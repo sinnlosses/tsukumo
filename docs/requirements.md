@@ -89,9 +89,17 @@
 
 - hook には `transcript_path` が渡る。SessionStart hook で既知の場所に書き出しておけば、
   サイドカーは**スラッグ化の規則を自前で再実装せずに**追従先を知れる
-- JSONL の `type` 分布（実測）: `assistant` / `user` / `attachment` / `mode` /
-  `permission-mode` / `last-prompt` / `ai-title` ほか。**assistant 以外は無視してよい**が、
-  未知の `type` が来ても落ちないこと
+- 行の `type` 分布（2026-09-09 に907行で実測）: `attachment` / `assistant` / `user` /
+  `permission-mode` / `mode` / `last-prompt` / `bridge-session` / `atis-latch` / `ai-title` /
+  `system` / `file-history-snapshot` / `file-history-delta`。**assistant 以外は無視してよい**が、
+  **未知の `type` が来ても落ちないこと**。後半の5つは 2026-09-08 の実測時には無かったもので、
+  **この集合は増える**と実際に確かめられている
+- **assistant 行の `content[]` にも複数の `type` がある**（同じ実測で `tool_use` 84 /
+  `thinking` 58 / `text` 30）。**吹き出しに出してよいのは `type: "text"` だけ。**
+  `thinking` はモデルの内部の思考なので、表示すると事故になる
+- 同じディレクトリには `<session-id>.jsonl` のほかに `<session-id>/` という**サブディレクトリ**が
+  でき、その下にサブエージェントの transcript（`subagents/*.jsonl`）が入る。
+  **`*.jsonl` を再帰的に拾うとサブエージェントの発話まで混ざる**ので、追従先は1ファイルに絞ること
 
 ### 4.2 表示
 

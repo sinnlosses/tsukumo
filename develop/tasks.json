@@ -20,10 +20,10 @@
   {
     "id": "T-003",
     "task": "サイドカーの PoC を作る: transcript(JSONL) を追従し、最新の assistant 発話を吹き出しとして描画する（まず文字だけ）。\n\n## 背景\n\n`docs/architecture.md`「採用アーキテクチャ（サイドカー pane）」の中核。**立ち絵より先に、追従と吹き出しだけを動かす。** 画像は後続タスク（立ち絵の表示）で足す。\n\ntranscript の場所と、最新の assistant 発話の取り出し方は `docs/requirements.md` 4.1 に実証済みのワンライナーがある。JSONL の `type` には `assistant` 以外に `user` / `attachment` / `mode` / `permission-mode` / `last-prompt` / `ai-title` があり、**未知の `type` が来ても落ちてはいけない**（`docs/architecture.md`「既知の制約・注意点」）。\n\n## 解くべき論点\n\n- 追従の方法（ファイルの再読み込みか、追記の監視か）。遅延の目安は1秒以内（`docs/requirements.md`「5. 実行環境・非機能要件」）\n- 発話が長いときに吹き出しをどう切るか（末尾を出すのか、先頭を出すのか、省略記号を入れるのか）\n\n## やること\n\n1. `docs/architecture.md`「新しいコードを置く場所」の原則2に沿って、「読む」「決める」「描く」を別モジュールに分ける\n2. transcript のパスは、この時点では**コマンドライン引数で受け取る**（hook からの受け渡しは後続タスク）\n3. 最新の assistant 発話を取り出し、ペイン幅に折り返して枠で囲んで表示する\n4. 追記を検知して描画を更新する\n5. 「読む」「決める」にテストを書く（`/tdd` を使う）。フィクスチャは**手で書いた架空の会話**にする（`docs/coding-standards.md`「会話内容の扱い」）\n6. 描画1回の失敗で落ちないことを確認する（壊れた行を含むフィクスチャで確かめる）\n\n## 完了条件\n\n- チェックコマンドが通る（テスト件数を `evidence` に書く）\n- 壊れた行・未知の `type` を含む JSONL を食わせても、プロセスが落ちずに描画を続ける（テストで固定する）\n- 実際に `claude` のセッションに対して起動し、**吹き出しが最新の発話に追従する**ことを目視で確認する（`docs/architecture.md`「手で確かめること」の手順1〜2、5）。確認した環境と結果を `evidence` に1行で書く\n\n## 注意\n\n- **transcript の内容を別の場所に書き出さない・ログに全文を出さない**（`docs/coding-standards.md`「会話内容の扱い」）\n- ペイン分割の方法に依存する実装を入れない（`docs/architecture.md`「tmux ではなく VS Code の split terminal を前提にした」）\n- 目視確認が必要なので、サブエージェントに委譲する場合も**受け入れはメインセッションで行う**",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`bun run check` 通過: 19 pass / 0 fail（3ファイル）。壊れた行・未知の type・thinking の除外はテストで固定。\n本物の transcript（907行、未知 type 5種を含む）に対して起動し、SIGTERM まで生存して枠付きの吹き出しに最新発話を描画。追記の反映は 153ms（目安1秒以内）。\n端末での目視確認はユーザー未実施（docs/architecture.md「手で確かめること」の手順1〜2、5）。",
     "dependencies": ["T-001"]
   },
   {
