@@ -2,10 +2,10 @@
   {
     "id": "T-001",
     "task": "実装スタック（言語・実行方法・テスト・チェックコマンド）を決め、リポジトリの雛形とチェックコマンドを整備する。\n\n## 背景\n\nリポジトリには AI 向けのドキュメント（`CLAUDE.md` / `docs/` / `develop/` / `.claude/skills/`）しか無く、コードは1行も無い。実装スタックが未決のため、`docs/coding-standards.md` は言語非依存の原則しか書けておらず、末尾に「スタック決定後に埋めること」というチェックリストが残っている。`CLAUDE.md`「よく使うコマンド」も未確定の穴になっている。\n\n前提となる環境（`docs/requirements.md`「5. 実行環境・非機能要件」の実測値）:\n\n- macOS (Darwin 25.6.0), zsh\n- 導入済み: `node`（nodebrew）, `jq`\n- 未導入: `tmux`, `deno`, `bun`, `chafa`, `viu`, `timg`, `img2sixel`\n\n## 解くべき論点\n\n1. **言語をどうするか。** 常駐して端末に描画するプロセスで、画像プロトコル（Sixel / iTerm inline）のバイト列を自前で組み立てる必要がある。`node` は入っているが、他の選択肢（Go・Rust・Python）は導入コストと引き換えに配布のしやすさが変わる\n2. **画像処理をどう扱うか。** 立ち絵の画像を読んで端末に流すのに、外部コマンド（`img2sixel` 等）に頼るか、ライブラリで自前で行うか。外部コマンドに頼ると未導入コマンドが増える\n3. **チェックコマンドの粒度。** 型チェック・lint・format・test を1コマンドにまとめるか、分けるか。`docs/workflow.md` は「チェックコマンド」という単数形で参照しているので、まとめる前提で書かれている\n4. **テストランナーで「決める」層をどこまで守れるか。** 描画は目視で確かめる方針（`docs/architecture.md`「手で確かめること」）なので、テストは「読む」「決める」に集中する\n\n## やること\n\n1. 上記の論点をユーザーと合意する\n2. 決めたスタックで最小の雛形を作る（依存定義・エントリポイント・テスト1件・チェックコマンド）\n3. `CLAUDE.md`「よく使うコマンド」に、実際に動くコマンドを書く\n4. `docs/coding-standards.md`「スタック決定後に埋めること」のチェックリストを1つずつ消化し、各節に言語固有の具体形を足す。消化し終えたらこの節自体を消す\n5. `docs/architecture.md`「新しいコードを置く場所」に、原則1〜5の具体形（実際のディレクトリ名）を足す\n6. `docs/requirements.md`「7. 未決事項」から「実装スタック」の行を消す\n\n## 完了条件\n\n- チェックコマンドが1つ存在し、実際に通る（コマンド名と出力を `evidence` に書く）\n- `docs/coding-standards.md` に「スタック決定後に埋めること」の節が残っていない\n- `docs/requirements.md`「7. 未決事項」に「実装スタック」の行が無い\n- `.gitignore` が、選んだスタックの生成物（依存ディレクトリ・ビルド成果物）を無視している\n\n## 注意\n\n- **ユーザーとの合意が必要なのでサブエージェントに委譲しない。** `/loop` の自動進行にも載せない（`docs/workflow.md`「委譲しないケース」）\n- 新しいツール（パッケージマネージャ・ランタイム）をグローバルに導入する場合は、**入れる前にユーザーの承認を得る**\n- 論点1〜4は `/grilling` でユーザーに問い詰めてから決めてよい",
-    "status": "todo",
+    "status": "done",
     "difficulty": "opus",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "Bun + TypeScript に決定（実行時の外部コマンド依存なし）。`bun run check` が通る: tsc --noEmit / oxlint / oxfmt --check / bun test 2 pass 0 fail。\n雛形は package.json・tsconfig.json・.oxlintrc.json・.oxfmtrc.json・.prettierignore・.gitignore・src/index.ts・test/index.test.ts。\n画像処理にライブラリが不要と分かった経緯は docs/architecture.md「画像処理に外部コマンドを使わない（当面）」に記録。",
     "dependencies": []
   },
   {
@@ -24,21 +24,16 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-001"
-    ]
+    "dependencies": ["T-001"]
   },
   {
     "id": "T-004",
-    "task": "画像プロトコルで立ち絵を表示する。使えない環境ではテキストのみにフォールバックする。\n\n## 背景\n\n`docs/requirements.md` 4.2 の中核機能。VS Code 統合ターミナルは `terminal.integrated.enableImages: true` と GPU アクセラレーションで Sixel / iTerm inline images が通るとされているが、**この組み合わせが実際に通るかは未確認**（`docs/requirements.md`「7. 未決事項」）。\n\n`docs/architecture.md` 原則3 により、端末・画像プロトコルに依存する処理は**1つのアダプタに閉じ込める**。フォールバックの判定もそこに置く。\n\n## 解くべき論点\n\n- Sixel と iTerm inline images のどちらを先に実装するか。VS Code 統合ターミナルで実際に通るほうを採る\n- 「画像プロトコルが使えるか」をどう判定するか（環境変数・端末への問い合わせ・設定での明示）。**誤判定したときに壊れるより、テキストに落ちるほうを選ぶ**\n- 立ち絵と吹き出しの縦の割り当て（ペインが低いときにどちらを削るか）\n\n## やること\n\n1. まず**手で確かめる**: `terminal.integrated.enableImages` を有効にし、画像プロトコルのバイト列を直接流して VS Code 統合ターミナルに絵が出るかを確認する。**ここで出なければ実装に進まず、確認した内容を `evidence` に書いて閉じる**（フォールバックのみの実装は別タスクに切る）\n2. 通ったら、原則3のアダプタとして立ち絵の描画を実装する\n3. 使えない環境ではテキストのみに切り替え、**起動失敗にしない**\n4. サンプル素材（T-002 のもの）で表示を確認する\n5. `docs/requirements.md`「7. 未決事項」から「画像プロトコル」の行を消し、確認した事実を `docs/architecture.md`「既知の制約・注意点」に反映する\n\n## 完了条件\n\n- チェックコマンドが通る\n- 画像プロトコルが使えない状態を強制したときに、**吹き出しだけが表示され、プロセスが落ちない**（テストで固定する）\n- VS Code 統合ターミナルで立ち絵が表示されること、またはそれが不可能だと確認できたことが `evidence` に書かれている\n- `docs/requirements.md`「7. 未決事項」に「画像プロトコル」の行が無い\n\n## 注意\n\n- 未導入の外部コマンド（`img2sixel` / `chafa` 等）に依存する場合は、**入れる前にユーザーの承認を得る**\n- 目視確認が主な検証手段なので、**受け入れはメインセッションで行う**",
+    "task": "画像プロトコルで立ち絵を表示する。使えない環境ではテキストのみにフォールバックする。\n\n## 背景\n\n`docs/requirements.md` 4.2 の中核機能。**2026-09-09 時点で、どちらの画像プロトコルも1つも通っていない。** 赤い四角を iTerm2 inline images（`ESC ]1337;File=inline=1:<base64>`）と Sixel の両方で流すプローブを VS Code 統合ターミナルと Orca で実行したが、どちらの端末でも何も表示されなかった。VS Code 側は `terminal.integrated.enableImages` が未設定（既定 `false`）だったことで説明が付く。Orca は素で非対応の可能性がある。\n\n**ここが通らないと「立ち絵付き」という企画の前提が変わる**ので、実装より先に確かめる。\n\n`docs/architecture.md` 原則3 により、端末・画像プロトコルに依存する処理は**1つのアダプタに閉じ込める**。フォールバックの判定もそこに置く。\n\n## 解くべき論点\n\n- どの端末で、どちらのプロトコルが通るか。**まず VS Code の `terminal.integrated.enableImages` を有効化して再確認する**（未設定が原因である可能性が高い）。Orca が非対応なら、tsukumo を動かすペインだけ VS Code 統合ターミナルにするという運用でよいかをユーザーに確認する\n- 「画像プロトコルが使えるか」をどう判定するか（環境変数・端末への問い合わせ・設定での明示）。**誤判定したときに壊れるより、テキストに落ちるほうを選ぶ**\n- 立ち絵と吹き出しの縦の割り当て（ペインが低いときにどちらを削るか）\n\n## やること\n\n1. まず**手で確かめる**: `terminal.integrated.enableImages` を有効にし、画像プロトコルのバイト列を直接流して絵が出るかを確認する。**エージェントの stdout は Claude Code の TUI を通るためエスケープが潰れる**ので、この確認はユーザーに素の端末で実行してもらう。**ここで出なければ実装に進まず、確認した内容を `evidence` に書いて閉じる**（フォールバックのみの実装は別タスクに切る）\n2. 通ったら、原則3のアダプタとして立ち絵の描画を実装する\n3. 使えない環境ではテキストのみに切り替え、**起動失敗にしない**\n4. サンプル素材（T-002 のもの）で表示を確認する\n5. `docs/requirements.md`「7. 未決事項」から「画像プロトコル」の行を消し、確認した事実を `docs/architecture.md`「既知の制約・注意点」に反映する\n\n## 完了条件\n\n- チェックコマンドが通る\n- 画像プロトコルが使えない状態を強制したときに、**吹き出しだけが表示され、プロセスが落ちない**（テストで固定する）\n- VS Code 統合ターミナルで立ち絵が表示されること、またはそれが不可能だと確認できたことが `evidence` に書かれている\n- `docs/requirements.md`「7. 未決事項」に「画像プロトコル」の行が無い\n\n## 注意\n\n- Sixel 経路が必要になった場合、新しいツールを入れる前に**手元の ImageMagick（`magick foo.png sixel:-`）で足りないかを先に確かめる**。外部コマンドへの依存を増やすときはユーザーの承認を得る（`docs/architecture.md`「画像処理に外部コマンドを使わない（当面）」）\n- 目視確認が主な検証手段なので、**受け入れはメインセッションで行う**",
     "status": "todo",
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-002",
-      "T-003"
-    ]
+    "dependencies": ["T-002", "T-003"]
   },
   {
     "id": "T-005",
@@ -47,9 +42,7 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-003"
-    ]
+    "dependencies": ["T-003"]
   },
   {
     "id": "T-006",
@@ -58,8 +51,6 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-005"
-    ]
+    "dependencies": ["T-005"]
   }
 ]

@@ -1,0 +1,4 @@
+node_modules/
+
+# 上流（mattpocock/skills）由来のスキル。取り直したときに差分が汚れるので整形しない
+.claude/
