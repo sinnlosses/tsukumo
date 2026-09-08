@@ -43,9 +43,19 @@ function main(args: readonly string[]): number {
   }
 
   renderOnce(transcriptPath)
+  followResize(transcriptPath)
   followTranscript(transcriptPath, initialSnapshot)
 
   return 0
+}
+
+// ペイン幅は描画のたびに読み直すが、描画が起きるのは transcript が変わったときだけ。
+// リサイズを拾わないと、幅を変えても箱が前の幅のまま残り、行が新しい幅を超えて
+// 折り返され、枠の右辺が次の行へ押し出される。
+function followResize(transcriptPath: string): void {
+  process.stdout.on("resize", () => {
+    renderOnce(transcriptPath)
+  })
 }
 
 /** 追記を検知して描画を更新するポーリングループ。ファイルの mtime/size を見るだけで十分とした。 */
