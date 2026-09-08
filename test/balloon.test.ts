@@ -6,8 +6,9 @@ describe("buildBalloon", () => {
   it("発話を枠で囲んで返す", () => {
     const lines = buildBalloon("こんにちは", 20)
 
-    expect(lines[0]?.startsWith("┌")).toBe(true)
-    expect(lines.at(-1)?.startsWith("└")).toBe(true)
+    // 角丸で囲む。角ばった枠は立ち絵の側で使うので、形で描き分ける
+    expect(lines[0]?.startsWith("╭")).toBe(true)
+    expect(lines.at(-1)?.startsWith("╰")).toBe(true)
     expect(lines.some((line) => line.includes("こんにちは"))).toBe(true)
   })
 

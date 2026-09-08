@@ -49,8 +49,8 @@ describe("tsukumo CLI", () => {
       // タイムアウトで強制終了されている = 例外で落ちずにポーリングを続けたまま生きていた
       expect(result.signal).toBe("SIGTERM")
       expect(result.stdout).toContain("絶好調だよ、任せて！")
-      expect(result.stdout).toContain("┌")
-      expect(result.stdout).toContain("└")
+      expect(result.stdout).toContain("╭")
+      expect(result.stdout).toContain("╰")
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }

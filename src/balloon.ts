@@ -66,10 +66,12 @@ function keepTail(lines: readonly string[], maxLines: number): readonly string[]
   return [TRUNCATION_MARKER, ...lines.slice(lines.length - (maxLines - 1))]
 }
 
+// 角丸で囲む。立ち絵は角ばった枠（┌┐└┘）で囲むので、両方が同じ形だと額縁と吹き出しの
+// 区別がつかなくなる。この描き分けは検討時のスケッチから引き継いでいる。
 function frame(content: readonly string[], innerWidth: number): readonly string[] {
   const horizontal = "─".repeat(innerWidth + 2)
-  const top = `┌${horizontal}┐`
-  const bottom = `└${horizontal}┘`
+  const top = `╭${horizontal}╮`
+  const bottom = `╰${horizontal}╯`
   const body = content.map((line) => `│ ${padToWidth(line, innerWidth)} │`)
 
   return [top, ...body, bottom]
