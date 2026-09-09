@@ -1,8 +1,8 @@
 # tsukumo
 
-Claude Code との会話を、キャラクターの立ち絵と吹き出しでターミナルに表示するサイドカー。
-Claude Code 本体のTUIには**一切割り込まず**、別ペインで常駐するプロセスがセッションの
-transcript（JSONL）を追従して描画する。
+**キャラクターと一緒に楽しく仕事をするためのターミナル環境。**
+実現の手段はサイドカー方式で、Claude Code 本体のTUIには**一切割り込まず**、別ペインで常駐する
+プロセスがセッションの transcript（JSONL）を追従して描画する。
 
 設計判断・要件・用語の正典は `docs/` にある。**このREADMEはセットアップ手順だけを持つ**
 （詳細は `CLAUDE.md` と `docs/architecture.md` を参照）。
@@ -19,8 +19,8 @@ bun run start <transcript.jsonl>
 ```
 
 引数を省略すると、後述の SessionStart hook が書き出す `~/.tsukumo/transcript-path` を
-追従先にする（**引数を渡した場合はそちらを優先する**）。VS Code の split terminal などで
-`claude` と別のペインに常駐させて使う。
+追従先にする（**引数を渡した場合はそちらを優先する**）。Orca の split terminal で `claude` と
+別のペインに常駐させて使う（画面レイアウトは `docs/requirements.md` 4.7）。
 
 ## hook を登録する（表情・衣装の切り替えと transcript パスの自動解決）
 
@@ -36,8 +36,8 @@ tsukumo は次の2つを hook から受け取る:
 
 ### 前提: `~/.claude/settings.json` は上書きせず追記する
 
-**このリポジトリの `hooks/state.sh` は自動では登録されない。登録は手動で行い、
-このセッションでは行わない**（グローバル設定の書き換えはユーザーの承認が要る操作のため）。
+**`hooks/state.sh` は自動では登録されない。** `~/.claude/settings.json` はユーザーの
+グローバル設定なので、**登録は承認を得たうえで手動で行う**。編集する前にバックアップを取ること。
 
 登録するときは次を守ること:
 

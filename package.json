@@ -2,7 +2,7 @@
   "name": "tsukumo",
   "version": "0.0.0",
   "private": true,
-  "description": "Claude Code の発話を立ち絵と吹き出しで表示するサイドカー",
+  "description": "キャラクターと一緒に楽しく仕事をするためのターミナル環境",
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
