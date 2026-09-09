@@ -153,7 +153,51 @@ describe("メインビューの本文", () => {
     expect(buildMainBody([])).toContain("まだ作業がありません")
   })
 
-  it("ツールの実行を、名前・引数・結果すべて込みで出す", () => {
+  it("ファイルを変えた操作（Write/Edit/NotebookEdit）は、ツール名とパスだけを出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Edit",
+        input: { file_path: "src/view.ts", old_string: "a", new_string: "b" },
+        result: { content: "The file has been updated", isError: false },
+      },
+      {
+        kind: "tool",
+        name: "Write",
+        input: { file_path: "src/new.ts", content: "export {}" },
+        result: { content: "File created", isError: false },
+      },
+      {
+        kind: "tool",
+        name: "NotebookEdit",
+        input: { notebook_path: "note.ipynb", new_source: "1+1" },
+        result: { content: "ok", isError: false },
+      },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("Edit: src/view.ts")
+    expect(body).toContain("Write: src/new.ts")
+    expect(body).toContain("NotebookEdit: note.ipynb")
+    // 引数・結果の中身は出ない。
+    expect(body).not.toContain("old_string")
+    expect(body).not.toContain("The file has been updated")
+    expect(body).not.toContain("export {}")
+  })
+
+  it("ファイルを変えた操作で、結果がまだ届いていないものは実行中と出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      { kind: "tool", name: "Edit", input: { file_path: "src/view.ts" }, result: undefined },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("Edit: src/view.ts")
+    expect(body).toContain("実行中")
+  })
+
+  it("コマンド（Bash）とその出力は、成功していれば出ない", () => {
     const entries: readonly MainViewEntry[] = [
       {
         kind: "tool",
@@ -165,17 +209,101 @@ describe("メインビューの本文", () => {
 
     const body = buildMainBody(entries)
 
-    expect(body).toContain("Bash")
-    expect(body).toContain("echo hi")
-    expect(body).toContain(">hi<")
+    expect(body).not.toContain("Bash")
+    expect(body).not.toContain("echo hi")
+    expect(body).not.toContain(">hi<")
   })
 
-  it("結果がまだ届いていないツールは実行中と出す", () => {
+  it("読み取り・検索（Read/Grep 等）は成功していれば出ない", () => {
     const entries: readonly MainViewEntry[] = [
-      { kind: "tool", name: "Read", input: { file_path: "/a" }, result: undefined },
+      {
+        kind: "tool",
+        name: "Read",
+        input: { file_path: "/a" },
+        result: { content: "中身", isError: false },
+      },
+      {
+        kind: "tool",
+        name: "Grep",
+        input: { pattern: "foo" },
+        result: { content: "1件", isError: false },
+      },
     ]
 
-    expect(buildMainBody(entries)).toContain("実行中")
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain("Read")
+    expect(body).not.toContain("Grep")
+  })
+
+  it("未知のツール名は、成功していれば出ない側に倒れる（安全側）", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "SomeFutureTool",
+        input: { anything: "x" },
+        result: { content: "done", isError: false },
+      },
+    ]
+
+    expect(buildMainBody(entries)).not.toContain("SomeFutureTool")
+  })
+
+  it("失敗したツールは、種類によらずエラーの内容込みで出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Bash",
+        input: { command: "exit 1" },
+        result: { content: "command not found", isError: true },
+      },
+      {
+        kind: "tool",
+        name: "Read",
+        input: { file_path: "/missing" },
+        result: { content: "No such file", isError: true },
+      },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("tool-error")
+    expect(body).toContain("exit 1")
+    expect(body).toContain("command not found")
+    expect(body).toContain("No such file")
+  })
+
+  it("サブエージェントの起動は、タスク名込みで出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Agent",
+        input: { description: "テストを直す", prompt: "テストの中身は出さない秘密" },
+        result: undefined,
+      },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("Agent: テストを直す")
+    expect(body).toContain("実行中")
+    expect(body).not.toContain("テストの中身は出さない秘密")
+  })
+
+  it("サブエージェントの起動で description が無いときも、列から消さずツール名は出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      { kind: "tool", name: "Agent", input: {}, result: undefined },
+    ]
+
+    expect(buildMainBody(entries)).toContain("タスク名不明")
+  })
+
+  it("ファイルを変えた操作で file_path が無い（壊れた入力）ときも、ツール名は出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      { kind: "tool", name: "Write", input: {}, result: undefined },
+    ]
+
+    expect(buildMainBody(entries)).toContain("パス不明")
   })
 
   it("エラーになったツールの結果には、そうと分かる印を付ける", () => {
@@ -191,13 +319,13 @@ describe("メインビューの本文", () => {
     expect(buildMainBody(entries)).toContain("tool-error")
   })
 
-  it("ツールの引数・出力を HTML として無害な形にして埋め込む", () => {
+  it("失敗したツールの引数・出力を HTML として無害な形にして埋め込む", () => {
     const entries: readonly MainViewEntry[] = [
       {
         kind: "tool",
         name: "Bash",
         input: { command: '<script>alert("x")</script>' },
-        result: { content: '<img src=x onerror="alert(1)">', isError: false },
+        result: { content: '<img src=x onerror="alert(1)">', isError: true },
       },
     ]
 
@@ -209,15 +337,49 @@ describe("メインビューの本文", () => {
     expect(body).toContain("&lt;img")
   })
 
+  it("ファイルを変えた操作のパスを HTML として無害な形にして埋め込む", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Edit",
+        input: { file_path: '<script>alert("x")</script>' },
+        result: undefined,
+      },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain("<script>")
+    expect(body).toContain("&lt;script&gt;")
+  })
+
   it("ツールの実行と発話の詳細を出現順のまま積む（状態を切り替えない）", () => {
     const entries: readonly MainViewEntry[] = [
-      { kind: "tool", name: "Bash", input: {}, result: { content: "ok", isError: false } },
+      {
+        kind: "tool",
+        name: "Edit",
+        input: { file_path: "src/view.ts" },
+        result: { content: "ok", isError: false },
+      },
       { kind: "detail", markdown: "終わったよ" },
     ]
 
     const body = buildMainBody(entries)
 
-    expect(body.indexOf("Bash")).toBeLessThan(body.indexOf("終わったよ"))
+    expect(body.indexOf("Edit")).toBeLessThan(body.indexOf("終わったよ"))
+  })
+
+  it("見えるツールの実行が1つも無いときも、まだ何もないことだけを出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Bash",
+        input: { command: "ls" },
+        result: { content: "a.txt", isError: false },
+      },
+    ]
+
+    expect(buildMainBody(entries)).toContain("まだ作業がありません")
   })
 
   it("発話の詳細（Markdown）を見出し・箇条書き・表・コードブロックが読める HTML に整形する", () => {
@@ -325,7 +487,7 @@ describe("メインビューの本文", () => {
   it("巨大なツール出力を食わせても表示が壊れない（切り詰めて表示する）", () => {
     const hugeOutput = "x".repeat(200_000)
     const entries: readonly MainViewEntry[] = [
-      { kind: "tool", name: "Bash", input: {}, result: { content: hugeOutput, isError: false } },
+      { kind: "tool", name: "Bash", input: {}, result: { content: hugeOutput, isError: true } },
     ]
 
     const body = buildMainBody(entries)

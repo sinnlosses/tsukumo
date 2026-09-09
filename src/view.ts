@@ -307,9 +307,11 @@ export function buildCharacterBody(data: CharacterViewData): string {
  * 時系列でそのまま積む**（理由は `src/transcript.ts` の `extractMainViewEntries` を参照。
  * transcript だけからは2つの状態を確実に判定できないため、無理に分けていない）。
  *
- * - **ツールの実行**: `docs/requirements.md` の決定どおり、**引数も結果も出す**（ツール名だけでは
- *   情報として足りず、サイドバーで「Bash ×5」と並んで使い物にならなかった前例があるため）。
- *   結果がまだ届いていないツールは「実行中」と出す
+ * - **ツールの実行**: `docs/requirements.md` 4.2 の決定どおり、**利用者が見るべきものだけに
+ *   絞る**（`toolVisibility`）。出すのはファイルを変えた操作（ツール名とパス）・
+ *   サブエージェントの起動（タスク名）・失敗したツール（エラーの内容）の3種類だけで、
+ *   コマンドとその出力・読み取りや検索・未知のツール名は出さない。**絞るのはこの「決める」層の
+ *   責務**（`extractMainViewEntries` は読む層なので、絞らずすべての `tool_use` を返す）
  * - **発話の詳細**: Markdown を `renderMarkdownToHtml` で HTML に整形する。**中身を要約・
  *   再構成しない**（読みづらさの主因は見た目であって内容ではないため。`docs/requirements.md` 2.2）
  *
@@ -317,11 +319,13 @@ export function buildCharacterBody(data: CharacterViewData): string {
  * 除外しているので、この関数の入力に `thinking` の中身が混ざる経路が無い。
  */
 export function buildMainBody(entries: readonly MainViewEntry[]): string {
-  if (entries.length === 0) {
+  const rendered = entries.flatMap((entry) => mainViewEntryHtml(entry))
+
+  if (rendered.length === 0) {
     return `<p class="placeholder">${escapeHtml(MAIN_VIEW_EMPTY_MESSAGE)}</p>`
   }
 
-  return entries.map((entry) => mainViewEntryHtml(entry)).join("\n")
+  return rendered.join("\n")
 }
 
 /**
@@ -587,11 +591,94 @@ function portraitMarkup(
   return `<div class="portrait" role="img" aria-label="${escapeHtml(altText)}"${accentStyle}>${inner}</div>`
 }
 
-function mainViewEntryHtml(entry: MainViewEntry): string {
-  return entry.kind === "tool" ? toolExecutionHtml(entry) : detailHtml(entry.markdown)
+/**
+ * 1件の記録から、メインビューに出す HTML を0個か1個返す（`flatMap` で積むための形）。
+ * `detail` は常に出す。`tool` は {@link toolVisibility} が「見せない」と決めたら空配列を返し、
+ * 呼び出し側（`buildMainBody`）でそのまま消える。
+ */
+function mainViewEntryHtml(entry: MainViewEntry): readonly string[] {
+  if (entry.kind === "detail") {
+    return [detailHtml(entry.markdown)]
+  }
+
+  const visibility = toolVisibility(entry)
+  if (visibility.kind === "hidden") {
+    return []
+  }
+  if (visibility.kind === "failed") {
+    return [failedToolHtml(entry)]
+  }
+  if (visibility.kind === "file-change") {
+    return [labeledToolHtml(entry, visibility.path ?? FILE_PATH_UNKNOWN_LABEL)]
+  }
+  return [labeledToolHtml(entry, visibility.description ?? AGENT_DESCRIPTION_UNKNOWN_LABEL)]
 }
 
-function toolExecutionHtml(entry: Extract<MainViewEntry, { readonly kind: "tool" }>): string {
+/**
+ * ツール名ごとに `input` の中のファイルパスが入るフィールド名。ここに載っている名前だけを
+ * 「ファイルを変えた操作」として扱う（`docs/requirements.md` 4.2）。**未知のツール名はここに
+ * 無いので、`toolVisibility` で自動的に「見せない」側に倒れる**（安全側のデフォルト）。
+ */
+const FILE_PATH_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
+  Write: "file_path",
+  Edit: "file_path",
+  NotebookEdit: "notebook_path",
+}
+
+/** サブエージェントを起動するツールの名前。`input.description` がタスク名（会話内容ではない）。 */
+const SUBAGENT_LAUNCH_TOOL_NAME = "Agent"
+
+const FILE_PATH_UNKNOWN_LABEL = "(パス不明)"
+const AGENT_DESCRIPTION_UNKNOWN_LABEL = "(タスク名不明)"
+
+type ToolVisibility =
+  | { readonly kind: "hidden" }
+  | { readonly kind: "failed" }
+  | { readonly kind: "file-change"; readonly path: string | undefined }
+  | { readonly kind: "agent-launch"; readonly description: string | undefined }
+
+/**
+ * 1件のツール実行を、メインビューに出してよい範囲で分類する（`docs/requirements.md` 4.2 の
+ * 決定を実装したもの）。**判定の優先順位は「失敗 → ファイルを変えた操作 → サブエージェントの
+ * 起動 → それ以外は見せない」**。失敗を最優先にするのは、決定表の「失敗したツール」の行が
+ * ツールの種類を問わず「出す」としているため（コマンドの出力を隠す方針より優先する）。
+ *
+ * **未知のツール名（`FILE_PATH_FIELD_BY_TOOL` にも `SUBAGENT_LAUNCH_TOOL_NAME` にも無い名前）は
+ * `hidden` に落ちる。** 新しいツールが増えても、ここに追記するまでは安全側（見せない）に倒れる。
+ */
+function toolVisibility(entry: Extract<MainViewEntry, { readonly kind: "tool" }>): ToolVisibility {
+  if (entry.result !== undefined && entry.result.isError) {
+    return { kind: "failed" }
+  }
+
+  const filePathField = FILE_PATH_FIELD_BY_TOOL[entry.name]
+  if (filePathField !== undefined) {
+    return { kind: "file-change", path: stringField(entry.input, filePathField) }
+  }
+
+  if (entry.name === SUBAGENT_LAUNCH_TOOL_NAME) {
+    return { kind: "agent-launch", description: stringField(entry.input, "description") }
+  }
+
+  return { kind: "hidden" }
+}
+
+/** `input`（`unknown`。transcript から来た JSON 値）から、指定したフィールドの文字列値を取り出す。 */
+function stringField(input: unknown, field: string): string | undefined {
+  if (!isRecord(input)) {
+    return undefined
+  }
+
+  const value = input[field]
+  return typeof value === "string" ? value : undefined
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
+/** 失敗したツールの表示。**ツールの種類によらず、引数と結果（エラーの内容）をそのまま出す。** */
+function failedToolHtml(entry: Extract<MainViewEntry, { readonly kind: "tool" }>): string {
   const inputText = truncateForDisplay(stringifyToolInput(entry.input))
   const resultHtml =
     entry.result === undefined
@@ -604,6 +691,22 @@ function toolExecutionHtml(entry: Extract<MainViewEntry, { readonly kind: "tool"
 <h3>${escapeHtml(entry.name)}</h3>
 <pre class="tool-input"><code>${escapeHtml(inputText)}</code></pre>
 ${resultHtml}
+</section>`
+}
+
+/**
+ * ファイルを変えた操作／サブエージェントの起動の表示。**引数や出力は出さず、
+ * ツール名とラベル（パス、またはタスク名）だけを見出しに出す。**
+ */
+function labeledToolHtml(
+  entry: Extract<MainViewEntry, { readonly kind: "tool" }>,
+  label: string,
+): string {
+  const statusHtml = entry.result === undefined ? `<p class="tool-pending">実行中…</p>` : ""
+
+  return `<section class="tool-block">
+<h3>${escapeHtml(entry.name)}: ${escapeHtml(label)}</h3>
+${statusHtml}
 </section>`
 }
 
