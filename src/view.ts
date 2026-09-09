@@ -93,7 +93,10 @@ export function buildCharacterBody(data: CharacterViewData): string {
       ? ""
       : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
 
-  return `${portraitHtml}<div class="balloon">${escapeHtml(text)}</div>`
+  // 立ち絵と吹き出しを横並びにする（`.character-layout`。4分割レイアウトの下段左は横長の領域に
+  // なるため、縦積みのままだと吹き出しの縦幅が窮屈になる）。幅が足りない環境では
+  // `flex-wrap: wrap` で自然に縦積みへ戻る（`docs/requirements.md` 4.7 「画面レイアウト」）。
+  return `<div class="character-layout">${portraitHtml}<div class="balloon">${escapeHtml(text)}</div></div>`
 }
 
 /**
@@ -207,8 +210,15 @@ const STYLE = `
     line-height: 1.7;
     overflow-wrap: anywhere;
   }
+  .character-layout {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
   .portrait {
-    margin: 0 0 0.75rem;
+    margin: 0;
+    flex: 0 0 auto;
     text-align: center;
     animation: portrait-fade-in 0.25s ease-out;
   }
@@ -224,6 +234,8 @@ const STYLE = `
     to { opacity: 1; }
   }
   .balloon {
+    flex: 1 1 14rem;
+    min-width: 0;
     padding: 0.75rem 1rem;
     border: 1px solid #3a4256;
     border-radius: 0.75rem;
