@@ -3,8 +3,10 @@
 // 純粋関数だけを置き、ネットワーク・ファイル・プロセスには触らない（配るのは src/view-server.ts）。
 // 折り返し・全角文字の幅・禁則処理はブラウザに任せる。ここが計算するのは中身だけ。
 //
-// **各ビューの中身はまだプレースホルダ**（メインビューの作業の進行、キャラビューの立ち絵、
-// サイドバーの情報は後続の作業で入る）。ページの骨組みと更新の受け口だけが確定している。
+// **メインビュー・キャラビューの中身はまだプレースホルダ**（作業の進行・立ち絵は後続の作業で
+// 入る）。サイドバーはこのタスクで中身が決まった（下の `buildSidebarBody`）。
+
+import { type TaskStatusCounts } from "./tasks.ts"
 
 export type ViewName = "main" | "character" | "sidebar"
 
@@ -67,6 +69,59 @@ export function buildPlaceholderBody(view: ViewName): string {
   return `<p class="placeholder">${escapeHtml(VIEW_TITLE[view])}（準備中）</p>`
 }
 
+/**
+ * 1件のサブエージェントについて、サイドバーに出してよい範囲の直近の状況。
+ * `description` / `model` は `agent-<id>.meta.json` 由来のラベル（会話内容ではない。
+ * ユーザーとの合意事項）。`meta.json` が無い・壊れているサブエージェントでは両方 undefined になり、
+ * その場合はツール名だけで表示する。
+ */
+export type SubagentActivity = {
+  readonly description: string | undefined
+  readonly model: string | undefined
+  /** 直近に使われたツール名。引数・出力は含めない（会話の内容を出さないため）。 */
+  readonly latestToolName: string | undefined
+}
+
+/** サブエージェントの状況のうち、サイドバーに出す分だけをまとめたもの。 */
+export type SubagentsSummary = {
+  /** 保留中のサブエージェント件数。件数の権威ある情報源は transcript の `pendingBackgroundAgentCount`
+   *  （`src/transcript.ts`）。8行に1回程度しか出ないため、無いときは undefined。 */
+  readonly pendingCount: number | undefined
+  /** 直近に活動したサブエージェントの状況（1件につき1つ）。「走っているか」の判定はできないため、
+   *  ここは活動の有無ではなく**直近の中身**を表す。新しい順。 */
+  readonly recentActivity: readonly SubagentActivity[]
+}
+
+/** サイドバーの本文を組み立てるために必要な値。取れなかった項目は `undefined` で表す。 */
+export type SidebarData = {
+  /** 最新の assistant 行の使用トークン数の合計。残量%は含まない（モデルの窓の大きさが
+   *  transcript に無いため）。 */
+  readonly contextTokens: number | undefined
+  readonly subagents: SubagentsSummary
+  /** develop/tasks.json の done / todo 件数。ファイルが読めない・壊れているときは undefined。 */
+  readonly taskCounts: TaskStatusCounts | undefined
+}
+
+/**
+ * サイドバーの本文。**「補足情報の置き場」であって単機能パネルではない**ので、独立した3つの
+ * 区画（コンテキスト使用量・サブエージェント・タスクの進捗）を並べる
+ * （`docs/history/direction.md` 2026-09-09 決定事項。biim システムのサイドバーに倣う）。
+ *
+ * **会話の内容は出さない。** サブエージェントの直近の活動は、`meta.json` 由来のラベル
+ * （`description` / `model`。会話内容ではなくこちら側が付けたタスクラベル）と、直近に使った
+ * ツール名までにとどめ、引数や出力は出さない（`docs/coding-standards.md`「会話内容の扱い」）。
+ *
+ * 3つの区画は互いに独立している。**どれか1つが取れなくても、その区画だけ「不明」を出し、
+ * 残りは表示を続ける**（`data` の各フィールドが `undefined` や空配列のときに壊れないこと）。
+ */
+export function buildSidebarBody(data: SidebarData): string {
+  return [
+    sidebarSection("コンテキスト使用量", contextUsageBody(data.contextTokens)),
+    sidebarSection("サブエージェント", subagentsBody(data.subagents)),
+    sidebarSection("タスクの進捗", taskProgressBody(data.taskCounts)),
+  ].join("\n")
+}
+
 /** 発話などの文字列を HTML に埋め込める形にする。 */
 export function escapeHtml(text: string): string {
   return text
@@ -107,7 +162,78 @@ const STYLE = `
   }
   .placeholder { color: #8f97ab; }
   a { color: #8ab4ff; }
+  .sidebar-block {
+    margin: 0 0 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #3a4256;
+    font-size: 0.85rem;
+  }
+  .sidebar-block:last-child { border-bottom: none; }
+  .sidebar-block h2 {
+    margin: 0 0 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #8f97ab;
+  }
+  .sidebar-block p { margin: 0.2rem 0; }
+  .sidebar-empty { color: #8f97ab; }
+  .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
 `
+
+function sidebarSection(title: string, body: string): string {
+  return `<section class="sidebar-block">
+<h2>${escapeHtml(title)}</h2>
+${body}
+</section>`
+}
+
+function contextUsageBody(tokens: number | undefined): string {
+  if (tokens === undefined) {
+    return `<p class="sidebar-empty">不明</p>`
+  }
+
+  return `<p>${escapeHtml(tokens.toLocaleString("ja-JP"))} トークン</p>`
+}
+
+function subagentsBody(subagents: SubagentsSummary): string {
+  const countLine =
+    subagents.pendingCount === undefined
+      ? `<p>保留中: 不明</p>`
+      : `<p>保留中: ${escapeHtml(String(subagents.pendingCount))}件</p>`
+
+  if (subagents.recentActivity.length === 0) {
+    return `${countLine}\n<p class="sidebar-empty">直近の活動なし</p>`
+  }
+
+  const items = subagents.recentActivity
+    .map((activity) => `<li>${escapeHtml(describeSubagentActivity(activity))}</li>`)
+    .join("\n")
+  return `${countLine}\n<ul class="sidebar-list">${items}</ul>`
+}
+
+/**
+ * サブエージェント1件分の表示テキストを組み立てる。`description`（あれば `model` も）と、
+ * 直近のツール名を1行にまとめる。`description` が無い（`meta.json` が無い・壊れている）
+ * サブエージェントは、従来どおりツール名だけを出す（列から消さない）。
+ * どちらも無いときの "(不明)" は、この関数を直接テストするとき用の安全側の既定値。
+ */
+function describeSubagentActivity(activity: SubagentActivity): string {
+  if (activity.description === undefined) {
+    return activity.latestToolName ?? "(不明)"
+  }
+
+  const modelPart = activity.model === undefined ? "" : ` (${activity.model})`
+  const toolPart = activity.latestToolName === undefined ? "" : ` — ${activity.latestToolName}`
+  return `${activity.description}${modelPart}${toolPart}`
+}
+
+function taskProgressBody(taskCounts: TaskStatusCounts | undefined): string {
+  if (taskCounts === undefined) {
+    return `<p class="sidebar-empty">不明</p>`
+  }
+
+  return `<p>done ${escapeHtml(String(taskCounts.done))} / todo ${escapeHtml(String(taskCounts.todo))}</p>`
+}
 
 function page(title: string, body: string): string {
   return `<!doctype html>

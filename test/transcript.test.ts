@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { extractLatestUtterance, splitUtterance } from "../src/transcript.ts"
+import {
+  extractContextUsage,
+  extractLatestPendingBackgroundAgentCount,
+  extractLatestUtterance,
+  splitUtterance,
+} from "../src/transcript.ts"
 
 // すべて手で書いた架空の会話。実物の transcript は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。
@@ -222,5 +227,129 @@ describe("splitUtterance", () => {
       speech: "> 入れ子の引用",
       detail: "詳細の説明",
     })
+  })
+})
+
+describe("extractContextUsage", () => {
+  it("最新の assistant 行の usage からトークン数の合計を取り出す", () => {
+    const content = [
+      JSON.stringify({
+        type: "assistant",
+        message: {
+          content: [{ type: "text", text: "最初の発話" }],
+          usage: { input_tokens: 1, cache_read_input_tokens: 10, cache_creation_input_tokens: 100 },
+        },
+      }),
+      JSON.stringify({
+        type: "assistant",
+        message: {
+          content: [{ type: "text", text: "最新の発話" }],
+          usage: {
+            input_tokens: 2,
+            cache_read_input_tokens: 603_400,
+            cache_creation_input_tokens: 5,
+          },
+        },
+      }),
+    ].join("\n")
+
+    expect(extractContextUsage(content)).toBe(603_407)
+  })
+
+  it("最新の assistant 行が tool_use だけでも usage があれば拾う", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [{ type: "tool_use", name: "Bash", input: { command: "echo hi" } }],
+        usage: { input_tokens: 1, cache_read_input_tokens: 2, cache_creation_input_tokens: 3 },
+      },
+    })
+
+    expect(extractContextUsage(content)).toBe(6)
+  })
+
+  it("assistant 行が1つも無いとき undefined を返す", () => {
+    const content = JSON.stringify({
+      type: "user",
+      message: { content: [{ type: "text", text: "はじめまして" }] },
+    })
+
+    expect(extractContextUsage(content)).toBeUndefined()
+  })
+
+  it("最新の assistant 行に usage が無いとき undefined を返す（残量%を捏造しない）", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "usage が無い発話" }] },
+    })
+
+    expect(extractContextUsage(content)).toBeUndefined()
+  })
+
+  it("usage の値が数値でないとき undefined を返す", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [{ type: "text", text: "壊れた usage" }],
+        usage: { input_tokens: "1", cache_read_input_tokens: 2, cache_creation_input_tokens: 3 },
+      },
+    })
+
+    expect(extractContextUsage(content)).toBeUndefined()
+  })
+
+  it("壊れた行が混ざっていても落ちずに読む", () => {
+    const content = [
+      "{not valid json",
+      JSON.stringify({
+        type: "assistant",
+        message: {
+          content: [{ type: "text", text: "壊れた行の後の発話" }],
+          usage: { input_tokens: 1, cache_read_input_tokens: 1, cache_creation_input_tokens: 1 },
+        },
+      }),
+    ].join("\n")
+
+    expect(extractContextUsage(content)).toBe(3)
+  })
+})
+
+describe("extractLatestPendingBackgroundAgentCount", () => {
+  it("system 行の pendingBackgroundAgentCount のうち最新の値を返す", () => {
+    const content = [
+      JSON.stringify({ type: "system", subtype: "turn_duration", pendingBackgroundAgentCount: 2 }),
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "text", text: "作業中" }] },
+      }),
+      JSON.stringify({ type: "system", subtype: "turn_duration", pendingBackgroundAgentCount: 1 }),
+    ].join("\n")
+
+    expect(extractLatestPendingBackgroundAgentCount(content)).toBe(1)
+  })
+
+  it("system 行はあるが pendingBackgroundAgentCount を持つ行が1つも無いとき undefined を返す", () => {
+    const content = JSON.stringify({ type: "system", subtype: "stop_hook_summary", hookCount: 1 })
+
+    expect(extractLatestPendingBackgroundAgentCount(content)).toBeUndefined()
+  })
+
+  it("system 行が1つも無いとき undefined を返す", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "こんにちは" }] },
+    })
+
+    expect(extractLatestPendingBackgroundAgentCount(content)).toBeUndefined()
+  })
+
+  it("壊れた行・未知の type が混ざっていても落ちずに読む", () => {
+    const content = [
+      "{not valid json",
+      JSON.stringify({ type: "future-type", pendingBackgroundAgentCount: 99 }),
+      JSON.stringify({ type: "system", subtype: "turn_duration", pendingBackgroundAgentCount: 3 }),
+    ].join("\n")
+
+    expect(extractLatestPendingBackgroundAgentCount(content)).toBe(3)
   })
 })

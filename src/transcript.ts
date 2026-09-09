@@ -1,8 +1,9 @@
-// transcript(JSONL) を読み、最新の assistant 発話を取り出し、セリフと詳細に分ける。「読む」層。
+// transcript(JSONL) を読み、最新の assistant 発話を取り出し、セリフと詳細に分ける。
+// 加えて、サイドバー用にコンテキスト使用量とサブエージェントの保留件数も取り出す。「読む」層。
 //
 // JSONL の1行は外部由来（Claude Code が書き出すもの）なので構造を信用しない。
-// unknown で受けて検証し、通った行だけを assistant の発話として扱う。
-// 壊れた行・assistant 以外の行（未知の type を含む）は読み飛ばし、例外を投げない。
+// unknown で受けて検証し、通った行だけを扱う。
+// 壊れた行・未知の type を含む行は読み飛ばし、例外を投げない。
 
 /**
  * transcript の全文から、最新の assistant 発話のテキストを取り出す。
@@ -17,6 +18,40 @@ export function extractLatestUtterance(content: string): string | undefined {
     .filter((utterance): utterance is string => utterance !== undefined)
 
   return utterances.at(-1)
+}
+
+/**
+ * transcript の**最新の** `type: "assistant"` 行から、コンテキスト使用量（トークン数の合計）を
+ * 取り出す。`input_tokens + cache_read_input_tokens + cache_creation_input_tokens` の合計値
+ * （サイドバー「コンテキスト使用量」の情報源。`docs/history/direction.md` 2026-09-09 決定事項）。
+ *
+ * **残量パーセントは出さない。** モデルの窓の大きさが transcript のどこにも無いため
+ * （決定事項どおり、実数だけを返す）。
+ *
+ * assistant 行が1つも無い、最新の行に `usage` が無い・形が壊れているときは undefined を返す。
+ * `extractLatestUtterance` と違い、テキストが無い行（tool_use のみの行など）も対象に含める
+ * （assistant 行には基本的に毎回 `usage` が付くため、直前の発話行まで遡る必要が無い）。
+ */
+export function extractContextUsage(content: string): number | undefined {
+  const latestAssistantLine = latestLineOfType(content, "assistant")
+  return latestAssistantLine === undefined ? undefined : usageTotal(latestAssistantLine)
+}
+
+/**
+ * transcript の `type: "system"` 行にある `pendingBackgroundAgentCount` の最新の値を取り出す。
+ * この行は疎で、他の `system` 行には現れない（実測: 全 `system` 行のうち一部だけが持つ）。
+ * **件数の権威ある情報源はこれ**（個々のサブエージェントの状況は `src/subagents.ts` が別途扱う）。
+ * 1つも無ければ undefined を返す。
+ */
+export function extractLatestPendingBackgroundAgentCount(content: string): number | undefined {
+  const values = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
+    .map((line) => pendingBackgroundAgentCountOf(tryParseJson(line)))
+    .filter((value): value is number => value !== undefined)
+
+  return values.at(-1)
 }
 
 export type UtteranceParts = {
@@ -84,6 +119,61 @@ function extractAssistantText(value: unknown): string | undefined {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
+}
+
+/** JSONL の1行を、与えた `type` を持つ行だけに絞って、最後に出現したものを返す。 */
+function latestLineOfType(content: string, type: string): Record<string, unknown> | undefined {
+  const matches = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
+    .map((line) => tryParseJson(line))
+    .filter((value): value is Record<string, unknown> => isRecord(value) && value.type === type)
+
+  return matches.at(-1)
+}
+
+function usageTotal(assistantLine: Record<string, unknown>): number | undefined {
+  const message = assistantLine.message
+  if (!isRecord(message)) {
+    return undefined
+  }
+
+  const usage = message.usage
+  if (!isRecord(usage)) {
+    return undefined
+  }
+
+  const inputTokens = usage.input_tokens
+  const cacheReadTokens = usage.cache_read_input_tokens
+  const cacheCreationTokens = usage.cache_creation_input_tokens
+  if (
+    typeof inputTokens !== "number" ||
+    typeof cacheReadTokens !== "number" ||
+    typeof cacheCreationTokens !== "number"
+  ) {
+    return undefined
+  }
+
+  return inputTokens + cacheReadTokens + cacheCreationTokens
+}
+
+function pendingBackgroundAgentCountOf(value: unknown): number | undefined {
+  if (!isRecord(value) || value.type !== "system") {
+    return undefined
+  }
+
+  const count = value.pendingBackgroundAgentCount
+  return typeof count === "number" ? count : undefined
+}
+
+/** JSON として不正な行を undefined に落とす。有効な JSON が undefined を返すことは無い。 */
+function tryParseJson(line: string): unknown {
+  try {
+    return JSON.parse(line)
+  } catch {
+    return undefined
+  }
 }
 
 function isTextContent(value: unknown): value is { readonly type: "text"; readonly text: string } {

@@ -27,6 +27,9 @@ const BROKEN_TRANSCRIPT_LINES = [
 type RunOptions = {
   readonly homeDir?: string
   readonly viewPort?: string
+  // サイドバーの develop/tasks.json は cwd 相対で読むため、無いことを確かめるテスト用に
+  // 差し替えられるようにしておく（既定は実際の cwd を継承する）。
+  readonly cwd?: string
 }
 
 function environmentFor(options: RunOptions): Record<string, string> {
@@ -47,6 +50,7 @@ function runCliToExit(args: readonly string[], options: RunOptions = {}) {
   return spawnSync("bun", ["run", ENTRY, ...args], {
     encoding: "utf8",
     env: environmentFor(options),
+    cwd: options.cwd,
   })
 }
 
@@ -57,7 +61,10 @@ type RunningCli = {
 
 /** サイドカーを起動し、ビューの URL を表示するまで待つ。呼び出し側は必ず stop する。 */
 function startCli(args: readonly string[], options: RunOptions = {}): Promise<RunningCli> {
-  const child = spawn("bun", ["run", ENTRY, ...args], { env: environmentFor(options) })
+  const child = spawn("bun", ["run", ENTRY, ...args], {
+    env: environmentFor(options),
+    cwd: options.cwd,
+  })
   child.stdout.setEncoding("utf8")
 
   return new Promise((resolve, reject) => {
@@ -224,6 +231,80 @@ describe("tsukumo CLI", () => {
       const page = await fetchView([transcriptPath], "main")
 
       expect(page).toContain("準備中")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("サイドバーに3つの区画が配られる", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
+
+    try {
+      const page = await fetchView([transcriptPath], "sidebar")
+
+      expect(page).toContain("コンテキスト使用量")
+      expect(page).toContain("サブエージェント")
+      expect(page).toContain("タスクの進捗")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("usage・pendingBackgroundAgentCount・サブエージェント・develop/tasks.json がどれも無くても、サイドバーは壊れずに配られる", async () => {
+    const dir = makeTempDir()
+    const cwdDir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    // BROKEN_TRANSCRIPT_LINES には usage も pendingBackgroundAgentCount も無く、
+    // session.jsonl 用の subagents ディレクトリも作らない。cwd も develop/tasks.json が無い
+    // まっさらな一時ディレクトリにする。
+    writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
+
+    try {
+      const page = await fetchView([transcriptPath], "sidebar", { cwd: cwdDir })
+
+      expect(page).toContain("不明")
+      expect(page).toContain("直近の活動なし")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(cwdDir, { recursive: true, force: true })
+    }
+  })
+
+  it("サブエージェントは meta.json があればラベル付きで、無ければツール名だけで区別して出る", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
+
+    // session.jsonl の隣の同名ディレクトリに subagents/ を置く（実測どおりの配置）。
+    const subagentsDir = join(dir, "session", "subagents")
+    mkdirSync(subagentsDir, { recursive: true })
+    writeFileSync(
+      join(subagentsDir, "agent-a0001.jsonl"),
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "tool_use", name: "Bash", input: { command: "echo hi" } }] },
+      }),
+    )
+    writeFileSync(
+      join(subagentsDir, "agent-a0001.meta.json"),
+      JSON.stringify({ agentType: "general-purpose", description: "架空のタスクA", model: "opus" }),
+    )
+    // agent-b0002 には meta.json を置かない（古いサブエージェント等を想定）。
+    writeFileSync(
+      join(subagentsDir, "agent-b0002.jsonl"),
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "tool_use", name: "Read", input: { file_path: "/a" } }] },
+      }),
+    )
+
+    try {
+      const page = await fetchView([transcriptPath], "sidebar")
+
+      expect(page).toContain("架空のタスクA (opus) — Bash")
+      expect(page).toContain("<li>Read</li>")
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
