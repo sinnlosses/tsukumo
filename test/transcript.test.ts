@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { extractLatestUtterance } from "../src/transcript.ts"
+import { extractLatestUtterance, splitUtterance } from "../src/transcript.ts"
 
 // すべて手で書いた架空の会話。実物の transcript は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。
@@ -131,5 +131,96 @@ describe("extractLatestUtterance", () => {
     })
 
     expect(extractLatestUtterance(content)).toBeUndefined()
+  })
+})
+
+describe("splitUtterance", () => {
+  it("引用が1箇所のとき、セリフと詳細に分ける", () => {
+    const utterance = [
+      "> やあ、今日は何をする?",
+      "手順はこう:",
+      "1. テストを書く",
+      "2. 実装する",
+    ].join("\n")
+
+    expect(splitUtterance(utterance)).toEqual({
+      speech: "やあ、今日は何をする?",
+      detail: ["手順はこう:", "1. テストを書く", "2. 実装する"].join("\n"),
+    })
+  })
+
+  it("連続する引用行は1つのまとまりとして改行でつなぐ", () => {
+    const utterance = ["> 1行目のセリフ", "> 2行目のセリフ", "詳細はこちら"].join("\n")
+
+    expect(splitUtterance(utterance)).toEqual({
+      speech: "1行目のセリフ\n2行目のセリフ",
+      detail: "詳細はこちら",
+    })
+  })
+
+  it("引用が複数箇所（冒頭と締め）に分かれているとき、出現順に連結する", () => {
+    const utterance = [
+      "> よし、始めよう",
+      "変更点:",
+      "- Aを直した",
+      "- Bを直した",
+      "> 終わったよ",
+    ].join("\n")
+
+    expect(splitUtterance(utterance)).toEqual({
+      speech: "よし、始めよう\n\n終わったよ",
+      detail: ["変更点:", "- Aを直した", "- Bを直した"].join("\n"),
+    })
+  })
+
+  it("引用が1つも無いとき、セリフは undefined で詳細は全文になる", () => {
+    const utterance = ["ただの説明文だけ。", "引用の記法は使っていない。"].join("\n")
+
+    expect(splitUtterance(utterance)).toEqual({
+      speech: undefined,
+      detail: utterance,
+    })
+  })
+
+  it("コードブロック内の `> ` を引用として拾わない", () => {
+    const utterance = [
+      "> 直したよ",
+      "```diff",
+      "> - old line",
+      "> + new line",
+      "```",
+      "これで直るはず",
+    ].join("\n")
+
+    expect(splitUtterance(utterance)).toEqual({
+      speech: "直したよ",
+      detail: ["```diff", "> - old line", "> + new line", "```", "これで直るはず"].join("\n"),
+    })
+  })
+
+  it("コードブロックが複数あっても、ブロックの外の引用だけを拾う", () => {
+    const utterance = [
+      "```ts",
+      "> not a quote",
+      "```",
+      "> 本物のセリフ",
+      "```bash",
+      "> echo hi",
+      "```",
+    ].join("\n")
+
+    expect(splitUtterance(utterance)).toEqual({
+      speech: "本物のセリフ",
+      detail: ["```ts", "> not a quote", "```", "```bash", "> echo hi", "```"].join("\n"),
+    })
+  })
+
+  it("ネストした引用（`> >`）は外側の `> ` だけを取り除く", () => {
+    const utterance = ["> > 入れ子の引用", "詳細の説明"].join("\n")
+
+    expect(splitUtterance(utterance)).toEqual({
+      speech: "> 入れ子の引用",
+      detail: "詳細の説明",
+    })
   })
 })

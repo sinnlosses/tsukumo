@@ -83,10 +83,10 @@
   {
     "id": "T-010",
     "task": "transcript の発話を「セリフ」と「詳細」に切り出す（読む層）。\n\n## 背景\n\n出力スタイルの規約が決まった（`docs/requirements.md` 4.2、正典は `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）: **セリフは引用（`> ` で始まる行）で書き、それ以外はすべて詳細**。\n\n現在の `src/transcript.ts` の `extractLatestUtterance()` は、assistant 行の `type: \"text\"` をすべて連結して1つの文字列で返す。ここに切り出しを足す。**この結果をキャラビュー（セリフ）とメインビュー（詳細）が別々に使う**ので、両方の前段になる。\n\n## 解くべき論点\n\n- **規約に従っていない発話が来たときどうするか。** 仕様は決まっている（`docs/requirements.md` 4.2「吹き出しは直前のセリフを出し続ける」）が、**「直前」を覚えるのは誰か**を決める必要がある。切り出す側が `undefined` を返し、覚えるのは呼び出し側にするのが素直\n- **引用が複数箇所に分かれているとき**の扱い（冒頭と締めにある場合）。連結するか、最後だけ取るか\n- 引用記法のネスト（`> >`）やコードブロック内の `> ` を誤って拾わないか\n\n## やること\n\n1. `src/transcript.ts` に、1つの発話を「セリフ」と「詳細」に分ける処理を足す。**ファイルI/Oは持たない純粋関数**のまま保つ\n2. コードブロック内の `> ` を拾わないようにする（```で囲まれた範囲を除外する）\n3. セリフが1つも無い発話では、セリフとして `undefined` を返す（詳細は全文）\n\n## 完了条件\n\n- チェックコマンド（`bun run check`）が通る\n- 次をテストで固定する: 引用が1箇所／複数箇所／無い場合、コードブロック内の `> ` を拾わないこと、`thinking` と `tool_use` を拾わない既存の振る舞いが壊れていないこと\n- **フィクスチャは手で書いた架空の会話にする**（`docs/coding-standards.md`「会話内容の扱い」）\n\n## 注意\n\n- **表示側（HTML ビュー）はこのタスクの範囲外。** ここは切り出しまで\n- `src/balloon.ts` / `src/draw.ts` は別タスクで削除される。**このタスクで触らない**",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`src/transcript.ts` に `splitUtterance(utterance): { speech: string | undefined; detail: string }` を追加。`bun run check` 通過: 69 pass / 0 fail。\nコードブロック内の `> ` を拾わないこと、引用が複数箇所／ゼロのとき、ネスト引用をテストで固定。既存の thinking / tool_use / 未知 type の振る舞いは無改変で通過。\n受け入れで実データ形の入力（表・コードブロック内の `> ` を含む）を通して動作を確認した。",
     "dependencies": ["T-008"]
   },
   {
