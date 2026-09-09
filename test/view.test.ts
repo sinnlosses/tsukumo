@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test"
+import vm from "node:vm"
 
 import { type MainViewEntry } from "../src/transcript.ts"
 import {
@@ -47,6 +48,271 @@ const FULL_SIDEBAR_DATA: SidebarData = {
   subagents: { pendingCount: 2, recentActivity: [LABELED_ACTIVITY, UNLABELED_ACTIVITY] },
   taskCounts: { done: 10, todo: 5 },
 }
+
+// --- SSE 購読スクリプトを実際に動かして確かめるための道具 -------------------------------------
+//
+// 生成された <script> の中身（本番と同じ文字列）を node:vm で実行し、「本文が前回と同じ update
+// イベントでは innerHTML を差し替えない」「差し替えるときはスクロール位置を扱う」という
+// 制御フローだけを固定する。ブラウザに実際に絵が出ているかどうか（描画そのもの）はここでは
+// 確かめない（docs/coding-standards.md「描画は自動テストで守らない」）。
+
+/** subscriptionScript が触るプロパティだけを持つ、テスト用の最小限の要素。 */
+type FakeElement = {
+  innerHTML: string
+  scrollTop: number
+  readonly scrollHeight: number
+  readonly clientHeight: number
+}
+
+type FakeElementHandle = {
+  readonly element: FakeElement
+  readonly innerHtmlSetCount: () => number
+}
+
+/**
+ * `innerHTML` への代入回数を数えられる要素を作る。差し替えのたびに scrollTop が 0 に戻る
+ * （実ブラウザでも、差し替えで中身が縮んだときなどに起こりうる）ことにして、「差し替え後に
+ * スクロール位置を復元しているか」を、値が偶然一致しただけでなくテストで確かめられるようにする。
+ */
+function makeFakeElement(options: {
+  readonly initialHtml: string
+  readonly scrollTop: number
+  readonly scrollHeight: number
+  readonly clientHeight: number
+}): FakeElementHandle {
+  let html = options.initialHtml
+  let scrollTop = options.scrollTop
+  let setCount = 0
+
+  const element: FakeElement = {
+    get innerHTML(): string {
+      return html
+    },
+    set innerHTML(value: string) {
+      html = value
+      setCount += 1
+      scrollTop = 0
+    },
+    get scrollTop(): number {
+      return scrollTop
+    },
+    set scrollTop(value: number) {
+      scrollTop = value
+    },
+    scrollHeight: options.scrollHeight,
+    clientHeight: options.clientHeight,
+  }
+
+  return { element, innerHtmlSetCount: () => setCount }
+}
+
+/** vm 実行中に見えてよいだけの、何にでも代入・addEventListener できる無害な代役。 */
+type InertStub = { [key: string]: unknown }
+
+function makeInertStub(): InertStub {
+  const stub: InertStub = {}
+  stub.addEventListener = () => {}
+  stub.appendChild = () => {}
+  return stub
+}
+
+type UpdateEvent = { readonly data: string }
+
+/**
+ * `EventSource` の最小限の代役。`url` ごとにハンドラを覚えておき、テスト側から
+ * その `url` 宛の update イベントを個別に発火できる（まとめたレイアウトページは
+ * 領域ごとに別々の `EventSource` を作るため）。
+ */
+function makeFakeEventSourceController(): {
+  readonly EventSourceClass: new (url: string) => {
+    readonly addEventListener: (type: string, listener: (event: UpdateEvent) => void) => void
+  }
+  readonly dispatch: (url: string, data: string) => void
+} {
+  const handlers = new Map<string, (event: UpdateEvent) => void>()
+
+  class FakeEventSource {
+    private readonly url: string
+
+    constructor(url: string) {
+      this.url = url
+    }
+
+    addEventListener(_type: string, listener: (event: UpdateEvent) => void): void {
+      handlers.set(this.url, listener)
+    }
+  }
+
+  return {
+    EventSourceClass: FakeEventSource,
+    dispatch: (url, data) => {
+      handlers.get(url)?.({ data })
+    },
+  }
+}
+
+/**
+ * ページ全体の HTML から `<script>` の中身を取り出し、渡した要素だけを本物として、
+ * それ以外の id は無害な代役（{@link makeInertStub}）で埋めて実行する。まとめたレイアウトの
+ * ページには送信フォームの配線（`dispatchScript`）も同じ `<script>` に同居しているため、
+ * そちらが参照する要素・`fetch` が無くても（`fetch` は未定義のまま呼ばれて例外になるが、
+ * 元の実装が try/catch で握っている）落ちずに済むようにする。
+ */
+function runSubscriptionScript(
+  page: string,
+  elements: ReadonlyMap<string, FakeElement>,
+): { readonly dispatch: (url: string, data: string) => void } {
+  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
+  if (scriptMatch === null || scriptMatch[1] === undefined) {
+    throw new Error("ページに <script> が無い")
+  }
+
+  const controller = makeFakeEventSourceController()
+  // 単体ページの <main> のように、要素自身が縦にあふれていないときのスクロール先
+  // （document.scrollingElement の代役）。テスト対象の要素をそのまま使う
+  // （実ページでは文書側だが、テストでは「差し替える要素自身」で代用しても、
+  //  スクロール位置を扱うかどうかの判定には影響しない）。
+  const fallbackScroller = elements.values().next().value ?? {
+    scrollTop: 0,
+    scrollHeight: 0,
+    clientHeight: 0,
+  }
+  const documentStub = {
+    getElementById: (id: string) => elements.get(id) ?? makeInertStub(),
+    scrollingElement: fallbackScroller,
+    documentElement: fallbackScroller,
+  }
+
+  vm.runInNewContext(scriptMatch[1], {
+    document: documentStub,
+    EventSource: controller.EventSourceClass,
+  })
+
+  return { dispatch: controller.dispatch }
+}
+
+describe("SSEの更新の適用（本文が同じなら差し替えない・スクロール位置を保つ）", () => {
+  it("購読直後の1回目の push が、埋め込み済みの本文と同じときは innerHTML を差し替えない", () => {
+    const initialBody = "<p>さいしょ</p>"
+    const page = buildViewPage("character", initialBody)
+    const { element, innerHtmlSetCount } = makeFakeElement({
+      initialHtml: initialBody,
+      scrollTop: 0,
+      scrollHeight: 100,
+      clientHeight: 100,
+    })
+
+    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    dispatch(viewEventPath("character"), initialBody)
+
+    expect(innerHtmlSetCount()).toBe(0)
+  })
+
+  it("本文が前回と同じ update イベントが続いても、差し替えは起きない", () => {
+    const initialBody = "<p>さいしょ</p>"
+    const page = buildViewPage("main", initialBody)
+    const { element, innerHtmlSetCount } = makeFakeElement({
+      initialHtml: initialBody,
+      scrollTop: 0,
+      scrollHeight: 100,
+      clientHeight: 100,
+    })
+
+    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    dispatch(viewEventPath("main"), initialBody)
+    dispatch(viewEventPath("main"), initialBody)
+    dispatch(viewEventPath("main"), initialBody)
+
+    expect(innerHtmlSetCount()).toBe(0)
+  })
+
+  it("本文が変わった update イベントでは innerHTML を差し替える", () => {
+    const initialBody = "<p>さいしょ</p>"
+    const page = buildViewPage("main", initialBody)
+    const { element, innerHtmlSetCount } = makeFakeElement({
+      initialHtml: initialBody,
+      scrollTop: 0,
+      scrollHeight: 100,
+      clientHeight: 100,
+    })
+
+    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    dispatch(viewEventPath("main"), "<p>つぎ</p>")
+
+    expect(innerHtmlSetCount()).toBe(1)
+    expect(element.innerHTML).toBe("<p>つぎ</p>")
+  })
+
+  it("差し替え前にいちばん下から24px以内を見ていたときは、差し替え後もいちばん下へ追従する", () => {
+    const initialBody = "<p>さいしょ</p>"
+    const page = buildViewPage("main", initialBody)
+    const { element } = makeFakeElement({
+      initialHtml: initialBody,
+      scrollTop: 980, // 1000 - 980 - 100 = -80 < 24 → いちばん下の近く
+      scrollHeight: 1000,
+      clientHeight: 100,
+    })
+
+    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    dispatch(viewEventPath("main"), "<p>つぎ</p>")
+
+    expect(element.scrollTop).toBe(1000)
+  })
+
+  it("差し替え前にいちばん下から離れていたときは、差し替え後も元のスクロール位置を保つ", () => {
+    const initialBody = "<p>さいしょ</p>"
+    const page = buildViewPage("main", initialBody)
+    const { element } = makeFakeElement({
+      initialHtml: initialBody,
+      scrollTop: 100, // 1000 - 100 - 100 = 800 ≥ 24 → 離れている
+      scrollHeight: 1000,
+      clientHeight: 100,
+    })
+
+    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    dispatch(viewEventPath("main"), "<p>つぎ</p>")
+
+    // 差し替え自体は scrollTop を 0 に戻す（makeFakeElement の側の想定）ので、
+    // 100 のままなら「明示的に復元している」ことの証拠になる。
+    expect(element.scrollTop).toBe(100)
+  })
+
+  it("まとめたレイアウトページでは、領域ごとに独立して差し替えの要否とスクロール位置を扱う", () => {
+    const bodies = { main: "<p>main1</p>", character: "<p>char1</p>", sidebar: "<p>side1</p>" }
+    const page = buildLayoutPage(bodies)
+
+    const main = makeFakeElement({
+      initialHtml: bodies.main,
+      scrollTop: 0,
+      scrollHeight: 1000,
+      clientHeight: 100,
+    })
+    const character = makeFakeElement({
+      initialHtml: bodies.character,
+      scrollTop: 0,
+      scrollHeight: 1000,
+      clientHeight: 100,
+    })
+
+    const { dispatch } = runSubscriptionScript(
+      page,
+      new Map([
+        ["tsukumo-view-main", main.element],
+        ["tsukumo-view-character", character.element],
+      ]),
+    )
+
+    // main と同じ本文の push は main 領域を差し替えない。
+    dispatch(viewEventPath("main"), bodies.main)
+    expect(main.innerHtmlSetCount()).toBe(0)
+
+    // character だけ違う本文が届いても、main 領域には影響しない。
+    dispatch(viewEventPath("character"), "<p>char2</p>")
+    expect(character.innerHtmlSetCount()).toBe(1)
+    expect(character.element.innerHTML).toBe("<p>char2</p>")
+    expect(main.innerHtmlSetCount()).toBe(0)
+  })
+})
 
 describe("ビューの経路", () => {
   it("ページと更新の経路が、ビューごとに別々になる", () => {

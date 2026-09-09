@@ -33,20 +33,21 @@ export const TERMINALS_PATH = "/api/terminals"
 /** 依頼をターミナルへ送る経路（POST）。 */
 export const DISPATCH_PATH = "/api/dispatch"
 
+/** 単体ビューのページで、本文を差し替える要素の id。 */
+const STANDALONE_VIEW_ELEMENT_ID = "tsukumo-view"
+
 /**
  * ビューのページ全体を組み立てる。`body` は本文の HTML 断片で、最初の表示に埋め込むと同時に、
- * 以降は Server-Sent Events で届く同じ形の断片で丸ごと差し替えられる
- * （docs/architecture.md「ビューの更新は Server-Sent Events で押す」）。
+ * 以降は Server-Sent Events で届く同じ形の断片で差し替えられる
+ * （docs/architecture.md「ビューの更新は Server-Sent Events で押す」）。差し替えの中身は
+ * {@link subscriptionScript} を参照。
  */
 export function buildViewPage(view: ViewName, body: string): string {
   return page(
     VIEW_TITLE[view],
-    `<main id="tsukumo-view">${body}</main>
+    `<main id="${STANDALONE_VIEW_ELEMENT_ID}">${body}</main>
 <script>
-  const source = new EventSource(${JSON.stringify(viewEventPath(view))})
-  source.addEventListener("update", (event) => {
-    document.getElementById("tsukumo-view").innerHTML = event.data
-  })
+${subscriptionScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
 </script>`,
   )
 }
@@ -83,13 +84,8 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
       `<section class="layout-region layout-${view}" id="${layoutRegionId(view)}">${bodies[view]}</section>`,
   ).join("\n")
 
-  const subscriptions = VIEW_NAMES.map(
-    (view) => `  {
-    const source = new EventSource(${JSON.stringify(viewEventPath(view))})
-    source.addEventListener("update", (event) => {
-      document.getElementById(${JSON.stringify(layoutRegionId(view))}).innerHTML = event.data
-    })
-  }`,
+  const subscriptions = VIEW_NAMES.map((view) =>
+    subscriptionScript(layoutRegionId(view), view, bodies[view]),
   ).join("\n")
 
   return page(
@@ -107,6 +103,55 @@ ${dispatchScript()}
 
 function layoutRegionId(view: ViewName): string {
   return `tsukumo-view-${view}`
+}
+
+/**
+ * 1領域ぶんの SSE 購読スクリプト。`buildViewPage`（単体ページ、要素 id は固定）と
+ * `buildLayoutPage`（まとめたレイアウト、要素 id は領域ごと）の両方から使う共通の中身。
+ *
+ * **本文が前回と同じなら `innerHTML` を差し替えない。** 実機での目視（2026-09-10 報告）で、
+ * 更新のたびに画面がチカチカする不具合があった。原因は「押す側（`src/index.ts` の
+ * `followTranscript`）が transcript のどんな変化にも反応して3領域まとめて publish する一方、
+ * 個々の領域の見た目が実際に変わっている割合はそれよりずっと低い」こと。特にキャラビューは
+ * 発話も表情も変わらないまま transcript だけが動く間が長く、そのたびに `.portrait` が
+ * 新しい要素として挿入されて CSS のフェードイン（`STYLE` の `portrait-fade-in`）が
+ * 再生されていた。**購読を開いた直後の1回目の push**（`view-server.ts` の `openStream` が
+ * 接続時点の本文をそのまま返す）も、ページに埋め込み済みの本文と同じなのでここで弾かれる
+ * （初回表示の直後にもう1回描き直る、という無駄も無くなる）。
+ *
+ * サーバ側の協力（変わった部分だけを送る差分化）は行っていない。**クライアント側で
+ * このガードを置くだけで、更新の大半（見た目が変わっていない push）が消える**ため
+ * （`docs/architecture.md`「ビューの更新は Server-Sent Events で押す」の仕組み自体は変えていない。
+ * `publish` 側は毎回まるごとの本文を送ったままでよい）。
+ *
+ * **差し替えるときはスクロール位置を保つ。** メインビューは作業の進行が積まれる場所なので、
+ * `innerHTML` の再代入で読んでいた位置が飛ぶと読めなくなる（`docs/architecture.md`
+ * 「ページ全体を再読み込みしない」と同じ理由を、領域の差し替えにも適用する）。差し替え前に
+ * いちばん下から24px以内を見ていたら、差し替え後も追従していちばん下へスクロールする。
+ * そうでなければ元のスクロール位置をそのまま保つ。**スクロールしている要素**は、差し替える
+ * 要素自身が縦にあふれていれば（まとめたレイアウトの `.layout-region` は `overflow-y: auto`）
+ * その要素、そうでなければ（単体ページの `<main>` は overflow を指定していないので文書側が
+ * スクロールする）`document.scrollingElement` を使う。
+ */
+function subscriptionScript(elementId: string, view: ViewName, initialBody: string): string {
+  return `  {
+    const el = document.getElementById(${JSON.stringify(elementId)})
+    let lastBody = ${JSON.stringify(initialBody)}
+    const source = new EventSource(${JSON.stringify(viewEventPath(view))})
+    source.addEventListener("update", (event) => {
+      if (event.data === lastBody) {
+        return
+      }
+      const scroller =
+        el.scrollHeight > el.clientHeight ? el : (document.scrollingElement ?? document.documentElement)
+      const distanceFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight
+      const wasNearBottom = distanceFromBottom < 24
+      const previousScrollTop = scroller.scrollTop
+      el.innerHTML = event.data
+      lastBody = event.data
+      scroller.scrollTop = wasNearBottom ? scroller.scrollHeight : previousScrollTop
+    })
+  }`
 }
 
 const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
