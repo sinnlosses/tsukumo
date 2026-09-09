@@ -4,11 +4,13 @@ import { type MainViewEntry } from "../src/transcript.ts"
 import {
   buildCharacterBody,
   buildIndexPage,
+  buildLayoutPage,
   buildMainBody,
   buildSidebarBody,
   buildViewPage,
   type CharacterViewData,
   isViewName,
+  LAYOUT_PATH,
   type SidebarData,
   type SubagentActivity,
   VIEW_NAMES,
@@ -73,6 +75,50 @@ describe("ビューのページ", () => {
     for (const view of VIEW_NAMES) {
       expect(page).toContain(`href="${viewPath(view)}"`)
     }
+  })
+})
+
+describe("まとめたレイアウトページ", () => {
+  it("経路が個別のビューのページ・更新の経路と重ならない", () => {
+    const paths = [
+      ...VIEW_NAMES.map((view) => viewPath(view)),
+      ...VIEW_NAMES.map((view) => viewEventPath(view)),
+    ]
+
+    expect(paths).not.toContain(LAYOUT_PATH)
+  })
+
+  it("3領域それぞれの本文を、対応する id の要素に埋め込む", () => {
+    const page = buildLayoutPage({
+      main: "<p>作業ちゅう</p>",
+      character: "<p>やあ</p>",
+      sidebar: "<p>done 1 / todo 2</p>",
+    })
+
+    expect(page).toContain(
+      '<section class="layout-region layout-main" id="tsukumo-view-main"><p>作業ちゅう</p></section>',
+    )
+    expect(page).toContain(
+      '<section class="layout-region layout-character" id="tsukumo-view-character"><p>やあ</p></section>',
+    )
+    expect(page).toContain(
+      '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"><p>done 1 / todo 2</p></section>',
+    )
+  })
+
+  it("3領域それぞれが、既存の /events/<view> を個別に購読して自分の要素だけを差し替える", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    for (const view of VIEW_NAMES) {
+      expect(page).toContain(`new EventSource(${JSON.stringify(viewEventPath(view))})`)
+      expect(page).toContain(`document.getElementById("tsukumo-view-${view}")`)
+    }
+  })
+
+  it("入力ペインの場所（空き領域）も持つが、そこには本文を差し込まない", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(page).toContain('<div class="layout-region layout-empty" aria-hidden="true"></div>')
   })
 })
 

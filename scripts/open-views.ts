@@ -1,13 +1,18 @@
-// 起動中のサイドカーが配っているビューを、ホスト（Orca）の中に開く。
+// 起動中のサイドカーが配っている、3領域をまとめたレイアウトページを、ホスト（Orca）の中に開く。
 // サイドカー本体からは呼ばれない一度きりの道具なので scripts/ に置く。
 //
 // 使い方: bun run scripts/open-views.ts http://127.0.0.1:7327
 //   （URL は `bun run start <transcript>` が起動時に表示するもの）
+//
+// **開くのはまとめたページ（LAYOUT_PATH）1つだけ。** 3つのビューは1枚の HTML にまとめてあるので、
+// ブラウザタブも1つで足りる（`docs/architecture.md`「3つのビューは1枚のページにまとめる」）。
+// 個別のビュー（`/main` `/character` `/sidebar`）はデバッグ用に残っているが、
+// 見たいときは Orca 内のブラウザで URL を直接開けばよく、この道具の役目ではない。
 
 import process from "node:process"
 
 import { createOrcaHost } from "../src/orca-host.ts"
-import { VIEW_NAMES, viewPath } from "../src/view.ts"
+import { LAYOUT_PATH } from "../src/view.ts"
 
 const baseUrl = process.argv[2]
 if (baseUrl === undefined) {
@@ -16,11 +21,9 @@ if (baseUrl === undefined) {
 }
 
 const host = createOrcaHost()
+const layoutUrl = new URL(LAYOUT_PATH, baseUrl).toString()
+const result = await host.showView(layoutUrl)
 
-// 1つずつ順に開く。まとめて投げるとホスト側でタブの並びが安定しない。
-for (const view of VIEW_NAMES) {
-  const url = new URL(viewPath(view), baseUrl).toString()
-  const result = await host.showView(url)
-
-  process.stdout.write(result.ok ? `開いた: ${url}\n` : `開けなかった: ${url} — ${result.reason}\n`)
-}
+process.stdout.write(
+  result.ok ? `開いた: ${layoutUrl}\n` : `開けなかった: ${layoutUrl} — ${result.reason}\n`,
+)

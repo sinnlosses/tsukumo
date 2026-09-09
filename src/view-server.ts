@@ -11,7 +11,10 @@ import process from "node:process"
 
 import {
   buildIndexPage,
+  buildLayoutPage,
   buildViewPage,
+  LAYOUT_PATH,
+  type LayoutBodies,
   VIEW_NAMES,
   type ViewName,
   viewEventPath,
@@ -27,6 +30,12 @@ const HEARTBEAT_INTERVAL_MS = 15_000
 export type ViewServer = {
   /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */
   readonly urlOf: (view: ViewName) => string
+  /**
+   * 3領域をまとめたレイアウトページの URL。利用者が実際に開くのはこちら1つだけでよい
+   * （個別の `urlOf` はデバッグ用に残してある。`docs/architecture.md`「3つのビューは
+   * 1枚のページにまとめる」）。
+   */
+  readonly layoutUrl: string
   /** ビューの本文を差し替え、開いているブラウザへ push する。 */
   readonly publish: (view: ViewName, body: string) => void
   readonly close: () => Promise<void>
@@ -73,6 +82,7 @@ export function startViewServer(port: number): Promise<ViewServer> {
 
       resolve({
         urlOf: (view) => `${origin}${viewPath(view)}`,
+        layoutUrl: `${origin}${LAYOUT_PATH}`,
         publish: (view, body) => {
           bodies.set(view, body)
           for (const response of clientsFor(clients, view)) {
@@ -108,6 +118,11 @@ function respond(
     return
   }
 
+  if (path === LAYOUT_PATH) {
+    writeHtml(response, buildLayoutPage(currentBodies(bodies)))
+    return
+  }
+
   const page = VIEW_NAMES.find((view) => viewPath(view) === path)
   if (page !== undefined) {
     writeHtml(response, buildViewPage(page, bodies.get(page) ?? ""))
@@ -122,6 +137,15 @@ function respond(
 
   response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
   response.end("not found\n")
+}
+
+/** レイアウトページに埋め込む、3領域それぞれの最新の本文。まだ publish されていない領域は空。 */
+function currentBodies(bodies: ReadonlyMap<ViewName, string>): LayoutBodies {
+  return {
+    main: bodies.get("main") ?? "",
+    character: bodies.get("character") ?? "",
+    sidebar: bodies.get("sidebar") ?? "",
+  }
 }
 
 function writeHtml(response: ServerResponse, html: string): void {

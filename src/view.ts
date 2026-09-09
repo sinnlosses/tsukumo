@@ -55,6 +55,54 @@ export function buildIndexPage(): string {
 }
 
 /**
+ * まとめたレイアウトページの URL パス。`/main` `/character` `/sidebar` はそれぞれ単体でも
+ * 開けるまま残す（デバッグしやすさのため。`docs/architecture.md`「3つのビューは1枚のページに
+ * まとめる」）。実際に利用者が開くのはこちらの1枚。
+ */
+export const LAYOUT_PATH = "/layout"
+
+/** {@link buildLayoutPage} に渡す、3領域それぞれの最新の本文。 */
+export type LayoutBodies = Readonly<Record<ViewName, string>>
+
+/**
+ * 3つのビューを1枚の HTML にまとめ、CSS の grid で領域を分けたページ（`docs/requirements.md`
+ * 4.7）。**それぞれの領域は、既存の `/events/<view>` を個別に購読する**（3本の SSE。
+ * 押す側の `src/view-server.ts` は経路ごとの `publish` をそのまま使えるので、更新の仕組み自体は
+ * 増やしていない）。ページを丸ごと再読み込みしないのは `buildViewPage` と同じ理由
+ * （`docs/architecture.md`「ビューの更新は Server-Sent Events で押す」）。
+ */
+export function buildLayoutPage(bodies: LayoutBodies): string {
+  const regions = VIEW_NAMES.map(
+    (view) =>
+      `<section class="layout-region layout-${view}" id="${layoutRegionId(view)}">${bodies[view]}</section>`,
+  ).join("\n")
+
+  const subscriptions = VIEW_NAMES.map(
+    (view) => `  {
+    const source = new EventSource(${JSON.stringify(viewEventPath(view))})
+    source.addEventListener("update", (event) => {
+      document.getElementById(${JSON.stringify(layoutRegionId(view))}).innerHTML = event.data
+    })
+  }`,
+  ).join("\n")
+
+  return page(
+    "tsukumo",
+    `<div class="layout-grid">
+${regions}
+<div class="layout-region layout-empty" aria-hidden="true"></div>
+</div>
+<script>
+${subscriptions}
+</script>`,
+  )
+}
+
+function layoutRegionId(view: ViewName): string {
+  return `tsukumo-view-${view}`
+}
+
+/**
  * 立ち絵の画像ソース。**SVG はファイルの中身をそのまま埋め込む**（インライン）。
  * `<img>` で読み込むと独立した文書扱いになり、ページ側の CSS 変数 `--outfit-accent` が
  * 届かないため（`characters/README.md` の実測）。それ以外の形式（ラスタ画像）は
@@ -93,9 +141,10 @@ export function buildCharacterBody(data: CharacterViewData): string {
       ? ""
       : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
 
-  // 立ち絵と吹き出しを横並びにする（`.character-layout`。4分割レイアウトの下段左は横長の領域に
-  // なるため、縦積みのままだと吹き出しの縦幅が窮屈になる）。幅が足りない環境では
-  // `flex-wrap: wrap` で自然に縦積みへ戻る（`docs/requirements.md` 4.7 「画面レイアウト」）。
+  // 立ち絵と吹き出しを横並びにする（`.character-layout`。まとめたレイアウト（`buildLayoutPage`）
+  // ではキャラビューは下段の半分幅になり、横長・浅めの領域になるため、縦積みのままだと吹き出しの
+  // 縦幅が窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
+  // （`docs/requirements.md` 4.7「画面レイアウト」）。
   return `<div class="character-layout">${portraitHtml}<div class="balloon">${escapeHtml(text)}</div></div>`
 }
 
@@ -213,7 +262,7 @@ const STYLE = `
   .character-layout {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.75rem;
   }
   .portrait {
@@ -225,7 +274,7 @@ const STYLE = `
   .portrait svg, .portrait-image {
     display: block;
     width: 100%;
-    max-width: 11rem;
+    max-width: 9rem;
     height: auto;
     margin: 0 auto;
   }
@@ -234,7 +283,7 @@ const STYLE = `
     to { opacity: 1; }
   }
   .balloon {
-    flex: 1 1 14rem;
+    flex: 1 1 11rem;
     min-width: 0;
     padding: 0.75rem 1rem;
     border: 1px solid #3a4256;
@@ -296,6 +345,46 @@ const STYLE = `
   .sidebar-block p { margin: 0.2rem 0; }
   .sidebar-empty { color: #8f97ab; }
   .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
+
+  /* まとめたレイアウト（buildLayoutPage）。上段はメイン3:サイドバー1、下段はキャラ半分:空き半分
+     （docs/requirements.md 4.7「上段と下段で縦の仕切り位置が違う」）。4列にしておくと、
+     行ごとに違う比率の仕切りを1つの grid-template-columns で表せる。 */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 7fr 3fr;
+    grid-template-areas: "main main main sidebar" "character character empty empty";
+    gap: 0.75rem;
+    /* body の padding（上下 1rem ずつ）ぶんを差し引いて、grid 自体は画面の高さぴったりにする。 */
+    height: calc(100vh - 2rem);
+  }
+  .layout-region {
+    min-width: 0;
+    min-height: 0;
+    padding: 0.75rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.75rem;
+    background: #1c202a;
+    overflow-y: auto;
+  }
+  .layout-main { grid-area: main; }
+  .layout-sidebar { grid-area: sidebar; }
+  .layout-character { grid-area: character; }
+  /* 入力ペインの場所（利用者が手で並べる。docs/requirements.md 4.7）。中身は無いが、他の領域と
+     同じ枠で囲むことで、ただの空白ではなく「ここは意図した余白」だと分かるようにする。 */
+  .layout-empty { grid-area: empty; }
+
+  /* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー の1列に畳む
+     （docs/requirements.md 4.7「狭い画面での崩れ方」）。空き領域はここでは意味を持たないので隠す。 */
+  @media (max-width: 760px) {
+    .layout-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: none;
+      grid-template-areas: "main" "sidebar" "character";
+      height: auto;
+    }
+    .layout-empty { display: none; }
+  }
 `
 
 /**

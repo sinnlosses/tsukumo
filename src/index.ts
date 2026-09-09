@@ -441,9 +441,15 @@ function readTaskCounts(): TaskStatusCounts | undefined {
 
 // 起動したことと URL は、ペインに残る唯一の出力。ここに会話の内容は出さない
 // （docs/coding-standards.md「会話内容の扱い」）。
+// 利用者が実際に開くのは layoutUrl（3領域をまとめた1枚）だけでよい。個別の URL は
+// デバッグ用に残してあるので、併せて表示しておく（`docs/architecture.md`「3つのビューは
+// 1枚のページにまとめる」）。
 function announce(server: ViewServer): void {
-  const lines = VIEW_NAMES.map((view) => `  ${server.urlOf(view)}`)
-  process.stdout.write(`tsukumo: ビューを配信中\n${lines.join("\n")}\n`)
+  const individualLines = VIEW_NAMES.map((view) => `    ${server.urlOf(view)}`)
+  process.stdout.write(
+    `tsukumo: ビューを配信中\n  ${server.layoutUrl}\n` +
+      `  （個別ビュー・デバッグ用）\n${individualLines.join("\n")}\n`,
+  )
 }
 
 function readSnapshot(path: string): FileSnapshot | undefined {
