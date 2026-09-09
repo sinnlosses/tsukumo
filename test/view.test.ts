@@ -191,6 +191,184 @@ function runSubscriptionScript(
   return { dispatch: controller.dispatch }
 }
 
+// --- 送信フォーム（dispatchScript）を実際に動かして確かめるための道具 -------------------------
+//
+// 「claude が動いていそう」（likelyClaude）の判定は、選択肢を絞り込む理由にしてはいけない
+// （判定を外したときに選べなくなるため）。ここでは `/api/terminals` の応答を差し替えて
+// `loadTerminals()` を実際に走らせ、届いた送信先が1件も消えずに `<option>` になること・
+// 印（DISPATCH_LIKELY_MARKER）の付け方だけを確かめる。実際に選べて見えるかはブラウザでの
+// 目視確認に任せる（docs/coding-standards.md「描画は自動テストで守らない」）。
+
+type FakeOptionElement = { value: string; textContent: string }
+
+/** `<select id="tsukumo-dispatch-target">` の代役。dispatchScript が触る範囲だけを持つ。 */
+type FakeSelectElement = {
+  value: string
+  innerHTML: string
+  readonly appendChild: (child: FakeOptionElement) => void
+  readonly appendedOptions: () => readonly FakeOptionElement[]
+}
+
+function makeFakeSelectElement(): FakeSelectElement {
+  const options: FakeOptionElement[] = []
+  return {
+    value: "",
+    innerHTML: "",
+    appendChild: (child) => {
+      options.push(child)
+    },
+    appendedOptions: () => options,
+  }
+}
+
+/** `<span id="tsukumo-dispatch-status">` の代役。 */
+type FakeTextElement = { textContent: string }
+
+function makeFakeTextElement(): FakeTextElement {
+  return { textContent: "" }
+}
+
+/** `<button id="tsukumo-dispatch-send">` の代役。クリックは発火させないので addEventListener は無害。 */
+type FakeButtonElement = {
+  disabled: boolean
+  readonly addEventListener: (type: string, listener: () => void) => void
+}
+
+function makeFakeButtonElement(): FakeButtonElement {
+  return { disabled: false, addEventListener: () => {} }
+}
+
+type FakeDispatchElement = FakeSelectElement | FakeTextElement | FakeButtonElement
+
+type TerminalsPayload =
+  | {
+      readonly ok: true
+      readonly terminals: readonly {
+        readonly id: string
+        readonly label: string
+        readonly likelyClaude: boolean
+      }[]
+    }
+  | { readonly ok: false; readonly reason: string }
+
+/**
+ * まとめたレイアウトページの `<script>`（3領域ぶんの購読と送信フォームの配線が同居する）を
+ * 実際に動かし、`loadTerminals()` が完了するまで待つ。3領域の購読が参照する要素・
+ * `EventSource` は無害な代役で埋める（{@link runSubscriptionScript} と同じ考え方）。
+ */
+async function runDispatchScript(
+  page: string,
+  options: {
+    readonly targetSelect: FakeSelectElement
+    readonly status: FakeTextElement
+    readonly sendButton: FakeButtonElement
+    readonly terminalsResponse: TerminalsPayload
+  },
+): Promise<void> {
+  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
+  if (scriptMatch === null || scriptMatch[1] === undefined) {
+    throw new Error("ページに <script> が無い")
+  }
+
+  const elements = new Map<string, FakeDispatchElement>([
+    ["tsukumo-dispatch-target", options.targetSelect],
+    ["tsukumo-dispatch-status", options.status],
+    ["tsukumo-dispatch-send", options.sendButton],
+  ])
+  const controller = makeFakeEventSourceController()
+  const fallback = makeInertStub()
+
+  const documentStub = {
+    getElementById: (id: string) => elements.get(id) ?? makeInertStub(),
+    createElement: (_tagName: string): FakeOptionElement => ({ value: "", textContent: "" }),
+    scrollingElement: fallback,
+    documentElement: fallback,
+  }
+  const fetchStub = (_url: string): Promise<{ json: () => Promise<TerminalsPayload> }> =>
+    Promise.resolve({ json: () => Promise.resolve(options.terminalsResponse) })
+  // 記憶（localStorage）はこのテストの関心事ではないので、常に「覚えていない」ものとして扱う。
+  const localStorageStub = { getItem: () => null, setItem: () => {} }
+
+  vm.runInNewContext(scriptMatch[1], {
+    document: documentStub,
+    EventSource: controller.EventSourceClass,
+    fetch: fetchStub,
+    localStorage: localStorageStub,
+  })
+
+  // loadTerminals() 内の await（fetch → response.json()）が解決するまでイベントループを進める。
+  await new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+describe("送信先の一覧（claude が動いていそうな順に並べる。絞り込まない）", () => {
+  it("likelyClaude が false の送信先も一覧に残り、選べる（判定を外しても閉じ込めない）", async () => {
+    const targetSelect = makeFakeSelectElement()
+    const status = makeFakeTextElement()
+    const sendButton = makeFakeButtonElement()
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    await runDispatchScript(page, {
+      targetSelect,
+      status,
+      sendButton,
+      terminalsResponse: {
+        ok: true,
+        terminals: [
+          { id: "t-likely", label: "claude worktree", likelyClaude: true },
+          { id: "t-unsure", label: "たぶん違う", likelyClaude: false },
+        ],
+      },
+    })
+
+    expect(targetSelect.appendedOptions().map((option) => option.value)).toEqual([
+      "t-likely",
+      "t-unsure",
+    ])
+    expect(sendButton.disabled).toBe(false)
+    expect(status.textContent).toBe("")
+  })
+
+  it("claude が動いていそうなものにだけ印を付け、ラベルそのものは変えない", async () => {
+    const targetSelect = makeFakeSelectElement()
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    await runDispatchScript(page, {
+      targetSelect,
+      status: makeFakeTextElement(),
+      sendButton: makeFakeButtonElement(),
+      terminalsResponse: {
+        ok: true,
+        terminals: [
+          { id: "t-likely", label: "claude worktree", likelyClaude: true },
+          { id: "t-unsure", label: "たぶん違う", likelyClaude: false },
+        ],
+      },
+    })
+
+    const [likely, unsure] = targetSelect.appendedOptions()
+    expect(likely?.textContent).toBe("★ claude worktree")
+    expect(unsure?.textContent).toBe("たぶん違う")
+  })
+
+  it("一覧の取得に失敗しても落ちず、送信ボタンを無効のまま理由を表示する", async () => {
+    const targetSelect = makeFakeSelectElement()
+    const status = makeFakeTextElement()
+    const sendButton = makeFakeButtonElement()
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    await runDispatchScript(page, {
+      targetSelect,
+      status,
+      sendButton,
+      terminalsResponse: { ok: false, reason: "orca コマンドが見つからない" },
+    })
+
+    expect(targetSelect.appendedOptions()).toEqual([])
+    expect(sendButton.disabled).toBe(true)
+    expect(status.textContent).toContain("orca コマンドが見つからない")
+  })
+})
+
 describe("SSEの更新の適用（本文が同じなら差し替えない・スクロール位置を保つ）", () => {
   it("購読直後の1回目の push が、埋め込み済みの本文と同じときは innerHTML を差し替えない", () => {
     const initialBody = "<p>さいしょ</p>"
@@ -410,7 +588,9 @@ describe("まとめたレイアウトページ", () => {
   it("送信ボタンは初期状態で無効になっている（送信先が揃うまで押せない）", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
-    expect(page).toContain('<button type="submit" id="tsukumo-dispatch-send" disabled>')
+    expect(page).toContain(
+      '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send" disabled>',
+    )
   })
 })
 

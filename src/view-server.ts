@@ -9,7 +9,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
 import process from "node:process"
 
-import { type Host } from "./host.ts"
+import { type Host, type Pane } from "./host.ts"
 import {
   buildIndexPage,
   buildLayoutPage,
@@ -200,7 +200,11 @@ function handleListTerminals(response: ServerResponse, host: Host): void {
         return
       }
 
-      const terminals = result.panes.map((pane) => ({ id: pane.id, label: pane.label }))
+      const terminals = sortPanesByLikelyClaude(result.panes).map((pane) => ({
+        id: pane.id,
+        label: pane.label,
+        likelyClaude: pane.likelyClaude,
+      }))
       writeJson(response, 200, { ok: true, terminals })
     })
     .catch(() => {
@@ -208,6 +212,18 @@ function handleListTerminals(response: ServerResponse, host: Host): void {
       // 落ちないようにしておく（docs/coding-standards.md「エラーハンドリング」）。
       writeJson(response, 502, { ok: false, reason: "送信先の一覧を取得できない" })
     })
+}
+
+/**
+ * 「claude が動いていそう」（`pane.likelyClaude`）なものを上に寄せる。**絞り込みはしない**。
+ * 判定は Orca 側の分類（src/orca-host.ts）で確実ではないため、外れたときに一覧から消えて
+ * 選べなくなることが無いよう、全件を残したまま並び順だけを変える（各グループ内の相対順は
+ * 変えない。`Array#filter` は元の順を保つので、2グループに分けて連結するだけでよい）。
+ */
+function sortPanesByLikelyClaude(panes: readonly Pane[]): readonly Pane[] {
+  const likely = panes.filter((pane) => pane.likelyClaude)
+  const others = panes.filter((pane) => !pane.likelyClaude)
+  return [...likely, ...others]
 }
 
 /**

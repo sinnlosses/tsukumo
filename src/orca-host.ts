@@ -8,7 +8,10 @@
 //   showView  → orca tab list --json でこの URL のタブを探し、あれば orca reload --page <id>、
 //               無ければ orca tab create --url <url>
 //   listPanes → orca terminal list --json。返る `handle` が id、表示名（label）は
-//               `title` を優先し、無ければ `worktreePath`、どちらも無ければ `handle` を使う
+//               `title` を優先し、無ければ `worktreePath`、どちらも無ければ `handle` を使う。
+//               「claude が動いていそう」の判定（likelyClaude）は `agentIdentity` フィールドが
+//               `"claude"` かどうかで決める（v1.4.197 で実測。Orca 自身がターミナルの中身を見て
+//               付けた分類ラベルで、`claude` セッションが動いているときだけ付く）
 //   sendText  → orca terminal send --terminal <handle> --text <text> --enter
 // `--direction` は `horizontal` が左右に、`vertical` が上下に並べる（Orca 本体のレイアウト実装で、
 // horizontal のときだけ flex-direction が row になることを確認した）。
@@ -124,8 +127,14 @@ async function sendText(paneId: string, text: string): Promise<HostResult> {
   return result.ok ? { ok: true } : { ok: false, reason: result.reason }
 }
 
-// `orca terminal list --json` は { result: { terminals: [{ handle, title, worktreePath, ... }] } }
+// `orca terminal list --json` は
+// { result: { terminals: [{ handle, title, worktreePath, agentIdentity, preview, ... }] } }
 // を返す（実測）。外部コマンドの出力なので構造を信用せず、`handle` を持つ要素だけを採る。
+//
+// **`preview`（直近の画面の断片）はここで読まない。** ターミナルの出力そのものなので会話の内容を
+// 含みうる（docs/coding-standards.md「会話内容の扱い」）。`agentIdentity` という、Orca 自身が
+// 会話の中身とは別に付けた分類ラベルが使えるとわかったため、「claude が動いていそう」の判定に
+// 会話内容を一切参照する必要が無い（詳しくはファイル冒頭のコメント）。
 function parsePaneList(stdout: string): readonly Pane[] | undefined {
   let parsed: unknown
   try {
@@ -162,7 +171,11 @@ function paneFromTerminal(value: unknown): Pane | undefined {
       ? value.worktreePath
       : undefined
 
-  return { id: value.handle, label: title ?? worktreePath ?? value.handle }
+  return {
+    id: value.handle,
+    label: title ?? worktreePath ?? value.handle,
+    likelyClaude: value.agentIdentity === "claude",
+  }
 }
 
 type CommandOutput =

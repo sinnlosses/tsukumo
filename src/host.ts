@@ -23,6 +23,12 @@ export type Pane = {
   readonly id: string
   /** 一覧から選ぶときに人が読む名前。 */
   readonly label: string
+  /**
+   * 「claude が動いていそう」という手がかり。**確実な判定ではない**ので、これを理由に
+   * 一覧から外してはいけない（絞り込みには使わない）。並び順を claude らしいものへ
+   * 寄せる・見た目で軽く示す、という用途だけに使う（判定の中身は src/orca-host.ts）。
+   */
+  readonly likelyClaude: boolean
 }
 
 /** ペインの一覧を得る依頼の結果。 */

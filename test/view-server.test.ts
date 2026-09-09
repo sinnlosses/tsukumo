@@ -174,10 +174,14 @@ describe("ビューサーバ", () => {
 })
 
 describe("入力欄からの送信", () => {
-  it("送信先の一覧を、id と label だけに絞って返す", async () => {
+  it("送信先の一覧を、id と label と likelyClaude だけに絞って返す", async () => {
     const server = await start(
       fakeHost({
-        listPanes: () => Promise.resolve({ ok: true, panes: [{ id: "term-1", label: "claude" }] }),
+        listPanes: () =>
+          Promise.resolve({
+            ok: true,
+            panes: [{ id: "term-1", label: "claude", likelyClaude: true }],
+          }),
       }),
     )
 
@@ -185,7 +189,61 @@ describe("入力欄からの送信", () => {
     const body = await response.json()
 
     expect(response.status).toBe(200)
-    expect(body).toEqual({ ok: true, terminals: [{ id: "term-1", label: "claude" }] })
+    expect(body).toEqual({
+      ok: true,
+      terminals: [{ id: "term-1", label: "claude", likelyClaude: true }],
+    })
+  })
+
+  it("likelyClaude で絞り込まず、外れている（false の）ものも一覧に残す", async () => {
+    const server = await start(
+      fakeHost({
+        listPanes: () =>
+          Promise.resolve({
+            ok: true,
+            panes: [{ id: "term-unsure", label: "たぶん違う", likelyClaude: false }],
+          }),
+      }),
+    )
+
+    const response = await fetch(`${originOf(server)}${TERMINALS_PATH}`)
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body).toEqual({
+      ok: true,
+      terminals: [{ id: "term-unsure", label: "たぶん違う", likelyClaude: false }],
+    })
+  })
+
+  it("likelyClaude が true のものを、元の順を保ったまま上に寄せる（絞り込まない）", async () => {
+    const server = await start(
+      fakeHost({
+        listPanes: () =>
+          Promise.resolve({
+            ok: true,
+            panes: [
+              { id: "a-unsure", label: "A", likelyClaude: false },
+              { id: "b-likely", label: "B", likelyClaude: true },
+              { id: "c-unsure", label: "C", likelyClaude: false },
+              { id: "d-likely", label: "D", likelyClaude: true },
+            ],
+          }),
+      }),
+    )
+
+    const response = await fetch(`${originOf(server)}${TERMINALS_PATH}`)
+    const body = await response.json()
+
+    expect(body).toEqual({
+      ok: true,
+      terminals: [
+        { id: "b-likely", label: "B", likelyClaude: true },
+        { id: "d-likely", label: "D", likelyClaude: true },
+        { id: "a-unsure", label: "A", likelyClaude: false },
+        { id: "c-unsure", label: "C", likelyClaude: false },
+      ],
+    })
   })
 
   it("送信先が1つも無いときも壊れず、空の一覧を返す", async () => {

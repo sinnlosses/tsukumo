@@ -164,11 +164,19 @@ const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
 // （docs/architecture.md「HTML はローカルの HTTP サーバから配る」— 本文はメモリにしか持たない、
 // という制約に送信先の記憶も揃える）。
 const DISPATCH_TARGET_STORAGE_KEY = "tsukumo-dispatch-target"
+// 「claude が動いていそう」な送信先の選択肢に付ける印。静的なヒント文（dispatchRegionHtml）と
+// 選択肢のラベル（dispatchScript）の両方で同じ文字を使う。
+const DISPATCH_LIKELY_MARKER = "★"
 
 /**
  * 右下の空き領域を埋める、依頼の送信フォーム（`docs/requirements.md` 4.7）。送信先の選択は
  * `orca terminal list` から得た一覧を `<select>` に出す（一覧の取得・選択の記憶は
  * {@link dispatchScript} 側の役目。ここは静的なマークアップだけを組み立てる）。
+ *
+ * **一覧は絞り込まない。** 「claude が動いていそう」（`likelyClaude`）なものは
+ * {@link dispatchScript} が上に寄せて印を付けるだけで、選択肢からは消さない
+ * （判定を外したときに選べなくならないように）。`.dispatch-hint` はその印の意味を示す
+ * 1行だけの補足で、会話の内容は含まない。
  */
 function dispatchRegionHtml(): string {
   return `<section class="layout-region layout-dispatch" id="tsukumo-view-dispatch">
@@ -177,9 +185,10 @@ function dispatchRegionHtml(): string {
     <select id="${DISPATCH_TARGET_ID}" aria-label="送信先のターミナル"></select>
     <button type="button" id="${DISPATCH_REFRESH_ID}">一覧を更新</button>
   </div>
+  <p class="dispatch-hint">${DISPATCH_LIKELY_MARKER} claude が動いていそうな順に並べています（目安。外れていても一覧の他の項目から選べます）</p>
   <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く" required></textarea>
   <div class="dispatch-row">
-    <button type="submit" id="${DISPATCH_SEND_ID}" disabled>送る</button>
+    <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send" disabled>送る</button>
     <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
   </div>
 </form>
@@ -197,6 +206,11 @@ function dispatchRegionHtml(): string {
  *   （壊れて見えないように。`tsukumo terminal list` が失敗する＝ `orca` が無い環境も含む）
  * - **送信中は再度押せないようにし、送信済み／失敗を必ず文字で残す**（送ったのに何も起きない
  *   ように見えないようにする、というこの機能の完了条件）
+ * - **「claude が動いていそう」（`terminal.likelyClaude`）は選択肢を消す理由にしない。**
+ *   サーバ（`src/view-server.ts` の `sortPanesByLikelyClaude`）が既に上に寄せた順で返すので、
+ *   ここでは届いた順番のまま選択肢を並べ、`likelyClaude` が true の項目にだけ
+ *   {@link DISPATCH_LIKELY_MARKER} の印を付ける。判定を外していても、印が付かないだけで
+ *   一覧からは消えない
  */
 function dispatchScript(): string {
   return `  {
@@ -251,7 +265,9 @@ function dispatchScript(): string {
       for (const terminal of data.terminals) {
         const option = document.createElement("option")
         option.value = terminal.id
-        option.textContent = terminal.label
+        option.textContent = terminal.likelyClaude
+          ? ${JSON.stringify(DISPATCH_LIKELY_MARKER)} + " " + terminal.label
+          : terminal.label
         targetSelect.appendChild(option)
       }
       if (remembered !== null && data.terminals.some((terminal) => terminal.id === remembered)) {
@@ -586,7 +602,37 @@ const STYLE = `
     align-items: center;
     gap: 0.5rem;
   }
-  .dispatch-row select { flex: 1 1 auto; min-width: 0; }
+  /* select・button は、他の3領域が使う語彙（#10131a の暗い地、#3a4256 の枠線、0.4remの角丸）に
+     揃える。素のブラウザ既定の見た目のままだと、ダークな画面の中でここだけ浮いていた。 */
+  .dispatch-row select {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.4rem 0.5rem;
+    background: #10131a;
+    color: inherit;
+    border: 1px solid #3a4256;
+    border-radius: 0.4rem;
+    font: inherit;
+  }
+  .dispatch-row button {
+    flex: 0 0 auto;
+    padding: 0.4rem 0.75rem;
+    background: #1c202a;
+    color: inherit;
+    border: 1px solid #3a4256;
+    border-radius: 0.4rem;
+    font: inherit;
+    cursor: pointer;
+  }
+  .dispatch-row button:hover:not(:disabled) { border-color: #8ab4ff; }
+  .dispatch-row button:disabled { opacity: 0.5; cursor: default; }
+  /* 「送る」は行の主目的なので、リンクと同じ差し色（#8ab4ff）で他のボタンより目立たせる。 */
+  .dispatch-send {
+    background: #26314a;
+    border-color: #8ab4ff;
+    font-weight: 600;
+  }
+  .dispatch-hint { margin: 0; font-size: 0.75rem; color: #8f97ab; }
   .dispatch-text {
     flex: 1 1 auto;
     min-height: 0;
