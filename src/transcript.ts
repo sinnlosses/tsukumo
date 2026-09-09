@@ -54,6 +54,47 @@ export function extractLatestPendingBackgroundAgentCount(content: string): numbe
   return values.at(-1)
 }
 
+/** メインビューに時系列で流す1件分の記録。ツールの実行か、発話の詳細のどちらか。 */
+export type MainViewEntry =
+  | {
+      readonly kind: "tool"
+      readonly name: string
+      readonly input: unknown
+      /** まだ結果が transcript に届いていない（作業中の）ツールは undefined になる。 */
+      readonly result: { readonly content: string; readonly isError: boolean } | undefined
+    }
+  | { readonly kind: "detail"; readonly markdown: string }
+
+/**
+ * transcript から、メインビューに時系列で出す記録を取り出す。**メインビューには「作業中」と
+ * 「完了後」の2つの状態があるが、transcript だけからは今どちらなのかを確実に判定できない**
+ * （assistant の1メッセージ内で text と tool_use が混在する順序に規約上の保証が無いため）。
+ * そこで状態を分けず、**ツールの実行と発話の詳細を出現順にそのまま積む**形にしている。
+ * 結果として、直近の結果が届いていないツール（`result: undefined`）が末尾に並んでいれば
+ * それが「作業中」に、末尾が `detail` エントリなら「完了後」に自然に対応する
+ * （呼び出し側で状態を明示的に切り替える必要が無い）。
+ *
+ * - **ツール**: assistant 行の `content[]` にある `tool_use`（`name` / `input`）と、対応する
+ *   `user` 行の `message.content[]` にある `tool_result`（`tool_use_id` で対応付け）を1件にする。
+ *   `toolUseResult`（`user` 行のトップレベル）にもツールごとに形の違う結果が入っているが、
+ *   `message.content[]` の `tool_result` は `content` / `is_error` に統一された形を持つため
+ *   こちらを使う（2026-09-09、自セッションの transcript で両方の実在を確認）
+ * - **詳細**: `text` を `splitUtterance` に通し、セリフを除いた `detail` だけを積む
+ *   （`docs/requirements.md` 4.2「詳細はメインビュー側に回る」）。空になった `detail`
+ *   （セリフだけの発話）は積まない
+ * - **`thinking` は対象外**（`docs/requirements.md` 4.1「表示してよいのは type: "text" だけ」）
+ */
+export function extractMainViewEntries(content: string): readonly MainViewEntry[] {
+  const lines = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
+    .map((line) => tryParseJson(line))
+
+  const results = collectToolResults(lines)
+  return lines.flatMap((line) => mainViewEntriesInLine(line, results))
+}
+
 export type UtteranceParts = {
   readonly speech: string | undefined
   readonly detail: string
@@ -178,6 +219,131 @@ function tryParseJson(line: string): unknown {
 
 function isTextContent(value: unknown): value is { readonly type: "text"; readonly text: string } {
   return isRecord(value) && value.type === "text" && typeof value.text === "string"
+}
+
+type ToolResultRecord = {
+  readonly toolUseId: string
+  readonly content: string
+  readonly isError: boolean
+}
+
+function collectToolResults(values: readonly unknown[]): readonly ToolResultRecord[] {
+  return values.flatMap((value) => toolResultsInLine(value))
+}
+
+function toolResultsInLine(value: unknown): readonly ToolResultRecord[] {
+  if (!isRecord(value) || value.type !== "user") {
+    return []
+  }
+
+  const message = value.message
+  if (!isRecord(message) || !Array.isArray(message.content)) {
+    return []
+  }
+
+  return message.content.filter(isToolResultItem).map(toToolResultRecord)
+}
+
+function isToolResultItem(value: unknown): value is {
+  readonly type: "tool_result"
+  readonly tool_use_id: string
+  readonly content: unknown
+  readonly is_error: unknown
+} {
+  return isRecord(value) && value.type === "tool_result" && typeof value.tool_use_id === "string"
+}
+
+function toToolResultRecord(item: {
+  readonly tool_use_id: string
+  readonly content: unknown
+  readonly is_error: unknown
+}): ToolResultRecord {
+  return {
+    toolUseId: item.tool_use_id,
+    content: toolResultContentText(item.content),
+    isError: item.is_error === true,
+  }
+}
+
+/**
+ * tool_result の `content` は文字列のことが多いが、複数ブロックの配列のこともある（実測）。
+ * テキストのブロックだけをつなぎ、テキスト以外（画像・`tool_reference` 等）は中身を持ち出さず
+ * 種別のラベルだけ残す（会話内容の外部持ち出しを増やさないため）。
+ */
+function toolResultContentText(content: unknown): string {
+  if (typeof content === "string") {
+    return content
+  }
+  if (!Array.isArray(content)) {
+    return ""
+  }
+
+  return content.map((item) => toolResultContentItemText(item)).join("\n\n")
+}
+
+function toolResultContentItemText(item: unknown): string {
+  if (isTextContent(item)) {
+    return item.text
+  }
+  if (isRecord(item) && typeof item.type === "string") {
+    return `(${item.type})`
+  }
+  return ""
+}
+
+function mainViewEntriesInLine(
+  value: unknown,
+  results: readonly ToolResultRecord[],
+): readonly MainViewEntry[] {
+  if (!isRecord(value) || value.type !== "assistant") {
+    return []
+  }
+
+  const message = value.message
+  if (!isRecord(message) || !Array.isArray(message.content)) {
+    return []
+  }
+
+  return message.content.flatMap((item) => mainViewEntryForContentItem(item, results))
+}
+
+function mainViewEntryForContentItem(
+  item: unknown,
+  results: readonly ToolResultRecord[],
+): readonly MainViewEntry[] {
+  if (isToolUseItem(item)) {
+    const result = results.find((entry) => entry.toolUseId === item.id)
+    return [
+      {
+        kind: "tool",
+        name: item.name,
+        input: item.input,
+        result:
+          result === undefined ? undefined : { content: result.content, isError: result.isError },
+      },
+    ]
+  }
+
+  if (isTextContent(item)) {
+    const detail = splitUtterance(item.text).detail.trim()
+    return detail === "" ? [] : [{ kind: "detail", markdown: detail }]
+  }
+
+  return []
+}
+
+function isToolUseItem(value: unknown): value is {
+  readonly type: "tool_use"
+  readonly id: string
+  readonly name: string
+  readonly input: unknown
+} {
+  return (
+    isRecord(value) &&
+    value.type === "tool_use" &&
+    typeof value.id === "string" &&
+    typeof value.name === "string"
+  )
 }
 
 type ClassifiedLine = {

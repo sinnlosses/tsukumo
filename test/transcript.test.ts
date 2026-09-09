@@ -4,6 +4,7 @@ import {
   extractContextUsage,
   extractLatestPendingBackgroundAgentCount,
   extractLatestUtterance,
+  extractMainViewEntries,
   splitUtterance,
 } from "../src/transcript.ts"
 
@@ -351,5 +352,193 @@ describe("extractLatestPendingBackgroundAgentCount", () => {
     ].join("\n")
 
     expect(extractLatestPendingBackgroundAgentCount(content)).toBe(3)
+  })
+})
+
+describe("extractMainViewEntries", () => {
+  it("tool_use と、対応する tool_result（tool_use_id で対応付け）を1件のツール実行にする", () => {
+    const content = [
+      JSON.stringify({
+        type: "assistant",
+        message: {
+          content: [
+            { type: "tool_use", id: "toolu_1", name: "Bash", input: { command: "echo hi" } },
+          ],
+        },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: {
+          content: [
+            { type: "tool_result", tool_use_id: "toolu_1", content: "hi", is_error: false },
+          ],
+        },
+        toolUseResult: { stdout: "hi", stderr: "", interrupted: false },
+      }),
+    ].join("\n")
+
+    expect(extractMainViewEntries(content)).toEqual([
+      {
+        kind: "tool",
+        name: "Bash",
+        input: { command: "echo hi" },
+        result: { content: "hi", isError: false },
+      },
+    ])
+  })
+
+  it("結果がまだ届いていないツールは result が undefined になる（作業中）", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [{ type: "tool_use", id: "toolu_1", name: "Read", input: { file_path: "/a" } }],
+      },
+    })
+
+    expect(extractMainViewEntries(content)).toEqual([
+      { kind: "tool", name: "Read", input: { file_path: "/a" }, result: undefined },
+    ])
+  })
+
+  it("エラーになったツールは isError が true になる", () => {
+    const content = [
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "tool_use", id: "toolu_1", name: "Bash", input: {} }] },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: {
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_1",
+              content: "command not found",
+              is_error: true,
+            },
+          ],
+        },
+      }),
+    ].join("\n")
+
+    expect(extractMainViewEntries(content)).toEqual([
+      {
+        kind: "tool",
+        name: "Bash",
+        input: {},
+        result: { content: "command not found", isError: true },
+      },
+    ])
+  })
+
+  it("tool_result の content が複数ブロックの配列のとき、text ブロックをつなぐ", () => {
+    const content = [
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "tool_use", id: "toolu_1", name: "Read", input: {} }] },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: {
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_1",
+              content: [
+                { type: "text", text: "1行目" },
+                { type: "text", text: "2行目" },
+              ],
+            },
+          ],
+        },
+      }),
+    ].join("\n")
+
+    expect(extractMainViewEntries(content)).toEqual([
+      {
+        kind: "tool",
+        name: "Read",
+        input: {},
+        result: { content: "1行目\n\n2行目", isError: false },
+      },
+    ])
+  })
+
+  it("text は splitUtterance の detail だけを積み、セリフは含めない", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "> やったよ\n詳しい説明はこちら" }] },
+    })
+
+    expect(extractMainViewEntries(content)).toEqual([
+      { kind: "detail", markdown: "詳しい説明はこちら" },
+    ])
+  })
+
+  it("セリフだけで detail が空になる発話は積まない", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "> セリフだけ" }] },
+    })
+
+    expect(extractMainViewEntries(content)).toEqual([])
+  })
+
+  it("thinking は絶対に出さない（中身が結果に一切現れない）", () => {
+    const content = [
+      JSON.stringify({
+        type: "assistant",
+        message: {
+          content: [
+            { type: "thinking", thinking: "秘密の内部思考。画面に出したら事故になる" },
+            { type: "tool_use", id: "toolu_1", name: "Bash", input: { command: "ls" } },
+          ],
+        },
+      }),
+      JSON.stringify({
+        type: "user",
+        message: {
+          content: [{ type: "tool_result", tool_use_id: "toolu_1", content: "a.txt" }],
+        },
+      }),
+    ].join("\n")
+
+    const serialized = JSON.stringify(extractMainViewEntries(content))
+    expect(serialized).not.toContain("秘密の内部思考")
+    expect(serialized).not.toContain("thinking")
+  })
+
+  it("1行の中で tool_use とテキストが混ざっているとき、出現順のまま両方を積む", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          { type: "tool_use", id: "toolu_1", name: "Bash", input: { command: "ls" } },
+          { type: "text", text: "> 見てみるね\n実行した結果はこちら" },
+        ],
+      },
+    })
+
+    expect(extractMainViewEntries(content)).toEqual([
+      { kind: "tool", name: "Bash", input: { command: "ls" }, result: undefined },
+      { kind: "detail", markdown: "実行した結果はこちら" },
+    ])
+  })
+
+  it("壊れた行・未知の type が混ざっていても落ちずに読む", () => {
+    const content = [
+      "{not valid json",
+      JSON.stringify({ type: "future-type", payload: { anything: true } }),
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "text", text: "> 唯一のセリフ\n唯一の詳細" }] },
+      }),
+    ].join("\n")
+
+    expect(extractMainViewEntries(content)).toEqual([{ kind: "detail", markdown: "唯一の詳細" }])
+  })
+
+  it("空の transcript では空配列を返す", () => {
+    expect(extractMainViewEntries("")).toEqual([])
   })
 })

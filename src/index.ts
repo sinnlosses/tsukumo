@@ -28,12 +28,13 @@ import {
   extractContextUsage,
   extractLatestPendingBackgroundAgentCount,
   extractLatestUtterance,
+  extractMainViewEntries,
   splitUtterance,
 } from "./transcript.ts"
 import { startViewServer, type ViewServer } from "./view-server.ts"
 import {
   buildCharacterBody,
-  buildPlaceholderBody,
+  buildMainBody,
   buildSidebarBody,
   type CharacterPortraitSource,
   type CharacterViewData,
@@ -73,6 +74,11 @@ const POLL_INTERVAL_MS = 500
 
 // サイドバーは縦に狭い領域なので、サブエージェントの直近の活動は数件に絞る。
 const MAX_RECENT_SUBAGENT_ACTIVITIES = 5
+
+// メインビューは更新のたびに本文を丸ごと描き直す（docs/architecture.md「ビューの更新は
+// Server-Sent Events で押す」）。セッションが長く続くほど転送量が増え続けないよう、
+// 直近の記録だけに絞る。
+const MAX_MAIN_VIEW_ENTRIES = 40
 
 // develop/tasks.json は起動時の cwd（リポジトリ直下で `bun run start` する運用）からの相対で読む。
 // セッションに依存しない、tsukumo 自身の進捗管理ファイルのため。
@@ -127,14 +133,12 @@ async function main(args: readonly string[]): Promise<number> {
     return 1
   }
 
-  // メインビューの中身は後続の作業で入る。ここでは場所だけを確保しておく。
-  server.publish("main", buildPlaceholderBody("main"))
-
   const characterDir = resolveCharacterDir(process.env[CHARACTER_DIR_ENV_NAME], process.cwd())
   const publishCharacterView = createCharacterViewPublisher(server, homeDir, characterDir)
 
   publishCharacterView(transcriptPath)
   publishSidebarView(server, transcriptPath)
+  publishMainView(server, transcriptPath)
   followTranscript(server, transcriptPath, initialSnapshot, publishCharacterView)
   announce(server)
 
@@ -205,8 +209,9 @@ function followTranscript(
 
     lastSnapshot = current
     publishCharacterView(transcriptPath)
-    // サイドバーの更新も同じきっかけ（transcript の変化）に相乗りする。
+    // サイドバー・メインビューの更新も同じきっかけ（transcript の変化）に相乗りする。
     publishSidebarView(server, transcriptPath)
+    publishMainView(server, transcriptPath)
   }, POLL_INTERVAL_MS)
 }
 
@@ -340,6 +345,20 @@ function publishSidebarView(server: ViewServer, transcriptPath: string): void {
     server.publish("sidebar", buildSidebarBody(data))
   } catch {
     process.stderr.write("tsukumo: サイドバーの更新に失敗した。次の更新を待つ\n")
+  }
+}
+
+// メインビューの「読む → 決める → 配る」1回分。extractMainViewEntries が transcript 全体から
+// 時系列の記録を作り、直近の分だけに絞って渡す（作業中/完了後の切り替えは行わない理由は
+// src/transcript.ts の extractMainViewEntries を参照）。
+function publishMainView(server: ViewServer, transcriptPath: string): void {
+  try {
+    const transcriptContent = readFileSync(transcriptPath, "utf8")
+    const entries = extractMainViewEntries(transcriptContent).slice(-MAX_MAIN_VIEW_ENTRIES)
+
+    server.publish("main", buildMainBody(entries))
+  } catch {
+    process.stderr.write("tsukumo: メインビューの更新に失敗した。次の更新を待つ\n")
   }
 }
 

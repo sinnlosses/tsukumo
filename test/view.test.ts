@@ -1,9 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
+import { type MainViewEntry } from "../src/transcript.ts"
 import {
   buildCharacterBody,
   buildIndexPage,
-  buildPlaceholderBody,
+  buildMainBody,
   buildSidebarBody,
   buildViewPage,
   type CharacterViewData,
@@ -75,9 +76,198 @@ describe("ビューのページ", () => {
   })
 })
 
-describe("ビューの本文", () => {
-  it("中身が未定のビューは、準備中であることだけを出す", () => {
-    expect(buildPlaceholderBody("main")).toContain("準備中")
+describe("メインビューの本文", () => {
+  it("記録が1つも無いとき、まだ何もないことだけを出す", () => {
+    expect(buildMainBody([])).toContain("まだ作業がありません")
+  })
+
+  it("ツールの実行を、名前・引数・結果すべて込みで出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Bash",
+        input: { command: "echo hi" },
+        result: { content: "hi", isError: false },
+      },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("Bash")
+    expect(body).toContain("echo hi")
+    expect(body).toContain(">hi<")
+  })
+
+  it("結果がまだ届いていないツールは実行中と出す", () => {
+    const entries: readonly MainViewEntry[] = [
+      { kind: "tool", name: "Read", input: { file_path: "/a" }, result: undefined },
+    ]
+
+    expect(buildMainBody(entries)).toContain("実行中")
+  })
+
+  it("エラーになったツールの結果には、そうと分かる印を付ける", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Bash",
+        input: {},
+        result: { content: "command not found", isError: true },
+      },
+    ]
+
+    expect(buildMainBody(entries)).toContain("tool-error")
+  })
+
+  it("ツールの引数・出力を HTML として無害な形にして埋め込む", () => {
+    const entries: readonly MainViewEntry[] = [
+      {
+        kind: "tool",
+        name: "Bash",
+        input: { command: '<script>alert("x")</script>' },
+        result: { content: '<img src=x onerror="alert(1)">', isError: false },
+      },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain("<script>")
+    expect(body).not.toContain('<img src=x onerror="alert(1)">')
+    expect(body).toContain("&lt;script&gt;")
+    expect(body).toContain("&lt;img")
+  })
+
+  it("ツールの実行と発話の詳細を出現順のまま積む（状態を切り替えない）", () => {
+    const entries: readonly MainViewEntry[] = [
+      { kind: "tool", name: "Bash", input: {}, result: { content: "ok", isError: false } },
+      { kind: "detail", markdown: "終わったよ" },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body.indexOf("Bash")).toBeLessThan(body.indexOf("終わったよ"))
+  })
+
+  it("発話の詳細（Markdown）を見出し・箇条書き・表・コードブロックが読める HTML に整形する", () => {
+    const markdown = [
+      "## 見出し",
+      "",
+      "- 箇条書き1",
+      "- 箇条書き2",
+      "",
+      "| 列A | 列B |",
+      "| --- | --- |",
+      "| a | b |",
+      "",
+      "```ts",
+      "const x = 1",
+      "```",
+      "",
+      "**強調**と`インラインコード`。",
+    ].join("\n")
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("<h2>見出し</h2>")
+    expect(body).toContain("<ul><li>箇条書き1</li><li>箇条書き2</li></ul>")
+    expect(body).toContain("<table>")
+    expect(body).toContain("<th>列A</th>")
+    expect(body).toContain("<td>a</td>")
+    expect(body).toContain("<pre><code")
+    expect(body).toContain("const x = 1")
+    expect(body).toContain("<strong>強調</strong>")
+    expect(body).toContain("<code>インラインコード</code>")
+  })
+
+  it("http: / https: と、/ や # で始まる相対リンクはリンクとして出す", () => {
+    const markdown = [
+      "[絶対](https://example.com)",
+      "[素のhttp](http://example.com)",
+      "[メール](mailto:a@example.com)",
+      "[相対](/foo/bar)",
+      "[アンカー](#section)",
+    ].join("\n\n")
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain('<a href="https://example.com" rel="noopener noreferrer">絶対</a>')
+    expect(body).toContain('<a href="http://example.com" rel="noopener noreferrer">素のhttp</a>')
+    expect(body).toContain('<a href="mailto:a@example.com" rel="noopener noreferrer">メール</a>')
+    expect(body).toContain('<a href="/foo/bar" rel="noopener noreferrer">相対</a>')
+    expect(body).toContain('<a href="#section" rel="noopener noreferrer">アンカー</a>')
+  })
+
+  it("javascript: リンクはクリックしても実行されないよう、リンクにせず見た目のまま平文で出す（隣の正当なリンクはそのままリンクになる）", () => {
+    const markdown = "[クリック](javascript:alert(1)) と [ふつう](https://example.com)"
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain('href="javascript:')
+    expect(body).toContain("[クリック](javascript:alert(1))")
+    expect(body).toContain('<a href="https://example.com" rel="noopener noreferrer">ふつう</a>')
+  })
+
+  it("スキームの大文字小文字を無視して判定する（JavaScript: も弾く）", () => {
+    const markdown = "[大文字](JavaScript:alert(1))"
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain("<a href")
+    expect(body).toContain("[大文字](JavaScript:alert(1))")
+  })
+
+  it("data: など allowlist に無いスキームもリンクにしない", () => {
+    const markdown = "[data](data:text/html,hi)"
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain("<a href")
+    expect(body).toContain("[data](data:text/html,hi)")
+  })
+
+  it("Markdown のコードブロックの中身も escape する（コード中の HTML がそのまま出ない）", () => {
+    const markdown = ["```html", '<script>alert("x")</script>', "```"].join("\n")
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain("<script>alert")
+    expect(body).toContain("&lt;script&gt;")
+  })
+
+  it("対応していない Markdown 記法（引用など）は、崩れた見た目になるだけで表示は壊れない", () => {
+    const markdown = "> これは対応していない引用記法\n地の文"
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("これは対応していない引用記法")
+    expect(body).toContain("地の文")
+  })
+
+  it("巨大なツール出力を食わせても表示が壊れない（切り詰めて表示する）", () => {
+    const hugeOutput = "x".repeat(200_000)
+    const entries: readonly MainViewEntry[] = [
+      { kind: "tool", name: "Bash", input: {}, result: { content: hugeOutput, isError: false } },
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body.length).toBeLessThan(hugeOutput.length)
+    expect(body).toContain("省略")
+  })
+
+  it("巨大な Markdown の詳細を食わせても表示が壊れない", () => {
+    const hugeMarkdown = Array.from({ length: 5000 }, (_, index) => `行${String(index)}`).join("\n")
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown: hugeMarkdown }]
+
+    expect(() => buildMainBody(entries)).not.toThrow()
+    expect(buildMainBody(entries).length).toBeLessThan(hugeMarkdown.length)
   })
 })
 

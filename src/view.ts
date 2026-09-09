@@ -3,11 +3,11 @@
 // 純粋関数だけを置き、ネットワーク・ファイル・プロセスには触らない（配るのは src/view-server.ts）。
 // 折り返し・全角文字の幅・禁則処理はブラウザに任せる。ここが計算するのは中身だけ。
 //
-// **メインビューの中身はまだプレースホルダ**（作業の進行は後続の作業で入る）。
-// キャラビュー・サイドバーはこのタスクで中身が決まった（下の `buildCharacterBody` /
-// `buildSidebarBody`）。
+// メインビュー・キャラビュー・サイドバーの中身はすべて決まっている（下の `buildMainBody` /
+// `buildCharacterBody` / `buildSidebarBody`）。
 
 import { type TaskStatusCounts } from "./tasks.ts"
+import { type MainViewEntry } from "./transcript.ts"
 
 export type ViewName = "main" | "character" | "sidebar"
 
@@ -96,9 +96,26 @@ export function buildCharacterBody(data: CharacterViewData): string {
   return `${portraitHtml}<div class="balloon">${escapeHtml(text)}</div>`
 }
 
-/** 中身がまだ決まっていないビューの本文。 */
-export function buildPlaceholderBody(view: ViewName): string {
-  return `<p class="placeholder">${escapeHtml(VIEW_TITLE[view])}（準備中）</p>`
+/**
+ * メインビューの本文。**「作業中」と「完了後」で状態を切り替えず、ツールの実行と発話の詳細を
+ * 時系列でそのまま積む**（理由は `src/transcript.ts` の `extractMainViewEntries` を参照。
+ * transcript だけからは2つの状態を確実に判定できないため、無理に分けていない）。
+ *
+ * - **ツールの実行**: `docs/requirements.md` の決定どおり、**引数も結果も出す**（ツール名だけでは
+ *   情報として足りず、サイドバーで「Bash ×5」と並んで使い物にならなかった前例があるため）。
+ *   結果がまだ届いていないツールは「実行中」と出す
+ * - **発話の詳細**: Markdown を `renderMarkdownToHtml` で HTML に整形する。**中身を要約・
+ *   再構成しない**（読みづらさの主因は見た目であって内容ではないため。`docs/requirements.md` 2.2）
+ *
+ * **`thinking` はここに一切現れない。** `extractMainViewEntries` が transcript を読む時点で
+ * 除外しているので、この関数の入力に `thinking` の中身が混ざる経路が無い。
+ */
+export function buildMainBody(entries: readonly MainViewEntry[]): string {
+  if (entries.length === 0) {
+    return `<p class="placeholder">${escapeHtml(MAIN_VIEW_EMPTY_MESSAGE)}</p>`
+  }
+
+  return entries.map((entry) => mainViewEntryHtml(entry)).join("\n")
 }
 
 /**
@@ -166,6 +183,12 @@ export function escapeHtml(text: string): string {
 
 const PLACEHOLDER_UTTERANCE = "（まだ発話がありません）"
 
+const MAIN_VIEW_EMPTY_MESSAGE = "（まだ作業がありません）"
+
+// ツールの入力・出力は数十KBになることがある（実測: あるツールの --json 出力が170KB）。
+// 切り詰めは表示を壊さないためであって秘匿のためではないので、切り詰めた旨だけ添えて残りは捨てる。
+const MAX_TOOL_TEXT_LENGTH = 8000
+
 const VIEW_TITLE: Readonly<Record<ViewName, string>> = {
   main: "メインビュー",
   character: "キャラビュー",
@@ -209,6 +232,42 @@ const STYLE = `
   }
   .placeholder { color: #8f97ab; }
   a { color: #8ab4ff; }
+  .tool-block {
+    margin: 0 0 1rem;
+    padding: 0.75rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.5rem;
+    background: #1c202a;
+  }
+  .tool-block h3 {
+    margin: 0 0 0.5rem;
+    font-size: 0.85rem;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    color: #8ab4ff;
+  }
+  .tool-block pre, .detail-block pre {
+    margin: 0.4rem 0 0;
+    padding: 0.5rem;
+    background: #10131a;
+    border-radius: 0.4rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .tool-result.tool-error { border: 1px solid #d16969; }
+  .tool-pending { margin: 0.4rem 0 0; color: #8f97ab; font-style: italic; }
+  .detail-block { margin: 0 0 1rem; }
+  .detail-block table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
+  .detail-block th, .detail-block td {
+    border: 1px solid #3a4256;
+    padding: 0.3rem 0.5rem;
+    text-align: left;
+  }
+  .detail-block :not(pre) > code {
+    background: #10131a;
+    padding: 0 0.25rem;
+    border-radius: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+  }
   .sidebar-block {
     margin: 0 0 1rem;
     padding-bottom: 1rem;
@@ -248,6 +307,365 @@ function portraitMarkup(
       : `<img class="portrait-image" src="${escapeHtml(portrait.dataUri)}" alt="${escapeHtml(altText)}">`
 
   return `<div class="portrait" role="img" aria-label="${escapeHtml(altText)}"${accentStyle}>${inner}</div>`
+}
+
+function mainViewEntryHtml(entry: MainViewEntry): string {
+  return entry.kind === "tool" ? toolExecutionHtml(entry) : detailHtml(entry.markdown)
+}
+
+function toolExecutionHtml(entry: Extract<MainViewEntry, { readonly kind: "tool" }>): string {
+  const inputText = truncateForDisplay(stringifyToolInput(entry.input))
+  const resultHtml =
+    entry.result === undefined
+      ? `<p class="tool-pending">実行中…</p>`
+      : `<pre class="tool-result${entry.result.isError ? " tool-error" : ""}"><code>${escapeHtml(
+          truncateForDisplay(entry.result.content),
+        )}</code></pre>`
+
+  return `<section class="tool-block">
+<h3>${escapeHtml(entry.name)}</h3>
+<pre class="tool-input"><code>${escapeHtml(inputText)}</code></pre>
+${resultHtml}
+</section>`
+}
+
+function detailHtml(markdown: string): string {
+  return `<div class="detail-block">${renderMarkdownToHtml(truncateForDisplay(markdown))}</div>`
+}
+
+/** ツールの入力（`unknown`。transcript から来た JSON 値）を、読める形の文字列にする。 */
+function stringifyToolInput(input: unknown): string {
+  if (input === undefined) {
+    return ""
+  }
+
+  const json = JSON.stringify(input, null, 2)
+  return json ?? String(input)
+}
+
+/**
+ * 表示を壊さない程度に文字列を切り詰める（`docs/requirements.md`「切り詰めは表示のためであって
+ * 秘匿のためではない」）。折りたたんで全部見せる形は採らず、上限を超えた分は捨てて件数だけ添える。
+ */
+function truncateForDisplay(text: string): string {
+  if (text.length <= MAX_TOOL_TEXT_LENGTH) {
+    return text
+  }
+
+  const omitted = text.length - MAX_TOOL_TEXT_LENGTH
+  return `${text.slice(0, MAX_TOOL_TEXT_LENGTH)}\n…（以下 ${String(omitted)} 文字を省略）`
+}
+
+/**
+ * Markdown を HTML に整形する。**外部の Markdown ライブラリには依存しない**
+ * （`docs/architecture.md`「画像処理に外部コマンドを使わない（当面）」と同じ考え方で、
+ * 実行時依存を増やさない）。対応する記法は次だけに絞る:
+ *
+ * - 見出し（`#` 〜 `######`）
+ * - フェンス付きコードブロック（```` ``` ````）
+ * - 箇条書き（`-` / `*` の番号無しリスト、`1.` の番号付きリスト。ネストは1段に平らにする）
+ * - テーブル（GFM 形式。ヘッダ行の次に `---` の区切り行があるものだけをテーブルと認識する）
+ * - 段落中のインライン強調（`**太字**`）・インラインコード（`` `code` ``）・リンク
+ *   （`[text](url)`）
+ *
+ * **対応しない記法（引用・ネストしたリスト・画像・水平線など）はブロックとして認識されず、
+ * ただの段落テキストとして escapeHtml を通ってそのまま表示される**（構文として壊れず、
+ * 崩れた見た目になるだけに留める）。**すべてのテキストは escapeHtml を通してから埋め込む**
+ * （コードブロックの中身も含む）ので、Markdown の中に HTML やコードが含まれていてもそのまま
+ * 描画されることはない。
+ */
+function renderMarkdownToHtml(markdown: string): string {
+  const lines = markdown.replaceAll("\r\n", "\n").split("\n")
+  const blocks: string[] = []
+  let index = 0
+
+  while (index < lines.length) {
+    const line = lineAt(lines, index)
+
+    if (line.trim() === "") {
+      index += 1
+      continue
+    }
+
+    if (isFenceLine(line)) {
+      const block = consumeCodeBlock(lines, index)
+      blocks.push(block.html)
+      index = block.next
+      continue
+    }
+
+    if (isTableStart(lines, index)) {
+      const block = consumeTable(lines, index)
+      blocks.push(block.html)
+      index = block.next
+      continue
+    }
+
+    const heading = matchHeading(line)
+    if (heading !== undefined) {
+      blocks.push(
+        `<h${String(heading.level)}>${renderInline(heading.text)}</h${String(heading.level)}>`,
+      )
+      index += 1
+      continue
+    }
+
+    if (isUnorderedListLine(line) || isOrderedListLine(line)) {
+      const block = consumeList(lines, index, isOrderedListLine(line))
+      blocks.push(block.html)
+      index = block.next
+      continue
+    }
+
+    const paragraph = consumeParagraph(lines, index)
+    blocks.push(paragraph.html)
+    index = paragraph.next
+  }
+
+  return blocks.join("\n")
+}
+
+function lineAt(lines: readonly string[], index: number): string {
+  return lines[index] ?? ""
+}
+
+function isFenceLine(line: string): boolean {
+  return line.trimStart().startsWith("```")
+}
+
+function isUnorderedListLine(line: string): boolean {
+  return /^[-*]\s+/.test(line.trim())
+}
+
+function isOrderedListLine(line: string): boolean {
+  return /^\d+\.\s+/.test(line.trim())
+}
+
+function isBlockStartLine(lines: readonly string[], index: number): boolean {
+  const line = lineAt(lines, index)
+  return (
+    isFenceLine(line) ||
+    matchHeading(line) !== undefined ||
+    isUnorderedListLine(line) ||
+    isOrderedListLine(line) ||
+    isTableStart(lines, index)
+  )
+}
+
+function matchHeading(line: string): { readonly level: number; readonly text: string } | undefined {
+  const match = /^(#{1,6})\s+(.+)$/.exec(line.trim())
+  if (match === null) {
+    return undefined
+  }
+
+  const marker = match[1] ?? ""
+  const text = match[2] ?? ""
+  return { level: marker.length, text }
+}
+
+type ParsedBlock = { readonly html: string; readonly next: number }
+
+function consumeCodeBlock(lines: readonly string[], start: number): ParsedBlock {
+  const fenceLine = lineAt(lines, start).trimStart()
+  const language = fenceLine.slice(3).trim()
+  const codeLines: string[] = []
+  let index = start + 1
+
+  while (index < lines.length && !isFenceLine(lineAt(lines, index))) {
+    codeLines.push(lineAt(lines, index))
+    index += 1
+  }
+  // 閉じフェンスが見つからない（発話が途中で切れた等）ときは、残り全部をコードとして扱う。
+  const next = index < lines.length ? index + 1 : index
+
+  const languageClass = language === "" ? "" : ` class="language-${escapeHtml(language)}"`
+  return {
+    html: `<pre><code${languageClass}>${escapeHtml(codeLines.join("\n"))}</code></pre>`,
+    next,
+  }
+}
+
+function isTableStart(lines: readonly string[], index: number): boolean {
+  const line = lineAt(lines, index)
+  if (line.trim() === "" || !line.includes("|")) {
+    return false
+  }
+  return isTableSeparatorLine(lineAt(lines, index + 1))
+}
+
+function isTableSeparatorLine(line: string): boolean {
+  const trimmed = line.trim()
+  if (trimmed === "" || !trimmed.includes("-")) {
+    return false
+  }
+
+  const cells = splitTableRow(trimmed)
+  return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell))
+}
+
+function splitTableRow(line: string): readonly string[] {
+  const withoutOuterPipes = stripOuterPipe(stripOuterPipe(line.trim(), "start"), "end")
+  return withoutOuterPipes.split("|").map((cell) => cell.trim())
+}
+
+function stripOuterPipe(line: string, side: "start" | "end"): string {
+  if (side === "start") {
+    return line.startsWith("|") ? line.slice(1) : line
+  }
+  return line.endsWith("|") ? line.slice(0, -1) : line
+}
+
+function consumeTable(lines: readonly string[], start: number): ParsedBlock {
+  const header = splitTableRow(lineAt(lines, start))
+  const bodyRows: string[][] = []
+  let index = start + 2
+
+  while (
+    index < lines.length &&
+    lineAt(lines, index).trim() !== "" &&
+    lineAt(lines, index).includes("|")
+  ) {
+    bodyRows.push([...splitTableRow(lineAt(lines, index))])
+    index += 1
+  }
+
+  const headHtml = `<thead><tr>${header.map((cell) => `<th>${renderInline(cell)}</th>`).join("")}</tr></thead>`
+  const bodyHtml =
+    bodyRows.length === 0
+      ? ""
+      : `<tbody>${bodyRows
+          .map((row) => `<tr>${row.map((cell) => `<td>${renderInline(cell)}</td>`).join("")}</tr>`)
+          .join("")}</tbody>`
+
+  return { html: `<table>${headHtml}${bodyHtml}</table>`, next: index }
+}
+
+function consumeList(lines: readonly string[], start: number, ordered: boolean): ParsedBlock {
+  const items: string[] = []
+  let index = start
+
+  while (index < lines.length) {
+    const line = lineAt(lines, index).trim()
+    const matches = ordered ? isOrderedListLine(line) : isUnorderedListLine(line)
+    if (!matches) {
+      break
+    }
+
+    const text = line.replace(ordered ? /^\d+\.\s+/ : /^[-*]\s+/, "")
+    items.push(`<li>${renderInline(text)}</li>`)
+    index += 1
+  }
+
+  const tag = ordered ? "ol" : "ul"
+  return { html: `<${tag}>${items.join("")}</${tag}>`, next: index }
+}
+
+function consumeParagraph(lines: readonly string[], start: number): ParsedBlock {
+  const paragraphLines: string[] = []
+  let index = start
+
+  while (
+    index < lines.length &&
+    lineAt(lines, index).trim() !== "" &&
+    !isBlockStartLine(lines, index)
+  ) {
+    paragraphLines.push(lineAt(lines, index))
+    index += 1
+  }
+
+  return {
+    html: `<p>${paragraphLines.map((line) => renderInline(line)).join("<br>\n")}</p>`,
+    next: index,
+  }
+}
+
+/**
+ * 段落・見出し・リスト・テーブルのセルに使う、簡易インライン記法の変換。
+ *
+ * **リンクだけは特別扱いする。** URL のスキーム判定は**エスケープ前の生の URL**に対して行う
+ * 必要があるため（エスケープ後の文字列で判定すると、記号の実体参照化で判定が狂いうる）、
+ * 先にリンク記法だけをテキストから切り出し（`splitOnLinks`）、リンク以外の部分にだけ
+ * `escapeHtml` を通してから `**太字**` / `` `コード` `` を当てる。
+ */
+function renderInline(rawText: string): string {
+  return splitOnLinks(rawText)
+    .map((part) => (part.kind === "link" ? linkPartHtml(part) : renderPlainInline(part.text)))
+    .join("")
+}
+
+type InlinePart =
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "link"; readonly text: string; readonly url: string }
+
+const LINK_PATTERN = /\[([^\]]+)\]\(([^)\s]+)\)/g
+
+/** `[text](url)` を実際のリンク記法として切り出し、それ以外の地の文と分ける。 */
+function splitOnLinks(rawText: string): readonly InlinePart[] {
+  const parts: InlinePart[] = []
+  let lastIndex = 0
+
+  LINK_PATTERN.lastIndex = 0
+  let match = LINK_PATTERN.exec(rawText)
+  while (match !== null) {
+    const whole = match[0]
+    const text = match[1]
+    const url = match[2]
+
+    if (text !== undefined && url !== undefined) {
+      if (match.index > lastIndex) {
+        parts.push({ kind: "text", text: rawText.slice(lastIndex, match.index) })
+      }
+      parts.push({ kind: "link", text, url })
+      lastIndex = match.index + whole.length
+    }
+
+    match = LINK_PATTERN.exec(rawText)
+  }
+
+  if (lastIndex < rawText.length) {
+    parts.push({ kind: "text", text: rawText.slice(lastIndex) })
+  }
+
+  return parts
+}
+
+/**
+ * `href` に入れてよいスキームの allowlist。**それ以外（`javascript:` / `data:` / 不明なスキーム）は
+ * リンクにせず、`[text](url)` の見た目のまま平文として出す**（`docs/coding-standards.md`
+ * 「会話内容の扱い」と同じ思想: このビューは localhost とはいえ会話の内容を持っているので、
+ * クリックで JavaScript が実行される経路を作らない）。`/` や `#` で始まる相対リンクは許可する。
+ * 判定は前後の空白を落とし、大文字小文字を無視して行う（`JavaScript:` のような表記も弾く）。
+ */
+const ALLOWED_LINK_SCHEMES: readonly string[] = ["http:", "https:", "mailto:"]
+
+function linkPartHtml(part: { readonly text: string; readonly url: string }): string {
+  const trimmedUrl = part.url.trim()
+  if (!isAllowedLinkUrl(trimmedUrl)) {
+    return renderPlainInline(`[${part.text}](${part.url})`)
+  }
+
+  return `<a href="${escapeHtml(trimmedUrl)}" rel="noopener noreferrer">${renderPlainInline(part.text)}</a>`
+}
+
+function isAllowedLinkUrl(url: string): boolean {
+  if (url.startsWith("/") || url.startsWith("#")) {
+    return true
+  }
+
+  const schemeMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(url)
+  if (schemeMatch === null) {
+    return false
+  }
+
+  const scheme = `${(schemeMatch[1] ?? "").toLowerCase()}:`
+  return ALLOWED_LINK_SCHEMES.includes(scheme)
+}
+
+/** リンク以外の地の文に使う、`escapeHtml` 済みの上での `**太字**` / `` `コード` `` の変換。 */
+function renderPlainInline(rawText: string): string {
+  const escaped = escapeHtml(rawText)
+  const withCode = escaped.replace(/`([^`]+)`/g, (_match, code: string) => `<code>${code}</code>`)
+  return withCode.replace(/\*\*([^*]+)\*\*/g, (_match, text: string) => `<strong>${text}</strong>`)
 }
 
 function sidebarSection(title: string, body: string): string {

@@ -237,7 +237,7 @@ describe("tsukumo CLI", () => {
     }
   })
 
-  it("中身が未定のビューも、経路としては配られている", async () => {
+  it("メインビューが配られる（セリフだけの発話は詳細が空になるので、まだ作業がない扱いになる）", async () => {
     const dir = makeTempDir()
     const transcriptPath = join(dir, "session.jsonl")
     writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
@@ -245,7 +245,7 @@ describe("tsukumo CLI", () => {
     try {
       const page = await fetchView([transcriptPath], "main")
 
-      expect(page).toContain("準備中")
+      expect(page).toContain("まだ作業がありません")
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
