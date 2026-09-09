@@ -35,8 +35,8 @@ function parseColumn(response: string): number | undefined {
     return undefined
   }
 
-  const column = Number(response.slice(separator + 1, end))
-  return Number.isFinite(column) ? column : undefined
+  const parsed = Number(response.slice(separator + 1, end))
+  return Number.isFinite(parsed) ? parsed : undefined
 }
 
 function column(): Promise<number> {
