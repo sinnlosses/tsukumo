@@ -21,6 +21,7 @@ import {
   resolveExpression,
   resolveOutfit,
 } from "./expression.ts"
+import { createOrcaHost } from "./orca-host.ts"
 import { parseStateFile } from "./state.ts"
 import { extractAgentMeta, extractLatestToolName } from "./subagents.ts"
 import { type TaskStatusCounts, countTaskStatuses } from "./tasks.ts"
@@ -125,7 +126,8 @@ async function main(args: readonly string[]): Promise<number> {
     return 1
   }
 
-  const server = await startViewServer(port).catch((error: unknown) => {
+  const host = createOrcaHost()
+  const server = await startViewServer(port, host).catch((error: unknown) => {
     process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
     return undefined
   })

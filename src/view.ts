@@ -27,6 +27,12 @@ export function viewEventPath(view: ViewName): string {
   return `/events/${view}`
 }
 
+/** 送信先として選べるターミナルの一覧を返す経路（GET）。 */
+export const TERMINALS_PATH = "/api/terminals"
+
+/** 依頼をターミナルへ送る経路（POST）。 */
+export const DISPATCH_PATH = "/api/dispatch"
+
 /**
  * ビューのページ全体を組み立てる。`body` は本文の HTML 断片で、最初の表示に埋め込むと同時に、
  * 以降は Server-Sent Events で届く同じ形の断片で丸ごと差し替えられる
@@ -90,16 +96,164 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
     "tsukumo",
     `<div class="layout-grid">
 ${regions}
-<div class="layout-region layout-empty" aria-hidden="true"></div>
+${dispatchRegionHtml()}
 </div>
 <script>
 ${subscriptions}
+${dispatchScript()}
 </script>`,
   )
 }
 
 function layoutRegionId(view: ViewName): string {
   return `tsukumo-view-${view}`
+}
+
+const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
+const DISPATCH_TARGET_ID = "tsukumo-dispatch-target"
+const DISPATCH_REFRESH_ID = "tsukumo-dispatch-refresh"
+const DISPATCH_TEXT_ID = "tsukumo-dispatch-text"
+const DISPATCH_SEND_ID = "tsukumo-dispatch-send"
+const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
+// ブラウザに選んだ送信先を覚えさせる場所（localStorage）のキー。サーバ側には状態を持たせない
+// （docs/architecture.md「HTML はローカルの HTTP サーバから配る」— 本文はメモリにしか持たない、
+// という制約に送信先の記憶も揃える）。
+const DISPATCH_TARGET_STORAGE_KEY = "tsukumo-dispatch-target"
+
+/**
+ * 右下の空き領域を埋める、依頼の送信フォーム（`docs/requirements.md` 4.7）。送信先の選択は
+ * `orca terminal list` から得た一覧を `<select>` に出す（一覧の取得・選択の記憶は
+ * {@link dispatchScript} 側の役目。ここは静的なマークアップだけを組み立てる）。
+ */
+function dispatchRegionHtml(): string {
+  return `<section class="layout-region layout-dispatch" id="tsukumo-view-dispatch">
+<form id="${DISPATCH_FORM_ID}">
+  <div class="dispatch-row">
+    <select id="${DISPATCH_TARGET_ID}" aria-label="送信先のターミナル"></select>
+    <button type="button" id="${DISPATCH_REFRESH_ID}">一覧を更新</button>
+  </div>
+  <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く" required></textarea>
+  <div class="dispatch-row">
+    <button type="submit" id="${DISPATCH_SEND_ID}" disabled>送る</button>
+    <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
+  </div>
+</form>
+</section>`
+}
+
+/**
+ * 送信フォームの配線。**会話の内容（依頼の文面）はブラウザから直接サーバへ POST するだけで、
+ * この関数自身（サーバ側で文字列として組み立てる部分）には一切現れない**（docs/coding-standards.md
+ * 「会話内容の扱い」）。ここに埋め込むのは経路（`TERMINALS_PATH` / `DISPATCH_PATH`）と要素IDだけ。
+ *
+ * - **一覧の取得は起動時と「一覧を更新」ボタンの両方で行う。** ターミナルは後から起動されうるので、
+ *   ページを開いた時点の一覧を固定にしない
+ * - **送信先が1つも無い・一覧の取得に失敗したときは送信ボタンを無効にし、理由を出す**
+ *   （壊れて見えないように。`tsukumo terminal list` が失敗する＝ `orca` が無い環境も含む）
+ * - **送信中は再度押せないようにし、送信済み／失敗を必ず文字で残す**（送ったのに何も起きない
+ *   ように見えないようにする、というこの機能の完了条件）
+ */
+function dispatchScript(): string {
+  return `  {
+    const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
+    const targetSelect = document.getElementById(${JSON.stringify(DISPATCH_TARGET_ID)})
+    const refreshButton = document.getElementById(${JSON.stringify(DISPATCH_REFRESH_ID)})
+    const textArea = document.getElementById(${JSON.stringify(DISPATCH_TEXT_ID)})
+    const sendButton = document.getElementById(${JSON.stringify(DISPATCH_SEND_ID)})
+    const status = document.getElementById(${JSON.stringify(DISPATCH_STATUS_ID)})
+    const storageKey = ${JSON.stringify(DISPATCH_TARGET_STORAGE_KEY)}
+
+    function rememberedTarget() {
+      try {
+        return localStorage.getItem(storageKey)
+      } catch {
+        return null
+      }
+    }
+
+    function rememberTarget(id) {
+      try {
+        localStorage.setItem(storageKey, id)
+      } catch {
+        // ブラウザの設定で使えないだけなので、記憶できないまま続ける。
+      }
+    }
+
+    async function loadTerminals() {
+      status.textContent = "送信先を取得中…"
+      sendButton.disabled = true
+      targetSelect.innerHTML = ""
+
+      let data
+      try {
+        const response = await fetch(${JSON.stringify(TERMINALS_PATH)})
+        data = await response.json()
+      } catch {
+        status.textContent = "送信先の一覧を取得できなかった"
+        return
+      }
+
+      if (!data.ok) {
+        status.textContent = "送信先の一覧を取得できなかった: " + data.reason
+        return
+      }
+      if (data.terminals.length === 0) {
+        status.textContent = "動いているターミナルが無い"
+        return
+      }
+
+      const remembered = rememberedTarget()
+      for (const terminal of data.terminals) {
+        const option = document.createElement("option")
+        option.value = terminal.id
+        option.textContent = terminal.label
+        targetSelect.appendChild(option)
+      }
+      if (remembered !== null && data.terminals.some((terminal) => terminal.id === remembered)) {
+        targetSelect.value = remembered
+      }
+
+      sendButton.disabled = false
+      status.textContent = ""
+    }
+
+    refreshButton.addEventListener("click", () => {
+      loadTerminals()
+    })
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault()
+      const text = textArea.value.trim()
+      const terminalId = targetSelect.value
+      if (text === "" || terminalId === "") {
+        return
+      }
+
+      sendButton.disabled = true
+      status.textContent = "送信中…"
+      try {
+        const response = await fetch(${JSON.stringify(DISPATCH_PATH)}, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ terminalId, text }),
+        })
+        const data = await response.json()
+        if (data.ok) {
+          rememberTarget(terminalId)
+          textArea.value = ""
+          status.textContent = "送信済み"
+        } else {
+          status.textContent = "送信できなかった: " + data.reason
+        }
+      } catch {
+        status.textContent = "送信できなかった"
+      } finally {
+        sendButton.disabled = false
+      }
+    })
+
+    loadTerminals()
+  }`
 }
 
 /**
@@ -346,14 +500,14 @@ const STYLE = `
   .sidebar-empty { color: #8f97ab; }
   .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
 
-  /* まとめたレイアウト（buildLayoutPage）。上段はメイン3:サイドバー1、下段はキャラ半分:空き半分
+  /* まとめたレイアウト（buildLayoutPage）。上段はメイン3:サイドバー1、下段はキャラ半分:送信欄半分
      （docs/requirements.md 4.7「上段と下段で縦の仕切り位置が違う」）。4列にしておくと、
      行ごとに違う比率の仕切りを1つの grid-template-columns で表せる。 */
   .layout-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: 7fr 3fr;
-    grid-template-areas: "main main main sidebar" "character character empty empty";
+    grid-template-areas: "main main main sidebar" "character character dispatch dispatch";
     gap: 0.75rem;
     /* body の padding（上下 1rem ずつ）ぶんを差し引いて、grid 自体は画面の高さぴったりにする。 */
     height: calc(100vh - 2rem);
@@ -370,20 +524,43 @@ const STYLE = `
   .layout-main { grid-area: main; }
   .layout-sidebar { grid-area: sidebar; }
   .layout-character { grid-area: character; }
-  /* 入力ペインの場所（利用者が手で並べる。docs/requirements.md 4.7）。中身は無いが、他の領域と
-     同じ枠で囲むことで、ただの空白ではなく「ここは意図した余白」だと分かるようにする。 */
-  .layout-empty { grid-area: empty; }
+  /* 右下の入力ペイン（docs/requirements.md 4.7）。claude への依頼を送るフォームを持つ。 */
+  .layout-dispatch { grid-area: dispatch; }
+  .layout-dispatch form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 0.5rem;
+  }
+  .dispatch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .dispatch-row select { flex: 1 1 auto; min-width: 0; }
+  .dispatch-text {
+    flex: 1 1 auto;
+    min-height: 0;
+    resize: none;
+    padding: 0.5rem;
+    background: #10131a;
+    color: inherit;
+    border: 1px solid #3a4256;
+    border-radius: 0.4rem;
+    font: inherit;
+  }
+  .dispatch-status { font-size: 0.8rem; color: #8f97ab; }
 
-  /* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー の1列に畳む
-     （docs/requirements.md 4.7「狭い画面での崩れ方」）。空き領域はここでは意味を持たないので隠す。 */
+  /* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
+     （docs/requirements.md 4.7「狭い画面での崩れ方」）。 */
   @media (max-width: 760px) {
     .layout-grid {
       grid-template-columns: 1fr;
       grid-template-rows: none;
-      grid-template-areas: "main" "sidebar" "character";
+      grid-template-areas: "main" "sidebar" "character" "dispatch";
       height: auto;
     }
-    .layout-empty { display: none; }
+    .layout-dispatch { min-height: 10rem; }
   }
 `
 

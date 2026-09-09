@@ -9,10 +9,12 @@ import {
   buildSidebarBody,
   buildViewPage,
   type CharacterViewData,
+  DISPATCH_PATH,
   isViewName,
   LAYOUT_PATH,
   type SidebarData,
   type SubagentActivity,
+  TERMINALS_PATH,
   VIEW_NAMES,
   viewEventPath,
   viewPath,
@@ -115,10 +117,34 @@ describe("まとめたレイアウトページ", () => {
     }
   })
 
-  it("入力ペインの場所（空き領域）も持つが、そこには本文を差し込まない", () => {
+  it("右下の入力ペインに、送信先の選択と依頼を書くフォームを持つ", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
-    expect(page).toContain('<div class="layout-region layout-empty" aria-hidden="true"></div>')
+    expect(page).toContain('<section class="layout-region layout-dispatch"')
+    expect(page).toContain('<form id="tsukumo-dispatch-form">')
+    expect(page).toContain('<select id="tsukumo-dispatch-target"')
+    expect(page).toContain('<textarea id="tsukumo-dispatch-text"')
+  })
+
+  it("送信先の一覧の取得と依頼の送信を、経路の定数（TERMINALS_PATH / DISPATCH_PATH）宛に行う", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(page).toContain(`fetch(${JSON.stringify(TERMINALS_PATH)})`)
+    expect(page).toContain(`fetch(${JSON.stringify(DISPATCH_PATH)}`)
+  })
+
+  it("送信先が0件のとき・一覧の取得や送信に失敗したときに出す理由の文言を持つ", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(page).toContain("動いているターミナルが無い")
+    expect(page).toContain("送信先の一覧を取得できなかった")
+    expect(page).toContain("送信できなかった")
+  })
+
+  it("送信ボタンは初期状態で無効になっている（送信先が揃うまで押せない）", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(page).toContain('<button type="submit" id="tsukumo-dispatch-send" disabled>')
   })
 })
 

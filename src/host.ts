@@ -18,6 +18,18 @@ export type PaneRequest = {
   readonly command: string | undefined
 }
 
+/** 送信先として選べる、生きているペイン1つの情報。 */
+export type Pane = {
+  readonly id: string
+  /** 一覧から選ぶときに人が読む名前。 */
+  readonly label: string
+}
+
+/** ペインの一覧を得る依頼の結果。 */
+export type ListPanesResult =
+  | { readonly ok: true; readonly panes: readonly Pane[] }
+  | { readonly ok: false; readonly reason: string }
+
 export type Host = {
   /** ペインを分割し、新しいペインでコマンドを起動する。 */
   readonly openPane: (request: PaneRequest) => Promise<HostResult>
@@ -27,4 +39,8 @@ export type Host = {
    * 済ませるため（同じ URL で何度呼んでもビューは1つ）。
    */
   readonly showView: (url: string) => Promise<HostResult>
+  /** 送信先として選べる、生きているペインの一覧を得る。 */
+  readonly listPanes: () => Promise<ListPanesResult>
+  /** 指定したペインに文字を送る（依頼の送信）。 */
+  readonly sendText: (paneId: string, text: string) => Promise<HostResult>
 }
