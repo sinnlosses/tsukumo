@@ -1,0 +1,17 @@
+{
+  "name": "つくもの精霊",
+  "description": "tsukumo の既定のキャラクター。ターミナルという道具に宿った小さな精霊。",
+  "license": "このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。",
+  "portraits": {
+    "default": "default.svg",
+    "working": "working.svg",
+    "proud": "proud.svg",
+    "flustered": "flustered.svg"
+  },
+  "outfitAccents": {
+    "default": "#b8c7ff",
+    "light": "#a8e6c0",
+    "normal": "#b8c7ff",
+    "heavy": "#ffb3a7"
+  }
+}

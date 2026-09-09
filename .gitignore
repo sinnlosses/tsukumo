@@ -5,3 +5,6 @@ node_modules/
 .DS_Store
 
 .idea/
+
+# キャラクター素材（権利のあるものを公開リポジトリに入れないため）
+characters/local/
