@@ -38,10 +38,10 @@
   {
     "id": "T-005",
     "task": "hook で状態ファイルを書き、表情と衣装を切り替える。transcript のパスも hook から受け渡す。\n\n## 背景\n\n`docs/requirements.md` 4.3 と `docs/architecture.md`「hookは状態ファイルを書くだけにする」。hook の stdout からは描画できないので、状態の受け渡しはファイル経由になる。\n\n対応の初期案は `PreToolUse` = 作業中 / `Stop` = どや顔 / エラー = あわあわ。衣装は実行中のモデル（`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` = 戦闘配置）。\n\nあわせて、SessionStart hook で `transcript_path` を既知の場所に書き出す（`docs/architecture.md`「追従先は自前でスラッグ化せず、hookが書いたパスを読む」）。これにより T-003 でコマンドライン引数にしていた transcript のパスを、hook 経由で解決できるようになる。\n\n## 解くべき論点\n\n- 状態ファイルの置き場所と形式。statusline 併走でも同じファイルを読む前提で決める\n- 状態ファイルがまだ書かれていないときの既定の表情\n- hook が書いた直後にサイドカーが読むときの、書き込み途中の行をどう避けるか\n\n## やること\n\n1. hook スクリプトを書く（状態ファイルへの書き込みと、SessionStart での `transcript_path` の書き出し）\n2. サイドカー側で状態ファイルを読み、表情と衣装を切り替える\n3. transcript のパスを、コマンドライン引数だけでなく hook が書いた場所からも解決できるようにする\n4. `~/.claude/settings.json` への登録手順を `README.md`（無ければ作る）に書く。**設定ファイル自体をこのタスクで書き換えるかはユーザーに確認する**\n\n## 完了条件\n\n- チェックコマンドが通る\n- 状態ファイルが無い / 壊れているときに、既定の表情で描画が続く（テストで固定する）\n- 実際に `claude` を動かし、ツール実行中と停止時で**表情が切り替わる**ことを目視で確認する（`docs/architecture.md`「手で確かめること」の手順4）。結果を `evidence` に1行で書く\n\n## 注意\n\n- **`~/.claude/settings.json` の hooks と statusLine は orca（`~/.orca/agent-hooks/`）が専有している。既存エントリを壊さず追記する。上書きすると orca 側が黙って動かなくなる**\n- ユーザーのグローバル設定を書き換えるのは外部への反映にあたるため、**実施前にユーザーの承認を得る**。承認が取れないうちは手順を書くところまでで止める\n- **hook は状態（イベント種別・モデル名）だけを書き、発話の内容を状態ファイルに書かない**（`docs/coding-standards.md`「会話内容の扱い」）",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`bun run check` 通過: 57 pass / 0 fail。状態ファイルが無い/壊れている/未知イベントのときの既定表示、会話断片が漏れないこと、原子的差し替えをテストで固定。\n`~/.claude/settings.json` に5イベント分を追記（バックアップ: settings.json.bak.20260909-124952）。orca の12エントリと statusLine がハッシュ一致で無傷であることを追記後に確認。\n目視確認: ツール実行後に表情が「どや顔」へ切り替わることをユーザーが確認。",
     "dependencies": ["T-003"]
   },
   {
