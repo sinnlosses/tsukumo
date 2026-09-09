@@ -1,24 +1,32 @@
-// tsukumo のエントリポイント。transcript(JSONL) を追従し、
-// 最新の assistant 発話を吹き出しとして描画し続ける。
+// tsukumo のエントリポイント。transcript(JSONL) と hook の状態ファイルを追従し、
+// ローカルの HTTP サーバから HTML のビューを配り続ける。
 
 import { readFileSync, statSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
 
-import { buildBalloon } from "./balloon.ts"
-import { draw, terminalWidth } from "./draw.ts"
 import { describeStatus, resolveExpression, resolveOutfit } from "./expression.ts"
 import { parseStateFile } from "./state.ts"
 import { extractLatestUtterance } from "./transcript.ts"
+import { startViewServer, type ViewServer } from "./view-server.ts"
+import { buildCharacterBody, buildPlaceholderBody, VIEW_NAMES } from "./view.ts"
 
-const USAGE = `tsukumo — Claude Code の発話を立ち絵と吹き出しで表示するサイドカー
+// ビューを配るポート。固定にしてあるのは、開き直したブラウザタブが同じ URL のまま使えるように
+// するため（docs/architecture.md「HTML はローカルの HTTP サーバから配る」）。
+const DEFAULT_VIEW_PORT = 7327
+const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
+
+const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出すサイドカー
 
 使い方:
   bun run start <transcript.jsonl>
 
 引数を省略すると、SessionStart hook が書き出す ~/.tsukumo/transcript-path を追従先にする
 （引数を渡した場合はそちらを優先する）。
+
+環境変数:
+  TSUKUMO_VIEW_PORT  ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
 `
 
 // hook（hooks/state.sh）が書く既知の場所。ディレクトリ名・ファイル名を変えるときは
@@ -37,10 +45,10 @@ type FileSnapshot = {
 }
 
 /**
- * 終了コードを返す。0 のときはポーリングループへ入ったままプロセスを生かし続けるので、
+ * 終了コードを返す。0 のときはビューサーバとポーリングループを残したままプロセスを生かし続けるので、
  * 呼び出し側は 0 以外のときだけ `process.exit` する。
  */
-function main(args: readonly string[]): number {
+async function main(args: readonly string[]): Promise<number> {
   const homeDir = homedir()
   const transcriptPath = resolveTranscriptPath(args[0], homeDir)
   if (transcriptPath === undefined) {
@@ -48,17 +56,35 @@ function main(args: readonly string[]): number {
     return 2
   }
 
+  // 起動時に前提（transcript が読める・ポートが空いている）が満たされていないときだけ即時終了する
+  // （docs/coding-standards.md「エラーハンドリング」）。
   const initialSnapshot = readSnapshot(transcriptPath)
   if (initialSnapshot === undefined) {
-    // 起動時に前提（transcript が読める）が満たされていない: 即時終了する
-    // （docs/coding-standards.md「エラーハンドリング」）。
     process.stderr.write(`tsukumo: transcript を読み込めない: ${transcriptPath}\n`)
     return 1
   }
 
-  renderOnce(transcriptPath, homeDir)
-  followResize(transcriptPath, homeDir)
-  followTranscript(transcriptPath, homeDir, initialSnapshot)
+  const port = resolveViewPort(process.env[VIEW_PORT_ENV_NAME])
+  if (port === undefined) {
+    process.stderr.write(`tsukumo: ${VIEW_PORT_ENV_NAME} がポート番号として読めない\n`)
+    return 1
+  }
+
+  const server = await startViewServer(port).catch((error: unknown) => {
+    process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
+    return undefined
+  })
+  if (server === undefined) {
+    return 1
+  }
+
+  // メインビューとサイドバーの中身は後続の作業で入る。ここでは場所だけを確保しておく。
+  server.publish("main", buildPlaceholderBody("main"))
+  server.publish("sidebar", buildPlaceholderBody("sidebar"))
+
+  publishCharacterView(server, transcriptPath, homeDir)
+  followTranscript(server, transcriptPath, homeDir, initialSnapshot)
+  announce(server)
 
   return 0
 }
@@ -78,17 +104,24 @@ function resolveTranscriptPath(argPath: string | undefined, homeDir: string): st
   return trimmed !== undefined && trimmed !== "" ? trimmed : undefined
 }
 
-// ペイン幅は描画のたびに読み直すが、描画が起きるのは transcript が変わったときだけ。
-// リサイズを拾わないと、幅を変えても箱が前の幅のまま残り、行が新しい幅を超えて
-// 折り返され、枠の右辺が次の行へ押し出される。
-function followResize(transcriptPath: string, homeDir: string): void {
-  process.stdout.on("resize", () => {
-    renderOnce(transcriptPath, homeDir)
-  })
+/** 環境変数のポート番号を読む。読めない値のときは undefined を返し、既定にも落とさない。 */
+function resolveViewPort(rawPort: string | undefined): number | undefined {
+  const trimmed = rawPort?.trim()
+  if (trimmed === undefined || trimmed === "") {
+    return DEFAULT_VIEW_PORT
+  }
+
+  const parsed = Number(trimmed)
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) {
+    return undefined
+  }
+
+  return parsed
 }
 
-/** 追記を検知して描画を更新するポーリングループ。ファイルの mtime/size を見るだけで十分とした。 */
+/** 追記を検知してビューを更新するポーリングループ。ファイルの mtime/size を見るだけで十分とした。 */
 function followTranscript(
+  server: ViewServer,
   transcriptPath: string,
   homeDir: string,
   initialSnapshot: FileSnapshot,
@@ -105,8 +138,35 @@ function followTranscript(
     }
 
     lastSnapshot = current
-    renderOnce(transcriptPath, homeDir)
+    publishCharacterView(server, transcriptPath, homeDir)
   }, POLL_INTERVAL_MS)
+}
+
+// 「読む → 決める → 配る」の1回分をまるごと包む唯一の場所。ここでの失敗は次のポーリングに
+// 任せて諦める（docs/coding-standards.md「エラーハンドリング」— ループの中に try/catch を
+// 散らさない）。
+function publishCharacterView(server: ViewServer, transcriptPath: string, homeDir: string): void {
+  try {
+    const utterance = extractLatestUtterance(readFileSync(transcriptPath, "utf8"))
+
+    // 状態ファイルが無い・壊れている・未知のイベント種別のときも、parseStateFile /
+    // resolveExpression / resolveOutfit が undefined ・ "default" に落として吸収するので、
+    // ここではそれ以上分岐しない。
+    const stateFileContent = readOptionalFile(stateFilePath(homeDir))
+    const state = stateFileContent !== undefined ? parseStateFile(stateFileContent) : undefined
+    const status = describeStatus(resolveExpression(state), resolveOutfit(state))
+
+    server.publish("character", buildCharacterBody(status, utterance))
+  } catch {
+    process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n")
+  }
+}
+
+// 起動したことと URL は、ペインに残る唯一の出力。ここに会話の内容は出さない
+// （docs/coding-standards.md「会話内容の扱い」）。
+function announce(server: ViewServer): void {
+  const lines = VIEW_NAMES.map((view) => `  ${server.urlOf(view)}`)
+  process.stdout.write(`tsukumo: ビューを配信中\n${lines.join("\n")}\n`)
 }
 
 function readSnapshot(path: string): FileSnapshot | undefined {
@@ -135,31 +195,11 @@ function stateFilePath(homeDir: string): string {
   return join(homeDir, TSUKUMO_DIR_NAME, STATE_FILE_NAME)
 }
 
-// 「読む → 決める → 描く」の1回分をまるごと包む唯一の場所。ここでの失敗は次のポーリングに
-// 任せて諦める（docs/coding-standards.md「エラーハンドリング」— 描画ループの中に try/catch
-// を散らさない）。
-function renderOnce(transcriptPath: string, homeDir: string): void {
-  try {
-    const content = readFileSync(transcriptPath, "utf8")
-    const utterance = extractLatestUtterance(content)
-    const balloonLines = buildBalloon(utterance, terminalWidth())
-
-    // 状態ファイルが無い・壊れている・未知のイベント種別のときも、parseStateFile /
-    // resolveExpression / resolveOutfit が undefined ・ "default" に落として吸収するので、
-    // ここではそれ以上分岐しない。
-    const stateFileContent = readOptionalFile(stateFilePath(homeDir))
-    const state = stateFileContent !== undefined ? parseStateFile(stateFileContent) : undefined
-    const expression = resolveExpression(state)
-    const outfit = resolveOutfit(state)
-    const statusLine = describeStatus(expression, outfit)
-
-    draw([statusLine, ...balloonLines])
-  } catch {
-    process.stderr.write("tsukumo: 描画に失敗した。次の更新を待つ\n")
-  }
+function describeError(error: unknown): string {
+  return error instanceof Error ? error.message : "原因不明"
 }
 
-const exitCode = main(process.argv.slice(2))
+const exitCode = await main(process.argv.slice(2))
 if (exitCode !== 0) {
   process.exit(exitCode)
 }

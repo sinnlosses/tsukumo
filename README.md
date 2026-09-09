@@ -2,7 +2,8 @@
 
 **キャラクターと一緒に楽しく仕事をするためのターミナル環境。**
 実現の手段はサイドカー方式で、Claude Code 本体のTUIには**一切割り込まず**、別ペインで常駐する
-プロセスがセッションの transcript（JSONL）を追従して描画する。
+プロセスがセッションの transcript（JSONL）を追従する。**表示はすべて HTML** で、ローカルの
+HTTP サーバから配り、Orca 内のブラウザタブに出す。
 
 設計判断・要件・用語の正典は `docs/` にある。**このREADMEはセットアップ手順だけを持つ**
 （詳細は `CLAUDE.md` と `docs/architecture.md` を参照）。
@@ -21,6 +22,17 @@ bun run start <transcript.jsonl>
 引数を省略すると、後述の SessionStart hook が書き出す `~/.tsukumo/transcript-path` を
 追従先にする（**引数を渡した場合はそちらを優先する**）。Orca の split terminal で `claude` と
 別のペインに常駐させて使う（画面レイアウトは `docs/requirements.md` 4.7）。
+
+起動すると3つのビューの URL を表示するので、それをホスト（Orca）の中に開く:
+
+```bash
+bun run scripts/open-views.ts http://127.0.0.1:7327
+```
+
+- ビューは `127.0.0.1` にだけバインドしたサーバから配られ、**ファイルには書き出さない**
+  （会話の内容をディスクに残さないため。`docs/coding-standards.md`「会話内容の扱い」）
+- ポートは既定 `7327`。`TSUKUMO_VIEW_PORT` で変えられる（`0` を渡すと空きポートを使う）
+- `orca` が無い環境では、ビューを開けないだけで配信は続く
 
 ## hook を登録する（表情・衣装の切り替えと transcript パスの自動解決）
 

@@ -110,10 +110,10 @@
   {
     "id": "T-013",
     "task": "ターミナル描画を捨て、HTML ビューの基盤を作る。\n\n## 背景\n\n表示は**すべて HTML** になった（`docs/history/direction.md` 2026-09-09 Q4 / Q7 / Q8）。「ターミナルにこだわるより、キャラと一緒に仕事できる状況が重要」というのがユーザーの判断。\n\nこれにより、**今ある `src/balloon.ts`（折り返し・切り詰め・枠付け）と `src/draw.ts`（端末への書き出しとペイン幅の取得）は役目を終える。** 折り返しも全角文字の幅もブラウザがやる。`develop/progress.md` の「未解決」にある**禁則処理の欠如も、この変更で消える**。\n\n残るのは `src/transcript.ts`（発話とセリフ／詳細の切り出し）・`src/state.ts`・`src/expression.ts`（hook の状態 → 表情・衣装）。これらは表示方法に依存しない。\n\n`orca tab create --url` で Orca 内にビューを開ける（外部ブラウザに出ない）。\n\n## 解くべき論点\n\n1. **HTML をどう配るか。** (a) ファイルに書き出して `file://` で開く / (b) ローカルの HTTP サーバを立てて配る。**後段で入力を claude に送り込む**ことが決まっている（`docs/history/direction.md` Q6）ので、そのときサーバは要る。先に (b) にしておくか、まず (a) で始めるか\n2. **会話内容がディスクに残ることをどう扱うか。** (a) なら HTML ファイルに詳細が平文で残る。`docs/coding-standards.md`「会話内容の扱い」の「別の場所に複製しない」と衝突する。(b) ならメモリ上で配れる。**この観点は (b) に有利**\n3. **更新の伝え方。** ポーリングで再読み込みするか、SSE / WebSocket で押すか\n4. **`src/balloon.ts` / `src/draw.ts` とそのテストをこのタスクで消すか、各ビューができてから消すか**\n\n## やること\n\n1. 論点1〜3を判断する。**判断と理由を `docs/architecture.md` の設計判断として残す**\n2. HTML ビューの基盤を作る（配信・更新の仕組み）\n3. **ホスト依存の操作をまとめるポート**を定義し、Orca のアダプタを1つ実装する（`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」）。**インターフェースに Orca の語彙を漏らさない**\n4. `src/balloon.ts` / `src/draw.ts` とそのテストを削除する。`src/index.ts` の配線もそれに合わせる\n5. `docs/architecture.md`「各ファイルの責務」の表と、`docs/requirements.md` 4.2 の「立ち絵はターミナルの画像プロトコルで表示する」を実態に合わせて直す\n6. `develop/progress.md` の「未解決」から、消えた項目（禁則処理・画像プロトコル）を落とすのは**メインセッションの担当**なので触らない\n\n## 完了条件\n\n- チェックコマンドが通る\n- `src/balloon.ts` / `src/draw.ts` がリポジトリに存在しない\n- Orca 内にビューが開き、そこに何か（プレースホルダでよい）が表示されることを目視で確認する\n- 論点1〜3の判断と理由が `docs/architecture.md` に書かれている\n\n## 注意\n\n- **`Bun.*` の固有APIを使わない**（`node:http` などの標準API。例外は `bun:test`）\n- **会話内容をディスクに書く方式を選ぶ場合は、先にユーザーの承認を得る**（論点2）\n- `orca` への依存はポートのアダプタ1箇所に閉じ込める。**VS Code 用のアダプタは作らない**",
-    "status": "todo",
+    "status": "done",
     "difficulty": "opus",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`bun run check` 通過: 62 pass / 0 fail。`src/balloon.ts` / `src/draw.ts` とテストを削除し、ホスト依存の操作をまとめる `src/host.ts`（ポート）と `src/orca-host.ts`（唯一のアダプタ）を追加。\nループバック限定を実測で確認: `127.0.0.1` → 200 / LAN IP（192.168.144.128）→ 接続不可 / `lsof` が `TCP 127.0.0.1:7327 (LISTEN)`。書き込み系APIは `src/` `scripts/` に0件。\n更新は SSE で押す判断。理由は docs/architecture.md「ビューの更新は Server-Sent Events で押す」。",
     "dependencies": []
   },
   {
