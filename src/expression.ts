@@ -46,11 +46,11 @@ export function resolveOutfit(state: StateFileContents | undefined): Outfit {
 }
 
 /**
- * 立ち絵がまだ無い間の暫定表示: 表情・衣装をテキスト1行にまとめる
- * （docs/architecture.md「現在の実装状況」— 立ち絵はまだ無い）。立ち絵ができたら置き換える。
+ * 表情の日本語ラベル。立ち絵の alt / aria-label に使う
+ * （画像だけでは伝わらない状態を、スクリーンリーダー等に文字で残すため）。
  */
-export function describeStatus(expression: Expression, outfit: Outfit): string {
-  return `［表情: ${EXPRESSION_LABEL[expression]} ／ 衣装: ${OUTFIT_LABEL[outfit]}］`
+export function expressionLabel(expression: Expression): string {
+  return EXPRESSION_LABEL[expression]
 }
 
 const EXPRESSION_BY_EVENT: Readonly<Record<string, Expression>> = {
@@ -71,11 +71,4 @@ const EXPRESSION_LABEL: Readonly<Record<Expression, string>> = {
   working: "作業中",
   proud: "どや顔",
   flustered: "あわあわ",
-}
-
-const OUTFIT_LABEL: Readonly<Record<Outfit, string>> = {
-  default: "不明",
-  light: "軽装",
-  normal: "通常装備",
-  heavy: "戦闘配置",
 }

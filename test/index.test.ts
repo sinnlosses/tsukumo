@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { spawn, spawnSync } from "node:child_process"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -16,11 +16,12 @@ function makeTempDir(): string {
 }
 
 // 手で書いた架空の会話。壊れた行と未知の type を混ぜて、落ちずに読み飛ばすことを確かめる。
+// assistant の発話は「> 」で始まる引用がセリフになる規約（docs/requirements.md 4.2）に従わせる。
 const BROKEN_TRANSCRIPT_LINES = [
   '{"type":"user","message":{"content":[{"type":"text","text":"つくもさん、調子はどう？"}]}}',
   "{this line is not valid json",
   '{"type":"mode","value":"plan"}',
-  '{"type":"assistant","message":{"content":[{"type":"text","text":"絶好調だよ、任せて！"}]}}',
+  '{"type":"assistant","message":{"content":[{"type":"text","text":"> 絶好調だよ、任せて！"}]}}',
   '{"type":"unknown-future-type","payload":{"whatever":true}}',
 ].join("\n")
 
@@ -30,6 +31,9 @@ type RunOptions = {
   // サイドバーの develop/tasks.json は cwd 相対で読むため、無いことを確かめるテスト用に
   // 差し替えられるようにしておく（既定は実際の cwd を継承する）。
   readonly cwd?: string
+  // キャラクター定義ディレクトリ。無いことを確かめるテスト用に差し替えられるようにしておく
+  // （既定は cwd 相対の characters/tsukumo-spirit を継承する）。
+  readonly characterDir?: string
 }
 
 function environmentFor(options: RunOptions): Record<string, string> {
@@ -43,6 +47,7 @@ function environmentFor(options: RunOptions): Record<string, string> {
     HOME: homeDir,
     // 常駐中のサイドカーとポートがぶつからないよう、既定では空きポートを使わせる。
     TSUKUMO_VIEW_PORT: options.viewPort ?? "0",
+    ...(options.characterDir === undefined ? {} : { TSUKUMO_CHARACTER_DIR: options.characterDir }),
   }
 }
 
@@ -99,6 +104,14 @@ async function fetchView(args: readonly string[], view: string, options: RunOpti
   } finally {
     cli.stop()
   }
+}
+
+// transcript の追記をポーリングが検知するまでの待ち時間。src/index.ts の POLL_INTERVAL_MS
+// （500ms）より十分長くとる。
+const POLL_WAIT_MS = 1_500
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms))
 }
 
 describe("tsukumo CLI", () => {
@@ -204,7 +217,7 @@ describe("tsukumo CLI", () => {
     }
   })
 
-  it("状態ファイルが既知のイベント種別・モデルを持つとき、対応する表情・衣装を配る", async () => {
+  it("状態ファイルが既知のイベント種別・モデルを持つとき、対応する表情（alt）・衣装（差し色）を配る", async () => {
     const dir = makeTempDir()
     const homeDir = makeTempDir()
     const transcriptPath = join(dir, "session.jsonl")
@@ -214,8 +227,10 @@ describe("tsukumo CLI", () => {
     try {
       const page = await fetchView([transcriptPath], "character", { homeDir })
 
+      // 表情は立ち絵の aria-label に、衣装は characters/tsukumo-spirit/character.json の
+      // outfitAccents（opus = heavy = #ffb3a7）に現れる。
       expect(page).toContain("作業中")
-      expect(page).toContain("戦闘配置")
+      expect(page).toContain("--outfit-accent: #ffb3a7")
     } finally {
       rmSync(dir, { recursive: true, force: true })
       rmSync(homeDir, { recursive: true, force: true })
@@ -306,6 +321,157 @@ describe("tsukumo CLI", () => {
       expect(page).toContain("架空のタスクA (opus) — Bash")
       expect(page).toContain("<li>Read</li>")
     } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("既定のキャラクター（characters/tsukumo-spirit）の立ち絵がインライン SVG で、差し色付きで出る", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(
+      transcriptPath,
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"> やあ"}]}}',
+    )
+
+    try {
+      // characterDir を指定せず、cwd 相対の既定（characters/tsukumo-spirit）を使わせる。
+      const page = await fetchView([transcriptPath], "character")
+
+      expect(page).toContain('<div class="portrait"')
+      expect(page).toContain("--outfit-accent")
+      expect(page).toContain("<svg")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("キャラクター定義ディレクトリが存在しないときも、キャラビューは吹き出しだけで壊れずに配られる", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(
+      transcriptPath,
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"> 立ち絵が無くても平気"}]}}',
+    )
+
+    try {
+      const page = await fetchView([transcriptPath], "character", {
+        characterDir: join(dir, "does-not-exist"),
+      })
+
+      expect(page).toContain("立ち絵が無くても平気")
+      expect(page).not.toContain("<svg")
+      expect(page).not.toContain("<img")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("character.json が壊れている（JSON として不正）ときも、キャラビューは吹き出しだけで壊れずに配られる", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    const characterDir = join(dir, "broken-character")
+    mkdirSync(characterDir, { recursive: true })
+    writeFileSync(join(characterDir, "character.json"), "{this is not valid json")
+    writeFileSync(
+      transcriptPath,
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"> それでも平気"}]}}',
+    )
+
+    try {
+      const page = await fetchView([transcriptPath], "character", { characterDir })
+
+      expect(page).toContain("それでも平気")
+      expect(page).not.toContain("<svg")
+      expect(page).not.toContain("<img")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("TSUKUMO_CHARACTER_DIR で利用者の素材（characters/local 相当）に差し替えられる。SVG はインラインで、差し色も効く", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    const characterDir = join(dir, "my-character")
+    mkdirSync(characterDir, { recursive: true })
+    writeFileSync(
+      join(characterDir, "character.json"),
+      JSON.stringify({
+        name: "テスト用の子",
+        portraits: { default: "default.svg" },
+        outfitAccents: { default: "#123456" },
+      }),
+    )
+    writeFileSync(
+      join(characterDir, "default.svg"),
+      '<svg xmlns="http://www.w3.org/2000/svg"><circle fill="var(--outfit-accent, #fff)" r="1"/></svg>',
+    )
+    writeFileSync(
+      transcriptPath,
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"> 自作の立ち絵だよ"}]}}',
+    )
+
+    try {
+      const page = await fetchView([transcriptPath], "character", { characterDir })
+
+      expect(page).toContain('<svg xmlns="http://www.w3.org/2000/svg">')
+      expect(page).toContain('fill="var(--outfit-accent, #fff)"')
+      expect(page).toContain("--outfit-accent: #123456")
+      expect(page).toContain('aria-label="テスト用の子')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("ラスタ画像（SVG以外）の立ち絵は <img> の data URI で出る", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    const characterDir = join(dir, "raster-character")
+    mkdirSync(characterDir, { recursive: true })
+    writeFileSync(
+      join(characterDir, "character.json"),
+      JSON.stringify({ portraits: { default: "default.png" }, outfitAccents: {} }),
+    )
+    writeFileSync(join(characterDir, "default.png"), Buffer.from([1, 2, 3, 4]))
+    writeFileSync(
+      transcriptPath,
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"> ラスタでも平気"}]}}',
+    )
+
+    try {
+      const page = await fetchView([transcriptPath], "character", { characterDir })
+
+      expect(page).toContain('<img class="portrait-image" src="data:image/png;base64,')
+      expect(page).not.toContain("<svg")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("規約に従っていない発話（セリフが無い）が来ても、吹き出しは直前のセリフを出し続ける", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(
+      transcriptPath,
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"> 最初のセリフ"}]}}',
+    )
+
+    const cli = await startCli([transcriptPath])
+    try {
+      const firstPage = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
+      expect(firstPage).toContain("最初のセリフ")
+
+      // 引用の無い（規約に従っていない）発話を追記する。
+      appendFileSync(
+        transcriptPath,
+        '\n{"type":"assistant","message":{"content":[{"type":"text","text":"引用の無い発話の詳細だけ"}]}}',
+      )
+      await sleep(POLL_WAIT_MS)
+
+      const secondPage = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
+      expect(secondPage).toContain("最初のセリフ")
+      expect(secondPage).not.toContain("引用の無い発話の詳細だけ")
+    } finally {
+      cli.stop()
       rmSync(dir, { recursive: true, force: true })
     }
   })

@@ -3,10 +3,24 @@
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { homedir } from "node:os"
-import { basename, dirname, join } from "node:path"
+import { basename, dirname, join, resolve } from "node:path"
 import process from "node:process"
 
-import { describeStatus, resolveExpression, resolveOutfit } from "./expression.ts"
+import {
+  classifyPortraitFile,
+  isPlausibleSvgMarkup,
+  parseCharacterDefinition,
+  rasterMimeType,
+  resolveOutfitAccent,
+  resolvePortraitFile,
+} from "./character.ts"
+import {
+  type Expression,
+  expressionLabel,
+  type Outfit,
+  resolveExpression,
+  resolveOutfit,
+} from "./expression.ts"
 import { parseStateFile } from "./state.ts"
 import { extractAgentMeta, extractLatestToolName } from "./subagents.ts"
 import { type TaskStatusCounts, countTaskStatuses } from "./tasks.ts"
@@ -14,12 +28,15 @@ import {
   extractContextUsage,
   extractLatestPendingBackgroundAgentCount,
   extractLatestUtterance,
+  splitUtterance,
 } from "./transcript.ts"
 import { startViewServer, type ViewServer } from "./view-server.ts"
 import {
   buildCharacterBody,
   buildPlaceholderBody,
   buildSidebarBody,
+  type CharacterPortraitSource,
+  type CharacterViewData,
   type SidebarData,
   type SubagentActivity,
   VIEW_NAMES,
@@ -39,7 +56,9 @@ const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出す�
 （引数を渡した場合はそちらを優先する）。
 
 環境変数:
-  TSUKUMO_VIEW_PORT  ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
+  TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
+  TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は characters/tsukumo-spirit。
+                          自分の素材を使うときは characters/local などを指す。cwd 相対にも対応）
 `
 
 // hook（hooks/state.sh）が書く既知の場所。ディレクトリ名・ファイル名を変えるときは
@@ -58,6 +77,16 @@ const MAX_RECENT_SUBAGENT_ACTIVITIES = 5
 // develop/tasks.json は起動時の cwd（リポジトリ直下で `bun run start` する運用）からの相対で読む。
 // セッションに依存しない、tsukumo 自身の進捗管理ファイルのため。
 const TASKS_FILE_RELATIVE_PATH: readonly string[] = ["develop", "tasks.json"]
+
+// キャラクター定義ディレクトリの既定値。自作で権利がクリーンな tsukumo-spirit を使う
+// （docs/requirements.md 4.4）。develop/tasks.json と同じく cwd 相対で読む。
+const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = ["characters", "tsukumo-spirit"]
+// 利用者が用意した素材（`characters/local/` など。characters/README.md）を使いたいときに
+// 直接指すための環境変数。
+const CHARACTER_DIR_ENV_NAME = "TSUKUMO_CHARACTER_DIR"
+const CHARACTER_DEFINITION_FILE_NAME = "character.json"
+// character.json が無い・壊れている、または name が無いときの立ち絵 alt テキストの既定名。
+const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
 type FileSnapshot = {
   readonly mtimeMs: number
@@ -101,12 +130,29 @@ async function main(args: readonly string[]): Promise<number> {
   // メインビューの中身は後続の作業で入る。ここでは場所だけを確保しておく。
   server.publish("main", buildPlaceholderBody("main"))
 
-  publishCharacterView(server, transcriptPath, homeDir)
+  const characterDir = resolveCharacterDir(process.env[CHARACTER_DIR_ENV_NAME], process.cwd())
+  const publishCharacterView = createCharacterViewPublisher(server, homeDir, characterDir)
+
+  publishCharacterView(transcriptPath)
   publishSidebarView(server, transcriptPath)
-  followTranscript(server, transcriptPath, homeDir, initialSnapshot)
+  followTranscript(server, transcriptPath, initialSnapshot, publishCharacterView)
   announce(server)
 
   return 0
+}
+
+/**
+ * キャラクター定義ディレクトリを決める。**環境変数が読み取りの唯一の場所**
+ * （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。空でなければそれを cwd 相対
+ * （絶対パスならそのまま）で解決し、無ければ既定の tsukumo-spirit を使う。
+ */
+function resolveCharacterDir(envValue: string | undefined, cwd: string): string {
+  const trimmed = envValue?.trim()
+  if (trimmed !== undefined && trimmed !== "") {
+    return resolve(cwd, trimmed)
+  }
+
+  return join(cwd, ...DEFAULT_CHARACTER_DIR_RELATIVE_PATH)
 }
 
 /**
@@ -143,8 +189,8 @@ function resolveViewPort(rawPort: string | undefined): number | undefined {
 function followTranscript(
   server: ViewServer,
   transcriptPath: string,
-  homeDir: string,
   initialSnapshot: FileSnapshot,
+  publishCharacterView: (transcriptPath: string) => void,
 ): void {
   let lastSnapshot = initialSnapshot
 
@@ -158,30 +204,121 @@ function followTranscript(
     }
 
     lastSnapshot = current
-    publishCharacterView(server, transcriptPath, homeDir)
+    publishCharacterView(transcriptPath)
     // サイドバーの更新も同じきっかけ（transcript の変化）に相乗りする。
     publishSidebarView(server, transcriptPath)
   }, POLL_INTERVAL_MS)
 }
 
-// 「読む → 決める → 配る」の1回分をまるごと包む唯一の場所。ここでの失敗は次のポーリングに
-// 任せて諦める（docs/coding-standards.md「エラーハンドリング」— ループの中に try/catch を
-// 散らさない）。
-function publishCharacterView(server: ViewServer, transcriptPath: string, homeDir: string): void {
-  try {
-    const utterance = extractLatestUtterance(readFileSync(transcriptPath, "utf8"))
+/**
+ * キャラビューの publish 関数を作る。**「直前のセリフ」を保持する場所はこの1箇所だけ**
+ * （`docs/requirements.md` 4.2「規約に従っていない発話が来たときは、吹き出しは直前のセリフを
+ * 出し続ける」）。閉じ込めた `lastSpeech` を、起動直後の1回目の呼び出しとポーリングループからの
+ * 呼び出しの両方で共有することで、状態の持ち主を1つに保っている。
+ *
+ * 返す関数が「読む → 決める → 配る」の1回分をまるごと包む唯一の場所になる。ここでの失敗は
+ * 次のポーリングに任せて諦める（docs/coding-standards.md「エラーハンドリング」— ループの中に
+ * `try`/`catch` を散らさない）。
+ */
+function createCharacterViewPublisher(
+  server: ViewServer,
+  homeDir: string,
+  characterDir: string,
+): (transcriptPath: string) => void {
+  let lastSpeech: string | undefined = undefined
 
-    // 状態ファイルが無い・壊れている・未知のイベント種別のときも、parseStateFile /
-    // resolveExpression / resolveOutfit が undefined ・ "default" に落として吸収するので、
-    // ここではそれ以上分岐しない。
-    const stateFileContent = readOptionalFile(stateFilePath(homeDir))
-    const state = stateFileContent !== undefined ? parseStateFile(stateFileContent) : undefined
-    const status = describeStatus(resolveExpression(state), resolveOutfit(state))
+  return (transcriptPath: string) => {
+    try {
+      const utterance = extractLatestUtterance(readFileSync(transcriptPath, "utf8"))
+      const speech = utterance === undefined ? undefined : splitUtterance(utterance).speech
+      if (speech !== undefined) {
+        lastSpeech = speech
+      }
 
-    server.publish("character", buildCharacterBody(status, utterance))
-  } catch {
-    process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n")
+      // 状態ファイルが無い・壊れている・未知のイベント種別のときも、parseStateFile /
+      // resolveExpression / resolveOutfit が undefined ・ "default" に落として吸収するので、
+      // ここではそれ以上分岐しない。
+      const stateFileContent = readOptionalFile(stateFilePath(homeDir))
+      const state = stateFileContent !== undefined ? parseStateFile(stateFileContent) : undefined
+      const expression = resolveExpression(state)
+      const outfit = resolveOutfit(state)
+
+      const data: CharacterViewData = {
+        speech: lastSpeech,
+        ...readCharacterAssets(characterDir, expression, outfit),
+      }
+
+      server.publish("character", buildCharacterBody(data))
+    } catch {
+      process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n")
+    }
   }
+}
+
+/**
+ * キャラクター定義（character.json）と立ち絵を読み、キャラビューに渡せる形にする。
+ * character.json が無い・壊れている、表情に対応する立ち絵が無い、画像ファイル自体が
+ * 読めない・種類を判定できない、といったときはすべて `portrait: undefined` に落ちて、
+ * 呼び出し側（buildCharacterBody）が吹き出しだけの表示にフォールバックする
+ * （docs/requirements.md 4.2「フォールバック」）。
+ */
+function readCharacterAssets(
+  characterDir: string,
+  expression: Expression,
+  outfit: Outfit,
+): Omit<CharacterViewData, "speech"> {
+  const definitionContent = readOptionalFile(join(characterDir, CHARACTER_DEFINITION_FILE_NAME))
+  const definition =
+    definitionContent === undefined ? undefined : parseCharacterDefinition(definitionContent)
+
+  if (definition === undefined) {
+    return {
+      portrait: undefined,
+      outfitAccent: undefined,
+      altText: characterAltText(undefined, expression),
+    }
+  }
+
+  const outfitAccent = resolveOutfitAccent(definition, outfit)
+  const portraitFile = resolvePortraitFile(definition, expression)
+  const altText = characterAltText(definition.name, expression)
+
+  if (portraitFile === undefined) {
+    return { portrait: undefined, outfitAccent, altText }
+  }
+
+  return { portrait: readPortraitSource(join(characterDir, portraitFile)), outfitAccent, altText }
+}
+
+function characterAltText(name: string | undefined, expression: Expression): string {
+  return `${name ?? DEFAULT_CHARACTER_ALT_NAME}（${expressionLabel(expression)}）`
+}
+
+/**
+ * 立ち絵1件を読む。SVG はファイルの中身をそのまま持ち出し、ラスタ画像はバイト列を
+ * data URI にして持ち出す（view-server.ts がファイルを配る経路を増やさないため。
+ * 会話内容と違って立ち絵は毎回同じ小さいファイルなので、都度読み直すコストは無視できる）。
+ * 拡張子が SVG でもラスタでもない、中身が SVG らしくない、ファイルが読めない、
+ * といったときは undefined を返す。
+ */
+function readPortraitSource(filePath: string): CharacterPortraitSource | undefined {
+  const kind = classifyPortraitFile(filePath)
+  if (kind === undefined) {
+    return undefined
+  }
+
+  if (kind === "svg") {
+    const content = readOptionalFile(filePath)
+    return content !== undefined && isPlausibleSvgMarkup(content)
+      ? { kind: "svg", svgMarkup: content }
+      : undefined
+  }
+
+  const mimeType = rasterMimeType(filePath)
+  const bytes = readOptionalBinaryFile(filePath)
+  return mimeType !== undefined && bytes !== undefined
+    ? { kind: "image", dataUri: `data:${mimeType};base64,${bytes.toString("base64")}` }
+    : undefined
 }
 
 // サイドバーの「読む → 決める → 配る」1回分。コンテキスト使用量・サブエージェントの状況・
@@ -303,6 +440,15 @@ function readSnapshot(path: string): FileSnapshot | undefined {
 function readOptionalFile(path: string): string | undefined {
   try {
     return readFileSync(path, "utf8")
+  } catch {
+    return undefined
+  }
+}
+
+/** 無くてもよいバイナリファイル（立ち絵のラスタ画像）を読む。存在しない・読めないときは undefined。 */
+function readOptionalBinaryFile(path: string): Buffer | undefined {
+  try {
+    return readFileSync(path)
   } catch {
     return undefined
   }

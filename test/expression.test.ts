@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { describeStatus, resolveExpression, resolveOutfit } from "../src/expression.ts"
+import { expressionLabel, resolveExpression, resolveOutfit } from "../src/expression.ts"
 
 describe("resolveExpression", () => {
   it("状態ファイルが無いとき既定の表情を返す", () => {
@@ -67,12 +67,14 @@ describe("resolveOutfit", () => {
   })
 })
 
-describe("describeStatus", () => {
-  it("表情と衣装を1行のテキストにまとめる", () => {
-    expect(describeStatus("working", "heavy")).toBe("［表情: 作業中 ／ 衣装: 戦闘配置］")
+describe("expressionLabel", () => {
+  it("表情を日本語ラベルにする", () => {
+    expect(expressionLabel("working")).toBe("作業中")
+    expect(expressionLabel("proud")).toBe("どや顔")
+    expect(expressionLabel("flustered")).toBe("あわあわ")
   })
 
-  it("既定値も日本語ラベルで表示する", () => {
-    expect(describeStatus("default", "default")).toBe("［表情: 通常 ／ 衣装: 不明］")
+  it("既定の表情も日本語ラベルで表示する", () => {
+    expect(expressionLabel("default")).toBe("通常")
   })
 })

@@ -3,8 +3,9 @@
 // 純粋関数だけを置き、ネットワーク・ファイル・プロセスには触らない（配るのは src/view-server.ts）。
 // 折り返し・全角文字の幅・禁則処理はブラウザに任せる。ここが計算するのは中身だけ。
 //
-// **メインビュー・キャラビューの中身はまだプレースホルダ**（作業の進行・立ち絵は後続の作業で
-// 入る）。サイドバーはこのタスクで中身が決まった（下の `buildSidebarBody`）。
+// **メインビューの中身はまだプレースホルダ**（作業の進行は後続の作業で入る）。
+// キャラビュー・サイドバーはこのタスクで中身が決まった（下の `buildCharacterBody` /
+// `buildSidebarBody`）。
 
 import { type TaskStatusCounts } from "./tasks.ts"
 
@@ -54,14 +55,45 @@ export function buildIndexPage(): string {
 }
 
 /**
- * キャラビューの本文。立ち絵と、発話からのセリフの切り出しは後続の作業で入るため、
- * 今は状態の1行と発話をそのまま出す。
+ * 立ち絵の画像ソース。**SVG はファイルの中身をそのまま埋め込む**（インライン）。
+ * `<img>` で読み込むと独立した文書扱いになり、ページ側の CSS 変数 `--outfit-accent` が
+ * 届かないため（`characters/README.md` の実測）。それ以外の形式（ラスタ画像）は
+ * `<img>` の `src` に data URI を渡す。**どちらの形にするかは src/character.ts が拡張子で
+ * 決め、ここでは分岐しない**（利用者が置いた任意のファイルを無検証で流し込まないための仕分け）。
  */
-export function buildCharacterBody(status: string, utterance: string | undefined): string {
-  const text = utterance ?? PLACEHOLDER_UTTERANCE
+export type CharacterPortraitSource =
+  | { readonly kind: "svg"; readonly svgMarkup: string }
+  | { readonly kind: "image"; readonly dataUri: string }
 
-  return `<p class="status">${escapeHtml(status)}</p>
-<div class="balloon">${escapeHtml(text)}</div>`
+/** キャラビューの本文を組み立てるために必要な値。 */
+export type CharacterViewData = {
+  /**
+   * 吹き出しに出すセリフ。規約に従っていない発話（セリフが無い）が来たときに**直前のセリフを
+   * 出し続ける**判断は、状態を持つ src/index.ts 側の役目（`docs/requirements.md` 4.2）。
+   * ここではもう解決済みの1つの値として受け取り、undefined は「まだ一度もセリフが無い」だけを表す。
+   */
+  readonly speech: string | undefined
+  /** 素材が無い・読めないときは undefined。そのときは吹き出しだけで成立させる。 */
+  readonly portrait: CharacterPortraitSource | undefined
+  /** 立ち絵の CSS 変数 `--outfit-accent` に渡す差し色。インライン SVG のときだけ見た目に効く。 */
+  readonly outfitAccent: string | undefined
+  /** 立ち絵の alt / aria-label。 */
+  readonly altText: string
+}
+
+/**
+ * キャラビューの本文。立ち絵と吹き出しを同じ領域に同居させる（`docs/glossary.md`「キャラビュー」）。
+ * 表情の切り替えは、差し替えのたびに新しい要素が挿入される性質を利用して、CSS アニメーション
+ * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
+ */
+export function buildCharacterBody(data: CharacterViewData): string {
+  const text = data.speech ?? PLACEHOLDER_UTTERANCE
+  const portraitHtml =
+    data.portrait === undefined
+      ? ""
+      : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
+
+  return `${portraitHtml}<div class="balloon">${escapeHtml(text)}</div>`
 }
 
 /** 中身がまだ決まっていないビューの本文。 */
@@ -152,7 +184,22 @@ const STYLE = `
     line-height: 1.7;
     overflow-wrap: anywhere;
   }
-  .status { margin: 0 0 0.75rem; color: #8f97ab; font-size: 0.85rem; }
+  .portrait {
+    margin: 0 0 0.75rem;
+    text-align: center;
+    animation: portrait-fade-in 0.25s ease-out;
+  }
+  .portrait svg, .portrait-image {
+    display: block;
+    width: 100%;
+    max-width: 11rem;
+    height: auto;
+    margin: 0 auto;
+  }
+  @keyframes portrait-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
   .balloon {
     padding: 0.75rem 1rem;
     border: 1px solid #3a4256;
@@ -179,6 +226,29 @@ const STYLE = `
   .sidebar-empty { color: #8f97ab; }
   .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
 `
+
+/**
+ * 立ち絵1件分の HTML。SVG は**エスケープせずファイルの中身をそのまま**差し込む
+ * （インライン埋め込みそのものが目的のため）。差し色は `style` 属性の値として埋め込む前提で
+ * `escapeHtml` を通す（`"` を含む値で属性が閉じないようにする程度の保護。character.json は
+ * 利用者自身が用意するローカルファイルなので、これ以上の検証は行わない）。
+ * `aria-label` はラッパー側に付ける（SVG 自身の `aria-label` は素材作成時点の固定値だが、
+ * こちらは今の表情を反映した値になる）。
+ */
+function portraitMarkup(
+  portrait: CharacterPortraitSource,
+  outfitAccent: string | undefined,
+  altText: string,
+): string {
+  const accentStyle =
+    outfitAccent === undefined ? "" : ` style="--outfit-accent: ${escapeHtml(outfitAccent)};"`
+  const inner =
+    portrait.kind === "svg"
+      ? portrait.svgMarkup
+      : `<img class="portrait-image" src="${escapeHtml(portrait.dataUri)}" alt="${escapeHtml(altText)}">`
+
+  return `<div class="portrait" role="img" aria-label="${escapeHtml(altText)}"${accentStyle}>${inner}</div>`
+}
 
 function sidebarSection(title: string, body: string): string {
   return `<section class="sidebar-block">

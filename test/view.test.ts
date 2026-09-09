@@ -6,6 +6,7 @@ import {
   buildPlaceholderBody,
   buildSidebarBody,
   buildViewPage,
+  type CharacterViewData,
   isViewName,
   type SidebarData,
   type SubagentActivity,
@@ -13,6 +14,14 @@ import {
   viewEventPath,
   viewPath,
 } from "../src/view.ts"
+
+// buildCharacterBody に渡す全部入りのデータ。個々のテストは必要な部分だけ上書きする。
+const FULL_CHARACTER_DATA: CharacterViewData = {
+  speech: "やあ、調子はどう？",
+  portrait: { kind: "svg", svgMarkup: '<svg role="img"><circle r="1"/></svg>' },
+  outfitAccent: "#b8c7ff",
+  altText: "架空の精霊（通常）",
+}
 
 // meta.json が有る（ラベル付き）サブエージェントと、無い（ツール名だけの）サブエージェントを
 // 両方含む、手で書いた架空のデータ。
@@ -67,21 +76,69 @@ describe("ビューのページ", () => {
 })
 
 describe("ビューの本文", () => {
-  it("発話をそのまま出さず、HTML として無害な形にして埋め込む", () => {
-    const body = buildCharacterBody("［表情: 通常］", '<script>alert("x")</script>')
+  it("中身が未定のビューは、準備中であることだけを出す", () => {
+    expect(buildPlaceholderBody("main")).toContain("準備中")
+  })
+})
+
+describe("キャラビューの本文", () => {
+  it("セリフをそのまま出さず、HTML として無害な形にして埋め込む", () => {
+    const body = buildCharacterBody({
+      ...FULL_CHARACTER_DATA,
+      speech: '<script>alert("x")</script>',
+    })
 
     expect(body).not.toContain("<script>")
     expect(body).toContain("&lt;script&gt;")
   })
 
-  it("発話がまだ無いときはプレースホルダを出す", () => {
-    const body = buildCharacterBody("［表情: 通常］", undefined)
+  it("セリフがまだ無い（一度も発話が無い）ときはプレースホルダを出す", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, speech: undefined })
 
     expect(body).toContain("まだ発話がありません")
   })
 
-  it("中身が未定のビューは、準備中であることだけを出す", () => {
-    expect(buildPlaceholderBody("main")).toContain("準備中")
+  it("インライン SVG の立ち絵は、エスケープせずファイルの中身をそのまま埋め込む", () => {
+    const body = buildCharacterBody(FULL_CHARACTER_DATA)
+
+    expect(body).toContain('<svg role="img"><circle r="1"/></svg>')
+  })
+
+  it("差し色を立ち絵のラッパーに CSS 変数として渡す", () => {
+    const body = buildCharacterBody(FULL_CHARACTER_DATA)
+
+    expect(body).toContain('style="--outfit-accent: #b8c7ff;"')
+  })
+
+  it("alt テキストをラッパーの aria-label にも出す", () => {
+    const body = buildCharacterBody(FULL_CHARACTER_DATA)
+
+    expect(body).toContain('aria-label="架空の精霊（通常）"')
+  })
+
+  it("ラスタ画像の立ち絵は <img> の data URI で出す（差し色は渡さない意味は無いが埋め込む）", () => {
+    const body = buildCharacterBody({
+      ...FULL_CHARACTER_DATA,
+      portrait: { kind: "image", dataUri: "data:image/png;base64,QUJD" },
+    })
+
+    expect(body).toContain('<img class="portrait-image" src="data:image/png;base64,QUJD"')
+    expect(body).toContain('alt="架空の精霊（通常）"')
+  })
+
+  it("立ち絵の素材が無い（portrait が undefined）ときは、吹き出しだけで成立する", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, portrait: undefined })
+
+    expect(body).not.toContain("<svg")
+    expect(body).not.toContain("<img")
+    expect(body).toContain('<div class="balloon">')
+    expect(body).toContain("やあ、調子はどう？")
+  })
+
+  it("差し色が無いときは style 属性ごと省略する", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, outfitAccent: undefined })
+
+    expect(body).not.toContain("--outfit-accent")
   })
 })
 
