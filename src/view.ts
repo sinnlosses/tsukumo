@@ -8,11 +8,11 @@
 
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
 import { type TaskStatusCounts } from "./tasks.ts"
-import { type MainViewEntry } from "./transcript.ts"
+import { type MainViewEntry, type PendingQuestion } from "./transcript.ts"
 
-export type ViewName = "main" | "character" | "sidebar"
+export type ViewName = "main" | "character" | "sidebar" | "question"
 
-export const VIEW_NAMES: readonly ViewName[] = ["main", "character", "sidebar"]
+export const VIEW_NAMES: readonly ViewName[] = ["main", "character", "sidebar", "question"]
 
 export function isViewName(value: string): value is ViewName {
   return VIEW_NAMES.some((name) => name === value)
@@ -267,7 +267,7 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
   const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
 <section class="layout-region layout-character" id="${layoutRegionId("character")}">${bodies.character}</section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_BOTTOM_ID}" role="separator" aria-orientation="vertical" aria-label="キャラビューと入力欄の境界"></div>
-${dispatchRegionHtml()}
+${dispatchRegionHtml(bodies.question)}
 </div>`
 
   const subscriptions = VIEW_NAMES.map((view) =>
@@ -286,8 +286,60 @@ ${bottomRow}
 ${layoutScript()}
 ${subscriptions}
 ${dispatchScript()}
+${questionRegionScript()}
 </script>`,
   )
+}
+
+/**
+ * 入力欄の領域を、質問と入力フォームで**切り替える**。質問の本文が入っている間はフォームを
+ * 隠す（ユーザーの決定 2026-09-10「質問中はフォームを退けて差し替える」）。
+ *
+ * 選択肢を押したときは、送信フォームと同じ経路へ**番号だけ**を送る。**押した直後に全部の
+ * 選択肢を無効化する**のは、二重送信を防ぐため（答え終わったあとに押すと、ただの依頼として
+ * 会話へ流れてしまう）。
+ */
+function questionRegionScript(): string {
+  return `  {
+    const el = document.getElementById(${JSON.stringify(layoutRegionId("question"))})
+    const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
+    const target = document.getElementById(${JSON.stringify(DISPATCH_TARGET_ID)})
+    const apply = () => {
+      if (form !== null) {
+        form.hidden = el.innerHTML.trim() !== ""
+      }
+    }
+    el.addEventListener("click", (event) => {
+      const choice = event.target.closest(".question-choice")
+      if (choice === null) {
+        return
+      }
+      const status = el.querySelector(".question-status")
+      const terminalId = target === null ? "" : target.value
+      if (terminalId === "") {
+        status.textContent = "送信先のターミナルが選べていない"
+        return
+      }
+      for (const button of el.querySelectorAll(".question-choice")) {
+        button.disabled = true
+      }
+      status.textContent = "送っている…"
+      fetch(${JSON.stringify(DISPATCH_PATH)}, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ terminalId, text: choice.dataset.answer }),
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          status.textContent = result.ok === true ? "送った" : "送れなかった: " + result.reason
+        })
+        .catch(() => {
+          status.textContent = "送れなかった"
+        })
+    })
+    new MutationObserver(apply).observe(el, { childList: true })
+    apply()
+  }`
 }
 
 function layoutRegionId(view: ViewName): string {
@@ -538,8 +590,11 @@ const DISPATCH_LIKELY_MARKER = "★"
  * （判定を外したときに選べなくならないように）。`.dispatch-hint` はその印の意味を示す
  * 1行だけの補足で、会話の内容は含まない。
  */
-function dispatchRegionHtml(): string {
+function dispatchRegionHtml(questionBody: string): string {
+  // 質問が来たら**この領域を質問へ差し替える**（ユーザーの決定 2026-09-10）。答え待ちの間は
+  // 入力フォームを隠し、答えが届いたらフォームへ戻す。切り替えは questionRegionScript が行う。
   return `<section class="layout-region layout-dispatch" id="tsukumo-view-dispatch">
+<div id="${layoutRegionId("question")}" class="question-panel">${questionBody}</div>
 <form id="${DISPATCH_FORM_ID}">
   <div class="dispatch-row">
     <select id="${DISPATCH_TARGET_ID}" aria-label="送信先のターミナル"></select>
@@ -784,11 +839,15 @@ const MAX_MAIN_VIEW_TURNS = 3
 const MAX_MAIN_VIEW_ENTRIES = 40
 
 type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
+type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question" }>
 
-/** 1ステップ＝レポート1件と、それに続くツールの実行（ユーザーの決定 2026-09-10）。 */
+/** ステップの中で起きたこと。ツールの実行か、キャラクターからの質問。 */
+type MainViewAction = MainViewToolRun | MainViewQuestion
+
+/** 1ステップ＝レポート1件と、それに続く出来事（ユーザーの決定 2026-09-10）。 */
 type MainViewStep = {
   readonly report: string | undefined
-  readonly tools: readonly MainViewToolRun[]
+  readonly actions: readonly MainViewAction[]
 }
 
 /**
@@ -825,16 +884,16 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 
     current ??= { id: 0, request: undefined, steps: [] }
     if (entry.kind === "detail") {
-      current.steps.push({ report: entry.markdown, tools: [] })
+      current.steps.push({ report: entry.markdown, actions: [] })
       continue
     }
 
     const step = current.steps.at(-1)
-    // レポートより前に実行されたツールは、レポートを持たないステップにまとめる。
+    // レポートより前に起きたことは、レポートを持たないステップにまとめる。
     current.steps =
       step === undefined
-        ? [{ report: undefined, tools: [entry] }]
-        : [...current.steps.slice(0, -1), { ...step, tools: [...step.tools, entry] }]
+        ? [{ report: undefined, actions: [entry] }]
+        : [...current.steps.slice(0, -1), { ...step, actions: [...step.actions, entry] }]
   }
   flush()
 
@@ -843,7 +902,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 
 /** 1つのやり取りが持つ記録を上限まで切り詰める。落とすのは**古いほう**（今回の続きを残す）。 */
 function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
-  const counts = turn.steps.map((step) => (step.report === undefined ? 0 : 1) + step.tools.length)
+  const counts = turn.steps.map((step) => (step.report === undefined ? 0 : 1) + step.actions.length)
   const total = counts.reduce((sum, count) => sum + count, 0)
   if (total <= MAX_MAIN_VIEW_ENTRIES) {
     return turn
@@ -897,7 +956,7 @@ function turnPanel(turn: MainViewTurn): TurnPanel {
  * 段組みはステップの中（レポート本文と、そこで動かしたツールの並べ方）で作る。
  */
 function stepHtml(step: MainViewStep): readonly string[] {
-  const tools = step.tools.flatMap((tool) => toolRunHtml(tool))
+  const tools = step.actions.flatMap((action) => actionHtml(action))
   const report = step.report === undefined ? "" : detailHtml(step.report)
   if (report === "" && tools.length === 0) {
     return []
@@ -928,6 +987,43 @@ function truncateRequest(request: string): string {
   return firstLine.length <= MAX_REQUEST_HEADING_LENGTH
     ? firstLine
     : `${firstLine.slice(0, MAX_REQUEST_HEADING_LENGTH)}…`
+}
+
+/**
+ * 入力欄の領域に差し込む**答え待ちの質問**。答え待ちが無いときは空文字を返し、
+ * その場合は入力フォームがそのまま見える（切り替えは {@link questionRegionScript}）。
+ *
+ * **選択肢は押せる。** 押すと、送信フォームと同じ道（`DISPATCH_PATH` → ホストの `sendText`）で
+ * 選択肢の**番号**を claude のターミナルへ送る。**番号で選べるかどうかは TUI 側の作りに依存する**
+ * ので、効かなかったときのために「ターミナルでそのまま答えてよい」ことを画面にも書いておく。
+ */
+export function buildQuestionBody(pending: PendingQuestion | undefined): string {
+  if (pending === undefined) {
+    return ""
+  }
+
+  const blocks = pending.questions.map((question) => {
+    const options = question.options
+      .map(
+        (option, index) =>
+          `<li><button type="button" class="question-choice" data-answer="${String(index + 1)}">
+<span class="question-choice-number">${String(index + 1)}</span>
+<span class="question-choice-label">${escapeHtml(option.label)}</span>
+<span class="question-choice-description">${escapeHtml(option.description)}</span>
+</button></li>`,
+      )
+      .join("")
+
+    return `<div class="question-card">
+<p class="question-header">${escapeHtml(question.header)}${question.multiSelect ? "（複数選べる）" : ""}</p>
+<p class="question-text">${escapeHtml(question.text)}</p>
+<ul class="question-choices">${options}</ul>
+</div>`
+  })
+
+  return `${blocks.join("\n")}
+<p class="question-status" role="status" aria-live="polite"></p>
+<p class="question-hint">押すと番号を送る。うまく選べないときは、ターミナル側でそのまま答えてよい</p>`
 }
 
 /**
@@ -995,6 +1091,7 @@ const VIEW_TITLE: Readonly<Record<ViewName, string>> = {
   main: "メインビュー",
   character: "キャラビュー",
   sidebar: "サイドバー",
+  question: "キャラクターからの質問",
 }
 
 // 3つのビューはそれぞれ別のペインに並ぶので、余白を詰めて縦スクロールだけを許す。
@@ -1147,6 +1244,43 @@ const STYLE = `
     color: #b9c0d0;
   }
   .detail-block svg { max-width: 100%; height: auto; }
+  /* 入力欄の領域に差し込む質問。答え待ちの間はここが入力フォームの代わりになる。 */
+  .question-panel:empty { display: none; }
+  .question-card { margin: 0 0 0.75rem; }
+  .question-header {
+    margin: 0 0 0.2rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: #8f97ab;
+  }
+  .question-text { margin: 0 0 0.5rem; font-weight: bold; }
+  .question-choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+  .question-choice {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.1rem 0.5rem;
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.5rem;
+    background: #1c202a;
+    color: #e6e8ee;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .question-choice:hover:not(:disabled) { border-color: #8ab4ff; }
+  .question-choice:disabled { opacity: 0.5; cursor: default; }
+  .question-choice-number { grid-row: span 2; color: #8ab4ff; font-variant-numeric: tabular-nums; }
+  .question-choice-label { font-weight: bold; }
+  .question-choice-description { font-size: 0.85rem; color: #b9c0d0; }
+  .question-status { margin: 0.3rem 0 0; min-height: 1.2em; color: #8ab4ff; font-size: 0.85rem; }
+  .question-hint { margin: 0.2rem 0 0; color: #8f97ab; font-size: 0.8rem; }
+  /* メインビューに残す質問の記録。 */
+  .tool-block-question .question-record h4 { margin: 0 0 0.3rem; font-size: 0.9rem; }
+  .question-options { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
+  .question-option { color: #8f97ab; }
+  .question-option.is-chosen { color: #e6e8ee; }
   .step-heading {
     margin: 0 0 0.5rem;
     font-size: 0.75rem;
@@ -1389,6 +1523,35 @@ function portraitMarkup(
  * `detail` は常に出す。`tool` は {@link toolVisibility} が「見せない」と決めたら空配列を返し、
  * 呼び出し側（`buildMainBody`）でそのまま消える。
  */
+function actionHtml(action: MainViewAction): readonly string[] {
+  return action.kind === "question" ? [questionRecordHtml(action)] : toolRunHtml(action)
+}
+
+/**
+ * メインビューに残す**質問の記録**。「何を聞いて、どう答えたか」を1つの塊で出す
+ * （ユーザーの決定 2026-09-10）。選ばれた答えには印を付ける。**答えが分からないとき**
+ * （利用者が質問を差し戻したときなど）は、印を付けずに選択肢だけを出す。
+ */
+function questionRecordHtml(entry: MainViewQuestion): string {
+  const blocks = entry.questions.map((question) => {
+    const options = question.options
+      .map((option) => {
+        const chosen = entry.answers.includes(option.label)
+        return `<li class="question-option${chosen ? " is-chosen" : ""}">${
+          chosen ? "●" : "○"
+        } ${escapeHtml(option.label)}</li>`
+      })
+      .join("")
+
+    return `<div class="question-record">
+<h4>${escapeHtml(question.header)}: ${escapeHtml(question.text)}</h4>
+<ul class="question-options">${options}</ul>
+</div>`
+  })
+
+  return `<section class="tool-block tool-block-question">${blocks.join("\n")}</section>`
+}
+
 function toolRunHtml(entry: MainViewToolRun): readonly string[] {
   const visibility = toolVisibility(entry)
   if (visibility.kind === "hidden") {

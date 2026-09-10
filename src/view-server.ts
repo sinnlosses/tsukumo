@@ -381,12 +381,16 @@ function writeJson(response: ServerResponse, status: number, body: unknown): voi
   response.end(JSON.stringify(body))
 }
 
-/** レイアウトページに埋め込む、3領域それぞれの最新の本文。まだ publish されていない領域は空。 */
+/**
+ * レイアウトページに埋め込む、領域ごとの最新の本文。まだ publish されていない領域は空。
+ * `question` は入力欄の領域に差し込む質問で、**答え待ちが無いときは空**になる。
+ */
 function currentBodies(bodies: ReadonlyMap<ViewName, string>): LayoutBodies {
   return {
     main: bodies.get("main") ?? "",
     character: bodies.get("character") ?? "",
     sidebar: bodies.get("sidebar") ?? "",
+    question: bodies.get("question") ?? "",
   }
 }
 

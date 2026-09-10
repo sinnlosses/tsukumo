@@ -32,12 +32,14 @@ import {
   extractLatestPendingBackgroundAgentCount,
   extractLatestUtterance,
   extractMainViewEntries,
+  extractPendingQuestion,
   splitUtterance,
 } from "./transcript.ts"
 import { startViewServer, type ViewServer } from "./view-server.ts"
 import {
   buildCharacterBody,
   buildMainBody,
+  buildQuestionBody,
   buildSidebarBody,
   type CharacterPortraitSource,
   type CharacterViewData,
@@ -329,6 +331,18 @@ function publishAllViews(
   publishCharacterView(transcriptPath)
   publishSidebarView(server, transcriptPath)
   publishMainView(server, transcriptPath, speechMarker)
+  publishQuestionView(server, transcriptPath)
+}
+
+// 答え待ちの質問の「読む → 決める → 配る」1回分。答え待ちが無いときは空を配り、入力欄の領域は
+// 送信フォームに戻る（src/view.ts の buildQuestionBody / questionRegionScript）。
+function publishQuestionView(server: ViewServer, transcriptPath: string): void {
+  try {
+    const transcriptContent = readFileSync(transcriptPath, "utf8")
+    server.publish("question", buildQuestionBody(extractPendingQuestion(transcriptContent)))
+  } catch {
+    process.stderr.write("tsukumo: 質問の更新に失敗した。次の更新を待つ\n")
+  }
 }
 
 /**

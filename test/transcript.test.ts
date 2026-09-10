@@ -5,6 +5,7 @@ import {
   extractLatestPendingBackgroundAgentCount,
   extractLatestUtterance,
   extractMainViewEntries,
+  extractPendingQuestion,
   splitUtterance,
 } from "../src/transcript.ts"
 
@@ -613,5 +614,87 @@ describe("extractMainViewEntries", () => {
 
   it("空の transcript では空配列を返す", () => {
     expect(extractMainViewEntries("", MARKER)).toEqual([])
+  })
+})
+
+// 手で書いた架空の質問。実物の transcript は使わない（docs/coding-standards.md「会話内容の扱い」）。
+describe("extractPendingQuestion", () => {
+  const askLine = (id: string, text: string) =>
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            id,
+            name: "AskUserQuestion",
+            input: {
+              questions: [
+                {
+                  header: "見出し",
+                  question: text,
+                  multiSelect: false,
+                  options: [{ label: "はい" }],
+                },
+              ],
+            },
+          },
+        ],
+      },
+    })
+
+  const answerLine = (id: string) =>
+    JSON.stringify({
+      type: "user",
+      message: {
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: id,
+            content: 'Your questions have been answered: "見出し"="はい"',
+          },
+        ],
+      },
+    })
+
+  it("答えがまだ届いていない質問を返す", () => {
+    const pending = extractPendingQuestion(askLine("q1", "どっちにする？"))
+
+    expect(pending?.toolUseId).toBe("q1")
+    expect(pending?.questions[0]?.text).toBe("どっちにする？")
+  })
+
+  it("答えが届いた質問は返さない", () => {
+    const content = [askLine("q1", "どっちにする？"), answerLine("q1")].join("\n")
+
+    expect(extractPendingQuestion(content)).toBeUndefined()
+  })
+
+  it("答え待ちが複数あるときは最後のものを返す", () => {
+    const content = [askLine("q1", "1つ目"), askLine("q2", "2つ目")].join("\n")
+
+    expect(extractPendingQuestion(content)?.toolUseId).toBe("q2")
+  })
+
+  it("質問が1つも無い transcript では undefined", () => {
+    const content = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "アスナ: 質問はしていないよ" }] },
+    })
+
+    expect(extractPendingQuestion(content)).toBeUndefined()
+  })
+
+  it("入力の形が壊れた質問は無視する（落ちない）", () => {
+    const broken = JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          { type: "tool_use", id: "q1", name: "AskUserQuestion", input: { questions: 42 } },
+        ],
+      },
+    })
+
+    expect(extractPendingQuestion(broken)).toBeUndefined()
   })
 })

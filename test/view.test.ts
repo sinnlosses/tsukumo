@@ -7,6 +7,7 @@ import {
   buildIndexPage,
   buildLayoutPage,
   buildMainBody,
+  buildQuestionBody,
   buildSidebarBody,
   buildViewPage,
   type CharacterViewData,
@@ -121,9 +122,11 @@ function makeInertStub(): InertStub {
   const stub: InertStub = {}
   stub.addEventListener = () => {}
   stub.appendChild = () => {}
-  // メインビューのタブ制御（mainTurnsScript）が触る最小限。無害な「何も無い」を返す。
+  // メインビューのタブ制御（mainTurnsScript）と質問の領域（questionRegionScript）が触る
+  // 最小限。無害な「何も無い」を返す。
   stub.querySelector = () => null
   stub.querySelectorAll = () => []
+  stub.innerHTML = ""
   return stub
 }
 
@@ -498,7 +501,7 @@ describe("送信先の一覧（claude が動いていそうな順に並べる。
     const targetSelect = makeFakeSelectElement()
     const status = makeFakeTextElement()
     const sendButton = makeFakeButtonElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     await runDispatchScript(page, {
       targetSelect,
@@ -523,7 +526,7 @@ describe("送信先の一覧（claude が動いていそうな順に並べる。
 
   it("claude が動いていそうなものにだけ印を付け、ラベルそのものは変えない", async () => {
     const targetSelect = makeFakeSelectElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     await runDispatchScript(page, {
       targetSelect,
@@ -547,7 +550,7 @@ describe("送信先の一覧（claude が動いていそうな順に並べる。
     const targetSelect = makeFakeSelectElement()
     const status = makeFakeTextElement()
     const sendButton = makeFakeButtonElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     await runDispatchScript(page, {
       targetSelect,
@@ -649,7 +652,12 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・ス�
   })
 
   it("まとめたレイアウトページでは、領域ごとに独立して差し替えの要否とスクロール位置を扱う", () => {
-    const bodies = { main: "<p>main1</p>", character: "<p>char1</p>", sidebar: "<p>side1</p>" }
+    const bodies = {
+      main: "<p>main1</p>",
+      character: "<p>char1</p>",
+      sidebar: "<p>side1</p>",
+      question: "",
+    }
     const page = buildLayoutPage(bodies)
 
     const main = makeFakeElement({
@@ -732,6 +740,7 @@ describe("まとめたレイアウトページ", () => {
       main: "<p>作業ちゅう</p>",
       character: "<p>やあ</p>",
       sidebar: "<p>done 1 / todo 2</p>",
+      question: "",
     })
 
     expect(page).toContain(
@@ -746,7 +755,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("3領域それぞれが、既存の /events/<view> を個別に購読して自分の要素だけを差し替える", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     for (const view of VIEW_NAMES) {
       expect(page).toContain(`new EventSource(${JSON.stringify(viewEventPath(view))})`)
@@ -755,7 +764,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("右下の入力ペインに、送信先の選択と依頼を書くフォームを持つ", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(page).toContain('<section class="layout-region layout-dispatch"')
     expect(page).toContain('<form id="tsukumo-dispatch-form">')
@@ -764,14 +773,14 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("送信先の一覧の取得と依頼の送信を、経路の定数（TERMINALS_PATH / DISPATCH_PATH）宛に行う", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(page).toContain(`fetch(${JSON.stringify(TERMINALS_PATH)})`)
     expect(page).toContain(`fetch(${JSON.stringify(DISPATCH_PATH)}`)
   })
 
   it("送信先が0件のとき・一覧の取得や送信に失敗したときに出す理由の文言を持つ", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(page).toContain("動いているターミナルが無い")
     expect(page).toContain("送信先の一覧を取得できなかった")
@@ -779,7 +788,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("送信ボタンは初期状態で無効になっている（送信先が揃うまで押せない）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(page).toContain(
       '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send" disabled>',
@@ -789,7 +798,7 @@ describe("まとめたレイアウトページ", () => {
 
 describe("まとめたレイアウトページの仕切り（3本のドラッグ・既定値・localStorage）", () => {
   it("3本の仕切りと、既定に戻すボタンを持つ", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(page).toContain('id="tsukumo-layout-resizer-top"')
     expect(page).toContain('id="tsukumo-layout-resizer-bottom"')
@@ -803,7 +812,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     runLayoutScript(
       page,
@@ -829,7 +838,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
 
   it("localStorage の値が JSON として壊れていても、例外にならず既定の比率にフォールバックする", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(() =>
       runLayoutScript(
@@ -852,7 +861,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
 
   it("localStorage の値が型違い・範囲外のときも、例外にならず既定の比率にフォールバックする", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
     const broken = JSON.stringify({ rowTop: 999, topLeft: "abc", bottomLeft: 35 })
 
     expect(() =>
@@ -878,7 +887,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
     const saved = JSON.stringify({ rowTop: 50, topLeft: 60, bottomLeft: 45 })
 
     runLayoutScript(
@@ -903,7 +912,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("横の仕切りをドラッグすると上段/下段の高さの比率が変わり、離した時点で保存する", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
     let savedValue: string | undefined
 
     runLayoutScript(
@@ -938,7 +947,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("縦の仕切り（上段）をドラッグすると、メインとサイドバーの幅の比率が変わる", () => {
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const resizerTop = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     runLayoutScript(
       page,
@@ -965,7 +974,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("動かせる範囲は端まで詰めきらないようにクランプする（15%〜85%）", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     runLayoutScript(
       page,
@@ -992,7 +1001,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
     const resetButton = makeFakeLayoutButtonElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
     let savedValue: string | undefined
 
     runLayoutScript(
@@ -1188,6 +1197,105 @@ describe("メインビューのタブの選択（push で戻らない・新し�
 
     expect(handle.activeTabId()).toBe("1")
     expect(handle.scrollTop()).toBe(400)
+  })
+})
+
+describe("キャラクターからの質問（入力欄の領域に差し込む）", () => {
+  const pending = {
+    toolUseId: "q1",
+    questions: [
+      {
+        header: "出す場所",
+        text: "質問をどのビューに出す？",
+        multiSelect: false,
+        options: [
+          { label: "メインビュー", description: "作業の記録として出す" },
+          { label: "吹き出し", description: "キャラビューに出す" },
+        ],
+      },
+    ],
+  }
+
+  it("答え待ちが無いときは空を返す（入力フォームがそのまま見える）", () => {
+    expect(buildQuestionBody(undefined)).toBe("")
+  })
+
+  it("質問文・見出し・選択肢を、番号付きの押せるボタンで出す", () => {
+    const body = buildQuestionBody(pending)
+
+    expect(body).toContain("質問をどのビューに出す？")
+    expect(body).toContain("出す場所")
+    expect(body).toContain('data-answer="1"')
+    expect(body).toContain('data-answer="2"')
+    expect(body).toContain("メインビュー")
+    expect(body).toContain("作業の記録として出す")
+    // 効かなかったときの逃げ道を画面にも書く。
+    expect(body).toContain("ターミナル側でそのまま答えてよい")
+  })
+
+  it("複数選べる質問はその旨を出す", () => {
+    const body = buildQuestionBody({
+      ...pending,
+      questions: [{ ...pending.questions[0]!, multiSelect: true }],
+    })
+
+    expect(body).toContain("複数選べる")
+  })
+
+  it("質問文や選択肢に HTML が混ざっていてもエスケープする", () => {
+    const body = buildQuestionBody({
+      toolUseId: "q1",
+      questions: [
+        {
+          header: "h",
+          text: "<script>alert(1)</script>",
+          multiSelect: false,
+          options: [{ label: "<b>太字</b>", description: "" }],
+        },
+      ],
+    })
+
+    expect(body).not.toContain("<script>")
+    expect(body).not.toContain("<b>")
+    expect(body).toContain("&lt;script&gt;")
+  })
+
+  it("メインビューには「聞いたこと・選んだ答え」が記録として残る", () => {
+    const body = buildMainBody([
+      {
+        kind: "question",
+        questions: pending.questions,
+        answers: ["メインビュー"],
+      },
+    ])
+
+    expect(body).toContain("質問をどのビューに出す？")
+    expect(body).toContain("● メインビュー")
+    expect(body).toContain("○ 吹き出し")
+  })
+
+  it("答えが分からない質問（差し戻しなど）は、印を付けずに選択肢だけ出す", () => {
+    const body = buildMainBody([{ kind: "question", questions: pending.questions, answers: [] }])
+
+    expect(body).toContain("○ メインビュー")
+    expect(body).not.toContain("●")
+  })
+
+  it("レイアウトページは、入力欄の領域に質問の差し込み先を持つ", () => {
+    const page = buildLayoutPage({
+      main: "",
+      character: "",
+      sidebar: "",
+      question: '<button class="question-choice" data-answer="1">はい</button>',
+    })
+
+    expect(page).toContain('id="tsukumo-view-question"')
+    expect(page).toContain('data-answer="1"')
+    // 質問の領域と送信フォームは同じ領域の中にある（差し替えるため）。
+    const region = page.slice(page.indexOf('id="tsukumo-view-dispatch"'))
+    expect(region.indexOf('id="tsukumo-view-question"')).toBeLessThan(
+      region.indexOf('id="tsukumo-dispatch-form"'),
+    )
   })
 })
 

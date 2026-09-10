@@ -5,6 +5,8 @@
 // unknown で受けて検証し、通った行だけを扱う。
 // 壊れた行・未知の type を含む行は読み飛ばし、例外を投げない。
 
+import { type Question, parseAnsweredLabels, parseQuestions } from "./question.ts"
+
 /**
  * transcript の全文から、最新の assistant 発話のテキストを取り出す。
  * assistant の発話が1つも無ければ undefined を返す。
@@ -61,6 +63,12 @@ export function extractLatestPendingBackgroundAgentCount(content: string): numbe
  */
 export type MainViewEntry =
   | { readonly kind: "request"; readonly text: string }
+  // キャラクターからの質問（AskUserQuestion）。`answers` は選ばれた答えのラベル（未回答なら空）。
+  | {
+      readonly kind: "question"
+      readonly questions: readonly Question[]
+      readonly answers: readonly string[]
+    }
   | {
       readonly kind: "tool"
       readonly name: string
@@ -327,6 +335,54 @@ function mainViewEntriesInLine(
   return message.content.flatMap((item) => mainViewEntryForContentItem(item, results, speechMarker))
 }
 
+/** キャラクターが質問するときのツール名。tsukumo はこれだけを質問として扱う。 */
+const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"
+
+/** 答え待ちの質問。`toolUseId` は、回答が届いたかどうかを対応付けるための識別子。 */
+export type PendingQuestion = {
+  readonly toolUseId: string
+  readonly questions: readonly Question[]
+}
+
+/**
+ * **まだ答えが届いていない質問**を返す。対応する `tool_result` がある質問は答え済みなので
+ * 対象にしない。複数あるときは最後のもの（利用者が今見せられているもの）を返す。
+ *
+ * 質問が無いときは undefined。**画面から質問を引っ込める判断**にもこれを使う。
+ */
+export function extractPendingQuestion(content: string): PendingQuestion | undefined {
+  const lines = content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
+    .map((line) => tryParseJson(line))
+
+  const answeredIds = new Set(collectToolResults(lines).map((result) => result.toolUseId))
+  const pending = lines.flatMap((line) => askUserQuestionsInLine(line))
+
+  return pending.filter((question) => !answeredIds.has(question.toolUseId)).at(-1)
+}
+
+function askUserQuestionsInLine(value: unknown): readonly PendingQuestion[] {
+  if (!isRecord(value) || value.type !== "assistant") {
+    return []
+  }
+
+  const message = value.message
+  if (!isRecord(message) || !Array.isArray(message.content)) {
+    return []
+  }
+
+  return message.content.flatMap((item) => {
+    if (!isToolUseItem(item) || item.name !== ASK_USER_QUESTION_TOOL_NAME) {
+      return []
+    }
+
+    const questions = parseQuestions(item.input)
+    return questions === undefined ? [] : [{ toolUseId: item.id, questions }]
+  })
+}
+
 /**
  * 利用者が打った依頼の本文を返す。`type: "user"` かつ `message.content` が**文字列**の行だけが
  * 対象で、ツールの結果（`content` が配列）や、システムが挿入した行（`isMeta: true`）は
@@ -351,6 +407,22 @@ function mainViewEntryForContentItem(
   results: readonly ToolResultRecord[],
   speechMarker: string,
 ): readonly MainViewEntry[] {
+  if (isToolUseItem(item) && item.name === ASK_USER_QUESTION_TOOL_NAME) {
+    const questions = parseQuestions(item.input)
+    if (questions === undefined) {
+      return []
+    }
+
+    const result = results.find((entry) => entry.toolUseId === item.id)
+    return [
+      {
+        kind: "question",
+        questions,
+        answers: result === undefined ? [] : parseAnsweredLabels(result.content),
+      },
+    ]
+  }
+
   if (isToolUseItem(item)) {
     const result = results.find((entry) => entry.toolUseId === item.id)
     return [
