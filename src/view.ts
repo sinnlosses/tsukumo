@@ -324,6 +324,18 @@ function questionRegionScript(): string {
         button.disabled = true
       }
       status.textContent = "送っている…"
+      // 失敗したときは選択肢を押せる状態へ戻し、**送信先の一覧を取り直す**。ページを開いた
+      // 時点の一覧は古くなることがあり（terminal_handle_stale）、それが唯一の原因になりうる。
+      const failed = (reason) => {
+        for (const button of el.querySelectorAll(".question-choice")) {
+          button.disabled = false
+        }
+        const refresh = document.getElementById(${JSON.stringify(DISPATCH_REFRESH_ID)})
+        if (refresh !== null) {
+          refresh.click()
+        }
+        status.textContent = "送れなかった: " + reason + "。一覧を更新したので、もう一度押してみて"
+      }
       fetch(${JSON.stringify(DISPATCH_PATH)}, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -331,10 +343,14 @@ function questionRegionScript(): string {
       })
         .then((response) => response.json())
         .then((result) => {
-          status.textContent = result.ok === true ? "送った" : "送れなかった: " + result.reason
+          if (result.ok === true) {
+            status.textContent = "送った"
+            return
+          }
+          failed(result.reason)
         })
         .catch(() => {
-          status.textContent = "送れなかった"
+          failed("応答が無かった")
         })
     })
     new MutationObserver(apply).observe(el, { childList: true })

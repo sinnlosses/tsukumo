@@ -308,6 +308,30 @@ describe("tsukumo CLI", () => {
     }
   })
 
+  it("別のディレクトリのセッションが後から始まっても、自分のディレクトリの追従先を使う", async () => {
+    const dir = makeTempDir()
+    const homeDir = makeTempDir()
+    const otherDir = makeTempDir()
+    const mine = join(dir, "mine.jsonl")
+    const theirs = join(dir, "theirs.jsonl")
+    writeFileSync(mine, utteranceLine("アスナ: このディレクトリのセリフ"))
+    writeFileSync(theirs, utteranceLine("アスナ: 別ディレクトリのセリフ"))
+    writeTranscriptTarget(homeDir, mine, process.cwd())
+    // あとから別のディレクトリでセッションが始まっても、別のファイルに書かれるので奪われない。
+    writeTranscriptTarget(homeDir, theirs, otherDir)
+
+    try {
+      const page = await fetchView([], "character", { homeDir })
+
+      expect(page).toContain("このディレクトリのセリフ")
+      expect(page).not.toContain("別ディレクトリのセリフ")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(homeDir, { recursive: true, force: true })
+      rmSync(otherDir, { recursive: true, force: true })
+    }
+  })
+
   it("hook が書いた追従先が別のディレクトリのものだけのとき、理由を伝えて終了コード2で終わる", () => {
     const dir = makeTempDir()
     const homeDir = makeTempDir()
@@ -675,11 +699,13 @@ describe("tsukumo CLI", () => {
 })
 
 /**
- * hook（hooks/state.sh）が SessionStart で書く追従先ファイルを再現する。cwd を書くのは、
- * サイドカーが**自分と同じディレクトリで始まったセッションだけ**に乗り換えるため。
+ * hook（hooks/state.sh）が SessionStart で書く追従先ファイルを再現する。**cwd ごとに別ファイル**
+ * なので、別のディレクトリのセッションに奪われない（2026-09-11 に実際に踏んだ穴の修正）。
  */
 function writeTranscriptTarget(homeDir: string, transcriptPath: string, cwd: string): void {
-  writeTsukumoFile(homeDir, "transcript-path", JSON.stringify({ transcriptPath, cwd }))
+  const targetsDir = join(homeDir, ".tsukumo", "targets")
+  mkdirSync(targetsDir, { recursive: true })
+  writeFileSync(join(targetsDir, cwd.replaceAll("/", "-")), JSON.stringify({ transcriptPath, cwd }))
 }
 
 function writeTsukumoFile(homeDir: string, name: string, content: string): void {

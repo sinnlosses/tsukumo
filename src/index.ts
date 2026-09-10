@@ -26,7 +26,11 @@ import { createOrcaHost } from "./orca-host.ts"
 import { parseStateFile } from "./state.ts"
 import { extractAgentMeta, extractLatestToolName } from "./subagents.ts"
 import { type TaskStatusCounts, countTaskStatuses } from "./tasks.ts"
-import { selectTranscriptTarget, type TranscriptTargetSelection } from "./transcript-target.ts"
+import {
+  selectTranscriptTarget,
+  type TranscriptTargetCandidate,
+  type TranscriptTargetSelection,
+} from "./transcript-target.ts"
 import {
   extractContextUsage,
   extractLatestPendingBackgroundAgentCount,
@@ -83,7 +87,10 @@ const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出す�
 // 両方を直す（docs/architecture.md「hookは状態ファイルを書くだけにする」）。
 const TSUKUMO_DIR_NAME = ".tsukumo"
 const STATE_FILE_NAME = "state.json"
-const TRANSCRIPT_PATH_FILE_NAME = "transcript-path"
+// hook が SessionStart で書く追従先。**セッションの cwd ごとに1ファイル**（同名になるのは
+// 同じディレクトリのセッションだけ）。1つのファイルを共有していた頃は、別のリポジトリで claude を
+// 起動しただけで奪われた（2026-09-11）。
+const TRANSCRIPT_TARGETS_DIR_NAME = "targets"
 
 // ポーリング間隔。追従の遅延目安1秒以内（docs/requirements.md「5. 実行環境・非機能要件」）
 // に対して余裕を持たせている。
@@ -229,7 +236,7 @@ function resolveTranscriptTarget(
     return { kind: "follow", path: argPath }
   }
 
-  return selectTranscriptTarget(readOptionalFile(transcriptPathFilePath(homeDir)), cwd)
+  return selectTranscriptTarget(readTranscriptTargets(homeDir), cwd)
 }
 
 /**
@@ -238,8 +245,20 @@ function resolveTranscriptTarget(
  * 返して今の追従先を変えさせない。
  */
 function readFollowTranscriptPath(homeDir: string, cwd: string): string | undefined {
-  const selection = selectTranscriptTarget(readOptionalFile(transcriptPathFilePath(homeDir)), cwd)
+  const selection = selectTranscriptTarget(readTranscriptTargets(homeDir), cwd)
   return selection.kind === "follow" ? selection.path : undefined
+}
+
+/** hook が書いた追従先ファイルを全部読む。読めないファイルはその1つだけを飛ばす。 */
+function readTranscriptTargets(homeDir: string): readonly TranscriptTargetCandidate[] {
+  const dir = join(homeDir, TSUKUMO_DIR_NAME, TRANSCRIPT_TARGETS_DIR_NAME)
+
+  return readOptionalDirEntries(dir).flatMap((name) => {
+    const path = join(dir, name)
+    const content = readOptionalFile(path)
+    const writtenAtMs = readOptionalMtimeMs(path)
+    return content === undefined || writtenAtMs === undefined ? [] : [{ content, writtenAtMs }]
+  })
 }
 
 /**
@@ -633,10 +652,6 @@ function readOptionalMtimeMs(path: string): number | undefined {
   } catch {
     return undefined
   }
-}
-
-function transcriptPathFilePath(homeDir: string): string {
-  return join(homeDir, TSUKUMO_DIR_NAME, TRANSCRIPT_PATH_FILE_NAME)
 }
 
 function stateFilePath(homeDir: string): string {

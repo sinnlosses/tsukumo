@@ -188,16 +188,29 @@ type CommandOutput =
  */
 function runOrca(args: readonly string[], label: string): Promise<CommandOutput> {
   return new Promise((resolve) => {
-    execFile(ORCA_COMMAND, [...args], { encoding: "utf8" }, (error, stdout) => {
+    execFile(ORCA_COMMAND, [...args], { encoding: "utf8" }, (error, stdout, stderr) => {
       if (error === null) {
         resolve({ ok: true, stdout })
         return
       }
 
-      resolve({ ok: false, reason: describeFailure(label, error) })
+      resolve({ ok: false, reason: describeFailure(label, error, `${stdout}\n${stderr}`) })
     })
   })
 }
+
+/**
+ * `orca` が返す**既知の**失敗の印と、その日本語の説明。**この表に載っているものだけを理由に
+ * 出す**（出力にも会話の内容が混ざりうるので、素通しにしない。`docs/coding-standards.md`
+ * 「会話内容の扱い」）。表に無い出力は、これまでどおり終了コードだけを伝える。
+ */
+const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: string }[] = [
+  {
+    marker: "terminal_handle_stale",
+    reason: "送信先のターミナルが見つからない（一覧が古くなっている）",
+  },
+  { marker: "Missing terminal send payload", reason: "送る中身が空" },
+]
 
 /**
  * 失敗の理由を、**呼び出し側が渡した固定の `label` と、失敗した事実だけ**で組み立てる。
@@ -208,10 +221,19 @@ function runOrca(args: readonly string[], label: string): Promise<CommandOutput>
  * （`docs/coding-standards.md`「会話内容の扱い」— 修正前の実装で、送った依頼の文面が
  * エラー応答にそのまま返っていた不具合）。安全に使えるのは終了コード（数値）だけなので、
  * 取れるときだけ添える。
+ *
+ * **例外は {@link KNOWN_ORCA_FAILURES} に載せた印だけ**で、これは orca 自身が返す固定の文言
+ * （会話の内容ではない）と分かっているものに限る。利用者が自力で直せる失敗（一覧が古い等）を
+ * 「終了コード 1」とだけ伝えても手の打ちようがないため。
  */
-function describeFailure(label: string, error: unknown): string {
+function describeFailure(label: string, error: unknown, output: string): string {
   if (isRecord(error) && error.code === "ENOENT") {
     return `${ORCA_COMMAND} コマンドが見つからない`
+  }
+
+  const known = KNOWN_ORCA_FAILURES.find((failure) => output.includes(failure.marker))
+  if (known !== undefined) {
+    return known.reason
   }
 
   const exitCode = isRecord(error) && typeof error.code === "number" ? error.code : undefined

@@ -142,9 +142,10 @@ VS Code 統合ターミナルは第一級ではない。サイドカー単体は
   ```
 
 - hook には `transcript_path` と `cwd` が渡る。SessionStart hook で既知の場所に書き出しておけば、
-  サイドカーは**スラッグ化の規則を自前で再実装せずに**追従先を知れる。**書き出す場所は全セッション
-  共通の1ファイル**なので、`cwd` も一緒に書いて「どのディレクトリのセッションか」を読む側が
-  判定できるようにする
+  サイドカーは**スラッグ化の規則を自前で再実装せずに**追従先を知れる。**書き出す場所は
+  セッションの cwd ごとに分ける**（`~/.tsukumo/targets/<cwd のスラッグ>`。2026-09-11。
+  共通の1ファイルだと、別のリポジトリで claude を起動しただけで奪われた）。`cwd` も中身に書き、
+  **判定はファイル名ではなく中身で行う**
 - 行の `type` 分布（2026-09-09 に907行で実測）: `attachment` / `assistant` / `user` /
   `permission-mode` / `mode` / `last-prompt` / `bridge-session` / `atis-latch` / `ai-title` /
   `system` / `file-history-snapshot` / `file-history-delta`。**assistant 以外は無視してよい**が、

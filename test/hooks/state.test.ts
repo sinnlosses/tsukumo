@@ -19,8 +19,13 @@ function runHook(payload: string, homeDir: string) {
   })
 }
 
-function readTranscriptTarget(homeDir: string): unknown {
-  return JSON.parse(readFileSync(join(homeDir, ".tsukumo", "transcript-path"), "utf8"))
+/** hook は cwd ごとに別ファイルへ書く（`/` を `-` に置き換えた名前）。 */
+function targetFilePath(homeDir: string, cwd: string): string {
+  return join(homeDir, ".tsukumo", "targets", cwd.replaceAll("/", "-"))
+}
+
+function readTranscriptTarget(homeDir: string, cwd: string): unknown {
+  return JSON.parse(readFileSync(targetFilePath(homeDir, cwd), "utf8"))
 }
 
 function readState(homeDir: string): unknown {
@@ -48,7 +53,7 @@ describe("hooks/state.sh", () => {
       expect(result.status).toBe(0)
       expect(result.stdout.trim()).toBe("{}")
       expect(readState(homeDir)).toEqual({ event: "SessionStart", model: "opus" })
-      expect(readTranscriptTarget(homeDir)).toEqual({
+      expect(readTranscriptTarget(homeDir, "/tmp/fake-session")).toEqual({
         transcriptPath: "/tmp/fake-session/session.jsonl",
         cwd: "/tmp/fake-session",
       })
@@ -181,7 +186,7 @@ describe("hooks/state.sh", () => {
       )
 
       expect(result.status).toBe(0)
-      expect(existsSync(join(homeDir, ".tsukumo", "transcript-path"))).toBe(false)
+      expect(existsSync(join(homeDir, ".tsukumo", "targets"))).toBe(false)
     } finally {
       rmSync(homeDir, { recursive: true, force: true })
     }
@@ -201,7 +206,7 @@ describe("hooks/state.sh", () => {
       )
 
       expect(result.status).toBe(0)
-      expect(existsSync(join(homeDir, ".tsukumo", "transcript-path"))).toBe(false)
+      expect(existsSync(join(homeDir, ".tsukumo", "targets"))).toBe(false)
     } finally {
       rmSync(homeDir, { recursive: true, force: true })
     }
@@ -217,7 +222,7 @@ describe("hooks/state.sh", () => {
       )
 
       expect(result.status).toBe(0)
-      expect(existsSync(join(homeDir, ".tsukumo", "transcript-path"))).toBe(false)
+      expect(existsSync(join(homeDir, ".tsukumo", "targets"))).toBe(false)
     } finally {
       rmSync(homeDir, { recursive: true, force: true })
     }
