@@ -6,6 +6,7 @@
 // メインビュー・キャラビュー・サイドバーの中身はすべて決まっている（下の `buildMainBody` /
 // `buildCharacterBody` / `buildSidebarBody`）。
 
+import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
 import { type TaskStatusCounts } from "./tasks.ts"
 import { type MainViewEntry } from "./transcript.ts"
 
@@ -774,9 +775,11 @@ function turnPanel(turn: MainViewTurn): TurnPanel {
       ? ""
       : `<h2 class="turn-request">${escapeHtml(truncateRequest(turn.request))}</h2>`
 
+  const stepsHtml = steps.length === 0 ? "" : `<div class="main-steps">${steps.join("\n")}</div>`
+
   return {
     id: turn.id,
-    html: [requestHtml, droppedHtml, ...steps].filter((part) => part !== "").join("\n"),
+    html: [requestHtml, droppedHtml, stepsHtml].filter((part) => part !== "").join("\n"),
     isEmpty: requestHtml === "" && steps.length === 0,
   }
 }
@@ -868,16 +871,6 @@ export function buildSidebarBody(data: SidebarData): string {
   ].join("\n")
 }
 
-/** 発話などの文字列を HTML に埋め込める形にする。 */
-export function escapeHtml(text: string): string {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;")
-}
-
 const PLACEHOLDER_UTTERANCE = "（まだ発話がありません）"
 
 const MAIN_VIEW_EMPTY_MESSAGE = "（まだ作業がありません）"
@@ -967,11 +960,60 @@ const STYLE = `
     padding-left: 0.6rem;
   }
   .turn-dropped { margin: 0 0 0.75rem; color: #8f97ab; font-size: 0.85rem; }
-  .main-step {
-    margin: 0 0 1.25rem;
-    padding-left: 0.75rem;
-    border-left: 2px solid #3a4256;
+  /* ステップはカードにして、領域が広いときだけ2列に折り返す（ユーザーの決定 2026-09-10。
+     上から下へ読むだけの1本の流れをやめ、縦の長さを半分にする）。 */
+  .main-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+    gap: 0.75rem;
+    align-items: start;
   }
+  .main-step {
+    margin: 0;
+    padding: 0.75rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.5rem;
+    background: #171b24;
+    min-width: 0;
+  }
+  /* レポートが直接書ける HTML（sanitizeReportHtml が通すもの）から使う見た目の語彙。
+     **クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
+  .detail-block .cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.75rem;
+  }
+  .detail-block .card {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.5rem;
+    background: #1c202a;
+  }
+  .detail-block .badge {
+    display: inline-block;
+    padding: 0 0.5rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.8rem;
+  }
+  .detail-block .badge-ok { color: #7ee081; }
+  .detail-block .badge-warn { color: #e3c766; }
+  .detail-block .badge-ng { color: #e88b8b; }
+  .detail-block .note {
+    margin: 0.5rem 0;
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid #8ab4ff;
+    background: #1c202a;
+  }
+  .detail-block .note-warn { border-left-color: #e3c766; }
+  .detail-block .note-ng { border-left-color: #e88b8b; }
+  .detail-block blockquote {
+    margin: 0.5rem 0;
+    padding-left: 0.75rem;
+    border-left: 3px solid #3a4256;
+    color: #b9c0d0;
+  }
+  .detail-block svg { max-width: 100%; height: auto; }
   .step-heading {
     margin: 0 0 0.5rem;
     font-size: 0.75rem;
@@ -1359,11 +1401,14 @@ function truncateForDisplay(text: string): string {
  * - テーブル（GFM 形式。ヘッダ行の次に `---` の区切り行があるものだけをテーブルと認識する）
  * - 段落中のインライン強調（`**太字**`）・インラインコード（`` `code` ``）・リンク
  *   （`[text](url)`）
+ * - **HTML のブロック**（行頭がタグに見える行から空行まで）。段組み・カード・SVG の図を
+ *   レポート側から組めるようにするため（2026-09-10 決定）。中身は
+ *   {@link sanitizeReportHtml} の許可リストを通り、`script` などは中身ごと落ちる
  *
- * **対応しない記法（引用・ネストしたリスト・画像・水平線など）はブロックとして認識されず、
- * ただの段落テキストとして escapeHtml を通ってそのまま表示される**（構文として壊れず、
- * 崩れた見た目になるだけに留める）。**すべてのテキストは escapeHtml を通してから埋め込む**
- * （コードブロックの中身も含む）ので、Markdown の中に HTML やコードが含まれていてもそのまま
+ * **対応しない Markdown 記法（引用・ネストしたリスト・画像・水平線など）はブロックとして
+ * 認識されず、ただの段落テキストとして表示される**（構文として壊れず、崩れた見た目になるだけに
+ * 留める。これらを使いたいときは HTML で書く）。**HTML ブロック以外のテキストは escapeHtml を
+ * 通してから埋め込む**（コードブロックの中身も含む）ので、Markdown の中のコードがそのまま
  * 描画されることはない。
  */
 function renderMarkdownToHtml(markdown: string): string {
@@ -1409,6 +1454,13 @@ function renderMarkdownToHtml(markdown: string): string {
       continue
     }
 
+    if (isHtmlBlockStart(line)) {
+      const block = consumeHtmlBlock(lines, index)
+      blocks.push(block.html)
+      index = block.next
+      continue
+    }
+
     const paragraph = consumeParagraph(lines, index)
     blocks.push(paragraph.html)
     index = paragraph.next
@@ -1440,8 +1492,34 @@ function isBlockStartLine(lines: readonly string[], index: number): boolean {
     matchHeading(line) !== undefined ||
     isUnorderedListLine(line) ||
     isOrderedListLine(line) ||
+    isHtmlBlockStart(line) ||
     isTableStart(lines, index)
   )
+}
+
+/**
+ * その行から HTML のブロックが始まるか。**行頭（インデントを除く）がタグに見えるときだけ**
+ * ブロックとして扱う（`< 3` のような不等号は段落のまま）。閉じタグから始まる形は、
+ * ブロックの途中で改行しただけの可能性があるので始まりとは見ない。
+ */
+function isHtmlBlockStart(line: string): boolean {
+  return /^<[a-zA-Z][a-zA-Z0-9-]*[\s/>]/.test(line.trimStart())
+}
+
+/**
+ * HTML のブロックを空行まで読み、{@link sanitizeReportHtml} に通す。**空行が区切り**なのは
+ * Markdown のブロック分けと同じ扱いにするため（HTML の入れ子を数える実装にしない）。
+ */
+function consumeHtmlBlock(lines: readonly string[], start: number): ParsedBlock {
+  const htmlLines: string[] = []
+  let index = start
+
+  while (index < lines.length && lineAt(lines, index).trim() !== "") {
+    htmlLines.push(lineAt(lines, index))
+    index += 1
+  }
+
+  return { html: sanitizeReportHtml(htmlLines.join("\n")), next: index }
 }
 
 function matchHeading(line: string): { readonly level: number; readonly text: string } | undefined {
@@ -1622,14 +1700,9 @@ function splitOnLinks(rawText: string): readonly InlinePart[] {
 }
 
 /**
- * `href` に入れてよいスキームの allowlist。**それ以外（`javascript:` / `data:` / 不明なスキーム）は
- * リンクにせず、`[text](url)` の見た目のまま平文として出す**（`docs/coding-standards.md`
- * 「会話内容の扱い」と同じ思想: このビューは localhost とはいえ会話の内容を持っているので、
- * クリックで JavaScript が実行される経路を作らない）。`/` や `#` で始まる相対リンクは許可する。
- * 判定は前後の空白を落とし、大文字小文字を無視して行う（`JavaScript:` のような表記も弾く）。
+ * リンクにできない URL（`javascript:` / `data:` / 不明なスキーム）は、`[text](url)` の見た目の
+ * まま平文として出す。判定の正典は `src/report-html.ts` の {@link isAllowedLinkUrl}。
  */
-const ALLOWED_LINK_SCHEMES: readonly string[] = ["http:", "https:", "mailto:"]
-
 function linkPartHtml(part: { readonly text: string; readonly url: string }): string {
   const trimmedUrl = part.url.trim()
   if (!isAllowedLinkUrl(trimmedUrl)) {
@@ -1637,20 +1710,6 @@ function linkPartHtml(part: { readonly text: string; readonly url: string }): st
   }
 
   return `<a href="${escapeHtml(trimmedUrl)}" rel="noopener noreferrer">${renderPlainInline(part.text)}</a>`
-}
-
-function isAllowedLinkUrl(url: string): boolean {
-  if (url.startsWith("/") || url.startsWith("#")) {
-    return true
-  }
-
-  const schemeMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(url)
-  if (schemeMatch === null) {
-    return false
-  }
-
-  const scheme = `${(schemeMatch[1] ?? "").toLowerCase()}:`
-  return ALLOWED_LINK_SCHEMES.includes(scheme)
 }
 
 /** リンク以外の地の文に使う、`escapeHtml` 済みの上での `**太字**` / `` `コード` `` の変換。 */
