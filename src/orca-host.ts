@@ -204,6 +204,20 @@ function runOrca(args: readonly string[], label: string): Promise<CommandOutput>
  * 出す**（出力にも会話の内容が混ざりうるので、素通しにしない。`docs/coding-standards.md`
  * 「会話内容の扱い」）。表に無い出力は、これまでどおり終了コードだけを伝える。
  */
+/**
+ * orca が返す**エラーコードだけ**を取り出す。`terminal_handle_stale` のような
+ * **小文字・数字・アンダースコアだけの短い1語**という形に限る。
+ *
+ * **形で許可しているのは、会話の内容と形が違うから**（日本語・空白・記号・改行を含むものは
+ * 通らない）。`docs/coding-standards.md`「会話内容の扱い」を守りつつ、まだ表に無い失敗でも
+ * 利用者が検索できる手掛かりを残すための折衷。表（{@link KNOWN_ORCA_FAILURES}）に載ったものは
+ * 日本語の説明が優先される。
+ */
+function orcaErrorCode(output: string): string | undefined {
+  const trimmed = output.trim()
+  return /^[a-z][a-z0-9_]{2,40}$/.test(trimmed) ? trimmed : undefined
+}
+
 const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: string }[] = [
   {
     marker: "terminal_handle_stale",
@@ -234,6 +248,11 @@ function describeFailure(label: string, error: unknown, output: string): string 
   const known = KNOWN_ORCA_FAILURES.find((failure) => output.includes(failure.marker))
   if (known !== undefined) {
     return known.reason
+  }
+
+  const code = orcaErrorCode(output)
+  if (code !== undefined) {
+    return `${ORCA_COMMAND} ${label} が失敗した（${code}）`
   }
 
   const exitCode = isRecord(error) && typeof error.code === "number" ? error.code : undefined
