@@ -127,12 +127,12 @@ const LAYOUT_RESET_ID = "tsukumo-layout-reset"
 const LAYOUT_SPLIT_STORAGE_KEY = "tsukumo-layout-split"
 // 3本の仕切りの既定位置（%）。rowTop は上段(メイン・サイドバー)の高さの割合、topLeft は
 // 上段内でのメインの幅の割合、bottomLeft は下段内でのキャラビューの幅の割合
-// （残りはそれぞれサイドバー・下段・入力欄に割り当たる）。**下段の高さと入力欄の幅を広めに
-// 取ってあるのは、入力フォームの狭さが既定値を決め直した動機だから**（狭めても構わないが、
-// 既定として狭くはしない）。
+// （残りはそれぞれサイドバー・下段・入力欄に割り当たる）。**下段の高さを広めに取ってあるのは、
+// 入力フォームの狭さが既定値を決め直した動機だから**（狭めても構わないが、既定として狭くはしない）。
+// **下段の左右は半々**（ユーザーの指定）。
 // **STYLE の grid-template-rows / grid-template-columns の var() 第2引数（フォールバック値）と
 // 一致させること**（JS が動かない場合の見た目もこの値になる）。
-const LAYOUT_SPLIT_DEFAULTS = { rowTop: 60, topLeft: 75, bottomLeft: 35 } as const
+const LAYOUT_SPLIT_DEFAULTS = { rowTop: 60, topLeft: 75, bottomLeft: 50 } as const
 // 仕切りをどちらかの端まで詰めて操作不能にしないための可動域。
 const LAYOUT_SPLIT_MIN_PERCENT = 15
 const LAYOUT_SPLIT_MAX_PERCENT = 85
@@ -771,7 +771,7 @@ const STYLE = `
     grid-template-columns: var(--layout-top-left, 75fr) auto var(--layout-top-right, 25fr);
   }
   .layout-row-bottom {
-    grid-template-columns: var(--layout-bottom-left, 35fr) auto var(--layout-bottom-right, 65fr);
+    grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
   }
   .layout-region {
     min-width: 0;

@@ -32,7 +32,7 @@
     "status": "doing",
     "difficulty": "sonnet",
     "passes": false,
-    "evidence": "実装は sonnet に委譲し、受け入れはメインで実施。`bun run check` 通過: 221 pass / 0 fail（うち仕切りの新規テスト9件）。触ったのは `src/view.ts` と `test/view.test.ts` のみ。\n上下段を別の grid（`.layout-row-top` / `.layout-row-bottom`）に分け、行の高さと各行の列幅を CSS カスタムプロパティで持たせて `layoutScript` が書き換える形にした。既定は 上段:下段=60:40 / メイン:サイドバー=75:25 / キャラ:入力欄=35:65（入力フォームの狭さが動機なので下段の高さと入力欄の幅を両方広げた）。可動域は15〜85%にクランプ。`textarea` の `resize: none` は維持（領域側のドラッグと競合するため）。\n**目視確認は未了。** 壊れた `localStorage` 値でのフォールバックは自動テスト2件（不正 JSON / 型・範囲違い）で確認済みだが、実際に仕切りが動くか・畳んだときの振る舞いはブラウザで見る必要がある。",
+    "evidence": "実装は sonnet に委譲し、受け入れはメインで実施。`bun run check` 通過: 221 pass / 0 fail（うち仕切りの新規テスト9件）。触ったのは `src/view.ts` と `test/view.test.ts` のみ。\n上下段を別の grid（`.layout-row-top` / `.layout-row-bottom`）に分け、行の高さと各行の列幅を CSS カスタムプロパティで持たせて `layoutScript` が書き換える形にした。既定は 上段:下段=60:40 / メイン:サイドバー=75:25 / キャラ:入力欄=50:50（下段の高さを広げるのは入力フォームの狭さが動機。下段の左右はユーザーの指定で半々）。可動域は15〜85%にクランプ。`textarea` の `resize: none` は維持（領域側のドラッグと競合するため）。\n**目視確認は未了。** 壊れた `localStorage` 値でのフォールバックは自動テスト2件（不正 JSON / 型・範囲違い）で確認済みだが、実際に仕切りが動くか・畳んだときの振る舞いはブラウザで見る必要がある。",
     "dependencies": []
   },
   {

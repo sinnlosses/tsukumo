@@ -781,8 +781,8 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     expect(grid.style.values()["--layout-row-bottom"]).toBe("40fr")
     expect(rowTop.style.values()["--layout-top-left"]).toBe("75fr")
     expect(rowTop.style.values()["--layout-top-right"]).toBe("25fr")
-    expect(rowBottom.style.values()["--layout-bottom-left"]).toBe("35fr")
-    expect(rowBottom.style.values()["--layout-bottom-right"]).toBe("65fr")
+    expect(rowBottom.style.values()["--layout-bottom-left"]).toBe("50fr")
+    expect(rowBottom.style.values()["--layout-bottom-right"]).toBe("50fr")
   })
 
   it("localStorage の値が JSON として壊れていても、例外にならず既定の比率にフォールバックする", () => {
@@ -890,7 +890,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     expect(grid.style.values()["--layout-row-top"]).toBe("50fr")
     expect(grid.style.values()["--layout-row-bottom"]).toBe("50fr")
     expect(savedValue).toBeDefined()
-    expect(JSON.parse(savedValue ?? "{}")).toEqual({ rowTop: 50, topLeft: 75, bottomLeft: 35 })
+    expect(JSON.parse(savedValue ?? "{}")).toEqual({ rowTop: 50, topLeft: 75, bottomLeft: 50 })
   })
 
   it("縦の仕切り（上段）をドラッグすると、メインとサイドバーの幅の比率が変わる", () => {
@@ -981,7 +981,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
 
     expect(grid.style.values()["--layout-row-top"]).toBe("60fr")
     expect(grid.style.values()["--layout-row-bottom"]).toBe("40fr")
-    expect(JSON.parse(savedValue ?? "{}")).toEqual({ rowTop: 60, topLeft: 75, bottomLeft: 35 })
+    expect(JSON.parse(savedValue ?? "{}")).toEqual({ rowTop: 60, topLeft: 75, bottomLeft: 50 })
   })
 })
 
