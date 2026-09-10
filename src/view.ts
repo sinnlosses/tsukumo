@@ -870,7 +870,7 @@ type TurnPanel = {
 }
 
 function turnPanel(turn: MainViewTurn): TurnPanel {
-  const steps = turn.steps.flatMap((step, index) => stepHtml(step, index + 1))
+  const steps = turn.steps.flatMap((step) => stepHtml(step))
   const droppedHtml =
     turn.droppedCount === 0
       ? ""
@@ -889,18 +889,25 @@ function turnPanel(turn: MainViewTurn): TurnPanel {
   }
 }
 
-/** 1ステップ分の HTML。レポートもツールも出すものが無いステップは、何も返さない。 */
-function stepHtml(step: MainViewStep, order: number): readonly string[] {
+/**
+ * 1ステップ分の HTML。レポートもツールも出すものが無いステップは、何も返さない。
+ *
+ * **ステップは「ひとかたまり」を示すだけで、番号は振らない**（ユーザーの指摘 2026-09-10。
+ * 「ステップ1」のような通し番号は読む助けにならない）。**縦に1本で並べる**ので、
+ * 段組みはステップの中（レポート本文と、そこで動かしたツールの並べ方）で作る。
+ */
+function stepHtml(step: MainViewStep): readonly string[] {
   const tools = step.tools.flatMap((tool) => toolRunHtml(tool))
   const report = step.report === undefined ? "" : detailHtml(step.report)
   if (report === "" && tools.length === 0) {
     return []
   }
 
+  const toolsHtml = tools.length === 0 ? "" : `<div class="step-tools">${tools.join("")}</div>`
+
   return [
     `<section class="main-step">
-<h3 class="step-heading">ステップ${String(order)}</h3>
-${[report, ...tools].filter((part) => part !== "").join("\n")}
+${[report, toolsHtml].filter((part) => part !== "").join("\n")}
 </section>`,
   ]
 }
@@ -1065,22 +1072,43 @@ const STYLE = `
     padding-left: 0.6rem;
   }
   .turn-dropped { margin: 0 0 0.75rem; color: #8f97ab; font-size: 0.85rem; }
-  /* ステップはカードにして、領域が広いときだけ2列に折り返す（ユーザーの決定 2026-09-10。
-     上から下へ読むだけの1本の流れをやめ、縦の長さを半分にする）。 */
+  /* ステップは**縦に1本**で積む（ユーザーの指摘 2026-09-10。Z字に読ませない）。
+     カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
   .main-steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
-    align-items: start;
   }
   .main-step {
     margin: 0;
-    padding: 0.75rem;
+    padding: 0.75rem 0.9rem;
     border: 1px solid #3a4256;
     border-radius: 0.5rem;
     background: #171b24;
     min-width: 0;
   }
+  .main-step > .detail-block:last-child { margin-bottom: 0; }
+  /* そのステップで動かしたツールは、本文の下に**行内のチップ**でまとめる（縦に積むと
+     本文が分断されるため）。失敗したツールだけは中身を読ませたいのでブロックのまま。 */
+  .step-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+  }
+  .step-tools .tool-block {
+    margin: 0;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: #1c202a;
+  }
+  .step-tools .tool-block h3 { margin: 0; }
+  .step-tools .tool-block-failed {
+    flex: 1 1 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+  }
+  .step-tools .tool-block-failed h3 { margin: 0 0 0.5rem; }
   /* レポートが直接書ける HTML（sanitizeReportHtml が通すもの）から使う見た目の語彙。
      **クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
   .detail-block .cols {
@@ -1448,7 +1476,7 @@ function failedToolHtml(entry: MainViewToolRun): string {
           truncateForDisplay(entry.result.content),
         )}</code></pre>`
 
-  return `<section class="tool-block">
+  return `<section class="tool-block tool-block-failed">
 <h3>${escapeHtml(entry.name)}</h3>
 <pre class="tool-input"><code>${escapeHtml(inputText)}</code></pre>
 ${resultHtml}

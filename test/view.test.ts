@@ -1316,8 +1316,15 @@ describe("メインビューのやり取り（依頼で区切り、タブで遡�
     expect(steps[0]).not.toContain("src/b.ts")
     expect(steps[1]).toContain("次に直すね")
     expect(steps[1]).toContain("Edit: src/b.ts")
-    expect(body).toContain("ステップ1")
-    expect(body).toContain("ステップ2")
+    // 番号の見出しは振らない（ユーザーの指摘 2026-09-10）。
+    expect(body).not.toContain("ステップ1")
+  })
+
+  it("ステップは縦に1本で積む（横に並べない）", () => {
+    const body = buildMainBody([request("依頼"), detail("ひとつめ"), detail("ふたつめ")])
+
+    expect(body).toContain('class="main-steps"')
+    expect(body).not.toContain("grid-template-columns")
   })
 
   it("レポートより前に実行されたツールも、レポートを持たないステップとして出る", () => {
