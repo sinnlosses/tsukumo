@@ -63,11 +63,7 @@ export type ViewServer = {
  * ここで直接組み立てず、必ずこのポート経由にする（docs/architecture.md「ホスト依存の操作は
  * 1つのポートにまとめる」）。
  */
-export function startViewServer(
-  port: number,
-  host: Host,
-  workingDirectory: string,
-): Promise<ViewServer> {
+export function startViewServer(port: number, host: Host): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
   // listen が終わるまでは空文字列。状態を変える経路（POST）が実際に受け付けられるのは
@@ -76,7 +72,7 @@ export function startViewServer(
 
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, bodies, clients, host, boundOrigin, workingDirectory)
+    respond(request, path, response, bodies, clients, host, boundOrigin)
   })
 
   const heartbeat = setInterval(() => {
@@ -141,7 +137,6 @@ function respond(
   clients: Map<ViewName, Set<ServerResponse>>,
   host: Host,
   serverOrigin: string,
-  workingDirectory: string,
 ): void {
   if (path === "/") {
     writeHtml(response, buildIndexPage())
@@ -184,7 +179,7 @@ function respond(
       writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
       return
     }
-    handleAnswer(request, response, host, workingDirectory)
+    handleAnswer(request, response, host)
     return
   }
 
@@ -335,24 +330,19 @@ const ALLOWED_ANSWER_KEYS: readonly string[] = [
 ]
 
 /**
- * 質問への回答としてキーを1つ押す。**押す場所はサイドカーの作業ディレクトリ**（＝このリポジトリ）
- * で、どのペインに届くかはホスト側のフォーカスに委ねる（`src/host.ts` の `pressKey`）。
+ * 質問への回答としてキーを1つ押す。**押す先は送信フォームと同じターミナル**（利用者が選んだもの）。
+ * ホスト側はそのペインを前面へ出してからキーを押す（`src/host.ts` の `pressKey`）。
  */
-function handleAnswer(
-  request: IncomingMessage,
-  response: ServerResponse,
-  host: Host,
-  workingDirectory: string,
-): void {
+function handleAnswer(request: IncomingMessage, response: ServerResponse, host: Host): void {
   readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
     .then(async (body) => {
-      const key = body === undefined ? undefined : parseAnswerKey(body)
-      if (key === undefined) {
-        writeJson(response, 400, { ok: false, reason: "押せないキー" })
+      const answer = body === undefined ? undefined : parseAnswerRequest(body)
+      if (answer === undefined) {
+        writeJson(response, 400, { ok: false, reason: "送信先か押せないキーの指定が正しくない" })
         return
       }
 
-      const result = await host.pressKey(workingDirectory, key)
+      const result = await host.pressKey(answer.terminalId, answer.key)
       if (!result.ok) {
         writeJson(response, 502, { ok: false, reason: result.reason })
         return
@@ -365,7 +355,9 @@ function handleAnswer(
     })
 }
 
-function parseAnswerKey(body: string): string | undefined {
+function parseAnswerRequest(
+  body: string,
+): { readonly terminalId: string; readonly key: string } | undefined {
   let parsed: unknown
   try {
     parsed = JSON.parse(body)
@@ -373,11 +365,16 @@ function parseAnswerKey(body: string): string | undefined {
     return undefined
   }
 
-  if (!isRecord(parsed) || typeof parsed.key !== "string") {
+  if (
+    !isRecord(parsed) ||
+    typeof parsed.key !== "string" ||
+    typeof parsed.terminalId !== "string"
+  ) {
     return undefined
   }
 
-  return ALLOWED_ANSWER_KEYS.includes(parsed.key) ? parsed.key : undefined
+  const { terminalId, key } = parsed
+  return terminalId !== "" && ALLOWED_ANSWER_KEYS.includes(key) ? { terminalId, key } : undefined
 }
 
 type DispatchRequest = { readonly terminalId: string; readonly text: string }

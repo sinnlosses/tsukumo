@@ -12,7 +12,8 @@
 //               「claude が動いていそう」の判定（likelyClaude）は `agentIdentity` フィールドが
 //               `"claude"` かどうかで決める（v1.4.197 で実測。Orca 自身がターミナルの中身を見て
 //               付けた分類ラベルで、`claude` セッションが動いているときだけ付く）
-//   pressKey  → orca keypress --key <key> --worktree path:<dir> --json
+//   pressKey  → orca terminal switch --terminal <handle> --json のあと orca keypress --key <key>
+//               （keypress は宛先を取らず**前面のペイン**に届くので、先に前面へ出す）
 //   sendText  → orca terminal send --terminal <handle> --text <text> --enter
 //               **claude が質問・確認を表示している間は送れない**（`agent_prompt_blocked` が
 //               返る。2026-09-11 実測）。入力フォームも質問の選択肢も、この制約を受ける
@@ -41,7 +42,7 @@ export function createOrcaHost(): Host {
     showView: (url) => showView(url),
     listPanes: () => listPanes(),
     sendText: (paneId, text) => sendText(paneId, text),
-    pressKey: (workingDirectory, key) => pressKey(workingDirectory, key),
+    pressKey: (paneId, key) => pressKey(paneId, key),
   }
 }
 
@@ -132,16 +133,24 @@ async function sendText(paneId: string, text: string): Promise<HostResult> {
 }
 
 /**
- * `orca keypress --key <key> --worktree path:<dir>` でキーを1つ押す。**`terminal send` とは
- * 別の経路**で、claude が質問を表示している間（`agent_prompt_blocked` になる状態）でも
- * 届くことを狙っている。どのペインに届くかは Orca 側のフォーカス次第。
+ * キーを1つ押す。**`terminal send` とは別の経路**で、claude が質問を表示している間
+ * （`agent_prompt_blocked` になる状態）でも届く。
+ *
+ * **2段構えなのは、`orca keypress` に宛先のターミナルを渡せないから**（`--worktree` /
+ * `--page` しか取らず、実際には**前面のペイン**に届く。2026-09-11 実測: 前面にしないと
+ * ターミナルには入らない）。先に `terminal switch` でそのペインを前面へ出す。
  */
-async function pressKey(workingDirectory: string, key: string): Promise<HostResult> {
-  const result = await runOrca(
-    ["keypress", "--key", key, "--worktree", `path:${workingDirectory}`, "--json"],
-    "キーを押す",
+async function pressKey(paneId: string, key: string): Promise<HostResult> {
+  const switched = await runOrca(
+    ["terminal", "switch", "--terminal", paneId, "--json"],
+    "ターミナルを前面にする",
   )
-  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
+  if (!switched.ok) {
+    return { ok: false, reason: switched.reason }
+  }
+
+  const pressed = await runOrca(["keypress", "--key", key, "--json"], "キーを押す")
+  return pressed.ok ? { ok: true } : { ok: false, reason: pressed.reason }
 }
 
 // `orca terminal list --json` は

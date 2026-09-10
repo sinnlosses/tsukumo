@@ -302,13 +302,14 @@ ${questionRegionScript()}
  * 入力欄の領域を、質問と入力フォームで**切り替える**。質問の本文が入っている間はフォームを
  * 隠す（ユーザーの決定 2026-09-10「質問中はフォームを退けて差し替える」）。
  *
- * 選択肢を押したときは {@link ANSWER_PATH} へ**キーの名前だけ**を送る。**押した直後に全部の
+ * 選択肢を押したときは {@link ANSWER_PATH} へ**送信先と、キーの名前だけ**を送る。**押した直後に全部の
  * 選択肢を無効化する**のは二重押しを防ぐため。失敗したら押せる状態へ戻す。
  */
 function questionRegionScript(): string {
   return `  {
     const el = document.getElementById(${JSON.stringify(layoutRegionId("question"))})
     const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
+    const target = document.getElementById(${JSON.stringify(DISPATCH_TARGET_ID)})
     const apply = () => {
       if (form !== null) {
         form.hidden = el.innerHTML.trim() !== ""
@@ -325,12 +326,17 @@ function questionRegionScript(): string {
         return
       }
       const status = el.querySelector(".question-status")
+      const terminalId = target === null ? "" : target.value
+      if (terminalId === "") {
+        status.textContent = "送信先のターミナルが選べていない"
+        return
+      }
       setDisabled(true)
       status.textContent = "押している…"
       fetch(${JSON.stringify(ANSWER_PATH)}, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ key: choice.dataset.key }),
+        body: JSON.stringify({ terminalId, key: choice.dataset.key }),
       })
         .then((response) => response.json())
         .then((result) => {
@@ -1033,7 +1039,7 @@ export function buildQuestionBody(pending: PendingQuestion | undefined): string 
 
   return `${blocks.join("\n")}
 <p class="question-status" role="status" aria-live="polite"></p>
-<p class="question-hint">押すと番号キーを押す。届かないときはターミナル側で答えてよい</p>`
+<p class="question-hint">押すとそのターミナルを前面にして番号キーを押す。ターミナル側で直接答えてもよい</p>`
 }
 
 /**

@@ -1228,7 +1228,7 @@ describe("キャラクターからの質問（入力欄の領域に差し込む�
     expect(body).toContain("メインビュー")
     expect(body).toContain("作業の記録として出す")
     // 番号はターミナルの並びと同じ。答えるのはターミナル側。
-    expect(body).toContain("ターミナル側で答えてよい")
+    expect(body).toContain("ターミナル側で直接答えてもよい")
   })
 
   it("選択肢は押せて、押すと番号キーを押す（文字を流し込む経路では届かないため）", () => {
@@ -1236,7 +1236,7 @@ describe("キャラクターからの質問（入力欄の領域に差し込む�
 
     expect(body).toContain('<button type="button" class="question-choice" data-key="1"')
     expect(body).toContain('data-key="2"')
-    expect(body).toContain("押すと番号キーを押す")
+    expect(body).toContain("番号キーを押す")
   })
 
   it("複数選べる質問はその旨を出す", () => {

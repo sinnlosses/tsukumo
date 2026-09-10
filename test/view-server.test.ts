@@ -25,11 +25,8 @@ function fakeHost(overrides: Partial<Host> = {}): Host {
   }
 }
 
-// テストの作業ディレクトリ。`pressKey` に渡る値を確かめるためだけに使う（実在しなくてよい）。
-const WORKING_DIRECTORY = "/work/tsukumo"
-
 async function start(host: Host = fakeHost()): Promise<ViewServer> {
-  const server = await startViewServer(0, host, WORKING_DIRECTORY)
+  const server = await startViewServer(0, host)
   running = server
   return server
 }
@@ -98,12 +95,12 @@ describe("ビューサーバ", () => {
     expect((await fetch(`${origin}/vendor/%2e%2e/package.json`)).status).toBe(404)
   })
 
-  it("質問への回答としてキーを押す（作業ディレクトリを添えてホストに頼む）", async () => {
-    const pressed: { directory?: string; key?: string } = {}
+  it("質問への回答として、選ばれたターミナルにキーを押す", async () => {
+    const pressed: { paneId?: string; key?: string } = {}
     const server = await start(
       fakeHost({
-        pressKey: (directory, key) => {
-          pressed.directory = directory
+        pressKey: (paneId, key) => {
+          pressed.paneId = paneId
           pressed.key = key
           return Promise.resolve({ ok: true })
         },
@@ -113,12 +110,12 @@ describe("ビューサーバ", () => {
     const response = await fetch(`${originOf(server)}/api/answer`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ key: "2" }),
+      body: JSON.stringify({ terminalId: "term_abc", key: "2" }),
     })
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ ok: true })
-    expect(pressed).toEqual({ directory: WORKING_DIRECTORY, key: "2" })
+    expect(pressed).toEqual({ paneId: "term_abc", key: "2" })
   })
 
   it("許可していないキーは押さない（ブラウザから任意のキーを押させない）", async () => {
@@ -136,7 +133,7 @@ describe("ビューサーバ", () => {
       const response = await fetch(`${originOf(server)}/api/answer`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ terminalId: "term_abc", key }),
       })
       expect(response.status).toBe(400)
     }
@@ -152,7 +149,7 @@ describe("ビューサーバ", () => {
     const response = await fetch(`${originOf(server)}/api/answer`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ key: "1" }),
+      body: JSON.stringify({ terminalId: "term_abc", key: "1" }),
     })
 
     expect(response.status).toBe(502)
