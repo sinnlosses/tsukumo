@@ -26,6 +26,7 @@ import { createOrcaHost } from "./orca-host.ts"
 import { parseStateFile } from "./state.ts"
 import { extractAgentMeta, extractLatestToolName } from "./subagents.ts"
 import { type TaskStatusCounts, countTaskStatuses } from "./tasks.ts"
+import { selectTranscriptTarget, type TranscriptTargetSelection } from "./transcript-target.ts"
 import {
   extractContextUsage,
   extractLatestPendingBackgroundAgentCount,
@@ -62,8 +63,10 @@ const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出す�
   bun run start [transcript.jsonl]
 
 起動すると、ビューの配信とレイアウトページのタブを開くところまで1コマンドで進む。
-引数を省略すると、SessionStart hook が書き出す ~/.tsukumo/transcript-path を追従先にする
-（引数を渡した場合はそちらを優先する）。
+引数を省略すると、SessionStart hook が書き出す ~/.tsukumo/transcript-path を追従先にし、
+**同じディレクトリで始まった新しいセッションへ自動で乗り換える**（Claude Code を再起動しても
+サイドカーは追いつく。別のディレクトリのセッションには乗り換えない）。
+引数でパスを渡した場合はそれを優先し、以降も乗り換えない。
 
 環境変数:
   TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
@@ -117,11 +120,20 @@ type FileSnapshot = {
  */
 async function main(args: readonly string[]): Promise<number> {
   const homeDir = homedir()
-  const transcriptPath = resolveTranscriptPath(args[0], homeDir)
-  if (transcriptPath === undefined) {
+  const cwd = process.cwd()
+  const target = resolveTranscriptTarget(args[0], homeDir, cwd)
+  if (target.kind === "other-cwd") {
+    process.stderr.write(
+      `tsukumo: hook が書いた追従先は別のディレクトリ（${target.cwd}）のセッション。` +
+        "このディレクトリで claude を起動し直すか、追従先を引数で渡す\n",
+    )
+    return 2
+  }
+  if (target.kind === "missing") {
     process.stderr.write(USAGE)
     return 2
   }
+  const transcriptPath = target.path
 
   // 起動時に前提（transcript が読める・ポートが空いている）が満たされていないときだけ即時終了する
   // （docs/coding-standards.md「エラーハンドリング」）。
@@ -155,10 +167,20 @@ async function main(args: readonly string[]): Promise<number> {
     speechMarker,
   )
 
-  publishCharacterView(transcriptPath)
-  publishSidebarView(server, transcriptPath)
-  publishMainView(server, transcriptPath, speechMarker)
-  followTranscript(server, transcriptPath, initialSnapshot, publishCharacterView, speechMarker)
+  // 引数でパスを渡して起動したときは追従先を固定する（明示した相手を見張り続けるための逃げ道。
+  // docs/architecture.md「追従先は自前でスラッグ化せず、hookが書いたパスを読む」）。
+  const resolveNextTranscriptPath =
+    args[0] === undefined ? () => readFollowTranscriptPath(homeDir, cwd) : () => undefined
+
+  publishAllViews(server, transcriptPath, publishCharacterView, speechMarker)
+  followTranscript(
+    server,
+    transcriptPath,
+    initialSnapshot,
+    publishCharacterView,
+    speechMarker,
+    resolveNextTranscriptPath,
+  )
   announce(server)
 
   if (resolveOpenView(process.env[OPEN_VIEW_ENV_NAME])) {
@@ -195,18 +217,32 @@ function resolveCharacterDir(envValue: string | undefined, cwd: string): string 
 }
 
 /**
- * 追従先の transcript パスを決める。**引数が優先**で、無ければ SessionStart hook が
- * 書き出した既知の場所（~/.tsukumo/transcript-path）を読む
+ * 起動時の追従先を決める。**引数が優先**で、無ければ SessionStart hook が書き出した既知の場所
+ * （~/.tsukumo/transcript-path）を読む
  * （docs/architecture.md「追従先は自前でスラッグ化せず、hookが書いたパスを読む」）。
+ * hook が書いたものは**このディレクトリで始まったセッションのときだけ**採る（判定は
+ * src/transcript-target.ts）。
  */
-function resolveTranscriptPath(argPath: string | undefined, homeDir: string): string | undefined {
+function resolveTranscriptTarget(
+  argPath: string | undefined,
+  homeDir: string,
+  cwd: string,
+): TranscriptTargetSelection {
   if (argPath !== undefined) {
-    return argPath
+    return { kind: "follow", path: argPath }
   }
 
-  const fileContent = readOptionalFile(transcriptPathFilePath(homeDir))
-  const trimmed = fileContent?.trim()
-  return trimmed !== undefined && trimmed !== "" ? trimmed : undefined
+  return selectTranscriptTarget(readOptionalFile(transcriptPathFilePath(homeDir)), cwd)
+}
+
+/**
+ * 追従中に乗り換え先を決め直す。hook が書いた追従先が**このディレクトリのセッションのもの**に
+ * 変わっていればそのパスを返し、それ以外（無い・読めない・別のディレクトリ）は undefined を
+ * 返して今の追従先を変えさせない。
+ */
+function readFollowTranscriptPath(homeDir: string, cwd: string): string | undefined {
+  const selection = selectTranscriptTarget(readOptionalFile(transcriptPathFilePath(homeDir)), cwd)
+  return selection.kind === "follow" ? selection.path : undefined
 }
 
 /**
@@ -243,17 +279,38 @@ function resolveViewPort(rawPort: string | undefined): number | undefined {
   return parsed
 }
 
-/** 追記を検知してビューを更新するポーリングループ。ファイルの mtime/size を見るだけで十分とした。 */
+/**
+ * 追記を検知してビューを更新するポーリングループ。ファイルの mtime/size を見るだけで十分とした。
+ *
+ * **同じきっかけで追従先の乗り換えも見る。** Claude Code を再起動すると transcript は別の
+ * ファイルになり、古いほうは更新が止まる。追従先を起動時に決めたきりにすると、ビューは
+ * 終わったセッションを映したまま黙って止まる（失敗の兆候が出ないので、利用者からは
+ * 「更新されない」としか見えない）。
+ */
 function followTranscript(
   server: ViewServer,
-  transcriptPath: string,
+  initialTranscriptPath: string,
   initialSnapshot: FileSnapshot,
   publishCharacterView: (transcriptPath: string) => void,
   speechMarker: string,
+  resolveNextTranscriptPath: () => string | undefined,
 ): void {
+  let transcriptPath = initialTranscriptPath
   let lastSnapshot = initialSnapshot
 
   setInterval(() => {
+    const next = resolveNextTranscriptPath()
+    const nextSnapshot =
+      next === undefined || next === transcriptPath ? undefined : readSnapshot(next)
+    // 新しい追従先がまだ読めないときは乗り換えない（読めている今の追従先を手放さないため）。
+    if (next !== undefined && nextSnapshot !== undefined) {
+      process.stderr.write(`tsukumo: 追従先を切り替えた: ${next}\n`)
+      transcriptPath = next
+      lastSnapshot = nextSnapshot
+      publishAllViews(server, transcriptPath, publishCharacterView, speechMarker)
+      return
+    }
+
     const current = readSnapshot(transcriptPath)
     if (current === undefined) {
       return
@@ -263,11 +320,20 @@ function followTranscript(
     }
 
     lastSnapshot = current
-    publishCharacterView(transcriptPath)
-    // サイドバー・メインビューの更新も同じきっかけ（transcript の変化）に相乗りする。
-    publishSidebarView(server, transcriptPath)
-    publishMainView(server, transcriptPath, speechMarker)
+    publishAllViews(server, transcriptPath, publishCharacterView, speechMarker)
   }, POLL_INTERVAL_MS)
+}
+
+/** 3つのビューをまとめて配る。サイドバー・メインビューの更新はキャラビューと同じきっかけに相乗りする。 */
+function publishAllViews(
+  server: ViewServer,
+  transcriptPath: string,
+  publishCharacterView: (transcriptPath: string) => void,
+  speechMarker: string,
+): void {
+  publishCharacterView(transcriptPath)
+  publishSidebarView(server, transcriptPath)
+  publishMainView(server, transcriptPath, speechMarker)
 }
 
 /**
@@ -287,8 +353,16 @@ function createCharacterViewPublisher(
   speechMarker: string,
 ): (transcriptPath: string) => void {
   let lastSpeech: string | undefined = undefined
+  let lastTranscriptPath: string | undefined = undefined
 
   return (transcriptPath: string) => {
+    // 追従先が変わったら直前のセリフを捨てる。「規約に従っていない発話が来たら直前のセリフを
+    // 出し続ける」のは同じセッションの中での話で、別のセッションのセリフを引き継ぐ意味はない。
+    if (transcriptPath !== lastTranscriptPath) {
+      lastSpeech = undefined
+      lastTranscriptPath = transcriptPath
+    }
+
     try {
       const utterance = extractLatestUtterance(readFileSync(transcriptPath, "utf8"))
       const speech =

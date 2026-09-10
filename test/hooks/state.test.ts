@@ -19,6 +19,10 @@ function runHook(payload: string, homeDir: string) {
   })
 }
 
+function readTranscriptTarget(homeDir: string): unknown {
+  return JSON.parse(readFileSync(join(homeDir, ".tsukumo", "transcript-path"), "utf8"))
+}
+
 function readState(homeDir: string): unknown {
   return JSON.parse(readFileSync(join(homeDir, ".tsukumo", "state.json"), "utf8"))
 }
@@ -44,9 +48,10 @@ describe("hooks/state.sh", () => {
       expect(result.status).toBe(0)
       expect(result.stdout.trim()).toBe("{}")
       expect(readState(homeDir)).toEqual({ event: "SessionStart", model: "opus" })
-      expect(readFileSync(join(homeDir, ".tsukumo", "transcript-path"), "utf8")).toBe(
-        "/tmp/fake-session/session.jsonl",
-      )
+      expect(readTranscriptTarget(homeDir)).toEqual({
+        transcriptPath: "/tmp/fake-session/session.jsonl",
+        cwd: "/tmp/fake-session",
+      })
     } finally {
       rmSync(homeDir, { recursive: true, force: true })
     }
@@ -156,6 +161,47 @@ describe("hooks/state.sh", () => {
       expect(result.status).toBe(0)
       const written = readFileSync(join(homeDir, ".tsukumo", "state.json"), "utf8")
       expect(written).not.toContain("ひみつの用事")
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true })
+    }
+  })
+
+  it("cwd が payload に無いときは、追従先を書かない", () => {
+    // cwd が無いと「どのディレクトリのセッションか」が分からず、サイドカーは乗り換えの判断が
+    // できない（src/transcript-target.ts）。中途半端なものを書くより書かないほうが安全。
+    const homeDir = mkdtempSync(join(tmpdir(), "tsukumo-hook-"))
+
+    try {
+      const result = runHook(
+        JSON.stringify({
+          hook_event_name: "SessionStart",
+          transcript_path: "/tmp/fake-session/session.jsonl",
+        }),
+        homeDir,
+      )
+
+      expect(result.status).toBe(0)
+      expect(existsSync(join(homeDir, ".tsukumo", "transcript-path"))).toBe(false)
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true })
+    }
+  })
+
+  it("パスに JSON を壊す文字（引用符・バックスラッシュ）が入っているときは書かない", () => {
+    const homeDir = mkdtempSync(join(tmpdir(), "tsukumo-hook-"))
+
+    try {
+      const result = runHook(
+        JSON.stringify({
+          hook_event_name: "SessionStart",
+          transcript_path: "/tmp/fake\\session.jsonl",
+          cwd: "/tmp/fake",
+        }),
+        homeDir,
+      )
+
+      expect(result.status).toBe(0)
+      expect(existsSync(join(homeDir, ".tsukumo", "transcript-path"))).toBe(false)
     } finally {
       rmSync(homeDir, { recursive: true, force: true })
     }

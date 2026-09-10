@@ -26,6 +26,11 @@ const BROKEN_TRANSCRIPT_LINES = [
   '{"type":"unknown-future-type","payload":{"whatever":true}}',
 ].join("\n")
 
+/** 手で書いた架空の発話1行。追従先の乗り換えを見分けるために、セリフだけを差し替えて使う。 */
+function utteranceLine(text: string): string {
+  return JSON.stringify({ type: "assistant", message: { content: [{ type: "text", text }] } })
+}
+
 type RunOptions = {
   readonly homeDir?: string
   readonly viewPort?: string
@@ -201,7 +206,7 @@ describe("tsukumo CLI", () => {
     const homeDir = makeTempDir()
     const transcriptPath = join(dir, "session.jsonl")
     writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
-    writeTsukumoFile(homeDir, "transcript-path", transcriptPath)
+    writeTranscriptTarget(homeDir, transcriptPath, process.cwd())
 
     try {
       const page = await fetchView([], "character", { homeDir })
@@ -224,7 +229,7 @@ describe("tsukumo CLI", () => {
       hookTranscript,
       '{"type":"assistant","message":{"content":[{"type":"text","text":"hookの方の発話"}]}}',
     )
-    writeTsukumoFile(homeDir, "transcript-path", hookTranscript)
+    writeTranscriptTarget(homeDir, hookTranscript, process.cwd())
 
     try {
       const page = await fetchView([argTranscript], "character", { homeDir })
@@ -235,6 +240,91 @@ describe("tsukumo CLI", () => {
       rmSync(dir, { recursive: true, force: true })
       rmSync(homeDir, { recursive: true, force: true })
       rmSync(hookDir, { recursive: true, force: true })
+    }
+  })
+
+  it("同じディレクトリで新しいセッションが始まると追従先を乗り換え、前のセリフを残さない", async () => {
+    const dir = makeTempDir()
+    const homeDir = makeTempDir()
+    const otherDir = makeTempDir()
+    const firstTranscript = join(dir, "first.jsonl")
+    const secondTranscript = join(dir, "second.jsonl")
+    const thirdTranscript = join(dir, "third.jsonl")
+    writeFileSync(firstTranscript, utteranceLine("アスナ: 前のセッションのセリフ"))
+    writeFileSync(secondTranscript, utteranceLine("アスナ: 新しいセッションのセリフ"))
+    // 3つ目は「別のディレクトリのセッション」役。マーカーの無い発話にして、万一乗り換えても
+    // 前のセリフが残るだけにならないよう、本文で見分けられるようにしておく。
+    writeFileSync(thirdTranscript, utteranceLine("アスナ: 別ディレクトリのセリフ"))
+    writeTranscriptTarget(homeDir, firstTranscript, process.cwd())
+
+    const cli = await startCli([], { homeDir })
+    try {
+      const firstPage = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
+      expect(firstPage).toContain("前のセッションのセリフ")
+
+      // Claude Code の再起動を再現する: hook が同じディレクトリの新しい transcript を書く。
+      writeTranscriptTarget(homeDir, secondTranscript, process.cwd())
+      await sleep(POLL_WAIT_MS)
+
+      const secondPage = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
+      expect(secondPage).toContain("新しいセッションのセリフ")
+      expect(secondPage).not.toContain("前のセッションのセリフ")
+
+      // 別のディレクトリで claude を起動したときは乗り換えない。
+      writeTranscriptTarget(homeDir, thirdTranscript, otherDir)
+      await sleep(POLL_WAIT_MS)
+
+      const thirdPage = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
+      expect(thirdPage).toContain("新しいセッションのセリフ")
+      expect(thirdPage).not.toContain("別ディレクトリのセリフ")
+    } finally {
+      cli.stop()
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(homeDir, { recursive: true, force: true })
+      rmSync(otherDir, { recursive: true, force: true })
+    }
+  })
+
+  it("引数でパスを渡して起動したときは、hook が新しいセッションを書いても乗り換えない", async () => {
+    const dir = makeTempDir()
+    const homeDir = makeTempDir()
+    const argTranscript = join(dir, "arg.jsonl")
+    const hookTranscript = join(dir, "hook.jsonl")
+    writeFileSync(argTranscript, utteranceLine("アスナ: 引数で指定したセリフ"))
+    writeFileSync(hookTranscript, utteranceLine("アスナ: hookが書いたセリフ"))
+
+    const cli = await startCli([argTranscript], { homeDir })
+    try {
+      writeTranscriptTarget(homeDir, hookTranscript, process.cwd())
+      await sleep(POLL_WAIT_MS)
+
+      const page = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
+      expect(page).toContain("引数で指定したセリフ")
+      expect(page).not.toContain("hookが書いたセリフ")
+    } finally {
+      cli.stop()
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(homeDir, { recursive: true, force: true })
+    }
+  })
+
+  it("hook が書いた追従先が別のディレクトリのものだけのとき、理由を伝えて終了コード2で終わる", () => {
+    const dir = makeTempDir()
+    const homeDir = makeTempDir()
+    const otherDir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
+    writeTranscriptTarget(homeDir, transcriptPath, otherDir)
+
+    try {
+      const result = runCliToExit([], { homeDir })
+
+      expect(result.status).toBe(2)
+      expect(result.stderr).toContain(otherDir)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(homeDir, { recursive: true, force: true })
+      rmSync(otherDir, { recursive: true, force: true })
     }
   })
 
@@ -583,6 +673,14 @@ describe("tsukumo CLI", () => {
     }
   })
 })
+
+/**
+ * hook（hooks/state.sh）が SessionStart で書く追従先ファイルを再現する。cwd を書くのは、
+ * サイドカーが**自分と同じディレクトリで始まったセッションだけ**に乗り換えるため。
+ */
+function writeTranscriptTarget(homeDir: string, transcriptPath: string, cwd: string): void {
+  writeTsukumoFile(homeDir, "transcript-path", JSON.stringify({ transcriptPath, cwd }))
+}
 
 function writeTsukumoFile(homeDir: string, name: string, content: string): void {
   const tsukumoDir = join(homeDir, ".tsukumo")

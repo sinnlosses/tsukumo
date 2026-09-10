@@ -1,7 +1,9 @@
 #!/bin/sh
 # Claude Code の hook から呼ばれ、状態ファイル（表情の元になるイベント種別と実行中のモデル）を
-# 書く。SessionStart のときだけ、追加で transcript_path を既知の場所へ書き出す
+# 書く。SessionStart のときだけ、追加で transcript_path と cwd を既知の場所へ書き出す
 # （docs/architecture.md「追従先は自前でスラッグ化せず、hookが書いたパスを読む」）。
+# cwd も書くのは、サイドカーが**自分と同じディレクトリで始まったセッションだけ**に乗り換える
+# ためで、これが無いと別のリポジトリで claude を起動した瞬間にビューがそちらへ移る。
 #
 # 書く場所は src/index.ts の TSUKUMO_DIR_NAME / STATE_FILE_NAME / TRANSCRIPT_PATH_FILE_NAME と
 # 一致させること（変えるときは両方を直す）: ~/.tsukumo/state.json と ~/.tsukumo/transcript-path。
@@ -20,6 +22,8 @@
 # 複数の Claude セッションが同時に走っていても、状態ファイルは単一の既知の場所を共有する。
 # 最後に書き込んだセッションの状態で上書きされ、セッションごとの分離はしない
 # （PoC としての割り切り。区別したくなったらセッションIDをファイル名に足す）。
+# 追従先ファイルも同じ1ファイルを共有するが、cwd を一緒に書いてあるので、読む側が
+# 自分と無関係なセッションのものを弾ける（src/transcript-target.ts）。
 #
 # hook の出力（stdout）は最初に一度だけ `{}` を書く。以降は何が起きても標準出力に触らない
 # ことで、途中で失敗しても常に妥当な hook 出力を返す（この後の処理は落ちても常駐プロセス側の
@@ -39,6 +43,19 @@ payload=$(cat) || exit 0
 extract_field() {
   # $1: JSON上のキー名。$2: 検索対象の文字列。"key":"value" 形式の value を1つ返す。
   printf '%s\n' "$2" | sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' 2>/dev/null | head -n 1
+}
+
+json_safe_abs_path() {
+  # $1: 検査する値。絶対パスで、`"` と `\` を含まないものだけをそのまま返す。それ以外は
+  # 何も返さず 1 で終わる（JSON をエスケープ無しで組み立てるので、壊す値は書かない）。
+  case "$1" in
+    /*) ;;
+    *) return 1 ;;
+  esac
+  case "$1" in
+    *[\"\\]*) return 1 ;;
+  esac
+  printf '%s' "$1"
 }
 
 event=$(extract_field hook_event_name "$payload")
@@ -82,15 +99,11 @@ fi
 mv "$state_tmp" "$STATE_FILE" 2>/dev/null || rm -f "$state_tmp" 2>/dev/null
 
 if [ "$event" = "SessionStart" ]; then
-  transcript_path=$(extract_field transcript_path "$payload")
-  # 同じ理由で、絶対パスの形をしていないものは書かない。
-  case "$transcript_path" in
-    /*) ;;
-    *) transcript_path="" ;;
-  esac
-  if [ -n "$transcript_path" ]; then
+  transcript_path=$(json_safe_abs_path "$(extract_field transcript_path "$payload")") || transcript_path=""
+  session_cwd=$(json_safe_abs_path "$(extract_field cwd "$payload")") || session_cwd=""
+  if [ -n "$transcript_path" ] && [ -n "$session_cwd" ]; then
     transcript_path_tmp="${TRANSCRIPT_PATH_FILE}.tmp.$$"
-    printf '%s' "$transcript_path" >"$transcript_path_tmp" 2>/dev/null
+    printf '{"transcriptPath":"%s","cwd":"%s"}\n' "$transcript_path" "$session_cwd" >"$transcript_path_tmp" 2>/dev/null
     mv "$transcript_path_tmp" "$TRANSCRIPT_PATH_FILE" 2>/dev/null || rm -f "$transcript_path_tmp" 2>/dev/null
   fi
 fi

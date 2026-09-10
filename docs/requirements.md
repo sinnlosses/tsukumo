@@ -141,8 +141,10 @@ VS Code 統合ターミナルは第一級ではない。サイドカー単体は
     ~/.claude/projects/<slug>/<session-id>.jsonl | tail -1
   ```
 
-- hook には `transcript_path` が渡る。SessionStart hook で既知の場所に書き出しておけば、
-  サイドカーは**スラッグ化の規則を自前で再実装せずに**追従先を知れる
+- hook には `transcript_path` と `cwd` が渡る。SessionStart hook で既知の場所に書き出しておけば、
+  サイドカーは**スラッグ化の規則を自前で再実装せずに**追従先を知れる。**書き出す場所は全セッション
+  共通の1ファイル**なので、`cwd` も一緒に書いて「どのディレクトリのセッションか」を読む側が
+  判定できるようにする
 - 行の `type` 分布（2026-09-09 に907行で実測）: `attachment` / `assistant` / `user` /
   `permission-mode` / `mode` / `last-prompt` / `bridge-session` / `atis-latch` / `ai-title` /
   `system` / `file-history-snapshot` / `file-history-delta`。**assistant 以外は無視してよい**が、
@@ -283,6 +285,10 @@ statusline 側にも小さいマスコットを出す。mascot-statusline をフ
   （`orca terminal split`）で行い、tmux の導入は前提にしない
 - 追従先の transcript は引数で渡せる。**引数だけで起動できる**ことは保つ
   （Orca が無い環境でもサイドカー単体が成立する条件。2.2）
+- **引数を省略したときは、同じディレクトリで始まった新しいセッションへ自動で乗り換える。**
+  Claude Code を再起動してもサイドカーを起動し直さずに済むため。**別のディレクトリのセッションには
+  乗り換えない**（複数のリポジトリで claude を動かしても、見ているペインの相手を奪われない）。
+  引数で渡したときは乗り換えず、その1本を追い続ける
 - hook の登録先である `~/.claude/settings.json` は、**既存の hooks / statusLine 設定を
   壊さないよう追記する**（現状 orca が専有している。`develop/progress.md`「注意」参照）
 
