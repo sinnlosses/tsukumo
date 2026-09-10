@@ -69,6 +69,31 @@ describe("ビューサーバ", () => {
     await expect(outside).rejects.toBeDefined()
   })
 
+  it("同梱した外部ライブラリを配る（allowlist に載っている名前だけ）", async () => {
+    const server = await start()
+    const origin = originOf(server)
+
+    const script = await fetch(`${origin}/vendor/highlight.min.js`)
+    expect(script.status).toBe(200)
+    expect(script.headers.get("content-type")).toContain("text/javascript")
+    expect((await script.text()).length).toBeGreaterThan(1000)
+
+    const style = await fetch(`${origin}/vendor/highlight-theme.min.css`)
+    expect(style.status).toBe(200)
+    expect(style.headers.get("content-type")).toContain("text/css")
+  })
+
+  it("同梱していない名前・上のディレクトリを指す名前は配らない", async () => {
+    const server = await start()
+    const origin = originOf(server)
+
+    // allowlist に無い名前。
+    expect((await fetch(`${origin}/vendor/other.js`)).status).toBe(404)
+    // パスを組み立てないので、`..` を書いても外のファイルには届かない。
+    expect((await fetch(`${origin}/vendor/../package.json`)).status).toBe(404)
+    expect((await fetch(`${origin}/vendor/%2e%2e/package.json`)).status).toBe(404)
+  })
+
   it("publish した本文を、そのビューのページに埋め込んで返す", async () => {
     const server = await start()
     server.publish("character", "<p>いま作業中だよ</p>")

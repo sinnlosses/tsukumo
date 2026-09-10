@@ -28,6 +28,23 @@ export function viewEventPath(view: ViewName): string {
   return `/events/${view}`
 }
 
+/**
+ * 同梱した外部ライブラリを配る経路（`vendor/README.md`）。**名前は allowlist にした固定の
+ * 対応表**で、リクエストのパスからファイル名を組み立てない（`..` で外へ出る経路を作らない）。
+ */
+export const VENDOR_PATH_PREFIX = "/vendor/"
+
+export const VENDOR_ASSET_CONTENT_TYPES: Readonly<Record<string, string>> = {
+  "highlight.min.js": "text/javascript; charset=utf-8",
+  "highlight-theme.min.css": "text/css; charset=utf-8",
+  "chart.umd.min.js": "text/javascript; charset=utf-8",
+  "mermaid.min.js": "text/javascript; charset=utf-8",
+}
+
+function vendorPath(name: string): string {
+  return `${VENDOR_PATH_PREFIX}${name}`
+}
+
 /** 送信先として選べるターミナルの一覧を返す経路（GET）。 */
 export const TERMINALS_PATH = "/api/terminals"
 
@@ -61,7 +78,95 @@ ${viewScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
  */
 function viewScript(elementId: string, view: ViewName, initialBody: string): string {
   const subscription = subscriptionScript(elementId, view, initialBody)
-  return view === "main" ? `${subscription}\n${mainTurnsScript(elementId)}` : subscription
+  return view === "main"
+    ? `${subscription}\n${mainTurnsScript(elementId)}\n${reportRenderersScript(elementId)}`
+    : subscription
+}
+
+/**
+ * レポートの中の**コード・図・グラフ**を描く。**同梱したライブラリ**（`vendor/README.md`）を
+ * `127.0.0.1` から読むので、表示のたびに外部へ通信は飛ばない（2026-09-10 のユーザーの決定）。
+ *
+ * - コードの色付け（highlight.js）はページの `<head>` で読み込み済みのものを使う
+ * - **mermaid（3.2MB）と Chart.js（196KB）は、その記法が実際に出てきたときだけ読み込む。**
+ *   レポートが図を書かない限り、重いファイルは1バイトも読まれない
+ * - 描き終えたものには印を付け、push で本文が差し替わったときだけ描き直す
+ */
+function reportRenderersScript(elementId: string): string {
+  return `  {
+    const el = document.getElementById(${JSON.stringify(elementId)})
+    const loaded = new Map()
+    const loadOnce = (src) => {
+      const already = loaded.get(src)
+      if (already !== undefined) {
+        return already
+      }
+      const loading = new Promise((resolve, reject) => {
+        const script = document.createElement("script")
+        script.src = src
+        script.addEventListener("load", () => resolve())
+        script.addEventListener("error", () => reject(new Error(src)))
+        document.head.appendChild(script)
+      })
+      loaded.set(src, loading)
+      return loading
+    }
+    const highlight = () => {
+      if (typeof hljs === "undefined") {
+        return
+      }
+      for (const block of el.querySelectorAll("pre code:not([data-highlighted])")) {
+        block.dataset.highlighted = "yes"
+        hljs.highlightElement(block)
+      }
+    }
+    const drawDiagrams = () => {
+      const nodes = [...el.querySelectorAll("pre.mermaid:not([data-drawn])")]
+      if (nodes.length === 0) {
+        return
+      }
+      for (const node of nodes) {
+        node.dataset.drawn = "yes"
+      }
+      loadOnce(${JSON.stringify(vendorPath("mermaid.min.js"))})
+        .then(() => {
+          mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict" })
+          return mermaid.run({ nodes })
+        })
+        .catch(() => {
+          for (const node of nodes) {
+            node.dataset.drawn = "failed"
+          }
+        })
+    }
+    const drawCharts = () => {
+      const canvases = [...el.querySelectorAll("canvas[data-chart]:not([data-drawn])")]
+      if (canvases.length === 0) {
+        return
+      }
+      for (const canvas of canvases) {
+        canvas.dataset.drawn = "yes"
+      }
+      loadOnce(${JSON.stringify(vendorPath("chart.umd.min.js"))})
+        .then(() => {
+          for (const canvas of canvases) {
+            try {
+              new Chart(canvas, JSON.parse(canvas.dataset.chart))
+            } catch {
+              canvas.dataset.drawn = "failed"
+            }
+          }
+        })
+        .catch(() => {})
+    }
+    const draw = () => {
+      highlight()
+      drawDiagrams()
+      drawCharts()
+    }
+    new MutationObserver(draw).observe(el, { childList: true })
+    draw()
+  }`
 }
 
 /**
@@ -1548,9 +1653,23 @@ function consumeCodeBlock(lines: readonly string[], start: number): ParsedBlock 
   // 閉じフェンスが見つからない（発話が途中で切れた等）ときは、残り全部をコードとして扱う。
   const next = index < lines.length ? index + 1 : index
 
+  const code = codeLines.join("\n")
+
+  // ```mermaid / ```chart は「コード」ではなく図・グラフの入れ物にする。中身はどちらも
+  // escapeHtml を通してから埋め込み、描画は同梱ライブラリがブラウザ側で行う（reportRenderersScript）。
+  if (language === "mermaid") {
+    return { html: `<pre class="mermaid">${escapeHtml(code)}</pre>`, next }
+  }
+  if (language === "chart") {
+    return {
+      html: `<div class="chart-block"><canvas data-chart="${escapeHtml(code)}"></canvas></div>`,
+      next,
+    }
+  }
+
   const languageClass = language === "" ? "" : ` class="language-${escapeHtml(language)}"`
   return {
-    html: `<pre><code${languageClass}>${escapeHtml(codeLines.join("\n"))}</code></pre>`,
+    html: `<pre><code${languageClass}>${escapeHtml(code)}</code></pre>`,
     next,
   }
 }
@@ -1781,6 +1900,8 @@ function page(title: string, body: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
+<link rel="stylesheet" href="${vendorPath("highlight-theme.min.css")}">
+<script src="${vendorPath("highlight.min.js")}"></script>
 <style>${STYLE}</style>
 </head>
 <body>

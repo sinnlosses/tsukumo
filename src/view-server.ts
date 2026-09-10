@@ -6,8 +6,10 @@
 // **ループバック（127.0.0.1）にだけバインドする。** 会話の一部を平文で配るので、
 // 同じマシンの外からは届かないことが前提になっている。
 
+import { readFileSync } from "node:fs"
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
 import process from "node:process"
+import { fileURLToPath } from "node:url"
 
 import { type Host, type Pane } from "./host.ts"
 import {
@@ -18,6 +20,8 @@ import {
   LAYOUT_PATH,
   type LayoutBodies,
   TERMINALS_PATH,
+  VENDOR_ASSET_CONTENT_TYPES,
+  VENDOR_PATH_PREFIX,
   VIEW_NAMES,
   type ViewName,
   viewEventPath,
@@ -169,8 +173,46 @@ function respond(
     return
   }
 
+  if (path.startsWith(VENDOR_PATH_PREFIX) && request.method === "GET") {
+    writeVendorAsset(response, path.slice(VENDOR_PATH_PREFIX.length))
+    return
+  }
+
   response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
   response.end("not found\n")
+}
+
+/**
+ * 同梱した外部ライブラリ（`vendor/`）を配る。**名前は allowlist の対応表に載っているものだけ**で、
+ * リクエストのパスからファイル名を組み立てないので、`..` で外のファイルを読み出す経路が無い。
+ * 置き場所はモジュールからの相対で解決する（cwd に依存させない）。
+ */
+function writeVendorAsset(response: ServerResponse, name: string): void {
+  const contentType = VENDOR_ASSET_CONTENT_TYPES[name]
+  if (contentType === undefined) {
+    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+    response.end("not found\n")
+    return
+  }
+
+  const content = readOptionalFile(fileURLToPath(new URL(`../vendor/${name}`, import.meta.url)))
+  if (content === undefined) {
+    // 同梱ファイルが無くても配信は続ける（表示物が1つ欠けても起動失敗にしない）。
+    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+    response.end("not found\n")
+    return
+  }
+
+  response.writeHead(200, { "content-type": contentType, "cache-control": "max-age=3600" })
+  response.end(content)
+}
+
+function readOptionalFile(path: string): Buffer | undefined {
+  try {
+    return readFileSync(path)
+  } catch {
+    return undefined
+  }
 }
 
 /**

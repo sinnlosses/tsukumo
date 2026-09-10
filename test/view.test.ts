@@ -1191,6 +1191,47 @@ describe("メインビューのタブの選択（push で戻らない・新し�
   })
 })
 
+describe("レポートの図・グラフ・コードの色（同梱ライブラリを使う）", () => {
+  it("```mermaid は図の入れ物になり、中身はエスケープされる", () => {
+    const body = buildMainBody([
+      { kind: "detail", markdown: "```mermaid\nflowchart LR\n  A --> B & <script>\n```" },
+    ])
+
+    expect(body).toContain('<pre class="mermaid">')
+    expect(body).toContain("flowchart LR")
+    expect(body).not.toContain("<script>")
+    expect(body).toContain("&lt;script&gt;")
+  })
+
+  it("```chart はグラフの入れ物になり、設定は属性に入る", () => {
+    const body = buildMainBody([
+      { kind: "detail", markdown: '```chart\n{"type":"bar","data":{}}\n```' },
+    ])
+
+    expect(body).toContain('<div class="chart-block">')
+    expect(body).toContain("<canvas data-chart=")
+    expect(body).toContain("&quot;type&quot;:&quot;bar&quot;")
+  })
+
+  it("ふつうのコードブロックは language クラス付きで出る（highlight.js が拾う）", () => {
+    const body = buildMainBody([{ kind: "detail", markdown: "```ts\nconst a = 1\n```" }])
+
+    expect(body).toContain('<pre><code class="language-ts">')
+    expect(body).toContain("const a = 1")
+  })
+
+  it("ページは同梱したライブラリを 127.0.0.1 から読む（外部 URL を書かない）", () => {
+    const page = buildViewPage("main", buildMainBody([]))
+
+    expect(page).toContain('href="/vendor/highlight-theme.min.css"')
+    expect(page).toContain('src="/vendor/highlight.min.js"')
+    expect(page).toContain("/vendor/mermaid.min.js")
+    expect(page).toContain("/vendor/chart.umd.min.js")
+    expect(page).not.toContain("https://cdn")
+    expect(page).not.toContain("http://cdn")
+  })
+})
+
 describe("メインビューのやり取り（依頼で区切り、タブで遡る）", () => {
   const request = (text: string): MainViewEntry => ({ kind: "request", text })
   const detail = (markdown: string): MainViewEntry => ({ kind: "detail", markdown })
