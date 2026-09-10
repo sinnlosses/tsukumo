@@ -141,92 +141,120 @@ describe("extractLatestUtterance", () => {
 })
 
 describe("splitUtterance", () => {
-  it("引用が1箇所のとき、セリフと詳細に分ける", () => {
+  const MARKER = "アスナ: "
+
+  it("マーカーで始まる行がセリフに、それ以外が詳細になる", () => {
     const utterance = [
-      "> やあ、今日は何をする?",
+      "アスナ: やあ、今日は何をする?",
       "手順はこう:",
       "1. テストを書く",
       "2. 実装する",
     ].join("\n")
 
-    expect(splitUtterance(utterance)).toEqual({
+    expect(splitUtterance(utterance, MARKER)).toEqual({
       speech: "やあ、今日は何をする?",
       detail: ["手順はこう:", "1. テストを書く", "2. 実装する"].join("\n"),
     })
   })
 
-  it("連続する引用行は1つのまとまりとして改行でつなぐ", () => {
-    const utterance = ["> 1行目のセリフ", "> 2行目のセリフ", "詳細はこちら"].join("\n")
+  it("連続するマーカー行は1つのまとまりとして改行でつなぐ", () => {
+    const utterance = ["アスナ: 1行目のセリフ", "アスナ: 2行目のセリフ", "詳細はこちら"].join("\n")
 
-    expect(splitUtterance(utterance)).toEqual({
+    expect(splitUtterance(utterance, MARKER)).toEqual({
       speech: "1行目のセリフ\n2行目のセリフ",
       detail: "詳細はこちら",
     })
   })
 
-  it("引用が複数箇所（冒頭と締め）に分かれているとき、出現順に連結する", () => {
+  it("離れたまとまり（冒頭と締め）は空行でつなぐ", () => {
     const utterance = [
-      "> よし、始めよう",
+      "アスナ: よし、始めよう",
       "変更点:",
       "- Aを直した",
       "- Bを直した",
-      "> 終わったよ",
+      "アスナ: 終わったよ",
     ].join("\n")
 
-    expect(splitUtterance(utterance)).toEqual({
+    expect(splitUtterance(utterance, MARKER)).toEqual({
       speech: "よし、始めよう\n\n終わったよ",
       detail: ["変更点:", "- Aを直した", "- Bを直した"].join("\n"),
     })
   })
 
-  it("引用が1つも無いとき、セリフは undefined で詳細は全文になる", () => {
-    const utterance = ["ただの説明文だけ。", "引用の記法は使っていない。"].join("\n")
+  it("マーカーが1つも無いとき、セリフは undefined で詳細は全文になる", () => {
+    const utterance = ["ただの説明文だけ。", "セリフの記法は使っていない。"].join("\n")
 
-    expect(splitUtterance(utterance)).toEqual({
+    expect(splitUtterance(utterance, MARKER)).toEqual({
       speech: undefined,
       detail: utterance,
     })
   })
 
-  it("コードブロック内の `> ` を引用として拾わない", () => {
+  it("コードブロック内のマーカー行を拾わない", () => {
     const utterance = [
-      "> 直したよ",
+      "アスナ: 直したよ",
       "```diff",
-      "> - old line",
-      "> + new line",
+      "アスナ: - old line",
+      "アスナ: + new line",
       "```",
       "これで直るはず",
     ].join("\n")
 
-    expect(splitUtterance(utterance)).toEqual({
+    expect(splitUtterance(utterance, MARKER)).toEqual({
       speech: "直したよ",
-      detail: ["```diff", "> - old line", "> + new line", "```", "これで直るはず"].join("\n"),
+      detail: ["```diff", "アスナ: - old line", "アスナ: + new line", "```", "これで直るはず"].join(
+        "\n",
+      ),
     })
   })
 
-  it("コードブロックが複数あっても、ブロックの外の引用だけを拾う", () => {
+  it("コードブロックが複数あっても、ブロックの外のマーカー行だけを拾う", () => {
     const utterance = [
       "```ts",
-      "> not a quote",
+      "アスナ: not a speech",
       "```",
-      "> 本物のセリフ",
+      "アスナ: 本物のセリフ",
       "```bash",
-      "> echo hi",
+      "アスナ: echo hi",
       "```",
     ].join("\n")
 
-    expect(splitUtterance(utterance)).toEqual({
+    expect(splitUtterance(utterance, MARKER)).toEqual({
       speech: "本物のセリフ",
-      detail: ["```ts", "> not a quote", "```", "```bash", "> echo hi", "```"].join("\n"),
+      detail: ["```ts", "アスナ: not a speech", "```", "```bash", "アスナ: echo hi", "```"].join(
+        "\n",
+      ),
     })
   })
 
-  it("ネストした引用（`> >`）は外側の `> ` だけを取り除く", () => {
-    const utterance = ["> > 入れ子の引用", "詳細の説明"].join("\n")
+  it("引用（`> `）はセリフにならず、詳細にそのまま残る", () => {
+    const utterance = [
+      "アスナ: レビューのコメントを引くね",
+      "> ここは分かりにくい、と言われた",
+      "なので言い回しを変えた",
+    ].join("\n")
 
-    expect(splitUtterance(utterance)).toEqual({
-      speech: "> 入れ子の引用",
-      detail: "詳細の説明",
+    expect(splitUtterance(utterance, MARKER)).toEqual({
+      speech: "レビューのコメントを引くね",
+      detail: ["> ここは分かりにくい、と言われた", "なので言い回しを変えた"].join("\n"),
+    })
+  })
+
+  it("マーカーを差し替えると、差し替えた側で拾う", () => {
+    const utterance = ["ゆき> こっちが新しいマーカー", "アスナ: こっちはただの本文"].join("\n")
+
+    expect(splitUtterance(utterance, "ゆき> ")).toEqual({
+      speech: "こっちが新しいマーカー",
+      detail: "アスナ: こっちはただの本文",
+    })
+  })
+
+  it("マーカーは行頭での一致だけを見る（行の途中にあっても拾わない）", () => {
+    const utterance = "この行の途中に アスナ: があっても詳細のまま"
+
+    expect(splitUtterance(utterance, MARKER)).toEqual({
+      speech: undefined,
+      detail: utterance,
     })
   })
 })
@@ -356,6 +384,8 @@ describe("extractLatestPendingBackgroundAgentCount", () => {
 })
 
 describe("extractMainViewEntries", () => {
+  const MARKER = "アスナ: "
+
   it("tool_use と、対応する tool_result（tool_use_id で対応付け）を1件のツール実行にする", () => {
     const content = [
       JSON.stringify({
@@ -377,7 +407,7 @@ describe("extractMainViewEntries", () => {
       }),
     ].join("\n")
 
-    expect(extractMainViewEntries(content)).toEqual([
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
       {
         kind: "tool",
         name: "Bash",
@@ -395,7 +425,7 @@ describe("extractMainViewEntries", () => {
       },
     })
 
-    expect(extractMainViewEntries(content)).toEqual([
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
       { kind: "tool", name: "Read", input: { file_path: "/a" }, result: undefined },
     ])
   })
@@ -421,7 +451,7 @@ describe("extractMainViewEntries", () => {
       }),
     ].join("\n")
 
-    expect(extractMainViewEntries(content)).toEqual([
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
       {
         kind: "tool",
         name: "Bash",
@@ -454,7 +484,7 @@ describe("extractMainViewEntries", () => {
       }),
     ].join("\n")
 
-    expect(extractMainViewEntries(content)).toEqual([
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
       {
         kind: "tool",
         name: "Read",
@@ -467,10 +497,10 @@ describe("extractMainViewEntries", () => {
   it("text は splitUtterance の detail だけを積み、セリフは含めない", () => {
     const content = JSON.stringify({
       type: "assistant",
-      message: { content: [{ type: "text", text: "> やったよ\n詳しい説明はこちら" }] },
+      message: { content: [{ type: "text", text: "アスナ: やったよ\n詳しい説明はこちら" }] },
     })
 
-    expect(extractMainViewEntries(content)).toEqual([
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
       { kind: "detail", markdown: "詳しい説明はこちら" },
     ])
   })
@@ -478,10 +508,10 @@ describe("extractMainViewEntries", () => {
   it("セリフだけで detail が空になる発話は積まない", () => {
     const content = JSON.stringify({
       type: "assistant",
-      message: { content: [{ type: "text", text: "> セリフだけ" }] },
+      message: { content: [{ type: "text", text: "アスナ: セリフだけ" }] },
     })
 
-    expect(extractMainViewEntries(content)).toEqual([])
+    expect(extractMainViewEntries(content, MARKER)).toEqual([])
   })
 
   it("thinking は絶対に出さない（中身が結果に一切現れない）", () => {
@@ -503,7 +533,7 @@ describe("extractMainViewEntries", () => {
       }),
     ].join("\n")
 
-    const serialized = JSON.stringify(extractMainViewEntries(content))
+    const serialized = JSON.stringify(extractMainViewEntries(content, MARKER))
     expect(serialized).not.toContain("秘密の内部思考")
     expect(serialized).not.toContain("thinking")
   })
@@ -514,12 +544,12 @@ describe("extractMainViewEntries", () => {
       message: {
         content: [
           { type: "tool_use", id: "toolu_1", name: "Bash", input: { command: "ls" } },
-          { type: "text", text: "> 見てみるね\n実行した結果はこちら" },
+          { type: "text", text: "アスナ: 見てみるね\n実行した結果はこちら" },
         ],
       },
     })
 
-    expect(extractMainViewEntries(content)).toEqual([
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
       { kind: "tool", name: "Bash", input: { command: "ls" }, result: undefined },
       { kind: "detail", markdown: "実行した結果はこちら" },
     ])
@@ -531,14 +561,16 @@ describe("extractMainViewEntries", () => {
       JSON.stringify({ type: "future-type", payload: { anything: true } }),
       JSON.stringify({
         type: "assistant",
-        message: { content: [{ type: "text", text: "> 唯一のセリフ\n唯一の詳細" }] },
+        message: { content: [{ type: "text", text: "アスナ: 唯一のセリフ\n唯一の詳細" }] },
       }),
     ].join("\n")
 
-    expect(extractMainViewEntries(content)).toEqual([{ kind: "detail", markdown: "唯一の詳細" }])
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
+      { kind: "detail", markdown: "唯一の詳細" },
+    ])
   })
 
   it("空の transcript では空配列を返す", () => {
-    expect(extractMainViewEntries("")).toEqual([])
+    expect(extractMainViewEntries("", MARKER)).toEqual([])
   })
 })

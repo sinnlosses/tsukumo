@@ -51,6 +51,10 @@ const DEFAULT_VIEW_PORT = 7327
 const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 // 起動時にレイアウトページのタブを自動で開くかどうか。既定は開く（コマンド1つで完成させるため）。
 const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
+// セリフの行頭マーカー。出力スタイルの規約（docs/requirements.md 4.2）とそろえる。
+// 末尾の半角スペースまでが1つのマーカー。
+const DEFAULT_SPEECH_MARKER = "アスナ: "
+const SPEECH_MARKER_ENV_NAME = "TSUKUMO_SPEECH_MARKER"
 
 const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出すサイドカー
 
@@ -66,6 +70,8 @@ const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出す�
   TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は characters/tsukumo-spirit。
                           自分の素材を使うときは characters/local などを指す。cwd 相対にも対応）
   TSUKUMO_OPEN_VIEW       起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
+  TSUKUMO_SPEECH_MARKER   セリフの行頭マーカー（既定は「${DEFAULT_SPEECH_MARKER}」。
+                          出力スタイル側の名前を変えたときに合わせる。末尾の空白も含めて扱う）
 `
 
 // hook（hooks/state.sh）が書く既知の場所。ディレクトリ名・ファイル名を変えるときは
@@ -141,12 +147,18 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   const characterDir = resolveCharacterDir(process.env[CHARACTER_DIR_ENV_NAME], process.cwd())
-  const publishCharacterView = createCharacterViewPublisher(server, homeDir, characterDir)
+  const speechMarker = resolveSpeechMarker(process.env[SPEECH_MARKER_ENV_NAME])
+  const publishCharacterView = createCharacterViewPublisher(
+    server,
+    homeDir,
+    characterDir,
+    speechMarker,
+  )
 
   publishCharacterView(transcriptPath)
   publishSidebarView(server, transcriptPath)
-  publishMainView(server, transcriptPath)
-  followTranscript(server, transcriptPath, initialSnapshot, publishCharacterView)
+  publishMainView(server, transcriptPath, speechMarker)
+  followTranscript(server, transcriptPath, initialSnapshot, publishCharacterView, speechMarker)
   announce(server)
 
   if (resolveOpenView(process.env[OPEN_VIEW_ENV_NAME])) {
@@ -206,6 +218,16 @@ function resolveOpenView(rawValue: string | undefined): boolean {
   return rawValue?.trim() !== "0"
 }
 
+/**
+ * セリフの行頭マーカーを決める。**環境変数が読み取りの唯一の場所**
+ * （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
+ * **値は trim しない**（既定の「アスナ: 」のように、末尾の空白までがマーカーの一部になる）。
+ * 未設定・空文字のときだけ既定に落とす。
+ */
+function resolveSpeechMarker(rawValue: string | undefined): string {
+  return rawValue === undefined || rawValue === "" ? DEFAULT_SPEECH_MARKER : rawValue
+}
+
 /** 環境変数のポート番号を読む。読めない値のときは undefined を返し、既定にも落とさない。 */
 function resolveViewPort(rawPort: string | undefined): number | undefined {
   const trimmed = rawPort?.trim()
@@ -227,6 +249,7 @@ function followTranscript(
   transcriptPath: string,
   initialSnapshot: FileSnapshot,
   publishCharacterView: (transcriptPath: string) => void,
+  speechMarker: string,
 ): void {
   let lastSnapshot = initialSnapshot
 
@@ -243,7 +266,7 @@ function followTranscript(
     publishCharacterView(transcriptPath)
     // サイドバー・メインビューの更新も同じきっかけ（transcript の変化）に相乗りする。
     publishSidebarView(server, transcriptPath)
-    publishMainView(server, transcriptPath)
+    publishMainView(server, transcriptPath, speechMarker)
   }, POLL_INTERVAL_MS)
 }
 
@@ -261,13 +284,15 @@ function createCharacterViewPublisher(
   server: ViewServer,
   homeDir: string,
   characterDir: string,
+  speechMarker: string,
 ): (transcriptPath: string) => void {
   let lastSpeech: string | undefined = undefined
 
   return (transcriptPath: string) => {
     try {
       const utterance = extractLatestUtterance(readFileSync(transcriptPath, "utf8"))
-      const speech = utterance === undefined ? undefined : splitUtterance(utterance).speech
+      const speech =
+        utterance === undefined ? undefined : splitUtterance(utterance, speechMarker).speech
       if (speech !== undefined) {
         lastSpeech = speech
       }
@@ -383,10 +408,12 @@ function publishSidebarView(server: ViewServer, transcriptPath: string): void {
 // メインビューの「読む → 決める → 配る」1回分。extractMainViewEntries が transcript 全体から
 // 時系列の記録を作り、直近の分だけに絞って渡す（作業中/完了後の切り替えは行わない理由は
 // src/transcript.ts の extractMainViewEntries を参照）。
-function publishMainView(server: ViewServer, transcriptPath: string): void {
+function publishMainView(server: ViewServer, transcriptPath: string, speechMarker: string): void {
   try {
     const transcriptContent = readFileSync(transcriptPath, "utf8")
-    const entries = extractMainViewEntries(transcriptContent).slice(-MAX_MAIN_VIEW_ENTRIES)
+    const entries = extractMainViewEntries(transcriptContent, speechMarker).slice(
+      -MAX_MAIN_VIEW_ENTRIES,
+    )
 
     server.publish("main", buildMainBody(entries))
   } catch {

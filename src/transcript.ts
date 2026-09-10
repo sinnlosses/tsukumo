@@ -84,7 +84,10 @@ export type MainViewEntry =
  *   （セリフだけの発話）は積まない
  * - **`thinking` は対象外**（`docs/requirements.md` 4.1「表示してよいのは type: "text" だけ」）
  */
-export function extractMainViewEntries(content: string): readonly MainViewEntry[] {
+export function extractMainViewEntries(
+  content: string,
+  speechMarker: string,
+): readonly MainViewEntry[] {
   const lines = content
     .split("\n")
     .map((line) => line.trim())
@@ -92,7 +95,7 @@ export function extractMainViewEntries(content: string): readonly MainViewEntry[
     .map((line) => tryParseJson(line))
 
   const results = collectToolResults(lines)
-  return lines.flatMap((line) => mainViewEntriesInLine(line, results))
+  return lines.flatMap((line) => mainViewEntriesInLine(line, results, speechMarker))
 }
 
 export type UtteranceParts = {
@@ -102,25 +105,27 @@ export type UtteranceParts = {
 
 /**
  * 1つの発話を「セリフ」と「詳細」に分ける（`docs/requirements.md` 4.2、正典は
- * `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）。**規約はセリフを引用
- * （`> ` で始まる行）で書くことだけを決めており、tsukumo はそれを機械的に拾う**。
- * コードブロック（``` で囲まれた範囲）の中の `> ` は拾わない。
+ * `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）。**規約はセリフを行頭の
+ * マーカー（`speechMarker`。既定は「アスナ: 」）で始めることだけを決めており、tsukumo は
+ * それを機械的に拾う**。マーカーは呼び出し側から受け取る（環境変数の読み取りは
+ * `src/index.ts` に集約している）。コードブロック（``` で囲まれた範囲）の中の
+ * マーカー行は拾わない。
  *
+ * - **マーカーは行頭での完全一致だけを見る。** 行の途中に同じ文字列があっても拾わない
  * - **規約に従っていない発話（セリフが1つも無い）**: `speech` は `undefined` を返す。
  *   直前のセリフを出し続けるかどうかは表示側の責務なので、ここでは決めない
  *   （`docs/requirements.md` 4.2「吹き出しは直前のセリフを出し続ける」）
- * - **引用が複数箇所に分かれているとき**: 出現順にすべて連結する。**セリフは役割
- *   （掛け声・リアクション・完了報告など）で書き分けられるものなので、後の引用が前の引用を
- *   上書きする理由が無い**。連続する引用行は改行で、離れた引用のまとまりは空行を挟んでつなぐ
- * - **ネストした引用（`> >`）**: 規約は引用を他の用途に使わないことを前提にしているので、
- *   特別扱いはしない。外側の `> ` だけを取り除き、残りはそのまま含める
- * - `detail` は発話から引用行を除いた残り。セリフが無ければ発話の全文がそのまま `detail` になる
+ * - **セリフが複数箇所に分かれているとき**: 出現順にすべて連結する。**セリフは役割
+ *   （掛け声・リアクション・完了報告など）で書き分けられるものなので、後のセリフが前のセリフを
+ *   上書きする理由が無い**。連続するマーカー行は改行で、離れたまとまりは空行を挟んでつなぐ
+ * - `detail` は発話からセリフ行を除いた残り。セリフが無ければ発話の全文がそのまま `detail`
+ *   になる。引用（`> `）はセリフではないので、詳細の中の普通の引用としてそのまま残る
  */
-export function splitUtterance(utterance: string): UtteranceParts {
-  const classified = classifyLines(utterance.split("\n"))
+export function splitUtterance(utterance: string, speechMarker: string): UtteranceParts {
+  const classified = classifyLines(utterance.split("\n"), speechMarker)
 
   return {
-    speech: extractSpeech(classified),
+    speech: extractSpeech(classified, speechMarker),
     detail: extractDetail(classified),
   }
 }
@@ -294,6 +299,7 @@ function toolResultContentItemText(item: unknown): string {
 function mainViewEntriesInLine(
   value: unknown,
   results: readonly ToolResultRecord[],
+  speechMarker: string,
 ): readonly MainViewEntry[] {
   if (!isRecord(value) || value.type !== "assistant") {
     return []
@@ -304,12 +310,13 @@ function mainViewEntriesInLine(
     return []
   }
 
-  return message.content.flatMap((item) => mainViewEntryForContentItem(item, results))
+  return message.content.flatMap((item) => mainViewEntryForContentItem(item, results, speechMarker))
 }
 
 function mainViewEntryForContentItem(
   item: unknown,
   results: readonly ToolResultRecord[],
+  speechMarker: string,
 ): readonly MainViewEntry[] {
   if (isToolUseItem(item)) {
     const result = results.find((entry) => entry.toolUseId === item.id)
@@ -325,7 +332,7 @@ function mainViewEntryForContentItem(
   }
 
   if (isTextContent(item)) {
-    const detail = splitUtterance(item.text).detail.trim()
+    const detail = splitUtterance(item.text, speechMarker).detail.trim()
     return detail === "" ? [] : [{ kind: "detail", markdown: detail }]
   }
 
@@ -348,14 +355,14 @@ function isToolUseItem(value: unknown): value is {
 
 type ClassifiedLine = {
   readonly line: string
-  readonly isQuote: boolean
+  readonly isSpeech: boolean
 }
 
 /**
- * 発話の各行に、引用行（セリフ）かどうかの印を付ける。コードブロック（``` で始まる行で
- * 開閉する範囲）の中は、`> ` で始まっていても引用行として扱わない。
+ * 発話の各行に、セリフ行かどうかの印を付ける。コードブロック（``` で始まる行で開閉する範囲）の
+ * 中は、マーカーで始まっていてもセリフ行として扱わない。
  */
-function classifyLines(lines: readonly string[]): readonly ClassifiedLine[] {
+function classifyLines(lines: readonly string[], speechMarker: string): readonly ClassifiedLine[] {
   const initial: { readonly inFence: boolean; readonly items: readonly ClassifiedLine[] } = {
     inFence: false,
     items: [],
@@ -363,32 +370,44 @@ function classifyLines(lines: readonly string[]): readonly ClassifiedLine[] {
 
   const result = lines.reduce((acc, line) => {
     const isFenceDelimiter = line.trim().startsWith("```")
-    const isQuote = !isFenceDelimiter && !acc.inFence && line.startsWith("> ")
+    const isSpeech = !isFenceDelimiter && !acc.inFence && line.startsWith(speechMarker)
     return {
       inFence: isFenceDelimiter ? !acc.inFence : acc.inFence,
-      items: [...acc.items, { line, isQuote }],
+      items: [...acc.items, { line, isSpeech }],
     }
   }, initial)
 
   return result.items
 }
 
-/** 引用行から「> 」を取り除き、まとまりごとに改行で、まとまり同士は空行でつないだ文字列を返す。 */
-function extractSpeech(classified: readonly ClassifiedLine[]): string | undefined {
-  const blocks = groupQuoteBlocks(classified)
+/**
+ * セリフ行からマーカーを取り除き、まとまりごとに改行で、まとまり同士は空行でつないだ文字列を
+ * 返す。
+ */
+function extractSpeech(
+  classified: readonly ClassifiedLine[],
+  speechMarker: string,
+): string | undefined {
+  const blocks = groupSpeechBlocks(classified, speechMarker)
   return blocks.length === 0 ? undefined : blocks.join("\n\n")
 }
 
-/** 連続する引用行を1つのまとまりにする。まとまりは出現順に並ぶ。 */
-function groupQuoteBlocks(classified: readonly ClassifiedLine[]): readonly string[] {
+/** 連続するセリフ行を1つのまとまりにする。まとまりは出現順に並ぶ。 */
+function groupSpeechBlocks(
+  classified: readonly ClassifiedLine[],
+  speechMarker: string,
+): readonly string[] {
   const initial: { readonly blocks: readonly string[]; readonly current: readonly string[] } = {
     blocks: [],
     current: [],
   }
 
   const result = classified.reduce((acc, item) => {
-    if (item.isQuote) {
-      return { blocks: acc.blocks, current: [...acc.current, stripQuoteMarker(item.line)] }
+    if (item.isSpeech) {
+      return {
+        blocks: acc.blocks,
+        current: [...acc.current, stripSpeechMarker(item.line, speechMarker)],
+      }
     }
     if (acc.current.length === 0) {
       return acc
@@ -399,14 +418,14 @@ function groupQuoteBlocks(classified: readonly ClassifiedLine[]): readonly strin
   return result.current.length === 0 ? result.blocks : [...result.blocks, result.current.join("\n")]
 }
 
-function stripQuoteMarker(line: string): string {
-  return line.slice("> ".length)
+function stripSpeechMarker(line: string, speechMarker: string): string {
+  return line.slice(speechMarker.length)
 }
 
-/** 引用行を除いた残りの行を、発話中の順序のまま改行でつないだ文字列を返す。 */
+/** セリフ行を除いた残りの行を、発話中の順序のまま改行でつないだ文字列を返す。 */
 function extractDetail(classified: readonly ClassifiedLine[]): string {
   return classified
-    .filter((item) => !item.isQuote)
+    .filter((item) => !item.isSpeech)
     .map((item) => item.line)
     .join("\n")
 }

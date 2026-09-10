@@ -16,12 +16,13 @@ function makeTempDir(): string {
 }
 
 // 手で書いた架空の会話。壊れた行と未知の type を混ぜて、落ちずに読み飛ばすことを確かめる。
-// assistant の発話は「> 」で始まる引用がセリフになる規約（docs/requirements.md 4.2）に従わせる。
+// assistant の発話は行頭マーカー（既定「アスナ: 」）で始まる行がセリフになる規約
+// （docs/requirements.md 4.2）に従わせる。
 const BROKEN_TRANSCRIPT_LINES = [
   '{"type":"user","message":{"content":[{"type":"text","text":"つくもさん、調子はどう？"}]}}',
   "{this line is not valid json",
   '{"type":"mode","value":"plan"}',
-  '{"type":"assistant","message":{"content":[{"type":"text","text":"> 絶好調だよ、任せて！"}]}}',
+  '{"type":"assistant","message":{"content":[{"type":"text","text":"アスナ: 絶好調だよ、任せて！"}]}}',
   '{"type":"unknown-future-type","payload":{"whatever":true}}',
 ].join("\n")
 
@@ -41,6 +42,9 @@ type RunOptions = {
   // 指定すると、PATH の先頭に加える。`orca` が使えない状況を再現するテスト用
   // （fakeFailingOrcaDir 参照）。
   readonly pathPrepend?: string
+  // セリフの行頭マーカー。**既定は実装の既定値と同じ文字列を明示的に渡す**（実行する人の
+  // シェルに TSUKUMO_SPEECH_MARKER が設定されていてもテストの結果が変わらないようにするため）。
+  readonly speechMarker?: string
 }
 
 function environmentFor(options: RunOptions): Record<string, string> {
@@ -61,6 +65,7 @@ function environmentFor(options: RunOptions): Record<string, string> {
     // 常駐中のサイドカーとポートがぶつからないよう、既定では空きポートを使わせる。
     TSUKUMO_VIEW_PORT: options.viewPort ?? "0",
     TSUKUMO_OPEN_VIEW: options.openView ?? "0",
+    TSUKUMO_SPEECH_MARKER: options.speechMarker ?? "アスナ: ",
     ...(options.characterDir === undefined ? {} : { TSUKUMO_CHARACTER_DIR: options.characterDir }),
   }
 }
@@ -284,6 +289,29 @@ describe("tsukumo CLI", () => {
     }
   })
 
+  it("TSUKUMO_SPEECH_MARKER でセリフの行頭マーカーを差し替えられる（キャラビューとメインビューの両方）", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(
+      transcriptPath,
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"ゆき> 差し替えたマーカーのセリフ\\nアスナ: これはもう詳細"}]}}',
+    )
+
+    try {
+      const characterPage = await fetchView([transcriptPath], "character", {
+        speechMarker: "ゆき> ",
+      })
+      const mainPage = await fetchView([transcriptPath], "main", { speechMarker: "ゆき> " })
+
+      expect(characterPage).toContain("差し替えたマーカーのセリフ")
+      expect(characterPage).not.toContain("これはもう詳細")
+      expect(mainPage).toContain("これはもう詳細")
+      expect(mainPage).not.toContain("差し替えたマーカーのセリフ")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   it("サイドバーに3つの区画が配られる", async () => {
     const dir = makeTempDir()
     const transcriptPath = join(dir, "session.jsonl")
@@ -363,7 +391,7 @@ describe("tsukumo CLI", () => {
     const transcriptPath = join(dir, "session.jsonl")
     writeFileSync(
       transcriptPath,
-      '{"type":"assistant","message":{"content":[{"type":"text","text":"> やあ"}]}}',
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"アスナ: やあ"}]}}',
     )
 
     try {
@@ -383,7 +411,7 @@ describe("tsukumo CLI", () => {
     const transcriptPath = join(dir, "session.jsonl")
     writeFileSync(
       transcriptPath,
-      '{"type":"assistant","message":{"content":[{"type":"text","text":"> 立ち絵が無くても平気"}]}}',
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"アスナ: 立ち絵が無くても平気"}]}}',
     )
 
     try {
@@ -407,7 +435,7 @@ describe("tsukumo CLI", () => {
     writeFileSync(join(characterDir, "character.json"), "{this is not valid json")
     writeFileSync(
       transcriptPath,
-      '{"type":"assistant","message":{"content":[{"type":"text","text":"> それでも平気"}]}}',
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"アスナ: それでも平気"}]}}',
     )
 
     try {
@@ -440,7 +468,7 @@ describe("tsukumo CLI", () => {
     )
     writeFileSync(
       transcriptPath,
-      '{"type":"assistant","message":{"content":[{"type":"text","text":"> 自作の立ち絵だよ"}]}}',
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"アスナ: 自作の立ち絵だよ"}]}}',
     )
 
     try {
@@ -467,7 +495,7 @@ describe("tsukumo CLI", () => {
     writeFileSync(join(characterDir, "default.png"), Buffer.from([1, 2, 3, 4]))
     writeFileSync(
       transcriptPath,
-      '{"type":"assistant","message":{"content":[{"type":"text","text":"> ラスタでも平気"}]}}',
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"アスナ: ラスタでも平気"}]}}',
     )
 
     try {
@@ -485,7 +513,7 @@ describe("tsukumo CLI", () => {
     const transcriptPath = join(dir, "session.jsonl")
     writeFileSync(
       transcriptPath,
-      '{"type":"assistant","message":{"content":[{"type":"text","text":"> 最初のセリフ"}]}}',
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"アスナ: 最初のセリフ"}]}}',
     )
 
     const cli = await startCli([transcriptPath])
@@ -493,16 +521,16 @@ describe("tsukumo CLI", () => {
       const firstPage = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
       expect(firstPage).toContain("最初のセリフ")
 
-      // 引用の無い（規約に従っていない）発話を追記する。
+      // マーカーの無い（規約に従っていない）発話を追記する。
       appendFileSync(
         transcriptPath,
-        '\n{"type":"assistant","message":{"content":[{"type":"text","text":"引用の無い発話の詳細だけ"}]}}',
+        '\n{"type":"assistant","message":{"content":[{"type":"text","text":"マーカーの無い発話の詳細だけ"}]}}',
       )
       await sleep(POLL_WAIT_MS)
 
       const secondPage = await fetch(`${cli.baseUrl}/character`).then((response) => response.text())
       expect(secondPage).toContain("最初のセリフ")
-      expect(secondPage).not.toContain("引用の無い発話の詳細だけ")
+      expect(secondPage).not.toContain("マーカーの無い発話の詳細だけ")
     } finally {
       cli.stop()
       rmSync(dir, { recursive: true, force: true })
