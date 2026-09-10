@@ -20,12 +20,16 @@ function fakeHost(overrides: Partial<Host> = {}): Host {
     showView: () => Promise.resolve({ ok: true }),
     listPanes: () => Promise.resolve({ ok: true, panes: [] }),
     sendText: () => Promise.resolve({ ok: true }),
+    pressKey: () => Promise.resolve({ ok: true }),
     ...overrides,
   }
 }
 
+// テストの作業ディレクトリ。`pressKey` に渡る値を確かめるためだけに使う（実在しなくてよい）。
+const WORKING_DIRECTORY = "/work/tsukumo"
+
 async function start(host: Host = fakeHost()): Promise<ViewServer> {
-  const server = await startViewServer(0, host)
+  const server = await startViewServer(0, host, WORKING_DIRECTORY)
   running = server
   return server
 }
@@ -92,6 +96,67 @@ describe("ビューサーバ", () => {
     // パスを組み立てないので、`..` を書いても外のファイルには届かない。
     expect((await fetch(`${origin}/vendor/../package.json`)).status).toBe(404)
     expect((await fetch(`${origin}/vendor/%2e%2e/package.json`)).status).toBe(404)
+  })
+
+  it("質問への回答としてキーを押す（作業ディレクトリを添えてホストに頼む）", async () => {
+    const pressed: { directory?: string; key?: string } = {}
+    const server = await start(
+      fakeHost({
+        pressKey: (directory, key) => {
+          pressed.directory = directory
+          pressed.key = key
+          return Promise.resolve({ ok: true })
+        },
+      }),
+    )
+
+    const response = await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ key: "2" }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(pressed).toEqual({ directory: WORKING_DIRECTORY, key: "2" })
+  })
+
+  it("許可していないキーは押さない（ブラウザから任意のキーを押させない）", async () => {
+    let pressedCount = 0
+    const server = await start(
+      fakeHost({
+        pressKey: () => {
+          pressedCount += 1
+          return Promise.resolve({ ok: true })
+        },
+      }),
+    )
+
+    for (const key of ["a", "Escape", "ArrowDown", "", "1 "]) {
+      const response = await fetch(`${originOf(server)}/api/answer`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ key }),
+      })
+      expect(response.status).toBe(400)
+    }
+
+    expect(pressedCount).toBe(0)
+  })
+
+  it("キーを押せなかったときは理由をそのまま返す", async () => {
+    const server = await start(
+      fakeHost({ pressKey: () => Promise.resolve({ ok: false, reason: "orca が見つからない" }) }),
+    )
+
+    const response = await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ key: "1" }),
+    })
+
+    expect(response.status).toBe(502)
+    expect(await response.json()).toEqual({ ok: false, reason: "orca が見つからない" })
   })
 
   it("publish した本文を、そのビューのページに埋め込んで返す", async () => {

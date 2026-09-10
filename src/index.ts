@@ -154,7 +154,7 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   const host = createOrcaHost()
-  const server = await startViewServer(port, host).catch((error: unknown) => {
+  const server = await startViewServer(port, host, cwd).catch((error: unknown) => {
     process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
     return undefined
   })

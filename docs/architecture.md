@@ -108,9 +108,10 @@ Chart.js）を使うことにした（2026-09-10 のユーザーの決定）。�
 `sendText`（`orca terminal send`）がターミナルへ文字を送る。**tsukumo が自分の判断で
 送ることはしない。**
 
-**その送信も、claude が入力待ちの表示（質問・確認）を出している間は届かない**
-（`agent_prompt_blocked`。2026-09-11 実測）。**質問の選択肢を押して答える案はこれで消えた**ので、
-質問は読むためだけに出す（`docs/requirements.md` 4.2）。
+**その送信は、claude が入力待ちの表示（質問・確認）を出している間は届かない**
+（`agent_prompt_blocked`。2026-09-11 実測）。そのため**質問への回答だけは別の経路**を使う:
+`orca keypress` は文字を流し込むのではなく**キーを1つ押す**ので、選択待ちの表示にも届きうる。
+ブラウザから押せるキーは**数字と Enter の許可リスト**に絞ってある（`src/view-server.ts`）。
 
 1. **発話**: Claude Code が transcript(JSONL) に追記する → tsukumo が tail して、最新の
    assistant 発話をビューの中身にする

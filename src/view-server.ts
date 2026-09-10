@@ -19,6 +19,7 @@ import {
   DISPATCH_PATH,
   LAYOUT_PATH,
   type LayoutBodies,
+  ANSWER_PATH,
   TERMINALS_PATH,
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
@@ -62,7 +63,11 @@ export type ViewServer = {
  * ここで直接組み立てず、必ずこのポート経由にする（docs/architecture.md「ホスト依存の操作は
  * 1つのポートにまとめる」）。
  */
-export function startViewServer(port: number, host: Host): Promise<ViewServer> {
+export function startViewServer(
+  port: number,
+  host: Host,
+  workingDirectory: string,
+): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
   // listen が終わるまでは空文字列。状態を変える経路（POST）が実際に受け付けられるのは
@@ -71,7 +76,7 @@ export function startViewServer(port: number, host: Host): Promise<ViewServer> {
 
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, bodies, clients, host, boundOrigin)
+    respond(request, path, response, bodies, clients, host, boundOrigin, workingDirectory)
   })
 
   const heartbeat = setInterval(() => {
@@ -136,6 +141,7 @@ function respond(
   clients: Map<ViewName, Set<ServerResponse>>,
   host: Host,
   serverOrigin: string,
+  workingDirectory: string,
 ): void {
   if (path === "/") {
     writeHtml(response, buildIndexPage())
@@ -170,6 +176,15 @@ function respond(
       return
     }
     handleDispatch(request, response, host)
+    return
+  }
+
+  if (path === ANSWER_PATH && request.method === "POST") {
+    if (!isAllowedOrigin(request, serverOrigin)) {
+      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
+      return
+    }
+    handleAnswer(request, response, host, workingDirectory)
     return
   }
 
@@ -300,6 +315,69 @@ function handleDispatch(request: IncomingMessage, response: ServerResponse, host
     .catch(() => {
       writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
     })
+}
+
+/**
+ * 質問の選択肢を押したときに受け付けるキー。**ここに載っているものだけ**を通す
+ * （ブラウザから任意のキーを押させない）。選択肢の番号と、選び終えるための Enter だけで足りる。
+ */
+const ALLOWED_ANSWER_KEYS: readonly string[] = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "Enter",
+]
+
+/**
+ * 質問への回答としてキーを1つ押す。**押す場所はサイドカーの作業ディレクトリ**（＝このリポジトリ）
+ * で、どのペインに届くかはホスト側のフォーカスに委ねる（`src/host.ts` の `pressKey`）。
+ */
+function handleAnswer(
+  request: IncomingMessage,
+  response: ServerResponse,
+  host: Host,
+  workingDirectory: string,
+): void {
+  readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
+    .then(async (body) => {
+      const key = body === undefined ? undefined : parseAnswerKey(body)
+      if (key === undefined) {
+        writeJson(response, 400, { ok: false, reason: "押せないキー" })
+        return
+      }
+
+      const result = await host.pressKey(workingDirectory, key)
+      if (!result.ok) {
+        writeJson(response, 502, { ok: false, reason: result.reason })
+        return
+      }
+
+      writeJson(response, 200, { ok: true })
+    })
+    .catch(() => {
+      writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
+    })
+}
+
+function parseAnswerKey(body: string): string | undefined {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(body)
+  } catch {
+    return undefined
+  }
+
+  if (!isRecord(parsed) || typeof parsed.key !== "string") {
+    return undefined
+  }
+
+  return ALLOWED_ANSWER_KEYS.includes(parsed.key) ? parsed.key : undefined
 }
 
 type DispatchRequest = { readonly terminalId: string; readonly text: string }

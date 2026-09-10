@@ -51,6 +51,13 @@ export const TERMINALS_PATH = "/api/terminals"
 /** 依頼をターミナルへ送る経路（POST）。 */
 export const DISPATCH_PATH = "/api/dispatch"
 
+/**
+ * 質問の選択肢を押したときに、キーを1つ押してもらう経路（POST）。**依頼の送信とは別の経路**に
+ * してあるのは、送る中身が「会話の文面」ではなく**キーの名前**だけだから（受け取り側で
+ * 許可リストと突き合わせられる）。
+ */
+export const ANSWER_PATH = "/api/answer"
+
 /** 単体ビューのページで、本文を差し替える要素の id。 */
 const STANDALONE_VIEW_ELEMENT_ID = "tsukumo-view"
 
@@ -295,10 +302,8 @@ ${questionRegionScript()}
  * 入力欄の領域を、質問と入力フォームで**切り替える**。質問の本文が入っている間はフォームを
  * 隠す（ユーザーの決定 2026-09-10「質問中はフォームを退けて差し替える」）。
  *
- * **選択肢を押して答えを送る作りは撤回した。** claude が質問を表示している間は
- * `orca terminal send` が `agent_prompt_blocked` を返して届かないため（2026-09-11 実測）。
- * **入力フォームも同じ制約を受ける**ので、質問中に隠すのは見た目の整理だけでなく、
- * 「今は送っても届かない」という事実とも合っている。
+ * 選択肢を押したときは {@link ANSWER_PATH} へ**キーの名前だけ**を送る。**押した直後に全部の
+ * 選択肢を無効化する**のは二重押しを防ぐため。失敗したら押せる状態へ戻す。
  */
 function questionRegionScript(): string {
   return `  {
@@ -309,6 +314,38 @@ function questionRegionScript(): string {
         form.hidden = el.innerHTML.trim() !== ""
       }
     }
+    const setDisabled = (disabled) => {
+      for (const button of el.querySelectorAll(".question-choice")) {
+        button.disabled = disabled
+      }
+    }
+    el.addEventListener("click", (event) => {
+      const choice = event.target.closest(".question-choice")
+      if (choice === null) {
+        return
+      }
+      const status = el.querySelector(".question-status")
+      setDisabled(true)
+      status.textContent = "押している…"
+      fetch(${JSON.stringify(ANSWER_PATH)}, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ key: choice.dataset.key }),
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          if (result.ok === true) {
+            status.textContent = "押した"
+            return
+          }
+          setDisabled(false)
+          status.textContent = "押せなかった: " + result.reason
+        })
+        .catch(() => {
+          setDisabled(false)
+          status.textContent = "押せなかった"
+        })
+    })
     new MutationObserver(apply).observe(el, { childList: true })
     apply()
   }`
@@ -965,10 +1002,10 @@ function truncateRequest(request: string): string {
  * 入力欄の領域に差し込む**答え待ちの質問**。答え待ちが無いときは空文字を返し、
  * その場合は入力フォームがそのまま見える（切り替えは {@link questionRegionScript}）。
  *
- * **選択肢は押せない。** 当初は押すと番号を送る作りにしたが、**claude が質問を表示している間は
- * `orca terminal send` が `agent_prompt_blocked` を返して届かない**（2026-09-11 実測）。
- * 質問が出ている間はまさにその状態なので、この経路では原理的に答えられない。番号を添えるのは、
- * **ターミナルの並びと同じ番号をそのまま打てるようにする**ため。
+ * **選択肢を押すと、その番号のキーを押してもらう**（{@link ANSWER_PATH} → ホストの `pressKey`）。
+ * **文字を流し込む経路（`sendText`）では答えられない**ことが実機で分かっている
+ * （claude が質問を表示している間は `agent_prompt_blocked` が返る。2026-09-11）。キーを押す
+ * 経路は別扱いなので届きうる。**届かない環境もある**ので、ターミナル側で答えられることも書いておく。
  */
 export function buildQuestionBody(pending: PendingQuestion | undefined): string {
   if (pending === undefined) {
@@ -979,11 +1016,11 @@ export function buildQuestionBody(pending: PendingQuestion | undefined): string 
     const options = question.options
       .map(
         (option, index) =>
-          `<li class="question-choice">
+          `<li><button type="button" class="question-choice" data-key="${String(index + 1)}">
 <span class="question-choice-number">${String(index + 1)}</span>
 <span class="question-choice-label">${escapeHtml(option.label)}</span>
 <span class="question-choice-description">${escapeHtml(option.description)}</span>
-</li>`,
+</button></li>`,
       )
       .join("")
 
@@ -995,7 +1032,8 @@ export function buildQuestionBody(pending: PendingQuestion | undefined): string 
   })
 
   return `${blocks.join("\n")}
-<p class="question-hint">番号はターミナルの並びと同じ。答えるのはターミナル側で</p>`
+<p class="question-status" role="status" aria-live="polite"></p>
+<p class="question-hint">押すと番号キーを押す。届かないときはターミナル側で答えてよい</p>`
 }
 
 /**
@@ -1231,11 +1269,19 @@ const STYLE = `
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0.1rem 0.5rem;
+    width: 100%;
     padding: 0.4rem 0.6rem;
     border: 1px solid #3a4256;
     border-radius: 0.5rem;
     background: #1c202a;
+    color: #e6e8ee;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
   }
+  .question-choice:hover:not(:disabled) { border-color: #8ab4ff; }
+  .question-choice:disabled { opacity: 0.5; cursor: default; }
+  .question-status { margin: 0.3rem 0 0; min-height: 1.2em; color: #8ab4ff; font-size: 0.85rem; }
   .question-choice-number { grid-row: span 2; color: #8ab4ff; font-variant-numeric: tabular-nums; }
   .question-choice-label { font-weight: bold; }
   .question-choice-description { font-size: 0.85rem; color: #b9c0d0; }

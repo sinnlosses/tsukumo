@@ -49,4 +49,10 @@ export type Host = {
   readonly listPanes: () => Promise<ListPanesResult>
   /** 指定したペインに文字を送る（依頼の送信）。 */
   readonly sendText: (paneId: string, text: string) => Promise<HostResult>
+  /**
+   * 作業ディレクトリで動いている画面に**キーを1つ押す**。文字を流し込む {@link sendText} とは
+   * 別の経路で、**選択待ちの表示（質問・確認）にも届く**ことを狙う（`sendText` はその状態だと
+   * ホスト側に拒否される）。どのペインに届くかはホストの実装（フォーカス）に委ねる。
+   */
+  readonly pressKey: (workingDirectory: string, key: string) => Promise<HostResult>
 }

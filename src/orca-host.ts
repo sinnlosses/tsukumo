@@ -12,6 +12,7 @@
 //               「claude が動いていそう」の判定（likelyClaude）は `agentIdentity` フィールドが
 //               `"claude"` かどうかで決める（v1.4.197 で実測。Orca 自身がターミナルの中身を見て
 //               付けた分類ラベルで、`claude` セッションが動いているときだけ付く）
+//   pressKey  → orca keypress --key <key> --worktree path:<dir> --json
 //   sendText  → orca terminal send --terminal <handle> --text <text> --enter
 //               **claude が質問・確認を表示している間は送れない**（`agent_prompt_blocked` が
 //               返る。2026-09-11 実測）。入力フォームも質問の選択肢も、この制約を受ける
@@ -40,6 +41,7 @@ export function createOrcaHost(): Host {
     showView: (url) => showView(url),
     listPanes: () => listPanes(),
     sendText: (paneId, text) => sendText(paneId, text),
+    pressKey: (workingDirectory, key) => pressKey(workingDirectory, key),
   }
 }
 
@@ -125,6 +127,19 @@ async function sendText(paneId: string, text: string): Promise<HostResult> {
   const result = await runOrca(
     ["terminal", "send", "--terminal", paneId, "--text", text, "--enter"],
     "ターミナルへ送信する",
+  )
+  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
+}
+
+/**
+ * `orca keypress --key <key> --worktree path:<dir>` でキーを1つ押す。**`terminal send` とは
+ * 別の経路**で、claude が質問を表示している間（`agent_prompt_blocked` になる状態）でも
+ * 届くことを狙っている。どのペインに届くかは Orca 側のフォーカス次第。
+ */
+async function pressKey(workingDirectory: string, key: string): Promise<HostResult> {
+  const result = await runOrca(
+    ["keypress", "--key", key, "--worktree", `path:${workingDirectory}`, "--json"],
+    "キーを押す",
   )
   return result.ok ? { ok: true } : { ok: false, reason: result.reason }
 }
