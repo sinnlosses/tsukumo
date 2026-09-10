@@ -300,6 +300,157 @@ async function runDispatchScript(
   await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
+// --- 3本の仕切り（layoutScript）を実際に動かして確かめるための道具 -----------------------------
+//
+// pointerdown → pointermove → pointerup を手で発火させ、「ドラッグで CSS カスタムプロパティが
+// 変わる」「離した時点で localStorage に保存する」「保存値が壊れていても既定に落ちる」を
+// 実際のスクリプトの中身で確かめる。実際にブラウザ上でドラッグして見えるかは目視確認に任せる
+// （docs/coding-standards.md「描画は自動テストで守らない」）。
+
+/** `style.setProperty` を記録するだけの代役。CSS が実際に効くかどうかまでは確かめない。 */
+type FakeStyle = {
+  readonly setProperty: (name: string, value: string) => void
+  readonly values: () => Readonly<Record<string, string>>
+}
+
+function makeFakeStyle(): FakeStyle {
+  const values: Record<string, string> = {}
+  return {
+    setProperty: (name, value) => {
+      values[name] = value
+    },
+    values: () => ({ ...values }),
+  }
+}
+
+/** `.layout-grid` / `.layout-row-*` の代役。仕切りのドラッグ元になる要素の矩形を固定で返す。 */
+type FakeLayoutContainer = {
+  readonly style: FakeStyle
+  readonly getBoundingClientRect: () => { top: number; left: number; width: number; height: number }
+}
+
+function makeFakeLayoutContainer(rect: {
+  readonly top: number
+  readonly left: number
+  readonly width: number
+  readonly height: number
+}): FakeLayoutContainer {
+  return { style: makeFakeStyle(), getBoundingClientRect: () => rect }
+}
+
+type FakePointerEvent = {
+  readonly pointerId?: number
+  readonly clientX?: number
+  readonly clientY?: number
+}
+
+/** `.layout-resizer` の代役。手動で pointerdown/pointermove/pointerup を発火できる。 */
+type FakeResizerElement = {
+  readonly style: FakeStyle
+  readonly addEventListener: (type: string, listener: (event: FakePointerEvent) => void) => void
+  readonly removeEventListener: (type: string, listener: (event: FakePointerEvent) => void) => void
+  readonly setPointerCapture: (pointerId: number | undefined) => void
+  readonly trigger: (type: string, event: FakePointerEvent) => void
+}
+
+function makeFakeResizerElement(): FakeResizerElement {
+  const listeners = new Map<string, Set<(event: FakePointerEvent) => void>>()
+  return {
+    style: makeFakeStyle(),
+    addEventListener: (type, listener) => {
+      const set = listeners.get(type) ?? new Set()
+      set.add(listener)
+      listeners.set(type, set)
+    },
+    removeEventListener: (type, listener) => {
+      listeners.get(type)?.delete(listener)
+    },
+    setPointerCapture: () => {},
+    trigger: (type, event) => {
+      for (const listener of listeners.get(type) ?? []) {
+        listener(event)
+      }
+    },
+  }
+}
+
+/** `#tsukumo-layout-reset` の代役。クリックを手動で発火できる。 */
+type FakeLayoutButtonElement = {
+  readonly style: FakeStyle
+  readonly addEventListener: (type: string, listener: () => void) => void
+  readonly trigger: (type: string) => void
+}
+
+function makeFakeLayoutButtonElement(): FakeLayoutButtonElement {
+  const listeners = new Map<string, Set<() => void>>()
+  return {
+    style: makeFakeStyle(),
+    addEventListener: (type, listener) => {
+      const set = listeners.get(type) ?? new Set()
+      set.add(listener)
+      listeners.set(type, set)
+    },
+    trigger: (type) => {
+      for (const listener of listeners.get(type) ?? []) {
+        listener()
+      }
+    },
+  }
+}
+
+type FakeLocalStorage = {
+  readonly getItem: (key: string) => string | null
+  readonly setItem: (key: string, value: string) => void
+}
+
+/**
+ * まとめたレイアウトページの `<script>` を実際に動かす。仕切り・行・既定に戻すボタンの
+ * 要素だけ本物の代役を渡し、それ以外（3領域の購読・送信フォーム）が参照する要素は
+ * {@link runDispatchScript} と同じ考え方で無害な代役に任せる。
+ */
+function runLayoutScript(
+  page: string,
+  elements: {
+    readonly grid: FakeLayoutContainer
+    readonly rowTop: FakeLayoutContainer
+    readonly rowBottom: FakeLayoutContainer
+    readonly resizerRow: FakeResizerElement
+    readonly resizerTop: FakeResizerElement
+    readonly resizerBottom: FakeResizerElement
+    readonly resetButton: FakeLayoutButtonElement
+  },
+  localStorageStub: FakeLocalStorage,
+): void {
+  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
+  if (scriptMatch === null || scriptMatch[1] === undefined) {
+    throw new Error("ページに <script> が無い")
+  }
+
+  const ids = new Map<string, unknown>([
+    ["tsukumo-layout-grid", elements.grid],
+    ["tsukumo-layout-row-top", elements.rowTop],
+    ["tsukumo-layout-row-bottom", elements.rowBottom],
+    ["tsukumo-layout-resizer-row", elements.resizerRow],
+    ["tsukumo-layout-resizer-top", elements.resizerTop],
+    ["tsukumo-layout-resizer-bottom", elements.resizerBottom],
+    ["tsukumo-layout-reset", elements.resetButton],
+  ])
+
+  const controller = makeFakeEventSourceController()
+  const fallback = makeInertStub()
+  const documentStub = {
+    getElementById: (id: string) => ids.get(id) ?? makeInertStub(),
+    scrollingElement: fallback,
+    documentElement: fallback,
+  }
+
+  vm.runInNewContext(scriptMatch[1], {
+    document: documentStub,
+    EventSource: controller.EventSourceClass,
+    localStorage: localStorageStub,
+  })
+}
+
 describe("送信先の一覧（claude が動いていそうな順に並べる。絞り込まない）", () => {
   it("likelyClaude が false の送信先も一覧に残り、選べる（判定を外しても閉じ込めない）", async () => {
     const targetSelect = makeFakeSelectElement()
@@ -591,6 +742,246 @@ describe("まとめたレイアウトページ", () => {
     expect(page).toContain(
       '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send" disabled>',
     )
+  })
+})
+
+describe("まとめたレイアウトページの仕切り（3本のドラッグ・既定値・localStorage）", () => {
+  it("3本の仕切りと、既定に戻すボタンを持つ", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(page).toContain('id="tsukumo-layout-resizer-top"')
+    expect(page).toContain('id="tsukumo-layout-resizer-bottom"')
+    expect(page).toContain('id="tsukumo-layout-resizer-row"')
+    expect(page).toContain(
+      '<button type="button" id="tsukumo-layout-reset" class="layout-reset">既定の比率に戻す</button>',
+    )
+  })
+
+  it("localStorage に何も保存されていないとき、既定の比率を適用する", () => {
+    const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
+    const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
+    const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    runLayoutScript(
+      page,
+      {
+        grid,
+        rowTop,
+        rowBottom,
+        resizerRow: makeFakeResizerElement(),
+        resizerTop: makeFakeResizerElement(),
+        resizerBottom: makeFakeResizerElement(),
+        resetButton: makeFakeLayoutButtonElement(),
+      },
+      { getItem: () => null, setItem: () => {} },
+    )
+
+    expect(grid.style.values()["--layout-row-top"]).toBe("60fr")
+    expect(grid.style.values()["--layout-row-bottom"]).toBe("40fr")
+    expect(rowTop.style.values()["--layout-top-left"]).toBe("75fr")
+    expect(rowTop.style.values()["--layout-top-right"]).toBe("25fr")
+    expect(rowBottom.style.values()["--layout-bottom-left"]).toBe("35fr")
+    expect(rowBottom.style.values()["--layout-bottom-right"]).toBe("65fr")
+  })
+
+  it("localStorage の値が JSON として壊れていても、例外にならず既定の比率にフォールバックする", () => {
+    const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(() =>
+      runLayoutScript(
+        page,
+        {
+          grid,
+          rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
+          rowBottom: makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 }),
+          resizerRow: makeFakeResizerElement(),
+          resizerTop: makeFakeResizerElement(),
+          resizerBottom: makeFakeResizerElement(),
+          resetButton: makeFakeLayoutButtonElement(),
+        },
+        { getItem: () => "{not valid json", setItem: () => {} },
+      ),
+    ).not.toThrow()
+
+    expect(grid.style.values()["--layout-row-top"]).toBe("60fr")
+  })
+
+  it("localStorage の値が型違い・範囲外のときも、例外にならず既定の比率にフォールバックする", () => {
+    const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const broken = JSON.stringify({ rowTop: 999, topLeft: "abc", bottomLeft: 35 })
+
+    expect(() =>
+      runLayoutScript(
+        page,
+        {
+          grid,
+          rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
+          rowBottom: makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 }),
+          resizerRow: makeFakeResizerElement(),
+          resizerTop: makeFakeResizerElement(),
+          resizerBottom: makeFakeResizerElement(),
+          resetButton: makeFakeLayoutButtonElement(),
+        },
+        { getItem: () => broken, setItem: () => {} },
+      ),
+    ).not.toThrow()
+
+    expect(grid.style.values()["--layout-row-top"]).toBe("60fr")
+  })
+
+  it("保存されていた正しい比率をそのまま復元する", () => {
+    const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
+    const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
+    const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const saved = JSON.stringify({ rowTop: 50, topLeft: 60, bottomLeft: 45 })
+
+    runLayoutScript(
+      page,
+      {
+        grid,
+        rowTop,
+        rowBottom,
+        resizerRow: makeFakeResizerElement(),
+        resizerTop: makeFakeResizerElement(),
+        resizerBottom: makeFakeResizerElement(),
+        resetButton: makeFakeLayoutButtonElement(),
+      },
+      { getItem: () => saved, setItem: () => {} },
+    )
+
+    expect(grid.style.values()["--layout-row-top"]).toBe("50fr")
+    expect(rowTop.style.values()["--layout-top-left"]).toBe("60fr")
+    expect(rowBottom.style.values()["--layout-bottom-left"]).toBe("45fr")
+  })
+
+  it("横の仕切りをドラッグすると上段/下段の高さの比率が変わり、離した時点で保存する", () => {
+    const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
+    const resizerRow = makeFakeResizerElement()
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    let savedValue: string | undefined
+
+    runLayoutScript(
+      page,
+      {
+        grid,
+        rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
+        rowBottom: makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 }),
+        resizerRow,
+        resizerTop: makeFakeResizerElement(),
+        resizerBottom: makeFakeResizerElement(),
+        resetButton: makeFakeLayoutButtonElement(),
+      },
+      {
+        getItem: () => null,
+        setItem: (_key, value) => {
+          savedValue = value
+        },
+      },
+    )
+
+    resizerRow.trigger("pointerdown", { pointerId: 1 })
+    resizerRow.trigger("pointermove", { clientY: 500 })
+    resizerRow.trigger("pointerup", {})
+
+    expect(grid.style.values()["--layout-row-top"]).toBe("50fr")
+    expect(grid.style.values()["--layout-row-bottom"]).toBe("50fr")
+    expect(savedValue).toBeDefined()
+    expect(JSON.parse(savedValue ?? "{}")).toEqual({ rowTop: 50, topLeft: 75, bottomLeft: 35 })
+  })
+
+  it("縦の仕切り（上段）をドラッグすると、メインとサイドバーの幅の比率が変わる", () => {
+    const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
+    const resizerTop = makeFakeResizerElement()
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    runLayoutScript(
+      page,
+      {
+        grid: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 }),
+        rowTop,
+        rowBottom: makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 }),
+        resizerRow: makeFakeResizerElement(),
+        resizerTop,
+        resizerBottom: makeFakeResizerElement(),
+        resetButton: makeFakeLayoutButtonElement(),
+      },
+      { getItem: () => null, setItem: () => {} },
+    )
+
+    resizerTop.trigger("pointerdown", { pointerId: 1 })
+    resizerTop.trigger("pointermove", { clientX: 300 })
+    resizerTop.trigger("pointerup", {})
+
+    expect(rowTop.style.values()["--layout-top-left"]).toBe("30fr")
+    expect(rowTop.style.values()["--layout-top-right"]).toBe("70fr")
+  })
+
+  it("動かせる範囲は端まで詰めきらないようにクランプする（15%〜85%）", () => {
+    const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
+    const resizerRow = makeFakeResizerElement()
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    runLayoutScript(
+      page,
+      {
+        grid,
+        rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
+        rowBottom: makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 }),
+        resizerRow,
+        resizerTop: makeFakeResizerElement(),
+        resizerBottom: makeFakeResizerElement(),
+        resetButton: makeFakeLayoutButtonElement(),
+      },
+      { getItem: () => null, setItem: () => {} },
+    )
+
+    resizerRow.trigger("pointerdown", { pointerId: 1 })
+    resizerRow.trigger("pointermove", { clientY: -1000 })
+    resizerRow.trigger("pointerup", {})
+
+    expect(grid.style.values()["--layout-row-top"]).toBe("15fr")
+  })
+
+  it("既定に戻すボタンを押すと、動かした比率が既定へ戻り保存される", () => {
+    const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
+    const resizerRow = makeFakeResizerElement()
+    const resetButton = makeFakeLayoutButtonElement()
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    let savedValue: string | undefined
+
+    runLayoutScript(
+      page,
+      {
+        grid,
+        rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
+        rowBottom: makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 }),
+        resizerRow,
+        resizerTop: makeFakeResizerElement(),
+        resizerBottom: makeFakeResizerElement(),
+        resetButton,
+      },
+      {
+        getItem: () => null,
+        setItem: (_key, value) => {
+          savedValue = value
+        },
+      },
+    )
+
+    resizerRow.trigger("pointerdown", { pointerId: 1 })
+    resizerRow.trigger("pointermove", { clientY: 900 })
+    resizerRow.trigger("pointerup", {})
+    expect(grid.style.values()["--layout-row-top"]).not.toBe("60fr")
+
+    resetButton.trigger("click")
+
+    expect(grid.style.values()["--layout-row-top"]).toBe("60fr")
+    expect(grid.style.values()["--layout-row-bottom"]).toBe("40fr")
+    expect(JSON.parse(savedValue ?? "{}")).toEqual({ rowTop: 60, topLeft: 75, bottomLeft: 35 })
   })
 })
 

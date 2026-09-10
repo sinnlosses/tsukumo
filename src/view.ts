@@ -79,10 +79,17 @@ export type LayoutBodies = Readonly<Record<ViewName, string>>
  * （`docs/architecture.md`「ビューの更新は Server-Sent Events で押す」）。
  */
 export function buildLayoutPage(bodies: LayoutBodies): string {
-  const regions = VIEW_NAMES.map(
-    (view) =>
-      `<section class="layout-region layout-${view}" id="${layoutRegionId(view)}">${bodies[view]}</section>`,
-  ).join("\n")
+  const topRow = `<div class="layout-row layout-row-top" id="${LAYOUT_ROW_TOP_ID}">
+<section class="layout-region layout-main" id="${layoutRegionId("main")}">${bodies.main}</section>
+<div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_TOP_ID}" role="separator" aria-orientation="vertical" aria-label="メインビューとサイドバーの境界"></div>
+<section class="layout-region layout-sidebar" id="${layoutRegionId("sidebar")}">${bodies.sidebar}</section>
+</div>`
+
+  const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
+<section class="layout-region layout-character" id="${layoutRegionId("character")}">${bodies.character}</section>
+<div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_BOTTOM_ID}" role="separator" aria-orientation="vertical" aria-label="キャラビューと入力欄の境界"></div>
+${dispatchRegionHtml()}
+</div>`
 
   const subscriptions = VIEW_NAMES.map((view) =>
     subscriptionScript(layoutRegionId(view), view, bodies[view]),
@@ -90,11 +97,14 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
 
   return page(
     "tsukumo",
-    `<div class="layout-grid">
-${regions}
-${dispatchRegionHtml()}
+    `<div class="layout-grid" id="${LAYOUT_GRID_ID}">
+${topRow}
+<div class="layout-resizer layout-resizer-horizontal" id="${LAYOUT_RESIZER_ROW_ID}" role="separator" aria-orientation="horizontal" aria-label="上段と下段の境界"></div>
+${bottomRow}
 </div>
+<button type="button" id="${LAYOUT_RESET_ID}" class="layout-reset">既定の比率に戻す</button>
 <script>
+${layoutScript()}
 ${subscriptions}
 ${dispatchScript()}
 </script>`,
@@ -103,6 +113,177 @@ ${dispatchScript()}
 
 function layoutRegionId(view: ViewName): string {
   return `tsukumo-view-${view}`
+}
+
+const LAYOUT_GRID_ID = "tsukumo-layout-grid"
+const LAYOUT_ROW_TOP_ID = "tsukumo-layout-row-top"
+const LAYOUT_ROW_BOTTOM_ID = "tsukumo-layout-row-bottom"
+const LAYOUT_RESIZER_ROW_ID = "tsukumo-layout-resizer-row"
+const LAYOUT_RESIZER_TOP_ID = "tsukumo-layout-resizer-top"
+const LAYOUT_RESIZER_BOTTOM_ID = "tsukumo-layout-resizer-bottom"
+const LAYOUT_RESET_ID = "tsukumo-layout-reset"
+// ブラウザに覚えさせる仕切りの比率（localStorage）のキー。DISPATCH_TARGET_STORAGE_KEY と同じ考え方
+// （サーバ側には状態を持たせない）。
+const LAYOUT_SPLIT_STORAGE_KEY = "tsukumo-layout-split"
+// 3本の仕切りの既定位置（%）。rowTop は上段(メイン・サイドバー)の高さの割合、topLeft は
+// 上段内でのメインの幅の割合、bottomLeft は下段内でのキャラビューの幅の割合
+// （残りはそれぞれサイドバー・下段・入力欄に割り当たる）。**下段の高さと入力欄の幅を広めに
+// 取ってあるのは、入力フォームの狭さが既定値を決め直した動機だから**（狭めても構わないが、
+// 既定として狭くはしない）。
+// **STYLE の grid-template-rows / grid-template-columns の var() 第2引数（フォールバック値）と
+// 一致させること**（JS が動かない場合の見た目もこの値になる）。
+const LAYOUT_SPLIT_DEFAULTS = { rowTop: 60, topLeft: 75, bottomLeft: 35 } as const
+// 仕切りをどちらかの端まで詰めて操作不能にしないための可動域。
+const LAYOUT_SPLIT_MIN_PERCENT = 15
+const LAYOUT_SPLIT_MAX_PERCENT = 85
+
+/**
+ * 3本の仕切り（上段の縦・下段の縦・上下の横）をドラッグで動かす配線。**新しい依存は足さず、
+ * 素の `pointerdown` / `pointermove` / `pointerup` で書く。**
+ *
+ * **論点（列の定義の持ち替え）**: 上段（メイン・サイドバー）と下段（キャラビュー・入力欄）で
+ * 縦の仕切り位置が違うため、4列共有の `grid-template-columns` では3本の仕切りを独立に動かせない
+ * （`docs/requirements.md` 4.7）。ここでは上下の行それぞれを別の grid（`.layout-row-top` /
+ * `.layout-row-bottom`）にし、列幅・行の高さを CSS カスタムプロパティで持つ
+ * （`--layout-top-left` 等。既定値は STYLE 側の `var()` フォールバックにも重複して書いてあり、
+ * `LAYOUT_SPLIT_DEFAULTS` と一致させる必要がある）。ドラッグはこの変数を書き換えるだけで、
+ * 実際の列・行のサイズ計算は CSS の grid に任せる。
+ *
+ * **要素の形が想定と違う（このページの HTML と一緒に配られていない）ときは何もしない。**
+ * 描画ループの try/catch を散らすのではなく、`isUsableElement` の判定1箇所で弾く
+ * （`docs/coding-standards.md`「エラーハンドリング」と同じ、受け止める場所を1つにする考え方）。
+ */
+function layoutScript(): string {
+  return `  {
+    const STORAGE_KEY = ${JSON.stringify(LAYOUT_SPLIT_STORAGE_KEY)}
+    const MIN_PERCENT = ${JSON.stringify(LAYOUT_SPLIT_MIN_PERCENT)}
+    const MAX_PERCENT = ${JSON.stringify(LAYOUT_SPLIT_MAX_PERCENT)}
+    const DEFAULTS = ${JSON.stringify(LAYOUT_SPLIT_DEFAULTS)}
+
+    const grid = document.getElementById(${JSON.stringify(LAYOUT_GRID_ID)})
+    const rowTop = document.getElementById(${JSON.stringify(LAYOUT_ROW_TOP_ID)})
+    const rowBottom = document.getElementById(${JSON.stringify(LAYOUT_ROW_BOTTOM_ID)})
+    const resizerRow = document.getElementById(${JSON.stringify(LAYOUT_RESIZER_ROW_ID)})
+    const resizerTop = document.getElementById(${JSON.stringify(LAYOUT_RESIZER_TOP_ID)})
+    const resizerBottom = document.getElementById(${JSON.stringify(LAYOUT_RESIZER_BOTTOM_ID)})
+    const resetButton = document.getElementById(${JSON.stringify(LAYOUT_RESET_ID)})
+
+    function isUsableElement(value) {
+      return value !== null && typeof value === "object" && "style" in value
+    }
+
+    if (
+      isUsableElement(grid) &&
+      isUsableElement(rowTop) &&
+      isUsableElement(rowBottom) &&
+      isUsableElement(resizerRow) &&
+      isUsableElement(resizerTop) &&
+      isUsableElement(resizerBottom) &&
+      isUsableElement(resetButton)
+    ) {
+      function isValidPercent(value) {
+        return (
+          typeof value === "number" &&
+          Number.isFinite(value) &&
+          value >= MIN_PERCENT &&
+          value <= MAX_PERCENT
+        )
+      }
+
+      function loadSplit() {
+        let raw = null
+        try {
+          raw = localStorage.getItem(STORAGE_KEY)
+        } catch {
+          return DEFAULTS
+        }
+        if (raw === null) {
+          return DEFAULTS
+        }
+        try {
+          const parsed = JSON.parse(raw)
+          if (
+            parsed !== null &&
+            typeof parsed === "object" &&
+            isValidPercent(parsed.rowTop) &&
+            isValidPercent(parsed.topLeft) &&
+            isValidPercent(parsed.bottomLeft)
+          ) {
+            return { rowTop: parsed.rowTop, topLeft: parsed.topLeft, bottomLeft: parsed.bottomLeft }
+          }
+        } catch {
+          // 保存値が JSON として壊れている。既定に落ちる。
+        }
+        return DEFAULTS
+      }
+
+      function saveSplit(value) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+        } catch {
+          // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
+        }
+      }
+
+      let split = loadSplit()
+
+      function applySplit() {
+        grid.style.setProperty("--layout-row-top", split.rowTop + "fr")
+        grid.style.setProperty("--layout-row-bottom", (100 - split.rowTop) + "fr")
+        rowTop.style.setProperty("--layout-top-left", split.topLeft + "fr")
+        rowTop.style.setProperty("--layout-top-right", (100 - split.topLeft) + "fr")
+        rowBottom.style.setProperty("--layout-bottom-left", split.bottomLeft + "fr")
+        rowBottom.style.setProperty("--layout-bottom-right", (100 - split.bottomLeft) + "fr")
+      }
+
+      applySplit()
+
+      function clampPercent(value) {
+        return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
+      }
+
+      function bindResizer(resizer, container, orientation, setPercent) {
+        resizer.addEventListener("pointerdown", (event) => {
+          if (typeof resizer.setPointerCapture === "function") {
+            resizer.setPointerCapture(event.pointerId)
+          }
+          const rect = container.getBoundingClientRect()
+
+          function onMove(moveEvent) {
+            const raw =
+              orientation === "horizontal"
+                ? ((moveEvent.clientY - rect.top) / rect.height) * 100
+                : ((moveEvent.clientX - rect.left) / rect.width) * 100
+            setPercent(clampPercent(raw))
+            applySplit()
+          }
+          function onUp() {
+            resizer.removeEventListener("pointermove", onMove)
+            resizer.removeEventListener("pointerup", onUp)
+            saveSplit(split)
+          }
+          resizer.addEventListener("pointermove", onMove)
+          resizer.addEventListener("pointerup", onUp)
+        })
+      }
+
+      bindResizer(resizerRow, grid, "horizontal", (percent) => {
+        split = { ...split, rowTop: percent }
+      })
+      bindResizer(resizerTop, rowTop, "vertical", (percent) => {
+        split = { ...split, topLeft: percent }
+      })
+      bindResizer(resizerBottom, rowBottom, "vertical", (percent) => {
+        split = { ...split, bottomLeft: percent }
+      })
+
+      resetButton.addEventListener("click", () => {
+        split = DEFAULTS
+        applySplit()
+        saveSplit(split)
+      })
+    }
+  }`
 }
 
 /**
@@ -565,17 +746,32 @@ const STYLE = `
   .sidebar-empty { color: #8f97ab; }
   .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
 
-  /* まとめたレイアウト（buildLayoutPage）。上段はメイン3:サイドバー1、下段はキャラ半分:送信欄半分
-     （docs/requirements.md 4.7「上段と下段で縦の仕切り位置が違う」）。4列にしておくと、
-     行ごとに違う比率の仕切りを1つの grid-template-columns で表せる。 */
+  /* まとめたレイアウト（buildLayoutPage）。上段（メイン・サイドバー）と下段（キャラビュー・
+     入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid
+     （.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は CSS カスタム
+     プロパティで持つ（layoutScript が3本の仕切りのドラッグに応じて書き換える）。
+     ここに書いた var() の第2引数（フォールバック値）は layoutScript の既定値
+     （LAYOUT_SPLIT_DEFAULTS）と一致させること。 */
   .layout-grid {
+    position: relative;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 7fr 3fr;
-    grid-template-areas: "main main main sidebar" "character character dispatch dispatch";
-    gap: 0.75rem;
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--layout-row-top, 60fr) auto var(--layout-row-bottom, 40fr);
+    gap: 0.5rem;
     /* body の padding（上下 1rem ずつ）ぶんを差し引いて、grid 自体は画面の高さぴったりにする。 */
     height: calc(100vh - 2rem);
+  }
+  .layout-row {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+    min-height: 0;
+  }
+  .layout-row-top {
+    grid-template-columns: var(--layout-top-left, 75fr) auto var(--layout-top-right, 25fr);
+  }
+  .layout-row-bottom {
+    grid-template-columns: var(--layout-bottom-left, 35fr) auto var(--layout-bottom-right, 65fr);
   }
   .layout-region {
     min-width: 0;
@@ -586,11 +782,51 @@ const STYLE = `
     background: #1c202a;
     overflow-y: auto;
   }
-  .layout-main { grid-area: main; }
-  .layout-sidebar { grid-area: sidebar; }
-  .layout-character { grid-area: character; }
+  /* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。 */
+  .layout-resizer {
+    position: relative;
+    touch-action: none;
+  }
+  .layout-resizer-vertical { width: 0.6rem; cursor: col-resize; }
+  .layout-resizer-horizontal { height: 0.6rem; cursor: row-resize; }
+  .layout-resizer::after {
+    content: "";
+    position: absolute;
+    background: #3a4256;
+  }
+  .layout-resizer-vertical::after {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+  }
+  .layout-resizer-horizontal::after {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+  .layout-resizer:hover::after { background: #8ab4ff; }
+  /* 既定の比率に戻す逃げ道。仕切りの上ではなく画面に固定した小さいボタンにして、
+     ドラッグ操作と取り合わない場所に置く。 */
+  .layout-reset {
+    position: fixed;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 20;
+    padding: 0.3rem 0.6rem;
+    background: #1c202a;
+    color: inherit;
+    border: 1px solid #3a4256;
+    border-radius: 0.4rem;
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .layout-reset:hover { border-color: #8ab4ff; }
   /* 右下の入力ペイン（docs/requirements.md 4.7）。claude への依頼を送るフォームを持つ。 */
-  .layout-dispatch { grid-area: dispatch; }
   .layout-dispatch form {
     display: flex;
     flex-direction: column;
@@ -647,14 +883,19 @@ const STYLE = `
   .dispatch-status { font-size: 0.8rem; color: #8f97ab; }
 
   /* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
-     （docs/requirements.md 4.7「狭い画面での崩れ方」）。 */
+     （docs/requirements.md 4.7「狭い画面での崩れ方」）。各行の中身は DOM の並び順どおり
+     （main→sidebar、character→dispatch）に積むだけで済むので、grid-template-areas は
+     使わない。畳んでいる間は仕切り・既定に戻すボタンを出さない（動かせる比率が無いため）。 */
   @media (max-width: 760px) {
     .layout-grid {
       grid-template-columns: 1fr;
       grid-template-rows: none;
-      grid-template-areas: "main" "sidebar" "character" "dispatch";
       height: auto;
     }
+    .layout-row-top, .layout-row-bottom {
+      grid-template-columns: 1fr;
+    }
+    .layout-resizer, .layout-reset { display: none; }
     .layout-dispatch { min-height: 10rem; }
   }
 `
