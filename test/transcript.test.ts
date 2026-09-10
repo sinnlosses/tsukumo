@@ -555,6 +555,47 @@ describe("extractMainViewEntries", () => {
     ])
   })
 
+  it("利用者が打った依頼（user 行の content が文字列）を、やり取りの境目として積む", () => {
+    const content = [
+      JSON.stringify({ type: "user", message: { content: "T-019 やろうか" } }),
+      JSON.stringify({
+        type: "assistant",
+        message: { content: [{ type: "text", text: "アスナ: やるよ\n読んだ結果" }] },
+      }),
+    ].join("\n")
+
+    expect(extractMainViewEntries(content, MARKER)).toEqual([
+      { kind: "request", text: "T-019 やろうか" },
+      { kind: "detail", markdown: "読んだ結果" },
+    ])
+  })
+
+  it("ツールの結果を返す user 行（content が配列）は依頼にしない", () => {
+    const content = JSON.stringify({
+      type: "user",
+      message: { content: [{ type: "tool_result", tool_use_id: "toolu_1", content: "ok" }] },
+      toolUseResult: { stdout: "ok" },
+    })
+
+    expect(extractMainViewEntries(content, MARKER)).toEqual([])
+  })
+
+  it("システムが挿入した user 行（isMeta）は依頼にしない", () => {
+    const content = JSON.stringify({
+      type: "user",
+      isMeta: true,
+      message: { content: "<command-name>/next-task</command-name>" },
+    })
+
+    expect(extractMainViewEntries(content, MARKER)).toEqual([])
+  })
+
+  it("空白だけの依頼は境目にしない", () => {
+    const content = JSON.stringify({ type: "user", message: { content: "   \n  " } })
+
+    expect(extractMainViewEntries(content, MARKER)).toEqual([])
+  })
+
   it("壊れた行・未知の type が混ざっていても落ちずに読む", () => {
     const content = [
       "{not valid json",

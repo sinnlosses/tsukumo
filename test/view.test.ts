@@ -62,6 +62,11 @@ type FakeElement = {
   scrollTop: number
   readonly scrollHeight: number
   readonly clientHeight: number
+  // メインビューのタブ制御（mainTurnsScript）が触る分。ここでは「タブが1つも無い本文」として
+  // 振る舞わせ、スクロール位置の扱いだけをこの代役で確かめる。
+  readonly addEventListener: () => void
+  readonly querySelector: () => null
+  readonly querySelectorAll: () => readonly never[]
 }
 
 type FakeElementHandle = {
@@ -101,6 +106,9 @@ function makeFakeElement(options: {
     },
     scrollHeight: options.scrollHeight,
     clientHeight: options.clientHeight,
+    addEventListener: () => {},
+    querySelector: () => null,
+    querySelectorAll: () => [],
   }
 
   return { element, innerHtmlSetCount: () => setCount }
@@ -113,7 +121,38 @@ function makeInertStub(): InertStub {
   const stub: InertStub = {}
   stub.addEventListener = () => {}
   stub.appendChild = () => {}
+  // メインビューのタブ制御（mainTurnsScript）が触る最小限。無害な「何も無い」を返す。
+  stub.querySelector = () => null
+  stub.querySelectorAll = () => []
   return stub
+}
+
+/**
+ * `MutationObserver` の最小限の代役。ブラウザでは本文の差し替え（`innerHTML` の再代入）で
+ * 自動的に発火するが、テストでは `trigger()` で明示的に起こす。
+ */
+function makeFakeMutationObserverController(): {
+  readonly MutationObserverClass: new (callback: () => void) => { readonly observe: () => void }
+  readonly trigger: () => void
+} {
+  const callbacks: (() => void)[] = []
+
+  class FakeMutationObserver {
+    constructor(callback: () => void) {
+      callbacks.push(callback)
+    }
+
+    observe(): void {}
+  }
+
+  return {
+    MutationObserverClass: FakeMutationObserver,
+    trigger: () => {
+      for (const callback of callbacks) {
+        callback()
+      }
+    },
+  }
 }
 
 type UpdateEvent = { readonly data: string }
@@ -186,6 +225,7 @@ function runSubscriptionScript(
   vm.runInNewContext(scriptMatch[1], {
     document: documentStub,
     EventSource: controller.EventSourceClass,
+    MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
   })
 
   return { dispatch: controller.dispatch }
@@ -292,6 +332,7 @@ async function runDispatchScript(
   vm.runInNewContext(scriptMatch[1], {
     document: documentStub,
     EventSource: controller.EventSourceClass,
+    MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
     fetch: fetchStub,
     localStorage: localStorageStub,
   })
@@ -447,6 +488,7 @@ function runLayoutScript(
   vm.runInNewContext(scriptMatch[1], {
     document: documentStub,
     EventSource: controller.EventSourceClass,
+    MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
     localStorage: localStorageStub,
   })
 }
@@ -982,6 +1024,297 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     expect(grid.style.values()["--layout-row-top"]).toBe("60fr")
     expect(grid.style.values()["--layout-row-bottom"]).toBe("40fr")
     expect(JSON.parse(savedValue ?? "{}")).toEqual({ rowTop: 60, topLeft: 75, bottomLeft: 50 })
+  })
+})
+
+// --- メインビューのタブ制御（mainTurnsScript）を実際に動かすための道具 -----------------------
+//
+// タブの選択と「新しいやり取りが始まったら先頭へ戻す」は**ブラウザ側だけが持つ状態**なので、
+// サーバの出力を見るだけでは確かめられない。ここでは本文の差し替え（push）を
+// `MutationObserver` の発火で再現し、選択が保たれるかどうかを確かめる。
+
+type FakeTurnsHandle = {
+  readonly setTurns: (ids: readonly string[]) => void
+  readonly clickTab: (id: string) => void
+  readonly activeTabId: () => string | undefined
+  readonly visiblePanelIds: () => readonly string[]
+  readonly scrollTop: () => number
+  readonly setScrollTop: (value: number) => void
+  readonly pushUpdate: () => void
+}
+
+function runMainTurnsScript(page: string, initialTurnIds: readonly string[]): FakeTurnsHandle {
+  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
+  if (scriptMatch === null || scriptMatch[1] === undefined) {
+    throw new Error("ページに <script> が無い")
+  }
+
+  type FakeTab = {
+    readonly dataset: { readonly turnId: string }
+    readonly classList: { readonly toggle: (name: string, force: boolean) => void }
+    active: boolean
+  }
+  type FakePanel = { readonly dataset: { readonly turnId: string }; hidden: boolean }
+
+  let tabs: FakeTab[] = []
+  let panels: FakePanel[] = []
+  let scrollTop = 0
+  let clickListener: ((event: { readonly target: unknown }) => void) | undefined = undefined
+
+  const setTurns = (ids: readonly string[]) => {
+    tabs = ids.map((id) => {
+      const tab: FakeTab = {
+        dataset: { turnId: id },
+        classList: {
+          toggle: (_name: string, force: boolean) => {
+            tab.active = force
+          },
+        },
+        active: false,
+      }
+      return tab
+    })
+    panels = ids.map((id) => ({ dataset: { turnId: id }, hidden: true }))
+  }
+  setTurns(initialTurnIds)
+
+  const element = {
+    innerHTML: "",
+    get scrollTop(): number {
+      return scrollTop
+    },
+    set scrollTop(value: number) {
+      scrollTop = value
+    },
+    scrollHeight: 500,
+    clientHeight: 100,
+    addEventListener: (type: string, listener: (event: { readonly target: unknown }) => void) => {
+      if (type === "click") {
+        clickListener = listener
+      }
+    },
+    querySelector: (selector: string) =>
+      selector === ".main-turns" ? { dataset: { turnCount: String(tabs.length) } } : null,
+    querySelectorAll: (selector: string) => (selector === ".turn-tab" ? tabs : panels),
+  }
+
+  const observer = makeFakeMutationObserverController()
+  const controller = makeFakeEventSourceController()
+  vm.runInNewContext(scriptMatch[1], {
+    document: {
+      getElementById: () => element,
+      scrollingElement: element,
+      documentElement: element,
+    },
+    EventSource: controller.EventSourceClass,
+    MutationObserver: observer.MutationObserverClass,
+  })
+
+  return {
+    setTurns,
+    clickTab: (id) => {
+      const tab = tabs.find((candidate) => candidate.dataset.turnId === id)
+      clickListener?.({
+        target: { closest: (selector: string) => (selector === ".turn-tab" ? tab : null) },
+      })
+    },
+    activeTabId: () => tabs.find((tab) => tab.active)?.dataset.turnId,
+    visiblePanelIds: () =>
+      panels.filter((panel) => !panel.hidden).map((panel) => panel.dataset.turnId),
+    scrollTop: () => scrollTop,
+    setScrollTop: (value) => {
+      scrollTop = value
+    },
+    pushUpdate: () => {
+      observer.trigger()
+    },
+  }
+}
+
+describe("メインビューのタブの選択（push で戻らない・新しいやり取りで先頭へ）", () => {
+  const pageWithTurns = () => buildViewPage("main", buildMainBody([]))
+
+  it("最初は今回（左端）のやり取りが選ばれている", () => {
+    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    handle.pushUpdate()
+
+    expect(handle.activeTabId()).toBe("3")
+    expect(handle.visiblePanelIds()).toEqual(["3"])
+  })
+
+  it("過去のタブを選ぶとそのやり取りだけが見え、先頭から読める位置に戻る", () => {
+    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    handle.pushUpdate()
+    handle.setScrollTop(400)
+
+    handle.clickTab("1")
+
+    expect(handle.visiblePanelIds()).toEqual(["1"])
+    expect(handle.scrollTop()).toBe(0)
+  })
+
+  it("本文が差し替わっても、選んでいた過去のタブが選ばれたまま残る", () => {
+    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    handle.pushUpdate()
+    handle.clickTab("2")
+
+    // 今回のやり取りに記録が増えただけの push（やり取りの数は変わらない）。
+    handle.pushUpdate()
+
+    expect(handle.activeTabId()).toBe("2")
+    expect(handle.visiblePanelIds()).toEqual(["2"])
+  })
+
+  it("新しいやり取りが始まると、今回を見ていた人は新しい先頭へ移る", () => {
+    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    handle.pushUpdate()
+    handle.setScrollTop(400)
+
+    handle.setTurns(["4", "3", "2", "1"])
+    handle.pushUpdate()
+
+    expect(handle.activeTabId()).toBe("4")
+    expect(handle.scrollTop()).toBe(0)
+  })
+
+  it("過去のタブを見ている間は、新しいやり取りが始まっても動かさない", () => {
+    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    handle.pushUpdate()
+    handle.clickTab("1")
+    handle.setScrollTop(400)
+
+    handle.setTurns(["4", "3", "2", "1"])
+    handle.pushUpdate()
+
+    expect(handle.activeTabId()).toBe("1")
+    expect(handle.scrollTop()).toBe(400)
+  })
+})
+
+describe("メインビューのやり取り（依頼で区切り、タブで遡る）", () => {
+  const request = (text: string): MainViewEntry => ({ kind: "request", text })
+  const detail = (markdown: string): MainViewEntry => ({ kind: "detail", markdown })
+  const edit = (path: string): MainViewEntry => ({
+    kind: "tool",
+    name: "Edit",
+    input: { file_path: path },
+    result: { content: "ok", isError: false },
+  })
+
+  it("依頼を境目にやり取りへ分け、今回だけを開いて出す（過去は hidden）", () => {
+    const body = buildMainBody([
+      request("前の依頼"),
+      detail("前のレポート"),
+      request("今回の依頼"),
+      detail("今回のレポート"),
+    ])
+
+    // 今回のパネルが先（hidden が付かない）、過去のパネルは hidden。
+    const currentPanel = /<section class="turn-panel" data-turn-id="1">/.exec(body)
+    const pastPanel = /<section class="turn-panel" data-turn-id="0" hidden>/.exec(body)
+    expect(currentPanel).not.toBeNull()
+    expect(pastPanel).not.toBeNull()
+    // 依頼の本文は見出しとして出る。
+    expect(body).toContain("今回の依頼")
+    expect(body).toContain("前の依頼")
+  })
+
+  it("タブは新しいものが左で、今回・1つ前…と並ぶ", () => {
+    const body = buildMainBody([
+      request("3つ前"),
+      detail("a"),
+      request("2つ前"),
+      detail("b"),
+      request("1つ前"),
+      detail("c"),
+      request("今"),
+      detail("d"),
+    ])
+
+    const labels = [...body.matchAll(/class="turn-tab[^"]*"[^>]*>([^<]+)</g)].map(
+      (matched) => matched[1],
+    )
+    // 4つ前は窓から外れる（上限3やり取り）。
+    expect(labels).toEqual(["今回", "1つ前", "2つ前"])
+  })
+
+  it("やり取りが1つだけのときはタブを出さない", () => {
+    const body = buildMainBody([request("ひとつだけ"), detail("レポート")])
+
+    expect(body).not.toContain("turn-tab")
+    expect(body).toContain("ひとつだけ")
+  })
+
+  it("古いやり取りは新しい方から3つだけ残す（今回・1つ前・2つ前）", () => {
+    const entries = Array.from({ length: 8 }, (_, index) => [
+      request(`依頼${String(index)}`),
+      detail(`レポート${String(index)}`),
+    ]).flat()
+
+    const body = buildMainBody(entries)
+
+    expect(body.split('<section class="turn-panel"').length - 1).toBe(3)
+    expect(body).toContain("依頼7")
+    expect(body).toContain("依頼5")
+    expect(body).not.toContain("依頼4")
+  })
+
+  it("レポートと、その後に続くツールの実行が1つのステップにまとまる", () => {
+    const body = buildMainBody([
+      request("依頼"),
+      detail("まず読むね"),
+      edit("src/a.ts"),
+      detail("次に直すね"),
+      edit("src/b.ts"),
+    ])
+
+    const steps = body.split('<section class="main-step">').slice(1)
+    expect(steps).toHaveLength(2)
+    expect(steps[0]).toContain("まず読むね")
+    expect(steps[0]).toContain("Edit: src/a.ts")
+    expect(steps[0]).not.toContain("src/b.ts")
+    expect(steps[1]).toContain("次に直すね")
+    expect(steps[1]).toContain("Edit: src/b.ts")
+    expect(body).toContain("ステップ1")
+    expect(body).toContain("ステップ2")
+  })
+
+  it("レポートより前に実行されたツールも、レポートを持たないステップとして出る", () => {
+    const body = buildMainBody([request("依頼"), edit("src/first.ts"), detail("あとから説明")])
+
+    const steps = body.split('<section class="main-step">').slice(1)
+    expect(steps).toHaveLength(2)
+    expect(steps[0]).toContain("Edit: src/first.ts")
+    expect(steps[1]).toContain("あとから説明")
+  })
+
+  it("1つのやり取りの記録が上限を超えたら、古いほうから落として件数を出す", () => {
+    const entries = [
+      request("依頼"),
+      ...Array.from({ length: 45 }, (_, index) => detail(`レポート${String(index)}`)),
+    ]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("これ以前の")
+    expect(body).toContain("件は省略した")
+    expect(body).toContain("レポート44")
+    expect(body).not.toContain("レポート0<")
+  })
+
+  it("依頼の見出しは1行に収め、長すぎるものは切り詰める", () => {
+    const body = buildMainBody([request(`${"あ".repeat(200)}\n2行目`), detail("x")])
+
+    expect(body).toContain("…")
+    expect(body).not.toContain("2行目")
+    expect(body).not.toContain("あ".repeat(200))
+  })
+
+  it("最初の依頼より前の記録も落とさずに出す（途中から追い始めたとき）", () => {
+    const body = buildMainBody([detail("依頼より前のレポート"), request("依頼"), detail("今回")])
+
+    expect(body).toContain("依頼より前のレポート")
+    expect(body.split('<section class="turn-panel"').length - 1).toBe(2)
   })
 })
 

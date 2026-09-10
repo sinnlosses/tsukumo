@@ -90,11 +90,6 @@ const POLL_INTERVAL_MS = 500
 // サイドバーは縦に狭い領域なので、サブエージェントの直近の活動は数件に絞る。
 const MAX_RECENT_SUBAGENT_ACTIVITIES = 5
 
-// メインビューは更新のたびに本文を丸ごと描き直す（docs/architecture.md「ビューの更新は
-// Server-Sent Events で押す」）。セッションが長く続くほど転送量が増え続けないよう、
-// 直近の記録だけに絞る。
-const MAX_MAIN_VIEW_ENTRIES = 40
-
 // develop/tasks.json は起動時の cwd（リポジトリ直下で `bun run start` する運用）からの相対で読む。
 // セッションに依存しない、tsukumo 自身の進捗管理ファイルのため。
 const TASKS_FILE_RELATIVE_PATH: readonly string[] = ["develop", "tasks.json"]
@@ -485,11 +480,7 @@ function publishSidebarView(server: ViewServer, transcriptPath: string): void {
 function publishMainView(server: ViewServer, transcriptPath: string, speechMarker: string): void {
   try {
     const transcriptContent = readFileSync(transcriptPath, "utf8")
-    const entries = extractMainViewEntries(transcriptContent, speechMarker).slice(
-      -MAX_MAIN_VIEW_ENTRIES,
-    )
-
-    server.publish("main", buildMainBody(entries))
+    server.publish("main", buildMainBody(extractMainViewEntries(transcriptContent, speechMarker)))
   } catch {
     process.stderr.write("tsukumo: メインビューの更新に失敗した。次の更新を待つ\n")
   }

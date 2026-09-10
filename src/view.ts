@@ -47,9 +47,82 @@ export function buildViewPage(view: ViewName, body: string): string {
     VIEW_TITLE[view],
     `<main id="${STANDALONE_VIEW_ELEMENT_ID}">${body}</main>
 <script>
-${subscriptionScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
+${viewScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
 </script>`,
   )
+}
+
+/**
+ * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューにだけ
+ * やり取りのタブの制御（{@link mainTurnsScript}）を足す。**タブの選択はブラウザ側だけが持つ**
+ * （サーバは常に「今回」を開いた本文を配る。`docs/architecture.md`「ビューの更新は
+ * Server-Sent Events で押す」— 押す側に状態を持たせない）。
+ */
+function viewScript(elementId: string, view: ViewName, initialBody: string): string {
+  const subscription = subscriptionScript(elementId, view, initialBody)
+  return view === "main" ? `${subscription}\n${mainTurnsScript(elementId)}` : subscription
+}
+
+/**
+ * メインビューのやり取りタブ。**本文は push のたびに丸ごと差し替わる**ので、選択は
+ * 差し替え後に付け直す（`MutationObserver` で差し替えを検知する。購読スクリプト側に
+ * 手を入れずに済む）。
+ *
+ * - **選択はやり取りの通し番号（`data-turn-id`）で覚える。** 新しいやり取りが増えても
+ *   「1つ前」の指す中身がずれない。選んでいたやり取りが窓から外れたら今回に戻す
+ * - **新しいやり取りが始まったら先頭へ戻す**（今回の通し番号が変わったことで判定）。
+ *   利用者が過去のタブを見ている間は動かさない（ユーザーの決定 2026-09-10 の論点7）
+ * - スクロールする要素の決め方は {@link subscriptionScript} と同じ
+ */
+function mainTurnsScript(elementId: string): string {
+  return `  {
+    const el = document.getElementById(${JSON.stringify(elementId)})
+    let selectedTurnId = null
+    let lastNewestId = null
+    const scroller = () =>
+      el.scrollHeight > el.clientHeight ? el : (document.scrollingElement ?? document.documentElement)
+    const tabIds = () => Array.from(el.querySelectorAll(".turn-tab")).map((tab) => tab.dataset.turnId)
+    const apply = () => {
+      const ids = tabIds()
+      if (ids.length === 0) {
+        return
+      }
+      const active = ids.includes(selectedTurnId) ? selectedTurnId : ids[0]
+      selectedTurnId = active
+      for (const tab of el.querySelectorAll(".turn-tab")) {
+        tab.classList.toggle("is-active", tab.dataset.turnId === active)
+      }
+      for (const panel of el.querySelectorAll(".turn-panel")) {
+        panel.hidden = panel.dataset.turnId !== active
+      }
+    }
+    el.addEventListener("click", (event) => {
+      const tab = event.target.closest(".turn-tab")
+      if (tab === null) {
+        return
+      }
+      selectedTurnId = tab.dataset.turnId
+      apply()
+      scroller().scrollTop = 0
+    })
+    const onUpdated = () => {
+      const ids = tabIds()
+      const newest = ids[0] ?? null
+      // 「今回」を見ていた人だけを新しいやり取りへ連れていく。**やり取りの数ではなく今回の
+      // 通し番号で見る**（上限に達すると数は増えないまま中身だけが進むため）。
+      const wasNewest = selectedTurnId === null || selectedTurnId === lastNewestId
+      const started = lastNewestId !== null && newest !== lastNewestId
+      apply()
+      if (started && wasNewest) {
+        selectedTurnId = newest
+        apply()
+        scroller().scrollTop = 0
+      }
+      lastNewestId = newest
+    }
+    new MutationObserver(onUpdated).observe(el, { childList: true })
+    onUpdated()
+  }`
 }
 
 /** ビューの一覧ページ。どの URL に何が出るのかを人間が確かめるための入口。 */
@@ -92,7 +165,7 @@ ${dispatchRegionHtml()}
 </div>`
 
   const subscriptions = VIEW_NAMES.map((view) =>
-    subscriptionScript(layoutRegionId(view), view, bodies[view]),
+    viewScript(layoutRegionId(view), view, bodies[view]),
   ).join("\n")
 
   return page(
@@ -545,9 +618,12 @@ export function buildCharacterBody(data: CharacterViewData): string {
 }
 
 /**
- * メインビューの本文。**「作業中」と「完了後」で状態を切り替えず、ツールの実行と発話の詳細を
- * 時系列でそのまま積む**（理由は `src/transcript.ts` の `extractMainViewEntries` を参照。
- * transcript だけからは2つの状態を確実に判定できないため、無理に分けていない）。
+ * メインビューの本文。**利用者の依頼を境目にして「やり取り」ごとに区切り、今回のやり取りを
+ * 上から読める形で出す**（ユーザーの決定 2026-09-10）。過去のやり取りはタブで選んで遡る。
+ * 1やり取りの中は**レポート1件と、それに続くツールの実行**を1ステップとしてまとめる。
+ *
+ * **「作業中」と「完了後」で状態は切り替えない**（理由は `src/transcript.ts` の
+ * `extractMainViewEntries` を参照。transcript だけからは2つの状態を確実に判定できない）。
  *
  * - **ツールの実行**: `docs/requirements.md` 4.2 の決定どおり、**利用者が見るべきものだけに
  *   絞る**（`toolVisibility`）。出すのはファイルを変えた操作（ツール名とパス）・
@@ -561,13 +637,182 @@ export function buildCharacterBody(data: CharacterViewData): string {
  * 除外しているので、この関数の入力に `thinking` の中身が混ざる経路が無い。
  */
 export function buildMainBody(entries: readonly MainViewEntry[]): string {
-  const rendered = entries.flatMap((entry) => mainViewEntryHtml(entry))
+  const turns = groupIntoTurns(entries)
+    .slice(-MAX_MAIN_VIEW_TURNS)
+    .map((turn) => limitTurnEntries(turn))
+  const panels = turns.map((turn) => turnPanel(turn))
 
-  if (rendered.length === 0) {
+  if (panels.every((panel) => panel.isEmpty)) {
     return `<p class="placeholder">${escapeHtml(MAIN_VIEW_EMPTY_MESSAGE)}</p>`
   }
 
-  return rendered.join("\n")
+  // タブは新しいものが左（[今回][1つ前]…）。パネルは既定で今回だけを見せ、残りは hidden に
+  // しておく（スクリプトが動かない環境でも今回のやり取りが読める）。
+  const ordered = [...panels].reverse()
+  const tabs =
+    ordered.length < 2
+      ? ""
+      : `<div class="turn-tabs" role="tablist">${ordered
+          .map((panel, index) => turnTabHtml(panel.id, index, index === 0))
+          .join("")}</div>`
+  const sections = ordered
+    .map(
+      (panel, index) =>
+        `<section class="turn-panel" data-turn-id="${String(panel.id)}"${index === 0 ? "" : " hidden"}>${panel.html}</section>`,
+    )
+    .join("\n")
+
+  return `<div class="main-turns">
+${tabs}
+${sections}
+</div>`
+}
+
+// 出すやり取りの数（今回・1つ前・2つ前）。**「今回」を読めることが目的**なので、過去は
+// タブで遡れる範囲だけを持たせる（本文はまるごと push されるので、数を持ちすぎると転送量が増える）。
+// 5から3へ減らしたのはユーザーの指定（2026-09-10「2つ前までで良さそう」）。
+const MAX_MAIN_VIEW_TURNS = 3
+
+// 1つのやり取りの中で出す記録の上限。超えた分は**古いほうから**落とし、件数だけを残す
+// （やり取りの境界を優先する。ユーザーの決定 2026-09-10）。
+const MAX_MAIN_VIEW_ENTRIES = 40
+
+type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
+
+/** 1ステップ＝レポート1件と、それに続くツールの実行（ユーザーの決定 2026-09-10）。 */
+type MainViewStep = {
+  readonly report: string | undefined
+  readonly tools: readonly MainViewToolRun[]
+}
+
+/**
+ * 利用者の依頼1件と、それ以降のステップ。`request` が undefined なのは、最初の依頼より前の記録
+ * （セッションの途中から追い始めたときに起こる）。`id` は**追加されても番号がずれない**ように
+ * 先頭から数えた通し番号で、ブラウザ側がタブの選択を保つのに使う。
+ */
+type MainViewTurn = {
+  readonly id: number
+  readonly request: string | undefined
+  readonly steps: readonly MainViewStep[]
+  /** 上限を超えて落とした記録の件数。0 のときは何も落としていない。 */
+  readonly droppedCount: number
+}
+
+/** 時系列に積まれた記録を、利用者の依頼を境目にしてやり取りごとへまとめる。 */
+function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTurn[] {
+  const turns: MainViewTurn[] = []
+  let current: { id: number; request: string | undefined; steps: MainViewStep[] } | undefined =
+    undefined
+
+  const flush = () => {
+    if (current !== undefined) {
+      turns.push({ ...current, droppedCount: 0 })
+    }
+  }
+
+  for (const entry of entries) {
+    if (entry.kind === "request") {
+      flush()
+      current = { id: turns.length, request: entry.text, steps: [] }
+      continue
+    }
+
+    current ??= { id: 0, request: undefined, steps: [] }
+    if (entry.kind === "detail") {
+      current.steps.push({ report: entry.markdown, tools: [] })
+      continue
+    }
+
+    const step = current.steps.at(-1)
+    // レポートより前に実行されたツールは、レポートを持たないステップにまとめる。
+    current.steps =
+      step === undefined
+        ? [{ report: undefined, tools: [entry] }]
+        : [...current.steps.slice(0, -1), { ...step, tools: [...step.tools, entry] }]
+  }
+  flush()
+
+  return turns
+}
+
+/** 1つのやり取りが持つ記録を上限まで切り詰める。落とすのは**古いほう**（今回の続きを残す）。 */
+function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
+  const counts = turn.steps.map((step) => (step.report === undefined ? 0 : 1) + step.tools.length)
+  const total = counts.reduce((sum, count) => sum + count, 0)
+  if (total <= MAX_MAIN_VIEW_ENTRIES) {
+    return turn
+  }
+
+  const kept: MainViewStep[] = []
+  let remaining = MAX_MAIN_VIEW_ENTRIES
+  for (const [index, step] of [...turn.steps].reverse().entries()) {
+    const count = counts[counts.length - 1 - index] ?? 0
+    if (count > remaining) {
+      break
+    }
+    kept.unshift(step)
+    remaining -= count
+  }
+
+  return { ...turn, steps: kept, droppedCount: total - (MAX_MAIN_VIEW_ENTRIES - remaining) }
+}
+
+type TurnPanel = {
+  readonly id: number
+  readonly html: string
+  readonly isEmpty: boolean
+}
+
+function turnPanel(turn: MainViewTurn): TurnPanel {
+  const steps = turn.steps.flatMap((step, index) => stepHtml(step, index + 1))
+  const droppedHtml =
+    turn.droppedCount === 0
+      ? ""
+      : `<p class="turn-dropped">これ以前の ${String(turn.droppedCount)} 件は省略した</p>`
+  const requestHtml =
+    turn.request === undefined
+      ? ""
+      : `<h2 class="turn-request">${escapeHtml(truncateRequest(turn.request))}</h2>`
+
+  return {
+    id: turn.id,
+    html: [requestHtml, droppedHtml, ...steps].filter((part) => part !== "").join("\n"),
+    isEmpty: requestHtml === "" && steps.length === 0,
+  }
+}
+
+/** 1ステップ分の HTML。レポートもツールも出すものが無いステップは、何も返さない。 */
+function stepHtml(step: MainViewStep, order: number): readonly string[] {
+  const tools = step.tools.flatMap((tool) => toolRunHtml(tool))
+  const report = step.report === undefined ? "" : detailHtml(step.report)
+  if (report === "" && tools.length === 0) {
+    return []
+  }
+
+  return [
+    `<section class="main-step">
+<h3 class="step-heading">ステップ${String(order)}</h3>
+${[report, ...tools].filter((part) => part !== "").join("\n")}
+</section>`,
+  ]
+}
+
+const TURN_TAB_LABEL_CURRENT = "今回"
+
+function turnTabHtml(id: number, index: number, isActive: boolean): string {
+  const label = index === 0 ? TURN_TAB_LABEL_CURRENT : `${String(index)}つ前`
+
+  return `<button type="button" class="turn-tab${isActive ? " is-active" : ""}" data-turn-id="${String(id)}">${escapeHtml(label)}</button>`
+}
+
+// 依頼の見出しに出す長さの上限。1行に収めたいだけなので、超えた分は落として「…」を付ける。
+const MAX_REQUEST_HEADING_LENGTH = 120
+
+function truncateRequest(request: string): string {
+  const firstLine = request.split("\n")[0] ?? request
+  return firstLine.length <= MAX_REQUEST_HEADING_LENGTH
+    ? firstLine
+    : `${firstLine.slice(0, MAX_REQUEST_HEADING_LENGTH)}…`
 }
 
 /**
@@ -692,6 +937,47 @@ const STYLE = `
     white-space: pre-wrap;
   }
   .placeholder { color: #8f97ab; }
+  .main-turns { display: flex; flex-direction: column; }
+  .turn-tabs {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0 0 0.5rem;
+    background: #14161c;
+    z-index: 1;
+  }
+  .turn-tab {
+    padding: 0.2rem 0.7rem;
+    border: 1px solid #3a4256;
+    border-radius: 999px;
+    background: #1c202a;
+    color: #8f97ab;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .turn-tab.is-active { color: #e6e8ee; border-color: #8ab4ff; }
+  .turn-request {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    color: #8ab4ff;
+    border-left: 3px solid #8ab4ff;
+    padding-left: 0.6rem;
+  }
+  .turn-dropped { margin: 0 0 0.75rem; color: #8f97ab; font-size: 0.85rem; }
+  .main-step {
+    margin: 0 0 1.25rem;
+    padding-left: 0.75rem;
+    border-left: 2px solid #3a4256;
+  }
+  .step-heading {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: #8f97ab;
+  }
   a { color: #8ab4ff; }
   .tool-block {
     margin: 0 0 1rem;
@@ -928,11 +1214,7 @@ function portraitMarkup(
  * `detail` は常に出す。`tool` は {@link toolVisibility} が「見せない」と決めたら空配列を返し、
  * 呼び出し側（`buildMainBody`）でそのまま消える。
  */
-function mainViewEntryHtml(entry: MainViewEntry): readonly string[] {
-  if (entry.kind === "detail") {
-    return [detailHtml(entry.markdown)]
-  }
-
+function toolRunHtml(entry: MainViewToolRun): readonly string[] {
   const visibility = toolVisibility(entry)
   if (visibility.kind === "hidden") {
     return []
@@ -978,7 +1260,7 @@ type ToolVisibility =
  * **未知のツール名（`FILE_PATH_FIELD_BY_TOOL` にも `SUBAGENT_LAUNCH_TOOL_NAME` にも無い名前）は
  * `hidden` に落ちる。** 新しいツールが増えても、ここに追記するまでは安全側（見せない）に倒れる。
  */
-function toolVisibility(entry: Extract<MainViewEntry, { readonly kind: "tool" }>): ToolVisibility {
+function toolVisibility(entry: MainViewToolRun): ToolVisibility {
   if (entry.result !== undefined && entry.result.isError) {
     return { kind: "failed" }
   }
@@ -1010,7 +1292,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** 失敗したツールの表示。**ツールの種類によらず、引数と結果（エラーの内容）をそのまま出す。** */
-function failedToolHtml(entry: Extract<MainViewEntry, { readonly kind: "tool" }>): string {
+function failedToolHtml(entry: MainViewToolRun): string {
   const inputText = truncateForDisplay(stringifyToolInput(entry.input))
   const resultHtml =
     entry.result === undefined
@@ -1030,10 +1312,7 @@ ${resultHtml}
  * ファイルを変えた操作／サブエージェントの起動の表示。**引数や出力は出さず、
  * ツール名とラベル（パス、またはタスク名）だけを見出しに出す。**
  */
-function labeledToolHtml(
-  entry: Extract<MainViewEntry, { readonly kind: "tool" }>,
-  label: string,
-): string {
+function labeledToolHtml(entry: MainViewToolRun, label: string): string {
   const statusHtml = entry.result === undefined ? `<p class="tool-pending">実行中…</p>` : ""
 
   return `<section class="tool-block">

@@ -54,8 +54,13 @@ export function extractLatestPendingBackgroundAgentCount(content: string): numbe
   return values.at(-1)
 }
 
-/** メインビューに時系列で流す1件分の記録。ツールの実行か、発話の詳細のどちらか。 */
+/**
+ * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
+ * 発話の詳細の3種類。まとめ方（どこからが「今回のやり取り」か、どこがステップの切れ目か）は
+ * 決める層の責務で、ここでは並びをそのまま返す。
+ */
 export type MainViewEntry =
+  | { readonly kind: "request"; readonly text: string }
   | {
       readonly kind: "tool"
       readonly name: string
@@ -83,6 +88,10 @@ export type MainViewEntry =
  *   （`docs/requirements.md` 4.2「詳細はメインビュー側に回る」）。空になった `detail`
  *   （セリフだけの発話）は積まない
  * - **`thinking` は対象外**（`docs/requirements.md` 4.1「表示してよいのは type: "text" だけ」）
+ * - **依頼**: 利用者が打った依頼は `type: "user"` かつ `message.content` が**文字列**の行
+ *   （2026-09-10 実測）。ツールの結果を返す `user` 行は `content` が配列なので混ざらない。
+ *   スラッシュコマンドの展開などシステムが挿入した行は `isMeta: true` を持つので**境界に数えない**
+ *   （利用者が打った区切りではないため）
  */
 export function extractMainViewEntries(
   content: string,
@@ -301,6 +310,11 @@ function mainViewEntriesInLine(
   results: readonly ToolResultRecord[],
   speechMarker: string,
 ): readonly MainViewEntry[] {
+  const request = userRequestInLine(value)
+  if (request !== undefined) {
+    return [{ kind: "request", text: request }]
+  }
+
   if (!isRecord(value) || value.type !== "assistant") {
     return []
   }
@@ -311,6 +325,25 @@ function mainViewEntriesInLine(
   }
 
   return message.content.flatMap((item) => mainViewEntryForContentItem(item, results, speechMarker))
+}
+
+/**
+ * 利用者が打った依頼の本文を返す。`type: "user"` かつ `message.content` が**文字列**の行だけが
+ * 対象で、ツールの結果（`content` が配列）や、システムが挿入した行（`isMeta: true`）は
+ * 依頼ではない。空文字だけの依頼は境界として扱わない。
+ */
+function userRequestInLine(value: unknown): string | undefined {
+  if (!isRecord(value) || value.type !== "user" || value.isMeta === true) {
+    return undefined
+  }
+
+  const message = value.message
+  if (!isRecord(message) || typeof message.content !== "string") {
+    return undefined
+  }
+
+  const text = message.content.trim()
+  return text === "" ? undefined : text
 }
 
 function mainViewEntryForContentItem(
