@@ -1220,17 +1220,22 @@ describe("キャラクターからの質問（入力欄の領域に差し込む�
     expect(buildQuestionBody(undefined)).toBe("")
   })
 
-  it("質問文・見出し・選択肢を、番号付きの押せるボタンで出す", () => {
+  it("質問文・見出し・選択肢を、番号付きの一覧で出す", () => {
     const body = buildQuestionBody(pending)
 
     expect(body).toContain("質問をどのビューに出す？")
     expect(body).toContain("出す場所")
-    expect(body).toContain('data-answer="1"')
-    expect(body).toContain('data-answer="2"')
     expect(body).toContain("メインビュー")
     expect(body).toContain("作業の記録として出す")
-    // 効かなかったときの逃げ道を画面にも書く。
-    expect(body).toContain("ターミナル側でそのまま答えてよい")
+    // 番号はターミナルの並びと同じ。答えるのはターミナル側。
+    expect(body).toContain("答えるのはターミナル側で")
+  })
+
+  it("選択肢は押せない（claude が質問中は送信が届かないため）", () => {
+    const body = buildQuestionBody(pending)
+
+    expect(body).not.toContain("<button")
+    expect(body).not.toContain("data-answer")
   })
 
   it("複数選べる質問はその旨を出す", () => {
@@ -1286,11 +1291,11 @@ describe("キャラクターからの質問（入力欄の領域に差し込む�
       main: "",
       character: "",
       sidebar: "",
-      question: '<button class="question-choice" data-answer="1">はい</button>',
+      question: '<li class="question-choice">はい</li>',
     })
 
     expect(page).toContain('id="tsukumo-view-question"')
-    expect(page).toContain('data-answer="1"')
+    expect(page).toContain('class="question-choice"')
     // 質問の領域と送信フォームは同じ領域の中にある（差し替えるため）。
     const region = page.slice(page.indexOf('id="tsukumo-view-dispatch"'))
     expect(region.indexOf('id="tsukumo-view-question"')).toBeLessThan(

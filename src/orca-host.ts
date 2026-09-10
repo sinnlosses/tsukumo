@@ -13,6 +13,8 @@
 //               `"claude"` かどうかで決める（v1.4.197 で実測。Orca 自身がターミナルの中身を見て
 //               付けた分類ラベルで、`claude` セッションが動いているときだけ付く）
 //   sendText  → orca terminal send --terminal <handle> --text <text> --enter
+//               **claude が質問・確認を表示している間は送れない**（`agent_prompt_blocked` が
+//               返る。2026-09-11 実測）。入力フォームも質問の選択肢も、この制約を受ける
 // `--direction` は `horizontal` が左右に、`vertical` が上下に並べる（Orca 本体のレイアウト実装で、
 // horizontal のときだけ flex-direction が row になることを確認した）。
 //
@@ -224,6 +226,11 @@ const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: 
     reason: "送信先のターミナルが見つからない（一覧が古くなっている）",
   },
   { marker: "Missing terminal send payload", reason: "送る中身が空" },
+  {
+    // 2026-09-11 実測。claude が質問や確認を表示している間は、この経路では文字を入れられない。
+    marker: "agent_prompt_blocked",
+    reason: "claude が入力待ちの表示を出している間は送れない（ターミナル側で答える）",
+  },
 ]
 
 /**

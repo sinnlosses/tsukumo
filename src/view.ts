@@ -295,64 +295,20 @@ ${questionRegionScript()}
  * 入力欄の領域を、質問と入力フォームで**切り替える**。質問の本文が入っている間はフォームを
  * 隠す（ユーザーの決定 2026-09-10「質問中はフォームを退けて差し替える」）。
  *
- * 選択肢を押したときは、送信フォームと同じ経路へ**番号だけ**を送る。**押した直後に全部の
- * 選択肢を無効化する**のは、二重送信を防ぐため（答え終わったあとに押すと、ただの依頼として
- * 会話へ流れてしまう）。
+ * **選択肢を押して答えを送る作りは撤回した。** claude が質問を表示している間は
+ * `orca terminal send` が `agent_prompt_blocked` を返して届かないため（2026-09-11 実測）。
+ * **入力フォームも同じ制約を受ける**ので、質問中に隠すのは見た目の整理だけでなく、
+ * 「今は送っても届かない」という事実とも合っている。
  */
 function questionRegionScript(): string {
   return `  {
     const el = document.getElementById(${JSON.stringify(layoutRegionId("question"))})
     const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
-    const target = document.getElementById(${JSON.stringify(DISPATCH_TARGET_ID)})
     const apply = () => {
       if (form !== null) {
         form.hidden = el.innerHTML.trim() !== ""
       }
     }
-    el.addEventListener("click", (event) => {
-      const choice = event.target.closest(".question-choice")
-      if (choice === null) {
-        return
-      }
-      const status = el.querySelector(".question-status")
-      const terminalId = target === null ? "" : target.value
-      if (terminalId === "") {
-        status.textContent = "送信先のターミナルが選べていない"
-        return
-      }
-      for (const button of el.querySelectorAll(".question-choice")) {
-        button.disabled = true
-      }
-      status.textContent = "送っている…"
-      // 失敗したときは選択肢を押せる状態へ戻し、**送信先の一覧を取り直す**。ページを開いた
-      // 時点の一覧は古くなることがあり（terminal_handle_stale）、それが唯一の原因になりうる。
-      const failed = (reason) => {
-        for (const button of el.querySelectorAll(".question-choice")) {
-          button.disabled = false
-        }
-        const refresh = document.getElementById(${JSON.stringify(DISPATCH_REFRESH_ID)})
-        if (refresh !== null) {
-          refresh.click()
-        }
-        status.textContent = "送れなかった: " + reason + "。一覧を更新したので、もう一度押してみて"
-      }
-      fetch(${JSON.stringify(DISPATCH_PATH)}, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ terminalId, text: choice.dataset.answer }),
-      })
-        .then((response) => response.json())
-        .then((result) => {
-          if (result.ok === true) {
-            status.textContent = "送った"
-            return
-          }
-          failed(result.reason)
-        })
-        .catch(() => {
-          failed("応答が無かった")
-        })
-    })
     new MutationObserver(apply).observe(el, { childList: true })
     apply()
   }`
@@ -1009,9 +965,10 @@ function truncateRequest(request: string): string {
  * 入力欄の領域に差し込む**答え待ちの質問**。答え待ちが無いときは空文字を返し、
  * その場合は入力フォームがそのまま見える（切り替えは {@link questionRegionScript}）。
  *
- * **選択肢は押せる。** 押すと、送信フォームと同じ道（`DISPATCH_PATH` → ホストの `sendText`）で
- * 選択肢の**番号**を claude のターミナルへ送る。**番号で選べるかどうかは TUI 側の作りに依存する**
- * ので、効かなかったときのために「ターミナルでそのまま答えてよい」ことを画面にも書いておく。
+ * **選択肢は押せない。** 当初は押すと番号を送る作りにしたが、**claude が質問を表示している間は
+ * `orca terminal send` が `agent_prompt_blocked` を返して届かない**（2026-09-11 実測）。
+ * 質問が出ている間はまさにその状態なので、この経路では原理的に答えられない。番号を添えるのは、
+ * **ターミナルの並びと同じ番号をそのまま打てるようにする**ため。
  */
 export function buildQuestionBody(pending: PendingQuestion | undefined): string {
   if (pending === undefined) {
@@ -1022,11 +979,11 @@ export function buildQuestionBody(pending: PendingQuestion | undefined): string 
     const options = question.options
       .map(
         (option, index) =>
-          `<li><button type="button" class="question-choice" data-answer="${String(index + 1)}">
+          `<li class="question-choice">
 <span class="question-choice-number">${String(index + 1)}</span>
 <span class="question-choice-label">${escapeHtml(option.label)}</span>
 <span class="question-choice-description">${escapeHtml(option.description)}</span>
-</button></li>`,
+</li>`,
       )
       .join("")
 
@@ -1038,8 +995,7 @@ export function buildQuestionBody(pending: PendingQuestion | undefined): string 
   })
 
   return `${blocks.join("\n")}
-<p class="question-status" role="status" aria-live="polite"></p>
-<p class="question-hint">押すと番号を送る。うまく選べないときは、ターミナル側でそのまま答えてよい</p>`
+<p class="question-hint">番号はターミナルの並びと同じ。答えるのはターミナル側で</p>`
 }
 
 /**
@@ -1275,22 +1231,14 @@ const STYLE = `
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 0.1rem 0.5rem;
-    width: 100%;
     padding: 0.4rem 0.6rem;
     border: 1px solid #3a4256;
     border-radius: 0.5rem;
     background: #1c202a;
-    color: #e6e8ee;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
   }
-  .question-choice:hover:not(:disabled) { border-color: #8ab4ff; }
-  .question-choice:disabled { opacity: 0.5; cursor: default; }
   .question-choice-number { grid-row: span 2; color: #8ab4ff; font-variant-numeric: tabular-nums; }
   .question-choice-label { font-weight: bold; }
   .question-choice-description { font-size: 0.85rem; color: #b9c0d0; }
-  .question-status { margin: 0.3rem 0 0; min-height: 1.2em; color: #8ab4ff; font-size: 0.85rem; }
   .question-hint { margin: 0.2rem 0 0; color: #8f97ab; font-size: 0.8rem; }
   /* メインビューに残す質問の記録。 */
   .tool-block-question .question-record h4 { margin: 0 0 0.3rem; font-size: 0.9rem; }
