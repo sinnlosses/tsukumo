@@ -55,8 +55,9 @@ bun test test/index.test.ts   # 単体テストファイルのみ実行
 bun run typecheck             # tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
 bun run format                # oxfmt で自動整形（--check は format:check）
-bun run start <transcript>    # ローカル実行（ビューの URL を表示する）
-bun run scripts/open-views.ts <URL>  # 表示された URL のビューを Orca 内に開く
+bun run start                 # サイドカーを起動し、レイアウトページのタブを Orca 内に自動で開く
+                              # （transcript 引数は省略可。TSUKUMO_OPEN_VIEW=0 で自動オープンを止める）
+bun run scripts/open-views.ts <URL>  # サイドカーは動いたままタブだけ閉じたときに、開き直す道具
 ```
 
 `docs/workflow.md` と各スキルが言う「チェックコマンド」は **`bun run check`** のこと。

@@ -16,26 +16,24 @@ HTTP サーバから配り、Orca 内のブラウザタブに出す。
 ## 使い方
 
 ```bash
-bun run start <transcript.jsonl>
+bun run start [transcript.jsonl]
 ```
 
+これだけで、ビューの配信とレイアウトページのタブが Orca 内に開くところまで進む。
 引数を省略すると、後述の SessionStart hook が書き出す `~/.tsukumo/transcript-path` を
 追従先にする（**引数を渡した場合はそちらを優先する**）。Orca の split terminal で `claude` と
 別のペインに常駐させて使う（画面レイアウトは `docs/requirements.md` 4.7）。
 
-起動すると URL を表示するので、それをホスト（Orca）の中に開く:
-
-```bash
-bun run scripts/open-views.ts http://127.0.0.1:7327
-```
-
 - **メインビュー・キャラビュー・サイドバーの3領域は、CSS の grid で1枚の HTML にまとめてある**
   （`docs/architecture.md`「3つのビューは1枚のページにまとめる」）。開くブラウザタブは1つだけで
-  よく、`scripts/open-views.ts` もそのまとめたページ1つだけを開く
+  よい
 - ビューは `127.0.0.1` にだけバインドしたサーバから配られ、**ファイルには書き出さない**
   （会話の内容をディスクに残さないため。`docs/coding-standards.md`「会話内容の扱い」）
 - ポートは既定 `7327`。`TSUKUMO_VIEW_PORT` で変えられる（`0` を渡すと空きポートを使う）
-- `orca` が無い環境では、ビューを開けないだけで配信は続く
+- `orca` が無い環境では、ビューを開けないだけで配信は続く。タブの自動オープンだけ止めたいときは
+  `TSUKUMO_OPEN_VIEW=0` を渡す
+- サイドカーは動かしたままタブだけ閉じてしまったときは、`scripts/open-views.ts` に
+  そのビューの URL（例: `http://127.0.0.1:7327`）を渡すと開き直せる
 
 ## 入力欄（右下）から claude に依頼を送る
 

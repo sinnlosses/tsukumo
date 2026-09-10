@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { spawn, spawnSync } from "node:child_process"
 import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { delimiter, join } from "node:path"
 
 const ENTRY = new URL("../src/index.ts", import.meta.url).pathname
 
@@ -34,6 +34,13 @@ type RunOptions = {
   // キャラクター定義ディレクトリ。無いことを確かめるテスト用に差し替えられるようにしておく
   // （既定は cwd 相対の characters/tsukumo-spirit を継承する）。
   readonly characterDir?: string
+  // レイアウトページのタブを自動で開くか。**既定は "0"（開かない）**にしてある。テストは
+  // 1プロセスごとに異なる（空きポートの）URL で何度も起動するため、既定を "1" のままにすると
+  // 実機の Orca が動いているときに毎回タブを増やしてしまう。
+  readonly openView?: string
+  // 指定すると、PATH の先頭に加える。`orca` が使えない状況を再現するテスト用
+  // （fakeFailingOrcaDir 参照）。
+  readonly pathPrepend?: string
 }
 
 function environmentFor(options: RunOptions): Record<string, string> {
@@ -41,14 +48,32 @@ function environmentFor(options: RunOptions): Record<string, string> {
   const inherited = Object.entries(process.env).flatMap(([key, value]) =>
     value === undefined ? [] : [[key, value] as const],
   )
+  const inheritedEnv = Object.fromEntries(inherited)
+  const path =
+    options.pathPrepend === undefined
+      ? inheritedEnv.PATH
+      : `${options.pathPrepend}${delimiter}${inheritedEnv.PATH ?? ""}`
 
   return {
-    ...Object.fromEntries(inherited),
+    ...inheritedEnv,
+    ...(path === undefined ? {} : { PATH: path }),
     HOME: homeDir,
     // 常駐中のサイドカーとポートがぶつからないよう、既定では空きポートを使わせる。
     TSUKUMO_VIEW_PORT: options.viewPort ?? "0",
+    TSUKUMO_OPEN_VIEW: options.openView ?? "0",
     ...(options.characterDir === undefined ? {} : { TSUKUMO_CHARACTER_DIR: options.characterDir }),
   }
+}
+
+/**
+ * `orca` を名乗って必ず失敗するだけの実行ファイルを置いたディレクトリを作る。
+ * 実機に本物の `orca` があっても、PATH の先頭に置けば探索がこちらで止まるので、
+ * 「`orca` が使えない」状況を実機の状態によらず再現できる。
+ */
+function fakeFailingOrcaDir(): string {
+  const dir = makeTempDir()
+  writeFileSync(join(dir, "orca"), "#!/bin/sh\nexit 1\n", { mode: 0o755 })
+  return dir
 }
 
 function runCliToExit(args: readonly string[], options: RunOptions = {}) {
@@ -62,6 +87,8 @@ function runCliToExit(args: readonly string[], options: RunOptions = {}) {
 type RunningCli = {
   readonly baseUrl: string
   readonly stop: () => void
+  // ここまでに受け取った標準エラー出力（呼び出し時点のスナップショット）。
+  readonly stderr: () => string
 }
 
 /** サイドカーを起動し、ビューの URL を表示するまで待つ。呼び出し側は必ず stop する。 */
@@ -71,6 +98,12 @@ function startCli(args: readonly string[], options: RunOptions = {}): Promise<Ru
     cwd: options.cwd,
   })
   child.stdout.setEncoding("utf8")
+  child.stderr.setEncoding("utf8")
+
+  let stderrText = ""
+  child.stderr.on("data", (chunk: string) => {
+    stderrText += chunk
+  })
 
   return new Promise((resolve, reject) => {
     const stop = () => {
@@ -90,7 +123,7 @@ function startCli(args: readonly string[], options: RunOptions = {}): Promise<Ru
       }
 
       clearTimeout(giveUp)
-      resolve({ baseUrl: matched[0], stop })
+      resolve({ baseUrl: matched[0], stop, stderr: () => stderrText })
     })
   })
 }
@@ -473,6 +506,52 @@ describe("tsukumo CLI", () => {
     } finally {
       cli.stop()
       rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it("orca のタブを開けなくても、ビューの配信は続く", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
+    const fakeOrcaDir = fakeFailingOrcaDir()
+
+    const cli = await startCli([transcriptPath], { openView: "1", pathPrepend: fakeOrcaDir })
+    try {
+      // showView は announce の後の非同期処理なので、失敗が stderr に出るまで少し待つ。
+      await sleep(POLL_WAIT_MS)
+
+      expect(cli.stderr()).toContain("ビューのタブを開けなかった")
+
+      const response = await fetch(`${cli.baseUrl}/character`)
+      expect(response.status).toBe(200)
+    } finally {
+      cli.stop()
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(fakeOrcaDir, { recursive: true, force: true })
+    }
+  })
+
+  it("TSUKUMO_OPEN_VIEW=0 のとき、タブを開こうとせず配信だけ続く", async () => {
+    const dir = makeTempDir()
+    const transcriptPath = join(dir, "session.jsonl")
+    writeFileSync(transcriptPath, BROKEN_TRANSCRIPT_LINES)
+    const fakeOrcaDir = fakeFailingOrcaDir()
+
+    // openView を明示的に "0" にし、かつ orca も失敗する状況にしておく。
+    // ここでタブを開こうとしていれば stderr にメッセージが出るはずなので、それが無いことで
+    // 「開こうとしなかった」ことを確かめる。
+    const cli = await startCli([transcriptPath], { openView: "0", pathPrepend: fakeOrcaDir })
+    try {
+      await sleep(POLL_WAIT_MS)
+
+      expect(cli.stderr()).not.toContain("ビューのタブを開けなかった")
+
+      const response = await fetch(`${cli.baseUrl}/character`)
+      expect(response.status).toBe(200)
+    } finally {
+      cli.stop()
+      rmSync(dir, { recursive: true, force: true })
+      rmSync(fakeOrcaDir, { recursive: true, force: true })
     }
   })
 })

@@ -21,6 +21,7 @@ import {
   resolveExpression,
   resolveOutfit,
 } from "./expression.ts"
+import { type Host } from "./host.ts"
 import { createOrcaHost } from "./orca-host.ts"
 import { parseStateFile } from "./state.ts"
 import { extractAgentMeta, extractLatestToolName } from "./subagents.ts"
@@ -48,12 +49,15 @@ import {
 // するため（docs/architecture.md「HTML はローカルの HTTP サーバから配る」）。
 const DEFAULT_VIEW_PORT = 7327
 const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
+// 起動時にレイアウトページのタブを自動で開くかどうか。既定は開く（コマンド1つで完成させるため）。
+const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
 
 const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出すサイドカー
 
 使い方:
-  bun run start <transcript.jsonl>
+  bun run start [transcript.jsonl]
 
+起動すると、ビューの配信とレイアウトページのタブを開くところまで1コマンドで進む。
 引数を省略すると、SessionStart hook が書き出す ~/.tsukumo/transcript-path を追従先にする
 （引数を渡した場合はそちらを優先する）。
 
@@ -61,6 +65,7 @@ const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出す�
   TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
   TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は characters/tsukumo-spirit。
                           自分の素材を使うときは characters/local などを指す。cwd 相対にも対応）
+  TSUKUMO_OPEN_VIEW       起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
 `
 
 // hook（hooks/state.sh）が書く既知の場所。ディレクトリ名・ファイル名を変えるときは
@@ -144,7 +149,23 @@ async function main(args: readonly string[]): Promise<number> {
   followTranscript(server, transcriptPath, initialSnapshot, publishCharacterView)
   announce(server)
 
+  if (resolveOpenView(process.env[OPEN_VIEW_ENV_NAME])) {
+    await openLayoutView(host, server)
+  }
+
   return 0
+}
+
+/**
+ * レイアウトページのタブを開く。**失敗しても起動は続ける**（`orca` が無い環境では
+ * `host.showView` が失敗を返すだけで例外は投げない。docs/coding-standards.md
+ * 「エラーハンドリング」— 常駐プロセスは描画1回の失敗で落ちない）。
+ */
+async function openLayoutView(host: Host, server: ViewServer): Promise<void> {
+  const result = await host.showView(server.layoutUrl)
+  if (!result.ok) {
+    process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
+  }
 }
 
 /**
@@ -174,6 +195,15 @@ function resolveTranscriptPath(argPath: string | undefined, homeDir: string): st
   const fileContent = readOptionalFile(transcriptPathFilePath(homeDir))
   const trimmed = fileContent?.trim()
   return trimmed !== undefined && trimmed !== "" ? trimmed : undefined
+}
+
+/**
+ * 起動時にレイアウトページのタブを自動で開くかどうかを決める。**環境変数が読み取りの唯一の場所**
+ * （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。"0" のときだけ開かない
+ * （ポート番号のような不正値の弾き方は不要で、それ以外の値はすべて「開く」に倒す）。
+ */
+function resolveOpenView(rawValue: string | undefined): boolean {
+  return rawValue?.trim() !== "0"
 }
 
 /** 環境変数のポート番号を読む。読めない値のときは undefined を返し、既定にも落とさない。 */

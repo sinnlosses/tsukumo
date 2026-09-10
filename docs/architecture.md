@@ -350,11 +350,11 @@ CLI から両者を1つのレイアウトに組むことはできない（UI 上
 `curl -N <URL>/events/character` に `event: update` が流れてくるかを見る。ここまで出ていれば
 配信はシロで、原因はページの側かホストの側にある。
 
-1. Orca のターミナルを split し、片方で `claude`、もう片方で
-   `bun run start <transcript>` を起動する（4分割のレイアウト全体は
-   `docs/requirements.md` 4.7）
-2. 表示された URL を渡して `bun run scripts/open-views.ts <URL>` を実行し、
-   **Orca 内のブラウザタブ**にビューが開くこと（外部ブラウザに出ないこと）
+1. Orca のターミナルを split し、片方で `claude`、もう片方で `bun run start` を起動する
+   （transcript の引数は省略してよい。4分割のレイアウト全体は `docs/requirements.md` 4.7）
+2. **サイドカー自身がレイアウトページのタブを開く**ので、それが**Orca 内のブラウザタブ**に
+   出ること（外部ブラウザに出ないこと）を見る。タブだけ閉じてしまったときは
+   `bun run scripts/open-views.ts <URL>` で開き直せる
 3. Claude Code に何か話しかけ、**再読み込みなしにキャラビューが最新の発話に追従する**ことを見る
 4. ツール実行中・停止時に**表情が切り替わる**こと
 5. ペインの幅を変えて、**折り返しがブラウザ側で追従する**こと
