@@ -10,8 +10,10 @@ import {
 } from "../src/session-view.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
+// 時刻に依らないテストでは `now` を固定の 0 で流す（表情の遅延切り替えを見るテストは
+// applySessionEvent を直接呼び、進める時刻を明示する）。
 function apply(...events: readonly SessionEvent[]): SessionView {
-  return events.reduce(applySessionEvent, INITIAL_SESSION_VIEW)
+  return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_VIEW)
 }
 
 describe("applySessionEvent", () => {
@@ -28,10 +30,11 @@ describe("applySessionEvent", () => {
       { kind: "detail", markdown: "ダミーの本文" },
     ])
 
-    const settled = applySessionEvent(streaming, {
-      kind: "utterance",
-      text: "ダミーの本文です。",
-    })
+    const settled = applySessionEvent(
+      streaming,
+      { kind: "utterance", text: "ダミーの本文です。" },
+      0,
+    )
 
     expect(settled.partialUtterance).toBe("")
     expect(mainViewEntries(settled)).toEqual([
@@ -54,9 +57,9 @@ describe("applySessionEvent", () => {
     const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
     expect(spoken.speeches).toEqual(["いくよ！"])
-    expect(currentExpression(spoken)).toBe("proud")
+    expect(currentExpression(spoken, 0)).toBe("proud")
 
-    const nextTurn = applySessionEvent(spoken, { kind: "request", text: "ダミーの依頼" })
+    const nextTurn = applySessionEvent(spoken, { kind: "request", text: "ダミーの依頼" }, 0)
 
     expect(nextTurn.speeches).toEqual(["いくよ！"])
   })
@@ -80,25 +83,31 @@ describe("applySessionEvent", () => {
       { kind: "speech", text: "1つめの2つめのセリフ", expression: "default" },
     )
 
-    const secondTurnStarted = applySessionEvent(firstTurn, {
-      kind: "request",
-      text: "2つめの依頼",
-    })
+    const secondTurnStarted = applySessionEvent(
+      firstTurn,
+      { kind: "request", text: "2つめの依頼" },
+      0,
+    )
     // 次の speak が来るまでは、前のターンのセリフを保つ（キャラクターが消えたように見せない）。
     expect(secondTurnStarted.speeches).toEqual(["1つめのセリフ", "1つめの2つめのセリフ"])
 
-    const secondTurnSpoken = applySessionEvent(secondTurnStarted, {
-      kind: "speech",
-      text: "2つめのセリフ",
-      expression: "default",
-    })
+    const secondTurnSpoken = applySessionEvent(
+      secondTurnStarted,
+      { kind: "speech", text: "2つめのセリフ", expression: "default" },
+      0,
+    )
     // 次の speak が来た時点で、そのターンのものだけになる。
     expect(secondTurnSpoken.speeches).toEqual(["2つめのセリフ"])
   })
 
-  it("ツールの実行中は表情が作業中になり、終わると直前のセリフの表情に戻る", () => {
-    const running = apply(
+  it("ツールが1秒以上実行中だと表情が作業中になり、終わると直前のセリフの表情に戻る", () => {
+    const spoken = applySessionEvent(
+      INITIAL_SESSION_VIEW,
       { kind: "speech", text: "いくよ！", expression: "proud" },
+      0,
+    )
+    const running = applySessionEvent(
+      spoken,
       {
         kind: "tool-started",
         toolUseId: "toolu_1",
@@ -106,25 +115,57 @@ describe("applySessionEvent", () => {
         input: {},
         parentToolUseId: undefined,
       },
+      0,
     )
 
-    expect(currentExpression(running)).toBe("working")
+    // 開始直後はまだ1秒経っていないので、直前のセリフの表情のまま。
+    expect(currentExpression(running, 0)).toBe("proud")
+    // 1秒経つと作業中に切り替わる。
+    expect(currentExpression(running, 1000)).toBe("working")
     expect(running.runningTools).toEqual([
-      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false },
+      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: 0 },
     ])
 
-    const finished = applySessionEvent(running, {
-      kind: "tool-finished",
-      toolUseId: "toolu_1",
-      content: "ダミーの結果",
-      isError: false,
-    })
+    const finished = applySessionEvent(
+      running,
+      { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: false },
+      2000,
+    )
 
-    expect(currentExpression(finished)).toBe("proud")
+    expect(currentExpression(finished, 2000)).toBe("proud")
     expect(finished.runningTools).toEqual([])
     expect(finished.finishedTools).toEqual([
-      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false },
+      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: 0 },
     ])
+  })
+
+  it("1秒未満で終わったツールは作業中の表情を起こさない（チカチカ防止）", () => {
+    const spoken = applySessionEvent(
+      INITIAL_SESSION_VIEW,
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+      0,
+    )
+    const running = applySessionEvent(
+      spoken,
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
+      0,
+    )
+
+    const finished = applySessionEvent(
+      running,
+      { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: false },
+      500,
+    )
+
+    // 実行中だった間（500ms 経過時点）も、終わったあとも、作業中の表情は一度も出ない。
+    expect(currentExpression(finished, 500)).toBe("proud")
+    expect(currentExpression(finished, 5000)).toBe("proud")
   })
 
   it("サブエージェントの中のツール（parentToolUseId あり）は nested として持つ", () => {
@@ -137,7 +178,7 @@ describe("applySessionEvent", () => {
     })
 
     expect(running.runningTools).toEqual([
-      { toolUseId: "toolu_1", name: "Bash", input: {}, nested: true },
+      { toolUseId: "toolu_1", name: "Bash", input: {}, nested: true, startedAt: 0 },
     ])
   })
 
@@ -162,6 +203,7 @@ describe("applySessionEvent", () => {
         name: "Read",
         input: { path: "/tmp/a" },
         nested: false,
+        startedAt: 0,
         result: { content: "ダミーの結果", isError: true },
       },
     ])
@@ -243,17 +285,18 @@ describe("applySessionEvent", () => {
     const started = apply({ kind: "request", text: "ダミーの依頼" })
     expect(started.turnInProgress).toBe(true)
 
-    const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" })
+    const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" }, 0)
     expect(finished.turnInProgress).toBe(false)
   })
 
   it("session-ended でも進行中を止める（中断・異常終了のどちらでも入力欄を送信可能に戻す）", () => {
     const started = apply({ kind: "request", text: "ダミーの依頼" })
 
-    const ended = applySessionEvent(started, {
-      kind: "session-ended",
-      reason: "セッションが終了した",
-    })
+    const ended = applySessionEvent(
+      started,
+      { kind: "session-ended", reason: "セッションが終了した" },
+      0,
+    )
 
     expect(ended.turnInProgress).toBe(false)
   })

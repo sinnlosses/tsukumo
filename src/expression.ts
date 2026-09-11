@@ -1,13 +1,14 @@
-// 状態ファイルの内容から、表情と衣装を決める。「決める」層。純粋関数で、fs/process には触らない。
+// いま出すべき表情・衣装を決める。「決める」層。純粋関数で、fs/process には触らない。
 //
-// hook イベント名と表情の対応、モデル名と衣装の対応は、キャラクター定義ファイルの形式がまだ
-// 決まっていないため（docs/requirements.md「7. 未決事項」）、当面ここに置く。形式が決まったら
-// 定義ファイル側へ移す（docs/architecture.md 原則4「キャラクターの中身をコードに書かない」）。
+// 表情は本筋として `speak(text, expression)` の引数から決まる（キャラ自身が選ぶ。
+// docs/requirements.md「4.3 状態連動」2026-09-11 決定）。ツールを実行している間だけ、
+// 自動で「作業中」に切り替える。切り替えの起点（ツール開始からの経過時間）は呼び出し側から
+// 渡される現在時刻で判定する（`Date.now()` はここでは呼ばない。副作用は呼び出し側
+// （src/index.ts の配線層）に残す）。
 //
-// 状態ファイルが無い・壊れている・未知のイベント種別のときは "default" に落ちる
-// （docs/requirements.md「4.3 状態連動」）。
-
-import { type StateFileContents } from "./state.ts"
+// モデル名と衣装の対応は、キャラクター定義ファイルの形式がまだ決まっていないため
+// （docs/requirements.md「7. 未決事項」）、当面ここに置く。形式が決まったら定義ファイル側へ移す
+// （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」）。
 
 export type Expression = "default" | "working" | "proud" | "flustered"
 export type Outfit = "default" | "light" | "normal" | "heavy"
@@ -19,17 +20,31 @@ export type Outfit = "default" | "light" | "normal" | "heavy"
 export const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud", "flustered"]
 
 /**
- * 状態ファイルの `event` から表情を決める。対応の初期案
- * （docs/requirements.md「4.3 状態連動」）: `PreToolUse` = 作業中 / `Stop` = どや顔 /
- * エラー = あわあわ。エラー系は `StopFailure` と `PostToolUseFailure` の2つが実在する
- * （実測で確認済みのイベント名だけを使い、推測でイベント名を作らない）。
+ * ツールが動き始めてから、これだけの時間が経ってもまだ終わっていなければ表情を「作業中」に
+ * 切り替える。ツールが連続して短く走るときに working ⇄ speak の表情が短時間で往復しない
+ * ようにするための遅延（docs/requirements.md「4.3 状態連動」）。
  */
-export function resolveExpression(state: StateFileContents | undefined): Expression {
-  if (state === undefined) {
-    return "default"
-  }
+export const WORKING_EXPRESSION_DELAY_MS = 1000
 
-  return EXPRESSION_BY_EVENT[state.event] ?? "default"
+/** 表情を決めるのに要る、実行中のツール1件分。開始時刻だけを見る。 */
+export type RunningToolTiming = {
+  readonly startedAt: number
+}
+
+/**
+ * いま出す表情を決める。**優先順位**（docs/requirements.md「4.3 状態連動」）:
+ * 実行中のツールが1つでも {@link WORKING_EXPRESSION_DELAY_MS} 以上前から動いていれば
+ * `working`。それ以外は `speechExpression`（直近の `speak` の表情）をそのまま返す。
+ * `speak` がまだ1回も呼ばれていないときの `default` へのフォールバックは、呼び出し側
+ * （src/session-view.ts の `INITIAL_SESSION_VIEW.speechExpression`）が持つ。
+ */
+export function resolveExpression(
+  runningTools: readonly RunningToolTiming[],
+  speechExpression: Expression,
+  now: number,
+): Expression {
+  const isWorking = runningTools.some((tool) => now - tool.startedAt >= WORKING_EXPRESSION_DELAY_MS)
+  return isWorking ? "working" : speechExpression
 }
 
 /**
@@ -55,13 +70,6 @@ export function resolveOutfit(model: string | undefined): Outfit {
  */
 export function expressionLabel(expression: Expression): string {
   return EXPRESSION_LABEL[expression]
-}
-
-const EXPRESSION_BY_EVENT: Readonly<Record<string, Expression>> = {
-  PreToolUse: "working",
-  Stop: "proud",
-  StopFailure: "flustered",
-  PostToolUseFailure: "flustered",
 }
 
 const OUTFIT_BY_MODEL_SUBSTRING: readonly (readonly [needle: string, outfit: Outfit])[] = [

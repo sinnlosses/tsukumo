@@ -3,28 +3,31 @@ import { describe, expect, it } from "bun:test"
 import { expressionLabel, resolveExpression, resolveOutfit } from "../src/expression.ts"
 
 describe("resolveExpression", () => {
-  it("状態ファイルが無いとき既定の表情を返す", () => {
-    expect(resolveExpression(undefined)).toBe("default")
+  it("実行中のツールが開始から1秒以上経っていれば作業中の表情を返す", () => {
+    expect(resolveExpression([{ startedAt: 0 }], "proud", 1000)).toBe("working")
   })
 
-  it("PreToolUse は作業中の表情を返す", () => {
-    expect(resolveExpression({ event: "PreToolUse", model: undefined })).toBe("working")
+  it("実行中のツールが開始から1秒未満なら直近の speak の表情を返す", () => {
+    expect(resolveExpression([{ startedAt: 0 }], "proud", 999)).toBe("proud")
   })
 
-  it("Stop はどや顔を返す", () => {
-    expect(resolveExpression({ event: "Stop", model: undefined })).toBe("proud")
+  it("speak があり実行中のツールが無ければその表情を返す", () => {
+    expect(resolveExpression([], "flustered", 0)).toBe("flustered")
   })
 
-  it("StopFailure はあわあわを返す", () => {
-    expect(resolveExpression({ event: "StopFailure", model: undefined })).toBe("flustered")
+  it("speak がまだ無く実行中のツールも無ければ default を返す（呼び出し側の既定）", () => {
+    expect(resolveExpression([], "default", 0)).toBe("default")
   })
 
-  it("PostToolUseFailure もあわあわを返す", () => {
-    expect(resolveExpression({ event: "PostToolUseFailure", model: undefined })).toBe("flustered")
+  it("ターンが終わったあとも、実行中のツールが無ければ直近の speak の表情を保つ", () => {
+    // ターンの終わり（turn-finished）は resolveExpression の入力に現れない
+    // （speechExpression は session-view.ts が持ち続ける）。ここでは実行中のツールが無い状態で
+    // speechExpression がそのまま返ることを固定する。
+    expect(resolveExpression([], "proud", 5000)).toBe("proud")
   })
 
-  it("未知のイベント種別のときは既定の表情に落ちる", () => {
-    expect(resolveExpression({ event: "SomeFutureEvent", model: undefined })).toBe("default")
+  it("実行中のツールが複数あり、どれか1つでも1秒以上経っていれば作業中になる", () => {
+    expect(resolveExpression([{ startedAt: 900 }, { startedAt: 0 }], "proud", 1000)).toBe("working")
   })
 })
 

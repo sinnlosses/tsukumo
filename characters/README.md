@@ -47,6 +47,10 @@ characters/
 
 - **`portraits` は「あるものだけ」でよい。** 見つからない表情は `default` に落ちる。
   1枚から始めて、増やすほど細かくなる
+- **`default` と `working` の2つだけは必ず用意する。** `default` は「speak がまだ無い・
+  表情の指定が無い」ときの既定、`working` はツールを実行している間に自動で切り替える先
+  （`docs/requirements.md` 4.3）。この2つはコード側が名前で直接参照するので、他の表情名のように
+  「あるものだけ」で済ませられない
 - **`outfitAccents` は衣装（実行中のモデル）ごとの差し色。** `light` = haiku /
   `normal` = sonnet / `heavy` = opus（`docs/requirements.md` 4.3）
 - **差し色が効くのはインラインで埋め込んだ SVG だけ。** `<img>` で読み込んだ画像は独立した

@@ -5,7 +5,7 @@
 //
 // ここが決めるのは「何を出すか」までで、HTML の組み立ては src/view.ts の仕事。
 
-import { type Expression } from "./expression.ts"
+import { type Expression, resolveExpression } from "./expression.ts"
 import { type PendingAsk } from "./pending-answer.ts"
 import { type SessionEvent } from "./session-event.ts"
 import { DEFAULT_SPEECH_MARKER, type MainViewEntry, splitUtterance } from "./transcript.ts"
@@ -38,6 +38,11 @@ export type ToolActivity = {
   readonly input: unknown
   /** サブエージェントの中で動いたか（`tool-started` の `parentToolUseId` があるか）。 */
   readonly nested: boolean
+  /**
+   * ツールが動き始めた時刻（呼び出し側が渡す現在時刻。`applySessionEvent` の `now`）。
+   * 表情を「作業中」に切り替えるかどうかの判定（`resolveExpression`）にだけ使う。
+   */
+  readonly startedAt: number
 }
 
 /**
@@ -53,6 +58,7 @@ export type SessionRecord =
       readonly name: string
       readonly input: unknown
       readonly nested: boolean
+      readonly startedAt: number
       readonly result: { readonly content: string; readonly isError: boolean } | undefined
     }
 
@@ -124,8 +130,17 @@ export const INITIAL_SESSION_VIEW: SessionView = {
   turnInProgress: false,
 }
 
-/** イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。 */
-export function applySessionEvent(view: SessionView, event: SessionEvent): SessionView {
+/**
+ * イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。
+ *
+ * `now` は `tool-started` の `startedAt` を記録するためだけに使う現在時刻。`Date.now()` を
+ * ここで呼ばないのは、この関数を純粋関数のまま保つため（呼び出し側の src/index.ts が渡す）。
+ */
+export function applySessionEvent(
+  view: SessionView,
+  event: SessionEvent,
+  now: number,
+): SessionView {
   switch (event.kind) {
     case "session-info":
       return {
@@ -170,11 +185,18 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
             name: event.name,
             input: event.input,
             nested,
+            startedAt: now,
             result: undefined,
           },
         ],
         runningTools: [
-          { toolUseId: event.toolUseId, name: event.name, input: event.input, nested },
+          {
+            toolUseId: event.toolUseId,
+            name: event.name,
+            input: event.input,
+            nested,
+            startedAt: now,
+          },
           ...view.runningTools,
         ],
       }
@@ -212,12 +234,12 @@ export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
 }
 
 /**
- * いま出す表情。**ツールを実行している間は「作業中」**（docs/requirements.md 4.3）で、
- * それ以外は直近の `speak` が指定した表情。状態として持たずここで決めるのは、
- * ツールの開始と終了だけで自然に戻るようにするため。
+ * いま出す表情。決め方の正典は `resolveExpression`（src/expression.ts）。ここは
+ * `SessionView` の該当する値（実行中のツール・直近の `speak` の表情）を渡すだけ。
+ * `now` は経過時間の判定に要る現在時刻（呼び出し側が渡す。`Date.now()` はここでは呼ばない）。
  */
-export function currentExpression(view: SessionView): Expression {
-  return view.runningTools.length > 0 ? "working" : view.speechExpression
+export function currentExpression(view: SessionView, now: number): Expression {
+  return resolveExpression(view.runningTools, view.speechExpression, now)
 }
 
 function isReportRecord(
@@ -292,6 +314,7 @@ function finishTool(
     name: record.name,
     input: record.input,
     nested: record.nested,
+    startedAt: record.startedAt,
   }
 
   return {

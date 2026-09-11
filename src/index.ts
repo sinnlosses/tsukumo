@@ -19,7 +19,13 @@ import {
   resolveOutfitAccent,
   resolvePortraitFile,
 } from "./character.ts"
-import { type Expression, expressionLabel, type Outfit, resolveOutfit } from "./expression.ts"
+import {
+  type Expression,
+  expressionLabel,
+  type Outfit,
+  resolveOutfit,
+  WORKING_EXPRESSION_DELAY_MS,
+} from "./expression.ts"
 import { type Host } from "./host.ts"
 import { createOrcaHost } from "./orca-host.ts"
 import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./session-driver.ts"
@@ -188,6 +194,12 @@ type PublishState = {
  * **`turnStartedAt`（経過時間の起点）もここで持つ。** `Date.now()` を呼ぶのは副作用なので、
  * 純粋な畳み込み（src/session-view.ts）の外、配線の層に置く。`request` が来るたびに更新し、
  * それ以外では前の値をそのまま持ち続ける（セッション全体の「直近の依頼から何秒」を表す）。
+ *
+ * **表情の「作業中」への遅延切り替え（`WORKING_EXPRESSION_DELAY_MS`）もここで進める。**
+ * ツールの開始・終了だけでは、遅延が経過した「その瞬間」には何のイベントも来ないので、
+ * 何もしなければ次のイベントが来るまで表情が切り替わらない。実行中のツールがあってまだ
+ * 「作業中」になっていないときだけ、遅延の残り時間ぶん先に1回だけ配り直すタイマーを立てる
+ * （タイマーは常に1本だけ。イベントが来るたびに立て直す）。
  */
 function createEventSink(
   publish: (state: PublishState) => void,
@@ -196,9 +208,28 @@ function createEventSink(
 ): (event: SessionEvent) => void {
   let view = INITIAL_SESSION_VIEW
   let turnStartedAt: number | undefined = undefined
+  let workingRefreshTimer: ReturnType<typeof setTimeout> | undefined = undefined
+
+  const publishAndScheduleWorkingRefresh = (): void => {
+    publish({ view, turnStartedAt })
+
+    if (workingRefreshTimer !== undefined) {
+      clearTimeout(workingRefreshTimer)
+      workingRefreshTimer = undefined
+    }
+    const delay = workingRefreshDelayMs(view.runningTools, Date.now())
+    if (delay === undefined) {
+      return
+    }
+    workingRefreshTimer = setTimeout(() => {
+      workingRefreshTimer = undefined
+      publishAndScheduleWorkingRefresh()
+    }, delay)
+  }
 
   return (event) => {
-    const next = applySessionEvent(view, event)
+    const now = Date.now()
+    const next = applySessionEvent(view, event, now)
     if (next.turnInProgress !== view.turnInProgress) {
       publishTurnStatus(next.turnInProgress)
     }
@@ -207,13 +238,28 @@ function createEventSink(
     }
     view = next
     if (event.kind === "request") {
-      turnStartedAt = Date.now()
+      turnStartedAt = now
     }
     if (event.kind === "session-ended") {
       process.stderr.write(`tsukumo: セッションが終わった: ${event.reason}\n`)
     }
-    publish({ view, turnStartedAt })
+    publishAndScheduleWorkingRefresh()
   }
+}
+
+/**
+ * 実行中のツールのうち、まだ「作業中」の遅延を超えていないものがあれば、超えるまでの
+ * 残り時間（ミリ秒）を返す。超えているものしかない・実行中のツールが無いときは undefined
+ * （その場合は時間経過だけで表情が変わることはないので、タイマーを立てる必要がない）。
+ */
+function workingRefreshDelayMs(
+  runningTools: readonly ToolActivity[],
+  now: number,
+): number | undefined {
+  const remaining = runningTools
+    .map((tool) => tool.startedAt + WORKING_EXPRESSION_DELAY_MS - now)
+    .filter((ms) => ms > 0)
+  return remaining.length === 0 ? undefined : Math.min(...remaining)
 }
 
 /**
@@ -232,7 +278,11 @@ function createViewPublisher(
         // 直近のセリフを1つのまとまりとして出す（docs/requirements.md 4.2「続けて並べた行は
         // 1つのまとまり」）。`buildCharacterBody` は1つの文字列しか受け取らないので改行で連結する。
         speech: view.speeches.length === 0 ? undefined : view.speeches.join("\n"),
-        ...readCharacterAssets(characterDir, currentExpression(view), resolveOutfit(view.model)),
+        ...readCharacterAssets(
+          characterDir,
+          currentExpression(view, Date.now()),
+          resolveOutfit(view.model),
+        ),
       }
       server.publish("character", buildCharacterBody(data))
       server.publish("main", buildMainBody(mainViewEntries(view)))
