@@ -9,8 +9,8 @@
 import { readFileSync } from "node:fs"
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
+import { bundledFilePath } from "./bundled-files.ts"
 import { type Host, type Pane } from "./host.ts"
 import { type Answer, parseAnswer } from "./pending-answer.ts"
 import { isPermissionMode, type PermissionMode } from "./session-driver.ts"
@@ -320,7 +320,7 @@ function writeVendorAsset(response: ServerResponse, name: string): void {
     return
   }
 
-  const content = readOptionalFile(fileURLToPath(new URL(`../vendor/${name}`, import.meta.url)))
+  const content = readOptionalFile(bundledFilePath("vendor", name))
   if (content === undefined) {
     // 同梱ファイルが無くても配信は続ける（表示物が1つ欠けても起動失敗にしない）。
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })

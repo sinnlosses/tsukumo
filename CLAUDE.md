@@ -60,8 +60,9 @@ bun run typecheck             # tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
 bun run format                # oxfmt で自動整形（--check は format:check）
 bun run start                 # 常駐プロセスを起動し、レイアウトページのタブを Orca 内に自動で開く
-                              # （TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。中身は旧方針のまま
-                              #   で、2026-09-11 の方針転換で役目を終える途中）
+                              # （`tsukumo` コマンドと同じ。TSUKUMO_OPEN_VIEW=0 で自動オープンを
+                              #   止める。中身は旧方針のままで、2026-09-11 の方針転換で役目を
+                              #   終える途中）
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具
 ```
 

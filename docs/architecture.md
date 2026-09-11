@@ -541,3 +541,8 @@ CLI から両者を1つのレイアウトに組むことはできない（UI 上
   `orca keypress` も claude の端末には届かない。**この経路に戻ろうとしないこと**
 - **ホストのポートの `openPane` は、一度も実際に呼ばれないまま役目を終えた。** 消すときは
   `src/host.ts` と `src/orca-host.ts` の両方から外す
+- **cwd に依存してよいのは起動先プロジェクトのものだけ。** 作業ディレクトリ・
+  `develop/tasks.json`・相対指定で渡した素材（`TSUKUMO_CHARACTER_DIR` に相対パスを渡した場合）
+  はそこに当たる。**同梱物（`vendor/`・既定の立ち絵）は tsukumo 自身の場所から読む**
+  （`src/bundled-files.ts`）。`tsukumo` コマンドをどのプロジェクトのディレクトリで起こしても
+  同梱物が見つかるようにするための区別

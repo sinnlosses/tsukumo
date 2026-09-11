@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "キャラクターと一緒に楽しく仕事をするためのターミナル環境",
+  "bin": {
+    "tsukumo": "bin/tsukumo"
+  },
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",

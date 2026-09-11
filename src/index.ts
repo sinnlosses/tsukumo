@@ -5,9 +5,10 @@
 // 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。
 
 import { readFileSync } from "node:fs"
-import { join, resolve } from "node:path"
+import { join } from "node:path"
 import process from "node:process"
 
+import { resolveBundledDir } from "./bundled-files.ts"
 import {
   availableExpressions,
   type CharacterDefinition,
@@ -53,15 +54,17 @@ const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
 
 使い方:
-  bun run start
+  tsukumo   （プロジェクトのディレクトリで打つ。開発中はリポジトリ直下の bun run start でも同じ）
 
 起動すると Claude Code のセッションが立ち上がり、ビューの配信とレイアウトページのタブを
-開くところまで1コマンドで進む。**セッションは毎回新規**で、再開はしない。
+開くところまで1コマンドで進む。**セッションは毎回新規**で、再開はしない。カレントディレクトリを
+作業対象にする（claude を打つのと同じ感覚）。
 
 環境変数:
   TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
-  TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は characters/tsukumo-spirit。
-                          自分の素材を使うときは characters/local などを指す。cwd 相対にも対応）
+  TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は tsukumo 自身の同梱の
+                          characters/tsukumo-spirit。自分の素材を使うときは起動先の
+                          characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
   TSUKUMO_OPEN_VIEW       起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
 `
 
@@ -75,7 +78,8 @@ const PUBLISH_INTERVAL_MS = 100
 const TASKS_FILE_RELATIVE_PATH: readonly string[] = ["develop", "tasks.json"]
 
 // キャラクター定義ディレクトリの既定値。自作で権利がクリーンな tsukumo-spirit を使う
-// （docs/requirements.md 4.4）。develop/tasks.json と同じく cwd 相対で読む。
+// （docs/requirements.md 4.4）。**tsukumo 自身の場所からの相対**で読む（bundledFilePath）。
+// develop/tasks.json とは違い、こちらは同梱物なので cwd には依存させない。
 const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = ["characters", "tsukumo-spirit"]
 // 利用者が用意した素材（`characters/local/` など。characters/README.md）を使いたいときに
 // 直接指すための環境変数。
@@ -132,7 +136,11 @@ async function main(args: readonly string[]): Promise<number> {
     return 1
   }
 
-  const characterDir = resolveCharacterDir(process.env[CHARACTER_DIR_ENV_NAME], process.cwd())
+  const characterDir = resolveBundledDir(
+    process.env[CHARACTER_DIR_ENV_NAME],
+    process.cwd(),
+    DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+  )
   const publish = throttle(createViewPublisher(server, characterDir), PUBLISH_INTERVAL_MS)
   publish(INITIAL_SESSION_VIEW)
 
@@ -279,20 +287,6 @@ async function openLayoutView(host: Host, server: ViewServer): Promise<void> {
   if (!result.ok) {
     process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
   }
-}
-
-/**
- * キャラクター定義ディレクトリを決める。**環境変数が読み取りの唯一の場所**
- * （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。空でなければそれを cwd 相対
- * （絶対パスならそのまま）で解決し、無ければ既定の tsukumo-spirit を使う。
- */
-function resolveCharacterDir(envValue: string | undefined, cwd: string): string {
-  const trimmed = envValue?.trim()
-  if (trimmed !== undefined && trimmed !== "") {
-    return resolve(cwd, trimmed)
-  }
-
-  return join(cwd, ...DEFAULT_CHARACTER_DIR_RELATIVE_PATH)
 }
 
 /**
