@@ -63,10 +63,10 @@
     "id": "T-051",
     "summary": "/ 補完を部分一致・アルファベット順にし、Enter で実行、Tab で補完にする",
     "task": "入力欄の `/` コマンド補完の絞り方・並び順・確定キーを、Claude Code の TUI の手触りに寄せる。\n\n## 背景\n\nユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」の、見た目（T-050）以外の部分。\n\n- `src/view.ts` `commandSuggestionsScript` の `matchingCommands` は**前方一致だけ**。`/task` で `next-task` `plan-tasks` は出ない\n- 並び順は `GET /api/commands` が返す順＝SDK の `init` の `slash_commands` の順のまま（`src/session-view.ts` `commandCandidates` は端末専用を除くだけで並べ替えない）。57件に対して上限10件（`MAX_COMMAND_SUGGESTIONS`）なので、`/` だけ打ったときに出る10件は SDK の並び次第\n- 確定キー: `dispatchScript` の `keydown` リスナーで Tab と Enter が同じ「確定だけ」（`confirmSelectedSuggestion` で `/名前 ` を入れて閉じる）。コマンドを1つ送るのに Enter を2回押す。Claude Code の TUI は、候補が選ばれている状態の Enter でそのコマンドを実行し、Tab は補完だけ（引数を続けて打てる）\n- 要件は `docs/requirements.md` 4.2「入力欄」(3) に1行あるだけで、絞り方・確定キーは書かれていない\n\n## 解くべき論点\n\n- 絞り方: **前方一致を先に、続けて部分一致**を出す（各グループの中はアルファベット順）。入力が `/` だけのときはアルファベット順の先頭10件\n- Enter の役割: 候補が開いているときの Enter は**「確定して送信」**に変える（TUI と同じ）。Tab は**「確定だけ」**（末尾に空白を付けて引数を続けられる。今と同じ）。Enter で送るのは選択中の1件で、候補が複数残っていても送る（TUI と同じ。誤送信を避けたければ Tab で確定してから読み直せる）。送信中（`inProgress`）の Enter は今までどおり送らない（確定だけ）。この決定は `docs/requirements.md` 4.2 に書く\n- 送るテキストは `/名前`（末尾の空白無し）でよいか実機で確かめる。SDK は `/<name>` を入力文字列に書けば送れる（`docs/history/direction.md` 2026-09-11）\n\n## やること\n\n1. `matchingCommands` を「前方一致 → 部分一致、それぞれアルファベット順、合計10件」に変える。並び替えはブラウザ側で行う（サーバは SDK の並びをそのまま返す）\n2. `keydown` の分岐で Tab と Enter を分ける。Enter は `confirmSelectedSuggestion()` のあと `form.requestSubmit()`（`inProgress` のときは送らない）\n3. `test/view.test.ts` の「候補が開いている間の Enter は確定だけで、送信しない」を新しい仕様に書き換え、部分一致・並び順・Tab では送らないことのテストを足す\n4. `docs/requirements.md` 4.2「入力欄」(3) に絞り方と確定キー（Tab＝補完、Enter＝実行）を追記する。編集後に `grep -c '^#\\{2,3\\} ' docs/requirements.md` の数が変わっていないことを確かめる（CLAUDE.md「ドキュメントを編集するときの罠」）\n\n## 完了条件\n\n- テスト: `/task` で `next-task` と `plan-tasks` が出る／前方一致が部分一致より先に並ぶ／Enter で `PROMPT_PATH` に `/名前` が送られる／Tab では送られない\n- Orca のタブで目視: 副作用の無いコマンド（例: `/cost`）を `/co` + Enter で送るとターンが始まる（送信ボタンが「中断」になる）。`/co` + Tab では入力欄に `/cost ` が入るだけ。何が見えたかを `evidence` に書く（動かなかったコマンドがあればそれも書く）\n- `bun run check` が通ること\n\n## 注意\n\n- 説明文の表示は T-052。ここでは触らない\n- サブエージェントに委譲してよい。`/loop` に載せてよい（目視の扱いは T-050 と同じ）\n",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "src/view.ts: matchingCommands を前方一致→部分一致（各アルファベット順、合計10件）に、keydown の Enter を確定＋requestSubmit（inProgress は確定だけ）に分けた。送信は既存の submit の trim で末尾の空白が落ちる。test/view.test.ts に部分一致・並び順・/ だけ・Enter で送信・進行中の Enter のテストを追加。docs/requirements.md 4.2 に決定を追記（節数 25→25）。bun run check: 420 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。",
     "dependencies": ["T-050"]
   },
   {

@@ -656,7 +656,10 @@ function dispatchRegionHtml(): string {
  * - **`/` コマンド補完（{@link commandSuggestionsScript}）は同じ `<textarea>` の `keydown` を
  *   共有する。** 送信の Enter と確定の Enter が同じキーなので、別のリスナーに分けると
  *   登録順で送信が先に走ってしまう。候補が開いている間は候補側の分岐で `return` し、
- *   閉じていれば今までどおり送信に落ちる1つのリスナーにまとめてある。
+ *   閉じていれば今までどおり送信に落ちる1つのリスナーにまとめてある。**候補が開いている間の
+ *   Enter は Claude Code の TUI に合わせ、確定に続けて送信まで行う**（Tab は確定だけ。
+ *   docs/requirements.md 4.2「入力欄」(3)。2026-09-12 決定）。送信中（`inProgress`）は
+ *   これまでどおり確定だけで送らない。
  */
 function dispatchScript(): string {
   return `  {
@@ -774,9 +777,17 @@ ${commandSuggestionsScript()}
           moveSuggestionSelection(-1)
           return
         }
-        if (event.key === "Tab" || event.key === "Enter") {
+        if (event.key === "Tab") {
           event.preventDefault()
           confirmSelectedSuggestion()
+          return
+        }
+        if (event.key === "Enter") {
+          event.preventDefault()
+          confirmSelectedSuggestion()
+          if (!inProgress) {
+            form.requestSubmit()
+          }
           return
         }
         if (event.key === "Escape") {
@@ -801,11 +812,14 @@ ${pendingAnswerScript(DISPATCH_PENDING_ID)}`
  * （docs/requirements.md 4.2「入力欄」）。候補は `COMMANDS_PATH` から1回だけ取りに行き、
  * 以降はセッション中キャッシュする（`allCommandsPromise`）。
  *
- * - **前方一致で絞り、最大 {@link MAX_COMMAND_SUGGESTIONS} 件**（`matchingCommands`）
+ * - **前方一致を先に、続けて部分一致を出す。各グループの中はアルファベット順で、合計
+ *   最大 {@link MAX_COMMAND_SUGGESTIONS} 件**（`matchingCommands`。Claude Code の TUI の
+ *   絞り方に合わせた。2026-09-12 決定）
  * - **答え待ちの箱がある間は出さない**（`shouldShowSuggestions` が `pendingRegion` の
  *   `data-pending` を見る。箱と重ならない位置に出す）
  * - キー操作（上下・Tab・Enter・Esc）の配線は呼び出し側（{@link dispatchScript}）の
- *   `keydown` リスナーが持つ（送信の Enter と同じリスナーを共有するため）。マウスでの確定
+ *   `keydown` リスナーが持つ（送信の Enter と同じリスナーを共有するため）。**Tab は確定だけ、
+ *   Enter は確定して送信する**（TUI と同じ。呼び出し側の分岐を参照）。マウスでの確定
  *   （`<li>` の `mousedown`）は送信と競合しないので、ここで直接配線する
  * - **候補の文字列は `escapeCommandLabel` を通してから組み立てる**（コマンド名は SDK が返す
  *   外部由来の値なので、HTML として解釈されない形にする）
@@ -842,9 +856,11 @@ function commandSuggestionsScript(): string {
 
     function matchingCommands(commands, value) {
       const prefix = value.slice(1)
-      return commands
-        .filter((command) => command.startsWith(prefix))
-        .slice(0, ${JSON.stringify(MAX_COMMAND_SUGGESTIONS)})
+      const prefixMatches = commands.filter((command) => command.startsWith(prefix)).sort()
+      const partialMatches = commands
+        .filter((command) => !command.startsWith(prefix) && command.includes(prefix))
+        .sort()
+      return [...prefixMatches, ...partialMatches].slice(0, ${JSON.stringify(MAX_COMMAND_SUGGESTIONS)})
     }
 
     function escapeCommandLabel(text) {

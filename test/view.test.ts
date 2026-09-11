@@ -905,7 +905,7 @@ describe("入力欄（送信・中断）", () => {
     })
   })
 
-  describe("入力欄の / コマンド補完（COMMANDS_PATH を1回だけ取りに行き、前方一致で絞る）", () => {
+  describe("入力欄の / コマンド補完（COMMANDS_PATH を1回だけ取りに行き、前方一致→部分一致で絞る）", () => {
     function setUpWithCommands(commands: readonly string[]) {
       return setUp(new Map([[COMMANDS_PATH, { commands }]]))
     }
@@ -934,6 +934,39 @@ describe("入力欄（送信・中断）", () => {
       expect(suggestionsBox.innerHTML).toContain("/next-task")
       expect(suggestionsBox.innerHTML).not.toContain("/clear")
       expect(suggestionsBox.innerHTML).not.toContain("/model")
+    })
+
+    it("前方一致が無いときは部分一致も出す（前方一致を先に、それぞれアルファベット順）", async () => {
+      const { textArea, suggestionsBox } = setUpWithCommands(["plan-tasks", "next-task", "clear"])
+
+      textArea.value = "/task"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const names = [...suggestionsBox.innerHTML.matchAll(/>\/([\w-]+)</g)].map((match) => match[1])
+      expect(names).toEqual(["next-task", "plan-tasks"])
+    })
+
+    it("前方一致・部分一致がどちらもあるときは前方一致が先に並ぶ", async () => {
+      const { textArea, suggestionsBox } = setUpWithCommands(["zzz-task", "task-list", "task-run"])
+
+      textArea.value = "/task"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const names = [...suggestionsBox.innerHTML.matchAll(/>\/([\w-]+)</g)].map((match) => match[1])
+      expect(names).toEqual(["task-list", "task-run", "zzz-task"])
+    })
+
+    it("入力が / だけのときはアルファベット順の先頭10件", async () => {
+      const { textArea, suggestionsBox } = setUpWithCommands(["next-task", "clear", "model"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const names = [...suggestionsBox.innerHTML.matchAll(/>\/([\w-]+)</g)].map((match) => match[1])
+      expect(names).toEqual(["clear", "model", "next-task"])
     })
 
     it("最大10件までに絞る", async () => {
@@ -999,8 +1032,30 @@ describe("入力欄（送信・中断）", () => {
       expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
     })
 
-    it("候補が開いている間の Enter は確定だけで、送信しない", async () => {
+    it("候補が開いている間の Enter は選ばれている候補を確定して送信する（末尾の空白は付けない）", async () => {
       const { textArea, suggestionsBox, calls } = setUpWithCommands(["clear", "model"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const { event, wasPrevented } = makeFakeKeydownEvent({ key: "Enter" })
+      textArea.dispatchKeydown(event)
+      await flushMicrotasks()
+
+      expect(wasPrevented()).toBe(true)
+      expect(suggestionsBox.hidden).toBe(true)
+      expect(calls().filter((call) => call.url === PROMPT_PATH)).toEqual([
+        { url: PROMPT_PATH, body: JSON.stringify({ text: "/clear" }) },
+      ])
+    })
+
+    it("送信中（進行中）の Enter は候補を確定するだけで、送信しない", async () => {
+      const { textArea, suggestionsBox, calls, dispatchTurnStatus } = setUpWithCommands([
+        "clear",
+        "model",
+      ])
+      dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
 
       textArea.value = "/"
       textArea.dispatchInput()
