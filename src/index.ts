@@ -185,7 +185,9 @@ function createViewPublisher(
   return (view) => {
     try {
       const data: CharacterViewData = {
-        speech: view.speech,
+        // 直近のセリフを1つのまとまりとして出す（docs/requirements.md 4.2「続けて並べた行は
+        // 1つのまとまり」）。`buildCharacterBody` は1つの文字列しか受け取らないので改行で連結する。
+        speech: view.speeches.length === 0 ? undefined : view.speeches.join("\n"),
         ...readCharacterAssets(characterDir, currentExpression(view), resolveOutfit(view.model)),
       }
       server.publish("character", buildCharacterBody(data))

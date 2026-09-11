@@ -2001,6 +2001,33 @@ describe("メインビューの本文", () => {
     expect(() => buildMainBody(entries)).not.toThrow()
     expect(buildMainBody(entries).length).toBeLessThan(hugeMarkdown.length)
   })
+
+  // 本文を書きかけのままリアルタイムに流す（docs/requirements.md 4.2）ので、ここに来る
+  // markdown は閉じ切っていないことがある。仮描画で例外が出ると更新そのものが止まってしまうため、
+  // 壊れた入力でも例外を投げないことを確かめる（描けなければ素のテキストのまま出ればよい）。
+  it("閉じていないコードブロックの書きかけ本文でも例外を投げない", () => {
+    const markdown = "着手します\n```ts\nconst a = 1\nfunction f() {\n  return a"
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    expect(() => buildMainBody(entries)).not.toThrow()
+    expect(buildMainBody(entries)).toContain("const a = 1")
+  })
+
+  it("閉じていない表の書きかけ本文でも例外を投げない", () => {
+    const markdown = "結果はこちら\n| A | B |\n| --- | --- |\n| 1 | 2"
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    expect(() => buildMainBody(entries)).not.toThrow()
+    expect(buildMainBody(entries)).toContain("<table>")
+  })
+
+  it("途中で切れた HTML タグの書きかけ本文でも例外を投げない", () => {
+    const markdown = '図を描きます\n<div class="card"><p>本文<span class="em'
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    expect(() => buildMainBody(entries)).not.toThrow()
+    expect(buildMainBody(entries)).toContain("本文")
+  })
 })
 
 describe("キャラビューの本文", () => {

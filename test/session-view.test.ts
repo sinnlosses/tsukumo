@@ -54,12 +54,47 @@ describe("applySessionEvent", () => {
   it("セリフと表情を持ち、セリフが来ないターンでも消さない", () => {
     const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
-    expect(spoken.speech).toBe("いくよ！")
+    expect(spoken.speeches).toEqual(["いくよ！"])
     expect(currentExpression(spoken)).toBe("proud")
 
     const nextTurn = applySessionEvent(spoken, { kind: "request", text: "ダミーの依頼" })
 
-    expect(nextTurn.speech).toBe("いくよ！")
+    expect(nextTurn.speeches).toEqual(["いくよ！"])
+  })
+
+  it("同じターン内のセリフは直近3件までを古い→新しいの順に並べる", () => {
+    const view = apply(
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "speech", text: "1つめ", expression: "default" },
+      { kind: "speech", text: "2つめ", expression: "default" },
+      { kind: "speech", text: "3つめ", expression: "default" },
+      { kind: "speech", text: "4つめ", expression: "proud" },
+    )
+
+    expect(view.speeches).toEqual(["2つめ", "3つめ", "4つめ"])
+  })
+
+  it("新しいターンで最初の speech が来た時点で、前のターンのセリフと混ざらず置き換わる", () => {
+    const firstTurn = apply(
+      { kind: "request", text: "1つめの依頼" },
+      { kind: "speech", text: "1つめのセリフ", expression: "default" },
+      { kind: "speech", text: "1つめの2つめのセリフ", expression: "default" },
+    )
+
+    const secondTurnStarted = applySessionEvent(firstTurn, {
+      kind: "request",
+      text: "2つめの依頼",
+    })
+    // 次の speak が来るまでは、前のターンのセリフを保つ（キャラクターが消えたように見せない）。
+    expect(secondTurnStarted.speeches).toEqual(["1つめのセリフ", "1つめの2つめのセリフ"])
+
+    const secondTurnSpoken = applySessionEvent(secondTurnStarted, {
+      kind: "speech",
+      text: "2つめのセリフ",
+      expression: "default",
+    })
+    // 次の speak が来た時点で、そのターンのものだけになる。
+    expect(secondTurnSpoken.speeches).toEqual(["2つめのセリフ"])
   })
 
   it("ツールの実行中は表情が作業中になり、終わると直前のセリフの表情に戻る", () => {
@@ -82,19 +117,37 @@ describe("applySessionEvent", () => {
     expect(recentToolNames(finished)).toEqual(["Read"])
   })
 
-  it("ツールの結果を、対応する tool_use の記録に合わせる", () => {
+  it("ツールの結果を、対応する tool_use の記録に合わせる（メインビューにはツール系を渡さない）", () => {
     const view = apply(
       { kind: "tool-started", toolUseId: "toolu_1", name: "Read", input: { path: "/tmp/a" } },
       { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: true },
     )
 
-    expect(mainViewEntries(view)).toEqual([
+    // ツールの記録そのものは持ち続ける（サイドバー用途。docs/requirements.md 4.2）が、
+    // メインビューはレポートだけを出すので `mainViewEntries` には渡さない。
+    expect(view.records).toEqual([
       {
         kind: "tool",
+        toolUseId: "toolu_1",
         name: "Read",
         input: { path: "/tmp/a" },
         result: { content: "ダミーの結果", isError: true },
       },
+    ])
+    expect(mainViewEntries(view)).toEqual([])
+  })
+
+  it("mainViewEntries はツール系の entry を含まない（依頼とレポートの間に挟まっていても除く）", () => {
+    const view = apply(
+      { kind: "request", text: "依頼" },
+      { kind: "tool-started", toolUseId: "toolu_1", name: "Read", input: {} },
+      { kind: "tool-finished", toolUseId: "toolu_1", content: "結果", isError: false },
+      { kind: "utterance", text: "レポート本文" },
+    )
+
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "request", text: "依頼" },
+      { kind: "detail", markdown: "レポート本文" },
     ])
   })
 
@@ -169,5 +222,49 @@ describe("applySessionEvent", () => {
     })
 
     expect(view.pending.map((ask) => ask.id)).toEqual(["toolu_1"])
+  })
+
+  it("speak が1回も呼ばれなかったターンでは、行頭マーカーの補助で吹き出しを埋め、本文からマーカー行を除く", () => {
+    const view = apply(
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "utterance", text: "アスナ: 補助で拾ったセリフ\n本文はこちら" },
+    )
+
+    expect(view.speeches).toEqual(["補助で拾ったセリフ"])
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "detail", markdown: "本文はこちら" },
+    ])
+  })
+
+  it("speak が呼ばれたターンでは、マーカー行があっても本文をそのまま出す", () => {
+    const view = apply(
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "speech", text: "本物のセリフ", expression: "proud" },
+      { kind: "utterance", text: "アスナ: マーカー行\n本文はこちら" },
+    )
+
+    expect(view.speeches).toEqual(["本物のセリフ"])
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "detail", markdown: "アスナ: マーカー行\n本文はこちら" },
+    ])
+  })
+
+  it("記録はターン数の窓（直近20ターン）だけを残し、古いターンは落とす", () => {
+    const events: SessionEvent[] = []
+    for (let turn = 0; turn < 25; turn += 1) {
+      events.push({ kind: "request", text: `依頼${String(turn)}` })
+      events.push({ kind: "utterance", text: `レポート${String(turn)}` })
+    }
+
+    const view = apply(...events)
+    const requestTexts = mainViewEntries(view)
+      .filter((entry): entry is { kind: "request"; text: string } => entry.kind === "request")
+      .map((entry) => entry.text)
+
+    expect(requestTexts).toHaveLength(20)
+    expect(requestTexts[0]).toBe("依頼5")
+    expect(requestTexts.at(-1)).toBe("依頼24")
   })
 })

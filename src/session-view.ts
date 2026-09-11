@@ -8,10 +8,24 @@
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-answer.ts"
 import { type SessionEvent } from "./session-event.ts"
-import { type MainViewEntry } from "./transcript.ts"
+import { DEFAULT_SPEECH_MARKER, type MainViewEntry, splitUtterance } from "./transcript.ts"
 
 /** サイドバーに出す、直近に使ったツールの数（縦に狭い領域なので絞る）。 */
 const MAX_RECENT_TOOL_NAMES = 5
+
+/**
+ * 吹き出しに並べて出す、同じターン内の直近セリフの上限件数（docs/requirements.md 4.2
+ * 「続けて並べた行は1つのまとまり」）。**ターンをまたいだセリフは混ぜない**
+ * （{@link applySessionEvent} の `speech` の扱いを参照）。
+ */
+const MAX_RECENT_SPEECHES = 3
+
+/**
+ * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。**過去のやり取りは
+ * `buildMainBody` 側のタブ（`MAX_MAIN_VIEW_TURNS`）でさらに絞られる**が、常駐プロセスが
+ * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
+ */
+const MAX_SESSION_VIEW_TURNS = 20
 
 /**
  * セッションの中で起きたことを起きた順に並べたもの。メインビューの `MainViewEntry` とほぼ同じだが、
@@ -38,12 +52,20 @@ export type SessionRecord =
  */
 export type SessionView = {
   /**
-   * 吹き出しに出す直近のセリフ。**セリフが1つも来なかったターンでも消さない**
-   * （docs/requirements.md 4.2）。まだ一度も `speak` が呼ばれていないときだけ undefined。
+   * 吹き出しに並べて出す、直近のセリフ（古い→新しいの順、最大 {@link MAX_RECENT_SPEECHES} 件）。
+   * **セリフが1つも来なかったターンでも消さない**（docs/requirements.md 4.2。新しいターンが
+   * 始まっても、次の `speech` が来るまでは前のターンの並びをそのまま保つ）。
+   * **次の `speech` が来た時点で、そのターンのものだけに置き換わる**（前のターンの分と混ざらない。
+   * {@link applySessionEvent} の `speech` を参照）。まだ一度も `speak` が呼ばれていなければ空配列。
    */
-  readonly speech: string | undefined
+  readonly speeches: readonly string[]
   /** 直近のセリフに添えられた表情。ツールの実行中は「作業中」が優先される。 */
   readonly speechExpression: Expression
+  /**
+   * 今のターンで `speak` が呼ばれたか（マーカー行の補助を効かせるかどうかの判定に使う。
+   * {@link settleUtterance}）。`request` で false に戻る。
+   */
+  readonly speechCalledInTurn: boolean
   /** 確定した記録。書きかけの本文は含まない。 */
   readonly records: readonly SessionRecord[]
   /** 書きかけの本文。完成した本文が来たら空に戻る。 */
@@ -69,8 +91,9 @@ export type SessionView = {
 }
 
 export const INITIAL_SESSION_VIEW: SessionView = {
-  speech: undefined,
+  speeches: [],
   speechExpression: "default",
+  speechCalledInTurn: false,
   records: [],
   partialUtterance: "",
   runningToolNames: [],
@@ -98,16 +121,26 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
     case "request":
       return {
         ...view,
-        records: [...view.records, { kind: "request", text: event.text }],
+        records: trimToRecentTurns([...view.records, { kind: "request", text: event.text }]),
         partialUtterance: "",
         turnInProgress: true,
+        speechCalledInTurn: false,
       }
     case "partial-utterance":
       return { ...view, partialUtterance: view.partialUtterance + event.text }
     case "utterance":
       return settleUtterance({ ...view, partialUtterance: event.text })
     case "speech":
-      return { ...view, speech: event.text, speechExpression: event.expression }
+      return {
+        ...view,
+        // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
+        // （docs/requirements.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
+        speeches: [...(view.speechCalledInTurn ? view.speeches : []), event.text].slice(
+          -MAX_RECENT_SPEECHES,
+        ),
+        speechExpression: event.expression,
+        speechCalledInTurn: true,
+      }
     case "tool-started":
       return {
         ...view,
@@ -143,9 +176,12 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
 /**
  * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`buildMainBody` はそのまま
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
+ *
+ * **メインビューはレポートだけ**（docs/requirements.md 4.2「ツールの流れはサイドバーへ」）。
+ * `records` に積んだ `tool` の記録はここでは渡さない（サイドバーの仕事は `recentToolNames`）。
  */
 export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
-  const settled = view.records.map((record) => toMainViewEntry(record))
+  const settled = view.records.filter(isReportRecord)
   return view.partialUtterance === ""
     ? settled
     : [...settled, { kind: "detail", markdown: view.partialUtterance }]
@@ -169,24 +205,52 @@ export function recentToolNames(view: SessionView): readonly string[] {
   return [...view.runningToolNames, ...view.finishedToolNames].slice(0, MAX_RECENT_TOOL_NAMES)
 }
 
-function toMainViewEntry(record: SessionRecord): MainViewEntry {
-  if (record.kind === "tool") {
-    return { kind: "tool", name: record.name, input: record.input, result: record.result }
-  }
-
-  return record
+function isReportRecord(
+  record: SessionRecord,
+): record is Extract<SessionRecord, { readonly kind: "request" } | { readonly kind: "detail" }> {
+  return record.kind !== "tool"
 }
 
-/** 書きかけの本文を確定した記録に移す。空のときは何もしない（空の本文を積まない）。 */
+/**
+ * 書きかけの本文を確定した記録に移す。空のときは何もしない（空の本文を積まない）。
+ *
+ * **`speak` が1回もこのターンで呼ばれていなければ、行頭マーカーの補助を効かせる**
+ * （docs/requirements.md 4.2「行頭のマーカーは補助に格下げ」）。拾えたセリフは吹き出しへ、
+ * 本文からはマーカー行を除く。**`speak` が呼ばれたターンでは本文をそのまま出す**
+ * （マーカー行があっても除かない。すでにセリフは `speak` の引数から出ているため）。
+ */
 function settleUtterance(view: SessionView): SessionView {
   if (view.partialUtterance.trim() === "") {
     return { ...view, partialUtterance: "" }
   }
 
+  const settled = view.speechCalledInTurn ? view : withMarkerFallback(view)
+  const markdown = settled.partialUtterance
+
+  return {
+    ...settled,
+    records:
+      markdown.trim() === "" ? settled.records : [...settled.records, { kind: "detail", markdown }],
+    partialUtterance: "",
+  }
+}
+
+/**
+ * 行頭マーカーの補助を1回効かせる。拾えたセリフがあれば、**そのターン最初のセリフとして**
+ * 置き換える（前のターンの並びと混ざらない。`speech` イベントの扱いと同じ規約）。
+ * `partialUtterance` にはマーカー行を除いた本文を残す（呼び出し側が確定した記録へ積む）。
+ */
+function withMarkerFallback(view: SessionView): SessionView {
+  const parts = splitUtterance(view.partialUtterance, DEFAULT_SPEECH_MARKER)
+  if (parts.speech === undefined) {
+    return { ...view, partialUtterance: parts.detail }
+  }
+
   return {
     ...view,
-    records: [...view.records, { kind: "detail", markdown: view.partialUtterance }],
-    partialUtterance: "",
+    speeches: [parts.speech],
+    speechCalledInTurn: true,
+    partialUtterance: parts.detail,
   }
 }
 
@@ -223,4 +287,21 @@ function finishTool(
 function removeFirst(names: readonly string[], name: string): readonly string[] {
   const index = names.indexOf(name)
   return index === -1 ? names : [...names.slice(0, index), ...names.slice(index + 1)]
+}
+
+/**
+ * 直近 {@link MAX_SESSION_VIEW_TURNS} ターンぶんだけを残す。**ターンの境目は `request`**
+ * なので、古い `request` から数えて窓の外に出たものをまとめて落とす。
+ */
+function trimToRecentTurns(records: readonly SessionRecord[]): readonly SessionRecord[] {
+  const requestIndexes = records.reduce<readonly number[]>(
+    (indexes, record, index) => (record.kind === "request" ? [...indexes, index] : indexes),
+    [],
+  )
+  if (requestIndexes.length <= MAX_SESSION_VIEW_TURNS) {
+    return records
+  }
+
+  const cutAt = requestIndexes[requestIndexes.length - MAX_SESSION_VIEW_TURNS]
+  return cutAt === undefined ? records : records.slice(cutAt)
 }

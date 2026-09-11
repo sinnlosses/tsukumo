@@ -120,6 +120,9 @@ export type UtteranceParts = {
   readonly detail: string
 }
 
+/** `speechMarker` の既定値（`docs/requirements.md` 4.2）。呼び出し側が差し替えないときに使う。 */
+export const DEFAULT_SPEECH_MARKER = "アスナ: "
+
 /**
  * 1つの発話を「セリフ」と「詳細」に分ける（`docs/requirements.md` 4.2、正典は
  * `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）。**規約はセリフを行頭の
