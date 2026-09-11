@@ -217,5 +217,5 @@ T-041 / T-042 / T-046 / T-048 はユーザーがいるセッションで。
 terminal-host` で見つけたら止めてよい
 - **環境の実測値は1日で変わる。** `docs/requirements.md`「5. 実行環境・非機能要件」の値も
   **前提にする前にその場で確認する**（2026-09-11: Claude Code 2.1.268、SDK 0.3.268）
-- **`develop/tasks.json` に無いタスクID（T-001〜T-034 のうち T-020 以外）は
-  アーカイブ済み**とみなす。中身は `docs/history/tasks-archive.md` の `## T-XXX` の節
+- **`develop/tasks.json` に無いタスクID（T-001〜T-049 のうち残っている5件以外）は
+  アーカイブ済み**とみなす（2026-09-12 に done 12件を移した）。中身は `docs/history/tasks-archive.md` の `## T-XXX` の節

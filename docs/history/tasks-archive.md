@@ -2051,3 +2051,597 @@ Orca は「ページを表示する箱」のままでよい。
 
 - **押せるキーは許可リストで絞ったまま**にする（ブラウザから任意のキーを送れるようにしない）
 - 質問文・選択肢は会話の内容。ログや状態ファイルに書かない
+
+## T-028 `develop/tasks.json` に一覧向けの要約フィールドを足し、既存タスクの分を埋める。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: なし
+- **summary**: サイドバーの一覧向けに要約フィールドを足して全件埋める
+- **evidence**:
+
+  フィールド名 `summary`・全角40文字以内・必須（ユーザー確認済み）。全14件に `id` の直後で記入、最長36文字。アーカイブには足していない。`docs/workflow.md` のフィールド表と `.claude/skills/plan-tasks/SKILL.md` 手順5に反映。見出し数 11→11。`bun run check` 通過: 307 pass / 0 fail。`src/tasks.ts` は未変更（読む口は後続）。
+
+### 当時のタスク本文
+
+`develop/tasks.json` に一覧向けの要約フィールドを足し、既存タスクの分を埋める。
+
+## 背景
+
+ユーザーの言葉: 「今のタスクは task フィールドが長いから要約を載せるフィールドを追加して、
+要約をサイドバーに載せて」（2026-09-10）。
+
+`develop/tasks.json` の各タスクは `id` / `task` / `status` / `difficulty` / `passes` /
+`evidence` / `dependencies` を持つ（フィールドの正典は `docs/workflow.md`「tasks.json の
+フィールド」）。**`task` は背景・論点・完了条件を含む数千文字**で、一覧に出せる長さではない
+（2026-09-10 時点で最長のタスクは 4000 文字を超える）。
+
+読む側の `src/tasks.ts` は `status` の件数を数えるだけで、**タスクの中身を読む口を持たない**。
+サイドバーに一覧を出すのは後続タスクの担当で、**このタスクはデータの側**（フィールドの追加と
+記入、正典の更新）だけを引き受ける。
+
+## 解くべき論点
+
+1. **フィールド名と長さの上限。** 名前（`summary` など）と、**何文字までにするか**を決める。
+   サイドバーは横に狭い領域なので、長いと折り返しで一覧にならない
+2. **必須にするか。** 既存タスクを全部埋めるのか、無いものは `task` の先頭行で代用するのか。
+   **`docs/workflow.md` のフィールド表と `/plan-tasks` スキルの手順にも反映が要る**
+   （新しいタスクを登録するときに埋め忘れないようにするため）
+3. **`docs/history/tasks-archive.md` の完了タスクにも足すか**（アーカイブは「当時の記述を
+   書き換えない」運用なので、原則は足さない方向）
+
+## やること
+
+1. 論点1〜3を決める
+2. `develop/tasks.json` の全タスクに要約を書く。**`task` の要約であって、新しい情報を
+   足さない**（読み手が一覧から本文へ辿れれば十分）
+3. `docs/workflow.md`「tasks.json のフィールド」の表に行を足す
+4. `.claude/skills/plan-tasks/SKILL.md` の手順5（登録するときに埋めるもの）に要約を足す
+5. `src/tasks.ts` は**このタスクでは変えない**（読む口を足すのは後続タスク）
+
+## 完了条件
+
+- `bun run check` が通る（テストの pass 件数を `evidence` に書く）
+- `develop/tasks.json` の全タスクが要約フィールドを持つ。次で確認する:
+  `python3 -c "import json;ts=json.load(open('develop/tasks.json'));print(all('summary' in t for t in ts), max(len(t.get('summary','')) for t in ts))"`
+- 要約の最長が、論点1で決めた上限以内
+- `docs/workflow.md` のフィールド表に行があり、`grep -c '^#\{2,3\} ' docs/workflow.md` が
+  編集の前後で変わらない（前後の値を `evidence` に書く）
+
+## 注意
+
+- **`develop/tasks.json` は毎セッション頭に読むファイル。** 要約を足して**本文が長くなること**を
+  避ける（要約は短く、`task` は変えない）
+- タスクIDをコード・ドキュメントに書かない規約は維持する（`CLAUDE.md`）
+- 論点1・2はユーザーに確認してから着手する（委譲・`/loop` 不可）
+
+## T-035 正典（CLAUDE.md / docs）を「SDK で Claude Code を動かす」方針に書き換える。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: なし
+- **summary**: 正典を「SDK で Claude Code を動かす」新方針に書き換える
+- **evidence**:
+
+  CLAUDE.md / docs/requirements.md / docs/architecture.md / docs/glossary.md / docs/coding-standards.md を新方針に書き換えた（opus に委譲、メインで差分を確認）。見出し数: requirements 24→25（合格シーンの節を追加）、architecture 10→10、coding-standards 20→20、glossary 30→36（箱・セッション・セッション駆動・ターン・speak ツール・許可プロンプト）。『サイドカー』のヒットは役目を終えた節と退役語の項目だけ。`bun run check` 通過: 307 pass / 0 fail（glossary.md の整形漏れ1件はメインで `bun run format` して解消）。
+
+### 当時のタスク本文
+
+正典（CLAUDE.md / docs）を「SDK で Claude Code を動かす」方針に書き換える。
+
+## 背景
+
+2026-09-11 に方針を全面的に見直した（`docs/history/direction.md` 2026-09-11「方針の全面見直し」）。**Claude Code の TUI を捨て、tsukumo が Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を動かす。** transcript の追従・hook の状態ファイル・追従先の乗り換え・Orca 経由の入力送信は役目を終える。セリフは MCP ツール `speak(text, expression)` で受け取る。
+
+いまの正典はすべて旧方針（サイドカーが transcript を覗き見る）で書かれている:
+
+- `CLAUDE.md`: 「サイドカー方式はその制約から導かれている」「tsukumo から Claude Code へ戻る経路は無い」「hook が書く状態ファイルを読む」
+- `docs/requirements.md`: 1章「実現の手段」、2.1/2.2、3章「技術制約」（パイプ・hook stdout が不可 → サイドカー、という論理）、4.1「発話の取得」（transcript JSONL）、4.2「出力の分離」（行頭マーカーの規約）、4.6「起動と設定」（hook の設定）、4.7「右下は空いている」、5章の外部依存の切り分け、7章
+- `docs/architecture.md`: 「採用アーキテクチャ（サイドカー pane）」の全体図とデータの流れ、「設計判断」の各節（特に「パイプ・hook stdout ではなくサイドカーにした」「hookは状態ファイルを書くだけにする」「追従先は自前でスラッグ化せず、hookが書いたパスを読む」）、「既知の制約・注意点」
+- `docs/glossary.md`: 「発話」「セリフ」「詳細」の定義が行頭マーカー前提。「ターン」「許可プロンプト」「speak ツール」「セッション駆動」の語が無い
+
+**コードより先に正典を直す**（ユーザー決定 Q15）。以降の実装タスクはこの書き換え後の正典を読んで動くため、ここが最初の1件。
+
+## 解くべき論点
+
+- 3章「技術制約」の位置づけ。「TUI に割り込めない」という事実は変わらないが、そこから導かれる結論が「サイドカー」から「TUI を使わず SDK で動かす」に変わる。事実と結論を分けて書き直す
+- 「設計判断」の旧節をどう残すか。消さずに「**この判断は 2026-09-11 の方針転換で役目を終えた**」と頭に付けて残す（`docs/workflow.md` のアーカイブ方針と同じく、経緯は消さない）。新しい節「Claude Code の TUI を捨て、SDK で動かす」「セリフはテキストの規約ではなくツール呼び出しで受け取る」「箱（Orca のタブ）と中身（Web アプリ）を分ける」を足す
+- 原則の差し替え。「tsukumo から Claude Code へ戻る経路は無い」→「**会話は tsukumo のプロセスの外へ出さない**」（SDK もツールもローカルのプロセス内で閉じる）。会話内容の扱い（`docs/coding-standards.md`）は変えない
+- 用語集に足す語の英語識別子: ターン（turn）、許可プロンプト（permission prompt）、speak ツール（speak tool）、セッション（session。SDK の query 1つ）。既存の「発話」「詳細」の定義は「ターンの本文」へ寄せる
+
+## やること
+
+1. `docs/history/direction.md` 2026-09-11「方針の全面見直し」を読む（決定の一覧はここが正典）
+2. `docs/requirements.md` を節ごとに書き換える。1章の合格シーン（Q1）を「1. 概要・目的」に足す。4.1 は「Claude Code の駆動」、4.2「出力の分離」は speak ツール、4.7 の右下は入力欄で埋まる、5章は SDK と Bun を書く。7章「未決事項」は「出力スタイルが SDK で効くか（スパイクで確認）」「Electron に行くか」に更新
+3. `docs/architecture.md` の全体図とデータの流れを書き直す（tsukumo → SDK → Claude Code、speak ツール → 吹き出し、ターン本文 → レポート、`canUseTool` → 許可/質問の UI）。旧節は頭に「役目を終えた」を付けて残す
+4. `CLAUDE.md` の「プロジェクト概要」「現在の状態」「アーキテクチャ概要」を新方針に合わせる
+5. `docs/glossary.md` に語を足す
+6. `docs/coding-standards.md` は「会話内容の扱い」に「SDK のイベントも transcript と同じ扱い（外に出さない・複製しない・全文をログに出さない）」の1文だけ足す
+
+## 完了条件
+
+- `grep -rn 'サイドカー' CLAUDE.md docs/requirements.md docs/architecture.md` の各ヒットが、「役目を終えた」節の中か、経緯の説明であること（現行の方式としてサイドカーを説明している行が無い）
+- `grep -c '^#\{2,3\} ' docs/requirements.md` の値を編集前後で記録し、増減が意図した節の追加/削除と一致すること（索引テーブルへの誤挿入の検知。`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 各 docs の冒頭「節の索引」が本文の見出しと一致すること
+- `docs/glossary.md` に turn / permission prompt / speak tool / session の英語識別子があること
+- `bun run check` が通ること（oxfmt が docs を整形する）
+
+## 注意
+
+- **見出し名で位置を探すと索引の行に先に当たる。** 行頭を含めて特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- アーカイブ（`docs/history/`）は書き換えない
+- 出力スタイル `~/.claude/output-styles/asuna.md` はここでは触らない（T-041）
+- コードは触らない。ドキュメントだけ
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-036 スパイク: Agent SDK で claude を起動し、方針の前提4点を実機で確かめる（使い捨ての実験）。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: ['T-035']
+- **summary**: SDK で claude を起こし、方針の前提4点を実機で確かめる
+- **evidence**:
+
+  scratchpad/sdk-spike/spike.ts（Bun + SDK 0.3.268 + Claude Code 2.1.268）で5段階を実機実行。①出力スタイル: init の output_style="Asuna"、応答も規約どおり。②speak: mcp**tsukumo**speak が2回、引数 text/expression。③canUseTool: Bash（touch）で届く（suggestions=1）、AskUserQuestion は questions が届き updatedInput.answers で答えて会話が続いた。ls は Claude Code 側が自動許可。④permissionMode に auto がある（init で permissionMode=auto）。補足: slash_commands=60（next-task / plan-tasks / code-review / loop / clear / compact / model を含む）、skills=26、stream_event で本文が流れる、interrupt() で中断→ result は error_during_execution、追加入力は同じ文脈で続く。init はプロンプトごとに届く。本体の src/test/package.json に差分なし。
+
+### 当時のタスク本文
+
+スパイク: Agent SDK で claude を起動し、方針の前提4点を実機で確かめる（使い捨ての実験）。
+
+## 背景
+
+方針転換（`docs/history/direction.md` 2026-09-11）は公式ドキュメントの読みに基づいている。**ドキュメントで確認できなかった点が1つ**（出力スタイルが SDK 経由で効くか）、**読めたが実機で見ていない点が3つ**ある。実装に入る前に、この4点を捨ててよいコードで確かめる（T-032 と同じ位置づけ）。
+
+確認済みの事実（2026-09-11、`npm view`）: `@anthropic-ai/claude-agent-sdk` は 0.3.268、`engines.node >= 18`、peer に `zod ^4` / `@anthropic-ai/sdk` / `@modelcontextprotocol/sdk`。Bun は公式サポート。手元の Claude Code は 2.1.268。
+
+## 解くべき論点
+
+1. **出力スタイルが効くか。** `settingSources` を省略（既定＝user/project/local）して query を起動し、`~/.claude/settings.json` の `outputStyle: "Asuna"` が反映されるか（応答がアスナの口調で来るか）。効かなければ `systemPrompt: { type: "preset", preset: "claude_code", append: <asuna.md の本文> }` で同じになるかを見る
+2. **speak ツールが呼ばれるか。** `createSdkMcpServer` でプロセス内に `speak(text, expression)` を定義し `mcpServers` で渡す。出力スタイルに「セリフは speak で言う」と一時的に書き足した状態（またはプロンプトで指示した状態）で、モデルが実際に呼ぶか。呼ばれたときの引数の形と、戻り値「ok」で会話が続くか
+3. **許可と質問が `canUseTool` に届くか。** 許可が要るツール（例: Bash）と `AskUserQuestion` を誘発し、コールバックの `toolName` と `input` の形、`{ behavior: "allow", updatedInput }` で答えたときの流れを見る。**質問への回答の返し方**（`updatedInput.answers`）が公式の記述どおりか
+4. **auto モード相当の許可モードがあるか。** `permissionMode` の選択肢（`default` / `acceptEdits` / `bypassPermissions` / `plan`）に、いまユーザーが使っている auto モードに当たるものがあるか。無ければ既定は `default`（毎回 `canUseTool` に来る）にする
+
+合わせて見るもの: `system/init` の `slash_commands` に `next-task` `plan-tasks` `code-review` が並ぶか。`includePartialMessages` で本文がトークン単位に流れるか。ストリーミング入力モードで2ターン目を送れるか、`interrupt()` が効くか。
+
+## やること
+
+1. `scratchpad/sdk-spike/` に最小の TypeScript を書く（Bun で実行。`bun add` は spike のディレクトリ内の package.json に閉じ、本体の `package.json` は触らない）
+2. 論点1〜4 と「合わせて見るもの」を順に実行し、結果を **1点ずつ「できた／できない／こうすれば同じ」** で記録する
+3. 論点3 が成立しなければ、方針に戻る（tsukumo が許可と質問を描けない＝合格シーンが成立しない）。**実装に進まず、理由を `evidence` に書いて閉じる**
+4. 論点1 が成立せず代替（systemPrompt append）でも同じにならなければ、T-041 の本文に「出力スタイルは SDK に渡す形で持つ」と足す
+5. 結果を `develop/progress.md` に書く。**会話の中身は書かない**（呼ばれたツール名・引数のキー・イベントの型名だけ）
+
+## 完了条件
+
+- 論点1〜4 のそれぞれに「できた／できない／代替」の記録があり、`evidence` にイベントの型名・コールバックの引数のキー・`slash_commands` の件数が書かれていること
+- 論点3 が「できた」であること（できなければこのタスクは閉じ、後続を止める）
+- `scratchpad/sdk-spike/` は残してよいが、本体の `src/` `test/` `package.json` に差分が無いこと（`git status` で確認）
+- `bun run check` が通ること（本体に変更が無いので通るはず）
+
+## 注意
+
+- **実際に Claude Code のセッションを起動する。** API の利用が発生し、許可プロンプトに答える操作が要るので、**サブエージェントに委譲せず、ユーザーがいるセッションで実行する。`/loop` に載せない**
+- スパイクで使う出力スタイルの書き足しは**一時的なもの**。`~/.claude/output-styles/asuna.md` を書き換えるなら事前にユーザーの承認を得て、終わったら戻す（本改訂は T-041）
+- `~/.claude/settings.json` は触らない（hooks と statusLine は orca が専有）
+- 起動した claude の作業ディレクトリは `scratchpad/sdk-spike/` にし、このリポジトリ本体を触らせない（`cwd` オプション）
+- 会話の内容を `evidence` や `progress.md` に写さない
+
+## T-037 SDK で Claude Code を動かす核（セッション駆動・イベントの変換・speak ツール・許可と質問の待ち行列）を作る。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: ['T-036']
+- **summary**: SDK でセッションを駆動し、イベントを内部の型に変える核
+- **evidence**:
+
+  opus に委譲。追加: src/session-driver.ts（SDK を import する唯一のファイル）/ session-event.ts（変換）/ session-view.ts（畳み込み）/ pending-answer.ts（答え待ち）。`bun run check` 通過: 327 pass / 0 fail（CLI を起動しきる E2E 24件は撤去し、前提チェック2件を残した）。目視（Orca タブ、TSUKUMO_VIEW_PORT=7399、POST /api/prompt で短い依頼）: 吹き出しに speak の完了報告が出て表情が proud、メインビューに本文が出た。ユーザー確認済み。申し送り: 本文に書かれたセリフはメインビューに出る（出力スタイルの改訂で直す）。/api/interrupt・許可/質問の UI・question ビューは後続。サブエージェント由来のメッセージは未フィルタ。
+
+### 当時のタスク本文
+
+SDK で Claude Code を動かす核（セッション駆動・イベントの変換・speak ツール・許可と質問の待ち行列）を作る。
+
+## 背景
+
+方針転換の本体。いまの `src/index.ts` は transcript（JSONL）を `followTranscript` で追い、`src/transcript.ts` の `extractMainViewEntries` / `splitUtterance` で読み、`src/state.ts` の状態ファイル（hook が書く）から表情を決めている。**これを、Agent SDK の `query()` をストリーミング入力モードで起動し、流れてくる `SDKMessage` を tsukumo 内部の型に変換する層に置き換える。**
+
+置き換え後の流れ（`docs/architecture.md` の新しい全体図が正典。T-035 で書き換え済み）:
+
+- 入力欄の文字列 → `query()` のストリーミング入力へ user メッセージとして送る
+- `assistant` のテキスト → **ターンの本文**（レポート。メインビューへ）
+- `speak` ツール（`createSdkMcpServer` でプロセス内に定義）の呼び出し → **セリフと表情**（吹き出しへ）
+- `tool_use` / `tool_result` → **いま何をしているか**（サイドバーへ）
+- `canUseTool` に届く許可と `AskUserQuestion` → **答え待ちの列**。UI が答えるまで Promise を保留し、答えが来たら `{ behavior: "allow" | "deny", updatedInput }` で返す
+- `system/init` → `slash_commands` と `session_id` を保持
+
+T-036 のスパイクで、実機のイベントの形・`canUseTool` の引数・許可モードが確認済み（`develop/progress.md` の記録を読む）。
+
+## 解くべき論点
+
+- **「読む」「決める」「描く」の分け方**（`CLAUDE.md` 原則2）。SDK のメッセージを内部の型（`TurnEvent` のような判別可能な union）に変換する純粋関数を「読む」に置き、query の起動・入力の送信・`canUseTool` の Promise 管理を「駆動」の1モジュールに閉じる。テストで守るのは変換と待ち行列の状態遷移
+- **SDK への依存を1モジュールに閉じる**（原則3。`orca` と同じ扱い）。`@anthropic-ai/claude-agent-sdk` を import するファイルは1つだけにする
+- **速度**: `includePartialMessages` を使って本文をトークン単位で流す（ユーザー決定 Q16）。`stream_event` と完成した `assistant` メッセージの両方が来るので、二重に積まない設計にする
+- **speak の戻り値は "ok" だけ**。tsukumo から Claude Code へ実質的な情報を返さない（`docs/architecture.md`「会話は tsukumo のプロセスの外へ出さない」）
+- **`expression` の検証**: キャラクター定義（`src/character.ts` の `CharacterDefinition`）にある表情名だけを通し、無い名前は `default` に落とす（境界で検証し変換を1箇所に）
+- **許可モード**: 既定は T-036 で確認した auto 相当。無ければ `default`。UI からの切り替えは `setPermissionMode` を使う（T-040 で配線）
+- 1つの tsukumo プロセスは1セッションだけ持つ（ユーザー決定 Q9: 毎回新規。再開はしない）
+
+## やること
+
+1. `bun add @anthropic-ai/claude-agent-sdk zod` と peer 依存を入れる（新しい実行時依存。ユーザー決定 Q2 で承認済み）
+2. 「読む」: SDK メッセージ → 内部イベントの変換（純粋関数。テストはフィクスチャで。**実物の会話は使わない**）
+3. 「駆動」: query の起動、ストリーミング入力への送信、`interrupt()`、`canUseTool` の待ち行列（answer(id, decision) で解決）、speak ツールの定義
+4. `src/index.ts` の起動経路を、transcript の追従から駆動へ差し替える。**旧経路（transcript 追従・状態ファイル・追従先）はこのタスクでは消さず、呼ばれなくするだけ**（撤去は T-042）
+5. ビューへの配信（`src/view-server.ts` の SSE）はそのまま使い、内部イベントから各ビューの本文を組む既存の `build*Body` に流し込む。**見た目の変更はしない**（T-038〜T-040 で行う）
+
+## 完了条件
+
+- `grep -rln 'claude-agent-sdk' src/` が1ファイルだけであること
+- 変換関数のテスト: `assistant` テキスト / `stream_event` の部分テキスト / `tool_use` / `tool_result` / speak 呼び出し / `system/init` の各フィクスチャに対して期待どおりの内部イベントが出ること
+- 待ち行列のテスト: 許可要求が積まれ、answer で解決され、解決後に同じ id を答えても無視されること
+- `bun run start` で claude のセッションが起動し、`speak` を1回以上受け取って吹き出しが変わることを Orca のタブで目視（何を打って、何が吹き出しに出たかを `evidence` に書く。**会話の中身は書かない**）
+- `bun run check` が通ること
+
+## 注意
+
+- **会話内容の扱い**（`docs/coding-standards.md`）: SDK のイベントは transcript と同じ扱い。ログに全文を出さない、ファイルに書かない、テストのフィクスチャに実物を使わない
+- 描画ループの中に `try`/`catch` を散らさない。query が落ちたらセッション終了として扱い、プロセスは落とさない
+- `~/.claude/settings.json` を触らない
+- サブエージェントに委譲してよい（目視確認だけメインで行う）。`/loop` に載せてよい
+
+## T-038 入力欄から依頼を送り、実行中は中断できるようにする（縦1本の起点）。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-037']
+- **summary**: 入力欄から依頼を送り、実行中は中断できるようにする
+- **evidence**:
+
+  sonnet に委譲。/api/interrupt（同一オリジン検査つき）と進行状態の SSE（/events/turn-status）を追加、入力欄を /api/prompt に付け替え、送り先の一覧を UI から外した。Enter 送信 / Shift+Enter 改行 / IME 確定は isComposing と keyCode 229 で除外。`bun run check` 通過: 337 pass / 0 fail。curl で prompt → {ok:true}、interrupt → {ok:true}、SSE で idle → in-progress → idle を観測（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 右下が入力欄＋送信だけ／送ると「中断」に変わり押すと「送信」に戻る／Shift+Enter で改行。
+
+### 当時のタスク本文
+
+入力欄から依頼を送り、実行中は中断できるようにする（縦1本の起点）。
+
+## 背景
+
+レイアウトページ（`src/view.ts` の `buildLayoutPage`）の右下には、T-015 で作った入力フォームがある。いまは `DISPATCH_PATH`（`/api/dispatch`）に POST し、`src/orca-host.ts` が `orca terminal send` で claude の端末へ送る作りで、**Orca に弾かれて届かない**（2026-09-11 実測）。T-037 で SDK の駆動が入ったので、**入力欄の送り先を駆動側の「ストリーミング入力への送信」に付け替える。**
+
+ユーザー決定 Q8: v1 の入力欄は (1) 複数行入力＋送信、(2) 実行中の中断、(3) `/` のコマンド補完。このタスクは (1)(2)。(3) は T-045。
+
+## 解くべき論点
+
+- 送信の HTTP API の形。`POST /api/prompt`（本文は JSON の `{ text }`）と `POST /api/interrupt`。既存の `isAllowedOrigin` の同一オリジン検査（`src/view-server.ts`）をそのまま掛ける
+- 実行中の状態表示。ターンが進行中は送信ボタンを「中断」に変える（送信と中断が同時に押せる状態を作らない）。進行中かどうかは駆動側のイベント（ターン開始／`result`）から決める
+- 送り先の一覧（`TERMINALS_PATH` と `orca terminal list`）は不要になるので UI から外す
+- Enter で送信、Shift+Enter で改行（IME の変換確定 Enter を送信にしない: `isComposing` を見る）
+
+## やること
+
+1. `src/view-server.ts` に `/api/prompt` と `/api/interrupt` を足し、駆動側の関数を呼ぶ
+2. `buildLayoutPage` の入力フォームを付け替える。送り先の一覧を外す
+3. `/api/dispatch` と `/api/terminals` は呼ばれなくする（撤去は T-042）
+
+## 完了条件
+
+- テスト: `/api/prompt` が JSON の `text` を駆動へ渡すこと、本文が壊れていれば 400 で何も送らないこと、別オリジンからは 403 になること、`/api/interrupt` が駆動の interrupt を呼ぶこと（駆動はフェイクに差し替える）
+- Orca のタブで目視: 入力欄に依頼を打って Enter で送ると、吹き出しとメインビューが動き始める。実行中に「中断」を押すと止まり、ボタンが「送信」に戻る。Shift+Enter で改行できる。**何を打ったかは `evidence` に書かない**（打った文字数と、起きたことだけ）
+- `bun run check` が通ること
+
+## 注意
+
+- 会話内容の扱い: 入力欄の文字列をログに出さない
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-039 セリフを吹き出しに、ターンの本文をレポートとしてリアルタイムに流す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-037']
+- **summary**: セリフを吹き出しに、本文をレポートとして流れるまま出す
+- **evidence**:
+
+  sonnet に委譲。session-view.ts で吹き出しを同ターン内の直近3件に、speak 不在のターンだけ行頭マーカーの補助、mainViewEntries からツール系を除外、直近20ターンの窓。レンダラは壊れた入力3種（未閉のコードブロック・表・HTML タグ）で例外を出さないことをテストで担保（変更不要だった）。`bun run check` 通過: 346 pass / 0 fail。curl 確認: /events/main に update 10回、最終 HTML に table / pre.mermaid / pre code、吹き出しに speak 2件（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 左上に本文が段々書き足され終わると整形される／吹き出しに着手と完了の2行／新しい依頼の直後も前の吹き出しが残る。申し送り: 行頭マーカーの既定値が transcript.ts の定数になった（環境変数の読み取りは無い）。
+
+### 当時のタスク本文
+
+セリフを吹き出しに、ターンの本文をレポートとしてリアルタイムに流す。
+
+## 背景
+
+T-037 で内部イベントが流れるようになったが、ビューの本文はまだ旧来の形（transcript から切り出した `MainViewEntry` / 行頭マーカーのセリフ）で組んでいる。**このタスクで、吹き出しは speak ツールの引数から、メインビューはターンの本文から組む形に変える。**
+
+ユーザー決定:
+
+- Q5: メインビューはレポートだけ。ツールの流れは出さない（サイドバーへ。T-043）
+- Q12: **レポートはリッチのまま。** `src/report-html.ts` の HTML 直書き（サニタイズ付き）、highlight.js、mermaid、Chart.js、GFM の表・ネストしたリスト・引用は**全部残す**。「今の表示は改善点はありつつわりと気に入っているから、簡素になるのは避けてね」。レポートの口調は落とさない（`docs/requirements.md` 4.2 の現行規約）
+- Q16: 本文を**書きかけのままリアルタイムに流し**、ターンが終わった瞬間に整形し直す
+- Q3: 行頭マーカー（`アスナ: `）の切り出し（`src/transcript.ts` の `splitUtterance`）は**補助**として残す。speak が1回も呼ばれなかったターンで、本文にマーカー行があればそれを吹き出しに出す
+
+## 解くべき論点
+
+- **ターンの単位**: 利用者の依頼1つ＝1ターン。メインビューのやり取りごとのタブ（T-019 の `buildMainBody` の仕組み）はそのまま使い、「今回」のタブに書きかけの本文を流す
+- **部分テキストの積み方**: `stream_event` の断片を連結して仮描画し、完成した `assistant` メッセージが来たら置き換える。Markdown の途中（閉じていないコードブロック等）を描いても壊れないように、仮描画は既存のレンダラを通したうえで失敗を握らない（描けなければ素のテキストのまま出す）
+- **吹き出しの更新**: speak が来るたびに差し替える。連続した speak を1つのまとまりとして出すか、最新1つだけにするかは、既存の「続けて並べた行は1つのまとまり」（出力スタイルの規約）に合わせて**同じターン内の直近数件を並べる**
+- 更新が本文全体の作り直しになって画面がチカチカしないこと（T-017 の対策を壊さない）
+
+## やること
+
+1. キャラビュー: `buildCharacterBody` へ渡す `CharacterViewData` の speech を、speak の引数から作る。補助の切り出しは speak 不在のターンだけ
+2. メインビュー: `buildMainBody` へ渡す entries を、ターンの本文（部分＋完成）から作る。ツール系の entry は渡さない
+3. `MAX_MAIN_VIEW_ENTRIES` などの窓は、ターン単位に読み替える
+
+## 完了条件
+
+- テスト: speak イベント列 → 吹き出しの本文（直近数件の並び）、部分テキスト → 仮描画 → 完成メッセージで置き換わること、speak 不在のターンで補助の切り出しが効くこと
+- Orca のタブで目視: 依頼を1つ送ると、左上に本文が書き上がっていき、終わると整形された形に変わる。左下の吹き出しに speak の文言が出る。表・コードブロック・mermaid の図が描ける（`evidence` には何を描かせたかの種類だけ書く）
+- `bun run check` が通ること
+
+## 注意
+
+- `src/report-html.ts` のサニタイズを緩めない
+- `vendor/` は減らさない（Q12）
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-040 許可プロンプトと質問をキャラが聞き、画面のボタンで答えられるようにする。許可モードも切り替えられるようにする。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-037', 'T-039']
+- **summary**: 許可と質問をキャラが聞き、画面のボタンで答えられるようにする
+- **evidence**:
+
+  sonnet に委譲。答え待ちの箱を buildCharacterBody に統合（吹き出しの直下。許可: ツール名＋要約120字と許可/拒否、質問: 番号付き選択肢・複数選択・その他の自由入力）。/api/answer を {id, answer} に付け替え、/api/permission-mode を追加、キャラビューに許可モードの select（bypassPermissions は警告色）。旧 question ビューと questionRegionScript は撤去。`bun run check` 通過: 371 pass / 0 fail。curl 確認: default モードで Bash 依頼 → 許可の箱 → allow で {ok:true} → idle、AskUserQuestion 依頼 → 質問の箱 → answers で {ok:true} → idle（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: Bash を使う依頼で吹き出しの下に許可/拒否が出る／許可で会話が続く／質問の選択肢を押すと会話が続く／bypassPermissions を選ぶと枠が警告色。
+
+### 当時のタスク本文
+
+許可プロンプトと質問をキャラが聞き、画面のボタンで答えられるようにする。許可モードも切り替えられるようにする。
+
+## 背景
+
+T-037 の駆動は `canUseTool` に届いた許可要求と `AskUserQuestion` を待ち行列に積み、`answer(id, decision)` で解決する。**このタスクで、待ち行列の先頭をキャラビューに出し、ボタンで answer を呼ぶ。** これで合格シーン（Q1）の「キャラが質問したら画面上のボタンで答えられる」が成立する。
+
+T-030 で作った質問の表示（`src/view.ts` の `buildQuestionBody`、`src/question.ts` の `parseQuestions`）は transcript から質問を拾う作りだったが、**選択肢の見た目はそのまま流用できる**。回答経路（`/api/answer` → `orca keypress`）は Orca に弾かれて動かなかったので捨てる。
+
+ユーザー決定 Q7: **キャラが聞く。** 吹き出しに「これ実行していい？」と出て、その下に許可／拒否のボタン。AskUserQuestion の選択肢と同じ見た目。許可モード（毎回聞く／編集は自動／全部許す／プラン）を画面から切り替えられる。既定は auto モード相当（T-036 で確認した値）。
+
+## 解くべき論点
+
+- **許可要求の見せ方**: ツール名と入力の要約（Bash ならコマンド、Edit ならファイルパス）を出す。**入力の全文は出さない**（長い・会話内容を含みうる）。要約の切り方は `src/view.ts` の `truncateForDisplay` に倣う
+- **質問の見せ方**: `AskUserQuestion` の `questions[].options[]` を番号付きのボタンに。複数選択（`multiSelect`）と「その他」（自由入力）に対応する。答えは `{ behavior: "allow", updatedInput: { questions, answers } }` で返す（形は T-036 の記録が正典）
+- **拒否の理由**: 拒否のときは `{ behavior: "deny", message }` で短い定型文を返す
+- **答え待ちが複数あるとき**: 先頭だけ出し、答えたら次を出す
+- 許可モードの切り替えは `POST /api/permission-mode` → 駆動の `setPermissionMode`
+
+## やること
+
+1. `buildQuestionBody` を「答え待ち（許可 or 質問）」を受け取る形に変え、キャラビューの吹き出しの直下に出す。旧 `PendingQuestion` は捨てる
+2. `POST /api/answer` を待ち行列の answer に付け替える（同一オリジン検査は維持）
+3. 許可モードの選択肢をサイドバーのセッション情報の区画（T-043 で作る場所。先に作るならキャラビューの端でよい）に置く
+
+## 完了条件
+
+- テスト: 許可要求 → 表示用データ（ツール名＋要約）、質問 → 選択肢の一覧、answer の JSON → 駆動へ渡す decision の形（allow/deny/answers）、壊れた JSON は 400
+- Orca のタブで目視: 許可が要る操作を依頼すると吹き出しの下に許可／拒否が出て、許可すると実行が続き、拒否すると止まって次の応答が来る。質問（AskUserQuestion を誘発する依頼）で選択肢を押すと会話が続く。許可モードを変えると、以後の許可要求が出なくなる／出るようになる
+- `bun run check` が通ること
+
+## 注意
+
+- 会話内容の扱い: 許可要求の入力の全文をログや `evidence` に写さない
+- `bypassPermissions` は危険側の設定。既定にしない。選んだときは画面に色を付けて分かるようにする
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-043 サイドバーを3区画（いま何をしているか／タスク一覧／セッション情報）に組み直す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-037', 'T-028']
+- **summary**: サイドバーを進行・タスク一覧・セッション情報の3区画にする
+- **evidence**:
+
+  sonnet に委譲。サイドバーを3区画（いま何をしているか: 実行中＋直近5件の完了、サブエージェント内は1段下げ／タスク一覧: readTaskSummaries を mtime で読み直し／セッション情報: モデルと許可モードの select、経過時間）に書き直し。ツール入力の要約は summarizeToolInput に1箇所化。/api/model（opus/sonnet/haiku）を追加。`bun run check` 通過: 394 pass / 0 fail。curl 確認: 区画1にツール名＋要約、区画2に tasks.json 17件、区画3の model が haiku に切り替わる（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: 3区画が並ぶ／実行中は普通の色・完了は薄い色／モデルを変えると次のターンから変わる。
+
+### 当時のタスク本文
+
+サイドバーを3区画（いま何をしているか／タスク一覧／セッション情報）に組み直す。
+
+## 背景
+
+いまのサイドバー（`src/view.ts` の `buildSidebarBody`、`SidebarData`）は「コンテキスト使用量・サブエージェント・タスク進捗」の3区画で、transcript とサブエージェントの transcript（`src/subagents.ts`）から組んでいる。**方針転換で、作業の進行（ツールの流れ）はメインビューからサイドバーへ移り（Q5）、中身は SDK のイベントから組む。**
+
+ユーザー決定 Q11、上から:
+
+1. **いま何をしているか**: 実行中のツールを1行で（ツール名＋入力の要約）。終わったものは薄く数行残す
+2. **`develop/tasks.json` のタスク一覧**: T-028 で足す要約フィールドを使う（T-028 が先）。旧 T-029 はここに畳んだ（「コンテキスト使用量は不要」もそのまま）
+3. **セッション情報**: モデル・許可モード・経過時間。モデルの切り替えの選択肢もここ（Q9: `/model` を送るのではなく SDK のオプションで渡す。T-036 で `setModel` の有無を確認済み）
+
+## 解くべき論点
+
+- ツールの要約の切り方は T-040 の許可要求の要約と同じ関数を使う（`src/view.ts` の `truncateForDisplay` 系。1箇所にまとめる）
+- サブエージェントの中のツール実行も「いま何をしているか」に出すか。SDK のイベントに `parent_tool_use_id` があるので、あれば1段下げて出す
+- タスク一覧は `tasks.json` をファイルから読む（既存の `src/tasks.ts` を広げる）。更新は SSE の既存経路で、ファイルの mtime を見て差し替える
+- モデルの切り替えは `POST /api/model` → 駆動の `setModel`。選択肢は固定の一覧でよい（sonnet / opus / haiku の最新）
+
+## やること
+
+1. `SidebarData` を新しい3区画に変え、`buildSidebarBody` を書き直す
+2. 駆動側の内部イベント（tool_use / tool_result / init / result）から区画1と3のデータを組む
+3. `src/tasks.ts` にタスク一覧（id・要約・status）の読み取りを足す
+4. `/api/model` を足す
+
+## 完了条件
+
+- テスト: イベント列 → 区画1のデータ（実行中1件＋直近の完了数件）、`tasks.json` のフィクスチャ → 一覧、`/api/model` が駆動へ渡すこと
+- Orca のタブで目視: 依頼を送ると区画1にツール名が流れ、終わると薄くなる。区画2に `develop/tasks.json` の一覧が出る。区画3のモデルを変えると、次のターンから応答のモデルが変わる（`system/init` か `assistant` の `model` フィールドで確認）
+- `bun run check` が通ること
+
+## 注意
+
+- 会話内容の扱い: ツール入力の要約に本文の断片が入る場合があるので、ログには出さない
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-044 表情を speak の引数から決め、ツール実行中は自動で「作業中」の顔にする。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-037', 'T-039']
+- **summary**: 表情を speak の引数で決め、ツール実行中は作業中の顔にする
+- **evidence**:
+
+  sonnet に委譲。expression.ts の resolveExpression を「実行中のツール（開始時刻つき）・直近の speak の表情・現在時刻」から決める形に書き直し（1秒以上実行中なら working、時刻は配線層から渡す）。state.ts への依存を外し、index.ts で1秒後の再配信タイマーを1本だけ持つ。characters/README.md に default と working が必須であることを追記。`bun run check` 通過: 398 pass / 0 fail。curl 確認: aria-label が 通常 → 作業中 → speak の表情（どや顔／あわあわ）と遷移（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: 数秒かかるツールで約1秒後に作業中の顔／短いツールの連続でチカチカしない／終わると直前の speak の表情に戻る。
+
+### 当時のタスク本文
+
+表情を speak の引数から決め、ツール実行中は自動で「作業中」の顔にする。
+
+## 背景
+
+いま表情は `src/expression.ts` の `resolveExpression(state)` が、hook の状態ファイル（`StateFileContents`）の「最後の hook 名」から推測している（`PreToolUse` → working、`Stop` → proud など）。**方針転換（Q10）で、表情はキャラ自身が `speak(text, expression)` で選ぶのが本筋**になり、hook は無くなる。ただし「考えている間は考えている顔」だけは自動のほうが自然なので、**speak の引数を主にして、ツール実行中は自動で working に切り替える。**
+
+衣装（`resolveOutfit`）はモデル連動のまま。モデル名は `system/init` / `assistant` の `model` から取る（状態ファイルからではなく）。
+
+## 解くべき論点
+
+- **優先順位**: ツール実行中は working、それ以外は直近の speak の `expression`、speak がまだ無ければ default。ターンが終わった（`result`）あとも直近の speak の表情を保つ
+- **チカチカ防止**: ツールが連続して走るとき working ⇄ speak の表情が短時間に往復しないよう、working への切り替えは「ツール開始から一定時間経っても終わらないとき」にする（目安 1 秒。値は定数に）
+- `resolveExpression` の入力を `StateFileContents` から内部イベント由来の値（実行中のツール数・直近の speak の表情・モデル名）に変える。テストはそこを守る
+
+## やること
+
+1. `src/expression.ts` の入力型を差し替え、優先順位を実装する
+2. 駆動側のイベントから入力を組んでキャラビューへ流す（`createCharacterViewPublisher` 相当）
+3. `src/state.ts` はここで不要になる（T-042 で消す。ここでは呼ばなくするだけ）
+
+## 完了条件
+
+- テスト: 上の優先順位の各ケース（実行中／speak あり／speak なし／ターン終了後）と、短時間のツール完了で working にならないこと
+- Orca のタブで目視: ツールが走る依頼で立ち絵が作業中の顔になり、speak が来ると引数の表情に変わる。表情名は `characters/*/` の定義から（`evidence` に確認した表情名を書く）
+- `bun run check` が通ること
+
+## 注意
+
+- キャラクターの表情名をコードに書かない（原則4）。`default` と `working` の2つだけは「無いときの既定」「自動切り替え先」として定義ファイル側に必須の名前とし、その旨を `characters/README.md` に書く
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-045 入力欄で `/` を打ったときにコマンドの候補を出す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-038']
+- **summary**: 入力欄で / を打ったときにコマンドの候補を出す
+- **evidence**:
+
+  sonnet に委譲（利用上限で1回止まり、途中から再開）。GET /api/commands（init の slash_commands − terminal_slash_commands、init 前は空）を追加し、入力欄で / を打つと候補（前方一致・最大10件、上下キー、Tab/Enter で確定・Esc で閉じる、IME 中と答え待ち中は出さない）を出す。`bun run check` 通過: 415 pass / 0 fail。curl 確認: init 後に57件、next-task と plan-tasks を含み doctor を含まない（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: / で候補が出て /ne で絞れる／Tab か Enter で埋まって送信されない／候補が閉じているときの Enter は送信。
+
+### 当時のタスク本文
+
+入力欄で `/` を打ったときにコマンドの候補を出す。
+
+## 背景
+
+ユーザー決定 Q8 の (3)。SDK は `system/init` メッセージの `slash_commands` に、そのセッションで使える組み込みコマンド・同梱スキル・自作スキル・`.claude/commands` の名前を並べて返す（公式ドキュメント「Commands in Agent SDK sessions」、T-036 で件数を確認済み）。**これを入力欄の補完に使う**と、`/next-task` `/plan-tasks` `/code-review` といういまの働き方が TUI と同じ手触りで打てる。
+
+## 解くべき論点
+
+- 候補の出し方: 入力の先頭が `/` で、まだ空白が無いときだけ候補を出す。前方一致で絞り、上下キーで選び、Tab か Enter で確定（Enter は確定だけで送信しない）
+- 候補の一覧は `GET /api/commands` で配るか、レイアウトページに埋め込むか。セッションごとに変わりうる（プロジェクトのスキル）ので API で配る
+- スキルの `description` は `slash_commands` に無い（名前だけ）。説明を出したければ `system/init` の `skills` 配列と突き合わせる。v1 は名前だけでよい
+
+## やること
+
+1. 駆動側が `system/init` の `slash_commands` を保持し、`GET /api/commands` で返す
+2. 入力欄に候補の UI を足す（`buildLayoutPage` のスクリプト）
+
+## 完了条件
+
+- テスト: `/api/commands` が init 前は空配列、init 後は一覧を返すこと
+- Orca のタブで目視: `/` を打つと候補が出て、`/ne` で `next-task` に絞れ、Tab で確定、Enter で送信できる。`evidence` に候補の件数を書く
+- `bun run check` が通ること
+
+## 注意
+
+- 入力履歴（上キー）と「繰り返す」トグルはこのタスクに含めない（次の指示待ち）
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-047 `tsukumo` コマンドを作り、どのプロジェクトのディレクトリで起こしても動くようにする（立ち絵と同梱物は tsukumo 自身の場所から読む）。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-040']
+- **summary**: どのディレクトリからでも tsukumo コマンドで起こせるようにする
+- **evidence**:
+
+  sonnet に委譲。bin/tsukumo（shebang + import の2行、実行権限あり）と package.json の bin を追加。同梱物の置き場所を src/bundled-files.ts に集約し、vendor/ と既定の立ち絵がそこを通る（TSUKUMO_CHARACTER_DIR は絶対ならそのまま、相対なら cwd 相対、未指定なら tsukumo 自身の場所）。docs/requirements.md（1章・2.1・4.6）/ architecture.md / CLAUDE.md を更新。見出し数 requirements 25→25、architecture 10→10。`bun run check` 通過: 376 pass / 0 fail。mktemp -d の空ディレクトリから bin/tsukumo を起こし、/character に <svg（立ち絵）が出ることを curl で確認（サブエージェント実施、メインで check を再実行）。
+
+### 当時のタスク本文
+
+`tsukumo` コマンドを作り、どのプロジェクトのディレクトリで起こしても動くようにする（立ち絵と同梱物は tsukumo 自身の場所から読む）。
+
+## 背景
+
+ユーザーの言葉（2026-09-11）: 「あるプロジェクトやディレクトリ上で tsukumo を起動して適用することができるのが絶対条件。あるプロジェクトのトップディレクトリで claude を打つように tsukumo と打つとそのプロジェクトをキャラと一緒に作業できるもの。claude の拡張と言ってもいい」。
+
+いまの状態（2026-09-11 実測）:
+
+- **`tsukumo` というコマンドは無い。** `package.json` に `bin` が無く、起動は `bun run start`（`bun run src/index.ts`）でリポジトリ直下からしかできない
+- **駆動の作業ディレクトリは `process.cwd()`**（`src/index.ts` の `startSessionDriver` に `cwd: process.cwd()`）。ここは既に正しい。別のディレクトリで起こせば、Claude Code はそのプロジェクトを見て、そのプロジェクトの CLAUDE.md・スキルを読む
+- **立ち絵の既定の置き場所が cwd 相対**（`src/index.ts` の `resolveCharacterDir`: 環境変数 `TSUKUMO_CHARACTER_DIR` が無ければ `join(cwd, "characters", "tsukumo-spirit")`）。別のプロジェクトで起こすと立ち絵が見つからず、キャラが出ない
+- `develop/tasks.json` は cwd 相対で読む（`readOptionalFile`）。無ければ `undefined` で、サイドバーの件数が出ないだけ。**これはそのままでよい**（起動先プロジェクトの `develop/tasks.json` があればそれを見る、という意味になる）
+- `vendor/` は `import.meta.url` からの相対で配る（`src/view-server.ts`）。cwd に依存しない。**これが手本**
+
+## 解くべき論点
+
+- **コマンドの器**: `package.json` に `"bin": { "tsukumo": "bin/tsukumo" }` を足し、`bin/tsukumo` は `#!/usr/bin/env bun` の1行と `src/index.ts` の `main` を呼ぶだけの短いファイルにする（ロジックを置かない）。`bun run start` は残す
+- **立ち絵の既定**: 「tsukumo 自身の場所」を `import.meta.url` から解いて `characters/tsukumo-spirit` を既定にする。環境変数 `TSUKUMO_CHARACTER_DIR` は**絶対パスならそのまま、相対なら cwd 相対**（今の挙動を保つ。起動先プロジェクトに自分の素材を置く使い方ができる）
+- **「tsukumo 自身の場所」の解き方は1箇所に置く**（`vendor/` の解き方と同じ関数にまとめる。原則3・5。ファイル名が概念になる名前にする。`paths` / `utils` にしない）
+- 環境変数の読み取りは `src/index.ts` に集約したまま（規約）
+
+## やること
+
+1. `bin/tsukumo` と `package.json` の `bin` を足す。`src/index.ts` の `main` を bin から呼べる形にする（既に `main(args)` があるならそれを export するだけ）
+2. 立ち絵の既定を tsukumo 自身の場所からにする。`vendor/` の解き方と同じ場所に寄せる
+3. `docs/requirements.md` 2.1 に「どのプロジェクトのディレクトリでも `tsukumo` で起動でき、そのプロジェクトを作業対象にする」を足し、4.6「起動と設定」の `bun run start` を `tsukumo`（開発中は `bun run start` でも同じ）に書き換える。1章の合格シーンの「1コマンドで起動すると」を「プロジェクトのディレクトリで `tsukumo` と打つと」に寄せる。`CLAUDE.md`「よく使うコマンド」も合わせる
+4. `docs/architecture.md`「既知の制約・注意点」に「cwd に依存してよいのは、起動先プロジェクトのもの（作業ディレクトリ・`develop/tasks.json`・相対指定の素材）だけ。同梱物は自分の場所から読む」を1項目足す
+
+## 完了条件
+
+- 別のディレクトリ（例: `mktemp -d` で作った空のディレクトリ）から `bun /path/to/tsukumo/bin/tsukumo` を起こして、`TSUKUMO_OPEN_VIEW=0` でも `/character` の HTML に立ち絵（`<img` か `<svg`）が出ること。`curl` で確かめ、起こしたプロセスは止める（`pgrep -f claude-agent-sdk` が空）
+- `TSUKUMO_CHARACTER_DIR` に相対パスを渡したとき cwd 相対に解けることのテスト、既定が tsukumo 自身の場所になることのテスト（`resolveCharacterDir` 相当の純粋関数で）
+- `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で同じ（索引テーブルへの誤挿入の検知。値を `evidence` に書く）
+- `bun run check` が通ること。**テストは SDK の子プロセスを起動しない**
+
+## 注意
+
+- **グローバルへの導入（`bun link` など）はこのタスクでやらない**（別タスク。ユーザーの承認が要る）
+- 見出し名で位置を探すと索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `Bun.*` の固有 API を使わない（bin の shebang だけは `bun`）。タスク番号をコード・ドキュメントに書かない
+- 会話内容の扱い: 動作確認で送った依頼の中身を報告・`evidence` に写さない
+- サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-049 許可と質問の答え待ちの箱を、キャラビューの吹き出しの下から**右下の入力欄の領域**へ移し、答え待ちになっていることに気づける印を付ける。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: ['T-043']
+- **summary**: 許可と質問の箱を右下の入力欄の上に移し、答え待ちに気づける印を付ける
+- **evidence**:
+
+  sonnet に委譲。答え待ちの箱を /events/pending-answer（turn-status と同型の SSE）で右下の入力欄の上へ届け、答え待ち中は枠を注意色にしてタブのタイトルに「● 」を付ける。buildCharacterBody から箱を外した。docs（4.7・全体図・目視手順・用語集）を追随、見出し数は不変。`bun run check` 通過: 397 pass / 0 fail。curl 確認: 書き込みを伴う Bash の依頼で箱の HTML が SSE に届き、allow 後に空が届く。/character に箱は無い（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: 許可待ちで右下の入力欄の上に許可/拒否が出て枠が黄色くなりタブに「●」／押すと消えて戻る／左下には出ない。
+
+### 当時のタスク本文
+
+許可と質問の答え待ちの箱を、キャラビューの吹き出しの下から**右下の入力欄の領域**へ移し、答え待ちになっていることに気づける印を付ける。
+
+## 背景
+
+答え待ちの箱（`src/view.ts` の `buildPendingAnswerBody`）は、`buildCharacterBody` の中で吹き出しの直下に出している。ボタンの配線は `pendingAnswerScript`、送り先は `POST /api/answer`（`src/view-server.ts`）。動作は正しい（ユーザー確認済み: 「T-040 は良さそう」）が、**置き場所が使いづらかった**。
+
+ユーザーの言葉（2026-09-11）: 「左下でキャラの下に出すのはダメだった。使いづらかったよ」。確認の回答: 使いづらかったのは「**気づかない**」（答え待ちになっていることに気づかない）と「**入力欄と離れている**」（答えるために視線とマウスが左下へ移る）。決定: **箱は右下の入力欄の領域に出す**（答え待ちの間は入力欄の上に箱を出す。入力欄は残す）。キャラは吹き出しで「これいい？」と言うだけ（`speak` に任せる。tsukumo が吹き出しの文言を作らない）。
+
+右下の入力欄は `dispatchRegionHtml()`（レイアウトページの静的な部分）で、SSE で更新される「ビュー」ではない。進行状態は `/events/turn-status`（`src/view-server.ts` の `publishTurnStatus`）という専用の SSE で入力欄へ届けている。**答え待ちの箱も同じ形で届けるのが素直**。
+
+## 解くべき論点
+
+- **届け方**: `turn-status` と同じ専用の SSE 経路（例: `/events/pending-answer`）で箱の HTML を押す。`ViewName` は増やさない（`question` ビューを消したばかりで、4領域のビューと「入力欄に乗る状態」は別物）。箱の HTML は `buildPendingAnswerBody` をそのまま使う
+- **置き方**: 入力欄の `<textarea>` の**上**に箱を出す。答え待ちが無いときは箱の要素を空にする（領域の高さが戻る）。入力欄は消さない（許可待ちの間も「中断」は押せる）
+- **気づける印**: (1) 答え待ちの間、入力欄の領域の枠を目立つ色にする（許可モードの警告色とは別の色）、(2) ブラウザのタブのタイトルの先頭に「●」を付ける（`document.title`。答え待ちが消えたら戻す）。フォーカスは奪わない（入力中の文字を壊さないため）。音は出さない
+- **キャラビューから箱を外す**。`buildCharacterBody` は立ち絵と吹き出しだけに戻す（`CharacterViewData.pending` を消す）。許可モードの `select` はサイドバーへ移っている前提（T-043。移っていなければ入力欄の領域の端に置く）
+- 答え待ちが複数あるときは先頭だけ、答えたら次、は今のまま（`view.pending[0]`）
+
+## やること
+
+1. `src/view-server.ts` に答え待ちの SSE 経路を足す（`publishTurnStatus` と同型）。`src/index.ts` で `pending-changed` から先頭の箱の HTML を押す
+2. `dispatchRegionHtml()` に箱の置き場所（空の要素）を足し、購読スクリプトで差し替える。`pendingAnswerScript` の配線をこちらへ移す
+3. 枠の色と `document.title` の印
+4. `buildCharacterBody` から箱を外す（テストも直す）
+5. `docs/requirements.md` 4.7 の「許可と質問はキャラビューの吹き出しの下にボタン」を「右下の入力欄の上」に直す（`docs/architecture.md` の全体図・データの流れの3本目も同じ）
+
+## 完了条件
+
+- テスト: `buildCharacterBody` に箱が含まれない／答え待ちの SSE が箱の HTML を押し、無いときは空を押す／`dispatchRegionHtml()` に箱の置き場所がある
+- `bun run check` が通ること（`bun run format` を先に）。**テストは SDK の子プロセスを起動しない**
+- 動作確認（curl）: `default` モードで Bash を使う依頼を送り、答え待ちの SSE に箱の HTML が届く → `/api/answer` で allow → 空が届く
+- **Orca のタブで目視（ユーザー）**: 許可待ちになると右下の入力欄の上に許可／拒否が出て、入力欄の枠の色が変わり、タブのタイトルに「●」が付く。許可を押すと箱が消えて枠の色とタイトルが戻る。左下には箱が出ない
+- `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で同じ
+
+## 注意
+
+- 会話内容の扱い: 許可要求の要約に本文の断片が入りうる。ログ・報告に写さない
+- キャラの吹き出しの文言を tsukumo 側で作らない（「これいい？」は出力スタイルの規約で `speak` に言わせる。T-041）
+- 見出し名で位置を探すと索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- サブエージェントに委譲してよい。`/loop` に載せてよい
