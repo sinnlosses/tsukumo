@@ -6,7 +6,6 @@ import {
   currentExpression,
   INITIAL_SESSION_VIEW,
   mainViewEntries,
-  recentToolNames,
   type SessionView,
 } from "../src/session-view.ts"
 
@@ -100,11 +99,19 @@ describe("applySessionEvent", () => {
   it("ツールの実行中は表情が作業中になり、終わると直前のセリフの表情に戻る", () => {
     const running = apply(
       { kind: "speech", text: "いくよ！", expression: "proud" },
-      { kind: "tool-started", toolUseId: "toolu_1", name: "Read", input: {} },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
     )
 
     expect(currentExpression(running)).toBe("working")
-    expect(recentToolNames(running)).toEqual(["Read"])
+    expect(running.runningTools).toEqual([
+      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false },
+    ])
 
     const finished = applySessionEvent(running, {
       kind: "tool-finished",
@@ -114,12 +121,35 @@ describe("applySessionEvent", () => {
     })
 
     expect(currentExpression(finished)).toBe("proud")
-    expect(recentToolNames(finished)).toEqual(["Read"])
+    expect(finished.runningTools).toEqual([])
+    expect(finished.finishedTools).toEqual([
+      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false },
+    ])
+  })
+
+  it("サブエージェントの中のツール（parentToolUseId あり）は nested として持つ", () => {
+    const running = apply({
+      kind: "tool-started",
+      toolUseId: "toolu_1",
+      name: "Bash",
+      input: {},
+      parentToolUseId: "toolu_agent",
+    })
+
+    expect(running.runningTools).toEqual([
+      { toolUseId: "toolu_1", name: "Bash", input: {}, nested: true },
+    ])
   })
 
   it("ツールの結果を、対応する tool_use の記録に合わせる（メインビューにはツール系を渡さない）", () => {
     const view = apply(
-      { kind: "tool-started", toolUseId: "toolu_1", name: "Read", input: { path: "/tmp/a" } },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: { path: "/tmp/a" },
+        parentToolUseId: undefined,
+      },
       { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: true },
     )
 
@@ -131,6 +161,7 @@ describe("applySessionEvent", () => {
         toolUseId: "toolu_1",
         name: "Read",
         input: { path: "/tmp/a" },
+        nested: false,
         result: { content: "ダミーの結果", isError: true },
       },
     ])
@@ -140,7 +171,13 @@ describe("applySessionEvent", () => {
   it("mainViewEntries はツール系の entry を含まない（依頼とレポートの間に挟まっていても除く）", () => {
     const view = apply(
       { kind: "request", text: "依頼" },
-      { kind: "tool-started", toolUseId: "toolu_1", name: "Read", input: {} },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
       { kind: "tool-finished", toolUseId: "toolu_1", content: "結果", isError: false },
       { kind: "utterance", text: "レポート本文" },
     )
@@ -186,12 +223,18 @@ describe("applySessionEvent", () => {
 
   it("セッションが終わると理由を持ち、実行中のツールを空にする", () => {
     const view = apply(
-      { kind: "tool-started", toolUseId: "toolu_1", name: "Read", input: {} },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
       { kind: "session-ended", reason: "セッションが終了した" },
     )
 
     expect(view.endedReason).toBe("セッションが終了した")
-    expect(view.runningToolNames).toEqual([])
+    expect(view.runningTools).toEqual([])
   })
 
   it("request でターンが進行中になり、turn-finished で止まる（入力欄の送信/中断の切り替えに使う）", () => {

@@ -17,8 +17,8 @@ import {
   LAYOUT_PATH,
   PROMPT_PATH,
   type SidebarData,
-  type SubagentActivity,
-  summarizePermissionInput,
+  type SidebarToolActivity,
+  summarizeToolInput,
   TERMINALS_PATH,
   TURN_STATUS_EVENT_PATH,
   TURN_STATUS_IDLE,
@@ -35,27 +35,36 @@ const FULL_CHARACTER_DATA: CharacterViewData = {
   outfitAccent: "#b8c7ff",
   altText: "架空の精霊（通常）",
   pending: undefined,
-  permissionMode: undefined,
 }
 
-// meta.json が有る（ラベル付き）サブエージェントと、無い（ツール名だけの）サブエージェントを
-// 両方含む、手で書いた架空のデータ。
-const LABELED_ACTIVITY: SubagentActivity = {
-  description: "架空のサイドバー実装",
-  model: "sonnet",
-  latestToolName: "Bash",
+// 実行中1件・完了2件（うち1件はサブエージェントの中）の、手で書いた架空のデータ。
+const RUNNING_ACTIVITY: SidebarToolActivity = {
+  name: "Bash",
+  input: { command: "echo dummy" },
+  nested: false,
 }
-const UNLABELED_ACTIVITY: SubagentActivity = {
-  description: undefined,
-  model: undefined,
-  latestToolName: "Edit",
+const FINISHED_ACTIVITY: SidebarToolActivity = {
+  name: "Edit",
+  input: { file_path: "src/dummy.ts" },
+  nested: false,
+}
+const NESTED_FINISHED_ACTIVITY: SidebarToolActivity = {
+  name: "Read",
+  input: { file_path: "src/dummy2.ts" },
+  nested: true,
 }
 
 // buildSidebarBody に渡す全部入りのデータ。個々のテストは必要な部分だけ上書きする。
 const FULL_SIDEBAR_DATA: SidebarData = {
-  contextTokens: 603_407,
-  subagents: { pendingCount: 2, recentActivity: [LABELED_ACTIVITY, UNLABELED_ACTIVITY] },
-  taskCounts: { done: 10, todo: 5 },
+  activity: {
+    running: [RUNNING_ACTIVITY],
+    finished: [FINISHED_ACTIVITY, NESTED_FINISHED_ACTIVITY],
+  },
+  tasks: [
+    { id: "X-001", summary: "架空のサイドバー実装", status: "done" },
+    { id: "X-002", summary: "架空のタスク一覧", status: "todo" },
+  ],
+  session: { model: "claude-sonnet-5", permissionMode: "auto", turnStartedAt: 1_700_000_000_000 },
 }
 
 // --- SSE 購読スクリプトを実際に動かして確かめるための道具 -------------------------------------
@@ -1367,14 +1376,14 @@ describe("メインビューのタブの選択（push で戻らない・新し�
   })
 })
 
-describe("許可要求の要約（summarizePermissionInput）", () => {
+describe("ツール名＋入力の要約（summarizeToolInput）", () => {
   it("Bash はコマンドを出す", () => {
-    expect(summarizePermissionInput("Bash", { command: "echo dummy" })).toBe("echo dummy")
+    expect(summarizeToolInput("Bash", { command: "echo dummy" })).toBe("echo dummy")
   })
 
   it("Edit はファイルパスを出す", () => {
     expect(
-      summarizePermissionInput("Edit", {
+      summarizeToolInput("Edit", {
         file_path: "/tmp/dummy.txt",
         old_string: "a",
         new_string: "b",
@@ -1383,7 +1392,7 @@ describe("許可要求の要約（summarizePermissionInput）", () => {
   })
 
   it("未知のツールは入力の最初の文字列値を出す", () => {
-    expect(summarizePermissionInput("MysteryTool", { note: "ダミーの説明", count: 3 })).toBe(
+    expect(summarizeToolInput("MysteryTool", { note: "ダミーの説明", count: 3 })).toBe(
       "ダミーの説明",
     )
   })
@@ -1391,16 +1400,21 @@ describe("許可要求の要約（summarizePermissionInput）", () => {
   it("120文字を超えたら切り詰める（入力の全文は出さない）", () => {
     const long = "a".repeat(200)
 
-    const summary = summarizePermissionInput("Bash", { command: long })
+    const summary = summarizeToolInput("Bash", { command: long })
 
     expect(summary.length).toBeLessThan(long.length)
     expect(summary).toEndWith("…")
   })
 
   it("要約に使わないフィールドの値は混ざらない", () => {
-    const summary = summarizePermissionInput("Bash", { command: "echo dummy", secret: "内緒" })
+    const summary = summarizeToolInput("Bash", { command: "echo dummy", secret: "内緒" })
 
     expect(summary).not.toContain("内緒")
+  })
+
+  it("入力がオブジェクトの形でないときは空文字", () => {
+    expect(summarizeToolInput("Bash", "echo dummy")).toBe("")
+    expect(summarizeToolInput("Bash", undefined)).toBe("")
   })
 })
 
@@ -1554,7 +1568,7 @@ describe("答え待ちの箱（キャラビューの吹き出しの直下。buil
   })
 })
 
-describe("キャラビューに出す答え待ちの箱・許可モード", () => {
+describe("キャラビューに出す答え待ちの箱", () => {
   it("答え待ちの箱は吹き出しの直下に出す", () => {
     const body = buildCharacterBody({
       ...FULL_CHARACTER_DATA,
@@ -1579,28 +1593,10 @@ describe("キャラビューに出す答え待ちの箱・許可モード", () =
     expect(body).not.toContain("pending-answer")
   })
 
-  it("いまの許可モードを選択済みにする", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: "plan" })
+  it("許可モードの select はキャラビューには出さない（サイドバーへ移した）", () => {
+    const body = buildCharacterBody(FULL_CHARACTER_DATA)
 
-    expect(body).toContain('<option value="plan" selected>')
-  })
-
-  it("permissionMode が未定のときは既定（auto）を選択済みにする", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: undefined })
-
-    expect(body).toContain('<option value="auto" selected>')
-  })
-
-  it("bypassPermissions のときは警告クラスを付ける", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: "bypassPermissions" })
-
-    expect(body).toContain("permission-mode-select-danger")
-  })
-
-  it("bypassPermissions 以外では警告クラスを付けない", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: "auto" })
-
-    expect(body).not.toContain("permission-mode-select-danger")
+    expect(body).not.toContain("permission-mode-select")
   })
 })
 
@@ -2256,58 +2252,81 @@ describe("キャラビューの本文", () => {
 })
 
 describe("サイドバーの本文", () => {
-  it("3つの区画（コンテキスト使用量・サブエージェント・タスクの進捗）を並べる", () => {
+  it("3つの区画（いま何をしているか・タスク一覧・セッション情報）を並べる", () => {
     const body = buildSidebarBody(FULL_SIDEBAR_DATA)
 
-    expect(body).toContain("コンテキスト使用量")
-    expect(body).toContain("サブエージェント")
-    expect(body).toContain("タスクの進捗")
+    expect(body).toContain("いま何をしているか")
+    expect(body).toContain("タスク一覧")
+    expect(body).toContain("セッション情報")
+    expect(body).not.toContain("コンテキスト使用量")
   })
 
-  it("コンテキスト使用量は3桁区切りで出し、残量%は出さない", () => {
+  it("実行中は普通の色、完了は薄い色で出す。サブエージェントの中は1段下げる", () => {
     const body = buildSidebarBody(FULL_SIDEBAR_DATA)
 
-    expect(body).toContain("603,407")
-    expect(body).not.toContain("%")
+    expect(body).toContain('<li class="activity-item activity-running">Bash: echo dummy</li>')
+    expect(body).toContain('<li class="activity-item activity-finished">Edit: src/dummy.ts</li>')
+    expect(body).toContain(
+      '<li class="activity-item activity-finished activity-nested">Read: src/dummy2.ts</li>',
+    )
   })
 
-  it("サブエージェントの保留件数を出す", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain("2件")
-  })
-
-  it("meta.json のあるサブエージェントは、ラベル(description)・model・直近のツール名を1行で出す", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain("<li>架空のサイドバー実装 (sonnet) — Bash</li>")
-  })
-
-  it("meta.json の無いサブエージェントは、列から消さずツール名だけで出す", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain("<li>Edit</li>")
-  })
-
-  it("タスクの進捗は done / todo の件数を出す", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain("10")
-    expect(body).toContain("5")
-  })
-
-  it("直近の活動のラベル・ツール名を、HTML として無害な形にして埋め込む", () => {
+  it("実行中・完了のどちらも無いときは、その旨を出す", () => {
     const body = buildSidebarBody({
       ...FULL_SIDEBAR_DATA,
-      subagents: {
-        pendingCount: 1,
-        recentActivity: [
-          {
-            description: '<script>alert("x")</script>',
-            model: undefined,
-            latestToolName: undefined,
-          },
+      activity: { running: [], finished: [] },
+    })
+
+    expect(body).toContain("いま動いているツールは無い")
+  })
+
+  it("タスク一覧は id・summary・status をファイルの順で出し、done は薄く出す", () => {
+    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
+
+    expect(body.indexOf("X-001")).toBeLessThan(body.indexOf("X-002"))
+    expect(body).toContain("架空のサイドバー実装")
+    expect(body).toContain('<li class="task-item task-done">')
+    expect(body).toContain('<span class="task-status">todo</span>')
+  })
+
+  it("develop/tasks.json が読めない（tasks が undefined）とき、その区画だけ「不明」を出し、残りは壊れない", () => {
+    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, tasks: undefined })
+
+    expect(body).toContain("不明")
+    expect(body).toContain("Bash: echo dummy")
+  })
+
+  it("タスクが0件のときは、その旨を出す", () => {
+    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, tasks: [] })
+
+    expect(body).toContain("タスクが無い")
+  })
+
+  it("セッション情報にモデル・許可モードの select と経過時間の枠を出す", () => {
+    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
+
+    expect(body).toContain('class="model-select"')
+    expect(body).toContain('class="permission-mode-select')
+    expect(body).toContain('data-started-at="1700000000000"')
+  })
+
+  it("turnStartedAt が未定のときは data-started-at が空", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, turnStartedAt: undefined },
+    })
+
+    expect(body).toContain('data-started-at=""')
+  })
+
+  it("ツール入力の要約を、HTML として無害な形にして埋め込む", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      activity: {
+        running: [
+          { name: "Bash", input: { command: '<script>alert("x")</script>' }, nested: false },
         ],
+        finished: [],
       },
     })
 
@@ -2315,42 +2334,92 @@ describe("サイドバーの本文", () => {
     expect(body).toContain("&lt;script&gt;")
   })
 
-  it("コンテキスト使用量が取れないとき、その区画だけ「不明」を出し、残りは壊れない", () => {
-    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, contextTokens: undefined })
-
-    expect(body).toContain("不明")
-    expect(body).toContain("10")
-    expect(body).toContain("<li>Edit</li>")
-  })
-
-  it("pendingBackgroundAgentCount が1行も無い（保留件数が取れない）とき、その旨を出し、残りは壊れない", () => {
+  it("タスクの summary を、HTML として無害な形にして埋め込む", () => {
     const body = buildSidebarBody({
       ...FULL_SIDEBAR_DATA,
-      subagents: { pendingCount: undefined, recentActivity: [] },
+      tasks: [{ id: "X-001", summary: '<script>alert("x")</script>', status: undefined }],
     })
 
-    expect(body).toContain("不明")
-    expect(body).toContain("直近の活動なし")
-    expect(body).toContain("603,407")
+    expect(body).not.toContain("<script>")
+    expect(body).toContain("&lt;script&gt;")
   })
 
-  it("develop/tasks.json が読めない（taskCounts が undefined）とき、その区画だけ「不明」を出し、残りは壊れない", () => {
-    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, taskCounts: undefined })
-
-    expect(body).toContain("不明")
-    expect(body).toContain("603,407")
-    expect(body).toContain("<li>Edit</li>")
-  })
-
-  it("すべて取れないときも例外を投げずに組み立てる", () => {
+  it("すべて取れない・空のときも例外を投げずに組み立てる", () => {
     const body = buildSidebarBody({
-      contextTokens: undefined,
-      subagents: { pendingCount: undefined, recentActivity: [] },
-      taskCounts: undefined,
+      activity: { running: [], finished: [] },
+      tasks: undefined,
+      session: { model: undefined, permissionMode: undefined, turnStartedAt: undefined },
     })
 
-    expect(body).toContain("コンテキスト使用量")
-    expect(body).toContain("サブエージェント")
-    expect(body).toContain("タスクの進捗")
+    expect(body).toContain("いま何をしているか")
+    expect(body).toContain("タスク一覧")
+    expect(body).toContain("セッション情報")
+  })
+})
+
+describe("サイドバーのモデル select（modelSelectHtml）", () => {
+  it("model にエイリアスが含まれていればそれを選択済みにする", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, model: "claude-opus-4-1" },
+    })
+
+    expect(body).toContain('<option value="opus" selected>')
+  })
+
+  it("model が未定のときは既定（sonnet）を選択済みにする", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, model: undefined },
+    })
+
+    expect(body).toContain('<option value="sonnet" selected>')
+  })
+
+  it("選択肢はエイリアスの3つだけ（フルネームは出さない）", () => {
+    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
+
+    expect(body).toContain('<option value="opus"')
+    expect(body).toContain('<option value="sonnet"')
+    expect(body).toContain('<option value="haiku"')
+    expect(body).not.toContain("claude-opus")
+  })
+})
+
+describe("サイドバーの許可モード select（moved from キャラビュー）", () => {
+  it("いまの許可モードを選択済みにする", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: "plan" },
+    })
+
+    expect(body).toContain('<option value="plan" selected>')
+  })
+
+  it("permissionMode が未定のときは既定（auto）を選択済みにする", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: undefined },
+    })
+
+    expect(body).toContain('<option value="auto" selected>')
+  })
+
+  it("bypassPermissions のときは警告クラスを付ける", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: "bypassPermissions" },
+    })
+
+    expect(body).toContain("permission-mode-select-danger")
+  })
+
+  it("bypassPermissions 以外では警告クラスを付けない", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: "auto" },
+    })
+
+    expect(body).not.toContain("permission-mode-select-danger")
   })
 })

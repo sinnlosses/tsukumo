@@ -61,6 +61,19 @@ export function isPermissionMode(value: string): value is PermissionMode {
   return PERMISSION_MODES.some((mode) => mode === value)
 }
 
+/**
+ * `setModel` に渡すモデルのエイリアス。Claude Code 本体はこの3語を受け付ける
+ * （2026-09-11 実測）。フルネーム（`claude-opus-4-1` のような値）は渡さない。
+ */
+export const MODEL_ALIASES = ["opus", "sonnet", "haiku"] as const
+
+export type ModelAlias = (typeof MODEL_ALIASES)[number]
+
+/** 画面から届いた文字列が {@link MODEL_ALIASES} のいずれかかどうかを検証する。 */
+export function isModelAlias(value: string): value is ModelAlias {
+  return MODEL_ALIASES.some((alias) => alias === value)
+}
+
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
   "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想・完了報告はこのツールで言う。" +

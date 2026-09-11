@@ -103,10 +103,10 @@
     "id": "T-043",
     "summary": "サイドバーを進行・タスク一覧・セッション情報の3区画にする",
     "task": "サイドバーを3区画（いま何をしているか／タスク一覧／セッション情報）に組み直す。\n\n## 背景\n\nいまのサイドバー（`src/view.ts` の `buildSidebarBody`、`SidebarData`）は「コンテキスト使用量・サブエージェント・タスク進捗」の3区画で、transcript とサブエージェントの transcript（`src/subagents.ts`）から組んでいる。**方針転換で、作業の進行（ツールの流れ）はメインビューからサイドバーへ移り（Q5）、中身は SDK のイベントから組む。**\n\nユーザー決定 Q11、上から:\n\n1. **いま何をしているか**: 実行中のツールを1行で（ツール名＋入力の要約）。終わったものは薄く数行残す\n2. **`develop/tasks.json` のタスク一覧**: T-028 で足す要約フィールドを使う（T-028 が先）。旧 T-029 はここに畳んだ（「コンテキスト使用量は不要」もそのまま）\n3. **セッション情報**: モデル・許可モード・経過時間。モデルの切り替えの選択肢もここ（Q9: `/model` を送るのではなく SDK のオプションで渡す。T-036 で `setModel` の有無を確認済み）\n\n## 解くべき論点\n\n- ツールの要約の切り方は T-040 の許可要求の要約と同じ関数を使う（`src/view.ts` の `truncateForDisplay` 系。1箇所にまとめる）\n- サブエージェントの中のツール実行も「いま何をしているか」に出すか。SDK のイベントに `parent_tool_use_id` があるので、あれば1段下げて出す\n- タスク一覧は `tasks.json` をファイルから読む（既存の `src/tasks.ts` を広げる）。更新は SSE の既存経路で、ファイルの mtime を見て差し替える\n- モデルの切り替えは `POST /api/model` → 駆動の `setModel`。選択肢は固定の一覧でよい（sonnet / opus / haiku の最新）\n\n## やること\n\n1. `SidebarData` を新しい3区画に変え、`buildSidebarBody` を書き直す\n2. 駆動側の内部イベント（tool_use / tool_result / init / result）から区画1と3のデータを組む\n3. `src/tasks.ts` にタスク一覧（id・要約・status）の読み取りを足す\n4. `/api/model` を足す\n\n## 完了条件\n\n- テスト: イベント列 → 区画1のデータ（実行中1件＋直近の完了数件）、`tasks.json` のフィクスチャ → 一覧、`/api/model` が駆動へ渡すこと\n- Orca のタブで目視: 依頼を送ると区画1にツール名が流れ、終わると薄くなる。区画2に `develop/tasks.json` の一覧が出る。区画3のモデルを変えると、次のターンから応答のモデルが変わる（`system/init` か `assistant` の `model` フィールドで確認）\n- `bun run check` が通ること\n\n## 注意\n\n- 会話内容の扱い: ツール入力の要約に本文の断片が入る場合があるので、ログには出さない\n- サブエージェントに委譲してよい。`/loop` に載せてよい",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "sonnet に委譲。サイドバーを3区画（いま何をしているか: 実行中＋直近5件の完了、サブエージェント内は1段下げ／タスク一覧: readTaskSummaries を mtime で読み直し／セッション情報: モデルと許可モードの select、経過時間）に書き直し。ツール入力の要約は summarizeToolInput に1箇所化。/api/model（opus/sonnet/haiku）を追加。`bun run check` 通過: 394 pass / 0 fail。curl 確認: 区画1にツール名＋要約、区画2に tasks.json 17件、区画3の model が haiku に切り替わる（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: 3区画が並ぶ／実行中は普通の色・完了は薄い色／モデルを変えると次のターンから変わる。",
     "dependencies": ["T-037", "T-028"]
   },
   {

@@ -9,7 +9,7 @@
 import { type PendingAsk } from "./pending-answer.ts"
 import { type Question, type QuestionOption } from "./question.ts"
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
-import { type TaskStatusCounts } from "./tasks.ts"
+import { type TaskSummaryItem } from "./tasks.ts"
 import { type MainViewEntry } from "./transcript.ts"
 
 export type ViewName = "main" | "character" | "sidebar"
@@ -88,6 +88,12 @@ export const ANSWER_PATH = "/api/answer"
 /** 許可モードを切り替える経路（POST、本文は `{ mode }`）。 */
 export const PERMISSION_MODE_PATH = "/api/permission-mode"
 
+/**
+ * モデルを切り替える経路（POST、本文は `{ model }`）。`model` はエイリアス（`opus` /
+ * `sonnet` / `haiku`）の3つだけを受け付ける（`src/session-driver.ts` の `MODEL_ALIASES`）。
+ */
+export const MODEL_PATH = "/api/model"
+
 /** 単体ビューのページで、本文を差し替える要素の id。 */
 const STANDALONE_VIEW_ELEMENT_ID = "tsukumo-view"
 
@@ -109,8 +115,9 @@ ${viewScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
 
 /**
  * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューには
- * やり取りのタブの制御（{@link mainTurnsScript}）、キャラビューには答え待ちの箱と許可モードの
- * 配線（{@link pendingAnswerScript}）を足す。**タブの選択・答え待ちの状態はブラウザ側だけが持つ**
+ * やり取りのタブの制御（{@link mainTurnsScript}）、キャラビューには答え待ちの箱の配線
+ * （{@link pendingAnswerScript}）、サイドバーにはモデル・許可モードの切り替えと経過時間の表示
+ * （{@link sessionInfoScript}）を足す。**タブの選択・答え待ちの状態はブラウザ側だけが持つ**
  * （サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は Server-Sent Events で
  * 押す」— 押す側に状態を持たせない）。
  */
@@ -121,6 +128,9 @@ function viewScript(elementId: string, view: ViewName, initialBody: string): str
   }
   if (view === "character") {
     return `${subscription}\n${pendingAnswerScript(elementId)}`
+  }
+  if (view === "sidebar") {
+    return `${subscription}\n${sessionInfoScript(elementId)}`
   }
   return subscription
 }
@@ -722,8 +732,6 @@ export type CharacterViewData = {
    * 答え待ちが無いときは undefined。
    */
   readonly pending: PendingAsk | undefined
-  /** いまの許可モード。`session-info` イベントの `permissionMode`（`init` のたびに届く）。 */
-  readonly permissionMode: string | undefined
 }
 
 /**
@@ -732,8 +740,8 @@ export type CharacterViewData = {
  * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
  *
  * **答え待ちの箱（{@link buildPendingAnswerBody}）は吹き出しの直下に出す**（許可プロンプトと
- * 質問はキャラが聞く。2026-09-11 決定）。**許可モードの `<select>`（{@link permissionModeHtml}）は
- * 領域の端に置く**。サイドバーの区画がまだ無いので、いまはここに置いている。
+ * 質問はキャラが聞く。2026-09-11 決定）。**許可モードの `<select>` はサイドバーのセッション情報へ
+ * 移した**（{@link sessionInfoBody}。2026-09-11 決定。サイドバーの区画ができたため）。
  */
 export function buildCharacterBody(data: CharacterViewData): string {
   const text = data.speech ?? PLACEHOLDER_UTTERANCE
@@ -747,7 +755,6 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // 縦幅が窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
   return `<div class="character-region">
-${permissionModeHtml(data.permissionMode)}
 <div class="character-layout">${portraitHtml}<div class="balloon">${escapeHtml(text)}</div></div>
 ${buildPendingAnswerBody(data.pending)}
 </div>`
@@ -970,14 +977,14 @@ const PENDING_ANSWER_ID_ATTR = "data-pending-id"
 /** `AskUserQuestion` の自由入力の選択肢。このラベルの選択肢だけ、テキスト欄で受け取る。 */
 const FREE_TEXT_OPTION_LABEL = "その他"
 
-/** 許可要求の要約に出す1行の長さの上限（目安）。切り方は {@link truncateForDisplay} と同じ考え方。 */
-const MAX_PERMISSION_SUMMARY_LENGTH = 120
+/** ツール入力の要約に出す1行の長さの上限（目安）。切り方は {@link truncateForDisplay} と同じ考え方。 */
+const MAX_TOOL_SUMMARY_LENGTH = 120
 
 /**
- * 許可要求の要約に使うフィールド名。Bash は `command`、Edit / Write / Read は `file_path`。
+ * ツール入力の要約に使うフィールド名。Bash は `command`、Edit / Write / Read は `file_path`。
  * 載っていないツールは {@link firstStringValue} に落ちる。
  */
-const PERMISSION_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
+const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
   Bash: "command",
   Edit: "file_path",
   Write: "file_path",
@@ -985,17 +992,19 @@ const PERMISSION_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
 }
 
 /**
- * 許可要求（`PendingAsk` の `permission`）を、キャラビューに出してよい1行の要約にする。
+ * ツール名＋入力を、画面に出してよい1行の要約にする。**許可要求（キャラビューの答え待ちの箱）と
+ * サイドバーの「いま何をしているか」の両方がここを呼ぶ**（同じ概念を2箇所で別に決めない）。
  * **入力の全文は出さない**（docs/coding-standards.md「会話内容の扱い」）。純粋関数なので、
- * ツールごとの要約の決め方は直接テストできる。
+ * ツールごとの要約の決め方は直接テストできる。入力がオブジェクトの形でないときは空文字。
  */
-export function summarizePermissionInput(
-  toolName: string,
-  input: Readonly<Record<string, unknown>>,
-): string {
-  const field = PERMISSION_SUMMARY_FIELD_BY_TOOL[toolName]
+export function summarizeToolInput(toolName: string, input: unknown): string {
+  if (!isRecord(input)) {
+    return ""
+  }
+
+  const field = TOOL_SUMMARY_FIELD_BY_TOOL[toolName]
   const value = field === undefined ? firstStringValue(input) : stringField(input, field)
-  return value === undefined ? "" : truncatePermissionSummary(value)
+  return value === undefined ? "" : truncateToolSummary(value)
 }
 
 function firstStringValue(input: Readonly<Record<string, unknown>>): string | undefined {
@@ -1007,10 +1016,10 @@ function firstStringValue(input: Readonly<Record<string, unknown>>): string | un
   return undefined
 }
 
-function truncatePermissionSummary(text: string): string {
-  return text.length <= MAX_PERMISSION_SUMMARY_LENGTH
+function truncateToolSummary(text: string): string {
+  return text.length <= MAX_TOOL_SUMMARY_LENGTH
     ? text
-    : `${text.slice(0, MAX_PERMISSION_SUMMARY_LENGTH)}…`
+    : `${text.slice(0, MAX_TOOL_SUMMARY_LENGTH)}…`
 }
 
 /**
@@ -1035,7 +1044,7 @@ export function buildPendingAnswerBody(pending: PendingAsk | undefined): string 
 function permissionAnswerHtml(
   pending: Extract<PendingAsk, { readonly kind: "permission" }>,
 ): string {
-  const summary = summarizePermissionInput(pending.toolName, pending.input)
+  const summary = summarizeToolInput(pending.toolName, pending.input)
 
   return `<div class="${PENDING_ANSWER_ELEMENT_CLASS} pending-permission" ${PENDING_ANSWER_ID_ATTR}="${escapeHtml(pending.id)}">
 <p class="pending-summary"><span class="pending-tool">${escapeHtml(pending.toolName)}</span>${summary === "" ? "" : `: ${escapeHtml(summary)}`}</p>
@@ -1112,8 +1121,9 @@ const DANGEROUS_PERMISSION_MODE = "bypassPermissions"
 const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
 
 /**
- * 許可モードを切り替える `<select>`。キャラビューの領域の端に置く（サイドバーの区画がまだ無いため。
- * 2026-09-11 決定）。`bypassPermissions` を選んでいるときは警告色を付ける
+ * 許可モードを切り替える `<select>`。サイドバーのセッション情報に置く（{@link sessionInfoBody}。
+ * 2026-09-11 決定。以前はキャラビューの領域の端に置いていたが、サイドバーの区画ができたため
+ * 移した）。`bypassPermissions` を選んでいるときは警告色を付ける
  * （`STYLE` の `.permission-mode-select-danger`）。
  */
 function permissionModeHtml(mode: string | undefined): string {
@@ -1131,18 +1141,60 @@ function permissionModeHtml(mode: string | undefined): string {
 </div>`
 }
 
+// モデルのエイリアスと、日本語ラベル。値は `src/session-driver.ts` の MODEL_ALIASES と同じ3つだが、
+// **view.ts はそのファイルを import しない**（原則3。PERMISSION_MODE_LABELS と同じ理由）。
+const MODEL_LABELS: ReadonlyArray<readonly [string, string]> = [
+  ["opus", "Opus"],
+  ["sonnet", "Sonnet"],
+  ["haiku", "Haiku"],
+]
+// `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。
+const MODEL_FALLBACK = "sonnet"
+const MODEL_SELECT_ID = "tsukumo-model"
+
 /**
- * 答え待ちの箱と許可モードの `<select>` の配線。キャラビューの要素（`elementId`）に対する
- * イベント委譲だけで書く（{@link subscriptionScript} が本文を丸ごと差し替えるため、
- * 個々のボタンに直接リスナーを付けても差し替えのたびに失われる。`mainTurnsScript` と同じ理由）。
+ * `session-info` の `model`（フルネームや実装依存の識別子）から、`<select>` に選択済みで
+ * 出すエイリアスを決める。**部分一致**にしてあるのは、フルネームの形（`claude-opus-4-1` の
+ * ような値）が実装側の都合で変わりうるため（2026-09-11 実測に頼らない安全側の判定）。
+ */
+function resolveModelAlias(model: string | undefined): string {
+  if (model === undefined) {
+    return MODEL_FALLBACK
+  }
+
+  return MODEL_LABELS.find(([alias]) => model.includes(alias))?.[0] ?? MODEL_FALLBACK
+}
+
+/**
+ * モデルを切り替える `<select>`。選べるのはエイリアス3つだけ（`docs`「セッション情報」の決定）。
+ * `/model` は送らず、駆動側の `setModel`（Agent SDK）を呼ぶ（{@link sessionInfoScript}）。
+ */
+function modelSelectHtml(model: string | undefined): string {
+  const current = resolveModelAlias(model)
+  const options = MODEL_LABELS.map(
+    ([value, label]) =>
+      `<option value="${value}"${value === current ? " selected" : ""}>${escapeHtml(label)}</option>`,
+  ).join("")
+
+  return `<div class="model-select-wrap">
+<label for="${MODEL_SELECT_ID}">モデル</label>
+<select id="${MODEL_SELECT_ID}" class="model-select">${options}</select>
+<span class="model-select-status" role="status" aria-live="polite"></span>
+</div>`
+}
+
+/**
+ * 答え待ちの箱の配線。キャラビューの要素（`elementId`）に対するイベント委譲だけで書く
+ * （{@link subscriptionScript} が本文を丸ごと差し替えるため、個々のボタンに直接リスナーを
+ * 付けても差し替えのたびに失われる。`mainTurnsScript` と同じ理由）。
  *
  * - **押した瞬間に無効化し、二重送信を防ぐ。** 失敗したら押せる状態に戻す
  * - **単一選択（質問が1つだけで単一選択）は選択肢を押した瞬間に送る。** それ以外は選択・入力を
  *   ブラウザ側に溜め、全部答えてから「答える」ボタンで送る
  * - **`multiSelect` は選んだ選択肢を「、」でつないだ1つの文字列にする**（`answersRecord` は
  *   1問につき1つの文字列しか受け取らない。`src/pending-answer.ts`）
- * - **許可モードの変更は `change` の瞬間に送る。** 次に届く `session-info` で `<select>` の
- *   選択が上書きされる（サーバ側の値が正になる）
+ *
+ * 許可モード・モデルの `<select>` はサイドバーへ移った（{@link sessionInfoScript}）。
  */
 function pendingAnswerScript(elementId: string): string {
   return `  {
@@ -1283,90 +1335,132 @@ function pendingAnswerScript(elementId: string): string {
       }
     })
 
-    el.addEventListener("change", (event) => {
-      if (!event.target.classList.contains("permission-mode-select")) {
-        return
-      }
-      const select = event.target
-      const status = el.querySelector(".permission-mode-status")
-      select.disabled = true
-      if (status !== null) {
-        status.textContent = "切り替え中…"
-      }
-      fetch(${JSON.stringify(PERMISSION_MODE_PATH)}, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode: select.value }),
-      })
-        .then((response) => response.json())
-        .then((result) => {
-          select.disabled = false
-          if (status !== null) {
-            status.textContent = result.ok === true ? "" : "切り替えられなかった: " + result.reason
-          }
-        })
-        .catch(() => {
-          select.disabled = false
-          if (status !== null) {
-            status.textContent = "切り替えられなかった"
-          }
-        })
-    })
-
     updateSubmitState()
   }`
 }
 
 /**
- * 1件のサブエージェントについて、サイドバーに出してよい範囲の直近の状況。
- * `description` / `model` は `agent-<id>.meta.json` 由来のラベル（会話内容ではない。
- * ユーザーとの合意事項）。`meta.json` が無い・壊れているサブエージェントでは両方 undefined になり、
- * その場合はツール名だけで表示する。
+ * サイドバーのセッション情報（モデル・許可モードの `<select>`、経過時間）の配線。
+ * サイドバーの要素（`elementId`）に対するイベント委譲で書く（`pendingAnswerScript` と同じ理由）。
+ *
+ * - **許可モード・モデルの変更は `change` の瞬間に送る。** 次に届く `session-info` で
+ *   `<select>` の選択が上書きされる（サーバ側の値が正になる）
+ * - **経過時間はブラウザ側で1秒ごとに刻む。** サーバは開始時刻を `data-started-at` 属性
+ *   （エポック ms）で渡すだけで、以降のカウントアップはここが担う。**差し替え
+ *   （`subscriptionScript` の `innerHTML` 代入）で要素が入れ替わっても、都度 `querySelector`
+ *   で読み直すので途切れない**
  */
-export type SubagentActivity = {
-  readonly description: string | undefined
-  readonly model: string | undefined
-  /** 直近に使われたツール名。引数・出力は含めない（会話の内容を出さないため）。 */
-  readonly latestToolName: string | undefined
+function sessionInfoScript(elementId: string): string {
+  return `  {
+    const el = document.getElementById(${JSON.stringify(elementId)})
+
+    function wireSelect(selectClass, statusClass, path, bodyOf) {
+      el.addEventListener("change", (event) => {
+        if (!event.target.classList.contains(selectClass)) {
+          return
+        }
+        const select = event.target
+        const status = el.querySelector("." + statusClass)
+        select.disabled = true
+        if (status !== null) {
+          status.textContent = "切り替え中…"
+        }
+        fetch(path, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(bodyOf(select.value)),
+        })
+          .then((response) => response.json())
+          .then((result) => {
+            select.disabled = false
+            if (status !== null) {
+              status.textContent = result.ok === true ? "" : "切り替えられなかった: " + result.reason
+            }
+          })
+          .catch(() => {
+            select.disabled = false
+            if (status !== null) {
+              status.textContent = "切り替えられなかった"
+            }
+          })
+      })
+    }
+
+    wireSelect("permission-mode-select", "permission-mode-status", ${JSON.stringify(PERMISSION_MODE_PATH)}, (mode) => ({ mode }))
+    wireSelect("model-select", "model-select-status", ${JSON.stringify(MODEL_PATH)}, (model) => ({ model }))
+
+    function tickElapsed() {
+      const span = el.querySelector(".${SESSION_ELAPSED_CLASS}")
+      if (span === null) {
+        return
+      }
+      const raw = span.getAttribute("data-started-at")
+      const startedAt = raw === null || raw === "" ? NaN : Number(raw)
+      if (!Number.isFinite(startedAt)) {
+        span.textContent = "-"
+        return
+      }
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
+      span.textContent = elapsedSeconds + "秒"
+    }
+
+    tickElapsed()
+    // ブラウザには必ずあるが、スクリプトだけを取り出して動かすテストのサンドボックスには無い
+    // （src/view.ts は表示の中身だけを決め、実行環境の前提はここでは張らない）。
+    if (typeof setInterval === "function") {
+      setInterval(tickElapsed, 1000)
+    }
+  }`
 }
 
-/** サブエージェントの状況のうち、サイドバーに出す分だけをまとめたもの。 */
-export type SubagentsSummary = {
-  /** 保留中のサブエージェント件数。件数の権威ある情報源は transcript の `pendingBackgroundAgentCount`
-   *  （`src/transcript.ts`）。8行に1回程度しか出ないため、無いときは undefined。 */
-  readonly pendingCount: number | undefined
-  /** 直近に活動したサブエージェントの状況（1件につき1つ）。「走っているか」の判定はできないため、
-   *  ここは活動の有無ではなく**直近の中身**を表す。新しい順。 */
-  readonly recentActivity: readonly SubagentActivity[]
+/**
+ * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は
+ * {@link summarizeToolInput} の仕事）。`src/session-view.ts` の `ToolActivity` と同じ形。
+ */
+export type SidebarToolActivity = {
+  readonly name: string
+  readonly input: unknown
+  /** サブエージェントの中で動いたか（1段下げて出す）。 */
+  readonly nested: boolean
 }
 
 /** サイドバーの本文を組み立てるために必要な値。取れなかった項目は `undefined` で表す。 */
 export type SidebarData = {
-  /** 最新の assistant 行の使用トークン数の合計。残量%は含まない（モデルの窓の大きさが
-   *  transcript に無いため）。 */
-  readonly contextTokens: number | undefined
-  readonly subagents: SubagentsSummary
-  /** develop/tasks.json の done / todo 件数。ファイルが読めない・壊れているときは undefined。 */
-  readonly taskCounts: TaskStatusCounts | undefined
+  /** いま何をしているか（区画1）。実行中は普通の色、直近の完了は薄く数行（`buildSidebarBody`）。 */
+  readonly activity: {
+    readonly running: readonly SidebarToolActivity[]
+    readonly finished: readonly SidebarToolActivity[]
+  }
+  /**
+   * develop/tasks.json の一覧（区画2）。ファイルが読めない・壊れているときは undefined
+   * （`src/tasks.ts` の `readTaskSummaries` と同じ契約）。
+   */
+  readonly tasks: readonly TaskSummaryItem[] | undefined
+  /** セッション情報（区画3）。 */
+  readonly session: {
+    readonly model: string | undefined
+    readonly permissionMode: string | undefined
+    /** 直近の依頼（`request`）が届いた時刻（エポック ms）。まだ依頼が無いときは undefined。 */
+    readonly turnStartedAt: number | undefined
+  }
 }
 
 /**
- * サイドバーの本文。**「補足情報の置き場」であって単機能パネルではない**ので、独立した3つの
- * 区画（コンテキスト使用量・サブエージェント・タスクの進捗）を並べる
- * （`docs/history/direction.md` 2026-09-09 決定事項。biim システムのサイドバーに倣う）。
+ * サイドバーの本文。「補足情報の置き場」であって単機能パネルではないので、独立した3つの区画
+ * （いま何をしているか・タスク一覧・セッション情報）を並べる（2026-09-11 決定。方針転換で
+ * 作業の進行（ツールの流れ）がメインビューからここへ移った。コンテキスト使用量は出さない）。
  *
- * **会話の内容は出さない。** サブエージェントの直近の活動は、`meta.json` 由来のラベル
- * （`description` / `model`。会話内容ではなくこちら側が付けたタスクラベル）と、直近に使った
- * ツール名までにとどめ、引数や出力は出さない（`docs/coding-standards.md`「会話内容の扱い」）。
+ * **会話の内容は出さない**建前だが、ツール名＋入力の要約には断片が入りうる
+ * （`docs/coding-standards.md`「会話内容の扱い」— 許可要求の要約と同じ扱い）。
  *
  * 3つの区画は互いに独立している。**どれか1つが取れなくても、その区画だけ「不明」を出し、
  * 残りは表示を続ける**（`data` の各フィールドが `undefined` や空配列のときに壊れないこと）。
  */
 export function buildSidebarBody(data: SidebarData): string {
   return [
-    sidebarSection("コンテキスト使用量", contextUsageBody(data.contextTokens)),
-    sidebarSection("サブエージェント", subagentsBody(data.subagents)),
-    sidebarSection("タスクの進捗", taskProgressBody(data.taskCounts)),
+    sidebarSection("いま何をしているか", activityBody(data.activity)),
+    sidebarSection("タスク一覧", taskListBody(data.tasks)),
+    sidebarSection("セッション情報", sessionInfoBody(data.session)),
   ].join("\n")
 }
 
@@ -1397,15 +1491,15 @@ const STYLE = `
     overflow-wrap: anywhere;
   }
   .character-region { display: flex; flex-direction: column; gap: 0.5rem; }
-  .permission-mode {
+  .permission-mode, .model-select-wrap {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 0.4rem;
     font-size: 0.8rem;
     color: #8f97ab;
   }
-  .permission-mode-select {
+  .permission-mode-select, .model-select {
     padding: 0.15rem 0.4rem;
     border: 1px solid #3a4256;
     border-radius: 0.4rem;
@@ -1414,7 +1508,7 @@ const STYLE = `
     font: inherit;
   }
   .permission-mode-select-danger { border-color: #e88b8b; color: #e88b8b; }
-  .permission-mode-status { min-height: 1.2em; }
+  .permission-mode-status, .model-select-status { min-height: 1.2em; }
   .character-layout {
     display: flex;
     flex-wrap: wrap;
@@ -1691,6 +1785,20 @@ const STYLE = `
   .sidebar-block p { margin: 0.2rem 0; }
   .sidebar-empty { color: #8f97ab; }
   .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
+  .activity-item.activity-finished { color: #8f97ab; }
+  .activity-item.activity-nested { margin-left: 1rem; list-style-type: circle; }
+  .task-item.task-done { color: #8f97ab; }
+  .task-item .task-id { font-family: ui-monospace, SFMono-Regular, monospace; opacity: 0.8; }
+  .task-item .task-status {
+    margin-left: 0.3rem;
+    padding: 0 0.3rem;
+    border-radius: 0.3rem;
+    background: #1c202a;
+    font-size: 0.75rem;
+  }
+  .session-info { display: flex; flex-direction: column; gap: 0.4rem; }
+  .session-elapsed-row { font-size: 0.8rem; color: #8f97ab; }
+  .session-elapsed { font-family: ui-monospace, SFMono-Regular, monospace; color: #e6e8ee; }
 
   /* まとめたレイアウト（buildLayoutPage）。上段（メイン・サイドバー）と下段（キャラビュー・
      入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid
@@ -2376,52 +2484,83 @@ ${body}
 </section>`
 }
 
-function contextUsageBody(tokens: number | undefined): string {
-  if (tokens === undefined) {
-    return `<p class="sidebar-empty">不明</p>`
+/**
+ * サイドバーの「いま何をしているか」の本文。**実行中が先（普通の色）、直近の完了がその下
+ * （薄い色）**（`docs/requirements.md` 4.2 の決定）。両方空のときだけ空であることを出す。
+ */
+function activityBody(activity: SidebarData["activity"]): string {
+  if (activity.running.length === 0 && activity.finished.length === 0) {
+    return `<p class="sidebar-empty">いま動いているツールは無い</p>`
   }
 
-  return `<p>${escapeHtml(tokens.toLocaleString("ja-JP"))} トークン</p>`
-}
-
-function subagentsBody(subagents: SubagentsSummary): string {
-  const countLine =
-    subagents.pendingCount === undefined
-      ? `<p>保留中: 不明</p>`
-      : `<p>保留中: ${escapeHtml(String(subagents.pendingCount))}件</p>`
-
-  if (subagents.recentActivity.length === 0) {
-    return `${countLine}\n<p class="sidebar-empty">直近の活動なし</p>`
-  }
-
-  const items = subagents.recentActivity
-    .map((activity) => `<li>${escapeHtml(describeSubagentActivity(activity))}</li>`)
-    .join("\n")
-  return `${countLine}\n<ul class="sidebar-list">${items}</ul>`
+  const items = [
+    ...activity.running.map((item) => activityItemHtml(item, false)),
+    ...activity.finished.map((item) => activityItemHtml(item, true)),
+  ].join("\n")
+  return `<ul class="sidebar-list activity-list">${items}</ul>`
 }
 
 /**
- * サブエージェント1件分の表示テキストを組み立てる。`description`（あれば `model` も）と、
- * 直近のツール名を1行にまとめる。`description` が無い（`meta.json` が無い・壊れている）
- * サブエージェントは、従来どおりツール名だけを出す（列から消さない）。
- * どちらも無いときの "(不明)" は、この関数を直接テストするとき用の安全側の既定値。
+ * 実行中・完了1件分。**サブエージェントの中（`nested`）は1段下げて出す**
+ * （`docs/coding-standards.md`「タスク本文」の決定）。要約は {@link summarizeToolInput} に頼る
+ * （許可要求の要約と同じ関数。同じ概念を2箇所で別に決めない）。
  */
-function describeSubagentActivity(activity: SubagentActivity): string {
-  if (activity.description === undefined) {
-    return activity.latestToolName ?? "(不明)"
-  }
+function activityItemHtml(activity: SidebarToolActivity, finished: boolean): string {
+  const summary = summarizeToolInput(activity.name, activity.input)
+  const label = `${activity.name}${summary === "" ? "" : `: ${summary}`}`
+  const classes = [
+    "activity-item",
+    finished ? "activity-finished" : "activity-running",
+    activity.nested ? "activity-nested" : "",
+  ]
+    .filter((name) => name !== "")
+    .join(" ")
 
-  const modelPart = activity.model === undefined ? "" : ` (${activity.model})`
-  const toolPart = activity.latestToolName === undefined ? "" : ` — ${activity.latestToolName}`
-  return `${activity.description}${modelPart}${toolPart}`
+  return `<li class="${classes}">${escapeHtml(label)}</li>`
 }
 
-function taskProgressBody(taskCounts: TaskStatusCounts | undefined): string {
-  if (taskCounts === undefined) {
+/**
+ * サイドバーの「タスク一覧」の本文。**status ごとにまとめず、ファイルの順で出す**
+ * （`develop/tasks.json` の決定）。`done` は薄く出す。
+ */
+function taskListBody(tasks: readonly TaskSummaryItem[] | undefined): string {
+  if (tasks === undefined) {
     return `<p class="sidebar-empty">不明</p>`
   }
+  if (tasks.length === 0) {
+    return `<p class="sidebar-empty">タスクが無い</p>`
+  }
 
-  return `<p>done ${escapeHtml(String(taskCounts.done))} / todo ${escapeHtml(String(taskCounts.todo))}</p>`
+  const items = tasks.map((task) => taskItemHtml(task)).join("\n")
+  return `<ul class="sidebar-list task-list">${items}</ul>`
+}
+
+function taskItemHtml(task: TaskSummaryItem): string {
+  const doneClass = task.status === "done" ? " task-done" : ""
+  const statusHtml =
+    task.status === undefined ? "" : `<span class="task-status">${escapeHtml(task.status)}</span>`
+
+  return `<li class="task-item${doneClass}"><span class="task-id">${escapeHtml(task.id)}</span> ${escapeHtml(task.summary)} ${statusHtml}</li>`
+}
+
+const SESSION_ELAPSED_CLASS = "session-elapsed"
+
+/**
+ * サイドバーの「セッション情報」の本文。モデル・許可モードの `<select>`（駆動側の切り替えは
+ * {@link sessionInfoScript}）と、経過時間の表示枠を並べる。**経過時間はここでは計算しない**
+ * （view.ts は純粋関数だけを置く場所で、`Date.now()` のような時刻の取得を持たない。開始時刻を
+ * `data-started-at` に載せるだけで、実際のカウントアップはブラウザ側の {@link sessionInfoScript}）。
+ */
+function sessionInfoBody(session: SidebarData["session"]): string {
+  const startedAtAttr = session.turnStartedAt === undefined ? "" : String(session.turnStartedAt)
+
+  return `<div class="session-info">
+<div class="session-info-row">${modelSelectHtml(session.model)}</div>
+<div class="session-info-row">${permissionModeHtml(session.permissionMode)}</div>
+<div class="session-info-row session-elapsed-row">経過:
+<span class="${SESSION_ELAPSED_CLASS}" data-started-at="${escapeHtml(startedAtAttr)}">-</span>
+</div>
+</div>`
 }
 
 function page(title: string, body: string): string {

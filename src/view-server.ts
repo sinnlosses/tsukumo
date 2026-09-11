@@ -13,7 +13,12 @@ import process from "node:process"
 import { bundledFilePath } from "./bundled-files.ts"
 import { type Host, type Pane } from "./host.ts"
 import { type Answer, parseAnswer } from "./pending-answer.ts"
-import { isPermissionMode, type PermissionMode } from "./session-driver.ts"
+import {
+  isModelAlias,
+  isPermissionMode,
+  type ModelAlias,
+  type PermissionMode,
+} from "./session-driver.ts"
 import {
   buildIndexPage,
   buildLayoutPage,
@@ -23,6 +28,7 @@ import {
   INTERRUPT_PATH,
   LAYOUT_PATH,
   type LayoutBodies,
+  MODEL_PATH,
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TERMINALS_PATH,
@@ -76,6 +82,13 @@ export type SendAnswer = (id: string, answer: Answer) => boolean
  */
 export type SendPermissionMode = (mode: PermissionMode) => Promise<boolean>
 
+/**
+ * サイドバーのモデル `<select>` から届いた切り替えをセッション駆動へ渡す関数。**`SendPermissionMode`
+ * と同じ契約**（セッションがまだ起きていないときは `false`）。`/model` を送るのではなく、
+ * 駆動側の `setModel`（Agent SDK）を呼ぶ。
+ */
+export type SendModel = (model: ModelAlias) => Promise<boolean>
+
 export type ViewServer = {
   /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */
   readonly urlOf: (view: ViewName) => string
@@ -110,6 +123,7 @@ export function startViewServer(
   sendInterrupt: SendInterrupt,
   sendAnswer: SendAnswer,
   sendPermissionMode: SendPermissionMode,
+  sendModel: SendModel,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
@@ -134,6 +148,7 @@ export function startViewServer(
       sendInterrupt,
       sendAnswer,
       sendPermissionMode,
+      sendModel,
       turnStatusClients,
       () => turnStatusBody,
     )
@@ -218,6 +233,7 @@ function respond(
   sendInterrupt: SendInterrupt,
   sendAnswer: SendAnswer,
   sendPermissionMode: SendPermissionMode,
+  sendModel: SendModel,
   turnStatusClients: Set<ServerResponse>,
   getTurnStatusBody: () => string,
 ): void {
@@ -295,6 +311,15 @@ function respond(
       return
     }
     handlePermissionMode(request, response, sendPermissionMode)
+    return
+  }
+
+  if (path === MODEL_PATH && request.method === "POST") {
+    if (!isAllowedOrigin(request, serverOrigin)) {
+      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
+      return
+    }
+    handleModel(request, response, sendModel)
     return
   }
 
@@ -585,6 +610,56 @@ function parsePermissionModeRequest(body: string): PermissionMode | undefined {
   }
 
   return isPermissionMode(parsed.mode) ? parsed.mode : undefined
+}
+
+/**
+ * サイドバーのモデル `<select>` から届いた切り替えを、セッション駆動へ渡す。
+ * **セッションがまだ起きていないときは 503**（`handlePermissionMode` と同じ扱い）。
+ * エイリアス（`MODEL_ALIASES`）以外・壊れた JSON は 400。
+ */
+function handleModel(
+  request: IncomingMessage,
+  response: ServerResponse,
+  sendModel: SendModel,
+): void {
+  readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
+    .then((body) => {
+      const model = body === undefined ? undefined : parseModelRequest(body)
+      if (model === undefined) {
+        writeJson(response, 400, { ok: false, reason: "モデルの指定が正しくない" })
+        return
+      }
+
+      sendModel(model)
+        .then((accepted) => {
+          if (!accepted) {
+            writeJson(response, 503, { ok: false, reason: "セッションがまだ起きていない" })
+            return
+          }
+          writeJson(response, 200, { ok: true })
+        })
+        .catch(() => {
+          writeJson(response, 502, { ok: false, reason: "モデルを切り替えられなかった" })
+        })
+    })
+    .catch(() => {
+      writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
+    })
+}
+
+function parseModelRequest(body: string): ModelAlias | undefined {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(body)
+  } catch {
+    return undefined
+  }
+
+  if (!isRecord(parsed) || typeof parsed.model !== "string") {
+    return undefined
+  }
+
+  return isModelAlias(parsed.model) ? parsed.model : undefined
 }
 
 type DispatchRequest = { readonly terminalId: string; readonly text: string }

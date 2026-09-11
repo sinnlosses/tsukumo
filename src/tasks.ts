@@ -10,6 +10,13 @@ export type TaskStatusCounts = {
   readonly todo: number
 }
 
+/** サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。 */
+export type TaskSummaryItem = {
+  readonly id: string
+  readonly summary: string
+  readonly status: string | undefined
+}
+
 /**
  * develop/tasks.json の内容から、`status` が `"done"` / `"todo"` の件数を数える。
  * JSON として不正、またはトップレベルが配列でないときは undefined を返す
@@ -38,6 +45,53 @@ export function countTaskStatuses(content: string): TaskStatusCounts | undefined
 
 function statusOf(task: unknown): string | undefined {
   return isRecord(task) && typeof task.status === "string" ? task.status : undefined
+}
+
+/**
+ * develop/tasks.json の内容から、サイドバーの一覧に出す id・summary・status をファイルの順で
+ * 取り出す。**status ごとにまとめない**（サイドバーの決定。ファイルの順のまま出す）。
+ *
+ * `summary` が無い・空文字の要素は `task` フィールドの先頭行で代用する。`id` が文字列でない、
+ * どちらも代用できない（`summary` も `task` も無い）要素は、その要素だけ読み飛ばす
+ * （`docs/coding-standards.md`「型を迂回するキャストを使わない」と同じ、要素単位の安全側の判断）。
+ * ファイル全体が JSON として不正、またはトップレベルが配列でないときは undefined
+ * （{@link countTaskStatuses} と同じ扱い）。
+ */
+export function readTaskSummaries(content: string): readonly TaskSummaryItem[] | undefined {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(content)
+  } catch {
+    return undefined
+  }
+
+  if (!Array.isArray(parsed)) {
+    return undefined
+  }
+
+  return parsed.flatMap((task) => taskSummaryItem(task))
+}
+
+function taskSummaryItem(task: unknown): readonly TaskSummaryItem[] {
+  if (!isRecord(task) || typeof task.id !== "string") {
+    return []
+  }
+
+  const summary =
+    typeof task.summary === "string" && task.summary !== "" ? task.summary : firstLineOf(task.task)
+  if (summary === undefined) {
+    return []
+  }
+
+  return [{ id: task.id, summary, status: statusOf(task) }]
+}
+
+function firstLineOf(value: unknown): string | undefined {
+  if (typeof value !== "string" || value === "") {
+    return undefined
+  }
+
+  return value.split("\n")[0]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

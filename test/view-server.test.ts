@@ -3,10 +3,11 @@ import { networkInterfaces } from "node:os"
 
 import { type Host, type HostResult } from "../src/host.ts"
 import { type Answer } from "../src/pending-answer.ts"
-import { type PermissionMode } from "../src/session-driver.ts"
+import { type ModelAlias, type PermissionMode } from "../src/session-driver.ts"
 import {
   type SendAnswer,
   type SendInterrupt,
+  type SendModel,
   type SendPermissionMode,
   type SendPrompt,
   startViewServer,
@@ -15,6 +16,7 @@ import {
 import {
   DISPATCH_PATH,
   INTERRUPT_PATH,
+  MODEL_PATH,
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TERMINALS_PATH,
@@ -50,6 +52,7 @@ async function start(
   sendInterrupt: SendInterrupt = () => Promise.resolve(),
   sendAnswer: SendAnswer = () => true,
   sendPermissionMode: SendPermissionMode = () => Promise.resolve(true),
+  sendModel: SendModel = () => Promise.resolve(true),
 ): Promise<ViewServer> {
   const server = await startViewServer(
     0,
@@ -58,6 +61,7 @@ async function start(
     sendInterrupt,
     sendAnswer,
     sendPermissionMode,
+    sendModel,
   )
   running = server
   return server
@@ -535,6 +539,91 @@ describe("許可モードの切り替え（/api/permission-mode）", () => {
 
     expect(response.status).toBe(403)
     expect(sendPermissionMode).not.toHaveBeenCalled()
+  })
+})
+
+describe("モデルの切り替え（/api/model）", () => {
+  it("model を駆動へ渡す", async () => {
+    const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      () => Promise.resolve(true),
+      sendModel,
+    )
+
+    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "haiku" }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(sendModel).toHaveBeenCalledWith("haiku")
+  })
+
+  it("エイリアス以外は駆動を呼ばずに400を返す", async () => {
+    const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      () => Promise.resolve(true),
+      sendModel,
+    )
+
+    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "claude-opus-4-1" }),
+    })
+
+    expect(response.status).toBe(400)
+    expect(sendModel).not.toHaveBeenCalled()
+  })
+
+  it("セッションがまだ起きていないときは503を返す", async () => {
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      () => Promise.resolve(true),
+      () => Promise.resolve(false),
+    )
+
+    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "opus" }),
+    })
+
+    expect(response.status).toBe(503)
+  })
+
+  it("別のオリジンからは403で弾く", async () => {
+    const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      () => Promise.resolve(true),
+      sendModel,
+    )
+
+    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: "http://example.invalid" },
+      body: JSON.stringify({ model: "opus" }),
+    })
+
+    expect(response.status).toBe(403)
+    expect(sendModel).not.toHaveBeenCalled()
   })
 })
 

@@ -10,8 +10,8 @@ import { type PendingAsk } from "./pending-answer.ts"
 import { type SessionEvent } from "./session-event.ts"
 import { DEFAULT_SPEECH_MARKER, type MainViewEntry, splitUtterance } from "./transcript.ts"
 
-/** サイドバーに出す、直近に使ったツールの数（縦に狭い領域なので絞る）。 */
-const MAX_RECENT_TOOL_NAMES = 5
+/** サイドバーの「終わったもの」に残す、直近に使い終えたツールの数（縦に狭い領域なので絞る）。 */
+const MAX_RECENT_FINISHED_TOOLS = 5
 
 /**
  * 吹き出しに並べて出す、同じターン内の直近セリフの上限件数（docs/requirements.md 4.2
@@ -28,6 +28,19 @@ const MAX_RECENT_SPEECHES = 3
 const MAX_SESSION_VIEW_TURNS = 20
 
 /**
+ * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は表示側
+ * `src/view.ts` の `summarizeToolInput` の仕事。`docs/coding-standards.md`「会話内容の扱い」の
+ * とおり、要約に断片が入りうることは呼び出し側が承知した上で使う）。
+ */
+export type ToolActivity = {
+  readonly toolUseId: string
+  readonly name: string
+  readonly input: unknown
+  /** サブエージェントの中で動いたか（`tool-started` の `parentToolUseId` があるか）。 */
+  readonly nested: boolean
+}
+
+/**
  * セッションの中で起きたことを起きた順に並べたもの。メインビューの `MainViewEntry` とほぼ同じだが、
  * **ツールは `toolUseId` を持つ**（あとから届く結果を突き合わせるため。表示には使わない）。
  */
@@ -39,6 +52,7 @@ export type SessionRecord =
       readonly toolUseId: string
       readonly name: string
       readonly input: unknown
+      readonly nested: boolean
       readonly result: { readonly content: string; readonly isError: boolean } | undefined
     }
 
@@ -71,9 +85,12 @@ export type SessionView = {
   /** 書きかけの本文。完成した本文が来たら空に戻る。 */
   readonly partialUtterance: string
   /** 実行中のツール（`tool_use` は届いたが結果がまだ来ていないもの）。新しい順。 */
-  readonly runningToolNames: readonly string[]
-  /** 直近に使い終えたツールの名前。新しい順。 */
-  readonly finishedToolNames: readonly string[]
+  readonly runningTools: readonly ToolActivity[]
+  /**
+   * 直近に使い終えたツール。新しい順、最大 {@link MAX_RECENT_FINISHED_TOOLS} 件
+   * （サイドバーの「終わったものは薄く数行」）。
+   */
+  readonly finishedTools: readonly ToolActivity[]
   /** 答え待ちの列（許可プロンプトと質問）。 */
   readonly pending: readonly PendingAsk[]
   readonly sessionId: string | undefined
@@ -96,8 +113,8 @@ export const INITIAL_SESSION_VIEW: SessionView = {
   speechCalledInTurn: false,
   records: [],
   partialUtterance: "",
-  runningToolNames: [],
-  finishedToolNames: [],
+  runningTools: [],
+  finishedTools: [],
   pending: [],
   sessionId: undefined,
   model: undefined,
@@ -141,7 +158,8 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
         speechExpression: event.expression,
         speechCalledInTurn: true,
       }
-    case "tool-started":
+    case "tool-started": {
+      const nested = event.parentToolUseId !== undefined
       return {
         ...view,
         records: [
@@ -151,11 +169,16 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
             toolUseId: event.toolUseId,
             name: event.name,
             input: event.input,
+            nested,
             result: undefined,
           },
         ],
-        runningToolNames: [event.name, ...view.runningToolNames],
+        runningTools: [
+          { toolUseId: event.toolUseId, name: event.name, input: event.input, nested },
+          ...view.runningTools,
+        ],
       }
+    }
     case "tool-finished":
       return finishTool(view, event.toolUseId, event.content, event.isError)
     case "pending-changed":
@@ -167,7 +190,7 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
       return {
         ...settleUtterance(view),
         endedReason: event.reason,
-        runningToolNames: [],
+        runningTools: [],
         turnInProgress: false,
       }
   }
@@ -178,7 +201,8 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
  * **メインビューはレポートだけ**（docs/requirements.md 4.2「ツールの流れはサイドバーへ」）。
- * `records` に積んだ `tool` の記録はここでは渡さない（サイドバーの仕事は `recentToolNames`）。
+ * `records` に積んだ `tool` の記録はここでは渡さない（サイドバーの仕事は `runningTools` /
+ * `finishedTools` を直接読む src/index.ts の役目）。
  */
 export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
   const settled = view.records.filter(isReportRecord)
@@ -193,16 +217,7 @@ export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
  * ツールの開始と終了だけで自然に戻るようにするため。
  */
 export function currentExpression(view: SessionView): Expression {
-  return view.runningToolNames.length > 0 ? "working" : view.speechExpression
-}
-
-/**
- * サイドバーの「いま何をしているか」に出すツール名。**実行中のものが先**で、
- * そのあとに使い終えたものを新しい順に並べる。引数と結果は出さない
- * （docs/coding-standards.md「会話内容の扱い」）。
- */
-export function recentToolNames(view: SessionView): readonly string[] {
-  return [...view.runningToolNames, ...view.finishedToolNames].slice(0, MAX_RECENT_TOOL_NAMES)
+  return view.runningTools.length > 0 ? "working" : view.speechExpression
 }
 
 function isReportRecord(
@@ -272,6 +287,13 @@ function finishTool(
     return view
   }
 
+  const activity: ToolActivity = {
+    toolUseId: record.toolUseId,
+    name: record.name,
+    input: record.input,
+    nested: record.nested,
+  }
+
   return {
     ...view,
     records: [
@@ -279,14 +301,9 @@ function finishTool(
       { ...record, result: { content, isError } },
       ...view.records.slice(index + 1),
     ],
-    runningToolNames: removeFirst(view.runningToolNames, record.name),
-    finishedToolNames: [record.name, ...view.finishedToolNames].slice(0, MAX_RECENT_TOOL_NAMES),
+    runningTools: view.runningTools.filter((running) => running.toolUseId !== toolUseId),
+    finishedTools: [activity, ...view.finishedTools].slice(0, MAX_RECENT_FINISHED_TOOLS),
   }
-}
-
-function removeFirst(names: readonly string[], name: string): readonly string[] {
-  const index = names.indexOf(name)
-  return index === -1 ? names : [...names.slice(0, index), ...names.slice(index + 1)]
 }
 
 /**

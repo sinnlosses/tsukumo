@@ -4,7 +4,7 @@
 // ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
 // 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。
 
-import { readFileSync } from "node:fs"
+import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
@@ -29,10 +29,10 @@ import {
   currentExpression,
   INITIAL_SESSION_VIEW,
   mainViewEntries,
-  recentToolNames,
   type SessionView,
+  type ToolActivity,
 } from "./session-view.ts"
-import { type TaskStatusCounts, countTaskStatuses } from "./tasks.ts"
+import { readTaskSummaries, type TaskSummaryItem } from "./tasks.ts"
 import { startViewServer, type ViewServer } from "./view-server.ts"
 import {
   buildCharacterBody,
@@ -41,6 +41,7 @@ import {
   type CharacterPortraitSource,
   type CharacterViewData,
   type SidebarData,
+  type SidebarToolActivity,
   VIEW_NAMES,
 } from "./view.ts"
 
@@ -128,6 +129,8 @@ async function main(args: readonly string[]): Promise<number> {
       driver === undefined
         ? Promise.resolve(false)
         : driver.setPermissionMode(mode).then(() => true),
+    (model) =>
+      driver === undefined ? Promise.resolve(false) : driver.setModel(model).then(() => true),
   ).catch((error: unknown) => {
     process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
     return undefined
@@ -141,8 +144,12 @@ async function main(args: readonly string[]): Promise<number> {
     process.cwd(),
     DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
   )
-  const publish = throttle(createViewPublisher(server, characterDir), PUBLISH_INTERVAL_MS)
-  publish(INITIAL_SESSION_VIEW)
+  const readTaskSummary = createTaskSummaryReader()
+  const publish = throttle(
+    createViewPublisher(server, characterDir, readTaskSummary),
+    PUBLISH_INTERVAL_MS,
+  )
+  publish({ view: INITIAL_SESSION_VIEW, turnStartedAt: undefined })
 
   driver = startSession({
     cwd: process.cwd(),
@@ -160,18 +167,29 @@ async function main(args: readonly string[]): Promise<number> {
   return 0
 }
 
+/** 配る係に渡す1回分。セッションの姿に加えて、経過時間の計算に要る「直近の依頼の開始時刻」。 */
+type PublishState = {
+  readonly view: SessionView
+  readonly turnStartedAt: number | undefined
+}
+
 /**
  * イベントを受けて姿を更新し、配る係を呼ぶ。**セッションの姿を持つのはここ1箇所だけ**
  * （畳み込みそのものは純粋関数。src/session-view.ts）。
  *
  * **`turnInProgress` が変わったときだけ `publishTurnStatus` を呼ぶ。** 書きかけの本文は
  * トークン単位で届くため、変わっていないのに毎回押すと入力欄の SSE だけ無駄に流れてしまう。
+ *
+ * **`turnStartedAt`（経過時間の起点）もここで持つ。** `Date.now()` を呼ぶのは副作用なので、
+ * 純粋な畳み込み（src/session-view.ts）の外、配線の層に置く。`request` が来るたびに更新し、
+ * それ以外では前の値をそのまま持ち続ける（セッション全体の「直近の依頼から何秒」を表す）。
  */
 function createEventSink(
-  publish: (view: SessionView) => void,
+  publish: (state: PublishState) => void,
   publishTurnStatus: (inProgress: boolean) => void,
 ): (event: SessionEvent) => void {
   let view = INITIAL_SESSION_VIEW
+  let turnStartedAt: number | undefined = undefined
 
   return (event) => {
     const next = applySessionEvent(view, event)
@@ -179,10 +197,13 @@ function createEventSink(
       publishTurnStatus(next.turnInProgress)
     }
     view = next
+    if (event.kind === "request") {
+      turnStartedAt = Date.now()
+    }
     if (event.kind === "session-ended") {
       process.stderr.write(`tsukumo: セッションが終わった: ${event.reason}\n`)
     }
-    publish(view)
+    publish({ view, turnStartedAt })
   }
 }
 
@@ -194,8 +215,9 @@ function createEventSink(
 function createViewPublisher(
   server: ViewServer,
   characterDir: string,
-): (view: SessionView) => void {
-  return (view) => {
+  readTaskSummary: () => readonly TaskSummaryItem[] | undefined,
+): (state: PublishState) => void {
+  return ({ view, turnStartedAt }) => {
     try {
       const data: CharacterViewData = {
         // 直近のセリフを1つのまとまりとして出す（docs/requirements.md 4.2「続けて並べた行は
@@ -204,12 +226,14 @@ function createViewPublisher(
         // 答え待ちの列の先頭だけを出す。答えたら `pending-changed` で列が進み、次が出る
         // （docs/requirements.md 4.2「許可と質問」）。
         pending: view.pending[0],
-        permissionMode: view.permissionMode,
         ...readCharacterAssets(characterDir, currentExpression(view), resolveOutfit(view.model)),
       }
       server.publish("character", buildCharacterBody(data))
       server.publish("main", buildMainBody(mainViewEntries(view)))
-      server.publish("sidebar", buildSidebarBody(sidebarData(view)))
+      server.publish(
+        "sidebar",
+        buildSidebarBody(sidebarData(view, turnStartedAt, readTaskSummary())),
+      )
     } catch {
       process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n")
     }
@@ -217,22 +241,62 @@ function createViewPublisher(
 }
 
 /**
- * サイドバーに出す値。**いま何をしているかは実行中・直近のツール名だけ**にとどめる
- * （引数と結果は会話の内容なので出さない。docs/coding-standards.md「会話内容の扱い」）。
- * 区画そのものの作り直しは後続タスクなので、いまは既存の部品にツール名を流し込んでいる。
+ * サイドバーに出す値。**いま何をしているかは実行中・直近の完了のツール名＋入力**
+ * （要約は表示側 `src/view.ts` の仕事。引数の断片が要約に入りうることは
+ * `docs/coding-standards.md`「会話内容の扱い」に沿って承知した上で渡す）。
  */
-function sidebarData(view: SessionView): SidebarData {
+function sidebarData(
+  view: SessionView,
+  turnStartedAt: number | undefined,
+  tasks: readonly TaskSummaryItem[] | undefined,
+): SidebarData {
   return {
-    contextTokens: undefined,
-    subagents: {
-      pendingCount: undefined,
-      recentActivity: recentToolNames(view).map((name) => ({
-        description: undefined,
-        model: undefined,
-        latestToolName: name,
-      })),
+    activity: {
+      running: view.runningTools.map(toSidebarToolActivity),
+      finished: view.finishedTools.map(toSidebarToolActivity),
     },
-    taskCounts: readTaskCounts(),
+    tasks,
+    session: { model: view.model, permissionMode: view.permissionMode, turnStartedAt },
+  }
+}
+
+function toSidebarToolActivity(activity: ToolActivity): SidebarToolActivity {
+  return { name: activity.name, input: activity.input, nested: activity.nested }
+}
+
+/**
+ * develop/tasks.json を読む係を作る。**ファイルの mtime を見て、変わったときだけ読み直す**
+ * （配信のたびに JSON をパースし直さないため。タスクの決定）。ファイルが消えた・読めなくなったら
+ * キャッシュも捨てて undefined に落ちる（次に読めるようになったら追従する）。
+ */
+function createTaskSummaryReader(): () => readonly TaskSummaryItem[] | undefined {
+  const path = join(process.cwd(), ...TASKS_FILE_RELATIVE_PATH)
+  let cachedMtimeMs: number | undefined = undefined
+  let cached: readonly TaskSummaryItem[] | undefined = undefined
+
+  return () => {
+    const mtimeMs = readOptionalMtimeMs(path)
+    if (mtimeMs === undefined) {
+      cachedMtimeMs = undefined
+      cached = undefined
+      return undefined
+    }
+    if (mtimeMs === cachedMtimeMs) {
+      return cached
+    }
+
+    const content = readOptionalFile(path)
+    cached = content === undefined ? undefined : readTaskSummaries(content)
+    cachedMtimeMs = mtimeMs
+    return cached
+  }
+}
+
+function readOptionalMtimeMs(path: string): number | undefined {
+  try {
+    return statSync(path).mtimeMs
+  } catch {
+    return undefined
   }
 }
 
@@ -240,15 +304,12 @@ function sidebarData(view: SessionView): SidebarData {
  * 呼び出しをまとめる。**最後の1回は必ず配る**（間隔の終わりに、そのとき最新の姿を配る）ので、
  * 流れが止まったあとに古い画面が残ることがない。
  */
-function throttle(
-  publish: (view: SessionView) => void,
-  intervalMs: number,
-): (view: SessionView) => void {
-  let latest: SessionView | undefined = undefined
+function throttle<T>(publish: (value: T) => void, intervalMs: number): (value: T) => void {
+  let latest: T | undefined = undefined
   let timer: ReturnType<typeof setTimeout> | undefined = undefined
 
-  return (view) => {
-    latest = view
+  return (value) => {
+    latest = value
     if (timer !== undefined) {
       return
     }
@@ -383,11 +444,6 @@ function readPortraitSource(filePath: string): CharacterPortraitSource | undefin
   return mimeType !== undefined && bytes !== undefined
     ? { kind: "image", dataUri: `data:${mimeType};base64,${bytes.toString("base64")}` }
     : undefined
-}
-
-function readTaskCounts(): TaskStatusCounts | undefined {
-  const content = readOptionalFile(join(process.cwd(), ...TASKS_FILE_RELATIVE_PATH))
-  return content === undefined ? undefined : countTaskStatuses(content)
 }
 
 // 起動したことと URL は、ペインに残る唯一の出力。ここに会話の内容は出さない

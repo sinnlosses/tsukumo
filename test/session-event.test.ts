@@ -9,8 +9,13 @@ const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud"]
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${SPEAK_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
-function assistantMessage(content: readonly unknown[]): unknown {
-  return { type: "assistant", message: { role: "assistant", content }, session_id: "s-1" }
+function assistantMessage(content: readonly unknown[], parentToolUseId?: string): unknown {
+  return {
+    type: "assistant",
+    message: { role: "assistant", content },
+    session_id: "s-1",
+    parent_tool_use_id: parentToolUseId ?? null,
+  }
 }
 
 describe("toSessionEvents", () => {
@@ -79,6 +84,7 @@ describe("toSessionEvents", () => {
         toolUseId: "toolu_1",
         name: "Read",
         input: { file_path: "/tmp/dummy.txt" },
+        parentToolUseId: undefined,
       },
     ])
   })
@@ -91,7 +97,30 @@ describe("toSessionEvents", () => {
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
       { kind: "utterance", text: "ダミーの本文です。" },
-      { kind: "tool-started", toolUseId: "toolu_1", name: "Read", input: {} },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
+    ])
+  })
+
+  it("サブエージェントの中の tool_use は parent_tool_use_id を parentToolUseId に乗せる", () => {
+    const message = assistantMessage(
+      [{ type: "tool_use", id: "toolu_1", name: "Bash", input: { command: "echo dummy" } }],
+      "toolu_agent",
+    )
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Bash",
+        input: { command: "echo dummy" },
+        parentToolUseId: "toolu_agent",
+      },
     ])
   })
 

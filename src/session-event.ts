@@ -51,6 +51,11 @@ export type SessionEvent =
       readonly toolUseId: string
       readonly name: string
       readonly input: unknown
+      /**
+       * サブエージェントの中で動いたときの、起こした側の Agent ツールの `toolUseId`。
+       * トップレベルのターンでは undefined（SDK メッセージの `parent_tool_use_id` が `null`）。
+       */
+      readonly parentToolUseId: string | undefined
     }
   | {
       readonly kind: "tool-finished"
@@ -73,6 +78,9 @@ export type SessionEvent =
  * - **`speak` の呼び出しは `tool-started` にしない。** `speech` として別に出す（吹き出し行き）
  * - `expression` は `expressions`（キャラクター定義にある表情名）に無ければ `default` に落とす
  *   （docs/architecture.md 原則4 — 表情名をコードに書かない）
+ * - **`tool-started` の `parentToolUseId`** は、メッセージ本体（`message.message` の外）にある
+ *   `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。2026-09-11 実測）。
+ *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
  * - 知らない `type`・壊れた形は空の並びを返す（落ちない）
  */
 export function toSessionEvents(
@@ -89,7 +97,11 @@ export function toSessionEvents(
     case "stream_event":
       return partialUtteranceEvents(message.event)
     case "assistant":
-      return assistantEvents(message.message, expressions)
+      return assistantEvents(
+        message.message,
+        expressions,
+        optionalString(message.parent_tool_use_id),
+      )
     case "user":
       return toolResultEvents(message.message)
     case "result":
@@ -135,17 +147,21 @@ function partialUtteranceEvents(event: unknown): readonly SessionEvent[] {
 function assistantEvents(
   message: unknown,
   expressions: readonly Expression[],
+  parentToolUseId: string | undefined,
 ): readonly SessionEvent[] {
   if (!isRecord(message) || !Array.isArray(message.content)) {
     return []
   }
 
-  return message.content.flatMap((block) => assistantBlockEvents(block, expressions))
+  return message.content.flatMap((block) =>
+    assistantBlockEvents(block, expressions, parentToolUseId),
+  )
 }
 
 function assistantBlockEvents(
   block: unknown,
   expressions: readonly Expression[],
+  parentToolUseId: string | undefined,
 ): readonly SessionEvent[] {
   if (!isRecord(block)) {
     return []
@@ -166,7 +182,15 @@ function assistantBlockEvents(
   }
 
   return typeof block.id === "string"
-    ? [{ kind: "tool-started", toolUseId: block.id, name: block.name, input: block.input }]
+    ? [
+        {
+          kind: "tool-started",
+          toolUseId: block.id,
+          name: block.name,
+          input: block.input,
+          parentToolUseId,
+        },
+      ]
     : []
 }
 
