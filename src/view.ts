@@ -45,14 +45,36 @@ function vendorPath(name: string): string {
   return `${VENDOR_PATH_PREFIX}${name}`
 }
 
-/** 送信先として選べるターミナルの一覧を返す経路（GET）。 */
+/**
+ * 送信先として選べるターミナルの一覧を返す経路（GET）。**入力欄の送り先がセッション駆動に
+ * 一本化されたので、入力欄からは呼ばれない**（送信元の分岐自体は残してある。撤去は後続タスク）。
+ */
 export const TERMINALS_PATH = "/api/terminals"
 
-/** 依頼をターミナルへ送る経路（POST）。**セッション駆動に置き換わったので呼ばれない。** */
+/**
+ * 依頼をターミナルへ送る経路（POST）。**セッション駆動に置き換わったので、入力欄からは
+ * 呼ばれない**（分岐自体は残してある。撤去は後続タスク）。
+ */
 export const DISPATCH_PATH = "/api/dispatch"
 
 /** 依頼をセッション駆動へ送る経路（POST、本文は JSON の `{ text }`）。 */
 export const PROMPT_PATH = "/api/prompt"
+
+/** 実行中のターンを中断する経路（POST、本文なし）。 */
+export const INTERRUPT_PATH = "/api/interrupt"
+
+/**
+ * 入力欄の「送信中か」を運ぶ Server-Sent Events の経路。**駆動側のイベント
+ * （`request` で開始、`turn-finished` / `session-ended` で終了）から決めた状態をサーバが持ち、
+ * ここへ push する**（ブラウザ側が送信ボタンを押した瞬間に勝手に「進行中」と決めない）。
+ * 既存の3領域（`viewEventPath`）と同じ push の仕組みだが、対応する `ViewName` の領域を
+ * 持たないので専用の経路にしてある。
+ */
+export const TURN_STATUS_EVENT_PATH = "/events/turn-status"
+
+/** {@link TURN_STATUS_EVENT_PATH} で push する本文。値そのものに意味はなく、比較にだけ使う。 */
+export const TURN_STATUS_IN_PROGRESS = "in-progress"
+export const TURN_STATUS_IDLE = "idle"
 
 /**
  * 質問の選択肢を押したときに、キーを1つ押してもらう経路（POST）。**依頼の送信とは別の経路**に
@@ -307,12 +329,17 @@ ${questionRegionScript()}
  *
  * 選択肢を押したときは {@link ANSWER_PATH} へ**送信先と、キーの名前だけ**を送る。**押した直後に全部の
  * 選択肢を無効化する**のは二重押しを防ぐため。失敗したら押せる状態へ戻す。
+ *
+ * **`LEGACY_ANSWER_TARGET_ID` の要素はもう無い**（送り先を選ぶ `<select>` を入力欄から
+ * 外したため）。`target` は常に `null` になり、この経路（ターミナルへのキー入力での回答）は
+ * 動かないままになる。`index.ts` はまだ "question" ビューを一度も publish していないので、
+ * いまのところ実害は無い。この経路の入れ替え・撤去は ANSWER_PATH 自体の後続タスクで行う。
  */
 function questionRegionScript(): string {
   return `  {
     const el = document.getElementById(${JSON.stringify(layoutRegionId("question"))})
     const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
-    const target = document.getElementById(${JSON.stringify(DISPATCH_TARGET_ID)})
+    const target = document.getElementById(${JSON.stringify(LEGACY_ANSWER_TARGET_ID)})
     const apply = () => {
       if (form !== null) {
         form.hidden = el.innerHTML.trim() !== ""
@@ -371,8 +398,7 @@ const LAYOUT_RESIZER_ROW_ID = "tsukumo-layout-resizer-row"
 const LAYOUT_RESIZER_TOP_ID = "tsukumo-layout-resizer-top"
 const LAYOUT_RESIZER_BOTTOM_ID = "tsukumo-layout-resizer-bottom"
 const LAYOUT_RESET_ID = "tsukumo-layout-reset"
-// ブラウザに覚えさせる仕切りの比率（localStorage）のキー。DISPATCH_TARGET_STORAGE_KEY と同じ考え方
-// （サーバ側には状態を持たせない）。
+// ブラウザに覚えさせる仕切りの比率（localStorage）のキー。サーバ側には状態を持たせない。
 const LAYOUT_SPLIT_STORAGE_KEY = "tsukumo-layout-split"
 // 3本の仕切りの既定位置（%）。rowTop は上段(メイン・サイドバー)の高さの割合、topLeft は
 // 上段内でのメインの幅の割合、bottomLeft は下段内でのキャラビューの幅の割合
@@ -585,28 +611,20 @@ function subscriptionScript(elementId: string, view: ViewName, initialBody: stri
 }
 
 const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
-const DISPATCH_TARGET_ID = "tsukumo-dispatch-target"
-const DISPATCH_REFRESH_ID = "tsukumo-dispatch-refresh"
 const DISPATCH_TEXT_ID = "tsukumo-dispatch-text"
 const DISPATCH_SEND_ID = "tsukumo-dispatch-send"
 const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
-// ブラウザに選んだ送信先を覚えさせる場所（localStorage）のキー。サーバ側には状態を持たせない
-// （docs/architecture.md「HTML はローカルの HTTP サーバから配る」— 本文はメモリにしか持たない、
-// という制約に送信先の記憶も揃える）。
-const DISPATCH_TARGET_STORAGE_KEY = "tsukumo-dispatch-target"
-// 「claude が動いていそう」な送信先の選択肢に付ける印。静的なヒント文（dispatchRegionHtml）と
-// 選択肢のラベル（dispatchScript）の両方で同じ文字を使う。
-const DISPATCH_LIKELY_MARKER = "★"
+// 送り先を選ぶ <select> を入力欄から外したので、この id を持つ要素はもう無い。
+// questionRegionScript が参照しているだけの残骸（上のコメント参照）。
+const LEGACY_ANSWER_TARGET_ID = "tsukumo-dispatch-target"
+
+const DISPATCH_SEND_LABEL = "送信"
+const DISPATCH_INTERRUPT_LABEL = "中断"
 
 /**
- * 右下の空き領域を埋める、依頼の送信フォーム（`docs/requirements.md` 4.7）。送信先の選択は
- * `orca terminal list` から得た一覧を `<select>` に出す（一覧の取得・選択の記憶は
- * {@link dispatchScript} 側の役目。ここは静的なマークアップだけを組み立てる）。
- *
- * **一覧は絞り込まない。** 「claude が動いていそう」（`likelyClaude`）なものは
- * {@link dispatchScript} が上に寄せて印を付けるだけで、選択肢からは消さない
- * （判定を外したときに選べなくならないように）。`.dispatch-hint` はその印の意味を示す
- * 1行だけの補足で、会話の内容は含まない。
+ * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
+ * （`src/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない
+ * （`TERMINALS_PATH` / `DISPATCH_PATH` は入力欄からは呼ばれなくなった）。
  */
 function dispatchRegionHtml(questionBody: string): string {
   // 質問が来たら**この領域を質問へ差し替える**（ユーザーの決定 2026-09-10）。答え待ちの間は
@@ -614,14 +632,9 @@ function dispatchRegionHtml(questionBody: string): string {
   return `<section class="layout-region layout-dispatch" id="tsukumo-view-dispatch">
 <div id="${layoutRegionId("question")}" class="question-panel">${questionBody}</div>
 <form id="${DISPATCH_FORM_ID}">
+  <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行）" required></textarea>
   <div class="dispatch-row">
-    <select id="${DISPATCH_TARGET_ID}" aria-label="送信先のターミナル"></select>
-    <button type="button" id="${DISPATCH_REFRESH_ID}">一覧を更新</button>
-  </div>
-  <p class="dispatch-hint">${DISPATCH_LIKELY_MARKER} claude が動いていそうな順に並べています（目安。外れていても一覧の他の項目から選べます）</p>
-  <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く" required></textarea>
-  <div class="dispatch-row">
-    <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send" disabled>送る</button>
+    <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send">${DISPATCH_SEND_LABEL}</button>
     <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
   </div>
 </form>
@@ -629,111 +642,53 @@ function dispatchRegionHtml(questionBody: string): string {
 }
 
 /**
- * 送信フォームの配線。**会話の内容（依頼の文面）はブラウザから直接サーバへ POST するだけで、
+ * 入力欄の配線。**会話の内容（依頼の文面）はブラウザから直接サーバへ POST するだけで、
  * この関数自身（サーバ側で文字列として組み立てる部分）には一切現れない**（docs/coding-standards.md
- * 「会話内容の扱い」）。ここに埋め込むのは経路（`TERMINALS_PATH` / `DISPATCH_PATH`）と要素IDだけ。
+ * 「会話内容の扱い」）。ここに埋め込むのは経路（`PROMPT_PATH` / `INTERRUPT_PATH` /
+ * `TURN_STATUS_EVENT_PATH`）と要素IDだけ。
  *
- * - **一覧の取得は起動時と「一覧を更新」ボタンの両方で行う。** ターミナルは後から起動されうるので、
- *   ページを開いた時点の一覧を固定にしない
- * - **送信先が1つも無い・一覧の取得に失敗したときは送信ボタンを無効にし、理由を出す**
- *   （壊れて見えないように。`tsukumo terminal list` が失敗する＝ `orca` が無い環境も含む）
- * - **送信中は再度押せないようにし、送信済み／失敗を必ず文字で残す**（送ったのに何も起きない
- *   ように見えないようにする、というこの機能の完了条件）
- * - **「claude が動いていそう」（`terminal.likelyClaude`）は選択肢を消す理由にしない。**
- *   サーバ（`src/view-server.ts` の `sortPanesByLikelyClaude`）が既に上に寄せた順で返すので、
- *   ここでは届いた順番のまま選択肢を並べ、`likelyClaude` が true の項目にだけ
- *   {@link DISPATCH_LIKELY_MARKER} の印を付ける。判定を外していても、印が付かないだけで
- *   一覧からは消えない
+ * - **送信と中断は同時に押せる状態を作らない。** 送信ボタン1つを、`TURN_STATUS_EVENT_PATH` から
+ *   届く「進行中か」で「送信」／「中断」に切り替える。**押した瞬間に切り替えない**（サーバ側の
+ *   駆動イベントで実際にターンが始まった／終わったことが確認できてから切り替える。
+ *   docs/requirements.md 4.7）
+ * - **Enter で送信、Shift+Enter で改行。** IME の変換確定の Enter は送信にしない
+ *   （`event.isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
+ * - **送信後は入力欄を空にしてフォーカスを残す。送信に失敗したら文字列は消さない**
+ *   （送ったのに消えて書き直しになる、ということが起きないようにする）
+ * - **中断ボタンは `INTERRUPT_PATH` を叩くだけ。** ボタンの表示は次に届く駆動の状態で戻る
+ *   （ここで自分から「中断した」表示に固定しない）
  */
 function dispatchScript(): string {
   return `  {
     const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
-    const targetSelect = document.getElementById(${JSON.stringify(DISPATCH_TARGET_ID)})
-    const refreshButton = document.getElementById(${JSON.stringify(DISPATCH_REFRESH_ID)})
     const textArea = document.getElementById(${JSON.stringify(DISPATCH_TEXT_ID)})
     const sendButton = document.getElementById(${JSON.stringify(DISPATCH_SEND_ID)})
     const status = document.getElementById(${JSON.stringify(DISPATCH_STATUS_ID)})
-    const storageKey = ${JSON.stringify(DISPATCH_TARGET_STORAGE_KEY)}
+    let inProgress = false
 
-    function rememberedTarget() {
-      try {
-        return localStorage.getItem(storageKey)
-      } catch {
-        return null
-      }
+    function applyButtonLabel() {
+      sendButton.textContent = inProgress
+        ? ${JSON.stringify(DISPATCH_INTERRUPT_LABEL)}
+        : ${JSON.stringify(DISPATCH_SEND_LABEL)}
     }
+    applyButtonLabel()
 
-    function rememberTarget(id) {
-      try {
-        localStorage.setItem(storageKey, id)
-      } catch {
-        // ブラウザの設定で使えないだけなので、記憶できないまま続ける。
-      }
-    }
-
-    async function loadTerminals() {
-      status.textContent = "送信先を取得中…"
-      sendButton.disabled = true
-      targetSelect.innerHTML = ""
-
-      let data
-      try {
-        const response = await fetch(${JSON.stringify(TERMINALS_PATH)})
-        data = await response.json()
-      } catch {
-        status.textContent = "送信先の一覧を取得できなかった"
-        return
-      }
-
-      if (!data.ok) {
-        status.textContent = "送信先の一覧を取得できなかった: " + data.reason
-        return
-      }
-      if (data.terminals.length === 0) {
-        status.textContent = "動いているターミナルが無い"
-        return
-      }
-
-      const remembered = rememberedTarget()
-      for (const terminal of data.terminals) {
-        const option = document.createElement("option")
-        option.value = terminal.id
-        option.textContent = terminal.likelyClaude
-          ? ${JSON.stringify(DISPATCH_LIKELY_MARKER)} + " " + terminal.label
-          : terminal.label
-        targetSelect.appendChild(option)
-      }
-      if (remembered !== null && data.terminals.some((terminal) => terminal.id === remembered)) {
-        targetSelect.value = remembered
-      }
-
-      sendButton.disabled = false
-      status.textContent = ""
-    }
-
-    refreshButton.addEventListener("click", () => {
-      loadTerminals()
+    new EventSource(${JSON.stringify(TURN_STATUS_EVENT_PATH)}).addEventListener("update", (event) => {
+      inProgress = event.data === ${JSON.stringify(TURN_STATUS_IN_PROGRESS)}
+      applyButtonLabel()
     })
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault()
-      const text = textArea.value.trim()
-      const terminalId = targetSelect.value
-      if (text === "" || terminalId === "") {
-        return
-      }
-
-      sendButton.disabled = true
+    async function sendPrompt(text) {
       status.textContent = "送信中…"
+      sendButton.disabled = true
       try {
-        const response = await fetch(${JSON.stringify(DISPATCH_PATH)}, {
+        const response = await fetch(${JSON.stringify(PROMPT_PATH)}, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ terminalId, text }),
+          body: JSON.stringify({ text }),
         })
         const data = await response.json()
         if (data.ok) {
-          rememberTarget(terminalId)
           textArea.value = ""
           status.textContent = "送信済み"
         } else {
@@ -743,10 +698,54 @@ function dispatchScript(): string {
         status.textContent = "送信できなかった"
       } finally {
         sendButton.disabled = false
+        applyButtonLabel()
+        textArea.focus()
+      }
+    }
+
+    async function sendInterrupt() {
+      status.textContent = "中断中…"
+      sendButton.disabled = true
+      try {
+        const response = await fetch(${JSON.stringify(INTERRUPT_PATH)}, { method: "POST" })
+        const data = await response.json()
+        status.textContent = data.ok ? "中断した" : "中断できなかった: " + data.reason
+      } catch {
+        status.textContent = "中断できなかった"
+      } finally {
+        sendButton.disabled = false
+        applyButtonLabel()
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault()
+      if (inProgress) {
+        return
+      }
+      const text = textArea.value.trim()
+      if (text === "") {
+        return
+      }
+      sendPrompt(text)
+    })
+
+    sendButton.addEventListener("click", (event) => {
+      if (inProgress) {
+        event.preventDefault()
+        sendInterrupt()
       }
     })
 
-    loadTerminals()
+    textArea.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) {
+        return
+      }
+      event.preventDefault()
+      if (!inProgress) {
+        form.requestSubmit()
+      }
+    })
   }`
 }
 
@@ -1452,18 +1451,8 @@ const STYLE = `
     align-items: center;
     gap: 0.5rem;
   }
-  /* select・button は、他の3領域が使う語彙（#10131a の暗い地、#3a4256 の枠線、0.4remの角丸）に
+  /* button は、他の3領域が使う語彙（#10131a の暗い地、#3a4256 の枠線、0.4remの角丸）に
      揃える。素のブラウザ既定の見た目のままだと、ダークな画面の中でここだけ浮いていた。 */
-  .dispatch-row select {
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 0.4rem 0.5rem;
-    background: #10131a;
-    color: inherit;
-    border: 1px solid #3a4256;
-    border-radius: 0.4rem;
-    font: inherit;
-  }
   .dispatch-row button {
     flex: 0 0 auto;
     padding: 0.4rem 0.75rem;
@@ -1482,7 +1471,6 @@ const STYLE = `
     border-color: #8ab4ff;
     font-weight: 600;
   }
-  .dispatch-hint { margin: 0; font-size: 0.75rem; color: #8f97ab; }
   .dispatch-text {
     flex: 1 1 auto;
     min-height: 0;

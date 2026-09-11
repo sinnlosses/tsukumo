@@ -12,11 +12,16 @@ import {
   buildViewPage,
   type CharacterViewData,
   DISPATCH_PATH,
+  INTERRUPT_PATH,
   isViewName,
   LAYOUT_PATH,
+  PROMPT_PATH,
   type SidebarData,
   type SubagentActivity,
   TERMINALS_PATH,
+  TURN_STATUS_EVENT_PATH,
+  TURN_STATUS_IDLE,
+  TURN_STATUS_IN_PROGRESS,
   VIEW_NAMES,
   viewEventPath,
   viewPath,
@@ -234,35 +239,13 @@ function runSubscriptionScript(
   return { dispatch: controller.dispatch }
 }
 
-// --- 送信フォーム（dispatchScript）を実際に動かして確かめるための道具 -------------------------
+// --- 入力欄（dispatchScript）を実際に動かして確かめるための道具 -------------------------------
 //
-// 「claude が動いていそう」（likelyClaude）の判定は、選択肢を絞り込む理由にしてはいけない
-// （判定を外したときに選べなくなるため）。ここでは `/api/terminals` の応答を差し替えて
-// `loadTerminals()` を実際に走らせ、届いた送信先が1件も消えずに `<option>` になること・
-// 印（DISPATCH_LIKELY_MARKER）の付け方だけを確かめる。実際に選べて見えるかはブラウザでの
-// 目視確認に任せる（docs/coding-standards.md「描画は自動テストで守らない」）。
-
-type FakeOptionElement = { value: string; textContent: string }
-
-/** `<select id="tsukumo-dispatch-target">` の代役。dispatchScript が触る範囲だけを持つ。 */
-type FakeSelectElement = {
-  value: string
-  innerHTML: string
-  readonly appendChild: (child: FakeOptionElement) => void
-  readonly appendedOptions: () => readonly FakeOptionElement[]
-}
-
-function makeFakeSelectElement(): FakeSelectElement {
-  const options: FakeOptionElement[] = []
-  return {
-    value: "",
-    innerHTML: "",
-    appendChild: (child) => {
-      options.push(child)
-    },
-    appendedOptions: () => options,
-  }
-}
+// 送り先の選択は無くなった（送り先はセッション駆動1つに決まっている）。ここで実際に動かして
+// 確かめるのは、Enter/Shift+Enter・IME変換確定・送信成功/失敗時の入力欄の扱い・進行中の状態
+// （`TURN_STATUS_EVENT_PATH`）による送信ボタンの表示切り替えと、押した先が `PROMPT_PATH` /
+// `INTERRUPT_PATH` になっていること。実際に見えるかはブラウザでの目視確認に任せる
+// （docs/coding-standards.md「描画は自動テストで守らない」）。
 
 /** `<span id="tsukumo-dispatch-status">` の代役。 */
 type FakeTextElement = { textContent: string }
@@ -271,77 +254,216 @@ function makeFakeTextElement(): FakeTextElement {
   return { textContent: "" }
 }
 
-/** `<button id="tsukumo-dispatch-send">` の代役。クリックは発火させないので addEventListener は無害。 */
+/** `<button id="tsukumo-dispatch-send">` の代役。クリックを手動で発火できる。 */
 type FakeButtonElement = {
   disabled: boolean
-  readonly addEventListener: (type: string, listener: () => void) => void
+  textContent: string
+  readonly addEventListener: (type: string, listener: (event: FakePreventableEvent) => void) => void
+  readonly click: () => void
 }
+
+type FakePreventableEvent = { readonly preventDefault: () => void }
 
 function makeFakeButtonElement(): FakeButtonElement {
-  return { disabled: false, addEventListener: () => {} }
+  const listeners = new Set<(event: FakePreventableEvent) => void>()
+  let disabled = false
+  let textContent = ""
+  return {
+    get disabled() {
+      return disabled
+    },
+    set disabled(value) {
+      disabled = value
+    },
+    get textContent() {
+      return textContent
+    },
+    set textContent(value) {
+      textContent = value
+    },
+    addEventListener: (type, listener) => {
+      if (type === "click") {
+        listeners.add(listener)
+      }
+    },
+    click: () => {
+      const event: FakePreventableEvent = { preventDefault: () => {} }
+      for (const listener of listeners) {
+        listener(event)
+      }
+    },
+  }
 }
 
-type FakeDispatchElement = FakeSelectElement | FakeTextElement | FakeButtonElement
+/** `<form id="tsukumo-dispatch-form">` の代役。`requestSubmit()` で submit を手動発火できる。 */
+type FakeFormElement = {
+  readonly addEventListener: (type: string, listener: (event: FakePreventableEvent) => void) => void
+  readonly requestSubmit: () => void
+}
 
-type TerminalsPayload =
-  | {
-      readonly ok: true
-      readonly terminals: readonly {
-        readonly id: string
-        readonly label: string
-        readonly likelyClaude: boolean
-      }[]
-    }
-  | { readonly ok: false; readonly reason: string }
+function makeFakeFormElement(): FakeFormElement {
+  const listeners = new Set<(event: FakePreventableEvent) => void>()
+  return {
+    addEventListener: (type, listener) => {
+      if (type === "submit") {
+        listeners.add(listener)
+      }
+    },
+    requestSubmit: () => {
+      const event: FakePreventableEvent = { preventDefault: () => {} }
+      for (const listener of listeners) {
+        listener(event)
+      }
+    },
+  }
+}
+
+/** `keydown` イベントの代役。IME の変換確定は `isComposing` / `keyCode` の両方で表現できる。 */
+type FakeKeydownEvent = FakePreventableEvent & {
+  readonly key: string
+  readonly shiftKey: boolean
+  readonly isComposing: boolean
+  readonly keyCode: number
+}
+
+function makeFakeKeydownEvent(options: {
+  readonly key: string
+  readonly shiftKey?: boolean
+  readonly isComposing?: boolean
+  readonly keyCode?: number
+}): { readonly event: FakeKeydownEvent; readonly wasPrevented: () => boolean } {
+  let prevented = false
+  return {
+    event: {
+      key: options.key,
+      shiftKey: options.shiftKey ?? false,
+      isComposing: options.isComposing ?? false,
+      keyCode: options.keyCode ?? 0,
+      preventDefault: () => {
+        prevented = true
+      },
+    },
+    wasPrevented: () => prevented,
+  }
+}
+
+/** `<textarea id="tsukumo-dispatch-text">` の代役。`keydown` を手動で発火できる。 */
+type FakeTextAreaElement = {
+  value: string
+  readonly addEventListener: (type: string, listener: (event: FakeKeydownEvent) => void) => void
+  readonly focus: () => void
+  readonly dispatchKeydown: (event: FakeKeydownEvent) => void
+  readonly focusCount: () => number
+}
+
+function makeFakeTextAreaElement(initialValue: string): FakeTextAreaElement {
+  const listeners = new Set<(event: FakeKeydownEvent) => void>()
+  let value = initialValue
+  let focusCount = 0
+  return {
+    get value() {
+      return value
+    },
+    set value(next) {
+      value = next
+    },
+    addEventListener: (type, listener) => {
+      if (type === "keydown") {
+        listeners.add(listener)
+      }
+    },
+    focus: () => {
+      focusCount += 1
+    },
+    dispatchKeydown: (event) => {
+      for (const listener of listeners) {
+        listener(event)
+      }
+    },
+    focusCount: () => focusCount,
+  }
+}
+
+type FakeFetchCall = { readonly url: string; readonly body: string | undefined }
 
 /**
- * まとめたレイアウトページの `<script>`（3領域ぶんの購読と送信フォームの配線が同居する）を
- * 実際に動かし、`loadTerminals()` が完了するまで待つ。3領域の購読が参照する要素・
- * `EventSource` は無害な代役で埋める（{@link runSubscriptionScript} と同じ考え方）。
+ * `fetch` の代役。`responses` に無い URL には `{ ok: true }` を返す。呼び出しは
+ * すべて記録するので、送り先（`PROMPT_PATH` か `INTERRUPT_PATH` か）と本文を確かめられる。
  */
-async function runDispatchScript(
+function makeFakeFetch(responses: ReadonlyMap<string, unknown>): {
+  readonly fetchStub: (
+    url: string,
+    init?: { readonly method?: string; readonly body?: string },
+  ) => Promise<{ readonly json: () => Promise<unknown> }>
+  readonly calls: () => readonly FakeFetchCall[]
+} {
+  const calls: FakeFetchCall[] = []
+  return {
+    fetchStub: (url, init) => {
+      calls.push({ url, body: init?.body })
+      const response = responses.get(url) ?? { ok: true }
+      return Promise.resolve({ json: () => Promise.resolve(response) })
+    },
+    calls: () => calls,
+  }
+}
+
+/**
+ * まとめたレイアウトページの `<script>`（3領域ぶんの購読と入力欄の配線が同居する）を実際に
+ * 動かす。3領域の購読が参照する要素は無害な代役で埋める（{@link runSubscriptionScript} と
+ * 同じ考え方）。`dispatchTurnStatus` で `TURN_STATUS_EVENT_PATH` 宛の update を手動で起こせる。
+ */
+function runInputScript(
   page: string,
-  options: {
-    readonly targetSelect: FakeSelectElement
-    readonly status: FakeTextElement
+  elements: {
+    readonly form: FakeFormElement
+    readonly textArea: FakeTextAreaElement
     readonly sendButton: FakeButtonElement
-    readonly terminalsResponse: TerminalsPayload
+    readonly status: FakeTextElement
   },
-): Promise<void> {
+  fetchStub: (
+    url: string,
+    init?: { readonly method?: string; readonly body?: string },
+  ) => Promise<{ readonly json: () => Promise<unknown> }>,
+): { readonly dispatchTurnStatus: (data: string) => void } {
   const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
   if (scriptMatch === null || scriptMatch[1] === undefined) {
     throw new Error("ページに <script> が無い")
   }
 
-  const elements = new Map<string, FakeDispatchElement>([
-    ["tsukumo-dispatch-target", options.targetSelect],
-    ["tsukumo-dispatch-status", options.status],
-    ["tsukumo-dispatch-send", options.sendButton],
+  const ids = new Map<string, unknown>([
+    ["tsukumo-dispatch-form", elements.form],
+    ["tsukumo-dispatch-text", elements.textArea],
+    ["tsukumo-dispatch-send", elements.sendButton],
+    ["tsukumo-dispatch-status", elements.status],
   ])
   const controller = makeFakeEventSourceController()
   const fallback = makeInertStub()
 
   const documentStub = {
-    getElementById: (id: string) => elements.get(id) ?? makeInertStub(),
-    createElement: (_tagName: string): FakeOptionElement => ({ value: "", textContent: "" }),
+    getElementById: (id: string) => ids.get(id) ?? makeInertStub(),
     scrollingElement: fallback,
     documentElement: fallback,
   }
-  const fetchStub = (_url: string): Promise<{ json: () => Promise<TerminalsPayload> }> =>
-    Promise.resolve({ json: () => Promise.resolve(options.terminalsResponse) })
-  // 記憶（localStorage）はこのテストの関心事ではないので、常に「覚えていない」ものとして扱う。
-  const localStorageStub = { getItem: () => null, setItem: () => {} }
 
   vm.runInNewContext(scriptMatch[1], {
     document: documentStub,
     EventSource: controller.EventSourceClass,
     MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
     fetch: fetchStub,
-    localStorage: localStorageStub,
+    localStorage: { getItem: () => null, setItem: () => {} },
   })
 
-  // loadTerminals() 内の await（fetch → response.json()）が解決するまでイベントループを進める。
-  await new Promise((resolve) => setTimeout(resolve, 0))
+  return {
+    dispatchTurnStatus: (data) => {
+      controller.dispatch(TURN_STATUS_EVENT_PATH, data)
+    },
+  }
+}
+
+/** 待っている非同期処理（fetch → response.json() の await）を1回分進める。 */
+function flushMicrotasks(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
 // --- 3本の仕切り（layoutScript）を実際に動かして確かめるための道具 -----------------------------
@@ -449,8 +571,8 @@ type FakeLocalStorage = {
 
 /**
  * まとめたレイアウトページの `<script>` を実際に動かす。仕切り・行・既定に戻すボタンの
- * 要素だけ本物の代役を渡し、それ以外（3領域の購読・送信フォーム）が参照する要素は
- * {@link runDispatchScript} と同じ考え方で無害な代役に任せる。
+ * 要素だけ本物の代役を渡し、それ以外（3領域の購読・入力欄）が参照する要素は
+ * {@link runInputScript} と同じ考え方で無害な代役に任せる。
  */
 function runLayoutScript(
   page: string,
@@ -496,72 +618,116 @@ function runLayoutScript(
   })
 }
 
-describe("送信先の一覧（claude が動いていそうな順に並べる。絞り込まない）", () => {
-  it("likelyClaude が false の送信先も一覧に残り、選べる（判定を外しても閉じ込めない）", async () => {
-    const targetSelect = makeFakeSelectElement()
-    const status = makeFakeTextElement()
-    const sendButton = makeFakeButtonElement()
+describe("入力欄（送信・中断）", () => {
+  function setUp(responses: ReadonlyMap<string, unknown> = new Map()): {
+    readonly form: FakeFormElement
+    readonly textArea: FakeTextAreaElement
+    readonly sendButton: FakeButtonElement
+    readonly status: FakeTextElement
+    readonly calls: () => readonly FakeFetchCall[]
+    readonly dispatchTurnStatus: (data: string) => void
+  } {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const form = makeFakeFormElement()
+    const textArea = makeFakeTextAreaElement("")
+    const sendButton = makeFakeButtonElement()
+    const status = makeFakeTextElement()
+    const { fetchStub, calls } = makeFakeFetch(responses)
 
-    await runDispatchScript(page, {
-      targetSelect,
-      status,
-      sendButton,
-      terminalsResponse: {
-        ok: true,
-        terminals: [
-          { id: "t-likely", label: "claude worktree", likelyClaude: true },
-          { id: "t-unsure", label: "たぶん違う", likelyClaude: false },
-        ],
-      },
-    })
+    const { dispatchTurnStatus } = runInputScript(
+      page,
+      { form, textArea, sendButton, status },
+      fetchStub,
+    )
 
-    expect(targetSelect.appendedOptions().map((option) => option.value)).toEqual([
-      "t-likely",
-      "t-unsure",
-    ])
-    expect(sendButton.disabled).toBe(false)
-    expect(status.textContent).toBe("")
+    return { form, textArea, sendButton, status, calls, dispatchTurnStatus }
+  }
+
+  it("Enter で送信する", async () => {
+    const { textArea, calls } = setUp()
+    textArea.value = "テストの依頼"
+
+    const { event } = makeFakeKeydownEvent({ key: "Enter" })
+    textArea.dispatchKeydown(event)
+    await flushMicrotasks()
+
+    expect(calls()).toEqual([{ url: PROMPT_PATH, body: JSON.stringify({ text: "テストの依頼" }) }])
   })
 
-  it("claude が動いていそうなものにだけ印を付け、ラベルそのものは変えない", async () => {
-    const targetSelect = makeFakeSelectElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+  it("Shift+Enter では送信せず、改行をそのまま許す（preventDefault しない）", () => {
+    const { textArea, calls } = setUp()
 
-    await runDispatchScript(page, {
-      targetSelect,
-      status: makeFakeTextElement(),
-      sendButton: makeFakeButtonElement(),
-      terminalsResponse: {
-        ok: true,
-        terminals: [
-          { id: "t-likely", label: "claude worktree", likelyClaude: true },
-          { id: "t-unsure", label: "たぶん違う", likelyClaude: false },
-        ],
-      },
-    })
+    const { event, wasPrevented } = makeFakeKeydownEvent({ key: "Enter", shiftKey: true })
+    textArea.dispatchKeydown(event)
 
-    const [likely, unsure] = targetSelect.appendedOptions()
-    expect(likely?.textContent).toBe("★ claude worktree")
-    expect(unsure?.textContent).toBe("たぶん違う")
+    expect(wasPrevented()).toBe(false)
+    expect(calls()).toEqual([])
   })
 
-  it("一覧の取得に失敗しても落ちず、送信ボタンを無効のまま理由を表示する", async () => {
-    const targetSelect = makeFakeSelectElement()
-    const status = makeFakeTextElement()
-    const sendButton = makeFakeButtonElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
-
-    await runDispatchScript(page, {
-      targetSelect,
-      status,
-      sendButton,
-      terminalsResponse: { ok: false, reason: "orca コマンドが見つからない" },
+  it("IME の変換確定の Enter では送信しない（isComposing / keyCode 229 のどちらでも）", () => {
+    const composing = setUp()
+    const { event: composingEvent, wasPrevented: composingPrevented } = makeFakeKeydownEvent({
+      key: "Enter",
+      isComposing: true,
     })
+    composing.textArea.dispatchKeydown(composingEvent)
+    expect(composingPrevented()).toBe(false)
+    expect(composing.calls()).toEqual([])
 
-    expect(targetSelect.appendedOptions()).toEqual([])
-    expect(sendButton.disabled).toBe(true)
-    expect(status.textContent).toContain("orca コマンドが見つからない")
+    const legacyIme = setUp()
+    const { event: legacyEvent, wasPrevented: legacyPrevented } = makeFakeKeydownEvent({
+      key: "Enter",
+      keyCode: 229,
+    })
+    legacyIme.textArea.dispatchKeydown(legacyEvent)
+    expect(legacyPrevented()).toBe(false)
+    expect(legacyIme.calls()).toEqual([])
+  })
+
+  it("送信に成功したら入力欄を空にしてフォーカスを残す", async () => {
+    const { form, textArea, status } = setUp()
+    textArea.value = "テストの依頼"
+
+    form.requestSubmit()
+    await flushMicrotasks()
+
+    expect(textArea.value).toBe("")
+    expect(textArea.focusCount()).toBeGreaterThan(0)
+    expect(status.textContent).toBe("送信済み")
+  })
+
+  it("送信に失敗したら入力欄の文字列を消さない", async () => {
+    const { form, textArea, status } = setUp(
+      new Map([[PROMPT_PATH, { ok: false, reason: "セッションがまだ起きていない" }]]),
+    )
+    textArea.value = "テストの依頼"
+
+    form.requestSubmit()
+    await flushMicrotasks()
+
+    expect(textArea.value).toBe("テストの依頼")
+    expect(status.textContent).toContain("セッションがまだ起きていない")
+  })
+
+  it("進行中は送信ボタンが「中断」に変わる。押した瞬間ではなく、サーバから届いた状態で決まる", () => {
+    const { sendButton, dispatchTurnStatus } = setUp()
+
+    expect(sendButton.textContent).toBe("送信")
+    dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
+    expect(sendButton.textContent).toBe("中断")
+    dispatchTurnStatus(TURN_STATUS_IDLE)
+    expect(sendButton.textContent).toBe("送信")
+  })
+
+  it("進行中に送信ボタンを押すと、INTERRUPT_PATH を叩くだけ", async () => {
+    const { sendButton, status, calls, dispatchTurnStatus } = setUp()
+    dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
+
+    sendButton.click()
+    await flushMicrotasks()
+
+    expect(calls()).toEqual([{ url: INTERRUPT_PATH, body: undefined }])
+    expect(status.textContent).toBe("中断した")
   })
 })
 
@@ -763,35 +929,35 @@ describe("まとめたレイアウトページ", () => {
     }
   })
 
-  it("右下の入力ペインに、送信先の選択と依頼を書くフォームを持つ", () => {
+  it("右下の入力ペインに、複数行入力・送信ボタンのフォームを持つ（送り先の選択は無い）", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(page).toContain('<section class="layout-region layout-dispatch"')
     expect(page).toContain('<form id="tsukumo-dispatch-form">')
-    expect(page).toContain('<select id="tsukumo-dispatch-target"')
     expect(page).toContain('<textarea id="tsukumo-dispatch-text"')
   })
 
-  it("送信先の一覧の取得と依頼の送信を、経路の定数（TERMINALS_PATH / DISPATCH_PATH）宛に行う", () => {
+  it("送り先を選ぶ <select> を持たず、DISPATCH_PATH / TERMINALS_PATH は入力欄から呼ばれない", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
-    expect(page).toContain(`fetch(${JSON.stringify(TERMINALS_PATH)})`)
-    expect(page).toContain(`fetch(${JSON.stringify(DISPATCH_PATH)}`)
+    expect(page).not.toContain('<select id="tsukumo-dispatch-target"')
+    expect(page).not.toContain(`fetch(${JSON.stringify(TERMINALS_PATH)})`)
+    expect(page).not.toContain(`fetch(${JSON.stringify(DISPATCH_PATH)}`)
   })
 
-  it("送信先が0件のとき・一覧の取得や送信に失敗したときに出す理由の文言を持つ", () => {
+  it("依頼の送信・中断を、経路の定数（PROMPT_PATH / INTERRUPT_PATH / TURN_STATUS_EVENT_PATH）宛に行う", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
-    expect(page).toContain("動いているターミナルが無い")
-    expect(page).toContain("送信先の一覧を取得できなかった")
-    expect(page).toContain("送信できなかった")
+    expect(page).toContain(`fetch(${JSON.stringify(PROMPT_PATH)}`)
+    expect(page).toContain(`fetch(${JSON.stringify(INTERRUPT_PATH)}`)
+    expect(page).toContain(`new EventSource(${JSON.stringify(TURN_STATUS_EVENT_PATH)})`)
   })
 
-  it("送信ボタンは初期状態で無効になっている（送信先が揃うまで押せない）", () => {
+  it("送信ボタンは初期状態で「送信」（無効ではない。送信先の選択が要らなくなったため）", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
 
     expect(page).toContain(
-      '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send" disabled>',
+      '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send">送信</button>',
     )
   })
 })

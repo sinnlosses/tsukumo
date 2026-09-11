@@ -61,6 +61,11 @@ export type SessionView = {
   readonly slashCommands: readonly string[]
   /** セッションが終わった理由。動いている間は undefined。 */
   readonly endedReason: string | undefined
+  /**
+   * ターンが進行中か。`request` で始まり、`turn-finished` / `session-ended` で終わる
+   * （入力欄が送信と中断を切り替える判断材料。docs/requirements.md 4.7）。
+   */
+  readonly turnInProgress: boolean
 }
 
 export const INITIAL_SESSION_VIEW: SessionView = {
@@ -76,6 +81,7 @@ export const INITIAL_SESSION_VIEW: SessionView = {
   permissionMode: undefined,
   slashCommands: [],
   endedReason: undefined,
+  turnInProgress: false,
 }
 
 /** イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。 */
@@ -94,6 +100,7 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
         ...view,
         records: [...view.records, { kind: "request", text: event.text }],
         partialUtterance: "",
+        turnInProgress: true,
       }
     case "partial-utterance":
       return { ...view, partialUtterance: view.partialUtterance + event.text }
@@ -122,9 +129,14 @@ export function applySessionEvent(view: SessionView, event: SessionEvent): Sessi
       return { ...view, pending: event.pending }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished":
-      return settleUtterance(view)
+      return { ...settleUtterance(view), turnInProgress: false }
     case "session-ended":
-      return { ...settleUtterance(view), endedReason: event.reason, runningToolNames: [] }
+      return {
+        ...settleUtterance(view),
+        endedReason: event.reason,
+        runningToolNames: [],
+        turnInProgress: false,
+      }
   }
 }
 

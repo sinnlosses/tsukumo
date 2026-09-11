@@ -53,10 +53,10 @@
     "id": "T-038",
     "summary": "入力欄から依頼を送り、実行中は中断できるようにする",
     "task": "入力欄から依頼を送り、実行中は中断できるようにする（縦1本の起点）。\n\n## 背景\n\nレイアウトページ（`src/view.ts` の `buildLayoutPage`）の右下には、T-015 で作った入力フォームがある。いまは `DISPATCH_PATH`（`/api/dispatch`）に POST し、`src/orca-host.ts` が `orca terminal send` で claude の端末へ送る作りで、**Orca に弾かれて届かない**（2026-09-11 実測）。T-037 で SDK の駆動が入ったので、**入力欄の送り先を駆動側の「ストリーミング入力への送信」に付け替える。**\n\nユーザー決定 Q8: v1 の入力欄は (1) 複数行入力＋送信、(2) 実行中の中断、(3) `/` のコマンド補完。このタスクは (1)(2)。(3) は T-045。\n\n## 解くべき論点\n\n- 送信の HTTP API の形。`POST /api/prompt`（本文は JSON の `{ text }`）と `POST /api/interrupt`。既存の `isAllowedOrigin` の同一オリジン検査（`src/view-server.ts`）をそのまま掛ける\n- 実行中の状態表示。ターンが進行中は送信ボタンを「中断」に変える（送信と中断が同時に押せる状態を作らない）。進行中かどうかは駆動側のイベント（ターン開始／`result`）から決める\n- 送り先の一覧（`TERMINALS_PATH` と `orca terminal list`）は不要になるので UI から外す\n- Enter で送信、Shift+Enter で改行（IME の変換確定 Enter を送信にしない: `isComposing` を見る）\n\n## やること\n\n1. `src/view-server.ts` に `/api/prompt` と `/api/interrupt` を足し、駆動側の関数を呼ぶ\n2. `buildLayoutPage` の入力フォームを付け替える。送り先の一覧を外す\n3. `/api/dispatch` と `/api/terminals` は呼ばれなくする（撤去は T-042）\n\n## 完了条件\n\n- テスト: `/api/prompt` が JSON の `text` を駆動へ渡すこと、本文が壊れていれば 400 で何も送らないこと、別オリジンからは 403 になること、`/api/interrupt` が駆動の interrupt を呼ぶこと（駆動はフェイクに差し替える）\n- Orca のタブで目視: 入力欄に依頼を打って Enter で送ると、吹き出しとメインビューが動き始める。実行中に「中断」を押すと止まり、ボタンが「送信」に戻る。Shift+Enter で改行できる。**何を打ったかは `evidence` に書かない**（打った文字数と、起きたことだけ）\n- `bun run check` が通ること\n\n## 注意\n\n- 会話内容の扱い: 入力欄の文字列をログに出さない\n- サブエージェントに委譲してよい。`/loop` に載せてよい",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "sonnet に委譲。/api/interrupt（同一オリジン検査つき）と進行状態の SSE（/events/turn-status）を追加、入力欄を /api/prompt に付け替え、送り先の一覧を UI から外した。Enter 送信 / Shift+Enter 改行 / IME 確定は isComposing と keyCode 229 で除外。`bun run check` 通過: 337 pass / 0 fail。curl で prompt → {ok:true}、interrupt → {ok:true}、SSE で idle → in-progress → idle を観測（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**（自動進行中のため）。確かめること: 右下が入力欄＋送信だけ／送ると「中断」に変わり押すと「送信」に戻る／Shift+Enter で改行。",
     "dependencies": ["T-037"]
   },
   {

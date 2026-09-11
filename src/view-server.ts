@@ -17,11 +17,15 @@ import {
   buildLayoutPage,
   buildViewPage,
   DISPATCH_PATH,
+  INTERRUPT_PATH,
   LAYOUT_PATH,
   type LayoutBodies,
   ANSWER_PATH,
   PROMPT_PATH,
   TERMINALS_PATH,
+  TURN_STATUS_EVENT_PATH,
+  TURN_STATUS_IDLE,
+  TURN_STATUS_IN_PROGRESS,
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
   VIEW_NAMES,
@@ -49,6 +53,13 @@ const HEARTBEAT_INTERVAL_MS = 15_000
  */
 export type SendPrompt = (text: string) => boolean
 
+/**
+ * 入力欄から届いた中断の要求をセッション駆動へ渡す関数。**駆動側の `interrupt()` は
+ * `Promise<void>` を返す**（失敗しても例外にはしない契約。src/session-driver.ts）ので、
+ * ここでは待つだけでよく、受け取れたかどうかの真偽値は要らない。
+ */
+export type SendInterrupt = () => Promise<void>
+
 export type ViewServer = {
   /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */
   readonly urlOf: (view: ViewName) => string
@@ -60,6 +71,11 @@ export type ViewServer = {
   readonly layoutUrl: string
   /** ビューの本文を差し替え、開いているブラウザへ push する。 */
   readonly publish: (view: ViewName, body: string) => void
+  /**
+   * 入力欄の「ターンが進行中か」を、開いているブラウザへ push する。**サーバがこの状態を持つ**
+   * （ブラウザ側が送信ボタンを押した瞬間に勝手に決めない。docs/requirements.md 4.7）。
+   */
+  readonly publishTurnStatus: (inProgress: boolean) => void
   readonly close: () => Promise<void>
 }
 
@@ -75,16 +91,32 @@ export function startViewServer(
   port: number,
   host: Host,
   sendPrompt: SendPrompt,
+  sendInterrupt: SendInterrupt,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
+  const turnStatusClients = new Set<ServerResponse>()
+  // ターンの進行中状態。セッションが起きる前は「進行中ではない」が正しい既定値。
+  let turnStatusBody = TURN_STATUS_IDLE
   // listen が終わるまでは空文字列。状態を変える経路（POST）が実際に受け付けられるのは
   // listen 後だけなので、リクエストが来る時点では必ず埋まっている。
   let boundOrigin = ""
 
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, bodies, clients, host, boundOrigin, sendPrompt)
+    respond(
+      request,
+      path,
+      response,
+      bodies,
+      clients,
+      host,
+      boundOrigin,
+      sendPrompt,
+      sendInterrupt,
+      turnStatusClients,
+      () => turnStatusBody,
+    )
   })
 
   const heartbeat = setInterval(() => {
@@ -92,6 +124,9 @@ export function startViewServer(
       for (const response of responses) {
         response.write(": ping\n\n")
       }
+    }
+    for (const response of turnStatusClients) {
+      response.write(": ping\n\n")
     }
   }, HEARTBEAT_INTERVAL_MS)
   heartbeat.unref()
@@ -123,6 +158,12 @@ export function startViewServer(
             writeUpdate(response, body)
           }
         },
+        publishTurnStatus: (inProgress) => {
+          turnStatusBody = inProgress ? TURN_STATUS_IN_PROGRESS : TURN_STATUS_IDLE
+          for (const response of turnStatusClients) {
+            writeUpdate(response, turnStatusBody)
+          }
+        },
         close: () => {
           clearInterval(heartbeat)
           for (const responses of clients.values()) {
@@ -131,6 +172,10 @@ export function startViewServer(
             }
             responses.clear()
           }
+          for (const response of turnStatusClients) {
+            response.end()
+          }
+          turnStatusClients.clear()
           return new Promise((closed) => {
             server.closeAllConnections()
             server.close(() => closed())
@@ -150,6 +195,9 @@ function respond(
   host: Host,
   serverOrigin: string,
   sendPrompt: SendPrompt,
+  sendInterrupt: SendInterrupt,
+  turnStatusClients: Set<ServerResponse>,
+  getTurnStatusBody: () => string,
 ): void {
   if (path === "/") {
     writeHtml(response, buildIndexPage())
@@ -173,6 +221,11 @@ function respond(
     return
   }
 
+  if (path === TURN_STATUS_EVENT_PATH) {
+    openTurnStatusStream(response, getTurnStatusBody(), turnStatusClients)
+    return
+  }
+
   if (path === TERMINALS_PATH && request.method === "GET") {
     handleListTerminals(response, host)
     return
@@ -184,6 +237,15 @@ function respond(
       return
     }
     handlePrompt(request, response, sendPrompt)
+    return
+  }
+
+  if (path === INTERRUPT_PATH && request.method === "POST") {
+    if (!isAllowedOrigin(request, serverOrigin)) {
+      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
+      return
+    }
+    handleInterrupt(response, sendInterrupt)
     return
   }
 
@@ -345,6 +407,21 @@ function parsePromptRequest(body: string): string | undefined {
   return typeof text === "string" && text.trim() !== "" && text.length <= MAX_DISPATCH_TEXT_LENGTH
     ? text
     : undefined
+}
+
+/**
+ * 実行中のターンを中断する。本文は無い。**駆動の `interrupt()` は失敗を例外にしない契約**
+ * （src/session-driver.ts）だが、呼び出しそのもの（`Promise` の生成）が失敗する余地は残るので、
+ * ここでも捕まえて理由付きの失敗を返す。
+ */
+function handleInterrupt(response: ServerResponse, sendInterrupt: SendInterrupt): void {
+  sendInterrupt()
+    .then(() => {
+      writeJson(response, 200, { ok: true })
+    })
+    .catch(() => {
+      writeJson(response, 502, { ok: false, reason: "中断できなかった" })
+    })
 }
 
 /**
@@ -562,6 +639,30 @@ function openStream(
   responses.add(response)
   response.on("close", () => {
     responses.delete(response)
+  })
+
+  writeUpdate(response, body)
+}
+
+/**
+ * 入力欄の「ターンが進行中か」の専用の Server-Sent Events。`openStream` と同じ形だが、
+ * 対応する `ViewName` の領域を持たないので `clients`（`Map<ViewName, Set>`）とは別に
+ * `Set<ServerResponse>` 1つで足りる。
+ */
+function openTurnStatusStream(
+  response: ServerResponse,
+  body: string,
+  turnStatusClients: Set<ServerResponse>,
+): void {
+  response.writeHead(200, {
+    "content-type": "text/event-stream; charset=utf-8",
+    "cache-control": "no-store",
+    connection: "keep-alive",
+  })
+
+  turnStatusClients.add(response)
+  response.on("close", () => {
+    turnStatusClients.delete(response)
   })
 
   writeUpdate(response, body)

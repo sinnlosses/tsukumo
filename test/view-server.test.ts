@@ -2,8 +2,22 @@ import { afterEach, describe, expect, it, mock } from "bun:test"
 import { networkInterfaces } from "node:os"
 
 import { type Host, type HostResult } from "../src/host.ts"
-import { type SendPrompt, startViewServer, type ViewServer } from "../src/view-server.ts"
-import { DISPATCH_PATH, PROMPT_PATH, TERMINALS_PATH, VIEW_NAMES } from "../src/view.ts"
+import {
+  type SendInterrupt,
+  type SendPrompt,
+  startViewServer,
+  type ViewServer,
+} from "../src/view-server.ts"
+import {
+  DISPATCH_PATH,
+  INTERRUPT_PATH,
+  PROMPT_PATH,
+  TERMINALS_PATH,
+  TURN_STATUS_EVENT_PATH,
+  TURN_STATUS_IDLE,
+  TURN_STATUS_IN_PROGRESS,
+  VIEW_NAMES,
+} from "../src/view.ts"
 
 // ポート 0 で起動し、割り当てられたポートを urlOf から読む（開発機で常駐中のサイドカーと
 // ぶつからないようにするため）。
@@ -28,8 +42,9 @@ function fakeHost(overrides: Partial<Host> = {}): Host {
 async function start(
   host: Host = fakeHost(),
   sendPrompt: SendPrompt = () => true,
+  sendInterrupt: SendInterrupt = () => Promise.resolve(),
 ): Promise<ViewServer> {
-  const server = await startViewServer(0, host, sendPrompt)
+  const server = await startViewServer(0, host, sendPrompt, sendInterrupt)
   running = server
   return server
 }
@@ -317,6 +332,68 @@ describe("セッションへの依頼", () => {
 
     expect(response.status).toBe(403)
     expect(sendPrompt).not.toHaveBeenCalled()
+  })
+})
+
+describe("実行中の中断", () => {
+  it("駆動の interrupt を呼び、ok を返す", async () => {
+    const sendInterrupt = mock((): Promise<void> => Promise.resolve())
+    const server = await start(fakeHost(), () => true, sendInterrupt)
+
+    const response = await fetch(`${originOf(server)}${INTERRUPT_PATH}`, { method: "POST" })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(sendInterrupt).toHaveBeenCalledTimes(1)
+  })
+
+  it("別のオリジンからは、駆動を呼ばずに403で弾く", async () => {
+    const sendInterrupt = mock((): Promise<void> => Promise.resolve())
+    const server = await start(fakeHost(), () => true, sendInterrupt)
+
+    const response = await fetch(`${originOf(server)}${INTERRUPT_PATH}`, {
+      method: "POST",
+      headers: { origin: "http://example.invalid" },
+    })
+
+    expect(response.status).toBe(403)
+    expect(sendInterrupt).not.toHaveBeenCalled()
+  })
+
+  it("駆動が失敗したときは理由付きで失敗を返す", async () => {
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.reject(new Error("中断に失敗")),
+    )
+
+    const response = await fetch(`${originOf(server)}${INTERRUPT_PATH}`, { method: "POST" })
+
+    expect(response.status).toBe(502)
+    expect((await response.json()).ok).toBe(false)
+  })
+})
+
+describe("入力欄の進行状態（SSE）", () => {
+  it("購読直後は「進行中でない」を push し、publishTurnStatus で切り替わる", async () => {
+    const server = await start()
+
+    const response = await fetch(`${originOf(server)}${TURN_STATUS_EVENT_PATH}`)
+    const stream = response.body
+    if (stream === null) {
+      throw new Error("イベントストリームの本文が空だった")
+    }
+    const reader = stream.getReader()
+
+    try {
+      expect(await readEvent(reader)).toContain(TURN_STATUS_IDLE)
+      server.publishTurnStatus(true)
+      expect(await readEvent(reader)).toContain(TURN_STATUS_IN_PROGRESS)
+      server.publishTurnStatus(false)
+      expect(await readEvent(reader)).toContain(TURN_STATUS_IDLE)
+    } finally {
+      await reader.cancel()
+    }
   })
 })
 

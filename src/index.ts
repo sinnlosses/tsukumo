@@ -108,13 +108,18 @@ async function main(args: readonly string[]): Promise<number> {
   // 配るためにサーバを要る）。**先に立てるのはサーバ**にして、セッションはあとから入る形にした。
   // 起動直後の依頼は受け取れずに 503 で返るだけで、どちらかが欠けて黙って落ちることがない。
   let driver: SessionDriver | undefined = undefined
-  const server = await startViewServer(port, host, (text) => {
-    if (driver === undefined) {
-      return false
-    }
-    driver.prompt(text)
-    return true
-  }).catch((error: unknown) => {
+  const server = await startViewServer(
+    port,
+    host,
+    (text) => {
+      if (driver === undefined) {
+        return false
+      }
+      driver.prompt(text)
+      return true
+    },
+    () => (driver === undefined ? Promise.resolve() : driver.interrupt()),
+  ).catch((error: unknown) => {
     process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
     return undefined
   })
@@ -130,7 +135,7 @@ async function main(args: readonly string[]): Promise<number> {
     cwd: process.cwd(),
     expressions: availableExpressions(readCharacterDefinition(characterDir)),
     permissionMode: DEFAULT_PERMISSION_MODE,
-    onEvent: createEventSink(publish),
+    onEvent: createEventSink(publish, server.publishTurnStatus),
   })
   stopSessionOnExit(driver)
   announce(server)
@@ -145,12 +150,22 @@ async function main(args: readonly string[]): Promise<number> {
 /**
  * イベントを受けて姿を更新し、配る係を呼ぶ。**セッションの姿を持つのはここ1箇所だけ**
  * （畳み込みそのものは純粋関数。src/session-view.ts）。
+ *
+ * **`turnInProgress` が変わったときだけ `publishTurnStatus` を呼ぶ。** 書きかけの本文は
+ * トークン単位で届くため、変わっていないのに毎回押すと入力欄の SSE だけ無駄に流れてしまう。
  */
-function createEventSink(publish: (view: SessionView) => void): (event: SessionEvent) => void {
+function createEventSink(
+  publish: (view: SessionView) => void,
+  publishTurnStatus: (inProgress: boolean) => void,
+): (event: SessionEvent) => void {
   let view = INITIAL_SESSION_VIEW
 
   return (event) => {
-    view = applySessionEvent(view, event)
+    const next = applySessionEvent(view, event)
+    if (next.turnInProgress !== view.turnInProgress) {
+      publishTurnStatus(next.turnInProgress)
+    }
+    view = next
     if (event.kind === "session-ended") {
       process.stderr.write(`tsukumo: セッションが終わった: ${event.reason}\n`)
     }

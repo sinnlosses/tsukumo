@@ -141,6 +141,27 @@ describe("applySessionEvent", () => {
     expect(view.runningToolNames).toEqual([])
   })
 
+  it("request でターンが進行中になり、turn-finished で止まる（入力欄の送信/中断の切り替えに使う）", () => {
+    expect(INITIAL_SESSION_VIEW.turnInProgress).toBe(false)
+
+    const started = apply({ kind: "request", text: "ダミーの依頼" })
+    expect(started.turnInProgress).toBe(true)
+
+    const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" })
+    expect(finished.turnInProgress).toBe(false)
+  })
+
+  it("session-ended でも進行中を止める（中断・異常終了のどちらでも入力欄を送信可能に戻す）", () => {
+    const started = apply({ kind: "request", text: "ダミーの依頼" })
+
+    const ended = applySessionEvent(started, {
+      kind: "session-ended",
+      reason: "セッションが終了した",
+    })
+
+    expect(ended.turnInProgress).toBe(false)
+  })
+
   it("答え待ちの列をそのまま持つ", () => {
     const view = apply({
       kind: "pending-changed",
