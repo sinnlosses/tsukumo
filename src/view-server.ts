@@ -24,6 +24,7 @@ import {
   buildLayoutPage,
   buildViewPage,
   ANSWER_PATH,
+  COMMANDS_PATH,
   DISPATCH_PATH,
   INTERRUPT_PATH,
   LAYOUT_PATH,
@@ -90,6 +91,13 @@ export type SendPermissionMode = (mode: PermissionMode) => Promise<boolean>
  */
 export type SendModel = (model: ModelAlias) => Promise<boolean>
 
+/**
+ * 入力欄の `/` 補完に出せるコマンド名の一覧を読む関数。**呼ばれた時点の最新の値**を返す契約
+ * （`init` 前は空配列。`GET /api/commands` が毎リクエストごとに呼ぶ。src/session-view.ts の
+ * `commandCandidates` が端末専用を除く計算をすでに済ませている）。
+ */
+export type GetCommands = () => readonly string[]
+
 export type ViewServer = {
   /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */
   readonly urlOf: (view: ViewName) => string
@@ -131,6 +139,7 @@ export function startViewServer(
   sendAnswer: SendAnswer,
   sendPermissionMode: SendPermissionMode,
   sendModel: SendModel,
+  getCommands: GetCommands,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
@@ -159,6 +168,7 @@ export function startViewServer(
       sendAnswer,
       sendPermissionMode,
       sendModel,
+      getCommands,
       turnStatusClients,
       () => turnStatusBody,
       pendingAnswerClients,
@@ -259,6 +269,7 @@ function respond(
   sendAnswer: SendAnswer,
   sendPermissionMode: SendPermissionMode,
   sendModel: SendModel,
+  getCommands: GetCommands,
   turnStatusClients: Set<ServerResponse>,
   getTurnStatusBody: () => string,
   pendingAnswerClients: Set<ServerResponse>,
@@ -298,6 +309,11 @@ function respond(
 
   if (path === TERMINALS_PATH && request.method === "GET") {
     handleListTerminals(response, host)
+    return
+  }
+
+  if (path === COMMANDS_PATH && request.method === "GET") {
+    writeJson(response, 200, { commands: getCommands() })
     return
   }
 

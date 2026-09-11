@@ -102,6 +102,13 @@ export const PERMISSION_MODE_PATH = "/api/permission-mode"
  */
 export const MODEL_PATH = "/api/model"
 
+/**
+ * 入力欄の `/` 補完の候補一覧を返す経路（GET、レスポンスは `{ commands: string[] }`）。
+ * セッションが起きる前（`init` 前）は空配列。ブラウザは `/` を最初に打ったときに1回だけ取りに行き、
+ * 以降はセッション中キャッシュする（{@link dispatchScript}。docs/requirements.md 4.2「入力欄」）。
+ */
+export const COMMANDS_PATH = "/api/commands"
+
 /** 単体ビューのページで、本文を差し替える要素の id。 */
 const STANDALONE_VIEW_ELEMENT_ID = "tsukumo-view"
 
@@ -573,6 +580,7 @@ function subscriptionScript(elementId: string, view: ViewName, initialBody: stri
 
 const DISPATCH_REGION_ID = "tsukumo-view-dispatch"
 const DISPATCH_PENDING_ID = "tsukumo-dispatch-pending"
+const DISPATCH_SUGGESTIONS_ID = "tsukumo-dispatch-suggestions"
 const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
 const DISPATCH_TEXT_ID = "tsukumo-dispatch-text"
 const DISPATCH_SEND_ID = "tsukumo-dispatch-send"
@@ -580,6 +588,10 @@ const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
 
 const DISPATCH_SEND_LABEL = "送信"
 const DISPATCH_INTERRUPT_LABEL = "中断"
+
+// 入力欄の `/` 補完で表示する候補の上限（docs/requirements.md 4.2「入力欄」）。
+const MAX_COMMAND_SUGGESTIONS = 10
+const COMMAND_SUGGESTION_ITEM_CLASS = "dispatch-suggestion-item"
 
 /**
  * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
@@ -592,12 +604,17 @@ const DISPATCH_INTERRUPT_LABEL = "中断"
  * 置く）。ここは箱の置き場所（空の要素）を出すだけで、中身は `PENDING_ANSWER_EVENT_PATH` の
  * SSE で差し替える（{@link dispatchScript}）。**入力欄は消さない**（答え待ちの間も
  * 「中断」は押せる）。
+ *
+ * **`/` コマンド補完の候補一覧（{@link commandSuggestionsScript}）は、答え待ちの箱の下・
+ * `<textarea>` の上に出す**（答え待ちの箱と重ならない位置。docs/requirements.md 4.2
+ * 「入力欄」）。中身はブラウザ側が組み立てる（`hidden` で始まり、候補が無いときも隠れたまま）。
  */
 function dispatchRegionHtml(): string {
   return `<section class="layout-region layout-dispatch" id="${DISPATCH_REGION_ID}" data-pending="no">
 <div class="dispatch-pending" id="${DISPATCH_PENDING_ID}"></div>
+<ul class="dispatch-suggestions" id="${DISPATCH_SUGGESTIONS_ID}" hidden></ul>
 <form id="${DISPATCH_FORM_ID}">
-  <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行）" required></textarea>
+  <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行、/ でコマンド補完）" required></textarea>
   <div class="dispatch-row">
     <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send">${DISPATCH_SEND_LABEL}</button>
     <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
@@ -629,6 +646,10 @@ function dispatchRegionHtml(): string {
  *   (2) タブのタイトルの先頭に「● 」を付け、答え待ちが消えたら**最初に読んだ元のタイトル**へ戻す
  *   （読むのは1回だけ。差し替え後の自分の変更を次回の「元」だと誤読しないようにする）。
  *   ボタンを押したときの配線自体は {@link pendingAnswerScript} が持つ（ここでは呼ぶだけ）。
+ * - **`/` コマンド補完（{@link commandSuggestionsScript}）は同じ `<textarea>` の `keydown` を
+ *   共有する。** 送信の Enter と確定の Enter が同じキーなので、別のリスナーに分けると
+ *   登録順で送信が先に走ってしまう。候補が開いている間は候補側の分岐で `return` し、
+ *   閉じていれば今までどおり送信に落ちる1つのリスナーにまとめてある。
  */
 function dispatchScript(): string {
   return `  {
@@ -638,6 +659,7 @@ function dispatchScript(): string {
     const status = document.getElementById(${JSON.stringify(DISPATCH_STATUS_ID)})
     const pendingRegion = document.getElementById(${JSON.stringify(DISPATCH_REGION_ID)})
     const pendingBox = document.getElementById(${JSON.stringify(DISPATCH_PENDING_ID)})
+    const suggestionsBox = document.getElementById(${JSON.stringify(DISPATCH_SUGGESTIONS_ID)})
     const originalTitle = document.title
     let inProgress = false
 
@@ -653,11 +675,16 @@ function dispatchScript(): string {
       applyButtonLabel()
     })
 
+${commandSuggestionsScript()}
+
     new EventSource(${JSON.stringify(PENDING_ANSWER_EVENT_PATH)}).addEventListener("update", (event) => {
       const hasPending = event.data !== ""
       pendingBox.innerHTML = event.data
       pendingRegion.dataset.pending = hasPending ? "yes" : "no"
       document.title = hasPending ? "● " + originalTitle : originalTitle
+      if (hasPending) {
+        closeSuggestions()
+      }
     })
 
     async function sendPrompt(text) {
@@ -672,6 +699,7 @@ function dispatchScript(): string {
         const data = await response.json()
         if (data.ok) {
           textArea.value = ""
+          closeSuggestions()
           status.textContent = "送信済み"
         } else {
           status.textContent = "送信できなかった: " + data.reason
@@ -719,8 +747,37 @@ function dispatchScript(): string {
       }
     })
 
+    textArea.addEventListener("input", (event) => {
+      if (event.isComposing) {
+        return
+      }
+      updateSuggestions()
+    })
+
     textArea.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) {
+      const composing = event.isComposing || event.keyCode === 229
+      if (!composing && suggestionMatches.length > 0) {
+        if (event.key === "ArrowDown") {
+          event.preventDefault()
+          moveSuggestionSelection(1)
+          return
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault()
+          moveSuggestionSelection(-1)
+          return
+        }
+        if (event.key === "Tab" || event.key === "Enter") {
+          event.preventDefault()
+          confirmSelectedSuggestion()
+          return
+        }
+        if (event.key === "Escape") {
+          closeSuggestions()
+          return
+        }
+      }
+      if (event.key !== "Enter" || event.shiftKey || composing) {
         return
       }
       event.preventDefault()
@@ -730,6 +787,132 @@ function dispatchScript(): string {
     })
   }
 ${pendingAnswerScript(DISPATCH_PENDING_ID)}`
+}
+
+/**
+ * `/` コマンド補完。**入力の先頭が `/` で、まだ空白が無いときだけ**候補を出す
+ * （docs/requirements.md 4.2「入力欄」）。候補は `COMMANDS_PATH` から1回だけ取りに行き、
+ * 以降はセッション中キャッシュする（`allCommandsPromise`）。
+ *
+ * - **前方一致で絞り、最大 {@link MAX_COMMAND_SUGGESTIONS} 件**（`matchingCommands`）
+ * - **答え待ちの箱がある間は出さない**（`shouldShowSuggestions` が `pendingRegion` の
+ *   `data-pending` を見る。箱と重ならない位置に出す）
+ * - キー操作（上下・Tab・Enter・Esc）の配線は呼び出し側（{@link dispatchScript}）の
+ *   `keydown` リスナーが持つ。ここでは状態（`suggestionMatches` / `suggestionIndex`）と、
+ *   状態を変える関数だけを定義する
+ * - **候補の文字列は `escapeCommandLabel` を通してから組み立てる**（コマンド名は SDK が返す
+ *   外部由来の値なので、HTML として解釈されない形にする）
+ */
+function commandSuggestionsScript(): string {
+  return `    let allCommandsPromise = null
+    let suggestionMatches = []
+    let suggestionIndex = -1
+
+    function loadCommands() {
+      if (allCommandsPromise === null) {
+        allCommandsPromise = fetch(${JSON.stringify(COMMANDS_PATH)})
+          .then((response) => response.json())
+          .then((data) => (Array.isArray(data.commands) ? data.commands : []))
+          .catch(() => [])
+      }
+      return allCommandsPromise
+    }
+
+    function containsWhitespace(text) {
+      return (
+        text.indexOf(" ") !== -1 ||
+        text.indexOf("\\t") !== -1 ||
+        text.indexOf("\\n") !== -1 ||
+        text.indexOf("\\r") !== -1
+      )
+    }
+
+    function shouldShowSuggestions(value) {
+      return (
+        value.startsWith("/") && !containsWhitespace(value) && pendingRegion.dataset.pending !== "yes"
+      )
+    }
+
+    function matchingCommands(commands, value) {
+      const prefix = value.slice(1)
+      return commands
+        .filter((command) => command.startsWith(prefix))
+        .slice(0, ${JSON.stringify(MAX_COMMAND_SUGGESTIONS)})
+    }
+
+    function escapeCommandLabel(text) {
+      return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+    }
+
+    function renderSuggestions(matches) {
+      suggestionMatches = matches
+      suggestionIndex = matches.length === 0 ? -1 : 0
+      if (matches.length === 0) {
+        suggestionsBox.hidden = true
+        suggestionsBox.innerHTML = ""
+        return
+      }
+      suggestionsBox.innerHTML = matches
+        .map(
+          (command, index) =>
+            '<li class="${COMMAND_SUGGESTION_ITEM_CLASS}' +
+            (index === 0 ? " is-selected" : "") +
+            '">/' +
+            escapeCommandLabel(command) +
+            "</li>",
+        )
+        .join("")
+      suggestionsBox.hidden = false
+    }
+
+    function closeSuggestions() {
+      suggestionMatches = []
+      suggestionIndex = -1
+      suggestionsBox.hidden = true
+      suggestionsBox.innerHTML = ""
+    }
+
+    function moveSuggestionSelection(delta) {
+      if (suggestionMatches.length === 0) {
+        return
+      }
+      suggestionIndex =
+        (suggestionIndex + delta + suggestionMatches.length) % suggestionMatches.length
+      const items = suggestionsBox.querySelectorAll(".${COMMAND_SUGGESTION_ITEM_CLASS}")
+      for (let index = 0; index < items.length; index += 1) {
+        items[index].classList.toggle("is-selected", index === suggestionIndex)
+      }
+    }
+
+    function confirmSelectedSuggestion() {
+      const command = suggestionMatches[suggestionIndex]
+      if (command === undefined) {
+        return
+      }
+      textArea.value = "/" + command + " "
+      closeSuggestions()
+      textArea.focus()
+    }
+
+    function updateSuggestions() {
+      const value = textArea.value
+      if (!shouldShowSuggestions(value)) {
+        closeSuggestions()
+        return
+      }
+      loadCommands().then((commands) => {
+        // fetch を待つ間に入力が変わっていたら、そのときの値で判定し直す。
+        if (!shouldShowSuggestions(textArea.value)) {
+          return
+        }
+        renderSuggestions(matchingCommands(commands, textArea.value))
+      })
+    }
+`
 }
 
 /**

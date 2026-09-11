@@ -215,6 +215,7 @@ describe("toSessionEvents", () => {
       model: "claude-opus-5",
       permissionMode: "auto",
       slash_commands: ["clear", "model", 7],
+      terminal_slash_commands: ["doctor", 7],
       output_style: "Asuna",
     }
 
@@ -225,6 +226,27 @@ describe("toSessionEvents", () => {
         model: "claude-opus-5",
         permissionMode: "auto",
         slashCommands: ["clear", "model"],
+        terminalSlashCommands: ["doctor"],
+      },
+    ])
+  })
+
+  it("terminal_slash_commands が無いときは空配列にする", () => {
+    const message = {
+      type: "system",
+      subtype: "init",
+      session_id: "session-dummy",
+      slash_commands: ["clear"],
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "session-info",
+        sessionId: "session-dummy",
+        model: undefined,
+        permissionMode: undefined,
+        slashCommands: ["clear"],
+        terminalSlashCommands: [],
       },
     ])
   })

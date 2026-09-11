@@ -5,6 +5,7 @@ import { type Host, type HostResult } from "../src/host.ts"
 import { type Answer } from "../src/pending-answer.ts"
 import { type ModelAlias, type PermissionMode } from "../src/session-driver.ts"
 import {
+  type GetCommands,
   type SendAnswer,
   type SendInterrupt,
   type SendModel,
@@ -14,6 +15,7 @@ import {
   type ViewServer,
 } from "../src/view-server.ts"
 import {
+  COMMANDS_PATH,
   DISPATCH_PATH,
   INTERRUPT_PATH,
   MODEL_PATH,
@@ -54,6 +56,7 @@ async function start(
   sendAnswer: SendAnswer = () => true,
   sendPermissionMode: SendPermissionMode = () => Promise.resolve(true),
   sendModel: SendModel = () => Promise.resolve(true),
+  getCommands: GetCommands = () => [],
 ): Promise<ViewServer> {
   const server = await startViewServer(
     0,
@@ -63,6 +66,7 @@ async function start(
     sendAnswer,
     sendPermissionMode,
     sendModel,
+    getCommands,
   )
   running = server
   return server
@@ -671,6 +675,42 @@ describe("答え待ちの箱（SSE）", () => {
     } finally {
       await reader.cancel()
     }
+  })
+})
+
+describe("入力欄の / 補完の候補（GET /api/commands）", () => {
+  it("init 前（getCommands が空配列を返す）は空配列を返す", async () => {
+    const server = await start(
+      fakeHost(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => [],
+    )
+
+    const response = await fetch(`${originOf(server)}${COMMANDS_PATH}`)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ commands: [] })
+  })
+
+  it("init 後（getCommands が一覧を返す）はその一覧を返す", async () => {
+    const server = await start(
+      fakeHost(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => ["clear", "model", "next-task"],
+    )
+
+    const response = await fetch(`${originOf(server)}${COMMANDS_PATH}`)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ commands: ["clear", "model", "next-task"] })
   })
 })
 

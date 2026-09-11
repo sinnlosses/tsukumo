@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test"
 import { type SessionEvent } from "../src/session-event.ts"
 import {
   applySessionEvent,
+  commandCandidates,
   currentExpression,
   INITIAL_SESSION_VIEW,
   mainViewEntries,
@@ -241,7 +242,7 @@ describe("applySessionEvent", () => {
     expect(mainViewEntries(view)).toEqual([])
   })
 
-  it("init のたびにセッション情報を上書きする", () => {
+  it("init のたびにセッション情報を上書きする（端末専用コマンドは候補から除く）", () => {
     const view = apply(
       {
         kind: "session-info",
@@ -249,13 +250,15 @@ describe("applySessionEvent", () => {
         model: "claude-opus-5",
         permissionMode: "auto",
         slashCommands: ["clear"],
+        terminalSlashCommands: [],
       },
       {
         kind: "session-info",
         sessionId: "s-1",
         model: "claude-opus-5",
         permissionMode: "default",
-        slashCommands: ["clear", "model"],
+        slashCommands: ["clear", "model", "doctor"],
+        terminalSlashCommands: ["doctor"],
       },
     )
 
@@ -352,5 +355,19 @@ describe("applySessionEvent", () => {
     expect(requestTexts).toHaveLength(20)
     expect(requestTexts[0]).toBe("依頼5")
     expect(requestTexts.at(-1)).toBe("依頼24")
+  })
+})
+
+describe("commandCandidates", () => {
+  it("端末専用のコマンドを除いた残りを返す", () => {
+    expect(commandCandidates(["clear", "model", "doctor"], ["doctor"])).toEqual(["clear", "model"])
+  })
+
+  it("端末専用が空のときはそのまま返す", () => {
+    expect(commandCandidates(["clear", "model"], [])).toEqual(["clear", "model"])
+  })
+
+  it("元の並び順を保つ（並べ替えない）", () => {
+    expect(commandCandidates(["b", "a", "c"], ["a"])).toEqual(["b", "c"])
   })
 })

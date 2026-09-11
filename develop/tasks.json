@@ -123,10 +123,10 @@
     "id": "T-045",
     "summary": "入力欄で / を打ったときにコマンドの候補を出す",
     "task": "入力欄で `/` を打ったときにコマンドの候補を出す。\n\n## 背景\n\nユーザー決定 Q8 の (3)。SDK は `system/init` メッセージの `slash_commands` に、そのセッションで使える組み込みコマンド・同梱スキル・自作スキル・`.claude/commands` の名前を並べて返す（公式ドキュメント「Commands in Agent SDK sessions」、T-036 で件数を確認済み）。**これを入力欄の補完に使う**と、`/next-task` `/plan-tasks` `/code-review` といういまの働き方が TUI と同じ手触りで打てる。\n\n## 解くべき論点\n\n- 候補の出し方: 入力の先頭が `/` で、まだ空白が無いときだけ候補を出す。前方一致で絞り、上下キーで選び、Tab か Enter で確定（Enter は確定だけで送信しない）\n- 候補の一覧は `GET /api/commands` で配るか、レイアウトページに埋め込むか。セッションごとに変わりうる（プロジェクトのスキル）ので API で配る\n- スキルの `description` は `slash_commands` に無い（名前だけ）。説明を出したければ `system/init` の `skills` 配列と突き合わせる。v1 は名前だけでよい\n\n## やること\n\n1. 駆動側が `system/init` の `slash_commands` を保持し、`GET /api/commands` で返す\n2. 入力欄に候補の UI を足す（`buildLayoutPage` のスクリプト）\n\n## 完了条件\n\n- テスト: `/api/commands` が init 前は空配列、init 後は一覧を返すこと\n- Orca のタブで目視: `/` を打つと候補が出て、`/ne` で `next-task` に絞れ、Tab で確定、Enter で送信できる。`evidence` に候補の件数を書く\n- `bun run check` が通ること\n\n## 注意\n\n- 入力履歴（上キー）と「繰り返す」トグルはこのタスクに含めない（次の指示待ち）\n- サブエージェントに委譲してよい。`/loop` に載せてよい",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "sonnet に委譲（利用上限で1回止まり、途中から再開）。GET /api/commands（init の slash_commands − terminal_slash_commands、init 前は空）を追加し、入力欄で / を打つと候補（前方一致・最大10件、上下キー、Tab/Enter で確定・Esc で閉じる、IME 中と答え待ち中は出さない）を出す。`bun run check` 通過: 415 pass / 0 fail。curl 確認: init 後に57件、next-task と plan-tasks を含み doctor を含まない（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: / で候補が出て /ne で絞れる／Tab か Enter で埋まって送信されない／候補が閉じているときの Enter は送信。",
     "dependencies": ["T-038"]
   },
   {

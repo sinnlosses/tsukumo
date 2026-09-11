@@ -29,7 +29,8 @@ export type TurnStatus = "success" | "error"
 export type SessionEvent =
   /**
    * `system` の `init`。**プロンプトを送るたびに届く**ので「新しいセッション」の合図にしない
-   * （2026-09-11 実測。docs/requirements.md 4.1）。`slash_commands` は毎回上書きでよい。
+   * （2026-09-11 実測。docs/requirements.md 4.1）。`slashCommands` / `terminalSlashCommands` は
+   * 毎回上書きでよい。
    */
   | {
       readonly kind: "session-info"
@@ -37,6 +38,13 @@ export type SessionEvent =
       readonly model: string | undefined
       readonly permissionMode: string | undefined
       readonly slashCommands: readonly string[]
+      /**
+       * `slash_commands` のうち、端末専用（UX が端末に結び付く。`doctor` / `color` /
+       * `reload-plugins` など）のもの。**入力欄の補完からは除く**
+       * （docs/requirements.md 4.2「入力欄」。除く計算は src/session-view.ts の
+       * `commandCandidates`）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
+       */
+      readonly terminalSlashCommands: readonly string[]
     }
   /** 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。 */
   | { readonly kind: "request"; readonly text: string }
@@ -123,6 +131,7 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
       model: optionalString(message.model),
       permissionMode: optionalString(message.permissionMode),
       slashCommands: stringArray(message.slash_commands),
+      terminalSlashCommands: stringArray(message.terminal_slash_commands),
     },
   ]
 }

@@ -102,7 +102,11 @@ export type SessionView = {
   readonly sessionId: string | undefined
   readonly model: string | undefined
   readonly permissionMode: string | undefined
-  /** 入力欄の `/` 補完に使うスラッシュコマンド（`init` のたびに上書きされる）。 */
+  /**
+   * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
+   * （`terminal_slash_commands`）は除いてある**（{@link commandCandidates}。
+   * docs/requirements.md 4.2「入力欄」）。
+   */
   readonly slashCommands: readonly string[]
   /** セッションが終わった理由。動いている間は undefined。 */
   readonly endedReason: string | undefined
@@ -148,7 +152,7 @@ export function applySessionEvent(
         sessionId: event.sessionId,
         model: event.model,
         permissionMode: event.permissionMode,
-        slashCommands: event.slashCommands,
+        slashCommands: commandCandidates(event.slashCommands, event.terminalSlashCommands),
       }
     case "request":
       return {
@@ -240,6 +244,19 @@ export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
  */
 export function currentExpression(view: SessionView, now: number): Expression {
   return resolveExpression(view.runningTools, view.speechExpression, now)
+}
+
+/**
+ * 入力欄の `/` 補完に出せるコマンド名。`slashCommands` から端末専用
+ * （`terminalSlashCommands`。`doctor` / `color` / `reload-plugins` など）を除く
+ * （docs/requirements.md 4.2「入力欄」）。
+ */
+export function commandCandidates(
+  slashCommands: readonly string[],
+  terminalSlashCommands: readonly string[],
+): readonly string[] {
+  const terminalOnly = new Set(terminalSlashCommands)
+  return slashCommands.filter((command) => !terminalOnly.has(command))
 }
 
 function isReportRecord(

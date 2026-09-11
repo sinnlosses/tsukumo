@@ -120,6 +120,10 @@ async function main(args: readonly string[]): Promise<number> {
   // 配るためにサーバを要る）。**先に立てるのはサーバ**にして、セッションはあとから入る形にした。
   // 起動直後の依頼は受け取れずに 503 で返るだけで、どちらかが欠けて黙って落ちることがない。
   let driver: SessionDriver | undefined = undefined
+  // 入力欄の `/` 補完の候補（`GET /api/commands` が読む）。init 前は空配列
+  // （docs/requirements.md 4.2「入力欄」）。session-view.ts が端末専用を除く計算を済ませた
+  // `slashCommands` をそのまま持つ。
+  let commands: readonly string[] = []
   const server = await startViewServer(
     port,
     host,
@@ -138,6 +142,7 @@ async function main(args: readonly string[]): Promise<number> {
         : driver.setPermissionMode(mode).then(() => true),
     (model) =>
       driver === undefined ? Promise.resolve(false) : driver.setModel(model).then(() => true),
+    () => commands,
   ).catch((error: unknown) => {
     process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
     return undefined
@@ -162,7 +167,14 @@ async function main(args: readonly string[]): Promise<number> {
     cwd: process.cwd(),
     expressions: availableExpressions(readCharacterDefinition(characterDir)),
     permissionMode: DEFAULT_PERMISSION_MODE,
-    onEvent: createEventSink(publish, server.publishTurnStatus, server.publishPendingAnswer),
+    onEvent: createEventSink(
+      publish,
+      server.publishTurnStatus,
+      server.publishPendingAnswer,
+      (next) => {
+        commands = next
+      },
+    ),
   })
   stopSessionOnExit(driver)
   announce(server)
@@ -200,11 +212,17 @@ type PublishState = {
  * 何もしなければ次のイベントが来るまで表情が切り替わらない。実行中のツールがあってまだ
  * 「作業中」になっていないときだけ、遅延の残り時間ぶん先に1回だけ配り直すタイマーを立てる
  * （タイマーは常に1本だけ。イベントが来るたびに立て直す）。
+ *
+ * **`setCommands` は毎イベントで呼ぶ。** `slashCommands` は `session-info` でしか変わらないが、
+ * 変わったかどうかをここで判定する必要はない（呼び出し先の `src/index.ts` の変数への代入は
+ * 副作用として軽く、`publishTurnStatus` / `publishPendingAnswer` のような SSE の押し出しとは
+ * 違って毎回呼んでも配信は増えない）。
  */
 function createEventSink(
   publish: (state: PublishState) => void,
   publishTurnStatus: (inProgress: boolean) => void,
   publishPendingAnswer: (html: string) => void,
+  setCommands: (commands: readonly string[]) => void,
 ): (event: SessionEvent) => void {
   let view = INITIAL_SESSION_VIEW
   let turnStartedAt: number | undefined = undefined
@@ -237,6 +255,7 @@ function createEventSink(
       publishPendingAnswer(buildPendingAnswerBody(next.pending[0]))
     }
     view = next
+    setCommands(view.slashCommands)
     if (event.kind === "request") {
       turnStartedAt = now
     }

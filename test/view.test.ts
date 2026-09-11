@@ -11,6 +11,7 @@ import {
   buildSidebarBody,
   buildViewPage,
   type CharacterViewData,
+  COMMANDS_PATH,
   DISPATCH_PATH,
   INTERRUPT_PATH,
   isViewName,
@@ -359,17 +360,28 @@ function makeFakeKeydownEvent(options: {
   }
 }
 
-/** `<textarea id="tsukumo-dispatch-text">` の代役。`keydown` を手動で発火できる。 */
+/** `input` イベントの代役。IME 変換中は `isComposing` が true になる。 */
+type FakeInputEvent = { readonly isComposing: boolean }
+
+/**
+ * `<textarea id="tsukumo-dispatch-text">` の代役。`keydown` に加えて、`/` 補完が拾う `input` も
+ * 手動で発火できる。
+ */
 type FakeTextAreaElement = {
   value: string
-  readonly addEventListener: (type: string, listener: (event: FakeKeydownEvent) => void) => void
+  readonly addEventListener: (
+    type: string,
+    listener: (event: FakeKeydownEvent | FakeInputEvent) => void,
+  ) => void
   readonly focus: () => void
   readonly dispatchKeydown: (event: FakeKeydownEvent) => void
+  readonly dispatchInput: (event?: FakeInputEvent) => void
   readonly focusCount: () => number
 }
 
 function makeFakeTextAreaElement(initialValue: string): FakeTextAreaElement {
-  const listeners = new Set<(event: FakeKeydownEvent) => void>()
+  const keydownListeners = new Set<(event: FakeKeydownEvent) => void>()
+  const inputListeners = new Set<(event: FakeInputEvent) => void>()
   let value = initialValue
   let focusCount = 0
   return {
@@ -381,14 +393,22 @@ function makeFakeTextAreaElement(initialValue: string): FakeTextAreaElement {
     },
     addEventListener: (type, listener) => {
       if (type === "keydown") {
-        listeners.add(listener)
+        keydownListeners.add(listener as (event: FakeKeydownEvent) => void)
+      }
+      if (type === "input") {
+        inputListeners.add(listener as (event: FakeInputEvent) => void)
       }
     },
     focus: () => {
       focusCount += 1
     },
     dispatchKeydown: (event) => {
-      for (const listener of listeners) {
+      for (const listener of keydownListeners) {
+        listener(event)
+      }
+    },
+    dispatchInput: (event = { isComposing: false }) => {
+      for (const listener of inputListeners) {
         listener(event)
       }
     },
@@ -435,6 +455,38 @@ type FakePendingBoxElement = InertStub
 /** 入力欄の領域（`#tsukumo-view-dispatch`）の代役。`data-pending` 属性を読み返せる。 */
 type FakePendingRegionElement = { dataset: { pending: string } }
 
+/**
+ * `/` 補完の候補一覧（`#tsukumo-dispatch-suggestions`）の代役。`hidden` と `innerHTML` を
+ * 読み返せる。`moveSuggestionSelection` が呼ぶ `querySelectorAll` は空を返すだけでよい
+ * （上下キーでの選択そのものは目視確認に任せる。docs/coding-standards.md「描画は自動テストで
+ * 守らない」）。
+ */
+type FakeSuggestionsBoxElement = {
+  hidden: boolean
+  innerHTML: string
+  readonly querySelectorAll: () => readonly never[]
+}
+
+function makeFakeSuggestionsBoxElement(): FakeSuggestionsBoxElement {
+  let hidden = true
+  let html = ""
+  return {
+    get hidden() {
+      return hidden
+    },
+    set hidden(value) {
+      hidden = value
+    },
+    get innerHTML() {
+      return html
+    },
+    set innerHTML(value) {
+      html = value
+    },
+    querySelectorAll: () => [],
+  }
+}
+
 function runInputScript(
   page: string,
   elements: {
@@ -454,6 +506,7 @@ function runInputScript(
   readonly pendingBox: FakePendingBoxElement
   readonly pendingDataAttribute: () => string
   readonly title: () => string
+  readonly suggestionsBox: FakeSuggestionsBoxElement
 } {
   const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
   if (scriptMatch === null || scriptMatch[1] === undefined) {
@@ -462,6 +515,7 @@ function runInputScript(
 
   const pendingBox: FakePendingBoxElement = makeInertStub()
   const pendingRegion: FakePendingRegionElement = { dataset: { pending: "no" } }
+  const suggestionsBox = makeFakeSuggestionsBoxElement()
 
   const ids = new Map<string, unknown>([
     ["tsukumo-dispatch-form", elements.form],
@@ -470,6 +524,7 @@ function runInputScript(
     ["tsukumo-dispatch-status", elements.status],
     ["tsukumo-dispatch-pending", pendingBox],
     ["tsukumo-view-dispatch", pendingRegion],
+    ["tsukumo-dispatch-suggestions", suggestionsBox],
   ])
   const controller = makeFakeEventSourceController()
   const fallback = makeInertStub()
@@ -499,6 +554,7 @@ function runInputScript(
     pendingBox,
     pendingDataAttribute: () => pendingRegion.dataset.pending,
     title: () => documentStub.title,
+    suggestionsBox,
   }
 }
 
@@ -671,6 +727,7 @@ describe("入力欄（送信・中断）", () => {
     readonly pendingBox: FakePendingBoxElement
     readonly pendingDataAttribute: () => string
     readonly title: () => string
+    readonly suggestionsBox: FakeSuggestionsBoxElement
   } {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const form = makeFakeFormElement()
@@ -679,8 +736,14 @@ describe("入力欄（送信・中断）", () => {
     const status = makeFakeTextElement()
     const { fetchStub, calls } = makeFakeFetch(responses)
 
-    const { dispatchTurnStatus, dispatchPendingAnswer, pendingBox, pendingDataAttribute, title } =
-      runInputScript(page, { form, textArea, sendButton, status }, fetchStub)
+    const {
+      dispatchTurnStatus,
+      dispatchPendingAnswer,
+      pendingBox,
+      pendingDataAttribute,
+      title,
+      suggestionsBox,
+    } = runInputScript(page, { form, textArea, sendButton, status }, fetchStub)
 
     return {
       form,
@@ -693,6 +756,7 @@ describe("入力欄（送信・中断）", () => {
       pendingBox,
       pendingDataAttribute,
       title,
+      suggestionsBox,
     }
   }
 
@@ -806,6 +870,156 @@ describe("入力欄（送信・中断）", () => {
       expect(pendingBox.innerHTML).toBe("")
       expect(pendingDataAttribute()).toBe("no")
       expect(title()).toBe("tsukumo")
+    })
+  })
+
+  describe("入力欄の / コマンド補完（COMMANDS_PATH を1回だけ取りに行き、前方一致で絞る）", () => {
+    function setUpWithCommands(commands: readonly string[]) {
+      return setUp(new Map([[COMMANDS_PATH, { commands }]]))
+    }
+
+    it("先頭が / のときだけ候補を出し、COMMANDS_PATH を取りに行く", async () => {
+      const { textArea, suggestionsBox, calls } = setUpWithCommands(["clear", "model", "next-task"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      expect(calls().map((call) => call.url)).toContain(COMMANDS_PATH)
+      expect(suggestionsBox.hidden).toBe(false)
+      expect(suggestionsBox.innerHTML).toContain("/clear")
+      expect(suggestionsBox.innerHTML).toContain("/model")
+      expect(suggestionsBox.innerHTML).toContain("/next-task")
+    })
+
+    it("前方一致で絞る", async () => {
+      const { textArea, suggestionsBox } = setUpWithCommands(["clear", "model", "next-task"])
+
+      textArea.value = "/ne"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      expect(suggestionsBox.innerHTML).toContain("/next-task")
+      expect(suggestionsBox.innerHTML).not.toContain("/clear")
+      expect(suggestionsBox.innerHTML).not.toContain("/model")
+    })
+
+    it("最大10件までに絞る", async () => {
+      const many = Array.from({ length: 15 }, (_, index) => `cmd${String(index)}`)
+      const { textArea, suggestionsBox } = setUpWithCommands(many)
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const matches = [...suggestionsBox.innerHTML.matchAll(/dispatch-suggestion-item/g)]
+      expect(matches).toHaveLength(10)
+    })
+
+    it("空白を含む・先頭が / でない入力では候補を出さない", async () => {
+      const { textArea, suggestionsBox } = setUpWithCommands(["clear"])
+
+      textArea.value = "/clear "
+      textArea.dispatchInput()
+      await flushMicrotasks()
+      expect(suggestionsBox.hidden).toBe(true)
+
+      textArea.value = "clear"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+      expect(suggestionsBox.hidden).toBe(true)
+    })
+
+    it("IME 変換中の input では候補を操作しない", async () => {
+      const { textArea, suggestionsBox } = setUpWithCommands(["clear"])
+
+      textArea.value = "/"
+      textArea.dispatchInput({ isComposing: true })
+      await flushMicrotasks()
+
+      expect(suggestionsBox.hidden).toBe(true)
+    })
+
+    it("答え待ちの箱がある間は候補を出さない", async () => {
+      const { textArea, suggestionsBox, dispatchPendingAnswer } = setUpWithCommands(["clear"])
+      dispatchPendingAnswer('<div class="pending-answer pending-permission"></div>')
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      expect(suggestionsBox.hidden).toBe(true)
+    })
+
+    it("Tab で選ばれている候補を確定し、送信はしない", async () => {
+      const { textArea, suggestionsBox, calls } = setUpWithCommands(["clear", "model"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const { event, wasPrevented } = makeFakeKeydownEvent({ key: "Tab" })
+      textArea.dispatchKeydown(event)
+
+      expect(wasPrevented()).toBe(true)
+      expect(textArea.value).toBe("/clear ")
+      expect(suggestionsBox.hidden).toBe(true)
+      expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
+    })
+
+    it("候補が開いている間の Enter は確定だけで、送信しない", async () => {
+      const { textArea, suggestionsBox, calls } = setUpWithCommands(["clear", "model"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const { event, wasPrevented } = makeFakeKeydownEvent({ key: "Enter" })
+      textArea.dispatchKeydown(event)
+      await flushMicrotasks()
+
+      expect(wasPrevented()).toBe(true)
+      expect(textArea.value).toBe("/clear ")
+      expect(suggestionsBox.hidden).toBe(true)
+      expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
+    })
+
+    it("候補が開いていないときの Enter は、これまでどおり送信する", async () => {
+      const { textArea, calls } = setUpWithCommands(["clear"])
+      textArea.value = "こんにちは"
+
+      const { event } = makeFakeKeydownEvent({ key: "Enter" })
+      textArea.dispatchKeydown(event)
+      await flushMicrotasks()
+
+      expect(calls()).toEqual([{ url: PROMPT_PATH, body: JSON.stringify({ text: "こんにちは" }) }])
+    })
+
+    it("Esc で候補を閉じる（入力欄の文字列は変えない）", async () => {
+      const { textArea, suggestionsBox } = setUpWithCommands(["clear", "model"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const { event } = makeFakeKeydownEvent({ key: "Escape" })
+      textArea.dispatchKeydown(event)
+
+      expect(suggestionsBox.hidden).toBe(true)
+      expect(textArea.value).toBe("/")
+    })
+
+    it("一覧は最初の / の1回だけ取りに行き、以降は取り直さない（セッション中キャッシュ）", async () => {
+      const { textArea, calls } = setUpWithCommands(["clear"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+      textArea.value = "/c"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      expect(calls().filter((call) => call.url === COMMANDS_PATH)).toHaveLength(1)
     })
   })
 })
