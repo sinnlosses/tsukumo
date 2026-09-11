@@ -1773,7 +1773,7 @@ export type SidebarData = {
 export function buildSidebarBody(data: SidebarData): string {
   return [
     sidebarSection("いま何をしているか", activityBody(data.activity)),
-    sidebarSection("タスク一覧", taskListBody(data.tasks)),
+    sidebarSection(taskListTitle(data.tasks), taskListBody(data.tasks)),
     sidebarSection("セッション情報", sessionInfoBody(data.session)),
   ].join("\n")
 }
@@ -2123,15 +2123,23 @@ const STYLE = `
   .activity-scroll { height: 10rem; overflow-y: auto; }
   .activity-item.activity-finished { color: #8f97ab; }
   .activity-item.activity-nested { margin-left: 1rem; list-style-type: circle; }
+  .task-list { list-style: none; padding-left: 0; }
+  .task-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.4rem;
+    align-items: baseline;
+  }
   .task-item.task-done { color: #8f97ab; }
   .task-item .task-id { font-family: ui-monospace, SFMono-Regular, monospace; opacity: 0.8; }
-  .task-item .task-status {
-    margin-left: 0.3rem;
+  .task-status {
     padding: 0 0.3rem;
     border-radius: 0.3rem;
     background: #1c202a;
     font-size: 0.75rem;
   }
+  .task-status-done { color: #8f97ab; }
+  .task-status-other { color: #e3c766; }
   .session-info { display: flex; flex-direction: column; gap: 0.4rem; }
   .session-elapsed-row { font-size: 0.8rem; color: #8f97ab; }
   .session-elapsed { font-family: ui-monospace, SFMono-Regular, monospace; color: #e6e8ee; }
@@ -2918,6 +2926,20 @@ function activityItemHtml(activity: SidebarToolActivity, finished: boolean): str
 }
 
 /**
+ * サイドバーの「タスク一覧」の見出し。tasks が読めているときだけ todo / done の件数を添える
+ * （`develop/tasks.json` が不明なときは件数も不明なので、見出しはそのまま）。
+ */
+function taskListTitle(tasks: readonly TaskSummaryItem[] | undefined): string {
+  if (tasks === undefined) {
+    return "タスク一覧"
+  }
+
+  const todo = tasks.filter((task) => task.status === "todo").length
+  const done = tasks.filter((task) => task.status === "done").length
+  return `タスク一覧 todo ${todo} / done ${done}`
+}
+
+/**
  * サイドバーの「タスク一覧」の本文。**status ごとにまとめず、ファイルの順で出す**
  * （`develop/tasks.json` の決定）。`done` は薄く出す。
  */
@@ -2933,12 +2955,31 @@ function taskListBody(tasks: readonly TaskSummaryItem[] | undefined): string {
   return `<ul class="sidebar-list task-list">${items}</ul>`
 }
 
+/**
+ * タスク一覧1件分。バッジ（status）を先頭列、ID＋summary を2列目に置く2列の grid 行
+ * （`.task-item` の `grid-template-columns: auto 1fr`）。summary が折り返してもバッジ列に
+ * 入り込まない。status が無いときはバッジを出さず、列だけ空けておく。
+ */
 function taskItemHtml(task: TaskSummaryItem): string {
   const doneClass = task.status === "done" ? " task-done" : ""
-  const statusHtml =
-    task.status === undefined ? "" : `<span class="task-status">${escapeHtml(task.status)}</span>`
+  const badgeHtml = task.status === undefined ? "" : taskStatusBadgeHtml(task.status)
 
-  return `<li class="task-item${doneClass}"><span class="task-id">${escapeHtml(task.id)}</span> ${escapeHtml(task.summary)} ${statusHtml}</li>`
+  return `<li class="task-item${doneClass}"><span class="task-status-cell">${badgeHtml}</span><span class="task-body"><span class="task-id">${escapeHtml(task.id)}</span> ${escapeHtml(task.summary)}</span></li>`
+}
+
+function taskStatusBadgeHtml(status: string): string {
+  return `<span class="task-status ${taskStatusClass(status)}">${escapeHtml(status)}</span>`
+}
+
+/** todo / done は色で区別し、それ以外（in-progress など）は注意色にする。文字は status のまま出す。 */
+function taskStatusClass(status: string): string {
+  if (status === "todo") {
+    return "task-status-todo"
+  }
+  if (status === "done") {
+    return "task-status-done"
+  }
+  return "task-status-other"
 }
 
 const SESSION_ELAPSED_CLASS = "session-elapsed"

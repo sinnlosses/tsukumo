@@ -2749,7 +2749,47 @@ describe("サイドバーの本文", () => {
     expect(body.indexOf("X-001")).toBeLessThan(body.indexOf("X-002"))
     expect(body).toContain("架空のサイドバー実装")
     expect(body).toContain('<li class="task-item task-done">')
-    expect(body).toContain('<span class="task-status">todo</span>')
+    expect(body).toContain('<span class="task-status task-status-todo">todo</span>')
+  })
+
+  it("タスク一覧1件は、バッジが summary より前に出る2列の行にする", () => {
+    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
+
+    const badgeIndex = body.indexOf('<span class="task-status task-status-done">done</span>')
+    const summaryIndex = body.indexOf("架空のサイドバー実装")
+    expect(badgeIndex).toBeGreaterThan(-1)
+    expect(badgeIndex).toBeLessThan(summaryIndex)
+  })
+
+  it("status が todo / done 以外（架空の値）のときは注意色のクラスが付く。文字は status のまま出す", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      tasks: [{ id: "X-001", summary: "架空の進行中タスク", status: "in-progress" }],
+    })
+
+    expect(body).toContain('<span class="task-status task-status-other">in-progress</span>')
+  })
+
+  it("status が無ければバッジを出さない", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      tasks: [{ id: "X-001", summary: "架空のタスク", status: undefined }],
+    })
+
+    expect(body).not.toContain('class="task-status task-status')
+    expect(body).toContain('<span class="task-status-cell"></span>')
+  })
+
+  it("見出しに todo / done の件数が出る", () => {
+    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
+
+    expect(body).toContain("タスク一覧 todo 1 / done 1")
+  })
+
+  it("develop/tasks.json が読めない（tasks が undefined）ときは見出しに件数を出さない", () => {
+    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, tasks: undefined })
+
+    expect(body).toContain("<h2>タスク一覧</h2>")
   })
 
   it("develop/tasks.json が読めない（tasks が undefined）とき、その区画だけ「不明」を出し、残りは壊れない", () => {
