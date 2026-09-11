@@ -82,8 +82,8 @@ export type SessionView = {
   /** 直近のセリフに添えられた表情。ツールの実行中は「作業中」が優先される。 */
   readonly speechExpression: Expression
   /**
-   * 今のターンで `speak` が呼ばれたか（マーカー行の補助を効かせるかどうかの判定に使う。
-   * {@link settleUtterance}）。`request` で false に戻る。
+   * 今のターンで `speak` が呼ばれたか（マーカー行の補助で拾ったセリフを、置き換えるか
+   * 並べるかの判定に使う。{@link settleUtterance}）。`request` で false に戻る。
    */
   readonly speechCalledInTurn: boolean
   /** 確定した記録。書きかけの本文は含まない。 */
@@ -268,17 +268,17 @@ function isReportRecord(
 /**
  * 書きかけの本文を確定した記録に移す。空のときは何もしない（空の本文を積まない）。
  *
- * **`speak` が1回もこのターンで呼ばれていなければ、行頭マーカーの補助を効かせる**
- * （docs/requirements.md 4.2「行頭のマーカーは補助に格下げ」）。拾えたセリフは吹き出しへ、
- * 本文からはマーカー行を除く。**`speak` が呼ばれたターンでは本文をそのまま出す**
- * （マーカー行があっても除かない。すでにセリフは `speak` の引数から出ているため）。
+ * **行頭マーカーの補助をここで効かせる**（docs/requirements.md 4.2「行頭のマーカーは補助に
+ * 格下げ」）。拾えたセリフは吹き出しへ、本文からはマーカー行を除く。`speak` が呼ばれたターンでも
+ * 同じ（規約が守られずに本文へ紛れたセリフの受け皿。以前は本文をそのまま出していたが、締めの
+ * 一言がメインビューに残った。2026-09-12）。
  */
 function settleUtterance(view: SessionView): SessionView {
   if (view.partialUtterance.trim() === "") {
     return { ...view, partialUtterance: "" }
   }
 
-  const settled = view.speechCalledInTurn ? view : withMarkerFallback(view)
+  const settled = withMarkerFallback(view)
   const markdown = settled.partialUtterance
 
   return {
@@ -290,8 +290,9 @@ function settleUtterance(view: SessionView): SessionView {
 }
 
 /**
- * 行頭マーカーの補助を1回効かせる。拾えたセリフがあれば、**そのターン最初のセリフとして**
- * 置き換える（前のターンの並びと混ざらない。`speech` イベントの扱いと同じ規約）。
+ * 行頭マーカーの補助を1回効かせる。拾えたセリフは、そのターンに `speak` があればその後ろに
+ * 並べ、無ければ**そのターン最初のセリフとして**置き換える（前のターンの並びと混ざらない。
+ * `speech` イベントの扱いと同じ規約）。
  * `partialUtterance` にはマーカー行を除いた本文を残す（呼び出し側が確定した記録へ積む）。
  */
 function withMarkerFallback(view: SessionView): SessionView {
@@ -300,9 +301,13 @@ function withMarkerFallback(view: SessionView): SessionView {
     return { ...view, partialUtterance: parts.detail }
   }
 
+  // speak を呼んだターンでも、本文に紛れたマーカー行は吹き出しへ回す（規約が守られなかった
+  // ときの受け皿。speak のあとに並べて、同じターンのまとまりとして出す）。
+  const speeches = view.speechCalledInTurn ? [...view.speeches, parts.speech] : [parts.speech]
+
   return {
     ...view,
-    speeches: [parts.speech],
+    speeches: speeches.slice(-MAX_RECENT_SPEECHES),
     speechCalledInTurn: true,
     partialUtterance: parts.detail,
   }

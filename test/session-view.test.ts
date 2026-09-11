@@ -326,17 +326,17 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("speak が呼ばれたターンでは、マーカー行があっても本文をそのまま出す", () => {
+  it("speak が呼ばれたターンでも、本文に紛れたマーカー行は吹き出しへ回して本文から除く", () => {
     const view = apply(
       { kind: "request", text: "ダミーの依頼" },
       { kind: "speech", text: "本物のセリフ", expression: "proud" },
       { kind: "utterance", text: "アスナ: マーカー行\n本文はこちら" },
     )
 
-    expect(view.speeches).toEqual(["本物のセリフ"])
+    expect(view.speeches).toEqual(["本物のセリフ", "マーカー行"])
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", text: "ダミーの依頼" },
-      { kind: "detail", markdown: "アスナ: マーカー行\n本文はこちら" },
+      { kind: "detail", markdown: "本文はこちら" },
     ])
   })
 
