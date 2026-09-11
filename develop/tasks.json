@@ -53,10 +53,10 @@
     "id": "T-050",
     "summary": "/ 補完の候補に見た目を付け、入力欄に重ねるポップアップにする",
     "task": "入力欄の `/` コマンド補完の候補一覧に見た目を付け、入力欄の上に重ねるポップアップにして、マウスでも確定できるようにする。\n\n## 背景\n\nユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」。現物を読んで分かったこと:\n\n- `src/view.ts` の `STYLE` に `.dispatch-suggestions` / `.dispatch-suggestion-item` / その `.is-selected` の CSS ルールが**1つも無い**（`is-selected` のルールは `.question-choice` 用の1件だけ）。候補は `<ul>` の素の箇条書き（黒丸・既定の余白）で出て、上下キーで動かしている選択中の項目が見た目に表れない\n- `dispatchRegionHtml` は `<ul>` を `<form>` の上に兄弟として置く。候補が出るたびに `<textarea>` が下に押され、閉じると戻る（打っている最中に入力欄が動く）。`.layout-region` は `overflow-y: auto` なので、候補が10件出て領域の高さを超えると領域ごとスクロールする\n- 候補の `<li>` にクリックの配線が無い（`commandSuggestionsScript` が持つのはキー操作の状態と、それを変える関数だけ）\n- 候補一覧は T-045 で入ったが、ブラウザでの目視は未実施のまま完了している（`docs/history/tasks-archive.md` の T-045 の evidence）\n\n## 解くべき論点\n\n- 重ね方: `.layout-dispatch` を `position: relative` にし、`<ul>` を `position: absolute` で `<textarea>` の上端に底を合わせて重ねる（`bottom` で指定。`<form>` の高さは送信の行を含む）。`.layout-region` の `overflow-y: auto` に切られないよう、`max-height` は領域の中に収まる値にする（領域の高さの半分程度）。答え待ちの箱がある間は候補を出さない今の仕様（`shouldShowSuggestions`）はそのまま\n- 色と形は同じ領域の他の要素の語彙に揃える（地 `#10131a`、枠 `#3a4256`、角丸 `0.4rem`。選択中は `.question-choice.is-selected` と同じ `#8ab4ff` / `#232a3c`）\n\n## やること\n\n1. `STYLE` に候補一覧と項目の CSS を足す（`list-style: none`、余白、選択中の色、はみ出しは `overflow-y: auto`）\n2. ポップアップとして重ねる（上の論点）。候補の表示・非表示で `<textarea>` の位置と高さが変わらないこと\n3. `<li>` の `mousedown` で確定する（`preventDefault` でフォーカスを `<textarea>` から奪わない。押した項目の index で `confirmSelectedSuggestion` を呼ぶ）\n4. 上下キーで選択が表示範囲の外に出たら `scrollIntoView({ block: \"nearest\" })` で追従する\n5. `test/view.test.ts` の補完の `describe` にクリック確定のテストを足す（偽の要素は同ファイルの `makeFakeSuggestionsBoxElement` を広げる）\n\n## 完了条件\n\n- Orca のタブで目視: `/` を打つと候補が入力欄の上に**重なって**出て、出る前後で入力欄の位置が動かない／上下キーで選択中の項目の背景色が変わる／候補をクリックすると `/名前 ` が入力欄に入って候補が閉じる／Esc で閉じる。何が見えたかを `evidence` に書く\n- テスト: クリックで確定し、`PROMPT_PATH` に送信されないこと\n- `bun run check` が通ること\n\n## 注意\n\n- 絞り方（部分一致）・並び順・Enter の役割は T-051。ここでは触らない\n- 起こし方は `docs/architecture.md`「手で確かめること」。`bun run start` は本物の claude を起こす。終わったら `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる\n- サブエージェントに委譲してよい。`/loop` に載せてよい。目視はユーザーが後で行い、結果を `evidence` に追記する（T-043〜T-045 と同じ扱い）\n",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "src/view.ts: 候補一覧を textarea と同じ包み（.dispatch-text-wrap、position: relative）に入れ、textarea の下端に底を合わせて中に重ねる（サブエージェントの bottom: 100% は領域の overflow に切られるので差し替えた）。mousedown で確定、選択の scrollIntoView。test/view.test.ts「候補をクリック（mousedown）で確定し、フォーカスを奪わず送信もしない」を追加。bun run check: 416 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。",
     "dependencies": []
   },
   {

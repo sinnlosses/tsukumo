@@ -605,16 +605,23 @@ const COMMAND_SUGGESTION_ITEM_CLASS = "dispatch-suggestion-item"
  * SSE で差し替える（{@link dispatchScript}）。**入力欄は消さない**（答え待ちの間も
  * 「中断」は押せる）。
  *
- * **`/` コマンド補完の候補一覧（{@link commandSuggestionsScript}）は、答え待ちの箱の下・
- * `<textarea>` の上に出す**（答え待ちの箱と重ならない位置。docs/requirements.md 4.2
+ * **`/` コマンド補完の候補一覧（{@link commandSuggestionsScript}）は、`<textarea>` の上に
+ * 重ねるポップアップにする**（答え待ちの箱とは別の位置。docs/requirements.md 4.2
  * 「入力欄」）。中身はブラウザ側が組み立てる（`hidden` で始まり、候補が無いときも隠れたまま）。
+ * **`<textarea>` と同じ包み（`.dispatch-text-wrap`、`position: relative`）に入れ、textarea の
+ * 下端に底を合わせて上へ伸びる**（`STYLE` の `.dispatch-suggestions`）。textarea の上に
+ * 伸ばすと領域（`.layout-region` の `overflow-y: auto`）の外に出て切られるため、textarea の
+ * 中に重ねる。打っている文字は textarea の上端にあるので隠れない。候補は `position: absolute`
+ * で `<form>` の高さ計算（flex）に加わらず、表示・非表示で textarea は動かない。
  */
 function dispatchRegionHtml(): string {
   return `<section class="layout-region layout-dispatch" id="${DISPATCH_REGION_ID}" data-pending="no">
 <div class="dispatch-pending" id="${DISPATCH_PENDING_ID}"></div>
-<ul class="dispatch-suggestions" id="${DISPATCH_SUGGESTIONS_ID}" hidden></ul>
 <form id="${DISPATCH_FORM_ID}">
-  <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行、/ でコマンド補完）" required></textarea>
+  <div class="dispatch-text-wrap">
+    <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行、/ でコマンド補完）" required></textarea>
+    <ul class="dispatch-suggestions" id="${DISPATCH_SUGGESTIONS_ID}" hidden></ul>
+  </div>
   <div class="dispatch-row">
     <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send">${DISPATCH_SEND_LABEL}</button>
     <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
@@ -798,8 +805,8 @@ ${pendingAnswerScript(DISPATCH_PENDING_ID)}`
  * - **答え待ちの箱がある間は出さない**（`shouldShowSuggestions` が `pendingRegion` の
  *   `data-pending` を見る。箱と重ならない位置に出す）
  * - キー操作（上下・Tab・Enter・Esc）の配線は呼び出し側（{@link dispatchScript}）の
- *   `keydown` リスナーが持つ。ここでは状態（`suggestionMatches` / `suggestionIndex`）と、
- *   状態を変える関数だけを定義する
+ *   `keydown` リスナーが持つ（送信の Enter と同じリスナーを共有するため）。マウスでの確定
+ *   （`<li>` の `mousedown`）は送信と競合しないので、ここで直接配線する
  * - **候補の文字列は `escapeCommandLabel` を通してから組み立てる**（コマンド名は SDK が返す
  *   外部由来の値なので、HTML として解釈されない形にする）
  */
@@ -861,6 +868,8 @@ function commandSuggestionsScript(): string {
           (command, index) =>
             '<li class="${COMMAND_SUGGESTION_ITEM_CLASS}' +
             (index === 0 ? " is-selected" : "") +
+            '" data-index="' +
+            index +
             '">/' +
             escapeCommandLabel(command) +
             "</li>",
@@ -886,10 +895,14 @@ function commandSuggestionsScript(): string {
       for (let index = 0; index < items.length; index += 1) {
         items[index].classList.toggle("is-selected", index === suggestionIndex)
       }
+      const selected = items[suggestionIndex]
+      if (selected !== undefined && typeof selected.scrollIntoView === "function") {
+        selected.scrollIntoView({ block: "nearest" })
+      }
     }
 
-    function confirmSelectedSuggestion() {
-      const command = suggestionMatches[suggestionIndex]
+    function confirmSelectedSuggestion(index = suggestionIndex) {
+      const command = suggestionMatches[index]
       if (command === undefined) {
         return
       }
@@ -912,6 +925,18 @@ function commandSuggestionsScript(): string {
         renderSuggestions(matchingCommands(commands, textArea.value))
       })
     }
+
+    // マウスでの確定。mousedown の既定動作（フォーカス移動）を preventDefault で止め、
+    // textarea にフォーカスを残す。押した項目の data-index で、キーボードの選択位置とは
+    // 独立に確定する。
+    suggestionsBox.addEventListener("mousedown", (event) => {
+      const item = event.target.closest(".${COMMAND_SUGGESTION_ITEM_CLASS}")
+      if (item === null) {
+        return
+      }
+      event.preventDefault()
+      confirmSelectedSuggestion(Number(item.dataset.index))
+    })
 `
 }
 
@@ -2099,6 +2124,39 @@ const STYLE = `
     height: 100%;
     gap: 0.5rem;
   }
+  /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
+  .dispatch-text-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  /* / 補完の候補一覧。textarea の下端に底を合わせ、textarea の中に重ねて上へ伸びる
+     ポップアップ。textarea の上に出すと領域（.layout-region の overflow-y: auto）の外に
+     出て切られる。max-height の % は包み（＝textarea の高さ）基準なので、打っている文字が
+     ある上半分は隠れない。 */
+  .dispatch-suggestions {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    margin: 0;
+    padding: 0.3rem;
+    max-height: 50%;
+    overflow-y: auto;
+    list-style: none;
+    background: #10131a;
+    border: 1px solid #3a4256;
+    border-radius: 0.4rem;
+  }
+  .dispatch-suggestion-item {
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+  }
+  .dispatch-suggestion-item.is-selected { background: #232a3c; color: #8ab4ff; }
   .dispatch-row {
     display: flex;
     align-items: center;

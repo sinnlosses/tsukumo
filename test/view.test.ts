@@ -456,20 +456,34 @@ type FakePendingBoxElement = InertStub
 type FakePendingRegionElement = { dataset: { pending: string } }
 
 /**
+ * `<li>` の `mousedown` の代役。`closest` は selector を見ずに常に「押した項目」を返す
+ * （実装が `.dispatch-suggestion-item` にしか listener を付けないため、テストでは
+ * どの要素にヒットしたかまで作り込む必要が無い）。
+ */
+type FakeMousedownEvent = FakePreventableEvent & {
+  readonly target: {
+    readonly closest: (selector: string) => { readonly dataset: { readonly index: string } } | null
+  }
+}
+
+/**
  * `/` 補完の候補一覧（`#tsukumo-dispatch-suggestions`）の代役。`hidden` と `innerHTML` を
  * 読み返せる。`moveSuggestionSelection` が呼ぶ `querySelectorAll` は空を返すだけでよい
  * （上下キーでの選択そのものは目視確認に任せる。docs/coding-standards.md「描画は自動テストで
- * 守らない」）。
+ * 守らない」）。`clickItem` は「index 番目の候補を mousedown で押した」を模す。
  */
 type FakeSuggestionsBoxElement = {
   hidden: boolean
   innerHTML: string
   readonly querySelectorAll: () => readonly never[]
+  readonly addEventListener: (type: string, listener: (event: FakeMousedownEvent) => void) => void
+  readonly clickItem: (index: number) => { readonly wasPrevented: () => boolean }
 }
 
 function makeFakeSuggestionsBoxElement(): FakeSuggestionsBoxElement {
   let hidden = true
   let html = ""
+  const mousedownListeners = new Set<(event: FakeMousedownEvent) => void>()
   return {
     get hidden() {
       return hidden
@@ -484,6 +498,24 @@ function makeFakeSuggestionsBoxElement(): FakeSuggestionsBoxElement {
       html = value
     },
     querySelectorAll: () => [],
+    addEventListener: (type, listener) => {
+      if (type === "mousedown") {
+        mousedownListeners.add(listener)
+      }
+    },
+    clickItem: (index) => {
+      let prevented = false
+      const event: FakeMousedownEvent = {
+        target: { closest: () => ({ dataset: { index: String(index) } }) },
+        preventDefault: () => {
+          prevented = true
+        },
+      }
+      for (const listener of mousedownListeners) {
+        listener(event)
+      }
+      return { wasPrevented: () => prevented }
+    },
   }
 }
 
@@ -993,6 +1025,21 @@ describe("入力欄（送信・中断）", () => {
       await flushMicrotasks()
 
       expect(calls()).toEqual([{ url: PROMPT_PATH, body: JSON.stringify({ text: "こんにちは" }) }])
+    })
+
+    it("候補をクリック（mousedown）で確定し、フォーカスを奪わず送信もしない", async () => {
+      const { textArea, suggestionsBox, calls } = setUpWithCommands(["clear", "model", "next-task"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const { wasPrevented } = suggestionsBox.clickItem(1)
+
+      expect(wasPrevented()).toBe(true)
+      expect(textArea.value).toBe("/model ")
+      expect(suggestionsBox.hidden).toBe(true)
+      expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
     })
 
     it("Esc で候補を閉じる（入力欄の文字列は変えない）", async () => {
