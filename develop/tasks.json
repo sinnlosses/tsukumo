@@ -158,5 +158,15 @@
     "passes": false,
     "evidence": "",
     "dependencies": ["T-047"]
+  },
+  {
+    "id": "T-049",
+    "summary": "許可と質問の箱を右下の入力欄の上に移し、答え待ちに気づける印を付ける",
+    "task": "許可と質問の答え待ちの箱を、キャラビューの吹き出しの下から**右下の入力欄の領域**へ移し、答え待ちになっていることに気づける印を付ける。\n\n## 背景\n\n答え待ちの箱（`src/view.ts` の `buildPendingAnswerBody`）は、`buildCharacterBody` の中で吹き出しの直下に出している。ボタンの配線は `pendingAnswerScript`、送り先は `POST /api/answer`（`src/view-server.ts`）。動作は正しい（ユーザー確認済み: 「T-040 は良さそう」）が、**置き場所が使いづらかった**。\n\nユーザーの言葉（2026-09-11）: 「左下でキャラの下に出すのはダメだった。使いづらかったよ」。確認の回答: 使いづらかったのは「**気づかない**」（答え待ちになっていることに気づかない）と「**入力欄と離れている**」（答えるために視線とマウスが左下へ移る）。決定: **箱は右下の入力欄の領域に出す**（答え待ちの間は入力欄の上に箱を出す。入力欄は残す）。キャラは吹き出しで「これいい？」と言うだけ（`speak` に任せる。tsukumo が吹き出しの文言を作らない）。\n\n右下の入力欄は `dispatchRegionHtml()`（レイアウトページの静的な部分）で、SSE で更新される「ビュー」ではない。進行状態は `/events/turn-status`（`src/view-server.ts` の `publishTurnStatus`）という専用の SSE で入力欄へ届けている。**答え待ちの箱も同じ形で届けるのが素直**。\n\n## 解くべき論点\n\n- **届け方**: `turn-status` と同じ専用の SSE 経路（例: `/events/pending-answer`）で箱の HTML を押す。`ViewName` は増やさない（`question` ビューを消したばかりで、4領域のビューと「入力欄に乗る状態」は別物）。箱の HTML は `buildPendingAnswerBody` をそのまま使う\n- **置き方**: 入力欄の `<textarea>` の**上**に箱を出す。答え待ちが無いときは箱の要素を空にする（領域の高さが戻る）。入力欄は消さない（許可待ちの間も「中断」は押せる）\n- **気づける印**: (1) 答え待ちの間、入力欄の領域の枠を目立つ色にする（許可モードの警告色とは別の色）、(2) ブラウザのタブのタイトルの先頭に「●」を付ける（`document.title`。答え待ちが消えたら戻す）。フォーカスは奪わない（入力中の文字を壊さないため）。音は出さない\n- **キャラビューから箱を外す**。`buildCharacterBody` は立ち絵と吹き出しだけに戻す（`CharacterViewData.pending` を消す）。許可モードの `select` はサイドバーへ移っている前提（T-043。移っていなければ入力欄の領域の端に置く）\n- 答え待ちが複数あるときは先頭だけ、答えたら次、は今のまま（`view.pending[0]`）\n\n## やること\n\n1. `src/view-server.ts` に答え待ちの SSE 経路を足す（`publishTurnStatus` と同型）。`src/index.ts` で `pending-changed` から先頭の箱の HTML を押す\n2. `dispatchRegionHtml()` に箱の置き場所（空の要素）を足し、購読スクリプトで差し替える。`pendingAnswerScript` の配線をこちらへ移す\n3. 枠の色と `document.title` の印\n4. `buildCharacterBody` から箱を外す（テストも直す）\n5. `docs/requirements.md` 4.7 の「許可と質問はキャラビューの吹き出しの下にボタン」を「右下の入力欄の上」に直す（`docs/architecture.md` の全体図・データの流れの3本目も同じ）\n\n## 完了条件\n\n- テスト: `buildCharacterBody` に箱が含まれない／答え待ちの SSE が箱の HTML を押し、無いときは空を押す／`dispatchRegionHtml()` に箱の置き場所がある\n- `bun run check` が通ること（`bun run format` を先に）。**テストは SDK の子プロセスを起動しない**\n- 動作確認（curl）: `default` モードで Bash を使う依頼を送り、答え待ちの SSE に箱の HTML が届く → `/api/answer` で allow → 空が届く\n- **Orca のタブで目視（ユーザー）**: 許可待ちになると右下の入力欄の上に許可／拒否が出て、入力欄の枠の色が変わり、タブのタイトルに「●」が付く。許可を押すと箱が消えて枠の色とタイトルが戻る。左下には箱が出ない\n- `grep -c '^#\\{2,3\\} ' docs/requirements.md` が編集の前後で同じ\n\n## 注意\n\n- 会話内容の扱い: 許可要求の要約に本文の断片が入りうる。ログ・報告に写さない\n- キャラの吹き出しの文言を tsukumo 側で作らない（「これいい？」は出力スタイルの規約で `speak` に言わせる。T-041）\n- 見出し名で位置を探すと索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- サブエージェントに委譲してよい。`/loop` に載せてよい",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-043"]
   }
 ]
