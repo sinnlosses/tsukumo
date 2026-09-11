@@ -592,6 +592,8 @@ const DISPATCH_INTERRUPT_LABEL = "中断"
 // 入力欄の `/` 補完で表示する候補の上限（docs/requirements.md 4.2「入力欄」）。
 const MAX_COMMAND_SUGGESTIONS = 10
 const COMMAND_SUGGESTION_ITEM_CLASS = "dispatch-suggestion-item"
+const COMMAND_SUGGESTION_NAME_CLASS = "dispatch-suggestion-name"
+const COMMAND_SUGGESTION_DESCRIPTION_CLASS = "dispatch-suggestion-description"
 
 /**
  * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
@@ -810,7 +812,7 @@ ${pendingAnswerScript(DISPATCH_PENDING_ID)}`
 /**
  * `/` コマンド補完。**入力の先頭が `/` で、まだ空白が無いときだけ**候補を出す
  * （docs/requirements.md 4.2「入力欄」）。候補は `COMMANDS_PATH` から1回だけ取りに行き、
- * 以降はセッション中キャッシュする（`allCommandsPromise`）。
+ * 以降はセッション中キャッシュする（`allCommandsPromise`）。1件は `{ name, description }`。
  *
  * - **前方一致を先に、続けて部分一致を出す。各グループの中はアルファベット順で、合計
  *   最大 {@link MAX_COMMAND_SUGGESTIONS} 件**（`matchingCommands`。Claude Code の TUI の
@@ -821,8 +823,11 @@ ${pendingAnswerScript(DISPATCH_PENDING_ID)}`
  *   `keydown` リスナーが持つ（送信の Enter と同じリスナーを共有するため）。**Tab は確定だけ、
  *   Enter は確定して送信する**（TUI と同じ。呼び出し側の分岐を参照）。マウスでの確定
  *   （`<li>` の `mousedown`）は送信と競合しないので、ここで直接配線する
- * - **候補の文字列は `escapeCommandLabel` を通してから組み立てる**（コマンド名は SDK が返す
- *   外部由来の値なので、HTML として解釈されない形にする）
+ * - **1件は「名前＋説明」の1行**（説明は薄い色、幅が足りなければ省略）。説明は SDK が返した
+ *   ものだけを出し、持たないコマンドは名前だけで出る（tsukumo 側に説明の表を持たない。
+ *   `CommandDescription`）
+ * - **候補の文字列は `escapeCommandLabel` を通してから組み立てる**（コマンド名も説明も SDK が
+ *   返す外部由来の値なので、HTML として解釈されない形にする）
  */
 function commandSuggestionsScript(): string {
   return `    let allCommandsPromise = null
@@ -833,7 +838,11 @@ function commandSuggestionsScript(): string {
       if (allCommandsPromise === null) {
         allCommandsPromise = fetch(${JSON.stringify(COMMANDS_PATH)})
           .then((response) => response.json())
-          .then((data) => (Array.isArray(data.commands) ? data.commands : []))
+          .then((data) =>
+            Array.isArray(data.commands)
+              ? data.commands.filter((command) => command !== null && typeof command === "object")
+              : [],
+          )
           .catch(() => [])
       }
       return allCommandsPromise
@@ -854,12 +863,18 @@ function commandSuggestionsScript(): string {
       )
     }
 
+    function byName(left, right) {
+      return left.name < right.name ? -1 : left.name > right.name ? 1 : 0
+    }
+
     function matchingCommands(commands, value) {
       const prefix = value.slice(1)
-      const prefixMatches = commands.filter((command) => command.startsWith(prefix)).sort()
+      const prefixMatches = commands
+        .filter((command) => command.name.startsWith(prefix))
+        .sort(byName)
       const partialMatches = commands
-        .filter((command) => !command.startsWith(prefix) && command.includes(prefix))
-        .sort()
+        .filter((command) => !command.name.startsWith(prefix) && command.name.includes(prefix))
+        .sort(byName)
       return [...prefixMatches, ...partialMatches].slice(0, ${JSON.stringify(MAX_COMMAND_SUGGESTIONS)})
     }
 
@@ -886,8 +901,14 @@ function commandSuggestionsScript(): string {
             (index === 0 ? " is-selected" : "") +
             '" data-index="' +
             index +
-            '">/' +
-            escapeCommandLabel(command) +
+            '"><span class="${COMMAND_SUGGESTION_NAME_CLASS}">/' +
+            escapeCommandLabel(command.name) +
+            "</span>" +
+            (typeof command.description === "string" && command.description !== ""
+              ? '<span class="${COMMAND_SUGGESTION_DESCRIPTION_CLASS}">' +
+                escapeCommandLabel(command.description) +
+                "</span>"
+              : "") +
             "</li>",
         )
         .join("")
@@ -922,7 +943,7 @@ function commandSuggestionsScript(): string {
       if (command === undefined) {
         return
       }
-      textArea.value = "/" + command + " "
+      textArea.value = "/" + command.name + " "
       closeSuggestions()
       textArea.focus()
     }
@@ -2167,12 +2188,27 @@ const STYLE = `
     border: 1px solid #3a4256;
     border-radius: 0.4rem;
   }
+  /* 1件は「名前＋説明」の1行。説明は薄い色で、幅が足りなければ省略記号で切る
+     （候補一覧そのものを横に広げない）。 */
   .dispatch-suggestion-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
     padding: 0.35rem 0.5rem;
     border-radius: 0.3rem;
     cursor: pointer;
   }
   .dispatch-suggestion-item.is-selected { background: #232a3c; color: #8ab4ff; }
+  .dispatch-suggestion-name { flex: 0 0 auto; }
+  .dispatch-suggestion-description {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: #7c869e;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .dispatch-row {
     display: flex;
     align-items: center;

@@ -7,7 +7,7 @@
 
 import { type Expression, resolveExpression } from "./expression.ts"
 import { type PendingAsk } from "./pending-answer.ts"
-import { type SessionEvent } from "./session-event.ts"
+import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { DEFAULT_SPEECH_MARKER, type MainViewEntry, splitUtterance } from "./transcript.ts"
 
 /** サイドバーの「終わったもの」に残す、直近に使い終えたツールの数（縦に狭い領域なので絞る）。 */
@@ -108,6 +108,12 @@ export type SessionView = {
    * docs/requirements.md 4.2「入力欄」）。
    */
   readonly slashCommands: readonly string[]
+  /**
+   * SDK から届いたコマンドの説明（名前と説明の組）。**端末専用のものも混ざったままの生の一覧**
+   * で、補完に出す並びは {@link commandSuggestions} が `slashCommands` と突き合わせて作る。
+   * 説明がまだ届いていなければ空配列（そのときは名前だけの補完に戻る）。
+   */
+  readonly commandDescriptions: readonly CommandDescription[]
   /** セッションが終わった理由。動いている間は undefined。 */
   readonly endedReason: string | undefined
   /**
@@ -130,6 +136,7 @@ export const INITIAL_SESSION_VIEW: SessionView = {
   model: undefined,
   permissionMode: undefined,
   slashCommands: [],
+  commandDescriptions: [],
   endedReason: undefined,
   turnInProgress: false,
 }
@@ -154,6 +161,8 @@ export function applySessionEvent(
         permissionMode: event.permissionMode,
         slashCommands: commandCandidates(event.slashCommands, event.terminalSlashCommands),
       }
+    case "command-descriptions":
+      return { ...view, commandDescriptions: event.descriptions }
     case "request":
       return {
         ...view,
@@ -244,6 +253,18 @@ export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
  */
 export function currentExpression(view: SessionView, now: number): Expression {
   return resolveExpression(view.runningTools, view.speechExpression, now)
+}
+
+/**
+ * 入力欄の `/` 補完に出す候補（名前と、あれば説明）。**並びも件数も `slashCommands` のまま**で、
+ * `commandDescriptions` は同じ名前のものを引き当てるためだけに使う（説明が届いていない・
+ * 説明を持たないコマンドは `description` が undefined になり、名前だけで出る）。
+ */
+export function commandSuggestions(view: SessionView): readonly CommandDescription[] {
+  const descriptions = new Map(
+    view.commandDescriptions.map((command) => [command.name, command.description]),
+  )
+  return view.slashCommands.map((name) => ({ name, description: descriptions.get(name) }))
 }
 
 /**

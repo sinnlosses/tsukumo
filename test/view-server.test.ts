@@ -696,7 +696,7 @@ describe("入力欄の / 補完の候補（GET /api/commands）", () => {
     expect(await response.json()).toEqual({ commands: [] })
   })
 
-  it("init 後（getCommands が一覧を返す）はその一覧を返す", async () => {
+  it("init 後は名前と説明の組をそのまま返す（説明が無いものは name だけ）", async () => {
     const server = await start(
       fakeHost(),
       undefined,
@@ -704,13 +704,23 @@ describe("入力欄の / 補完の候補（GET /api/commands）", () => {
       undefined,
       undefined,
       undefined,
-      () => ["clear", "model", "next-task"],
+      () => [
+        { name: "clear", description: "会話をリセットする" },
+        { name: "model", description: undefined },
+        { name: "next-task", description: "次のタスクを1件進める" },
+      ],
     )
 
     const response = await fetch(`${originOf(server)}${COMMANDS_PATH}`)
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ commands: ["clear", "model", "next-task"] })
+    expect(await response.json()).toEqual({
+      commands: [
+        { name: "clear", description: "会話をリセットする" },
+        { name: "model" },
+        { name: "next-task", description: "次のタスクを1件進める" },
+      ],
+    })
   })
 })
 

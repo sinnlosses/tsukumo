@@ -22,6 +22,17 @@ export const SPEAK_TOOL_NAME = "speak"
 export type TurnStatus = "success" | "error"
 
 /**
+ * `/` 補完に出すコマンド1件。**説明は SDK 側が持っている**（`init` の `slash_commands` は
+ * 名前だけだが、駆動側の `supportedCommands()` と `system` の `commands_changed` が名前と説明の
+ * 組を返す。2026-09-12 調査）。組み込みコマンドも含めて説明が付くので、tsukumo 側に説明の表を
+ * 持たない。説明が空文字のコマンドは `undefined` に倒す（名前だけ出す）。
+ */
+export type CommandDescription = {
+  readonly name: string
+  readonly description: string | undefined
+}
+
+/**
  * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/session-driver.ts）が
  * 自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざる。
  * 受け取る側（src/session-view.ts）はどちらから来たかを区別しない。
@@ -45,6 +56,16 @@ export type SessionEvent =
        * `commandCandidates`）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
        */
       readonly terminalSlashCommands: readonly string[]
+    }
+  /**
+   * コマンドの説明が届いた。**名前の一覧（`session-info`）とは別の経路で来る**ので、別の
+   * イベントにしてある（駆動側の `supportedCommands()` の結果と、`system` の
+   * `commands_changed` の押し出しの両方がここに入る）。端末専用かどうかは分からないので、
+   * 補完に出す/出さないの判断は名前の一覧の側が持つ（src/session-view.ts）。
+   */
+  | {
+      readonly kind: "command-descriptions"
+      readonly descriptions: readonly CommandDescription[]
     }
   /** 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。 */
   | { readonly kind: "request"; readonly text: string }
@@ -101,7 +122,12 @@ export function toSessionEvents(
 
   switch (message.type) {
     case "system":
-      return message.subtype === "init" ? sessionInfoEvents(message) : []
+      if (message.subtype === "init") {
+        return sessionInfoEvents(message)
+      }
+      return message.subtype === "commands_changed"
+        ? [{ kind: "command-descriptions", descriptions: toCommandDescriptions(message.commands) }]
+        : []
     case "stream_event":
       return partialUtteranceEvents(message.event)
     case "assistant":
@@ -117,6 +143,26 @@ export function toSessionEvents(
     default:
       return []
   }
+}
+
+/**
+ * SDK が返すコマンド一覧（`supportedCommands()` の戻り値と `commands_changed` の `commands`）を
+ * 検証して内部の型に変える。**駆動側（src/session-driver.ts）が制御リクエストの結果に対しても
+ * これを使う**ので、`toSessionEvents` とは別に公開してある（検証の場所を1つにするため）。
+ * 名前が文字列でない要素は捨て、説明が空文字のものは `undefined` にする。
+ */
+export function toCommandDescriptions(value: unknown): readonly CommandDescription[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.flatMap((item) => {
+    if (!isRecord(item) || typeof item.name !== "string" || item.name === "") {
+      return []
+    }
+    const description = optionalString(item.description)
+    return [{ name: item.name, description: description === "" ? undefined : description }]
+  })
 }
 
 function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly SessionEvent[] {

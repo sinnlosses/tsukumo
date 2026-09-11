@@ -4,6 +4,7 @@ import { type SessionEvent } from "../src/session-event.ts"
 import {
   applySessionEvent,
   commandCandidates,
+  commandSuggestions,
   currentExpression,
   INITIAL_SESSION_VIEW,
   mainViewEntries,
@@ -355,6 +356,55 @@ describe("applySessionEvent", () => {
     expect(requestTexts).toHaveLength(20)
     expect(requestTexts[0]).toBe("依頼5")
     expect(requestTexts.at(-1)).toBe("依頼24")
+  })
+})
+
+describe("commandSuggestions", () => {
+  const info: SessionEvent = {
+    kind: "session-info",
+    sessionId: "s-1",
+    model: undefined,
+    permissionMode: undefined,
+    slashCommands: ["clear", "model", "doctor"],
+    terminalSlashCommands: ["doctor"],
+  }
+
+  it("説明が届く前は名前だけ（description は undefined）を返す", () => {
+    expect(commandSuggestions(apply(info))).toEqual([
+      { name: "clear", description: undefined },
+      { name: "model", description: undefined },
+    ])
+  })
+
+  it("届いた説明を同じ名前の候補に添える（説明の無いものは undefined のまま）", () => {
+    const view = apply(info, {
+      kind: "command-descriptions",
+      descriptions: [
+        { name: "clear", description: "会話をリセットする" },
+        { name: "model", description: undefined },
+        { name: "doctor", description: "端末専用なので候補に出ない" },
+      ],
+    })
+
+    expect(commandSuggestions(view)).toEqual([
+      { name: "clear", description: "会話をリセットする" },
+      { name: "model", description: undefined },
+    ])
+  })
+
+  it("説明が先に届いても、あとから来た init の候補に添わる", () => {
+    const view = apply(
+      {
+        kind: "command-descriptions",
+        descriptions: [{ name: "clear", description: "会話をリセットする" }],
+      },
+      info,
+    )
+
+    expect(commandSuggestions(view)).toEqual([
+      { name: "clear", description: "会話をリセットする" },
+      { name: "model", description: undefined },
+    ])
   })
 })
 

@@ -1,7 +1,12 @@
 import { describe, expect, it } from "bun:test"
 
 import { type Expression } from "../src/expression.ts"
-import { SPEAK_MCP_SERVER_NAME, SPEAK_TOOL_NAME, toSessionEvents } from "../src/session-event.ts"
+import {
+  SPEAK_MCP_SERVER_NAME,
+  SPEAK_TOOL_NAME,
+  toCommandDescriptions,
+  toSessionEvents,
+} from "../src/session-event.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の会話は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。
@@ -257,6 +262,27 @@ describe("toSessionEvents", () => {
     )
   })
 
+  it("system の commands_changed からコマンドの説明を取り出す", () => {
+    const message = {
+      type: "system",
+      subtype: "commands_changed",
+      commands: [
+        { name: "clear", description: "会話をリセットする", argumentHint: "" },
+        { name: "next-task", description: "次のタスクを1件進める", argumentHint: "" },
+      ],
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "command-descriptions",
+        descriptions: [
+          { name: "clear", description: "会話をリセットする" },
+          { name: "next-task", description: "次のタスクを1件進める" },
+        ],
+      },
+    ])
+  })
+
   it("result の success はターンの成功にする", () => {
     const message = { type: "result", subtype: "success", num_turns: 1, duration_ms: 10 }
 
@@ -287,5 +313,38 @@ describe("toSessionEvents", () => {
       toSessionEvents({ type: "assistant", message: { content: "文字列" } }, EXPRESSIONS),
     ).toEqual([])
     expect(toSessionEvents({ type: "system", subtype: "init" }, EXPRESSIONS)).toEqual([])
+  })
+})
+
+describe("toCommandDescriptions", () => {
+  it("名前と説明の組にする", () => {
+    expect(
+      toCommandDescriptions([{ name: "clear", description: "会話をリセットする", aliases: [] }]),
+    ).toEqual([{ name: "clear", description: "会話をリセットする" }])
+  })
+
+  it("説明が空文字・文字列でないものは説明なし（undefined）にする", () => {
+    expect(
+      toCommandDescriptions([
+        { name: "model", description: "" },
+        { name: "compact", description: 7 },
+        { name: "usage" },
+      ]),
+    ).toEqual([
+      { name: "model", description: undefined },
+      { name: "compact", description: undefined },
+      { name: "usage", description: undefined },
+    ])
+  })
+
+  it("名前が無い・空の要素は捨てる", () => {
+    expect(toCommandDescriptions([{ description: "名無し" }, { name: "" }, "clear", null])).toEqual(
+      [],
+    )
+  })
+
+  it("配列でない値は空配列にする", () => {
+    expect(toCommandDescriptions(undefined)).toEqual([])
+    expect(toCommandDescriptions({ commands: [] })).toEqual([])
   })
 })

@@ -19,6 +19,7 @@ import {
   type ModelAlias,
   type PermissionMode,
 } from "./session-driver.ts"
+import { type CommandDescription } from "./session-event.ts"
 import {
   buildIndexPage,
   buildLayoutPage,
@@ -92,11 +93,12 @@ export type SendPermissionMode = (mode: PermissionMode) => Promise<boolean>
 export type SendModel = (model: ModelAlias) => Promise<boolean>
 
 /**
- * 入力欄の `/` 補完に出せるコマンド名の一覧を読む関数。**呼ばれた時点の最新の値**を返す契約
- * （`init` 前は空配列。`GET /api/commands` が毎リクエストごとに呼ぶ。src/session-view.ts の
- * `commandCandidates` が端末専用を除く計算をすでに済ませている）。
+ * 入力欄の `/` 補完に出せるコマンドの一覧（名前と、あれば説明）を読む関数。**呼ばれた時点の
+ * 最新の値**を返す契約（`init` 前は空配列。`GET /api/commands` が毎リクエストごとに呼ぶ。
+ * src/session-view.ts の `commandSuggestions` が端末専用を除いた名前に説明を添える計算を
+ * すでに済ませている）。
  */
-export type GetCommands = () => readonly string[]
+export type GetCommands = () => readonly CommandDescription[]
 
 export type ViewServer = {
   /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */

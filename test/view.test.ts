@@ -906,7 +906,14 @@ describe("入力欄（送信・中断）", () => {
   })
 
   describe("入力欄の / コマンド補完（COMMANDS_PATH を1回だけ取りに行き、前方一致→部分一致で絞る）", () => {
-    function setUpWithCommands(commands: readonly string[]) {
+    /** 説明を見ないテスト用。名前だけを渡すと、説明を持たないコマンドとして組み立てる。 */
+    function setUpWithCommands(names: readonly string[]) {
+      return setUpWithDescribedCommands(names.map((name) => ({ name })))
+    }
+
+    function setUpWithDescribedCommands(
+      commands: readonly { readonly name: string; readonly description?: string }[],
+    ) {
       return setUp(new Map([[COMMANDS_PATH, { commands }]]))
     }
 
@@ -922,6 +929,47 @@ describe("入力欄（送信・中断）", () => {
       expect(suggestionsBox.innerHTML).toContain("/clear")
       expect(suggestionsBox.innerHTML).toContain("/model")
       expect(suggestionsBox.innerHTML).toContain("/next-task")
+    })
+
+    it("候補に説明を添えて出す", async () => {
+      const { textArea, suggestionsBox } = setUpWithDescribedCommands([
+        { name: "clear", description: "会話をリセットする" },
+        { name: "next-task", description: "次のタスクを1件進める" },
+      ])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      expect(suggestionsBox.innerHTML).toContain("会話をリセットする")
+      expect(suggestionsBox.innerHTML).toContain("次のタスクを1件進める")
+    })
+
+    it("説明を持たないコマンドは名前だけで出す（説明の箱を作らない）", async () => {
+      const { textArea, suggestionsBox } = setUpWithDescribedCommands([
+        { name: "clear", description: "会話をリセットする" },
+        { name: "model" },
+      ])
+
+      textArea.value = "/mo"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      expect(suggestionsBox.innerHTML).toContain("/model")
+      expect(suggestionsBox.innerHTML).not.toContain("dispatch-suggestion-description")
+    })
+
+    it("説明も HTML として解釈されない形にしてから出す", async () => {
+      const { textArea, suggestionsBox } = setUpWithDescribedCommands([
+        { name: "clear", description: "<b>太字</b>" },
+      ])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      expect(suggestionsBox.innerHTML).toContain("&lt;b&gt;太字&lt;/b&gt;")
+      expect(suggestionsBox.innerHTML).not.toContain("<b>")
     })
 
     it("前方一致で絞る", async () => {

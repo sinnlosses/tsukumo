@@ -31,6 +31,7 @@ import {
   type SessionEvent,
   SPEAK_MCP_SERVER_NAME,
   SPEAK_TOOL_NAME,
+  toCommandDescriptions,
   toSessionEvents,
 } from "./session-event.ts"
 
@@ -133,6 +134,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
   })
 
   void relayMessages(session, options)
+  void relayCommandDescriptions(session, options)
 
   return {
     prompt: (text) => {
@@ -169,6 +171,28 @@ async function relayMessages(
     options.onEvent({ kind: "session-ended", reason: "セッションが終了した" })
   } catch (error) {
     options.onEvent({ kind: "session-ended", reason: describeError(error) })
+  }
+}
+
+/**
+ * コマンドの説明を1回だけ取りに行く。`init` の `slash_commands` は名前だけなので、説明は
+ * この制御リクエストから受け取る（組み込みコマンドの分も返る。2026-09-12 調査）。
+ * 以降セッション中に増減したときは `commands_changed` が押してくる（src/session-event.ts）。
+ *
+ * **取れなくてもセッションは続ける**（説明が無いまま名前だけの補完に戻るだけ。
+ * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」）。
+ */
+async function relayCommandDescriptions(
+  session: { readonly supportedCommands: () => Promise<unknown> },
+  options: SessionDriverOptions,
+): Promise<void> {
+  try {
+    const descriptions = toCommandDescriptions(await session.supportedCommands())
+    if (descriptions.length > 0) {
+      options.onEvent({ kind: "command-descriptions", descriptions })
+    }
+  } catch {
+    // 説明が付かないだけなので、何も流さずに諦める。
   }
 }
 

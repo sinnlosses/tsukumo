@@ -29,9 +29,10 @@ import {
 import { type Host } from "./host.ts"
 import { createOrcaHost } from "./orca-host.ts"
 import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./session-driver.ts"
-import { type SessionEvent } from "./session-event.ts"
+import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import {
   applySessionEvent,
+  commandSuggestions,
   currentExpression,
   INITIAL_SESSION_VIEW,
   mainViewEntries,
@@ -121,9 +122,9 @@ async function main(args: readonly string[]): Promise<number> {
   // 起動直後の依頼は受け取れずに 503 で返るだけで、どちらかが欠けて黙って落ちることがない。
   let driver: SessionDriver | undefined = undefined
   // 入力欄の `/` 補完の候補（`GET /api/commands` が読む）。init 前は空配列
-  // （docs/requirements.md 4.2「入力欄」）。session-view.ts が端末専用を除く計算を済ませた
-  // `slashCommands` をそのまま持つ。
-  let commands: readonly string[] = []
+  // （docs/requirements.md 4.2「入力欄」）。session-view.ts が端末専用を除いた名前に説明を
+  // 添える計算（`commandSuggestions`）を済ませたものをそのまま持つ。
+  let commands: readonly CommandDescription[] = []
   const server = await startViewServer(
     port,
     host,
@@ -213,7 +214,8 @@ type PublishState = {
  * 「作業中」になっていないときだけ、遅延の残り時間ぶん先に1回だけ配り直すタイマーを立てる
  * （タイマーは常に1本だけ。イベントが来るたびに立て直す）。
  *
- * **`setCommands` は毎イベントで呼ぶ。** `slashCommands` は `session-info` でしか変わらないが、
+ * **`setCommands` は毎イベントで呼ぶ。** 候補は `session-info` と `command-descriptions` でしか
+ * 変わらないが、
  * 変わったかどうかをここで判定する必要はない（呼び出し先の `src/index.ts` の変数への代入は
  * 副作用として軽く、`publishTurnStatus` / `publishPendingAnswer` のような SSE の押し出しとは
  * 違って毎回呼んでも配信は増えない）。
@@ -222,7 +224,7 @@ function createEventSink(
   publish: (state: PublishState) => void,
   publishTurnStatus: (inProgress: boolean) => void,
   publishPendingAnswer: (html: string) => void,
-  setCommands: (commands: readonly string[]) => void,
+  setCommands: (commands: readonly CommandDescription[]) => void,
 ): (event: SessionEvent) => void {
   let view = INITIAL_SESSION_VIEW
   let turnStartedAt: number | undefined = undefined
@@ -255,7 +257,7 @@ function createEventSink(
       publishPendingAnswer(buildPendingAnswerBody(next.pending[0]))
     }
     view = next
-    setCommands(view.slashCommands)
+    setCommands(commandSuggestions(view))
     if (event.kind === "request") {
       turnStartedAt = now
     }
