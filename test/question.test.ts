@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test"
 
-import { parseAnsweredLabels, parseQuestions } from "../src/question.ts"
+import { parseQuestions } from "../src/question.ts"
 
-// 手で書いた架空の質問。実物の transcript は使わない（docs/coding-standards.md「会話内容の扱い」）。
+// 手で書いた架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
 
 describe("parseQuestions", () => {
   it("質問文・見出し・選択肢を取り出す（preview は捨てる）", () => {
@@ -72,18 +72,5 @@ describe("parseQuestions", () => {
     expect(parseQuestions({ questions: "まとも？" })).toBeUndefined()
     expect(parseQuestions({ questions: [] })).toBeUndefined()
     expect(parseQuestions({ questions: ["壊れ"] })).toBeUndefined()
-  })
-})
-
-describe("parseAnsweredLabels", () => {
-  it("回答の本文から、選ばれた答えのラベルを取り出す", () => {
-    const text =
-      'Your questions have been answered: "質問A"="答えA", "質問B"="答えB" selected preview:\nAAの図'
-
-    expect(parseAnsweredLabels(text)).toEqual(["答えA", "答えB"])
-  })
-
-  it("差し戻された（この形ではない）ときは空を返す", () => {
-    expect(parseAnsweredLabels("The user doesn't want to proceed with this tool use.")).toEqual([])
   })
 })

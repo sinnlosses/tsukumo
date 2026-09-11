@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import vm from "node:vm"
 
-import { type MainViewEntry } from "../src/transcript.ts"
+import { type MainViewEntry } from "../src/session-view.ts"
 import {
   buildCharacterBody,
   buildIndexPage,
@@ -12,7 +12,6 @@ import {
   buildViewPage,
   type CharacterViewData,
   COMMANDS_PATH,
-  DISPATCH_PATH,
   INTERRUPT_PATH,
   isViewName,
   LAYOUT_PATH,
@@ -21,7 +20,6 @@ import {
   type SidebarData,
   type SidebarToolActivity,
   summarizeToolInput,
-  TERMINALS_PATH,
   TURN_STATUS_EVENT_PATH,
   TURN_STATUS_IDLE,
   TURN_STATUS_IN_PROGRESS,
@@ -1397,12 +1395,10 @@ describe("まとめたレイアウトページ", () => {
     expect(textareaIndex).toBeGreaterThan(pendingBoxIndex)
   })
 
-  it("送り先を選ぶ <select> を持たず、DISPATCH_PATH / TERMINALS_PATH は入力欄から呼ばれない", () => {
+  it("送り先を選ぶ <select> を持たない（送り先はセッション駆動1つ）", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).not.toContain('<select id="tsukumo-dispatch-target"')
-    expect(page).not.toContain(`fetch(${JSON.stringify(TERMINALS_PATH)})`)
-    expect(page).not.toContain(`fetch(${JSON.stringify(DISPATCH_PATH)}`)
   })
 
   it("依頼の送信・中断を、経路の定数（PROMPT_PATH / INTERRUPT_PATH / TURN_STATUS_EVENT_PATH）宛に行う", () => {

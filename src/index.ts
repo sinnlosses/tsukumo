@@ -127,7 +127,6 @@ async function main(args: readonly string[]): Promise<number> {
   let commands: readonly CommandDescription[] = []
   const server = await startViewServer(
     port,
-    host,
     (text) => {
       if (driver === undefined) {
         return false

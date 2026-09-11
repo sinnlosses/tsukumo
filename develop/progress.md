@@ -1,15 +1,15 @@
 # 現在の状態
 
-最終更新: 2026-09-12（`/loop /next-task` で T-050〜T-057 の8件を完了し、done 10件を
+最終更新: 2026-09-12（承認を得て T-042（旧経路の撤去）を完了。同日 `/loop /next-task` で T-050〜T-057 の8件を完了し、done 10件を
 `docs/history/tasks-archive.md` へ移した。同日、`/plan-tasks` で箱の選択肢の比較を T-057 に起こし、T-046 の論点を広げ、
 サイドバーの改善を T-054〜T-056、吹き出しの分割を T-053、補完の改善を T-050〜T-052 に起こし、
 progress.md の 2026-09-11 分を `docs/history/progress-archive.md` へ移した。2026-09-11 に方針を全面的に見直して
 Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リポジトリの立ち上げは 2026-09-09）
 
 スタックは **Bun + TypeScript**、チェックコマンドは **`bun run check`**。
-**旧方針（サイドカーが transcript を覗き見る）の実装は一式動いている**が、入力が Orca に弾かれて
-合格シーンが成立しなかった。**新方針は `docs/history/direction.md` 2026-09-11「方針の全面見直し」が
-正典**で、`CLAUDE.md` / `docs/` はそれに沿って書き換え済み（T-035）。
+**旧方針（サイドカーが transcript を覗き見る）の実装は 2026-09-12 に撤去した**（T-042）。
+**新方針は `docs/history/direction.md` 2026-09-11「方針の全面見直し」が正典**で、
+`CLAUDE.md` / `docs/` / `README.md` はそれに沿って書き換え済み。
 **`develop/direction.md` は空。**
 
 ## 完了したこと（このセッション）
@@ -56,10 +56,15 @@ Enter を「確定して送信」、Tab を「確定だけ」にした（`docs/r
 
 **T-056 完了。** サイドバーのタスク一覧を、status のバッジを先頭に置いた2列の行にし、見出しに
 todo / done の件数を添えた。未使用だった `countTaskStatuses`（`src/tasks.ts`）は消した。目視は未実施。
+**T-042 完了。** 旧経路（transcript 追従・状態ファイル・hook・Orca 経由の送信）をコードごと撤去した。
+`~/.claude/settings.json` の tsukumo の hook エントリ5件も**承認を得て**外した（バックアップあり。
+orca の12件と statusLine は無傷）。`src/transcript.ts` の残り（`splitUtterance`）は `src/utterance.ts`
+へ、`MainViewEntry` は `src/session-view.ts` へ移した。テストは 436→339 件（消したモジュールの分）。
+
 **T-057 完了。** 箱の選択肢（Orca のタブのまま／Electron／Tauri v2／素のブラウザのアプリモード／WKWebView／
 その他）を一次情報で比べて `docs/research/app-shell.md` に記録した（結論は書かない。T-046 が読んで決める）。
 一次情報で埋まらなかった10欄は「不明」と理由付き。手元は `cargo` / `rustc` / `rustup` 未導入、Xcode あり。
-**これで `/loop` に載せられるタスクは無くなった**（残りは承認や感想が要る T-042 / T-046 / T-048）。
+**これで `/loop` に載せられるタスクは無くなった**（残りは承認や感想が要る T-046 / T-048）。
 done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md` へ移した。
 
 ## 次にやること
@@ -72,13 +77,12 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 - **サイドバーの改善3件（T-054〜T-056）は完了。** 目視は同上
 - **目視がまとめて未実施**: T-050〜T-056 の7件。tsukumo を起こし直して（出力スタイルも読み直される）
   Orca のタブで確かめ、各タスクの `evidence` に1行ずつ追記する
-- **T-042（sonnet）**: 旧経路の撤去。**`~/.claude/settings.json` を触るので承認が要る**
 - **T-048（sonnet、着手可能）**: グローバルへの導入と別プロジェクトでの目視。**承認が要るので
   `/loop` に載せない**
-- **T-046（opus）**: 箱の判断。ユーザーの感想が要る。T-042 待ち（T-057 の比較表
-  `docs/research/app-shell.md` は完成）
+- **T-046（opus、着手可能）**: 箱の判断。ユーザーの感想が要る。依存（T-042 / T-057）は完了し、
+  比較表 `docs/research/app-shell.md` も揃っている
 
-T-042 / T-046 / T-048 はユーザーがいるセッションで。
+T-046 / T-048 はユーザーがいるセッションで。
 
 ## 未解決
 
@@ -93,17 +97,21 @@ T-042 / T-046 / T-048 はユーザーがいるセッションで。
 
 - **正典ドキュメントは新方針に書き換え済み**（T-035）。設計判断の旧節は「役目を終えた」の
   注記付きで残っている。経緯を辿るときだけ読む
-- **旧方針のコード（transcript 追従・hook・`~/.tsukumo/`）は T-042 まで残る**が、`src/index.ts`
-  からはもう呼ばれていない。消すのは縦1本（T-038〜T-040）が動いてから
+- **旧方針のコードは撤去済み**（T-042）。`src/transcript.ts` / `src/state.ts` /
+  `src/transcript-target.ts` / `src/subagents.ts` / `hooks/` は無い。`src/transcript.ts` の
+  残った部分（`splitUtterance`）は `src/utterance.ts` に、`MainViewEntry` は
+  `src/session-view.ts` に移した
+- **`~/.tsukumo/`（`state.json` / `targets/` / `transcript-path`）はもう読まれない**が、
+  消していない（利用者のホームの掃除は利用者がする）。消して構わない
 - **`bun run start` は本物の claude を子プロセスで起こす**（API の利用が発生する）。テストから
   CLI を起動しきらない。動作確認は `TSUKUMO_VIEW_PORT` を変えて起こし、終わったら
   `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる
-- **旧方針の常駐プロセス（`bun run src/index.ts`、7327 番）がユーザーの端末で動いたまま**
-  （2026-09-11 時点。旧コードのまま）。新しいコードで起こし直すときは先に止める
+- **7327 番で tsukumo が動いている**（2026-09-12 実測。新方針のコードで、`claude-agent-sdk` の
+  子プロセスを持つ）。起こし直すときは先に止める
 - **`git stash` に PTY 路線の未コミット分がある**（stash@{0}）。戻す予定は無い。誤って
   `git stash pop` しない
 - **`~/.claude/settings.json` の hooks と statusLine は orca（`~/.orca/agent-hooks/`）が
-  専有している。** tsukumo の `hooks/state.sh` のエントリ5件もここにある（T-042 で外す）。
+  専有している。** tsukumo のエントリ5件は 2026-09-12 に外した（残る12件はすべて orca のもの）。
   **設定を足す・外すときは既存エントリを壊さない。** 上書きすると orca が黙って動かなくなる
 - **出力スタイル（`~/.claude/output-styles/asuna.md`）はセッション起動時にしか読まれない。**
   `/clear` では読み直されない（2026-09-10 実測）
@@ -113,9 +121,6 @@ T-042 / T-046 / T-048 はユーザーがいるセッションで。
 - **CLI を起動するテストは、負荷が高いとフレークする。** `bun run check` は他の重い処理と同時に
   走らせない（2026-09-09 に1件が457秒かかった）
 - **`oxfmt` は Markdown も整形する。** `docs/` と `develop/` は対象、`.claude/` と `vendor/` は除外
-- **旧方針の `bun run start` がまだ動いているとき、端末ホスト（`src/terminal-host.ts` の node
-  プロセス）が残っていることがある**（2026-09-11 に stash 前の起動分を観測）。`pgrep -f
-terminal-host` で見つけたら止めてよい
 - **環境の実測値は1日で変わる。** `docs/requirements.md`「5. 実行環境・非機能要件」の値も
   **前提にする前にその場で確認する**（2026-09-11: Claude Code 2.1.268、SDK 0.3.268）
 - **`develop/tasks.json` に無いタスクID（T-001〜T-057 のうち残っている3件以外）は

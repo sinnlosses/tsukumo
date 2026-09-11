@@ -9,8 +9,8 @@
 import { type PendingAsk } from "./pending-answer.ts"
 import { type Question, type QuestionOption } from "./question.ts"
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
+import { type MainViewEntry } from "./session-view.ts"
 import { type TaskSummaryItem } from "./tasks.ts"
-import { type MainViewEntry } from "./transcript.ts"
 
 export type ViewName = "main" | "character" | "sidebar"
 
@@ -46,18 +46,6 @@ export const VENDOR_ASSET_CONTENT_TYPES: Readonly<Record<string, string>> = {
 function vendorPath(name: string): string {
   return `${VENDOR_PATH_PREFIX}${name}`
 }
-
-/**
- * 送信先として選べるターミナルの一覧を返す経路（GET）。**入力欄の送り先がセッション駆動に
- * 一本化されたので、入力欄からは呼ばれない**（送信元の分岐自体は残してある。撤去は後続タスク）。
- */
-export const TERMINALS_PATH = "/api/terminals"
-
-/**
- * 依頼をターミナルへ送る経路（POST）。**セッション駆動に置き換わったので、入力欄からは
- * 呼ばれない**（分岐自体は残してある。撤去は後続タスク）。
- */
-export const DISPATCH_PATH = "/api/dispatch"
 
 /** 依頼をセッション駆動へ送る経路（POST、本文は JSON の `{ text }`）。 */
 export const PROMPT_PATH = "/api/prompt"
@@ -597,8 +585,7 @@ const COMMAND_SUGGESTION_DESCRIPTION_CLASS = "dispatch-suggestion-description"
 
 /**
  * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
- * （`src/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない
- * （`TERMINALS_PATH` / `DISPATCH_PATH` は入力欄からは呼ばれなくなった）。
+ * （`src/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない。
  *
  * **答え待ちの箱（{@link buildPendingAnswerBody}）はここ（`<textarea>` の上）に出す**
  * （2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していたが、「気づかない」

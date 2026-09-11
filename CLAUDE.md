@@ -29,11 +29,9 @@ SDK で動かす」を必ず読む（採らなかった案もそこにある）�
 
 ## 現在の状態
 
-**2026-09-11 に方針を全面的に見直した。** 旧方針（別ペインの常駐プロセスが transcript を
-追従して覗き見る）の実装は一式動いている（キャラビュー・レポートの HTML 化・ビューの配信・
-hook 連動の表情と衣装）が、**役目を終える途中**である。新方針（SDK で Claude Code を動かす）の
-実装はまだ無く、SDK のスパイク（出力スタイルが効くか・`speak` が呼ばれるか・許可と質問が
-`canUseTool` に届くか）から始まる。
+**2026-09-11 に方針を全面的に見直し、2026-09-12 に旧方針の実装を撤去した。** いまは新方針
+（Agent SDK で Claude Code を動かす）だけが動いている。**transcript の追従・hook と状態ファイル・
+Orca 経由の入力送信はコードごと消えた**ので、ホストに依存するのはビューを開く `showView` 1つだけ。
 最初に着手すべきタスクと未解決事項は [`develop/progress.md`](./develop/progress.md) が正典。
 
 ## セットアップ / 環境構築
@@ -59,10 +57,10 @@ bun test test/index.test.ts   # 単体テストファイルのみ実行
 bun run typecheck             # tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
 bun run format                # oxfmt で自動整形（--check は format:check）
-bun run start                 # 常駐プロセスを起動し、レイアウトページのタブを Orca 内に自動で開く
+bun run start                 # セッションを起こし、レイアウトページのタブを Orca 内に自動で開く
                               # （`tsukumo` コマンドと同じ。TSUKUMO_OPEN_VIEW=0 で自動オープンを
-                              #   止める。中身は旧方針のままで、2026-09-11 の方針転換で役目を
-                              #   終える途中）
+                              #   止める。**本物の claude を子プロセスで起こす**ので、テストから
+                              #   起動しきらない）
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具
 ```
 
@@ -193,8 +191,8 @@ issueトラッカー連携を前提とする元の記述を、このリポジト
 **グローバルなツールの導入**。
 
 **IMPORTANT**: `~/.claude/settings.json` の hooks と statusLine は orca
-（`~/.orca/agent-hooks/`）が専有している。**設定を足すときは既存エントリを壊さず追記する。**
-上書きすると orca 側が黙って動かなくなる。
+（`~/.orca/agent-hooks/`）が専有している（**tsukumo のエントリは 2026-09-12 に外した**）。
+**設定を足すときは既存エントリを壊さず追記する。** 上書きすると orca 側が黙って動かなくなる。
 
 ## ドキュメントを編集するときの罠
 

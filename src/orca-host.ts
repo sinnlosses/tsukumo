@@ -3,58 +3,19 @@
 // **`orca` コマンドを呼ぶのはこのファイルだけ**（docs/architecture.md 原則3）。
 // 実際に Orca が動いていないと結果を確かめられないので、ここは自動テストの対象にしない。
 //
-// Orca CLI の対応関係（v1.4.194 で確認、listPanes/sendText は v1.4.197 で確認）:
-//   openPane  → orca terminal split --direction horizontal|vertical [--command <text>]
-//   showView  → orca tab list --json でこの URL のタブを探し、あれば orca reload --page <id>、
-//               無ければ orca tab create --url <url>
-//   listPanes → orca terminal list --json。返る `handle` が id、表示名（label）は
-//               `title` を優先し、無ければ `worktreePath`、どちらも無ければ `handle` を使う。
-//               「claude が動いていそう」の判定（likelyClaude）は `agentIdentity` フィールドが
-//               `"claude"` かどうかで決める（v1.4.197 で実測。Orca 自身がターミナルの中身を見て
-//               付けた分類ラベルで、`claude` セッションが動いているときだけ付く）
-//   pressKey  → orca terminal switch --terminal <handle> --json のあと orca keypress --key <key>
-//               （keypress は宛先を取らず**前面のペイン**に届くので、先に前面へ出す）
-//   sendText  → orca terminal send --terminal <handle> --text <text> --enter
-//               **claude が質問・確認を表示している間は送れない**（`agent_prompt_blocked` が
-//               返る。2026-09-11 実測）。入力フォームも質問の選択肢も、この制約を受ける
-// `--direction` は `horizontal` が左右に、`vertical` が上下に並べる（Orca 本体のレイアウト実装で、
-// horizontal のときだけ flex-direction が row になることを確認した）。
-//
-// **`orca terminal send` は自動テストの対象にしない。** 動いているターミナル（利用者のセッション
-// を含みうる）に実際に文字を送ってしまうため（README.md / docs/coding-standards.md）。
+// Orca CLI の対応関係（v1.4.194 で確認）:
+//   showView → orca tab list --json でこの URL のタブを探し、あれば orca reload --page <id>、
+//              無ければ orca tab create --url <url>
 
 import { execFile } from "node:child_process"
 
-import {
-  type Host,
-  type HostResult,
-  type ListPanesResult,
-  type Pane,
-  type PaneRequest,
-} from "./host.ts"
+import { type Host, type HostResult } from "./host.ts"
 
 const ORCA_COMMAND = "orca"
 
 /** Orca のアダプタを作る。`orca` が入っていない環境でも、失敗を返すだけで例外は投げない。 */
 export function createOrcaHost(): Host {
-  return {
-    openPane: (request) => openPane(request),
-    showView: (url) => showView(url),
-    listPanes: () => listPanes(),
-    sendText: (paneId, text) => sendText(paneId, text),
-    pressKey: (paneId, key) => pressKey(paneId, key),
-  }
-}
-
-async function openPane(request: PaneRequest): Promise<HostResult> {
-  const direction = request.placement === "beside" ? "horizontal" : "vertical"
-  const commandArgs = request.command === undefined ? [] : ["--command", request.command]
-  const result = await runOrca(
-    ["terminal", "split", "--direction", direction, ...commandArgs],
-    "ペインを開く",
-  )
-
-  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
+  return { showView: (url) => showView(url) }
 }
 
 async function showView(url: string): Promise<HostResult> {
@@ -106,102 +67,6 @@ function findPageIdInTabList(value: unknown, url: string): string | undefined {
   }
 
   return undefined
-}
-
-/**
- * 送信先として選べる、生きているターミナルの一覧を得る。一覧が取れない・形が想定と違うときは
- * `ok: false` を返し、呼び出し側（サーバ）が理由をそのまま利用者に見せる。
- */
-async function listPanes(): Promise<ListPanesResult> {
-  const listed = await runOrca(["terminal", "list", "--json"], "ターミナル一覧を取得する")
-  if (!listed.ok) {
-    return { ok: false, reason: listed.reason }
-  }
-
-  const panes = parsePaneList(listed.stdout)
-  return panes === undefined
-    ? { ok: false, reason: "ターミナル一覧の形式が読み取れない" }
-    : { ok: true, panes }
-}
-
-async function sendText(paneId: string, text: string): Promise<HostResult> {
-  const result = await runOrca(
-    ["terminal", "send", "--terminal", paneId, "--text", text, "--enter"],
-    "ターミナルへ送信する",
-  )
-  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
-}
-
-/**
- * キーを1つ押す。**`terminal send` とは別の経路**で、claude が質問を表示している間
- * （`agent_prompt_blocked` になる状態）でも届く。
- *
- * **2段構えなのは、`orca keypress` に宛先のターミナルを渡せないから**（`--worktree` /
- * `--page` しか取らず、実際には**前面のペイン**に届く。2026-09-11 実測: 前面にしないと
- * ターミナルには入らない）。先に `terminal switch` でそのペインを前面へ出す。
- */
-async function pressKey(paneId: string, key: string): Promise<HostResult> {
-  const switched = await runOrca(
-    ["terminal", "switch", "--terminal", paneId, "--json"],
-    "ターミナルを前面にする",
-  )
-  if (!switched.ok) {
-    return { ok: false, reason: switched.reason }
-  }
-
-  const pressed = await runOrca(["keypress", "--key", key, "--json"], "キーを押す")
-  return pressed.ok ? { ok: true } : { ok: false, reason: pressed.reason }
-}
-
-// `orca terminal list --json` は
-// { result: { terminals: [{ handle, title, worktreePath, agentIdentity, preview, ... }] } }
-// を返す（実測）。外部コマンドの出力なので構造を信用せず、`handle` を持つ要素だけを採る。
-//
-// **`preview`（直近の画面の断片）はここで読まない。** ターミナルの出力そのものなので会話の内容を
-// 含みうる（docs/coding-standards.md「会話内容の扱い」）。`agentIdentity` という、Orca 自身が
-// 会話の中身とは別に付けた分類ラベルが使えるとわかったため、「claude が動いていそう」の判定に
-// 会話内容を一切参照する必要が無い（詳しくはファイル冒頭のコメント）。
-function parsePaneList(stdout: string): readonly Pane[] | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(stdout)
-  } catch {
-    return undefined
-  }
-
-  if (!isRecord(parsed) || !isRecord(parsed.result) || !Array.isArray(parsed.result.terminals)) {
-    return undefined
-  }
-
-  const terminals: readonly unknown[] = parsed.result.terminals
-  const panes: Pane[] = []
-  for (const terminal of terminals) {
-    const pane = paneFromTerminal(terminal)
-    if (pane !== undefined) {
-      panes.push(pane)
-    }
-  }
-
-  return panes
-}
-
-function paneFromTerminal(value: unknown): Pane | undefined {
-  if (!isRecord(value) || typeof value.handle !== "string") {
-    return undefined
-  }
-
-  const title =
-    typeof value.title === "string" && value.title.trim() !== "" ? value.title : undefined
-  const worktreePath =
-    typeof value.worktreePath === "string" && value.worktreePath.trim() !== ""
-      ? value.worktreePath
-      : undefined
-
-  return {
-    id: value.handle,
-    label: title ?? worktreePath ?? value.handle,
-    likelyClaude: value.agentIdentity === "claude",
-  }
 }
 
 type CommandOutput =

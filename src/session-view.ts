@@ -7,8 +7,9 @@
 
 import { type Expression, resolveExpression } from "./expression.ts"
 import { type PendingAsk } from "./pending-answer.ts"
+import { type Question } from "./question.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
-import { DEFAULT_SPEECH_MARKER, type MainViewEntry, splitUtterance } from "./transcript.ts"
+import { DEFAULT_SPEECH_MARKER, splitUtterance } from "./utterance.ts"
 
 /**
  * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
@@ -42,7 +43,29 @@ export type ToolActivity = {
 }
 
 /**
- * セッションの中で起きたことを起きた順に並べたもの。メインビューの `MainViewEntry` とほぼ同じだが、
+ * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
+ * 発話の詳細の3種類。**描く側（src/view.ts）が読むだけの形**で、ここが決めた結果を渡す
+ * （{@link mainViewEntries}）。
+ */
+export type MainViewEntry =
+  | { readonly kind: "request"; readonly text: string }
+  // キャラクターからの質問（AskUserQuestion）。`answers` は選ばれた答えのラベル（未回答なら空）。
+  | {
+      readonly kind: "question"
+      readonly questions: readonly Question[]
+      readonly answers: readonly string[]
+    }
+  | {
+      readonly kind: "tool"
+      readonly name: string
+      readonly input: unknown
+      /** まだ結果が届いていない（作業中の）ツールは undefined になる。 */
+      readonly result: { readonly content: string; readonly isError: boolean } | undefined
+    }
+  | { readonly kind: "detail"; readonly markdown: string }
+
+/**
+ * セッションの中で起きたことを起きた順に並べたもの。{@link MainViewEntry} とほぼ同じだが、
  * **ツールは `toolUseId` を持つ**（あとから届く結果を突き合わせるため。表示には使わない）。
  */
 export type SessionRecord =

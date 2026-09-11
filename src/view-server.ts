@@ -11,7 +11,6 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import process from "node:process"
 
 import { bundledFilePath } from "./bundled-files.ts"
-import { type Host, type Pane } from "./host.ts"
 import { type Answer, parseAnswer } from "./pending-answer.ts"
 import {
   isModelAlias,
@@ -26,7 +25,6 @@ import {
   buildViewPage,
   ANSWER_PATH,
   COMMANDS_PATH,
-  DISPATCH_PATH,
   INTERRUPT_PATH,
   LAYOUT_PATH,
   type LayoutBodies,
@@ -34,7 +32,6 @@ import {
   PENDING_ANSWER_EVENT_PATH,
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
-  TERMINALS_PATH,
   TURN_STATUS_EVENT_PATH,
   TURN_STATUS_IDLE,
   TURN_STATUS_IN_PROGRESS,
@@ -129,13 +126,11 @@ export type ViewServer = {
  * ビューサーバを起動する。`port` に 0 を渡すと空きポートが割り当てられる。
  * ポートが塞がっているときは reject する（起動時の前提不足なので、呼び出し側は即時終了する）。
  *
- * `host` は入力欄（右下）から届いた依頼を実際に送るために使う。ホスト依存の操作は
- * ここで直接組み立てず、必ずこのポート経由にする（docs/architecture.md「ホスト依存の操作は
- * 1つのポートにまとめる」）。
+ * **ホスト（src/host.ts）には依存しない。** 依頼も回答もこのサーバがセッション駆動へ直接渡す
+ * ので、ホストに頼るのはビューを開くこと（`showView`。呼ぶのは src/index.ts）だけ。
  */
 export function startViewServer(
   port: number,
-  host: Host,
   sendPrompt: SendPrompt,
   sendInterrupt: SendInterrupt,
   sendAnswer: SendAnswer,
@@ -163,7 +158,6 @@ export function startViewServer(
       response,
       bodies,
       clients,
-      host,
       boundOrigin,
       sendPrompt,
       sendInterrupt,
@@ -264,7 +258,6 @@ function respond(
   response: ServerResponse,
   bodies: ReadonlyMap<ViewName, string>,
   clients: Map<ViewName, Set<ServerResponse>>,
-  host: Host,
   serverOrigin: string,
   sendPrompt: SendPrompt,
   sendInterrupt: SendInterrupt,
@@ -309,11 +302,6 @@ function respond(
     return
   }
 
-  if (path === TERMINALS_PATH && request.method === "GET") {
-    handleListTerminals(response, host)
-    return
-  }
-
   if (path === COMMANDS_PATH && request.method === "GET") {
     writeJson(response, 200, { commands: getCommands() })
     return
@@ -334,15 +322,6 @@ function respond(
       return
     }
     handleInterrupt(response, sendInterrupt)
-    return
-  }
-
-  if (path === DISPATCH_PATH && request.method === "POST") {
-    if (!isAllowedOrigin(request, serverOrigin)) {
-      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
-      return
-    }
-    handleDispatch(request, response, host)
     return
   }
 
@@ -432,42 +411,6 @@ function isAllowedOrigin(request: IncomingMessage, serverOrigin: string): boolea
   return origin === serverOrigin
 }
 
-/** 送信先として選べるターミナルの一覧を JSON で返す（`src/view.ts` の入力欄が使う）。 */
-function handleListTerminals(response: ServerResponse, host: Host): void {
-  host
-    .listPanes()
-    .then((result) => {
-      if (!result.ok) {
-        writeJson(response, 502, { ok: false, reason: result.reason })
-        return
-      }
-
-      const terminals = sortPanesByLikelyClaude(result.panes).map((pane) => ({
-        id: pane.id,
-        label: pane.label,
-        likelyClaude: pane.likelyClaude,
-      }))
-      writeJson(response, 200, { ok: true, terminals })
-    })
-    .catch(() => {
-      // Host は失敗を例外にしない契約（src/host.ts）だが、リクエストを処理するここまでは
-      // 落ちないようにしておく（docs/coding-standards.md「エラーハンドリング」）。
-      writeJson(response, 502, { ok: false, reason: "送信先の一覧を取得できない" })
-    })
-}
-
-/**
- * 「claude が動いていそう」（`pane.likelyClaude`）なものを上に寄せる。**絞り込みはしない**。
- * 判定は Orca 側の分類（src/orca-host.ts）で確実ではないため、外れたときに一覧から消えて
- * 選べなくなることが無いよう、全件を残したまま並び順だけを変える（各グループ内の相対順は
- * 変えない。`Array#filter` は元の順を保つので、2グループに分けて連結するだけでよい）。
- */
-function sortPanesByLikelyClaude(panes: readonly Pane[]): readonly Pane[] {
-  const likely = panes.filter((pane) => pane.likelyClaude)
-  const others = panes.filter((pane) => !pane.likelyClaude)
-  return [...likely, ...others]
-}
-
 /**
  * 入力欄から届いた依頼をセッション駆動へ渡す。**文面はここでもディスクに書かず、ログにも
  * 出さない**（docs/coding-standards.md「会話内容の扱い」）。エラー時に返すのも定型の理由文だけ。
@@ -527,40 +470,6 @@ function handleInterrupt(response: ServerResponse, sendInterrupt: SendInterrupt)
     })
     .catch(() => {
       writeJson(response, 502, { ok: false, reason: "中断できなかった" })
-    })
-}
-
-/**
- * 入力欄から届いた依頼を、選ばれたターミナルへポート経由で送る。
- *
- * **本文（依頼の文面）はここでもディスクに書かず、ログにも出さない**
- * （docs/coding-standards.md「会話内容の扱い」）。エラー時に返すのも定型の理由文だけで、
- * 受け取った文面をそのまま含めない。
- */
-function handleDispatch(request: IncomingMessage, response: ServerResponse, host: Host): void {
-  readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
-    .then(async (body) => {
-      if (body === undefined) {
-        writeJson(response, 413, { ok: false, reason: "本文が大きすぎる" })
-        return
-      }
-
-      const dispatchRequest = parseDispatchRequest(body)
-      if (dispatchRequest === undefined) {
-        writeJson(response, 400, { ok: false, reason: "送信先とテキストの形式が正しくない" })
-        return
-      }
-
-      const result = await host.sendText(dispatchRequest.terminalId, dispatchRequest.text)
-      if (!result.ok) {
-        writeJson(response, 502, { ok: false, reason: result.reason })
-        return
-      }
-
-      writeJson(response, 200, { ok: true })
-    })
-    .catch(() => {
-      writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
     })
 }
 
@@ -710,31 +619,6 @@ function parseModelRequest(body: string): ModelAlias | undefined {
   }
 
   return isModelAlias(parsed.model) ? parsed.model : undefined
-}
-
-type DispatchRequest = { readonly terminalId: string; readonly text: string }
-
-function parseDispatchRequest(body: string): DispatchRequest | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(body)
-  } catch {
-    return undefined
-  }
-
-  if (!isRecord(parsed)) {
-    return undefined
-  }
-
-  const { terminalId, text } = parsed
-  if (typeof terminalId !== "string" || terminalId.trim() === "") {
-    return undefined
-  }
-  if (typeof text !== "string" || text.trim() === "" || text.length > MAX_DISPATCH_TEXT_LENGTH) {
-    return undefined
-  }
-
-  return { terminalId, text }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

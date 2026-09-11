@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, mock } from "bun:test"
 import { networkInterfaces } from "node:os"
 
-import { type Host, type HostResult } from "../src/host.ts"
 import { type Answer } from "../src/pending-answer.ts"
 import { type ModelAlias, type PermissionMode } from "../src/session-driver.ts"
 import {
@@ -16,13 +15,11 @@ import {
 } from "../src/view-server.ts"
 import {
   COMMANDS_PATH,
-  DISPATCH_PATH,
   INTERRUPT_PATH,
   MODEL_PATH,
   PENDING_ANSWER_EVENT_PATH,
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
-  TERMINALS_PATH,
   TURN_STATUS_EVENT_PATH,
   TURN_STATUS_IDLE,
   TURN_STATUS_IN_PROGRESS,
@@ -33,24 +30,7 @@ import {
 // ぶつからないようにするため）。
 let running: ViewServer | undefined
 
-/**
- * `orca` を一切呼ばないテスト用のホスト。既定はすべて成功・一覧は空にしてあり、
- * 個々のテストは必要な操作だけ `overrides` で差し替える
- * （`docs/coding-standards.md`「モックするのはシステム境界だけ」— Host はまさにその境界）。
- */
-function fakeHost(overrides: Partial<Host> = {}): Host {
-  return {
-    openPane: () => Promise.resolve({ ok: true }),
-    showView: () => Promise.resolve({ ok: true }),
-    listPanes: () => Promise.resolve({ ok: true, panes: [] }),
-    sendText: () => Promise.resolve({ ok: true }),
-    pressKey: () => Promise.resolve({ ok: true }),
-    ...overrides,
-  }
-}
-
 async function start(
-  host: Host = fakeHost(),
   sendPrompt: SendPrompt = () => true,
   sendInterrupt: SendInterrupt = () => Promise.resolve(),
   sendAnswer: SendAnswer = () => true,
@@ -60,7 +40,6 @@ async function start(
 ): Promise<ViewServer> {
   const server = await startViewServer(
     0,
-    host,
     sendPrompt,
     sendInterrupt,
     sendAnswer,
@@ -243,7 +222,7 @@ describe("ビューサーバ", () => {
 describe("セッションへの依頼", () => {
   it("依頼のテキストをセッション駆動へ渡す", async () => {
     const sendPrompt = mock((_text: string) => true)
-    const server = await start(fakeHost(), sendPrompt)
+    const server = await start(sendPrompt)
 
     const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
       method: "POST",
@@ -258,7 +237,7 @@ describe("セッションへの依頼", () => {
 
   it("テキストが欠けている・空のときは、駆動を呼ばずに400を返す", async () => {
     const sendPrompt = mock((_text: string) => true)
-    const server = await start(fakeHost(), sendPrompt)
+    const server = await start(sendPrompt)
 
     const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
       method: "POST",
@@ -271,7 +250,7 @@ describe("セッションへの依頼", () => {
   })
 
   it("セッションがまだ起きていないときは503を返す", async () => {
-    const server = await start(fakeHost(), () => false)
+    const server = await start(() => false)
 
     const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
       method: "POST",
@@ -284,7 +263,7 @@ describe("セッションへの依頼", () => {
 
   it("別のオリジンからの依頼は、駆動を呼ばずに403で弾く", async () => {
     const sendPrompt = mock((_text: string) => true)
-    const server = await start(fakeHost(), sendPrompt)
+    const server = await start(sendPrompt)
 
     const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
       method: "POST",
@@ -300,7 +279,7 @@ describe("セッションへの依頼", () => {
 describe("実行中の中断", () => {
   it("駆動の interrupt を呼び、ok を返す", async () => {
     const sendInterrupt = mock((): Promise<void> => Promise.resolve())
-    const server = await start(fakeHost(), () => true, sendInterrupt)
+    const server = await start(() => true, sendInterrupt)
 
     const response = await fetch(`${originOf(server)}${INTERRUPT_PATH}`, { method: "POST" })
 
@@ -311,7 +290,7 @@ describe("実行中の中断", () => {
 
   it("別のオリジンからは、駆動を呼ばずに403で弾く", async () => {
     const sendInterrupt = mock((): Promise<void> => Promise.resolve())
-    const server = await start(fakeHost(), () => true, sendInterrupt)
+    const server = await start(() => true, sendInterrupt)
 
     const response = await fetch(`${originOf(server)}${INTERRUPT_PATH}`, {
       method: "POST",
@@ -324,7 +303,6 @@ describe("実行中の中断", () => {
 
   it("駆動が失敗したときは理由付きで失敗を返す", async () => {
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.reject(new Error("中断に失敗")),
     )
@@ -340,7 +318,6 @@ describe("答え待ちへの回答（/api/answer）", () => {
   it("id と answer を駆動へそのまま渡す", async () => {
     const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       sendAnswer,
@@ -360,7 +337,6 @@ describe("答え待ちへの回答（/api/answer）", () => {
   it("拒否と、質問の answers も同じ経路で渡す", async () => {
     const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       sendAnswer,
@@ -390,7 +366,6 @@ describe("答え待ちへの回答（/api/answer）", () => {
   it("壊れた JSON は駆動を呼ばずに400を返す", async () => {
     const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       sendAnswer,
@@ -407,7 +382,7 @@ describe("答え待ちへの回答（/api/answer）", () => {
   })
 
   it("id が無い・answer の形が合わないときも400を返す", async () => {
-    const server = await start(fakeHost())
+    const server = await start()
 
     for (const body of [
       JSON.stringify({ answer: { kind: "allow" } }),
@@ -425,7 +400,6 @@ describe("答え待ちへの回答（/api/answer）", () => {
 
   it("解決済み・知らない id は409を返す（駆動が false を返したとき）", async () => {
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => false,
@@ -443,7 +417,6 @@ describe("答え待ちへの回答（/api/answer）", () => {
   it("別のオリジンからは、駆動を呼ばずに403で弾く", async () => {
     const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       sendAnswer,
@@ -466,7 +439,6 @@ describe("許可モードの切り替え（/api/permission-mode）", () => {
       (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
     )
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -489,7 +461,6 @@ describe("許可モードの切り替え（/api/permission-mode）", () => {
       (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
     )
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -508,7 +479,6 @@ describe("許可モードの切り替え（/api/permission-mode）", () => {
 
   it("セッションがまだ起きていないときは503を返す", async () => {
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -529,7 +499,6 @@ describe("許可モードの切り替え（/api/permission-mode）", () => {
       (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
     )
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -551,7 +520,6 @@ describe("モデルの切り替え（/api/model）", () => {
   it("model を駆動へ渡す", async () => {
     const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -573,7 +541,6 @@ describe("モデルの切り替え（/api/model）", () => {
   it("エイリアス以外は駆動を呼ばずに400を返す", async () => {
     const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -593,7 +560,6 @@ describe("モデルの切り替え（/api/model）", () => {
 
   it("セッションがまだ起きていないときは503を返す", async () => {
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -613,7 +579,6 @@ describe("モデルの切り替え（/api/model）", () => {
   it("別のオリジンからは403で弾く", async () => {
     const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
     const server = await start(
-      fakeHost(),
       () => true,
       () => Promise.resolve(),
       () => true,
@@ -680,15 +645,7 @@ describe("答え待ちの箱（SSE）", () => {
 
 describe("入力欄の / 補完の候補（GET /api/commands）", () => {
   it("init 前（getCommands が空配列を返す）は空配列を返す", async () => {
-    const server = await start(
-      fakeHost(),
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      () => [],
-    )
+    const server = await start(undefined, undefined, undefined, undefined, undefined, () => [])
 
     const response = await fetch(`${originOf(server)}${COMMANDS_PATH}`)
 
@@ -697,19 +654,11 @@ describe("入力欄の / 補完の候補（GET /api/commands）", () => {
   })
 
   it("init 後は名前と説明の組をそのまま返す（説明が無いものは name だけ）", async () => {
-    const server = await start(
-      fakeHost(),
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      () => [
-        { name: "clear", description: "会話をリセットする" },
-        { name: "model", description: undefined },
-        { name: "next-task", description: "次のタスクを1件進める" },
-      ],
-    )
+    const server = await start(undefined, undefined, undefined, undefined, undefined, () => [
+      { name: "clear", description: "会話をリセットする" },
+      { name: "model", description: undefined },
+      { name: "next-task", description: "次のタスクを1件進める" },
+    ])
 
     const response = await fetch(`${originOf(server)}${COMMANDS_PATH}`)
 
@@ -721,260 +670,6 @@ describe("入力欄の / 補完の候補（GET /api/commands）", () => {
         { name: "next-task", description: "次のタスクを1件進める" },
       ],
     })
-  })
-})
-
-describe("入力欄からの送信", () => {
-  it("送信先の一覧を、id と label と likelyClaude だけに絞って返す", async () => {
-    const server = await start(
-      fakeHost({
-        listPanes: () =>
-          Promise.resolve({
-            ok: true,
-            panes: [{ id: "term-1", label: "claude", likelyClaude: true }],
-          }),
-      }),
-    )
-
-    const response = await fetch(`${originOf(server)}${TERMINALS_PATH}`)
-    const body = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(body).toEqual({
-      ok: true,
-      terminals: [{ id: "term-1", label: "claude", likelyClaude: true }],
-    })
-  })
-
-  it("likelyClaude で絞り込まず、外れている（false の）ものも一覧に残す", async () => {
-    const server = await start(
-      fakeHost({
-        listPanes: () =>
-          Promise.resolve({
-            ok: true,
-            panes: [{ id: "term-unsure", label: "たぶん違う", likelyClaude: false }],
-          }),
-      }),
-    )
-
-    const response = await fetch(`${originOf(server)}${TERMINALS_PATH}`)
-    const body = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(body).toEqual({
-      ok: true,
-      terminals: [{ id: "term-unsure", label: "たぶん違う", likelyClaude: false }],
-    })
-  })
-
-  it("likelyClaude が true のものを、元の順を保ったまま上に寄せる（絞り込まない）", async () => {
-    const server = await start(
-      fakeHost({
-        listPanes: () =>
-          Promise.resolve({
-            ok: true,
-            panes: [
-              { id: "a-unsure", label: "A", likelyClaude: false },
-              { id: "b-likely", label: "B", likelyClaude: true },
-              { id: "c-unsure", label: "C", likelyClaude: false },
-              { id: "d-likely", label: "D", likelyClaude: true },
-            ],
-          }),
-      }),
-    )
-
-    const response = await fetch(`${originOf(server)}${TERMINALS_PATH}`)
-    const body = await response.json()
-
-    expect(body).toEqual({
-      ok: true,
-      terminals: [
-        { id: "b-likely", label: "B", likelyClaude: true },
-        { id: "d-likely", label: "D", likelyClaude: true },
-        { id: "a-unsure", label: "A", likelyClaude: false },
-        { id: "c-unsure", label: "C", likelyClaude: false },
-      ],
-    })
-  })
-
-  it("送信先が1つも無いときも壊れず、空の一覧を返す", async () => {
-    const server = await start()
-
-    const response = await fetch(`${originOf(server)}${TERMINALS_PATH}`)
-    const body = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(body).toEqual({ ok: true, terminals: [] })
-  })
-
-  it("一覧の取得にホストが失敗したとき、理由付きで失敗を返す", async () => {
-    const server = await start(
-      fakeHost({
-        listPanes: () => Promise.resolve({ ok: false, reason: "orca コマンドが見つからない" }),
-      }),
-    )
-
-    const response = await fetch(`${originOf(server)}${TERMINALS_PATH}`)
-    const body = await response.json()
-
-    expect(response.status).toBe(502)
-    expect(body).toEqual({ ok: false, reason: "orca コマンドが見つからない" })
-  })
-
-  it("依頼を POST すると、選ばれた送信先とテキストでホストに送信を頼む", async () => {
-    const sendText = mock(
-      (_paneId: string, _text: string): Promise<HostResult> => Promise.resolve({ ok: true }),
-    )
-    const server = await start(fakeHost({ sendText }))
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term-1", text: "テストの依頼" }),
-    })
-    const body = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(body).toEqual({ ok: true })
-    expect(sendText).toHaveBeenCalledWith("term-1", "テストの依頼")
-  })
-
-  it("送信にホストが失敗したとき、理由付きで失敗を返す", async () => {
-    const server = await start(
-      fakeHost({
-        sendText: () => Promise.resolve({ ok: false, reason: "ターミナルが見つからない" }),
-      }),
-    )
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term-1", text: "テストの依頼" }),
-    })
-    const body = await response.json()
-
-    expect(response.status).toBe(502)
-    expect(body).toEqual({ ok: false, reason: "ターミナルが見つからない" })
-  })
-
-  it("送信先やテキストが欠けている・空のときは、ホストを呼ばずに400を返す", async () => {
-    const sendText = mock(
-      (_paneId: string, _text: string): Promise<HostResult> => Promise.resolve({ ok: true }),
-    )
-    const server = await start(fakeHost({ sendText }))
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term-1", text: "" }),
-    })
-
-    expect(response.status).toBe(400)
-    expect(sendText).not.toHaveBeenCalled()
-  })
-
-  it("本文がJSONとして壊れているときも壊れず、理由付きで失敗を返す", async () => {
-    const server = await start()
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: "{ このJSONは壊れている",
-    })
-    const body = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(body.ok).toBe(false)
-  })
-
-  it("GET で /api/dispatch を叩いても送信は起きない（POSTだけを受け付ける）", async () => {
-    const sendText = mock(
-      (_paneId: string, _text: string): Promise<HostResult> => Promise.resolve({ ok: true }),
-    )
-    const server = await start(fakeHost({ sendText }))
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`)
-
-    expect(response.status).toBe(404)
-    expect(sendText).not.toHaveBeenCalled()
-  })
-
-  it("Origin ヘッダーが無い POST（curl相当）は通す", async () => {
-    const sendText = mock(
-      (_paneId: string, _text: string): Promise<HostResult> => Promise.resolve({ ok: true }),
-    )
-    const server = await start(fakeHost({ sendText }))
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term-1", text: "テストの依頼" }),
-    })
-
-    expect(response.status).toBe(200)
-    expect(sendText).toHaveBeenCalledWith("term-1", "テストの依頼")
-  })
-
-  it("サーバ自身のオリジンと一致する Origin ヘッダーの POST は通す", async () => {
-    const sendText = mock(
-      (_paneId: string, _text: string): Promise<HostResult> => Promise.resolve({ ok: true }),
-    )
-    const server = await start(fakeHost({ sendText }))
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", origin: originOf(server) },
-      body: JSON.stringify({ terminalId: "term-1", text: "テストの依頼" }),
-    })
-
-    expect(response.status).toBe(200)
-    expect(sendText).toHaveBeenCalledWith("term-1", "テストの依頼")
-  })
-
-  it("別オリジンの Origin ヘッダーが付いた POST は403で弾き、ホストを呼ばない", async () => {
-    const sendText = mock(
-      (_paneId: string, _text: string): Promise<HostResult> => Promise.resolve({ ok: true }),
-    )
-    const server = await start(fakeHost({ sendText }))
-
-    const response = await fetch(`${originOf(server)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        origin: "https://evil.example.com",
-      },
-      body: JSON.stringify({ terminalId: "term-1", text: "外部からの注入テスト" }),
-    })
-    const body = await response.json()
-
-    expect(response.status).toBe(403)
-    expect(body.ok).toBe(false)
-    expect(sendText).not.toHaveBeenCalled()
-  })
-
-  it("依頼の文面を、応答のどこにも含めない（成功時も失敗時も）", async () => {
-    const secretText = "サーバの外に出てはいけない秘密の依頼文"
-
-    const failing = await start(
-      fakeHost({
-        sendText: () => Promise.resolve({ ok: false, reason: "ターミナルへの送信に失敗した" }),
-      }),
-    )
-    const failingResponse = await fetch(`${originOf(failing)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term-1", text: secretText }),
-    })
-    expect(await failingResponse.text()).not.toContain(secretText)
-    await failing.close()
-
-    const succeeding = await start()
-    const succeedingResponse = await fetch(`${originOf(succeeding)}${DISPATCH_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term-1", text: secretText }),
-    })
-    expect(await succeedingResponse.text()).not.toContain(secretText)
   })
 })
 
