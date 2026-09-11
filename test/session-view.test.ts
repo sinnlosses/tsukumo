@@ -66,7 +66,7 @@ describe("applySessionEvent", () => {
     expect(nextTurn.speeches).toEqual(["いくよ！"])
   })
 
-  it("同じターン内のセリフは直近3件までを古い→新しいの順に並べる", () => {
+  it("同じターン内のセリフは件数を絞らず、古い→新しいの順に並べる", () => {
     const view = apply(
       { kind: "request", text: "ダミーの依頼" },
       { kind: "speech", text: "1つめ", expression: "default" },
@@ -75,10 +75,10 @@ describe("applySessionEvent", () => {
       { kind: "speech", text: "4つめ", expression: "proud" },
     )
 
-    expect(view.speeches).toEqual(["2つめ", "3つめ", "4つめ"])
+    expect(view.speeches).toEqual(["1つめ", "2つめ", "3つめ", "4つめ"])
   })
 
-  it("新しいターンで最初の speech が来た時点で、前のターンのセリフと混ざらず置き換わる", () => {
+  it("新しいターンの request の直後は、前のターンのセリフの最後の1件だけを残す", () => {
     const firstTurn = apply(
       { kind: "request", text: "1つめの依頼" },
       { kind: "speech", text: "1つめのセリフ", expression: "default" },
@@ -90,8 +90,9 @@ describe("applySessionEvent", () => {
       { kind: "request", text: "2つめの依頼" },
       0,
     )
-    // 次の speak が来るまでは、前のターンのセリフを保つ（キャラクターが消えたように見せない）。
-    expect(secondTurnStarted.speeches).toEqual(["1つめのセリフ", "1つめの2つめのセリフ"])
+    // 消すとキャラクターが消えたように見えるので最後の1件だけ残す。前のターンの並びを丸ごとは
+    // 持ち越さない（次のターンの冒頭に前のターンの並びが残らないようにする）。
+    expect(secondTurnStarted.speeches).toEqual(["1つめの2つめのセリフ"])
 
     const secondTurnSpoken = applySessionEvent(
       secondTurnStarted,

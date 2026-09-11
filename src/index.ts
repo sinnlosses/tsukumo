@@ -296,9 +296,7 @@ function createViewPublisher(
   return ({ view, turnStartedAt }) => {
     try {
       const data: CharacterViewData = {
-        // 直近のセリフを1つのまとまりとして出す（docs/requirements.md 4.2「続けて並べた行は
-        // 1つのまとまり」）。`buildCharacterBody` は1つの文字列しか受け取らないので改行で連結する。
-        speech: view.speeches.length === 0 ? undefined : view.speeches.join("\n"),
+        speeches: view.speeches,
         ...readCharacterAssets(
           characterDir,
           currentExpression(view, Date.now()),
@@ -470,7 +468,7 @@ function readCharacterAssets(
   characterDir: string,
   expression: Expression,
   outfit: Outfit,
-): Omit<CharacterViewData, "speech" | "permissionMode"> {
+): Omit<CharacterViewData, "speeches" | "permissionMode"> {
   const definition = readCharacterDefinition(characterDir)
 
   if (definition === undefined) {

@@ -14,13 +14,6 @@ import { DEFAULT_SPEECH_MARKER, type MainViewEntry, splitUtterance } from "./tra
 const MAX_RECENT_FINISHED_TOOLS = 5
 
 /**
- * 吹き出しに並べて出す、同じターン内の直近セリフの上限件数（docs/requirements.md 4.2
- * 「続けて並べた行は1つのまとまり」）。**ターンをまたいだセリフは混ぜない**
- * （{@link applySessionEvent} の `speech` の扱いを参照）。
- */
-const MAX_RECENT_SPEECHES = 3
-
-/**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。**過去のやり取りは
  * `buildMainBody` 側のタブ（`MAX_MAIN_VIEW_TURNS`）でさらに絞られる**が、常駐プロセスが
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
@@ -72,11 +65,11 @@ export type SessionRecord =
  */
 export type SessionView = {
   /**
-   * 吹き出しに並べて出す、直近のセリフ（古い→新しいの順、最大 {@link MAX_RECENT_SPEECHES} 件）。
-   * **セリフが1つも来なかったターンでも消さない**（docs/requirements.md 4.2。新しいターンが
-   * 始まっても、次の `speech` が来るまでは前のターンの並びをそのまま保つ）。
-   * **次の `speech` が来た時点で、そのターンのものだけに置き換わる**（前のターンの分と混ざらない。
-   * {@link applySessionEvent} の `speech` を参照）。まだ一度も `speak` が呼ばれていなければ空配列。
+   * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。**件数の上限は無い**、
+   * ターンの境目だけで区切る）。**セリフが1つも来なかったターンでも消さない**
+   * （docs/requirements.md 4.2。`request` の時点では前のターンの並びの**最後の1件だけ**を残し、
+   * 次の `speech` が来た時点でそのターンのものだけに置き換わる。{@link applySessionEvent} の
+   * `request` / `speech` を参照）。まだ一度も `speak` が呼ばれていなければ空配列。
    */
   readonly speeches: readonly string[]
   /** 直近のセリフに添えられた表情。ツールの実行中は「作業中」が優先される。 */
@@ -167,6 +160,9 @@ export function applySessionEvent(
       return {
         ...view,
         records: trimToRecentTurns([...view.records, { kind: "request", text: event.text }]),
+        // 前のターンの並びは最後の1件だけ残す（消すとキャラクターが消えたように見えるが、
+        // 丸ごと持ち越すと次のターンの冒頭に前のターンの並びが残ってしまう）。
+        speeches: view.speeches.slice(-1),
         partialUtterance: "",
         turnInProgress: true,
         speechCalledInTurn: false,
@@ -180,9 +176,7 @@ export function applySessionEvent(
         ...view,
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
         // （docs/requirements.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
-        speeches: [...(view.speechCalledInTurn ? view.speeches : []), event.text].slice(
-          -MAX_RECENT_SPEECHES,
-        ),
+        speeches: [...(view.speechCalledInTurn ? view.speeches : []), event.text],
         speechExpression: event.expression,
         speechCalledInTurn: true,
       }
@@ -328,7 +322,7 @@ function withMarkerFallback(view: SessionView): SessionView {
 
   return {
     ...view,
-    speeches: speeches.slice(-MAX_RECENT_SPEECHES),
+    speeches,
     speechCalledInTurn: true,
     partialUtterance: parts.detail,
   }

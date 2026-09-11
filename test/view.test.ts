@@ -32,7 +32,7 @@ import {
 
 // buildCharacterBody に渡す全部入りのデータ。個々のテストは必要な部分だけ上書きする。
 const FULL_CHARACTER_DATA: CharacterViewData = {
-  speech: "やあ、調子はどう？",
+  speeches: ["やあ、調子はどう？"],
   portrait: { kind: "svg", svgMarkup: '<svg role="img"><circle r="1"/></svg>' },
   outfitAccent: "#b8c7ff",
   altText: "架空の精霊（通常）",
@@ -2621,7 +2621,7 @@ describe("キャラビューの本文", () => {
   it("セリフをそのまま出さず、HTML として無害な形にして埋め込む", () => {
     const body = buildCharacterBody({
       ...FULL_CHARACTER_DATA,
-      speech: '<script>alert("x")</script>',
+      speeches: ['<script>alert("x")</script>'],
     })
 
     expect(body).not.toContain("<script>")
@@ -2629,9 +2629,31 @@ describe("キャラビューの本文", () => {
   })
 
   it("セリフがまだ無い（一度も発話が無い）ときはプレースホルダを出す", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, speech: undefined })
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, speeches: [] })
 
     expect(body).toContain("まだ発話がありません")
+  })
+
+  it("セリフの件数と同じ数の吹き出しを出す", () => {
+    const body = buildCharacterBody({
+      ...FULL_CHARACTER_DATA,
+      speeches: ["1つめ", "2つめ", "3つめ"],
+    })
+
+    expect(body.match(/<div class="balloon">/g)?.length).toBe(3)
+    expect(body).toContain("1つめ")
+    expect(body).toContain("2つめ")
+    expect(body).toContain("3つめ")
+  })
+
+  it("並びは DOM 上で新しい順（CSS の column-reverse で見た目は最新が下になる）", () => {
+    const body = buildCharacterBody({
+      ...FULL_CHARACTER_DATA,
+      speeches: ["1つめ", "2つめ", "3つめ"],
+    })
+
+    expect(body.indexOf("3つめ")).toBeLessThan(body.indexOf("2つめ"))
+    expect(body.indexOf("2つめ")).toBeLessThan(body.indexOf("1つめ"))
   })
 
   it("インライン SVG の立ち絵は、エスケープせずファイルの中身をそのまま埋め込む", () => {

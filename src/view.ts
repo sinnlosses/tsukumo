@@ -991,11 +991,12 @@ export type CharacterPortraitSource =
 /** キャラビューの本文を組み立てるために必要な値。 */
 export type CharacterViewData = {
   /**
-   * 吹き出しに出すセリフ。規約に従っていない発話（セリフが無い）が来たときに**直前のセリフを
-   * 出し続ける**判断は、状態を持つ src/index.ts 側の役目（`docs/requirements.md` 4.2）。
-   * ここではもう解決済みの1つの値として受け取り、undefined は「まだ一度もセリフが無い」だけを表す。
+   * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順）。規約に従っていない発話
+   * （セリフが無い）が来たときに**直前のセリフを出し続ける**判断は、状態を持つ src/index.ts
+   * 側の役目（`docs/requirements.md` 4.2）。ここではもう解決済みの並びとして受け取り、
+   * 空配列は「まだ一度もセリフが無い」だけを表す。
    */
-  readonly speech: string | undefined
+  readonly speeches: readonly string[]
   /** 素材が無い・読めないときは undefined。そのときは吹き出しだけで成立させる。 */
   readonly portrait: CharacterPortraitSource | undefined
   /** 立ち絵の CSS 変数 `--outfit-accent` に渡す差し色。インライン SVG のときだけ見た目に効く。 */
@@ -1009,6 +1010,9 @@ export type CharacterViewData = {
  * 表情の切り替えは、差し替えのたびに新しい要素が挿入される性質を利用して、CSS アニメーション
  * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
  *
+ * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-list` に縦へ積み、最新が
+ * 一番下に見える（`STYLE` の `.balloon-list`）。並びは自前でスクロールする。
+ *
  * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（{@link buildPendingAnswerBody}）は
  * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
  * 入力欄と離れている」という理由で使いづらかった。`src/index.ts` / `dispatchScript` を参照）。
@@ -1017,18 +1021,28 @@ export type CharacterViewData = {
  * 決定。サイドバーの区画ができたため）。
  */
 export function buildCharacterBody(data: CharacterViewData): string {
-  const text = data.speech ?? PLACEHOLDER_UTTERANCE
   const portraitHtml =
     data.portrait === undefined
       ? ""
       : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
 
-  // 立ち絵と吹き出しを横並びにする（`.character-layout`。まとめたレイアウト（`buildLayoutPage`）
-  // ではキャラビューは下段の半分幅になり、横長・浅めの領域になるため、縦積みのままだと吹き出しの
-  // 縦幅が窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
+  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-list` の
+  // `flex-direction: column-reverse` と組み、`scrollTop = 0`（既定の位置）が最新を指すようにする。
+  // こうしておくと SSE で並びが丸ごと差し替わっても、購読スクリプト側に手を入れずに最新が見える。
+  const balloonsHtml =
+    data.speeches.length === 0
+      ? `<div class="balloon">${escapeHtml(PLACEHOLDER_UTTERANCE)}</div>`
+      : [...data.speeches]
+          .reverse()
+          .map((speech) => `<div class="balloon">${escapeHtml(speech)}</div>`)
+          .join("")
+
+  // 立ち絵と吹き出しの並びを横並びにする（`.character-layout`。まとめたレイアウト
+  // （`buildLayoutPage`）ではキャラビューは下段の半分幅になり、横長・浅めの領域になるため、
+  // 縦積みのままだと窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
   return `<div class="character-region">
-<div class="character-layout">${portraitHtml}<div class="balloon">${escapeHtml(text)}</div></div>
+<div class="character-layout">${portraitHtml}<div class="balloon-list">${balloonsHtml}</div></div>
 </div>`
 }
 
@@ -1764,7 +1778,10 @@ const STYLE = `
     line-height: 1.7;
     overflow-wrap: anywhere;
   }
-  .character-region { display: flex; flex-direction: column; gap: 0.5rem; }
+  /* 領域の高さを .character-layout → .balloon-list まで継がせ、並びの max-height: 100% が
+     領域の中に収まるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きくなって
+     領域ごとスクロールし、最新の吹き出しが隠れる）。 */
+  .character-region { display: flex; flex-direction: column; gap: 0.5rem; height: 100%; }
   .permission-mode, .model-select-wrap {
     display: flex;
     align-items: center;
@@ -1788,6 +1805,7 @@ const STYLE = `
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
+    height: 100%;
   }
   .portrait {
     margin: 0;
@@ -1806,9 +1824,24 @@ const STYLE = `
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  .balloon {
+  /* セリフ1件につき1つの吹き出しを、そのターンの分だけ縦に積む。最新を下に見せ、innerHTML の
+     差し替え直後も最新が見えるようにするため、DOM は新しい順（buildCharacterBody）に並べた上で
+     column-reverse で視覚上の順序を戻す。こうすると scrollTop の既定値（0）がちょうど最新側を
+     指す（column-reverse は「開始」が視覚上の下端になるため）。overflow-y: auto で並び自身が
+     スクロールする（.layout-region 側の外枠スクロールとは別）。max-height の % は
+     .character-region → .character-layout と height: 100% で継いだ領域の高さが基準。
+     幅が足りず縦積みに戻ったとき（.character-layout の flex-wrap）は、立ち絵と本要素の
+     合計が入りきらなければ外枠の .layout-region の overflow-y: auto が受け止める。 */
+  .balloon-list {
+    display: flex;
     flex: 1 1 11rem;
+    flex-direction: column-reverse;
+    gap: 0.5rem;
     min-width: 0;
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  .balloon {
     padding: 0.75rem 1rem;
     border: 1px solid #3a4256;
     border-radius: 0.75rem;
