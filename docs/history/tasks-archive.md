@@ -2645,3 +2645,548 @@ T-030 で作った質問の表示（`src/view.ts` の `buildQuestionBody`、`src
 - キャラの吹き出しの文言を tsukumo 側で作らない（「これいい？」は出力スタイルの規約で `speak` に言わせる。T-041）
 - 見出し名で位置を探すと索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
 - サブエージェントに委譲してよい。`/loop` に載せてよい
+
+---
+
+## T-020 レポートの構造化の規約を決めて、出力スタイルに反映する。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: `T-041`
+- **evidence**:
+
+  承認を得て ~/.claude/output-styles/asuna.md「セリフと詳細の書き分け」に「レポートの組み立て方」を追記（`## ` の数 6→6、バックアップ asuna.md.bak-T-020）。docs/requirements.md 4.2「出力の分離」に決定を記録（節数 25→25）。bun run check 415 pass / 0 fail。
+  論点の決着: 図・フローは同梱済みの mermaid / Chart.js / SVG（2026-09-10 の決定どおり）、規約は「内容の種類→使う構造」の表で語彙と使いどころを両方書く、セリフ側は T-041 の「本文で語りかけない」条項で足りるため追加なし、1ターンのレポートは最後に1つ（途中は事実の記録だけ）。
+  レンダラ側の対応が要る記法: Markdown の引用 `> `（「本文の書き方」が許しているが renderMarkdownToHtml は描けない。規約側で `<blockquote>` に寄せた）。ネストしたリスト・画像・`---` は規約で使わないことにしたので対応不要。
+
+### 当時のタスク本文
+
+レポートの構造化の規約を決めて、出力スタイルに反映する。
+
+## 背景
+
+メインビューに出る「詳細（レポート）」は、`~/.claude/output-styles/asuna.md`
+「セリフと詳細の書き分け」の規約に従ってモデル側が書いたものを、`src/view.ts` の
+`renderMarkdownToHtml` が HTML に整形して出している。**規約は「何をセリフにし、何を詳細に
+するか」しか決めていない。** 詳細を**どういう構造で書くか**（表・箇条書き・見出し・図）は
+何も書かれていないため、レポートが地の文の塊になりやすい。
+
+ユーザーの言葉: 「単なる文章ではなく図、テーブル、フロー、箇条書きなど応答の構造を変える
+ことで見やすくすることが求められる」「そのうえで、レポートを指してキャラが色々と左下で
+セリフを話すイメージ。質問したり、報告したり、応答したり」。
+
+**前段タスクでレンダラーが描ける表現が増え（T-021）、レポートの文体がキャラクターの口調から変わる**
+（2026-09-10 の方針転換）。構造の規約はその文体の上に書くことになるうえ、書き換える先が
+`~/.claude/output-styles/asuna.md` の同じ節なので、**文体が決着してから着手する**。
+
+`renderMarkdownToHtml` が今すでに描けるのは、見出し・フェンス付きコードブロック・箇条書き
+（**ネストは1段に平らにする**）・番号付きリスト・GFM のテーブル・太字・インラインコード・
+リンクだけ。**引用・ネストしたリスト・画像・水平線は描けず、段落として素のまま出る**
+（同関数のドキュメンテーションコメントに明記）。「図」「フロー」を描く手段は無い。
+
+## 解くべき論点
+
+1. **「図」「フロー」をどう実現するか。** 選択肢は (a) 出さないと決めて表・箇条書きで代替する、
+   (b) 自前で SVG / CSS を組み立てる、(c) 外部のライブラリを読み込む。**(c) は会話内容が
+   載っているページに外部のスクリプトを持ち込むことになる**ので、`docs/coding-standards.md`
+   「会話内容の扱い」と正面から衝突する。採るなら理由が要る
+2. **規約に書くのは「構造の語彙」か「使いどころ」か。** 「表を使え」だけでは使われすぎるし
+   使われなさすぎる。どんな内容のときにどの構造を使うのかまで書くかを決める
+3. **セリフ側に足すことがあるか。** 現行の規約には既に「地の文の中でユーザーに語りかけて
+   いる部分は、見落とさずセリフにする」がある（2026-09-10 追記済み）。ユーザーが挙げた例
+   （「どこからいく？自分でペースを決める形で回すね。まず着手前のチェック。」）はこの条項で
+   拾えるはずなので、**足りないのは条項なのか、単に守られていないだけなのか**を先に切り分ける
+4. **1回の応答にレポートが複数あるときの扱い**（見出しで区切るか、1つに絞るか）
+
+## やること
+
+1. 論点1〜4をユーザーと決める
+2. 決まった内容を `~/.claude/output-styles/asuna.md` に節として足す。**既存の節を消さない・
+   書き換えない**（追記する）
+3. 決定の理由を `docs/requirements.md` 4.2「出力の分離（セリフと詳細）」に1〜3行で残す。
+   **節の索引の行に本文を流し込まないよう、行頭を含めて位置を特定する**
+   （`CLAUDE.md`「ドキュメントを編集するときの罠」）
+4. 論点1で「レンダラー側の対応が要る記法」が出たら、それを `evidence` に列挙する
+   （実装は後続タスクが引き取る）
+5. 論点3の切り分けの結果、規約に足すことが何も無ければ、**足さずに理由を `evidence` に
+   書いて閉じる**
+
+## 完了条件
+
+- `~/.claude/output-styles/asuna.md` の変更が**ユーザーの承認を得たうえで**行われている
+- 変更の前後で `grep -c '^## ' ~/.claude/output-styles/asuna.md` が減っていない
+  （前後の値を `evidence` に書く）
+- `docs/requirements.md` の節数（`grep -c '^#\{2,3\} ' docs/requirements.md`）が編集の前後で
+  変わっていない（前後の値を `evidence` に書く）
+- `bun run check` が通る（コードは変えない見込みだが、確認として通す）
+- レンダラー側の対応が要る記法の一覧が `evidence` にある（無ければ「無し」と明記する）
+
+## 注意
+
+- **`~/.claude/output-styles/asuna.md` はユーザーのグローバル設定。書き換えには必ず人間の
+  承認を得る**（`CLAUDE.md`「進捗管理とHandoff」）
+- `~/.claude/settings.json` は触らない。触る必要が出たときも hooks と statusLine は orca
+  （`~/.orca/agent-hooks/`）が専有しているので、既存エントリを壊さず追記する
+- **サブエージェントに委譲しない。** 論点の決着にユーザーへの確認が要る
+  （`docs/workflow.md`「委譲しないケース」）。`/loop` の自動進行にも載せない
+
+## 補記（2026-09-11）
+
+方針転換で出力スタイルの「セリフ」節は T-041（speak ツールの規約）で書き換わる。同じファイルを触るので依存を T-041 に付け替えた。レポートの口調は落とさない（`docs/requirements.md` 4.2 現行規約）。
+
+---
+
+## T-041 出力スタイル（`~/.claude/output-styles/asuna.md`）を「セリフは speak ツールで言う」規約に改訂する。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: `T-036`
+- **evidence**:
+
+  ユーザー承認のうえ ~/.claude/output-styles/asuna.md の「セリフと詳細の書き分け」を「セリフは speak で言い、本文にセリフを書かない」規約に差し替え（バックアップ asuna.md.bak.20260912-020250）。呼ぶタイミング・text の長さ・expression の選び方・本文の書き方を明記。掛け声の節にも1行追加。docs/requirements.md 4.2 を追随。保険として session-view.ts の行頭マーカーの補助を speak ありのターンにも効かせ、本文に紛れたセリフを吹き出しへ回す（テスト更新）。`bun run check` 通過: 415 pass / 0 fail。実機（TSUKUMO_VIEW_PORT=7399、新セッション）: 短いレポートの依頼で speak が着手と完了の2回、表情 proud、本文にマーカーの漏れ 0 件。
+
+### 当時のタスク本文
+
+出力スタイル（`~/.claude/output-styles/asuna.md`）を「セリフは speak ツールで言う」規約に改訂する。
+
+## 背景
+
+いまの出力スタイルの「セリフと詳細の書き分け」節は、行頭 `アスナ: ` のマーカーでセリフを書く規約（T-024）。**方針転換（Q3）で、セリフは tsukumo が提供する MCP ツール `speak(text, expression)` の呼び出しで受け取る。** 規約をそちらに書き換え、マーカーは「speak が使えない環境（ふつうの TUI）での補助」に格下げする。
+
+T-036 のスパイクで「出力スタイルが SDK で効くか」「どう指示すればモデルが speak を呼ぶか」が分かっている（`develop/progress.md` の記録を読む）。効かない場合は、出力スタイルの本文を tsukumo が `systemPrompt` の append として渡す形になるので、その旨を本文に書く。
+
+旧タスク T-026（セリフをステップごとに置く規約）はこのタスクに畳んだ。ユーザーの言葉: 「キャラ画面のセリフが少なすぎ。ステップごとにもっとたくさん話して」。
+
+## 解くべき論点
+
+- **呼ぶタイミング**（ユーザー決定 Q10）: 着手の一言、ステップごと、完了報告、質問や許可のとき。「ステップ」の単位をどう書けば守られるか（ツール実行の前後か、論点の切り替わりか）
+- **表情の選び方**: `expression` はキャラクター定義の表情名から選ぶ。名前の一覧は tsukumo がツールの説明（MCP の tool description）に入れるので、出力スタイル側には「ツールの説明にある名前から選ぶ」とだけ書く（原則4: キャラクターの中身をコードにも規約にも書かない）
+- **レポートの口調**: 落とさない（`docs/requirements.md` 4.2 の現行規約。2026-09-10 に一度落とす方針が出て同日に撤回済み）。この節は触らない
+- **速度とのバランス**: speak はツール呼び出し1回なので、1ターンに何十回も呼ぶと遅くなる。「ステップごとに1〜2回」の目安を書く
+- モデル別の掛け声の節は残す（speak で言う形に読み替え）
+
+## やること
+
+1. `~/.claude/output-styles/asuna.md` の「セリフと詳細の書き分け」節を書き換える。**書き換え前にバックアップを取る**（既存の `asuna.md.bak.<日時>` の慣例）
+2. `docs/requirements.md` 4.2「出力の分離」の規約の記述を同じ内容に合わせる（T-035 で骨組みは直っているので、規約の文言だけ）
+3. 実機で1ターン試し、speak の回数と表情の引数を `evidence` に書く（会話の中身は書かない）
+
+## 完了条件
+
+- `asuna.md` に `speak` の呼び方・タイミング・表情の選び方・マーカーが補助であることが書かれていること
+- 実機で1ターン送って、speak が「着手」「完了」の少なくとも2回呼ばれ、`expression` が定義済みの名前であること
+- `bun run check` が通ること（docs の整形）
+
+## 注意
+
+- **`~/.claude/output-styles/asuna.md` はユーザーのグローバル設定。書き換える前にユーザーの承認を得る。** サブエージェントに委譲せず、ユーザーがいるセッションで行う。`/loop` に載せない
+- **出力スタイルはセッション起動時にしか読まれない**（`/clear` では読み直されない。2026-09-10 実測）。試すときは新しいセッション
+- `~/.claude/settings.json` を触らない
+
+---
+
+## T-050 入力欄の `/` コマンド補完の候補一覧に見た目を付け、入力欄の上に重ねるポップアップにして、マウスでも確定できるようにする。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  src/view.ts: 候補一覧を textarea と同じ包み（.dispatch-text-wrap、position: relative）に入れ、textarea の下端に底を合わせて中に重ねる（サブエージェントの bottom: 100% は領域の overflow に切られるので差し替えた）。mousedown で確定、選択の scrollIntoView。test/view.test.ts「候補をクリック（mousedown）で確定し、フォーカスを奪わず送信もしない」を追加。bun run check: 416 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。
+
+### 当時のタスク本文
+
+入力欄の `/` コマンド補完の候補一覧に見た目を付け、入力欄の上に重ねるポップアップにして、マウスでも確定できるようにする。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」。現物を読んで分かったこと:
+
+- `src/view.ts` の `STYLE` に `.dispatch-suggestions` / `.dispatch-suggestion-item` / その `.is-selected` の CSS ルールが**1つも無い**（`is-selected` のルールは `.question-choice` 用の1件だけ）。候補は `<ul>` の素の箇条書き（黒丸・既定の余白）で出て、上下キーで動かしている選択中の項目が見た目に表れない
+- `dispatchRegionHtml` は `<ul>` を `<form>` の上に兄弟として置く。候補が出るたびに `<textarea>` が下に押され、閉じると戻る（打っている最中に入力欄が動く）。`.layout-region` は `overflow-y: auto` なので、候補が10件出て領域の高さを超えると領域ごとスクロールする
+- 候補の `<li>` にクリックの配線が無い（`commandSuggestionsScript` が持つのはキー操作の状態と、それを変える関数だけ）
+- 候補一覧は T-045 で入ったが、ブラウザでの目視は未実施のまま完了している（`docs/history/tasks-archive.md` の T-045 の evidence）
+
+## 解くべき論点
+
+- 重ね方: `.layout-dispatch` を `position: relative` にし、`<ul>` を `position: absolute` で `<textarea>` の上端に底を合わせて重ねる（`bottom` で指定。`<form>` の高さは送信の行を含む）。`.layout-region` の `overflow-y: auto` に切られないよう、`max-height` は領域の中に収まる値にする（領域の高さの半分程度）。答え待ちの箱がある間は候補を出さない今の仕様（`shouldShowSuggestions`）はそのまま
+- 色と形は同じ領域の他の要素の語彙に揃える（地 `#10131a`、枠 `#3a4256`、角丸 `0.4rem`。選択中は `.question-choice.is-selected` と同じ `#8ab4ff` / `#232a3c`）
+
+## やること
+
+1. `STYLE` に候補一覧と項目の CSS を足す（`list-style: none`、余白、選択中の色、はみ出しは `overflow-y: auto`）
+2. ポップアップとして重ねる（上の論点）。候補の表示・非表示で `<textarea>` の位置と高さが変わらないこと
+3. `<li>` の `mousedown` で確定する（`preventDefault` でフォーカスを `<textarea>` から奪わない。押した項目の index で `confirmSelectedSuggestion` を呼ぶ）
+4. 上下キーで選択が表示範囲の外に出たら `scrollIntoView({ block: "nearest" })` で追従する
+5. `test/view.test.ts` の補完の `describe` にクリック確定のテストを足す（偽の要素は同ファイルの `makeFakeSuggestionsBoxElement` を広げる）
+
+## 完了条件
+
+- Orca のタブで目視: `/` を打つと候補が入力欄の上に**重なって**出て、出る前後で入力欄の位置が動かない／上下キーで選択中の項目の背景色が変わる／候補をクリックすると `/名前 ` が入力欄に入って候補が閉じる／Esc で閉じる。何が見えたかを `evidence` に書く
+- テスト: クリックで確定し、`PROMPT_PATH` に送信されないこと
+- `bun run check` が通ること
+
+## 注意
+
+- 絞り方（部分一致）・並び順・Enter の役割は T-051。ここでは触らない
+- 起こし方は `docs/architecture.md`「手で確かめること」。`bun run start` は本物の claude を起こす。終わったら `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる
+- サブエージェントに委譲してよい。`/loop` に載せてよい。目視はユーザーが後で行い、結果を `evidence` に追記する（T-043〜T-045 と同じ扱い）
+
+---
+
+## T-051 入力欄の `/` コマンド補完の絞り方・並び順・確定キーを、Claude Code の TUI の手触りに寄せる。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: `T-050`
+- **evidence**:
+
+  src/view.ts: matchingCommands を前方一致→部分一致（各アルファベット順、合計10件）に、keydown の Enter を確定＋requestSubmit（inProgress は確定だけ）に分けた。送信は既存の submit の trim で末尾の空白が落ちる。test/view.test.ts に部分一致・並び順・/ だけ・Enter で送信・進行中の Enter のテストを追加。docs/requirements.md 4.2 に決定を追記（節数 25→25）。bun run check: 420 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。
+
+### 当時のタスク本文
+
+入力欄の `/` コマンド補完の絞り方・並び順・確定キーを、Claude Code の TUI の手触りに寄せる。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」の、見た目（T-050）以外の部分。
+
+- `src/view.ts` `commandSuggestionsScript` の `matchingCommands` は**前方一致だけ**。`/task` で `next-task` `plan-tasks` は出ない
+- 並び順は `GET /api/commands` が返す順＝SDK の `init` の `slash_commands` の順のまま（`src/session-view.ts` `commandCandidates` は端末専用を除くだけで並べ替えない）。57件に対して上限10件（`MAX_COMMAND_SUGGESTIONS`）なので、`/` だけ打ったときに出る10件は SDK の並び次第
+- 確定キー: `dispatchScript` の `keydown` リスナーで Tab と Enter が同じ「確定だけ」（`confirmSelectedSuggestion` で `/名前 ` を入れて閉じる）。コマンドを1つ送るのに Enter を2回押す。Claude Code の TUI は、候補が選ばれている状態の Enter でそのコマンドを実行し、Tab は補完だけ（引数を続けて打てる）
+- 要件は `docs/requirements.md` 4.2「入力欄」(3) に1行あるだけで、絞り方・確定キーは書かれていない
+
+## 解くべき論点
+
+- 絞り方: **前方一致を先に、続けて部分一致**を出す（各グループの中はアルファベット順）。入力が `/` だけのときはアルファベット順の先頭10件
+- Enter の役割: 候補が開いているときの Enter は**「確定して送信」**に変える（TUI と同じ）。Tab は**「確定だけ」**（末尾に空白を付けて引数を続けられる。今と同じ）。Enter で送るのは選択中の1件で、候補が複数残っていても送る（TUI と同じ。誤送信を避けたければ Tab で確定してから読み直せる）。送信中（`inProgress`）の Enter は今までどおり送らない（確定だけ）。この決定は `docs/requirements.md` 4.2 に書く
+- 送るテキストは `/名前`（末尾の空白無し）でよいか実機で確かめる。SDK は `/<name>` を入力文字列に書けば送れる（`docs/history/direction.md` 2026-09-11）
+
+## やること
+
+1. `matchingCommands` を「前方一致 → 部分一致、それぞれアルファベット順、合計10件」に変える。並び替えはブラウザ側で行う（サーバは SDK の並びをそのまま返す）
+2. `keydown` の分岐で Tab と Enter を分ける。Enter は `confirmSelectedSuggestion()` のあと `form.requestSubmit()`（`inProgress` のときは送らない）
+3. `test/view.test.ts` の「候補が開いている間の Enter は確定だけで、送信しない」を新しい仕様に書き換え、部分一致・並び順・Tab では送らないことのテストを足す
+4. `docs/requirements.md` 4.2「入力欄」(3) に絞り方と確定キー（Tab＝補完、Enter＝実行）を追記する。編集後に `grep -c '^#\{2,3\} ' docs/requirements.md` の数が変わっていないことを確かめる（CLAUDE.md「ドキュメントを編集するときの罠」）
+
+## 完了条件
+
+- テスト: `/task` で `next-task` と `plan-tasks` が出る／前方一致が部分一致より先に並ぶ／Enter で `PROMPT_PATH` に `/名前` が送られる／Tab では送られない
+- Orca のタブで目視: 副作用の無いコマンド（例: `/cost`）を `/co` + Enter で送るとターンが始まる（送信ボタンが「中断」になる）。`/co` + Tab では入力欄に `/cost ` が入るだけ。何が見えたかを `evidence` に書く（動かなかったコマンドがあればそれも書く）
+- `bun run check` が通ること
+
+## 注意
+
+- 説明文の表示は T-052。ここでは触らない
+- サブエージェントに委譲してよい。`/loop` に載せてよい（目視の扱いは T-050 と同じ）
+
+---
+
+## T-052 入力欄の `/` コマンド補完の候補に、コマンドの説明を添える。説明の出どころが足りなければ、名前だけのままにして閉じる。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: `T-050`
+- **evidence**:
+
+  実測: frontmatter から説明が引けるのは 11/57（.claude/skills 11、.claude/commands 0、~/.claude/skills 0、~/.claude/commands 0。~/.claude/plugins のキャッシュ 31+30 は enabledPlugins が無いので対象外）で基準では閉じる。ただし SDK 0.3.268 の Query.supportedCommands() と system/commands_changed が { name, description } を組み込み分も返す（sdk.d.ts 2757・3448・8453 行）ので、そちらを出どころにして実装した（frontmatter は読まない）。src/session-driver.ts で起動時に1回 supportedCommands() を取り command-descriptions イベントに、src/session-event.ts で検証（toCommandDescriptions）、src/session-view.ts の commandSuggestions が名前一覧に説明を引き当て、/api/commands は { commands: [{ name, description }] }、候補は名前＋薄い説明（省略記号）。テスト11件追加、bun run check: 431 pass / 0 fail、docs/requirements.md 節数 25→25（2026-09-12）。目視は未実施（組み込みコマンド /clear などにも説明が出るかは型定義からの推定。ユーザーが後で確かめてここに追記する）。
+
+### 当時のタスク本文
+
+入力欄の `/` コマンド補完の候補に、コマンドの説明を添える。説明の出どころが足りなければ、名前だけのままにして閉じる。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」を受けて、Claude Code の TUI が候補に説明を並べているのに合わせる案。
+
+- 候補は名前だけ（`/next-task` のように）。SDK の `system/init` は `slash_commands: string[]` で**名前しか返さない**（`@anthropic-ai/claude-agent-sdk` 0.3.268 の `sdk.d.ts` `SDKSystemMessage` を確認。`skills` の配列は無い。T-045 の本文にあった「`init` の `skills` 配列と突き合わせる」は成り立たない）
+- 説明の出どころとして手元にあるのは、スキルの `SKILL.md` の frontmatter `description`（このリポジトリの `.claude/skills/` に11件。`~/.claude/skills/` にもあれば同様）と `.claude/commands/*.md` の frontmatter（このリポジトリには無い）。組み込みコマンド（`clear` `model` `compact` など）には出どころが無い
+- 候補の HTML は `src/view.ts` `renderSuggestions` が組み立て、`GET /api/commands` の形は `{ commands: string[] }`（`src/view-server.ts` `GetCommands`、`src/index.ts` で `view.slashCommands` から更新）
+
+## 解くべき論点
+
+- 出どころ: (a) `SKILL.md` / `.claude/commands/*.md` の frontmatter を読む（cwd と `~/.claude` の両方。ファイルの読み取りは外の世界への依存なので1モジュールに閉じる。原則3）。(b) 組み込みコマンドの説明をコードに表として持つ（Claude Code の版で変わるので保守負担になる）。**推奨は (a) だけ**で、説明が無いものは名前だけ出す
+- `GET /api/commands` の形を `{ commands: [{ name, description }] }` に変えるか、別の経路にするか。変えるなら `test/view-server.test.ts` と `test/view.test.ts` の偽の fetch も直す
+- 説明が出せる件数が候補全体の半分に満たないなら（例: 57件中スキル11件）、見た目がまだらになる。**その場合はやらずに閉じる**（`evidence` に件数を書く）
+
+## やること
+
+1. 出どころを実測する（`slash_commands` の件数に対して、frontmatter から説明が引けるコマンドの件数）
+2. 成り立つなら、frontmatter の読み取りモジュールを1つ作り（`name` と `description` だけ）、`/api/commands` に載せ、候補の各行に名前＋薄い色の説明を出す（幅が足りなければ1行で省略する）
+3. 成り立たなければ、理由と件数を `evidence` に書いて閉じる
+
+## 完了条件
+
+- やる場合: テスト（frontmatter の読み取り、`/api/commands` の形）、Orca のタブで目視（`/ne` の候補に `next-task` の説明が出る。何が見えたかを `evidence` に書く）、`bun run check` が通ること
+- 閉じる場合: `evidence` に実測した件数と判断が書いてあること
+
+## 注意
+
+- frontmatter はローカルのファイルで会話内容ではないが、説明の全文をログに出さない
+- 方針の判断を含むので、委譲するなら opus。`/loop` に載せてよい（閉じる判断まで含めて任せる）
+
+---
+
+## T-053 キャラビューの吹き出しを、セリフ1件につき1つに分け、そのターンの分を縦に積んで最新を一番下に見せる。並びは自前でスクロールでき、前のターンの分は次の依頼で最後の1件だけ残す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  src/session-view.ts: MAX_RECENT_SPEECHES を撤去し、request で speeches を最後の1件に絞る。src/view.ts: CharacterViewData.speeches（配列）、セリフごとに <div class="balloon">、DOM は新しい順で .balloon-list の column-reverse で最新を下に（scrollTop 0 が最新）。高さは .character-region → .character-layout の height: 100% を継いで max-height: 100%（サブエージェントの 50vh は下段の既定 40% を超えて領域ごとスクロールするので差し替えた）。test/session-view.test.ts（4件残る／request 直後は前のターンの最後の1件）と test/view.test.ts（件数と同じ数の吹き出し／DOM は新しい順／0件はプレースホルダ）を更新。docs/requirements.md 4.2 と docs/glossary.md「吹き出し」に決定を記録（節数 25→25、36→36）。bun run check: 433 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。
+
+### 当時のタスク本文
+
+キャラビューの吹き出しを、セリフ1件につき1つに分け、そのターンの分を縦に積んで最新を一番下に見せる。並びは自前でスクロールでき、前のターンの分は次の依頼で最後の1件だけ残す。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「キャラ画面のセリフは1つの出力を1つの吹き出しにして区切りにすることで見やすくしたい。複数の台詞があれば過去の台詞は上に押し上げられていって最新の台詞がよく見えるようにして、スクロールで過去の台詞が見れるように。過去はユーザーが入力してからのものに限定」。現物を読んで分かったこと:
+
+- `src/session-view.ts` の `MAX_RECENT_SPEECHES = 3` が、同じターンのセリフを直近3件に絞っている（`applySessionEvent` の `speech` と `withMarkerFallback` の両方で `slice(-MAX_RECENT_SPEECHES)`）
+- `src/index.ts` の `createViewPublisher` が `view.speeches.join("\n")` で**1つの文字列**にして `CharacterViewData.speech`（`string | undefined`）に渡す。`src/view.ts` の `buildCharacterBody` は `<div class="balloon">` を**1つだけ**出し、CSS の `white-space: pre-wrap` で改行を保つ。つまり複数のセリフは1つの吹き出しの中に改行区切りで並び、区切りが見えない
+- 「ユーザーが入力してからのものに限定」は、`applySessionEvent` が `speechCalledInTurn` を見て、そのターン最初の `speech` で前のターンの並びを捨てる形で**既に入っている**。ただし `request` の時点では前のターンの並びを**丸ごと**保つ（次の `speak` が来るまで空にしない。`docs/requirements.md` 4.2「セリフが1つも来なかったターンの扱い」）。3件の上限を外すと、前のターンの並びが丸ごと次のターンの冒頭に残る
+- 描画側: キャラビューは `.layout-region`（`overflow-y: auto`。高さは `.layout-grid` の行で決まる）の中で、`.character-region`（縦 flex）→ `.character-layout`（`flex-wrap: wrap; align-items: center` で立ち絵と吹き出しを横並び）→ `.balloon`。SSE の購読スクリプト（`src/view.ts` の `subscriptionScript`）は領域の `innerHTML` をまるごと差し替え、スクロール位置は**領域（または文書）に対してだけ**保つ。吹き出しの並びを自前の要素でスクロールさせる場合、その要素のスクロール位置は購読スクリプトが面倒を見ていない
+- テスト: `test/session-view.test.ts` の「同じターン内のセリフは直近3件まで」「新しいターンで最初の speech が来た時点で…置き換わる」（`request` 直後に前のターンの2件が残る期待値）、`test/view.test.ts`「キャラビューの本文」（`speech` が1つの文字列の前提）
+
+## 解くべき論点
+
+- **上限**: 3件の上限を外し、ターンの境目を上限にする。**前のターンの分は `request` で最後の1件だけ残す**（4.2 の「空にしない」は守りつつ、並びは今のターンの分に限定する）。これで `test/session-view.test.ts` の `request` 直後の期待値が2件→1件に変わる。上限を残したいなら大きめ（例 50）にし、なぜその値かをコードのコメントに書く
+- **最新を下に見せ、差し替え後も末尾を見せる方法**: 推奨は CSS だけで済ませる `flex-direction: column-reverse`（DOM には新しい順に並べる。`scrollTop = 0` が末尾になるので、`innerHTML` の差し替え直後も最新が見える。ユーザーが上へスクロールして過去を見ている最中に差し替えが起きると末尾へ戻るが、これは許容する）。代案は `subscriptionScript` に「差し替え後に印を持つ要素を末尾までスクロールする」処理を足す（JS が増え、他の領域にも効く汎用の仕組みになる）。どちらでもよいが、選んだ理由を `evidence` に書く
+- **並びの高さ**: 並びの要素に `overflow-y: auto` と、`.layout-region` の高さに収まる `max-height` が要る。`.character-layout` が幅不足で縦積みに戻ったときも、立ち絵と並びの合計が領域からはみ出さないこと（`.character-region` / `.character-layout` を高さ 100% の flex の連鎖にするか、`max-height` を `vh` 基準で置くか）
+- 表情は最新のセリフの分だけ（今と同じ。変えない）
+
+## やること
+
+1. `src/session-view.ts`: `MAX_RECENT_SPEECHES` を外す（または上の論点どおり大きくする）。`request` で `speeches` を最後の1件に絞る。`SessionView.speeches` の doc コメントを新しい規約に直す
+2. `src/view.ts`: `CharacterViewData.speech: string | undefined` を `speeches: readonly string[]` に変える（空配列＝まだ一度もセリフが無い＝プレースホルダ）。`buildCharacterBody` はセリフごとに `<div class="balloon">` を出し、並び全体を1つの要素で包む（要素名は `docs/glossary.md`「吹き出し」の識別子 `balloon` に合わせる）。`STYLE` に並びの CSS（縦積み・間隔・`overflow-y: auto`・`max-height`・最新が下）を足す
+3. `src/index.ts` の `createViewPublisher`: `join("\n")` をやめて配列をそのまま渡す
+4. テスト: `test/view.test.ts`「キャラビューの本文」に「セリフの件数と同じ数の `<div class="balloon">` が出る」「並びの順序」「0件ならプレースホルダ」を足す。`test/session-view.test.ts` の期待値を新しい規約に直す（同じターンで4件来たら4件残る／`request` 直後は前のターンの最後の1件／次の `speech` でそのターンの1件だけ）
+5. ドキュメント: `docs/requirements.md` 4.2「各表示物」の吹き出しの項と「セリフが1つも来なかったターンの扱い」に決定を書く（**索引の表に同じ見出しがあるので行頭を含めて位置を特定する**。編集の前後で `grep -c '^#\{2,3\} ' docs/requirements.md` が一致すること）。`docs/glossary.md`「吹き出し」の定義（「最新のセリフを囲って見せる」→ セリフ1件につき1つ、そのターンの分を積む）を直す
+6. `bun run check` を通す
+
+## 完了条件
+
+- テストで守るもの: 同じターンで `speech` が4回来たら `speeches` が4件（3件に絞られない）／`request` の直後は前のターンの最後の1件だけ／その後の最初の `speech` でそのターンの1件だけになる／`buildCharacterBody` はセリフの件数と同じ数の `<div class="balloon">` を出し、0件ならプレースホルダを出す
+- Orca のタブで目視（起こし方は `docs/architecture.md`「手で確かめること」）: `speak` が3回以上呼ばれる依頼を打って、(a) 吹き出しがセリフ1件ごとに分かれて縦に並ぶ、(b) 最新が一番下で見えている（並びが領域の高さを超えても最新が隠れない）、(c) 並びの中をスクロールして最初のセリフまで戻れる、(d) 次の依頼を打つと前の並びは最後の1件だけになり、最初の `speak` で今の依頼の分に置き換わる、(e) 立ち絵と並びが領域から縦にも横にもはみ出さない。何が見えたかを `evidence` に1行で書く
+- `bun run check` が通ること
+
+## 注意
+
+- 吹き出しにターンの本文を出さない。許可と質問のボタンは入力欄の上のまま（変えない）。`speak` の受け口（`src/session-event.ts`）と戻り値も触らない
+- 立ち絵と吹き出しの位置関係の見直し（`develop/progress.md`「未解決」）は別。ここでは横並びの形を保つ
+- テストのフィクスチャに実物のセリフを使わない（`docs/coding-standards.md`「会話内容の扱い」）
+- `bun run start` は本物の claude を起こす。`TSUKUMO_VIEW_PORT` を変えて起こし、終わったら `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる。旧方針の常駐（7327番）が動いていたら先に止める
+- サブエージェントに委譲してよい。`/loop` に載せてよい。目視はユーザーが後で行い、結果を `evidence` に追記する（T-043〜T-045 と同じ扱い）
+
+---
+
+## T-054 サイドバーの「いま何をしているか」を固定の高さにし、並びの中でスクロールして過去のツールを見られるようにする。区画の高さがツールの数で変わらず、下のタスク一覧が押し下げられないようにする。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  src/view.ts: activityBody の並び（空のときも）を <div class="activity-scroll">（height: 10rem、overflow-y: auto）で包んだ。src/session-view.ts: MAX_RECENT_FINISHED_TOOLS 5→50、理由のコメントを差し替え。docs/requirements.md 4.2 サイドバーの項を更新（節数 25→25）。test/view.test.ts「空のときも並びを包む要素（.activity-scroll）が出る」、test/session-view.test.ts「finishedTools は6件来たら6件とも残す」を追加。bun run check: 435 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。
+
+### 当時のタスク本文
+
+サイドバーの「いま何をしているか」を固定の高さにし、並びの中でスクロールして過去のツールを見られるようにする。区画の高さがツールの数で変わらず、下のタスク一覧が押し下げられないようにする。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「なにをしているかがタスク一覧を押し下げてしまって微妙な印象。高さは固定で、スクロールして過去のものを見れるイメージがいいかな」。現物を読んで分かったこと:
+
+- `src/view.ts` の `buildSidebarBody` は3区画（いま何をしているか・タスク一覧・セッション情報）を `<section class="sidebar-block">` で縦に積む。区画1の本文 `activityBody` は実行中＋直近の完了を `<ul class="sidebar-list activity-list">` に並べ、**件数に応じて高さが変わる**。高さの指定は `.sidebar-block` にも並びにも無いので、ツールが増えるとタスク一覧とセッション情報が下に押される
+- 空のときは `<p class="sidebar-empty">いま動いているツールは無い</p>` の1行になり、区画の高さがさらに変わる
+- `src/session-view.ts` の `MAX_RECENT_FINISHED_TOOLS = 5`（`finishTool` の `slice(0, 5)`）が完了分を絞っている。コメントの理由は「縦に狭い領域なので絞る」。並びが自前でスクロールするなら、この理由は消える
+- 並びの順序は `activityBody` で「実行中が先（普通の色）、完了は新しい順（薄い色）」（`docs/requirements.md` 4.2 の決定）。**先頭が最新**
+- 描画側: サイドバーは `.layout-region`（`overflow-y: auto`）に入る。SSE の購読スクリプト（`src/view.ts` の `subscriptionScript`）は領域の `innerHTML` をまるごと差し替え、スクロール位置は領域（または文書）に対してだけ保つ。並びを自前の要素でスクロールさせる場合、差し替えのたびにその要素の `scrollTop` は 0 に戻る。**先頭が最新なので、これは「差し替え後は最新が見える」と同じ意味になり、都合がよい**（T-053 の吹き出しは最新が末尾なので事情が違う）
+- テスト: `test/view.test.ts`「サイドバーの本文」（`activity-running` / `activity-finished` / 「いま動いているツールは無い」）、`test/session-view.test.ts`（`finishedTools` の中身。5件の上限を確かめるテストは無い）
+
+## 解くべき論点
+
+- **高さ**: 並びを包む要素に固定の `height`（目安は8行ぶん。`.sidebar-block` の `font-size: 0.85rem` 基準で 10rem 前後）と `overflow-y: auto` を付ける。**空のときも同じ要素で包んで同じ高さにする**（タスク一覧の見出しの位置が状態で動かないようにするのが目的）。`max-height` ではなく `height`（指示は「高さは固定」）
+- **上限**: `MAX_RECENT_FINISHED_TOOLS` を 50 に上げ、理由のコメントを「並びは自前でスクロールするが、常駐プロセスがセッションを通して持ち続けるので無限には増やさない」に書き換える。ターンをまたいで残す（今と同じ。変えない）
+- **スクロール位置**: 差し替えで先頭に戻る挙動をそのまま使う（上の背景のとおり）。ユーザーが過去を見るためにスクロールしている最中に差し替えが起きると先頭に戻るが、これは許容する。`subscriptionScript` に並びのスクロール位置を保つ処理は**足さない**
+
+## やること
+
+1. `src/session-view.ts`: `MAX_RECENT_FINISHED_TOOLS` を 50 にし、コメントの理由を直す
+2. `src/view.ts`: `activityBody` の並び（空のときの `<p>` も）を1つの要素（例 `<div class="activity-scroll">`）で包む。`STYLE` にその要素の固定の `height` と `overflow-y: auto` を足す
+3. テスト: `test/view.test.ts`「サイドバーの本文」に「空のときも並びを包む要素が出る」を足す。`test/session-view.test.ts` に「`tool-finished` が6回来たら `finishedTools` が6件残る（5件に絞られない）」を足す
+4. ドキュメント: `docs/requirements.md` 4.2「各表示物」のサイドバーの項「終わったものは薄く数行」を「固定の高さの並びに新しい順で積み、並びの中でスクロールする」に直す。**索引の表に同じ見出しがあるので、行頭を含めて位置を特定する。** 編集の前後で `grep -c '^#\{2,3\} ' docs/requirements.md` が一致すること
+5. `bun run check` を通す
+
+## 完了条件
+
+- テストで守るもの: `tool-finished` が6回来たら `finishedTools` が6件／`activityBody` が空のときも並びを包む要素が出る／実行中と完了の出し方（クラス名・順序）は今のテストのまま通る
+- Orca のタブで目視（起こし方は `docs/architecture.md`「手で確かめること」）: ツールを10回以上使う依頼を打って、(a) 区画1の高さがツールの数で変わらず、「タスク一覧」の見出しの位置が依頼の前後で動かない、(b) 並びの中をスクロールして最初のツールまで戻れる、(c) 実行中のツールが並びの先頭に見えている、(d) 依頼を打つ前（ツールが無い状態）でも区画1の高さが同じ。何が見えたかを `evidence` に1行で書く
+- `bun run check` が通ること
+
+## 注意
+
+- 並びの順序（実行中が先、完了は新しい順）と、サブエージェントの中を1段下げる出し方は変えない
+- 会話の内容（ツールの入力の要約）の扱いは今のまま（`docs/coding-standards.md`「会話内容の扱い」）。テストのフィクスチャに実物を使わない
+- `bun run start` は本物の claude を起こす。`TSUKUMO_VIEW_PORT` を変えて起こし、終わったら `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる。旧方針の常駐（7327番）が動いていたら先に止める
+- サブエージェントに委譲してよい。`/loop` に載せてよい。目視はユーザーが後で行い、結果を `evidence` に追記する（T-043〜T-045 と同じ扱い）
+- T-055 / T-056 も `src/view.ts` の `STYLE` と `test/view.test.ts`「サイドバーの本文」を触る。同時に進めず、順に1件ずつコミットする
+
+---
+
+## T-055 サイドバーの経過時間を「依頼を送ってから、そのターンが終わるまで」の時間にする。ターンの途中は1秒ごとに増え、終わったらその値で止まる。次の依頼で0から始まる。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  src/index.ts: createEventSink が turnFinishedAt を持ち（turn-finished / session-ended で now、request で undefined）、PublishState → sidebarData → SidebarData.session に渡す。src/view.ts: sessionInfoBody が data-finished-at とラベルの span を出し、sessionInfoScript の tickElapsed が終了時刻を終点に固定してラベルを「経過」→「所要」に、書式は N秒 / M分SS秒。test/view.test.ts に「turnFinishedAt があれば data-finished-at にその値が出る」「未定なら空」を追加。docs/requirements.md 4.2 サイドバーの項に決定を追記（節数 25→25）。bun run check: 437 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。
+
+### 当時のタスク本文
+
+サイドバーの経過時間を「依頼を送ってから、そのターンが終わるまで」の時間にする。ターンの途中は1秒ごとに増え、終わったらその値で止まる。次の依頼で0から始まる。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「経過時間が思ったより微妙...どちらかというとユーザーが送信してから完了までの経過時間のほうが嬉しいな」。現物を読んで分かったこと:
+
+- `src/index.ts` の `createEventSink` が `request` のたびに `turnStartedAt = now` を持ち、`PublishState` → `createViewPublisher` → `sidebarData` → `SidebarData.session.turnStartedAt` の経路で `src/view.ts` に渡す。**`turn-finished` / `session-ended` では何もしない**ので、ターンが終わっても次の `request` まで増え続ける（「直近の依頼から何秒」の意味。`createEventSink` のドキュメンテーションコメントにそう書いてある）
+- `src/view.ts` の `sessionInfoBody` が開始時刻を `<span class="session-elapsed" data-started-at="…">` に載せ、`sessionInfoScript` の `tickElapsed` がブラウザ側で1秒ごとに `Date.now() - startedAt` を「N秒」で出す。`view.ts` は時刻を取らない（純粋関数だけ）という分担
+- `SessionView.turnInProgress`（`src/session-view.ts`）は `request` で true、`turn-finished` / `session-ended` で false になる
+- 表示は秒だけ（例 `125秒`）で、分が無い
+- テスト: `test/view.test.ts`「セッション情報にモデル・許可モードの select と経過時間の枠を出す」（`data-started-at="1700000000000"`）と「turnStartedAt が未定のときは data-started-at が空」。`createEventSink` は `src/index.ts` の中で、テストは無い（`index.ts` は export を持たない配線の層）
+
+## 解くべき論点
+
+- **終了時刻を誰が持つか**: `turnStartedAt` と同じ場所（`createEventSink`）に `turnFinishedAt: number | undefined` を足す。`turn-finished` / `session-ended` で `now`、`request` で `undefined` に戻す。`PublishState` と `SidebarData.session` にも同じ名前で足す。代案は `view.turnInProgress` を渡してブラウザ側の tick を止める方法だが、止めた瞬間の値がブラウザの tick のタイミングに依存し、ページを開き直したときに再計算できないので採らない
+- **表示**: `sessionInfoBody` は `data-started-at` に加えて `data-finished-at`（未定なら空文字）を載せる。`tickElapsed` は終了時刻があればそれを終点にする（tick 自体は続けてよい。値が変わらないだけ）。ラベルは進行中「経過」、終わったら「所要」にして、止まっていることが文字でも分かるようにする
+- **書式**: 60秒未満は `N秒`、60秒以上は `M分S秒`（例 `2分05秒`）。書式を決める小さな関数を `sessionInfoScript` の中に置く（ブラウザで動く文字列なので `src/view.ts` の TS 側には置けない）
+- 依頼がまだ無い（開始時刻が未定）ときは `-` のまま
+
+## やること
+
+1. `src/index.ts`: `PublishState` に `turnFinishedAt` を足し、`createEventSink` で `turn-finished` / `session-ended` に `now` を入れ、`request` で `undefined` に戻す。`sidebarData` で `SidebarData.session` に渡す。`createEventSink` のドキュメンテーションコメント（「セッション全体の『直近の依頼から何秒』を表す」）を新しい意味に直す
+2. `src/view.ts`: `SidebarData.session.turnFinishedAt` を足す。`sessionInfoBody` で `data-finished-at` を出す。`sessionInfoScript` の `tickElapsed` で終点とラベル（経過／所要）と書式を扱う
+3. テスト: `test/view.test.ts` に「`turnFinishedAt` があれば `data-finished-at` にその値が出る」「未定なら空」を足す。`FULL_SIDEBAR_DATA` の `session` に `turnFinishedAt: undefined` を足す
+4. ドキュメント: `docs/requirements.md` 4.2 サイドバーの項の「経過時間」に「依頼を送ってからそのターンが終わるまで。終わったら止まる」を1行で書く。**索引の表に同じ見出しがあるので、行頭を含めて位置を特定する。** 編集の前後で `grep -c '^#\{2,3\} ' docs/requirements.md` が一致すること
+5. `bun run check` を通す
+
+## 完了条件
+
+- テストで守るもの: `turnFinishedAt` の有無で `data-finished-at` の値が変わる／`turnStartedAt` が未定なら `data-started-at` が空（今のテストのまま）
+- Orca のタブで目視（起こし方は `docs/architecture.md`「手で確かめること」）: 依頼を打って、(a) ターンの途中は1秒ごとに増える、(b) ターンが終わったらその値で止まり、ラベルが「所要」に変わる、(c) 次の依頼を打つと0秒から始まりラベルが「経過」に戻る、(d) 60秒を超える依頼で `M分S秒` の書式になる。何が見えたかを `evidence` に1行で書く
+- `bun run check` が通ること
+
+## 注意
+
+- `Date.now()` を `src/session-view.ts` / `src/view.ts` で呼ばない（純粋関数のまま保つ。時刻は `src/index.ts` の配線の層か、ブラウザ側のスクリプトで取る）
+- モデル・許可モードの `<select>` の配線（`wireSelect`）は触らない
+- `bun run start` は本物の claude を起こす。`TSUKUMO_VIEW_PORT` を変えて起こし、終わったら `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる。旧方針の常駐（7327番）が動いていたら先に止める
+- サブエージェントに委譲してよい。`/loop` に載せてよい。目視はユーザーが後で行い、結果を `evidence` に追記する（T-043〜T-045 と同じ扱い）
+- T-054 / T-056 も `src/view.ts` と `test/view.test.ts`「サイドバーの本文」を触る。同時に進めず、順に1件ずつコミットする
+
+---
+
+## T-056 サイドバーの「タスク一覧」の1件を、ステータスのバッジを先頭に置いた2列の行にして見やすくする。見出しに件数（todo / done）を添える。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  src/view.ts: taskItemHtml をバッジ列＋（ID＋summary）列の grid 行（auto 1fr、list-style: none）にし、status ごとに task-status-todo / -done / -other（注意色 #e3c766）を付与。status が無ければバッジ無しで列だけ空ける。taskListTitle で見出しに「todo N / done M」（tasks が undefined なら件数なし）。src/tasks.ts: 未使用の countTaskStatuses / TaskStatusCounts を削除（src からの参照なしを grep で確認。残る言及は docs/history のアーカイブのみ）。test/view.test.ts に2列・注意色・バッジ無し・見出しの件数・undefined 時のテストを追加、test/tasks.test.ts の countTaskStatuses のテストを削除。docs/requirements.md 4.2 に決定を追記（節数 25→25）。bun run check: 436 pass / 0 fail（2026-09-12）。目視は未実施（ユーザーが後で行い、ここに追記する）。
+
+### 当時のタスク本文
+
+サイドバーの「タスク一覧」の1件を、ステータスのバッジを先頭に置いた2列の行にして見やすくする。見出しに件数（todo / done）を添える。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「タスク一覧が少し見づらい? サマリとステータスだよね。もう少し見やすくならないかな」。現物を読んで分かったこと:
+
+- `src/view.ts` の `taskListBody` / `taskItemHtml` が `<ul class="sidebar-list task-list">` に `<li class="task-item[ task-done]"><span class="task-id">T-050</span> summary <span class="task-status">todo</span></li>` を出す。**1行に ID・summary・status を詰めていて、summary が折り返すと status のバッジが行末の続きに紛れる**。`.sidebar-list` は既定の丸印の箇条書き（`padding-left: 1.2rem`）
+- `done` は `.task-done` で文字色を薄くするだけ。`todo` と `done` の違いは文字色と末尾のバッジの文字で、バッジの色は status によらず同じ（`.task-status` の `background: #1c202a`）
+- 並びは「status ごとにまとめず、ファイルの順で出す」（`docs/requirements.md` 4.2 と `taskListBody` のコメント。**この決定は変えない**）
+- `TaskSummaryItem`（`src/tasks.ts`）は `id` / `summary` / `status`（`status` は文字列なら何でも通る。`done` / `todo` 以外も来うる）。同じファイルの `countTaskStatuses` は旧方針のサイドバーで使っていたもので、いまは `src/` のどこからも呼ばれていない（`test/tasks.test.ts` だけが使う）
+- テスト: `test/view.test.ts`「タスク一覧は id・summary・status をファイルの順で出し、done は薄く出す」（`<li class="task-item task-done">` と `<span class="task-status">todo</span>` の文字列一致）、「タスクの summary を、HTML として無害な形にして埋め込む」
+
+## 解くべき論点
+
+- **1件の形**: 「ステータスのバッジ（先頭・固定幅）」「ID（等幅・薄く）＋summary」の2列の grid 行にする（`grid-template-columns: auto 1fr`）。summary が折り返してもバッジの列の下に入り込まない。丸印は消す（`list-style: none`）。要素は `<ul>` / `<li>` のままでよい（並びであることは変わらない）
+- **バッジの色**: `todo` は今の色、`done` は薄く、それ以外（`in-progress` など）は注意色（`#e3c766`。入力欄の答え待ちの枠と同じ色）。**文字は status をそのまま出す**（色だけで意味を伝えない。`docs/requirements.md` 4.2「レポートの見せ方」と同じ原則）。`status` が無い（`undefined`）ときはバッジを出さず、列を空けておく
+- **件数**: 見出しを「タスク一覧」から「タスク一覧 todo 7 / done 2」のように件数付きにする。件数は `taskListBody` が `TaskSummaryItem[]` から数える。`countTaskStatuses`（`src/tasks.ts`）は入力が JSON 文字列で形が合わないので使わず、呼ばれていないままなら**この機会に消す**（`test/tasks.test.ts` の該当テストも）。残す理由があれば `evidence` に書いて残す
+- 出す情報は今と同じ ID・summary・status の3つ。他の列（difficulty など）は足さない
+
+## やること
+
+1. `src/view.ts`: `taskItemHtml` を2列の形に直し、バッジに status ごとのクラス（例 `task-status-todo` / `task-status-done` / `task-status-other`）を付ける。`taskListBody` で件数を数え、`buildSidebarBody` の見出しに添える。`STYLE` に grid 行・バッジの色・`list-style: none` を足す
+2. `src/tasks.ts`: `countTaskStatuses` が `src/` から呼ばれていないことを `grep` で確かめてから消す（`TaskStatusCounts` 型も）。`test/tasks.test.ts` の該当テストを消す
+3. テスト: `test/view.test.ts`「タスク一覧は…」を新しい形（バッジが summary より前に出る・status ごとのクラス・`done` は薄い）に直し、「見出しに todo / done の件数が出る」「status が `todo` / `done` 以外なら注意色のクラスが付く」「status が無ければバッジを出さない」を足す。ファイルの順で出すテストは残す
+4. ドキュメント: `docs/requirements.md` 4.2 サイドバーの項「タスク一覧（`develop/tasks.json` の要約列）」に「status のバッジを先頭に置き、見出しに件数を添える」を1行で足す。**索引の表に同じ見出しがあるので、行頭を含めて位置を特定する。** 編集の前後で `grep -c '^#\{2,3\} ' docs/requirements.md` が一致すること
+5. `bun run check` を通す
+
+## 完了条件
+
+- テストで守るもの: バッジが summary より前に出る／status ごとのクラスが付く／`todo` `done` 以外は注意色のクラス／status が無ければバッジ無し／見出しに件数／ファイルの順のまま／summary と status が HTML として無害な形で埋め込まれる
+- Orca のタブで目視（起こし方は `docs/architecture.md`「手で確かめること」）: `develop/tasks.json` を読ませた状態で、(a) 各行の先頭にバッジが縦に揃って並ぶ、(b) summary が折り返してもバッジの列の下に入り込まない、(c) `done` の行が薄く、`todo` の行が普通の色、(d) 見出しに件数が出ている。何が見えたかを `evidence` に1行で書く
+- `bun run check` が通ること
+
+## 注意
+
+- 並び順（ファイルの順。status ごとにまとめない）は変えない
+- `develop/tasks.json` は会話の内容ではない（`src/tasks.ts` の冒頭コメント）が、summary を HTML に埋めるときのエスケープは今のまま守る
+- `bun run start` は本物の claude を起こす。`TSUKUMO_VIEW_PORT` を変えて起こし、終わったら `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる。旧方針の常駐（7327番）が動いていたら先に止める
+- サブエージェントに委譲してよい。`/loop` に載せてよい。目視はユーザーが後で行い、結果を `evidence` に追記する（T-043〜T-045 と同じ扱い）
+- T-054 / T-055 も `src/view.ts` と `test/view.test.ts`「サイドバーの本文」を触る。同時に進めず、順に1件ずつコミットする
+
+---
+
+## T-057 箱（ウィンドウ）の選択肢を一次情報で比較し、`docs/research/app-shell.md` に記録する。**選ぶのはこのタスクではない**（決めるのは T-046）。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  docs/research/app-shell.md を新規作成（候補5つ＋その他1行、候補ごとに軸7つ×（内容・出典）の表、最後に「T-046 で決めるときに効く違い」5行。結論は無し）。「不明」10欄には一次情報で埋まらなかった理由を添えた（Electron / Tauri のテレメトリの有無、Chrome --app の視覚確認、Safari の既定の通信、WKWebView の同梱・entitlement・手数）。着手時の実測（2026-09-12）: cargo / rustc / rustup 未導入、node v22.13.1、npm 11.1.0、Xcode あり（/Applications/Xcode.app/Contents/Developer）、macOS 26.6.2、orca 1.4.200（テレメトリ・自動更新とも既定オン）。依存は足していない。Chrome --app の起動テストのプロセス・一時プロファイルは削除済み（受け入れ時に pgrep と ls で確認）。bun run check: 436 pass / 0 fail（oxfmt 59 ファイル）。
+
+### 当時のタスク本文
+
+箱（ウィンドウ）の選択肢を一次情報で比較し、`docs/research/app-shell.md` に記録する。**選ぶのはこのタスクではない**（決めるのは T-046）。
+
+## 背景
+
+いまの構成では、画面は「どの箱でも動く Web アプリ」で、`src/index.ts` が 127.0.0.1 にローカル HTTP サーバを立てて配っている。Orca への依存は `src/orca-host.ts` の `showView`（`orca tab create --url`）1つだけになる（T-042 後）。**箱を替えるとは、この `showView` の実装を差し替えて `http://127.0.0.1:<port>/layout` を別のウィンドウで開くこと**であって、Web アプリ側を作り直すことではない（`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」）。
+
+T-046（Orca のタブのままか、アプリに包むか）は「包むなら Electron か Tauri か」を論点に挙げているが、**比較の中身はまだ誰も調べていない**。ユーザーの言葉: 「T-046 は Electoron がベストかな? Tauri(https://v2.tauri.app/) や他の選択肢も検討する?」。
+
+T-046 の判断そのものはユーザーが実際に使った感想が要るので動かせないが、**選択肢の比較は感想と独立に進められる**ので、前段として切り出した。
+
+環境の実測（2026-09-12）: `cargo` / `rustc` / `rustup` はいずれも未導入、`node` v22.13.1・`npm` 11.1.0 あり、Xcode は `/Applications/Xcode.app`、macOS 26.6.2。**実測値は変わるので、着手時にもう一度確認して `evidence` に書く**。
+
+## 解くべき論点
+
+比較の軸はこのタスクで決めずに、下の「やること」で固定したものを使う（足すのはよいが減らさない）。調査中に判断が要るのは次の2点だけ。
+
+1. 候補に入れるかどうかの足切り。**macOS で動かない・メンテが止まっている・会話の載るページを外部のサービスへ出す構造のものは、表に名前と落とした理由だけ残して深追いしない**
+2. 一次情報が見つからない軸は「不明」と書く。**推測で埋めない**
+
+## やること
+
+1. 次の候補を調べる。括弧内は最低限あたる一次情報源。
+   - **Orca のタブのまま**（現状維持のベースライン。`orca --help` など手元の実測）
+   - **Electron**（electronjs.org の公式ドキュメント）
+   - **Tauri v2**（https://v2.tauri.app/ の公式ドキュメント）
+   - **素のブラウザをアプリとして使う**（Chrome の `--app`、Safari の「Dock に追加」など各ベンダーの文書）
+   - **WKWebView を薄く包む**（Apple の Developer Documentation）
+   - その他（Wails・Neutralino・Photino など）は名前を挙げ、足切りの理由を1行で書く
+2. 次の7つの軸で表にする。
+   - 追加で要るツールチェーン（手元に無いものは何か）
+   - Bun のプロセス（駆動＋ビューサーバ）を子として起こせるか、同梱の方法
+   - `http://127.0.0.1:<port>/layout` を開くだけで済むか、追加の配線が要るか
+   - 既定で外部と通信するか（テレメトリ・自動更新）。**会話の載るページを抱える箱なので必ず調べる**
+   - ウィンドウまわりでできること（独立したウィンドウ・大きさの記憶・常に手前・キーボード・通知）
+   - 導入から「ウィンドウが1枚出る」までの手数
+   - 撤退のしやすさ（やめたときに Web アプリ側に残る変更）
+3. `docs/research/app-shell.md` に書く。**主張ごとに出典 URL を添える**。`docs/` の他のファイルが持つ「節の索引」は、このファイルには作らない（調査メモであって正典ではない）
+4. 最後に「T-046 で決めるときに効く違い」を3〜5行でまとめる。**結論（どれにするか）は書かない**
+5. 調べた結果、**Orca のタブのまま以外に条件を満たすものが1つも残らなかった場合**は、落とした理由を表に残したうえで `evidence` に書いて閉じる
+
+## 完了条件
+
+- `docs/research/app-shell.md` があり、上の候補6つ（「その他」はまとめて1行でよい）と軸7つを含む表があること
+- 表の各主張に出典 URL があり、**出典が一次情報（公式ドキュメント・ベンダーの文書・手元の実測）であること**。二次的な解説記事だけを根拠にした行が無いこと
+- 「不明」と書いた欄に、なぜ一次情報で埋まらなかったかが1行添えてあること
+- `bun run check` が通ること（`oxfmt` が Markdown も整形するため）
+- `evidence` に、着手時に実測したツールチェーンの有無（`cargo` / `node` / `npm` / Xcode）が書かれていること
+
+## 注意
+
+- **調べるだけで、依存は1つも足さない。** `npm install electron` も `cargo` の導入も**しない**（`CLAUDE.md`「`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る」）
+- **検索クエリに会話の中身を入れない**（`docs/coding-standards.md`「会話内容の扱い」）。調べるのは公開情報だけ
+- `~/.claude/settings.json` を触らない
+- **決定はしない。** T-046 がこの表を読んで決める。`docs/requirements.md` 7章の未決事項も動かさない
+- サブエージェントに委譲してよい。`/loop` に載せてよい

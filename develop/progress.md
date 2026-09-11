@@ -1,6 +1,7 @@
 # 現在の状態
 
-最終更新: 2026-09-12（`/plan-tasks` で箱の選択肢の比較を T-057 に起こし、T-046 の論点を広げた。同日、
+最終更新: 2026-09-12（`/loop /next-task` で T-050〜T-057 の8件を完了し、done 10件を
+`docs/history/tasks-archive.md` へ移した。同日、`/plan-tasks` で箱の選択肢の比較を T-057 に起こし、T-046 の論点を広げ、
 サイドバーの改善を T-054〜T-056、吹き出しの分割を T-053、補完の改善を T-050〜T-052 に起こし、
 progress.md の 2026-09-11 分を `docs/history/progress-archive.md` へ移した。2026-09-11 に方針を全面的に見直して
 Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リポジトリの立ち上げは 2026-09-09）
@@ -55,7 +56,11 @@ Enter を「確定して送信」、Tab を「確定だけ」にした（`docs/r
 
 **T-056 完了。** サイドバーのタスク一覧を、status のバッジを先頭に置いた2列の行にし、見出しに
 todo / done の件数を添えた。未使用だった `countTaskStatuses`（`src/tasks.ts`）は消した。目視は未実施。
+**T-057 完了。** 箱の選択肢（Orca のタブのまま／Electron／Tauri v2／素のブラウザのアプリモード／WKWebView／
+その他）を一次情報で比べて `docs/research/app-shell.md` に記録した（結論は書かない。T-046 が読んで決める）。
+一次情報で埋まらなかった10欄は「不明」と理由付き。手元は `cargo` / `rustc` / `rustup` 未導入、Xcode あり。
 **これで `/loop` に載せられるタスクは無くなった**（残りは承認や感想が要る T-042 / T-046 / T-048）。
+done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md` へ移した。
 
 ## 次にやること
 
@@ -70,10 +75,8 @@ todo / done の件数を添えた。未使用だった `countTaskStatuses`（`sr
 - **T-042（sonnet）**: 旧経路の撤去。**`~/.claude/settings.json` を触るので承認が要る**
 - **T-048（sonnet、着手可能）**: グローバルへの導入と別プロジェクトでの目視。**承認が要るので
   `/loop` に載せない**
-- **T-057（sonnet、着手可能、依存なし、`/loop` に載せてよい）**: 箱の選択肢（Orca のタブのまま /
-  Electron / Tauri v2 / 素のブラウザのアプリモード / WKWebView）を一次情報で比較し、
-  `docs/research/app-shell.md` に表で記録する。**選ぶのはこのタスクではない**（決めるのは T-046）
-- **T-046（opus）**: 箱の判断。ユーザーの感想が要る。T-042 / T-045 / T-057 待ち
+- **T-046（opus）**: 箱の判断。ユーザーの感想が要る。T-042 待ち（T-057 の比較表
+  `docs/research/app-shell.md` は完成）
 
 T-042 / T-046 / T-048 はユーザーがいるセッションで。
 
@@ -115,5 +118,5 @@ T-042 / T-046 / T-048 はユーザーがいるセッションで。
 terminal-host` で見つけたら止めてよい
 - **環境の実測値は1日で変わる。** `docs/requirements.md`「5. 実行環境・非機能要件」の値も
   **前提にする前にその場で確認する**（2026-09-11: Claude Code 2.1.268、SDK 0.3.268）
-- **`develop/tasks.json` に無いタスクID（T-001〜T-049 のうち残っている5件以外）は
-  アーカイブ済み**とみなす（2026-09-12 に done 12件を移した）。中身は `docs/history/tasks-archive.md` の `## T-XXX` の節
+- **`develop/tasks.json` に無いタスクID（T-001〜T-057 のうち残っている3件以外）は
+  アーカイブ済み**とみなす（2026-09-12 に done 12件、同日さらに 10件を移した）。中身は `docs/history/tasks-archive.md` の `## T-XXX` の節
