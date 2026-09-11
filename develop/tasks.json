@@ -48,5 +48,35 @@
     "passes": false,
     "evidence": "",
     "dependencies": ["T-047"]
+  },
+  {
+    "id": "T-050",
+    "summary": "/ 補完の候補に見た目を付け、入力欄に重ねるポップアップにする",
+    "task": "入力欄の `/` コマンド補完の候補一覧に見た目を付け、入力欄の上に重ねるポップアップにして、マウスでも確定できるようにする。\n\n## 背景\n\nユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」。現物を読んで分かったこと:\n\n- `src/view.ts` の `STYLE` に `.dispatch-suggestions` / `.dispatch-suggestion-item` / その `.is-selected` の CSS ルールが**1つも無い**（`is-selected` のルールは `.question-choice` 用の1件だけ）。候補は `<ul>` の素の箇条書き（黒丸・既定の余白）で出て、上下キーで動かしている選択中の項目が見た目に表れない\n- `dispatchRegionHtml` は `<ul>` を `<form>` の上に兄弟として置く。候補が出るたびに `<textarea>` が下に押され、閉じると戻る（打っている最中に入力欄が動く）。`.layout-region` は `overflow-y: auto` なので、候補が10件出て領域の高さを超えると領域ごとスクロールする\n- 候補の `<li>` にクリックの配線が無い（`commandSuggestionsScript` が持つのはキー操作の状態と、それを変える関数だけ）\n- 候補一覧は T-045 で入ったが、ブラウザでの目視は未実施のまま完了している（`docs/history/tasks-archive.md` の T-045 の evidence）\n\n## 解くべき論点\n\n- 重ね方: `.layout-dispatch` を `position: relative` にし、`<ul>` を `position: absolute` で `<textarea>` の上端に底を合わせて重ねる（`bottom` で指定。`<form>` の高さは送信の行を含む）。`.layout-region` の `overflow-y: auto` に切られないよう、`max-height` は領域の中に収まる値にする（領域の高さの半分程度）。答え待ちの箱がある間は候補を出さない今の仕様（`shouldShowSuggestions`）はそのまま\n- 色と形は同じ領域の他の要素の語彙に揃える（地 `#10131a`、枠 `#3a4256`、角丸 `0.4rem`。選択中は `.question-choice.is-selected` と同じ `#8ab4ff` / `#232a3c`）\n\n## やること\n\n1. `STYLE` に候補一覧と項目の CSS を足す（`list-style: none`、余白、選択中の色、はみ出しは `overflow-y: auto`）\n2. ポップアップとして重ねる（上の論点）。候補の表示・非表示で `<textarea>` の位置と高さが変わらないこと\n3. `<li>` の `mousedown` で確定する（`preventDefault` でフォーカスを `<textarea>` から奪わない。押した項目の index で `confirmSelectedSuggestion` を呼ぶ）\n4. 上下キーで選択が表示範囲の外に出たら `scrollIntoView({ block: \"nearest\" })` で追従する\n5. `test/view.test.ts` の補完の `describe` にクリック確定のテストを足す（偽の要素は同ファイルの `makeFakeSuggestionsBoxElement` を広げる）\n\n## 完了条件\n\n- Orca のタブで目視: `/` を打つと候補が入力欄の上に**重なって**出て、出る前後で入力欄の位置が動かない／上下キーで選択中の項目の背景色が変わる／候補をクリックすると `/名前 ` が入力欄に入って候補が閉じる／Esc で閉じる。何が見えたかを `evidence` に書く\n- テスト: クリックで確定し、`PROMPT_PATH` に送信されないこと\n- `bun run check` が通ること\n\n## 注意\n\n- 絞り方（部分一致）・並び順・Enter の役割は T-051。ここでは触らない\n- 起こし方は `docs/architecture.md`「手で確かめること」。`bun run start` は本物の claude を起こす。終わったら `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる\n- サブエージェントに委譲してよい。`/loop` に載せてよい。目視はユーザーが後で行い、結果を `evidence` に追記する（T-043〜T-045 と同じ扱い）\n",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "passes": false,
+    "evidence": "",
+    "dependencies": []
+  },
+  {
+    "id": "T-051",
+    "summary": "/ 補完を部分一致・アルファベット順にし、Enter で実行、Tab で補完にする",
+    "task": "入力欄の `/` コマンド補完の絞り方・並び順・確定キーを、Claude Code の TUI の手触りに寄せる。\n\n## 背景\n\nユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」の、見た目（T-050）以外の部分。\n\n- `src/view.ts` `commandSuggestionsScript` の `matchingCommands` は**前方一致だけ**。`/task` で `next-task` `plan-tasks` は出ない\n- 並び順は `GET /api/commands` が返す順＝SDK の `init` の `slash_commands` の順のまま（`src/session-view.ts` `commandCandidates` は端末専用を除くだけで並べ替えない）。57件に対して上限10件（`MAX_COMMAND_SUGGESTIONS`）なので、`/` だけ打ったときに出る10件は SDK の並び次第\n- 確定キー: `dispatchScript` の `keydown` リスナーで Tab と Enter が同じ「確定だけ」（`confirmSelectedSuggestion` で `/名前 ` を入れて閉じる）。コマンドを1つ送るのに Enter を2回押す。Claude Code の TUI は、候補が選ばれている状態の Enter でそのコマンドを実行し、Tab は補完だけ（引数を続けて打てる）\n- 要件は `docs/requirements.md` 4.2「入力欄」(3) に1行あるだけで、絞り方・確定キーは書かれていない\n\n## 解くべき論点\n\n- 絞り方: **前方一致を先に、続けて部分一致**を出す（各グループの中はアルファベット順）。入力が `/` だけのときはアルファベット順の先頭10件\n- Enter の役割: 候補が開いているときの Enter は**「確定して送信」**に変える（TUI と同じ）。Tab は**「確定だけ」**（末尾に空白を付けて引数を続けられる。今と同じ）。Enter で送るのは選択中の1件で、候補が複数残っていても送る（TUI と同じ。誤送信を避けたければ Tab で確定してから読み直せる）。送信中（`inProgress`）の Enter は今までどおり送らない（確定だけ）。この決定は `docs/requirements.md` 4.2 に書く\n- 送るテキストは `/名前`（末尾の空白無し）でよいか実機で確かめる。SDK は `/<name>` を入力文字列に書けば送れる（`docs/history/direction.md` 2026-09-11）\n\n## やること\n\n1. `matchingCommands` を「前方一致 → 部分一致、それぞれアルファベット順、合計10件」に変える。並び替えはブラウザ側で行う（サーバは SDK の並びをそのまま返す）\n2. `keydown` の分岐で Tab と Enter を分ける。Enter は `confirmSelectedSuggestion()` のあと `form.requestSubmit()`（`inProgress` のときは送らない）\n3. `test/view.test.ts` の「候補が開いている間の Enter は確定だけで、送信しない」を新しい仕様に書き換え、部分一致・並び順・Tab では送らないことのテストを足す\n4. `docs/requirements.md` 4.2「入力欄」(3) に絞り方と確定キー（Tab＝補完、Enter＝実行）を追記する。編集後に `grep -c '^#\\{2,3\\} ' docs/requirements.md` の数が変わっていないことを確かめる（CLAUDE.md「ドキュメントを編集するときの罠」）\n\n## 完了条件\n\n- テスト: `/task` で `next-task` と `plan-tasks` が出る／前方一致が部分一致より先に並ぶ／Enter で `PROMPT_PATH` に `/名前` が送られる／Tab では送られない\n- Orca のタブで目視: 副作用の無いコマンド（例: `/cost`）を `/co` + Enter で送るとターンが始まる（送信ボタンが「中断」になる）。`/co` + Tab では入力欄に `/cost ` が入るだけ。何が見えたかを `evidence` に書く（動かなかったコマンドがあればそれも書く）\n- `bun run check` が通ること\n\n## 注意\n\n- 説明文の表示は T-052。ここでは触らない\n- サブエージェントに委譲してよい。`/loop` に載せてよい（目視の扱いは T-050 と同じ）\n",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-050"]
+  },
+  {
+    "id": "T-052",
+    "summary": "/ 補完の候補にコマンドの説明を添える（出どころが無ければ閉じる）",
+    "task": "入力欄の `/` コマンド補完の候補に、コマンドの説明を添える。説明の出どころが足りなければ、名前だけのままにして閉じる。\n\n## 背景\n\nユーザーの指示（2026-09-12）「入力画面のスラッシュコマンドの補完の出し方がスマートじゃなくて使いづらい」を受けて、Claude Code の TUI が候補に説明を並べているのに合わせる案。\n\n- 候補は名前だけ（`/next-task` のように）。SDK の `system/init` は `slash_commands: string[]` で**名前しか返さない**（`@anthropic-ai/claude-agent-sdk` 0.3.268 の `sdk.d.ts` `SDKSystemMessage` を確認。`skills` の配列は無い。T-045 の本文にあった「`init` の `skills` 配列と突き合わせる」は成り立たない）\n- 説明の出どころとして手元にあるのは、スキルの `SKILL.md` の frontmatter `description`（このリポジトリの `.claude/skills/` に11件。`~/.claude/skills/` にもあれば同様）と `.claude/commands/*.md` の frontmatter（このリポジトリには無い）。組み込みコマンド（`clear` `model` `compact` など）には出どころが無い\n- 候補の HTML は `src/view.ts` `renderSuggestions` が組み立て、`GET /api/commands` の形は `{ commands: string[] }`（`src/view-server.ts` `GetCommands`、`src/index.ts` で `view.slashCommands` から更新）\n\n## 解くべき論点\n\n- 出どころ: (a) `SKILL.md` / `.claude/commands/*.md` の frontmatter を読む（cwd と `~/.claude` の両方。ファイルの読み取りは外の世界への依存なので1モジュールに閉じる。原則3）。(b) 組み込みコマンドの説明をコードに表として持つ（Claude Code の版で変わるので保守負担になる）。**推奨は (a) だけ**で、説明が無いものは名前だけ出す\n- `GET /api/commands` の形を `{ commands: [{ name, description }] }` に変えるか、別の経路にするか。変えるなら `test/view-server.test.ts` と `test/view.test.ts` の偽の fetch も直す\n- 説明が出せる件数が候補全体の半分に満たないなら（例: 57件中スキル11件）、見た目がまだらになる。**その場合はやらずに閉じる**（`evidence` に件数を書く）\n\n## やること\n\n1. 出どころを実測する（`slash_commands` の件数に対して、frontmatter から説明が引けるコマンドの件数）\n2. 成り立つなら、frontmatter の読み取りモジュールを1つ作り（`name` と `description` だけ）、`/api/commands` に載せ、候補の各行に名前＋薄い色の説明を出す（幅が足りなければ1行で省略する）\n3. 成り立たなければ、理由と件数を `evidence` に書いて閉じる\n\n## 完了条件\n\n- やる場合: テスト（frontmatter の読み取り、`/api/commands` の形）、Orca のタブで目視（`/ne` の候補に `next-task` の説明が出る。何が見えたかを `evidence` に書く）、`bun run check` が通ること\n- 閉じる場合: `evidence` に実測した件数と判断が書いてあること\n\n## 注意\n\n- frontmatter はローカルのファイルで会話内容ではないが、説明の全文をログに出さない\n- 方針の判断を含むので、委譲するなら opus。`/loop` に載せてよい（閉じる判断まで含めて任せる）\n",
+    "status": "todo",
+    "difficulty": "opus",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-050"]
   }
 ]
