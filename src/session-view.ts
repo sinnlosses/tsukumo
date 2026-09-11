@@ -10,8 +10,11 @@ import { type PendingAsk } from "./pending-answer.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { DEFAULT_SPEECH_MARKER, type MainViewEntry, splitUtterance } from "./transcript.ts"
 
-/** サイドバーの「終わったもの」に残す、直近に使い終えたツールの数（縦に狭い領域なので絞る）。 */
-const MAX_RECENT_FINISHED_TOOLS = 5
+/**
+ * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
+ * 常駐プロセスがセッションを通して持ち続けるので無限には増やさない。
+ */
+const MAX_RECENT_FINISHED_TOOLS = 50
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。**過去のやり取りは
@@ -87,7 +90,7 @@ export type SessionView = {
   readonly runningTools: readonly ToolActivity[]
   /**
    * 直近に使い終えたツール。新しい順、最大 {@link MAX_RECENT_FINISHED_TOOLS} 件
-   * （サイドバーの「終わったものは薄く数行」）。
+   * （サイドバーの「いま何をしているか」の並びに、実行中の下へ積む）。
    */
   readonly finishedTools: readonly ToolActivity[]
   /** 答え待ちの列（許可プロンプトと質問）。 */

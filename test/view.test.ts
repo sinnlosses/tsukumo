@@ -2729,6 +2729,15 @@ describe("サイドバーの本文", () => {
     expect(body).toContain("いま動いているツールは無い")
   })
 
+  it("空のときも並びを包む要素（.activity-scroll）が出る", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      activity: { running: [], finished: [] },
+    })
+
+    expect(body).toContain('<div class="activity-scroll"><p class="sidebar-empty">')
+  })
+
   it("タスク一覧は id・summary・status をファイルの順で出し、done は薄く出す", () => {
     const body = buildSidebarBody(FULL_SIDEBAR_DATA)
 

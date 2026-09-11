@@ -185,6 +185,26 @@ describe("applySessionEvent", () => {
     ])
   })
 
+  it("finishedTools は6件来たら6件とも残す（5件に絞らない。並びは自前でスクロールする）", () => {
+    const events = Array.from({ length: 6 }, (_unused, index): SessionEvent[] => {
+      const toolUseId = `toolu_${String(index)}`
+      return [
+        {
+          kind: "tool-started",
+          toolUseId,
+          name: "Read",
+          input: {},
+          parentToolUseId: undefined,
+        },
+        { kind: "tool-finished", toolUseId, content: "ダミーの結果", isError: false },
+      ]
+    }).flat()
+
+    const view = apply(...events)
+
+    expect(view.finishedTools).toHaveLength(6)
+  })
+
   it("ツールの結果を、対応する tool_use の記録に合わせる（メインビューにはツール系を渡さない）", () => {
     const view = apply(
       {

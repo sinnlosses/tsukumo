@@ -2092,6 +2092,9 @@ const STYLE = `
   .sidebar-block p { margin: 0.2rem 0; }
   .sidebar-empty { color: #8f97ab; }
   .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
+  /* 8行ぶんの目安（.sidebar-block の font-size: 0.85rem 基準）。ツールの数で高さが変わらないよう
+     固定し、はみ出す分は中でスクロールする。 */
+  .activity-scroll { height: 10rem; overflow-y: auto; }
   .activity-item.activity-finished { color: #8f97ab; }
   .activity-item.activity-nested { margin-left: 1rem; list-style-type: circle; }
   .task-item.task-done { color: #8f97ab; }
@@ -2852,17 +2855,21 @@ ${body}
 /**
  * サイドバーの「いま何をしているか」の本文。**実行中が先（普通の色）、直近の完了がその下
  * （薄い色）**（`docs/requirements.md` 4.2 の決定）。両方空のときだけ空であることを出す。
+ *
+ * **並びは固定の高さの `.activity-scroll` で包み、中身の多寡にかかわらず区画の高さを変えない**
+ * （下のタスク一覧・セッション情報が押し下げられないようにするため）。空のときも同じ要素で
+ * 包み、見出しの位置を状態で動かさない。
  */
 function activityBody(activity: SidebarData["activity"]): string {
   if (activity.running.length === 0 && activity.finished.length === 0) {
-    return `<p class="sidebar-empty">いま動いているツールは無い</p>`
+    return `<div class="activity-scroll"><p class="sidebar-empty">いま動いているツールは無い</p></div>`
   }
 
   const items = [
     ...activity.running.map((item) => activityItemHtml(item, false)),
     ...activity.finished.map((item) => activityItemHtml(item, true)),
   ].join("\n")
-  return `<ul class="sidebar-list activity-list">${items}</ul>`
+  return `<div class="activity-scroll"><ul class="sidebar-list activity-list">${items}</ul></div>`
 }
 
 /**
