@@ -65,7 +65,12 @@ const FULL_SIDEBAR_DATA: SidebarData = {
     { id: "X-001", summary: "架空のサイドバー実装", status: "done" },
     { id: "X-002", summary: "架空のタスク一覧", status: "todo" },
   ],
-  session: { model: "claude-sonnet-5", permissionMode: "auto", turnStartedAt: 1_700_000_000_000 },
+  session: {
+    model: "claude-sonnet-5",
+    permissionMode: "auto",
+    turnStartedAt: 1_700_000_000_000,
+    turnFinishedAt: undefined,
+  },
 }
 
 // --- SSE 購読スクリプトを実際に動かして確かめるための道具 -------------------------------------
@@ -2777,6 +2782,21 @@ describe("サイドバーの本文", () => {
     expect(body).toContain('data-started-at=""')
   })
 
+  it("turnFinishedAt があれば data-finished-at にその値が出る", () => {
+    const body = buildSidebarBody({
+      ...FULL_SIDEBAR_DATA,
+      session: { ...FULL_SIDEBAR_DATA.session, turnFinishedAt: 1_700_000_005_000 },
+    })
+
+    expect(body).toContain('data-finished-at="1700000005000"')
+  })
+
+  it("turnFinishedAt が未定のときは data-finished-at が空", () => {
+    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
+
+    expect(body).toContain('data-finished-at=""')
+  })
+
   it("ツール入力の要約を、HTML として無害な形にして埋め込む", () => {
     const body = buildSidebarBody({
       ...FULL_SIDEBAR_DATA,
@@ -2806,7 +2826,12 @@ describe("サイドバーの本文", () => {
     const body = buildSidebarBody({
       activity: { running: [], finished: [] },
       tasks: undefined,
-      session: { model: undefined, permissionMode: undefined, turnStartedAt: undefined },
+      session: {
+        model: undefined,
+        permissionMode: undefined,
+        turnStartedAt: undefined,
+        turnFinishedAt: undefined,
+      },
     })
 
     expect(body).toContain("いま何をしているか")

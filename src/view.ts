@@ -1633,10 +1633,13 @@ function pendingAnswerScript(elementId: string): string {
  *
  * - **許可モード・モデルの変更は `change` の瞬間に送る。** 次に届く `session-info` で
  *   `<select>` の選択が上書きされる（サーバ側の値が正になる）
- * - **経過時間はブラウザ側で1秒ごとに刻む。** サーバは開始時刻を `data-started-at` 属性
- *   （エポック ms）で渡すだけで、以降のカウントアップはここが担う。**差し替え
- *   （`subscriptionScript` の `innerHTML` 代入）で要素が入れ替わっても、都度 `querySelector`
- *   で読み直すので途切れない**
+ * - **経過時間はブラウザ側で1秒ごとに刻む。** サーバは開始時刻・終了時刻を `data-started-at` /
+ *   `data-finished-at` 属性（エポック ms、無ければ空文字）で渡すだけで、以降のカウントアップは
+ *   ここが担う。**差し替え（`subscriptionScript` の `innerHTML` 代入）で要素が入れ替わっても、
+ *   都度 `querySelector` で読み直すので途切れない**
+ * - **終了時刻があれば、それを終点に固定する。** tick 自体は1秒ごとに動き続けるが、
+ *   `Date.now()` の代わりに終了時刻を使うので表示は変わらない（止まって見える）。ラベルも
+ *   同時に「経過」→「所要」へ書き換える
  */
 function sessionInfoScript(elementId: string): string {
   return `  {
@@ -1677,19 +1680,37 @@ function sessionInfoScript(elementId: string): string {
     wireSelect("permission-mode-select", "permission-mode-status", ${JSON.stringify(PERMISSION_MODE_PATH)}, (mode) => ({ mode }))
     wireSelect("model-select", "model-select-status", ${JSON.stringify(MODEL_PATH)}, (model) => ({ model }))
 
+    function formatElapsed(totalSeconds) {
+      if (totalSeconds < 60) {
+        return totalSeconds + "秒"
+      }
+      const minutes = Math.floor(totalSeconds / 60)
+      const seconds = totalSeconds % 60
+      return minutes + "分" + String(seconds).padStart(2, "0") + "秒"
+    }
+
     function tickElapsed() {
       const span = el.querySelector(".${SESSION_ELAPSED_CLASS}")
+      const label = el.querySelector(".${SESSION_ELAPSED_LABEL_CLASS}")
       if (span === null) {
         return
       }
-      const raw = span.getAttribute("data-started-at")
-      const startedAt = raw === null || raw === "" ? NaN : Number(raw)
+      const rawStarted = span.getAttribute("data-started-at")
+      const startedAt = rawStarted === null || rawStarted === "" ? NaN : Number(rawStarted)
       if (!Number.isFinite(startedAt)) {
         span.textContent = "-"
         return
       }
-      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
-      span.textContent = elapsedSeconds + "秒"
+      const rawFinished = span.getAttribute("data-finished-at")
+      const finishedAt = rawFinished === null || rawFinished === "" ? NaN : Number(rawFinished)
+      const endsAt = Number.isFinite(finishedAt) ? finishedAt : Date.now()
+      if (label !== null) {
+        label.textContent = Number.isFinite(finishedAt)
+          ? ${JSON.stringify(SESSION_FINISHED_LABEL)}
+          : ${JSON.stringify(SESSION_ELAPSED_LABEL)}
+      }
+      const elapsedSeconds = Math.max(0, Math.floor((endsAt - startedAt) / 1000))
+      span.textContent = formatElapsed(elapsedSeconds)
     }
 
     tickElapsed()
@@ -1730,6 +1751,11 @@ export type SidebarData = {
     readonly permissionMode: string | undefined
     /** 直近の依頼（`request`）が届いた時刻（エポック ms）。まだ依頼が無いときは undefined。 */
     readonly turnStartedAt: number | undefined
+    /**
+     * 直近のターンが終わった時刻（エポック ms）。ターンの途中、またはまだ依頼が無いときは
+     * undefined。
+     */
+    readonly turnFinishedAt: number | undefined
   }
 }
 
@@ -2916,21 +2942,29 @@ function taskItemHtml(task: TaskSummaryItem): string {
 }
 
 const SESSION_ELAPSED_CLASS = "session-elapsed"
+const SESSION_ELAPSED_LABEL_CLASS = "session-elapsed-label"
+// 進行中／終了後のラベル。ブラウザ側（{@link sessionInfoScript}）が終了時刻の有無で
+// どちらを出すか決める。
+const SESSION_ELAPSED_LABEL = "経過"
+const SESSION_FINISHED_LABEL = "所要"
 
 /**
  * サイドバーの「セッション情報」の本文。モデル・許可モードの `<select>`（駆動側の切り替えは
  * {@link sessionInfoScript}）と、経過時間の表示枠を並べる。**経過時間はここでは計算しない**
- * （view.ts は純粋関数だけを置く場所で、`Date.now()` のような時刻の取得を持たない。開始時刻を
- * `data-started-at` に載せるだけで、実際のカウントアップはブラウザ側の {@link sessionInfoScript}）。
+ * （view.ts は純粋関数だけを置く場所で、`Date.now()` のような時刻の取得を持たない。開始時刻・
+ * 終了時刻を `data-started-at` / `data-finished-at` に載せるだけで、実際のカウントアップと
+ * ラベルの出し分け（経過／所要）はブラウザ側の {@link sessionInfoScript}）。
  */
 function sessionInfoBody(session: SidebarData["session"]): string {
   const startedAtAttr = session.turnStartedAt === undefined ? "" : String(session.turnStartedAt)
+  const finishedAtAttr = session.turnFinishedAt === undefined ? "" : String(session.turnFinishedAt)
 
   return `<div class="session-info">
 <div class="session-info-row">${modelSelectHtml(session.model)}</div>
 <div class="session-info-row">${permissionModeHtml(session.permissionMode)}</div>
-<div class="session-info-row session-elapsed-row">経過:
-<span class="${SESSION_ELAPSED_CLASS}" data-started-at="${escapeHtml(startedAtAttr)}">-</span>
+<div class="session-info-row session-elapsed-row">
+<span class="${SESSION_ELAPSED_LABEL_CLASS}">${SESSION_ELAPSED_LABEL}</span>:
+<span class="${SESSION_ELAPSED_CLASS}" data-started-at="${escapeHtml(startedAtAttr)}" data-finished-at="${escapeHtml(finishedAtAttr)}">-</span>
 </div>
 </div>`
 }
