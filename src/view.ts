@@ -48,8 +48,11 @@ function vendorPath(name: string): string {
 /** 送信先として選べるターミナルの一覧を返す経路（GET）。 */
 export const TERMINALS_PATH = "/api/terminals"
 
-/** 依頼をターミナルへ送る経路（POST）。 */
+/** 依頼をターミナルへ送る経路（POST）。**セッション駆動に置き換わったので呼ばれない。** */
 export const DISPATCH_PATH = "/api/dispatch"
+
+/** 依頼をセッション駆動へ送る経路（POST、本文は JSON の `{ text }`）。 */
+export const PROMPT_PATH = "/api/prompt"
 
 /**
  * 質問の選択肢を押したときに、キーを1つ押してもらう経路（POST）。**依頼の送信とは別の経路**に

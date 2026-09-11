@@ -13,6 +13,12 @@ export type Expression = "default" | "working" | "proud" | "flustered"
 export type Outfit = "default" | "light" | "normal" | "heavy"
 
 /**
+ * 表情名の全体。**`default` が先頭**で、キャラクター定義に立ち絵があるものだけを選ぶときの
+ * 元になる（src/character.ts の `availableExpressions`）。
+ */
+export const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud", "flustered"]
+
+/**
  * 状態ファイルの `event` から表情を決める。対応の初期案
  * （docs/requirements.md「4.3 状態連動」）: `PreToolUse` = 作業中 / `Stop` = どや顔 /
  * エラー = あわあわ。エラー系は `StopFailure` と `PostToolUseFailure` の2つが実在する
@@ -27,15 +33,13 @@ export function resolveExpression(state: StateFileContents | undefined): Express
 }
 
 /**
- * 状態ファイルの `model` から衣装を決める。`haiku` = 軽装 / `sonnet` = 通常装備 /
- * `opus` = 戦闘配置（docs/requirements.md「4.3 状態連動」、`~/.claude/output-styles/asuna.md`
- * のモデル分岐と対応）。
+ * モデル名から衣装を決める。`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` = 戦闘配置
+ * （docs/requirements.md「4.3 状態連動」、`~/.claude/output-styles/asuna.md` のモデル分岐と対応）。
  *
- * hook の payload に渡る `model` の形式が、短い別名（"opus" など）か解決済みの完全な
- * モデルIDかを確認できなかったため、部分一致で両方を拾う。
+ * 渡ってくる `model` が短い別名（"opus" など）か解決済みの完全なモデルIDかは場合による
+ * （SDK の `init` は完全なモデルIDを返す）ため、部分一致で両方を拾う。
  */
-export function resolveOutfit(state: StateFileContents | undefined): Outfit {
-  const model = state?.model
+export function resolveOutfit(model: string | undefined): Outfit {
   if (model === undefined) {
     return "default"
   }

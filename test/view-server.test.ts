@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, mock } from "bun:test"
 import { networkInterfaces } from "node:os"
 
 import { type Host, type HostResult } from "../src/host.ts"
-import { startViewServer, type ViewServer } from "../src/view-server.ts"
-import { DISPATCH_PATH, TERMINALS_PATH, VIEW_NAMES } from "../src/view.ts"
+import { type SendPrompt, startViewServer, type ViewServer } from "../src/view-server.ts"
+import { DISPATCH_PATH, PROMPT_PATH, TERMINALS_PATH, VIEW_NAMES } from "../src/view.ts"
 
 // ポート 0 で起動し、割り当てられたポートを urlOf から読む（開発機で常駐中のサイドカーと
 // ぶつからないようにするため）。
@@ -25,8 +25,11 @@ function fakeHost(overrides: Partial<Host> = {}): Host {
   }
 }
 
-async function start(host: Host = fakeHost()): Promise<ViewServer> {
-  const server = await startViewServer(0, host)
+async function start(
+  host: Host = fakeHost(),
+  sendPrompt: SendPrompt = () => true,
+): Promise<ViewServer> {
+  const server = await startViewServer(0, host, sendPrompt)
   running = server
   return server
 }
@@ -257,6 +260,63 @@ describe("ビューサーバ", () => {
 
     expect(response.status).toBe(200)
     expect(await response.text()).toContain("<p>サイドバー単体</p>")
+  })
+})
+
+describe("セッションへの依頼", () => {
+  it("依頼のテキストをセッション駆動へ渡す", async () => {
+    const sendPrompt = mock((_text: string) => true)
+    const server = await start(fakeHost(), sendPrompt)
+
+    const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: "テストの依頼" }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(sendPrompt).toHaveBeenCalledWith("テストの依頼")
+  })
+
+  it("テキストが欠けている・空のときは、駆動を呼ばずに400を返す", async () => {
+    const sendPrompt = mock((_text: string) => true)
+    const server = await start(fakeHost(), sendPrompt)
+
+    const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: "   " }),
+    })
+
+    expect(response.status).toBe(400)
+    expect(sendPrompt).not.toHaveBeenCalled()
+  })
+
+  it("セッションがまだ起きていないときは503を返す", async () => {
+    const server = await start(fakeHost(), () => false)
+
+    const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: "テストの依頼" }),
+    })
+
+    expect(response.status).toBe(503)
+  })
+
+  it("別のオリジンからの依頼は、駆動を呼ばずに403で弾く", async () => {
+    const sendPrompt = mock((_text: string) => true)
+    const server = await start(fakeHost(), sendPrompt)
+
+    const response = await fetch(`${originOf(server)}${PROMPT_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: "http://example.invalid" },
+      body: JSON.stringify({ text: "テストの依頼" }),
+    })
+
+    expect(response.status).toBe(403)
+    expect(sendPrompt).not.toHaveBeenCalled()
   })
 })
 

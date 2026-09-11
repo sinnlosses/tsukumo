@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import {
+  availableExpressions,
   classifyPortraitFile,
   type CharacterDefinition,
   isPlausibleSvgMarkup,
@@ -69,6 +70,34 @@ describe("parseCharacterDefinition", () => {
 
     expect(definition?.portraits.default).toBeUndefined()
     expect(definition?.outfitAccents.default).toBeUndefined()
+  })
+})
+
+describe("availableExpressions", () => {
+  it("立ち絵がある表情だけを返す", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+
+    expect(definition).toBeDefined()
+    expect(availableExpressions(definition)).toEqual(["default", "working", "proud", "flustered"])
+  })
+
+  it("立ち絵が一部しか無い定義では、その表情と default だけを返す", () => {
+    const definition: CharacterDefinition = {
+      name: undefined,
+      portraits: {
+        default: undefined,
+        working: "working.svg",
+        proud: undefined,
+        flustered: undefined,
+      },
+      outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+    }
+
+    expect(availableExpressions(definition)).toEqual(["default", "working"])
+  })
+
+  it("定義が無いときは default だけを返す（受け付ける表情名が空にならない）", () => {
+    expect(availableExpressions(undefined)).toEqual(["default"])
   })
 })
 

@@ -29,41 +29,34 @@ describe("resolveExpression", () => {
 })
 
 describe("resolveOutfit", () => {
-  it("状態ファイルが無いとき既定の衣装を返す", () => {
+  it("モデル名が無いとき既定の衣装を返す", () => {
     expect(resolveOutfit(undefined)).toBe("default")
   })
 
-  it("model が無いとき既定の衣装を返す", () => {
-    expect(resolveOutfit({ event: "PreToolUse", model: undefined })).toBe("default")
-  })
-
   it("haiku は軽装", () => {
-    expect(resolveOutfit({ event: "SessionStart", model: "haiku" })).toBe("light")
+    expect(resolveOutfit("haiku")).toBe("light")
   })
 
   it("sonnet は通常装備", () => {
-    expect(resolveOutfit({ event: "SessionStart", model: "sonnet" })).toBe("normal")
+    expect(resolveOutfit("sonnet")).toBe("normal")
   })
 
   it("opus は戦闘配置", () => {
-    expect(resolveOutfit({ event: "SessionStart", model: "opus" })).toBe("heavy")
+    expect(resolveOutfit("opus")).toBe("heavy")
   })
 
-  // hook の payload に渡る model が短い別名か解決済みの完全なモデルIDかを確認できなかったため、
-  // 部分一致にしている（src/expression.ts のコメント参照）。完全なモデルIDでも拾えることを
-  // ここで固定する。
+  // 短い別名か完全なモデルIDかは場合によるため部分一致にしている（src/expression.ts の
+  // コメント参照）。完全なモデルIDでも拾えることをここで固定する。
   it("完全なモデルIDに含まれていても拾う", () => {
-    expect(resolveOutfit({ event: "SessionStart", model: "claude-opus-4-1-20250805" })).toBe(
-      "heavy",
-    )
+    expect(resolveOutfit("claude-opus-4-1-20250805")).toBe("heavy")
   })
 
   it("大文字・小文字が違っても拾う", () => {
-    expect(resolveOutfit({ event: "SessionStart", model: "Opus" })).toBe("heavy")
+    expect(resolveOutfit("Opus")).toBe("heavy")
   })
 
   it("知らないモデル名のときは既定の衣装に落ちる", () => {
-    expect(resolveOutfit({ event: "SessionStart", model: "some-future-model" })).toBe("default")
+    expect(resolveOutfit("some-future-model")).toBe("default")
   })
 })
 

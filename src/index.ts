@@ -1,12 +1,16 @@
-// tsukumo のエントリポイント。transcript(JSONL) と hook の状態ファイルを追従し、
-// ローカルの HTTP サーバから HTML のビューを配り続ける。
+// tsukumo のエントリポイント。Agent SDK で Claude Code のセッションを起こし、届いたイベントを
+// HTML のビューに変えて、ローカルの HTTP サーバから配り続ける。
+//
+// ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
+// 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。
 
-import { readdirSync, readFileSync, statSync } from "node:fs"
-import { homedir } from "node:os"
-import { basename, dirname, join, resolve } from "node:path"
+import { readFileSync } from "node:fs"
+import { join, resolve } from "node:path"
 import process from "node:process"
 
 import {
+  availableExpressions,
+  type CharacterDefinition,
   classifyPortraitFile,
   isPlausibleSvgMarkup,
   parseCharacterDefinition,
@@ -14,41 +18,28 @@ import {
   resolveOutfitAccent,
   resolvePortraitFile,
 } from "./character.ts"
-import {
-  type Expression,
-  expressionLabel,
-  type Outfit,
-  resolveExpression,
-  resolveOutfit,
-} from "./expression.ts"
+import { type Expression, expressionLabel, type Outfit, resolveOutfit } from "./expression.ts"
 import { type Host } from "./host.ts"
 import { createOrcaHost } from "./orca-host.ts"
-import { parseStateFile } from "./state.ts"
-import { extractAgentMeta, extractLatestToolName } from "./subagents.ts"
+import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./session-driver.ts"
+import { type SessionEvent } from "./session-event.ts"
+import {
+  applySessionEvent,
+  currentExpression,
+  INITIAL_SESSION_VIEW,
+  mainViewEntries,
+  recentToolNames,
+  type SessionView,
+} from "./session-view.ts"
 import { type TaskStatusCounts, countTaskStatuses } from "./tasks.ts"
-import {
-  selectTranscriptTarget,
-  type TranscriptTargetCandidate,
-  type TranscriptTargetSelection,
-} from "./transcript-target.ts"
-import {
-  extractContextUsage,
-  extractLatestPendingBackgroundAgentCount,
-  extractLatestUtterance,
-  extractMainViewEntries,
-  extractPendingQuestion,
-  splitUtterance,
-} from "./transcript.ts"
 import { startViewServer, type ViewServer } from "./view-server.ts"
 import {
   buildCharacterBody,
   buildMainBody,
-  buildQuestionBody,
   buildSidebarBody,
   type CharacterPortraitSource,
   type CharacterViewData,
   type SidebarData,
-  type SubagentActivity,
   VIEW_NAMES,
 } from "./view.ts"
 
@@ -58,46 +49,26 @@ const DEFAULT_VIEW_PORT = 7327
 const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 // 起動時にレイアウトページのタブを自動で開くかどうか。既定は開く（コマンド1つで完成させるため）。
 const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
-// セリフの行頭マーカー。出力スタイルの規約（docs/requirements.md 4.2）とそろえる。
-// 末尾の半角スペースまでが1つのマーカー。
-const DEFAULT_SPEECH_MARKER = "アスナ: "
-const SPEECH_MARKER_ENV_NAME = "TSUKUMO_SPEECH_MARKER"
 
-const USAGE = `tsukumo — Claude Code の発話を HTML のビューに出すサイドカー
+const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
 
 使い方:
-  bun run start [transcript.jsonl]
+  bun run start
 
-起動すると、ビューの配信とレイアウトページのタブを開くところまで1コマンドで進む。
-引数を省略すると、SessionStart hook が書き出す ~/.tsukumo/transcript-path を追従先にし、
-**同じディレクトリで始まった新しいセッションへ自動で乗り換える**（Claude Code を再起動しても
-サイドカーは追いつく。別のディレクトリのセッションには乗り換えない）。
-引数でパスを渡した場合はそれを優先し、以降も乗り換えない。
+起動すると Claude Code のセッションが立ち上がり、ビューの配信とレイアウトページのタブを
+開くところまで1コマンドで進む。**セッションは毎回新規**で、再開はしない。
 
 環境変数:
   TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
   TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は characters/tsukumo-spirit。
                           自分の素材を使うときは characters/local などを指す。cwd 相対にも対応）
   TSUKUMO_OPEN_VIEW       起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
-  TSUKUMO_SPEECH_MARKER   セリフの行頭マーカー（既定は「${DEFAULT_SPEECH_MARKER}」。
-                          出力スタイル側の名前を変えたときに合わせる。末尾の空白も含めて扱う）
 `
 
-// hook（hooks/state.sh）が書く既知の場所。ディレクトリ名・ファイル名を変えるときは
-// 両方を直す（docs/architecture.md「hookは状態ファイルを書くだけにする」）。
-const TSUKUMO_DIR_NAME = ".tsukumo"
-const STATE_FILE_NAME = "state.json"
-// hook が SessionStart で書く追従先。**セッションの cwd ごとに1ファイル**（同名になるのは
-// 同じディレクトリのセッションだけ）。1つのファイルを共有していた頃は、別のリポジトリで claude を
-// 起動しただけで奪われた（2026-09-11）。
-const TRANSCRIPT_TARGETS_DIR_NAME = "targets"
-
-// ポーリング間隔。追従の遅延目安1秒以内（docs/requirements.md「5. 実行環境・非機能要件」）
-// に対して余裕を持たせている。
-const POLL_INTERVAL_MS = 500
-
-// サイドバーは縦に狭い領域なので、サブエージェントの直近の活動は数件に絞る。
-const MAX_RECENT_SUBAGENT_ACTIVITIES = 5
+// ビューを配り直す間隔。本文はトークン単位で流れてくるので、断片1つごとに全ビューを組み直すと
+// 無駄が大きい。まとめて配ることで転送量を抑える（反映の遅延目安は1秒以内。
+// docs/requirements.md「5. 実行環境・非機能要件」）。
+const PUBLISH_INTERVAL_MS = 100
 
 // develop/tasks.json は起動時の cwd（リポジトリ直下で `bun run start` する運用）からの相対で読む。
 // セッションに依存しない、tsukumo 自身の進捗管理ファイルのため。
@@ -113,40 +84,18 @@ const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 // character.json が無い・壊れている、または name が無いときの立ち絵 alt テキストの既定名。
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
-type FileSnapshot = {
-  readonly mtimeMs: number
-  readonly size: number
-}
-
 /**
- * 終了コードを返す。0 のときはビューサーバとポーリングループを残したままプロセスを生かし続けるので、
+ * 終了コードを返す。0 のときはビューサーバとセッションを残したままプロセスを生かし続けるので、
  * 呼び出し側は 0 以外のときだけ `process.exit` する。
  */
 async function main(args: readonly string[]): Promise<number> {
-  const homeDir = homedir()
-  const cwd = process.cwd()
-  const target = resolveTranscriptTarget(args[0], homeDir, cwd)
-  if (target.kind === "other-cwd") {
-    process.stderr.write(
-      `tsukumo: hook が書いた追従先は別のディレクトリ（${target.cwd}）のセッション。` +
-        "このディレクトリで claude を起動し直すか、追従先を引数で渡す\n",
-    )
-    return 2
+  if (args.includes("--help")) {
+    process.stdout.write(USAGE)
+    return 0
   }
-  if (target.kind === "missing") {
-    process.stderr.write(USAGE)
-    return 2
-  }
-  const transcriptPath = target.path
 
-  // 起動時に前提（transcript が読める・ポートが空いている）が満たされていないときだけ即時終了する
+  // 起動時に前提（ポートが空いている）が満たされていないときだけ即時終了する
   // （docs/coding-standards.md「エラーハンドリング」）。
-  const initialSnapshot = readSnapshot(transcriptPath)
-  if (initialSnapshot === undefined) {
-    process.stderr.write(`tsukumo: transcript を読み込めない: ${transcriptPath}\n`)
-    return 1
-  }
-
   const port = resolveViewPort(process.env[VIEW_PORT_ENV_NAME])
   if (port === undefined) {
     process.stderr.write(`tsukumo: ${VIEW_PORT_ENV_NAME} がポート番号として読めない\n`)
@@ -154,7 +103,18 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   const host = createOrcaHost()
-  const server = await startViewServer(port, host).catch((error: unknown) => {
+
+  // ビューサーバとセッションは互いを必要とする（サーバは依頼をセッションへ渡し、セッションは
+  // 配るためにサーバを要る）。**先に立てるのはサーバ**にして、セッションはあとから入る形にした。
+  // 起動直後の依頼は受け取れずに 503 で返るだけで、どちらかが欠けて黙って落ちることがない。
+  let driver: SessionDriver | undefined = undefined
+  const server = await startViewServer(port, host, (text) => {
+    if (driver === undefined) {
+      return false
+    }
+    driver.prompt(text)
+    return true
+  }).catch((error: unknown) => {
     process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
     return undefined
   })
@@ -163,28 +123,16 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   const characterDir = resolveCharacterDir(process.env[CHARACTER_DIR_ENV_NAME], process.cwd())
-  const speechMarker = resolveSpeechMarker(process.env[SPEECH_MARKER_ENV_NAME])
-  const publishCharacterView = createCharacterViewPublisher(
-    server,
-    homeDir,
-    characterDir,
-    speechMarker,
-  )
+  const publish = throttle(createViewPublisher(server, characterDir), PUBLISH_INTERVAL_MS)
+  publish(INITIAL_SESSION_VIEW)
 
-  // 引数でパスを渡して起動したときは追従先を固定する（明示した相手を見張り続けるための逃げ道。
-  // docs/architecture.md「追従先は自前でスラッグ化せず、hookが書いたパスを読む」）。
-  const resolveNextTranscriptPath =
-    args[0] === undefined ? () => readFollowTranscriptPath(homeDir, cwd) : () => undefined
-
-  publishAllViews(server, transcriptPath, publishCharacterView, speechMarker)
-  followTranscript(
-    server,
-    transcriptPath,
-    initialSnapshot,
-    publishCharacterView,
-    speechMarker,
-    resolveNextTranscriptPath,
-  )
+  driver = startSession({
+    cwd: process.cwd(),
+    expressions: availableExpressions(readCharacterDefinition(characterDir)),
+    permissionMode: DEFAULT_PERMISSION_MODE,
+    onEvent: createEventSink(publish),
+  })
+  stopSessionOnExit(driver)
   announce(server)
 
   if (resolveOpenView(process.env[OPEN_VIEW_ENV_NAME])) {
@@ -192,6 +140,107 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   return 0
+}
+
+/**
+ * イベントを受けて姿を更新し、配る係を呼ぶ。**セッションの姿を持つのはここ1箇所だけ**
+ * （畳み込みそのものは純粋関数。src/session-view.ts）。
+ */
+function createEventSink(publish: (view: SessionView) => void): (event: SessionEvent) => void {
+  let view = INITIAL_SESSION_VIEW
+
+  return (event) => {
+    view = applySessionEvent(view, event)
+    if (event.kind === "session-ended") {
+      process.stderr.write(`tsukumo: セッションが終わった: ${event.reason}\n`)
+    }
+    publish(view)
+  }
+}
+
+/**
+ * ビューを配る係を作る。**「決める → 配る」1回分をまるごと包む唯一の場所**で、ここでの失敗は
+ * 次の更新に任せて諦める（docs/coding-standards.md「エラーハンドリング」— 描画ループの中に
+ * `try`/`catch` を散らさない）。
+ */
+function createViewPublisher(
+  server: ViewServer,
+  characterDir: string,
+): (view: SessionView) => void {
+  return (view) => {
+    try {
+      const data: CharacterViewData = {
+        speech: view.speech,
+        ...readCharacterAssets(characterDir, currentExpression(view), resolveOutfit(view.model)),
+      }
+      server.publish("character", buildCharacterBody(data))
+      server.publish("main", buildMainBody(mainViewEntries(view)))
+      server.publish("sidebar", buildSidebarBody(sidebarData(view)))
+    } catch {
+      process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n")
+    }
+  }
+}
+
+/**
+ * サイドバーに出す値。**いま何をしているかは実行中・直近のツール名だけ**にとどめる
+ * （引数と結果は会話の内容なので出さない。docs/coding-standards.md「会話内容の扱い」）。
+ * 区画そのものの作り直しは後続タスクなので、いまは既存の部品にツール名を流し込んでいる。
+ */
+function sidebarData(view: SessionView): SidebarData {
+  return {
+    contextTokens: undefined,
+    subagents: {
+      pendingCount: undefined,
+      recentActivity: recentToolNames(view).map((name) => ({
+        description: undefined,
+        model: undefined,
+        latestToolName: name,
+      })),
+    },
+    taskCounts: readTaskCounts(),
+  }
+}
+
+/**
+ * 呼び出しをまとめる。**最後の1回は必ず配る**（間隔の終わりに、そのとき最新の姿を配る）ので、
+ * 流れが止まったあとに古い画面が残ることがない。
+ */
+function throttle(
+  publish: (view: SessionView) => void,
+  intervalMs: number,
+): (view: SessionView) => void {
+  let latest: SessionView | undefined = undefined
+  let timer: ReturnType<typeof setTimeout> | undefined = undefined
+
+  return (view) => {
+    latest = view
+    if (timer !== undefined) {
+      return
+    }
+
+    timer = setTimeout(() => {
+      timer = undefined
+      const pending = latest
+      latest = undefined
+      if (pending !== undefined) {
+        publish(pending)
+      }
+    }, intervalMs)
+  }
+}
+
+/**
+ * プロセスが終わるときにセッションを閉じる。**閉じないと claude の子プロセスが残る**ので、
+ * 割り込み（Ctrl-C）と終了要求の両方で入力を閉じてから抜ける。
+ */
+function stopSessionOnExit(driver: SessionDriver): void {
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    process.on(signal, () => {
+      driver.close()
+      process.exit(0)
+    })
+  }
 }
 
 /**
@@ -221,63 +270,12 @@ function resolveCharacterDir(envValue: string | undefined, cwd: string): string 
 }
 
 /**
- * 起動時の追従先を決める。**引数が優先**で、無ければ SessionStart hook が書き出した既知の場所
- * （~/.tsukumo/transcript-path）を読む
- * （docs/architecture.md「追従先は自前でスラッグ化せず、hookが書いたパスを読む」）。
- * hook が書いたものは**このディレクトリで始まったセッションのときだけ**採る（判定は
- * src/transcript-target.ts）。
- */
-function resolveTranscriptTarget(
-  argPath: string | undefined,
-  homeDir: string,
-  cwd: string,
-): TranscriptTargetSelection {
-  if (argPath !== undefined) {
-    return { kind: "follow", path: argPath }
-  }
-
-  return selectTranscriptTarget(readTranscriptTargets(homeDir), cwd)
-}
-
-/**
- * 追従中に乗り換え先を決め直す。hook が書いた追従先が**このディレクトリのセッションのもの**に
- * 変わっていればそのパスを返し、それ以外（無い・読めない・別のディレクトリ）は undefined を
- * 返して今の追従先を変えさせない。
- */
-function readFollowTranscriptPath(homeDir: string, cwd: string): string | undefined {
-  const selection = selectTranscriptTarget(readTranscriptTargets(homeDir), cwd)
-  return selection.kind === "follow" ? selection.path : undefined
-}
-
-/** hook が書いた追従先ファイルを全部読む。読めないファイルはその1つだけを飛ばす。 */
-function readTranscriptTargets(homeDir: string): readonly TranscriptTargetCandidate[] {
-  const dir = join(homeDir, TSUKUMO_DIR_NAME, TRANSCRIPT_TARGETS_DIR_NAME)
-
-  return readOptionalDirEntries(dir).flatMap((name) => {
-    const path = join(dir, name)
-    const content = readOptionalFile(path)
-    const writtenAtMs = readOptionalMtimeMs(path)
-    return content === undefined || writtenAtMs === undefined ? [] : [{ content, writtenAtMs }]
-  })
-}
-
-/**
  * 起動時にレイアウトページのタブを自動で開くかどうかを決める。**環境変数が読み取りの唯一の場所**
  * （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。"0" のときだけ開かない
  * （ポート番号のような不正値の弾き方は不要で、それ以外の値はすべて「開く」に倒す）。
  */
 function resolveOpenView(rawValue: string | undefined): boolean {
   return rawValue?.trim() !== "0"
-}
-
-/**
- * セリフの行頭マーカーを決める。**環境変数が読み取りの唯一の場所**
- * （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
- * **値は trim しない**（既定の「アスナ: 」のように、末尾の空白までがマーカーの一部になる）。
- * 未設定・空文字のときだけ既定に落とす。
- */
-function resolveSpeechMarker(rawValue: string | undefined): string {
-  return rawValue === undefined || rawValue === "" ? DEFAULT_SPEECH_MARKER : rawValue
 }
 
 /** 環境変数のポート番号を読む。読めない値のときは undefined を返し、既定にも落とさない。 */
@@ -296,144 +294,26 @@ function resolveViewPort(rawPort: string | undefined): number | undefined {
 }
 
 /**
- * 追記を検知してビューを更新するポーリングループ。ファイルの mtime/size を見るだけで十分とした。
- *
- * **同じきっかけで追従先の乗り換えも見る。** Claude Code を再起動すると transcript は別の
- * ファイルになり、古いほうは更新が止まる。追従先を起動時に決めたきりにすると、ビューは
- * 終わったセッションを映したまま黙って止まる（失敗の兆候が出ないので、利用者からは
- * 「更新されない」としか見えない）。
+ * キャラクター定義（character.json）を読む。無い・壊れているときは undefined を返し、
+ * 呼び出し側は立ち絵なし・表情は `default` だけにフォールバックする。
  */
-function followTranscript(
-  server: ViewServer,
-  initialTranscriptPath: string,
-  initialSnapshot: FileSnapshot,
-  publishCharacterView: (transcriptPath: string) => void,
-  speechMarker: string,
-  resolveNextTranscriptPath: () => string | undefined,
-): void {
-  let transcriptPath = initialTranscriptPath
-  let lastSnapshot = initialSnapshot
-
-  setInterval(() => {
-    const next = resolveNextTranscriptPath()
-    const nextSnapshot =
-      next === undefined || next === transcriptPath ? undefined : readSnapshot(next)
-    // 新しい追従先がまだ読めないときは乗り換えない（読めている今の追従先を手放さないため）。
-    if (next !== undefined && nextSnapshot !== undefined) {
-      process.stderr.write(`tsukumo: 追従先を切り替えた: ${next}\n`)
-      transcriptPath = next
-      lastSnapshot = nextSnapshot
-      publishAllViews(server, transcriptPath, publishCharacterView, speechMarker)
-      return
-    }
-
-    const current = readSnapshot(transcriptPath)
-    if (current === undefined) {
-      return
-    }
-    if (current.mtimeMs === lastSnapshot.mtimeMs && current.size === lastSnapshot.size) {
-      return
-    }
-
-    lastSnapshot = current
-    publishAllViews(server, transcriptPath, publishCharacterView, speechMarker)
-  }, POLL_INTERVAL_MS)
-}
-
-/** 3つのビューをまとめて配る。サイドバー・メインビューの更新はキャラビューと同じきっかけに相乗りする。 */
-function publishAllViews(
-  server: ViewServer,
-  transcriptPath: string,
-  publishCharacterView: (transcriptPath: string) => void,
-  speechMarker: string,
-): void {
-  publishCharacterView(transcriptPath)
-  publishSidebarView(server, transcriptPath)
-  publishMainView(server, transcriptPath, speechMarker)
-  publishQuestionView(server, transcriptPath)
-}
-
-// 答え待ちの質問の「読む → 決める → 配る」1回分。答え待ちが無いときは空を配り、入力欄の領域は
-// 送信フォームに戻る（src/view.ts の buildQuestionBody / questionRegionScript）。
-function publishQuestionView(server: ViewServer, transcriptPath: string): void {
-  try {
-    const transcriptContent = readFileSync(transcriptPath, "utf8")
-    server.publish("question", buildQuestionBody(extractPendingQuestion(transcriptContent)))
-  } catch {
-    process.stderr.write("tsukumo: 質問の更新に失敗した。次の更新を待つ\n")
-  }
+function readCharacterDefinition(characterDir: string): CharacterDefinition | undefined {
+  const content = readOptionalFile(join(characterDir, CHARACTER_DEFINITION_FILE_NAME))
+  return content === undefined ? undefined : parseCharacterDefinition(content)
 }
 
 /**
- * キャラビューの publish 関数を作る。**「直前のセリフ」を保持する場所はこの1箇所だけ**
- * （`docs/requirements.md` 4.2「規約に従っていない発話が来たときは、吹き出しは直前のセリフを
- * 出し続ける」）。閉じ込めた `lastSpeech` を、起動直後の1回目の呼び出しとポーリングループからの
- * 呼び出しの両方で共有することで、状態の持ち主を1つに保っている。
- *
- * 返す関数が「読む → 決める → 配る」の1回分をまるごと包む唯一の場所になる。ここでの失敗は
- * 次のポーリングに任せて諦める（docs/coding-standards.md「エラーハンドリング」— ループの中に
- * `try`/`catch` を散らさない）。
- */
-function createCharacterViewPublisher(
-  server: ViewServer,
-  homeDir: string,
-  characterDir: string,
-  speechMarker: string,
-): (transcriptPath: string) => void {
-  let lastSpeech: string | undefined = undefined
-  let lastTranscriptPath: string | undefined = undefined
-
-  return (transcriptPath: string) => {
-    // 追従先が変わったら直前のセリフを捨てる。「規約に従っていない発話が来たら直前のセリフを
-    // 出し続ける」のは同じセッションの中での話で、別のセッションのセリフを引き継ぐ意味はない。
-    if (transcriptPath !== lastTranscriptPath) {
-      lastSpeech = undefined
-      lastTranscriptPath = transcriptPath
-    }
-
-    try {
-      const utterance = extractLatestUtterance(readFileSync(transcriptPath, "utf8"))
-      const speech =
-        utterance === undefined ? undefined : splitUtterance(utterance, speechMarker).speech
-      if (speech !== undefined) {
-        lastSpeech = speech
-      }
-
-      // 状態ファイルが無い・壊れている・未知のイベント種別のときも、parseStateFile /
-      // resolveExpression / resolveOutfit が undefined ・ "default" に落として吸収するので、
-      // ここではそれ以上分岐しない。
-      const stateFileContent = readOptionalFile(stateFilePath(homeDir))
-      const state = stateFileContent !== undefined ? parseStateFile(stateFileContent) : undefined
-      const expression = resolveExpression(state)
-      const outfit = resolveOutfit(state)
-
-      const data: CharacterViewData = {
-        speech: lastSpeech,
-        ...readCharacterAssets(characterDir, expression, outfit),
-      }
-
-      server.publish("character", buildCharacterBody(data))
-    } catch {
-      process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n")
-    }
-  }
-}
-
-/**
- * キャラクター定義（character.json）と立ち絵を読み、キャラビューに渡せる形にする。
- * character.json が無い・壊れている、表情に対応する立ち絵が無い、画像ファイル自体が
- * 読めない・種類を判定できない、といったときはすべて `portrait: undefined` に落ちて、
- * 呼び出し側（buildCharacterBody）が吹き出しだけの表示にフォールバックする
- * （docs/requirements.md 4.2「フォールバック」）。
+ * キャラクター定義と立ち絵を読み、キャラビューに渡せる形にする。character.json が無い・
+ * 壊れている、表情に対応する立ち絵が無い、画像ファイル自体が読めない・種類を判定できない、
+ * といったときはすべて `portrait: undefined` に落ちて、呼び出し側（buildCharacterBody）が
+ * 吹き出しだけの表示にフォールバックする（docs/requirements.md 4.2「フォールバック」）。
  */
 function readCharacterAssets(
   characterDir: string,
   expression: Expression,
   outfit: Outfit,
 ): Omit<CharacterViewData, "speech"> {
-  const definitionContent = readOptionalFile(join(characterDir, CHARACTER_DEFINITION_FILE_NAME))
-  const definition =
-    definitionContent === undefined ? undefined : parseCharacterDefinition(definitionContent)
+  const definition = readCharacterDefinition(characterDir)
 
   if (definition === undefined) {
     return {
@@ -485,112 +365,6 @@ function readPortraitSource(filePath: string): CharacterPortraitSource | undefin
     : undefined
 }
 
-// サイドバーの「読む → 決める → 配る」1回分。コンテキスト使用量・サブエージェントの状況・
-// タスクの進捗の3つは互いに独立した情報源を持つので、どれか1つが読めなくても
-// buildSidebarBody 側が「不明」に倒して残りを表示する（ここでは分岐しない）。
-function publishSidebarView(server: ViewServer, transcriptPath: string): void {
-  try {
-    const transcriptContent = readFileSync(transcriptPath, "utf8")
-
-    const data: SidebarData = {
-      contextTokens: extractContextUsage(transcriptContent),
-      subagents: {
-        pendingCount: extractLatestPendingBackgroundAgentCount(transcriptContent),
-        recentActivity: readRecentSubagentActivity(transcriptPath),
-      },
-      taskCounts: readTaskCounts(),
-    }
-
-    server.publish("sidebar", buildSidebarBody(data))
-  } catch {
-    process.stderr.write("tsukumo: サイドバーの更新に失敗した。次の更新を待つ\n")
-  }
-}
-
-// メインビューの「読む → 決める → 配る」1回分。extractMainViewEntries が transcript 全体から
-// 時系列の記録を作り、直近の分だけに絞って渡す（作業中/完了後の切り替えは行わない理由は
-// src/transcript.ts の extractMainViewEntries を参照）。
-function publishMainView(server: ViewServer, transcriptPath: string, speechMarker: string): void {
-  try {
-    const transcriptContent = readFileSync(transcriptPath, "utf8")
-    server.publish("main", buildMainBody(extractMainViewEntries(transcriptContent, speechMarker)))
-  } catch {
-    process.stderr.write("tsukumo: メインビューの更新に失敗した。次の更新を待つ\n")
-  }
-}
-
-/**
- * 直近に更新されたサブエージェントの記録から、それぞれの状況（meta.json のラベル＋直近の
- * ツール名）を集める。ディレクトリが無い・空のときは空配列（サブエージェントがまだ1つも
- * 居ないのと同じ扱い）。「今も走っているか」は判定できないため、ここでは mtime の新しい順に
- * 並べるだけに留める（src/subagents.ts のコメント参照）。
- */
-function readRecentSubagentActivity(transcriptPath: string): readonly SubagentActivity[] {
-  const dir = subagentsDirFor(transcriptPath)
-  const files = readOptionalDirEntries(dir).filter((name) => name.endsWith(".jsonl"))
-
-  const withMtime = files
-    .map((name) => {
-      const filePath = join(dir, name)
-      const mtimeMs = readOptionalMtimeMs(filePath)
-      return mtimeMs === undefined ? undefined : { filePath, mtimeMs }
-    })
-    .filter(
-      (entry): entry is { readonly filePath: string; readonly mtimeMs: number } =>
-        entry !== undefined,
-    )
-
-  const recentFilePaths = [...withMtime]
-    .sort((a, b) => b.mtimeMs - a.mtimeMs)
-    .slice(0, MAX_RECENT_SUBAGENT_ACTIVITIES)
-    .map((entry) => entry.filePath)
-
-  return recentFilePaths
-    .map((filePath) => subagentActivityAt(filePath))
-    .filter((activity): activity is SubagentActivity => activity !== undefined)
-}
-
-/**
- * 1件のサブエージェントの transcript パスから、直近のツール名と meta.json のラベルを合わせる。
- * どちらも読み取れない（transcript にツール使用が無く、meta.json も無い・壊れている）ときだけ
- * undefined を返し、一覧から外す。**meta.json が無い場合はツール名だけで出す**
- * （列から消さない。ユーザーとの合意事項）。
- */
-function subagentActivityAt(transcriptFilePath: string): SubagentActivity | undefined {
-  const transcriptContent = readOptionalFile(transcriptFilePath)
-  const latestToolName =
-    transcriptContent === undefined ? undefined : extractLatestToolName(transcriptContent)
-
-  const metaContent = readOptionalFile(metaFilePathFor(transcriptFilePath))
-  const meta = metaContent === undefined ? undefined : extractAgentMeta(metaContent)
-
-  if (latestToolName === undefined && meta === undefined) {
-    return undefined
-  }
-
-  return {
-    description: meta?.description,
-    model: meta?.model,
-    latestToolName,
-  }
-}
-
-/**
- * サブエージェントの transcript が置かれるディレクトリ
- * （`<主 transcript のディレクトリ>/<session-id>/subagents`、実測。docs/architecture.md
- * 「採用アーキテクチャ」）。主 transcript のファイル名（拡張子抜き）が session-id にあたる。
- */
-function subagentsDirFor(transcriptPath: string): string {
-  const sessionId = basename(transcriptPath, ".jsonl")
-  return join(dirname(transcriptPath), sessionId, "subagents")
-}
-
-/** `agent-<id>.jsonl` の隣にある `agent-<id>.meta.json` のパス（実測）。 */
-function metaFilePathFor(transcriptFilePath: string): string {
-  const idWithoutExtension = basename(transcriptFilePath, ".jsonl")
-  return join(dirname(transcriptFilePath), `${idWithoutExtension}.meta.json`)
-}
-
 function readTaskCounts(): TaskStatusCounts | undefined {
   const content = readOptionalFile(join(process.cwd(), ...TASKS_FILE_RELATIVE_PATH))
   return content === undefined ? undefined : countTaskStatuses(content)
@@ -599,7 +373,7 @@ function readTaskCounts(): TaskStatusCounts | undefined {
 // 起動したことと URL は、ペインに残る唯一の出力。ここに会話の内容は出さない
 // （docs/coding-standards.md「会話内容の扱い」）。
 // 利用者が実際に開くのは layoutUrl（3領域をまとめた1枚）だけでよい。個別の URL は
-// デバッグ用に残してあるので、併せて表示しておく（`docs/architecture.md`「3つのビューは
+// デバッグ用に残してあるので、併せて表示しておく（`docs/architecture.md`「ビューは
 // 1枚のページにまとめる」）。
 function announce(server: ViewServer): void {
   const individualLines = VIEW_NAMES.map((view) => `    ${server.urlOf(view)}`)
@@ -607,15 +381,6 @@ function announce(server: ViewServer): void {
     `tsukumo: ビューを配信中\n  ${server.layoutUrl}\n` +
       `  （個別ビュー・デバッグ用）\n${individualLines.join("\n")}\n`,
   )
-}
-
-function readSnapshot(path: string): FileSnapshot | undefined {
-  try {
-    const stat = statSync(path)
-    return { mtimeMs: stat.mtimeMs, size: stat.size }
-  } catch {
-    return undefined
-  }
 }
 
 /** 無くてもよいファイルを読む。存在しない・読めないときは undefined を返す（例外にしない）。 */
@@ -634,28 +399,6 @@ function readOptionalBinaryFile(path: string): Buffer | undefined {
   } catch {
     return undefined
   }
-}
-
-/** 無くてもよいディレクトリの中身を列挙する。存在しない・読めないときは空配列を返す。 */
-function readOptionalDirEntries(path: string): readonly string[] {
-  try {
-    return readdirSync(path)
-  } catch {
-    return []
-  }
-}
-
-/** 無くてもよいファイルの最終更新時刻を読む。存在しない・読めないときは undefined を返す。 */
-function readOptionalMtimeMs(path: string): number | undefined {
-  try {
-    return statSync(path).mtimeMs
-  } catch {
-    return undefined
-  }
-}
-
-function stateFilePath(homeDir: string): string {
-  return join(homeDir, TSUKUMO_DIR_NAME, STATE_FILE_NAME)
 }
 
 function describeError(error: unknown): string {

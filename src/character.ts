@@ -9,7 +9,7 @@
 // ファイルI/O（character.json 自体・立ち絵の画像ファイルを読むこと）は src/index.ts に集約する。
 // ここが返すのはファイル名の文字列までで、実際に中身を読むのは呼び出し側。
 
-import { type Expression, type Outfit } from "./expression.ts"
+import { type Expression, EXPRESSIONS, type Outfit } from "./expression.ts"
 
 /**
  * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」
@@ -47,6 +47,24 @@ export function resolvePortraitFile(
   expression: Expression,
 ): string | undefined {
   return definition.portraits[expression] ?? definition.portraits.default
+}
+
+/**
+ * 立ち絵がある表情の一覧。`speak` ツールが受け付ける表情名をここから作る
+ * （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」— 表情名の出どころは
+ * 定義ファイル側）。**`default` は定義に無くても必ず含む**（未知の表情の落とし先なので、
+ * これが無いと受け付けられる名前が1つも無くなる）。定義そのものが無いときは `default` だけ。
+ */
+export function availableExpressions(
+  definition: CharacterDefinition | undefined,
+): readonly Expression[] {
+  if (definition === undefined) {
+    return ["default"]
+  }
+
+  return EXPRESSIONS.filter(
+    (expression) => expression === "default" || definition.portraits[expression] !== undefined,
+  )
 }
 
 /** 衣装に対応する差し色を決める。該当する衣装の指定が無ければ `default` に落ちる。 */

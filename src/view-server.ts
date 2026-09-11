@@ -20,6 +20,7 @@ import {
   LAYOUT_PATH,
   type LayoutBodies,
   ANSWER_PATH,
+  PROMPT_PATH,
   TERMINALS_PATH,
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
@@ -40,6 +41,13 @@ const BIND_HOST = "127.0.0.1"
 
 // 接続が黙ったまま切られるのを防ぐための空打ち。中身は持たない。
 const HEARTBEAT_INTERVAL_MS = 15_000
+
+/**
+ * 入力欄から届いた依頼をセッション駆動へ渡す関数。**受け取れたかどうかだけを返す**
+ * （セッションがまだ起きていないときは `false`）。ここで待たないのは、応答が返るのは
+ * ビューの SSE 側だから。
+ */
+export type SendPrompt = (text: string) => boolean
 
 export type ViewServer = {
   /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */
@@ -63,7 +71,11 @@ export type ViewServer = {
  * ここで直接組み立てず、必ずこのポート経由にする（docs/architecture.md「ホスト依存の操作は
  * 1つのポートにまとめる」）。
  */
-export function startViewServer(port: number, host: Host): Promise<ViewServer> {
+export function startViewServer(
+  port: number,
+  host: Host,
+  sendPrompt: SendPrompt,
+): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
   // listen が終わるまでは空文字列。状態を変える経路（POST）が実際に受け付けられるのは
@@ -72,7 +84,7 @@ export function startViewServer(port: number, host: Host): Promise<ViewServer> {
 
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, bodies, clients, host, boundOrigin)
+    respond(request, path, response, bodies, clients, host, boundOrigin, sendPrompt)
   })
 
   const heartbeat = setInterval(() => {
@@ -137,6 +149,7 @@ function respond(
   clients: Map<ViewName, Set<ServerResponse>>,
   host: Host,
   serverOrigin: string,
+  sendPrompt: SendPrompt,
 ): void {
   if (path === "/") {
     writeHtml(response, buildIndexPage())
@@ -162,6 +175,15 @@ function respond(
 
   if (path === TERMINALS_PATH && request.method === "GET") {
     handleListTerminals(response, host)
+    return
+  }
+
+  if (path === PROMPT_PATH && request.method === "POST") {
+    if (!isAllowedOrigin(request, serverOrigin)) {
+      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
+      return
+    }
+    handlePrompt(request, response, sendPrompt)
     return
   }
 
@@ -276,6 +298,53 @@ function sortPanesByLikelyClaude(panes: readonly Pane[]): readonly Pane[] {
   const likely = panes.filter((pane) => pane.likelyClaude)
   const others = panes.filter((pane) => !pane.likelyClaude)
   return [...likely, ...others]
+}
+
+/**
+ * 入力欄から届いた依頼をセッション駆動へ渡す。**文面はここでもディスクに書かず、ログにも
+ * 出さない**（docs/coding-standards.md「会話内容の扱い」）。エラー時に返すのも定型の理由文だけ。
+ */
+function handlePrompt(
+  request: IncomingMessage,
+  response: ServerResponse,
+  sendPrompt: SendPrompt,
+): void {
+  readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
+    .then((body) => {
+      const text = body === undefined ? undefined : parsePromptRequest(body)
+      if (text === undefined) {
+        writeJson(response, 400, { ok: false, reason: "依頼の形式が正しくない" })
+        return
+      }
+
+      if (!sendPrompt(text)) {
+        writeJson(response, 503, { ok: false, reason: "セッションがまだ起きていない" })
+        return
+      }
+
+      writeJson(response, 200, { ok: true })
+    })
+    .catch(() => {
+      writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
+    })
+}
+
+function parsePromptRequest(body: string): string | undefined {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(body)
+  } catch {
+    return undefined
+  }
+
+  if (!isRecord(parsed)) {
+    return undefined
+  }
+
+  const { text } = parsed
+  return typeof text === "string" && text.trim() !== "" && text.length <= MAX_DISPATCH_TEXT_LENGTH
+    ? text
+    : undefined
 }
 
 /**
