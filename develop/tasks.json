@@ -7,7 +7,9 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-041"]
+    "dependencies": [
+      "T-041"
+    ]
   },
   {
     "id": "T-028",
@@ -37,7 +39,9 @@
     "difficulty": "opus",
     "passes": true,
     "evidence": "scratchpad/sdk-spike/spike.ts（Bun + SDK 0.3.268 + Claude Code 2.1.268）で5段階を実機実行。①出力スタイル: init の output_style=\"Asuna\"、応答も規約どおり。②speak: mcp__tsukumo__speak が2回、引数 text/expression。③canUseTool: Bash（touch）で届く（suggestions=1）、AskUserQuestion は questions が届き updatedInput.answers で答えて会話が続いた。ls は Claude Code 側が自動許可。④permissionMode に auto がある（init で permissionMode=auto）。補足: slash_commands=60（next-task / plan-tasks / code-review / loop / clear / compact / model を含む）、skills=26、stream_event で本文が流れる、interrupt() で中断→ result は error_during_execution、追加入力は同じ文脈で続く。init はプロンプトごとに届く。本体の src/test/package.json に差分なし。",
-    "dependencies": ["T-035"]
+    "dependencies": [
+      "T-035"
+    ]
   },
   {
     "id": "T-037",
@@ -47,7 +51,9 @@
     "difficulty": "opus",
     "passes": true,
     "evidence": "opus に委譲。追加: src/session-driver.ts（SDK を import する唯一のファイル）/ session-event.ts（変換）/ session-view.ts（畳み込み）/ pending-answer.ts（答え待ち）。`bun run check` 通過: 327 pass / 0 fail（CLI を起動しきる E2E 24件は撤去し、前提チェック2件を残した）。目視（Orca タブ、TSUKUMO_VIEW_PORT=7399、POST /api/prompt で短い依頼）: 吹き出しに speak の完了報告が出て表情が proud、メインビューに本文が出た。ユーザー確認済み。申し送り: 本文に書かれたセリフはメインビューに出る（出力スタイルの改訂で直す）。/api/interrupt・許可/質問の UI・question ビューは後続。サブエージェント由来のメッセージは未フィルタ。",
-    "dependencies": ["T-036"]
+    "dependencies": [
+      "T-036"
+    ]
   },
   {
     "id": "T-038",
@@ -56,8 +62,10 @@
     "status": "done",
     "difficulty": "sonnet",
     "passes": true,
-    "evidence": "sonnet に委譲。/api/interrupt（同一オリジン検査つき）と進行状態の SSE（/events/turn-status）を追加、入力欄を /api/prompt に付け替え、送り先の一覧を UI から外した。Enter 送信 / Shift+Enter 改行 / IME 確定は isComposing と keyCode 229 で除外。`bun run check` 通過: 337 pass / 0 fail。curl で prompt → {ok:true}、interrupt → {ok:true}、SSE で idle → in-progress → idle を観測（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**（自動進行中のため）。確かめること: 右下が入力欄＋送信だけ／送ると「中断」に変わり押すと「送信」に戻る／Shift+Enter で改行。",
-    "dependencies": ["T-037"]
+    "evidence": "sonnet に委譲。/api/interrupt（同一オリジン検査つき）と進行状態の SSE（/events/turn-status）を追加、入力欄を /api/prompt に付け替え、送り先の一覧を UI から外した。Enter 送信 / Shift+Enter 改行 / IME 確定は isComposing と keyCode 229 で除外。`bun run check` 通過: 337 pass / 0 fail。curl で prompt → {ok:true}、interrupt → {ok:true}、SSE で idle → in-progress → idle を観測（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 右下が入力欄＋送信だけ／送ると「中断」に変わり押すと「送信」に戻る／Shift+Enter で改行。",
+    "dependencies": [
+      "T-037"
+    ]
   },
   {
     "id": "T-039",
@@ -66,8 +74,10 @@
     "status": "done",
     "difficulty": "sonnet",
     "passes": true,
-    "evidence": "sonnet に委譲。session-view.ts で吹き出しを同ターン内の直近3件に、speak 不在のターンだけ行頭マーカーの補助、mainViewEntries からツール系を除外、直近20ターンの窓。レンダラは壊れた入力3種（未閉のコードブロック・表・HTML タグ）で例外を出さないことをテストで担保（変更不要だった）。`bun run check` 通過: 346 pass / 0 fail。curl 確認: /events/main に update 10回、最終 HTML に table / pre.mermaid / pre code、吹き出しに speak 2件（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: 左上に本文が段々書き足され終わると整形される／吹き出しに着手と完了の2行／新しい依頼の直後も前の吹き出しが残る。申し送り: 行頭マーカーの既定値が transcript.ts の定数になった（環境変数の読み取りは無い）。",
-    "dependencies": ["T-037"]
+    "evidence": "sonnet に委譲。session-view.ts で吹き出しを同ターン内の直近3件に、speak 不在のターンだけ行頭マーカーの補助、mainViewEntries からツール系を除外、直近20ターンの窓。レンダラは壊れた入力3種（未閉のコードブロック・表・HTML タグ）で例外を出さないことをテストで担保（変更不要だった）。`bun run check` 通過: 346 pass / 0 fail。curl 確認: /events/main に update 10回、最終 HTML に table / pre.mermaid / pre code、吹き出しに speak 2件（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 左上に本文が段々書き足され終わると整形される／吹き出しに着手と完了の2行／新しい依頼の直後も前の吹き出しが残る。申し送り: 行頭マーカーの既定値が transcript.ts の定数になった（環境変数の読み取りは無い）。",
+    "dependencies": [
+      "T-037"
+    ]
   },
   {
     "id": "T-040",
@@ -77,7 +87,10 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-037", "T-039"]
+    "dependencies": [
+      "T-037",
+      "T-039"
+    ]
   },
   {
     "id": "T-041",
@@ -87,7 +100,9 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-036"]
+    "dependencies": [
+      "T-036"
+    ]
   },
   {
     "id": "T-042",
@@ -97,7 +112,11 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-038", "T-039", "T-040"]
+    "dependencies": [
+      "T-038",
+      "T-039",
+      "T-040"
+    ]
   },
   {
     "id": "T-043",
@@ -107,7 +126,10 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-037", "T-028"]
+    "dependencies": [
+      "T-037",
+      "T-028"
+    ]
   },
   {
     "id": "T-044",
@@ -117,7 +139,10 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-037", "T-039"]
+    "dependencies": [
+      "T-037",
+      "T-039"
+    ]
   },
   {
     "id": "T-045",
@@ -127,7 +152,9 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-038"]
+    "dependencies": [
+      "T-038"
+    ]
   },
   {
     "id": "T-046",
@@ -137,6 +164,11 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-042", "T-043", "T-044", "T-045"]
+    "dependencies": [
+      "T-042",
+      "T-043",
+      "T-044",
+      "T-045"
+    ]
   }
 ]
