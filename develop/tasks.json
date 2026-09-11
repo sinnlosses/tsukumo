@@ -7,9 +7,7 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-041"
-    ]
+    "dependencies": ["T-041"]
   },
   {
     "id": "T-028",
@@ -39,9 +37,7 @@
     "difficulty": "opus",
     "passes": true,
     "evidence": "scratchpad/sdk-spike/spike.ts（Bun + SDK 0.3.268 + Claude Code 2.1.268）で5段階を実機実行。①出力スタイル: init の output_style=\"Asuna\"、応答も規約どおり。②speak: mcp__tsukumo__speak が2回、引数 text/expression。③canUseTool: Bash（touch）で届く（suggestions=1）、AskUserQuestion は questions が届き updatedInput.answers で答えて会話が続いた。ls は Claude Code 側が自動許可。④permissionMode に auto がある（init で permissionMode=auto）。補足: slash_commands=60（next-task / plan-tasks / code-review / loop / clear / compact / model を含む）、skills=26、stream_event で本文が流れる、interrupt() で中断→ result は error_during_execution、追加入力は同じ文脈で続く。init はプロンプトごとに届く。本体の src/test/package.json に差分なし。",
-    "dependencies": [
-      "T-035"
-    ]
+    "dependencies": ["T-035"]
   },
   {
     "id": "T-037",
@@ -51,9 +47,7 @@
     "difficulty": "opus",
     "passes": true,
     "evidence": "opus に委譲。追加: src/session-driver.ts（SDK を import する唯一のファイル）/ session-event.ts（変換）/ session-view.ts（畳み込み）/ pending-answer.ts（答え待ち）。`bun run check` 通過: 327 pass / 0 fail（CLI を起動しきる E2E 24件は撤去し、前提チェック2件を残した）。目視（Orca タブ、TSUKUMO_VIEW_PORT=7399、POST /api/prompt で短い依頼）: 吹き出しに speak の完了報告が出て表情が proud、メインビューに本文が出た。ユーザー確認済み。申し送り: 本文に書かれたセリフはメインビューに出る（出力スタイルの改訂で直す）。/api/interrupt・許可/質問の UI・question ビューは後続。サブエージェント由来のメッセージは未フィルタ。",
-    "dependencies": [
-      "T-036"
-    ]
+    "dependencies": ["T-036"]
   },
   {
     "id": "T-038",
@@ -63,9 +57,7 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "sonnet に委譲。/api/interrupt（同一オリジン検査つき）と進行状態の SSE（/events/turn-status）を追加、入力欄を /api/prompt に付け替え、送り先の一覧を UI から外した。Enter 送信 / Shift+Enter 改行 / IME 確定は isComposing と keyCode 229 で除外。`bun run check` 通過: 337 pass / 0 fail。curl で prompt → {ok:true}、interrupt → {ok:true}、SSE で idle → in-progress → idle を観測（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 右下が入力欄＋送信だけ／送ると「中断」に変わり押すと「送信」に戻る／Shift+Enter で改行。",
-    "dependencies": [
-      "T-037"
-    ]
+    "dependencies": ["T-037"]
   },
   {
     "id": "T-039",
@@ -75,9 +67,7 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "sonnet に委譲。session-view.ts で吹き出しを同ターン内の直近3件に、speak 不在のターンだけ行頭マーカーの補助、mainViewEntries からツール系を除外、直近20ターンの窓。レンダラは壊れた入力3種（未閉のコードブロック・表・HTML タグ）で例外を出さないことをテストで担保（変更不要だった）。`bun run check` 通過: 346 pass / 0 fail。curl 確認: /events/main に update 10回、最終 HTML に table / pre.mermaid / pre code、吹き出しに speak 2件（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 左上に本文が段々書き足され終わると整形される／吹き出しに着手と完了の2行／新しい依頼の直後も前の吹き出しが残る。申し送り: 行頭マーカーの既定値が transcript.ts の定数になった（環境変数の読み取りは無い）。",
-    "dependencies": [
-      "T-037"
-    ]
+    "dependencies": ["T-037"]
   },
   {
     "id": "T-040",
@@ -87,10 +77,7 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-037",
-      "T-039"
-    ]
+    "dependencies": ["T-037", "T-039"]
   },
   {
     "id": "T-041",
@@ -100,9 +87,7 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-036"
-    ]
+    "dependencies": ["T-036"]
   },
   {
     "id": "T-042",
@@ -112,11 +97,7 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-038",
-      "T-039",
-      "T-040"
-    ]
+    "dependencies": ["T-038", "T-039", "T-040"]
   },
   {
     "id": "T-043",
@@ -126,10 +107,7 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-037",
-      "T-028"
-    ]
+    "dependencies": ["T-037", "T-028"]
   },
   {
     "id": "T-044",
@@ -139,10 +117,7 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-037",
-      "T-039"
-    ]
+    "dependencies": ["T-037", "T-039"]
   },
   {
     "id": "T-045",
@@ -152,9 +127,7 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-038"
-    ]
+    "dependencies": ["T-038"]
   },
   {
     "id": "T-046",
@@ -164,11 +137,26 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-042",
-      "T-043",
-      "T-044",
-      "T-045"
-    ]
+    "dependencies": ["T-042", "T-043", "T-044", "T-045"]
+  },
+  {
+    "id": "T-047",
+    "summary": "どのディレクトリからでも tsukumo コマンドで起こせるようにする",
+    "task": "`tsukumo` コマンドを作り、どのプロジェクトのディレクトリで起こしても動くようにする（立ち絵と同梱物は tsukumo 自身の場所から読む）。\n\n## 背景\n\nユーザーの言葉（2026-09-11）: 「あるプロジェクトやディレクトリ上で tsukumo を起動して適用することができるのが絶対条件。あるプロジェクトのトップディレクトリで claude を打つように tsukumo と打つとそのプロジェクトをキャラと一緒に作業できるもの。claude の拡張と言ってもいい」。\n\nいまの状態（2026-09-11 実測）:\n\n- **`tsukumo` というコマンドは無い。** `package.json` に `bin` が無く、起動は `bun run start`（`bun run src/index.ts`）でリポジトリ直下からしかできない\n- **駆動の作業ディレクトリは `process.cwd()`**（`src/index.ts` の `startSessionDriver` に `cwd: process.cwd()`）。ここは既に正しい。別のディレクトリで起こせば、Claude Code はそのプロジェクトを見て、そのプロジェクトの CLAUDE.md・スキルを読む\n- **立ち絵の既定の置き場所が cwd 相対**（`src/index.ts` の `resolveCharacterDir`: 環境変数 `TSUKUMO_CHARACTER_DIR` が無ければ `join(cwd, \"characters\", \"tsukumo-spirit\")`）。別のプロジェクトで起こすと立ち絵が見つからず、キャラが出ない\n- `develop/tasks.json` は cwd 相対で読む（`readOptionalFile`）。無ければ `undefined` で、サイドバーの件数が出ないだけ。**これはそのままでよい**（起動先プロジェクトの `develop/tasks.json` があればそれを見る、という意味になる）\n- `vendor/` は `import.meta.url` からの相対で配る（`src/view-server.ts`）。cwd に依存しない。**これが手本**\n\n## 解くべき論点\n\n- **コマンドの器**: `package.json` に `\"bin\": { \"tsukumo\": \"bin/tsukumo\" }` を足し、`bin/tsukumo` は `#!/usr/bin/env bun` の1行と `src/index.ts` の `main` を呼ぶだけの短いファイルにする（ロジックを置かない）。`bun run start` は残す\n- **立ち絵の既定**: 「tsukumo 自身の場所」を `import.meta.url` から解いて `characters/tsukumo-spirit` を既定にする。環境変数 `TSUKUMO_CHARACTER_DIR` は**絶対パスならそのまま、相対なら cwd 相対**（今の挙動を保つ。起動先プロジェクトに自分の素材を置く使い方ができる）\n- **「tsukumo 自身の場所」の解き方は1箇所に置く**（`vendor/` の解き方と同じ関数にまとめる。原則3・5。ファイル名が概念になる名前にする。`paths` / `utils` にしない）\n- 環境変数の読み取りは `src/index.ts` に集約したまま（規約）\n\n## やること\n\n1. `bin/tsukumo` と `package.json` の `bin` を足す。`src/index.ts` の `main` を bin から呼べる形にする（既に `main(args)` があるならそれを export するだけ）\n2. 立ち絵の既定を tsukumo 自身の場所からにする。`vendor/` の解き方と同じ場所に寄せる\n3. `docs/requirements.md` 2.1 に「どのプロジェクトのディレクトリでも `tsukumo` で起動でき、そのプロジェクトを作業対象にする」を足し、4.6「起動と設定」の `bun run start` を `tsukumo`（開発中は `bun run start` でも同じ）に書き換える。1章の合格シーンの「1コマンドで起動すると」を「プロジェクトのディレクトリで `tsukumo` と打つと」に寄せる。`CLAUDE.md`「よく使うコマンド」も合わせる\n4. `docs/architecture.md`「既知の制約・注意点」に「cwd に依存してよいのは、起動先プロジェクトのもの（作業ディレクトリ・`develop/tasks.json`・相対指定の素材）だけ。同梱物は自分の場所から読む」を1項目足す\n\n## 完了条件\n\n- 別のディレクトリ（例: `mktemp -d` で作った空のディレクトリ）から `bun /path/to/tsukumo/bin/tsukumo` を起こして、`TSUKUMO_OPEN_VIEW=0` でも `/character` の HTML に立ち絵（`<img` か `<svg`）が出ること。`curl` で確かめ、起こしたプロセスは止める（`pgrep -f claude-agent-sdk` が空）\n- `TSUKUMO_CHARACTER_DIR` に相対パスを渡したとき cwd 相対に解けることのテスト、既定が tsukumo 自身の場所になることのテスト（`resolveCharacterDir` 相当の純粋関数で）\n- `grep -c '^#\\{2,3\\} ' docs/requirements.md` が編集の前後で同じ（索引テーブルへの誤挿入の検知。値を `evidence` に書く）\n- `bun run check` が通ること。**テストは SDK の子プロセスを起動しない**\n\n## 注意\n\n- **グローバルへの導入（`bun link` など）はこのタスクでやらない**（別タスク。ユーザーの承認が要る）\n- 見出し名で位置を探すと索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `Bun.*` の固有 API を使わない（bin の shebang だけは `bun`）。タスク番号をコード・ドキュメントに書かない\n- 会話内容の扱い: 動作確認で送った依頼の中身を報告・`evidence` に写さない\n- サブエージェントに委譲してよい。`/loop` に載せてよい",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-040"]
+  },
+  {
+    "id": "T-048",
+    "summary": "tsukumo コマンドをグローバルに入れ、別プロジェクトで起動して確かめる",
+    "task": "`tsukumo` コマンドをグローバルに導入し、別のプロジェクトのディレクトリで `tsukumo` と打って起動できることを確かめる。\n\n## 背景\n\nコマンドの器（`bin/tsukumo`、`package.json` の `bin`）は前のタスクで入る。**それをどのディレクトリからでも打てるようにするには、グローバルへの導入が要る**。`CLAUDE.md`「進捗管理とHandoff」の IMPORTANT にあるとおり、**グローバルなツールの導入はユーザーの承認を得てから行う**。\n\n2026-09-11 実測: `which tsukumo` は無し、`bun pm bin -g` は空（Bun のグローバル bin ディレクトリが未設定か未使用）、`~/.bun/bin` には `bun` と `bunx` だけ。`~/.zshrc` に tsukumo の alias は無い。\n\n## 解くべき論点\n\n- **導入の方法**（ユーザーに選んでもらう）: (a) リポジトリで `bun link` して `~/.bun/bin/tsukumo` を作る（`PATH` に `~/.bun/bin` が要る。開発中の変更がそのまま反映される）、(b) `~/.local/bin/tsukumo` などへシンボリックリンクを置く、(c) `~/.zshrc` に alias。**推奨は (a)**（Bun の標準の仕組みで、消すときも `bun unlink` で済む）。どれを選んでも**このリポジトリの外に何を置いたか**を `docs/requirements.md` 4.6 と `docs/architecture.md`「既知の制約・注意点」に書く（後で消せるように）\n- `PATH` の確認: `~/.bun/bin` が `PATH` に無ければ、ユーザーに `~/.zshrc` への追記を頼む（**tsukumo からユーザーのシェル設定を書き換えない**）\n\n## やること\n\n1. ユーザーに導入の方法を確認し、承認を得る\n2. 導入する（例: `bun link`）。`which tsukumo` で場所を確かめる\n3. **別のプロジェクトのディレクトリ**（tsukumo 以外の実在するリポジトリ）で `tsukumo` と打ち、Orca のタブが開いて、そのプロジェクトについての依頼（例: 「このリポジトリのトップにあるファイルを3つ挙げて」）に、そのプロジェクトの内容で答えることを目視する\n4. `docs/requirements.md` 4.6 と `CLAUDE.md`「セットアップ / 環境構築」に導入の手順（と消し方）を書く\n\n## 完了条件\n\n- `which tsukumo` がパスを返すこと（`evidence` に書く）\n- 別のプロジェクトのディレクトリで `tsukumo` と打って、Orca のタブに立ち絵が出て、そのプロジェクトの内容で応答が返ることをユーザーが目視（どのディレクトリで、何が見えたかを `evidence` に書く。**依頼と応答の中身は写さない**）\n- `bun run check` が通ること（docs の整形）\n\n## 注意\n\n- **グローバルへの導入はユーザーの承認を得てから。** サブエージェントに委譲せず、ユーザーがいるセッションで行う。`/loop` に載せない\n- `~/.zshrc` や `~/.claude/settings.json` を tsukumo 側から書き換えない\n- 起こしたプロセスは終わったら止め、`pgrep -f claude-agent-sdk` が空であることを確かめる",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-047"]
   }
 ]
