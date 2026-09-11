@@ -42,6 +42,25 @@ export { type PermissionMode }
  */
 export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto"
 
+/**
+ * `PermissionMode` が持つ値の全体（SDK の型定義そのままの列挙）。**外部から届いた値の検証
+ * （{@link isPermissionMode}）がここを参照する。** `src/view.ts` の `<select>` は
+ * このファイルを import しない（原則3。SDK への依存を session-driver.ts に閉じるため）ので、
+ * 画面に出す並び・日本語ラベルは `src/view.ts` 側に別で持つ（値そのものは同じ5つ）。
+ */
+export const PERMISSION_MODES: readonly PermissionMode[] = [
+  "default",
+  "acceptEdits",
+  "auto",
+  "plan",
+  "bypassPermissions",
+]
+
+/** 画面から届いた文字列（外部由来の `unknown`）が `PermissionMode` の値かどうかを検証する。 */
+export function isPermissionMode(value: string): value is PermissionMode {
+  return PERMISSION_MODES.some((mode) => mode === value)
+}
+
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
   "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想・完了報告はこのツールで言う。" +

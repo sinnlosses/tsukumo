@@ -177,3 +177,32 @@ function answersRecord(
     }),
   )
 }
+
+/**
+ * 画面から届いた JSON（外部由来の `unknown`）を {@link Answer} として検証する。
+ * `labels` は自由入力の文字列も受け取れる（`answersRecord` は選択肢との一致を要求しない）。
+ * 形が違うときは undefined を返す。
+ */
+export function parseAnswer(value: unknown): Answer | undefined {
+  if (!isRecord(value)) {
+    return undefined
+  }
+
+  if (value.kind === "allow" || value.kind === "deny") {
+    return { kind: value.kind }
+  }
+
+  if (value.kind !== "answers" || !Array.isArray(value.labels) || !value.labels.every(isString)) {
+    return undefined
+  }
+
+  return { kind: "answers", labels: value.labels }
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string"
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}

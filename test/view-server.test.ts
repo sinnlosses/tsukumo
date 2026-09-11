@@ -2,8 +2,12 @@ import { afterEach, describe, expect, it, mock } from "bun:test"
 import { networkInterfaces } from "node:os"
 
 import { type Host, type HostResult } from "../src/host.ts"
+import { type Answer } from "../src/pending-answer.ts"
+import { type PermissionMode } from "../src/session-driver.ts"
 import {
+  type SendAnswer,
   type SendInterrupt,
+  type SendPermissionMode,
   type SendPrompt,
   startViewServer,
   type ViewServer,
@@ -11,6 +15,7 @@ import {
 import {
   DISPATCH_PATH,
   INTERRUPT_PATH,
+  PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TERMINALS_PATH,
   TURN_STATUS_EVENT_PATH,
@@ -43,8 +48,17 @@ async function start(
   host: Host = fakeHost(),
   sendPrompt: SendPrompt = () => true,
   sendInterrupt: SendInterrupt = () => Promise.resolve(),
+  sendAnswer: SendAnswer = () => true,
+  sendPermissionMode: SendPermissionMode = () => Promise.resolve(true),
 ): Promise<ViewServer> {
-  const server = await startViewServer(0, host, sendPrompt, sendInterrupt)
+  const server = await startViewServer(
+    0,
+    host,
+    sendPrompt,
+    sendInterrupt,
+    sendAnswer,
+    sendPermissionMode,
+  )
   running = server
   return server
 }
@@ -111,67 +125,6 @@ describe("ビューサーバ", () => {
     // パスを組み立てないので、`..` を書いても外のファイルには届かない。
     expect((await fetch(`${origin}/vendor/../package.json`)).status).toBe(404)
     expect((await fetch(`${origin}/vendor/%2e%2e/package.json`)).status).toBe(404)
-  })
-
-  it("質問への回答として、選ばれたターミナルにキーを押す", async () => {
-    const pressed: { paneId?: string; key?: string } = {}
-    const server = await start(
-      fakeHost({
-        pressKey: (paneId, key) => {
-          pressed.paneId = paneId
-          pressed.key = key
-          return Promise.resolve({ ok: true })
-        },
-      }),
-    )
-
-    const response = await fetch(`${originOf(server)}/api/answer`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term_abc", key: "2" }),
-    })
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ ok: true })
-    expect(pressed).toEqual({ paneId: "term_abc", key: "2" })
-  })
-
-  it("許可していないキーは押さない（ブラウザから任意のキーを押させない）", async () => {
-    let pressedCount = 0
-    const server = await start(
-      fakeHost({
-        pressKey: () => {
-          pressedCount += 1
-          return Promise.resolve({ ok: true })
-        },
-      }),
-    )
-
-    for (const key of ["a", "Escape", "ArrowDown", "", "1 "]) {
-      const response = await fetch(`${originOf(server)}/api/answer`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ terminalId: "term_abc", key }),
-      })
-      expect(response.status).toBe(400)
-    }
-
-    expect(pressedCount).toBe(0)
-  })
-
-  it("キーを押せなかったときは理由をそのまま返す", async () => {
-    const server = await start(
-      fakeHost({ pressKey: () => Promise.resolve({ ok: false, reason: "orca が見つからない" }) }),
-    )
-
-    const response = await fetch(`${originOf(server)}/api/answer`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ terminalId: "term_abc", key: "1" }),
-    })
-
-    expect(response.status).toBe(502)
-    expect(await response.json()).toEqual({ ok: false, reason: "orca が見つからない" })
   })
 
   it("publish した本文を、そのビューのページに埋め込んで返す", async () => {
@@ -371,6 +324,217 @@ describe("実行中の中断", () => {
 
     expect(response.status).toBe(502)
     expect((await response.json()).ok).toBe(false)
+  })
+})
+
+describe("答え待ちへの回答（/api/answer）", () => {
+  it("id と answer を駆動へそのまま渡す", async () => {
+    const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      sendAnswer,
+    )
+
+    const response = await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "toolu_1", answer: { kind: "allow" } }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(sendAnswer).toHaveBeenCalledWith("toolu_1", { kind: "allow" })
+  })
+
+  it("拒否と、質問の answers も同じ経路で渡す", async () => {
+    const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      sendAnswer,
+    )
+
+    await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "toolu_1", answer: { kind: "deny" } }),
+    })
+    await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        id: "toolu_q",
+        answer: { kind: "answers", labels: ["自由入力の答え"] },
+      }),
+    })
+
+    expect(sendAnswer).toHaveBeenNthCalledWith(1, "toolu_1", { kind: "deny" })
+    expect(sendAnswer).toHaveBeenNthCalledWith(2, "toolu_q", {
+      kind: "answers",
+      labels: ["自由入力の答え"],
+    })
+  })
+
+  it("壊れた JSON は駆動を呼ばずに400を返す", async () => {
+    const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      sendAnswer,
+    )
+
+    const response = await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{ 壊れた json",
+    })
+
+    expect(response.status).toBe(400)
+    expect(sendAnswer).not.toHaveBeenCalled()
+  })
+
+  it("id が無い・answer の形が合わないときも400を返す", async () => {
+    const server = await start(fakeHost())
+
+    for (const body of [
+      JSON.stringify({ answer: { kind: "allow" } }),
+      JSON.stringify({ id: "toolu_1", answer: { kind: "maybe" } }),
+      JSON.stringify({ id: "toolu_1", answer: { kind: "answers", labels: [1, 2] } }),
+    ]) {
+      const response = await fetch(`${originOf(server)}/api/answer`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+      })
+      expect(response.status).toBe(400)
+    }
+  })
+
+  it("解決済み・知らない id は409を返す（駆動が false を返したとき）", async () => {
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => false,
+    )
+
+    const response = await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "toolu_unknown", answer: { kind: "allow" } }),
+    })
+
+    expect(response.status).toBe(409)
+  })
+
+  it("別のオリジンからは、駆動を呼ばずに403で弾く", async () => {
+    const sendAnswer = mock((_id: string, _answer: Answer): boolean => true)
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      sendAnswer,
+    )
+
+    const response = await fetch(`${originOf(server)}/api/answer`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: "http://example.invalid" },
+      body: JSON.stringify({ id: "toolu_1", answer: { kind: "allow" } }),
+    })
+
+    expect(response.status).toBe(403)
+    expect(sendAnswer).not.toHaveBeenCalled()
+  })
+})
+
+describe("許可モードの切り替え（/api/permission-mode）", () => {
+  it("mode を駆動へ渡す", async () => {
+    const sendPermissionMode = mock(
+      (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
+    )
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      sendPermissionMode,
+    )
+
+    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "plan" }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(sendPermissionMode).toHaveBeenCalledWith("plan")
+  })
+
+  it("PermissionMode の値以外は駆動を呼ばずに400を返す", async () => {
+    const sendPermissionMode = mock(
+      (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
+    )
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      sendPermissionMode,
+    )
+
+    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "yolo" }),
+    })
+
+    expect(response.status).toBe(400)
+    expect(sendPermissionMode).not.toHaveBeenCalled()
+  })
+
+  it("セッションがまだ起きていないときは503を返す", async () => {
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      () => Promise.resolve(false),
+    )
+
+    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "plan" }),
+    })
+
+    expect(response.status).toBe(503)
+  })
+
+  it("別のオリジンからは403で弾く", async () => {
+    const sendPermissionMode = mock(
+      (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
+    )
+    const server = await start(
+      fakeHost(),
+      () => true,
+      () => Promise.resolve(),
+      () => true,
+      sendPermissionMode,
+    )
+
+    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: "http://example.invalid" },
+      body: JSON.stringify({ mode: "plan" }),
+    })
+
+    expect(response.status).toBe(403)
+    expect(sendPermissionMode).not.toHaveBeenCalled()
   })
 })
 

@@ -7,7 +7,7 @@ import {
   buildIndexPage,
   buildLayoutPage,
   buildMainBody,
-  buildQuestionBody,
+  buildPendingAnswerBody,
   buildSidebarBody,
   buildViewPage,
   type CharacterViewData,
@@ -18,6 +18,7 @@ import {
   PROMPT_PATH,
   type SidebarData,
   type SubagentActivity,
+  summarizePermissionInput,
   TERMINALS_PATH,
   TURN_STATUS_EVENT_PATH,
   TURN_STATUS_IDLE,
@@ -33,6 +34,8 @@ const FULL_CHARACTER_DATA: CharacterViewData = {
   portrait: { kind: "svg", svgMarkup: '<svg role="img"><circle r="1"/></svg>' },
   outfitAccent: "#b8c7ff",
   altText: "架空の精霊（通常）",
+  pending: undefined,
+  permissionMode: undefined,
 }
 
 // meta.json が有る（ラベル付き）サブエージェントと、無い（ツール名だけの）サブエージェントを
@@ -627,7 +630,7 @@ describe("入力欄（送信・中断）", () => {
     readonly calls: () => readonly FakeFetchCall[]
     readonly dispatchTurnStatus: (data: string) => void
   } {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const form = makeFakeFormElement()
     const textArea = makeFakeTextAreaElement("")
     const sendButton = makeFakeButtonElement()
@@ -822,7 +825,6 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・ス�
       main: "<p>main1</p>",
       character: "<p>char1</p>",
       sidebar: "<p>side1</p>",
-      question: "",
     }
     const page = buildLayoutPage(bodies)
 
@@ -906,7 +908,6 @@ describe("まとめたレイアウトページ", () => {
       main: "<p>作業ちゅう</p>",
       character: "<p>やあ</p>",
       sidebar: "<p>done 1 / todo 2</p>",
-      question: "",
     })
 
     expect(page).toContain(
@@ -921,7 +922,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("3領域それぞれが、既存の /events/<view> を個別に購読して自分の要素だけを差し替える", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     for (const view of VIEW_NAMES) {
       expect(page).toContain(`new EventSource(${JSON.stringify(viewEventPath(view))})`)
@@ -930,7 +931,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("右下の入力ペインに、複数行入力・送信ボタンのフォームを持つ（送り先の選択は無い）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).toContain('<section class="layout-region layout-dispatch"')
     expect(page).toContain('<form id="tsukumo-dispatch-form">')
@@ -938,7 +939,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("送り先を選ぶ <select> を持たず、DISPATCH_PATH / TERMINALS_PATH は入力欄から呼ばれない", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).not.toContain('<select id="tsukumo-dispatch-target"')
     expect(page).not.toContain(`fetch(${JSON.stringify(TERMINALS_PATH)})`)
@@ -946,7 +947,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("依頼の送信・中断を、経路の定数（PROMPT_PATH / INTERRUPT_PATH / TURN_STATUS_EVENT_PATH）宛に行う", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).toContain(`fetch(${JSON.stringify(PROMPT_PATH)}`)
     expect(page).toContain(`fetch(${JSON.stringify(INTERRUPT_PATH)}`)
@@ -954,7 +955,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("送信ボタンは初期状態で「送信」（無効ではない。送信先の選択が要らなくなったため）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).toContain(
       '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send">送信</button>',
@@ -964,7 +965,7 @@ describe("まとめたレイアウトページ", () => {
 
 describe("まとめたレイアウトページの仕切り（3本のドラッグ・既定値・localStorage）", () => {
   it("3本の仕切りと、既定に戻すボタンを持つ", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).toContain('id="tsukumo-layout-resizer-top"')
     expect(page).toContain('id="tsukumo-layout-resizer-bottom"')
@@ -978,7 +979,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     runLayoutScript(
       page,
@@ -1004,7 +1005,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
 
   it("localStorage の値が JSON として壊れていても、例外にならず既定の比率にフォールバックする", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(() =>
       runLayoutScript(
@@ -1027,7 +1028,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
 
   it("localStorage の値が型違い・範囲外のときも、例外にならず既定の比率にフォールバックする", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const broken = JSON.stringify({ rowTop: 999, topLeft: "abc", bottomLeft: 35 })
 
     expect(() =>
@@ -1053,7 +1054,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const saved = JSON.stringify({ rowTop: 50, topLeft: 60, bottomLeft: 45 })
 
     runLayoutScript(
@@ -1078,7 +1079,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("横の仕切りをドラッグすると上段/下段の高さの比率が変わり、離した時点で保存する", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     let savedValue: string | undefined
 
     runLayoutScript(
@@ -1113,7 +1114,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("縦の仕切り（上段）をドラッグすると、メインとサイドバーの幅の比率が変わる", () => {
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const resizerTop = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     runLayoutScript(
       page,
@@ -1140,7 +1141,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("動かせる範囲は端まで詰めきらないようにクランプする（15%〜85%）", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     runLayoutScript(
       page,
@@ -1167,7 +1168,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
     const resetButton = makeFakeLayoutButtonElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "", question: "" })
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     let savedValue: string | undefined
 
     runLayoutScript(
@@ -1366,57 +1367,177 @@ describe("メインビューのタブの選択（push で戻らない・新し�
   })
 })
 
-describe("キャラクターからの質問（入力欄の領域に差し込む）", () => {
-  const pending = {
-    toolUseId: "q1",
-    questions: [
-      {
-        header: "出す場所",
-        text: "質問をどのビューに出す？",
-        multiSelect: false,
-        options: [
-          { label: "メインビュー", description: "作業の記録として出す" },
-          { label: "吹き出し", description: "キャラビューに出す" },
-        ],
-      },
-    ],
-  }
-
-  it("答え待ちが無いときは空を返す（入力フォームがそのまま見える）", () => {
-    expect(buildQuestionBody(undefined)).toBe("")
+describe("許可要求の要約（summarizePermissionInput）", () => {
+  it("Bash はコマンドを出す", () => {
+    expect(summarizePermissionInput("Bash", { command: "echo dummy" })).toBe("echo dummy")
   })
 
-  it("質問文・見出し・選択肢を、番号付きの一覧で出す", () => {
-    const body = buildQuestionBody(pending)
+  it("Edit はファイルパスを出す", () => {
+    expect(
+      summarizePermissionInput("Edit", {
+        file_path: "/tmp/dummy.txt",
+        old_string: "a",
+        new_string: "b",
+      }),
+    ).toBe("/tmp/dummy.txt")
+  })
+
+  it("未知のツールは入力の最初の文字列値を出す", () => {
+    expect(summarizePermissionInput("MysteryTool", { note: "ダミーの説明", count: 3 })).toBe(
+      "ダミーの説明",
+    )
+  })
+
+  it("120文字を超えたら切り詰める（入力の全文は出さない）", () => {
+    const long = "a".repeat(200)
+
+    const summary = summarizePermissionInput("Bash", { command: long })
+
+    expect(summary.length).toBeLessThan(long.length)
+    expect(summary).toEndWith("…")
+  })
+
+  it("要約に使わないフィールドの値は混ざらない", () => {
+    const summary = summarizePermissionInput("Bash", { command: "echo dummy", secret: "内緒" })
+
+    expect(summary).not.toContain("内緒")
+  })
+})
+
+describe("答え待ちの箱（キャラビューの吹き出しの直下。buildPendingAnswerBody）", () => {
+  it("答え待ちが無いときは空を返す", () => {
+    expect(buildPendingAnswerBody(undefined)).toBe("")
+  })
+
+  it("許可要求はツール名・要約・許可・拒否ボタンを出す", () => {
+    const body = buildPendingAnswerBody({
+      kind: "permission",
+      id: "toolu_1",
+      toolName: "Bash",
+      input: { command: "echo dummy" },
+    })
+
+    expect(body).toContain('data-pending-id="toolu_1"')
+    expect(body).toContain("Bash")
+    expect(body).toContain("echo dummy")
+    expect(body).toContain("許可")
+    expect(body).toContain("拒否")
+  })
+
+  it("質問は見出し・本文・選択肢を番号付きの一覧で出す", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        {
+          header: "出す場所",
+          text: "質問をどのビューに出す？",
+          multiSelect: false,
+          options: [
+            { label: "メインビュー", description: "作業の記録として出す" },
+            { label: "吹き出し", description: "キャラビューに出す" },
+          ],
+        },
+      ],
+    })
 
     expect(body).toContain("質問をどのビューに出す？")
     expect(body).toContain("出す場所")
-    expect(body).toContain("メインビュー")
+    expect(body).toContain('data-label="メインビュー"')
     expect(body).toContain("作業の記録として出す")
-    // 番号はターミナルの並びと同じ。答えるのはターミナル側。
-    expect(body).toContain("ターミナル側で直接答えてもよい")
+    expect(body).toContain('data-label="吹き出し"')
   })
 
-  it("選択肢は押せて、押すと番号キーを押す（文字を流し込む経路では届かないため）", () => {
-    const body = buildQuestionBody(pending)
+  it("質問には拒否ボタンを出さない（答えないと会話が進まないため）", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        { header: "h", text: "t", multiSelect: false, options: [{ label: "a", description: "" }] },
+      ],
+    })
 
-    expect(body).toContain('<button type="button" class="question-choice" data-key="1"')
-    expect(body).toContain('data-key="2"')
-    expect(body).toContain("番号キーを押す")
+    expect(body).not.toContain("拒否")
   })
 
-  it("複数選べる質問はその旨を出す", () => {
-    const body = buildQuestionBody({
-      ...pending,
-      questions: [{ ...pending.questions[0]!, multiSelect: true }],
+  it("質問が1件だけの単一選択には「答える」ボタンを出さない（選ぶと即送るため）", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        { header: "h", text: "t", multiSelect: false, options: [{ label: "a", description: "" }] },
+      ],
+    })
+
+    expect(body).not.toContain("pending-answer-submit")
+  })
+
+  it("複数選べる質問はその旨を出し、「答える」ボタンを出す", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        {
+          header: "h",
+          text: "t",
+          multiSelect: true,
+          options: [
+            { label: "a", description: "" },
+            { label: "b", description: "" },
+          ],
+        },
+      ],
     })
 
     expect(body).toContain("複数選べる")
+    expect(body).toContain("pending-answer-submit")
+  })
+
+  it("質問が2件以上のときも「答える」ボタンを出す（全部答えてから送るため）", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        {
+          header: "h1",
+          text: "t1",
+          multiSelect: false,
+          options: [{ label: "a", description: "" }],
+        },
+        {
+          header: "h2",
+          text: "t2",
+          multiSelect: false,
+          options: [{ label: "b", description: "" }],
+        },
+      ],
+    })
+
+    expect(body).toContain("pending-answer-submit")
+  })
+
+  it("「その他」の選択肢は自由入力欄と送るボタンにする", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        {
+          header: "h",
+          text: "t",
+          multiSelect: false,
+          options: [{ label: "その他", description: "" }],
+        },
+      ],
+    })
+
+    expect(body).toContain('class="question-other-input"')
+    expect(body).toContain("送る")
   })
 
   it("質問文や選択肢に HTML が混ざっていてもエスケープする", () => {
-    const body = buildQuestionBody({
-      toolUseId: "q1",
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
       questions: [
         {
           header: "h",
@@ -1431,14 +1552,74 @@ describe("キャラクターからの質問（入力欄の領域に差し込む�
     expect(body).not.toContain("<b>")
     expect(body).toContain("&lt;script&gt;")
   })
+})
 
-  it("メインビューには「聞いたこと・選んだ答え」が記録として残る", () => {
-    const body = buildMainBody([
-      {
-        kind: "question",
-        questions: pending.questions,
-        answers: ["メインビュー"],
+describe("キャラビューに出す答え待ちの箱・許可モード", () => {
+  it("答え待ちの箱は吹き出しの直下に出す", () => {
+    const body = buildCharacterBody({
+      ...FULL_CHARACTER_DATA,
+      pending: {
+        kind: "permission",
+        id: "toolu_1",
+        toolName: "Bash",
+        input: { command: "echo dummy" },
       },
+    })
+
+    const balloonIndex = body.indexOf('class="balloon"')
+    const pendingIndex = body.indexOf('class="pending-answer')
+
+    expect(balloonIndex).toBeGreaterThan(-1)
+    expect(pendingIndex).toBeGreaterThan(balloonIndex)
+  })
+
+  it("答え待ちが無いときは箱を出さない", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, pending: undefined })
+
+    expect(body).not.toContain("pending-answer")
+  })
+
+  it("いまの許可モードを選択済みにする", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: "plan" })
+
+    expect(body).toContain('<option value="plan" selected>')
+  })
+
+  it("permissionMode が未定のときは既定（auto）を選択済みにする", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: undefined })
+
+    expect(body).toContain('<option value="auto" selected>')
+  })
+
+  it("bypassPermissions のときは警告クラスを付ける", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: "bypassPermissions" })
+
+    expect(body).toContain("permission-mode-select-danger")
+  })
+
+  it("bypassPermissions 以外では警告クラスを付けない", () => {
+    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, permissionMode: "auto" })
+
+    expect(body).not.toContain("permission-mode-select-danger")
+  })
+})
+
+describe("メインビューに残る質問の記録（過去の質問と選ばれた答え）", () => {
+  const historyQuestions = [
+    {
+      header: "出す場所",
+      text: "質問をどのビューに出す？",
+      multiSelect: false,
+      options: [
+        { label: "メインビュー", description: "作業の記録として出す" },
+        { label: "吹き出し", description: "キャラビューに出す" },
+      ],
+    },
+  ]
+
+  it("聞いたこと・選んだ答えが記録として残る", () => {
+    const body = buildMainBody([
+      { kind: "question", questions: historyQuestions, answers: ["メインビュー"] },
     ])
 
     expect(body).toContain("質問をどのビューに出す？")
@@ -1447,27 +1628,10 @@ describe("キャラクターからの質問（入力欄の領域に差し込む�
   })
 
   it("答えが分からない質問（差し戻しなど）は、印を付けずに選択肢だけ出す", () => {
-    const body = buildMainBody([{ kind: "question", questions: pending.questions, answers: [] }])
+    const body = buildMainBody([{ kind: "question", questions: historyQuestions, answers: [] }])
 
     expect(body).toContain("○ メインビュー")
     expect(body).not.toContain("●")
-  })
-
-  it("レイアウトページは、入力欄の領域に質問の差し込み先を持つ", () => {
-    const page = buildLayoutPage({
-      main: "",
-      character: "",
-      sidebar: "",
-      question: '<button class="question-choice" data-key="1">はい</button>',
-    })
-
-    expect(page).toContain('id="tsukumo-view-question"')
-    expect(page).toContain('data-key="1"')
-    // 質問の領域と送信フォームは同じ領域の中にある（差し替えるため）。
-    const region = page.slice(page.indexOf('id="tsukumo-view-dispatch"'))
-    expect(region.indexOf('id="tsukumo-view-question"')).toBeLessThan(
-      region.indexOf('id="tsukumo-dispatch-form"'),
-    )
   })
 })
 

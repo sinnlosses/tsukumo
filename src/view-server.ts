@@ -12,15 +12,18 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { type Host, type Pane } from "./host.ts"
+import { type Answer, parseAnswer } from "./pending-answer.ts"
+import { isPermissionMode, type PermissionMode } from "./session-driver.ts"
 import {
   buildIndexPage,
   buildLayoutPage,
   buildViewPage,
+  ANSWER_PATH,
   DISPATCH_PATH,
   INTERRUPT_PATH,
   LAYOUT_PATH,
   type LayoutBodies,
-  ANSWER_PATH,
+  PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TERMINALS_PATH,
   TURN_STATUS_EVENT_PATH,
@@ -60,6 +63,19 @@ export type SendPrompt = (text: string) => boolean
  */
 export type SendInterrupt = () => Promise<void>
 
+/**
+ * 答え待ちの箱から届いた回答をセッション駆動へ渡す関数。**駆動側の `answer` は同期的に
+ * 真偽値を返す契約**（解決済み・知らない id なら `false`。src/pending-answer.ts）。
+ */
+export type SendAnswer = (id: string, answer: Answer) => boolean
+
+/**
+ * 許可モードの `<select>` から届いた切り替えをセッション駆動へ渡す関数。**セッションが
+ * まだ起きていないときは `false` を返す**（`SendPrompt` と同じ契約。駆動側の
+ * `setPermissionMode` 自体は失敗を例外にしない）。
+ */
+export type SendPermissionMode = (mode: PermissionMode) => Promise<boolean>
+
 export type ViewServer = {
   /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */
   readonly urlOf: (view: ViewName) => string
@@ -92,6 +108,8 @@ export function startViewServer(
   host: Host,
   sendPrompt: SendPrompt,
   sendInterrupt: SendInterrupt,
+  sendAnswer: SendAnswer,
+  sendPermissionMode: SendPermissionMode,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
@@ -114,6 +132,8 @@ export function startViewServer(
       boundOrigin,
       sendPrompt,
       sendInterrupt,
+      sendAnswer,
+      sendPermissionMode,
       turnStatusClients,
       () => turnStatusBody,
     )
@@ -196,6 +216,8 @@ function respond(
   serverOrigin: string,
   sendPrompt: SendPrompt,
   sendInterrupt: SendInterrupt,
+  sendAnswer: SendAnswer,
+  sendPermissionMode: SendPermissionMode,
   turnStatusClients: Set<ServerResponse>,
   getTurnStatusBody: () => string,
 ): void {
@@ -263,7 +285,16 @@ function respond(
       writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
       return
     }
-    handleAnswer(request, response, host)
+    handleAnswer(request, response, sendAnswer)
+    return
+  }
+
+  if (path === PERMISSION_MODE_PATH && request.method === "POST") {
+    if (!isAllowedOrigin(request, serverOrigin)) {
+      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
+      return
+    }
+    handlePermissionMode(request, response, sendPermissionMode)
     return
   }
 
@@ -459,38 +490,25 @@ function handleDispatch(request: IncomingMessage, response: ServerResponse, host
 }
 
 /**
- * 質問の選択肢を押したときに受け付けるキー。**ここに載っているものだけ**を通す
- * （ブラウザから任意のキーを押させない）。選択肢の番号と、選び終えるための Enter だけで足りる。
+ * 答え待ちの箱から届いた回答を、答え待ちの列（`src/pending-answer.ts`）へ渡す。
+ * **解決済み・知らない id は 409**（同じボタンを二度押しても2回目はここで弾かれる）。
+ * 壊れた JSON・形が合わない本文は 400。
  */
-const ALLOWED_ANSWER_KEYS: readonly string[] = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "Enter",
-]
-
-/**
- * 質問への回答としてキーを1つ押す。**押す先は送信フォームと同じターミナル**（利用者が選んだもの）。
- * ホスト側はそのペインを前面へ出してからキーを押す（`src/host.ts` の `pressKey`）。
- */
-function handleAnswer(request: IncomingMessage, response: ServerResponse, host: Host): void {
+function handleAnswer(
+  request: IncomingMessage,
+  response: ServerResponse,
+  sendAnswer: SendAnswer,
+): void {
   readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
-    .then(async (body) => {
-      const answer = body === undefined ? undefined : parseAnswerRequest(body)
-      if (answer === undefined) {
-        writeJson(response, 400, { ok: false, reason: "送信先か押せないキーの指定が正しくない" })
+    .then((body) => {
+      const parsed = body === undefined ? undefined : parseAnswerRequest(body)
+      if (parsed === undefined) {
+        writeJson(response, 400, { ok: false, reason: "回答の形式が正しくない" })
         return
       }
 
-      const result = await host.pressKey(answer.terminalId, answer.key)
-      if (!result.ok) {
-        writeJson(response, 502, { ok: false, reason: result.reason })
+      if (!sendAnswer(parsed.id, parsed.answer)) {
+        writeJson(response, 409, { ok: false, reason: "解決済み、または知らない答え待ち" })
         return
       }
 
@@ -503,7 +521,7 @@ function handleAnswer(request: IncomingMessage, response: ServerResponse, host: 
 
 function parseAnswerRequest(
   body: string,
-): { readonly terminalId: string; readonly key: string } | undefined {
+): { readonly id: string; readonly answer: Answer } | undefined {
   let parsed: unknown
   try {
     parsed = JSON.parse(body)
@@ -511,16 +529,62 @@ function parseAnswerRequest(
     return undefined
   }
 
-  if (
-    !isRecord(parsed) ||
-    typeof parsed.key !== "string" ||
-    typeof parsed.terminalId !== "string"
-  ) {
+  if (!isRecord(parsed) || typeof parsed.id !== "string" || parsed.id === "") {
     return undefined
   }
 
-  const { terminalId, key } = parsed
-  return terminalId !== "" && ALLOWED_ANSWER_KEYS.includes(key) ? { terminalId, key } : undefined
+  const answer = parseAnswer(parsed.answer)
+  return answer === undefined ? undefined : { id: parsed.id, answer }
+}
+
+/**
+ * 許可モードの `<select>` から届いた切り替えを、セッション駆動へ渡す。
+ * **セッションがまだ起きていないときは 503**（`handlePrompt` と同じ扱い）。
+ * `PermissionMode` の値以外・壊れた JSON は 400。
+ */
+function handlePermissionMode(
+  request: IncomingMessage,
+  response: ServerResponse,
+  sendPermissionMode: SendPermissionMode,
+): void {
+  readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
+    .then((body) => {
+      const mode = body === undefined ? undefined : parsePermissionModeRequest(body)
+      if (mode === undefined) {
+        writeJson(response, 400, { ok: false, reason: "許可モードの指定が正しくない" })
+        return
+      }
+
+      sendPermissionMode(mode)
+        .then((accepted) => {
+          if (!accepted) {
+            writeJson(response, 503, { ok: false, reason: "セッションがまだ起きていない" })
+            return
+          }
+          writeJson(response, 200, { ok: true })
+        })
+        .catch(() => {
+          writeJson(response, 502, { ok: false, reason: "許可モードを切り替えられなかった" })
+        })
+    })
+    .catch(() => {
+      writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
+    })
+}
+
+function parsePermissionModeRequest(body: string): PermissionMode | undefined {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(body)
+  } catch {
+    return undefined
+  }
+
+  if (!isRecord(parsed) || typeof parsed.mode !== "string") {
+    return undefined
+  }
+
+  return isPermissionMode(parsed.mode) ? parsed.mode : undefined
 }
 
 type DispatchRequest = { readonly terminalId: string; readonly text: string }
@@ -602,16 +666,12 @@ function writeJson(response: ServerResponse, status: number, body: unknown): voi
   response.end(JSON.stringify(body))
 }
 
-/**
- * レイアウトページに埋め込む、領域ごとの最新の本文。まだ publish されていない領域は空。
- * `question` は入力欄の領域に差し込む質問で、**答え待ちが無いときは空**になる。
- */
+/** レイアウトページに埋め込む、領域ごとの最新の本文。まだ publish されていない領域は空。 */
 function currentBodies(bodies: ReadonlyMap<ViewName, string>): LayoutBodies {
   return {
     main: bodies.get("main") ?? "",
     character: bodies.get("character") ?? "",
     sidebar: bodies.get("sidebar") ?? "",
-    question: bodies.get("question") ?? "",
   }
 }
 

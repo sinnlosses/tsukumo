@@ -119,6 +119,11 @@ async function main(args: readonly string[]): Promise<number> {
       return true
     },
     () => (driver === undefined ? Promise.resolve() : driver.interrupt()),
+    (id, answer) => (driver === undefined ? false : driver.answer(id, answer)),
+    (mode) =>
+      driver === undefined
+        ? Promise.resolve(false)
+        : driver.setPermissionMode(mode).then(() => true),
   ).catch((error: unknown) => {
     process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
     return undefined
@@ -188,6 +193,10 @@ function createViewPublisher(
         // 直近のセリフを1つのまとまりとして出す（docs/requirements.md 4.2「続けて並べた行は
         // 1つのまとまり」）。`buildCharacterBody` は1つの文字列しか受け取らないので改行で連結する。
         speech: view.speeches.length === 0 ? undefined : view.speeches.join("\n"),
+        // 答え待ちの列の先頭だけを出す。答えたら `pending-changed` で列が進み、次が出る
+        // （docs/requirements.md 4.2「許可と質問」）。
+        pending: view.pending[0],
+        permissionMode: view.permissionMode,
         ...readCharacterAssets(characterDir, currentExpression(view), resolveOutfit(view.model)),
       }
       server.publish("character", buildCharacterBody(data))
@@ -329,7 +338,7 @@ function readCharacterAssets(
   characterDir: string,
   expression: Expression,
   outfit: Outfit,
-): Omit<CharacterViewData, "speech"> {
+): Omit<CharacterViewData, "speech" | "pending" | "permissionMode"> {
   const definition = readCharacterDefinition(characterDir)
 
   if (definition === undefined) {

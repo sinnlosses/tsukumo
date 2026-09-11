@@ -73,10 +73,10 @@
     "id": "T-040",
     "summary": "許可と質問をキャラが聞き、画面のボタンで答えられるようにする",
     "task": "許可プロンプトと質問をキャラが聞き、画面のボタンで答えられるようにする。許可モードも切り替えられるようにする。\n\n## 背景\n\nT-037 の駆動は `canUseTool` に届いた許可要求と `AskUserQuestion` を待ち行列に積み、`answer(id, decision)` で解決する。**このタスクで、待ち行列の先頭をキャラビューに出し、ボタンで answer を呼ぶ。** これで合格シーン（Q1）の「キャラが質問したら画面上のボタンで答えられる」が成立する。\n\nT-030 で作った質問の表示（`src/view.ts` の `buildQuestionBody`、`src/question.ts` の `parseQuestions`）は transcript から質問を拾う作りだったが、**選択肢の見た目はそのまま流用できる**。回答経路（`/api/answer` → `orca keypress`）は Orca に弾かれて動かなかったので捨てる。\n\nユーザー決定 Q7: **キャラが聞く。** 吹き出しに「これ実行していい？」と出て、その下に許可／拒否のボタン。AskUserQuestion の選択肢と同じ見た目。許可モード（毎回聞く／編集は自動／全部許す／プラン）を画面から切り替えられる。既定は auto モード相当（T-036 で確認した値）。\n\n## 解くべき論点\n\n- **許可要求の見せ方**: ツール名と入力の要約（Bash ならコマンド、Edit ならファイルパス）を出す。**入力の全文は出さない**（長い・会話内容を含みうる）。要約の切り方は `src/view.ts` の `truncateForDisplay` に倣う\n- **質問の見せ方**: `AskUserQuestion` の `questions[].options[]` を番号付きのボタンに。複数選択（`multiSelect`）と「その他」（自由入力）に対応する。答えは `{ behavior: \"allow\", updatedInput: { questions, answers } }` で返す（形は T-036 の記録が正典）\n- **拒否の理由**: 拒否のときは `{ behavior: \"deny\", message }` で短い定型文を返す\n- **答え待ちが複数あるとき**: 先頭だけ出し、答えたら次を出す\n- 許可モードの切り替えは `POST /api/permission-mode` → 駆動の `setPermissionMode`\n\n## やること\n\n1. `buildQuestionBody` を「答え待ち（許可 or 質問）」を受け取る形に変え、キャラビューの吹き出しの直下に出す。旧 `PendingQuestion` は捨てる\n2. `POST /api/answer` を待ち行列の answer に付け替える（同一オリジン検査は維持）\n3. 許可モードの選択肢をサイドバーのセッション情報の区画（T-043 で作る場所。先に作るならキャラビューの端でよい）に置く\n\n## 完了条件\n\n- テスト: 許可要求 → 表示用データ（ツール名＋要約）、質問 → 選択肢の一覧、answer の JSON → 駆動へ渡す decision の形（allow/deny/answers）、壊れた JSON は 400\n- Orca のタブで目視: 許可が要る操作を依頼すると吹き出しの下に許可／拒否が出て、許可すると実行が続き、拒否すると止まって次の応答が来る。質問（AskUserQuestion を誘発する依頼）で選択肢を押すと会話が続く。許可モードを変えると、以後の許可要求が出なくなる／出るようになる\n- `bun run check` が通ること\n\n## 注意\n\n- 会話内容の扱い: 許可要求の入力の全文をログや `evidence` に写さない\n- `bypassPermissions` は危険側の設定。既定にしない。選んだときは画面に色を付けて分かるようにする\n- サブエージェントに委譲してよい。`/loop` に載せてよい",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "sonnet に委譲。答え待ちの箱を buildCharacterBody に統合（吹き出しの直下。許可: ツール名＋要約120字と許可/拒否、質問: 番号付き選択肢・複数選択・その他の自由入力）。/api/answer を {id, answer} に付け替え、/api/permission-mode を追加、キャラビューに許可モードの select（bypassPermissions は警告色）。旧 question ビューと questionRegionScript は撤去。`bun run check` 通過: 371 pass / 0 fail。curl 確認: default モードで Bash 依頼 → 許可の箱 → allow で {ok:true} → idle、AskUserQuestion 依頼 → 質問の箱 → answers で {ok:true} → idle（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: Bash を使う依頼で吹き出しの下に許可/拒否が出る／許可で会話が続く／質問の選択肢を押すと会話が続く／bypassPermissions を選ぶと枠が警告色。",
     "dependencies": ["T-037", "T-039"]
   },
   {

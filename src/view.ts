@@ -6,13 +6,15 @@
 // メインビュー・キャラビュー・サイドバーの中身はすべて決まっている（下の `buildMainBody` /
 // `buildCharacterBody` / `buildSidebarBody`）。
 
+import { type PendingAsk } from "./pending-answer.ts"
+import { type Question, type QuestionOption } from "./question.ts"
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
 import { type TaskStatusCounts } from "./tasks.ts"
-import { type MainViewEntry, type PendingQuestion } from "./transcript.ts"
+import { type MainViewEntry } from "./transcript.ts"
 
-export type ViewName = "main" | "character" | "sidebar" | "question"
+export type ViewName = "main" | "character" | "sidebar"
 
-export const VIEW_NAMES: readonly ViewName[] = ["main", "character", "sidebar", "question"]
+export const VIEW_NAMES: readonly ViewName[] = ["main", "character", "sidebar"]
 
 export function isViewName(value: string): value is ViewName {
   return VIEW_NAMES.some((name) => name === value)
@@ -77,11 +79,14 @@ export const TURN_STATUS_IN_PROGRESS = "in-progress"
 export const TURN_STATUS_IDLE = "idle"
 
 /**
- * 質問の選択肢を押したときに、キーを1つ押してもらう経路（POST）。**依頼の送信とは別の経路**に
- * してあるのは、送る中身が「会話の文面」ではなく**キーの名前**だけだから（受け取り側で
- * 許可リストと突き合わせられる）。
+ * 答え待ち（許可要求・質問）に答える経路（POST、本文は `{ id, answer }`）。`answer` は
+ * `src/pending-answer.ts` の `Answer` と同じ形の JSON。**キャラビューの答え待ちの箱だけが
+ * 呼ぶ**（キーを押す旧経路は 2026-09-11 に役目を終えた。`docs/requirements.md` 4.2）。
  */
 export const ANSWER_PATH = "/api/answer"
+
+/** 許可モードを切り替える経路（POST、本文は `{ mode }`）。 */
+export const PERMISSION_MODE_PATH = "/api/permission-mode"
 
 /** 単体ビューのページで、本文を差し替える要素の id。 */
 const STANDALONE_VIEW_ELEMENT_ID = "tsukumo-view"
@@ -103,16 +108,21 @@ ${viewScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
 }
 
 /**
- * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューにだけ
- * やり取りのタブの制御（{@link mainTurnsScript}）を足す。**タブの選択はブラウザ側だけが持つ**
- * （サーバは常に「今回」を開いた本文を配る。`docs/architecture.md`「ビューの更新は
- * Server-Sent Events で押す」— 押す側に状態を持たせない）。
+ * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューには
+ * やり取りのタブの制御（{@link mainTurnsScript}）、キャラビューには答え待ちの箱と許可モードの
+ * 配線（{@link pendingAnswerScript}）を足す。**タブの選択・答え待ちの状態はブラウザ側だけが持つ**
+ * （サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は Server-Sent Events で
+ * 押す」— 押す側に状態を持たせない）。
  */
 function viewScript(elementId: string, view: ViewName, initialBody: string): string {
   const subscription = subscriptionScript(elementId, view, initialBody)
-  return view === "main"
-    ? `${subscription}\n${mainTurnsScript(elementId)}\n${reportRenderersScript(elementId)}`
-    : subscription
+  if (view === "main") {
+    return `${subscription}\n${mainTurnsScript(elementId)}\n${reportRenderersScript(elementId)}`
+  }
+  if (view === "character") {
+    return `${subscription}\n${pendingAnswerScript(elementId)}`
+  }
+  return subscription
 }
 
 /**
@@ -299,7 +309,7 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
   const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
 <section class="layout-region layout-character" id="${layoutRegionId("character")}">${bodies.character}</section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_BOTTOM_ID}" role="separator" aria-orientation="vertical" aria-label="キャラビューと入力欄の境界"></div>
-${dispatchRegionHtml(bodies.question)}
+${dispatchRegionHtml()}
 </div>`
 
   const subscriptions = VIEW_NAMES.map((view) =>
@@ -318,73 +328,8 @@ ${bottomRow}
 ${layoutScript()}
 ${subscriptions}
 ${dispatchScript()}
-${questionRegionScript()}
 </script>`,
   )
-}
-
-/**
- * 入力欄の領域を、質問と入力フォームで**切り替える**。質問の本文が入っている間はフォームを
- * 隠す（ユーザーの決定 2026-09-10「質問中はフォームを退けて差し替える」）。
- *
- * 選択肢を押したときは {@link ANSWER_PATH} へ**送信先と、キーの名前だけ**を送る。**押した直後に全部の
- * 選択肢を無効化する**のは二重押しを防ぐため。失敗したら押せる状態へ戻す。
- *
- * **`LEGACY_ANSWER_TARGET_ID` の要素はもう無い**（送り先を選ぶ `<select>` を入力欄から
- * 外したため）。`target` は常に `null` になり、この経路（ターミナルへのキー入力での回答）は
- * 動かないままになる。`index.ts` はまだ "question" ビューを一度も publish していないので、
- * いまのところ実害は無い。この経路の入れ替え・撤去は ANSWER_PATH 自体の後続タスクで行う。
- */
-function questionRegionScript(): string {
-  return `  {
-    const el = document.getElementById(${JSON.stringify(layoutRegionId("question"))})
-    const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
-    const target = document.getElementById(${JSON.stringify(LEGACY_ANSWER_TARGET_ID)})
-    const apply = () => {
-      if (form !== null) {
-        form.hidden = el.innerHTML.trim() !== ""
-      }
-    }
-    const setDisabled = (disabled) => {
-      for (const button of el.querySelectorAll(".question-choice")) {
-        button.disabled = disabled
-      }
-    }
-    el.addEventListener("click", (event) => {
-      const choice = event.target.closest(".question-choice")
-      if (choice === null) {
-        return
-      }
-      const status = el.querySelector(".question-status")
-      const terminalId = target === null ? "" : target.value
-      if (terminalId === "") {
-        status.textContent = "送信先のターミナルが選べていない"
-        return
-      }
-      setDisabled(true)
-      status.textContent = "押している…"
-      fetch(${JSON.stringify(ANSWER_PATH)}, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ terminalId, key: choice.dataset.key }),
-      })
-        .then((response) => response.json())
-        .then((result) => {
-          if (result.ok === true) {
-            status.textContent = "押した"
-            return
-          }
-          setDisabled(false)
-          status.textContent = "押せなかった: " + result.reason
-        })
-        .catch(() => {
-          setDisabled(false)
-          status.textContent = "押せなかった"
-        })
-    })
-    new MutationObserver(apply).observe(el, { childList: true })
-    apply()
-  }`
 }
 
 function layoutRegionId(view: ViewName): string {
@@ -614,9 +559,6 @@ const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
 const DISPATCH_TEXT_ID = "tsukumo-dispatch-text"
 const DISPATCH_SEND_ID = "tsukumo-dispatch-send"
 const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
-// 送り先を選ぶ <select> を入力欄から外したので、この id を持つ要素はもう無い。
-// questionRegionScript が参照しているだけの残骸（上のコメント参照）。
-const LEGACY_ANSWER_TARGET_ID = "tsukumo-dispatch-target"
 
 const DISPATCH_SEND_LABEL = "送信"
 const DISPATCH_INTERRUPT_LABEL = "中断"
@@ -625,12 +567,12 @@ const DISPATCH_INTERRUPT_LABEL = "中断"
  * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
  * （`src/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない
  * （`TERMINALS_PATH` / `DISPATCH_PATH` は入力欄からは呼ばれなくなった）。
+ *
+ * **答え待ちの箱はここには出さない。** キャラビューの吹き出しの直下（`buildCharacterBody`）に
+ * 出すことにしたので（2026-09-11 決定）、入力フォームはもう質問と切り替わらない。
  */
-function dispatchRegionHtml(questionBody: string): string {
-  // 質問が来たら**この領域を質問へ差し替える**（ユーザーの決定 2026-09-10）。答え待ちの間は
-  // 入力フォームを隠し、答えが届いたらフォームへ戻す。切り替えは questionRegionScript が行う。
+function dispatchRegionHtml(): string {
   return `<section class="layout-region layout-dispatch" id="tsukumo-view-dispatch">
-<div id="${layoutRegionId("question")}" class="question-panel">${questionBody}</div>
 <form id="${DISPATCH_FORM_ID}">
   <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行）" required></textarea>
   <div class="dispatch-row">
@@ -774,12 +716,24 @@ export type CharacterViewData = {
   readonly outfitAccent: string | undefined
   /** 立ち絵の alt / aria-label。 */
   readonly altText: string
+  /**
+   * 答え待ちの列の先頭（`src/pending-answer.ts`）。**先頭だけ出し、答えたら次を出す**のは
+   * 呼び出し側（`src/index.ts`）の役目で、ここは受け取った1件をそのまま描くだけ。
+   * 答え待ちが無いときは undefined。
+   */
+  readonly pending: PendingAsk | undefined
+  /** いまの許可モード。`session-info` イベントの `permissionMode`（`init` のたびに届く）。 */
+  readonly permissionMode: string | undefined
 }
 
 /**
  * キャラビューの本文。立ち絵と吹き出しを同じ領域に同居させる（`docs/glossary.md`「キャラビュー」）。
  * 表情の切り替えは、差し替えのたびに新しい要素が挿入される性質を利用して、CSS アニメーション
  * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
+ *
+ * **答え待ちの箱（{@link buildPendingAnswerBody}）は吹き出しの直下に出す**（許可プロンプトと
+ * 質問はキャラが聞く。2026-09-11 決定）。**許可モードの `<select>`（{@link permissionModeHtml}）は
+ * 領域の端に置く**。サイドバーの区画がまだ無いので、いまはここに置いている。
  */
 export function buildCharacterBody(data: CharacterViewData): string {
   const text = data.speech ?? PLACEHOLDER_UTTERANCE
@@ -792,7 +746,11 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // ではキャラビューは下段の半分幅になり、横長・浅めの領域になるため、縦積みのままだと吹き出しの
   // 縦幅が窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
-  return `<div class="character-layout">${portraitHtml}<div class="balloon">${escapeHtml(text)}</div></div>`
+  return `<div class="character-region">
+${permissionModeHtml(data.permissionMode)}
+<div class="character-layout">${portraitHtml}<div class="balloon">${escapeHtml(text)}</div></div>
+${buildPendingAnswerBody(data.pending)}
+</div>`
 }
 
 /**
@@ -1006,42 +964,357 @@ function truncateRequest(request: string): string {
     : `${firstLine.slice(0, MAX_REQUEST_HEADING_LENGTH)}…`
 }
 
+// 答え待ちのフィールドと同じ形の JSON をボタンの data 属性に埋め込むための識別子。
+const PENDING_ANSWER_ELEMENT_CLASS = "pending-answer"
+const PENDING_ANSWER_ID_ATTR = "data-pending-id"
+/** `AskUserQuestion` の自由入力の選択肢。このラベルの選択肢だけ、テキスト欄で受け取る。 */
+const FREE_TEXT_OPTION_LABEL = "その他"
+
+/** 許可要求の要約に出す1行の長さの上限（目安）。切り方は {@link truncateForDisplay} と同じ考え方。 */
+const MAX_PERMISSION_SUMMARY_LENGTH = 120
+
 /**
- * 入力欄の領域に差し込む**答え待ちの質問**。答え待ちが無いときは空文字を返し、
- * その場合は入力フォームがそのまま見える（切り替えは {@link questionRegionScript}）。
- *
- * **選択肢を押すと、その番号のキーを押してもらう**（{@link ANSWER_PATH} → ホストの `pressKey`）。
- * **文字を流し込む経路（`sendText`）では答えられない**ことが実機で分かっている
- * （claude が質問を表示している間は `agent_prompt_blocked` が返る。2026-09-11）。キーを押す
- * 経路は別扱いなので届きうる。**届かない環境もある**ので、ターミナル側で答えられることも書いておく。
+ * 許可要求の要約に使うフィールド名。Bash は `command`、Edit / Write / Read は `file_path`。
+ * 載っていないツールは {@link firstStringValue} に落ちる。
  */
-export function buildQuestionBody(pending: PendingQuestion | undefined): string {
+const PERMISSION_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
+  Bash: "command",
+  Edit: "file_path",
+  Write: "file_path",
+  Read: "file_path",
+}
+
+/**
+ * 許可要求（`PendingAsk` の `permission`）を、キャラビューに出してよい1行の要約にする。
+ * **入力の全文は出さない**（docs/coding-standards.md「会話内容の扱い」）。純粋関数なので、
+ * ツールごとの要約の決め方は直接テストできる。
+ */
+export function summarizePermissionInput(
+  toolName: string,
+  input: Readonly<Record<string, unknown>>,
+): string {
+  const field = PERMISSION_SUMMARY_FIELD_BY_TOOL[toolName]
+  const value = field === undefined ? firstStringValue(input) : stringField(input, field)
+  return value === undefined ? "" : truncatePermissionSummary(value)
+}
+
+function firstStringValue(input: Readonly<Record<string, unknown>>): string | undefined {
+  for (const value of Object.values(input)) {
+    if (typeof value === "string") {
+      return value
+    }
+  }
+  return undefined
+}
+
+function truncatePermissionSummary(text: string): string {
+  return text.length <= MAX_PERMISSION_SUMMARY_LENGTH
+    ? text
+    : `${text.slice(0, MAX_PERMISSION_SUMMARY_LENGTH)}…`
+}
+
+/**
+ * 答え待ちの箱。キャラビューの吹き出しの直下に出す（{@link buildCharacterBody}）。
+ * 答え待ちが無いときは空文字（そのときは箱そのものが無く、見た目に何も増えない）。
+ *
+ * - **許可要求**: ツール名＋要約と、「許可」「拒否」ボタン
+ * - **質問**（`AskUserQuestion`）: `header` / `question` / 選択肢を `AskUserQuestion` と同じ
+ *   見た目（`.question-card` / `.question-choice`）で出す。**拒否ボタンは出さない**
+ *   （答えないと会話が進まないため。中断は入力欄の「中断」が担う）
+ *
+ * ボタンを押したときの配線は {@link pendingAnswerScript}。ここは静的な HTML の組み立てだけ。
+ */
+export function buildPendingAnswerBody(pending: PendingAsk | undefined): string {
   if (pending === undefined) {
     return ""
   }
 
-  const blocks = pending.questions.map((question) => {
-    const options = question.options
-      .map(
-        (option, index) =>
-          `<li><button type="button" class="question-choice" data-key="${String(index + 1)}">
-<span class="question-choice-number">${String(index + 1)}</span>
-<span class="question-choice-label">${escapeHtml(option.label)}</span>
-<span class="question-choice-description">${escapeHtml(option.description)}</span>
-</button></li>`,
-      )
-      .join("")
+  return pending.kind === "permission" ? permissionAnswerHtml(pending) : questionAnswerHtml(pending)
+}
 
-    return `<div class="question-card">
+function permissionAnswerHtml(
+  pending: Extract<PendingAsk, { readonly kind: "permission" }>,
+): string {
+  const summary = summarizePermissionInput(pending.toolName, pending.input)
+
+  return `<div class="${PENDING_ANSWER_ELEMENT_CLASS} pending-permission" ${PENDING_ANSWER_ID_ATTR}="${escapeHtml(pending.id)}">
+<p class="pending-summary"><span class="pending-tool">${escapeHtml(pending.toolName)}</span>${summary === "" ? "" : `: ${escapeHtml(summary)}`}</p>
+<div class="pending-actions">
+<button type="button" class="pending-action pending-allow" data-answer="${escapeHtml(JSON.stringify({ kind: "allow" }))}">許可</button>
+<button type="button" class="pending-action pending-deny" data-answer="${escapeHtml(JSON.stringify({ kind: "deny" }))}">拒否</button>
+</div>
+<p class="pending-status" role="status" aria-live="polite"></p>
+</div>`
+}
+
+function questionAnswerHtml(pending: Extract<PendingAsk, { readonly kind: "question" }>): string {
+  const cards = pending.questions
+    .map((question, index) => questionCardHtml(question, index))
+    .join("\n")
+  // 質問が1つだけで単一選択なら、選択肢を押した瞬間に送る（overall の「答える」ボタンは要らない）。
+  // それ以外（複数の質問／複数選択／自由入力）は、全部に答えてから「答える」を押してもらう。
+  const needsSubmitButton =
+    pending.questions.length > 1 || (pending.questions[0]?.multiSelect ?? false)
+  const submitHtml = needsSubmitButton
+    ? `<button type="button" class="pending-action pending-answer-submit" disabled>答える</button>`
+    : ""
+
+  return `<div class="${PENDING_ANSWER_ELEMENT_CLASS} pending-question" ${PENDING_ANSWER_ID_ATTR}="${escapeHtml(pending.id)}">
+${cards}
+${submitHtml}
+<p class="pending-status" role="status" aria-live="polite"></p>
+</div>`
+}
+
+function questionCardHtml(question: Question, index: number): string {
+  const options = question.options
+    .map((option, optionIndex) => questionOptionHtml(option, index, optionIndex))
+    .join("")
+
+  return `<div class="question-card" data-question-index="${String(index)}" data-multi-select="${String(question.multiSelect)}">
 <p class="question-header">${escapeHtml(question.header)}${question.multiSelect ? "（複数選べる）" : ""}</p>
 <p class="question-text">${escapeHtml(question.text)}</p>
 <ul class="question-choices">${options}</ul>
 </div>`
-  })
+}
 
-  return `${blocks.join("\n")}
-<p class="question-status" role="status" aria-live="polite"></p>
-<p class="question-hint">押すとそのターミナルを前面にして番号キーを押す。ターミナル側で直接答えてもよい</p>`
+function questionOptionHtml(
+  option: QuestionOption,
+  questionIndex: number,
+  optionIndex: number,
+): string {
+  if (option.label === FREE_TEXT_OPTION_LABEL) {
+    return `<li class="question-choice-other">
+<input type="text" class="question-other-input" placeholder="自由入力" aria-label="${escapeHtml(option.label)}" />
+<button type="button" class="question-other-send">送る</button>
+</li>`
+  }
+
+  return `<li><button type="button" class="question-choice question-option-button" data-label="${escapeHtml(option.label)}">
+<span class="question-choice-number">${String(optionIndex + 1)}</span>
+<span class="question-choice-label">${escapeHtml(option.label)}</span>
+<span class="question-choice-description">${escapeHtml(option.description)}</span>
+</button></li>`
+}
+
+// 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
+const PERMISSION_MODE_LABELS: ReadonlyArray<readonly [string, string]> = [
+  ["default", "毎回聞く"],
+  ["acceptEdits", "編集は自動"],
+  ["auto", "自動判定"],
+  ["plan", "プラン"],
+  ["bypassPermissions", "全部許す"],
+]
+// `permissionMode` がまだ届いていないとき（session-info 前）の見た目上の既定値。
+// `src/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
+const PERMISSION_MODE_FALLBACK = "auto"
+const DANGEROUS_PERMISSION_MODE = "bypassPermissions"
+const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
+
+/**
+ * 許可モードを切り替える `<select>`。キャラビューの領域の端に置く（サイドバーの区画がまだ無いため。
+ * 2026-09-11 決定）。`bypassPermissions` を選んでいるときは警告色を付ける
+ * （`STYLE` の `.permission-mode-select-danger`）。
+ */
+function permissionModeHtml(mode: string | undefined): string {
+  const current = mode ?? PERMISSION_MODE_FALLBACK
+  const options = PERMISSION_MODE_LABELS.map(
+    ([value, label]) =>
+      `<option value="${value}"${value === current ? " selected" : ""}>${escapeHtml(label)}</option>`,
+  ).join("")
+  const dangerClass = current === DANGEROUS_PERMISSION_MODE ? " permission-mode-select-danger" : ""
+
+  return `<div class="permission-mode">
+<label for="${PERMISSION_MODE_SELECT_ID}">許可モード</label>
+<select id="${PERMISSION_MODE_SELECT_ID}" class="permission-mode-select${dangerClass}">${options}</select>
+<span class="permission-mode-status" role="status" aria-live="polite"></span>
+</div>`
+}
+
+/**
+ * 答え待ちの箱と許可モードの `<select>` の配線。キャラビューの要素（`elementId`）に対する
+ * イベント委譲だけで書く（{@link subscriptionScript} が本文を丸ごと差し替えるため、
+ * 個々のボタンに直接リスナーを付けても差し替えのたびに失われる。`mainTurnsScript` と同じ理由）。
+ *
+ * - **押した瞬間に無効化し、二重送信を防ぐ。** 失敗したら押せる状態に戻す
+ * - **単一選択（質問が1つだけで単一選択）は選択肢を押した瞬間に送る。** それ以外は選択・入力を
+ *   ブラウザ側に溜め、全部答えてから「答える」ボタンで送る
+ * - **`multiSelect` は選んだ選択肢を「、」でつないだ1つの文字列にする**（`answersRecord` は
+ *   1問につき1つの文字列しか受け取らない。`src/pending-answer.ts`）
+ * - **許可モードの変更は `change` の瞬間に送る。** 次に届く `session-info` で `<select>` の
+ *   選択が上書きされる（サーバ側の値が正になる）
+ */
+function pendingAnswerScript(elementId: string): string {
+  return `  {
+    const el = document.getElementById(${JSON.stringify(elementId)})
+
+    const box = () => el.querySelector(".${PENDING_ANSWER_ELEMENT_CLASS}")
+    const totalQuestions = () => el.querySelectorAll(".question-card").length
+
+    const answerFor = (index) => {
+      const card = el.querySelector('.question-card[data-question-index="' + index + '"]')
+      if (card === null) {
+        return ""
+      }
+      if (card.dataset.multiSelect === "true") {
+        const labels = [...card.querySelectorAll(".question-option-button.is-selected")].map(
+          (button) => button.dataset.label,
+        )
+        const other = card.querySelector(".question-other-input")
+        const otherValue = other === null ? "" : other.value.trim()
+        if (otherValue !== "") {
+          labels.push(otherValue)
+        }
+        return labels.join("、")
+      }
+      const selected = card.querySelector(".question-option-button.is-selected")
+      if (selected !== null) {
+        return selected.dataset.label
+      }
+      const other = card.querySelector(".question-other-input")
+      return other === null ? "" : other.value.trim()
+    }
+
+    const updateSubmitState = () => {
+      const submit = el.querySelector(".pending-answer-submit")
+      if (submit === null) {
+        return
+      }
+      let allAnswered = true
+      for (let index = 0; index < totalQuestions(); index += 1) {
+        if (answerFor(index) === "") {
+          allAnswered = false
+          break
+        }
+      }
+      submit.disabled = !allAnswered
+    }
+
+    const setStatus = (text) => {
+      const status = el.querySelector(".pending-status")
+      if (status !== null) {
+        status.textContent = text
+      }
+    }
+
+    const lockPending = (locked) => {
+      for (const control of el.querySelectorAll(
+        ".pending-action, .question-option-button, .question-other-send, .question-other-input",
+      )) {
+        control.disabled = locked
+      }
+    }
+
+    const sendAnswer = (answer) => {
+      const pendingBox = box()
+      const id = pendingBox === null ? "" : pendingBox.dataset.pendingId
+      lockPending(true)
+      setStatus("送信中…")
+      fetch(${JSON.stringify(ANSWER_PATH)}, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, answer }),
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          if (result.ok === true) {
+            setStatus("送った")
+            return
+          }
+          lockPending(false)
+          setStatus("送れなかった: " + result.reason)
+        })
+        .catch(() => {
+          lockPending(false)
+          setStatus("送れなかった")
+        })
+    }
+
+    el.addEventListener("click", (event) => {
+      const permissionButton = event.target.closest(".pending-permission .pending-action")
+      if (permissionButton !== null) {
+        sendAnswer(JSON.parse(permissionButton.dataset.answer))
+        return
+      }
+
+      const optionButton = event.target.closest(".question-option-button")
+      if (optionButton !== null) {
+        const card = optionButton.closest(".question-card")
+        for (const sibling of card.querySelectorAll(".question-option-button")) {
+          sibling.classList.toggle("is-selected", sibling === optionButton)
+        }
+        if (totalQuestions() === 1 && card.dataset.multiSelect !== "true") {
+          sendAnswer({ kind: "answers", labels: [optionButton.dataset.label] })
+          return
+        }
+        updateSubmitState()
+        return
+      }
+
+      const otherSend = event.target.closest(".question-other-send")
+      if (otherSend !== null) {
+        const card = otherSend.closest(".question-card")
+        const input = card.querySelector(".question-other-input")
+        const value = input === null ? "" : input.value.trim()
+        if (value === "") {
+          return
+        }
+        if (totalQuestions() === 1 && card.dataset.multiSelect !== "true") {
+          sendAnswer({ kind: "answers", labels: [value] })
+          return
+        }
+        updateSubmitState()
+        return
+      }
+
+      const submit = event.target.closest(".pending-answer-submit")
+      if (submit !== null) {
+        const labels = []
+        for (let index = 0; index < totalQuestions(); index += 1) {
+          labels.push(answerFor(index))
+        }
+        sendAnswer({ kind: "answers", labels })
+      }
+    })
+
+    el.addEventListener("input", (event) => {
+      if (event.target.classList.contains("question-other-input")) {
+        updateSubmitState()
+      }
+    })
+
+    el.addEventListener("change", (event) => {
+      if (!event.target.classList.contains("permission-mode-select")) {
+        return
+      }
+      const select = event.target
+      const status = el.querySelector(".permission-mode-status")
+      select.disabled = true
+      if (status !== null) {
+        status.textContent = "切り替え中…"
+      }
+      fetch(${JSON.stringify(PERMISSION_MODE_PATH)}, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode: select.value }),
+      })
+        .then((response) => response.json())
+        .then((result) => {
+          select.disabled = false
+          if (status !== null) {
+            status.textContent = result.ok === true ? "" : "切り替えられなかった: " + result.reason
+          }
+        })
+        .catch(() => {
+          select.disabled = false
+          if (status !== null) {
+            status.textContent = "切り替えられなかった"
+          }
+        })
+    })
+
+    updateSubmitState()
+  }`
 }
 
 /**
@@ -1109,7 +1382,6 @@ const VIEW_TITLE: Readonly<Record<ViewName, string>> = {
   main: "メインビュー",
   character: "キャラビュー",
   sidebar: "サイドバー",
-  question: "キャラクターからの質問",
 }
 
 // 3つのビューはそれぞれ別のペインに並ぶので、余白を詰めて縦スクロールだけを許す。
@@ -1124,6 +1396,25 @@ const STYLE = `
     line-height: 1.7;
     overflow-wrap: anywhere;
   }
+  .character-region { display: flex; flex-direction: column; gap: 0.5rem; }
+  .permission-mode {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #8f97ab;
+  }
+  .permission-mode-select {
+    padding: 0.15rem 0.4rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.4rem;
+    background: #1c202a;
+    color: #e6e8ee;
+    font: inherit;
+  }
+  .permission-mode-select-danger { border-color: #e88b8b; color: #e88b8b; }
+  .permission-mode-status { min-height: 1.2em; }
   .character-layout {
     display: flex;
     flex-wrap: wrap;
@@ -1262,8 +1553,32 @@ const STYLE = `
     color: #b9c0d0;
   }
   .detail-block svg { max-width: 100%; height: auto; }
-  /* 入力欄の領域に差し込む質問。答え待ちの間はここが入力フォームの代わりになる。 */
-  .question-panel:empty { display: none; }
+  /* 答え待ちの箱（キャラビューの吹き出しの直下。docs/requirements.md 4.2「許可と質問」）。 */
+  .pending-answer {
+    margin: 0.5rem 0 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.75rem;
+    background: #1c202a;
+  }
+  .pending-summary { margin: 0 0 0.5rem; }
+  .pending-tool { font-weight: bold; }
+  .pending-actions, .pending-answer-submit { margin-top: 0.5rem; }
+  .pending-actions { display: flex; gap: 0.5rem; }
+  .pending-action {
+    padding: 0.35rem 0.9rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.5rem;
+    background: #1c202a;
+    color: #e6e8ee;
+    font: inherit;
+    cursor: pointer;
+  }
+  .pending-action:hover:not(:disabled) { border-color: #8ab4ff; }
+  .pending-action:disabled { opacity: 0.5; cursor: default; }
+  .pending-allow { border-color: #7ee081; color: #7ee081; }
+  .pending-deny { border-color: #e88b8b; color: #e88b8b; }
+  .pending-status { margin: 0.3rem 0 0; min-height: 1.2em; color: #8ab4ff; font-size: 0.85rem; }
   .question-card { margin: 0 0 0.75rem; }
   .question-header {
     margin: 0 0 0.2rem;
@@ -1289,11 +1604,29 @@ const STYLE = `
   }
   .question-choice:hover:not(:disabled) { border-color: #8ab4ff; }
   .question-choice:disabled { opacity: 0.5; cursor: default; }
-  .question-status { margin: 0.3rem 0 0; min-height: 1.2em; color: #8ab4ff; font-size: 0.85rem; }
+  .question-choice.is-selected { border-color: #8ab4ff; background: #232a3c; }
   .question-choice-number { grid-row: span 2; color: #8ab4ff; font-variant-numeric: tabular-nums; }
   .question-choice-label { font-weight: bold; }
   .question-choice-description { font-size: 0.85rem; color: #b9c0d0; }
-  .question-hint { margin: 0.2rem 0 0; color: #8f97ab; font-size: 0.8rem; }
+  .question-choice-other { display: flex; gap: 0.4rem; }
+  .question-other-input {
+    flex: 1 1 auto;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.5rem;
+    background: #1c202a;
+    color: #e6e8ee;
+    font: inherit;
+  }
+  .question-other-send {
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #3a4256;
+    border-radius: 0.5rem;
+    background: #1c202a;
+    color: #e6e8ee;
+    font: inherit;
+    cursor: pointer;
+  }
   /* メインビューに残す質問の記録。 */
   .tool-block-question .question-record h4 { margin: 0 0 0.3rem; font-size: 0.9rem; }
   .question-options { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
