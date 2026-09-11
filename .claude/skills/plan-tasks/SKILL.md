@@ -50,7 +50,9 @@ description: "develop/direction.md に書かれたユーザーからの指示を
 
 5. **登録する**: `develop/tasks.json` に追記する。`id` は通し番号の続き（`docs/workflow.md`
    「何を移すか」参照）、`status: "todo"`、`passes: false`、`evidence: ""`。
-   **`difficulty` と `dependencies` は登録時に必ず埋める**（後から付けない）。
+   **`summary`（全角40文字以内の一覧向けの要約）・`difficulty`・`dependencies` は
+   登録時に必ず埋める**（後から付けない）。`summary` は `task` の要約であって、
+   そこに無い情報を足さない。
 
    追記したら**その場で `docs/workflow.md`「いつ移すか（トリガー）」の判定を行う**
    （`tasks.json`は`done`が10件以上または`done`のサイズが30KB超。**`todo`は数えない**ので、
