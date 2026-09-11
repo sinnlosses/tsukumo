@@ -17,6 +17,7 @@ import {
   DISPATCH_PATH,
   INTERRUPT_PATH,
   MODEL_PATH,
+  PENDING_ANSWER_EVENT_PATH,
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TERMINALS_PATH,
@@ -644,6 +645,29 @@ describe("入力欄の進行状態（SSE）", () => {
       expect(await readEvent(reader)).toContain(TURN_STATUS_IN_PROGRESS)
       server.publishTurnStatus(false)
       expect(await readEvent(reader)).toContain(TURN_STATUS_IDLE)
+    } finally {
+      await reader.cancel()
+    }
+  })
+})
+
+describe("答え待ちの箱（SSE）", () => {
+  it("購読直後は空を push し、publishPendingAnswer で箱の HTML に切り替わり、空文字も押せる", async () => {
+    const server = await start()
+
+    const response = await fetch(`${originOf(server)}${PENDING_ANSWER_EVENT_PATH}`)
+    const stream = response.body
+    if (stream === null) {
+      throw new Error("イベントストリームの本文が空だった")
+    }
+    const reader = stream.getReader()
+
+    try {
+      expect(await readEvent(reader)).toContain("data: \n\n")
+      server.publishPendingAnswer('<div class="pending-answer pending-permission"></div>')
+      expect(await readEvent(reader)).toContain('<div class="pending-answer pending-permission">')
+      server.publishPendingAnswer("")
+      expect(await readEvent(reader)).toContain("data: \n\n")
     } finally {
       await reader.cancel()
     }

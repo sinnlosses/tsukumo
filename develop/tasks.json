@@ -7,7 +7,9 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-041"]
+    "dependencies": [
+      "T-041"
+    ]
   },
   {
     "id": "T-028",
@@ -37,7 +39,9 @@
     "difficulty": "opus",
     "passes": true,
     "evidence": "scratchpad/sdk-spike/spike.ts（Bun + SDK 0.3.268 + Claude Code 2.1.268）で5段階を実機実行。①出力スタイル: init の output_style=\"Asuna\"、応答も規約どおり。②speak: mcp__tsukumo__speak が2回、引数 text/expression。③canUseTool: Bash（touch）で届く（suggestions=1）、AskUserQuestion は questions が届き updatedInput.answers で答えて会話が続いた。ls は Claude Code 側が自動許可。④permissionMode に auto がある（init で permissionMode=auto）。補足: slash_commands=60（next-task / plan-tasks / code-review / loop / clear / compact / model を含む）、skills=26、stream_event で本文が流れる、interrupt() で中断→ result は error_during_execution、追加入力は同じ文脈で続く。init はプロンプトごとに届く。本体の src/test/package.json に差分なし。",
-    "dependencies": ["T-035"]
+    "dependencies": [
+      "T-035"
+    ]
   },
   {
     "id": "T-037",
@@ -47,7 +51,9 @@
     "difficulty": "opus",
     "passes": true,
     "evidence": "opus に委譲。追加: src/session-driver.ts（SDK を import する唯一のファイル）/ session-event.ts（変換）/ session-view.ts（畳み込み）/ pending-answer.ts（答え待ち）。`bun run check` 通過: 327 pass / 0 fail（CLI を起動しきる E2E 24件は撤去し、前提チェック2件を残した）。目視（Orca タブ、TSUKUMO_VIEW_PORT=7399、POST /api/prompt で短い依頼）: 吹き出しに speak の完了報告が出て表情が proud、メインビューに本文が出た。ユーザー確認済み。申し送り: 本文に書かれたセリフはメインビューに出る（出力スタイルの改訂で直す）。/api/interrupt・許可/質問の UI・question ビューは後続。サブエージェント由来のメッセージは未フィルタ。",
-    "dependencies": ["T-036"]
+    "dependencies": [
+      "T-036"
+    ]
   },
   {
     "id": "T-038",
@@ -57,7 +63,9 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "sonnet に委譲。/api/interrupt（同一オリジン検査つき）と進行状態の SSE（/events/turn-status）を追加、入力欄を /api/prompt に付け替え、送り先の一覧を UI から外した。Enter 送信 / Shift+Enter 改行 / IME 確定は isComposing と keyCode 229 で除外。`bun run check` 通過: 337 pass / 0 fail。curl で prompt → {ok:true}、interrupt → {ok:true}、SSE で idle → in-progress → idle を観測（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 右下が入力欄＋送信だけ／送ると「中断」に変わり押すと「送信」に戻る／Shift+Enter で改行。",
-    "dependencies": ["T-037"]
+    "dependencies": [
+      "T-037"
+    ]
   },
   {
     "id": "T-039",
@@ -67,7 +75,9 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "sonnet に委譲。session-view.ts で吹き出しを同ターン内の直近3件に、speak 不在のターンだけ行頭マーカーの補助、mainViewEntries からツール系を除外、直近20ターンの窓。レンダラは壊れた入力3種（未閉のコードブロック・表・HTML タグ）で例外を出さないことをテストで担保（変更不要だった）。`bun run check` 通過: 346 pass / 0 fail。curl 確認: /events/main に update 10回、最終 HTML に table / pre.mermaid / pre code、吹き出しに speak 2件（サブエージェント実施、メインで check を再実行）。目視: 2026-09-11 にユーザーが Orca のタブで確認済み（「出てるね。良さそう」）。確かめたこと: 左上に本文が段々書き足され終わると整形される／吹き出しに着手と完了の2行／新しい依頼の直後も前の吹き出しが残る。申し送り: 行頭マーカーの既定値が transcript.ts の定数になった（環境変数の読み取りは無い）。",
-    "dependencies": ["T-037"]
+    "dependencies": [
+      "T-037"
+    ]
   },
   {
     "id": "T-040",
@@ -77,7 +87,10 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "sonnet に委譲。答え待ちの箱を buildCharacterBody に統合（吹き出しの直下。許可: ツール名＋要約120字と許可/拒否、質問: 番号付き選択肢・複数選択・その他の自由入力）。/api/answer を {id, answer} に付け替え、/api/permission-mode を追加、キャラビューに許可モードの select（bypassPermissions は警告色）。旧 question ビューと questionRegionScript は撤去。`bun run check` 通過: 371 pass / 0 fail。curl 確認: default モードで Bash 依頼 → 許可の箱 → allow で {ok:true} → idle、AskUserQuestion 依頼 → 質問の箱 → answers で {ok:true} → idle（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: Bash を使う依頼で吹き出しの下に許可/拒否が出る／許可で会話が続く／質問の選択肢を押すと会話が続く／bypassPermissions を選ぶと枠が警告色。",
-    "dependencies": ["T-037", "T-039"]
+    "dependencies": [
+      "T-037",
+      "T-039"
+    ]
   },
   {
     "id": "T-041",
@@ -87,7 +100,9 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-036"]
+    "dependencies": [
+      "T-036"
+    ]
   },
   {
     "id": "T-042",
@@ -97,7 +112,11 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-038", "T-039", "T-040"]
+    "dependencies": [
+      "T-038",
+      "T-039",
+      "T-040"
+    ]
   },
   {
     "id": "T-043",
@@ -107,7 +126,10 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "sonnet に委譲。サイドバーを3区画（いま何をしているか: 実行中＋直近5件の完了、サブエージェント内は1段下げ／タスク一覧: readTaskSummaries を mtime で読み直し／セッション情報: モデルと許可モードの select、経過時間）に書き直し。ツール入力の要約は summarizeToolInput に1箇所化。/api/model（opus/sonnet/haiku）を追加。`bun run check` 通過: 394 pass / 0 fail。curl 確認: 区画1にツール名＋要約、区画2に tasks.json 17件、区画3の model が haiku に切り替わる（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: 3区画が並ぶ／実行中は普通の色・完了は薄い色／モデルを変えると次のターンから変わる。",
-    "dependencies": ["T-037", "T-028"]
+    "dependencies": [
+      "T-037",
+      "T-028"
+    ]
   },
   {
     "id": "T-044",
@@ -117,7 +139,10 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-037", "T-039"]
+    "dependencies": [
+      "T-037",
+      "T-039"
+    ]
   },
   {
     "id": "T-045",
@@ -127,7 +152,9 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-038"]
+    "dependencies": [
+      "T-038"
+    ]
   },
   {
     "id": "T-046",
@@ -137,7 +164,12 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-042", "T-043", "T-044", "T-045"]
+    "dependencies": [
+      "T-042",
+      "T-043",
+      "T-044",
+      "T-045"
+    ]
   },
   {
     "id": "T-047",
@@ -147,7 +179,9 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "sonnet に委譲。bin/tsukumo（shebang + import の2行、実行権限あり）と package.json の bin を追加。同梱物の置き場所を src/bundled-files.ts に集約し、vendor/ と既定の立ち絵がそこを通る（TSUKUMO_CHARACTER_DIR は絶対ならそのまま、相対なら cwd 相対、未指定なら tsukumo 自身の場所）。docs/requirements.md（1章・2.1・4.6）/ architecture.md / CLAUDE.md を更新。見出し数 requirements 25→25、architecture 10→10。`bun run check` 通過: 376 pass / 0 fail。mktemp -d の空ディレクトリから bin/tsukumo を起こし、/character に <svg（立ち絵）が出ることを curl で確認（サブエージェント実施、メインで check を再実行）。",
-    "dependencies": ["T-040"]
+    "dependencies": [
+      "T-040"
+    ]
   },
   {
     "id": "T-048",
@@ -157,16 +191,20 @@
     "difficulty": "sonnet",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-047"]
+    "dependencies": [
+      "T-047"
+    ]
   },
   {
     "id": "T-049",
     "summary": "許可と質問の箱を右下の入力欄の上に移し、答え待ちに気づける印を付ける",
     "task": "許可と質問の答え待ちの箱を、キャラビューの吹き出しの下から**右下の入力欄の領域**へ移し、答え待ちになっていることに気づける印を付ける。\n\n## 背景\n\n答え待ちの箱（`src/view.ts` の `buildPendingAnswerBody`）は、`buildCharacterBody` の中で吹き出しの直下に出している。ボタンの配線は `pendingAnswerScript`、送り先は `POST /api/answer`（`src/view-server.ts`）。動作は正しい（ユーザー確認済み: 「T-040 は良さそう」）が、**置き場所が使いづらかった**。\n\nユーザーの言葉（2026-09-11）: 「左下でキャラの下に出すのはダメだった。使いづらかったよ」。確認の回答: 使いづらかったのは「**気づかない**」（答え待ちになっていることに気づかない）と「**入力欄と離れている**」（答えるために視線とマウスが左下へ移る）。決定: **箱は右下の入力欄の領域に出す**（答え待ちの間は入力欄の上に箱を出す。入力欄は残す）。キャラは吹き出しで「これいい？」と言うだけ（`speak` に任せる。tsukumo が吹き出しの文言を作らない）。\n\n右下の入力欄は `dispatchRegionHtml()`（レイアウトページの静的な部分）で、SSE で更新される「ビュー」ではない。進行状態は `/events/turn-status`（`src/view-server.ts` の `publishTurnStatus`）という専用の SSE で入力欄へ届けている。**答え待ちの箱も同じ形で届けるのが素直**。\n\n## 解くべき論点\n\n- **届け方**: `turn-status` と同じ専用の SSE 経路（例: `/events/pending-answer`）で箱の HTML を押す。`ViewName` は増やさない（`question` ビューを消したばかりで、4領域のビューと「入力欄に乗る状態」は別物）。箱の HTML は `buildPendingAnswerBody` をそのまま使う\n- **置き方**: 入力欄の `<textarea>` の**上**に箱を出す。答え待ちが無いときは箱の要素を空にする（領域の高さが戻る）。入力欄は消さない（許可待ちの間も「中断」は押せる）\n- **気づける印**: (1) 答え待ちの間、入力欄の領域の枠を目立つ色にする（許可モードの警告色とは別の色）、(2) ブラウザのタブのタイトルの先頭に「●」を付ける（`document.title`。答え待ちが消えたら戻す）。フォーカスは奪わない（入力中の文字を壊さないため）。音は出さない\n- **キャラビューから箱を外す**。`buildCharacterBody` は立ち絵と吹き出しだけに戻す（`CharacterViewData.pending` を消す）。許可モードの `select` はサイドバーへ移っている前提（T-043。移っていなければ入力欄の領域の端に置く）\n- 答え待ちが複数あるときは先頭だけ、答えたら次、は今のまま（`view.pending[0]`）\n\n## やること\n\n1. `src/view-server.ts` に答え待ちの SSE 経路を足す（`publishTurnStatus` と同型）。`src/index.ts` で `pending-changed` から先頭の箱の HTML を押す\n2. `dispatchRegionHtml()` に箱の置き場所（空の要素）を足し、購読スクリプトで差し替える。`pendingAnswerScript` の配線をこちらへ移す\n3. 枠の色と `document.title` の印\n4. `buildCharacterBody` から箱を外す（テストも直す）\n5. `docs/requirements.md` 4.7 の「許可と質問はキャラビューの吹き出しの下にボタン」を「右下の入力欄の上」に直す（`docs/architecture.md` の全体図・データの流れの3本目も同じ）\n\n## 完了条件\n\n- テスト: `buildCharacterBody` に箱が含まれない／答え待ちの SSE が箱の HTML を押し、無いときは空を押す／`dispatchRegionHtml()` に箱の置き場所がある\n- `bun run check` が通ること（`bun run format` を先に）。**テストは SDK の子プロセスを起動しない**\n- 動作確認（curl）: `default` モードで Bash を使う依頼を送り、答え待ちの SSE に箱の HTML が届く → `/api/answer` で allow → 空が届く\n- **Orca のタブで目視（ユーザー）**: 許可待ちになると右下の入力欄の上に許可／拒否が出て、入力欄の枠の色が変わり、タブのタイトルに「●」が付く。許可を押すと箱が消えて枠の色とタイトルが戻る。左下には箱が出ない\n- `grep -c '^#\\{2,3\\} ' docs/requirements.md` が編集の前後で同じ\n\n## 注意\n\n- 会話内容の扱い: 許可要求の要約に本文の断片が入りうる。ログ・報告に写さない\n- キャラの吹き出しの文言を tsukumo 側で作らない（「これいい？」は出力スタイルの規約で `speak` に言わせる。T-041）\n- 見出し名で位置を探すと索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- サブエージェントに委譲してよい。`/loop` に載せてよい",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
-    "dependencies": ["T-043"]
+    "passes": true,
+    "evidence": "sonnet に委譲。答え待ちの箱を /events/pending-answer（turn-status と同型の SSE）で右下の入力欄の上へ届け、答え待ち中は枠を注意色にしてタブのタイトルに「● 」を付ける。buildCharacterBody から箱を外した。docs（4.7・全体図・目視手順・用語集）を追随、見出し数は不変。`bun run check` 通過: 397 pass / 0 fail。curl 確認: 書き込みを伴う Bash の依頼で箱の HTML が SSE に届き、allow 後に空が届く。/character に箱は無い（サブエージェント実施、メインで check を再実行）。**ブラウザでの目視は未実施**。確かめること: 許可待ちで右下の入力欄の上に許可/拒否が出て枠が黄色くなりタブに「●」／押すと消えて戻る／左下には出ない。",
+    "dependencies": [
+      "T-043"
+    ]
   }
 ]

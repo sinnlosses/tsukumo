@@ -37,6 +37,7 @@ import { startViewServer, type ViewServer } from "./view-server.ts"
 import {
   buildCharacterBody,
   buildMainBody,
+  buildPendingAnswerBody,
   buildSidebarBody,
   type CharacterPortraitSource,
   type CharacterViewData,
@@ -155,7 +156,7 @@ async function main(args: readonly string[]): Promise<number> {
     cwd: process.cwd(),
     expressions: availableExpressions(readCharacterDefinition(characterDir)),
     permissionMode: DEFAULT_PERMISSION_MODE,
-    onEvent: createEventSink(publish, server.publishTurnStatus),
+    onEvent: createEventSink(publish, server.publishTurnStatus, server.publishPendingAnswer),
   })
   stopSessionOnExit(driver)
   announce(server)
@@ -180,6 +181,10 @@ type PublishState = {
  * **`turnInProgress` が変わったときだけ `publishTurnStatus` を呼ぶ。** 書きかけの本文は
  * トークン単位で届くため、変わっていないのに毎回押すと入力欄の SSE だけ無駄に流れてしまう。
  *
+ * **答え待ちの列の先頭（`view.pending[0]`）が変わったときだけ `publishPendingAnswer` を呼ぶ**
+ * （同じ考え方。同一判定は `id`。答えたら列が進み、次が出る。無くなったら空文字を押す
+ * 。docs/requirements.md 4.7「答えるのは入力の動作なので入力欄の側に置く」）。
+ *
  * **`turnStartedAt`（経過時間の起点）もここで持つ。** `Date.now()` を呼ぶのは副作用なので、
  * 純粋な畳み込み（src/session-view.ts）の外、配線の層に置く。`request` が来るたびに更新し、
  * それ以外では前の値をそのまま持ち続ける（セッション全体の「直近の依頼から何秒」を表す）。
@@ -187,6 +192,7 @@ type PublishState = {
 function createEventSink(
   publish: (state: PublishState) => void,
   publishTurnStatus: (inProgress: boolean) => void,
+  publishPendingAnswer: (html: string) => void,
 ): (event: SessionEvent) => void {
   let view = INITIAL_SESSION_VIEW
   let turnStartedAt: number | undefined = undefined
@@ -195,6 +201,9 @@ function createEventSink(
     const next = applySessionEvent(view, event)
     if (next.turnInProgress !== view.turnInProgress) {
       publishTurnStatus(next.turnInProgress)
+    }
+    if (next.pending[0]?.id !== view.pending[0]?.id) {
+      publishPendingAnswer(buildPendingAnswerBody(next.pending[0]))
     }
     view = next
     if (event.kind === "request") {
@@ -223,9 +232,6 @@ function createViewPublisher(
         // 直近のセリフを1つのまとまりとして出す（docs/requirements.md 4.2「続けて並べた行は
         // 1つのまとまり」）。`buildCharacterBody` は1つの文字列しか受け取らないので改行で連結する。
         speech: view.speeches.length === 0 ? undefined : view.speeches.join("\n"),
-        // 答え待ちの列の先頭だけを出す。答えたら `pending-changed` で列が進み、次が出る
-        // （docs/requirements.md 4.2「許可と質問」）。
-        pending: view.pending[0],
         ...readCharacterAssets(characterDir, currentExpression(view), resolveOutfit(view.model)),
       }
       server.publish("character", buildCharacterBody(data))
@@ -393,7 +399,7 @@ function readCharacterAssets(
   characterDir: string,
   expression: Expression,
   outfit: Outfit,
-): Omit<CharacterViewData, "speech" | "pending" | "permissionMode"> {
+): Omit<CharacterViewData, "speech" | "permissionMode"> {
   const definition = readCharacterDefinition(characterDir)
 
   if (definition === undefined) {

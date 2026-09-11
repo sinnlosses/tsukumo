@@ -29,6 +29,7 @@ import {
   LAYOUT_PATH,
   type LayoutBodies,
   MODEL_PATH,
+  PENDING_ANSWER_EVENT_PATH,
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TERMINALS_PATH,
@@ -105,6 +106,12 @@ export type ViewServer = {
    * （ブラウザ側が送信ボタンを押した瞬間に勝手に決めない。docs/requirements.md 4.7）。
    */
   readonly publishTurnStatus: (inProgress: boolean) => void
+  /**
+   * 答え待ちの箱（許可要求・質問）の本文を、開いているブラウザへ push する。**`publish` /
+   * `publishTurnStatus` と同型**（対応する `ViewName` の領域を持たない専用の経路）。
+   * 答え待ちが無いときは空文字を渡す（`docs/requirements.md` 4.7）。
+   */
+  readonly publishPendingAnswer: (html: string) => void
   readonly close: () => Promise<void>
 }
 
@@ -128,8 +135,11 @@ export function startViewServer(
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
   const turnStatusClients = new Set<ServerResponse>()
+  const pendingAnswerClients = new Set<ServerResponse>()
   // ターンの進行中状態。セッションが起きる前は「進行中ではない」が正しい既定値。
   let turnStatusBody = TURN_STATUS_IDLE
+  // 答え待ちの箱の本文。セッションが起きる前・答え待ちが無いときは空文字（=箱なし）。
+  let pendingAnswerBody = ""
   // listen が終わるまでは空文字列。状態を変える経路（POST）が実際に受け付けられるのは
   // listen 後だけなので、リクエストが来る時点では必ず埋まっている。
   let boundOrigin = ""
@@ -151,6 +161,8 @@ export function startViewServer(
       sendModel,
       turnStatusClients,
       () => turnStatusBody,
+      pendingAnswerClients,
+      () => pendingAnswerBody,
     )
   })
 
@@ -161,6 +173,9 @@ export function startViewServer(
       }
     }
     for (const response of turnStatusClients) {
+      response.write(": ping\n\n")
+    }
+    for (const response of pendingAnswerClients) {
       response.write(": ping\n\n")
     }
   }, HEARTBEAT_INTERVAL_MS)
@@ -199,6 +214,12 @@ export function startViewServer(
             writeUpdate(response, turnStatusBody)
           }
         },
+        publishPendingAnswer: (html) => {
+          pendingAnswerBody = html
+          for (const response of pendingAnswerClients) {
+            writeUpdate(response, pendingAnswerBody)
+          }
+        },
         close: () => {
           clearInterval(heartbeat)
           for (const responses of clients.values()) {
@@ -211,6 +232,10 @@ export function startViewServer(
             response.end()
           }
           turnStatusClients.clear()
+          for (const response of pendingAnswerClients) {
+            response.end()
+          }
+          pendingAnswerClients.clear()
           return new Promise((closed) => {
             server.closeAllConnections()
             server.close(() => closed())
@@ -236,6 +261,8 @@ function respond(
   sendModel: SendModel,
   turnStatusClients: Set<ServerResponse>,
   getTurnStatusBody: () => string,
+  pendingAnswerClients: Set<ServerResponse>,
+  getPendingAnswerBody: () => string,
 ): void {
   if (path === "/") {
     writeHtml(response, buildIndexPage())
@@ -260,7 +287,12 @@ function respond(
   }
 
   if (path === TURN_STATUS_EVENT_PATH) {
-    openTurnStatusStream(response, getTurnStatusBody(), turnStatusClients)
+    openSingleStream(response, getTurnStatusBody(), turnStatusClients)
+    return
+  }
+
+  if (path === PENDING_ANSWER_EVENT_PATH) {
+    openSingleStream(response, getPendingAnswerBody(), pendingAnswerClients)
     return
   }
 
@@ -780,14 +812,14 @@ function openStream(
 }
 
 /**
- * 入力欄の「ターンが進行中か」の専用の Server-Sent Events。`openStream` と同じ形だが、
- * 対応する `ViewName` の領域を持たないので `clients`（`Map<ViewName, Set>`）とは別に
+ * 対応する `ViewName` の領域を持たない専用の Server-Sent Events（入力欄の「ターンが進行中か」・
+ * 答え待ちの箱）。`openStream` と同じ形だが、`clients`（`Map<ViewName, Set>`）とは別に
  * `Set<ServerResponse>` 1つで足りる。
  */
-function openTurnStatusStream(
+function openSingleStream(
   response: ServerResponse,
   body: string,
-  turnStatusClients: Set<ServerResponse>,
+  streamClients: Set<ServerResponse>,
 ): void {
   response.writeHead(200, {
     "content-type": "text/event-stream; charset=utf-8",
@@ -795,9 +827,9 @@ function openTurnStatusStream(
     connection: "keep-alive",
   })
 
-  turnStatusClients.add(response)
+  streamClients.add(response)
   response.on("close", () => {
-    turnStatusClients.delete(response)
+    streamClients.delete(response)
   })
 
   writeUpdate(response, body)

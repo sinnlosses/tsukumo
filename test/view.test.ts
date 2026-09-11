@@ -15,6 +15,7 @@ import {
   INTERRUPT_PATH,
   isViewName,
   LAYOUT_PATH,
+  PENDING_ANSWER_EVENT_PATH,
   PROMPT_PATH,
   type SidebarData,
   type SidebarToolActivity,
@@ -34,7 +35,6 @@ const FULL_CHARACTER_DATA: CharacterViewData = {
   portrait: { kind: "svg", svgMarkup: '<svg role="img"><circle r="1"/></svg>' },
   outfitAccent: "#b8c7ff",
   altText: "架空の精霊（通常）",
-  pending: undefined,
 }
 
 // 実行中1件・完了2件（うち1件はサブエージェントの中）の、手で書いた架空のデータ。
@@ -425,6 +425,16 @@ function makeFakeFetch(responses: ReadonlyMap<string, unknown>): {
  * 動かす。3領域の購読が参照する要素は無害な代役で埋める（{@link runSubscriptionScript} と
  * 同じ考え方）。`dispatchTurnStatus` で `TURN_STATUS_EVENT_PATH` 宛の update を手動で起こせる。
  */
+/**
+ * 答え待ちの箱の置き場所（`#tsukumo-dispatch-pending`）の代役。`innerHTML` を読み返せる
+ * ことに加え、`pendingAnswerScript` が無条件に呼ぶ `addEventListener` / `querySelector` /
+ * `querySelectorAll` を持たせる必要があるので `makeInertStub` をそのまま使う。
+ */
+type FakePendingBoxElement = InertStub
+
+/** 入力欄の領域（`#tsukumo-view-dispatch`）の代役。`data-pending` 属性を読み返せる。 */
+type FakePendingRegionElement = { dataset: { pending: string } }
+
 function runInputScript(
   page: string,
   elements: {
@@ -437,17 +447,29 @@ function runInputScript(
     url: string,
     init?: { readonly method?: string; readonly body?: string },
   ) => Promise<{ readonly json: () => Promise<unknown> }>,
-): { readonly dispatchTurnStatus: (data: string) => void } {
+  initialTitle = "tsukumo",
+): {
+  readonly dispatchTurnStatus: (data: string) => void
+  readonly dispatchPendingAnswer: (html: string) => void
+  readonly pendingBox: FakePendingBoxElement
+  readonly pendingDataAttribute: () => string
+  readonly title: () => string
+} {
   const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
   if (scriptMatch === null || scriptMatch[1] === undefined) {
     throw new Error("ページに <script> が無い")
   }
+
+  const pendingBox: FakePendingBoxElement = makeInertStub()
+  const pendingRegion: FakePendingRegionElement = { dataset: { pending: "no" } }
 
   const ids = new Map<string, unknown>([
     ["tsukumo-dispatch-form", elements.form],
     ["tsukumo-dispatch-text", elements.textArea],
     ["tsukumo-dispatch-send", elements.sendButton],
     ["tsukumo-dispatch-status", elements.status],
+    ["tsukumo-dispatch-pending", pendingBox],
+    ["tsukumo-view-dispatch", pendingRegion],
   ])
   const controller = makeFakeEventSourceController()
   const fallback = makeInertStub()
@@ -456,6 +478,7 @@ function runInputScript(
     getElementById: (id: string) => ids.get(id) ?? makeInertStub(),
     scrollingElement: fallback,
     documentElement: fallback,
+    title: initialTitle,
   }
 
   vm.runInNewContext(scriptMatch[1], {
@@ -470,6 +493,12 @@ function runInputScript(
     dispatchTurnStatus: (data) => {
       controller.dispatch(TURN_STATUS_EVENT_PATH, data)
     },
+    dispatchPendingAnswer: (html) => {
+      controller.dispatch(PENDING_ANSWER_EVENT_PATH, html)
+    },
+    pendingBox,
+    pendingDataAttribute: () => pendingRegion.dataset.pending,
+    title: () => documentStub.title,
   }
 }
 
@@ -638,6 +667,10 @@ describe("入力欄（送信・中断）", () => {
     readonly status: FakeTextElement
     readonly calls: () => readonly FakeFetchCall[]
     readonly dispatchTurnStatus: (data: string) => void
+    readonly dispatchPendingAnswer: (html: string) => void
+    readonly pendingBox: FakePendingBoxElement
+    readonly pendingDataAttribute: () => string
+    readonly title: () => string
   } {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const form = makeFakeFormElement()
@@ -646,13 +679,21 @@ describe("入力欄（送信・中断）", () => {
     const status = makeFakeTextElement()
     const { fetchStub, calls } = makeFakeFetch(responses)
 
-    const { dispatchTurnStatus } = runInputScript(
-      page,
-      { form, textArea, sendButton, status },
-      fetchStub,
-    )
+    const { dispatchTurnStatus, dispatchPendingAnswer, pendingBox, pendingDataAttribute, title } =
+      runInputScript(page, { form, textArea, sendButton, status }, fetchStub)
 
-    return { form, textArea, sendButton, status, calls, dispatchTurnStatus }
+    return {
+      form,
+      textArea,
+      sendButton,
+      status,
+      calls,
+      dispatchTurnStatus,
+      dispatchPendingAnswer,
+      pendingBox,
+      pendingDataAttribute,
+      title,
+    }
   }
 
   it("Enter で送信する", async () => {
@@ -740,6 +781,32 @@ describe("入力欄（送信・中断）", () => {
 
     expect(calls()).toEqual([{ url: INTERRUPT_PATH, body: undefined }])
     expect(status.textContent).toBe("中断した")
+  })
+
+  describe("入力欄の上の答え待ちの箱（PENDING_ANSWER_EVENT_PATH を購読して差し替える）", () => {
+    it("答え待ちが届くと箱の中身を差し替え、領域の data-pending を yes にし、タブのタイトルに「● 」を付ける", () => {
+      const { pendingBox, pendingDataAttribute, title, dispatchPendingAnswer } = setUp()
+
+      expect(pendingDataAttribute()).toBe("no")
+      expect(title()).toBe("tsukumo")
+
+      dispatchPendingAnswer('<div class="pending-answer pending-permission"></div>')
+
+      expect(pendingBox.innerHTML).toBe('<div class="pending-answer pending-permission"></div>')
+      expect(pendingDataAttribute()).toBe("yes")
+      expect(title()).toBe("● tsukumo")
+    })
+
+    it("答え待ちが消えたら（空文字）箱を空にし、data-pending を no に、タイトルを元へ戻す", () => {
+      const { pendingBox, pendingDataAttribute, title, dispatchPendingAnswer } = setUp()
+
+      dispatchPendingAnswer('<div class="pending-answer pending-question"></div>')
+      dispatchPendingAnswer("")
+
+      expect(pendingBox.innerHTML).toBe("")
+      expect(pendingDataAttribute()).toBe("no")
+      expect(title()).toBe("tsukumo")
+    })
   })
 })
 
@@ -945,6 +1012,20 @@ describe("まとめたレイアウトページ", () => {
     expect(page).toContain('<section class="layout-region layout-dispatch"')
     expect(page).toContain('<form id="tsukumo-dispatch-form">')
     expect(page).toContain('<textarea id="tsukumo-dispatch-text"')
+  })
+
+  it("入力欄の領域に、答え待ちの箱の置き場所を持つ（textarea より上、既定は data-pending=no）", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    const regionIndex = page.indexOf('id="tsukumo-view-dispatch" data-pending="no"')
+    const pendingBoxIndex = page.indexOf(
+      '<div class="dispatch-pending" id="tsukumo-dispatch-pending">',
+    )
+    const textareaIndex = page.indexOf('<textarea id="tsukumo-dispatch-text"')
+
+    expect(regionIndex).toBeGreaterThan(-1)
+    expect(pendingBoxIndex).toBeGreaterThan(regionIndex)
+    expect(textareaIndex).toBeGreaterThan(pendingBoxIndex)
   })
 
   it("送り先を選ぶ <select> を持たず、DISPATCH_PATH / TERMINALS_PATH は入力欄から呼ばれない", () => {
@@ -1568,27 +1649,9 @@ describe("答え待ちの箱（キャラビューの吹き出しの直下。buil
   })
 })
 
-describe("キャラビューに出す答え待ちの箱", () => {
-  it("答え待ちの箱は吹き出しの直下に出す", () => {
-    const body = buildCharacterBody({
-      ...FULL_CHARACTER_DATA,
-      pending: {
-        kind: "permission",
-        id: "toolu_1",
-        toolName: "Bash",
-        input: { command: "echo dummy" },
-      },
-    })
-
-    const balloonIndex = body.indexOf('class="balloon"')
-    const pendingIndex = body.indexOf('class="pending-answer')
-
-    expect(balloonIndex).toBeGreaterThan(-1)
-    expect(pendingIndex).toBeGreaterThan(balloonIndex)
-  })
-
-  it("答え待ちが無いときは箱を出さない", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, pending: undefined })
+describe("キャラビューは立ち絵と吹き出しだけ（答え待ちの箱は入力欄側へ移した）", () => {
+  it("答え待ちの箱を出さない（CharacterViewData に pending フィールド自体が無い）", () => {
+    const body = buildCharacterBody(FULL_CHARACTER_DATA)
 
     expect(body).not.toContain("pending-answer")
   })

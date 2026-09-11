@@ -79,8 +79,16 @@ export const TURN_STATUS_IN_PROGRESS = "in-progress"
 export const TURN_STATUS_IDLE = "idle"
 
 /**
+ * 答え待ちの箱（許可要求・質問）の本文を運ぶ Server-Sent Events の経路。**`TURN_STATUS_EVENT_PATH`
+ * と同型**（対応する `ViewName` の領域を持たない専用の経路）。押す本文は
+ * {@link buildPendingAnswerBody} が組んだ HTML そのもので、答え待ちが無いときは空文字
+ * （2026-09-11 決定。入力欄の上に箱を出す。`docs/requirements.md` 4.7）。
+ */
+export const PENDING_ANSWER_EVENT_PATH = "/events/pending-answer"
+
+/**
  * 答え待ち（許可要求・質問）に答える経路（POST、本文は `{ id, answer }`）。`answer` は
- * `src/pending-answer.ts` の `Answer` と同じ形の JSON。**キャラビューの答え待ちの箱だけが
+ * `src/pending-answer.ts` の `Answer` と同じ形の JSON。**入力欄の上の答え待ちの箱だけが
  * 呼ぶ**（キーを押す旧経路は 2026-09-11 に役目を終えた。`docs/requirements.md` 4.2）。
  */
 export const ANSWER_PATH = "/api/answer"
@@ -115,19 +123,17 @@ ${viewScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
 
 /**
  * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューには
- * やり取りのタブの制御（{@link mainTurnsScript}）、キャラビューには答え待ちの箱の配線
- * （{@link pendingAnswerScript}）、サイドバーにはモデル・許可モードの切り替えと経過時間の表示
- * （{@link sessionInfoScript}）を足す。**タブの選択・答え待ちの状態はブラウザ側だけが持つ**
- * （サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は Server-Sent Events で
- * 押す」— 押す側に状態を持たせない）。
+ * やり取りのタブの制御（{@link mainTurnsScript}）、サイドバーにはモデル・許可モードの切り替えと
+ * 経過時間の表示（{@link sessionInfoScript}）を足す。**答え待ちの箱の配線
+ * （{@link pendingAnswerScript}）は入力欄側（{@link dispatchScript}）に付く**（2026-09-11
+ * 決定。キャラビューの吹き出しの下ではなく、入力欄の上に出す）。**タブの選択・答え待ちの状態は
+ * ブラウザ側だけが持つ**（サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は
+ * Server-Sent Events で押す」— 押す側に状態を持たせない）。
  */
 function viewScript(elementId: string, view: ViewName, initialBody: string): string {
   const subscription = subscriptionScript(elementId, view, initialBody)
   if (view === "main") {
     return `${subscription}\n${mainTurnsScript(elementId)}\n${reportRenderersScript(elementId)}`
-  }
-  if (view === "character") {
-    return `${subscription}\n${pendingAnswerScript(elementId)}`
   }
   if (view === "sidebar") {
     return `${subscription}\n${sessionInfoScript(elementId)}`
@@ -565,6 +571,8 @@ function subscriptionScript(elementId: string, view: ViewName, initialBody: stri
   }`
 }
 
+const DISPATCH_REGION_ID = "tsukumo-view-dispatch"
+const DISPATCH_PENDING_ID = "tsukumo-dispatch-pending"
 const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
 const DISPATCH_TEXT_ID = "tsukumo-dispatch-text"
 const DISPATCH_SEND_ID = "tsukumo-dispatch-send"
@@ -578,11 +586,16 @@ const DISPATCH_INTERRUPT_LABEL = "中断"
  * （`src/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない
  * （`TERMINALS_PATH` / `DISPATCH_PATH` は入力欄からは呼ばれなくなった）。
  *
- * **答え待ちの箱はここには出さない。** キャラビューの吹き出しの直下（`buildCharacterBody`）に
- * 出すことにしたので（2026-09-11 決定）、入力フォームはもう質問と切り替わらない。
+ * **答え待ちの箱（{@link buildPendingAnswerBody}）はここ（`<textarea>` の上）に出す**
+ * （2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していたが、「気づかない」
+ * 「入力欄と離れている」という理由で使いづらかった。答えるのは入力の動作なので、入力欄の側に
+ * 置く）。ここは箱の置き場所（空の要素）を出すだけで、中身は `PENDING_ANSWER_EVENT_PATH` の
+ * SSE で差し替える（{@link dispatchScript}）。**入力欄は消さない**（答え待ちの間も
+ * 「中断」は押せる）。
  */
 function dispatchRegionHtml(): string {
-  return `<section class="layout-region layout-dispatch" id="tsukumo-view-dispatch">
+  return `<section class="layout-region layout-dispatch" id="${DISPATCH_REGION_ID}" data-pending="no">
+<div class="dispatch-pending" id="${DISPATCH_PENDING_ID}"></div>
 <form id="${DISPATCH_FORM_ID}">
   <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行）" required></textarea>
   <div class="dispatch-row">
@@ -597,7 +610,7 @@ function dispatchRegionHtml(): string {
  * 入力欄の配線。**会話の内容（依頼の文面）はブラウザから直接サーバへ POST するだけで、
  * この関数自身（サーバ側で文字列として組み立てる部分）には一切現れない**（docs/coding-standards.md
  * 「会話内容の扱い」）。ここに埋め込むのは経路（`PROMPT_PATH` / `INTERRUPT_PATH` /
- * `TURN_STATUS_EVENT_PATH`）と要素IDだけ。
+ * `TURN_STATUS_EVENT_PATH` / `PENDING_ANSWER_EVENT_PATH`）と要素IDだけ。
  *
  * - **送信と中断は同時に押せる状態を作らない。** 送信ボタン1つを、`TURN_STATUS_EVENT_PATH` から
  *   届く「進行中か」で「送信」／「中断」に切り替える。**押した瞬間に切り替えない**（サーバ側の
@@ -609,6 +622,13 @@ function dispatchRegionHtml(): string {
  *   （送ったのに消えて書き直しになる、ということが起きないようにする）
  * - **中断ボタンは `INTERRUPT_PATH` を叩くだけ。** ボタンの表示は次に届く駆動の状態で戻る
  *   （ここで自分から「中断した」表示に固定しない）
+ * - **答え待ちの箱（`PENDING_ANSWER_EVENT_PATH`）は `#${DISPATCH_PENDING_ID}` の中身を
+ *   丸ごと差し替える。** 気づける印は2つ（2026-09-11 決定。フォーカスは奪わず、音は出さない）。
+ *   (1) 入力欄の領域（`#${DISPATCH_REGION_ID}`）の `data-pending` 属性を "yes"/"no" に切り替え、
+ *   許可モードの警告色とは別の色で枠を目立たせる（`STYLE` の `.layout-dispatch[data-pending="yes"]`）。
+ *   (2) タブのタイトルの先頭に「● 」を付け、答え待ちが消えたら**最初に読んだ元のタイトル**へ戻す
+ *   （読むのは1回だけ。差し替え後の自分の変更を次回の「元」だと誤読しないようにする）。
+ *   ボタンを押したときの配線自体は {@link pendingAnswerScript} が持つ（ここでは呼ぶだけ）。
  */
 function dispatchScript(): string {
   return `  {
@@ -616,6 +636,9 @@ function dispatchScript(): string {
     const textArea = document.getElementById(${JSON.stringify(DISPATCH_TEXT_ID)})
     const sendButton = document.getElementById(${JSON.stringify(DISPATCH_SEND_ID)})
     const status = document.getElementById(${JSON.stringify(DISPATCH_STATUS_ID)})
+    const pendingRegion = document.getElementById(${JSON.stringify(DISPATCH_REGION_ID)})
+    const pendingBox = document.getElementById(${JSON.stringify(DISPATCH_PENDING_ID)})
+    const originalTitle = document.title
     let inProgress = false
 
     function applyButtonLabel() {
@@ -628,6 +651,13 @@ function dispatchScript(): string {
     new EventSource(${JSON.stringify(TURN_STATUS_EVENT_PATH)}).addEventListener("update", (event) => {
       inProgress = event.data === ${JSON.stringify(TURN_STATUS_IN_PROGRESS)}
       applyButtonLabel()
+    })
+
+    new EventSource(${JSON.stringify(PENDING_ANSWER_EVENT_PATH)}).addEventListener("update", (event) => {
+      const hasPending = event.data !== ""
+      pendingBox.innerHTML = event.data
+      pendingRegion.dataset.pending = hasPending ? "yes" : "no"
+      document.title = hasPending ? "● " + originalTitle : originalTitle
     })
 
     async function sendPrompt(text) {
@@ -698,7 +728,8 @@ function dispatchScript(): string {
         form.requestSubmit()
       }
     })
-  }`
+  }
+${pendingAnswerScript(DISPATCH_PENDING_ID)}`
 }
 
 /**
@@ -726,12 +757,6 @@ export type CharacterViewData = {
   readonly outfitAccent: string | undefined
   /** 立ち絵の alt / aria-label。 */
   readonly altText: string
-  /**
-   * 答え待ちの列の先頭（`src/pending-answer.ts`）。**先頭だけ出し、答えたら次を出す**のは
-   * 呼び出し側（`src/index.ts`）の役目で、ここは受け取った1件をそのまま描くだけ。
-   * 答え待ちが無いときは undefined。
-   */
-  readonly pending: PendingAsk | undefined
 }
 
 /**
@@ -739,9 +764,12 @@ export type CharacterViewData = {
  * 表情の切り替えは、差し替えのたびに新しい要素が挿入される性質を利用して、CSS アニメーション
  * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
  *
- * **答え待ちの箱（{@link buildPendingAnswerBody}）は吹き出しの直下に出す**（許可プロンプトと
- * 質問はキャラが聞く。2026-09-11 決定）。**許可モードの `<select>` はサイドバーのセッション情報へ
- * 移した**（{@link sessionInfoBody}。2026-09-11 決定。サイドバーの区画ができたため）。
+ * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（{@link buildPendingAnswerBody}）は
+ * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
+ * 入力欄と離れている」という理由で使いづらかった。`src/index.ts` / `dispatchScript` を参照）。
+ * キャラは吹き出しで「これいい？」と言うだけで、ボタンの中身はここには無い。**許可モードの
+ * `<select>` はサイドバーのセッション情報へ移した**（{@link sessionInfoBody}。2026-09-11
+ * 決定。サイドバーの区画ができたため）。
  */
 export function buildCharacterBody(data: CharacterViewData): string {
   const text = data.speech ?? PLACEHOLDER_UTTERANCE
@@ -756,7 +784,6 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
   return `<div class="character-region">
 <div class="character-layout">${portraitHtml}<div class="balloon">${escapeHtml(text)}</div></div>
-${buildPendingAnswerBody(data.pending)}
 </div>`
 }
 
@@ -1023,7 +1050,8 @@ function truncateToolSummary(text: string): string {
 }
 
 /**
- * 答え待ちの箱。キャラビューの吹き出しの直下に出す（{@link buildCharacterBody}）。
+ * 答え待ちの箱。入力欄（右下）の `<textarea>` の上に出す（{@link dispatchRegionHtml} /
+ * {@link dispatchScript}。2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していた）。
  * 答え待ちが無いときは空文字（そのときは箱そのものが無く、見た目に何も増えない）。
  *
  * - **許可要求**: ツール名＋要約と、「許可」「拒否」ボタン
@@ -1184,9 +1212,10 @@ function modelSelectHtml(model: string | undefined): string {
 }
 
 /**
- * 答え待ちの箱の配線。キャラビューの要素（`elementId`）に対するイベント委譲だけで書く
- * （{@link subscriptionScript} が本文を丸ごと差し替えるため、個々のボタンに直接リスナーを
- * 付けても差し替えのたびに失われる。`mainTurnsScript` と同じ理由）。
+ * 答え待ちの箱の配線。入力欄の上の答え待ちの箱の要素（`elementId`）に対するイベント委譲だけで書く
+ * （箱の中身は `PENDING_ANSWER_EVENT_PATH` の SSE で丸ごと差し替わるため、個々のボタンに直接
+ * リスナーを付けても差し替えのたびに失われる。`mainTurnsScript` と同じ理由）。**呼ぶ側は
+ * {@link dispatchScript}**（2026-09-11 決定。以前はキャラビュー側から呼んでいた）。
  *
  * - **押した瞬間に無効化し、二重送信を防ぐ。** 失敗したら押せる状態に戻す
  * - **単一選択（質問が1つだけで単一選択）は選択肢を押した瞬間に送る。** それ以外は選択・入力を
@@ -1647,7 +1676,7 @@ const STYLE = `
     color: #b9c0d0;
   }
   .detail-block svg { max-width: 100%; height: auto; }
-  /* 答え待ちの箱（キャラビューの吹き出しの直下。docs/requirements.md 4.2「許可と質問」）。 */
+  /* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。 */
   .pending-answer {
     margin: 0.5rem 0 0;
     padding: 0.75rem 0.9rem;
@@ -1924,6 +1953,16 @@ const STYLE = `
     font: inherit;
   }
   .dispatch-status { font-size: 0.8rem; color: #8f97ab; }
+  /* 答え待ちの箱の置き場所。答え待ちが無いとき（buildPendingAnswerBody が空文字を返すとき）は
+     空になり、高さも増えない。 */
+  .dispatch-pending:empty { display: none; }
+  /* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
+     （permission-mode-select-danger の #e88b8b、破壊的操作向け）とは別の、注意を引くための
+     黄色にしてある（2026-09-11 決定）。 */
+  .layout-dispatch[data-pending="yes"] {
+    border-color: #e3c766;
+    box-shadow: 0 0 0 1px #e3c766;
+  }
 
   /* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
      （docs/requirements.md 4.7「狭い画面での崩れ方」）。各行の中身は DOM の並び順どおり
