@@ -397,6 +397,22 @@ describe("commandSuggestions", () => {
     ])
   })
 
+  it("init 前（slashCommands が空）でも commandDescriptions が届いていれば名前の出どころにする", () => {
+    const view = apply({
+      kind: "command-descriptions",
+      descriptions: [
+        { name: "clear", description: "会話をリセットする" },
+        { name: "model", description: undefined },
+      ],
+    })
+
+    expect(view.slashCommands).toEqual([])
+    expect(commandSuggestions(view)).toEqual([
+      { name: "clear", description: "会話をリセットする" },
+      { name: "model", description: undefined },
+    ])
+  })
+
   it("届いた説明を同じ名前の候補に添える（説明の無いものは undefined のまま）", () => {
     const view = apply(info, {
       kind: "command-descriptions",

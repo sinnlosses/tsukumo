@@ -798,8 +798,17 @@ ${pendingAnswerScript(DISPATCH_PENDING_ID)}`
 
 /**
  * `/` コマンド補完。**入力の先頭が `/` で、まだ空白が無いときだけ**候補を出す
- * （docs/requirements.md 4.2「入力欄」）。候補は `COMMANDS_PATH` から1回だけ取りに行き、
- * 以降はセッション中キャッシュする（`allCommandsPromise`）。1件は `{ name, description }`。
+ * （docs/requirements.md 4.2「入力欄」）。候補は `COMMANDS_PATH` から取りに行き、
+ * 0件でない結果はセッション中キャッシュする（`allCommandsPromise`）。1件は
+ * `{ name, description }`。
+ *
+ * - **0件を掴んだときはキャッシュせず、次に候補を出そうとしたときに取り直す。** 最初の依頼を
+ *   送る前は `GET /api/commands` が0件を返すことがある（`init` がまだ届いていないため。
+ *   `src/session-view.ts` の `commandSuggestions`）。ここを永久キャッシュすると、依頼を送って
+ *   候補が用意できたあとも、そのタブでは空のまま固定されてリロードするまで戻らない
+ *   （2026-09-12 に見つかった不具合）。1件以上の結果だけをキャッシュすることで、
+ *   `/` を打つたびに（＝答えを待っている間だけの短い頻度で）取り直しつつ、いったん埋まれば
+ *   以降は取り直さない
  *
  * - **前方一致を先に、続けて部分一致を出す。各グループの中はアルファベット順で、合計
  *   最大 {@link MAX_COMMAND_SUGGESTIONS} 件**（`matchingCommands`。Claude Code の TUI の
@@ -831,6 +840,14 @@ function commandSuggestionsScript(): string {
               : [],
           )
           .catch(() => [])
+          .then((commands) => {
+            // 0件は「まだ用意できていない」としてキャッシュせず、次回また取りに行く
+            // （最初の依頼を送る前は 0件が正当な応答なので、リロードせずに回復させる）。
+            if (commands.length === 0) {
+              allCommandsPromise = null
+            }
+            return commands
+          })
       }
       return allCommandsPromise
     }

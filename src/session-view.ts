@@ -124,13 +124,19 @@ export type SessionView = {
   /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
    * （`terminal_slash_commands`）は除いてある**（{@link commandCandidates}。
-   * docs/requirements.md 4.2「入力欄」）。
+   * docs/requirements.md 4.2「入力欄」）。**`init`（`session-info`）は最初の依頼を送るまで
+   * 届かない**（2026-09-12 実測。SDK の `system`/`init` はターンのたびに届く仕組みで、
+   * セッション開始直後には来ない）ので、それまでは空配列のまま。その間の名前の出どころは
+   * {@link commandSuggestions} が `commandDescriptions` 側に振る。
    */
   readonly slashCommands: readonly string[]
   /**
-   * SDK から届いたコマンドの説明（名前と説明の組）。**端末専用のものも混ざったままの生の一覧**
-   * で、補完に出す並びは {@link commandSuggestions} が `slashCommands` と突き合わせて作る。
-   * 説明がまだ届いていなければ空配列（そのときは名前だけの補完に戻る）。
+   * SDK から届いたコマンドの説明（名前と説明の組）。**端末専用のものも混ざったままの生の一覧**。
+   * `supportedCommands()`（駆動側が起動直後に呼ぶ）はセッション開始後すぐに届く（2026-09-12
+   * 実測。`init` を待たない）ので、`slashCommands` が空の間は {@link commandSuggestions} が
+   * ここを名前の出どころとして使う（端末専用の除外はまだ効かせられない。`init` が届き
+   * `slashCommands` が埋まった時点で、除外込みの一覧に戻る）。説明がまだ届いていなければ
+   * 空配列。
    */
   readonly commandDescriptions: readonly CommandDescription[]
   /** セッションが終わった理由。動いている間は undefined。 */
@@ -276,11 +282,23 @@ export function currentExpression(view: SessionView, now: number): Expression {
 }
 
 /**
- * 入力欄の `/` 補完に出す候補（名前と、あれば説明）。**並びも件数も `slashCommands` のまま**で、
- * `commandDescriptions` は同じ名前のものを引き当てるためだけに使う（説明が届いていない・
- * 説明を持たないコマンドは `description` が undefined になり、名前だけで出る）。
+ * 入力欄の `/` 補完に出す候補（名前と、あれば説明）。
+ *
+ * `slashCommands`（`init` 由来）が届いていればそれが並びの出どころで、`commandDescriptions` は
+ * 同じ名前のものを引き当てるためだけに使う（説明が届いていない・説明を持たないコマンドは
+ * `description` が undefined になり、名前だけで出る）。
+ *
+ * **`slashCommands` がまだ空（`init` が届く前）は `commandDescriptions` をそのまま名前の出どころに
+ * する。** `supportedCommands()` は `init` を待たずに届くため、これで最初の依頼を送る前でも
+ * 候補が出せる（2026-09-12 実測。docs/requirements.md 4.2）。ただしこの間は端末専用
+ * （`doctor` など）の除外がまだ効かない。**`init` が届き `slashCommands` が埋まった時点で、
+ * 除外込みの一覧に戻る**ので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
  */
 export function commandSuggestions(view: SessionView): readonly CommandDescription[] {
+  if (view.slashCommands.length === 0) {
+    return view.commandDescriptions
+  }
+
   const descriptions = new Map(
     view.commandDescriptions.map((command) => [command.name, command.description]),
   )
