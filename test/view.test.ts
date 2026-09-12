@@ -2657,16 +2657,17 @@ describe("キャラビューの本文", () => {
     expect(body.indexOf("2つめ")).toBeLessThan(body.indexOf("1つめ"))
   })
 
-  it("吹き出しは .balloon-anchor 配下の .balloon-track に入る（最新を領域の縦中央に固定するための入れ物）", () => {
+  it("吹き出しは立ち絵と横並びの .balloon-track に直接入る（縦を割る入れ物は置かない）", () => {
     const body = buildCharacterBody({
       ...FULL_CHARACTER_DATA,
       speeches: ["1つめ", "2つめ"],
     })
 
-    expect(body).toContain('<div class="balloon-anchor">')
     expect(body).toContain('<div class="balloon-track">')
-    // balloon-track の直後に balloon-spacer（下半分の空白）が続く。
-    expect(body).toMatch(/<\/div><div class="balloon-spacer"><\/div>/)
+    // 立ち絵の直後が並びで、間に高さを割る入れ物を挟まない。
+    expect(body).toMatch(/<\/div><div class="balloon-track">/)
+    expect(body).not.toContain("balloon-anchor")
+    expect(body).not.toContain("balloon-spacer")
   })
 
   it("インライン SVG の立ち絵は、エスケープせずファイルの中身をそのまま埋め込む", () => {
