@@ -287,7 +287,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   リスト・水平線 `---` の禁止を**解く**
 - **HTML・mermaid・chart の規約は tsukumo が持つ。** `query()` の
   `systemPrompt: { type: "preset", preset: "claude_code", append }` で足す。正典がリポジトリ内に
-  来るので、**描ける記法の一覧が `src/report-html.ts` と同じコミットで動く**（レンダラを直したのに
+  来るので、**描ける記法の一覧が `src/presentation/report-html.ts` と同じコミットで動く**（レンダラを直したのに
   規約が古いまま、が起きない）
 - **`~/.claude/settings.json` には触らない**（`outputStyle` も、orca が専有する hooks /
   statusLine も無傷のまま）。書き換えるのは `asuna.md` 1ファイルだけ
@@ -304,8 +304,8 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 **実測（2026-09-12、SDK v0.3.268）**: `systemPrompt` の append と出力スタイルは**同時に効く**
 （`init` の `output_style` は `"Asuna"` のまま、応答に人格と append の指示の両方が出た）。
 `applyFlagSettings({ outputStyle })` もセッション限りで効き、設定ファイルは書き換わらない。
-**配線済み**（2026-09-12、T-059）: 文面は `src/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
-`startSession`（`src/session-driver.ts`）が `query()` の `systemPrompt` へ渡す。`asuna.md` の
+**配線済み**（2026-09-12、T-059）: 文面は `src/presentation/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
+`startSession`（`src/infrastructure/session-driver.ts`）が `query()` の `systemPrompt` へ渡す。`asuna.md` の
 「レポートの組み立て方」は TUI 向けに差し替え済み。
 
 #### 各表示物
@@ -344,7 +344,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   以前はインラインの経路だけ実装が追いついておらず、`<span class="badge">` のような書き方が
   タグの文字列のまま出ていた）。どちらの経路も**通すのは許可リストに載った要素・属性だけ**で、
   `script` / `style` / `iframe` は中身ごと、`on*` と `javascript:` は属性ごと落とす
-  （`src/report-html.ts` の `sanitizeReportHtml` 1箇所に集約）。ただし**コードスパン
+  （`src/presentation/report-html.ts` の `sanitizeReportHtml` 1箇所に集約）。ただし**コードスパン
   （`` `code` ``）の中に書いた HTML はタグにせず、文字のまま出す**。
   `style` 属性は通すが、**外部を読みに行く記法（`url(` / `@import`）を含むものは落とす**。
   段組みは、レンダラー側が**ステップをカードにして縦に1本で積み**（横に並べてZ字に読ませない。
@@ -413,7 +413,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   style の「出撃時の掛け声」のモデル分岐と対応させる。モデルは**SDK に渡した値と `system` の
   `init` から分かる**ので、**hook の状態ファイルは要らなくなった**（2026-09-11）。値の形式
   （短い別名か解決済みの完全なモデルIDか）は場合によるので、衣装の判定は部分一致で行う
-- 表情・衣装の対応は、キャラクター定義ファイルの形式が決まるまで `src/expression.ts` に置く
+- 表情・衣装の対応は、キャラクター定義ファイルの形式が決まるまで `src/domain/expression.ts` に置く
   （決まったら定義ファイル側へ移す）
 
 ### 4.4 キャラクター定義

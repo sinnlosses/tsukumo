@@ -199,11 +199,11 @@
     "id": "T-089",
     "summary": "docs に残る移動前の src パスを4層のパスへ直す",
     "task": "`src/` を4層へ移した際に直しきれなかった、`docs/` 配下のパス参照を新しいものへ直す。\n\n## 背景\n\n`src/` は `domain` / `usecase` / `presentation` / `infrastructure` の4層へ移った（2026-09-12）。そのとき `docs/architecture.md` のパスは直したが、他のドキュメントに移動前のパスが残っている。\n\n実測（2026-09-12、`grep -no 'src/[a-z/-]*\\.ts'`）で直す対象は**8箇所**:\n\n- `docs/requirements.md`: 5箇所（`src/expression.ts` / `src/report-html.ts` / `src/report-notation.ts` / `src/session-driver.ts`）\n- `docs/glossary.md`: 2箇所（`src/host.ts` / `src/orca-host.ts`）\n- `docs/workflow.md`: 1箇所（`src/view.ts`）\n\n新しいパスの対応:\n\n| 移動前 | 移動後 |\n| --- | --- |\n| `src/expression.ts` | `src/domain/expression.ts` |\n| `src/report-html.ts` | `src/presentation/report-html.ts` |\n| `src/report-notation.ts` | `src/presentation/report-notation.ts` |\n| `src/view.ts` | `src/presentation/view.ts` |\n| `src/session-driver.ts` | `src/infrastructure/session-driver.ts` |\n| `src/host.ts` | `src/infrastructure/host.ts` |\n| `src/orca-host.ts` | `src/infrastructure/orca-host.ts` |\n\n## やること\n\n1. 上の8箇所を新しいパスへ直す。\n2. **`docs/architecture.md` に残る11箇所は直さない。** `src/transcript.ts` / `src/transcript-target.ts` / `src/state.ts` / `src/balloon.ts` / `src/draw.ts` は**もう存在しないファイルについての過去の記述**で、当時の形を書き残すことが目的だから。`docs/architecture.md` 419行目付近の `src/expression.ts` も同じ文脈（旧方針の説明）に入っていないかを読んで判断し、**過去の記述なら直さずに理由を `evidence` に書く**。\n3. `docs/history/` 配下は**一切直さない**（当時の記述をそのまま残す場所）。\n4. 直したあと、`grep -rno 'src/[a-z/-]*\\.ts' docs/*.md CLAUDE.md README.md | grep -v 'src/domain/\\|src/usecase/\\|src/presentation/\\|src/infrastructure/\\|src/index\\.ts'` の結果が `docs/architecture.md` の過去の記述だけになることを確かめる。\n\n## 完了条件\n\n- 上の `grep` の結果が `docs/architecture.md` の行だけになること（件数を `evidence` に書く）\n- 節の数が編集の前後で変わらないこと。3ファイルすべてで確かめ、前後の値を `evidence` に書く\n  - `grep -c '^#\\{2,3\\} ' docs/requirements.md`（着手時点で 25）\n  - `grep -c '^#\\{2,3\\} ' docs/glossary.md`\n  - `grep -c '^#\\{2,3\\} ' docs/workflow.md`\n- 直したパスが**実在すること**を確かめる（各パスに対して `test -f`）。存在しないパスを書かない\n- `bun run check` が通ること\n\n## 注意\n\n- **`docs/` は冒頭に「節の索引」の表を持ち、そこに節の見出し名がそのまま入っている。** 見出し名で位置を探すと索引の行に先に当たる事故がある（2026-09-10 に実際に起きた）。編集は行頭を含めて位置を特定する\n- 文章の中身は変えない。**パスだけを直す**\n- コード・ドキュメントにタスク番号を書かない\n",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
     "loopable": "Y",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "docs/requirements.md 5箇所（report-html ×2 / report-notation / session-driver / expression）、docs/glossary.md 2箇所（host / orca-host）、docs/workflow.md 1箇所（view）の計8箇所を新しい層のパスへ直した。7つの新パスは test -f で実在を確認。節の数は requirements 25→25、glossary 36→36、workflow 3→3 で不変。docs/architecture.md に残る11箇所は直していない（transcript / transcript-target / state / balloon / draw と、419行目の expression。いずれも「捨てた」「当初」と書かれた過去の記述の中にあり、当時の形を残すのが目的）。grep の残りは docs/architecture.md の11件だけ。bun run check は 382 pass / 0 fail。",
     "dependencies": []
   }
 ]
