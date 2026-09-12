@@ -97,6 +97,11 @@ const BROWSER_SCRIPT_ENTRY = "main.ts"
 /** 組み立てた結果の受け取り上限。超えるとビルドが失敗扱いになる（いまの実測は数KB）。 */
 const BROWSER_SCRIPT_MAX_BYTES = 8 * 1024 * 1024
 
+/** CSS の入口。ここから `@import` で辿れるものが1本にまとまる（`buildStyleSheet`）。 */
+const STYLE_SHEET_ENTRY = "main.css"
+/** 組み立てた結果の受け取り上限。超えるとビルドが失敗扱いになる（いまの実測は数十KB）。 */
+const STYLE_SHEET_MAX_BYTES = 8 * 1024 * 1024
+
 // develop/tasks.json は起動時の cwd（リポジトリ直下で `bun run start` する運用）からの相対で読む。
 // セッションに依存しない、tsukumo 自身の進捗管理ファイルのため。
 const TASKS_FILE_RELATIVE_PATH: readonly string[] = ["develop", "tasks.json"]
@@ -144,6 +149,28 @@ function buildBrowserScript(): Promise<string | undefined> {
 }
 
 /**
+ * CSS（`src/presentation/style/`）を `bun build` で1本にまとめ、**中身を文字列で返す**。
+ * 失敗したら undefined を返す（呼び出し側が起動を止める）。
+ *
+ * `buildBrowserScript` と同じ形。**ファイルに書き出さない**（`src/infrastructure/view-server.ts` が
+ * `/assets/style.css` として配る）。領域ごとに割った `.css`（`src/presentation/style/*.css`）を
+ * `main.css` の `@import` で束ねる。
+ */
+function buildStyleSheet(): Promise<string | undefined> {
+  const entry = bundledFilePath("src", "presentation", "style", STYLE_SHEET_ENTRY)
+  return new Promise((resolve) => {
+    execFile(
+      "bun",
+      ["build", entry, "--target=browser"],
+      { maxBuffer: STYLE_SHEET_MAX_BYTES },
+      (error, stdout) => {
+        resolve(error === null && stdout !== "" ? stdout : undefined)
+      },
+    )
+  })
+}
+
+/**
  * 終了コードを返す。0 のときはビューサーバとセッションを残したままプロセスを生かし続けるので、
  * 呼び出し側は 0 以外のときだけ `process.exit` する。
  */
@@ -161,13 +188,17 @@ async function main(args: readonly string[]): Promise<number> {
     return 1
   }
 
-  // ブラウザ側スクリプトは**起動のたびに組み立てる**（2026-09-12 T-083 決定）。ディスクに置かない
-  // ので古い成果物を配る事故が起きず、`.ts` を直して起こし直すだけで反映される。組み立てに
-  // 失敗したらページが動かないので、**ここは起動時の前提不足として即時終了する**
-  // （`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の例外側）。
-  const browserScript = await buildBrowserScript()
+  // ブラウザ側スクリプトと CSS は**起動のたびに組み立てる**（2026-09-12 T-083 決定、CSS も同じ形に
+  // 乗せる）。ディスクに置かないので古い成果物を配る事故が起きず、`.ts` / `.css` を直して起こし直す
+  // だけで反映される。組み立てに失敗したらページが動かないので、**ここは起動時の前提不足として
+  // 即時終了する**（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の例外側）。
+  const [browserScript, styleSheet] = await Promise.all([buildBrowserScript(), buildStyleSheet()])
   if (browserScript === undefined) {
     process.stderr.write("tsukumo: ブラウザ側スクリプトを組み立てられない\n")
+    return 1
+  }
+  if (styleSheet === undefined) {
+    process.stderr.write("tsukumo: CSS を組み立てられない\n")
     return 1
   }
 
@@ -203,6 +234,7 @@ async function main(args: readonly string[]): Promise<number> {
         driver === undefined ? Promise.resolve(false) : driver.setModel(model).then(() => true),
       () => commands,
       browserScript,
+      styleSheet,
     ),
   )
   if (!startResult.ok) {

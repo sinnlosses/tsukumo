@@ -142,6 +142,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
           () => Promise.resolve(false),
           () => [],
           "",
+          "",
         ),
       )
 
@@ -171,6 +172,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
           () => Promise.resolve(false),
           () => Promise.resolve(false),
           () => [],
+          "",
           "",
         ),
       )

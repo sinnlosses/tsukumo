@@ -1,0 +1,234 @@
+.placeholder {
+  color: #8f97ab;
+}
+.main-turns {
+  display: flex;
+  flex-direction: column;
+}
+.turn-tabs {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0 0 0.5rem;
+  background: #14161c;
+  z-index: 1;
+}
+.turn-tab {
+  padding: 0.2rem 0.7rem;
+  border: 1px solid #3a4256;
+  border-radius: 999px;
+  background: #1c202a;
+  color: #8f97ab;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.turn-tab.is-active {
+  color: #e6e8ee;
+  border-color: #8ab4ff;
+}
+/* 既定では summary（依頼の1行目）だけの高さで収まり、開くと全行が読める
+   （requestHeadingHtml 参照）。 */
+/* 依頼の見出し。1行なら h2、複数行なら details[open]（requestHeadingHtml）。**どちらも
+   既定で全行が見えて**、長いときだけ max-height でスクロールに切り替わる。 */
+.turn-request {
+  margin: 0 0 0.75rem;
+  border-left: 3px solid #8ab4ff;
+  padding-left: 0.6rem;
+}
+h2.turn-request {
+  font-size: 0.95rem;
+  color: #8ab4ff;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.turn-request > summary {
+  font-size: 0.95rem;
+  color: #8ab4ff;
+  cursor: pointer;
+}
+.turn-request-full {
+  margin-top: 0.4rem;
+  max-height: 40vh;
+  overflow-y: auto;
+  color: #e6e8ee;
+  font-size: 0.9rem;
+}
+.turn-dropped {
+  margin: 0 0 0.75rem;
+  color: #8f97ab;
+  font-size: 0.85rem;
+}
+/* ステップは**縦に1本**で積む（ユーザーの指摘 2026-09-10。Z字に読ませない）。
+   カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
+.main-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.main-step {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.5rem;
+  background: #171b24;
+  min-width: 0;
+}
+.main-step > .detail-block:last-child {
+  margin-bottom: 0;
+}
+/* そのステップで動かしたツールは、本文の下に**行内のチップ**でまとめる（縦に積むと
+   本文が分断されるため）。失敗したツールだけは中身を読ませたいのでブロックのまま。 */
+.step-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+.step-tools .tool-block {
+  margin: 0;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #1c202a;
+}
+.step-tools .tool-block h3 {
+  margin: 0;
+}
+.step-tools .tool-block-failed {
+  flex: 1 1 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+.step-tools .tool-block-failed h3 {
+  margin: 0 0 0.5rem;
+}
+/* レポートが直接書ける HTML（sanitizeReportHtml が通すもの）から使う見た目の語彙。
+   **クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
+.detail-block .cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+.detail-block .card {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.5rem;
+  background: #1c202a;
+}
+.detail-block .badge {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+.detail-block .badge-ok {
+  color: #7ee081;
+}
+.detail-block .badge-warn {
+  color: #e3c766;
+}
+.detail-block .badge-ng {
+  color: #e88b8b;
+}
+.detail-block .note {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #8ab4ff;
+  background: #1c202a;
+}
+.detail-block .note-warn {
+  border-left-color: #e3c766;
+}
+.detail-block .note-ng {
+  border-left-color: #e88b8b;
+}
+.detail-block blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid #3a4256;
+  color: #b9c0d0;
+}
+.detail-block svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* メインビューに残す質問の記録。 */
+.tool-block-question .question-record h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.9rem;
+}
+.question-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+.question-option {
+  color: #8f97ab;
+}
+.question-option.is-chosen {
+  color: #e6e8ee;
+}
+.step-heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: #8f97ab;
+}
+a {
+  color: #8ab4ff;
+}
+.tool-block {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.5rem;
+  background: #1c202a;
+}
+.tool-block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: #8ab4ff;
+}
+.tool-block pre,
+.detail-block pre {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem;
+  background: #10131a;
+  border-radius: 0.4rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.tool-result.tool-error {
+  border: 1px solid #d16969;
+}
+.tool-pending {
+  margin: 0.4rem 0 0;
+  color: #8f97ab;
+  font-style: italic;
+}
+.detail-block {
+  margin: 0 0 1rem;
+}
+.detail-block table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+.detail-block th,
+.detail-block td {
+  border: 1px solid #3a4256;
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+}
+.detail-block :not(pre) > code {
+  background: #10131a;
+  padding: 0 0.25rem;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}

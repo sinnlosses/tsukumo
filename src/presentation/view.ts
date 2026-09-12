@@ -58,6 +58,17 @@ export function browserScriptPath(): string {
   return `${ASSET_PATH_PREFIX}${BROWSER_SCRIPT_NAME}`
 }
 
+/**
+ * 配る CSS の名前。`src/presentation/style/main.css` を `bun build` でまとめたもので、
+ * ブラウザ側スクリプトと同じくディスクには置かず起動時にメモリへ持つ
+ * （`src/index.ts` の `buildStyleSheet`）。
+ */
+export const STYLE_SHEET_NAME = "style.css"
+
+export function styleSheetPath(): string {
+  return `${ASSET_PATH_PREFIX}${STYLE_SHEET_NAME}`
+}
+
 /** 依頼をセッション駆動へ送る経路（POST、本文は JSON の `{ text }`）。 */
 export const PROMPT_PATH = "/api/prompt"
 
@@ -211,7 +222,7 @@ const TURN_ELAPSED_LABEL = "経過"
 const TURN_FINISHED_LABEL = "所要"
 // 送信ボタンに添える、Command+Enter で送信できることを示す記号（2026-09-12 決定）。
 // **ラベルの文字列（`textContent`）とは分けて `data-shortcut` 属性に持たせる**（描くのは
-// `STYLE` の `.dispatch-send[data-shortcut]::after`）。ラベルと同じ文字列にすると、送信／中断の
+// `src/presentation/style/dispatch.css` の `.dispatch-send[data-shortcut]::after`）。ラベルと同じ文字列にすると、送信／中断の
 // 切り替えが `textContent` の一致で見分けられなくなるため。**初期の HTML にも属性を入れておく**
 // ので、スクリプトが動く前から記号が出る。中断のときは出さない（`src/presentation/browser/dispatch.ts` が
 // `data-shortcut` 属性ごと外す）。
@@ -231,7 +242,7 @@ const DISPATCH_SEND_SHORTCUT_HINT = "⌘⏎"
  * **`/` コマンド補完の候補一覧は、`<textarea>` の上に重ねるポップアップにする**（答え待ちの箱とは
  * 別の位置。docs/requirements.md 4.2「入力欄」）。中身はブラウザ側が組み立てる（`hidden` で
  * 始まり、候補が無いときも隠れたまま）。**`<textarea>` と同じ包み（`.dispatch-text-wrap`、
- * `position: relative`）に入れ、textarea の下端に底を合わせて上へ伸びる**（`STYLE` の
+ * `position: relative`）に入れ、textarea の下端に底を合わせて上へ伸びる**（`src/presentation/style/dispatch.css` の
  * `.dispatch-suggestions`）。textarea の上に伸ばすと領域（`.layout-region` の
  * `overflow-y: auto`）の外に出て切られるため、textarea の中に重ねる。打っている文字は
  * textarea の上端にあるので隠れない。候補は `position: absolute` で `<form>` の高さ計算（flex）
@@ -296,14 +307,14 @@ export type CharacterViewData = {
 /**
  * キャラビューの本文。立ち絵と吹き出しを同じ領域に同居させる（`docs/glossary.md`「キャラビュー」）。
  * 表情の切り替えは、差し替えのたびに新しい要素が挿入される性質を利用して、CSS アニメーション
- * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
+ * （`src/presentation/style/character.css` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
  *
  * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-track` に縦へ積み、最新が
- * 一番下・過去のセリフほど上へ押し上がって見える（`STYLE` の `.balloon-track` の
+ * 一番下・過去のセリフほど上へ押し上がって見える（`src/presentation/style/character.css` の `.balloon-track` の
  * `column-reverse`）。並びは自前でスクロールする。**立ち絵も吹き出しの並びも下端で揃え**、
  * 最新の吹き出しの左下から立ち絵へ向けて尻尾を出す（2026-09-12 ユーザーの指示）。**主役は
  * 立ち絵で、読ませたいのは最新のセリフ1件**なので、最新の吹き出しだけを濃く大きく（過去は
- * 小さく薄く）する（詳細は `STYLE` のコメント）。
+ * 小さく薄く）する（詳細は `src/presentation/style/character.css` のコメント）。
  *
  * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（{@link buildPendingAnswerBody}）は
  * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
@@ -335,7 +346,7 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // 縦積みのままだと窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
   //
-  // 立ち絵も吹き出しの並びも下端に寄せる（`STYLE` の `.character-layout` と `.balloon-track`
+  // 立ち絵も吹き出しの並びも下端に寄せる（`src/presentation/style/character.css` の `.character-layout` と `.balloon-track`
   // の `align-self`）。最新の吹き出しが立ち絵のすぐ隣に来る。
   return `<div class="character-region">
 <div class="character-layout">${portraitHtml}<div class="balloon-track">${balloonsHtml}</div></div>
@@ -559,7 +570,7 @@ function truncateRequestText(request: string): string {
  *   閉じて1行目だけにできる。**`<summary>` に1行目、中の `<div>` には2行目以降**を入れて
  *   1行目が二重に出ないようにする。開閉はブラウザ標準なのでスクリプトが要らない
  *
- * どちらの形でも高さは `max-height` で頭打ちにしてあり（`STYLE` の `.turn-request` と
+ * どちらの形でも高さは `max-height` で頭打ちにしてあり（`src/presentation/style/main-turns.css` の `.turn-request` と
  * `.turn-request-full`）、長い依頼が画面をその1件で埋めない。
  *
  * **タブのラベルは依頼の文面を使わない**（`turnTabHtml` が出すのは「今回」「1つ前」）ので、
@@ -741,7 +752,7 @@ const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
  * 許可モードを切り替える `<select>`。サイドバーのセッション情報に置く（{@link sessionInfoBody}。
  * 2026-09-11 決定。以前はキャラビューの領域の端に置いていたが、サイドバーの区画ができたため
  * 移した）。`bypassPermissions` を選んでいるときは警告色を付ける
- * （`STYLE` の `.permission-mode-select-danger`）。
+ * （`src/presentation/style/sidebar.css` の `.permission-mode-select-danger`）。
  */
 function permissionModeHtml(mode: string | undefined): string {
   const current = mode ?? PERMISSION_MODE_FALLBACK
@@ -862,733 +873,6 @@ const MAIN_VIEW_EMPTY_MESSAGE = "（まだ作業がありません）"
 // ツールの入力・出力は数十KBになることがある（実測: あるツールの --json 出力が170KB）。
 // 切り詰めは表示を壊さないためであって秘匿のためではないので、切り詰めた旨だけ添えて残りは捨てる。
 const MAX_TOOL_TEXT_LENGTH = 8000
-
-// 3つのビューはそれぞれ別のペインに並ぶので、余白を詰めて縦スクロールだけを許す。
-const STYLE = `
-  :root { color-scheme: dark; }
-  body {
-    margin: 0;
-    padding: 1rem;
-    background: #14161c;
-    color: #e6e8ee;
-    font-family: system-ui, sans-serif;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
-  }
-  /* 領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
-     領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく
-     なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
-  .character-region {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    height: 100%;
-    /* 立ち絵の大きさ（領域の高さに対する割合）と、尻尾の大きさ。立ち絵は領域いっぱいには
-       出さず、少し小さくして床に置く（2026-09-12 ユーザーの指示）。--portrait-drop は立ち絵を
-       領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる
-       （2026-09-12 ユーザーの指示「キャラはもう少し下に配置」）。 */
-    --portrait-height: 68%;
-    --portrait-drop: 0.75rem;
-    --balloon-tail: 14px;
-  }
-  .permission-mode, .model-select-wrap {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    color: #8f97ab;
-  }
-  .permission-mode-select, .model-select {
-    padding: 0.15rem 0.4rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.4rem;
-    background: #1c202a;
-    color: #e6e8ee;
-    font: inherit;
-  }
-  .permission-mode-select-danger { border-color: #e88b8b; color: #e88b8b; }
-  .permission-mode-status, .model-select-status { min-height: 1.2em; }
-  /* 立ち絵も吹き出しの並びも**下端で揃える**（2026-09-12 ユーザーの指示）。最新のセリフが
-     立ち絵のすぐ隣に来て、左下から出る尻尾が短い距離で立ち絵に届く。並びが伸びる向きは上で、
-     過去のセリフは上へ押し上がる（.balloon-track の column-reverse）。
-     overflow: hidden は --portrait-drop で下へはみ出した立ち絵の足元をここで切るためのもの。
-     領域そのもの（.layout-region の overflow-y: auto）にスクロールバーを出さない。 */
-  .character-layout {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 0.75rem;
-    height: 100%;
-    overflow: hidden;
-  }
-  /* 立ち絵の大きさは**領域の高さ**を基準にする（幅は画の縦横比で決まる）。幅を基準にすると、
-     キャラビューが横長・浅めの領域（既定で画面の 40% の高さ）のときに小さくなりすぎる。
-     いっぱいには広げず --portrait-height ぶんに留め、下端で揃えたうえで --portrait-drop ぶん
-     下へずらして床に置く（2026-09-12 ユーザーの指示）。max-width は、領域が細いときに吹き出しの場所（.balloon-track の
-     flex-basis）を食い潰さないための上限。 */
-  .portrait {
-    margin: 0 0 calc(-1 * var(--portrait-drop));
-    flex: 0 1 auto;
-    height: var(--portrait-height);
-    max-width: 45%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    text-align: center;
-    animation: portrait-fade-in 0.25s ease-out;
-  }
-  .portrait svg, .portrait-image {
-    display: block;
-    width: auto;
-    height: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-  }
-  @keyframes portrait-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  /* 吹き出しの並び。**DOM は新しい順**（buildCharacterBody）なので、column-reverse で並べると
-     最新が一番下に来て、過去のセリフほど上へ積み上がる（2026-09-12 ユーザーの指示「過去の発言は
-     上に押し上げる」）。並び全体を領域の下端（align-self: flex-end）に置き、吹き出しは立ち絵の
-     側（align-items: flex-start）へ寄せる。最新の吹き出しが立ち絵の隣に並ぶので、左下から出る
-     尻尾が短い距離で立ち絵に届く。
-     **column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の下端＝最新**なので、
-     SSE で並びが丸ごと差し替わっても購読スクリプトに手を入れずに最新が見える。
-     高さは中身なり・上限は領域なり（基準は .character-region → .character-layout と継いだ
-     高さ）で、入りきらなくなったぶんだけ内側でスクロールする。「どれが最新か」は位置と
-     **見た目の強弱**の両方で示す（下の .balloon:first-child）。 */
-  .balloon-track {
-    display: flex;
-    align-self: flex-end;
-    align-items: flex-start;
-    flex: 1 1 11rem;
-    flex-direction: column-reverse;
-    gap: 0.5rem;
-    min-width: 0;
-    min-height: 0;
-    max-height: 100%;
-    overflow-y: auto;
-  }
-  /* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。 */
-  .balloon {
-    position: relative;
-    width: fit-content;
-    max-width: 100%;
-    padding: 0.75rem 1.1rem;
-    border: 1px solid #3a4256;
-    border-radius: 1.25rem;
-    background: #1c202a;
-    white-space: pre-wrap;
-  }
-  /* **DOM の先頭が最新**（column-reverse で視覚上は下端に出る）。いま読んでほしい1件だけを
-     濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。過去の分は小さく薄くして、
-     残ってはいるが読み返す対象だと分かる見た目にする。 */
-  .balloon:first-child {
-    animation: balloon-appear 0.3s ease-out;
-    font-size: 1.05rem;
-    background: #232a3a;
-    border-color: #8ab4ff;
-    box-shadow: 0 0 0 1px rgba(138, 180, 255, 0.25);
-  }
-  /* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
-     **枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形に
-     する**（2026-09-12 ユーザーの指示「<◯ のような本当の吹き出し」）。三角1枚だと枠線の色で
-     塗った板が飛び出しているだけに見える。
-     立ち絵は左・最新の吹き出しはその隣なので、**尻尾は吹き出しの左下から左下へ向けて出す**
-     （2026-09-12 ユーザーの指示）。border-top と border-right を組むと、上辺が吹き出しに
-     接し先端が左下を向く直角三角形になる（回転を使わないので、上辺が枠線の上に乗って
-     「口」が開いた状態を保てる）。left は角の丸み（border-radius）より内側から始める。
-     ::after は右へ 1px・上へ 1px ずらしたうえで**一回り小さく**する。ずらすだけだと斜辺に沿って
-     滑るだけで枠の色が出ないので、左の辺・斜辺に 1px 残すには大きさも変える必要がある。
-     上へずらしたぶんが吹き出しの下の枠線を塗りつぶし、尻尾の「口」が開く。 */
-  .portrait + .balloon-track > .balloon:first-child::before,
-  .portrait + .balloon-track > .balloon:first-child::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 1.5rem;
-    width: 0;
-    height: 0;
-    border-top: var(--balloon-tail) solid #8ab4ff;
-    border-right: var(--balloon-tail) solid transparent;
-  }
-  .portrait + .balloon-track > .balloon:first-child::after {
-    top: calc(100% - 1px);
-    left: calc(1.5rem + 1px);
-    border-top-width: calc(var(--balloon-tail) - 2px);
-    border-right-width: calc(var(--balloon-tail) - 2px);
-    border-top-color: #232a3a;
-  }
-  /* 尻尾が次（1つ前のセリフ）の吹き出しに重ならないよう、その分だけ下に場所を空ける。
-     並びの最後が最新の1件だけのときも、この margin が overflow の計算に入るので切れない。 */
-  .portrait + .balloon-track > .balloon:first-child {
-    margin-bottom: var(--balloon-tail);
-  }
-  .balloon:not(:first-child) {
-    font-size: 0.85rem;
-    opacity: 0.5;
-    animation: balloon-push-up 0.3s ease-out;
-  }
-  /* 差し替えは Idiomorph の morph（src/presentation/browser/region-subscription.ts、2026-09-12）。.balloon は id を
-     持たないので、新しく増えた1件は新規ノードとして挿入されて balloon-appear が頭から再生
-     されるが、既存の .balloon はタグが一致する限り同じノードのまま中身だけが更新されうる
-     （Idiomorph は要素の挿入で以降のノードが総入れ替えになるのを避ける設計のため）。このため
-     balloon-push-up（過去のセリフの押し上げ）は、以前の全置換のときのように既存セリフ全件で
-     毎回再生されるとは限らない。「最新が並びの下端に差し込まれ、過去のセリフは1つぶん上へ
-     押し上げられて薄くなる」動きの向きと最終状態（class・opacity）は変わらない。押し上げる量は
-     最新の吹き出し1つぶんの当て推量なので、セリフが長いと少しずれるが、動きの向きが伝われば
-     よい。 */
-  @keyframes balloon-push-up {
-    from { transform: translateY(2.75rem); opacity: 0.85; }
-    to { transform: translateY(0); opacity: 0.5; }
-  }
-  @keyframes balloon-appear {
-    from { transform: translateY(0.9rem); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  .placeholder { color: #8f97ab; }
-  .main-turns { display: flex; flex-direction: column; }
-  .turn-tabs {
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    padding: 0 0 0.5rem;
-    background: #14161c;
-    z-index: 1;
-  }
-  .turn-tab {
-    padding: 0.2rem 0.7rem;
-    border: 1px solid #3a4256;
-    border-radius: 999px;
-    background: #1c202a;
-    color: #8f97ab;
-    font: inherit;
-    font-size: 0.85rem;
-    cursor: pointer;
-  }
-  .turn-tab.is-active { color: #e6e8ee; border-color: #8ab4ff; }
-  /* 既定では summary（依頼の1行目）だけの高さで収まり、開くと全行が読める
-     （requestHeadingHtml 参照）。 */
-  /* 依頼の見出し。1行なら h2、複数行なら details[open]（requestHeadingHtml）。**どちらも
-     既定で全行が見えて**、長いときだけ max-height でスクロールに切り替わる。 */
-  .turn-request {
-    margin: 0 0 0.75rem;
-    border-left: 3px solid #8ab4ff;
-    padding-left: 0.6rem;
-  }
-  h2.turn-request {
-    font-size: 0.95rem;
-    color: #8ab4ff;
-    max-height: 40vh;
-    overflow-y: auto;
-  }
-  .turn-request > summary {
-    font-size: 0.95rem;
-    color: #8ab4ff;
-    cursor: pointer;
-  }
-  .turn-request-full {
-    margin-top: 0.4rem;
-    max-height: 40vh;
-    overflow-y: auto;
-    color: #e6e8ee;
-    font-size: 0.9rem;
-  }
-  .turn-dropped { margin: 0 0 0.75rem; color: #8f97ab; font-size: 0.85rem; }
-  /* ステップは**縦に1本**で積む（ユーザーの指摘 2026-09-10。Z字に読ませない）。
-     カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
-  .main-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .main-step {
-    margin: 0;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.5rem;
-    background: #171b24;
-    min-width: 0;
-  }
-  .main-step > .detail-block:last-child { margin-bottom: 0; }
-  /* そのステップで動かしたツールは、本文の下に**行内のチップ**でまとめる（縦に積むと
-     本文が分断されるため）。失敗したツールだけは中身を読ませたいのでブロックのまま。 */
-  .step-tools {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.6rem;
-  }
-  .step-tools .tool-block {
-    margin: 0;
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
-    background: #1c202a;
-  }
-  .step-tools .tool-block h3 { margin: 0; }
-  .step-tools .tool-block-failed {
-    flex: 1 1 100%;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-  }
-  .step-tools .tool-block-failed h3 { margin: 0 0 0.5rem; }
-  /* レポートが直接書ける HTML（sanitizeReportHtml が通すもの）から使う見た目の語彙。
-     **クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
-  .detail-block .cols {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 0.75rem;
-  }
-  .detail-block .card {
-    padding: 0.6rem 0.75rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.5rem;
-    background: #1c202a;
-  }
-  .detail-block .badge {
-    display: inline-block;
-    padding: 0 0.5rem;
-    border: 1px solid currentColor;
-    border-radius: 999px;
-    font-size: 0.8rem;
-  }
-  .detail-block .badge-ok { color: #7ee081; }
-  .detail-block .badge-warn { color: #e3c766; }
-  .detail-block .badge-ng { color: #e88b8b; }
-  .detail-block .note {
-    margin: 0.5rem 0;
-    padding: 0.5rem 0.75rem;
-    border-left: 3px solid #8ab4ff;
-    background: #1c202a;
-  }
-  .detail-block .note-warn { border-left-color: #e3c766; }
-  .detail-block .note-ng { border-left-color: #e88b8b; }
-  .detail-block blockquote {
-    margin: 0.5rem 0;
-    padding-left: 0.75rem;
-    border-left: 3px solid #3a4256;
-    color: #b9c0d0;
-  }
-  .detail-block svg { max-width: 100%; height: auto; }
-  /* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。 */
-  .pending-answer {
-    margin: 0.5rem 0 0;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.75rem;
-    background: #1c202a;
-  }
-  .pending-summary { margin: 0 0 0.5rem; }
-  .pending-tool { font-weight: bold; }
-  .pending-actions, .pending-answer-submit { margin-top: 0.5rem; }
-  .pending-actions { display: flex; gap: 0.5rem; }
-  .pending-action {
-    padding: 0.35rem 0.9rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.5rem;
-    background: #1c202a;
-    color: #e6e8ee;
-    font: inherit;
-    cursor: pointer;
-  }
-  .pending-action:hover:not(:disabled) { border-color: #8ab4ff; }
-  .pending-action:disabled { opacity: 0.5; cursor: default; }
-  .pending-allow { border-color: #7ee081; color: #7ee081; }
-  .pending-deny { border-color: #e88b8b; color: #e88b8b; }
-  .pending-status { margin: 0.3rem 0 0; min-height: 1.2em; color: #8ab4ff; font-size: 0.85rem; }
-  .question-card { margin: 0 0 0.75rem; }
-  .question-header {
-    margin: 0 0 0.2rem;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    color: #8f97ab;
-  }
-  .question-text { margin: 0 0 0.5rem; font-weight: bold; }
-  .question-choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
-  .question-choice {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 0.1rem 0.5rem;
-    width: 100%;
-    padding: 0.4rem 0.6rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.5rem;
-    background: #1c202a;
-    color: #e6e8ee;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-  }
-  .question-choice:hover:not(:disabled) { border-color: #8ab4ff; }
-  .question-choice:disabled { opacity: 0.5; cursor: default; }
-  .question-choice.is-selected { border-color: #8ab4ff; background: #232a3c; }
-  .question-choice-number { grid-row: span 2; color: #8ab4ff; font-variant-numeric: tabular-nums; }
-  .question-choice-label { font-weight: bold; }
-  .question-choice-description { font-size: 0.85rem; color: #b9c0d0; }
-  .question-choice-other { display: flex; gap: 0.4rem; }
-  .question-other-input {
-    flex: 1 1 auto;
-    padding: 0.35rem 0.5rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.5rem;
-    background: #1c202a;
-    color: #e6e8ee;
-    font: inherit;
-  }
-  .question-other-send {
-    padding: 0.35rem 0.7rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.5rem;
-    background: #1c202a;
-    color: #e6e8ee;
-    font: inherit;
-    cursor: pointer;
-  }
-  /* メインビューに残す質問の記録。 */
-  .tool-block-question .question-record h4 { margin: 0 0 0.3rem; font-size: 0.9rem; }
-  .question-options { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; }
-  .question-option { color: #8f97ab; }
-  .question-option.is-chosen { color: #e6e8ee; }
-  .step-heading {
-    margin: 0 0 0.5rem;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    color: #8f97ab;
-  }
-  a { color: #8ab4ff; }
-  .tool-block {
-    margin: 0 0 1rem;
-    padding: 0.75rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.5rem;
-    background: #1c202a;
-  }
-  .tool-block h3 {
-    margin: 0 0 0.5rem;
-    font-size: 0.85rem;
-    font-family: ui-monospace, SFMono-Regular, monospace;
-    color: #8ab4ff;
-  }
-  .tool-block pre, .detail-block pre {
-    margin: 0.4rem 0 0;
-    padding: 0.5rem;
-    background: #10131a;
-    border-radius: 0.4rem;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
-  .tool-result.tool-error { border: 1px solid #d16969; }
-  .tool-pending { margin: 0.4rem 0 0; color: #8f97ab; font-style: italic; }
-  .detail-block { margin: 0 0 1rem; }
-  .detail-block table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
-  .detail-block th, .detail-block td {
-    border: 1px solid #3a4256;
-    padding: 0.3rem 0.5rem;
-    text-align: left;
-  }
-  .detail-block :not(pre) > code {
-    background: #10131a;
-    padding: 0 0.25rem;
-    border-radius: 0.25rem;
-    font-family: ui-monospace, SFMono-Regular, monospace;
-  }
-  /* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて
-     内側でスクロールする）の縦積みにする。区画自身は伸縮できないと内側の overflow-y: auto が
-     効かないので min-height: 0 が要る。 */
-  .sidebar-block {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    margin: 0 0 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #3a4256;
-    font-size: 0.85rem;
-  }
-  .sidebar-block:last-child { border-bottom: none; }
-  .sidebar-block h2 {
-    flex: 0 0 auto;
-    margin: 0 0 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #8f97ab;
-  }
-  .sidebar-block p { margin: 0.2rem 0; }
-  /* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み）
-     では flex-grow は働かず、中身なりの高さに広がるだけになる（中で無理に
-     スクロールさせない）。**flex-basis は 0 ではなく auto にすること**：親の高さが auto の
-     ときに flex-basis: 0 だと、内容サイズの見積もりに使う基準そのものが 0 になり、
-     overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる（2026-09-12、T-067 で
-     T-061 の回帰として発覚）。flex-basis: auto なら親の高さが定まっている（.layout-sidebar
-     配下）ときは今まで通り内側でスクロールし、定まっていない（狭い画面）ときは
-     中身なりの高さに自然に広がる。 */
-  .sidebar-block-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-  /* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。
-     「セッション情報」は3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの
-     高さで止める（等分すると中身が短いぶんだけ下に空白が間延びするため）。 */
-  .sidebar-block-activity, .sidebar-block-tasks { flex: 1 1 0; }
-  .sidebar-block-session { flex: 0 1 auto; }
-  .sidebar-empty { color: #8f97ab; }
-  .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
-  .activity-item.activity-finished { color: #8f97ab; }
-  .activity-item.activity-nested { margin-left: 1rem; list-style-type: circle; }
-  .task-list { list-style: none; padding-left: 0; }
-  .task-item {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: 0.4rem;
-    align-items: baseline;
-  }
-  .task-item.task-done { color: #8f97ab; }
-  .task-item .task-id { font-family: ui-monospace, SFMono-Regular, monospace; opacity: 0.8; }
-  .task-status {
-    padding: 0 0.3rem;
-    border-radius: 0.3rem;
-    background: #1c202a;
-    font-size: 0.75rem;
-  }
-  .task-status-done { color: #8f97ab; }
-  .task-status-other { color: #e3c766; }
-  .session-info { display: flex; flex-direction: column; gap: 0.4rem; }
-
-  /* まとめたレイアウト（buildLayoutPage）。上段（メイン・サイドバー）と下段（キャラビュー・
-     入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid
-     （.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は CSS カスタム
-     プロパティで持つ（src/presentation/browser/layout-resizer.ts が3本の仕切りのドラッグに応じて書き換える）。
-     ここに書いた var() の第2引数（フォールバック値）は layout-resizer.ts の既定値
-     （DEFAULTS）と一致させること。 */
-  .layout-grid {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: var(--layout-row-top, 60fr) auto var(--layout-row-bottom, 40fr);
-    gap: 0.5rem;
-    /* body の padding（上下 1rem ずつ）ぶんを差し引いて、grid 自体は画面の高さぴったりにする。 */
-    height: calc(100vh - 2rem);
-  }
-  .layout-row {
-    display: grid;
-    gap: 0.5rem;
-    min-width: 0;
-    min-height: 0;
-  }
-  .layout-row-top {
-    grid-template-columns: var(--layout-top-left, 75fr) auto var(--layout-top-right, 25fr);
-  }
-  .layout-row-bottom {
-    grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
-  }
-  .layout-region {
-    min-width: 0;
-    min-height: 0;
-    padding: 0.75rem;
-    border: 1px solid #3a4256;
-    border-radius: 0.75rem;
-    background: #1c202a;
-    overflow-y: auto;
-  }
-  /* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、
-     3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」
-     「セッション情報」の見出しが画面の外に流れないようにするため）。狭い画面
-     （@media (max-width: 760px)）では .layout-grid の行が高さ auto になり、この領域にも
-     定まった高さが無くなるので、flex-grow は働かず中身なりの高さに自然に伸びる
-     （メインビュー・キャラビューの overflow-y: auto はここでは変えない）。 */
-  .layout-sidebar {
-    display: flex;
-    flex-direction: column;
-    overflow-y: hidden;
-  }
-  /* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。 */
-  .layout-resizer {
-    position: relative;
-    touch-action: none;
-  }
-  .layout-resizer-vertical { width: 0.6rem; cursor: col-resize; }
-  .layout-resizer-horizontal { height: 0.6rem; cursor: row-resize; }
-  .layout-resizer::after {
-    content: "";
-    position: absolute;
-    background: #3a4256;
-  }
-  .layout-resizer-vertical::after {
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 2px;
-    transform: translateX(-50%);
-  }
-  .layout-resizer-horizontal::after {
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 2px;
-    transform: translateY(-50%);
-  }
-  .layout-resizer:hover::after { background: #8ab4ff; }
-  /* 既定の比率に戻す逃げ道。仕切りの上ではなく画面に固定した小さいボタンにして、
-     ドラッグ操作と取り合わない場所に置く。 */
-  .layout-reset {
-    position: fixed;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    z-index: 20;
-    padding: 0.3rem 0.6rem;
-    background: #1c202a;
-    color: inherit;
-    border: 1px solid #3a4256;
-    border-radius: 0.4rem;
-    font: inherit;
-    font-size: 0.75rem;
-    cursor: pointer;
-  }
-  .layout-reset:hover { border-color: #8ab4ff; }
-  /* 右下の入力ペイン（docs/requirements.md 4.7）。claude への依頼を送るフォームを持つ。 */
-  .layout-dispatch form {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    gap: 0.5rem;
-  }
-  /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
-  .dispatch-text-wrap {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-  /* / 補完の候補一覧。textarea の下端に底を合わせ、textarea の中に重ねて上へ伸びる
-     ポップアップ。textarea の上に出すと領域（.layout-region の overflow-y: auto）の外に
-     出て切られる。max-height の % は包み（＝textarea の高さ）基準なので、打っている文字が
-     ある上半分は隠れない。 */
-  .dispatch-suggestions {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 5;
-    margin: 0;
-    padding: 0.3rem;
-    max-height: 50%;
-    overflow-y: auto;
-    list-style: none;
-    background: #10131a;
-    border: 1px solid #3a4256;
-    border-radius: 0.4rem;
-  }
-  /* 1件は「名前＋説明」の1行。説明は薄い色で、幅が足りなければ省略記号で切る
-     （候補一覧そのものを横に広げない）。 */
-  .dispatch-suggestion-item {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    padding: 0.35rem 0.5rem;
-    border-radius: 0.3rem;
-    cursor: pointer;
-  }
-  .dispatch-suggestion-item.is-selected { background: #232a3c; color: #8ab4ff; }
-  .dispatch-suggestion-name { flex: 0 0 auto; }
-  .dispatch-suggestion-description {
-    flex: 1 1 auto;
-    min-width: 0;
-    color: #7c869e;
-    font-size: 0.85em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .dispatch-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  /* button は、他の3領域が使う語彙（#10131a の暗い地、#3a4256 の枠線、0.4remの角丸）に
-     揃える。素のブラウザ既定の見た目のままだと、ダークな画面の中でここだけ浮いていた。 */
-  .dispatch-row button {
-    flex: 0 0 auto;
-    padding: 0.4rem 0.75rem;
-    background: #1c202a;
-    color: inherit;
-    border: 1px solid #3a4256;
-    border-radius: 0.4rem;
-    font: inherit;
-    cursor: pointer;
-  }
-  .dispatch-row button:hover:not(:disabled) { border-color: #8ab4ff; }
-  .dispatch-row button:disabled { opacity: 0.5; cursor: default; }
-  /* 「送る」は行の主目的なので、リンクと同じ差し色（#8ab4ff）で他のボタンより目立たせる。 */
-  .dispatch-send {
-    background: #26314a;
-    border-color: #8ab4ff;
-    font-weight: 600;
-  }
-  /* Command+Enter で送信できることを示す記号（applyButtonLabel が data-shortcut 属性に
-     持たせる）。ラベルの文字とは別の擬似要素にして、ステータス表示と同じ弱い色で添える。
-     中断のときは属性ごと外れるので、この擬似要素も出ない。 */
-  .dispatch-send[data-shortcut]::after {
-    content: " " attr(data-shortcut);
-    color: #8f97ab;
-    font-weight: 400;
-  }
-  .dispatch-text {
-    flex: 1 1 auto;
-    min-height: 0;
-    resize: none;
-    padding: 0.5rem;
-    background: #10131a;
-    color: inherit;
-    border: 1px solid #3a4256;
-    border-radius: 0.4rem;
-    font: inherit;
-  }
-  .dispatch-status { font-size: 0.8rem; color: #8f97ab; }
-  /* 経過時間（送信ボタンと同じ行。2026-09-12 T-075 でサイドバーから移した）。他の2つ
-     （ボタン・ステータス文字）と同じく伸び縮みしない固定幅にしておく。 */
-  .dispatch-elapsed-row { flex: 0 0 auto; font-size: 0.8rem; color: #8f97ab; }
-  .dispatch-elapsed { font-family: ui-monospace, SFMono-Regular, monospace; color: #e6e8ee; }
-  /* 答え待ちの箱の置き場所。答え待ちが無いとき（buildPendingAnswerBody が空文字を返すとき）は
-     空になり、高さも増えない。 */
-  .dispatch-pending:empty { display: none; }
-  /* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
-     （permission-mode-select-danger の #e88b8b、破壊的操作向け）とは別の、注意を引くための
-     黄色にしてある（2026-09-11 決定）。 */
-  .layout-dispatch[data-pending="yes"] {
-    border-color: #e3c766;
-    box-shadow: 0 0 0 1px #e3c766;
-  }
-
-  /* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
-     （docs/requirements.md 4.7「狭い画面での崩れ方」）。各行の中身は DOM の並び順どおり
-     （main→sidebar、character→dispatch）に積むだけで済むので、grid-template-areas は
-     使わない。畳んでいる間は仕切り・既定に戻すボタンを出さない（動かせる比率が無いため）。 */
-  @media (max-width: 760px) {
-    .layout-grid {
-      grid-template-columns: 1fr;
-      grid-template-rows: none;
-      height: auto;
-    }
-    .layout-row-top, .layout-row-bottom {
-      grid-template-columns: 1fr;
-    }
-    .layout-resizer, .layout-reset { display: none; }
-    .layout-dispatch { min-height: 10rem; }
-    /* .layout-sidebar もこの幅では高さ auto になるので、「いま何をしているか」「タスク一覧」の
-       flex-basis: 0（.sidebar-block-activity / .sidebar-block-tasks の既定）が同じ理由で
-       自身の中身を 0 扱いにしてしまう。狭い画面では元々スクロールさせる意図が無いので、
-       「セッション情報」と同じ「中身なりの高さ」に揃える。 */
-    .sidebar-block-activity, .sidebar-block-tasks { flex: 0 1 auto; }
-    /* .layout-region.layout-character もこの幅では高さ auto になり、割合で書いた高さの基準が
-       消える（同じ理由の T-067 の再発）。この幅ではページ自体が縦スクロールするので、立ち絵は
-       幅を基準にした元の大きさに戻し、吹き出しは中身なりの高さで積むだけにする。 */
-    .character-layout { align-items: stretch; overflow: visible; }
-    .portrait { height: auto; max-width: none; display: block; margin-bottom: 0; }
-    .portrait svg, .portrait-image { width: 100%; height: auto; max-width: 9rem; }
-    .balloon-track { align-self: stretch; flex: 0 1 auto; max-height: none; overflow-y: visible; }
-  }
-`
 
 /**
  * 立ち絵1件分の HTML。SVG は**エスケープせずファイルの中身をそのまま**差し込む
@@ -2308,9 +1592,9 @@ function page(title: string, body: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
 <link rel="stylesheet" href="${vendorPath("highlight-theme.min.css")}">
+<link rel="stylesheet" href="${styleSheetPath()}">
 <script src="${vendorPath("highlight.min.js")}"></script>
 <script src="${vendorPath("idiomorph.min.js")}"></script>
-<style>${STYLE}</style>
 </head>
 <body>
 ${body}

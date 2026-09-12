@@ -1,0 +1,268 @@
+/* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。 */
+.pending-answer {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.75rem;
+  background: #1c202a;
+}
+.pending-summary {
+  margin: 0 0 0.5rem;
+}
+.pending-tool {
+  font-weight: bold;
+}
+.pending-actions,
+.pending-answer-submit {
+  margin-top: 0.5rem;
+}
+.pending-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.pending-action {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.5rem;
+  background: #1c202a;
+  color: #e6e8ee;
+  font: inherit;
+  cursor: pointer;
+}
+.pending-action:hover:not(:disabled) {
+  border-color: #8ab4ff;
+}
+.pending-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pending-allow {
+  border-color: #7ee081;
+  color: #7ee081;
+}
+.pending-deny {
+  border-color: #e88b8b;
+  color: #e88b8b;
+}
+.pending-status {
+  margin: 0.3rem 0 0;
+  min-height: 1.2em;
+  color: #8ab4ff;
+  font-size: 0.85rem;
+}
+.question-card {
+  margin: 0 0 0.75rem;
+}
+.question-header {
+  margin: 0 0 0.2rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: #8f97ab;
+}
+.question-text {
+  margin: 0 0 0.5rem;
+  font-weight: bold;
+}
+.question-choices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.question-choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.1rem 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.5rem;
+  background: #1c202a;
+  color: #e6e8ee;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.question-choice:hover:not(:disabled) {
+  border-color: #8ab4ff;
+}
+.question-choice:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.question-choice.is-selected {
+  border-color: #8ab4ff;
+  background: #232a3c;
+}
+.question-choice-number {
+  grid-row: span 2;
+  color: #8ab4ff;
+  font-variant-numeric: tabular-nums;
+}
+.question-choice-label {
+  font-weight: bold;
+}
+.question-choice-description {
+  font-size: 0.85rem;
+  color: #b9c0d0;
+}
+.question-choice-other {
+  display: flex;
+  gap: 0.4rem;
+}
+.question-other-input {
+  flex: 1 1 auto;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.5rem;
+  background: #1c202a;
+  color: #e6e8ee;
+  font: inherit;
+}
+.question-other-send {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #3a4256;
+  border-radius: 0.5rem;
+  background: #1c202a;
+  color: #e6e8ee;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* 右下の入力ペイン（docs/requirements.md 4.7）。claude への依頼を送るフォームを持つ。 */
+.layout-dispatch form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.5rem;
+}
+/* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
+.dispatch-text-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* / 補完の候補一覧。textarea の下端に底を合わせ、textarea の中に重ねて上へ伸びる
+   ポップアップ。textarea の上に出すと領域（.layout-region の overflow-y: auto）の外に
+   出て切られる。max-height の % は包み（＝textarea の高さ）基準なので、打っている文字が
+   ある上半分は隠れない。 */
+.dispatch-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 0.3rem;
+  max-height: 50%;
+  overflow-y: auto;
+  list-style: none;
+  background: #10131a;
+  border: 1px solid #3a4256;
+  border-radius: 0.4rem;
+}
+/* 1件は「名前＋説明」の1行。説明は薄い色で、幅が足りなければ省略記号で切る
+   （候補一覧そのものを横に広げない）。 */
+.dispatch-suggestion-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+.dispatch-suggestion-item.is-selected {
+  background: #232a3c;
+  color: #8ab4ff;
+}
+.dispatch-suggestion-name {
+  flex: 0 0 auto;
+}
+.dispatch-suggestion-description {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #7c869e;
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dispatch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* button は、他の3領域が使う語彙（#10131a の暗い地、#3a4256 の枠線、0.4remの角丸）に
+   揃える。素のブラウザ既定の見た目のままだと、ダークな画面の中でここだけ浮いていた。 */
+.dispatch-row button {
+  flex: 0 0 auto;
+  padding: 0.4rem 0.75rem;
+  background: #1c202a;
+  color: inherit;
+  border: 1px solid #3a4256;
+  border-radius: 0.4rem;
+  font: inherit;
+  cursor: pointer;
+}
+.dispatch-row button:hover:not(:disabled) {
+  border-color: #8ab4ff;
+}
+.dispatch-row button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* 「送る」は行の主目的なので、リンクと同じ差し色（#8ab4ff）で他のボタンより目立たせる。 */
+.dispatch-send {
+  background: #26314a;
+  border-color: #8ab4ff;
+  font-weight: 600;
+}
+/* Command+Enter で送信できることを示す記号（applyButtonLabel が data-shortcut 属性に
+   持たせる）。ラベルの文字とは別の擬似要素にして、ステータス表示と同じ弱い色で添える。
+   中断のときは属性ごと外れるので、この擬似要素も出ない。 */
+.dispatch-send[data-shortcut]::after {
+  content: " " attr(data-shortcut);
+  color: #8f97ab;
+  font-weight: 400;
+}
+.dispatch-text {
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+  padding: 0.5rem;
+  background: #10131a;
+  color: inherit;
+  border: 1px solid #3a4256;
+  border-radius: 0.4rem;
+  font: inherit;
+}
+.dispatch-status {
+  font-size: 0.8rem;
+  color: #8f97ab;
+}
+/* 経過時間（送信ボタンと同じ行。2026-09-12 T-075 でサイドバーから移した）。他の2つ
+   （ボタン・ステータス文字）と同じく伸び縮みしない固定幅にしておく。 */
+.dispatch-elapsed-row {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  color: #8f97ab;
+}
+.dispatch-elapsed {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: #e6e8ee;
+}
+/* 答え待ちの箱の置き場所。答え待ちが無いとき（buildPendingAnswerBody が空文字を返すとき）は
+   空になり、高さも増えない。 */
+.dispatch-pending:empty {
+  display: none;
+}
+/* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
+   （permission-mode-select-danger の #e88b8b、破壊的操作向け）とは別の、注意を引くための
+   黄色にしてある（2026-09-11 決定）。 */
+.layout-dispatch[data-pending="yes"] {
+  border-color: #e3c766;
+  box-shadow: 0 0 0 1px #e3c766;
+}

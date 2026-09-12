@@ -28,6 +28,7 @@ import {
   type TurnStatus,
   ASSET_PATH_PREFIX,
   BROWSER_SCRIPT_NAME,
+  STYLE_SHEET_NAME,
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
   VIEW_NAMES,
@@ -141,6 +142,12 @@ export function startViewServer(
    * 1回組み立てて渡す**（`src/index.ts`）。ディスクには置かないので、ここが唯一の持ち主になる。
    */
   browserScript: string,
+  /**
+   * CSS の中身（`src/presentation/style/main.css` を `bun build` でまとめたもの）。**起動時に
+   * 1回組み立てて渡す**（`src/index.ts` の `buildStyleSheet`）。ディスクには置かないので、
+   * ここが唯一の持ち主になる。
+   */
+  styleSheet: string,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
@@ -174,6 +181,7 @@ export function startViewServer(
       pendingAnswerClients,
       () => pendingAnswerBody,
       browserScript,
+      styleSheet,
     )
   })
 
@@ -274,6 +282,7 @@ function respond(
   pendingAnswerClients: Set<ServerResponse>,
   getPendingAnswerBody: () => string,
   browserScript: string,
+  styleSheet: string,
 ): void {
   if (path === LAYOUT_PATH) {
     writeHtml(response, buildLayoutPage(currentBodies(bodies)))
@@ -354,6 +363,17 @@ function respond(
       "cache-control": "no-store",
     })
     response.end(browserScript)
+    return
+  }
+
+  if (path === `${ASSET_PATH_PREFIX}${STYLE_SHEET_NAME}` && request.method === "GET") {
+    // 起動時に組み立てた CSS（`src/presentation/style/main.css` を bun build でまとめたもの）。
+    // **ディスクには無い**ので、vendor と違ってファイルを読みに行かない。
+    response.writeHead(200, {
+      "content-type": "text/css; charset=utf-8",
+      "cache-control": "no-store",
+    })
+    response.end(styleSheet)
     return
   }
 

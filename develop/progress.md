@@ -19,6 +19,15 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-085 完了。** CSS の巨大な `STYLE` 定数を `src/presentation/style/` の7ファイル＋入口
+`main.css` に割り、**`/assets/style.css` の `<link>` で配る形**にした（インラインの `<style>` は
+撤去）。組み立ては `browser.js` と同じ工程（起動時に `bun build` を子プロセスで起こし、
+メモリに持つ。失敗したら起動を止める）。**`src/presentation/view.ts` は 2320 → 1604行**
+（716行減）で、**T-084 と合わせると 3279 → 1604行、半分以下になった**。CSS を検査していた
+テストは出どころを `.css` に付け替えて中身を減らさず維持し、経路のテストを足した
+（380 → 382 pass / 0 fail）。見た目は機械で確認（Chrome headless ＋ CDP。grid の3トラック、
+立ち絵の接地が 1px 差、サイドバー3区画の内側スクロール、送信ボタンの `::after` が `⌘⏎`）。
+
 **T-086 完了。** `src/` の18ファイルを `domain` / `usecase` / `presentation` /
 `infrastructure` の4層へ `git mv` で移し、**`test/architecture.test.ts` で依存の向きを縛った**
 （`node:fs` と正規表現だけ。外部ツールは増やしていない）。**型検査に出ない2箇所を手で直した**:
@@ -316,8 +325,6 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 - **T-065（sonnet、T-064 待ち）**: 決めた方式で切り替えを実装する
 - **T-089（sonnet、着手可能、`/loop` 可）**: `docs/` に残る移動前の `src/*.ts` パス8箇所を
   4層のパスへ直す。`docs/architecture.md` の11箇所は撤去済みファイルの過去の記述なので直さない
-- **T-085（sonnet、着手可能、`/loop` 可）**: CSS の `STYLE` 定数を領域ごとの `.css` に割り、同じ工程でまとめる
-  （T-084 が終わったので、`src/view.ts` に残る大物はこの CSS 定数）
 
 2026-09-12 に届いた指示から起こした10件（**登録しただけで未着手**）:
 

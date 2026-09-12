@@ -1,0 +1,173 @@
+/* 領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
+   領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく
+   なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
+.character-region {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  /* 立ち絵の大きさ（領域の高さに対する割合）と、尻尾の大きさ。立ち絵は領域いっぱいには
+     出さず、少し小さくして床に置く（2026-09-12 ユーザーの指示）。--portrait-drop は立ち絵を
+     領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる
+     （2026-09-12 ユーザーの指示「キャラはもう少し下に配置」）。 */
+  --portrait-height: 68%;
+  --portrait-drop: 0.75rem;
+  --balloon-tail: 14px;
+}
+
+/* 立ち絵も吹き出しの並びも**下端で揃える**（2026-09-12 ユーザーの指示）。最新のセリフが
+   立ち絵のすぐ隣に来て、左下から出る尻尾が短い距離で立ち絵に届く。並びが伸びる向きは上で、
+   過去のセリフは上へ押し上がる（.balloon-track の column-reverse）。
+   overflow: hidden は --portrait-drop で下へはみ出した立ち絵の足元をここで切るためのもの。
+   領域そのもの（.layout-region の overflow-y: auto）にスクロールバーを出さない。 */
+.character-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  height: 100%;
+  overflow: hidden;
+}
+/* 立ち絵の大きさは**領域の高さ**を基準にする（幅は画の縦横比で決まる）。幅を基準にすると、
+   キャラビューが横長・浅めの領域（既定で画面の 40% の高さ）のときに小さくなりすぎる。
+   いっぱいには広げず --portrait-height ぶんに留め、下端で揃えたうえで --portrait-drop ぶん
+   下へずらして床に置く（2026-09-12 ユーザーの指示）。max-width は、領域が細いときに吹き出しの場所（.balloon-track の
+   flex-basis）を食い潰さないための上限。 */
+.portrait {
+  margin: 0 0 calc(-1 * var(--portrait-drop));
+  flex: 0 1 auto;
+  height: var(--portrait-height);
+  max-width: 45%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: center;
+  animation: portrait-fade-in 0.25s ease-out;
+}
+.portrait svg,
+.portrait-image {
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+@keyframes portrait-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* 吹き出しの並び。**DOM は新しい順**（buildCharacterBody）なので、column-reverse で並べると
+   最新が一番下に来て、過去のセリフほど上へ積み上がる（2026-09-12 ユーザーの指示「過去の発言は
+   上に押し上げる」）。並び全体を領域の下端（align-self: flex-end）に置き、吹き出しは立ち絵の
+   側（align-items: flex-start）へ寄せる。最新の吹き出しが立ち絵の隣に並ぶので、左下から出る
+   尻尾が短い距離で立ち絵に届く。
+   **column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の下端＝最新**なので、
+   SSE で並びが丸ごと差し替わっても購読スクリプトに手を入れずに最新が見える。
+   高さは中身なり・上限は領域なり（基準は .character-region → .character-layout と継いだ
+   高さ）で、入りきらなくなったぶんだけ内側でスクロールする。「どれが最新か」は位置と
+   **見た目の強弱**の両方で示す（下の .balloon:first-child）。 */
+.balloon-track {
+  display: flex;
+  align-self: flex-end;
+  align-items: flex-start;
+  flex: 1 1 11rem;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+}
+/* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。 */
+.balloon {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.75rem 1.1rem;
+  border: 1px solid #3a4256;
+  border-radius: 1.25rem;
+  background: #1c202a;
+  white-space: pre-wrap;
+}
+/* **DOM の先頭が最新**（column-reverse で視覚上は下端に出る）。いま読んでほしい1件だけを
+   濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。過去の分は小さく薄くして、
+   残ってはいるが読み返す対象だと分かる見た目にする。 */
+.balloon:first-child {
+  animation: balloon-appear 0.3s ease-out;
+  font-size: 1.05rem;
+  background: #232a3a;
+  border-color: #8ab4ff;
+  box-shadow: 0 0 0 1px rgba(138, 180, 255, 0.25);
+}
+/* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
+   **枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形に
+   する**（2026-09-12 ユーザーの指示「<◯ のような本当の吹き出し」）。三角1枚だと枠線の色で
+   塗った板が飛び出しているだけに見える。
+   立ち絵は左・最新の吹き出しはその隣なので、**尻尾は吹き出しの左下から左下へ向けて出す**
+   （2026-09-12 ユーザーの指示）。border-top と border-right を組むと、上辺が吹き出しに
+   接し先端が左下を向く直角三角形になる（回転を使わないので、上辺が枠線の上に乗って
+   「口」が開いた状態を保てる）。left は角の丸み（border-radius）より内側から始める。
+   ::after は右へ 1px・上へ 1px ずらしたうえで**一回り小さく**する。ずらすだけだと斜辺に沿って
+   滑るだけで枠の色が出ないので、左の辺・斜辺に 1px 残すには大きさも変える必要がある。
+   上へずらしたぶんが吹き出しの下の枠線を塗りつぶし、尻尾の「口」が開く。 */
+.portrait + .balloon-track > .balloon:first-child::before,
+.portrait + .balloon-track > .balloon:first-child::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 1.5rem;
+  width: 0;
+  height: 0;
+  border-top: var(--balloon-tail) solid #8ab4ff;
+  border-right: var(--balloon-tail) solid transparent;
+}
+.portrait + .balloon-track > .balloon:first-child::after {
+  top: calc(100% - 1px);
+  left: calc(1.5rem + 1px);
+  border-top-width: calc(var(--balloon-tail) - 2px);
+  border-right-width: calc(var(--balloon-tail) - 2px);
+  border-top-color: #232a3a;
+}
+/* 尻尾が次（1つ前のセリフ）の吹き出しに重ならないよう、その分だけ下に場所を空ける。
+   並びの最後が最新の1件だけのときも、この margin が overflow の計算に入るので切れない。 */
+.portrait + .balloon-track > .balloon:first-child {
+  margin-bottom: var(--balloon-tail);
+}
+.balloon:not(:first-child) {
+  font-size: 0.85rem;
+  opacity: 0.5;
+  animation: balloon-push-up 0.3s ease-out;
+}
+/* 差し替えは Idiomorph の morph（src/presentation/browser/region-subscription.ts、2026-09-12）。.balloon は id を
+   持たないので、新しく増えた1件は新規ノードとして挿入されて balloon-appear が頭から再生
+   されるが、既存の .balloon はタグが一致する限り同じノードのまま中身だけが更新されうる
+   （Idiomorph は要素の挿入で以降のノードが総入れ替えになるのを避ける設計のため）。このため
+   balloon-push-up（過去のセリフの押し上げ）は、以前の全置換のときのように既存セリフ全件で
+   毎回再生されるとは限らない。「最新が並びの下端に差し込まれ、過去のセリフは1つぶん上へ
+   押し上げられて薄くなる」動きの向きと最終状態（class・opacity）は変わらない。押し上げる量は
+   最新の吹き出し1つぶんの当て推量なので、セリフが長いと少しずれるが、動きの向きが伝われば
+   よい。 */
+@keyframes balloon-push-up {
+  from {
+    transform: translateY(2.75rem);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+}
+@keyframes balloon-appear {
+  from {
+    transform: translateY(0.9rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

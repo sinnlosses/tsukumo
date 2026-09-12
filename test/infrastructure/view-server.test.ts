@@ -35,6 +35,12 @@ let running: ViewServer | undefined
  */
 const TEST_BROWSER_SCRIPT = "/* テスト用のブラウザ側スクリプト */"
 
+/**
+ * CSS の代役。**本物のビルドはしない**（テストから `bun build` を起こさない）。
+ * 配信の経路（`/assets/style.css`）が通っているかだけを見たいので、中身は目印の1行でよい。
+ */
+const TEST_STYLE_SHEET = "/* テスト用の CSS */"
+
 async function start(
   sendPrompt: SendPrompt = () => true,
   sendInterrupt: SendInterrupt = () => Promise.resolve(),
@@ -52,6 +58,7 @@ async function start(
     sendModel,
     getCommands,
     TEST_BROWSER_SCRIPT,
+    TEST_STYLE_SHEET,
   )
   running = server
   return server
@@ -220,6 +227,7 @@ describe("ビューサーバ", () => {
     expect(body).toContain('data-event-path="/events/character"')
     expect(body).toContain('data-event-path="/events/sidebar"')
     expect(body).toContain('<script src="/assets/browser.js"></script>')
+    expect(body).toContain('<link rel="stylesheet" href="/assets/style.css">')
   })
 
   it("/assets/browser.js が、起動時に組み立てたブラウザ側スクリプトを返す", async () => {
@@ -230,6 +238,16 @@ describe("ビューサーバ", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("text/javascript")
     expect(await response.text()).toBe(TEST_BROWSER_SCRIPT)
+  })
+
+  it("/assets/style.css が、起動時に組み立てた CSS を返す", async () => {
+    const server = await start()
+
+    const response = await fetch(`${originOf(server)}/assets/style.css`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("text/css")
+    expect(await response.text()).toBe(TEST_STYLE_SHEET)
   })
 
   it("個別ビューのページ（/main /character /sidebar）は無い（2026-09-12 に消した。404）", async () => {

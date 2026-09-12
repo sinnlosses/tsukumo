@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 
 import {
   bindDispatch,
@@ -91,6 +93,13 @@ const IN_PROGRESS_TURN_STATUS = encodeTurnStatus({
   turnFinishedAt: undefined,
 })
 const IDLE_TURN_STATUS = encodeTurnStatus({ turnStartedAt: undefined, turnFinishedAt: undefined })
+
+// STYLE 定数を分割した先（2026-09-12）。ページは <link> で読むだけなので、CSS の中身自体は
+// 分割先の .css ファイルを直接読んで検査する。
+const DISPATCH_STYLE_SHEET = readFileSync(
+  fileURLToPath(new URL("../../src/presentation/style/dispatch.css", import.meta.url)),
+  "utf8",
+)
 
 // --- SSE 購読スクリプトを実際に動かして確かめるための道具 -------------------------------------
 //
@@ -1417,6 +1426,13 @@ describe("レイアウトページの基本", () => {
     expect(page).toContain("<title>tsukumo</title>")
   })
 
+  it("CSS はインラインの <style> ではなく、/assets/style.css への <link> で読む（2026-09-12）", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(page).toContain('<link rel="stylesheet" href="/assets/style.css">')
+    expect(page).not.toContain("<style>")
+  })
+
   it("`/` は個別ビューのページの一覧ではなく、まとめたレイアウトページそのもの（LAYOUT_PATH）", () => {
     expect(LAYOUT_PATH).toBe("/")
   })
@@ -1507,7 +1523,9 @@ describe("まとめたレイアウトページ", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).toContain('data-shortcut="⌘⏎">送信</button>')
-    expect(page).toContain(".dispatch-send[data-shortcut]::after")
+    // CSS 自体は STYLE 定数を分割した src/presentation/style/dispatch.css 側にある
+    // （ページは <link rel="stylesheet"> で読むだけで、中身を持たない）。
+    expect(DISPATCH_STYLE_SHEET).toContain(".dispatch-send[data-shortcut]::after")
   })
 
   // 経過時間は送信ボタンと同じ行（.dispatch-row）に出す（2026-09-12 T-075 決定。
