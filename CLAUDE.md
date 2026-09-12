@@ -68,7 +68,8 @@ bun run start                 # セッションを起こし、レイアウトペ
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具
 ```
 
-`docs/workflow.md` と各スキルが言う「チェックコマンド」は **`bun run check`** のこと。
+各スキルが言う「チェックコマンド」（`develop/workflow.json` の `checkCommand`）は
+**`bun run check`** のこと。
 
 ## アーキテクチャ概要
 
@@ -183,10 +184,12 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 会話やセッションが切れても再開できるよう、状態はチャットではなく `develop/` 配下の
 `tasks.json` / `progress.md` に記録する。ユーザーからの指示も同様に `direction.md` に書く。
 **各手順の詳細（フィールド定義・difficultyの基準と委譲の書き方・evidenceの粒度・アーカイブの
-トリガーと手順）は [`docs/workflow.md`](./docs/workflow.md) が正典。**
+トリガーと手順）は `~/.claude/skills/task-workflow/WORKFLOW.md` が正典**（複数のプロジェクトで
+共通）。**このリポジトリでの上乗せだけ**が [`docs/workflow.md`](./docs/workflow.md) にある。
 
 1. セッション開始時に `develop/progress.md` と `develop/tasks.json` を読み、アーカイブすべき
-   タイミングなら作業前にアーカイブする（**両方が判定の対象**。基準は `docs/workflow.md`）。
+   タイミングなら作業前にアーカイブする（**両方が判定の対象**。基準は `task-workflow` の
+   `WORKFLOW.md`）。
    `develop/direction.md` に見出し以外の中身があれば未タスク化の指示が残っているので、
    他の作業より先に `/plan-tasks` でタスク化する
 2. `tasks.json` から依存が完了済みの `todo` タスクを1つ選ぶ
@@ -225,7 +228,8 @@ grep -c '^#\{2,3\} ' docs/requirements.md   # 編集の前後で数が合うか
 - コーディング規約の詳細（各ルールの理由・例外、**会話内容の扱い**）: `docs/coding-standards.md`
 - 用語集（日本語表記とコード上の識別子の対応、避ける言い方）: `docs/glossary.md`
 - 進捗管理の詳細（`develop/` の tasks.json・progress.md・direction.md のフィールド定義・
-  evidenceの粒度・アーカイブ運用）: `docs/workflow.md`
+  evidenceの粒度・アーカイブ運用）: `~/.claude/skills/task-workflow/WORKFLOW.md`（共通の正典）と
+  `docs/workflow.md`（このリポジトリでの上乗せ）
 - 検討当時のユーザーの指示メモ: `docs/history/direction.md`
 - 完了タスク・過去セッションの記録: `docs/history/tasks-archive.md` /
   `docs/history/progress-archive.md`（セッション開始時に読む必要はない。過去の判断の経緯を

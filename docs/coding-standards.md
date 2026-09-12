@@ -269,4 +269,4 @@ transcript と同じ扱いにする。**
 消える）。上のgrepは `develop/` / `docs/history/` に加えて、この表だけを除外して読む。
 
 **コミットメッセージは対象外**（上の確認はワーキングツリーしか見ない）。件名の先頭にIDを置く
-運用は `docs/workflow.md`「コミットメッセージ」が正典。
+運用は `~/.claude/skills/task-workflow/WORKFLOW.md`「コミットメッセージ」が正典。

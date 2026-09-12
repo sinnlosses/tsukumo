@@ -555,7 +555,8 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 
 **ブラウザに出た絵は自動チェックで捉えられない。** テストで守れるのは「受け取る」「決める」と、
 配信そのもの（バインド先・経路・push）まで。表示に関わる変更をしたら、次を確認して
-その結果を `evidence` に書く（`docs/workflow.md`「良いevidenceの書き方」）。
+その結果を `evidence` に書く（`~/.claude/skills/task-workflow/WORKFLOW.md`
+「良いevidenceの書き方」と `docs/workflow.md`「タスクを書くとき・受け入れるとき」）。
 
 **配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が
 表示されるので、`curl <URL>` で HTML が返るか、`curl -N <URL>/events/...` に `event: update` が
