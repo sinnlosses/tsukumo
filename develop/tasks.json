@@ -124,11 +124,11 @@
     "id": "T-091",
     "summary": "キャラビューの最新の吹き出しを中央寄りにし、立ち絵を大きくする",
     "task": "キャラビューで、最新の吹き出しの縦位置を中央寄りに上げ、立ち絵をもう少し大きくする。\n\n## 背景\n\nユーザーの指示（2026-09-13）2件:\n\n- 「キャラ画面の最新の吹き出しの位置が下過ぎます。中央にしてほしい」\n- 「キャラはもう少し大きくしていいよ」\n\n現物（2026-09-13 に確認。`src/presentation/style/character.css`）:\n\n- `.balloon-track` は `align-self: flex-end` / `flex-direction: column-reverse` / `max-height: 100%`。**最新が DOM の先頭で、視覚上はいちばん下**に来る（`scrollTop = 0` が最新を指す作りで、`src/presentation/browser/region-subscription.ts` の追従がこれに乗っている）\n- 立ち絵は `--portrait-height: 68%` と `--portrait-drop: 0.75rem`（下へずらして床に置く）。`.character-layout` が `align-items: flex-end` で下端に揃える\n\n## 解くべき論点\n\n- **「中央」をどう実現するか。** `docs/requirements.md` の 4.3（325行目付近）に、**2026-09-12 に一度「最新を領域の縦中央に固定し、下半分を空ける」と決めて差し戻した**記録がある（吹き出しに使える高さが半分になって読みづらかった）。今回はユーザーの再指示なので実装するが、**同じ失敗を繰り返さない形**を選ぶ。候補は「track 全体を上へ寄せる（`align-self: center` 寄り）」「下に余白を持たせるが上方向には領域いっぱいまで伸ばせるようにする」など。**下半分を捨てる形にはしない**\n- **立ち絵をどこまで大きくするか。** `--portrait-height` の値を上げると、横に細い領域では吹き出しの幅（`.balloon-track` の `flex: 1 1 11rem`）を圧迫する。**吹き出しが読めなくなる手前**で止める\n- 2つは同じ領域の取り合いなので、**片方だけ決めない**\n\n## やること\n\n1. `--portrait-height` と `.balloon-track` の寄せ方を調整する。**数値は1案に決めてから、下の確認で測る**\n2. 変更が `docs/requirements.md` 4.3 の記述（立ち絵は左下・吹き出しは右上・最新を強調）と矛盾しないかを確かめ、**矛盾するなら要件側を先に直す**（節の数は変えない）\n3. 合わせて、差し戻しの経緯が残っている記述（4.3）に今回の決定を1行足す\n\n## 完了条件\n\n- **数値で確認**: 合成データのページを Chrome headless + CDP で測り、次を `evidence` に書く\n  1. 最新の吹き出しの `getBoundingClientRect()` の中心が、キャラビュー領域の縦方向で**下寄りから中央寄りへ移っている**こと（変更前後の値を両方書く）\n  2. 吹き出しの並びに使える高さが、**変更前より減っていないこと**（`.balloon-track` の `clientHeight` の前後）\n  3. 立ち絵の高さが**増えていること**（`.portrait` の `getBoundingClientRect().height` の前後）\n- **ユーザーの目視**: 実機（`TSUKUMO_VIEW_PORT` を変えて起こす）で見てもらい、「下過ぎない」「大きさが十分」の2点について了解を得ること。**数値が条件を満たしていても、見た目の可否はユーザーが決める**\n- テスト件数が減らないこと（着手前は 415 pass / 0 fail）\n- `grep -c '^#\\{2,3\\} ' docs/requirements.md` が編集の前後で変わらないこと\n- `bun run check` が通ること\n\n## 注意\n\n- **常駐している 7327 番を落とさない**\n- 「中央」の解釈と大きさの加減にユーザーの目が要るので `/loop` に載せない\n- `.balloon-track` の `column-reverse` と `scrollTop = 0` の関係を壊さない（壊すと SSE の差し替えで最新が見えなくなる）\n",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
     "loopable": "N",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`src/presentation/style/character.css`: `--portrait-height` 68%→78%、`--portrait-drop` 0.75rem→2.25rem、`--balloon-bottom-gap` 7rem を新設して`.balloon-track` を下端揃え＋固定余白にし、尻尾を左辺から真横（左）へ向けた。CDP 実測（1400x900、合成セリフ）で最新の吹き出しの rect が 1/3/8 件とも top 680.45 / bottom 735.0 で不動、`.balloon-track` の clientHeight は変更前後とも同じ、`.portrait` は 211.5→242.5px。実機の目視（Orca のタブ、127.0.0.1:7327）でユーザーが可否を了解。`bun run check` 415 pass / 0 fail。",
     "dependencies": []
   },
   {

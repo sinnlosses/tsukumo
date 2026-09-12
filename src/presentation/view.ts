@@ -312,7 +312,10 @@ export type CharacterViewData = {
  * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-track` に縦へ積み、最新が
  * 一番下・過去のセリフほど上へ押し上がって見える（`src/presentation/style/character.css` の `.balloon-track` の
  * `column-reverse`）。並びは自前でスクロールする。**立ち絵も吹き出しの並びも下端で揃え**、
- * 最新の吹き出しの左下から立ち絵へ向けて尻尾を出す（2026-09-12 ユーザーの指示）。**主役は
+ * 最新の吹き出しの左辺から立ち絵へ向けて尻尾を出す（2026-09-12 ユーザーの指示。尻尾の向きは
+ * 2026-09-13 に左下から真横へ変更）。**最新の吹き出しの下端の位置は固定の余白
+ * （`--balloon-bottom-gap`）で保つ**（2026-09-13 決定。詳細は
+ * `src/presentation/style/character.css` の `.balloon-track` のコメント）。**主役は
  * 立ち絵で、読ませたいのは最新のセリフ1件**なので、最新の吹き出しだけを濃く大きく（過去は
  * 小さく薄く）する（詳細は `src/presentation/style/character.css` のコメント）。
  *
@@ -346,8 +349,9 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // 縦積みのままだと窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
   //
-  // 立ち絵も吹き出しの並びも下端に寄せる（`src/presentation/style/character.css` の `.character-layout` と `.balloon-track`
-  // の `align-self`）。最新の吹き出しが立ち絵のすぐ隣に来る。
+  // 立ち絵も吹き出しの並びも下端に寄せる（`src/presentation/style/character.css` の
+  // `.character-layout` の `align-items` と `.balloon-track` の `align-self`）。最新の吹き出しの
+  // 下端は `.balloon-track` の `margin-bottom`（`--balloon-bottom-gap`）で固定の位置に保つ。
   return `<div class="character-region">
 <div class="character-layout">${portraitHtml}<div class="balloon-track">${balloonsHtml}</div></div>
 </div>`

@@ -46,9 +46,13 @@
     height: auto;
     max-width: 9rem;
   }
+  /* 最新の吹き出しの下端を固定する余白（--balloon-bottom-gap）は、領域の高さが割合で
+     決まっている前提の指定。この幅では高さが auto になり「下端」が無いので、余白だけが
+     吹き出しの下に居座る。戻す。 */
   .balloon-track {
     align-self: stretch;
     flex: 0 1 auto;
+    margin-bottom: 0;
     max-height: none;
     overflow-y: visible;
   }
