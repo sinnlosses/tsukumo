@@ -3,6 +3,20 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-12 4層への移動で直しきれなかった docs のパス
+
+- 生成したタスク: T-089（`docs/requirements.md` 5箇所・`docs/glossary.md` 2箇所・`docs/workflow.md` 1箇所の計8箇所を新しいパスへ直す。`docs/architecture.md` に残る11箇所は `transcript.ts` / `state.ts` / `balloon.ts` / `draw.ts` など**もう存在しないファイルの過去の記述**なので直さない、と本文に明記した）
+- 裏取り: `grep -rno 'src/[a-z/-]*\.ts' docs/*.md CLAUDE.md README.md` で件数を数え、ファイルごとの内訳（architecture 11 / requirements 5 / glossary 2 / workflow 1）と、architecture の11件がすべて撤去済みファイルへの言及であることを確認した
+- タスクにしなかった項目: 無し
+
+T-086（層をディレクトリで表す `src/` の移動）で `docs/architecture.md` の `src/*.ts` パスは
+直したが、`docs/requirements.md`（4.2 のレポート記法まわり・4.1 の session-driver 言及・
+4.3 の expression.ts 言及など）と `docs/glossary.md`（ホストのポート／アダプタの節）にも
+移動前のパス（`src/report-html.ts` / `src/report-notation.ts` / `src/session-driver.ts` /
+`src/expression.ts` / `src/host.ts` / `src/orca-host.ts` など）がそのまま残っている。
+T-086 の指示は `docs/architecture.md` のパス修正だけを求めていたため対象外にしたが、
+本来は同じ理由で直すべきなので、別タスクとして拾ってほしい。
+
 ## 2026-09-12 T-080 の決定から出た、層をディレクトリで表す3段階
 
 - 生成したタスク: T-086（`src/` を4層へ `git mv` し、`test/architecture.test.ts` で許した import の辺以外を落とす。改名2件と `buildBrowserScript` のリテラルのパスを含む）、T-087（`index.ts` からユースケースを `usecase/` へ、ファイルI/Oと環境変数を `infrastructure/` へ抜き、配線だけにする）、T-088（`presentation/view.ts` の割り方を決めて割る。T-084 / T-085 の後）
