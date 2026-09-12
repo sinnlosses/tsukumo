@@ -43,6 +43,10 @@ bottom 735.0 で不動、並びに使える高さは変更前後で同じ、立�
 着手前に `develop/progress.md` の `### 2026-09-12` の1小節（290行）を
 `docs/history/progress-archive.md` へ移した（`tasks.json` 側はトリガー未該当）。
 
+**T-090 は着手せずに閉じた**（ユーザーの判断「やらなくていいや」。2026-09-13）。`passes` は
+`false` のまま `done` にしてある（未達で終了の形）。セリフ0件のプレースホルダは
+`<div class="balloon">` のままなので、気が変わったら新しいタスクとして起こす。
+
 ## 次にやること
 
 **`develop/tasks.json` の `done` 9件は `docs/history/tasks-archive.md` へアーカイブした**

@@ -113,11 +113,11 @@
     "id": "T-090",
     "summary": "セリフが1件も無いときのキャラビューを、吹き出しではない案内にする",
     "task": "まだセリフが1件も無いときに、キャラビューへ吹き出しの形で出しているプレースホルダを、吹き出しではない案内の表示にする。\n\n## 背景\n\nユーザーの指示（2026-09-13）「発話がないときのキャラ画面は吹き出しにせずまだ発話がありません表示してください」。\n\n現物（2026-09-13 に確認）: `src/presentation/view.ts` の `buildCharacterBody`（337行目付近）が、`data.speeches.length === 0` のとき `PLACEHOLDER_UTTERANCE`（869行目、`\"（まだ発話がありません）\"`）を **`<div class=\"balloon\">` に入れて**出している。つまり「セリフが無い」状態が、セリフが1件あるのと同じ見た目（枠・角丸・最新の強調・尻尾）になっている。尻尾は `src/presentation/style/character.css` の `.balloon:first-child` 系が付ける。\n\n## やること\n\n1. セリフが0件のときだけ、`.balloon` ではない要素（例: `.character-empty`）で案内を出す。文言は `PLACEHOLDER_UTTERANCE` をそのまま使ってよいが、括弧付きのままにするかは見た目に合わせて決めてよい\n2. `src/presentation/style/character.css` に、その要素の見た目を足す。**枠・背景・尻尾を持たせない**（`.sidebar-empty` が「何も無い」を薄い文字だけで示している前例に倣う。`src/presentation/style/sidebar.css`）\n3. セリフが1件以上あるときの見た目は**変えない**\n\n## 完了条件\n\n- `buildCharacterBody` の出力に、セリフ0件のとき `class=\"balloon\"` が**1つも含まれない**こと（テストで固定する）\n- セリフ1件以上のときの出力は従来どおりであること（既存テストが通ること）\n- テスト件数が減らないこと（着手前は 415 pass / 0 fail）\n- **見た目の確認は機械で取る**: 合成データでページを組み立て、Chrome headless + CDP で (a) 0件のときに枠線が無いこと（案内要素の `getComputedStyle` の `borderWidth` が `0px`）、(b) 1件以上のときは従来どおり枠と尻尾が出ていること（`.balloon:first-child` の `::after` の `content` か `borderWidth`）を数値で読む。**claude は起こさない**\n- `bun run check` が通ること\n\n## 注意\n\n- **常駐している 7327 番を落とさない**（確認は `TSUKUMO_VIEW_PORT` を変えるか、合成データの使い捨てサーバで行う）\n- 用語は `docs/glossary.md` に合わせる（セリフ・吹き出し・立ち絵）\n",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
     "loopable": "Y",
     "passes": false,
-    "evidence": "",
+    "evidence": "**着手しない判断で閉じた**（2026-09-13、ユーザーの指示「T-090 はやらなくていいや。done にしよう」）。実装・目視ともに行っていないので `passes` は `false` のまま。\n現物は未変更: `buildCharacterBody`（src/presentation/view.ts）はセリフ0件のとき `PLACEHOLDER_UTTERANCE` を `<div class=\"balloon\">` で出したままになっている。同じ直しがまた要るなら新しいタスクとして起こす。",
     "dependencies": []
   },
   {
