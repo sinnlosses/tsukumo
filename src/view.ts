@@ -1203,10 +1203,7 @@ function turnPanel(turn: MainViewTurn): TurnPanel {
     turn.droppedCount === 0
       ? ""
       : `<p class="turn-dropped">これ以前の ${String(turn.droppedCount)} 件は省略した</p>`
-  const requestHtml =
-    turn.request === undefined
-      ? ""
-      : `<h2 class="turn-request">${escapeHtml(truncateRequest(turn.request))}</h2>`
+  const requestHtml = turn.request === undefined ? "" : requestHeadingHtml(turn.request)
 
   const stepsHtml = steps.length === 0 ? "" : `<div class="main-steps">${steps.join("\n")}</div>`
 
@@ -1248,14 +1245,41 @@ function turnTabHtml(id: number, index: number, isActive: boolean): string {
   return `<button type="button" class="turn-tab${isActive ? " is-active" : ""}" data-turn-id="${String(id)}">${escapeHtml(label)}</button>`
 }
 
-// 依頼の見出しに出す長さの上限。1行に収めたいだけなので、超えた分は落として「…」を付ける。
-const MAX_REQUEST_HEADING_LENGTH = 120
+// 見出しに出す依頼の全文の長さの上限。タブの上限（MAX_REQUEST_HEADING_LENGTH）とは別物で、
+// 複数行ぶんを保つ分だけ長めに取ってある。無いと際限なく長い依頼で DOM が育ち続ける。
+const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
 
-function truncateRequest(request: string): string {
-  const firstLine = request.split("\n")[0] ?? request
-  return firstLine.length <= MAX_REQUEST_HEADING_LENGTH
-    ? firstLine
-    : `${firstLine.slice(0, MAX_REQUEST_HEADING_LENGTH)}…`
+function truncateRequestText(request: string): string {
+  return request.length <= MAX_REQUEST_HEADING_TEXT_LENGTH
+    ? request
+    : `${request.slice(0, MAX_REQUEST_HEADING_TEXT_LENGTH)}…`
+}
+
+/**
+ * 依頼の見出し。**全行を既定で見せる**（ユーザーの指摘 2026-09-12「複数行の依頼が1行しか
+ * 出ない」。**畳んだ状態を既定にすると、クリックが1手増えるだけでこの指摘が残る**）。
+ *
+ * - **1行の依頼は `<h2>` のまま。** 畳む先が無いのに開閉の三角を出さない
+ * - **複数行の依頼は `<details open>`。** 既定で開いているので全行が読め、読み終わったら
+ *   閉じて1行目だけにできる。**`<summary>` に1行目、中の `<div>` には2行目以降**を入れて
+ *   1行目が二重に出ないようにする。開閉はブラウザ標準なのでスクリプトが要らない
+ *
+ * どちらの形でも高さは `max-height` で頭打ちにしてあり（`STYLE` の `.turn-request` と
+ * `.turn-request-full`）、長い依頼が画面をその1件で埋めない。
+ *
+ * **タブのラベルは依頼の文面を使わない**（`turnTabHtml` が出すのは「今回」「1つ前」）ので、
+ * 1行目だけを切り出す処理はここには要らない。
+ */
+function requestHeadingHtml(request: string): string {
+  const text = truncateRequestText(request)
+  const lineBreak = text.indexOf("\n")
+  if (lineBreak === -1) {
+    return `<h2 class="turn-request">${escapeHtml(text)}</h2>`
+  }
+
+  const firstLine = escapeHtml(text.slice(0, lineBreak))
+  const rest = escapeHtml(text.slice(lineBreak + 1)).replaceAll("\n", "<br>")
+  return `<details class="turn-request" open><summary>${firstLine}</summary><div class="turn-request-full">${rest}</div></details>`
 }
 
 // 答え待ちのフィールドと同じ形の JSON をボタンの data 属性に埋め込むための識別子。
@@ -2005,12 +2029,32 @@ const STYLE = `
     cursor: pointer;
   }
   .turn-tab.is-active { color: #e6e8ee; border-color: #8ab4ff; }
+  /* 既定では summary（依頼の1行目）だけの高さで収まり、開くと全行が読める
+     （requestHeadingHtml 参照）。 */
+  /* 依頼の見出し。1行なら h2、複数行なら details[open]（requestHeadingHtml）。**どちらも
+     既定で全行が見えて**、長いときだけ max-height でスクロールに切り替わる。 */
   .turn-request {
     margin: 0 0 0.75rem;
-    font-size: 0.95rem;
-    color: #8ab4ff;
     border-left: 3px solid #8ab4ff;
     padding-left: 0.6rem;
+  }
+  h2.turn-request {
+    font-size: 0.95rem;
+    color: #8ab4ff;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+  .turn-request > summary {
+    font-size: 0.95rem;
+    color: #8ab4ff;
+    cursor: pointer;
+  }
+  .turn-request-full {
+    margin-top: 0.4rem;
+    max-height: 40vh;
+    overflow-y: auto;
+    color: #e6e8ee;
+    font-size: 0.9rem;
   }
   .turn-dropped { margin: 0 0 0.75rem; color: #8f97ab; font-size: 0.85rem; }
   /* ステップは**縦に1本**で積む（ユーザーの指摘 2026-09-10。Z字に読ませない）。

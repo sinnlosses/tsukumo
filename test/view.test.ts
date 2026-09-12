@@ -2408,12 +2408,33 @@ describe("メインビューのやり取り（依頼で区切り、タブで遡�
     expect(body).not.toContain("レポート0<")
   })
 
-  it("依頼の見出しは1行に収め、長すぎるものは切り詰める", () => {
-    const body = buildMainBody([request(`${"あ".repeat(200)}\n2行目`), detail("x")])
+  it("依頼の見出しには全行を出す（複数行の依頼を読めるように 2026-09-12）", () => {
+    const body = buildMainBody([request("1行目\n2行目\n3行目"), detail("x")])
+
+    expect(body).toContain("2行目")
+    expect(body).toContain("3行目")
+  })
+
+  it("タブのラベルに依頼の文面は出ない（出すのは「今回」「1つ前」だけ）", () => {
+    const body = buildMainBody([
+      request("前の依頼\n前の2行目"),
+      detail("前のレポート"),
+      request("今回の依頼\n今回の2行目"),
+      detail("今回のレポート"),
+    ])
+
+    const tabsHtml = /<div class="turn-tabs"[\s\S]*?<\/div>/.exec(body)?.[0] ?? ""
+    expect(tabsHtml).not.toBe("")
+    expect(tabsHtml).not.toContain("前の2行目")
+    expect(tabsHtml).not.toContain("今回の2行目")
+  })
+
+  it("見出しの全文にも上限が効き、長すぎるものは切り詰めの印が付く", () => {
+    const longLine = "あ".repeat(3000)
+    const body = buildMainBody([request(longLine), detail("x")])
 
     expect(body).toContain("…")
-    expect(body).not.toContain("2行目")
-    expect(body).not.toContain("あ".repeat(200))
+    expect(body).not.toContain(longLine)
   })
 
   it("最初の依頼より前の記録も落とさずに出す（途中から追い始めたとき）", () => {
