@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { spawnSync } from "node:child_process"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
-import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/view-port.ts"
+import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/infrastructure/view-port.ts"
 
 // **このファイルは CLI を起動しきらないものだけを扱う。**
 // 2026-09-11 に起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
@@ -11,11 +11,11 @@ import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/view-port
 //
 // 追従・状態ファイル・立ち絵のフォールバック・ビューの中身を端から端まで見ていたテストは、
 // この変更で対象そのものが無くなった。振る舞い自体は次のテストが守っている:
-//   - ビューの HTML の組み立て（吹き出し・メインビュー・サイドバー）: test/view.test.ts
-//   - 配信（バインド先・経路・SSE・依頼の受け口）: test/view-server.test.ts
-//   - キャラクター定義の解釈と立ち絵の選び方: test/character.test.ts
-//   - SDK のイベントの変換・答え待ち・畳み込み: test/session-event.test.ts /
-//     test/pending-answer.test.ts / test/session-view.test.ts
+//   - ビューの HTML の組み立て（吹き出し・メインビュー・サイドバー）: test/presentation/view.test.ts
+//   - 配信（バインド先・経路・SSE・依頼の受け口）: test/infrastructure/view-server.test.ts
+//   - キャラクター定義の解釈と立ち絵の選び方: test/domain/character.test.ts
+//   - SDK のイベントの変換・答え待ち・畳み込み: test/domain/session-event.test.ts /
+//     test/domain/pending-answer.test.ts / test/usecase/session-view.test.ts
 // 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
 
 const ENTRY = new URL("../src/index.ts", import.meta.url).pathname

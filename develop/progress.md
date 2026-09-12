@@ -19,6 +19,18 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-086 完了。** `src/` の18ファイルを `domain` / `usecase` / `presentation` /
+`infrastructure` の4層へ `git mv` で移し、**`test/architecture.test.ts` で依存の向きを縛った**
+（`node:fs` と正規表現だけ。外部ツールは増やしていない）。**型検査に出ない2箇所を手で直した**:
+`index.ts` の `bundledFilePath("src", "browser", …)` と、`bundled-path.ts` の
+`new URL("..")` → `new URL("../..")`（1階層深くなったため。基準はリポジトリのルートのまま）。
+検査の実効性はメインセッションでも再確認した（`domain` → `presentation` の辺を足すと違反の行を
+出して落ち、復元で緑に戻る）。改名2件（`tasks.ts` → `domain/task-summary.ts`、
+`bundled-files.ts` → `infrastructure/bundled-path.ts`）も反映済み。`bun run check` は
+380 pass / 0 fail、`bun build` は 30950 バイト、`docs/architecture.md` の節の数は 27 のまま。
+**`docs/requirements.md` と `docs/glossary.md` に残る旧パスは対象外**にして
+`develop/direction.md` にメモを残した（次のセッションで `/plan-tasks`）。
+
 **T-084 完了。** `src/view.ts` に残っていたブラウザ側 JS 8関数をすべて `src/browser/` の `.ts` へ
 移した（新規7ファイル。`viewScript` は T-082 で単体ページが消えて未使用だったので削除）。
 **`src/view.ts` は 3279 → 2319行（960行減）**で、ページのインライン `<script>` は0になった
@@ -309,8 +321,6 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 - **T-077（opus、着手可能）**: セッション復元の方式を決める。**会話内容の複製にあたるかが
   最大の論点**（規約を曲げるなら規約側を先に直す）。実装はしない
 - **T-078（sonnet、T-077 待ち）**: 決めた方式でセッション復元を実装する
-- **T-086（sonnet、着手可能、`/loop` 可）**: `src/` を `domain` / `usecase` / `presentation` /
-  `infrastructure` の4層へ移し、`test/architecture.test.ts` で依存の向きを縛る。ロジックは動かさない
 - **T-087（sonnet、T-086 待ち）**: `index.ts` からユースケースを抜いて配線だけにする
 - **T-088（opus、T-086 / T-084 / T-085 待ち）**: `presentation/view.ts` の割り方を決めて割る
 

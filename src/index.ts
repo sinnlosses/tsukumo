@@ -9,7 +9,6 @@ import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
-import { bundledFilePath, resolveBundledDir } from "./bundled-files.ts"
 import {
   availableExpressions,
   type CharacterDefinition,
@@ -19,35 +18,31 @@ import {
   rasterMimeType,
   resolveOutfitAccent,
   resolvePortraitFile,
-} from "./character.ts"
+} from "./domain/character.ts"
 import {
   type Expression,
   expressionLabel,
   type Outfit,
   resolveOutfit,
   WORKING_EXPRESSION_DELAY_MS,
-} from "./expression.ts"
-import { type Host } from "./host.ts"
-import { createOrcaHost } from "./orca-host.ts"
-import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./session-driver.ts"
-import { type CommandDescription, type SessionEvent } from "./session-event.ts"
+} from "./domain/expression.ts"
+import { type CommandDescription, type SessionEvent } from "./domain/session-event.ts"
+import { readTaskSummaries, type TaskSummaryItem } from "./domain/task-summary.ts"
+import { bundledFilePath, resolveBundledDir } from "./infrastructure/bundled-path.ts"
+import { type Host } from "./infrastructure/host.ts"
+import { createOrcaHost } from "./infrastructure/orca-host.ts"
 import {
-  applySessionEvent,
-  commandSuggestions,
-  currentExpression,
-  INITIAL_SESSION_VIEW,
-  mainViewEntries,
-  type SessionView,
-  type ToolActivity,
-} from "./session-view.ts"
-import { readTaskSummaries, type TaskSummaryItem } from "./tasks.ts"
+  DEFAULT_PERMISSION_MODE,
+  type SessionDriver,
+  startSession,
+} from "./infrastructure/session-driver.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "./view-port.ts"
-import { startViewServer, type ViewServer } from "./view-server.ts"
+} from "./infrastructure/view-port.ts"
+import { startViewServer, type ViewServer } from "./infrastructure/view-server.ts"
 import {
   buildCharacterBody,
   buildMainBody,
@@ -58,7 +53,16 @@ import {
   type SidebarData,
   type SidebarToolActivity,
   type TurnStatus,
-} from "./view.ts"
+} from "./presentation/view.ts"
+import {
+  applySessionEvent,
+  commandSuggestions,
+  currentExpression,
+  INITIAL_SESSION_VIEW,
+  mainViewEntries,
+  type SessionView,
+  type ToolActivity,
+} from "./usecase/session-view.ts"
 
 const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 // 起動時にレイアウトページのタブを自動で開くかどうか。既定は開く（コマンド1つで完成させるため）。
@@ -109,10 +113,11 @@ const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
 /**
- * ブラウザ側スクリプト（`src/browser/`）を `bun build` で1本にまとめ、**中身を文字列で返す**。
+ * ブラウザ側スクリプト（`src/presentation/browser/`）を `bun build` で1本にまとめ、
+ * **中身を文字列で返す**。
  * 失敗したら undefined を返す（呼び出し側が起動を止める）。
  *
- * **ファイルに書き出さない。** 出力を標準出力で受け取ってメモリに持ち、`src/view-server.ts` が
+ * **ファイルに書き出さない。** 出力を標準出力で受け取ってメモリに持ち、`src/infrastructure/view-server.ts` が
  * `/assets/browser.js` として配る。ディスクに成果物を残さないので、古いものを配る事故も、
  * `.gitignore` に足す必要も出ない（2026-09-12 T-083 決定）。
  *
@@ -121,11 +126,11 @@ const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
  * 動かしている実行環境なので、外部コマンドの依存が増えるわけではない。
  *
  * 型検査はここではしない（`bun build` はトランスパイルだけで型を見ない）。型は
- * `bun run check` の `tsc --noEmit` が見る。**`src/browser/` も tsconfig の `include`
- * （`src` 配下の `.ts` すべて）に入っている**ので、検査は自動で届く。
+ * `bun run check` の `tsc --noEmit` が見る。**`src/presentation/browser/` も tsconfig の
+ * `include`（`src` 配下の `.ts` すべて）に入っている**ので、検査は自動で届く。
  */
 function buildBrowserScript(): Promise<string | undefined> {
-  const entry = bundledFilePath("src", "browser", BROWSER_SCRIPT_ENTRY)
+  const entry = bundledFilePath("src", "presentation", "browser", BROWSER_SCRIPT_ENTRY)
   return new Promise((resolve) => {
     execFile(
       "bun",
@@ -177,7 +182,7 @@ async function main(args: readonly string[]): Promise<number> {
   // 添える計算（`commandSuggestions`）を済ませたものをそのまま持つ。
   let commands: readonly CommandDescription[] = []
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
-  // ずらして再挑戦する（src/view-port.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
+  // ずらして再挑戦する（src/infrastructure/view-port.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
     startViewServer(
       port,
@@ -243,7 +248,7 @@ async function main(args: readonly string[]): Promise<number> {
 
 /**
  * イベントを受けて姿を更新し、配る係を呼ぶ。**セッションの姿を持つのはここ1箇所だけ**
- * （畳み込みそのものは純粋関数。src/session-view.ts）。
+ * （畳み込みそのものは純粋関数。src/usecase/session-view.ts）。
  *
  * **`turnInProgress` が変わったときだけ `publishTurnStatus` を呼ぶ。** 書きかけの本文は
  * トークン単位で届くため、変わっていないのに毎回押すと入力欄の SSE だけ無駄に流れてしまう。
@@ -253,7 +258,7 @@ async function main(args: readonly string[]): Promise<number> {
  * 。docs/requirements.md 4.7「答えるのは入力の動作なので入力欄の側に置く」）。
  *
  * **`turnStartedAt` / `turnFinishedAt`（経過時間の起点・終点）もここで持つ。** `Date.now()` を
- * 呼ぶのは副作用なので、純粋な畳み込み（src/session-view.ts）の外、配線の層に置く。`request` が
+ * 呼ぶのは副作用なので、純粋な畳み込み（src/usecase/session-view.ts）の外、配線の層に置く。`request` が
  * 来るたびに `turnStartedAt` を更新し `turnFinishedAt` を undefined に戻し、`turn-finished` /
  * `session-ended` が来たときだけ `turnFinishedAt` を入れる（それ以外では前の値をそのまま持ち
  * 続ける）。表す意味は「依頼を送ってから、そのターンが終わるまでの時間」で、終わったら
@@ -374,7 +379,7 @@ function createViewPublisher(
 
 /**
  * サイドバーに出す値。**いま何をしているかは実行中・直近の完了のツール名＋入力**
- * （要約は表示側 `src/view.ts` の仕事。引数の断片が要約に入りうることは
+ * （要約は表示側 `src/presentation/view.ts` の仕事。引数の断片が要約に入りうることは
  * `docs/coding-standards.md`「会話内容の扱い」に沿って承知した上で渡す）。**経過時間はここに
  * 無い**（入力欄側へ渡すのは `publishTurnStatus`。2026-09-12 T-075 決定）。
  */
