@@ -2657,6 +2657,18 @@ describe("キャラビューの本文", () => {
     expect(body.indexOf("2つめ")).toBeLessThan(body.indexOf("1つめ"))
   })
 
+  it("吹き出しは .balloon-anchor 配下の .balloon-track に入る（最新を領域の縦中央に固定するための入れ物）", () => {
+    const body = buildCharacterBody({
+      ...FULL_CHARACTER_DATA,
+      speeches: ["1つめ", "2つめ"],
+    })
+
+    expect(body).toContain('<div class="balloon-anchor">')
+    expect(body).toContain('<div class="balloon-track">')
+    // balloon-track の直後に balloon-spacer（下半分の空白）が続く。
+    expect(body).toMatch(/<\/div><div class="balloon-spacer"><\/div>/)
+  })
+
   it("インライン SVG の立ち絵は、エスケープせずファイルの中身をそのまま埋め込む", () => {
     const body = buildCharacterBody(FULL_CHARACTER_DATA)
 

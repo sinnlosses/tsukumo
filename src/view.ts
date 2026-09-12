@@ -1014,8 +1014,10 @@ export type CharacterViewData = {
  * 表情の切り替えは、差し替えのたびに新しい要素が挿入される性質を利用して、CSS アニメーション
  * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
  *
- * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-list` に縦へ積み、最新が
- * 一番下に見える（`STYLE` の `.balloon-list`）。並びは自前でスクロールする。
+ * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-track` に縦へ積み、最新が
+ * 一番下に見える（`STYLE` の `.balloon-track`）。並びは自前でスクロールする。**最新の吹き出し
+ * （＝並びの下端）は領域の縦中央に固定し、過去の分はその上に積む**（`.balloon-anchor` /
+ * `.balloon-track` / `.balloon-spacer` の3段構成。2026-09-12 決定。詳細は `STYLE` のコメント）。
  *
  * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（{@link buildPendingAnswerBody}）は
  * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
@@ -1030,7 +1032,7 @@ export function buildCharacterBody(data: CharacterViewData): string {
       ? ""
       : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
 
-  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-list` の
+  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-track` の
   // `flex-direction: column-reverse` と組み、`scrollTop = 0`（既定の位置）が最新を指すようにする。
   // こうしておくと SSE で並びが丸ごと差し替わっても、購読スクリプト側に手を入れずに最新が見える。
   const balloonsHtml =
@@ -1045,8 +1047,12 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // （`buildLayoutPage`）ではキャラビューは下段の半分幅になり、横長・浅めの領域になるため、
   // 縦積みのままだと窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
+  //
+  // `.balloon-anchor` は縦を2段に割る箱（`.balloon-track` が上半分・`.balloon-spacer` が
+  // 下半分）。最新の吹き出しを領域の縦中央に固定する仕組みは `STYLE` の `.balloon-track` の
+  // コメントを参照。
   return `<div class="character-region">
-<div class="character-layout">${portraitHtml}<div class="balloon-list">${balloonsHtml}</div></div>
+<div class="character-layout">${portraitHtml}<div class="balloon-anchor"><div class="balloon-track">${balloonsHtml}</div><div class="balloon-spacer"></div></div></div>
 </div>`
 }
 
@@ -1808,9 +1814,9 @@ const STYLE = `
     line-height: 1.7;
     overflow-wrap: anywhere;
   }
-  /* 領域の高さを .character-layout → .balloon-list まで継がせ、並びの max-height: 100% が
-     領域の中に収まるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きくなって
-     領域ごとスクロールし、最新の吹き出しが隠れる）。 */
+  /* 領域の高さを .character-layout → .balloon-anchor まで継がせ、.balloon-track の
+     flex-basis: 50% が領域の中に収まるようにする（vh 基準にすると、下段の行の高さ（既定 40%）
+     より大きくなって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
   .character-region { display: flex; flex-direction: column; gap: 0.5rem; height: 100%; }
   .permission-mode, .model-select-wrap {
     display: flex;
@@ -1854,23 +1860,39 @@ const STYLE = `
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  /* セリフ1件につき1つの吹き出しを、そのターンの分だけ縦に積む。最新を下に見せ、innerHTML の
-     差し替え直後も最新が見えるようにするため、DOM は新しい順（buildCharacterBody）に並べた上で
-     column-reverse で視覚上の順序を戻す。こうすると scrollTop の既定値（0）がちょうど最新側を
-     指す（column-reverse は「開始」が視覚上の下端になるため）。overflow-y: auto で並び自身が
-     スクロールする（.layout-region 側の外枠スクロールとは別）。max-height の % は
-     .character-region → .character-layout と height: 100% で継いだ領域の高さが基準。
+  /* 最新の吹き出しを領域の縦中央に固定し、過去の分をその上に積む（2026-09-12 決定。ユーザーの
+     指示「最新は中央に、過去はそれより上に」）。.balloon-anchor を縦2段（.balloon-track が
+     上半分・.balloon-spacer が下半分）に割り、.balloon-track を .balloon-anchor の下端
+     （＝領域の縦中央）に flex-direction: column を使って flush させる。.balloon-track の中では
+     従来どおり DOM を新しい順に並べ column-reverse で視覚上の順序を戻すので、
+     .balloon-track 自身の下端（＝領域の縦中央）に常に最新の吹き出しが接する。件数が増えても
+     .balloon-track の高さ（flex-basis: 50%）自体は動かないので、最新の位置はそのまま固定され、
+     入りきらない過去の分だけ .balloon-track 内の overflow-y: auto でスクロールする
+     （.layout-region 側の外枠スクロールとは別）。50% の基準は .character-region →
+     .character-layout → .balloon-anchor と継いだ領域の高さ。height: 100% を直接指定する
+     （align-self: stretch だと、.balloon-anchor 自身の高さがブラウザの計算上「定まった値」
+     扱いにならず、.balloon-track の flex-basis: 50% が中身の量に応じて伸縮してしまう実測を
+     2026-09-12 に確認した。height: 100% の指定なら、.character-region 以来の実績があるチェーン
+     と同じ経路なので確実に定まる）。
      幅が足りず縦積みに戻ったとき（.character-layout の flex-wrap）は、立ち絵と本要素の
      合計が入りきらなければ外枠の .layout-region の overflow-y: auto が受け止める。 */
-  .balloon-list {
+  .balloon-anchor {
     display: flex;
+    flex-direction: column;
     flex: 1 1 11rem;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+  .balloon-track {
+    display: flex;
+    flex: 0 0 50%;
     flex-direction: column-reverse;
     gap: 0.5rem;
-    min-width: 0;
-    max-height: 100%;
+    min-height: 0;
     overflow-y: auto;
   }
+  .balloon-spacer { flex: 1 1 auto; }
   .balloon {
     padding: 0.75rem 1rem;
     border: 1px solid #3a4256;
@@ -2380,6 +2402,11 @@ const STYLE = `
        自身の中身を 0 扱いにしてしまう。狭い画面では元々スクロールさせる意図が無いので、
        「セッション情報」と同じ「中身なりの高さ」に揃える。 */
     .sidebar-block-activity, .sidebar-block-tasks { flex: 0 1 auto; }
+    /* .layout-region.layout-character もこの幅では高さ auto になり、.balloon-track の
+       flex-basis: 50% の基準が消える（同じ理由の T-067 の再発）。この幅ではページ自体が
+       縦スクロールするので中央固定の意味も無く、吹き出しは中身なりの高さで積むだけにする。 */
+    .balloon-track { flex: 0 1 auto; max-height: none; overflow-y: visible; }
+    .balloon-spacer { display: none; }
   }
 `
 
