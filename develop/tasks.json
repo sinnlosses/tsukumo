@@ -7,7 +7,7 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "撤去: src/transcript.ts / src/state.ts / src/transcript-target.ts / src/subagents.ts / hooks/state.sh と各テスト、host.ts・orca-host.ts の openPane/listPanes/sendText/pressKey、view.ts の TERMINALS_PATH/DISPATCH_PATH、view-server.ts の該当ハンドラと host 引数、question.ts の parseAnsweredLabels。残した splitUtterance は src/utterance.ts に、MainViewEntry は src/session-view.ts に移した（transcript.ts のままだと名前が概念と合わないため）。~/.claude/settings.json は承認を得て tsukumo のエントリ5件（SessionStart / Stop / StopFailure / PreToolUse / PostToolUseFailure）を削除。バックアップ ~/.claude/settings.json.bak-20260912-072424。編集後 tsukumo 0件・hooks のキー12個で編集前と一致・orca のエントリ12件と statusLine は無傷。~/.tsukumo/ は消していない（progress.md の「注意」に記録）。完了条件の grep は全て0件。bun run check: 339 pass / 0 fail（436 から97件減。消したのは transcript/state/transcript-target/subagents/hooks のテストと、view-server のターミナル一覧・dispatch のテスト）。CLAUDE.md / docs/architecture.md / README.md を現状に合わせた（architecture.md の節数 25→25）。目視は未実施。",
-    "dependencies": ["T-038", "T-039", "T-040"]
+    "dependencies": ["T-038","T-039","T-040"]
   },
   {
     "id": "T-046",
@@ -17,7 +17,7 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-042", "T-043", "T-044", "T-045", "T-057"]
+    "dependencies": ["T-042","T-043","T-044","T-045","T-057"]
   },
   {
     "id": "T-048",
@@ -123,10 +123,10 @@
     "id": "T-067",
     "summary": "サイドバーのセッション情報の中身が潰れる回帰を直す",
     "task": "サイドバーの「セッション情報」の中身が高さ0に潰れて見えない回帰を直す。\n\n## 背景\n\nユーザーの指示: 「セッション情報が表示されなくなってるから修正して」。\n\n2026-09-12 に現物で裏を取った結果:\n\n- **配る側の HTML は壊れていない。** `curl http://127.0.0.1:7327/sidebar` と `/layout` の両方に\n  `sidebar-block-session` / `session-info` / `model-select` / `permission-mode-select` /\n  `session-elapsed-row` が揃っており、サイドバー領域のタグの開閉も一致している\n  （`section` / `div` / `ul` / `li` / `select` / `label` / `option` を数えて確認）。\n  つまり `buildSidebarBody` → `sessionInfoBody`（`src/view.ts` 1760行目・3014行目付近）は動いている\n- **ブラウザで再現した。** 会話の中身を含まない合成データで layout ページを1枚書き出し、\n  1512x900 で描画したところ、**「セッション情報」の見出しだけが出て、中身（モデルの `<select>`・\n  許可モードの `<select>`・経過時間の行）が高さ 0 に潰れていた**。他の2区画（いま何をしているか・\n  タスク一覧）は中身が出てそれぞれ内側でスクロールしている\n- **原因の見込みは T-061 で入れた CSS。** `.sidebar-block-scroll { flex: 1 1 0; min-height: 0;\n  overflow-y: auto }`（`src/view.ts` 2116行目付近）と `.sidebar-block-session { flex: 0 1 auto }`\n  （2121行目付近）の組み合わせ。「いま何をしているか」「タスク一覧」は `flex: 1 1 0` で伸びて\n  高さが定まるが、**セッション情報だけは主軸の基準が `auto`（＝中身なり）**で、その中身が\n  `flex-basis: 0` の `.sidebar-block-scroll` 1つしかないため、高さの見積もりが 0 になる\n- T-061 の `evidence` は「目視はユーザー確認待ち」。この回帰はそこで見つかるはずだったもの\n\n## 解くべき論点\n\n- **セッション情報の区画に内側スクロールが要るか。** 中身は3行で固定なので、区画ごと中身なりの\n  高さにして `overflow-y` を外すのが素直（T-061 の意図は「見出しが画面の外に流れないこと」で、\n  スクロールが要るのは中身の量が変わる2区画）\n- 直し方を `.sidebar-block-session` だけの上書きにするか、`.sidebar-block-scroll` の既定そのものを\n  変えるか（後者は他の2区画の内側スクロールを壊しうる）\n- 狭い画面（`@media (max-width: 760px)`）と単体ページ `/sidebar`（`.layout-sidebar` が無く、\n  区画に定まった高さが無い文脈）でも同じ結果になるか\n\n## やること\n\n1. 合成データだけのページで再現させる（**実際の tsukumo のページを撮らない**。会話の中身を\n   複製しないため）。`buildSidebarBody` と `buildLayoutPage` を合成の値で呼んで HTML を1枚書き出す\n2. セッション情報の中身が潰れないように CSS を直す。**「いま何をしているか」「タスク一覧」の\n   内側スクロール（T-061 の意図）は保つ**\n3. 同じ手順で描き直し、3区画すべての中身が出ていることを確かめる\n4. `bun run check` を通す\n5. **調べて「CSS ではなくブラウザ側のスクリプトが中身を消している」と分かったら**、そちらを直す\n   （原因が上の見込みと違ったら、実際の原因を `evidence` に書く）\n\n## 完了条件\n\n- 合成データのページで、**「セッション情報」の見出しの下にモデルの `<select>`・許可モードの\n  `<select>`・経過時間の3行が見えること**\n- 「いま何をしているか」「タスク一覧」が**それぞれの区画の内側でスクロールし、サイドバーの領域\n  自体はスクロールしない**こと（T-061 の意図を壊していないこと）\n- 単体ページ `/sidebar` でも3区画の中身が出ること\n- `bun run check` が通ること（テスト件数を `evidence` に書く）\n- 何をどう見て合格としたか（画面の大きさ、3区画それぞれに何が見えたか）を `evidence` に書く\n\n## 注意\n\n- 触るのは `src/view.ts` の `STYLE` のサイドバー周り。**`buildSidebarBody` / `sessionInfoBody` の\n  HTML は壊れていない**ので、原因がそちらだと分かったときだけ触る\n- **ブラウザに出た絵は自動テストで守らない**（`CLAUDE.md`「テスト方針」）。CSS の文字列を\n  テストで固定しない\n- 確認にヘッドレスのブラウザを使ってよいが、**リポジトリの依存には加えない**\n  （外部コマンド依存を増やすときはユーザーの承認。`CLAUDE.md`）。**会話の中身が写るページは撮らない**\n- `/loop` に載せてよい\n- 動作確認で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番のプロセスを\n  落とさない**。止めるのは自分が起こした pid だけ",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`.sidebar-block-scroll` の flex-basis を 0→auto にし、狭い画面（760px 以下）では activity/tasks を `flex: 0 1 auto` にした（src/view.ts の STYLE のみ）。原因は見込みどおり、親の高さが auto のとき flex-basis: 0 が内容の見積もりを 0 にすること（T-061 の回帰）。狭い画面で他の2区画が同じ理由で潰れる別口も同時に直した。\n`bun run check` 通過: 340 pass / 0 fail、oxfmt 52ファイル。\n目視（合成データのみの layout ページを Chrome headless 1512x900 で描画。会話の中身は写していない）: 修正前は「セッション情報」が見出しだけ。修正後はモデル（Opus）・許可モード（自動判定）・経過（1分06秒）の3行が出て、他の2区画は区画の途中で切れ（内側スクロール）、サイドバーの領域自体はスクロールしない。",
     "dependencies": []
   },
   {

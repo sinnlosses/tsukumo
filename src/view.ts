@@ -2112,8 +2112,13 @@ const STYLE = `
   .sidebar-block p { margin: 0.2rem 0; }
   /* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み、単体ページ
      /sidebar）では flex-grow は働かず、中身なりの高さに広がるだけになる（中で無理に
-     スクロールさせない）。 */
-  .sidebar-block-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+     スクロールさせない）。**flex-basis は 0 ではなく auto にすること**：親の高さが auto の
+     ときに flex-basis: 0 だと、内容サイズの見積もりに使う基準そのものが 0 になり、
+     overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる（2026-09-12、T-067 で
+     T-061 の回帰として発覚）。flex-basis: auto なら親の高さが定まっている（.layout-sidebar
+     配下）ときは今まで通り内側でスクロールし、定まっていない（狭い画面・単体ページ）ときは
+     中身なりの高さに自然に広がる。 */
+  .sidebar-block-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   /* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。
      「セッション情報」は3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの
      高さで止める（等分すると中身が短いぶんだけ下に空白が間延びするため）。 */
@@ -2353,6 +2358,11 @@ const STYLE = `
     }
     .layout-resizer, .layout-reset { display: none; }
     .layout-dispatch { min-height: 10rem; }
+    /* .layout-sidebar もこの幅では高さ auto になるので、「いま何をしているか」「タスク一覧」の
+       flex-basis: 0（.sidebar-block-activity / .sidebar-block-tasks の既定）が同じ理由で
+       自身の中身を 0 扱いにしてしまう。狭い画面では元々スクロールさせる意図が無いので、
+       「セッション情報」と同じ「中身なりの高さ」に揃える。 */
+    .sidebar-block-activity, .sidebar-block-tasks { flex: 0 1 auto; }
   }
 `
 
