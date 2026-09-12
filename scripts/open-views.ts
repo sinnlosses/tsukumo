@@ -8,10 +8,9 @@
 // 使い方: bun run scripts/open-views.ts http://127.0.0.1:7327
 //   （URL は `bun run start` が起動時に表示するもの）
 //
-// **開くのはまとめたページ（LAYOUT_PATH）1つだけ。** 3つのビューは1枚の HTML にまとめてあるので、
-// ブラウザタブも1つで足りる（`docs/architecture.md`「3つのビューは1枚のページにまとめる」）。
-// 個別のビュー（`/main` `/character` `/sidebar`）はデバッグ用に残っているが、
-// 見たいときは Orca 内のブラウザで URL を直接開けばよく、この道具の役目ではない。
+// **開くのはまとめたページ（LAYOUT_PATH、`/`）1つだけ。** 3つのビューは1枚の HTML に
+// まとめてあるので、ブラウザタブも1つで足りる（`docs/architecture.md`「ビューは1枚のページに
+// まとめる」）。個別のビュー（`/main` `/character` `/sidebar`）のページは 2026-09-12 に消した。
 
 import process from "node:process"
 

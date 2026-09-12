@@ -4,17 +4,16 @@ import vm from "node:vm"
 import { type MainViewEntry } from "../src/session-view.ts"
 import {
   buildCharacterBody,
-  buildIndexPage,
   buildLayoutPage,
   buildMainBody,
   buildPendingAnswerBody,
   buildSidebarBody,
-  buildViewPage,
   type CharacterViewData,
   COMMANDS_PATH,
   INTERRUPT_PATH,
   isViewName,
   LAYOUT_PATH,
+  type LayoutBodies,
   PENDING_ANSWER_EVENT_PATH,
   PROMPT_PATH,
   type SidebarData,
@@ -25,7 +24,7 @@ import {
   TURN_STATUS_IN_PROGRESS,
   VIEW_NAMES,
   viewEventPath,
-  viewPath,
+  type ViewName,
 } from "../src/view.ts"
 
 // buildCharacterBody に渡す全部入りのデータ。個々のテストは必要な部分だけ上書きする。
@@ -1254,9 +1253,24 @@ describe("入力欄（送信・中断）", () => {
   })
 })
 
+/**
+ * `buildLayoutPage` のうち1領域だけに本文を入れ、残りは空にする。個別ビューのページ
+ * （`buildViewPage`。2026-09-12 に消した）の代わりに、まとめたレイアウトページの1領域だけを
+ * 見たいテストで使う。
+ */
+function singleRegionLayoutPage(view: ViewName, body: string): string {
+  const bodies: LayoutBodies = { main: "", character: "", sidebar: "", [view]: body }
+  return buildLayoutPage(bodies)
+}
+
+/** `buildLayoutPage` の領域の要素 id（`src/view.ts` の `layoutRegionId` と同じ規則）。 */
+function layoutElementId(view: ViewName): string {
+  return `tsukumo-view-${view}`
+}
+
 describe("SSEの更新の適用（本文が同じなら差し替えない・morph でスクロール位置を保つ）", () => {
   it("購読スクリプトは Idiomorph.morph で差し替え、innerHTML の全置換は残っていない", () => {
-    const page = buildViewPage("main", "<p>さいしょ</p>")
+    const page = singleRegionLayoutPage("main", "<p>さいしょ</p>")
     const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
     if (scriptMatch === null || scriptMatch[1] === undefined) {
       throw new Error("ページに <script> が無い")
@@ -1264,18 +1278,22 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
     const script = scriptMatch[1]
 
     expect(script).toContain("Idiomorph.morph(")
-    expect(script).not.toMatch(/\.innerHTML\s*=\s*event\.data/)
+    // 領域の購読（subscriptionScript）だけを見る。まとめたレイアウトページの <script> には
+    // 答え待ちの箱の配線（pendingAnswerScript）も同居しており、そちらは小さな断片を直接
+    // innerHTML へ入れる設計のまま（morph の対象ではない）なので、変数名 `el`（購読側が使う名前）
+    // に絞って確かめる。
+    expect(script).not.toMatch(/\bel\.innerHTML\s*=\s*event\.data/)
   })
 
   it("ページが Idiomorph 本体（/vendor/idiomorph.min.js）を読み込む", () => {
-    const page = buildViewPage("main", "<p>さいしょ</p>")
+    const page = singleRegionLayoutPage("main", "<p>さいしょ</p>")
 
     expect(page).toContain('src="/vendor/idiomorph.min.js"')
   })
 
   it("購読直後の1回目の push が、埋め込み済みの本文と同じときは差し替えない", () => {
     const initialBody = "<p>さいしょ</p>"
-    const page = buildViewPage("character", initialBody)
+    const page = singleRegionLayoutPage("character", initialBody)
     const { element, innerHtmlSetCount } = makeFakeElement({
       initialHtml: initialBody,
       scrollTop: 0,
@@ -1283,7 +1301,10 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
       clientHeight: 100,
     })
 
-    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    const { dispatch } = runSubscriptionScript(
+      page,
+      new Map([[layoutElementId("character"), element]]),
+    )
     dispatch(viewEventPath("character"), initialBody)
 
     expect(innerHtmlSetCount()).toBe(0)
@@ -1291,7 +1312,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
 
   it("本文が前回と同じ update イベントが続いても、差し替えは起きない", () => {
     const initialBody = "<p>さいしょ</p>"
-    const page = buildViewPage("main", initialBody)
+    const page = singleRegionLayoutPage("main", initialBody)
     const { element, innerHtmlSetCount } = makeFakeElement({
       initialHtml: initialBody,
       scrollTop: 0,
@@ -1299,7 +1320,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
       clientHeight: 100,
     })
 
-    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
     dispatch(viewEventPath("main"), initialBody)
     dispatch(viewEventPath("main"), initialBody)
     dispatch(viewEventPath("main"), initialBody)
@@ -1309,7 +1330,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
 
   it("本文が変わった update イベントでは morph で差し替える", () => {
     const initialBody = "<p>さいしょ</p>"
-    const page = buildViewPage("main", initialBody)
+    const page = singleRegionLayoutPage("main", initialBody)
     const { element, innerHtmlSetCount } = makeFakeElement({
       initialHtml: initialBody,
       scrollTop: 0,
@@ -1317,7 +1338,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
       clientHeight: 100,
     })
 
-    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
     dispatch(viewEventPath("main"), "<p>つぎ</p>")
 
     expect(innerHtmlSetCount()).toBe(1)
@@ -1326,7 +1347,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
 
   it("差し替え前にいちばん下から24px以内を見ていたときは、差し替え後もいちばん下へ追従する", () => {
     const initialBody = "<p>さいしょ</p>"
-    const page = buildViewPage("main", initialBody)
+    const page = singleRegionLayoutPage("main", initialBody)
     const { element } = makeFakeElement({
       initialHtml: initialBody,
       scrollTop: 980, // 1000 - 980 - 100 = -80 < 24 → いちばん下の近く
@@ -1334,7 +1355,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
       clientHeight: 100,
     })
 
-    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
     dispatch(viewEventPath("main"), "<p>つぎ</p>")
 
     expect(element.scrollTop).toBe(1000)
@@ -1342,7 +1363,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
 
   it("差し替え前にいちばん下から離れていたときは、差し替え後も元のスクロール位置を保つ", () => {
     const initialBody = "<p>さいしょ</p>"
-    const page = buildViewPage("main", initialBody)
+    const page = singleRegionLayoutPage("main", initialBody)
     const { element } = makeFakeElement({
       initialHtml: initialBody,
       scrollTop: 100, // 1000 - 100 - 100 = 800 ≥ 24 → 離れている
@@ -1350,7 +1371,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
       clientHeight: 100,
     })
 
-    const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
+    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
     dispatch(viewEventPath("main"), "<p>つぎ</p>")
 
     // morph 自体は scrollTop に触れない（makeFakeElement の想定）。ここで確かめるのは、
@@ -1400,12 +1421,11 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
   })
 })
 
-describe("ビューの経路", () => {
-  it("ページと更新の経路が、ビューごとに別々になる", () => {
-    const paths = VIEW_NAMES.map((view) => viewPath(view))
+describe("SSEの更新の経路", () => {
+  it("更新の経路が、ビューごとに別々になる", () => {
     const eventPaths = VIEW_NAMES.map((view) => viewEventPath(view))
 
-    expect(new Set([...paths, ...eventPaths]).size).toBe(paths.length + eventPaths.length)
+    expect(new Set(eventPaths).size).toBe(eventPaths.length)
   })
 
   it("知らないビュー名を弾く", () => {
@@ -1414,32 +1434,24 @@ describe("ビューの経路", () => {
   })
 })
 
-describe("ビューのページ", () => {
-  it("本文を埋め込み、そのビューの更新の経路を購読する", () => {
-    const page = buildViewPage("character", "<p>こんにちは</p>")
+describe("レイアウトページの基本", () => {
+  it("タイトルは固定で「tsukumo」（個別ビューのページ・タイトルは 2026-09-12 に消した）", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).toStartWith("<!doctype html>")
-    expect(page).toContain("<p>こんにちは</p>")
-    expect(page).toContain(`new EventSource("${viewEventPath("character")}")`)
+    expect(page).toContain("<title>tsukumo</title>")
   })
 
-  it("一覧ページから3つのビューすべてに辿れる", () => {
-    const page = buildIndexPage()
-
-    for (const view of VIEW_NAMES) {
-      expect(page).toContain(`href="${viewPath(view)}"`)
-    }
+  it("`/` は個別ビューのページの一覧ではなく、まとめたレイアウトページそのもの（LAYOUT_PATH）", () => {
+    expect(LAYOUT_PATH).toBe("/")
   })
 })
 
 describe("まとめたレイアウトページ", () => {
-  it("経路が個別のビューのページ・更新の経路と重ならない", () => {
-    const paths = [
-      ...VIEW_NAMES.map((view) => viewPath(view)),
-      ...VIEW_NAMES.map((view) => viewEventPath(view)),
-    ]
+  it("経路が SSE の更新の経路と重ならない", () => {
+    const eventPaths = VIEW_NAMES.map((view) => viewEventPath(view))
 
-    expect(paths).not.toContain(LAYOUT_PATH)
+    expect(eventPaths).not.toContain(LAYOUT_PATH)
   })
 
   it("3領域それぞれの本文を、対応する id の要素に埋め込む", () => {
@@ -1834,14 +1846,20 @@ function runMainTurnsScript(page: string, initialTurnIds: readonly string[]): Fa
 
   const observer = makeFakeMutationObserverController()
   const controller = makeFakeEventSourceController()
+  const mainElementId = layoutElementId("main")
+  // まとめたレイアウトページの <script> にはメインビュー以外の配線
+  // （layoutScript・dispatchScript・character/sidebar の購読）も同居している。ここで
+  // 見たいのはメインビューのタブ制御だけなので、それ以外の id は無害な代役
+  // （{@link makeInertStub}）で埋め、実行はするが何も確かめない。
   vm.runInNewContext(scriptMatch[1], {
     document: {
-      getElementById: () => element,
+      getElementById: (id: string) => (id === mainElementId ? element : makeInertStub()),
       scrollingElement: element,
       documentElement: element,
     },
     EventSource: controller.EventSourceClass,
     MutationObserver: observer.MutationObserverClass,
+    Idiomorph: makeFakeIdiomorph(),
   })
 
   return {
@@ -1866,7 +1884,7 @@ function runMainTurnsScript(page: string, initialTurnIds: readonly string[]): Fa
 }
 
 describe("メインビューのタブの選択（push で戻らない・新しいやり取りで先頭へ）", () => {
-  const pageWithTurns = () => buildViewPage("main", buildMainBody([]))
+  const pageWithTurns = () => singleRegionLayoutPage("main", buildMainBody([]))
 
   it("最初は今回（左端）のやり取りが選ばれている", () => {
     const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
@@ -2192,7 +2210,7 @@ describe("レポートの図・グラフ・コードの色（同梱ライブラ�
   })
 
   it("ページは同梱したライブラリを 127.0.0.1 から読む（外部 URL を書かない）", () => {
-    const page = buildViewPage("main", buildMainBody([]))
+    const page = singleRegionLayoutPage("main", buildMainBody([]))
 
     expect(page).toContain('href="/vendor/highlight-theme.min.css"')
     expect(page).toContain('src="/vendor/highlight.min.js"')

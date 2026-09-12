@@ -20,9 +20,7 @@ import {
 } from "./session-driver.ts"
 import { type CommandDescription } from "./session-event.ts"
 import {
-  buildIndexPage,
   buildLayoutPage,
-  buildViewPage,
   ANSWER_PATH,
   COMMANDS_PATH,
   INTERRUPT_PATH,
@@ -40,7 +38,6 @@ import {
   VIEW_NAMES,
   type ViewName,
   viewEventPath,
-  viewPath,
 } from "./view.ts"
 
 // 依頼として送る文面の上限（送信のための素朴な上限であって、秘匿・検閲のためではない。
@@ -98,12 +95,10 @@ export type SendModel = (model: ModelAlias) => Promise<boolean>
 export type GetCommands = () => readonly CommandDescription[]
 
 export type ViewServer = {
-  /** ブラウザで開く URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけ。 */
-  readonly urlOf: (view: ViewName) => string
   /**
-   * 3領域をまとめたレイアウトページの URL。利用者が実際に開くのはこちら1つだけでよい
-   * （個別の `urlOf` はデバッグ用に残してある。`docs/architecture.md`「3つのビューは
-   * 1枚のページにまとめる」）。
+   * 3領域をまとめたレイアウトページの URL。ホストのポート（src/host.ts）に渡すのはこの文字列だけで、
+   * 利用者が実際に開くのもこれ1つでよい（個別ビューのページは 2026-09-12 に消した。
+   * `docs/architecture.md`「ビューは1枚のページにまとめる」）。
    */
   readonly layoutUrl: string
   /** ビューの本文を差し替え、開いているブラウザへ push する。 */
@@ -206,7 +201,6 @@ export function startViewServer(
       boundOrigin = origin
 
       resolve({
-        urlOf: (view) => `${origin}${viewPath(view)}`,
         layoutUrl: `${origin}${LAYOUT_PATH}`,
         publish: (view, body) => {
           bodies.set(view, body)
@@ -270,19 +264,8 @@ function respond(
   pendingAnswerClients: Set<ServerResponse>,
   getPendingAnswerBody: () => string,
 ): void {
-  if (path === "/") {
-    writeHtml(response, buildIndexPage())
-    return
-  }
-
   if (path === LAYOUT_PATH) {
     writeHtml(response, buildLayoutPage(currentBodies(bodies)))
-    return
-  }
-
-  const page = VIEW_NAMES.find((view) => viewPath(view) === path)
-  if (page !== undefined) {
-    writeHtml(response, buildViewPage(page, bodies.get(page) ?? ""))
     return
   }
 

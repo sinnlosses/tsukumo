@@ -26,7 +26,7 @@ import {
   VIEW_NAMES,
 } from "../src/view.ts"
 
-// ポート 0 で起動し、割り当てられたポートを urlOf から読む（開発機で常駐中のサイドカーと
+// ポート 0 で起動し、割り当てられたポートを layoutUrl から読む（開発機で常駐中のサイドカーと
 // ぶつからないようにするため）。
 let running: ViewServer | undefined
 
@@ -57,7 +57,7 @@ afterEach(async () => {
 })
 
 function originOf(server: ViewServer): string {
-  return new URL(server.urlOf("character")).origin
+  return new URL(server.layoutUrl).origin
 }
 
 /** 自分のマシンが持つループバック以外の IPv4 アドレス。無い環境では undefined。 */
@@ -83,8 +83,8 @@ describe("ビューサーバ", () => {
       return
     }
 
-    const port = new URL(server.urlOf("character")).port
-    const outside = fetch(`http://${external}:${port}/character`, {
+    const port = new URL(server.layoutUrl).port
+    const outside = fetch(`http://${external}:${port}/`, {
       signal: AbortSignal.timeout(3000),
     })
     await expect(outside).rejects.toBeDefined()
@@ -120,11 +120,11 @@ describe("ビューサーバ", () => {
     expect((await fetch(`${origin}/vendor/%2e%2e/package.json`)).status).toBe(404)
   })
 
-  it("publish した本文を、そのビューのページに埋め込んで返す", async () => {
+  it("publish した本文を、レイアウトページに埋め込んで返す", async () => {
     const server = await start()
     server.publish("character", "<p>いま作業中だよ</p>")
 
-    const response = await fetch(server.urlOf("character"))
+    const response = await fetch(server.layoutUrl)
 
     expect(response.status).toBe(200)
     expect(await response.text()).toContain("<p>いま作業中だよ</p>")
@@ -181,13 +181,13 @@ describe("ビューサーバ", () => {
     }
   })
 
-  it("layoutUrl は同じサーバの /layout を指す", async () => {
+  it("layoutUrl は同じサーバの / を指す", async () => {
     const server = await start()
 
-    expect(server.layoutUrl).toBe(`${originOf(server)}/layout`)
+    expect(server.layoutUrl).toBe(`${originOf(server)}/`)
   })
 
-  it("/layout が3領域を1枚にまとめたページを返し、それぞれ publish した本文を持つ", async () => {
+  it("/ が3領域を1枚にまとめたページを返し、それぞれ publish した本文を持つ", async () => {
     const server = await start()
     server.publish("main", "<p>メインの本文</p>")
     server.publish("character", "<p>キャラの本文</p>")
@@ -202,7 +202,7 @@ describe("ビューサーバ", () => {
     expect(body).toContain("<p>サイドバーの本文</p>")
   })
 
-  it("/layout の3領域それぞれが、個別ビューと同じ /events/<view> を購読する更新経路を持つ", async () => {
+  it("/ の3領域それぞれが、/events/<view> を購読する更新経路を持つ", async () => {
     const server = await start()
 
     const response = await fetch(server.layoutUrl)
@@ -213,14 +213,13 @@ describe("ビューサーバ", () => {
     expect(body).toContain('new EventSource("/events/sidebar")')
   })
 
-  it("個別ビューの経路（/main /character /sidebar）は /layout を足したあとも残る", async () => {
+  it("個別ビューのページ（/main /character /sidebar）は無い（2026-09-12 に消した。404）", async () => {
     const server = await start()
-    server.publish("sidebar", "<p>サイドバー単体</p>")
 
-    const response = await fetch(server.urlOf("sidebar"))
-
-    expect(response.status).toBe(200)
-    expect(await response.text()).toContain("<p>サイドバー単体</p>")
+    for (const view of VIEW_NAMES) {
+      const response = await fetch(`${originOf(server)}/${view}`)
+      expect(response.status).toBe(404)
+    }
   })
 })
 

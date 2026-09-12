@@ -56,7 +56,6 @@ import {
   type CharacterViewData,
   type SidebarData,
   type SidebarToolActivity,
-  VIEW_NAMES,
 } from "./view.ts"
 
 const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
@@ -533,15 +532,10 @@ function readPortraitSource(filePath: string): CharacterPortraitSource | undefin
 
 // 起動したことと URL は、ペインに残る唯一の出力。ここに会話の内容は出さない
 // （docs/coding-standards.md「会話内容の扱い」）。
-// 利用者が実際に開くのは layoutUrl（3領域をまとめた1枚）だけでよい。個別の URL は
-// デバッグ用に残してあるので、併せて表示しておく（`docs/architecture.md`「ビューは
-// 1枚のページにまとめる」）。
+// 利用者が実際に開くのは layoutUrl（3領域をまとめた1枚）だけ。個別ビューのページは
+// 2026-09-12 に消した（`docs/architecture.md`「ビューは1枚のページにまとめる」）。
 function announce(server: ViewServer): void {
-  const individualLines = VIEW_NAMES.map((view) => `    ${server.urlOf(view)}`)
-  process.stdout.write(
-    `tsukumo: ビューを配信中\n  ${server.layoutUrl}\n` +
-      `  （個別ビュー・デバッグ用）\n${individualLines.join("\n")}\n`,
-  )
+  process.stdout.write(`tsukumo: ビューを配信中\n  ${server.layoutUrl}\n`)
 }
 
 /** 無くてもよいファイルを読む。存在しない・読めないときは undefined を返す（例外にしない）。 */

@@ -20,11 +20,6 @@ export function isViewName(value: string): value is ViewName {
   return VIEW_NAMES.some((name) => name === value)
 }
 
-/** ビューのページの URL パス。ここと viewEventPath だけが経路を決める。 */
-export function viewPath(view: ViewName): string {
-  return `/${view}`
-}
-
 /** 更新を押し込む Server-Sent Events の URL パス。 */
 export function viewEventPath(view: ViewName): string {
   return `/events/${view}`
@@ -97,25 +92,6 @@ export const MODEL_PATH = "/api/model"
  * 以降はセッション中キャッシュする（{@link dispatchScript}。docs/requirements.md 4.2「入力欄」）。
  */
 export const COMMANDS_PATH = "/api/commands"
-
-/** 単体ビューのページで、本文を差し替える要素の id。 */
-const STANDALONE_VIEW_ELEMENT_ID = "tsukumo-view"
-
-/**
- * ビューのページ全体を組み立てる。`body` は本文の HTML 断片で、最初の表示に埋め込むと同時に、
- * 以降は Server-Sent Events で届く同じ形の断片で差し替えられる
- * （docs/architecture.md「ビューの更新は Server-Sent Events で押す」）。差し替えの中身は
- * {@link subscriptionScript} を参照。
- */
-export function buildViewPage(view: ViewName, body: string): string {
-  return page(
-    VIEW_TITLE[view],
-    `<main id="${STANDALONE_VIEW_ELEMENT_ID}">${body}</main>
-<script>
-${viewScript(STANDALONE_VIEW_ELEMENT_ID, view, body)}
-</script>`,
-  )
-}
 
 /**
  * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューには
@@ -285,21 +261,15 @@ function mainTurnsScript(elementId: string): string {
   }`
 }
 
-/** ビューの一覧ページ。どの URL に何が出るのかを人間が確かめるための入口。 */
-export function buildIndexPage(): string {
-  const links = VIEW_NAMES.map(
-    (view) => `<li><a href="${viewPath(view)}">${escapeHtml(VIEW_TITLE[view])}</a></li>`,
-  ).join("\n")
-
-  return page("tsukumo", `<main id="tsukumo-view"><ul>${links}</ul></main>`)
-}
-
 /**
- * まとめたレイアウトページの URL パス。`/main` `/character` `/sidebar` はそれぞれ単体でも
- * 開けるまま残す（デバッグしやすさのため。`docs/architecture.md`「3つのビューは1枚のページに
- * まとめる」）。実際に利用者が開くのはこちらの1枚。
+ * まとめたレイアウトページの URL パス。**個別ビューのページ（`/main` `/character`
+ * `/sidebar`）は 2026-09-12 に消した。** 当初案（3つを別々のタブで開いて `orca terminal split`
+ * でペインに並べる）の名残で「デバッグしやすさのため残す」としていたが、実際の目視確認は
+ * 合成データで `buildLayoutPage` を呼んで静的 HTML を書き出す方法で行っており、個別ページの経路は
+ * 使われていなかった（`docs/architecture.md`「ビューは1枚のページにまとめる」）。利用者が
+ * 開くのはこの1本だけでよい。
  */
-export const LAYOUT_PATH = "/layout"
+export const LAYOUT_PATH = "/"
 
 /** {@link buildLayoutPage} に渡す、3領域それぞれの最新の本文。 */
 export type LayoutBodies = Readonly<Record<ViewName, string>>
@@ -308,8 +278,8 @@ export type LayoutBodies = Readonly<Record<ViewName, string>>
  * 3つのビューを1枚の HTML にまとめ、CSS の grid で領域を分けたページ（`docs/requirements.md`
  * 4.7）。**それぞれの領域は、既存の `/events/<view>` を個別に購読する**（3本の SSE。
  * 押す側の `src/view-server.ts` は経路ごとの `publish` をそのまま使えるので、更新の仕組み自体は
- * 増やしていない）。ページを丸ごと再読み込みしないのは `buildViewPage` と同じ理由
- * （`docs/architecture.md`「ビューの更新は Server-Sent Events で押す」）。
+ * 増やしていない）。ページを丸ごと再読み込みしない理由は
+ * `docs/architecture.md`「ビューの更新は Server-Sent Events で押す」を参照。
  */
 export function buildLayoutPage(bodies: LayoutBodies): string {
   const topRow = `<div class="layout-row layout-row-top" id="${LAYOUT_ROW_TOP_ID}">
@@ -519,8 +489,8 @@ function layoutScript(): string {
 }
 
 /**
- * 1領域ぶんの SSE 購読スクリプト。`buildViewPage`（単体ページ、要素 id は固定）と
- * `buildLayoutPage`（まとめたレイアウト、要素 id は領域ごと）の両方から使う共通の中身。
+ * 1領域ぶんの SSE 購読スクリプト。`buildLayoutPage` が3領域それぞれに対して呼ぶ共通の中身
+ * （要素 id は領域ごとに違う）。
  *
  * **本文が前回と同じなら `innerHTML` を差し替えない。** 実機での目視（2026-09-10 報告）で、
  * 更新のたびに画面がチカチカする不具合があった。原因は「押す側（`src/index.ts` の
@@ -547,8 +517,8 @@ function layoutScript(): string {
  * 残す。** レポートが伸びていくメインビューで読み続けられるようにするための挙動で、morph は
  * 元のスクロール位置を保つだけなので、追従（新しく増えた分だけ位置を動かす）は再現されない。
  * **スクロールしている要素**は、差し替える要素自身が縦にあふれていれば（まとめたレイアウトの
- * `.layout-region` は `overflow-y: auto`）その要素、そうでなければ（単体ページの `<main>` は
- * overflow を指定していないので文書側がスクロールする）`document.scrollingElement` を使う。
+ * `.layout-region` は `overflow-y: auto`）その要素、そうでなければ `document.scrollingElement` を
+ * 使う（領域の中身が高さより短く、あふれていないとき）。
  */
 function subscriptionScript(elementId: string, view: ViewName, initialBody: string): string {
   return `  {
@@ -1817,12 +1787,6 @@ const MAIN_VIEW_EMPTY_MESSAGE = "（まだ作業がありません）"
 // 切り詰めは表示を壊さないためであって秘匿のためではないので、切り詰めた旨だけ添えて残りは捨てる。
 const MAX_TOOL_TEXT_LENGTH = 8000
 
-const VIEW_TITLE: Readonly<Record<ViewName, string>> = {
-  main: "メインビュー",
-  character: "キャラビュー",
-  sidebar: "サイドバー",
-}
-
 // 3つのビューはそれぞれ別のペインに並ぶので、余白を詰めて縦スクロールだけを許す。
 const STYLE = `
   :root { color-scheme: dark; }
@@ -2257,13 +2221,13 @@ const STYLE = `
     color: #8f97ab;
   }
   .sidebar-block p { margin: 0.2rem 0; }
-  /* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み、単体ページ
-     /sidebar）では flex-grow は働かず、中身なりの高さに広がるだけになる（中で無理に
+  /* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み）
+     では flex-grow は働かず、中身なりの高さに広がるだけになる（中で無理に
      スクロールさせない）。**flex-basis は 0 ではなく auto にすること**：親の高さが auto の
      ときに flex-basis: 0 だと、内容サイズの見積もりに使う基準そのものが 0 になり、
      overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる（2026-09-12、T-067 で
      T-061 の回帰として発覚）。flex-basis: auto なら親の高さが定まっている（.layout-sidebar
-     配下）ときは今まで通り内側でスクロールし、定まっていない（狭い画面・単体ページ）ときは
+     配下）ときは今まで通り内側でスクロールし、定まっていない（狭い画面）ときは
      中身なりの高さに自然に広がる。 */
   .sidebar-block-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   /* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。

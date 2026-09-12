@@ -19,6 +19,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-082 完了。** 個別ビューのページ（`/main` `/character` `/sidebar`）と `/` のリンク一覧を消し、
+**レイアウトページを `/` で配る**ようにした（`LAYOUT_PATH` が `"/"`）。消えたのは `viewPath` /
+`buildViewPage` / `buildIndexPage` / `VIEW_TITLE` / `ViewServer.urlOf` / 起動ログの「個別ビュー・
+デバッグ用」3行。**SSE の経路（`/events/*`）は無傷。** テストは削除ではなく `buildLayoutPage` ベースへの
+**書き換え**で、`it()` の数は 164→164 / 36→36 のまま（359 pass / 0 fail）。経路は使い捨てサーバ
+（7403）で実測: `/` が 200 で3領域を含み、`/layout` を含む旧経路は 404、`/events/*` は
+`text/event-stream` で 200。**実機の目視は未実施で、開きっぱなしの `/layout` のタブは開き直しが要る。**
+
 **T-070 完了。** Idiomorph 0.8.0（0BSD、10587バイト）を `vendor/` に同梱し、`subscriptionScript` の
 `el.innerHTML = event.data` を `Idiomorph.morph(el, event.data, { morphStyle: "innerHTML" })` に
 替えた。**外したのは差し替え前後の scrollTop の保存・復元だけ**で、「いちばん下から24px以内なら
@@ -194,10 +202,7 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
   （`characters/` 配下）を1人の単位にどう束ねるか、起動時だけか途中で切り替えるかを決める。
   人格の正典の置き場所は T-058 が決めるので、その後に回す。ユーザーの選択が要る
 - **T-065（sonnet、T-064 待ち）**: 決めた方式で切り替えを実装する
-- **T-082（sonnet、着手可能）**: 個別ビューのページ（`/main` `/character` `/sidebar`）と `/` の
-  リンク一覧を消し、レイアウトを `/` で開く。**`buildViewPage` はテストの土台にも使われている**
-  ので、書き換えであって削除にしない（件数が減らないことが完了条件）
-- **T-083（opus、T-082 待ち）**: ブラウザ側 JS を `.ts` へ出すビルド工程を決め、**1本だけ**移して
+- **T-083（opus、着手可能になった）**: ブラウザ側 JS を `.ts` へ出すビルド工程を決め、**1本だけ**移して
   経路を通す。`bun run start` と `bin/tsukumo`（`bun link` 済み）が壊れない形を決めるのが本題
 - **T-084（sonnet、T-083 待ち）**: 残りのブラウザ側 JS をすべて `.ts` へ移す
 - **T-085（sonnet、T-083 待ち）**: CSS の `STYLE` 定数を領域ごとの `.css` に割り、同じ工程でまとめる
