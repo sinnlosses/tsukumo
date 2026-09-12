@@ -15,14 +15,13 @@ import {
 } from "../src/view-server.ts"
 import {
   COMMANDS_PATH,
+  encodeTurnStatus,
   INTERRUPT_PATH,
   MODEL_PATH,
   PENDING_ANSWER_EVENT_PATH,
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TURN_STATUS_EVENT_PATH,
-  TURN_STATUS_IDLE,
-  TURN_STATUS_IN_PROGRESS,
   VIEW_NAMES,
 } from "../src/view.ts"
 
@@ -601,8 +600,8 @@ describe("モデルの切り替え（/api/model）", () => {
   })
 })
 
-describe("入力欄の進行状態（SSE）", () => {
-  it("購読直後は「進行中でない」を push し、publishTurnStatus で切り替わる", async () => {
+describe("入力欄の進行状態・経過時間（SSE）", () => {
+  it("購読直後は開始・終了時刻とも無しを push し、publishTurnStatus で切り替わる", async () => {
     const server = await start()
 
     const response = await fetch(`${originOf(server)}${TURN_STATUS_EVENT_PATH}`)
@@ -613,11 +612,23 @@ describe("入力欄の進行状態（SSE）", () => {
     const reader = stream.getReader()
 
     try {
-      expect(await readEvent(reader)).toContain(TURN_STATUS_IDLE)
-      server.publishTurnStatus(true)
-      expect(await readEvent(reader)).toContain(TURN_STATUS_IN_PROGRESS)
-      server.publishTurnStatus(false)
-      expect(await readEvent(reader)).toContain(TURN_STATUS_IDLE)
+      expect(await readEvent(reader)).toContain(
+        encodeTurnStatus({ turnStartedAt: undefined, turnFinishedAt: undefined }),
+      )
+      server.publishTurnStatus({ turnStartedAt: 1_700_000_000_000, turnFinishedAt: undefined })
+      expect(await readEvent(reader)).toContain(
+        encodeTurnStatus({ turnStartedAt: 1_700_000_000_000, turnFinishedAt: undefined }),
+      )
+      server.publishTurnStatus({
+        turnStartedAt: 1_700_000_000_000,
+        turnFinishedAt: 1_700_000_005_000,
+      })
+      expect(await readEvent(reader)).toContain(
+        encodeTurnStatus({
+          turnStartedAt: 1_700_000_000_000,
+          turnFinishedAt: 1_700_000_005_000,
+        }),
+      )
     } finally {
       await reader.cancel()
     }

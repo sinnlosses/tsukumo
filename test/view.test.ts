@@ -16,12 +16,11 @@ import {
   type LayoutBodies,
   PENDING_ANSWER_EVENT_PATH,
   PROMPT_PATH,
+  encodeTurnStatus,
   type SidebarData,
   type SidebarToolActivity,
   summarizeToolInput,
   TURN_STATUS_EVENT_PATH,
-  TURN_STATUS_IDLE,
-  TURN_STATUS_IN_PROGRESS,
   VIEW_NAMES,
   viewEventPath,
   type ViewName,
@@ -65,10 +64,17 @@ const FULL_SIDEBAR_DATA: SidebarData = {
   session: {
     model: "claude-sonnet-5",
     permissionMode: "auto",
-    turnStartedAt: 1_700_000_000_000,
-    turnFinishedAt: undefined,
   },
 }
+
+// TURN_STATUS_EVENT_PATH を模すテスト用の定数（encodeTurnStatus の JSON をそのまま使う）。
+// 送信ボタンの表示切り替えの判定は「進行中か」（turnStartedAt があって turnFinishedAt が無いか）
+// だけを見るので、時刻の値そのものは他のテストとの整合を気にしなくてよい。
+const IN_PROGRESS_TURN_STATUS = encodeTurnStatus({
+  turnStartedAt: 1_700_000_000_000,
+  turnFinishedAt: undefined,
+})
+const IDLE_TURN_STATUS = encodeTurnStatus({ turnStartedAt: undefined, turnFinishedAt: undefined })
 
 // --- SSE 購読スクリプトを実際に動かして確かめるための道具 -------------------------------------
 //
@@ -567,6 +573,8 @@ function runInputScript(
     readonly textArea: FakeTextAreaElement
     readonly sendButton: FakeButtonElement
     readonly status: FakeTextElement
+    readonly elapsed: FakeTextElement
+    readonly elapsedLabel: FakeTextElement
   },
   fetchStub: (
     url: string,
@@ -595,6 +603,8 @@ function runInputScript(
     ["tsukumo-dispatch-text", elements.textArea],
     ["tsukumo-dispatch-send", elements.sendButton],
     ["tsukumo-dispatch-status", elements.status],
+    ["tsukumo-dispatch-elapsed", elements.elapsed],
+    ["tsukumo-dispatch-elapsed-label", elements.elapsedLabel],
     ["tsukumo-dispatch-pending", pendingBox],
     ["tsukumo-view-dispatch", pendingRegion],
     ["tsukumo-dispatch-suggestions", suggestionsBox],
@@ -794,6 +804,8 @@ describe("入力欄（送信・中断）", () => {
     readonly textArea: FakeTextAreaElement
     readonly sendButton: FakeButtonElement
     readonly status: FakeTextElement
+    readonly elapsed: FakeTextElement
+    readonly elapsedLabel: FakeTextElement
     readonly calls: () => readonly FakeFetchCall[]
     readonly dispatchTurnStatus: (data: string) => void
     readonly dispatchPendingAnswer: (html: string) => void
@@ -807,6 +819,8 @@ describe("入力欄（送信・中断）", () => {
     const textArea = makeFakeTextAreaElement("")
     const sendButton = makeFakeButtonElement()
     const status = makeFakeTextElement()
+    const elapsed = makeFakeTextElement()
+    const elapsedLabel = makeFakeTextElement()
     const { fetchStub, calls } = makeFakeFetch(responses)
 
     const {
@@ -816,13 +830,19 @@ describe("入力欄（送信・中断）", () => {
       pendingDataAttribute,
       title,
       suggestionsBox,
-    } = runInputScript(page, { form, textArea, sendButton, status }, fetchStub)
+    } = runInputScript(
+      page,
+      { form, textArea, sendButton, status, elapsed, elapsedLabel },
+      fetchStub,
+    )
 
     return {
       form,
       textArea,
       sendButton,
       status,
+      elapsed,
+      elapsedLabel,
       calls,
       dispatchTurnStatus,
       dispatchPendingAnswer,
@@ -915,9 +935,9 @@ describe("入力欄（送信・中断）", () => {
     const { sendButton, dispatchTurnStatus } = setUp()
 
     expect(sendButton.textContent).toBe("送信")
-    dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
+    dispatchTurnStatus(IN_PROGRESS_TURN_STATUS)
     expect(sendButton.textContent).toBe("中断")
-    dispatchTurnStatus(TURN_STATUS_IDLE)
+    dispatchTurnStatus(IDLE_TURN_STATUS)
     expect(sendButton.textContent).toBe("送信")
   })
 
@@ -925,21 +945,66 @@ describe("入力欄（送信・中断）", () => {
     const { sendButton, dispatchTurnStatus } = setUp()
 
     expect(sendButton.dataset.shortcut).toBe("⌘⏎")
-    dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
+    dispatchTurnStatus(IN_PROGRESS_TURN_STATUS)
     expect(sendButton.dataset.shortcut).toBeUndefined()
-    dispatchTurnStatus(TURN_STATUS_IDLE)
+    dispatchTurnStatus(IDLE_TURN_STATUS)
     expect(sendButton.dataset.shortcut).toBe("⌘⏎")
   })
 
   it("進行中に送信ボタンを押すと、INTERRUPT_PATH を叩くだけ", async () => {
     const { sendButton, status, calls, dispatchTurnStatus } = setUp()
-    dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
+    dispatchTurnStatus(IN_PROGRESS_TURN_STATUS)
 
     sendButton.click()
     await flushMicrotasks()
 
     expect(calls()).toEqual([{ url: INTERRUPT_PATH, body: undefined }])
     expect(status.textContent).toBe("中断した")
+  })
+
+  // 経過時間は送信ボタンと同じ行に出す（2026-09-12 T-075 決定。以前はサイドバーの
+  // 「セッション情報」にあった）。書式（N秒 / M分SS秒）とラベルの出し分け（経過／所要）の
+  // 振る舞いは T-055 のまま、実装だけが sessionInfoScript からここ（dispatchScript）へ移った。
+  describe("送信ボタンと同じ行の経過時間表示（TURN_STATUS_EVENT_PATH から届く開始・終了時刻）", () => {
+    it("開始・終了とも届く前は「-」を出す", () => {
+      const { elapsed } = setUp()
+
+      expect(elapsed.textContent).toBe("-")
+    })
+
+    it("60秒未満は「N秒」、ラベルは「経過」のまま（終了時刻が届いていない＝進行中）", () => {
+      const { elapsed, elapsedLabel, dispatchTurnStatus } = setUp()
+      // 進行中はカウントアップの終点が Date.now() になるので、テスト側で「5秒前」を作る
+      // （vm サンドボックスの Date も同じ壁時計を指すので、数ミリ秒のずれは切り捨てに埋もれる）。
+      const startedAt = Date.now() - 5_000
+
+      dispatchTurnStatus(encodeTurnStatus({ turnStartedAt: startedAt, turnFinishedAt: undefined }))
+
+      expect(elapsedLabel.textContent).toBe("経過")
+      expect(elapsed.textContent).toBe("5秒")
+    })
+
+    it("終了時刻が届くと、開始との差を書式（N秒 / M分SS秒）で出し、ラベルは「所要」になる", () => {
+      const { elapsed, elapsedLabel, dispatchTurnStatus } = setUp()
+
+      dispatchTurnStatus(encodeTurnStatus({ turnStartedAt: 0, turnFinishedAt: 45_000 }))
+      expect(elapsed.textContent).toBe("45秒")
+      expect(elapsedLabel.textContent).toBe("所要")
+
+      dispatchTurnStatus(encodeTurnStatus({ turnStartedAt: 0, turnFinishedAt: 125_000 }))
+      expect(elapsed.textContent).toBe("2分05秒")
+      expect(elapsedLabel.textContent).toBe("所要")
+    })
+
+    it("次の依頼（開始時刻だけが更新される）が来たら、ラベルは「経過」に戻る", () => {
+      const { elapsedLabel, dispatchTurnStatus } = setUp()
+
+      dispatchTurnStatus(encodeTurnStatus({ turnStartedAt: 0, turnFinishedAt: 10_000 }))
+      expect(elapsedLabel.textContent).toBe("所要")
+
+      dispatchTurnStatus(encodeTurnStatus({ turnStartedAt: 20_000, turnFinishedAt: undefined }))
+      expect(elapsedLabel.textContent).toBe("経過")
+    })
   })
 
   describe("入力欄の上の答え待ちの箱（PENDING_ANSWER_EVENT_PATH を購読して差し替える）", () => {
@@ -1182,7 +1247,7 @@ describe("入力欄（送信・中断）", () => {
         "clear",
         "model",
       ])
-      dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
+      dispatchTurnStatus(IN_PROGRESS_TURN_STATUS)
 
       textArea.value = "/"
       textArea.dispatchInput()
@@ -1530,6 +1595,24 @@ describe("まとめたレイアウトページ", () => {
 
     expect(page).toContain('data-shortcut="⌘⏎">送信</button>')
     expect(page).toContain(".dispatch-send[data-shortcut]::after")
+  })
+
+  // 経過時間は送信ボタンと同じ行（.dispatch-row）に出す（2026-09-12 T-075 決定。
+  // 以前はサイドバーの「セッション情報」にあった）。
+  it("経過時間の表示は送信ボタンと同じ行（.dispatch-row）にあり、サイドバーには無い", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    const rowStart = page.indexOf('<div class="dispatch-row">')
+    const rowEnd = page.indexOf("</div>", rowStart)
+    const sendButtonIndex = page.indexOf('id="tsukumo-dispatch-send"')
+    const elapsedIndex = page.indexOf('id="tsukumo-dispatch-elapsed"')
+
+    expect(rowStart).toBeGreaterThan(-1)
+    expect(rowEnd).toBeGreaterThan(-1)
+    expect(sendButtonIndex).toBeGreaterThan(rowStart)
+    expect(elapsedIndex).toBeGreaterThan(sendButtonIndex)
+    expect(elapsedIndex).toBeLessThan(rowEnd)
+    expect(page).not.toContain("session-elapsed")
   })
 })
 
@@ -3034,36 +3117,22 @@ describe("サイドバーの本文", () => {
     expect(body).toContain("タスクが無い")
   })
 
-  it("セッション情報にモデル・許可モードの select と経過時間の枠を出す", () => {
+  it("セッション情報にモデル・許可モードの select を出す", () => {
     const body = buildSidebarBody(FULL_SIDEBAR_DATA)
 
     expect(body).toContain('class="model-select"')
     expect(body).toContain('class="permission-mode-select')
-    expect(body).toContain('data-started-at="1700000000000"')
   })
 
-  it("turnStartedAt が未定のときは data-started-at が空", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, turnStartedAt: undefined },
-    })
-
-    expect(body).toContain('data-started-at=""')
-  })
-
-  it("turnFinishedAt があれば data-finished-at にその値が出る", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, turnFinishedAt: 1_700_000_005_000 },
-    })
-
-    expect(body).toContain('data-finished-at="1700000005000"')
-  })
-
-  it("turnFinishedAt が未定のときは data-finished-at が空", () => {
+  // 経過時間の表示は入力欄側（送信ボタンと同じ行）へ移した（2026-09-12 T-075 決定）。
+  // サイドバーは領域が別なので、ここへ戻ってこないことを固定する。
+  it("経過時間の枠を出さない（送信ボタンの隣へ移した）", () => {
     const body = buildSidebarBody(FULL_SIDEBAR_DATA)
 
-    expect(body).toContain('data-finished-at=""')
+    expect(body).not.toContain("dispatch-elapsed")
+    expect(body).not.toContain("session-elapsed")
+    expect(body).not.toContain("data-started-at")
+    expect(body).not.toContain("data-finished-at")
   })
 
   it("ツール入力の要約を、HTML として無害な形にして埋め込む", () => {
@@ -3098,8 +3167,6 @@ describe("サイドバーの本文", () => {
       session: {
         model: undefined,
         permissionMode: undefined,
-        turnStartedAt: undefined,
-        turnFinishedAt: undefined,
       },
     })
 

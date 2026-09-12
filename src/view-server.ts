@@ -23,6 +23,7 @@ import {
   buildLayoutPage,
   ANSWER_PATH,
   COMMANDS_PATH,
+  encodeTurnStatus,
   INTERRUPT_PATH,
   LAYOUT_PATH,
   type LayoutBodies,
@@ -31,8 +32,7 @@ import {
   PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TURN_STATUS_EVENT_PATH,
-  TURN_STATUS_IDLE,
-  TURN_STATUS_IN_PROGRESS,
+  type TurnStatus,
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
   VIEW_NAMES,
@@ -104,10 +104,12 @@ export type ViewServer = {
   /** ビューの本文を差し替え、開いているブラウザへ push する。 */
   readonly publish: (view: ViewName, body: string) => void
   /**
-   * 入力欄の「ターンが進行中か」を、開いているブラウザへ push する。**サーバがこの状態を持つ**
-   * （ブラウザ側が送信ボタンを押した瞬間に勝手に決めない。docs/requirements.md 4.7）。
+   * 入力欄の「ターンが進行中か」（送信ボタン／中断ボタンの出し分け）と、経過時間の起点・終点を、
+   * 開いているブラウザへ push する。**サーバがこの状態を持つ**（ブラウザ側が送信ボタンを
+   * 押した瞬間に勝手に決めない。docs/requirements.md 4.7）。経過時間の表示は送信ボタンと
+   * 同じ行に出る（2026-09-12 T-075 決定。`src/view.ts` の `TurnStatus` / `encodeTurnStatus`）。
    */
-  readonly publishTurnStatus: (inProgress: boolean) => void
+  readonly publishTurnStatus: (status: TurnStatus) => void
   /**
    * 答え待ちの箱（許可要求・質問）の本文を、開いているブラウザへ push する。**`publish` /
    * `publishTurnStatus` と同型**（対応する `ViewName` の領域を持たない専用の経路）。
@@ -137,8 +139,8 @@ export function startViewServer(
   const clients = new Map<ViewName, Set<ServerResponse>>()
   const turnStatusClients = new Set<ServerResponse>()
   const pendingAnswerClients = new Set<ServerResponse>()
-  // ターンの進行中状態。セッションが起きる前は「進行中ではない」が正しい既定値。
-  let turnStatusBody = TURN_STATUS_IDLE
+  // ターンの進行状態（開始・終了時刻）。セッションが起きる前はどちらも無いのが正しい既定値。
+  let turnStatusBody = encodeTurnStatus({ turnStartedAt: undefined, turnFinishedAt: undefined })
   // 答え待ちの箱の本文。セッションが起きる前・答え待ちが無いときは空文字（=箱なし）。
   let pendingAnswerBody = ""
   // listen が終わるまでは空文字列。状態を変える経路（POST）が実際に受け付けられるのは
@@ -208,8 +210,8 @@ export function startViewServer(
             writeUpdate(response, body)
           }
         },
-        publishTurnStatus: (inProgress) => {
-          turnStatusBody = inProgress ? TURN_STATUS_IN_PROGRESS : TURN_STATUS_IDLE
+        publishTurnStatus: (status) => {
+          turnStatusBody = encodeTurnStatus(status)
           for (const response of turnStatusClients) {
             writeUpdate(response, turnStatusBody)
           }

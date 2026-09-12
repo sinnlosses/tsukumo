@@ -56,6 +56,7 @@ import {
   type CharacterViewData,
   type SidebarData,
   type SidebarToolActivity,
+  type TurnStatus,
 } from "./view.ts"
 
 const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
@@ -168,7 +169,7 @@ async function main(args: readonly string[]): Promise<number> {
     createViewPublisher(server, characterDir, readTaskSummary),
     PUBLISH_INTERVAL_MS,
   )
-  publish({ view: INITIAL_SESSION_VIEW, turnStartedAt: undefined, turnFinishedAt: undefined })
+  publish(INITIAL_SESSION_VIEW)
 
   driver = startSession({
     cwd: process.cwd(),
@@ -194,16 +195,6 @@ async function main(args: readonly string[]): Promise<number> {
 }
 
 /**
- * 配る係に渡す1回分。セッションの姿に加えて、経過時間の計算に要る「直近の依頼の開始時刻」と
- * 「そのターンが終わった時刻」。
- */
-type PublishState = {
-  readonly view: SessionView
-  readonly turnStartedAt: number | undefined
-  readonly turnFinishedAt: number | undefined
-}
-
-/**
  * イベントを受けて姿を更新し、配る係を呼ぶ。**セッションの姿を持つのはここ1箇所だけ**
  * （畳み込みそのものは純粋関数。src/session-view.ts）。
  *
@@ -219,7 +210,11 @@ type PublishState = {
  * 来るたびに `turnStartedAt` を更新し `turnFinishedAt` を undefined に戻し、`turn-finished` /
  * `session-ended` が来たときだけ `turnFinishedAt` を入れる（それ以外では前の値をそのまま持ち
  * 続ける）。表す意味は「依頼を送ってから、そのターンが終わるまでの時間」で、終わったら
- * `turnFinishedAt` が止め、次の `request` まではそのまま止まって見える。
+ * `turnFinishedAt` が止め、次の `request` まではそのまま止まって見える。**渡す先は
+ * `publishTurnStatus` だけ**（2026-09-12 T-075 決定。経過時間の表示先が入力欄側
+ * （送信ボタンと同じ行）へ移ったので、サイドバー向けの `publish` はもうこの2つを要らない）。
+ * `turnInProgress` の変化と同じ瞬間に確定するので、`publishTurnStatus` を呼ぶ直前に
+ * 更新しておく。
  *
  * **表情の「作業中」への遅延切り替え（`WORKING_EXPRESSION_DELAY_MS`）もここで進める。**
  * ツールの開始・終了だけでは、遅延が経過した「その瞬間」には何のイベントも来ないので、
@@ -234,8 +229,8 @@ type PublishState = {
  * 違って毎回呼んでも配信は増えない）。
  */
 function createEventSink(
-  publish: (state: PublishState) => void,
-  publishTurnStatus: (inProgress: boolean) => void,
+  publish: (view: SessionView) => void,
+  publishTurnStatus: (status: TurnStatus) => void,
   publishPendingAnswer: (html: string) => void,
   setCommands: (commands: readonly CommandDescription[]) => void,
 ): (event: SessionEvent) => void {
@@ -245,7 +240,7 @@ function createEventSink(
   let workingRefreshTimer: ReturnType<typeof setTimeout> | undefined = undefined
 
   const publishAndScheduleWorkingRefresh = (): void => {
-    publish({ view, turnStartedAt, turnFinishedAt })
+    publish(view)
 
     if (workingRefreshTimer !== undefined) {
       clearTimeout(workingRefreshTimer)
@@ -264,14 +259,6 @@ function createEventSink(
   return (event) => {
     const now = Date.now()
     const next = applySessionEvent(view, event, now)
-    if (next.turnInProgress !== view.turnInProgress) {
-      publishTurnStatus(next.turnInProgress)
-    }
-    if (next.pending[0]?.id !== view.pending[0]?.id) {
-      publishPendingAnswer(buildPendingAnswerBody(next.pending[0]))
-    }
-    view = next
-    setCommands(commandSuggestions(view))
     if (event.kind === "request") {
       turnStartedAt = now
       turnFinishedAt = undefined
@@ -279,6 +266,14 @@ function createEventSink(
     if (event.kind === "turn-finished" || event.kind === "session-ended") {
       turnFinishedAt = now
     }
+    if (next.turnInProgress !== view.turnInProgress) {
+      publishTurnStatus({ turnStartedAt, turnFinishedAt })
+    }
+    if (next.pending[0]?.id !== view.pending[0]?.id) {
+      publishPendingAnswer(buildPendingAnswerBody(next.pending[0]))
+    }
+    view = next
+    setCommands(commandSuggestions(view))
     if (event.kind === "session-ended") {
       process.stderr.write(`tsukumo: セッションが終わった: ${event.reason}\n`)
     }
@@ -310,8 +305,8 @@ function createViewPublisher(
   server: ViewServer,
   characterDir: string,
   readTaskSummary: () => readonly TaskSummaryItem[] | undefined,
-): (state: PublishState) => void {
-  return ({ view, turnStartedAt, turnFinishedAt }) => {
+): (view: SessionView) => void {
+  return (view) => {
     try {
       const data: CharacterViewData = {
         speeches: view.speeches,
@@ -323,10 +318,7 @@ function createViewPublisher(
       }
       server.publish("character", buildCharacterBody(data))
       server.publish("main", buildMainBody(mainViewEntries(view)))
-      server.publish(
-        "sidebar",
-        buildSidebarBody(sidebarData(view, turnStartedAt, turnFinishedAt, readTaskSummary())),
-      )
+      server.publish("sidebar", buildSidebarBody(sidebarData(view, readTaskSummary())))
     } catch {
       process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n")
     }
@@ -336,12 +328,11 @@ function createViewPublisher(
 /**
  * サイドバーに出す値。**いま何をしているかは実行中・直近の完了のツール名＋入力**
  * （要約は表示側 `src/view.ts` の仕事。引数の断片が要約に入りうることは
- * `docs/coding-standards.md`「会話内容の扱い」に沿って承知した上で渡す）。
+ * `docs/coding-standards.md`「会話内容の扱い」に沿って承知した上で渡す）。**経過時間はここに
+ * 無い**（入力欄側へ渡すのは `publishTurnStatus`。2026-09-12 T-075 決定）。
  */
 function sidebarData(
   view: SessionView,
-  turnStartedAt: number | undefined,
-  turnFinishedAt: number | undefined,
   tasks: readonly TaskSummaryItem[] | undefined,
 ): SidebarData {
   return {
@@ -353,8 +344,6 @@ function sidebarData(
     session: {
       model: view.model,
       permissionMode: view.permissionMode,
-      turnStartedAt,
-      turnFinishedAt,
     },
   }
 }

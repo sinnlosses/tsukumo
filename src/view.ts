@@ -50,17 +50,38 @@ export const PROMPT_PATH = "/api/prompt"
 export const INTERRUPT_PATH = "/api/interrupt"
 
 /**
- * 入力欄の「送信中か」を運ぶ Server-Sent Events の経路。**駆動側のイベント
+ * 入力欄の「送信中か」と経過時間の起点・終点を運ぶ Server-Sent Events の経路。**駆動側のイベント
  * （`request` で開始、`turn-finished` / `session-ended` で終了）から決めた状態をサーバが持ち、
  * ここへ push する**（ブラウザ側が送信ボタンを押した瞬間に勝手に「進行中」と決めない）。
  * 既存の3領域（`viewEventPath`）と同じ push の仕組みだが、対応する `ViewName` の領域を
  * 持たないので専用の経路にしてある。
+ *
+ * **経過時間の表示（送信ボタンと同じ行）もここで運ぶ**（2026-09-12 T-075 決定。
+ * サイドバーの「セッション情報」から移した）。サイドバーと入力欄は領域が別で SSE の経路も別なので、
+ * サイドバーの HTML を読みに行く形にはできない（領域の差し替えで消える）。入力欄側は既に
+ * このイベントを「進行中か」の判定に購読していたので、そこへ開始・終了時刻を足すだけで届く。
  */
 export const TURN_STATUS_EVENT_PATH = "/events/turn-status"
 
-/** {@link TURN_STATUS_EVENT_PATH} で push する本文。値そのものに意味はなく、比較にだけ使う。 */
-export const TURN_STATUS_IN_PROGRESS = "in-progress"
-export const TURN_STATUS_IDLE = "idle"
+/**
+ * {@link TURN_STATUS_EVENT_PATH} で push する本文の中身。**「進行中か」は運ばない**
+ * （`turnStartedAt` があって `turnFinishedAt` が無ければ進行中、とブラウザ側で導ける）。
+ */
+export type TurnStatus = {
+  readonly turnStartedAt: number | undefined
+  readonly turnFinishedAt: number | undefined
+}
+
+/**
+ * {@link TurnStatus} を SSE の本文（JSON）にする。JSON に `undefined` は無いので `null` にする
+ * （ブラウザ側は `JSON.parse` して `null` を「無い」として扱う）。
+ */
+export function encodeTurnStatus(status: TurnStatus): string {
+  return JSON.stringify({
+    turnStartedAt: status.turnStartedAt ?? null,
+    turnFinishedAt: status.turnFinishedAt ?? null,
+  })
+}
 
 /**
  * 答え待ちの箱（許可要求・質問）の本文を運ぶ Server-Sent Events の経路。**`TURN_STATUS_EVENT_PATH`
@@ -95,10 +116,11 @@ export const COMMANDS_PATH = "/api/commands"
 
 /**
  * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューには
- * やり取りのタブの制御（{@link mainTurnsScript}）、サイドバーにはモデル・許可モードの切り替えと
- * 経過時間の表示（{@link sessionInfoScript}）を足す。**答え待ちの箱の配線
- * （{@link pendingAnswerScript}）は入力欄側（{@link dispatchScript}）に付く**（2026-09-11
- * 決定。キャラビューの吹き出しの下ではなく、入力欄の上に出す）。**タブの選択・答え待ちの状態は
+ * やり取りのタブの制御（{@link mainTurnsScript}）、サイドバーにはモデル・許可モードの切り替え
+ * （{@link sessionInfoScript}）を足す。**答え待ちの箱の配線（{@link pendingAnswerScript}）と
+ * 経過時間の表示は入力欄側（{@link dispatchScript}）に付く**（答え待ちの箱は2026-09-11 決定。
+ * キャラビューの吹き出しの下ではなく、入力欄の上に出す。経過時間は2026-09-12 T-075 決定。
+ * サイドバーの「セッション情報」から送信ボタンの隣へ移した）。**タブの選択・答え待ちの状態は
  * ブラウザ側だけが持つ**（サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は
  * Server-Sent Events で押す」— 押す側に状態を持たせない）。
  */
@@ -549,9 +571,17 @@ const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
 const DISPATCH_TEXT_ID = "tsukumo-dispatch-text"
 const DISPATCH_SEND_ID = "tsukumo-dispatch-send"
 const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
+const DISPATCH_ELAPSED_LABEL_ID = "tsukumo-dispatch-elapsed-label"
+const DISPATCH_ELAPSED_ID = "tsukumo-dispatch-elapsed"
 
 const DISPATCH_SEND_LABEL = "送信"
 const DISPATCH_INTERRUPT_LABEL = "中断"
+
+// 経過時間のラベル。進行中／終了後でブラウザ側（{@link dispatchScript}）が出し分ける
+// （終了時刻の有無で決める。書式・出し分けは T-055 のまま。2026-09-12 T-075 でサイドバーから
+// 入力欄（送信ボタンと同じ行）へ移した）。
+const TURN_ELAPSED_LABEL = "経過"
+const TURN_FINISHED_LABEL = "所要"
 // 送信ボタンに添える、Command+Enter で送信できることを示す記号（2026-09-12 決定）。
 // **ラベルの文字列（`textContent`）とは分けて `data-shortcut` 属性に持たせる**（描くのは
 // `STYLE` の `.dispatch-send[data-shortcut]::after`）。ラベルと同じ文字列にすると、送信／中断の
@@ -585,6 +615,12 @@ const COMMAND_SUGGESTION_DESCRIPTION_CLASS = "dispatch-suggestion-description"
  * 伸ばすと領域（`.layout-region` の `overflow-y: auto`）の外に出て切られるため、textarea の
  * 中に重ねる。打っている文字は textarea の上端にあるので隠れない。候補は `position: absolute`
  * で `<form>` の高さ計算（flex）に加わらず、表示・非表示で textarea は動かない。
+ *
+ * **経過時間の表示は送信ボタンと同じ行（`.dispatch-row`）に出す**（2026-09-12 T-075 決定。
+ * 以前はサイドバーの「セッション情報」にあったが、ユーザーの指示で送信ボタンの隣へ移した。
+ * サイドバーと入力欄は領域が別で SSE の経路も別なので、開始・終了時刻は `TURN_STATUS_EVENT_PATH`
+ * に載せて運ぶ（{@link dispatchScript}）。ここでは空の枠（`-`）を出すだけで、中身の計算は
+ * 持たない。
  */
 function dispatchRegionHtml(): string {
   return `<section class="layout-region layout-dispatch" id="${DISPATCH_REGION_ID}" data-pending="no">
@@ -596,6 +632,10 @@ function dispatchRegionHtml(): string {
   </div>
   <div class="dispatch-row">
     <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send" data-shortcut="${DISPATCH_SEND_SHORTCUT_HINT}">${DISPATCH_SEND_LABEL}</button>
+    <span class="dispatch-elapsed-row">
+<span id="${DISPATCH_ELAPSED_LABEL_ID}" class="dispatch-elapsed-label">${TURN_ELAPSED_LABEL}</span>:
+<span id="${DISPATCH_ELAPSED_ID}" class="dispatch-elapsed">-</span>
+</span>
     <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
   </div>
 </form>
@@ -636,6 +676,15 @@ function dispatchRegionHtml(): string {
  *   送信の判定に落ちる1つのリスナーにまとめてある。**候補が開いている間の Enter は Tab と同じく
  *   確定だけ**（送信しない。送信は Command+Enter に一本化したので、確定と送信を同じキーで
  *   兼ねない。docs/requirements.md 4.2「入力欄」(3)。2026-09-12 決定でこちらへ変更）。
+ * - **経過時間の表示（送信ボタンと同じ行）もここで配線する**（2026-09-12 T-075
+ *   決定。以前はサイドバーの `sessionInfoScript` にあった）。`TURN_STATUS_EVENT_PATH` の
+ *   `update` から届く `{ turnStartedAt, turnFinishedAt }`（{@link encodeTurnStatus} の JSON。
+ *   `undefined` は `null` で届く）をそのまま変数に持ち、`inProgress` もここから導く
+ *   （`turnStartedAt` があって `turnFinishedAt` が無ければ進行中）。**カウントアップは
+ *   ブラウザ側で1秒ごとに刻む**（`Date.now()` を呼ぶのは副作用なので `src/view.ts` の
+ *   純粋関数には置けない。T-055 の決定を踏襲）。終了時刻があればそれを終点に固定し、
+ *   ラベルを「経過」→「所要」に書き換える。書式（`N秒` / `M分SS秒`）も T-055 のまま
+ *   （60秒未満は `N秒`、以降は `M分SS秒`）。
  */
 function dispatchScript(): string {
   return `  {
@@ -646,8 +695,12 @@ function dispatchScript(): string {
     const pendingRegion = document.getElementById(${JSON.stringify(DISPATCH_REGION_ID)})
     const pendingBox = document.getElementById(${JSON.stringify(DISPATCH_PENDING_ID)})
     const suggestionsBox = document.getElementById(${JSON.stringify(DISPATCH_SUGGESTIONS_ID)})
+    const elapsedLabel = document.getElementById(${JSON.stringify(DISPATCH_ELAPSED_LABEL_ID)})
+    const elapsedSpan = document.getElementById(${JSON.stringify(DISPATCH_ELAPSED_ID)})
     const originalTitle = document.title
     let inProgress = false
+    let turnStartedAt = null
+    let turnFinishedAt = null
 
     function applyButtonLabel() {
       sendButton.textContent = inProgress
@@ -661,9 +714,40 @@ function dispatchScript(): string {
     }
     applyButtonLabel()
 
+    function formatElapsed(totalSeconds) {
+      if (totalSeconds < 60) {
+        return totalSeconds + "秒"
+      }
+      const minutes = Math.floor(totalSeconds / 60)
+      const seconds = totalSeconds % 60
+      return minutes + "分" + String(seconds).padStart(2, "0") + "秒"
+    }
+
+    function tickElapsed() {
+      if (turnStartedAt === null) {
+        elapsedSpan.textContent = "-"
+        return
+      }
+      const endsAt = turnFinishedAt === null ? Date.now() : turnFinishedAt
+      elapsedLabel.textContent =
+        turnFinishedAt === null ? ${JSON.stringify(TURN_ELAPSED_LABEL)} : ${JSON.stringify(TURN_FINISHED_LABEL)}
+      const elapsedSeconds = Math.max(0, Math.floor((endsAt - turnStartedAt) / 1000))
+      elapsedSpan.textContent = formatElapsed(elapsedSeconds)
+    }
+    tickElapsed()
+    // ブラウザには必ずあるが、スクリプトだけを取り出して動かすテストのサンドボックスには無い
+    // （src/view.ts は表示の中身だけを決め、実行環境の前提はここでは張らない）。
+    if (typeof setInterval === "function") {
+      setInterval(tickElapsed, 1000)
+    }
+
     new EventSource(${JSON.stringify(TURN_STATUS_EVENT_PATH)}).addEventListener("update", (event) => {
-      inProgress = event.data === ${JSON.stringify(TURN_STATUS_IN_PROGRESS)}
+      const turnStatus = JSON.parse(event.data)
+      turnStartedAt = turnStatus.turnStartedAt
+      turnFinishedAt = turnStatus.turnFinishedAt
+      inProgress = turnStartedAt !== null && turnFinishedAt === null
       applyButtonLabel()
+      tickElapsed()
     })
 
 ${commandSuggestionsScript()}
@@ -1663,18 +1747,14 @@ function pendingAnswerScript(elementId: string): string {
 }
 
 /**
- * サイドバーのセッション情報（モデル・許可モードの `<select>`、経過時間）の配線。
- * サイドバーの要素（`elementId`）に対するイベント委譲で書く（`pendingAnswerScript` と同じ理由）。
+ * サイドバーのセッション情報（モデル・許可モードの `<select>`）の配線。サイドバーの要素
+ * （`elementId`）に対するイベント委譲で書く（`pendingAnswerScript` と同じ理由）。
  *
  * - **許可モード・モデルの変更は `change` の瞬間に送る。** 次に届く `session-info` で
  *   `<select>` の選択が上書きされる（サーバ側の値が正になる）
- * - **経過時間はブラウザ側で1秒ごとに刻む。** サーバは開始時刻・終了時刻を `data-started-at` /
- *   `data-finished-at` 属性（エポック ms、無ければ空文字）で渡すだけで、以降のカウントアップは
- *   ここが担う。**差し替え（`subscriptionScript` の Idiomorph による morph）で要素が
- *   作り直されても、都度 `querySelector` で読み直すので途切れない**
- * - **終了時刻があれば、それを終点に固定する。** tick 自体は1秒ごとに動き続けるが、
- *   `Date.now()` の代わりに終了時刻を使うので表示は変わらない（止まって見える）。ラベルも
- *   同時に「経過」→「所要」へ書き換える
+ *
+ * **経過時間の表示は入力欄側（{@link dispatchScript}）へ移した**（2026-09-12 T-075 決定。
+ * 送信ボタンと同じ行へ出す。サイドバーはこの状態を持たない）。
  */
 function sessionInfoScript(elementId: string): string {
   return `  {
@@ -1714,46 +1794,6 @@ function sessionInfoScript(elementId: string): string {
 
     wireSelect("permission-mode-select", "permission-mode-status", ${JSON.stringify(PERMISSION_MODE_PATH)}, (mode) => ({ mode }))
     wireSelect("model-select", "model-select-status", ${JSON.stringify(MODEL_PATH)}, (model) => ({ model }))
-
-    function formatElapsed(totalSeconds) {
-      if (totalSeconds < 60) {
-        return totalSeconds + "秒"
-      }
-      const minutes = Math.floor(totalSeconds / 60)
-      const seconds = totalSeconds % 60
-      return minutes + "分" + String(seconds).padStart(2, "0") + "秒"
-    }
-
-    function tickElapsed() {
-      const span = el.querySelector(".${SESSION_ELAPSED_CLASS}")
-      const label = el.querySelector(".${SESSION_ELAPSED_LABEL_CLASS}")
-      if (span === null) {
-        return
-      }
-      const rawStarted = span.getAttribute("data-started-at")
-      const startedAt = rawStarted === null || rawStarted === "" ? NaN : Number(rawStarted)
-      if (!Number.isFinite(startedAt)) {
-        span.textContent = "-"
-        return
-      }
-      const rawFinished = span.getAttribute("data-finished-at")
-      const finishedAt = rawFinished === null || rawFinished === "" ? NaN : Number(rawFinished)
-      const endsAt = Number.isFinite(finishedAt) ? finishedAt : Date.now()
-      if (label !== null) {
-        label.textContent = Number.isFinite(finishedAt)
-          ? ${JSON.stringify(SESSION_FINISHED_LABEL)}
-          : ${JSON.stringify(SESSION_ELAPSED_LABEL)}
-      }
-      const elapsedSeconds = Math.max(0, Math.floor((endsAt - startedAt) / 1000))
-      span.textContent = formatElapsed(elapsedSeconds)
-    }
-
-    tickElapsed()
-    // ブラウザには必ずあるが、スクリプトだけを取り出して動かすテストのサンドボックスには無い
-    // （src/view.ts は表示の中身だけを決め、実行環境の前提はここでは張らない）。
-    if (typeof setInterval === "function") {
-      setInterval(tickElapsed, 1000)
-    }
   }`
 }
 
@@ -1780,17 +1820,14 @@ export type SidebarData = {
    * （`src/tasks.ts` の `readTaskSummaries` と同じ契約）。
    */
   readonly tasks: readonly TaskSummaryItem[] | undefined
-  /** セッション情報（区画3）。 */
+  /**
+   * セッション情報（区画3）。**経過時間はここに無い**（2026-09-12 T-075 決定。入力欄の
+   * 送信ボタンと同じ行へ移した。開始・終了時刻は `TURN_STATUS_EVENT_PATH` で運ぶ
+   * （`src/view.ts` の `TurnStatus` / `encodeTurnStatus`）。
+   */
   readonly session: {
     readonly model: string | undefined
     readonly permissionMode: string | undefined
-    /** 直近の依頼（`request`）が届いた時刻（エポック ms）。まだ依頼が無いときは undefined。 */
-    readonly turnStartedAt: number | undefined
-    /**
-     * 直近のターンが終わった時刻（エポック ms）。ターンの途中、またはまだ依頼が無いときは
-     * undefined。
-     */
-    readonly turnFinishedAt: number | undefined
   }
 }
 
@@ -2311,8 +2348,6 @@ const STYLE = `
   .task-status-done { color: #8f97ab; }
   .task-status-other { color: #e3c766; }
   .session-info { display: flex; flex-direction: column; gap: 0.4rem; }
-  .session-elapsed-row { font-size: 0.8rem; color: #8f97ab; }
-  .session-elapsed { font-family: ui-monospace, SFMono-Regular, monospace; color: #e6e8ee; }
 
   /* まとめたレイアウト（buildLayoutPage）。上段（メイン・サイドバー）と下段（キャラビュー・
      入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid
@@ -2505,6 +2540,10 @@ const STYLE = `
     font: inherit;
   }
   .dispatch-status { font-size: 0.8rem; color: #8f97ab; }
+  /* 経過時間（送信ボタンと同じ行。2026-09-12 T-075 でサイドバーから移した）。他の2つ
+     （ボタン・ステータス文字）と同じく伸び縮みしない固定幅にしておく。 */
+  .dispatch-elapsed-row { flex: 0 0 auto; font-size: 0.8rem; color: #8f97ab; }
+  .dispatch-elapsed { font-family: ui-monospace, SFMono-Regular, monospace; color: #e6e8ee; }
   /* 答え待ちの箱の置き場所。答え待ちが無いとき（buildPendingAnswerBody が空文字を返すとき）は
      空になり、高さも増えない。 */
   .dispatch-pending:empty { display: none; }
@@ -3187,31 +3226,16 @@ function taskStatusClass(status: string): string {
   return "task-status-other"
 }
 
-const SESSION_ELAPSED_CLASS = "session-elapsed"
-const SESSION_ELAPSED_LABEL_CLASS = "session-elapsed-label"
-// 進行中／終了後のラベル。ブラウザ側（{@link sessionInfoScript}）が終了時刻の有無で
-// どちらを出すか決める。
-const SESSION_ELAPSED_LABEL = "経過"
-const SESSION_FINISHED_LABEL = "所要"
-
 /**
  * サイドバーの「セッション情報」の本文。モデル・許可モードの `<select>`（駆動側の切り替えは
- * {@link sessionInfoScript}）と、経過時間の表示枠を並べる。**経過時間はここでは計算しない**
- * （view.ts は純粋関数だけを置く場所で、`Date.now()` のような時刻の取得を持たない。開始時刻・
- * 終了時刻を `data-started-at` / `data-finished-at` に載せるだけで、実際のカウントアップと
- * ラベルの出し分け（経過／所要）はブラウザ側の {@link sessionInfoScript}）。
+ * {@link sessionInfoScript}）を並べる。**経過時間はここに無い**（2026-09-12 T-075 決定。
+ * 入力欄の送信ボタンと同じ行（{@link dispatchRegionHtml}）へ移した。サイドバーと入力欄は
+ * 領域が別で SSE の経路も別なので、ここへ戻すときは経路をもう一段考える必要がある）。
  */
 function sessionInfoBody(session: SidebarData["session"]): string {
-  const startedAtAttr = session.turnStartedAt === undefined ? "" : String(session.turnStartedAt)
-  const finishedAtAttr = session.turnFinishedAt === undefined ? "" : String(session.turnFinishedAt)
-
   return `<div class="session-info">
 <div class="session-info-row">${modelSelectHtml(session.model)}</div>
 <div class="session-info-row">${permissionModeHtml(session.permissionMode)}</div>
-<div class="session-info-row session-elapsed-row">
-<span class="${SESSION_ELAPSED_LABEL_CLASS}">${SESSION_ELAPSED_LABEL}</span>:
-<span class="${SESSION_ELAPSED_CLASS}" data-started-at="${escapeHtml(startedAtAttr)}" data-finished-at="${escapeHtml(finishedAtAttr)}">-</span>
-</div>
 </div>`
 }
 
