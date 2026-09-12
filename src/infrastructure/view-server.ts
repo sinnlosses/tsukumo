@@ -139,12 +139,13 @@ export function startViewServer(
   getCommands: GetCommands,
   /**
    * ブラウザ側スクリプトの中身（`src/presentation/browser/` を `bun build` でまとめたもの）。**起動時に
-   * 1回組み立てて渡す**（`src/index.ts`）。ディスクには置かないので、ここが唯一の持ち主になる。
+   * 1回組み立てて渡す**（`src/infrastructure/browser-bundle.ts` の `buildBrowserScript`）。ディスクには置かないので、
+   * ここが唯一の持ち主になる。
    */
   browserScript: string,
   /**
    * CSS の中身（`src/presentation/style/main.css` を `bun build` でまとめたもの）。**起動時に
-   * 1回組み立てて渡す**（`src/index.ts` の `buildStyleSheet`）。ディスクには置かないので、
+   * 1回組み立てて渡す**（`src/infrastructure/browser-bundle.ts` の `buildStyleSheet`）。ディスクには置かないので、
    * ここが唯一の持ち主になる。
    */
   styleSheet: string,

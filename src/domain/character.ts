@@ -6,8 +6,9 @@
 // なので構造を信用しない。unknown で受けて検証し、壊れている・キーが無いときは undefined に落とす
 // （docs/coding-standards.md「型を迂回するキャストを使わない」）。
 //
-// ファイルI/O（character.json 自体・立ち絵の画像ファイルを読むこと）は src/index.ts に集約する。
-// ここが返すのはファイル名の文字列までで、実際に中身を読むのは呼び出し側。
+// ファイルI/O（character.json 自体・立ち絵の画像ファイルを読むこと）は
+// src/infrastructure/character-asset.ts に集約する。ここが返すのはファイル名の文字列までで、
+// 実際に中身を読むのは呼び出し側。
 
 import { type Expression, EXPRESSIONS, type Outfit } from "./expression.ts"
 

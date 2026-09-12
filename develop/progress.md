@@ -19,6 +19,16 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-087 完了。** `src/index.ts` を **635 → 231行**にして、配線だけの場所にした。`usecase/` へ
+`throttle.ts` / `event-sink.ts` / `view-publish.ts`、`infrastructure/` へ `character-asset.ts` /
+`task-summary.ts` / `auto-open-view.ts` / `browser-bundle.ts` を新設。**層の規則を満たすために
+依存を注入する形にした**（`event-sink` は `now()` を引数で受け取り `PendingAsk` と
+`onSessionEnded` を返す、`view-publish` は `buildCharacterBody` などの描画関数を注入される）。
+テストは 382 → 415 pass / 0 fail（新規33件。移す前に書いた。従来の `test/index.test.ts` は
+CLI の起動失敗しか見ていなかった）。実機（7434 / 7435番）で1往復し、メインビューへの押し出しと
+`turn-status` の `null → turnStartedAt → turnFinishedAt` を確認。**経過時間はサイドバーではなく
+入力欄で `turn-status` から描かれる**作りだった（タスク本文の記述と違ったので記録）。
+
 **T-089 完了。** 4層への移動で残っていた `docs/` の旧パス8箇所（`docs/requirements.md` 5 /
 `docs/glossary.md` 2 / `docs/workflow.md` 1）を新しいパスへ直し、`test -f` で実在を確認した。
 節の数は3ファイルとも不変。**`docs/architecture.md` の11箇所は直していない**（`transcript.ts` /

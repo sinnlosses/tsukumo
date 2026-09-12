@@ -3,7 +3,7 @@
 // develop/tasks.json は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは
 // 別物（`docs/workflow.md`「tasks.json のフィールド」）。ここは会話の内容を一切扱わない。
 //
-// transcript.ts と同じく、ここはファイルI/Oを持たない。ファイルを読むのは src/index.ts。
+// ここはファイルI/Oを持たない。ファイルを読むのは src/infrastructure/task-summary.ts。
 
 /** サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。 */
 export type TaskSummaryItem = {

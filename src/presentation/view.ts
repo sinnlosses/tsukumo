@@ -47,7 +47,7 @@ function vendorPath(name: string): string {
 /**
  * **自前のブラウザ側スクリプト**を配る経路。`vendor/`（外から持ってきたもの）と分けてあるのは、
  * 中身の出どころが違うため（こちらは `src/presentation/browser/` を `bun build` でまとめたもので、
- * ディスクには置かず起動時にメモリへ持つ。`src/index.ts` の `buildBrowserScript`）。
+ * ディスクには置かず起動時にメモリへ持つ。`src/infrastructure/browser-bundle.ts` の `buildBrowserScript`）。
  */
 export const ASSET_PATH_PREFIX = "/assets/"
 
@@ -61,7 +61,7 @@ export function browserScriptPath(): string {
 /**
  * 配る CSS の名前。`src/presentation/style/main.css` を `bun build` でまとめたもので、
  * ブラウザ側スクリプトと同じくディスクには置かず起動時にメモリへ持つ
- * （`src/index.ts` の `buildStyleSheet`）。
+ * （`src/infrastructure/browser-bundle.ts` の `buildStyleSheet`）。
  */
 export const STYLE_SHEET_NAME = "style.css"
 

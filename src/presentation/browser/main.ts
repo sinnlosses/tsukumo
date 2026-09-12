@@ -1,5 +1,5 @@
 // ブラウザ側スクリプトの入口。**`bun build` がここから辿って1本にまとめる**
-// （`src/index.ts` の `buildBrowserScript`）。
+// （`src/infrastructure/browser-bundle.ts` の `buildBrowserScript`）。
 //
 // ここには**副作用（ページに対して実際に何かを始めること）だけ**を置き、仕組みは別のファイルに
 // 分ける。こうしておくと、仕組みの側はテストから素直に import できる（入口を import すると

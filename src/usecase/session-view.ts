@@ -263,7 +263,7 @@ export function applySessionEvent(
  *
  * **メインビューはレポートだけ**（docs/requirements.md 4.2「ツールの流れはサイドバーへ」）。
  * `records` に積んだ `tool` の記録はここでは渡さない（サイドバーの仕事は `runningTools` /
- * `finishedTools` を直接読む src/index.ts の役目）。
+ * `finishedTools` を直接読む src/usecase/view-publish.ts の役目）。
  */
 export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
   const settled = view.records.filter(isReportRecord)
