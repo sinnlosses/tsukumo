@@ -7,7 +7,7 @@
     "difficulty": "sonnet",
     "passes": true,
     "evidence": "撤去: src/transcript.ts / src/state.ts / src/transcript-target.ts / src/subagents.ts / hooks/state.sh と各テスト、host.ts・orca-host.ts の openPane/listPanes/sendText/pressKey、view.ts の TERMINALS_PATH/DISPATCH_PATH、view-server.ts の該当ハンドラと host 引数、question.ts の parseAnsweredLabels。残した splitUtterance は src/utterance.ts に、MainViewEntry は src/session-view.ts に移した（transcript.ts のままだと名前が概念と合わないため）。~/.claude/settings.json は承認を得て tsukumo のエントリ5件（SessionStart / Stop / StopFailure / PreToolUse / PostToolUseFailure）を削除。バックアップ ~/.claude/settings.json.bak-20260912-072424。編集後 tsukumo 0件・hooks のキー12個で編集前と一致・orca のエントリ12件と statusLine は無傷。~/.tsukumo/ は消していない（progress.md の「注意」に記録）。完了条件の grep は全て0件。bun run check: 339 pass / 0 fail（436 から97件減。消したのは transcript/state/transcript-target/subagents/hooks のテストと、view-server のターミナル一覧・dispatch のテスト）。CLAUDE.md / docs/architecture.md / README.md を現状に合わせた（architecture.md の節数 25→25）。目視は未実施。",
-    "dependencies": ["T-038","T-039","T-040"]
+    "dependencies": ["T-038", "T-039", "T-040"]
   },
   {
     "id": "T-046",
@@ -17,7 +17,7 @@
     "difficulty": "opus",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-042","T-043","T-044","T-045","T-057"]
+    "dependencies": ["T-042", "T-043", "T-044", "T-045", "T-057"]
   },
   {
     "id": "T-048",
