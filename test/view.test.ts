@@ -2647,7 +2647,7 @@ describe("キャラビューの本文", () => {
     expect(body).toContain("3つめ")
   })
 
-  it("並びは DOM 上で新しい順（CSS の column-reverse で見た目は最新が下になる）", () => {
+  it("並びは DOM 上で新しい順（先頭が最新。CSS でそのまま上から並べる）", () => {
     const body = buildCharacterBody({
       ...FULL_CHARACTER_DATA,
       speeches: ["1つめ", "2つめ", "3つめ"],

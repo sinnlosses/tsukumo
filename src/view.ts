@@ -1015,9 +1015,10 @@ export type CharacterViewData = {
  * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
  *
  * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-track` に縦へ積み、最新が
- * 一番下に見える（`STYLE` の `.balloon-track`）。並びは自前でスクロールする。**主役は立ち絵で、
- * 読ませたいのは最新のセリフ1件**なので、立ち絵は領域の高さいっぱいに出し、最新の吹き出しだけを
- * 濃く大きく（過去は小さく薄く）する（2026-09-12 決定。詳細は `STYLE` のコメント）。
+ * 一番上に見える（`STYLE` の `.balloon-track`）。並びは自前でスクロールする。**立ち絵は左下、
+ * 吹き出しは右上**で、最新の吹き出しの左下から立ち絵へ向けて尻尾を出す（2026-09-12 ユーザーの
+ * 指示）。**主役は立ち絵で、読ませたいのは最新のセリフ1件**なので、最新の吹き出しだけを
+ * 濃く大きく（過去は小さく薄く）する（詳細は `STYLE` のコメント）。
  *
  * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（{@link buildPendingAnswerBody}）は
  * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
@@ -1032,8 +1033,8 @@ export function buildCharacterBody(data: CharacterViewData): string {
       ? ""
       : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
 
-  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-track` の
-  // `flex-direction: column-reverse` と組み、`scrollTop = 0`（既定の位置）が最新を指すようにする。
+  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-track` は上から下へ
+  // 並べるので先頭＝最新が一番上に来て、`scrollTop = 0`（既定の位置）がそのまま最新を指す。
   // こうしておくと SSE で並びが丸ごと差し替わっても、購読スクリプト側に手を入れずに最新が見える。
   const balloonsHtml =
     data.speeches.length === 0
@@ -1048,8 +1049,8 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // 縦積みのままだと窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
   //
-  // 立ち絵と吹き出しの並びは**どちらも下端で揃える**（`STYLE` の `.character-layout` の
-  // `align-items: flex-end`）。セリフが少ないときは並びが下に沈み、増えると上へ伸びる。
+  // 立ち絵は下端、吹き出しの並びは上端に寄せる（`STYLE` の `.character-layout` と
+  // `.balloon-track` の `align-self`）。立ち絵が左下・最新の吹き出しが右上の対角になる。
   return `<div class="character-region">
 <div class="character-layout">${portraitHtml}<div class="balloon-track">${balloonsHtml}</div></div>
 </div>`
@@ -1813,10 +1814,19 @@ const STYLE = `
     line-height: 1.7;
     overflow-wrap: anywhere;
   }
-  /* 領域の高さを .character-layout まで継がせ、立ち絵の height: 100% と .balloon-track の
-     max-height: 100% が領域の中に収まるようにする（vh 基準にすると、下段の行の高さ（既定 40%）
-     より大きくなって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
-  .character-region { display: flex; flex-direction: column; gap: 0.5rem; height: 100%; }
+  /* 領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
+     領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく
+     なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
+  .character-region {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 100%;
+    /* 立ち絵の大きさ（領域の高さに対する割合）と、尻尾の大きさ。立ち絵は領域いっぱいには
+       出さず、少し小さくして床に置く（2026-09-12 ユーザーの指示）。 */
+    --portrait-height: 68%;
+    --balloon-tail: 14px;
+  }
   .permission-mode, .model-select-wrap {
     display: flex;
     align-items: center;
@@ -1835,8 +1845,9 @@ const STYLE = `
   }
   .permission-mode-select-danger { border-color: #e88b8b; color: #e88b8b; }
   .permission-mode-status, .model-select-status { min-height: 1.2em; }
-  /* 立ち絵と吹き出しの並びを下端で揃える（2026-09-12 決定。「キャラと一緒に仕事をする」画面なので
-     主役は立ち絵。床に立たせ、セリフはその隣に沈める）。 */
+  /* 立ち絵は左下、吹き出しの並びは右上（2026-09-12 ユーザーの指示）。**立ち絵と吹き出しを
+     対角に置き、尻尾で結ぶ**ことで、画面のどこを見ればよいかが位置で分かる。ここでは立ち絵の
+     下端揃えだけを決め、並びを上へ寄せるのは .balloon-track の align-self。 */
   .character-layout {
     display: flex;
     flex-wrap: wrap;
@@ -1844,14 +1855,15 @@ const STYLE = `
     gap: 0.75rem;
     height: 100%;
   }
-  /* 立ち絵は**領域の高さいっぱい**に出す（幅は画の縦横比で決まる）。幅を基準にすると、
+  /* 立ち絵の大きさは**領域の高さ**を基準にする（幅は画の縦横比で決まる）。幅を基準にすると、
      キャラビューが横長・浅めの領域（既定で画面の 40% の高さ）のときに小さくなりすぎる。
-     max-width は、領域が細いときに吹き出しの場所（.balloon-track の flex-basis）を
-     食い潰さないための上限。 */
+     いっぱいには広げず --portrait-height ぶんに留め、下端で揃えて床に置く（2026-09-12
+     ユーザーの指示）。max-width は、領域が細いときに吹き出しの場所（.balloon-track の
+     flex-basis）を食い潰さないための上限。 */
   .portrait {
     margin: 0;
     flex: 0 1 auto;
-    height: 100%;
+    height: var(--portrait-height);
     max-width: 45%;
     display: flex;
     align-items: flex-end;
@@ -1870,17 +1882,20 @@ const STYLE = `
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  /* 吹き出しの並び。**DOM は新しい順**（buildCharacterBody）で、column-reverse で
-     視覚上の順序を戻すので、並びの下端に常に最新が来る。高さは中身なり（flex: 1 1 11rem の
-     伸縮は横方向）で、領域に入りきらなくなったぶんだけ内側でスクロールする（max-height: 100%）。
-     **領域の縦半分を空けておく作りはやめた**（2026-09-12。最新を領域の縦中央に固定していたが、
-     吹き出しに使える高さが半分になり読みづらいというユーザーの報告があった）。いまは高さを
-     全部使い、「どれが最新か」は位置ではなく**見た目の強弱**で示す（下の .balloon:first-child）。
-     max-height: 100% の基準は .character-region → .character-layout と継いだ領域の高さ。 */
+  /* 吹き出しの並び。**DOM は新しい順**（buildCharacterBody）なので、flex-direction: column の
+     まま並べると最新が一番上に来る。並び全体を領域の上端（align-self: flex-start）・右寄せ
+     （align-items: flex-end）に置き、左下の立ち絵と対角になるようにする（2026-09-12 ユーザーの
+     指示）。**スクロールの既定位置（scrollTop = 0）がそのまま最新を指す**ので、SSE で並びが
+     丸ごと差し替わっても購読スクリプトに手を入れずに最新が見える。
+     高さは領域なり（基準は .character-region → .character-layout と継いだ高さ）で、入り
+     きらなくなったぶんだけ内側でスクロールする。「どれが最新か」は位置と**見た目の強弱**の
+     両方で示す（下の .balloon:first-child）。 */
   .balloon-track {
     display: flex;
+    align-self: flex-start;
+    align-items: flex-end;
     flex: 1 1 11rem;
-    flex-direction: column-reverse;
+    flex-direction: column;
     gap: 0.5rem;
     min-width: 0;
     min-height: 0;
@@ -1892,9 +1907,9 @@ const STYLE = `
     position: relative;
     width: fit-content;
     max-width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1.1rem;
     border: 1px solid #3a4256;
-    border-radius: 0.75rem;
+    border-radius: 1.25rem;
     background: #1c202a;
     white-space: pre-wrap;
   }
@@ -1902,24 +1917,63 @@ const STYLE = `
      濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。過去の分は小さく薄くして、
      残ってはいるが読み返す対象だと分かる見た目にする。 */
   .balloon:first-child {
+    animation: balloon-appear 0.3s ease-out;
     font-size: 1.05rem;
     background: #232a3a;
     border-color: #8ab4ff;
     box-shadow: 0 0 0 1px rgba(138, 180, 255, 0.25);
   }
-  /* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。 */
-  .portrait + .balloon-track > .balloon:first-child::before {
+  /* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
+     **枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形に
+     する**（2026-09-12 ユーザーの指示「<◯ のような本当の吹き出し」）。三角1枚だと枠線の色で
+     塗った板が飛び出しているだけに見える。
+     立ち絵は左下・吹き出しは右上なので、**尻尾は吹き出しの左下から左下へ向けて出す**
+     （2026-09-12 ユーザーの指示）。border-top と border-right を組むと、上辺が吹き出しに
+     接し先端が左下を向く直角三角形になる（回転を使わないので、上辺が枠線の上に乗って
+     「口」が開いた状態を保てる）。left は角の丸み（border-radius）より内側から始める。
+     ::after は右へ 1px・上へ 1px ずらしたうえで**一回り小さく**する。ずらすだけだと斜辺に沿って
+     滑るだけで枠の色が出ないので、左の辺・斜辺に 1px 残すには大きさも変える必要がある。
+     上へずらしたぶんが吹き出しの下の枠線を塗りつぶし、尻尾の「口」が開く。 */
+  .portrait + .balloon-track > .balloon:first-child::before,
+  .portrait + .balloon-track > .balloon:first-child::after {
     content: "";
     position: absolute;
-    left: -8px;
-    bottom: 1rem;
-    border: 8px solid transparent;
-    border-left: 0;
-    border-right-color: #8ab4ff;
+    top: 100%;
+    left: 1.5rem;
+    width: 0;
+    height: 0;
+    border-top: var(--balloon-tail) solid #8ab4ff;
+    border-right: var(--balloon-tail) solid transparent;
+  }
+  .portrait + .balloon-track > .balloon:first-child::after {
+    top: calc(100% - 1px);
+    left: calc(1.5rem + 1px);
+    border-top-width: calc(var(--balloon-tail) - 2px);
+    border-right-width: calc(var(--balloon-tail) - 2px);
+    border-top-color: #232a3a;
+  }
+  /* 尻尾が次（1つ前のセリフ）の吹き出しに重ならないよう、その分だけ下に場所を空ける。
+     並びの最後が最新の1件だけのときも、この margin が overflow の計算に入るので切れない。 */
+  .portrait + .balloon-track > .balloon:first-child {
+    margin-bottom: var(--balloon-tail);
   }
   .balloon:not(:first-child) {
     font-size: 0.85rem;
     opacity: 0.5;
+    animation: balloon-push-down 0.3s ease-out;
+  }
+  /* セリフが増えると本文がまるごと差し替わる（subscriptionScript の innerHTML 代入）ので、
+     **差し替えのたびにアニメーションが頭から再生される**。これを使って「最新が並びの上端に
+     差し込まれ、過去のセリフは1つぶん下へ押し下げられて薄くなる」動きを CSS だけで作る（JS 側の
+     トランジション制御は要らない）。押し下げる量は最新の吹き出し1つぶんの当て推量なので、
+     セリフが長いと少しずれるが、動きの向きが伝わればよい。 */
+  @keyframes balloon-push-down {
+    from { transform: translateY(-2.75rem); opacity: 0.85; }
+    to { transform: translateY(0); opacity: 0.5; }
+  }
+  @keyframes balloon-appear {
+    from { transform: translateY(0.9rem); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
   .placeholder { color: #8f97ab; }
   .main-turns { display: flex; flex-direction: column; }
@@ -2429,7 +2483,7 @@ const STYLE = `
     .character-layout { align-items: stretch; }
     .portrait { height: auto; max-width: none; display: block; }
     .portrait svg, .portrait-image { width: 100%; height: auto; max-width: 9rem; }
-    .balloon-track { flex: 0 1 auto; max-height: none; overflow-y: visible; }
+    .balloon-track { align-self: stretch; flex: 0 1 auto; max-height: none; overflow-y: visible; }
   }
 `
 
