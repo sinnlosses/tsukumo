@@ -576,6 +576,13 @@ const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
 
 const DISPATCH_SEND_LABEL = "送信"
 const DISPATCH_INTERRUPT_LABEL = "中断"
+// 送信ボタンに添える、Command+Enter で送信できることを示す記号（2026-09-12 決定）。
+// **ラベルの文字列（`textContent`）とは分けて `data-shortcut` 属性に持たせる**（描くのは
+// `STYLE` の `.dispatch-send[data-shortcut]::after`）。ラベルと同じ文字列にすると、送信／中断の
+// 切り替えが `textContent` の一致で見分けられなくなるため。**初期の HTML にも属性を入れておく**
+// ので、スクリプトが動く前から記号が出る。中断のときは出さない（`applyButtonLabel` が
+// `data-shortcut` 属性ごと外す）。
+const DISPATCH_SEND_SHORTCUT_HINT = "⌘⏎"
 
 // 入力欄の `/` 補完で表示する候補の上限（docs/requirements.md 4.2「入力欄」）。
 const MAX_COMMAND_SUGGESTIONS = 10
@@ -608,11 +615,11 @@ function dispatchRegionHtml(): string {
 <div class="dispatch-pending" id="${DISPATCH_PENDING_ID}"></div>
 <form id="${DISPATCH_FORM_ID}">
   <div class="dispatch-text-wrap">
-    <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で送信、Shift+Enter で改行、/ でコマンド補完）" required></textarea>
+    <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）" required></textarea>
     <ul class="dispatch-suggestions" id="${DISPATCH_SUGGESTIONS_ID}" hidden></ul>
   </div>
   <div class="dispatch-row">
-    <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send">${DISPATCH_SEND_LABEL}</button>
+    <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send" data-shortcut="${DISPATCH_SEND_SHORTCUT_HINT}">${DISPATCH_SEND_LABEL}</button>
     <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
   </div>
 </form>
@@ -629,8 +636,14 @@ function dispatchRegionHtml(): string {
  *   届く「進行中か」で「送信」／「中断」に切り替える。**押した瞬間に切り替えない**（サーバ側の
  *   駆動イベントで実際にターンが始まった／終わったことが確認できてから切り替える。
  *   docs/requirements.md 4.7）
- * - **Enter で送信、Shift+Enter で改行。** IME の変換確定の Enter は送信にしない
+ * - **Command+Enter（`event.metaKey`）で送信、Enter 単独と Shift+Enter はどちらも既定動作の
+ *   改行のまま**（`preventDefault` しない。2026-09-12 決定。ユーザーの指示で T-051 の
+ *   「Enter で送信」を覆した）。IME の変換確定の Command+Enter は送信にしない
  *   （`event.isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
+ * - **送信ボタンには Command+Enter を示す記号（`DISPATCH_SEND_SHORTCUT_HINT`）を添える。**
+ *   ラベルの文字列（`textContent`）とは分けて `data-shortcut` 属性に持たせ、`STYLE` の
+ *   `.dispatch-send[data-shortcut]::after` で弱い色で描く。中断のときは `data-shortcut` 属性
+ *   ごと外す（中断は Command+Enter では起きないため）
  * - **送信後は入力欄を空にしてフォーカスを残す。送信に失敗したら文字列は消さない**
  *   （送ったのに消えて書き直しになる、ということが起きないようにする）
  * - **中断ボタンは `INTERRUPT_PATH` を叩くだけ。** ボタンの表示は次に届く駆動の状態で戻る
@@ -643,12 +656,10 @@ function dispatchRegionHtml(): string {
  *   （読むのは1回だけ。差し替え後の自分の変更を次回の「元」だと誤読しないようにする）。
  *   ボタンを押したときの配線自体は {@link pendingAnswerScript} が持つ（ここでは呼ぶだけ）。
  * - **`/` コマンド補完（{@link commandSuggestionsScript}）は同じ `<textarea>` の `keydown` を
- *   共有する。** 送信の Enter と確定の Enter が同じキーなので、別のリスナーに分けると
- *   登録順で送信が先に走ってしまう。候補が開いている間は候補側の分岐で `return` し、
- *   閉じていれば今までどおり送信に落ちる1つのリスナーにまとめてある。**候補が開いている間の
- *   Enter は Claude Code の TUI に合わせ、確定に続けて送信まで行う**（Tab は確定だけ。
- *   docs/requirements.md 4.2「入力欄」(3)。2026-09-12 決定）。送信中（`inProgress`）は
- *   これまでどおり確定だけで送らない。
+ *   共有する。** 候補が開いている間は候補側の分岐で `return` し、閉じていれば今までどおり
+ *   送信の判定に落ちる1つのリスナーにまとめてある。**候補が開いている間の Enter は Tab と同じく
+ *   確定だけ**（送信しない。送信は Command+Enter に一本化したので、確定と送信を同じキーで
+ *   兼ねない。docs/requirements.md 4.2「入力欄」(3)。2026-09-12 決定でこちらへ変更）。
  */
 function dispatchScript(): string {
   return `  {
@@ -666,6 +677,11 @@ function dispatchScript(): string {
       sendButton.textContent = inProgress
         ? ${JSON.stringify(DISPATCH_INTERRUPT_LABEL)}
         : ${JSON.stringify(DISPATCH_SEND_LABEL)}
+      if (inProgress) {
+        delete sendButton.dataset.shortcut
+      } else {
+        sendButton.dataset.shortcut = ${JSON.stringify(DISPATCH_SEND_SHORTCUT_HINT)}
+      }
     }
     applyButtonLabel()
 
@@ -774,9 +790,6 @@ ${commandSuggestionsScript()}
         if (event.key === "Enter") {
           event.preventDefault()
           confirmSelectedSuggestion()
-          if (!inProgress) {
-            form.requestSubmit()
-          }
           return
         }
         if (event.key === "Escape") {
@@ -784,7 +797,7 @@ ${commandSuggestionsScript()}
           return
         }
       }
-      if (event.key !== "Enter" || event.shiftKey || composing) {
+      if (event.key !== "Enter" || composing || !event.metaKey) {
         return
       }
       event.preventDefault()
@@ -1015,10 +1028,11 @@ export type CharacterViewData = {
  * （`STYLE` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
  *
  * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-track` に縦へ積み、最新が
- * 一番上に見える（`STYLE` の `.balloon-track`）。並びは自前でスクロールする。**立ち絵は左下、
- * 吹き出しは右上**で、最新の吹き出しの左下から立ち絵へ向けて尻尾を出す（2026-09-12 ユーザーの
- * 指示）。**主役は立ち絵で、読ませたいのは最新のセリフ1件**なので、最新の吹き出しだけを
- * 濃く大きく（過去は小さく薄く）する（詳細は `STYLE` のコメント）。
+ * 一番下・過去のセリフほど上へ押し上がって見える（`STYLE` の `.balloon-track` の
+ * `column-reverse`）。並びは自前でスクロールする。**立ち絵も吹き出しの並びも下端で揃え**、
+ * 最新の吹き出しの左下から立ち絵へ向けて尻尾を出す（2026-09-12 ユーザーの指示）。**主役は
+ * 立ち絵で、読ませたいのは最新のセリフ1件**なので、最新の吹き出しだけを濃く大きく（過去は
+ * 小さく薄く）する（詳細は `STYLE` のコメント）。
  *
  * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（{@link buildPendingAnswerBody}）は
  * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
@@ -1033,8 +1047,9 @@ export function buildCharacterBody(data: CharacterViewData): string {
       ? ""
       : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
 
-  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-track` は上から下へ
-  // 並べるので先頭＝最新が一番上に来て、`scrollTop = 0`（既定の位置）がそのまま最新を指す。
+  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-track` は
+  // `column-reverse` なので先頭＝最新が視覚上いちばん下に来て、`scrollTop = 0`（既定の位置）が
+  // そのまま最新を指す。
   // こうしておくと SSE で並びが丸ごと差し替わっても、購読スクリプト側に手を入れずに最新が見える。
   const balloonsHtml =
     data.speeches.length === 0
@@ -1049,8 +1064,8 @@ export function buildCharacterBody(data: CharacterViewData): string {
   // 縦積みのままだと窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
   // （`docs/requirements.md` 4.7「画面レイアウト」）。
   //
-  // 立ち絵は下端、吹き出しの並びは上端に寄せる（`STYLE` の `.character-layout` と
-  // `.balloon-track` の `align-self`）。立ち絵が左下・最新の吹き出しが右上の対角になる。
+  // 立ち絵も吹き出しの並びも下端に寄せる（`STYLE` の `.character-layout` と `.balloon-track`
+  // の `align-self`）。最新の吹き出しが立ち絵のすぐ隣に来る。
   return `<div class="character-region">
 <div class="character-layout">${portraitHtml}<div class="balloon-track">${balloonsHtml}</div></div>
 </div>`
@@ -1823,8 +1838,11 @@ const STYLE = `
     gap: 0.5rem;
     height: 100%;
     /* 立ち絵の大きさ（領域の高さに対する割合）と、尻尾の大きさ。立ち絵は領域いっぱいには
-       出さず、少し小さくして床に置く（2026-09-12 ユーザーの指示）。 */
+       出さず、少し小さくして床に置く（2026-09-12 ユーザーの指示）。--portrait-drop は立ち絵を
+       領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる
+       （2026-09-12 ユーザーの指示「キャラはもう少し下に配置」）。 */
     --portrait-height: 68%;
+    --portrait-drop: 0.75rem;
     --balloon-tail: 14px;
   }
   .permission-mode, .model-select-wrap {
@@ -1845,23 +1863,26 @@ const STYLE = `
   }
   .permission-mode-select-danger { border-color: #e88b8b; color: #e88b8b; }
   .permission-mode-status, .model-select-status { min-height: 1.2em; }
-  /* 立ち絵は左下、吹き出しの並びは右上（2026-09-12 ユーザーの指示）。**立ち絵と吹き出しを
-     対角に置き、尻尾で結ぶ**ことで、画面のどこを見ればよいかが位置で分かる。ここでは立ち絵の
-     下端揃えだけを決め、並びを上へ寄せるのは .balloon-track の align-self。 */
+  /* 立ち絵も吹き出しの並びも**下端で揃える**（2026-09-12 ユーザーの指示）。最新のセリフが
+     立ち絵のすぐ隣に来て、左下から出る尻尾が短い距離で立ち絵に届く。並びが伸びる向きは上で、
+     過去のセリフは上へ押し上がる（.balloon-track の column-reverse）。
+     overflow: hidden は --portrait-drop で下へはみ出した立ち絵の足元をここで切るためのもの。
+     領域そのもの（.layout-region の overflow-y: auto）にスクロールバーを出さない。 */
   .character-layout {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: 0.75rem;
     height: 100%;
+    overflow: hidden;
   }
   /* 立ち絵の大きさは**領域の高さ**を基準にする（幅は画の縦横比で決まる）。幅を基準にすると、
      キャラビューが横長・浅めの領域（既定で画面の 40% の高さ）のときに小さくなりすぎる。
-     いっぱいには広げず --portrait-height ぶんに留め、下端で揃えて床に置く（2026-09-12
-     ユーザーの指示）。max-width は、領域が細いときに吹き出しの場所（.balloon-track の
+     いっぱいには広げず --portrait-height ぶんに留め、下端で揃えたうえで --portrait-drop ぶん
+     下へずらして床に置く（2026-09-12 ユーザーの指示）。max-width は、領域が細いときに吹き出しの場所（.balloon-track の
      flex-basis）を食い潰さないための上限。 */
   .portrait {
-    margin: 0;
+    margin: 0 0 calc(-1 * var(--portrait-drop));
     flex: 0 1 auto;
     height: var(--portrait-height);
     max-width: 45%;
@@ -1882,20 +1903,22 @@ const STYLE = `
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  /* 吹き出しの並び。**DOM は新しい順**（buildCharacterBody）なので、flex-direction: column の
-     まま並べると最新が一番上に来る。並び全体を領域の上端（align-self: flex-start）・右寄せ
-     （align-items: flex-end）に置き、左下の立ち絵と対角になるようにする（2026-09-12 ユーザーの
-     指示）。**スクロールの既定位置（scrollTop = 0）がそのまま最新を指す**ので、SSE で並びが
-     丸ごと差し替わっても購読スクリプトに手を入れずに最新が見える。
-     高さは領域なり（基準は .character-region → .character-layout と継いだ高さ）で、入り
-     きらなくなったぶんだけ内側でスクロールする。「どれが最新か」は位置と**見た目の強弱**の
-     両方で示す（下の .balloon:first-child）。 */
+  /* 吹き出しの並び。**DOM は新しい順**（buildCharacterBody）なので、column-reverse で並べると
+     最新が一番下に来て、過去のセリフほど上へ積み上がる（2026-09-12 ユーザーの指示「過去の発言は
+     上に押し上げる」）。並び全体を領域の下端（align-self: flex-end）に置き、吹き出しは立ち絵の
+     側（align-items: flex-start）へ寄せる。最新の吹き出しが立ち絵の隣に並ぶので、左下から出る
+     尻尾が短い距離で立ち絵に届く。
+     **column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の下端＝最新**なので、
+     SSE で並びが丸ごと差し替わっても購読スクリプトに手を入れずに最新が見える。
+     高さは中身なり・上限は領域なり（基準は .character-region → .character-layout と継いだ
+     高さ）で、入りきらなくなったぶんだけ内側でスクロールする。「どれが最新か」は位置と
+     **見た目の強弱**の両方で示す（下の .balloon:first-child）。 */
   .balloon-track {
     display: flex;
-    align-self: flex-start;
-    align-items: flex-end;
+    align-self: flex-end;
+    align-items: flex-start;
     flex: 1 1 11rem;
-    flex-direction: column;
+    flex-direction: column-reverse;
     gap: 0.5rem;
     min-width: 0;
     min-height: 0;
@@ -1927,7 +1950,7 @@ const STYLE = `
      **枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形に
      する**（2026-09-12 ユーザーの指示「<◯ のような本当の吹き出し」）。三角1枚だと枠線の色で
      塗った板が飛び出しているだけに見える。
-     立ち絵は左下・吹き出しは右上なので、**尻尾は吹き出しの左下から左下へ向けて出す**
+     立ち絵は左・最新の吹き出しはその隣なので、**尻尾は吹き出しの左下から左下へ向けて出す**
      （2026-09-12 ユーザーの指示）。border-top と border-right を組むと、上辺が吹き出しに
      接し先端が左下を向く直角三角形になる（回転を使わないので、上辺が枠線の上に乗って
      「口」が開いた状態を保てる）。left は角の丸み（border-radius）より内側から始める。
@@ -1960,15 +1983,15 @@ const STYLE = `
   .balloon:not(:first-child) {
     font-size: 0.85rem;
     opacity: 0.5;
-    animation: balloon-push-down 0.3s ease-out;
+    animation: balloon-push-up 0.3s ease-out;
   }
   /* セリフが増えると本文がまるごと差し替わる（subscriptionScript の innerHTML 代入）ので、
-     **差し替えのたびにアニメーションが頭から再生される**。これを使って「最新が並びの上端に
-     差し込まれ、過去のセリフは1つぶん下へ押し下げられて薄くなる」動きを CSS だけで作る（JS 側の
-     トランジション制御は要らない）。押し下げる量は最新の吹き出し1つぶんの当て推量なので、
+     **差し替えのたびにアニメーションが頭から再生される**。これを使って「最新が並びの下端に
+     差し込まれ、過去のセリフは1つぶん上へ押し上げられて薄くなる」動きを CSS だけで作る（JS 側の
+     トランジション制御は要らない）。押し上げる量は最新の吹き出し1つぶんの当て推量なので、
      セリフが長いと少しずれるが、動きの向きが伝わればよい。 */
-  @keyframes balloon-push-down {
-    from { transform: translateY(-2.75rem); opacity: 0.85; }
+  @keyframes balloon-push-up {
+    from { transform: translateY(2.75rem); opacity: 0.85; }
     to { transform: translateY(0); opacity: 0.5; }
   }
   @keyframes balloon-appear {
@@ -2434,6 +2457,14 @@ const STYLE = `
     border-color: #8ab4ff;
     font-weight: 600;
   }
+  /* Command+Enter で送信できることを示す記号（applyButtonLabel が data-shortcut 属性に
+     持たせる）。ラベルの文字とは別の擬似要素にして、ステータス表示と同じ弱い色で添える。
+     中断のときは属性ごと外れるので、この擬似要素も出ない。 */
+  .dispatch-send[data-shortcut]::after {
+    content: " " attr(data-shortcut);
+    color: #8f97ab;
+    font-weight: 400;
+  }
   .dispatch-text {
     flex: 1 1 auto;
     min-height: 0;
@@ -2480,8 +2511,8 @@ const STYLE = `
     /* .layout-region.layout-character もこの幅では高さ auto になり、割合で書いた高さの基準が
        消える（同じ理由の T-067 の再発）。この幅ではページ自体が縦スクロールするので、立ち絵は
        幅を基準にした元の大きさに戻し、吹き出しは中身なりの高さで積むだけにする。 */
-    .character-layout { align-items: stretch; }
-    .portrait { height: auto; max-width: none; display: block; }
+    .character-layout { align-items: stretch; overflow: visible; }
+    .portrait { height: auto; max-width: none; display: block; margin-bottom: 0; }
     .portrait svg, .portrait-image { width: 100%; height: auto; max-width: 9rem; }
     .balloon-track { align-self: stretch; flex: 0 1 auto; max-height: none; overflow-y: visible; }
   }

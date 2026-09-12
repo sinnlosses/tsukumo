@@ -148,6 +148,9 @@ function makeInertStub(): InertStub {
   stub.querySelector = () => null
   stub.querySelectorAll = () => []
   stub.innerHTML = ""
+  // 送信ボタンの data-shortcut（applyButtonLabel）のように、無害な代役でも
+  // dataset のプロパティを読み書きするコードがある。
+  stub.dataset = {}
   return stub
 }
 
@@ -258,7 +261,7 @@ function runSubscriptionScript(
 // --- 入力欄（dispatchScript）を実際に動かして確かめるための道具 -------------------------------
 //
 // 送り先の選択は無くなった（送り先はセッション駆動1つに決まっている）。ここで実際に動かして
-// 確かめるのは、Enter/Shift+Enter・IME変換確定・送信成功/失敗時の入力欄の扱い・進行中の状態
+// 確かめるのは、Command+Enter/Enter単独/Shift+Enter・IME変換確定・送信成功/失敗時の入力欄の扱い・進行中の状態
 // （`TURN_STATUS_EVENT_PATH`）による送信ボタンの表示切り替えと、押した先が `PROMPT_PATH` /
 // `INTERRUPT_PATH` になっていること。実際に見えるかはブラウザでの目視確認に任せる
 // （docs/coding-standards.md「描画は自動テストで守らない」）。
@@ -274,6 +277,7 @@ function makeFakeTextElement(): FakeTextElement {
 type FakeButtonElement = {
   disabled: boolean
   textContent: string
+  readonly dataset: { shortcut: string | undefined }
   readonly addEventListener: (type: string, listener: (event: FakePreventableEvent) => void) => void
   readonly click: () => void
 }
@@ -297,6 +301,7 @@ function makeFakeButtonElement(): FakeButtonElement {
     set textContent(value) {
       textContent = value
     },
+    dataset: { shortcut: undefined },
     addEventListener: (type, listener) => {
       if (type === "click") {
         listeners.add(listener)
@@ -338,6 +343,7 @@ function makeFakeFormElement(): FakeFormElement {
 type FakeKeydownEvent = FakePreventableEvent & {
   readonly key: string
   readonly shiftKey: boolean
+  readonly metaKey: boolean
   readonly isComposing: boolean
   readonly keyCode: number
 }
@@ -345,6 +351,7 @@ type FakeKeydownEvent = FakePreventableEvent & {
 function makeFakeKeydownEvent(options: {
   readonly key: string
   readonly shiftKey?: boolean
+  readonly metaKey?: boolean
   readonly isComposing?: boolean
   readonly keyCode?: number
 }): { readonly event: FakeKeydownEvent; readonly wasPrevented: () => boolean } {
@@ -353,6 +360,7 @@ function makeFakeKeydownEvent(options: {
     event: {
       key: options.key,
       shiftKey: options.shiftKey ?? false,
+      metaKey: options.metaKey ?? false,
       isComposing: options.isComposing ?? false,
       keyCode: options.keyCode ?? 0,
       preventDefault: () => {
@@ -795,15 +803,25 @@ describe("入力欄（送信・中断）", () => {
     }
   }
 
-  it("Enter で送信する", async () => {
+  it("Command+Enter で送信する", async () => {
     const { textArea, calls } = setUp()
     textArea.value = "テストの依頼"
 
-    const { event } = makeFakeKeydownEvent({ key: "Enter" })
+    const { event } = makeFakeKeydownEvent({ key: "Enter", metaKey: true })
     textArea.dispatchKeydown(event)
     await flushMicrotasks()
 
     expect(calls()).toEqual([{ url: PROMPT_PATH, body: JSON.stringify({ text: "テストの依頼" }) }])
+  })
+
+  it("Enter 単独では送信せず、改行をそのまま許す（preventDefault しない）", () => {
+    const { textArea, calls } = setUp()
+
+    const { event, wasPrevented } = makeFakeKeydownEvent({ key: "Enter" })
+    textArea.dispatchKeydown(event)
+
+    expect(wasPrevented()).toBe(false)
+    expect(calls()).toEqual([])
   })
 
   it("Shift+Enter では送信せず、改行をそのまま許す（preventDefault しない）", () => {
@@ -816,10 +834,11 @@ describe("入力欄（送信・中断）", () => {
     expect(calls()).toEqual([])
   })
 
-  it("IME の変換確定の Enter では送信しない（isComposing / keyCode 229 のどちらでも）", () => {
+  it("IME の変換確定の Command+Enter では送信しない（isComposing / keyCode 229 のどちらでも）", () => {
     const composing = setUp()
     const { event: composingEvent, wasPrevented: composingPrevented } = makeFakeKeydownEvent({
       key: "Enter",
+      metaKey: true,
       isComposing: true,
     })
     composing.textArea.dispatchKeydown(composingEvent)
@@ -829,6 +848,7 @@ describe("入力欄（送信・中断）", () => {
     const legacyIme = setUp()
     const { event: legacyEvent, wasPrevented: legacyPrevented } = makeFakeKeydownEvent({
       key: "Enter",
+      metaKey: true,
       keyCode: 229,
     })
     legacyIme.textArea.dispatchKeydown(legacyEvent)
@@ -869,6 +889,16 @@ describe("入力欄（送信・中断）", () => {
     expect(sendButton.textContent).toBe("中断")
     dispatchTurnStatus(TURN_STATUS_IDLE)
     expect(sendButton.textContent).toBe("送信")
+  })
+
+  it("送信ボタンは Command+Enter を示す記号を持つ。中断のときは持たない", () => {
+    const { sendButton, dispatchTurnStatus } = setUp()
+
+    expect(sendButton.dataset.shortcut).toBe("⌘⏎")
+    dispatchTurnStatus(TURN_STATUS_IN_PROGRESS)
+    expect(sendButton.dataset.shortcut).toBeUndefined()
+    dispatchTurnStatus(TURN_STATUS_IDLE)
+    expect(sendButton.dataset.shortcut).toBe("⌘⏎")
   })
 
   it("進行中に送信ボタンを押すと、INTERRUPT_PATH を叩くだけ", async () => {
@@ -1083,7 +1113,7 @@ describe("入力欄（送信・中断）", () => {
       expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
     })
 
-    it("候補が開いている間の Enter は選ばれている候補を確定して送信する（末尾の空白は付けない）", async () => {
+    it("候補が開いている間の Enter は選ばれている候補を確定するだけで、送信しない（送信は Command+Enter に一本化）", async () => {
       const { textArea, suggestionsBox, calls } = setUpWithCommands(["clear", "model"])
 
       textArea.value = "/"
@@ -1095,10 +1125,26 @@ describe("入力欄（送信・中断）", () => {
       await flushMicrotasks()
 
       expect(wasPrevented()).toBe(true)
+      expect(textArea.value).toBe("/clear ")
       expect(suggestionsBox.hidden).toBe(true)
-      expect(calls().filter((call) => call.url === PROMPT_PATH)).toEqual([
-        { url: PROMPT_PATH, body: JSON.stringify({ text: "/clear" }) },
-      ])
+      expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
+    })
+
+    it("候補が開いている間の Command+Enter も確定するだけで、送信しない", async () => {
+      const { textArea, suggestionsBox, calls } = setUpWithCommands(["clear", "model"])
+
+      textArea.value = "/"
+      textArea.dispatchInput()
+      await flushMicrotasks()
+
+      const { event, wasPrevented } = makeFakeKeydownEvent({ key: "Enter", metaKey: true })
+      textArea.dispatchKeydown(event)
+      await flushMicrotasks()
+
+      expect(wasPrevented()).toBe(true)
+      expect(textArea.value).toBe("/clear ")
+      expect(suggestionsBox.hidden).toBe(true)
+      expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
     })
 
     it("送信中（進行中）の Enter は候補を確定するだけで、送信しない", async () => {
@@ -1122,11 +1168,11 @@ describe("入力欄（送信・中断）", () => {
       expect(calls().map((call) => call.url)).not.toContain(PROMPT_PATH)
     })
 
-    it("候補が開いていないときの Enter は、これまでどおり送信する", async () => {
+    it("候補が開いていないときの Command+Enter は、これまでどおり送信する", async () => {
       const { textArea, calls } = setUpWithCommands(["clear"])
       textArea.value = "こんにちは"
 
-      const { event } = makeFakeKeydownEvent({ key: "Enter" })
+      const { event } = makeFakeKeydownEvent({ key: "Enter", metaKey: true })
       textArea.dispatchKeydown(event)
       await flushMicrotasks()
 
@@ -1413,8 +1459,15 @@ describe("まとめたレイアウトページ", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(page).toContain(
-      '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send">送信</button>',
+      '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send" data-shortcut="⌘⏎">送信</button>',
     )
+  })
+
+  it("送信ボタンの記号はラベルの文字列に混ざらない（属性で持ち、CSS の ::after で描く）", () => {
+    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+
+    expect(page).toContain('data-shortcut="⌘⏎">送信</button>')
+    expect(page).toContain(".dispatch-send[data-shortcut]::after")
   })
 })
 
@@ -2647,7 +2700,7 @@ describe("キャラビューの本文", () => {
     expect(body).toContain("3つめ")
   })
 
-  it("並びは DOM 上で新しい順（先頭が最新。CSS でそのまま上から並べる）", () => {
+  it("並びは DOM 上で新しい順（先頭が最新。CSS の column-reverse で視覚上は下端に出る）", () => {
     const body = buildCharacterBody({
       ...FULL_CHARACTER_DATA,
       speeches: ["1つめ", "2つめ", "3つめ"],
