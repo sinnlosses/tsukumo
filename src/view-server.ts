@@ -33,6 +33,8 @@ import {
   PROMPT_PATH,
   TURN_STATUS_EVENT_PATH,
   type TurnStatus,
+  ASSET_PATH_PREFIX,
+  BROWSER_SCRIPT_NAME,
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
   VIEW_NAMES,
@@ -134,6 +136,11 @@ export function startViewServer(
   sendPermissionMode: SendPermissionMode,
   sendModel: SendModel,
   getCommands: GetCommands,
+  /**
+   * ブラウザ側スクリプトの中身（`src/browser/` を `bun build` でまとめたもの）。**起動時に
+   * 1回組み立てて渡す**（`src/index.ts`）。ディスクには置かないので、ここが唯一の持ち主になる。
+   */
+  browserScript: string,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
@@ -166,6 +173,7 @@ export function startViewServer(
       () => turnStatusBody,
       pendingAnswerClients,
       () => pendingAnswerBody,
+      browserScript,
     )
   })
 
@@ -265,6 +273,7 @@ function respond(
   getTurnStatusBody: () => string,
   pendingAnswerClients: Set<ServerResponse>,
   getPendingAnswerBody: () => string,
+  browserScript: string,
 ): void {
   if (path === LAYOUT_PATH) {
     writeHtml(response, buildLayoutPage(currentBodies(bodies)))
@@ -334,6 +343,17 @@ function respond(
       return
     }
     handleModel(request, response, sendModel)
+    return
+  }
+
+  if (path === `${ASSET_PATH_PREFIX}${BROWSER_SCRIPT_NAME}` && request.method === "GET") {
+    // 起動時に組み立てたブラウザ側スクリプト（`src/browser/` を bun build でまとめたもの）。
+    // **ディスクには無い**ので、vendor と違ってファイルを読みに行かない。
+    response.writeHead(200, {
+      "content-type": "text/javascript; charset=utf-8",
+      "cache-control": "no-store",
+    })
+    response.end(browserScript)
     return
   }
 

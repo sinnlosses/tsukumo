@@ -4,11 +4,12 @@
 // ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
 // 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。
 
+import { execFile } from "node:child_process"
 import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
-import { resolveBundledDir } from "./bundled-files.ts"
+import { bundledFilePath, resolveBundledDir } from "./bundled-files.ts"
 import {
   availableExpressions,
   type CharacterDefinition,
@@ -87,6 +88,11 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
 // docs/requirements.md「5. 実行環境・非機能要件」）。
 const PUBLISH_INTERVAL_MS = 100
 
+/** ブラウザ側スクリプトの入口。ここから辿れるものが1本にまとまる（`buildBrowserScript`）。 */
+const BROWSER_SCRIPT_ENTRY = "main.ts"
+/** 組み立てた結果の受け取り上限。超えるとビルドが失敗扱いになる（いまの実測は数KB）。 */
+const BROWSER_SCRIPT_MAX_BYTES = 8 * 1024 * 1024
+
 // develop/tasks.json は起動時の cwd（リポジトリ直下で `bun run start` する運用）からの相対で読む。
 // セッションに依存しない、tsukumo 自身の進捗管理ファイルのため。
 const TASKS_FILE_RELATIVE_PATH: readonly string[] = ["develop", "tasks.json"]
@@ -103,6 +109,36 @@ const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
 /**
+ * ブラウザ側スクリプト（`src/browser/`）を `bun build` で1本にまとめ、**中身を文字列で返す**。
+ * 失敗したら undefined を返す（呼び出し側が起動を止める）。
+ *
+ * **ファイルに書き出さない。** 出力を標準出力で受け取ってメモリに持ち、`src/view-server.ts` が
+ * `/assets/browser.js` として配る。ディスクに成果物を残さないので、古いものを配る事故も、
+ * `.gitignore` に足す必要も出ない（2026-09-12 T-083 決定）。
+ *
+ * **`Bun.build()` ではなく `bun build` のプロセスを起こす**のは、`Bun.*` の固有 API に寄せない
+ * 規約（`docs/coding-standards.md`「Bun固有APIに寄せない」）のため。`bun` は tsukumo 自身を
+ * 動かしている実行環境なので、外部コマンドの依存が増えるわけではない。
+ *
+ * 型検査はここではしない（`bun build` はトランスパイルだけで型を見ない）。型は
+ * `bun run check` の `tsc --noEmit` が見る。**`src/browser/` も tsconfig の `include`
+ * （`src` 配下の `.ts` すべて）に入っている**ので、検査は自動で届く。
+ */
+function buildBrowserScript(): Promise<string | undefined> {
+  const entry = bundledFilePath("src", "browser", BROWSER_SCRIPT_ENTRY)
+  return new Promise((resolve) => {
+    execFile(
+      "bun",
+      ["build", entry, "--target=browser"],
+      { maxBuffer: BROWSER_SCRIPT_MAX_BYTES },
+      (error, stdout) => {
+        resolve(error === null && stdout !== "" ? stdout : undefined)
+      },
+    )
+  })
+}
+
+/**
  * 終了コードを返す。0 のときはビューサーバとセッションを残したままプロセスを生かし続けるので、
  * 呼び出し側は 0 以外のときだけ `process.exit` する。
  */
@@ -117,6 +153,16 @@ async function main(args: readonly string[]): Promise<number> {
   const portResolution = resolveViewPort(process.env[VIEW_PORT_ENV_NAME])
   if (portResolution.kind === "invalid") {
     process.stderr.write(`tsukumo: ${VIEW_PORT_ENV_NAME} がポート番号として読めない\n`)
+    return 1
+  }
+
+  // ブラウザ側スクリプトは**起動のたびに組み立てる**（2026-09-12 T-083 決定）。ディスクに置かない
+  // ので古い成果物を配る事故が起きず、`.ts` を直して起こし直すだけで反映される。組み立てに
+  // 失敗したらページが動かないので、**ここは起動時の前提不足として即時終了する**
+  // （`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の例外側）。
+  const browserScript = await buildBrowserScript()
+  if (browserScript === undefined) {
+    process.stderr.write("tsukumo: ブラウザ側スクリプトを組み立てられない\n")
     return 1
   }
 
@@ -151,6 +197,7 @@ async function main(args: readonly string[]): Promise<number> {
       (model) =>
         driver === undefined ? Promise.resolve(false) : driver.setModel(model).then(() => true),
       () => commands,
+      browserScript,
     ),
   )
   if (!startResult.ok) {

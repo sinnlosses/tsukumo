@@ -29,6 +29,12 @@ import {
 // ぶつからないようにするため）。
 let running: ViewServer | undefined
 
+/**
+ * ブラウザ側スクリプトの代役。**本物のビルドはしない**（テストから `bun build` を起こさない）。
+ * 配信の経路（`/assets/browser.js`）が通っているかだけを見たいので、中身は目印の1行でよい。
+ */
+const TEST_BROWSER_SCRIPT = "/* テスト用のブラウザ側スクリプト */"
+
 async function start(
   sendPrompt: SendPrompt = () => true,
   sendInterrupt: SendInterrupt = () => Promise.resolve(),
@@ -45,6 +51,7 @@ async function start(
     sendPermissionMode,
     sendModel,
     getCommands,
+    TEST_BROWSER_SCRIPT,
   )
   running = server
   return server
@@ -201,15 +208,28 @@ describe("ビューサーバ", () => {
     expect(body).toContain("<p>サイドバーの本文</p>")
   })
 
-  it("/ の3領域それぞれが、/events/<view> を購読する更新経路を持つ", async () => {
+  it("/ の3領域それぞれが、/events/<view> を購読先として示す", async () => {
     const server = await start()
 
     const response = await fetch(server.layoutUrl)
     const body = await response.text()
 
-    expect(body).toContain('new EventSource("/events/main")')
-    expect(body).toContain('new EventSource("/events/character")')
-    expect(body).toContain('new EventSource("/events/sidebar")')
+    // 購読そのものは外に出したスクリプト（/assets/browser.js）が data-event-path を見て回る
+    // （2026-09-12 T-083）。ページが持つのは経路の宣言だけ。
+    expect(body).toContain('data-event-path="/events/main"')
+    expect(body).toContain('data-event-path="/events/character"')
+    expect(body).toContain('data-event-path="/events/sidebar"')
+    expect(body).toContain('<script src="/assets/browser.js"></script>')
+  })
+
+  it("/assets/browser.js が、起動時に組み立てたブラウザ側スクリプトを返す", async () => {
+    const server = await start()
+
+    const response = await fetch(`${originOf(server)}/assets/browser.js`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("text/javascript")
+    expect(await response.text()).toBe(TEST_BROWSER_SCRIPT)
   })
 
   it("個別ビューのページ（/main /character /sidebar）は無い（2026-09-12 に消した。404）", async () => {

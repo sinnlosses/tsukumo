@@ -43,6 +43,20 @@ function vendorPath(name: string): string {
   return `${VENDOR_PATH_PREFIX}${name}`
 }
 
+/**
+ * **自前のブラウザ側スクリプト**を配る経路。`vendor/`（外から持ってきたもの）と分けてあるのは、
+ * 中身の出どころが違うため（こちらは `src/browser/` を `bun build` でまとめたもので、
+ * ディスクには置かず起動時にメモリへ持つ。`src/index.ts` の `buildBrowserScript`）。
+ */
+export const ASSET_PATH_PREFIX = "/assets/"
+
+/** 配るブラウザ側スクリプトの名前。**ここに無い名前は配らない**（vendor と同じ許可リスト方式）。 */
+export const BROWSER_SCRIPT_NAME = "browser.js"
+
+export function browserScriptPath(): string {
+  return `${ASSET_PATH_PREFIX}${BROWSER_SCRIPT_NAME}`
+}
+
 /** 依頼をセッション駆動へ送る経路（POST、本文は JSON の `{ text }`）。 */
 export const PROMPT_PATH = "/api/prompt"
 
@@ -115,24 +129,29 @@ export const MODEL_PATH = "/api/model"
 export const COMMANDS_PATH = "/api/commands"
 
 /**
- * 1領域ぶんのスクリプト。購読（{@link subscriptionScript}）に加えて、メインビューには
- * やり取りのタブの制御（{@link mainTurnsScript}）、サイドバーにはモデル・許可モードの切り替え
- * （{@link sessionInfoScript}）を足す。**答え待ちの箱の配線（{@link pendingAnswerScript}）と
- * 経過時間の表示は入力欄側（{@link dispatchScript}）に付く**（答え待ちの箱は2026-09-11 決定。
- * キャラビューの吹き出しの下ではなく、入力欄の上に出す。経過時間は2026-09-12 T-075 決定。
- * サイドバーの「セッション情報」から送信ボタンの隣へ移した）。**タブの選択・答え待ちの状態は
- * ブラウザ側だけが持つ**（サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は
- * Server-Sent Events で押す」— 押す側に状態を持たせない）。
+ * 1領域ぶんの、**まだテンプレート文字列に残っているスクリプト**。メインビューにはやり取りの
+ * タブの制御（{@link mainTurnsScript}）とレポートのレンダラ（{@link reportRenderersScript}）、
+ * サイドバーにはモデル・許可モードの切り替え（{@link sessionInfoScript}）が付く。
+ *
+ * **SSE の購読はここに無い。** 2026-09-12 に `src/browser/region-subscription.ts` へ移し、
+ * `bun build` でまとめて `/assets/browser.js` から配るようになった（T-083）。**残りの
+ * スクリプトも順次そちらへ移す**（T-084）ので、この関数は最後には消える。
+ *
+ * **答え待ちの箱の配線（{@link pendingAnswerScript}）と経過時間の表示は入力欄側
+ * （{@link dispatchScript}）に付く**（答え待ちの箱は2026-09-11 決定。キャラビューの吹き出しの
+ * 下ではなく、入力欄の上に出す。経過時間は2026-09-12 T-075 決定。サイドバーの「セッション情報」
+ * から送信ボタンの隣へ移した）。**タブの選択・答え待ちの状態はブラウザ側だけが持つ**
+ * （サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は Server-Sent Events で
+ * 押す」— 押す側に状態を持たせない）。
  */
-function viewScript(elementId: string, view: ViewName, initialBody: string): string {
-  const subscription = subscriptionScript(elementId, view, initialBody)
+function viewScript(elementId: string, view: ViewName): string {
   if (view === "main") {
-    return `${subscription}\n${mainTurnsScript(elementId)}\n${reportRenderersScript(elementId)}`
+    return `${mainTurnsScript(elementId)}\n${reportRenderersScript(elementId)}`
   }
   if (view === "sidebar") {
-    return `${subscription}\n${sessionInfoScript(elementId)}`
+    return sessionInfoScript(elementId)
   }
-  return subscription
+  return ""
 }
 
 /**
@@ -230,7 +249,7 @@ function reportRenderersScript(elementId: string): string {
  *   「1つ前」の指す中身がずれない。選んでいたやり取りが窓から外れたら今回に戻す
  * - **新しいやり取りが始まったら先頭へ戻す**（今回の通し番号が変わったことで判定）。
  *   利用者が過去のタブを見ている間は動かさない（ユーザーの決定 2026-09-10 の論点7）
- * - スクロールする要素の決め方は {@link subscriptionScript} と同じ
+ * - スクロールする要素の決め方は `src/browser/region-subscription.ts` の `scrollerFor` と同じ
  */
 function mainTurnsScript(elementId: string): string {
   return `  {
@@ -305,20 +324,16 @@ export type LayoutBodies = Readonly<Record<ViewName, string>>
  */
 export function buildLayoutPage(bodies: LayoutBodies): string {
   const topRow = `<div class="layout-row layout-row-top" id="${LAYOUT_ROW_TOP_ID}">
-<section class="layout-region layout-main" id="${layoutRegionId("main")}">${bodies.main}</section>
+<section class="layout-region layout-main" id="${layoutRegionId("main")}" data-event-path="${viewEventPath("main")}">${bodies.main}</section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_TOP_ID}" role="separator" aria-orientation="vertical" aria-label="メインビューとサイドバーの境界"></div>
-<section class="layout-region layout-sidebar" id="${layoutRegionId("sidebar")}">${bodies.sidebar}</section>
+<section class="layout-region layout-sidebar" id="${layoutRegionId("sidebar")}" data-event-path="${viewEventPath("sidebar")}">${bodies.sidebar}</section>
 </div>`
 
   const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
-<section class="layout-region layout-character" id="${layoutRegionId("character")}">${bodies.character}</section>
+<section class="layout-region layout-character" id="${layoutRegionId("character")}" data-event-path="${viewEventPath("character")}">${bodies.character}</section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_BOTTOM_ID}" role="separator" aria-orientation="vertical" aria-label="キャラビューと入力欄の境界"></div>
 ${dispatchRegionHtml()}
 </div>`
-
-  const subscriptions = VIEW_NAMES.map((view) =>
-    viewScript(layoutRegionId(view), view, bodies[view]),
-  ).join("\n")
 
   return page(
     "tsukumo",
@@ -328,9 +343,10 @@ ${topRow}
 ${bottomRow}
 </div>
 <button type="button" id="${LAYOUT_RESET_ID}" class="layout-reset">既定の比率に戻す</button>
+<script src="${browserScriptPath()}"></script>
 <script>
 ${layoutScript()}
-${subscriptions}
+${VIEW_NAMES.map((view) => viewScript(layoutRegionId(view), view)).join("\n")}
 ${dispatchScript()}
 </script>`,
   )
@@ -507,60 +523,6 @@ function layoutScript(): string {
         saveSplit(split)
       })
     }
-  }`
-}
-
-/**
- * 1領域ぶんの SSE 購読スクリプト。`buildLayoutPage` が3領域それぞれに対して呼ぶ共通の中身
- * （要素 id は領域ごとに違う）。
- *
- * **本文が前回と同じなら `innerHTML` を差し替えない。** 実機での目視（2026-09-10 報告）で、
- * 更新のたびに画面がチカチカする不具合があった。原因は「押す側（`src/index.ts` の
- * `followTranscript`）が transcript のどんな変化にも反応して3領域まとめて publish する一方、
- * 個々の領域の見た目が実際に変わっている割合はそれよりずっと低い」こと。特にキャラビューは
- * 発話も表情も変わらないまま transcript だけが動く間が長く、そのたびに `.portrait` が
- * 新しい要素として挿入されて CSS のフェードイン（`STYLE` の `portrait-fade-in`）が
- * 再生されていた。**購読を開いた直後の1回目の push**（`view-server.ts` の `openStream` が
- * 接続時点の本文をそのまま返す）も、ページに埋め込み済みの本文と同じなのでここで弾かれる
- * （初回表示の直後にもう1回描き直る、という無駄も無くなる）。
- *
- * サーバ側の協力（変わった部分だけを送る差分化）は行っていない。**クライアント側で
- * このガードを置くだけで、更新の大半（見た目が変わっていない push）が消える**ため
- * （`docs/architecture.md`「ビューの更新は Server-Sent Events で押す」の仕組み自体は変えていない。
- * `publish` 側は毎回まるごとの本文を送ったままでよい）。
- *
- * **差し替えは `innerHTML` の全代入ではなく Idiomorph の morph で行う**（`vendor/README.md`。
- * 2026-09-12）。一致した要素は DOM に残ったまま中身だけが直るので、領域自身は元より
- * 内側にスクロールする要素（サイドバーの `.sidebar-block-scroll` など）の位置・`<details>` の
- * 開閉・フォーカス・入力中の選択範囲がまとめて保たれる。**このため、差し替え前後でスクロール
- * 位置を自前で保存・復元する手当ては不要になった**（morph が保つ）。
- *
- * **ただし「いちばん下から24px以内を見ていたら差し替え後もいちばん下へ追従する」動きだけは
- * 残す。** レポートが伸びていくメインビューで読み続けられるようにするための挙動で、morph は
- * 元のスクロール位置を保つだけなので、追従（新しく増えた分だけ位置を動かす）は再現されない。
- * **スクロールしている要素**は、差し替える要素自身が縦にあふれていれば（まとめたレイアウトの
- * `.layout-region` は `overflow-y: auto`）その要素、そうでなければ `document.scrollingElement` を
- * 使う（領域の中身が高さより短く、あふれていないとき）。
- */
-function subscriptionScript(elementId: string, view: ViewName, initialBody: string): string {
-  return `  {
-    const el = document.getElementById(${JSON.stringify(elementId)})
-    let lastBody = ${JSON.stringify(initialBody)}
-    const source = new EventSource(${JSON.stringify(viewEventPath(view))})
-    source.addEventListener("update", (event) => {
-      if (event.data === lastBody) {
-        return
-      }
-      const scroller =
-        el.scrollHeight > el.clientHeight ? el : (document.scrollingElement ?? document.documentElement)
-      const distanceFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight
-      const wasNearBottom = distanceFromBottom < 24
-      Idiomorph.morph(el, event.data, { morphStyle: "innerHTML" })
-      lastBody = event.data
-      if (wasNearBottom) {
-        scroller.scrollTop = scroller.scrollHeight
-      }
-    })
   }`
 }
 
@@ -2026,7 +1988,7 @@ const STYLE = `
     opacity: 0.5;
     animation: balloon-push-up 0.3s ease-out;
   }
-  /* 差し替えは Idiomorph の morph（subscriptionScript、2026-09-12）。.balloon は id を
+  /* 差し替えは Idiomorph の morph（src/browser/region-subscription.ts、2026-09-12）。.balloon は id を
      持たないので、新しく増えた1件は新規ノードとして挿入されて balloon-appear が頭から再生
      されるが、既存の .balloon はタグが一致する限り同じノードのまま中身だけが更新されうる
      （Idiomorph は要素の挿入で以降のノードが総入れ替えになるのを避ける設計のため）。このため

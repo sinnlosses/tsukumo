@@ -1,6 +1,7 @@
-import { describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import vm from "node:vm"
 
+import { subscribeAllRegions, subscribeRegion } from "../src/browser/region-subscription.ts"
 import { type MainViewEntry } from "../src/session-view.ts"
 import {
   buildCharacterBody,
@@ -84,70 +85,6 @@ const IDLE_TURN_STATUS = encodeTurnStatus({ turnStartedAt: undefined, turnFinish
 // どうか（描画そのもの）はここでは確かめない（docs/coding-standards.md「描画は自動テストで
 // 守らない」）。**本物の Idiomorph は使わず、`morph` を代役に差し替える**（下の
 // `runSubscriptionScript` が vm のグローバルへ渡す）。
-
-/** subscriptionScript が触るプロパティだけを持つ、テスト用の最小限の要素。 */
-type FakeElement = {
-  readonly innerHTML: string
-  scrollTop: number
-  readonly scrollHeight: number
-  readonly clientHeight: number
-  // メインビューのタブ制御（mainTurnsScript）が触る分。ここでは「タブが1つも無い本文」として
-  // 振る舞わせ、スクロール位置の扱いだけをこの代役で確かめる。
-  readonly addEventListener: () => void
-  readonly querySelector: () => null
-  readonly querySelectorAll: () => readonly never[]
-  /**
-   * `Idiomorph.morph` の代役（{@link runSubscriptionScript}）が呼ぶ。**実際の Idiomorph と同じく
-   * `scrollTop` には触れない**（一致した要素が DOM に残ったまま中身だけが直るので、スクロール
-   * 位置は自然に保たれる）。ここでは呼ばれた回数と渡された中身だけを覚える。
-   */
-  readonly morph: (value: string) => void
-}
-
-type FakeElementHandle = {
-  readonly element: FakeElement
-  readonly innerHtmlSetCount: () => number
-}
-
-/**
- * `morph`（{@link FakeElement.morph}）が呼ばれた回数を数えられる要素を作る。**morph は
- * `scrollTop` を変えない**ので、「差し替え後に元のスクロール位置がそのまま保たれているか」を、
- * 値が偶然一致しただけでなくテストで確かめられる（subscriptionScript 側が明示的に
- * いちばん下へ動かさない限り、位置は動かないはず）。
- */
-function makeFakeElement(options: {
-  readonly initialHtml: string
-  readonly scrollTop: number
-  readonly scrollHeight: number
-  readonly clientHeight: number
-}): FakeElementHandle {
-  let html = options.initialHtml
-  let scrollTop = options.scrollTop
-  let setCount = 0
-
-  const element: FakeElement = {
-    get innerHTML(): string {
-      return html
-    },
-    get scrollTop(): number {
-      return scrollTop
-    },
-    set scrollTop(value: number) {
-      scrollTop = value
-    },
-    scrollHeight: options.scrollHeight,
-    clientHeight: options.clientHeight,
-    addEventListener: () => {},
-    querySelector: () => null,
-    querySelectorAll: () => [],
-    morph: (value: string) => {
-      html = value
-      setCount += 1
-    },
-  }
-
-  return { element, innerHtmlSetCount: () => setCount }
-}
 
 /** vm 実行中に見えてよいだけの、何にでも代入・addEventListener できる無害な代役。 */
 type InertStub = { [key: string]: unknown }
@@ -250,48 +187,6 @@ function makeFakeIdiomorph(): {
       target.innerHTML = content
     },
   }
-}
-
-/**
- * ページ全体の HTML から `<script>` の中身を取り出し、渡した要素だけを本物として、
- * それ以外の id は無害な代役（{@link makeInertStub}）で埋めて実行する。まとめたレイアウトの
- * ページには送信フォームの配線（`dispatchScript`）も同じ `<script>` に同居しているため、
- * そちらが参照する要素・`fetch` が無くても（`fetch` は未定義のまま呼ばれて例外になるが、
- * 元の実装が try/catch で握っている）落ちずに済むようにする。
- */
-function runSubscriptionScript(
-  page: string,
-  elements: ReadonlyMap<string, FakeElement>,
-): { readonly dispatch: (url: string, data: string) => void } {
-  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
-  if (scriptMatch === null || scriptMatch[1] === undefined) {
-    throw new Error("ページに <script> が無い")
-  }
-
-  const controller = makeFakeEventSourceController()
-  // 単体ページの <main> のように、要素自身が縦にあふれていないときのスクロール先
-  // （document.scrollingElement の代役）。テスト対象の要素をそのまま使う
-  // （実ページでは文書側だが、テストでは「差し替える要素自身」で代用しても、
-  //  スクロール位置を扱うかどうかの判定には影響しない）。
-  const fallbackScroller = elements.values().next().value ?? {
-    scrollTop: 0,
-    scrollHeight: 0,
-    clientHeight: 0,
-  }
-  const documentStub = {
-    getElementById: (id: string) => elements.get(id) ?? makeInertStub(),
-    scrollingElement: fallbackScroller,
-    documentElement: fallbackScroller,
-  }
-
-  vm.runInNewContext(scriptMatch[1], {
-    document: documentStub,
-    EventSource: controller.EventSourceClass,
-    MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
-    Idiomorph: makeFakeIdiomorph(),
-  })
-
-  return { dispatch: controller.dispatch }
 }
 
 // --- 入力欄（dispatchScript）を実際に動かして確かめるための道具 -------------------------------
@@ -1334,155 +1229,178 @@ function layoutElementId(view: ViewName): string {
 }
 
 describe("SSEの更新の適用（本文が同じなら差し替えない・morph でスクロール位置を保つ）", () => {
-  it("購読スクリプトは Idiomorph.morph で差し替え、innerHTML の全置換は残っていない", () => {
-    const page = singleRegionLayoutPage("main", "<p>さいしょ</p>")
-    const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
-    if (scriptMatch === null || scriptMatch[1] === undefined) {
-      throw new Error("ページに <script> が無い")
-    }
-    const script = scriptMatch[1]
+  // 購読の仕組みは `src/browser/region-subscription.ts`（ブラウザで動く本物の TypeScript）に
+  // あるので、**モジュールを直接呼んで確かめる**（2026-09-12 T-083。以前はページに埋め込まれた
+  // 文字列を vm で動かしていた）。`EventSource` と `window.Idiomorph` はブラウザのグローバルなので、
+  // テストの間だけ代役に差し替える。
+  type FakeSource = {
+    readonly path: string
+    readonly emit: (data: string) => void
+  }
 
-    expect(script).toContain("Idiomorph.morph(")
-    // 領域の購読（subscriptionScript）だけを見る。まとめたレイアウトページの <script> には
-    // 答え待ちの箱の配線（pendingAnswerScript）も同居しており、そちらは小さな断片を直接
-    // innerHTML へ入れる設計のまま（morph の対象ではない）なので、変数名 `el`（購読側が使う名前）
-    // に絞って確かめる。
-    expect(script).not.toMatch(/\bel\.innerHTML\s*=\s*event\.data/)
+  let sources: FakeSource[] = []
+  let morphCalls: Array<{ readonly target: unknown; readonly html: string }> = []
+  let originalEventSource: unknown
+  let originalIdiomorph: unknown
+  let originalDocument: unknown
+
+  beforeEach(() => {
+    sources = []
+    morphCalls = []
+    originalEventSource = (globalThis as Record<string, unknown>)["EventSource"]
+    originalIdiomorph = (globalThis as Record<string, unknown>)["window"]
+    originalDocument = (globalThis as Record<string, unknown>)["document"]
+
+    class StubEventSource {
+      private readonly listeners = new Set<(event: { data: string }) => void>()
+      constructor(readonly url: string) {
+        sources.push({
+          path: url,
+          emit: (data) => {
+            for (const listener of this.listeners) {
+              listener({ data })
+            }
+          },
+        })
+      }
+      addEventListener(_type: string, listener: (event: { data: string }) => void): void {
+        this.listeners.add(listener)
+      }
+    }
+
+    ;(globalThis as Record<string, unknown>)["EventSource"] = StubEventSource
+    // `document` はテスト環境（Bun）に無いので代役を置く。`scrollerFor` が
+    // 領域が縦にあふれていないときの逃げ先として触る。
+    ;(globalThis as Record<string, unknown>)["document"] = {
+      querySelectorAll: () => [],
+      scrollingElement: { scrollHeight: 0, clientHeight: 0, scrollTop: 0 },
+      documentElement: { scrollHeight: 0, clientHeight: 0, scrollTop: 0 },
+    }
+    ;(globalThis as Record<string, unknown>)["window"] = {
+      Idiomorph: {
+        morph: (target: unknown, html: string) => {
+          morphCalls.push({ target, html })
+        },
+      },
+    }
+  })
+
+  afterEach(() => {
+    ;(globalThis as Record<string, unknown>)["EventSource"] = originalEventSource
+    ;(globalThis as Record<string, unknown>)["window"] = originalIdiomorph
+    ;(globalThis as Record<string, unknown>)["document"] = originalDocument
+  })
+
+  /** 購読対象の要素の代役。スクロールの寸法と innerHTML だけを持つ。 */
+  function fakeRegion(options: {
+    readonly innerHTML: string
+    readonly scrollHeight?: number
+    readonly clientHeight?: number
+    readonly scrollTop?: number
+  }): Element & { scrollTop: number } {
+    return {
+      innerHTML: options.innerHTML,
+      scrollHeight: options.scrollHeight ?? 100,
+      clientHeight: options.clientHeight ?? 100,
+      scrollTop: options.scrollTop ?? 0,
+    } as unknown as Element & { scrollTop: number }
+  }
+
+  it("ページは購読を埋め込まず、外に出したスクリプトを読む（/assets/browser.js）", () => {
+    const page = singleRegionLayoutPage("main", "<p>さいしょ</p>")
+
+    expect(page).toContain('<script src="/assets/browser.js"></script>')
+    expect(page).not.toContain('new EventSource("/events/main")')
   })
 
   it("ページが Idiomorph 本体（/vendor/idiomorph.min.js）を読み込む", () => {
     const page = singleRegionLayoutPage("main", "<p>さいしょ</p>")
 
-    expect(page).toContain('src="/vendor/idiomorph.min.js"')
+    expect(page).toContain('<script src="/vendor/idiomorph.min.js"></script>')
   })
 
-  it("購読直後の1回目の push が、埋め込み済みの本文と同じときは差し替えない", () => {
-    const initialBody = "<p>さいしょ</p>"
-    const page = singleRegionLayoutPage("character", initialBody)
-    const { element, innerHtmlSetCount } = makeFakeElement({
-      initialHtml: initialBody,
-      scrollTop: 0,
-      scrollHeight: 100,
-      clientHeight: 100,
-    })
+  it("領域は data-event-path で購読先を示す（ブラウザ側はこれを見て回る）", () => {
+    const page = buildLayoutPage({ main: "m", character: "c", sidebar: "s" })
 
-    const { dispatch } = runSubscriptionScript(
-      page,
-      new Map([[layoutElementId("character"), element]]),
-    )
-    dispatch(viewEventPath("character"), initialBody)
+    for (const view of VIEW_NAMES) {
+      expect(page).toContain(`data-event-path="/events/${view}"`)
+    }
+  })
 
-    expect(innerHtmlSetCount()).toBe(0)
+  it("data-event-path を持つ要素を見つけたぶんだけ購読する", () => {
+    const regions = [
+      { ...fakeRegion({ innerHTML: "<p>m</p>" }), getAttribute: () => "/events/main" },
+      { ...fakeRegion({ innerHTML: "<p>s</p>" }), getAttribute: () => "/events/sidebar" },
+      // 属性が空の要素は購読しない（`data-event-path` が付いていない領域の代わり）。
+      { ...fakeRegion({ innerHTML: "" }), getAttribute: () => "" },
+    ]
+    ;(globalThis as Record<string, unknown>)["document"] = {
+      querySelectorAll: () => regions,
+      scrollingElement: { scrollHeight: 0, clientHeight: 0, scrollTop: 0 },
+      documentElement: { scrollHeight: 0, clientHeight: 0, scrollTop: 0 },
+    }
+
+    subscribeAllRegions()
+
+    expect(sources.map((s) => s.path)).toEqual(["/events/main", "/events/sidebar"])
+  })
+
+  it("購読直後の1回目の push が、いま出ている本文と同じときは差し替えない", () => {
+    const region = fakeRegion({ innerHTML: "<p>さいしょ</p>" })
+    subscribeRegion(region, "/events/main")
+
+    sources[0]?.emit("<p>さいしょ</p>")
+
+    expect(morphCalls).toEqual([])
   })
 
   it("本文が前回と同じ update イベントが続いても、差し替えは起きない", () => {
-    const initialBody = "<p>さいしょ</p>"
-    const page = singleRegionLayoutPage("main", initialBody)
-    const { element, innerHtmlSetCount } = makeFakeElement({
-      initialHtml: initialBody,
-      scrollTop: 0,
-      scrollHeight: 100,
-      clientHeight: 100,
-    })
+    const region = fakeRegion({ innerHTML: "<p>さいしょ</p>" })
+    subscribeRegion(region, "/events/main")
 
-    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
-    dispatch(viewEventPath("main"), initialBody)
-    dispatch(viewEventPath("main"), initialBody)
-    dispatch(viewEventPath("main"), initialBody)
+    sources[0]?.emit("<p>つぎ</p>")
+    sources[0]?.emit("<p>つぎ</p>")
 
-    expect(innerHtmlSetCount()).toBe(0)
+    expect(morphCalls.length).toBe(1)
   })
 
   it("本文が変わった update イベントでは morph で差し替える", () => {
-    const initialBody = "<p>さいしょ</p>"
-    const page = singleRegionLayoutPage("main", initialBody)
-    const { element, innerHtmlSetCount } = makeFakeElement({
-      initialHtml: initialBody,
-      scrollTop: 0,
-      scrollHeight: 100,
-      clientHeight: 100,
-    })
+    const region = fakeRegion({ innerHTML: "<p>さいしょ</p>" })
+    subscribeRegion(region, "/events/main")
 
-    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
-    dispatch(viewEventPath("main"), "<p>つぎ</p>")
+    sources[0]?.emit("<p>つぎ</p>")
 
-    expect(innerHtmlSetCount()).toBe(1)
-    expect(element.innerHTML).toBe("<p>つぎ</p>")
+    expect(morphCalls.length).toBe(1)
+    expect(morphCalls[0]?.html).toBe("<p>つぎ</p>")
+    expect(morphCalls[0]?.target).toBe(region)
   })
 
   it("差し替え前にいちばん下から24px以内を見ていたときは、差し替え後もいちばん下へ追従する", () => {
-    const initialBody = "<p>さいしょ</p>"
-    const page = singleRegionLayoutPage("main", initialBody)
-    const { element } = makeFakeElement({
-      initialHtml: initialBody,
-      scrollTop: 980, // 1000 - 980 - 100 = -80 < 24 → いちばん下の近く
+    const region = fakeRegion({
+      innerHTML: "<p>さいしょ</p>",
       scrollHeight: 1000,
-      clientHeight: 100,
+      clientHeight: 200,
+      scrollTop: 790,
     })
+    subscribeRegion(region, "/events/main")
 
-    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
-    dispatch(viewEventPath("main"), "<p>つぎ</p>")
+    sources[0]?.emit("<p>つぎ</p>")
 
-    expect(element.scrollTop).toBe(1000)
+    expect(region.scrollTop).toBe(1000)
   })
 
   it("差し替え前にいちばん下から離れていたときは、差し替え後も元のスクロール位置を保つ", () => {
-    const initialBody = "<p>さいしょ</p>"
-    const page = singleRegionLayoutPage("main", initialBody)
-    const { element } = makeFakeElement({
-      initialHtml: initialBody,
-      scrollTop: 100, // 1000 - 100 - 100 = 800 ≥ 24 → 離れている
+    const region = fakeRegion({
+      innerHTML: "<p>さいしょ</p>",
       scrollHeight: 1000,
-      clientHeight: 100,
+      clientHeight: 200,
+      scrollTop: 100,
     })
+    subscribeRegion(region, "/events/main")
 
-    const { dispatch } = runSubscriptionScript(page, new Map([[layoutElementId("main"), element]]))
-    dispatch(viewEventPath("main"), "<p>つぎ</p>")
+    sources[0]?.emit("<p>つぎ</p>")
 
-    // morph 自体は scrollTop に触れない（makeFakeElement の想定）。ここで確かめるのは、
-    // いちばん下から離れているときに「追従していちばん下へ動かす」処理が実行されず、
-    // 元の位置がそのまま保たれること。
-    expect(element.scrollTop).toBe(100)
-  })
-
-  it("まとめたレイアウトページでは、領域ごとに独立して差し替えの要否とスクロール位置を扱う", () => {
-    const bodies = {
-      main: "<p>main1</p>",
-      character: "<p>char1</p>",
-      sidebar: "<p>side1</p>",
-    }
-    const page = buildLayoutPage(bodies)
-
-    const main = makeFakeElement({
-      initialHtml: bodies.main,
-      scrollTop: 0,
-      scrollHeight: 1000,
-      clientHeight: 100,
-    })
-    const character = makeFakeElement({
-      initialHtml: bodies.character,
-      scrollTop: 0,
-      scrollHeight: 1000,
-      clientHeight: 100,
-    })
-
-    const { dispatch } = runSubscriptionScript(
-      page,
-      new Map([
-        ["tsukumo-view-main", main.element],
-        ["tsukumo-view-character", character.element],
-      ]),
-    )
-
-    // main と同じ本文の push は main 領域を差し替えない。
-    dispatch(viewEventPath("main"), bodies.main)
-    expect(main.innerHtmlSetCount()).toBe(0)
-
-    // character だけ違う本文が届いても、main 領域には影響しない。
-    dispatch(viewEventPath("character"), "<p>char2</p>")
-    expect(character.innerHtmlSetCount()).toBe(1)
-    expect(character.element.innerHTML).toBe("<p>char2</p>")
-    expect(main.innerHtmlSetCount()).toBe(0)
+    expect(region.scrollTop).toBe(100)
   })
 })
 
@@ -1527,22 +1445,23 @@ describe("まとめたレイアウトページ", () => {
     })
 
     expect(page).toContain(
-      '<section class="layout-region layout-main" id="tsukumo-view-main"><p>作業ちゅう</p></section>',
+      '<section class="layout-region layout-main" id="tsukumo-view-main" data-event-path="/events/main"><p>作業ちゅう</p></section>',
     )
     expect(page).toContain(
-      '<section class="layout-region layout-character" id="tsukumo-view-character"><p>やあ</p></section>',
+      '<section class="layout-region layout-character" id="tsukumo-view-character" data-event-path="/events/character"><p>やあ</p></section>',
     )
     expect(page).toContain(
-      '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"><p>done 1 / todo 2</p></section>',
+      '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar" data-event-path="/events/sidebar"><p>done 1 / todo 2</p></section>',
     )
   })
 
-  it("3領域それぞれが、既存の /events/<view> を個別に購読して自分の要素だけを差し替える", () => {
+  it("3領域それぞれが、自分の要素に /events/<view> を示して個別に購読される", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
+    // 購読そのものは外に出したスクリプト（`src/browser/region-subscription.ts`）が、この属性を
+    // 見て回る（2026-09-12 T-083）。ページが持つのは「どの要素がどの経路か」だけ。
     for (const view of VIEW_NAMES) {
-      expect(page).toContain(`new EventSource(${JSON.stringify(viewEventPath(view))})`)
-      expect(page).toContain(`document.getElementById("tsukumo-view-${view}")`)
+      expect(page).toContain(`id="tsukumo-view-${view}" data-event-path="${viewEventPath(view)}"`)
     }
   })
 
