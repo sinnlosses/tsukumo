@@ -2730,13 +2730,22 @@ describe("サイドバーの本文", () => {
     expect(body).toContain("いま動いているツールは無い")
   })
 
-  it("空のときも並びを包む要素（.activity-scroll）が出る", () => {
+  it("空のときも並びを包む要素（.sidebar-block-scroll）が出る", () => {
     const body = buildSidebarBody({
       ...FULL_SIDEBAR_DATA,
       activity: { running: [], finished: [] },
     })
 
-    expect(body).toContain('<div class="activity-scroll"><p class="sidebar-empty">')
+    expect(body).toContain('<div class="sidebar-block-scroll"><p class="sidebar-empty">')
+  })
+
+  it("3区画それぞれに、高さの配分を決める区画別のクラスと内側スクロールの枠が付く", () => {
+    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
+
+    expect(body).toContain('<section class="sidebar-block sidebar-block-activity">')
+    expect(body).toContain('<section class="sidebar-block sidebar-block-tasks">')
+    expect(body).toContain('<section class="sidebar-block sidebar-block-session">')
+    expect(body.match(/<div class="sidebar-block-scroll">/g)).toHaveLength(3)
   })
 
   it("タスク一覧は id・summary・status をファイルの順で出し、done は薄く出す", () => {

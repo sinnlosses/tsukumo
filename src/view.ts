@@ -1759,9 +1759,9 @@ export type SidebarData = {
  */
 export function buildSidebarBody(data: SidebarData): string {
   return [
-    sidebarSection("いま何をしているか", activityBody(data.activity)),
-    sidebarSection(taskListTitle(data.tasks), taskListBody(data.tasks)),
-    sidebarSection("セッション情報", sessionInfoBody(data.session)),
+    sidebarSection("いま何をしているか", activityBody(data.activity), "sidebar-block-activity"),
+    sidebarSection(taskListTitle(data.tasks), taskListBody(data.tasks), "sidebar-block-tasks"),
+    sidebarSection("セッション情報", sessionInfoBody(data.session), "sidebar-block-session"),
   ].join("\n")
 }
 
@@ -2089,7 +2089,13 @@ const STYLE = `
     border-radius: 0.25rem;
     font-family: ui-monospace, SFMono-Regular, monospace;
   }
+  /* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて
+     内側でスクロールする）の縦積みにする。区画自身は伸縮できないと内側の overflow-y: auto が
+     効かないので min-height: 0 が要る。 */
   .sidebar-block {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     margin: 0 0 1rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid #3a4256;
@@ -2097,17 +2103,24 @@ const STYLE = `
   }
   .sidebar-block:last-child { border-bottom: none; }
   .sidebar-block h2 {
+    flex: 0 0 auto;
     margin: 0 0 0.4rem;
     font-size: 0.8rem;
     font-weight: 600;
     color: #8f97ab;
   }
   .sidebar-block p { margin: 0.2rem 0; }
+  /* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み、単体ページ
+     /sidebar）では flex-grow は働かず、中身なりの高さに広がるだけになる（中で無理に
+     スクロールさせない）。 */
+  .sidebar-block-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+  /* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。
+     「セッション情報」は3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの
+     高さで止める（等分すると中身が短いぶんだけ下に空白が間延びするため）。 */
+  .sidebar-block-activity, .sidebar-block-tasks { flex: 1 1 0; }
+  .sidebar-block-session { flex: 0 1 auto; }
   .sidebar-empty { color: #8f97ab; }
   .sidebar-list { margin: 0.2rem 0 0; padding-left: 1.2rem; }
-  /* 8行ぶんの目安（.sidebar-block の font-size: 0.85rem 基準）。ツールの数で高さが変わらないよう
-     固定し、はみ出す分は中でスクロールする。 */
-  .activity-scroll { height: 10rem; overflow-y: auto; }
   .activity-item.activity-finished { color: #8f97ab; }
   .activity-item.activity-nested { margin-left: 1rem; list-style-type: circle; }
   .task-list { list-style: none; padding-left: 0; }
@@ -2166,6 +2179,17 @@ const STYLE = `
     border-radius: 0.75rem;
     background: #1c202a;
     overflow-y: auto;
+  }
+  /* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、
+     3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」
+     「セッション情報」の見出しが画面の外に流れないようにするため）。狭い画面
+     （@media (max-width: 760px)）では .layout-grid の行が高さ auto になり、この領域にも
+     定まった高さが無くなるので、flex-grow は働かず中身なりの高さに自然に伸びる
+     （メインビュー・キャラビューの overflow-y: auto はここでは変えない）。 */
+  .layout-sidebar {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
   }
   /* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。 */
   .layout-resizer {
@@ -2866,10 +2890,15 @@ function renderPlainInline(rawText: string): string {
   return withCode.replace(/\*\*([^*]+)\*\*/g, (_match, text: string) => `<strong>${text}</strong>`)
 }
 
-function sidebarSection(title: string, body: string): string {
-  return `<section class="sidebar-block">
+/**
+ * サイドバーの区画1つぶんの HTML。見出し `h2` は区画の中で固定し、`body` だけを
+ * `.sidebar-block-scroll` で包んで内側にスクロールさせる（3区画それぞれの内側スクロールは
+ * ここで共通に持たせ、高さの配分は `extraClass` ごとの `flex` 値（CSS 側）で決める）。
+ */
+function sidebarSection(title: string, body: string, extraClass: string): string {
+  return `<section class="sidebar-block ${extraClass}">
 <h2>${escapeHtml(title)}</h2>
-${body}
+<div class="sidebar-block-scroll">${body}</div>
 </section>`
 }
 
@@ -2877,20 +2906,19 @@ ${body}
  * サイドバーの「いま何をしているか」の本文。**実行中が先（普通の色）、直近の完了がその下
  * （薄い色）**（`docs/requirements.md` 4.2 の決定）。両方空のときだけ空であることを出す。
  *
- * **並びは固定の高さの `.activity-scroll` で包み、中身の多寡にかかわらず区画の高さを変えない**
- * （下のタスク一覧・セッション情報が押し下げられないようにするため）。空のときも同じ要素で
- * 包み、見出しの位置を状態で動かさない。
+ * 区画の高さは `.sidebar-block-activity` に与えた `flex` 値（CSS 側）で決まり、中身の多寡では
+ * 変わらない。
  */
 function activityBody(activity: SidebarData["activity"]): string {
   if (activity.running.length === 0 && activity.finished.length === 0) {
-    return `<div class="activity-scroll"><p class="sidebar-empty">いま動いているツールは無い</p></div>`
+    return `<p class="sidebar-empty">いま動いているツールは無い</p>`
   }
 
   const items = [
     ...activity.running.map((item) => activityItemHtml(item, false)),
     ...activity.finished.map((item) => activityItemHtml(item, true)),
   ].join("\n")
-  return `<div class="activity-scroll"><ul class="sidebar-list activity-list">${items}</ul></div>`
+  return `<ul class="sidebar-list activity-list">${items}</ul>`
 }
 
 /**
