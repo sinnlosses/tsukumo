@@ -3675,3 +3675,85 @@ overflow-y: auto }`（`src/view.ts` 2116行目付近）と `.sidebar-block-sessi
 - 会話の中身をログ・`evidence`・テストのフィクスチャに写さない（`docs/coding-standards.md`
   「会話内容の扱い」）
 - `/loop` に載せてよい
+
+## T-069 HTML の描画に特定の技術（ライブラリ・フレームワーク）を入れるべきかを、現状と理想を分析して決める。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  結論: **フレームワークは入れない**。層1=Idiomorph 0.8.0 を同梱して `innerHTML` を morph に、層2=ブラウザ側 JS 812行を `.ts` へ出して `bun build`、層3=**自前の `renderMarkdownToHtml` を保つ**、層4=CSS を `.css` に割って同じ工程でまとめる。比較は `docs/research/view-rendering.md`（4層 + 「サーバが HTML を作る」系の一族 htmx / Datastar / Turbo / Next.js、各行に出典 URL）、決定は `docs/architecture.md`「描画にフレームワークを入れず、morph とビルド1段で足りないところを埋める」（節数 25→26、索引は無傷）。
+  ユーザーに確認した不足は (a) DOM の状態が飛ぶ (b) ブラウザ側 JS が野放し (c) CSS が巨大な1定数 の3つで、**Markdown の記法とレポートの表現力は不足に挙がらなかった**。ビルド工程の追加は許容を得た。依存の追加（Idiomorph 0.8.0 / 取得元 jsdelivr（cdnjs には無い）/ 0BSD / min+gzip 3.7KB。非圧縮は未実測）は選択肢の説明にこの4点を明示したうえで承認を得た。
+  後続への影響: **T-070** は Idiomorph で直る（本文を差し替えるか同梱作業に統合する）。**T-063** は「自前で足す」で確定（ライブラリ置き換えの分岐は消えた）。**T-062** は縛らない（表現力は不足に挙がらなかったので優先度は下がるが、判断は T-062 が持つ）。実装3件は `develop/direction.md` に書き出した。
+
+## T-070 Idiomorph を同梱して SSE の差し替えを morph にし、再描画でスクロール位置が飛ぶのを直す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: T-069
+- **evidence**:
+
+  `bun run check` 357→359 pass / 0 fail（+2）。`vendor/idiomorph.min.js` 10587 バイト（0.8.0 / 0BSD / jsdelivr）。中身は素の IIFE（`var Idiomorph=function(){...}()`）なのでグローバルで読み、highlight.js と同じ「常に読む」扱いにした。`subscriptionScript` は `Idiomorph.morph(el, event.data, { morphStyle: "innerHTML" })` に。**外したのは差し替え前後の scrollTop の保存・復元だけ**で、「いちばん下から24px以内なら追従」と「本文が同じなら差し替えない」ガードは残した。
+  目視は合成データの使い捨てサーバ（7401。claude は起こしていない）を立て、**Chrome DevTools Protocol で機械的に確認**: `.sidebar-block-tasks .sidebar-block-scroll` を scrollTop=150 にし、SSE の更新を3回またいでも **150 のまま**（同時に `.activity-running` の中身は Running-10→27 に変わっており、差し替え自体は起きている）。入力欄のフォーカスと打ちかけの文字も保たれた。スクリーンショットでも一覧が先頭に戻っていないことを確認（1440x900、104回更新後）。
+  **実機（Orca のタブ）での目視は未実施**。なお確認中に 7327 の常駐 tsukumo が動いていないことに気づいた（`lsof -iTCP:7327` も `pgrep -f claude-agent-sdk` も空。いつ止まったかは不明）。
+
+## T-071 キャラビューの吹き出しが使える高さを取り戻す（T-066 の縦2段の見直し）。
+
+- **difficulty**: `opus` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  キャラビューを作り直した（src/view.ts）: .balloon-anchor / .balloon-spacer を廃して .character-layout を立ち絵＋.balloon-track の2つに単純化。立ち絵は height: 100%（max-width 45%）、並びは下端揃え・高さ全開（max-height: 100%）、吹き出しは幅が中身なりで、最新（DOM 先頭）だけ 1.05rem・青枠・尻尾、過去は 0.85rem・opacity .5。狭い画面（760px 以下）の上書きも更新。
+  docs/requirements.md 4.2 と docs/glossary.md「吹き出し」を新しい決定に差し替え（節数 25→25 / 36→36）。bun run check: 353 pass / 0 fail（件数は同じ。構造テスト1件を anchor/spacer から新構造に書き換え）。
+  目視（合成データのみ。Chrome headless 1512x900 と 700x1000。セリフの中身は合成）: 5件すべてが領域に入り（従来は3件で頭が切れていた）、最新が一目で分かる。立ち絵は幅 110px→170px。長いセリフ2件でも最新は全文見え、立ち絵なし・狭い幅の縦積みでも破綻なし。ユーザー向けに 127.0.0.1:7411 の一時ページを Orca のタブで提示。
+  追い直し（2026-09-12 ユーザーの指摘「まだ吹き出しがダメ」）: 並びを column-reverse にして最新を下端・過去を上へ押し上げる形に変更（align-self: flex-end / align-items: flex-start）。アニメーションも balloon-push-down → balloon-push-up。立ち絵は --portrait-drop: 0.75rem ぶん下へずらし、はみ出した足元は .character-layout の overflow: hidden で切る。bun run check: 353 pass / 0 fail。目視（合成データ・Chrome headless 1440x900、セリフは合成）: セリフ0件のプレースホルダが立ち絵の隣・下端に出て尻尾が左下から立ち絵へ向く、6件では最新が下端で強調され過去5件が上へ積まれて最古が並びの外へ流れる、立ち絵は枠の下端に接する。
+
+## T-072 入力欄のキー割り当てを「Enter で改行、Command+Enter で送信」に入れ替える。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `bun run check` 353→357 pass / 0 fail（+4）。`src/view.ts`: keydown を `key !== "Enter" || composing || !metaKey` に変え、補完候補が開いている間の Enter から `requestSubmit()` を外し（Tab と同じ確定だけ）、送信ボタンに `data-shortcut="⌘⏎"`（初期 HTML にも入れ、`applyButtonLabel` が中断時に外す）と `.dispatch-send[data-shortcut]::after` を足し、placeholder を差し替えた。`docs/requirements.md` 4.2 の入力欄を差し替え（節数 25→25）。
+  目視は合成データの静的ページで実施（Chrome headless 1440x900）: 送信ボタンに「送信 ⌘⏎」が弱い色で出ること、placeholder が「Enter で改行、Command+Enter で送信」になっていることを確認。
+  **実機の目視は未実施**（Enter で改行が入る・Command+Enter で送信・進行中に記号が消える、の3点はOrca のタブで要確認。記号が消えることはテストで検証済み）。
+
+## T-073 キャラクターからの質問に、選択肢とは別の自由入力欄を常に出す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `bun run check` 359→362 pass / 0 fail（+3）。`questionCardHtml` が、選択肢に `その他` が無いときだけ末尾に自由入力の行を足す（`freeTextOptionHtml` に切り出して二重定義を解消）。`docs/requirements.md` 4.2 に決定を1行追記（節数 25→25）。
+  呼び出し側でも合成データで実測: `question-other-input` の数は その他なし=1 / その他あり=1 / その他あり(multiSelect)=1 / 質問2件=2 / 選択肢0件=1 / 許可要求=0。サブエージェント側は使い捨てサーバ（7404）と CDP でも確認し、`.question-other-input` に入力して「答える」を押すと `{"kind":"answers","labels":["選択肢X、合成自由入力テキスト"]}` が届いた。
+  **multiSelect は既存の配線に従い、選んだラベルと自由入力を「、」で1つの文字列に結合する**（`pendingAnswerScript` の `answerFor` を変更していない）。
+
+## T-074 メインビューのやり取りの見出しに、複数行の依頼を1行だけでなく全部出す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `bun run check` 362→364 pass / 0 fail（+2。旧「見出しは1行に収める」1件を新方針の3件に置き換えた）。**1行の依頼は `<h2 class="turn-request">`、複数行は `<details class="turn-request" open>`**（`<summary>` に1行目、中の `<div>` に2行目以降で重複させない）。全文は 2000 文字で切り、`max-height: 40vh` + `overflow-y: auto` で画面をその1件で埋めない。
+  **サブエージェントの実装は既定で畳んだ `<details>` だったので受け入れ時に直した**（クリックが1手増えるだけで「1行しか出ない」という元の指摘が残るため）。あわせて、タブのラベルが依頼の文面を使っている前提のコメントとテスト名も直した（`turnTabHtml` が出すのは「今回」「1つ前」で、未使用になった `truncateRequest` と `MAX_REQUEST_HEADING_LENGTH` は消した）。
+  確認は合成データで実測: 1行→`<h2>`、3行→`<details ... open>` で1行目の出現は1回のみ、3000文字→2031文字に切られ末尾「…」。CDP でも既定 `open: true` / `clientHeight: 81` / 2行目以降が `offsetHeight > 0` で見えていることを確認。
+
+## T-075 経過時間の表示を、サイドバーから入力欄の送信ボタンの行へ移す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `bun run check` 364→367 pass / 0 fail（+3）。経過時間を `.dispatch-row`（送信ボタンと同じ行）へ移し、サイドバーの `.session-elapsed-row` は削除。**経路は `TURN_STATUS_EVENT_PATH` に相乗り**（`turnInProgress` が変わる瞬間と起点・終点が確定する瞬間が一致し、接続直後に現在値を1回 push する実装なので再読み込みも賄える）。ペイロードは真偽値をやめて `{turnStartedAt, turnFinishedAt}` の JSON にし、「進行中か」はブラウザ側で導出（`TurnStatus` / `encodeTurnStatus`）。書式とラベルの出し分けは T-055 のまま。
+  呼び出し側でも実測: `.dispatch-row` に送信ボタンと経過時間の両方が入り、`buildSidebarBody` の出力に `elapsed` が含まれないことを確認。CDP（7408 / 9225）で 進行中「経過 5秒」＋ボタン「中断」→ 終了後「所要 3秒」＋ボタン「送信」→ 2秒待っても「3秒」のまま（`turnFinishedAt - turnStartedAt` = 3000ms と一致）。
+  `docs/requirements.md` 4.2 の記述をサイドバーから入力欄へ移した（節数 25→25）。**ついでに `PublishState` ラッパー型を廃した**（サイドバー向け `publish` がこの2値を運ばなくなったため）。
+
+## T-079 段落・表のセル・箇条書きの中に書いた HTML（`<span class="badge">` など）が、
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: T-069
+- **evidence**:
+
+  `bun run check` 367→372 pass / 0 fail（+5）。`renderPlainInline` が `escapeHtml` の代わりに `sanitizeReportHtml` を呼ぶ形にし、**サニタイズは `src/report-html.ts` の1箇所のまま**。コードスパンは新設の `splitOnCodeSpans` で先に切り出して `escapeHtml` だけを通し、HTML として解釈しない。処理順は リンク→コードスパン→サニタイズ→`**太字**`。
+  呼び出し側で攻撃的に実測（合成データ14ケース）: 段落・表のセル・箇条書きのバッジは実タグで出る。`<script>` は中身ごと、`<img src=x onerror=...>` と `<iframe>` は丸ごと落ちる。`onclick` / `style` 属性は剥がれ、`<a href="javascript:...">` は href だけ落ちて `<a>` になる（通常の https リンクは `rel="noopener noreferrer"` 付きで通る）。コードスパンの中の `<span>` は文字のまま、生の `<` `>` はエスケープされる。**属性値の中の `**`は太字化されない**ことも確認。
+サブエージェント側は CDP でも`.badge-ok`の実際の色が`rgb(126, 224, 129)`（CSS の `#7ee081`）であることを確認済み。`docs/requirements.md` 4.2 を実態に合わせた（節数 25→25）。
+
+## T-082 個別ビューのページ（`/main` `/character` `/sidebar`）と `/` のリンク一覧を消し、
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `bun run check` 359 pass / 0 fail（前後で同数。`it()` の数も view.test.ts 164→164、view-server.test.ts 36→36 で、削除ではなく `buildLayoutPage` ベースへの書き換えになっている）。消したのは `viewPath` / `buildViewPage` / `buildIndexPage` / `VIEW_TITLE` / `STANDALONE_VIEW_ELEMENT_ID` / `ViewServer.urlOf` / 起動ログの3行。`LAYOUT_PATH` は `"/"` に。
+  経路を呼び出し側でも実測（`startViewServer` を直接起こした使い捨てスクリプト、7403。claude は起こしていない）: `/` → 200 で3領域の本文をすべて含む、`/layout` `/main` `/character` `/sidebar` → すべて 404、`/events/{main,character,sidebar}` → 200 `text/event-stream`（SSE は無傷）。
+  `docs/architecture.md` 節数 26→26、`docs/requirements.md` 25→25。**実機（Orca のタブ）での目視は未実施**。**開きっぱなしの `/layout` のタブはリンクが切れるので開き直しが要る。**
