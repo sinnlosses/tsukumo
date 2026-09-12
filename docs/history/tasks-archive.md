@@ -3757,3 +3757,70 @@ overflow-y: auto }`（`src/view.ts` 2116行目付近）と `.sidebar-block-sessi
   `bun run check` 359 pass / 0 fail（前後で同数。`it()` の数も view.test.ts 164→164、view-server.test.ts 36→36 で、削除ではなく `buildLayoutPage` ベースへの書き換えになっている）。消したのは `viewPath` / `buildViewPage` / `buildIndexPage` / `VIEW_TITLE` / `STANDALONE_VIEW_ELEMENT_ID` / `ViewServer.urlOf` / 起動ログの3行。`LAYOUT_PATH` は `"/"` に。
   経路を呼び出し側でも実測（`startViewServer` を直接起こした使い捨てスクリプト、7403。claude は起こしていない）: `/` → 200 で3領域の本文をすべて含む、`/layout` `/main` `/character` `/sidebar` → すべて 404、`/events/{main,character,sidebar}` → 200 `text/event-stream`（SSE は無傷）。
   `docs/architecture.md` 節数 26→26、`docs/requirements.md` 25→25。**実機（Orca のタブ）での目視は未実施**。**開きっぱなしの `/layout` のタブはリンクが切れるので開き直しが要る。**
+
+## T-058 TUI のプロジェクトで HTML を出さない切り替え方を決める
+
+- **difficulty**: `opus` / **loopable**: `?` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  3方式を4軸で比較し、(c)「tsukumo が systemPrompt の append で HTML 規約を足す」に決定（ユーザー選択）。docs/requirements.md 4.2 に #### レポートの記法は、TUI と tsukumo で出し分ける を追加。`grep -c '^#\{2,3\} ' docs/requirements.md` は編集の前後とも 25。
+  実測（SDK v0.3.268 / haiku / 素の query）: append と出力スタイルは同時に効く（init の output_style は "Asuna" のまま、応答に人格と append のマーカーが両方出た。append 無しではマーカー無し）。applyFlagSettings({outputStyle:"Explanatory"}) もセッション限りで効き、settings.json は不変。
+  ユーザー承認: 書き換えは ~/.claude/output-styles/asuna.md のみ（settings.json は触らない）。TUI 側は HTML・mermaid・chart を外し、引用 `> `・ネストしたリスト・水平線 `---` を解禁する。実装は T-059。bun run check は 374 pass / 0 fail。
+
+## T-059 決めた方式で TUI 向けの HTML なし出力を実装する
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: T-058
+- **evidence**:
+
+  方式(c)を実装。src/report-notation.ts に REPORT_NOTATION_PROMPT（HTML・mermaid・chart の記法と、引用/ネスト/水平線が描けないこと）を置き、src/session-driver.ts の query() に systemPrompt: { type: "preset", preset: "claude_code", append } で渡した。~/.claude/output-styles/asuna.md は「レポートの組み立て方」だけを TUI 向けに差し替え（HTML 4行と mermaid/chart の2行を削除、引用 `> ` と水平線 `---` の2行を追加、ネスト1段の制限を解除）。バックアップ ~/.claude/asuna.md.bak-20260912。grep -c '^#\{2,3\} ' は編集の前後とも 11。~/.claude/settings.json は未変更（hooks 12キーと statusLine はそのまま）。テストは test/report-notation.test.ts を新規3件（規約が名乗る要素を sanitizeReportHtml が通すか、名乗る class が buildLayoutPage の CSS にあるか、上書きの明示があるか）。bun run check は 377 pass / 0 fail。TUI 側の目視: day-snap で素の claude に表・箇条書き・注意の強調を含む依頼を1つ送り、<div/<span/<details/<blockquote/<hr が0件、mermaid/chart のフェンスも0件、代わりに引用が5行出た。tsukumo 側の目視: TSUKUMO_VIEW_PORT=7431 で起こして同種の依頼を1つ送り、ユーザーが Orca のタブで「枠・ラベル・横並びとして描かれている（タグが文字として出ていない）」ことを確認。配信されたバイト列にも class="note" / note-warn / badge badge-ok|warn|ng / cols / card が生の HTML で出ており、エスケープされていたのは <code> の中の説明用だけだった。7431 番は確認後に停止し、7327 番は触っていない。
+
+## T-080 ドメイン駆動で作り直すかを規約ごと見直して決める
+
+- **difficulty**: `opus` / **loopable**: `N` / **passes**: `true` / **dependencies**: T-069
+- **evidence**:
+
+  結論: **層をディレクトリで表し、依存の向きをテストで縛る**（ユーザー選択）。ユーザーに聞いた困りごとは「読みにくい・探しにくい」と「差し替えが怖い」の2つ、許容する規模は「ディレクトリ構成から変える」。層は domain / usecase / presentation / infrastructure の4つ（すべて単数形。adapter ではなく infrastructure、view ではなく presentation はユーザーの指定）。実測（src/ 18ファイル・7322行）では import の循環0件で層は既に分かれており、**いまの import 関係は許した辺をすべて満たしている**ので、段階1は git mv と import 書き換えだけでロジックは動かない。session-event.ts は SDK の型を1つも import しない純粋関数なので domain に置く。差し替えた原則は **原則2**（層をディレクトリで表す＋test/architecture.test.ts で辺を検査）、**原則3**（アダプタ→infrastructure の1つのアダプタ）、**原則5**（単数形の命名を追加）の3つで、CLAUDE.md と docs/architecture.md「新しいコードを置く場所」と docs/coding-standards.md「層と依存の向き」（新設）を同時に直した。採らなかった案: 現状維持（どちらの困りごとにも効かない）、検査テストだけ（探しにくさが残る）。段階は 1.移動と検査テスト 2.index.ts からユースケース抽出 3.presentation の分割（T-084/T-085 の後）で、develop/direction.md に書き出した。節の数は docs/architecture.md 26→27（新設1つ）、docs/coding-standards.md 20→21（新設1つ）で減っていない。コードは変えていないが bun run check は 377 pass / 0 fail。
+
+## T-081 既定のモデルを Opus の effort high で起こす
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  src/session-driver.ts に DEFAULT_MODEL="opus" と DEFAULT_EFFORT="high" を置き、query() の options を組み立てる buildQuerySeedOptions（クロージャを含まない部分）へ切り出して渡した。src/view.ts の MODEL_FALLBACK も "opus" に揃えた（import はしない。原則3）。テストは test/session-driver.test.ts を新規2件（既定値が渡る形・cwd/permissionMode はそのまま）、test/view.test.ts の既定値テスト1件を更新。bun run check は 379 pass / 0 fail。実機: TSUKUMO_VIEW_PORT=7432 で起こして1往復し、サイドバーの <select> が Opus 選択済みになることを確認（7回の push すべて）。ただし MODEL_FALLBACK も opus なので表示だけでは区別が付かないため、SDK を直接呼ぶプローブで裏を取った: model:"opus" / effort:"high" を渡すと init.model = claude-opus-5。effort の実測結果: **外から観測できない**（init システムメッセージに effort キーは無く false、setModel はモデル名しか取らない）。そのため切り替え時に保たれるかは不明で、docs/requirements.md 4.1 にその旨と「effort を画面の要素にしない」を1行書いた（節の数は前後とも 25）。起こした 7432 番は停止済み、常駐の 7327 番は触っていない。
+
+## T-083 ブラウザ側 JS を外に出すビルド工程を決めて1本通す
+
+- **difficulty**: `opus` / **loopable**: `?` / **passes**: `true` / **dependencies**: T-082
+- **evidence**:
+
+  `bun run check` 372→374 pass / 0 fail。**起動のたびに `bun build` で組み立て、ディスクに置かない**（ユーザーの選択）。`src/index.ts` の `buildBrowserScript` が `execFile("bun", ["build", ...])` の標準出力を受け取ってメモリに持ち、`/assets/browser.js` で配る（`/vendor/` とは経路を分けた）。失敗したら起動を止める。1本目は SSE の購読で、`src/browser/region-subscription.ts` へ移した（入口は `main.ts`。副作用は入口だけが持ち、仕組みはテストから import できる）。領域は `data-event-path` で購読先を示す。
+  **型を分ける必要は無かった**: `@types/bun` が `document` / `EventSource` の型を持つので、`tsconfig` の include にそのまま入る。**検査が届くことをわざと壊して確認**: 型エラーを入れると `tsc` が3件検出、未使用変数を入れると `oxlint` が検出。どちらも戻した。
+  実測: `bun build` は 0.02 秒未満、成果物は 1,411 バイト。リポジトリ外（`/private/tmp`）から `bundledFilePath` 経由で組み立てられることを確認。使い捨てサーバ（7412）＋CDP で、**外に出した購読が実際に効いて本文が更新される**ことを確認（「更新 10 回目」→「更新 13 回目」、スクリプトのエラーなし）。**本物の claude を起こす確認は未実施**（API を使うため）。
+
+## T-084 残りのブラウザ側 JS をすべて .ts へ移す
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: T-083
+- **evidence**:
+
+  残る8関数（viewScript / reportRenderersScript / mainTurnsScript / layoutScript / dispatchScript / commandSuggestionsScript / pendingAnswerScript / sessionInfoScript）をすべて src/browser/ の .ts へ移した。新規7ファイル: report-renderers / main-turns / layout-resizer / dispatch / command-suggestions / pending-answer / session-info。viewScript は T-082 で単体ページが消えたため未使用になっており、関数ごと削除。値の渡し方は **data- 属性に統一**（T-083 の data-event-path に合わせた。経路8種とラベル2種。初期HTMLに既に出ている文言は要素から読むだけにして属性を増やしていない）。src/view.ts は 3279 → 2319行（960行減）、grep 'function .\*Script(' は 0件、ページのインライン <script> も 0件（残るのは /assets/browser.js と vendor 2本）。テストは 379 pass → 379 pass / 0 fail（vm で文字列を実行していた土台を、移した関数を直接呼ぶ形に書き換えた）。わざと型エラー（layout-resizer.ts の MIN_PERCENT に文字列）を入れると TS2322 で bun run check が落ちることを確認し復元。bun build の出力は 30833 バイト。実機（TSUKUMO_VIEW_PORT=7433、Orca のタブ）: 6項目（Command+Enter の送信と中断への切り替え / `/` 補完と Tab 確定 / 仕切りのドラッグと再読み込み後の保持 / 許可要求のボタン / モデル・許可モードの select と経過時間 / やり取りのタブ切り替え）すべて動くことをユーザーが確認。7433 番は停止済み、常駐の 7327 番は触っていない。
+
+## T-085 CSS を領域ごとの .css に割ってビルドでまとめる
+
+- **difficulty**: `sonnet` / **loopable**: `Y` / **passes**: `true` / **dependencies**: T-083
+- **evidence**:
+
+  STYLE 定数（約700行）を src/presentation/style/ の7ファイル＋入口 main.css に割った（theme / character / main-turns / dispatch / sidebar / layout / narrow-screen。narrow-screen は他を上書きするので @import の最後）。配る経路は **<link rel="stylesheet" href="/assets/style.css">**（インラインの <style> は撤去）。理由は browser.js と同じ「起動時に bun build でメモリに1回だけ組み立てて配る」工程を素直に踏襲できるため。index.ts に buildStyleSheet()（buildBrowserScript と同型）を足し、組み立てに失敗したら起動を止める。src/presentation/view.ts は 2320 → 1604行（716行減）。テストは 380 → 382 pass / 0 fail。CSS を検査していたテストは出どころを .css ファイルに付け替えて中身を減らさず維持し、/assets/style.css の経路テストと <link> の存在確認を足した。bun build の出力は 16006 バイト。見た目は機械で確認（7451番＋Chrome headless＋CDP。claude は起こさない）: grid は 3トラックで4領域すべて幅・高さ非0、立ち絵の下端とキャラビューの下端の差は 1px、サイドバー3区画はすべて overflow-y: auto で内側スクロールが効く、送信ボタンの ::after は " ⌘⏎"。7451番と Chrome は停止済み、常駐の 7327 番は触っていない。
+
+## T-086 src/ を domain / usecase / presentation / infrastructure へ移し、依存の向きをテストで縛る
+
+- **difficulty**: `sonnet` / **loopable**: `Y` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  src/ の18ファイルを git mv で4層へ移した（git status は全件 R/RM の rename として出る）。domain=character/expression/utterance/question/pending-answer/session-event/task-summary（tasks.ts から改名）、usecase=session-view、presentation=view/report-html/report-notation/browser一式、infrastructure=session-driver/view-server/host/orca-host/view-port/bundled-path（bundled-files.ts から改名）、index.ts はそのまま。test/ も同じ構成へ移した。型検査に出ない2箇所を手で直した: index.ts の bundledFilePath("src","browser",…) → ("src","presentation","browser",…) と、bundled-path.ts の new URL("..") → ("../..")（1階層深くなったため。基準はリポジトリのルートのまま）。scripts/open-views.ts の import も追従。test/architecture.test.ts を新設（node:fs で src/ を再帰的に読み、from の相対 import を正規表現で拾って層の辺を判定。外部ツールなし）。**メインセッションで検査の実効性を再確認**: src/domain/utterance.ts に ../presentation/view.ts の import を足すと 「src/domain/utterance.ts（domain） → src/presentation/view.ts（presentation）」と出して落ち、復元後は差分ゼロで緑に戻る。委譲先が書いたキャスト（match[1] as string）は規約違反なので flatMap の分割代入に直した。bun run check は 380 pass / 0 fail（+1 は検査テスト自体）。bun build は 30950 バイト（移動前 30833）。docs/architecture.md の節の数は前後とも 27。docs/requirements.md と docs/glossary.md に残る旧パスは対象外とし、develop/direction.md にメモを残した。
+
+## T-089 docs に残る移動前の src パスを4層のパスへ直す
+
+- **difficulty**: `sonnet` / **loopable**: `Y` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  docs/requirements.md 5箇所（report-html ×2 / report-notation / session-driver / expression）、docs/glossary.md 2箇所（host / orca-host）、docs/workflow.md 1箇所（view）の計8箇所を新しい層のパスへ直した。7つの新パスは test -f で実在を確認。節の数は requirements 25→25、glossary 36→36、workflow 3→3 で不変。docs/architecture.md に残る11箇所は直していない（transcript / transcript-target / state / balloon / draw と、419行目の expression。いずれも「捨てた」「当初」と書かれた過去の記述の中にあり、当時の形を残すのが目的）。grep の残りは docs/architecture.md の11件だけ。bun run check は 382 pass / 0 fail。
