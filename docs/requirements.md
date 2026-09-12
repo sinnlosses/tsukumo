@@ -267,6 +267,41 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   決定どおり。tsukumo 側で構造を推測・整形しない）。規約が許す記法のうちレンダラが描けない
   Markdown の引用 `> ` は、規約側で「`<blockquote>` を HTML で書く」に寄せた
 
+#### レポートの記法は、TUI と tsukumo で出し分ける
+
+**出力スタイル（`~/.claude/output-styles/asuna.md`）は `~/.claude/settings.json` の
+`outputStyle` で全プロジェクトに同じものが当たる**ため、そこに HTML の記法を書くと、tsukumo 以外の
+素の TUI でもタグが文字のまま見える（2026-09-12 のユーザーの報告）。逆に「引用 `> `・ネストした
+リスト・水平線 `---` は描けない」という制約は tsukumo のレンダラの都合で、TUI では成り立たない。
+
+**tsukumo が `systemPrompt` の append で差分を足す形にする**（2026-09-12 決定）。
+
+- グローバルの `asuna.md` は **TUI 向け**に保つ。人格・`speak` の分岐・セリフと詳細の書き分けは
+  残し、**HTML の記法（`note` / `badge` / `cols` / `card` / `details` / `blockquote` / `hr`）と
+  mermaid / chart のフェンスを外す**。代わりに、レンダラの都合で禁じていた引用 `> `・ネストした
+  リスト・水平線 `---` の禁止を**解く**
+- **HTML・mermaid・chart の規約は tsukumo が持つ。** `query()` の
+  `systemPrompt: { type: "preset", preset: "claude_code", append }` で足す。正典がリポジトリ内に
+  来るので、**描ける記法の一覧が `src/report-html.ts` と同じコミットで動く**（レンダラを直したのに
+  規約が古いまま、が起きない）
+- **`~/.claude/settings.json` には触らない**（`outputStyle` も、orca が専有する hooks /
+  statusLine も無傷のまま）。書き換えるのは `asuna.md` 1ファイルだけ
+
+**なぜ他の2案を採らなかったか**:
+
+- **出力スタイルを2ファイルに分け、tsukumo が `applyFlagSettings({ outputStyle })` で選ぶ案**:
+  切り替えは確実だが、**共通部分113行が両方に重複する**。`asuna.md` 141行のうち tsukumo 専用は
+  「レポートの組み立て方」の28行だけで、重複のほうが4倍大きい。片方だけ直す事故が避けられない
+- **1ファイルのまま「`speak` が無い環境では HTML を使わない」と条件分岐で書く案**:
+  実装は要らないが、**守られたかどうかがこちら側から分からない**。上の「なぜテキストの規約を
+  やめたか」で一度否定した弱点をそのまま抱える
+
+**実測（2026-09-12、SDK v0.3.268）**: `systemPrompt` の append と出力スタイルは**同時に効く**
+（`init` の `output_style` は `"Asuna"` のまま、応答に人格と append の指示の両方が出た）。
+`applyFlagSettings({ outputStyle })` もセッション限りで効き、設定ファイルは書き換わらない。
+`startSession`（`src/session-driver.ts`）はいま `systemPrompt` を指定していないので、
+append の配線と `asuna.md` の整理は後続タスクで行う。
+
 #### 各表示物
 
 **表示はすべて HTML である**（2026-09-09 決定。`docs/architecture.md`「表示はターミナル描画を
