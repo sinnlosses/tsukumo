@@ -171,3 +171,19 @@ T-046 / T-064 / T-076 / T-077 はいずれもユーザーがいる
 `.sidebar-block` の 0.85rem を拾って 12.8px→13.6px、状態表示の色も #8f97ab→#e6e8ee）ので、
 両方を `.session-info` に置いて HEAD と同値に戻した。`bun run check` は 415 pass / 0 fail。
 **実機の目視は未実施**（CSS は起動時に束ねるので、7327 の常駐プロセスを再起動しないと反映されない）。
+
+**T-077 完了（決めるタスク。実装はしない）。** 起こし直したときのセッション復元の方式を決めた。
+**最大の論点だった「会話内容の複製にあたるか」は、複製せずに済むことが分かった**: claude 自身が
+`~/.claude/projects/` に transcript を書いている（SDK の `persistSession`、既定 `true`）ので、
+tsukumo は**そこを正典として読み直すだけ**でよく、自前のキャッシュもスナップショットも要らない。
+規約は曲げず、`docs/coding-standards.md`「別の場所に複製しない」に「禁じているのは書き出すほう」
+という1文を補うだけにした。ユーザーの選択は **(1) 会話＋画面の履歴も戻す、(2) 常に自動で続きから、
+(3) 鍵は `cwd` ＋ tsukumo が `tagSession` で付けた印**。(3) は `tsukumo` が `bun link` で
+グローバルに入っていて同じディレクトリで素の `claude` も使いうるため、`cwd` だけでは足りない。
+(2) の事故（意図せず前の文脈が続く）には「続きから始まったことの表示」と「新規で起こす逃げ道」を
+セットで要求に入れた。決定は `docs/requirements.md` 4.8「セッションの復元」。
+**SDK の口は型定義で裏取り済み**（`Options.resume` / `listSessions` / `tagSession` /
+`getSessionMessages`）。`SessionMessage` が `toSessionEvents` の見ている形とほぼ同じで**そのまま
+流し込める**ことも確認したので、T-078 の本文に足りない2点（利用者の依頼をテキストブロックから
+起こす・`result` が残らないのでターンの境目を依頼で区切る）まで書き下し、`difficulty` を
+sonnet → opus に上げた。`bun run check` は 415 pass / 0 fail（コードは未変更）。

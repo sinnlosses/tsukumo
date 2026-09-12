@@ -8,13 +8,7 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-042",
-      "T-043",
-      "T-044",
-      "T-045",
-      "T-057"
-    ]
+    "dependencies": ["T-042", "T-043", "T-044", "T-045", "T-057"]
   },
   {
     "id": "T-062",
@@ -36,10 +30,7 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-062",
-      "T-069"
-    ]
+    "dependencies": ["T-062", "T-069"]
   },
   {
     "id": "T-064",
@@ -50,9 +41,7 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-058"
-    ]
+    "dependencies": ["T-058"]
   },
   {
     "id": "T-065",
@@ -63,9 +52,7 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-064"
-    ]
+    "dependencies": ["T-064"]
   },
   {
     "id": "T-076",
@@ -82,25 +69,23 @@
     "id": "T-077",
     "summary": "開き直したときにセッションを引き継ぐ方式を決める",
     "task": "tsukumo を起こし直したときに前のセッションを復元する方式を決める（実装はしない）。\n\n## 背景\n\nユーザーの指示（2026-09-12）「tsukumo を開き直したとき、セッションを復元するように変更しよう。」\n\n現物（2026-09-12 に確認）:\n\n- `src/session-driver.ts` の `startSession`（118行目付近）が `query({ options: { cwd,\n  permissionMode, mcpServers, ... } })` で**毎回まっさらなセッションを起こす**。\n  `resume` も `continue` も渡していない\n- Agent SDK の `Options` には **`resume?: string`（再開するセッションID）**、\n  `forkSession?: boolean`、`resumeSessionAt?: string` がある\n  （`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` の 1934 / 1584 / 1950 行目付近）\n- セッションIDは届いている。`src/session-event.ts`（169行目付近）が SDK のメッセージから\n  `session_id` を読んで `{ kind: \"session-info\", sessionId }` を流す\n- **画面の中身（やり取りの履歴）はプロセスのメモリにしかない。** `src/session-view.ts` の\n  `SessionView` が `applySessionEvent` で積み上がるだけで、どこにも保存していない\n- **`~/.tsukumo/` は旧方針の遺物で、もう読まれない**（T-042 で撤去。`develop/progress.md`\n  「注意」）。書き込む場所を作るなら、ここを再利用するか別の場所にするかを決めることになる\n\n## 解くべき論点\n\n- **何を復元するのか。** (a) claude 側の会話（`resume` で足りる）、(b) 画面のやり取りの履歴\n  （メインビューのタブ・レポート・ツールの行）、(c) 吹き出しに出ていたセリフ。\n  **(b)(c) は tsukumo 側で保存しないと戻らない**。どこまでやるかをここで決める\n- **会話内容の扱いとの衝突。** `docs/coding-standards.md`「会話内容の扱い」は\n  **「別の場所に複製しない」**と言っている。(b)(c) を保存するのはレポートとセリフの複製にあたる。\n  **セッションIDだけを保存して claude 側の transcript を正典にする**なら複製にならない。\n  この線引きが最大の論点で、**規約を曲げるなら規約側を先に直す**（`CLAUDE.md`\n  「用語を変えたくなったら先に用語集を直す」と同じ順序）\n- **何を鍵に復元するか。** 起動した作業ディレクトリ（`cwd`）ごとか、ホストの単位か。\n  `tsukumo` は `bun link` でグローバルに入っていて**別のプロジェクトからも起こせる**\n  （T-048）ので、鍵を間違えると他のプロジェクトの会話が出る\n- **いつ復元するか。** 常に自動で続きから始めるのか、起動時に選ばせるのか、\n  明示のフラグ（`--resume` / 環境変数）だけか。**事故（意図せず前の会話が続く）を防ぐ形**を選ぶ\n- **どこに保存するか。** `~/.tsukumo/` を復活させるか、`cwd` の中か。旧方針の遺物と\n  混ざらないようにする\n- **復元できなかったときどうするか。** セッションIDが古い・transcript が消えている場合に\n  **常駐プロセスが落ちない**こと（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で\n  落ちない」。起動時の前提不足だけが即時終了）\n\n## やること\n\n1. SDK の `resume` / `forkSession` / `resumeSessionAt` の意味を**型定義と公式ドキュメントで\n   確かめる**（推測で書かない。出典を控える）\n2. 上の論点をユーザーと突き合わせて決める。**(b)(c) を保存するかは規約に触れるので必ず確認を取る**\n3. 決めた方式を `docs/requirements.md` 4 に節として1つ足す。規約を変えるなら\n   `docs/coding-standards.md`「会話内容の扱い」も同時に直す\n4. **実装はこのタスクではやらない。** 実装の手順を T-078 の本文に書き足す\n\n## 完了条件\n\n- `docs/requirements.md` に「何を復元し、何を復元しないか」「鍵」「いつ復元するか」\n  「保存場所」「失敗時の振る舞い」が書かれた節があること\n- 会話内容の複製にあたるかの判断と、その結論が `evidence` に1行で書かれていること\n- `develop/tasks.json` の T-078 の本文が、決めた方式に沿って更新されていること\n- `grep -c '^#\\{2,3\\} ' docs/requirements.md` が編集の前後で減っていないこと\n- コードを変えていなければ `bun run check` は不要（変えたなら通すこと）\n\n## 注意\n\n- **ユーザーの選択が要るので委譲せず、`/loop` にも載せない**\n- **このタスクで実装しない。** 決めるところまで\n- **会話内容の扱いは他のどの規約よりも優先する**（`CLAUDE.md`）。保存を伴う案は、\n  規約を先に直してからでないと実装に進めない\n- `docs/requirements.md` を編集するときは**行頭を含めて位置を特定する**\n",
-    "status": "todo",
+    "status": "done",
     "difficulty": "opus",
     "loopable": "N",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "**会話内容の複製にはあたらない**（＝規約を曲げずに実装できる）と判断した。claude 自身が `~/.claude/projects/` に書く transcript を正典として読み直すだけで、tsukumo 側は何も書き出さないため。`docs/coding-standards.md`「別の場所に複製しない」に、禁じているのは書き出すほうだと1文を補った。\n決定を `docs/requirements.md` 4.8「セッションの復元」に追加（戻すもの／戻さないもの・鍵・契機・保存しない理由・失敗時の振る舞い）。ユーザーの選択は「会話＋画面の履歴も戻す」「常に自動で続きから」「鍵は cwd ＋ tsukumo の印（tagSession）」。\nSDK の口は `node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` で確認: `Options.resume`(1936) / `listSessions`(1002) / `tagSession`(8686) / `getSessionMessages`(807) / `SDKSessionInfo`(5154)。`grep -c '^#\\{2,3\\} ' docs/requirements.md` は 25→26（4.8 を1つ足したぶん）。コードは未変更。",
     "dependencies": []
   },
   {
     "id": "T-078",
     "summary": "決めた方式でセッションの復元を実装する",
-    "task": "T-077 が決めた方式で、起こし直したときのセッション復元を実装する。\n\n## 背景\n\nユーザーの指示（2026-09-12）「tsukumo を開き直したとき、セッションを復元するように変更しよう。」\n**何を復元し、どこに何を保存し、いつ復元するかは T-077 が決める。**\n\n現物の出発点（2026-09-12 に確認）:\n\n- `src/session-driver.ts` の `startSession`（118行目付近）が `query()` に渡す `options` に\n  `resume` を足す口がある（SDK の `Options.resume`）\n- セッションIDは `src/session-event.ts`（169行目付近）が `session-info` として流している\n- 起動時の前提チェック・状態の保持・`try`/`catch` は配線の層（`src/index.ts`）の仕事\n\n## やること\n\n1. **T-077 の決定を読む**（`develop/tasks.json` の T-077 の `evidence` と\n   `docs/requirements.md` の該当節）。決まっていなければ着手しない\n2. 決まった方式で実装する。**外の世界に依存する値（保存先のパス・環境変数）の読み取りは\n   1モジュールに集約し、モジュールのトップレベルで環境変数に触らない**\n   （`docs/coding-standards.md`）\n3. 復元に失敗したときは**新しいセッションとして起動し、プロセスを落とさない**\n   （起動時の前提不足だけが即時終了）\n4. `bun run check` を通す\n\n## 完了条件\n\n- **テスト**: 復元の判断（保存された値を読んで `resume` に渡すかを決める部分）を\n  純粋な関数として切り出し、`test/` に次を足すこと（増えた件数を `evidence` に書く）\n  1. 保存された値があるときは復元する形になる\n  2. 保存された値が無い・壊れているときは新しいセッションとして起動する形になる\n  3. T-077 が「鍵」に決めた単位（`cwd` など）が違うときは復元しない\n- **テストから本物の claude を起動しない**（`develop/progress.md`「注意」）\n- **実機**: `TSUKUMO_VIEW_PORT` を変えて tsukumo を起こし、1往復したあと落として起こし直し、\n  T-077 が「復元する」と決めたものが戻っていることを確認する。**会話の中身は `evidence` に\n  写さない**（「前のやり取りのタブが N 個見えた」のように書く）\n- 起こし直したあと `pgrep -f claude-agent-sdk` で**自分が起こした pid だけ**を落としたことを確認\n- `bun run check` が通ること\n\n## 注意\n\n- **会話内容の扱いが最優先。** T-077 が許した範囲を超えて保存しない。ログに全文を出さない\n- **常駐している 7327 番を落とさない。** 動作確認は `TSUKUMO_VIEW_PORT` を変えて起こす\n- **実機の確認が要るので `/loop` には載せない。** 実装はサブエージェントに委譲してよい\n",
+    "task": "T-077 が決めた方式で、起こし直したときのセッション復元を実装する。\n\n## 決定（T-077・2026-09-13）\n\n**正典は `docs/requirements.md` 4.8「セッションの復元」。** 要点:\n\n- **戻すもの**: claude 側の会話（`resume`）、メインビューのやり取り、吹き出しのセリフ\n- **戻さないもの**: 答え待ち（許可・質問）、書きかけの本文（`partial-utterance`）\n- **tsukumo 側に会話を保存しない。** claude 自身の transcript（`~/.claude/projects/`）を\n  正典として読み直す。キャッシュもスナップショットも作らない\n- **鍵**: `cwd` ＋ tsukumo が `tagSession` で付けた印\n- **契機**: 常に自動で続きから。ただし**続きから始まったことが画面で分かる**ようにし、\n  **新規で起こす逃げ道**（環境変数）を用意する\n- **失敗時**: 新しいセッションとして起動し、プロセスは落とさない\n\n## 使う SDK の口（2026-09-13 に `sdk.d.ts` で確認）\n\n| 使うもの                                          | 行     | 用途                                       |\n| ------------------------------------------------- | ------ | ------------------------------------------ |\n| `Options.resume?: string`                         | 1936   | 会話を再開する                             |\n| `listSessions({ dir, limit, offset })`            | 1002   | `cwd` のセッション一覧（`SDKSessionInfo`） |\n| `tagSession(sessionId, tag, { dir })`             | 8686   | tsukumo の印を付ける                       |\n| `getSessionMessages(sessionId, { dir })`          | 807    | transcript のメッセージ列を読む            |\n\n`SDKSessionInfo` は `{ sessionId, summary, lastModified, cwd?, tag?, ... }`（5154行目付近）。\n**`forkSession` / `resumeSessionAt` は使わない**（前者は新しいIDへ枝分かれするので「続き」に\nならず、後者は途中で切り詰める用途）。\n\n## やること\n\n1. **復元するセッションを選ぶ**（`infrastructure`）。`listSessions({ dir: cwd })` を読み、\n   印のあるもののうち `lastModified` が最新のものを選ぶ。**選ぶ計算は純粋関数として切り出す**\n   （`SDKSessionInfo[]` と印 → `sessionId | undefined`）\n2. **`resume` を渡す。** `src/infrastructure/session-driver.ts` の `buildQuerySeedOptions`\n   （189行目付近）の戻り値に `resume: string | undefined` を足す\n3. **印を付ける。** `session-info` でセッションIDが届いたら `tagSession` を呼ぶ。\n   **失敗しても続行する**（印が付かなければ次回は新規で起きるだけ）\n4. **画面の履歴を組み直す。** `getSessionMessages(sessionId, { dir: cwd })` の結果を\n   `SessionEvent[]` に変え、`applySessionEvent`（`src/usecase/session-view.ts`）へ順に流す。\n   **`SessionMessage` は `toSessionEvents`（`src/domain/session-event.ts`）が見ている形と\n   ほぼ同じ**（`assistant` / `user` の分岐は `message.message` と `message.parent_tool_use_id`\n   しか読まない）ので、そのまま流し込める。**足りないのは次の2つ**:\n   - **利用者の依頼（`request`）**: 生きたセッションでは駆動側が `prompt()` のときに起こして\n     いるので、transcript 側では `user` のテキストブロックから起こす必要がある\n     （`toolResultEvents` は `tool_result` ブロックしか見ていない）\n   - **ターンの境目（`turn-finished`）**: transcript に `result` は残らない（`SessionMessage`\n     の `type` は `user` / `assistant` / `system` の3つだけ）ので、次の依頼の手前で区切る\n5. **新規で起こす逃げ道**と、**続きから始まったことの表示**（サイドバーの「セッション情報」）\n6. **外の世界に依存する値（印の文字列・逃げ道の環境変数）の読み取りは1モジュールに集約し、\n   モジュールのトップレベルで環境変数に触らない**（`docs/coding-standards.md`）\n7. `bun run check` を通す\n\n**SDK を import してよいのは `infrastructure` だけ**（原則3。`test/architecture.test.ts` が\n落とす）。`domain` / `usecase` に `listSessions` などを持ち込まない。\n\n## 完了条件\n\n- **テスト**: 次を純粋な関数として切り出し、`test/` に足すこと（増えた件数を `evidence` に書く）\n  1. 印のあるセッションが複数あるとき、`lastModified` が最新のものを選ぶ\n  2. 一覧が空・印が1つも無い・形が壊れているときは「復元しない」（＝新規起動）を返す\n  3. 印が無いセッション（同じ `cwd` の素の `claude`）は選ばない\n  4. transcript のメッセージ列から `request` / `utterance` / `speech` / ツールの行が起き、\n     ターンの境目が依頼ごとに分かれる\n  5. 空の列・壊れた要素が混じった列でも落ちず、読めたものだけを返す\n- **テストのフィクスチャは手で書いた架空の会話にする**（実物の transcript を使わない。\n  `docs/coding-standards.md`「会話内容の扱い」）\n- **テストから本物の claude を起動しない**（`develop/progress.md`「注意」）\n- **実機**: `TSUKUMO_VIEW_PORT` を変えて tsukumo を起こし、1往復したあと落として起こし直し、\n  (1) 前のやり取りがメインビューに戻っていること、(2) 吹き出しにセリフが戻っていること、\n  (3) 「さっき何を頼んだか覚えてる？」に答えられること（＝claude 側の会話が繋がっていること）\n  を確認する。**会話の中身は `evidence` に写さない**（「前のやり取りのタブが N 個見えた」の\n  ように書く）\n- **逃げ道の確認**: 新規で起こす指定をしたときは、前の履歴が出ないこと\n- 起こし直したあと `pgrep -f claude-agent-sdk` で**自分が起こした pid だけ**を落としたことを確認\n- `bun run check` が通ること\n\n## 注意\n\n- **会話内容の扱いが最優先。** 読んだ transcript の中身を**どこにも書き出さない**\n  （ログ・一時ファイル・キャッシュ）。出してよいのはビュー（`127.0.0.1`）だけ\n- **常駐している 7327 番を落とさない。** 動作確認は `TSUKUMO_VIEW_PORT` を変えて起こす\n- **実機の確認が要るので `/loop` には載せない。** 実装はサブエージェントに委譲してよい\n- 復元に失敗したときは**新しいセッションとして起動する**。`listSessions` が読めない・\n  transcript が消えている・履歴の組み直しが途中で壊れる、のいずれでもプロセスを落とさない\n",
     "status": "todo",
-    "difficulty": "sonnet",
+    "difficulty": "opus",
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-077"
-    ]
+    "dependencies": ["T-077"]
   },
   {
     "id": "T-087",
@@ -111,9 +96,7 @@
     "loopable": "N",
     "passes": true,
     "evidence": "index.ts を 635 → 231行にした。usecase へ throttle.ts / event-sink.ts / view-publish.ts、infrastructure へ character-asset.ts / task-summary.ts / auto-open-view.ts / browser-bundle.ts を新設し、VIEW_PORT_ENV_NAME は view-port.ts へ同居させた。index.ts に残したのは main / stopSessionOnExit / openLayoutView / announce / USAGE と、両者を具体の関数で繋ぐ配線だけ。層の規則を満たすため、event-sink は now() を引数で受け取り PendingAsk と onSessionEnded を返す形に、view-publish は render 関数（buildCharacterBody 等）と readCharacterAssets を注入される形にした（依存の向きを逆にしない）。テストは 382 → 415 pass / 0 fail（新規33件。移す前に書いた。既存の test/index.test.ts は CLI の起動失敗しか見ていなかった）。test/architecture.test.ts も通る。実機（TSUKUMO_VIEW_PORT=7434 と 7435、常駐の 7327 番は触っていない）: 1往復してメインビューに detail-block / turn-panel が押し出され、turn-status が null → turnStartedAt → turnFinishedAt（8.5秒）と流れることを確認。経過時間はサイドバーではなく入力欄で turn-status から描かれる作りだった。会話の中身は写していない。",
-    "dependencies": [
-      "T-086"
-    ]
+    "dependencies": ["T-086"]
   },
   {
     "id": "T-088",
@@ -124,11 +107,7 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-086",
-      "T-084",
-      "T-085"
-    ]
+    "dependencies": ["T-086", "T-084", "T-085"]
   },
   {
     "id": "T-090",
@@ -172,9 +151,7 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-062"
-    ]
+    "dependencies": ["T-062"]
   },
   {
     "id": "T-094",
@@ -185,8 +162,6 @@
     "loopable": "Y",
     "passes": false,
     "evidence": "",
-    "dependencies": [
-      "T-093"
-    ]
+    "dependencies": ["T-093"]
   }
 ]
