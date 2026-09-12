@@ -1985,6 +1985,11 @@ describe("ツール名＋入力の要約（summarizeToolInput）", () => {
   })
 })
 
+// `.question-other-input` が出た回数を数える（自由入力欄がカードごとに1つずつ出ているかを見る）。
+function countOtherInputs(html: string): number {
+  return (html.match(/class="question-other-input"/g) ?? []).length
+}
+
 describe("答え待ちの箱（キャラビューの吹き出しの直下。buildPendingAnswerBody）", () => {
   it("答え待ちが無いときは空を返す", () => {
     expect(buildPendingAnswerBody(undefined)).toBe("")
@@ -2113,6 +2118,69 @@ describe("答え待ちの箱（キャラビューの吹き出しの直下。buil
 
     expect(body).toContain('class="question-other-input"')
     expect(body).toContain("送る")
+  })
+
+  it("「その他」を選択肢に含めない質問でも、自由入力欄を1つ出す", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        {
+          header: "h",
+          text: "t",
+          multiSelect: false,
+          options: [
+            { label: "a", description: "" },
+            { label: "b", description: "" },
+          ],
+        },
+      ],
+    })
+
+    expect(countOtherInputs(body)).toBe(1)
+  })
+
+  it("選択肢に「その他」を含めてきても、自由入力欄は二重に出さない", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        {
+          header: "h",
+          text: "t",
+          multiSelect: false,
+          options: [
+            { label: "a", description: "" },
+            { label: "その他", description: "" },
+          ],
+        },
+      ],
+    })
+
+    expect(countOtherInputs(body)).toBe(1)
+  })
+
+  it("質問が2件あるときは、カードごとに自由入力欄が1つずつ、計2つ出る", () => {
+    const body = buildPendingAnswerBody({
+      kind: "question",
+      id: "toolu_q",
+      questions: [
+        {
+          header: "h1",
+          text: "t1",
+          multiSelect: false,
+          options: [{ label: "a", description: "" }],
+        },
+        {
+          header: "h2",
+          text: "t2",
+          multiSelect: false,
+          options: [{ label: "b", description: "" }],
+        },
+      ],
+    })
+
+    expect(countOtherInputs(body)).toBe(2)
   })
 
   it("質問文や選択肢に HTML が混ざっていてもエスケープする", () => {

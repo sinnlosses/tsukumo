@@ -19,6 +19,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-073 完了。** 質問に**自由入力欄を常に1つ出す**ようにした（モデルが選択肢に `その他` を入れて
+きたときは二重に出さない）。`questionCardHtml` が末尾に足す形で、中身は `freeTextOptionHtml` に
+切り出して `questionOptionHtml` の `その他` 分岐と共有する。**multiSelect は既存の配線のまま**で、
+選んだラベルと自由入力は「、」で結合されて1つの label になる。`bun run check` は 362 pass / 0 fail。
+確認は合成データの機械検証（`question-other-input` の数と、CDP で「答える」を押したときに届く値）。
+
 **T-082 完了。** 個別ビューのページ（`/main` `/character` `/sidebar`）と `/` のリンク一覧を消し、
 **レイアウトページを `/` で配る**ようにした（`LAYOUT_PATH` が `"/"`）。消えたのは `viewPath` /
 `buildViewPage` / `buildIndexPage` / `VIEW_TITLE` / `ViewServer.urlOf` / 起動ログの「個別ビュー・
@@ -209,8 +215,6 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 
 2026-09-12 に届いた指示から起こした10件（**登録しただけで未着手**）:
 
-- **T-073（sonnet、着手可能）**: 質問の選択肢に `その他` が無いと自由入力欄が出ない件。
-  カードごとに常に1つ出す
 - **T-074（sonnet、着手可能）**: 依頼が複数行でも見出しに1行しか出ない件（`truncateRequest`）。
   全行出し、タブのラベルは1行のまま
 - **T-075（sonnet、着手可能）**: 経過時間をサイドバーから入力欄の送信ボタンの行へ移す

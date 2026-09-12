@@ -1367,11 +1367,17 @@ function questionCardHtml(question: Question, index: number): string {
   const options = question.options
     .map((option, optionIndex) => questionOptionHtml(option, index, optionIndex))
     .join("")
+  // モデルが選択肢に「その他」を含めてこなかったときの受け皿。TUI の AskUserQuestion と同じく、
+  // 自由入力は選択肢の有無によらず常に1つ出す（モデルが自分で足したときは二重に出さない）。
+  const hasFreeTextOption = question.options.some(
+    (option) => option.label === FREE_TEXT_OPTION_LABEL,
+  )
+  const freeText = hasFreeTextOption ? "" : freeTextOptionHtml()
 
   return `<div class="question-card" data-question-index="${String(index)}" data-multi-select="${String(question.multiSelect)}">
 <p class="question-header">${escapeHtml(question.header)}${question.multiSelect ? "（複数選べる）" : ""}</p>
 <p class="question-text">${escapeHtml(question.text)}</p>
-<ul class="question-choices">${options}</ul>
+<ul class="question-choices">${options}${freeText}</ul>
 </div>`
 }
 
@@ -1381,10 +1387,7 @@ function questionOptionHtml(
   optionIndex: number,
 ): string {
   if (option.label === FREE_TEXT_OPTION_LABEL) {
-    return `<li class="question-choice-other">
-<input type="text" class="question-other-input" placeholder="自由入力" aria-label="${escapeHtml(option.label)}" />
-<button type="button" class="question-other-send">送る</button>
-</li>`
+    return freeTextOptionHtml()
   }
 
   return `<li><button type="button" class="question-choice question-option-button" data-label="${escapeHtml(option.label)}">
@@ -1392,6 +1395,13 @@ function questionOptionHtml(
 <span class="question-choice-label">${escapeHtml(option.label)}</span>
 <span class="question-choice-description">${escapeHtml(option.description)}</span>
 </button></li>`
+}
+
+function freeTextOptionHtml(): string {
+  return `<li class="question-choice-other">
+<input type="text" class="question-other-input" placeholder="自由入力" aria-label="${escapeHtml(FREE_TEXT_OPTION_LABEL)}" />
+<button type="button" class="question-other-send">送る</button>
+</li>`
 }
 
 // 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
