@@ -8,7 +8,13 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-042", "T-043", "T-044", "T-045", "T-057"]
+    "dependencies": [
+      "T-042",
+      "T-043",
+      "T-044",
+      "T-045",
+      "T-057"
+    ]
   },
   {
     "id": "T-062",
@@ -30,7 +36,10 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-062", "T-069"]
+    "dependencies": [
+      "T-062",
+      "T-069"
+    ]
   },
   {
     "id": "T-064",
@@ -41,7 +50,9 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-058"]
+    "dependencies": [
+      "T-058"
+    ]
   },
   {
     "id": "T-065",
@@ -52,7 +63,9 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-064"]
+    "dependencies": [
+      "T-064"
+    ]
   },
   {
     "id": "T-076",
@@ -85,7 +98,9 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-077"]
+    "dependencies": [
+      "T-077"
+    ]
   },
   {
     "id": "T-087",
@@ -96,7 +111,9 @@
     "loopable": "N",
     "passes": true,
     "evidence": "index.ts を 635 → 231行にした。usecase へ throttle.ts / event-sink.ts / view-publish.ts、infrastructure へ character-asset.ts / task-summary.ts / auto-open-view.ts / browser-bundle.ts を新設し、VIEW_PORT_ENV_NAME は view-port.ts へ同居させた。index.ts に残したのは main / stopSessionOnExit / openLayoutView / announce / USAGE と、両者を具体の関数で繋ぐ配線だけ。層の規則を満たすため、event-sink は now() を引数で受け取り PendingAsk と onSessionEnded を返す形に、view-publish は render 関数（buildCharacterBody 等）と readCharacterAssets を注入される形にした（依存の向きを逆にしない）。テストは 382 → 415 pass / 0 fail（新規33件。移す前に書いた。既存の test/index.test.ts は CLI の起動失敗しか見ていなかった）。test/architecture.test.ts も通る。実機（TSUKUMO_VIEW_PORT=7434 と 7435、常駐の 7327 番は触っていない）: 1往復してメインビューに detail-block / turn-panel が押し出され、turn-status が null → turnStartedAt → turnFinishedAt（8.5秒）と流れることを確認。経過時間はサイドバーではなく入力欄で turn-status から描かれる作りだった。会話の中身は写していない。",
-    "dependencies": ["T-086"]
+    "dependencies": [
+      "T-086"
+    ]
   },
   {
     "id": "T-088",
@@ -107,7 +124,11 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-086", "T-084", "T-085"]
+    "dependencies": [
+      "T-086",
+      "T-084",
+      "T-085"
+    ]
   },
   {
     "id": "T-090",
@@ -135,11 +156,11 @@
     "id": "T-092",
     "summary": "セッション情報のラベルと値を縦に揃える",
     "task": "サイドバーの「セッション情報」で、ラベルと値（`<select>`）が行ごとに横位置がずれているのを揃える。\n\n## 背景\n\nユーザーの指示（2026-09-13）「セッション情報のコンポーネントがラベルと値で縦に揃ってないから揃えて」。\n\n現物（2026-09-13 に確認）: `src/presentation/view.ts` の `sessionInfoBody`（1581行目付近）が `.session-info-row` を2つ並べ、それぞれの中で `modelSelectHtml`（802行目付近）と `permissionModeHtml` が `<label>` + `<select>` を出している。`src/presentation/style/sidebar.css` の `.model-select-wrap` は `display: flex` なので、**ラベルの文字数の差（「モデル」3字 / 「許可モード」5字）がそのまま `<select>` の左端のズレになる**。\n\n## やること\n\n1. 2行のラベル列と値列が揃う形にする（例: `.session-info` を `display: grid` の2列にし、各行のラベルと `<select>` を別のセルへ置く）。**行ごとに別の `flex` で並べる形はやめる**\n2. `<select>` の右にある状態表示（`.model-select-status`）の置き場所も崩れないようにする\n3. 狭い画面（`src/presentation/style/narrow-screen.css` の `@media (max-width: 760px)`）で崩れないことを確かめる\n\n## 完了条件\n\n- **数値で確認**: 合成データのページを Chrome headless + CDP で測り、**2つの `<select>` の `getBoundingClientRect().left` が一致すること**（差が 1px 以内。前後の値を `evidence` に書く）。ラベル側の `left` も一致していること\n- 760px 未満の幅でも、どちらの行も領域の外へはみ出さないこと（`scrollWidth <= clientWidth`）\n- モデル・許可モードの `<select>` が**従来どおり効く**こと（値を変えると `PUT`/`POST` が飛ぶ経路は変えない）\n- テスト件数が減らないこと（着手前は 415 pass / 0 fail）\n- `bun run check` が通ること\n\n## 注意\n\n- **常駐している 7327 番を落とさない**\n- `<label for=...>` と `<select id=...>` の対応を壊さない（壊すとクリックでフォーカスが移らなくなる）\n- 見た目の色・文字サイズは変えない。**揃えるだけ**\n",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
     "loopable": "Y",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`src/presentation/style/sidebar.css`: `.session-info` を `display: grid` / `grid-template-columns: auto minmax(0, 1fr)` の2列にし、`.permission-mode`・`.model-select-wrap` の行ごとの flex を `.session-info-label` / `.session-info-value` に置き換えた。`src/presentation/view.ts` の `modelSelectHtml` / `permissionModeHtml` はラベルと値を別々に返し、`sessionInfoBody` が4つを grid の直接の子として並べる。\nCDP 実測（headless Chrome 153、合成データ、`buildLayoutPage`+`buildSidebarBody`+実物の CSS）: 2つの `<select>` の `left` が 1400px で 1105.42/1131.78 → 1134.98/1134.98（差 26.36px → 0px）。1400/900/759/600/400/320px の全幅で select・label とも差 0px、`.session-info` は `scrollWidth == clientWidth`。`label[for]` クリックで `activeElement` が `tsukumo-permission-mode` になることも確認。\n文字サイズと色は HEAD と同値に戻してある（select 12.8px / status の色 rgb(143,151,171)）。委譲時の実装は `.session-info-value` に font-size・color が無く 13.6px / rgb(230,232,238) にずれていたので、`.session-info` へ移して直した。`bun run check` 415 pass / 0 fail。**実機（7327 の常駐タブ）での目視は未実施**（起動時に CSS を束ねるため再起動が要る）。",
     "dependencies": []
   },
   {
@@ -151,7 +172,9 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-062"]
+    "dependencies": [
+      "T-062"
+    ]
   },
   {
     "id": "T-094",
@@ -162,6 +185,8 @@
     "loopable": "Y",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-093"]
+    "dependencies": [
+      "T-093"
+    ]
   }
 ]

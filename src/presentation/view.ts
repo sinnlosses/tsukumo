@@ -757,8 +757,15 @@ const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
  * 2026-09-11 決定。以前はキャラビューの領域の端に置いていたが、サイドバーの区画ができたため
  * 移した）。`bypassPermissions` を選んでいるときは警告色を付ける
  * （`src/presentation/style/sidebar.css` の `.permission-mode-select-danger`）。
+ *
+ * ラベルと値（`<select>` + 状態表示）を別々に返す（{@link sessionInfoBody} が2列の grid に
+ * 直接の子として並べるため。ラベル・値をここで1つの div にまとめると、その div がグリッドの
+ * 1マスになってしまい、モデル行と列が揃わない — 2026-09-13 T-092）。
  */
-function permissionModeHtml(mode: string | undefined): string {
+function permissionModeHtml(mode: string | undefined): {
+  readonly label: string
+  readonly value: string
+} {
   const current = mode ?? PERMISSION_MODE_FALLBACK
   const options = PERMISSION_MODE_LABELS.map(
     ([value, label]) =>
@@ -766,11 +773,10 @@ function permissionModeHtml(mode: string | undefined): string {
   ).join("")
   const dangerClass = current === DANGEROUS_PERMISSION_MODE ? " permission-mode-select-danger" : ""
 
-  return `<div class="permission-mode">
-<label for="${PERMISSION_MODE_SELECT_ID}">許可モード</label>
-<select id="${PERMISSION_MODE_SELECT_ID}" class="permission-mode-select${dangerClass}">${options}</select>
-<span class="permission-mode-status" role="status" aria-live="polite"></span>
-</div>`
+  return {
+    label: `<label for="${PERMISSION_MODE_SELECT_ID}" class="session-info-label">許可モード</label>`,
+    value: `<span class="session-info-value"><select id="${PERMISSION_MODE_SELECT_ID}" class="permission-mode-select${dangerClass}">${options}</select><span class="permission-mode-status" role="status" aria-live="polite"></span></span>`,
+  }
 }
 
 // モデルのエイリアスと、日本語ラベル。値は `src/infrastructure/session-driver.ts` の MODEL_ALIASES と同じ3つだが、
@@ -802,19 +808,23 @@ function resolveModelAlias(model: string | undefined): string {
 /**
  * モデルを切り替える `<select>`。選べるのはエイリアス3つだけ（`docs`「セッション情報」の決定）。
  * `/model` は送らず、駆動側の `setModel`（Agent SDK）を呼ぶ（{@link sessionInfoScript}）。
+ *
+ * ラベルと値を別々に返す理由は {@link permissionModeHtml} と同じ。
  */
-function modelSelectHtml(model: string | undefined): string {
+function modelSelectHtml(model: string | undefined): {
+  readonly label: string
+  readonly value: string
+} {
   const current = resolveModelAlias(model)
   const options = MODEL_LABELS.map(
     ([value, label]) =>
       `<option value="${value}"${value === current ? " selected" : ""}>${escapeHtml(label)}</option>`,
   ).join("")
 
-  return `<div class="model-select-wrap">
-<label for="${MODEL_SELECT_ID}">モデル</label>
-<select id="${MODEL_SELECT_ID}" class="model-select">${options}</select>
-<span class="model-select-status" role="status" aria-live="polite"></span>
-</div>`
+  return {
+    label: `<label for="${MODEL_SELECT_ID}" class="session-info-label">モデル</label>`,
+    value: `<span class="session-info-value"><select id="${MODEL_SELECT_ID}" class="model-select">${options}</select><span class="model-select-status" role="status" aria-live="polite"></span></span>`,
+  }
 }
 
 /**
@@ -1580,11 +1590,21 @@ function taskStatusClass(status: string): string {
  * {@link sessionInfoScript}）を並べる。**経過時間はここに無い**（2026-09-12 T-075 決定。
  * 入力欄の送信ボタンと同じ行（{@link dispatchRegionHtml}）へ移した。サイドバーと入力欄は
  * 領域が別で SSE の経路も別なので、ここへ戻すときは経路をもう一段考える必要がある）。
+ *
+ * `.session-info` は2列の grid（`src/presentation/style/sidebar.css`）で、ラベルと値
+ * （`<select>` + 状態表示）を直接の子として並べる。行ごとに別々の flex で並べると
+ * ラベルの文字数の差がそのまま `<select>` の左端のズレになるため、行の境目を div で
+ * 区切らずグリッド1つに任せる（2026-09-13 T-092）。
  */
 function sessionInfoBody(session: SidebarData["session"]): string {
+  const model = modelSelectHtml(session.model)
+  const permissionMode = permissionModeHtml(session.permissionMode)
+
   return `<div class="session-info">
-<div class="session-info-row">${modelSelectHtml(session.model)}</div>
-<div class="session-info-row">${permissionModeHtml(session.permissionMode)}</div>
+${model.label}
+${model.value}
+${permissionMode.label}
+${permissionMode.value}
 </div>`
 }
 

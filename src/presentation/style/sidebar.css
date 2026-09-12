@@ -1,11 +1,12 @@
-.permission-mode,
-.model-select-wrap {
+.session-info-label {
+  white-space: nowrap;
+}
+.session-info-value {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.4rem;
-  font-size: 0.8rem;
-  color: #8f97ab;
+  min-width: 0;
 }
 .permission-mode-select,
 .model-select {
@@ -116,8 +117,17 @@
 .task-status-other {
   color: #e3c766;
 }
+/* ラベル列（`.session-info-label`）と値列（`.session-info-value`）を2列の grid で揃える。
+   行ごとに別々の flex で並べると、ラベルの文字数の差（「モデル」3字 /「許可モード」5字）が
+   そのまま select の左端のズレになる（2026-09-13 T-092）。 */
 .session-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.6rem;
+  row-gap: 0.4rem;
+  align-items: center;
+  /* ラベル・状態表示の文字と、`font: inherit` の `<select>` がここから受け取る。
+     子（ラベル／値）の片方だけに置くと、もう片方が .sidebar-block の 0.85rem に戻る。 */
+  font-size: 0.8rem;
+  color: #8f97ab;
 }

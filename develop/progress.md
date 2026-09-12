@@ -157,3 +157,17 @@ T-046 / T-064 / T-076 / T-077 はいずれもユーザーがいる
 - **`develop/tasks.json` に無いタスクIDはアーカイブ済み**とみなす
   （2026-09-12 に done 12件、同日さらに 10件、同日さらに 7件、同日さらに 9件を移した。計 70 節）。中身は
   `docs/history/tasks-archive.md` の `## T-XXX` の節
+
+**T-092 完了。** サイドバーの「セッション情報」で、ラベルと `<select>` が行ごとにズレていたのを
+揃えた。原因は**行ごとに別々の flex**（`.model-select-wrap` / `.permission-mode`）で並べていたこと
+で、ラベルの文字数の差（「モデル」3字 /「許可モード」5字）がそのまま `<select>` の左端の差
+（26.36px）になっていた。`.session-info` を `display: grid` の2列
+（`auto minmax(0, 1fr)`）にし、`modelSelectHtml` / `permissionModeHtml` は**ラベルと値を別々に
+返す**形へ変えて、4つをグリッドの直接の子として並べている（1行を div でくるむとその div が
+1マスになり、列が揃わない）。**CDP 実測**（headless Chrome、合成データ）で
+1400/900/759/600/400/320px の全幅で select・label とも差 0px、`scrollWidth == clientWidth`。
+`label[for]` → `<select>` のフォーカスも維持。**委譲した実装が文字サイズを変えてしまっていた**
+（`.session-info-value` に `font-size`/`color` が無く、`font: inherit` の `<select>` が
+`.sidebar-block` の 0.85rem を拾って 12.8px→13.6px、状態表示の色も #8f97ab→#e6e8ee）ので、
+両方を `.session-info` に置いて HEAD と同値に戻した。`bun run check` は 415 pass / 0 fail。
+**実機の目視は未実施**（CSS は起動時に束ねるので、7327 の常駐プロセスを再起動しないと反映されない）。
