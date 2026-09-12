@@ -2794,6 +2794,55 @@ describe("メインビューの本文", () => {
     expect(body).toContain("<code>インラインコード</code>")
   })
 
+  it("段落の途中に書いたインライン HTML（許可リストのタグ）はタグとして出る", () => {
+    const markdown = '状態は <span class="badge badge-ok">あり</span> です。'
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain('<span class="badge badge-ok">あり</span>')
+  })
+
+  it("表のセルの途中に書いたインライン HTML もタグとして出る", () => {
+    const markdown = ["| 状態 |", "| --- |", '| <span class="badge badge-ok">あり</span> |'].join(
+      "\n",
+    )
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain('<span class="badge badge-ok">あり</span>')
+  })
+
+  it("箇条書きの項目の途中に書いたインライン HTML もタグとして出る", () => {
+    const markdown = '- 状態は <span class="badge badge-ok">あり</span> です。'
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain('<span class="badge badge-ok">あり</span>')
+  })
+
+  it("段落の途中でも、許可リストに無いタグ（script）はタグとして出ない", () => {
+    const markdown = '危険 <script>alert("x")</script> です。'
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).not.toContain("<script>")
+    expect(body).not.toContain("alert(")
+  })
+
+  it("コードスパンで囲んだインライン HTML は、タグにならず文字のまま出る", () => {
+    const markdown = "書き方は `<span>` です。"
+    const entries: readonly MainViewEntry[] = [{ kind: "detail", markdown }]
+
+    const body = buildMainBody(entries)
+
+    expect(body).toContain("<code>&lt;span&gt;</code>")
+    expect(body).not.toContain("<span>")
+  })
+
   it("http: / https: と、/ や # で始まる相対リンクはリンクとして出す", () => {
     const markdown = [
       "[絶対](https://example.com)",

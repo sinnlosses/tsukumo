@@ -2786,16 +2786,19 @@ function truncateForDisplay(text: string): string {
  * - 箇条書き（`-` / `*` の番号無しリスト、`1.` の番号付きリスト。ネストは1段に平らにする）
  * - テーブル（GFM 形式。ヘッダ行の次に `---` の区切り行があるものだけをテーブルと認識する）
  * - 段落中のインライン強調（`**太字**`）・インラインコード（`` `code` ``）・リンク
- *   （`[text](url)`）
+ *   （`[text](url)`）・**インライン HTML**（`<span class="badge">` のように段落・表のセル・
+ *   箇条書きの項目の途中に書いたもの。2026-09-12 決定。{@link renderPlainInline} 参照）
  * - **HTML のブロック**（行頭がタグに見える行から空行まで）。段組み・カード・SVG の図を
- *   レポート側から組めるようにするため（2026-09-10 決定）。中身は
- *   {@link sanitizeReportHtml} の許可リストを通り、`script` などは中身ごと落ちる
+ *   レポート側から組めるようにするため（2026-09-10 決定）
+ *
+ * どちらの HTML 経路も {@link sanitizeReportHtml} の同じ許可リストを通り、`script` などは
+ * 中身ごと落ちる（サニタイズは2箇所に書き分けない）。
  *
  * **対応しない Markdown 記法（引用・ネストしたリスト・画像・水平線など）はブロックとして
  * 認識されず、ただの段落テキストとして表示される**（構文として壊れず、崩れた見た目になるだけに
- * 留める。これらを使いたいときは HTML で書く）。**HTML ブロック以外のテキストは escapeHtml を
- * 通してから埋め込む**（コードブロックの中身も含む）ので、Markdown の中のコードがそのまま
- * 描画されることはない。
+ * 留める。これらを使いたいときは HTML で書く）。**フェンス付きコードブロックの中身は常に
+ * escapeHtml を通してから埋め込む**ので、Markdown の中のコードがそのまま描画されることはない。
+ * インラインのコードスパン（`` `code` ``）も同様に文字のまま出す（{@link splitOnCodeSpans}）。
  */
 function renderMarkdownToHtml(markdown: string): string {
   const lines = markdown.replaceAll("\r\n", "\n").split("\n")
@@ -3055,7 +3058,7 @@ function consumeParagraph(lines: readonly string[], start: number): ParsedBlock 
  * **リンクだけは特別扱いする。** URL のスキーム判定は**エスケープ前の生の URL**に対して行う
  * 必要があるため（エスケープ後の文字列で判定すると、記号の実体参照化で判定が狂いうる）、
  * 先にリンク記法だけをテキストから切り出し（`splitOnLinks`）、リンク以外の部分にだけ
- * `escapeHtml` を通してから `**太字**` / `` `コード` `` を当てる。
+ * {@link renderPlainInline} で HTML・`**太字**` / `` `コード` `` を当てる。
  */
 function renderInline(rawText: string): string {
   return splitOnLinks(rawText)
@@ -3112,11 +3115,64 @@ function linkPartHtml(part: { readonly text: string; readonly url: string }): st
   return `<a href="${escapeHtml(trimmedUrl)}" rel="noopener noreferrer">${renderPlainInline(part.text)}</a>`
 }
 
-/** リンク以外の地の文に使う、`escapeHtml` 済みの上での `**太字**` / `` `コード` `` の変換。 */
+/**
+ * リンク以外の地の文に使う変換。段落の途中・表のセル・箇条書きの項目でも、行頭からの
+ * HTML ブロック（{@link consumeHtmlBlock}）と同じ**許可リストを通す**ことで、
+ * `<span class="badge badge-ok">` のようなインライン HTML をタグとして描く
+ * （2026-09-12 決定。以前は `escapeHtml` だけを通していたので、この経路の HTML はタグの
+ * 文字列のまま出ていた）。
+ *
+ * **コードスパンが最優先。** `` `<span>` `` のように書いたものは、中身が HTML に見えても
+ * タグとして解釈せず文字のまま出す必要があるため、`` `code` `` をまず切り出し
+ * （{@link splitOnCodeSpans}）、コード以外の部分にだけ {@link sanitizeReportHtml} を通す。
+ * サニタイズは `src/report-html.ts` の {@link sanitizeReportHtml} 1箇所に集約し、
+ * ここでは呼ぶだけにする。`**太字**` は、サニタイズ済みの文字列（`&` 等は実体参照化済みだが
+ * `*` はそのまま残る）に対して最後に当てる。
+ */
 function renderPlainInline(rawText: string): string {
-  const escaped = escapeHtml(rawText)
-  const withCode = escaped.replace(/`([^`]+)`/g, (_match, code: string) => `<code>${code}</code>`)
+  const withCode = splitOnCodeSpans(rawText)
+    .map((part) =>
+      part.kind === "code"
+        ? `<code>${escapeHtml(part.text)}</code>`
+        : sanitizeReportHtml(part.text),
+    )
+    .join("")
   return withCode.replace(/\*\*([^*]+)\*\*/g, (_match, text: string) => `<strong>${text}</strong>`)
+}
+
+type CodeSpanPart =
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "code"; readonly text: string }
+
+const CODE_SPAN_PATTERN = /`([^`]+)`/g
+
+/** `` `code` `` を実際のコードスパンとして切り出し、それ以外の地の文と分ける。 */
+function splitOnCodeSpans(rawText: string): readonly CodeSpanPart[] {
+  const parts: CodeSpanPart[] = []
+  let lastIndex = 0
+
+  CODE_SPAN_PATTERN.lastIndex = 0
+  let match = CODE_SPAN_PATTERN.exec(rawText)
+  while (match !== null) {
+    const whole = match[0]
+    const code = match[1]
+
+    if (code !== undefined) {
+      if (match.index > lastIndex) {
+        parts.push({ kind: "text", text: rawText.slice(lastIndex, match.index) })
+      }
+      parts.push({ kind: "code", text: code })
+      lastIndex = match.index + whole.length
+    }
+
+    match = CODE_SPAN_PATTERN.exec(rawText)
+  }
+
+  if (lastIndex < rawText.length) {
+    parts.push({ kind: "text", text: rawText.slice(lastIndex) })
+  }
+
+  return parts
 }
 
 /**
