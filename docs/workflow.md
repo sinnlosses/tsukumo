@@ -4,6 +4,34 @@
 `develop/progress.md` のフィールド定義、difficultyの基準と委譲の書き方、evidenceの粒度、
 アーカイブのトリガーと手順）。**手順そのものはCLAUDE.md側が正典**で、ここには繰り返さない。
 
+**2026-09-12 に、タスク運用のスキル（`next-task` / `plan-tasks` / `list-tasks`）は
+`~/.claude/skills/` の共通版に一本化した。** 共通版は `task-workflow` スキルの `WORKFLOW.md` を
+正典とし、プロジェクト固有の値は `develop/workflow.json` から読む。**この文書の内容は
+`WORKFLOW.md` とほぼ重なっている**ので、食い違いを見つけたら `WORKFLOW.md` を優先する。
+**このリポジトリ固有の上乗せは下の「このリポジトリでの上乗せ」だけ**が正典。
+
+## このリポジトリでの上乗せ
+
+共通のスキルはこのリポジトリの事情を知らないので、ここで補う。**タスクを書くとき
+（`plan-tasks`）と受け入れるとき（`next-task`）に、共通版の手順に加えて次を守る。**
+
+- **目視でしか確かめられないものは、何をどう見れば合格なのかまで書く。** 「適切に」
+  「きれいに」のような読み手で結論が変わる語を使わない。**合成データの使い捨てサーバ＋`curl`＋
+  Chrome DevTools Protocol で数値として読めることが多い**（2026-09-12 に T-070 / T-082 で
+  実証。`claude` を起こさないので API も使わない）。その形にできるなら `/loop` に載せてよく、
+  人の目でしか判断できないこと（色・間合い・好み）が出たらそこで止めて報告する
+- **`~/.claude/settings.json` を触るタスクには、既存の hooks / statusLine を壊さないことを
+  必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT と `develop/progress.md`「注意」）
+- **環境側の前提はその場で確かめる。** ターミナルの画像プロトコル対応、外部コマンドの有無、
+  常駐プロセスの生死は時間とともに変わる。`develop/progress.md`「注意」を鵜呑みにしない
+- **spec の出典**は `docs/requirements.md` と `develop/tasks.json` の各タスク本文
+  （issueトラッカーは未設定）。**standards の出典**は `CLAUDE.md` ＋
+  `docs/coding-standards.md` ＋ `docs/architecture.md` の3つ。`code-review` スキルが
+  「リポジトリ内から探す」と言うのはこれらのこと
+- **作業ブランチは切らず `main` に直接コミットする**（`CLAUDE.md`「Git運用」）
+- **会話の内容をログ・`evidence`・テストのフィクスチャに写さない**
+  （`docs/coding-standards.md`「会話内容の扱い」。他のどの規約よりも優先する）
+
 ## tasks.json のフィールド
 
 各タスクは以下のフィールドを持つオブジェクト:

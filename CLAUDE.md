@@ -152,18 +152,25 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 
 ## 導入済みスキル
 
-[mattpocock/skills](https://github.com/mattpocock/skills) 由来のコア開発スキルを日本語化して
-`.claude/skills/` に導入済み（一覧は毎セッションのスキル案内を参照）。`code-review` は
-issueトラッカー連携を前提とする元の記述を、このリポジトリの `docs/requirements.md` /
-`develop/tasks.json` を spec の出典とする形に直してある。
+**スキルはすべて `~/.claude/skills/` にある**（複数のプロジェクトで共通。2026-09-12 に
+リポジトリ内の複製を削除した）。一覧は毎セッションのスキル案内を参照。
 
-このプロジェクト独自のスキルとして次の2つもある。
+タスク運用の3つ（`next-task` / `plan-tasks` / `list-tasks`）は **`task-workflow` スキルの
+`WORKFLOW.md` を正典**とし、**プロジェクト固有の値は `develop/workflow.json` から読む**。
+このリポジトリでは `checkCommand` = `bun run check`、`formatCommand` = `bun run format` を
+設定してある（他のキーは既定値）。
 
 - `next-task`: `develop/tasks.json` の未着手タスクを1件実行する。`/loop /next-task` で
   全件`done`になるまでの自動進行に使う
 - `plan-tasks`: `develop/direction.md` の指示をタスクに分解して `develop/tasks.json` に登録し、
   指示メモを `docs/history/direction.md` へ移す。**分解は方針決めを含むので委譲せず、
   `/loop` にも載せない**
+- `list-tasks`: 登録済みタスクを一覧の表で見るだけ（読み取り専用）
+
+**共通のスキルはこのリポジトリの事情を知らない。** spec の出典（`docs/requirements.md` と
+`develop/tasks.json` の各タスク本文）、standards の出典（この `CLAUDE.md` ＋
+`docs/coding-standards.md` ＋ `docs/architecture.md`）、`main` に直接コミットすること、
+タスクを書くときの上乗せは、**このファイルと `docs/workflow.md` が補う**。
 
 ## Git運用
 
