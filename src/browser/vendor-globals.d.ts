@@ -19,6 +19,28 @@ declare global {
       ) => void
     }
   }
+
+  /**
+   * highlight.js。ページの `<head>` で読み込み済み（`report-renderers.ts` はここでは読み込まない）。
+   * 読み込みに失敗すると存在しないので `| undefined`。
+   */
+  const hljs: { readonly highlightElement: (element: Element) => void } | undefined
+
+  /**
+   * mermaid（`vendor/mermaid.min.js`）。**`report-renderers.ts` が図の記法を見つけたときだけ**
+   * 動的に読み込むので、参照する時点（読み込みの `then` の中）では必ず存在する。
+   */
+  const mermaid: {
+    readonly initialize: (options: {
+      readonly startOnLoad: boolean
+      readonly theme: string
+      readonly securityLevel: string
+    }) => void
+    readonly run: (options: { readonly nodes: readonly Element[] }) => Promise<void>
+  }
+
+  /** Chart.js（`vendor/chart.umd.min.js`）。mermaid と同じく、必要になったときだけ読み込む。 */
+  const Chart: new (target: Element, config: unknown) => unknown
 }
 
 export {}

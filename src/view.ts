@@ -129,180 +129,6 @@ export const MODEL_PATH = "/api/model"
 export const COMMANDS_PATH = "/api/commands"
 
 /**
- * 1領域ぶんの、**まだテンプレート文字列に残っているスクリプト**。メインビューにはやり取りの
- * タブの制御（{@link mainTurnsScript}）とレポートのレンダラ（{@link reportRenderersScript}）、
- * サイドバーにはモデル・許可モードの切り替え（{@link sessionInfoScript}）が付く。
- *
- * **SSE の購読はここに無い。** 2026-09-12 に `src/browser/region-subscription.ts` へ移し、
- * `bun build` でまとめて `/assets/browser.js` から配るようになった（T-083）。**残りの
- * スクリプトも順次そちらへ移す**（T-084）ので、この関数は最後には消える。
- *
- * **答え待ちの箱の配線（{@link pendingAnswerScript}）と経過時間の表示は入力欄側
- * （{@link dispatchScript}）に付く**（答え待ちの箱は2026-09-11 決定。キャラビューの吹き出しの
- * 下ではなく、入力欄の上に出す。経過時間は2026-09-12 T-075 決定。サイドバーの「セッション情報」
- * から送信ボタンの隣へ移した）。**タブの選択・答え待ちの状態はブラウザ側だけが持つ**
- * （サーバは常に最新の本文を配る。`docs/architecture.md`「ビューの更新は Server-Sent Events で
- * 押す」— 押す側に状態を持たせない）。
- */
-function viewScript(elementId: string, view: ViewName): string {
-  if (view === "main") {
-    return `${mainTurnsScript(elementId)}\n${reportRenderersScript(elementId)}`
-  }
-  if (view === "sidebar") {
-    return sessionInfoScript(elementId)
-  }
-  return ""
-}
-
-/**
- * レポートの中の**コード・図・グラフ**を描く。**同梱したライブラリ**（`vendor/README.md`）を
- * `127.0.0.1` から読むので、表示のたびに外部へ通信は飛ばない（2026-09-10 のユーザーの決定）。
- *
- * - コードの色付け（highlight.js）はページの `<head>` で読み込み済みのものを使う
- * - **mermaid（3.2MB）と Chart.js（196KB）は、その記法が実際に出てきたときだけ読み込む。**
- *   レポートが図を書かない限り、重いファイルは1バイトも読まれない
- * - 描き終えたものには印を付け、push で本文が差し替わったときだけ描き直す
- */
-function reportRenderersScript(elementId: string): string {
-  return `  {
-    const el = document.getElementById(${JSON.stringify(elementId)})
-    const loaded = new Map()
-    const loadOnce = (src) => {
-      const already = loaded.get(src)
-      if (already !== undefined) {
-        return already
-      }
-      const loading = new Promise((resolve, reject) => {
-        const script = document.createElement("script")
-        script.src = src
-        script.addEventListener("load", () => resolve())
-        script.addEventListener("error", () => reject(new Error(src)))
-        document.head.appendChild(script)
-      })
-      loaded.set(src, loading)
-      return loading
-    }
-    const highlight = () => {
-      if (typeof hljs === "undefined") {
-        return
-      }
-      for (const block of el.querySelectorAll("pre code:not([data-highlighted])")) {
-        block.dataset.highlighted = "yes"
-        hljs.highlightElement(block)
-      }
-    }
-    const drawDiagrams = () => {
-      const nodes = [...el.querySelectorAll("pre.mermaid:not([data-drawn])")]
-      if (nodes.length === 0) {
-        return
-      }
-      for (const node of nodes) {
-        node.dataset.drawn = "yes"
-      }
-      loadOnce(${JSON.stringify(vendorPath("mermaid.min.js"))})
-        .then(() => {
-          mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict" })
-          return mermaid.run({ nodes })
-        })
-        .catch(() => {
-          for (const node of nodes) {
-            node.dataset.drawn = "failed"
-          }
-        })
-    }
-    const drawCharts = () => {
-      const canvases = [...el.querySelectorAll("canvas[data-chart]:not([data-drawn])")]
-      if (canvases.length === 0) {
-        return
-      }
-      for (const canvas of canvases) {
-        canvas.dataset.drawn = "yes"
-      }
-      loadOnce(${JSON.stringify(vendorPath("chart.umd.min.js"))})
-        .then(() => {
-          for (const canvas of canvases) {
-            try {
-              new Chart(canvas, JSON.parse(canvas.dataset.chart))
-            } catch {
-              canvas.dataset.drawn = "failed"
-            }
-          }
-        })
-        .catch(() => {})
-    }
-    const draw = () => {
-      highlight()
-      drawDiagrams()
-      drawCharts()
-    }
-    new MutationObserver(draw).observe(el, { childList: true })
-    draw()
-  }`
-}
-
-/**
- * メインビューのやり取りタブ。**本文は push のたびに丸ごと差し替わる**ので、選択は
- * 差し替え後に付け直す（`MutationObserver` で差し替えを検知する。購読スクリプト側に
- * 手を入れずに済む）。
- *
- * - **選択はやり取りの通し番号（`data-turn-id`）で覚える。** 新しいやり取りが増えても
- *   「1つ前」の指す中身がずれない。選んでいたやり取りが窓から外れたら今回に戻す
- * - **新しいやり取りが始まったら先頭へ戻す**（今回の通し番号が変わったことで判定）。
- *   利用者が過去のタブを見ている間は動かさない（ユーザーの決定 2026-09-10 の論点7）
- * - スクロールする要素の決め方は `src/browser/region-subscription.ts` の `scrollerFor` と同じ
- */
-function mainTurnsScript(elementId: string): string {
-  return `  {
-    const el = document.getElementById(${JSON.stringify(elementId)})
-    let selectedTurnId = null
-    let lastNewestId = null
-    const scroller = () =>
-      el.scrollHeight > el.clientHeight ? el : (document.scrollingElement ?? document.documentElement)
-    const tabIds = () => Array.from(el.querySelectorAll(".turn-tab")).map((tab) => tab.dataset.turnId)
-    const apply = () => {
-      const ids = tabIds()
-      if (ids.length === 0) {
-        return
-      }
-      const active = ids.includes(selectedTurnId) ? selectedTurnId : ids[0]
-      selectedTurnId = active
-      for (const tab of el.querySelectorAll(".turn-tab")) {
-        tab.classList.toggle("is-active", tab.dataset.turnId === active)
-      }
-      for (const panel of el.querySelectorAll(".turn-panel")) {
-        panel.hidden = panel.dataset.turnId !== active
-      }
-    }
-    el.addEventListener("click", (event) => {
-      const tab = event.target.closest(".turn-tab")
-      if (tab === null) {
-        return
-      }
-      selectedTurnId = tab.dataset.turnId
-      apply()
-      scroller().scrollTop = 0
-    })
-    const onUpdated = () => {
-      const ids = tabIds()
-      const newest = ids[0] ?? null
-      // 「今回」を見ていた人だけを新しいやり取りへ連れていく。**やり取りの数ではなく今回の
-      // 通し番号で見る**（上限に達すると数は増えないまま中身だけが進むため）。
-      const wasNewest = selectedTurnId === null || selectedTurnId === lastNewestId
-      const started = lastNewestId !== null && newest !== lastNewestId
-      apply()
-      if (started && wasNewest) {
-        selectedTurnId = newest
-        apply()
-        scroller().scrollTop = 0
-      }
-      lastNewestId = newest
-    }
-    new MutationObserver(onUpdated).observe(el, { childList: true })
-    onUpdated()
-  }`
-}
-
-/**
  * まとめたレイアウトページの URL パス。**個別ビューのページ（`/main` `/character`
  * `/sidebar`）は 2026-09-12 に消した。** 当初案（3つを別々のタブで開いて `orca terminal split`
  * でペインに並べる）の名残で「デバッグしやすさのため残す」としていたが、実際の目視確認は
@@ -321,12 +147,17 @@ export type LayoutBodies = Readonly<Record<ViewName, string>>
  * 押す側の `src/view-server.ts` は経路ごとの `publish` をそのまま使えるので、更新の仕組み自体は
  * 増やしていない）。ページを丸ごと再読み込みしない理由は
  * `docs/architecture.md`「ビューの更新は Server-Sent Events で押す」を参照。
+ *
+ * **ブラウザ側の配線（購読・タブ制御・レポートの描画・仕切り・入力欄・`/` 補完・答え待ちの箱・
+ * セッション情報）はすべて `/assets/browser.js`（`src/browser/`）にある。** ここが渡すのは
+ * 要素の id・class と、`data-` 属性に載せた経路・ラベルだけ（{@link dispatchRegionHtml} 等。
+ * 2026-09-12。以前はテンプレート文字列の `<script>` に埋め込んでいた）。
  */
 export function buildLayoutPage(bodies: LayoutBodies): string {
   const topRow = `<div class="layout-row layout-row-top" id="${LAYOUT_ROW_TOP_ID}">
-<section class="layout-region layout-main" id="${layoutRegionId("main")}" data-event-path="${viewEventPath("main")}">${bodies.main}</section>
+<section class="layout-region layout-main" id="${layoutRegionId("main")}" data-event-path="${viewEventPath("main")}" data-mermaid-src="${vendorPath("mermaid.min.js")}" data-chart-src="${vendorPath("chart.umd.min.js")}">${bodies.main}</section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_TOP_ID}" role="separator" aria-orientation="vertical" aria-label="メインビューとサイドバーの境界"></div>
-<section class="layout-region layout-sidebar" id="${layoutRegionId("sidebar")}" data-event-path="${viewEventPath("sidebar")}">${bodies.sidebar}</section>
+<section class="layout-region layout-sidebar" id="${layoutRegionId("sidebar")}" data-event-path="${viewEventPath("sidebar")}" data-permission-mode-path="${PERMISSION_MODE_PATH}" data-model-path="${MODEL_PATH}">${bodies.sidebar}</section>
 </div>`
 
   const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
@@ -343,12 +174,7 @@ ${topRow}
 ${bottomRow}
 </div>
 <button type="button" id="${LAYOUT_RESET_ID}" class="layout-reset">既定の比率に戻す</button>
-<script src="${browserScriptPath()}"></script>
-<script>
-${layoutScript()}
-${VIEW_NAMES.map((view) => viewScript(layoutRegionId(view), view)).join("\n")}
-${dispatchScript()}
-</script>`,
+<script src="${browserScriptPath()}"></script>`,
   )
 }
 
@@ -363,168 +189,6 @@ const LAYOUT_RESIZER_ROW_ID = "tsukumo-layout-resizer-row"
 const LAYOUT_RESIZER_TOP_ID = "tsukumo-layout-resizer-top"
 const LAYOUT_RESIZER_BOTTOM_ID = "tsukumo-layout-resizer-bottom"
 const LAYOUT_RESET_ID = "tsukumo-layout-reset"
-// ブラウザに覚えさせる仕切りの比率（localStorage）のキー。サーバ側には状態を持たせない。
-const LAYOUT_SPLIT_STORAGE_KEY = "tsukumo-layout-split"
-// 3本の仕切りの既定位置（%）。rowTop は上段(メイン・サイドバー)の高さの割合、topLeft は
-// 上段内でのメインの幅の割合、bottomLeft は下段内でのキャラビューの幅の割合
-// （残りはそれぞれサイドバー・下段・入力欄に割り当たる）。**下段の高さを広めに取ってあるのは、
-// 入力フォームの狭さが既定値を決め直した動機だから**（狭めても構わないが、既定として狭くはしない）。
-// **下段の左右は半々**（ユーザーの指定）。
-// **STYLE の grid-template-rows / grid-template-columns の var() 第2引数（フォールバック値）と
-// 一致させること**（JS が動かない場合の見た目もこの値になる）。
-const LAYOUT_SPLIT_DEFAULTS = { rowTop: 60, topLeft: 75, bottomLeft: 50 } as const
-// 仕切りをどちらかの端まで詰めて操作不能にしないための可動域。
-const LAYOUT_SPLIT_MIN_PERCENT = 15
-const LAYOUT_SPLIT_MAX_PERCENT = 85
-
-/**
- * 3本の仕切り（上段の縦・下段の縦・上下の横）をドラッグで動かす配線。**新しい依存は足さず、
- * 素の `pointerdown` / `pointermove` / `pointerup` で書く。**
- *
- * **論点（列の定義の持ち替え）**: 上段（メイン・サイドバー）と下段（キャラビュー・入力欄）で
- * 縦の仕切り位置が違うため、4列共有の `grid-template-columns` では3本の仕切りを独立に動かせない
- * （`docs/requirements.md` 4.7）。ここでは上下の行それぞれを別の grid（`.layout-row-top` /
- * `.layout-row-bottom`）にし、列幅・行の高さを CSS カスタムプロパティで持つ
- * （`--layout-top-left` 等。既定値は STYLE 側の `var()` フォールバックにも重複して書いてあり、
- * `LAYOUT_SPLIT_DEFAULTS` と一致させる必要がある）。ドラッグはこの変数を書き換えるだけで、
- * 実際の列・行のサイズ計算は CSS の grid に任せる。
- *
- * **要素の形が想定と違う（このページの HTML と一緒に配られていない）ときは何もしない。**
- * 描画ループの try/catch を散らすのではなく、`isUsableElement` の判定1箇所で弾く
- * （`docs/coding-standards.md`「エラーハンドリング」と同じ、受け止める場所を1つにする考え方）。
- */
-function layoutScript(): string {
-  return `  {
-    const STORAGE_KEY = ${JSON.stringify(LAYOUT_SPLIT_STORAGE_KEY)}
-    const MIN_PERCENT = ${JSON.stringify(LAYOUT_SPLIT_MIN_PERCENT)}
-    const MAX_PERCENT = ${JSON.stringify(LAYOUT_SPLIT_MAX_PERCENT)}
-    const DEFAULTS = ${JSON.stringify(LAYOUT_SPLIT_DEFAULTS)}
-
-    const grid = document.getElementById(${JSON.stringify(LAYOUT_GRID_ID)})
-    const rowTop = document.getElementById(${JSON.stringify(LAYOUT_ROW_TOP_ID)})
-    const rowBottom = document.getElementById(${JSON.stringify(LAYOUT_ROW_BOTTOM_ID)})
-    const resizerRow = document.getElementById(${JSON.stringify(LAYOUT_RESIZER_ROW_ID)})
-    const resizerTop = document.getElementById(${JSON.stringify(LAYOUT_RESIZER_TOP_ID)})
-    const resizerBottom = document.getElementById(${JSON.stringify(LAYOUT_RESIZER_BOTTOM_ID)})
-    const resetButton = document.getElementById(${JSON.stringify(LAYOUT_RESET_ID)})
-
-    function isUsableElement(value) {
-      return value !== null && typeof value === "object" && "style" in value
-    }
-
-    if (
-      isUsableElement(grid) &&
-      isUsableElement(rowTop) &&
-      isUsableElement(rowBottom) &&
-      isUsableElement(resizerRow) &&
-      isUsableElement(resizerTop) &&
-      isUsableElement(resizerBottom) &&
-      isUsableElement(resetButton)
-    ) {
-      function isValidPercent(value) {
-        return (
-          typeof value === "number" &&
-          Number.isFinite(value) &&
-          value >= MIN_PERCENT &&
-          value <= MAX_PERCENT
-        )
-      }
-
-      function loadSplit() {
-        let raw = null
-        try {
-          raw = localStorage.getItem(STORAGE_KEY)
-        } catch {
-          return DEFAULTS
-        }
-        if (raw === null) {
-          return DEFAULTS
-        }
-        try {
-          const parsed = JSON.parse(raw)
-          if (
-            parsed !== null &&
-            typeof parsed === "object" &&
-            isValidPercent(parsed.rowTop) &&
-            isValidPercent(parsed.topLeft) &&
-            isValidPercent(parsed.bottomLeft)
-          ) {
-            return { rowTop: parsed.rowTop, topLeft: parsed.topLeft, bottomLeft: parsed.bottomLeft }
-          }
-        } catch {
-          // 保存値が JSON として壊れている。既定に落ちる。
-        }
-        return DEFAULTS
-      }
-
-      function saveSplit(value) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
-        } catch {
-          // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-        }
-      }
-
-      let split = loadSplit()
-
-      function applySplit() {
-        grid.style.setProperty("--layout-row-top", split.rowTop + "fr")
-        grid.style.setProperty("--layout-row-bottom", (100 - split.rowTop) + "fr")
-        rowTop.style.setProperty("--layout-top-left", split.topLeft + "fr")
-        rowTop.style.setProperty("--layout-top-right", (100 - split.topLeft) + "fr")
-        rowBottom.style.setProperty("--layout-bottom-left", split.bottomLeft + "fr")
-        rowBottom.style.setProperty("--layout-bottom-right", (100 - split.bottomLeft) + "fr")
-      }
-
-      applySplit()
-
-      function clampPercent(value) {
-        return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
-      }
-
-      function bindResizer(resizer, container, orientation, setPercent) {
-        resizer.addEventListener("pointerdown", (event) => {
-          if (typeof resizer.setPointerCapture === "function") {
-            resizer.setPointerCapture(event.pointerId)
-          }
-          const rect = container.getBoundingClientRect()
-
-          function onMove(moveEvent) {
-            const raw =
-              orientation === "horizontal"
-                ? ((moveEvent.clientY - rect.top) / rect.height) * 100
-                : ((moveEvent.clientX - rect.left) / rect.width) * 100
-            setPercent(clampPercent(raw))
-            applySplit()
-          }
-          function onUp() {
-            resizer.removeEventListener("pointermove", onMove)
-            resizer.removeEventListener("pointerup", onUp)
-            saveSplit(split)
-          }
-          resizer.addEventListener("pointermove", onMove)
-          resizer.addEventListener("pointerup", onUp)
-        })
-      }
-
-      bindResizer(resizerRow, grid, "horizontal", (percent) => {
-        split = { ...split, rowTop: percent }
-      })
-      bindResizer(resizerTop, rowTop, "vertical", (percent) => {
-        split = { ...split, topLeft: percent }
-      })
-      bindResizer(resizerBottom, rowBottom, "vertical", (percent) => {
-        split = { ...split, bottomLeft: percent }
-      })
-
-      resetButton.addEventListener("click", () => {
-        split = DEFAULTS
-        applySplit()
-        saveSplit(split)
-      })
-    }
-  }`
-}
 
 const DISPATCH_REGION_ID = "tsukumo-view-dispatch"
 const DISPATCH_PENDING_ID = "tsukumo-dispatch-pending"
@@ -539,7 +203,7 @@ const DISPATCH_ELAPSED_ID = "tsukumo-dispatch-elapsed"
 const DISPATCH_SEND_LABEL = "送信"
 const DISPATCH_INTERRUPT_LABEL = "中断"
 
-// 経過時間のラベル。進行中／終了後でブラウザ側（{@link dispatchScript}）が出し分ける
+// 経過時間のラベル。進行中／終了後でブラウザ側（`src/browser/dispatch.ts`）が出し分ける
 // （終了時刻の有無で決める。書式・出し分けは T-055 のまま。2026-09-12 T-075 でサイドバーから
 // 入力欄（送信ボタンと同じ行）へ移した）。
 const TURN_ELAPSED_LABEL = "経過"
@@ -548,15 +212,9 @@ const TURN_FINISHED_LABEL = "所要"
 // **ラベルの文字列（`textContent`）とは分けて `data-shortcut` 属性に持たせる**（描くのは
 // `STYLE` の `.dispatch-send[data-shortcut]::after`）。ラベルと同じ文字列にすると、送信／中断の
 // 切り替えが `textContent` の一致で見分けられなくなるため。**初期の HTML にも属性を入れておく**
-// ので、スクリプトが動く前から記号が出る。中断のときは出さない（`applyButtonLabel` が
+// ので、スクリプトが動く前から記号が出る。中断のときは出さない（`src/browser/dispatch.ts` が
 // `data-shortcut` 属性ごと外す）。
 const DISPATCH_SEND_SHORTCUT_HINT = "⌘⏎"
-
-// 入力欄の `/` 補完で表示する候補の上限（docs/requirements.md 4.2「入力欄」）。
-const MAX_COMMAND_SUGGESTIONS = 10
-const COMMAND_SUGGESTION_ITEM_CLASS = "dispatch-suggestion-item"
-const COMMAND_SUGGESTION_NAME_CLASS = "dispatch-suggestion-name"
-const COMMAND_SUGGESTION_DESCRIPTION_CLASS = "dispatch-suggestion-description"
 
 /**
  * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
@@ -566,26 +224,28 @@ const COMMAND_SUGGESTION_DESCRIPTION_CLASS = "dispatch-suggestion-description"
  * （2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していたが、「気づかない」
  * 「入力欄と離れている」という理由で使いづらかった。答えるのは入力の動作なので、入力欄の側に
  * 置く）。ここは箱の置き場所（空の要素）を出すだけで、中身は `PENDING_ANSWER_EVENT_PATH` の
- * SSE で差し替える（{@link dispatchScript}）。**入力欄は消さない**（答え待ちの間も
+ * SSE で差し替える（`src/browser/dispatch.ts`）。**入力欄は消さない**（答え待ちの間も
  * 「中断」は押せる）。
  *
- * **`/` コマンド補完の候補一覧（{@link commandSuggestionsScript}）は、`<textarea>` の上に
- * 重ねるポップアップにする**（答え待ちの箱とは別の位置。docs/requirements.md 4.2
- * 「入力欄」）。中身はブラウザ側が組み立てる（`hidden` で始まり、候補が無いときも隠れたまま）。
- * **`<textarea>` と同じ包み（`.dispatch-text-wrap`、`position: relative`）に入れ、textarea の
- * 下端に底を合わせて上へ伸びる**（`STYLE` の `.dispatch-suggestions`）。textarea の上に
- * 伸ばすと領域（`.layout-region` の `overflow-y: auto`）の外に出て切られるため、textarea の
- * 中に重ねる。打っている文字は textarea の上端にあるので隠れない。候補は `position: absolute`
- * で `<form>` の高さ計算（flex）に加わらず、表示・非表示で textarea は動かない。
+ * **`/` コマンド補完の候補一覧は、`<textarea>` の上に重ねるポップアップにする**（答え待ちの箱とは
+ * 別の位置。docs/requirements.md 4.2「入力欄」）。中身はブラウザ側が組み立てる（`hidden` で
+ * 始まり、候補が無いときも隠れたまま）。**`<textarea>` と同じ包み（`.dispatch-text-wrap`、
+ * `position: relative`）に入れ、textarea の下端に底を合わせて上へ伸びる**（`STYLE` の
+ * `.dispatch-suggestions`）。textarea の上に伸ばすと領域（`.layout-region` の
+ * `overflow-y: auto`）の外に出て切られるため、textarea の中に重ねる。打っている文字は
+ * textarea の上端にあるので隠れない。候補は `position: absolute` で `<form>` の高さ計算（flex）
+ * に加わらず、表示・非表示で textarea は動かない。
  *
  * **経過時間の表示は送信ボタンと同じ行（`.dispatch-row`）に出す**（2026-09-12 T-075 決定。
- * 以前はサイドバーの「セッション情報」にあったが、ユーザーの指示で送信ボタンの隣へ移した。
- * サイドバーと入力欄は領域が別で SSE の経路も別なので、開始・終了時刻は `TURN_STATUS_EVENT_PATH`
- * に載せて運ぶ（{@link dispatchScript}）。ここでは空の枠（`-`）を出すだけで、中身の計算は
- * 持たない。
+ * 以前はサイドバーの「セッション情報」にあったが、ユーザーの指示で送信ボタンの隣へ移した）。
+ * ここでは空の枠（`-`）を出すだけで、中身の計算はブラウザ側が持つ。
+ *
+ * **経路・中断ラベル・所要ラベルは `data-` 属性で渡す**（送信ラベル・経過中ラベル・
+ * Command+Enter の記号は、この関数がすでに出している初期値をブラウザ側がそのまま読むので、
+ * 二重には持たない。値の渡し方を統一した経緯は `src/browser/dispatch.ts` の冒頭コメント）。
  */
 function dispatchRegionHtml(): string {
-  return `<section class="layout-region layout-dispatch" id="${DISPATCH_REGION_ID}" data-pending="no">
+  return `<section class="layout-region layout-dispatch" id="${DISPATCH_REGION_ID}" data-pending="no" data-prompt-path="${PROMPT_PATH}" data-interrupt-path="${INTERRUPT_PATH}" data-turn-status-path="${TURN_STATUS_EVENT_PATH}" data-pending-answer-path="${PENDING_ANSWER_EVENT_PATH}" data-answer-path="${ANSWER_PATH}" data-commands-path="${COMMANDS_PATH}" data-interrupt-label="${DISPATCH_INTERRUPT_LABEL}" data-finished-label="${TURN_FINISHED_LABEL}">
 <div class="dispatch-pending" id="${DISPATCH_PENDING_ID}"></div>
 <form id="${DISPATCH_FORM_ID}">
   <div class="dispatch-text-wrap">
@@ -602,418 +262,6 @@ function dispatchRegionHtml(): string {
   </div>
 </form>
 </section>`
-}
-
-/**
- * 入力欄の配線。**会話の内容（依頼の文面）はブラウザから直接サーバへ POST するだけで、
- * この関数自身（サーバ側で文字列として組み立てる部分）には一切現れない**（docs/coding-standards.md
- * 「会話内容の扱い」）。ここに埋め込むのは経路（`PROMPT_PATH` / `INTERRUPT_PATH` /
- * `TURN_STATUS_EVENT_PATH` / `PENDING_ANSWER_EVENT_PATH`）と要素IDだけ。
- *
- * - **送信と中断は同時に押せる状態を作らない。** 送信ボタン1つを、`TURN_STATUS_EVENT_PATH` から
- *   届く「進行中か」で「送信」／「中断」に切り替える。**押した瞬間に切り替えない**（サーバ側の
- *   駆動イベントで実際にターンが始まった／終わったことが確認できてから切り替える。
- *   docs/requirements.md 4.7）
- * - **Command+Enter（`event.metaKey`）で送信、Enter 単独と Shift+Enter はどちらも既定動作の
- *   改行のまま**（`preventDefault` しない。2026-09-12 決定。ユーザーの指示で T-051 の
- *   「Enter で送信」を覆した）。IME の変換確定の Command+Enter は送信にしない
- *   （`event.isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
- * - **送信ボタンには Command+Enter を示す記号（`DISPATCH_SEND_SHORTCUT_HINT`）を添える。**
- *   ラベルの文字列（`textContent`）とは分けて `data-shortcut` 属性に持たせ、`STYLE` の
- *   `.dispatch-send[data-shortcut]::after` で弱い色で描く。中断のときは `data-shortcut` 属性
- *   ごと外す（中断は Command+Enter では起きないため）
- * - **送信後は入力欄を空にしてフォーカスを残す。送信に失敗したら文字列は消さない**
- *   （送ったのに消えて書き直しになる、ということが起きないようにする）
- * - **中断ボタンは `INTERRUPT_PATH` を叩くだけ。** ボタンの表示は次に届く駆動の状態で戻る
- *   （ここで自分から「中断した」表示に固定しない）
- * - **答え待ちの箱（`PENDING_ANSWER_EVENT_PATH`）は `#${DISPATCH_PENDING_ID}` の中身を
- *   丸ごと差し替える。** 気づける印は2つ（2026-09-11 決定。フォーカスは奪わず、音は出さない）。
- *   (1) 入力欄の領域（`#${DISPATCH_REGION_ID}`）の `data-pending` 属性を "yes"/"no" に切り替え、
- *   許可モードの警告色とは別の色で枠を目立たせる（`STYLE` の `.layout-dispatch[data-pending="yes"]`）。
- *   (2) タブのタイトルの先頭に「● 」を付け、答え待ちが消えたら**最初に読んだ元のタイトル**へ戻す
- *   （読むのは1回だけ。差し替え後の自分の変更を次回の「元」だと誤読しないようにする）。
- *   ボタンを押したときの配線自体は {@link pendingAnswerScript} が持つ（ここでは呼ぶだけ）。
- * - **`/` コマンド補完（{@link commandSuggestionsScript}）は同じ `<textarea>` の `keydown` を
- *   共有する。** 候補が開いている間は候補側の分岐で `return` し、閉じていれば今までどおり
- *   送信の判定に落ちる1つのリスナーにまとめてある。**候補が開いている間の Enter は Tab と同じく
- *   確定だけ**（送信しない。送信は Command+Enter に一本化したので、確定と送信を同じキーで
- *   兼ねない。docs/requirements.md 4.2「入力欄」(3)。2026-09-12 決定でこちらへ変更）。
- * - **経過時間の表示（送信ボタンと同じ行）もここで配線する**（2026-09-12 T-075
- *   決定。以前はサイドバーの `sessionInfoScript` にあった）。`TURN_STATUS_EVENT_PATH` の
- *   `update` から届く `{ turnStartedAt, turnFinishedAt }`（{@link encodeTurnStatus} の JSON。
- *   `undefined` は `null` で届く）をそのまま変数に持ち、`inProgress` もここから導く
- *   （`turnStartedAt` があって `turnFinishedAt` が無ければ進行中）。**カウントアップは
- *   ブラウザ側で1秒ごとに刻む**（`Date.now()` を呼ぶのは副作用なので `src/view.ts` の
- *   純粋関数には置けない。T-055 の決定を踏襲）。終了時刻があればそれを終点に固定し、
- *   ラベルを「経過」→「所要」に書き換える。書式（`N秒` / `M分SS秒`）も T-055 のまま
- *   （60秒未満は `N秒`、以降は `M分SS秒`）。
- */
-function dispatchScript(): string {
-  return `  {
-    const form = document.getElementById(${JSON.stringify(DISPATCH_FORM_ID)})
-    const textArea = document.getElementById(${JSON.stringify(DISPATCH_TEXT_ID)})
-    const sendButton = document.getElementById(${JSON.stringify(DISPATCH_SEND_ID)})
-    const status = document.getElementById(${JSON.stringify(DISPATCH_STATUS_ID)})
-    const pendingRegion = document.getElementById(${JSON.stringify(DISPATCH_REGION_ID)})
-    const pendingBox = document.getElementById(${JSON.stringify(DISPATCH_PENDING_ID)})
-    const suggestionsBox = document.getElementById(${JSON.stringify(DISPATCH_SUGGESTIONS_ID)})
-    const elapsedLabel = document.getElementById(${JSON.stringify(DISPATCH_ELAPSED_LABEL_ID)})
-    const elapsedSpan = document.getElementById(${JSON.stringify(DISPATCH_ELAPSED_ID)})
-    const originalTitle = document.title
-    let inProgress = false
-    let turnStartedAt = null
-    let turnFinishedAt = null
-
-    function applyButtonLabel() {
-      sendButton.textContent = inProgress
-        ? ${JSON.stringify(DISPATCH_INTERRUPT_LABEL)}
-        : ${JSON.stringify(DISPATCH_SEND_LABEL)}
-      if (inProgress) {
-        delete sendButton.dataset.shortcut
-      } else {
-        sendButton.dataset.shortcut = ${JSON.stringify(DISPATCH_SEND_SHORTCUT_HINT)}
-      }
-    }
-    applyButtonLabel()
-
-    function formatElapsed(totalSeconds) {
-      if (totalSeconds < 60) {
-        return totalSeconds + "秒"
-      }
-      const minutes = Math.floor(totalSeconds / 60)
-      const seconds = totalSeconds % 60
-      return minutes + "分" + String(seconds).padStart(2, "0") + "秒"
-    }
-
-    function tickElapsed() {
-      if (turnStartedAt === null) {
-        elapsedSpan.textContent = "-"
-        return
-      }
-      const endsAt = turnFinishedAt === null ? Date.now() : turnFinishedAt
-      elapsedLabel.textContent =
-        turnFinishedAt === null ? ${JSON.stringify(TURN_ELAPSED_LABEL)} : ${JSON.stringify(TURN_FINISHED_LABEL)}
-      const elapsedSeconds = Math.max(0, Math.floor((endsAt - turnStartedAt) / 1000))
-      elapsedSpan.textContent = formatElapsed(elapsedSeconds)
-    }
-    tickElapsed()
-    // ブラウザには必ずあるが、スクリプトだけを取り出して動かすテストのサンドボックスには無い
-    // （src/view.ts は表示の中身だけを決め、実行環境の前提はここでは張らない）。
-    if (typeof setInterval === "function") {
-      setInterval(tickElapsed, 1000)
-    }
-
-    new EventSource(${JSON.stringify(TURN_STATUS_EVENT_PATH)}).addEventListener("update", (event) => {
-      const turnStatus = JSON.parse(event.data)
-      turnStartedAt = turnStatus.turnStartedAt
-      turnFinishedAt = turnStatus.turnFinishedAt
-      inProgress = turnStartedAt !== null && turnFinishedAt === null
-      applyButtonLabel()
-      tickElapsed()
-    })
-
-${commandSuggestionsScript()}
-
-    new EventSource(${JSON.stringify(PENDING_ANSWER_EVENT_PATH)}).addEventListener("update", (event) => {
-      const hasPending = event.data !== ""
-      pendingBox.innerHTML = event.data
-      pendingRegion.dataset.pending = hasPending ? "yes" : "no"
-      document.title = hasPending ? "● " + originalTitle : originalTitle
-      if (hasPending) {
-        closeSuggestions()
-      }
-    })
-
-    async function sendPrompt(text) {
-      status.textContent = "送信中…"
-      sendButton.disabled = true
-      try {
-        const response = await fetch(${JSON.stringify(PROMPT_PATH)}, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text }),
-        })
-        const data = await response.json()
-        if (data.ok) {
-          textArea.value = ""
-          closeSuggestions()
-          status.textContent = "送信済み"
-        } else {
-          status.textContent = "送信できなかった: " + data.reason
-        }
-      } catch {
-        status.textContent = "送信できなかった"
-      } finally {
-        sendButton.disabled = false
-        applyButtonLabel()
-        textArea.focus()
-      }
-    }
-
-    async function sendInterrupt() {
-      status.textContent = "中断中…"
-      sendButton.disabled = true
-      try {
-        const response = await fetch(${JSON.stringify(INTERRUPT_PATH)}, { method: "POST" })
-        const data = await response.json()
-        status.textContent = data.ok ? "中断した" : "中断できなかった: " + data.reason
-      } catch {
-        status.textContent = "中断できなかった"
-      } finally {
-        sendButton.disabled = false
-        applyButtonLabel()
-      }
-    }
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault()
-      if (inProgress) {
-        return
-      }
-      const text = textArea.value.trim()
-      if (text === "") {
-        return
-      }
-      sendPrompt(text)
-    })
-
-    sendButton.addEventListener("click", (event) => {
-      if (inProgress) {
-        event.preventDefault()
-        sendInterrupt()
-      }
-    })
-
-    textArea.addEventListener("input", (event) => {
-      if (event.isComposing) {
-        return
-      }
-      updateSuggestions()
-    })
-
-    textArea.addEventListener("keydown", (event) => {
-      const composing = event.isComposing || event.keyCode === 229
-      if (!composing && suggestionMatches.length > 0) {
-        if (event.key === "ArrowDown") {
-          event.preventDefault()
-          moveSuggestionSelection(1)
-          return
-        }
-        if (event.key === "ArrowUp") {
-          event.preventDefault()
-          moveSuggestionSelection(-1)
-          return
-        }
-        if (event.key === "Tab") {
-          event.preventDefault()
-          confirmSelectedSuggestion()
-          return
-        }
-        if (event.key === "Enter") {
-          event.preventDefault()
-          confirmSelectedSuggestion()
-          return
-        }
-        if (event.key === "Escape") {
-          closeSuggestions()
-          return
-        }
-      }
-      if (event.key !== "Enter" || composing || !event.metaKey) {
-        return
-      }
-      event.preventDefault()
-      if (!inProgress) {
-        form.requestSubmit()
-      }
-    })
-  }
-${pendingAnswerScript(DISPATCH_PENDING_ID)}`
-}
-
-/**
- * `/` コマンド補完。**入力の先頭が `/` で、まだ空白が無いときだけ**候補を出す
- * （docs/requirements.md 4.2「入力欄」）。候補は `COMMANDS_PATH` から取りに行き、
- * 0件でない結果はセッション中キャッシュする（`allCommandsPromise`）。1件は
- * `{ name, description }`。
- *
- * - **0件を掴んだときはキャッシュせず、次に候補を出そうとしたときに取り直す。** 最初の依頼を
- *   送る前は `GET /api/commands` が0件を返すことがある（`init` がまだ届いていないため。
- *   `src/session-view.ts` の `commandSuggestions`）。ここを永久キャッシュすると、依頼を送って
- *   候補が用意できたあとも、そのタブでは空のまま固定されてリロードするまで戻らない
- *   （2026-09-12 に見つかった不具合）。1件以上の結果だけをキャッシュすることで、
- *   `/` を打つたびに（＝答えを待っている間だけの短い頻度で）取り直しつつ、いったん埋まれば
- *   以降は取り直さない
- *
- * - **前方一致を先に、続けて部分一致を出す。各グループの中はアルファベット順で、合計
- *   最大 {@link MAX_COMMAND_SUGGESTIONS} 件**（`matchingCommands`。Claude Code の TUI の
- *   絞り方に合わせた。2026-09-12 決定）
- * - **答え待ちの箱がある間は出さない**（`shouldShowSuggestions` が `pendingRegion` の
- *   `data-pending` を見る。箱と重ならない位置に出す）
- * - キー操作（上下・Tab・Enter・Esc）の配線は呼び出し側（{@link dispatchScript}）の
- *   `keydown` リスナーが持つ（送信の Enter と同じリスナーを共有するため）。**Tab は確定だけ、
- *   Enter は確定して送信する**（TUI と同じ。呼び出し側の分岐を参照）。マウスでの確定
- *   （`<li>` の `mousedown`）は送信と競合しないので、ここで直接配線する
- * - **1件は「名前＋説明」の1行**（説明は薄い色、幅が足りなければ省略）。説明は SDK が返した
- *   ものだけを出し、持たないコマンドは名前だけで出る（tsukumo 側に説明の表を持たない。
- *   `CommandDescription`）
- * - **候補の文字列は `escapeCommandLabel` を通してから組み立てる**（コマンド名も説明も SDK が
- *   返す外部由来の値なので、HTML として解釈されない形にする）
- */
-function commandSuggestionsScript(): string {
-  return `    let allCommandsPromise = null
-    let suggestionMatches = []
-    let suggestionIndex = -1
-
-    function loadCommands() {
-      if (allCommandsPromise === null) {
-        allCommandsPromise = fetch(${JSON.stringify(COMMANDS_PATH)})
-          .then((response) => response.json())
-          .then((data) =>
-            Array.isArray(data.commands)
-              ? data.commands.filter((command) => command !== null && typeof command === "object")
-              : [],
-          )
-          .catch(() => [])
-          .then((commands) => {
-            // 0件は「まだ用意できていない」としてキャッシュせず、次回また取りに行く
-            // （最初の依頼を送る前は 0件が正当な応答なので、リロードせずに回復させる）。
-            if (commands.length === 0) {
-              allCommandsPromise = null
-            }
-            return commands
-          })
-      }
-      return allCommandsPromise
-    }
-
-    function containsWhitespace(text) {
-      return (
-        text.indexOf(" ") !== -1 ||
-        text.indexOf("\\t") !== -1 ||
-        text.indexOf("\\n") !== -1 ||
-        text.indexOf("\\r") !== -1
-      )
-    }
-
-    function shouldShowSuggestions(value) {
-      return (
-        value.startsWith("/") && !containsWhitespace(value) && pendingRegion.dataset.pending !== "yes"
-      )
-    }
-
-    function byName(left, right) {
-      return left.name < right.name ? -1 : left.name > right.name ? 1 : 0
-    }
-
-    function matchingCommands(commands, value) {
-      const prefix = value.slice(1)
-      const prefixMatches = commands
-        .filter((command) => command.name.startsWith(prefix))
-        .sort(byName)
-      const partialMatches = commands
-        .filter((command) => !command.name.startsWith(prefix) && command.name.includes(prefix))
-        .sort(byName)
-      return [...prefixMatches, ...partialMatches].slice(0, ${JSON.stringify(MAX_COMMAND_SUGGESTIONS)})
-    }
-
-    function escapeCommandLabel(text) {
-      return text
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-    }
-
-    function renderSuggestions(matches) {
-      suggestionMatches = matches
-      suggestionIndex = matches.length === 0 ? -1 : 0
-      if (matches.length === 0) {
-        suggestionsBox.hidden = true
-        suggestionsBox.innerHTML = ""
-        return
-      }
-      suggestionsBox.innerHTML = matches
-        .map(
-          (command, index) =>
-            '<li class="${COMMAND_SUGGESTION_ITEM_CLASS}' +
-            (index === 0 ? " is-selected" : "") +
-            '" data-index="' +
-            index +
-            '"><span class="${COMMAND_SUGGESTION_NAME_CLASS}">/' +
-            escapeCommandLabel(command.name) +
-            "</span>" +
-            (typeof command.description === "string" && command.description !== ""
-              ? '<span class="${COMMAND_SUGGESTION_DESCRIPTION_CLASS}">' +
-                escapeCommandLabel(command.description) +
-                "</span>"
-              : "") +
-            "</li>",
-        )
-        .join("")
-      suggestionsBox.hidden = false
-    }
-
-    function closeSuggestions() {
-      suggestionMatches = []
-      suggestionIndex = -1
-      suggestionsBox.hidden = true
-      suggestionsBox.innerHTML = ""
-    }
-
-    function moveSuggestionSelection(delta) {
-      if (suggestionMatches.length === 0) {
-        return
-      }
-      suggestionIndex =
-        (suggestionIndex + delta + suggestionMatches.length) % suggestionMatches.length
-      const items = suggestionsBox.querySelectorAll(".${COMMAND_SUGGESTION_ITEM_CLASS}")
-      for (let index = 0; index < items.length; index += 1) {
-        items[index].classList.toggle("is-selected", index === suggestionIndex)
-      }
-      const selected = items[suggestionIndex]
-      if (selected !== undefined && typeof selected.scrollIntoView === "function") {
-        selected.scrollIntoView({ block: "nearest" })
-      }
-    }
-
-    function confirmSelectedSuggestion(index = suggestionIndex) {
-      const command = suggestionMatches[index]
-      if (command === undefined) {
-        return
-      }
-      textArea.value = "/" + command.name + " "
-      closeSuggestions()
-      textArea.focus()
-    }
-
-    function updateSuggestions() {
-      const value = textArea.value
-      if (!shouldShowSuggestions(value)) {
-        closeSuggestions()
-        return
-      }
-      loadCommands().then((commands) => {
-        // fetch を待つ間に入力が変わっていたら、そのときの値で判定し直す。
-        if (!shouldShowSuggestions(textArea.value)) {
-          return
-        }
-        renderSuggestions(matchingCommands(commands, textArea.value))
-      })
-    }
-
-    // マウスでの確定。mousedown の既定動作（フォーカス移動）を preventDefault で止め、
-    // textarea にフォーカスを残す。押した項目の data-index で、キーボードの選択位置とは
-    // 独立に確定する。
-    suggestionsBox.addEventListener("mousedown", (event) => {
-      const item = event.target.closest(".${COMMAND_SUGGESTION_ITEM_CLASS}")
-      if (item === null) {
-        return
-      }
-      event.preventDefault()
-      confirmSelectedSuggestion(Number(item.dataset.index))
-    })
-`
 }
 
 /**
@@ -1551,214 +799,6 @@ function modelSelectHtml(model: string | undefined): string {
 <select id="${MODEL_SELECT_ID}" class="model-select">${options}</select>
 <span class="model-select-status" role="status" aria-live="polite"></span>
 </div>`
-}
-
-/**
- * 答え待ちの箱の配線。入力欄の上の答え待ちの箱の要素（`elementId`）に対するイベント委譲だけで書く
- * （箱の中身は `PENDING_ANSWER_EVENT_PATH` の SSE で丸ごと差し替わるため、個々のボタンに直接
- * リスナーを付けても差し替えのたびに失われる。`mainTurnsScript` と同じ理由）。**呼ぶ側は
- * {@link dispatchScript}**（2026-09-11 決定。以前はキャラビュー側から呼んでいた）。
- *
- * - **押した瞬間に無効化し、二重送信を防ぐ。** 失敗したら押せる状態に戻す
- * - **単一選択（質問が1つだけで単一選択）は選択肢を押した瞬間に送る。** それ以外は選択・入力を
- *   ブラウザ側に溜め、全部答えてから「答える」ボタンで送る
- * - **`multiSelect` は選んだ選択肢を「、」でつないだ1つの文字列にする**（`answersRecord` は
- *   1問につき1つの文字列しか受け取らない。`src/pending-answer.ts`）
- *
- * 許可モード・モデルの `<select>` はサイドバーへ移った（{@link sessionInfoScript}）。
- */
-function pendingAnswerScript(elementId: string): string {
-  return `  {
-    const el = document.getElementById(${JSON.stringify(elementId)})
-
-    const box = () => el.querySelector(".${PENDING_ANSWER_ELEMENT_CLASS}")
-    const totalQuestions = () => el.querySelectorAll(".question-card").length
-
-    const answerFor = (index) => {
-      const card = el.querySelector('.question-card[data-question-index="' + index + '"]')
-      if (card === null) {
-        return ""
-      }
-      if (card.dataset.multiSelect === "true") {
-        const labels = [...card.querySelectorAll(".question-option-button.is-selected")].map(
-          (button) => button.dataset.label,
-        )
-        const other = card.querySelector(".question-other-input")
-        const otherValue = other === null ? "" : other.value.trim()
-        if (otherValue !== "") {
-          labels.push(otherValue)
-        }
-        return labels.join("、")
-      }
-      const selected = card.querySelector(".question-option-button.is-selected")
-      if (selected !== null) {
-        return selected.dataset.label
-      }
-      const other = card.querySelector(".question-other-input")
-      return other === null ? "" : other.value.trim()
-    }
-
-    const updateSubmitState = () => {
-      const submit = el.querySelector(".pending-answer-submit")
-      if (submit === null) {
-        return
-      }
-      let allAnswered = true
-      for (let index = 0; index < totalQuestions(); index += 1) {
-        if (answerFor(index) === "") {
-          allAnswered = false
-          break
-        }
-      }
-      submit.disabled = !allAnswered
-    }
-
-    const setStatus = (text) => {
-      const status = el.querySelector(".pending-status")
-      if (status !== null) {
-        status.textContent = text
-      }
-    }
-
-    const lockPending = (locked) => {
-      for (const control of el.querySelectorAll(
-        ".pending-action, .question-option-button, .question-other-send, .question-other-input",
-      )) {
-        control.disabled = locked
-      }
-    }
-
-    const sendAnswer = (answer) => {
-      const pendingBox = box()
-      const id = pendingBox === null ? "" : pendingBox.dataset.pendingId
-      lockPending(true)
-      setStatus("送信中…")
-      fetch(${JSON.stringify(ANSWER_PATH)}, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, answer }),
-      })
-        .then((response) => response.json())
-        .then((result) => {
-          if (result.ok === true) {
-            setStatus("送った")
-            return
-          }
-          lockPending(false)
-          setStatus("送れなかった: " + result.reason)
-        })
-        .catch(() => {
-          lockPending(false)
-          setStatus("送れなかった")
-        })
-    }
-
-    el.addEventListener("click", (event) => {
-      const permissionButton = event.target.closest(".pending-permission .pending-action")
-      if (permissionButton !== null) {
-        sendAnswer(JSON.parse(permissionButton.dataset.answer))
-        return
-      }
-
-      const optionButton = event.target.closest(".question-option-button")
-      if (optionButton !== null) {
-        const card = optionButton.closest(".question-card")
-        for (const sibling of card.querySelectorAll(".question-option-button")) {
-          sibling.classList.toggle("is-selected", sibling === optionButton)
-        }
-        if (totalQuestions() === 1 && card.dataset.multiSelect !== "true") {
-          sendAnswer({ kind: "answers", labels: [optionButton.dataset.label] })
-          return
-        }
-        updateSubmitState()
-        return
-      }
-
-      const otherSend = event.target.closest(".question-other-send")
-      if (otherSend !== null) {
-        const card = otherSend.closest(".question-card")
-        const input = card.querySelector(".question-other-input")
-        const value = input === null ? "" : input.value.trim()
-        if (value === "") {
-          return
-        }
-        if (totalQuestions() === 1 && card.dataset.multiSelect !== "true") {
-          sendAnswer({ kind: "answers", labels: [value] })
-          return
-        }
-        updateSubmitState()
-        return
-      }
-
-      const submit = event.target.closest(".pending-answer-submit")
-      if (submit !== null) {
-        const labels = []
-        for (let index = 0; index < totalQuestions(); index += 1) {
-          labels.push(answerFor(index))
-        }
-        sendAnswer({ kind: "answers", labels })
-      }
-    })
-
-    el.addEventListener("input", (event) => {
-      if (event.target.classList.contains("question-other-input")) {
-        updateSubmitState()
-      }
-    })
-
-    updateSubmitState()
-  }`
-}
-
-/**
- * サイドバーのセッション情報（モデル・許可モードの `<select>`）の配線。サイドバーの要素
- * （`elementId`）に対するイベント委譲で書く（`pendingAnswerScript` と同じ理由）。
- *
- * - **許可モード・モデルの変更は `change` の瞬間に送る。** 次に届く `session-info` で
- *   `<select>` の選択が上書きされる（サーバ側の値が正になる）
- *
- * **経過時間の表示は入力欄側（{@link dispatchScript}）へ移した**（2026-09-12 T-075 決定。
- * 送信ボタンと同じ行へ出す。サイドバーはこの状態を持たない）。
- */
-function sessionInfoScript(elementId: string): string {
-  return `  {
-    const el = document.getElementById(${JSON.stringify(elementId)})
-
-    function wireSelect(selectClass, statusClass, path, bodyOf) {
-      el.addEventListener("change", (event) => {
-        if (!event.target.classList.contains(selectClass)) {
-          return
-        }
-        const select = event.target
-        const status = el.querySelector("." + statusClass)
-        select.disabled = true
-        if (status !== null) {
-          status.textContent = "切り替え中…"
-        }
-        fetch(path, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(bodyOf(select.value)),
-        })
-          .then((response) => response.json())
-          .then((result) => {
-            select.disabled = false
-            if (status !== null) {
-              status.textContent = result.ok === true ? "" : "切り替えられなかった: " + result.reason
-            }
-          })
-          .catch(() => {
-            select.disabled = false
-            if (status !== null) {
-              status.textContent = "切り替えられなかった"
-            }
-          })
-      })
-    }
-
-    wireSelect("permission-mode-select", "permission-mode-status", ${JSON.stringify(PERMISSION_MODE_PATH)}, (mode) => ({ mode }))
-    wireSelect("model-select", "model-select-status", ${JSON.stringify(MODEL_PATH)}, (model) => ({ model }))
-  }`
 }
 
 /**
@@ -2316,9 +1356,9 @@ const STYLE = `
   /* まとめたレイアウト（buildLayoutPage）。上段（メイン・サイドバー）と下段（キャラビュー・
      入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid
      （.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は CSS カスタム
-     プロパティで持つ（layoutScript が3本の仕切りのドラッグに応じて書き換える）。
-     ここに書いた var() の第2引数（フォールバック値）は layoutScript の既定値
-     （LAYOUT_SPLIT_DEFAULTS）と一致させること。 */
+     プロパティで持つ（src/browser/layout-resizer.ts が3本の仕切りのドラッグに応じて書き換える）。
+     ここに書いた var() の第2引数（フォールバック値）は layout-resizer.ts の既定値
+     （DEFAULTS）と一致させること。 */
   .layout-grid {
     position: relative;
     display: grid;

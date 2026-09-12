@@ -1,9 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import vm from "node:vm"
 
+import {
+  bindDispatch,
+  type DispatchConfig,
+  type DispatchElements,
+} from "../src/browser/dispatch.ts"
+import { bindLayoutResizer, type LayoutResizerElements } from "../src/browser/layout-resizer.ts"
+import { bindMainTurns } from "../src/browser/main-turns.ts"
 import { subscribeAllRegions, subscribeRegion } from "../src/browser/region-subscription.ts"
 import { type MainViewEntry } from "../src/session-view.ts"
 import {
+  ANSWER_PATH,
   buildCharacterBody,
   buildLayoutPage,
   buildMainBody,
@@ -15,7 +22,9 @@ import {
   isViewName,
   LAYOUT_PATH,
   type LayoutBodies,
+  MODEL_PATH,
   PENDING_ANSWER_EVENT_PATH,
+  PERMISSION_MODE_PATH,
   PROMPT_PATH,
   encodeTurnStatus,
   type SidebarData,
@@ -163,28 +172,6 @@ function makeFakeEventSourceController(): {
     EventSourceClass: FakeEventSource,
     dispatch: (url, data) => {
       handlers.get(url)?.({ data })
-    },
-  }
-}
-
-/**
- * `Idiomorph`（グローバル）の代役。**実際に DOM を morph はしない**（vm のサンドボックスに
- * 本物の DOM が無い）。渡された要素に {@link FakeElement.morph} があればそれを呼び、
- * 無ければ（`makeInertStub` の無害な代役）`innerHTML` へそのまま代入する。
- */
-function makeFakeIdiomorph(): {
-  readonly morph: (
-    target: { morph?: (value: string) => void; innerHTML?: string },
-    content: string,
-  ) => void
-} {
-  return {
-    morph: (target, content) => {
-      if (typeof target.morph === "function") {
-        target.morph(content)
-        return
-      }
-      target.innerHTML = content
     },
   }
 }
@@ -461,8 +448,17 @@ function makeFakeSuggestionsBoxElement(): FakeSuggestionsBoxElement {
   }
 }
 
+/**
+ * `src/browser/dispatch.ts` の {@link bindDispatch} を直接呼ぶ（2026-09-12 T-084。以前はページに
+ * 埋め込まれた文字列を vm で動かしていたが、`bindDispatch` は本物の TypeScript の関数なので
+ * そのまま呼べる）。`EventSource` / `fetch` / `document.title` はブラウザのグローバルなので、
+ * 呼び出し前に代役へ差し替える（呼び出し側の `beforeEach`/`afterEach` で元に戻す）。
+ *
+ * **送信ラベル・経過中ラベル・Command+Enter の記号は、`bindDispatch` が要素の初期状態
+ * （`textContent` / `dataset.shortcut`）から読む**（`src/view.ts` が初期 HTML に出す値と同じ）。
+ * ここでは実際の初期 HTML と同じ値を fake 要素にあらかじめ入れておく。
+ */
 function runInputScript(
-  page: string,
   elements: {
     readonly form: FakeFormElement
     readonly textArea: FakeTextAreaElement
@@ -484,43 +480,45 @@ function runInputScript(
   readonly title: () => string
   readonly suggestionsBox: FakeSuggestionsBoxElement
 } {
-  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
-  if (scriptMatch === null || scriptMatch[1] === undefined) {
-    throw new Error("ページに <script> が無い")
-  }
+  elements.sendButton.textContent = "送信"
+  elements.sendButton.dataset.shortcut = "⌘⏎"
+  elements.elapsedLabel.textContent = "経過"
 
   const pendingBox: FakePendingBoxElement = makeInertStub()
   const pendingRegion: FakePendingRegionElement = { dataset: { pending: "no" } }
   const suggestionsBox = makeFakeSuggestionsBoxElement()
-
-  const ids = new Map<string, unknown>([
-    ["tsukumo-dispatch-form", elements.form],
-    ["tsukumo-dispatch-text", elements.textArea],
-    ["tsukumo-dispatch-send", elements.sendButton],
-    ["tsukumo-dispatch-status", elements.status],
-    ["tsukumo-dispatch-elapsed", elements.elapsed],
-    ["tsukumo-dispatch-elapsed-label", elements.elapsedLabel],
-    ["tsukumo-dispatch-pending", pendingBox],
-    ["tsukumo-view-dispatch", pendingRegion],
-    ["tsukumo-dispatch-suggestions", suggestionsBox],
-  ])
   const controller = makeFakeEventSourceController()
-  const fallback = makeInertStub()
+  const documentStub = { title: initialTitle }
 
-  const documentStub = {
-    getElementById: (id: string) => ids.get(id) ?? makeInertStub(),
-    scrollingElement: fallback,
-    documentElement: fallback,
-    title: initialTitle,
+  ;(globalThis as Record<string, unknown>)["EventSource"] = controller.EventSourceClass
+  ;(globalThis as Record<string, unknown>)["fetch"] = fetchStub
+  ;(globalThis as Record<string, unknown>)["document"] = documentStub
+
+  const config: DispatchConfig = {
+    promptPath: PROMPT_PATH,
+    interruptPath: INTERRUPT_PATH,
+    turnStatusPath: TURN_STATUS_EVENT_PATH,
+    pendingAnswerPath: PENDING_ANSWER_EVENT_PATH,
+    answerPath: ANSWER_PATH,
+    commandsPath: COMMANDS_PATH,
+    interruptLabel: "中断",
+    finishedLabel: "所要",
   }
 
-  vm.runInNewContext(scriptMatch[1], {
-    document: documentStub,
-    EventSource: controller.EventSourceClass,
-    MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
-    fetch: fetchStub,
-    localStorage: { getItem: () => null, setItem: () => {} },
-  })
+  bindDispatch(
+    {
+      form: elements.form,
+      textArea: elements.textArea,
+      sendButton: elements.sendButton,
+      status: elements.status,
+      pendingRegion,
+      pendingBox,
+      suggestionsBox,
+      elapsedLabel: elements.elapsedLabel,
+      elapsedSpan: elements.elapsed,
+    } as unknown as DispatchElements,
+    config,
+  )
 
   return {
     dispatchTurnStatus: (data) => {
@@ -649,8 +647,13 @@ type FakeLocalStorage = {
  * 要素だけ本物の代役を渡し、それ以外（3領域の購読・入力欄）が参照する要素は
  * {@link runInputScript} と同じ考え方で無害な代役に任せる。
  */
+/**
+ * `src/browser/layout-resizer.ts` の {@link bindLayoutResizer} を直接呼ぶ（2026-09-12 T-084。
+ * 以前はページに埋め込まれた文字列を vm で動かしていた）。`localStorage` はブラウザの
+ * グローバルなので、呼び出し前に代役へ差し替える（呼び出し側の `beforeEach`/`afterEach` で
+ * 元に戻す）。
+ */
 function runLayoutScript(
-  page: string,
   elements: {
     readonly grid: FakeLayoutContainer
     readonly rowTop: FakeLayoutContainer
@@ -662,38 +665,30 @@ function runLayoutScript(
   },
   localStorageStub: FakeLocalStorage,
 ): void {
-  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
-  if (scriptMatch === null || scriptMatch[1] === undefined) {
-    throw new Error("ページに <script> が無い")
-  }
+  ;(globalThis as Record<string, unknown>)["localStorage"] = localStorageStub
 
-  const ids = new Map<string, unknown>([
-    ["tsukumo-layout-grid", elements.grid],
-    ["tsukumo-layout-row-top", elements.rowTop],
-    ["tsukumo-layout-row-bottom", elements.rowBottom],
-    ["tsukumo-layout-resizer-row", elements.resizerRow],
-    ["tsukumo-layout-resizer-top", elements.resizerTop],
-    ["tsukumo-layout-resizer-bottom", elements.resizerBottom],
-    ["tsukumo-layout-reset", elements.resetButton],
-  ])
-
-  const controller = makeFakeEventSourceController()
-  const fallback = makeInertStub()
-  const documentStub = {
-    getElementById: (id: string) => ids.get(id) ?? makeInertStub(),
-    scrollingElement: fallback,
-    documentElement: fallback,
-  }
-
-  vm.runInNewContext(scriptMatch[1], {
-    document: documentStub,
-    EventSource: controller.EventSourceClass,
-    MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
-    localStorage: localStorageStub,
-  })
+  bindLayoutResizer(elements as unknown as LayoutResizerElements)
 }
 
 describe("入力欄（送信・中断）", () => {
+  // `bindDispatch` はブラウザのグローバル（`EventSource` / `fetch` / `document`）をそのまま使うので、
+  // テストの間だけ代役に差し替え、後始末する（`region-subscription.ts` のテストと同じ理由）。
+  let originalEventSource: unknown
+  let originalFetch: unknown
+  let originalDocument: unknown
+
+  beforeEach(() => {
+    originalEventSource = (globalThis as Record<string, unknown>)["EventSource"]
+    originalFetch = (globalThis as Record<string, unknown>)["fetch"]
+    originalDocument = (globalThis as Record<string, unknown>)["document"]
+  })
+
+  afterEach(() => {
+    ;(globalThis as Record<string, unknown>)["EventSource"] = originalEventSource
+    ;(globalThis as Record<string, unknown>)["fetch"] = originalFetch
+    ;(globalThis as Record<string, unknown>)["document"] = originalDocument
+  })
+
   function setUp(responses: ReadonlyMap<string, unknown> = new Map()): {
     readonly form: FakeFormElement
     readonly textArea: FakeTextAreaElement
@@ -709,7 +704,6 @@ describe("入力欄（送信・中断）", () => {
     readonly title: () => string
     readonly suggestionsBox: FakeSuggestionsBoxElement
   } {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const form = makeFakeFormElement()
     const textArea = makeFakeTextAreaElement("")
     const sendButton = makeFakeButtonElement()
@@ -725,11 +719,7 @@ describe("入力欄（送信・中断）", () => {
       pendingDataAttribute,
       title,
       suggestionsBox,
-    } = runInputScript(
-      page,
-      { form, textArea, sendButton, status, elapsed, elapsedLabel },
-      fetchStub,
-    )
+    } = runInputScript({ form, textArea, sendButton, status, elapsed, elapsedLabel }, fetchStub)
 
     return {
       form,
@@ -1223,11 +1213,6 @@ function singleRegionLayoutPage(view: ViewName, body: string): string {
   return buildLayoutPage(bodies)
 }
 
-/** `buildLayoutPage` の領域の要素 id（`src/view.ts` の `layoutRegionId` と同じ規則）。 */
-function layoutElementId(view: ViewName): string {
-  return `tsukumo-view-${view}`
-}
-
 describe("SSEの更新の適用（本文が同じなら差し替えない・morph でスクロール位置を保つ）", () => {
   // 購読の仕組みは `src/browser/region-subscription.ts`（ブラウザで動く本物の TypeScript）に
   // あるので、**モジュールを直接呼んで確かめる**（2026-09-12 T-083。以前はページに埋め込まれた
@@ -1445,13 +1430,13 @@ describe("まとめたレイアウトページ", () => {
     })
 
     expect(page).toContain(
-      '<section class="layout-region layout-main" id="tsukumo-view-main" data-event-path="/events/main"><p>作業ちゅう</p></section>',
+      '<section class="layout-region layout-main" id="tsukumo-view-main" data-event-path="/events/main" data-mermaid-src="/vendor/mermaid.min.js" data-chart-src="/vendor/chart.umd.min.js"><p>作業ちゅう</p></section>',
     )
     expect(page).toContain(
       '<section class="layout-region layout-character" id="tsukumo-view-character" data-event-path="/events/character"><p>やあ</p></section>',
     )
     expect(page).toContain(
-      '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar" data-event-path="/events/sidebar"><p>done 1 / todo 2</p></section>',
+      `<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar" data-event-path="/events/sidebar" data-permission-mode-path="${PERMISSION_MODE_PATH}" data-model-path="${MODEL_PATH}"><p>done 1 / todo 2</p></section>`,
     )
   })
 
@@ -1493,12 +1478,14 @@ describe("まとめたレイアウトページ", () => {
     expect(page).not.toContain('<select id="tsukumo-dispatch-target"')
   })
 
-  it("依頼の送信・中断を、経路の定数（PROMPT_PATH / INTERRUPT_PATH / TURN_STATUS_EVENT_PATH）宛に行う", () => {
+  it("依頼の送信・中断・経過表示の経路を data- 属性で入力欄の領域に渡す（PROMPT_PATH / INTERRUPT_PATH / TURN_STATUS_EVENT_PATH）", () => {
+    // 2026-09-12 T-084 で、これらの経路はテンプレート文字列の <script> に埋め込むのをやめ、
+    // ブラウザ側（`src/browser/dispatch.ts`）が読む data- 属性で渡すようにした。
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
-    expect(page).toContain(`fetch(${JSON.stringify(PROMPT_PATH)}`)
-    expect(page).toContain(`fetch(${JSON.stringify(INTERRUPT_PATH)}`)
-    expect(page).toContain(`new EventSource(${JSON.stringify(TURN_STATUS_EVENT_PATH)})`)
+    expect(page).toContain(`data-prompt-path="${PROMPT_PATH}"`)
+    expect(page).toContain(`data-interrupt-path="${INTERRUPT_PATH}"`)
+    expect(page).toContain(`data-turn-status-path="${TURN_STATUS_EVENT_PATH}"`)
   })
 
   it("送信ボタンは初期状態で「送信」（無効ではない。送信先の選択が要らなくなったため）", () => {
@@ -1536,6 +1523,18 @@ describe("まとめたレイアウトページ", () => {
 })
 
 describe("まとめたレイアウトページの仕切り（3本のドラッグ・既定値・localStorage）", () => {
+  // `bindLayoutResizer` はブラウザのグローバル（`localStorage`）をそのまま使うので、テストの間
+  // だけ代役に差し替え、後始末する。
+  let originalLocalStorage: unknown
+
+  beforeEach(() => {
+    originalLocalStorage = (globalThis as Record<string, unknown>)["localStorage"]
+  })
+
+  afterEach(() => {
+    ;(globalThis as Record<string, unknown>)["localStorage"] = originalLocalStorage
+  })
+
   it("3本の仕切りと、既定に戻すボタンを持つ", () => {
     const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
@@ -1551,10 +1550,8 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     runLayoutScript(
-      page,
       {
         grid,
         rowTop,
@@ -1577,11 +1574,9 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
 
   it("localStorage の値が JSON として壊れていても、例外にならず既定の比率にフォールバックする", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     expect(() =>
       runLayoutScript(
-        page,
         {
           grid,
           rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
@@ -1600,12 +1595,10 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
 
   it("localStorage の値が型違い・範囲外のときも、例外にならず既定の比率にフォールバックする", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const broken = JSON.stringify({ rowTop: 999, topLeft: "abc", bottomLeft: 35 })
 
     expect(() =>
       runLayoutScript(
-        page,
         {
           grid,
           rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
@@ -1626,11 +1619,9 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const rowBottom = makeFakeLayoutContainer({ top: 600, left: 0, width: 1000, height: 400 })
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     const saved = JSON.stringify({ rowTop: 50, topLeft: 60, bottomLeft: 45 })
 
     runLayoutScript(
-      page,
       {
         grid,
         rowTop,
@@ -1651,11 +1642,9 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("横の仕切りをドラッグすると上段/下段の高さの比率が変わり、離した時点で保存する", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     let savedValue: string | undefined
 
     runLayoutScript(
-      page,
       {
         grid,
         rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
@@ -1686,10 +1675,8 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("縦の仕切り（上段）をドラッグすると、メインとサイドバーの幅の比率が変わる", () => {
     const rowTop = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 })
     const resizerTop = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     runLayoutScript(
-      page,
       {
         grid: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 }),
         rowTop,
@@ -1713,10 +1700,8 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   it("動かせる範囲は端まで詰めきらないようにクランプする（15%〜85%）", () => {
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
 
     runLayoutScript(
-      page,
       {
         grid,
         rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
@@ -1740,11 +1725,9 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
     const grid = makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 1000 })
     const resizerRow = makeFakeResizerElement()
     const resetButton = makeFakeLayoutButtonElement()
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
     let savedValue: string | undefined
 
     runLayoutScript(
-      page,
       {
         grid,
         rowTop: makeFakeLayoutContainer({ top: 0, left: 0, width: 1000, height: 600 }),
@@ -1791,12 +1774,11 @@ type FakeTurnsHandle = {
   readonly pushUpdate: () => void
 }
 
-function runMainTurnsScript(page: string, initialTurnIds: readonly string[]): FakeTurnsHandle {
-  const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
-  if (scriptMatch === null || scriptMatch[1] === undefined) {
-    throw new Error("ページに <script> が無い")
-  }
-
+/**
+ * `src/browser/main-turns.ts` の {@link bindMainTurns} を直接呼ぶ（2026-09-12 T-084。以前は
+ * ページに埋め込まれた文字列を vm で動かしていた）。
+ */
+function runMainTurnsScript(initialTurnIds: readonly string[]): FakeTurnsHandle {
   type FakeTab = {
     readonly dataset: { readonly turnId: string }
     readonly classList: { readonly toggle: (name: string, force: boolean) => void }
@@ -1847,22 +1829,14 @@ function runMainTurnsScript(page: string, initialTurnIds: readonly string[]): Fa
   }
 
   const observer = makeFakeMutationObserverController()
-  const controller = makeFakeEventSourceController()
-  const mainElementId = layoutElementId("main")
-  // まとめたレイアウトページの <script> にはメインビュー以外の配線
-  // （layoutScript・dispatchScript・character/sidebar の購読）も同居している。ここで
-  // 見たいのはメインビューのタブ制御だけなので、それ以外の id は無害な代役
-  // （{@link makeInertStub}）で埋め、実行はするが何も確かめない。
-  vm.runInNewContext(scriptMatch[1], {
-    document: {
-      getElementById: (id: string) => (id === mainElementId ? element : makeInertStub()),
-      scrollingElement: element,
-      documentElement: element,
-    },
-    EventSource: controller.EventSourceClass,
-    MutationObserver: observer.MutationObserverClass,
-    Idiomorph: makeFakeIdiomorph(),
-  })
+
+  ;(globalThis as Record<string, unknown>)["MutationObserver"] = observer.MutationObserverClass
+  ;(globalThis as Record<string, unknown>)["document"] = {
+    scrollingElement: element,
+    documentElement: element,
+  }
+
+  bindMainTurns(element as unknown as Element)
 
   return {
     setTurns,
@@ -1886,10 +1860,23 @@ function runMainTurnsScript(page: string, initialTurnIds: readonly string[]): Fa
 }
 
 describe("メインビューのタブの選択（push で戻らない・新しいやり取りで先頭へ）", () => {
-  const pageWithTurns = () => singleRegionLayoutPage("main", buildMainBody([]))
+  // `bindMainTurns` はブラウザのグローバル（`MutationObserver` / `document`）をそのまま使うので、
+  // テストの間だけ代役に差し替え、後始末する。
+  let originalMutationObserver: unknown
+  let originalDocument: unknown
+
+  beforeEach(() => {
+    originalMutationObserver = (globalThis as Record<string, unknown>)["MutationObserver"]
+    originalDocument = (globalThis as Record<string, unknown>)["document"]
+  })
+
+  afterEach(() => {
+    ;(globalThis as Record<string, unknown>)["MutationObserver"] = originalMutationObserver
+    ;(globalThis as Record<string, unknown>)["document"] = originalDocument
+  })
 
   it("最初は今回（左端）のやり取りが選ばれている", () => {
-    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    const handle = runMainTurnsScript(["3", "2", "1"])
     handle.pushUpdate()
 
     expect(handle.activeTabId()).toBe("3")
@@ -1897,7 +1884,7 @@ describe("メインビューのタブの選択（push で戻らない・新し�
   })
 
   it("過去のタブを選ぶとそのやり取りだけが見え、先頭から読める位置に戻る", () => {
-    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    const handle = runMainTurnsScript(["3", "2", "1"])
     handle.pushUpdate()
     handle.setScrollTop(400)
 
@@ -1908,7 +1895,7 @@ describe("メインビューのタブの選択（push で戻らない・新し�
   })
 
   it("本文が差し替わっても、選んでいた過去のタブが選ばれたまま残る", () => {
-    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    const handle = runMainTurnsScript(["3", "2", "1"])
     handle.pushUpdate()
     handle.clickTab("2")
 
@@ -1920,7 +1907,7 @@ describe("メインビューのタブの選択（push で戻らない・新し�
   })
 
   it("新しいやり取りが始まると、今回を見ていた人は新しい先頭へ移る", () => {
-    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    const handle = runMainTurnsScript(["3", "2", "1"])
     handle.pushUpdate()
     handle.setScrollTop(400)
 
@@ -1932,7 +1919,7 @@ describe("メインビューのタブの選択（push で戻らない・新し�
   })
 
   it("過去のタブを見ている間は、新しいやり取りが始まっても動かさない", () => {
-    const handle = runMainTurnsScript(pageWithTurns(), ["3", "2", "1"])
+    const handle = runMainTurnsScript(["3", "2", "1"])
     handle.pushUpdate()
     handle.clickTab("1")
     handle.setScrollTop(400)

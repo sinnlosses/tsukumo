@@ -5,8 +5,18 @@
 // 分ける。こうしておくと、仕組みの側はテストから素直に import できる（入口を import すると
 // その場でページを触り始めてしまう）。
 //
-// **移してくるスクリプトが増えたら、ここに1行ずつ足す**（T-084）。
+// **移してくるスクリプトが増えたら、ここに1行ずつ足す。**
 
+import { wireDispatch } from "./dispatch.ts"
+import { wireLayoutResizer } from "./layout-resizer.ts"
+import { wireMainTurns } from "./main-turns.ts"
 import { subscribeAllRegions } from "./region-subscription.ts"
+import { wireReportRenderers } from "./report-renderers.ts"
+import { wireSessionInfo } from "./session-info.ts"
 
 subscribeAllRegions()
+wireLayoutResizer()
+wireMainTurns()
+wireReportRenderers()
+wireDispatch()
+wireSessionInfo()
