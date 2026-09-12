@@ -3190,3 +3190,488 @@ T-046 の判断そのものはユーザーが実際に使った感想が要る�
 - `~/.claude/settings.json` を触らない
 - **決定はしない。** T-046 がこの表を読んで決める。`docs/requirements.md` 7章の未決事項も動かさない
 - サブエージェントに委譲してよい。`/loop` に載せてよい
+
+## T-042 旧経路（transcript 追従・状態ファイル・hook・Orca 経由の送信）を撤去する。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: T-038 / T-039 / T-040
+- **evidence**:
+
+  撤去: src/transcript.ts / src/state.ts / src/transcript-target.ts / src/subagents.ts / hooks/state.sh と各テスト、host.ts・orca-host.ts の openPane/listPanes/sendText/pressKey、view.ts の TERMINALS_PATH/DISPATCH_PATH、view-server.ts の該当ハンドラと host 引数、question.ts の parseAnsweredLabels。残した splitUtterance は src/utterance.ts に、MainViewEntry は src/session-view.ts に移した（transcript.ts のままだと名前が概念と合わないため）。~/.claude/settings.json は承認を得て tsukumo のエントリ5件（SessionStart / Stop / StopFailure / PreToolUse / PostToolUseFailure）を削除。バックアップ ~/.claude/settings.json.bak-20260912-072424。編集後 tsukumo 0件・hooks のキー12個で編集前と一致・orca のエントリ12件と statusLine は無傷。~/.tsukumo/ は消していない（progress.md の「注意」に記録）。完了条件の grep は全て0件。bun run check: 339 pass / 0 fail（436 から97件減。消したのは transcript/state/transcript-target/subagents/hooks のテストと、view-server のターミナル一覧・dispatch のテスト）。CLAUDE.md / docs/architecture.md / README.md を現状に合わせた（architecture.md の節数 25→25）。目視は未実施。
+
+### 当時のタスク本文
+
+旧経路（transcript 追従・状態ファイル・hook・Orca 経由の送信）を撤去する。
+
+## 背景
+
+T-037〜T-040 で縦1本が動いた時点で、次のものは呼ばれていないコードになっている:
+
+- transcript の追従: `src/index.ts` の `followTranscript` / `publishAllViews` / `readSnapshot`、`src/transcript.ts` の `extractMainViewEntries` とその周辺（**`splitUtterance` は補助として残す**）
+- 追従先の管理: `src/transcript-target.ts`、`~/.tsukumo/targets/`、`~/.tsukumo/transcript-path`
+- hook と状態ファイル: `hooks/state.sh`、`src/state.ts`、`~/.tsukumo/state.json`、**`~/.claude/settings.json` の hooks に登録された `hooks/state.sh` のエントリ5件**（SessionStart / UserPromptSubmit / PreToolUse / PostToolUse / Stop 付近。2026-09-11 に `grep tsukumo ~/.claude/settings.json` で確認）
+- Orca 経由の送信: `src/orca-host.ts` の dispatch / keypress / terminal list、`src/host.ts` の対応する型、`src/view.ts` の `DISPATCH_PATH` / `TERMINALS_PATH`、`src/subagents.ts`（サブエージェントの transcript を読む仕組み。サイドバーは T-043 で SDK のイベントから組み直す）
+
+残すもの: `src/host.ts` / `src/orca-host.ts` の **`showView`（`orca tab create --url`）**。箱としての Orca への依存はこれ1つになる。`scripts/open-views.ts` も残す。
+
+## 解くべき論点
+
+- **`~/.claude/settings.json` の hooks エントリを外す**のはグローバル設定の変更。**orca が専有している hooks / statusLine の他のエントリを壊さない**（`CLAUDE.md`）。tsukumo の `command` を持つエントリだけを取り除き、前後で `hooks` のキー一覧と他エントリの件数が変わらないことを確かめる
+- `src/expression.ts` は「作業中の自動表情」（T-044）で使うので残す。ただし入力が `StateFileContents` から内部イベントに変わるので、T-044 側で差し替える。ここでは消さない
+- テストの整理: 消したモジュールのテストは消す。`splitUtterance` と `report-html` のテストは残す
+
+## やること
+
+1. 上の一覧を消す。`bun run check` を通す
+2. `~/.claude/settings.json` から tsukumo のエントリを外す（承認を得てから。バックアップを取る）
+3. `~/.tsukumo/` の不要ファイルは**消さずに**、`develop/progress.md`「注意」に「もう読まれない」と書く（利用者のホームの掃除は利用者がする）
+4. `CLAUDE.md`「よく使うコマンド」と `docs/architecture.md`「各ファイルの責務」を現状に合わせる
+
+## 完了条件
+
+- `grep -rn 'transcript-path\|targets/\|state.json\|state.sh' src/ hooks/ 2>/dev/null` がヒットしないこと（`hooks/` ディレクトリ自体が無くてよい）
+- `grep -rn 'orca' src/` のヒットが `src/orca-host.ts` の `showView` 周辺だけであること
+- `python3 -c "import json;s=json.load(open('$HOME/.claude/settings.json'));print(sum('tsukumo' in json.dumps(h) for h in s['hooks'].values()))"` が 0 で、`hooks` のキー一覧が編集前と同じであること
+- `bun run check` が通り、テスト件数が減った理由（消したモジュール）が `evidence` に書かれていること
+
+## 注意
+
+- **`~/.claude/settings.json` の編集はユーザーの承認を得てから。** 既存の hooks / statusLine を壊さない。サブエージェントに委譲せず、ユーザーがいるセッションで行う。`/loop` に載せない
+- 消す前に T-038〜T-040 の目視確認が済んでいること（縦1本が動いてから捨てる）
+
+## T-048 `tsukumo` コマンドをグローバルに導入し、別のプロジェクトのディレクトリで `tsukumo` と打って起動できることを確かめる。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: T-047
+- **evidence**:
+
+  承認を得て bun link で導入（選択肢から (a) をユーザーが選択）。which tsukumo → /Users/sinnlos/.bun/bin/tsukumo（実体は ../install/global/node_modules/tsukumo/bin/tsukumo へのシンボリックリンク）。~/.bun/bin は既に PATH にあり、シェル設定は書き換えていない。消し方は bun unlink。別プロジェクト /Users/sinnlos/ghq/github.com/sinnlosses/day-snap（README.md と LICENSE だけ、develop/tasks.json 無し）で TSUKUMO_VIEW_PORT=56906 TSUKUMO_OPEN_VIEW=0 tsukumo を起動し、curl で確認: /character が 200 で立ち絵の svg あり（同梱物が tsukumo 自身の場所から読めている）、/sidebar のタスク一覧が「不明」で見出しに件数なし、/layout が 200。依頼を1件送ると /events/main の応答にそのプロジェクトの README.md と LICENSE が出て、tsukumo 側のファイル名は0件（cwd がそのプロジェクトになっている）。内容は写していない。起こしたプロセス（pid 65154 とその子 65164）は停止を確認。ユーザーの常駐（7327番、pid 59091）は無傷。docs/requirements.md 4.6 / CLAUDE.md / docs/architecture.md に導入と消し方を記録（節数 25→25 / 15→15 / 25→25）。bun run check: 339 pass / 0 fail。**Orca のタブでの目視は未実施**（ユーザーが後で行う）。
+
+### 当時のタスク本文
+
+`tsukumo` コマンドをグローバルに導入し、別のプロジェクトのディレクトリで `tsukumo` と打って起動できることを確かめる。
+
+## 背景
+
+コマンドの器（`bin/tsukumo`、`package.json` の `bin`）は前のタスクで入る。**それをどのディレクトリからでも打てるようにするには、グローバルへの導入が要る**。`CLAUDE.md`「進捗管理とHandoff」の IMPORTANT にあるとおり、**グローバルなツールの導入はユーザーの承認を得てから行う**。
+
+2026-09-11 実測: `which tsukumo` は無し、`bun pm bin -g` は空（Bun のグローバル bin ディレクトリが未設定か未使用）、`~/.bun/bin` には `bun` と `bunx` だけ。`~/.zshrc` に tsukumo の alias は無い。
+
+## 解くべき論点
+
+- **導入の方法**（ユーザーに選んでもらう）: (a) リポジトリで `bun link` して `~/.bun/bin/tsukumo` を作る（`PATH` に `~/.bun/bin` が要る。開発中の変更がそのまま反映される）、(b) `~/.local/bin/tsukumo` などへシンボリックリンクを置く、(c) `~/.zshrc` に alias。**推奨は (a)**（Bun の標準の仕組みで、消すときも `bun unlink` で済む）。どれを選んでも**このリポジトリの外に何を置いたか**を `docs/requirements.md` 4.6 と `docs/architecture.md`「既知の制約・注意点」に書く（後で消せるように）
+- `PATH` の確認: `~/.bun/bin` が `PATH` に無ければ、ユーザーに `~/.zshrc` への追記を頼む（**tsukumo からユーザーのシェル設定を書き換えない**）
+
+## やること
+
+1. ユーザーに導入の方法を確認し、承認を得る
+2. 導入する（例: `bun link`）。`which tsukumo` で場所を確かめる
+3. **別のプロジェクトのディレクトリ**（tsukumo 以外の実在するリポジトリ）で `tsukumo` と打ち、Orca のタブが開いて、そのプロジェクトについての依頼（例: 「このリポジトリのトップにあるファイルを3つ挙げて」）に、そのプロジェクトの内容で答えることを目視する
+4. `docs/requirements.md` 4.6 と `CLAUDE.md`「セットアップ / 環境構築」に導入の手順（と消し方）を書く
+
+## 完了条件
+
+- `which tsukumo` がパスを返すこと（`evidence` に書く）
+- 別のプロジェクトのディレクトリで `tsukumo` と打って、Orca のタブに立ち絵が出て、そのプロジェクトの内容で応答が返ることをユーザーが目視（どのディレクトリで、何が見えたかを `evidence` に書く。**依頼と応答の中身は写さない**）
+- `bun run check` が通ること（docs の整形）
+
+## 注意
+
+- **グローバルへの導入はユーザーの承認を得てから。** サブエージェントに委譲せず、ユーザーがいるセッションで行う。`/loop` に載せない
+- `~/.zshrc` や `~/.claude/settings.json` を tsukumo 側から書き換えない
+- 起こしたプロセスは終わったら止め、`pgrep -f claude-agent-sdk` が空であることを確かめる
+
+## T-060 既定のポートが塞がっていたら次の番号へずらして起動する（明示指定のときはずらさない）。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `src/view-port.ts` を新設。`resolveViewPort` を `{default|explicit|invalid}` を返す形にし、`startOnResolvedPort` が**既定のときだけ** EADDRINUSE で +1（上限20個＝7327〜7346）。リトライは配線側（src/index.ts）に置き、`src/view-server.ts` は触っていない。EADDRINUSE 以外（EACCES など）はずらさない。決定は docs/requirements.md 4.6 に記録（見出しは 25 のまま）。
+  `bun run check` 通過: 352 pass / 0 fail（+11件。view-port.test.ts 9件、index.test.ts 2件）。
+  実機確認: 7327 が常駐で塞がった状態で `TSUKUMO_OPEN_VIEW=0 bun run src/index.ts` → stdout に `http://127.0.0.1:7328/layout` が出て 7328 で listen（lsof で確認）。`TSUKUMO_VIEW_PORT=7327` を明示すると終了コード 1 で「ビューを配れない: Failed to start server. Is port 7327 in use?」。全滅の経路はテストで確認。起こしたプロセスは停止し、常駐の 7327 は無傷。
+
+### 当時のタスク本文
+
+既定のポートが塞がっていたら次の番号へずらして起動する（明示指定のときはずらさない）。
+
+## 背景
+
+2つ目のプロジェクトで `tsukumo` と打つと EADDRINUSE で起動できない（ユーザーの報告）。
+コードの現状（2026-09-12 に確認）:
+
+- `src/index.ts` の `DEFAULT_VIEW_PORT` は `7327` 固定。`resolveViewPort`（455行目付近）は
+  `TSUKUMO_VIEW_PORT` が未設定・空なら `DEFAULT_VIEW_PORT` を、読めない値なら `undefined` を返す
+- `src/view-server.ts` の `startViewServer` は `server.on("error")` で **`listening` になる前の
+  エラーを `reject` する**（190〜200行目付近）。listen 後のエラーは stderr に出すだけで落とさない
+- `src/index.ts` の `main` は `startViewServer(...).catch(...)` で stderr に1行出して**終了コード 1 で
+  即時終了する**（128〜152行目付近）。「起動時の前提不足だけが即時終了」という
+  `docs/coding-standards.md`「エラーハンドリング」の方針そのままで、**ポートが1つ塞がっただけで
+  前提不足として扱っている**のがいまの挙動
+
+`DEFAULT_VIEW_PORT` を固定にしてある理由はコメントに残っている（開き直したブラウザタブが同じ URL の
+まま使えるように）。ずらすとこの前提が弱まるが、**起動時に `announce`（545行目付近）が実際の
+`layoutUrl` を stdout に出している**ので、ずれた番号は利用者から見える。
+
+## 解くべき論点
+
+- **何回までずらすか。** 上限を決め、そこまで全滅したら「7327〜73NN が全部塞がっている」と理由を
+  出して終了コード 1 で終わる（黙って 0 番＝ランダムな空きポートに逃げない。**どのポートで
+  待っているか分からない状態を作らない**）
+- **ずらす対象は「既定を使ったとき」だけ。** `TSUKUMO_VIEW_PORT` を明示的に渡したときはずらさず、
+  そのまま失敗させる（ユーザーの指示。指定したポートで待てないことに気づけなくなるため）。
+  `TSUKUMO_VIEW_PORT=0`（OS が空きを選ぶ）も明示指定なので、ずらす処理を通さない
+- **「明示的に渡したか」をどこで持つか。** いまの `resolveViewPort` は数値1つしか返さないので、
+  既定を使ったかどうかが呼び出し側から分からない。戻り値の形を変えるか、別の関数を足すかを決める
+  （`docs/coding-standards.md`「環境変数の読み取りを1モジュールに集約」に沿って、判定を
+  `src/index.ts` の読み取り側に閉じる）
+- **リトライをどちらのモジュールに置くか。** `startViewServer`（`src/view-server.ts`）に
+  ずらす責務を持たせると「ビューを配るサーバ」という概念からはみ出す。`src/index.ts` 側で
+  `startViewServer` を呼び直す形に寄せるほうが素直か検討する
+- **EADDRINUSE 以外の listen 失敗（EACCES など）ではずらさない。** エラーの種類で分ける
+
+## やること
+
+1. `TSUKUMO_VIEW_PORT` が明示されているかどうかを、`main` が判別できる形にする
+2. 明示されていないときだけ、`DEFAULT_VIEW_PORT` から上限まで EADDRINUSE のあいだ +1 して
+   `startViewServer` を試す
+3. 全滅したときは、試した範囲（最初と最後のポート番号）を含む1行を stderr に出して終了コード 1
+4. `USAGE`（`src/index.ts` 68行目付近）の `TSUKUMO_VIEW_PORT` の説明に、既定のときだけずらすことを
+   1行足す
+5. `docs/requirements.md` 4.6「起動と設定」に決めた上限と挙動を書く
+6. テストを足す（`test/index.test.ts` か `test/view-server.test.ts`）。**本物の claude を
+   起こさずに**、先にダミーのサーバでポートを塞いでから、ずらす関数だけを呼んで確かめる
+
+## 完了条件
+
+- **塞がっているときにずれる**: 適当なポート（例 7327）を塞いだ状態で、`TSUKUMO_VIEW_PORT` を
+  渡さずに起動すると次の番号で listen し、`announce` が出す `layoutUrl` がその番号になっていること。
+  実際に打ったコマンドと、出た URL のポート番号を `evidence` に書く
+- **明示したときはずれない**: 塞がっているポートを `TSUKUMO_VIEW_PORT` で明示して起動すると、
+  ずらさずに終了コード 1 で終わり、stderr に理由が1行出ること
+- **全滅したときの文言**: 上限まで全部塞げた状態で、試した範囲が分かる1行が stderr に出て
+  終了コード 1 で終わること（この経路は自動テストで確かめてよい）
+- 上の3つを守るテストが `bun test` に入っていること（何件増えたかを `evidence` に書く）
+- `bun run check` が通ること
+
+## 注意
+
+- **`/loop` に載せてよい**（ユーザーの承認が要る操作を含まない）
+- **動作確認で tsukumo を起こすときは、常駐している 7327 番のプロセスを落とさない。**
+  塞がった状態を作るのは、常駐をそのまま使うか、テスト内でダミーのサーバを立てる。止めるのは
+  自分が起こした pid だけ（`pgrep -f claude-agent-sdk` は常駐の分も拾うので、空になることを
+  完了条件にしない）
+- **`bun run start` / `tsukumo` は本物の claude を子プロセスで起こす**（API の利用が発生する）。
+  テストから CLI を起動しきらない
+- `Bun.serve` に寄せない。`node:http` のままにする（`docs/coding-standards.md`「Bun固有APIに寄せない」）
+- 0 番（空きポート自動割り当て）へのフォールバックを既定の挙動にしない
+
+## T-061 サイドバーの領域自体はスクロールさせず、中の3つの区画をそれぞれ内側でスクロールさせる。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `bun run check` 通過（340 pass / 0 fail。339→340 は `.activity-scroll` 依存の1件を `.sidebar-block-scroll` へ直し、3区画のクラスと内側スクロールの枠を見る1件を足したため）。`.layout-sidebar` で `overflow-y: hidden` + flex 縦積みにし、区画1・2に `flex: 1 1 0`、区画3は中身なりの高さ。`docs/requirements.md` 4.2 に反映（見出し数 27 で不変）。
+  目視: claude を起こさず静的な HTML だけを配る使い捨てサーバ（127.0.0.1:7399/layout、ダミーの活動30件）を Orca のタブで開いた。配信された HTML に `layout-region layout-sidebar` 1件・`sidebar-block-{activity,tasks,session}` 各1件・`sidebar-block-scroll` 3件を確認。**画面での見え方（仕切りのドラッグ・区画内スクロール・760px 以下）はユーザー確認待ち。**
+
+### 当時のタスク本文
+
+サイドバーの領域自体はスクロールさせず、中の3つの区画をそれぞれ内側でスクロールさせる。
+
+## 背景
+
+いまはサイドバー全体が縦にスクロールする。`src/view.ts` の CSS で `.layout-region`
+（2161行目付近）が `overflow-y: auto` を持ち、**メインビュー・キャラビュー・サイドバーの
+3領域すべてがこれを共有している**ため。区画が増えると見出しごと上へ流れてしまい、
+「タスク一覧」「セッション情報」の見出しが画面の外に出る。
+
+サイドバーの中身は `sidebarSection`（2869行目付近）が `<section class="sidebar-block">` を
+3つ並べたもの（1762〜1764行目付近）:
+
+1. 「いま何をしているか」= `activityBody`。T-054 で入れた `.activity-scroll`
+   （`height: 10rem; overflow-y: auto;`、2110行目付近）で包まれていて、**3つのうちここだけが
+   内側でスクロールする**
+2. 「タスク一覧」= `taskListBody`（`<ul class="sidebar-list task-list">`）。内側のスクロールなし
+3. 「セッション情報」= `sessionInfoBody`。内側のスクロールなし
+
+`.sidebar-block` は `margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid #3a4256`
+（2092行目付近）。
+
+サイドバーの高さは固定ではない。**上段の仕切りをドラッグすると `--layout-top-right` が変わり、
+横幅も縦の比率も動く**。狭い画面（`@media (max-width: 760px)`、2320行目付近）では
+`.layout-grid` が `height: auto` の1列に畳まれるので、**高さ 100% を前提にした配分はそこでは
+成り立たない**。また `/sidebar` は単体ページとしても配信されていて、そちらには
+`.layout-region` の包みが無い。
+
+仕様の正典は `docs/requirements.md` 4.2「サイドバー」（306〜311行目付近）で、いまは
+「(1) は固定の高さの並びへ積み、はみ出す分は並びの中でスクロールする」とだけ書いてある。
+
+## 解くべき論点
+
+- **3区画への高さの配り方。** サイドバーの高さは仕切りで動くので、固定値の足し算では埋まらない。
+  `.layout-sidebar` を `display: flex; flex-direction: column;` にして各 `.sidebar-block` に
+  `min-height: 0; overflow-y: auto;` を持たせる形が素直だが、**3つを等分するのか、
+  重み（`flex`）を変えるのか**を決める。中身が短いとき（セッション情報は3行）に空白が
+  間延びしないようにする
+- **T-054 の「`.activity-scroll` は固定 10rem」を残すか。** 残すと (1) の高さが仕切りに
+  追従しなくなる。T-054 の意図は「ツールの数で区画の高さが変わらない」ことなので、
+  **flex で配る形に変えてもその意図は保てる**（数ではなく割り当てで決まるため）。
+  どちらにするかを決めて `docs/requirements.md` 4.2 を直す
+- **狭い画面（760px 以下）と単体ページ `/sidebar` での挙動。** どちらも高さの基準が無いので、
+  内側スクロールを切って自然に伸ばすのか、最小の高さを与えるのかを決める。
+  **メインビューとキャラビューの `.layout-region` の `overflow-y: auto` は変えない**
+  （サイドバーだけを対象にする）
+- **セッション情報にもスクロールを付けるか。** いまは3行で溢れないが、区画の扱いを
+  揃えるかどうかを決める（ユーザーの指示は3つとも「スクロール可」）
+
+## やること
+
+1. `.layout-sidebar` の縦スクロールを切り、3つの `.sidebar-block` が内側でスクロールする形にする
+   （`.layout-region` の共通ルールは残し、サイドバー側で打ち消す）
+2. 上の論点で決めた高さの配り方を入れる。決めた内容は `docs/requirements.md` 4.2「サイドバー」に
+   反映する（`.activity-scroll` の固定高さの記述を書き換える）
+3. 狭い画面と単体ページ `/sidebar` の扱いを決めて CSS に入れる
+4. `bun run check` を通す。`test/view.test.ts` が生成 HTML の構造を見ているので、
+   クラス名や入れ子を変えたら**テストを実態に合わせて直す**（減らさない）
+5. 目視する（下の完了条件）
+
+## 完了条件
+
+- **`bun run check` が通ること**（テスト件数の増減と、その理由を `evidence` に書く）
+- **目視（Orca のタブでレイアウトページを開く）**。ツールを何度も使う依頼を1つ送ったうえで、
+  次の4つを確かめて `evidence` に書く:
+  1. **サイドバーの領域自体にスクロールバーが出ない。** 上段の仕切りをドラッグしてサイドバーを
+     縦に縮めても、「いま何をしているか」「タスク一覧」「セッション情報」の**3つの見出しが
+     すべて見えたまま**であること
+  2. 「いま何をしているか」の**中だけ**がスクロールし、終わったツールを遡れること
+  3. 「タスク一覧」が入りきらない高さまで縮めたとき、**その区画の中で**スクロールできること
+  4. 「セッション情報」のモデル・許可モード・経過時間が見えていること
+- **狭い画面の確認**: ブラウザの幅を 760px 以下にして1列に畳んだとき、3区画の中身が
+  読める状態であること（潰れて0の高さにならない）
+- どの端末・どの URL で見たかを `evidence` に書く（**依頼と応答の中身は写さない**）
+
+## 注意
+
+- **描画に関わる変更なので、目視の結果を `evidence` に必ず含める**（`CLAUDE.md`「テスト方針」）。
+  ブラウザに出た絵は自動テストで守らない
+- **目視が要るので `/loop` に載せない。** CSS の実装そのものはサブエージェントに委譲してよいが、
+  目視はユーザーがいるセッションで行う
+- **メインビューとキャラビューのスクロールを変えない。** `.layout-region` の共通ルールを消さず、
+  `.layout-sidebar` 側で打ち消す
+- 目視のために tsukumo を起こし直すときは、**常駐している 7327 番のプロセスを落とさない**。
+  別のを起こすなら `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+- **`bun run start` / `tsukumo` は本物の claude を子プロセスで起こす**（API の利用が発生する）。
+  テストから CLI を起動しきらない
+- 外部の CSS ライブラリを持ち込まない（`docs/architecture.md`「外部ライブラリは CDN から
+  読まず、同梱して自分で配る」）
+
+## T-066 キャラビューの最新の吹き出しを領域の縦中央に固定し、過去の吹き出しをその上に積む。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `.balloon-list` を `.balloon-anchor`（縦2段の箱）/ `.balloon-track`（上半分・`flex: 0 0 50%`・`column-reverse`・内側スクロール）/ `.balloon-spacer`（下半分・空けたまま）に分けた（src/view.ts の `buildCharacterBody` と STYLE）。**「中央」は最新の吹き出しの下端**を領域の縦中央に合わせた（中心を合わせるには吹き出しの高さを測る必要があり CSS だけでは決まらない）。決定は docs/requirements.md 4.2 と docs/glossary.md「吹き出し」に記録（見出し 25 / 36 のまま）。
+  `bun run check` 通過: 353 pass / 0 fail（構造テスト1件追加）。
+  目視（合成データのみ。Chrome headless 1512x900・1512x1400。会話の中身は写していない）: セリフ5件で最新の吹き出しの下端が領域の中心に接し、過去4件はその上に積まれて古い分は並びの中でスクロール。短いセリフ1件のときの中心は領域の 41〜45%。長いセリフ1件は下端が中心のまま上へ伸びる（中心は 29% で帯の外。下端を基準にした結果）。立ち絵ありは顔の高さと最新の吹き出しが揃う。立ち絵なしでも成立。幅が足りず縦積みに戻る場合は領域の overflow-y が受け止める。
+
+### 当時のタスク本文
+
+キャラビューの最新の吹き出しを領域の縦中央に固定し、過去の吹き出しをその上に積む。
+
+## 背景
+
+ユーザーの指示: 「キャラ画面の最新の吹き出しは中央に、過去の吹き出しはそれより上に配置することで今見てほしいものをハッキリさせよう。」
+
+いまの実装（2026-09-12 に現物を読んで確認）:
+
+- `src/view.ts` の `buildCharacterBody`（1010行目付近）がセリフ1件につき吹き出し1つを作り、**DOM は新しい順**に `.balloon-list` へ入れる
+- CSS の `.balloon-list`（1848行目付近）は `flex-direction: column-reverse` / `flex: 1 1 11rem` / `max-height: 100%` / `overflow-y: auto`。視覚上は**最新が一番下**に出て、`scrollTop` の既定値 0 がちょうど最新側を指す（T-053 の作り）
+- 領域の中は `.character-layout`（`display: flex; flex-wrap: wrap; align-items: center; height: 100%`）が立ち絵と `.balloon-list` を横並びにしている。立ち絵は `align-items: center` で縦中央に来る
+- キャラビューはまとめたレイアウトの**下段左**で、既定は高さ 40fr・幅 50fr（2157行目・2172行目付近）。**splitter で変わる**ので `vh` を基準にできない（1794行目付近のコメントに、`vh` 基準で領域からあふれた跡が残っている）
+
+つまり今は**セリフが増えるほど最新の位置が下へ動く**（並びが下端基準で伸びる）。指示は、最新の位置を領域の縦中央に固定して視線の落ち先を動かさないこと。
+
+## 解くべき論点
+
+- **「中央」の基準**: 領域の高さの 50% に、最新の吹き出しの上端／中心／下端のどれを合わせるか。立ち絵が縦中央に来ているので、**最新の吹き出しの中心を領域の中心に合わせる**と立ち絵と高さが揃う
+- **下半分を空けたままにするか**。最新を中央に置くと下半分が空く。過去の分が上に入りきらないとき、下半分を使って伸ばすのか、今の `overflow-y: auto` のまま上側でスクロールさせるのか
+- **最新と過去の見分けを CSS で足すか**（過去を薄くする・小さくする）。指示は位置の話なので、**足すなら最小限**にする
+- 幅が足りず `.character-layout` が `flex-wrap` で縦積みに戻ったときに崩れないか
+
+## やること
+
+1. `.balloon-list` の配置を変える。見込みは「並びの高さを領域の 50% 付近に抑えて上半分に置き、中身は下端（=最新側）に寄せる」。**`column-reverse` と `scrollTop = 0` が最新を指す今の仕組みは壊さない**（SSE で並びが丸ごと差し替わっても最新が見えるのはこの作りのおかげ）
+2. セリフ1件のとき・10件あるとき・立ち絵が無いときの3通りで崩れないことを確かめる
+3. `bun run check` を通す（HTML の構造やクラス名のテストは足してよい。**見え方はテストで守らない**）
+4. 目視（完了条件）
+
+## 完了条件
+
+- セリフが1件のとき、その吹き出しの中心がキャラビューの**領域の高さの 40〜60% の帯**に入ること
+- セリフが3件以上あるとき、**最新の吹き出しが同じ位置のまま**で、過去の分が上に積まれること（最新が下へ流れないこと）
+- 領域の高さを splitter で変えても上の2つが保たれること
+- 立ち絵が無い（`character.json` が無い・壊れている）ときも吹き出しだけで成り立つこと
+- `bun run check` が通ること（テスト件数を `evidence` に書く）
+- **目視**: Orca のタブで tsukumo を開き、上の4点を確かめて何がどう見えたかを `evidence` に書く。目視が未実施なら「未実施」と明記する（T-050〜T-056 と同じ扱い）
+
+## 注意
+
+- 触るのは `src/view.ts` の `buildCharacterBody` と `STYLE` の吹き出し周りだけ。**メインビュー・サイドバー・入力欄のレイアウトには手を入れない**
+- **`vh` を基準にしない**（下段の高さは splitter で変わる。1794行目付近のコメント参照）
+- **ブラウザに出た絵は自動テストで守らない**（`CLAUDE.md`「テスト方針」）
+- `/loop` に載せてよい（目視はユーザーが後で行う扱いでよい）
+- 動作確認で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番のプロセスを落とさない**。止めるのは自分が起こした pid だけ
+
+## T-067 サイドバーの「セッション情報」の中身が高さ0に潰れて見えない回帰を直す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `.sidebar-block-scroll` の flex-basis を 0→auto にし、狭い画面（760px 以下）では activity/tasks を `flex: 0 1 auto` にした（src/view.ts の STYLE のみ）。原因は見込みどおり、親の高さが auto のとき flex-basis: 0 が内容の見積もりを 0 にすること（T-061 の回帰）。狭い画面で他の2区画が同じ理由で潰れる別口も同時に直した。
+  `bun run check` 通過: 340 pass / 0 fail、oxfmt 52ファイル。
+  目視（合成データのみの layout ページを Chrome headless 1512x900 で描画。会話の中身は写していない）: 修正前は「セッション情報」が見出しだけ。修正後はモデル（Opus）・許可モード（自動判定）・経過（1分06秒）の3行が出て、他の2区画は区画の途中で切れ（内側スクロール）、サイドバーの領域自体はスクロールしない。
+
+### 当時のタスク本文
+
+サイドバーの「セッション情報」の中身が高さ0に潰れて見えない回帰を直す。
+
+## 背景
+
+ユーザーの指示: 「セッション情報が表示されなくなってるから修正して」。
+
+2026-09-12 に現物で裏を取った結果:
+
+- **配る側の HTML は壊れていない。** `curl http://127.0.0.1:7327/sidebar` と `/layout` の両方に
+  `sidebar-block-session` / `session-info` / `model-select` / `permission-mode-select` /
+  `session-elapsed-row` が揃っており、サイドバー領域のタグの開閉も一致している
+  （`section` / `div` / `ul` / `li` / `select` / `label` / `option` を数えて確認）。
+  つまり `buildSidebarBody` → `sessionInfoBody`（`src/view.ts` 1760行目・3014行目付近）は動いている
+- **ブラウザで再現した。** 会話の中身を含まない合成データで layout ページを1枚書き出し、
+  1512x900 で描画したところ、**「セッション情報」の見出しだけが出て、中身（モデルの `<select>`・
+  許可モードの `<select>`・経過時間の行）が高さ 0 に潰れていた**。他の2区画（いま何をしているか・
+  タスク一覧）は中身が出てそれぞれ内側でスクロールしている
+- **原因の見込みは T-061 で入れた CSS。** `.sidebar-block-scroll { flex: 1 1 0; min-height: 0;
+overflow-y: auto }`（`src/view.ts` 2116行目付近）と `.sidebar-block-session { flex: 0 1 auto }`
+  （2121行目付近）の組み合わせ。「いま何をしているか」「タスク一覧」は `flex: 1 1 0` で伸びて
+  高さが定まるが、**セッション情報だけは主軸の基準が `auto`（＝中身なり）**で、その中身が
+  `flex-basis: 0` の `.sidebar-block-scroll` 1つしかないため、高さの見積もりが 0 になる
+- T-061 の `evidence` は「目視はユーザー確認待ち」。この回帰はそこで見つかるはずだったもの
+
+## 解くべき論点
+
+- **セッション情報の区画に内側スクロールが要るか。** 中身は3行で固定なので、区画ごと中身なりの
+  高さにして `overflow-y` を外すのが素直（T-061 の意図は「見出しが画面の外に流れないこと」で、
+  スクロールが要るのは中身の量が変わる2区画）
+- 直し方を `.sidebar-block-session` だけの上書きにするか、`.sidebar-block-scroll` の既定そのものを
+  変えるか（後者は他の2区画の内側スクロールを壊しうる）
+- 狭い画面（`@media (max-width: 760px)`）と単体ページ `/sidebar`（`.layout-sidebar` が無く、
+  区画に定まった高さが無い文脈）でも同じ結果になるか
+
+## やること
+
+1. 合成データだけのページで再現させる（**実際の tsukumo のページを撮らない**。会話の中身を
+   複製しないため）。`buildSidebarBody` と `buildLayoutPage` を合成の値で呼んで HTML を1枚書き出す
+2. セッション情報の中身が潰れないように CSS を直す。**「いま何をしているか」「タスク一覧」の
+   内側スクロール（T-061 の意図）は保つ**
+3. 同じ手順で描き直し、3区画すべての中身が出ていることを確かめる
+4. `bun run check` を通す
+5. **調べて「CSS ではなくブラウザ側のスクリプトが中身を消している」と分かったら**、そちらを直す
+   （原因が上の見込みと違ったら、実際の原因を `evidence` に書く）
+
+## 完了条件
+
+- 合成データのページで、**「セッション情報」の見出しの下にモデルの `<select>`・許可モードの
+  `<select>`・経過時間の3行が見えること**
+- 「いま何をしているか」「タスク一覧」が**それぞれの区画の内側でスクロールし、サイドバーの領域
+  自体はスクロールしない**こと（T-061 の意図を壊していないこと）
+- 単体ページ `/sidebar` でも3区画の中身が出ること
+- `bun run check` が通ること（テスト件数を `evidence` に書く）
+- 何をどう見て合格としたか（画面の大きさ、3区画それぞれに何が見えたか）を `evidence` に書く
+
+## 注意
+
+- 触るのは `src/view.ts` の `STYLE` のサイドバー周り。**`buildSidebarBody` / `sessionInfoBody` の
+  HTML は壊れていない**ので、原因がそちらだと分かったときだけ触る
+- **ブラウザに出た絵は自動テストで守らない**（`CLAUDE.md`「テスト方針」）。CSS の文字列を
+  テストで固定しない
+- 確認にヘッドレスのブラウザを使ってよいが、**リポジトリの依存には加えない**
+  （外部コマンド依存を増やすときはユーザーの承認。`CLAUDE.md`）。**会話の中身が写るページは撮らない**
+- `/loop` に載せてよい
+- 動作確認で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番のプロセスを
+  落とさない**。止めるのは自分が起こした pid だけ
+
+## T-068 入力欄の `/` コマンド補完が、最初の依頼を送るまで候補0件のままで、しかも空をタブに固定してしまうのを直す。
+
+- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  原因は想定と逆: `init`（`session-info`）は依頼を送るたびに届く仕組みで開始直後には来ず（実測で約59.5秒後・最初の ping の直後）、`supportedCommands()` 由来の `command-descriptions` は起動から約1秒で60件届いた。そこで `commandSuggestions`（src/session-view.ts）を「`slashCommands` が空なら `commandDescriptions` を名前の出どころにする」形にし（その間だけ端末専用の除外が効かない。`init` 到達で除外込みに戻る）、ブラウザ側の `loadCommands`（src/view.ts）は0件をキャッシュせず次の `/` で取り直すようにした。決定は docs/requirements.md 4.2 に記録。
+  `bun run check` 通過: 341 pass / 0 fail（1件追加）。`GET /api/commands` は依頼0件の状態で 0件 → 60件（別ポート 7502、起動2秒後）。
+  目視はヘッドレス Chrome + CDP で代替（発話が無い起動直後のページのみ撮影）: 依頼0件で `/` を打つと候補10件が説明つきで出る。0件を掴ませたあともリロードせず2回目の `/` で復活。確認で起こしたプロセスは停止済み（7501/7502 が空いたことを lsof で確認）、常駐の 7327 は無傷。
+
+### 当時のタスク本文
+
+入力欄の `/` コマンド補完が、最初の依頼を送るまで候補0件のままで、しかも空をタブに固定してしまうのを直す。
+
+## 背景
+
+ユーザーの指示: 「入力画面のコマンド補完が効かなくなったから修正して」。
+
+2026-09-12 の実測:
+
+- 常駐している 7327 番では `GET /api/commands` が 12682 バイト（候補あり）を返す
+- **別ポート（7401）で起こしたばかりのインスタンスでは、35秒経っても `commands` が 0 件**。
+  子プロセスの `claude` は起きている（pid で確認）。サイドバーのモデルも既定の `sonnet` のままで、
+  **`init`（`session-info` イベント）がまだ届いていない**
+
+コード側の筋:
+
+- `src/session-view.ts` の `commandSuggestions`（283行目付近）は **`view.slashCommands`
+  （`init` 由来）を並びの出どころ**にし、`view.commandDescriptions`（`supportedCommands()` の
+  戻り値）は**説明を引き当てるためだけ**に使う。つまり `init` が来るまで候補は必ず0件
+- `src/session-driver.ts` の `relayCommandDescriptions` は起動直後に `supportedCommands()` を
+  呼んでいて、**その戻り値には名前も説明も入っている**（T-052 の調査）。名前の出どころを
+  こちらにも広げれば `init` を待たずに候補を出せる見込み
+- ブラウザ側（`src/view.ts` の `commandSuggestionsScript`、819行目付近）は `loadCommands()` が
+  **最初の1回の fetch の結果を `allCommandsPromise` に永久にキャッシュ**する。
+  → **最初の依頼を送る前に `/` を打つと、空の候補がそのタブで固定され、リロードするまで戻らない**
+
+## 解くべき論点
+
+- **候補の名前の出どころを `supportedCommands()` にも広げるか。** `init` と両方から来たときの
+  優先と重複の扱い、端末専用コマンドの除外（`commandCandidates`）をどう当てるか
+- **ブラウザ側のキャッシュをどうするか**: 毎回取り直す / 0件のときだけ取り直す / SSE で押す。
+  1文字打つたびに fetch するのは避ける
+- 補完が出ない条件が他にもある（`shouldShowSuggestions` は答え待ち（`data-pending="yes"`）の間は
+  出さない）。**それが誤爆して出っぱなしになっていないか**も確かめる
+
+## やること
+
+1. 再現する: `TSUKUMO_VIEW_PORT` を変えて起こし、**依頼を1つも送っていない状態**で
+   `GET /api/commands` が0件であることを確かめる
+2. 名前の出どころを広げる（`supportedCommands()` の結果からも候補を作る）。端末専用の除外は
+   今のまま効かせる
+3. ブラウザ側のキャッシュを、**空を掴んだら次に取り直す**形にする
+4. テストを足す（`slashCommands` が空で `commandDescriptions` だけある入力を
+   `commandSuggestions` に渡した場合）
+5. `bun run check` を通す
+6. 目視（完了条件）
+7. **調べて「`supportedCommands()` も `init` 前は空を返す」と分かったら、名前の出どころは広げず
+   ブラウザ側の取り直しだけに絞ってよい**（理由を `evidence` に書く）
+
+## 完了条件
+
+- `TSUKUMO_VIEW_PORT` を変えて起こした直後（**依頼を1つも送っていない状態**）に
+  `GET /api/commands` が**1件以上**返すこと。返せないと分かった場合は、その理由と、代わりに
+  満たした「空を掴んだあとに回復すること」の確認結果を `evidence` に書く
+- **目視**: Orca のタブで起動直後に `/` を打ち、候補の一覧が出ること。出ない場合でも、
+  最初の依頼を送ったあとに `/` を打てば候補が出ること（**タブをリロードせずに**回復すること）
+- `bun run check` が通ること（テスト件数を `evidence` に書く）
+- 確認で起こしたプロセスを止めたこと（**常駐の 7327 番は落とさない**）
+
+## 注意
+
+- **`bun run start` / `tsukumo` は本物の claude を子プロセスで起こす。** 依頼を送らなければ
+  応答は生成されない（子プロセスは起きる）。ターンを送って確かめる場合は短い依頼1つに留める
+- 動作確認は `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+  （`pgrep -f claude-agent-sdk` は常駐の分も拾うので、空になることを完了条件にしない）
+- 会話の中身をログ・`evidence`・テストのフィクスチャに写さない（`docs/coding-standards.md`
+  「会話内容の扱い」）
+- `/loop` に載せてよい
