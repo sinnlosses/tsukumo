@@ -102,6 +102,11 @@ describe("ビューサーバ", () => {
     const style = await fetch(`${origin}/vendor/highlight-theme.min.css`)
     expect(style.status).toBe(200)
     expect(style.headers.get("content-type")).toContain("text/css")
+
+    const idiomorph = await fetch(`${origin}/vendor/idiomorph.min.js`)
+    expect(idiomorph.status).toBe(200)
+    expect(idiomorph.headers.get("content-type")).toContain("text/javascript")
+    expect((await idiomorph.text()).length).toBeGreaterThan(1000)
   })
 
   it("同梱していない名前・上のディレクトリを指す名前は配らない", async () => {

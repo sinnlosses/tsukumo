@@ -74,13 +74,15 @@ const FULL_SIDEBAR_DATA: SidebarData = {
 // --- SSE 購読スクリプトを実際に動かして確かめるための道具 -------------------------------------
 //
 // 生成された <script> の中身（本番と同じ文字列）を node:vm で実行し、「本文が前回と同じ update
-// イベントでは innerHTML を差し替えない」「差し替えるときはスクロール位置を扱う」という
-// 制御フローだけを固定する。ブラウザに実際に絵が出ているかどうか（描画そのもの）はここでは
-// 確かめない（docs/coding-standards.md「描画は自動テストで守らない」）。
+// イベントでは差し替えない」「差し替えは Idiomorph の morph で行い、いちばん下から24px以内の
+// ときだけ追従してスクロールする」という制御フローだけを固定する。ブラウザに実際に絵が出ているか
+// どうか（描画そのもの）はここでは確かめない（docs/coding-standards.md「描画は自動テストで
+// 守らない」）。**本物の Idiomorph は使わず、`morph` を代役に差し替える**（下の
+// `runSubscriptionScript` が vm のグローバルへ渡す）。
 
 /** subscriptionScript が触るプロパティだけを持つ、テスト用の最小限の要素。 */
 type FakeElement = {
-  innerHTML: string
+  readonly innerHTML: string
   scrollTop: number
   readonly scrollHeight: number
   readonly clientHeight: number
@@ -89,6 +91,12 @@ type FakeElement = {
   readonly addEventListener: () => void
   readonly querySelector: () => null
   readonly querySelectorAll: () => readonly never[]
+  /**
+   * `Idiomorph.morph` の代役（{@link runSubscriptionScript}）が呼ぶ。**実際の Idiomorph と同じく
+   * `scrollTop` には触れない**（一致した要素が DOM に残ったまま中身だけが直るので、スクロール
+   * 位置は自然に保たれる）。ここでは呼ばれた回数と渡された中身だけを覚える。
+   */
+  readonly morph: (value: string) => void
 }
 
 type FakeElementHandle = {
@@ -97,9 +105,10 @@ type FakeElementHandle = {
 }
 
 /**
- * `innerHTML` への代入回数を数えられる要素を作る。差し替えのたびに scrollTop が 0 に戻る
- * （実ブラウザでも、差し替えで中身が縮んだときなどに起こりうる）ことにして、「差し替え後に
- * スクロール位置を復元しているか」を、値が偶然一致しただけでなくテストで確かめられるようにする。
+ * `morph`（{@link FakeElement.morph}）が呼ばれた回数を数えられる要素を作る。**morph は
+ * `scrollTop` を変えない**ので、「差し替え後に元のスクロール位置がそのまま保たれているか」を、
+ * 値が偶然一致しただけでなくテストで確かめられる（subscriptionScript 側が明示的に
+ * いちばん下へ動かさない限り、位置は動かないはず）。
  */
 function makeFakeElement(options: {
   readonly initialHtml: string
@@ -115,11 +124,6 @@ function makeFakeElement(options: {
     get innerHTML(): string {
       return html
     },
-    set innerHTML(value: string) {
-      html = value
-      setCount += 1
-      scrollTop = 0
-    },
     get scrollTop(): number {
       return scrollTop
     },
@@ -131,6 +135,10 @@ function makeFakeElement(options: {
     addEventListener: () => {},
     querySelector: () => null,
     querySelectorAll: () => [],
+    morph: (value: string) => {
+      html = value
+      setCount += 1
+    },
   }
 
   return { element, innerHtmlSetCount: () => setCount }
@@ -218,6 +226,28 @@ function makeFakeEventSourceController(): {
 }
 
 /**
+ * `Idiomorph`（グローバル）の代役。**実際に DOM を morph はしない**（vm のサンドボックスに
+ * 本物の DOM が無い）。渡された要素に {@link FakeElement.morph} があればそれを呼び、
+ * 無ければ（`makeInertStub` の無害な代役）`innerHTML` へそのまま代入する。
+ */
+function makeFakeIdiomorph(): {
+  readonly morph: (
+    target: { morph?: (value: string) => void; innerHTML?: string },
+    content: string,
+  ) => void
+} {
+  return {
+    morph: (target, content) => {
+      if (typeof target.morph === "function") {
+        target.morph(content)
+        return
+      }
+      target.innerHTML = content
+    },
+  }
+}
+
+/**
  * ページ全体の HTML から `<script>` の中身を取り出し、渡した要素だけを本物として、
  * それ以外の id は無害な代役（{@link makeInertStub}）で埋めて実行する。まとめたレイアウトの
  * ページには送信フォームの配線（`dispatchScript`）も同じ `<script>` に同居しているため、
@@ -253,6 +283,7 @@ function runSubscriptionScript(
     document: documentStub,
     EventSource: controller.EventSourceClass,
     MutationObserver: makeFakeMutationObserverController().MutationObserverClass,
+    Idiomorph: makeFakeIdiomorph(),
   })
 
   return { dispatch: controller.dispatch }
@@ -1223,8 +1254,26 @@ describe("入力欄（送信・中断）", () => {
   })
 })
 
-describe("SSEの更新の適用（本文が同じなら差し替えない・スクロール位置を保つ）", () => {
-  it("購読直後の1回目の push が、埋め込み済みの本文と同じときは innerHTML を差し替えない", () => {
+describe("SSEの更新の適用（本文が同じなら差し替えない・morph でスクロール位置を保つ）", () => {
+  it("購読スクリプトは Idiomorph.morph で差し替え、innerHTML の全置換は残っていない", () => {
+    const page = buildViewPage("main", "<p>さいしょ</p>")
+    const scriptMatch = /<script>([\s\S]*)<\/script>/.exec(page)
+    if (scriptMatch === null || scriptMatch[1] === undefined) {
+      throw new Error("ページに <script> が無い")
+    }
+    const script = scriptMatch[1]
+
+    expect(script).toContain("Idiomorph.morph(")
+    expect(script).not.toMatch(/\.innerHTML\s*=\s*event\.data/)
+  })
+
+  it("ページが Idiomorph 本体（/vendor/idiomorph.min.js）を読み込む", () => {
+    const page = buildViewPage("main", "<p>さいしょ</p>")
+
+    expect(page).toContain('src="/vendor/idiomorph.min.js"')
+  })
+
+  it("購読直後の1回目の push が、埋め込み済みの本文と同じときは差し替えない", () => {
     const initialBody = "<p>さいしょ</p>"
     const page = buildViewPage("character", initialBody)
     const { element, innerHtmlSetCount } = makeFakeElement({
@@ -1258,7 +1307,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・ス�
     expect(innerHtmlSetCount()).toBe(0)
   })
 
-  it("本文が変わった update イベントでは innerHTML を差し替える", () => {
+  it("本文が変わった update イベントでは morph で差し替える", () => {
     const initialBody = "<p>さいしょ</p>"
     const page = buildViewPage("main", initialBody)
     const { element, innerHtmlSetCount } = makeFakeElement({
@@ -1304,8 +1353,9 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・ス�
     const { dispatch } = runSubscriptionScript(page, new Map([["tsukumo-view", element]]))
     dispatch(viewEventPath("main"), "<p>つぎ</p>")
 
-    // 差し替え自体は scrollTop を 0 に戻す（makeFakeElement の側の想定）ので、
-    // 100 のままなら「明示的に復元している」ことの証拠になる。
+    // morph 自体は scrollTop に触れない（makeFakeElement の想定）。ここで確かめるのは、
+    // いちばん下から離れているときに「追従していちばん下へ動かす」処理が実行されず、
+    // 元の位置がそのまま保たれること。
     expect(element.scrollTop).toBe(100)
   })
 
@@ -2146,6 +2196,7 @@ describe("レポートの図・グラフ・コードの色（同梱ライブラ�
 
     expect(page).toContain('href="/vendor/highlight-theme.min.css"')
     expect(page).toContain('src="/vendor/highlight.min.js"')
+    expect(page).toContain('src="/vendor/idiomorph.min.js"')
     expect(page).toContain("/vendor/mermaid.min.js")
     expect(page).toContain("/vendor/chart.umd.min.js")
     expect(page).not.toContain("https://cdn")

@@ -41,6 +41,7 @@ export const VENDOR_ASSET_CONTENT_TYPES: Readonly<Record<string, string>> = {
   "highlight-theme.min.css": "text/css; charset=utf-8",
   "chart.umd.min.js": "text/javascript; charset=utf-8",
   "mermaid.min.js": "text/javascript; charset=utf-8",
+  "idiomorph.min.js": "text/javascript; charset=utf-8",
 }
 
 function vendorPath(name: string): string {
@@ -536,14 +537,18 @@ function layoutScript(): string {
  * （`docs/architecture.md`「ビューの更新は Server-Sent Events で押す」の仕組み自体は変えていない。
  * `publish` 側は毎回まるごとの本文を送ったままでよい）。
  *
- * **差し替えるときはスクロール位置を保つ。** メインビューは作業の進行が積まれる場所なので、
- * `innerHTML` の再代入で読んでいた位置が飛ぶと読めなくなる（`docs/architecture.md`
- * 「ページ全体を再読み込みしない」と同じ理由を、領域の差し替えにも適用する）。差し替え前に
- * いちばん下から24px以内を見ていたら、差し替え後も追従していちばん下へスクロールする。
- * そうでなければ元のスクロール位置をそのまま保つ。**スクロールしている要素**は、差し替える
- * 要素自身が縦にあふれていれば（まとめたレイアウトの `.layout-region` は `overflow-y: auto`）
- * その要素、そうでなければ（単体ページの `<main>` は overflow を指定していないので文書側が
- * スクロールする）`document.scrollingElement` を使う。
+ * **差し替えは `innerHTML` の全代入ではなく Idiomorph の morph で行う**（`vendor/README.md`。
+ * 2026-09-12）。一致した要素は DOM に残ったまま中身だけが直るので、領域自身は元より
+ * 内側にスクロールする要素（サイドバーの `.sidebar-block-scroll` など）の位置・`<details>` の
+ * 開閉・フォーカス・入力中の選択範囲がまとめて保たれる。**このため、差し替え前後でスクロール
+ * 位置を自前で保存・復元する手当ては不要になった**（morph が保つ）。
+ *
+ * **ただし「いちばん下から24px以内を見ていたら差し替え後もいちばん下へ追従する」動きだけは
+ * 残す。** レポートが伸びていくメインビューで読み続けられるようにするための挙動で、morph は
+ * 元のスクロール位置を保つだけなので、追従（新しく増えた分だけ位置を動かす）は再現されない。
+ * **スクロールしている要素**は、差し替える要素自身が縦にあふれていれば（まとめたレイアウトの
+ * `.layout-region` は `overflow-y: auto`）その要素、そうでなければ（単体ページの `<main>` は
+ * overflow を指定していないので文書側がスクロールする）`document.scrollingElement` を使う。
  */
 function subscriptionScript(elementId: string, view: ViewName, initialBody: string): string {
   return `  {
@@ -558,10 +563,11 @@ function subscriptionScript(elementId: string, view: ViewName, initialBody: stri
         el.scrollHeight > el.clientHeight ? el : (document.scrollingElement ?? document.documentElement)
       const distanceFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight
       const wasNearBottom = distanceFromBottom < 24
-      const previousScrollTop = scroller.scrollTop
-      el.innerHTML = event.data
+      Idiomorph.morph(el, event.data, { morphStyle: "innerHTML" })
       lastBody = event.data
-      scroller.scrollTop = wasNearBottom ? scroller.scrollHeight : previousScrollTop
+      if (wasNearBottom) {
+        scroller.scrollTop = scroller.scrollHeight
+      }
     })
   }`
 }
@@ -1660,8 +1666,8 @@ function pendingAnswerScript(elementId: string): string {
  *   `<select>` の選択が上書きされる（サーバ側の値が正になる）
  * - **経過時間はブラウザ側で1秒ごとに刻む。** サーバは開始時刻・終了時刻を `data-started-at` /
  *   `data-finished-at` 属性（エポック ms、無ければ空文字）で渡すだけで、以降のカウントアップは
- *   ここが担う。**差し替え（`subscriptionScript` の `innerHTML` 代入）で要素が入れ替わっても、
- *   都度 `querySelector` で読み直すので途切れない**
+ *   ここが担う。**差し替え（`subscriptionScript` の Idiomorph による morph）で要素が
+ *   作り直されても、都度 `querySelector` で読み直すので途切れない**
  * - **終了時刻があれば、それを終点に固定する。** tick 自体は1秒ごとに動き続けるが、
  *   `Date.now()` の代わりに終了時刻を使うので表示は変わらない（止まって見える）。ラベルも
  *   同時に「経過」→「所要」へ書き換える
@@ -1985,11 +1991,15 @@ const STYLE = `
     opacity: 0.5;
     animation: balloon-push-up 0.3s ease-out;
   }
-  /* セリフが増えると本文がまるごと差し替わる（subscriptionScript の innerHTML 代入）ので、
-     **差し替えのたびにアニメーションが頭から再生される**。これを使って「最新が並びの下端に
-     差し込まれ、過去のセリフは1つぶん上へ押し上げられて薄くなる」動きを CSS だけで作る（JS 側の
-     トランジション制御は要らない）。押し上げる量は最新の吹き出し1つぶんの当て推量なので、
-     セリフが長いと少しずれるが、動きの向きが伝わればよい。 */
+  /* 差し替えは Idiomorph の morph（subscriptionScript、2026-09-12）。.balloon は id を
+     持たないので、新しく増えた1件は新規ノードとして挿入されて balloon-appear が頭から再生
+     されるが、既存の .balloon はタグが一致する限り同じノードのまま中身だけが更新されうる
+     （Idiomorph は要素の挿入で以降のノードが総入れ替えになるのを避ける設計のため）。このため
+     balloon-push-up（過去のセリフの押し上げ）は、以前の全置換のときのように既存セリフ全件で
+     毎回再生されるとは限らない。「最新が並びの下端に差し込まれ、過去のセリフは1つぶん上へ
+     押し上げられて薄くなる」動きの向きと最終状態（class・opacity）は変わらない。押し上げる量は
+     最新の吹き出し1つぶんの当て推量なので、セリフが長いと少しずれるが、動きの向きが伝われば
+     よい。 */
   @keyframes balloon-push-up {
     from { transform: translateY(2.75rem); opacity: 0.85; }
     to { transform: translateY(0); opacity: 0.5; }
@@ -3196,6 +3206,7 @@ function page(title: string, body: string): string {
 <title>${escapeHtml(title)}</title>
 <link rel="stylesheet" href="${vendorPath("highlight-theme.min.css")}">
 <script src="${vendorPath("highlight.min.js")}"></script>
+<script src="${vendorPath("idiomorph.min.js")}"></script>
 <style>${STYLE}</style>
 </head>
 <body>

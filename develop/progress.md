@@ -19,6 +19,15 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-070 完了。** Idiomorph 0.8.0（0BSD、10587バイト）を `vendor/` に同梱し、`subscriptionScript` の
+`el.innerHTML = event.data` を `Idiomorph.morph(el, event.data, { morphStyle: "innerHTML" })` に
+替えた。**外したのは差し替え前後の scrollTop の保存・復元だけ**で、「いちばん下から24px以内なら
+追従」（morph では再現されない別の意図）と「本文が同じなら差し替えない」ガードは残っている。
+中身は素の IIFE なのでグローバルで読み、highlight.js と同じ「常に読む」扱い。**目視は合成データの
+使い捨てサーバ（7401）を立てて Chrome DevTools Protocol で機械的に確認**: タスク一覧を
+scrollTop=150 にして SSE の更新を3回またいでも 150 のまま、同時に実行中の行は更新されていた
+（差し替えは起きている）。`bun run check` は 359 pass / 0 fail。**実機の目視は未実施。**
+
 **T-069 完了。** 描画の技術を決めた。**フレームワークは入れない**（React / Preact / Lit /
 Next.js / htmx / Turbo / Datastar）。ユーザーに確かめた不足は (a) DOM の状態が飛ぶ (b) ブラウザ側
 JS 812行が文字列の中で検査が効かない (c) CSS が約700行の1定数 の3つで、**Markdown の記法と
@@ -185,9 +194,6 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
   （`characters/` 配下）を1人の単位にどう束ねるか、起動時だけか途中で切り替えるかを決める。
   人格の正典の置き場所は T-058 が決めるので、その後に回す。ユーザーの選択が要る
 - **T-065（sonnet、T-064 待ち）**: 決めた方式で切り替えを実装する
-- **T-070（sonnet、着手可能）**: **本文を差し替えた**。Idiomorph 0.8.0 を `vendor/` に同梱し、
-  `subscriptionScript` の `innerHTML` 全置換を morph にする。サイドバーのスクロール位置が戻る
-  不具合はこれで直る。目視（一覧をスクロール中に更新が来ても戻らないこと）が完了条件
 - **T-082（sonnet、着手可能）**: 個別ビューのページ（`/main` `/character` `/sidebar`）と `/` の
   リンク一覧を消し、レイアウトを `/` で開く。**`buildViewPage` はテストの土台にも使われている**
   ので、書き換えであって削除にしない（件数が減らないことが完了条件）
@@ -241,7 +247,8 @@ T-046 / T-058 / T-059 / T-064 / T-076 / T-077 / T-080 / T-083 はいずれもユ
 - **`bun run start` は本物の claude を子プロセスで起こす**（API の利用が発生する）。テストから
   CLI を起動しきらない。動作確認は `TSUKUMO_VIEW_PORT` を変えて起こし、終わったら
   `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる
-- **7327 番で tsukumo が動いている**（2026-09-12 実測。新方針のコードで、`claude-agent-sdk` の
+- **7327 番の常駐は 2026-09-12 時点で止まっている**（T-070 の確認中に気づいた。`lsof -iTCP:7327` も `pgrep -f claude-agent-sdk` も空。いつ止まったかは不明）。**動いているかは前提にせず、その場で確かめる。**
+- 以前の記録: **7327 番で tsukumo が動いている**（2026-09-12 実測。新方針のコードで、`claude-agent-sdk` の
   子プロセスを持つ）。起こし直すときは先に止める。**動作確認で別のを起こすときは
   `TSUKUMO_VIEW_PORT` を変え、止めるときは自分が起こした pid だけを落とす**
   （`pgrep -f claude-agent-sdk` は常駐の分も拾うので、空になることを完了条件にしない）
