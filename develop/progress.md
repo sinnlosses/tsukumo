@@ -255,8 +255,10 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 
 ## 次にやること
 
-**`develop/direction.md` に未タスク化の指示がある**（T-080 が書き出した「層をディレクトリで表す」
-3段階）。次のセッションは他の作業より先に `/plan-tasks` でタスク化する。
+**T-080 の3段階はタスク化済み**（T-086 / T-087 / T-088。指示メモは
+`docs/history/direction.md` の 2026-09-12 の節へ移した）。**着手できるのは T-086 から**で、
+これは `/loop` に載せてよい唯一のアーキ系タスク（claude を起こさず、`bun run check` と
+`bun build` だけで受け入れられる）。
 
 **2026-09-11 に方針を全面的に見直した。** 順番は「スパイク → 縦1本 → 横に広げる → Electron の判断」。
 縦1本（T-037〜T-040）と横に広げる分（T-043 / T-044 / T-045 / T-049）は完了。
@@ -291,6 +293,10 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
   最大の論点**（規約を曲げるなら規約側を先に直す）。実装はしない
 - **T-078（sonnet、T-077 待ち）**: 決めた方式でセッション復元を実装する
 - **T-081（sonnet、着手可能）**: 既定のモデルを Opus・effort `high` にする
+- **T-086（sonnet、着手可能、`/loop` 可）**: `src/` を `domain` / `usecase` / `presentation` /
+  `infrastructure` の4層へ移し、`test/architecture.test.ts` で依存の向きを縛る。ロジックは動かさない
+- **T-087（sonnet、T-086 待ち）**: `index.ts` からユースケースを抜いて配線だけにする
+- **T-088（opus、T-086 / T-084 / T-085 待ち）**: `presentation/view.ts` の割り方を決めて割る
 
 T-046 / T-064 / T-076 / T-077 はいずれもユーザーがいる
 セッションで（委譲せず、`/loop` に載せない）。

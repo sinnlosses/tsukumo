@@ -3,6 +3,45 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-12 T-080 の決定から出た、層をディレクトリで表す3段階
+
+- 生成したタスク: T-086（`src/` を4層へ `git mv` し、`test/architecture.test.ts` で許した import の辺以外を落とす。改名2件と `buildBrowserScript` のリテラルのパスを含む）、T-087（`index.ts` からユースケースを `usecase/` へ、ファイルI/Oと環境変数を `infrastructure/` へ抜き、配線だけにする）、T-088（`presentation/view.ts` の割り方を決めて割る。T-084 / T-085 の後）
+- タスクにしなかった項目: 無し（3段階がそのまま3タスクになった）
+- 裏取り: `src/` 18ファイルの現物と、`src/index.ts` の `buildBrowserScript` が `bundledFilePath("src", "browser", BROWSER_SCRIPT_ENTRY)` というリテラルのパスを持つこと（移動で型検査に出ない形で壊れる箇所）を確認し、T-086 の本文に書いた
+
+## 層をディレクトリで表す（T-080 の決定を実装に落とす。3段階）
+
+正典: `docs/architecture.md`「層をディレクトリで表し、依存の向きをテストで縛る」と
+`docs/coding-standards.md`「層と依存の向き」。**決めることはもう無い。上の正典どおりに動かすだけ。**
+
+### 段階1: 移動と検査（ロジックを動かさない）
+
+- `git mv` で `src/` を4層に割る。`domain` = `character.ts` / `expression.ts` / `utterance.ts` /
+  `question.ts` / `pending-answer.ts` / `session-event.ts` / `task-summary.ts`（`tasks.ts` から改名）、
+  `usecase` = `session-view.ts`、`presentation` = `view.ts` / `report-html.ts` /
+  `report-notation.ts` / `browser/`、`infrastructure` = `session-driver.ts` / `view-server.ts` /
+  `host.ts` / `orca-host.ts` / `view-port.ts` / `bundled-path.ts`（`bundled-files.ts` から改名）
+- `test/` も同じ構成に移す（`src/<相対パス>.ts` → `test/<相対パス>.test.ts` の対応は維持）
+- `test/architecture.test.ts` を足し、`src/` の import を読んで**許した辺以外を落とす**
+  （`node:fs` と正規表現で足りる。外部ツールを増やさない）
+- `docs/architecture.md` の「拾う/捨てる/足す」の表と責務の表に出てくる `src/*.ts` のパスを
+  新しいものに直す。**節の数は変えない**
+- ロジックは1行も変えない。`bun run check` が通ることと、実機で1往復できることで受け入れる
+
+### 段階2: `index.ts` からユースケースを抜く
+
+- 598行のうち `createEventSink` / `createViewPublisher` / `sidebarData` /
+  `workingRefreshDelayMs` / `throttle` を `usecase` へ移し、`index.ts` は配線だけにする
+- ファイルI/O（`readCharacterDefinition` / `readCharacterAssets` / `readOptionalFile` /
+  `readOptionalMtimeMs`）と環境変数の読み取りは `infrastructure` へ
+- **ここは中身が動く。** 移す前に、移す対象の振る舞いを押さえるテストがあるかを確かめる
+
+### 段階3: `presentation` の中を割る
+
+- **T-084（ブラウザ側 JS を `.ts` へ）と T-085（CSS を `.css` へ）の後に着手する。**
+  `view.ts` 3277行から1000行以上が外へ出てから割らないと、割る線が二度動く
+- 割り方（レイアウト / 領域ごと / レポート）は着手時に決める
+
 ## 2026-09-12 T-069 の結論から出た実装3件と、個別ビューの撤去
 
 - 生成したタスク: T-082（個別ビューのページと `/` のリンク一覧を消し、レイアウトを `/` で開く。`buildViewPage` は `test/view.test.ts` の9箇所でテストの土台に使われているので、書き換えであって削除にしない）、T-083（ブラウザ側 JS を `.ts` へ出すビルド工程を決めて**1本だけ**移して経路を通す。起動経路の設計にユーザーの判断が要るので opus）、T-084（残りのブラウザ側 JS をすべて移す）、T-085（CSS を領域ごとの `.css` に割ってビルドでまとめる）

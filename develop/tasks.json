@@ -161,5 +161,38 @@
     "passes": false,
     "evidence": "",
     "dependencies": ["T-083"]
+  },
+  {
+    "id": "T-086",
+    "summary": "src/ を domain / usecase / presentation / infrastructure へ移し、依存の向きをテストで縛る",
+    "task": "`src/` の18ファイルを4層のディレクトリへ移し、許した import の辺以外を落とすテストを足す。**ロジックは1行も変えない。**\n\n## 背景\n\nT-080 の決定（2026-09-12、ユーザー選択）。正典は `docs/architecture.md`「層をディレクトリで表し、依存の向きをテストで縛る」と `docs/coding-standards.md`「層と依存の向き」。**方針はもう決まっているので、このタスクでは決め直さない。**\n\nいまの `src/` は18ファイル・約7300行が平らに並んでいる。import の循環は0件で、**いまの依存関係は下の表の辺をすべて満たしている**（実測。2026-09-12）。だから移動は `git mv` と import パスの書き換えだけで済み、検査テストは初日から緑になる。\n\n## やること\n\n1. `git mv` で次のとおり移す（改名2件を含む）。\n   - `domain/`: `character.ts` / `expression.ts` / `utterance.ts` / `question.ts` / `pending-answer.ts` / `session-event.ts` / `task-summary.ts`（`tasks.ts` から改名）\n   - `usecase/`: `session-view.ts`\n   - `presentation/`: `view.ts` / `report-html.ts` / `report-notation.ts` / `browser/`\n   - `infrastructure/`: `session-driver.ts` / `view-server.ts` / `host.ts` / `orca-host.ts` / `view-port.ts` / `bundled-path.ts`（`bundled-files.ts` から改名）\n2. `test/` も同じ構成に移す（`src/<相対パス>.ts` → `test/<相対パス>.test.ts` の対応を保つ）。\n3. **`src/index.ts` の `buildBrowserScript` が持つリテラルのパスを直す。** いまは `bundledFilePath(\"src\", \"browser\", BROWSER_SCRIPT_ENTRY)` で、移動後は `src/presentation/browser/main.ts` を指す必要がある。ここは型検査に出ないので手で確かめる。\n4. `test/architecture.test.ts` を足す。`src/` 配下の `.ts` を `node:fs` で読み、`from \"...\"` の相対 import を拾って、下の表に無い辺があれば失敗させる。**外部ツールを増やさない**（正規表現で足りる）。\n   | 層 | import してよい先 |\n   | --- | --- |\n   | `domain` | `domain` のみ |\n   | `usecase` | `domain` / `usecase` |\n   | `presentation` | `domain` / `usecase` / `presentation` |\n   | `infrastructure` | すべて（`index.ts` を除く） |\n   | `index.ts` | すべて |\n5. `docs/architecture.md` に出てくる `src/*.ts` のパス（「拾う/捨てる/足す」の表と責務の表）を新しいものに直す。**節の数は変えない。**\n6. 移した先でファイル冒頭のコメントが層と食い違っていたら、その行だけ直す（中身の説明は変えない）。\n\n## 完了条件\n\n- `bun run check` が通ること（`tsc --noEmit` が全ての import パスを検査する）\n- `test/architecture.test.ts` が**わざと壊すと落ちる**こと。確認は1つでよい（例: `src/domain/` のどれかに `presentation` からの import を一時的に足すと失敗する）。結果を `evidence` に書く\n- `bun build src/presentation/browser/main.ts --target=browser` の標準出力が**空でない**こと（ブラウザ側の束ね直しが移動後のパスで通ることの確認。`evidence` にバイト数を書く）\n- `grep -c '^#\\{2,4\\} ' docs/architecture.md` が編集の前後で変わらないこと（前後の値を `evidence` に書く）\n- `git status` に削除と追加が別々に出ていないこと（`git mv` を使い、履歴を追える形にする）\n\n## 注意\n\n- **ロジックを変えない。** 移すついでに直したくなったものは `develop/direction.md` に書いて別タスクにする\n- `view-server.ts` / `view-port.ts` の名前は**変えない**（「ビュー」は用語集の言葉で、層の名前とは別）\n- **claude を起こさない**（API を使わない）。確認は `bun run check` と `bun build` で取れる\n- `~/.claude/` 配下は触らない\n",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "passes": false,
+    "evidence": "",
+    "dependencies": []
+  },
+  {
+    "id": "T-087",
+    "summary": "index.ts からユースケースを usecase/ へ抜き、配線だけにする",
+    "task": "`src/index.ts`（598行）に埋まっているユースケースを `usecase/` へ、ファイルI/Oと環境変数の読み取りを `infrastructure/` へ移す。\n\n## 背景\n\nT-080 の決定（2026-09-12）の段階2。正典は `docs/architecture.md`「層をディレクトリで表し、依存の向きをテストで縛る」。段階1（T-086）でディレクトリは4層になっているが、**`index.ts` は配線とユースケースとファイルI/Oを兼ねたまま**で、598行のうち大半が配線ではない。\n\nいま `index.ts` にあるもの（2026-09-12 実測）:\n\n- ユースケース寄り: `createEventSink` / `createViewPublisher` / `sidebarData` / `toSidebarToolActivity` / `workingRefreshDelayMs` / `throttle`\n- ファイルI/O・環境変数: `readCharacterDefinition` / `readCharacterAssets` / `readPortraitSource` / `readOptionalFile` / `readOptionalMtimeMs` / `createTaskSummaryReader` / `resolveOpenView` と各 `*_ENV_NAME` 定数\n- 配線として残るもの: `main` / `announce` / `stopSessionOnExit` / `openLayoutView` / `USAGE`\n\n## 解くべき論点\n\n- **`createViewPublisher` と `throttle` の置き場所。** `throttle` は時間に依存するが外の世界には触らない。`usecase` に置くか `infrastructure` に置くかを、テストのしやすさ（時刻をモックする位置）で決める\n- **`createTaskSummaryReader` は読み取り（`infrastructure`）と要約の組み立て（`usecase`）が1つになっている。** 割るか、`infrastructure` にまとめるか\n\n## やること\n\n1. 上の分類に沿って移す。**移す前に、移す対象の振る舞いを押さえるテストがあるかを確かめ、無いものは先にテストを書く**（`test/index.test.ts` に何があるかを見る）。\n2. 移した関数は、`index.ts` から渡されていた値を引数で受け取る形にする（モジュールのトップレベルで環境変数に触らない。`docs/coding-standards.md`「外部の入力を読む場所を1つにする」）。\n3. `index.ts` に残すのは配線だけにする。\n4. 調べた結果、分けるとかえって読みにくくなる関数が出てきたら、**押し切らずに `index.ts` へ残し、理由を `evidence` に書く**。\n\n## 完了条件\n\n- `bun run check` が通ること\n- `test/architecture.test.ts` が通ること（新しい import の辺が規則を破っていないこと）\n- `src/index.ts` の行数が**400行以下**になっていること（前後の値を `evidence` に書く）\n- 移した関数のテストが `test/usecase/` または `test/infrastructure/` にあり、増えた件数を `evidence` に書くこと\n- **実機**: `TSUKUMO_VIEW_PORT` を変えて tsukumo を起こし、1往復して**メインビューにレポートが出る・サイドバーの経過時間が動く**ことを確認する（`createEventSink` と `createViewPublisher` が繋がっていることの確認）。**会話の中身は `evidence` に写さない**\n\n## 注意\n\n- **常駐している 7327 番を落とさない。** 動作確認は `TSUKUMO_VIEW_PORT` を変えて起こし、終わったら自分が起こした pid だけを落とす\n- **会話内容の扱いが最優先**（`docs/coding-standards.md`）。移す途中でログに出す誘惑に乗らない\n- 実機の1往復が要るので `/loop` には載せない（`loopable: \"N\"`）。実装はサブエージェントに委譲してよい\n",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "loopable": "N",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-086"]
+  },
+  {
+    "id": "T-088",
+    "summary": "presentation/view.ts の割り方を決めて割る",
+    "task": "`src/presentation/view.ts` を、レイアウト・領域ごと・レポートのどこで割るかを決めて割る。\n\n## 背景\n\nT-080 の決定（2026-09-12）の段階3。**T-084（ブラウザ側 JS を `.ts` へ）と T-085（CSS を `.css` へ）の後に着手する**ことが決まっている。理由は、`view.ts` 3277行から1000行以上が外へ出る前に割ると、割る線が二度動くため。\n\n着手時点の `view.ts` に残っているのは、ビューの識別子・URL の経路（`VIEW_NAMES` / `viewEventPath` / 各 `*_PATH`）と、`buildLayoutPage` / `buildMainBody` / `buildCharacterBody` / `buildSidebarBody` / `buildPendingAnswerBody` などの HTML 組み立て。これらは「決める」層の純粋関数で、`test/view.test.ts` が守っている（`docs/architecture.md`「描画にフレームワークを入れず…」）。\n\n## 解くべき論点\n\n- **割る線**: 領域ごと（main / character / sidebar）か、役割ごと（経路の定義 / ページの骨格 / 領域の中身）か。**`test/view.test.ts` の分け方も同時に決まる**\n- **URL の経路の定義をどこに置くか。** `view-server.ts`（`infrastructure`）と `browser/`（`presentation`）の両方が参照している。経路は「ビューの識別」であって HTML の組み立てではない\n- **共有されている小さな関数**（`escapeHtml` など）の置き場所。`helpers` 的なファイルを作らない（原則5）\n\n## やること\n\n1. 着手時点の `view.ts` の中身を関数単位で数え、割る線の候補を2〜3個挙げてユーザーに選んでもらう。\n2. 決めた線で割る。**中身は変えない**（HTML の出力が1バイトも変わらないことを目指す）。\n3. `test/view.test.ts` も同じ線で割る。\n4. `docs/architecture.md` の責務の表を新しいファイル名に直す。**節の数は変えない。**\n\n## 完了条件\n\n- `bun run check` が通ること\n- 割った各ファイルが**1000行以下**であること（`wc -l` の結果を `evidence` に書く）\n- `test/architecture.test.ts` が通ること\n- **描画の確認**: 合成データで `buildLayoutPage` を組み立て、割る前後の HTML を比較して**差分が無い**こと（差分が出たら、それが意図したものかを `evidence` に書く）\n- 目視: `TSUKUMO_VIEW_PORT` を変えて起こし、3領域＋入力欄が崩れていないこと\n\n## 注意\n\n- **割り方の選択にユーザーの判断が要る**ので `/loop` に載せない（`loopable: \"N\"`）\n- **T-084 / T-085 が終わる前に着手しない。** 割る線が二度動く\n- **常駐している 7327 番を落とさない**\n",
+    "status": "todo",
+    "difficulty": "opus",
+    "loopable": "N",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-086", "T-084", "T-085"]
   }
 ]
