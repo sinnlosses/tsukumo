@@ -597,3 +597,293 @@ UI から外した（経路はサーバに残置、撤去は旧経路の撤去�
 `init` の `slash_commands` から端末専用を除いたもの、57件）。**目視で確かめること**: `/ne` で絞れる、
 Tab か Enter で埋まって送信されない、候補が閉じているときの Enter は送信のまま。
 サブエージェントが利用上限（1:40 リセット）で1回止まり、差分を残したまま再開して仕上げた。
+
+### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
+
+**T-087 完了。** `src/index.ts` を **635 → 231行**にして、配線だけの場所にした。`usecase/` へ
+`throttle.ts` / `event-sink.ts` / `view-publish.ts`、`infrastructure/` へ `character-asset.ts` /
+`task-summary.ts` / `auto-open-view.ts` / `browser-bundle.ts` を新設。**層の規則を満たすために
+依存を注入する形にした**（`event-sink` は `now()` を引数で受け取り `PendingAsk` と
+`onSessionEnded` を返す、`view-publish` は `buildCharacterBody` などの描画関数を注入される）。
+テストは 382 → 415 pass / 0 fail（新規33件。移す前に書いた。従来の `test/index.test.ts` は
+CLI の起動失敗しか見ていなかった）。実機（7434 / 7435番）で1往復し、メインビューへの押し出しと
+`turn-status` の `null → turnStartedAt → turnFinishedAt` を確認。**経過時間はサイドバーではなく
+入力欄で `turn-status` から描かれる**作りだった（タスク本文の記述と違ったので記録）。
+
+**T-089 完了。** 4層への移動で残っていた `docs/` の旧パス8箇所（`docs/requirements.md` 5 /
+`docs/glossary.md` 2 / `docs/workflow.md` 1）を新しいパスへ直し、`test -f` で実在を確認した。
+節の数は3ファイルとも不変。**`docs/architecture.md` の11箇所は直していない**（`transcript.ts` /
+`state.ts` / `balloon.ts` / `draw.ts` など、撤去済みファイルについての過去の記述だから）。
+
+**T-085 完了。** CSS の巨大な `STYLE` 定数を `src/presentation/style/` の7ファイル＋入口
+`main.css` に割り、**`/assets/style.css` の `<link>` で配る形**にした（インラインの `<style>` は
+撤去）。組み立ては `browser.js` と同じ工程（起動時に `bun build` を子プロセスで起こし、
+メモリに持つ。失敗したら起動を止める）。**`src/presentation/view.ts` は 2320 → 1604行**
+（716行減）で、**T-084 と合わせると 3279 → 1604行、半分以下になった**。CSS を検査していた
+テストは出どころを `.css` に付け替えて中身を減らさず維持し、経路のテストを足した
+（380 → 382 pass / 0 fail）。見た目は機械で確認（Chrome headless ＋ CDP。grid の3トラック、
+立ち絵の接地が 1px 差、サイドバー3区画の内側スクロール、送信ボタンの `::after` が `⌘⏎`）。
+
+**T-086 完了。** `src/` の18ファイルを `domain` / `usecase` / `presentation` /
+`infrastructure` の4層へ `git mv` で移し、**`test/architecture.test.ts` で依存の向きを縛った**
+（`node:fs` と正規表現だけ。外部ツールは増やしていない）。**型検査に出ない2箇所を手で直した**:
+`index.ts` の `bundledFilePath("src", "browser", …)` と、`bundled-path.ts` の
+`new URL("..")` → `new URL("../..")`（1階層深くなったため。基準はリポジトリのルートのまま）。
+検査の実効性はメインセッションでも再確認した（`domain` → `presentation` の辺を足すと違反の行を
+出して落ち、復元で緑に戻る）。改名2件（`tasks.ts` → `domain/task-summary.ts`、
+`bundled-files.ts` → `infrastructure/bundled-path.ts`）も反映済み。`bun run check` は
+380 pass / 0 fail、`bun build` は 30950 バイト、`docs/architecture.md` の節の数は 27 のまま。
+**`docs/requirements.md` と `docs/glossary.md` に残る旧パスは対象外**にして
+`develop/direction.md` にメモを残した（次のセッションで `/plan-tasks`）。
+
+**T-084 完了。** `src/view.ts` に残っていたブラウザ側 JS 8関数をすべて `src/browser/` の `.ts` へ
+移した（新規7ファイル。`viewScript` は T-082 で単体ページが消えて未使用だったので削除）。
+**`src/view.ts` は 3279 → 2319行（960行減）**で、ページのインライン `<script>` は0になった
+（残るのは `/assets/browser.js` と vendor 2本）。**サーバ側から渡す値は `data-` 属性に統一**
+（T-083 の `data-event-path` に合わせた。経路8種とラベル2種。初期 HTML に出ている文言は要素から
+読むだけにして属性を増やさない）。テストは 379 pass のまま0 fail で、**vm で文字列を実行していた
+土台を、移した関数を直接呼ぶ形に書き換えた**。わざと型エラーを入れると `TS2322` で落ちることも
+確認済み。実機（7433番、Orca のタブ）で6項目すべて動くことをユーザーが確認した。
+
+**T-081 完了。** セッションを起こすときの既定を **Opus・effort `high`** にした
+（`src/session-driver.ts` の `DEFAULT_MODEL` / `DEFAULT_EFFORT`）。`query()` の `options` は
+クロージャを含まない部分を `buildQuerySeedOptions` に切り出し、**本物の claude を起こさずに
+既定値を検査できる形**にした（テスト2件追加）。画面側の `MODEL_FALLBACK` も `opus` に揃えた。
+**実測で分かったこと**: `model: "opus"` を渡すと `init.model` は `claude-opus-5`。一方
+**effort は外から観測できない**（`init` に `effort` キーが無く、`setModel` はモデル名しか
+取らない）ので、切り替えで保たれるかは不明。**分からないことを前提に effort を画面の要素に
+しない**と `docs/requirements.md` 4.1 に書いた。`bun run check` は 379 pass / 0 fail。
+
+**T-080 完了（決めるだけ。実装は `develop/direction.md` の3段階）。** アーキテクチャを
+ドメイン駆動へ作り直すかを決めた。**結論は「層をディレクトリで表し、依存の向きをテストで縛る」**
+（ユーザー選択）。ユーザーの困りごとは**「読みにくい・探しにくい」と「差し替えが怖い」**の2つで、
+許容する規模は「ディレクトリ構成から変える」。層は `domain` / `usecase` / `presentation` /
+`infrastructure` の4つ（すべて**単数形**。`adapter` ではなく `infrastructure`、`view` ではなく
+`presentation` はユーザーの指定）。**実測で分かった大事なこと**: `src/` 18ファイル・7322行に
+import の循環は0件で、**いまの依存関係は許した辺をすべて満たしている**。だから段階1は `git mv` と
+import の書き換えだけで、ロジックは1行も動かない。差し替えた原則は**原則2・原則3・原則5**の3つで、
+`CLAUDE.md` と `docs/architecture.md` と `docs/coding-standards.md`（「層と依存の向き」を新設）を
+同時に直した。**`view.ts` 3277行の分割は T-084 / T-085 の後**（1000行以上が外へ出てから割らないと
+線が二度動く）。
+
+**T-059 完了。** T-058 が決めた方式（tsukumo が `systemPrompt` の append で差分を足す）を実装した。
+`src/report-notation.ts` に `REPORT_NOTATION_PROMPT` を置き、`startSession` の `query()` へ
+`systemPrompt: { type: "preset", preset: "claude_code", append }` で渡す。**規約の正典がリポジトリ内に
+来たので、描ける記法の一覧が `src/report-html.ts` と同じコミットで動く**。テスト
+（`test/report-notation.test.ts` 3件）は**規約が名乗る要素をサニタイザが通すか**と、**名乗る class に
+CSS があるか**を両側へ突き合わせる（文面だけが先に進むのを防ぐ）。グローバルの
+`~/.claude/output-styles/asuna.md` は「レポートの組み立て方」だけを TUI 向けに差し替え（HTML と
+mermaid/chart を削除、引用 `> `・水平線 `---` を解禁、ネスト1段の制限を解除）。バックアップは
+`~/.claude/asuna.md.bak-20260912`、節の数は前後とも 11、`settings.json` は無傷。
+**目視は両側で実施**: 素の TUI（day-snap）で HTML タグ・mermaid/chart が0件、tsukumo（7431番）の
+メインビューで `.note` / `.badge` / `.cols` が枠・ラベル・横並びとして描かれることをユーザーが確認。
+`bun run check` は 377 pass / 0 fail。
+
+**`develop/tasks.json` の todo 13件に `loopable` を入れた。** 各タスク本文の「注意」が既に書いていた
+判断を固定しただけで、決め直してはいない。**`Y` は T-085 の1件のみ**で、残り12件は方針決め・
+グローバル設定の書き換え・実機確認のいずれかに当たる。`/loop /next-task` で進むのは T-085 だけ。
+
+**T-058 完了（決めるだけ。実装は T-059）。** 素の TUI にレポートの HTML タグが漏れる件の方式を
+決めた。**tsukumo が `systemPrompt` の append で HTML・mermaid・chart の規約を足し**、グローバルの
+`~/.claude/output-styles/asuna.md` は TUI 向け（HTML 無し・引用/ネスト/水平線は解禁）に保つ
+（ユーザーの選択）。**実測で2つ確かめた**: append と出力スタイルは同時に効く（`init` の
+`output_style` は `"Asuna"` のまま人格と append の両方が出る）、`applyFlagSettings({outputStyle})`
+もセッション限りで効き設定ファイルは不変（SDK v0.3.268）。**スタイルを2ファイルに分ける案は、
+共通部分113行が重複する**（tsukumo 専用は141行中28行）ので採らなかった。書き換えの承認範囲は
+`asuna.md` 1ファイルのみで、`settings.json`（orca の hooks / statusLine）には触らない。
+`bun run check` は 374 pass / 0 fail。
+
+**T-083 完了。** ブラウザ側 JS を `.ts` へ出すビルド工程を作り、1本目（SSE の購読）を移した。
+**起動のたびに `bun build` で組み立て、ディスクに置かない**（ユーザーの選択。`execFile` の標準出力を
+メモリに持ち、`/assets/browser.js` で配る）。置き場所は `src/browser/` で、**入口 `main.ts` だけが
+副作用を持ち**、仕組みの側は関数を公開するのでテストから import できる。領域は `data-event-path` で
+購読先を示す。**型を分ける必要は無かった**（`@types/bun` がブラウザの型を持つ）。**検査が届くことは
+わざと壊して確認**（型エラーで `tsc` が3件、未使用変数で `oxlint` が検出）。`bun run check` は
+374 pass / 0 fail。CDP で外に出した購読が実際に効くことも確認。**claude を起こす確認は未実施。**
+
+**T-079 完了。** 段落の途中・表のセル・箇条書きの項目に書いた HTML が生タグで出ていた件を直した。
+`renderPlainInline` が `escapeHtml` ではなく **`sanitizeReportHtml` を通す**形にして、行頭からの
+HTML ブロックと同じ許可リストを共有する（サニタイズは1箇所のまま）。コードスパンは
+`splitOnCodeSpans` で先に切り出し、中身を HTML として解釈しない。`bun run check` は 372 pass / 0 fail。
+**安全側は攻撃的に実測**（`<script>` / `<img onerror>` / `<iframe>` は落ちる、`onclick` と `style` は
+剥がれる、`javascript:` の href だけ落ちて `<a>` になる、属性値の中の `**` は太字化されない）。
+
+**T-075 完了。** 経過時間をサイドバーから**入力欄の送信ボタンと同じ行**へ移した。経路は
+`TURN_STATUS_EVENT_PATH` に相乗りし、ペイロードを真偽値から `{turnStartedAt, turnFinishedAt}` の
+JSON に変えて、「進行中か」はブラウザ側で導出する（冗長な状態を持たない）。書式（`N秒` /
+`M分SS秒`）とラベルの出し分けは T-055 のまま。サイドバー向けの `publish` がこの2値を運ばなく
+なったので `PublishState` ラッパー型も廃した。`bun run check` は 367 pass / 0 fail。CDP で
+進行中「経過 5秒」＋「中断」→ 終了後「所要 3秒」＋「送信」→ その後は増えない、を確認。
+
+**T-074 完了。** 依頼の見出しに**全行を既定で見せる**ようにした。1行なら `<h2>`、複数行なら
+`<details open>`（`<summary>` に1行目、中に2行目以降で重複なし）。全文は 2000 文字で切り、
+`max-height: 40vh` で画面を埋めない。**サブエージェントは既定で畳んだ `<details>` にしていたので
+受け入れ時に直した**（クリックが1手増えるだけで「1行しか出ない」という指摘が残るため）。あわせて
+「タブのラベルが依頼の文面を切り詰めている」という**事実と違うコメント**も直した（`turnTabHtml` が
+出すのは「今回」「1つ前」だけで、`truncateRequest` は誰も使っていなかったので削除）。
+`bun run check` は 364 pass / 0 fail。CDP で既定 `open: true` と2行目以降が見えることを確認。
+
+**T-073 完了。** 質問に**自由入力欄を常に1つ出す**ようにした（モデルが選択肢に `その他` を入れて
+きたときは二重に出さない）。`questionCardHtml` が末尾に足す形で、中身は `freeTextOptionHtml` に
+切り出して `questionOptionHtml` の `その他` 分岐と共有する。**multiSelect は既存の配線のまま**で、
+選んだラベルと自由入力は「、」で結合されて1つの label になる。`bun run check` は 362 pass / 0 fail。
+確認は合成データの機械検証（`question-other-input` の数と、CDP で「答える」を押したときに届く値）。
+
+**T-082 完了。** 個別ビューのページ（`/main` `/character` `/sidebar`）と `/` のリンク一覧を消し、
+**レイアウトページを `/` で配る**ようにした（`LAYOUT_PATH` が `"/"`）。消えたのは `viewPath` /
+`buildViewPage` / `buildIndexPage` / `VIEW_TITLE` / `ViewServer.urlOf` / 起動ログの「個別ビュー・
+デバッグ用」3行。**SSE の経路（`/events/*`）は無傷。** テストは削除ではなく `buildLayoutPage` ベースへの
+**書き換え**で、`it()` の数は 164→164 / 36→36 のまま（359 pass / 0 fail）。経路は使い捨てサーバ
+（7403）で実測: `/` が 200 で3領域を含み、`/layout` を含む旧経路は 404、`/events/*` は
+`text/event-stream` で 200。**実機の目視は未実施で、開きっぱなしの `/layout` のタブは開き直しが要る。**
+
+**T-070 完了。** Idiomorph 0.8.0（0BSD、10587バイト）を `vendor/` に同梱し、`subscriptionScript` の
+`el.innerHTML = event.data` を `Idiomorph.morph(el, event.data, { morphStyle: "innerHTML" })` に
+替えた。**外したのは差し替え前後の scrollTop の保存・復元だけ**で、「いちばん下から24px以内なら
+追従」（morph では再現されない別の意図）と「本文が同じなら差し替えない」ガードは残っている。
+中身は素の IIFE なのでグローバルで読み、highlight.js と同じ「常に読む」扱い。**目視は合成データの
+使い捨てサーバ（7401）を立てて Chrome DevTools Protocol で機械的に確認**: タスク一覧を
+scrollTop=150 にして SSE の更新を3回またいでも 150 のまま、同時に実行中の行は更新されていた
+（差し替えは起きている）。`bun run check` は 359 pass / 0 fail。**実機の目視は未実施。**
+
+**T-069 完了。** 描画の技術を決めた。**フレームワークは入れない**（React / Preact / Lit /
+Next.js / htmx / Turbo / Datastar）。ユーザーに確かめた不足は (a) DOM の状態が飛ぶ (b) ブラウザ側
+JS 812行が文字列の中で検査が効かない (c) CSS が約700行の1定数 の3つで、**Markdown の記法と
+レポートの表現力は不足に挙がらなかった**。ビルド工程の追加は許容を得た。層ごとに
+**層1=Idiomorph 0.8.0 を同梱して `innerHTML` を morph に / 層2=ブラウザ側 JS を `.ts` へ出して
+`bun build` / 層3=自前の `renderMarkdownToHtml` を保つ / 層4=CSS を `.css` に割って同じ工程で
+まとめる**と決めた。決め手は「**この一族が解く問題（遷移・フォーム・部分更新の push）のうち
+tsukumo が持っているのは push だけ**で、残るのは押された HTML を DOM に当てるところ＝一族が
+どれも内部でやっている morph そのもの」。比較は `docs/research/view-rendering.md`、決定は
+`docs/architecture.md`（節数 25→26）。実装3件は `develop/direction.md` へ。
+
+**T-072 完了。** 入力欄を **Enter で改行・Command+Enter で送信**に入れ替えた（ユーザーの指示で
+T-051 の「Enter で確定して送信」を覆した）。`/` 補完の候補が開いている間の Enter は Tab と同じ
+**確定だけ**にし、送信は Command+Enter に一本化。送信ボタンには `⌘⏎` を添えるが、**ラベルの
+`textContent` とは分けて `data-shortcut` 属性に持たせ**（初期 HTML にも入れる）、CSS の
+`.dispatch-send[data-shortcut]::after` で描く。こうしないと「送信／中断」の切り替えを
+`textContent` の一致で見分けられなくなる。中断のときは `applyButtonLabel` が属性ごと外す。
+`bun run check` は 357 pass / 0 fail（353 から +4）。**目視は合成データの静的ページで実施**
+（Chrome headless 1440x900。「送信 ⌘⏎」と新しい placeholder を確認）。**実機の目視は未実施**
+（Enter で改行・Command+Enter で送信・進行中に記号が消える、の3点）。
+
+**T-041 完了。** 出力スタイル（`~/.claude/output-styles/asuna.md`）を「セリフは `speak` で言い、本文に
+セリフを書かない」規約に差し替えた（承認済み、バックアップあり）。ユーザーの指摘（「質問は
+AskUserQuestion で出して…経路は生きてるね」のようなセリフがメインビューに出る）は、モデルが旧規約の
+まま本文にセリフを書いていたのが原因。保険として、`speak` ありのターンでも本文の行頭マーカー行は
+吹き出しへ回すようにした（T-039 の決定を1つ覆した）。実機で着手と完了の `speak` が2回、本文の漏れ 0。
+**注意: 出力スタイルはセッション起動時にしか読まれない。** tsukumo を起こし直せば新しい規約で動く。
+
+**T-020 完了。** 出力スタイルに「レポートの組み立て方」（内容の種類→使う構造の表、冒頭は結論、
+1ターンのレポートは最後に1つ）を承認を得て追記し、決定を `docs/requirements.md` 4.2 に記録した。
+レンダラ側の宿題は Markdown の引用 `> `（規約が許すが描けない。規約側で `<blockquote>` に寄せた）。
+**出力スタイルはセッション起動時にしか読まれない**ので、tsukumo を起こし直すと効く。
+
+**T-050 完了。** `/` 補完の候補一覧をポップアップにした（`src/view.ts`）。候補は textarea と同じ包みに入れ、
+**textarea の下端に底を合わせて中に重ねる**（サブエージェントは form の上に `bottom: 100%` で出したが、
+それは領域の `overflow-y: auto` に切られて見えないので差し替えた）。mousedown で確定、選択は
+`scrollIntoView` で追従。目視は未実施（ユーザーが後で行う）。
+
+**T-051 完了。** `/` 補完を前方一致→部分一致（各アルファベット順、合計10件）にし、候補が開いている間の
+Enter を「確定して送信」、Tab を「確定だけ」にした（`docs/requirements.md` 4.2 に決定を追記）。
+目視は未実施（ユーザーが後で行う。`/co` + Enter でターンが始まるか）。
+
+**T-052 完了。** `/` 補完の候補に説明を添えた。frontmatter から引けるのは 11/57 で閉じる基準だったが、
+**SDK の `supportedCommands()` と `commands_changed` が組み込み分も含めて名前と説明を返す**ので、
+そちらを出どころにした（tsukumo 側に説明の表もファイル読み取りも持たない。取れなければ名前だけに戻る）。
+**組み込みコマンドにも説明が出るかは型定義からの推定**なので、目視（`/cl` で `/clear` に説明が付くか）が要る。
+
+**T-053 完了。** 吹き出しをセリフ1件ずつに分け、今のターンの分を `.balloon-list` に縦へ積んで最新を下に
+見せる（DOM は新しい順＋`column-reverse` で、差し替え直後も最新が見える）。`request` で前のターンの
+最後の1件だけ残す。並びの高さは領域から `height: 100%` で継いで `max-height: 100%`（サブエージェントの
+`50vh` は下段の既定 40% を超えるので差し替えた）。目視は未実施（ユーザーが後で行う）。
+
+**T-054 完了。** サイドバーの「いま何をしているか」を固定の高さ（10rem）の `.activity-scroll` で包み、
+並びの中でスクロールするようにした（空のときも同じ高さ）。完了分の上限は 5→50 件。目視は未実施。
+
+**T-055 完了。** サイドバーの経過時間を「依頼を送ってからそのターンが終わるまで」にした。終了時刻は
+`src/index.ts` の配線が `turnFinishedAt` として持ち、ブラウザ側がそれを終点に固定してラベルを
+「所要」に変える（書式は `N秒` / `M分SS秒`）。目視は未実施。
+
+**T-056 完了。** サイドバーのタスク一覧を、status のバッジを先頭に置いた2列の行にし、見出しに
+todo / done の件数を添えた。未使用だった `countTaskStatuses`（`src/tasks.ts`）は消した。目視は未実施。
+**T-061 完了。** サイドバーの領域自体のスクロールを切り（`.layout-sidebar` を `overflow-y: hidden` の
+flex 縦積みに）、3つの区画をそれぞれ内側でスクロールさせるようにした（`.sidebar-block-scroll`）。
+高さは「いま何をしているか」「タスク一覧」が残りの2等分、「セッション情報」は中身なり。T-054 で入れた
+`.activity-scroll` の固定 10rem は廃止（意図は flex の割り当てで保てる）。**目視はユーザー確認待ち**で、
+claude を起こさず静的な HTML だけを配る使い捨てサーバ（7399）を Orca のタブに開いてある。
+
+**T-048 完了。** 承認を得て `bun link` で `tsukumo` をグローバルに入れた（`~/.bun/bin/tsukumo`。
+消すときはリポジトリ直下で `bun unlink`）。別プロジェクト（`day-snap`）から起こして、立ち絵が出て
+そのプロジェクトの内容で答えることを curl で確認した。**Orca のタブでの目視は未実施。**
+
+**T-042 完了。** 旧経路（transcript 追従・状態ファイル・hook・Orca 経由の送信）をコードごと撤去した。
+`~/.claude/settings.json` の tsukumo の hook エントリ5件も**承認を得て**外した（バックアップあり。
+orca の12件と statusLine は無傷）。`src/transcript.ts` の残り（`splitUtterance`）は `src/utterance.ts`
+へ、`MainViewEntry` は `src/session-view.ts` へ移した。テストは 436→339 件（消したモジュールの分）。
+
+**T-066 完了。** 最新の吹き出しをキャラビューの縦中央に据えた。`.balloon-list` を
+`.balloon-anchor`（縦2段の箱）/ `.balloon-track`（上半分・`column-reverse`・内側スクロール）/
+`.balloon-spacer`（下半分・空けたまま）に分け、**並びの下端＝最新の吹き出しの下端が領域の中心に
+接する**形にした（中心を合わせるには高さを測る必要があり CSS だけでは決まらないので下端を基準に
+した）。セリフが増えても最新の位置は動かない。決定は `docs/requirements.md` 4.2 と
+`docs/glossary.md`「吹き出し」に記録。**目視は合成データのページで実施**（1512x900 / 1512x1400）。
+
+**T-060 完了。** 既定ポート 7327 が塞がっていたら +1 して20個先（7346）まで順に試すようにした。
+概念を `src/view-port.ts` に切り出し、`resolveViewPort` が「既定か明示か」を返す形にして、
+**明示のときはずらさずそのまま失敗**させる。リトライは配線側（`src/index.ts`）に置き、
+`src/view-server.ts` は触っていない。実機で 7327 が塞がった状態から 7328 へずれることを確認。
+決定は `docs/requirements.md` 4.6 に記録。
+
+**T-068 完了。** `/` 補完が起動直後に候補0件のままになる不具合を直した。**原因は想定と逆**で、
+`init`（`session-info`。`slashCommands` の出どころ）は**依頼を送るたびに届く仕組みで開始直後には来ない**
+（実測で約59.5秒後、最初の ping の直後）。一方 `supportedCommands()` 由来の `command-descriptions` は
+起動から約1秒で60件届いていた。そこで `commandSuggestions` を「`slashCommands` が空なら
+`commandDescriptions` を名前の出どころにする」形にし、ブラウザ側は0件をキャッシュせず次の `/` で
+取り直すようにした。決定は `docs/requirements.md` 4.2 に記録。**この間だけ端末専用コマンドの除外が
+効かない**（`init` 到達で除外込みに戻る）。
+
+**T-067 完了。** サイドバーの「セッション情報」が見出しだけになる回帰（T-061 由来）を直した。原因は
+`.sidebar-block-scroll` の `flex-basis: 0`。親（`.sidebar-block-session`）の高さが auto のとき、
+内容サイズの見積もりが 0 になって中身が潰れていた。`flex: 1 1 auto` に変え、狭い画面（760px 以下）で
+同じ理由で潰れる「いま何をしているか」「タスク一覧」も `flex: 0 1 auto` に揃えた。**目視は合成データの
+ページで実施**（Chrome headless 1512x900。会話の中身は写していない）。
+
+**T-057 完了。** 箱の選択肢（Orca のタブのまま／Electron／Tauri v2／素のブラウザのアプリモード／WKWebView／
+その他）を一次情報で比べて `docs/research/app-shell.md` に記録した（結論は書かない。T-046 が読んで決める）。
+一次情報で埋まらなかった10欄は「不明」と理由付き。手元は `cargo` / `rustc` / `rustup` 未導入、Xcode あり。
+**これで `/loop` に載せられるタスクは無くなった**（残るのは感想が要る T-046 だけ）。
+done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md` へ移した。
+
+**T-071 完了。** キャラビューを作り直した。ユーザーの指示でスコープを「吹き出しの高さ」から画面全体の
+再設計に広げ、合成データで3案を見比べて**案A（立ち絵を主役に、最新のセリフだけ強調）**を採った。
+`.balloon-anchor` / `.balloon-spacer` を廃し、立ち絵は領域の高さいっぱい、並びは下端揃えで高さ全開。
+最新（DOM 先頭）だけ大きく青枠＋尻尾、過去は小さく薄く。**目視は合成データのページで実施**
+（1512x900 / 700x1000。セリフ5件が全部入る・立ち絵 110px→170px）。**実機の目視は未実施**
+（tsukumo を起こし直すと効く）。
+
+**吹き出しの位置関係を直した（指示への直接対応。タスク番号なし）。** 立ち絵は左下・最新の吹き出しは
+右上の**対角**に置き、尻尾は吹き出しの左下の角から左下（立ち絵の側）へ向けて出す（2026-09-12
+ユーザーの指示）。`.balloon-track` を `column-reverse` から `column` に変え（DOM は新しい順のまま
+なので最新が一番上に来て、`scrollTop = 0` が最新を指す性質も保たれる）、`align-self: flex-start` /
+`align-items: flex-end` で右上へ寄せた。領域の下端から浮かせる `--balloon-lift` は役目を終えたので
+撤去。尻尾は `border-top` + `border-right` の直角三角形に作り直し、塗りの `::after` を右上へ 1px
+ずらしたうえで一回り小さくして、左の辺と斜辺にだけ枠の色を残した。`docs/requirements.md` 4.2 と
+`docs/glossary.md`「吹き出し」も差し替え（節数 25→25 / 36→36）。**目視は合成データのページで実施**
+（Chrome headless 1512x900 と 700x1000。セリフの中身は合成）: 立ち絵が左下・最新が右上・尻尾が
+左下向きで、尻尾の塗りと枠が出ていること、セリフ1件だけのときも尻尾が切れないこと、狭い画面の
+縦積みでも破綻しないことを確認。`bun run check` は 353 pass / 0 fail。
+
+**吹き出しの積み方と立ち絵の位置を直した（指示への直接対応。タスク番号なし）。** 上の「対角」の形は
+ユーザーの再指摘（「最初の『発話がない』が右上すぎる」「過去の発言は上に押し上げる」「キャラはもう少し
+下に配置」）で作り直した。`.balloon-track` を `column`・`align-self: flex-start`・
+`align-items: flex-end` から `column-reverse`・`align-self: flex-end`・`align-items: flex-start` に
+変え、**最新が一番下（立ち絵のすぐ隣）、過去は上へ押し上がる**形にした。アニメーションも
+`balloon-push-down` → `balloon-push-up`（下から上へ）。立ち絵は `--portrait-drop: 0.75rem` ぶん
+下へずらし、はみ出した足元は `.character-layout` の `overflow: hidden` で切る（領域自体に
+スクロールバーを出さないため）。**尻尾の作り（`border-top` + `border-right` の直角三角形、`::after` を
+ずらして口を開ける）はそのまま**で、最新が下端に来たぶん立ち絵との距離が縮んだ。
+**目視は合成データのページで実施**（Chrome headless 1440x900。セリフは合成）: セリフ0件の
+プレースホルダが立ち絵の隣・下端に出て尻尾が左下から出ること、6件では最新が下端で強調され過去5件が
+上へ積まれて最古が並びの外へ流れること、立ち絵が枠の下端に接することを確認。
+`bun run check` は 353 pass / 0 fail。**実機の目視は未実施**（tsukumo を起こし直すと効く）。
