@@ -3154,13 +3154,13 @@ describe("サイドバーのモデル select（modelSelectHtml）", () => {
     expect(body).toContain('<option value="opus" selected>')
   })
 
-  it("model が未定のときは既定（sonnet）を選択済みにする", () => {
+  it("model が未定のときは既定（opus）を選択済みにする", () => {
     const body = buildSidebarBody({
       ...FULL_SIDEBAR_DATA,
       session: { ...FULL_SIDEBAR_DATA.session, model: undefined },
     })
 
-    expect(body).toContain('<option value="sonnet" selected>')
+    expect(body).toContain('<option value="opus" selected>')
   })
 
   it("選択肢はエイリアスの3つだけ（フルネームは出さない）", () => {

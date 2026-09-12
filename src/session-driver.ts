@@ -12,6 +12,7 @@
 
 import {
   createSdkMcpServer,
+  type EffortLevel,
   type PermissionMode,
   type PermissionResult,
   query,
@@ -76,6 +77,19 @@ export function isModelAlias(value: string): value is ModelAlias {
   return MODEL_ALIASES.some((alias) => alias === value)
 }
 
+/**
+ * 既定のモデル。ユーザーの指示（2026-09-12）で Opus に固定した
+ * （docs/requirements.md 4.1）。画面の `<select>` 側の見た目上の既定値
+ * （`src/view.ts` の `MODEL_FALLBACK`）も同じ値に揃える。
+ */
+export const DEFAULT_MODEL: ModelAlias = "opus"
+
+/**
+ * 既定の reasoning effort。ユーザーの指示（2026-09-12）で high に固定した
+ * （docs/requirements.md 4.1）。画面には出さない（設定するだけ）。
+ */
+export const DEFAULT_EFFORT: EffortLevel = "high"
+
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
   "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想・完了報告はこのツールで言う。" +
@@ -125,10 +139,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
   const session = query({
     prompt: input.stream(),
     options: {
-      cwd: options.cwd,
-      includePartialMessages: true,
-      systemPrompt: { type: "preset", preset: "claude_code", append: REPORT_NOTATION_PROMPT },
-      permissionMode: options.permissionMode,
+      ...buildQuerySeedOptions(options),
       mcpServers: { [SPEAK_MCP_SERVER_NAME]: speakServer(options.expressions) },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),
@@ -153,6 +164,36 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
     close: () => {
       input.end()
     },
+  }
+}
+
+/** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
+export type QuerySeedOptions = {
+  readonly cwd: string
+  readonly includePartialMessages: true
+  readonly systemPrompt: {
+    readonly type: "preset"
+    readonly preset: "claude_code"
+    readonly append: string
+  }
+  readonly permissionMode: PermissionMode
+  readonly model: string
+  readonly effort: EffortLevel
+}
+
+/**
+ * `query()` に渡す `options` のうち、クロージャを含まない部分を組み立てる。**本物の
+ * `query()` を呼ばずに既定値（{@link DEFAULT_MODEL} / {@link DEFAULT_EFFORT}）が渡る形を
+ * 検査できるように、`startSession` から切り出してある。**
+ */
+export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
+  return {
+    cwd: options.cwd,
+    includePartialMessages: true,
+    systemPrompt: { type: "preset", preset: "claude_code", append: REPORT_NOTATION_PROMPT },
+    permissionMode: options.permissionMode,
+    model: DEFAULT_MODEL,
+    effort: DEFAULT_EFFORT,
   }
 }
 

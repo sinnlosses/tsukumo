@@ -19,6 +19,15 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-081 完了。** セッションを起こすときの既定を **Opus・effort `high`** にした
+（`src/session-driver.ts` の `DEFAULT_MODEL` / `DEFAULT_EFFORT`）。`query()` の `options` は
+クロージャを含まない部分を `buildQuerySeedOptions` に切り出し、**本物の claude を起こさずに
+既定値を検査できる形**にした（テスト2件追加）。画面側の `MODEL_FALLBACK` も `opus` に揃えた。
+**実測で分かったこと**: `model: "opus"` を渡すと `init.model` は `claude-opus-5`。一方
+**effort は外から観測できない**（`init` に `effort` キーが無く、`setModel` はモデル名しか
+取らない）ので、切り替えで保たれるかは不明。**分からないことを前提に effort を画面の要素に
+しない**と `docs/requirements.md` 4.1 に書いた。`bun run check` は 379 pass / 0 fail。
+
 **T-080 完了（決めるだけ。実装は `develop/direction.md` の3段階）。** アーキテクチャを
 ドメイン駆動へ作り直すかを決めた。**結論は「層をディレクトリで表し、依存の向きをテストで縛る」**
 （ユーザー選択）。ユーザーの困りごとは**「読みにくい・探しにくい」と「差し替えが怖い」**の2つで、
@@ -292,7 +301,6 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 - **T-077（opus、着手可能）**: セッション復元の方式を決める。**会話内容の複製にあたるかが
   最大の論点**（規約を曲げるなら規約側を先に直す）。実装はしない
 - **T-078（sonnet、T-077 待ち）**: 決めた方式でセッション復元を実装する
-- **T-081（sonnet、着手可能）**: 既定のモデルを Opus・effort `high` にする
 - **T-086（sonnet、着手可能、`/loop` 可）**: `src/` を `domain` / `usecase` / `presentation` /
   `infrastructure` の4層へ移し、`test/architecture.test.ts` で依存の向きを縛る。ロジックは動かさない
 - **T-087（sonnet、T-086 待ち）**: `index.ts` からユースケースを抜いて配線だけにする

@@ -1516,8 +1516,10 @@ const MODEL_LABELS: ReadonlyArray<readonly [string, string]> = [
   ["sonnet", "Sonnet"],
   ["haiku", "Haiku"],
 ]
-// `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。
-const MODEL_FALLBACK = "sonnet"
+// `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。値は
+// `src/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）だが、**view.ts はそのファイルを
+// import しない**（原則3）ので、値だけをここに再掲する。
+const MODEL_FALLBACK = "opus"
 const MODEL_SELECT_ID = "tsukumo-model"
 
 /**
