@@ -1,6 +1,6 @@
 # 現在の状態
 
-最終更新: 2026-09-12（承認を得て T-042（旧経路の撤去）を完了。同日 `/loop /next-task` で T-050〜T-057 の8件を完了し、done 10件を
+最終更新: 2026-09-12（承認を得て T-042（旧経路の撤去）と T-048（グローバル導入）を完了。同日 `/loop /next-task` で T-050〜T-057 の8件を完了し、done 10件を
 `docs/history/tasks-archive.md` へ移した。同日、`/plan-tasks` で箱の選択肢の比較を T-057 に起こし、T-046 の論点を広げ、
 サイドバーの改善を T-054〜T-056、吹き出しの分割を T-053、補完の改善を T-050〜T-052 に起こし、
 progress.md の 2026-09-11 分を `docs/history/progress-archive.md` へ移した。2026-09-11 に方針を全面的に見直して
@@ -56,6 +56,10 @@ Enter を「確定して送信」、Tab を「確定だけ」にした（`docs/r
 
 **T-056 完了。** サイドバーのタスク一覧を、status のバッジを先頭に置いた2列の行にし、見出しに
 todo / done の件数を添えた。未使用だった `countTaskStatuses`（`src/tasks.ts`）は消した。目視は未実施。
+**T-048 完了。** 承認を得て `bun link` で `tsukumo` をグローバルに入れた（`~/.bun/bin/tsukumo`。
+消すときはリポジトリ直下で `bun unlink`）。別プロジェクト（`day-snap`）から起こして、立ち絵が出て
+そのプロジェクトの内容で答えることを curl で確認した。**Orca のタブでの目視は未実施。**
+
 **T-042 完了。** 旧経路（transcript 追従・状態ファイル・hook・Orca 経由の送信）をコードごと撤去した。
 `~/.claude/settings.json` の tsukumo の hook エントリ5件も**承認を得て**外した（バックアップあり。
 orca の12件と statusLine は無傷）。`src/transcript.ts` の残り（`splitUtterance`）は `src/utterance.ts`
@@ -64,7 +68,7 @@ orca の12件と statusLine は無傷）。`src/transcript.ts` の残り（`spli
 **T-057 完了。** 箱の選択肢（Orca のタブのまま／Electron／Tauri v2／素のブラウザのアプリモード／WKWebView／
 その他）を一次情報で比べて `docs/research/app-shell.md` に記録した（結論は書かない。T-046 が読んで決める）。
 一次情報で埋まらなかった10欄は「不明」と理由付き。手元は `cargo` / `rustc` / `rustup` 未導入、Xcode あり。
-**これで `/loop` に載せられるタスクは無くなった**（残りは承認や感想が要る T-046 / T-048）。
+**これで `/loop` に載せられるタスクは無くなった**（残るのは感想が要る T-046 だけ）。
 done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md` へ移した。
 
 ## 次にやること
@@ -77,12 +81,10 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 - **サイドバーの改善3件（T-054〜T-056）は完了。** 目視は同上
 - **目視がまとめて未実施**: T-050〜T-056 の7件。tsukumo を起こし直して（出力スタイルも読み直される）
   Orca のタブで確かめ、各タスクの `evidence` に1行ずつ追記する
-- **T-048（sonnet、着手可能）**: グローバルへの導入と別プロジェクトでの目視。**承認が要るので
-  `/loop` に載せない**
 - **T-046（opus、着手可能）**: 箱の判断。ユーザーの感想が要る。依存（T-042 / T-057）は完了し、
   比較表 `docs/research/app-shell.md` も揃っている
 
-T-046 / T-048 はユーザーがいるセッションで。
+T-046 はユーザーがいるセッションで。
 
 ## 未解決
 
@@ -107,7 +109,11 @@ T-046 / T-048 はユーザーがいるセッションで。
   CLI を起動しきらない。動作確認は `TSUKUMO_VIEW_PORT` を変えて起こし、終わったら
   `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる
 - **7327 番で tsukumo が動いている**（2026-09-12 実測。新方針のコードで、`claude-agent-sdk` の
-  子プロセスを持つ）。起こし直すときは先に止める
+  子プロセスを持つ）。起こし直すときは先に止める。**動作確認で別のを起こすときは
+  `TSUKUMO_VIEW_PORT` を変え、止めるときは自分が起こした pid だけを落とす**
+  （`pgrep -f claude-agent-sdk` は常駐の分も拾うので、空になることを完了条件にしない）
+- **`tsukumo` は `bun link` でグローバルに入っている**（`~/.bun/bin/tsukumo` →
+  リポジトリの `bin/tsukumo`）。消すときはリポジトリ直下で `bun unlink`
 - **`git stash` に PTY 路線の未コミット分がある**（stash@{0}）。戻す予定は無い。誤って
   `git stash pop` しない
 - **`~/.claude/settings.json` の hooks と statusLine は orca（`~/.orca/agent-hooks/`）が

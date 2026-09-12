@@ -23,10 +23,10 @@
     "id": "T-048",
     "summary": "tsukumo コマンドをグローバルに入れ、別プロジェクトで起動して確かめる",
     "task": "`tsukumo` コマンドをグローバルに導入し、別のプロジェクトのディレクトリで `tsukumo` と打って起動できることを確かめる。\n\n## 背景\n\nコマンドの器（`bin/tsukumo`、`package.json` の `bin`）は前のタスクで入る。**それをどのディレクトリからでも打てるようにするには、グローバルへの導入が要る**。`CLAUDE.md`「進捗管理とHandoff」の IMPORTANT にあるとおり、**グローバルなツールの導入はユーザーの承認を得てから行う**。\n\n2026-09-11 実測: `which tsukumo` は無し、`bun pm bin -g` は空（Bun のグローバル bin ディレクトリが未設定か未使用）、`~/.bun/bin` には `bun` と `bunx` だけ。`~/.zshrc` に tsukumo の alias は無い。\n\n## 解くべき論点\n\n- **導入の方法**（ユーザーに選んでもらう）: (a) リポジトリで `bun link` して `~/.bun/bin/tsukumo` を作る（`PATH` に `~/.bun/bin` が要る。開発中の変更がそのまま反映される）、(b) `~/.local/bin/tsukumo` などへシンボリックリンクを置く、(c) `~/.zshrc` に alias。**推奨は (a)**（Bun の標準の仕組みで、消すときも `bun unlink` で済む）。どれを選んでも**このリポジトリの外に何を置いたか**を `docs/requirements.md` 4.6 と `docs/architecture.md`「既知の制約・注意点」に書く（後で消せるように）\n- `PATH` の確認: `~/.bun/bin` が `PATH` に無ければ、ユーザーに `~/.zshrc` への追記を頼む（**tsukumo からユーザーのシェル設定を書き換えない**）\n\n## やること\n\n1. ユーザーに導入の方法を確認し、承認を得る\n2. 導入する（例: `bun link`）。`which tsukumo` で場所を確かめる\n3. **別のプロジェクトのディレクトリ**（tsukumo 以外の実在するリポジトリ）で `tsukumo` と打ち、Orca のタブが開いて、そのプロジェクトについての依頼（例: 「このリポジトリのトップにあるファイルを3つ挙げて」）に、そのプロジェクトの内容で答えることを目視する\n4. `docs/requirements.md` 4.6 と `CLAUDE.md`「セットアップ / 環境構築」に導入の手順（と消し方）を書く\n\n## 完了条件\n\n- `which tsukumo` がパスを返すこと（`evidence` に書く）\n- 別のプロジェクトのディレクトリで `tsukumo` と打って、Orca のタブに立ち絵が出て、そのプロジェクトの内容で応答が返ることをユーザーが目視（どのディレクトリで、何が見えたかを `evidence` に書く。**依頼と応答の中身は写さない**）\n- `bun run check` が通ること（docs の整形）\n\n## 注意\n\n- **グローバルへの導入はユーザーの承認を得てから。** サブエージェントに委譲せず、ユーザーがいるセッションで行う。`/loop` に載せない\n- `~/.zshrc` や `~/.claude/settings.json` を tsukumo 側から書き換えない\n- 起こしたプロセスは終わったら止め、`pgrep -f claude-agent-sdk` が空であることを確かめる",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "承認を得て bun link で導入（選択肢から (a) をユーザーが選択）。which tsukumo → /Users/sinnlos/.bun/bin/tsukumo（実体は ../install/global/node_modules/tsukumo/bin/tsukumo へのシンボリックリンク）。~/.bun/bin は既に PATH にあり、シェル設定は書き換えていない。消し方は bun unlink。別プロジェクト /Users/sinnlos/ghq/github.com/sinnlosses/day-snap（README.md と LICENSE だけ、develop/tasks.json 無し）で TSUKUMO_VIEW_PORT=56906 TSUKUMO_OPEN_VIEW=0 tsukumo を起動し、curl で確認: /character が 200 で立ち絵の svg あり（同梱物が tsukumo 自身の場所から読めている）、/sidebar のタスク一覧が「不明」で見出しに件数なし、/layout が 200。依頼を1件送ると /events/main の応答にそのプロジェクトの README.md と LICENSE が出て、tsukumo 側のファイル名は0件（cwd がそのプロジェクトになっている）。内容は写していない。起こしたプロセス（pid 65154 とその子 65164）は停止を確認。ユーザーの常駐（7327番、pid 59091）は無傷。docs/requirements.md 4.6 / CLAUDE.md / docs/architecture.md に導入と消し方を記録（節数 25→25 / 15→15 / 25→25）。bun run check: 339 pass / 0 fail。**Orca のタブでの目視は未実施**（ユーザーが後で行う）。",
     "dependencies": ["T-047"]
   }
 ]
