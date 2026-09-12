@@ -299,8 +299,9 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 **実測（2026-09-12、SDK v0.3.268）**: `systemPrompt` の append と出力スタイルは**同時に効く**
 （`init` の `output_style` は `"Asuna"` のまま、応答に人格と append の指示の両方が出た）。
 `applyFlagSettings({ outputStyle })` もセッション限りで効き、設定ファイルは書き換わらない。
-`startSession`（`src/session-driver.ts`）はいま `systemPrompt` を指定していないので、
-append の配線と `asuna.md` の整理は後続タスクで行う。
+**配線済み**（2026-09-12、T-059）: 文面は `src/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
+`startSession`（`src/session-driver.ts`）が `query()` の `systemPrompt` へ渡す。`asuna.md` の
+「レポートの組み立て方」は TUI 向けに差し替え済み。
 
 #### 各表示物
 

@@ -27,6 +27,7 @@ import {
   type PendingAsk,
   type PendingAnswerQueue,
 } from "./pending-answer.ts"
+import { REPORT_NOTATION_PROMPT } from "./report-notation.ts"
 import {
   type SessionEvent,
   SPEAK_MCP_SERVER_NAME,
@@ -126,6 +127,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
     options: {
       cwd: options.cwd,
       includePartialMessages: true,
+      systemPrompt: { type: "preset", preset: "claude_code", append: REPORT_NOTATION_PROMPT },
       permissionMode: options.permissionMode,
       mcpServers: { [SPEAK_MCP_SERVER_NAME]: speakServer(options.expressions) },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>

@@ -19,6 +19,23 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ### 2026-09-12 出力スタイルの改訂と、`/loop` の残り
 
+**T-059 完了。** T-058 が決めた方式（tsukumo が `systemPrompt` の append で差分を足す）を実装した。
+`src/report-notation.ts` に `REPORT_NOTATION_PROMPT` を置き、`startSession` の `query()` へ
+`systemPrompt: { type: "preset", preset: "claude_code", append }` で渡す。**規約の正典がリポジトリ内に
+来たので、描ける記法の一覧が `src/report-html.ts` と同じコミットで動く**。テスト
+（`test/report-notation.test.ts` 3件）は**規約が名乗る要素をサニタイザが通すか**と、**名乗る class に
+CSS があるか**を両側へ突き合わせる（文面だけが先に進むのを防ぐ）。グローバルの
+`~/.claude/output-styles/asuna.md` は「レポートの組み立て方」だけを TUI 向けに差し替え（HTML と
+mermaid/chart を削除、引用 `> `・水平線 `---` を解禁、ネスト1段の制限を解除）。バックアップは
+`~/.claude/asuna.md.bak-20260912`、節の数は前後とも 11、`settings.json` は無傷。
+**目視は両側で実施**: 素の TUI（day-snap）で HTML タグ・mermaid/chart が0件、tsukumo（7431番）の
+メインビューで `.note` / `.badge` / `.cols` が枠・ラベル・横並びとして描かれることをユーザーが確認。
+`bun run check` は 377 pass / 0 fail。
+
+**`develop/tasks.json` の todo 13件に `loopable` を入れた。** 各タスク本文の「注意」が既に書いていた
+判断を固定しただけで、決め直してはいない。**`Y` は T-085 の1件のみ**で、残り12件は方針決め・
+グローバル設定の書き換え・実機確認のいずれかに当たる。`/loop /next-task` で進むのは T-085 だけ。
+
 **T-058 完了（決めるだけ。実装は T-059）。** 素の TUI にレポートの HTML タグが漏れる件の方式を
 決めた。**tsukumo が `systemPrompt` の append で HTML・mermaid・chart の規約を足し**、グローバルの
 `~/.claude/output-styles/asuna.md` は TUI 向け（HTML 無し・引用/ネスト/水平線は解禁）に保つ
@@ -240,7 +257,6 @@ done 10件（T-020 / T-041 / T-050〜T-057）を `docs/history/tasks-archive.md`
 - **T-058（opus、着手可能）**: tsukumo 以外の素の TUI でレポートに HTML タグが出る件。出力スタイルを
   分けるか / 1ファイルで条件分岐するか / tsukumo が `systemPrompt` で足すかを決める。ユーザーの選択と
   グローバル設定を触る承認が要る
-- **T-059（sonnet、T-058 待ち）**: T-058 が決めた方式での実装と、TUI 側・ブラウザ側の両方の目視
 - **T-062（opus、着手可能）**: レポートを読み終えるまでの時間を短くするために、レンダラ・CSS・
   出力スタイルの3層のどこに何を足すかを決める。ユーザーの感想が要る。実装はしない
 - **T-063（sonnet、T-062 待ち）**: 自前レンダラで描けない引用・ネストしたリスト・水平線を埋める
