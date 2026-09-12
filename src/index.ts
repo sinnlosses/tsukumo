@@ -40,6 +40,12 @@ import {
   type ToolActivity,
 } from "./session-view.ts"
 import { readTaskSummaries, type TaskSummaryItem } from "./tasks.ts"
+import {
+  DEFAULT_VIEW_PORT,
+  resolveViewPort,
+  startOnResolvedPort,
+  VIEW_PORT_FALLBACK_ATTEMPTS,
+} from "./view-port.ts"
 import { startViewServer, type ViewServer } from "./view-server.ts"
 import {
   buildCharacterBody,
@@ -53,9 +59,6 @@ import {
   VIEW_NAMES,
 } from "./view.ts"
 
-// ビューを配るポート。固定にしてあるのは、開き直したブラウザタブが同じ URL のまま使えるように
-// するため（docs/architecture.md「HTML はローカルの HTTP サーバから配る」）。
-const DEFAULT_VIEW_PORT = 7327
 const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 // 起動時にレイアウトページのタブを自動で開くかどうか。既定は開く（コマンド1つで完成させるため）。
 const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
@@ -70,7 +73,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
 作業対象にする（claude を打つのと同じ感覚）。
 
 環境変数:
-  TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。0 を渡すと空きポートを使う）
+  TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。既定のまま塞がっていたら
+                          ${String(VIEW_PORT_FALLBACK_ATTEMPTS)}個先まで順にずらす。明示的に指定した
+                          ときはずらさずそのまま失敗する。0 を渡すと空きポートを使う）
   TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は tsukumo 自身の同梱の
                           characters/tsukumo-spirit。自分の素材を使うときは起動先の
                           characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
@@ -107,10 +112,10 @@ async function main(args: readonly string[]): Promise<number> {
     return 0
   }
 
-  // 起動時に前提（ポートが空いている）が満たされていないときだけ即時終了する
+  // 起動時に前提（ポート番号として読める）が満たされていないときだけ即時終了する
   // （docs/coding-standards.md「エラーハンドリング」）。
-  const port = resolveViewPort(process.env[VIEW_PORT_ENV_NAME])
-  if (port === undefined) {
+  const portResolution = resolveViewPort(process.env[VIEW_PORT_ENV_NAME])
+  if (portResolution.kind === "invalid") {
     process.stderr.write(`tsukumo: ${VIEW_PORT_ENV_NAME} がポート番号として読めない\n`)
     return 1
   }
@@ -125,31 +130,34 @@ async function main(args: readonly string[]): Promise<number> {
   // （docs/requirements.md 4.2「入力欄」）。session-view.ts が端末専用を除いた名前に説明を
   // 添える計算（`commandSuggestions`）を済ませたものをそのまま持つ。
   let commands: readonly CommandDescription[] = []
-  const server = await startViewServer(
-    port,
-    (text) => {
-      if (driver === undefined) {
-        return false
-      }
-      driver.prompt(text)
-      return true
-    },
-    () => (driver === undefined ? Promise.resolve() : driver.interrupt()),
-    (id, answer) => (driver === undefined ? false : driver.answer(id, answer)),
-    (mode) =>
-      driver === undefined
-        ? Promise.resolve(false)
-        : driver.setPermissionMode(mode).then(() => true),
-    (model) =>
-      driver === undefined ? Promise.resolve(false) : driver.setModel(model).then(() => true),
-    () => commands,
-  ).catch((error: unknown) => {
-    process.stderr.write(`tsukumo: ビューを配れない: ${describeError(error)}\n`)
-    return undefined
-  })
-  if (server === undefined) {
+  // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
+  // ずらして再挑戦する（src/view-port.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
+  const startResult = await startOnResolvedPort(portResolution, (port) =>
+    startViewServer(
+      port,
+      (text) => {
+        if (driver === undefined) {
+          return false
+        }
+        driver.prompt(text)
+        return true
+      },
+      () => (driver === undefined ? Promise.resolve() : driver.interrupt()),
+      (id, answer) => (driver === undefined ? false : driver.answer(id, answer)),
+      (mode) =>
+        driver === undefined
+          ? Promise.resolve(false)
+          : driver.setPermissionMode(mode).then(() => true),
+      (model) =>
+        driver === undefined ? Promise.resolve(false) : driver.setModel(model).then(() => true),
+      () => commands,
+    ),
+  )
+  if (!startResult.ok) {
+    process.stderr.write(`tsukumo: ビューを配れない: ${startResult.reason}\n`)
     return 1
   }
+  const server = startResult.server
 
   const characterDir = resolveBundledDir(
     process.env[CHARACTER_DIR_ENV_NAME],
@@ -451,21 +459,6 @@ function resolveOpenView(rawValue: string | undefined): boolean {
   return rawValue?.trim() !== "0"
 }
 
-/** 環境変数のポート番号を読む。読めない値のときは undefined を返し、既定にも落とさない。 */
-function resolveViewPort(rawPort: string | undefined): number | undefined {
-  const trimmed = rawPort?.trim()
-  if (trimmed === undefined || trimmed === "") {
-    return DEFAULT_VIEW_PORT
-  }
-
-  const parsed = Number(trimmed)
-  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) {
-    return undefined
-  }
-
-  return parsed
-}
-
 /**
  * キャラクター定義（character.json）を読む。無い・壊れているときは undefined を返し、
  * 呼び出し側は立ち絵なし・表情は `default` だけにフォールバックする。
@@ -567,10 +560,6 @@ function readOptionalBinaryFile(path: string): Buffer | undefined {
   } catch {
     return undefined
   }
-}
-
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : "原因不明"
 }
 
 const exitCode = await main(process.argv.slice(2))
