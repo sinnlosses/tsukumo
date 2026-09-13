@@ -4427,3 +4427,408 @@ T-080 の決定（2026-09-12）の段階3。**T-084（ブラウザ側 JS を `.t
 - 見た目の色・文字サイズは変えない。**揃えるだけ**
 
 ---
+
+## T-095 移行の段2: protocol と core の骨組み・WebSocket・偽の駆動
+
+- **difficulty**: `opus` / **loopable**: `N` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  bun run check 445 pass / 0 fail（415→445）。src/ は protocol 8 / core 9 / ui 1 と旧3層（domain は protocol に吸収）。依存は docs/design.md 11章の8件だけ。層の検査は3辺＋併存の辺で、違反4種を一時的に足して落ちることを確認。
+  実機（偽の駆動を2回、7398）: Orca のタブが同じ browserPageId 049487c2 のまま新しいトークンの URL へ貼り直され、2つに増えない。**orca tab goto は存在せず** orca goto --url --page が正しい（docs/requirements.md 5章を実態に直した）。
+  実機（SDK の駆動で1往復、7398）: 旧の SSE のページに balloon 2 / turn-panel 1 / detail-block 1 / sidebar-block 9 / portrait 1、新の ws に hello（protocolVersion 1・model claude-opus-5・slashCommands 61）。トークン無しの upgrade は 403、stderr は空。ブラウザでの目視は未実施（playwright 未導入）。
+
+### 当時のタスク本文
+
+描く層をブラウザ側へ移す移行（`docs/design.md`）の**段2**。`src/protocol/` と `src/core/` を切り、WebSocket 1本の経路と偽の駆動を通す。**見た目は変えない**（旧の SSE と POST はそのまま動かし続ける）。
+
+## 決定（2026-09-13 に着手前へユーザーと確認済み。**この4点は決まっているので決め直さない**）
+
+1. **zod は境界だけ**。`ClientCommand` は全部 zod（書き込み経路なので厳密に。`text` の上限 20,000 文字もここ）。`ServerFrame` は**封筒だけ** zod（`type` と `protocolVersion`）で、中身（`state` / `events`）は TS の型のまま検証しない。**`SessionEvent` と `SessionState` は zod にしない**（TS の型のまま）。理由は、状態にフィールドを1つ足すたびにスキーマを二重に直す手間が段3〜段9 の各段で効いてくるため。`docs/design.md` 4章の「zod のスキーマが正典」はこの範囲に読み替える（設計書側も直す）
+2. **起動トークンは入れる**。起動ごとに乱数1つをメモリに持ち（**ディスクに書かない**）、`GET /` はトークン不要、`/ws?t=<token>` は必須。ページは `location.search` からトークンを読んで ws に付ける
+3. **トークンで URL が変わるので、`showView` は既存タブを貼り直す**。オリジンとパス（クエリを除く）が一致するタブを `orca tab list --json` で探し、**あれば `orca goto --url <新しい URL> --page <pageId> --json`、無ければ `orca tab create --url`**。変更は `core/orca-host.ts` の中だけで、ポート（`showView(url)`）の形は変えない
+4. **バッチは 100ms**（いまの `PUBLISH_INTERVAL_MS` と同じ値を使う）。**`ui.js` の空の入口までやる**（段3の前提を作る）
+
+**Orca の実測（2026-09-13。`docs/requirements.md` 5章の表が古い）**: **`orca tab goto` は存在しない**。正しいのは `orca goto --url <url> --page <pageId>`（`tab` のサブコマンドではない。`reload` も同じ）。**ページの読み込みに失敗しても URL の遷移そのものは起きる**（`ERR_CONNECTION_REFUSED` のとき `ok: false` が返るが、`tab list` の URL は新しいものになっていた）ので、`ok: false` を「遷移できなかった」と解釈して即座に `tab create` に倒すと**タブが増える**。`tab create` に倒すのは一覧にそのタブが無かったときだけにする。**あわせて `docs/requirements.md` 5章の Orca コマンドの表の該当行を実態に直す**（節の数は変えない）
+
+## 背景
+
+正典は `docs/design.md`（2章 全体構成、3章 動きの流れ、4章 protocol、5章 core、9章 会話内容と安全、10章 テスト、11章 ビルドと依存、12章 段2）。いまのコード（2026-09-13 時点）:
+
+- `src/domain/session-event.ts` の `SessionEvent` union と `src/usecase/session-view.ts` の `applySessionEvent(view, event, now)` / `SessionView` が、そのまま `protocol` の核になる（改名: `SessionView` → `SessionState`、`now` → `at`）
+- `src/usecase/event-sink.ts` が状態を持ち、`turnStartedAt` / `turnFinishedAt` を畳み込みの外で持っている。これは `session-manager` へ移し、時刻は `StampedEvent.at` として畳み込みの中に入れる（4.2）
+- `src/infrastructure/view-server.ts` が SSE 5本と POST 6本を持つ。**このタスクでは消さない**。`/ws` を1本足すだけ
+- `src/index.ts` は配線。`startViewServer` の引数が9個ある（コールバックの束）。`session-manager` の `dispatch(sessionId, command)` に置き換わる形を作る
+- `src/infrastructure/session-driver.ts` の `SessionDriver` の契約はそのまま。偽の駆動はこの契約を実装する
+- `test/architecture.test.ts` が4層の辺を検査している。3層の辺（`protocol ← core`、`protocol ← ui`、`core ⟂ ui`）と、併存期間の規則（旧 → `protocol` は可）を足す
+
+## 解くべき論点
+
+- **zod を正典にする範囲**。`SessionEvent` を zod で定義し直すか（`z.infer` で型を得る）、TS の型のまま `ServerFrame` の外側だけ zod にするか。設計は「zod が正典」（4章）。移す量と、`domain/session-event.ts` の `toSessionEvents`（SDK メッセージ → イベントの変換。これは `core` に残る）との切り分け
+- **`session-manager` のバッチ**: 50〜100ms でまとめる（いまの `usecase/throttle.ts` を流用）。`partial-utterance` を1バッチ内で連結する（3章「依頼」）
+- **起動トークン**（9章）: 生成・URL への付け方（`showView` に渡す URL に含める）・`/ws` の upgrade での検証。旧のページ（`/`）はトークン無しで開ける形を保つ（旧経路が動き続けるため）
+- **`ui.js` の空の入口**を束ねてページに読ませるところまでやるか（段3が React を入れる前提を作る）。設計は「やる」（12章）。`bun build` に TSX を通すための tsconfig（`jsx: react-jsx`）と `react` の依存はここで入れる
+
+## やること
+
+1. `docs/design.md` 11章の依存を `bun add` / `bun add -d` で入れる（`react` `react-dom` `ws` と型、`happy-dom` `@testing-library/react`。Markdown 一式は段6でもよいが、ここで入れても構わない）
+2. `src/protocol/` を作り、`domain/` の語彙（`expression` / `question` / `pending-ask` の型 / `task-summary` の型 / `character` の型）と `session-event.ts`（イベントの型と zod）、`session-state.ts`（`SessionState` / `applySessionEvent(state, event, at)` / `INITIAL_SESSION_STATE`）、`command.ts`、`frame.ts`（`PROTOCOL_VERSION` を含む）を置く。**`toSessionEvents`（SDK メッセージの変換）は `core` へ**（`unknown` を受ける検証だが SDK の形に結び付いているため）。旧の `domain/` / `usecase/` は新しい場所を re-export するか import 先を書き換え、テストを移す
+3. `src/core/` を作り、`session-manager.ts`（5章の `SessionHost`。`create` / `dispatch` / `subscribe`。バッチ。サーバ側でも reducer を回す）、`fake-driver.ts`（台本の JSON を時間どおりに流す。`prompt()` で次の場面。答え待ちも積む）、`config.ts`（`TSUKUMO_DRIVER` / `TSUKUMO_CHARACTER` / `TSUKUMO_NEW_SESSION` を含む環境変数の読み取りをここへ集約。`TSUKUMO_CHARACTER_DIR` は `TSUKUMO_CHARACTER` に統合）、`server.ts`（`ws` の upgrade を `/ws?t=` で受け、Origin とトークンを確かめ、`hello` を送って購読に加える。**当面は旧 `view-server.ts` の `createServer` に upgrade ハンドラを足す形でもよい**。`http` 側の経路は段3以降で移す）を置く
+4. `src/index.ts` の配線を、`session-manager` を通す形に変える。旧の `event-sink` / `view-publish` は `session-manager` の購読者の1つとして残す（旧の SSE が動き続ける）
+5. `src/ui/main.tsx` に空の入口（`console` に何も出さない、`document` に触らない1行）を置き、`bundle.ts`（いまの `browser-bundle.ts`）で束ねて `/assets/ui.js` として配り、ページの `<script>` に足す。tsconfig に `"jsx": "react-jsx"` を足す
+6. `test/architecture.test.ts` を3層 + 併存の規則に書き換える
+7. 台本のフィクスチャ（`test/fixture/fake-session.json` など。架空の会話）を1本書く
+8. `bun run check` を通す
+
+## 完了条件
+
+- `bun run check` が通ること（テスト件数の増減を `evidence` に書く）
+- **テスト**: (1) `applySessionEvent(state, event, at)` の既存テストが全件そのまま通る（改名だけ）、(2) `ClientCommand` / `ServerFrame` の zod が受け付ける形と落とす形を各1件以上、(3) `session-manager` に偽の駆動を差し込み、`subscribe` 直後に `hello`（snapshot）→ 以降 `events` の順で届く、`partial-utterance` が1バッチで連結される、`dispatch` の `prompt` が駆動の `prompt` を呼ぶ、(4) `server` の ws: トークン無しは拒否、Origin 違いは拒否、正しい接続で `hello` の `protocolVersion` と `state` が読める
+- **偽の駆動で起こせること**: `TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=<別> bun run start` で claude を起こさずに立ち上がり、旧のページ（`/`）に台本のセリフとレポートが出る（Playwright かスクリーンショットで確認。**目視の内容は台本の架空の会話なので `evidence` に書いてよい**）
+- **`bun run start`（SDK の駆動）で見た目が変わっていないこと**（旧の SSE と POST が動く。実機で1往復）
+- `test/architecture.test.ts` が3層の辺で通り、`core` から `ui`、`ui` から `core`、新から旧の import を1つ足すと落ちること（落ちることを一時的に確かめて戻す）
+- `docs/architecture.md`「各ファイルの責務」に `protocol` / `core` の新しいファイルを足すこと（節の数は変えない）
+
+## 注意
+
+- **設計は `docs/design.md` が正典。** 迷ったら該当章を読む（`sed -n '/^## N\. /,/^## /p' docs/design.md`）。設計書と違う形にしたくなったら押し切らず、理由を `evidence` に書いて止める
+- **会話内容の扱い**（`docs/coding-standards.md`）が最優先。テストのフィクスチャ・偽の駆動の台本は手で書いた架空の会話だけ。ログに会話を出さない
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+- **`~/.claude/` を触らない**
+- 足してよい npm の依存は `docs/design.md` 11章の一覧だけ（承認済み）。一覧に無いものが要ると分かったら止めて聞く
+- 旧4層（`domain` / `usecase` / `presentation` / `infrastructure`）と新3層（`protocol` / `core` / `ui`）は段7まで併存する。**旧 → 新（`protocol`）の import は可、新 → 旧は不可**（`docs/coding-standards.md`「層と依存の向き」）
+- **`Bun.serve` の WebSocket を使わない**（`ws` パッケージ。`Bun.*` に寄せない規約）
+- **旧の経路を消さない。** 消すのは段3以降、領域ごと
+- `/loop` に載せないのは、移行の骨組みを決める最初の段で、ここで決めた形（zod の範囲・バッチ・トークン）が以後の段すべてに波及するため。実装はサブエージェントに委譲してよいが、受け入れはユーザーのいるセッションで行う
+
+---
+
+## T-096 移行の段3: サイドバーを React の部品にする
+
+- **difficulty**: `sonnet` / **loopable**: `Y` / **passes**: `true` / **dependencies**: `T-095`
+- **evidence**:
+
+  bun run check 432 pass / 0 fail（445→432。旧のサイドバーの HTML 文字列テストを消し、部品のテスト30件＋層の辺を足した差し引き）。src/ui/ に app / socket / component/select / sidebar 5件、core/task-summary.ts（mtime を見て tasks-changed を起こす）。
+  見た目は据え置き。偽の駆動（7398）で 1400 / 900 / 600 / 400px を実測し、.layout-sidebar（top 16 / left 1048.39 / 335.61x505.44）と .layout-main が段2 と同値、label と select の左端の差が全幅で 68.7px 一定、横のはみ出し 0px。画像も段2 と同じ見え方。
+  ui/ の作法3点: ui/component/select.tsx を SessionInfo が使う／領域どうしの import の辺を test/architecture.test.ts に足し、ui/sidebar → ui/dispatch を一時的に入れて落ちることを確認／barrel 無し（`find src -name index.ts` が拾う src/index.ts は配線の入口で、段7 に cli.ts へ改名する）。
+
+### 当時のタスク本文
+
+描く層をブラウザ側へ移す移行（`docs/design.md`）の**段3**。サイドバー（進行・タスク一覧・セッション情報）を React の部品にし、旧の `/events/sidebar` と `buildSidebarBody` を消す。
+
+## 背景
+
+正典は `docs/design.md`（6.1 部品の木、6.2 状態の持ち方、4.1 `tasks-changed`、12章 段3）。いまのコード:
+
+- `src/presentation/view.ts` の `buildSidebarBody` / `sidebarSection` / `activityBody` / `taskListBody` / `sessionInfoBody` / `permissionModeHtml` / `modelSelectHtml` がサイドバーの HTML を組み立て、`src/usecase/view-publish.ts` の `sidebarData` が値を渡している
+- `src/presentation/browser/session-info.ts` が `<select>` の変更を `POST /api/model` / `/api/permission-mode` に送っている
+- タスク一覧は `src/infrastructure/task-summary.ts` の読み直し係が publish のたびに `develop/tasks.json` を読んでいる。移行後は **core が mtime を見て `tasks-changed` イベントを流し、状態に入る**（5章 `task-summary.ts`）
+- CSS は `src/presentation/style/sidebar.css`。T-092 で `.session-info` を2列 grid にしてある（ラベルと `<select>` の左端が全幅で揃う。CDP で実測済み）
+- 段2で `src/ui/main.tsx` の空の入口と `<App>` の置き場所、`socket.ts`、`SessionState` の Context が整っている前提（無ければこのタスクで `app.tsx` / `socket.ts` を作る。6.1 / 6.2）
+
+## やること
+
+1. `core/task-summary.ts` を「mtime が変わったときだけ `tasks-changed` を起こす」形にし、`SessionState.tasks` に入れる（`protocol` に `tasks-changed` イベントと `tasks` を足す）
+2. `src/ui/app.tsx`（接続・`useReducer(applySessionEvent)`・`dispatch(command)` の Context）と `src/ui/socket.ts`（接続・再接続・フレームの zod 検証・`hello` で状態を置き換え）を作る（段2で作っていなければ）
+3. `src/ui/sidebar/` に `Sidebar` / `Activity` / `TaskList` / `SessionInfo` を作る。`<select>` は `set-model` / `set-permission-mode` のコマンドを送る。CSS は `src/ui/style/sidebar.css` へ移す（中身は変えない）
+4. レイアウトページの `.layout-sidebar` から `data-event-path` を外し、React の root をそこに mount する（`main.tsx`）。**他の3領域は旧のまま**
+5. 旧の `/events/sidebar`、`buildSidebarBody` とその内部関数、`view-publish.ts` の `sidebarData`、`browser/session-info.ts`、`POST /api/model` / `/api/permission-mode` の経路、対応するテストを消す
+6. **`ui/` の作法を3つ入れる**（下の「ui/ の作法」。最初の部品を書くこの段でやる）
+7. `bun run check` を通す
+
+## ui/ の作法（2026-09-13 決定。bulletproof-react の現物と突き合わせて決めた）
+
+**bulletproof-react の芯（機能ごとの縦割り・一方向・横断 import の禁止）は既に入っている**ので、
+足りない3つだけを入れる。**`features/` への改名はしない**（領域の名前は `docs/glossary.md` が正典で、
+用語集とコードがズレるほうが高くつく）。`api/` `lib/` `stores/` `hooks/` `utils/` は**先に切らない**
+（原則5「必要になったときに作る」。`utils` は原則5が名指しで禁じている）。
+
+1. **`src/ui/component/` を切る**（単数形。原則5）。**領域をまたいで使う UI の部品だけ**を置く。
+   段4 で送信ボタン・`<select>`・チェックボックスが `dispatch/` と `sidebar/` の両方に要るので、
+   ここが無いと片方の領域に置いてもう片方から引くことになり、それが横断 import の第一歩になる。
+   **この段では `<select>` 1つだけを移せばよい**（`SessionInfo` が使うもの。段4 が続きを足す）
+2. **領域どうしの import を禁じる辺を `test/architecture.test.ts` に足す。** いまの辺は
+   `ui: ["protocol", "ui"]` で、`main-view` が `sidebar` を引いても落ちない。
+   **`ui/<領域>/` から別の `ui/<領域>/` への import を落とす**（`ui/component/` `ui/style/` と
+   `ui/app.tsx` `ui/socket.ts` `ui/main.tsx` は誰から引いてもよい共有部分）。領域は
+   `layout` / `main-view` / `character-view` / `sidebar` / `dispatch` / `report`
+3. **barrel file を作らない**、を `docs/coding-standards.md` に1項目として足す。
+   ディレクトリに `index.ts` を置いて中身を再エクスポートしない（import は実ファイルを直接指す）。
+   理由は2つで、束ねるときの tree-shaking が効かなくなること（bulletproof-react が挙げている
+   理由）と、`index.ts` が「置き場所を名前にしたファイル」になること（原則5）
+
+## 完了条件
+
+- `bun run check` が通ること（増減を `evidence` に書く）
+- **部品のテスト**（`bun test` + `happy-dom` + `@testing-library/react`。役割と文言で当てる）: (1) 実行中・終わったツールが新しい順に出る、(2) タスク一覧が status のバッジ付きで出て見出しに todo / done の件数が付く、(3) `tasks` が `undefined` のとき一覧の代わりの文言が出る、(4) モデルと許可モードの `<select>` が状態の値を選択し、変更で `set-model` / `set-permission-mode` が `dispatch` される、(5) `bypassPermissions` を選ぶと警告の見た目の印（class か属性）が付く
+- **見た目が変わっていないこと**: 偽の駆動で起こし、CDP（headless Chrome）で 1400 / 900 / 600 / 400px の幅について、`.session-info` の label と `<select>` の左端の差が 0px、3区画の見出しの文字列と順序が段2と同じ、`scrollWidth == clientWidth`。数値を `evidence` に書く
+- `grep -rn "events/sidebar\|buildSidebarBody" src test` が空であること
+- `src/presentation/style/sidebar.css` が無く `src/ui/style/sidebar.css` があること
+- **`ui/` の作法**: (1) `src/ui/component/` があり、共有する `<select>` がそこにあること、
+  (2) `test/architecture.test.ts` に領域どうしの辺があり、`ui/sidebar/` から `ui/dispatch/` への
+  import を一時的に足すと**落ちる**こと（落ちることを確かめてから戻す。段2 で違反4種を確かめたのと
+  同じやり方）、(3) `docs/coding-standards.md` に barrel file を作らない項目があり、
+  `find src -name index.ts` が空であること。**`grep -c '^#\{2,3\} ' docs/coding-standards.md` は
+  1つ増える**（項目を節として足した場合。箇条書きで足したなら変わらない。どちらかを `evidence` に書く）
+
+## 注意
+
+- **設計は `docs/design.md` が正典。** 迷ったら該当章を読む（`sed -n '/^## N\. /,/^## /p' docs/design.md`）。設計書と違う形にしたくなったら押し切らず、理由を `evidence` に書いて止める
+- **会話内容の扱い**（`docs/coding-standards.md`）が最優先。テストのフィクスチャ・偽の駆動の台本は手で書いた架空の会話だけ。ログに会話を出さない
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+- **`~/.claude/` を触らない**
+- 足してよい npm の依存は `docs/design.md` 11章の一覧だけ（承認済み）。一覧に無いものが要ると分かったら止めて聞く
+- 旧4層（`domain` / `usecase` / `presentation` / `infrastructure`）と新3層（`protocol` / `core` / `ui`）は段7まで併存する。**旧 → 新（`protocol`）の import は可、新 → 旧は不可**（`docs/coding-standards.md`「層と依存の向き」）
+- **T-094（`dl` の CSS）が先に入っていたら、その CSS も一緒に `src/ui/style/` へ移す**（レポートの CSS は段6だが、ファイルの移動で取りこぼさない）
+
+---
+
+## T-097 移行の段4: 入力欄を React の部品にする
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: `T-096`
+- **evidence**:
+
+  入力欄を `src/ui/dispatch/`（Dispatch / Composer / CommandSuggestions / PendingAnswer / TurnStatus）へ移し、旧の POST 5本・SSE 2本・`browser/dispatch.ts` / `command-suggestions.ts` / `pending-answer.ts` / `dispatchRegionHtml` 一式を削除。`protocol/tool-summary.ts` は `ui/component/tool-summary.ts` へ。`bun run check` 393 pass / 0 fail（着手前 432。旧の HTML 文字列テストが消え、部品のテストが入った差し引き）。
+  実機（SDK の駆動、7502）を Playwright で操作: 送信→「中断」に変わる→完了で「所要」、⌘Enter でも送れる、中断が効く、許可モードを「毎回聞く」にして**許可と拒否の両方**を1往復、答え待ち中は タブのタイトルが「● 」で始まり答えると戻る、枠の強調が出て消える、`/` 補完10件と Tab 確定（送信しない）。偽の駆動（7503）で multiSelect に2つ答え `labels: ["A案、C案"]` が届くのを確認。目視2枚（/tmp。会話が写るのでリポジトリには置かない）。
+  **完了条件(8)の「labels に2つ入る」は満たさず、「選んだ2つを「、」でつないで labels[0] に入れる」形にした。** 委譲した実装は「質問1件のときだけ labels の意味を変える」形で、`Answer` の契約（`labels[i]` が `questions[i]` への答え）と衝突し、型に表れない暗黙の契約になるため差し戻した（`core/pending-answer.ts` の分岐も戻した）。`formatElapsed` のテストのためだけの export も外した（部品経由の検証に置き換え）。旧実装が multiSelect を単一選択的に扱っていたことは確認済み。
+
+### 当時のタスク本文
+
+描く層をブラウザ側へ移す移行（`docs/design.md`）の**段4**。入力欄（Composer・`/` 補完・答え待ちの箱・送信／中断と経過時間）を React の部品にし、旧の `/events/turn-status`、`/events/pending-answer`、`POST /api/prompt` / `/api/interrupt` / `/api/answer`、`GET /api/commands` を消す。
+
+## 背景
+
+正典は `docs/design.md`（6.1、6.2、3章「依頼」「答え待ち」、4.2 `turnStartedAt` / `turnFinishedAt`、12章 段4）。いまのコード:
+
+- `src/presentation/browser/dispatch.ts`（384行）が送信・中断・経過時間・答え待ちの箱の表示切り替えを配線し、`command-suggestions.ts`（222行）が `/` 補完、`pending-answer.ts`（208行）がボタンの配線を持つ。**状態は DOM と変数に散っている**（`data-pending` 属性、タブのタイトル、`inProgress` の変数）
+- `src/presentation/view.ts` の `dispatchRegionHtml` / `buildPendingAnswerBody` / `questionCardHtml` / `freeTextOptionHtml` などが HTML を組み立てている
+- 経過時間はいま `encodeTurnStatus` の JSON を `/events/turn-status` で押している。移行後は `SessionState.turnStartedAt` / `turnFinishedAt` から部品が計算する（1秒の刻みは部品のローカルなタイマー）
+- `/` 補完の候補はいま `GET /api/commands` で取っている。移行後は `SessionState.commandDescriptions` / `slashCommands` から `commandSuggestions(state)`（`protocol` に移った関数）で作る
+- **`develop/progress.md`「未解決」に「質問の `multiSelect` が単一選択的な挙動かもしれない」がある。** 移行後の `PendingAnswer` は `multiSelect` のときチェックボックスで複数選べる形にする（6.1）。既存の挙動を再現しない
+- 入力欄の規則（`docs/requirements.md` 4.2「入力欄」）: Enter は改行、⌘Enter で送信、IME の変換確定の ⌘Enter は送らない、送信後は空にしてフォーカスを残す、失敗したら消さない、候補の絞り方は前方一致 → 部分一致で最大10件、Tab / Enter は確定だけ、質問には自由入力欄を常に1つ出す。**規則は変えない**
+
+## 段3 からの申し送り（2026-09-13）
+
+**`src/protocol/tool-summary.ts` をこの段で `src/ui/` へ移す。** 段3 でツール入力の要約
+（`summarizeToolInput`）を `presentation/view.ts` から `protocol/` へ出した。理由は、旧の
+答え待ちの箱（`buildPendingAnswerBody`）と新しい `ui/sidebar/activity.tsx` の**両方が読む**のに、
+`ui → presentation` も `presentation → ui` も禁じられていて、共有できる場所が `protocol` しか
+無かったため。**この段で答え待ちの箱が `ui/` に来ると旧側の読み手が消える**ので、そのときに
+`ui/` へ移す（置き場所は `ui/component/` か、要約を使う側の領域）。**これは表示の整形であって
+サーバとブラウザの契約ではない**ので、`protocol` に置いたままにしない（`protocol` が
+何でも入る置き場になるのを防ぐ。`docs/design.md` 2章）。
+
+## やること
+
+1. `src/ui/dispatch/` に `Dispatch` / `Composer` / `CommandSuggestions` / `PendingAnswer` / `TurnStatus` を作る。コマンドは `prompt` / `interrupt` / `answer`。CSS は `src/ui/style/dispatch.css` へ
+2. 答え待ちの印（タブのタイトルの先頭の「● 」、枠の色）は `<Layout>` か `<Dispatch>` が `state.pending` から出す
+3. `.layout-dispatch` の旧 HTML と購読を外し、React の root を mount する
+4. 旧の `dispatchRegionHtml` / `buildPendingAnswerBody` 一式、`browser/dispatch.ts` / `command-suggestions.ts` / `pending-answer.ts`、`/events/turn-status` / `/events/pending-answer`、`POST /api/prompt` / `/api/interrupt` / `/api/answer`、`GET /api/commands`、`view-server.ts` の `publishTurnStatus` / `publishPendingAnswer`、対応するテストを消す
+5. `bun run check` を通す
+
+## 完了条件
+
+- `bun run check` が通ること（増減を `evidence` に書く）
+- **部品のテスト**: (1) ⌘Enter で `prompt` が `dispatch` され入力欄が空になる、(2) Enter 単独と Shift+Enter は送らない、(3) `isComposing` 中の ⌘Enter は送らない、(4) `turnInProgress` のときボタンが「中断」になり押すと `interrupt`、(5) 経過時間が `turnStartedAt` から数え `turnFinishedAt` で止まりラベルが「経過」→「所要」に変わる、(6) `/` で候補が前方一致 → 部分一致の順に最大10件、Tab で確定して送信しない、(7) 許可要求で「許可」「拒否」が `answer` を送る、(8) 質問の `multiSelect: true` で2つ選んで送ると `labels` に2つ入る、(9) 自由入力欄が常に1つ出る
+- **偽の駆動で1往復**: 台本に許可要求と `multiSelect` の質問を含め、Playwright で送信 → 許可 → 質問に2つ答える → 完了まで通ること。**実機（SDK の駆動、Orca のタブ）でも1往復**して、送信・中断・許可のボタンが動くこと（会話の中身は `evidence` に写さない）
+- **`src/protocol/tool-summary.ts` が無く、要約が `src/ui/` 側にあること**（上の申し送り）
+- `grep -rn "api/prompt\|api/answer\|api/interrupt\|api/commands\|events/turn-status\|events/pending-answer" src test` が空であること
+- `develop/progress.md`「未解決」の `multiSelect` の項目を、確かめた結果とともに閉じる
+
+## 注意
+
+- **設計は `docs/design.md` が正典。** 迷ったら該当章を読む（`sed -n '/^## N\. /,/^## /p' docs/design.md`）。設計書と違う形にしたくなったら押し切らず、理由を `evidence` に書いて止める
+- **会話内容の扱い**（`docs/coding-standards.md`）が最優先。テストのフィクスチャ・偽の駆動の台本は手で書いた架空の会話だけ。ログに会話を出さない
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+- **`~/.claude/` を触らない**
+- 足してよい npm の依存は `docs/design.md` 11章の一覧だけ（承認済み）。一覧に無いものが要ると分かったら止めて聞く
+- 旧4層（`domain` / `usecase` / `presentation` / `infrastructure`）と新3層（`protocol` / `core` / `ui`）は段7まで併存する。**旧 → 新（`protocol`）の import は可、新 → 旧は不可**（`docs/coding-standards.md`「層と依存の向き」）
+- `/loop` に載せないのは、実機（SDK の駆動）で1往復して許可と中断の手触りを確かめる必要があるため。実装はサブエージェントに委譲してよい
+
+---
+
+## T-098 移行の段5: キャラビューを React の部品にする
+
+- **difficulty**: `sonnet` / **loopable**: `Y` / **passes**: `true` / **dependencies**: `T-097`
+- **evidence**:
+
+  キャラビューを `src/ui/character-view/`（CharacterView / Portrait / BalloonTrack / Balloon）へ移し、`core/character-pack.ts` と `/character/<file>`、`character-changed` / `SessionState.character` を追加。旧の `/events/character`・`buildCharacterBody` / `portraitMarkup`・`infrastructure/character-asset.ts`・`event-sink.ts` の「作業中」タイマーを削除（grep で空を確認）。`bun run check` 399 pass / 0 fail / 43 files（着手前 393。旧の HTML 文字列テストが消え、部品と経路のテストが入った差し引き）。
+  目視（偽の駆動・7399・CDP 1400x900）: 最新の吹き出し bottom 759.0 / 高さ 83.09、`.portrait` 高さ 242.55px で段4と一致（`top` は台本の文言の折り返しで変わるが、固定すべき下端は不動）。立ち絵はインライン SVG で描画され、尻尾も左辺から真横のまま。`/character/<file>` は定義に無い名前・`..` を含む要求とも実機で 404。
+  受け入れ時に規約違反2件を直した: テスト専用になっていた `isPlausibleSvgMarkup` を削除、CSS 変数の `as CSSProperties` を型注釈（`PortraitStyle`）に置換。`/character/<file>` の配信は design.md 5章の `core/server.ts` ではなく旧 `view-server.ts` に置き、allowlist とファイル読み取りだけを core に置く形（旧→core の import が禁じられているため。段7で解消する）。
+
+### 当時のタスク本文
+
+描く層をブラウザ側へ移す移行（`docs/design.md`）の**段5**。キャラビュー（立ち絵と吹き出し）を React の部品にし、`character-changed` イベントと `/character/<file>` の経路を足して、旧の `/events/character` と `buildCharacterBody` を消す。
+
+## 背景
+
+正典は `docs/design.md`（6.1、6.5、4.1 `character-changed`、5章 `server.ts` の `/character/<file>`、12章 段5）。いまのコード:
+
+- `src/presentation/view.ts` の `buildCharacterBody` / `portraitMarkup` が、`src/infrastructure/character-asset.ts` が読んだ SVG の中身（インライン）か data URI を HTML に埋め込んでいる。**移行後は素材を HTML に埋めず、`/character/<file>` から取る**。SVG は部品が `fetch` して `dangerouslySetInnerHTML` でインラインにし（差し色の CSS 変数 `--outfit-accent` を効かせるため。`docs/requirements.md` 4.4）、ラスタは `<img>`
+- `character-changed` は core（`character-pack.ts`。段2で無ければこのタスクで `character-asset.ts` を元に作る）が起動時に流す。中身は `name` / `expressions` / `portraits`（表情 → URL）/ `outfitAccents`。**`SessionState.character` には URL だけ**を入れる
+- `/character/<file>` は **`character.json` に書かれたファイル名だけ**を配る（パスから組み立てない。`vendor` の allowlist と同じ考え方）
+- 吹き出しの規則（`docs/requirements.md` 4.2「吹き出し」）: 1件につき1つ、最新を一番下、**最新の下端の位置はセリフの件数によらず固定**（`--balloon-bottom-gap`）、尻尾は左辺から真横、最新だけ濃く大きい。T-091 で CDP 実測した値（1400x900 で最新の `rect` が 1/3/8 件とも top 680.45 / bottom 735.0、立ち絵 242.5px）が基準
+- CSS は `src/presentation/style/character.css`
+- 表情は `currentExpression(state, now)`（`protocol` に移った関数）と `resolveOutfit(state.model)` で決める。「作業中」への遅延切り替え（`WORKING_EXPRESSION_DELAY_MS`）のタイマーは、いま `event-sink.ts` が持っている。移行後は **部品側の `useEffect` のタイマー**で再計算する（サーバが配り直す必要が無くなる）
+
+## やること
+
+1. `protocol` に `character-changed` と `SessionState.character` を足す
+2. `core/character-pack.ts`（無ければ）と `/character/<file>` の経路を足し、起動時に `character-changed` を流す
+3. `src/ui/character-view/` に `CharacterView` / `Portrait` / `BalloonTrack` / `Balloon` を作る。`Portrait` は表情の遷移の余地（6.5）として props で `expression` / `outfit` を受けるだけにし、**動きは作らない**。CSS は `src/ui/style/character.css` へ
+4. `.layout-character` の旧 HTML と購読を外し、React の root を mount する
+5. 旧の `/events/character`、`buildCharacterBody` / `portraitMarkup`、`character-asset.ts` の埋め込み（`readCharacterAssets`）、`view-publish.ts` の該当部分、`event-sink.ts` の「作業中」タイマー、対応するテストを消す
+6. `bun run check` を通す
+
+## 完了条件
+
+- `bun run check` が通ること（増減を `evidence` に書く）
+- **部品のテスト**: (1) セリフが古い → 新しいの順で並び最新に強調の印が付く、(2) セリフ0件のとき「（まだ発話がありません）」相当の文言が出る、(3) 立ち絵の URL が無いとき吹き出しだけが出て落ちない、(4) 実行中のツールがあり遅延を超えると表情が `working` になる（偽の時計）、(5) `outfitAccent` が CSS 変数として当たる
+- **`/character/<file>` のテスト**: 定義に無いファイル名は 404、`..` を含む要求は 404
+- **見た目が変わっていないこと**: 偽の駆動で起こし、CDP（1400x900）で最新の吹き出しの `rect` の top / bottom がセリフ 1 / 3 / 8 件で不動かつ段4と同じ値、立ち絵の高さが同じ。数値を `evidence` に書く
+- `grep -rn "events/character\|buildCharacterBody" src test` が空であること
+
+## 注意
+
+- **設計は `docs/design.md` が正典。** 迷ったら該当章を読む（`sed -n '/^## N\. /,/^## /p' docs/design.md`）。設計書と違う形にしたくなったら押し切らず、理由を `evidence` に書いて止める
+- **会話内容の扱い**（`docs/coding-standards.md`）が最優先。テストのフィクスチャ・偽の駆動の台本は手で書いた架空の会話だけ。ログに会話を出さない
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+- **`~/.claude/` を触らない**
+- 足してよい npm の依存は `docs/design.md` 11章の一覧だけ（承認済み）。一覧に無いものが要ると分かったら止めて聞く
+- 旧4層（`domain` / `usecase` / `presentation` / `infrastructure`）と新3層（`protocol` / `core` / `ui`）は段7まで併存する。**旧 → 新（`protocol`）の import は可、新 → 旧は不可**（`docs/coding-standards.md`「層と依存の向き」）
+- **立ち絵は動くが話さない。** ここでアニメーションを足さない（`docs/requirements.md` 4.3。何を作るかは別に決める）
+- 素材の中身（SVG）を `SessionState` や `hello` に入れない（URL だけ）
+
+---
+
+## T-099 移行の段6: メインビューを React にし Markdown を unified に置き換える
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: `T-098`
+- **evidence**:
+
+  メインビューを `src/ui/main-view/`（MainView / TurnTabs / Turn / Report / ToolRun / QuestionRecord）に、Markdown を `src/ui/report/`（react-markdown + remark-gfm + rehype-raw/sanitize/highlight）に置き換え、`src/presentation/` と `src/usecase/` を全削除。`src/ui/layout/` で単一 root にまとめた。**T-063 を吸収して閉じた**（引用・2段ネスト・水平線・列揃えが描けるようになった）。`bun run check` 320 pass / 0 fail / 42 files（着手前 399。旧の HTML 文字列テスト3,224行が消えた差し引き）。`bun test` は `--isolate` を付けた（`mock.module` の漏れ。実測 1.1→2.4 秒）。
+  **実機（本物の claude・7403）で3往復**: レポートが 69→584 文字・塊 0→6 と18秒かけて流れ、完了時に 584→573 文字へ整形し直された（0.7秒間隔の実測）。引用/2段ネスト/水平線/列揃え（中央4・右4）/note/badge/cols+card/mermaid の svg/chart の canvas がすべて描画され、`img` と `script` は0件。2ターン目でタブが「今回」「1つ前」の2つ出て先頭へ戻った（scrollTop 0）。失敗した Bash がツールの行に赤枠で出た。コンソールのエラーは `/favicon.ico` の404のみで、これは HEAD でも同じ（段6とは無関係）。
+  **要確認**: `mainViewEntries` がツールの記録を渡すようになり、`docs/requirements.md` 4.2 の「メインビューはレポートだけ（2026-09-11 決定）」を「主役はレポート＋ツール3種は残す」に書き換えた（design.md 6.1 の部品の木とこのタスクの完了条件を優先。決定の読み替えなのでユーザーの追認が要る）。受け入れ時に3点修正: 推移的依存 `hast-util-sanitize` からの型 import を `rehype-sanitize` に、`--isolate` の前提を書いた古いコメント2箇所、`report-notation.ts` の経緯コメントを制約の記述に。
+
+### 当時のタスク本文
+
+描く層をブラウザ側へ移す移行（`docs/design.md`）の**段6**。メインビュー（やり取りのタブ・レポート・ツールの行・質問の記録）を React の部品にし、Markdown の変換を自前のレンダラから unified（react-markdown 一式）に置き換える。旧の `/events/main`、`presentation/view.ts`、`report-html.ts`、`browser/` 全部、Idiomorph を消す。**T-063（引用・ネスト・水平線・列揃え）はこのタスクで閉じる。**
+
+## 背景
+
+正典は `docs/design.md`（6.1、6.3 Markdown、6.4 重いライブラリ、12章 段6）。いまのコード:
+
+- `src/presentation/view.ts` の `buildMainBody` / `groupIntoTurns` / `turnPanel` / `stepHtml` / `toolVisibility` / `renderMarkdownToHtml`（約400行の自前レンダラ）と `src/presentation/report-html.ts` の `sanitizeReportHtml`（398行。許可リストは54要素・42属性、`style` は `url(` / `@import` を落とす、リンクは `isAllowedLinkUrl`）
+- `src/presentation/browser/main-turns.ts`（タブの選択・追従）、`report-renderers.ts`（highlight / mermaid / Chart.js の起動）、`region-subscription.ts`（Idiomorph の morph）、`layout-resizer.ts`（領域の比率。これは `src/ui/layout/` へ移す）
+- `src/presentation/report-notation.ts` の `REPORT_NOTATION_PROMPT` に「Markdown の引用 `> `・ネストしたリスト・画像・水平線 `---` は描けない」と HTML への迂回の指示がある。**unified で描けるようになるので、この迂回の記述を外す**（T-063 の4番。`~/.claude/output-styles/asuna.md` は触らない）
+- メインビューの規則（`docs/requirements.md` 4.2「メインビュー」「レポートの見せ方」）: 1ターン＝1枚、今回・1つ前・2つ前の3タブ、新しいターンで先頭へ戻すが過去のタブを見ている間は動かさない、ステップはカードで縦1本、書きかけの本文をリアルタイムに流す、HTML はブロックでもインラインでも書けるが許可リストだけ通す、コードスパンの中の HTML は文字のまま、`img` は許可しない、mermaid と Chart.js は記法が出たときだけ読む。**規則は変えない**
+- `vendor/` の mermaid（3.3MB）と Chart.js は残し、`<script>` で遅延読み込み。highlight.js は `rehype-highlight` で束ね、テーマ CSS は `vendor/` のまま
+- CSS は `src/presentation/style/main-turns.css`（`.detail-block` 配下に `blockquote` / `table` / `.note` / `.badge` / `.cols` / `.card` の規則。T-094 で `dl` が足されているかもしれない）
+
+## やること
+
+1. `docs/design.md` 11章の Markdown の依存（`react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`）を入れる（段2で入れていなければ）
+2. `src/ui/report/` に `markdown.tsx`（react-markdown の構成。`components` でフェンスの言語 `mermaid` / `chart` を `MermaidBlock` / `ChartBlock` に振り、`a` を許可スキームだけに）、`sanitize-schema.ts`（**`sanitizeReportHtml` の許可リストを rehype-sanitize の schema に写す**。`class` の語彙、`style` の禁止パターン）、`MermaidBlock.tsx` / `ChartBlock.tsx`（`useEffect` で `vendor/` を読んで描く。暗い配色の既定値は `report-renderers.ts` から移す）を作る
+3. `src/ui/main-view/` に `MainView` / `TurnTabs` / `Turn` / `Report` / `ToolRun` / `QuestionRecord` を作る。`Report` は書きかけの本文を空行で塊に割り、塊ごとに `memo`（6.3）。`toolVisibility` の規則（ファイルを変えた操作・サブエージェントの起動・失敗したツールだけ出す）は `protocol` か `ui` の純粋関数として持ち越す
+4. `src/ui/layout/` に `Layout` と `LayoutResizer` を移し（`browser/layout-resizer.ts` から）、ページの `<div id="app">` に **1つの root** で `<App>` を mount する（段3〜段5の複数 root を1つにまとめる）
+5. `report-notation.ts` から「描けない記法」の行と HTML への迂回の指示を外し、`docs/requirements.md` 4.2 の対応記法の記述を実態に合わせる（節の数は変えない）
+6. 旧の `/events/main`、`presentation/view.ts`、`report-html.ts`、`browser/` 配下すべて、`vendor/idiomorph.min.js` と `vendor-globals.d.ts` の Idiomorph、`view-publish.ts`、`test/presentation/view.test.ts`（3,224行）、`report-html.test.ts` を消す。**`view-server.ts` に残るのは静的配信と ws だけ**になる（`core/server.ts` へ移してよい）
+7. `bun run check` を通す
+
+## 完了条件
+
+- `bun run check` が通ること（増減を `evidence` に書く。3,224行のテストが消えるので件数は大きく減る）
+- **Markdown のテスト**（部品として描いて DOM を当てる）: (1) `> 引用` が `<blockquote>`、(2) 2段のネストが `<ul>` の入れ子、(3) `---` が `<hr>` で、GFM テーブルの区切り行と衝突しない、(4) `| :---: |` が中央揃え・`| ---: |` が右揃えの印を持つ、(5) `<div class="note">` / `<span class="badge">` / `<div class="cols"><div class="card">` / `<details>` が通る、(6) `<script>` / `<iframe>` / `on*` 属性 / `javascript:` / `style="background:url(...)"` が落ちる、(7) コードスパンの中の `<b>` が文字のまま、(8) `img` が落ちる、(9) 書きかけの本文で未終端のコードフェンスが表や見出しに化けない、(10) 塊が変わらなければ再描画されない（`memo` の鍵）
+- **メインビューのテスト**: (1) 3ターンまでタブが出て新しいターンで先頭へ戻る、(2) 過去のタブを見ている間は動かない、(3) `toolVisibility` の3種だけがツールの行として出る、(4) 質問の記録に選ばれた答えが出る
+- **偽の駆動で1往復**（台本に引用・ネスト・水平線・列揃え・`note` / `badge` / `cols` / mermaid / chart を含める）: Playwright で mermaid と chart が描かれ、他の記法が上のとおり描かれること。**実機（SDK の駆動、Orca のタブ）でも1往復**して、レポートがリアルタイムに流れ、完成時に整形し直されること
+- `grep -rn "Idiomorph\|renderMarkdownToHtml\|sanitizeReportHtml\|events/main" src test vendor` が空であること。`src/presentation/` が無いこと
+- `REPORT_NOTATION_PROMPT` に「描けない」の語が無いこと
+- **T-063 を `done` にし、`evidence` にこのタスクの ID を書く**
+
+## 注意
+
+- **設計は `docs/design.md` が正典。** 迷ったら該当章を読む（`sed -n '/^## N\. /,/^## /p' docs/design.md`）。設計書と違う形にしたくなったら押し切らず、理由を `evidence` に書いて止める
+- **会話内容の扱い**（`docs/coding-standards.md`）が最優先。テストのフィクスチャ・偽の駆動の台本は手で書いた架空の会話だけ。ログに会話を出さない
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+- **`~/.claude/` を触らない**
+- 足してよい npm の依存は `docs/design.md` 11章の一覧だけ（承認済み）。一覧に無いものが要ると分かったら止めて聞く
+- 旧4層（`domain` / `usecase` / `presentation` / `infrastructure`）と新3層（`protocol` / `core` / `ui`）は段7まで併存する。**旧 → 新（`protocol`）の import は可、新 → 旧は不可**（`docs/coding-standards.md`「層と依存の向き」）
+- **規約（`report-notation.ts`）・`sanitize-schema.ts`・CSS の3つは同じコミットで揃える**（`docs/requirements.md` 4.2 の決定）
+- **`img` を許可しない。CDN から読まない。** mermaid / Chart.js は `vendor/` から
+- **レンダラが目次・要約・段組みを起こさない**（再構成は対象外。4.2「見せ方と再構成の線引き」）
+- `/loop` に載せないのは、実機で流れるレポートの見え方を確かめる必要があるため。実装はサブエージェントに委譲してよい
+
+---
+
+## T-100 移行の段7: 旧4層を消し src を protocol/core/ui/cli.ts にする
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: `T-099`
+- **evidence**:
+
+  `src/infrastructure/view-port.ts` → `core/port-resolution.ts`、`src/index.ts` → `src/cli.ts` （`bin/tsukumo` と `package.json` の `start` も追従）。`find src -maxdepth 1` は `cli.ts` / `core` / `protocol` / `ui` だけ。`test/architecture.test.ts` は3辺 （protocol→protocol / core→protocol,core / ui→protocol,ui）＋配線の `cli`。`bun run check` 322 pass / 0 fail / 42 files（着手前 320）。
+  **説明の書き直し**: `CLAUDE.md` 原則2 から「受け取る／決める／描く」を外し「両側で共有する契約（protocol）／サーバ（core）／クライアント（ui）」に、`docs/design.md` 2章に「共有コントラクト＋クライアント/サーバ分割」と `protocol` の制約が物理的な理由であることを追記。`architecture.md` の実装状況・責務の表を新のファイル名に。5つの docs すべてで節数は不変（requirements 26 / architecture 10 / coding-standards 21 / design 43 / glossary 42）。`grep -rn '移行前|移行中'` は0件。`core/host.ts` のポートは残した。
+  **実機**: グローバルの `tsukumo` を別プロジェクト（day-snap）で `TSUKUMO_VIEW_PORT` を変えて起動し、偽の駆動・本物の駆動とも Orca のタブが開いて1往復できた（cwd 依存も正しく、サイドバーのタスク一覧は「不明」）。**受け入れ時に段6の回帰を1件修正**: `toolVisibility` が「見せない」と決めたツールしか無いステップが枠だけの空カードとして残っていた（旧 `stepHtml` は絞ったあとの数で判定していた）。`Step` を同じ判定に直し、回帰テストを2件追加（修正前の `turn.tsx` で落ちることを確認済み）。
+
+### 当時のタスク本文
+
+描く層をブラウザ側へ移す移行（`docs/design.md`）の**段7**。旧の4層（`domain` / `usecase` / `presentation` / `infrastructure`）に残っているものを新の3層へ移し切り、`src/index.ts` を `src/cli.ts` にして、`docs/architecture.md`「現在の実装状況」を「移行完了」に書き換える。
+
+## 背景
+
+正典は `docs/design.md`（2章 ディレクトリ、12章 段7）。段6が終わった時点で旧の層に残っているのは、`infrastructure/session-driver.ts` / `orca-host.ts` / `host.ts` / `view-port.ts` / `bundled-path.ts` / `auto-open-view.ts` / `browser-bundle.ts` / `view-server.ts` の残骸 / `task-summary.ts` と、`domain` / `usecase` の re-export、`test/architecture.test.ts` の併存の規則の見込み（**着手時に `find src -type f` で実際に数える**）。
+
+## やること
+
+1. 旧の層に残っているファイルを `docs/design.md` 2章の対応表どおりに `git mv` する（`session-driver.ts` → `core/`、`host.ts` / `orca-host.ts` → `core/`、`view-port.ts` → `core/`（名前は `port-resolution.ts` など概念で）、`bundled-path.ts` → `core/`、`browser-bundle.ts` → `core/bundle.ts`、`auto-open-view.ts` は `core/config.ts` に統合、`view-server.ts` の残りは `core/server.ts` に統合）。`test/` も同じ構成に
+2. `src/index.ts` → `src/cli.ts`。`bin/tsukumo` と `package.json` の `start` を直す。**`bun link` 済みの `~/.bun/bin/tsukumo` は `bin/tsukumo` へのシンボリックリンクなので、そのまま効く**（起こして確かめる）
+3. `test/architecture.test.ts` から併存の規則を外し、3辺だけにする
+4. 旧の層のディレクトリを消す（`src/domain` / `src/usecase` / `src/presentation` / `src/infrastructure` と `test/` の同名）
+5. **枠組みの説明を実態に合わせて書き直す**（下の「説明の書き直し」）。ディレクトリ名を消すだけでは
+   足りない部分で、**ここを飛ばすと次に読む人が旧い枠組みで判断する**
+6. `docs/architecture.md`: 「現在の実装状況」を移行完了に書き換え（「拾う・捨てる・足す」と「各ファイルの責務」の表を新のファイル名で書き直す）、「採用アーキテクチャ」と「新しいコードを置く場所」の「移行前」の注記を外して新の形にする（図は `docs/design.md` 2章を参照する形でよい）。**節の数（`^#\{2,3\} `）は変えない**。`docs/coding-standards.md`「層と依存の向き」から併存の段落を外す。`CLAUDE.md`「現在の状態」と原則2から移行前の記述を外す。`docs/glossary.md`「通信（移行後）」の「予定」を外す
+7. `develop/progress.md`「注意」から「コードはまだ移行前」の項目を外す
+8. `bun run check` を通す
+
+## 説明の書き直し（2026-09-13 決定）
+
+**旧の4層はクリーンアーキテクチャの写しだったが、移行後の3層は別物**である。`protocol` は
+**サーバとブラウザが共有する契約**（TypeScript のモノレポでいう `packages/shared` / `contracts` の
+位置）、`core` はバックエンド、`ui` はクライアントで、全体は
+**「共有コントラクト＋クライアント/サーバ分割」**。ディレクトリ名が変わっても、次の2箇所が
+旧い語彙のままだと読む人が旧い枠組みで判断するので、同じ段で直す。
+
+- **`CLAUDE.md` の原則2**: いまは「**受け取る／決める／描く**を別のモジュールに分け、層を
+  ディレクトリで表す」。これはクリーンアーキテクチャの語彙で、実態を説明していない。
+  **「両側で共有する契約（`protocol`）／サーバ（`core`）／クライアント（`ui`）に分ける」**と書き直す
+- **`docs/design.md` 2章**: 「層と依存の向き」の説明に、**この形が何と呼ばれるものなのか**を1〜2文で
+  足す（共有コントラクト＋クライアント/サーバ分割であること、`protocol` が `node:` にも `document` にも
+  触らないのは思想ではなく**両方の実行環境で動くという物理的な制約**であること）
+
+**クリーンアーキテクチャ由来で残すもの**（消さない。理由も書き添える）: `core/host.ts` と
+`core/orca-host.ts` のポートとアダプタ。**2つ目の実装（Electron / Tauri）を実際に見込んでいる**から
+残す（`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」に、この戒めを意図的に
+外した理由が既にある）。
+
+## 完了条件
+
+- `find src -maxdepth 1` が `cli.ts` / `protocol` / `core` / `ui` だけであること（`ls` の結果を `evidence` に書く）
+- `bun run check` が通ること
+- `test/architecture.test.ts` が3辺で通ること
+- **実機**: `tsukumo`（グローバルのコマンド）を別のプロジェクトのディレクトリで `TSUKUMO_VIEW_PORT` を変えて起こし、Orca のタブが開いて1往復できること。`TSUKUMO_DRIVER=fake` でも起きること
+- `grep -c '^#\{2,3\} ' docs/requirements.md docs/architecture.md docs/coding-standards.md` が編集の前後で変わらないこと
+- `grep -rn "移行前\|移行中" docs/architecture.md CLAUDE.md docs/coding-standards.md` が経緯の記述（設計判断の節）以外に無いこと
+- **説明の書き直し**: `CLAUDE.md` の原則2 に「受け取る／決める／描く」が無く、`protocol` / `core` / `ui` が
+  それぞれ何なのかで書かれていること。`docs/design.md` 2章に「共有コントラクト」と、`protocol` の
+  制約が物理的な理由であることが書かれていること。**`core/host.ts` のポートは残っている**こと
+
+## 注意
+
+- **設計は `docs/design.md` が正典。** 迷ったら該当章を読む（`sed -n '/^## N\. /,/^## /p' docs/design.md`）。設計書と違う形にしたくなったら押し切らず、理由を `evidence` に書いて止める
+- **会話内容の扱い**（`docs/coding-standards.md`）が最優先。テストのフィクスチャ・偽の駆動の台本は手で書いた架空の会話だけ。ログに会話を出さない
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、止めるのは自分が起こした pid だけ
+- **`~/.claude/` を触らない**
+- 足してよい npm の依存は `docs/design.md` 11章の一覧だけ（承認済み）。一覧に無いものが要ると分かったら止めて聞く
+- 旧4層（`domain` / `usecase` / `presentation` / `infrastructure`）と新3層（`protocol` / `core` / `ui`）は段7まで併存する。**旧 → 新（`protocol`）の import は可、新 → 旧は不可**（`docs/coding-standards.md`「層と依存の向き」）
+- **ロジックを変えない。** 移動と統合だけ。振る舞いを変えたくなったら別タスクにする
+- `/loop` に載せないのは、グローバルの `tsukumo` コマンドを実機で起こして確かめる必要があるため
+
+---
