@@ -515,13 +515,14 @@ API を使わない形になる。
 **足す依存**（`CLAUDE.md`「外部依存を増やすときは承認を得る」。**2026-09-13 に「移行しようか」の
 決定で一括して承認済み**。ここに無いものを足すときは改めて承認を得る）:
 
-| 種別    | パッケージ                                                                         | 用途                     |
-| ------- | ---------------------------------------------------------------------------------- | ------------------------ |
-| runtime | `react` `react-dom`                                                                | ui                       |
-| runtime | `ws`                                                                               | core の WebSocket サーバ |
-| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                 |
-| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト               |
-| dev     | `playwright-core`                                                                  | 画面全体の確認（10章）   |
+| 種別    | パッケージ                                                                         | 用途                                                                      |
+| ------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| runtime | `react` `react-dom`                                                                | ui                                                                        |
+| runtime | `ws`                                                                               | core の WebSocket サーバ                                                  |
+| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                                  |
+| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）。2026-09-13 にユーザーの承認を得て追加（T-104） |
+| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                                |
+| dev     | `playwright-core`                                                                  | 画面全体の確認（10章）                                                    |
 
 `zod` はある。`@anthropic-ai/claude-agent-sdk` はある。**`Bun.*` の固有 API に寄せない**規約は続く
 （`ws` を選ぶのはそのため）。

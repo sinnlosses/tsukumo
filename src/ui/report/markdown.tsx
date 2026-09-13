@@ -5,6 +5,11 @@
 // （引用・ネストしたリスト・水平線・GFM の列揃えは自前の実装では描けなかった。T-063）。
 //
 // - `remark-gfm` で表・取り消し線・自動リンク・チェックボックス・列揃え（`:---:` / `---:`）を読む
+// - `remark-cjk-friendly` で、CommonMark の delimiter run 規則（強調記号の直前・直後が約物だと
+//   強調と認識されない）を日本語向けに補う。CommonMark の仕様どおりの挙動として、
+//   `**「呼んだか」**` のように中身を約物で始める・終える強調が記法のまま出てしまう
+//   （旧レンダラは素朴な正規表現 `/\*\*([^*]+)\*\*/g` だったので、この規則に関係なく通っていた）。
+//   このリポジトリのレポートは `**「…」**` を多用するため、このプラグインで直す（T-104）
 // - `rehype-raw` で、Markdown の中に直接書いた HTML ブロック・インライン HTML を解釈する
 // - `rehype-sanitize`（{@link REPORT_SANITIZE_SCHEMA}）で許可リストに無い要素・属性を落とす。
 //   **サニタイズはここ1箇所に集約**（docs/requirements.md 4.2）
@@ -21,6 +26,7 @@ import ReactMarkdown, { type ExtraProps } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
+import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
 import { ChartBlock } from "./chart-block.tsx"
@@ -35,7 +41,12 @@ export type MarkdownProps = {
 export function Markdown(props: MarkdownProps): ReactElement {
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
+      // remark-cjk-friendly は remark-gfm より後（README の使用例どおり）。
+      // **効くのは `**` と `*` だけで、GFM の取り消し線 `~~` には効かない**（あちらは
+      // micromark-extension-gfm-strikethrough の別の判定を通るため。直すには
+      // remark-cjk-friendly-gfm-strikethrough が要る）。取り消し線はレポートの規約
+      // （src/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
+      remarkPlugins={[remarkGfm, remarkCjkFriendly]}
       rehypePlugins={[rehypeRaw, [rehypeSanitize, REPORT_SANITIZE_SCHEMA], rehypeHighlight]}
       components={{ pre: Pre, a: Anchor }}
     >
