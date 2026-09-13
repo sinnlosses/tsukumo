@@ -38,9 +38,9 @@ import {
 } from "./infrastructure/view-port.ts"
 import { startViewServer } from "./infrastructure/view-server.ts"
 import { REPORT_NOTATION_PROMPT } from "./presentation/report-notation.ts"
-import { buildCharacterBody, buildMainBody, buildPendingAnswerBody } from "./presentation/view.ts"
+import { buildCharacterBody, buildMainBody } from "./presentation/view.ts"
 import { availableExpressions } from "./protocol/character.ts"
-import { type SessionEvent, type CommandDescription } from "./protocol/session-event.ts"
+import { type SessionEvent } from "./protocol/session-event.ts"
 import { createEventSink } from "./usecase/event-sink.ts"
 import { throttle } from "./usecase/throttle.ts"
 import { createViewPublisher } from "./usecase/view-publish.ts"
@@ -122,33 +122,10 @@ async function main(args: readonly string[]): Promise<number> {
 
   const host = createOrcaHost()
 
-  // ビューサーバとセッションは互いを必要とする（サーバは依頼をセッションへ渡し、セッションは
-  // 配るためにサーバを要る）。**先に立てるのはサーバ**にして、セッションはあとから入る形にした。
-  // 起動直後の依頼は受け取れずに 503 で返るだけで、どちらかが欠けて黙って落ちることがない。
-  let driver: SessionDriver | undefined = undefined
-  // 入力欄の `/` 補完の候補（`GET /api/commands` が読む）。init 前は空配列
-  // （docs/requirements.md 4.2「入力欄」）。session-state.ts が端末専用を除いた名前に説明を
-  // 添える計算（`commandSuggestions`）を済ませたものをそのまま持つ。
-  let commands: readonly CommandDescription[] = []
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/infrastructure/view-port.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
-    startViewServer(
-      port,
-      (text) => {
-        if (driver === undefined) {
-          return false
-        }
-        driver.prompt(text)
-        return true
-      },
-      () => (driver === undefined ? Promise.resolve() : driver.interrupt()),
-      (id, answer) => (driver === undefined ? false : driver.answer(id, answer)),
-      () => commands,
-      browserScript,
-      styleSheet,
-      uiScript,
-    ),
+    startViewServer(port, browserScript, styleSheet, uiScript),
   )
   if (!startResult.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${startResult.reason}\n`)
@@ -177,16 +154,10 @@ async function main(args: readonly string[]): Promise<number> {
   )
 
   // 旧の経路（SSE で押す HTML）。**新しい経路と同じイベントを受け取る購読者の1つ**として残す
-  // （docs/design.md 12章の段2）。
+  // （docs/design.md 12章の段2。入力欄は段4で WebSocket 側の `SessionState` だけを見るようになり、
+  // ここへは何も渡さなくなった）。
   const sink = createEventSink(
     publish,
-    server.publishTurnStatus,
-    (pending) => {
-      server.publishPendingAnswer(buildPendingAnswerBody(pending))
-    },
-    (next) => {
-      commands = next
-    },
     (reason) => {
       process.stderr.write(`tsukumo: セッションが終わった: ${reason}\n`)
     },
@@ -217,7 +188,6 @@ async function main(args: readonly string[]): Promise<number> {
           sink(event)
         },
       )
-      driver = started
       return {
         ...started,
         close: () => {

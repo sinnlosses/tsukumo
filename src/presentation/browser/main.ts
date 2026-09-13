@@ -7,7 +7,6 @@
 //
 // **移してくるスクリプトが増えたら、ここに1行ずつ足す。**
 
-import { wireDispatch } from "./dispatch.ts"
 import { wireLayoutResizer } from "./layout-resizer.ts"
 import { wireMainTurns } from "./main-turns.ts"
 import { subscribeAllRegions } from "./region-subscription.ts"
@@ -17,4 +16,3 @@ subscribeAllRegions()
 wireLayoutResizer()
 wireMainTurns()
 wireReportRenderers()
-wireDispatch()

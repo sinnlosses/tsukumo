@@ -4,7 +4,7 @@
 import { type ReactElement } from "react"
 
 import { type ToolActivity } from "../../protocol/session-state.ts"
-import { summarizeToolInput } from "../../protocol/tool-summary.ts"
+import { summarizeToolInput } from "../component/tool-summary.ts"
 
 export type ActivityProps = {
   /** 実行中のツール（新しい順）。 */

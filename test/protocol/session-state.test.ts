@@ -326,6 +326,45 @@ describe("applySessionEvent", () => {
     expect(ended.turnInProgress).toBe(false)
   })
 
+  it("request で turnStartedAt を打ち、turn-finished で turnFinishedAt が止まる（入力欄の経過時間表示に使う）", () => {
+    expect(INITIAL_SESSION_STATE.turnStartedAt).toBeUndefined()
+    expect(INITIAL_SESSION_STATE.turnFinishedAt).toBeUndefined()
+
+    const started = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "request", text: "ダミーの依頼" },
+      100,
+    )
+    expect(started.turnStartedAt).toBe(100)
+    expect(started.turnFinishedAt).toBeUndefined()
+
+    const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" }, 300)
+    expect(finished.turnStartedAt).toBe(100)
+    expect(finished.turnFinishedAt).toBe(300)
+
+    // 次の依頼で0から数え直す（turnFinishedAt が undefined に戻る）。
+    const restarted = applySessionEvent(finished, { kind: "request", text: "次の依頼" }, 400)
+    expect(restarted.turnStartedAt).toBe(400)
+    expect(restarted.turnFinishedAt).toBeUndefined()
+  })
+
+  it("session-ended でも turnFinishedAt を打つ（中断・異常終了でも経過時間表示が止まる）", () => {
+    const started = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "request", text: "ダミーの依頼" },
+      100,
+    )
+
+    const ended = applySessionEvent(
+      started,
+      { kind: "session-ended", reason: "セッションが終了した" },
+      250,
+    )
+
+    expect(ended.turnStartedAt).toBe(100)
+    expect(ended.turnFinishedAt).toBe(250)
+  })
+
   it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは undefined", () => {
     expect(INITIAL_SESSION_STATE.tasks).toBeUndefined()
 

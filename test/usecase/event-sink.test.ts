@@ -8,33 +8,21 @@ import { createEventSink } from "../../src/usecase/event-sink.ts"
 
 type Recorder = {
   readonly views: SessionState[]
-  readonly turnStatuses: {
-    readonly turnStartedAt: number | undefined
-    readonly turnFinishedAt: number | undefined
-  }[]
-  readonly pendingAnswers: unknown[]
-  readonly commandsCalls: unknown[][]
   readonly endedReasons: string[]
   readonly sink: (event: SessionEvent) => void
 }
 
 function createRecorder(now: () => number = () => 0): Recorder {
   const views: SessionState[] = []
-  const turnStatuses: Recorder["turnStatuses"] = []
-  const pendingAnswers: unknown[] = []
-  const commandsCalls: unknown[][] = []
   const endedReasons: string[] = []
 
   const sink = createEventSink(
     (view) => views.push(view),
-    (status) => turnStatuses.push(status),
-    (pending) => pendingAnswers.push(pending),
-    (commands) => commandsCalls.push([...commands]),
     (reason) => endedReasons.push(reason),
     now,
   )
 
-  return { views, turnStatuses, pendingAnswers, commandsCalls, endedReasons, sink }
+  return { views, endedReasons, sink }
 }
 
 describe("createEventSink", () => {
@@ -45,65 +33,6 @@ describe("createEventSink", () => {
 
     expect(recorder.views).toHaveLength(1)
     expect(recorder.views[0]?.speeches).toEqual(["いくよ！"])
-  })
-
-  it("turnInProgress が変わったときだけ publishTurnStatus を呼ぶ（開始・終了の時刻を持つ）", () => {
-    const times = [100, 200, 300]
-    let index = 0
-    const recorder = createRecorder(() => times[index++] ?? times.at(-1) ?? 0)
-
-    recorder.sink({ kind: "request", text: "依頼" })
-    expect(recorder.turnStatuses).toEqual([{ turnStartedAt: 100, turnFinishedAt: undefined }])
-
-    // 進行中のままの partial-utterance では呼ばれない。
-    recorder.sink({ kind: "partial-utterance", text: "途中" })
-    expect(recorder.turnStatuses).toHaveLength(1)
-
-    recorder.sink({ kind: "turn-finished", status: "success" })
-    expect(recorder.turnStatuses).toEqual([
-      { turnStartedAt: 100, turnFinishedAt: undefined },
-      { turnStartedAt: 100, turnFinishedAt: 300 },
-    ])
-  })
-
-  it("答え待ちの列の先頭が変わったときだけ publishPendingAnswer を呼び、無くなったら undefined を渡す", () => {
-    const recorder = createRecorder()
-
-    recorder.sink({
-      kind: "pending-changed",
-      pending: [{ kind: "permission", id: "toolu_1", toolName: "Bash", input: {} }],
-    })
-    expect(recorder.pendingAnswers).toEqual([
-      { kind: "permission", id: "toolu_1", toolName: "Bash", input: {} },
-    ])
-
-    // 同じ id のままなら呼ばない。
-    recorder.sink({
-      kind: "pending-changed",
-      pending: [{ kind: "permission", id: "toolu_1", toolName: "Bash", input: {} }],
-    })
-    expect(recorder.pendingAnswers).toHaveLength(1)
-
-    recorder.sink({ kind: "pending-changed", pending: [] })
-    expect(recorder.pendingAnswers).toEqual([
-      { kind: "permission", id: "toolu_1", toolName: "Bash", input: {} },
-      undefined,
-    ])
-  })
-
-  it("setCommands は毎イベントで呼び、端末専用を除いた候補を渡す", () => {
-    const recorder = createRecorder()
-
-    recorder.sink({
-      kind: "session-info",
-      sessionId: "s-1",
-      model: undefined,
-      permissionMode: undefined,
-      slashCommands: ["clear", "doctor"],
-      terminalSlashCommands: ["doctor"],
-    })
-
-    expect(recorder.commandsCalls.at(-1)).toEqual([{ name: "clear", description: undefined }])
   })
 
   it("session-ended で理由を通知する", () => {

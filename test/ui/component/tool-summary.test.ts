@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { summarizeToolInput } from "../../src/protocol/tool-summary.ts"
+import { summarizeToolInput } from "../../../src/ui/component/tool-summary.ts"
 
 describe("summarizeToolInput", () => {
   it("Bash はコマンドを出す", () => {

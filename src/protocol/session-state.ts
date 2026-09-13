@@ -154,6 +154,19 @@ export type SessionState = {
    * （読めない・まだ読んでいないのどちらも同じ「不明」表示になる。docs/design.md 4.1）。
    */
   readonly tasks: readonly TaskSummaryItem[] | undefined
+  /**
+   * 今のターンが始まった時刻（`request` の `at`）。表す意味は「依頼を送ってから、そのターンが
+   * 終わるまでの時間」の起点で、次の `request` まではそのまま持ち続ける（入力欄の経過時間表示
+   * `src/ui/dispatch/turn-status.tsx` が使う。docs/design.md 4.2）。まだ一度も依頼が無ければ
+   * undefined。
+   */
+  readonly turnStartedAt: number | undefined
+  /**
+   * 今のターンが終わった時刻（`turn-finished` / `session-ended` の `at`）。**`request` で
+   * undefined に戻る**（次のターンが始まったら経過時間を0から数え直す）。終わっていない間は
+   * undefined。
+   */
+  readonly turnFinishedAt: number | undefined
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -173,6 +186,8 @@ export const INITIAL_SESSION_STATE: SessionState = {
   endedReason: undefined,
   turnInProgress: false,
   tasks: undefined,
+  turnStartedAt: undefined,
+  turnFinishedAt: undefined,
 }
 
 /**
@@ -208,6 +223,8 @@ export function applySessionEvent(
         partialUtterance: "",
         turnInProgress: true,
         speechCalledInTurn: false,
+        turnStartedAt: at,
+        turnFinishedAt: undefined,
       }
     case "partial-utterance":
       return { ...state, partialUtterance: state.partialUtterance + event.text }
@@ -256,13 +273,14 @@ export function applySessionEvent(
       return { ...state, pending: event.pending }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished":
-      return { ...settleUtterance(state), turnInProgress: false }
+      return { ...settleUtterance(state), turnInProgress: false, turnFinishedAt: at }
     case "session-ended":
       return {
         ...settleUtterance(state),
         endedReason: event.reason,
         runningTools: [],
         turnInProgress: false,
+        turnFinishedAt: at,
       }
     case "tasks-changed":
       return { ...state, tasks: event.tasks }

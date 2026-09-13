@@ -43,7 +43,7 @@ export const answerSchema = z.discriminatedUnion("kind", [
 
 /**
  * 画面から届いた JSON（外部由来の `unknown`）を {@link Answer} として検証する。
- * 形が違うときは undefined を返す（旧の `POST /api/answer` が使う入口）。
+ * 形が違うときは undefined を返す。
  */
 export function parseAnswer(value: unknown): Answer | undefined {
   const parsed = answerSchema.safeParse(value)

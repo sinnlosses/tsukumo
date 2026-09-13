@@ -1,6 +1,27 @@
+/* 入力欄（`<Dispatch>` 一式。src/ui/dispatch/）。`.dispatch` は `.layout-dispatch`
+   （旧 HTML が出す静的な section。src/presentation/view.ts）の中いっぱいに広がり、
+   フォーム・答え待ちの箱を縦に積む（docs/requirements.md 4.7）。 */
+.dispatch {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.5rem;
+}
+/* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
+   （permission-mode-select-danger の #e88b8b、破壊的操作向け）とは別の、注意を引くための
+   黄色にしてある（2026-09-11 決定）。`.layout-dispatch` の内側の縁に沿わせる
+   （`position: relative` は src/presentation/style/layout.css 側で用意してある）。 */
+.dispatch-pending-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 1px #e3c766;
+  pointer-events: none;
+}
+
 /* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。 */
 .pending-answer {
-  margin: 0.5rem 0 0;
+  margin: 0 0 0.5rem;
   padding: 0.75rem 0.9rem;
   border: 1px solid #3a4256;
   border-radius: 0.75rem;
@@ -44,14 +65,11 @@
   border-color: #e88b8b;
   color: #e88b8b;
 }
-.pending-status {
-  margin: 0.3rem 0 0;
-  min-height: 1.2em;
-  color: #8ab4ff;
-  font-size: 0.85rem;
-}
 .question-card {
   margin: 0 0 0.75rem;
+}
+.question-card:last-of-type {
+  margin-bottom: 0;
 }
 .question-header {
   margin: 0 0 0.2rem;
@@ -70,10 +88,11 @@
   display: grid;
   gap: 0.35rem;
 }
+/* 選択肢1件（単一選択の <button>、複数選択の <label> のどちらにも使う）。 */
 .question-choice {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.1rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
   width: 100%;
   padding: 0.4rem 0.6rem;
   border: 1px solid #3a4256;
@@ -95,17 +114,19 @@
   border-color: #8ab4ff;
   background: #232a3c;
 }
-.question-choice-number {
-  grid-row: span 2;
-  color: #8ab4ff;
-  font-variant-numeric: tabular-nums;
-}
 .question-choice-label {
   font-weight: bold;
 }
 .question-choice-description {
   font-size: 0.85rem;
   color: #b9c0d0;
+}
+/* 複数選択（multiSelect）はチェックボックス（docs/design.md 6.1）。ラベル・説明を
+   チェックボックスと同じ行の先頭に置く。 */
+.question-choice-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .question-choice-other {
   display: flex;
@@ -131,10 +152,11 @@
 }
 
 /* 右下の入力ペイン（docs/requirements.md 4.7）。claude への依頼を送るフォームを持つ。 */
-.layout-dispatch form {
+.dispatch-form {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 0.5rem;
 }
 /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
@@ -220,9 +242,9 @@
   border-color: #8ab4ff;
   font-weight: 600;
 }
-/* Command+Enter で送信できることを示す記号（applyButtonLabel が data-shortcut 属性に
-   持たせる）。ラベルの文字とは別の擬似要素にして、ステータス表示と同じ弱い色で添える。
-   中断のときは属性ごと外れるので、この擬似要素も出ない。 */
+/* Command+Enter で送信できることを示す記号（<TurnStatus> が data-shortcut 属性に持たせる）。
+   ラベルの文字とは別の擬似要素にして、弱い色で添える。中断のときは属性ごと出ないので、
+   この擬似要素も出ない。 */
 .dispatch-send[data-shortcut]::after {
   content: " " attr(data-shortcut);
   color: #8f97ab;
@@ -239,12 +261,8 @@
   border-radius: 0.4rem;
   font: inherit;
 }
-.dispatch-status {
-  font-size: 0.8rem;
-  color: #8f97ab;
-}
-/* 経過時間（送信ボタンと同じ行。2026-09-12 T-075 でサイドバーから移した）。他の2つ
-   （ボタン・ステータス文字）と同じく伸び縮みしない固定幅にしておく。 */
+/* 経過時間（送信ボタンと同じ行）。他の2つ（ボタン・候補）と同じく伸び縮みしない
+   固定幅にしておく。 */
 .dispatch-elapsed-row {
   flex: 0 0 auto;
   font-size: 0.8rem;
@@ -253,16 +271,4 @@
 .dispatch-elapsed {
   font-family: ui-monospace, SFMono-Regular, monospace;
   color: #e6e8ee;
-}
-/* 答え待ちの箱の置き場所。答え待ちが無いとき（buildPendingAnswerBody が空文字を返すとき）は
-   空になり、高さも増えない。 */
-.dispatch-pending:empty {
-  display: none;
-}
-/* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
-   （permission-mode-select-danger の #e88b8b、破壊的操作向け）とは別の、注意を引くための
-   黄色にしてある（2026-09-11 決定）。 */
-.layout-dispatch[data-pending="yes"] {
-  border-color: #e3c766;
-  box-shadow: 0 0 0 1px #e3c766;
 }

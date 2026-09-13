@@ -7,14 +7,11 @@
 // メインビュー・キャラビューの中身はすべて決まっている（下の `buildMainBody` /
 // `buildCharacterBody`）。**サイドバーは段3で `src/ui/sidebar/` へ移った**（docs/design.md 12章）。
 
-import { type PendingAsk } from "../protocol/pending-ask.ts"
-import { type Question, type QuestionOption } from "../protocol/question.ts"
 import { type MainViewEntry } from "../protocol/session-state.ts"
-import { summarizeToolInput } from "../protocol/tool-summary.ts"
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
 
 /**
- * 旧の SSE 経路が残る2領域。**サイドバーは段3で `src/ui/sidebar/` へ移り、旧の SSE 経路と
+ * 旧の SSE 経路が残る2領域。**サイドバー・入力欄は段3/段4で `src/ui/` へ移り、旧の SSE 経路と
  * HTML の組み立て関数は消えた**（docs/design.md 12章）ので、ここにはもう含めない。
  */
 export type ViewName = "main" | "character"
@@ -84,68 +81,6 @@ export function styleSheetPath(): string {
   return `${ASSET_PATH_PREFIX}${STYLE_SHEET_NAME}`
 }
 
-/** 依頼をセッション駆動へ送る経路（POST、本文は JSON の `{ text }`）。 */
-export const PROMPT_PATH = "/api/prompt"
-
-/** 実行中のターンを中断する経路（POST、本文なし）。 */
-export const INTERRUPT_PATH = "/api/interrupt"
-
-/**
- * 入力欄の「送信中か」と経過時間の起点・終点を運ぶ Server-Sent Events の経路。**駆動側のイベント
- * （`request` で開始、`turn-finished` / `session-ended` で終了）から決めた状態をサーバが持ち、
- * ここへ push する**（ブラウザ側が送信ボタンを押した瞬間に勝手に「進行中」と決めない）。
- * 既存の3領域（`viewEventPath`）と同じ push の仕組みだが、対応する `ViewName` の領域を
- * 持たないので専用の経路にしてある。
- *
- * **経過時間の表示（送信ボタンと同じ行）もここで運ぶ**（2026-09-12 T-075 決定。
- * サイドバーの「セッション情報」から移した）。サイドバーと入力欄は領域が別で SSE の経路も別なので、
- * サイドバーの HTML を読みに行く形にはできない（領域の差し替えで消える）。入力欄側は既に
- * このイベントを「進行中か」の判定に購読していたので、そこへ開始・終了時刻を足すだけで届く。
- */
-export const TURN_STATUS_EVENT_PATH = "/events/turn-status"
-
-/**
- * {@link TURN_STATUS_EVENT_PATH} で push する本文の中身。**「進行中か」は運ばない**
- * （`turnStartedAt` があって `turnFinishedAt` が無ければ進行中、とブラウザ側で導ける）。
- */
-export type TurnStatus = {
-  readonly turnStartedAt: number | undefined
-  readonly turnFinishedAt: number | undefined
-}
-
-/**
- * {@link TurnStatus} を SSE の本文（JSON）にする。JSON に `undefined` は無いので `null` にする
- * （ブラウザ側は `JSON.parse` して `null` を「無い」として扱う）。
- */
-export function encodeTurnStatus(status: TurnStatus): string {
-  return JSON.stringify({
-    turnStartedAt: status.turnStartedAt ?? null,
-    turnFinishedAt: status.turnFinishedAt ?? null,
-  })
-}
-
-/**
- * 答え待ちの箱（許可要求・質問）の本文を運ぶ Server-Sent Events の経路。**`TURN_STATUS_EVENT_PATH`
- * と同型**（対応する `ViewName` の領域を持たない専用の経路）。押す本文は
- * {@link buildPendingAnswerBody} が組んだ HTML そのもので、答え待ちが無いときは空文字
- * （2026-09-11 決定。入力欄の上に箱を出す。`docs/requirements.md` 4.7）。
- */
-export const PENDING_ANSWER_EVENT_PATH = "/events/pending-answer"
-
-/**
- * 答え待ち（許可要求・質問）に答える経路（POST、本文は `{ id, answer }`）。`answer` は
- * `src/domain/pending-answer.ts` の `Answer` と同じ形の JSON。**入力欄の上の答え待ちの箱だけが
- * 呼ぶ**（キーを押す旧経路は 2026-09-11 に役目を終えた。`docs/requirements.md` 4.2）。
- */
-export const ANSWER_PATH = "/api/answer"
-
-/**
- * 入力欄の `/` 補完の候補一覧を返す経路（GET、レスポンスは `{ commands: string[] }`）。
- * セッションが起きる前（`init` 前）は空配列。ブラウザは `/` を最初に打ったときに1回だけ取りに行き、
- * 以降はセッション中キャッシュする（{@link dispatchScript}。docs/requirements.md 4.2「入力欄」）。
- */
-export const COMMANDS_PATH = "/api/commands"
-
 /**
  * まとめたレイアウトページの URL パス。**個別ビューのページ（`/main` `/character`
  * `/sidebar`）は 2026-09-12 に消した。** 当初案（3つを別々のタブで開いて `orca terminal split`
@@ -168,10 +103,11 @@ export type LayoutBodies = Readonly<Record<ViewName, string>>
  * ページを丸ごと再読み込みしない理由は `docs/architecture.md`
  * 「ビューの更新は Server-Sent Events で押す」を参照。
  *
- * **ブラウザ側の配線（購読・タブ制御・レポートの描画・仕切り・入力欄・`/` 補完・答え待ちの箱）は
- * すべて `/assets/browser.js`（`src/presentation/browser/`）にある。** ここが渡すのは
- * 要素の id・class と、`data-` 属性に載せた経路・ラベルだけ（{@link dispatchRegionHtml} 等。
- * 2026-09-12。以前はテンプレート文字列の `<script>` に埋め込んでいた）。
+ * **ブラウザ側の配線（購読・タブ制御・レポートの描画・仕切り）は `/assets/browser.js`
+ * （`src/presentation/browser/`）にある。** 入力欄（送信・中断・`/` 補完・答え待ちの箱）は
+ * **段4 で React の root（`.layout-dispatch` に mount する `src/ui/dispatch/`）へ移った**
+ * （docs/design.md 12章）ので、ここは他の領域（サイドバー）と同じく空の `<section>` を
+ * 出すだけになる。
  */
 export function buildLayoutPage(bodies: LayoutBodies): string {
   const topRow = `<div class="layout-row layout-row-top" id="${LAYOUT_ROW_TOP_ID}">
@@ -183,7 +119,7 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
   const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
 <section class="layout-region layout-character" id="${layoutRegionId("character")}" data-event-path="${viewEventPath("character")}">${bodies.character}</section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_BOTTOM_ID}" role="separator" aria-orientation="vertical" aria-label="キャラビューと入力欄の境界"></div>
-${dispatchRegionHtml()}
+<section class="layout-region layout-dispatch" id="${layoutRegionId("dispatch")}"></section>
 </div>`
 
   return page(
@@ -199,8 +135,11 @@ ${bottomRow}
   )
 }
 
-/** レイアウトページの領域の id。サイドバーは {@link ViewName} に無い（SSE の領域ではないため）。 */
-type LayoutRegionName = ViewName | "sidebar"
+/**
+ * レイアウトページの領域の id。サイドバー・入力欄は {@link ViewName} に無い（SSE の領域では
+ * ないため。段4で入力欄も React の root になったので、サイドバーと同じ扱いになった）。
+ */
+type LayoutRegionName = ViewName | "sidebar" | "dispatch"
 
 function layoutRegionId(region: LayoutRegionName): string {
   return `tsukumo-view-${region}`
@@ -213,80 +152,6 @@ const LAYOUT_RESIZER_ROW_ID = "tsukumo-layout-resizer-row"
 const LAYOUT_RESIZER_TOP_ID = "tsukumo-layout-resizer-top"
 const LAYOUT_RESIZER_BOTTOM_ID = "tsukumo-layout-resizer-bottom"
 const LAYOUT_RESET_ID = "tsukumo-layout-reset"
-
-const DISPATCH_REGION_ID = "tsukumo-view-dispatch"
-const DISPATCH_PENDING_ID = "tsukumo-dispatch-pending"
-const DISPATCH_SUGGESTIONS_ID = "tsukumo-dispatch-suggestions"
-const DISPATCH_FORM_ID = "tsukumo-dispatch-form"
-const DISPATCH_TEXT_ID = "tsukumo-dispatch-text"
-const DISPATCH_SEND_ID = "tsukumo-dispatch-send"
-const DISPATCH_STATUS_ID = "tsukumo-dispatch-status"
-const DISPATCH_ELAPSED_LABEL_ID = "tsukumo-dispatch-elapsed-label"
-const DISPATCH_ELAPSED_ID = "tsukumo-dispatch-elapsed"
-
-const DISPATCH_SEND_LABEL = "送信"
-const DISPATCH_INTERRUPT_LABEL = "中断"
-
-// 経過時間のラベル。進行中／終了後でブラウザ側（`src/presentation/browser/dispatch.ts`）が出し分ける
-// （終了時刻の有無で決める。書式・出し分けは T-055 のまま。2026-09-12 T-075 でサイドバーから
-// 入力欄（送信ボタンと同じ行）へ移した）。
-const TURN_ELAPSED_LABEL = "経過"
-const TURN_FINISHED_LABEL = "所要"
-// 送信ボタンに添える、Command+Enter で送信できることを示す記号（2026-09-12 決定）。
-// **ラベルの文字列（`textContent`）とは分けて `data-shortcut` 属性に持たせる**（描くのは
-// `src/presentation/style/dispatch.css` の `.dispatch-send[data-shortcut]::after`）。ラベルと同じ文字列にすると、送信／中断の
-// 切り替えが `textContent` の一致で見分けられなくなるため。**初期の HTML にも属性を入れておく**
-// ので、スクリプトが動く前から記号が出る。中断のときは出さない（`src/presentation/browser/dispatch.ts` が
-// `data-shortcut` 属性ごと外す）。
-const DISPATCH_SEND_SHORTCUT_HINT = "⌘⏎"
-
-/**
- * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
- * （`src/core/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない。
- *
- * **答え待ちの箱（{@link buildPendingAnswerBody}）はここ（`<textarea>` の上）に出す**
- * （2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していたが、「気づかない」
- * 「入力欄と離れている」という理由で使いづらかった。答えるのは入力の動作なので、入力欄の側に
- * 置く）。ここは箱の置き場所（空の要素）を出すだけで、中身は `PENDING_ANSWER_EVENT_PATH` の
- * SSE で差し替える（`src/presentation/browser/dispatch.ts`）。**入力欄は消さない**（答え待ちの間も
- * 「中断」は押せる）。
- *
- * **`/` コマンド補完の候補一覧は、`<textarea>` の上に重ねるポップアップにする**（答え待ちの箱とは
- * 別の位置。docs/requirements.md 4.2「入力欄」）。中身はブラウザ側が組み立てる（`hidden` で
- * 始まり、候補が無いときも隠れたまま）。**`<textarea>` と同じ包み（`.dispatch-text-wrap`、
- * `position: relative`）に入れ、textarea の下端に底を合わせて上へ伸びる**（`src/presentation/style/dispatch.css` の
- * `.dispatch-suggestions`）。textarea の上に伸ばすと領域（`.layout-region` の
- * `overflow-y: auto`）の外に出て切られるため、textarea の中に重ねる。打っている文字は
- * textarea の上端にあるので隠れない。候補は `position: absolute` で `<form>` の高さ計算（flex）
- * に加わらず、表示・非表示で textarea は動かない。
- *
- * **経過時間の表示は送信ボタンと同じ行（`.dispatch-row`）に出す**（2026-09-12 T-075 決定。
- * 以前はサイドバーの「セッション情報」にあったが、ユーザーの指示で送信ボタンの隣へ移した）。
- * ここでは空の枠（`-`）を出すだけで、中身の計算はブラウザ側が持つ。
- *
- * **経路・中断ラベル・所要ラベルは `data-` 属性で渡す**（送信ラベル・経過中ラベル・
- * Command+Enter の記号は、この関数がすでに出している初期値をブラウザ側がそのまま読むので、
- * 二重には持たない。値の渡し方を統一した経緯は `src/presentation/browser/dispatch.ts` の冒頭コメント）。
- */
-function dispatchRegionHtml(): string {
-  return `<section class="layout-region layout-dispatch" id="${DISPATCH_REGION_ID}" data-pending="no" data-prompt-path="${PROMPT_PATH}" data-interrupt-path="${INTERRUPT_PATH}" data-turn-status-path="${TURN_STATUS_EVENT_PATH}" data-pending-answer-path="${PENDING_ANSWER_EVENT_PATH}" data-answer-path="${ANSWER_PATH}" data-commands-path="${COMMANDS_PATH}" data-interrupt-label="${DISPATCH_INTERRUPT_LABEL}" data-finished-label="${TURN_FINISHED_LABEL}">
-<div class="dispatch-pending" id="${DISPATCH_PENDING_ID}"></div>
-<form id="${DISPATCH_FORM_ID}">
-  <div class="dispatch-text-wrap">
-    <textarea id="${DISPATCH_TEXT_ID}" class="dispatch-text" placeholder="claude への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）" required></textarea>
-    <ul class="dispatch-suggestions" id="${DISPATCH_SUGGESTIONS_ID}" hidden></ul>
-  </div>
-  <div class="dispatch-row">
-    <button type="submit" id="${DISPATCH_SEND_ID}" class="dispatch-send" data-shortcut="${DISPATCH_SEND_SHORTCUT_HINT}">${DISPATCH_SEND_LABEL}</button>
-    <span class="dispatch-elapsed-row">
-<span id="${DISPATCH_ELAPSED_LABEL_ID}" class="dispatch-elapsed-label">${TURN_ELAPSED_LABEL}</span>:
-<span id="${DISPATCH_ELAPSED_ID}" class="dispatch-elapsed">-</span>
-</span>
-    <span id="${DISPATCH_STATUS_ID}" class="dispatch-status" role="status" aria-live="polite"></span>
-  </div>
-</form>
-</section>`
-}
 
 /**
  * 立ち絵の画像ソース。**SVG はファイルの中身をそのまま埋め込む**（インライン）。
@@ -331,9 +196,9 @@ export type CharacterViewData = {
  * 立ち絵で、読ませたいのは最新のセリフ1件**なので、最新の吹き出しだけを濃く大きく（過去は
  * 小さく薄く）する（詳細は `src/presentation/style/character.css` のコメント）。
  *
- * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（{@link buildPendingAnswerBody}）は
+ * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（`src/ui/dispatch/pending-answer.tsx`）は
  * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
- * 入力欄と離れている」という理由で使いづらかった。`src/index.ts` / `dispatchScript` を参照）。
+ * 入力欄と離れている」という理由で使いづらかった）。
  * キャラは吹き出しで「これいい？」と言うだけで、ボタンの中身はここには無い。**許可モードの
  * `<select>` はサイドバーのセッション情報（`src/ui/sidebar/session-info.tsx`）へ移した**
  * （2026-09-11 決定。サイドバーの区画ができたため）。
@@ -602,107 +467,6 @@ function requestHeadingHtml(request: string): string {
   const firstLine = escapeHtml(text.slice(0, lineBreak))
   const rest = escapeHtml(text.slice(lineBreak + 1)).replaceAll("\n", "<br>")
   return `<details class="turn-request" open><summary>${firstLine}</summary><div class="turn-request-full">${rest}</div></details>`
-}
-
-// 答え待ちのフィールドと同じ形の JSON をボタンの data 属性に埋め込むための識別子。
-const PENDING_ANSWER_ELEMENT_CLASS = "pending-answer"
-const PENDING_ANSWER_ID_ATTR = "data-pending-id"
-/** `AskUserQuestion` の自由入力の選択肢。このラベルの選択肢だけ、テキスト欄で受け取る。 */
-const FREE_TEXT_OPTION_LABEL = "その他"
-
-/**
- * 答え待ちの箱。入力欄（右下）の `<textarea>` の上に出す（{@link dispatchRegionHtml} /
- * {@link dispatchScript}。2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していた）。
- * 答え待ちが無いときは空文字（そのときは箱そのものが無く、見た目に何も増えない）。
- *
- * - **許可要求**: ツール名＋要約と、「許可」「拒否」ボタン
- * - **質問**（`AskUserQuestion`）: `header` / `question` / 選択肢を `AskUserQuestion` と同じ
- *   見た目（`.question-card` / `.question-choice`）で出す。**拒否ボタンは出さない**
- *   （答えないと会話が進まないため。中断は入力欄の「中断」が担う）
- *
- * ボタンを押したときの配線は {@link pendingAnswerScript}。ここは静的な HTML の組み立てだけ。
- */
-export function buildPendingAnswerBody(pending: PendingAsk | undefined): string {
-  if (pending === undefined) {
-    return ""
-  }
-
-  return pending.kind === "permission" ? permissionAnswerHtml(pending) : questionAnswerHtml(pending)
-}
-
-function permissionAnswerHtml(
-  pending: Extract<PendingAsk, { readonly kind: "permission" }>,
-): string {
-  const summary = summarizeToolInput(pending.toolName, pending.input)
-
-  return `<div class="${PENDING_ANSWER_ELEMENT_CLASS} pending-permission" ${PENDING_ANSWER_ID_ATTR}="${escapeHtml(pending.id)}">
-<p class="pending-summary"><span class="pending-tool">${escapeHtml(pending.toolName)}</span>${summary === "" ? "" : `: ${escapeHtml(summary)}`}</p>
-<div class="pending-actions">
-<button type="button" class="pending-action pending-allow" data-answer="${escapeHtml(JSON.stringify({ kind: "allow" }))}">許可</button>
-<button type="button" class="pending-action pending-deny" data-answer="${escapeHtml(JSON.stringify({ kind: "deny" }))}">拒否</button>
-</div>
-<p class="pending-status" role="status" aria-live="polite"></p>
-</div>`
-}
-
-function questionAnswerHtml(pending: Extract<PendingAsk, { readonly kind: "question" }>): string {
-  const cards = pending.questions
-    .map((question, index) => questionCardHtml(question, index))
-    .join("\n")
-  // 質問が1つだけで単一選択なら、選択肢を押した瞬間に送る（overall の「答える」ボタンは要らない）。
-  // それ以外（複数の質問／複数選択／自由入力）は、全部に答えてから「答える」を押してもらう。
-  const needsSubmitButton =
-    pending.questions.length > 1 || (pending.questions[0]?.multiSelect ?? false)
-  const submitHtml = needsSubmitButton
-    ? `<button type="button" class="pending-action pending-answer-submit" disabled>答える</button>`
-    : ""
-
-  return `<div class="${PENDING_ANSWER_ELEMENT_CLASS} pending-question" ${PENDING_ANSWER_ID_ATTR}="${escapeHtml(pending.id)}">
-${cards}
-${submitHtml}
-<p class="pending-status" role="status" aria-live="polite"></p>
-</div>`
-}
-
-function questionCardHtml(question: Question, index: number): string {
-  const options = question.options
-    .map((option, optionIndex) => questionOptionHtml(option, index, optionIndex))
-    .join("")
-  // モデルが選択肢に「その他」を含めてこなかったときの受け皿。TUI の AskUserQuestion と同じく、
-  // 自由入力は選択肢の有無によらず常に1つ出す（モデルが自分で足したときは二重に出さない）。
-  const hasFreeTextOption = question.options.some(
-    (option) => option.label === FREE_TEXT_OPTION_LABEL,
-  )
-  const freeText = hasFreeTextOption ? "" : freeTextOptionHtml()
-
-  return `<div class="question-card" data-question-index="${String(index)}" data-multi-select="${String(question.multiSelect)}">
-<p class="question-header">${escapeHtml(question.header)}${question.multiSelect ? "（複数選べる）" : ""}</p>
-<p class="question-text">${escapeHtml(question.text)}</p>
-<ul class="question-choices">${options}${freeText}</ul>
-</div>`
-}
-
-function questionOptionHtml(
-  option: QuestionOption,
-  questionIndex: number,
-  optionIndex: number,
-): string {
-  if (option.label === FREE_TEXT_OPTION_LABEL) {
-    return freeTextOptionHtml()
-  }
-
-  return `<li><button type="button" class="question-choice question-option-button" data-label="${escapeHtml(option.label)}">
-<span class="question-choice-number">${String(optionIndex + 1)}</span>
-<span class="question-choice-label">${escapeHtml(option.label)}</span>
-<span class="question-choice-description">${escapeHtml(option.description)}</span>
-</button></li>`
-}
-
-function freeTextOptionHtml(): string {
-  return `<li class="question-choice-other">
-<input type="text" class="question-other-input" placeholder="自由入力" aria-label="${escapeHtml(FREE_TEXT_OPTION_LABEL)}" />
-<button type="button" class="question-other-send">送る</button>
-</li>`
 }
 
 const PLACEHOLDER_UTTERANCE = "（まだ発話がありません）"

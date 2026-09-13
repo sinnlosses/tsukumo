@@ -107,6 +107,48 @@
         }
       },
       { "afterMs": 1300, "event": { "kind": "turn-finished", "status": "success" } }
+    ],
+    [
+      {
+        "afterMs": 100,
+        "event": {
+          "kind": "pending-changed",
+          "pending": [
+            {
+              "kind": "question",
+              "id": "fake-ask-2",
+              "questions": [
+                {
+                  "header": "架空の選択",
+                  "text": "架空の質問：どの案を試す？",
+                  "multiSelect": true,
+                  "options": [
+                    { "label": "A案", "description": "架空の説明A" },
+                    { "label": "B案", "description": "架空の説明B" },
+                    { "label": "C案", "description": "架空の説明C" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "afterMs": 200,
+        "event": {
+          "kind": "speech",
+          "text": "複数選べる質問を出したよ。チェックボックスで選んでみて。",
+          "expression": "default"
+        }
+      },
+      {
+        "afterMs": 1200,
+        "event": {
+          "kind": "utterance",
+          "text": "multiSelect の質問に答える場面（架空）。答えると箱が消える。\n"
+        }
+      },
+      { "afterMs": 1300, "event": { "kind": "turn-finished", "status": "success" } }
     ]
   ]
 }

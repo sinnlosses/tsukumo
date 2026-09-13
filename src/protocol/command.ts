@@ -12,7 +12,7 @@ import { answerSchema } from "./pending-ask.ts"
 
 /**
  * 依頼として送れる文面の上限。送信のための素朴な上限であって、秘匿・検閲のためではない
- * （旧の `POST /api/prompt` の `MAX_DISPATCH_TEXT_LENGTH` と同じ値をここへ移した）。
+ * （旧の入力欄の送信経路にあった `MAX_DISPATCH_TEXT_LENGTH` と同じ値をここへ移した）。
  */
 export const MAX_PROMPT_TEXT_LENGTH = 20_000
 

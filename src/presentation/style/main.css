@@ -1,12 +1,12 @@
 /* ページ全体の CSS の入口。`bun build` がここから辿れるものを1本にまとめる
    （src/infrastructure/browser-bundle.ts の buildStyleSheet。src/presentation/browser/main.ts と対の構造）。
    narrow-screen.css は他のファイルが定義するセレクタを狭い画面用に上書きするので、
-   **必ず最後に読む**。**sidebar.css だけ `src/ui/style/` にある**（段3でサイドバーが React の
-   部品になったが、CSS の入口は1本のまま。docs/design.md 12章）。 */
+   **必ず最後に読む**。**sidebar.css / dispatch.css だけ `src/ui/style/` にある**（段3/段4で
+   サイドバー・入力欄が React の部品になったが、CSS の入口は1本のまま。docs/design.md 12章）。 */
 @import "./theme.css";
 @import "./character.css";
 @import "./main-turns.css";
-@import "./dispatch.css";
 @import "../../ui/style/sidebar.css";
+@import "../../ui/style/dispatch.css";
 @import "./layout.css";
 @import "./narrow-screen.css";

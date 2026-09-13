@@ -1,6 +1,14 @@
-// ツール名＋入力を、画面に出してよい1行の要約にする。**許可要求（入力欄上の答え待ちの箱。
-// `src/presentation/view.ts`）とサイドバーの「いま何をしているか」（`src/ui/sidebar/activity.tsx`）の
-// 両方が読む契約**なので protocol に置く（同じ概念を2箇所で別に決めない。docs/design.md 2章）。
+// ツール名＋入力を、画面に出してよい1行の要約にする。**サイドバーの「いま何をしているか」
+// （`src/ui/sidebar/activity.tsx`）と入力欄の答え待ちの箱（`src/ui/dispatch/pending-answer.tsx`）の
+// 両方が読む**ので、領域をまたぐ共有部品として `ui/component/` に置く（`ui/` の作法1。
+// docs/design.md 12章 段3）。
+//
+// **段3では `protocol` に置いていた**（旧の答え待ちの箱 `presentation/view.ts` と新しい
+// `ui/sidebar/activity.tsx` の両方が読むのに、`ui → presentation` も `presentation → ui` も
+// 禁じられていて、共有できる場所が `protocol` しか無かったため）。**段4で答え待ちの箱が
+// `ui/` に来て旧側の読み手が消えた**ので、ここへ移した。表示の整形であってサーバとブラウザの
+// 契約ではないので、`protocol` に置いたままにしない（`protocol` が何でも入る置き場になるのを
+// 防ぐ。docs/design.md 2章）。
 //
 // **入力の全文は返さない**（docs/coding-standards.md「会話内容の扱い」）。純粋関数。
 

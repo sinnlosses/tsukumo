@@ -45,6 +45,14 @@
   flex-direction: column;
   overflow-y: hidden;
 }
+/* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。src/ui/style/dispatch.css）は、
+   React が mount する `.dispatch` の兄弟としてではなく、この領域自身の内側の縁に沿わせたい。
+   `<Dispatch>` は `.layout-dispatch`（旧 HTML が出す静的な section）の**中**に mount するので、
+   そこに `position: absolute; inset: -1px` を置くための基準をここで用意する（部品は自分の
+   subtree の外の DOM を直接いじらない。基準を用意するのは静的な CSS で、JS の配線ではない）。 */
+.layout-dispatch {
+  position: relative;
+}
 /* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。 */
 .layout-resizer {
   position: relative;
