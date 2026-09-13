@@ -419,13 +419,29 @@ react-markdown
 CDN からは読まない（いまのまま）。`bun build` の出力は1本（コード分割はしない。分割すると
 ディスクに置かないメモリ配信と噛み合わない）。
 
-### 6.5 立ち絵の動き（余地。段の中では作らない）
+### 6.5 立ち絵の動き
 
-`<Portrait>` は `expression` と `outfit` を props で受け、**遷移は hooks の中の状態機械**で表す
-（前の表情 → 次の表情のクロスフェード、待機中のまばたき、ターン開始の登場）。素材が SVG なら
-CSS の `@keyframes` と `<g>` の差し替えで足り、Lottie / Live2D を使うなら安定した `<canvas>` を
-この部品が持つ。**音声・口パクは作らない。** ここに何を作るかは `docs/requirements.md` 4.3 の
-決定を待つ（この設計書は「部品の中に閉じる」ことだけを決める）。
+**立ち絵は「1枚の矩形」として扱う**（2026-09-13 決定。`docs/requirements.md` 4.3）。`<Portrait>` が
+動かすのは**位置・大きさ・傾き・上下・不透明度**だけで、**素材の中身には触らない**。
+`docs/requirements.md` 2.2 が「素材は利用者が自分で用意する」と決めている以上、素材がどう
+作られているかを当てにできないため（既定のパックの SVG も `id="body"` しか持たない）。
+**この割り切りの見返りに、SVG でも PNG でも GIF でも同じだけ動く。**
+
+- **まばたき・表情のクロスフェード・部分の動きは作らない**（素材の構造に依存するため）。
+  Lottie / Live2D も同じ理由で採らない
+- **動くのは利用者の注意が空いているときだけ。** `<Portrait>` は `SessionState` の
+  `turnInProgress` / `runningTools` / `turnFinishedAt` から「いま読んでいるか、待っているか」を
+  決め、**読んでいる間は呼吸だけに落とす**
+- 作るのは4つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に
+  領域の中をゆっくり歩く）/ **完了の反応**（小さく跳ねる）/ **失敗でびくっ**（一瞬のけぞる）
+- **領域の外へ出さない。** `.character-region` の中で閉じる（レポートの上に被らせない）
+- **利用者は「固定」を選べる。** 値は `localStorage`（`src/ui/layout/split.ts` の前例）
+- `prefers-reduced-motion: reduce` を尊重する（`src/ui/style/theme.css`）
+- 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
+  ライブラリも要らない**（矩形しか動かさないため）
+
+**既にあるもの**（`src/ui/style/character.css`）: `portrait-fade-in`（登場）・`balloon-appear`・
+`balloon-push-up`。登場はここで作り直さない。
 
 ### 6.6 CSS
 
