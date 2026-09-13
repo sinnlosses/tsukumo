@@ -96,6 +96,12 @@ export function startReportRenderers(element: Element, mermaidSrc: string, chart
     }
     loadOnce(chartSrc)
       .then(() => {
+        // Chart.js の既定は明るい背景向けで、目盛りの文字（`#666`）と線
+        // （`rgba(0,0,0,0.1)`）がこの配色では読めない。**データ系列の色は同梱の colors
+        // プラグインが割り当てる**ので、ここで寄せるのは文字と線だけ。色の値は
+        // `src/presentation/style/theme.css` と `main-turns.css` に合わせてある。
+        Chart.defaults.color = "#b9c0d0"
+        Chart.defaults.borderColor = "#3a4256"
         for (const canvas of canvases) {
           try {
             const raw = canvas.dataset.chart

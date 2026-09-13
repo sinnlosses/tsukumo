@@ -39,8 +39,14 @@ declare global {
     readonly run: (options: { readonly nodes: readonly Element[] }) => Promise<void>
   }
 
-  /** Chart.js（`vendor/chart.umd.min.js`）。mermaid と同じく、必要になったときだけ読み込む。 */
-  const Chart: new (target: Element, config: unknown) => unknown
+  /**
+   * Chart.js（`vendor/chart.umd.min.js`）。mermaid と同じく、必要になったときだけ読み込む。
+   * `defaults` は**明るい背景向けの既定値**（文字 `#666`・目盛り線 `rgba(0,0,0,0.1)`）を
+   * 暗い配色へ寄せるためだけに触る（`report-renderers.ts`）。
+   */
+  const Chart: (new (target: Element, config: unknown) => unknown) & {
+    readonly defaults: { color: string; borderColor: string }
+  }
 }
 
 export {}
