@@ -5,23 +5,17 @@ import { fileURLToPath } from "node:url"
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
-// **いまは新3層（protocol / core / ui）と旧の残り（infrastructure。domain は段2で protocol に
-// 吸収され、usecase と presentation は段6で空になって消えた）が並んでいる**（docs/design.md 12章）。
-// 併存期間の規則:
-//   - 旧の各層 → `protocol` は**可**（語彙と畳み込みは protocol に移したため）
-//   - 新（`protocol` / `core` / `ui`）→ 旧は**不可**
-//   - 旧 → `core` / `ui` も**不可**（新しい経路の配線は `index.ts` だけが持つ）
-// 段7で `infrastructure` も消えたら、この表から旧の行が消える。
+// **3層（protocol / core / ui）と配線（cli.ts）の3辺だけ**（docs/design.md 12章 段7で
+// 旧の domain / usecase / presentation / infrastructure がすべて消えた）。
 
-type Layer = "protocol" | "core" | "ui" | "infrastructure" | "index"
+type Layer = "protocol" | "core" | "ui" | "cli"
 
 // 各層が import してよい先（docs/coding-standards.md「層と依存の向き」の表そのもの）。
 const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
   protocol: new Set(["protocol"]),
   core: new Set(["protocol", "core"]),
   ui: new Set(["protocol", "ui"]),
-  infrastructure: new Set(["protocol", "infrastructure"]),
-  index: new Set(["protocol", "core", "ui", "infrastructure", "index"]),
+  cli: new Set(["protocol", "core", "ui", "cli"]),
 }
 
 const SRC_ROOT = fileURLToPath(new URL("../src", import.meta.url)).replace(/\/$/, "")
@@ -34,7 +28,7 @@ type Violation = {
 }
 
 describe("層と依存の向き", () => {
-  it("src/ の相対 import は、許した辺（protocol/core/ui と併存中の旧3層 + index）だけで構成されている", () => {
+  it("src/ の相対 import は、許した辺（protocol/core/ui + cli）だけで構成されている", () => {
     const files = listSourceFiles(SRC_ROOT)
     expect(files.length).toBeGreaterThan(0)
 
@@ -168,13 +162,13 @@ function resolveRelativeImport(fromRelPath: string, specifier: string): string {
   return resolved.join("/")
 }
 
-/** `src/` 相対パスから層を決める。`index.ts` は配線層で、それ以外は先頭ディレクトリで決まる。 */
+/** `src/` 相対パスから層を決める。`cli.ts` は配線層で、それ以外は先頭ディレクトリで決まる。 */
 function layerOf(relPath: string): Layer {
-  if (relPath === "index.ts") {
-    return "index"
+  if (relPath === "cli.ts") {
+    return "cli"
   }
   const [top] = relPath.split("/")
-  if (top === "protocol" || top === "core" || top === "ui" || top === "infrastructure") {
+  if (top === "protocol" || top === "core" || top === "ui") {
     return top
   }
   throw new Error(`src/${relPath} の層を判定できない（層のディレクトリの外にある）`)

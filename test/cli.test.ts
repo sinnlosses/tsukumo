@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { spawnSync } from "node:child_process"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
-import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/infrastructure/view-port.ts"
+import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/core/port-resolution.ts"
 
 // **このファイルは CLI を起動しきらないものだけを扱う。**
 // 2026-09-11 に起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
@@ -20,7 +20,7 @@ import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/infrastru
 //     test/core/pending-answer.test.ts / test/protocol/session-state.test.ts
 // 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
 
-const ENTRY = new URL("../src/index.ts", import.meta.url).pathname
+const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname
 
 function runCliToExit(args: readonly string[], env: Readonly<Record<string, string>>) {
   const inherited = Object.entries(process.env).flatMap(([key, value]) =>

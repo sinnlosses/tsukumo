@@ -73,8 +73,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子（予定）**: `host`
 - **定義**: tsukumo のページを出す相手。実測環境では Orca。**頼む仕事はビューを見せること
   （`showView`）だけ**で、それ以外の依存は持たない
-- **注記**: ホストに依存する操作は1つのポート（`src/infrastructure/host.ts`）の裏に置き、実装は
-  アダプタ（`src/infrastructure/orca-host.ts`）に閉じ込める（`docs/architecture.md`
+- **注記**: ホストに依存する操作は1つのポート（`src/core/host.ts`）の裏に置き、実装は
+  アダプタ（`src/core/orca-host.ts`）に閉じ込める（`docs/architecture.md`
   「ホスト依存の操作は1つのポートにまとめる」）
 - **注記**: **「本体」とは別のもの**。本体は Claude Code の CLI を指す
 - **避ける言い方**: 端末環境、プラットフォーム、シェル
@@ -313,11 +313,11 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ## 通信（移行後）
 
-2026-09-13 に決めた移行（`docs/design.md`）で加わった語。**コードが移行前のあいだは「予定」**。
+2026-09-13 に決めた移行（`docs/design.md`）で加わった語。
 
 ### プロトコル
 
-- **英語識別子（予定）**: `protocol`（ディレクトリ `src/protocol/`）
+- **英語識別子**: `protocol`（ディレクトリ `src/protocol/`）
 - **定義**: サーバ（core）とブラウザ（ui）の**両方が import する契約**。イベント・状態・reducer・
   コマンドとフレームの zod スキーマ・`PROTOCOL_VERSION`
 - **注記**: `node:` にも `document` にも触らない。zod のスキーマが正典で、型は `z.infer`
@@ -325,14 +325,14 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### フレーム
 
-- **英語識別子（予定）**: `ServerFrame`（`hello` / `events` / `error`）
+- **英語識別子**: `ServerFrame`（`hello` / `events` / `error`）
 - **定義**: サーバがブラウザへ WebSocket で送る1件。`hello` は接続直後の snapshot、`events` は
   まとめたイベント、`error` はコマンドの失敗
 - **避ける言い方**: メッセージ（SDK の `SDKMessage` と紛れる）、パケット
 
 ### コマンド
 
-- **英語識別子（予定）**: `ClientCommand`（`prompt` / `interrupt` / `answer` / `set-model` /
+- **英語識別子**: `ClientCommand`（`prompt` / `interrupt` / `answer` / `set-model` /
   `set-permission-mode` / `switch-character` / `new-session`）
 - **定義**: ブラウザがサーバへ WebSocket で送る1件。`commandId` を持ち、失敗は `error` フレームで返る
 - **注記**: **スラッシュコマンド（`/model` など）とは別物。** あちらは `prompt` の `text` に書く
@@ -340,7 +340,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セッションの姿
 
-- **英語識別子（予定）**: `SessionState`（移行前は `SessionView`）
+- **英語識別子**: `SessionState`（移行前は `SessionView`）
 - **定義**: イベントを畳んで得た「いま画面に出すべき中身」。サーバとブラウザが**同じ reducer**
   （`applySessionEvent`）で同じ姿を持つ
 - **注記**: 時刻はイベントの `at`（サーバの時計）から入る。ブラウザの時計を reducer に渡さない
@@ -348,7 +348,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 偽の駆動
 
-- **英語識別子（予定）**: `fakeDriver`（`TSUKUMO_DRIVER=fake`）
+- **英語識別子**: `fakeDriver`（`TSUKUMO_DRIVER=fake`）
 - **定義**: `SessionDriver` と同じ契約で、手で書いた架空の台本どおりにイベントを流す実装。
   claude を起こさずに画面全体を動かすための道具
 - **注記**: 台本は**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）

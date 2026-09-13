@@ -4,7 +4,7 @@
 //
 // 値の意味と既定は docs/design.md 5章「config.ts」の表が正典。
 
-/** ビューを配るポート（既定は src/infrastructure/view-port.ts の `DEFAULT_VIEW_PORT`）。 */
+/** ビューを配るポート（既定は src/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 /** キャラクターパックの名前（`characters/<name>`）または絶対パス。 */
 export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
@@ -24,7 +24,7 @@ export type DriverKind = "sdk" | "fake"
 export type Config = {
   /**
    * `TSUKUMO_VIEW_PORT` の生の値。**ここでは数として解釈しない**（既定か明示かの区別と
-   * ずらす判断は src/infrastructure/view-port.ts が持つ）。
+   * ずらす判断は src/core/port-resolution.ts が持つ）。
    */
   readonly rawViewPort: string | undefined
   /** キャラクターの指定（未設定なら undefined ＝ 同梱の既定を使う）。 */

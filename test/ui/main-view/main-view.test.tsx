@@ -146,6 +146,30 @@ describe("MainView（ツールの行は toolVisibility の3種だけ）", () => 
   })
 })
 
+describe("MainView（見せないツールだけのステップ）", () => {
+  it("見せないツールしか無いステップは、枠だけのカードを残さない", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      tool({ name: "Read", input: { file_path: "/a.ts" } }),
+      tool({ name: "Grep", input: { pattern: "x" } }),
+    ])
+
+    expect(container.querySelectorAll(".main-step")).toHaveLength(0)
+    expect(container.querySelectorAll(".step-tools")).toHaveLength(0)
+  })
+
+  it("見せるツールが1つでもあれば、そのステップは出る", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      tool({ name: "Read", input: { file_path: "/a.ts" } }),
+      tool({ name: "Write", input: { file_path: "/b.ts" } }),
+    ])
+
+    expect(container.querySelectorAll(".main-step")).toHaveLength(1)
+    expect(container.querySelectorAll(".tool-block")).toHaveLength(1)
+  })
+})
+
 describe("MainView（質問の記録）", () => {
   // `QuestionRecord` を直接見る（`MainViewQuestion` は `SessionRecord` にまだ無く、
   // 実際の `SessionState.records` からは今のところ作られない。`MainViewEntry` の型としては

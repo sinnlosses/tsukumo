@@ -61,7 +61,7 @@ export type CharacterAssetFile = {
  * `/character/<file>` が配ってよい1件を読む。**character.json の `portraits` に載っている
  * ファイル名だけ**を許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
  * `..` を含む要求や定義に無い名前は自然に undefined になる）。呼び出し側
- * （src/infrastructure/view-server.ts）はこの結果をそのまま配るか、undefined なら404にする。
+ * （src/core/server.ts）はこの結果をそのまま配るか、undefined なら404にする。
  */
 export function readCharacterPackFile(
   pack: CharacterPack,

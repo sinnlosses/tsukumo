@@ -68,7 +68,7 @@ export type SessionDriverOptions = {
   readonly permissionMode: PermissionMode
   /**
    * `systemPrompt` に足す文字列（レポートの記法など）。**中身を core が決めない**
-   * （描く側の都合なので、配線（src/index.ts）が渡す。段6でここに人格 = persona も乗る。
+   * （描く側の都合なので、配線（src/cli.ts）が渡す。段6でここに人格 = persona も乗る。
    * docs/design.md 5章）。
    */
   readonly systemPromptAppend: string

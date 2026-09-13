@@ -4,7 +4,12 @@
 
 import { Fragment, type ReactElement } from "react"
 
-import { type MainViewStep, type MainViewTurn } from "../../protocol/main-view.ts"
+import {
+  toolVisibility,
+  type MainViewAction,
+  type MainViewStep,
+  type MainViewTurn,
+} from "../../protocol/main-view.ts"
 import { QuestionRecord } from "./question-record.tsx"
 import { Report } from "./report.tsx"
 import { ToolRun } from "./tool-run.tsx"
@@ -33,25 +38,38 @@ export function Turn(props: TurnProps): ReactElement {
   )
 }
 
-/** 1ステップ分。レポートもツールも出すものが無いステップは何も描かない（`null`）。 */
+/**
+ * 1ステップ分。レポートもツールも出すものが無いステップは何も描かない（`null`）。
+ *
+ * **空かどうかは「絞ったあとの数」で判定する。** `toolVisibility` が「見せない」と決めたツール
+ * （読み取り・検索・コマンドの出力）しか無いステップは、`actions` が空でなくても描くものが
+ * 無いので、枠だけの空のカードになってしまう（実機で確認。移行前の `stepHtml` も絞った
+ * あとの数で判定していた）。
+ */
 function Step(props: { readonly step: MainViewStep }): ReactElement | null {
   const { step } = props
-  const tools = step.actions.map((action, index) => (
+  const shownActions = props.step.actions.filter(isShownAction)
+  const tools = shownActions.map((action, index) => (
     <Fragment key={index}>
       {action.kind === "question" ? <QuestionRecord entry={action} /> : <ToolRun entry={action} />}
     </Fragment>
   ))
 
-  if (step.report === undefined && step.actions.length === 0) {
+  if (step.report === undefined && shownActions.length === 0) {
     return null
   }
 
   return (
     <section className="main-step">
       {step.report !== undefined && <Report markdown={step.report} />}
-      {step.actions.length > 0 && <div className="step-tools">{tools}</div>}
+      {shownActions.length > 0 && <div className="step-tools">{tools}</div>}
     </section>
   )
+}
+
+/** 質問の記録は常に出す。ツールは `toolVisibility` が「見せない」と決めたものだけ落ちる。 */
+function isShownAction(action: MainViewAction): boolean {
+  return action.kind === "question" || toolVisibility(action).kind !== "hidden"
 }
 
 // 見出しに出す依頼の全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。

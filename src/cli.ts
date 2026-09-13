@@ -2,10 +2,8 @@
 // `session-manager` に渡して WebSocket のフレームとして配り続ける。
 //
 // ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
-// 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。
-//
-// **移行が終わるまで（段7）は旧の層（`core` から見て `index.ts` だけが持つ配線）が残る**が、
-// 描く側の経路はもう新3層（`protocol` / `core` / `ui`）だけになった（段6。docs/design.md 12章）。
+// 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。`protocol` / `core` / `ui` の
+// すべてを import してよい唯一の場所（docs/design.md 2章「層と依存の向き」）。
 
 import { randomUUID } from "node:crypto"
 import process from "node:process"
@@ -22,17 +20,17 @@ import { readConfig, VIEW_PORT_ENV_NAME } from "./core/config.ts"
 import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
 import { type Host } from "./core/host.ts"
 import { createOrcaHost } from "./core/orca-host.ts"
-import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
-import { attachSessionSocket, createStartupToken, startViewServer } from "./core/server.ts"
-import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./core/session-driver.ts"
-import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
-import { watchTaskSummary } from "./core/task-summary.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "./infrastructure/view-port.ts"
+} from "./core/port-resolution.ts"
+import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
+import { attachSessionSocket, createStartupToken, startViewServer } from "./core/server.ts"
+import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./core/session-driver.ts"
+import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
+import { watchTaskSummary } from "./core/task-summary.ts"
 import { availableExpressions } from "./protocol/character.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
 
@@ -108,7 +106,7 @@ async function main(args: readonly string[]): Promise<number> {
   const characterPack = readCharacterPack(characterDir)
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
-  // ずらして再挑戦する（src/infrastructure/view-port.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
+  // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
     startViewServer(port, uiScript, styleSheet, (fileName) =>
       readCharacterPackFile(characterPack, fileName),

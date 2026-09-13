@@ -1,9 +1,6 @@
 // tsukumo が配る唯一のサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信
 // と、フレーム・コマンドが通る WebSocket（`GET /ws?t=<起動トークン>`）の両方をここが持つ**
-// （docs/design.md 5章「server.ts」）。移行前は HTTP 側を旧の
-// `src/infrastructure/view-server.ts` が持っていたが、メインビューが React の部品になり
-// 旧のメインビュー専用の SSE 経路が要らなくなった段6で、静的配信だけになったそちらをここへ合流させた
-// （docs/design.md 12章 段6）。
+// （docs/design.md 5章「server.ts」）。
 //
 // **`Bun.serve` は使わない**（`node:http` + `ws` パッケージ。docs/coding-standards.md
 // 「Bun固有APIに寄せない」）。
@@ -224,7 +221,7 @@ const BIND_HOST = "127.0.0.1"
 export type ViewServer = {
   /**
    * 待ち受けている HTTP サーバそのもの。**{@link attachSessionSocket} を足すためだけに
-   * 外へ出している**（配線するのは `src/index.ts`）。
+   * 外へ出している**（配線するのは `src/cli.ts`）。
    */
   readonly httpServer: Server
   /** ページの URL。利用者が実際に開くのもこれ1つでよい。 */
@@ -248,7 +245,7 @@ export function startViewServer(
   styleSheet: string,
   /**
    * `/character/<file>` の1件を配ってよい形にする（`src/core/character-pack.ts` の
-   * `readCharacterPackFile` を束ねたもの。呼び出し側 = `src/index.ts` が渡す）。
+   * `readCharacterPackFile` を束ねたもの。呼び出し側 = `src/cli.ts` が渡す）。
    */
   serveCharacterAsset: ServeCharacterAsset,
 ): Promise<ViewServer> {

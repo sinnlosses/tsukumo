@@ -29,9 +29,11 @@ SDK で動かす」を必ず読む（採らなかった案もそこにある）�
 
 ## 現在の状態
 
-**2026-09-13 に「描く」層をブラウザ側へ移すと決めた**（`protocol` / `core` / `ui` の3層、WebSocket 1本、
-React の部品、unified の Markdown、キャラクターパック）。**移行後の形の正典は
-[`docs/design.md`](./docs/design.md)**。コードはまだ移行前の形で、段階は同 12章。
+**2026-09-13 に「描く」層をブラウザ側へ移すと決め、同日中に段7（`protocol` / `core` / `ui` の
+3層 + `src/cli.ts` への構造の移行）まで終えた**（WebSocket 1本、React の部品、unified の
+Markdown、キャラクターパック）。**正典は [`docs/design.md`](./docs/design.md)**。残る段8
+（キャラクターパック本体の移動・切り替え）と段9（セッションの復元）は独立した機能追加として
+`develop/tasks.json` に別タスクである。
 
 **2026-09-11 に方針を全面的に見直し、2026-09-12 に旧方針の実装を撤去した。** いまは新方針
 （Agent SDK で Claude Code を動かす）だけが動いている。**transcript の追従・hook と状態ファイル・
@@ -61,7 +63,7 @@ Orca 経由の入力送信はコードごと消えた**ので、ホストに依�
 ```bash
 bun run check                 # typecheck + lint + format:check + test（変更後は必ずこれを通す）
 bun test                      # テスト全体
-bun test test/index.test.ts   # 単体テストファイルのみ実行
+bun test test/cli.test.ts     # 単体テストファイルのみ実行
 bun run typecheck             # tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
 bun run format                # oxfmt で自動整形（--check は format:check）
@@ -87,21 +89,20 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 
 - **原則1**: **Claude Code の TUI を使わない。** TUI には割り込めないので、パイプ・hook の
   stdout・本体へのパッチを経路にせず、SDK で動かす側に回る
-- **原則2**: 「**受け取る**（SDK のイベント）」「**決める**」「**描く**」を別のモジュールに
-  分け、**層をディレクトリで表す**。**移行後は `protocol`（両側で共有）/ `core`（サーバ）/ `ui`
-  （ブラウザ）の3層**（`docs/design.md` 2章）。**移行の段2で `domain` は `protocol` に吸収され、
-  残る旧3層（`usecase` / `presentation` / `infrastructure`）は段7まで併存する。**新しいコードは
-  新3層に置く。許した依存の辺以外は `test/architecture.test.ts` が
-  落とす。テストで守れるのは「受け取る」「決める」と部品の振る舞いまでで、絵は目視
+- **原則2**: **両側で共有する契約（`protocol`）／サーバ（`core`）／クライアント（`ui`）に分け、
+  層をディレクトリで表す**（`docs/design.md` 2章）。TypeScript のモノレポでいう
+  `packages/shared` + クライアント/サーバ分割に近い形で、クリーンアーキテクチャの
+  「受け取る／決める／描く」の写しではない。許した依存の辺以外は `test/architecture.test.ts` が
+  落とす。テストで守れるのは `protocol` の畳み込みと `ui` の部品の振る舞いまでで、絵は目視
 - **原則3**: ホスト（ターミナル環境）・外部コマンド・OSに依存するものは
-  **`core` の1つのアダプタに閉じ込める**（移行前の呼び名は `infrastructure`）
+  **`core` の1つのアダプタに閉じ込める**
 - **原則4**: **キャラクターの中身をコードに書かない**（素材のパス・表情・衣装の対応は定義ファイル側）
 - **原則5**: まとめるか分けるかは、行数でも関数の数でもなく「**ファイル名が概念になっているか**」で
   決める。`helpers` / `utils` / `common` のような**置き場所を名前にしたファイルは作らない**。
   **ディレクトリもファイルも単数形**にし、複数は「複数返す」関数名の側で表す
 
-**移行後の形（3層・プロトコル・部品・段階）は [`docs/design.md`](./docs/design.md) が正典。
-移行前の全体図、過去の設計判断（なぜこの形なのか）、描画の目視確認の手順、既知の制約は
+**3層・プロトコル・部品・段階の設計は [`docs/design.md`](./docs/design.md) が正典。
+実装の全体図、過去の設計判断（なぜこの形なのか）、描画の目視確認の手順、既知の制約は
 [`docs/architecture.md`](./docs/architecture.md) が正典。** 上の原則で迷ったら必ずそちらを開く
 （このファイルには判断材料を二重に書かない）。
 
