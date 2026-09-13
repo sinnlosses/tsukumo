@@ -19,6 +19,12 @@ import { type Expression, EXPRESSIONS, type Outfit } from "./expression.ts"
  */
 export type CharacterDefinition = {
   readonly name: string | undefined
+  /**
+   * キャラクターの色（`docs/design.md` 13.2 の `accent`）。**衣装ごとの差し色
+   * （`outfitAccents`）とは別物**で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・
+   * フォーカスの輪など、13.1 原則1が許す場所）に効く。無ければ画面側の既定値に落ちる。
+   */
+  readonly accent: string | undefined
   readonly portraits: Readonly<Record<Expression, string | undefined>>
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
 }
@@ -73,6 +79,8 @@ export function characterAssetPath(fileName: string): string {
  */
 export type CharacterInfo = {
   readonly name: string | undefined
+  /** {@link CharacterDefinition.accent} をそのまま持つ。ブラウザ側は `--accent` に流す。 */
+  readonly accent: string | undefined
   readonly expressions: readonly Expression[]
   readonly portraits: Readonly<Record<Expression, string | undefined>>
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
@@ -86,6 +94,7 @@ export type CharacterInfo = {
 export function toCharacterInfo(definition: CharacterDefinition | undefined): CharacterInfo {
   return {
     name: definition?.name,
+    accent: definition?.accent,
     expressions: availableExpressions(definition),
     portraits: portraitUrls(definition),
     outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
@@ -174,6 +183,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
 
   return {
     name: typeof value.name === "string" ? value.name : undefined,
+    accent: typeof value.accent === "string" ? value.accent : undefined,
     portraits: toPortraits(value.portraits),
     outfitAccents: toOutfitAccents(value.outfitAccents),
   }

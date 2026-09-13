@@ -16,6 +16,7 @@ import {
 const FULL_DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
+  accent: "#f2b0a0",
   portraits: {
     default: "default.svg",
     working: "working.svg",
@@ -85,6 +86,7 @@ describe("availableExpressions", () => {
   it("立ち絵が一部しか無い定義では、その表情と default だけを返す", () => {
     const definition: CharacterDefinition = {
       name: undefined,
+      accent: undefined,
       portraits: {
         default: undefined,
         working: "working.svg",
@@ -159,6 +161,7 @@ describe("toCharacterInfo", () => {
     const info = definition === undefined ? undefined : toCharacterInfo(definition)
 
     expect(info?.name).toBe("架空の精霊")
+    expect(info?.accent).toBe("#f2b0a0")
     expect(info?.expressions).toEqual(["default", "working", "proud", "flustered"])
     expect(info?.portraits.working).toBe("/character/working.svg")
     expect(info?.outfitAccents.heavy).toBe("#ffb3a7")
@@ -168,6 +171,7 @@ describe("toCharacterInfo", () => {
     const info = toCharacterInfo(undefined)
 
     expect(info.name).toBeUndefined()
+    expect(info.accent).toBeUndefined()
     expect(info.expressions).toEqual(["default"])
     expect(info.portraits.default).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()

@@ -8,14 +8,14 @@
   gap: 0.5rem;
 }
 /* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
-   （permission-mode-select-danger の #e88b8b、破壊的操作向け）とは別の、注意を引くための
-   黄色にしてある（2026-09-11 決定）。`.layout-dispatch` の内側の縁に沿わせる
+   （permission-mode-select-danger の var(--state-ng)、破壊的操作向け）とは別の、注意を引くための
+   var(--state-warn) にしてある（2026-09-11 決定）。`.layout-dispatch` の内側の縁に沿わせる
    （`position: relative` は src/presentation/style/layout.css 側で用意してある）。 */
 .dispatch-pending-glow {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  box-shadow: 0 0 0 1px #e3c766;
+  box-shadow: 0 0 0 1px var(--state-warn);
   pointer-events: none;
 }
 
@@ -23,9 +23,9 @@
 .pending-answer {
   margin: 0 0 0.5rem;
   padding: 0.75rem 0.9rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.75rem;
-  background: #1c202a;
+  background: var(--surface);
 }
 .pending-summary {
   margin: 0 0 0.5rem;
@@ -43,27 +43,27 @@
 }
 .pending-action {
   padding: 0.35rem 0.9rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: #1c202a;
-  color: #e6e8ee;
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
 }
 .pending-action:hover:not(:disabled) {
-  border-color: #8ab4ff;
+  border-color: var(--accent);
 }
 .pending-action:disabled {
   opacity: 0.5;
   cursor: default;
 }
 .pending-allow {
-  border-color: #7ee081;
-  color: #7ee081;
+  border-color: var(--state-ok);
+  color: var(--state-ok);
 }
 .pending-deny {
-  border-color: #e88b8b;
-  color: #e88b8b;
+  border-color: var(--state-ng);
+  color: var(--state-ng);
 }
 .question-card {
   margin: 0 0 0.75rem;
@@ -73,9 +73,9 @@
 }
 .question-header {
   margin: 0 0 0.2rem;
-  font-size: 0.75rem;
+  font-size: var(--font-label);
   letter-spacing: 0.08em;
-  color: #8f97ab;
+  color: var(--ink-quiet);
 }
 .question-text {
   margin: 0 0 0.5rem;
@@ -95,31 +95,38 @@
   gap: 0.15rem;
   width: 100%;
   padding: 0.4rem 0.6rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: #1c202a;
-  color: #e6e8ee;
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 .question-choice:hover:not(:disabled) {
-  border-color: #8ab4ff;
+  border-color: var(--accent);
 }
 .question-choice:disabled {
   opacity: 0.5;
   cursor: default;
 }
 .question-choice.is-selected {
-  border-color: #8ab4ff;
-  background: #232a3c;
+  border-color: var(--accent);
+  background: var(--surface-accent);
+}
+/* チェックボックス版（`<label class="question-choice question-choice-checkbox">`）は
+   フォーカスが乗るのは中の `<input type="checkbox">` 自身。カード全体にも輪を出す
+   （:has は Chromium で動く。webapp-testing の Chrome もこれで確かめる）。 */
+.question-choice-checkbox:has(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .question-choice-label {
   font-weight: bold;
 }
 .question-choice-description {
-  font-size: 0.85rem;
-  color: #b9c0d0;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
 }
 /* 複数選択（multiSelect）はチェックボックス（docs/design.md 6.1）。ラベル・説明を
    チェックボックスと同じ行の先頭に置く。 */
@@ -135,18 +142,18 @@
 .question-other-input {
   flex: 1 1 auto;
   padding: 0.35rem 0.5rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: #1c202a;
-  color: #e6e8ee;
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
 }
 .question-other-send {
   padding: 0.35rem 0.7rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: #1c202a;
-  color: #e6e8ee;
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
 }
@@ -182,8 +189,8 @@
   max-height: 50%;
   overflow-y: auto;
   list-style: none;
-  background: #10131a;
-  border: 1px solid #3a4256;
+  background: var(--ground);
+  border: 1px solid var(--rule);
   border-radius: 0.4rem;
 }
 /* 1件は「名前＋説明」の1行。説明は薄い色で、幅が足りなければ省略記号で切る
@@ -197,8 +204,8 @@
   cursor: pointer;
 }
 .dispatch-suggestion-item.is-selected {
-  background: #232a3c;
-  color: #8ab4ff;
+  background: var(--surface-accent);
+  color: var(--ink);
 }
 .dispatch-suggestion-name {
   flex: 0 0 auto;
@@ -206,8 +213,8 @@
 .dispatch-suggestion-description {
   flex: 1 1 auto;
   min-width: 0;
-  color: #7c869e;
-  font-size: 0.85em;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -217,29 +224,30 @@
   align-items: center;
   gap: 0.5rem;
 }
-/* button は、他の3領域が使う語彙（#10131a の暗い地、#3a4256 の枠線、0.4remの角丸）に
+/* button は、他の3領域が使う語彙（var(--surface) の暗い地、var(--rule) の枠線、0.4remの角丸）に
    揃える。素のブラウザ既定の見た目のままだと、ダークな画面の中でここだけ浮いていた。 */
 .dispatch-row button {
   flex: 0 0 auto;
   padding: 0.4rem 0.75rem;
-  background: #1c202a;
+  background: var(--surface);
   color: inherit;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.4rem;
   font: inherit;
   cursor: pointer;
 }
 .dispatch-row button:hover:not(:disabled) {
-  border-color: #8ab4ff;
+  border-color: var(--accent);
 }
 .dispatch-row button:disabled {
   opacity: 0.5;
   cursor: default;
 }
-/* 「送る」は行の主目的なので、リンクと同じ差し色（#8ab4ff）で他のボタンより目立たせる。 */
+/* 「送る」は行の主目的なので、キャラクターの色（accent）を帯びた地と枠で他のボタンより
+   目立たせる（13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。 */
 .dispatch-send {
-  background: #26314a;
-  border-color: #8ab4ff;
+  background: var(--surface-accent);
+  border-color: var(--accent);
   font-weight: 600;
 }
 /* Command+Enter で送信できることを示す記号（<TurnStatus> が data-shortcut 属性に持たせる）。
@@ -247,7 +255,7 @@
    この擬似要素も出ない。 */
 .dispatch-send[data-shortcut]::after {
   content: " " attr(data-shortcut);
-  color: #8f97ab;
+  color: var(--ink-quiet);
   font-weight: 400;
 }
 .dispatch-text {
@@ -255,9 +263,9 @@
   min-height: 0;
   resize: none;
   padding: 0.5rem;
-  background: #10131a;
+  background: var(--ground);
   color: inherit;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.4rem;
   font: inherit;
 }
@@ -265,10 +273,9 @@
    固定幅にしておく。 */
 .dispatch-elapsed-row {
   flex: 0 0 auto;
-  font-size: 0.8rem;
-  color: #8f97ab;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
 }
 .dispatch-elapsed {
-  font-family: ui-monospace, SFMono-Regular, monospace;
-  color: #e6e8ee;
+  color: var(--ink);
 }

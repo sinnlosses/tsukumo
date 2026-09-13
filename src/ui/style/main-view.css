@@ -1,5 +1,5 @@
 .placeholder {
-  color: #8f97ab;
+  color: var(--ink-quiet);
 }
 .main-turns {
   display: flex;
@@ -12,22 +12,22 @@
   flex-wrap: wrap;
   gap: 0.25rem;
   padding: 0 0 0.5rem;
-  background: #14161c;
+  background: var(--surface);
   z-index: 1;
 }
 .turn-tab {
   padding: 0.2rem 0.7rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 999px;
-  background: #1c202a;
-  color: #8f97ab;
+  background: var(--surface);
+  color: var(--ink-quiet);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--font-secondary);
   cursor: pointer;
 }
 .turn-tab.is-active {
-  color: #e6e8ee;
-  border-color: #8ab4ff;
+  color: var(--ink);
+  border-color: var(--accent);
 }
 /* 既定では summary（依頼の1行目）だけの高さで収まり、開くと全行が読める
    （requestHeadingHtml 参照）。 */
@@ -35,31 +35,33 @@
    既定で全行が見えて**、長いときだけ max-height でスクロールに切り替わる。 */
 .turn-request {
   margin: 0 0 0.75rem;
-  border-left: 3px solid #8ab4ff;
+  /* 依頼の見出しの縦罫は、キャラクターの色を出してよい場所の1つ（13.1 原則1）。
+     見出し自体の文字色は「読む面」なので ink のまま（下の h2.turn-request / summary）。 */
+  border-left: 3px solid var(--accent);
   padding-left: 0.6rem;
 }
 h2.turn-request {
-  font-size: 0.95rem;
-  color: #8ab4ff;
+  font-size: var(--font-heading);
+  color: var(--ink);
   max-height: 40vh;
   overflow-y: auto;
 }
 .turn-request > summary {
-  font-size: 0.95rem;
-  color: #8ab4ff;
+  font-size: var(--font-heading);
+  color: var(--ink);
   cursor: pointer;
 }
 .turn-request-full {
   margin-top: 0.4rem;
   max-height: 40vh;
   overflow-y: auto;
-  color: #e6e8ee;
-  font-size: 0.9rem;
+  color: var(--ink);
+  font-size: var(--font-body);
 }
 .turn-dropped {
   margin: 0 0 0.75rem;
-  color: #8f97ab;
-  font-size: 0.85rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
 }
 /* ステップは**縦に1本**で積む（ユーザーの指摘 2026-09-10。Z字に読ませない）。
    カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
@@ -71,9 +73,9 @@ h2.turn-request {
 .main-step {
   margin: 0;
   padding: 0.75rem 0.9rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: #171b24;
+  background: var(--surface);
   min-width: 0;
 }
 .main-step > .detail-block:last-child {
@@ -91,7 +93,7 @@ h2.turn-request {
   margin: 0;
   padding: 0.15rem 0.6rem;
   border-radius: 999px;
-  background: #1c202a;
+  background: var(--surface);
 }
 .step-tools .tool-block h3 {
   margin: 0;
@@ -113,43 +115,43 @@ h2.turn-request {
 }
 .detail-block .card {
   padding: 0.6rem 0.75rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: #1c202a;
+  background: var(--surface);
 }
 .detail-block .badge {
   display: inline-block;
   padding: 0 0.5rem;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: var(--font-secondary);
 }
 .detail-block .badge-ok {
-  color: #7ee081;
+  color: var(--state-ok);
 }
 .detail-block .badge-warn {
-  color: #e3c766;
+  color: var(--state-warn);
 }
 .detail-block .badge-ng {
-  color: #e88b8b;
+  color: var(--state-ng);
 }
 .detail-block .note {
   margin: 0.5rem 0;
   padding: 0.5rem 0.75rem;
-  border-left: 3px solid #8ab4ff;
-  background: #1c202a;
+  border-left: 3px solid var(--ink-quiet);
+  background: var(--surface);
 }
 .detail-block .note-warn {
-  border-left-color: #e3c766;
+  border-left-color: var(--state-warn);
 }
 .detail-block .note-ng {
-  border-left-color: #e88b8b;
+  border-left-color: var(--state-ng);
 }
 .detail-block blockquote {
   margin: 0.5rem 0;
   padding-left: 0.75rem;
-  border-left: 3px solid #3a4256;
-  color: #b9c0d0;
+  border-left: 3px solid var(--rule);
+  color: var(--ink-quiet);
 }
 .detail-block svg {
   max-width: 100%;
@@ -159,61 +161,73 @@ h2.turn-request {
 /* メインビューに残す質問の記録。 */
 .tool-block-question .question-record h4 {
   margin: 0 0 0.3rem;
-  font-size: 0.9rem;
+  font-size: var(--font-body);
 }
 .question-options {
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 0.9rem;
+  font-size: var(--font-body);
 }
 .question-option {
-  color: #8f97ab;
+  color: var(--ink-quiet);
 }
 .question-option.is-chosen {
-  color: #e6e8ee;
+  color: var(--ink);
 }
 .step-heading {
   margin: 0 0 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--font-label);
   letter-spacing: 0.08em;
-  color: #8f97ab;
+  color: var(--ink-quiet);
 }
+/* リンクも「読む面」の一部（13.1 原則1）。色はキャラクターのものではなく本文と同じ。 */
+/* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない。docs/design.md 13.1）。
+   **色を取り上げるかわりに下線で区別する。** 色だけに頼らないので、どのパックの accent が来ても
+   リンクだと分かる。 */
 a {
-  color: #8ab4ff;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+a:hover {
+  text-decoration-color: var(--accent);
 }
 .tool-block {
   margin: 0 0 1rem;
   padding: 0.75rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: #1c202a;
+  background: var(--surface);
 }
 .tool-block h3 {
   margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  font-family: ui-monospace, SFMono-Regular, monospace;
-  color: #8ab4ff;
+  font-size: var(--font-secondary);
+  color: var(--ink);
 }
 .tool-block pre,
 .detail-block pre {
   margin: 0.4rem 0 0;
   padding: 0.5rem;
-  background: #10131a;
+  background: var(--ground);
   border-radius: 0.4rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .tool-result.tool-error {
-  border: 1px solid #d16969;
+  border: 1px solid var(--state-ng);
 }
 .tool-pending {
   margin: 0.4rem 0 0;
-  color: #8f97ab;
+  color: var(--ink-quiet);
   font-style: italic;
 }
+/* レポート本文の行長を42全角で切る（13.3）。値は system-ui + var(--font-body) で「国」を
+   42字並べて実測した幅（約 581.7px = 36.36rem。measure.ts の一時スクリプトで実測、
+   環境のフォントで再測すると変わりうる）。 */
 .detail-block {
   margin: 0 0 1rem;
+  max-width: 36.36rem;
 }
 .detail-block table {
   border-collapse: collapse;
@@ -222,7 +236,7 @@ a {
 }
 .detail-block th,
 .detail-block td {
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   padding: 0.3rem 0.5rem;
   text-align: left;
 }
@@ -239,7 +253,7 @@ a {
 }
 .detail-block dt {
   grid-column: 1;
-  color: #8ab4ff;
+  color: var(--ink);
   font-weight: 600;
 }
 .detail-block dd {
@@ -247,8 +261,7 @@ a {
   margin: 0;
 }
 .detail-block :not(pre) > code {
-  background: #10131a;
+  background: var(--ground);
   padding: 0 0.25rem;
   border-radius: 0.25rem;
-  font-family: ui-monospace, SFMono-Regular, monospace;
 }

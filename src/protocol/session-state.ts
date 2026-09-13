@@ -297,6 +297,7 @@ export function applySessionEvent(
         ...state,
         character: {
           name: event.name,
+          accent: event.accent,
           expressions: event.expressions,
           portraits: event.portraits,
           outfitAccents: event.outfitAccents,

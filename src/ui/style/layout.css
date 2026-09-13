@@ -29,10 +29,16 @@
   min-width: 0;
   min-height: 0;
   padding: 0.75rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.75rem;
-  background: #1c202a;
+  background: var(--surface);
   overflow-y: auto;
+}
+/* キャラビューだけは枠も地も持たない。付喪神は器物に宿るのであって、ウィジェットの中に
+   座っているのではない（`ground` の上に直接立つ。docs/design.md 13.1 原則2 / 13.4）。 */
+.layout-character {
+  border: none;
+  background: none;
 }
 /* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、
    3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」
@@ -69,7 +75,7 @@
 .layout-resizer::after {
   content: "";
   position: absolute;
-  background: #3a4256;
+  background: var(--rule);
 }
 .layout-resizer-vertical::after {
   top: 0;
@@ -86,7 +92,7 @@
   transform: translateY(-50%);
 }
 .layout-resizer:hover::after {
-  background: #8ab4ff;
+  background: var(--accent);
 }
 /* 既定の比率に戻す逃げ道。仕切りの上ではなく画面に固定した小さいボタンにして、
    ドラッグ操作と取り合わない場所に置く。 */
@@ -96,14 +102,14 @@
   bottom: 0.75rem;
   z-index: 20;
   padding: 0.3rem 0.6rem;
-  background: #1c202a;
+  background: var(--surface);
   color: inherit;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 0.4rem;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--font-label);
   cursor: pointer;
 }
 .layout-reset:hover {
-  border-color: #8ab4ff;
+  border-color: var(--accent);
 }

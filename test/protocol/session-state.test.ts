@@ -396,6 +396,7 @@ describe("applySessionEvent", () => {
     const view = apply({
       kind: "character-changed",
       name: "架空の精霊",
+      accent: "#f2b0a0",
       expressions: ["default", "working"],
       portraits: {
         default: "/character/default.svg",
@@ -408,6 +409,7 @@ describe("applySessionEvent", () => {
 
     expect(view.character).toEqual({
       name: "架空の精霊",
+      accent: "#f2b0a0",
       expressions: ["default", "working"],
       portraits: {
         default: "/character/default.svg",

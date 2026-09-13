@@ -96,6 +96,20 @@ export function App(props: AppProps): ReactElement {
     socketRef.current?.send({ ...command, commandId: crypto.randomUUID() })
   }, [])
 
+  // パックが差す `accent`（docs/design.md 13.2 / 13.5）を、`:root` の既定値の上から
+  // `document.documentElement` に差し替える。`<Layout>` の外（`.layout-reset`）にも届く
+  // 唯一の場所がここ（`document.title` を差し替える `src/ui/dispatch/dispatch.tsx` と同じ、
+  // ホスト側の値をコンポーネントの外から書き換える形）。届いていない・パックに `accent` が
+  // 無いときは既定値（theme.css の `:root`）に戻す。
+  const accent = state.character?.accent
+  useEffect(() => {
+    if (accent === undefined) {
+      document.documentElement.style.removeProperty("--accent")
+    } else {
+      document.documentElement.style.setProperty("--accent", accent)
+    }
+  }, [accent])
+
   return (
     <SessionContext.Provider value={{ state, connection, dispatch }}>
       {props.children}

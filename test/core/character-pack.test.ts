@@ -63,6 +63,7 @@ describe("characterChangedEvent", () => {
     expect(event).toEqual({
       kind: "character-changed",
       name: "架空の精霊",
+      accent: undefined,
       expressions: ["default", "working"],
       portraits: {
         default: "/character/default.svg",

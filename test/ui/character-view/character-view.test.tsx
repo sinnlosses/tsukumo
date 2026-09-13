@@ -48,6 +48,7 @@ describe("CharacterView", () => {
         ],
         character: {
           name: "架空の精霊",
+          accent: undefined,
           expressions: ["default", "working"],
           portraits: {
             default: "/character/default.png",
@@ -85,6 +86,7 @@ describe("CharacterView", () => {
         ],
         character: {
           name: "架空の精霊",
+          accent: undefined,
           expressions: ["default", "proud"],
           portraits: {
             default: "/character/default.png",

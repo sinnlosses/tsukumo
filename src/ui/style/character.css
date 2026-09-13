@@ -111,9 +111,9 @@
   width: fit-content;
   max-width: 100%;
   padding: 0.75rem 1.1rem;
-  border: 1px solid #3a4256;
+  border: 1px solid var(--rule);
   border-radius: 1.25rem;
-  background: #1c202a;
+  background: var(--surface);
   white-space: pre-wrap;
 }
 /* **DOM の先頭が最新**（column-reverse で視覚上は下端に出る）。いま読んでほしい1件だけを
@@ -121,10 +121,10 @@
    残ってはいるが読み返す対象だと分かる見た目にする。 */
 .balloon:first-child {
   animation: balloon-appear 0.3s ease-out;
-  font-size: 1.05rem;
-  background: #232a3a;
-  border-color: #8ab4ff;
-  box-shadow: 0 0 0 1px rgba(138, 180, 255, 0.25);
+  font-size: var(--font-body);
+  background: var(--surface-accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 /* 尻尾ぶんの場所を左に確保する。`.balloon-track` は overflow-y: auto を持ち、CSS の規則で
    overflow-x も自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を
@@ -160,16 +160,16 @@
   height: 0;
   border-top: var(--balloon-tail) solid transparent;
   border-bottom: var(--balloon-tail) solid transparent;
-  border-right: var(--balloon-tail) solid #8ab4ff;
+  border-right: var(--balloon-tail) solid var(--accent);
 }
 .portrait + .balloon-track > .balloon:first-child::after {
   right: calc(100% - 1px);
   border-top-width: calc(var(--balloon-tail) - 2px);
   border-bottom-width: calc(var(--balloon-tail) - 2px);
-  border-right-color: #232a3a;
+  border-right-color: var(--surface-accent);
 }
 .balloon:not(:first-child) {
-  font-size: 0.85rem;
+  font-size: var(--font-secondary);
   opacity: 0.5;
   animation: balloon-push-up 0.3s ease-out;
 }
