@@ -3824,3 +3824,604 @@ overflow-y: auto }`（`src/view.ts` 2116行目付近）と `.sidebar-block-sessi
 - **evidence**:
 
   docs/requirements.md 5箇所（report-html ×2 / report-notation / session-driver / expression）、docs/glossary.md 2箇所（host / orca-host）、docs/workflow.md 1箇所（view）の計8箇所を新しい層のパスへ直した。7つの新パスは test -f で実在を確認。節の数は requirements 25→25、glossary 36→36、workflow 3→3 で不変。docs/architecture.md に残る11箇所は直していない（transcript / transcript-target / state / balloon / draw と、419行目の expression。いずれも「捨てた」「当初」と書かれた過去の記述の中にあり、当時の形を残すのが目的）。grep の残りは docs/architecture.md の11件だけ。bun run check は 382 pass / 0 fail。
+
+## T-062 レポートを読む時間を減らすために何を足すかを決める
+
+- **difficulty**: `opus` / **loopable**: `N` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  棚卸し: (i) renderMarkdownToHtml（view.ts:1096）は引用/ネスト/水平線/画像/列揃え `:---:` を描かず、(ii) ALLOWED_TAGS 54要素は blockquote/hr/details/dl を許可済み・CSS は .cols/.card/.badge/.note/blockquote/table/pre、(iii) report-notation.ts は「使ってよい構造」の一覧止まり。実物の見本（引用・ネスト・`---`・`:---:`・blockquote・cols・details・mermaid）をレポートに出して目視で一致を確認。
+  ユーザーの読みにくさ: 「多少の問題はあれどそれなりの表現力はすでにある」「改善点は、tsukumo モードのときにどう描画すべきかを指定する印を付与すること／その指示に従ってレンダリングすること。重要なのは output styles のほう」。
+  決定（docs/requirements.md 4.2「読む時間を減らすために足すのは、規約の側」。`grep -c '^#\{2,3\} '` は 25 のまま）: 足す=規約の印の語彙・列揃え `:---:`・dl の CSS / 足さない=外部 Markdown ライブラリ（実行時依存と容量）・img（外部読み込みの経路）・自動の段組み/目次/要約（本文の再構成で 2.2 のスコープ外）・.note の種類追加（3つで足りる）。後続案は develop/direction.md。
+
+### 当時のタスク本文
+
+レポートを読み終えるまでの時間を短くするために、どの層に何を足すかを決める。
+
+## 背景
+
+ユーザーの指示: 「レポートの出力をもっとリッチに、段組みしたり見やすくしたりできる限り人間が
+理解するまでの時間を減らせるよう工夫してほしい」。**何が読みにくいかはユーザーの主観が正典**なので、
+推測で足さずに聞いてから決める。
+
+いまの到達点（2026-09-12 に現物を読んで確認。3層に分かれている）:
+
+- **(i) レンダラ**: `src/view.ts` の `renderMarkdownToHtml`（2548行目付近）が自前の Markdown→HTML。
+  **外部の Markdown ライブラリに依存しない**方針（同関数の doc コメント）。対応するのは
+  見出し / フェンス付きコード / 箇条書き（**ネストは1段に平らにする**）/ GFM テーブル /
+  インライン（`**太字**`・`` `code` ``・`[text](url)`）/ HTML ブロック。
+  **描けないもの: 引用 `> `・ネストしたリスト・画像・水平線 `---`**（段落テキストに落ちる）。
+  テーブルの列揃え（`:---:`）も見ていない。` ```mermaid ` は `<pre class="mermaid">`、
+  ` ```chart ` は `<canvas data-chart>` になり（2686〜2694行目付近）、mermaid（3.2MB）と
+  Chart.js（196KB）はその記法が出たときだけ読み込む（144行目付近）
+- **(ii) 通す HTML と見た目**: レポートが直接書いた HTML は `src/report-html.ts` の
+  `sanitizeReportHtml` の許可リストを通る（`div` / `span` / `table` / `details` / `summary` /
+  `dl` / `figure` / `svg` 系など、15行目〜）。見た目の語彙は `src/view.ts` の CSS にある
+  `.detail-block` 配下の `.cols`（`repeat(auto-fit, minmax(14rem, 1fr))` の段組み）/ `.card` /
+  `.badge`（ok / warn / ng）/ `.note`（warn / ng）/ `blockquote` / `table`
+  （1934〜1969行目付近と 2079〜2090行目付近）
+- **(iii) 組み立ての規約**: `~/.claude/output-styles/asuna.md` の「### レポートの組み立て方」
+  （104〜130行）が「内容の種類 → 使う構造」の対応表を持つ。**(i) が描けないぶんを
+  `<blockquote>` / `<hr>` への迂回で埋めている**（126行目）
+
+**外してはいけない制約**: `src/view.ts` の `buildMainBody`（1049〜1050行目付近）に
+「**中身を要約・再構成しない**（読みづらさの主因は見た目であって内容ではないため。
+`docs/requirements.md` 2.2）」と書いてある。ここは 2.2 のスコープ外と直結しているので、
+見せ方で解く。
+
+## 解くべき論点
+
+- **どの層に効かせるか。** (i) レンダラの記法を増やす / (ii) CSS と通す HTML を増やす /
+  (iii) 出力スタイルの組み立て規約を直す、の3つは効き方が違う。(iii) だけで済むなら
+  コードは1行も要らない
+- **「中身を要約・再構成しない」との線引き。** 段組みにする・目次を付ける・先頭に結論を固定するは
+  見せ方か再構成か。**どこまでを見せ方と呼ぶかをここで決めて書き残す**（後で同じ議論が再燃するため）
+- **外部の Markdown ライブラリを同梱するか。** いまは自前・実行時依存なし。同梱するなら
+  `docs/architecture.md`「外部ライブラリは CDN から読まず、同梱して自分で配る」に従い、
+  サニタイズ（`sanitizeReportHtml`）を通す経路を保つ必要がある。容量も増える
+  （mermaid の 3.2MB という前例がある）
+- **段組みを誰が決めるか。** モデルが `<div class="cols">` で明示するのか、レンダラが
+  内容から自動で段に割るのか。自動にすると (i) の制約に触れる
+- **追加候補の棚卸しと取捨。** 目次、`<details>` の既定の開閉、コードの行番号、
+  テーブルの列揃え（`:---:`）、`.note` の種類を増やす、レポート先頭の要約を固定表示、
+  見出しへのアンカー、長いレポートでのスクロール位置の保持。**足さないものは理由を書く**
+  （`CLAUDE.md`「機能を足そうとする前に `docs/requirements.md` 1と 2.2 を見る」）
+
+## やること
+
+1. いま描けるもの・描けないものを**実物で棚卸しして表にする**（上の (i)(ii)(iii) の3層ごと）。
+   確かめ方は、各記法を含むレポートを1つ書いて Orca のタブで見る
+2. ユーザーに**どのレポートのどこが読みにくかったか**を聞く。主観が正典なので、ここを飛ばさない
+3. 3層のどこに何を足すかを決める。**足すものと足さないものを、理由付きで両方書く**
+4. 決めた実装は**このタスクではやらない**。後続タスクの案を `develop/direction.md` に書き出す
+   （T-046 と同じ進め方）
+5. 決定を `docs/requirements.md` 4.2 に記録する
+6. **棚卸しの結果「いまの語彙で足りていて、足りないのは規約の書き方だけ」と分かったら**、
+   出力スタイル（(iii)）の改訂1件だけに落として閉じてよい。その場合はコードを触らず、
+   理由を `evidence` に書く
+
+## 完了条件
+
+- **棚卸しの表**（3層それぞれの「描ける / 描けない」）が `evidence` に書かれていること
+- **ユーザーから聞いた読みにくさ**の要約が `evidence` にあること（**レポートの中身は写さない**）
+- 足すと決めたものと、**足さないと決めたものとその理由**が両方 `evidence` にあること
+- 後続タスクの案が `develop/direction.md` に書かれていること。または 6 の逃げ道で閉じた場合は
+  その理由が `evidence` にあること
+- `docs/requirements.md` 4.2 に決定が追記され、`grep -c '^#\{2,3\} ' docs/requirements.md` が
+  編集の前後で変わらないこと（前後の値を `evidence` に）
+- `bun run check` が通ること
+
+## 注意
+
+- **ユーザーの感想が要る。サブエージェントに委譲せず、`/loop` に載せない**
+- **このタスクでは実装しない**（決めて書き出すところまで）
+- `~/.claude/output-styles/asuna.md` はユーザーのグローバル設定。**書き換えには承認を得て、
+  先にバックアップを取る**。`~/.claude/settings.json` を触る場合は、orca が専有する hooks（12件）と
+  statusLine を壊さない
+- 棚卸しで tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番のプロセスを
+  落とさない**。止めるのは自分が起こした pid だけ
+- **`bun run start` / `tsukumo` は本物の claude を子プロセスで起こす**（API の利用が発生する）
+
+---
+
+## T-063 レポートで描けない引用・ネスト・水平線・列揃えを埋める
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `false` / **dependencies**: T-062, T-069
+- **evidence**:
+
+  移行の段6（T-099）に統合（2026-09-13）。Markdown を unified に置き換えるので自前レンダラに記法を足さない。完了条件（引用・ネスト・水平線・列揃え・迂回の記述の除去）は T-099 に写した。
+
+### 当時のタスク本文
+
+レンダラが描けない Markdown 記法（引用・ネストしたリスト・水平線・テーブルの列揃え）を埋める。
+
+## 背景
+
+`src/presentation/view.ts` の `renderMarkdownToHtml`（1096行目付近）は、**引用 `> `・ネストした
+リスト・画像・水平線 `---` をブロックとして認識せず、段落テキストとして出す**（同関数の doc
+コメントに明記されている既知の制約）。箇条書きのネストも `consumeList` が1段に平らにする。
+**GFM テーブルの区切り行のコロン（`:---:`）も読んでいない**ので、数値の列が左揃えのまま出る。
+
+そのぶんを規約側が迂回で埋めている。`src/presentation/report-notation.ts` の
+`REPORT_NOTATION_PROMPT` が「引用と区切りが要るときは `<blockquote>` / `<hr>` を HTML で書く」
+「**ネストは1段まで**」と、**レンダラの都合を書き手の規約として押し付けている**状態にある。
+
+CSS 側には受け皿が既にある（`.detail-block blockquote` は
+`src/presentation/style/main-turns.css:148` で定義済み）。`sanitizeReportHtml`
+（`src/presentation/report-html.ts`）も `blockquote` / `hr` / `ul` / `ol` / `li` を通す。
+
+**T-062（完了済み）の決定は「自前のレンダラのまま足す」**（`docs/requirements.md` 4.2
+「読む時間を減らすために足すのは、規約の側」）。外部の Markdown ライブラリは同梱しないと
+決まったので、このタスクは自前で足す前提でそのまま進めてよい。**画像 `img` は足さない**
+（同じ決定で、外部を読みに行く経路を作らないため）。
+
+## やること
+
+1. `renderMarkdownToHtml` に引用（`> `）・水平線（`---` / `***`）のブロック認識を足す
+2. `consumeList` のネストを2段まで（インデント2スペースまたはタブ1つを1段とみなす）扱えるようにする
+3. `consumeTable` で区切り行のコロンを読み、列ごとに左・中央・右の揃えを `th` / `td` に当てる
+   （`class` で当て、CSS は `main-turns.css` の `.detail-block table` の近くに置く）
+4. `src/presentation/report-notation.ts` の文面から、**描けないことを前提にした迂回の記述を外す**
+   （「引用・ネスト・水平線は描けない」の行と、`<blockquote>` / `<hr>` へ寄せる指示）。
+   **`~/.claude/output-styles/asuna.md` は触らない**（TUI 向けの正典。4.2 の決定）
+5. `docs/requirements.md` 4.2 の対応記法の記述を実態に合わせる
+6. `bun run check` を通す
+
+## 完了条件
+
+- **テスト**: `test/view.test.ts` に次の4つを足し、`bun test` が通ること
+  （増えた件数を `evidence` に書く）
+  1. `> 引用` の行が `<blockquote>` を含む HTML になる
+  2. 2段のネストした箇条書きが `<ul>` の入れ子になる（平らにならない）
+  3. `---` だけの行が `<hr>` になる
+  4. `| :---: |` の列が中央揃え、`| ---: |` の列が右揃えの印を持つ
+- **描画が壊れていないこと**: 既存の `test/view.test.ts` の件数が減っていないこと
+  （テーブル・コードブロック・HTML ブロックの判定を壊していない。特に `---` を水平線として
+  扱うようにすると**GFM テーブルの区切り行と衝突する**ので、テーブルのテストが通ることを
+  `evidence` で示す）
+- **目視**: Orca のタブで、引用・2段のネスト・水平線・列揃えを含むレポートを1つ出し、
+  それぞれが引用の縦線・入れ子の箇条書き・横線・揃った数値列として描かれていること。
+  どの URL で何が見えたかを `evidence` に書く（**レポートの中身は写さない**）
+- `docs/requirements.md` を編集したなら、`grep -c '^#\{2,3\} ' docs/requirements.md` が
+  編集の前後で変わらないこと
+- `bun run check` が通ること
+
+## 注意
+
+- **`---` は GFM テーブルの区切り行と見分けが要る。** `isTableStart` の判定より後ろで
+  水平線を判定するか、区切り行の形（`|` を含む）を先に除く
+- **目視が要るので `/loop` に載せない。** 実装だけをサブエージェントに委譲してよい
+- **外部の Markdown ライブラリを持ち込まない**（T-062 で決定済み）
+- 目視で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番を落とさない**
+
+---
+
+## T-064 キャラクター切り替えの単位と切り替え時機を決める
+
+- **difficulty**: `opus` / **loopable**: `N` / **passes**: `false` / **dependencies**: T-058
+- **evidence**:
+
+  移行の段8（T-101）に統合（2026-09-13）。論点（1人の単位＝パック、人格の正典＝characters/<name>/persona.md、切り替えは起こし直し、操作はサイドバーの select）は docs/design.md 7章で決めた。残る未実測（二重適用）は T-101 のスパイク。
+
+### 当時のタスク本文
+
+キャラクターを切り替えられるようにするための方式を決める（何を1人の単位にするか・いつ切り替わるか・操作をどこに置くか）。実装はしない。
+
+## 背景
+
+ユーザーの指示: 「キャラクターの切り替えを行えるようにしたい。output style と characters ディレクトリ配下の切り替えを同時に行うことが必要そう?」
+
+いまの構成（2026-09-12 に現物を読んで確認）:
+
+- **素材と定義**: `characters/<名前>/character.json`（`portraits` / `outfitAccents`）を `src/character.ts` の `parseCharacterDefinition` が読む。どのディレクトリを読むかは `src/index.ts` の `resolveBundledDir(process.env.TSUKUMO_CHARACTER_DIR, cwd, ["characters", "tsukumo-spirit"])` が**起動時に1回だけ**決め、`createViewPublisher` の引数として固定される（154〜162行目付近）。いま置いてあるのは `characters/tsukumo-spirit/` の1体だけ
+- **人格**: `~/.claude/output-styles/asuna.md` の1ファイル。`~/.claude/settings.json` の `outputStyle: "Asuna"` で全プロジェクトに効く（2026-09-12 実測。`~/.claude/output-styles/` には `asuna.md` と `.bak` 5件しか無く、**選べる自前のスタイルは1つ**）。`src/session-driver.ts` の `query()` は `outputStyle` を一切指定していない
+- **表情名の出どころ**: `availableExpressions(readCharacterDefinition(characterDir))` が `startSession` の `expressions` に渡り、`speak` の `expression` の zod enum になる（`src/session-driver.ts` の `speakServer`）。**セッションを起こす時点で固定される**
+- **人格と素材の名前は一致していない**: 立ち絵は「つくもの精霊」、人格は「Asuna」。2つは独立して選ばれている（既知として `docs/history/progress-archive.md` に記録あり）
+
+SDK 側でできること（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` v0.3.268 を 2026-09-12 に確認）:
+
+- `Query.applyFlagSettings({ outputStyle })` — セッション限りの層に出力スタイルを指定する（設定ファイルには書かない）
+- `Query.updateSettings('localSettings', { outputStyle })` — 許可キーは `outputStyle` だけ。**プロジェクトの local 設定ファイルに書く**
+- `Query.reloadOutputStyles()` — 出力スタイルのディレクトリを読み直し、選べる名前を返す
+- `initializationResult()` と `init` メッセージの `output_style` / `available_output_styles` — 今のスタイルと選択肢が取れる
+- `Query.setMcpServers(...)` — MCP サーバを入れ替えられる（`speak` の表情 enum を作り直す経路になる）
+- **いずれも「本当に効くか」は未実測**。「出力スタイルはセッション起動時にしか読まれない」という実測（2026-09-10）があるので、途中で差し替えて口調が変わるかは確かめるまで分からない
+
+## 解くべき論点
+
+- **「キャラクター1人」を何で表すか。** 人格（出力スタイル）と素材（`characters/<名前>/`）を1つの単位に束ねるのか、別々に選べるままにするのか。束ねるなら `character.json` に人格への参照（出力スタイル名、または同じディレクトリの人格ファイル）を持たせるのか
+- **人格の正典をどこに置くか。これは T-058 が決める話と同じ場所を触る。** T-058 が (c)「tsukumo が `systemPrompt` で足す」を選ぶなら人格の正典はリポジトリ側（キャラクターディレクトリ）に来るので、切り替えはファイルの読み替えで済む。(a)「出力スタイルを複数置く」なら `~/.claude/output-styles/` に人格ぶんのファイルが並び、切り替えは `applyFlagSettings({ outputStyle })` になる。**T-058 の決定に乗り、ここで別の方式を作らない**
+- **いつ切り替わるか**: (i) 起動時だけ（環境変数・引数で選ぶ。コードはほぼ要らない）/ (ii) セッションの途中（画面から選ぶ。出力スタイルが途中で効くか、`speak` の表情 enum を作り直す必要があるかの未実測を解く必要がある）/ (iii) 画面から選んだらセッションを起こし直す（**会話は捨てる**。`docs/requirements.md` 2.2 でセッションの再開は対象外なので、続きにはできない）
+- **操作をどこに置くか**（画面から切り替える場合）: サイドバーのセッション情報にある許可モード・モデルの `<select>` の隣か。**`<select>` 1つで人格と素材がまとめて変わる**のが指示の意図に合う
+- **切り替えたときに画面の何を捨てるか**: 吹き出し（前のキャラのセリフ）・立ち絵・メインビューのレポート
+- **素材が1体しか無い環境で何を出すか**（いまの状態）。選択肢が1つのときに `<select>` を出すのか
+- **`~/.claude/` を触るか。** 触るならユーザーの承認が要る（`CLAUDE.md`）。触らずに済む方式があるならそちらを優先する
+
+## やること
+
+1. T-058 の決定（`evidence` と `docs/requirements.md` 4.2）を読み、人格の正典の置き場所を確認する
+2. 切り替えの時機 (i)(ii)(iii) を「指示の意図（人格と素材が同時に変わる）を満たすか」「未実測の前提がいくつ残るか」「実装量」「切り替えで会話が消えるか」の4軸で比べて表にする
+3. (ii) を候補に残すなら、**出力スタイルをセッションの途中で差し替えて実際に口調が変わるかを確かめる**（`TSUKUMO_VIEW_PORT` を変えて起こし、`applyFlagSettings({ outputStyle })` の前後で応答を見る。**会話の中身は記録しない**）。変わらないと分かったら (ii) を落とし、理由を `evidence` に書く
+4. ユーザーに方式を選んでもらう。**2体目の素材と人格をどう用意するつもりかもここで聞く**（`characters/local/` は `.gitignore` 済みで、素材の同梱は `docs/requirements.md` 2.2 で対象外）
+5. 決めた方式・根拠・実装手順を `evidence` と `docs/requirements.md` 4.4 に書く。**実装はしない**
+6. **聞いた結果「2体目を用意する予定が無い」と分かったら、切り替えの仕組みは作らずに閉じてよい**（理由を `evidence` に書く）。その場合は T-065 も同じ理由で閉じる
+
+## 完了条件
+
+- 切り替えの時機の比較表と、選んだ方式・選んだ理由が `evidence` に書かれていること
+- 「キャラクター1人」を何で表すか（人格と素材の束ね方）の決定が `evidence` にあること
+- (ii) を検討したなら、**出力スタイルを途中で差し替えて口調が変わるかの実測結果**が `evidence` にあること
+- `docs/requirements.md` 4.4 に決定が追記され、`grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で変わらないこと（前後の値を `evidence` に書く）
+- `bun run check` が通ること
+
+## 注意
+
+- **ユーザーの選択が要る。サブエージェントに委譲せず、`/loop` に載せない**
+- **このタスクでは実装しない。`~/.claude/` も書き換えない**（決めるだけ）
+- 実測で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番のプロセスを落とさない**。止めるのは自分が起こした pid だけ
+- **`bun run start` / `tsukumo` は本物の claude を子プロセスで起こす**（API の利用が発生する）
+- 口調の確認に使った応答の中身を `evidence` やログに写さない（`docs/coding-standards.md`「会話内容の扱い」）
+
+---
+
+## T-065 決めた方式でキャラクターの切り替えを実装する
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `false` / **dependencies**: T-064
+- **evidence**:
+
+  移行の段8（T-101）に統合（2026-09-13）。実装は T-101 で行う。
+
+### 当時のタスク本文
+
+T-064 が決めた方式で、キャラクター（人格＋素材）の切り替えを実装する。
+
+## 背景
+
+**方式と実装手順は T-064 の `evidence` と `docs/requirements.md` 4.4 が正典**で、このタスクでは決め直さない。
+
+いまは切り替える余地が無い（2026-09-12 時点）:
+
+- `src/index.ts` がキャラクターディレクトリを起動時に1回だけ決め（`resolveBundledDir(process.env.TSUKUMO_CHARACTER_DIR, ...)`、154〜162行目付近）、`createViewPublisher` に固定の引数として渡している。立ち絵と差し色は配るたびに `readCharacterAssets(characterDir, ...)` でファイルから読み直しているので、**ディレクトリを持つ場所が変数になれば立ち絵側の差し替えは届く**
+- 表情名は `availableExpressions(...)` の結果が `startSession` の `expressions` に渡り、`speak` の zod enum として固定される（`src/session-driver.ts` の `speakServer`）。表情の集合が違うキャラに変えるなら `Query.setMcpServers` で作り直すか、セッションを起こし直すことになる
+- 人格（出力スタイル）は tsukumo から一切指定していない（`query()` のオプションに `outputStyle` が無い）
+
+画面から切り替える形にする場合、**前例がそのまま使える**: 許可モードとモデルの `<select>` は `src/view.ts` の `sessionInfoBody` が出し、`src/view-server.ts` の POST が受け、`src/index.ts` の配線が `driver.setPermissionMode` / `driver.setModel` を呼んでいる。同じ経路をもう1本足す形になる。
+
+## やること
+
+1. T-064 が決めた方式で実装する（起動時だけで済む方式なら、環境変数・引数の受け取りと一覧の読み取りだけで閉じる）
+2. 「決める」部分（どのディレクトリが選べるか・名前から定義を引く・選択が不正なときの落とし先）は**純粋関数に寄せて `test/` にテストを足す**（`src/character.ts` か新しい概念名のモジュール。`helpers` のような置き場所を名前にしたファイルは作らない）
+3. 表情の集合が変わる場合にどうなるかを確かめ、決めた通りに動かなければ**押し切らずに**理由を `evidence` に書いて止め、`develop/direction.md` に差し戻す
+4. `~/.claude/` を触る方式なら、**先にバックアップを取り、ユーザーの承認を得てから**触る
+5. `bun run check` を通す
+6. 目視（完了条件）
+
+## 完了条件
+
+- **キャラクターを2つ用意した状態で切り替えられること**（2体目は `characters/local/` など `.gitignore` 済みの場所に置いた確認用でよい。**リポジトリにコミットしない**）
+- 切り替え後に、**立ち絵が2体目のものに変わり、次のターンの口調が2体目の人格になる**こと（人格の切り替えを含む方式を選んだ場合。起動時だけの方式なら起こし直しで変わること）
+- 選択が不正なとき（無いディレクトリ名・壊れた `character.json`）に**プロセスが落ちず**、既定のキャラクターか立ち絵なしに落ちること
+- `bun run check` が通ること（テスト件数を `evidence` に書く）
+- **目視**: Orca のタブで切り替えを1回行い、立ち絵と吹き出しがどう変わったかを `evidence` に書く（**会話の中身は写さない**）。未実施なら「未実施」と明記する（T-050〜T-056 と同じ扱い）
+- `~/.claude/settings.json` を変更したなら、`hooks` のキー12件と `statusLine` が編集の前後で変わらないこと（前後の値を `evidence` に書く）
+
+## 注意
+
+- **キャラクターの中身をコードに書かない**（`docs/architecture.md` 原則4）。キャラ名・人格の文言・表情の対応はすべて定義ファイル側に置く
+- **環境変数の読み取りは `src/index.ts` の配線に集約する**（`docs/coding-standards.md`。モジュールのトップレベルで環境変数に触らない）
+- **`~/.claude/output-styles/` と `~/.claude/settings.json` はユーザーのグローバル設定。書き換えには必ず承認を得る。** 触る方式になった場合は**サブエージェントに委譲せず、`/loop` に載せない**。`~/.claude/` を触らない方式なら `/loop` に載せてよい
+- 2体目の確認用素材を**リポジトリにコミットしない**（`docs/requirements.md` 2.2「キャラクター素材そのものの同梱・配布」は対象外）
+- 動作確認で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番のプロセスを落とさない**。止めるのは自分が起こした pid だけ
+- **`bun run start` / `tsukumo` は本物の claude を子プロセスで起こす**（API の利用が発生する）。テストから CLI を起動しきらない
+
+---
+
+## T-077 開き直したときにセッションを引き継ぐ方式を決める
+
+- **difficulty**: `opus` / **loopable**: `N` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  **会話内容の複製にはあたらない**（＝規約を曲げずに実装できる）と判断した。claude 自身が `~/.claude/projects/` に書く transcript を正典として読み直すだけで、tsukumo 側は何も書き出さないため。`docs/coding-standards.md`「別の場所に複製しない」に、禁じているのは書き出すほうだと1文を補った。
+  決定を `docs/requirements.md` 4.8「セッションの復元」に追加（戻すもの／戻さないもの・鍵・契機・保存しない理由・失敗時の振る舞い）。ユーザーの選択は「会話＋画面の履歴も戻す」「常に自動で続きから」「鍵は cwd ＋ tsukumo の印（tagSession）」。
+  SDK の口は `node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` で確認: `Options.resume`(1936) / `listSessions`(1002) / `tagSession`(8686) / `getSessionMessages`(807) / `SDKSessionInfo`(5154)。`grep -c '^#\{2,3\} ' docs/requirements.md` は 25→26（4.8 を1つ足したぶん）。コードは未変更。
+
+### 当時のタスク本文
+
+tsukumo を起こし直したときに前のセッションを復元する方式を決める（実装はしない）。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「tsukumo を開き直したとき、セッションを復元するように変更しよう。」
+
+現物（2026-09-12 に確認）:
+
+- `src/session-driver.ts` の `startSession`（118行目付近）が `query({ options: { cwd,
+permissionMode, mcpServers, ... } })` で**毎回まっさらなセッションを起こす**。
+  `resume` も `continue` も渡していない
+- Agent SDK の `Options` には **`resume?: string`（再開するセッションID）**、
+  `forkSession?: boolean`、`resumeSessionAt?: string` がある
+  （`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` の 1934 / 1584 / 1950 行目付近）
+- セッションIDは届いている。`src/session-event.ts`（169行目付近）が SDK のメッセージから
+  `session_id` を読んで `{ kind: "session-info", sessionId }` を流す
+- **画面の中身（やり取りの履歴）はプロセスのメモリにしかない。** `src/session-view.ts` の
+  `SessionView` が `applySessionEvent` で積み上がるだけで、どこにも保存していない
+- **`~/.tsukumo/` は旧方針の遺物で、もう読まれない**（T-042 で撤去。`develop/progress.md`
+  「注意」）。書き込む場所を作るなら、ここを再利用するか別の場所にするかを決めることになる
+
+## 解くべき論点
+
+- **何を復元するのか。** (a) claude 側の会話（`resume` で足りる）、(b) 画面のやり取りの履歴
+  （メインビューのタブ・レポート・ツールの行）、(c) 吹き出しに出ていたセリフ。
+  **(b)(c) は tsukumo 側で保存しないと戻らない**。どこまでやるかをここで決める
+- **会話内容の扱いとの衝突。** `docs/coding-standards.md`「会話内容の扱い」は
+  **「別の場所に複製しない」**と言っている。(b)(c) を保存するのはレポートとセリフの複製にあたる。
+  **セッションIDだけを保存して claude 側の transcript を正典にする**なら複製にならない。
+  この線引きが最大の論点で、**規約を曲げるなら規約側を先に直す**（`CLAUDE.md`
+  「用語を変えたくなったら先に用語集を直す」と同じ順序）
+- **何を鍵に復元するか。** 起動した作業ディレクトリ（`cwd`）ごとか、ホストの単位か。
+  `tsukumo` は `bun link` でグローバルに入っていて**別のプロジェクトからも起こせる**
+  （T-048）ので、鍵を間違えると他のプロジェクトの会話が出る
+- **いつ復元するか。** 常に自動で続きから始めるのか、起動時に選ばせるのか、
+  明示のフラグ（`--resume` / 環境変数）だけか。**事故（意図せず前の会話が続く）を防ぐ形**を選ぶ
+- **どこに保存するか。** `~/.tsukumo/` を復活させるか、`cwd` の中か。旧方針の遺物と
+  混ざらないようにする
+- **復元できなかったときどうするか。** セッションIDが古い・transcript が消えている場合に
+  **常駐プロセスが落ちない**こと（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で
+  落ちない」。起動時の前提不足だけが即時終了）
+
+## やること
+
+1. SDK の `resume` / `forkSession` / `resumeSessionAt` の意味を**型定義と公式ドキュメントで
+   確かめる**（推測で書かない。出典を控える）
+2. 上の論点をユーザーと突き合わせて決める。**(b)(c) を保存するかは規約に触れるので必ず確認を取る**
+3. 決めた方式を `docs/requirements.md` 4 に節として1つ足す。規約を変えるなら
+   `docs/coding-standards.md`「会話内容の扱い」も同時に直す
+4. **実装はこのタスクではやらない。** 実装の手順を T-078 の本文に書き足す
+
+## 完了条件
+
+- `docs/requirements.md` に「何を復元し、何を復元しないか」「鍵」「いつ復元するか」
+  「保存場所」「失敗時の振る舞い」が書かれた節があること
+- 会話内容の複製にあたるかの判断と、その結論が `evidence` に1行で書かれていること
+- `develop/tasks.json` の T-078 の本文が、決めた方式に沿って更新されていること
+- `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で減っていないこと
+- コードを変えていなければ `bun run check` は不要（変えたなら通すこと）
+
+## 注意
+
+- **ユーザーの選択が要るので委譲せず、`/loop` にも載せない**
+- **このタスクで実装しない。** 決めるところまで
+- **会話内容の扱いは他のどの規約よりも優先する**（`CLAUDE.md`）。保存を伴う案は、
+  規約を先に直してからでないと実装に進めない
+- `docs/requirements.md` を編集するときは**行頭を含めて位置を特定する**
+
+---
+
+## T-087 index.ts からユースケースを usecase/ へ抜き、配線だけにする
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: T-086
+- **evidence**:
+
+  index.ts を 635 → 231行にした。usecase へ throttle.ts / event-sink.ts / view-publish.ts、infrastructure へ character-asset.ts / task-summary.ts / auto-open-view.ts / browser-bundle.ts を新設し、VIEW_PORT_ENV_NAME は view-port.ts へ同居させた。index.ts に残したのは main / stopSessionOnExit / openLayoutView / announce / USAGE と、両者を具体の関数で繋ぐ配線だけ。層の規則を満たすため、event-sink は now() を引数で受け取り PendingAsk と onSessionEnded を返す形に、view-publish は render 関数（buildCharacterBody 等）と readCharacterAssets を注入される形にした（依存の向きを逆にしない）。テストは 382 → 415 pass / 0 fail（新規33件。移す前に書いた。既存の test/index.test.ts は CLI の起動失敗しか見ていなかった）。test/architecture.test.ts も通る。実機（TSUKUMO_VIEW_PORT=7434 と 7435、常駐の 7327 番は触っていない）: 1往復してメインビューに detail-block / turn-panel が押し出され、turn-status が null → turnStartedAt → turnFinishedAt（8.5秒）と流れることを確認。経過時間はサイドバーではなく入力欄で turn-status から描かれる作りだった。会話の中身は写していない。
+
+### 当時のタスク本文
+
+`src/index.ts`（598行）に埋まっているユースケースを `usecase/` へ、ファイルI/Oと環境変数の読み取りを `infrastructure/` へ移す。
+
+## 背景
+
+T-080 の決定（2026-09-12）の段階2。正典は `docs/architecture.md`「層をディレクトリで表し、依存の向きをテストで縛る」。段階1（T-086）でディレクトリは4層になっているが、**`index.ts` は配線とユースケースとファイルI/Oを兼ねたまま**で、598行のうち大半が配線ではない。
+
+いま `index.ts` にあるもの（2026-09-12 実測）:
+
+- ユースケース寄り: `createEventSink` / `createViewPublisher` / `sidebarData` / `toSidebarToolActivity` / `workingRefreshDelayMs` / `throttle`
+- ファイルI/O・環境変数: `readCharacterDefinition` / `readCharacterAssets` / `readPortraitSource` / `readOptionalFile` / `readOptionalMtimeMs` / `createTaskSummaryReader` / `resolveOpenView` と各 `*_ENV_NAME` 定数
+- 配線として残るもの: `main` / `announce` / `stopSessionOnExit` / `openLayoutView` / `USAGE`
+
+## 解くべき論点
+
+- **`createViewPublisher` と `throttle` の置き場所。** `throttle` は時間に依存するが外の世界には触らない。`usecase` に置くか `infrastructure` に置くかを、テストのしやすさ（時刻をモックする位置）で決める
+- **`createTaskSummaryReader` は読み取り（`infrastructure`）と要約の組み立て（`usecase`）が1つになっている。** 割るか、`infrastructure` にまとめるか
+
+## やること
+
+1. 上の分類に沿って移す。**移す前に、移す対象の振る舞いを押さえるテストがあるかを確かめ、無いものは先にテストを書く**（`test/index.test.ts` に何があるかを見る）。
+2. 移した関数は、`index.ts` から渡されていた値を引数で受け取る形にする（モジュールのトップレベルで環境変数に触らない。`docs/coding-standards.md`「外部の入力を読む場所を1つにする」）。
+3. `index.ts` に残すのは配線だけにする。
+4. 調べた結果、分けるとかえって読みにくくなる関数が出てきたら、**押し切らずに `index.ts` へ残し、理由を `evidence` に書く**。
+
+## 完了条件
+
+- `bun run check` が通ること
+- `test/architecture.test.ts` が通ること（新しい import の辺が規則を破っていないこと）
+- `src/index.ts` の行数が**400行以下**になっていること（前後の値を `evidence` に書く）
+- 移した関数のテストが `test/usecase/` または `test/infrastructure/` にあり、増えた件数を `evidence` に書くこと
+- **実機**: `TSUKUMO_VIEW_PORT` を変えて tsukumo を起こし、1往復して**メインビューにレポートが出る・サイドバーの経過時間が動く**ことを確認する（`createEventSink` と `createViewPublisher` が繋がっていることの確認）。**会話の中身は `evidence` に写さない**
+
+## 注意
+
+- **常駐している 7327 番を落とさない。** 動作確認は `TSUKUMO_VIEW_PORT` を変えて起こし、終わったら自分が起こした pid だけを落とす
+- **会話内容の扱いが最優先**（`docs/coding-standards.md`）。移す途中でログに出す誘惑に乗らない
+- 実機の1往復が要るので `/loop` には載せない（`loopable: "N"`）。実装はサブエージェントに委譲してよい
+
+---
+
+## T-088 presentation/view.ts の割り方を決めて割る
+
+- **difficulty**: `opus` / **loopable**: `N` / **passes**: `false` / **dependencies**: T-086, T-084, T-085
+- **evidence**:
+
+  着手せずに閉じる（2026-09-13）。描く層をブラウザ側へ移す移行（docs/design.md）の段6（T-099）で presentation/view.ts ごと消えるため、割る意味が無くなった。
+
+### 当時のタスク本文
+
+`src/presentation/view.ts` を、レイアウト・領域ごと・レポートのどこで割るかを決めて割る。
+
+## 背景
+
+T-080 の決定（2026-09-12）の段階3。**T-084（ブラウザ側 JS を `.ts` へ）と T-085（CSS を `.css` へ）の後に着手する**ことが決まっている。理由は、`view.ts` 3277行から1000行以上が外へ出る前に割ると、割る線が二度動くため。
+
+着手時点の `view.ts` に残っているのは、ビューの識別子・URL の経路（`VIEW_NAMES` / `viewEventPath` / 各 `*_PATH`）と、`buildLayoutPage` / `buildMainBody` / `buildCharacterBody` / `buildSidebarBody` / `buildPendingAnswerBody` などの HTML 組み立て。これらは「決める」層の純粋関数で、`test/view.test.ts` が守っている（`docs/architecture.md`「描画にフレームワークを入れず…」）。
+
+## 解くべき論点
+
+- **割る線**: 領域ごと（main / character / sidebar）か、役割ごと（経路の定義 / ページの骨格 / 領域の中身）か。**`test/view.test.ts` の分け方も同時に決まる**
+- **URL の経路の定義をどこに置くか。** `view-server.ts`（`infrastructure`）と `browser/`（`presentation`）の両方が参照している。経路は「ビューの識別」であって HTML の組み立てではない
+- **共有されている小さな関数**（`escapeHtml` など）の置き場所。`helpers` 的なファイルを作らない（原則5）
+
+## やること
+
+1. 着手時点の `view.ts` の中身を関数単位で数え、割る線の候補を2〜3個挙げてユーザーに選んでもらう。
+2. 決めた線で割る。**中身は変えない**（HTML の出力が1バイトも変わらないことを目指す）。
+3. `test/view.test.ts` も同じ線で割る。
+4. `docs/architecture.md` の責務の表を新しいファイル名に直す。**節の数は変えない。**
+
+## 完了条件
+
+- `bun run check` が通ること
+- 割った各ファイルが**1000行以下**であること（`wc -l` の結果を `evidence` に書く）
+- `test/architecture.test.ts` が通ること
+- **描画の確認**: 合成データで `buildLayoutPage` を組み立て、割る前後の HTML を比較して**差分が無い**こと（差分が出たら、それが意図したものかを `evidence` に書く）
+- 目視: `TSUKUMO_VIEW_PORT` を変えて起こし、3領域＋入力欄が崩れていないこと
+
+## 注意
+
+- **割り方の選択にユーザーの判断が要る**ので `/loop` に載せない（`loopable: "N"`）
+- **T-084 / T-085 が終わる前に着手しない。** 割る線が二度動く
+- **常駐している 7327 番を落とさない**
+
+---
+
+## T-090 セリフが1件も無いときのキャラビューを、吹き出しではない案内にする
+
+- **difficulty**: `sonnet` / **loopable**: `Y` / **passes**: `false` / **dependencies**: なし
+- **evidence**:
+
+  **着手しない判断で閉じた**（2026-09-13、ユーザーの指示「T-090 はやらなくていいや。done にしよう」）。実装・目視ともに行っていないので `passes` は `false` のまま。
+  現物は未変更: `buildCharacterBody`（src/presentation/view.ts）はセリフ0件のとき `PLACEHOLDER_UTTERANCE` を `<div class="balloon">` で出したままになっている。同じ直しがまた要るなら新しいタスクとして起こす。
+
+### 当時のタスク本文
+
+まだセリフが1件も無いときに、キャラビューへ吹き出しの形で出しているプレースホルダを、吹き出しではない案内の表示にする。
+
+## 背景
+
+ユーザーの指示（2026-09-13）「発話がないときのキャラ画面は吹き出しにせずまだ発話がありません表示してください」。
+
+現物（2026-09-13 に確認）: `src/presentation/view.ts` の `buildCharacterBody`（337行目付近）が、`data.speeches.length === 0` のとき `PLACEHOLDER_UTTERANCE`（869行目、`"（まだ発話がありません）"`）を **`<div class="balloon">` に入れて**出している。つまり「セリフが無い」状態が、セリフが1件あるのと同じ見た目（枠・角丸・最新の強調・尻尾）になっている。尻尾は `src/presentation/style/character.css` の `.balloon:first-child` 系が付ける。
+
+## やること
+
+1. セリフが0件のときだけ、`.balloon` ではない要素（例: `.character-empty`）で案内を出す。文言は `PLACEHOLDER_UTTERANCE` をそのまま使ってよいが、括弧付きのままにするかは見た目に合わせて決めてよい
+2. `src/presentation/style/character.css` に、その要素の見た目を足す。**枠・背景・尻尾を持たせない**（`.sidebar-empty` が「何も無い」を薄い文字だけで示している前例に倣う。`src/presentation/style/sidebar.css`）
+3. セリフが1件以上あるときの見た目は**変えない**
+
+## 完了条件
+
+- `buildCharacterBody` の出力に、セリフ0件のとき `class="balloon"` が**1つも含まれない**こと（テストで固定する）
+- セリフ1件以上のときの出力は従来どおりであること（既存テストが通ること）
+- テスト件数が減らないこと（着手前は 415 pass / 0 fail）
+- **見た目の確認は機械で取る**: 合成データでページを組み立て、Chrome headless + CDP で (a) 0件のときに枠線が無いこと（案内要素の `getComputedStyle` の `borderWidth` が `0px`）、(b) 1件以上のときは従来どおり枠と尻尾が出ていること（`.balloon:first-child` の `::after` の `content` か `borderWidth`）を数値で読む。**claude は起こさない**
+- `bun run check` が通ること
+
+## 注意
+
+- **常駐している 7327 番を落とさない**（確認は `TSUKUMO_VIEW_PORT` を変えるか、合成データの使い捨てサーバで行う）
+- 用語は `docs/glossary.md` に合わせる（セリフ・吹き出し・立ち絵）
+
+---
+
+## T-091 キャラビューの最新の吹き出しを中央寄りにし、立ち絵を大きくする
+
+- **difficulty**: `sonnet` / **loopable**: `N` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `src/presentation/style/character.css`: `--portrait-height` 68%→78%、`--portrait-drop` 0.75rem→2.25rem、`--balloon-bottom-gap` 7rem を新設して`.balloon-track` を下端揃え＋固定余白にし、尻尾を左辺から真横（左）へ向けた。CDP 実測（1400x900、合成セリフ）で最新の吹き出しの rect が 1/3/8 件とも top 680.45 / bottom 735.0 で不動、`.balloon-track` の clientHeight は変更前後とも同じ、`.portrait` は 211.5→242.5px。実機の目視（Orca のタブ、127.0.0.1:7327）でユーザーが可否を了解。`bun run check` 415 pass / 0 fail。
+
+### 当時のタスク本文
+
+キャラビューで、最新の吹き出しの縦位置を中央寄りに上げ、立ち絵をもう少し大きくする。
+
+## 背景
+
+ユーザーの指示（2026-09-13）2件:
+
+- 「キャラ画面の最新の吹き出しの位置が下過ぎます。中央にしてほしい」
+- 「キャラはもう少し大きくしていいよ」
+
+現物（2026-09-13 に確認。`src/presentation/style/character.css`）:
+
+- `.balloon-track` は `align-self: flex-end` / `flex-direction: column-reverse` / `max-height: 100%`。**最新が DOM の先頭で、視覚上はいちばん下**に来る（`scrollTop = 0` が最新を指す作りで、`src/presentation/browser/region-subscription.ts` の追従がこれに乗っている）
+- 立ち絵は `--portrait-height: 68%` と `--portrait-drop: 0.75rem`（下へずらして床に置く）。`.character-layout` が `align-items: flex-end` で下端に揃える
+
+## 解くべき論点
+
+- **「中央」をどう実現するか。** `docs/requirements.md` の 4.3（325行目付近）に、**2026-09-12 に一度「最新を領域の縦中央に固定し、下半分を空ける」と決めて差し戻した**記録がある（吹き出しに使える高さが半分になって読みづらかった）。今回はユーザーの再指示なので実装するが、**同じ失敗を繰り返さない形**を選ぶ。候補は「track 全体を上へ寄せる（`align-self: center` 寄り）」「下に余白を持たせるが上方向には領域いっぱいまで伸ばせるようにする」など。**下半分を捨てる形にはしない**
+- **立ち絵をどこまで大きくするか。** `--portrait-height` の値を上げると、横に細い領域では吹き出しの幅（`.balloon-track` の `flex: 1 1 11rem`）を圧迫する。**吹き出しが読めなくなる手前**で止める
+- 2つは同じ領域の取り合いなので、**片方だけ決めない**
+
+## やること
+
+1. `--portrait-height` と `.balloon-track` の寄せ方を調整する。**数値は1案に決めてから、下の確認で測る**
+2. 変更が `docs/requirements.md` 4.3 の記述（立ち絵は左下・吹き出しは右上・最新を強調）と矛盾しないかを確かめ、**矛盾するなら要件側を先に直す**（節の数は変えない）
+3. 合わせて、差し戻しの経緯が残っている記述（4.3）に今回の決定を1行足す
+
+## 完了条件
+
+- **数値で確認**: 合成データのページを Chrome headless + CDP で測り、次を `evidence` に書く
+  1. 最新の吹き出しの `getBoundingClientRect()` の中心が、キャラビュー領域の縦方向で**下寄りから中央寄りへ移っている**こと（変更前後の値を両方書く）
+  2. 吹き出しの並びに使える高さが、**変更前より減っていないこと**（`.balloon-track` の `clientHeight` の前後）
+  3. 立ち絵の高さが**増えていること**（`.portrait` の `getBoundingClientRect().height` の前後）
+- **ユーザーの目視**: 実機（`TSUKUMO_VIEW_PORT` を変えて起こす）で見てもらい、「下過ぎない」「大きさが十分」の2点について了解を得ること。**数値が条件を満たしていても、見た目の可否はユーザーが決める**
+- テスト件数が減らないこと（着手前は 415 pass / 0 fail）
+- `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で変わらないこと
+- `bun run check` が通ること
+
+## 注意
+
+- **常駐している 7327 番を落とさない**
+- 「中央」の解釈と大きさの加減にユーザーの目が要るので `/loop` に載せない
+- `.balloon-track` の `column-reverse` と `scrollTop = 0` の関係を壊さない（壊すと SSE の差し替えで最新が見えなくなる）
+
+---
+
+## T-092 セッション情報のラベルと値を縦に揃える
+
+- **difficulty**: `sonnet` / **loopable**: `Y` / **passes**: `true` / **dependencies**: なし
+- **evidence**:
+
+  `src/presentation/style/sidebar.css`: `.session-info` を `display: grid` / `grid-template-columns: auto minmax(0, 1fr)` の2列にし、`.permission-mode`・`.model-select-wrap` の行ごとの flex を `.session-info-label` / `.session-info-value` に置き換えた。`src/presentation/view.ts` の `modelSelectHtml` / `permissionModeHtml` はラベルと値を別々に返し、`sessionInfoBody` が4つを grid の直接の子として並べる。
+  CDP 実測（headless Chrome 153、合成データ、`buildLayoutPage`+`buildSidebarBody`+実物の CSS）: 2つの `<select>` の `left` が 1400px で 1105.42/1131.78 → 1134.98/1134.98（差 26.36px → 0px）。1400/900/759/600/400/320px の全幅で select・label とも差 0px、`.session-info` は `scrollWidth == clientWidth`。`label[for]` クリックで `activeElement` が `tsukumo-permission-mode` になることも確認。
+  文字サイズと色は HEAD と同値に戻してある（select 12.8px / status の色 rgb(143,151,171)）。委譲時の実装は `.session-info-value` に font-size・color が無く 13.6px / rgb(230,232,238) にずれていたので、`.session-info` へ移して直した。`bun run check` 415 pass / 0 fail。**実機（7327 の常駐タブ）での目視は未実施**（起動時に CSS を束ねるため再起動が要る）。
+
+### 当時のタスク本文
+
+サイドバーの「セッション情報」で、ラベルと値（`<select>`）が行ごとに横位置がずれているのを揃える。
+
+## 背景
+
+ユーザーの指示（2026-09-13）「セッション情報のコンポーネントがラベルと値で縦に揃ってないから揃えて」。
+
+現物（2026-09-13 に確認）: `src/presentation/view.ts` の `sessionInfoBody`（1581行目付近）が `.session-info-row` を2つ並べ、それぞれの中で `modelSelectHtml`（802行目付近）と `permissionModeHtml` が `<label>` + `<select>` を出している。`src/presentation/style/sidebar.css` の `.model-select-wrap` は `display: flex` なので、**ラベルの文字数の差（「モデル」3字 / 「許可モード」5字）がそのまま `<select>` の左端のズレになる**。
+
+## やること
+
+1. 2行のラベル列と値列が揃う形にする（例: `.session-info` を `display: grid` の2列にし、各行のラベルと `<select>` を別のセルへ置く）。**行ごとに別の `flex` で並べる形はやめる**
+2. `<select>` の右にある状態表示（`.model-select-status`）の置き場所も崩れないようにする
+3. 狭い画面（`src/presentation/style/narrow-screen.css` の `@media (max-width: 760px)`）で崩れないことを確かめる
+
+## 完了条件
+
+- **数値で確認**: 合成データのページを Chrome headless + CDP で測り、**2つの `<select>` の `getBoundingClientRect().left` が一致すること**（差が 1px 以内。前後の値を `evidence` に書く）。ラベル側の `left` も一致していること
+- 760px 未満の幅でも、どちらの行も領域の外へはみ出さないこと（`scrollWidth <= clientWidth`）
+- モデル・許可モードの `<select>` が**従来どおり効く**こと（値を変えると `PUT`/`POST` が飛ぶ経路は変えない）
+- テスト件数が減らないこと（着手前は 415 pass / 0 fail）
+- `bun run check` が通ること
+
+## 注意
+
+- **常駐している 7327 番を落とさない**
+- `<label for=...>` と `<select id=...>` の対応を壊さない（壊すとクリックでフォーカスが移らなくなる）
+- 見た目の色・文字サイズは変えない。**揃えるだけ**
+
+---
