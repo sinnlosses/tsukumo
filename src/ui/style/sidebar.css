@@ -64,8 +64,8 @@
    では flex-grow は働かず、中身なりの高さに広がるだけになる（中で無理に
    スクロールさせない）。**flex-basis は 0 ではなく auto にすること**：親の高さが auto の
    ときに flex-basis: 0 だと、内容サイズの見積もりに使う基準そのものが 0 になり、
-   overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる（2026-09-12、T-067 で
-   T-061 の回帰として発覚）。flex-basis: auto なら親の高さが定まっている（.layout-sidebar
+   overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる（2026-09-12、サイドバーの
+   スクロール範囲の回帰として発覚）。flex-basis: auto なら親の高さが定まっている（.layout-sidebar
    配下）ときは今まで通り内側でスクロールし、定まっていない（狭い画面）ときは
    中身なりの高さに自然に広がる。 */
 .sidebar-block-scroll {
@@ -127,7 +127,7 @@
 }
 /* ラベル列（`.session-info-label`）と値列（`.session-info-value`）を2列の grid で揃える。
    行ごとに別々の flex で並べると、ラベルの文字数の差（「モデル」3字 /「許可モード」5字）が
-   そのまま select の左端のズレになる（2026-09-13 T-092）。 */
+   そのまま select の左端のズレになる（2026-09-13）。 */
 .session-info {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

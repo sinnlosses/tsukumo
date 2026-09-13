@@ -206,7 +206,7 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     a: ["href"],
     // GFM の列揃え（`:---:` / `---:`）は mdast-util-to-hast が `th` / `td` に `align` を
     // 直接付けて表す。**もとの自前サニタイザの42属性には無かった追加**
-    // （旧レンダラは列揃え自体を描けなかった。T-063・docs/requirements.md 4.2）。
+    // （旧レンダラは列揃え自体を描けなかった。docs/requirements.md 4.2）。
     // `align` 以外の属性はここに書かなくても `*` の定義へ自動でフォールバックする
     // （hast-util-sanitize の仕組み。tag 固有の定義に無ければ `*` を見る）。
     th: ["align"],

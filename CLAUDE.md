@@ -62,8 +62,9 @@ Orca 経由の入力送信はコードごと消えた**ので、ホストに依�
 
 ```bash
 bun run check                 # typecheck + lint + format:check + test（変更後は必ずこれを通す）
-bun test                      # テスト全体
-bun test test/cli.test.ts     # 単体テストファイルのみ実行
+bun run test                  # テスト全体（`bun test --isolate`。**素の `bun test` は使わない**
+                              #   — `mock.module` がファイルをまたいで漏れ、19件が落ちる）
+bun test --isolate test/cli.test.ts  # 単体テストファイルのみ実行
 bun run typecheck             # tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
 bun run format                # oxfmt で自動整形（--check は format:check）

@@ -20,7 +20,7 @@ async function flushEffects(): Promise<void> {
   })
 }
 
-describe("Markdown（unified への置き換え。T-063 が求める記法）", () => {
+describe("Markdown（unified への置き換えが求める記法）", () => {
   it("引用 `> ` が <blockquote> になる", () => {
     const { container } = render(<Markdown text="> よそからの引用" />)
 
@@ -149,7 +149,7 @@ describe("Markdown（unified への置き換え。T-063 が求める記法）", 
   })
 })
 
-describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る事故の回帰。T-104）", () => {
+describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る事故の回帰）", () => {
   it("素の強調はそのまま太字になる", () => {
     const { container } = render(<Markdown text="これは**太字**です" />)
 
@@ -188,7 +188,7 @@ describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る
 
   // 既知の穴: remark-cjk-friendly は GFM の取り消し線（`~~`）の delimiter run を直さない
   // （パッケージの README が明記。直すには別パッケージ `remark-cjk-friendly-gfm-strikethrough`
-  // が要るが、T-104 でユーザーが承認したのは `remark-cjk-friendly` 単体のみなので、この
+  // が要るが、ユーザーが承認したのは `remark-cjk-friendly` 単体のみなので、この
   // ケースはここでは直さず、実際の（まだ直っていない）挙動を固定して次に見た人が気づけるようにする。
   it("中身がかぎ括弧の取り消し線はまだ直らない（別パッケージが要る既知の穴）", () => {
     const { container } = render(<Markdown text="これは~~「消し」~~です" />)

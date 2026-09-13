@@ -51,7 +51,7 @@ describe("層と依存の向き", () => {
 // `ui/component/` `ui/style/` と `ui/app.tsx` `ui/socket.ts` `ui/main.tsx`（領域のディレクトリの
 // 直下に無いもの）は誰から引いてもよい共有部分なので、ここでは見ない。
 //
-// **`ui/report/` も共有部分に含めた**（段6。当初 T-096 で「領域」の1つとして名指しされていたが、
+// **`ui/report/` も共有部分に含めた**（段6。当初は「領域」の1つとして名指しされていたが、
 // `report/` は state を持たない Markdown の描画プリミティブ（unified の構成・sanitize の
 // schema・MermaidBlock・ChartBlock）で、それ自体が何かの「機能」ではなく `ui/component/` と
 // 同じ役割。`main-view/` の `<Report>` が `<Markdown>` を直接使う必要があり、横断 import 禁止の

@@ -1,5 +1,5 @@
 // 立ち絵を動かすか固定するか。使う人の設定で `localStorage` に持つ
-// （`src/ui/layout/split.ts` の書き方に倣う）。**T-107 の動きの実装がここを読んで、固定なら
+// （`src/ui/layout/split.ts` の書き方に倣う）。**立ち絵の動きの実装がここを読んで、固定なら
 // 動きを適用しない。** 既定は可動（`false`。`docs/requirements.md` 4.3「立ち絵は動くが話さない」）。
 
 const STORAGE_KEY = "tsukumo-portrait-fixed"

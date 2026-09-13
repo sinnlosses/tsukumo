@@ -3,8 +3,8 @@
 // `src/ui/style/character.css`）が視覚上は最新を下端に置き、過去のセリフを上へ押し上げる
 // （旧・サーバ側で HTML を組み立てていた頃と同じ並びの規約。docs/requirements.md 4.2「吹き出し」）。
 //
-// セリフが1件も無いときは、プレースホルダを吹き出し1件として出す（T-090 の見送りを踏まえ、
-// 形は変えない。docs/history/tasks-archive.md T-090）。
+// セリフが1件も無いときは、プレースホルダを吹き出し1件として出す（案内文に差し替える案を
+// 見送った経緯は docs/history/tasks-archive.md）。
 
 import { type ReactElement } from "react"
 

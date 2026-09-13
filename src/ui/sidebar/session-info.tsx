@@ -79,7 +79,7 @@ function resolveCharacterPack(state: SessionState): string {
  * `.session-info` は2列の grid（`src/ui/style/sidebar.css`）で、ラベルと値（`<select>`）を
  * 直接の子として並べる。行ごとに別々の flex で並べると、ラベルの文字数の差がそのまま
  * `<select>` の左端のズレになるため、行の境目を div で区切らずグリッド1つに任せる
- * （2026-09-13 T-092）。`bypassPermissions` を選んでいるときは警告色を付ける
+ * （2026-09-13）。`bypassPermissions` を選んでいるときは警告色を付ける
  * （`.permission-mode-select-danger`）。
  */
 export function SessionInfo(): ReactElement {
