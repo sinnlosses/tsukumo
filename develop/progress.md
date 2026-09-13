@@ -17,6 +17,21 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-13 Playwright（playwright-core）の導入
+
+**ユーザーの承認を得て `playwright-core` を devDependency に足した**（タスクIDなし）。
+`docs/design.md` 10章が「偽の駆動で起こした tsukumo に Playwright」と名指ししていたのに
+11章の依存の一覧から漏れていたので、そこも埋めた。**ブラウザは落とさない**
+（`playwright` の側は postinstall で約130MB を取りに行く。`playwright-core` は driver だけ 13MB で、
+`chromium.launch({ channel: "chrome" })` として手元の Google Chrome 153.0.8010.36 を動かす）。
+**テストランナーは足していない**（`@playwright/test` ではなくライブラリだけ。`bun test` と競合しない）。
+道具は `scripts/capture-view.ts` 1本で、URL を開いて画像に撮り、`--measure <selector>` で位置と
+大きさを数値で出す。**`bun run check` には入れない**（生きたサーバが要って遅い）。
+**偽の駆動（7398）で動作確認済み**: 1400x900 で撮れ、`.layout-main` 1006.8x505.44 /
+`.layout-sidebar` 335.61x505.44 / `.layout-character` と `.layout-dispatch` が各 671.2x336.97 /
+`.portrait` 高さ 242.55px（T-091 の記録 242.5px と一致）/ 横のはみ出し 0px。画像には4領域・立ち絵・
+吹き出し・タスク一覧・入力欄が出ていた。`bun run check` は 445 pass / 0 fail。
+
 ### 2026-09-13 移行の段2（protocol と core の骨組み・WebSocket・偽の駆動）
 
 **T-095 完了。** `src/protocol/`（両側で共有する語彙・畳み込み・zod）と `src/core/`（SDK 駆動・
@@ -178,6 +193,9 @@ T-046 / T-064 / T-076 / T-077 はいずれもユーザーがいる
 
 次のセッションで踏み外しやすい点:
 
+- **描画の確認は `bun run scripts/capture-view.ts <URL> --measure <selector>`**（2026-09-13 導入）。
+  偽の駆動（`TSUKUMO_DRIVER=fake`）と組み合わせると claude を起こさずに撮れる。**撮った画像を
+  リポジトリに置かない**（既定の出力先は `/tmp`。ビューには会話の内容が写る）
 - **2026-09-13 に描く層をブラウザ側へ移すと決めた。正典は `docs/design.md`。コードはまだ移行前の形。**
   `docs/architecture.md` の「採用アーキテクチャ」「新しいコードを置く場所」は移行前の記述で、段7で
   書き換える。**移行前の形に機能を足さない**（足すなら新の層へ）

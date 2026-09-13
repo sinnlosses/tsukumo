@@ -512,9 +512,18 @@ API を使わない形になる。
 | runtime | `ws`                                                                               | core の WebSocket サーバ |
 | runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                 |
 | dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト               |
+| dev     | `playwright-core`                                                                  | 画面全体の確認（10章）   |
 
 `zod` はある。`@anthropic-ai/claude-agent-sdk` はある。**`Bun.*` の固有 API に寄せない**規約は続く
 （`ws` を選ぶのはそのため）。
+
+**`playwright-core` を選ぶ理由**（2026-09-13 にユーザーの承認を得て追加。10章が名指ししていたのに
+この一覧から漏れていたのを埋めた）: **ブラウザを落とさない**。`playwright` の側は postinstall で
+約130MB のブラウザを `~/Library/Caches/ms-playwright` へ取りに行くが、`playwright-core` は driver
+だけ（13MB）で、`chromium.launch({ channel: "chrome" })` として**手元の Google Chrome を動かす**。
+リポジトリの外に何も置かないので、`node_modules` を消せば消える。**テストランナーは足さない**
+（`@playwright/test` ではなくライブラリだけを使い、`bun test` と競合させない）。呼ぶのは
+`scripts/capture-view.ts` で、**`bun run check` には入れない**（生きたサーバが要って遅いため)。
 
 ## 12. 移行の段階
 
