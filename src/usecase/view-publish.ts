@@ -12,9 +12,7 @@ import {
   mainViewEntries,
   type MainViewEntry,
   type SessionState,
-  type ToolActivity,
 } from "../protocol/session-state.ts"
-import { type TaskSummaryItem } from "../protocol/task-summary.ts"
 
 /**
  * キャラビューに渡す立ち絵ソース。`src/presentation/view.ts` の `CharacterPortraitSource` /
@@ -42,23 +40,21 @@ export type ViewRendering = {
   readonly readCharacterAssets: (expression: Expression, outfit: Outfit) => CharacterAssetsLike
   readonly buildCharacterBody: (data: CharacterViewDataLike) => string
   readonly buildMainBody: (entries: readonly MainViewEntry[]) => string
-  readonly buildSidebarBody: (data: ReturnType<typeof sidebarData>) => string
   /** 組み立てた本文を、開いているブラウザへ push する（`src/infrastructure/view-server.ts` の `publish`）。 */
-  readonly publish: (view: "main" | "character" | "sidebar", body: string) => void
+  readonly publish: (view: "main" | "character", body: string) => void
 }
 
 /**
- * ビューを配る係を作る。
+ * ビューを配る係を作る。**サイドバーはここでは配らない**（段3 で React の部品へ移った。
+ * `src/ui/sidebar/` が WebSocket の `SessionState` から直接組み立てる。docs/design.md 12章）。
  *
- * `readTaskSummary` は develop/tasks.json の読み直し係（`src/infrastructure/task-summary.ts` の
- * `createTaskSummaryReader`）。`now` は現在時刻を返す関数（呼び出し側が `Date.now` を渡す。
- * 表情の判定 {@link currentExpression} にだけ使う）。`onFailure` はここでの失敗を諦めて次へ
- * 進むための通知で、**受け取った例外の中身は渡さない**（会話内容が紛れた例外を外へ出さないため。
+ * `now` は現在時刻を返す関数（呼び出し側が `Date.now` を渡す。表情の判定
+ * {@link currentExpression} にだけ使う）。`onFailure` はここでの失敗を諦めて次へ進むための通知で、
+ * **受け取った例外の中身は渡さない**（会話内容が紛れた例外を外へ出さないため。
  * docs/coding-standards.md「会話内容の扱い」）。
  */
 export function createViewPublisher(
   render: ViewRendering,
-  readTaskSummary: () => readonly TaskSummaryItem[] | undefined,
   now: () => number,
   onFailure: () => void,
 ): (view: SessionState) => void {
@@ -70,33 +66,8 @@ export function createViewPublisher(
       }
       render.publish("character", render.buildCharacterBody(data))
       render.publish("main", render.buildMainBody(mainViewEntries(view)))
-      render.publish("sidebar", render.buildSidebarBody(sidebarData(view, readTaskSummary())))
     } catch {
       onFailure()
     }
   }
-}
-
-/**
- * サイドバーに出す値。**いま何をしているかは実行中・直近の完了のツール名＋入力**
- * （要約は表示側 `src/presentation/view.ts` の仕事。引数の断片が要約に入りうることは
- * `docs/coding-standards.md`「会話内容の扱い」に沿って承知した上で渡す）。**経過時間はここに
- * 無い**（入力欄側へ渡すのは `publishTurnStatus`。2026-09-12 T-075 決定）。
- */
-function sidebarData(view: SessionState, tasks: readonly TaskSummaryItem[] | undefined) {
-  return {
-    activity: {
-      running: view.runningTools.map(toSidebarToolActivity),
-      finished: view.finishedTools.map(toSidebarToolActivity),
-    },
-    tasks,
-    session: {
-      model: view.model,
-      permissionMode: view.permissionMode,
-    },
-  }
-}
-
-function toSidebarToolActivity(activity: ToolActivity) {
-  return { name: activity.name, input: activity.input, nested: activity.nested }
 }

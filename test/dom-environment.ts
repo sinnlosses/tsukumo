@@ -1,0 +1,66 @@
+// `bun run check` の `bun test` の前に1回だけ読まれる（`bunfig.toml` の `preload`）。
+// `src/ui/` の部品テスト（`@testing-library/react`）が要る DOM のグローバルを用意する。
+//
+// **`happy-dom` の `Window` が持つ全部を `globalThis` へコピーしない。** `fetch` / `WebSocket` /
+// `setTimeout` / `console` まで happy-dom のものに差し替わると、実際の HTTP・WebSocket を使う
+// 他のテスト（`test/core/server.test.ts` / `test/infrastructure/view-server.test.ts` など）が
+// 同じプロセスで動くため巻き添えになる（`bun test` は全テストファイルを1つのプロセス・1つの
+// `globalThis` で順に実行する。2026-09-13 実測）。**DOM を組み立てる部品だけを借りる。**
+//
+// `@happy-dom/global-registrator`（this 一式を1関数でやってくれる別パッケージ）は使わない
+// （`docs/design.md` 11章の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。
+
+import { Window } from "happy-dom"
+
+/**
+ * 借りる DOM のグローバル。React・react-dom・@testing-library/react が `instanceof` や
+ * `document.createElement` の戻り値の型として触れるものだけ（2026-09-13、実際にレンダリングと
+ * `fireEvent` を通して確かめた最小集合）。
+ */
+const BORROWED_DOM_GLOBAL_NAMES = [
+  "Node",
+  "Element",
+  "HTMLElement",
+  "SVGElement",
+  "Text",
+  "Comment",
+  "DocumentFragment",
+  "HTMLDivElement",
+  "HTMLSpanElement",
+  "HTMLParagraphElement",
+  "HTMLAnchorElement",
+  "HTMLHeadingElement",
+  "HTMLUListElement",
+  "HTMLLIElement",
+  "HTMLLabelElement",
+  "HTMLButtonElement",
+  "HTMLSelectElement",
+  "HTMLOptionElement",
+  "HTMLInputElement",
+  "HTMLTextAreaElement",
+  "HTMLFormElement",
+  "Event",
+  "CustomEvent",
+  "UIEvent",
+  "MouseEvent",
+  "KeyboardEvent",
+  "InputEvent",
+  "FocusEvent",
+  "MutationObserver",
+  "getComputedStyle",
+  "requestAnimationFrame",
+  "cancelAnimationFrame",
+] as const
+
+const window = new Window({ url: "http://127.0.0.1/" })
+const target = globalThis as unknown as Record<string, unknown>
+const windowRecord = window as unknown as Record<string, unknown>
+
+for (const name of BORROWED_DOM_GLOBAL_NAMES) {
+  target[name] = windowRecord[name]
+}
+target["window"] = window
+target["document"] = window.document
+target["navigator"] = window.navigator
+// React の act() まわりの警告（テスト環境だと自動検出できない）を止める公式の合図。
+target["IS_REACT_ACT_ENVIRONMENT"] = true

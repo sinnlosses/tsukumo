@@ -5,8 +5,6 @@ import {
   type GetCommands,
   type SendAnswer,
   type SendInterrupt,
-  type SendModel,
-  type SendPermissionMode,
   type SendPrompt,
   startViewServer,
   type ViewServer,
@@ -15,14 +13,11 @@ import {
   COMMANDS_PATH,
   encodeTurnStatus,
   INTERRUPT_PATH,
-  MODEL_PATH,
   PENDING_ANSWER_EVENT_PATH,
-  PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TURN_STATUS_EVENT_PATH,
   VIEW_NAMES,
 } from "../../src/presentation/view.ts"
-import { type ModelAlias, type PermissionMode } from "../../src/protocol/command.ts"
 import { type Answer } from "../../src/protocol/pending-ask.ts"
 
 // ポート 0 で起動し、割り当てられたポートを layoutUrl から読む（開発機で常駐中のサイドカーと
@@ -51,8 +46,6 @@ async function start(
   sendPrompt: SendPrompt = () => true,
   sendInterrupt: SendInterrupt = () => Promise.resolve(),
   sendAnswer: SendAnswer = () => true,
-  sendPermissionMode: SendPermissionMode = () => Promise.resolve(true),
-  sendModel: SendModel = () => Promise.resolve(true),
   getCommands: GetCommands = () => [],
 ): Promise<ViewServer> {
   const server = await startViewServer(
@@ -60,8 +53,6 @@ async function start(
     sendPrompt,
     sendInterrupt,
     sendAnswer,
-    sendPermissionMode,
-    sendModel,
     getCommands,
     TEST_BROWSER_SCRIPT,
     TEST_STYLE_SHEET,
@@ -178,7 +169,7 @@ describe("ビューサーバ", () => {
     }
   })
 
-  it("3領域（main / character / sidebar）のどれでも、購読後の publish が push される", async () => {
+  it("2領域（main / character）のどれでも、購読後の publish が push される", async () => {
     const server = await start()
 
     for (const view of VIEW_NAMES) {
@@ -207,11 +198,10 @@ describe("ビューサーバ", () => {
     expect(server.layoutUrl).toBe(`${originOf(server)}/`)
   })
 
-  it("/ が3領域を1枚にまとめたページを返し、それぞれ publish した本文を持つ", async () => {
+  it("/ がメイン・キャラ・サイドバーを1枚にまとめたページを返し、publish した本文を持つ（サイドバーは React の root。段3）", async () => {
     const server = await start()
     server.publish("main", "<p>メインの本文</p>")
     server.publish("character", "<p>キャラの本文</p>")
-    server.publish("sidebar", "<p>サイドバーの本文</p>")
 
     const response = await fetch(server.layoutUrl)
     const body = await response.text()
@@ -219,10 +209,12 @@ describe("ビューサーバ", () => {
     expect(response.status).toBe(200)
     expect(body).toContain("<p>メインの本文</p>")
     expect(body).toContain("<p>キャラの本文</p>")
-    expect(body).toContain("<p>サイドバーの本文</p>")
+    expect(body).toContain(
+      '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"></section>',
+    )
   })
 
-  it("/ の3領域それぞれが、/events/<view> を購読先として示す", async () => {
+  it("/ のメイン・キャラの領域が、/events/<view> を購読先として示す（サイドバーは持たない）", async () => {
     const server = await start()
 
     const response = await fetch(server.layoutUrl)
@@ -232,7 +224,6 @@ describe("ビューサーバ", () => {
     // （2026-09-12 T-083）。ページが持つのは経路の宣言だけ。
     expect(body).toContain('data-event-path="/events/main"')
     expect(body).toContain('data-event-path="/events/character"')
-    expect(body).toContain('data-event-path="/events/sidebar"')
     expect(body).toContain('<script src="/assets/browser.js"></script>')
     expect(body).toContain('<link rel="stylesheet" href="/assets/style.css">')
   })
@@ -257,7 +248,7 @@ describe("ビューサーバ", () => {
     expect(await response.text()).toBe(TEST_STYLE_SHEET)
   })
 
-  it("個別ビューのページ（/main /character /sidebar）は無い（2026-09-12 に消した。404）", async () => {
+  it("個別ビューのページ（/main /character）は無い（2026-09-12 に消した。404）", async () => {
     const server = await start()
 
     for (const view of VIEW_NAMES) {
@@ -481,170 +472,6 @@ describe("答え待ちへの回答（/api/answer）", () => {
   })
 })
 
-describe("許可モードの切り替え（/api/permission-mode）", () => {
-  it("mode を駆動へ渡す", async () => {
-    const sendPermissionMode = mock(
-      (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
-    )
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      sendPermissionMode,
-    )
-
-    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode: "plan" }),
-    })
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ ok: true })
-    expect(sendPermissionMode).toHaveBeenCalledWith("plan")
-  })
-
-  it("PermissionMode の値以外は駆動を呼ばずに400を返す", async () => {
-    const sendPermissionMode = mock(
-      (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
-    )
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      sendPermissionMode,
-    )
-
-    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode: "yolo" }),
-    })
-
-    expect(response.status).toBe(400)
-    expect(sendPermissionMode).not.toHaveBeenCalled()
-  })
-
-  it("セッションがまだ起きていないときは503を返す", async () => {
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      () => Promise.resolve(false),
-    )
-
-    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode: "plan" }),
-    })
-
-    expect(response.status).toBe(503)
-  })
-
-  it("別のオリジンからは403で弾く", async () => {
-    const sendPermissionMode = mock(
-      (_mode: PermissionMode): Promise<boolean> => Promise.resolve(true),
-    )
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      sendPermissionMode,
-    )
-
-    const response = await fetch(`${originOf(server)}${PERMISSION_MODE_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", origin: "http://example.invalid" },
-      body: JSON.stringify({ mode: "plan" }),
-    })
-
-    expect(response.status).toBe(403)
-    expect(sendPermissionMode).not.toHaveBeenCalled()
-  })
-})
-
-describe("モデルの切り替え（/api/model）", () => {
-  it("model を駆動へ渡す", async () => {
-    const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      () => Promise.resolve(true),
-      sendModel,
-    )
-
-    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model: "haiku" }),
-    })
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ ok: true })
-    expect(sendModel).toHaveBeenCalledWith("haiku")
-  })
-
-  it("エイリアス以外は駆動を呼ばずに400を返す", async () => {
-    const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      () => Promise.resolve(true),
-      sendModel,
-    )
-
-    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model: "claude-opus-4-1" }),
-    })
-
-    expect(response.status).toBe(400)
-    expect(sendModel).not.toHaveBeenCalled()
-  })
-
-  it("セッションがまだ起きていないときは503を返す", async () => {
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      () => Promise.resolve(true),
-      () => Promise.resolve(false),
-    )
-
-    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model: "opus" }),
-    })
-
-    expect(response.status).toBe(503)
-  })
-
-  it("別のオリジンからは403で弾く", async () => {
-    const sendModel = mock((_model: ModelAlias): Promise<boolean> => Promise.resolve(true))
-    const server = await start(
-      () => true,
-      () => Promise.resolve(),
-      () => true,
-      () => Promise.resolve(true),
-      sendModel,
-    )
-
-    const response = await fetch(`${originOf(server)}${MODEL_PATH}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", origin: "http://example.invalid" },
-      body: JSON.stringify({ model: "opus" }),
-    })
-
-    expect(response.status).toBe(403)
-    expect(sendModel).not.toHaveBeenCalled()
-  })
-})
-
 describe("入力欄の進行状態・経過時間（SSE）", () => {
   it("購読直後は開始・終了時刻とも無しを push し、publishTurnStatus で切り替わる", async () => {
     const server = await start()
@@ -705,7 +532,7 @@ describe("答え待ちの箱（SSE）", () => {
 
 describe("入力欄の / 補完の候補（GET /api/commands）", () => {
   it("init 前（getCommands が空配列を返す）は空配列を返す", async () => {
-    const server = await start(undefined, undefined, undefined, undefined, undefined, () => [])
+    const server = await start(undefined, undefined, undefined, () => [])
 
     const response = await fetch(`${originOf(server)}${COMMANDS_PATH}`)
 
@@ -714,7 +541,7 @@ describe("入力欄の / 補完の候補（GET /api/commands）", () => {
   })
 
   it("init 後は名前と説明の組をそのまま返す（説明が無いものは name だけ）", async () => {
-    const server = await start(undefined, undefined, undefined, undefined, undefined, () => [
+    const server = await start(undefined, undefined, undefined, () => [
       { name: "clear", description: "会話をリセットする" },
       { name: "model", description: undefined },
       { name: "next-task", description: "次のタスクを1件進める" },

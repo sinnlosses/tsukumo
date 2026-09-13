@@ -212,6 +212,13 @@ transcript と同じ扱いにする。**
 （`task-summary.ts` の `readTaskSummaries`）。理由は、ファイル名が**概念**を指すため
 （原則5）。概念は1つで、いくつ返すかは関数の都合。
 
+**barrel file を作らない。** ディレクトリに `index.ts` を置いて中身をまとめて re-export しない
+（import は実ファイルを直接指す）。理由は2つ: (1) 束ねるときの tree-shaking が効かなくなる
+（`ui` は `bun build` で1本に束ねる。`docs/design.md` 11章）。(2) `index.ts` という名前自体が
+「置き場所を名前にしたファイル」になり、原則5に反する（ディレクトリ名がすでに概念を表すのに、
+その中の `index.ts` は何の概念も指さない）。2026-09-13、`src/ui/` を切った段（`docs/design.md`
+12章 段3）で bulletproof-react の実例と突き合わせて決めた。
+
 ## テスト
 
 ### 置き場所とモック

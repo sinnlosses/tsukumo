@@ -1,0 +1,5 @@
+[test]
+# ui/ の部品テスト（@testing-library/react）が使う DOM のグローバルを、全テストの前に1回だけ
+# 用意する（test/dom-environment.ts）。他のテスト（実際の fetch / WebSocket を使うもの）に
+# 影響しないよう、borrow するのは DOM 関連の名前だけに絞ってある。
+preload = ["./test/dom-environment.ts"]

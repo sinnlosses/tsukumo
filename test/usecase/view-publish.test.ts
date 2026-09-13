@@ -18,7 +18,6 @@ function fakeRendering(overrides: Partial<ViewRendering> = {}): {
     }),
     buildCharacterBody: (data) => `character:${data.speeches.join(",")}:${data.altText}`,
     buildMainBody: (entries) => `main:${String(entries.length)}`,
-    buildSidebarBody: (data) => `sidebar:${String(data.activity.running.length)}`,
     publish: (view, body) => published.push({ view, body }),
     ...overrides,
   }
@@ -26,7 +25,7 @@ function fakeRendering(overrides: Partial<ViewRendering> = {}): {
 }
 
 describe("createViewPublisher", () => {
-  it("キャラビュー・メインビュー・サイドバーの3つを配る", () => {
+  it("キャラビュー・メインビューの2つを配る（サイドバーは段3で React 側へ移った）", () => {
     const { rendering, published } = fakeRendering()
     const view = applySessionEvent(
       INITIAL_SESSION_STATE,
@@ -35,7 +34,6 @@ describe("createViewPublisher", () => {
     )
     const publish = createViewPublisher(
       rendering,
-      () => undefined,
       () => 0,
       () => {
         throw new Error("呼ばれないはず")
@@ -47,61 +45,6 @@ describe("createViewPublisher", () => {
     expect(published).toEqual([
       { view: "character", body: "character:いくよ！:alt:proud" },
       { view: "main", body: "main:0" },
-      { view: "sidebar", body: "sidebar:0" },
-    ])
-  })
-
-  it("develop/tasks.json の読み係が返した値をサイドバーへそのまま渡す", () => {
-    const captured: unknown[] = []
-    const { rendering } = fakeRendering({
-      buildSidebarBody: (data) => {
-        captured.push(data.tasks)
-        return "sidebar"
-      },
-    })
-    const tasks = [{ id: "T-1", summary: "ダミーのタスク", status: "todo" }]
-    const publish = createViewPublisher(
-      rendering,
-      () => tasks,
-      () => 0,
-      () => {},
-    )
-
-    publish(INITIAL_SESSION_STATE)
-
-    expect(captured).toEqual([tasks])
-  })
-
-  it("いま実行中のツールをサイドバーの activity に渡す", () => {
-    const captured: unknown[] = []
-    const { rendering } = fakeRendering({
-      buildSidebarBody: (data) => {
-        captured.push(data.activity)
-        return "sidebar"
-      },
-    })
-    const view = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      {
-        kind: "tool-started",
-        toolUseId: "toolu_1",
-        name: "Read",
-        input: {},
-        parentToolUseId: undefined,
-      },
-      0,
-    )
-    const publish = createViewPublisher(
-      rendering,
-      () => undefined,
-      () => 0,
-      () => {},
-    )
-
-    publish(view)
-
-    expect(captured).toEqual([
-      { running: [{ name: "Read", input: {}, nested: false }], finished: [] },
     ])
   })
 
@@ -114,7 +57,6 @@ describe("createViewPublisher", () => {
     })
     const publish = createViewPublisher(
       rendering,
-      () => undefined,
       () => 0,
       () => {
         failed += 1
@@ -146,7 +88,6 @@ describe("createViewPublisher", () => {
     )
     const publish = createViewPublisher(
       rendering,
-      () => undefined,
       () => 2000,
       () => {},
     )

@@ -12,11 +12,9 @@ import { wireLayoutResizer } from "./layout-resizer.ts"
 import { wireMainTurns } from "./main-turns.ts"
 import { subscribeAllRegions } from "./region-subscription.ts"
 import { wireReportRenderers } from "./report-renderers.ts"
-import { wireSessionInfo } from "./session-info.ts"
 
 subscribeAllRegions()
 wireLayoutResizer()
 wireMainTurns()
 wireReportRenderers()
 wireDispatch()
-wireSessionInfo()

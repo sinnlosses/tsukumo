@@ -18,9 +18,7 @@ import {
   INTERRUPT_PATH,
   LAYOUT_PATH,
   type LayoutBodies,
-  MODEL_PATH,
   PENDING_ANSWER_EVENT_PATH,
-  PERMISSION_MODE_PATH,
   PROMPT_PATH,
   TURN_STATUS_EVENT_PATH,
   type TurnStatus,
@@ -34,13 +32,7 @@ import {
   type ViewName,
   viewEventPath,
 } from "../presentation/view.ts"
-import {
-  isModelAlias,
-  isPermissionMode,
-  MAX_PROMPT_TEXT_LENGTH,
-  type ModelAlias,
-  type PermissionMode,
-} from "../protocol/command.ts"
+import { MAX_PROMPT_TEXT_LENGTH } from "../protocol/command.ts"
 import { type Answer, parseAnswer } from "../protocol/pending-ask.ts"
 import { type CommandDescription } from "../protocol/session-event.ts"
 import { bundledFilePath } from "./bundled-path.ts"
@@ -76,20 +68,6 @@ export type SendInterrupt = () => Promise<void>
  * 真偽値を返す契約**（解決済み・知らない id なら `false`。src/domain/pending-answer.ts）。
  */
 export type SendAnswer = (id: string, answer: Answer) => boolean
-
-/**
- * 許可モードの `<select>` から届いた切り替えをセッション駆動へ渡す関数。**セッションが
- * まだ起きていないときは `false` を返す**（`SendPrompt` と同じ契約。駆動側の
- * `setPermissionMode` 自体は失敗を例外にしない）。
- */
-export type SendPermissionMode = (mode: PermissionMode) => Promise<boolean>
-
-/**
- * サイドバーのモデル `<select>` から届いた切り替えをセッション駆動へ渡す関数。**`SendPermissionMode`
- * と同じ契約**（セッションがまだ起きていないときは `false`）。`/model` を送るのではなく、
- * 駆動側の `setModel`（Agent SDK）を呼ぶ。
- */
-export type SendModel = (model: ModelAlias) => Promise<boolean>
 
 /**
  * 入力欄の `/` 補完に出せるコマンドの一覧（名前と、あれば説明）を読む関数。**呼ばれた時点の
@@ -142,8 +120,6 @@ export function startViewServer(
   sendPrompt: SendPrompt,
   sendInterrupt: SendInterrupt,
   sendAnswer: SendAnswer,
-  sendPermissionMode: SendPermissionMode,
-  sendModel: SendModel,
   getCommands: GetCommands,
   /**
    * ブラウザ側スクリプトの中身（`src/presentation/browser/` を `bun build` でまとめたもの）。**起動時に
@@ -188,8 +164,6 @@ export function startViewServer(
       sendPrompt,
       sendInterrupt,
       sendAnswer,
-      sendPermissionMode,
-      sendModel,
       getCommands,
       turnStatusClients,
       () => turnStatusBody,
@@ -291,8 +265,6 @@ function respond(
   sendPrompt: SendPrompt,
   sendInterrupt: SendInterrupt,
   sendAnswer: SendAnswer,
-  sendPermissionMode: SendPermissionMode,
-  sendModel: SendModel,
   getCommands: GetCommands,
   turnStatusClients: Set<ServerResponse>,
   getTurnStatusBody: () => string,
@@ -352,24 +324,6 @@ function respond(
       return
     }
     handleAnswer(request, response, sendAnswer)
-    return
-  }
-
-  if (path === PERMISSION_MODE_PATH && request.method === "POST") {
-    if (!isAllowedOrigin(request, serverOrigin)) {
-      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
-      return
-    }
-    handlePermissionMode(request, response, sendPermissionMode)
-    return
-  }
-
-  if (path === MODEL_PATH && request.method === "POST") {
-    if (!isAllowedOrigin(request, serverOrigin)) {
-      writeJson(response, 403, { ok: false, reason: "許可されていない送信元" })
-      return
-    }
-    handleModel(request, response, sendModel)
     return
   }
 
@@ -575,106 +529,6 @@ function parseAnswerRequest(
   return answer === undefined ? undefined : { id: parsed.id, answer }
 }
 
-/**
- * 許可モードの `<select>` から届いた切り替えを、セッション駆動へ渡す。
- * **セッションがまだ起きていないときは 503**（`handlePrompt` と同じ扱い）。
- * `PermissionMode` の値以外・壊れた JSON は 400。
- */
-function handlePermissionMode(
-  request: IncomingMessage,
-  response: ServerResponse,
-  sendPermissionMode: SendPermissionMode,
-): void {
-  readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
-    .then((body) => {
-      const mode = body === undefined ? undefined : parsePermissionModeRequest(body)
-      if (mode === undefined) {
-        writeJson(response, 400, { ok: false, reason: "許可モードの指定が正しくない" })
-        return
-      }
-
-      sendPermissionMode(mode)
-        .then((accepted) => {
-          if (!accepted) {
-            writeJson(response, 503, { ok: false, reason: "セッションがまだ起きていない" })
-            return
-          }
-          writeJson(response, 200, { ok: true })
-        })
-        .catch(() => {
-          writeJson(response, 502, { ok: false, reason: "許可モードを切り替えられなかった" })
-        })
-    })
-    .catch(() => {
-      writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
-    })
-}
-
-function parsePermissionModeRequest(body: string): PermissionMode | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(body)
-  } catch {
-    return undefined
-  }
-
-  if (!isRecord(parsed) || typeof parsed.mode !== "string") {
-    return undefined
-  }
-
-  return isPermissionMode(parsed.mode) ? parsed.mode : undefined
-}
-
-/**
- * サイドバーのモデル `<select>` から届いた切り替えを、セッション駆動へ渡す。
- * **セッションがまだ起きていないときは 503**（`handlePermissionMode` と同じ扱い）。
- * エイリアス（`MODEL_ALIASES`）以外・壊れた JSON は 400。
- */
-function handleModel(
-  request: IncomingMessage,
-  response: ServerResponse,
-  sendModel: SendModel,
-): void {
-  readRequestBody(request, MAX_DISPATCH_BODY_BYTES)
-    .then((body) => {
-      const model = body === undefined ? undefined : parseModelRequest(body)
-      if (model === undefined) {
-        writeJson(response, 400, { ok: false, reason: "モデルの指定が正しくない" })
-        return
-      }
-
-      sendModel(model)
-        .then((accepted) => {
-          if (!accepted) {
-            writeJson(response, 503, { ok: false, reason: "セッションがまだ起きていない" })
-            return
-          }
-          writeJson(response, 200, { ok: true })
-        })
-        .catch(() => {
-          writeJson(response, 502, { ok: false, reason: "モデルを切り替えられなかった" })
-        })
-    })
-    .catch(() => {
-      writeJson(response, 400, { ok: false, reason: "本文を読み取れない" })
-    })
-}
-
-function parseModelRequest(body: string): ModelAlias | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(body)
-  } catch {
-    return undefined
-  }
-
-  if (!isRecord(parsed) || typeof parsed.model !== "string") {
-    return undefined
-  }
-
-  return isModelAlias(parsed.model) ? parsed.model : undefined
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
@@ -734,7 +588,6 @@ function currentBodies(bodies: ReadonlyMap<ViewName, string>): LayoutBodies {
   return {
     main: bodies.get("main") ?? "",
     character: bodies.get("character") ?? "",
-    sidebar: bodies.get("sidebar") ?? "",
   }
 }
 

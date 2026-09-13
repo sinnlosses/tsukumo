@@ -15,6 +15,7 @@ import { z } from "zod"
 
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
+import { type TaskSummaryItem } from "./task-summary.ts"
 
 /** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
 export type TurnStatus = "success" | "error"
@@ -98,6 +99,11 @@ export type SessionEvent =
   | { readonly kind: "turn-finished"; readonly status: TurnStatus }
   /** `query()` の反復が終わった（正常終了・例外のどちらも）。プロセスは落とさない。 */
   | { readonly kind: "session-ended"; readonly reason: string }
+  /**
+   * develop/tasks.json が変わった（core の `task-summary.ts` が mtime を見て起こす）。
+   * ファイルが読めない・消えたときは `tasks: undefined`（サイドバーの「不明」表示に対応する）。
+   */
+  | { readonly kind: "tasks-changed"; readonly tasks: readonly TaskSummaryItem[] | undefined }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

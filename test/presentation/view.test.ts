@@ -22,21 +22,15 @@ import {
   buildLayoutPage,
   buildMainBody,
   buildPendingAnswerBody,
-  buildSidebarBody,
   type CharacterViewData,
   COMMANDS_PATH,
   INTERRUPT_PATH,
   isViewName,
   LAYOUT_PATH,
   type LayoutBodies,
-  MODEL_PATH,
   PENDING_ANSWER_EVENT_PATH,
-  PERMISSION_MODE_PATH,
   PROMPT_PATH,
   encodeTurnStatus,
-  type SidebarData,
-  type SidebarToolActivity,
-  summarizeToolInput,
   TURN_STATUS_EVENT_PATH,
   VIEW_NAMES,
   viewEventPath,
@@ -50,39 +44,6 @@ const FULL_CHARACTER_DATA: CharacterViewData = {
   portrait: { kind: "svg", svgMarkup: '<svg role="img"><circle r="1"/></svg>' },
   outfitAccent: "#b8c7ff",
   altText: "架空の精霊（通常）",
-}
-
-// 実行中1件・完了2件（うち1件はサブエージェントの中）の、手で書いた架空のデータ。
-const RUNNING_ACTIVITY: SidebarToolActivity = {
-  name: "Bash",
-  input: { command: "echo dummy" },
-  nested: false,
-}
-const FINISHED_ACTIVITY: SidebarToolActivity = {
-  name: "Edit",
-  input: { file_path: "src/dummy.ts" },
-  nested: false,
-}
-const NESTED_FINISHED_ACTIVITY: SidebarToolActivity = {
-  name: "Read",
-  input: { file_path: "src/dummy2.ts" },
-  nested: true,
-}
-
-// buildSidebarBody に渡す全部入りのデータ。個々のテストは必要な部分だけ上書きする。
-const FULL_SIDEBAR_DATA: SidebarData = {
-  activity: {
-    running: [RUNNING_ACTIVITY],
-    finished: [FINISHED_ACTIVITY, NESTED_FINISHED_ACTIVITY],
-  },
-  tasks: [
-    { id: "X-001", summary: "架空のサイドバー実装", status: "done" },
-    { id: "X-002", summary: "架空のタスク一覧", status: "todo" },
-  ],
-  session: {
-    model: "claude-sonnet-5",
-    permissionMode: "auto",
-  },
 }
 
 // TURN_STATUS_EVENT_PATH を模すテスト用の定数（encodeTurnStatus の JSON をそのまま使う）。
@@ -1225,7 +1186,7 @@ describe("入力欄（送信・中断）", () => {
  * 見たいテストで使う。
  */
 function singleRegionLayoutPage(view: ViewName, body: string): string {
-  const bodies: LayoutBodies = { main: "", character: "", sidebar: "", [view]: body }
+  const bodies: LayoutBodies = { main: "", character: "", [view]: body }
   return buildLayoutPage(bodies)
 }
 
@@ -1321,18 +1282,27 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
   })
 
   it("領域は data-event-path で購読先を示す（ブラウザ側はこれを見て回る）", () => {
-    const page = buildLayoutPage({ main: "m", character: "c", sidebar: "s" })
+    const page = buildLayoutPage({ main: "m", character: "c" })
 
     for (const view of VIEW_NAMES) {
       expect(page).toContain(`data-event-path="/events/${view}"`)
     }
   })
 
+  it("サイドバーの領域は data-event-path を持たない（React の root を mount する側。段3）", () => {
+    const page = buildLayoutPage({ main: "m", character: "c" })
+
+    expect(page).toContain(
+      '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"></section>',
+    )
+  })
+
   it("data-event-path を持つ要素を見つけたぶんだけ購読する", () => {
     const regions = [
       { ...fakeRegion({ innerHTML: "<p>m</p>" }), getAttribute: () => "/events/main" },
-      { ...fakeRegion({ innerHTML: "<p>s</p>" }), getAttribute: () => "/events/sidebar" },
-      // 属性が空の要素は購読しない（`data-event-path` が付いていない領域の代わり）。
+      { ...fakeRegion({ innerHTML: "<p>c</p>" }), getAttribute: () => "/events/character" },
+      // 属性が空の要素は購読しない（`data-event-path` が付いていない領域の代わり。
+      // サイドバーは段3以降ここに当たる）。
       { ...fakeRegion({ innerHTML: "" }), getAttribute: () => "" },
     ]
     ;(globalThis as Record<string, unknown>)["document"] = {
@@ -1343,7 +1313,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
 
     subscribeAllRegions()
 
-    expect(sources.map((s) => s.path)).toEqual(["/events/main", "/events/sidebar"])
+    expect(sources.map((s) => s.path)).toEqual(["/events/main", "/events/character"])
   })
 
   it("購読直後の1回目の push が、いま出ている本文と同じときは差し替えない", () => {
@@ -1420,14 +1390,14 @@ describe("SSEの更新の経路", () => {
 
 describe("レイアウトページの基本", () => {
   it("タイトルは固定で「tsukumo」（個別ビューのページ・タイトルは 2026-09-12 に消した）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).toStartWith("<!doctype html>")
     expect(page).toContain("<title>tsukumo</title>")
   })
 
   it("CSS はインラインの <style> ではなく、/assets/style.css への <link> で読む（2026-09-12）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).toContain('<link rel="stylesheet" href="/assets/style.css">')
     expect(page).not.toContain("<style>")
@@ -1445,11 +1415,10 @@ describe("まとめたレイアウトページ", () => {
     expect(eventPaths).not.toContain(LAYOUT_PATH)
   })
 
-  it("3領域それぞれの本文を、対応する id の要素に埋め込む", () => {
+  it("メイン・キャラの本文を、対応する id の要素に埋め込む。サイドバーは空のまま（React が mount する）", () => {
     const page = buildLayoutPage({
       main: "<p>作業ちゅう</p>",
       character: "<p>やあ</p>",
-      sidebar: "<p>done 1 / todo 2</p>",
     })
 
     expect(page).toContain(
@@ -1459,12 +1428,12 @@ describe("まとめたレイアウトページ", () => {
       '<section class="layout-region layout-character" id="tsukumo-view-character" data-event-path="/events/character"><p>やあ</p></section>',
     )
     expect(page).toContain(
-      `<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar" data-event-path="/events/sidebar" data-permission-mode-path="${PERMISSION_MODE_PATH}" data-model-path="${MODEL_PATH}"><p>done 1 / todo 2</p></section>`,
+      '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"></section>',
     )
   })
 
   it("3領域それぞれが、自分の要素に /events/<view> を示して個別に購読される", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     // 購読そのものは外に出したスクリプト（`src/presentation/browser/region-subscription.ts`）が、この属性を
     // 見て回る（2026-09-12 T-083）。ページが持つのは「どの要素がどの経路か」だけ。
@@ -1474,7 +1443,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("右下の入力ペインに、複数行入力・送信ボタンのフォームを持つ（送り先の選択は無い）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).toContain('<section class="layout-region layout-dispatch"')
     expect(page).toContain('<form id="tsukumo-dispatch-form">')
@@ -1482,7 +1451,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("入力欄の領域に、答え待ちの箱の置き場所を持つ（textarea より上、既定は data-pending=no）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     const regionIndex = page.indexOf('id="tsukumo-view-dispatch" data-pending="no"')
     const pendingBoxIndex = page.indexOf(
@@ -1496,7 +1465,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("送り先を選ぶ <select> を持たない（送り先はセッション駆動1つ）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).not.toContain('<select id="tsukumo-dispatch-target"')
   })
@@ -1504,7 +1473,7 @@ describe("まとめたレイアウトページ", () => {
   it("依頼の送信・中断・経過表示の経路を data- 属性で入力欄の領域に渡す（PROMPT_PATH / INTERRUPT_PATH / TURN_STATUS_EVENT_PATH）", () => {
     // 2026-09-12 T-084 で、これらの経路はテンプレート文字列の <script> に埋め込むのをやめ、
     // ブラウザ側（`src/presentation/browser/dispatch.ts`）が読む data- 属性で渡すようにした。
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).toContain(`data-prompt-path="${PROMPT_PATH}"`)
     expect(page).toContain(`data-interrupt-path="${INTERRUPT_PATH}"`)
@@ -1512,7 +1481,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("送信ボタンは初期状態で「送信」（無効ではない。送信先の選択が要らなくなったため）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).toContain(
       '<button type="submit" id="tsukumo-dispatch-send" class="dispatch-send" data-shortcut="⌘⏎">送信</button>',
@@ -1520,7 +1489,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("送信ボタンの記号はラベルの文字列に混ざらない（属性で持ち、CSS の ::after で描く）", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).toContain('data-shortcut="⌘⏎">送信</button>')
     // CSS 自体は STYLE 定数を分割した src/presentation/style/dispatch.css 側にある
@@ -1531,7 +1500,7 @@ describe("まとめたレイアウトページ", () => {
   // 経過時間は送信ボタンと同じ行（.dispatch-row）に出す（2026-09-12 T-075 決定。
   // 以前はサイドバーの「セッション情報」にあった）。
   it("経過時間の表示は送信ボタンと同じ行（.dispatch-row）にあり、サイドバーには無い", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     const rowStart = page.indexOf('<div class="dispatch-row">')
     const rowEnd = page.indexOf("</div>", rowStart)
@@ -1561,7 +1530,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   })
 
   it("3本の仕切りと、既定に戻すボタンを持つ", () => {
-    const page = buildLayoutPage({ main: "", character: "", sidebar: "" })
+    const page = buildLayoutPage({ main: "", character: "" })
 
     expect(page).toContain('id="tsukumo-layout-resizer-top"')
     expect(page).toContain('id="tsukumo-layout-resizer-bottom"')
@@ -1954,48 +1923,6 @@ describe("メインビューのタブの選択（push で戻らない・新し�
 
     expect(handle.activeTabId()).toBe("1")
     expect(handle.scrollTop()).toBe(400)
-  })
-})
-
-describe("ツール名＋入力の要約（summarizeToolInput）", () => {
-  it("Bash はコマンドを出す", () => {
-    expect(summarizeToolInput("Bash", { command: "echo dummy" })).toBe("echo dummy")
-  })
-
-  it("Edit はファイルパスを出す", () => {
-    expect(
-      summarizeToolInput("Edit", {
-        file_path: "/tmp/dummy.txt",
-        old_string: "a",
-        new_string: "b",
-      }),
-    ).toBe("/tmp/dummy.txt")
-  })
-
-  it("未知のツールは入力の最初の文字列値を出す", () => {
-    expect(summarizeToolInput("MysteryTool", { note: "ダミーの説明", count: 3 })).toBe(
-      "ダミーの説明",
-    )
-  })
-
-  it("120文字を超えたら切り詰める（入力の全文は出さない）", () => {
-    const long = "a".repeat(200)
-
-    const summary = summarizeToolInput("Bash", { command: long })
-
-    expect(summary.length).toBeLessThan(long.length)
-    expect(summary).toEndWith("…")
-  })
-
-  it("要約に使わないフィールドの値は混ざらない", () => {
-    const summary = summarizeToolInput("Bash", { command: "echo dummy", secret: "内緒" })
-
-    expect(summary).not.toContain("内緒")
-  })
-
-  it("入力がオブジェクトの形でないときは空文字", () => {
-    expect(summarizeToolInput("Bash", "echo dummy")).toBe("")
-    expect(summarizeToolInput("Bash", undefined)).toBe("")
   })
 })
 
@@ -2985,240 +2912,5 @@ describe("キャラビューの本文", () => {
     const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, outfitAccent: undefined })
 
     expect(body).not.toContain("--outfit-accent")
-  })
-})
-
-describe("サイドバーの本文", () => {
-  it("3つの区画（いま何をしているか・タスク一覧・セッション情報）を並べる", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain("いま何をしているか")
-    expect(body).toContain("タスク一覧")
-    expect(body).toContain("セッション情報")
-    expect(body).not.toContain("コンテキスト使用量")
-  })
-
-  it("実行中は普通の色、完了は薄い色で出す。サブエージェントの中は1段下げる", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain('<li class="activity-item activity-running">Bash: echo dummy</li>')
-    expect(body).toContain('<li class="activity-item activity-finished">Edit: src/dummy.ts</li>')
-    expect(body).toContain(
-      '<li class="activity-item activity-finished activity-nested">Read: src/dummy2.ts</li>',
-    )
-  })
-
-  it("実行中・完了のどちらも無いときは、その旨を出す", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      activity: { running: [], finished: [] },
-    })
-
-    expect(body).toContain("いま動いているツールは無い")
-  })
-
-  it("空のときも並びを包む要素（.sidebar-block-scroll）が出る", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      activity: { running: [], finished: [] },
-    })
-
-    expect(body).toContain('<div class="sidebar-block-scroll"><p class="sidebar-empty">')
-  })
-
-  it("3区画それぞれに、高さの配分を決める区画別のクラスと内側スクロールの枠が付く", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain('<section class="sidebar-block sidebar-block-activity">')
-    expect(body).toContain('<section class="sidebar-block sidebar-block-tasks">')
-    expect(body).toContain('<section class="sidebar-block sidebar-block-session">')
-    expect(body.match(/<div class="sidebar-block-scroll">/g)).toHaveLength(3)
-  })
-
-  it("タスク一覧は id・summary・status をファイルの順で出し、done は薄く出す", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body.indexOf("X-001")).toBeLessThan(body.indexOf("X-002"))
-    expect(body).toContain("架空のサイドバー実装")
-    expect(body).toContain('<li class="task-item task-done">')
-    expect(body).toContain('<span class="task-status task-status-todo">todo</span>')
-  })
-
-  it("タスク一覧1件は、バッジが summary より前に出る2列の行にする", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    const badgeIndex = body.indexOf('<span class="task-status task-status-done">done</span>')
-    const summaryIndex = body.indexOf("架空のサイドバー実装")
-    expect(badgeIndex).toBeGreaterThan(-1)
-    expect(badgeIndex).toBeLessThan(summaryIndex)
-  })
-
-  it("status が todo / done 以外（架空の値）のときは注意色のクラスが付く。文字は status のまま出す", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      tasks: [{ id: "X-001", summary: "架空の進行中タスク", status: "in-progress" }],
-    })
-
-    expect(body).toContain('<span class="task-status task-status-other">in-progress</span>')
-  })
-
-  it("status が無ければバッジを出さない", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      tasks: [{ id: "X-001", summary: "架空のタスク", status: undefined }],
-    })
-
-    expect(body).not.toContain('class="task-status task-status')
-    expect(body).toContain('<span class="task-status-cell"></span>')
-  })
-
-  it("見出しに todo / done の件数が出る", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain("タスク一覧 todo 1 / done 1")
-  })
-
-  it("develop/tasks.json が読めない（tasks が undefined）ときは見出しに件数を出さない", () => {
-    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, tasks: undefined })
-
-    expect(body).toContain("<h2>タスク一覧</h2>")
-  })
-
-  it("develop/tasks.json が読めない（tasks が undefined）とき、その区画だけ「不明」を出し、残りは壊れない", () => {
-    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, tasks: undefined })
-
-    expect(body).toContain("不明")
-    expect(body).toContain("Bash: echo dummy")
-  })
-
-  it("タスクが0件のときは、その旨を出す", () => {
-    const body = buildSidebarBody({ ...FULL_SIDEBAR_DATA, tasks: [] })
-
-    expect(body).toContain("タスクが無い")
-  })
-
-  it("セッション情報にモデル・許可モードの select を出す", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain('class="model-select"')
-    expect(body).toContain('class="permission-mode-select')
-  })
-
-  // 経過時間の表示は入力欄側（送信ボタンと同じ行）へ移した（2026-09-12 T-075 決定）。
-  // サイドバーは領域が別なので、ここへ戻ってこないことを固定する。
-  it("経過時間の枠を出さない（送信ボタンの隣へ移した）", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).not.toContain("dispatch-elapsed")
-    expect(body).not.toContain("session-elapsed")
-    expect(body).not.toContain("data-started-at")
-    expect(body).not.toContain("data-finished-at")
-  })
-
-  it("ツール入力の要約を、HTML として無害な形にして埋め込む", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      activity: {
-        running: [
-          { name: "Bash", input: { command: '<script>alert("x")</script>' }, nested: false },
-        ],
-        finished: [],
-      },
-    })
-
-    expect(body).not.toContain("<script>")
-    expect(body).toContain("&lt;script&gt;")
-  })
-
-  it("タスクの summary を、HTML として無害な形にして埋め込む", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      tasks: [{ id: "X-001", summary: '<script>alert("x")</script>', status: undefined }],
-    })
-
-    expect(body).not.toContain("<script>")
-    expect(body).toContain("&lt;script&gt;")
-  })
-
-  it("すべて取れない・空のときも例外を投げずに組み立てる", () => {
-    const body = buildSidebarBody({
-      activity: { running: [], finished: [] },
-      tasks: undefined,
-      session: {
-        model: undefined,
-        permissionMode: undefined,
-      },
-    })
-
-    expect(body).toContain("いま何をしているか")
-    expect(body).toContain("タスク一覧")
-    expect(body).toContain("セッション情報")
-  })
-})
-
-describe("サイドバーのモデル select（modelSelectHtml）", () => {
-  it("model にエイリアスが含まれていればそれを選択済みにする", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, model: "claude-opus-4-1" },
-    })
-
-    expect(body).toContain('<option value="opus" selected>')
-  })
-
-  it("model が未定のときは既定（opus）を選択済みにする", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, model: undefined },
-    })
-
-    expect(body).toContain('<option value="opus" selected>')
-  })
-
-  it("選択肢はエイリアスの3つだけ（フルネームは出さない）", () => {
-    const body = buildSidebarBody(FULL_SIDEBAR_DATA)
-
-    expect(body).toContain('<option value="opus"')
-    expect(body).toContain('<option value="sonnet"')
-    expect(body).toContain('<option value="haiku"')
-    expect(body).not.toContain("claude-opus")
-  })
-})
-
-describe("サイドバーの許可モード select（moved from キャラビュー）", () => {
-  it("いまの許可モードを選択済みにする", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: "plan" },
-    })
-
-    expect(body).toContain('<option value="plan" selected>')
-  })
-
-  it("permissionMode が未定のときは既定（auto）を選択済みにする", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: undefined },
-    })
-
-    expect(body).toContain('<option value="auto" selected>')
-  })
-
-  it("bypassPermissions のときは警告クラスを付ける", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: "bypassPermissions" },
-    })
-
-    expect(body).toContain("permission-mode-select-danger")
-  })
-
-  it("bypassPermissions 以外では警告クラスを付けない", () => {
-    const body = buildSidebarBody({
-      ...FULL_SIDEBAR_DATA,
-      session: { ...FULL_SIDEBAR_DATA.session, permissionMode: "auto" },
-    })
-
-    expect(body).not.toContain("permission-mode-select-danger")
   })
 })

@@ -326,6 +326,17 @@ describe("applySessionEvent", () => {
     expect(ended.turnInProgress).toBe(false)
   })
 
+  it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは undefined", () => {
+    expect(INITIAL_SESSION_STATE.tasks).toBeUndefined()
+
+    const tasks = [{ id: "X-001", summary: "架空のタスク", status: "todo" }]
+    const withTasks = apply({ kind: "tasks-changed", tasks })
+    expect(withTasks.tasks).toEqual(tasks)
+
+    const cleared = applySessionEvent(withTasks, { kind: "tasks-changed", tasks: undefined }, 0)
+    expect(cleared.tasks).toBeUndefined()
+  })
+
   it("答え待ちの列をそのまま持つ", () => {
     const view = apply({
       kind: "pending-changed",

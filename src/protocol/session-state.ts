@@ -11,6 +11,7 @@ import { type Expression, resolveExpression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question } from "./question.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
+import { type TaskSummaryItem } from "./task-summary.ts"
 import { DEFAULT_SPEECH_MARKER, splitUtterance } from "./utterance.ts"
 
 /**
@@ -148,6 +149,11 @@ export type SessionState = {
    * （入力欄が送信と中断を切り替える判断材料。docs/requirements.md 4.7）。
    */
   readonly turnInProgress: boolean
+  /**
+   * develop/tasks.json の一覧（サイドバーのタスク一覧）。`tasks-changed` が届くまでは undefined
+   * （読めない・まだ読んでいないのどちらも同じ「不明」表示になる。docs/design.md 4.1）。
+   */
+  readonly tasks: readonly TaskSummaryItem[] | undefined
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -166,6 +172,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   commandDescriptions: [],
   endedReason: undefined,
   turnInProgress: false,
+  tasks: undefined,
 }
 
 /**
@@ -257,6 +264,8 @@ export function applySessionEvent(
         runningTools: [],
         turnInProgress: false,
       }
+    case "tasks-changed":
+      return { ...state, tasks: event.tasks }
   }
 }
 

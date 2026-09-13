@@ -18,6 +18,7 @@ import { createOrcaHost } from "./core/orca-host.ts"
 import { attachSessionSocket, createStartupToken } from "./core/server.ts"
 import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./core/session-driver.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
+import { watchTaskSummary } from "./core/task-summary.ts"
 import {
   buildBrowserScript,
   buildStyleSheet,
@@ -29,7 +30,6 @@ import {
   readCharacterAssets,
   readCharacterDefinition,
 } from "./infrastructure/character-asset.ts"
-import { createTaskSummaryReader } from "./infrastructure/task-summary.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
@@ -38,12 +38,7 @@ import {
 } from "./infrastructure/view-port.ts"
 import { startViewServer } from "./infrastructure/view-server.ts"
 import { REPORT_NOTATION_PROMPT } from "./presentation/report-notation.ts"
-import {
-  buildCharacterBody,
-  buildMainBody,
-  buildPendingAnswerBody,
-  buildSidebarBody,
-} from "./presentation/view.ts"
+import { buildCharacterBody, buildMainBody, buildPendingAnswerBody } from "./presentation/view.ts"
 import { availableExpressions } from "./protocol/character.ts"
 import { type SessionEvent, type CommandDescription } from "./protocol/session-event.ts"
 import { createEventSink } from "./usecase/event-sink.ts"
@@ -149,12 +144,6 @@ async function main(args: readonly string[]): Promise<number> {
       },
       () => (driver === undefined ? Promise.resolve() : driver.interrupt()),
       (id, answer) => (driver === undefined ? false : driver.answer(id, answer)),
-      (mode) =>
-        driver === undefined
-          ? Promise.resolve(false)
-          : driver.setPermissionMode(mode).then(() => true),
-      (model) =>
-        driver === undefined ? Promise.resolve(false) : driver.setModel(model).then(() => true),
       () => commands,
       browserScript,
       styleSheet,
@@ -172,7 +161,6 @@ async function main(args: readonly string[]): Promise<number> {
     process.cwd(),
     DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
   )
-  const readTaskSummary = createTaskSummaryReader(process.cwd())
   const publish = throttle(
     createViewPublisher(
       {
@@ -180,10 +168,8 @@ async function main(args: readonly string[]): Promise<number> {
           readCharacterAssets(characterDir, expression, outfit),
         buildCharacterBody,
         buildMainBody,
-        buildSidebarBody,
         publish: server.publish,
       },
-      readTaskSummary,
       Date.now,
       () => process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n"),
     ),
@@ -215,6 +201,11 @@ async function main(args: readonly string[]): Promise<number> {
   manager.create({
     sessionId,
     startDriver: (toFrames) => {
+      // develop/tasks.json の見張りは core（サイドバーの React 側だけが `tasks` を読む。
+      // 段3。旧の `sink` へは流さない — サイドバーはもう HTML を組み立てて配る側を持たない）。
+      const taskWatcher = watchTaskSummary(process.cwd(), (tasks) => {
+        toFrames({ kind: "tasks-changed", tasks })
+      })
       const started = startDriver(
         {
           cwd: process.cwd(),
@@ -227,7 +218,13 @@ async function main(args: readonly string[]): Promise<number> {
         },
       )
       driver = started
-      return started
+      return {
+        ...started,
+        close: () => {
+          taskWatcher.close()
+          started.close()
+        },
+      }
     },
   })
 

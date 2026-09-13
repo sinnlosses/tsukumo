@@ -17,6 +17,24 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-13 移行の段3（サイドバーを React の部品に）
+
+**T-096 完了。** サイドバーの3区画（いま何をしているか・タスク一覧・セッション情報）を React の
+部品にし、旧の `/events/sidebar`・`buildSidebarBody`・`POST /api/model` / `/api/permission-mode`・
+`browser/session-info.ts` を消した。**他の3領域は旧のまま動いている。** タスク一覧は
+`core/task-summary.ts` が mtime を見て `tasks-changed` イベントを起こす形に変わり、
+`SessionState.tasks` に入る。**`ui/` の作法3点も同じ段で入れた**（`ui/component/` を切る・領域
+どうしの import を禁じる辺・barrel file を作らない規約）。`bun run check` は 432 pass / 0 fail
+（445→432。旧の HTML 文字列テストを消して部品のテスト30件を足した差し引き）。**見た目は据え置き**
+（4つの幅で実測、段2 と同値）。
+
+**`bunfig.toml` が増えた**（`test/dom-environment.ts` を preload して `@testing-library/react` が
+要る DOM のグローバルだけを借りる。`fetch` / `WebSocket` / タイマーは差し替えないので、実際の
+HTTP と WebSocket を使う既存のテストが巻き添えにならない）。
+
+**`protocol/tool-summary.ts` は段4 で `ui/` へ移す**（旧の答え待ちの箱と新しいサイドバーの両方が
+読むため一時的に `protocol` へ置いた。申し送りは T-097 の本文）。
+
 ### 2026-09-13 Playwright（playwright-core）の導入
 
 **ユーザーの承認を得て `playwright-core` を devDependency に足した**（タスクIDなし）。
@@ -200,6 +218,8 @@ T-046 / T-064 / T-076 / T-077 はいずれもユーザーがいる
 
 次のセッションで踏み外しやすい点:
 
+- **`develop/tasks.json` を書き換えたら `bun run format` を通す。** oxfmt は JSON も整形するので、
+  python の `json.dump` で書いたままだと `bun run check` が落ちる（2026-09-13 に踏んだ）
 - **描画の確認は `bun run scripts/capture-view.ts <URL> --measure <selector>`**（2026-09-13 導入）。
   偽の駆動（`TSUKUMO_DRIVER=fake`）と組み合わせると claude を起こさずに撮れる。**撮った画像を
   リポジトリに置かない**（既定の出力先は `/tmp`。ビューには会話の内容が写る）

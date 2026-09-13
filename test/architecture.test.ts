@@ -55,6 +55,74 @@ describe("層と依存の向き", () => {
   })
 })
 
+// `ui/` の中の横断 import を禁じる（`docs/design.md` 12章 段3「ui/ の作法」2）。
+// 領域は `layout` / `main-view` / `character-view` / `sidebar` / `dispatch` / `report`。
+// `ui/component/` `ui/style/` と `ui/app.tsx` `ui/socket.ts` `ui/main.tsx`（領域のディレクトリの
+// 直下に無いもの）は誰から引いてもよい共有部分なので、ここでは見ない。
+const UI_REGIONS = [
+  "layout",
+  "main-view",
+  "character-view",
+  "sidebar",
+  "dispatch",
+  "report",
+] as const
+type UiRegion = (typeof UI_REGIONS)[number]
+
+type UiRegionViolation = {
+  readonly fromPath: string
+  readonly fromRegion: UiRegion
+  readonly toPath: string
+  readonly toRegion: UiRegion
+}
+
+describe("ui/ の領域どうしの import", () => {
+  it("ui/<領域>/ から別の ui/<領域>/ への import が無い", () => {
+    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("ui/"))
+    expect(files.length).toBeGreaterThan(0)
+
+    const violations = files.flatMap((relPath) => findUiRegionViolations(relPath))
+
+    expect(uiRegionViolationsMessage(violations)).toBe("")
+  })
+})
+
+/** ファイル1件の相対 import から、別の ui 領域を指すものだけを違反として返す。 */
+function findUiRegionViolations(relPath: string): readonly UiRegionViolation[] {
+  const fromRegion = uiRegionOf(relPath)
+  if (fromRegion === undefined) {
+    return []
+  }
+
+  const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
+  return relativeImportSpecifiers(content).flatMap((specifier) => {
+    const toPath = resolveRelativeImport(relPath, specifier)
+    const toRegion = uiRegionOf(toPath)
+    return toRegion === undefined || toRegion === fromRegion
+      ? []
+      : [{ fromPath: relPath, fromRegion, toPath, toRegion }]
+  })
+}
+
+/** `ui/<領域>/...` の形なら領域名を返す。共有部分（`ui/component/` など）は undefined。 */
+function uiRegionOf(relPath: string): UiRegion | undefined {
+  const [top, second] = relPath.split("/")
+  if (top !== "ui" || second === undefined) {
+    return undefined
+  }
+  return isUiRegion(second) ? second : undefined
+}
+
+function isUiRegion(value: string): value is UiRegion {
+  return UI_REGIONS.some((region) => region === value)
+}
+
+function uiRegionViolationsMessage(violations: readonly UiRegionViolation[]): string {
+  return violations
+    .map((v) => `src/${v.fromPath}（${v.fromRegion}） → src/${v.toPath}（${v.toRegion}）`)
+    .join("\n")
+}
+
 /** `src/` 配下の `.ts` / `.tsx` を再帰的に集める。相対パス（`protocol/character.ts`）で返す。 */
 function listSourceFiles(root: string, dir = root): readonly string[] {
   return readdirSync(dir).flatMap((name) => {

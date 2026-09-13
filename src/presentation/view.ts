@@ -4,18 +4,22 @@
 // （配るのは src/infrastructure/view-server.ts）。
 // 折り返し・全角文字の幅・禁則処理はブラウザに任せる。ここが計算するのは中身だけ。
 //
-// メインビュー・キャラビュー・サイドバーの中身はすべて決まっている（下の `buildMainBody` /
-// `buildCharacterBody` / `buildSidebarBody`）。
+// メインビュー・キャラビューの中身はすべて決まっている（下の `buildMainBody` /
+// `buildCharacterBody`）。**サイドバーは段3で `src/ui/sidebar/` へ移った**（docs/design.md 12章）。
 
 import { type PendingAsk } from "../protocol/pending-ask.ts"
 import { type Question, type QuestionOption } from "../protocol/question.ts"
 import { type MainViewEntry } from "../protocol/session-state.ts"
-import { type TaskSummaryItem } from "../protocol/task-summary.ts"
+import { summarizeToolInput } from "../protocol/tool-summary.ts"
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
 
-export type ViewName = "main" | "character" | "sidebar"
+/**
+ * 旧の SSE 経路が残る2領域。**サイドバーは段3で `src/ui/sidebar/` へ移り、旧の SSE 経路と
+ * HTML の組み立て関数は消えた**（docs/design.md 12章）ので、ここにはもう含めない。
+ */
+export type ViewName = "main" | "character"
 
-export const VIEW_NAMES: readonly ViewName[] = ["main", "character", "sidebar"]
+export const VIEW_NAMES: readonly ViewName[] = ["main", "character"]
 
 export function isViewName(value: string): value is ViewName {
   return VIEW_NAMES.some((name) => name === value)
@@ -135,15 +139,6 @@ export const PENDING_ANSWER_EVENT_PATH = "/events/pending-answer"
  */
 export const ANSWER_PATH = "/api/answer"
 
-/** 許可モードを切り替える経路（POST、本文は `{ mode }`）。 */
-export const PERMISSION_MODE_PATH = "/api/permission-mode"
-
-/**
- * モデルを切り替える経路（POST、本文は `{ model }`）。`model` はエイリアス（`opus` /
- * `sonnet` / `haiku`）の3つだけを受け付ける（`src/core/session-driver.ts` の `MODEL_ALIASES`）。
- */
-export const MODEL_PATH = "/api/model"
-
 /**
  * 入力欄の `/` 補完の候補一覧を返す経路（GET、レスポンスは `{ commands: string[] }`）。
  * セッションが起きる前（`init` 前）は空配列。ブラウザは `/` を最初に打ったときに1回だけ取りに行き、
@@ -165,14 +160,16 @@ export const LAYOUT_PATH = "/"
 export type LayoutBodies = Readonly<Record<ViewName, string>>
 
 /**
- * 3つのビューを1枚の HTML にまとめ、CSS の grid で領域を分けたページ（`docs/requirements.md`
- * 4.7）。**それぞれの領域は、既存の `/events/<view>` を個別に購読する**（3本の SSE。
- * 押す側の `src/infrastructure/view-server.ts` は経路ごとの `publish` をそのまま使えるので、更新の仕組み自体は
- * 増やしていない）。ページを丸ごと再読み込みしない理由は
- * `docs/architecture.md`「ビューの更新は Server-Sent Events で押す」を参照。
+ * メインビュー・キャラビュー・サイドバーを1枚の HTML にまとめ、CSS の grid で領域を分けたページ
+ * （`docs/requirements.md` 4.7）。**メインビュー・キャラビューは既存の `/events/<view>` を
+ * 個別に購読する**（2本の SSE。押す側の `src/infrastructure/view-server.ts` は経路ごとの
+ * `publish` をそのまま使う）。**サイドバーは React の root**（`.layout-sidebar` に
+ * `src/ui/main.tsx` が mount する。段3。docs/design.md 12章）で、初期の本文は持たない。
+ * ページを丸ごと再読み込みしない理由は `docs/architecture.md`
+ * 「ビューの更新は Server-Sent Events で押す」を参照。
  *
- * **ブラウザ側の配線（購読・タブ制御・レポートの描画・仕切り・入力欄・`/` 補完・答え待ちの箱・
- * セッション情報）はすべて `/assets/browser.js`（`src/presentation/browser/`）にある。** ここが渡すのは
+ * **ブラウザ側の配線（購読・タブ制御・レポートの描画・仕切り・入力欄・`/` 補完・答え待ちの箱）は
+ * すべて `/assets/browser.js`（`src/presentation/browser/`）にある。** ここが渡すのは
  * 要素の id・class と、`data-` 属性に載せた経路・ラベルだけ（{@link dispatchRegionHtml} 等。
  * 2026-09-12。以前はテンプレート文字列の `<script>` に埋め込んでいた）。
  */
@@ -180,7 +177,7 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
   const topRow = `<div class="layout-row layout-row-top" id="${LAYOUT_ROW_TOP_ID}">
 <section class="layout-region layout-main" id="${layoutRegionId("main")}" data-event-path="${viewEventPath("main")}" data-mermaid-src="${vendorPath("mermaid.min.js")}" data-chart-src="${vendorPath("chart.umd.min.js")}">${bodies.main}</section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_TOP_ID}" role="separator" aria-orientation="vertical" aria-label="メインビューとサイドバーの境界"></div>
-<section class="layout-region layout-sidebar" id="${layoutRegionId("sidebar")}" data-event-path="${viewEventPath("sidebar")}" data-permission-mode-path="${PERMISSION_MODE_PATH}" data-model-path="${MODEL_PATH}">${bodies.sidebar}</section>
+<section class="layout-region layout-sidebar" id="${layoutRegionId("sidebar")}"></section>
 </div>`
 
   const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
@@ -202,8 +199,11 @@ ${bottomRow}
   )
 }
 
-function layoutRegionId(view: ViewName): string {
-  return `tsukumo-view-${view}`
+/** レイアウトページの領域の id。サイドバーは {@link ViewName} に無い（SSE の領域ではないため）。 */
+type LayoutRegionName = ViewName | "sidebar"
+
+function layoutRegionId(region: LayoutRegionName): string {
+  return `tsukumo-view-${region}`
 }
 
 const LAYOUT_GRID_ID = "tsukumo-layout-grid"
@@ -335,8 +335,8 @@ export type CharacterViewData = {
  * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
  * 入力欄と離れている」という理由で使いづらかった。`src/index.ts` / `dispatchScript` を参照）。
  * キャラは吹き出しで「これいい？」と言うだけで、ボタンの中身はここには無い。**許可モードの
- * `<select>` はサイドバーのセッション情報へ移した**（{@link sessionInfoBody}。2026-09-11
- * 決定。サイドバーの区画ができたため）。
+ * `<select>` はサイドバーのセッション情報（`src/ui/sidebar/session-info.tsx`）へ移した**
+ * （2026-09-11 決定。サイドバーの区画ができたため）。
  */
 export function buildCharacterBody(data: CharacterViewData): string {
   const portraitHtml =
@@ -610,51 +610,6 @@ const PENDING_ANSWER_ID_ATTR = "data-pending-id"
 /** `AskUserQuestion` の自由入力の選択肢。このラベルの選択肢だけ、テキスト欄で受け取る。 */
 const FREE_TEXT_OPTION_LABEL = "その他"
 
-/** ツール入力の要約に出す1行の長さの上限（目安）。切り方は {@link truncateForDisplay} と同じ考え方。 */
-const MAX_TOOL_SUMMARY_LENGTH = 120
-
-/**
- * ツール入力の要約に使うフィールド名。Bash は `command`、Edit / Write / Read は `file_path`。
- * 載っていないツールは {@link firstStringValue} に落ちる。
- */
-const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
-  Bash: "command",
-  Edit: "file_path",
-  Write: "file_path",
-  Read: "file_path",
-}
-
-/**
- * ツール名＋入力を、画面に出してよい1行の要約にする。**許可要求（キャラビューの答え待ちの箱）と
- * サイドバーの「いま何をしているか」の両方がここを呼ぶ**（同じ概念を2箇所で別に決めない）。
- * **入力の全文は出さない**（docs/coding-standards.md「会話内容の扱い」）。純粋関数なので、
- * ツールごとの要約の決め方は直接テストできる。入力がオブジェクトの形でないときは空文字。
- */
-export function summarizeToolInput(toolName: string, input: unknown): string {
-  if (!isRecord(input)) {
-    return ""
-  }
-
-  const field = TOOL_SUMMARY_FIELD_BY_TOOL[toolName]
-  const value = field === undefined ? firstStringValue(input) : stringField(input, field)
-  return value === undefined ? "" : truncateToolSummary(value)
-}
-
-function firstStringValue(input: Readonly<Record<string, unknown>>): string | undefined {
-  for (const value of Object.values(input)) {
-    if (typeof value === "string") {
-      return value
-    }
-  }
-  return undefined
-}
-
-function truncateToolSummary(text: string): string {
-  return text.length <= MAX_TOOL_SUMMARY_LENGTH
-    ? text
-    : `${text.slice(0, MAX_TOOL_SUMMARY_LENGTH)}…`
-}
-
 /**
  * 答え待ちの箱。入力欄（右下）の `<textarea>` の上に出す（{@link dispatchRegionHtml} /
  * {@link dispatchScript}。2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していた）。
@@ -748,148 +703,6 @@ function freeTextOptionHtml(): string {
 <input type="text" class="question-other-input" placeholder="自由入力" aria-label="${escapeHtml(FREE_TEXT_OPTION_LABEL)}" />
 <button type="button" class="question-other-send">送る</button>
 </li>`
-}
-
-// 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
-const PERMISSION_MODE_LABELS: ReadonlyArray<readonly [string, string]> = [
-  ["default", "毎回聞く"],
-  ["acceptEdits", "編集は自動"],
-  ["auto", "自動判定"],
-  ["plan", "プラン"],
-  ["bypassPermissions", "全部許す"],
-]
-// `permissionMode` がまだ届いていないとき（session-info 前）の見た目上の既定値。
-// `src/core/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
-const PERMISSION_MODE_FALLBACK = "auto"
-const DANGEROUS_PERMISSION_MODE = "bypassPermissions"
-const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
-
-/**
- * 許可モードを切り替える `<select>`。サイドバーのセッション情報に置く（{@link sessionInfoBody}。
- * 2026-09-11 決定。以前はキャラビューの領域の端に置いていたが、サイドバーの区画ができたため
- * 移した）。`bypassPermissions` を選んでいるときは警告色を付ける
- * （`src/presentation/style/sidebar.css` の `.permission-mode-select-danger`）。
- *
- * ラベルと値（`<select>` + 状態表示）を別々に返す（{@link sessionInfoBody} が2列の grid に
- * 直接の子として並べるため。ラベル・値をここで1つの div にまとめると、その div がグリッドの
- * 1マスになってしまい、モデル行と列が揃わない — 2026-09-13 T-092）。
- */
-function permissionModeHtml(mode: string | undefined): {
-  readonly label: string
-  readonly value: string
-} {
-  const current = mode ?? PERMISSION_MODE_FALLBACK
-  const options = PERMISSION_MODE_LABELS.map(
-    ([value, label]) =>
-      `<option value="${value}"${value === current ? " selected" : ""}>${escapeHtml(label)}</option>`,
-  ).join("")
-  const dangerClass = current === DANGEROUS_PERMISSION_MODE ? " permission-mode-select-danger" : ""
-
-  return {
-    label: `<label for="${PERMISSION_MODE_SELECT_ID}" class="session-info-label">許可モード</label>`,
-    value: `<span class="session-info-value"><select id="${PERMISSION_MODE_SELECT_ID}" class="permission-mode-select${dangerClass}">${options}</select><span class="permission-mode-status" role="status" aria-live="polite"></span></span>`,
-  }
-}
-
-// モデルのエイリアスと、日本語ラベル。値は `src/core/session-driver.ts` の MODEL_ALIASES と同じ3つだが、
-// **view.ts はそのファイルを import しない**（原則3。PERMISSION_MODE_LABELS と同じ理由）。
-const MODEL_LABELS: ReadonlyArray<readonly [string, string]> = [
-  ["opus", "Opus"],
-  ["sonnet", "Sonnet"],
-  ["haiku", "Haiku"],
-]
-// `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。値は
-// `src/core/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）だが、**view.ts はそのファイルを
-// import しない**（原則3）ので、値だけをここに再掲する。
-const MODEL_FALLBACK = "opus"
-const MODEL_SELECT_ID = "tsukumo-model"
-
-/**
- * `session-info` の `model`（フルネームや実装依存の識別子）から、`<select>` に選択済みで
- * 出すエイリアスを決める。**部分一致**にしてあるのは、フルネームの形（`claude-opus-4-1` の
- * ような値）が実装側の都合で変わりうるため（2026-09-11 実測に頼らない安全側の判定）。
- */
-function resolveModelAlias(model: string | undefined): string {
-  if (model === undefined) {
-    return MODEL_FALLBACK
-  }
-
-  return MODEL_LABELS.find(([alias]) => model.includes(alias))?.[0] ?? MODEL_FALLBACK
-}
-
-/**
- * モデルを切り替える `<select>`。選べるのはエイリアス3つだけ（`docs`「セッション情報」の決定）。
- * `/model` は送らず、駆動側の `setModel`（Agent SDK）を呼ぶ（{@link sessionInfoScript}）。
- *
- * ラベルと値を別々に返す理由は {@link permissionModeHtml} と同じ。
- */
-function modelSelectHtml(model: string | undefined): {
-  readonly label: string
-  readonly value: string
-} {
-  const current = resolveModelAlias(model)
-  const options = MODEL_LABELS.map(
-    ([value, label]) =>
-      `<option value="${value}"${value === current ? " selected" : ""}>${escapeHtml(label)}</option>`,
-  ).join("")
-
-  return {
-    label: `<label for="${MODEL_SELECT_ID}" class="session-info-label">モデル</label>`,
-    value: `<span class="session-info-value"><select id="${MODEL_SELECT_ID}" class="model-select">${options}</select><span class="model-select-status" role="status" aria-live="polite"></span></span>`,
-  }
-}
-
-/**
- * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は
- * {@link summarizeToolInput} の仕事）。`src/protocol/session-state.ts` の `ToolActivity` と同じ形。
- */
-export type SidebarToolActivity = {
-  readonly name: string
-  readonly input: unknown
-  /** サブエージェントの中で動いたか（1段下げて出す）。 */
-  readonly nested: boolean
-}
-
-/** サイドバーの本文を組み立てるために必要な値。取れなかった項目は `undefined` で表す。 */
-export type SidebarData = {
-  /** いま何をしているか（区画1）。実行中は普通の色、直近の完了は薄く数行（`buildSidebarBody`）。 */
-  readonly activity: {
-    readonly running: readonly SidebarToolActivity[]
-    readonly finished: readonly SidebarToolActivity[]
-  }
-  /**
-   * develop/tasks.json の一覧（区画2）。ファイルが読めない・壊れているときは undefined
-   * （`src/protocol/task-summary.ts` の `readTaskSummaries` と同じ契約）。
-   */
-  readonly tasks: readonly TaskSummaryItem[] | undefined
-  /**
-   * セッション情報（区画3）。**経過時間はここに無い**（2026-09-12 T-075 決定。入力欄の
-   * 送信ボタンと同じ行へ移した。開始・終了時刻は `TURN_STATUS_EVENT_PATH` で運ぶ
-   * （`src/presentation/view.ts` の `TurnStatus` / `encodeTurnStatus`）。
-   */
-  readonly session: {
-    readonly model: string | undefined
-    readonly permissionMode: string | undefined
-  }
-}
-
-/**
- * サイドバーの本文。「補足情報の置き場」であって単機能パネルではないので、独立した3つの区画
- * （いま何をしているか・タスク一覧・セッション情報）を並べる（2026-09-11 決定。方針転換で
- * 作業の進行（ツールの流れ）がメインビューからここへ移った。コンテキスト使用量は出さない）。
- *
- * **会話の内容は出さない**建前だが、ツール名＋入力の要約には断片が入りうる
- * （`docs/coding-standards.md`「会話内容の扱い」— 許可要求の要約と同じ扱い）。
- *
- * 3つの区画は互いに独立している。**どれか1つが取れなくても、その区画だけ「不明」を出し、
- * 残りは表示を続ける**（`data` の各フィールドが `undefined` や空配列のときに壊れないこと）。
- */
-export function buildSidebarBody(data: SidebarData): string {
-  return [
-    sidebarSection("いま何をしているか", activityBody(data.activity), "sidebar-block-activity"),
-    sidebarSection(taskListTitle(data.tasks), taskListBody(data.tasks), "sidebar-block-tasks"),
-    sidebarSection("セッション情報", sessionInfoBody(data.session), "sidebar-block-session"),
-  ].join("\n")
 }
 
 const PLACEHOLDER_UTTERANCE = "（まだ発話がありません）"
@@ -1488,136 +1301,6 @@ function splitOnCodeSpans(rawText: string): readonly CodeSpanPart[] {
   }
 
   return parts
-}
-
-/**
- * サイドバーの区画1つぶんの HTML。見出し `h2` は区画の中で固定し、`body` だけを
- * `.sidebar-block-scroll` で包んで内側にスクロールさせる（3区画それぞれの内側スクロールは
- * ここで共通に持たせ、高さの配分は `extraClass` ごとの `flex` 値（CSS 側）で決める）。
- */
-function sidebarSection(title: string, body: string, extraClass: string): string {
-  return `<section class="sidebar-block ${extraClass}">
-<h2>${escapeHtml(title)}</h2>
-<div class="sidebar-block-scroll">${body}</div>
-</section>`
-}
-
-/**
- * サイドバーの「いま何をしているか」の本文。**実行中が先（普通の色）、直近の完了がその下
- * （薄い色）**（`docs/requirements.md` 4.2 の決定）。両方空のときだけ空であることを出す。
- *
- * 区画の高さは `.sidebar-block-activity` に与えた `flex` 値（CSS 側）で決まり、中身の多寡では
- * 変わらない。
- */
-function activityBody(activity: SidebarData["activity"]): string {
-  if (activity.running.length === 0 && activity.finished.length === 0) {
-    return `<p class="sidebar-empty">いま動いているツールは無い</p>`
-  }
-
-  const items = [
-    ...activity.running.map((item) => activityItemHtml(item, false)),
-    ...activity.finished.map((item) => activityItemHtml(item, true)),
-  ].join("\n")
-  return `<ul class="sidebar-list activity-list">${items}</ul>`
-}
-
-/**
- * 実行中・完了1件分。**サブエージェントの中（`nested`）は1段下げて出す**
- * （`docs/coding-standards.md`「タスク本文」の決定）。要約は {@link summarizeToolInput} に頼る
- * （許可要求の要約と同じ関数。同じ概念を2箇所で別に決めない）。
- */
-function activityItemHtml(activity: SidebarToolActivity, finished: boolean): string {
-  const summary = summarizeToolInput(activity.name, activity.input)
-  const label = `${activity.name}${summary === "" ? "" : `: ${summary}`}`
-  const classes = [
-    "activity-item",
-    finished ? "activity-finished" : "activity-running",
-    activity.nested ? "activity-nested" : "",
-  ]
-    .filter((name) => name !== "")
-    .join(" ")
-
-  return `<li class="${classes}">${escapeHtml(label)}</li>`
-}
-
-/**
- * サイドバーの「タスク一覧」の見出し。tasks が読めているときだけ todo / done の件数を添える
- * （`develop/tasks.json` が不明なときは件数も不明なので、見出しはそのまま）。
- */
-function taskListTitle(tasks: readonly TaskSummaryItem[] | undefined): string {
-  if (tasks === undefined) {
-    return "タスク一覧"
-  }
-
-  const todo = tasks.filter((task) => task.status === "todo").length
-  const done = tasks.filter((task) => task.status === "done").length
-  return `タスク一覧 todo ${todo} / done ${done}`
-}
-
-/**
- * サイドバーの「タスク一覧」の本文。**status ごとにまとめず、ファイルの順で出す**
- * （`develop/tasks.json` の決定）。`done` は薄く出す。
- */
-function taskListBody(tasks: readonly TaskSummaryItem[] | undefined): string {
-  if (tasks === undefined) {
-    return `<p class="sidebar-empty">不明</p>`
-  }
-  if (tasks.length === 0) {
-    return `<p class="sidebar-empty">タスクが無い</p>`
-  }
-
-  const items = tasks.map((task) => taskItemHtml(task)).join("\n")
-  return `<ul class="sidebar-list task-list">${items}</ul>`
-}
-
-/**
- * タスク一覧1件分。バッジ（status）を先頭列、ID＋summary を2列目に置く2列の grid 行
- * （`.task-item` の `grid-template-columns: auto 1fr`）。summary が折り返してもバッジ列に
- * 入り込まない。status が無いときはバッジを出さず、列だけ空けておく。
- */
-function taskItemHtml(task: TaskSummaryItem): string {
-  const doneClass = task.status === "done" ? " task-done" : ""
-  const badgeHtml = task.status === undefined ? "" : taskStatusBadgeHtml(task.status)
-
-  return `<li class="task-item${doneClass}"><span class="task-status-cell">${badgeHtml}</span><span class="task-body"><span class="task-id">${escapeHtml(task.id)}</span> ${escapeHtml(task.summary)}</span></li>`
-}
-
-function taskStatusBadgeHtml(status: string): string {
-  return `<span class="task-status ${taskStatusClass(status)}">${escapeHtml(status)}</span>`
-}
-
-/** todo / done は色で区別し、それ以外（in-progress など）は注意色にする。文字は status のまま出す。 */
-function taskStatusClass(status: string): string {
-  if (status === "todo") {
-    return "task-status-todo"
-  }
-  if (status === "done") {
-    return "task-status-done"
-  }
-  return "task-status-other"
-}
-
-/**
- * サイドバーの「セッション情報」の本文。モデル・許可モードの `<select>`（駆動側の切り替えは
- * {@link sessionInfoScript}）を並べる。**経過時間はここに無い**（2026-09-12 T-075 決定。
- * 入力欄の送信ボタンと同じ行（{@link dispatchRegionHtml}）へ移した。サイドバーと入力欄は
- * 領域が別で SSE の経路も別なので、ここへ戻すときは経路をもう一段考える必要がある）。
- *
- * `.session-info` は2列の grid（`src/presentation/style/sidebar.css`）で、ラベルと値
- * （`<select>` + 状態表示）を直接の子として並べる。行ごとに別々の flex で並べると
- * ラベルの文字数の差がそのまま `<select>` の左端のズレになるため、行の境目を div で
- * 区切らずグリッド1つに任せる（2026-09-13 T-092）。
- */
-function sessionInfoBody(session: SidebarData["session"]): string {
-  const model = modelSelectHtml(session.model)
-  const permissionMode = permissionModeHtml(session.permissionMode)
-
-  return `<div class="session-info">
-${model.label}
-${model.value}
-${permissionMode.label}
-${permissionMode.value}
-</div>`
 }
 
 function page(title: string, body: string): string {
