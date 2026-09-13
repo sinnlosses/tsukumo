@@ -7,10 +7,10 @@
 // メインビュー・キャラビュー・サイドバーの中身はすべて決まっている（下の `buildMainBody` /
 // `buildCharacterBody` / `buildSidebarBody`）。
 
-import { type PendingAsk } from "../domain/pending-answer.ts"
-import { type Question, type QuestionOption } from "../domain/question.ts"
-import { type TaskSummaryItem } from "../domain/task-summary.ts"
-import { type MainViewEntry } from "../usecase/session-view.ts"
+import { type PendingAsk } from "../protocol/pending-ask.ts"
+import { type Question, type QuestionOption } from "../protocol/question.ts"
+import { type MainViewEntry } from "../protocol/session-state.ts"
+import { type TaskSummaryItem } from "../protocol/task-summary.ts"
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
 
 export type ViewName = "main" | "character" | "sidebar"
@@ -56,6 +56,17 @@ export const BROWSER_SCRIPT_NAME = "browser.js"
 
 export function browserScriptPath(): string {
   return `${ASSET_PATH_PREFIX}${BROWSER_SCRIPT_NAME}`
+}
+
+/**
+ * 新しいブラウザ側スクリプト（`src/ui/main.tsx` を `bun build` でまとめたもの）の名前。
+ * **段2 の時点では何も描かない**（React の入口を束ねて配る経路を通しただけ。段3 から領域ごとに
+ * ここへ移る。docs/design.md 12章）。旧の `browser.js` と同じページに両方読む期間がある。
+ */
+export const UI_SCRIPT_NAME = "ui.js"
+
+export function uiScriptPath(): string {
+  return `${ASSET_PATH_PREFIX}${UI_SCRIPT_NAME}`
 }
 
 /**
@@ -129,7 +140,7 @@ export const PERMISSION_MODE_PATH = "/api/permission-mode"
 
 /**
  * モデルを切り替える経路（POST、本文は `{ model }`）。`model` はエイリアス（`opus` /
- * `sonnet` / `haiku`）の3つだけを受け付ける（`src/infrastructure/session-driver.ts` の `MODEL_ALIASES`）。
+ * `sonnet` / `haiku`）の3つだけを受け付ける（`src/core/session-driver.ts` の `MODEL_ALIASES`）。
  */
 export const MODEL_PATH = "/api/model"
 
@@ -186,7 +197,8 @@ ${topRow}
 ${bottomRow}
 </div>
 <button type="button" id="${LAYOUT_RESET_ID}" class="layout-reset">既定の比率に戻す</button>
-<script src="${browserScriptPath()}"></script>`,
+<script src="${browserScriptPath()}"></script>
+<script type="module" src="${uiScriptPath()}"></script>`,
   )
 }
 
@@ -230,7 +242,7 @@ const DISPATCH_SEND_SHORTCUT_HINT = "⌘⏎"
 
 /**
  * 右下の空き領域を埋める、依頼の入力欄（`docs/requirements.md` 4.7）。送り先は駆動
- * （`src/infrastructure/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない。
+ * （`src/core/session-driver.ts`）1つに決まっているので、送り先を選ぶ UI は持たない。
  *
  * **答え待ちの箱（{@link buildPendingAnswerBody}）はここ（`<textarea>` の上）に出す**
  * （2026-09-11 決定。以前はキャラビューの吹き出しの直下に出していたが、「気づかない」
@@ -280,7 +292,7 @@ function dispatchRegionHtml(): string {
  * 立ち絵の画像ソース。**SVG はファイルの中身をそのまま埋め込む**（インライン）。
  * `<img>` で読み込むと独立した文書扱いになり、ページ側の CSS 変数 `--outfit-accent` が
  * 届かないため（`characters/README.md` の実測）。それ以外の形式（ラスタ画像）は
- * `<img>` の `src` に data URI を渡す。**どちらの形にするかは src/domain/character.ts が拡張子で
+ * `<img>` の `src` に data URI を渡す。**どちらの形にするかは src/protocol/character.ts が拡張子で
  * 決め、ここでは分岐しない**（利用者が置いた任意のファイルを無検証で流し込まないための仕分け）。
  */
 export type CharacterPortraitSource =
@@ -747,7 +759,7 @@ const PERMISSION_MODE_LABELS: ReadonlyArray<readonly [string, string]> = [
   ["bypassPermissions", "全部許す"],
 ]
 // `permissionMode` がまだ届いていないとき（session-info 前）の見た目上の既定値。
-// `src/infrastructure/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
+// `src/core/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
 const PERMISSION_MODE_FALLBACK = "auto"
 const DANGEROUS_PERMISSION_MODE = "bypassPermissions"
 const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
@@ -779,7 +791,7 @@ function permissionModeHtml(mode: string | undefined): {
   }
 }
 
-// モデルのエイリアスと、日本語ラベル。値は `src/infrastructure/session-driver.ts` の MODEL_ALIASES と同じ3つだが、
+// モデルのエイリアスと、日本語ラベル。値は `src/core/session-driver.ts` の MODEL_ALIASES と同じ3つだが、
 // **view.ts はそのファイルを import しない**（原則3。PERMISSION_MODE_LABELS と同じ理由）。
 const MODEL_LABELS: ReadonlyArray<readonly [string, string]> = [
   ["opus", "Opus"],
@@ -787,7 +799,7 @@ const MODEL_LABELS: ReadonlyArray<readonly [string, string]> = [
   ["haiku", "Haiku"],
 ]
 // `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。値は
-// `src/infrastructure/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）だが、**view.ts はそのファイルを
+// `src/core/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）だが、**view.ts はそのファイルを
 // import しない**（原則3）ので、値だけをここに再掲する。
 const MODEL_FALLBACK = "opus"
 const MODEL_SELECT_ID = "tsukumo-model"
@@ -829,7 +841,7 @@ function modelSelectHtml(model: string | undefined): {
 
 /**
  * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は
- * {@link summarizeToolInput} の仕事）。`src/usecase/session-view.ts` の `ToolActivity` と同じ形。
+ * {@link summarizeToolInput} の仕事）。`src/protocol/session-state.ts` の `ToolActivity` と同じ形。
  */
 export type SidebarToolActivity = {
   readonly name: string
@@ -847,7 +859,7 @@ export type SidebarData = {
   }
   /**
    * develop/tasks.json の一覧（区画2）。ファイルが読めない・壊れているときは undefined
-   * （`src/domain/task-summary.ts` の `readTaskSummaries` と同じ契約）。
+   * （`src/protocol/task-summary.ts` の `readTaskSummaries` と同じ契約）。
    */
   readonly tasks: readonly TaskSummaryItem[] | undefined
   /**

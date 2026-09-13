@@ -7,11 +7,9 @@
 // 同じマシンの外からは届かないことが前提になっている。
 
 import { readFileSync } from "node:fs"
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import process from "node:process"
 
-import { type Answer, parseAnswer } from "../domain/pending-answer.ts"
-import { type CommandDescription } from "../domain/session-event.ts"
 import {
   buildLayoutPage,
   ANSWER_PATH,
@@ -28,6 +26,7 @@ import {
   type TurnStatus,
   ASSET_PATH_PREFIX,
   BROWSER_SCRIPT_NAME,
+  UI_SCRIPT_NAME,
   STYLE_SHEET_NAME,
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
@@ -35,17 +34,20 @@ import {
   type ViewName,
   viewEventPath,
 } from "../presentation/view.ts"
-import { bundledFilePath } from "./bundled-path.ts"
 import {
   isModelAlias,
   isPermissionMode,
+  MAX_PROMPT_TEXT_LENGTH,
   type ModelAlias,
   type PermissionMode,
-} from "./session-driver.ts"
+} from "../protocol/command.ts"
+import { type Answer, parseAnswer } from "../protocol/pending-ask.ts"
+import { type CommandDescription } from "../protocol/session-event.ts"
+import { bundledFilePath } from "./bundled-path.ts"
 
-// 依頼として送る文面の上限（送信のための素朴な上限であって、秘匿・検閲のためではない。
-// src/presentation/view.ts の MAX_TOOL_TEXT_LENGTH と同じ考え方）。
-const MAX_DISPATCH_TEXT_LENGTH = 20_000
+// 依頼として送る文面の上限は protocol が持つ（`src/protocol/command.ts` の
+// MAX_PROMPT_TEXT_LENGTH。WebSocket の経路と同じ値を使う）。
+const MAX_DISPATCH_TEXT_LENGTH = MAX_PROMPT_TEXT_LENGTH
 // リクエスト本文の読み取り上限（バイト）。JSON の入れ物ぶんの余裕を持たせている。
 const MAX_DISPATCH_BODY_BYTES = MAX_DISPATCH_TEXT_LENGTH * 4
 
@@ -64,7 +66,7 @@ export type SendPrompt = (text: string) => boolean
 
 /**
  * 入力欄から届いた中断の要求をセッション駆動へ渡す関数。**駆動側の `interrupt()` は
- * `Promise<void>` を返す**（失敗しても例外にはしない契約。src/infrastructure/session-driver.ts）ので、
+ * `Promise<void>` を返す**（失敗しても例外にはしない契約。src/core/session-driver.ts）ので、
  * ここでは待つだけでよく、受け取れたかどうかの真偽値は要らない。
  */
 export type SendInterrupt = () => Promise<void>
@@ -92,12 +94,18 @@ export type SendModel = (model: ModelAlias) => Promise<boolean>
 /**
  * 入力欄の `/` 補完に出せるコマンドの一覧（名前と、あれば説明）を読む関数。**呼ばれた時点の
  * 最新の値**を返す契約（`init` 前は空配列。`GET /api/commands` が毎リクエストごとに呼ぶ。
- * src/usecase/session-view.ts の `commandSuggestions` が端末専用を除いた名前に説明を添える計算を
+ * src/protocol/session-state.ts の `commandSuggestions` が端末専用を除いた名前に説明を添える計算を
  * すでに済ませている）。
  */
 export type GetCommands = () => readonly CommandDescription[]
 
 export type ViewServer = {
+  /**
+   * 待ち受けている HTTP サーバそのもの。**WebSocket の受け口（src/core/server.ts の
+   * `attachSessionSocket`）を足すためだけに外へ出している**（配線するのは src/index.ts）。
+   * 段3以降で HTTP の経路ごと core へ移るまでの、併存期間の受け渡し口。
+   */
+  readonly httpServer: Server
   /**
    * 3領域をまとめたレイアウトページの URL。ホストのポート（src/infrastructure/host.ts）に渡すのはこの文字列だけで、
    * 利用者が実際に開くのもこれ1つでよい（個別ビューのページは 2026-09-12 に消した。
@@ -149,6 +157,12 @@ export function startViewServer(
    * ここが唯一の持ち主になる。
    */
   styleSheet: string,
+  /**
+   * 新しいブラウザ側スクリプト（`src/ui/main.tsx` を `bun build` でまとめたもの）の中身。
+   * **段2 ではまだ何も描かない**（React の入口を束ねて配る経路だけを通してある。
+   * docs/design.md 12章の段2）。
+   */
+  uiScript: string,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
@@ -183,6 +197,7 @@ export function startViewServer(
       () => pendingAnswerBody,
       browserScript,
       styleSheet,
+      uiScript,
     )
   })
 
@@ -220,6 +235,7 @@ export function startViewServer(
       boundOrigin = origin
 
       resolve({
+        httpServer: server,
         layoutUrl: `${origin}${LAYOUT_PATH}`,
         publish: (view, body) => {
           bodies.set(view, body)
@@ -284,6 +300,7 @@ function respond(
   getPendingAnswerBody: () => string,
   browserScript: string,
   styleSheet: string,
+  uiScript: string,
 ): void {
   if (path === LAYOUT_PATH) {
     writeHtml(response, buildLayoutPage(currentBodies(bodies)))
@@ -364,6 +381,17 @@ function respond(
       "cache-control": "no-store",
     })
     response.end(browserScript)
+    return
+  }
+
+  if (path === `${ASSET_PATH_PREFIX}${UI_SCRIPT_NAME}` && request.method === "GET") {
+    // 起動時に組み立てた新しいブラウザ側スクリプト（`src/ui/`）。browser.js と同じ扱いで、
+    // ディスクには無い。
+    response.writeHead(200, {
+      "content-type": "text/javascript; charset=utf-8",
+      "cache-control": "no-store",
+    })
+    response.end(uiScript)
     return
   }
 
@@ -486,7 +514,7 @@ function parsePromptRequest(body: string): string | undefined {
 
 /**
  * 実行中のターンを中断する。本文は無い。**駆動の `interrupt()` は失敗を例外にしない契約**
- * （src/infrastructure/session-driver.ts）だが、呼び出しそのもの（`Promise` の生成）が失敗する余地は残るので、
+ * （src/core/session-driver.ts）だが、呼び出しそのもの（`Promise` の生成）が失敗する余地は残るので、
  * ここでも捕まえて理由付きの失敗を返す。
  */
 function handleInterrupt(response: ServerResponse, sendInterrupt: SendInterrupt): void {

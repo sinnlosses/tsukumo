@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it, mock } from "bun:test"
 import { networkInterfaces } from "node:os"
 
-import { type Answer } from "../../src/domain/pending-answer.ts"
-import { type ModelAlias, type PermissionMode } from "../../src/infrastructure/session-driver.ts"
 import {
   type GetCommands,
   type SendAnswer,
@@ -24,6 +22,8 @@ import {
   TURN_STATUS_EVENT_PATH,
   VIEW_NAMES,
 } from "../../src/presentation/view.ts"
+import { type ModelAlias, type PermissionMode } from "../../src/protocol/command.ts"
+import { type Answer } from "../../src/protocol/pending-ask.ts"
 
 // ポート 0 で起動し、割り当てられたポートを layoutUrl から読む（開発機で常駐中のサイドカーと
 // ぶつからないようにするため）。
@@ -40,6 +40,12 @@ const TEST_BROWSER_SCRIPT = "/* テスト用のブラウザ側スクリプト */
  * 配信の経路（`/assets/style.css`）が通っているかだけを見たいので、中身は目印の1行でよい。
  */
 const TEST_STYLE_SHEET = "/* テスト用の CSS */"
+
+/**
+ * 新しいブラウザ側スクリプト（`src/ui/`）の代役。**本物のビルドはしない**。
+ * 配信の経路（`/assets/ui.js`）が通っているかだけを見る。
+ */
+const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 
 async function start(
   sendPrompt: SendPrompt = () => true,
@@ -59,6 +65,7 @@ async function start(
     getCommands,
     TEST_BROWSER_SCRIPT,
     TEST_STYLE_SHEET,
+    TEST_UI_SCRIPT,
   )
   running = server
   return server

@@ -1,8 +1,8 @@
 // 1つの発話を「セリフ」と「詳細」に分ける。「決める」層で、ファイルI/Oを持たない。
 //
-// セリフの主経路は `speak` ツール（src/domain/session-event.ts）で、ここはその補助。
+// セリフの主経路は `speak` ツール（src/protocol/session-event.ts）で、ここはその補助。
 // **`speak` が1度も呼ばれなかったターンだけ**、本文の行頭マーカーをセリフとして拾う
-// （docs/requirements.md 4.2。呼び出しは src/usecase/session-view.ts の畳み込み）。
+// （docs/requirements.md 4.2。呼び出しは src/protocol/session-state.ts の畳み込み）。
 
 export type UtteranceParts = {
   readonly speech: string | undefined

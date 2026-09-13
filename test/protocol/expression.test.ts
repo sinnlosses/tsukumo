@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { expressionLabel, resolveExpression, resolveOutfit } from "../../src/domain/expression.ts"
+import { expressionLabel, resolveExpression, resolveOutfit } from "../../src/protocol/expression.ts"
 
 describe("resolveExpression", () => {
   it("実行中のツールが開始から1秒以上経っていれば作業中の表情を返す", () => {
@@ -48,7 +48,7 @@ describe("resolveOutfit", () => {
     expect(resolveOutfit("opus")).toBe("heavy")
   })
 
-  // 短い別名か完全なモデルIDかは場合によるため部分一致にしている（src/domain/expression.ts の
+  // 短い別名か完全なモデルIDかは場合によるため部分一致にしている（src/protocol/expression.ts の
   // コメント参照）。完全なモデルIDでも拾えることをここで固定する。
   it("完全なモデルIDに含まれていても拾う", () => {
     expect(resolveOutfit("claude-opus-4-1-20250805")).toBe("heavy")

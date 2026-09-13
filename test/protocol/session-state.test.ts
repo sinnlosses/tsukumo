@@ -1,21 +1,21 @@
 import { describe, expect, it } from "bun:test"
 
-import { type SessionEvent } from "../../src/domain/session-event.ts"
+import { type SessionEvent } from "../../src/protocol/session-event.ts"
 import {
   applySessionEvent,
   commandCandidates,
   commandSuggestions,
   currentExpression,
-  INITIAL_SESSION_VIEW,
+  INITIAL_SESSION_STATE,
   mainViewEntries,
-  type SessionView,
-} from "../../src/usecase/session-view.ts"
+  type SessionState,
+} from "../../src/protocol/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 時刻に依らないテストでは `now` を固定の 0 で流す（表情の遅延切り替えを見るテストは
 // applySessionEvent を直接呼び、進める時刻を明示する）。
-function apply(...events: readonly SessionEvent[]): SessionView {
-  return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_VIEW)
+function apply(...events: readonly SessionEvent[]): SessionState {
+  return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_STATE)
 }
 
 describe("applySessionEvent", () => {
@@ -105,7 +105,7 @@ describe("applySessionEvent", () => {
 
   it("ツールが1秒以上実行中だと表情が作業中になり、終わると直前のセリフの表情に戻る", () => {
     const spoken = applySessionEvent(
-      INITIAL_SESSION_VIEW,
+      INITIAL_SESSION_STATE,
       { kind: "speech", text: "いくよ！", expression: "proud" },
       0,
     )
@@ -144,7 +144,7 @@ describe("applySessionEvent", () => {
 
   it("1秒未満で終わったツールは作業中の表情を起こさない（チカチカ防止）", () => {
     const spoken = applySessionEvent(
-      INITIAL_SESSION_VIEW,
+      INITIAL_SESSION_STATE,
       { kind: "speech", text: "いくよ！", expression: "proud" },
       0,
     )
@@ -305,7 +305,7 @@ describe("applySessionEvent", () => {
   })
 
   it("request でターンが進行中になり、turn-finished で止まる（入力欄の送信/中断の切り替えに使う）", () => {
-    expect(INITIAL_SESSION_VIEW.turnInProgress).toBe(false)
+    expect(INITIAL_SESSION_STATE.turnInProgress).toBe(false)
 
     const started = apply({ kind: "request", text: "ダミーの依頼" })
     expect(started.turnInProgress).toBe(true)

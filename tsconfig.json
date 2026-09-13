@@ -8,7 +8,8 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
     "types": ["bun"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx", "scripts/**/*.ts"]
 }

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test"
 
-import { type Expression } from "../../src/domain/expression.ts"
 import {
   SPEAK_MCP_SERVER_NAME,
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
   toSessionEvents,
-} from "../../src/domain/session-event.ts"
+} from "../../src/core/sdk-message.ts"
+import { type Expression } from "../../src/protocol/expression.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の会話は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。

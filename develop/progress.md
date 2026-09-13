@@ -17,6 +17,20 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-13 移行の段2（protocol と core の骨組み・WebSocket・偽の駆動）
+
+**T-095 完了。** `src/protocol/`（両側で共有する語彙・畳み込み・zod）と `src/core/`（SDK 駆動・
+セッション管理・WebSocket・偽の駆動・環境変数）を切り、`/ws?t=<起動トークン>` を1本通した。
+**旧の SSE 5本と POST 6本はそのまま動いている**（見た目は変わらない）。着手前にユーザーと決めた
+4点: **zod は境界だけ**（`ClientCommand` は全部、`ServerFrame` は封筒だけ。`SessionEvent` /
+`SessionState` は TS の型のまま）、**起動トークンを入れる**、**`showView` はタブを貼り直す**、
+**バッチ 100ms ＋ `ui.js` の空の入口まで**。`domain/` は消えて `protocol/` に吸収され、
+`session-driver` / `host` / `orca-host` は `core/` へ移った（`REPORT_NOTATION_PROMPT` は
+`systemPromptAppend` として `index.ts` から注入する形にした）。**`orca tab goto` は存在しない**
+ことが実測で分かり（正しくは `orca goto --url --page`）、`docs/requirements.md` 5章の表を直した。
+`bun run check` は 445 pass / 0 fail（415→445）。**実機で確認済み**（偽の駆動でタブの貼り直し、
+SDK の駆動で1往復。詳細は `evidence`）。
+
 ### 2026-09-13 描く層をブラウザ側へ移す決定と、正典の書き換え（移行の段1）
 
 **ユーザーの依頼「最適なアーキテクチャを再考して提案して。規約にとらわれず、言語やエコシステムから

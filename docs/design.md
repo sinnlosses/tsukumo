@@ -189,8 +189,13 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 
 ## 4. protocol
 
-**zod のスキーマが正典で、型は `z.infer` で得る。** 境界（WebSocket の両端）で1回だけ検証し、
-中では検証済みの型を使う。`protocol` の中に `node:` も `document` も持ち込まない。
+**zod を使うのは境界の書き込み側と封筒だけ**（2026-09-13、段2 の着手前に決めた）。
+`ClientCommand` は**全部 zod が正典**で型は `z.infer`（ブラウザから届く書き込みの経路なので厳密に見る。
+`text` の上限もここ）。`ServerFrame` は**封筒（`type` / `protocolVersion`）だけ** zod で、中身
+（`state` / `events`）は検証しない。**`SessionEvent` と `SessionState` は zod にしない**（TS の型のまま。
+状態にフィールドを1つ足すたびにスキーマを二重に直す手間が、段3〜段9 の各段で効いてくるため）。
+境界（WebSocket の両端）で1回だけ検証し、中では検証済みの型を使う。`protocol` の中に `node:` も
+`document` も持ち込まない。
 
 ### 4.1 SessionEvent
 

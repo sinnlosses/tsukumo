@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { readTaskSummaries } from "../../src/domain/task-summary.ts"
+import { readTaskSummaries } from "../../src/protocol/task-summary.ts"
 
 // すべて手で書いた架空のタスク一覧。develop/tasks.json の実物は使わない。
 

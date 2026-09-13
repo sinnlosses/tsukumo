@@ -1,5 +1,5 @@
 // キャラクター定義（character.json）と立ち絵を読む。「外に触るのはここだけ」の側で、
-// character.json・画像ファイルの実際の読み取りに閉じる（解釈は src/domain/character.ts の仕事）。
+// character.json・画像ファイルの実際の読み取りに閉じる（解釈は src/protocol/character.ts の仕事）。
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
@@ -12,8 +12,8 @@ import {
   rasterMimeType,
   resolveOutfitAccent,
   resolvePortraitFile,
-} from "../domain/character.ts"
-import { type Expression, expressionLabel, type Outfit } from "../domain/expression.ts"
+} from "../protocol/character.ts"
+import { type Expression, expressionLabel, type Outfit } from "../protocol/expression.ts"
 
 const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 // character.json が無い・壊れている、または name が無いときの立ち絵 alt テキストの既定名。
@@ -26,10 +26,6 @@ export const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = [
   "characters",
   "tsukumo-spirit",
 ]
-// 利用者が用意した素材（`characters/local/` など。characters/README.md）を使いたいときに
-// 直接指すための環境変数。
-export const CHARACTER_DIR_ENV_NAME = "TSUKUMO_CHARACTER_DIR"
-
 /**
  * 立ち絵の画像ソース。**SVG はファイルの中身をそのまま埋め込む**（インライン）。それ以外
  * （ラスタ画像）は data URI にする。`src/presentation/view.ts` の `CharacterPortraitSource` と

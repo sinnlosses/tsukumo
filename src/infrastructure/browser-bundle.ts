@@ -22,6 +22,14 @@ const BROWSER_SCRIPT_ENTRY = "main.ts"
 /** 組み立てた結果の受け取り上限。超えるとビルドが失敗扱いになる（いまの実測は数KB）。 */
 const BROWSER_SCRIPT_MAX_BYTES = 8 * 1024 * 1024
 
+/**
+ * 新しいブラウザ側スクリプト（React）の入口。**段2 の時点では何も描かない**
+ * （docs/design.md 12章の段2）。段3以降、領域ごとにここへ移る。
+ */
+const UI_SCRIPT_ENTRY = "main.tsx"
+/** 組み立てた結果の受け取り上限。React を含むので旧のスクリプトより大きい。 */
+const UI_SCRIPT_MAX_BYTES = 8 * 1024 * 1024
+
 /** CSS の入口。ここから `@import` で辿れるものが1本にまとまる（`buildStyleSheet`）。 */
 const STYLE_SHEET_ENTRY = "main.css"
 /** 組み立てた結果の受け取り上限。超えるとビルドが失敗扱いになる（いまの実測は数十KB）。 */
@@ -30,6 +38,15 @@ const STYLE_SHEET_MAX_BYTES = 8 * 1024 * 1024
 export function buildBrowserScript(): Promise<string | undefined> {
   const entry = bundledFilePath("src", "presentation", "browser", BROWSER_SCRIPT_ENTRY)
   return bundleWithBun(entry, BROWSER_SCRIPT_MAX_BYTES)
+}
+
+/**
+ * 新しいブラウザ側スクリプト（`src/ui/`）を `bun build` でまとめる。JSX は tsconfig の
+ * `"jsx": "react-jsx"` で自動変換される（docs/design.md 11章）。
+ */
+export function buildUiScript(): Promise<string | undefined> {
+  const entry = bundledFilePath("src", "ui", UI_SCRIPT_ENTRY)
+  return bundleWithBun(entry, UI_SCRIPT_MAX_BYTES)
 }
 
 /**

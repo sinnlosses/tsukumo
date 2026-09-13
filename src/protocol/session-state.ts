@@ -1,15 +1,17 @@
-// 内部イベントの並びから、いま画面に出すべき中身を決める。原則2の「決める」層。
+// セッションの状態と、イベント1件を畳み込む純粋関数。**サーバ（core）とブラウザ（ui）の
+// 両方が同じものを回す**ので、protocol に置く（docs/design.md 4.2）。
 //
-// **純粋な畳み込み**（状態と1件のイベントから次の状態を返す）にしてあるので、fs にも
-// process にも SDK にも触らない。状態を持つのは呼び出し側（src/index.ts）。
+// **`node:` にも `document` にも触らない。** 状態を持つのは呼び出し側
+// （core の session-manager と、ブラウザ側の <App>）。
 //
-// ここが決めるのは「何を出すか」までで、HTML の組み立ては src/presentation/view.ts の仕事。
+// 時刻は畳み込みの中で `Date.now()` を呼ばず、イベントに打たれた `at` を受け取る
+// （両側の状態が同じになるように、時刻はイベントの発生側が決める。docs/design.md 4.1）。
 
-import { type Expression, resolveExpression } from "../domain/expression.ts"
-import { type PendingAsk } from "../domain/pending-answer.ts"
-import { type Question } from "../domain/question.ts"
-import { type CommandDescription, type SessionEvent } from "../domain/session-event.ts"
-import { DEFAULT_SPEECH_MARKER, splitUtterance } from "../domain/utterance.ts"
+import { type Expression, resolveExpression } from "./expression.ts"
+import { type PendingAsk } from "./pending-ask.ts"
+import { type Question } from "./question.ts"
+import { type CommandDescription, type SessionEvent } from "./session-event.ts"
+import { DEFAULT_SPEECH_MARKER, splitUtterance } from "./utterance.ts"
 
 /**
  * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
@@ -22,7 +24,7 @@ const MAX_RECENT_FINISHED_TOOLS = 50
  * `buildMainBody` 側のタブ（`MAX_MAIN_VIEW_TURNS`）でさらに絞られる**が、常駐プロセスが
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
  */
-const MAX_SESSION_VIEW_TURNS = 20
+const MAX_SESSION_STATE_TURNS = 20
 
 /**
  * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は表示側
@@ -36,7 +38,7 @@ export type ToolActivity = {
   /** サブエージェントの中で動いたか（`tool-started` の `parentToolUseId` があるか）。 */
   readonly nested: boolean
   /**
-   * ツールが動き始めた時刻（呼び出し側が渡す現在時刻。`applySessionEvent` の `now`）。
+   * ツールが動き始めた時刻（呼び出し側が渡す現在時刻。`applySessionEvent` の `at`）。
    * 表情を「作業中」に切り替えるかどうかの判定（`resolveExpression`）にだけ使う。
    */
   readonly startedAt: number
@@ -89,7 +91,7 @@ export type SessionRecord =
  * （docs/requirements.md 4.2「書きかけの本文がそのまま流れていき、ターンが終わった瞬間に
  * 整形し直す」）。
  */
-export type SessionView = {
+export type SessionState = {
   /**
    * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。**件数の上限は無い**、
    * ターンの境目だけで区切る）。**セリフが1つも来なかったターンでも消さない**
@@ -148,7 +150,7 @@ export type SessionView = {
   readonly turnInProgress: boolean
 }
 
-export const INITIAL_SESSION_VIEW: SessionView = {
+export const INITIAL_SESSION_STATE: SessionState = {
   speeches: [],
   speechExpression: "default",
   speechCalledInTurn: false,
@@ -169,62 +171,63 @@ export const INITIAL_SESSION_VIEW: SessionView = {
 /**
  * イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。
  *
- * `now` は `tool-started` の `startedAt` を記録するためだけに使う現在時刻。`Date.now()` を
- * ここで呼ばないのは、この関数を純粋関数のまま保つため（呼び出し側の src/index.ts が渡す）。
+ * `at` はイベントが起きた時刻（`StampedEvent.at`）。`tool-started` の `startedAt` を記録する
+ * ためだけに使う。`Date.now()` をここで呼ばないのは、この関数を純粋関数のまま保ち、
+ * **サーバとブラウザで同じ結果になる**ようにするため（docs/design.md 4.1）。
  */
 export function applySessionEvent(
-  view: SessionView,
+  state: SessionState,
   event: SessionEvent,
-  now: number,
-): SessionView {
+  at: number,
+): SessionState {
   switch (event.kind) {
     case "session-info":
       return {
-        ...view,
+        ...state,
         sessionId: event.sessionId,
         model: event.model,
         permissionMode: event.permissionMode,
         slashCommands: commandCandidates(event.slashCommands, event.terminalSlashCommands),
       }
     case "command-descriptions":
-      return { ...view, commandDescriptions: event.descriptions }
+      return { ...state, commandDescriptions: event.descriptions }
     case "request":
       return {
-        ...view,
-        records: trimToRecentTurns([...view.records, { kind: "request", text: event.text }]),
+        ...state,
+        records: trimToRecentTurns([...state.records, { kind: "request", text: event.text }]),
         // 前のターンの並びは最後の1件だけ残す（消すとキャラクターが消えたように見えるが、
         // 丸ごと持ち越すと次のターンの冒頭に前のターンの並びが残ってしまう）。
-        speeches: view.speeches.slice(-1),
+        speeches: state.speeches.slice(-1),
         partialUtterance: "",
         turnInProgress: true,
         speechCalledInTurn: false,
       }
     case "partial-utterance":
-      return { ...view, partialUtterance: view.partialUtterance + event.text }
+      return { ...state, partialUtterance: state.partialUtterance + event.text }
     case "utterance":
-      return settleUtterance({ ...view, partialUtterance: event.text })
+      return settleUtterance({ ...state, partialUtterance: event.text })
     case "speech":
       return {
-        ...view,
+        ...state,
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
         // （docs/requirements.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
-        speeches: [...(view.speechCalledInTurn ? view.speeches : []), event.text],
+        speeches: [...(state.speechCalledInTurn ? state.speeches : []), event.text],
         speechExpression: event.expression,
         speechCalledInTurn: true,
       }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
       return {
-        ...view,
+        ...state,
         records: [
-          ...view.records,
+          ...state.records,
           {
             kind: "tool",
             toolUseId: event.toolUseId,
             name: event.name,
             input: event.input,
             nested,
-            startedAt: now,
+            startedAt: at,
             result: undefined,
           },
         ],
@@ -234,22 +237,22 @@ export function applySessionEvent(
             name: event.name,
             input: event.input,
             nested,
-            startedAt: now,
+            startedAt: at,
           },
-          ...view.runningTools,
+          ...state.runningTools,
         ],
       }
     }
     case "tool-finished":
-      return finishTool(view, event.toolUseId, event.content, event.isError)
+      return finishTool(state, event.toolUseId, event.content, event.isError)
     case "pending-changed":
-      return { ...view, pending: event.pending }
+      return { ...state, pending: event.pending }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished":
-      return { ...settleUtterance(view), turnInProgress: false }
+      return { ...settleUtterance(state), turnInProgress: false }
     case "session-ended":
       return {
-        ...settleUtterance(view),
+        ...settleUtterance(state),
         endedReason: event.reason,
         runningTools: [],
         turnInProgress: false,
@@ -263,22 +266,22 @@ export function applySessionEvent(
  *
  * **メインビューはレポートだけ**（docs/requirements.md 4.2「ツールの流れはサイドバーへ」）。
  * `records` に積んだ `tool` の記録はここでは渡さない（サイドバーの仕事は `runningTools` /
- * `finishedTools` を直接読む src/usecase/view-publish.ts の役目）。
+ * `finishedTools` を直接読む src/usecase/state-publish.ts の役目）。
  */
-export function mainViewEntries(view: SessionView): readonly MainViewEntry[] {
-  const settled = view.records.filter(isReportRecord)
-  return view.partialUtterance === ""
+export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
+  const settled = state.records.filter(isReportRecord)
+  return state.partialUtterance === ""
     ? settled
-    : [...settled, { kind: "detail", markdown: view.partialUtterance }]
+    : [...settled, { kind: "detail", markdown: state.partialUtterance }]
 }
 
 /**
- * いま出す表情。決め方の正典は `resolveExpression`（src/domain/expression.ts）。ここは
- * `SessionView` の該当する値（実行中のツール・直近の `speak` の表情）を渡すだけ。
+ * いま出す表情。決め方の正典は `resolveExpression`（src/protocol/expression.ts）。ここは
+ * `SessionState` の該当する値（実行中のツール・直近の `speak` の表情）を渡すだけ。
  * `now` は経過時間の判定に要る現在時刻（呼び出し側が渡す。`Date.now()` はここでは呼ばない）。
  */
-export function currentExpression(view: SessionView, now: number): Expression {
-  return resolveExpression(view.runningTools, view.speechExpression, now)
+export function currentExpression(state: SessionState, now: number): Expression {
+  return resolveExpression(state.runningTools, state.speechExpression, now)
 }
 
 /**
@@ -294,15 +297,15 @@ export function currentExpression(view: SessionView, now: number): Expression {
  * （`doctor` など）の除外がまだ効かない。**`init` が届き `slashCommands` が埋まった時点で、
  * 除外込みの一覧に戻る**ので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
  */
-export function commandSuggestions(view: SessionView): readonly CommandDescription[] {
-  if (view.slashCommands.length === 0) {
-    return view.commandDescriptions
+export function commandSuggestions(state: SessionState): readonly CommandDescription[] {
+  if (state.slashCommands.length === 0) {
+    return state.commandDescriptions
   }
 
   const descriptions = new Map(
-    view.commandDescriptions.map((command) => [command.name, command.description]),
+    state.commandDescriptions.map((command) => [command.name, command.description]),
   )
-  return view.slashCommands.map((name) => ({ name, description: descriptions.get(name) }))
+  return state.slashCommands.map((name) => ({ name, description: descriptions.get(name) }))
 }
 
 /**
@@ -332,12 +335,12 @@ function isReportRecord(
  * 同じ（規約が守られずに本文へ紛れたセリフの受け皿。以前は本文をそのまま出していたが、締めの
  * 一言がメインビューに残った。2026-09-12）。
  */
-function settleUtterance(view: SessionView): SessionView {
-  if (view.partialUtterance.trim() === "") {
-    return { ...view, partialUtterance: "" }
+function settleUtterance(state: SessionState): SessionState {
+  if (state.partialUtterance.trim() === "") {
+    return { ...state, partialUtterance: "" }
   }
 
-  const settled = withMarkerFallback(view)
+  const settled = withMarkerFallback(state)
   const markdown = settled.partialUtterance
 
   return {
@@ -354,18 +357,18 @@ function settleUtterance(view: SessionView): SessionView {
  * `speech` イベントの扱いと同じ規約）。
  * `partialUtterance` にはマーカー行を除いた本文を残す（呼び出し側が確定した記録へ積む）。
  */
-function withMarkerFallback(view: SessionView): SessionView {
-  const parts = splitUtterance(view.partialUtterance, DEFAULT_SPEECH_MARKER)
+function withMarkerFallback(state: SessionState): SessionState {
+  const parts = splitUtterance(state.partialUtterance, DEFAULT_SPEECH_MARKER)
   if (parts.speech === undefined) {
-    return { ...view, partialUtterance: parts.detail }
+    return { ...state, partialUtterance: parts.detail }
   }
 
   // speak を呼んだターンでも、本文に紛れたマーカー行は吹き出しへ回す（規約が守られなかった
   // ときの受け皿。speak のあとに並べて、同じターンのまとまりとして出す）。
-  const speeches = view.speechCalledInTurn ? [...view.speeches, parts.speech] : [parts.speech]
+  const speeches = state.speechCalledInTurn ? [...state.speeches, parts.speech] : [parts.speech]
 
   return {
-    ...view,
+    ...state,
     speeches,
     speechCalledInTurn: true,
     partialUtterance: parts.detail,
@@ -377,17 +380,17 @@ function withMarkerFallback(view: SessionView): SessionView {
  * （対応が取れない結果を作らない）。
  */
 function finishTool(
-  view: SessionView,
+  state: SessionState,
   toolUseId: string,
   content: string,
   isError: boolean,
-): SessionView {
-  const index = view.records.findIndex(
+): SessionState {
+  const index = state.records.findIndex(
     (record) => record.kind === "tool" && record.toolUseId === toolUseId,
   )
-  const record = index === -1 ? undefined : view.records[index]
+  const record = index === -1 ? undefined : state.records[index]
   if (record === undefined || record.kind !== "tool") {
-    return view
+    return state
   }
 
   const activity: ToolActivity = {
@@ -399,19 +402,19 @@ function finishTool(
   }
 
   return {
-    ...view,
+    ...state,
     records: [
-      ...view.records.slice(0, index),
+      ...state.records.slice(0, index),
       { ...record, result: { content, isError } },
-      ...view.records.slice(index + 1),
+      ...state.records.slice(index + 1),
     ],
-    runningTools: view.runningTools.filter((running) => running.toolUseId !== toolUseId),
-    finishedTools: [activity, ...view.finishedTools].slice(0, MAX_RECENT_FINISHED_TOOLS),
+    runningTools: state.runningTools.filter((running) => running.toolUseId !== toolUseId),
+    finishedTools: [activity, ...state.finishedTools].slice(0, MAX_RECENT_FINISHED_TOOLS),
   }
 }
 
 /**
- * 直近 {@link MAX_SESSION_VIEW_TURNS} ターンぶんだけを残す。**ターンの境目は `request`**
+ * 直近 {@link MAX_SESSION_STATE_TURNS} ターンぶんだけを残す。**ターンの境目は `request`**
  * なので、古い `request` から数えて窓の外に出たものをまとめて落とす。
  */
 function trimToRecentTurns(records: readonly SessionRecord[]): readonly SessionRecord[] {
@@ -419,10 +422,10 @@ function trimToRecentTurns(records: readonly SessionRecord[]): readonly SessionR
     (indexes, record, index) => (record.kind === "request" ? [...indexes, index] : indexes),
     [],
   )
-  if (requestIndexes.length <= MAX_SESSION_VIEW_TURNS) {
+  if (requestIndexes.length <= MAX_SESSION_STATE_TURNS) {
     return records
   }
 
-  const cutAt = requestIndexes[requestIndexes.length - MAX_SESSION_VIEW_TURNS]
+  const cutAt = requestIndexes[requestIndexes.length - MAX_SESSION_STATE_TURNS]
   return cutAt === undefined ? records : records.slice(cutAt)
 }

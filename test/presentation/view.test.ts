@@ -42,7 +42,7 @@ import {
   viewEventPath,
   type ViewName,
 } from "../../src/presentation/view.ts"
-import { type MainViewEntry } from "../../src/usecase/session-view.ts"
+import { type MainViewEntry } from "../../src/protocol/session-state.ts"
 
 // buildCharacterBody に渡す全部入りのデータ。個々のテストは必要な部分だけ上書きする。
 const FULL_CHARACTER_DATA: CharacterViewData = {

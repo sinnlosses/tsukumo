@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { splitUtterance } from "../../src/domain/utterance.ts"
+import { splitUtterance } from "../../src/protocol/utterance.ts"
 
 // すべて手で書いた架空の発話。実物の会話は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。

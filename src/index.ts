@@ -1,44 +1,51 @@
 // tsukumo のエントリポイント。Agent SDK で Claude Code のセッションを起こし、届いたイベントを
-// HTML のビューに変えて、ローカルの HTTP サーバから配り続ける。
+// ビューに変えて、ローカルの HTTP サーバから配り続ける。
 //
 // ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
 // 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。
+//
+// **いまは新旧2つの経路が並んで動く**（docs/design.md 12章の段2）。届いたイベントは
+// (1) `session-manager` へ（WebSocket の `events` フレーム）と (2) 旧の `event-sink` へ
+// （SSE で押す HTML）の両方へ流れる。段3以降、領域ごとに (2) が消えていく。
 
+import { randomUUID } from "node:crypto"
 import process from "node:process"
 
-import { availableExpressions } from "./domain/character.ts"
-import { type CommandDescription } from "./domain/session-event.ts"
-import { resolveOpenView, OPEN_VIEW_ENV_NAME } from "./infrastructure/auto-open-view.ts"
-import { buildBrowserScript, buildStyleSheet } from "./infrastructure/browser-bundle.ts"
+import { readConfig, VIEW_PORT_ENV_NAME } from "./core/config.ts"
+import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
+import { type Host } from "./core/host.ts"
+import { createOrcaHost } from "./core/orca-host.ts"
+import { attachSessionSocket, createStartupToken } from "./core/server.ts"
+import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./core/session-driver.ts"
+import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
+import {
+  buildBrowserScript,
+  buildStyleSheet,
+  buildUiScript,
+} from "./infrastructure/browser-bundle.ts"
 import { resolveBundledDir } from "./infrastructure/bundled-path.ts"
 import {
-  CHARACTER_DIR_ENV_NAME,
   DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
   readCharacterAssets,
   readCharacterDefinition,
 } from "./infrastructure/character-asset.ts"
-import { type Host } from "./infrastructure/host.ts"
-import { createOrcaHost } from "./infrastructure/orca-host.ts"
-import {
-  DEFAULT_PERMISSION_MODE,
-  type SessionDriver,
-  startSession,
-} from "./infrastructure/session-driver.ts"
 import { createTaskSummaryReader } from "./infrastructure/task-summary.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
   startOnResolvedPort,
-  VIEW_PORT_ENV_NAME,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "./infrastructure/view-port.ts"
-import { startViewServer, type ViewServer } from "./infrastructure/view-server.ts"
+import { startViewServer } from "./infrastructure/view-server.ts"
+import { REPORT_NOTATION_PROMPT } from "./presentation/report-notation.ts"
 import {
   buildCharacterBody,
   buildMainBody,
   buildPendingAnswerBody,
   buildSidebarBody,
 } from "./presentation/view.ts"
+import { availableExpressions } from "./protocol/character.ts"
+import { type SessionEvent, type CommandDescription } from "./protocol/session-event.ts"
 import { createEventSink } from "./usecase/event-sink.ts"
 import { throttle } from "./usecase/throttle.ts"
 import { createViewPublisher } from "./usecase/view-publish.ts"
@@ -53,13 +60,14 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
 作業対象にする（claude を打つのと同じ感覚）。
 
 環境変数:
-  TSUKUMO_VIEW_PORT       ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。既定のまま塞がっていたら
-                          ${String(VIEW_PORT_FALLBACK_ATTEMPTS)}個先まで順にずらす。明示的に指定した
-                          ときはずらさずそのまま失敗する。0 を渡すと空きポートを使う）
-  TSUKUMO_CHARACTER_DIR   キャラクター定義ディレクトリ（既定は tsukumo 自身の同梱の
-                          characters/tsukumo-spirit。自分の素材を使うときは起動先の
-                          characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
-  TSUKUMO_OPEN_VIEW       起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
+  TSUKUMO_VIEW_PORT   ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。既定のまま塞がっていたら
+                      ${String(VIEW_PORT_FALLBACK_ATTEMPTS)}個先まで順にずらす。明示的に指定した
+                      ときはずらさずそのまま失敗する。0 を渡すと空きポートを使う）
+  TSUKUMO_CHARACTER   キャラクター定義ディレクトリ（既定は tsukumo 自身の同梱の
+                      characters/tsukumo-spirit。自分の素材を使うときは起動先の
+                      characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
+  TSUKUMO_OPEN_VIEW   起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
+  TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず台本を流す）
 `
 
 // ビューを配り直す間隔。本文はトークン単位で流れてくるので、断片1つごとに全ビューを組み直すと
@@ -77,9 +85,12 @@ async function main(args: readonly string[]): Promise<number> {
     return 0
   }
 
+  // 環境変数を読むのはここ1回だけ（src/core/config.ts）。
+  const config = readConfig(process.env)
+
   // 起動時に前提（ポート番号として読める）が満たされていないときだけ即時終了する
   // （docs/coding-standards.md「エラーハンドリング」）。
-  const portResolution = resolveViewPort(process.env[VIEW_PORT_ENV_NAME])
+  const portResolution = resolveViewPort(config.rawViewPort)
   if (portResolution.kind === "invalid") {
     process.stderr.write(`tsukumo: ${VIEW_PORT_ENV_NAME} がポート番号として読めない\n`)
     return 1
@@ -89,13 +100,28 @@ async function main(args: readonly string[]): Promise<number> {
   // 乗せる）。ディスクに置かないので古い成果物を配る事故が起きず、`.ts` / `.css` を直して起こし直す
   // だけで反映される。組み立てに失敗したらページが動かないので、**ここは起動時の前提不足として
   // 即時終了する**（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の例外側）。
-  const [browserScript, styleSheet] = await Promise.all([buildBrowserScript(), buildStyleSheet()])
+  const [browserScript, styleSheet, uiScript] = await Promise.all([
+    buildBrowserScript(),
+    buildStyleSheet(),
+    buildUiScript(),
+  ])
   if (browserScript === undefined) {
     process.stderr.write("tsukumo: ブラウザ側スクリプトを組み立てられない\n")
     return 1
   }
   if (styleSheet === undefined) {
     process.stderr.write("tsukumo: CSS を組み立てられない\n")
+    return 1
+  }
+  if (uiScript === undefined) {
+    process.stderr.write("tsukumo: ブラウザ側スクリプト（ui）を組み立てられない\n")
+    return 1
+  }
+
+  // 偽の駆動を選んだときは台本が要る。無ければ起こす意味が無いので、起動時の前提不足として扱う。
+  const fakeScript = config.driver === "fake" ? readFakeScript() : undefined
+  if (config.driver === "fake" && fakeScript === undefined) {
+    process.stderr.write("tsukumo: 偽の駆動の台本を読めない\n")
     return 1
   }
 
@@ -106,7 +132,7 @@ async function main(args: readonly string[]): Promise<number> {
   // 起動直後の依頼は受け取れずに 503 で返るだけで、どちらかが欠けて黙って落ちることがない。
   let driver: SessionDriver | undefined = undefined
   // 入力欄の `/` 補完の候補（`GET /api/commands` が読む）。init 前は空配列
-  // （docs/requirements.md 4.2「入力欄」）。session-view.ts が端末専用を除いた名前に説明を
+  // （docs/requirements.md 4.2「入力欄」）。session-state.ts が端末専用を除いた名前に説明を
   // 添える計算（`commandSuggestions`）を済ませたものをそのまま持つ。
   let commands: readonly CommandDescription[] = []
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
@@ -132,6 +158,7 @@ async function main(args: readonly string[]): Promise<number> {
       () => commands,
       browserScript,
       styleSheet,
+      uiScript,
     ),
   )
   if (!startResult.ok) {
@@ -141,7 +168,7 @@ async function main(args: readonly string[]): Promise<number> {
   const server = startResult.server
 
   const characterDir = resolveBundledDir(
-    process.env[CHARACTER_DIR_ENV_NAME],
+    config.character,
     process.cwd(),
     DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
   )
@@ -163,43 +190,101 @@ async function main(args: readonly string[]): Promise<number> {
     PUBLISH_INTERVAL_MS,
   )
 
-  driver = startSession({
-    cwd: process.cwd(),
-    expressions: availableExpressions(readCharacterDefinition(characterDir)),
-    permissionMode: DEFAULT_PERMISSION_MODE,
-    onEvent: createEventSink(
-      publish,
-      server.publishTurnStatus,
-      (pending) => {
-        server.publishPendingAnswer(buildPendingAnswerBody(pending))
-      },
-      (next) => {
-        commands = next
-      },
-      (reason) => {
-        process.stderr.write(`tsukumo: セッションが終わった: ${reason}\n`)
-      },
-      Date.now,
-    ),
-  })
-  stopSessionOnExit(driver)
-  announce(server)
+  // 旧の経路（SSE で押す HTML）。**新しい経路と同じイベントを受け取る購読者の1つ**として残す
+  // （docs/design.md 12章の段2）。
+  const sink = createEventSink(
+    publish,
+    server.publishTurnStatus,
+    (pending) => {
+      server.publishPendingAnswer(buildPendingAnswerBody(pending))
+    },
+    (next) => {
+      commands = next
+    },
+    (reason) => {
+      process.stderr.write(`tsukumo: セッションが終わった: ${reason}\n`)
+    },
+    Date.now,
+  )
 
-  if (resolveOpenView(process.env[OPEN_VIEW_ENV_NAME])) {
-    await openLayoutView(host, server)
+  const sessionId = randomUUID()
+  const manager = createSessionManager({
+    now: Date.now,
+    batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
+  })
+  manager.create({
+    sessionId,
+    startDriver: (toFrames) => {
+      const started = startDriver(
+        {
+          cwd: process.cwd(),
+          expressions: availableExpressions(readCharacterDefinition(characterDir)),
+          script: fakeScript,
+        },
+        (event) => {
+          toFrames(event)
+          sink(event)
+        },
+      )
+      driver = started
+      return started
+    },
+  })
+
+  // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
+  const token = createStartupToken()
+  attachSessionSocket({
+    httpServer: server.httpServer,
+    token,
+    origin: new URL(server.layoutUrl).origin,
+    subscribe: (send) => manager.subscribe(sessionId, send),
+    dispatch: (command) => manager.dispatch(sessionId, command),
+  })
+
+  const viewUrl = `${server.layoutUrl}?t=${token}`
+  stopSessionOnExit(manager.close)
+  announce(viewUrl)
+
+  if (config.openView) {
+    await openLayoutView(host, viewUrl)
   }
 
   return 0
+}
+
+/** 駆動を起こすときに要るもの。偽の駆動を選んだときだけ `script` が入る。 */
+type DriverSeed = {
+  readonly cwd: string
+  readonly expressions: ReturnType<typeof availableExpressions>
+  readonly script: ReturnType<typeof readFakeScript>
+}
+
+/**
+ * セッション駆動を1つ起こす。**台本があれば偽の駆動**（claude を起こさない。
+ * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。
+ */
+function startDriver(seed: DriverSeed, onEvent: (event: SessionEvent) => void): SessionDriver {
+  if (seed.script !== undefined) {
+    return startFakeSession({ script: seed.script, onEvent })
+  }
+
+  return startSession({
+    cwd: seed.cwd,
+    expressions: seed.expressions,
+    permissionMode: DEFAULT_PERMISSION_MODE,
+    systemPromptAppend: REPORT_NOTATION_PROMPT,
+    onEvent,
+  })
 }
 
 /**
  * プロセスが終わるときにセッションを閉じる。**閉じないと claude の子プロセスが残る**ので、
  * 割り込み（Ctrl-C）と終了要求の両方で入力を閉じてから抜ける。
  */
-function stopSessionOnExit(driver: SessionDriver): void {
+function stopSessionOnExit(closeSessions: () => void): void {
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, () => {
-      driver.close()
+      closeSessions()
       process.exit(0)
     })
   }
@@ -210,19 +295,18 @@ function stopSessionOnExit(driver: SessionDriver): void {
  * `host.showView` が失敗を返すだけで例外は投げない。docs/coding-standards.md
  * 「エラーハンドリング」— 常駐プロセスは描画1回の失敗で落ちない）。
  */
-async function openLayoutView(host: Host, server: ViewServer): Promise<void> {
-  const result = await host.showView(server.layoutUrl)
+async function openLayoutView(host: Host, url: string): Promise<void> {
+  const result = await host.showView(url)
   if (!result.ok) {
     process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
   }
 }
 
 // 起動したことと URL は、ペインに残る唯一の出力。ここに会話の内容は出さない
-// （docs/coding-standards.md「会話内容の扱い」）。
-// 利用者が実際に開くのは layoutUrl（3領域をまとめた1枚）だけ。個別ビューのページは
-// 2026-09-12 に消した（`docs/architecture.md`「ビューは1枚のページにまとめる」）。
-function announce(server: ViewServer): void {
-  process.stdout.write(`tsukumo: ビューを配信中\n  ${server.layoutUrl}\n`)
+// （docs/coding-standards.md「会話内容の扱い」）。**URL には起動トークンが付く**ので、
+// タブを開き直すときはこの URL をそのまま使う。
+function announce(url: string): void {
+  process.stdout.write(`tsukumo: ビューを配信中\n  ${url}\n`)
 }
 
 const exitCode = await main(process.argv.slice(2))

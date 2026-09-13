@@ -202,10 +202,11 @@ transcript と同じ扱いにする。**
 `test/architecture.test.ts` が落とす**ので、向きを変えたくなったら先にこのテストと `docs/design.md`
 2章を直す。
 
-**移行が終わるまで（段7まで）は旧の4層（`domain` / `usecase` / `presentation` / `infrastructure`）が
-併存する。** 旧の層の辺は移行前の表のまま（`docs/architecture.md`「層をディレクトリで表し、依存の
-向きをテストで縛る」）で、**旧の層から新の層（`protocol`）を import するのは可、逆は不可**。
-新しく書くコードは新の層に置く。
+**移行が終わるまで（段7まで）は旧の層（`usecase` / `presentation` / `infrastructure`。`domain` は
+段2で `protocol` に吸収されて消えた）が併存する。** 旧の層の辺は移行前の表のまま
+（`docs/architecture.md`「層をディレクトリで表し、依存の向きをテストで縛る」）で、**旧の層から
+`protocol` を import するのは可、逆は不可**。**旧の層から `core` / `ui` も不可**（新しい経路の
+配線を持つのは `src/index.ts` だけ）。新しく書くコードは新の層に置く。
 
 **ディレクトリもファイルも単数形にする。** 複数は「複数返す」関数名の側で表す
 （`task-summary.ts` の `readTaskSummaries`）。理由は、ファイル名が**概念**を指すため

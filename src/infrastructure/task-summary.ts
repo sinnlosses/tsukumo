@@ -1,12 +1,12 @@
 // develop/tasks.json を読む。ファイルの mtime を見て、変わったときだけ読み直す
-// （配信のたびに JSON をパースし直さないため）。中身の解釈は src/domain/task-summary.ts の
+// （配信のたびに JSON をパースし直さないため）。中身の解釈は src/protocol/task-summary.ts の
 // `readTaskSummaries` の仕事で、ここは読み直すかどうかの判断とファイルの読み取りだけを持つ
 // （決定。分けると同じ概念が2箇所に散るので割らない）。
 
 import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-import { readTaskSummaries, type TaskSummaryItem } from "../domain/task-summary.ts"
+import { readTaskSummaries, type TaskSummaryItem } from "../protocol/task-summary.ts"
 
 // develop/tasks.json はセッションに依存しない、tsukumo 自身の進捗管理ファイルなので、
 // **cwd 相対**で読む（bundledFilePath は使わない）。

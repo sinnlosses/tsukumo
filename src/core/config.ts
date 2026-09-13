@@ -1,0 +1,54 @@
+// 環境変数の読み取り。**`process.env` を読むのはここ1箇所**（docs/coding-standards.md
+// 「外の世界に依存する値は読み取りを1モジュールに集約する」。モジュールのトップレベルでは
+// 触らず、{@link readConfig} を呼んだときだけ読む）。
+//
+// 値の意味と既定は docs/design.md 5章「config.ts」の表が正典。
+
+/** ビューを配るポート（既定は src/infrastructure/view-port.ts の `DEFAULT_VIEW_PORT`）。 */
+export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
+/** キャラクターパックの名前（`characters/<name>`）または絶対パス。 */
+export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
+/** 起動時にタブを自動で開くか（`0` のときだけ開かない）。 */
+export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
+/** セッションの駆動（`sdk` / `fake`）。 */
+export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
+/** `1` で復元せず新規に起こす（復元そのものは段9で入る。docs/design.md 8章）。 */
+export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
+
+/**
+ * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、台本どおりにイベントを流す
+ * （src/core/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
+ */
+export type DriverKind = "sdk" | "fake"
+
+export type Config = {
+  /**
+   * `TSUKUMO_VIEW_PORT` の生の値。**ここでは数として解釈しない**（既定か明示かの区別と
+   * ずらす判断は src/infrastructure/view-port.ts が持つ）。
+   */
+  readonly rawViewPort: string | undefined
+  /** キャラクターの指定（未設定なら undefined ＝ 同梱の既定を使う）。 */
+  readonly character: string | undefined
+  readonly openView: boolean
+  readonly driver: DriverKind
+  readonly newSession: boolean
+}
+
+/**
+ * 環境変数を1回だけ読んで設定にする。**不正な値でここでは落とさない**（読めない値は既定へ
+ * 倒し、ポート番号のように起動を止めるべきものだけを呼び出し側が判断する）。
+ */
+export function readConfig(env: Readonly<Record<string, string | undefined>>): Config {
+  return {
+    rawViewPort: env[VIEW_PORT_ENV_NAME],
+    character: nonEmpty(env[CHARACTER_ENV_NAME]),
+    openView: env[OPEN_VIEW_ENV_NAME]?.trim() !== "0",
+    driver: env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk",
+    newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
+  }
+}
+
+function nonEmpty(value: string | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed === undefined || trimmed === "" ? undefined : trimmed
+}

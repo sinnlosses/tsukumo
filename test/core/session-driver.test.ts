@@ -1,12 +1,15 @@
 import { describe, expect, it } from "bun:test"
 
+import { type PermissionMode as SdkPermissionMode } from "@anthropic-ai/claude-agent-sdk"
+
 import {
   buildQuerySeedOptions,
   DEFAULT_EFFORT,
   DEFAULT_MODEL,
   DEFAULT_PERMISSION_MODE,
   type SessionDriverOptions,
-} from "../../src/infrastructure/session-driver.ts"
+} from "../../src/core/session-driver.ts"
+import { MODEL_ALIASES, PERMISSION_MODES } from "../../src/protocol/command.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
@@ -15,6 +18,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",
   expressions: ["default"],
   permissionMode: DEFAULT_PERMISSION_MODE,
+  systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
   onEvent: () => {},
 }
 
@@ -37,5 +41,26 @@ describe("buildQuerySeedOptions", () => {
 
     expect(seed.cwd).toBe("/tmp/tsukumo-other")
     expect(seed.permissionMode).toBe("plan")
+  })
+})
+
+describe("protocol の値の一覧と SDK の型", () => {
+  it("PERMISSION_MODES はすべて SDK の PermissionMode として渡せる値", () => {
+    // 代入できること自体が型の検査。**SDK 側にはこれ以外の値もある**（`dontAsk`。画面には
+    // 出さないので protocol の一覧には入れていない）ので、確かめるのはこの向きだけ。
+    const asSdk: readonly SdkPermissionMode[] = PERMISSION_MODES
+
+    expect([...asSdk].sort()).toEqual([
+      "acceptEdits",
+      "auto",
+      "bypassPermissions",
+      "default",
+      "plan",
+    ])
+  })
+
+  it("MODEL_ALIASES は既定のモデルを含む3語", () => {
+    expect(MODEL_ALIASES).toEqual(["opus", "sonnet", "haiku"])
+    expect(MODEL_ALIASES).toContain(DEFAULT_MODEL)
   })
 })

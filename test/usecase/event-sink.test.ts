@@ -1,13 +1,13 @@
 import { describe, expect, it } from "bun:test"
 
-import { type SessionEvent } from "../../src/domain/session-event.ts"
+import { type SessionEvent } from "../../src/protocol/session-event.ts"
+import { type SessionState } from "../../src/protocol/session-state.ts"
 import { createEventSink } from "../../src/usecase/event-sink.ts"
-import { type SessionView } from "../../src/usecase/session-view.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 
 type Recorder = {
-  readonly views: SessionView[]
+  readonly views: SessionState[]
   readonly turnStatuses: {
     readonly turnStartedAt: number | undefined
     readonly turnFinishedAt: number | undefined
@@ -19,7 +19,7 @@ type Recorder = {
 }
 
 function createRecorder(now: () => number = () => 0): Recorder {
-  const views: SessionView[] = []
+  const views: SessionState[] = []
   const turnStatuses: Recorder["turnStatuses"] = []
   const pendingAnswers: unknown[] = []
   const commandsCalls: unknown[][] = []

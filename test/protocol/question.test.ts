@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { parseQuestions } from "../../src/domain/question.ts"
+import { parseQuestions } from "../../src/protocol/question.ts"
 
 // 手で書いた架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
 

@@ -1,0 +1,112 @@
+{
+  "opening": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "session-info",
+        "sessionId": "fake-session",
+        "model": "opus",
+        "permissionMode": "auto",
+        "slashCommands": ["clear", "compact", "doctor"],
+        "terminalSlashCommands": ["doctor"]
+      }
+    },
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "command-descriptions",
+        "descriptions": [
+          { "name": "clear", "description": "会話を消して始め直す（架空の説明）" },
+          { "name": "compact", "description": "会話を要約してまとめる（架空の説明）" }
+        ]
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "speech",
+        "text": "台本の駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+        "expression": "default"
+      }
+    }
+  ],
+  "turns": [
+    [
+      { "afterMs": 100, "event": { "kind": "partial-utterance", "text": "## 台本の" } },
+      { "afterMs": 150, "event": { "kind": "partial-utterance", "text": "レポート\n\n" } },
+      {
+        "afterMs": 200,
+        "event": {
+          "kind": "partial-utterance",
+          "text": "これは架空の本文で、実物の会話ではない。\n"
+        }
+      },
+      {
+        "afterMs": 300,
+        "event": {
+          "kind": "tool-started",
+          "toolUseId": "fake-tool-1",
+          "name": "Read",
+          "input": { "file_path": "/tmp/dummy/notes.md" }
+        }
+      },
+      {
+        "afterMs": 700,
+        "event": {
+          "kind": "tool-finished",
+          "toolUseId": "fake-tool-1",
+          "content": "ダミーの読み取り結果（3行）",
+          "isError": false
+        }
+      },
+      {
+        "afterMs": 800,
+        "event": {
+          "kind": "speech",
+          "text": "読み終わったよ。中身はダミーだけどね。",
+          "expression": "proud"
+        }
+      },
+      {
+        "afterMs": 900,
+        "event": {
+          "kind": "utterance",
+          "text": "## 台本のレポート\n\nこれは架空の本文で、実物の会話ではない。\n\n- 段2 の配信の経路を確かめるための台本\n- 表・コードなどの記法は段6で unified に置き換わる\n"
+        }
+      },
+      { "afterMs": 1000, "event": { "kind": "turn-finished", "status": "success" } }
+    ],
+    [
+      {
+        "afterMs": 100,
+        "event": {
+          "kind": "pending-changed",
+          "pending": [
+            {
+              "kind": "permission",
+              "id": "fake-ask-1",
+              "toolName": "Bash",
+              "input": { "command": "echo 架空の確認" }
+            }
+          ]
+        }
+      },
+      {
+        "afterMs": 200,
+        "event": {
+          "kind": "speech",
+          "text": "許可がほしいところ。答えてみて。",
+          "expression": "flustered"
+        }
+      },
+      {
+        "afterMs": 1200,
+        "event": {
+          "kind": "utterance",
+          "text": "答え待ちの箱を出す場面（架空）。答えると箱が消える。\n"
+        }
+      },
+      { "afterMs": 1300, "event": { "kind": "turn-finished", "status": "success" } }
+    ]
+  ]
+}

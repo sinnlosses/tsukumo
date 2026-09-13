@@ -2,20 +2,29 @@ import { describe, expect, it } from "bun:test"
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
-// 層をディレクトリで表す（docs/architecture.md「層をディレクトリで表し、依存の向きを
-// テストで縛る」）。ここは正規表現と node:fs だけで、許した辺以外の import を落とす。
-// 外部ツールは増やさない。
+// 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
+// 許した辺以外の import を落とす。外部ツールは増やさない。
+//
+// **いまは新3層（protocol / core / ui）と旧4層（usecase / presentation / infrastructure。
+// domain は段2で protocol に吸収された）が並んでいる**（docs/design.md 12章）。
+// 併存期間の規則:
+//   - 旧の各層 → `protocol` は**可**（語彙と畳み込みは protocol に移したため）
+//   - 新（`protocol` / `core` / `ui`）→ 旧は**不可**
+//   - 旧 → `core` / `ui` も**不可**（新しい経路の配線は `index.ts` だけが持つ）
+// 段7で旧の3ディレクトリが消えたら、この表から旧の行が消える。
 
-type Layer = "domain" | "usecase" | "presentation" | "infrastructure" | "index"
+type Layer = "protocol" | "core" | "ui" | "usecase" | "presentation" | "infrastructure" | "index"
 
 // 各層が import してよい先（docs/coding-standards.md「層と依存の向き」の表そのもの）。
 // `src/presentation/browser/` の中身も presentation として扱う。
 const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
-  domain: new Set(["domain"]),
-  usecase: new Set(["domain", "usecase"]),
-  presentation: new Set(["domain", "usecase", "presentation"]),
-  infrastructure: new Set(["domain", "usecase", "presentation", "infrastructure"]),
-  index: new Set(["domain", "usecase", "presentation", "infrastructure", "index"]),
+  protocol: new Set(["protocol"]),
+  core: new Set(["protocol", "core"]),
+  ui: new Set(["protocol", "ui"]),
+  usecase: new Set(["protocol", "usecase"]),
+  presentation: new Set(["protocol", "usecase", "presentation"]),
+  infrastructure: new Set(["protocol", "usecase", "presentation", "infrastructure"]),
+  index: new Set(["protocol", "core", "ui", "usecase", "presentation", "infrastructure", "index"]),
 }
 
 const SRC_ROOT = fileURLToPath(new URL("../src", import.meta.url)).replace(/\/$/, "")
@@ -28,24 +37,32 @@ type Violation = {
 }
 
 describe("層と依存の向き", () => {
-  it("src/ の相対 import は、許した辺（domain/usecase/presentation/infrastructure/index）だけで構成されている", () => {
-    const files = listTsFiles(SRC_ROOT)
+  it("src/ の相対 import は、許した辺（protocol/core/ui と併存中の旧3層 + index）だけで構成されている", () => {
+    const files = listSourceFiles(SRC_ROOT)
     expect(files.length).toBeGreaterThan(0)
 
     const violations = files.flatMap((relPath) => findViolations(relPath))
 
     expect(violationsMessage(violations)).toBe("")
   })
+
+  it("protocol は node: にも document にも触らない（両側で動く純粋な契約）", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => layerOf(relPath) === "protocol")
+      .filter((relPath) => /from\s+["']node:/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
+
+    expect(offenders).toEqual([])
+  })
 })
 
-/** `src/` 配下の `.ts` を再帰的に集める。相対パス（`domain/character.ts` のような形）で返す。 */
-function listTsFiles(root: string, dir = root): readonly string[] {
+/** `src/` 配下の `.ts` / `.tsx` を再帰的に集める。相対パス（`protocol/character.ts`）で返す。 */
+function listSourceFiles(root: string, dir = root): readonly string[] {
   return readdirSync(dir).flatMap((name) => {
     const fullPath = `${dir}/${name}`
     if (statSync(fullPath).isDirectory()) {
-      return listTsFiles(root, fullPath)
+      return listSourceFiles(root, fullPath)
     }
-    return name.endsWith(".ts") ? [fullPath.slice(root.length + 1)] : []
+    return name.endsWith(".ts") || name.endsWith(".tsx") ? [fullPath.slice(root.length + 1)] : []
   })
 }
 
@@ -93,10 +110,17 @@ function layerOf(relPath: string): Layer {
     return "index"
   }
   const [top] = relPath.split("/")
-  if (top === "domain" || top === "usecase" || top === "presentation" || top === "infrastructure") {
+  if (
+    top === "protocol" ||
+    top === "core" ||
+    top === "ui" ||
+    top === "usecase" ||
+    top === "presentation" ||
+    top === "infrastructure"
+  ) {
     return top
   }
-  throw new Error(`src/${relPath} の層を判定できない（4層のディレクトリの外にある）`)
+  throw new Error(`src/${relPath} の層を判定できない（層のディレクトリの外にある）`)
 }
 
 function violationsMessage(violations: readonly Violation[]): string {

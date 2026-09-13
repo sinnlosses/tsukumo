@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { applySessionEvent, INITIAL_SESSION_VIEW } from "../../src/usecase/session-view.ts"
+import { applySessionEvent, INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
 import { createViewPublisher, type ViewRendering } from "../../src/usecase/view-publish.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
@@ -29,7 +29,7 @@ describe("createViewPublisher", () => {
   it("キャラビュー・メインビュー・サイドバーの3つを配る", () => {
     const { rendering, published } = fakeRendering()
     const view = applySessionEvent(
-      INITIAL_SESSION_VIEW,
+      INITIAL_SESSION_STATE,
       { kind: "speech", text: "いくよ！", expression: "proud" },
       0,
     )
@@ -67,7 +67,7 @@ describe("createViewPublisher", () => {
       () => {},
     )
 
-    publish(INITIAL_SESSION_VIEW)
+    publish(INITIAL_SESSION_STATE)
 
     expect(captured).toEqual([tasks])
   })
@@ -81,7 +81,7 @@ describe("createViewPublisher", () => {
       },
     })
     const view = applySessionEvent(
-      INITIAL_SESSION_VIEW,
+      INITIAL_SESSION_STATE,
       {
         kind: "tool-started",
         toolUseId: "toolu_1",
@@ -121,7 +121,7 @@ describe("createViewPublisher", () => {
       },
     )
 
-    expect(() => publish(INITIAL_SESSION_VIEW)).not.toThrow()
+    expect(() => publish(INITIAL_SESSION_STATE)).not.toThrow()
     expect(failed).toBe(1)
   })
 
@@ -134,7 +134,7 @@ describe("createViewPublisher", () => {
       },
     })
     const view = applySessionEvent(
-      INITIAL_SESSION_VIEW,
+      INITIAL_SESSION_STATE,
       {
         kind: "tool-started",
         toolUseId: "toolu_1",

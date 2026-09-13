@@ -9,7 +9,7 @@ import {
   rasterMimeType,
   resolveOutfitAccent,
   resolvePortraitFile,
-} from "../../src/domain/character.ts"
+} from "../../src/protocol/character.ts"
 
 // characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const FULL_DEFINITION_JSON = JSON.stringify({

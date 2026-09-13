@@ -1,102 +1,25 @@
-// SDK から届いたメッセージを、tsukumo 内部のイベントに変換する。原則2の「受け取る」層。
-// 純粋関数で、fs にも process にも触らない。
+// SDK から届いたメッセージを、tsukumo 内部のイベント（src/protocol/session-event.ts）に変換する。
 //
-// **SDK の型を import しない。** SDK への依存は src/infrastructure/session-driver.ts の1ファイルに閉じる
-// （docs/architecture.md 原則3）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
+// **SDK の型を import しない。** SDK への依存は src/core/session-driver.ts の1ファイルに閉じる
+// （docs/design.md 5章）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
 // unknown で受けて検証する（docs/coding-standards.md「型を迂回するキャストを使わない」）。
 // 知らない種別・壊れた形は**空の並び**にして無視する。種別は本体の更新で増える
 // （docs/architecture.md「既知の制約・注意点」）。
 //
-// **会話の内容がここを通る。** 持ち出す先は呼び出し側のビューだけで、ログにもファイルにも
+// **会話の内容がここを通る。** 持ち出す先は呼び出し側のイベントの流れだけで、ログにもファイルにも
 // 書かない（docs/coding-standards.md「会話内容の扱い」）。
 
-import { type Expression } from "./expression.ts"
-import { type PendingAsk } from "./pending-answer.ts"
+import { type Expression } from "../protocol/expression.ts"
+import {
+  type CommandDescription,
+  type SessionEvent,
+  type TurnStatus,
+} from "../protocol/session-event.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const SPEAK_MCP_SERVER_NAME = "tsukumo"
 /** セリフを受け取るツールの名前（docs/glossary.md「speak ツール」）。 */
 export const SPEAK_TOOL_NAME = "speak"
-
-/** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
-export type TurnStatus = "success" | "error"
-
-/**
- * `/` 補完に出すコマンド1件。**説明は SDK 側が持っている**（`init` の `slash_commands` は
- * 名前だけだが、駆動側の `supportedCommands()` と `system` の `commands_changed` が名前と説明の
- * 組を返す。2026-09-12 調査）。組み込みコマンドも含めて説明が付くので、tsukumo 側に説明の表を
- * 持たない。説明が空文字のコマンドは `undefined` に倒す（名前だけ出す）。
- */
-export type CommandDescription = {
-  readonly name: string
-  readonly description: string | undefined
-}
-
-/**
- * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/infrastructure/session-driver.ts）が
- * 自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざる。
- * 受け取る側（src/usecase/session-view.ts）はどちらから来たかを区別しない。
- */
-export type SessionEvent =
-  /**
-   * `system` の `init`。**プロンプトを送るたびに届く**ので「新しいセッション」の合図にしない
-   * （2026-09-11 実測。docs/requirements.md 4.1）。`slashCommands` / `terminalSlashCommands` は
-   * 毎回上書きでよい。
-   */
-  | {
-      readonly kind: "session-info"
-      readonly sessionId: string
-      readonly model: string | undefined
-      readonly permissionMode: string | undefined
-      readonly slashCommands: readonly string[]
-      /**
-       * `slash_commands` のうち、端末専用（UX が端末に結び付く。`doctor` / `color` /
-       * `reload-plugins` など）のもの。**入力欄の補完からは除く**
-       * （docs/requirements.md 4.2「入力欄」。除く計算は src/usecase/session-view.ts の
-       * `commandCandidates`）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
-       */
-      readonly terminalSlashCommands: readonly string[]
-    }
-  /**
-   * コマンドの説明が届いた。**名前の一覧（`session-info`）とは別の経路で来る**ので、別の
-   * イベントにしてある（駆動側の `supportedCommands()` の結果と、`system` の
-   * `commands_changed` の押し出しの両方がここに入る）。端末専用かどうかは分からないので、
-   * 補完に出す/出さないの判断は名前の一覧の側が持つ（src/usecase/session-view.ts）。
-   */
-  | {
-      readonly kind: "command-descriptions"
-      readonly descriptions: readonly CommandDescription[]
-    }
-  /** 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。 */
-  | { readonly kind: "request"; readonly text: string }
-  /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/requirements.md 4.2）。 */
-  | { readonly kind: "partial-utterance"; readonly text: string }
-  /** 完成したターンの本文。仮の本文を置き換える。 */
-  | { readonly kind: "utterance"; readonly text: string }
-  /** `speak` ツールの呼び出し。セリフと表情（docs/glossary.md「セリフ」「表情」）。 */
-  | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
-  | {
-      readonly kind: "tool-started"
-      readonly toolUseId: string
-      readonly name: string
-      readonly input: unknown
-      /**
-       * サブエージェントの中で動いたときの、起こした側の Agent ツールの `toolUseId`。
-       * トップレベルのターンでは undefined（SDK メッセージの `parent_tool_use_id` が `null`）。
-       */
-      readonly parentToolUseId: string | undefined
-    }
-  | {
-      readonly kind: "tool-finished"
-      readonly toolUseId: string
-      readonly content: string
-      readonly isError: boolean
-    }
-  /** 答え待ちの列が変わった（積まれた・解決した）。中身は src/domain/pending-answer.ts が持つ。 */
-  | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
-  | { readonly kind: "turn-finished"; readonly status: TurnStatus }
-  /** `query()` の反復が終わった（正常終了・例外のどちらも）。プロセスは落とさない。 */
-  | { readonly kind: "session-ended"; readonly reason: string }
 
 /**
  * SDK のメッセージ1つを内部イベントの並びに変換する。1つのメッセージから複数のイベントが
@@ -147,7 +70,7 @@ export function toSessionEvents(
 
 /**
  * SDK が返すコマンド一覧（`supportedCommands()` の戻り値と `commands_changed` の `commands`）を
- * 検証して内部の型に変える。**駆動側（src/infrastructure/session-driver.ts）が制御リクエストの結果に対しても
+ * 検証して内部の型に変える。**駆動側（src/core/session-driver.ts）が制御リクエストの結果に対しても
  * これを使う**ので、`toSessionEvents` とは別に公開してある（検証の場所を1つにするため）。
  * 名前が文字列でない要素は捨て、説明が空文字のものは `undefined` にする。
  */

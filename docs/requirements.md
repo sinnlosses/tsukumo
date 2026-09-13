@@ -658,7 +658,7 @@ Electron などに載せ替えるときも Bun のプロセスを子として起
 
 - **`@anthropic-ai/claude-agent-sdk`**（npm パッケージ）— Claude Code を動かす。2026-09-11 に
   追加。これが唯一の本質的な実行時依存で、`claude` 本体は SDK が子プロセスとして起こす
-- **`orca` コマンド**— 使うのは **`orca tab create --url`（ページを箱の中に開く）だけ**。
+- **`orca` コマンド**— 使うのは **`orca tab list` / `orca goto` / `orca tab create --url`（ページを箱の中に開く・開いているタブを貼り直す）だけ**。
   1つのアダプタに閉じ込め、**無ければその機能を諦めて動作を続ける**
 - **本体（立ち絵・吹き出し・レポートの整形）は外部コマンドに依存しない**
 - **2026-09-13 の移行で足す npm の依存（React・`ws`・unified 一式）は承認済み**（一覧は
@@ -680,18 +680,20 @@ Electron などに載せ替えるときも Bun のプロセスを子として起
 
 ### Orca の使える機能（2026-09-09 に `orca --help` で確認）
 
-**2026-09-11 以降、tsukumo が実際に使うのは `orca tab create --url` だけ**である。
-表は「箱を差し替えるときに何が失われるか」を測るために残してある。
+**2026-09-13 以降、tsukumo が実際に使うのは `orca tab list` / `orca goto` / `orca tab create --url`
+の3つ**である（ビューの URL に起動トークンが付き、開いているタブを貼り直すようになったため。
+`src/core/orca-host.ts`）。表は「箱を差し替えるときに何が失われるか」を測るために残してある。
 
-| コマンド                                      | できること                                               |
-| --------------------------------------------- | -------------------------------------------------------- |
-| `orca tab create --url`                       | **Orca 自身のブラウザタブ**を開く（Chrome に出ない）     |
-| `orca tab list` / `goto` / `reload`           | 開いているタブの一覧・遷移・再読み込み                   |
-| `orca terminal split`                         | ペインを分割する。`--command` で起動時のコマンドも渡せる |
-| `orca terminal list --include-visual-layouts` | 現在のレイアウトを読む                                   |
-| `orca terminal create` / `rename` / `switch`  | ターミナルの作成・タイトル設定・前面化                   |
-| `orca file open`                              | Orca のエディタでファイルを開く                          |
-| `orca agent-context`                          | エージェント向けの機械可読なコマンドスキーマを出す       |
+| コマンド                                       | できること                                                                                                                                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `orca tab create --url`                        | **Orca 自身のブラウザタブ**を開く（Chrome に出ない）                                                                                                                                       |
+| `orca tab list --json`                         | 開いているタブの一覧（`url` と `browserPageId`）                                                                                                                                           |
+| `orca goto --url <url> --page <id>` / `reload` | そのタブを別の URL へ移す・再読み込みする（**`tab` のサブコマンドではない**。2026-09-13 実測。読み込みに失敗しても遷移自体は起きるので、`ok: false` で `tab create` に倒すとタブが増える） |
+| `orca terminal split`                          | ペインを分割する。`--command` で起動時のコマンドも渡せる                                                                                                                                   |
+| `orca terminal list --include-visual-layouts`  | 現在のレイアウトを読む                                                                                                                                                                     |
+| `orca terminal create` / `rename` / `switch`   | ターミナルの作成・タイトル設定・前面化                                                                                                                                                     |
+| `orca file open`                               | Orca のエディタでファイルを開く                                                                                                                                                            |
+| `orca agent-context`                           | エージェント向けの機械可読なコマンドスキーマを出す                                                                                                                                         |
 
 **幅や比率を指定するフラグは存在しない**（`orca agent-context --json` の schema を全文検索して
 確認済み）。**この制約はもう効かない**: 領域は1枚のページの CSS で割るので、比率は

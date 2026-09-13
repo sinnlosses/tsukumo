@@ -1,38 +1,21 @@
 // 答え待ちの列。SDK の `canUseTool` に届いた許可要求とキャラクターからの質問を積み、
 // 画面から答えが来るまで Promise を保留する（docs/requirements.md 4.1 / 4.2）。
 //
-// **SDK の型を import しない**（依存は src/infrastructure/session-driver.ts の1ファイルに閉じる）。
+// **SDK の型を import しない**（依存は src/core/session-driver.ts の1ファイルに閉じる）。
 // `AnswerResult` は SDK の `PermissionResult` と構造が一致するので、駆動側はそのまま返せる。
+// 答え待ちの語彙そのもの（`PendingAsk` / `Answer`）は protocol にある。
 //
 // 許可要求の入力と質問文は会話の内容そのものなので、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import { parseQuestions, type Question } from "./question.ts"
+import { type Answer, type PendingAsk } from "../protocol/pending-ask.ts"
+import { parseQuestions, type Question } from "../protocol/question.ts"
 
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"
 
 /** 拒否したときにモデルへ返す定型文。**入力の中身は含めない。** */
 const DENY_MESSAGE = "利用者が実行を許可しなかった"
-
-/** 答え待ち1件。`id` は SDK の `toolUseID`（1つのツール呼び出しに1つ）。 */
-export type PendingAsk =
-  | {
-      readonly kind: "permission"
-      readonly id: string
-      readonly toolName: string
-      readonly input: Readonly<Record<string, unknown>>
-    }
-  | { readonly kind: "question"; readonly id: string; readonly questions: readonly Question[] }
-
-/** 画面から返ってくる答え。 */
-export type Answer =
-  /** 許可する（許可要求にだけ意味がある）。 */
-  | { readonly kind: "allow" }
-  /** 拒否する（許可要求・質問のどちらにも使える）。 */
-  | { readonly kind: "deny" }
-  /** 質問に答える。`labels[i]` が `questions[i]` に対する選択肢のラベル。 */
-  | { readonly kind: "answers"; readonly labels: readonly string[] }
 
 /** `canUseTool` の戻り値に渡せる形（SDK の `PermissionResult` と同じ構造）。 */
 export type AnswerResult =
@@ -176,33 +159,4 @@ function answersRecord(
       return label === undefined ? [] : [[question.text, label] as const]
     }),
   )
-}
-
-/**
- * 画面から届いた JSON（外部由来の `unknown`）を {@link Answer} として検証する。
- * `labels` は自由入力の文字列も受け取れる（`answersRecord` は選択肢との一致を要求しない）。
- * 形が違うときは undefined を返す。
- */
-export function parseAnswer(value: unknown): Answer | undefined {
-  if (!isRecord(value)) {
-    return undefined
-  }
-
-  if (value.kind === "allow" || value.kind === "deny") {
-    return { kind: value.kind }
-  }
-
-  if (value.kind !== "answers" || !Array.isArray(value.labels) || !value.labels.every(isString)) {
-    return undefined
-  }
-
-  return { kind: "answers", labels: value.labels }
-}
-
-function isString(value: unknown): value is string {
-  return typeof value === "string"
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
 }

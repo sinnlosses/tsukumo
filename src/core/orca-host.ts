@@ -1,11 +1,17 @@
-// ホスト依存の操作（src/infrastructure/host.ts）を Orca の CLI で実装するアダプタ。
+// ホスト依存の操作（src/core/host.ts）を Orca の CLI で実装するアダプタ。
 //
 // **`orca` コマンドを呼ぶのはこのファイルだけ**（docs/architecture.md 原則3）。
 // 実際に Orca が動いていないと結果を確かめられないので、ここは自動テストの対象にしない。
 //
-// Orca CLI の対応関係（v1.4.194 で確認）:
-//   showView → orca tab list --json でこの URL のタブを探し、あれば orca reload --page <id>、
-//              無ければ orca tab create --url <url>
+// Orca CLI の対応関係（2026-09-13 に v1.4.x で実測。**`orca tab goto` は無い**）:
+//   showView → orca tab list --json で**オリジンとパスが同じ**タブを探し、
+//              あれば orca goto --url <新しい URL> --page <pageId> --json、
+//              無ければ orca tab create --url <url> --json
+//
+// **URL のクエリを見比べないのは、起動ごとにトークンが変わるため**（`?t=<起動トークン>`。
+// docs/design.md 9章）。同じ場所を指すタブは貼り直して1つに保つ。
+// **`goto` が `ok: false` を返しても `tab create` に倒さない**（読み込みに失敗しても遷移自体は
+// 起きており、倒すとタブが増える。2026-09-13 実測）。開き直すのは一覧にそのタブが無かったときだけ。
 
 import { execFile } from "node:child_process"
 
@@ -21,11 +27,12 @@ export function createOrcaHost(): Host {
 async function showView(url: string): Promise<HostResult> {
   const pageId = await findViewPageId(url)
   if (pageId !== undefined) {
-    const reloaded = await runOrca(["reload", "--page", pageId, "--json"], "ビューを更新する")
-    if (reloaded.ok) {
-      return { ok: true }
-    }
-    // 一覧に載っていたタブが既に閉じられていることがあるので、開き直しに倒す。
+    // 一覧にあったタブはそのまま使い、URL を貼り直す（トークンが変わっていても同じタブに載る）。
+    const moved = await runOrca(
+      ["goto", "--url", url, "--page", pageId, "--json"],
+      "ビューを開き直す",
+    )
+    return moved.ok ? { ok: true } : { ok: false, reason: moved.reason }
   }
 
   const created = await runOrca(["tab", "create", "--url", url, "--json"], "ビューを開く")
@@ -33,8 +40,9 @@ async function showView(url: string): Promise<HostResult> {
 }
 
 /**
- * 同じ URL で開いているタブのページIDを探す。一覧が取れない・形が想定と違うときは undefined を
- * 返し、呼び出し側で新しく開く側に倒す（推測で壊れた ID を渡さない）。
+ * 同じビューを開いているタブのページIDを探す。**比べるのはオリジンとパスだけ**で、クエリ
+ * （`?t=<起動トークン>`）は見ない。一覧が取れない・形が想定と違うときは undefined を返し、
+ * 呼び出し側で新しく開く側に倒す（推測で壊れた ID を渡さない）。
  */
 async function findViewPageId(url: string): Promise<string | undefined> {
   const listed = await runOrca(["tab", "list", "--json"], "タブ一覧を取得する")
@@ -59,14 +67,33 @@ function findPageIdInTabList(value: unknown, url: string): string | undefined {
     return undefined
   }
 
+  const wanted = viewLocation(url)
   const tabs: readonly unknown[] = value.result.tabs
   for (const tab of tabs) {
-    if (isRecord(tab) && tab.url === url && typeof tab.browserPageId === "string") {
+    if (
+      isRecord(tab) &&
+      typeof tab.url === "string" &&
+      viewLocation(tab.url) === wanted &&
+      typeof tab.browserPageId === "string"
+    ) {
       return tab.browserPageId
     }
   }
 
   return undefined
+}
+
+/**
+ * タブが同じビューを指しているかを比べるための鍵（オリジン + パス）。URL として読めない値は
+ * そのまま返し、文字列一致に倒す（比べられない値で他のタブを掴まない）。
+ */
+function viewLocation(url: string): string {
+  try {
+    const parsed = new URL(url)
+    return `${parsed.origin}${parsed.pathname}`
+  } catch {
+    return url
+  }
 }
 
 type CommandOutput =

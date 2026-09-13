@@ -1,19 +1,19 @@
 // SDK のイベントを受けて姿を更新し、配る係を呼ぶ「決める」層。畳み込みそのものは純粋関数
-// （applySessionEvent。src/usecase/session-view.ts）だが、**セッションの姿を持つのはここ1箇所だけ**。
+// （applySessionEvent。src/protocol/session-state.ts）だが、**セッションの姿を持つのはここ1箇所だけ**。
 //
 // HTML の組み立て（答え待ちの箱など）は presentation の仕事なので、ここは PendingAsk のような
 // 決めた結果までしか渡さない。呼び出し側（src/index.ts）が HTML に組み立ててから配る。
 
-import { WORKING_EXPRESSION_DELAY_MS } from "../domain/expression.ts"
-import { type PendingAsk } from "../domain/pending-answer.ts"
-import { type CommandDescription, type SessionEvent } from "../domain/session-event.ts"
+import { WORKING_EXPRESSION_DELAY_MS } from "../protocol/expression.ts"
+import { type PendingAsk } from "../protocol/pending-ask.ts"
+import { type CommandDescription, type SessionEvent } from "../protocol/session-event.ts"
 import {
   applySessionEvent,
   commandSuggestions,
-  INITIAL_SESSION_VIEW,
-  type SessionView,
+  INITIAL_SESSION_STATE,
+  type SessionState,
   type ToolActivity,
-} from "./session-view.ts"
+} from "../protocol/session-state.ts"
 
 /**
  * ターンの進行状態（開始・終了時刻）。`src/presentation/view.ts` の `TurnStatus` と同じ形だが、
@@ -27,7 +27,7 @@ type TurnStatusSnapshot = {
 
 /**
  * イベントを受けて姿を更新し、配る係を呼ぶ。**セッションの姿を持つのはここ1箇所だけ**
- * （畳み込みそのものは純粋関数。src/usecase/session-view.ts）。
+ * （畳み込みそのものは純粋関数。src/protocol/session-state.ts）。
  *
  * **`turnInProgress` が変わったときだけ `publishTurnStatus` を呼ぶ。** 書きかけの本文は
  * トークン単位で届くため、変わっていないのに毎回押すと入力欄の SSE だけ無駄に流れてしまう。
@@ -37,7 +37,7 @@ type TurnStatusSnapshot = {
  * 。docs/requirements.md 4.7「答えるのは入力の動作なので入力欄の側に置く」）。
  *
  * **`turnStartedAt` / `turnFinishedAt`（経過時間の起点・終点）もここで持つ。** `now()` を
- * 呼ぶのは副作用なので、純粋な畳み込み（src/usecase/session-view.ts）の外に置く。`request` が
+ * 呼ぶのは副作用なので、純粋な畳み込み（src/protocol/session-state.ts）の外に置く。`request` が
  * 来るたびに `turnStartedAt` を更新し `turnFinishedAt` を undefined に戻し、`turn-finished` /
  * `session-ended` が来たときだけ `turnFinishedAt` を入れる（それ以外では前の値をそのまま持ち
  * 続ける）。表す意味は「依頼を送ってから、そのターンが終わるまでの時間」で、終わったら
@@ -62,14 +62,14 @@ type TurnStatusSnapshot = {
  * 呼ばないのは、偽の時計を差し込んでテストできるようにするため。
  */
 export function createEventSink(
-  publish: (view: SessionView) => void,
+  publish: (view: SessionState) => void,
   publishTurnStatus: (status: TurnStatusSnapshot) => void,
   publishPendingAnswer: (pending: PendingAsk | undefined) => void,
   setCommands: (commands: readonly CommandDescription[]) => void,
   onSessionEnded: (reason: string) => void,
   now: () => number,
 ): (event: SessionEvent) => void {
-  let view = INITIAL_SESSION_VIEW
+  let view = INITIAL_SESSION_STATE
   let turnStartedAt: number | undefined = undefined
   let turnFinishedAt: number | undefined = undefined
   let workingRefreshTimer: ReturnType<typeof setTimeout> | undefined = undefined

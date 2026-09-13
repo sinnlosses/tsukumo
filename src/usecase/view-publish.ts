@@ -6,15 +6,15 @@
 // ここが持つのは、呼び出しの順序と「ここでの失敗は次の更新に任せて諦める」という契約だけ
 // （docs/coding-standards.md「エラーハンドリング」— 描画ループの中に try/catch を散らさない）。
 
-import { resolveOutfit, type Expression, type Outfit } from "../domain/expression.ts"
-import { type TaskSummaryItem } from "../domain/task-summary.ts"
+import { resolveOutfit, type Expression, type Outfit } from "../protocol/expression.ts"
 import {
   currentExpression,
   mainViewEntries,
   type MainViewEntry,
-  type SessionView,
+  type SessionState,
   type ToolActivity,
-} from "./session-view.ts"
+} from "../protocol/session-state.ts"
+import { type TaskSummaryItem } from "../protocol/task-summary.ts"
 
 /**
  * キャラビューに渡す立ち絵ソース。`src/presentation/view.ts` の `CharacterPortraitSource` /
@@ -61,7 +61,7 @@ export function createViewPublisher(
   readTaskSummary: () => readonly TaskSummaryItem[] | undefined,
   now: () => number,
   onFailure: () => void,
-): (view: SessionView) => void {
+): (view: SessionState) => void {
   return (view) => {
     try {
       const data: CharacterViewDataLike = {
@@ -83,7 +83,7 @@ export function createViewPublisher(
  * `docs/coding-standards.md`「会話内容の扱い」に沿って承知した上で渡す）。**経過時間はここに
  * 無い**（入力欄側へ渡すのは `publishTurnStatus`。2026-09-12 T-075 決定）。
  */
-function sidebarData(view: SessionView, tasks: readonly TaskSummaryItem[] | undefined) {
+function sidebarData(view: SessionState, tasks: readonly TaskSummaryItem[] | undefined) {
   return {
     activity: {
       running: view.runningTools.map(toSidebarToolActivity),

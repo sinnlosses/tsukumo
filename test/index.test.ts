@@ -13,9 +13,10 @@ import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/infrastru
 // この変更で対象そのものが無くなった。振る舞い自体は次のテストが守っている:
 //   - ビューの HTML の組み立て（吹き出し・メインビュー・サイドバー）: test/presentation/view.test.ts
 //   - 配信（バインド先・経路・SSE・依頼の受け口）: test/infrastructure/view-server.test.ts
-//   - キャラクター定義の解釈と立ち絵の選び方: test/domain/character.test.ts
-//   - SDK のイベントの変換・答え待ち・畳み込み: test/domain/session-event.test.ts /
-//     test/domain/pending-answer.test.ts / test/usecase/session-view.test.ts
+//   - WebSocket の経路（トークン・Origin・hello・コマンド）: test/core/server.test.ts
+//   - キャラクター定義の解釈と立ち絵の選び方: test/protocol/character.test.ts
+//   - SDK のイベントの変換・答え待ち・畳み込み: test/core/sdk-message.test.ts /
+//     test/core/pending-answer.test.ts / test/protocol/session-state.test.ts
 // 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
 
 const ENTRY = new URL("../src/index.ts", import.meta.url).pathname

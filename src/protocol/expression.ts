@@ -15,7 +15,7 @@ export type Outfit = "default" | "light" | "normal" | "heavy"
 
 /**
  * 表情名の全体。**`default` が先頭**で、キャラクター定義に立ち絵があるものだけを選ぶときの
- * 元になる（src/domain/character.ts の `availableExpressions`）。
+ * 元になる（src/protocol/character.ts の `availableExpressions`）。
  */
 export const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud", "flustered"]
 
@@ -36,7 +36,7 @@ export type RunningToolTiming = {
  * 実行中のツールが1つでも {@link WORKING_EXPRESSION_DELAY_MS} 以上前から動いていれば
  * `working`。それ以外は `speechExpression`（直近の `speak` の表情）をそのまま返す。
  * `speak` がまだ1回も呼ばれていないときの `default` へのフォールバックは、呼び出し側
- * （src/usecase/session-view.ts の `INITIAL_SESSION_VIEW.speechExpression`）が持つ。
+ * （src/protocol/session-state.ts の `INITIAL_SESSION_STATE.speechExpression`）が持つ。
  */
 export function resolveExpression(
   runningTools: readonly RunningToolTiming[],
