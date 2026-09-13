@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render } from "@testing-library/react"
 
@@ -8,8 +8,33 @@ import { CharacterView } from "../../../src/ui/character-view/character-view.tsx
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
+const PORTRAIT_FIXED_STORAGE_KEY = "tsukumo-portrait-fixed"
+
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
+  name: "架空の精霊",
+  accent: undefined,
+  expressions: ["default"],
+  portraits: {
+    default: "/character/default.png",
+    working: undefined,
+    proud: undefined,
+    flustered: undefined,
+  },
+  outfitAccents: {
+    default: undefined,
+    light: undefined,
+    normal: undefined,
+    heavy: undefined,
+  },
+}
+
+beforeEach(() => {
+  localStorage.removeItem(PORTRAIT_FIXED_STORAGE_KEY)
+})
+
 afterEach(() => {
   cleanup()
+  localStorage.removeItem(PORTRAIT_FIXED_STORAGE_KEY)
 })
 
 function renderCharacterView(stateOverrides: Partial<SessionState>): void {
@@ -107,5 +132,76 @@ describe("CharacterView", () => {
     } finally {
       Date.now = originalNow
     }
+  })
+
+  it("ターンが進行中でなく、直近の完了・失敗も無ければ data-motion は reading（呼吸だけ）", () => {
+    renderCharacterView({
+      character: FIXTURE_CHARACTER,
+      turnInProgress: false,
+      turnFinishedAt: undefined,
+      lastToolFailureAt: undefined,
+    })
+
+    expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("reading")
+  })
+
+  it("ターンが進行中なら data-motion は waiting（領域の中を歩く）", () => {
+    renderCharacterView({
+      character: FIXTURE_CHARACTER,
+      turnInProgress: true,
+      turnFinishedAt: undefined,
+      lastToolFailureAt: undefined,
+    })
+
+    expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("waiting")
+  })
+
+  it("ターンが終わった直後は data-motion が success（完了の反応。偽の時計）", () => {
+    const now = 1_700_000_000_000
+    const originalNow = Date.now
+    Date.now = () => now
+    try {
+      renderCharacterView({
+        character: FIXTURE_CHARACTER,
+        turnInProgress: false,
+        turnFinishedAt: now - 100,
+        lastToolFailureAt: undefined,
+      })
+
+      expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("success")
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
+  it("ツールが失敗した直後は data-motion が failure（失敗でびくっ。偽の時計）", () => {
+    const now = 1_700_000_000_000
+    const originalNow = Date.now
+    Date.now = () => now
+    try {
+      renderCharacterView({
+        character: FIXTURE_CHARACTER,
+        turnInProgress: true,
+        turnFinishedAt: undefined,
+        lastToolFailureAt: now - 100,
+      })
+
+      expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("failure")
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
+  it("「固定」を localStorage に入れていると data-motion 属性ごと省略する（動かない）", () => {
+    localStorage.setItem(PORTRAIT_FIXED_STORAGE_KEY, "true")
+
+    renderCharacterView({
+      character: FIXTURE_CHARACTER,
+      turnInProgress: true,
+      turnFinishedAt: undefined,
+      lastToolFailureAt: undefined,
+    })
+
+    expect(document.querySelector(".portrait")?.hasAttribute("data-motion")).toBe(false)
   })
 })

@@ -36,6 +36,7 @@ describe("Portrait", () => {
         altText="架空の精霊（通常）"
         expression="default"
         outfit="default"
+        motion="reading"
       />,
     )
 
@@ -52,6 +53,7 @@ describe("Portrait", () => {
         altText="架空の精霊（通常）"
         expression="default"
         outfit="default"
+        motion="reading"
       />,
     )
 
@@ -70,6 +72,7 @@ describe("Portrait", () => {
         altText="架空の精霊（通常）"
         expression="default"
         outfit="normal"
+        motion="reading"
       />,
     )
 
@@ -85,10 +88,43 @@ describe("Portrait", () => {
         altText="架空の精霊（通常）"
         expression="default"
         outfit="default"
+        motion="reading"
       />,
     )
 
     const wrapper = document.querySelector(".portrait") as HTMLElement
     expect(wrapper.getAttribute("style")).toBeNull()
+  })
+
+  it("motion をそのまま data-motion 属性へ渡す（CSS 側が動きを選ぶ手がかり）", () => {
+    render(
+      <Portrait
+        url="/character/default.png"
+        accent={undefined}
+        altText="架空の精霊（通常）"
+        expression="default"
+        outfit="default"
+        motion="waiting"
+      />,
+    )
+
+    const wrapper = document.querySelector(".portrait") as HTMLElement
+    expect(wrapper.getAttribute("data-motion")).toBe("waiting")
+  })
+
+  it("motion が undefined（固定）のときは data-motion 属性ごと省略する", () => {
+    render(
+      <Portrait
+        url="/character/default.png"
+        accent={undefined}
+        altText="架空の精霊（通常）"
+        expression="default"
+        outfit="default"
+        motion={undefined}
+      />,
+    )
+
+    const wrapper = document.querySelector(".portrait") as HTMLElement
+    expect(wrapper.hasAttribute("data-motion")).toBe(false)
   })
 })

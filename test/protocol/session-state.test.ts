@@ -390,6 +390,60 @@ describe("applySessionEvent", () => {
     expect(ended.turnFinishedAt).toBe(250)
   })
 
+  it("tool-finished が isError:true のとき lastToolFailureAt にその時刻を打つ（立ち絵の「失敗でびくっ」の材料）", () => {
+    expect(INITIAL_SESSION_STATE.lastToolFailureAt).toBeUndefined()
+
+    const started = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
+      100,
+    )
+    const failed = applySessionEvent(
+      started,
+      { kind: "tool-finished", toolUseId: "toolu_1", content: "失敗した", isError: true },
+      400,
+    )
+
+    expect(failed.lastToolFailureAt).toBe(400)
+  })
+
+  it("tool-finished が isError:false のときは lastToolFailureAt を変えない", () => {
+    const started = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
+      100,
+    )
+    const finished = applySessionEvent(
+      started,
+      { kind: "tool-finished", toolUseId: "toolu_1", content: "ok", isError: false },
+      400,
+    )
+
+    expect(finished.lastToolFailureAt).toBeUndefined()
+  })
+
+  it("対応する tool_use が無い失敗は lastToolFailureAt を打たない（対応が取れない結果は捨てる）", () => {
+    const result = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "tool-finished", toolUseId: "toolu_unknown", content: "失敗した", isError: true },
+      400,
+    )
+
+    expect(result.lastToolFailureAt).toBeUndefined()
+  })
+
   it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは undefined", () => {
     expect(INITIAL_SESSION_STATE.tasks).toBeUndefined()
 

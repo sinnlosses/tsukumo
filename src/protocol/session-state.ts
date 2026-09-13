@@ -180,6 +180,14 @@ export type SessionState = {
    * undefined。
    */
   readonly turnFinishedAt: number | undefined
+  /**
+   * 直近でツールが失敗した時刻（`tool-finished` の `isError` が true のときの `at`）。
+   * **立ち絵の「失敗でびくっ」の判定にだけ使う**（`protocol/portrait-motion.ts` の
+   * `resolvePortraitMotion`）。次のターンが始まっても戻さない（時間の窓が過ぎれば
+   * `resolvePortraitMotion` 側で自然に「今は失敗直後ではない」に戻るため、`turnFinishedAt`
+   * と違って `request` での巻き戻しは要らない）。まだ一度も失敗していなければ undefined。
+   */
+  readonly lastToolFailureAt: number | undefined
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -203,6 +211,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   character: undefined,
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
+  lastToolFailureAt: undefined,
 }
 
 /**
@@ -283,7 +292,7 @@ export function applySessionEvent(
       }
     }
     case "tool-finished":
-      return finishTool(state, event.toolUseId, event.content, event.isError)
+      return finishTool(state, event.toolUseId, event.content, event.isError, at)
     case "pending-changed":
       return { ...state, pending: event.pending }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
@@ -442,13 +451,15 @@ function withMarkerFallback(state: SessionState): SessionState {
 
 /**
  * ツール1件の結果を記録に合わせる。**対応する `tool_use` が見つからないときは何もしない**
- * （対応が取れない結果を作らない）。
+ * （対応が取れない結果を作らない）。`isError` が true のときは `lastToolFailureAt` に `at` を
+ * 打つ（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）。
  */
 function finishTool(
   state: SessionState,
   toolUseId: string,
   content: string,
   isError: boolean,
+  at: number,
 ): SessionState {
   const index = state.records.findIndex(
     (record) => record.kind === "tool" && record.toolUseId === toolUseId,
@@ -475,6 +486,7 @@ function finishTool(
     ],
     runningTools: state.runningTools.filter((running) => running.toolUseId !== toolUseId),
     finishedTools: [activity, ...state.finishedTools].slice(0, MAX_RECENT_FINISHED_TOOLS),
+    lastToolFailureAt: isError ? at : state.lastToolFailureAt,
   }
 }
 
