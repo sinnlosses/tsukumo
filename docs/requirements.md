@@ -533,8 +533,8 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 **同梱するパックは自作のものだけ**（2026-09-14 決定）。素材（画像）と同じ理由で、
 **`persona.md` に書く人格の記述も「素材」に数える**。既存の作品のキャラクターを演じさせたい
 ときは、`characters/local/` に自分で置く（`.gitignore` 済み）。同梱するのは
-`tsukumo-spirit`（つくもの精霊）と `hidamari`（ひだまり）の2体で、どちらもこのリポジトリの
-ために自作したもの。
+`tsukumo`（`assets/logo.png` にいる狐の付喪神。このプロジェクトの顔）と `tsukumo-spirit`
+（つくもの精霊）の2体で、どちらもこのリポジトリのために自作したもの。
 
 **人格の二重適用は `applyFlagSettings({ outputStyle: "default" })` で避ける**（2026-09-14 に
 スパイクで実測）。`~/.claude/settings.json` の `outputStyle` は全プロジェクトに効くので、

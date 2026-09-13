@@ -4,6 +4,7 @@
 
 ## 既定のキャラクター
 
+`tsukumo/` — `assets/logo.png` にいる狐の付喪神。**このプロジェクトの顔**で、既定のキャラクター。
 `tsukumo-spirit/` — このリポジトリのために自作した精霊。**権利がクリーンなので公開リポジトリに
 置いてある。** 素材が1つも無くても tsukumo が動くようにするためのもの。
 
@@ -16,6 +17,10 @@
 
 ```
 characters/
+├── tsukumo/            ← 自作。コミットされる（assets/logo.png の狐の付喪神）
+│   ├── character.json
+│   ├── persona.md
+│   └── *.svg
 ├── tsukumo-spirit/     ← 自作。コミットされる
 │   ├── character.json
 │   ├── persona.md
