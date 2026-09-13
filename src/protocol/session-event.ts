@@ -13,6 +13,7 @@
 
 import { z } from "zod"
 
+import { type CharacterInfo } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
@@ -104,6 +105,12 @@ export type SessionEvent =
    * ファイルが読めない・消えたときは `tasks: undefined`（サイドバーの「不明」表示に対応する）。
    */
   | { readonly kind: "tasks-changed"; readonly tasks: readonly TaskSummaryItem[] | undefined }
+  /**
+   * キャラクターパックが決まった（core の `character-pack.ts` が起動時に1回だけ流す）。
+   * キャラビューが立ち絵を取りに行く先（`docs/design.md` 4.1・7章）。**中身は URL だけ**
+   * （素材そのものは乗らない。docs/coding-standards.md「会話内容の扱い」と同じ考え方）。
+   */
+  | ({ readonly kind: "character-changed" } & CharacterInfo)
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

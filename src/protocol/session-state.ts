@@ -7,6 +7,7 @@
 // 時刻は畳み込みの中で `Date.now()` を呼ばず、イベントに打たれた `at` を受け取る
 // （両側の状態が同じになるように、時刻はイベントの発生側が決める。docs/design.md 4.1）。
 
+import { type CharacterInfo } from "./character.ts"
 import { type Expression, resolveExpression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question } from "./question.ts"
@@ -155,6 +156,12 @@ export type SessionState = {
    */
   readonly tasks: readonly TaskSummaryItem[] | undefined
   /**
+   * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
+   * **素材そのものは持たない**（`portraits` の値は `/character/<file>` の URL。docs/design.md
+   * 4.2）。
+   */
+  readonly character: CharacterInfo | undefined
+  /**
    * 今のターンが始まった時刻（`request` の `at`）。表す意味は「依頼を送ってから、そのターンが
    * 終わるまでの時間」の起点で、次の `request` まではそのまま持ち続ける（入力欄の経過時間表示
    * `src/ui/dispatch/turn-status.tsx` が使う。docs/design.md 4.2）。まだ一度も依頼が無ければ
@@ -186,6 +193,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   endedReason: undefined,
   turnInProgress: false,
   tasks: undefined,
+  character: undefined,
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
 }
@@ -284,6 +292,16 @@ export function applySessionEvent(
       }
     case "tasks-changed":
       return { ...state, tasks: event.tasks }
+    case "character-changed":
+      return {
+        ...state,
+        character: {
+          name: event.name,
+          expressions: event.expressions,
+          portraits: event.portraits,
+          outfitAccents: event.outfitAccents,
+        },
+      }
   }
 }
 

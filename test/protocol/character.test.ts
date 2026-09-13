@@ -2,13 +2,14 @@ import { describe, expect, it } from "bun:test"
 
 import {
   availableExpressions,
+  characterAssetPath,
   classifyPortraitFile,
   type CharacterDefinition,
-  isPlausibleSvgMarkup,
   parseCharacterDefinition,
   rasterMimeType,
   resolveOutfitAccent,
-  resolvePortraitFile,
+  resolvePortraitUrl,
+  toCharacterInfo,
 } from "../../src/protocol/character.ts"
 
 // characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
@@ -101,53 +102,75 @@ describe("availableExpressions", () => {
   })
 })
 
-describe("resolvePortraitFile", () => {
-  const definitionWithoutWorking: CharacterDefinition = {
-    name: undefined,
-    portraits: {
-      default: "default.svg",
-      working: undefined,
-      proud: undefined,
-      flustered: undefined,
-    },
-    outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+describe("resolvePortraitUrl", () => {
+  const portraitsWithoutWorking = {
+    default: "default.svg",
+    working: undefined,
+    proud: undefined,
+    flustered: undefined,
   }
 
   it("該当する表情があればそれを使う", () => {
-    expect(resolvePortraitFile(definitionWithoutWorking, "default")).toBe("default.svg")
+    expect(resolvePortraitUrl(portraitsWithoutWorking, "default")).toBe("default.svg")
   })
 
   it("見つからない表情は default に落ちる", () => {
-    expect(resolvePortraitFile(definitionWithoutWorking, "working")).toBe("default.svg")
+    expect(resolvePortraitUrl(portraitsWithoutWorking, "working")).toBe("default.svg")
   })
 
   it("default も無ければ undefined（立ち絵なしにフォールバック）", () => {
-    const empty: CharacterDefinition = {
-      name: undefined,
-      portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
-      outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-    }
+    const empty = { default: undefined, working: undefined, proud: undefined, flustered: undefined }
 
-    expect(resolvePortraitFile(empty, "working")).toBeUndefined()
+    expect(resolvePortraitUrl(empty, "working")).toBeUndefined()
   })
 })
 
 describe("resolveOutfitAccent", () => {
   it("該当する衣装があればそれを使う", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
-    expect(definition === undefined ? undefined : resolveOutfitAccent(definition, "heavy")).toBe(
-      "#ffb3a7",
-    )
+    expect(
+      definition === undefined ? undefined : resolveOutfitAccent(definition.outfitAccents, "heavy"),
+    ).toBe("#ffb3a7")
   })
 
   it("見つからない衣装は default に落ちる", () => {
-    const definition: CharacterDefinition = {
-      name: undefined,
-      portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
-      outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+    const outfitAccents = {
+      default: "#b8c7ff",
+      light: undefined,
+      normal: undefined,
+      heavy: undefined,
     }
 
-    expect(resolveOutfitAccent(definition, "light")).toBe("#b8c7ff")
+    expect(resolveOutfitAccent(outfitAccents, "light")).toBe("#b8c7ff")
+  })
+})
+
+describe("characterAssetPath", () => {
+  it("/character/<file> の形にする", () => {
+    expect(characterAssetPath("default.svg")).toBe("/character/default.svg")
+  })
+})
+
+describe("toCharacterInfo", () => {
+  it("ファイル名を /character/<file> の URL に変える", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+    expect(definition).toBeDefined()
+
+    const info = definition === undefined ? undefined : toCharacterInfo(definition)
+
+    expect(info?.name).toBe("架空の精霊")
+    expect(info?.expressions).toEqual(["default", "working", "proud", "flustered"])
+    expect(info?.portraits.working).toBe("/character/working.svg")
+    expect(info?.outfitAccents.heavy).toBe("#ffb3a7")
+  })
+
+  it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
+    const info = toCharacterInfo(undefined)
+
+    expect(info.name).toBeUndefined()
+    expect(info.expressions).toEqual(["default"])
+    expect(info.portraits.default).toBeUndefined()
+    expect(info.outfitAccents.default).toBeUndefined()
   })
 })
 
@@ -183,20 +206,5 @@ describe("rasterMimeType", () => {
   it("svg・未知の拡張子は undefined", () => {
     expect(rasterMimeType("a.svg")).toBeUndefined()
     expect(rasterMimeType("a.bmp")).toBeUndefined()
-  })
-})
-
-describe("isPlausibleSvgMarkup", () => {
-  it("<svg ...> で始まる中身は true", () => {
-    expect(isPlausibleSvgMarkup('<svg xmlns="http://www.w3.org/2000/svg"></svg>')).toBe(true)
-  })
-
-  it("XML宣言付きの SVG も true", () => {
-    expect(isPlausibleSvgMarkup('<?xml version="1.0"?><svg></svg>')).toBe(true)
-  })
-
-  it("SVG らしくない中身は false", () => {
-    expect(isPlausibleSvgMarkup("not an svg file")).toBe(false)
-    expect(isPlausibleSvgMarkup("")).toBe(false)
   })
 })

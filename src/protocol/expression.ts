@@ -48,6 +48,28 @@ export function resolveExpression(
 }
 
 /**
+ * 実行中のツールのうち、まだ「作業中」の遅延を超えていないものがあれば、超えるまでの
+ * 残り時間（ミリ秒）を返す。超えているものしかない・実行中のツールが無いときは undefined
+ * （その場合は時間経過だけで表情が変わることはない）。
+ *
+ * ツールの開始・終了だけでは、遅延が経過した「その瞬間」には何のイベントも来ないので、
+ * 何もしなければ次のイベントが来るまで表情の再計算が起きない。呼び出し側
+ * （`src/ui/character-view/character-view.tsx` の `useEffect` タイマー）が、この関数の
+ * 戻り値ぶん先に1回だけ自分を配り直す形で「作業中」への切り替えを進める（移行前は
+ * `usecase/event-sink.ts` がサーバ側でこれを担っていたが、キャラビューが React の部品に
+ * なった段5でブラウザ側へ移した。docs/design.md 4.1）。
+ */
+export function nextWorkingTransitionDelayMs(
+  runningTools: readonly RunningToolTiming[],
+  now: number,
+): number | undefined {
+  const remaining = runningTools
+    .map((tool) => tool.startedAt + WORKING_EXPRESSION_DELAY_MS - now)
+    .filter((ms) => ms > 0)
+  return remaining.length === 0 ? undefined : Math.min(...remaining)
+}
+
+/**
  * モデル名から衣装を決める。`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` = 戦闘配置
  * （docs/requirements.md「4.3 状態連動」、`~/.claude/output-styles/asuna.md` のモデル分岐と対応）。
  *

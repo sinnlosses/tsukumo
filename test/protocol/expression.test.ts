@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { expressionLabel, resolveExpression, resolveOutfit } from "../../src/protocol/expression.ts"
+import {
+  expressionLabel,
+  nextWorkingTransitionDelayMs,
+  resolveExpression,
+  resolveOutfit,
+} from "../../src/protocol/expression.ts"
 
 describe("resolveExpression", () => {
   it("実行中のツールが開始から1秒以上経っていれば作業中の表情を返す", () => {
@@ -60,6 +65,24 @@ describe("resolveOutfit", () => {
 
   it("知らないモデル名のときは既定の衣装に落ちる", () => {
     expect(resolveOutfit("some-future-model")).toBe("default")
+  })
+})
+
+describe("nextWorkingTransitionDelayMs", () => {
+  it("実行中のツールが無ければ undefined（再計算のタイマーは要らない）", () => {
+    expect(nextWorkingTransitionDelayMs([], 0)).toBeUndefined()
+  })
+
+  it("すでに1秒以上経っているツールしか無ければ undefined", () => {
+    expect(nextWorkingTransitionDelayMs([{ startedAt: 0 }], 1500)).toBeUndefined()
+  })
+
+  it("まだ1秒経っていないツールがあれば、超えるまでの残り時間を返す", () => {
+    expect(nextWorkingTransitionDelayMs([{ startedAt: 0 }], 700)).toBe(300)
+  })
+
+  it("複数あるときは、いちばん早く超えるものまでの残り時間を返す", () => {
+    expect(nextWorkingTransitionDelayMs([{ startedAt: 0 }, { startedAt: 500 }], 700)).toBe(300)
   })
 })
 

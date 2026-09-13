@@ -133,7 +133,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "default", port: blockedPort }, (port) =>
-        startViewServer(port, "", "", ""),
+        startViewServer(port, "", "", "", () => undefined),
       )
 
       expect(result.ok).toBe(true)
@@ -154,7 +154,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "explicit", port: blockedPort }, (port) =>
-        startViewServer(port, "", "", ""),
+        startViewServer(port, "", "", "", () => undefined),
       )
 
       expect(result.ok).toBe(false)

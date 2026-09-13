@@ -1,6 +1,6 @@
 # 現在の状態
 
-最終更新: 2026-09-13（同日 T-097 で移行の段4（入力欄）を終え、`multiSelect` の未解決事項を閉じた。同日 `/plan-tasks` でデザイン再考の指示を T-102 / T-103 に起こした。2026-09-12 に T-058 で、素の TUI にレポートの HTML タグが漏れる件の方式を決めた（tsukumo が `systemPrompt` の append で足す。実装は T-059）。同日 `/plan-tasks` で T-069 の結論から出た実装3件と個別ビューの撤去を T-082〜T-085 に起こし、Idiomorph の同梱は T-070 の本文を差し替える形にした。同日 T-069 で描画の技術を決め（フレームワークは入れない）、T-072 で入力欄のキー割り当てを入れ替えた。同日 `/plan-tasks` で届いた指示10件を T-072〜T-081 に起こし、HTML 描画のライブラリ（React）の検討は既存の T-069 に統合した。T-071 でキャラビューを立ち絵主役の形に作り直した。同日 `/plan-tasks` で描画の技術を T-069、サイドバーのスクロール位置が戻る件を T-070、
+最終更新: 2026-09-13（同日 T-098 で移行の段5（キャラビュー）を終え、残るビューはメインだけになった。同日 T-097 で移行の段4（入力欄）を終え、`multiSelect` の未解決事項を閉じた。同日 `/plan-tasks` でデザイン再考の指示を T-102 / T-103 に起こした。2026-09-12 に T-058 で、素の TUI にレポートの HTML タグが漏れる件の方式を決めた（tsukumo が `systemPrompt` の append で足す。実装は T-059）。同日 `/plan-tasks` で T-069 の結論から出た実装3件と個別ビューの撤去を T-082〜T-085 に起こし、Idiomorph の同梱は T-070 の本文を差し替える形にした。同日 T-069 で描画の技術を決め（フレームワークは入れない）、T-072 で入力欄のキー割り当てを入れ替えた。同日 `/plan-tasks` で届いた指示10件を T-072〜T-081 に起こし、HTML 描画のライブラリ（React）の検討は既存の T-069 に統合した。T-071 でキャラビューを立ち絵主役の形に作り直した。同日 `/plan-tasks` で描画の技術を T-069、サイドバーのスクロール位置が戻る件を T-070、
 吹き出しの見えづらさを T-071 に起こし、done 7件（T-042 / T-048 / T-060 / T-061 / T-066 / T-067 / T-068）を
 `docs/history/tasks-archive.md` へ移した。同日 `/loop /next-task` で T-067 / T-068 / T-060 / T-066 を完了（これで `/loop` に載せられるタスクは無くなった）。同日 `/plan-tasks` でセッション情報が出ない件を T-067 に、`/` 補完が効かない件を T-068 に起こした（どちらも現物で再現を確認）。同日の `/plan-tasks` でキャラクターの切り替えを T-064 / T-065 に、最新の吹き出しを領域の縦中央に置く件を T-066 に起こした。同日の `/plan-tasks` で TUI の HTML タグの件を T-058 / T-059 に、ポートの衝突を T-060 に、サイドバーのスクロール範囲を T-061 に、レポートの見やすさを T-062 / T-063 に起こした。承認を得て T-042（旧経路の撤去）と T-048（グローバル導入）を完了。同日 `/loop /next-task` で T-050〜T-057 の8件を完了し、done 10件を
 `docs/history/tasks-archive.md` へ移した。同日、`/plan-tasks` で箱の選択肢の比較を T-057 に起こし、T-046 の論点を広げ、
@@ -16,6 +16,25 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `docs/history/direction.md` へ移した）。
 
 ## 完了したこと（このセッション）
+
+### 2026-09-13 移行の段5（キャラビューを React の部品に）
+
+**T-098 完了。** キャラビュー（立ち絵と吹き出し）を `src/ui/character-view/` の4部品
+（`CharacterView` / `Portrait` / `BalloonTrack` / `Balloon`）にし、素材は HTML に埋めずに
+`/character/<file>` から取る形にした。`core/character-pack.ts` が `character.json` を読んで
+起動時に `character-changed` を1回流し、`SessionState.character` には **URL だけ**が乗る
+（allowlist は `portraits` に書かれたファイル名のみ）。SVG は部品が `fetch` して
+`dangerouslySetInnerHTML` でインラインにするので、差し色の `--outfit-accent` が効く。
+表情の「作業中」への遅延切り替えは、サーバ（`event-sink.ts`）のタイマーから部品の
+`useEffect` へ移した。旧の `/events/character`・`buildCharacterBody` / `portraitMarkup`・
+`infrastructure/character-asset.ts` は削除。**残るはメインビューだけ（段6）。**
+`bun run check` は 399 pass / 0 fail（393→399）。目視は偽の駆動 + CDP（1400x900）で
+最新の吹き出し bottom 759.0、立ち絵の高さ 242.55px が段4と一致することを確認した。
+
+**`/character/<file>` の置き場所は設計書と1点ずれている。** `docs/design.md` 5章は
+`core/server.ts` に置くとしているが、HTTP の配信自体がまだ旧 `infrastructure/view-server.ts`
+にあり、旧4層から `core` を import できない。allowlist とファイル読み取りだけを core に置き、
+配信側には関数を注入する形にした（**段7で HTTP 配信ごと `core` へ移すときに解消する**）。
 
 ### 2026-09-13 移行の段4（入力欄を React の部品に）
 

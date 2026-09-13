@@ -7,7 +7,7 @@
 // （docs/coding-standards.md「型を迂回するキャストを使わない」）。
 //
 // ファイルI/O（character.json 自体・立ち絵の画像ファイルを読むこと）は
-// src/infrastructure/character-asset.ts に集約する。ここが返すのはファイル名の文字列までで、
+// src/core/character-pack.ts に集約する。ここが返すのはファイル名の文字列までで、
 // 実際に中身を読むのは呼び出し側。
 
 import { type Expression, EXPRESSIONS, type Outfit } from "./expression.ts"
@@ -39,18 +39,6 @@ export function parseCharacterDefinition(content: string): CharacterDefinition |
 }
 
 /**
- * 表情に対応する立ち絵のファイル名を決める。該当する表情の指定が無ければ `default` に落ちる
- * （docs/requirements.md 4.4「あるものだけでよい」）。`default` も無ければ undefined を返し、
- * 呼び出し側は立ち絵なし（吹き出しだけ）にフォールバックする。
- */
-export function resolvePortraitFile(
-  definition: CharacterDefinition,
-  expression: Expression,
-): string | undefined {
-  return definition.portraits[expression] ?? definition.portraits.default
-}
-
-/**
  * 立ち絵がある表情の一覧。`speak` ツールが受け付ける表情名をここから作る
  * （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」— 表情名の出どころは
  * 定義ファイル側）。**`default` は定義に無くても必ず含む**（未知の表情の落とし先なので、
@@ -68,12 +56,93 @@ export function availableExpressions(
   )
 }
 
+/**
+ * `/character/<file>` の URL の作り方。**`character.json` に書かれたファイル名だけ**を渡す前提
+ * （`src/core/character-pack.ts` の allowlist と同じ考え方。パスから組み立てない）。
+ */
+export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
+
+export function characterAssetPath(fileName: string): string {
+  return `${CHARACTER_ASSET_PATH_PREFIX}${fileName}`
+}
+
+/**
+ * キャラビューに渡す、キャラクター定義の姿（`character-changed` イベント・`SessionState.character`
+ * の中身。docs/design.md 4.1 / 4.2）。**`portraits` の値は `/character/<file>` の URL**
+ * （ファイル名ではない。素材の中身はここにもイベントにも乗せない）。
+ */
+export type CharacterInfo = {
+  readonly name: string | undefined
+  readonly expressions: readonly Expression[]
+  readonly portraits: Readonly<Record<Expression, string | undefined>>
+  readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
+}
+
+/**
+ * キャラクター定義を {@link CharacterInfo}（キャラビューに渡す形）にする。ファイル名を
+ * {@link characterAssetPath} で URL に変える。定義が無い・壊れているときも、欠けた形
+ * （立ち絵なし・`default` だけの表情）で返す。
+ */
+export function toCharacterInfo(definition: CharacterDefinition | undefined): CharacterInfo {
+  return {
+    name: definition?.name,
+    expressions: availableExpressions(definition),
+    portraits: portraitUrls(definition),
+    outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
+  }
+}
+
+function portraitUrls(
+  definition: CharacterDefinition | undefined,
+): Readonly<Record<Expression, string | undefined>> {
+  if (definition === undefined) {
+    return EMPTY_PORTRAITS
+  }
+  return {
+    default: portraitUrl(definition.portraits.default),
+    working: portraitUrl(definition.portraits.working),
+    proud: portraitUrl(definition.portraits.proud),
+    flustered: portraitUrl(definition.portraits.flustered),
+  }
+}
+
+function portraitUrl(fileName: string | undefined): string | undefined {
+  return fileName === undefined ? undefined : characterAssetPath(fileName)
+}
+
+const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
+  default: undefined,
+  working: undefined,
+  proud: undefined,
+  flustered: undefined,
+}
+
+const EMPTY_OUTFIT_ACCENTS: Readonly<Record<Outfit, string | undefined>> = {
+  default: undefined,
+  light: undefined,
+  normal: undefined,
+  heavy: undefined,
+}
+
+/**
+ * 表情に対応する立ち絵の URL を決める。該当する表情の指定が無ければ `default` に落ちる
+ * （docs/requirements.md 4.4「あるものだけでよい」）。`default` も無ければ undefined を返し、
+ * 呼び出し側（`src/ui/character-view/portrait.tsx`）は立ち絵なし（吹き出しだけ）に
+ * フォールバックする。
+ */
+export function resolvePortraitUrl(
+  portraits: Readonly<Record<Expression, string | undefined>>,
+  expression: Expression,
+): string | undefined {
+  return portraits[expression] ?? portraits.default
+}
+
 /** 衣装に対応する差し色を決める。該当する衣装の指定が無ければ `default` に落ちる。 */
 export function resolveOutfitAccent(
-  definition: CharacterDefinition,
+  outfitAccents: Readonly<Record<Outfit, string | undefined>>,
   outfit: Outfit,
 ): string | undefined {
-  return definition.outfitAccents[outfit] ?? definition.outfitAccents.default
+  return outfitAccents[outfit] ?? outfitAccents.default
 }
 
 /**
@@ -96,16 +165,6 @@ export function classifyPortraitFile(fileName: string): "svg" | "raster" | undef
 /** ラスタ画像の MIME タイプ。`classifyPortraitFile` が `"raster"` を返したときだけ意味を持つ。 */
 export function rasterMimeType(fileName: string): string | undefined {
   return RASTER_MIME_BY_EXTENSION[fileExtension(fileName)]
-}
-
-/**
- * 読み込んだファイルの中身が SVG らしいかどうかの簡易な判定。**厳密な検証はしない**
- * （フルパースは過剰）。拡張子は `.svg` でも中身が壊れている・別形式のときにここで弾き、
- * 立ち絵なしのフォールバックへ落とす。
- */
-export function isPlausibleSvgMarkup(content: string): boolean {
-  const trimmed = content.trimStart().toLowerCase()
-  return trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")
 }
 
 function toCharacterDefinition(value: unknown): CharacterDefinition | undefined {

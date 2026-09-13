@@ -72,11 +72,11 @@
     opacity: 1;
   }
 }
-/* 吹き出しの並び。**DOM は新しい順**（buildCharacterBody）なので、column-reverse で並べると
-   最新が一番下に来て、過去のセリフほど上へ積み上がる（2026-09-12 ユーザーの指示「過去の発言は
-   上に押し上げる」）。吹き出しは立ち絵の側（align-items: flex-start）へ寄せる。
-   **column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の下端＝最新**なので、
-   SSE で並びが丸ごと差し替わっても購読スクリプトに手を入れずに最新が見える。
+/* 吹き出しの並び。**DOM は新しい順**（`src/ui/character-view/balloon-track.tsx`）なので、
+   column-reverse で並べると最新が一番下に来て、過去のセリフほど上へ積み上がる（2026-09-12
+   ユーザーの指示「過去の発言は上に押し上げる」）。吹き出しは立ち絵の側（align-items:
+   flex-start）へ寄せる。**column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の
+   下端＝最新**なので、並びが丸ごと差し替わっても最新が見える。
 
    2026-09-13 に一度 align-self を center（箱ごと中央寄せ）へ変えたが、箱の高さがセリフの
    件数で伸び縮みするため、箱の中心を領域中央に置くと**箱の下端＝最新の吹き出しの位置が
@@ -173,11 +173,10 @@
   opacity: 0.5;
   animation: balloon-push-up 0.3s ease-out;
 }
-/* 差し替えは Idiomorph の morph（src/presentation/browser/region-subscription.ts、2026-09-12）。.balloon は id を
-   持たないので、新しく増えた1件は新規ノードとして挿入されて balloon-appear が頭から再生
-   されるが、既存の .balloon はタグが一致する限り同じノードのまま中身だけが更新されうる
-   （Idiomorph は要素の挿入で以降のノードが総入れ替えになるのを避ける設計のため）。このため
-   balloon-push-up（過去のセリフの押し上げ）は、以前の全置換のときのように既存セリフ全件で
+/* 差し替えは React の再描画（`src/ui/character-view/balloon-track.tsx`）。**位置ベースの key**
+   （`index`）を使うため、新しい吹き出しが増えて既存の吹き出しの位置がずれると、その位置の
+   ノードは中身だけが更新されて同じ DOM ノードのまま残ることがある（React が key の一致で
+   ノードを再利用する）。そのため balloon-push-up（過去のセリフの押し上げ）は、既存セリフ全件で
    毎回再生されるとは限らない。「最新が並びの下端に差し込まれ、過去のセリフは1つぶん上へ
    押し上げられて薄くなる」動きの向きと最終状態（class・opacity）は変わらない。押し上げる量は
    最新の吹き出し1つぶんの当て推量なので、セリフが長いと少しずれるが、動きの向きが伝われば

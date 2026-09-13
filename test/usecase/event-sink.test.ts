@@ -42,22 +42,4 @@ describe("createEventSink", () => {
 
     expect(recorder.endedReasons).toEqual(["セッションが終了した"])
   })
-
-  it("実行中のツールが作業中の遅延を超えたら、setTimeout でもう一度 publish する", async () => {
-    const recorder = createRecorder()
-
-    recorder.sink({
-      kind: "tool-started",
-      toolUseId: "toolu_1",
-      name: "Read",
-      input: {},
-      parentToolUseId: undefined,
-    })
-    const publishCountAfterStart = recorder.views.length
-
-    // WORKING_EXPRESSION_DELAY_MS（1秒）を超えるまで待つ。
-    await new Promise((resolve) => setTimeout(resolve, 1100))
-
-    expect(recorder.views.length).toBeGreaterThan(publishCountAfterStart)
-  }, 3000)
 })

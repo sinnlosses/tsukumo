@@ -376,6 +376,35 @@ describe("applySessionEvent", () => {
     expect(cleared.tasks).toBeUndefined()
   })
 
+  it("character-changed でキャラクターパックの姿を持ち、届くまでは undefined", () => {
+    expect(INITIAL_SESSION_STATE.character).toBeUndefined()
+
+    const view = apply({
+      kind: "character-changed",
+      name: "架空の精霊",
+      expressions: ["default", "working"],
+      portraits: {
+        default: "/character/default.svg",
+        working: "/character/working.svg",
+        proud: undefined,
+        flustered: undefined,
+      },
+      outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+    })
+
+    expect(view.character).toEqual({
+      name: "架空の精霊",
+      expressions: ["default", "working"],
+      portraits: {
+        default: "/character/default.svg",
+        working: "/character/working.svg",
+        proud: undefined,
+        flustered: undefined,
+      },
+      outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+    })
+  })
+
   it("答え待ちの列をそのまま持つ", () => {
     const view = apply({
       kind: "pending-changed",

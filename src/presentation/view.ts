@@ -4,19 +4,20 @@
 // （配るのは src/infrastructure/view-server.ts）。
 // 折り返し・全角文字の幅・禁則処理はブラウザに任せる。ここが計算するのは中身だけ。
 //
-// メインビュー・キャラビューの中身はすべて決まっている（下の `buildMainBody` /
-// `buildCharacterBody`）。**サイドバーは段3で `src/ui/sidebar/` へ移った**（docs/design.md 12章）。
+// メインビューの中身はすべて決まっている（下の `buildMainBody`）。**サイドバー・入力欄は
+// 段3/段4、キャラビューは段5で `src/ui/` へ移った**（docs/design.md 12章）。
 
 import { type MainViewEntry } from "../protocol/session-state.ts"
 import { escapeHtml, isAllowedLinkUrl, sanitizeReportHtml } from "./report-html.ts"
 
 /**
- * 旧の SSE 経路が残る2領域。**サイドバー・入力欄は段3/段4で `src/ui/` へ移り、旧の SSE 経路と
- * HTML の組み立て関数は消えた**（docs/design.md 12章）ので、ここにはもう含めない。
+ * 旧の SSE 経路が残る領域。**サイドバー・入力欄は段3/段4、キャラビューは段5で `src/ui/` へ移り、
+ * 旧の SSE 経路と HTML の組み立て関数は消えた**（docs/design.md 12章）ので、ここにはもう
+ * メインビューしか含めない。
  */
-export type ViewName = "main" | "character"
+export type ViewName = "main"
 
-export const VIEW_NAMES: readonly ViewName[] = ["main", "character"]
+export const VIEW_NAMES: readonly ViewName[] = ["main"]
 
 export function isViewName(value: string): value is ViewName {
   return VIEW_NAMES.some((name) => name === value)
@@ -91,23 +92,21 @@ export function styleSheetPath(): string {
  */
 export const LAYOUT_PATH = "/"
 
-/** {@link buildLayoutPage} に渡す、3領域それぞれの最新の本文。 */
+/** {@link buildLayoutPage} に渡す、まだ SSE で配っている領域（メインビューだけ）の最新の本文。 */
 export type LayoutBodies = Readonly<Record<ViewName, string>>
 
 /**
- * メインビュー・キャラビュー・サイドバーを1枚の HTML にまとめ、CSS の grid で領域を分けたページ
- * （`docs/requirements.md` 4.7）。**メインビュー・キャラビューは既存の `/events/<view>` を
- * 個別に購読する**（2本の SSE。押す側の `src/infrastructure/view-server.ts` は経路ごとの
- * `publish` をそのまま使う）。**サイドバーは React の root**（`.layout-sidebar` に
- * `src/ui/main.tsx` が mount する。段3。docs/design.md 12章）で、初期の本文は持たない。
+ * メインビュー・キャラビュー・サイドバー・入力欄を1枚の HTML にまとめ、CSS の grid で領域を
+ * 分けたページ（`docs/requirements.md` 4.7）。**メインビューだけまだ既存の `/events/main` を
+ * 購読する**（押す側の `src/infrastructure/view-server.ts` がそのまま `publish` を使う）。
+ * **キャラビュー・サイドバー・入力欄は React の root**（`.layout-character` /
+ * `.layout-sidebar` / `.layout-dispatch` に `src/ui/main.tsx` が mount する。段3/段4/段5。
+ * docs/design.md 12章）で、初期の本文は持たない。
  * ページを丸ごと再読み込みしない理由は `docs/architecture.md`
  * 「ビューの更新は Server-Sent Events で押す」を参照。
  *
  * **ブラウザ側の配線（購読・タブ制御・レポートの描画・仕切り）は `/assets/browser.js`
- * （`src/presentation/browser/`）にある。** 入力欄（送信・中断・`/` 補完・答え待ちの箱）は
- * **段4 で React の root（`.layout-dispatch` に mount する `src/ui/dispatch/`）へ移った**
- * （docs/design.md 12章）ので、ここは他の領域（サイドバー）と同じく空の `<section>` を
- * 出すだけになる。
+ * （`src/presentation/browser/`）にある。**
  */
 export function buildLayoutPage(bodies: LayoutBodies): string {
   const topRow = `<div class="layout-row layout-row-top" id="${LAYOUT_ROW_TOP_ID}">
@@ -117,7 +116,7 @@ export function buildLayoutPage(bodies: LayoutBodies): string {
 </div>`
 
   const bottomRow = `<div class="layout-row layout-row-bottom" id="${LAYOUT_ROW_BOTTOM_ID}">
-<section class="layout-region layout-character" id="${layoutRegionId("character")}" data-event-path="${viewEventPath("character")}">${bodies.character}</section>
+<section class="layout-region layout-character" id="${layoutRegionId("character")}"></section>
 <div class="layout-resizer layout-resizer-vertical" id="${LAYOUT_RESIZER_BOTTOM_ID}" role="separator" aria-orientation="vertical" aria-label="キャラビューと入力欄の境界"></div>
 <section class="layout-region layout-dispatch" id="${layoutRegionId("dispatch")}"></section>
 </div>`
@@ -136,10 +135,10 @@ ${bottomRow}
 }
 
 /**
- * レイアウトページの領域の id。サイドバー・入力欄は {@link ViewName} に無い（SSE の領域では
- * ないため。段4で入力欄も React の root になったので、サイドバーと同じ扱いになった）。
+ * レイアウトページの領域の id。サイドバー・キャラビュー・入力欄は {@link ViewName} に無い
+ * （SSE の領域ではなく、React の root を mount するだけだから）。
  */
-type LayoutRegionName = ViewName | "sidebar" | "dispatch"
+type LayoutRegionName = ViewName | "sidebar" | "character" | "dispatch"
 
 function layoutRegionId(region: LayoutRegionName): string {
   return `tsukumo-view-${region}`
@@ -152,87 +151,6 @@ const LAYOUT_RESIZER_ROW_ID = "tsukumo-layout-resizer-row"
 const LAYOUT_RESIZER_TOP_ID = "tsukumo-layout-resizer-top"
 const LAYOUT_RESIZER_BOTTOM_ID = "tsukumo-layout-resizer-bottom"
 const LAYOUT_RESET_ID = "tsukumo-layout-reset"
-
-/**
- * 立ち絵の画像ソース。**SVG はファイルの中身をそのまま埋め込む**（インライン）。
- * `<img>` で読み込むと独立した文書扱いになり、ページ側の CSS 変数 `--outfit-accent` が
- * 届かないため（`characters/README.md` の実測）。それ以外の形式（ラスタ画像）は
- * `<img>` の `src` に data URI を渡す。**どちらの形にするかは src/protocol/character.ts が拡張子で
- * 決め、ここでは分岐しない**（利用者が置いた任意のファイルを無検証で流し込まないための仕分け）。
- */
-export type CharacterPortraitSource =
-  | { readonly kind: "svg"; readonly svgMarkup: string }
-  | { readonly kind: "image"; readonly dataUri: string }
-
-/** キャラビューの本文を組み立てるために必要な値。 */
-export type CharacterViewData = {
-  /**
-   * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順）。規約に従っていない発話
-   * （セリフが無い）が来たときに**直前のセリフを出し続ける**判断は、状態を持つ src/index.ts
-   * 側の役目（`docs/requirements.md` 4.2）。ここではもう解決済みの並びとして受け取り、
-   * 空配列は「まだ一度もセリフが無い」だけを表す。
-   */
-  readonly speeches: readonly string[]
-  /** 素材が無い・読めないときは undefined。そのときは吹き出しだけで成立させる。 */
-  readonly portrait: CharacterPortraitSource | undefined
-  /** 立ち絵の CSS 変数 `--outfit-accent` に渡す差し色。インライン SVG のときだけ見た目に効く。 */
-  readonly outfitAccent: string | undefined
-  /** 立ち絵の alt / aria-label。 */
-  readonly altText: string
-}
-
-/**
- * キャラビューの本文。立ち絵と吹き出しを同じ領域に同居させる（`docs/glossary.md`「キャラビュー」）。
- * 表情の切り替えは、差し替えのたびに新しい要素が挿入される性質を利用して、CSS アニメーション
- * （`src/presentation/style/character.css` の `portrait-fade-in`）で軽くフェードさせる。JS 側のトランジション制御は要らない。
- *
- * **吹き出しはセリフ1件につき1つ。** 今のターンの分を `.balloon-track` に縦へ積み、最新が
- * 一番下・過去のセリフほど上へ押し上がって見える（`src/presentation/style/character.css` の `.balloon-track` の
- * `column-reverse`）。並びは自前でスクロールする。**立ち絵も吹き出しの並びも下端で揃え**、
- * 最新の吹き出しの左辺から立ち絵へ向けて尻尾を出す（2026-09-12 ユーザーの指示。尻尾の向きは
- * 2026-09-13 に左下から真横へ変更）。**最新の吹き出しの下端の位置は固定の余白
- * （`--balloon-bottom-gap`）で保つ**（2026-09-13 決定。詳細は
- * `src/presentation/style/character.css` の `.balloon-track` のコメント）。**主役は
- * 立ち絵で、読ませたいのは最新のセリフ1件**なので、最新の吹き出しだけを濃く大きく（過去は
- * 小さく薄く）する（詳細は `src/presentation/style/character.css` のコメント）。
- *
- * **キャラは立ち絵と吹き出しだけ。** 答え待ちの箱（`src/ui/dispatch/pending-answer.tsx`）は
- * 入力欄の上に出すことにした（2026-09-11 決定。「左下でキャラの下に出すのは気づかない、
- * 入力欄と離れている」という理由で使いづらかった）。
- * キャラは吹き出しで「これいい？」と言うだけで、ボタンの中身はここには無い。**許可モードの
- * `<select>` はサイドバーのセッション情報（`src/ui/sidebar/session-info.tsx`）へ移した**
- * （2026-09-11 決定。サイドバーの区画ができたため）。
- */
-export function buildCharacterBody(data: CharacterViewData): string {
-  const portraitHtml =
-    data.portrait === undefined
-      ? ""
-      : portraitMarkup(data.portrait, data.outfitAccent, data.altText)
-
-  // セリフ1件につき吹き出し1つ。**DOM は新しい順**に並べる（`.balloon-track` は
-  // `column-reverse` なので先頭＝最新が視覚上いちばん下に来て、`scrollTop = 0`（既定の位置）が
-  // そのまま最新を指す。
-  // こうしておくと SSE で並びが丸ごと差し替わっても、購読スクリプト側に手を入れずに最新が見える。
-  const balloonsHtml =
-    data.speeches.length === 0
-      ? `<div class="balloon">${escapeHtml(PLACEHOLDER_UTTERANCE)}</div>`
-      : [...data.speeches]
-          .reverse()
-          .map((speech) => `<div class="balloon">${escapeHtml(speech)}</div>`)
-          .join("")
-
-  // 立ち絵と吹き出しの並びを横並びにする（`.character-layout`。まとめたレイアウト
-  // （`buildLayoutPage`）ではキャラビューは下段の半分幅になり、横長・浅めの領域になるため、
-  // 縦積みのままだと窮屈になる）。幅が足りない環境では `flex-wrap: wrap` で自然に縦積みへ戻る
-  // （`docs/requirements.md` 4.7「画面レイアウト」）。
-  //
-  // 立ち絵も吹き出しの並びも下端に寄せる（`src/presentation/style/character.css` の
-  // `.character-layout` の `align-items` と `.balloon-track` の `align-self`）。最新の吹き出しの
-  // 下端は `.balloon-track` の `margin-bottom`（`--balloon-bottom-gap`）で固定の位置に保つ。
-  return `<div class="character-region">
-<div class="character-layout">${portraitHtml}<div class="balloon-track">${balloonsHtml}</div></div>
-</div>`
-}
 
 /**
  * メインビューの本文。**利用者の依頼を境目にして「やり取り」ごとに区切り、今回のやり取りを
@@ -469,36 +387,11 @@ function requestHeadingHtml(request: string): string {
   return `<details class="turn-request" open><summary>${firstLine}</summary><div class="turn-request-full">${rest}</div></details>`
 }
 
-const PLACEHOLDER_UTTERANCE = "（まだ発話がありません）"
-
 const MAIN_VIEW_EMPTY_MESSAGE = "（まだ作業がありません）"
 
 // ツールの入力・出力は数十KBになることがある（実測: あるツールの --json 出力が170KB）。
 // 切り詰めは表示を壊さないためであって秘匿のためではないので、切り詰めた旨だけ添えて残りは捨てる。
 const MAX_TOOL_TEXT_LENGTH = 8000
-
-/**
- * 立ち絵1件分の HTML。SVG は**エスケープせずファイルの中身をそのまま**差し込む
- * （インライン埋め込みそのものが目的のため）。差し色は `style` 属性の値として埋め込む前提で
- * `escapeHtml` を通す（`"` を含む値で属性が閉じないようにする程度の保護。character.json は
- * 利用者自身が用意するローカルファイルなので、これ以上の検証は行わない）。
- * `aria-label` はラッパー側に付ける（SVG 自身の `aria-label` は素材作成時点の固定値だが、
- * こちらは今の表情を反映した値になる）。
- */
-function portraitMarkup(
-  portrait: CharacterPortraitSource,
-  outfitAccent: string | undefined,
-  altText: string,
-): string {
-  const accentStyle =
-    outfitAccent === undefined ? "" : ` style="--outfit-accent: ${escapeHtml(outfitAccent)};"`
-  const inner =
-    portrait.kind === "svg"
-      ? portrait.svgMarkup
-      : `<img class="portrait-image" src="${escapeHtml(portrait.dataUri)}" alt="${escapeHtml(altText)}">`
-
-  return `<div class="portrait" role="img" aria-label="${escapeHtml(altText)}"${accentStyle}>${inner}</div>`
-}
 
 /**
  * 1件の記録から、メインビューに出す HTML を0個か1個返す（`flatMap` で積むための形）。

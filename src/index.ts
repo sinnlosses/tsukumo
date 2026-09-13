@@ -11,6 +11,12 @@
 import { randomUUID } from "node:crypto"
 import process from "node:process"
 
+import {
+  characterChangedEvent,
+  DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+  readCharacterPack,
+  readCharacterPackFile,
+} from "./core/character-pack.ts"
 import { readConfig, VIEW_PORT_ENV_NAME } from "./core/config.ts"
 import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
 import { type Host } from "./core/host.ts"
@@ -26,11 +32,6 @@ import {
 } from "./infrastructure/browser-bundle.ts"
 import { resolveBundledDir } from "./infrastructure/bundled-path.ts"
 import {
-  DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
-  readCharacterAssets,
-  readCharacterDefinition,
-} from "./infrastructure/character-asset.ts"
-import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
   startOnResolvedPort,
@@ -38,7 +39,7 @@ import {
 } from "./infrastructure/view-port.ts"
 import { startViewServer } from "./infrastructure/view-server.ts"
 import { REPORT_NOTATION_PROMPT } from "./presentation/report-notation.ts"
-import { buildCharacterBody, buildMainBody } from "./presentation/view.ts"
+import { buildMainBody } from "./presentation/view.ts"
 import { availableExpressions } from "./protocol/character.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
 import { createEventSink } from "./usecase/event-sink.ts"
@@ -122,10 +123,19 @@ async function main(args: readonly string[]): Promise<number> {
 
   const host = createOrcaHost()
 
+  const characterDir = resolveBundledDir(
+    config.character,
+    process.cwd(),
+    DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+  )
+  const characterPack = readCharacterPack(characterDir)
+
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/infrastructure/view-port.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
-    startViewServer(port, browserScript, styleSheet, uiScript),
+    startViewServer(port, browserScript, styleSheet, uiScript, (fileName) =>
+      readCharacterPackFile(characterPack, fileName),
+    ),
   )
   if (!startResult.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${startResult.reason}\n`)
@@ -133,22 +143,9 @@ async function main(args: readonly string[]): Promise<number> {
   }
   const server = startResult.server
 
-  const characterDir = resolveBundledDir(
-    config.character,
-    process.cwd(),
-    DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
-  )
   const publish = throttle(
-    createViewPublisher(
-      {
-        readCharacterAssets: (expression, outfit) =>
-          readCharacterAssets(characterDir, expression, outfit),
-        buildCharacterBody,
-        buildMainBody,
-        publish: server.publish,
-      },
-      Date.now,
-      () => process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n"),
+    createViewPublisher({ buildMainBody, publish: server.publish }, () =>
+      process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n"),
     ),
     PUBLISH_INTERVAL_MS,
   )
@@ -172,6 +169,10 @@ async function main(args: readonly string[]): Promise<number> {
   manager.create({
     sessionId,
     startDriver: (toFrames) => {
+      // キャラクターパックは起動時に決まっていて変わらないので、1回だけ流す
+      // （core/character-pack.ts。docs/design.md 12章 段5）。
+      toFrames(characterChangedEvent(characterPack))
+
       // develop/tasks.json の見張りは core（サイドバーの React 側だけが `tasks` を読む。
       // 段3。旧の `sink` へは流さない — サイドバーはもう HTML を組み立てて配る側を持たない）。
       const taskWatcher = watchTaskSummary(process.cwd(), (tasks) => {
@@ -180,7 +181,7 @@ async function main(args: readonly string[]): Promise<number> {
       const started = startDriver(
         {
           cwd: process.cwd(),
-          expressions: availableExpressions(readCharacterDefinition(characterDir)),
+          expressions: availableExpressions(characterPack.definition),
           script: fakeScript,
         },
         (event) => {

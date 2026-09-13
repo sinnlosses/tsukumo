@@ -9,7 +9,13 @@
 // **依頼・中断・答え待ちの回答・`/` 補完は段4で WebSocket（src/core/server.ts）へ移った。**
 // 旧の入力欄向けの POST / GET の経路と、そのための専用 SSE はここから消えた
 // （docs/design.md 12章 段4）。ここに残るのはページ・アセットの配信と、まだ移っていない
-// メイン・キャラビューの SSE（`/events/<view>`）だけ。
+// メインビューの SSE（`/events/main`）だけ。
+//
+// **`/character/<file>` は core（`src/core/character-pack.ts`）が持つ判断を、ここは配るだけ**
+// （`serveCharacterAsset` として注入してもらう）。旧4層（このファイル）から `core` を import する
+// 辺は禁じられている（`test/architecture.test.ts`）ので、実際にどのファイルを許すかの allowlist と
+// ファイルの読み取りは core 側に置き、ここは受け取ったバイト列を配るだけに留める
+// （`browserScript` / `styleSheet` / `uiScript` を起動時に組み立てて渡してもらうのと同じ形）。
 
 import { readFileSync } from "node:fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
@@ -29,7 +35,20 @@ import {
   type ViewName,
   viewEventPath,
 } from "../presentation/view.ts"
+import { CHARACTER_ASSET_PATH_PREFIX } from "../protocol/character.ts"
 import { bundledFilePath } from "./bundled-path.ts"
+
+/** `/character/<file>` を1件配るために要るもの。中身は core（`character-pack.ts`）が決める。 */
+export type CharacterAssetFile = {
+  readonly contentType: string
+  readonly content: Buffer
+}
+
+/**
+ * `/character/<file>` の名前1つを配ってよい形にする。**allowlist に無い・ディスクに無い**ときは
+ * undefined（呼び出し側が404にする）。core の `readCharacterPackFile` を束ねる。
+ */
+export type ServeCharacterAsset = (fileName: string) => CharacterAssetFile | undefined
 
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
@@ -82,13 +101,30 @@ export function startViewServer(
    * 段2以降、React の root を配る経路を通してある（docs/design.md 12章）。
    */
   uiScript: string,
+  /**
+   * `/character/<file>` の1件を配ってよい形にする（`src/core/character-pack.ts` の
+   * `readCharacterPackFile` を束ねたもの。呼び出し側 = src/index.ts が渡す）。**allowlist・
+   * ファイルの読み取りは core 側の判断**で、ここは受け取った結果をそのまま配るか404にするだけ
+   * （旧4層から `core` を import できないための注入。ファイル冒頭のコメント参照）。
+   */
+  serveCharacterAsset: ServeCharacterAsset,
 ): Promise<ViewServer> {
   const bodies = new Map<ViewName, string>()
   const clients = new Map<ViewName, Set<ServerResponse>>()
 
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, bodies, clients, browserScript, styleSheet, uiScript)
+    respond(
+      request,
+      path,
+      response,
+      bodies,
+      clients,
+      browserScript,
+      styleSheet,
+      uiScript,
+      serveCharacterAsset,
+    )
   })
 
   const heartbeat = setInterval(() => {
@@ -153,6 +189,7 @@ function respond(
   browserScript: string,
   styleSheet: string,
   uiScript: string,
+  serveCharacterAsset: ServeCharacterAsset,
 ): void {
   if (path === LAYOUT_PATH) {
     writeHtml(response, buildLayoutPage(currentBodies(bodies)))
@@ -203,6 +240,15 @@ function respond(
     return
   }
 
+  if (path.startsWith(CHARACTER_ASSET_PATH_PREFIX) && request.method === "GET") {
+    writeCharacterAsset(
+      response,
+      path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
+      serveCharacterAsset,
+    )
+    return
+  }
+
   response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
   response.end("not found\n")
 }
@@ -232,6 +278,26 @@ function writeVendorAsset(response: ServerResponse, name: string): void {
   response.end(content)
 }
 
+/**
+ * `/character/<file>` を配る。名前が指す中身の判断（allowlist・ファイルの読み取り）は
+ * `serveCharacterAsset`（core 側）に任せ、ここは結果をそのまま配るか404にするだけ。
+ */
+function writeCharacterAsset(
+  response: ServerResponse,
+  fileName: string,
+  serveCharacterAsset: ServeCharacterAsset,
+): void {
+  const asset = serveCharacterAsset(fileName)
+  if (asset === undefined) {
+    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+    response.end("not found\n")
+    return
+  }
+
+  response.writeHead(200, { "content-type": asset.contentType, "cache-control": "no-store" })
+  response.end(asset.content)
+}
+
 function readOptionalFile(path: string): Buffer | undefined {
   try {
     return readFileSync(path)
@@ -244,7 +310,6 @@ function readOptionalFile(path: string): Buffer | undefined {
 function currentBodies(bodies: ReadonlyMap<ViewName, string>): LayoutBodies {
   return {
     main: bodies.get("main") ?? "",
-    character: bodies.get("character") ?? "",
   }
 }
 

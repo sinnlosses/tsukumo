@@ -26,8 +26,26 @@ const TEST_STYLE_SHEET = "/* テスト用の CSS */"
  */
 const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 
-async function start(): Promise<ViewServer> {
-  const server = await startViewServer(0, TEST_BROWSER_SCRIPT, TEST_STYLE_SHEET, TEST_UI_SCRIPT)
+/**
+ * `/character/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
+ * 上書きする（`src/core/character-pack.ts` の `readCharacterPackFile` の代役）。
+ */
+function noCharacterAsset(): undefined {
+  return undefined
+}
+
+async function start(
+  serveCharacterAsset: (
+    fileName: string,
+  ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
+): Promise<ViewServer> {
+  const server = await startViewServer(
+    0,
+    TEST_BROWSER_SCRIPT,
+    TEST_STYLE_SHEET,
+    TEST_UI_SCRIPT,
+    serveCharacterAsset,
+  )
   running = server
   return server
 }
@@ -103,7 +121,7 @@ describe("ビューサーバ", () => {
 
   it("publish した本文を、レイアウトページに埋め込んで返す", async () => {
     const server = await start()
-    server.publish("character", "<p>いま作業中だよ</p>")
+    server.publish("main", "<p>いま作業中だよ</p>")
 
     const response = await fetch(server.layoutUrl)
 
@@ -139,7 +157,7 @@ describe("ビューサーバ", () => {
     }
   })
 
-  it("2領域（main / character）のどれでも、購読後の publish が push される", async () => {
+  it("残っている領域（main）で、購読後の publish が push される", async () => {
     const server = await start()
 
     for (const view of VIEW_NAMES) {
@@ -168,32 +186,34 @@ describe("ビューサーバ", () => {
     expect(server.layoutUrl).toBe(`${originOf(server)}/`)
   })
 
-  it("/ がメイン・キャラ・サイドバーを1枚にまとめたページを返し、publish した本文を持つ（サイドバーは React の root。段3）", async () => {
+  it("/ がメイン・キャラ・サイドバーを1枚にまとめたページを返し、publish した本文を持つ（キャラ・サイドバーは React の root。段3/段5）", async () => {
     const server = await start()
     server.publish("main", "<p>メインの本文</p>")
-    server.publish("character", "<p>キャラの本文</p>")
 
     const response = await fetch(server.layoutUrl)
     const body = await response.text()
 
     expect(response.status).toBe(200)
     expect(body).toContain("<p>メインの本文</p>")
-    expect(body).toContain("<p>キャラの本文</p>")
     expect(body).toContain(
       '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"></section>',
     )
+    expect(body).toContain(
+      '<section class="layout-region layout-character" id="tsukumo-view-character"></section>',
+    )
   })
 
-  it("/ のメイン・キャラの領域が、/events/<view> を購読先として示す（サイドバーは持たない）", async () => {
+  it("/ のメインの領域だけが、/events/<view> を購読先として示す（キャラ・サイドバーは持たない）", async () => {
     const server = await start()
 
     const response = await fetch(server.layoutUrl)
     const body = await response.text()
 
     // 購読そのものは外に出したスクリプト（/assets/browser.js）が data-event-path を見て回る
-    // （2026-09-12 T-083）。ページが持つのは経路の宣言だけ。
+    // （2026-09-12 T-083）。ページが持つのは経路の宣言だけ。**キャラビューの領域に
+    // data-event-path が無い**ことは、直前のテストが埋め込んだ完全な `<section>` の文字列
+    // （属性が無い形）で確かめ済み。
     expect(body).toContain('data-event-path="/events/main"')
-    expect(body).toContain('data-event-path="/events/character"')
     expect(body).toContain('<script src="/assets/browser.js"></script>')
     expect(body).toContain('<link rel="stylesheet" href="/assets/style.css">')
   })
@@ -221,10 +241,47 @@ describe("ビューサーバ", () => {
   it("個別ビューのページ（/main /character）は無い（2026-09-12 に消した。404）", async () => {
     const server = await start()
 
-    for (const view of VIEW_NAMES) {
+    for (const view of [...VIEW_NAMES, "character"]) {
       const response = await fetch(`${originOf(server)}/${view}`)
       expect(response.status).toBe(404)
     }
+  })
+
+  it("/character/<file> は serveCharacterAsset が返した中身をそのまま配る", async () => {
+    const server = await start((fileName) =>
+      fileName === "default.svg"
+        ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
+        : undefined,
+    )
+    const origin = originOf(server)
+
+    const response = await fetch(`${origin}/character/default.svg`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("image/svg+xml")
+    expect(await response.text()).toBe("<svg></svg>")
+  })
+
+  it("/character/<file> は、定義に無いファイル名（serveCharacterAsset が undefined を返す）なら404", async () => {
+    const server = await start()
+
+    const response = await fetch(`${originOf(server)}/character/not-defined.svg`)
+
+    expect(response.status).toBe(404)
+  })
+
+  it("/character/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {
+    const server = await start((fileName) =>
+      fileName === "default.svg"
+        ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
+        : undefined,
+    )
+    const origin = originOf(server)
+
+    // `..` は URL の正規化で消えることがあるので、%2e%2e でエンコードして届ける
+    // （src/infrastructure/view-server.ts の vendor のテストと同じやり方）。
+    expect((await fetch(`${origin}/character/%2e%2e/package.json`)).status).toBe(404)
+    expect((await fetch(`${origin}/character/..%2Fdefault.svg`)).status).toBe(404)
   })
 })
 

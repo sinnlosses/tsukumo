@@ -10,10 +10,8 @@ import {
   subscribeRegion,
 } from "../../src/presentation/browser/region-subscription.ts"
 import {
-  buildCharacterBody,
   buildLayoutPage,
   buildMainBody,
-  type CharacterViewData,
   isViewName,
   LAYOUT_PATH,
   type LayoutBodies,
@@ -22,14 +20,6 @@ import {
   type ViewName,
 } from "../../src/presentation/view.ts"
 import { type MainViewEntry } from "../../src/protocol/session-state.ts"
-
-// buildCharacterBody に渡す全部入りのデータ。個々のテストは必要な部分だけ上書きする。
-const FULL_CHARACTER_DATA: CharacterViewData = {
-  speeches: ["やあ、調子はどう？"],
-  portrait: { kind: "svg", svgMarkup: '<svg role="img"><circle r="1"/></svg>' },
-  outfitAccent: "#b8c7ff",
-  altText: "架空の精霊（通常）",
-}
 
 // --- SSE 購読スクリプトを実際に動かして確かめるための道具 -------------------------------------
 //
@@ -194,8 +184,10 @@ function runLayoutScript(
   bindLayoutResizer(elements as unknown as LayoutResizerElements)
 }
 
+// `view` は呼び出し側の意図を残すための引数だが、`ViewName` はもう `"main"` しか無いので
+// 実質は本文を差し込むだけの関数になっている（段5でキャラビューが ViewName から抜けたため）。
 function singleRegionLayoutPage(view: ViewName, body: string): string {
-  const bodies: LayoutBodies = { main: "", character: "", [view]: body }
+  const bodies: LayoutBodies = { [view]: body }
   return buildLayoutPage(bodies)
 }
 
@@ -291,25 +283,31 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
   })
 
   it("領域は data-event-path で購読先を示す（ブラウザ側はこれを見て回る）", () => {
-    const page = buildLayoutPage({ main: "m", character: "c" })
+    const page = buildLayoutPage({ main: "m" })
 
     for (const view of VIEW_NAMES) {
       expect(page).toContain(`data-event-path="/events/${view}"`)
     }
   })
 
-  it("サイドバーの領域は data-event-path を持たない（React の root を mount する側。段3）", () => {
-    const page = buildLayoutPage({ main: "m", character: "c" })
+  it("サイドバー・キャラビューの領域は data-event-path を持たない（React の root を mount する側。段3/段5）", () => {
+    const page = buildLayoutPage({ main: "m" })
 
     expect(page).toContain(
       '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"></section>',
     )
+    expect(page).toContain(
+      '<section class="layout-region layout-character" id="tsukumo-view-character"></section>',
+    )
   })
 
   it("data-event-path を持つ要素を見つけたぶんだけ購読する", () => {
+    // 経路の値そのものは任意の文字列でよい（`subscribeAllRegions` は属性の値をそのまま渡すだけ）。
+    // 実在するのは main（段6まで残る SSE）だけだが、複数領域を見つける規約自体は経路名に依らない
+    // ので、架空の2件目でその規約を固定する。
     const regions = [
       { ...fakeRegion({ innerHTML: "<p>m</p>" }), getAttribute: () => "/events/main" },
-      { ...fakeRegion({ innerHTML: "<p>c</p>" }), getAttribute: () => "/events/character" },
+      { ...fakeRegion({ innerHTML: "<p>x</p>" }), getAttribute: () => "/events/example" },
       // 属性が空の要素は購読しない（`data-event-path` が付いていない領域の代わり。
       // サイドバーは段3以降ここに当たる）。
       { ...fakeRegion({ innerHTML: "" }), getAttribute: () => "" },
@@ -322,7 +320,7 @@ describe("SSEの更新の適用（本文が同じなら差し替えない・morp
 
     subscribeAllRegions()
 
-    expect(sources.map((s) => s.path)).toEqual(["/events/main", "/events/character"])
+    expect(sources.map((s) => s.path)).toEqual(["/events/main", "/events/example"])
   })
 
   it("購読直後の1回目の push が、いま出ている本文と同じときは差し替えない", () => {
@@ -392,21 +390,23 @@ describe("SSEの更新の経路", () => {
   })
 
   it("知らないビュー名を弾く", () => {
-    expect(isViewName("character")).toBe(true)
+    expect(isViewName("main")).toBe(true)
+    // キャラビューは段5で React の root（旧の SSE 経路を持たないビュー名）になった。
+    expect(isViewName("character")).toBe(false)
     expect(isViewName("balloon")).toBe(false)
   })
 })
 
 describe("レイアウトページの基本", () => {
   it("タイトルは固定で「tsukumo」（個別ビューのページ・タイトルは 2026-09-12 に消した）", () => {
-    const page = buildLayoutPage({ main: "", character: "" })
+    const page = buildLayoutPage({ main: "" })
 
     expect(page).toStartWith("<!doctype html>")
     expect(page).toContain("<title>tsukumo</title>")
   })
 
   it("CSS はインラインの <style> ではなく、/assets/style.css への <link> で読む（2026-09-12）", () => {
-    const page = buildLayoutPage({ main: "", character: "" })
+    const page = buildLayoutPage({ main: "" })
 
     expect(page).toContain('<link rel="stylesheet" href="/assets/style.css">')
     expect(page).not.toContain("<style>")
@@ -424,25 +424,22 @@ describe("まとめたレイアウトページ", () => {
     expect(eventPaths).not.toContain(LAYOUT_PATH)
   })
 
-  it("メイン・キャラの本文を、対応する id の要素に埋め込む。サイドバーは空のまま（React が mount する）", () => {
-    const page = buildLayoutPage({
-      main: "<p>作業ちゅう</p>",
-      character: "<p>やあ</p>",
-    })
+  it("メインの本文を、対応する id の要素に埋め込む。サイドバー・キャラビュー・入力欄は空のまま（React が mount する）", () => {
+    const page = buildLayoutPage({ main: "<p>作業ちゅう</p>" })
 
     expect(page).toContain(
       '<section class="layout-region layout-main" id="tsukumo-view-main" data-event-path="/events/main" data-mermaid-src="/vendor/mermaid.min.js" data-chart-src="/vendor/chart.umd.min.js"><p>作業ちゅう</p></section>',
     )
     expect(page).toContain(
-      '<section class="layout-region layout-character" id="tsukumo-view-character" data-event-path="/events/character"><p>やあ</p></section>',
+      '<section class="layout-region layout-character" id="tsukumo-view-character"></section>',
     )
     expect(page).toContain(
       '<section class="layout-region layout-sidebar" id="tsukumo-view-sidebar"></section>',
     )
   })
 
-  it("3領域それぞれが、自分の要素に /events/<view> を示して個別に購読される", () => {
-    const page = buildLayoutPage({ main: "", character: "" })
+  it("残っている領域（メイン）が、自分の要素に /events/<view> を示して購読される", () => {
+    const page = buildLayoutPage({ main: "" })
 
     // 購読そのものは外に出したスクリプト（`src/presentation/browser/region-subscription.ts`）が、この属性を
     // 見て回る（2026-09-12 T-083）。ページが持つのは「どの要素がどの経路か」だけ。
@@ -452,7 +449,7 @@ describe("まとめたレイアウトページ", () => {
   })
 
   it("右下の入力欄の領域は空のまま（React が mount する。段4 でサイドバーと同じ形にした）", () => {
-    const page = buildLayoutPage({ main: "", character: "" })
+    const page = buildLayoutPage({ main: "" })
 
     expect(page).toContain(
       '<section class="layout-region layout-dispatch" id="tsukumo-view-dispatch"></section>',
@@ -474,7 +471,7 @@ describe("まとめたレイアウトページの仕切り（3本のドラッグ
   })
 
   it("3本の仕切りと、既定に戻すボタンを持つ", () => {
-    const page = buildLayoutPage({ main: "", character: "" })
+    const page = buildLayoutPage({ main: "" })
 
     expect(page).toContain('id="tsukumo-layout-resizer-top"')
     expect(page).toContain('id="tsukumo-layout-resizer-bottom"')
@@ -867,20 +864,6 @@ describe("メインビューのタブの選択（push で戻らない・新し�
 
     expect(handle.activeTabId()).toBe("1")
     expect(handle.scrollTop()).toBe(400)
-  })
-})
-
-describe("キャラビューは立ち絵と吹き出しだけ（答え待ちの箱は入力欄側へ移した）", () => {
-  it("答え待ちの箱を出さない（CharacterViewData に pending フィールド自体が無い）", () => {
-    const body = buildCharacterBody(FULL_CHARACTER_DATA)
-
-    expect(body).not.toContain("pending-answer")
-  })
-
-  it("許可モードの select はキャラビューには出さない（サイドバーへ移した）", () => {
-    const body = buildCharacterBody(FULL_CHARACTER_DATA)
-
-    expect(body).not.toContain("permission-mode-select")
   })
 })
 
@@ -1542,101 +1525,5 @@ describe("メインビューの本文", () => {
 
     expect(() => buildMainBody(entries)).not.toThrow()
     expect(buildMainBody(entries)).toContain("本文")
-  })
-})
-
-describe("キャラビューの本文", () => {
-  it("セリフをそのまま出さず、HTML として無害な形にして埋め込む", () => {
-    const body = buildCharacterBody({
-      ...FULL_CHARACTER_DATA,
-      speeches: ['<script>alert("x")</script>'],
-    })
-
-    expect(body).not.toContain("<script>")
-    expect(body).toContain("&lt;script&gt;")
-  })
-
-  it("セリフがまだ無い（一度も発話が無い）ときはプレースホルダを出す", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, speeches: [] })
-
-    expect(body).toContain("まだ発話がありません")
-  })
-
-  it("セリフの件数と同じ数の吹き出しを出す", () => {
-    const body = buildCharacterBody({
-      ...FULL_CHARACTER_DATA,
-      speeches: ["1つめ", "2つめ", "3つめ"],
-    })
-
-    expect(body.match(/<div class="balloon">/g)?.length).toBe(3)
-    expect(body).toContain("1つめ")
-    expect(body).toContain("2つめ")
-    expect(body).toContain("3つめ")
-  })
-
-  it("並びは DOM 上で新しい順（先頭が最新。CSS の column-reverse で視覚上は下端に出る）", () => {
-    const body = buildCharacterBody({
-      ...FULL_CHARACTER_DATA,
-      speeches: ["1つめ", "2つめ", "3つめ"],
-    })
-
-    expect(body.indexOf("3つめ")).toBeLessThan(body.indexOf("2つめ"))
-    expect(body.indexOf("2つめ")).toBeLessThan(body.indexOf("1つめ"))
-  })
-
-  it("吹き出しは立ち絵と横並びの .balloon-track に直接入る（縦を割る入れ物は置かない）", () => {
-    const body = buildCharacterBody({
-      ...FULL_CHARACTER_DATA,
-      speeches: ["1つめ", "2つめ"],
-    })
-
-    expect(body).toContain('<div class="balloon-track">')
-    // 立ち絵の直後が並びで、間に高さを割る入れ物を挟まない。
-    expect(body).toMatch(/<\/div><div class="balloon-track">/)
-    expect(body).not.toContain("balloon-anchor")
-    expect(body).not.toContain("balloon-spacer")
-  })
-
-  it("インライン SVG の立ち絵は、エスケープせずファイルの中身をそのまま埋め込む", () => {
-    const body = buildCharacterBody(FULL_CHARACTER_DATA)
-
-    expect(body).toContain('<svg role="img"><circle r="1"/></svg>')
-  })
-
-  it("差し色を立ち絵のラッパーに CSS 変数として渡す", () => {
-    const body = buildCharacterBody(FULL_CHARACTER_DATA)
-
-    expect(body).toContain('style="--outfit-accent: #b8c7ff;"')
-  })
-
-  it("alt テキストをラッパーの aria-label にも出す", () => {
-    const body = buildCharacterBody(FULL_CHARACTER_DATA)
-
-    expect(body).toContain('aria-label="架空の精霊（通常）"')
-  })
-
-  it("ラスタ画像の立ち絵は <img> の data URI で出す（差し色は渡さない意味は無いが埋め込む）", () => {
-    const body = buildCharacterBody({
-      ...FULL_CHARACTER_DATA,
-      portrait: { kind: "image", dataUri: "data:image/png;base64,QUJD" },
-    })
-
-    expect(body).toContain('<img class="portrait-image" src="data:image/png;base64,QUJD"')
-    expect(body).toContain('alt="架空の精霊（通常）"')
-  })
-
-  it("立ち絵の素材が無い（portrait が undefined）ときは、吹き出しだけで成立する", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, portrait: undefined })
-
-    expect(body).not.toContain("<svg")
-    expect(body).not.toContain("<img")
-    expect(body).toContain('<div class="balloon">')
-    expect(body).toContain("やあ、調子はどう？")
-  })
-
-  it("差し色が無いときは style 属性ごと省略する", () => {
-    const body = buildCharacterBody({ ...FULL_CHARACTER_DATA, outfitAccent: undefined })
-
-    expect(body).not.toContain("--outfit-accent")
   })
 })
