@@ -9,22 +9,22 @@
 
 | ファイル | 版 | 取得元 | ライセンス | 用途 |
 | --- | --- | --- | --- | --- |
-| `highlight.min.js` | 11.9.0 | cdnjs | BSD-3-Clause | コードの色付け |
-| `highlight-theme.min.css` | 11.9.0 (github-dark) | cdnjs | BSD-3-Clause | 同上のテーマ |
+| `highlight-theme.min.css` | 11.9.0 (github-dark) | cdnjs | BSD-3-Clause | コードの色付けのテーマ |
 | `chart.umd.min.js` | 4.4.1 | cdnjs | MIT | グラフ |
 | `mermaid.min.js` | 11.15.0 | cdnjs | MIT | 図 |
-| `idiomorph.min.js` | 0.8.0 | jsdelivr（cdnjs には無い） | 0BSD | 領域の差し替えを DOM の morph で行う（`subscriptionScript`） |
 
 更新するときは、同じ URL の版だけを差し替えて上の表も直す:
 
 ```bash
-curl -sL -o vendor/highlight.min.js https://cdnjs.cloudflare.com/ajax/libs/highlight.js/<版>/highlight.min.js
 curl -sL -o vendor/highlight-theme.min.css https://cdnjs.cloudflare.com/ajax/libs/highlight.js/<版>/styles/github-dark.min.css
 curl -sL -o vendor/chart.umd.min.js https://cdnjs.cloudflare.com/ajax/libs/Chart.js/<版>/chart.umd.min.js
 curl -sL -o vendor/mermaid.min.js https://cdnjs.cloudflare.com/ajax/libs/mermaid/<版>/mermaid.min.js
-curl -sL -o vendor/idiomorph.min.js https://cdn.jsdelivr.net/npm/idiomorph@<版>/dist/idiomorph.min.js
 ```
 
 **mermaid は 3.2MB と大きい**ので、`chart.umd.min.js` ともども**レポートが実際にその記法を
-使ったときだけ読み込む**（`src/view.ts`）。`highlight.min.js` は 118KB なので常に読む。
-`idiomorph.min.js`（min+gzip 3.7KB 公称）も、SSE の差し替えのたびに要るので常に読む。
+使ったときだけ読み込む**（`src/ui/report/mermaid-block.tsx` / `chart-block.tsx`）。
+
+**`highlight.min.js` と `idiomorph.min.js` は移行の段6で消えた**（docs/design.md 12章）。
+コードの色付けは `rehype-highlight`（`lowlight` を内蔵）が Markdown を HTML に変換する時点で
+済ませるので、ブラウザで動く色付けスクリプトが要らなくなった（テーマの CSS だけ残る）。
+領域の差し替えは React の再描画に変わったので、DOM を差分適用するライブラリも要らなくなった。

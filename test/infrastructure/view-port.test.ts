@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
+import { startViewServer, type ViewServer } from "../../src/core/server.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
@@ -8,7 +9,6 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../src/infrastructure/view-port.ts"
-import { startViewServer, type ViewServer } from "../../src/infrastructure/view-server.ts"
 
 /** `node:http` の `listen` が投げるエラーに似せた、`code` 付きのエラーを作る。 */
 function errnoError(code: string): NodeJS.ErrnoException {
@@ -133,7 +133,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "default", port: blockedPort }, (port) =>
-        startViewServer(port, "", "", "", () => undefined),
+        startViewServer(port, "", "", () => undefined),
       )
 
       expect(result.ok).toBe(true)
@@ -154,7 +154,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "explicit", port: blockedPort }, (port) =>
-        startViewServer(port, "", "", "", () => undefined),
+        startViewServer(port, "", "", () => undefined),
       )
 
       expect(result.ok).toBe(false)

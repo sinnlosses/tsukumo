@@ -16,8 +16,14 @@
       "event": {
         "kind": "command-descriptions",
         "descriptions": [
-          { "name": "clear", "description": "会話を消して始め直す（架空の説明）" },
-          { "name": "compact", "description": "会話を要約してまとめる（架空の説明）" }
+          {
+            "name": "clear",
+            "description": "会話を消して始め直す（架空の説明）"
+          },
+          {
+            "name": "compact",
+            "description": "会話を要約してまとめる（架空の説明）"
+          }
         ]
       }
     },
@@ -32,8 +38,20 @@
   ],
   "turns": [
     [
-      { "afterMs": 100, "event": { "kind": "partial-utterance", "text": "## 台本の" } },
-      { "afterMs": 150, "event": { "kind": "partial-utterance", "text": "レポート\n\n" } },
+      {
+        "afterMs": 100,
+        "event": {
+          "kind": "partial-utterance",
+          "text": "## 台本の"
+        }
+      },
+      {
+        "afterMs": 150,
+        "event": {
+          "kind": "partial-utterance",
+          "text": "レポート\n\n"
+        }
+      },
       {
         "afterMs": 200,
         "event": {
@@ -47,7 +65,9 @@
           "kind": "tool-started",
           "toolUseId": "fake-tool-1",
           "name": "Read",
-          "input": { "file_path": "/tmp/dummy/notes.md" }
+          "input": {
+            "file_path": "/tmp/dummy/notes.md"
+          }
         }
       },
       {
@@ -74,7 +94,13 @@
           "text": "## 台本のレポート\n\nこれは架空の本文で、実物の会話ではない。\n\n- 段2 の配信の経路を確かめるための台本\n- 表・コードなどの記法は段6で unified に置き換わる\n"
         }
       },
-      { "afterMs": 1000, "event": { "kind": "turn-finished", "status": "success" } }
+      {
+        "afterMs": 1000,
+        "event": {
+          "kind": "turn-finished",
+          "status": "success"
+        }
+      }
     ],
     [
       {
@@ -86,7 +112,9 @@
               "kind": "permission",
               "id": "fake-ask-1",
               "toolName": "Bash",
-              "input": { "command": "echo 架空の確認" }
+              "input": {
+                "command": "echo 架空の確認"
+              }
             }
           ]
         }
@@ -106,7 +134,13 @@
           "text": "答え待ちの箱を出す場面（架空）。答えると箱が消える。\n"
         }
       },
-      { "afterMs": 1300, "event": { "kind": "turn-finished", "status": "success" } }
+      {
+        "afterMs": 1300,
+        "event": {
+          "kind": "turn-finished",
+          "status": "success"
+        }
+      }
     ],
     [
       {
@@ -123,9 +157,18 @@
                   "text": "架空の質問：どの案を試す？",
                   "multiSelect": true,
                   "options": [
-                    { "label": "A案", "description": "架空の説明A" },
-                    { "label": "B案", "description": "架空の説明B" },
-                    { "label": "C案", "description": "架空の説明C" }
+                    {
+                      "label": "A案",
+                      "description": "架空の説明A"
+                    },
+                    {
+                      "label": "B案",
+                      "description": "架空の説明B"
+                    },
+                    {
+                      "label": "C案",
+                      "description": "架空の説明C"
+                    }
                   ]
                 }
               ]
@@ -148,7 +191,51 @@
           "text": "multiSelect の質問に答える場面（架空）。答えると箱が消える。\n"
         }
       },
-      { "afterMs": 1300, "event": { "kind": "turn-finished", "status": "success" } }
+      {
+        "afterMs": 1300,
+        "event": {
+          "kind": "turn-finished",
+          "status": "success"
+        }
+      }
+    ],
+    [
+      {
+        "afterMs": 100,
+        "event": {
+          "kind": "partial-utterance",
+          "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- "
+        }
+      },
+      {
+        "afterMs": 200,
+        "event": {
+          "kind": "partial-utterance",
+          "text": "項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
+        }
+      },
+      {
+        "afterMs": 400,
+        "event": {
+          "kind": "speech",
+          "text": "記法の見本を出したよ。引用・ネスト・区切り線・表・図・グラフの架空の例。",
+          "expression": "proud"
+        }
+      },
+      {
+        "afterMs": 600,
+        "event": {
+          "kind": "utterance",
+          "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- 項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
+        }
+      },
+      {
+        "afterMs": 700,
+        "event": {
+          "kind": "turn-finished",
+          "status": "success"
+        }
+      }
     ]
   ]
 }

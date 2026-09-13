@@ -3931,6 +3931,8 @@ overflow-y: auto }`（`src/view.ts` 2116行目付近）と `.sidebar-block-sessi
 
   移行の段6（T-099）に統合（2026-09-13）。Markdown を unified に置き換えるので自前レンダラに記法を足さない。完了条件（引用・ネスト・水平線・列揃え・迂回の記述の除去）は T-099 に写した。
 
+  **T-099 が完了し、この統合は実際に閉じた**（2026-09-13）。`src/ui/report/markdown.tsx`（react-markdown + remark-gfm）が引用 `> `・2段以上のネストしたリスト・水平線 `---` を描き、GFM の列揃え（`:---:` / `---:`）は `src/ui/report/sanitize-schema.ts` に `align` 属性を足して通した。`src/core/report-notation.ts`（旧 `report-notation.ts`）から「描けない」の迂回の記述を外し、`docs/requirements.md` 4.2 の記述も実態に合わせた。部品のテスト `test/ui/report/markdown.test.tsx` に4項目とも含めて確認済み（T-099 の evidence を参照）。
+
 ### 当時のタスク本文
 
 レンダラが描けない Markdown 記法（引用・ネストしたリスト・水平線・テーブルの列揃え）を埋める。

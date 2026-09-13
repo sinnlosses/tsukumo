@@ -205,7 +205,7 @@ describe("applySessionEvent", () => {
     expect(view.finishedTools).toHaveLength(6)
   })
 
-  it("ツールの結果を、対応する tool_use の記録に合わせる（メインビューにはツール系を渡さない）", () => {
+  it("ツールの結果を、対応する tool_use の記録に合わせる（mainViewEntries は toolUseId 等を落として渡す）", () => {
     const view = apply(
       {
         kind: "tool-started",
@@ -217,8 +217,8 @@ describe("applySessionEvent", () => {
       { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: true },
     )
 
-    // ツールの記録そのものは持ち続ける（サイドバー用途。docs/requirements.md 4.2）が、
-    // メインビューはレポートだけを出すので `mainViewEntries` には渡さない。
+    // ツールの記録そのものは `toolUseId` / `nested` / `startedAt` を持つ（サイドバー用途と
+    // 突き合わせ用。docs/requirements.md 4.2）。
     expect(view.records).toEqual([
       {
         kind: "tool",
@@ -230,10 +230,18 @@ describe("applySessionEvent", () => {
         result: { content: "ダミーの結果", isError: true },
       },
     ])
-    expect(mainViewEntries(view)).toEqual([])
+    // メインビューの部品（`toolVisibility`）が見てよいのは名前・入力・結果だけ。
+    expect(mainViewEntries(view)).toEqual([
+      {
+        kind: "tool",
+        name: "Read",
+        input: { path: "/tmp/a" },
+        result: { content: "ダミーの結果", isError: true },
+      },
+    ])
   })
 
-  it("mainViewEntries はツール系の entry を含まない（依頼とレポートの間に挟まっていても除く）", () => {
+  it("mainViewEntries はツール系の entry も含む（メインビューの ToolRun が toolVisibility で絞る）", () => {
     const view = apply(
       { kind: "request", text: "依頼" },
       {
@@ -249,6 +257,12 @@ describe("applySessionEvent", () => {
 
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", text: "依頼" },
+      {
+        kind: "tool",
+        name: "Read",
+        input: {},
+        result: { content: "結果", isError: false },
+      },
       { kind: "detail", markdown: "レポート本文" },
     ])
   })

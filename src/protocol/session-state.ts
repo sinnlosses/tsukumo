@@ -306,18 +306,34 @@ export function applySessionEvent(
 }
 
 /**
- * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`buildMainBody` はそのまま
+ * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`ui/main-view/` の部品はそのまま
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
- * **メインビューはレポートだけ**（docs/requirements.md 4.2「ツールの流れはサイドバーへ」）。
- * `records` に積んだ `tool` の記録はここでは渡さない（サイドバーの仕事は `runningTools` /
- * `finishedTools` を直接読む src/usecase/state-publish.ts の役目）。
+ * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
+ * `[<Report> | <ToolRun> | <QuestionRecord>]*`」）。サイドバーの「いま何をしているか」は
+ * 別に `runningTools` / `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
+ * **どのツールを実際にメインビューへ出すかは `protocol/main-view.ts` の `toolVisibility`
+ * が絞る**（ファイルを変えた操作・サブエージェントの起動・失敗したツールの3種類だけ。
+ * `docs/requirements.md` 4.2）。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
-  const settled = state.records.filter(isReportRecord)
+  const settled = state.records.map(toMainViewEntry)
   return state.partialUtterance === ""
     ? settled
     : [...settled, { kind: "detail", markdown: state.partialUtterance }]
+}
+
+/**
+ * `SessionRecord` を `MainViewEntry` に変える。**`tool` は `toolUseId` / `nested` /
+ * `startedAt`（突き合わせや表情の判定にしか使わない内部の付随情報）を落とす**（メインビューの
+ * 部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。docs/coding-standards.md
+ * 「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを暗黙に持ち越さない）。
+ */
+function toMainViewEntry(record: SessionRecord): MainViewEntry {
+  if (record.kind !== "tool") {
+    return record
+  }
+  return { kind: "tool", name: record.name, input: record.input, result: record.result }
 }
 
 /**
@@ -364,12 +380,6 @@ export function commandCandidates(
 ): readonly string[] {
   const terminalOnly = new Set(terminalSlashCommands)
   return slashCommands.filter((command) => !terminalOnly.has(command))
-}
-
-function isReportRecord(
-  record: SessionRecord,
-): record is Extract<SessionRecord, { readonly kind: "request" } | { readonly kind: "detail" }> {
-  return record.kind !== "tool"
 }
 
 /**

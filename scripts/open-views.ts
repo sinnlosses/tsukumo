@@ -15,7 +15,7 @@
 import process from "node:process"
 
 import { createOrcaHost } from "../src/core/orca-host.ts"
-import { LAYOUT_PATH } from "../src/presentation/view.ts"
+import { LAYOUT_PATH } from "../src/core/server.ts"
 
 const baseUrl = process.argv[2]
 if (baseUrl === undefined) {

@@ -7,7 +7,9 @@ import {
   attachSessionSocket,
   createStartupToken,
   SESSION_SOCKET_PATH,
+  startViewServer,
   type SessionSocket,
+  type ViewServer,
 } from "../../src/core/server.ts"
 import { type DispatchResult } from "../../src/core/session-manager.ts"
 import { type ClientCommand } from "../../src/protocol/command.ts"
@@ -238,5 +240,166 @@ describe("attachSessionSocket", () => {
       events: [{ at: 1, event: { kind: "speech", text: "架空のセリフ", expression: "default" } }],
     })
     client.close()
+  })
+})
+
+// ここから静的配信（ページ・`/assets`・`/vendor`・`/character`）。移行の段6で
+// 旧のビューサーバから合流した（メインビュー専用の SSE 経路は無くなった。
+// docs/design.md 12章）。
+
+let runningView: ViewServer | undefined
+
+/** ブラウザ側スクリプトの代役。**本物のビルドはしない**（テストから `bun build` を起こさない）。 */
+const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
+
+/** CSS の代役。**本物のビルドはしない**。 */
+const TEST_STYLE_SHEET = "/* テスト用の CSS */"
+
+/**
+ * `/character/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
+ * 上書きする（`src/core/character-pack.ts` の `readCharacterPackFile` の代役）。
+ */
+function noCharacterAsset(): undefined {
+  return undefined
+}
+
+async function startView(
+  serveCharacterAsset: (
+    fileName: string,
+  ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
+): Promise<ViewServer> {
+  const server = await startViewServer(0, TEST_UI_SCRIPT, TEST_STYLE_SHEET, serveCharacterAsset)
+  runningView = server
+  return server
+}
+
+afterEach(async () => {
+  await runningView?.close()
+  runningView = undefined
+})
+
+function viewOrigin(server: ViewServer): string {
+  return new URL(server.layoutUrl).origin
+}
+
+describe("startViewServer", () => {
+  it("ループバックにだけバインドする", async () => {
+    const server = await startView()
+
+    expect(viewOrigin(server)).toStartWith("http://127.0.0.1:")
+  })
+
+  it("layoutUrl は同じサーバの / を指す", async () => {
+    const server = await startView()
+
+    expect(server.layoutUrl).toBe(`${viewOrigin(server)}/`)
+  })
+
+  it('/ が <div id="app"> と ui.js への script タグを持つページを返す', async () => {
+    const server = await startView()
+
+    const response = await fetch(server.layoutUrl)
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('<div id="app"></div>')
+    expect(body).toContain('<script type="module" src="/assets/ui.js"></script>')
+    expect(body).toContain('<link rel="stylesheet" href="/assets/style.css">')
+  })
+
+  it("/assets/ui.js が、起動時に組み立てたブラウザ側スクリプトを返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(`${viewOrigin(server)}/assets/ui.js`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("text/javascript")
+    expect(await response.text()).toBe(TEST_UI_SCRIPT)
+  })
+
+  it("/assets/style.css が、起動時に組み立てた CSS を返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(`${viewOrigin(server)}/assets/style.css`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("text/css")
+    expect(await response.text()).toBe(TEST_STYLE_SHEET)
+  })
+
+  it("同梱した外部ライブラリを配る（allowlist に載っている名前だけ）", async () => {
+    const server = await startView()
+    const origin = viewOrigin(server)
+
+    const theme = await fetch(`${origin}/vendor/highlight-theme.min.css`)
+    expect(theme.status).toBe(200)
+    expect(theme.headers.get("content-type")).toContain("text/css")
+
+    const chart = await fetch(`${origin}/vendor/chart.umd.min.js`)
+    expect(chart.status).toBe(200)
+    expect(chart.headers.get("content-type")).toContain("text/javascript")
+    expect((await chart.text()).length).toBeGreaterThan(1000)
+  })
+
+  it("消えた同梱ファイル（highlight.min.js / idiomorph.min.js）はもう配らない（移行の段6）", async () => {
+    const server = await startView()
+    const origin = viewOrigin(server)
+
+    expect((await fetch(`${origin}/vendor/highlight.min.js`)).status).toBe(404)
+    expect((await fetch(`${origin}/vendor/idiomorph.min.js`)).status).toBe(404)
+  })
+
+  it("同梱していない名前・上のディレクトリを指す名前は配らない", async () => {
+    const server = await startView()
+    const origin = viewOrigin(server)
+
+    // allowlist に無い名前。
+    expect((await fetch(`${origin}/vendor/other.js`)).status).toBe(404)
+    // パスを組み立てないので、`..` を書いても外のファイルには届かない。
+    expect((await fetch(`${origin}/vendor/../package.json`)).status).toBe(404)
+    expect((await fetch(`${origin}/vendor/%2e%2e/package.json`)).status).toBe(404)
+  })
+
+  it("知らない経路には404を返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(`${viewOrigin(server)}/balloon`)
+
+    expect(response.status).toBe(404)
+  })
+
+  it("/character/<file> は serveCharacterAsset が返した中身をそのまま配る", async () => {
+    const server = await startView((fileName) =>
+      fileName === "default.svg"
+        ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
+        : undefined,
+    )
+    const origin = viewOrigin(server)
+
+    const response = await fetch(`${origin}/character/default.svg`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("image/svg+xml")
+    expect(await response.text()).toBe("<svg></svg>")
+  })
+
+  it("/character/<file> は、定義に無いファイル名（serveCharacterAsset が undefined を返す）なら404", async () => {
+    const server = await startView()
+
+    const response = await fetch(`${viewOrigin(server)}/character/not-defined.svg`)
+
+    expect(response.status).toBe(404)
+  })
+
+  it("/character/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {
+    const server = await startView((fileName) =>
+      fileName === "default.svg"
+        ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
+        : undefined,
+    )
+    const origin = viewOrigin(server)
+
+    expect((await fetch(`${origin}/character/%2e%2e/package.json`)).status).toBe(404)
+    expect((await fetch(`${origin}/character/..%2Fdefault.svg`)).status).toBe(404)
   })
 })

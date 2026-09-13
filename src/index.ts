@@ -1,16 +1,17 @@
 // tsukumo のエントリポイント。Agent SDK で Claude Code のセッションを起こし、届いたイベントを
-// ビューに変えて、ローカルの HTTP サーバから配り続ける。
+// `session-manager` に渡して WebSocket のフレームとして配り続ける。
 //
 // ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
 // 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。
 //
-// **いまは新旧2つの経路が並んで動く**（docs/design.md 12章の段2）。届いたイベントは
-// (1) `session-manager` へ（WebSocket の `events` フレーム）と (2) 旧の `event-sink` へ
-// （SSE で押す HTML）の両方へ流れる。段3以降、領域ごとに (2) が消えていく。
+// **移行が終わるまで（段7）は旧の層（`core` から見て `index.ts` だけが持つ配線）が残る**が、
+// 描く側の経路はもう新3層（`protocol` / `core` / `ui`）だけになった（段6。docs/design.md 12章）。
 
 import { randomUUID } from "node:crypto"
 import process from "node:process"
 
+import { buildStyleSheet, buildUiScript } from "./core/bundle.ts"
+import { resolveBundledDir } from "./core/bundled-path.ts"
 import {
   characterChangedEvent,
   DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
@@ -21,30 +22,19 @@ import { readConfig, VIEW_PORT_ENV_NAME } from "./core/config.ts"
 import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
 import { type Host } from "./core/host.ts"
 import { createOrcaHost } from "./core/orca-host.ts"
-import { attachSessionSocket, createStartupToken } from "./core/server.ts"
+import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
+import { attachSessionSocket, createStartupToken, startViewServer } from "./core/server.ts"
 import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./core/session-driver.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { watchTaskSummary } from "./core/task-summary.ts"
-import {
-  buildBrowserScript,
-  buildStyleSheet,
-  buildUiScript,
-} from "./infrastructure/browser-bundle.ts"
-import { resolveBundledDir } from "./infrastructure/bundled-path.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "./infrastructure/view-port.ts"
-import { startViewServer } from "./infrastructure/view-server.ts"
-import { REPORT_NOTATION_PROMPT } from "./presentation/report-notation.ts"
-import { buildMainBody } from "./presentation/view.ts"
 import { availableExpressions } from "./protocol/character.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
-import { createEventSink } from "./usecase/event-sink.ts"
-import { throttle } from "./usecase/throttle.ts"
-import { createViewPublisher } from "./usecase/view-publish.ts"
 
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
 
@@ -65,11 +55,6 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_OPEN_VIEW   起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
   TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず台本を流す）
 `
-
-// ビューを配り直す間隔。本文はトークン単位で流れてくるので、断片1つごとに全ビューを組み直すと
-// 無駄が大きい。まとめて配ることで転送量を抑える（反映の遅延目安は1秒以内。
-// docs/requirements.md「5. 実行環境・非機能要件」）。
-const PUBLISH_INTERVAL_MS = 100
 
 /**
  * 終了コードを返す。0 のときはビューサーバとセッションを残したままプロセスを生かし続けるので、
@@ -96,21 +81,13 @@ async function main(args: readonly string[]): Promise<number> {
   // 乗せる）。ディスクに置かないので古い成果物を配る事故が起きず、`.ts` / `.css` を直して起こし直す
   // だけで反映される。組み立てに失敗したらページが動かないので、**ここは起動時の前提不足として
   // 即時終了する**（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の例外側）。
-  const [browserScript, styleSheet, uiScript] = await Promise.all([
-    buildBrowserScript(),
-    buildStyleSheet(),
-    buildUiScript(),
-  ])
-  if (browserScript === undefined) {
-    process.stderr.write("tsukumo: ブラウザ側スクリプトを組み立てられない\n")
-    return 1
-  }
+  const [styleSheet, uiScript] = await Promise.all([buildStyleSheet(), buildUiScript()])
   if (styleSheet === undefined) {
     process.stderr.write("tsukumo: CSS を組み立てられない\n")
     return 1
   }
   if (uiScript === undefined) {
-    process.stderr.write("tsukumo: ブラウザ側スクリプト（ui）を組み立てられない\n")
+    process.stderr.write("tsukumo: ブラウザ側スクリプトを組み立てられない\n")
     return 1
   }
 
@@ -133,7 +110,7 @@ async function main(args: readonly string[]): Promise<number> {
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/infrastructure/view-port.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
-    startViewServer(port, browserScript, styleSheet, uiScript, (fileName) =>
+    startViewServer(port, uiScript, styleSheet, (fileName) =>
       readCharacterPackFile(characterPack, fileName),
     ),
   )
@@ -142,24 +119,6 @@ async function main(args: readonly string[]): Promise<number> {
     return 1
   }
   const server = startResult.server
-
-  const publish = throttle(
-    createViewPublisher({ buildMainBody, publish: server.publish }, () =>
-      process.stderr.write("tsukumo: ビューの更新に失敗した。次の更新を待つ\n"),
-    ),
-    PUBLISH_INTERVAL_MS,
-  )
-
-  // 旧の経路（SSE で押す HTML）。**新しい経路と同じイベントを受け取る購読者の1つ**として残す
-  // （docs/design.md 12章の段2。入力欄は段4で WebSocket 側の `SessionState` だけを見るようになり、
-  // ここへは何も渡さなくなった）。
-  const sink = createEventSink(
-    publish,
-    (reason) => {
-      process.stderr.write(`tsukumo: セッションが終わった: ${reason}\n`)
-    },
-    Date.now,
-  )
 
   const sessionId = randomUUID()
   const manager = createSessionManager({
@@ -173,8 +132,8 @@ async function main(args: readonly string[]): Promise<number> {
       // （core/character-pack.ts。docs/design.md 12章 段5）。
       toFrames(characterChangedEvent(characterPack))
 
-      // develop/tasks.json の見張りは core（サイドバーの React 側だけが `tasks` を読む。
-      // 段3。旧の `sink` へは流さない — サイドバーはもう HTML を組み立てて配る側を持たない）。
+      // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に畳んで読む
+      // （段3。docs/design.md 12章）。
       const taskWatcher = watchTaskSummary(process.cwd(), (tasks) => {
         toFrames({ kind: "tasks-changed", tasks })
       })
@@ -184,10 +143,7 @@ async function main(args: readonly string[]): Promise<number> {
           expressions: availableExpressions(characterPack.definition),
           script: fakeScript,
         },
-        (event) => {
-          toFrames(event)
-          sink(event)
-        },
+        toFrames,
       )
       return {
         ...started,

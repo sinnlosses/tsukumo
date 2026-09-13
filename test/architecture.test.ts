@@ -5,26 +5,23 @@ import { fileURLToPath } from "node:url"
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
-// **いまは新3層（protocol / core / ui）と旧4層（usecase / presentation / infrastructure。
-// domain は段2で protocol に吸収された）が並んでいる**（docs/design.md 12章）。
+// **いまは新3層（protocol / core / ui）と旧の残り（infrastructure。domain は段2で protocol に
+// 吸収され、usecase と presentation は段6で空になって消えた）が並んでいる**（docs/design.md 12章）。
 // 併存期間の規則:
 //   - 旧の各層 → `protocol` は**可**（語彙と畳み込みは protocol に移したため）
 //   - 新（`protocol` / `core` / `ui`）→ 旧は**不可**
 //   - 旧 → `core` / `ui` も**不可**（新しい経路の配線は `index.ts` だけが持つ）
-// 段7で旧の3ディレクトリが消えたら、この表から旧の行が消える。
+// 段7で `infrastructure` も消えたら、この表から旧の行が消える。
 
-type Layer = "protocol" | "core" | "ui" | "usecase" | "presentation" | "infrastructure" | "index"
+type Layer = "protocol" | "core" | "ui" | "infrastructure" | "index"
 
 // 各層が import してよい先（docs/coding-standards.md「層と依存の向き」の表そのもの）。
-// `src/presentation/browser/` の中身も presentation として扱う。
 const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
   protocol: new Set(["protocol"]),
   core: new Set(["protocol", "core"]),
   ui: new Set(["protocol", "ui"]),
-  usecase: new Set(["protocol", "usecase"]),
-  presentation: new Set(["protocol", "usecase", "presentation"]),
-  infrastructure: new Set(["protocol", "usecase", "presentation", "infrastructure"]),
-  index: new Set(["protocol", "core", "ui", "usecase", "presentation", "infrastructure", "index"]),
+  infrastructure: new Set(["protocol", "infrastructure"]),
+  index: new Set(["protocol", "core", "ui", "infrastructure", "index"]),
 }
 
 const SRC_ROOT = fileURLToPath(new URL("../src", import.meta.url)).replace(/\/$/, "")
@@ -56,17 +53,16 @@ describe("層と依存の向き", () => {
 })
 
 // `ui/` の中の横断 import を禁じる（`docs/design.md` 12章 段3「ui/ の作法」2）。
-// 領域は `layout` / `main-view` / `character-view` / `sidebar` / `dispatch` / `report`。
+// 領域は `layout` / `main-view` / `character-view` / `sidebar` / `dispatch`。
 // `ui/component/` `ui/style/` と `ui/app.tsx` `ui/socket.ts` `ui/main.tsx`（領域のディレクトリの
 // 直下に無いもの）は誰から引いてもよい共有部分なので、ここでは見ない。
-const UI_REGIONS = [
-  "layout",
-  "main-view",
-  "character-view",
-  "sidebar",
-  "dispatch",
-  "report",
-] as const
+//
+// **`ui/report/` も共有部分に含めた**（段6。当初 T-096 で「領域」の1つとして名指しされていたが、
+// `report/` は state を持たない Markdown の描画プリミティブ（unified の構成・sanitize の
+// schema・MermaidBlock・ChartBlock）で、それ自体が何かの「機能」ではなく `ui/component/` と
+// 同じ役割。`main-view/` の `<Report>` が `<Markdown>` を直接使う必要があり、横断 import 禁止の
+// 対象にすると設計（`docs/design.md` 6.1 の部品の木）と両立しない）。
+const UI_REGIONS = ["layout", "main-view", "character-view", "sidebar", "dispatch"] as const
 type UiRegion = (typeof UI_REGIONS)[number]
 
 type UiRegionViolation = {
@@ -178,14 +174,7 @@ function layerOf(relPath: string): Layer {
     return "index"
   }
   const [top] = relPath.split("/")
-  if (
-    top === "protocol" ||
-    top === "core" ||
-    top === "ui" ||
-    top === "usecase" ||
-    top === "presentation" ||
-    top === "infrastructure"
-  ) {
+  if (top === "protocol" || top === "core" || top === "ui" || top === "infrastructure") {
     return top
   }
   throw new Error(`src/${relPath} の層を判定できない（層のディレクトリの外にある）`)
