@@ -3,6 +3,13 @@
   "description": "tsukumo の既定のキャラクター。ターミナルという道具に宿った小さな精霊。",
   "license": "このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。",
   "accent": "#f2b0a0",
+  "speechMarker": "アスナ: ",
+  "expressions": {
+    "default": "通常",
+    "working": "作業中",
+    "proud": "どや顔",
+    "flustered": "あわあわ"
+  },
   "portraits": {
     "default": "default.svg",
     "working": "working.svg",

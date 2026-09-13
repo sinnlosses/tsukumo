@@ -13,7 +13,7 @@
 
 import { z } from "zod"
 
-import { type CharacterInfo } from "./character.ts"
+import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
@@ -112,11 +112,17 @@ export type SessionEvent =
    */
   | { readonly kind: "tasks-changed"; readonly tasks: readonly TaskSummaryItem[] | undefined }
   /**
-   * キャラクターパックが決まった（core の `character-pack.ts` が起動時に1回だけ流す）。
-   * キャラビューが立ち絵を取りに行く先（`docs/design.md` 4.1・7章）。**中身は URL だけ**
-   * （素材そのものは乗らない。docs/coding-standards.md「会話内容の扱い」と同じ考え方）。
+   * キャラクターパックが決まった（core の `character-pack.ts`。**起こしたときと、
+   * `switch-character` で起こし直したときの1回ずつ**）。キャラビューが立ち絵を取りに行く先
+   * （`docs/design.md` 4.1・7章）。**中身は URL だけ**（素材そのものは乗らない。
+   * docs/coding-standards.md「会話内容の扱い」と同じ考え方）。
+   *
+   * 切り替えの選択肢（`packs`）も一緒に運ぶ。**一覧は起動先とキャラクターパックの置き場を
+   * 見て決まる**もので、いま出しているキャラクターと出どころが同じなので、イベントを分けない。
    */
-  | ({ readonly kind: "character-changed" } & CharacterInfo)
+  | ({ readonly kind: "character-changed" } & CharacterInfo & {
+        readonly packs: readonly CharacterPackChoice[]
+      })
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

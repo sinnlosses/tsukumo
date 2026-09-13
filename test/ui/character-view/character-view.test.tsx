@@ -11,9 +11,11 @@ import { CharacterView } from "../../../src/ui/character-view/character-view.tsx
 const PORTRAIT_FIXED_STORAGE_KEY = "tsukumo-portrait-fixed"
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
+  pack: "fictional",
   name: "架空の精霊",
   accent: undefined,
-  expressions: ["default"],
+  speechMarker: undefined,
+  expressions: [{ name: "default", label: "通常" }],
   portraits: {
     default: "/character/default.png",
     working: undefined,
@@ -72,9 +74,11 @@ describe("CharacterView", () => {
           { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: now - 2000 },
         ],
         character: {
-          name: "架空の精霊",
-          accent: undefined,
-          expressions: ["default", "working"],
+          ...FIXTURE_CHARACTER,
+          expressions: [
+            { name: "default", label: "通常" },
+            { name: "working", label: "作業中" },
+          ],
           portraits: {
             default: "/character/default.png",
             working: "/character/working.png",
@@ -110,9 +114,11 @@ describe("CharacterView", () => {
           { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: now - 100 },
         ],
         character: {
-          name: "架空の精霊",
-          accent: undefined,
-          expressions: ["default", "proud"],
+          ...FIXTURE_CHARACTER,
+          expressions: [
+            { name: "default", label: "通常" },
+            { name: "proud", label: "どや顔" },
+          ],
           portraits: {
             default: "/character/default.png",
             working: undefined,

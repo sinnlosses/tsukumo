@@ -7,13 +7,13 @@
 // 時刻は畳み込みの中で `Date.now()` を呼ばず、イベントに打たれた `at` を受け取る
 // （両側の状態が同じになるように、時刻はイベントの発生側が決める。docs/design.md 4.1）。
 
-import { type CharacterInfo } from "./character.ts"
+import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { type Expression, resolveExpression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question } from "./question.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
-import { DEFAULT_SPEECH_MARKER, splitUtterance } from "./utterance.ts"
+import { splitUtterance } from "./utterance.ts"
 
 /**
  * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
@@ -168,6 +168,12 @@ export type SessionState = {
    */
   readonly character: CharacterInfo | undefined
   /**
+   * 切り替えられるキャラクターパックの一覧（サイドバーの `<select>`。docs/design.md 7章）。
+   * `character-changed` と一緒に届く。**まだ届いていないときは空**で、そのときは選択肢を
+   * 出せないので `<select>` ごと出さない。
+   */
+  readonly characterPacks: readonly CharacterPackChoice[]
+  /**
    * 今のターンが始まった時刻（`request` の `at`）。表す意味は「依頼を送ってから、そのターンが
    * 終わるまでの時間」の起点で、次の `request` まではそのまま持ち続ける（入力欄の経過時間表示
    * `src/ui/dispatch/turn-status.tsx` が使う。docs/design.md 4.2）。まだ一度も依頼が無ければ
@@ -209,6 +215,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   turnInProgress: false,
   tasks: undefined,
   character: undefined,
+  characterPacks: [],
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
@@ -314,12 +321,15 @@ export function applySessionEvent(
       return {
         ...state,
         character: {
+          pack: event.pack,
           name: event.name,
           accent: event.accent,
           expressions: event.expressions,
           portraits: event.portraits,
           outfitAccents: event.outfitAccents,
+          speechMarker: event.speechMarker,
         },
+        characterPacks: event.packs,
       }
   }
 }
@@ -432,7 +442,14 @@ function settleUtterance(state: SessionState): SessionState {
  * `partialUtterance` にはマーカー行を除いた本文を残す（呼び出し側が確定した記録へ積む）。
  */
 function withMarkerFallback(state: SessionState): SessionState {
-  const parts = splitUtterance(state.partialUtterance, DEFAULT_SPEECH_MARKER)
+  // マーカーはキャラクターパックの定義から来る。**定義に無いパックでは補助そのものが効かない**
+  // （コードに既定のマーカーを持たない。docs/design.md 7章）。
+  const speechMarker = state.character?.speechMarker
+  if (speechMarker === undefined || speechMarker === "") {
+    return state
+  }
+
+  const parts = splitUtterance(state.partialUtterance, speechMarker)
   if (parts.speech === undefined) {
     return { ...state, partialUtterance: parts.detail }
   }

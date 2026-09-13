@@ -50,14 +50,20 @@ export function isModelAlias(value: string): value is ModelAlias {
 }
 
 /**
+ * キャラクターパックの名前（`characters/<name>` のディレクトリ名）として受け付ける長さの上限。
+ * **ここは長さしか見ない。** 名前をパスとして組み立てず、受け取った側（`src/cli.ts`）が
+ * 一覧にある名前とだけ突き合わせるので、`..` のような値は自然に「見つからない」に落ちる。
+ */
+const MAX_CHARACTER_PACK_NAME_LENGTH = 200
+
+/**
  * ブラウザが作る、コマンド1件の識別子（`crypto.randomUUID()`）。**`error` フレームの
  * 突き合わせにだけ使う**ので、サーバはこれを状態に持たない。
  */
 const commandIdSchema = z.string().min(1).max(200)
 
 /**
- * ブラウザ → サーバのコマンド。`switch-character`（段8）と `new-session`（段9）は
- * まだ足していない（docs/design.md 4.3）。
+ * ブラウザ → サーバのコマンド。`new-session`（docs/design.md 8章）はまだ足していない。
  */
 export const clientCommandSchema = z.discriminatedUnion("type", [
   z.object({
@@ -84,6 +90,11 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     type: z.literal("set-permission-mode"),
     commandId: commandIdSchema,
     mode: z.enum(PERMISSION_MODES),
+  }),
+  z.object({
+    type: z.literal("switch-character"),
+    commandId: commandIdSchema,
+    name: z.string().min(1).max(MAX_CHARACTER_PACK_NAME_LENGTH),
   }),
 ])
 

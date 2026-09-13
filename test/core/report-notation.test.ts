@@ -42,11 +42,19 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("素の TUI 向けの記法を上書きすると明示する", () => {
-    expect(REPORT_NOTATION_PROMPT).toContain("出力スタイルに書かれた指示よりこの節を優先する")
+  it("出力スタイルとキャラクターの人格の両方を上書きすると明示する", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain(
+      "出力スタイルやキャラクターの人格に書かれた指示よりこの節を優先する",
+    )
   })
 
-  it("「描けない」記法は無い（T-063・移行の段6で unified に置き換えたため）", () => {
+  it("レポートの文体は中立と決めている（キャラクターの口調はセリフが担う）", () => {
+    // どのパックに切り替えても本文の読みやすさが変わらないようにするための決定
+    // （docs/requirements.md 4.2）。文体を persona.md 側に持たせない。
+    expect(REPORT_NOTATION_PROMPT).toContain("レポートは中立の文体で書く")
+  })
+
+  it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("描けない")
   })
 })

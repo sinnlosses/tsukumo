@@ -1,12 +1,14 @@
 import { describe, expect, it } from "bun:test"
 
 import {
-  availableExpressions,
   characterAssetPath,
   classifyPortraitFile,
   type CharacterDefinition,
   parseCharacterDefinition,
+  expressionChoices,
+  expressionNames,
   rasterMimeType,
+  resolveExpressionLabel,
   resolveOutfitAccent,
   resolvePortraitUrl,
   toCharacterInfo,
@@ -17,6 +19,13 @@ const FULL_DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
   accent: "#f2b0a0",
+  speechMarker: "精霊: ",
+  expressions: {
+    default: "通常",
+    working: "作業中",
+    proud: "どや顔",
+    flustered: "あわあわ",
+  },
   portraits: {
     default: "default.svg",
     working: "working.svg",
@@ -50,6 +59,31 @@ describe("parseCharacterDefinition", () => {
     expect(definition?.outfitAccents.default).toBeUndefined()
   })
 
+  it("expressions（表情名 → ラベル）と speechMarker を読む", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+
+    expect(definition?.expressions.working).toBe("作業中")
+    expect(definition?.speechMarker).toBe("精霊: ")
+  })
+
+  it("expressions / speechMarker が無ければ undefined に落ちる（既定はコード側に持たない）", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.svg" } }),
+    )
+
+    expect(definition?.expressions.working).toBeUndefined()
+    expect(definition?.speechMarker).toBeUndefined()
+  })
+
+  it("expressions / speechMarker の型が違うときも undefined に落ちる", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ expressions: "not an object", speechMarker: 42 }),
+    )
+
+    expect(definition?.expressions.default).toBeUndefined()
+    expect(definition?.speechMarker).toBeUndefined()
+  })
+
   it("name が無くても壊れない", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ portraits: {}, outfitAccents: {} }),
@@ -75,18 +109,41 @@ describe("parseCharacterDefinition", () => {
   })
 })
 
-describe("availableExpressions", () => {
-  it("立ち絵がある表情だけを返す", () => {
+describe("expressionChoices", () => {
+  it("定義の expressions をラベルにする", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
 
     expect(definition).toBeDefined()
-    expect(availableExpressions(definition)).toEqual(["default", "working", "proud", "flustered"])
+    expect(expressionChoices(definition)).toEqual([
+      { name: "default", label: "通常" },
+      { name: "working", label: "作業中" },
+      { name: "proud", label: "どや顔" },
+      { name: "flustered", label: "あわあわ" },
+    ])
+  })
+
+  it("ラベルが無い表情は、表情名がそのままラベルになる", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.svg", working: "working.svg" } }),
+    )
+
+    expect(expressionChoices(definition)).toEqual([
+      { name: "default", label: "default" },
+      { name: "working", label: "working" },
+    ])
   })
 
   it("立ち絵が一部しか無い定義では、その表情と default だけを返す", () => {
     const definition: CharacterDefinition = {
       name: undefined,
       accent: undefined,
+      expressions: {
+        default: undefined,
+        working: undefined,
+        proud: undefined,
+        flustered: undefined,
+      },
+      speechMarker: undefined,
       portraits: {
         default: undefined,
         working: "working.svg",
@@ -96,11 +153,31 @@ describe("availableExpressions", () => {
       outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
     }
 
-    expect(availableExpressions(definition)).toEqual(["default", "working"])
+    expect(expressionNames(expressionChoices(definition))).toEqual(["default", "working"])
+  })
+
+  it("立ち絵が無くてもラベルがあれば選べる（絵は default に落ちる）", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.svg" }, expressions: { proud: "どや顔" } }),
+    )
+
+    expect(expressionNames(expressionChoices(definition))).toEqual(["default", "proud"])
   })
 
   it("定義が無いときは default だけを返す（受け付ける表情名が空にならない）", () => {
-    expect(availableExpressions(undefined)).toEqual(["default"])
+    expect(expressionChoices(undefined)).toEqual([{ name: "default", label: "default" }])
+  })
+})
+
+describe("resolveExpressionLabel", () => {
+  it("一覧にある表情はそのラベルを返す", () => {
+    const choices = expressionChoices(parseCharacterDefinition(FULL_DEFINITION_JSON))
+
+    expect(resolveExpressionLabel(choices, "proud")).toBe("どや顔")
+  })
+
+  it("一覧に無い表情は表情名をそのまま返す", () => {
+    expect(resolveExpressionLabel([], "working")).toBe("working")
   })
 })
 
@@ -158,21 +235,30 @@ describe("toCharacterInfo", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
     expect(definition).toBeDefined()
 
-    const info = definition === undefined ? undefined : toCharacterInfo(definition)
+    const info = definition === undefined ? undefined : toCharacterInfo(definition, "fictional")
 
+    expect(info?.pack).toBe("fictional")
     expect(info?.name).toBe("架空の精霊")
     expect(info?.accent).toBe("#f2b0a0")
-    expect(info?.expressions).toEqual(["default", "working", "proud", "flustered"])
+    expect(info?.speechMarker).toBe("精霊: ")
+    expect(info?.expressions.map((choice) => choice.name)).toEqual([
+      "default",
+      "working",
+      "proud",
+      "flustered",
+    ])
     expect(info?.portraits.working).toBe("/character/working.svg")
     expect(info?.outfitAccents.heavy).toBe("#ffb3a7")
   })
 
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
-    const info = toCharacterInfo(undefined)
+    const info = toCharacterInfo(undefined, undefined)
 
+    expect(info.pack).toBeUndefined()
     expect(info.name).toBeUndefined()
     expect(info.accent).toBeUndefined()
-    expect(info.expressions).toEqual(["default"])
+    expect(info.speechMarker).toBeUndefined()
+    expect(info.expressions).toEqual([{ name: "default", label: "default" }])
     expect(info.portraits.default).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()
   })

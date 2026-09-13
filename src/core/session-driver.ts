@@ -24,8 +24,12 @@ import {
 } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
+import {
+  type ExpressionChoice,
+  expressionNames as toExpressionNames,
+} from "../protocol/character.ts"
 import { type ModelAlias, type PermissionMode } from "../protocol/command.ts"
-import { type Expression, expressionLabel } from "../protocol/expression.ts"
+import { type Expression } from "../protocol/expression.ts"
 import { type Answer, type PendingAsk } from "../protocol/pending-ask.ts"
 import { type SessionEvent } from "../protocol/session-event.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "./pending-answer.ts"
@@ -77,13 +81,13 @@ const SPEAK_TOOL_DESCRIPTION =
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */
   readonly cwd: string
-  /** `speak` の `expression` で受け付ける表情名（キャラクター定義から作る）。 */
-  readonly expressions: readonly Expression[]
+  /** `speak` の `expression` で受け付ける表情と、そのラベル（キャラクターパックから作る）。 */
+  readonly expressions: readonly ExpressionChoice[]
   readonly permissionMode: PermissionMode
   /**
-   * `systemPrompt` に足す文字列（レポートの記法など）。**中身を core が決めない**
-   * （描く側の都合なので、配線（src/cli.ts）が渡す。段6でここに人格 = persona も乗る。
-   * docs/design.md 5章）。
+   * `systemPrompt` に足す文字列（人格とレポートの記法。組み立ては
+   * `src/core/character-pack.ts` の `buildSystemPromptAppend`）。**中身をこのファイルが
+   * 決めない**（docs/design.md 5章）。
    */
   readonly systemPromptAppend: string
   /**
@@ -142,6 +146,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
     },
   })
 
+  void applyNeutralOutputStyle(session)
   void relayMessages(session, options)
   void relayCommandDescriptions(session, options)
 
@@ -224,10 +229,13 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
 export async function readRestoredEvents(
   sessionId: string,
   cwd: string,
-  expressions: readonly Expression[],
+  expressions: readonly ExpressionChoice[],
 ): Promise<readonly SessionEvent[]> {
   try {
-    return toRestoredEvents(await getSessionMessages(sessionId, { dir: cwd }), expressions)
+    return toRestoredEvents(
+      await getSessionMessages(sessionId, { dir: cwd }),
+      toExpressionNames(expressions),
+    )
   } catch {
     return []
   }
@@ -246,7 +254,7 @@ async function relayMessages(
   let sessionId: string | undefined = undefined
   try {
     for await (const message of session) {
-      for (const event of toSessionEvents(message, options.expressions)) {
+      for (const event of toSessionEvents(message, toExpressionNames(options.expressions))) {
         if (event.kind === "session-info") {
           sessionId = event.sessionId
         }
@@ -286,6 +294,25 @@ async function markSession(sessionId: string, options: SessionDriverOptions): Pr
     await tagSession(sessionId, options.tag, { dir: options.cwd })
   } catch {
     // 印が付かないだけなので、何も流さずに諦める。
+  }
+}
+
+/**
+ * グローバルの出力スタイル（`~/.claude/settings.json` の `outputStyle`）をこのセッションの中だけ
+ * 中立に戻す。**そうしないと人格が二重に効く**（パックの `persona.md` と、全プロジェクトに効く
+ * 出力スタイルが重なる。2026-09-14 実測: 応答が両方の人格を名乗った。docs/requirements.md 4.4）。
+ *
+ * 触るのは**セッション限りのフラグ層だけ**で、設定ファイルは書き換えない（`updateSettings` の
+ * ほうはファイルを書くので使わない）。**失敗しても続行する** — 人格が二重になるだけで、
+ * セッション自体は動く（docs/coding-standards.md「エラーハンドリング」）。
+ */
+async function applyNeutralOutputStyle(session: {
+  readonly applyFlagSettings: (settings: { readonly outputStyle: string }) => Promise<void>
+}): Promise<void> {
+  try {
+    await session.applyFlagSettings({ outputStyle: "default" })
+  } catch {
+    // 中立に戻せなかっただけなので、何も流さずに諦める。
   }
 }
 
@@ -333,7 +360,7 @@ function askForAnswer(
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
  */
-function speakServer(expressions: readonly Expression[]) {
+function speakServer(expressions: readonly ExpressionChoice[]) {
   return createSdkMcpServer({
     name: SPEAK_MCP_SERVER_NAME,
     version: "0.0.0",
@@ -343,7 +370,9 @@ function speakServer(expressions: readonly Expression[]) {
         SPEAK_TOOL_DESCRIPTION,
         {
           text: z.string().describe("セリフ。1〜2文の短い一言"),
-          expression: z.enum(expressionNames(expressions)).describe(expressionGuide(expressions)),
+          expression: z
+            .enum(speakExpressionEnum(expressions))
+            .describe(expressionGuide(expressions)),
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
@@ -353,18 +382,27 @@ function speakServer(expressions: readonly Expression[]) {
 
 /**
  * zod の `enum` に渡す表情名。**空にならないこと**が型の要求なので、`default` を必ず先頭に置く
- * （`availableExpressions` も `default` を必ず含むが、ここで型としても保証しておく）。
+ * （`expressionChoices` も `default` を必ず含むが、ここで型としても保証しておく）。
  */
-function expressionNames(expressions: readonly Expression[]): [Expression, ...Expression[]] {
-  return ["default", ...expressions.filter((expression) => expression !== "default")]
+function speakExpressionEnum(
+  expressions: readonly ExpressionChoice[],
+): [Expression, ...Expression[]] {
+  return ["default", ...toExpressionNames(expressions).filter((name) => name !== "default")]
 }
 
-/** 表情名と日本語ラベルの対応。モデルが名前だけで意味を取れるように説明へ入れる。 */
-function expressionGuide(expressions: readonly Expression[]): string {
-  const guide = expressionNames(expressions)
-    .map((expression) => `${expression}（${expressionLabel(expression)}）`)
+/**
+ * 表情名とラベルの対応。モデルが名前だけで意味を取れるように説明へ入れる。
+ * **ラベルはキャラクターパックの定義から来る**（コードに持たない。docs/design.md 7章）。
+ */
+function expressionGuide(expressions: readonly ExpressionChoice[]): string {
+  const guide = speakExpressionEnum(expressions)
+    .map((name) => `${name}（${labelOf(expressions, name)}）`)
     .join(" / ")
   return `表情。${guide}`
+}
+
+function labelOf(expressions: readonly ExpressionChoice[], name: Expression): string {
+  return expressions.find((choice) => choice.name === name)?.label ?? name
 }
 
 /**

@@ -9,16 +9,14 @@ export type UtteranceParts = {
   readonly detail: string
 }
 
-/** `speechMarker` の既定値（`docs/requirements.md` 4.2）。呼び出し側が差し替えないときに使う。 */
-export const DEFAULT_SPEECH_MARKER = "アスナ: "
-
 /**
- * 1つの発話を「セリフ」と「詳細」に分ける（`docs/requirements.md` 4.2、正典は
- * `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）。**規約はセリフを行頭の
- * マーカー（`speechMarker`。既定は「アスナ: 」）で始めることだけを決めており、tsukumo は
- * それを機械的に拾う**。マーカーは呼び出し側から受け取る（環境変数の読み取りは
- * `src/cli.ts` に集約している）。コードブロック（``` で囲まれた範囲）の中の
- * マーカー行は拾わない。
+ * 1つの発話を「セリフ」と「詳細」に分ける（`docs/requirements.md` 4.2。書き分けの規約そのものは
+ * キャラクターパックの人格（`characters/<pack>/persona.md`）側にある）。**規約はセリフを行頭の
+ * マーカー（`speechMarker`）で始めることだけを決めており、tsukumo はそれを機械的に拾う**。
+ * **マーカーの値はパックの定義（`character.json` の `speechMarker`）から来る**（コードに既定値を
+ * 持たない。docs/design.md 7章）。定義に無いパックではこの補助が効かず、`speak` だけがセリフの
+ * 経路になる（判断するのは呼び出し側の `src/protocol/session-state.ts`）。コードブロック
+ * （``` で囲まれた範囲）の中のマーカー行は拾わない。
  *
  * - **マーカーは行頭での完全一致だけを見る。** 行の途中に同じ文字列があっても拾わない
  * - **規約に従っていない発話（セリフが1つも無い）**: `speech` は `undefined` を返す。

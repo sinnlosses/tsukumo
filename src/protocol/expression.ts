@@ -6,9 +6,10 @@
 // 渡される現在時刻で判定する（`Date.now()` はここでは呼ばない。副作用は呼び出し側
 // （src/cli.ts の配線層）に残す）。
 //
-// モデル名と衣装の対応は、キャラクター定義ファイルの形式がまだ決まっていないため
-// （docs/requirements.md「7. 未決事項」）、当面ここに置く。形式が決まったら定義ファイル側へ移す
-// （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」）。
+// **表情の日本語ラベルはここに持たない。** キャラクターごとの言葉なので定義ファイル側
+// （`character.json` の `expressions`）にあり、解くのは src/protocol/character.ts
+// （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」、docs/design.md 7章）。
+// モデル名と衣装の対応だけは、どのキャラクターでも同じ「装備の重さ」の規則なのでここに残す。
 
 export type Expression = "default" | "working" | "proud" | "flustered"
 export type Outfit = "default" | "light" | "normal" | "heavy"
@@ -86,23 +87,8 @@ export function resolveOutfit(model: string | undefined): Outfit {
   return matched?.[1] ?? "default"
 }
 
-/**
- * 表情の日本語ラベル。立ち絵の alt / aria-label に使う
- * （画像だけでは伝わらない状態を、スクリーンリーダー等に文字で残すため）。
- */
-export function expressionLabel(expression: Expression): string {
-  return EXPRESSION_LABEL[expression]
-}
-
 const OUTFIT_BY_MODEL_SUBSTRING: readonly (readonly [needle: string, outfit: Outfit])[] = [
   ["haiku", "light"],
   ["sonnet", "normal"],
   ["opus", "heavy"],
 ]
-
-const EXPRESSION_LABEL: Readonly<Record<Expression, string>> = {
-  default: "通常",
-  working: "作業中",
-  proud: "どや顔",
-  flustered: "あわあわ",
-}

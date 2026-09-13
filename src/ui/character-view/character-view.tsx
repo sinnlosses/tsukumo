@@ -12,12 +12,12 @@
 
 import { useEffect, useState, type ReactElement } from "react"
 
-import { resolveOutfitAccent, resolvePortraitUrl } from "../../protocol/character.ts"
 import {
-  expressionLabel,
-  nextWorkingTransitionDelayMs,
-  resolveOutfit,
-} from "../../protocol/expression.ts"
+  resolveExpressionLabel,
+  resolveOutfitAccent,
+  resolvePortraitUrl,
+} from "../../protocol/character.ts"
+import { nextWorkingTransitionDelayMs, resolveOutfit } from "../../protocol/expression.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
@@ -119,7 +119,12 @@ export function CharacterView(): ReactElement {
     character === undefined ? undefined : resolvePortraitUrl(character.portraits, expression)
   const accent =
     character === undefined ? undefined : resolveOutfitAccent(character.outfitAccents, outfit)
-  const altText = `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${expressionLabel(expression)}）`
+  // 表情のラベルはキャラクターパックの定義から来る（docs/design.md 7章）。定義が届く前・
+  // ラベルが無い表情では、表情名そのものがラベルになる。
+  const altText = `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(
+    character?.expressions ?? [],
+    expression,
+  )}）`
 
   return (
     <div className="character-region">

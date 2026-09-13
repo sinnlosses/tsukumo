@@ -11,10 +11,14 @@ import process from "node:process"
 import { buildStyleSheet, buildUiScript } from "./core/bundle.ts"
 import { resolveBundledDir } from "./core/bundled-path.ts"
 import {
+  buildSystemPromptAppend,
+  type CharacterPack,
   characterChangedEvent,
   DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+  listCharacterPacks,
   readCharacterPack,
   readCharacterPackFile,
+  toCharacterPackChoices,
 } from "./core/character-pack.ts"
 import { readConfig, SESSION_TAG, VIEW_PORT_ENV_NAME } from "./core/config.ts"
 import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
@@ -37,7 +41,7 @@ import {
 } from "./core/session-driver.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { watchTaskSummary } from "./core/task-summary.ts"
-import { availableExpressions } from "./protocol/character.ts"
+import { type ExpressionChoice, expressionChoices } from "./protocol/character.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
 
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
@@ -106,12 +110,23 @@ async function main(args: readonly string[]): Promise<number> {
 
   const host = createOrcaHost()
 
-  const characterDir = resolveBundledDir(
-    config.character,
-    process.cwd(),
-    DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+  // 切り替えの選択肢（サイドバーの `<select>`）と、いま出しているパック。**パックは
+  // `switch-character` で入れ替わる**ので、この1つだけを配線層が持ち回る
+  // （立ち絵を配る `/character/<file>` も、駆動に渡す表情・人格もここを見る）。
+  const defaultPack = readCharacterPack(
+    resolveBundledDir(config.character, process.cwd(), DEFAULT_CHARACTER_DIR_RELATIVE_PATH),
   )
-  const characterPack = readCharacterPack(characterDir)
+  const found = listCharacterPacks(process.cwd())
+  // 既定のパックが一覧に無いとき（`TSUKUMO_CHARACTER` で別の場所を指したとき）も選択肢に足す
+  // （いま出しているものが `<select>` に無いと、選択の表示がずれる）。
+  const packs = found.some((pack) => pack.name === defaultPack.name)
+    ? found
+    : [...found, defaultPack]
+  const packChoices = toCharacterPackChoices(packs)
+  // 知らない名前が来たら既定に落ちる（名前をパスとして組み立てない。docs/design.md 7章）。
+  const selectPack = (name: string | undefined): CharacterPack =>
+    packs.find((pack) => pack.name === name) ?? defaultPack
+  let characterPack = defaultPack
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
@@ -128,7 +143,6 @@ async function main(args: readonly string[]): Promise<number> {
 
   // 続きから始めるセッションを選ぶのは起動時の1回だけ（docs/requirements.md 4.8）。
   // 偽の駆動は claude を起こさないので、復元も探さない。
-  const expressions = availableExpressions(characterPack.definition)
   const resumeSessionId =
     config.newSession || config.driver === "fake"
       ? undefined
@@ -141,31 +155,37 @@ async function main(args: readonly string[]): Promise<number> {
   })
   manager.create({
     sessionId,
-    startDriver: (toFrames) => {
-      // キャラクターパックは起動時に決まっていて変わらないので、1回だけ流す
-      // （core/character-pack.ts。docs/design.md 12章 段5）。
-      toFrames(characterChangedEvent(characterPack))
+    startDriver: (toFrames, character) => {
+      // **`character` が入っているのは `switch-character` で起こし直したときだけ。**
+      // パックが決まったら、立ち絵の取り先と選択肢を1回流す（docs/design.md 7章）。
+      characterPack = character === undefined ? defaultPack : selectPack(character)
+      toFrames(characterChangedEvent(characterPack, packChoices))
 
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に畳んで読む
       // （段3。docs/design.md 12章）。
       const taskWatcher = watchTaskSummary(process.cwd(), (tasks) => {
         toFrames({ kind: "tasks-changed", tasks })
       })
+      // **続きから始めるのは起動時の1回だけ。** 切り替えは別のキャラクターで起こし直すもので、
+      // 前のキャラクターの会話は続かない（docs/design.md 7章）。
+      const resume = character === undefined ? resumeSessionId : undefined
+      const expressions = expressionChoices(characterPack.definition)
       const started = startDriver(
         {
           cwd: process.cwd(),
           expressions,
+          persona: characterPack,
           script: fakeScript,
-          resume: resumeSessionId,
+          resume,
         },
         toFrames,
       )
 
       // 続きから始まったことは、履歴が組み上がるのを待たずに画面へ出す（サイドバーの
       // 「セッション情報」。docs/requirements.md 4.8「いつ復元するか」）。
-      if (resumeSessionId !== undefined) {
-        toFrames({ kind: "session-restored", sessionId: resumeSessionId })
-        void replayRestoredSession(resumeSessionId, process.cwd(), expressions, toFrames)
+      if (resume !== undefined) {
+        toFrames({ kind: "session-restored", sessionId: resume })
+        void replayRestoredSession(resume, process.cwd(), expressions, toFrames)
       }
 
       return {
@@ -202,7 +222,9 @@ async function main(args: readonly string[]): Promise<number> {
 /** 駆動を起こすときに要るもの。偽の駆動を選んだときだけ `script` が入る。 */
 type DriverSeed = {
   readonly cwd: string
-  readonly expressions: ReturnType<typeof availableExpressions>
+  readonly expressions: readonly ExpressionChoice[]
+  /** 人格を持つキャラクターパック（`systemPrompt` の append を組み立てるために渡す）。 */
+  readonly persona: CharacterPack
   readonly script: ReturnType<typeof readFakeScript>
   /** 続きから始めるセッションのID（新規に起こすときは undefined）。 */
   readonly resume: string | undefined
@@ -221,7 +243,7 @@ function startDriver(seed: DriverSeed, onEvent: (event: SessionEvent) => void): 
     cwd: seed.cwd,
     expressions: seed.expressions,
     permissionMode: DEFAULT_PERMISSION_MODE,
-    systemPromptAppend: REPORT_NOTATION_PROMPT,
+    systemPromptAppend: buildSystemPromptAppend(seed.persona, REPORT_NOTATION_PROMPT),
     resume: seed.resume,
     tag: SESSION_TAG,
     onEvent,
@@ -239,7 +261,7 @@ function startDriver(seed: DriverSeed, onEvent: (event: SessionEvent) => void): 
 async function replayRestoredSession(
   sessionId: string,
   cwd: string,
-  expressions: ReturnType<typeof availableExpressions>,
+  expressions: readonly ExpressionChoice[],
   onEvent: (event: SessionEvent) => void,
 ): Promise<void> {
   for (const event of await readRestoredEvents(sessionId, cwd, expressions)) {

@@ -1,17 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { basename, join } from "node:path"
 
 import {
+  buildSystemPromptAppend,
   characterChangedEvent,
+  listCharacterPacks,
   readCharacterPack,
   readCharacterPackFile,
+  toCharacterPackChoices,
 } from "../../src/core/character-pack.ts"
 
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
+  speechMarker: "精霊: ",
+  expressions: {
+    default: "通常",
+    working: "作業中",
+  },
   portraits: {
     default: "default.svg",
     working: "working.svg",
@@ -58,13 +66,21 @@ describe("characterChangedEvent", () => {
   it("portraits の値をファイル名でなく /character/<file> の URL にする", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
 
-    const event = characterChangedEvent(readCharacterPack(dir))
+    const event = characterChangedEvent(readCharacterPack(dir), [
+      { name: basename(dir), label: "架空の精霊" },
+    ])
 
     expect(event).toEqual({
       kind: "character-changed",
+      pack: basename(dir),
       name: "架空の精霊",
       accent: undefined,
-      expressions: ["default", "working"],
+      speechMarker: "精霊: ",
+      expressions: [
+        { name: "default", label: "通常" },
+        { name: "working", label: "作業中" },
+      ],
+      packs: [{ name: basename(dir), label: "架空の精霊" }],
       portraits: {
         default: "/character/default.svg",
         working: "/character/working.svg",
@@ -81,13 +97,101 @@ describe("characterChangedEvent", () => {
   })
 
   it("定義が無くても、立ち絵なしの形で流せる", () => {
-    const event = characterChangedEvent(readCharacterPack(dir))
+    const event = characterChangedEvent(readCharacterPack(dir), [])
 
     expect(event).toMatchObject({
       kind: "character-changed",
       name: undefined,
-      expressions: ["default"],
+      expressions: [{ name: "default", label: "default" }],
+      packs: [],
     })
+  })
+})
+
+// **人格は手で書いた架空の一文だけ**（実物の人格ファイルも会話も使わない。
+// docs/coding-standards.md「会話内容の扱い」）。
+const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
+const REPORT_NOTATION = "（レポートの記法。テスト用の短い文）"
+
+describe("persona.md", () => {
+  it("パックの persona.md を読み、人格 → レポートの記法の順につなぐ", () => {
+    writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
+    writeFileSync(join(dir, "persona.md"), PERSONA)
+
+    const pack = readCharacterPack(dir)
+
+    expect(pack.persona).toBe(PERSONA)
+    expect(buildSystemPromptAppend(pack, REPORT_NOTATION)).toBe(`${PERSONA}\n\n${REPORT_NOTATION}`)
+  })
+
+  it("persona.md が無いパックでも起動する（append がレポートの記法だけになる）", () => {
+    writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
+
+    const pack = readCharacterPack(dir)
+
+    expect(pack.persona).toBeUndefined()
+    expect(buildSystemPromptAppend(pack, REPORT_NOTATION)).toBe(REPORT_NOTATION)
+  })
+})
+
+describe("listCharacterPacks", () => {
+  /** `<root>/<name>/character.json` を置く。`definition` を省くとパックにならない。 */
+  function writePack(root: string, name: string, definition?: string): string {
+    const packDir = join(root, name)
+    mkdirSync(packDir, { recursive: true })
+    if (definition !== undefined) {
+      writeFileSync(join(packDir, "character.json"), definition)
+    }
+    return packDir
+  }
+
+  it("同梱の characters/ と、起動先の characters/local/ を並べる", () => {
+    const bundled = join(dir, "bundled")
+    writePack(bundled, "tsukumo-spirit", DEFINITION_JSON)
+    const cwd = join(dir, "cwd")
+    writePack(join(cwd, "characters"), "local", DEFINITION_JSON)
+
+    const packs = listCharacterPacks(cwd, bundled)
+
+    expect(packs.map((pack) => pack.name)).toEqual(["tsukumo-spirit", "local"])
+  })
+
+  it("同名は起動先が勝つ", () => {
+    const bundled = join(dir, "bundled")
+    const bundledLocal = writePack(bundled, "local", DEFINITION_JSON)
+    const cwd = join(dir, "cwd")
+    const cwdLocal = writePack(join(cwd, "characters"), "local", DEFINITION_JSON)
+
+    const packs = listCharacterPacks(cwd, bundled)
+
+    expect(packs.map((pack) => pack.name)).toEqual(["local"])
+    expect(packs[0]?.dir).toBe(cwdLocal)
+    expect(packs[0]?.dir).not.toBe(bundledLocal)
+  })
+
+  it("character.json が無いディレクトリはパックとして数えない", () => {
+    const bundled = join(dir, "bundled")
+    writePack(bundled, "not-a-pack")
+    writePack(bundled, "tsukumo-spirit", DEFINITION_JSON)
+
+    expect(listCharacterPacks(join(dir, "cwd"), bundled).map((pack) => pack.name)).toEqual([
+      "tsukumo-spirit",
+    ])
+  })
+
+  it("置き場が無くても落ちない（一覧が空になるだけ）", () => {
+    expect(listCharacterPacks(join(dir, "missing"), join(dir, "missing"))).toEqual([])
+  })
+
+  it("選択肢のラベルは character.json の name。無ければディレクトリ名", () => {
+    const bundled = join(dir, "bundled")
+    writePack(bundled, "named", DEFINITION_JSON)
+    writePack(bundled, "unnamed", JSON.stringify({ portraits: {} }))
+
+    expect(toCharacterPackChoices(listCharacterPacks(join(dir, "cwd"), bundled))).toEqual([
+      { name: "named", label: "架空の精霊" },
+      { name: "unnamed", label: "unnamed" },
+    ])
   })
 })
 

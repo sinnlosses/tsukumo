@@ -4,19 +4,22 @@ import { type SessionDriver } from "../../src/core/session-driver.ts"
 import { createSessionManager } from "../../src/core/session-manager.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../src/protocol/frame.ts"
 import { type SessionEvent } from "../../src/protocol/session-event.ts"
+import { INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
 
 // 台本もセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
 const BATCH_MS = 5
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
-function createStubDriver(): {
+type StubDriver = {
   readonly driver: SessionDriver
   readonly emit: (event: SessionEvent) => void
   readonly attach: (onEvent: (event: SessionEvent) => void) => void
   readonly calls: string[]
   answerable: boolean
-} {
+}
+
+function createStubDriver(): StubDriver {
   const calls: string[] = []
   let onEvent: (event: SessionEvent) => void = () => {}
   const stub = {
@@ -173,6 +176,59 @@ describe("createSessionManager", () => {
         answer: { kind: "allow" },
       }),
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.unresolvedAnswer })
+  })
+
+  it("switch-character で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
+    // 起こされた駆動を順に覚える（`startDriver` に渡るパックの名前もここで見る）。
+    const started: { readonly character: string | undefined; readonly stub: StubDriver }[] = []
+    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: (onEvent, character) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        started.push({ character, stub })
+        return stub.driver
+      },
+    })
+
+    const frames: ServerFrame[] = []
+    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    started[0]?.stub.emit({ kind: "speech", text: "切り替える前のセリフ", expression: "default" })
+    await waitForBatch()
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-character",
+        commandId: "c-1",
+        name: "fictional",
+      }),
+    ).toEqual({ ok: true })
+
+    // 前の駆動は閉じ、新しい駆動がパックの名前付きで起きている。
+    expect(started[0]?.stub.calls).toContain("close")
+    expect(started).toHaveLength(2)
+    expect(started[1]?.character).toBe("fictional")
+
+    // 購読者には、初期状態に戻した新しい hello が届く（吹き出し・立ち絵・メインビューが消える）。
+    const hello = frames.filter((frame) => frame.type === "hello")
+    expect(hello).toHaveLength(2)
+    const latest = hello[1]
+    if (latest?.type === "hello") {
+      expect(latest.state).toEqual(INITIAL_SESSION_STATE)
+    }
+
+    // 閉じた駆動があとから投げてくるイベントは、新しい状態に混ざらない。
+    started[0]?.stub.emit({ kind: "speech", text: "閉じた駆動のセリフ", expression: "proud" })
+    started[1]?.stub.emit({ kind: "speech", text: "切り替えたあとのセリフ", expression: "default" })
+    await waitForBatch()
+
+    const events = frames.filter((frame) => frame.type === "events").at(-1)
+    if (events?.type === "events") {
+      expect(events.events.map((stamped) => stamped.event)).toEqual([
+        { kind: "speech", text: "切り替えたあとのセリフ", expression: "default" },
+      ])
+    }
   })
 
   it("close で駆動を閉じ、購読も外れる", async () => {

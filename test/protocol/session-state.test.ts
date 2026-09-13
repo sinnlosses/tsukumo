@@ -18,6 +18,22 @@ function apply(...events: readonly SessionEvent[]): SessionState {
   return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_STATE)
 }
 
+/**
+ * 行頭マーカーを持つ架空のキャラクターパックが決まったところ。**マーカーは定義ファイル側から
+ * 来る**ので、補助を見るテストはこれを先に流す（docs/design.md 7章）。
+ */
+const CHARACTER_WITH_MARKER: SessionEvent = {
+  kind: "character-changed",
+  pack: "fictional",
+  name: "架空の精霊",
+  accent: undefined,
+  speechMarker: "精霊: ",
+  expressions: [{ name: "default", label: "通常" }],
+  portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
+  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+  packs: [{ name: "fictional", label: "架空の精霊" }],
+}
+
 describe("applySessionEvent", () => {
   it("書きかけの本文をつなぎ、完成した本文が来たら置き換える（二重に積まない）", () => {
     const streaming = apply(
@@ -460,9 +476,15 @@ describe("applySessionEvent", () => {
 
     const view = apply({
       kind: "character-changed",
+      pack: "fictional",
       name: "架空の精霊",
       accent: "#f2b0a0",
-      expressions: ["default", "working"],
+      speechMarker: "精霊: ",
+      expressions: [
+        { name: "default", label: "通常" },
+        { name: "working", label: "作業中" },
+      ],
+      packs: [{ name: "fictional", label: "架空の精霊" }],
       portraits: {
         default: "/character/default.svg",
         working: "/character/working.svg",
@@ -473,9 +495,14 @@ describe("applySessionEvent", () => {
     })
 
     expect(view.character).toEqual({
+      pack: "fictional",
       name: "架空の精霊",
       accent: "#f2b0a0",
-      expressions: ["default", "working"],
+      speechMarker: "精霊: ",
+      expressions: [
+        { name: "default", label: "通常" },
+        { name: "working", label: "作業中" },
+      ],
       portraits: {
         default: "/character/default.svg",
         working: "/character/working.svg",
@@ -497,8 +524,9 @@ describe("applySessionEvent", () => {
 
   it("speak が1回も呼ばれなかったターンでは、行頭マーカーの補助で吹き出しを埋め、本文からマーカー行を除く", () => {
     const view = apply(
+      CHARACTER_WITH_MARKER,
       { kind: "request", text: "ダミーの依頼" },
-      { kind: "utterance", text: "アスナ: 補助で拾ったセリフ\n本文はこちら" },
+      { kind: "utterance", text: "精霊: 補助で拾ったセリフ\n本文はこちら" },
     )
 
     expect(view.speeches).toEqual(["補助で拾ったセリフ"])
@@ -510,15 +538,30 @@ describe("applySessionEvent", () => {
 
   it("speak が呼ばれたターンでも、本文に紛れたマーカー行は吹き出しへ回して本文から除く", () => {
     const view = apply(
+      CHARACTER_WITH_MARKER,
       { kind: "request", text: "ダミーの依頼" },
       { kind: "speech", text: "本物のセリフ", expression: "proud" },
-      { kind: "utterance", text: "アスナ: マーカー行\n本文はこちら" },
+      { kind: "utterance", text: "精霊: マーカー行\n本文はこちら" },
     )
 
     expect(view.speeches).toEqual(["本物のセリフ", "マーカー行"])
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", text: "ダミーの依頼" },
       { kind: "detail", markdown: "本文はこちら" },
+    ])
+  })
+
+  it("speechMarker が無いパックでは補助が効かず、本文はそのままレポートになる", () => {
+    const view = apply(
+      { ...CHARACTER_WITH_MARKER, speechMarker: undefined },
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "utterance", text: "精霊: マーカーのつもりの行\n本文はこちら" },
+    )
+
+    expect(view.speeches).toEqual([])
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "detail", markdown: "精霊: マーカーのつもりの行\n本文はこちら" },
     ])
   })
 

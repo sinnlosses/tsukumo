@@ -3,6 +3,7 @@
 //
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
 // - コマンドの分岐（`switch (command.type)`）は**ここが唯一**。旧の POST 6本ぶんの判断が1つになる
+//   （`switch-character` だけは駆動へ渡すのではなく、起こし直しとして手前で捌く）
 // - **いまはセッションが1つだけ**。鍵（`sessionId`）を持たせてあるのは複数化（docs/design.md 8章）のため
 //
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
@@ -36,8 +37,15 @@ export type SessionCreateOptions = {
   /**
    * 駆動を起こす。**渡された `onEvent` を駆動に配線する**のは呼び出し側の仕事で、
    * ここは種類（SDK か偽の駆動か）を知らない。
+   *
+   * `character` は起こすキャラクターパックの名前で、**最初の1回は undefined**
+   * （呼び出し側の既定にまかせる）。`switch-character` で起こし直すときだけ名前が入る
+   * （docs/design.md 7章）。知らない名前のときに何を起こすかも呼び出し側が決める。
    */
-  readonly startDriver: (onEvent: (event: SessionEvent) => void) => SessionDriver
+  readonly startDriver: (
+    onEvent: (event: SessionEvent) => void,
+    character: string | undefined,
+  ) => SessionDriver
 }
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
@@ -97,6 +105,16 @@ function createSessionHost(
   let flushTimer: ReturnType<typeof setTimeout> | undefined = undefined
   // 閉じたあとに駆動が投げてくるイベントは捨てる（配る先がもう無いのにタイマーを立てない）。
   let closed = false
+  // 何代目の駆動か。**閉じた駆動があとから投げてくるイベントを捨てる**ための印
+  // （`switch-character` で起こし直したとき、前の駆動の最後のイベントが新しい状態に混ざらない）。
+  let generation = 0
+
+  const cancelFlush = (): void => {
+    if (flushTimer !== undefined) {
+      clearTimeout(flushTimer)
+      flushTimer = undefined
+    }
+  }
 
   const flush = (): void => {
     flushTimer = undefined
@@ -108,27 +126,65 @@ function createSessionHost(
     publish({ type: "events", events }, subscribers)
   }
 
-  const driver = created.startDriver((event) => {
-    if (closed) {
-      return
-    }
-    const at = options.now()
-    state = applySessionEvent(state, event, at)
-    buffered = [...buffered, { at, event }]
-    if (flushTimer === undefined) {
-      flushTimer = setTimeout(flush, options.batchIntervalMs)
-    }
+  const helloFrame = (): ServerFrame => ({
+    type: "hello",
+    protocolVersion: PROTOCOL_VERSION,
+    sessionId: created.sessionId,
+    state,
   })
 
+  const start = (character: string | undefined): SessionDriver => {
+    const born = generation
+    return created.startDriver((event) => {
+      if (closed || born !== generation) {
+        return
+      }
+      const at = options.now()
+      state = applySessionEvent(state, event, at)
+      buffered = [...buffered, { at, event }]
+      if (flushTimer === undefined) {
+        flushTimer = setTimeout(flush, options.batchIntervalMs)
+      }
+    }, character)
+  }
+
+  let driver = start(undefined)
+
+  /**
+   * 別のキャラクターパックで駆動を起こし直す（docs/design.md 7章。会話は続かない）。
+   * **画面は初期状態に戻す** — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
+   * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed` など）は
+   * その `hello` の状態に入っているので、二重に配らない。
+   *
+   * 起こし直しに失敗しても**常駐プロセスは落とさない**（`dispatchToDriver` と同じ扱いで、
+   * 定型文の理由を返すだけ。docs/coding-standards.md「エラーハンドリング」）。
+   */
+  const restart = (character: string): DispatchResult => {
+    try {
+      driver.close()
+      generation += 1
+      cancelFlush()
+      state = INITIAL_SESSION_STATE
+      buffered = []
+      driver = start(character)
+      cancelFlush()
+      buffered = []
+      publish(helloFrame(), subscribers)
+      return { ok: true }
+    } catch {
+      return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
+    }
+  }
+
   return {
-    dispatch: (command) => dispatchToDriver(driver, command),
+    dispatch: (command) => {
+      if (command.type === "switch-character") {
+        return Promise.resolve(restart(command.name))
+      }
+      return dispatchToDriver(driver, command)
+    },
     subscribe: (send) => {
-      send({
-        type: "hello",
-        protocolVersion: PROTOCOL_VERSION,
-        sessionId: created.sessionId,
-        state,
-      })
+      send(helloFrame())
       subscribers.add(send)
       return () => {
         subscribers.delete(send)
@@ -136,10 +192,7 @@ function createSessionHost(
     },
     close: () => {
       closed = true
-      if (flushTimer !== undefined) {
-        clearTimeout(flushTimer)
-        flushTimer = undefined
-      }
+      cancelFlush()
       subscribers.clear()
       driver.close()
     },
@@ -155,7 +208,7 @@ function createSessionHost(
  */
 async function dispatchToDriver(
   driver: SessionDriver,
-  command: ClientCommand,
+  command: Exclude<ClientCommand, { readonly type: "switch-character" }>,
 ): Promise<DispatchResult> {
   try {
     switch (command.type) {

@@ -9,7 +9,8 @@
   min-width: 0;
 }
 .permission-mode-select,
-.model-select {
+.model-select,
+.character-select {
   padding: 0.15rem 0.4rem;
   border: 1px solid var(--rule);
   border-radius: 0.4rem;

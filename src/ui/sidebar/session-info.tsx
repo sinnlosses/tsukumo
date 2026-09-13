@@ -1,7 +1,8 @@
-// サイドバーの「セッション情報」。モデル・許可モードの `<select>`（共有部品。
-// `src/ui/component/select.tsx`）を並べ、変更で `set-model` / `set-permission-mode` を
-// `dispatch` する。**次に届く `session-info` で `<select>` の選択が上書きされる**
-// （サーバ側の値が正になる。旧の `src/presentation/browser/session-info.ts` と同じ考え方）。
+// サイドバーの「セッション情報」。キャラクター・モデル・許可モードの `<select>`（共有部品。
+// `src/ui/component/select.tsx`）を並べ、変更で `switch-character` / `set-model` /
+// `set-permission-mode` を `dispatch` する。**次に届く `session-info` で `<select>` の選択が
+// 上書きされる**（サーバ側の値が正になる。旧の `src/presentation/browser/session-info.ts` と
+// 同じ考え方）。キャラクターの `<select>` は**選択肢が1つでも出す**（docs/design.md 7章）。
 
 import { type ReactElement } from "react"
 
@@ -11,6 +12,7 @@ import {
   type ModelAlias,
   type PermissionMode,
 } from "../../protocol/command.ts"
+import { type SessionState } from "../../protocol/session-state.ts"
 import { useSession } from "../app.tsx"
 import { Select } from "../component/select.tsx"
 
@@ -39,6 +41,8 @@ const MODEL_LABELS: ReadonlyArray<readonly [ModelAlias, string]> = [
 const MODEL_FALLBACK: ModelAlias = "opus"
 const MODEL_SELECT_ID = "tsukumo-model"
 
+const CHARACTER_SELECT_ID = "tsukumo-character"
+
 /**
  * `session-info` の `model`（フルネームや実装依存の識別子）から、`<select>` に選択済みで
  * 出すエイリアスを決める。**部分一致**にしてあるのは、フルネームの形（`claude-opus-4-1` の
@@ -57,6 +61,17 @@ function resolvePermissionMode(mode: string | undefined): PermissionMode {
 }
 
 /**
+ * `<select>` に選択済みで出すキャラクターパックの名前。**素材が1体ぶんしか無くても
+ * `<select>` は出す**（無いように見えるほうが分かりにくい。docs/design.md 7章）ので、
+ * いま出しているパックが分からないときは一覧の先頭に倒す。
+ */
+function resolveCharacterPack(state: SessionState): string {
+  const packs = state.characterPacks
+  const current = state.character?.pack
+  return packs.some((pack) => pack.name === current) ? (current ?? "") : (packs[0]?.name ?? "")
+}
+
+/**
  * **続きから始まったときは、いちばん上に「続きから」の印を出す**（docs/requirements.md 4.8
  * 「いつ復元するか」。意図せず前の文脈が付いてくるのがこの方式の唯一の事故なので、気づける
  * 表示が復元とセットで要る）。新規に起きたセッションでは行そのものが出ない。
@@ -69,6 +84,7 @@ function resolvePermissionMode(mode: string | undefined): PermissionMode {
  */
 export function SessionInfo(): ReactElement {
   const { state, dispatch } = useSession()
+  const currentPack = resolveCharacterPack(state)
   const model = resolveModelAlias(state.model)
   const permissionMode = resolvePermissionMode(state.permissionMode)
   const dangerClass =
@@ -80,6 +96,26 @@ export function SessionInfo(): ReactElement {
         <>
           <span className="session-info-label">セッション</span>
           <span className="session-info-value session-info-restored">続きから</span>
+        </>
+      ) : null}
+      {state.characterPacks.length > 0 ? (
+        <>
+          <label htmlFor={CHARACTER_SELECT_ID} className="session-info-label">
+            キャラクター
+          </label>
+          <span className="session-info-value">
+            <Select
+              id={CHARACTER_SELECT_ID}
+              ariaLabel="キャラクター"
+              className="character-select"
+              value={currentPack}
+              disabled={false}
+              options={state.characterPacks.map(({ name, label }) => ({ value: name, label }))}
+              onChange={(value) => {
+                dispatch({ type: "switch-character", name: value })
+              }}
+            />
+          </span>
         </>
       ) : null}
       <label htmlFor={MODEL_SELECT_ID} className="session-info-label">

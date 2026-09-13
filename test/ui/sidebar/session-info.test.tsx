@@ -30,6 +30,17 @@ function renderSessionInfo(
   )
 }
 
+// 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
+  pack: undefined,
+  name: "架空の精霊",
+  accent: undefined,
+  speechMarker: undefined,
+  expressions: [{ name: "default", label: "通常" }],
+  portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
+  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+}
+
 function selectValue(element: HTMLElement): string {
   return (element as HTMLSelectElement).value
 }
@@ -40,6 +51,43 @@ describe("SessionInfo", () => {
 
     expect(selectValue(screen.getByLabelText("モデル"))).toBe("sonnet")
     expect(selectValue(screen.getByLabelText("許可モード"))).toBe("plan")
+  })
+
+  it("キャラクターの <select> は選択肢が1つでも出す", () => {
+    renderSessionInfo({
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
+    })
+
+    const select = screen.getByLabelText("キャラクター")
+    expect(selectValue(select)).toBe("tsukumo-spirit")
+    expect((select as HTMLSelectElement).options).toHaveLength(1)
+  })
+
+  it("キャラクターを変更すると switch-character が dispatch される", () => {
+    const calls: unknown[] = []
+    renderSessionInfo(
+      {
+        characterPacks: [
+          { name: "tsukumo-spirit", label: "つくもの精霊" },
+          { name: "local", label: "架空の同居人" },
+        ],
+        character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
+      },
+      (command) => {
+        calls.push(command)
+      },
+    )
+
+    fireEvent.change(screen.getByLabelText("キャラクター"), { target: { value: "local" } })
+
+    expect(calls).toEqual([{ type: "switch-character", name: "local" }])
+  })
+
+  it("パックの一覧が届いていなければ、キャラクターの <select> は出さない", () => {
+    renderSessionInfo({})
+
+    expect(screen.queryByLabelText("キャラクター")).toBeNull()
   })
 
   it("モデルを変更すると set-model が dispatch される", () => {

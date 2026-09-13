@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
 import {
-  expressionLabel,
   nextWorkingTransitionDelayMs,
   resolveExpression,
   resolveOutfit,
@@ -83,17 +82,5 @@ describe("nextWorkingTransitionDelayMs", () => {
 
   it("複数あるときは、いちばん早く超えるものまでの残り時間を返す", () => {
     expect(nextWorkingTransitionDelayMs([{ startedAt: 0 }, { startedAt: 500 }], 700)).toBe(300)
-  })
-})
-
-describe("expressionLabel", () => {
-  it("表情を日本語ラベルにする", () => {
-    expect(expressionLabel("working")).toBe("作業中")
-    expect(expressionLabel("proud")).toBe("どや顔")
-    expect(expressionLabel("flustered")).toBe("あわあわ")
-  })
-
-  it("既定の表情も日本語ラベルで表示する", () => {
-    expect(expressionLabel("default")).toBe("通常")
   })
 })
