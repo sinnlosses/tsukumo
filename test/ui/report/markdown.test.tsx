@@ -75,6 +75,15 @@ describe("Markdown（unified への置き換え。T-063 が求める記法）", 
     expect(container.querySelector("details > summary")).not.toBeNull()
   })
 
+  it("用語と説明の対（dl / dt / dd）が通る", () => {
+    const { container } = render(
+      <Markdown text="<dl><dt>付喪神</dt><dd>長く使った道具に宿るもの</dd></dl>" />,
+    )
+
+    expect(container.querySelector("dl > dt")?.textContent).toBe("付喪神")
+    expect(container.querySelector("dl > dd")?.textContent).toBe("長く使った道具に宿るもの")
+  })
+
   it("script / iframe / on* 属性 / javascript: / style の url() が落ちる", () => {
     const { container } = render(
       <Markdown

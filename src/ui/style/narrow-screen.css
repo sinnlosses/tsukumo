@@ -3,6 +3,15 @@
    （main→sidebar、character→dispatch）に積むだけで済むので、grid-template-areas は
    使わない。畳んでいる間は仕切り・既定に戻すボタンを出さない（動かせる比率が無いため）。 */
 @media (max-width: 760px) {
+  /* レポートの「用語 → 説明」の対は、狭い画面では2列をやめて1列で積む
+     （用語の列に幅を取られると説明が1文字ずつ折り返すため。src/ui/style/main-view.css）。 */
+  .detail-block dl {
+    display: block;
+  }
+  .detail-block dd {
+    margin: 0 0 0.5rem;
+  }
+
   .layout-grid {
     grid-template-columns: 1fr;
     grid-template-rows: none;

@@ -226,6 +226,26 @@ a {
   padding: 0.3rem 0.5rem;
   text-align: left;
 }
+/* 「用語 → 説明」の対。**用語と説明を2列に組み、説明の左端を揃える**（対応が一目で分かる）。
+   1列目は max-content なので用語は折り返さない。用語が長くて2列が入らない狭い画面では
+   1列へ戻す（src/ui/style/narrow-screen.css。境目は他の領域と同じ 760px）。
+   1つの dt に dd が2つ以上ぶら下がっても崩れないよう、列は grid-column で固定する。 */
+.detail-block dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 1rem;
+  row-gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+.detail-block dt {
+  grid-column: 1;
+  color: #8ab4ff;
+  font-weight: 600;
+}
+.detail-block dd {
+  grid-column: 2;
+  margin: 0;
+}
 .detail-block :not(pre) > code {
   background: #10131a;
   padding: 0 0.25rem;
