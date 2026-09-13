@@ -94,22 +94,5 @@
 .layout-resizer:hover::after {
   background: var(--accent);
 }
-/* 既定の比率に戻す逃げ道。仕切りの上ではなく画面に固定した小さいボタンにして、
-   ドラッグ操作と取り合わない場所に置く。 */
-.layout-reset {
-  position: fixed;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  z-index: 20;
-  padding: 0.3rem 0.6rem;
-  background: var(--surface);
-  color: inherit;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  font: inherit;
-  font-size: var(--font-label);
-  cursor: pointer;
-}
-.layout-reset:hover {
-  border-color: var(--accent);
-}
+/* 「見た目」の引き出しの開く口（`.appearance-trigger`）は `src/ui/style/appearance.css` に
+   持つ（`src/ui/appearance/appearance.tsx`。docs/design.md 13.6）。 */

@@ -97,10 +97,11 @@ export function App(props: AppProps): ReactElement {
   }, [])
 
   // パックが差す `accent`（docs/design.md 13.2 / 13.5）を、`:root` の既定値の上から
-  // `document.documentElement` に差し替える。`<Layout>` の外（`.layout-reset`）にも届く
-  // 唯一の場所がここ（`document.title` を差し替える `src/ui/dispatch/dispatch.tsx` と同じ、
-  // ホスト側の値をコンポーネントの外から書き換える形）。届いていない・パックに `accent` が
-  // 無いときは既定値（theme.css の `:root`）に戻す。
+  // `document.documentElement` に差し替える。`<Layout>` の外まで届く唯一の場所がここ
+  // （`document.title` を差し替える `src/ui/dispatch/dispatch.tsx` と同じ、ホスト側の値を
+  // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
+  // 手口で `src/ui/appearance/appearance-color.ts` が持つ）。届いていない・パックに `accent`
+  // が無いときは既定値（theme.css の `:root`）に戻す。
   const accent = state.character?.accent
   useEffect(() => {
     if (accent === undefined) {

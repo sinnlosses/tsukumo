@@ -51,6 +51,10 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "getComputedStyle",
   "requestAnimationFrame",
   "cancelAnimationFrame",
+  // `src/ui/layout/split.ts` 系（利用者の設定を `localStorage` に持つモジュール）のテストが
+  // 要る。DOM を組み立てる部品ではないが、他のテスト（`fetch` / `WebSocket` を使うもの）には
+  // 影響しない値の保管場所なので、ここに含めてよい。
+  "localStorage",
 ] as const
 
 const window = new Window({ url: "http://127.0.0.1/" })

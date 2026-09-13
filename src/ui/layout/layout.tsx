@@ -1,5 +1,8 @@
 // レイアウト全体（`<Layout>`。docs/design.md 6.1）。4領域（メイン・サイドバー・キャラビュー・
-// 入力欄）を grid に並べ、3本の仕切りをドラッグで動かせるようにする。既定に戻すボタンも持つ。
+// 入力欄）を grid に並べ、3本の仕切りをドラッグで動かせるようにする。**既定の比率に戻す実行だけ
+// ここに残し、UI（開く口・引き出し）は `<Appearance>` に出す**（`ui/appearance/` は
+// `test/architecture.test.ts` の `UI_REGIONS` に無い共有部分なので、ここから import してよい。
+// `ui/component/` と同じ扱い）。
 //
 // もとは `src/presentation/view.ts` の `buildLayoutPage` が組み立てる静的な HTML と、
 // `src/presentation/browser/layout-resizer.ts` の配線だった（移行の段6で React の部品にし、
@@ -11,6 +14,7 @@
 
 import { useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react"
 
+import { Appearance } from "../appearance/appearance.tsx"
 import { LayoutResizer } from "./layout-resizer.tsx"
 import { DEFAULT_SPLIT, loadSplit, saveSplit, type Split } from "./split.ts"
 
@@ -94,9 +98,7 @@ export function Layout(props: LayoutProps): ReactElement {
           <section className="layout-region layout-dispatch">{props.dispatch}</section>
         </div>
       </div>
-      <button type="button" className="layout-reset" onClick={reset}>
-        既定の比率に戻す
-      </button>
+      <Appearance onResetSplit={reset} />
     </>
   )
 }
