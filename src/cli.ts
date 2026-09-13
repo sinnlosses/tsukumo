@@ -16,7 +16,7 @@ import {
   readCharacterPack,
   readCharacterPackFile,
 } from "./core/character-pack.ts"
-import { readConfig, VIEW_PORT_ENV_NAME } from "./core/config.ts"
+import { readConfig, SESSION_TAG, VIEW_PORT_ENV_NAME } from "./core/config.ts"
 import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
 import { type Host } from "./core/host.ts"
 import { createOrcaHost } from "./core/orca-host.ts"
@@ -28,7 +28,13 @@ import {
 } from "./core/port-resolution.ts"
 import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
 import { attachSessionSocket, createStartupToken, startViewServer } from "./core/server.ts"
-import { DEFAULT_PERMISSION_MODE, type SessionDriver, startSession } from "./core/session-driver.ts"
+import {
+  DEFAULT_PERMISSION_MODE,
+  findSessionToResume,
+  readRestoredEvents,
+  type SessionDriver,
+  startSession,
+} from "./core/session-driver.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { watchTaskSummary } from "./core/task-summary.ts"
 import { availableExpressions } from "./protocol/character.ts"
@@ -40,8 +46,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   tsukumo   （プロジェクトのディレクトリで打つ。開発中はリポジトリ直下の bun run start でも同じ）
 
 起動すると Claude Code のセッションが立ち上がり、ビューの配信とレイアウトページのタブを
-開くところまで1コマンドで進む。**セッションは毎回新規**で、再開はしない。カレントディレクトリを
-作業対象にする（claude を打つのと同じ感覚）。
+開くところまで1コマンドで進む。**前に同じディレクトリで起こしたセッションがあれば、その続きから
+始まる**（docs/requirements.md 4.8。新規に起こしたいときは TSUKUMO_NEW_SESSION=1）。
+カレントディレクトリを作業対象にする（claude を打つのと同じ感覚）。
 
 環境変数:
   TSUKUMO_VIEW_PORT   ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。既定のまま塞がっていたら
@@ -52,6 +59,7 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
   TSUKUMO_OPEN_VIEW   起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
   TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず台本を流す）
+  TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす
 `
 
 /**
@@ -118,6 +126,14 @@ async function main(args: readonly string[]): Promise<number> {
   }
   const server = startResult.server
 
+  // 続きから始めるセッションを選ぶのは起動時の1回だけ（docs/requirements.md 4.8）。
+  // 偽の駆動は claude を起こさないので、復元も探さない。
+  const expressions = availableExpressions(characterPack.definition)
+  const resumeSessionId =
+    config.newSession || config.driver === "fake"
+      ? undefined
+      : await findSessionToResume(process.cwd(), SESSION_TAG)
+
   const sessionId = randomUUID()
   const manager = createSessionManager({
     now: Date.now,
@@ -138,11 +154,20 @@ async function main(args: readonly string[]): Promise<number> {
       const started = startDriver(
         {
           cwd: process.cwd(),
-          expressions: availableExpressions(characterPack.definition),
+          expressions,
           script: fakeScript,
+          resume: resumeSessionId,
         },
         toFrames,
       )
+
+      // 続きから始まったことは、履歴が組み上がるのを待たずに画面へ出す（サイドバーの
+      // 「セッション情報」。docs/requirements.md 4.8「いつ復元するか」）。
+      if (resumeSessionId !== undefined) {
+        toFrames({ kind: "session-restored", sessionId: resumeSessionId })
+        void replayRestoredSession(resumeSessionId, process.cwd(), expressions, toFrames)
+      }
+
       return {
         ...started,
         close: () => {
@@ -179,6 +204,8 @@ type DriverSeed = {
   readonly cwd: string
   readonly expressions: ReturnType<typeof availableExpressions>
   readonly script: ReturnType<typeof readFakeScript>
+  /** 続きから始めるセッションのID（新規に起こすときは undefined）。 */
+  readonly resume: string | undefined
 }
 
 /**
@@ -195,8 +222,29 @@ function startDriver(seed: DriverSeed, onEvent: (event: SessionEvent) => void): 
     expressions: seed.expressions,
     permissionMode: DEFAULT_PERMISSION_MODE,
     systemPromptAppend: REPORT_NOTATION_PROMPT,
+    resume: seed.resume,
+    tag: SESSION_TAG,
     onEvent,
   })
+}
+
+/**
+ * 前のセッションの記録（メインビューのやり取りと吹き出しのセリフ）を組み直して流す。
+ * **claude 側の会話は `resume` が繋いでいる**ので、ここが失敗しても続行する（読めなかったぶんの
+ * 履歴が画面に出ないだけ。docs/requirements.md 4.8「復元できなかったときどうするか」）。
+ *
+ * 組み上がるのはこのプロセスのメモリの中だけで、**どこにも書き出さない**
+ * （docs/coding-standards.md「会話内容の扱い」）。
+ */
+async function replayRestoredSession(
+  sessionId: string,
+  cwd: string,
+  expressions: ReturnType<typeof availableExpressions>,
+  onEvent: (event: SessionEvent) => void,
+): Promise<void> {
+  for (const event of await readRestoredEvents(sessionId, cwd, expressions)) {
+    onEvent(event)
+  }
 }
 
 /**

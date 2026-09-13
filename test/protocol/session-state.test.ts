@@ -328,6 +328,17 @@ describe("applySessionEvent", () => {
     expect(finished.turnInProgress).toBe(false)
   })
 
+  it("session-restored で「続きから始まった」印が立つ（画面に出すためだけの値）", () => {
+    expect(INITIAL_SESSION_STATE.restored).toBe(false)
+
+    const restored = apply({ kind: "session-restored", sessionId: "s-1" })
+
+    expect(restored.restored).toBe(true)
+    // 印が立つだけで、記録も吹き出しも動かさない（履歴は組み直したイベントの側で入る）。
+    expect(restored.records).toEqual([])
+    expect(restored.speeches).toEqual([])
+  })
+
   it("session-ended でも進行中を止める（中断・異常終了のどちらでも入力欄を送信可能に戻す）", () => {
     const started = apply({ kind: "request", text: "ダミーの依頼" })
 

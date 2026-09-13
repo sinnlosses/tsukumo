@@ -19,6 +19,8 @@ const BASE_OPTIONS: SessionDriverOptions = {
   expressions: ["default"],
   permissionMode: DEFAULT_PERMISSION_MODE,
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
+  resume: undefined,
+  tag: "tsukumo-test",
   onEvent: () => {},
 }
 
@@ -41,6 +43,11 @@ describe("buildQuerySeedOptions", () => {
 
     expect(seed.cwd).toBe("/tmp/tsukumo-other")
     expect(seed.permissionMode).toBe("plan")
+  })
+
+  it("続きから始めるセッションのIDを resume として渡す（新規のときは undefined）", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).resume).toBeUndefined()
+    expect(buildQuerySeedOptions({ ...BASE_OPTIONS, resume: "s-1" }).resume).toBe("s-1")
   })
 })
 

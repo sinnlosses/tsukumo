@@ -5,7 +5,8 @@
 // 呼ぶのが src/core/orca-host.ts だけなのと同じ扱い）。SDK の語彙を外へ漏らさないため、外に出す型は
 // このファイルで定義し直すか protocol から取る。
 //
-// **セッションは1プロセスに1つで、毎回新規**（再開はしない。docs/requirements.md 2.2）。
+// **セッションは1プロセスに1つ**。起こし直したときは前の続きから始める（`resume`。
+// docs/requirements.md 4.8「セッションの復元」。選ぶ計算は src/core/session-restore.ts）。
 //
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。stderr に出すのは SDK 自身のエラー文だけ。
@@ -13,9 +14,12 @@
 import {
   createSdkMcpServer,
   type EffortLevel,
+  getSessionMessages,
+  listSessions,
   type PermissionResult,
   query,
   type SDKUserMessage,
+  tagSession,
   tool,
 } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
@@ -31,6 +35,7 @@ import {
   toCommandDescriptions,
   toSessionEvents,
 } from "./sdk-message.ts"
+import { selectSessionToResume, toRestoredEvents } from "./session-restore.ts"
 
 /**
  * 既定の許可モード。`auto` は Claude Code 側が読み取り専用の操作を自動で通し、書き込みなどは
@@ -55,6 +60,15 @@ export const DEFAULT_MODEL: ModelAlias = "opus"
  */
 export const DEFAULT_EFFORT: EffortLevel = "high"
 
+/**
+ * ターンが終わってから印（`tagSession`）を付け直すまでの待ち。**本体もターンの終わりに
+ * セッションの要約を自分で書き、そこに印が含まれない**ので、書き込みと重なると印が消える
+ * （2026-09-13 実測: `init` の直後・`result` の直後に付けた印はどちらも消え、ターンの3秒後に
+ * 付けた印は入力を閉じたあとまで残った）。**ターンが終わるたびに付け直す**ので、途中の1回が
+ * 消えても次のターンで戻る。
+ */
+const SESSION_TAG_DELAY_MS = 3_000
+
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
   "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想・完了報告はこのツールで言う。" +
@@ -72,6 +86,17 @@ export type SessionDriverOptions = {
    * docs/design.md 5章）。
    */
   readonly systemPromptAppend: string
+  /**
+   * 続きから始めるセッションのID（undefined なら新規に起こす。docs/requirements.md 4.8）。
+   * 選ぶのは {@link findSessionToResume}。
+   */
+  readonly resume: string | undefined
+  /**
+   * このセッションに付ける印（`src/core/config.ts` の `SESSION_TAG`）。**ターンが終わるたびに
+   * 付け直す**（次に起こしたときに、これで自分のセッションだけを見分ける。付け直す理由は
+   * {@link SESSION_TAG_DELAY_MS}）。
+   */
+  readonly tag: string
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }
@@ -150,6 +175,8 @@ export type QuerySeedOptions = {
   readonly permissionMode: PermissionMode
   readonly model: string
   readonly effort: EffortLevel
+  /** 続きから始めるセッションのID。新規に起こすときは undefined（SDK 側は省略と同じ扱い）。 */
+  readonly resume: string | undefined
 }
 
 /**
@@ -165,26 +192,100 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     permissionMode: options.permissionMode,
     model: DEFAULT_MODEL,
     effort: DEFAULT_EFFORT,
+    resume: options.resume,
   }
 }
 
 /**
- * 届いたメッセージを内部イベントに変えて流し続ける。**ここが唯一の `try`/`catch`**で、
+ * 続きから始めるセッションを探す（起動時に1回。docs/requirements.md 4.8）。**同じ作業
+ * ディレクトリで tsukumo が起こしたもの**のうち最新の1つを返し、無ければ undefined（新規に起こす）。
+ *
+ * `includeWorktrees` を切ってあるのは、鍵が「起動した作業ディレクトリ ＋ 印」の2つだから
+ * （同じリポジトリの別の worktree は別の作業対象）。
+ *
+ * **一覧が読めなくても落とさない**（前提不足ではなく動作中の一時的な失敗として扱い、新規に
+ * 起こす。docs/coding-standards.md「エラーハンドリング」）。
+ */
+export async function findSessionToResume(cwd: string, tag: string): Promise<string | undefined> {
+  try {
+    return selectSessionToResume(await listSessions({ dir: cwd, includeWorktrees: false }), tag)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * 前のセッションの transcript を読み直して、画面の履歴を組み直すためのイベントにする
+ * （docs/requirements.md 4.8）。**読めなければ空**（会話（`resume`）だけ生きていれば続行する）。
+ *
+ * 読んだ内容はそのままイベントの流れに渡すだけで、**どこにも書き出さない**
+ * （docs/coding-standards.md「会話内容の扱い」）。
+ */
+export async function readRestoredEvents(
+  sessionId: string,
+  cwd: string,
+  expressions: readonly Expression[],
+): Promise<readonly SessionEvent[]> {
+  try {
+    return toRestoredEvents(await getSessionMessages(sessionId, { dir: cwd }), expressions)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * 届いたメッセージを内部イベントに変えて流し続ける。**反復を包む `try`/`catch` はここだけ**で、
  * 反復が終わる・落ちるのどちらもセッションの終わりとして扱う。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
   options: SessionDriverOptions,
 ): Promise<void> {
+  // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに
+  // 印を付け直す（{@link SESSION_TAG_DELAY_MS}）。
+  let sessionId: string | undefined = undefined
   try {
     for await (const message of session) {
       for (const event of toSessionEvents(message, options.expressions)) {
+        if (event.kind === "session-info") {
+          sessionId = event.sessionId
+        }
+        if (event.kind === "turn-finished" && sessionId !== undefined) {
+          scheduleMarkSession(sessionId, options)
+        }
         options.onEvent(event)
       }
     }
     options.onEvent({ kind: "session-ended", reason: "セッションが終了した" })
   } catch (error) {
     options.onEvent({ kind: "session-ended", reason: describeError(error) })
+  }
+}
+
+/**
+ * ターンの終わりに tsukumo の印を付け直す予約をする（次に起こしたときに自分のセッションを
+ * 見分けるため。docs/requirements.md 4.8「鍵」）。本体側の書き込みと重ならないように
+ * {@link SESSION_TAG_DELAY_MS} だけ待つ。
+ *
+ * 待っている間に tsukumo が終わるなら印はどのみち要らないので、タイマーでプロセスを
+ * 引き延ばさない（`unref`）。
+ */
+function scheduleMarkSession(sessionId: string, options: SessionDriverOptions): void {
+  setTimeout(() => {
+    void markSession(sessionId, options)
+  }, SESSION_TAG_DELAY_MS).unref()
+}
+
+/**
+ * セッションに tsukumo の印を付ける。**失敗しても続行する** — 付かなかったときに起きるのは
+ * 「次回は新規から始まる」ことだけで、いま動いているセッションには影響しない
+ * （docs/coding-standards.md「エラーハンドリング」）。
+ */
+async function markSession(sessionId: string, options: SessionDriverOptions): Promise<void> {
+  try {
+    await tagSession(sessionId, options.tag, { dir: options.cwd })
+  } catch {
+    // 印が付かないだけなので、何も流さずに諦める。
   }
 }
 

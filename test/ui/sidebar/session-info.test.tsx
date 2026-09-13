@@ -64,6 +64,18 @@ describe("SessionInfo", () => {
     expect(calls).toEqual([{ type: "set-permission-mode", mode: "plan" }])
   })
 
+  it("続きから始まったときは「続きから」の印を出す", () => {
+    renderSessionInfo({ restored: true })
+
+    expect(screen.getByText("続きから")).toBeDefined()
+  })
+
+  it("新規に起きたセッションでは「続きから」の印を出さない", () => {
+    renderSessionInfo({ restored: false })
+
+    expect(screen.queryByText("続きから")).toBeNull()
+  })
+
   it("bypassPermissions を選ぶと警告の見た目のクラスが付く", () => {
     renderSessionInfo({ permissionMode: "bypassPermissions" })
 

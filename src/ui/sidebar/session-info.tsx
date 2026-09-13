@@ -57,6 +57,10 @@ function resolvePermissionMode(mode: string | undefined): PermissionMode {
 }
 
 /**
+ * **続きから始まったときは、いちばん上に「続きから」の印を出す**（docs/requirements.md 4.8
+ * 「いつ復元するか」。意図せず前の文脈が付いてくるのがこの方式の唯一の事故なので、気づける
+ * 表示が復元とセットで要る）。新規に起きたセッションでは行そのものが出ない。
+ *
  * `.session-info` は2列の grid（`src/ui/style/sidebar.css`）で、ラベルと値（`<select>`）を
  * 直接の子として並べる。行ごとに別々の flex で並べると、ラベルの文字数の差がそのまま
  * `<select>` の左端のズレになるため、行の境目を div で区切らずグリッド1つに任せる
@@ -72,6 +76,12 @@ export function SessionInfo(): ReactElement {
 
   return (
     <div className="session-info">
+      {state.restored ? (
+        <>
+          <span className="session-info-label">セッション</span>
+          <span className="session-info-value session-info-restored">続きから</span>
+        </>
+      ) : null}
       <label htmlFor={MODEL_SELECT_ID} className="session-info-label">
         モデル
       </label>
