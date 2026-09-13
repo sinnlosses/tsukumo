@@ -1,6 +1,6 @@
 {
   "name": "tsukumo",
-  "description": "このターミナルに棲みついた狐の付喪神。窓の向こうからいつも身を乗り出している。ロゴの子。",
+  "description": "このターミナルに棲みついた狐の付喪神。窓の向こうからいつも身を乗り出している。立ち絵は default の1枚だけで、他の表情はそこに落ちる（docs/requirements.md 4.4）。",
   "license": "このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。",
   "accent": "#6fe3cd",
   "speechMarker": "tsukumo: ",
@@ -11,15 +11,6 @@
     "flustered": "あわわ"
   },
   "portraits": {
-    "default": "default.svg",
-    "working": "working.svg",
-    "proud": "proud.svg",
-    "flustered": "flustered.svg"
-  },
-  "outfitAccents": {
-    "default": "#6fe3cd",
-    "light": "#9af0b8",
-    "normal": "#6fe3cd",
-    "heavy": "#5ec8e3"
+    "default": "default.png"
   }
 }

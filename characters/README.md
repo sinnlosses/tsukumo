@@ -20,7 +20,7 @@ characters/
 ├── tsukumo/            ← 自作。コミットされる（assets/logo.png の狐の付喪神）
 │   ├── character.json
 │   ├── persona.md
-│   └── *.svg
+│   └── default.png     ← **立ち絵は1枚だけ**。他の表情はここに落ちる
 ├── tsukumo-spirit/     ← 自作。コミットされる
 │   ├── character.json
 │   ├── persona.md
