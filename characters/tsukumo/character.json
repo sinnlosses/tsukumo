@@ -13,6 +13,7 @@
   "portraits": {
     "default": "default.png",
     "proud": "proud.png",
-    "working": "working.png"
+    "working": "working.png",
+    "flustered": "flustered.png"
   }
 }
