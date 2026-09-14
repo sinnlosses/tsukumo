@@ -11,6 +11,7 @@
     "flustered": "あわわ"
   },
   "portraits": {
-    "default": "default.png"
+    "default": "default.png",
+    "proud": "proud.png"
   }
 }
