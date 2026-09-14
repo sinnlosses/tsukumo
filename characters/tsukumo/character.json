@@ -12,6 +12,7 @@
   },
   "portraits": {
     "default": "default.png",
-    "proud": "proud.png"
+    "proud": "proud.png",
+    "working": "working.png"
   }
 }
