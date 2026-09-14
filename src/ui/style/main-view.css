@@ -222,12 +222,14 @@ a:hover {
   color: var(--ink-quiet);
   font-style: italic;
 }
-/* レポート本文の行長を42全角で切る（13.3）。値は system-ui + var(--font-body) で「国」を
-   42字並べて実測した幅（約 581.7px = 36.36rem。measure.ts の一時スクリプトで実測、
-   環境のフォントで再測すると変わりうる）。 */
 .detail-block {
   margin: 0 0 1rem;
-  max-width: 36.36rem;
+}
+/* 領域の内幅に入りきらない表は、**その表だけ**横に転がす（ページ全体は横スクロールさせない。
+   13.3）。器は Markdown のレンダラ側（src/ui/report/markdown.tsx の `table` の上書き）が
+   作るので、レポートの記法・許可リストは増えていない。 */
+.detail-block .table-scroll {
+  overflow-x: auto;
 }
 .detail-block table {
   border-collapse: collapse;
@@ -239,6 +241,15 @@ a:hover {
   border: 1px solid var(--rule);
   padding: 0.3rem 0.5rem;
   text-align: left;
+}
+/* **どのセルも最低4全角は1行で出す。** これが無いと `width: 100%` の表は列の数だけ詰まって
+   セルが1〜2字ずつの折り返しになり（実測: 12列で最小41px）、上の `overflow-x` も働かない
+   （表が縮んで器に収まってしまうため）。`em` はセル自身の字の大きさ基準で、全角の字は 1em
+   ちょうどなので「4全角」がそのまま書ける（px の実測値を持たない）。入りきらないぶんは
+   上の器が横に転がす。実測（1400/760/400px、12列と20列）は T-112 の evidence。 */
+.detail-block .table-scroll th,
+.detail-block .table-scroll td {
+  min-width: 4em;
 }
 /* 「用語 → 説明」の対。**用語と説明を2列に組み、説明の左端を揃える**（対応が一目で分かる）。
    1列目は max-content なので用語は折り返さない。用語が長くて2列が入らない狭い画面では

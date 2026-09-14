@@ -57,6 +57,20 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect((cells[2] as HTMLTableCellElement).style.textAlign).toBe("right")
   })
 
+  it("表は横スクロールの器（div.table-scroll）に包まれる", () => {
+    const { container } = render(<Markdown text={"| 見出し | 値 |\n| --- | --- |\n| あ | 1 |"} />)
+
+    expect(container.querySelectorAll("div.table-scroll > table")).toHaveLength(1)
+  })
+
+  it("レポートが直接書いた <table> も同じ器に包まれる（rehype-raw と同じ木を通るため）", () => {
+    const { container } = render(
+      <Markdown text="<table><tbody><tr><td>あ</td></tr></tbody></table>" />,
+    )
+
+    expect(container.querySelectorAll("div.table-scroll > table")).toHaveLength(1)
+  })
+
   it("note / badge / cols+card / details が通る", () => {
     const { container } = render(
       <Markdown

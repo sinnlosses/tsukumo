@@ -19,6 +19,10 @@
 // **```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする**
 // （{@link MermaidBlock} / {@link ChartBlock}）。`pre` を上書きし、中の `code` 要素の
 // `className`（`language-mermaid` / `language-chart`）を見て振り分ける。
+//
+// **表は横スクロールの器で包む**（{@link Table}）。器をここで作るのは、**`rehype-raw` が生の
+// HTML も同じ hast の木に入れる**ので、`table` の上書き1つで Markdown の表とレポートが直接
+// 書いた `<table>` の両方に効くため。
 
 import { type Element } from "hast"
 import { type JSX, type ReactElement, type ReactNode } from "react"
@@ -48,7 +52,7 @@ export function Markdown(props: MarkdownProps): ReactElement {
       // （src/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
       remarkPlugins={[remarkGfm, remarkCjkFriendly]}
       rehypePlugins={[rehypeRaw, [rehypeSanitize, REPORT_SANITIZE_SCHEMA], rehypeHighlight]}
-      components={{ pre: Pre, a: Anchor }}
+      components={{ pre: Pre, a: Anchor, table: Table }}
     >
       {props.text}
     </ReactMarkdown>
@@ -117,5 +121,22 @@ function Anchor(props: AnchorProps): ReactElement {
     <a {...rest} rel="noopener noreferrer">
       {children as ReactNode}
     </a>
+  )
+}
+
+type TableProps = JSX.IntrinsicElements["table"] & ExtraProps
+
+/**
+ * 表。**列が多い表は領域の内幅に収まらない**ので、横スクロールの器で包んで表だけを転がす
+ * （ページ全体は横スクロールさせない。`.table-scroll` の CSS は `src/ui/style/main-view.css`）。
+ * **器は React 側で作るので、{@link REPORT_SANITIZE_SCHEMA} の許可リストは通らない**
+ * （レポートの記法は増えない）。
+ */
+function Table(props: TableProps): ReactElement {
+  const { node: _node, children, ...rest } = props
+  return (
+    <div className="table-scroll">
+      <table {...rest}>{children as ReactNode}</table>
+    </div>
   )
 }
