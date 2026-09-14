@@ -41,6 +41,17 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-15 起動時のキャラクターが既定に戻る報告を調べた（実装は正常・T-110）
+
+**T-110 の不具合報告は実装の不具合ではなかった（2026-09-15）。** 「起動したらつくもの精霊になる」
+という指摘の原因は、**旧方針の hook（2026-09-12 に撤去）が使っていた `~/.tsukumo/state.json` が
+残っていたこと**。中身が当時の形（`{"event": …}`）なので `readRememberedCharacter` が `undefined` を
+返し、仕様どおり既定の `tsukumo-spirit` へ落ちていた。`TSUKUMO_CHARACTER` は設定されておらず、
+**T-116 とは無関係**。画面で切り替えた時点で正しい形に上書きされたので自己解消済みで、
+`cli.ts` と同じ経路を呼んで初期パックが `tsukumo` になることを確認した（サーバは起こしていない）。
+旧方針の残骸（`targets/` 4件・`transcript-path`・`state.json.tmp.*`）を消し、置き場の再利用という
+罠を `docs/architecture.md`「既知の制約・注意点」に1件足した。コードは変更していない。
+
 ### 2026-09-14 セリフをターンに紐づけて遡れるようにした（T-111）
 
 **T-111 完了。タブを切り替えると吹き出しと表情も一緒に遡る。** セリフを `SessionRecord` に
@@ -269,8 +280,11 @@ T-046 と T-076 は完了条件が**ユーザーの感想そのもの**を求め
   `src/transcript-target.ts` / `src/subagents.ts` / `hooks/` は無い。`src/transcript.ts` の
   残った部分（`splitUtterance`）は `src/utterance.ts` に、`MainViewEntry` は
   `src/session-view.ts` に移した
-- **`~/.tsukumo/`（`state.json` / `targets/` / `transcript-path`）はもう読まれない**が、
-  消していない（利用者のホームの掃除は利用者がする）。消して構わない
+- **`~/.tsukumo/state.json` は T-110 で再び読まれるようになった**（覚えたキャラクターの名前。
+  `src/core/remembered-character.ts`）。**旧方針が同じ置き場を使っていた**ので、残骸
+  （`targets/`・`transcript-path`・`state.json.tmp.*`）は 2026-09-15 に消した。古い形の
+  `state.json` が残っていると読めずに既定のパックへ落ちる（`docs/architecture.md`
+  「既知の制約・注意点」）
 - **`bun run start` は本物の claude を子プロセスで起こす**（API の利用が発生する）。テストから
   CLI を起動しきらない。動作確認は `TSUKUMO_VIEW_PORT` を変えて起こし、終わったら
   `pgrep -f claude-agent-sdk` で子プロセスが残っていないことを確かめる
@@ -329,12 +343,3 @@ tsukumo は**そこを正典として読み直すだけ**でよく、自前の�
 流し込める**ことも確認したので、T-078 の本文に足りない2点（利用者の依頼をテキストブロックから
 起こす・`result` が残らないのでターンの境目を依頼で区切る）まで書き下し、`difficulty` を
 sonnet → opus に上げた。`bun run check` は 415 pass / 0 fail（コードは未変更）。
-
-**T-110 の不具合報告は実装の不具合ではなかった（2026-09-15）。** 「起動したらつくもの精霊になる」
-という指摘の原因は、**旧方針の hook（2026-09-12 に撤去）が使っていた `~/.tsukumo/state.json` が
-残っていたこと**。中身が当時の形（`{"event": …}`）なので `readRememberedCharacter` が `undefined` を
-返し、仕様どおり既定の `tsukumo-spirit` へ落ちていた。`TSUKUMO_CHARACTER` は設定されておらず、
-**T-116 とは無関係**。画面で切り替えた時点で正しい形に上書きされたので自己解消済みで、
-`cli.ts` と同じ経路を呼んで初期パックが `tsukumo` になることを確認した（サーバは起こしていない）。
-旧方針の残骸（`targets/` 4件・`transcript-path`・`state.json.tmp.*`）を消し、置き場の再利用という
-罠を `docs/architecture.md`「既知の制約・注意点」に1件足した。コードは変更していない。
