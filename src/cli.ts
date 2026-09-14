@@ -30,6 +30,7 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "./core/port-resolution.ts"
+import { readRememberedCharacter, writeRememberedCharacter } from "./core/remembered-character.ts"
 import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
 import { attachSessionSocket, createStartupToken, startViewServer } from "./core/server.ts"
 import {
@@ -128,7 +129,14 @@ async function main(args: readonly string[]): Promise<number> {
   // 知らない名前が来たら既定に落ちる（名前をパスとして組み立てない。docs/design.md 7章）。
   const selectPack = (name: string | undefined): CharacterPack =>
     packs.find((pack) => pack.name === name) ?? defaultPack
-  let characterPack = defaultPack
+
+  // 起動時の初期パック。優先順位は TSUKUMO_CHARACTER（config.character）> 覚えた値 > 同梱の既定
+  // （docs/design.md 13.6「第3の扱い」）。TSUKUMO_CHARACTER があるときはすでに defaultPack に
+  // 反映されているので覚えた値は見ない。無ければ覚えた名前を packs から引き、一覧に無ければ
+  // selectPack の既定（defaultPack）へ落ちる。
+  const remembered = config.character === undefined ? readRememberedCharacter() : undefined
+  const initialPack = remembered === undefined ? defaultPack : selectPack(remembered)
+  let characterPack = initialPack
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
@@ -152,8 +160,15 @@ async function main(args: readonly string[]): Promise<number> {
     sessionId,
     startDriver: async (toFrames, character) => {
       // **`character` が入っているのは `switch-character` で起こし直したときだけ。**
-      // パックが決まったら、立ち絵の取り先と選択肢を1回流す（docs/design.md 7章）。
-      characterPack = character === undefined ? defaultPack : selectPack(character)
+      // 無ければ起動時の初期パック（覚えた値、または同梱の既定）。パックが決まったら、
+      // 立ち絵の取り先と選択肢を1回流す（docs/design.md 7章）。
+      characterPack = character === undefined ? initialPack : selectPack(character)
+      // **覚えるのは画面から選んだときだけ。** 起動時にも書くと、その回だけの指定
+      // （TSUKUMO_CHARACTER）や同梱の既定が次の起動の初期値として残ってしまう
+      // （環境変数は「その回の上書き」なので残さない。docs/design.md 13.6）。
+      if (character !== undefined) {
+        writeRememberedCharacter(characterPack.name)
+      }
       toFrames(characterChangedEvent(characterPack, packChoices))
 
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に畳んで読む
