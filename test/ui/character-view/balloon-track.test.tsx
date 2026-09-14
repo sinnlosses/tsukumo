@@ -12,14 +12,14 @@ afterEach(() => {
 
 describe("BalloonTrack", () => {
   it("(1) 古い→新しいの順で渡したセリフが、DOM 上は新しい順（先頭が最新）で並ぶ", () => {
-    render(<BalloonTrack speeches={["1つめ", "2つめ", "3つめ"]} />)
+    render(<BalloonTrack speeches={["1つめ", "2つめ", "3つめ"]} emptyMessage={undefined} />)
 
     const balloons = document.querySelectorAll(".balloon")
     expect([...balloons].map((balloon) => balloon.textContent)).toEqual(["3つめ", "2つめ", "1つめ"])
   })
 
   it("(1) 最新の1件だけに強調の印（data-latest）が付く", () => {
-    render(<BalloonTrack speeches={["1つめ", "2つめ", "3つめ"]} />)
+    render(<BalloonTrack speeches={["1つめ", "2つめ", "3つめ"]} emptyMessage={undefined} />)
 
     const balloons = [...document.querySelectorAll(".balloon")]
     expect(balloons[0]?.getAttribute("data-latest")).toBe("true")
@@ -28,9 +28,16 @@ describe("BalloonTrack", () => {
   })
 
   it("(2) セリフが0件のときはプレースホルダの文言を出す", () => {
-    render(<BalloonTrack speeches={[]} />)
+    render(<BalloonTrack speeches={[]} emptyMessage={undefined} />)
 
     expect(screen.getByText("（まだ発話がありません）")).toBeDefined()
+    expect(document.querySelectorAll(".balloon")).toHaveLength(1)
+  })
+
+  it("(3) セリフが0件で emptyMessage が渡ると、その文言を出す（過去のターン向け）", () => {
+    render(<BalloonTrack speeches={[]} emptyMessage="（架空の文言）" />)
+
+    expect(screen.getByText("（架空の文言）")).toBeDefined()
     expect(document.querySelectorAll(".balloon")).toHaveLength(1)
   })
 })

@@ -9,6 +9,11 @@
 //
 // **立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる**
 // （docs/requirements.md 4.2「フォールバック」）。
+//
+// **過去のターンのタブを選んでいる間は、そのターンの吹き出しと表情に戻す**
+// （`useTurnSelection`。ユーザーの指摘 2026-09-14「レポート同様にセリフも遡る」）。
+// **立ち絵の「動き」は遡らない**（時間相対のアニメーションで、遡るには
+// `docs/requirements.md` 4.3 の決定の見直しが要る。別タスク）。
 
 import { useEffect, useState, type ReactElement } from "react"
 
@@ -24,14 +29,29 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../protocol/portrait-motion.ts"
-import { currentExpression, type ToolActivity } from "../../protocol/session-state.ts"
+import {
+  currentExpression,
+  type SessionRecord,
+  type ToolActivity,
+} from "../../protocol/session-state.ts"
+import { turnSpeeches, type TurnSpeech } from "../../protocol/turn-speech.ts"
 import { useSession } from "../app.tsx"
 import { loadPortraitFixed } from "../appearance/portrait-fixed.ts"
+import { useTurnSelection } from "../turn-selection.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
 import { Portrait } from "./portrait.tsx"
 
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
+
+/**
+ * セリフが1件も無い**過去の**ターンを見ているときの文言。今のターンの「（まだ発話がありません）」
+ * （`balloon-track.tsx`）は、もう終わったターンには合わない（「まだ」＝これから来る、の言い方）。
+ */
+const PAST_TURN_EMPTY_MESSAGE = "（このターンでは発話がありませんでした）"
+
+/** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
+const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
 /**
  * 表情の「作業中」への遅延切り替えを、部品側のタイマーで再計算する。ツールの開始・終了だけでは
@@ -103,10 +123,33 @@ function usePortraitMotion(input: PortraitMotionInput): PortraitMotion | undefin
   return loadPortraitFixed() ? undefined : resolvePortraitMotion(input, now)
 }
 
+/**
+ * 過去のターンを見ているときだけ、そのターンのセリフと表情を返す（今回を見ていれば undefined）。
+ * 今のターンを記録から導き直さないのは、`request` の時点で「前のターンの最後の1件だけ残す」
+ * 規則（docs/requirements.md 4.2）が `SessionState.speeches` 側にしか無いため。
+ */
+function pastTurnSpeech(
+  records: readonly SessionRecord[],
+  activeTurnId: number | undefined,
+  newestTurnId: number | undefined,
+): TurnSpeech | undefined {
+  if (activeTurnId === undefined || activeTurnId === newestTurnId) {
+    return undefined
+  }
+  return turnSpeeches(records).find((turn) => turn.id === activeTurnId)
+}
+
 export function CharacterView(): ReactElement {
   const { state } = useSession()
+  const { activeTurnId, newestTurnId } = useTurnSelection()
   const now = useNowForExpression(state.runningTools)
-  const expression = currentExpression(state, now)
+  const pastTurn = pastTurnSpeech(state.records, activeTurnId, newestTurnId)
+  // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
+  // **ツール実行中の「作業中」への上書きは今回を見ているときだけ**（決定 2026-09-14）。
+  const expression =
+    pastTurn === undefined
+      ? currentExpression(state, now)
+      : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
   const outfit = resolveOutfit(state.model)
   const character = state.character
   const motion = usePortraitMotion({
@@ -139,7 +182,10 @@ export function CharacterView(): ReactElement {
             motion={motion}
           />
         )}
-        <BalloonTrack speeches={state.speeches} />
+        <BalloonTrack
+          speeches={pastTurn === undefined ? state.speeches : pastTurn.speeches}
+          emptyMessage={pastTurn === undefined ? undefined : PAST_TURN_EMPTY_MESSAGE}
+        />
       </div>
     </div>
   )

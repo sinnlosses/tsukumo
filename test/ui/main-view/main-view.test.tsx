@@ -11,6 +11,7 @@ import {
 import { SessionContext, type SessionContextValue } from "../../../src/ui/app.tsx"
 import { MainView } from "../../../src/ui/main-view/main-view.tsx"
 import { QuestionRecord } from "../../../src/ui/main-view/question-record.tsx"
+import { TurnSelectionProvider } from "../../../src/ui/turn-selection.tsx"
 
 afterEach(() => {
   cleanup()
@@ -22,6 +23,10 @@ function request(text: string): SessionRecord {
 
 function detail(markdown: string): SessionRecord {
   return { kind: "detail", markdown }
+}
+
+function speech(text: string): SessionRecord {
+  return { kind: "speech", text, expression: "default" }
 }
 
 function tool(
@@ -44,7 +49,9 @@ function renderMainView(records: readonly SessionRecord[]): RenderResult {
   const value: SessionContextValue = { state, connection: "open", dispatch: () => {} }
   return render(
     <SessionContext.Provider value={value}>
-      <MainView />
+      <TurnSelectionProvider>
+        <MainView />
+      </TurnSelectionProvider>
     </SessionContext.Provider>,
   )
 }
@@ -54,7 +61,9 @@ function rerenderMainView(result: RenderResult, records: readonly SessionRecord[
   const value: SessionContextValue = { state, connection: "open", dispatch: () => {} }
   result.rerender(
     <SessionContext.Provider value={value}>
-      <MainView />
+      <TurnSelectionProvider>
+        <MainView />
+      </TurnSelectionProvider>
     </SessionContext.Provider>,
   )
 }
@@ -121,6 +130,31 @@ describe("MainView（タブの規則）", () => {
 
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
     expect(screen.queryByText("4つ目のレポート")).toBeNull()
+  })
+})
+
+describe("MainView（セリフはレポートに出さない）", () => {
+  it("セリフの記録が混ざっても、レポートには出ずタブの並びも変わらない", () => {
+    renderMainView([
+      request("1つ目"),
+      speech("1つ目のセリフ"),
+      detail("1つ目のレポート"),
+      request("2つ目"),
+      speech("2つ目のセリフ"),
+      detail("2つ目のレポート"),
+    ])
+
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "今回",
+      "1つ前",
+    ])
+    expect(screen.getByText("2つ目のレポート")).toBeDefined()
+    expect(screen.queryByText("2つ目のセリフ")).toBeNull()
+
+    // 「1つ前」も、セリフ抜きのレポートだけが出る（ターンの区切りはずれない）。
+    fireEvent.click(screen.getByText("1つ前"))
+    expect(screen.getByText("1つ目のレポート")).toBeDefined()
+    expect(screen.queryByText("1つ目のセリフ")).toBeNull()
   })
 })
 

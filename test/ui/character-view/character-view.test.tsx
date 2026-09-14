@@ -2,9 +2,14 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render } from "@testing-library/react"
 
-import { INITIAL_SESSION_STATE, type SessionState } from "../../../src/protocol/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionRecord,
+  type SessionState,
+} from "../../../src/protocol/session-state.ts"
 import { SessionContext, type SessionContextValue } from "../../../src/ui/app.tsx"
 import { CharacterView } from "../../../src/ui/character-view/character-view.tsx"
+import { TurnSelectionContext, type TurnSelectionValue } from "../../../src/ui/turn-selection.tsx"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -39,7 +44,17 @@ afterEach(() => {
   localStorage.removeItem(PORTRAIT_FIXED_STORAGE_KEY)
 })
 
-function renderCharacterView(stateOverrides: Partial<SessionState>): void {
+/** ターンが1つも無い（タブも出ていない）ときの選択。今回を見ている扱いになる。 */
+const NO_TURN_SELECTION: TurnSelectionValue = {
+  activeTurnId: undefined,
+  newestTurnId: undefined,
+  selectTurn: () => {},
+}
+
+function renderCharacterView(
+  stateOverrides: Partial<SessionState>,
+  selection: TurnSelectionValue = NO_TURN_SELECTION,
+): void {
   const value: SessionContextValue = {
     state: { ...INITIAL_SESSION_STATE, ...stateOverrides },
     connection: "open",
@@ -47,10 +62,27 @@ function renderCharacterView(stateOverrides: Partial<SessionState>): void {
   }
   render(
     <SessionContext.Provider value={value}>
-      <CharacterView />
+      <TurnSelectionContext.Provider value={selection}>
+        <CharacterView />
+      </TurnSelectionContext.Provider>
     </SessionContext.Provider>,
   )
 }
+
+const request = (text: string): SessionRecord => ({ kind: "request", text })
+const speech = (
+  text: string,
+  expression: "default" | "proud" | "flustered" = "default",
+): SessionRecord => ({ kind: "speech", text, expression })
+
+/** 通し番号 0 / 1 の2ターン分の記録（0 が過去、1 が今回）。 */
+const TWO_TURN_RECORDS: readonly SessionRecord[] = [
+  request("1つ目の依頼"),
+  speech("1つ目のセリフA", "proud"),
+  speech("1つ目のセリフB", "flustered"),
+  request("2つ目の依頼"),
+  speech("2つ目のセリフ", "default"),
+]
 
 describe("CharacterView", () => {
   it("(3) 立ち絵の URL が無い（character が undefined）ときは、吹き出しだけが出て落ちない", () => {
@@ -193,6 +225,92 @@ describe("CharacterView", () => {
       })
 
       expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("failure")
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
+  it("(1) 過去のターンを選ぶと、そのターンのセリフだけが吹き出しに出る", () => {
+    renderCharacterView(
+      { records: TWO_TURN_RECORDS, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
+      { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+    )
+
+    expect(
+      [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+    ).toEqual(["1つ目のセリフB", "1つ目のセリフA"])
+    // 最新（そのターンの最後）の1件だけが濃い（吹き出しの規則は変えない）。
+    expect(document.querySelector(".balloon")?.getAttribute("data-latest")).toBe("true")
+  })
+
+  it("(2) 今回のターンを選ぶと、従来どおり今のセリフが出る", () => {
+    renderCharacterView(
+      { records: TWO_TURN_RECORDS, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
+      { activeTurnId: 1, newestTurnId: 1, selectTurn: () => {} },
+    )
+
+    expect(
+      [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+    ).toEqual(["2つ目のセリフ"])
+  })
+
+  it("(3) セリフが1件も無い過去のターンでも壊れず、そのターン向けの文言が出る", () => {
+    const records: readonly SessionRecord[] = [
+      request("1つ目の依頼"),
+      request("2つ目の依頼"),
+      speech("2つ目のセリフ"),
+    ]
+
+    expect(() =>
+      renderCharacterView(
+        { records, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
+        { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+      ),
+    ).not.toThrow()
+
+    expect(document.querySelectorAll(".balloon")).toHaveLength(1)
+    expect(document.querySelector(".balloon")?.textContent).toBe(
+      "（このターンでは発話がありませんでした）",
+    )
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
+  })
+
+  it("過去のターンでは、そのターンの最後のセリフの表情になる（ツール実行中でも作業中に上書きしない）", () => {
+    const now = 1_700_000_000_000
+    const originalNow = Date.now
+    Date.now = () => now
+    try {
+      renderCharacterView(
+        {
+          records: TWO_TURN_RECORDS,
+          speeches: ["2つ目のセリフ"],
+          speechExpression: "default",
+          // 今回のターンでツールが動き続けていても、過去のターンの表情は上書きされない。
+          runningTools: [
+            { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: now - 5000 },
+          ],
+          character: {
+            ...FIXTURE_CHARACTER,
+            expressions: [
+              { name: "default", label: "通常" },
+              { name: "working", label: "作業中" },
+              { name: "flustered", label: "あわてた" },
+            ],
+            portraits: {
+              default: "/character/default.png",
+              working: "/character/working.png",
+              proud: undefined,
+              flustered: "/character/flustered.png",
+            },
+          },
+        },
+        { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+      )
+
+      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("flustered")
+      expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
+        "/character/flustered.png",
+      )
     } finally {
       Date.now = originalNow
     }

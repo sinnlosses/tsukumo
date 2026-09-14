@@ -383,13 +383,19 @@ type SessionHost = {
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。
 
+**選んでいるターンは `<App>` の内側の `<TurnSelectionProvider>`（`ui/turn-selection.tsx`）が
+配る**（6.2）。`<MainView>` のタブだけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
+従う**（過去のターンを選んでいる間は、そのターンのセリフと**最後のセリフの表情**に戻す。
+ターンごとのセリフは `protocol/turn-speech.ts` が記録から引く）。**立ち絵の「動き」は遡らない**
+（時間相対のアニメーションなので、遡るには `docs/requirements.md` 4.3 の決定の見直しが要る）。
+
 ### 6.2 状態の持ち方
 
 | 状態                                                             | 置き場所                                                                                  |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `SessionState`                                                   | `<App>` の `useReducer(applySessionEvent)`。`events` フレームを畳む。`hello` で置き換える |
 | 接続中 / 切断中、プロトコルの版違い                              | `<App>` のローカル状態                                                                    |
-| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `<MainView>` のローカル状態（規則はいまの `main-turns.ts` のまま）                        |
+| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `ui/turn-selection.tsx` の Context（メインビューとキャラビューの両方が読む。規則は同じ）  |
 | 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                               |
 | 質問の選択（送る前）                                             | `<PendingAnswer>` のローカル状態                                                          |
 | 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turnStartedAt` から計算）                                  |

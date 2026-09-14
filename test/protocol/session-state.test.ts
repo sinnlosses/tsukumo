@@ -10,6 +10,7 @@ import {
   mainViewEntries,
   type SessionState,
 } from "../../src/protocol/session-state.ts"
+import { turnSpeeches } from "../../src/protocol/turn-speech.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 時刻に依らないテストでは `now` を固定の 0 で流す（表情の遅延切り替えを見るテストは
@@ -80,6 +81,27 @@ describe("applySessionEvent", () => {
     const nextTurn = applySessionEvent(spoken, { kind: "request", text: "ダミーの依頼" }, 0)
 
     expect(nextTurn.speeches).toEqual(["いくよ！"])
+  })
+
+  it("セリフは記録にも積むが、レポート（mainViewEntries）には出さない", () => {
+    const view = apply(
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+      { kind: "utterance", text: "ダミーのレポート" },
+    )
+
+    // 記録には残す（過去のターンの吹き出しを引き直すため。protocol/turn-speech.ts）。
+    expect(view.records).toEqual([
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+      { kind: "detail", markdown: "ダミーのレポート" },
+    ])
+    // メインビューにはセリフを出さない（吹き出しだけ。docs/requirements.md 4.2）。
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "detail", markdown: "ダミーのレポート" },
+    ])
+    // `MainViewEntry` には `speech` の種類そのものが無い（型の側でも混ざらない）。
   })
 
   it("同じターン内のセリフは件数を絞らず、古い→新しいの順に並べる", () => {
@@ -548,6 +570,19 @@ describe("applySessionEvent", () => {
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", text: "ダミーの依頼" },
       { kind: "detail", markdown: "本文はこちら" },
+    ])
+  })
+
+  it("行頭マーカーの補助で拾ったセリフも記録に積む（過去のターンで消えないため）", () => {
+    const view = apply(
+      CHARACTER_WITH_MARKER,
+      { kind: "request", text: "ダミーの依頼" },
+      { kind: "speech", text: "本物のセリフ", expression: "proud" },
+      { kind: "utterance", text: "精霊: マーカー行\n本文はこちら" },
+    )
+
+    expect(turnSpeeches(view.records)).toEqual([
+      { id: 0, speeches: ["本物のセリフ", "マーカー行"], expression: "proud" },
     ])
   })
 

@@ -185,6 +185,22 @@
         }
       },
       {
+        "afterMs": 300,
+        "event": {
+          "kind": "speech",
+          "text": "選ぶのを待っている間の、架空のひとこと。",
+          "expression": "working"
+        }
+      },
+      {
+        "afterMs": 400,
+        "event": {
+          "kind": "speech",
+          "text": "吹き出しが3つ並ぶ場面（架空）。",
+          "expression": "proud"
+        }
+      },
+      {
         "afterMs": 1200,
         "event": {
           "kind": "utterance",

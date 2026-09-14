@@ -71,10 +71,16 @@ export type MainViewEntry =
 /**
  * セッションの中で起きたことを起きた順に並べたもの。{@link MainViewEntry} とほぼ同じだが、
  * **ツールは `toolUseId` を持つ**（あとから届く結果を突き合わせるため。表示には使わない）。
+ *
+ * **`speech` はここにしか無い**（{@link MainViewEntry} には対応する種類が無く、
+ * {@link mainViewEntries} が落とす）。セリフが出るのは吹き出しだけで、レポートには混ぜない
+ * （docs/requirements.md 4.2）。記録に残すのは、過去のターンの吹き出しを引き直せるように
+ * するため（`protocol/turn-speech.ts` の `turnSpeeches`）。
  */
 export type SessionRecord =
   | { readonly kind: "request"; readonly text: string }
   | { readonly kind: "detail"; readonly markdown: string }
+  | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
   | {
       readonly kind: "tool"
       readonly toolUseId: string
@@ -264,6 +270,12 @@ export function applySessionEvent(
     case "speech":
       return {
         ...state,
+        // 記録は積みっぱなし（`speeches` と違ってターンの境目で捨てない）。過去のターンの
+        // 吹き出しと表情をここから引き直す（`protocol/turn-speech.ts`）。
+        records: [
+          ...state.records,
+          { kind: "speech", text: event.text, expression: event.expression },
+        ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
         // （docs/requirements.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
         speeches: [...(state.speechCalledInTurn ? state.speeches : []), event.text],
@@ -346,23 +358,32 @@ export function applySessionEvent(
  * `docs/requirements.md` 4.2）。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
-  const settled = state.records.map(toMainViewEntry)
+  const settled = state.records.flatMap(toMainViewEntries)
   return state.partialUtterance === ""
     ? settled
     : [...settled, { kind: "detail", markdown: state.partialUtterance }]
 }
 
 /**
- * `SessionRecord` を `MainViewEntry` に変える。**`tool` は `toolUseId` / `nested` /
- * `startedAt`（突き合わせや表情の判定にしか使わない内部の付随情報）を落とす**（メインビューの
- * 部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。docs/coding-standards.md
- * 「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを暗黙に持ち越さない）。
+ * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
+ *
+ * **`speech` は落とす**（セリフは吹き出しだけに出し、レポートに混ぜない。
+ * docs/requirements.md 4.2）。落としても `request` の数と順番は変わらないので、
+ * `protocol/main-view.ts` の `groupIntoTurns` が振るターンの通し番号はずれない。
+ *
+ * **`tool` は `toolUseId` / `nested` / `startedAt`（突き合わせや表情の判定にしか使わない内部の
+ * 付随情報）を落とす**（メインビューの部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。
+ * docs/coding-standards.md「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを
+ * 暗黙に持ち越さない）。
  */
-function toMainViewEntry(record: SessionRecord): MainViewEntry {
-  if (record.kind !== "tool") {
-    return record
+function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
+  if (record.kind === "speech") {
+    return []
   }
-  return { kind: "tool", name: record.name, input: record.input, result: record.result }
+  if (record.kind !== "tool") {
+    return [record]
+  }
+  return [{ kind: "tool", name: record.name, input: record.input, result: record.result }]
 }
 
 /**
@@ -460,6 +481,13 @@ function withMarkerFallback(state: SessionState): SessionState {
 
   return {
     ...state,
+    // **記録にも積む**（`speech` イベントと同じ扱い）。積まないと、この経路で拾ったセリフだけが
+    // 過去のターンで消える（今のターンは `speeches` から出るので気づきにくい。
+    // `protocol/turn-speech.ts`）。マーカー行に表情は添えられないので、いまの表情を残す。
+    records: [
+      ...state.records,
+      { kind: "speech", text: parts.speech, expression: state.speechExpression },
+    ],
     speeches,
     speechCalledInTurn: true,
     partialUtterance: parts.detail,

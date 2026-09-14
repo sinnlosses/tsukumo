@@ -15,13 +15,19 @@ const PLACEHOLDER_UTTERANCE = "（まだ発話がありません）"
 export type BalloonTrackProps = {
   /** 古い→新しいの順（`SessionState.speeches` と同じ並び）。 */
   readonly speeches: readonly string[]
+  /**
+   * セリフが1件も無いときに出す文言。undefined なら今のターン向けの既定文
+   * （「まだ」＝これから来る、の言い方）。**過去のターンには合わない**ので、呼び出し側が
+   * そのターン向けの文言を渡す（`src/ui/character-view/character-view.tsx`）。
+   */
+  readonly emptyMessage: string | undefined
 }
 
 export function BalloonTrack(props: BalloonTrackProps): ReactElement {
   if (props.speeches.length === 0) {
     return (
       <div className="balloon-track">
-        <Balloon text={PLACEHOLDER_UTTERANCE} latest={true} />
+        <Balloon text={props.emptyMessage ?? PLACEHOLDER_UTTERANCE} latest={true} />
       </div>
     )
   }
