@@ -61,7 +61,7 @@ function startManagerWithStub() {
     sessionId: SESSION_ID,
     startDriver: (onEvent) => {
       stub.attach(onEvent)
-      return stub.driver
+      return Promise.resolve(stub.driver)
     },
   })
   return { manager, stub }
@@ -188,7 +188,7 @@ describe("createSessionManager", () => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push({ character, stub })
-        return stub.driver
+        return Promise.resolve(stub.driver)
       },
     })
 
@@ -229,6 +229,44 @@ describe("createSessionManager", () => {
         { kind: "speech", text: "切り替えたあとのセリフ", expression: "default" },
       ])
     }
+  })
+
+  it("駆動が起き上がるのを待ってから、新しい hello を配る（続きから始めるセッションを探す間）", async () => {
+    // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`startDriver` は待てる形で返る。
+    const started: StubDriver[] = []
+    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: async (onEvent) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        await waitForBatch()
+        started.push(stub)
+        return stub.driver
+      },
+    })
+
+    const frames: ServerFrame[] = []
+    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+
+    // 起き上がる前に届いた依頼も、待ってから渡る（取りこぼさない）。
+    expect(
+      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-1", text: "架空の依頼" }),
+    ).toEqual({ ok: true })
+    expect(started[0]?.calls).toEqual(["prompt:架空の依頼"])
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-character",
+        commandId: "c-2",
+        name: "fictional",
+      }),
+    ).toEqual({ ok: true })
+
+    // 切り替え先の駆動が起き上がったあとで hello が配られている。
+    expect(started).toHaveLength(2)
+    expect(started[0]?.calls).toContain("close")
+    expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(2)
   })
 
   it("close で駆動を閉じ、購読も外れる", async () => {

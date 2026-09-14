@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { sessionTag } from "../../src/core/config.ts"
 import { SPEAK_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../src/core/sdk-message.ts"
 import { selectSessionToResume, toRestoredEvents } from "../../src/core/session-restore.ts"
 import { type Expression } from "../../src/protocol/expression.ts"
@@ -9,7 +10,9 @@ import { type Expression } from "../../src/protocol/expression.ts"
 // （`listSessions` / `getSessionMessages` を呼ぶのは src/core/session-driver.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud"]
 
-const TAG = "tsukumo"
+// 印はキャラクターパックごとに違う（`tsukumo:<パック名>`）。
+const TAG = sessionTag("架空のパック")
+const OTHER_PACK_TAG = sessionTag("別の架空のパック")
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${SPEAK_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
@@ -65,6 +68,24 @@ describe("selectSessionToResume", () => {
     expect(
       selectSessionToResume([sessionInfo({ sessionId: "s-bare", lastModified: 900 })], TAG),
     ).toBeUndefined()
+  })
+
+  it("別のパックの印を持つセッションは選ばない（キャラクターごとに別のセッション）", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-other-pack", lastModified: 900, tag: OTHER_PACK_TAG }),
+      sessionInfo({ sessionId: "s-this-pack", lastModified: 100, tag: TAG }),
+    ]
+
+    expect(selectSessionToResume(sessions, TAG)).toBe("s-this-pack")
+  })
+
+  it("そのパックの印を持つセッションが無ければ復元しない（新規に起こす）", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-other-pack", lastModified: 900, tag: OTHER_PACK_TAG }),
+      sessionInfo({ sessionId: "s-bare", lastModified: 800 }),
+    ]
+
+    expect(selectSessionToResume(sessions, sessionTag("まだ起こしていないパック"))).toBeUndefined()
   })
 
   it("形が壊れているときは復元しない（落ちない）", () => {

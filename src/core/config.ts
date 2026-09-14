@@ -15,16 +15,8 @@ export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
 /** `1` で復元せず新規に起こす（docs/requirements.md 4.8 の「逃げ道」）。 */
 export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 
-/**
- * tsukumo が起こしたセッションに付ける印（SDK の `tagSession`）。**続きから始めるセッションを
- * 選ぶ鍵の片方**で、もう片方は起動した作業ディレクトリ（docs/requirements.md 4.8「鍵」）。
- * 印が無いセッション（同じディレクトリで使った素の `claude`）は拾わない。
- *
- * **印は会話の内容ではない**ので、claude 自身の transcript に付けても「会話内容の扱い」には
- * 触れない。環境変数ではないが、**外の世界（transcript）に書かれる値**なので、読み取りを
- * 集約するこのモジュールに置く（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
- */
-export const SESSION_TAG = "tsukumo"
+/** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */
+const SESSION_TAG_PREFIX = "tsukumo"
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、台本どおりにイベントを流す
@@ -57,6 +49,22 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     driver: env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk",
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
   }
+}
+
+/**
+ * キャラクターパック1つぶんのセッションの印（SDK の `tagSession`）。**続きから始めるセッションを
+ * 選ぶ鍵の片方**で、もう片方は起動した作業ディレクトリ（docs/requirements.md 4.8「鍵」）。
+ *
+ * 印にパックの名前を混ぜるのは、**キャラクターごとに別のセッションを持つ**ため
+ * （docs/design.md 7章）。印の無いセッション（同じディレクトリで使った素の `claude`）も、
+ * 別のパックのセッションも、これで外れる。
+ *
+ * **印は会話の内容ではない**ので、claude 自身の transcript に付けても「会話内容の扱い」には
+ * 触れない。環境変数ではないが、**外の世界（transcript）に書かれる値**なので、組み立てを
+ * 集約するこのモジュールに置く（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
+ */
+export function sessionTag(characterName: string): string {
+  return `${SESSION_TAG_PREFIX}:${characterName}`
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

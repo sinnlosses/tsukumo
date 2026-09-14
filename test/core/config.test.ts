@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { readConfig } from "../../src/core/config.ts"
+import { readConfig, sessionTag } from "../../src/core/config.ts"
 
 describe("readConfig", () => {
   it("何も無ければ既定（sdk の駆動・タブを開く・キャラクターは同梱）", () => {
@@ -33,5 +33,17 @@ describe("readConfig", () => {
 
   it("知らない駆動の名前は sdk に倒す", () => {
     expect(readConfig({ TSUKUMO_DRIVER: "まぼろし" }).driver).toBe("sdk")
+  })
+})
+
+describe("sessionTag", () => {
+  it("キャラクターパックごとに違う印を組み立てる（キャラクターごとに別のセッション）", () => {
+    expect(sessionTag("tsukumo")).toBe("tsukumo:tsukumo")
+    expect(sessionTag("tsukumo-spirit")).toBe("tsukumo:tsukumo-spirit")
+    expect(sessionTag("tsukumo")).not.toBe(sessionTag("tsukumo-spirit"))
+  })
+
+  it("印の無い素の claude のセッションとも混ざらない（前置きが付く）", () => {
+    expect(sessionTag("tsukumo")).not.toBe("tsukumo")
   })
 })

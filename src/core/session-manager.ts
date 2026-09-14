@@ -41,11 +41,14 @@ export type SessionCreateOptions = {
    * `character` は起こすキャラクターパックの名前で、**最初の1回は undefined**
    * （呼び出し側の既定にまかせる）。`switch-character` で起こし直すときだけ名前が入る
    * （docs/design.md 7章）。知らない名前のときに何を起こすかも呼び出し側が決める。
+   *
+   * **待てる形（Promise）で返す**のは、そのパックの続きから始めるセッションを探すのに
+   * 外の世界（claude 自身の transcript の一覧）を読むから（docs/requirements.md 4.8）。
    */
   readonly startDriver: (
     onEvent: (event: SessionEvent) => void,
     character: string | undefined,
-  ) => SessionDriver
+  ) => Promise<SessionDriver>
 }
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
@@ -108,6 +111,9 @@ function createSessionHost(
   // 何代目の駆動か。**閉じた駆動があとから投げてくるイベントを捨てる**ための印
   // （`switch-character` で起こし直したとき、前の駆動の最後のイベントが新しい状態に混ざらない）。
   let generation = 0
+  // 起き上がったあとの駆動。**閉じるのを待たない**ために値でも持つ（プロセスの終了は
+  // `process.exit` ですぐ進むので、待っていると claude の子プロセスが閉じられずに残る）。
+  let live: SessionDriver | undefined = undefined
 
   const cancelFlush = (): void => {
     if (flushTimer !== undefined) {
@@ -133,9 +139,9 @@ function createSessionHost(
     state,
   })
 
-  const start = (character: string | undefined): SessionDriver => {
+  const start = (character: string | undefined): Promise<SessionDriver> => {
     const born = generation
-    return created.startDriver((event) => {
+    const starting = created.startDriver((event) => {
       if (closed || born !== generation) {
         return
       }
@@ -146,27 +152,45 @@ function createSessionHost(
         flushTimer = setTimeout(flush, options.batchIntervalMs)
       }
     }, character)
+
+    void starting.then(
+      (started) => {
+        // 起き上がる前に閉じた・起こし直したときは、その場で閉じる（駆動を取り残さない）。
+        if (closed || born !== generation) {
+          started.close()
+          return
+        }
+        live = started
+      },
+      () => {
+        // 起こせなかったことは、待っている側（restart / dispatchToDriver）が拾う。
+      },
+    )
+    return starting
   }
 
   let driver = start(undefined)
 
   /**
-   * 別のキャラクターパックで駆動を起こし直す（docs/design.md 7章。会話は続かない）。
+   * 別のキャラクターパックで駆動を起こし直す（docs/design.md 7章。**そのパックのセッションの
+   * 続きから始まる** — 会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる）。
    * **画面は初期状態に戻す** — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
-   * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed` など）は
+   * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）は
    * その `hello` の状態に入っているので、二重に配らない。
    *
    * 起こし直しに失敗しても**常駐プロセスは落とさない**（`dispatchToDriver` と同じ扱いで、
    * 定型文の理由を返すだけ。docs/coding-standards.md「エラーハンドリング」）。
    */
-  const restart = (character: string): DispatchResult => {
+  const restart = async (character: string): Promise<DispatchResult> => {
     try {
-      driver.close()
+      live?.close()
+      live = undefined
       generation += 1
       cancelFlush()
       state = INITIAL_SESSION_STATE
       buffered = []
       driver = start(character)
+      await driver
       cancelFlush()
       buffered = []
       publish(helloFrame(), subscribers)
@@ -179,7 +203,7 @@ function createSessionHost(
   return {
     dispatch: (command) => {
       if (command.type === "switch-character") {
-        return Promise.resolve(restart(command.name))
+        return restart(command.name)
       }
       return dispatchToDriver(driver, command)
     },
@@ -194,7 +218,7 @@ function createSessionHost(
       closed = true
       cancelFlush()
       subscribers.clear()
-      driver.close()
+      live?.close()
     },
   }
 }
@@ -207,26 +231,27 @@ function createSessionHost(
  * （docs/coding-standards.md「エラーハンドリング」）。
  */
 async function dispatchToDriver(
-  driver: SessionDriver,
+  driver: Promise<SessionDriver>,
   command: Exclude<ClientCommand, { readonly type: "switch-character" }>,
 ): Promise<DispatchResult> {
   try {
+    const started = await driver
     switch (command.type) {
       case "prompt":
-        driver.prompt(command.text)
+        started.prompt(command.text)
         return { ok: true }
       case "interrupt":
-        await driver.interrupt()
+        await started.interrupt()
         return { ok: true }
       case "answer":
-        return driver.answer(command.id, command.answer)
+        return started.answer(command.id, command.answer)
           ? { ok: true }
           : { ok: false, reason: FRAME_ERROR_REASON.unresolvedAnswer }
       case "set-model":
-        await driver.setModel(command.model)
+        await started.setModel(command.model)
         return { ok: true }
       case "set-permission-mode":
-        await driver.setPermissionMode(command.mode)
+        await started.setPermissionMode(command.mode)
         return { ok: true }
     }
   } catch {

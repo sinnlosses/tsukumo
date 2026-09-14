@@ -20,7 +20,7 @@ import {
   readCharacterPackFile,
   toCharacterPackChoices,
 } from "./core/character-pack.ts"
-import { readConfig, SESSION_TAG, VIEW_PORT_ENV_NAME } from "./core/config.ts"
+import { type Config, readConfig, sessionTag, VIEW_PORT_ENV_NAME } from "./core/config.ts"
 import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
 import { type Host } from "./core/host.ts"
 import { createOrcaHost } from "./core/orca-host.ts"
@@ -50,8 +50,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   tsukumo   （プロジェクトのディレクトリで打つ。開発中はリポジトリ直下の bun run start でも同じ）
 
 起動すると Claude Code のセッションが立ち上がり、ビューの配信とレイアウトページのタブを
-開くところまで1コマンドで進む。**前に同じディレクトリで起こしたセッションがあれば、その続きから
-始まる**（docs/requirements.md 4.8。新規に起こしたいときは TSUKUMO_NEW_SESSION=1）。
+開くところまで1コマンドで進む。**前に同じディレクトリで同じキャラクターと話していたセッションが
+あれば、その続きから始まる**（docs/requirements.md 4.8。キャラクターごとに別のセッションを持つ。
+新規に起こしたいときは TSUKUMO_NEW_SESSION=1）。
 カレントディレクトリを作業対象にする（claude を打つのと同じ感覚）。
 
 環境変数:
@@ -64,6 +65,7 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_OPEN_VIEW   起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
   TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず台本を流す）
   TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす
+                      （この起動の間は、切り替えた先のキャラクターも新規から始まる）
 `
 
 /**
@@ -141,13 +143,6 @@ async function main(args: readonly string[]): Promise<number> {
   }
   const server = startResult.server
 
-  // 続きから始めるセッションを選ぶのは起動時の1回だけ（docs/requirements.md 4.8）。
-  // 偽の駆動は claude を起こさないので、復元も探さない。
-  const resumeSessionId =
-    config.newSession || config.driver === "fake"
-      ? undefined
-      : await findSessionToResume(process.cwd(), SESSION_TAG)
-
   const sessionId = randomUUID()
   const manager = createSessionManager({
     now: Date.now,
@@ -155,7 +150,7 @@ async function main(args: readonly string[]): Promise<number> {
   })
   manager.create({
     sessionId,
-    startDriver: (toFrames, character) => {
+    startDriver: async (toFrames, character) => {
       // **`character` が入っているのは `switch-character` で起こし直したときだけ。**
       // パックが決まったら、立ち絵の取り先と選択肢を1回流す（docs/design.md 7章）。
       characterPack = character === undefined ? defaultPack : selectPack(character)
@@ -166,9 +161,9 @@ async function main(args: readonly string[]): Promise<number> {
       const taskWatcher = watchTaskSummary(process.cwd(), (tasks) => {
         toFrames({ kind: "tasks-changed", tasks })
       })
-      // **続きから始めるのは起動時の1回だけ。** 切り替えは別のキャラクターで起こし直すもので、
-      // 前のキャラクターの会話は続かない（docs/design.md 7章）。
-      const resume = character === undefined ? resumeSessionId : undefined
+      // **キャラクターごとに別のセッションを持つ**（docs/design.md 7章）。起動時も切り替え時も、
+      // これから起こすパックの印を持つ最新のセッションを探して続きから始める。
+      const resume = await findPackSessionToResume(config, process.cwd(), characterPack.name)
       const expressions = expressionChoices(characterPack.definition)
       const started = startDriver(
         {
@@ -245,9 +240,27 @@ function startDriver(seed: DriverSeed, onEvent: (event: SessionEvent) => void): 
     permissionMode: DEFAULT_PERMISSION_MODE,
     systemPromptAppend: buildSystemPromptAppend(seed.persona, REPORT_NOTATION_PROMPT),
     resume: seed.resume,
-    tag: SESSION_TAG,
+    tag: sessionTag(seed.persona.name),
     onEvent,
   })
+}
+
+/**
+ * これから起こすキャラクターパックの、続きから始めるセッションを探す（docs/requirements.md 4.8）。
+ * 無ければ undefined（新規に起こす）。
+ *
+ * **印はターンが終わって3秒後に付く**ので、ターンを1つも終えずに離れたパックのセッションは
+ * 次に来たときに見つからず、新規から始まる（`SESSION_TAG_DELAY_MS`。4.8「復元できなかったとき
+ * どうするか」の範囲）。偽の駆動は claude を起こさないので、そもそも探さない。
+ */
+async function findPackSessionToResume(
+  config: Config,
+  cwd: string,
+  characterName: string,
+): Promise<string | undefined> {
+  return config.newSession || config.driver === "fake"
+    ? undefined
+    : findSessionToResume(cwd, sessionTag(characterName))
 }
 
 /**

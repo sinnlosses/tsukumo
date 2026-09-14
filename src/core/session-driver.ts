@@ -96,9 +96,9 @@ export type SessionDriverOptions = {
    */
   readonly resume: string | undefined
   /**
-   * このセッションに付ける印（`src/core/config.ts` の `SESSION_TAG`）。**ターンが終わるたびに
-   * 付け直す**（次に起こしたときに、これで自分のセッションだけを見分ける。付け直す理由は
-   * {@link SESSION_TAG_DELAY_MS}）。
+   * このセッションに付ける印（組み立ては `src/core/config.ts` の `sessionTag`。キャラクター
+   * パックごとに違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
+   * セッションだけを見分ける。付け直す理由は {@link SESSION_TAG_DELAY_MS}）。
    */
   readonly tag: string
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
@@ -202,8 +202,9 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 }
 
 /**
- * 続きから始めるセッションを探す（起動時に1回。docs/requirements.md 4.8）。**同じ作業
- * ディレクトリで tsukumo が起こしたもの**のうち最新の1つを返し、無ければ undefined（新規に起こす）。
+ * 続きから始めるセッションを探す（起動時と、キャラクターを切り替えるたび。
+ * docs/requirements.md 4.8）。**同じ作業ディレクトリで、渡された印を持つもの**のうち最新の1つを
+ * 返し、無ければ undefined（新規に起こす）。
  *
  * `includeWorktrees` を切ってあるのは、鍵が「起動した作業ディレクトリ ＋ 印」の2つだから
  * （同じリポジトリの別の worktree は別の作業対象）。
