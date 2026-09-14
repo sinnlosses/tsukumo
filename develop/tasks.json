@@ -119,5 +119,16 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-116",
+    "difficulty": "sonnet",
+    "loopable": "N",
+    "dependencies": [],
+    "summary": "TSUKUMO_CHARACTER を撤去するか決め、design.md の説明と README の旧名を直す",
+    "task": "## 背景\n\nT-110（前回のキャラクターを覚える）を入れたとき、`TSUKUMO_CHARACTER` の用途を調べたら\n**1つしか残っていないことが分かった**（2026-09-14）。ユーザーの判断で「撤去の可否は別タスク」と\nしたのがこのタスク。\n\n**いまの挙動**: `src/cli.ts` が `resolveBundledDir(config.character, process.cwd(), …)` に渡し、\n`src/core/bundled-path.ts` の `resolveBundledDir` が `resolve(cwd, trimmed)` で**パスとして**解く。\n\n- **`docs/design.md` 5章の表の説明は実装と違う。** 表は「パックの名前（`characters/<name>`）\n  または絶対パス」と書いているが、**名前では指せない**（`TSUKUMO_CHARACTER=local` は\n  `<cwd>/local` に解かれて存在しない）。`src/cli.ts` のヘルプ文のほうが正確\n  （「キャラクター定義ディレクトリ…相対パスは cwd 相対」）\n- **切り替えの一覧には効かない。** `listCharacterPacks(cwd)` は同梱の `characters/` 配下と\n  起動先の `characters/local/` を常に返すので、**`characters/local/` のパックは環境変数なしで\n  `<select>` から選べる**（実測: 選択肢は `local` / `tsukumo` / `tsukumo-spirit` の3つ）\n- **T-110 で初期パックの選択は覚えた値が担うようになった。** 残る用途は\n  「**`characters/` の外に置いたパックを初期パックにする**」1点だけで、いま素材は\n  `characters/local/` に置いているので使われていない\n\n**`README.md` は統合前の名前のまま**（182行・192行が `TSUKUMO_CHARACTER_DIR`）。これは撤去する\nかどうかに関わらず古い。\n\n## 解くべき論点\n\n1. **撤去するか、残すか。** 撤去すると「`characters/` の外のパックを初期値にする」道が消える。\n   残すなら、**説明を実装に合わせて直す**だけで済む。判断の材料は「その道を将来使うか」で、\n   `characters/local/` は `.gitignore` 済みなので**素材をリポジトリの外に置く理由がいまは無い**\n2. **撤去する場合、代わりの道を用意するか。** 例: 覚える仕組み（`~/.tsukumo/state.json`）が\n   名前ではなくパスも受け取れるようにする／一覧の探し先を増やす（`~/.tsukumo/characters/` など）。\n   **代わりを足さないのも結論として正しい**（使っていない道を消すだけ）\n3. **`docs/design.md` 5章の表をどう直すか。** 撤去するなら行を消し、残すなら\n   「ディレクトリのパス（相対は cwd 相対、絶対はそのまま）」に直す\n\n## やること\n\n1. 論点1をユーザーと決める（`characters/` の外にパックを置く使い方をするかを聞く）\n2. **撤去する場合**: `src/core/config.ts` の `CHARACTER_ENV_NAME` と `Config.character`、\n   `src/cli.ts` の受け渡しとヘルプ文、`test/core/config.test.ts` の2行、\n   `docs/design.md` 5章の表の行、`docs/architecture.md:701` の言及を消す。\n   `resolveBundledDir` の `overridePath` 引数は**他の呼び出し元があるか確認してから**触る\n3. **残す場合**: `docs/design.md` 5章の表の説明を実装に合わせて直すだけにする\n4. **どちらの結論でも `README.md` の `TSUKUMO_CHARACTER_DIR`（182行・192行）を直す**\n   （撤去なら行を消し、残すなら新しい名前と正しい説明にする）\n\n## 完了条件\n\n- 論点1の結論が `docs/design.md` 5章に反映されている（撤去なら行が無い、残すなら説明が\n  実装と一致する）\n- `README.md` に `TSUKUMO_CHARACTER_DIR` が残っていない\n  （`grep -rn 'TSUKUMO_CHARACTER_DIR' README.md docs/*.md` の結果を `evidence` に書く。\n  `docs/history/` は当時の記録なので**直さない**）\n- 撤去した場合: `grep -rn 'TSUKUMO_CHARACTER' src test` が空\n- `docs/design.md` / `docs/requirements.md` の節の数が変わっていない\n  （`grep -c '^#\\{2,3\\} '` を前後で比較）\n- `bun run check` が通る（pass 件数の増減を `evidence` に書く。撤去ならテストは2件ぶん減る）\n\n## 注意\n\n- **T-110 で入れた `~/.tsukumo/state.json` の仕組みは壊さない。** 覚えた値の優先順位は\n  「`TSUKUMO_CHARACTER` > 覚えた値 > 既定」で、撤去すると2段になるだけ\n- `docs/history/` の記述は**直さない**（当時の記録）\n- 撤去はユーザーの使い方次第なので `loopable` は `\"N\"`",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
