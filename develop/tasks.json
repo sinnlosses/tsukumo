@@ -75,5 +75,16 @@
     "passes": false,
     "evidence": "",
     "dependencies": []
+  },
+  {
+    "id": "T-112",
+    "difficulty": "opus",
+    "loopable": "N",
+    "dependencies": [],
+    "summary": "レポートの行長の上限（.detail-block の max-width）からテーブルなど横に広がる要素を外す",
+    "task": "## 背景\n\nレポート本文には**行長の上限が意図的に掛かっている**。`src/ui/style/main-view.css` の\n`.detail-block` に `max-width: 36.36rem`（= 42 全角ぶんの実測値 約581.7px）があり、これは\n`docs/design.md` 13.1 の原則4「読む面は行長を測る」と 13.3 の「本文の行長は 42 全角で切る」を\n実装したもの。\n\n問題は、この上限が `.detail-block` の**子孫すべて**に効くこと。レポートの HTML 語彙のうち\n**横に広がりたいもの**（GFM のテーブル → `.detail-block table { width: 100% }`、`pre`、\n```mermaid / ```chart のフェンス、`.cols` / `.card`）も 581.7px に閉じ込められるため、列の多い\nテーブルは1セルあたり数十pxしか取れず、文字が1〜2字ずつ折り返してつぶれる。メインビューは\n上段の 75%（`src/ui/layout/split.ts` の `DEFAULT_SPLIT.topLeft = 75`）を占めるので、広い窓では\n**領域の右半分が空いたままテーブルだけが窮屈**という状態になる。\n\nなお `.detail-block svg` には既に `max-width: 100%` があり、`.detail-block dl` は狭い画面で\n1列に畳む（`src/ui/style/narrow-screen.css`）。**個別の要素に例外を与える前例はある**が、\n「行長の外に出す」という形の例外はまだ無い。\n\n## 解くべき論点\n\n1. **どの要素を行長の外に出すか。** 候補は `table` / `pre` / `.cols` / mermaid・chart の\n   ブロック（`src/ui/report/mermaid-block.tsx` / `chart-block.tsx` が吐く器）/ `svg`。\n   逆に**段落・リスト・`dl`・`blockquote`・`.note` は 42 全角のまま保つ**のが原則4の趣旨。\n   `details` の中身はどちら扱いにするか（畳んだ中にテーブルが入る）も決める\n2. **出した要素をどこまで広げるか。** `.main-step` の内幅いっぱいか、行長より広い第2の上限\n   （例: 領域幅の 100% だが上限を設ける）を置くか。「読む面の行長」と「見る面の広さ」を\n   2段の寸法として design.md に書けるか\n3. **領域幅を超えたときの逃げ方。** 列が多すぎるテーブルは広げても入らない。その要素だけを\n   横スクロールさせる（`overflow-x: auto` の器で包む）か、折り返しに任せるか。\n   **ページ全体が横スクロールする形にはしない**\n4. **実装の形。** `.detail-block` の `max-width` を外して段落側の要素に付け替えるか、\n   `max-width` を保ったまま特定の子だけ広げるか（後者は `max-width` を継ぐ子に\n   `width: 100%` を足しても効かないため、`.detail-block` 自体を grid にして\n   `grid-template-columns: minmax(0, 36.36rem)` + 広げる要素だけ別トラック、などの手が要る）。\n   **どちらでも同じ絵が出るなら、語彙が増えないほうを採る**\n5. **`docs/design.md` 13.3 の書き換え方。** 原則4・13.3 は正典なので、例外を1行足す形にするか、\n   「行長は本文にだけ掛ける」という書き方に改めるか。どちらでも**実装と文面を一致させる**\n\n## やること\n\n1. **まず現物で再現を確認する。** テーブルを含むレポートを出し、テーブルの `clientWidth` と\n   `.main-step` の内幅を実測して差を記録する（CDP / headless の実測でよい。合成データを使い、\n   **実際の会話内容はフィクスチャにしない** — `docs/coding-standards.md`「会話内容の扱い」）。\n   **つぶれが再現しなければ、直さずに理由と実測値を `evidence` に書いて閉じる**\n2. 上の論点を決める。決めた理由を短く書き残す（progress.md の完了記録に入れる）\n3. `src/ui/style/main-view.css`（必要なら `src/ui/style/narrow-screen.css`）を直す。\n   色・トークン・フォント寸法は変えない\n4. `docs/design.md` の 13.1 原則4 / 13.3 を実装と一致させる\n5. 実測と目視で確かめる\n\n## 完了条件\n\n- 広い窓（1400px 相当）で、テーブルの幅が **36.36rem（581.7px）を明確に超えて** `.main-step`\n  の内幅に追随することを実測値で示す（前後の値を `evidence` に書く）\n- **同じレポート内の段落の行長が 36.36rem のまま**であることを実測値で示す\n  （行長の上限を全体で捨てていないことの証拠）\n- 狭い画面（760px 以下）で**ページ全体が横スクロールしない**（`document.scrollingElement` の\n  `scrollWidth == clientWidth`）。広げた要素の中だけがスクロールするのは可\n- `docs/design.md` の節の数が変わっていない（`grep -c '^#\\{2,3\\} ' docs/design.md` を前後で比較）\n- `bun run check` が通る（pass 件数を `evidence` に書く）\n- **実機の目視確認をして結果を `evidence` に書く**（何が見えたか。CSS は起動時に束ねるので\n  常駐プロセスの再起動が必要）\n\n## 注意\n\n- 原則4「読む面は行長を測る」は**捨てない**。長い本文の行長を伸ばす変更にしてはいけない\n- `.detail-block` の語彙（`sanitizeReportHtml` が通すクラス名）を増やす場合は\n  `src/ui/report/sanitize-schema.ts` と `src/core/report-notation.ts` の記法の説明も揃える。\n  **記法の説明を増やさずに済む形（既存のタグにスタイルを当てるだけ）を優先する**\n- 目視確認が要るため `loopable` は `\"N\"`",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
