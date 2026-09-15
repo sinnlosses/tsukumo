@@ -8,7 +8,13 @@
     "loopable": "N",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-042", "T-043", "T-044", "T-045", "T-057"]
+    "dependencies": [
+      "T-042",
+      "T-043",
+      "T-044",
+      "T-045",
+      "T-057"
+    ]
   },
   {
     "id": "T-076",
@@ -91,7 +97,9 @@
     "id": "T-120",
     "difficulty": "opus",
     "loopable": "N",
-    "dependencies": ["T-111"],
+    "dependencies": [
+      "T-111"
+    ],
     "summary": "過去のターンを選んだときに立ち絵の動きも再生するかを決める（4.3「注意が空いているときだけ」の見直し）",
     "task": "## 背景\n\nT-111（セリフをターンに紐づけ、過去の吹き出しと表情も遡る）を実装したとき、ユーザーの要望は\n**「こだわって、そのターンの表情と動きに戻す」**だった。**表情は T-111 で戻した**が、\n**動きは別タスクに分けた**（2026-09-14）。分けた理由は技術的な難しさではなく、\n**決定の見直しを含むから**。\n\n**立ち絵の4つの動き**（`docs/requirements.md` 4.3、`src/protocol/portrait-motion.ts` の\n`resolvePortraitMotion`、`src/ui/character-view/character-view.tsx` の `usePortraitMotion`）:\n\n| 動き | いまの引き金 | 過去のターンで再生できるか |\n| --- | --- | --- |\n| 呼吸 | 常時 | そのまま続く（時間に紐づかない） |\n| 待っている間の移動 | `turnInProgress` | **過去のターンは進行中ではない**ので出ない |\n| 完了の反応 | `turnFinishedAt` が直近 | 「そのターンが終わった」は言えるが、**終わったのは今ではない** |\n| 失敗でびくっ | `lastToolFailureAt` が直近 | そのターンに失敗したツールがあったかは `records` から引ける |\n\n**衝突する決定がある。** `docs/requirements.md` 4.3 に「**動くのは利用者の注意が空いている\nときだけ**」とある。過去のタブを選んだ瞬間に動きを再生するのは、**利用者が見ているまさにその\n瞬間に動かす**ことになる。ただし**利用者自身の操作（タブを押す）が引き金**なので、\n「読んでいる最中に勝手に動く」のとは別だとも言える。**そこが判断の分かれ目。**\n\n**材料は揃っている。** そのターンに失敗したツールがあったかは `SessionRecord` の\n`tool.result.isError` から引ける（T-111 で足した `turnSpeeches` と同じ形の純粋関数にできる）。\n過去のターンは定義上「終わっている」ので、完了の反応は無条件に当てられる。\n\n## 解くべき論点\n\n1. **4.3 の「動くのは利用者の注意が空いているときだけ」を見直すか。** 見直すなら、\n   **利用者の操作が引き金のときは例外**と書く。見直さないなら**このタスクは着手しない判断で\n   閉じる**（表情だけ遡る T-111 の形で止める）。**どちらも結論として正しい**\n2. **何を再生するか。** (a) そのターンの終わり方を1回だけ（成功＝完了の反応、ツール失敗が\n   あった＝びくっ）/ (b) 動きは止めて呼吸だけにする（「過去を見ている」ことが分かる）/\n   (c) 何もしない（いまと同じ＝今の状態の動きが続く）\n3. **再生の実装をどうするか。** `resolvePortraitMotion` は `turnFinishedAt` /\n   `lastToolFailureAt` と `now` の差で決めているので、**タブを選んだ時刻をその引数に流し込めば\n   既存の仕組みをそのまま使える**（`resolvePortraitMotion` を変えずに済む）。別の道として\n   動きの種類を直接指定する引数を足す形もある。**どちらが `protocol` の純粋関数の性質を\n   保てるか**で決める\n4. **今回のタブに戻ったときどうするか。** 戻った瞬間にも何か再生するのか、いまの状態の動きに\n   素直に戻すだけか\n5. **`prefers-reduced-motion: reduce` と「固定」の設定**（`loadPortraitFixed`）が効いている\n   ときは再生しない、で良いか\n\n## やること\n\n1. 論点1を**先に**ユーザーと決める。見直さない結論なら、**実装せず理由を `evidence` に書いて\n   閉じる**（`status: \"done\"` / `passes: false`。正典の「着手しない判断」）\n2. 見直す結論なら、論点2〜5を決めて `docs/requirements.md` 4.3 に書く\n3. そのターンにツールの失敗があったかを引く純粋関数を `src/protocol/` に足す\n   （`turn-speech.ts` の `turnSpeeches` と同じ「`request` を境目に数える」形にし、\n   **通し番号を `mainViewTurns` と揃える**）\n4. `src/ui/character-view/character-view.tsx` の `usePortraitMotion` に、選んでいるターンが\n   変わったことを渡す。**`resolvePortraitMotion` の既存の振る舞いは変えない**\n5. 実機で目視する\n\n## 完了条件\n\n- 論点1の結論が `docs/requirements.md` 4.3 に書かれている（見直さないならその理由）\n- 実装した場合:\n  - 過去のタブを押すと、そのターンの終わり方に応じた動きが**1回だけ**出ることを部品の\n    テストで示す（同じタブを押し続けても繰り返さない）\n  - **ツールが失敗したターンと、成功したターンで出る動きが違う**ことをテストで示す\n  - `prefers-reduced-motion: reduce` と「固定」が効いているときは動かないことをテストで示す\n  - 実機の目視の結果を `evidence` に書く（どのタブでどう動いたか）\n- `docs/requirements.md` の節の数が変わっていない\n  （`grep -c '^#\\{2,3\\} ' docs/requirements.md` を前後で比較）\n- `bun run check` が通る（pass 件数の増減を `evidence` に書く。実装しない結論でも、文面の\n  変更後に走らせる）\n\n## 注意\n\n- **T-111 で入れた「表情は遡る」は変えない。** このタスクは動きだけを扱う\n- **立ち絵は「1枚の矩形」として扱う**（4.3。位置・大きさ・傾き・上下・不透明度だけを動かし、\n  素材の中身に触らない）。新しい動きを作るのではなく、**既存の4つの再生**にとどめる\n- **動ける範囲はキャラビューの領域の中だけ**（4.3）。T-115（レポートにミニ立ち絵）とは別の話で、\n  こちらは領域の外に出ない\n- **論点1（4.3 の「注意が空いているときだけ」を見直すか）をユーザーが決める**ので `loopable` は `\"N\"`",
     "status": "todo",
@@ -140,7 +148,9 @@
     "loopable": "Y",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-123"]
+    "dependencies": [
+      "T-123"
+    ]
   },
   {
     "id": "T-125",
@@ -151,7 +161,10 @@
     "loopable": "Y",
     "passes": false,
     "evidence": "",
-    "dependencies": ["T-123", "T-124"]
+    "dependencies": [
+      "T-123",
+      "T-124"
+    ]
   },
   {
     "id": "T-126",
@@ -226,9 +239,9 @@
     "dependencies": [],
     "summary": "立ち絵の URL にパックの識別を足し、同名ファイルのパック間で切り替わるようにする",
     "task": "## 背景\n\nユーザーの報告（2026-09-15）「アスナから tsukumo にキャラを切り替えたときに立ち絵が\n切り替わらない」。\n\n**原因は立ち絵の URL がパックをまたいで同じになることにある。** `src/protocol/character.ts` の\n`characterAssetPath(fileName)` は **`/character/<ファイル名>` を返すだけ**で、パックの名前を\n含まない（113〜117行目）。そして:\n\n| パック | `portraits.default` | 立ち絵の URL |\n| --- | --- | --- |\n| `characters/local`（一之瀬アスナ） | `default.png` | `/character/default.png` |\n| `characters/tsukumo` | `default.png` | `/character/default.png` |\n| `characters/tsukumo-spirit` | `default.svg` | `/character/default.svg` |\n\n**アスナ ↔ tsukumo はファイル名が同じ**なので URL の文字列が変わらず、`<img src>` が\n書き換わらない。ブラウザは**すでに読み込んだ画像を出したまま**で、新しい取得も起きない\n（`src/core/server.ts` の `writeCharacterAsset` は `cache-control: no-store` を付けているが、\n**そもそも再取得が走らない**ので効かない）。\n\n**つくもの精霊との行き来では起きない。** あちらは `.svg` で、`classifyPortraitFile` が\n`\"svg\"` を返してインラインで埋め込む経路（`<img>` ではない）に入るため、URL の一致が問題に\nならない。**この不具合が PNG のパックどうしでだけ出る**のと符合する。\n\n**配る側はパックを見ている。** `/character/<file>` の中身は `src/cli.ts` が渡す\n`readCharacterPackFile(characterPack, fileName)` で、**そのときの `characterPack`** から読む。\nつまり**同じ URL が指す中身だけが入れ替わる**状態になっている。\n\n## 解くべき論点\n\n- **URL にパックを入れる形をどうするか。** (a) 問い合わせ文字列を足す\n  （`/character/default.png?pack=local`）/ (b) パスに入れる（`/character/local/default.png`）。\n  **(b) は `serveCharacterAsset` の allowlist（`character.json` の `portraits` に載っている\n  ファイル名だけを配る）とパスの組み立て方に触る**ので、(a) のほうが変更が小さい。\n  どちらでも**パスから素材を組み立てない**という原則（`character.ts` 110行目付近のコメント）を\n  崩さないこと\n\n## やること\n\n1. まず現物で再現する。アスナ → tsukumo に切り替えて、`character-changed` が届いているのに\n   `<img src>` の値が変わらないことを確認する（**会話の中身は見ない**）\n2. 論点のとおり URL にパックの識別を足す。**`characterAssetPath` 1箇所で組み立てる**\n   （文字列を他所で作らない。既存のコメントの方針をそのまま守る）\n3. 配る側（`src/core/server.ts` の `/character/<file>` の経路と\n   `src/core/character-pack.ts` の `readCharacterPackFile`）が、足した識別を**無視して\n   よいか確かめる**。いまも「そのときの `characterPack`」から読むので、識別は\n   **ブラウザに再取得させるためだけ**のものにできる。その割り切りをコメントに残す\n4. 実機で3つのパックを行き来して目視する\n\n## 完了条件\n\n- **アスナ → tsukumo → アスナ**と切り替えて、`<img src>` の値が**毎回変わる**ことを実測値で\n  示す（変更前は同じ文字列のままだったこと、変更後は変わることの両方）\n- 実機で**立ち絵の絵柄が実際に入れ替わる**ことを目視して `evidence` に書く\n  （3つのパックすべての行き来）\n- つくもの精霊（SVG のインライン埋め込み）の経路が壊れていないことを目視して `evidence` に書く\n- `/character/<file>` が**`portraits` に載っていないファイル名を配らない**ことの既存テストが\n  通る（allowlist を緩めていないことの証拠）\n- `bun run check` が通る（pass 件数の増減を `evidence` に書く）\n\n## 注意\n\n- **`characters/local/` は `.gitignore` 済み**（権利のある素材を公開リポジトリに入れない。\n  `docs/requirements.md` 2.2）。**素材をコミットしない**\n- **パスから素材を組み立てない**（`src/protocol/character.ts` の方針）。配ってよいのは\n  `character.json` の `portraits` に載っているファイル名だけ\n- 確認は tsukumo 自身で行える（パックを切り替えて `<img src>` の変化と絵柄を撮って見る）。\n  `loopable` は `\"Y\"`（`docs/workflow.md`「`loopable` の判定」）",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "立ち絵URLに ?pack= を足した（characterAssetPath 1箇所）。Chrome 実機で local→tsukumo→local→tsukumo-spirit→tsukumo と切り替え、<img src> が /character/default.png?pack=local ↔ ?pack=tsukumo と毎回変化し naturalSize も 246x203 ↔ 830x1254 と入れ替わることを実測（変更前は両者とも /character/default.png で不変）。3パックの絵柄の差し替えを画面写真で目視、精霊の SVG インライン経路（<img>なし・svg 1268文字）も維持。\n付随して classifyPortraitFile が ?pack= 付き URL で拡張子を見失い立ち絵が消える退行を実機で発見・修正（fileExtension が ? 以降を落とす）。\nbun run check: 456 pass → 461 pass / 0 fail（新規5件）。/character/ の allowlist は未変更で、character.json・../package.json は 404 のまま。"
   },
   {
     "id": "T-133",

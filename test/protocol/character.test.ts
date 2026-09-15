@@ -226,7 +226,17 @@ describe("resolveOutfitAccent", () => {
 
 describe("characterAssetPath", () => {
   it("/character/<file> の形にする", () => {
-    expect(characterAssetPath("default.svg")).toBe("/character/default.svg")
+    expect(characterAssetPath("default.svg", undefined)).toBe("/character/default.svg")
+  })
+
+  it("pack があれば問い合わせ文字列 ?pack=<name> を付ける", () => {
+    expect(characterAssetPath("default.svg", "tsukumo")).toBe("/character/default.svg?pack=tsukumo")
+  })
+
+  it("pack の値はエンコードする（ディレクトリ名に URL の特殊文字が入りうる）", () => {
+    expect(characterAssetPath("default.svg", "my pack")).toBe(
+      "/character/default.svg?pack=my%20pack",
+    )
   })
 })
 
@@ -247,8 +257,32 @@ describe("toCharacterInfo", () => {
       "proud",
       "flustered",
     ])
-    expect(info?.portraits.working).toBe("/character/working.svg")
+    expect(info?.portraits.working).toBe("/character/working.svg?pack=fictional")
     expect(info?.outfitAccents.heavy).toBe("#ffb3a7")
+  })
+
+  it("pack が違えば、同じファイル名でも URL が変わる", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+    expect(definition).toBeDefined()
+    if (definition === undefined) {
+      return
+    }
+
+    const infoA = toCharacterInfo(definition, "pack-a")
+    const infoB = toCharacterInfo(definition, "pack-b")
+
+    expect(infoA.portraits.default).not.toBe(infoB.portraits.default)
+    expect(infoA.portraits.default).toBe("/character/default.svg?pack=pack-a")
+    expect(infoB.portraits.default).toBe("/character/default.svg?pack=pack-b")
+  })
+
+  it("pack が undefined のときは問い合わせ文字列を付けない（既定の場所を直に指したときなど）", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+    expect(definition).toBeDefined()
+
+    const info = definition === undefined ? undefined : toCharacterInfo(definition, undefined)
+
+    expect(info?.portraits.default).toBe("/character/default.svg")
   })
 
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
@@ -276,6 +310,11 @@ describe("classifyPortraitFile", () => {
     expect(classifyPortraitFile("default.jpg")).toBe("raster")
     expect(classifyPortraitFile("default.jpeg")).toBe("raster")
     expect(classifyPortraitFile("default.webp")).toBe("raster")
+  })
+
+  it("characterAssetPath が返した URL（?pack= 付き）でも拡張子を見失わない", () => {
+    expect(classifyPortraitFile(characterAssetPath("default.svg", "tsukumo-spirit"))).toBe("svg")
+    expect(classifyPortraitFile(characterAssetPath("default.png", "local"))).toBe("raster")
   })
 
   it("知らない拡張子・拡張子が無いときは undefined（立ち絵なしにフォールバック）", () => {

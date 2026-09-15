@@ -109,11 +109,17 @@ export function resolveExpressionLabel(
 /**
  * `/character/<file>` の URL の作り方。**`character.json` に書かれたファイル名だけ**を渡す前提
  * （`src/core/character-pack.ts` の allowlist と同じ考え方。パスから組み立てない）。
+ *
+ * `pack` は**ブラウザに再取得させるためだけ**の問い合わせ文字列。2つのパックが同じファイル名
+ * （`default.png` など）を使うと URL が一致し、`<img src>` が書き換わらないので再取得が起きない。
+ * **配る側（`src/core/server.ts`）はこの値を見ない**（`?` 以降を落としてから配信ファイルを
+ * 決める）。中身を決めるのは呼び出し側が渡す `CharacterPack` のほう。
  */
 export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
 
-export function characterAssetPath(fileName: string): string {
-  return `${CHARACTER_ASSET_PATH_PREFIX}${fileName}`
+export function characterAssetPath(fileName: string, pack: string | undefined): string {
+  const path = `${CHARACTER_ASSET_PATH_PREFIX}${fileName}`
+  return pack === undefined ? path : `${path}?pack=${encodeURIComponent(pack)}`
 }
 
 /**
@@ -161,7 +167,7 @@ export function toCharacterInfo(
     name: definition?.name,
     accent: definition?.accent,
     expressions: expressionChoices(definition),
-    portraits: portraitUrls(definition),
+    portraits: portraitUrls(definition, pack),
     outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
     speechMarker: definition?.speechMarker,
   }
@@ -169,20 +175,21 @@ export function toCharacterInfo(
 
 function portraitUrls(
   definition: CharacterDefinition | undefined,
+  pack: string | undefined,
 ): Readonly<Record<Expression, string | undefined>> {
   if (definition === undefined) {
     return EMPTY_PORTRAITS
   }
   return {
-    default: portraitUrl(definition.portraits.default),
-    working: portraitUrl(definition.portraits.working),
-    proud: portraitUrl(definition.portraits.proud),
-    flustered: portraitUrl(definition.portraits.flustered),
+    default: portraitUrl(definition.portraits.default, pack),
+    working: portraitUrl(definition.portraits.working, pack),
+    proud: portraitUrl(definition.portraits.proud, pack),
+    flustered: portraitUrl(definition.portraits.flustered, pack),
   }
 }
 
-function portraitUrl(fileName: string | undefined): string | undefined {
-  return fileName === undefined ? undefined : characterAssetPath(fileName)
+function portraitUrl(fileName: string | undefined, pack: string | undefined): string | undefined {
+  return fileName === undefined ? undefined : characterAssetPath(fileName, pack)
 }
 
 const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
@@ -221,7 +228,8 @@ export function resolveOutfitAccent(
 }
 
 /**
- * 立ち絵ファイルの種類を拡張子だけで分ける。**利用者が `characters/local/` に置いた任意の
+ * 立ち絵の種類を拡張子だけで分ける。**ファイル名でも `characterAssetPath` が返した URL でも
+ * 受け取る**（`?pack=` が付いていても拡張子を見失わない）。**利用者が `characters/local/` に置いた任意の
  * ファイルを無検証で流し込まないための最低限の仕分け**（このタスクの注意事項）。
  * SVG はインラインで埋め込む（ページの CSS 変数 `--outfit-accent` を効かせるため。
  * `<img>` で読み込むと独立した文書扱いになり届かない。実測は `characters/README.md`）。
@@ -304,7 +312,12 @@ const RASTER_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
   ".webp": "image/webp",
 }
 
+/**
+ * 拡張子を小文字で返す。**問い合わせ文字列は落としてから見る**（`characterAssetPath` が
+ * 付ける `?pack=` で拡張子を見失わないため）。無ければ空文字。
+ */
 function fileExtension(fileName: string): string {
-  const dotIndex = fileName.lastIndexOf(".")
-  return dotIndex === -1 ? "" : fileName.slice(dotIndex).toLowerCase()
+  const path = fileName.split("?")[0] ?? fileName
+  const dotIndex = path.lastIndexOf(".")
+  return dotIndex === -1 ? "" : path.slice(dotIndex).toLowerCase()
 }

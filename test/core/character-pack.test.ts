@@ -82,8 +82,8 @@ describe("characterChangedEvent", () => {
       ],
       packs: [{ name: basename(dir), label: "架空の精霊" }],
       portraits: {
-        default: "/character/default.svg",
-        working: "/character/working.svg",
+        default: `/character/default.svg?pack=${encodeURIComponent(basename(dir))}`,
+        working: `/character/working.svg?pack=${encodeURIComponent(basename(dir))}`,
         proud: undefined,
         flustered: undefined,
       },
