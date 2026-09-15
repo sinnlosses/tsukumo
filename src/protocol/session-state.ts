@@ -30,8 +30,8 @@ const MAX_SESSION_STATE_TURNS = 20
 
 /**
  * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は表示側
- * `src/presentation/view.ts` の `summarizeToolInput` の仕事。`docs/coding-standards.md`「会話内容の扱い」の
- * とおり、要約に断片が入りうることは呼び出し側が承知した上で使う）。
+ * `src/ui/component/tool-summary.ts` の `summarizeToolInput` の仕事。`docs/coding-standards.md`
+ * 「会話内容の扱い」のとおり、要約に断片が入りうることは呼び出し側が承知した上で使う）。
  */
 export type ToolActivity = {
   readonly toolUseId: string
@@ -55,7 +55,7 @@ export type ToolActivity = {
 
 /**
  * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
- * 発話の詳細の3種類。**描く側（src/presentation/view.ts）が読むだけの形**で、ここが決めた結果を渡す
+ * 発話の詳細の3種類。**描く側（`src/ui/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
  * （{@link mainViewEntries}）。
  */
 export type MainViewEntry =

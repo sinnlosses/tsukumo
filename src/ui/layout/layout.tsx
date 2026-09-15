@@ -4,9 +4,8 @@
 // `test/architecture.test.ts` の `UI_REGIONS` に無い共有部分なので、ここから import してよい。
 // `ui/component/` と同じ扱い）。
 //
-// もとは `src/presentation/view.ts` の `buildLayoutPage` が組み立てる静的な HTML と、
-// `src/presentation/browser/layout-resizer.ts` の配線だった（移行の段6で React の部品にし、
-// 段3〜5の複数の root を1つにまとめた。docs/design.md 12章）。
+// もとは静的な HTML の組み立てとブラウザ側の配線に分かれていた処理だった（移行の段6で
+// React の部品にし、段3〜5の複数の root を1つにまとめた。docs/design.md 12章）。
 //
 // **領域の中身（`<MainView>` / `<Sidebar>` / `<CharacterView>` / `<Dispatch>`）は props で
 // 受け取る。** ここから他の `ui/<領域>/` を import しない（`test/architecture.test.ts`

@@ -1,8 +1,7 @@
 // 送信⇄中断のボタンと経過/所要の表示（<TurnStatus>。docs/design.md 6.1）。**`<Composer>` の
 // `<form>` の中に置く**ことを前提にする — 進行中でなければ `type="submit"` なので、押すと
 // Composer の `onSubmit` がそのまま依頼を送る。進行中は `type="button"` にして、ここが直接
-// `interrupt` を dispatch する（送信と中断が同時に押せる状態を作らないための、旧
-// `src/presentation/browser/dispatch.ts` と同じ考え方）。
+// `interrupt` を dispatch する（送信と中断が同時に押せる状態を作らないためのもの）。
 //
 // 経過時間は `state.turnStartedAt` から数え、`state.turnFinishedAt` があればそこで止まる
 // （**1秒の刻みはここのローカルなタイマー**。`SessionState` に秒数は持たない。docs/design.md

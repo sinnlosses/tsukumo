@@ -1,8 +1,8 @@
 // メインビューに出す前段の「決める」ロジック。**`MainViewEntry`（`session-state.ts`）を、
 // やり取り（ターン）ごとにまとめ、1件ずつのツールを表示してよい範囲まで絞る**純粋関数だけを置く。
 //
-// もとは `src/presentation/view.ts` の `groupIntoTurns` / `limitTurnEntries` / `toolVisibility`
-// だった（移行の段6で HTML の組み立てが `src/ui/main-view/` へ移るのに合わせ、判断そのものは
+// `groupIntoTurns` / `limitTurnEntries` / `toolVisibility` はもとは1つのファイルにまとまって
+// いた（移行の段6で HTML の組み立てが `src/ui/main-view/` へ移るのに合わせ、判断そのものは
 // サーバ・ブラウザどちらでも同じ結果になる `protocol` へ残した。docs/design.md 12章 段6）。
 //
 // `node:` にも `document` にも触らない（他の protocol と同じ制約）。

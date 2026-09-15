@@ -27,6 +27,7 @@ import {
   parseClientCommand,
 } from "../protocol/command.ts"
 import { FRAME_ERROR_REASON, type ServerFrame } from "../protocol/frame.ts"
+import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../protocol/session-socket.ts"
 import {
   VENDOR_ASSET_CONTENT_TYPES,
   VENDOR_PATH_PREFIX,
@@ -34,12 +35,6 @@ import {
 } from "../protocol/vendor-asset.ts"
 import { bundledFilePath } from "./bundled-path.ts"
 import { type DispatchResult } from "./session-manager.ts"
-
-/** WebSocket の経路。 */
-export const SESSION_SOCKET_PATH = "/ws"
-
-/** 起動トークンを載せるクエリの名前（`/ws?t=<token>`）。 */
-export const SESSION_TOKEN_QUERY_NAME = "t"
 
 /**
  * 受け取るメッセージ1件の上限（バイト）。依頼の文面の上限（{@link MAX_PROMPT_TEXT_LENGTH}）に

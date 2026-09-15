@@ -1,18 +1,15 @@
 // サーバの WebSocket（`/ws?t=<token>`）へつなぎ、届いたフレームを封筒だけ検証してから渡す
 // （docs/design.md 6.1 / 6.2「接続・再接続・フレームの zod 検証」）。**core を import しない**
 // （原則2/3。`ui` が触れる契約は `protocol` だけ）。`/ws` の経路名・トークンのクエリ名の値は
-// `src/core/server.ts` の `SESSION_SOCKET_PATH` / `SESSION_TOKEN_QUERY_NAME` と揃えてある
-// （import はできないので、値をここに再掲する。層をまたぐ経路の名前が2箇所に分かれるのは
-// core/server.ts の `PERMISSION_MODE_LABELS` などと同じ、旧のやり方の踏襲）。
+// `protocol/session-socket.ts` が正典で、`core/server.ts` と両方から import する（値の再掲は
+// しない）。
 //
 // 接続が切れたら、間隔を指数的に伸ばしながら再接続する。読めないフレームは黙って捨てて
 // 次のフレームを待つ（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」と
 // 同じ考え方をブラウザ側でも取る）。
 
 import { parseServerFrame, type ServerFrame } from "../protocol/frame.ts"
-
-const SESSION_SOCKET_PATH = "/ws"
-const SESSION_TOKEN_QUERY_NAME = "t"
+import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../protocol/session-socket.ts"
 
 const RECONNECT_INITIAL_DELAY_MS = 500
 const RECONNECT_MAX_DELAY_MS = 8000

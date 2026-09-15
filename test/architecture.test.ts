@@ -37,10 +37,13 @@ describe("層と依存の向き", () => {
     expect(violationsMessage(violations)).toBe("")
   })
 
-  it("protocol は node: にも document にも触らない（両側で動く純粋な契約）", () => {
+  it("protocol は node: にも document/window/localStorage にも触らない（両側で動く純粋な契約）", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => layerOf(relPath) === "protocol")
-      .filter((relPath) => /from\s+["']node:/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
+      .filter((relPath) => {
+        const code = nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
+        return /from\s+["']node:/.test(code) || /\b(document|window|localStorage)\b/.test(code)
+      })
 
     expect(offenders).toEqual([])
   })
@@ -61,10 +64,80 @@ describe("orca コマンドを起こす箇所", () => {
   })
 })
 
+// ここから、まだ adapter/ を切っていない段階（docs/research/architecture-proposal.md 5章 段1）で
+// 書ける限定の検査。許す先はいまのパス（`src/core/...`）で書く。段2で `adapter/` を切ったら
+// パスを書き換える（`core` が `node:` / SDK / `ws` に触らないことを検査する、より広い形に置き換わる
+// 想定。3章「許す依存の辺」）。
+
+// SDK（`@anthropic-ai/claude-agent-sdk`）を起こすのは駆動のファイル1つに閉じ込める
+// （docs/architecture.md 原則3、src/core/session-driver.ts 冒頭コメント）。import 文の
+// クォートされた specifier だけを拾うので、バッククォートで囲んだ日本語の説明文は拾わない
+// （orca の検査と同じやり方）。
+describe("Agent SDK を import する箇所", () => {
+  it("`@anthropic-ai/claude-agent-sdk` を import するのは src/core/session-driver.ts だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath !== "core/session-driver.ts")
+      .filter((relPath) =>
+        /from\s+["']@anthropic-ai\/claude-agent-sdk["']/.test(
+          readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"),
+        ),
+      )
+
+    expect(offenders).toEqual([])
+  })
+})
+
+// `node:child_process` を起こすのはホスト（orca）とビルド（bun build）の2つの境界に閉じ込める
+// （docs/architecture.md 原則3）。
+describe("子プロセスを起こす箇所", () => {
+  it("`node:child_process` を import するのは src/core/orca-host.ts と src/core/bundle.ts だけ", () => {
+    const allowed = new Set(["core/orca-host.ts", "core/bundle.ts"])
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => !allowed.has(relPath))
+      .filter((relPath) =>
+        /from\s+["']node:child_process["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+      )
+
+    expect(offenders).toEqual([])
+  })
+})
+
+// 環境変数の読み取りは配線層の1ファイルに集める（docs/coding-standards.md「外の世界に依存する値
+// は読み取りを1モジュールに集約する」）。コメント中の `` `process.env` `` のような説明文は
+// 拾わない（実コードの行だけを見る）。
+describe("process.env を読む箇所", () => {
+  it("`process.env` を読むのは src/cli.ts だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath !== "cli.ts")
+      .filter((relPath) =>
+        /\bprocess\.env\b/.test(nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+      )
+
+    expect(offenders).toEqual([])
+  })
+})
+
+// 経路名のリテラルは protocol にだけ書く。両側（core と ui）が見る値は import で共有し、
+// 文字列リテラルとして再掲しない（`src/protocol/session-socket.ts` が代表例）。
+describe("経路名のリテラル", () => {
+  it('"/ws" "/character/" "/vendor/" を文字列リテラルで書くのは protocol/ だけ', () => {
+    const pathLiteralPatterns = [/["']\/ws["']/, /["']\/character\/["']/, /["']\/vendor\/["']/]
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => !relPath.startsWith("protocol/"))
+      .filter((relPath) => {
+        const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
+        return pathLiteralPatterns.some((pattern) => pattern.test(content))
+      })
+
+    expect(offenders).toEqual([])
+  })
+})
+
 // `ui/` の中の横断 import を禁じる（`docs/design.md` 12章 段3「ui/ の作法」2）。
 // 領域は `layout` / `main-view` / `character-view` / `sidebar` / `dispatch`。
-// `ui/component/` `ui/style/` と `ui/app.tsx` `ui/socket.ts` `ui/main.tsx`（領域のディレクトリの
-// 直下に無いもの）は誰から引いてもよい共有部分なので、ここでは見ない。
+// `ui/component/` `ui/style/` `ui/appearance/` と `ui/app.tsx` `ui/socket.ts` `ui/main.tsx`
+// （領域のディレクトリの直下に無いもの。`UI_REGIONS` に無ければ自動的にここに入る）は誰から
+// 引いてもよい共有部分なので、ここでは見ない。
 //
 // **`ui/report/` も共有部分に含めた**（段6。当初は「領域」の1つとして名指しされていたが、
 // `report/` は state を持たない Markdown の描画プリミティブ（unified の構成・sanitize の
@@ -125,6 +198,19 @@ function isUiRegion(value: string): value is UiRegion {
 function uiRegionViolationsMessage(violations: readonly UiRegionViolation[]): string {
   return violations
     .map((v) => `src/${v.fromPath}（${v.fromRegion}） → src/${v.toPath}（${v.toRegion}）`)
+    .join("\n")
+}
+
+/**
+ * 単行コメント（`// ...`）だけの行を落とした中身を返す。`process.env` や `document` の説明を
+ * バッククォートで書いたコメント（例: `` // `process.env` を読むのはここ1箇所 ``）を実コードの
+ * 出現と取り違えないための下ごしらえ（このリポジトリの `.ts`/`.tsx` にブロックコメントは
+ * 出てこない前提。JSDoc の `* ` 始まりの行にこの語が出てこないことは書いた時点で確認した）。
+ */
+function nonCommentContent(content: string): string {
+  return content
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("//"))
     .join("\n")
 }
 

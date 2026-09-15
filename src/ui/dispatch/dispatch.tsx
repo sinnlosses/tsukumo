@@ -11,8 +11,7 @@ import { PendingAnswer } from "./pending-answer.tsx"
 export function Dispatch(): ReactElement {
   const { state } = useSession()
   const pendingActive = state.pending.length > 0
-  // 最初に読んだ元のタイトルへ戻す（読むのは1回だけ。旧 src/presentation/browser/dispatch.ts と
-  // 同じ考え方）。
+  // 最初に読んだ元のタイトルへ戻す（読むのは1回だけ）。
   const originalTitleRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {

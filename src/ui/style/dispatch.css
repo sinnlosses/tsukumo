@@ -1,6 +1,5 @@
-/* 入力欄（`<Dispatch>` 一式。src/ui/dispatch/）。`.dispatch` は `.layout-dispatch`
-   （旧 HTML が出す静的な section。src/presentation/view.ts）の中いっぱいに広がり、
-   フォーム・答え待ちの箱を縦に積む（docs/requirements.md 4.7）。 */
+/* 入力欄（`<Dispatch>` 一式。src/ui/dispatch/）。`.dispatch` は `.layout-dispatch` の中
+   いっぱいに広がり、フォーム・答え待ちの箱を縦に積む（docs/requirements.md 4.7）。 */
 .dispatch {
   display: flex;
   flex-direction: column;
@@ -10,7 +9,7 @@
 /* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
    （permission-mode-select-danger の var(--state-ng)、破壊的操作向け）とは別の、注意を引くための
    var(--state-warn) にしてある（2026-09-11 決定）。`.layout-dispatch` の内側の縁に沿わせる
-   （`position: relative` は src/presentation/style/layout.css 側で用意してある）。 */
+   （`position: relative` は `src/ui/style/layout.css` 側で用意してある）。 */
 .dispatch-pending-glow {
   position: absolute;
   inset: 0;

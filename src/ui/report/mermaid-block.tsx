@@ -1,8 +1,8 @@
 // レポートの ```mermaid フェンスの中身を図として描く。**mermaid は `vendor/` に同梱し、
 // その記法が実際に出てきたときだけ `<script>` で読み込む**（`docs/requirements.md` 4.2）。
 //
-// もとは `src/presentation/browser/report-renderers.ts` の `drawDiagrams` だった処理を、
-// 部品の `useEffect` に持ち替えた（移行の段6。docs/design.md 6.4）。
+// もとは別ファイルの処理だったものを、部品の `useEffect` に持ち替えた（移行の段6。
+// docs/design.md 6.4）。
 
 import { useEffect, useRef, useState, type ReactElement } from "react"
 

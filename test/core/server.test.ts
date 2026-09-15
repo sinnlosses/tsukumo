@@ -6,7 +6,6 @@ import WebSocket from "ws"
 import {
   attachSessionSocket,
   createStartupToken,
-  SESSION_SOCKET_PATH,
   startViewServer,
   type SessionSocket,
   type ViewServer,
@@ -19,6 +18,7 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../src/protocol/frame.ts"
+import { SESSION_SOCKET_PATH } from "../../src/protocol/session-socket.ts"
 import { INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
 
 // 会話は流さない（フレームの中身は初期状態と架空のセリフだけ）。

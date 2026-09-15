@@ -1,8 +1,8 @@
 // サイドバーの「セッション情報」。キャラクター・モデル・許可モードの `<select>`（共有部品。
 // `src/ui/component/select.tsx`）を並べ、変更で `switch-character` / `set-model` /
 // `set-permission-mode` を `dispatch` する。**次に届く `session-info` で `<select>` の選択が
-// 上書きされる**（サーバ側の値が正になる。旧の `src/presentation/browser/session-info.ts` と
-// 同じ考え方）。キャラクターの `<select>` は**選択肢が1つでも出す**（docs/design.md 7章）。
+// 上書きされる**（サーバ側の値が正になる）。キャラクターの `<select>` は**選択肢が1つでも出す**
+// （docs/design.md 7章）。
 
 import { type ReactElement } from "react"
 

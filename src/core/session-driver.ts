@@ -54,7 +54,7 @@ export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto"
 /**
  * 既定のモデル。ユーザーの指示（2026-09-12）で Opus に固定した
  * （docs/requirements.md 4.1）。画面の `<select>` 側の見た目上の既定値
- * （`src/presentation/view.ts` の `MODEL_FALLBACK`）も同じ値に揃える。
+ * （`src/ui/sidebar/session-info.tsx` の `MODEL_FALLBACK`）も同じ値に揃える。
  */
 export const DEFAULT_MODEL: ModelAlias = "opus"
 
