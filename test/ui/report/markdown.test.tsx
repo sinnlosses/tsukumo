@@ -89,6 +89,23 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("details > summary")).not.toBeNull()
   })
 
+  it("<details> の中の Markdown が、空行を挟めば <details> の中で解釈される", () => {
+    const { container } = render(
+      <Markdown
+        text={
+          "<details>\n<summary>長い根拠</summary>\n\n" +
+          "| a | b |\n| --- | --- |\n| 1 | 2 |\n\n" +
+          "</details>"
+        }
+      />,
+    )
+
+    // 表が <details> の外に出ると、畳まれずに常に見えてしまう（2026-09-15 のユーザーの報告
+    // 「展開を押しても意味なく、最初から展開済みの文章が出てしまっている」）。
+    expect(container.querySelector("details table")).not.toBeNull()
+    expect(container.querySelector("details > summary")?.textContent).toBe("長い根拠")
+  })
+
   it("用語と説明の対（dl / dt / dd）が通る", () => {
     const { container } = render(
       <Markdown text="<dl><dt>付喪神</dt><dd>長く使った道具に宿るもの</dd></dl>" />,
