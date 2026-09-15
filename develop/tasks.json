@@ -1,11 +1,11 @@
 [
   {
     "id": "T-046",
-    "summary": "Orca のタブのままか、アプリに包むかを使ってから決める",
-    "task": "Orca のタブのまま行くか、Electron 等で1つのアプリに包むかを決める。\n\n## 背景\n\nユーザー決定 Q4: 箱は当面 Orca のブラウザタブ。**最終形は「使い勝手が上がるなら」スタンドアロンのアプリ**（「この orca のように統合されたアプリケーション内でキャラと一緒に仕事がしたい」）。判断は縦1本と横の広がり（T-042〜T-045）まで動いて、実際に使ってからにする（Q13 の 4）。\n\nいまの構成では、ページは「どの箱でも動く Web アプリ」で、Orca への依存は `showView`（`orca tab create --url`）だけ（T-042 後）。Electron で包む場合は、Bun のプロセス（駆動＋ビューサーバ）を子として起こし、`BrowserWindow` で `http://127.0.0.1:<port>/layout` を開くだけで済む見込み。Tauri なら Rust の toolchain が要る（2026-09-12 に再確認して `cargo` / `rustc` / `rustup` はいずれも未導入。`node` v22.13.1 と Xcode はある）。\n\n**選択肢の比較そのものは T-057 が先に作る**（2026-09-12 のユーザーの問いかけ「Electoron がベストかな? Tauri や他の選択肢も検討する?」）。このタスクは、その表（`docs/research/app-shell.md`）とユーザーの使った感想を突き合わせて**決める**側に専念する。\n\n## 解くべき論点\n\n- **Orca のタブで困ったことが実際にあったか**（ユーザーが使った感想が正典。推測で決めない）: タブが他のタブに埋もれる、起動に `orca` が要る、ウィンドウの大きさ、キーボードショートカットの衝突、通知\n- 包むなら何で包むか。**候補と軸は T-057 の `docs/research/app-shell.md` から取り、Electron / Tauri の2択に絞らない**（素のブラウザのアプリモード・WKWebView・現状維持も候補）。決め手は「外部依存を増やす承認」（`CLAUDE.md`）と、ユーザーの手元の toolchain、そして1で挙げた困りごとが実際に解けるか\n- 包んだあとも Orca のタブで開ける経路を残すか（残すと `showView` の抽象がそのまま活きる）\n\n## やること\n\n1. ユーザーに使った感想を聞き、困りごとを列挙する\n2. 困りごとが無ければ「Orca のタブのまま」で閉じ、`docs/requirements.md` 7章の未決事項から外す\n3. 包むなら、T-057 の比較表から1つ選び、選んだ理由と実装の手順を `develop/direction.md` に書いてタスク化する（このタスクでは実装しない）\n\n## 完了条件\n\n- 判断とその根拠（ユーザーの感想の要約）が `evidence` と `docs/requirements.md` 7章に書かれていること\n- 包むと決めた場合、`docs/research/app-shell.md` のどの軸が決め手になったかが `evidence` に書かれていること\n- `bun run check` が通ること\n\n## 注意\n\n- **ユーザーへの確認が要る。** サブエージェントに委譲せず、`/loop` に載せない\n- 外部依存（Electron / Tauri / cargo）を増やすときはユーザーの承認を得る\n- **完了条件がユーザーの使ってみた感想そのもの**なので `loopable` は `\"N\"`",
+    "summary": "箱の方針（当面 Orca、載せ替えられる形を保つ）を正典に落とす",
+    "task": "## 背景\n\nユーザー決定 Q4 で「箱は当面 Orca のブラウザタブ。最終形は使い勝手が上がるならスタンドアロンのアプリ」と決めていた。**2026-09-16 に方針を受け取った**（`docs/history/direction.md` 同日）:\n\n> Orca で進めつつ、他の技術に適用することもあるからドメイン（tsukumo の核）が特定の技術（orca など）に依存しないようにする\n\nこれは元の依頼文が想定していた2つの分岐（困りごとが無ければ閉じる／包むなら候補を選ぶ）の**どちらでもない第3の答え**で、「当面 Orca、ただし載せ替えられる形を保つことを条件にする」という意味。包む/包まないの決着ではないので、`docs/requirements.md` 7章の未決事項の行は**消さずに書き換える**。\n\n**受け取り側で実測した現状**（2026-09-16、`grep -rn 'orca' src`）: **核は既に汚れていない。** `src/` で `orca` が出るのはアダプタ（`src/core/orca-host.ts`）と配線（`src/cli.ts` の `createOrcaHost` の import と呼び出し）とコメントだけで、`protocol` にも `ui` にも1件も無い。ポート `src/core/host.ts` の操作は `showView` 1つで、Orca の語彙（タブ、`--direction`）はインターフェースに漏れていない。**方針は既存の原則3（`docs/architecture.md`）と同じ向き**なので、このタスクは構造を変えるものではなく、正典の文言を方針に合わせるもの。\n\n箱の比較表は `docs/research/app-shell.md`（2026-09-16 に候補6 Electrobun を追記し、ツールチェーンを再実測した）。\n\n## 解くべき論点\n\n- `docs/requirements.md` 7章「Electron などのスタンドアロンに移るか」の行をどう書き換えるか。**消して閉じるのではなく条件付きの保留**として残し、**何が満たされたら再検討するのか**を1行で書く\n- `docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」節の「アダプタは**当面 Orca の1つだけ**を作る。VS Code 用の実装は**作らない**」の扱い。同節は `codebase-design` の戒め（アダプタが1つなら仮説上のシーム）を意図的に外す理由を「ユーザーが2つ目のホストを実際に見込んでいる」としており、**今回の方針はその見込みを追認した**。「作らない」をそのまま残すのか、「2つ目を書くまでポートは `showView` 1つに保つ」のような言い方に変えるのかを決める\n- 方針の言葉（「ドメインが特定の技術に依存しない」）を正典のどの語に写すか。原則3 と `docs/glossary.md`「ホスト」に同じ趣旨が既にあるので、**新しい原則を足さず既存の記述を補強する**\n\n## やること\n\n1. `docs/requirements.md` 7章の該当行を、条件付きの保留として書き換える\n2. `docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」節の文言を方針に合わせて見直す\n3. 方針と根拠（この背景の要約と、`orca` が `src/` のどこに出るかの実測）を `evidence` に書く\n4. **新しい原則もディレクトリも足さない。** 構造側に残っている穴は T-140（検査で守る）と T-141（選ぶ口を作るか決める）が持つので、このタスクでは扱わない\n\n## 完了条件\n\n- `docs/requirements.md` 7章の「Electron などのスタンドアロンに移るか」の行が条件付きの保留として書き換わっていること（**行が消えていないこと**）\n- `docs/architecture.md` の該当節が方針と矛盾しないこと\n- 編集の前後で `grep -c '^#\\{2,3\\} ' docs/requirements.md docs/architecture.md` の見出し数が変わらないこと（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `evidence` に方針の要約と実測の結果が書かれていること\n- `bun run check` が通ること\n\n## 注意\n\n- **コードを変えない。** 正典の文言だけを直す\n- `docs/research/app-shell.md` は調査メモなので、結論（どれにするか）を書き込まない",
     "status": "todo",
     "difficulty": "opus",
-    "loopable": "N",
+    "loopable": "Y",
     "passes": false,
     "evidence": "",
     "dependencies": ["T-042", "T-043", "T-044", "T-045", "T-057"]
@@ -306,5 +306,27 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-140",
+    "summary": "orca を呼ぶのが orca-host.ts だけであることをテストで守る",
+    "task": "## 背景\n\n`docs/architecture.md` 原則3 と `src/core/orca-host.ts` の冒頭コメントは「**`orca` コマンドを呼ぶのはこのファイルだけ**」と書いているが、**これを落とす検査が無い**。`test/architecture.test.ts` が見ているのは (1) 層の辺（`protocol` / `core` / `ui` / `cli`）、(2) `protocol` が `node:` を import しないこと、(3) `ui/<領域>/` 同士の import が無いこと の3つだけ。\n\n2026-09-16 のユーザーの方針「ドメイン（tsukumo の核）が特定の技術（orca など）に依存しないようにする」（T-046）を、コメントではなくテストで守る。\n\n**いま破られてはいない**（`grep -rn 'orca' src` の結果はアダプタと `src/cli.ts` の配線とコメントだけ）ので、このタスクは現状を固定するもの。タスクをサブエージェントに委譲する運用（`CLAUDE.md`「進捗管理とHandoff」）では、**検査の無い約束は破られても気づけない**のが問題。\n\n## 解くべき論点\n\n- **何を落とすか。** `\"orca\"` の文字列リテラルか、`createOrcaHost` の import か、その両方か。`src/cli.ts` は配線層なので `createOrcaHost` を import してよい（`ALLOWED_IMPORTS` で `cli → core` は許されている）。落としたいのは「アダプタ以外が `orca` コマンドを起こすこと」\n- `scripts/open-views.ts` も `createOrcaHost()` を直接呼ぶが、`scripts/` は本体から呼ばれない道具で `test/architecture.test.ts` の対象外（`SRC_ROOT` が `src/` を指している）。対象を広げるかどうか\n\n## やること\n\n1. `test/architecture.test.ts` に検査を1つ足し、`src/` の中で `orca` コマンドを起こす記述が `src/core/orca-host.ts` 以外に無いことを落とす\n2. **検査が効くことを確かめる。** 別のファイルに一時的に `execFile(\"orca\", …)` を書いて落ちること、書き戻して通ることを見る。**確認のための変更はコミットしない**\n3. `src/core/orca-host.ts` の冒頭コメントに「テストで守られている」ことが分かる1文を足すかを判断する（足さなくてもよい）\n\n## 完了条件\n\n- `test/architecture.test.ts` の `it` が1つ増え、`bun run check` が通ること\n- 手順2の確認（わざと破ると落ちる・戻すと通る）の結果が `evidence` に書かれていること\n- `src/` の**コードを変えないこと**（テストと、必要ならコメントだけ）\n\n## 注意\n\n- **外部ツールを増やさない。** `test/architecture.test.ts` の冒頭が「ここは正規表現と `node:fs` だけで、外部ツールは増やさない」と明記している\n- `docs/research/architecture-proposal.md` の段1は、同じ仕組みで SDK・`node:child_process`・`process.env`・`document`・経路名の限定もまとめて足す案になっている。**段1を先にやるなら、この検査はその中に含めてよい**（その場合はこのタスクを段1の一部として閉じ、その旨を `evidence` に書く）",
+    "status": "todo",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "passes": false,
+    "evidence": "",
+    "dependencies": []
+  },
+  {
+    "id": "T-141",
+    "summary": "ホストを選ぶ口を作るかを決める（いまは cli.ts に直書き）",
+    "task": "## 背景\n\n2026-09-16 の方針（T-046）「他の技術に適用することもあるから、ドメインが特定の技術に依存しないようにする」を受けて、**ホストを選ぶ口が無い**ことが残っている。`src/cli.ts` が `const host = createOrcaHost()` と直書きし、`scripts/open-views.ts` も同じく `createOrcaHost()` を直接呼ぶ。別のホスト（VS Code、Electron、素のブラウザ）のアダプタを足しても、**選ぶには `cli.ts` を編集するしかない**。\n\nポート（`src/core/host.ts`。操作は `showView` 1つ）とアダプタ（`src/core/orca-host.ts`）の分離自体はできている。足りていないのは「どのアダプタを使うか」の決め方だけ。\n\n**ただし作らない判断も十分ありうる。** `cli.ts` は配線層で、具体的な選択を置く場所として正しい（`docs/design.md` 2章）。`docs/architecture.md` は「アダプタは当面 Orca の1つだけ」と書き、`codebase-design` の「アダプタが1つならそれは仮説上のシーム」を意図的に外す理由を説明している。実装が1つしかないうちに選択の仕組みを足すのは、`docs/research/architecture-proposal.md`「やりがちな失敗」の**抽象を先に足す**に当たる。\n\n## 解くべき論点\n\n- **そもそも要るか。** 2つ目のアダプタを実際に書く見込みが近いかが決め手。近くないなら「`cli.ts` の1行を書き換える」で足りる\n- 要るとして、どの形か。候補: 環境変数（`TSUKUMO_HOST`。`src/core/config.ts` に1つ足す）、コマンド引数、`core` にファクトリ関数を置く、`Host` を外から `main` に渡す\n- `scripts/open-views.ts` も同じ口を通すか\n- **T-116（`TSUKUMO_CHARACTER` を撤去するか決める）と向きが逆にならないか。** 環境変数を減らす方向の検討が別に走っているので、環境変数案を採るなら理由を揃える\n\n## やること\n\n1. 上の論点を検討し、**作る/作らないを決める**\n2. **作らないと決めたら、実装せずに理由を `evidence` に書いて閉じる。** そのうえで `docs/architecture.md` の該当節に「選択は `cli.ts` の1行。2つ目のアダプタを書くときに考える」という趣旨の1行を足すかを判断する\n3. 作ると決めたら、形を決めて `develop/direction.md` に実装タスクの下書きを書く（**このタスクでは実装しない**）\n\n## 完了条件\n\n- 作る/作らないの判断と根拠が `evidence` に書かれていること\n- 作ると決めた場合、選んだ形と `scripts/open-views.ts` の扱いが `evidence` に書かれていること\n- `bun run check` が通ること\n\n## 注意\n\n- **実装しない**（決めるところまで）\n- 外部依存を増やす案は出さない（ホストのアダプタを1つ足すだけで済む形に限る）",
+    "status": "todo",
+    "difficulty": "opus",
+    "loopable": "N",
+    "passes": false,
+    "evidence": "",
+    "dependencies": ["T-046"]
   }
 ]
