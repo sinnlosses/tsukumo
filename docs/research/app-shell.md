@@ -19,6 +19,10 @@
 
 **実測値は時間が経つと変わる**ので、T-046 で決めるときはその場で確認し直す。
 
+**再実測（2026-09-16）**: `cargo` / `rustc` は依然として未導入。`node` `v22.13.1`・`npm` `11.1.0`・macOS
+`26.6.2` は変わらず。`orca` は `1.4.203` に上がっている（上表の `1.4.200` から）。加えて
+`/Applications/Google Chrome.app` の存在を確認した（候補4が前提にするもの）。
+
 ## 候補ごとの比較
 
 ### 1. Orca のタブのまま（現状維持のベースライン）
@@ -83,6 +87,30 @@
 | 導入から「ウィンドウが1枚出る」までの手数 | **不明**。Xcode でプロジェクトを新規作成する手順の一次情報（Apple 公式のステップバイステップ）を、このセッションの取得ツールでは本文まで確認できなかった                                                                                                                                                                         | ―（未確認）                                                                                                                                                                 |
 | 撤退のしやすさ                            | Web アプリ側は `webView.load(URLRequest(url:))` で既存 URL を開くだけなので変更は残らないはず。撤退時は Xcode プロジェクト一式を削除すればよい                                                                                                                                                                                   | 上記 `load(_:)` の仕様から論理的に導ける                                                                                                                                    |
 
+### 6. Electrobun（2026-09-16 追記）
+
+**この候補は 2026-09-12 の調査で漏れていた**（当時の足切りは Wails / Neutralino / Photino の3つで、
+Electrobun には触れていない）。v1 が 2026-02-06 に出ており、調査時点で既に存在した。
+
+| 軸                                        | 内容                                                                                                                                                                                                                                                                                                                                                                         | 出典                                                                                                                                                   |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 追加で要るツールチェーン                  | **`hutch` という新しい外部コマンド**（「Electrobun's build and workspace CLI」）を `curl -fsSL https://hutch.blackboard.sh/hutch/install.sh \| sh` で入れ、`hutch electrobun init <name>` で作る。`bunx electrobun init` / `npx electrobun init` も動くと明記されている。Bun の明示的な導入要件は Quick Start に記載なし                                                     | https://framework.blackboard.sh/electrobun/guides/quick-start/                                                                                         |
+| Bun プロセスを子として起こせるか・同梱    | **不明**。「Bundling and distribution」に外部バイナリ（サイドカー）の同梱方法の記載が無い（Electron の `extraResources` や Tauri の `externalBin` に相当するものを見つけられなかった）。main プロセスは `src/bun/index.ts` で、ランタイムは Cottontail / Bun / Zig / Rust / Go / Odin から選べると書かれているが、**外部バイナリの同梱は別の話なので、この軸は未確認のまま** | https://framework.blackboard.sh/electrobun/guides/bundling-and-distribution/ ／ https://framework.blackboard.sh/electrobun/guides/native-main-process/ |
+| `.../layout` を開くだけで済むか           | 済む。`new BrowserWindow({ title, url, frame: { width, height } })` の `url` に文字列を渡す（既定は `null`、`views://` で同梱コンテンツも指せる）。ただし公式が「信頼できないコンテンツに特権 RPC ハンドラを繋がないこと。リモートページには `sandbox: true` を使うこと」と警告している                                                                                      | https://framework.blackboard.sh/electrobun/apis/browser-window/                                                                                        |
+| 既定で外部と通信するか                    | **自動更新は既定で無効**。`release.generatePatch` が true かつ `release.baseUrl` がある場合に生成され、アプリ側も Updater API を呼ぶ必要がある。**テレメトリの有無はドキュメントに記載なし**（不明）                                                                                                                                                                         | https://framework.blackboard.sh/electrobun/guides/bundling-and-distribution/                                                                           |
+| ウィンドウまわりでできること              | `frame` で `x` / `y` / `width` / `height`（既定 800×600、x/y 省略で中央）。常に手前は `setAlwaysOnTop(boolean)` / `isAlwaysOnTop()` がある。**サイズ記憶に相当する標準 API はドキュメントに無い**                                                                                                                                                                            | https://framework.blackboard.sh/electrobun/apis/browser-window/                                                                                        |
+| 導入から「ウィンドウが1枚出る」までの手数 | `hutch` を入れる → `hutch electrobun init <name>` → `hutch run dev`（「builds the app, launches it, and rebuilds when you edit source files」）の3手。**手元では未実行**（`hutch` を導入していない）                                                                                                                                                                         | https://framework.blackboard.sh/electrobun/guides/quick-start/                                                                                         |
+| 撤退のしやすさ                            | Web アプリ側は `url` を渡すだけなので変更は残らないはず。撤退時はプロジェクトと `hutch` を消す。**`hutch` がホームディレクトリのどこに何を置くかは未確認**                                                                                                                                                                                                                   | 上記 Quick Start の手順から論理的に導ける（`hutch` の設置場所は未確認）                                                                                |
+
+**補足（サイズと WebView）**: 既定で OS 内蔵の WebView を使い（macOS は WKWebView）、`bundleCEF` で
+Chromium を同梱する選択もできる。hello world が「about a megabyte」と説明されている。ライセンスは MIT、
+公式対応は macOS 14+ / Windows 11+ / Ubuntu 24.04+。GitHub の README では **ベータ**と位置づけられている。
+出典: https://blackboard.sh/electrobun/ ／ https://github.com/blackboardsh/electrobun
+
+**確度についての注記**: 調査中にドキュメントのドメインが `blackboard.sh/electrobun/docs/` →
+`framework.blackboard.sh/electrobun/` → 一部ページが `electrobun.dev` へ、と 301 / 302 で行き来していた。
+**一次情報の置き場所自体がまだ動いている**ので、T-046 で使うときは URL を取り直す。
+
 ### その他（足切りしたもの）
 
 Wails（[wails.io](https://wails.io/docs/introduction/)）・Neutralino.js（[neutralino.js.org](https://neutralino.js.org/)）・Photino（[tryphotino.io](https://www.tryphotino.io/)）は、いずれも macOS で動きメンテナンスも継続しているため「動かない／止まっている」による足切りではないが、**Wails は Go、Photino は .NET(C#) という、tsukumo のスタック（Bun + TypeScript）にも Tauri（Rust）にも無い新しい言語ランタイムを追加で持ち込む**ため、Neutralino.js は OS 内蔵の WebView をそのまま使い軽量な一方で **ドキュメント上でも Electron/Tauri ほどウィンドウ操作 API が整理されていない**ため、3つとも比較表には入れず名前だけ残す。
@@ -94,3 +122,26 @@ Wails（[wails.io](https://wails.io/docs/introduction/)）・Neutralino.js（[ne
 - **「URL を開くだけ」で済むかに段階がある。** Electron の `loadURL`・Tauri の `localhost` プラグイン・Chrome の `--app` はほぼそのまま開けるが、Tauri の `localhost` プラグインは公式が「かなりのセキュリティリスク」と明記している。WKWebView だけは Xcode プロジェクトを新規に組む必要があり、他の候補と手数の桁が違う。
 - **ウィンドウ操作の作り込み量が違う。** Tauri と Electron はサイズ記憶・常に手前がプラグイン／API 呼び出し1つで揃うが、WKWebView は AppKit の `NSWindow` を自分で操作する必要がある。Orca のタブのままは、そもそも独立したウィンドウにならない。
 - **撤退のしやすさの土台は共通。** どの候補も `showView` の実装だけを差し替える設計にできそうだが、後始末の重さ（Rust のツールチェーンや Xcode プロジェクト、エンタイトルメントの片付け）は候補によって違う。
+
+## 箱の仕事の大きさは、tsukumo 側の形で変わる（2026-09-16 追記）
+
+上の比較は「tsukumo の Bun プロセスが今の形のまま動く」ことを前提にしている。**その前提は
+tsukumo 側の選択で動く**ので、T-046 で読むときに効く点を書いておく。結論は書かない。
+
+- **「Bun プロセスを子として起こせるか・同梱」の軸が、そもそも成立しない組み方がある。** 現状の
+  `src/core/bundle.ts` は起動のたびに `execFile("bun", ["build", …])` を呼ぶので、実行時に `bun` と
+  `src/ui/**` の両方が要る（T-122 の依存3と依存5）。`bun build --compile` で単一の実行ファイルに
+  すればこの2つは消え、箱が抱えるのは**バイナリ1つ**になる。埋め込みは `with { type: "file" }` と
+  `Bun.embeddedFiles` で行う。出典: https://bun.com/docs/bundler/executables
+- **その形にすると、箱に残る仕事は「窓を1枚開くこと」だけになる。** 比較表の7軸のうち「Bun プロセスを
+  子として起こせるか・同梱」の重みが下がり、「ウィンドウまわりでできること」と「追加で要る
+  ツールチェーン」の重みが上がる。Chromium を同梱する候補（Electron、Electrobun の `bundleCEF`）は、
+  そのぶんの容量に見合う機能があるかで見ることになる。
+- **ただし `--compile` を採るかは `docs/coding-standards.md`「Bun固有APIに寄せない」の扱いと連動する。**
+  同規約は「退避先（Node へ移せること）を残すため」と理由を書いているが、上記のとおり
+  `bundle.ts` 経由で `bun` への実行時依存は既にある。**規約の現状と実態のずれは
+  `docs/research/architecture-proposal.md` 側の論点**で、この文書では扱わない。
+- **`docs/design.md` 1章と T-046 の依頼文で、Electron の想定が食い違っている**（前者は「core を
+  Electron の Node で動かせるので Bun は不要」、後者は「Bun のプロセスを子として起こす」）。
+  **この比較表は後者の前提で書かれている**（7軸の2つ目がそれを前提にしている）。どちらを採るかで
+  「Bun を採用できるか」の答えが変わるので、T-046 は先にこの食い違いを解く。
