@@ -1,5 +1,19 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 パックを切り替えても立ち絵が変わらないのを直した（T-132）
+
+立ち絵の URL に `?pack=<name>` を足した（`characterAssetPath` 1箇所で組み立てる）。アスナと
+tsukumo がどちらも `default.png` なので URL が一致し、`<img src>` が書き換わらず再取得が
+起きていなかった。配る側はこの値を見ない（`server.ts` が `?` 以降を落とす）ので、allowlist は
+触っていない。
+
+実機（Chrome・台本の駆動）で local → tsukumo → local → つくもの精霊 → tsukumo と行き来し、
+`<img src>` と naturalSize（246x203 ↔ 830x1254）が毎回入れ替わること、3パックの絵柄が
+実際に差し替わることを画面写真で目視した。精霊の SVG インライン経路も維持されている。
+
+この目視で退行を1件見つけて直した: `classifyPortraitFile` が `?pack=` 付きの URL で拡張子を
+見失い、立ち絵が丸ごと消えていた（`fileExtension` が `?` 以降を落とすようにした）。
+
 ### 2026-09-15 /clear のあとに前の会話が残るのを直した（T-131）
 
 **T-131 完了。** `/clear` のとき SDK が **`conversation_reset`** を流すことを実測で確かめ
