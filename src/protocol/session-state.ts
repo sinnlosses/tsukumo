@@ -333,6 +333,20 @@ export function applySessionEvent(
         turnInProgress: false,
         turnFinishedAt: at,
       }
+    case "conversation-cleared":
+      // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**（2026-09-15 決定）。
+      // 消すのは吹き出しとメインビューが読む値だけで、キャラクター・セッション情報・
+      // 答え待ちの列は残す（`pending` の正典は core の待ち行列なので、状態側で空にすると
+      // 実際の待ちと食い違う）。**普通のターンの `speeches.slice(-1)`（docs/requirements.md
+      // 4.2）はそのまま**で、空にするのはここだけ。
+      return {
+        ...state,
+        speeches: [],
+        speechExpression: INITIAL_SESSION_STATE.speechExpression,
+        speechCalledInTurn: false,
+        records: [],
+        partialUtterance: "",
+      }
     case "session-restored":
       return { ...state, restored: true }
     case "tasks-changed":

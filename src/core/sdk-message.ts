@@ -33,6 +33,8 @@ export const SPEAK_TOOL_NAME = "speak"
  * - **`tool-started` の `parentToolUseId`** は、メッセージ本体（`message.message` の外）にある
  *   `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。2026-09-11 実測）。
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
+ * - **`conversation_reset` は `/clear` の合図**（2026-09-15 実測）。tsukumo は `/clear` という
+ *   文字列を見ず、本体が会話を捨てたことをこのメッセージで知る
  * - 知らない `type`・壊れた形は空の並びを返す（落ちない）
  */
 export function toSessionEvents(
@@ -63,6 +65,9 @@ export function toSessionEvents(
       return toolResultEvents(message.message)
     case "result":
       return [{ kind: "turn-finished", status: turnStatus(message.subtype) }]
+    case "conversation_reset":
+      // `/clear` で本体が会話を捨てたとき（2026-09-15 実測）。**`/compact` では届かない。**
+      return [{ kind: "conversation-cleared" }]
     default:
       return []
   }

@@ -98,6 +98,16 @@ export type SessionEvent =
   /** 答え待ちの列が変わった（積まれた・解決した）。中身は src/protocol/pending-ask.ts が持つ。 */
   | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
   | { readonly kind: "turn-finished"; readonly status: TurnStatus }
+  /**
+   * `/clear` で会話が消された（SDK の `conversation_reset`。2026-09-15 実測）。**tsukumo は
+   * `/clear` という文字列を見ていない。** `/` コマンドは依頼の文面としてそのまま本体へ渡り、
+   * 本体が会話を捨てたときにこのメッセージを流してくる（`new_conversation_id` 付き。直後に
+   * 新しい `session_id` の `system/init` が届く）。
+   *
+   * **`/compact` では流れない**（同じ実測で `system/status` + 同じ `session_id` の `init` だけ
+   * だった）。要約は会話を消さないので、ここで拾う必要も無い。
+   */
+  | { readonly kind: "conversation-cleared" }
   /** `query()` の反復が終わった（正常終了・例外のどちらも）。プロセスは落とさない。 */
   | { readonly kind: "session-ended"; readonly reason: string }
   /**

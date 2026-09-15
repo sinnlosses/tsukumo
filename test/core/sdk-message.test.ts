@@ -256,6 +256,28 @@ describe("toSessionEvents", () => {
     ])
   })
 
+  it("conversation_reset を conversation-cleared にする（/clear の合図。2026-09-15 実測）", () => {
+    const message = {
+      type: "conversation_reset",
+      new_conversation_id: "conversation-dummy",
+      uuid: "uuid-dummy",
+      session_id: "session-dummy",
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([{ kind: "conversation-cleared" }])
+  })
+
+  it("/compact で届くもの（system の status）からは何も起こさない（会話は消えていない）", () => {
+    const status = {
+      type: "system",
+      subtype: "status",
+      status: "compacting",
+      session_id: "session-dummy",
+    }
+
+    expect(toSessionEvents(status, EXPRESSIONS)).toEqual([])
+  })
+
   it("init 以外の system は無視する", () => {
     expect(toSessionEvents({ type: "system", subtype: "compact_boundary" }, EXPRESSIONS)).toEqual(
       [],

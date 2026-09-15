@@ -529,6 +529,53 @@ describe("applySessionEvent", () => {
     expect(result.lastToolFailureAt).toBeUndefined()
   })
 
+  it("conversation-cleared で吹き出しと記録を空にする（/clear。キャラクターとセッション情報は残す）", () => {
+    const before = apply(
+      CHARACTER_WITH_MARKER,
+      {
+        kind: "session-info",
+        sessionId: "session-dummy",
+        model: "claude-opus-5",
+        permissionMode: "auto",
+        slashCommands: ["clear"],
+        terminalSlashCommands: [],
+      },
+      { kind: "request", text: "架空の依頼" },
+      { kind: "speech", text: "架空のセリフ", expression: "proud" },
+      { kind: "utterance", text: "架空のレポート" },
+      { kind: "request", text: "/clear" },
+    )
+    expect(before.speeches).toEqual(["架空のセリフ"])
+    expect(before.records.length).toBeGreaterThan(0)
+
+    const cleared = applySessionEvent(before, { kind: "conversation-cleared" }, 0)
+
+    expect(cleared.speeches).toEqual([])
+    expect(cleared.speechExpression).toBe("default")
+    expect(cleared.speechCalledInTurn).toBe(false)
+    expect(cleared.records).toEqual([])
+    expect(cleared.partialUtterance).toBe("")
+    // 画面が壊れないように、キャラクターとセッション情報は残す。
+    expect(cleared.character).toEqual(before.character)
+    expect(cleared.characterPacks).toEqual(before.characterPacks)
+    expect(cleared.sessionId).toBe("session-dummy")
+    expect(cleared.model).toBe("claude-opus-5")
+    expect(cleared.permissionMode).toBe("auto")
+    expect(cleared.slashCommands).toEqual(["clear"])
+  })
+
+  it("普通のターン（request）では前のターンの最後の1件を残す（空にするのは /clear だけ）", () => {
+    const before = apply(
+      { kind: "request", text: "架空の依頼" },
+      { kind: "speech", text: "架空のセリフ1", expression: "default" },
+      { kind: "speech", text: "架空のセリフ2", expression: "default" },
+      { kind: "request", text: "次の架空の依頼" },
+    )
+
+    expect(before.speeches).toEqual(["架空のセリフ2"])
+    expect(before.records.length).toBeGreaterThan(0)
+  })
+
   it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは undefined", () => {
     expect(INITIAL_SESSION_STATE.tasks).toBeUndefined()
 
