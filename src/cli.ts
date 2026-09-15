@@ -42,7 +42,9 @@ import {
 } from "./core/session-driver.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { watchTaskSummary } from "./core/task-summary.ts"
+import { watchUiSource } from "./core/ui-rebuild.ts"
 import { type ExpressionChoice, expressionChoices } from "./protocol/character.ts"
+import { type RefreshTarget, type ServerFrame } from "./protocol/frame.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
 
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
@@ -67,6 +69,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず台本を流す）
   TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす
                       （この起動の間は、切り替えた先のキャラクターも新規から始まる）
+  TSUKUMO_WATCH_UI    1 を渡すと src/ui/ を見張り、保存のたびに組み立て直して開いているタブへ
+                      取り直しを押す（tsukumo 自身を直しながら動かすとき用。既定は見張らない。
+                      src/core/ と src/protocol/ を直したときは上げ直しが要る）
 `
 
 /**
@@ -103,6 +108,9 @@ async function main(args: readonly string[]): Promise<number> {
     process.stderr.write("tsukumo: ブラウザ側スクリプトを組み立てられない\n")
     return 1
   }
+  // 組み立てたものの持ち主はここ（ディスクに置かない）。**`TSUKUMO_WATCH_UI` のときだけ
+  // 組み立て直したものへ丸ごと差し替わる**ので、サーバには取り出し口だけを渡す。
+  let viewAssets = { uiScript, styleSheet }
 
   // 偽の駆動を選んだときは台本が要る。無ければ起こす意味が無いので、起動時の前提不足として扱う。
   const fakeScript = config.driver === "fake" ? readFakeScript() : undefined
@@ -141,8 +149,10 @@ async function main(args: readonly string[]): Promise<number> {
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
-    startViewServer(port, uiScript, styleSheet, (fileName) =>
-      readCharacterPackFile(characterPack, fileName),
+    startViewServer(
+      port,
+      { uiScript: () => viewAssets.uiScript, styleSheet: () => viewAssets.styleSheet },
+      (fileName) => readCharacterPackFile(characterPack, fileName),
     ),
   )
   if (!startResult.ok) {
@@ -208,15 +218,37 @@ async function main(args: readonly string[]): Promise<number> {
     },
   })
 
+  // 開いているタブ。**セッションのイベントとは別に押したいもの**（いまは `refresh` だけ）が
+  // あるので、購読を manager に渡すついでにここでも持つ。
+  const viewers = new Set<(frame: ServerFrame) => void>()
+
   // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
   const token = createStartupToken()
   attachSessionSocket({
     httpServer: server.httpServer,
     token,
     origin: new URL(server.layoutUrl).origin,
-    subscribe: (send) => manager.subscribe(sessionId, send),
+    subscribe: (send) => {
+      viewers.add(send)
+      const unsubscribe = manager.subscribe(sessionId, send)
+      return () => {
+        viewers.delete(send)
+        unsubscribe()
+      }
+    },
     dispatch: (command) => manager.dispatch(sessionId, command),
   })
+
+  if (config.watchUi) {
+    watchUiSource({
+      onRebuilt: (rebuilt) => {
+        viewAssets = { uiScript: rebuilt.uiScript, styleSheet: rebuilt.styleSheet }
+        pushRefresh(viewers, rebuilt.target)
+      },
+      // 組み立て直せなくても前の版が配られたままなので、知らせるだけで続ける。
+      onFailure: (reason) => process.stderr.write(`tsukumo: ${reason}\n`),
+    })
+  }
 
   const viewUrl = `${server.layoutUrl}?t=${token}`
   stopSessionOnExit(manager.close)
@@ -227,6 +259,19 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   return 0
+}
+
+/**
+ * 開いているタブに取り直しを押す。**セッションの状態は動かない**ので `session-manager` を
+ * 通さない（docs/design.md 11章）。
+ */
+function pushRefresh(
+  viewers: ReadonlySet<(frame: ServerFrame) => void>,
+  target: RefreshTarget,
+): void {
+  for (const send of viewers) {
+    send({ type: "refresh", target })
+  }
 }
 
 /** 駆動を起こすときに要るもの。偽の駆動を選んだときだけ `script` が入る。 */

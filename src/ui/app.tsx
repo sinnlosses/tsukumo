@@ -23,6 +23,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../protocol/session-state.ts"
+import { applyRefresh } from "./refresh.ts"
 import { connectSessionSocket, type ConnectionStatus } from "./socket.ts"
 
 /**
@@ -68,6 +69,7 @@ function applyFrame(state: SessionState, frame: ServerFrame): SessionState {
     )
   }
   // "error" は commandId の突き合わせだけに使う（8章以降）。段3の時点では状態を変えない。
+  // "refresh" はここまで来ない（状態を動かさないので、下の `onFrame` が手前で捌く）。
   return state
 }
 
@@ -82,7 +84,15 @@ export function App(props: AppProps): ReactElement {
 
   useEffect(() => {
     const socket = connectSessionSocket({
-      onFrame: (frame) => applyOne(frame),
+      // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く
+      // （開発中だけ届く。docs/design.md 11章）。
+      onFrame: (frame) => {
+        if (frame.type === "refresh") {
+          applyRefresh(frame.target)
+          return
+        }
+        applyOne(frame)
+      },
       onStatusChange: setConnection,
     })
     socketRef.current = socket

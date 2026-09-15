@@ -185,7 +185,7 @@ export const LAYOUT_PATH = "/"
 
 /**
  * **自前のブラウザ側スクリプト**（`src/ui/` を `bun build` でまとめたもの）と CSS を配る経路。
- * ディスクには置かず起動時にメモリへ持つ（`src/core/bundle.ts`）。
+ * ディスクには置かずメモリに持つ（`src/core/bundle.ts`）。
  */
 const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
@@ -196,6 +196,16 @@ function uiScriptPath(): string {
 }
 function styleSheetPath(): string {
   return `${ASSET_PATH_PREFIX}${STYLE_SHEET_NAME}`
+}
+
+/**
+ * ブラウザに配る2つの成果物の取り出し口。**値ではなく関数**なのは、開発中に組み立て直したものへ
+ * 差し替わるため（`src/core/ui-rebuild.ts`）。呼ぶたびに今の版を返す契約で、サーバはどちらが
+ * 今の版かを自分では持たない。
+ */
+export type ViewAssets = {
+  readonly uiScript: () => string
+  readonly styleSheet: () => string
 }
 
 /** `/character/<file>` を1件配るために要るもの。中身は core（`character-pack.ts`）が決める。 */
@@ -231,13 +241,11 @@ export type ViewServer = {
 export function startViewServer(
   port: number,
   /**
-   * ブラウザ側スクリプトの中身（`src/ui/` を `bun build` でまとめたもの）。**起動時に1回
-   * 組み立てて渡す**（`src/core/bundle.ts` の `buildUiScript`）。ディスクには置かないので、
-   * ここが唯一の持ち主になる。
+   * ブラウザ側スクリプトと CSS の取り出し口（`src/core/bundle.ts` が組み立てたもの）。
+   * ディスクには置かないので、**持ち主は呼び出し側 = `src/cli.ts`** で、ここは要求のたびに
+   * 引きに行く。
    */
-  uiScript: string,
-  /** CSS の中身（`src/ui/style/main.css` を `bun build` でまとめたもの）。同じく起動時に1回。 */
-  styleSheet: string,
+  assets: ViewAssets,
   /**
    * `/character/<file>` の1件を配ってよい形にする（`src/core/character-pack.ts` の
    * `readCharacterPackFile` を束ねたもの。呼び出し側 = `src/cli.ts` が渡す）。
@@ -246,7 +254,7 @@ export function startViewServer(
 ): Promise<ViewServer> {
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, uiScript, styleSheet, serveCharacterAsset)
+    respond(request, path, response, assets, serveCharacterAsset)
   })
 
   return new Promise((resolve, reject) => {
@@ -282,8 +290,7 @@ function respond(
   request: IncomingMessage,
   path: string,
   response: ServerResponse,
-  uiScript: string,
-  styleSheet: string,
+  assets: ViewAssets,
   serveCharacterAsset: ServeCharacterAsset,
 ): void {
   if (path === LAYOUT_PATH) {
@@ -292,13 +299,13 @@ function respond(
   }
 
   if (path === uiScriptPath() && request.method === "GET") {
-    // 起動時に組み立てたブラウザ側スクリプト（`src/ui/`）。**ディスクには無い**ので、
-    // vendor と違ってファイルを読みに行かない。
+    // 組み立てたブラウザ側スクリプト（`src/ui/`）。**ディスクには無い**ので、vendor と違って
+    // ファイルを読みに行かない。
     response.writeHead(200, {
       "content-type": "text/javascript; charset=utf-8",
       "cache-control": "no-store",
     })
-    response.end(uiScript)
+    response.end(assets.uiScript())
     return
   }
 
@@ -307,7 +314,7 @@ function respond(
       "content-type": "text/css; charset=utf-8",
       "cache-control": "no-store",
     })
-    response.end(styleSheet)
+    response.end(assets.styleSheet())
     return
   }
 

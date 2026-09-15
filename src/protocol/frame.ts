@@ -21,11 +21,19 @@ import { type SessionState } from "./session-state.ts"
 export const PROTOCOL_VERSION = 1
 
 /**
+ * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
+ * 文面も残る**）、`page` はページごと読み込み直す。
+ */
+export type RefreshTarget = "page" | "style"
+
+/**
  * サーバ → ブラウザのフレーム。
  *
  * - `hello`: 接続ごとに1回。`state` は**サーバ側の畳み込みが持っている今の姿**
  * - `events`: 起きたイベントをまとめたもの（`src/core/session-manager.ts` が間引く）
  * - `error`: コマンドを受け付けられなかった。`reason` は定型文（{@link FRAME_ERROR_REASON}）
+ * - `refresh`: 配っているものを組み立て直したので取り直せ。**セッションとは無関係**で、
+ *   `src/ui/` を見張っている開発中だけ届く（docs/design.md 11章）。会話の内容は乗らない
  */
 export type ServerFrame =
   | {
@@ -36,6 +44,7 @@ export type ServerFrame =
     }
   | { readonly type: "events"; readonly events: readonly StampedEvent[] }
   | { readonly type: "error"; readonly commandId: string | undefined; readonly reason: string }
+  | { readonly type: "refresh"; readonly target: RefreshTarget }
 
 /**
  * コマンドを受け付けられなかったときの理由。**定型文だけ**を並べ、依頼の文面や届いた値を
@@ -65,6 +74,7 @@ export const serverFrameSchema = z.discriminatedUnion("type", [
     commandId: z.string().optional(),
     reason: z.string(),
   }),
+  z.object({ type: z.literal("refresh"), target: z.enum(["page", "style"]) }),
 ])
 
 /**

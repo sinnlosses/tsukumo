@@ -44,6 +44,17 @@ describe("parseServerFrame（受け付ける形）", () => {
       reason: "依頼の形式が正しくない",
     })
   })
+
+  it("refresh を受け付ける（取り直す先は page と style の2つだけ）", () => {
+    expect(parseServerFrame({ type: "refresh", target: "page" })).toEqual({
+      type: "refresh",
+      target: "page",
+    })
+    expect(parseServerFrame({ type: "refresh", target: "style" })).toEqual({
+      type: "refresh",
+      target: "style",
+    })
+  })
 })
 
 describe("parseServerFrame（落とす形）", () => {
@@ -56,6 +67,7 @@ describe("parseServerFrame（落とす形）", () => {
       parseServerFrame({ type: "hello", protocolVersion: "1", sessionId: "s-1", state: {} }),
     ).toBeUndefined()
     expect(parseServerFrame({ type: "events", events: [{ at: 1 }] })).toBeUndefined()
+    expect(parseServerFrame({ type: "refresh", target: "everything" })).toBeUndefined()
     expect(parseServerFrame(null)).toBeUndefined()
   })
 })

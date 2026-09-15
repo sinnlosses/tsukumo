@@ -8,7 +8,10 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../src/core/port-resolution.ts"
-import { startViewServer, type ViewServer } from "../../src/core/server.ts"
+import { startViewServer, type ViewAssets, type ViewServer } from "../../src/core/server.ts"
+
+/** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
+const emptyViewAssets: ViewAssets = { uiScript: () => "", styleSheet: () => "" }
 
 /** `node:http` の `listen` が投げるエラーに似せた、`code` 付きのエラーを作る。 */
 function errnoError(code: string): NodeJS.ErrnoException {
@@ -133,7 +136,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "default", port: blockedPort }, (port) =>
-        startViewServer(port, "", "", () => undefined),
+        startViewServer(port, emptyViewAssets, () => undefined),
       )
 
       expect(result.ok).toBe(true)
@@ -154,7 +157,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "explicit", port: blockedPort }, (port) =>
-        startViewServer(port, "", "", () => undefined),
+        startViewServer(port, emptyViewAssets, () => undefined),
       )
 
       expect(result.ok).toBe(false)

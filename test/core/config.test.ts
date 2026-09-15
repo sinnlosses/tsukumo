@@ -10,6 +10,7 @@ describe("readConfig", () => {
       openView: true,
       driver: "sdk",
       newSession: false,
+      watchUi: false,
     })
   })
 
@@ -21,6 +22,7 @@ describe("readConfig", () => {
         TSUKUMO_OPEN_VIEW: "0",
         TSUKUMO_DRIVER: "fake",
         TSUKUMO_NEW_SESSION: "1",
+        TSUKUMO_WATCH_UI: "1",
       }),
     ).toEqual({
       rawViewPort: "7398",
@@ -28,6 +30,7 @@ describe("readConfig", () => {
       openView: false,
       driver: "fake",
       newSession: true,
+      watchUi: true,
     })
   })
 

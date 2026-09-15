@@ -268,6 +268,7 @@ type ServerFrame =
   | { type: "hello"; protocolVersion: number; sessionId: string; state: SessionState }
   | { type: "events"; events: StampedEvent[] }
   | { type: "error"; commandId: string | undefined; reason: string }
+  | { type: "refresh"; target: "page" | "style" }
 ```
 
 - `hello` は接続ごとに1回。**snapshot はサーバ側の reducer が持っている `SessionState`**
@@ -275,6 +276,8 @@ type ServerFrame =
 - `protocolVersion` が ui の `PROTOCOL_VERSION` と違えば、ui は「ページを読み込み直してください」を
   出して以降のフレームを無視する（起こし直したプロセスと古いタブの組み合わせで起きる）
 - `error` の `reason` は定型文（`"依頼の形式が正しくない"` など）。会話の内容を含めない
+- `refresh` は**セッションとは無関係**で、`src/ui/` を見張っている開発中だけ届く（11章）。
+  `style` は CSS だけ取り直す、`page` はページごと読み込み直す。会話の内容は乗らない
 
 ### 4.5 版と互換
 
@@ -338,7 +341,7 @@ type SessionHost = {
 | 経路                           | 中身                                                                                                               | トークン |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------ | -------- |
 | `GET /`                        | ページ（`<div id="app">` と `<script src="/assets/ui.js">` と `<link href="/assets/ui.css">`。**本文は入れない**） | 不要     |
-| `GET /assets/ui.js` / `ui.css` | 起動時に束ねたもの（メモリ）                                                                                       | 不要     |
+| `GET /assets/ui.js` / `ui.css` | 束ねたもの（メモリ。11章の見張りで差し替わる）                                                                     | 不要     |
 | `GET /vendor/<name>`           | allowlist の対応表にある同梱物だけ（いまのまま）                                                                   | 不要     |
 | `GET /character/<file>`        | いまのパックの素材。**`character.json` に書かれたファイル名だけ**を配る（パスから組み立てない）                    | 不要     |
 | `GET /ws?t=<token>`            | WebSocket。Origin とトークンを確かめてから upgrade                                                                 | **必要** |
@@ -354,6 +357,7 @@ type SessionHost = {
 | `TSUKUMO_OPEN_VIEW`   | いまのまま                                        | 開く             |
 | `TSUKUMO_DRIVER`      | `sdk` / `fake`                                    | `sdk`            |
 | `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）         | 復元する         |
+| `TSUKUMO_WATCH_UI`    | `1` で `src/ui/` を見張って組み立て直す（11章）   | 見張らない       |
 
 `TSUKUMO_CHARACTER_DIR` は `TSUKUMO_CHARACTER` に統合する（ディレクトリの指定は絶対パスで足りる）。
 
@@ -616,7 +620,43 @@ API を使わない形になる。
 - `bundle.ts` は `bun build src/ui/main.tsx --target=browser` と `bun build src/ui/style/main.css`
   を起動時に起こす（いまと同じ形。JSX は tsconfig の `"jsx": "react-jsx"` で自動）
 - tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は `@types/bun` が持っているのでそのまま
-- HMR は持たない（欲しくなったら Vite を**開発時だけ**足す。配る経路は変えない）
+- **HMR（差分を当てる）は持たない。** 代わりに、**`src/ui/` を見張って組み立て直し、開いている
+  タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。**Vite は足していない**し、
+  `Bun.serve` の HMR も `Bun.build()` も使わない（「Bun固有APIに寄せない」規約のまま）
+
+**作り直しを押す仕組み。** `src/core/ui-rebuild.ts` が `node:fs` の `watch` で `src/ui/` を**再帰に**見張り、保存が静まって
+から（120ms）`bundle.ts` の `buildUiScript` / `buildStyleSheet` を呼び直す。組み上がったものは
+`src/cli.ts` が持ち替え、`protocol` の `refresh` フレーム（4.4）で開いているタブへ押す。
+**差分は当てない**（当てた時点で HMR そのものになり、規模が跳ねる）。成果物は前と同じくメモリに
+だけ持つ。
+
+**救えるのはブラウザに配る側だけ**で、`src/` を直すたびに上げ直さずに済むわけではない:
+
+| 直した場所                  | どうなるか                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `src/ui/**/*.css`           | CSS だけ取り直す（`refresh` の `style`）。**ターンの選択も入力欄の書きかけも残る** |
+| `src/ui/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る       |
+| `src/protocol/`             | **プロセスの上げ直しが要る**（下）                                                 |
+| `src/core/` `src/cli.ts`    | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある       |
+
+`src/protocol/` を見張らないのは、**畳み込み（`session-state.ts`）がサーバ側でも回っている**から。
+ブラウザ側だけ新しくすると、新旧が食い違ったまま動く状態ができる。片方だけ救うより
+「`src/ui/` だけが救える」という1本の線のほうが信用できる。
+
+割り切ってよいと判断した根拠は、直近30コミットで `src/` の各層が触られた回数（2026-09-16 の実測）:
+`src/ui/**` が 112回で**全体の52%**、`src/protocol/**` が 49回、`src/core/**` が 43回、
+`src/cli.ts` が 11回。手を入れる場所の半分が上げ直し無しで済む。
+
+**見張るのは `TSUKUMO_WATCH_UI=1` のときだけ**（既定は見張らない）。`tsukumo` は `bun link` で
+リポジトリを指していて**普段使いと開発が同じ経路**なので、常に入れると仕事中の保存でページが
+読み込み直されうる（入力欄の書きかけが消える）。tsukumo 自身を直しながら動かすときだけ
+`TSUKUMO_WATCH_UI=1 bun run start` で入れる。
+
+**組み立て直しが失敗したときは、前の版を配り続ける。** `onRebuilt` を呼ばず `refresh` も押さない
+ので、ブラウザは何も起きていないように見える。理由の1行だけがペインに出る（常駐プロセスは
+描画1回の失敗で落ちない、の側）。なお `bun build` はトランスパイルだけで**型を見ない**ので、
+型エラーだけのコードは組み上がってそのまま配られる。組み立てが失敗するのは構文が壊れているとき・
+import 先が解けないとき（＝書きかけを保存したとき）。
 
 **足す依存**（`CLAUDE.md`「外部依存を増やすときは承認を得る」。**2026-09-13 に「移行しようか」の
 決定で一括して承認済み**。ここに無いものを足すときは改めて承認を得る）:

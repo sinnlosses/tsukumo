@@ -268,7 +268,11 @@ async function startView(
     fileName: string,
   ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
 ): Promise<ViewServer> {
-  const server = await startViewServer(0, TEST_UI_SCRIPT, TEST_STYLE_SHEET, serveCharacterAsset)
+  const server = await startViewServer(
+    0,
+    { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
+    serveCharacterAsset,
+  )
   runningView = server
   return server
 }
