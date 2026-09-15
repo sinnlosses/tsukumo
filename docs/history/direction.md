@@ -3,6 +3,16 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-15 作業中のコマンドをメイン画面に出さない
+
+- 生成したタスク: T-133（ツールの行をレポートから消し、「レポートだけを出す」に戻す）
+- タスクにしなかった項目: なし（`docs/requirements.md` 4.2 が予告していた差し戻しそのものだと確認した）
+
+- 作業中のコマンドはメイン画面に出さなくていいのでルールで塞いでほしい(以下は例)
+  - Agent: Implement T-113 turn window
+  - Edit: /Users/sinnlos/ghq/github.com/sinnlosses/tsukumo/src/protocol/main-view.ts
+  - Edit: /Users/sinnlos/ghq/github.com/sinnlosses/tsukumo/test/protocol/main-view.test.ts
+
 ## 2026-09-15 detail の不具合、前置き、補完キー、サイドバー、Fable、clear、立ち絵
 
 - 生成したタスク: T-126（detail が割れる）、T-127（前置きを出さないか決める）、T-128（Ctrl+P / Ctrl+N）、T-129（タスク一覧の再デザイン）、T-130（Fable）、T-131（clear でセリフが残る）、T-132（立ち絵が切り替わらない）
