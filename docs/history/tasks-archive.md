@@ -6174,3 +6174,771 @@ T-099 の実装を見たうえでユーザーが暫定で認めた（「一旦�
 - 論点1・2はユーザーが決めるため `loopable` は `"N"`
 
 ---
+
+## T-113
+
+**タスク**: MAX_MAIN_VIEW_TURNS を 3 から 5 に増やし、タブと文面を揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+MAX_MAIN_VIEW_TURNS を 3→5（src/protocol/main-view.ts。由来のコメントも「もとは5、2026-09-10 に3へ、2026-09-14 の指示で5へ戻した」に差し替え）。MAX_SESSION_STATE_TURNS(20) と MAX_MAIN_VIEW_ENTRIES(40) は未変更。テストは定数基準で組み立てる形に直し、turn-speech.test.ts のハードコード（5件・[2,3,4]）も同時に直した。実機（偽の駆動、HOME=/tmp、ポート 7399。常駐の 7327 は触っていない）: 6ターン流してタブが 今回/1つ前/2つ前/3つ前/4つ前 の5枚になり、「4つ前」を選ぶとそのターンの内容に切り替わった。**タブ帯は折り返さない**（高さ 39px、1400px と 760px の両方）。依頼の見出しの上端 68px に対し領域の上端 16px でレポートの先頭は読める。残存 grep は src/protocol/main-view.ts の歴史的引用1件のみ（docs/history と docs/research は当時の記録なので直さない）。節数は requirements 26→26、design 50→50。bun run check 452 pass / 0 fail（増減なし）。
+
+## 背景
+
+メインビューが持つやり取り（ターン）の数は `src/protocol/main-view.ts:13` の
+`MAX_MAIN_VIEW_TURNS = 3` で決まっている。`mainViewTurns()` が `slice(-MAX_MAIN_VIEW_TURNS)` で
+直近3件に絞り、`src/ui/main-view/main-view.tsx` がそれを新しい順に並べ、
+`src/ui/main-view/turn-tabs.tsx` が `今回` / `1つ前` / `2つ前` のタブにする。
+
+**この 3 はユーザーが一度 5 から下げた値**（`docs/history/tasks-archive.md`「上限は5→3やり取り
+（今回・1つ前・2つ前）にユーザー指定で変更」、2026-09-10「2つ前までで良さそう」）。
+今回の指示はそれを 5 へ戻すもの。
+
+保持側には余裕がある。`src/protocol/session-state.ts:29` の `MAX_SESSION_STATE_TURNS = 20` が
+常駐プロセスの持ち分で、メインビューのタブはそこからさらに絞る関係（同 26 行のコメント）。
+1ターンあたりの記録の上限 `MAX_MAIN_VIEW_ENTRIES = 40`（同ファイル 17 行）はターン単位なので
+この変更では動かない。
+
+## 解くべき論点
+
+- タブのラベルは `turnTabLabel()` が `${index}つ前` を組み立てるので `4つ前` まで自動で伸びる。
+  **5枚並んだときに `.turn-tabs`（`flex-wrap: wrap`、`position: sticky`）が2行に折り返して
+  レポートを押し下げないか**を実物で見る。折り返すこと自体は許容してよいか、狭い画面で
+  どう見えるかを判断する
+
+## やること
+
+1. `MAX_MAIN_VIEW_TURNS` を 5 にする。**値の由来を書いたコメント**（いまは「ユーザーの指定
+   （2026-09-10「2つ前までで良さそう」）」）も 2026-09-14 の指示に合わせて差し替える
+2. `test/protocol/main-view.test.ts:42` は定数を参照しているので通るが、**5件で絞りが効くことを
+   確かめるテストになっているか**を確認する（ターンを6件以上流して5件に絞られること）
+3. 文面を実装に合わせる。少なくとも次の4箇所に「今回・1つ前・2つ前」「3ターン」が直接書かれている:
+   - `docs/requirements.md` 402行目付近（4.2「メインビュー」）
+   - `docs/design.md` 361行目付近（部品の木の `<MainView>` の行）
+   - `src/ui/main-view/turn-tabs.tsx` 冒頭のコメント
+   - `src/ui/main-view/main-view.tsx` 冒頭のコメント（「直近3件」の記述も 6 行目付近にある）
+4. 実機で 5 枚のタブを出して目視する
+
+## 完了条件
+
+- `MAX_MAIN_VIEW_TURNS` が 5 で、6ターン以上流したとき `mainViewTurns()` が 5 件を返すことを
+  テストで示す
+- `docs/requirements.md` / `docs/design.md` に「今回・1つ前・2つ前」「3ターン」の記述が
+  残っていない（`grep -rn '2つ前\|3ターン' docs src` の結果を `evidence` に書く。
+  `docs/history/` と `docs/research/` は当時の記録なので**直さない**）
+- 節の数が変わっていない（`grep -c '^#\{2,3\} ' docs/requirements.md` と
+  `grep -c '^#\{2,3\} ' docs/design.md` を前後で比較）
+- `bun run check` が通る（pass 件数を `evidence` に書く）
+- **実機の目視**: タブが5枚出ること、`4つ前` を選んで内容が切り替わること、タブが折り返しても
+  レポートの先頭が読めることを確認し、見えたものを `evidence` に書く
+
+## 注意
+
+- **タブの枚数を増やすだけで、`MAX_SESSION_STATE_TURNS`（20）と `MAX_MAIN_VIEW_ENTRIES`（40）は
+  変えない。** 前者はプロセスが持つ量、後者は1ターンの中の量で、指示の対象ではない
+- T-111（吹き出しをターンに紐づけてタブで遡る）は**同じターンの窓を使うことになる**。
+  T-111 を先に着手する場合でも、ターン数の正典は `MAX_MAIN_VIEW_TURNS` 1つに保ち、
+  吹き出し側に別の定数を作らない
+- 確認は tsukumo 自身で行える（偽の駆動＋`scripts/capture-view.ts` でタブの折り返しを実測する）。
+  `loopable` は `"Y"`（`docs/workflow.md`「`loopable` の判定」）
+
+## T-117
+
+**タスク**: 1問1答で質問を出し、入力欄の領域が縦スクロールしないようにする
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+1問1答に作り替え（`src/ui/dispatch/pending-answer.tsx`）。`index` の state で `questions[index]` を1枚だけ描き、単一選択は選んだ瞬間に次へ、最後の1問で `labels` を全問ぶんまとめて1回 dispatch する（契約 `labels[i]`＝`questions[i]` は不変）。「戻る」は進捗の行（`2問中1問目`）に同居。自由入力の死にボタン「送る」は撤去し Enter で進む形にし、単一選択では自由入力に打つと選択肢のハイライトが外れる。`bun run check` 452 pass / 0 fail（着手前 443。+9）。
+高さ: 選択肢をラベル＋説明の1行（`/` 補完の `.dispatch-suggestion-item` と同じ形、説明は省略記号で切る）にし、`.pending-answer` を `max-height: 64%` + `.question-card` だけ `overflow-y: auto` に。`.dispatch-pending-glow` の `inset: -1px` が領域の外へ 1px はみ出していたので内向きの影に変えた。
+実機（`TSUKUMO_DRIVER=fake`・ポート 7403・HOME=/tmp/tsukumo-t117-home・1400x900・既定の比率。常駐の 7327 は触っていない）: `.layout-dispatch` は scrollH 335 = clientH 335・scrollW 669 = clientW 669（着手前は 464 > 335）。質問2件でも `.question-card` は1枚、進捗は `2問中1問目`→`2問中2問目`、「戻る」で答えを保ったまま1問目へ戻る。選択肢は2件ぶんが見えて残りは箱の中でスクロール（236/147）。
+
+## 背景
+
+ユーザーの指摘（2026-09-14）「入力画面に出る質問が1問1答になってなくて、スクロールしないと
+いけないのが使いづらい印象を持ったよ」。
+
+**いまは全部の質問を1つの箱に縦に積んでいる。** `src/ui/dispatch/pending-answer.tsx` の
+`QuestionAsk` が `questions.map(...)` で `QuestionCard` を並べ、末尾に「答える」ボタンを1つ置く
+（`needsSubmitButton = questions.length > 1 || multiSelect`）。質問が2件あれば2枚、
+選択肢はそれぞれ3〜4件＋説明＋自由入力の行が付くので、箱は縦に伸び続ける。
+
+**1問でも高さが足りていない**（実測。偽の駆動の台本、1400x900 の窓、既定の比率）:
+
+| 測ったもの                               |    値 |
+| ---------------------------------------- | ----: |
+| 入力欄の領域（`.layout-dispatch`）の高さ | 335px |
+| 中身の高さ（`scrollHeight`）             | 464px |
+
+質問1件・選択肢3件でこれなので、**質問が2件あれば「答える」ボタンまで確実に届かない**。
+入力欄の領域は下段の右（既定で高さ 40%・幅 50%）で、`.layout-region` の `overflow-y: auto` が
+効いて領域ごとスクロールする。
+
+**前例がある。** `/` 補完の候補一覧は同じ問題（領域の外に出ると切られる）に当たって、
+**textarea の中に重ねて上へ伸びるポップアップ**にして回避している
+（`src/ui/style/dispatch.css` の `.dispatch-suggestions` のコメント）。
+
+## 解くべき論点
+
+1. **1問ずつ出すとき、答えたあとどう進むか。** 候補は (a) 答えると自動で次の質問へ進む /
+   (b)「次へ」を押して進む / (c) 1問目だけ出し、残りは答えるたびに差し替わる。
+   **いまは1問・単一選択のときだけ選んだ瞬間に送っている**（`selectSingle` の
+   `!needsSubmitButton` の分岐）ので、複数問のときの送信のタイミングも決め直す
+2. **いま何問目かをどう見せるか。** 「2問中1問目」のような表示を出すか。出す場所は箱の中か
+3. **戻れるようにするか。** 1問目の答えを変えたいときに戻る道を作るか。作らない場合、
+   間違えたらどうするか（`AskUserQuestion` は答えると SDK へ返るので、送信後は戻れない）
+4. **高さが足りない問題を、1問1答だけで解けるか。** 1問でも 464px 必要なのに領域は 335px
+   しかない。**選択肢の説明（`question-choice-description`）を畳む・領域の外へ重ねる
+   ポップアップにする**などを併せるかを決める。ポップアップにするなら
+   `.dispatch-suggestions` と同じ「領域の中に重ねる」手を使う
+5. **許可要求（`PermissionAsk`）は触るか。** あちらは要約1行＋ボタン2つで縦に伸びないので、
+   対象外にしてよいか
+
+## やること
+
+1. 上の論点をユーザーと決める（案を2つ以上出す）
+2. `src/ui/dispatch/pending-answer.tsx` を直す。**`answer.labels[i]` は `questions[i]` への
+   答え1つ**という契約（`src/protocol/pending-ask.ts`）は変えない。複数選択を「、」でつなぐ形も
+   変えない
+3. 高さの逃げ道を入れる場合は `src/ui/style/dispatch.css` も直す
+4. `test/ui/dispatch/` の既存のテストに合わせてケースを足す（1問ずつ出ること、全問答えると
+   まとめて送ること）
+5. 実機で目視する
+
+## 完了条件
+
+- 質問が2件のとき、**同時に見えるのは1問だけ**であることをテストで示す
+  （`.question-card` の数が 1 になる）
+- 質問が2件のとき、両方に答えると `labels` が**2件の配列**として送られることをテストで示す
+  （契約を壊していないことの証拠）
+- 実機（1400x900、既定の比率）で、**質問1件のときに入力欄の領域が縦スクロールしない**ことを
+  実測値で示す（`.layout-dispatch` の `scrollHeight <= clientHeight`。いまは 464 > 335）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- 実機の目視の結果を `evidence` に書く
+
+## 注意
+
+- **横スクロールの件は T-118 が持つ。** このタスクでは `.layout-region` の `overflow` を触らない
+  （同じ画面だが原因が別。二重に直すと打ち消し合う）
+- 自由入力欄は**選択肢の有無によらず常に1つ出す**という決定（`docs/requirements.md` 4.2
+  「許可と質問」）を変えない
+- 答えを返す経路（`dispatch({ type: "answer" })` → `canUseTool` の戻り値）は触らない
+- 見え方の案をユーザーが決めるので `loopable` は `"N"`
+
+## T-118
+
+**タスク**: 答え待ちの箱の横方向のはみ出しを止め、領域の overflow-x を閉じる
+
+**difficulty**: sonnet / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`.layout-region` に `overflow-x: hidden` を足した（ユーザーの選択は「4領域すべて閉じる」）。**中身のはみ出し（7px）と『送る』ボタンが切れる件は T-117 で消えていた**（選択肢を1行にして `min-width: 0` を入れ、自由入力の『送る』ボタンごと撤去したため）。CSS 1ファイルの変更で、`bun run check` は 452 pass / 0 fail（着手前と同数。テストは足していない — 絵は目視で守る方針）。
+実機（`TSUKUMO_DRIVER=fake`・ポート 7405・HOME=/tmp/tsukumo-t118-home。常駐の 7327 は触っていない）: 質問が出ている状態で4領域とも `computedStyle.overflowX === "hidden"`、`scrollLeft = 999` を入れても転がらない。`.layout-dispatch` 669/669・`.pending-answer` 643/643（着手前は 670 > 669・650 > 643）。1400 / 760 / 400px のいずれもページ全体は `scrollWidth == clientWidth`。
+**`.table-scroll` の横スクロールは働いたまま**: 表に10列足して広げると容器の中だけが転がり（1002/950・転がる=true）、領域は 1005/1005 で転がらない。目視でも 1400px と 400px で引用・ネスト・区切り線・表・badge・カード・mermaid の図が切られずに出た。
+
+## 背景
+
+ユーザーの指摘（2026-09-14）「入力画面に質問が出たとき、横にスクロールできたのが気になった。
+この場合、スクロールできないのが使い勝手良さそうだよ」。
+
+**原因は2つ重なっている。**
+
+**(1) 領域は横スクロールできる状態になっている。** `src/ui/style/layout.css` の `.layout-region`
+は `overflow-y: auto` しか書いていないが、**CSS では片方の軸が `visible` でなくなると
+もう片方の `visible` は `auto` に計算される**ので、`overflow-x` も `auto` になる。
+実測（偽の駆動、1400x900）で `.layout-dispatch` の `getComputedStyle().overflowX` は `"auto"`、
+`scrollLeft = 999` を入れると実際に転がった。**これは4つの領域すべてに効いている**
+（入力欄だけの話ではない）。
+
+**(2) 答え待ちの箱の中身が実際にはみ出している。** 同じ実測で `.pending-answer` は
+`clientWidth 643` に対して `scrollWidth 650`（**7px はみ出す**）。箱自身は `overflow: visible`
+なので、はみ出しはそのまま領域へ抜けて横スクロールになる。目視でも
+**自由入力の「送る」ボタンの右端が切れて見えた**（`.question-choice-other` は
+`display: flex` で、`.question-other-input` が `flex: 1 1 auto`、`.question-other-send` が
+固定幅）。
+
+## 解くべき論点
+
+- **`overflow-x` をどう閉じるか。** (a) `.layout-region` に `overflow-x: hidden` を足す /
+  (b) 入力欄の領域だけに足す / (c) 中身のはみ出しだけ直して `overflow-x` は触らない。
+  **(a) は主役のレポートにも効く**ので、`hidden` にすると横に長いものが**戻せない形で切られる**
+  （T-112 で表は `.table-scroll` の中で転がすようにしたので領域には出てこないが、
+  将来の記法で同じことが起きたときに気づけなくなる）
+- **7px のはみ出しの直し方。** `.question-choice-other` の flex の組み方（`min-width: 0` の
+  付け忘れ、`gap` とボタンの固定幅の合算）を実測で特定してから直す
+
+## やること
+
+1. 実機（偽の駆動 `TSUKUMO_DRIVER=fake`、質問が出る場面）で、**7px のはみ出しがどの要素から
+   出ているか**を特定する（`.pending-answer` の子要素の `getBoundingClientRect().right` を
+   並べて、箱の右端を超えているものを探す）
+2. 中身のはみ出しを直す
+3. `overflow-x` の扱いを上の論点のとおり決めて直す
+4. 実測で確かめる
+
+## 完了条件
+
+- 質問が出ている状態で、入力欄の領域が**横スクロールできない**ことを実測値で示す
+  （`.layout-dispatch` の `scrollWidth <= clientWidth`。いまは 670 > 669）
+- 答え待ちの箱の中身がはみ出していないことを実測値で示す
+  （`.pending-answer` の `scrollWidth <= clientWidth`。いまは 650 > 643）
+- **「送る」ボタンが切れずに全部見える**ことを目視で確認して `evidence` に書く
+- 1400 / 760 / 400px のいずれでも**ページ全体は横スクロールしない**
+  （`document.scrollingElement` の `scrollWidth == clientWidth`）
+- `.layout-region` を触った場合は、**メインビューで表・コードブロック・mermaid が切られて
+  いないこと**を目視で確認して `evidence` に書く（T-112 で入れた `.table-scroll` の中の
+  横スクロールは働いたままであること）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **1問1答の件は T-117 が持つ。** このタスクでは `pending-answer.tsx` の質問の出し方
+  （何問を同時に出すか）を変えない。直すのは横方向のはみ出しだけ
+- **`overflow-x: hidden` を主役のレポートに当てるかは慎重に。** T-112 でレポートは領域の内幅を
+  使う形になったばかりで、切られると気づきにくい
+- 16進の色・`font-size` を `theme.css` の外に書かない
+- 目視確認が要るため `loopable` は `"N"`
+
+## T-119
+
+**タスク**: レポートの規約に冗長さを止める条項を入れ、「削らない」の一文を見直す
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`REPORT_NOTATION_PROMPT` の「内容を削って短くするのではなく」を「**まず量を絞り、残ったものに構造を付ける**」へ書き換え、冗長さを止める条項を6つ足した（前置きと締め / 二度言わない / 根拠は結論を支える分だけ / 既知のことを書き直さない / ぼかさない / 効能書き）。量の上限は数で縛らない（ユーザーの選択）。`docs/requirements.md` 4.2 に見直しと、参考資料から採らなかった4条項の理由を書いた（節数 26 → 26）。`bun run check` 452 pass / 0 fail（着手前と同数。文面だけの変更）。
+**実物で確認**（ポート 7406 に `TSUKUMO_NEW_SESSION=1` で新しいプロセスを起こし、本物の駆動で2ターン。常駐の 7327 は触っていない）: 本文は「1〜2文の結論＋表1つ」まで縮み、見出し 0 個・締め・効能書きは出なかった（2ターン目は `<details>` 1つ）。ユーザーの判断は「試してみるから一旦OK」。
+**抑えきれなかったもの**: ツールを呼ぶ前の実況（`I'll read the file first.`）は条項を足しても本文の先頭に残る。tsukumo 側で出すかどうかを決める話なので `develop/direction.md` に残した。
+
+## 背景
+
+ユーザーの指示（2026-09-14）「キャラにかからわず、レポートは冗長さを廃してください。
+https://github.com/ayghri/i-have-adhd/blob/main/skills/i-have-adhd/SKILL.md を参考に。」
+
+**「キャラにかかわらず」は置き場所を指している。** レポートの文体を決めるのは
+`src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` で、**キャラクターパックの
+`persona.md` ではない**（`docs/requirements.md` 4.2 の 2026-09-14 の決定。どのパックに
+切り替えても本文の読みやすさが変わらないようにするため）。指示はその決定と同じ場所を指している。
+
+**いまの規約には、冗長さを止める条項が1つも無い。** それどころか逆を言っている:
+
+> **内容を削って短くするのではなく、構造を付けて読む順番を作る。**
+
+この一文は `REPORT_NOTATION_PROMPT` にあり、`docs/requirements.md` 4.2
+「読む時間を減らすために足すのは、規約の側（2026-09-13 決定）」の帰結として書かれた。
+**今回の指示はこの一文の見直しを含む。**
+
+**一部はすでに満たされている。** 前置き・締めの禁止は規約と 4.2 にある（「本文の冒頭・締め・
+途中でユーザーに語りかける一文を書かない」。語りかけは `speak` の担当）。**足りないのは、
+本文そのものの密度に関する条項**（言い換えの繰り返し、根拠の過剰な展開、ヘッジ表現、
+1レポートの量の上限）。
+
+**参考にした資料の要点**（2026-09-14 に取得。原文は英語で、汎用のアシスタント向け）:
+
+- 禁止: 発表的な前置き（"Let me…"）/ 締めの確認文・感情的な締め / 実行結果の総括の言い直し /
+  複数の問題を同時に持ち出す脱線 / 曖昧な推測表現（perhaps, might）/ 5項目を超える単純列挙 /
+  抽象的な時間表現（"a bit of work"）
+- 要求: 最初の行を実行可能な行動にする / 複数ステップは番号付きで1項目1行動 / 数字・ファイル名・
+  行番号で具体化 / **最初と最後の行だけで「次の行動」と「やったこと」が分かる**構造
+
+## 解くべき論点
+
+1. **「内容を削って短くするのではなく」の一文をどう書き換えるか。** 削ることを認めるのか、
+   「構造は付けるが量は絞る」と両立させるのか。**`docs/requirements.md` 2.2 の
+   「レポートの中身の要約・再構成」はスコープ外**だが、あれは**レンダラ（tsukumo）が
+   本文から要約を起こすこと**を禁じたもので、**書き手が最初から短く書くこと**は 4.2 が
+   「執筆であって再構成ではない」と切り分けている。この線引きを壊さずに書けるか
+2. **参考資料のどの条項を採り、どれを採らないか。** そのままでは既存の決定とぶつかるものがある:
+   - 「5項目を超える単純列挙を禁止」は、規約が勧める**表（3行以上で使う）や箇条書き**と衝突しうる
+   - 「各ターンで現在位置を再述（Step 3 of 5 done）」は、**進行はサイドバーが持つ**という
+     決定（4.2「主役はレポート」）と衝突する。T-114（過程をレポートから外す）とも逆向き
+   - 「最初の行を実行可能な行動にする」は、この環境では**結論を冒頭に置く**という既存の条項と
+     ほぼ同じなので、二重に書かない
+3. **量の上限を数で書くか。** 「1レポートは本文◯行まで」「根拠は `<details>` に畳む」のように
+   検証しやすい形にするか、判断の基準だけを書くか。**数で縛ると、長い調査の報告が切り詰まる**
+4. **効果をどう確かめるか。** 文体の規約は「守られたかどうかがこちら側から分からない」
+   （4.2「なぜテキストの規約をやめたか」）。**実際のレポートを読んでユーザーが判断する**しかない
+   ので、完了条件を「文面を入れたこと」に置くか「実物を見て合意したこと」に置くかを決める
+
+## やること
+
+1. 上の論点をユーザーと決める。特に論点1（削ることを認めるか）は 2026-09-13 の決定の
+   見直しになるので、**先に確認する**
+2. `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` に条項を足す／書き換える。
+   **表の「使う印」の行は触らない**（記法の一覧は `src/ui/report/sanitize-schema.ts` と
+   揃っている必要がある）
+3. `docs/requirements.md` 4.2 の該当箇所（「読む時間を減らすために足すのは、規約の側」）に、
+   今回の見直しを**日付つきで**書き足す。2.2 の「中身の要約・再構成」は**レンダラの話なので
+   触らない**（触る必要が出たら、それは論点1の結論が変わったということ）
+4. **`~/.claude/output-styles/asuna.md` は触らない**（TUI 向けに保つ。4.2 の決定）
+5. 入れたあと、実際のレポートを1〜2ターン出してユーザーに読んでもらう
+
+## 完了条件
+
+- `REPORT_NOTATION_PROMPT` に冗長さを止める条項が入っていて、**「内容を削って短くするのでは
+  なく」の一文が論点1の結論と矛盾していない**
+- 採らなかった条項とその理由が `docs/requirements.md` 4.2 に書かれている
+  （参考資料をそのまま写していないことの証拠）
+- `docs/requirements.md` の節の数が変わっていない
+  （`grep -c '^#\{2,3\} ' docs/requirements.md` を前後で比較）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- **入れたあとのレポートをユーザーが読んで、冗長さが減ったと判断したこと**を `evidence` に書く
+  （文体の規約は自動で判定できないため）
+
+## 注意
+
+- **`src/ui/report/sanitize-schema.ts` が通す記法の一覧と、規約の表の対応を壊さない**
+  （片方だけ直すと勧めた記法が画面で落ちる。4.2）
+- **`persona.md` 側に文体の条項を書かない**（パックごとに読みやすさが変わる。4.2 の決定）
+- 参考資料は**汎用のアシスタント向け**で、この環境の前提（セリフは `speak`、進行はサイドバー、
+  レポートは長く読み続ける面）を知らない。**条項をそのまま写さず、衝突するものは落とす**
+- 効果の判定がユーザーの読後感なので `loopable` は `"N"`
+
+## T-123
+
+**タスク**: キャラクターパックを画面から書き換えるための置き場と受け取り方を決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+決定: 書き込み先は ~/.tsukumo/characters/<name>/、探索は 同梱→ホーム→起動先 local（同名は後ろ勝ち・local の1つ固定は据え置き）、画像は data URL を WebSocket のコマンドで受け取る、上限は 1枚 2MiB / パック 8枚 / maxPayload 4MiB。docs/design.md 7.1（新設）と docs/requirements.md 4.4 に記録。
+却下: <cwd>/characters/<name>（.gitignore を characters/local から広げる必要・リポジトリ内で同梱パックと取り違える）、同梱側（bun link で他プロジェクトから作ったパックが git 差分になる）、multipart POST（node:http にパーサーが無く外部依存が要る）、生バイト POST（トークンと Origin の照合をもう一組書く）。
+見出し数: design.md 50→51（### 7.1 を追加。索引は ## だけを載せる表なので変更不要）、requirements.md 26→26（4.4 の表に1行追加のみ）。bun test --isolate 452 pass / 0 fail、typecheck・lint 通過、編集した2ファイルは oxfmt --check 済み。
+
+## 背景
+
+ユーザーの指示（2026-09-15）「キャラ設定を画面上からできるようにしたい」。聞き取りの結果、
+変えたいのは**(1) 立ち絵と差し色**と**(2) 新しいキャラクターを画面から作ること**の2つ
+（表示名・人格の文面は今回の対象外）。
+
+**いま tsukumo がファイルに書いているのは `~/.tsukumo/state.json` の1つだけ**
+（前回選んだキャラクターの名前。`src/core/remembered-character.ts`）。画面から来た値を
+ディスクへ書く経路は他に無い。
+
+キャラクターパック1つは**ディレクトリ1つ**で、中身は次のとおり（`src/core/character-pack.ts`）:
+
+- `character.json`（`name` / `license` / `portraits` / `outfitAccents`。仕様は `characters/README.md` が正典）
+- 立ち絵のファイル（`default` と `working` の2つは必須。SVG はインラインで埋め込むと差し色が効く）
+- `persona.md`（任意）
+
+パックの探索先は2つだけ（`listCharacterPacks`）:
+
+- **同梱側**: `bundledFilePath("characters")` ＝ **リポジトリの中**。`tsukumo-spirit` / `tsukumo` / `local`
+- **起動先（cwd）側**: `<cwd>/characters/local` の1つだけ（`.gitignore` 済み）
+
+**ここに書き込み先の問題がある。** 同梱側へ書くと**リポジトリが汚れる**（`bun link` で
+グローバルに入っているので、別プロジェクトから作ったパックがリポジトリの作業ツリーに現れる）。
+起動先側は `local` という名前1つしか見ないので、複数のパックを作れない。
+
+## 解くべき論点
+
+- **どこへ書くか。** 候補: (a) `~/.tsukumo/characters/<name>/`（設定と同じ場所。どのプロジェクト
+  からでも共有される） / (b) `<cwd>/characters/<name>/`（プロジェクトごと。`.gitignore` の扱いが要る） /
+  (c) 同梱側（リポジトリが汚れるので却下の見込み）。**`listCharacterPacks` の探索先を増やす**
+  ことになるので、同名が重なったときの優先順位もここで決める
+- **`local` という特別扱いをどうするか。** いまの起動先側は `characters/local` 1つ固定。
+  書き込み先を増やすなら、この固定をやめるか、併存させるかを決める
+- **ブラウザからバイナリ（画像）をどう受け取るか。** いまの `dispatch` は
+  `src/protocol/command.ts` の zod スキーマで検証した JSON のコマンドだけを受け取る。
+  画像を運ぶなら別の口（`multipart/form-data` の POST か、data URL を JSON に載せるか）が要る。
+  **どちらもサーバ（`src/core/server.ts`）に新しい経路を足すことになる**ので、
+  受け取る大きさの上限と、書いてよい場所の限定（パストラバーサルを作らない）を決める
+- **「会話内容の扱い」との関係。** 立ち絵は利用者の素材であって会話ではないので規約の対象外だが、
+  **書き込み先が会話の記録と混ざらない**ことは確かめる
+- **権利の扱い。** `README.md` と `characters/README.md` が「公開リポジトリに権利のある画像を
+  コミットしない」と言っている。書き込み先をリポジトリの外にすれば自然に守られるので、
+  この点も置き場所の決め手にする
+- **どこまでを画面に出すか。** `docs/design.md` 13.6 の分類（今回のことはサイドバー、
+  ずっとのことは引き出し）でいくと、キャラクターの中身は「ずっとのこと」＝**「見た目」の
+  引き出し**（`src/ui/appearance/`）の側。ただし引き出しはいま**常設の要素を増やさない**
+  約束で作ってあるので、増やさずに入るかを見る
+
+## やること
+
+1. 上の論点をユーザーと決める（**置き場所の案は2つ以上出して比べる**）
+2. 決めたことを `docs/design.md` 7章（キャラクターパック）と `docs/requirements.md` 4.4 に書く
+3. **実装はこのタスクではやらない。** 立ち絵と差し色の編集は後続タスク、新規作成はさらにその後続
+
+## 完了条件
+
+- 書き込み先・探索先の優先順位・画像の受け取り方・上限の4つが、
+  `docs/design.md` か `docs/requirements.md` に**節として記録されている**こと
+- 却下した案とその理由が `evidence` に書かれていること
+- `grep -c '^#\{2,3\} ' docs/design.md` と `docs/requirements.md` の増減が `evidence` に
+  書かれていること（節を足すなら増えてよい。**索引の表も直したか**を確かめる）
+- コードを変えていれば `bun run check` が通る（変えないなら不要）
+
+## 注意
+
+- **ユーザーへの確認が要る。** サブエージェントに委譲せず、`/loop` に載せない
+- **このタスクで実装しない。** 決めるところまで
+- `docs/` を編集するときは**行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集する
+  ときの罠」）。節の一覧が変わっていないかを前後で数える
+- **新しい外部コマンド依存を増やすときはユーザーの承認を得る**（`CLAUDE.md`）
+- **書き込み先と受け取り方の案をユーザーが決める**ので `loopable` は `"N"`
+
+## T-126
+
+**タスク**: splitReportBlocks が HTML ブロックの中で割るのを止め、details を機能させる
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+splitReportBlocks に HTML ブロックの深さ（閉じタグ必須の囲み要素のみ。p/li/td などは省略可なので数えない）を足し、閉じるまで空行で割らないようにした。実測: <details> の中に空行2つを挟む本文が 6塊 → 4塊 になり、details が1塊に収まる。
+実機（Chrome・台本の駆動・ポート7466）で目視: <details> は open 属性なしで出て、summary のクリックで false→true→false と開閉。表と段落が details の中に入り（details table が存在）、閉じている間は画面に出ない。<div class="cols"> の入れ子も card 2枚が details の外に正しく描かれ、</details> の文字列も残らない。
+bun run check: 461 pass → 470 pass / 0 fail（新規9件）。節の数は docs/design.md 51・docs/requirements.md 26 で編集前後とも不変。規約（report-notation.ts）は「塊の途中に空行を入れない」を削り、HTML の中に Markdown を入れるなら空行を空ける、に直した。
+
+## 背景
+
+ユーザーの報告（2026-09-15）「detail が機能してない(展開を押しても意味なく、最初から展開済みの
+文章が出てしまっている)」。
+
+**原因は `src/ui/report/split-blocks.ts` の `splitReportBlocks` が空行で塊を割ることにある。**
+呼び出し側（`src/ui/main-view/report.tsx`）は塊ごとに**独立した `<Markdown>`** を描くので、
+`<details>` の中に空行があると次のようにばらける:
+
+```
+<details>                    ← 塊1（rehype-raw が閉じるので、中身が空の details になる）
+<summary>見出し</summary>
+                             ← ここで割れる
+中身の段落                    ← 塊2（details の外なので**常に見えている**）
+
+</details>                    ← 塊3（対応する開きタグが無く落ちる）
+```
+
+これが「最初から展開済みの文章が出る」「押しても意味がない」の両方を説明する。
+**フェンス付きコードブロックには同じ対策がすでにある**（`inFence` の判定で、フェンスの中の
+空行では割らない）。HTML ブロックにはそれが無い。
+
+**規約の側は「塊の途中に空行を入れない」と書いている**（`src/core/report-notation.ts`。
+`docs/requirements.md` 4.2 の「HTML はブロックでもインラインでも書ける」の帰結）。ただし
+**Markdown を HTML の中で解釈させるには空行が要る**（CommonMark の規則）ので、書き手に
+「空行を入れるな」と要求すると `<details>` の中で表や箇条書きが使えなくなる。**規約で回避する
+形には無理がある。**
+
+## 解くべき論点
+
+1. **どこまでを1つの塊として扱うか。** (a) `sanitizeReportHtml` が通すブロック級のタグ
+   （`details` / `div` / `dl` / `table` / `svg` / `blockquote`）の開閉を数え、閉じるまで割らない /
+   (b) 行頭が `<` で始まる塊に入ったら、対応する閉じタグの行まで割らない /
+   (c) 割るのをやめて1つの `<Markdown>` にする
+2. **書きかけ（ストリーミング）の扱い。** 塊に割っている目的は
+   **変わらない塊を `React.memo` で描き直さない**こと（`split-blocks.ts` 冒頭）。
+   `<details>` を書いている途中は閉じタグが未着なので、**残り全部が1つの塊になって
+   メモ化が効かなくなる**。フェンスと同じ割り切り（「閉じていないものは最後の塊に閉じる」）で
+   よいかを決める
+3. **規約の文面をどう直すか。** `src/core/report-notation.ts` の「塊の途中に空行を入れない」は、
+   この修正が入れば**不要になる**（むしろ空行を入れてよい）。消すのか、別の言い方に変えるのか
+4. **ネストの扱い。** `<div class="cols"><div class="card">` のように同じタグが入れ子になる
+   書き方を規約が勧めている。**深さを数える**必要があるか
+
+## やること
+
+1. まず現物で再現する。**`<details>` の中に空行がある本文を `splitReportBlocks` に通して、
+   塊が3つに割れること**を単体テストで固定してから直す（再現テストを先に書く）
+2. 論点を決めて `splitReportBlocks` を直す。**純粋関数のまま保つ**（React を import しない）
+3. `src/core/report-notation.ts` の文面を論点3のとおり直す
+4. `docs/design.md` 6.3（塊に割る話）と `docs/requirements.md` 4.2 の該当箇所を実装に合わせる
+5. 実機で `<details>` を含むレポートを出し、**閉じた状態で出て、押すと開く**ことを目視する
+
+## 完了条件
+
+- `<details>` の中に空行がある本文で、`splitReportBlocks` が**その `<details>` を割らない**
+  ことを単体テストで示す
+- `<div class="cols">` の入れ子でも割れないことを単体テストで示す
+- **閉じていない HTML ブロック**（書きかけ）で例外にならず、最後の塊に収まることをテストで示す
+- フェンスの既存の挙動が変わっていないこと（既存テストが通る）
+- 実機で `<details>` が**既定で閉じており、クリックで開く**ことを目視し、結果を `evidence` に書く
+- `src/core/report-notation.ts` の文面が実装と矛盾していない
+- `docs/design.md` / `docs/requirements.md` の節の数が変わっていない
+  （`grep -c '^#\{2,3\} '` を前後で比較）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`sanitizeReportHtml` の許可リストを増やさない**（通すタグは変えない。読むだけ）
+- **塊に割る目的（メモ化）を忘れない。** 1つの `<Markdown>` に戻す案（論点1の (c)）を採るなら、
+  書きかけの本文が毎トークン描き直しになる影響を実測してから決める
+- 確認は tsukumo 自身で行える（`<details>` を含むレポートを出し、閉じた状態で出ること・
+  クリックで開くことを操作して確かめる）。`loopable` は `"Y"`（`docs/workflow.md`「`loopable` の判定」）
+
+## T-131
+
+**タスク**: /clear のあとに前の会話のセリフが残るのを直す
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+実測（使い捨てスパイクで haiku に /compact → /clear を送信）: /clear のとき SDK は `conversation_reset`（keys=type,new_conversation_id,uuid,session_id）を流し、直後に**新しい session_id** の system/init が届く。/compact では system/status（compact_result 付き）と**同じ session_id** の init だけで conversation_reset は流れない。入力の文字列は見ずに済む。
+決定（ユーザー）: セリフと記録の両方を空にし、吹き出しは空（起動直後と同じプレースホルダ）。残すのはキャラクター定義・セッション情報・答え待ちの列（pending の正典は core の待ち行列のため）。
+実機（127.0.0.1:7399、続きから起こしたセッション）で /clear を送信: 吹き出し 4件 → 1件「（まだ発話がありません）」、ターンのタブ 5 → 0、立ち絵とセッション情報は残存（/tmp/t131-2-clearのあと.png）。bun run check 通過・456 pass（+4件）。docs/requirements.md の節数は 26 のまま。
+
+## 背景
+
+ユーザーの報告（2026-09-15）「clear コマンドを実行するとレポートは消えるがキャラのセリフは
+リセットされない」。
+
+**tsukumo は `/clear` を何も処理していない。** `src/core/` と `src/protocol/` に `/clear` を
+見る経路は無く（`grep -rn 'clear' src` で出るのは `timers.clear()` などの無関係な呼び出しだけ）、
+`/` コマンドは**依頼の文字列としてそのまま claude へ渡る**。つまり画面の変化は
+**SDK 側の結果として起きている**。
+
+**セリフが残るのは意図的な規則のため。** `src/protocol/session-state.ts` の
+`applySessionEvent` の `request` は `speeches: state.speeches.slice(-1)` として
+**前のターンの最後の1件だけを残す**。これは `docs/requirements.md` 4.2 の
+「セリフが1つも来なかったターンでも吹き出しを空にしない（キャラクターが消えたように見える）」
+という 2026-09-12 の決定の実装。`/clear` も tsukumo から見れば**ただの依頼1件**なので、
+この規則がそのまま効いて前の会話のセリフが残る。
+
+**「レポートは消える」の正体は未確認。** `records` を捨てる経路は
+`src/core/session-manager.ts` の `restart`（`switch-character` のときだけ
+`state = INITIAL_SESSION_STATE`）しか無い。**`/clear` でレポートが消えて見えるのは、
+新しいターンが始まって中身が空だからかもしれない**（タブの「1つ前」に前の会話が残っているか
+どうかで見分けられる）。**ここを最初に確かめる。**
+
+## 解くべき論点
+
+1. **`/clear` が起きたことを、どうやって知るか。** (a) 入力の文字列を見る（`/clear` で始まる）/
+   (b) SDK が流すイベントを見る（`system` の種類・`init` の再送など。**要実測**）。
+   **(a) は「規約は守られたか分からない」と同じ形の弱さ**（`/clear extra` や別名で漏れる）で、
+   (b) が取れるならそちらが確実
+2. **何をリセットするか。** セリフだけ / セリフと記録（レポート）の両方 / `switch-character` と
+   同じ `INITIAL_SESSION_STATE` まで戻す。**キャラクターの定義（`state.character`）や
+   セッション情報（モデル・許可モード）まで消すと画面が壊れる**ので、そこは残す必要がある
+3. **吹き出しを空にしてよいのか。** 4.2 は「空にするとキャラクターが消えたように見える」
+   として最後の1件を残すと決めた。`/clear` は**会話を消す操作なので例外**と書くのか、
+   それとも「はじめまして」相当の1件に差し替えるのか
+4. **`/compact` はどうするか。** 会話を要約してまとめる別のコマンドで、**会話は消えない**。
+   同じ扱いにしないことを明示するか
+
+## やること
+
+1. **まず再現して、何が起きているかを確かめる。** `/clear` を実行し、(1) タブに「1つ前」が
+   残るか、(2) `records` が残っているか、(3) SDK からどの種類のイベントが来るかを見る
+   （**会話の中身はログに出さず、イベントの種類と件数だけ**。`docs/coding-standards.md`
+   「会話内容の扱い」）。**論点1の (b) が取れるかはここで決まる**
+2. 論点をユーザーと決める（論点3は見え方の好み）
+3. 決めた形で `src/protocol/session-state.ts`（と必要なら `src/core/session-manager.ts`）を直す
+4. `docs/requirements.md` 4.2 の「セリフが1つも来なかったターンの扱い」に、`/clear` の例外を
+   書き足す
+5. 実機で `/clear` を実行し、吹き出しとレポートの両方を目視する
+
+## 完了条件
+
+- 再現の結果（タブ・記録・イベントの種類）が `evidence` に書かれている
+- `/clear` 相当の入力（または検出したイベント）で、**決めた範囲だけがリセットされる**ことを
+  `protocol` のテストで示す。**`state.character` とセッション情報が残る**ことも同じテストで固定する
+- `/compact` では**リセットされない**ことをテストで示す（論点4の担保）
+- 実機で `/clear` を実行し、吹き出しが決めた形（空 or 差し替え）になることを目視して
+  `evidence` に書く
+- `docs/requirements.md` の節の数が変わっていない
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`speeches.slice(-1)` の規則そのものを消さない。** 普通のターンでは 4.2 の決定どおり
+  最後の1件を残す。変えるのは `/clear` の場合だけ
+- **入力の文字列を見る形にする場合、会話の内容を条件分岐の材料にすることになる。**
+  `/clear` かどうかの判定に必要な範囲に留め、内容をログや外部に出さない
+- **`/clear` のあと吹き出しをどう見せるかをユーザーが決める**ので `loopable` は `"N"`
+
+## T-132
+
+**タスク**: 立ち絵の URL にパックの識別を足し、同名ファイルのパック間で切り替わるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+立ち絵URLに ?pack= を足した（characterAssetPath 1箇所）。Chrome 実機で local→tsukumo→local→tsukumo-spirit→tsukumo と切り替え、<img src> が /character/default.png?pack=local ↔ ?pack=tsukumo と毎回変化し naturalSize も 246x203 ↔ 830x1254 と入れ替わることを実測（変更前は両者とも /character/default.png で不変）。3パックの絵柄の差し替えを画面写真で目視、精霊の SVG インライン経路（<img>なし・svg 1268文字）も維持。
+付随して classifyPortraitFile が ?pack= 付き URL で拡張子を見失い立ち絵が消える退行を実機で発見・修正（fileExtension が ? 以降を落とす）。
+bun run check: 456 pass → 461 pass / 0 fail（新規5件）。/character/ の allowlist は未変更で、character.json・../package.json は 404 のまま。
+
+## 背景
+
+ユーザーの報告（2026-09-15）「アスナから tsukumo にキャラを切り替えたときに立ち絵が
+切り替わらない」。
+
+**原因は立ち絵の URL がパックをまたいで同じになることにある。** `src/protocol/character.ts` の
+`characterAssetPath(fileName)` は **`/character/<ファイル名>` を返すだけ**で、パックの名前を
+含まない（113〜117行目）。そして:
+
+| パック                             | `portraits.default` | 立ち絵の URL             |
+| ---------------------------------- | ------------------- | ------------------------ |
+| `characters/local`（一之瀬アスナ） | `default.png`       | `/character/default.png` |
+| `characters/tsukumo`               | `default.png`       | `/character/default.png` |
+| `characters/tsukumo-spirit`        | `default.svg`       | `/character/default.svg` |
+
+**アスナ ↔ tsukumo はファイル名が同じ**なので URL の文字列が変わらず、`<img src>` が
+書き換わらない。ブラウザは**すでに読み込んだ画像を出したまま**で、新しい取得も起きない
+（`src/core/server.ts` の `writeCharacterAsset` は `cache-control: no-store` を付けているが、
+**そもそも再取得が走らない**ので効かない）。
+
+**つくもの精霊との行き来では起きない。** あちらは `.svg` で、`classifyPortraitFile` が
+`"svg"` を返してインラインで埋め込む経路（`<img>` ではない）に入るため、URL の一致が問題に
+ならない。**この不具合が PNG のパックどうしでだけ出る**のと符合する。
+
+**配る側はパックを見ている。** `/character/<file>` の中身は `src/cli.ts` が渡す
+`readCharacterPackFile(characterPack, fileName)` で、**そのときの `characterPack`** から読む。
+つまり**同じ URL が指す中身だけが入れ替わる**状態になっている。
+
+## 解くべき論点
+
+- **URL にパックを入れる形をどうするか。** (a) 問い合わせ文字列を足す
+  （`/character/default.png?pack=local`）/ (b) パスに入れる（`/character/local/default.png`）。
+  **(b) は `serveCharacterAsset` の allowlist（`character.json` の `portraits` に載っている
+  ファイル名だけを配る）とパスの組み立て方に触る**ので、(a) のほうが変更が小さい。
+  どちらでも**パスから素材を組み立てない**という原則（`character.ts` 110行目付近のコメント）を
+  崩さないこと
+
+## やること
+
+1. まず現物で再現する。アスナ → tsukumo に切り替えて、`character-changed` が届いているのに
+   `<img src>` の値が変わらないことを確認する（**会話の中身は見ない**）
+2. 論点のとおり URL にパックの識別を足す。**`characterAssetPath` 1箇所で組み立てる**
+   （文字列を他所で作らない。既存のコメントの方針をそのまま守る）
+3. 配る側（`src/core/server.ts` の `/character/<file>` の経路と
+   `src/core/character-pack.ts` の `readCharacterPackFile`）が、足した識別を**無視して
+   よいか確かめる**。いまも「そのときの `characterPack`」から読むので、識別は
+   **ブラウザに再取得させるためだけ**のものにできる。その割り切りをコメントに残す
+4. 実機で3つのパックを行き来して目視する
+
+## 完了条件
+
+- **アスナ → tsukumo → アスナ**と切り替えて、`<img src>` の値が**毎回変わる**ことを実測値で
+  示す（変更前は同じ文字列のままだったこと、変更後は変わることの両方）
+- 実機で**立ち絵の絵柄が実際に入れ替わる**ことを目視して `evidence` に書く
+  （3つのパックすべての行き来）
+- つくもの精霊（SVG のインライン埋め込み）の経路が壊れていないことを目視して `evidence` に書く
+- `/character/<file>` が**`portraits` に載っていないファイル名を配らない**ことの既存テストが
+  通る（allowlist を緩めていないことの証拠）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`characters/local/` は `.gitignore` 済み**（権利のある素材を公開リポジトリに入れない。
+  `docs/requirements.md` 2.2）。**素材をコミットしない**
+- **パスから素材を組み立てない**（`src/protocol/character.ts` の方針）。配ってよいのは
+  `character.json` の `portraits` に載っているファイル名だけ
+- 確認は tsukumo 自身で行える（パックを切り替えて `<img src>` の変化と絵柄を撮って見る）。
+  `loopable` は `"Y"`（`docs/workflow.md`「`loopable` の判定」）
+
+## T-140
+
+**タスク**: orca を呼ぶのが orca-host.ts だけであることをテストで守る
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+test/architecture.test.ts に describe「orca コマンドを起こす箇所」を1つ足した（it が3→4）。src/ 全ファイルから core/orca-host.ts を除き、/["']orca["']/ にマッチしたら違反。ファイル名 orca-host.ts やバッククォート表記は拾わない。わざと破る確認: src/core/host.ts に const TEMP_ORCA_PROBE = "orca" を足すと bun test --isolate test/architecture.test.ts が 3 pass / 1 fail（offenders に core/host.ts）、git checkout で戻すと 4 pass / 0 fail。確認用の変更はコミットしていない。src/core/orca-host.ts は冒頭コメントに「この境界は test/architecture.test.ts が落とす」を1文足しただけ（コードは無変更）。bun run check: typecheck/lint/format(166ファイル) OK、471 pass / 0 fail / 49ファイル。
+
+## 背景
+
+`docs/architecture.md` 原則3 と `src/core/orca-host.ts` の冒頭コメントは「**`orca` コマンドを呼ぶのはこのファイルだけ**」と書いているが、**これを落とす検査が無い**。`test/architecture.test.ts` が見ているのは (1) 層の辺（`protocol` / `core` / `ui` / `cli`）、(2) `protocol` が `node:` を import しないこと、(3) `ui/<領域>/` 同士の import が無いこと の3つだけ。
+
+2026-09-16 のユーザーの方針「ドメイン（tsukumo の核）が特定の技術（orca など）に依存しないようにする」（T-046）を、コメントではなくテストで守る。
+
+**いま破られてはいない**（`grep -rn 'orca' src` の結果はアダプタと `src/cli.ts` の配線とコメントだけ）ので、このタスクは現状を固定するもの。タスクをサブエージェントに委譲する運用（`CLAUDE.md`「進捗管理とHandoff」）では、**検査の無い約束は破られても気づけない**のが問題。
+
+## 解くべき論点
+
+- **何を落とすか。** `"orca"` の文字列リテラルか、`createOrcaHost` の import か、その両方か。`src/cli.ts` は配線層なので `createOrcaHost` を import してよい（`ALLOWED_IMPORTS` で `cli → core` は許されている）。落としたいのは「アダプタ以外が `orca` コマンドを起こすこと」
+- `scripts/open-views.ts` も `createOrcaHost()` を直接呼ぶが、`scripts/` は本体から呼ばれない道具で `test/architecture.test.ts` の対象外（`SRC_ROOT` が `src/` を指している）。対象を広げるかどうか
+
+## やること
+
+1. `test/architecture.test.ts` に検査を1つ足し、`src/` の中で `orca` コマンドを起こす記述が `src/core/orca-host.ts` 以外に無いことを落とす
+2. **検査が効くことを確かめる。** 別のファイルに一時的に `execFile("orca", …)` を書いて落ちること、書き戻して通ることを見る。**確認のための変更はコミットしない**
+3. `src/core/orca-host.ts` の冒頭コメントに「テストで守られている」ことが分かる1文を足すかを判断する（足さなくてもよい）
+
+## 完了条件
+
+- `test/architecture.test.ts` の `it` が1つ増え、`bun run check` が通ること
+- 手順2の確認（わざと破ると落ちる・戻すと通る）の結果が `evidence` に書かれていること
+- `src/` の**コードを変えないこと**（テストと、必要ならコメントだけ）
+
+## 注意
+
+- **外部ツールを増やさない。** `test/architecture.test.ts` の冒頭が「ここは正規表現と `node:fs` だけで、外部ツールは増やさない」と明記している
+- `docs/research/architecture-proposal.md` の段1は、同じ仕組みで SDK・`node:child_process`・`process.env`・`document`・経路名の限定もまとめて足す案で、**2026-09-16 に T-142 として登録した**。**このタスクを先に行い、T-142 がその隣に並べる**形に決めたので、ここでは `orca` の1件だけを足す（まとめてやり直さない）
+
+## T-142
+
+**タスク**: 層の検査を広げ、旧パスのコメントと経路名の再掲を掃除する
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-140 / **passes**: True
+
+**evidence**:
+
+protocol/session-socket.ts を新設（SESSION_SOCKET_PATH / SESSION_TOKEN_QUERY_NAME）。core/server.ts・ui/socket.ts・test/core/server.test.ts が import に切り替わり、grep -rn '"/ws"' src は 1件（protocol のみ）、grep -rn "src/presentation" src は 0件。architecture.test.ts の it は 4→8（SDK / node:child_process / process.env / 経路名リテラル。ws の限定と core の node: 全面禁止と Layer への adapter 追加は、段2で書き換わる前提なので見送り）。既存の「protocol は document に触らない」は名ばかりで node: しか見ていなかったので実装を直した。効くことの確認: core/\_probe.ts と protocol/\_probe.ts に違反を書くと該当5件が fail（3 pass/5 fail）、消すと 8 pass/0 fail。docs/architecture.md 原則2 を design.md 2章の言い方に合わせ、見出し数は前後で 51/10 のまま。配信の実確認（偽の駆動、HOME=scratchpad、ポート 7391）: HTML が返り、/ws の upgrade が通って hello フレームが届いた。絵に関わる変更は無い（コメントと定数の置き場所のみ）。bun run check: 475 pass / 0 fail / 49ファイル、oxfmt 166ファイル。
+
+## 背景
+
+`docs/research/architecture-proposal.md`（2026-09-15）が出した移行の段1。**ファイルを1つも動かさずに、
+検査と正典の再掲だけを掃除する段**で、提案メモは「段1で止めても兆候 1・2・3・5・6 が消える」と書いている。
+メモ末尾の「次の一手」が段1〜段3を `develop/tasks.json` に起こすよう指示していたのに登録されていなかったため、
+2026-09-16 に3件として起こした。
+
+**現物で裏を取った現状**（2026-09-16）:
+
+- `test/architecture.test.ts` は 181 行・`it` が **3 件**（層の辺 / `protocol` が `node:` と `document` に
+  触らない / `ui/<領域>/` 同士の import が無い）
+- 経路名 `"/ws"` が **2 箇所に再掲**されている（`src/core/server.ts:39` の `SESSION_SOCKET_PATH` と
+  `src/ui/socket.ts:14` の同名の定数）。`src/protocol/session-socket.ts` は**まだ無い**
+- `grep -rn "src/presentation" src` が **15 件**（移行で消えたディレクトリを指す古いコメント）
+- `process.env` を実際に読んでいるのは `src/cli.ts:83`（`readConfig(process.env)`）**だけ**。
+  `src/core/config.ts` と `src/core/port-resolution.ts` の出現はコメント中の記述なので、
+  **「`process.env` は `cli.ts` だけ」の検査は現状のまま通る**
+- SDK・`ws`・`node:child_process` に触るのは `src/core/session-driver.ts` / `src/core/server.ts` /
+  `src/core/orca-host.ts` / `src/core/bundle.ts` の4ファイル
+
+## 解くべき論点
+
+- **限定の検査をどこまで厳しく書くか。** 提案メモは「SDK の import は駆動のファイルだけ」「`node:child_process` は
+  `orca-host` / `bundle` だけ」「`process.env` は `cli.ts` だけ」「経路名のリテラル（`"/ws"` `"/character/"`
+  `"/vendor/"`）は `protocol` だけ」を挙げている。**段2（`adapter/` を切る）より前なので、許す先は
+  いまのパス（`src/core/...`）で書くことになる。** 段2で書き換わる前提の検査を足してよいか、
+  段2まで待つものを選り分けるか
+- `ui/` の分類（`UI_SHARED`）の検査を、いまの `ui/` の構成（`appearance/` を共有として扱うか）に
+  どう合わせるか
+- **正典の `protocol` の文言を1本にする**とき、どのファイルを主にするか（`docs/design.md` 2章と
+  `docs/architecture.md` に同じ趣旨の説明がある）
+
+## やること
+
+1. `src/protocol/session-socket.ts` を作り、`"/ws"` とトークンのクエリ名をそこに集める。
+   `src/core/server.ts` と `src/ui/socket.ts` はそこから引く（**両側から読まれるので `protocol` が正しい置き場**）
+2. `test/architecture.test.ts` に限定と分類の検査を足す。**論点の選り分けの結果、段2まで待つと決めたものは
+   足さずに理由を `evidence` に書く**
+3. `grep -rn "src/presentation" src` の 15 件のコメントを、いまのパスに直す
+4. 正典（`docs/design.md` / `docs/architecture.md`）の `protocol` の説明が二重になっているところを1本にする
+5. **ファイルを動かさない。** `git mv` は段2（別タスク）の仕事
+
+## 完了条件
+
+- `bun run check` が通ること（件数を `evidence` に書く）
+- `test/architecture.test.ts` の `it` が増えていること（**増えた数と、足さなかった検査があればその理由**を
+  `evidence` に書く）
+- `grep -rn "src/presentation" src` が **0 件**になること
+- `grep -rn '"/ws"' src` が `src/protocol/session-socket.ts` の **1 件**になること
+- 足した検査が**効くこと**を確かめた結果が `evidence` にあること（わざと破ると落ちる・戻すと通る）
+- `grep -c '^#\{2,3\} ' docs/design.md docs/architecture.md` が編集の前後で変わらないこと
+  （`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## 注意
+
+- **`src/` のファイルを移動・改名しない**（段2の仕事）。触ってよいのはコメントと、新設する
+  `protocol/session-socket.ts` からの参照だけ
+- **外部ツールを増やさない。** `test/architecture.test.ts` の冒頭が「ここは正規表現と `node:fs` だけ」と
+  明記している
+- T-140（`orca` の限定検査）が先に入る前提で `dependencies` に置いてある。**T-140 が足した `it` を
+  作り直さず、その隣に並べる**
