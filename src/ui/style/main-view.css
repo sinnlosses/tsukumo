@@ -98,14 +98,6 @@ h2.turn-request {
 .step-tools .tool-block h3 {
   margin: 0;
 }
-.step-tools .tool-block-failed {
-  flex: 1 1 100%;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-}
-.step-tools .tool-block-failed h3 {
-  margin: 0 0 0.5rem;
-}
 /* レポートが直接書ける HTML（rehype-sanitize の schema が通すもの。`src/ui/report/sanitize-schema.ts`）
    から使う見た目の語彙。**クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
 .detail-block .cols {
@@ -205,7 +197,6 @@ a:hover {
   font-size: var(--font-secondary);
   color: var(--ink);
 }
-.tool-block pre,
 .detail-block pre {
   margin: 0.4rem 0 0;
   padding: 0.5rem;
@@ -213,9 +204,6 @@ a:hover {
   border-radius: 0.4rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-.tool-result.tool-error {
-  border: 1px solid var(--state-ng);
 }
 .tool-pending {
   margin: 0.4rem 0 0;

@@ -164,7 +164,14 @@ describe("applySessionEvent", () => {
     // 1秒経つと作業中に切り替わる。
     expect(currentExpression(running, 1000)).toBe("working")
     expect(running.runningTools).toEqual([
-      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: 0 },
+      {
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        nested: false,
+        startedAt: 0,
+        failureOutput: undefined,
+      },
     ])
 
     const finished = applySessionEvent(
@@ -176,8 +183,41 @@ describe("applySessionEvent", () => {
     expect(currentExpression(finished, 2000)).toBe("proud")
     expect(finished.runningTools).toEqual([])
     expect(finished.finishedTools).toEqual([
-      { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: 0 },
+      {
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        nested: false,
+        startedAt: 0,
+        failureOutput: undefined,
+      },
     ])
+  })
+
+  it("失敗して終わったツールは出力を failureOutput に残す（サイドバーで開いて読むため）", () => {
+    const running = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Bash",
+        input: { command: "架空" },
+        parentToolUseId: undefined,
+      },
+      0,
+    )
+    const failed = applySessionEvent(
+      running,
+      {
+        kind: "tool-finished",
+        toolUseId: "toolu_1",
+        content: "架空のエラー出力",
+        isError: true,
+      },
+      1000,
+    )
+
+    expect(failed.finishedTools[0]?.failureOutput).toBe("架空のエラー出力")
   })
 
   it("1秒未満で終わったツールは作業中の表情を起こさない（チカチカ防止）", () => {
@@ -219,7 +259,14 @@ describe("applySessionEvent", () => {
     })
 
     expect(running.runningTools).toEqual([
-      { toolUseId: "toolu_1", name: "Bash", input: {}, nested: true, startedAt: 0 },
+      {
+        toolUseId: "toolu_1",
+        name: "Bash",
+        input: {},
+        nested: true,
+        startedAt: 0,
+        failureOutput: undefined,
+      },
     ])
   })
 

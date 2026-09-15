@@ -97,6 +97,31 @@
   margin-left: 1rem;
   list-style-type: circle;
 }
+/* 失敗した回。**引数と出力を読める場所はここだけ**なので、薄い色に落とさず開ける形にする
+   （docs/requirements.md 4.2）。印は文字（「失敗」）で、色はその補助。 */
+.activity-item.activity-failed {
+  color: var(--ink);
+}
+.activity-failure > summary {
+  cursor: pointer;
+}
+.activity-failure-mark {
+  color: var(--state-ng);
+  font-weight: 600;
+}
+.activity-failure pre {
+  margin: 0.3rem 0 0;
+  padding: 0.4rem;
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: 0.4rem;
+  background: var(--ground);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.activity-failure-output {
+  border: 1px solid var(--state-ng);
+}
 .task-list {
   list-style: none;
   padding-left: 0;

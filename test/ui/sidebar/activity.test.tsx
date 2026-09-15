@@ -18,6 +18,7 @@ function activity(overrides: Partial<ToolActivity>): ToolActivity {
     input: { command: "echo dummy" },
     nested: false,
     startedAt: 0,
+    failureOutput: undefined,
     ...overrides,
   }
 }
@@ -69,5 +70,49 @@ describe("Activity", () => {
     render(<Activity running={[]} finished={[activity({ toolUseId: "toolu_1", nested: true })]} />)
 
     expect(screen.getByRole("listitem").className).toContain("activity-nested")
+  })
+
+  it("失敗した回は「失敗」の文字が付き、色だけに頼らない", () => {
+    render(
+      <Activity
+        running={[]}
+        finished={[activity({ toolUseId: "toolu_1", failureOutput: "架空のエラー出力" })]}
+      />,
+    )
+
+    expect(screen.getByRole("listitem").className).toContain("activity-failed")
+    expect(screen.getByText("失敗")).toBeDefined()
+  })
+
+  it("失敗した回は引数と出力を開いて読める（レポートには出さないため）", () => {
+    const { container } = render(
+      <Activity
+        running={[]}
+        finished={[
+          activity({
+            toolUseId: "toolu_1",
+            input: { command: "架空のコマンド" },
+            failureOutput: "架空のエラー出力",
+          }),
+        ]}
+      />,
+    )
+
+    expect(container.querySelector("details.activity-failure")).toBeDefined()
+    expect(container.querySelector("pre.activity-failure-input")?.textContent).toContain(
+      "架空のコマンド",
+    )
+    expect(container.querySelector("pre.activity-failure-output")?.textContent).toContain(
+      "架空のエラー出力",
+    )
+  })
+
+  it("成功した回は畳む器を作らない", () => {
+    const { container } = render(
+      <Activity running={[]} finished={[activity({ toolUseId: "toolu_1" })]} />,
+    )
+
+    expect(container.querySelector("details")).toBeNull()
+    expect(screen.getByRole("listitem").className).not.toContain("activity-failed")
   })
 })

@@ -111,11 +111,31 @@ describe("toolVisibility（見せてよい3種だけを選ぶ）", () => {
     expect(toolVisibility(tool({ name: "Grep" }))).toEqual({ kind: "hidden" })
   })
 
-  it("失敗したツールは種類によらず failed になる", () => {
-    const visibility = toolVisibility(
-      tool({ name: "Read", result: { content: "エラー", isError: true } }),
-    )
-    expect(visibility).toEqual({ kind: "failed" })
+  it("失敗したツールも成否を見ずに分類する（Bash の失敗はレポートに出さない）", () => {
+    expect(
+      toolVisibility(
+        tool({
+          name: "Bash",
+          input: { command: "false" },
+          result: { content: "架空のエラー出力", isError: true },
+        }),
+      ),
+    ).toEqual({ kind: "hidden" })
+    expect(
+      toolVisibility(tool({ name: "Read", result: { content: "架空のエラー", isError: true } })),
+    ).toEqual({ kind: "hidden" })
+  })
+
+  it("失敗しても、ファイルを変えた操作とサブエージェントの起動は種類を保つ", () => {
+    expect(
+      toolVisibility(
+        tool({
+          name: "Edit",
+          input: { file_path: "src/a.ts" },
+          result: { content: "架空のエラー", isError: true },
+        }),
+      ),
+    ).toEqual({ kind: "file-change", path: "src/a.ts" })
   })
 
   it("サブエージェントの起動は description 込みで agent-launch になる", () => {

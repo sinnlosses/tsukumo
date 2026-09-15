@@ -44,6 +44,13 @@ export type ToolActivity = {
    * 表情を「作業中」に切り替えるかどうかの判定（`resolveExpression`）にだけ使う。
    */
   readonly startedAt: number
+  /**
+   * 失敗して終わったときの出力。成功したときと実行中は undefined
+   * （**「失敗した」という印そのもの**を兼ねる）。**失敗したツールはレポートに出さない**
+   * （`toolVisibility`。docs/requirements.md 4.2）ので、エラーの内容を読める場所はここから
+   * 開くサイドバーの並びだけになる。
+   */
+  readonly failureOutput: string | undefined
 }
 
 /**
@@ -305,6 +312,7 @@ export function applySessionEvent(
             input: event.input,
             nested,
             startedAt: at,
+            failureOutput: undefined,
           },
           ...state.runningTools,
         ],
@@ -354,8 +362,8 @@ export function applySessionEvent(
  * `[<Report> | <ToolRun> | <QuestionRecord>]*`」）。サイドバーの「いま何をしているか」は
  * 別に `runningTools` / `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
  * **どのツールを実際にメインビューへ出すかは `protocol/main-view.ts` の `toolVisibility`
- * が絞る**（ファイルを変えた操作・サブエージェントの起動・失敗したツールの3種類だけ。
- * `docs/requirements.md` 4.2）。
+ * が絞る**（ファイルを変えた操作・サブエージェントの起動の2種類だけ。失敗したツールは
+ * サイドバー側に寄せてある。`docs/requirements.md` 4.2）。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
   const settled = state.records.flatMap(toMainViewEntries)
@@ -497,7 +505,8 @@ function withMarkerFallback(state: SessionState): SessionState {
 /**
  * ツール1件の結果を記録に合わせる。**対応する `tool_use` が見つからないときは何もしない**
  * （対応が取れない結果を作らない）。`isError` が true のときは `lastToolFailureAt` に `at` を
- * 打つ（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）。
+ * 打ち（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）、出力を
+ * {@link ToolActivity.failureOutput} に移す（サイドバーで開いて読むため）。
  */
 function finishTool(
   state: SessionState,
@@ -520,6 +529,7 @@ function finishTool(
     input: record.input,
     nested: record.nested,
     startedAt: record.startedAt,
+    failureOutput: isError ? content : undefined,
   }
 
   return {

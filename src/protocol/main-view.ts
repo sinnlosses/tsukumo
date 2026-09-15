@@ -126,24 +126,23 @@ const SUBAGENT_LAUNCH_TOOL_NAME = "Agent"
 
 export type ToolVisibility =
   | { readonly kind: "hidden" }
-  | { readonly kind: "failed" }
   | { readonly kind: "file-change"; readonly path: string | undefined }
   | { readonly kind: "agent-launch"; readonly description: string | undefined }
 
 /**
  * 1件のツール実行を、メインビューに出してよい範囲で分類する（`docs/requirements.md` 4.2 の
- * 決定を実装したもの）。**判定の優先順位は「失敗 → ファイルを変えた操作 → サブエージェントの
- * 起動 → それ以外は見せない」**。失敗を最優先にするのは、決定表の「失敗したツール」の行が
- * ツールの種類を問わず「出す」としているため（コマンドの出力を隠す方針より優先する）。
+ * 決定を実装したもの）。**判定は「ファイルを変えた操作 → サブエージェントの起動 →
+ * それ以外は見せない」だけで、成否は見ない。**
+ *
+ * **失敗したツールもここでは特別扱いしない**（2026-09-15 決定）。以前は `result.isError` を
+ * 最優先で見て引数と出力をレポートへそのまま出していたが、それだと `Bash` が非0で終わるだけで
+ * コマンドと stdout/stderr がレポートに流れ込む。失敗に気づく経路と中身を読む経路は
+ * サイドバーの「いま何をしているか」が持つ（`src/ui/sidebar/activity.tsx`）。
  *
  * **未知のツール名（`FILE_PATH_FIELD_BY_TOOL` にも `SUBAGENT_LAUNCH_TOOL_NAME` にも無い名前）は
  * `hidden` に落ちる。** 新しいツールが増えても、ここに追記するまでは安全側（見せない）に倒れる。
  */
 export function toolVisibility(entry: MainViewToolRun): ToolVisibility {
-  if (entry.result !== undefined && entry.result.isError) {
-    return { kind: "failed" }
-  }
-
   const filePathField = FILE_PATH_FIELD_BY_TOOL[entry.name]
   if (filePathField !== undefined) {
     return { kind: "file-change", path: stringField(entry.input, filePathField) }

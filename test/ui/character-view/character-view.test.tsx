@@ -103,7 +103,14 @@ describe("CharacterView", () => {
       renderCharacterView({
         speechExpression: "default",
         runningTools: [
-          { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: now - 2000 },
+          {
+            toolUseId: "toolu_1",
+            name: "Read",
+            input: {},
+            nested: false,
+            startedAt: now - 2000,
+            failureOutput: undefined,
+          },
         ],
         character: {
           ...FIXTURE_CHARACTER,
@@ -143,7 +150,14 @@ describe("CharacterView", () => {
       renderCharacterView({
         speechExpression: "proud",
         runningTools: [
-          { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: now - 100 },
+          {
+            toolUseId: "toolu_1",
+            name: "Read",
+            input: {},
+            nested: false,
+            startedAt: now - 100,
+            failureOutput: undefined,
+          },
         ],
         character: {
           ...FIXTURE_CHARACTER,
@@ -287,7 +301,14 @@ describe("CharacterView", () => {
           speechExpression: "default",
           // 今回のターンでツールが動き続けていても、過去のターンの表情は上書きされない。
           runningTools: [
-            { toolUseId: "toolu_1", name: "Read", input: {}, nested: false, startedAt: now - 5000 },
+            {
+              toolUseId: "toolu_1",
+              name: "Read",
+              input: {},
+              nested: false,
+              startedAt: now - 5000,
+              failureOutput: undefined,
+            },
           ],
           character: {
             ...FIXTURE_CHARACTER,

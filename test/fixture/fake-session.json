@@ -80,6 +80,26 @@
         }
       },
       {
+        "afterMs": 720,
+        "event": {
+          "kind": "tool-started",
+          "toolUseId": "fake-tool-2",
+          "name": "Bash",
+          "input": {
+            "command": "dummy-command --check /tmp/dummy/nowhere"
+          }
+        }
+      },
+      {
+        "afterMs": 760,
+        "event": {
+          "kind": "tool-finished",
+          "toolUseId": "fake-tool-2",
+          "content": "dummy-command: /tmp/dummy/nowhere が無い（台本の作り物のエラー出力）\n終了コード 1",
+          "isError": true
+        }
+      },
+      {
         "afterMs": 800,
         "event": {
           "kind": "speech",

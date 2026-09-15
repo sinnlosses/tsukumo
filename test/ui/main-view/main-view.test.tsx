@@ -158,25 +158,54 @@ describe("MainView（セリフはレポートに出さない）", () => {
   })
 })
 
-describe("MainView（ツールの行は toolVisibility の3種だけ）", () => {
-  it("ファイルを変えた操作・サブエージェントの起動・失敗したツールだけが出る", () => {
+describe("MainView（ツールの行は toolVisibility の2種だけ）", () => {
+  it("ファイルを変えた操作とサブエージェントの起動だけが出る", () => {
     renderMainView([
       request("依頼"),
       tool({ toolUseId: "t1", name: "Edit", input: { file_path: "src/a.ts" } }),
       tool({ toolUseId: "t2", name: "Read", input: { file_path: "src/b.ts" } }),
       tool({ toolUseId: "t3", name: "Agent", input: { description: "調査タスク" } }),
-      tool({
-        toolUseId: "t4",
-        name: "Bash",
-        input: {},
-        result: { content: "失敗した", isError: true },
-      }),
     ])
 
     expect(screen.getByText("Edit: src/a.ts")).toBeDefined()
     expect(screen.getByText(/^Agent: 調査タスク$/)).toBeDefined()
-    expect(screen.getByText("Bash")).toBeDefined()
     expect(screen.queryByText(/Read/)).toBeNull()
+  })
+
+  it("失敗したツールは引数も出力も出さない（過程はサイドバーに寄せた）", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      tool({
+        toolUseId: "t1",
+        name: "Bash",
+        input: { command: "架空のコマンド" },
+        result: { content: "架空のエラー出力", isError: true },
+      }),
+    ])
+
+    expect(container.querySelectorAll("pre.tool-input")).toHaveLength(0)
+    expect(container.querySelectorAll("pre.tool-result")).toHaveLength(0)
+    expect(container.querySelectorAll(".tool-block-failed")).toHaveLength(0)
+    expect(screen.queryByText(/架空のコマンド/)).toBeNull()
+    expect(screen.queryByText(/架空のエラー出力/)).toBeNull()
+    // ツール名だけの器も残さない（ステップごと消える）。
+    expect(container.querySelectorAll(".main-step")).toHaveLength(0)
+  })
+
+  it("失敗しても、ファイルを変えた操作はパスだけの行として残る", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      tool({
+        toolUseId: "t1",
+        name: "Edit",
+        input: { file_path: "src/a.ts" },
+        result: { content: "架空のエラー出力", isError: true },
+      }),
+    ])
+
+    expect(screen.getByText("Edit: src/a.ts")).toBeDefined()
+    expect(container.querySelectorAll("pre")).toHaveLength(0)
+    expect(screen.queryByText(/架空のエラー出力/)).toBeNull()
   })
 })
 
