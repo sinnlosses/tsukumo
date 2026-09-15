@@ -364,7 +364,7 @@ type SessionHost = {
 ```
 <App>                        socket.ts で接続。SessionState と dispatch(command) を Context で配る
 └ <Layout>                   grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）
-   ├ <MainView>              <TurnTabs> + <Turn>（今回・1つ前・2つ前）
+   ├ <MainView>              <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
    │   └ <Turn>              <RequestHeading> + [<Report> | <ToolRun> | <QuestionRecord>]*
    │       └ <Report>        Markdown（6.3）。書きかけはブロック単位で memo
    ├ <CharacterView>         <Portrait> + <BalloonTrack>

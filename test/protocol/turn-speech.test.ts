@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { mainViewTurns } from "../../src/protocol/main-view.ts"
+import { MAX_MAIN_VIEW_TURNS, mainViewTurns } from "../../src/protocol/main-view.ts"
 import {
   INITIAL_SESSION_STATE,
   mainViewEntries,
@@ -106,8 +106,9 @@ describe("turnSpeeches（通し番号）", () => {
     })
   })
 
-  it("直近3ターンに絞られたあとも、窓の中の番号でそのターンのセリフが引ける", () => {
-    const records: readonly SessionRecord[] = Array.from({ length: 5 }, (_, index) => [
+  it(`直近${String(MAX_MAIN_VIEW_TURNS)}ターンに絞られたあとも、窓の中の番号でそのターンのセリフが引ける`, () => {
+    const turnCount = MAX_MAIN_VIEW_TURNS + 2
+    const records: readonly SessionRecord[] = Array.from({ length: turnCount }, (_, index) => [
       request(`依頼${String(index)}`),
       speech(`セリフ${String(index)}`),
       detail(`レポート${String(index)}`),
@@ -116,9 +117,13 @@ describe("turnSpeeches（通し番号）", () => {
     const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }))
     const speechTurns = turnSpeeches(records)
 
-    expect(viewTurns.map((turn) => turn.id)).toEqual([2, 3, 4])
+    const expectedIds = Array.from(
+      { length: MAX_MAIN_VIEW_TURNS },
+      (_, index) => turnCount - MAX_MAIN_VIEW_TURNS + index,
+    )
+    expect(viewTurns.map((turn) => turn.id)).toEqual(expectedIds)
     expect(
       viewTurns.map((turn) => speechTurns.find((candidate) => candidate.id === turn.id)?.speeches),
-    ).toEqual([["セリフ2"], ["セリフ3"], ["セリフ4"]])
+    ).toEqual(expectedIds.map((id) => [`セリフ${String(id)}`]))
   })
 })

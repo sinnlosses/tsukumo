@@ -2,8 +2,8 @@
 // `toolVisibility` が絞ったツールの行・質問の記録が挟まる（`docs/requirements.md` 4.2。
 // 作業の**進行**はサイドバーが別に持つ）。
 //
-// **1ターン＝1枚、今回・1つ前・2つ前の3タブ。新しいターンで先頭へ戻すが、利用者が過去の
-// タブを見ている間は動かさない**（規則は `src/ui/turn-selection.tsx` にある。
+// **1ターン＝1枚、直近 `MAX_MAIN_VIEW_TURNS` 件をタブにする。新しいターンで先頭へ戻すが、
+// 利用者が過去のタブを見ている間は動かさない**（規則は `src/ui/turn-selection.tsx` にある。
 // docs/design.md 6.2）。
 //
 // 選んでいるターン（`turnId`）は `<TurnSelectionProvider>` の Context

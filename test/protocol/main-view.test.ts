@@ -17,7 +17,7 @@ const edit = (path: string): MainViewEntry => ({
   result: { content: "ok", isError: false },
 })
 
-describe("mainViewTurns（依頼で区切り、直近3件に絞る）", () => {
+describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("依頼を境目にやり取りへ分ける", () => {
     const turns = mainViewTurns([
       request("前の依頼"),
@@ -31,8 +31,9 @@ describe("mainViewTurns（依頼で区切り、直近3件に絞る）", () => {
     expect(turns[1]?.steps[0]?.report).toBe("今回のレポート")
   })
 
-  it("直近3件（今回・1つ前・2つ前）だけを昇順で残す", () => {
-    const entries = Array.from({ length: 8 }, (_, index) => [
+  it(`直近${String(MAX_MAIN_VIEW_TURNS)}件だけを昇順で残す（6件以上流しても絞られる）`, () => {
+    const turnCount = MAX_MAIN_VIEW_TURNS + 3
+    const entries = Array.from({ length: turnCount }, (_, index) => [
       request(`依頼${String(index)}`),
       detail(`レポート${String(index)}`),
     ]).flat()
@@ -40,7 +41,12 @@ describe("mainViewTurns（依頼で区切り、直近3件に絞る）", () => {
     const turns = mainViewTurns(entries)
 
     expect(turns).toHaveLength(MAX_MAIN_VIEW_TURNS)
-    expect(turns.map((turn) => turn.request)).toEqual(["依頼5", "依頼6", "依頼7"])
+    expect(turns.map((turn) => turn.request)).toEqual(
+      Array.from({ length: MAX_MAIN_VIEW_TURNS }, (_, index) => {
+        const originalIndex = turnCount - MAX_MAIN_VIEW_TURNS + index
+        return `依頼${String(originalIndex)}`
+      }),
+    )
   })
 
   it("レポートとその後のツールの実行が1つのステップにまとまる", () => {

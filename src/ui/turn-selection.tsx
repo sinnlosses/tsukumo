@@ -8,7 +8,7 @@
 //
 // 規則（もとは `<MainView>` のローカル状態。振る舞いは変えていない）:
 // 新しいターンが始まったら先頭（今回）へ戻す / 利用者が過去のタブを見ている間は動かさない /
-// 選んでいたターンが窓（直近3件）から外れたら今回に戻す。
+// 選んでいたターンが窓（`MAX_MAIN_VIEW_TURNS` 件）から外れたら今回に戻す。
 
 import {
   createContext,
@@ -79,7 +79,7 @@ export function TurnSelectionProvider(props: TurnSelectionProviderProps): ReactE
     // 選択を変えるたびに「新しいターンが始まったか」の判定まで走り直ってしまう）。
   }, [newestTurnId])
 
-  // 選んでいたターンが窓（直近3件）から外れたら今回に戻す。
+  // 選んでいたターンが窓（`MAX_MAIN_VIEW_TURNS` 件）から外れたら今回に戻す。
   const activeTurnId =
     selectedTurnId !== undefined && turnIds.includes(selectedTurnId) ? selectedTurnId : newestTurnId
 
