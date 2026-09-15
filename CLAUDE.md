@@ -72,6 +72,9 @@ bun run start                 # セッションを起こし、レイアウトペ
                               # （`tsukumo` コマンドと同じ。TSUKUMO_OPEN_VIEW=0 で自動オープンを
                               #   止める。**本物の claude を子プロセスで起こす**ので、テストから
                               #   起動しきらない）
+bun run dev                   # start と同じだが src/ui/ を見張る（開発用。保存すると開いている
+                              #   タブが組み立て直したものに入れ替わる。src/core/ と src/protocol/ を
+                              #   直したときは上げ直しが要る。docs/design.md 11章）
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具
 ```
 
