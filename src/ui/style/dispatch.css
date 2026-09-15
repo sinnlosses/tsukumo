@@ -13,14 +13,27 @@
    （`position: relative` は src/presentation/style/layout.css 側で用意してある）。 */
 .dispatch-pending-glow {
   position: absolute;
-  inset: -1px;
+  inset: 0;
   border-radius: inherit;
-  box-shadow: 0 0 0 1px var(--state-warn);
+  /* 外向きの影だと領域の外へ 1px はみ出して .layout-dispatch がスクロールしてしまうので、
+     内向き（inset）の影で内側の縁に沿わせる。 */
+  box-shadow: inset 0 0 0 1px var(--state-warn);
   pointer-events: none;
 }
 
-/* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。 */
+/* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。
+   **領域（.layout-dispatch）そのものを縦スクロールさせない**ため、箱の高さは `.dispatch` の
+   高さ基準の max-height で抑え、溢れるぶんは中の .question-card だけでスクロールさせる。
+   進捗と操作の行は縮めず（flex: 0 0 auto）常に見える位置に残す。
+   max-height は枠・内側の余白も込みで数えたいので、ここだけ border-box にする。
+   割合は 1400x900・既定の比率（領域 335px）で測って決めた。上げるほど選択肢が見えるが
+   textarea が潰れる（60% で選択肢1件・textarea 57px / 64% で2件・45px / 68% で2件・34px）。 */
 .pending-answer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 64%;
   margin: 0 0 0.5rem;
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--rule);
@@ -34,12 +47,13 @@
   font-weight: bold;
 }
 .pending-actions,
-.pending-answer-submit {
-  margin-top: 0.5rem;
-}
-.pending-actions {
+.pending-answer-actions {
   display: flex;
   gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.pending-answer-actions {
+  flex: 0 0 auto;
 }
 .pending-action {
   padding: 0.35rem 0.9rem;
@@ -65,11 +79,40 @@
   border-color: var(--state-ng);
   color: var(--state-ng);
 }
-.question-card {
-  margin: 0 0 0.75rem;
+/* いま何問目かの見出し（質問が2件以上のときだけ出る）。「戻る」もこの行に同居させる
+   （独立した行にすると、その高さのぶんだけ選択肢が見えなくなる）。 */
+.question-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  margin: 0 0 0.4rem;
+  font-size: var(--font-label);
+  letter-spacing: 0.08em;
+  color: var(--ink-quiet);
 }
-.question-card:last-of-type {
-  margin-bottom: 0;
+.pending-answer-back {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--ink-quiet);
+  font: inherit;
+  cursor: pointer;
+}
+.pending-answer-back:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+/* 質問1問ぶん。箱が max-height に達したら、ここだけが縦にスクロールする。 */
+.question-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
 }
 .question-header {
   margin: 0 0 0.2rem;
@@ -86,14 +129,20 @@
   margin: 0;
   padding: 0;
   display: grid;
+  /* grid の既定（auto）だと中身の最小幅で列が広がり、長いラベルで横に溢れる。 */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.35rem;
 }
-/* 選択肢1件（単一選択の <button>、複数選択の <label> のどちらにも使う）。 */
+/* 選択肢1件（単一選択の <button>、複数選択の <label> のどちらにも使う）。
+   **ラベルと説明は1行に並べる**（/ 補完の候補一覧 .dispatch-suggestion-item と同じ形）。
+   縦に積むと選択肢3件で入力欄の領域の高さを使い切ってしまい、1件しか見えなくなる。 */
 .question-choice {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: baseline;
+  gap: 0.5rem;
   width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
@@ -122,9 +171,17 @@
   outline-offset: 2px;
 }
 .question-choice-label {
+  flex: 0 0 auto;
   font-weight: bold;
 }
+/* 説明はラベルの右の余りに収め、幅が足りなければ省略記号で切る（選択肢そのものを縦にも横にも
+   広げない）。選んだとき・hover したときに高さが変わってガタつかせないため、行数は常に1行。 */
 .question-choice-description {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
@@ -133,29 +190,24 @@
 .question-choice-checkbox-row {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 0.5rem;
 }
 .question-choice-other {
   display: flex;
+  min-width: 0;
   gap: 0.4rem;
 }
+/* 自由入力は Enter で進む（送るボタンは持たない。進む操作は箱の下の1つに統一してある）。 */
 .question-other-input {
   flex: 1 1 auto;
+  min-width: 0;
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-}
-.question-other-send {
-  padding: 0.35rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
 }
 
 /* 右下の入力ペイン（docs/requirements.md 4.7）。claude への依頼を送るフォームを持つ。 */

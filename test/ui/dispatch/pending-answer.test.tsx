@@ -26,6 +26,51 @@ function renderPendingAnswer(
   )
 }
 
+function oneQuestion(id: string): PendingAsk {
+  return {
+    kind: "question",
+    id,
+    questions: [
+      {
+        header: "架空の選択",
+        text: "架空の質問",
+        multiSelect: false,
+        options: [
+          { label: "A案", description: "架空の説明A" },
+          { label: "B案", description: "架空の説明B" },
+        ],
+      },
+    ],
+  }
+}
+
+function twoQuestions(id: string): PendingAsk {
+  return {
+    kind: "question",
+    id,
+    questions: [
+      {
+        header: "架空の選択1",
+        text: "架空の質問1",
+        multiSelect: false,
+        options: [
+          { label: "A案", description: "架空の説明A" },
+          { label: "B案", description: "架空の説明B" },
+        ],
+      },
+      {
+        header: "架空の選択2",
+        text: "架空の質問2",
+        multiSelect: false,
+        options: [
+          { label: "C案", description: "架空の説明C" },
+          { label: "D案", description: "架空の説明D" },
+        ],
+      },
+    ],
+  }
+}
+
 describe("PendingAnswer", () => {
   it("答え待ちが無いときは何も描かない", () => {
     const { container } = render(
@@ -183,50 +228,152 @@ describe("PendingAnswer", () => {
     ])
   })
 
-  it("質問が2件以上のときは、答えるまで送らず「答える」ボタンで一括送信する", () => {
-    const calls: unknown[] = []
-    renderPendingAnswer(
-      [
-        {
-          kind: "question",
-          id: "ask-6",
-          questions: [
-            {
-              header: "架空の選択1",
-              text: "架空の質問1",
-              multiSelect: false,
-              options: [{ label: "A案", description: "" }],
-            },
-            {
-              header: "架空の選択2",
-              text: "架空の質問2",
-              multiSelect: false,
-              options: [{ label: "B案", description: "" }],
-            },
-          ],
-        },
-      ],
-      (command) => calls.push(command),
+  it("質問が2件あっても、同時に見えるのは1問だけ", () => {
+    const { container } = render(
+      <SessionContext.Provider
+        value={{
+          state: { ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-6")] },
+          connection: "open",
+          dispatch: () => {},
+        }}
+      >
+        <PendingAnswer />
+      </SessionContext.Provider>,
     )
 
-    const submit = screen.getByText("答える") as HTMLButtonElement
-    expect(submit.disabled).toBe(true)
+    expect(container.querySelectorAll(".question-card")).toHaveLength(1)
+    expect(screen.getByText("架空の質問1")).toBeDefined()
+    expect(screen.queryByText("架空の質問2")).toBeNull()
+  })
+
+  it("質問が2件のとき、両方に答えると labels 2件で1回だけ dispatch する", () => {
+    const calls: unknown[] = []
+    renderPendingAnswer([twoQuestions("ask-7")], (command) => calls.push(command))
 
     fireEvent.click(screen.getByText("A案"))
     expect(calls).toEqual([])
-    expect(submit.disabled).toBe(true)
 
-    fireEvent.click(screen.getByText("B案"))
-    expect(submit.disabled).toBe(false)
-
-    fireEvent.click(submit)
+    fireEvent.click(screen.getByText("C案"))
 
     expect(calls).toEqual([
       {
         type: "answer",
-        id: "ask-6",
-        answer: { kind: "answers", labels: ["A案", "B案"] },
+        id: "ask-7",
+        answer: { kind: "answers", labels: ["A案", "C案"] },
       },
     ])
+  })
+
+  it("「戻る」で前の質問に戻り、選び直した答えが反映される", () => {
+    const calls: unknown[] = []
+    renderPendingAnswer([twoQuestions("ask-8")], (command) => calls.push(command))
+
+    fireEvent.click(screen.getByText("A案"))
+    fireEvent.click(screen.getByText("戻る"))
+
+    expect(screen.getByText("架空の質問1")).toBeDefined()
+    // 選んだ答えは残っている。
+    expect(document.querySelector(".question-choice.is-selected")?.textContent).toContain("A案")
+
+    fireEvent.click(screen.getByText("B案"))
+    fireEvent.click(screen.getByText("C案"))
+
+    expect(calls).toEqual([
+      {
+        type: "answer",
+        id: "ask-8",
+        answer: { kind: "answers", labels: ["B案", "C案"] },
+      },
+    ])
+  })
+
+  it("いま何問目かは質問が2件以上のときだけ出す", () => {
+    renderPendingAnswer([twoQuestions("ask-9")])
+
+    expect(screen.getByText("2問中1問目")).toBeDefined()
+
+    fireEvent.click(screen.getByText("A案"))
+
+    expect(screen.getByText("2問中2問目")).toBeDefined()
+  })
+
+  it("質問が1件のときは、いま何問目かを出さない", () => {
+    renderPendingAnswer([oneQuestion("ask-10")])
+
+    expect(screen.queryByText("1問中1問目")).toBeNull()
+  })
+
+  it("単一選択で自由入力に打つと、直前に押した選択肢の選択が外れる", () => {
+    const { container } = render(
+      <SessionContext.Provider
+        value={{
+          state: { ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-11")] },
+          connection: "open",
+          dispatch: () => {},
+        }}
+      >
+        <PendingAnswer />
+      </SessionContext.Provider>,
+    )
+
+    fireEvent.click(screen.getByText("A案"))
+    fireEvent.click(screen.getByText("戻る"))
+    expect(container.querySelector(".question-choice.is-selected")).not.toBeNull()
+
+    fireEvent.change(screen.getByLabelText("その他"), { target: { value: "D案（架空）" } })
+
+    expect(container.querySelector(".question-choice.is-selected")).toBeNull()
+  })
+
+  it("自由入力欄に「送る」ボタンは無い", () => {
+    renderPendingAnswer([oneQuestion("ask-12")])
+
+    expect(screen.queryByText("送る")).toBeNull()
+  })
+
+  it("自由入力欄で Enter を押すと、最後の質問なら自由入力の文字列を送る", () => {
+    const calls: unknown[] = []
+    renderPendingAnswer([oneQuestion("ask-13")], (command) => calls.push(command))
+
+    const input = screen.getByLabelText("その他")
+    fireEvent.change(input, { target: { value: " D案（架空） " } })
+    fireEvent.keyDown(input, { key: "Enter" })
+
+    expect(calls).toEqual([
+      { type: "answer", id: "ask-13", answer: { kind: "answers", labels: ["D案（架空）"] } },
+    ])
+  })
+
+  it("自由入力欄で Enter を押すと、最後の質問でなければ次の質問へ進む", () => {
+    const calls: unknown[] = []
+    renderPendingAnswer([twoQuestions("ask-14")], (command) => calls.push(command))
+
+    const input = screen.getByLabelText("その他")
+    fireEvent.change(input, { target: { value: "D案（架空）" } })
+    fireEvent.keyDown(input, { key: "Enter" })
+
+    expect(screen.getByText("架空の質問2")).toBeDefined()
+    expect(calls).toEqual([])
+
+    fireEvent.click(screen.getByText("C案"))
+
+    expect(calls).toEqual([
+      {
+        type: "answer",
+        id: "ask-14",
+        answer: { kind: "answers", labels: ["D案（架空）", "C案"] },
+      },
+    ])
+  })
+
+  it("自由入力に文字があるときだけ、単一選択でも進むボタンを出す", () => {
+    renderPendingAnswer([twoQuestions("ask-15")])
+
+    expect(screen.queryByText("次へ")).toBeNull()
+
+    fireEvent.change(screen.getByLabelText("その他"), { target: { value: "D案（架空）" } })
+
+    expect(screen.getByText("次へ")).toBeDefined()
+    expect(screen.queryByText("答える")).toBeNull()
   })
 })

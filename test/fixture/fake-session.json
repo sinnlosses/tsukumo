@@ -239,6 +239,82 @@
       {
         "afterMs": 100,
         "event": {
+          "kind": "pending-changed",
+          "pending": [
+            {
+              "kind": "question",
+              "id": "fake-ask-3",
+              "questions": [
+                {
+                  "header": "架空の選択1",
+                  "text": "架空の質問1：どの道具で進める？",
+                  "multiSelect": false,
+                  "options": [
+                    {
+                      "label": "道具A（架空）",
+                      "description": "架空の説明：一番手早く終わるが、後から直しにくい。"
+                    },
+                    {
+                      "label": "道具B（架空）",
+                      "description": "架空の説明：手間はかかるが、途中で向きを変えやすい。"
+                    },
+                    {
+                      "label": "道具C（架空）",
+                      "description": "架空の説明：長い説明を折り返しと行数の上限で確かめるための、わざと長めの架空の文面。ここから先は2行目に入り、さらに続く部分は切られて見えなくなるはず。"
+                    }
+                  ]
+                },
+                {
+                  "header": "架空の選択2",
+                  "text": "架空の質問2：どこから手を付ける？",
+                  "multiSelect": false,
+                  "options": [
+                    {
+                      "label": "入口（架空）",
+                      "description": "架空の説明：見えるところから順に触る。"
+                    },
+                    {
+                      "label": "土台（架空）",
+                      "description": "架空の説明：下の層から組み直す。"
+                    },
+                    {
+                      "label": "端（架空）",
+                      "description": "架空の説明：影響の小さいところで試してから広げる。"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "afterMs": 200,
+        "event": {
+          "kind": "speech",
+          "text": "質問を2つ出したよ。1問ずつ答えてね。",
+          "expression": "default"
+        }
+      },
+      {
+        "afterMs": 1200,
+        "event": {
+          "kind": "utterance",
+          "text": "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。\n"
+        }
+      },
+      {
+        "afterMs": 1300,
+        "event": {
+          "kind": "turn-finished",
+          "status": "success"
+        }
+      }
+    ],
+    [
+      {
+        "afterMs": 100,
+        "event": {
           "kind": "partial-utterance",
           "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- "
         }

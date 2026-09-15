@@ -1,10 +1,11 @@
 // 答え待ちの箱（許可要求・質問）。`<Composer>` の `<textarea>` の上に出す（2026-09-11 決定。
 // docs/design.md 6.1）。答え待ちが無いときは何も描かない。
 //
+// **質問は1問ずつ出す**（入力欄の領域が縦に溢れないようにするため。溢れるぶんは箱の中だけで
+// スクロールさせる）。単一選択は選んだ瞬間に次の質問へ進み、最後の1問を答えた時点で
+// **全問ぶんをまとめて1回 dispatch する**。送る前なら「戻る」で選び直せる。
+//
 // **`multiSelect` はチェックボックスで複数選べる**（docs/design.md 6.1「複数選択はチェックボックス」）。
-// 旧実装（`src/presentation/browser/pending-answer.ts`）は選択肢ボタンを押すたびに同じ質問の中の
-// 他の選択を必ず解除していたため、**`multiSelect` の値に関わらず単一選択的な挙動だった**
-// （develop/progress.md「未解決」で疑われていた点。確認できた）。ここでは再現しない。
 //
 // **`answer.labels[i]` は `questions[i]` への答え1つ**（`protocol/pending-ask.ts` の契約）。
 // 複数選択で2つ以上選んだときは、ここで「、」でつないで1つの文字列にする。質問の件数で
@@ -72,45 +73,55 @@ function PermissionAsk(props: {
 
 function QuestionAsk(props: {
   readonly pending: Extract<PendingAsk, { readonly kind: "question" }>
-}): ReactElement {
+}): ReactElement | null {
   const { dispatch } = useSession()
   const questions = props.pending.questions
+  // 答えは質問ごとに持ち続ける（「戻る」で前の質問に戻ったとき、選んだものが残っているように）。
   const [selections, setSelections] = useState<readonly (readonly string[])[]>(
     questions.map(() => []),
   )
   const [freeTexts, setFreeTexts] = useState<readonly string[]>(questions.map(() => ""))
+  const [index, setIndex] = useState(0)
 
-  // 質問が1件だけで単一選択なら、選ぶ／自由入力を送った瞬間に答える（旧実装と同じ）。
-  // それ以外（複数の質問／複数選択）は、全部に答えてから「答える」ボタンで送る。
-  const needsSubmitButton = questions.length > 1 || (questions[0]?.multiSelect ?? false)
-
-  const answerFor = (index: number): string[] => {
-    const freeText = freeTexts[index]?.trim() ?? ""
-    const selected = selections[index] ?? []
-    return freeText === "" ? [...selected] : [...selected, freeText]
+  const question = questions[index]
+  if (question === undefined) {
+    return null
   }
 
-  const send = (): void => {
-    const labels = questions.map((_, index) => answerFor(index).join("、"))
+  const answerFor = (target: number): readonly string[] => {
+    const freeText = freeTexts[target]?.trim() ?? ""
+    const selected = selections[target] ?? []
+    return freeText === "" ? selected : [...selected, freeText]
+  }
+
+  /**
+   * `target` 番目の答えだけ `answer` に差し替えて `labels` を組む。
+   * 選んだ直後に送るときは `setSelections` の結果をまだ読めないため、状態ではなく引数から組む。
+   * 返りが可変なのは、コマンド（`protocol/command.ts`）の zod スキーマが `string[]` を要求するため。
+   */
+  const labelsWith = (target: number, answer: readonly string[]): string[] =>
+    questions.map((_, i) => (i === target ? answer : answerFor(i)).join("、"))
+
+  const advance = (target: number, answer: readonly string[]): void => {
+    if (target < questions.length - 1) {
+      setIndex(target + 1)
+      return
+    }
     dispatch({
       type: "answer",
       id: props.pending.id,
-      answer: { kind: "answers", labels },
+      answer: { kind: "answers", labels: labelsWith(target, answer) },
     })
   }
 
-  const selectSingle = (index: number, label: string): void => {
+  const selectSingle = (label: string): void => {
     setSelections((current) => current.map((selected, i) => (i === index ? [label] : selected)))
-    if (!needsSubmitButton) {
-      dispatch({
-        type: "answer",
-        id: props.pending.id,
-        answer: { kind: "answers", labels: [label] },
-      })
-    }
+    // 単一選択は「選択肢」と「自由入力」の排他。選び直したら前に打った文字は捨てる。
+    setFreeTexts((current) => current.map((existing, i) => (i === index ? "" : existing)))
+    advance(index, [label])
   }
 
-  const toggleMulti = (index: number, label: string): void => {
+  const toggleMulti = (label: string): void => {
     setSelections((current) =>
       current.map((selected, i) => {
         if (i !== index) {
@@ -123,50 +134,56 @@ function QuestionAsk(props: {
     )
   }
 
-  const setFreeText = (index: number, value: string): void => {
+  const setFreeText = (value: string): void => {
     setFreeTexts((current) => current.map((existing, i) => (i === index ? value : existing)))
+    if (!question.multiSelect && value.trim() !== "") {
+      // 打っている最中に、直前に押した選択肢が光ったままにならないようにする。
+      setSelections((current) => current.map((selected, i) => (i === index ? [] : selected)))
+    }
   }
 
-  const sendFreeText = (index: number): void => {
-    if (needsSubmitButton) {
-      return
-    }
-    const value = freeTexts[index]?.trim() ?? ""
-    if (value === "") {
-      return
-    }
-    dispatch({
-      type: "answer",
-      id: props.pending.id,
-      answer: { kind: "answers", labels: [value] },
-    })
-  }
-
-  const allAnswered = questions.every((_, index) => answerFor(index).length > 0)
+  const currentAnswer = answerFor(index)
+  const isLast = index === questions.length - 1
+  const showBack = index > 0
+  // 単一選択で自由入力が空のときは、選んだ瞬間に進むのでボタンを出さない。
+  const showAdvance = question.multiSelect || (freeTexts[index]?.trim() ?? "") !== ""
 
   return (
     <div className="pending-answer pending-question">
-      {questions.map((question, index) => (
-        <QuestionCard
-          key={index}
-          question={question}
-          selected={selections[index] ?? []}
-          freeText={freeTexts[index] ?? ""}
-          onSelectSingle={(label) => selectSingle(index, label)}
-          onToggleMulti={(label) => toggleMulti(index, label)}
-          onFreeTextChange={(value) => setFreeText(index, value)}
-          onFreeTextSend={() => sendFreeText(index)}
-        />
-      ))}
-      {needsSubmitButton ? (
-        <button
-          type="button"
-          className="pending-action pending-answer-submit"
-          disabled={!allAnswered}
-          onClick={send}
-        >
-          答える
-        </button>
+      {questions.length > 1 ? (
+        <div className="question-progress">
+          <span>{`${String(questions.length)}問中${String(index + 1)}問目`}</span>
+          {showBack ? (
+            <button
+              type="button"
+              className="pending-answer-back"
+              onClick={() => setIndex(index - 1)}
+            >
+              戻る
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      <QuestionCard
+        question={question}
+        selected={selections[index] ?? []}
+        freeText={freeTexts[index] ?? ""}
+        onSelectSingle={selectSingle}
+        onToggleMulti={toggleMulti}
+        onFreeTextChange={setFreeText}
+        onFreeTextEnter={() => advance(index, answerFor(index))}
+      />
+      {showAdvance ? (
+        <div className="pending-answer-actions">
+          <button
+            type="button"
+            className="pending-action pending-answer-submit"
+            disabled={currentAnswer.length === 0}
+            onClick={() => advance(index, currentAnswer)}
+          >
+            {isLast ? "答える" : "次へ"}
+          </button>
+        </div>
       ) : null}
     </div>
   )
@@ -179,9 +196,10 @@ function QuestionCard(props: {
   readonly onSelectSingle: (label: string) => void
   readonly onToggleMulti: (label: string) => void
   readonly onFreeTextChange: (value: string) => void
-  readonly onFreeTextSend: () => void
+  readonly onFreeTextEnter: () => void
 }): ReactElement {
   const { question } = props
+
   const hasFreeTextOption = question.options.some(
     (option) => option.label === FREE_TEXT_OPTION_LABEL,
   )
@@ -200,7 +218,7 @@ function QuestionCard(props: {
               key={option.label}
               value={props.freeText}
               onChange={props.onFreeTextChange}
-              onSend={props.onFreeTextSend}
+              onEnter={props.onFreeTextEnter}
             />
           ) : question.multiSelect ? (
             <li key={option.label}>
@@ -235,7 +253,7 @@ function QuestionCard(props: {
           <FreeTextOption
             value={props.freeText}
             onChange={props.onFreeTextChange}
-            onSend={props.onFreeTextSend}
+            onEnter={props.onFreeTextEnter}
           />
         )}
       </ul>
@@ -247,11 +265,13 @@ function QuestionCard(props: {
  * 自由入力欄。**選択肢の有無によらず常に1つ出す**（モデルが選択肢に「その他」を含めてこなかった
  * ときの受け皿。モデルが自分で足したときは、その位置に出して二重にしない。呼び出し側
  * {@link QuestionCard} が判断する）。
+ *
+ * 進む操作は箱の下の1つに統一してあるので、ここには送るボタンを置かない。Enter で進む。
  */
 function FreeTextOption(props: {
   readonly value: string
   readonly onChange: (value: string) => void
-  readonly onSend: () => void
+  readonly onEnter: () => void
 }): ReactElement {
   return (
     <li className="question-choice-other">
@@ -262,10 +282,14 @@ function FreeTextOption(props: {
         aria-label={FREE_TEXT_OPTION_LABEL}
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" || event.currentTarget.value.trim() === "") {
+            return
+          }
+          event.preventDefault()
+          props.onEnter()
+        }}
       />
-      <button type="button" className="question-other-send" onClick={props.onSend}>
-        送る
-      </button>
     </li>
   )
 }

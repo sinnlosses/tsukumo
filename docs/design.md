@@ -373,7 +373,7 @@ type SessionHost = {
    ├ <Sidebar>               <Activity> + <TaskList> + <SessionInfo>
    │   └ <SessionInfo>       モデル / 許可モード の <select>、キャラクターの <select>（段8）、続きから始まった印
    ├ <Dispatch>              <PendingAnswer> + <Composer> + <TurnStatus>
-   │   ├ <PendingAnswer>     許可（許可 / 拒否）・質問（選択肢 + 自由入力。**複数選択はチェックボックス**）
+   │   ├ <PendingAnswer>     許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）
    │   ├ <Composer>          <textarea>。Enter 改行 / ⌘Enter 送信。<CommandSuggestions> を内包
    │   └ <TurnStatus>        送信 ⇄ 中断、経過 / 所要
    └ <Appearance>            「見た目」の引き出し（13.6）。色3つ・立ち絵の固定・比率のリセット。
