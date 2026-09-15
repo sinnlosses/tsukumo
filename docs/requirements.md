@@ -887,3 +887,4 @@ Electron などに載せ替えるときも Bun のプロセスを子として起
 - 用語の定義: [`docs/glossary.md`](./glossary.md)
 - コーディング規約: [`docs/coding-standards.md`](./coding-standards.md)
 - 検討当時のユーザーの指示メモ: [`docs/history/direction.md`](./history/direction.md)
+- 外に依存しているものの洗い出しと「外せるか」の評価: [`docs/research/external-dependency.md`](./research/external-dependency.md)
