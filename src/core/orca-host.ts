@@ -1,7 +1,9 @@
 // ホスト依存の操作（src/core/host.ts）を Orca の CLI で実装するアダプタ。
 //
 // **`orca` コマンドを呼ぶのはこのファイルだけ**（docs/architecture.md 原則3）。
-// 実際に Orca が動いていないと結果を確かめられないので、ここは自動テストの対象にしない。
+// この境界は test/architecture.test.ts が落とす。
+// 実際に Orca が動いていないと showView などの挙動そのものは確かめられないので、
+// ここは（境界のテストを除き）自動テストの対象にしない。
 //
 // Orca CLI の対応関係（2026-09-13 に v1.4.x で実測。**`orca tab goto` は無い**）:
 //   showView → orca tab list --json で**オリジンとパスが同じ**タブを探し、

@@ -46,6 +46,21 @@ describe("層と依存の向き", () => {
   })
 })
 
+// `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md 原則3、
+// src/core/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
+// コマンド名の文字列リテラル "orca" を伴うので、それを orca-host.ts の外から探す。
+// ファイル名（`orca-host.ts`）やバッククォートで囲んだ日本語の説明文はクォートされた文字列
+// リテラルではないので拾わない。
+describe("orca コマンドを起こす箇所", () => {
+  it("`orca` コマンドを呼ぶのは src/core/orca-host.ts だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath !== "core/orca-host.ts")
+      .filter((relPath) => /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
+
+    expect(offenders).toEqual([])
+  })
+})
+
 // `ui/` の中の横断 import を禁じる（`docs/design.md` 12章 段3「ui/ の作法」2）。
 // 領域は `layout` / `main-view` / `character-view` / `sidebar` / `dispatch`。
 // `ui/component/` `ui/style/` と `ui/app.tsx` `ui/socket.ts` `ui/main.tsx`（領域のディレクトリの

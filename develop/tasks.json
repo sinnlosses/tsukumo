@@ -311,11 +311,11 @@
     "id": "T-140",
     "summary": "orca を呼ぶのが orca-host.ts だけであることをテストで守る",
     "task": "## 背景\n\n`docs/architecture.md` 原則3 と `src/core/orca-host.ts` の冒頭コメントは「**`orca` コマンドを呼ぶのはこのファイルだけ**」と書いているが、**これを落とす検査が無い**。`test/architecture.test.ts` が見ているのは (1) 層の辺（`protocol` / `core` / `ui` / `cli`）、(2) `protocol` が `node:` を import しないこと、(3) `ui/<領域>/` 同士の import が無いこと の3つだけ。\n\n2026-09-16 のユーザーの方針「ドメイン（tsukumo の核）が特定の技術（orca など）に依存しないようにする」（T-046）を、コメントではなくテストで守る。\n\n**いま破られてはいない**（`grep -rn 'orca' src` の結果はアダプタと `src/cli.ts` の配線とコメントだけ）ので、このタスクは現状を固定するもの。タスクをサブエージェントに委譲する運用（`CLAUDE.md`「進捗管理とHandoff」）では、**検査の無い約束は破られても気づけない**のが問題。\n\n## 解くべき論点\n\n- **何を落とすか。** `\"orca\"` の文字列リテラルか、`createOrcaHost` の import か、その両方か。`src/cli.ts` は配線層なので `createOrcaHost` を import してよい（`ALLOWED_IMPORTS` で `cli → core` は許されている）。落としたいのは「アダプタ以外が `orca` コマンドを起こすこと」\n- `scripts/open-views.ts` も `createOrcaHost()` を直接呼ぶが、`scripts/` は本体から呼ばれない道具で `test/architecture.test.ts` の対象外（`SRC_ROOT` が `src/` を指している）。対象を広げるかどうか\n\n## やること\n\n1. `test/architecture.test.ts` に検査を1つ足し、`src/` の中で `orca` コマンドを起こす記述が `src/core/orca-host.ts` 以外に無いことを落とす\n2. **検査が効くことを確かめる。** 別のファイルに一時的に `execFile(\"orca\", …)` を書いて落ちること、書き戻して通ることを見る。**確認のための変更はコミットしない**\n3. `src/core/orca-host.ts` の冒頭コメントに「テストで守られている」ことが分かる1文を足すかを判断する（足さなくてもよい）\n\n## 完了条件\n\n- `test/architecture.test.ts` の `it` が1つ増え、`bun run check` が通ること\n- 手順2の確認（わざと破ると落ちる・戻すと通る）の結果が `evidence` に書かれていること\n- `src/` の**コードを変えないこと**（テストと、必要ならコメントだけ）\n\n## 注意\n\n- **外部ツールを増やさない。** `test/architecture.test.ts` の冒頭が「ここは正規表現と `node:fs` だけで、外部ツールは増やさない」と明記している\n- `docs/research/architecture-proposal.md` の段1は、同じ仕組みで SDK・`node:child_process`・`process.env`・`document`・経路名の限定もまとめて足す案で、**2026-09-16 に T-142 として登録した**。**このタスクを先に行い、T-142 がその隣に並べる**形に決めたので、ここでは `orca` の1件だけを足す（まとめてやり直さない）",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
     "loopable": "Y",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "test/architecture.test.ts に describe「orca コマンドを起こす箇所」を1つ足した（it が3→4）。src/ 全ファイルから core/orca-host.ts を除き、/[\"']orca[\"']/ にマッチしたら違反。ファイル名 orca-host.ts やバッククォート表記は拾わない。わざと破る確認: src/core/host.ts に const TEMP_ORCA_PROBE = \"orca\" を足すと bun test --isolate test/architecture.test.ts が 3 pass / 1 fail（offenders に core/host.ts）、git checkout で戻すと 4 pass / 0 fail。確認用の変更はコミットしていない。src/core/orca-host.ts は冒頭コメントに「この境界は test/architecture.test.ts が落とす」を1文足しただけ（コードは無変更）。bun run check: typecheck/lint/format(166ファイル) OK、471 pass / 0 fail / 49ファイル。",
     "dependencies": []
   },
   {
