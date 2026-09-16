@@ -78,9 +78,6 @@ bun run dev                   # start と同じだが src/ui/ を見張る（開
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具
 ```
 
-各スキルが言う「チェックコマンド」（`develop/workflow.json` の `checkCommand`）は
-**`bun run check`** のこと。
-
 ## アーキテクチャ概要
 
 tsukumo は1つのプロセスで、Agent SDK で Claude Code を子プロセスとして起こし、受け取った
@@ -172,9 +169,8 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 リポジトリ内の複製を削除した）。一覧は毎セッションのスキル案内を参照。
 
 タスク運用の3つ（`next-task` / `plan-tasks` / `list-tasks`）は **`task-workflow` スキルの
-`WORKFLOW.md` を正典**とし、**プロジェクト固有の値は `develop/workflow.json` から読む**。
-このリポジトリでは `checkCommand` = `bun run check`、`formatCommand` = `bun run format` を
-設定してある（他のキーは既定値）。
+`WORKFLOW.md` を正典**とし、**プロジェクト固有の値はこの `CLAUDE.md` の「## タスク運用」節**
+（検証コマンド・整形コマンド・ブランチ運用）から読む。
 
 - `next-task`: `develop/tasks.json` の未着手タスクを1件実行する。`/loop /next-task` で
   全件`done`になるまでの自動進行に使う
@@ -193,6 +189,15 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 個人開発のため、**作業ブランチは切らず `main` に直接コミットする**。「デフォルトブランチに
 いるならまずブランチを切る」という一般的な既定挙動より、このルールを優先する。レビューのために
 差分を分けたいときなど、必要な場合だけ明示的に指示する。
+
+## タスク運用
+
+- 検証コマンド: `bun run check`（変更後は必ずこれを通す。受け入れ判定に使う）
+- 整形コマンド: `bun run format`
+- ブランチ: 切らない。直接 main にコミットする
+
+`develop/tasks.json`・`develop/progress.md`・`develop/direction.md` で管理する。
+指示は `develop/direction.md` に溜め、`/plan-tasks` でタスク化して `/next-task` で進める。
 
 ## 進捗管理とHandoff
 
@@ -247,7 +252,7 @@ grep -c '^#\{2,3\} ' docs/requirements.md   # 編集の前後で数が合うか
   evidenceの粒度・アーカイブ運用）: `~/.claude/skills/task-workflow/WORKFLOW.md`（共通の正典）と
   `docs/workflow.md`（このリポジトリでの上乗せ）
 - 検討当時のユーザーの指示メモ: `docs/history/direction.md`
-- 完了タスク・過去セッションの記録: `docs/history/tasks-archive.md` /
-  `docs/history/progress-archive.md`（セッション開始時に読む必要はない。過去の判断の経緯を
+- 完了タスク・過去セッションの記録: `docs/history/tasks.md` /
+  `docs/history/progress.md`（セッション開始時に読む必要はない。過去の判断の経緯を
   たどりたいときだけ、`grep` で該当する節を見つけてそこだけ参照する。**通読しない**）
 - Issueトラッカー・外部の設計ドキュメントは未設定（今後追加され次第ここに記載する）

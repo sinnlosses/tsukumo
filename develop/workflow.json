@@ -1,4 +1,0 @@
-{
-  "checkCommand": "bun run check",
-  "formatCommand": "bun run format"
-}
