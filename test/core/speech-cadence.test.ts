@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { buildSystemPromptAppend, type CharacterPack } from "../../src/core/character-pack.ts"
+import { buildSystemPromptAppend, type CharacterPack } from "../../src/adapter/character-pack.ts"
 import { REPORT_NOTATION_PROMPT } from "../../src/core/report-notation.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../src/core/speech-cadence.ts"
 

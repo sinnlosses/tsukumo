@@ -1,5 +1,5 @@
 /* ページ全体の CSS の入口。`bun build` がここから辿れるものを1本にまとめる
-   （src/core/bundle.ts の buildStyleSheet。src/ui/main.tsx と対の構造）。
+   （src/adapter/bundle.ts の buildStyleSheet。src/ui/main.tsx と対の構造）。
    narrow-screen.css は他のファイルが定義するセレクタを狭い画面用に上書きするので、
    **必ず最後に読む**。**CSS はすべてこのディレクトリの中にある**（移行の段6。
    docs/design.md 12章）。 */

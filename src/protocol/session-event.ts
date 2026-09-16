@@ -33,7 +33,7 @@ export type CommandDescription = {
 }
 
 /**
- * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/core/session-driver.ts）が
+ * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/adapter/sdk-driver.ts）が
  * 自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざる。
  * 受け取る側（src/protocol/session-state.ts）はどちらから来たかを区別しない。
  *
@@ -147,7 +147,7 @@ export type StampedEvent = {
  * 外から届いた値を {@link SessionEvent} として受け取るための**封筒だけ**のスキーマ
  * （`kind` を持つオブジェクトであること）。**中身は検証しない**（2026-09-13 決定。union を
  * zod で二重に持たない）。使うのは境界の2箇所だけ — フレームの読み取り（src/protocol/frame.ts）と
- * 偽の駆動の台本（src/core/fake-driver.ts）。
+ * 偽の駆動の台本（src/adapter/fake-driver.ts）。
  */
 export const sessionEventSchema = z.custom<SessionEvent>(
   (value) => isRecord(value) && typeof value.kind === "string",

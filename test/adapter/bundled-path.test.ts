@@ -2,14 +2,14 @@ import { describe, expect, it } from "bun:test"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { bundledFilePath, resolveBundledDir } from "../../src/core/bundled-path.ts"
+import { bundledFilePath, resolveBundledDir } from "../../src/adapter/bundled-path.ts"
 
 describe("bundledFilePath", () => {
   it("tsukumo 自身の場所（リポジトリのルート）からの相対で解く", () => {
     const path = bundledFilePath("characters", "tsukumo-spirit")
 
     // このテストファイル自身（test/core/）から見たリポジトリのルートで組み立て、
-    // 一致することを確かめる。src/core/bundled-path.ts の実装（import.meta.url
+    // 一致することを確かめる。src/adapter/bundled-path.ts の実装（import.meta.url
     // からの相対）とは別の経路で同じ値を作る。
     const repoRoot = fileURLToPath(new URL("../..", import.meta.url))
     expect(path).toBe(join(repoRoot, "characters", "tsukumo-spirit"))

@@ -1,6 +1,6 @@
 // 画面から届いた立ち絵・差し色をキャラクターパックに書き込む。**書き込んでよいのは
 // `~/.tsukumo/characters/<name>/` の下だけ**（`docs/design.md` 7.1。`state.json` と同じ親の下で、
-// リポジトリの作業ツリーが汚れない）。読む側は `src/core/character-pack.ts`。
+// リポジトリの作業ツリーが汚れない）。読む側は `src/adapter/character-pack.ts`。
 //
 // **ファイル名を外から受け取らない。** 立ち絵の名前は表情と形式から組み立てる
 // （`src/protocol/portrait-image.ts` の `portraitFileName`）ので、届いた文字列がパスの一部に

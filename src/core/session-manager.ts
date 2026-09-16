@@ -59,7 +59,7 @@ export type SessionCreateOptions = {
   /**
    * いま出しているキャラクターパックの立ち絵・差し色を変え、**画面へ流す
    * `character-changed` イベントを返す**（書き込み先と受け付けない条件は
-   * `src/core/character-edit.ts`）。**受け付けられなかったときは undefined**
+   * `src/adapter/character-edit.ts`）。**受け付けられなかったときは undefined**
    * （呼び出し側は定型文の `error` を返す）。
    *
    * セッションは起こし直さない（会話も履歴も消えない）。**`speak` が受け付ける表情の一覧は
@@ -333,7 +333,7 @@ function joinPartialUtterances(events: readonly StampedEvent[]): readonly Stampe
   }, [])
 }
 
-/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（src/core/server.ts）の仕事。 */
+/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（src/adapter/server.ts）の仕事。 */
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)

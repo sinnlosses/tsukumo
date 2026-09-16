@@ -3,7 +3,7 @@
 //
 // **`happy-dom` の `Window` が持つ全部を `globalThis` へコピーしない。** `fetch` / `WebSocket` /
 // `setTimeout` / `console` まで happy-dom のものに差し替わると、実際の HTTP・WebSocket を使う
-// 他のテスト（`test/core/server.test.ts` など）が巻き添えになる。**DOM を組み立てる部品だけを
+// 他のテスト（`test/adapter/server.test.ts` など）が巻き添えになる。**DOM を組み立てる部品だけを
 // 借りる。**（`bun test --isolate` でテストファイルごとにプロセスが分かれるようになった今も、
 // 1ファイルの中では同じ `globalThis` を共有するので、借りる範囲は絞ったままにする。
 // `--isolate` を付けている理由は `package.json` と `test/ui/main-view/report.test.tsx`）

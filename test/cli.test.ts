@@ -14,7 +14,7 @@ import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/core/port
 //   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/ui/main-view/**
 //   - Markdown の変換（unified）: test/ui/report/**
 //   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
-//     （トークン・Origin・hello・コマンド）: test/core/server.test.ts
+//     （トークン・Origin・hello・コマンド）: test/adapter/server.test.ts
 //   - キャラクター定義の解釈と立ち絵の選び方: test/protocol/character.test.ts
 //   - SDK のイベントの変換・答え待ち・畳み込み: test/core/sdk-message.test.ts /
 //     test/core/pending-answer.test.ts / test/protocol/session-state.test.ts

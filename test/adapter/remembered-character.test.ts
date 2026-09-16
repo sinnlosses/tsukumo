@@ -6,7 +6,7 @@ import { join } from "node:path"
 import {
   readRememberedCharacter,
   writeRememberedCharacter,
-} from "../../src/core/remembered-character.ts"
+} from "../../src/adapter/remembered-character.ts"
 
 let dir: string
 

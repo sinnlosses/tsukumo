@@ -1,6 +1,6 @@
 // SDK から届いたメッセージを、tsukumo 内部のイベント（src/protocol/session-event.ts）に変換する。
 //
-// **SDK の型を import しない。** SDK への依存は src/core/session-driver.ts の1ファイルに閉じる
+// **SDK の型を import しない。** SDK への依存は src/adapter/sdk-driver.ts の1ファイルに閉じる
 // （docs/design.md 5章）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
 // unknown で受けて検証する（docs/coding-standards.md「型を迂回するキャストを使わない」）。
 // 知らない種別・壊れた形は**空の並び**にして無視する。種別は本体の更新で増える
@@ -75,7 +75,7 @@ export function toSessionEvents(
 
 /**
  * SDK が返すコマンド一覧（`supportedCommands()` の戻り値と `commands_changed` の `commands`）を
- * 検証して内部の型に変える。**駆動側（src/core/session-driver.ts）が制御リクエストの結果に対しても
+ * 検証して内部の型に変える。**駆動側（src/adapter/sdk-driver.ts）が制御リクエストの結果に対しても
  * これを使う**ので、`toSessionEvents` とは別に公開してある（検証の場所を1つにするため）。
  * 名前が文字列でない要素は捨て、説明が空文字のものは `undefined` にする。
  */

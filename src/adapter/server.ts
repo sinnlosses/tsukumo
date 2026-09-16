@@ -20,6 +20,7 @@ import { type Duplex } from "node:stream"
 
 import { type RawData, WebSocketServer } from "ws"
 
+import { type DispatchResult } from "../core/session-manager.ts"
 import { CHARACTER_ASSET_PATH_PREFIX } from "../protocol/character.ts"
 import { type ClientCommand, parseClientCommand } from "../protocol/command.ts"
 import { FRAME_ERROR_REASON, type ServerFrame } from "../protocol/frame.ts"
@@ -30,7 +31,6 @@ import {
   vendorAssetPath,
 } from "../protocol/vendor-asset.ts"
 import { bundledFilePath } from "./bundled-path.ts"
-import { type DispatchResult } from "./session-manager.ts"
 
 /**
  * 受け取るメッセージ1件の上限（バイト）。**立ち絵1枚（デコード後 2 MiB）を data URL で運べる
@@ -184,7 +184,7 @@ export const LAYOUT_PATH = "/"
 
 /**
  * **自前のブラウザ側スクリプト**（`src/ui/` を `bun build` でまとめたもの）と CSS を配る経路。
- * ディスクには置かずメモリに持つ（`src/core/bundle.ts`）。
+ * ディスクには置かずメモリに持つ（`src/adapter/bundle.ts`）。
  */
 const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
@@ -199,7 +199,7 @@ function styleSheetPath(): string {
 
 /**
  * ブラウザに配る2つの成果物の取り出し口。**値ではなく関数**なのは、開発中に組み立て直したものへ
- * 差し替わるため（`src/core/ui-rebuild.ts`）。呼ぶたびに今の版を返す契約で、サーバはどちらが
+ * 差し替わるため（`src/adapter/ui-rebuild.ts`）。呼ぶたびに今の版を返す契約で、サーバはどちらが
  * 今の版かを自分では持たない。
  */
 export type ViewAssets = {
@@ -240,13 +240,13 @@ export type ViewServer = {
 export function startViewServer(
   port: number,
   /**
-   * ブラウザ側スクリプトと CSS の取り出し口（`src/core/bundle.ts` が組み立てたもの）。
+   * ブラウザ側スクリプトと CSS の取り出し口（`src/adapter/bundle.ts` が組み立てたもの）。
    * ディスクには置かないので、**持ち主は呼び出し側 = `src/cli.ts`** で、ここは要求のたびに
    * 引きに行く。
    */
   assets: ViewAssets,
   /**
-   * `/character/<file>` の1件を配ってよい形にする（`src/core/character-pack.ts` の
+   * `/character/<file>` の1件を配ってよい形にする（`src/adapter/character-pack.ts` の
    * `readCharacterPackFile` を束ねたもの。呼び出し側 = `src/cli.ts` が渡す）。
    */
   serveCharacterAsset: ServeCharacterAsset,

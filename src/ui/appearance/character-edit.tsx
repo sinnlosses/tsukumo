@@ -3,7 +3,7 @@
 // 入るので、閉じている間は画面に出ているボタンの数が変わらない（13.1 原則2）。
 //
 // 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` の3つで、**書き込み先と
-// 反映はサーバ側**（`src/core/character-edit.ts` → `character-changed`）。ここは選んだ画像を
+// 反映はサーバ側**（`src/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を
 // data URL にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
 // **`default` と `working` には消す口を出さない**（立ち絵が必ず要る2つ。

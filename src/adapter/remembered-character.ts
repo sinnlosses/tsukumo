@@ -60,7 +60,7 @@ export function writeRememberedCharacter(
   }
 }
 
-/** 既定の保存先。ホームの場所は `src/core/tsukumo-home.ts` が持つ（呼んだときだけ読む）。 */
+/** 既定の保存先。ホームの場所は `src/adapter/tsukumo-home.ts` が持つ（呼んだときだけ読む）。 */
 function defaultStatePath(): string {
   return join(tsukumoHomeDir(), STATE_FILE_NAME)
 }

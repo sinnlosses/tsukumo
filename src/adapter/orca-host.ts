@@ -17,7 +17,7 @@
 
 import { execFile } from "node:child_process"
 
-import { type Host, type HostResult } from "./host.ts"
+import { type Host, type HostResult } from "../core/host.ts"
 
 const ORCA_COMMAND = "orca"
 

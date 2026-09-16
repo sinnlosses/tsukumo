@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { watchTaskSummary, type TaskSummaryWatcher } from "../../src/core/task-summary.ts"
+import { watchTaskSummary, type TaskSummaryWatcher } from "../../src/adapter/task-summary.ts"
 
 // 実際のポーリング間隔（TASK_SUMMARY_POLL_INTERVAL_MS）を待つとテストが遅くなるので、
 // テストだけ短い間隔に差し替える（`pollOnce` はこの間隔より少し長く待つ）。

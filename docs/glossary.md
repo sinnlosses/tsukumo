@@ -28,7 +28,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 | ## 会話の駆動             | セッション / セッション駆動 / ターン / speak ツール / 許可プロンプト / transcript / セッションスラッグ / 発話                                                     |
 | ## 表示                   | ビュー / メインビュー / キャラビュー / ビューサーバ / 立ち絵 / 吹き出し / セリフ / 詳細 / 中間レポート / お願い / 表情 / 衣装 / キャラクター定義 / フォールバック |
 | ## Claude Code 側の仕組み | hook / 状態ファイル / statusline / output style                                                                                                                   |
-| ## 通信（移行後）         | プロトコル / フレーム / コマンド / セッションの姿 / 偽の駆動                                                                                                      |
+| ## 通信（移行後）         | プロトコル / アダプタ / フレーム / コマンド / セッションの姿 / 偽の駆動                                                                                           |
 
 ## 実行構成
 
@@ -74,8 +74,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: tsukumo のページを出す相手。実測環境では Orca。**頼む仕事はビューを見せること
   （`showView`）だけ**で、それ以外の依存は持たない
 - **注記**: ホストに依存する操作は1つのポート（`src/core/host.ts`）の裏に置き、実装は
-  アダプタ（`src/core/orca-host.ts`）に閉じ込める（`docs/architecture.md`
-  「ホスト依存の操作は1つのポートにまとめる」）
+  アダプタ（`src/adapter/orca-host.ts`）に閉じ込める（`docs/architecture.md`
+  「ホスト依存の操作は1つのポートにまとめる」。「アダプタ」の項は「通信（移行後）」にある）
 - **注記**: **「本体」とは別のもの**。本体は Claude Code の CLI を指す
 - **避ける言い方**: 端末環境、プラットフォーム、シェル
 
@@ -352,11 +352,23 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: `node:` にも `document` にも触らない。zod のスキーマが正典で、型は `z.infer`
 - **避ける言い方**: 共通、shared、API
 
+### アダプタ
+
+- **英語識別子**: `adapter`（ディレクトリ `src/adapter/`）
+- **定義**: 外の世界（Agent SDK・HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るコードの
+  置き場所。**1ファイル = 1つの境界**。判断は持たず、`core` から呼ばれるか `cli.ts` が結ぶ
+- **注記**: インターフェースは**実装が2つあるもの（駆動・ホスト）にだけ** `core` に置く
+  （`core/session-driver.ts` / `core/host.ts`）。`core → adapter` の import は
+  `test/architecture.test.ts` が落とす
+- **避ける言い方**: インフラ層、外界、helpers
+
 ### フレーム
 
 - **英語識別子**: `ServerFrame`（`hello` / `events` / `error`）
 - **定義**: サーバがブラウザへ WebSocket で送る1件。`hello` は接続直後の snapshot、`events` は
   まとめたイベント、`error` はコマンドの失敗
+- **注記**: 経路名 `/ws` とトークンのクエリ名は `src/protocol/session-socket.ts` が正典で、
+  `adapter` と `ui` は値を再掲しない
 - **避ける言い方**: メッセージ（SDK の `SDKMessage` と紛れる）、パケット
 
 ### コマンド
@@ -378,7 +390,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 偽の駆動
 
 - **英語識別子**: `fakeDriver`（`TSUKUMO_DRIVER=fake`）
-- **定義**: `SessionDriver` と同じ契約で、手で書いた架空の台本どおりにイベントを流す実装。
-  claude を起こさずに画面全体を動かすための道具
+- **定義**: `SessionDriver`（`src/core/session-driver.ts` の契約）と同じ形で、手で書いた架空の
+  台本どおりにイベントを流す実装（`src/adapter/fake-driver.ts`）。claude を起こさずに画面全体を
+  動かすための道具
 - **注記**: 台本は**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: モック（テストの中の置き換え一般と紛れる）、スタブ

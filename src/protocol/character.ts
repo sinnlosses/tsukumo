@@ -7,7 +7,7 @@
 // （docs/coding-standards.md「型を迂回するキャストを使わない」）。
 //
 // ファイルI/O（character.json 自体・立ち絵の画像ファイルを読むこと）は
-// src/core/character-pack.ts に集約する。ここが返すのはファイル名の文字列までで、
+// src/adapter/character-pack.ts に集約する。ここが返すのはファイル名の文字列までで、
 // 実際に中身を読むのは呼び出し側。
 
 import {
@@ -113,13 +113,13 @@ export function resolveExpressionLabel(
 
 /**
  * `/character/<file>` の URL の作り方。**`character.json` に書かれたファイル名だけ**を渡す前提
- * （`src/core/character-pack.ts` の allowlist と同じ考え方。パスから組み立てない）。
+ * （`src/adapter/character-pack.ts` の allowlist と同じ考え方。パスから組み立てない）。
  *
  * `cacheKey` は**ブラウザに再取得させるためだけ**の問い合わせ文字列（{@link characterAssetCacheKey}
  * が組み立てる）。2つのパックが同じファイル名（`default.png` など）を使うと URL が一致し、
  * `<img src>` が書き換わらないので再取得が起きない。**画面から立ち絵を差し替えたときも
  * ファイル名が同じまま中身だけが変わる**ので、パックの名前だけでは足りず素材の版も混ぜる。
- * **配る側（`src/core/server.ts`）はこの値を見ない**（`?` 以降を落としてから配信ファイルを
+ * **配る側（`src/adapter/server.ts`）はこの値を見ない**（`?` 以降を落としてから配信ファイルを
  * 決める）。中身を決めるのは呼び出し側が渡す `CharacterPack` のほう。
  */
 export const CHARACTER_ASSET_PATH_PREFIX = "/character/"

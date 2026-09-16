@@ -20,7 +20,7 @@ import { type SessionEvent } from "../protocol/session-event.ts"
 import { bundledFilePath } from "./bundled-path.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
-/** 定義ファイルの名前。**画面から書き込む側（`src/core/character-edit.ts`）も同じ名前を使う。** */
+/** 定義ファイルの名前。**画面から書き込む側（`src/adapter/character-edit.ts`）も同じ名前を使う。** */
 export const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 
 /** 人格のファイル名。パックの中に無くてもよい（append が空になるだけ）。 */
@@ -189,7 +189,7 @@ export type CharacterAssetFile = {
  * `/character/<file>` が配ってよい1件を読む。**character.json の `portraits` に載っている
  * ファイル名だけ**を許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
  * `..` を含む要求や定義に無い名前は自然に undefined になる）。呼び出し側
- * （src/core/server.ts）はこの結果をそのまま配るか、undefined なら404にする。
+ * （src/adapter/server.ts）はこの結果をそのまま配るか、undefined なら404にする。
  */
 export function readCharacterPackFile(
   pack: CharacterPack,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { buildStyleSheet, buildUiScript, bundleWithBun } from "../../src/core/bundle.ts"
+import { buildStyleSheet, buildUiScript, bundleWithBun } from "../../src/adapter/bundle.ts"
 
 // `bun build` を実際に起こす統合的なテスト。src/ui/ が壊れていないことも合わせて確かめる
 // （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない test/index.test.ts と

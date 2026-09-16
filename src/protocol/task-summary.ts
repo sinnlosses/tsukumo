@@ -3,7 +3,7 @@
 // develop/tasks.json は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは
 // 別物（`docs/workflow.md`「tasks.json のフィールド」）。ここは会話の内容を一切扱わない。
 //
-// ここはファイルI/Oを持たない。ファイルを読み、mtime を見て読み直すのは src/core/task-summary.ts。
+// ここはファイルI/Oを持たない。ファイルを読み、mtime を見て読み直すのは src/adapter/task-summary.ts。
 
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。

@@ -11,7 +11,7 @@ import {
   readCharacterPack,
   readCharacterPackFile,
   toCharacterPackChoices,
-} from "../../src/core/character-pack.ts"
+} from "../../src/adapter/character-pack.ts"
 
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const DEFINITION_JSON = JSON.stringify({

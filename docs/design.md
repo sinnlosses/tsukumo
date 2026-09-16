@@ -3,7 +3,8 @@
 最終更新: 2026-09-13（起こした日。**移行の決定は同日**。経緯と採らなかった案は
 `docs/research/architecture-rethink.md`）
 ステータス: **正典**。**構造の移行は段7まで完了**（`protocol` / `core` / `ui` の3層 +
-`cli.ts`。`docs/architecture.md`「現在の実装状況」）。**段9（セッションの復元）も入った**
+`cli.ts`。2026-09-16 に**サーバ側を `core`（判断）と `adapter`（境界）に割った**。
+`docs/architecture.md`「現在の実装状況」）。**段9（セッションの復元）も入った**
 （2026-09-13。`docs/requirements.md` 4.8。画面からの `new-session` コマンドだけは、セッションを
 起こし直す仕組みを作る段8と一緒に入れる）。残る段8（キャラクターパック）は末尾「移行の段階」の
 完了条件どおり、別タスクとして進める。
@@ -23,10 +24,10 @@ sed -n '/^## 4\. protocol/,/^## /p' docs/design.md
 | 節                             | 中身                                                                       |
 | ------------------------------ | -------------------------------------------------------------------------- |
 | ## 1. 何を変え、何を残すか     | 決定の要約。**最初にここ**                                                 |
-| ## 2. 全体構成                 | 3層（protocol / core / ui）の図、依存の向き、ディレクトリ                  |
+| ## 2. 全体構成                 | 層（protocol / core / adapter / ui）の図、依存の向き、ディレクトリ         |
 | ## 3. 動きの流れ               | 起動・接続・依頼・答え待ち・再接続の順序                                   |
 | ## 4. protocol                 | **両側が共有する契約**。イベント・状態・reducer・コマンド・フレーム・版    |
-| ## 5. core                     | サーバ側のモジュールと責務。セッション管理・キャラクターパック・偽の駆動   |
+| ## 5. core と adapter          | サーバ側のモジュールと責務。判断（core）と外の世界に触る境界（adapter）    |
 | ## 6. ui                       | ブラウザ側の部品の木、状態の持ち方、Markdown、重いライブラリ、立ち絵の動き |
 | ## 7. キャラクターパック       | `character.json` + `persona.md` + 素材。人格の注入と切り替え               |
 | ## 8. セッションの復元と複数化 | 復元（4.8）を新しい形に載せる。複数セッションへ広げる余地                  |
@@ -80,39 +81,53 @@ sed -n '/^## 4\. protocol/,/^## /p' docs/design.md
                │  hello（snapshot）/ events  │  prompt / answer / …
                │        WebSocket 1本（127.0.0.1、起動トークン付き）
 ┌──────────────┴───────────────────────────▼─────────────────┐
-│ core（Bun。Node でも動く形）                                 │
-│   session-manager ── session-driver（SDK）／ fake-driver     │
-│   character-pack ／ task-summary ／ config ／ bundle         │
+│ core（サーバ側の純粋な判断。外の世界に触らない）              │
+│   session-manager ／ session-driver（駆動の契約）／ config    │
+│   sdk-message ／ session-restore ／ pending-answer ／ host    │
+└──────────────▲───────────────────────────┬─────────────────┘
+               │ 呼ばれる                   │ core を import する
+┌──────────────┴───────────────────────────▼─────────────────┐
+│ adapter（外の世界に触る場所。1ファイル = 1つの境界）          │
+│   sdk-driver（SDK）／ fake-driver（台本）                     │
 │   server（http: ページ・束ねた JS/CSS・vendor・立ち絵 / ws）  │
-│   host（showView）── orca-host                               │
+│   character-pack ／ task-summary ／ bundle ／ orca-host       │
 └──────────────▲───────────────────────────┬─────────────────┘
                │ SDKMessage                 │ query / interrupt / canUseTool
 ┌──────────────┴───────────────────────────▼─────────────────┐
 │ Claude Code（SDK が起こす子プロセス）                         │
 └────────────────────────────────────────────────────────────┘
       protocol（語彙・イベント・状態・reducer・zod スキーマ。ui と core の両方が import する）
+      辺は adapter ──▶ core ──▶ protocol ◀── ui（**core → adapter は禁止**。結ぶのは cli.ts だけ）
 ```
 
 ### 層と依存の向き
 
 **この形は「共有コントラクト＋クライアント/サーバ分割」で、旧の4層（クリーンアーキテクチャの
 写し）とは別物**。`protocol` は TypeScript のモノレポでいう `packages/shared` / `contracts`
-の位置（サーバとブラウザの両方が import する契約）、`core` はサーバ、`ui` はクライアントで、
-「受け取る／決める／描く」という役割の分割ではなく「どちらの実行環境で動くか」で分けている。
+の位置（サーバとブラウザの両方が import する契約）、`ui` はクライアント、`core` と `adapter` は
+サーバで、「受け取る／決める／描く」という役割の分割ではなく「どちらの実行環境で動くか」で
+分けている。**サーバ側だけをもう一段、「純粋な判断（`core`）」と「外の世界に触る境界
+（`adapter`）」に割ってある**（2026-09-16。`docs/research/architecture-proposal.md`）。
 
-| 層         | 置くもの                                                                                  | import してよい先                   | 実行場所         |
-| ---------- | ----------------------------------------------------------------------------------------- | ----------------------------------- | ---------------- |
-| `protocol` | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod | `protocol` のみ（`zod` は可）       | サーバとブラウザ |
-| `core`     | SDK・WebSocket・HTTP・ホスト・ファイル・環境変数・セッション管理・偽の駆動                | `protocol`                          | サーバ（Bun）    |
-| `ui`       | React の部品・hooks・CSS・Markdown の変換                                                 | `protocol`（React などの npm は可） | ブラウザ         |
-| `cli.ts`   | 配線（composition root）                                                                  | すべて                              | サーバ           |
+| 層         | 置くもの                                                                                   | import してよい先                   | 実行場所         |
+| ---------- | ------------------------------------------------------------------------------------------ | ----------------------------------- | ---------------- |
+| `protocol` | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod  | `protocol` のみ（`zod` は可）       | サーバとブラウザ |
+| `core`     | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈 | `protocol` / `core`                 | サーバ（Bun）    |
+| `adapter`  | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・偽の駆動           | `protocol` / `core` / `adapter`     | サーバ（Bun）    |
+| `ui`       | React の部品・hooks・CSS・Markdown の変換                                                  | `protocol`（React などの npm は可） | ブラウザ         |
+| `cli.ts`   | 配線（composition root）                                                                   | すべて                              | サーバ           |
 
 - **`core` と `ui` は互いを import しない。** 両者が知っているのは `protocol` だけ
+- **`core → adapter` は禁止。** 辺は `adapter ──▶ core ──▶ protocol ◀── ui` の一方通行で、
+  `core` と `adapter` を結ぶのは `cli.ts` だけ。**`core` は `node:` / SDK（`@anthropic-ai/*`）/
+  `ws` を import しない**ので、`core` から外の世界へ出る道は無い
+- **`adapter` は1ファイル = 1つの境界。** インターフェースは切らない（実装が2つあるもの —
+  駆動とホスト — だけ、契約の型を `core` に置く: `core/session-driver.ts` / `core/host.ts`）
 - **`protocol` は `node:` も `document` も触らない。** これは設計上の好みではなく**物理的な制約**
   である。`protocol` はサーバ（Bun/Node）とブラウザの両方の実行環境で読み込まれるので、
   片方にしか無い API（`node:fs` や `document` など）に触れた時点でもう片方で動かなくなる。
   純粋関数と型と zod スキーマだけが両方で動く共通部分
-- 許した辺以外は `test/architecture.test.ts` が落とす（辺は上の3本）
+- 許した辺以外は `test/architecture.test.ts` が落とす（辺は上の4本）
 
 ### ディレクトリ
 
@@ -126,17 +141,27 @@ src/
     frame.ts                  ServerFrame（zod）・PROTOCOL_VERSION
     expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
                               語彙（いまの domain のうち、両側が使うもの）
-  core/
-    session-driver.ts         SDK を import する唯一の場所（いまのまま）
-    fake-driver.ts            台本どおりに SessionEvent を流す SessionDriver
+  core/                       サーバ側の純粋な判断。node: / SDK / ws を import しない
+    session-driver.ts         駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
     session-manager.ts        sessionId → { driver, state, subscribers }。reducer をサーバ側でも回す
-    pending-answer.ts         答え待ちの列（いまのまま。SDK の canUseTool に結び付くので core）
-    character-pack.ts         パックの列挙・読み込み（character.json / persona.md / 素材）
-    task-summary.ts           develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
+    pending-answer.ts         答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
+    sdk-message.ts            SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
+    session-restore.ts        続きから始めるセッションを選ぶ・transcript を履歴イベントにする
+    port-resolution.ts        どのポートで試すかの決定（listen そのものは adapter/server.ts）
+    config.ts                 環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
+    report-notation.ts / speech-cadence.ts   systemPrompt に足す規約の文面
+    host.ts                   ホストのポート（showView）。実装は adapter/orca-host.ts
+  adapter/                    外の世界に触る場所。1ファイル = 1つの境界
+    sdk-driver.ts             SDK を import する唯一の場所。SessionDriver の本物の実装
+    fake-driver.ts            台本どおりに SessionEvent を流す SessionDriver（台本は fs から読む）
     server.ts                 http（ページ・/assets・/vendor・/character）+ ws（フレームとコマンド）
-    bundle.ts                 bun build（ui の入口と CSS）
-    config.ts                 環境変数の読み取り（ここ以外で process.env に触らない）
-    host.ts / orca-host.ts    いまのまま
+    character-pack.ts         パックの列挙・読み込み（character.json / persona.md / 素材）
+    character-edit.ts         画面から変えた立ち絵・差し色を ~/.tsukumo/characters/ へ書く
+    remembered-character.ts   覚えたキャラクター名（~/.tsukumo/state.json）
+    task-summary.ts           develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
+    bundle.ts / ui-rebuild.ts bun build（ui の入口と CSS）と src/ui/ の見張り
+    bundled-path.ts           同梱物の位置（import.meta.url）。tsukumo-home.ts は ~/.tsukumo/
+    orca-host.ts              `orca` コマンドを起こす唯一の場所
   ui/
     main.tsx                  入口。<App> を mount する（副作用はここだけ）
     app.tsx                   接続・状態・コマンドの配り口（Context）
@@ -284,25 +309,33 @@ type ServerFrame =
 `PROTOCOL_VERSION` は整数1つ。**イベントの追加は版を上げない**（知らない `kind` は reducer が
 無視する。いまの「未知の種別で落ちない」と同じ）。既存イベントの形を変える・状態の形を変えるときだけ上げる。
 
-## 5. core
+## 5. core と adapter
 
-### session-driver.ts（いまのまま）
+**サーバ側は2つのディレクトリに分かれている**（2章の表）。`core/` は純粋な判断だけで
+`node:` / SDK / `ws` を import せず、外の世界に触るものは `adapter/` にある。この章の各節は
+ファイル名で引けるようにしてあるので、どちらのディレクトリにあるかは各節の冒頭を見る。
 
-`SessionDriver` の契約（`prompt` / `interrupt` / `answer` / `pending` / `setModel` /
-`setPermissionMode` / `close`）と `onEvent` はそのまま。足すのは次の2つだけ。
+### session-driver.ts（core）と sdk-driver.ts（adapter）
+
+**契約は `core/session-driver.ts`、SDK の実装は `adapter/sdk-driver.ts`**。境目の基準は
+「`protocol` の語彙で書けるか / SDK の語彙を名乗るか」で、`SessionDriver` の契約
+（`prompt` / `interrupt` / `answer` / `pending` / `setModel` / `setPermissionMode` / `close`）と
+`onEvent`・`SessionDriverOptions`・`DEFAULT_PERMISSION_MODE` / `DEFAULT_MODEL` は `core` 側、
+`query()` を回す `startSession` と `buildQuerySeedOptions`・`findSessionToResume` /
+`readRestoredEvents`・SDK の型を持つ `DEFAULT_EFFORT` は `adapter` 側。
 
 - `persona: string | undefined` を受け取り、`systemPrompt.append` に tsukumo 側の規約
   （`SPEECH_CADENCE_PROMPT` / `REPORT_NOTATION_PROMPT`）と一緒に足す（7章）
 - `resume: string | undefined`（8章。T-078 のとおり）
 
-### fake-driver.ts
+### fake-driver.ts（adapter）
 
 `SessionDriver` と同じ契約で、**台本（`StampedEvent[]` の JSON）を時間どおりに流す**。`prompt()` を
 受けたら台本の次の場面を再生し、`canUseTool` 相当の答え待ちも積む（`answer()` で解決）。台本は
 `test/fixture/` に**手で書いた架空の会話**として置く（`docs/coding-standards.md`「会話内容の扱い」）。
 用途は 10章（目視・Playwright・スクリーンショット）。`TSUKUMO_DRIVER=fake` で選ぶ。
 
-### session-manager.ts
+### session-manager.ts（core）
 
 ```ts
 type SessionHost = {
@@ -320,7 +353,7 @@ type SessionHost = {
 - `subscribe(sessionId, send)`: 接続ごとに `hello` を送ってから購読に加える
 - **いまは要素1つ。** 鍵（`sessionId`）を持たせておくのは 8章のため
 
-### character-pack.ts
+### character-pack.ts（adapter）
 
 7章。`listCharacterPacks(dirs)` と `readCharacterPack(dir)`。読めないものは `undefined`（立ち絵なしの
 フォールバック）。
@@ -336,12 +369,12 @@ type SessionHost = {
 **ホームの場所を組み立てるのは `tsukumo-home.ts` の1関数だけ**で、`state.json` もパックの置き場も
 その下に並ぶ。
 
-### task-summary.ts
+### task-summary.ts（adapter）
 
 いまの読み直し係を、**mtime が変わったときだけ `tasks-changed` を起こす**形にする（1〜2秒の
 ポーリング。`fs.watch` は macOS でも取りこぼすことがあるので使わない）。
 
-### server.ts
+### server.ts（adapter）
 
 | 経路                              | 中身                                                                                                                  | トークン |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
@@ -353,7 +386,7 @@ type SessionHost = {
 
 会話の内容が乗るのは `/ws` だけ。他は静的な物か素材なので、トークン無しでよい。
 
-### config.ts
+### config.ts（core）
 
 | 環境変数              | 意味                                              | 既定             |
 | --------------------- | ------------------------------------------------- | ---------------- |
@@ -552,7 +585,7 @@ characters/<name>/
 - **「同名は起動先が勝つ」という既存の規則は変えない。** ホームはその手前に挟まる
 
 **画像は data URL を JSON に載せ、いまの WebSocket のコマンドで受け取る。**
-`src/protocol/command.ts` に `ClientCommand` を1つ足すだけで、`src/core/server.ts` に新しい
+`src/protocol/command.ts` に `ClientCommand` を1つ足すだけで、`src/adapter/server.ts` に新しい
 書き込み経路を作らない。起動トークンと `Origin` の照合・zod の検証・定型文の `error` が
 そのまま効く。`multipart/form-data` の POST は node:http にパーサーが無く外部依存が要るので採らない。
 生バイトの POST は照合と上限をもう一組書くことになるので採らない。
@@ -628,9 +661,9 @@ characters/<name>/
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                               | `test/protocol/session-state.test.ts` |
 | zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                            | `test/protocol/command.test.ts` など  |
-| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                       | `test/core/session-driver.test.ts`    |
+| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                       | `test/adapter/sdk-driver.test.ts`     |
 | `session-manager`              | 偽の駆動を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/core/session-manager.test.ts`   |
-| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                    | `test/core/server.test.ts`            |
+| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                    | `test/adapter/server.test.ts`         |
 | ui の部品                      | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                   | `test/ui/**`                          |
 | 層の検査                       | `protocol ← core` / `protocol ← ui` / `core ⟂ ui` の3辺。外部ツールは増やさない                                            | `test/architecture.test.ts`           |
 | 画面全体                       | **偽の駆動で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）      |
@@ -648,7 +681,7 @@ API を使わない形になる。
   タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。**Vite は足していない**し、
   `Bun.serve` の HMR も `Bun.build()` も使わない（「Bun固有APIに寄せない」規約のまま）
 
-**作り直しを押す仕組み。** `src/core/ui-rebuild.ts` が `node:fs` の `watch` で `src/ui/` を**再帰に**見張り、保存が静まって
+**作り直しを押す仕組み。** `src/adapter/ui-rebuild.ts` が `node:fs` の `watch` で `src/ui/` を**再帰に**見張り、保存が静まって
 から（120ms）`bundle.ts` の `buildUiScript` / `buildStyleSheet` を呼び直す。組み上がったものは
 `src/cli.ts` が持ち替え、`protocol` の `refresh` フレーム（4.4）で開いているタブへ押す。
 **差分は当てない**（当てた時点で HMR そのものになり、規模が跳ねる）。成果物は前と同じくメモリに
@@ -884,7 +917,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 **キャラクターの切り替えは「セッション限り」から「ずっと」へ移したわけではない。** 選ぶ操作自体は
 今回どおりセッション限り（起こし直すと戻る）だが、**次に起こしたときの初期値としては覚える**
 （2026-09-14 決定。ユーザーの指摘「終了直前のキャラクターで起動時にもそうであってほしい」）。
-持ち先は `localStorage` ではなく `~/.tsukumo/state.json`（`core/remembered-character.ts`、5章）。
+持ち先は `localStorage` ではなく `~/.tsukumo/state.json`（`adapter/remembered-character.ts`、5章）。
 **cwd には依存させない**（キャラクターの好みはプロジェクトごとではないため）。置き場所（サイドバー
 「セッション情報」）は変えない。
 

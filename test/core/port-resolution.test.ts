@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
+import { startViewServer, type ViewAssets, type ViewServer } from "../../src/adapter/server.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
@@ -8,7 +9,6 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../src/core/port-resolution.ts"
-import { startViewServer, type ViewAssets, type ViewServer } from "../../src/core/server.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewAssets: ViewAssets = { uiScript: () => "", styleSheet: () => "" }

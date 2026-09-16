@@ -2,7 +2,7 @@
 // **既定を使ったときだけ** EADDRINUSE で次の番号へずらすリトライを1つの概念としてここに閉じる
 // （docs/coding-standards.md「環境変数の読み取りを1モジュールに集約」）。
 //
-// listen そのもの（node:http）は src/core/server.ts の責務のまま。ここは「どのポートで
+// listen そのもの（node:http）は src/adapter/server.ts の責務のまま。ここは「どのポートで
 // 試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
 
 // ビューを配るポートを上書きするための環境変数。実際の `process.env` の読み取りは

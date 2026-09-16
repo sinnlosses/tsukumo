@@ -1,11 +1,11 @@
 // `src/ui/` を見張り、変更のたびにブラウザ側スクリプトと CSS を組み立て直す。**開発中だけ**
-// 呼ばれる（`TSUKUMO_WATCH_UI`。docs/design.md 11章）。組み立てそのものは `src/core/bundle.ts`
+// 呼ばれる（`TSUKUMO_WATCH_UI`。docs/design.md 11章）。組み立てそのものは `src/adapter/bundle.ts`
 // が持ち、ここは「いつ組み立て直すか」と「ブラウザに何をさせるか」だけを決める。
 //
 // **見張るのは `src/ui/` だけ。** `src/protocol/` はサーバ側でも畳み込みに使われていて、
 // ブラウザ側だけ新しくすると両側の食い違った状態が動いてしまう（docs/design.md 11章）。
 //
-// **`fs.watch` を使う**のは、`src/core/task-summary.ts` が `develop/tasks.json` で選んだ
+// **`fs.watch` を使う**のは、`src/adapter/task-summary.ts` が `develop/tasks.json` で選んだ
 // ポーリングと逆に見えるが、取りこぼしの理由が違う。あちらは**ファイル1つ**を見張るので、
 // 保存で inode ごと差し替わると監視が古い実体に残って鳴らなくなる。ここは**ディレクトリを
 // 再帰で**見張るので、中のファイルが差し替わっても鳴る。

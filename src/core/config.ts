@@ -22,7 +22,7 @@ const SESSION_TAG_PREFIX = "tsukumo"
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、台本どおりにイベントを流す
- * （src/core/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
+ * （src/adapter/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
  */
 export type DriverKind = "sdk" | "fake"
 

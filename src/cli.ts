@@ -2,15 +2,16 @@
 // `session-manager` に渡して WebSocket のフレームとして配り続ける。
 //
 // ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
-// 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。`protocol` / `core` / `ui` の
-// すべてを import してよい唯一の場所（docs/design.md 2章「層と依存の向き」）。
+// 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。`protocol` / `core` /
+// `adapter` / `ui` のすべてを import してよい唯一の場所（docs/design.md 2章「層と依存の向き」。
+// **`core` から `adapter` を引くのは禁じてあり、両者を結ぶのはここだけ**）。
 
 import { randomUUID } from "node:crypto"
 import process from "node:process"
 
-import { buildStyleSheet, buildUiScript } from "./core/bundle.ts"
-import { resolveBundledDir } from "./core/bundled-path.ts"
-import { editCharacterPack } from "./core/character-edit.ts"
+import { buildStyleSheet, buildUiScript } from "./adapter/bundle.ts"
+import { resolveBundledDir } from "./adapter/bundled-path.ts"
+import { editCharacterPack } from "./adapter/character-edit.ts"
 import {
   buildSystemPromptAppend,
   type CharacterPack,
@@ -21,31 +22,29 @@ import {
   readCharacterPack,
   readCharacterPackFile,
   toCharacterPackChoices,
-} from "./core/character-pack.ts"
+} from "./adapter/character-pack.ts"
+import { readFakeScript, startFakeSession } from "./adapter/fake-driver.ts"
+import { createOrcaHost } from "./adapter/orca-host.ts"
+import {
+  readRememberedCharacter,
+  writeRememberedCharacter,
+} from "./adapter/remembered-character.ts"
+import { findSessionToResume, readRestoredEvents, startSession } from "./adapter/sdk-driver.ts"
+import { attachSessionSocket, createStartupToken, startViewServer } from "./adapter/server.ts"
+import { watchTaskSummary } from "./adapter/task-summary.ts"
+import { watchUiSource } from "./adapter/ui-rebuild.ts"
 import { type Config, readConfig, sessionTag, VIEW_PORT_ENV_NAME } from "./core/config.ts"
-import { readFakeScript, startFakeSession } from "./core/fake-driver.ts"
 import { type Host } from "./core/host.ts"
-import { createOrcaHost } from "./core/orca-host.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "./core/port-resolution.ts"
-import { readRememberedCharacter, writeRememberedCharacter } from "./core/remembered-character.ts"
 import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
-import { attachSessionSocket, createStartupToken, startViewServer } from "./core/server.ts"
-import {
-  DEFAULT_PERMISSION_MODE,
-  findSessionToResume,
-  readRestoredEvents,
-  type SessionDriver,
-  startSession,
-} from "./core/session-driver.ts"
+import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./core/session-driver.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { SPEECH_CADENCE_PROMPT } from "./core/speech-cadence.ts"
-import { watchTaskSummary } from "./core/task-summary.ts"
-import { watchUiSource } from "./core/ui-rebuild.ts"
 import { type ExpressionChoice, expressionChoices } from "./protocol/character.ts"
 import { type CharacterEditCommand } from "./protocol/command.ts"
 import { type RefreshTarget, type ServerFrame } from "./protocol/frame.ts"

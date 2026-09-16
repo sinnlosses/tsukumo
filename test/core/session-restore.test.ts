@@ -7,7 +7,7 @@ import { type Expression } from "../../src/protocol/expression.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
-// （`listSessions` / `getSessionMessages` を呼ぶのは src/core/session-driver.ts の側）。
+// （`listSessions` / `getSessionMessages` を呼ぶのは src/adapter/sdk-driver.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud"]
 
 // 印はキャラクターパックごとに違う（`tsukumo:<パック名>`）。

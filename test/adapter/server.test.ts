@@ -9,7 +9,7 @@ import {
   startViewServer,
   type SessionSocket,
   type ViewServer,
-} from "../../src/core/server.ts"
+} from "../../src/adapter/server.ts"
 import { type DispatchResult } from "../../src/core/session-manager.ts"
 import { type ClientCommand } from "../../src/protocol/command.ts"
 import {
@@ -289,7 +289,7 @@ const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
 /**
  * `/character/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
- * 上書きする（`src/core/character-pack.ts` の `readCharacterPackFile` の代役）。
+ * 上書きする（`src/adapter/character-pack.ts` の `readCharacterPackFile` の代役）。
  */
 function noCharacterAsset(): undefined {
   return undefined

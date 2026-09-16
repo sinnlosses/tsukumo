@@ -2,9 +2,8 @@ import { describe, expect, it } from "bun:test"
 
 import { type PermissionMode as SdkPermissionMode } from "@anthropic-ai/claude-agent-sdk"
 
+import { buildQuerySeedOptions, DEFAULT_EFFORT } from "../../src/adapter/sdk-driver.ts"
 import {
-  buildQuerySeedOptions,
-  DEFAULT_EFFORT,
   DEFAULT_MODEL,
   DEFAULT_PERMISSION_MODE,
   type SessionDriverOptions,

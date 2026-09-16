@@ -3,8 +3,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { editCharacterPack, MAX_PORTRAIT_FILES_PER_PACK } from "../../src/core/character-edit.ts"
-import { listCharacterPacks, readCharacterPack } from "../../src/core/character-pack.ts"
+import { editCharacterPack, MAX_PORTRAIT_FILES_PER_PACK } from "../../src/adapter/character-edit.ts"
+import { listCharacterPacks, readCharacterPack } from "../../src/adapter/character-pack.ts"
 import { type CharacterEditCommand } from "../../src/protocol/command.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
