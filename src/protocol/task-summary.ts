@@ -8,7 +8,7 @@
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
  *
- * `difficulty`・`loopable`・`dependencies` は**一覧の表（`src/ui/sidebar/task-board.tsx`）が使う**。
+ * `difficulty`・`loopable`・`dependencies` は**一覧の表（`src/ui/features/sidebar/task-board.tsx`）が使う**。
  * サイドバーの区画には出さないが、同じ読み取りから採れるものをここで揃えておく
  * （読み取りを2本に分けない）。
  */

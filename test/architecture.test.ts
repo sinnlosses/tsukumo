@@ -143,18 +143,22 @@ describe("経路名のリテラル", () => {
   })
 })
 
-// `ui/` の中の横断 import を禁じる（`docs/design.md` 12章 段3「ui/ の作法」2）。
-// 領域は `layout` / `main-view` / `character-view` / `sidebar` / `dispatch`。
-// `ui/component/` `ui/style/` `ui/appearance/` と `ui/app.tsx` `ui/socket.ts` `ui/main.tsx`
-// （領域のディレクトリの直下に無いもの。`UI_REGIONS` に無ければ自動的にここに入る）は誰から
-// 引いてもよい共有部分なので、ここでは見ない。
+// `ui/features/` の中の横断 import を禁じる（`docs/design.md` 2章「`src/ui/` の箱と、置く基準」）。
+// 機能は `layout` / `main-view` / `character-view` / `sidebar` / `dispatch` / `appearance`。
+// `ui/components/` `ui/lib/` `ui/stores/` `ui/styles/` と `ui/main.tsx`（`ui/features/` の
+// 直下に無いもの。`UI_REGIONS` に無ければ自動的にここに入る）は誰から引いてもよい共有部分
+// なので、ここでは見ない。
 //
-// **`ui/report/` も共有部分に含めた**（段6。当初は「領域」の1つとして名指しされていたが、
-// `report/` は state を持たない Markdown の描画プリミティブ（unified の構成・sanitize の
-// schema・MermaidBlock・ChartBlock）で、それ自体が何かの「機能」ではなく `ui/component/` と
-// 同じ役割。`main-view/` の `<Report>` が `<Markdown>` を直接使う必要があり、横断 import 禁止の
-// 対象にすると設計（`docs/design.md` 6.1 の部品の木）と両立しない）。
-const UI_REGIONS = ["layout", "main-view", "character-view", "sidebar", "dispatch"] as const
+// **`markdown/` は `main-view` の中**（`ui/features/main-view/markdown/`）なので、機能の
+// 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
+const UI_REGIONS = [
+  "layout",
+  "main-view",
+  "character-view",
+  "sidebar",
+  "dispatch",
+  "appearance",
+] as const
 type UiRegion = (typeof UI_REGIONS)[number]
 
 type UiRegionViolation = {
@@ -164,8 +168,8 @@ type UiRegionViolation = {
   readonly toRegion: UiRegion
 }
 
-describe("ui/ の領域どうしの import", () => {
-  it("ui/<領域>/ から別の ui/<領域>/ への import が無い", () => {
+describe("ui/ の機能どうしの import", () => {
+  it("ui/features/<機能>/ から別の ui/features/<機能>/ への import が無い", () => {
     const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("ui/"))
     expect(files.length).toBeGreaterThan(0)
 
@@ -192,13 +196,13 @@ function findUiRegionViolations(relPath: string): readonly UiRegionViolation[] {
   })
 }
 
-/** `ui/<領域>/...` の形なら領域名を返す。共有部分（`ui/component/` など）は undefined。 */
+/** `ui/features/<機能>/...` の形なら機能名を返す。共有部分（`ui/lib/` など）は undefined。 */
 function uiRegionOf(relPath: string): UiRegion | undefined {
-  const [top, second] = relPath.split("/")
-  if (top !== "ui" || second === undefined) {
+  const [top, second, third] = relPath.split("/")
+  if (top !== "ui" || second !== "features" || third === undefined) {
     return undefined
   }
-  return isUiRegion(second) ? second : undefined
+  return isUiRegion(third) ? third : undefined
 }
 
 function isUiRegion(value: string): value is UiRegion {

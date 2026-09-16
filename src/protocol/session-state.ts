@@ -30,7 +30,7 @@ const MAX_SESSION_STATE_TURNS = 20
 
 /**
  * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は表示側
- * `src/ui/component/tool-summary.ts` の `summarizeToolInput` の仕事。`docs/coding-standards.md`
+ * `src/ui/lib/tool-summary.ts` の `summarizeToolInput` の仕事。`docs/coding-standards.md`
  * 「会話内容の扱い」のとおり、要約に断片が入りうることは呼び出し側が承知した上で使う）。
  */
 export type ToolActivity = {
@@ -55,7 +55,7 @@ export type ToolActivity = {
 
 /**
  * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
- * 発話の詳細の3種類。**描く側（`src/ui/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
+ * 発話の詳細の3種類。**描く側（`src/ui/features/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
  * （{@link mainViewEntries}）。
  */
 export type MainViewEntry =
@@ -202,7 +202,7 @@ export type SessionState = {
   /**
    * 今のターンが始まった時刻（`request` の `at`）。表す意味は「依頼を送ってから、そのターンが
    * 終わるまでの時間」の起点で、次の `request` まではそのまま持ち続ける（入力欄の経過時間表示
-   * `src/ui/dispatch/turn-status.tsx` が使う。docs/design.md 4.2）。まだ一度も依頼が無ければ
+   * `src/ui/features/dispatch/turn-status.tsx` が使う。docs/design.md 4.2）。まだ一度も依頼が無ければ
    * undefined。
    */
   readonly turnStartedAt: number | undefined
@@ -413,7 +413,7 @@ export function applySessionEvent(
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
  * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
- * `[<Report> | <QuestionRecord>]*`」）が、`src/ui/main-view/turn.tsx` はそこから描かない
+ * `[<Report> | <QuestionRecord>]*`」）が、`src/ui/features/main-view/turn.tsx` はそこから描かない
  * （2026-09-16 決定。`docs/requirements.md` 4.2）。**`groupIntoTurns` / `keepOnlyInterimReports`
  * （`protocol/main-view.ts`）が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
  * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /

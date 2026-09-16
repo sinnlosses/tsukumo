@@ -51,11 +51,11 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "getComputedStyle",
   "requestAnimationFrame",
   "cancelAnimationFrame",
-  // `src/ui/layout/split.ts` 系（利用者の設定を `localStorage` に持つモジュール）のテストが
+  // `src/ui/features/layout/split.ts` 系（利用者の設定を `localStorage` に持つモジュール）のテストが
   // 要る。DOM を組み立てる部品ではないが、他のテスト（`fetch` / `WebSocket` を使うもの）には
   // 影響しない値の保管場所なので、ここに含めてよい。
   "localStorage",
-  // `src/ui/appearance/character-edit.tsx`（選んだ立ち絵を data URL にする）のテストが要る。
+  // `src/ui/features/appearance/character-edit.tsx`（選んだ立ち絵を data URL にする）のテストが要る。
   // **2つセットで借りる** — 片方だけ差し替えると `FileReader` が相手の `Blob` を受け取れない。
   "File",
   "FileReader",

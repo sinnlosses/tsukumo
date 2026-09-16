@@ -16,7 +16,7 @@ describe("buildUiScript", () => {
 })
 
 describe("buildStyleSheet", () => {
-  it("src/ui/style/ を1本の CSS にまとめて返す", async () => {
+  it("src/ui/styles/ を1本の CSS にまとめて返す", async () => {
     const styleSheet = await buildStyleSheet()
 
     expect(styleSheet).toBeDefined()

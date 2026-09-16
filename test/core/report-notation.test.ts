@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { REPORT_NOTATION_PROMPT } from "../../src/core/report-notation.ts"
-import { REPORT_SANITIZE_SCHEMA } from "../../src/ui/report/sanitize-schema.ts"
+import { REPORT_SANITIZE_SCHEMA } from "../../src/ui/features/main-view/markdown/sanitize-schema.ts"
 
 // この規約は**レンダラが描けるものの一覧**でもある（docs/requirements.md 4.2）。文面だけが先に
 // 進んで「勧めた記法が描かれない」が起きないよう、名乗った要素と class を両側に突き合わせる。
@@ -15,10 +15,10 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
   ([, names]) => names?.split(" ") ?? [],
 )
 
-// 見た目は src/ui/style/*.css にある（移行の段6で src/presentation/style/ から移った）。
+// 見た目は src/ui/styles/*.css にある（移行の段6で src/presentation/style/ から移った）。
 // ページは <link> で読むだけで中身を持たないので、main.css（@import で束ねる入口）が指す先を
 // そのまま連結して検査する。
-const STYLE_DIR = fileURLToPath(new URL("../../src/ui/style", import.meta.url))
+const STYLE_DIR = fileURLToPath(new URL("../../src/ui/styles", import.meta.url))
 const STYLE_SHEET_SOURCE = readdirSync(STYLE_DIR)
   .filter((name) => name.endsWith(".css") && name !== "main.css")
   .map((name) => readFileSync(`${STYLE_DIR}/${name}`, "utf8"))

@@ -2,7 +2,7 @@
 // やり取り（ターン）ごとにまとめる**純粋関数だけを置く。
 //
 // `groupIntoTurns` / `limitTurnEntries` はもとは1つのファイルにまとまっていた（移行の段6で
-// HTML の組み立てが `src/ui/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
+// HTML の組み立てが `src/ui/features/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
 // どちらでも同じ結果になる `protocol` へ残した。docs/design.md 12章 段6）。
 //
 // `node:` にも `document` にも触らない（他の protocol と同じ制約）。
@@ -30,7 +30,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  *
  * `interim` は、その本文が**中間レポート**（あとにツールが続いたが、まとまった資料なので
  * 残した本文。`keepOnlyInterimReports`）かどうか。`report` が undefined のときは常に false。
- * 見分けを付けて描くのは `src/ui/main-view/turn.tsx` の仕事で、判定はここに置く。
+ * 見分けを付けて描くのは `src/ui/features/main-view/turn.tsx` の仕事で、判定はここに置く。
  *
  * `superseded` は、**自分より後ろに `report` を持つステップがあるか**（`markSupersededSteps`）。
  * 中間レポートが何件も積むと見通しが悪い問題（2026-09-16 の指摘）に対する材料で、
@@ -43,7 +43,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  * `id` は**追加されても番号がずれない**ように、そのやり取りの中で作られた順に先頭から数えた
  * 通し番号（`MainViewTurn.id` と同じ考え方）。`limitTurnEntries` が上限を超えた分を古いほうから
  * 落としても、残ったステップの `id` は変わらない（`groupIntoTurns` で、`limitTurnEntries` より
- * 前に振る）。`src/ui/main-view/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
+ * 前に振る）。`src/ui/features/main-view/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
  * すると**、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に、React が別のステップの
  * DOM を使い回して描き直してしまう（`<details>` の `open` のような制御されていない DOM の状態が
  * 別のステップへ乗り移って見える。2026-09-16 の指摘）。
@@ -60,7 +60,7 @@ export type MainViewStep = {
 /**
  * 利用者の依頼1件と、それ以降のステップ。`request` が undefined なのは、最初の依頼より前の記録
  * （セッションの途中から追い始めたときに起こる）。`id` は**追加されても番号がずれない**ように
- * 先頭から数えた通し番号で、タブの選択を保つのに使う（`src/ui/main-view/main-view.tsx`）。
+ * 先頭から数えた通し番号で、タブの選択を保つのに使う（`src/ui/features/main-view/main-view.tsx`）。
  */
 export type MainViewTurn = {
   readonly id: number
@@ -72,7 +72,7 @@ export type MainViewTurn = {
 
 /**
  * 時系列の記録を、やり取り（ターン）ごとにまとめ、直近 {@link MAX_MAIN_VIEW_TURNS} 件へ絞る。
- * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/ui/main-view/` の仕事）。
+ * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/ui/features/main-view/` の仕事）。
  */
 export function mainViewTurns(entries: readonly MainViewEntry[]): readonly MainViewTurn[] {
   return groupIntoTurns(entries)
@@ -219,7 +219,7 @@ function isInterimReport(markdown: string): boolean {
  * は変えない**——このタスク（2026-09-16）で足すのは「畳むかどうか」の材料だけ。
  * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
  * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
- * `src/ui/main-view/turn.tsx`）。
+ * `src/ui/features/main-view/turn.tsx`）。
  */
 function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
   const { steps } = turn.steps.reduceRight<{

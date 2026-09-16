@@ -36,11 +36,11 @@ export function buildUiScript(): Promise<string | undefined> {
 }
 
 /**
- * CSS（`src/ui/style/`）を `bun build` でまとめる。領域ごとに割った `.css`
- * （`src/ui/style/*.css`）を `main.css` の `@import` で束ねる。
+ * CSS（`src/ui/styles/`）を `bun build` でまとめる。領域ごとに割った `.css`
+ * （`src/ui/styles/*.css`）を `main.css` の `@import` で束ねる。
  */
 export function buildStyleSheet(): Promise<string | undefined> {
-  const entry = bundledFilePath("src", "ui", "style", STYLE_SHEET_ENTRY)
+  const entry = bundledFilePath("src", "ui", "styles", STYLE_SHEET_ENTRY)
   return bundleWithBun(entry, STYLE_SHEET_MAX_BYTES)
 }
 

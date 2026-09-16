@@ -60,7 +60,7 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
  * （その場合は時間経過だけで動きが変わることはない）。
  *
  * ツールの失敗・ターンの完了そのものは受け取ったイベントで再描画されるが、時間の窓が
- * 「過ぎた瞬間」には何のイベントも来ない。呼び出し側（`src/ui/character-view/character-view.tsx`
+ * 「過ぎた瞬間」には何のイベントも来ない。呼び出し側（`src/ui/features/character-view/character-view.tsx`
  * の `useEffect` タイマー）が、この関数の戻り値ぶん先に1回だけ自分を配り直すことで、
  * 「読んでいる」「待っている」へ戻す（`nextWorkingTransitionDelayMs` と同じ形。
  * `src/protocol/expression.ts`）。

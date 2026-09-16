@@ -1,0 +1,305 @@
+/* 領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
+   領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく
+   なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
+.character-region {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  /* 立ち絵の大きさ（領域の高さに対する割合）と、尻尾の大きさ。立ち絵は領域いっぱいには
+     出さず、少し小さくして床に置く（2026-09-12 ユーザーの指示）。--portrait-drop は立ち絵を
+     領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる
+     （2026-09-12 ユーザーの指示「キャラはもう少し下に配置」。2026-09-13 に「あと少し下に」で
+     0.75rem から下げた。立ち絵と吹き出しは同じだけ下がらないと尻尾の指す先がずれるので、
+     --balloon-bottom-gap と同じ量だけ動かす）。
+     2026-09-13 ユーザーの指示「キャラはもう少し大きくしていいよ」で 68% から引き上げた。
+     `.portrait` の max-width（45%）と `.balloon-track` の flex-basis（11rem）が先に当たるので、
+     ここを上げすぎても吹き出しの幅は 11rem 未満には潰れない（下の `.balloon-track` 参照）。
+     --balloon-bottom-gap は最新の吹き出しの下端を領域の下端から浮かせる固定量（下の
+     `.balloon-track` 参照）。**rem の絶対値で持つ**（margin/max-height のパーセントは
+     containing block の幅に対して解決されるため、高さの意図で書くと壊れる）。 */
+  --portrait-height: 78%;
+  --portrait-drop: 2.25rem;
+  --balloon-tail: 14px;
+  --balloon-bottom-gap: 7rem;
+
+  /* 立ち絵の動きの速さ・大きさ（docs/requirements.md 4.3・docs/design.md 6.5）。**この4組が
+     唯一の調整箇所**（変えたい人はここだけ触ればよい）。動かすのは transform（位置・傾き）と
+     opacity だけで、素材の中身には触らない（「1枚の矩形」の割り切り）。控えめの初期値にして
+     ある（ユーザーと詰めて調整する前提）。
+     --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
+     --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
+     --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
+     --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。 */
+  --portrait-breathe-amount: 0.2rem;
+  --portrait-breathe-duration: 3.2s;
+  --portrait-walk-amount: 0.5rem;
+  --portrait-walk-duration: 4.5s;
+  --portrait-bounce-amount: 0.55rem;
+  --portrait-bounce-duration: 0.5s;
+  --portrait-flinch-amount: 0.3rem;
+  --portrait-flinch-rotate: 3deg;
+  --portrait-flinch-duration: 0.35s;
+}
+
+/* 立ち絵も吹き出しの並びも**下端で揃える**（2026-09-12 ユーザーの指示。床に立つ見え方にする
+   ため）。並びが伸びる向きは上で、過去のセリフは上へ押し上がる（.balloon-track の
+   column-reverse）。最新の吹き出しの下端の位置そのものは .balloon-track の
+   margin-bottom（--balloon-bottom-gap）で固定する（下のコメント参照。align-items:
+   flex-end はここでは水平位置に効かない縦積みの並びなので、実質 .balloon-track の
+   自己配置＝下端揃えの起点をそろえる役目）。
+   overflow: hidden は --portrait-drop で下へはみ出した立ち絵の足元をここで切るためのもの。
+   領域そのもの（.layout-region の overflow-y: auto）にスクロールバーを出さない。 */
+.character-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  height: 100%;
+  overflow: hidden;
+}
+/* 立ち絵の大きさは**領域の高さ**を基準にする（幅は画の縦横比で決まる）。幅を基準にすると、
+   キャラビューが横長・浅めの領域（既定で画面の 40% の高さ）のときに小さくなりすぎる。
+   いっぱいには広げず --portrait-height ぶんに留め、下端で揃えたうえで --portrait-drop ぶん
+   下へずらして床に置く（2026-09-12 ユーザーの指示）。max-width は、領域が細いときに吹き出しの場所（.balloon-track の
+   flex-basis）を食い潰さないための上限。 */
+.portrait {
+  margin: 0 0 calc(-1 * var(--portrait-drop));
+  flex: 0 1 auto;
+  height: var(--portrait-height);
+  max-width: 45%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: center;
+  animation: portrait-fade-in 0.25s ease-out;
+}
+.portrait svg,
+.portrait-image {
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+/* 立ち絵の動き（`docs/design.md` 6.5）。**「1枚の矩形」として transform（位置・大きさ・傾き・
+   上下）と opacity だけを動かす**（素材の中身には触らない）。どの動きにするかは `<Portrait>`
+   が `data-motion` 属性で渡す（`src/protocol/portrait-motion.ts` の `resolvePortraitMotion`。
+   「固定」・reduced-motion のときは属性ごと無い＝この4つのどれも当たらず、
+   `portrait-fade-in`（登場）だけが残る）。
+   `margin`（floor に立つ位置）は動かさない値なので、いずれの keyframes も **0%/100% を
+   transform なし（＝上の margin だけで決まる位置）に揃えてある**。reduced-motion
+   （`theme.css`）は `animation-iteration-count: 1` を強制するため、無限ループの呼吸・歩行も
+   1周目の終わり（＝ transform なしの姿勢）で止まり、足元が床から浮いたまま止まることはない。 */
+.portrait[data-motion="reading"] {
+  animation:
+    portrait-fade-in 0.25s ease-out,
+    portrait-breathe var(--portrait-breathe-duration) ease-in-out infinite;
+}
+.portrait[data-motion="waiting"] {
+  animation:
+    portrait-fade-in 0.25s ease-out,
+    portrait-walk var(--portrait-walk-duration) ease-in-out infinite;
+}
+.portrait[data-motion="success"] {
+  animation:
+    portrait-fade-in 0.25s ease-out,
+    portrait-bounce var(--portrait-bounce-duration) ease-out 1;
+}
+.portrait[data-motion="failure"] {
+  animation:
+    portrait-fade-in 0.25s ease-out,
+    portrait-flinch var(--portrait-flinch-duration) ease-out 1;
+}
+@keyframes portrait-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(calc(-1 * var(--portrait-breathe-amount)));
+  }
+}
+/* 領域の中を歩く。**横方向だけ**（`.character-layout` の overflow: hidden が領域の外を切る。
+   固定の rem 量なので、領域の幅がどれだけ狭くても外へは出ない）。中央（transform 無し）から
+   左右へ振れて中央へ戻る、往復1回ぶんを1周期にする。 */
+@keyframes portrait-walk {
+  0%,
+  50%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(var(--portrait-walk-amount));
+  }
+  75% {
+    transform: translateX(calc(-1 * var(--portrait-walk-amount)));
+  }
+}
+/* 完了の反応。小さく跳ねて着地する（完了の合図も兼ねる）。ターンが終わった直後の窓
+   （`SUCCESS_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
+@keyframes portrait-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(calc(-1 * var(--portrait-bounce-amount)));
+  }
+  65% {
+    transform: translateY(calc(var(--portrait-bounce-amount) * 0.2));
+  }
+}
+/* 失敗でびくっ。横に引いて傾き、戻る。ツールが失敗した直後の窓
+   （`FAILURE_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
+@keyframes portrait-flinch {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  30% {
+    transform: translateX(calc(-1 * var(--portrait-flinch-amount)))
+      rotate(calc(-1 * var(--portrait-flinch-rotate)));
+  }
+  60% {
+    transform: translateX(calc(var(--portrait-flinch-amount) * 0.4))
+      rotate(calc(var(--portrait-flinch-rotate) * 0.4));
+  }
+}
+@keyframes portrait-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* 吹き出しの並び。**DOM は新しい順**（`src/ui/features/character-view/balloon-track.tsx`）なので、
+   column-reverse で並べると最新が一番下に来て、過去のセリフほど上へ積み上がる（2026-09-12
+   ユーザーの指示「過去の発言は上に押し上げる」）。吹き出しは立ち絵の側（align-items:
+   flex-start）へ寄せる。**column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の
+   下端＝最新**なので、並びが丸ごと差し替わっても最新が見える。
+
+   2026-09-13 に一度 align-self を center（箱ごと中央寄せ）へ変えたが、箱の高さがセリフの
+   件数で伸び縮みするため、箱の中心を領域中央に置くと**箱の下端＝最新の吹き出しの位置が
+   セリフの増減で動いてしまい**、ユーザーから「最新の位置がズレていく」と差し戻しが入った。
+   flex-end に戻し、代わりに**箱の下に固定の余白（--balloon-bottom-gap）を持たせて下端の
+   位置そのものを固定**する形にした。max-height をその余白ぶん差し引くことで、並びが
+   伸びても余白の下は侵食しない（＝最新の吹き出しの Y 座標がセリフ件数によらず一定になる。
+   --balloon-bottom-gap の値は「セリフ1件のときに旧 center 版と同じ高さに来る」ことを
+   基準に実測で決めた）。高さの起点はここでも中身なり・上限は領域なり（基準は
+   .character-region → .character-layout と継いだ高さから --balloon-bottom-gap を引いたもの）
+   で、入りきらなくなったぶんだけ内側でスクロールする。「どれが最新か」は位置と
+   **見た目の強弱**の両方で示す（下の .balloon:first-child）。 */
+.balloon-track {
+  display: flex;
+  align-self: flex-end;
+  align-items: flex-start;
+  flex: 1 1 11rem;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+  margin-bottom: var(--balloon-bottom-gap);
+  /* max() の下限は、領域を仕切りで低くしたときに calc の側が 0 以下になって**吹き出しが
+     丸ごと消える**のを防ぐためのもの。下限が勝つのは領域が --balloon-bottom-gap + 6rem
+     より低いときだけで、そこでは最新の位置の固定より読めることを優先する。 */
+  max-height: max(6rem, calc(100% - var(--balloon-bottom-gap)));
+  overflow-y: auto;
+}
+/* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。 */
+.balloon {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.75rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  white-space: pre-wrap;
+}
+/* **DOM の先頭が最新**（column-reverse で視覚上は下端に出る）。いま読んでほしい1件だけを
+   濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。過去の分は小さく薄くして、
+   残ってはいるが読み返す対象だと分かる見た目にする。 */
+.balloon:first-child {
+  animation: balloon-appear 0.3s ease-out;
+  font-size: var(--font-body);
+  background: var(--surface-accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+/* 尻尾ぶんの場所を左に確保する。`.balloon-track` は overflow-y: auto を持ち、CSS の規則で
+   overflow-x も自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を
+   吹き出しの外（左）へ絶対配置するだけだと padding の外＝クリップ境界の外に出て消える。
+   ここで確保した padding-left ぶんが、下の尻尾の幅（--balloon-tail）と一致することで、
+   尻尾がちょうど padding の中に収まりクリップされない（2026-09-13、目視で確認）。 */
+.portrait + .balloon-track {
+  padding-left: var(--balloon-tail);
+}
+/* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
+   **枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形に
+   する**（2026-09-12 ユーザーの指示「<◯ のような本当の吹き出し」）。三角1枚だと枠線の色で
+   塗った板が飛び出しているだけに見える。
+   立ち絵は左にいるので、**尻尾は吹き出しの左辺から真横（左）へ出し、先端を左に向ける**
+   （2026-09-13 ユーザーの指示「尻尾は左下じゃなくて左がいい」。以前は下辺から左下へ向けて
+   出していたが、下に伸びる分の場所を空ける必要があり最新位置を固定する直しと相性が悪かった）。
+   border-right を色付きに、border-top と border-bottom を透明にした二等辺三角形で、
+   right: 100% で吹き出しの左外側に置き、top: 50% + translateY(-50%) で吹き出しの縦中央に
+   合わせる（`::before` の border-box の高さが `--balloon-tail` の2倍になるので、
+   translateY(-50%) は幅を書き換えても自動で中央に追随する）。
+   ::after は吹き出し側へ 1px 寄せたうえで上下の border 幅を一回り小さくする。ずらすだけだと
+   斜辺に沿って滑るだけで枠の色が出ないので、斜辺に 1px 残すには大きさも変える必要がある
+   （縦中央合わせは translateY(-50%) がそのつど計算し直すので、幅を変えても位置合わせは
+   崩れない）。 */
+.portrait + .balloon-track > .balloon:first-child::before,
+.portrait + .balloon-track > .balloon:first-child::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: var(--balloon-tail) solid transparent;
+  border-bottom: var(--balloon-tail) solid transparent;
+  border-right: var(--balloon-tail) solid var(--accent);
+}
+.portrait + .balloon-track > .balloon:first-child::after {
+  right: calc(100% - 1px);
+  border-top-width: calc(var(--balloon-tail) - 2px);
+  border-bottom-width: calc(var(--balloon-tail) - 2px);
+  border-right-color: var(--surface-accent);
+}
+.balloon:not(:first-child) {
+  font-size: var(--font-secondary);
+  opacity: 0.5;
+  animation: balloon-push-up 0.3s ease-out;
+}
+/* 差し替えは React の再描画（`src/ui/features/character-view/balloon-track.tsx`）。**位置ベースの key**
+   （`index`）を使うため、新しい吹き出しが増えて既存の吹き出しの位置がずれると、その位置の
+   ノードは中身だけが更新されて同じ DOM ノードのまま残ることがある（React が key の一致で
+   ノードを再利用する）。そのため balloon-push-up（過去のセリフの押し上げ）は、既存セリフ全件で
+   毎回再生されるとは限らない。「最新が並びの下端に差し込まれ、過去のセリフは1つぶん上へ
+   押し上げられて薄くなる」動きの向きと最終状態（class・opacity）は変わらない。押し上げる量は
+   最新の吹き出し1つぶんの当て推量なので、セリフが長いと少しずれるが、動きの向きが伝われば
+   よい。 */
+@keyframes balloon-push-up {
+  from {
+    transform: translateY(2.75rem);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+}
+@keyframes balloon-appear {
+  from {
+    transform: translateY(0.9rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

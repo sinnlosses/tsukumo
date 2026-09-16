@@ -149,7 +149,7 @@ export function resolveExpression(
  *
  * ツールの開始・終了だけでは、遅延やクールダウンが経過した「その瞬間」には何のイベントも
  * 来ないので、何もしなければ次のイベントが来るまで表情の再計算が起きない。呼び出し側
- * （`src/ui/character-view/character-view.tsx` の `useEffect` タイマー）が、この関数の
+ * （`src/ui/features/character-view/character-view.tsx` の `useEffect` タイマー）が、この関数の
  * 戻り値ぶん先に1回だけ自分を配り直し、**発火するたびに次の遅延を計算し直して立て直す**
  * ことで、「作業中」への切り替えとクールダウン明けの両方を追う（移行前は
  * `usecase/event-sink.ts` がサーバ側でこれを担っていたが、キャラビューが React の部品に

@@ -87,7 +87,7 @@ describe("applySessionEvent", () => {
     const nextTurn = applySessionEvent(spoken, { kind: "request", text: "ダミーの依頼" }, 0)
 
     // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
-    // （src/ui/character-view/balloon-track.tsx）。
+    // （src/ui/features/character-view/balloon-track.tsx）。
     expect(nextTurn.speeches).toEqual([])
     expect(currentExpression(nextTurn, 0)).toBe("default")
   })
@@ -380,7 +380,7 @@ describe("applySessionEvent", () => {
       },
     ])
     // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
-    // `src/ui/main-view/turn.tsx` の仕事で、いまはツールを描かない）。
+    // `src/ui/features/main-view/turn.tsx` の仕事で、いまはツールを描かない）。
     expect(mainViewEntries(view)).toEqual([
       {
         kind: "tool",

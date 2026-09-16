@@ -255,8 +255,10 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
   `test/ui/features/main-view/markdown/` になる）
 - パスを本文に書いているコメントを追随させる（`src/core/report-notation.ts`・
   `src/protocol/session-state.ts`・`src/protocol/session-socket.ts`・`src/adapter/server.ts`・
-  `test/dom-environment.ts`・`test/cli.test.ts`）。ドキュメントで残るのは
-  `docs/requirements.md` 4.3 の `src/ui/style/theme.css` 1件
+  `test/dom-environment.ts`・`test/cli.test.ts`）。**`docs/` 側の旧パスは10箇所あり
+  （`requirements.md` 7・`architecture.md` 1・`glossary.md` 1・`workflow.md` 1）、移動と
+  同じコミットで追随させた**（2026-09-16 の実測。この対応表と12章の移行の記録、
+  `docs/research/` は当時の記録なので残す）
 
 **採らなかった bullet-proof-react の要素**（実体が無い箱を先に作らないため。要るようになったら足す）:
 

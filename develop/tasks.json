@@ -314,9 +314,9 @@
     "dependencies": ["T-169"],
     "summary": "決めた形に src/ui/ と test/ui/ を組み替える",
     "task": "## 背景\n\n前段のタスクが `docs/design.md` 2章に「いまのパス → 新しいパス」の対応表を書いている。\nこのタスクは**そのとおりにファイルを移すだけ**。\n\n移動に追随が要る場所（実測）:\n\n- `src/adapter/bundle.ts`: `UI_SCRIPT_ENTRY = \"main.tsx\"`（`src/ui/` 直下にある前提）。\n  CSS は `src/ui/style/*.css` を `style/main.css` の `@import` で束ねる\n- `src/adapter/ui-rebuild.ts`: `UI_SOURCE_DIR_RELATIVE_PATH = [\"src\", \"ui\"]` を再帰で見張る\n  （`src/ui/` の中で移すぶんには影響しない）\n- `test/`: `src/<相対パス>.ts` → `test/<相対パス>.test.ts` のミラー。`test/ui/` 配下に**24ファイル**\n- `test/architecture.test.ts` の `layerOf` は `src/` 直下の先頭ディレクトリで層を判定する\n  （`src/ui/` の中で移すぶんには影響しない）\n\n## 決まっていること（蒸し返さない）\n\n- 形は前段のタスクが `docs/design.md` に決めたものに従う。**このタスクで設計を蒸し返さない**。\n- barrel file を作らない（import は実ファイルを直接指す。2026-09-13 決定）。\n- **見た目も部品の中身も変えない。** CSS のクラス名も変えない（HTML と CSS の対応が切れる）。\n\n## 解くべき論点\n\n- 相対 import の書き換え漏れをどう検出するか（`bun run typecheck` が拾うはずだが、\n  CSS の `@import` と `bundle.ts` の入口は型で守れない）。\n- 移動を1コミットに収められるか（収まらないなら、移動のコミットと中身の修正のコミットを分ける）。\n\n## やること\n\n1. `docs/design.md` 2章の対応表のとおりに `src/ui/` を **`git mv`** で移す（履歴を保つ）。\n2. `test/ui/` を同じ形に追随させる。\n3. 相対 import と、`src/adapter/bundle.ts` の入口・CSS の束ね方を直す。\n4. `bun run format` を通す。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書き、**移動前の件数と同じ**であることを\n  確かめる。件数が減っていたらテストが拾われなくなっている）。\n- **目視で確かめる**: `TSUKUMO_DRIVER=fake` で起こし、4領域（メインビュー・キャラビュー・\n  サイドバー・入力欄）が移動前と同じに見えることを確かめ、何を見たかを `evidence` に書く。\n- `git status` に、自分が移したファイル以外の変更が混ざっていない。\n\n## 注意\n\n- **他のセッションの未コミット変更を巻き込まない**（CLAUDE.md「Git運用」）。`git add -A` を\n  使わず、触ったファイルを個別に足す。\n- 大量の移動になるので、**移動と中身の変更を同じコミットに混ぜない**。\n- `develop/tasks.json` はコミットしない（記録はメインセッションが行う）。",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "git mv で74件（src/ui 50 + test/ui 24）を docs/design.md 2章の対応表どおりに移した。中身の変更は App→SessionProvider の改名・Layout が renderAppearance を props で受け取る形・bundle.ts の CSS 入口・相対 import とコメントのパス追随だけ。bun run check: 594 pass / 0 fail / 56 files（移動前と同数）。目視は移動前の HEAD を一時 worktree に出し 1400x900 で撮り比べ、4領域の実測座標が1pxも変わらず（.layout-main 16/1006.8x505.44 ほか）、横のはみ出し0px・pageerror 0件・4xx 0件。依頼の送信→レポート表示→立ち絵と吹き出しの更新と、今回変えた唯一の描画の配線である「見た目」の引き出しまで確認。docs/ の旧パスは設計が「1件」と書いていたが実測10箇所（requirements 7 / architecture 1 / glossary 1 / workflow 1）あったので同じコミットで追随させ、design.md 側の件数も直した。test/architecture.test.ts は uiRegionOf を ui/features/<機能>/ を見る形に最小限だけ追随（直さないと横断 import の検査が黙って空振りする）。"
   },
   {
     "id": "T-171",

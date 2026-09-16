@@ -62,7 +62,7 @@ pid だけ**にする（`lsof -ti :<port>` で引く。`pkill -f 'bun run'` の�
 ## `summary` の長さ
 
 共通版は「1行に収める」とだけ言う。**このリポジトリでは全角40文字以内**を目安にする
-（サイドバーのタスク一覧が2列の行で出すため。`src/ui/sidebar/task-list.tsx` の `TaskItem`）。
+（サイドバーのタスク一覧が2列の行で出すため。`src/ui/features/sidebar/task-list.tsx` の `TaskItem`）。
 
 ## 関連
 

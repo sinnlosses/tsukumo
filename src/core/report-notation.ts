@@ -14,7 +14,7 @@
  * メインビューが HTML を描けることを前提に、出力スタイルのレポート規約を上書きする文面。
  * `query()` の `systemPrompt: { type: "preset", preset: "claude_code", append }` に渡す。
  *
- * **ここに並ぶ記法は `src/ui/report/sanitize-schema.ts` が通すものと揃っている必要がある**
+ * **ここに並ぶ記法は `src/ui/features/main-view/markdown/sanitize-schema.ts` が通すものと揃っている必要がある**
  * （片方だけ直すと、勧めた記法が画面で落ちる。docs/requirements.md 4.2）。
  *
  * **レポートの文体もここが決める**（キャラクターパックの `persona.md` ではない）。どのパックに

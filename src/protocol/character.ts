@@ -313,7 +313,7 @@ const EMPTY_OUTFIT_ACCENTS: Readonly<Record<Outfit, string | undefined>> = {
 /**
  * 表情に対応する立ち絵の URL を決める。該当する表情の指定が無ければ `default` に落ちる
  * （docs/requirements.md 4.4「あるものだけでよい」）。`default` も無ければ undefined を返し、
- * 呼び出し側（`src/ui/character-view/portrait.tsx`）は立ち絵なし（吹き出しだけ）に
+ * 呼び出し側（`src/ui/features/character-view/portrait.tsx`）は立ち絵なし（吹き出しだけ）に
  * フォールバックする。
  */
 export function resolvePortraitUrl(

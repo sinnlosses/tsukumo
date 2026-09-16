@@ -102,7 +102,7 @@ export type SessionEvent =
    * 質問（`AskUserQuestion`）に利用者が答えた。**答えが確定した時点で1回だけ流す**
    * （2026-09-16 決定。docs/requirements.md 4.2「許可と質問」）。`pending-changed` は列が
    * 空になったことしか伝えないので、**「何を聞いて、どう答えたか」を残せるのはこの経路だけ**
-   * （メインビューの質問の記録。`src/ui/main-view/question-record.tsx`）。
+   * （メインビューの質問の記録。`src/ui/features/main-view/question-record.tsx`）。
    *
    * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
    * **質問文も答えも会話の内容**なので、ログに出さない・外へ出さない。
