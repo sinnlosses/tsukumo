@@ -1,5 +1,11 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 タスク一覧の表に loopable の列を足した（T-151）
+
+`src/protocol/task-summary.ts` が `loopable` を読み捨てていたので `TaskSummaryItem` に足し、
+モーダルの表（`src/ui/sidebar/task-board.tsx`）に難易度の次の列として出した。モーダルの幅は
+変えていない（1024px のまま）。
+
 ### 2026-09-16 ツールの行をレポートから消し、「レポートだけを出す」に戻した（T-133）
 
 `toolVisibility` と `<ToolRun>` と `.step-tools` をまとめて撤去した（判断そのものが要らなく
