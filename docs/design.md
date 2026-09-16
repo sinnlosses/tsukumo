@@ -144,7 +144,7 @@ src/
     layout/                   Layout・領域の枠・リサイザ
     main-view/                TurnTabs・Turn・Report（Markdown）・ToolRun・QuestionRecord
     character-view/           Portrait・BalloonTrack・Balloon・動きの hooks
-    sidebar/                  Activity・TaskList・SessionInfo
+    sidebar/                  Activity・TaskList・TaskBoard（表のモーダル）・SessionInfo
     dispatch/                 Composer・CommandSuggestions・PendingAnswer・TurnStatus
     report/                   markdown.tsx（unified の設定）・sanitize-schema.ts・MermaidBlock・ChartBlock
     style/                    いまの .css を部品ごとに置き直す
@@ -374,7 +374,8 @@ type SessionHost = {
    ├ <CharacterView>         <Portrait> + <BalloonTrack>
    │   ├ <Portrait>          立ち絵。SVG はインラインで差し色、ラスタは <img>。動きの hooks（6.5）
    │   └ <BalloonTrack>      <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）
-   ├ <Sidebar>               <Activity> + <TaskList> + <SessionInfo>
+   ├ <Sidebar>               <Activity> + <TaskList> + <SessionInfo> + <TaskBoard>
+   │   └ <TaskBoard>         タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
    │   └ <SessionInfo>       モデル / 許可モード の <select>、キャラクターの <select>（段8）、続きから始まった印
    ├ <Dispatch>              <PendingAnswer> + <Composer> + <TurnStatus>
    │   ├ <PendingAnswer>     許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）

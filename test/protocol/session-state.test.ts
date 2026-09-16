@@ -579,7 +579,15 @@ describe("applySessionEvent", () => {
   it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは undefined", () => {
     expect(INITIAL_SESSION_STATE.tasks).toBeUndefined()
 
-    const tasks = [{ id: "X-001", summary: "架空のタスク", status: "todo" }]
+    const tasks = [
+      {
+        id: "X-001",
+        summary: "架空のタスク",
+        status: "todo",
+        difficulty: "sonnet",
+        dependencies: [],
+      },
+    ]
     const withTasks = apply({ kind: "tasks-changed", tasks })
     expect(withTasks.tasks).toEqual(tasks)
 

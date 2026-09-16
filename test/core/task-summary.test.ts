@@ -41,6 +41,12 @@ function watch(onChange: (tasks: unknown) => void): TaskSummaryWatcher {
   return created
 }
 
+/** 通知されるはずの1件。**フィールドの一覧は protocol 側の仕事**なので、ここでは1箇所にまとめて
+ * 置き、この層が見ている「読み直したかどうか」だけがテストの主題であることを保つ。 */
+function notified(id: string, summary: string, status: string): Record<string, unknown> {
+  return { id, summary, status, difficulty: undefined, dependencies: [] }
+}
+
 function pollOnce(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, TEST_POLL_INTERVAL_MS * 3))
 }
@@ -58,7 +64,7 @@ describe("watchTaskSummary", () => {
     const changes: unknown[] = []
     watch((tasks) => changes.push(tasks))
 
-    expect(changes).toEqual([[{ id: "T-1", summary: "ダミーのタスク", status: "todo" }]])
+    expect(changes).toEqual([[notified("T-1", "ダミーのタスク", "todo")]])
   })
 
   it("mtime が変わらない間は読み直さず、通知もしない", async () => {
@@ -84,8 +90,8 @@ describe("watchTaskSummary", () => {
     await pollOnce()
 
     expect(changes).toEqual([
-      [{ id: "T-1", summary: "1つめ", status: "todo" }],
-      [{ id: "T-2", summary: "2つめ", status: "in_progress" }],
+      [notified("T-1", "1つめ", "todo")],
+      [notified("T-2", "2つめ", "in_progress")],
     ])
   })
 
@@ -101,9 +107,9 @@ describe("watchTaskSummary", () => {
     await pollOnce()
 
     expect(changes).toEqual([
-      [{ id: "T-1", summary: "1つめ", status: "todo" }],
+      [notified("T-1", "1つめ", "todo")],
       undefined,
-      [{ id: "T-1", summary: "1つめ", status: "todo" }],
+      [notified("T-1", "1つめ", "todo")],
     ])
   })
 

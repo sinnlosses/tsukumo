@@ -295,5 +295,16 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-149",
+    "status": "done",
+    "difficulty": "opus",
+    "loopable": "N",
+    "dependencies": ["T-129"],
+    "passes": "yes",
+    "summary": "タスク一覧を区画の中で畳まず、表のモーダルで見渡せるようにする",
+    "task": "## 背景\n\nT-129 で入れた「畳んで開く」形に対するユーザーの修正依頼（2026-09-16）。意図していたのは\n**閉じた状態はスクロールできること**と、**開いたら `/list-tasks` のようなテーブルを\nモーダルで出すこと**（閉じるボタンかモーダルの外側のクリックで閉じる）だった。\n\n## 決めたこと\n\n- 表の列は `/list-tasks` 相当（ID / status / 難易度 / 依存 / 着手 / 要約）。着手可否は\n  依存と status から計算する（`status.py` と同じ規則）\n- サイドバー側の行は**折り返したまま**（1行に省略しない）\n- 区画の高さの配分は**元の2等分に戻す**（畳む/開くで入れ替える仕掛けは撤去）\n\n## やったこと\n\n1. `src/protocol/task-summary.ts` に `difficulty` / `dependencies` を足し、`taskReadiness` を新設\n2. `src/ui/sidebar/task-board.tsx` を新設（`<dialog>` の `showModal()`。閉じるボタン・外側の\n   クリック・Esc で閉じる）。`src/ui/style/task-board.css` を新設\n3. `src/ui/sidebar/section.tsx` の見出しに押せる口（`action`）を足し、「一覧を見る」を置いた\n4. `task-list.tsx` を全件表示に戻し、`sidebar.css` / `narrow-screen.css` の高さの取り合いを撤去\n5. `docs/requirements.md` 4.2 と `docs/design.md` の部品の木を更新\n\n## 完了条件\n\n- 表が 1400 / 760 / 400px で開き、閉じるボタン・外側のクリック・Esc で閉じる\n- 一度に見える件数（表）の実測値を `evidence` に書く\n- ページ全体が横にスクロールしない（`scrollWidth == clientWidth`）\n- `bun run check` が通る",
+    "evidence": "1400x900 で表を開くと 27件中 19件が一度に見える（サイドバーの区画は 2件のまま。760px は 14件、400px は 14件で、表だけが横スクロールする）。閉じるボタン・モーダルの外側のクリック・Esc のどれでも閉じることを Chrome で実測。\\n3つの幅すべてでページ全体の横スクロールは 0px、3区画の見出しは領域内。\\nbun run check: 497 pass / 0 fail（変更前 487 pass）。docs/requirements.md の節の数は 26 で不変。"
   }
 ]

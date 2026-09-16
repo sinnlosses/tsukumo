@@ -9,9 +9,9 @@ afterEach(() => {
 })
 
 describe("SidebarSection", () => {
-  it("toggle が無い区画の見出しは押せない地の文のまま", () => {
+  it("action が無い区画は見出しの文字だけを出す", () => {
     render(
-      <SidebarSection title="架空の区画" extraClass="sidebar-block-fake" toggle={undefined}>
+      <SidebarSection title="架空の区画" extraClass="sidebar-block-fake" action={undefined}>
         <p>中身</p>
       </SidebarSection>,
     )
@@ -20,16 +20,16 @@ describe("SidebarSection", () => {
     expect(screen.queryByRole("button")).toBeNull()
   })
 
-  it("toggle がある区画は見出しが押せて、開閉の状態を aria-expanded と文字で出す", () => {
-    const pressed: boolean[] = []
-    const { rerender } = render(
+  it("action がある区画は見出しに押せる口が並び、押すと呼ばれる", () => {
+    const pressed: string[] = []
+    render(
       <SidebarSection
         title="架空の区画"
         extraClass="sidebar-block-fake"
-        toggle={{
-          expanded: false,
-          onToggle: () => {
-            pressed.push(true)
+        action={{
+          label: "一覧を見る",
+          onAction: () => {
+            pressed.push("一覧を見る")
           },
         }}
       >
@@ -37,29 +37,9 @@ describe("SidebarSection", () => {
       </SidebarSection>,
     )
 
-    const collapsed = screen.getByRole("button")
-    expect(collapsed.getAttribute("aria-expanded")).toBe("false")
-    expect(collapsed.textContent).toContain("開く")
-    collapsed.click()
-    expect(pressed).toHaveLength(1)
-
-    rerender(
-      <SidebarSection
-        title="架空の区画"
-        extraClass="sidebar-block-fake"
-        toggle={{
-          expanded: true,
-          onToggle: () => {
-            pressed.push(true)
-          },
-        }}
-      >
-        <p>中身</p>
-      </SidebarSection>,
-    )
-
-    const expanded = screen.getByRole("button")
-    expect(expanded.getAttribute("aria-expanded")).toBe("true")
-    expect(expanded.textContent).toContain("畳む")
+    const button = screen.getByRole("button", { name: "一覧を見る" })
+    expect(button.getAttribute("aria-haspopup")).toBe("dialog")
+    button.click()
+    expect(pressed).toEqual(["一覧を見る"])
   })
 })

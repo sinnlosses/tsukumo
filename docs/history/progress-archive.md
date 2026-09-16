@@ -1,5 +1,26 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 層の検査を広げ、旧パスと経路名の再掲を掃除した（T-142）
+
+`docs/research/architecture-proposal.md` の移行の段1。`src/protocol/session-socket.ts` を作って
+`"/ws"` とトークンのクエリ名を1箇所に集め、`core/server.ts` と `ui/socket.ts` の再掲を消した。
+`test/architecture.test.ts` の `it` は 4→8（SDK・`node:child_process`・`process.env`・経路名の限定）。
+消えた `src/presentation` を指すコメント15件も掃除した。
+
+`ws` の限定・`core` の `node:` 全面禁止・`Layer` への `adapter` 追加は、**段2（T-143）で
+書き換わる前提**なので足していない。既存の「`protocol` は `document` に触らない」はテスト名だけで
+実装が無かったので、この機会に実装を入れた。
+
+### 2026-09-16 orca を呼ぶのが1ファイルだけであることをテストで固定した（T-140）
+
+`docs/architecture.md` 原則3 の「`orca` コマンドを呼ぶのは `src/core/orca-host.ts` だけ」は
+コメントにしかなく、委譲先が破っても気づけなかった。`test/architecture.test.ts` に検査を1つ足し、
+`src/` の中で `orca-host.ts` 以外にコマンド名の文字列リテラルが現れたら落ちるようにした。
+
+わざと `src/core/host.ts` に `"orca"` を書くと落ち、戻すと通ることを確認済み。`src/` のコードは
+変えていない（`orca-host.ts` の冒頭コメントに「この境界はテストが落とす」の1文だけ足した）。
+移行の段1（T-142）は、この隣に SDK・`process.env`・経路名の限定を並べる形になる。
+
 ### 2026-09-16 details が機能しないのを直した（T-126）
 
 レポートを塊に割る `splitReportBlocks` が **HTML ブロックの中の空行でも割っていた**ため、

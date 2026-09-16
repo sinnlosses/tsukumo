@@ -1,9 +1,9 @@
 // サイドバーの「タスク一覧」。**status ごとにまとめず、ファイルの順で出す**
 // （develop/tasks.json の決定）。`done` は薄く出す。読めない・まだ届いていないときは undefined。
 //
-// 区画が狭いので**畳んで開く**（docs/requirements.md 4.2）。畳んだ状態（既定）は `done` を
-// 除いた先頭数件だけを出し、残りの件数を1行添える。開いた状態は `done` も含めて全件出す。
-// **どちらの状態でも並べ替えはしない**（畳んだ状態は `done` を除いた部分列で、ファイルの順のまま）。
+// **区画には全件を並べ、入りきらない分は区画の内側でスクロールする。** 一覧を見渡すのは
+// 見出しの「一覧を見る」から開く表（`task-board.tsx`）の仕事で、ここは直近の並びを
+// 視界の端に置いておくだけ（docs/requirements.md 4.2）。
 
 import { type ReactElement } from "react"
 
@@ -11,11 +11,7 @@ import { type TaskSummaryItem } from "../../protocol/task-summary.ts"
 
 export type TaskListProps = {
   readonly tasks: readonly TaskSummaryItem[] | undefined
-  readonly expanded: boolean
 }
-
-/** 畳んだ状態で出す件数。区画が中身なりの高さで止まるので、行数の上限がそのまま区画の高さになる。 */
-const COLLAPSED_COUNT = 3
 
 /**
  * サイドバーの「タスク一覧」の見出し。tasks が読めているときだけ todo / done の件数を添える
@@ -39,26 +35,13 @@ export function TaskList(props: TaskListProps): ReactElement {
     return <p className="sidebar-empty">タスクが無い</p>
   }
 
-  const shown = props.expanded ? props.tasks : collapsedTasks(props.tasks)
-  const hidden = props.tasks.length - shown.length
-
   return (
-    <>
-      {shown.length === 0 ? null : (
-        <ul className="sidebar-list task-list">
-          {shown.map((task) => (
-            <TaskItem key={task.id} task={task} />
-          ))}
-        </ul>
-      )}
-      {hidden === 0 ? null : <p className="task-more">{`ほか ${String(hidden)} 件`}</p>}
-    </>
+    <ul className="sidebar-list task-list">
+      {props.tasks.map((task) => (
+        <TaskItem key={task.id} task={task} />
+      ))}
+    </ul>
   )
-}
-
-/** 畳んだ状態で出す分。`done` を落とした部分列の先頭から取るだけで、順番は入れ替えない。 */
-function collapsedTasks(tasks: readonly TaskSummaryItem[]): readonly TaskSummaryItem[] {
-  return tasks.filter((task) => task.status !== "done").slice(0, COLLAPSED_COUNT)
 }
 
 /**
