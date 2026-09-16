@@ -113,6 +113,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 - **`docs/research/architecture-proposal.md` の段1〜段3は T-142 / T-143 / T-144 として
   登録済み**（2026-09-16）。メモ末尾の「次の一手」は消化したので、**重ねて起こさない**。
   段1（T-142）は T-140 の後に置いてある（どちらも `test/architecture.test.ts` を触る）
+- **レポートの `##` / `###` は見出しとして描かれていない**（2026-09-16 に実測）。
+  `src/ui/report/sanitize-schema.ts` の `ALLOWED_TAG_NAMES` に `h1`〜`h3` が無く、タグが落ちて
+  素のテキストになる（`h4` 以下だけが生きる）。**規約（`REPORT_NOTATION_PROMPT`）は `##` /
+  `###` を勧めている**ので食い違っている。直すのは T-154 で、T-155 / T-156 がその上に乗る
 - **`develop/tasks.json` を書き換えたら `bun run format` を通す。** oxfmt は JSON も整形するので、
   python の `json.dump` で書いたままだと `bun run check` が落ちる（2026-09-13 に踏んだ）
 - **「目視が要る」だけを理由に `loopable: "N"` にしない**（2026-09-15 決定。
