@@ -6942,3 +6942,713 @@ protocol/session-socket.ts を新設（SESSION_SOCKET_PATH / SESSION_TOKEN_QUERY
   明記している
 - T-140（`orca` の限定検査）が先に入る前提で `dependencies` に置いてある。**T-140 が足した `it` を
   作り直さず、その隣に並べる**
+
+## T-046
+
+**タスク**: 箱の方針（当面 Orca、載せ替えられる形を保つ）を正典に落とす
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-042, T-043, T-044, T-045, T-057 / **passes**: True
+
+**evidence**:
+
+2026-09-16 の方針（Orca で進めつつ核が特定の技術に依存しないようにする）を正典に落とした。包む/包まないの決着ではないので `docs/requirements.md` 7章の「Electron などのスタンドアロンに移るか」の行は消さず、「当面は保留。Orca のタブでは埋められない使い勝手の不足が実際に出たときに再検討」と条件付きの保留に書き換えた。`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」節は「VS Code 用の実装は作らない」を「まだ書かない／書けるままにしておくことが条件／2つ目のアダプタを書くまでポートは `showView` 1つに保つ」に改めた。
+実測（`grep -rn 'orca' src`、2026-09-16）: 19行・4ファイルのみ（`src/core/orca-host.ts` 14行、`src/cli.ts` 2行、`src/core/host.ts` 1行、`src/core/session-driver.ts` 2行。後3者はコメントと import）。`src/protocol/` と `src/ui/` は0件で、核は汚れていないことを再確認した。コードは無変更。
+見出し数は編集の前後で一致（`docs/requirements.md` 26 / `docs/architecture.md` 10）。`bun run check` は 475 pass / 0 fail（49ファイル、864 expect）、typecheck・oxlint・oxfmt --check（167ファイル）も通過。
+
+## 背景
+
+ユーザー決定 Q4 で「箱は当面 Orca のブラウザタブ。最終形は使い勝手が上がるならスタンドアロンのアプリ」と決めていた。**2026-09-16 に方針を受け取った**（`docs/history/direction.md` 同日）:
+
+> Orca で進めつつ、他の技術に適用することもあるからドメイン（tsukumo の核）が特定の技術（orca など）に依存しないようにする
+
+これは元の依頼文が想定していた2つの分岐（困りごとが無ければ閉じる／包むなら候補を選ぶ）の**どちらでもない第3の答え**で、「当面 Orca、ただし載せ替えられる形を保つことを条件にする」という意味。包む/包まないの決着ではないので、`docs/requirements.md` 7章の未決事項の行は**消さずに書き換える**。
+
+**受け取り側で実測した現状**（2026-09-16、`grep -rn 'orca' src`）: **核は既に汚れていない。** `src/` で `orca` が出るのはアダプタ（`src/core/orca-host.ts`）と配線（`src/cli.ts` の `createOrcaHost` の import と呼び出し）とコメントだけで、`protocol` にも `ui` にも1件も無い。ポート `src/core/host.ts` の操作は `showView` 1つで、Orca の語彙（タブ、`--direction`）はインターフェースに漏れていない。**方針は既存の原則3（`docs/architecture.md`）と同じ向き**なので、このタスクは構造を変えるものではなく、正典の文言を方針に合わせるもの。
+
+箱の比較表は `docs/research/app-shell.md`（2026-09-16 に候補6 Electrobun を追記し、ツールチェーンを再実測した）。
+
+## 解くべき論点
+
+- `docs/requirements.md` 7章「Electron などのスタンドアロンに移るか」の行をどう書き換えるか。**消して閉じるのではなく条件付きの保留**として残し、**何が満たされたら再検討するのか**を1行で書く
+- `docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」節の「アダプタは**当面 Orca の1つだけ**を作る。VS Code 用の実装は**作らない**」の扱い。同節は `codebase-design` の戒め（アダプタが1つなら仮説上のシーム）を意図的に外す理由を「ユーザーが2つ目のホストを実際に見込んでいる」としており、**今回の方針はその見込みを追認した**。「作らない」をそのまま残すのか、「2つ目を書くまでポートは `showView` 1つに保つ」のような言い方に変えるのかを決める
+- 方針の言葉（「ドメインが特定の技術に依存しない」）を正典のどの語に写すか。原則3 と `docs/glossary.md`「ホスト」に同じ趣旨が既にあるので、**新しい原則を足さず既存の記述を補強する**
+
+## やること
+
+1. `docs/requirements.md` 7章の該当行を、条件付きの保留として書き換える
+2. `docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」節の文言を方針に合わせて見直す
+3. 方針と根拠（この背景の要約と、`orca` が `src/` のどこに出るかの実測）を `evidence` に書く
+4. **新しい原則もディレクトリも足さない。** 構造側に残っている穴は T-140（検査で守る）と T-141（選ぶ口を作るか決める）が持つので、このタスクでは扱わない
+
+## 完了条件
+
+- `docs/requirements.md` 7章の「Electron などのスタンドアロンに移るか」の行が条件付きの保留として書き換わっていること（**行が消えていないこと**）
+- `docs/architecture.md` の該当節が方針と矛盾しないこと
+- 編集の前後で `grep -c '^#\{2,3\} ' docs/requirements.md docs/architecture.md` の見出し数が変わらないこと（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `evidence` に方針の要約と実測の結果が書かれていること
+- `bun run check` が通ること
+
+## 注意
+
+- **コードを変えない。** 正典の文言だけを直す
+- `docs/research/app-shell.md` は調査メモなので、結論（どれにするか）を書き込まない
+
+## T-121
+
+**タスク**: README を現状に合わせ、別プロジェクトで起動できない件（command not found）を直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: yes
+
+**evidence**:
+
+空の /tmp/tsukumo-readme-check（characters/ も develop/ も無い）で README の手順どおりに実行: `which tsukumo` → /Users/sinnlos/.bun/bin/tsukumo、`TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7412 TSUKUMO_OPEN_VIEW=0 tsukumo` で配信開始、トップ 200 / /character/default.png 200。起こした pid だけを停止（7327 は触っていない）。\ngrep -n 'TSUKUMO_CHARACTER_DIR|domain/|usecase/|infrastructure/' README.md は 0 件、grep -n 'bun test' README.md は --isolate 付きの3行だけ。\nbun run check: 501 pass / 0 fail（README だけの変更なので変更前と同数）。
+
+## 背景
+
+ユーザーの報告（2026-09-15）「README で書かれた方法で試したけど別のプロジェクトで tsukumo が
+起動できなかった」。**症状は `command not found`**（同日の聞き取り）。
+
+**受け入れ側で実測したところ、コマンドさえ通れば別のプロジェクトでは動く。**
+`/tmp` の空のディレクトリ（`characters/` も `develop/` も無い）で `tsukumo` を実行すると、
+サーバが立ち上がり、4領域・立ち絵（`/character/default.png` が 200）・入力欄・3つの `<select>` が
+すべて出た。同梱物は `src/core/bundled-path.ts` の `bundledFilePath`（`import.meta.url` 基準）で
+解くので cwd に依存しない。**つまり直すのは README 側**。
+
+コマンドが通る仕組みは次のとおり（実測）:
+
+- `package.json` の `bin` は `{"tsukumo": "bin/tsukumo"}`
+- `bun link` がリポジトリ直下で作るのは
+  `~/.bun/install/global/node_modules/tsukumo` → リポジトリ のシンボリックリンクと、
+  `~/.bun/bin/tsukumo` → その `bin/tsukumo`
+- **`~/.bun/bin` が PATH に無いと `command not found` になる。** README にはこの前提も、
+  確かめ方（`which tsukumo`）も書かれていない
+
+**あわせて README には現状と食い違う記述が複数ある**（実測で確認済み）:
+
+| README の記述                                                       | 現状                                                                                                 |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 環境変数 `TSUKUMO_CHARACTER_DIR`                                    | 実際は `TSUKUMO_CHARACTER`（パック名か絶対パス。`src/core/config.ts` の `CHARACTER_ENV_NAME`）       |
+| `TSUKUMO_CHARACTER_DIR=characters/local tsukumo` の例               | 上記のため効かない                                                                                   |
+| 環境変数の表                                                        | `TSUKUMO_DRIVER` / `TSUKUMO_NEW_SESSION` が載っていない                                              |
+| 「セッションは毎回新規で、再開はしません」                          | 復元が入っている（`findPackSessionToResume` / `session-restored`）                                   |
+| プロジェクト構成が `domain/ usecase/ presentation/ infrastructure/` | 段7 で `protocol/ core/ ui/ cli.ts` になった                                                         |
+| `bun test`（素）                                                    | `bun test --isolate` でないと19件落ちる（`CLAUDE.md`。`package.json` の `test` も `--isolate` 付き） |
+| Features                                                            | 画面からのキャラクター切り替え（段8）が載っていない                                                  |
+
+## 解くべき論点
+
+- **`command not found` の対処を README にどう書くか。** PATH の確認（`which tsukumo`）と、
+  通っていないときの直し方（`~/.bun/bin` を PATH に足す）。**Bun の導入手順そのものは
+  README の守備範囲外**なので、どこまで書くかを決める
+
+## やること
+
+1. Quick Start に**コマンドが通ったことを確かめる手順**（`which tsukumo`）と、通らないときの
+   対処（`~/.bun/bin` が PATH にあるか）を足す
+2. 上の表の食い違いを現状に合わせて直す
+3. **空のディレクトリで実際に手順どおり通して確かめる**（`TSUKUMO_DRIVER=fake` を使えば
+   本物の claude を起こさずに起動まで確かめられる）
+
+## 完了条件
+
+- 空のディレクトリ（`characters/` も `develop/` も無い場所）で README の手順どおりに
+  起動できることを実際に試し、**打ったコマンドと出力の要点**を `evidence` に書く
+- 上の表の7項目が README から消えている（`grep -n 'TSUKUMO_CHARACTER_DIR\|domain/\|usecase/\|infrastructure/' README.md` が 0 件になることを `evidence` に書く）
+- `grep -n 'bun test' README.md` の結果が `--isolate` 付きだけになっている
+- `bun run check` が通る（README だけの変更なら件数は変わらない。件数を `evidence` に書く）
+
+## 注意
+
+- **`TSUKUMO_CHARACTER` の行そのものを消すかは T-116 が決める。** このタスクでは
+  **名前を現状（`TSUKUMO_CHARACTER`）に直すだけ**にし、撤去の判断には踏み込まない
+- 起動の確認で**常駐している 7327 番を落とさない**。`TSUKUMO_VIEW_PORT` を変え、止めるのは
+  自分が起こした pid だけ
+- README は公開リポジトリの顔なので、**日本語の言い回しは既存の調子に揃える**
+
+## T-122
+
+**タスク**: プロジェクト外への依存を洗い出し、外せるかを評価して1枚の表にする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`docs/research/external-dependency.md` を新規作成（2026-09-16 実測）。19系統を3表に分けた（本体が動くために要るもの12 / 外にあるのが自然なもの4 / 開発と検証のときだけ3）。列は4つ、各行にファイル名か関数名の根拠つき。内訳は 外せない7 / 外せる9 / 要検討3。`docs/requirements.md`「8. 参照」に1行リンクを張った。
+下調べ6系統のうち3件を実測で訂正: (1) 起こしているのは PATH の `claude` ではなく SDK 同梱の`@anthropic-ai/claude-agent-sdk-darwin-arm64/claude`（202MB）、(2) `~/.claude/settings.json` の `outputStyle` はtsukumo が読むのではなく `applyNeutralOutputStyle` で上書きする側（ただし `settingSources` 未指定なので設定一式は claude 側が読む）、(3) `bun` は PATH 依存ではなく Bun が自分自身を子に渡す（`PATH=/usr/bin:/bin` で `bun bin/tsukumo` の起動を実測）。
+見出し数は編集の前後で一致（`docs/requirements.md` 26 / `docs/architecture.md` 10）。`bun run check` は 475 pass / 0 fail（49ファイル、864 expect）。コードは無変更。
+
+## 背景
+
+ユーザーの指示（2026-09-15）「今、プロジェクト外のファイルで tsukumo が依存しているものを
+洗い出してほしい。最終的に tsukumo をスタンドアロンで動かしたい」。
+
+受け入れ側の下調べ（2026-09-15、`grep` と現物で確認）で、**6系統**が見つかっている。
+**この一覧は出発点であって完全ではない**ので、タスクの中で裏を取り直す。
+
+1. **`claude` 本体**（Agent SDK が子プロセスで起こす。`src/core/session-driver.ts`）。加えて
+   `~/.claude/settings.json` の `outputStyle` を読む（同ファイル 302 行付近）と、
+   `~/.claude/projects/` の transcript を復元・履歴の組み直しで読む
+   （`src/core/session-restore.ts` / `src/core/session-manager.ts`）
+2. **`orca` コマンド**（`src/core/orca-host.ts`。無くてもタブが開かないだけで配信は続く）
+3. **`bun` が PATH にあること。** 起動のたびに `execFile("bun", ["build", <entry>, "--target=browser"])`
+   で `src/ui` を束ねている（`src/core/bundle.ts`）。**つまり実行時に自分のソース一式が要る**
+4. **`~/.tsukumo/state.json`**（前回選んだキャラクター。`src/core/remembered-character.ts`）
+5. **自分の設置場所**（`bundledFilePath` ＝ `import.meta.url` 基準）: `src/ui/**`・`characters/`・
+   `vendor/`・偽の駆動の `test/fixture/fake-session.json`
+6. **起動先（cwd）**: `characters/local/`・`develop/tasks.json`（`watchTaskSummary`）
+
+**箱をどうするか（Orca のタブのままか、アプリに包むか）は T-046 が持つ。**
+このタスクは T-046 の判断材料になる側で、**包む/包まないを決めない**。
+
+## 解くべき論点
+
+- **「スタンドアロン」の線引き。** どこまでを「外す」対象にするのか。`claude` 本体は
+  tsukumo の存在理由そのものなので外せない。`bun` は実行環境。`orca` は任意。
+  **外せないもの・外したいもの・気づかず依存しているものを分けて書く**
+- **3（起動のたびに `bun build`）が一番重い。** 事前にビルドした成果物を同梱する形にすれば
+  `bun` と `src/ui` への実行時依存が消えるが、開発中に毎回ビルドが要るようになる。
+  **この取り替えをやるかどうかは、このタスクでは決めるところまで**（実装しない）
+- **4（`~/.tsukumo/`）と 6（cwd）は「外す」べきものか。** 設定と作業対象はむしろ外にあるのが
+  自然なので、依存として数えるべきか、書き方を分けるか
+- **数え漏れをどう防ぐか。** `grep` の網（`homedir` / `process.env` / `execFile` / `spawn` /
+  `import.meta` / `process.cwd`）と、`package.json` の依存、`vendor/` の中身まで見る
+
+## やること
+
+1. 上の6系統を現物で裏取りし直し、**漏れを足す**
+2. `docs/research/external-dependency.md` を新しく作り、1系統1行の表にまとめる。列は
+   **「何に依存しているか」「どこで」「無いとどうなるか」「外せるか（外せない/外せる/要検討）」**
+3. 外せるものについて、外し方の候補を1〜2行ずつ添える（**実装しない**）
+4. `docs/requirements.md` の「関連リンク」相当の場所か、`docs/architecture.md` の該当節から
+   この文書へ1行リンクを張る
+
+## 完了条件
+
+- `docs/research/external-dependency.md` が存在し、上の4列の表を持つこと
+- 表の各行に**ファイル名か関数名の根拠**が入っていること（「なんとなく」の行を作らない）
+- 「外せない」と判定したものには、その理由が1行ずつ書かれていること
+- `grep -c '^#\{2,3\} ' docs/requirements.md` と `docs/architecture.md` が編集の前後で
+  変わっていないこと（リンクを足すだけなので節は増えない）
+- `bun run check` が通る（件数を `evidence` に書く）
+
+## 注意
+
+- **このタスクでは実装しない。** 洗い出しと評価まで
+- **箱の決定（T-046）に踏み込まない。** Electron / Tauri のような包み方の比較は
+  `docs/research/app-shell.md` が持っている
+- 調査のために tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番を
+  落とさない**
+- 実測値は時間が経つと変わるので、**測った日付を文書に添える**
+- 洗い出しと評価だけで人に委ねる判断が無いので `loopable` は `"Y"`
+  （`docs/workflow.md`「`loopable` の判定」）
+
+## T-124
+
+**タスク**: 立ち絵と差し色を画面から差し替えられるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-123 / **passes**: yes
+
+**evidence**:
+
+実機（偽の駆動・Chrome・1400x900）: 引き出しから default の立ち絵を自作 SVG に差し替えるとその場で立ち絵が入れ替わり、~/.tsukumo/characters/tsukumo/ に default.svg が書かれて古い default.png は消えた。上げ直しても差し替えたまま（4xx/5xx なし）。\n差し色（戦闘配置＝opus）を #22ff88 にすると --outfit-accent が即時に変わり、インライン SVG の塗りが rgb(34,255,136) になった。上げ直し後も保持。確認後 ~/.tsukumo/characters は消した。\n常設のボタンは着手前後とも3つ（一覧を見る・送信・見た目）。1400/900/600/400px で横のはみ出し 0px。必須の2つを消せないことは protocol・core・ui の3層でテスト。bun run check: 551 pass / 0 fail（変更前 501）。
+
+## 背景
+
+ユーザーの指示（2026-09-15）「キャラ設定を画面上からできるようにしたい」のうち、
+**立ち絵と差し色**を画面から差し替えられるようにする側。置き場所と受け取り方は前段のタスクで
+決まっている前提なので、**ここでは決め直さない**。
+
+いまの形:
+
+- 差し色は `character.json` の `outfitAccents`（`default` / `light` = haiku / `normal` = sonnet /
+  `heavy` = opus）。**効くのはインラインで埋め込んだ SVG だけ**で、PNG / GIF は表情ごとに
+  ファイルを分ける（`characters/README.md` が正典）
+- 立ち絵は `portraits` の表情名 → ファイル名。`default` と `working` の2つは必須で、
+  見つからない表情は `default` に落ちる。ブラウザは `/character/<file>` から取りに行く
+  （素材のバイト列は `SessionState` にも `character-changed` イベントにも乗せない。
+  `src/core/character-pack.ts` 冒頭）
+- 画面から変えられる「ずっとのこと」は**「見た目」の引き出し**（`src/ui/appearance/`。
+  いまは地・領域・字の色、立ち絵の固定、比率のリセットの3つ）
+
+## 解くべき論点
+
+- **引き出しに入れるか、別の場所にするか。** 引き出しは「常設の要素を増やさない」約束で
+  作ってある（`docs/design.md` 13.1 原則2）。キャラクターの編集を足しても、
+  **画面に出ているボタンの数が増えない**形にできるかを見る
+- **差し替えた立ち絵をいつ反映するか。** `character-changed` イベントを流し直すのか、
+  `/character/<file>` のキャッシュをどう外すのか
+- **壊れた入力をどう弾くか。** `default` と `working` が欠けたパックは起動できない。
+  必須の表情が消える操作を受け取らない形にする
+
+## やること
+
+1. 立ち絵（表情ごとの画像）と差し色（`outfitAccents` の4つ）を画面から変える口を作る
+2. 変えた結果を前段で決めた置き場所へ書き、**その場で画面に反映する**
+3. 反映と保存の経路をテストする（保存した値が次の起動で読まれること）
+4. 実機で目視する
+
+## 完了条件
+
+- 立ち絵を1枚差し替えると**その場で画面の立ち絵が変わり、再起動しても残る**ことを、
+  実際に試して `evidence` に書く（どの表情をどの素材に変えたか）
+- 差し色を変えると**衣装（モデル）に応じた色が変わる**ことを実機で確かめて `evidence` に書く
+- **`default` と `working` を消す操作が弾かれる**ことをテストで示す
+- **常設の要素が増えていないこと**（画面に出ているボタンの数が着手前と同じ）を `evidence` に書く
+- 4つの幅（1400 / 900 / 600 / 400）で横のはみ出しが 0px
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **置き場所と受け取り方を決め直さない。** 前段のタスクの結論に従う
+- **16進の色を `theme.css` の外に書かない**（差し色はキャラクター定義の値で、トークンではない。
+  JS 側に既定の16進を持たせない）
+- 撮った画像をリポジトリに置かない（既定の出力先は `/tmp`）
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、
+  止めるのは自分が起こした pid だけ
+- 確認は tsukumo 自身で行える（偽の駆動で差し替えの前後を撮り、絵柄が入れ替わったかを見る）。
+  `loopable` は `"Y"`（`docs/workflow.md`「`loopable` の判定」）
+
+## T-127
+
+**タスク**: 最初のツール呼び出しより前の本文をレポートに出さないかを決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: yes
+
+**evidence**:
+
+protocol のテストで「detail→tool→detail→tool→detail」の並びから前2件の本文だけが落ちること、ツールを1つも呼ばないターンでは何も落ちないこと、質問はツールに数えないことを固定（+4件）。\n実機: 偽の駆動の台本に実況の場面を足し、1400x900 の Chrome で確認。`.detail-block` は実況0件・レポート1件、続いた Edit の行は残る（`.tool-block` 1件）。\nbun run check: 501 pass / 0 fail（変更前 497 pass）。docs/requirements.md の節の数は 26 で不変。
+
+## 背景
+
+ユーザーの報告（2026-09-15）「レポートの先頭に『I'll read the file first.』のような前置きが
+残る。ツールを呼ぶ前にモデルが出す実況で、規約の条項（2026-09-15 に足した『前置きと締めを
+書かない』）では抑えきれなかった。tsukumo 側で『最初のツール呼び出しより前の本文をレポートに
+出さない』と決めるかを検討したい（`toolVisibility` と同じ『何を出すか』の判断になる）」。
+
+**規約で抑える道は一度試して足りなかった。** T-119（2026-09-15）で
+`src/core/report-notation.ts` に前置き・締めの禁止を入れたが、**ツール呼び出しの直前に出る
+短い実況は残る**。これは `docs/requirements.md` 4.2 の「なぜテキストの規約をやめたか」
+（規約は守られたかどうかがこちら側から分からない）と同じ形の問題で、**ツールの呼び出しという
+事実で判定できるなら、そちらのほうが確実**。
+
+**いまの流れ。** `assistant` のテキストは `partialUtterance` に流れ、`utterance` で確定して
+`{ kind: "detail" }` として `records` に積まれる（`src/protocol/session-state.ts` の
+`settleUtterance`）。`src/protocol/main-view.ts` の `groupIntoTurns` が
+**「レポート1件と、それに続く出来事」を1ステップ**にまとめる（`MainViewStep`）。
+**前置きは、その依頼の最初のステップの `report`** として出ている。
+
+**前例がある。** 何を出すかの判断は `toolVisibility`（同ファイル）が持っており、
+T-114 で「失敗したツールの引数と出力はレポートに出さずサイドバーへ寄せる」と決めた。
+今回も**同じ層（`protocol` の純粋関数）で落とす**形にできる。
+
+## 解くべき論点
+
+1. **落とす条件をどう書くか。** (a) そのターンで**最初のツール呼び出しより前**の
+   `detail` を落とす / (b) 最初のステップの `report` が**短い**（N文字以下）ときだけ落とす /
+   (c) ツール呼び出しが続く `detail` を落とす。**(b) は長さのしきい値が恣意的**、
+   **(a) は「ツールを呼ぶ前に書いた本当に必要な結論」も落ちる**
+2. **ツールを1つも呼ばないターンで何が起きるか。** 質問に文章だけで答えるターンでは、
+   最初の `detail` が**唯一のレポート**になる。(a) を素直に実装すると**全部落ちる**ので、
+   「あとにツール呼び出しが来たときだけ落とす」形が要る
+3. **書きかけの表示との整合。** `partialUtterance` は**リアルタイムに流れる**
+   （`docs/requirements.md` 4.2）。前置きは一度画面に出てから消えることになる。
+   **出してから消すのを許すのか、確定まで出さないのか**
+4. **落としたものをどこかに出すか。** 完全に捨てるのか、サイドバー側に回すのか
+   （T-114 の「失敗したツール」と同じ扱いにするのか）。**捨てる場合、モデルが前置きに
+   重要なことを書いていたら失われる**
+5. **規約の条項を残すか。** tsukumo 側で落とすなら、規約の「前置きを書かない」は
+   重複になる。残すと二重、消すと素の TUI で前置きが戻る
+
+## やること
+
+1. まず**現物で何が来ているか**を確かめる。前置きが出たターンで、`records` の並びが
+   「`detail`（前置き）→ `tool` → `detail`（本文）」になっているかを確認する
+   （**会話の中身はログに出さず、種類の並びだけ**を見る。`docs/coding-standards.md`
+   「会話内容の扱い」）
+2. 論点をユーザーと決める（論点1と4は捨てる／残すの好みが入る）
+3. `src/protocol/main-view.ts` に判定を足す。**`toolVisibility` と同じ純粋関数の形**にし、
+   サーバ・ブラウザのどちらでも同じ結果になるようにする
+4. `docs/requirements.md` 4.2 に決定を書く（論点5の結論も含める）
+5. 実機で、ツールを呼ぶターンとツールを呼ばないターンの両方を出して目視する
+
+## 完了条件
+
+- 「`detail`（前置き）→ `tool` → `detail`（本文）」の並びで、**前置きだけが落ちる**ことを
+  `protocol` のテストで示す
+- **ツールを1つも呼ばないターンでは何も落ちない**ことをテストで示す（論点2の担保）
+- 判定が `protocol` の純粋関数で、`node:` にも `document` にも触らないこと
+  （`test/architecture.test.ts` が通る）
+- 実機で両方のターンを出し、前置きが消えて本文が残ることを目視して `evidence` に書く
+- `docs/requirements.md` の節の数が変わっていない
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`~/.claude/output-styles/asuna.md` は触らない**（TUI 向けに保つ。4.2 の決定）
+- **レポートの本文を tsukumo が書き換えない。** 落とすか出すかの判断だけにする
+  （`docs/requirements.md` 2.2「中身の要約・再構成」はスコープ外）
+- **落とした前置きを捨てるか残すかをユーザーが決める**ので `loopable` は `"N"`
+
+## T-128
+
+**タスク**: コマンド補完の上下移動に Ctrl+P / Ctrl+N を足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: yes
+
+**evidence**:
+
+src/ui/dispatch/composer.tsx の onKeyDown で、候補が出ている間だけ Ctrl+N を ArrowDown、Ctrl+P を ArrowUp と同じ扱いにした（ctrlKey && !metaKey のときだけ）。\ntest/ui/dispatch/composer.test.tsx に2件: 候補が出ている間の上下移動と Meta 併用の無視、候補が出ていないときは dispatch も preventDefault も起きないこと（keyDown の戻り値で判定）。\ndocs/requirements.md 4.2 の入力欄 (3) に追記。節の数は 26 で不変。bun run check: 553 pass / 0 fail（変更前 551）。
+
+## 背景
+
+ユーザーの要望（2026-09-15）「Mac の場合、コマンド補完を ctrl+p や ctrl+n で上下に移動したい」。
+
+**いまは矢印キーだけ。** `src/ui/dispatch/composer.tsx` の `onKeyDown` が、補完の候補が出て
+いる間だけ `ArrowDown`（86行目付近）と `ArrowUp`（91行目付近）で選択を動かし、
+`Tab` / `Enter` で確定、`Escape` で閉じる。キーの割り当ては
+`docs/requirements.md` 4.2「入力欄」の (3) に書かれている
+（Tab・Enter はどちらも確定だけ、送信は Command+Enter）。
+
+**macOS では `Ctrl+P` / `Ctrl+N` がテキスト入力の標準の移動キー**（emacs 風のキーバインド）で、
+`<textarea>` にフォーカスがあるとキャレットが上下の行へ動く。**`preventDefault` が要る。**
+
+## 解くべき論点
+
+- **候補が出ていないときは何もしない**（既定の動きを妨げない）でよいか。候補が出ている間だけ
+  奪う形にすれば、普段のキャレット移動は残る
+
+## やること
+
+1. `src/ui/dispatch/composer.tsx` の `onKeyDown` で、**候補が出ている間だけ**
+   `Ctrl+P` を `ArrowUp` と同じ、`Ctrl+N` を `ArrowDown` と同じ扱いにする。
+   `event.preventDefault()` を忘れない（キャレットが動くため）
+2. `Meta`（Command）と組み合わせたときは反応しない（Command+Enter の送信と混ざらないよう、
+   `ctrlKey` だけを見る）
+3. `docs/requirements.md` 4.2「入力欄」の (3) に、追加したキーを書く
+4. `test/ui/dispatch/` の既存のテストに合わせてケースを足す
+
+## 完了条件
+
+- 候補が出ている間、`Ctrl+P` / `Ctrl+N` で選択が上下に動くことをテストで示す
+- **候補が出ていないときは選択が動かず、`preventDefault` も呼ばれない**ことをテストで示す
+- 矢印キー・`Tab` / `Enter` / `Escape` の既存の挙動が変わっていないこと（既存テストが通る）
+- `docs/requirements.md` 4.2 にキーの追加が書かれていて、**節の数が変わっていない**
+  （`grep -c '^#\{2,3\} ' docs/requirements.md` を前後で比較）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **送信は Command+Enter のまま**（2026-09-12 の決定。`docs/requirements.md` 4.2）。
+  確定と送信を同じキーで兼ねない
+- IME の変換中（`composing`）の扱いを変えない
+- 確認は tsukumo 自身で行える（playwright で `Ctrl+P` / `Ctrl+N` を打って選択が動くかを見る）。
+  `loopable` は `"Y"`（`docs/workflow.md`「`loopable` の判定」）
+
+## T-129
+
+**タスク**: サイドバーのタスク一覧の見せ方を作り直し、見える件数を増やす
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: yes
+
+**evidence**:
+
+1400x900 で見えるタスク: 変更前 2/27 → 畳んだ状態は todo の先頭3件が全部見えて「ほか 24 件」、開いた状態は 3/27（区画の内側 226px、残りは内側スクロール）。760/400px では全27件。3区画の見出しはいずれも領域内、横のはみ出しは 1400/760/400px とも 0px。
+bun run check: 487 pass / 0 fail（変更前 479 pass）。docs/requirements.md の節の数は 26 で不変。
+目視: 偽の駆動 + scripts/capture-view.ts で畳む/開くの両方を撮って確認。「いま何をしているか」に背の高い <pre> を差し込んだ場合も上限（開: 30% / 畳: 50%）で止まり、どの区画も潰れない。
+
+## 背景
+
+ユーザーの要望（2026-09-15）「サイドバーの領域が小さく、タスク一覧の見せ方を再デザインしたい
+(frontend-design skill かな?)」。
+
+**サイドバーは3区画で、高さを分け合っている。** `src/ui/sidebar/sidebar.tsx` が
+「いま何をしているか」（`sidebar-block-activity`）・「タスク一覧」（`sidebar-block-tasks`）・
+「セッション情報」（`sidebar-block-session`）を縦に並べ、`src/ui/style/sidebar.css` が
+**上2つを残りの高さの2等分**（`flex: 1 1 0`）、セッション情報は中身なり（`flex: 0 1 auto`）に
+している。**サイドバー全体はスクロールさせず、区画ごとに内側でスクロールする**
+（`docs/requirements.md` 4.2 の 2026-09-12 決定。見出しが画面の外へ流れないため）。
+
+**直前の変更で「いま何をしているか」の中身が増えた。** T-114（2026-09-15）で、失敗したツールを
+`<details class="activity-failure">` として**引数と出力の `<pre>` 込み**でサイドバーへ寄せた
+（`src/ui/sidebar/activity.tsx`）。上2つが2等分のままなので、**タスク一覧に使える高さは
+変わっていないのに競合相手が重くなった**。
+
+**タスク一覧の中身。** `src/ui/sidebar/task-list.tsx`（75行）が `develop/tasks.json` の要約列を
+`status` のバッジ付きの行で出し、見出しに todo / done の件数を添える。**いまは全件を平らに
+並べるだけ**で、絞り込み・畳み・並べ替えは無い。領域は下段ではなく上段の右（既定で幅 25%）。
+
+## 解くべき論点
+
+1. **何を減らすのか。** 出す件数を絞る（todo だけ・上位N件）/ 1行を短くする（IDと要約だけ）/
+   畳めるようにする / 区画の高さの配分を変える。**「小さい」への答えは複数あり、
+   どれを採るかで作るものが変わる**
+2. **`docs/requirements.md` 4.2 の決定に触るか。** 「サイドバーは3区画のまま」
+   「全体はスクロールさせず区画ごとに内側でスクロール」「上2つは残りの高さの2等分」は
+   どれも記録された決定。**配分を変えるならこの3つ目に触る**
+3. **タスク一覧はそもそもサイドバーに要るか。** `develop/tasks.json` は**この
+   リポジトリでだけ**意味を持つ。別プロジェクトで tsukumo を起こすと空の区画になる
+   （T-121 が別プロジェクトでの起動を扱っている）。**区画を条件で隠す**案もある
+4. **`frontend-design` スキルを使うか。** ユーザーが名指ししている。使うなら
+   **`docs/design.md` 13章（配色・寸法・レイアウトの正典）と衝突しない**ことを確かめる
+   （13.1 の5原則・13.2 の「差せるつまみは4つだけ」・13.3 のタイプスケール4段）
+
+## やること
+
+1. **まず実測する。** 1400x900 の既定の比率で、3区画それぞれの高さと、タスク一覧が
+   何件ぶん見えているかを数える（偽の駆動 `TSUKUMO_DRIVER=fake` と
+   `scripts/capture-view.ts` を使う）。**「小さい」を数字にしてから**案を出す
+2. 論点をユーザーと決める（案は2つ以上、実際の画面の見た目で比べられる形で出す）
+3. `src/ui/sidebar/task-list.tsx` と `src/ui/style/sidebar.css` を直す。
+   **色・寸法は `docs/design.md` 13章のトークンの範囲で**（16進の色を `theme.css` の外に
+   書かない）
+4. `docs/requirements.md` 4.2 と、触ったなら `docs/design.md` 13章を更新する
+5. 実機で目視する
+
+## 完了条件
+
+- 変更前後で、**タスク一覧が何件ぶん見えるか**の実測値を `evidence` に書く（増えたことの証拠）
+- 「いま何をしているか」と「セッション情報」が**見出しごと画面の外へ流れていない**ことを
+  実測値で示す（各区画の見出しが領域の中にある）
+- 1400 / 760 / 400px のいずれでも**ページ全体がスクロールしない**
+  （`document.scrollingElement` の `scrollWidth == clientWidth`）
+- `docs/requirements.md` / `docs/design.md` の節の数が変わっていない
+  （`grep -c '^#\{2,3\} '` を前後で比較）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- 実機の目視の結果を `evidence` に書く
+
+## 注意
+
+- **T-114 で入れた「失敗したツールはサイドバー」を後戻りさせない**（この区画を軽くしたい
+  だけなら、失敗の表示を畳む側で調整する）
+- **状態の3色**（`state-ok` / `state-warn` / `state-ng`）は誰が来ても変えない
+  （`docs/design.md` 13.1 原則5）。**色だけで意味を伝えない**（文字も添える）
+- T-130（モデルに Fable を足す）が同じサイドバーの「セッション情報」を触る。
+  **区画の中身が別なので依存は置かないが、同時に着手しない**
+- **見え方の案をユーザーが決める**ので `loopable` は `"N"`
+
+## T-133
+
+**タスク**: ツールの行をレポートから消し、「レポートだけを出す」に戻す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: yes
+
+**evidence**:
+
+実機（偽の駆動・1400x900）: 台本の Read と失敗する Bash を含むターンを出して、メインビューの .tool-block（質問以外）と .step-tools がどちらも 0件、「Edit:/Read:/Bash:/Agent:」の文字列も出ないことを確認。サイドバーは活動2件・失敗1件が引数と出力つきで読める（T-114 の表示は減っていない）。\ngrep -rn 'toolVisibility|step-tools|tool-run' src test は空。MainViewToolRun 型とMainViewStep.actions のツールは残した（dropNarration が判定に使うため）。\n節の数: requirements 26→26、design 51→51。bun run check: 545 pass / 0 fail（変更前 553。toolVisibility のテストを畳んだぶん -8）。
+
+## 背景
+
+ユーザーの指示（2026-09-15）「作業中のコマンドはメイン画面に出さなくていいのでルールで塞いで
+ほしい」。挙がっていた例は `Agent: Implement T-113 turn window` と
+`Edit: /Users/.../src/protocol/main-view.ts` の2つ。
+
+**これは `docs/requirements.md` 4.2 が予告していた差し戻しの最後の一歩。** 同節には
+「ただし**ファイルを変えた操作・サブエージェントの起動の2種類だけは、レポートと同じ並びに
+残す**（`toolVisibility`。2026-09-10 決定）」とあり、続けて
+「**さらに戻して『レポートだけを出す』（2026-09-11）にするなら、直すのは `toolVisibility` の
+判定とこの段落**」と書かれている。T-114（2026-09-15）で失敗したツールをサイドバーへ寄せたので、
+**残っているのはこの2種類だけ**。
+
+**いまの作り。** `src/protocol/main-view.ts` の `toolVisibility()` が
+`hidden` / `file-change` / `agent-launch` に分類し、`src/ui/main-view/tool-run.tsx` の
+`LabeledTool` が「ツール名: パス（またはタスク名）」の行を描く。
+`src/ui/main-view/turn.tsx` の `isShownAction()` が `hidden` を落とし、残りを
+`.step-tools`（`src/ui/style/main-view.css`）の中のチップとして並べる。
+
+**2種類を落とすと `toolVisibility` は常に `hidden` を返す関数になる。** つまり「何を出すか」の
+判断そのものが要らなくなり、`ToolVisibility` 型・`FILE_PATH_FIELD_BY_TOOL`・
+`SUBAGENT_LAUNCH_TOOL_NAME`・`ToolRun` / `LabeledTool`・`.step-tools` の CSS が**まとめて
+使われなくなる**。
+
+**進行を見る場所はすでにある。** サイドバーの「いま何をしているか」
+（`src/ui/sidebar/activity.tsx`）が実行中と直近の完了を並べ、T-114 で失敗の引数と出力も
+そこから開ける。**メインビューから消しても、見る手段は失われない。**
+
+## 解くべき論点
+
+- **どこまで消すか。** `toolVisibility` を「常に `hidden`」にして器を残すと**死んだコードが
+  残る**。関数と描画の経路をまとめて消すほうが素直だが、**`MainViewStep.actions` に
+  ツールを積むのは残す**（下の「注意」。T-127 が判定の材料に使う）
+
+## やること
+
+1. `src/ui/main-view/turn.tsx` が**質問の記録だけを描く**ようにする（`isShownAction` の
+   ツール側の分岐を落とす）。`step.report` も `actions`（質問）も無いステップを描かない
+   いまの判定は保つ
+2. `src/ui/main-view/tool-run.tsx` を消す。`src/protocol/main-view.ts` から
+   `toolVisibility` / `ToolVisibility` / `FILE_PATH_FIELD_BY_TOOL` /
+   `SUBAGENT_LAUNCH_TOOL_NAME` と、それだけが使う補助（`stringField` など他に使い先が
+   無いもの）を消す。**`MainViewToolRun` 型は残す**（`MainViewStep.actions` が使う）
+3. `src/ui/style/main-view.css` の `.step-tools` とその子（`.step-tools .tool-block` など、
+   他から使われなくなるもの）を消す。**`.tool-block` をサイドバー側が使っていないかを
+   `grep` で確かめてから**消す
+4. テストを更新する。`test/protocol/main-view.test.ts` の `toolVisibility` の describe、
+   `test/ui/main-view/main-view.test.tsx` の「ツールの行は toolVisibility の2種だけ」の
+   describe を、**「ツールの行はレポートに出ない」ことを固定するテストに置き換える**
+   （消すだけにしない）
+5. `docs/requirements.md` 4.2「メインビュー」の段落を 2026-09-11 の「レポートだけを出す」に
+   戻す。**予告の一文（「さらに戻して〜」）も、戻し終わったので書き換える**
+6. `docs/design.md` の部品の木で `<ToolRun>` に触れている行を直す
+
+## 完了条件
+
+- **合成データで、ファイルを変えるツール（`Edit`）とサブエージェントの起動（`Agent`）を
+  含むターンを描いても、レポートに行が出ない**ことを部品のテストで示す
+  （`.step-tools` と `.tool-block` が DOM に無いこと）
+- **質問の記録は従来どおり出る**ことをテストで示す（一緒に落としていないことの証拠）
+- `grep -rn 'toolVisibility\|step-tools\|tool-run' src test` が空
+  （`docs/history/` は当時の記録なので対象外）
+- **サイドバーの「いま何をしているか」が壊れていない**ことを実機で確かめる（実行中・完了・
+  失敗の3つが出ること）。見えたものを `evidence` に書く
+- 実機で、ファイル編集とサブエージェント起動を含むターンのレポートに**チップの行が1つも
+  出ない**ことを目視して `evidence` に書く
+- `docs/requirements.md` / `docs/design.md` の節の数が変わっていない
+  （`grep -c '^#\{2,3\} '` を前後で比較）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`MainViewStep.actions` にツールを積むのは残す。** `groupIntoTurns` はいまのまま
+  （ツールも `actions` に入れる）にしておく。**T-127（最初のツール呼び出しより前の本文を
+  出さないか決める）が「そのステップにツール呼び出しがあったか」を判定の材料に使う**ので、
+  ここで `MainViewEntry` から `tool` を落とすと T-127 が材料を失う
+- **これは tsukumo 側の描画の話で、モデルが従う「規約」ではない。**
+  `src/core/report-notation.ts` は触らない（指示の「ルールで塞ぐ」は tsukumo 側の判定を指す）
+- **サイドバーの表示を減らさない**（T-114 で寄せたばかり。進行と失敗の中身はあちらが持つ）
+- `docs/requirements.md` を編集するときは**行頭を含めて位置を特定する**
+  （`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 確認は tsukumo 自身で行える（偽の駆動で編集とサブエージェントを含むターンを出し、DOM と
+  画面を見る）。`loopable` は `"Y"`（`docs/workflow.md`「`loopable` の判定」）
+
+## T-146
+
+**タスク**: 開発中にブラウザ側を作り直して再読み込みを押す仕組みを入れる
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+node:fs の watch で src/ui/ を再帰監視（120ms でまとめる）→ 既存の bun build で組み立て直し → 新設の refresh フレームで開いているタブへ押す。CSS は style（<link> の href にクエリ）、.ts/.tsx は page（location.reload）。Vite も Bun.serve も Bun.build() も使っておらず package.json / bun.lock の差分は空。
+実機（Chrome・台本の駆動・ポート7491・TSUKUMO_WATCH_UI=1）で実測: sidebar.css に1行足すと window に置いた印が残ったまま見出しの色が rgba(232,227,234,0.6) → rgb(255,0,0) に変化（＝ページを読み込み直していない）。構文の壊れた .tsx を保存してもプロセスは生存し、印も色も保たれ、stderr に定型文1行だけが出た。
+bun run check: 475 pass → 479 pass / 0 fail（新規4件）。docs/design.md の節数は 51 で編集前後とも不変。救えるのは src/ui/ だけ（直近30コミットの実測で全体の52%）で、src/core/ と src/protocol/ は上げ直しが要ることを 11章に明記。
+
+## 背景
+
+ユーザーの指示（2026-09-16）「`src/` を直すたびにプロセスを上げ直すのが手間。**Vite を足すのでは
+なく、Bun でできるならそれでやってほしい。**」
+
+**いまは起動時に1回だけ組み立てて、あとは作り直さない。** `src/core/bundle.ts` の
+`buildUiScript` / `buildStyleSheet` が `bun build` を**子プロセスとして起こし**
+（`Bun.build()` ではない。規約「Bun固有APIに寄せない」のため）、結果を**文字列でメモリに持つ**。
+`src/core/server.ts` がそれを配る。ディスクに成果物を残さない（2026-09-12 決定）。
+
+**`docs/design.md` 11章は「HMR は持たない」と決めている**（「欲しくなったら Vite を開発時だけ
+足す。配る経路は変えない」）。指示は**この決定を見直すこと**と、**手段は Vite ではなく Bun を
+優先する**ことの2つ。
+
+**押す経路はもうある。** ブラウザとは WebSocket が1本つながっていて、`ServerFrame`
+（`src/protocol/frame.ts`）で `hello` / `events` / `error` を配っている。再読み込みの合図を
+足すならここ。
+
+## 解くべき論点
+
+1. **どの道を採るか。** ユーザーのメモが2つ挙げている:
+   - `Bun.serve` の HMR: **規約「Bun固有APIに寄せない」と正面から当たる**ので T-145
+     （Bun のまま進めるか Node へ寄せるか）の決定待ち
+   - `node:fs.watch` + 既存の `bun build` で作り直し、WebSocket で再読み込みを押す:
+     **T-145 に依存しない**（標準 API と既存の仕組みだけで閉じる）
+
+   **後者を既定とする**（依存が無く、いまの `bundle.ts` の形をそのまま使えるため）。
+   前者を採るなら T-145 を先に片付ける必要があるので、その旨を `evidence` に書いて閉じる
+
+2. **どこまでが対象か。** `fs.watch` + 作り直し + ブラウザの再読み込みで生き返るのは
+   **ブラウザに配る側だけ**（`src/ui/` と、`ui` が import する `src/protocol/`）。
+   `src/core/` を直したときは**プロセスの上げ直しが要るまま**。
+   指示は「`src/` を直すたび」なので、**片側しか救えないことを先に確かめて合意する**
+   （救えない側をどう扱うかも決める。諦める／別タスクにする）
+3. **開発中かどうかをどう見分けるか。** `tsukumo` は `bun link` でリポジトリを指しているので、
+   **普段使いと開発が同じ経路**。常に監視すると普段使いでも `fs.watch` が回る。
+   環境変数で入れるか、常時入れてよいかを決める（`src/core/config.ts` が環境変数の読み取りを
+   集約している）
+4. **作り直しの失敗をどう扱う。** 規約「常駐プロセスは描画1回の失敗で落ちない」。
+   途中まで書いたコードは型が通らないので**作り直しは普通に失敗する**。
+   失敗したときは前の版を配り続けるのか、画面に出すのかを決める
+5. **押し方。** 新しいフレームを足すか、既存の `events` に載せるか。ブラウザ側で
+   `location.reload()` するのか、差分だけ当てるのか（**差分を当てるのは HMR そのもの**なので、
+   規模が跳ねる。全体の再読み込みで足りるかを先に見る）
+
+## やること
+
+1. 論点1〜5を、`src/core/bundle.ts` / `src/core/server.ts` / `src/protocol/frame.ts` /
+   `src/core/config.ts` / `docs/design.md` 11章の現物を読んで詰める
+2. 論点2（片側しか救えない）を**先に確かめる**。ここが「手間が減らない」という結論になるなら、
+   **作らずに理由を `evidence` に書いて閉じてよい**
+3. 既定の道（`node:fs.watch` + `bun build` + WebSocket）で実装する
+4. `docs/design.md` 11章の「HMR は持たない」の行を、入れた形に合わせて直す
+   （**Vite を足していないこと**が分かるように書く）
+5. 実機で、`src/ui/` のファイルを1つ直してブラウザが作り直された版に入れ替わることを目視する
+
+## 完了条件
+
+- `src/ui/` のファイルを変更してから、**プロセスを上げ直さずに**ブラウザの表示が変わることを
+  実機で確かめ、何を変えて何が変わったかを `evidence` に書く
+- **作り直しが失敗したとき（型エラーを含むコードを保存したとき）にプロセスが落ちない**ことを
+  実機で確かめ、そのときの画面の様子を `evidence` に書く
+- 監視を入れる条件（常時か、環境変数か）が決まっていて、`docs/design.md` 11章に書かれている
+- **`src/core/` を直したときは上げ直しが要る**ことが 11章に明記されている（論点2）
+- 新しい外部依存を足していない（`package.json` の差分が空。Vite を入れない）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/design.md` が編集の前後で合う
+
+## 注意
+
+- **`Bun.*` の固有 API に寄せない**（規約）。`Bun.serve` の HMR も `Bun.build()` も使わない。
+  監視は `node:fs` の `watch`
+- **外部依存を増やすときはユーザーの承認が要る**（`CLAUDE.md`）。**Vite を足さない**
+- **成果物をディスクに書かない**（2026-09-12 決定。`bundle.ts` 冒頭）。作り直した結果も
+  メモリに持つ
+- **常駐プロセスは描画1回の失敗で落ちない**（規約）。監視ループに `try`/`catch` を散らさない
+- T-145（Bun のまま進めるか Node へ寄せるか）が未決。**既定の道はこれに依存しない**が、
+  `Bun.serve` へ寄せたくなったら先に T-145 を片付けること
+- 検証は `TSUKUMO_DRIVER=fake TSUKUMO_OPEN_VIEW=0 TSUKUMO_VIEW_PORT=<空きポート>` で
+  本物の claude を起こさずに立ち上げられる
+- コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-149
+
+**タスク**: タスク一覧を区画の中で畳まず、表のモーダルで見渡せるようにする
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-129 / **passes**: yes
+
+**evidence**:
+
+1400x900 で表を開くと 27件中 19件が一度に見える（サイドバーの区画は 2件のまま。760px は 14件、400px は 14件で、表だけが横スクロールする）。閉じるボタン・モーダルの外側のクリック・Esc のどれでも閉じることを Chrome で実測。\n3つの幅すべてでページ全体の横スクロールは 0px、3区画の見出しは領域内。\nbun run check: 497 pass / 0 fail（変更前 487 pass）。docs/requirements.md の節の数は 26 で不変。
+
+## 背景
+
+T-129 で入れた「畳んで開く」形に対するユーザーの修正依頼（2026-09-16）。意図していたのは
+**閉じた状態はスクロールできること**と、**開いたら `/list-tasks` のようなテーブルを
+モーダルで出すこと**（閉じるボタンかモーダルの外側のクリックで閉じる）だった。
+
+## 決めたこと
+
+- 表の列は `/list-tasks` 相当（ID / status / 難易度 / 依存 / 着手 / 要約）。着手可否は
+  依存と status から計算する（`status.py` と同じ規則）
+- サイドバー側の行は**折り返したまま**（1行に省略しない）
+- 区画の高さの配分は**元の2等分に戻す**（畳む/開くで入れ替える仕掛けは撤去）
+
+## やったこと
+
+1. `src/protocol/task-summary.ts` に `difficulty` / `dependencies` を足し、`taskReadiness` を新設
+2. `src/ui/sidebar/task-board.tsx` を新設（`<dialog>` の `showModal()`。閉じるボタン・外側の
+   クリック・Esc で閉じる）。`src/ui/style/task-board.css` を新設
+3. `src/ui/sidebar/section.tsx` の見出しに押せる口（`action`）を足し、「一覧を見る」を置いた
+4. `task-list.tsx` を全件表示に戻し、`sidebar.css` / `narrow-screen.css` の高さの取り合いを撤去
+5. `docs/requirements.md` 4.2 と `docs/design.md` の部品の木を更新
+
+## 完了条件
+
+- 表が 1400 / 760 / 400px で開き、閉じるボタン・外側のクリック・Esc で閉じる
+- 一度に見える件数（表）の実測値を `evidence` に書く
+- ページ全体が横にスクロールしない（`scrollWidth == clientWidth`）
+- `bun run check` が通る
