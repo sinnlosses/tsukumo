@@ -8357,3 +8357,741 @@ MainViewStep に superseded（自分より後ろに report を持つステップ
 
 - **`interim` の判定そのもの（T-159）は変えない。** 足すのは「畳むかどうか」だけ。
 - 畳んだ中身は DOM に残す（`<details>` は閉じているだけ）。**記録から消さない。**
+
+## T-076
+
+**タスク**: 依頼を送って待っている間にメイン画面へ出すものを決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: False
+
+**evidence**:
+
+着手しない判断で閉じた（2026-09-16、ユーザーの判断）。このタスクが決めようとしていた「待っている間にメインビューへ何を出すか」は、2026-09-16 の一連の決定で別の形で片付いた: メインビューはレポートをリアルタイムに流し（書きかけの本文がそのまま流れる）、ツールが始まると実況は消えるが、構造を持つまとまった本文は中間レポートとして残って積まれる（docs/requirements.md 4.2、src/protocol/main-view.ts の keepOnlyInterimReports）。追い越された中間レポートは畳む（T-161）。つまり待機中のメインビューは空ではなく、流れているレポートと積まれた中間レポートで埋まる。本文が求めていた棚卸し（4箇所に何が出ているか）と候補出しは行っていないので passes は false。中間レポートの見せ方の残件は T-165 / T-166 が持つ。
+
+依頼を送ってから答えが出るまでの間、メインビューに何を出すかを決める。
+
+## 背景
+
+ユーザーの指示（2026-09-12）「入力後、待っている間にメイン画面に表示する内容って何がいいかな?
+考えてもらっていい?」。**何が待ち時間をつらくするかはユーザーの体感が正典**なので、
+推測で足さずに聞いてから決める。
+
+いまの到達点（2026-09-12 に現物を読んで確認）:
+
+- メインビューは `src/view.ts` の `buildMainBody`（1081行目付近）が組み立てる。
+  **利用者の依頼を境目にやり取りごとに区切り**、1やり取りの中は「レポート1件＋それに続く
+  ツールの実行」を1ステップとして縦に積む。過去のやり取りはタブで遡る
+- **「作業中」と「完了後」で状態を切り替えない**（同関数の doc コメント）。つまり
+  **待っている間に専用の見た目は無い**。出るのはツールの実行の行だけで、最初のレポートが
+  届くまでは実質ほとんど何も増えない
+- ツールの行は**利用者が見るべきものだけに絞ってある**（`toolVisibility`。ファイルを変えた操作・
+  サブエージェントの起動・失敗したツールの3種類だけ。コマンドとその出力・読み取り・検索は出ない）。
+  **待ち時間の大半は「出さないと決めたツール」で埋まっている**可能性がある
+- 進行中かどうかは `TURN_STATUS_EVENT_PATH` でブラウザへ届いており、入力欄のボタンが
+  「送信」／「中断」に切り替わる。サイドバーには「いま何をしているか」（`ToolActivity`）と
+  経過時間がある（T-054 / T-055。経過時間は T-075 で入力欄へ移る）
+- 表情は待っている間 `working` に変わる（`WORKING_EXPRESSION_DELAY_MS`）
+
+## 解くべき論点
+
+- **待ち時間の何がつらいのか。** 「進んでいるか分からない」のか「終わりが読めない」のか
+  「手持ち無沙汰」なのか。**ここを聞かずに何を出すかを決めない**（対策が変わる）
+- **メインビューの役目と衝突しないか。** メインビューは「読むもの」で、サイドバーが
+  「いま何をしているか」を持つ。待機中の表示をメインに置くと**サイドバーと二重になる**。
+  役割分担をここで決めて書き残す
+- **出さないと決めたツールを待機中だけ出すか。** `toolVisibility` の決定
+  （`docs/requirements.md` 4.2）を待機中に限って緩めるかどうか。緩めるなら
+  **コマンドの中身・出力は会話の内容**なので、どこまで出すかの線引きが要る
+- **キャラクターと一緒に仕事をする目的に沿うか。** 待ち時間をキャラビュー側（立ち絵・セリフ）で
+  埋めるほうが目的に近い可能性がある。**メインビューに足さない**という結論もあり得る
+- **足さない候補も並べる。** `CLAUDE.md`「機能を足そうとする前に `docs/requirements.md` 1と
+  2.2 を見る」
+
+## やること
+
+1. ユーザーに**待っている間の何が不便だったか**を聞く。体感が正典なので、ここを飛ばさない
+2. いま待機中に画面のどこに何が出ているかを**実物で棚卸しする**（メインビュー・キャラビュー・
+   サイドバー・入力欄の4箇所。tsukumo を `TSUKUMO_VIEW_PORT` を変えて起こし、依頼を1件送って観察する）
+3. 候補を出して、出すもの・出さないものを**理由付きで両方決める**
+4. 決めた実装は**このタスクではやらない**。後続タスクの案を `develop/direction.md` に書き出す
+   （T-069 と同じ進め方）
+5. 決定を `docs/requirements.md` 4.2 に記録する
+
+## 完了条件
+
+- ユーザーに聞いた「何がつらいか」と、それに対する結論が `docs/requirements.md` 4.2 に
+  節として記録されていること。**足さないと決めたものも理由付きで書かれている**こと
+- 棚卸しの結果（待機中に4箇所それぞれに何が出ているか）が `evidence` にあること。
+  **会話の中身は写さない**（どの要素が出たかだけ）
+- 実装が要るなら `develop/direction.md` に後続の案が書かれていること。
+  要らないと決めたならその理由が `evidence` にあること
+- `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で減っていないこと
+- コードを変えていれば `bun run check` が通ること（変えないなら不要）
+
+## 注意
+
+- **ユーザーの感想が要るので委譲せず、`/loop` にも載せない**
+- **このタスクで実装しない。** 決めるところまで
+- 観察のために tsukumo を起こすときは `TSUKUMO_VIEW_PORT` を変え、**常駐している 7327 番を落とさない**
+- `docs/requirements.md` を編集するときは**行頭を含めて位置を特定する**
+  （`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- **完了条件がユーザーの「何がつらいか」そのもの**なので `loopable` は `"N"`
+
+## T-134
+
+**タスク**: 質問の選択肢の説明を省略せず全部出す（折り返してよい）
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/ui/style/dispatch.css の .question-choice-description から nowrap / overflow:hidden / text-overflow:ellipsis を外し overflow-wrap:anywhere にした（CSS 1ファイルで済み、レイアウト側は無変更）。docs/requirements.md 4.2 の「省略記号で切る」を「折り返して全文を出す」に書き換え（節の数 26 で不変）。test/fixture/fake-session.json の長文説明の文言を新しい挙動に合わせた（恒久的な修正）。bun run check: 571 pass / 0 fail（変更前と同数）。目視（1400x900）で、長い説明が省略記号なしで末尾まで読めること、.layout-dispatch は縦横ともスクロールせず .question-card の中だけがスクロールすること（281/147）、hover 前後と次の質問へ進んだ前後で .pending-answer の高さが 199.015625px で同一（ガタつき無し）を確認。.pending-answer の 64% は据え置き。
+
+## 背景
+
+ユーザーの指示（2026-09-15）「入力画面に表示された質問が途中で...と見切れてしまうので、
+そこは省略せずすべて表示してほしい（縦にスクロールすることになっても良い）」。
+
+切っているのは `src/ui/style/dispatch.css` の `.question-choice-description` で、
+`white-space: nowrap` + `overflow: hidden` + `text-overflow: ellipsis` の3つ。ラベル
+（`.question-choice-label`）と説明を `.question-choice`（`display: flex`）で1行に並べ、
+余りに収まらない説明を省略記号で切っている。**これは 2026-09-15 の決定**で、
+`docs/requirements.md` 4.2「許可と質問」の末尾に
+「**選択肢の説明はラベルと同じ行に置き、幅が足りなければ省略記号で切る**（縦に積むと選択肢1件で
+領域の高さを使い切る）」と書いてある。**今回の指示はこの決定の見直し**にあたる。
+
+高さの作りは T-118 で決めた形のまま使える: `.pending-answer` が `max-height: 64%`
+（`.dispatch` の高さ基準。border-box）で箱を抑え、`.question-card` が
+`overflow-y: auto` で**中だけ**縦スクロールする。**領域（`.layout-dispatch`）そのものは
+縦スクロールさせない**という T-118 の決定は保つ（説明が伸びたぶんは `.question-card` の中で
+スクロールすればよいので、指示の「縦にスクロールすることになっても良い」はこれで満たせる）。
+
+CSS のコメントには「選んだとき・hover したときに高さが変わってガタつかせないため、行数は常に1行」
+とある。折り返すと行数が中身で決まるので、**hover と選択で高さが動かないか**は実際に見る。
+
+## 解くべき論点
+
+- ラベルと説明を**同じ行のまま折り返す**か、説明を**ラベルの次の行に落とす**か。`.question-choice`
+  は `display: flex; align-items: baseline` なので、前者は `.question-choice-description` の
+  `white-space` を戻すだけ、後者は `flex-direction: column` 相当の組み替えになる
+- `.pending-answer` の `max-height: 64%` を据え置くか上げるか。CSS のコメントに
+  1400x900・既定の比率での実測（60% で選択肢1件・textarea 57px / 64% で2件・45px /
+  68% で2件・34px）があるので、**同じ条件で測り直して決める**
+- 選択肢が `is-selected` になったとき・hover したときに高さが動かないか（動くならガタつきを
+  止める手当てが要る）
+
+## やること
+
+1. `.question-choice-description` の `white-space: nowrap` / `overflow: hidden` /
+   `text-overflow: ellipsis` を外し、説明を最後まで出す
+2. 上の論点を実測で決める。`.pending-answer` の割合を変えるなら、CSS のコメントの実測値も
+   測り直した値に書き換える
+3. CSS のコメント（「幅が足りなければ省略記号で切る」「行数は常に1行」）を今の挙動に直す
+4. `docs/requirements.md` 4.2「許可と質問」の末尾の一文（`省略記号で切る`）を、今回決めた形に
+   書き換える。**行頭を含めて位置を特定し**、前後で `grep -c '^#\{2,3\} ' docs/requirements.md`
+   の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+5. 目視で確かめる。**長い説明を持つ選択肢の質問**を出し、(a) 説明の末尾まで読めること、
+   (b) スクロールするのは `.question-card` の中だけで `.layout-dispatch` は縦にも横にも
+   動かないこと、(c) 選択肢を選んだとき・hover したときに高さが飛ばないこと
+
+## 完了条件
+
+- `bun run check` が通る（ファイル数・テスト件数を evidence に書く）
+- 長い説明の選択肢で末尾に `…` が出ないこと、`.layout-dispatch` が縦スクロールしないことを
+  目視で確かめ、**どの画面幅で何が見えたか**を evidence に書く（`docs/architecture.md`
+  「手で確かめること」）
+- `docs/requirements.md` 4.2 の該当の一文が今の挙動と一致していること。編集の前後で節の数が
+  変わっていないことを evidence に書く
+
+## 注意
+
+- **T-118 の決定（領域そのものを縦にも横にもスクロールさせない）と T-117 の決定（1問ずつ出す）は
+  壊さない。** 変えるのは「説明を1行に切り詰める」ところだけ
+- `.dispatch-suggestion-*`（`/` 補完の候補）にも同じ省略記号の指定があるが、**今回の指示の対象外**。
+  触らない
+
+## T-135
+
+**タスク**: 質問と答えを記録に積み、メインビューで見返せるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+答えが確定した時点で1回だけ question-answered を流し、SessionRecord の新しい枝 question に積む形にした（未回答の質問は残さない）。答えは質問ごとの並び QuestionAnswer で運び、SDK が求める1文字列への「、」連結は画面側から src/core/pending-answer.ts へ移した（画面が SDK の符号化を知らなくて済む）。状態とコマンドの形が変わるので PROTOCOL_VERSION を 1 → 2。復元（readRestoredEvents）には広げない: 「、」を含む自由入力が逆変換できず、復元は 4.8 の別要件のため。bun run check: 594 pass / 0 fail（56ファイル、新規は畳み込み5件・core 4件・部品3件）。目視（TSUKUMO_DRIVER=fake / ポート7399 / Playwright）: 複数選択は選んだぶんに ● が付き、自由入力は末尾に別行（斜体・「（自由入力）」付き）で出た。再読み込み後も残り、タブ「1つ前」で前のターンの記録が読めた。docs/requirements.md 4.2 に決定を追記し、見出し数は前後とも26。
+
+## 背景
+
+ユーザーの指示（2026-09-15）「入力画面に表示された質問への回答が、回答後に見返せないので
+改善方法を考えてほしい」。
+
+**見返す先の部品はもうある。** `src/ui/main-view/question-record.tsx` の `<QuestionRecord>` が
+「何を聞いて、どう答えたか」を1つの塊で出す形（選ばれた答えに `●`、それ以外に `○`）で書かれて
+いて、`src/ui/main-view/turn.tsx:54` から `action.kind === "question"` のときに描かれる。
+`src/protocol/session-state.ts` の `MainViewEntry` にも
+`{ kind: "question"; questions; answers }` の枝がある。
+
+**足りないのは記録を積む経路。** `SessionRecord`（同ファイル）には `request` / `detail` /
+`speech` / `tool` の4種類しか無く、`question` が無い。`mainViewEntries` は `SessionRecord` を
+`MainViewEntry` へ写す関数なので、**`kind: "question"` のエントリは実際には一度も作られない**
+（`grep -rn '"question"' src/` で当たるのは型の定義と `src/core/pending-answer.ts` の
+`PendingAsk` 側だけ。作っているのは `test/ui/main-view/main-view.test.tsx:254` のテストだけ）。
+つまり `<QuestionRecord>` は production では到達しない。
+
+答えが今どこにあるか: ブラウザの `src/ui/dispatch/pending-answer.tsx` が `answer` コマンド
+（`{ kind: "answers", labels }`）を送り、`src/core/pending-answer.ts:148` が
+`updatedInput.answers`（質問文 → 選ばれたラベル）に組んで SDK へ返す。**この答えは
+`SessionEvent` として流れていない**ので、状態を畳む側は答えを知らない
+（`pending-changed` は答え待ちの列が空になったことしか伝えない）。
+
+## 解くべき論点
+
+- **記録をいつ積むか。** 質問が出た時点（未回答で積み、答えが来たら差し替える）か、
+  答えが確定した時点の1回か。前者は答えずにセッションが終わったときも残るが、
+  `SessionState` の畳み込みに「あとから書き換える」経路が増える
+- **どの経路で伝えるか。** `SessionEvent` に1種類足して `core/pending-answer.ts` から流すのが
+  素直（`protocol/session-event.ts` と `applySessionEvent`）。**`protocol` の契約を変えるので
+  `docs/design.md` 4.1 と 4.5（版と互換）を見てから決める**
+- **自由入力の答えをどう出すか。** `<QuestionRecord>` は `answers.includes(option.label)` で
+  印を付けるので、`options` に無い自由入力の文字列は**どの行にも印が付かない**。別行で出すか、
+  選択肢の下に添えるか
+- **複数選択の答え。** `pending-answer.tsx` は複数選んだときに「、」でつないだ1つの文字列を
+  `labels[i]` に入れる。`includes` では一致しないので、記録側で分ける必要がある
+- **復元（`readRestoredEvents`）でも組み直すか。** transcript には `AskUserQuestion` の
+  `tool_use`（`questions`）と `tool_result`（`updatedInput.answers`）の両方があるので材料は
+  揃うが、**今回やらない判断もあり得る**（そのときは理由を `evidence` に書いて閉じる）
+
+## やること
+
+1. 上の論点を決める
+2. 決めた経路を実装する（`protocol` の型 → `core` の送出 → `applySessionEvent` の畳み込み →
+   `mainViewEntries` が通す、の順）。**`<QuestionRecord>` は既にあるので、必要なら手直しだけ**
+3. 自由入力と複数選択の答えが記録で読めることを確かめる
+4. 復元の経路まで広げるかを決め、やらないなら理由を `evidence` に書く
+5. 決めたことを `docs/requirements.md` 4.2「許可と質問」に1〜2文で足す。**行頭を含めて位置を
+   特定し**、前後で節の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## 完了条件
+
+- `bun run check` が通る（ファイル数・テスト件数を evidence に書く）
+- 畳み込みのテストがある（質問 → 答え で `MainViewEntry` の `question` が1件でき、
+  `answers` に選んだラベルが入る。自由入力と複数選択もそれぞれ1件）
+- **目視**: 質問に答えたあと、メインビューのそのターンに「何を聞いて、どう答えたか」が残り、
+  タブで前のターンへ戻っても読めること。何が見えたかを evidence に書く
+- `docs/requirements.md` 4.2 に決めたことが書かれ、節の数が変わっていないこと
+
+## 注意
+
+- **`MAX_MAIN_VIEW_TURNS` は 5。** それより古いターンの記録は画面から落ちる（`main-view.ts`）。
+  今回の範囲を「直近5ターンで見返せる」までとし、それ以上は広げない
+- **会話内容の扱い**（`docs/coding-standards.md`）が最優先。質問文と答えは会話の内容なので、
+  ログに全文を出さない・`error` の理由に混ぜない・テストのフィクスチャに実物を使わない
+- T-133（ツールの行をレポートから消す）は**ツールの行**の話で、質問の記録は別物。
+  T-133 を先にやっても後にやっても、この記録は残す側
+
+## T-163
+
+**タスク**: character-pack.ts の純粋な部分を core へ切り出すかを設計する
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-143 / **passes**: True
+
+**evidence**:
+
+割らない結論。決め手は test/core/speech-cadence.test.ts が既に fs に触れず CharacterPack をリテラルで組んで buildSystemPromptAppend を呼べていること（実害が無い）。3関数は本体が計13行、呼び出しは src/cli.ts のみで、割ると CharacterPack 型を core へ出して adapter が import し返す形になり「型1つ + 一行関数3つ」の浅いモジュールが増えるだけになる。決定を docs/architecture.md「新しいコードを置く場所」に追記し、docs/design.md 4.1 の出どころ2件（tasks-changed / character-changed を core → adapter）と src/protocol/character.ts の層名を追従。src/ の差分は全てコメントで挙動は不変。bun run check: 582 pass / 0 fail（56ファイル）。見出し数は architecture.md 10・design.md 51 で前後不変。
+
+## 背景
+
+`docs/research/architecture-proposal.md`「7. 未決事項」が、`character-pack.ts` の扱いについて
+仮定を置いたうえで次のように書いている:
+
+> **`character-pack.ts` はファイルごと `adapter`**。中の純粋な部分（`characterChangedEvent` /
+> `buildSystemPromptAppend` / `toCharacterPackChoices`）は分けない ／ 分けるなら
+> `core/character-pack.ts`（純粋）と `adapter/character-pack.ts`（fs）。**この層の中の割り方は
+> `codebase-design` で別途設計する**
+
+いまの `src/core/character-pack.ts` は、fs を読む `readCharacterPack` と、外の世界に触らない
+`characterChangedEvent` / `buildSystemPromptAppend` / `toCharacterPackChoices` を同居させている。
+段2（T-143）はこのファイルを**丸ごと `adapter/` へ移す**仮定で進むので、移したあとは
+「純粋な関数が `adapter/` にある」状態になる。
+
+関連して T-125（新しいキャラクターパックを画面から作れるようにする）が入ると、書き込む側の
+関数が増える。提案は「パックの系統が3ファイル以上（読む・書く・覚える・検証）になったら
+`adapter/character-pack/` を切る」とも書いている。
+
+## 決まっていること（蒸し返さない）
+
+- 段2（T-143）で**いったんファイルごと `adapter/` へ移す**のは仮定どおり進める。
+  このタスクはその**後**に、割るかどうかを決める。
+
+## 解くべき論点
+
+- **そもそも割るか。** 純粋な3関数が `adapter/` にあることで実際に困るか（テストが書きにくい、
+  依存の辺が読めない、など）を具体的に挙げる。**困らなければ割らない**という結論でよい。
+- 割るなら**境目**。`buildSystemPromptAppend` は規約の連結（`speech-cadence` /
+  `report-notation` を並べる）だけなので `core` 寄り、`toCharacterPackChoices` は
+  定義ファイルの形に依存する、など性質が違う。まとめて動かすか、1つずつ見るか。
+- `codebase-design` の語彙（深いモジュール・シーム）で見たときに、割ることで
+  **インターフェースが増えるだけ**になっていないか。
+- T-125 で書き込む側が増えたときに `adapter/character-pack/` を切る判断と、どちらが先か。
+
+## やること
+
+1. `codebase-design` スキルを読み、その語彙で現状を見る。
+2. 上の論点を決める。**割らない結論なら、やらずに理由を `evidence` に書いて閉じる**
+   （そのとき提案書の仮定が確定するので、`docs/architecture.md` に1行残すかも判断する）。
+3. 割るなら実装し、`test/` の置き場もそれに合わせる。依存の辺は
+   `test/architecture.test.ts` が見ているので、そちらも通す。
+4. `docs/design.md` / `docs/architecture.md` の該当箇所を追従させる。**行頭を含めて位置を
+   特定し**、`grep -c '^#\{2,3\} '` の値が編集の前後で変わらないことを確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- 割った場合: `core` 側のファイルが `node:` を import していないこと
+  （`grep -l 'from "node:' src/core/*.ts` に出ないこと）を確かめた。
+- 割らなかった場合: **何を見て不要と判断したか**が `evidence` に書かれている。
+
+## 注意
+
+- **T-143（段2）より先に着手しない。** 移したあとの姿を見てから決めるタスク。
+- キャラクターの中身（素材のパス・表情・衣装の対応）をコードへ持ち込まない（CLAUDE.md 原則4）。
+
+## T-164
+
+**タスク**: 見出しを付けるレポートでは冒頭の塊にも見出しを置く条項を足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/core/report-notation.ts の見出しの条項に3条目を足した（既存2条は書き換えずそのまま）:「見出しを付けると決めたら、最初の塊にも見出しを置く。最初の見出しより前に地の文を置かない（短い本文で見出しを省く場合はこの限りでない）」。箇条書き1点・2行で上限どおり。「結論 → 根拠」の条項との整合は、見出し＝語レベルの結論 / 冒頭1〜2文＝文レベルの結論 / そのあと根拠、の積み重ねになるので両立すると判断し、文言は調整していない。bun run check: 594 pass / 0 fail（別セッションの T-135 の作業中の変更を含んだベースラインと同数）。docs/requirements.md と test/core/report-notation.test.ts は変更不要（前者は相手が編集中、後者は文面の中身を見ていない）。
+
+## 背景
+
+**見出しを付けると決めたレポートでも、冒頭の塊だけが地の文で始まる。** そこが何の話かを
+見出しから拾えないので、拾い読みが冒頭で途切れる（2026-09-16 のユーザーの指摘
+「今回も最終レポートに見出しがないけど、できれば見出しは常につけるようにしてほしいな」）。
+
+いま `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（86〜89行）が持っている
+見出しの条項は2つ:
+
+```
+- **見出しは `##` / `###` を数個までで、短い本文（3〜4行）には付けない。** レポートの見出しに
+  `#` は使わない
+- **見出しはその塊の結論を言う語にする。** 見出しだけ読めば結論が分かる語にし、「変更点」
+  「まとめ」のようなどのレポートにも当てはまる語だけの見出しにしない
+```
+
+**「付けるか付けないか」の判断は正しく働いている**（長いレポートには見出しが3つ付き、短い
+レポートには付かない）。抜けているのは**付けると決めたあとの、最初の塊の扱い**だけ。
+
+## 決まっていること（蒸し返さない）
+
+- **「短い本文（3〜4行）には付けない」は残す**（2026-09-16 ユーザー確認。「それは正しいよ」）。
+  「常に付ける」には**しない**。
+- 足すのは「**見出しを付ける長さのレポートでは、冒頭の塊にも見出しを置く（地の文で始めない）**」
+  の1点。
+
+## 解くべき論点
+
+- **既存の1条目を書き換えるか、3条目として足すか。** `REPORT_NOTATION_PROMPT` は
+  **短さ自体が条項**（同ファイルの docstring「冗長さを止める」）なので、**足す量は1行**に収める。
+- **検証可能な言い方にする。** 「冒頭の塊」では読み手によって結論が変わるので、
+  たとえば「最初の見出しより前に本文を置かない」のように、**見れば分かる形**で書く。
+- 同じ文面の上のほうにある「**読み手は「結論 → 根拠」の順に見る。** 冒頭の1〜2文で結論を書き」
+  と噛み合うかを確かめる。冒頭の見出し自体が結論を言う語になっていれば両立するはずだが、
+  **矛盾して読めるなら、そちらの文言も1行だけ調整してよい**。
+
+## やること
+
+1. 上の論点を決め、`src/core/report-notation.ts` に足す（または1条目を書き換える）。
+2. `test/core/report-notation.test.ts` が文面の中身を見ているなら追従させる
+   （T-155 のときは見ていなかったので変更不要だった。**今回も同じなら触らない**）。
+3. `docs/requirements.md` 4.2 は見出しの規則を条項として列挙していないので、
+   **原則として編集不要**。もし触るなら行頭を含めて位置を特定し、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で 26 のままであることを確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- 足した文面が**箇条書き1点（折り返して2行まで）**に収まっている。
+- 「短い本文には付けない」が**残っている**こと、足した条項と矛盾しないことを、
+  `evidence` に該当箇所を引用して示す。
+
+## 注意
+
+- **「常に見出しを付ける」と書かない。** 短いレポートに見出しを強制すると、見出しが中身より
+  多いレポートができる（T-155 で一度解いた対立を作り直すことになる）。
+- **レポートの文体を決めるのはここ1箇所**（`characters/<pack>/persona.md` ではない）。
+  人格の側に書かない。
+
+## T-165
+
+**タスク**: ステップの key を安定させ、畳んだ中間レポートの開閉が入れ替わらないようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+MainViewStep に id を足し、groupIntoTurns が limitTurnEntries より前に作成順で振る（PendingTurn.nextStepId を新設）。turn.tsx の <Step> の key を添字から step.id に替えた。questions.map と Fragment key={index} は直していない（前者は同じステップ内で末尾に追記されるだけ、後者は依頼の文字列から毎回導出するだけで増減しないため）。bun run check: 582 pass / 0 fail（変更前 580、+2）。追加したテストは key={index} に一時的に戻すと実際に落ちることを確認済み（回帰検出力の検証）。目視は上限 40 件を超えるターンをフィクスチャに一時追加し、開いた <details>（見出し35）が9件の追加で古いステップが落ちる間も開いたまま中身も保たれること、修正前は同じ手順で open が false に戻ることを確認。フィクスチャは git checkout を使わず元の内容を書き戻して復元（差分ゼロを確認）。
+
+## 背景
+
+畳んだ中間レポートが**勝手に開いたり閉じたりする**（2026-09-16 のユーザーの指摘）。
+
+原因は `src/ui/main-view/turn.tsx` の32行:
+
+```
+<Step step={step} key={index} />
+```
+
+**`key` が配列の添字**になっている。`src/protocol/main-view.ts` の `limitTurnEntries` は
+`MAX_MAIN_VIEW_ENTRIES`（40）を超えたぶんを**前（古いほう）から落とす**ので、ターンが伸びると
+残ったステップの添字が1つずつ前へずれる。React は同じ `key` を同じ要素として再利用するため、
+**添字がずれた瞬間に、あるステップの DOM が別のステップの中身で描き直される**。
+
+T-161 で中間レポートを `<details>` にしたので、これが目に見えるようになった。`<details>` の
+`open` は**制御されていない DOM の状態**なので、利用者が開いた1件が閉じて見えたり、別の1件が
+開いて見えたりする。
+
+## 決まっていること（蒸し返さない）
+
+- **直すのは `key` の付け方**。`limitTurnEntries` の落とし方（古いほうから落とす）は変えない
+  （それは T-166 の担当）。
+
+## 解くべき論点
+
+- **何を `key` にするか。** ステップは `report` と `actions` の組で、いまは識別子を持っていない。
+  候補は (a) `MainViewStep` に通し番号を足す（`MainViewTurn.id` と同じ考え方で、
+  **落としても番号がずれない**ように先頭から数える）、(b) 最初の `action` の `toolUseId` を使う
+  （ツールを持たないステップがあるので単独では足りない）。**`protocol` 側で番号を持つのが
+  素直**だが、`limitTurnEntries` の前に振る必要がある。
+- `questions.map` と `Fragment key={index}`（同ファイル68行・135行）も同じ問題を持つか。
+  **持つなら一緒に直し、持たないなら理由を `evidence` に書く**（質問の記録は落とされないなら
+  添字は動かない）。
+
+## やること
+
+1. 上の論点を決め、`MainViewStep` に安定した識別子を足して `turn.tsx` の `key` に使う。
+   **番号を振るのは `limitTurnEntries` より前**（落としたあとに振り直すと同じ問題が残る）。
+2. `test/protocol/main-view.test.ts` に「上限を超えて古いステップが落ちても、残ったステップの
+   識別子が変わらない」ケースを足す。
+3. `test/ui/main-view/main-view.test.tsx` に、`key` が変わらないことを外から見える形で
+   確かめるケースを足せるなら足す（**書けないなら理由を `evidence` に書いて飛ばしてよい**。
+   React の `key` は DOM に出ないので、直接は見えない）。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **目視で確かめる**: `test/fixture/fake-session.json` に、上限（40件）を超えるステップを持つ
+  ターンを一時的に作り、`TSUKUMO_DRIVER=fake` で開いて **畳んだ中間レポートを1つ開いた状態で
+  記録が増えても、開いたままの1件が入れ替わらない**ことを確かめる。**確認したらフィクスチャを
+  元に戻す**。
+- 上限を超えていないターンでは見た目が変わっていないことも確かめる。
+
+## 注意
+
+- **`limitTurnEntries` の落とし方と `droppedCount` の計算は変えない**（T-166 の担当）。
+- `MainViewTurn.id` は「追加されても番号がずれないように先頭から数えた通し番号」で、
+  タブの選択を保つのに使っている。**同じ考え方をステップにも使うなら、その理由を
+  コメントに書く**（なぜ添字ではだめなのかが次に読む人に伝わるように）。
+
+## T-167
+
+**タスク**: ツールが終わってもしばらく working を保つクールダウンを入れる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+SessionState に lastToolFinishedAt を足し（finishTool の中で resolveExpression を使い「その瞬間 working だったか」を見て、true のときだけ更新。短いツールでクールダウンが始まらない）、WORKING_EXPRESSION_COOLDOWN_MS = 4000 を入れた。クールダウンの長さを「隙間 + 1000ms」で見積もらずに済むよう、クールダウン中に始まったツールは遅延を待たず即座に working にする（isToolImmediatelyWorking）。4000ms の根拠は実測した隙間（短い連続で 2.1s / 3.2s、判断を挟むと 19.6s / 20.2s）で、覆うのは前者だけ。bun run check: 580 pass / 0 fail（変更前 571、it が9件増）。目視（fake + Playwright で data-expression を継続観測）で、1.4秒のツール2回＋隙間 400ms の台本に対し切り替わりが default → working → proud の3回だけ、隙間で往復ゼロ、クールダウンが明ける 7500ms と proud に戻った 7604ms が一致することを確認。節の数は requirements 26 で不変。
+
+## 背景
+
+立ち絵が `default` と `working` を**短い間隔で往復する**（2026-09-16 のユーザーの指摘）。
+
+`src/protocol/expression.ts` の `resolveExpression` が、いまはこう決めている:
+
+> 実行中のツールが1つでも `WORKING_EXPRESSION_DELAY_MS`（1000ms）以上前から動いていれば
+> `working`。それ以外は `speechExpression`（直近の `speak` の表情）。
+
+つまり**ツールが終わった瞬間に `speechExpression` へ戻る**。ツールを続けて走らせると、
+その隙間ごとに戻って往復する。1000ms の遅延は「ツールが**短く**連続するときに往復しない」
+ためのもので、**ツールとツールの隙間には効かない**。
+
+**T-150（2026-09-16）で `speak` の頻度を1ターン5〜10回にしたので、この往復は増えている。**
+`speechExpression` が書き換わる回数そのものが増えたため。
+
+時刻の持ち物に穴がある。`SessionState` は実行中のツールの `startedAt` は持っているが、
+**ツールが終わった時刻を持っていない**（`finishedTools` の要素は `ToolActivity` で、
+`startedAt` しか写していない。`src/protocol/session-state.ts` の552行あたり）。
+
+## 決まっていること（蒸し返さない）
+
+- **クールダウンを入れる**（2026-09-16 ユーザー選択）。ツールが終わってからしばらくは
+  `working` を保つ。
+- **クールダウンが明けたあとは `speak` で指定された表情に従う**（いまと同じ挙動）。
+  クールダウン中に新しい `speak` が来ても、**明けるまでは `working` のまま**でよい。
+
+## 解くべき論点
+
+- **クールダウンの長さ。** `WORKING_EXPRESSION_DELAY_MS`（1000ms）と揃えるか、別の値にするか。
+  **実際のツールの隙間の長さを測ってから決める**（今日のセッションではツール1回あたり 5〜9秒で、
+  隙間はもっと短い）。
+- **ツールの終了時刻をどう持つか。** `finishedTools` に終了時刻を足すのか、
+  `SessionState` に「最後にツールが終わった時刻」を1つ持つのか。**`resolveExpression` は
+  `protocol` の純粋な関数**なので、渡す形も決める（いまは `runningTools` と `speechExpression`
+  と `now` の3つ）。
+- **再計算のきっかけ。** いまは `src/ui/character-view/character-view.tsx` の `useEffect` が
+  「遅延が明けるまでの残り時間」ぶん先に1回だけ自分を配り直している
+  （`expression.ts` の `nextExpressionDelay` 相当）。**クールダウンが明ける瞬間にも
+  同じ仕掛けが要る**（何もしないと次のイベントまで表情が変わらない）。
+
+## やること
+
+1. 上の論点を決め、`src/protocol/expression.ts` と `src/protocol/session-state.ts` を直す。
+2. `src/ui/character-view/character-view.tsx` のタイマーを、クールダウンが明ける時刻にも
+   効くようにする。
+3. `test/protocol/expression.test.ts` に、(a) ツールが終わってもクールダウン中は `working`、
+   (b) クールダウンが明けたら `speechExpression` に戻る、(c) ツールが続けて走る隙間では
+   往復しない、のケースを足す。
+4. `docs/requirements.md`「4.3 状態連動」の優先順位の記述を追従させる。**行頭を含めて位置を
+   特定し**、`bun run format` のあとに `grep -c '^#\{2,3\} '` が 26 のままであることを確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **目視で確かめる**: `TSUKUMO_DRIVER=fake` で台本を流し、**ツールが連続する場面で立ち絵が
+  往復しない**ことを確かめる（表情の切り替わった回数を数えて `evidence` に書く）。
+- クールダウンの長さと、その値を選んだ根拠（測った隙間の長さ）が `evidence` にある。
+
+## 注意
+
+- **`speak` が表情を選ぶ仕組みそのものは変えない。** 選択肢はキャラクターパックの
+  `character.json` から来ていて、コードに表情の中身を書かない（CLAUDE.md 原則4）。
+- `working` は**私が `speak` で選ぶ表情でもあり、自動で被さる状態でもある**という二役を持つ。
+  この二役を解消しようとしない（別の判断が要る）。
+
+## T-169
+
+**タスク**: src/ui/ を bullet-proof-react の形に置き直す設計を決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/ui/ の箱を main.tsx（直下）/ features/ / components/ / lib/ / stores/ / styles/ に決め、docs/design.md 2章に52ファイルの移動の対応表・箱ごとの import の辺・同時に直すもの・採らなかった12要素（app/ api/ types/ utils/ 共有hooks/ config/ assets/ testing/ barrel @/絶対import 機能内サブディレクトリ ESLint）の表を書いた。stores/ は状態ライブラリの置き場ではなく「画面全体で共有する状態」（session / turn-selection の2つ。どちらも複数の機能が読む）の置き場として実体を確認し、6.2 の zustand を入れない決定は据え置き。単数形の規約は CLAUDE.md 原則5・architecture.md 原則5・coding-standards.md で「ファイルは単数形、ディレクトリも単数形だが src/ui/ の置き場所5つだけ例外」に統一した。bun run check: 594 pass / 0 fail（変更前と同数）。節の数は design 51 / coding-standards 21 / architecture 10 / CLAUDE.md 16 で不変、ファイルの移動はゼロ（git status はドキュメント4件のみ）。
+
+## 背景
+
+`src/ui/` を bullet-proof-react ベースのアーキテクチャに構成し直したい（2026-09-16 のユーザーの
+指示。`codebase-design` スキルを使う）。
+
+いまの `src/ui/` は **51ファイル・5505行**で、すでに機能単位に割れている:
+
+- 機能: `layout/` `main-view/` `character-view/` `sidebar/` `dispatch/` `appearance/`
+- 共有と思われるもの: `component/`（`select.tsx` / `tool-summary.ts`）、
+  `report/`（`markdown.tsx` / `sanitize-schema.ts` / `split-blocks.ts` / `mermaid-block.tsx` /
+  `chart-block.tsx` / `vendor-script.ts`）
+- 直下: `main.tsx`（入口）・`app.tsx`（Context）・`socket.ts`・`refresh.ts`・
+  `turn-selection.tsx`・`css-variable.d.ts`
+- CSS は機能と同居せず `style/` に集約（`style/main.css` の `@import` で束ねる）
+
+**機能どうしの import は実測で2本しかない**（`character-view/character-view.tsx` →
+`appearance/portrait-fixed.ts`、`layout/layout.tsx` → `appearance/appearance.tsx`。後者は親が
+子を組む形）。残りの領域をまたぐ import は `component/` `report/` と直下のファイル向け。
+つまり**中身はすでに bullet-proof-react の考え方に近く、違うのは名前と、境界が明文化も
+強制もされていないこと**。
+
+`docs/coding-standards.md` の barrel file の節に **2026-09-13 に `src/ui/` を切った段で
+bulletproof-react の実例と突き合わせて決めた**と書いてある。今回はその続きにあたる。
+
+## 決まっていること（蒸し返さない）
+
+- **bullet-proof-react の名前を採る**（2026-09-16 ユーザー選択）。`features/` `components/`
+  `hooks/` のような複数形・置き場所名を使ってよく、そのために **CLAUDE.md「アーキテクチャ概要」
+  の原則5・`docs/architecture.md` 原則5・`docs/coding-standards.md`「ディレクトリもファイルも
+  単数形にする」を書き換える**。
+- **設計と実装を分ける**（2026-09-16 ユーザー選択）。このタスクは決めて文書に落とすところまでで、
+  **ファイルは移さない**（移すのは後続タスク）。
+- **barrel file 禁止は維持する**（2026-09-13 決定。bulletproof-react 自身も tree-shaking の
+  理由で外している）。
+- 層の辺（`ui` は `protocol` しか import しない）は変えない。
+
+## 解くべき論点
+
+- **どのディレクトリを作るか。** `features/` `components/` `hooks/` `lib/` `utils/` `types/` の
+  うち、このプロジェクトに実体があるのはどれか。**実体の無い箱を先に作らない**
+  （型は `protocol/` にあり、API 層も状態ライブラリも無い）。
+- **いまの領域を機能と共有にどう割り振るか。** 特に `report/`（`main-view/report.tsx` だけが
+  使う）と `component/`（2つの機能が使う）。
+- **CSS を機能と同居させるか、`style/` に残すか。** 同居させるなら `src/adapter/bundle.ts` の
+  `buildStyleSheet`（`src/ui/style/*.css` を `main.css` の `@import` で束ねる前提）を
+  どう変えるかまで決める。
+- **`app.tsx` / `main.tsx` / `socket.ts` / `turn-selection.tsx` / `refresh.ts` の置き場。**
+  bullet-proof-react の `app/` に当たるか。
+- **単数形をやめる範囲。** `src/ui/` の中だけか、`src/protocol/` `src/core/` `src/adapter/` にも
+  及ぼすか。及ぼさないなら、規約に「`ui` の中だけの例外」と書く必要がある。
+- **機能どうしの import を禁止する規則をどの粒度で書くか**（実装は後続タスクの
+  `test/architecture.test.ts`）。
+
+## やること
+
+1. `codebase-design` スキルを読み、その語彙で現状の `src/ui/` を見る。
+2. 上の論点を決め、**移動の対応表（いまのパス → 新しいパス）を全ファイルぶん**まとめる。
+3. `docs/design.md` の 2章「ディレクトリ」と 6章「ui」を書き換え、対応表を 2章に載せる。
+   **行頭を含めて位置を特定し**、`bun run format` のあとに
+   `grep -c '^#\{2,3\} ' docs/design.md` が **51** のままであることを確かめる。
+4. `docs/coding-standards.md`「ディレクトリもファイルも単数形にする」・`docs/architecture.md`
+   原則5・`CLAUDE.md`「アーキテクチャ概要」の原則5 を、決めた内容に合わせて直す。節の数は
+   coding-standards.md **21** / architecture.md **10** のまま。
+5. 調べた結果、bullet-proof-react の形に落とすと**いまより悪くなる部分**（例: 実体の無い箱が
+   増える、`protocol/` と役割が二重になる）が見つかったら、その部分は**採らず理由を
+   `evidence` に書いて閉じる**。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **移動の対応表が `docs/design.md` 2章にある**（後続タスクがそれだけを見て移せる粒度で）。
+- 節の数が design.md 51 / coding-standards.md 21 / architecture.md 10 のまま。
+- 採らなかった bullet-proof-react の要素があれば、その理由が `evidence` にある。
+
+## 注意
+
+- **ファイルを移動しない。** このタスクの成果物はドキュメントだけ。
+- 層の辺（`ui` は `protocol` しか import しない）を変えない。
+- `CLAUDE.md` の原則5 を書き換えるので、**原則5 を参照している他の箇所**
+  （`docs/architecture.md` の原則のリスト、`docs/coding-standards.md`「層と依存の向き」の
+  索引行「単数形の命名」）も追随させる。
+
+## T-170
+
+**タスク**: 決めた形に src/ui/ と test/ui/ を組み替える
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-169 / **passes**: True
+
+**evidence**:
+
+git mv で74件（src/ui 50 + test/ui 24）を docs/design.md 2章の対応表どおりに移した。中身の変更は App→SessionProvider の改名・Layout が renderAppearance を props で受け取る形・bundle.ts の CSS 入口・相対 import とコメントのパス追随だけ。bun run check: 594 pass / 0 fail / 56 files（移動前と同数）。目視は移動前の HEAD を一時 worktree に出し 1400x900 で撮り比べ、4領域の実測座標が1pxも変わらず（.layout-main 16/1006.8x505.44 ほか）、横のはみ出し0px・pageerror 0件・4xx 0件。依頼の送信→レポート表示→立ち絵と吹き出しの更新と、今回変えた唯一の描画の配線である「見た目」の引き出しまで確認。docs/ の旧パスは設計が「1件」と書いていたが実測10箇所（requirements 7 / architecture 1 / glossary 1 / workflow 1）あったので同じコミットで追随させ、design.md 側の件数も直した。test/architecture.test.ts は uiRegionOf を ui/features/<機能>/ を見る形に最小限だけ追随（直さないと横断 import の検査が黙って空振りする）。
+
+## 背景
+
+前段のタスクが `docs/design.md` 2章に「いまのパス → 新しいパス」の対応表を書いている。
+このタスクは**そのとおりにファイルを移すだけ**。
+
+移動に追随が要る場所（実測）:
+
+- `src/adapter/bundle.ts`: `UI_SCRIPT_ENTRY = "main.tsx"`（`src/ui/` 直下にある前提）。
+  CSS は `src/ui/style/*.css` を `style/main.css` の `@import` で束ねる
+- `src/adapter/ui-rebuild.ts`: `UI_SOURCE_DIR_RELATIVE_PATH = ["src", "ui"]` を再帰で見張る
+  （`src/ui/` の中で移すぶんには影響しない）
+- `test/`: `src/<相対パス>.ts` → `test/<相対パス>.test.ts` のミラー。`test/ui/` 配下に**24ファイル**
+- `test/architecture.test.ts` の `layerOf` は `src/` 直下の先頭ディレクトリで層を判定する
+  （`src/ui/` の中で移すぶんには影響しない）
+
+## 決まっていること（蒸し返さない）
+
+- 形は前段のタスクが `docs/design.md` に決めたものに従う。**このタスクで設計を蒸し返さない**。
+- barrel file を作らない（import は実ファイルを直接指す。2026-09-13 決定）。
+- **見た目も部品の中身も変えない。** CSS のクラス名も変えない（HTML と CSS の対応が切れる）。
+
+## 解くべき論点
+
+- 相対 import の書き換え漏れをどう検出するか（`bun run typecheck` が拾うはずだが、
+  CSS の `@import` と `bundle.ts` の入口は型で守れない）。
+- 移動を1コミットに収められるか（収まらないなら、移動のコミットと中身の修正のコミットを分ける）。
+
+## やること
+
+1. `docs/design.md` 2章の対応表のとおりに `src/ui/` を **`git mv`** で移す（履歴を保つ）。
+2. `test/ui/` を同じ形に追随させる。
+3. 相対 import と、`src/adapter/bundle.ts` の入口・CSS の束ね方を直す。
+4. `bun run format` を通す。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書き、**移動前の件数と同じ**であることを
+  確かめる。件数が減っていたらテストが拾われなくなっている）。
+- **目視で確かめる**: `TSUKUMO_DRIVER=fake` で起こし、4領域（メインビュー・キャラビュー・
+  サイドバー・入力欄）が移動前と同じに見えることを確かめ、何を見たかを `evidence` に書く。
+- `git status` に、自分が移したファイル以外の変更が混ざっていない。
+
+## 注意
+
+- **他のセッションの未コミット変更を巻き込まない**（CLAUDE.md「Git運用」）。`git add -A` を
+  使わず、触ったファイルを個別に足す。
+- 大量の移動になるので、**移動と中身の変更を同じコミットに混ぜない**。
+- `develop/tasks.json` はコミットしない（記録はメインセッションが行う）。
+
+## T-171
+
+**タスク**: 機能どうしの import を test/architecture.test.ts で落とす
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-170 / **passes**: True
+
+**evidence**:
+
+test/architecture.test.ts に describe("ui/ の箱をまたぐ import") を足し、docs/design.md 2章の表を ALLOWED_UI_BOX_IMPORTS（main / features / components / lib / stores）としてそのまま写した。css-variable.d.ts と styles/ は箱に属さないので import 元・先とも無視、ui/ 直下の未知の区画は layerOf と同じく throw（箱を増やしたときの直し忘れで素通りしない）。既存の ALLOWED_IMPORTS（層の辺）と UI_REGIONS（機能どうし）は無変更。わざと違反させて2通りとも落ちることを確認: (1) src/ui/lib/refresh.ts に features/main-view/turn.tsx の import →「lib → features」で fail、(2) src/ui/features/layout/layout.tsx に main.tsx の import →「features → main」で fail。どちらも復元して src/ の差分ゼロ。bun run check: 595 pass / 0 fail（T-170 の 594 から it が1件増）。docs/coding-standards.md の節数は 21 で不変（表は二重に書かず design.md 2章を参照する2文だけ足した）。
+
+## 背景
+
+bullet-proof-react の核は「機能どうしは import し合わず、共有 → 機能 → 入口の一方向だけ」と
+いう規則で、本家はこれを eslint の boundaries プラグインで強制している。このリポジトリは
+外部ツールを増やさず、`test/architecture.test.ts` が**正規表現と `node:fs` だけ**で層の辺を
+落としている（`ALLOWED_IMPORTS` の表）。同じ形で `src/ui/` の箱どうしの辺も落とす。
+
+**機能どうしの import を禁じる検査はすでにある**（`UI_REGIONS` と `uiRegionOf`。組み替えの
+タスクで `ui/features/<機能>/` を見る形に追随させ、`appearance` も機能に加えた）。**残っている
+のはそれ以外の辺**で、`docs/design.md` 2章「`src/ui/` の箱と、置く基準」の表がこう決めている:
+
+| 箱            | import してよい先                            |
+| ------------- | -------------------------------------------- |
+| `main.tsx`    | すべて                                       |
+| `features/`   | `components` / `lib` / `stores` / `protocol` |
+| `components/` | `lib` / `protocol`                           |
+| `lib/`        | `protocol`                                   |
+| `stores/`     | `lib` / `protocol`                           |
+
+いまは**この表のうち「機能どうし」の1辺しか守られていない**。`lib/` が機能を import する、
+`components/` が `stores/` を読む、機能が `main.tsx` を import する、といった逆流はすべて
+素通りする。
+
+## 決まっていること（蒸し返さない）
+
+- **外部ツール（eslint プラグインなど）を増やさない。** 既存の `test/architecture.test.ts` に
+  足す（CLAUDE.md「`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る」）。
+- 許す辺の定義は `docs/design.md` 2章の表に従う。**表のほうを書き換えない。**
+- 既存の `UI_REGIONS` の検査（機能どうし）は**消さない**。箱の検査と役割が違う
+  （あちらは `features/` の中の横の辺、こちらは箱をまたぐ縦の辺）。
+
+## 解くべき論点
+
+- **箱を名前で列挙するか、ディレクトリの構造から導くか。** 新しい箱を足したときにテストを
+  直し忘れても落ちる形が望ましい（`layerOf` が未知のディレクトリで `throw` しているのと同じ
+  考え方が使えるか）。
+- **`main.tsx` と `css-variable.d.ts`（`ui/` の直下にあり箱に属さない2つ）をどう扱うか。**
+- 違反したときのメッセージに何を出すか（既存の `violationsMessage` の形に合わせる）。
+
+## やること
+
+1. `test/architecture.test.ts` に `src/ui/` の箱どうしの辺の検査を足す。既存の
+   `ALLOWED_IMPORTS` と同じ形（箱 → 許した先の集合）で書く。
+2. わざと違反する import を一時的に書いて**テストが落ちることを確かめ**、戻す。
+   最低2通り試す（`lib/` から機能へ、機能から `main.tsx` へ）。
+3. `docs/coding-standards.md`「層と依存の向き」に、`src/ui/` の箱の規則を1〜2行で足す
+   （表そのものは `docs/design.md` 2章が正典なので、二重に書かず参照する）。
+   **行頭を含めて位置を特定し**、`bun run format` のあとに
+   `grep -c '^#\{2,3\} ' docs/coding-standards.md` が **21** のままであることを確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **わざと違反させたときに落ちることを確かめた**記録が `evidence` にある（どのファイルに
+  どの import を足して、どう落ちたか。2通り）。
+- 節の数が `docs/coding-standards.md` 21 のまま。
+
+## 注意
+
+- 既存の層の辺の検査（`ALLOWED_IMPORTS`）と機能どうしの検査（`UI_REGIONS`）を壊さない。
+- **`src/` のファイルを変更しない**（テストとドキュメントだけ）。手順2で一時的に足した
+  import は必ず戻す。

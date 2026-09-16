@@ -1,5 +1,21 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 畳んだ中間レポートの開閉が入れ替わるのを直した（T-165）
+
+`<Step>` の `key` が配列の添字だったので、`limitTurnEntries` が古いステップを落とすと
+React が別のステップの DOM を使い回していた。`MainViewStep.id`（作成順の通し番号）に替えた。
+
+### 2026-09-16 character-pack.ts を core と adapter に割らないと決めた（T-163）
+
+fs に触らない3関数（`characterChangedEvent` / `buildSystemPromptAppend` /
+`toCharacterPackChoices`）も `adapter/character-pack.ts` に置いたまま。層は「外の世界に触るか」で
+決め、ファイルの中身の純度で割り直さない、という決定を `docs/architecture.md` に足した。
+
+### 2026-09-16 立ち絵が working と往復するのを止めた（T-167）
+
+ツールが終わっても 4000ms は `working` を保つクールダウンを入れた。クールダウン中に始まった
+ツールは遅延を待たず即座に `working` にするので、覆う長さは隙間ぶんだけで済む。
+
 ### 2026-09-16 待機中のメインビューの件を着手せずに閉じた（T-076）
 
 「依頼を送って待っている間にメイン画面へ何を出すか」を決めるタスクだったが、レポートを

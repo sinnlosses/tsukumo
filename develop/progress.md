@@ -79,22 +79,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `REPORT_NOTATION_PROMPT` の見出しの条項が3つになった。「短い本文には付けない」は残したまま、
 付けると決めたレポートでは**最初の見出しより前に地の文を置かない**を足した。
 
-### 2026-09-16 畳んだ中間レポートの開閉が入れ替わるのを直した（T-165）
-
-`<Step>` の `key` が配列の添字だったので、`limitTurnEntries` が古いステップを落とすと
-React が別のステップの DOM を使い回していた。`MainViewStep.id`（作成順の通し番号）に替えた。
-
-### 2026-09-16 character-pack.ts を core と adapter に割らないと決めた（T-163）
-
-fs に触らない3関数（`characterChangedEvent` / `buildSystemPromptAppend` /
-`toCharacterPackChoices`）も `adapter/character-pack.ts` に置いたまま。層は「外の世界に触るか」で
-決め、ファイルの中身の純度で割り直さない、という決定を `docs/architecture.md` に足した。
-
-### 2026-09-16 立ち絵が working と往復するのを止めた（T-167）
-
-ツールが終わっても 4000ms は `working` を保つクールダウンを入れた。クールダウン中に始まった
-ツールは遅延を待たず即座に `working` にするので、覆う長さは隙間ぶんだけで済む。
-
 ## 未解決
 
 - **偽の駆動で質問の場面を自動操作したとき、`turnInProgress` が解消しないことがある**
