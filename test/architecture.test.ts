@@ -179,6 +179,95 @@ describe("ui/ の機能どうしの import", () => {
   })
 })
 
+// `src/ui/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/ui/` の箱と、置く基準」の表そのもの）。
+// 上の `UI_REGIONS` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
+// `main.tsx` / `features/` / `components/` / `lib/` / `stores/` という箱をまたぐ辺を見る
+// （`protocol` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
+//
+// `ui/css-variable.d.ts`（ui 直下にあり箱に属さない ambient 宣言）と `ui/styles/`（CSS のみで
+// `.ts`/`.tsx` を持たない）はどの箱にも属さないので、import 元・import 先のどちらでも無視する。
+// 未知のディレクトリが `ui/` 直下に増えたときにテストの直し忘れで素通りしないよう、
+// `main.tsx` でも `css-variable.d.ts`/`styles` でもない未知の区画は `layerOf` と同じく `throw` する。
+const UI_BOXES = ["main", "features", "components", "lib", "stores"] as const
+type UiBox = (typeof UI_BOXES)[number]
+
+// 各箱が import してよい先（docs/design.md 2章の表そのもの。`main` は「すべて」なので全箱を許す）。
+const ALLOWED_UI_BOX_IMPORTS: Readonly<Record<UiBox, ReadonlySet<UiBox>>> = {
+  main: new Set(["main", "features", "components", "lib", "stores"]),
+  features: new Set(["features", "components", "lib", "stores"]),
+  components: new Set(["components", "lib"]),
+  lib: new Set(["lib"]),
+  stores: new Set(["stores", "lib"]),
+}
+
+type UiBoxViolation = {
+  readonly fromPath: string
+  readonly fromBox: UiBox
+  readonly toPath: string
+  readonly toBox: UiBox
+}
+
+describe("ui/ の箱をまたぐ import", () => {
+  it("src/ui/ の箱どうしの import は、docs/design.md 2章の表にある辺だけで構成されている", () => {
+    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("ui/"))
+    expect(files.length).toBeGreaterThan(0)
+
+    const violations = files.flatMap((relPath) => findUiBoxViolations(relPath))
+
+    expect(uiBoxViolationsMessage(violations)).toBe("")
+  })
+})
+
+/** ファイル1件の相対 import から、許した箱の辺に無いものだけを違反として返す。 */
+function findUiBoxViolations(relPath: string): readonly UiBoxViolation[] {
+  const fromBox = uiBoxOf(relPath)
+  if (fromBox === undefined) {
+    return []
+  }
+
+  const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
+  const allowed = ALLOWED_UI_BOX_IMPORTS[fromBox]
+  return relativeImportSpecifiers(content).flatMap((specifier) => {
+    const toPath = resolveRelativeImport(relPath, specifier)
+    const toBox = uiBoxOf(toPath)
+    return toBox === undefined || allowed.has(toBox)
+      ? []
+      : [{ fromPath: relPath, fromBox, toPath, toBox }]
+  })
+}
+
+/**
+ * `ui/` 相対パスから箱を決める。箱に属さない `ui/css-variable.d.ts` と `ui/styles/`（CSS のみ）は
+ * `undefined`（import 元・import 先のどちらでも無視する）。`ui/` の外は対象外なので `undefined`。
+ */
+function uiBoxOf(relPath: string): UiBox | undefined {
+  if (!relPath.startsWith("ui/")) {
+    return undefined
+  }
+  if (relPath === "ui/main.tsx") {
+    return "main"
+  }
+  if (relPath === "ui/css-variable.d.ts") {
+    return undefined
+  }
+  const [, second] = relPath.split("/")
+  if (second === "features" || second === "components" || second === "lib" || second === "stores") {
+    return second
+  }
+  if (second === "styles") {
+    return undefined
+  }
+  throw new Error(
+    `src/${relPath} の ui 箱を判定できない（新しい箱なら UI_BOXES と ALLOWED_UI_BOX_IMPORTS を足す）`,
+  )
+}
+
+function uiBoxViolationsMessage(violations: readonly UiBoxViolation[]): string {
+  return violations
+    .map((v) => `src/${v.fromPath}（${v.fromBox}） → src/${v.toPath}（${v.toBox}）`)
+    .join("\n")
+}
+
 /** ファイル1件の相対 import から、別の ui 領域を指すものだけを違反として返す。 */
 function findUiRegionViolations(relPath: string): readonly UiRegionViolation[] {
   const fromRegion = uiRegionOf(relPath)

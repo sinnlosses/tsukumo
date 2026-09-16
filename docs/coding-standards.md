@@ -207,6 +207,10 @@ transcript と同じ扱いにする。**
 `test/architecture.test.ts` が落とす**ので、向きを変えたくなったら先にこのテストと `docs/design.md`
 2章を直す。
 
+**`ui` 層の中も、箱（`main.tsx` / `features/` / `components/` / `lib/` / `stores/`）ごとに
+import してよい先が決まっている**（表は二重に書かず `docs/design.md` 2章「`src/ui/` の箱と、
+置く基準」を正典とする）。この縦の辺も `test/architecture.test.ts` が落とす。
+
 **ファイルは単数形にする。** 複数は「複数返す」関数名の側で表す（`task-summary.ts` の
 `readTaskSummaries`）。理由は、ファイル名が**概念**を指すため（原則5）。概念は1つで、いくつ返すかは
 関数の都合。

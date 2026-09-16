@@ -48,6 +48,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-16 src/ui/ の箱どうしの import をテストで守るようにした（T-171）
+
+`docs/design.md` 2章の表を `ALLOWED_UI_BOX_IMPORTS` として `test/architecture.test.ts` に写した。
+`ui/` 直下に未知のディレクトリが増えたら `throw` するので、箱を足したときの直し忘れで検査が
+素通りしない。わざと違反させて2通りとも落ちることを確認済み。
+
 ### 2026-09-16 src/ui/ を bullet-proof-react の形に組み替えた（T-170）
 
 `git mv` で74件（`src/ui/` 50 + `test/ui/` 24）を移し、`features/` `components/` `lib/` `stores/`
@@ -143,10 +149,11 @@ fs に触らない3関数（`characterChangedEvent` / `buildSystemPromptAppend` 
 - **サブエージェントの `TaskOutput` を読まない**（2026-09-16 に仕様を確認）。出力ファイルは
   会話まるごとの JSONL で、読むとコンテキストが溢れる。途中経過は
   `SendMessage({ to: "main" })` で**子狐から押し込む**（背景で動いているときだけ使える）
-- **`src/ui/` は bullet-proof-react の形へ組み替わる**（2026-09-16 に T-169 → T-170 → T-171 で
-  登録）。**T-169 で CLAUDE.md 原則5・`docs/architecture.md` 原則5・`docs/coding-standards.md`
-  「単数形」が書き換わる**ので、それまでは現行の単数形の規約が正典。**T-170 は `src/ui/` の
-  51ファイルを動かす**ので、ui を触る他のタスクと並行させない（CLAUDE.md「## タスク運用」）
+- **`src/ui/` は bullet-proof-react の形に組み替わった**（2026-09-16、T-169 → T-170 → T-171）。
+  **単数形の規約は「ファイルは単数形、ディレクトリも単数形だが `src/ui/` の置き場所5つだけ例外」**
+  に変わっている（CLAUDE.md 原則5）。**`src/ui/` のパスを書いた古いメモ・コメントは信用しない**
+  （`app.tsx` → `stores/session.tsx`、`socket.ts` → `lib/socket.ts`、`style/` → `styles/`、
+  領域のディレクトリは `features/` の下。対応表は `docs/design.md` 2章）
 
 - **`develop/tasks.json` を書き換えたら `bun run format` を通す。** oxfmt は JSON も整形するので、
   python の `json.dump` で書いたままだと `bun run check` が落ちる（2026-09-13 に踏んだ）
