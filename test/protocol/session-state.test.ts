@@ -316,7 +316,8 @@ describe("applySessionEvent", () => {
         result: { content: "ダミーの結果", isError: true },
       },
     ])
-    // メインビューの部品（`toolVisibility`）が見てよいのは名前・入力・結果だけ。
+    // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
+    // `src/ui/main-view/turn.tsx` の仕事で、いまはツールを描かない）。
     expect(mainViewEntries(view)).toEqual([
       {
         kind: "tool",
@@ -327,7 +328,7 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("mainViewEntries はツール系の entry も含む（メインビューの ToolRun が toolVisibility で絞る）", () => {
+  it("mainViewEntries はツール系の entry も含む（`groupIntoTurns` / `dropNarration` の材料になる）", () => {
     const view = apply(
       { kind: "request", text: "依頼" },
       {

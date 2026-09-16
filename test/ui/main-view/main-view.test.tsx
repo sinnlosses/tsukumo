@@ -158,21 +158,22 @@ describe("MainView（セリフはレポートに出さない）", () => {
   })
 })
 
-describe("MainView（ツールの行は toolVisibility の2種だけ）", () => {
-  it("ファイルを変えた操作とサブエージェントの起動だけが出る", () => {
-    renderMainView([
+describe("MainView（ツールの行はレポートに出ない）", () => {
+  it("ファイルを変えた操作もサブエージェントの起動も行にならない（枠ごと消える）", () => {
+    const { container } = renderMainView([
       request("依頼"),
       tool({ toolUseId: "t1", name: "Edit", input: { file_path: "src/a.ts" } }),
-      tool({ toolUseId: "t2", name: "Read", input: { file_path: "src/b.ts" } }),
-      tool({ toolUseId: "t3", name: "Agent", input: { description: "調査タスク" } }),
+      tool({ toolUseId: "t2", name: "Agent", input: { description: "調査タスク" } }),
     ])
 
-    expect(screen.getByText("Edit: src/a.ts")).toBeDefined()
-    expect(screen.getByText(/^Agent: 調査タスク$/)).toBeDefined()
-    expect(screen.queryByText(/Read/)).toBeNull()
+    expect(screen.queryByText(/Edit:/)).toBeNull()
+    expect(screen.queryByText(/Agent:/)).toBeNull()
+    expect(container.querySelectorAll(".tool-block")).toHaveLength(0)
+    // ツールしか無いステップは、レポートも無いので枠ごと消える。
+    expect(container.querySelectorAll(".main-step")).toHaveLength(0)
   })
 
-  it("失敗したツールは引数も出力も出さない（過程はサイドバーに寄せた）", () => {
+  it("失敗したツールも引数も出力も行にならない（過程はサイドバーに寄せた）", () => {
     const { container } = renderMainView([
       request("依頼"),
       tool({
@@ -183,53 +184,21 @@ describe("MainView（ツールの行は toolVisibility の2種だけ）", () => 
       }),
     ])
 
-    expect(container.querySelectorAll("pre.tool-input")).toHaveLength(0)
-    expect(container.querySelectorAll("pre.tool-result")).toHaveLength(0)
-    expect(container.querySelectorAll(".tool-block-failed")).toHaveLength(0)
     expect(screen.queryByText(/架空のコマンド/)).toBeNull()
     expect(screen.queryByText(/架空のエラー出力/)).toBeNull()
-    // ツール名だけの器も残さない（ステップごと消える）。
+    expect(container.querySelectorAll(".tool-block")).toHaveLength(0)
     expect(container.querySelectorAll(".main-step")).toHaveLength(0)
   })
 
-  it("失敗しても、ファイルを変えた操作はパスだけの行として残る", () => {
+  it("本文の後ろにツールが続くと本文は落ち、チップも残らない（枠ごと消える）", () => {
     const { container } = renderMainView([
       request("依頼"),
-      tool({
-        toolUseId: "t1",
-        name: "Edit",
-        input: { file_path: "src/a.ts" },
-        result: { content: "架空のエラー出力", isError: true },
-      }),
+      detail("まず直すね"),
+      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
     ])
 
-    expect(screen.getByText("Edit: src/a.ts")).toBeDefined()
-    expect(container.querySelectorAll("pre")).toHaveLength(0)
-    expect(screen.queryByText(/架空のエラー出力/)).toBeNull()
-  })
-})
-
-describe("MainView（見せないツールだけのステップ）", () => {
-  it("見せないツールしか無いステップは、枠だけのカードを残さない", () => {
-    const { container } = renderMainView([
-      request("依頼"),
-      tool({ name: "Read", input: { file_path: "/a.ts" } }),
-      tool({ name: "Grep", input: { pattern: "x" } }),
-    ])
-
+    expect(screen.queryByText("まず直すね")).toBeNull()
     expect(container.querySelectorAll(".main-step")).toHaveLength(0)
-    expect(container.querySelectorAll(".step-tools")).toHaveLength(0)
-  })
-
-  it("見せるツールが1つでもあれば、そのステップは出る", () => {
-    const { container } = renderMainView([
-      request("依頼"),
-      tool({ name: "Read", input: { file_path: "/a.ts" } }),
-      tool({ name: "Write", input: { file_path: "/b.ts" } }),
-    ])
-
-    expect(container.querySelectorAll(".main-step")).toHaveLength(1)
-    expect(container.querySelectorAll(".tool-block")).toHaveLength(1)
   })
 })
 

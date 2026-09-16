@@ -46,9 +46,9 @@ export type ToolActivity = {
   readonly startedAt: number
   /**
    * 失敗して終わったときの出力。成功したときと実行中は undefined
-   * （**「失敗した」という印そのもの**を兼ねる）。**失敗したツールはレポートに出さない**
-   * （`toolVisibility`。docs/requirements.md 4.2）ので、エラーの内容を読める場所はここから
-   * 開くサイドバーの並びだけになる。
+   * （**「失敗した」という印そのもの**を兼ねる）。**ツールの実行はレポートに出さない**
+   * （docs/requirements.md 4.2）ので、エラーの内容を読める場所はここから開くサイドバーの
+   * 並びだけになる。
    */
   readonly failureOutput: string | undefined
 }
@@ -374,11 +374,11 @@ export function applySessionEvent(
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
  * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
- * `[<Report> | <ToolRun> | <QuestionRecord>]*`」）。サイドバーの「いま何をしているか」は
- * 別に `runningTools` / `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
- * **どのツールを実際にメインビューへ出すかは `protocol/main-view.ts` の `toolVisibility`
- * が絞る**（ファイルを変えた操作・サブエージェントの起動の2種類だけ。失敗したツールは
- * サイドバー側に寄せてある。`docs/requirements.md` 4.2）。
+ * `[<Report> | <QuestionRecord>]*`」）が、`src/ui/main-view/turn.tsx` はそこから描かない
+ * （2026-09-16 決定。`docs/requirements.md` 4.2）。**`groupIntoTurns` / `dropNarration`
+ * （`protocol/main-view.ts`）が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
+ * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /
+ * `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
   const settled = state.records.flatMap(toMainViewEntries)

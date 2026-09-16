@@ -142,7 +142,7 @@ src/
     app.tsx                   接続・状態・コマンドの配り口（Context）
     socket.ts                 WebSocket の接続・再接続・フレームの検証
     layout/                   Layout・領域の枠・リサイザ
-    main-view/                TurnTabs・Turn・Report（Markdown）・ToolRun・QuestionRecord
+    main-view/                TurnTabs・Turn・Report（Markdown）・QuestionRecord
     character-view/           Portrait・BalloonTrack・Balloon・動きの hooks
     sidebar/                  Activity・TaskList・TaskBoard（表のモーダル）・SessionInfo
     dispatch/                 Composer・CommandSuggestions・PendingAnswer・TurnStatus
@@ -374,7 +374,7 @@ type SessionHost = {
 <App>                        socket.ts で接続。SessionState と dispatch(command) を Context で配る
 └ <Layout>                   grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）
    ├ <MainView>              <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
-   │   └ <Turn>              <RequestHeading> + [<Report> | <ToolRun> | <QuestionRecord>]*
+   │   └ <Turn>              <RequestHeading> + [<Report> | <QuestionRecord>]*
    │       └ <Report>        Markdown（6.3）。書きかけはブロック単位で memo
    ├ <CharacterView>         <Portrait> + <BalloonTrack>
    │   ├ <Portrait>          立ち絵。SVG はインラインで差し色、ラスタは <img>。動きの hooks（6.5）

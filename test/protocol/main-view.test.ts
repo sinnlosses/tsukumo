@@ -1,11 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import {
-  MAX_MAIN_VIEW_TURNS,
-  mainViewTurns,
-  toolVisibility,
-  type MainViewToolRun,
-} from "../../src/protocol/main-view.ts"
+import { MAX_MAIN_VIEW_TURNS, mainViewTurns } from "../../src/protocol/main-view.ts"
 import { type MainViewEntry } from "../../src/protocol/session-state.ts"
 
 const request = (text: string): MainViewEntry => ({ kind: "request", text })
@@ -141,70 +136,5 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(turns).toHaveLength(2)
     expect(turns[0]?.request).toBeUndefined()
     expect(turns[0]?.steps[0]?.report).toBe("依頼より前のレポート")
-  })
-})
-
-describe("toolVisibility（見せてよい3種だけを選ぶ）", () => {
-  function tool(overrides: Partial<MainViewToolRun>): MainViewToolRun {
-    return {
-      kind: "tool",
-      name: "Read",
-      input: {},
-      result: { content: "ok", isError: false },
-      ...overrides,
-    }
-  }
-
-  it("ファイルを変えた操作（Write/Edit/NotebookEdit）はパス込みで file-change になる", () => {
-    const visibility = toolVisibility(tool({ name: "Edit", input: { file_path: "src/a.ts" } }))
-    expect(visibility).toEqual({ kind: "file-change", path: "src/a.ts" })
-  })
-
-  it("読み取り・検索など未知のツール名は hidden になる", () => {
-    expect(toolVisibility(tool({ name: "Read" }))).toEqual({ kind: "hidden" })
-    expect(toolVisibility(tool({ name: "Grep" }))).toEqual({ kind: "hidden" })
-  })
-
-  it("失敗したツールも成否を見ずに分類する（Bash の失敗はレポートに出さない）", () => {
-    expect(
-      toolVisibility(
-        tool({
-          name: "Bash",
-          input: { command: "false" },
-          result: { content: "架空のエラー出力", isError: true },
-        }),
-      ),
-    ).toEqual({ kind: "hidden" })
-    expect(
-      toolVisibility(tool({ name: "Read", result: { content: "架空のエラー", isError: true } })),
-    ).toEqual({ kind: "hidden" })
-  })
-
-  it("失敗しても、ファイルを変えた操作とサブエージェントの起動は種類を保つ", () => {
-    expect(
-      toolVisibility(
-        tool({
-          name: "Edit",
-          input: { file_path: "src/a.ts" },
-          result: { content: "架空のエラー", isError: true },
-        }),
-      ),
-    ).toEqual({ kind: "file-change", path: "src/a.ts" })
-  })
-
-  it("サブエージェントの起動は description 込みで agent-launch になる", () => {
-    const visibility = toolVisibility(tool({ name: "Agent", input: { description: "調査タスク" } }))
-    expect(visibility).toEqual({ kind: "agent-launch", description: "調査タスク" })
-  })
-
-  it("file_path / description が無い（壊れた入力）ときは undefined を持たせて種類は保つ", () => {
-    expect(toolVisibility(tool({ name: "Edit", input: {} }))).toEqual({
-      kind: "file-change",
-      path: undefined,
-    })
-    expect(toolVisibility(tool({ name: "Agent", input: {} }))).toEqual({
-      kind: "agent-launch",
-      description: undefined,
-    })
   })
 })

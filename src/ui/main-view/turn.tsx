@@ -1,18 +1,17 @@
 // 1つのやり取り（依頼 → ステップの並び）。`<RequestHeading>` + ステップの並び
-// （レポート・ツールの実行・質問の記録）を縦に1本で積む（`docs/requirements.md` 4.2
-// 「ステップは縦に1本で積む」。番号は振らない）。
+// （レポート・質問の記録）を縦に1本で積む（`docs/requirements.md` 4.2
+// 「ステップは縦に1本で積む」。番号は振らない）。**ツールの実行は描かない**
+// （`docs/requirements.md` 4.2「メインビュー」。2026-09-16 決定。進行はサイドバーが持つ）。
 
 import { Fragment, type ReactElement } from "react"
 
 import {
-  toolVisibility,
   type MainViewAction,
   type MainViewStep,
   type MainViewTurn,
 } from "../../protocol/main-view.ts"
 import { QuestionRecord } from "./question-record.tsx"
 import { Report } from "./report.tsx"
-import { ToolRun } from "./tool-run.tsx"
 
 export type TurnProps = {
   readonly turn: MainViewTurn
@@ -39,37 +38,34 @@ export function Turn(props: TurnProps): ReactElement {
 }
 
 /**
- * 1ステップ分。レポートもツールも出すものが無いステップは何も描かない（`null`）。
+ * 1ステップ分。レポートも質問の記録も無いステップは何も描かない（`null`）。
  *
- * **空かどうかは「絞ったあとの数」で判定する。** `toolVisibility` が「見せない」と決めたツール
- * （読み取り・検索・コマンドの出力）しか無いステップは、`actions` が空でなくても描くものが
- * 無いので、枠だけの空のカードになってしまう（実機で確認。移行前の `stepHtml` も絞った
- * あとの数で判定していた）。
+ * **ツールの実行（`action.kind === "tool"`）は描かない。** `actions` にはツールの記録も
+ * 残っているが（`dropNarration` などが「そのステップにツール呼び出しが続いたか」の材料に使う。
+ * `MainViewStep.actions` はそのために残す）、メインビューに出すのは質問の記録だけ。
  */
 function Step(props: { readonly step: MainViewStep }): ReactElement | null {
   const { step } = props
-  const shownActions = props.step.actions.filter(isShownAction)
-  const tools = shownActions.map((action, index) => (
-    <Fragment key={index}>
-      {action.kind === "question" ? <QuestionRecord entry={action} /> : <ToolRun entry={action} />}
-    </Fragment>
-  ))
+  const questions = props.step.actions.filter(isQuestion)
 
-  if (step.report === undefined && shownActions.length === 0) {
+  if (step.report === undefined && questions.length === 0) {
     return null
   }
 
   return (
     <section className="main-step">
       {step.report !== undefined && <Report markdown={step.report} />}
-      {shownActions.length > 0 && <div className="step-tools">{tools}</div>}
+      {questions.map((question, index) => (
+        <QuestionRecord entry={question} key={index} />
+      ))}
     </section>
   )
 }
 
-/** 質問の記録は常に出す。ツールは `toolVisibility` が「見せない」と決めたものだけ落ちる。 */
-function isShownAction(action: MainViewAction): boolean {
-  return action.kind === "question" || toolVisibility(action).kind !== "hidden"
+function isQuestion(
+  action: MainViewAction,
+): action is Extract<MainViewAction, { kind: "question" }> {
+  return action.kind === "question"
 }
 
 // 見出しに出す依頼の全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。

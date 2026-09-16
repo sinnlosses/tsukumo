@@ -81,23 +81,6 @@ h2.turn-request {
 .main-step > .detail-block:last-child {
   margin-bottom: 0;
 }
-/* そのステップで動かしたツールは、本文の下に**行内のチップ**でまとめる（縦に積むと
-   本文が分断されるため）。失敗したツールだけは中身を読ませたいのでブロックのまま。 */
-.step-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.6rem;
-}
-.step-tools .tool-block {
-  margin: 0;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background: var(--surface);
-}
-.step-tools .tool-block h3 {
-  margin: 0;
-}
 /* レポートが直接書ける HTML（rehype-sanitize の schema が通すもの。`src/ui/report/sanitize-schema.ts`）
    から使う見た目の語彙。**クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
 .detail-block .cols {
@@ -192,11 +175,6 @@ a:hover {
   border-radius: 0.5rem;
   background: var(--surface);
 }
-.tool-block h3 {
-  margin: 0 0 0.5rem;
-  font-size: var(--font-secondary);
-  color: var(--ink);
-}
 .detail-block pre {
   margin: 0.4rem 0 0;
   padding: 0.5rem;
@@ -204,11 +182,6 @@ a:hover {
   border-radius: 0.4rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-.tool-pending {
-  margin: 0.4rem 0 0;
-  color: var(--ink-quiet);
-  font-style: italic;
 }
 .detail-block {
   margin: 0 0 1rem;

@@ -1,9 +1,9 @@
 // メインビューに出す前段の「決める」ロジック。**`MainViewEntry`（`session-state.ts`）を、
-// やり取り（ターン）ごとにまとめ、1件ずつのツールを表示してよい範囲まで絞る**純粋関数だけを置く。
+// やり取り（ターン）ごとにまとめる**純粋関数だけを置く。
 //
-// `groupIntoTurns` / `limitTurnEntries` / `toolVisibility` はもとは1つのファイルにまとまって
-// いた（移行の段6で HTML の組み立てが `src/ui/main-view/` へ移るのに合わせ、判断そのものは
-// サーバ・ブラウザどちらでも同じ結果になる `protocol` へ残した。docs/design.md 12章 段6）。
+// `groupIntoTurns` / `limitTurnEntries` はもとは1つのファイルにまとまっていた（移行の段6で
+// HTML の組み立てが `src/ui/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
+// どちらでも同じ結果になる `protocol` へ残した。docs/design.md 12章 段6）。
 //
 // `node:` にも `document` にも触らない（他の protocol と同じ制約）。
 
@@ -135,63 +135,4 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
   }
 
   return { ...turn, steps: kept, droppedCount: total - (MAX_MAIN_VIEW_ENTRIES - remaining) }
-}
-
-/**
- * ツール名ごとに `input` の中のファイルパスが入るフィールド名。ここに載っている名前だけを
- * 「ファイルを変えた操作」として扱う（`docs/requirements.md` 4.2）。**未知のツール名はここに
- * 無いので、`toolVisibility` で自動的に「見せない」側に倒れる**（安全側のデフォルト）。
- */
-const FILE_PATH_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
-  Write: "file_path",
-  Edit: "file_path",
-  NotebookEdit: "notebook_path",
-}
-
-/** サブエージェントを起動するツールの名前。`input.description` がタスク名（会話内容ではない）。 */
-const SUBAGENT_LAUNCH_TOOL_NAME = "Agent"
-
-export type ToolVisibility =
-  | { readonly kind: "hidden" }
-  | { readonly kind: "file-change"; readonly path: string | undefined }
-  | { readonly kind: "agent-launch"; readonly description: string | undefined }
-
-/**
- * 1件のツール実行を、メインビューに出してよい範囲で分類する（`docs/requirements.md` 4.2 の
- * 決定を実装したもの）。**判定は「ファイルを変えた操作 → サブエージェントの起動 →
- * それ以外は見せない」だけで、成否は見ない。**
- *
- * **失敗したツールもここでは特別扱いしない**（2026-09-15 決定）。以前は `result.isError` を
- * 最優先で見て引数と出力をレポートへそのまま出していたが、それだと `Bash` が非0で終わるだけで
- * コマンドと stdout/stderr がレポートに流れ込む。失敗に気づく経路と中身を読む経路は
- * サイドバーの「いま何をしているか」が持つ（`src/ui/sidebar/activity.tsx`）。
- *
- * **未知のツール名（`FILE_PATH_FIELD_BY_TOOL` にも `SUBAGENT_LAUNCH_TOOL_NAME` にも無い名前）は
- * `hidden` に落ちる。** 新しいツールが増えても、ここに追記するまでは安全側（見せない）に倒れる。
- */
-export function toolVisibility(entry: MainViewToolRun): ToolVisibility {
-  const filePathField = FILE_PATH_FIELD_BY_TOOL[entry.name]
-  if (filePathField !== undefined) {
-    return { kind: "file-change", path: stringField(entry.input, filePathField) }
-  }
-
-  if (entry.name === SUBAGENT_LAUNCH_TOOL_NAME) {
-    return { kind: "agent-launch", description: stringField(entry.input, "description") }
-  }
-
-  return { kind: "hidden" }
-}
-
-/** `input`（`unknown`。transcript から来た JSON 値）から、指定したフィールドの文字列値を取り出す。 */
-function stringField(input: unknown, field: string): string | undefined {
-  if (!isRecord(input)) {
-    return undefined
-  }
-
-  const value = input[field]
-  return typeof value === "string" ? value : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
 }

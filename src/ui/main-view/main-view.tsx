@@ -1,5 +1,5 @@
-// メインビュー本体（`<MainView>`。docs/design.md 6.1）。**主役はレポート**で、そこに
-// `toolVisibility` が絞ったツールの行・質問の記録が挟まる（`docs/requirements.md` 4.2。
+// メインビュー本体（`<MainView>`。docs/design.md 6.1）。**レポートだけを出す**。そこに
+// 質問の記録が挟まる（`docs/requirements.md` 4.2。ツールの実行は描かない。
 // 作業の**進行**はサイドバーが別に持つ）。
 //
 // **1ターン＝1枚、直近 `MAX_MAIN_VIEW_TURNS` 件をタブにする。新しいターンで先頭へ戻すが、
