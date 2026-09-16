@@ -208,6 +208,38 @@ describe("attachSessionSocket", () => {
     client.close()
   })
 
+  // **必須の2つ（`default` / `working`）の立ち絵を消す操作は、駆動まで届かせない。**
+  it("default の立ち絵を消す要求は受け口で弾き、dispatch まで届かない", async () => {
+    const started = await start()
+    const client = await connect(socketUrl(started.origin, TOKEN))
+    await nextFrame(client)
+
+    client.send(JSON.stringify({ type: "clear-portrait", commandId: "c-1", expression: "default" }))
+    const frame = await nextFrame(client)
+
+    expect(frame).toEqual({
+      type: "error",
+      commandId: undefined,
+      reason: FRAME_ERROR_REASON.invalidCommand,
+    })
+    expect(started.dispatched).toEqual([])
+    client.close()
+  })
+
+  it("必須でない表情（proud）の立ち絵を消す要求は dispatch へ渡る", async () => {
+    const started = await start()
+    const client = await connect(socketUrl(started.origin, TOKEN))
+    await nextFrame(client)
+
+    client.send(JSON.stringify({ type: "clear-portrait", commandId: "c-2", expression: "proud" }))
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(started.dispatched).toEqual([
+      { type: "clear-portrait", commandId: "c-2", expression: "proud" },
+    ])
+    client.close()
+  })
+
   it("受け付けられなかったコマンドには、理由を添えた error を返す", async () => {
     const started = await start({ ok: false, reason: FRAME_ERROR_REASON.noSession })
     const client = await connect(socketUrl(started.origin, TOKEN))

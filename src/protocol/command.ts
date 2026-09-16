@@ -8,7 +8,16 @@
 
 import { z } from "zod"
 
+import {
+  type Expression,
+  isExpression,
+  isOutfit,
+  isRemovableExpression,
+  type Outfit,
+  type RemovableExpression,
+} from "./expression.ts"
 import { answerSchema } from "./pending-ask.ts"
+import { MAX_PORTRAIT_DATA_URL_LENGTH, parsePortraitImage } from "./portrait-image.ts"
 
 /**
  * 依頼として送れる文面の上限。送信のための素朴な上限であって、秘匿・検閲のためではない
@@ -63,6 +72,36 @@ const MAX_CHARACTER_PACK_NAME_LENGTH = 200
 const commandIdSchema = z.string().min(1).max(200)
 
 /**
+ * 立ち絵1枚の data URL。**大きさと種類はここで見る**（`src/protocol/portrait-image.ts`。
+ * 受け取るのは `.svg` / `.png` / `.gif` の3つだけ）。
+ *
+ * 文字列のまま持ち、`{ format, base64 }` へのほどきは書き込む側（`src/core/character-edit.ts`）が
+ * 同じ `parsePortraitImage` で行う。**zod の `transform` で形を変えない**のは、ブラウザ側が
+ * 送るときの型（`ClientCommand`）が受け取ったあとの形にすり替わってしまうため。
+ */
+const portraitDataUrlSchema = z
+  .string()
+  .max(MAX_PORTRAIT_DATA_URL_LENGTH)
+  .refine((value) => parsePortraitImage(value) !== undefined)
+
+/** 差し色（`<input type="color">` が渡す形）。**16進の値そのものはここに書かない。** */
+const accentColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
+
+const expressionSchema = z.custom<Expression>(
+  (value) => typeof value === "string" && isExpression(value),
+)
+
+/**
+ * 立ち絵を**消せる**表情。`default` と `working` はここで弾かれる（必須の2つ。
+ * `src/protocol/expression.ts` の `REQUIRED_EXPRESSIONS`）。
+ */
+const removableExpressionSchema = z.custom<RemovableExpression>(
+  (value) => typeof value === "string" && isRemovableExpression(value),
+)
+
+const outfitSchema = z.custom<Outfit>((value) => typeof value === "string" && isOutfit(value))
+
+/**
  * ブラウザ → サーバのコマンド。`new-session`（docs/design.md 8章）はまだ足していない。
  */
 export const clientCommandSchema = z.discriminatedUnion("type", [
@@ -96,9 +135,53 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     commandId: commandIdSchema,
     name: z.string().min(1).max(MAX_CHARACTER_PACK_NAME_LENGTH),
   }),
+  z.object({
+    type: z.literal("set-portrait"),
+    commandId: commandIdSchema,
+    expression: expressionSchema,
+    image: portraitDataUrlSchema,
+  }),
+  z.object({
+    type: z.literal("clear-portrait"),
+    commandId: commandIdSchema,
+    expression: removableExpressionSchema,
+  }),
+  z.object({
+    type: z.literal("set-outfit-accent"),
+    commandId: commandIdSchema,
+    outfit: outfitSchema,
+    color: accentColorSchema,
+  }),
 ])
 
 export type ClientCommand = z.infer<typeof clientCommandSchema>
+
+/**
+ * いま出しているキャラクターパックの見た目（立ち絵・差し色）を変えるコマンド。**どれも
+ * 駆動には渡らない**（書き込みと `character-changed` の流し直しで済むので、セッションは
+ * 起こし直さない。`docs/design.md` 7.1）。
+ */
+export type CharacterEditCommand = Extract<
+  ClientCommand,
+  { readonly type: "set-portrait" | "clear-portrait" | "set-outfit-accent" }
+>
+
+/** 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる）。 */
+export type DriverCommand = Exclude<
+  ClientCommand,
+  CharacterEditCommand | { readonly type: "switch-character" }
+>
+
+/** 見た目の編集のコマンドかどうか（`src/core/session-manager.ts` の分岐で使う）。 */
+export function isCharacterEditCommand(command: ClientCommand): command is CharacterEditCommand {
+  return CHARACTER_EDIT_COMMAND_TYPES.some((type) => type === command.type)
+}
+
+const CHARACTER_EDIT_COMMAND_TYPES = [
+  "set-portrait",
+  "clear-portrait",
+  "set-outfit-accent",
+] as const
 
 /**
  * 届いた値をコマンドとして検証する。形が合わないときは undefined を返す

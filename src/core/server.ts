@@ -21,11 +21,7 @@ import { type Duplex } from "node:stream"
 import { type RawData, WebSocketServer } from "ws"
 
 import { CHARACTER_ASSET_PATH_PREFIX } from "../protocol/character.ts"
-import {
-  type ClientCommand,
-  MAX_PROMPT_TEXT_LENGTH,
-  parseClientCommand,
-} from "../protocol/command.ts"
+import { type ClientCommand, parseClientCommand } from "../protocol/command.ts"
 import { FRAME_ERROR_REASON, type ServerFrame } from "../protocol/frame.ts"
 import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../protocol/session-socket.ts"
 import {
@@ -37,10 +33,13 @@ import { bundledFilePath } from "./bundled-path.ts"
 import { type DispatchResult } from "./session-manager.ts"
 
 /**
- * 受け取るメッセージ1件の上限（バイト）。依頼の文面の上限（{@link MAX_PROMPT_TEXT_LENGTH}）に
- * JSON と多バイト文字ぶんの余裕を持たせた素朴な上限。
+ * 受け取るメッセージ1件の上限（バイト）。**立ち絵1枚（デコード後 2 MiB）を data URL で運べる
+ * 大きさ**にしてある（base64 の33%増と JSON のぶんを足して 4 MiB。`docs/design.md` 7.1 の表）。
+ *
+ * **依頼の文面の上限はこれとは別に効いている**（zod の `MAX_PROMPT_TEXT_LENGTH`。
+ * `src/protocol/command.ts`）ので、ここを上げても送れる文面は長くならない。
  */
-const MAX_MESSAGE_BYTES = MAX_PROMPT_TEXT_LENGTH * 4
+const MAX_MESSAGE_BYTES = 4 * 1024 * 1024
 
 /**
  * 起動トークンを1つ作る。**起動ごとに変わり、メモリにしか置かない**（ディスクに書かない。

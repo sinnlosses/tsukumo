@@ -34,6 +34,7 @@ const TOKEN_NAME: Readonly<Record<AppearanceColorKey, string>> = {
   surface: "--surface",
   ink: "--ink",
 }
+const ACCENT_TOKEN_NAME = "--accent"
 
 export function loadAppearanceColorOverride(): AppearanceColorOverride {
   let raw: string | null = null
@@ -79,7 +80,16 @@ export function applyAppearanceColorOverride(value: AppearanceColorOverride): vo
 
 /** 今その色に見えている16進値。上書き中ならその値、無ければ `:root` の既定値。 */
 export function readCurrentColor(key: AppearanceColorKey): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(TOKEN_NAME[key]).trim()
+  return readToken(TOKEN_NAME[key])
+}
+
+/**
+ * 今のキャラクターの色（`--accent`）。**差し色（`outfitAccents`）が定義に無い衣装の
+ * `<input type="color">` の初期値**に使う。パックが差した値、無ければ `theme.css` の `:root` の
+ * 既定値が返る（**JS 側に既定の16進を持たない**ための読み取り。13.2 / 13.5）。
+ */
+export function readAccentColor(): string {
+  return readToken(ACCENT_TOKEN_NAME)
 }
 
 /**
@@ -109,6 +119,10 @@ export function changeAppearanceColor(
     return current
   }
   return { ...current, [key]: value }
+}
+
+function readToken(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
 function optionalHexColor(value: unknown): string | undefined {

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
+import { INITIAL_SESSION_STATE } from "../../../src/protocol/session-state.ts"
+import { SessionContext, type SessionContextValue } from "../../../src/ui/app.tsx"
 import { Appearance } from "../../../src/ui/appearance/appearance.tsx"
 
 const COLOR_STORAGE_KEY = "tsukumo-appearance-color"
@@ -16,7 +18,8 @@ beforeEach(() => {
   document.documentElement.style.removeProperty("--surface")
   document.documentElement.style.removeProperty("--ink")
   themeStyleElement = document.createElement("style")
-  themeStyleElement.textContent = ":root { --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; }"
+  themeStyleElement.textContent =
+    ":root { --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; --accent: #f2b0a0; }"
   document.head.appendChild(themeStyleElement)
 })
 
@@ -37,9 +40,27 @@ function openDrawer(): void {
   fireEvent.click(screen.getByRole("button", { name: "見た目" }))
 }
 
+/**
+ * 引き出しを描く。中の `<CharacterEdit>` が `SessionContext` を読むので、`<App>` を経由せず
+ * 値を差し込む（`src/ui/app.tsx` が Context 自体を公開している）。**キャラクターが届いて
+ * いない状態**を既定にしてあるので、ここの各テストは色と立ち絵の固定だけを見る。
+ */
+function renderAppearance(onResetSplit: () => void = () => {}): void {
+  const value: SessionContextValue = {
+    state: INITIAL_SESSION_STATE,
+    connection: "open",
+    dispatch: () => {},
+  }
+  render(
+    <SessionContext.Provider value={value}>
+      <Appearance onResetSplit={onResetSplit} />
+    </SessionContext.Provider>,
+  )
+}
+
 describe("Appearance", () => {
   it("開く口だけが最初から見え、押すと引き出しが開く", () => {
-    render(<Appearance onResetSplit={() => {}} />)
+    renderAppearance()
 
     const trigger = screen.getByRole("button", { name: "見た目" })
     const dialog = document.querySelector("dialog.appearance-drawer") as HTMLDialogElement
@@ -51,7 +72,7 @@ describe("Appearance", () => {
   })
 
   it("色を変えると documentElement に反映し、localStorage に残る", () => {
-    render(<Appearance onResetSplit={() => {}} />)
+    renderAppearance()
     openDrawer()
 
     const groundInput = screen.getByLabelText("画面の地") as HTMLInputElement
@@ -68,7 +89,7 @@ describe("Appearance", () => {
   })
 
   it("ground を ink と同じ色にしようとすると受け取らず、既定へ落ちる", () => {
-    render(<Appearance onResetSplit={() => {}} />)
+    renderAppearance()
     openDrawer()
 
     const groundInput = screen.getByLabelText("画面の地") as HTMLInputElement
@@ -86,7 +107,7 @@ describe("Appearance", () => {
   })
 
   it("立ち絵の固定を切り替えると localStorage に残る", () => {
-    render(<Appearance onResetSplit={() => {}} />)
+    renderAppearance()
     openDrawer()
 
     const checkbox = screen.getByLabelText("立ち絵の位置を固定する") as HTMLInputElement
@@ -100,7 +121,7 @@ describe("Appearance", () => {
 
   it("比率を既定に戻すボタンは props の onResetSplit を呼ぶ", () => {
     let calls = 0
-    render(<Appearance onResetSplit={() => (calls += 1)} />)
+    renderAppearance(() => (calls += 1))
     openDrawer()
 
     fireEvent.click(screen.getByRole("button", { name: "領域の比率を既定に戻す" }))

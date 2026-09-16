@@ -6,6 +6,7 @@ import { basename, join } from "node:path"
 import {
   buildSystemPromptAppend,
   characterChangedEvent,
+  isEditableCharacterPack,
   listCharacterPacks,
   readCharacterPack,
   readCharacterPackFile,
@@ -66,9 +67,10 @@ describe("characterChangedEvent", () => {
   it("portraits の値をファイル名でなく /character/<file> の URL にする", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
 
-    const event = characterChangedEvent(readCharacterPack(dir), [
-      { name: basename(dir), label: "架空の精霊" },
-    ])
+    const pack = readCharacterPack(dir)
+    const event = characterChangedEvent(pack, [{ name: basename(dir), label: "架空の精霊" }], true)
+    // 取り直しの印はパックの名前と素材の版（更新時刻）を混ぜたもの。
+    const cacheKey = encodeURIComponent(`${basename(dir)}@${String(pack.revision)}`)
 
     expect(event).toEqual({
       kind: "character-changed",
@@ -76,14 +78,15 @@ describe("characterChangedEvent", () => {
       name: "架空の精霊",
       accent: undefined,
       speechMarker: "精霊: ",
+      editable: true,
       expressions: [
         { name: "default", label: "通常" },
         { name: "working", label: "作業中" },
       ],
       packs: [{ name: basename(dir), label: "架空の精霊" }],
       portraits: {
-        default: `/character/default.svg?pack=${encodeURIComponent(basename(dir))}`,
-        working: `/character/working.svg?pack=${encodeURIComponent(basename(dir))}`,
+        default: `/character/default.svg?v=${cacheKey}`,
+        working: `/character/working.svg?v=${cacheKey}`,
         proud: undefined,
         flustered: undefined,
       },
@@ -97,7 +100,7 @@ describe("characterChangedEvent", () => {
   })
 
   it("定義が無くても、立ち絵なしの形で流せる", () => {
-    const event = characterChangedEvent(readCharacterPack(dir), [])
+    const event = characterChangedEvent(readCharacterPack(dir), [], true)
 
     expect(event).toMatchObject({
       kind: "character-changed",
@@ -145,53 +148,102 @@ describe("listCharacterPacks", () => {
     return packDir
   }
 
-  it("同梱の characters/ と、起動先の characters/local/ を並べる", () => {
-    const bundled = join(dir, "bundled")
-    writePack(bundled, "tsukumo-spirit", DEFINITION_JSON)
+  /** 探し先3箇所。**ホームは必ず tmp に向ける**（本物の `~/.tsukumo` を読まない）。 */
+  function roots(): { readonly bundled: string; readonly home: string } {
+    return { bundled: join(dir, "bundled"), home: join(dir, "home") }
+  }
+
+  it("同梱の characters/・ホーム・起動先の characters/local/ を並べる", () => {
+    writePack(roots().bundled, "tsukumo-spirit", DEFINITION_JSON)
+    writePack(roots().home, "from-screen", DEFINITION_JSON)
     const cwd = join(dir, "cwd")
     writePack(join(cwd, "characters"), "local", DEFINITION_JSON)
 
-    const packs = listCharacterPacks(cwd, bundled)
+    const packs = listCharacterPacks(cwd, roots())
 
-    expect(packs.map((pack) => pack.name)).toEqual(["tsukumo-spirit", "local"])
+    expect(packs.map((pack) => pack.name)).toEqual(["tsukumo-spirit", "from-screen", "local"])
   })
 
-  it("同名は起動先が勝つ", () => {
-    const bundled = join(dir, "bundled")
-    const bundledLocal = writePack(bundled, "local", DEFINITION_JSON)
+  it("同名はホームが同梱に勝つ（画面から変えたものが出る）", () => {
+    const bundledSpirit = writePack(roots().bundled, "tsukumo-spirit", DEFINITION_JSON)
+    const homeSpirit = writePack(roots().home, "tsukumo-spirit", DEFINITION_JSON)
+
+    const packs = listCharacterPacks(join(dir, "cwd"), roots())
+
+    expect(packs.map((pack) => pack.name)).toEqual(["tsukumo-spirit"])
+    expect(packs[0]?.dir).toBe(homeSpirit)
+    expect(packs[0]?.dir).not.toBe(bundledSpirit)
+  })
+
+  it("同名は起動先がホームにも勝つ", () => {
+    writePack(roots().bundled, "local", DEFINITION_JSON)
+    writePack(roots().home, "local", DEFINITION_JSON)
     const cwd = join(dir, "cwd")
     const cwdLocal = writePack(join(cwd, "characters"), "local", DEFINITION_JSON)
 
-    const packs = listCharacterPacks(cwd, bundled)
+    const packs = listCharacterPacks(cwd, roots())
 
     expect(packs.map((pack) => pack.name)).toEqual(["local"])
     expect(packs[0]?.dir).toBe(cwdLocal)
-    expect(packs[0]?.dir).not.toBe(bundledLocal)
   })
 
   it("character.json が無いディレクトリはパックとして数えない", () => {
-    const bundled = join(dir, "bundled")
-    writePack(bundled, "not-a-pack")
-    writePack(bundled, "tsukumo-spirit", DEFINITION_JSON)
+    writePack(roots().bundled, "not-a-pack")
+    writePack(roots().bundled, "tsukumo-spirit", DEFINITION_JSON)
 
-    expect(listCharacterPacks(join(dir, "cwd"), bundled).map((pack) => pack.name)).toEqual([
+    expect(listCharacterPacks(join(dir, "cwd"), roots()).map((pack) => pack.name)).toEqual([
       "tsukumo-spirit",
     ])
   })
 
   it("置き場が無くても落ちない（一覧が空になるだけ）", () => {
-    expect(listCharacterPacks(join(dir, "missing"), join(dir, "missing"))).toEqual([])
+    expect(
+      listCharacterPacks(join(dir, "missing"), {
+        bundled: join(dir, "missing"),
+        home: join(dir, "missing"),
+      }),
+    ).toEqual([])
   })
 
   it("選択肢のラベルは character.json の name。無ければディレクトリ名", () => {
-    const bundled = join(dir, "bundled")
-    writePack(bundled, "named", DEFINITION_JSON)
-    writePack(bundled, "unnamed", JSON.stringify({ portraits: {} }))
+    writePack(roots().bundled, "named", DEFINITION_JSON)
+    writePack(roots().bundled, "unnamed", JSON.stringify({ portraits: {} }))
 
-    expect(toCharacterPackChoices(listCharacterPacks(join(dir, "cwd"), bundled))).toEqual([
+    expect(toCharacterPackChoices(listCharacterPacks(join(dir, "cwd"), roots()))).toEqual([
       { name: "named", label: "架空の精霊" },
       { name: "unnamed", label: "unnamed" },
     ])
+  })
+})
+
+describe("isEditableCharacterPack", () => {
+  it("起動先の characters/local と同じ名前のパックは画面から変えられない", () => {
+    const cwd = join(dir, "cwd")
+    mkdirSync(join(cwd, "characters", "local"), { recursive: true })
+    writeFileSync(join(cwd, "characters", "local", "character.json"), DEFINITION_JSON)
+
+    const local = readCharacterPack(join(cwd, "characters", "local"))
+
+    expect(isEditableCharacterPack(local, cwd)).toBe(false)
+  })
+
+  it("起動先に characters/local が無ければ、local という名前でも変えられる", () => {
+    const cwd = join(dir, "cwd")
+    mkdirSync(join(dir, "home", "local"), { recursive: true })
+    writeFileSync(join(dir, "home", "local", "character.json"), DEFINITION_JSON)
+
+    const fromHome = readCharacterPack(join(dir, "home", "local"))
+
+    expect(isEditableCharacterPack(fromHome, cwd)).toBe(true)
+  })
+
+  it("同梱のパックは変えられる（ホームに書いた版が勝つ）", () => {
+    mkdirSync(join(dir, "bundled", "tsukumo"), { recursive: true })
+    writeFileSync(join(dir, "bundled", "tsukumo", "character.json"), DEFINITION_JSON)
+
+    const bundled = readCharacterPack(join(dir, "bundled", "tsukumo"))
+
+    expect(isEditableCharacterPack(bundled, join(dir, "cwd"))).toBe(true)
   })
 })
 

@@ -18,11 +18,13 @@ import {
 } from "../protocol/character.ts"
 import { type SessionEvent } from "../protocol/session-event.ts"
 import { bundledFilePath } from "./bundled-path.ts"
+import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
-const CHARACTER_DEFINITION_FILE_NAME = "character.json"
+/** 定義ファイルの名前。**画面から書き込む側（`src/core/character-edit.ts`）も同じ名前を使う。** */
+export const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 
 /** 人格のファイル名。パックの中に無くてもよい（append が空になるだけ）。 */
-const PERSONA_FILE_NAME = "persona.md"
+export const PERSONA_FILE_NAME = "persona.md"
 
 /** パックの置き場の名前。同梱側も起動先側も、この名前のディレクトリの下を見る。 */
 const CHARACTER_DIR_NAME = "characters"
@@ -55,6 +57,12 @@ export type CharacterPack = {
    * レポートの記法だけになる。docs/design.md 7章）。
    */
   readonly persona: string | undefined
+  /**
+   * 素材の版（定義と立ち絵のファイルの更新時刻のうち、いちばん新しいもの）。
+   * **`/character/<file>` の URL に混ぜて、差し替えた立ち絵をブラウザに取り直させるためだけ**に
+   * ある（`src/protocol/character.ts` の `characterAssetCacheKey`）。読めなければ undefined。
+   */
+  readonly revision: string | undefined
 }
 
 /**
@@ -64,36 +72,71 @@ export type CharacterPack = {
  */
 export function readCharacterPack(dir: string): CharacterPack {
   const content = readOptionalFile(join(dir, CHARACTER_DEFINITION_FILE_NAME))
+  const definition = content === undefined ? undefined : parseCharacterDefinition(content)
   return {
     name: basename(dir),
     dir,
-    definition: content === undefined ? undefined : parseCharacterDefinition(content),
+    definition,
     persona: readOptionalFile(join(dir, PERSONA_FILE_NAME)),
+    revision: readPackRevision(dir, definition),
   }
 }
 
+/** パックの探し先3箇所（`docs/design.md` 7.1）。`local` の1つ固定は起動先の側だけ。 */
+export type CharacterPackRoots = {
+  /** 同梱の `characters/`（tsukumo 自身の場所からの相対）。 */
+  readonly bundled: string
+  /** `~/.tsukumo/characters/`（**画面から作ったパック**。全プロジェクト共通）。 */
+  readonly home: string
+}
+
+export function defaultCharacterPackRoots(): CharacterPackRoots {
+  return { bundled: bundledFilePath(CHARACTER_DIR_NAME), home: homeCharacterDir() }
+}
+
 /**
- * 切り替えられるパックを列挙する（docs/design.md 7章）。探し先は2箇所:
+ * 画面から変えたパックの書き込み先の親（`~/.tsukumo/characters`）。**書き込んでよいのは
+ * この下だけ**（`docs/design.md` 7.1）。
+ */
+export function homeCharacterDir(): string {
+  return join(tsukumoHomeDir(), CHARACTER_DIR_NAME)
+}
+
+/**
+ * このパックを画面から変えてよいか（`docs/design.md` 7.1）。**書き込み先はホームの1箇所だけ**な
+ * ので、探索の順でホームに勝つもの — つまり**起動先の `characters/local`** と同じ名前のパック
+ * だけは false にする（書いても次の起動では起動先のほうが読まれて、変更が消えたように見える）。
+ */
+export function isEditableCharacterPack(pack: CharacterPack, cwd: string): boolean {
+  return !(pack.name === LOCAL_PACK_NAME && hasDefinition(localPackDir(cwd)))
+}
+
+/**
+ * 切り替えられるパックを列挙する（docs/design.md 7章・7.1）。探し先は3箇所:
  *
  * 1. **tsukumo 同梱の `characters/`** の各ディレクトリ（`character.json` があるものだけ）
- * 2. **起動先の `characters/local/`**（利用者が自分で用意した素材）
+ * 2. **`~/.tsukumo/characters/`** の各ディレクトリ（画面から作った・変えたパック）
+ * 3. **起動先の `characters/local/`**（利用者が自分で用意した素材。ここは1つ固定）
  *
- * **同名は起動先が勝つ**（同梱の既定より、そのプロジェクトで用意したものを優先する）。
+ * **同名は後ろが勝つ**（ホームは同梱を上書きし、起動先はそのホームにも勝つ。7.1）。
  * 読めないディレクトリは黙って飛ばす（一覧が短くなるだけで、起動は止めない。
  * docs/coding-standards.md「エラーハンドリング」）。
  *
- * `bundledRoot` は同梱の置き場（既定は tsukumo 自身の `characters/`。`readFakeScript` の
+ * `roots` は同梱とホームの置き場（既定は {@link defaultCharacterPackRoots}。`readFakeScript` の
  * `path` と同じで、差し替えられるのは置き場所だけ）。
  */
 export function listCharacterPacks(
   cwd: string,
-  bundledRoot: string = bundledFilePath(CHARACTER_DIR_NAME),
+  roots: CharacterPackRoots = defaultCharacterPackRoots(),
 ): readonly CharacterPack[] {
-  const bundled = listPackDirs(bundledRoot)
-  const local = join(cwd, CHARACTER_DIR_NAME, LOCAL_PACK_NAME)
-  const dirs = [...bundled, ...(hasDefinition(local) ? [local] : [])]
+  const local = localPackDir(cwd)
+  const dirs = [
+    ...listPackDirs(roots.bundled),
+    ...listPackDirs(roots.home),
+    ...(hasDefinition(local) ? [local] : []),
+  ]
 
-  // 同名は後勝ち。起動先を後ろに置いてあるので、これがそのまま「起動先が勝つ」になる。
+  // 同名は後勝ち。同梱 → ホーム → 起動先の順に並べてあるので、これがそのまま 7.1 の優先順になる。
   const packs = dirs.map(readCharacterPack)
   return [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
 }
@@ -123,8 +166,15 @@ export function buildSystemPromptAppend(pack: CharacterPack, reportNotation: str
 export function characterChangedEvent(
   pack: CharacterPack,
   packs: readonly CharacterPackChoice[],
+  editable: boolean,
 ): SessionEvent {
-  return { kind: "character-changed", ...toCharacterInfo(pack.definition, pack.name), packs }
+  const info = toCharacterInfo({
+    definition: pack.definition,
+    pack: pack.name,
+    revision: pack.revision,
+    editable,
+  })
+  return { kind: "character-changed", ...info, packs }
 }
 
 export type CharacterAssetFile = {
@@ -173,7 +223,7 @@ function characterAssetContentType(fileName: string): string | undefined {
   return kind === "raster" ? rasterMimeType(fileName) : undefined
 }
 
-function isDefined(value: string | undefined): value is string {
+function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined
 }
 
@@ -194,6 +244,35 @@ function listPackDirs(root: string): readonly string[] {
     .sort((a, b) => a.localeCompare(b))
     .map((name) => join(root, name))
     .filter(hasDefinition)
+}
+
+/** 起動先のパックの置き場（`<cwd>/characters/local`）。**ここだけは1つ固定**（7.1）。 */
+function localPackDir(cwd: string): string {
+  return join(cwd, CHARACTER_DIR_NAME, LOCAL_PACK_NAME)
+}
+
+/**
+ * 素材の版。定義ファイルと `portraits` の各ファイルの更新時刻のうち、いちばん新しいものを
+ * そのまま文字列にする。**中身は読まない**（更新時刻だけで足りる）。1つも読めなければ undefined。
+ */
+function readPackRevision(
+  dir: string,
+  definition: CharacterDefinition | undefined,
+): string | undefined {
+  const fileNames = [
+    CHARACTER_DEFINITION_FILE_NAME,
+    ...Object.values(definition?.portraits ?? {}).filter(isDefined),
+  ]
+  const times = fileNames.map((name) => modifiedAtMs(join(dir, name))).filter(isDefined)
+  return times.length === 0 ? undefined : String(Math.max(...times))
+}
+
+function modifiedAtMs(path: string): number | undefined {
+  try {
+    return Math.trunc(statSync(path).mtimeMs)
+  } catch {
+    return undefined
+  }
 }
 
 function hasDefinition(dir: string): boolean {

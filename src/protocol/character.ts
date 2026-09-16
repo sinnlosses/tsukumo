@@ -10,7 +10,12 @@
 // src/core/character-pack.ts に集約する。ここが返すのはファイル名の文字列までで、
 // 実際に中身を読むのは呼び出し側。
 
-import { type Expression, EXPRESSIONS, type Outfit } from "./expression.ts"
+import {
+  type Expression,
+  EXPRESSIONS,
+  type Outfit,
+  type RemovableExpression,
+} from "./expression.ts"
 
 /**
  * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」
@@ -110,16 +115,30 @@ export function resolveExpressionLabel(
  * `/character/<file>` の URL の作り方。**`character.json` に書かれたファイル名だけ**を渡す前提
  * （`src/core/character-pack.ts` の allowlist と同じ考え方。パスから組み立てない）。
  *
- * `pack` は**ブラウザに再取得させるためだけ**の問い合わせ文字列。2つのパックが同じファイル名
- * （`default.png` など）を使うと URL が一致し、`<img src>` が書き換わらないので再取得が起きない。
+ * `cacheKey` は**ブラウザに再取得させるためだけ**の問い合わせ文字列（{@link characterAssetCacheKey}
+ * が組み立てる）。2つのパックが同じファイル名（`default.png` など）を使うと URL が一致し、
+ * `<img src>` が書き換わらないので再取得が起きない。**画面から立ち絵を差し替えたときも
+ * ファイル名が同じまま中身だけが変わる**ので、パックの名前だけでは足りず素材の版も混ぜる。
  * **配る側（`src/core/server.ts`）はこの値を見ない**（`?` 以降を落としてから配信ファイルを
  * 決める）。中身を決めるのは呼び出し側が渡す `CharacterPack` のほう。
  */
 export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
 
-export function characterAssetPath(fileName: string, pack: string | undefined): string {
+export function characterAssetPath(fileName: string, cacheKey: string | undefined): string {
   const path = `${CHARACTER_ASSET_PATH_PREFIX}${fileName}`
-  return pack === undefined ? path : `${path}?pack=${encodeURIComponent(pack)}`
+  return cacheKey === undefined ? path : `${path}?v=${encodeURIComponent(cacheKey)}`
+}
+
+/**
+ * 取り直しの印を組み立てる。パックの名前と素材の版（`revision`）を混ぜたもので、**どちらも
+ * 無いときだけ undefined**（問い合わせ文字列そのものが付かない）。
+ */
+export function characterAssetCacheKey(
+  pack: string | undefined,
+  revision: string | undefined,
+): string | undefined {
+  const parts = [pack, revision].filter((part): part is string => part !== undefined)
+  return parts.length === 0 ? undefined : parts.join("@")
 }
 
 /**
@@ -142,6 +161,13 @@ export type CharacterInfo = {
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /** {@link CharacterDefinition.speechMarker} をそのまま持つ（畳み込みが行頭マーカーに使う）。 */
   readonly speechMarker: string | undefined
+  /**
+   * 立ち絵と差し色を**画面から変えられるか**。変えた結果の書き込み先は
+   * `~/.tsukumo/characters/<name>/` の1箇所だけで（`docs/design.md` 7.1）、そこに書いた版が
+   * 探索の順で**起動先の `characters/local` に負けるパックだけが false** になる
+   * （書いても次の起動で読まれないので、画面から口を出さない）。
+   */
+  readonly editable: boolean
 }
 
 /**
@@ -153,43 +179,121 @@ export type CharacterPackChoice = {
   readonly label: string
 }
 
+/** {@link toCharacterInfo} に渡すもの。パックそのもの（`core` の型）はここでは知らない。 */
+export type CharacterInfoSource = {
+  readonly definition: CharacterDefinition | undefined
+  /** `characters/<name>` のディレクトリ名（既定の場所を直に指したときは undefined）。 */
+  readonly pack: string | undefined
+  /** 素材の版（`/character/<file>` に付ける取り直しの印。無ければ名前だけで組む）。 */
+  readonly revision: string | undefined
+  readonly editable: boolean
+}
+
 /**
  * キャラクター定義を {@link CharacterInfo}（キャラビューに渡す形）にする。ファイル名を
  * {@link characterAssetPath} で URL に変える。定義が無い・壊れているときも、欠けた形
  * （立ち絵なし・`default` だけの表情）で返す。
  */
-export function toCharacterInfo(
-  definition: CharacterDefinition | undefined,
-  pack: string | undefined,
-): CharacterInfo {
+export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
+  const definition = source.definition
   return {
-    pack,
+    pack: source.pack,
     name: definition?.name,
     accent: definition?.accent,
     expressions: expressionChoices(definition),
-    portraits: portraitUrls(definition, pack),
+    portraits: portraitUrls(definition, characterAssetCacheKey(source.pack, source.revision)),
     outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
     speechMarker: definition?.speechMarker,
+    editable: source.editable,
   }
+}
+
+/**
+ * 生の `character.json` の文字列に、立ち絵1件の差し替えを重ねた JSON を返す。
+ * **`portraits` の当該の表情だけを差し替え、ほかのキー（`name` / `license` / `persona` の
+ * 指定など）はそのまま残す**（画面から変えられるのは立ち絵と差し色だけなので、定義を
+ * 組み直して書き戻すと利用者が手で書いた値が消えてしまう）。
+ *
+ * 読めない・オブジェクトでない内容は**空の定義として作り直す**（定義がまだ無いパックに
+ * 立ち絵を足せるようにするため）。
+ */
+export function definitionWithPortrait(
+  content: string | undefined,
+  expression: Expression,
+  fileName: string,
+): string {
+  return editedDefinitionJson(content, "portraits", expression, fileName)
+}
+
+/**
+ * 立ち絵1件を消した JSON を返す。**受け取れるのは必須でない表情だけ**
+ * （`default` / `working` は型で入らない。`src/protocol/expression.ts` の
+ * {@link RemovableExpression}）。
+ */
+export function definitionWithoutPortrait(
+  content: string | undefined,
+  expression: RemovableExpression,
+): string {
+  return editedDefinitionJson(content, "portraits", expression, undefined)
+}
+
+/** 差し色1件を差し替えた JSON を返す。ほかのキーはそのまま残す。 */
+export function definitionWithOutfitAccent(
+  content: string | undefined,
+  outfit: Outfit,
+  color: string,
+): string {
+  return editedDefinitionJson(content, "outfitAccents", outfit, color)
 }
 
 function portraitUrls(
   definition: CharacterDefinition | undefined,
-  pack: string | undefined,
+  cacheKey: string | undefined,
 ): Readonly<Record<Expression, string | undefined>> {
   if (definition === undefined) {
     return EMPTY_PORTRAITS
   }
   return {
-    default: portraitUrl(definition.portraits.default, pack),
-    working: portraitUrl(definition.portraits.working, pack),
-    proud: portraitUrl(definition.portraits.proud, pack),
-    flustered: portraitUrl(definition.portraits.flustered, pack),
+    default: portraitUrl(definition.portraits.default, cacheKey),
+    working: portraitUrl(definition.portraits.working, cacheKey),
+    proud: portraitUrl(definition.portraits.proud, cacheKey),
+    flustered: portraitUrl(definition.portraits.flustered, cacheKey),
   }
 }
 
-function portraitUrl(fileName: string | undefined, pack: string | undefined): string | undefined {
-  return fileName === undefined ? undefined : characterAssetPath(fileName, pack)
+function portraitUrl(
+  fileName: string | undefined,
+  cacheKey: string | undefined,
+): string | undefined {
+  return fileName === undefined ? undefined : characterAssetPath(fileName, cacheKey)
+}
+
+/**
+ * 定義の入れ子のキー1つを差し替えた JSON 文字列を作る。**値が undefined のキーは
+ * `JSON.stringify` が落とす**ので、それが「消す」になる。整形は2スペース（利用者が
+ * あとから手で編集する前提のファイルなので、1行に潰さない）。
+ */
+function editedDefinitionJson(
+  content: string | undefined,
+  group: "portraits" | "outfitAccents",
+  key: string,
+  value: string | undefined,
+): string {
+  const source = asRecord(content === undefined ? undefined : parseJson(content))
+  const edited = { ...asRecord(source[group]), [key]: value }
+  return `${JSON.stringify({ ...source, [group]: edited }, undefined, 2)}\n`
+}
+
+function parseJson(content: string): unknown {
+  try {
+    return JSON.parse(content)
+  } catch {
+    return undefined
+  }
+}
+
+function asRecord(value: unknown): Readonly<Record<string, unknown>> {
+  return isRecord(value) ? value : {}
 }
 
 const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
@@ -229,7 +333,7 @@ export function resolveOutfitAccent(
 
 /**
  * 立ち絵の種類を拡張子だけで分ける。**ファイル名でも `characterAssetPath` が返した URL でも
- * 受け取る**（`?pack=` が付いていても拡張子を見失わない）。**利用者が `characters/local/` に置いた任意の
+ * 受け取る**（`?v=` が付いていても拡張子を見失わない）。**利用者が `characters/local/` に置いた任意の
  * ファイルを無検証で流し込まないための最低限の仕分け**（このタスクの注意事項）。
  * SVG はインラインで埋め込む（ページの CSS 変数 `--outfit-accent` を効かせるため。
  * `<img>` で読み込むと独立した文書扱いになり届かない。実測は `characters/README.md`）。
@@ -314,7 +418,7 @@ const RASTER_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
 
 /**
  * 拡張子を小文字で返す。**問い合わせ文字列は落としてから見る**（`characterAssetPath` が
- * 付ける `?pack=` で拡張子を見失わないため）。無ければ空文字。
+ * 付ける `?v=` で拡張子を見失わないため）。無ければ空文字。
  */
 function fileExtension(fileName: string): string {
   const path = fileName.split("?")[0] ?? fileName

@@ -32,6 +32,7 @@ const CHARACTER_WITH_MARKER: SessionEvent = {
   expressions: [{ name: "default", label: "通常" }],
   portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+  editable: true,
   packs: [{ name: "fictional", label: "架空の精霊" }],
 }
 
@@ -616,6 +617,7 @@ describe("applySessionEvent", () => {
         flustered: undefined,
       },
       outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+      editable: true,
     })
 
     expect(view.character).toEqual({
@@ -634,6 +636,7 @@ describe("applySessionEvent", () => {
         flustered: undefined,
       },
       outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+      editable: true,
     })
   })
 

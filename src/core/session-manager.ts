@@ -3,13 +3,20 @@
 //
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
 // - コマンドの分岐（`switch (command.type)`）は**ここが唯一**。旧の POST 6本ぶんの判断が1つになる
-//   （`switch-character` だけは駆動へ渡すのではなく、起こし直しとして手前で捌く）
+//   （`switch-character` は駆動へ渡すのではなく起こし直しとして、見た目の編集
+//   （`set-portrait` / `clear-portrait` / `set-outfit-accent`）は**書き込みと
+//   `character-changed` の流し直し**として、どちらも手前で捌く）
 // - **いまはセッションが1つだけ**。鍵（`sessionId`）を持たせてあるのは複数化（docs/design.md 8章）のため
 //
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
 
-import { type ClientCommand } from "../protocol/command.ts"
+import {
+  type CharacterEditCommand,
+  type ClientCommand,
+  type DriverCommand,
+  isCharacterEditCommand,
+} from "../protocol/command.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../protocol/frame.ts"
 import { type SessionEvent, type StampedEvent } from "../protocol/session-event.ts"
 import {
@@ -49,6 +56,16 @@ export type SessionCreateOptions = {
     onEvent: (event: SessionEvent) => void,
     character: string | undefined,
   ) => Promise<SessionDriver>
+  /**
+   * いま出しているキャラクターパックの立ち絵・差し色を変え、**画面へ流す
+   * `character-changed` イベントを返す**（書き込み先と受け付けない条件は
+   * `src/core/character-edit.ts`）。**受け付けられなかったときは undefined**
+   * （呼び出し側は定型文の `error` を返す）。
+   *
+   * セッションは起こし直さない（会話も履歴も消えない）。**`speak` が受け付ける表情の一覧は
+   * 起こしたときのままなので、立ち絵を足した表情をキャラクター自身が選べるのは次の起動から。**
+   */
+  readonly editCharacter: (edit: CharacterEditCommand) => Promise<SessionEvent | undefined>
 }
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
@@ -139,18 +156,29 @@ function createSessionHost(
     state,
   })
 
+  /**
+   * イベント1件を畳んで次のバッチに積む。**駆動から届いたものと、見た目の編集で起こした
+   * `character-changed` の両方がここを通る**（サーバ側の状態とブラウザへ配る内容を1本にする）。
+   */
+  const receive = (event: SessionEvent): void => {
+    if (closed) {
+      return
+    }
+    const at = options.now()
+    state = applySessionEvent(state, event, at)
+    buffered = [...buffered, { at, event }]
+    if (flushTimer === undefined) {
+      flushTimer = setTimeout(flush, options.batchIntervalMs)
+    }
+  }
+
   const start = (character: string | undefined): Promise<SessionDriver> => {
     const born = generation
     const starting = created.startDriver((event) => {
-      if (closed || born !== generation) {
+      if (born !== generation) {
         return
       }
-      const at = options.now()
-      state = applySessionEvent(state, event, at)
-      buffered = [...buffered, { at, event }]
-      if (flushTimer === undefined) {
-        flushTimer = setTimeout(flush, options.batchIntervalMs)
-      }
+      receive(event)
     }, character)
 
     void starting.then(
@@ -200,10 +228,30 @@ function createSessionHost(
     }
   }
 
+  /**
+   * 立ち絵・差し色を変える。**書き込みは呼び出し側（配線層）に任せ**、戻ってきたイベントを
+   * ここで畳んで配る（`hello` は配り直さない — 状態はイベント1つで足りる）。
+   */
+  const edit = async (command: CharacterEditCommand): Promise<DispatchResult> => {
+    try {
+      const event = await created.editCharacter(command)
+      if (event === undefined) {
+        return { ok: false, reason: FRAME_ERROR_REASON.characterEditFailed }
+      }
+      receive(event)
+      return { ok: true }
+    } catch {
+      return { ok: false, reason: FRAME_ERROR_REASON.characterEditFailed }
+    }
+  }
+
   return {
     dispatch: (command) => {
       if (command.type === "switch-character") {
         return restart(command.name)
+      }
+      if (isCharacterEditCommand(command)) {
+        return edit(command)
       }
       return dispatchToDriver(driver, command)
     },
@@ -232,7 +280,7 @@ function createSessionHost(
  */
 async function dispatchToDriver(
   driver: Promise<SessionDriver>,
-  command: Exclude<ClientCommand, { readonly type: "switch-character" }>,
+  command: DriverCommand,
 ): Promise<DispatchResult> {
   try {
     const started = await driver

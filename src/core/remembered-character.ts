@@ -6,12 +6,12 @@
 // （docs/coding-standards.md「会話内容の扱い」）。
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { homedir } from "node:os"
 import { dirname, join } from "node:path"
 
 import { z } from "zod"
 
-const STATE_DIR_NAME = ".tsukumo"
+import { tsukumoHomeDir } from "./tsukumo-home.ts"
+
 const STATE_FILE_NAME = "state.json"
 
 const stateSchema = z.object({ character: z.string() })
@@ -60,7 +60,7 @@ export function writeRememberedCharacter(
   }
 }
 
-/** 既定の保存先。呼んだときだけ `homedir()` を読む（モジュールのトップレベルでは読まない）。 */
+/** 既定の保存先。ホームの場所は `src/core/tsukumo-home.ts` が持つ（呼んだときだけ読む）。 */
 function defaultStatePath(): string {
-  return join(homedir(), STATE_DIR_NAME, STATE_FILE_NAME)
+  return join(tsukumoHomeDir(), STATE_FILE_NAME)
 }

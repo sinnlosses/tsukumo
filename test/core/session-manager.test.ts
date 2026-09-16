@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test"
 
 import { type SessionDriver } from "../../src/core/session-driver.ts"
 import { createSessionManager } from "../../src/core/session-manager.ts"
+import { type CharacterEditCommand } from "../../src/protocol/command.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../src/protocol/frame.ts"
 import { type SessionEvent } from "../../src/protocol/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
@@ -54,8 +55,31 @@ function createStubDriver(): StubDriver {
   return stub
 }
 
-function startManagerWithStub() {
+/**
+ * 見た目の編集で流し直す `character-changed`（手で書いた架空のパック）。**書き込みそのものは
+ * 配線層の仕事**なので、ここでは「書けた/書けなかった」だけを差し替える。
+ */
+const CHARACTER_EVENT: SessionEvent = {
+  kind: "character-changed",
+  pack: "fictional",
+  name: "架空の精霊",
+  accent: undefined,
+  speechMarker: undefined,
+  editable: true,
+  expressions: [{ name: "default", label: "通常" }],
+  portraits: {
+    default: "/character/default.png?v=fictional@2",
+    working: undefined,
+    proud: undefined,
+    flustered: undefined,
+  },
+  outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+  packs: [{ name: "fictional", label: "架空の精霊" }],
+}
+
+function startManagerWithStub(editResult: "written" | "rejected" = "written") {
   const stub = createStubDriver()
+  const edits: CharacterEditCommand[] = []
   const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
   manager.create({
     sessionId: SESSION_ID,
@@ -63,8 +87,12 @@ function startManagerWithStub() {
       stub.attach(onEvent)
       return Promise.resolve(stub.driver)
     },
+    editCharacter: (edit) => {
+      edits.push(edit)
+      return Promise.resolve(editResult === "written" ? CHARACTER_EVENT : undefined)
+    },
   })
-  return { manager, stub }
+  return { manager, stub, edits }
 }
 
 function waitForBatch(): Promise<void> {
@@ -190,6 +218,7 @@ describe("createSessionManager", () => {
         started.push({ character, stub })
         return Promise.resolve(stub.driver)
       },
+      editCharacter: () => Promise.resolve(undefined),
     })
 
     const frames: ServerFrame[] = []
@@ -244,6 +273,7 @@ describe("createSessionManager", () => {
         started.push(stub)
         return stub.driver
       },
+      editCharacter: () => Promise.resolve(undefined),
     })
 
     const frames: ServerFrame[] = []
@@ -267,6 +297,64 @@ describe("createSessionManager", () => {
     expect(started).toHaveLength(2)
     expect(started[0]?.calls).toContain("close")
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(2)
+  })
+
+  it("立ち絵を変えるコマンドは駆動へ渡さず、書けたら character-changed を畳んで配る", async () => {
+    const { manager, stub, edits } = startManagerWithStub()
+    const frames: ServerFrame[] = []
+    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "set-portrait",
+        commandId: "c-1",
+        expression: "proud",
+        image: "data:image/png;base64,AAAA",
+      }),
+    ).toEqual({ ok: true })
+    await waitForBatch()
+
+    // 駆動には何も渡らない（セッションは起こし直さない）。
+    expect(stub.calls).toEqual([])
+    expect(edits.map((edit) => edit.type)).toEqual(["set-portrait"])
+    // サーバ側の状態にも畳まれ、購読者にはイベントとして届く。
+    const events = frames.filter((frame) => frame.type === "events").at(-1)
+    if (events?.type === "events") {
+      expect(events.events.map((stamped) => stamped.event)).toEqual([CHARACTER_EVENT])
+    }
+    expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
+  })
+
+  it("差し色を変えるコマンドも同じ経路を通る", async () => {
+    const { manager, edits } = startManagerWithStub()
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "set-outfit-accent",
+        commandId: "c-1",
+        outfit: "heavy",
+        color: "#ffb3a7",
+      }),
+    ).toEqual({ ok: true })
+
+    expect(edits.map((edit) => edit.type)).toEqual(["set-outfit-accent"])
+  })
+
+  it("書き込みが受け付けられなかったら定型文の理由を返し、状態は動かさない", async () => {
+    const { manager } = startManagerWithStub("rejected")
+    const frames: ServerFrame[] = []
+    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "clear-portrait",
+        commandId: "c-1",
+        expression: "proud",
+      }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterEditFailed })
+    await waitForBatch()
+
+    expect(frames.filter((frame) => frame.type === "events")).toEqual([])
   })
 
   it("close で駆動を閉じ、購読も外れる", async () => {

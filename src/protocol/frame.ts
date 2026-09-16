@@ -55,6 +55,7 @@ export const FRAME_ERROR_REASON = {
   noSession: "セッションがまだ起きていない",
   unresolvedAnswer: "解決済み、または知らない答え待ち",
   driverFailed: "セッション駆動が受け付けなかった",
+  characterEditFailed: "キャラクターの見た目を変えられなかった",
 } as const
 
 /**

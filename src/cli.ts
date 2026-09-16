@@ -10,11 +10,13 @@ import process from "node:process"
 
 import { buildStyleSheet, buildUiScript } from "./core/bundle.ts"
 import { resolveBundledDir } from "./core/bundled-path.ts"
+import { editCharacterPack } from "./core/character-edit.ts"
 import {
   buildSystemPromptAppend,
   type CharacterPack,
   characterChangedEvent,
   DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+  isEditableCharacterPack,
   listCharacterPacks,
   readCharacterPack,
   readCharacterPackFile,
@@ -44,6 +46,7 @@ import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-ma
 import { watchTaskSummary } from "./core/task-summary.ts"
 import { watchUiSource } from "./core/ui-rebuild.ts"
 import { type ExpressionChoice, expressionChoices } from "./protocol/character.ts"
+import { type CharacterEditCommand } from "./protocol/command.ts"
 import { type RefreshTarget, type ServerFrame } from "./protocol/frame.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
 
@@ -127,13 +130,15 @@ async function main(args: readonly string[]): Promise<number> {
   const defaultPack = readCharacterPack(
     resolveBundledDir(config.character, process.cwd(), DEFAULT_CHARACTER_DIR_RELATIVE_PATH),
   )
-  const found = listCharacterPacks(process.cwd())
-  // 既定のパックが一覧に無いとき（`TSUKUMO_CHARACTER` で別の場所を指したとき）も選択肢に足す
-  // （いま出しているものが `<select>` に無いと、選択の表示がずれる）。
-  const packs = found.some((pack) => pack.name === defaultPack.name)
-    ? found
-    : [...found, defaultPack]
-  const packChoices = toCharacterPackChoices(packs)
+  // **一覧は読み直せる形で持つ。** 画面から立ち絵を変えるとホーム（`~/.tsukumo/characters/`）に
+  // パックが現れるので、そのときに引き直す（docs/design.md 7.1）。
+  const findPacks = (): readonly CharacterPack[] => {
+    const found = listCharacterPacks(process.cwd())
+    // 既定のパックが一覧に無いとき（`TSUKUMO_CHARACTER` で別の場所を指したとき）も選択肢に足す
+    // （いま出しているものが `<select>` に無いと、選択の表示がずれる）。
+    return found.some((pack) => pack.name === defaultPack.name) ? found : [...found, defaultPack]
+  }
+  let packs = findPacks()
   // 知らない名前が来たら既定に落ちる（名前をパスとして組み立てない。docs/design.md 7章）。
   const selectPack = (name: string | undefined): CharacterPack =>
     packs.find((pack) => pack.name === name) ?? defaultPack
@@ -145,6 +150,30 @@ async function main(args: readonly string[]): Promise<number> {
   const remembered = config.character === undefined ? readRememberedCharacter() : undefined
   const initialPack = remembered === undefined ? defaultPack : selectPack(remembered)
   let characterPack = initialPack
+
+  // いま出しているパックを画面へ流す形。**立ち絵の URL・選択肢・画面から変えられるかの3つ**を
+  // 組み立てるのはここ1箇所で、起こしたときと見た目を変えたときの両方から呼ぶ。
+  const characterEvent = (): SessionEvent =>
+    characterChangedEvent(
+      characterPack,
+      toCharacterPackChoices(packs),
+      isEditableCharacterPack(characterPack, process.cwd()),
+    )
+
+  /**
+   * 画面から届いた立ち絵・差し色を書き込み、流し直す `character-changed` を返す
+   * （受け付けられなければ undefined）。**書けたパックをそのまま持ち替える**ので、
+   * `/character/<file>` もこのあと書いた先から配る。
+   */
+  const applyCharacterEdit = (edit: CharacterEditCommand): SessionEvent | undefined => {
+    const edited = editCharacterPack(characterPack, edit, process.cwd())
+    if (edited === undefined) {
+      return undefined
+    }
+    characterPack = edited
+    packs = findPacks()
+    return characterEvent()
+  }
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
@@ -179,7 +208,7 @@ async function main(args: readonly string[]): Promise<number> {
       if (character !== undefined) {
         writeRememberedCharacter(characterPack.name)
       }
-      toFrames(characterChangedEvent(characterPack, packChoices))
+      toFrames(characterEvent())
 
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に畳んで読む
       // （段3。docs/design.md 12章）。
@@ -216,6 +245,7 @@ async function main(args: readonly string[]): Promise<number> {
         },
       }
     },
+    editCharacter: (edit) => Promise.resolve(applyCharacterEdit(edit)),
   })
 
   // 開いているタブ。**セッションのイベントとは別に押したいもの**（いまは `refresh` だけ）が

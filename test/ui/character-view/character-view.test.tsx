@@ -33,6 +33,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     normal: undefined,
     heavy: undefined,
   },
+  editable: true,
 }
 
 beforeEach(() => {

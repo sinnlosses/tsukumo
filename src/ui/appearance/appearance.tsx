@@ -1,6 +1,7 @@
 // 「見た目」の引き出し（docs/design.md 6.1 部品の木の `<Appearance>` / 13.6）。地・領域・字の色
 // （`ground` / `surface` / `ink`）・立ち絵を動かすか固定するか・領域の比率を既定に戻す、を
-// ここにまとめる。**常設なのは開く口のボタン1つだけ**（
+// ここにまとめる。**キャラクターの立ち絵と差し色の差し替え（`<CharacterEdit>`）もここに入る**
+// （7.1。引き出しの中なので常設の要素は増えない）。**常設なのは開く口のボタン1つだけ**（
 // 13.6「常設の要素は差し引きゼロ」）。
 //
 // 比率のリセットは `<Layout>` が state を持ったままなので、ここへは実行する関数だけを props
@@ -25,6 +26,7 @@ import {
   type AppearanceColorKey,
   type AppearanceColorOverride,
 } from "./appearance-color.ts"
+import { CharacterEdit } from "./character-edit.tsx"
 import { loadPortraitFixed, savePortraitFixed } from "./portrait-fixed.ts"
 
 export type AppearanceProps = {
@@ -65,7 +67,9 @@ export function Appearance(props: AppearanceProps): ReactElement {
     if (event.key !== "Tab") {
       return
     }
-    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>("button, input")
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      "button:not([disabled]), input:not([disabled])",
+    )
     const first = focusable?.[0]
     const last =
       focusable !== undefined && focusable.length > 0 ? focusable[focusable.length - 1] : undefined
@@ -94,7 +98,7 @@ export function Appearance(props: AppearanceProps): ReactElement {
       <dialog ref={dialogRef} className="appearance-drawer" aria-label="見た目の設定">
         <form method="dialog" className="appearance-drawer-body" onKeyDown={trapTabKey}>
           <h2 className="appearance-drawer-heading">見た目</h2>
-          <fieldset className="appearance-color-fieldset">
+          <fieldset className="appearance-fieldset">
             <legend>色</legend>
             {COLOR_FIELDS.map((field) => {
               const inputId = `appearance-color-${field.key}`
@@ -111,6 +115,7 @@ export function Appearance(props: AppearanceProps): ReactElement {
               )
             })}
           </fieldset>
+          <CharacterEdit />
           <div className="appearance-field appearance-field-checkbox">
             <label>
               <input

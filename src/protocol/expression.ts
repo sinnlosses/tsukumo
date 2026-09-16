@@ -21,6 +21,40 @@ export type Outfit = "default" | "light" | "normal" | "heavy"
 export const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud", "flustered"]
 
 /**
+ * **立ち絵が必ず要る表情**（`characters/README.md`）。`default` は表情の指定が無いときの
+ * 落とし先、`working` はツールの実行中に自動で切り替える先で、**どちらもコードが名前で直接
+ * 参照する**ので「あるものだけ」で済ませられない。画面からこの2つを消せないのは同じ理由
+ * （消せる表情は {@link REMOVABLE_EXPRESSIONS} のほうだけ）。
+ */
+export const REQUIRED_EXPRESSIONS = ["default", "working"] as const
+
+export type RequiredExpression = (typeof REQUIRED_EXPRESSIONS)[number]
+
+/** 画面から立ち絵を**消せる**表情（必須の2つを除いた残り）。 */
+export type RemovableExpression = Exclude<Expression, RequiredExpression>
+
+export const REMOVABLE_EXPRESSIONS: readonly RemovableExpression[] =
+  EXPRESSIONS.filter(isRemovableExpression)
+
+/** 衣装の全体。並びは画面に出す順（軽いほうから重いほうへ）。 */
+export const OUTFITS: readonly Outfit[] = ["default", "light", "normal", "heavy"]
+
+/** 外から届いた文字列が表情の名前かどうかを検証する（境界で1回だけ使う）。 */
+export function isExpression(value: string): value is Expression {
+  return EXPRESSIONS.some((expression) => expression === value)
+}
+
+/** 外から届いた文字列が、立ち絵を消せる表情の名前かどうかを検証する。 */
+export function isRemovableExpression(value: string): value is RemovableExpression {
+  return isExpression(value) && !REQUIRED_EXPRESSIONS.some((required) => required === value)
+}
+
+/** 外から届いた文字列が衣装の名前かどうかを検証する。 */
+export function isOutfit(value: string): value is Outfit {
+  return OUTFITS.some((outfit) => outfit === value)
+}
+
+/**
  * ツールが動き始めてから、これだけの時間が経ってもまだ終わっていなければ表情を「作業中」に
  * 切り替える。ツールが連続して短く走るときに working ⇄ speak の表情が短時間で往復しない
  * ようにするための遅延（docs/requirements.md「4.3 状態連動」）。

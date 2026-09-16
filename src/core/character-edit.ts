@@ -1,0 +1,203 @@
+// 画面から届いた立ち絵・差し色をキャラクターパックに書き込む。**書き込んでよいのは
+// `~/.tsukumo/characters/<name>/` の下だけ**（`docs/design.md` 7.1。`state.json` と同じ親の下で、
+// リポジトリの作業ツリーが汚れない）。読む側は `src/core/character-pack.ts`。
+//
+// **ファイル名を外から受け取らない。** 立ち絵の名前は表情と形式から組み立てる
+// （`src/protocol/portrait-image.ts` の `portraitFileName`）ので、届いた文字列がパスの一部に
+// なる経路がそもそも無い。
+//
+// **書き込む前に、いま出しているパックをホームへ丸ごと写す**（同梱のパックを直さないため）。
+// 写すのは定義・人格・`portraits` に載っている素材で、ホームに既に同じ名前のパックがあるときは
+// 写さない（画面から重ねた変更を上書きしてしまわないため）。
+//
+// 失敗しても例外を投げない（常駐プロセスは1回の失敗で落ちない。
+// `docs/coding-standards.md`「エラーハンドリング」）。受け付けられなかった回は undefined を
+// 返し、呼び出し側が定型文の `error` を返す。
+
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
+import { basename, join } from "node:path"
+
+import {
+  type CharacterDefinition,
+  classifyPortraitFile,
+  definitionWithOutfitAccent,
+  definitionWithoutPortrait,
+  definitionWithPortrait,
+  parseCharacterDefinition,
+} from "../protocol/character.ts"
+import { type CharacterEditCommand } from "../protocol/command.ts"
+import { type Expression } from "../protocol/expression.ts"
+import { parsePortraitImage, portraitFileName } from "../protocol/portrait-image.ts"
+import {
+  type CharacterPack,
+  CHARACTER_DEFINITION_FILE_NAME,
+  homeCharacterDir,
+  isEditableCharacterPack,
+  PERSONA_FILE_NAME,
+  readCharacterPack,
+} from "./character-pack.ts"
+
+/** 1つのパックが持てる立ち絵の数（`docs/design.md` 7.1 の表）。 */
+export const MAX_PORTRAIT_FILES_PER_PACK = 8
+
+/**
+ * 立ち絵1枚・差し色1色を書き込み、**書けたパックを読み直して返す**（呼び出し側はそれを
+ * `characterChangedEvent` に渡して画面へ流す）。受け付けられなかったときは undefined:
+ *
+ * - 起動先の `characters/local` と同じ名前のパック（書いても次の起動で読まれない。7.1）
+ * - 立ち絵の数が {@link MAX_PORTRAIT_FILES_PER_PACK} を超える
+ * - ディスクに書けない
+ *
+ * `root` は書き込み先の親（既定は `~/.tsukumo/characters`。差し替えられるのは置き場所だけで、
+ * テストがホームを汚さないためにある）。
+ */
+export function editCharacterPack(
+  pack: CharacterPack,
+  edit: CharacterEditCommand,
+  cwd: string,
+  root: string = homeCharacterDir(),
+): CharacterPack | undefined {
+  if (!isEditableCharacterPack(pack, cwd)) {
+    return undefined
+  }
+
+  const dir = join(root, pack.name)
+  try {
+    copyPackOnce(pack, dir)
+    return applyEdit(dir, edit) ? readCharacterPack(dir) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * ホームにまだ同じ名前のパックが無ければ、いま出しているパックを丸ごと写す。**人格
+ * （`persona.md`）も写す**（写し忘れると、次の起動でそのパックの人格が消える）。
+ */
+function copyPackOnce(pack: CharacterPack, dir: string): void {
+  mkdirSync(dir, { recursive: true })
+  if (dir === pack.dir || existsSync(join(dir, CHARACTER_DEFINITION_FILE_NAME))) {
+    return
+  }
+
+  for (const name of [
+    CHARACTER_DEFINITION_FILE_NAME,
+    PERSONA_FILE_NAME,
+    ...portraitFileNames(pack.definition),
+  ]) {
+    copyIfExists(join(pack.dir, name), join(dir, name))
+  }
+}
+
+/** 編集1件をディスクに書く。書けたら true、受け付けられなければ false。 */
+function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
+  const definitionPath = join(dir, CHARACTER_DEFINITION_FILE_NAME)
+  const content = readOptionalFile(definitionPath)
+
+  switch (edit.type) {
+    case "set-outfit-accent":
+      writeFileSync(definitionPath, definitionWithOutfitAccent(content, edit.outfit, edit.color))
+      return true
+    case "clear-portrait": {
+      const previous = portraitFileNameOf(content, edit.expression)
+      writeFileSync(definitionPath, definitionWithoutPortrait(content, edit.expression))
+      removeUnreferencedPortrait(dir, previous)
+      return true
+    }
+    case "set-portrait": {
+      // 検証は境界（`src/protocol/command.ts` の `portraitDataUrlSchema`）で済んでいるので、
+      // ここで undefined になるのは配線の誤りのときだけ。型を迂回せずほどくために、もう一度
+      // 同じ関数を通す。
+      const image = parsePortraitImage(edit.image)
+      if (image === undefined) {
+        return false
+      }
+
+      const fileName = portraitFileName(edit.expression, image.format)
+      if (!withinPortraitFileLimit(dir, fileName)) {
+        return false
+      }
+
+      const previous = portraitFileNameOf(content, edit.expression)
+      writeFileSync(join(dir, fileName), Buffer.from(image.base64, "base64"))
+      writeFileSync(definitionPath, definitionWithPortrait(content, edit.expression, fileName))
+      removeUnreferencedPortrait(dir, previous)
+      return true
+    }
+  }
+}
+
+/** 書き換える前の、その表情の立ち絵のファイル名（定義が無い・読めないときは undefined）。 */
+function portraitFileNameOf(
+  content: string | undefined,
+  expression: Expression,
+): string | undefined {
+  return content === undefined
+    ? undefined
+    : parseCharacterDefinition(content)?.portraits[expression]
+}
+
+/**
+ * 差し替え・消去で参照が外れた立ち絵のファイルを消す（**書いた先のディレクトリの中の、
+ * どの表情からも参照されていない画像だけ**）。形式を変えて差し替えたときに古い拡張子の
+ * ファイルが残り続けるのを防ぐ。消せなくてもそのまま続ける。
+ */
+function removeUnreferencedPortrait(dir: string, fileName: string | undefined): void {
+  if (fileName === undefined || !isPortraitFileName(fileName)) {
+    return
+  }
+
+  const definition = readCharacterPack(dir).definition
+  if (portraitFileNames(definition).includes(fileName)) {
+    return
+  }
+
+  rmSync(join(dir, fileName), { force: true })
+}
+
+/**
+ * 立ち絵の数の上限を超えないか。**同じ名前を上書きするだけなら増えない**ので、既にある名前は
+ * そのまま通す。
+ */
+function withinPortraitFileLimit(dir: string, fileName: string): boolean {
+  const existing = readdirSync(dir).filter(isPortraitFileName)
+  return existing.includes(fileName) || existing.length < MAX_PORTRAIT_FILES_PER_PACK
+}
+
+/** `portraits` に載っている素材のファイル名（重複なし・ディレクトリを跨がないものだけ）。 */
+function portraitFileNames(definition: CharacterDefinition | undefined): readonly string[] {
+  const names = Object.values(definition?.portraits ?? {}).filter(isPortraitFileName)
+  return [...new Set(names)]
+}
+
+/**
+ * 立ち絵の素材として扱ってよいファイル名か。**定義ファイルに書かれた名前も外部由来**なので、
+ * ディレクトリを跨ぐ名前（`../foo`）はここで落とす（写す・消すのがホームの1階層に閉じる）。
+ */
+function isPortraitFileName(name: string | undefined): name is string {
+  return name !== undefined && basename(name) === name && classifyPortraitFile(name) !== undefined
+}
+
+function copyIfExists(from: string, to: string): void {
+  try {
+    copyFileSync(from, to)
+  } catch {
+    // 元が無いだけ（人格が無いパック・立ち絵が1枚だけのパック）。写せたものだけで続ける。
+  }
+}
+
+function readOptionalFile(path: string): string | undefined {
+  try {
+    return readFileSync(path, "utf8")
+  } catch {
+    return undefined
+  }
+}

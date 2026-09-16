@@ -52,13 +52,51 @@
   flex-direction: column;
   gap: 0.75rem;
 }
-.appearance-color-fieldset {
+/* 引き出しの中の組（色・立ち絵・差し色）。枠は持たず、`<legend>` を小さな見出しとして使う
+   （13.1 原則2「常設の枠を増やさない」）。 */
+.appearance-fieldset {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   margin: 0;
   padding: 0;
   border: none;
+}
+.appearance-fieldset > legend {
+  padding: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 画面から変えられないパックのときの一言。 */
+.appearance-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 立ち絵の行は「選ぶ」と「消す」が並ぶので、ラベルの右側をひとまとめにする。 */
+.appearance-portrait-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.appearance-portrait-file {
+  max-width: 9.5rem;
+  font: inherit;
+  font-size: var(--font-label);
+}
+.appearance-portrait-clear {
+  padding: 0.15rem 0.4rem;
+  background: var(--surface);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.appearance-portrait-clear:hover {
+  border-color: var(--accent);
 }
 .appearance-field {
   display: flex;
