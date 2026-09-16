@@ -202,6 +202,33 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
   })
 })
 
+describe("MainView（中間レポート）", () => {
+  it("まとまった本文の後ろにツールが続くと、中間レポートの印が付いた枠で残る", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
+    ])
+
+    expect(screen.getByText("中間レポート")).toBeDefined()
+    expect(screen.getByText("1つ目の発見")).toBeDefined()
+    expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
+  })
+
+  it("最後に書いた本文は中間レポートにしない（印は付かない）", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
+      detail("直したよ"),
+    ])
+
+    expect(screen.getByText("直したよ")).toBeDefined()
+    expect(container.querySelectorAll(".main-step")).toHaveLength(2)
+    expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
+  })
+})
+
 describe("MainView（質問の記録）", () => {
   // `QuestionRecord` を直接見る（`MainViewQuestion` は `SessionRecord` にまだ無く、
   // 実際の `SessionState.records` からは今のところ作られない。`MainViewEntry` の型としては

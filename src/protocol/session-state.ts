@@ -375,7 +375,7 @@ export function applySessionEvent(
  *
  * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
  * `[<Report> | <QuestionRecord>]*`」）が、`src/ui/main-view/turn.tsx` はそこから描かない
- * （2026-09-16 決定。`docs/requirements.md` 4.2）。**`groupIntoTurns` / `dropNarration`
+ * （2026-09-16 決定。`docs/requirements.md` 4.2）。**`groupIntoTurns` / `keepOnlyInterimReports`
  * （`protocol/main-view.ts`）が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
  * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /
  * `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。

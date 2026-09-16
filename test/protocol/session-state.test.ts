@@ -328,7 +328,7 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("mainViewEntries はツール系の entry も含む（`groupIntoTurns` / `dropNarration` の材料になる）", () => {
+  it("mainViewEntries はツール系の entry も含む（`groupIntoTurns` / `keepOnlyInterimReports` の材料になる）", () => {
     const view = apply(
       { kind: "request", text: "依頼" },
       {

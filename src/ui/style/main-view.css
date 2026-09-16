@@ -81,6 +81,14 @@ h2.turn-request {
 .main-step > .detail-block:last-child {
   margin-bottom: 0;
 }
+/* 中間レポート（あとにツールが続いた、まとまった本文。`src/protocol/main-view.ts` の
+   `keepOnlyInterimReports` が印を付ける）。**新しい色は作らない**（theme.css のトークンだけ）。
+   本文は読む面なので `ink` のまま置き、**地を ground に落とす・枠を破線にする・小さなラベルを
+   載せる**の3つで本体のレポートと見分ける（色だけに頼らない。docs/design.md 13.1 原則1）。 */
+.main-step.is-interim {
+  background: var(--ground);
+  border-style: dashed;
+}
 /* レポートが直接書ける HTML（rehype-sanitize の schema が通すもの。`src/ui/report/sanitize-schema.ts`）
    から使う見た目の語彙。**クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
 .detail-block .cols {

@@ -41,8 +41,12 @@ export function Turn(props: TurnProps): ReactElement {
  * 1ステップ分。レポートも質問の記録も無いステップは何も描かない（`null`）。
  *
  * **ツールの実行（`action.kind === "tool"`）は描かない。** `actions` にはツールの記録も
- * 残っているが（`dropNarration` などが「そのステップにツール呼び出しが続いたか」の材料に使う。
- * `MainViewStep.actions` はそのために残す）、メインビューに出すのは質問の記録だけ。
+ * 残っているが（`keepOnlyInterimReports` などが「そのステップにツール呼び出しが続いたか」の
+ * 材料に使う。`MainViewStep.actions` はそのために残す）、メインビューに出すのは質問の記録だけ。
+ *
+ * **中間レポート（`step.interim`）は見分けが付く形で描く。** 話が途中の本文なので、
+ * 小さなラベルを載せて地と枠を変える（`.main-step.is-interim`。判定そのものは
+ * `src/protocol/main-view.ts` が済ませてある）。
  */
 function Step(props: { readonly step: MainViewStep }): ReactElement | null {
   const { step } = props
@@ -53,7 +57,8 @@ function Step(props: { readonly step: MainViewStep }): ReactElement | null {
   }
 
   return (
-    <section className="main-step">
+    <section className={step.interim ? "main-step is-interim" : "main-step"}>
+      {step.interim && <p className="step-heading">中間レポート</p>}
       {step.report !== undefined && <Report markdown={step.report} />}
       {questions.map((question, index) => (
         <QuestionRecord entry={question} key={index} />

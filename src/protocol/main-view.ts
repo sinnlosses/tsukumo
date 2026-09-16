@@ -25,9 +25,16 @@ export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question
 /** ステップの中で起きたこと。ツールの実行か、キャラクターからの質問。 */
 export type MainViewAction = MainViewToolRun | MainViewQuestion
 
-/** 1ステップ＝レポート1件と、それに続く出来事（ユーザーの決定 2026-09-10）。 */
+/**
+ * 1ステップ＝レポート1件と、それに続く出来事（ユーザーの決定 2026-09-10）。
+ *
+ * `interim` は、その本文が**中間レポート**（あとにツールが続いたが、まとまった資料なので
+ * 残した本文。`keepOnlyInterimReports`）かどうか。`report` が undefined のときは常に false。
+ * 見分けを付けて描くのは `src/ui/main-view/turn.tsx` の仕事で、判定はここに置く。
+ */
 export type MainViewStep = {
   readonly report: string | undefined
+  readonly interim: boolean
   readonly actions: readonly MainViewAction[]
 }
 
@@ -51,7 +58,7 @@ export type MainViewTurn = {
 export function mainViewTurns(entries: readonly MainViewEntry[]): readonly MainViewTurn[] {
   return groupIntoTurns(entries)
     .slice(-MAX_MAIN_VIEW_TURNS)
-    .map((turn) => dropNarration(turn))
+    .map((turn) => keepOnlyInterimReports(turn))
     .map((turn) => limitTurnEntries(turn))
 }
 
@@ -76,7 +83,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 
     current ??= { id: 0, request: undefined, steps: [] }
     if (entry.kind === "detail") {
-      current.steps.push({ report: entry.markdown, actions: [] })
+      current.steps.push({ report: entry.markdown, interim: false, actions: [] })
       continue
     }
 
@@ -84,7 +91,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
     // レポートより前に起きたことは、レポートを持たないステップにまとめる。
     current.steps =
       step === undefined
-        ? [{ report: undefined, actions: [entry] }]
+        ? [{ report: undefined, interim: false, actions: [entry] }]
         : [...current.steps.slice(0, -1), { ...step, actions: [...step.actions, entry] }]
   }
   flush()
@@ -93,26 +100,65 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 }
 
 /**
- * **あとにツール呼び出しが続いた本文を落とす**（`docs/requirements.md` 4.2。2026-09-16 決定）。
- * 「まず読むね」「次はテスト」のような実況は、ツールを呼ぶ合図としてしか書かれておらず、
- * レポートとして読むものではない。**規約の条項（`src/core/report-notation.ts` の
- * 「前置きと締めを書かない」）では抑えきれなかった**ので、ツールを呼んだという事実で落とす
+ * **あとにツール呼び出しが続いた本文のうち、実況だけを落とす**（`docs/requirements.md` 4.2。
+ * 2026-09-16 決定）。「まず読むね」「次はテスト」のような実況は、ツールを呼ぶ合図としてしか
+ * 書かれておらず、レポートとして読むものではない。**規約の条項（`src/core/report-notation.ts` の
+ * 「前置きと締めを書かない」）では抑えきれなかった**ので、tsukumo の側で落とす
  * （4.2「なぜテキストの規約をやめたか」と同じ立場）。
  *
+ * **まとまった資料（{@link isInterimReport}）は中間レポートとして残す**（同日にユーザーの指摘
+ * 「枠組みされたまとまった資料がたまに出てくる」で、判定の材料を「ツールが続いたか」だけから
+ * 「ツールが続いた**かつ**まとまっていない」の2条件へ狭めた）。
+ *
  * **質問（`question`）はツールに数えない。** 質問は利用者が答える手前で止まる場所なので、
- * その直前に書いた本文は読むためのレポートとして残す。
+ * その直前に書いた本文は読むためのレポートとして残す（中間レポートにもしない）。
  *
  * **ツールを1つも呼ばないターンでは何も落ちない**（どのステップにも `tool` が続かない）。
  * 書きかけ（`partialUtterance`）は常に最後のステップなので、流れている間は消えない
- * （ツールが始まった時点で落ちる。「出してから消す」＝ 2026-09-16 決定）。
+ * （ツールが始まった時点で落ちるか、中間レポートに変わる。「出してから消す」＝ 2026-09-16 決定）。
  */
-function dropNarration(turn: MainViewTurn): MainViewTurn {
+function keepOnlyInterimReports(turn: MainViewTurn): MainViewTurn {
   return {
     ...turn,
-    steps: turn.steps.map((step) =>
-      step.actions.some((action) => action.kind === "tool") ? { ...step, report: undefined } : step,
-    ),
+    steps: turn.steps.map((step) => {
+      if (step.report === undefined || !step.actions.some((action) => action.kind === "tool")) {
+        return step
+      }
+      return isInterimReport(step.report)
+        ? { ...step, interim: true }
+        : { ...step, report: undefined }
+    }),
   }
+}
+
+/**
+ * まとまった資料の印。**行頭に現れるブロックの記法だけ**を見る（見出し・表の行・箇条書き・
+ * 番号付き・コードフェンス・引用・行頭の HTML タグ）。インラインの記法（`` `code` `` や
+ * `**強調**`）を印にしないのは、実況もふつうにファイル名を `` ` `` で囲んで書くため。
+ */
+const STRUCTURE_MARK = /^\s*(?:#{1,6}\s|\||[-*+]\s|\d+[.)]\s|```|~~~|>|<[a-zA-Z/])/
+
+/**
+ * 中間レポートと認める下限。印が1つ付いただけの1〜2行（「- まず読むね」）は資料ではないので、
+ * **行数か文字数のどちらか**を満たすことも求める。文字数のほうは、見出し1行＋長い段落のように
+ * 行数が伸びない資料を拾うためにある。
+ */
+const MIN_INTERIM_REPORT_LINES = 3
+const MIN_INTERIM_REPORT_LENGTH = 200
+
+/**
+ * 「まとまった資料」か（＝中間レポートとして残すか）。**構造の印を持ち、かつ短くない**ものだけを
+ * 資料と見なす。**迷ったら落とす側に倒してある**（印が無ければ長くても落とし、印があっても
+ * 短ければ落とす）: 実況が残るとチラつきの指摘がそのまま戻るのに対し、これまでは同じ本文を
+ * すべて落としていたので、残す側を絞っても以前より悪くはならない。
+ */
+function isInterimReport(markdown: string): boolean {
+  const lines = markdown.split("\n").filter((line) => line.trim() !== "")
+  return (
+    lines.some((line) => STRUCTURE_MARK.test(line)) &&
+    (lines.length >= MIN_INTERIM_REPORT_LINES ||
+      markdown.trim().length >= MIN_INTERIM_REPORT_LENGTH)
+  )
 }
 
 /** 1つのやり取りが持つ記録を上限まで切り詰める。落とすのは**古いほう**（今回の続きを残す）。 */
