@@ -332,9 +332,8 @@ describe("MainView（中間レポート）", () => {
 })
 
 describe("MainView（質問の記録）", () => {
-  // `QuestionRecord` を直接見る（`MainViewQuestion` は `SessionRecord` にまだ無く、
-  // 実際の `SessionState.records` からは今のところ作られない。`MainViewEntry` の型としては
-  // 存在するので、部品自体は `MainView` を経由せずここで確かめる）。
+  // `QuestionRecord` を直接見る（`MainView` を経由した「記録が積まれてから見えるまで」は
+  // `test/protocol/session-state.test.ts` の畳み込みと、この部品の組み合わせで足りる）。
   it("選ばれた答えに印が付く", () => {
     const entry: MainViewQuestion = {
       kind: "question",
@@ -349,7 +348,7 @@ describe("MainView（質問の記録）", () => {
           ],
         },
       ],
-      answers: ["案B"],
+      answers: [["案B"]],
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)
@@ -360,5 +359,91 @@ describe("MainView（質問の記録）", () => {
 
     expect(optionB?.className).toContain("is-chosen")
     expect(optionA?.className).not.toContain("is-chosen")
+  })
+
+  it("複数選択の答えは、選んだ選択肢すべてに印が付く", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [
+        {
+          header: "確認",
+          text: "どれを試す？",
+          multiSelect: true,
+          options: [
+            { label: "案A", description: "" },
+            { label: "案B", description: "" },
+            { label: "案C", description: "" },
+          ],
+        },
+      ],
+      answers: [["案A", "案C"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    const chosen = [...container.querySelectorAll(".question-option.is-chosen")].map(
+      (option) => option.textContent,
+    )
+    expect(chosen).toEqual(["● 案A", "● 案C"])
+  })
+
+  it("自由入力の答えは、選択肢の下に別の行で出る", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [
+        {
+          header: "確認",
+          text: "どちらにする？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "" },
+            { label: "案B", description: "" },
+          ],
+        },
+      ],
+      answers: [["どちらでもない架空の答え"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    const options = [...container.querySelectorAll(".question-option")].map(
+      (option) => option.textContent,
+    )
+    expect(options).toEqual(["○ 案A", "○ 案B", "● どちらでもない架空の答え（自由入力）"])
+    expect(container.querySelector(".question-option.is-free-text")).not.toBeNull()
+  })
+
+  it("質問が2件あると、答えは質問ごとに突き合わせる", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [
+        {
+          header: "確認1",
+          text: "1つ目は？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "" },
+            { label: "案B", description: "" },
+          ],
+        },
+        {
+          header: "確認2",
+          text: "2つ目は？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "" },
+            { label: "案C", description: "" },
+          ],
+        },
+      ],
+      answers: [["案B"], ["案A"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    const records = [...container.querySelectorAll(".question-record")]
+    expect(
+      records.map((record) => record.querySelector(".question-option.is-chosen")?.textContent),
+    ).toEqual(["● 案B", "● 案A"])
   })
 })

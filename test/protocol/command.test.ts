@@ -30,13 +30,13 @@ describe("parseClientCommand（受け付ける形）", () => {
         type: "answer",
         commandId: "c-3",
         id: "toolu_1",
-        answer: { kind: "answers", labels: ["こっち"] },
+        answer: { kind: "answers", labels: [["こっち"]] },
       }),
     ).toEqual({
       type: "answer",
       commandId: "c-3",
       id: "toolu_1",
-      answer: { kind: "answers", labels: ["こっち"] },
+      answer: { kind: "answers", labels: [["こっち"]] },
     })
     expect(parseClientCommand({ type: "set-model", commandId: "c-4", model: "opus" })).toEqual({
       type: "set-model",

@@ -16,6 +16,7 @@ import { z } from "zod"
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
+import { type Question, type QuestionAnswer } from "./question.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
 
 /** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
@@ -97,6 +98,20 @@ export type SessionEvent =
     }
   /** 答え待ちの列が変わった（積まれた・解決した）。中身は src/protocol/pending-ask.ts が持つ。 */
   | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
+  /**
+   * 質問（`AskUserQuestion`）に利用者が答えた。**答えが確定した時点で1回だけ流す**
+   * （2026-09-16 決定。docs/requirements.md 4.2「許可と質問」）。`pending-changed` は列が
+   * 空になったことしか伝えないので、**「何を聞いて、どう答えたか」を残せるのはこの経路だけ**
+   * （メインビューの質問の記録。`src/ui/main-view/question-record.tsx`）。
+   *
+   * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
+   * **質問文も答えも会話の内容**なので、ログに出さない・外へ出さない。
+   */
+  | {
+      readonly kind: "question-answered"
+      readonly questions: readonly Question[]
+      readonly answers: readonly QuestionAnswer[]
+    }
   | { readonly kind: "turn-finished"; readonly status: TurnStatus }
   /**
    * `/clear` で会話が消された（SDK の `conversation_reset`。2026-09-15 実測）。**tsukumo は

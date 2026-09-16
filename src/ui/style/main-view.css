@@ -206,6 +206,10 @@ h2.turn-request {
 .question-option.is-chosen {
   color: var(--ink);
 }
+/* 自由入力の答え（選択肢に無いので、並びの末尾に別の行で出る）。 */
+.question-option.is-free-text {
+  font-style: italic;
+}
 .step-heading {
   margin: 0 0 0.5rem;
   font-size: var(--font-label);

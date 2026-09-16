@@ -791,6 +791,107 @@ describe("applySessionEvent", () => {
   })
 })
 
+describe("applySessionEvent（質問の記録）", () => {
+  // 架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
+  const singleQuestion = {
+    header: "確認",
+    text: "どちらの案で進める？",
+    multiSelect: false,
+    options: [
+      { label: "案A", description: "架空の説明A" },
+      { label: "案B", description: "架空の説明B" },
+    ],
+  }
+
+  const multiQuestion = {
+    header: "確認",
+    text: "どれを試す？",
+    multiSelect: true,
+    options: [
+      { label: "案A", description: "架空の説明A" },
+      { label: "案B", description: "架空の説明B" },
+      { label: "案C", description: "架空の説明C" },
+    ],
+  }
+
+  function questionEntries(...events: readonly SessionEvent[]) {
+    return mainViewEntries(apply(...events)).filter((entry) => entry.kind === "question")
+  }
+
+  it("質問に答えると、そのやり取りの記録に質問1件が残る", () => {
+    const entries = questionEntries(
+      { kind: "request", text: "架空の依頼" },
+      {
+        kind: "question-answered",
+        questions: [singleQuestion],
+        answers: [["案B"]],
+      },
+    )
+
+    expect(entries).toEqual([{ kind: "question", questions: [singleQuestion], answers: [["案B"]] }])
+  })
+
+  it("自由入力の答えも、選んだものとして記録に残る", () => {
+    const entries = questionEntries(
+      { kind: "request", text: "架空の依頼" },
+      {
+        kind: "question-answered",
+        questions: [singleQuestion],
+        answers: [["どちらでもない架空の答え"]],
+      },
+    )
+
+    expect(entries).toEqual([
+      {
+        kind: "question",
+        questions: [singleQuestion],
+        answers: [["どちらでもない架空の答え"]],
+      },
+    ])
+  })
+
+  it("複数選択の答えは1つの文字列に畳まれず、選んだぶんだけ並ぶ", () => {
+    const entries = questionEntries(
+      { kind: "request", text: "架空の依頼" },
+      {
+        kind: "question-answered",
+        questions: [multiQuestion],
+        answers: [["案A", "案C"]],
+      },
+    )
+
+    expect(entries).toEqual([
+      { kind: "question", questions: [multiQuestion], answers: [["案A", "案C"]] },
+    ])
+  })
+
+  it("答えていない質問（pending-changed だけ）は記録に残らない", () => {
+    const entries = questionEntries(
+      { kind: "request", text: "架空の依頼" },
+      {
+        kind: "pending-changed",
+        pending: [{ kind: "question", id: "toolu_q", questions: [singleQuestion] }],
+      },
+    )
+
+    expect(entries).toEqual([])
+  })
+
+  it("記録は前のやり取りに残り、次の依頼で消えない", () => {
+    const view = apply(
+      { kind: "request", text: "架空の依頼1" },
+      { kind: "question-answered", questions: [singleQuestion], answers: [["案A"]] },
+      { kind: "request", text: "架空の依頼2" },
+    )
+
+    expect(mainViewEntries(view).map((entry) => entry.kind)).toEqual([
+      "request",
+      "question",
+      "request",
+    ])
+  })
+})
+
 describe("commandSuggestions", () => {
   const info: SessionEvent = {
     kind: "session-info",

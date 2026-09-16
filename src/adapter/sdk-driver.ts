@@ -77,8 +77,13 @@ const SPEAK_TOOL_DESCRIPTION =
  */
 export function startSession(options: SessionDriverOptions): SessionDriver {
   const input = createPromptStream()
-  const queue = createPendingAnswerQueue((pending) => {
-    options.onEvent({ kind: "pending-changed", pending })
+  const queue = createPendingAnswerQueue({
+    onChange: (pending) => {
+      options.onEvent({ kind: "pending-changed", pending })
+    },
+    onAnswered: (questions, answers) => {
+      options.onEvent({ kind: "question-answered", questions, answers })
+    },
   })
 
   const session = query({

@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url"
 import { z } from "zod"
 
 import { type SessionDriver } from "../core/session-driver.ts"
-import { type PendingAsk } from "../protocol/pending-ask.ts"
+import { type Answer, type PendingAsk } from "../protocol/pending-ask.ts"
 import { type SessionEvent, sessionEventSchema } from "../protocol/session-event.ts"
 
 /** 既定の台本。tsukumo 自身の場所から解く（cwd に依存させない）。 */
@@ -97,11 +97,17 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     }
   }
 
-  const settle = (id: string): boolean => {
-    if (!pending.some((ask) => ask.id === id)) {
+  const settle = (id: string, answer: Answer): boolean => {
+    const ask = pending.find((candidate) => candidate.id === id)
+    if (ask === undefined) {
       return false
     }
-    emit({ kind: "pending-changed", pending: pending.filter((ask) => ask.id !== id) })
+    // 本物の駆動（src/core/pending-answer.ts）と同じで、質問に答えが付いたら記録を流す。
+    // これが無いと、台本で目視するときだけ質問の記録が残らない。
+    if (ask.kind === "question" && answer.kind === "answers") {
+      emit({ kind: "question-answered", questions: ask.questions, answers: answer.labels })
+    }
+    emit({ kind: "pending-changed", pending: pending.filter((candidate) => candidate.id !== id) })
     return true
   }
 
@@ -121,7 +127,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       emit({ kind: "turn-finished", status: "error" })
       return Promise.resolve()
     },
-    answer: (id) => settle(id),
+    answer: (id, answer) => settle(id, answer),
     pending: () => pending,
     setModel: (model) => {
       emit({ kind: "session-info", ...sessionInfo(), model })

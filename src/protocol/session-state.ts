@@ -10,7 +10,7 @@
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { type Expression, resolveExpression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
-import { type Question } from "./question.ts"
+import { type Question, type QuestionAnswer } from "./question.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
 import { splitUtterance } from "./utterance.ts"
@@ -60,11 +60,14 @@ export type ToolActivity = {
  */
 export type MainViewEntry =
   | { readonly kind: "request"; readonly text: string }
-  // キャラクターからの質問（AskUserQuestion）。`answers` は選ばれた答えのラベル（未回答なら空）。
+  /**
+   * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
+   * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
+   */
   | {
       readonly kind: "question"
       readonly questions: readonly Question[]
-      readonly answers: readonly string[]
+      readonly answers: readonly QuestionAnswer[]
     }
   | {
       readonly kind: "tool"
@@ -87,6 +90,16 @@ export type MainViewEntry =
 export type SessionRecord =
   | { readonly kind: "request"; readonly text: string }
   | { readonly kind: "detail"; readonly markdown: string }
+  /**
+   * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
+   * 書き換えない（2026-09-16 決定。docs/requirements.md 4.2「許可と質問」）。形は
+   * {@link MainViewEntry} の `question` と同じなので、{@link mainViewEntries} はそのまま通す。
+   */
+  | {
+      readonly kind: "question"
+      readonly questions: readonly Question[]
+      readonly answers: readonly QuestionAnswer[]
+    }
   | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
   | {
       readonly kind: "tool"
@@ -336,6 +349,17 @@ export function applySessionEvent(
       return finishTool(state, event.toolUseId, event.content, event.isError, at)
     case "pending-changed":
       return { ...state, pending: event.pending }
+    case "question-answered":
+      // 答えが確定した1回だけ積む（未回答の質問は記録に残さない）。`request` と違って
+      // 窓の切り詰め（`trimToRecentTurns`）は要らない — 質問はやり取りの境目にならないので、
+      // 次の `request` が来たときに一緒に古いぶんが落ちる。
+      return {
+        ...state,
+        records: [
+          ...state.records,
+          { kind: "question", questions: event.questions, answers: event.answers },
+        ],
+      }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished":
       return { ...settleUtterance(state), turnInProgress: false, turnFinishedAt: at }
@@ -418,6 +442,7 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
   if (record.kind === "speech") {
     return []
   }
+  // `request` / `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。
   if (record.kind !== "tool") {
     return [record]
   }

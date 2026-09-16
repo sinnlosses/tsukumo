@@ -7,10 +7,11 @@
 //
 // **`multiSelect` はチェックボックスで複数選べる**（docs/design.md 6.1「複数選択はチェックボックス」）。
 //
-// **`answer.labels[i]` は `questions[i]` への答え1つ**（`protocol/pending-ask.ts` の契約）。
-// 複数選択で2つ以上選んだときは、ここで「、」でつないで1つの文字列にする。質問の件数で
-// `labels` の意味が変わらないようにするため（SDK に渡す `answers` も質問1件に対して1つの
-// 文字列で、その形をそのまま保つ）。自由入力に書いた文字列は同じ並びの末尾に足す。
+// **`answer.labels[i]` は `questions[i]` に対して選んだ答えの並び**（`protocol/pending-ask.ts` の
+// 契約）。複数選択で2つ以上選んだときはそのまま複数の要素として送り、自由入力に書いた文字列は
+// 同じ並びの末尾に足す。**1つの文字列に畳むのはここではない**（2026-09-16 変更。SDK が求める
+// 「質問1件に対して1つの文字列」へ畳むのは `src/core/pending-answer.ts` の役目。ここで畳むと、
+// メインビューに残す記録の側で選択肢と突き合わせられなくなる）。
 
 import { useState, type ReactElement } from "react"
 
@@ -97,10 +98,11 @@ function QuestionAsk(props: {
   /**
    * `target` 番目の答えだけ `answer` に差し替えて `labels` を組む。
    * 選んだ直後に送るときは `setSelections` の結果をまだ読めないため、状態ではなく引数から組む。
-   * 返りが可変なのは、コマンド（`protocol/command.ts`）の zod スキーマが `string[]` を要求するため。
+   * 返りが可変なのは、コマンド（`protocol/command.ts`）の zod スキーマが `string[][]` を
+   * 要求するため。
    */
-  const labelsWith = (target: number, answer: readonly string[]): string[] =>
-    questions.map((_, i) => (i === target ? answer : answerFor(i)).join("、"))
+  const labelsWith = (target: number, answer: readonly string[]): string[][] =>
+    questions.map((_, i) => [...(i === target ? answer : answerFor(i))])
 
   const advance = (target: number, answer: readonly string[]): void => {
     if (target < questions.length - 1) {

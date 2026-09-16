@@ -145,9 +145,10 @@ describe("PendingAnswer", () => {
       {
         type: "answer",
         id: "ask-2",
-        // labels[i] は questions[i] への答え1つ（protocol/pending-ask.ts の契約）。
-        // 複数選んだぶんは部品の側でつないでから送る。
-        answer: { kind: "answers", labels: ["A案、C案"] },
+        // labels[i] は questions[i] に対して選んだ答えの並び（protocol/pending-ask.ts の
+        // 契約）。複数選んだぶんはそのまま並べて送り、1つの文字列には畳まない
+        // （畳むのは src/core/pending-answer.ts）。
+        answer: { kind: "answers", labels: [["A案", "C案"]] },
       },
     ])
   })
@@ -224,7 +225,7 @@ describe("PendingAnswer", () => {
     fireEvent.click(screen.getByText("A案"))
 
     expect(calls).toEqual([
-      { type: "answer", id: "ask-5", answer: { kind: "answers", labels: ["A案"] } },
+      { type: "answer", id: "ask-5", answer: { kind: "answers", labels: [["A案"]] } },
     ])
   })
 
@@ -259,7 +260,7 @@ describe("PendingAnswer", () => {
       {
         type: "answer",
         id: "ask-7",
-        answer: { kind: "answers", labels: ["A案", "C案"] },
+        answer: { kind: "answers", labels: [["A案"], ["C案"]] },
       },
     ])
   })
@@ -282,7 +283,7 @@ describe("PendingAnswer", () => {
       {
         type: "answer",
         id: "ask-8",
-        answer: { kind: "answers", labels: ["B案", "C案"] },
+        answer: { kind: "answers", labels: [["B案"], ["C案"]] },
       },
     ])
   })
@@ -340,7 +341,7 @@ describe("PendingAnswer", () => {
     fireEvent.keyDown(input, { key: "Enter" })
 
     expect(calls).toEqual([
-      { type: "answer", id: "ask-13", answer: { kind: "answers", labels: ["D案（架空）"] } },
+      { type: "answer", id: "ask-13", answer: { kind: "answers", labels: [["D案（架空）"]] } },
     ])
   })
 
@@ -361,7 +362,7 @@ describe("PendingAnswer", () => {
       {
         type: "answer",
         id: "ask-14",
-        answer: { kind: "answers", labels: ["D案（架空）", "C案"] },
+        answer: { kind: "answers", labels: [["D案（架空）"], ["C案"]] },
       },
     ])
   })

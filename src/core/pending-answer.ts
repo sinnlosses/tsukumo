@@ -9,13 +9,20 @@
 // （docs/coding-standards.md「会話内容の扱い」）。
 
 import { type Answer, type PendingAsk } from "../protocol/pending-ask.ts"
-import { parseQuestions, type Question } from "../protocol/question.ts"
+import { parseQuestions, type Question, type QuestionAnswer } from "../protocol/question.ts"
 
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"
 
 /** 拒否したときにモデルへ返す定型文。**入力の中身は含めない。** */
 const DENY_MESSAGE = "利用者が実行を許可しなかった"
+
+/**
+ * SDK へ返す `answers` は質問1件に対して1つの文字列なので、複数選んだ答えはこれでつなぐ
+ * （2026-09-16 に画面側から移した。画面は質問ごとの並びのまま送る。
+ * `src/protocol/pending-ask.ts` の `Answer`）。
+ */
+const ANSWER_SEPARATOR = "、"
 
 /** `canUseTool` の戻り値に渡せる形（SDK の `PermissionResult` と同じ構造）。 */
 export type AnswerResult =
@@ -28,6 +35,16 @@ export type AskRequest = {
   readonly toolName: string
   readonly input: Readonly<Record<string, unknown>>
   readonly signal: AbortSignal | undefined
+}
+
+/**
+ * 列の外へ知らせるもの。`onChange` は積まれたとき・解決したときの合図（画面の更新）、
+ * `onAnswered` は**質問に答えが付いたとき1回だけ**（メインビューに残す質問の記録。
+ * `question-answered` を流すのは呼び出し側の駆動）。
+ */
+export type PendingAnswerHandlers = {
+  readonly onChange: (pending: readonly PendingAsk[]) => void
+  readonly onAnswered: (questions: readonly Question[], answers: readonly QuestionAnswer[]) => void
 }
 
 export type PendingAnswerQueue = {
@@ -43,14 +60,12 @@ export type PendingAnswerQueue = {
 }
 
 /**
- * 答え待ちの列を作る。`onChange` は積まれたとき・解決したときに呼ばれる（画面を更新する合図）。
+ * 答え待ちの列を作る。合図の受け口は {@link PendingAnswerHandlers}。
  *
  * 状態（保留中の Promise の解決関数）を持つのはここだけ。駆動側はこの列を通してしか
  * `canUseTool` の応答を決めない。
  */
-export function createPendingAnswerQueue(
-  onChange: (pending: readonly PendingAsk[]) => void,
-): PendingAnswerQueue {
+export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): PendingAnswerQueue {
   const entries = new Map<string, Entry>()
 
   const list = (): readonly PendingAsk[] => [...entries.values()].map((entry) => entry.ask)
@@ -58,7 +73,7 @@ export function createPendingAnswerQueue(
   const settle = (id: string, entry: Entry, result: AnswerResult): void => {
     entries.delete(id)
     entry.resolve(result)
-    onChange(list())
+    handlers.onChange(list())
   }
 
   return {
@@ -73,7 +88,7 @@ export function createPendingAnswerQueue(
             settle(request.id, entry, { behavior: "deny", message: DENY_MESSAGE })
           }
         })
-        onChange(list())
+        handlers.onChange(list())
       }),
 
     answer: (id, answer) => {
@@ -85,6 +100,13 @@ export function createPendingAnswerQueue(
       const result = toAnswerResult(entry, answer)
       if (result === undefined) {
         return false
+      }
+
+      // 質問の記録は**答えが確定したここ1回だけ**知らせる（未回答のまま終わった質問は残さない。
+      // docs/requirements.md 4.2「許可と質問」）。解決より先に知らせるので、答えを受けて動き
+      // 出したツールのイベントより前に記録が積まれる。
+      if (entry.ask.kind === "question" && answer.kind === "answers") {
+        handlers.onAnswered(entry.ask.questions, answer.labels)
       }
 
       settle(id, entry, result)
@@ -149,14 +171,19 @@ function toAnswerResult(entry: Entry, answer: Answer): AnswerResult | undefined 
   }
 }
 
+/**
+ * SDK へ返す `answers`（質問文 → 答えの文字列）。**複数選んだ答えは
+ * {@link ANSWER_SEPARATOR} でつなぐ**。何も選ばれていない質問は入れない（空の答えを
+ * 送らない）。
+ */
 function answersRecord(
   questions: readonly Question[],
-  labels: readonly string[],
+  labels: readonly QuestionAnswer[],
 ): Readonly<Record<string, string>> {
   return Object.fromEntries(
     questions.flatMap((question, index) => {
-      const label = labels[index]
-      return label === undefined ? [] : [[question.text, label] as const]
+      const answer = labels[index] ?? []
+      return answer.length === 0 ? [] : [[question.text, answer.join(ANSWER_SEPARATOR)] as const]
     }),
   )
 }

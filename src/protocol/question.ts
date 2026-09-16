@@ -21,6 +21,16 @@ export type Question = {
 }
 
 /**
+ * 質問1件に対して利用者が選んだ答え。**選択肢のラベルと、自由入力に打った文字列が同じ並びに
+ * 混ざる**（自由入力は `options` のどれとも一致しないので、突き合わせる側はそれで見分ける。
+ * `src/ui/main-view/question-record.tsx`）。複数選択のときは選んだぶんだけ要素が並ぶ。
+ *
+ * **SDK へ返すときは1つの文字列に畳む**（質問1件に対して1つの文字列という `AskUserQuestion` の
+ * 形。畳むのは `src/core/pending-answer.ts` の役目で、画面側はこの形のまま送る）。
+ */
+export type QuestionAnswer = readonly string[]
+
+/**
  * `AskUserQuestion` の入力（外部由来の `unknown`）を検証して質問の並びにする。
  * 形が違う・`questions` が空のときは undefined を返す（画面には何も出さない）。
  *

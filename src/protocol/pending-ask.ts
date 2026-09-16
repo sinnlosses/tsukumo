@@ -9,7 +9,7 @@
 
 import { z } from "zod"
 
-import { type Question } from "./question.ts"
+import { type Question, type QuestionAnswer } from "./question.ts"
 
 /** 答え待ち1件。`id` は SDK の `toolUseID`（1つのツール呼び出しに1つ）。 */
 export type PendingAsk =
@@ -27,8 +27,15 @@ export type Answer =
   | { readonly kind: "allow" }
   /** 拒否する（許可要求・質問のどちらにも使える）。 */
   | { readonly kind: "deny" }
-  /** 質問に答える。`labels[i]` が `questions[i]` に対する選択肢のラベル。 */
-  | { readonly kind: "answers"; readonly labels: readonly string[] }
+  /**
+   * 質問に答える。**`labels[i]` が `questions[i]` に対して選んだ答えの並び**
+   * （{@link QuestionAnswer}。複数選択は選んだぶんだけ、自由入力はその文字列が入る）。
+   *
+   * **1つの文字列に畳まない**（2026-09-16 変更。以前は画面側が「、」でつないだ1つの文字列を
+   * 入れていたが、それだと記録（`question-answered`）の側で選択肢と突き合わせられなくなる。
+   * SDK へ渡す形へ畳むのは src/core/pending-answer.ts の役目）。
+   */
+  | { readonly kind: "answers"; readonly labels: readonly QuestionAnswer[] }
 
 /**
  * 画面から届いた答えのスキーマ。**書き込みの経路なので zod で厳密に見る**
@@ -38,7 +45,7 @@ export type Answer =
 export const answerSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("allow") }),
   z.object({ kind: z.literal("deny") }),
-  z.object({ kind: z.literal("answers"), labels: z.array(z.string()) }),
+  z.object({ kind: z.literal("answers"), labels: z.array(z.array(z.string())) }),
 ])
 
 /**

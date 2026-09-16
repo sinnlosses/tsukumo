@@ -8,10 +8,12 @@ describe("parseAnswer", () => {
     expect(parseAnswer({ kind: "deny" })).toEqual({ kind: "deny" })
   })
 
-  it("answers は labels の並びをそのまま受け取る（自由入力の文字列も受けられる）", () => {
-    expect(parseAnswer({ kind: "answers", labels: ["選択肢A", "自由入力の答え"] })).toEqual({
+  it("answers は質問ごとの並びをそのまま受け取る（自由入力の文字列も受けられる）", () => {
+    expect(
+      parseAnswer({ kind: "answers", labels: [["選択肢A", "自由入力の答え"], ["選択肢B"]] }),
+    ).toEqual({
       kind: "answers",
-      labels: ["選択肢A", "自由入力の答え"],
+      labels: [["選択肢A", "自由入力の答え"], ["選択肢B"]],
     })
   })
 
@@ -22,8 +24,9 @@ describe("parseAnswer", () => {
     expect(parseAnswer(null)).toBeUndefined()
   })
 
-  it("answers の labels が文字列の配列でないときは undefined を返す", () => {
+  it("answers の labels が「文字列の配列」の配列でないときは undefined を返す", () => {
     expect(parseAnswer({ kind: "answers", labels: [1, 2] })).toBeUndefined()
+    expect(parseAnswer({ kind: "answers", labels: ["答え"] })).toBeUndefined()
     expect(parseAnswer({ kind: "answers", labels: "答え" })).toBeUndefined()
     expect(parseAnswer({ kind: "answers" })).toBeUndefined()
   })

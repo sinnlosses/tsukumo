@@ -17,8 +17,11 @@ import { type SessionState } from "./session-state.ts"
  * フレームと状態の版。**イベントの追加では上げない**（知らない `kind` は畳み込みが無視する）。
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
+ *
+ * 2 へ上げたのは 2026-09-16（質問の記録。`SessionRecord` の `question` と、`answer` コマンドの
+ * `labels` を質問ごとの並びに変えた。古いタブが繋がったままだと、送った答えが弾かれる）。
  */
-export const PROTOCOL_VERSION = 1
+export const PROTOCOL_VERSION = 2
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
