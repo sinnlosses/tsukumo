@@ -26,7 +26,12 @@
    進捗と操作の行は縮めず（flex: 0 0 auto）常に見える位置に残す。
    max-height は枠・内側の余白も込みで数えたいので、ここだけ border-box にする。
    割合は 1400x900・既定の比率（領域 335px）で測って決めた。上げるほど選択肢が見えるが
-   textarea が潰れる（60% で選択肢1件・textarea 57px / 64% で2件・45px / 68% で2件・34px）。 */
+   textarea が潰れる（60% で選択肢1件・textarea 57px / 64% で2件・45px / 68% で2件・34px）。
+   説明を省略記号で切らず折り返す形に変えたあとも 64% のまま据え置いた（2026-09-16。同じ
+   1400x900 で長い説明を含む質問を測ると、.question-card の中身が箱の高さを超えて
+   （scrollHeight 281px / clientHeight 147px）中だけでスクロールし、.pending-answer 自体の
+   高さは選択肢を切り替えても hover しても変わらない。ここを上げるとテキストエリアが
+   潰れる問題は変わらないので、上げる理由が無い）。 */
 .pending-answer {
   box-sizing: border-box;
   display: flex;
@@ -173,14 +178,14 @@
   flex: 0 0 auto;
   font-weight: bold;
 }
-/* 説明はラベルの右の余りに収め、幅が足りなければ省略記号で切る（選択肢そのものを縦にも横にも
-   広げない）。選んだとき・hover したときに高さが変わってガタつかせないため、行数は常に1行。 */
+/* 説明はラベルの右の余りに収め、幅が足りなければ折り返して全文を出す（省略しない。
+   2026-09-16 決定。以前は省略記号で切っていたが、途中で切れて読めないとの指摘で全文表示に
+   変えた）。折り返しても選択肢そのものは縦にも横にも広げず、はみ出るぶんは
+   .question-card の中でスクロールする。 */
 .question-choice-description {
   flex: 1 1 auto;
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
