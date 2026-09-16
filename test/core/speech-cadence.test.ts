@@ -4,6 +4,9 @@ import { buildSystemPromptAppend, type CharacterPack } from "../../src/adapter/c
 import { REPORT_NOTATION_PROMPT } from "../../src/core/report-notation.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../src/core/speech-cadence.ts"
 
+// `buildSystemPromptAppend` を adapter から引くのは、あの関数が fs に触らなくても
+// `adapter/character-pack.ts` に置くと決めたため（docs/architecture.md「新しいコードを置く場所」）。
+//
 // この規約は**パックによらず同じもの**（docs/requirements.md 4.2）。文面そのものではなく、
 // **どのパックの append にも載ること**を見る（人格が無いパックで落ちると、そのパックだけ
 // 吹き出しが止まる）。

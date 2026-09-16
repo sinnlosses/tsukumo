@@ -196,6 +196,15 @@ tsukumo の画面だけになる。
   **置き場所を名前にしたファイルは作らない**。**ディレクトリもファイルも単数形**にし、
   複数は「複数返す」関数名の側で表す（`readTaskSummaries`）
 
+**境界のファイルの中に、外の世界に触らない関数が混じっていてよい**（2026-09-16 決定）。層は
+「外の世界に触るか」で決め、**ファイルの中身の純度で割り直さない**。`adapter/character-pack.ts` の
+`characterChangedEvent` / `buildSystemPromptAppend` / `toCharacterPackChoices` は fs を読まないが
+`core` へは出さない。呼び出し側が `cli.ts` だけで、パックの供給元も fs の1つしかないので、割っても
+「型1つ + 一行関数3つ」の浅いモジュールが増え、同じ名前のファイルが2つの層に並ぶだけになる
+（`docs/research/architecture-proposal.md` 7章が仮定として置いていた分岐は、これで確定）。
+**`core` からパックの判断が要るようになったら、層を写した `core/character-pack.ts` ではなく概念で切る**
+（同 3章の `core/character-selection.ts`）。
+
 ## 設計判断（なぜ今の形なのか）
 
 #### 描く層をブラウザ側へ移す（2026-09-13）

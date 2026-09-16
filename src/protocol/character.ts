@@ -179,7 +179,7 @@ export type CharacterPackChoice = {
   readonly label: string
 }
 
-/** {@link toCharacterInfo} に渡すもの。パックそのもの（`core` の型）はここでは知らない。 */
+/** {@link toCharacterInfo} に渡すもの。パックそのもの（`adapter` の型）はここでは知らない。 */
 export type CharacterInfoSource = {
   readonly definition: CharacterDefinition | undefined
   /** `characters/<name>` のディレクトリ名（既定の場所を直に指したときは undefined）。 */

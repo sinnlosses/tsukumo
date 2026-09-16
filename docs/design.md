@@ -238,12 +238,12 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 
 いまの `src/domain/session-event.ts` の union をそのまま持ち越し、次を足す。
 
-| イベント            | 出どころ                  | 中身                                                              | 用途                                                                             |
-| ------------------- | ------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `tasks-changed`     | core（`task-summary`）    | `tasks: TaskSummaryItem[] \| undefined`                           | サイドバーのタスク一覧。読み直しは core が mtime で行う                          |
-| `character-changed` | core（`character-pack`）  | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents` | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
-| `session-restored`  | core（`session-manager`） | `sessionId`                                                       | 「続きから始まった」表示（8章）                                                  |
-| `session-started`   | core（`session-manager`） | `sessionId`・`cwd`                                                | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
+| イベント            | 出どころ                    | 中身                                                              | 用途                                                                             |
+| ------------------- | --------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `tasks-changed`     | adapter（`task-summary`）   | `tasks: TaskSummaryItem[] \| undefined`                           | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
+| `character-changed` | adapter（`character-pack`） | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents` | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
+| `session-restored`  | core（`session-manager`）   | `sessionId`                                                       | 「続きから始まった」表示（8章）                                                  |
+| `session-started`   | core（`session-manager`）   | `sessionId`・`cwd`                                                | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
 
 イベントは**時刻を持って**送る: `StampedEvent = { at: number; event: SessionEvent }`。`at` は
 サーバの `Date.now()`。reducer は `applySessionEvent(state, event, at)`（いまの第3引数 `now` と同じ）。
