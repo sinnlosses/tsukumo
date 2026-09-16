@@ -3,6 +3,19 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-16 ui/ を bullet-proof-react の形にする
+
+- ui/ディレクトリ配下をbullet-proof-reactベースのアーキテクチャに構成し直す(codebase-designスキル推奨)
+
+- 生成したタスク: T-169（設計）/ T-170（組み替え）/ T-171（機能間 import の検査）
+- 登録時にユーザーへ聞いて決めたこと: (1) bullet-proof-react の複数形・置き場所名を採り、
+  CLAUDE.md 原則5 と `docs/architecture.md` 原則5・`docs/coding-standards.md`「単数形」を
+  書き換える。(2) 設計と実装を2段に分ける
+- 登録時に確かめたこと: `src/ui/` は既に機能単位に割れていて、機能どうしの import は実測2本
+  （`character-view` → `appearance/portrait-fixed.ts`、`layout` → `appearance/appearance.tsx`）。
+  `docs/coding-standards.md` の barrel file の節に、2026-09-13 に `src/ui/` を切った段で
+  bulletproof-react と突き合わせた記録がある（barrel file 禁止はそのまま維持する）
+
 ## 2026-09-16 ブランチと direction.md・立ち絵の往復・レスポンシブ・省略
 
 - 困っていることがあって。

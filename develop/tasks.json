@@ -295,5 +295,38 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-169",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "src/ui/ を bullet-proof-react の形に置き直す設計を決める",
+    "task": "## 背景\n\n`src/ui/` を bullet-proof-react ベースのアーキテクチャに構成し直したい（2026-09-16 のユーザーの\n指示。`codebase-design` スキルを使う）。\n\nいまの `src/ui/` は **51ファイル・5505行**で、すでに機能単位に割れている:\n\n- 機能: `layout/` `main-view/` `character-view/` `sidebar/` `dispatch/` `appearance/`\n- 共有と思われるもの: `component/`（`select.tsx` / `tool-summary.ts`）、\n  `report/`（`markdown.tsx` / `sanitize-schema.ts` / `split-blocks.ts` / `mermaid-block.tsx` /\n  `chart-block.tsx` / `vendor-script.ts`）\n- 直下: `main.tsx`（入口）・`app.tsx`（Context）・`socket.ts`・`refresh.ts`・\n  `turn-selection.tsx`・`css-variable.d.ts`\n- CSS は機能と同居せず `style/` に集約（`style/main.css` の `@import` で束ねる）\n\n**機能どうしの import は実測で2本しかない**（`character-view/character-view.tsx` →\n`appearance/portrait-fixed.ts`、`layout/layout.tsx` → `appearance/appearance.tsx`。後者は親が\n子を組む形）。残りの領域をまたぐ import は `component/` `report/` と直下のファイル向け。\nつまり**中身はすでに bullet-proof-react の考え方に近く、違うのは名前と、境界が明文化も\n強制もされていないこと**。\n\n`docs/coding-standards.md` の barrel file の節に **2026-09-13 に `src/ui/` を切った段で\nbulletproof-react の実例と突き合わせて決めた**と書いてある。今回はその続きにあたる。\n\n## 決まっていること（蒸し返さない）\n\n- **bullet-proof-react の名前を採る**（2026-09-16 ユーザー選択）。`features/` `components/`\n  `hooks/` のような複数形・置き場所名を使ってよく、そのために **CLAUDE.md「アーキテクチャ概要」\n  の原則5・`docs/architecture.md` 原則5・`docs/coding-standards.md`「ディレクトリもファイルも\n  単数形にする」を書き換える**。\n- **設計と実装を分ける**（2026-09-16 ユーザー選択）。このタスクは決めて文書に落とすところまでで、\n  **ファイルは移さない**（移すのは後続タスク）。\n- **barrel file 禁止は維持する**（2026-09-13 決定。bulletproof-react 自身も tree-shaking の\n  理由で外している）。\n- 層の辺（`ui` は `protocol` しか import しない）は変えない。\n\n## 解くべき論点\n\n- **どのディレクトリを作るか。** `features/` `components/` `hooks/` `lib/` `utils/` `types/` の\n  うち、このプロジェクトに実体があるのはどれか。**実体の無い箱を先に作らない**\n  （型は `protocol/` にあり、API 層も状態ライブラリも無い）。\n- **いまの領域を機能と共有にどう割り振るか。** 特に `report/`（`main-view/report.tsx` だけが\n  使う）と `component/`（2つの機能が使う）。\n- **CSS を機能と同居させるか、`style/` に残すか。** 同居させるなら `src/adapter/bundle.ts` の\n  `buildStyleSheet`（`src/ui/style/*.css` を `main.css` の `@import` で束ねる前提）を\n  どう変えるかまで決める。\n- **`app.tsx` / `main.tsx` / `socket.ts` / `turn-selection.tsx` / `refresh.ts` の置き場。**\n  bullet-proof-react の `app/` に当たるか。\n- **単数形をやめる範囲。** `src/ui/` の中だけか、`src/protocol/` `src/core/` `src/adapter/` にも\n  及ぼすか。及ぼさないなら、規約に「`ui` の中だけの例外」と書く必要がある。\n- **機能どうしの import を禁止する規則をどの粒度で書くか**（実装は後続タスクの\n  `test/architecture.test.ts`）。\n\n## やること\n\n1. `codebase-design` スキルを読み、その語彙で現状の `src/ui/` を見る。\n2. 上の論点を決め、**移動の対応表（いまのパス → 新しいパス）を全ファイルぶん**まとめる。\n3. `docs/design.md` の 2章「ディレクトリ」と 6章「ui」を書き換え、対応表を 2章に載せる。\n   **行頭を含めて位置を特定し**、`bun run format` のあとに\n   `grep -c '^#\\{2,3\\} ' docs/design.md` が **51** のままであることを確かめる。\n4. `docs/coding-standards.md`「ディレクトリもファイルも単数形にする」・`docs/architecture.md`\n   原則5・`CLAUDE.md`「アーキテクチャ概要」の原則5 を、決めた内容に合わせて直す。節の数は\n   coding-standards.md **21** / architecture.md **10** のまま。\n5. 調べた結果、bullet-proof-react の形に落とすと**いまより悪くなる部分**（例: 実体の無い箱が\n   増える、`protocol/` と役割が二重になる）が見つかったら、その部分は**採らず理由を\n   `evidence` に書いて閉じる**。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）。\n- **移動の対応表が `docs/design.md` 2章にある**（後続タスクがそれだけを見て移せる粒度で）。\n- 節の数が design.md 51 / coding-standards.md 21 / architecture.md 10 のまま。\n- 採らなかった bullet-proof-react の要素があれば、その理由が `evidence` にある。\n\n## 注意\n\n- **ファイルを移動しない。** このタスクの成果物はドキュメントだけ。\n- 層の辺（`ui` は `protocol` しか import しない）を変えない。\n- `CLAUDE.md` の原則5 を書き換えるので、**原則5 を参照している他の箇所**\n  （`docs/architecture.md` の原則のリスト、`docs/coding-standards.md`「層と依存の向き」の\n  索引行「単数形の命名」）も追随させる。",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-170",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-169"],
+    "summary": "決めた形に src/ui/ と test/ui/ を組み替える",
+    "task": "## 背景\n\n前段のタスクが `docs/design.md` 2章に「いまのパス → 新しいパス」の対応表を書いている。\nこのタスクは**そのとおりにファイルを移すだけ**。\n\n移動に追随が要る場所（実測）:\n\n- `src/adapter/bundle.ts`: `UI_SCRIPT_ENTRY = \"main.tsx\"`（`src/ui/` 直下にある前提）。\n  CSS は `src/ui/style/*.css` を `style/main.css` の `@import` で束ねる\n- `src/adapter/ui-rebuild.ts`: `UI_SOURCE_DIR_RELATIVE_PATH = [\"src\", \"ui\"]` を再帰で見張る\n  （`src/ui/` の中で移すぶんには影響しない）\n- `test/`: `src/<相対パス>.ts` → `test/<相対パス>.test.ts` のミラー。`test/ui/` 配下に**24ファイル**\n- `test/architecture.test.ts` の `layerOf` は `src/` 直下の先頭ディレクトリで層を判定する\n  （`src/ui/` の中で移すぶんには影響しない）\n\n## 決まっていること（蒸し返さない）\n\n- 形は前段のタスクが `docs/design.md` に決めたものに従う。**このタスクで設計を蒸し返さない**。\n- barrel file を作らない（import は実ファイルを直接指す。2026-09-13 決定）。\n- **見た目も部品の中身も変えない。** CSS のクラス名も変えない（HTML と CSS の対応が切れる）。\n\n## 解くべき論点\n\n- 相対 import の書き換え漏れをどう検出するか（`bun run typecheck` が拾うはずだが、\n  CSS の `@import` と `bundle.ts` の入口は型で守れない）。\n- 移動を1コミットに収められるか（収まらないなら、移動のコミットと中身の修正のコミットを分ける）。\n\n## やること\n\n1. `docs/design.md` 2章の対応表のとおりに `src/ui/` を **`git mv`** で移す（履歴を保つ）。\n2. `test/ui/` を同じ形に追随させる。\n3. 相対 import と、`src/adapter/bundle.ts` の入口・CSS の束ね方を直す。\n4. `bun run format` を通す。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書き、**移動前の件数と同じ**であることを\n  確かめる。件数が減っていたらテストが拾われなくなっている）。\n- **目視で確かめる**: `TSUKUMO_DRIVER=fake` で起こし、4領域（メインビュー・キャラビュー・\n  サイドバー・入力欄）が移動前と同じに見えることを確かめ、何を見たかを `evidence` に書く。\n- `git status` に、自分が移したファイル以外の変更が混ざっていない。\n\n## 注意\n\n- **他のセッションの未コミット変更を巻き込まない**（CLAUDE.md「Git運用」）。`git add -A` を\n  使わず、触ったファイルを個別に足す。\n- 大量の移動になるので、**移動と中身の変更を同じコミットに混ぜない**。\n- `develop/tasks.json` はコミットしない（記録はメインセッションが行う）。",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-171",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-170"],
+    "summary": "機能どうしの import を test/architecture.test.ts で落とす",
+    "task": "## 背景\n\nbullet-proof-react の核は「機能どうしは import し合わず、共有 → 機能 → app の一方向だけ」と\nいう規則で、本家はこれを eslint の boundaries プラグインで強制している。このリポジトリは\n外部ツールを増やさず、`test/architecture.test.ts` が**正規表現と `node:fs` だけ**で層の辺を\n落としている（`ALLOWED_IMPORTS` の表）。同じ形で `ui/` の内側の辺も落とす。\n\nいまの `test/architecture.test.ts` が見ているのは `protocol / core / adapter / ui / cli` の\n5つだけで、**`ui/` の中はどこから何を import してもよい**。組み替えた直後は規則どおりでも、\n守る仕掛けが無いと戻る（組み替え前の実測でも `character-view` → `appearance` の辺が1本あった）。\n\n## 決まっていること（蒸し返さない）\n\n- **外部ツール（eslint プラグインなど）を増やさない。** 既存の `test/architecture.test.ts` に\n  足す（CLAUDE.md「`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る」）。\n- 許す辺の定義は前段のタスクが `docs/design.md` に書いたものに従う。\n\n## 解くべき論点\n\n- **機能を名前で列挙するか、ディレクトリの構造から導くか。** 新しい機能を足したときに\n  テストを直し忘れても落ちる形が望ましい。\n- 違反したときのメッセージに何を出すか（既存の `violationsMessage` の形に合わせる）。\n\n## やること\n\n1. `test/architecture.test.ts` に `ui/` の内側の辺の検査を足す。\n2. わざと違反する import を一時的に書いて**テストが落ちることを確かめ**、戻す。\n3. `docs/coding-standards.md`「層と依存の向き」に、`ui/` の内側の規則を1〜2行で足す。\n   **行頭を含めて位置を特定し**、`bun run format` のあとに\n   `grep -c '^#\\{2,3\\} ' docs/coding-standards.md` が **21** のままであることを確かめる。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）。\n- **わざと違反させたときに落ちることを確かめた**記録が `evidence` にある（どのファイルに\n  どの import を足して、どう落ちたか）。\n- 節の数が `docs/coding-standards.md` 21 のまま。\n\n## 注意\n\n- 既存の層の辺の検査（`ALLOWED_IMPORTS`）を壊さない。\n- **`src/` のファイルを変更しない**（テストとドキュメントだけ）。手順2で一時的に足した\n  import は必ず戻す。",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
