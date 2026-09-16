@@ -5,7 +5,8 @@
 // - Enter は改行、Command+Enter で送信。IME の変換確定の Command+Enter は送らない
 //   （`isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
 // - 送信後は入力欄を空にしてフォーカスを残す
-// - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）
+// - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は
+//   矢印キーに加えて Ctrl+P（前へ）/ Ctrl+N（次へ）でも行える（Meta 併用は無視）
 //
 // **下書き・候補の開閉と選択位置は `<Composer>` のローカル状態**（docs/design.md 6.2）。候補は
 // `SessionState`（`commandSuggestions(state)`）と下書きの文字列から毎回計算するだけの導出値で、
@@ -83,12 +84,12 @@ export function Composer(): ReactElement {
     const composing = isComposingEvent(event)
 
     if (!composing && matches.length > 0) {
-      if (event.key === "ArrowDown") {
+      if (event.key === "ArrowDown" || (event.ctrlKey && !event.metaKey && event.key === "n")) {
         event.preventDefault()
         setSelectedIndex((current) => (current + 1) % matches.length)
         return
       }
-      if (event.key === "ArrowUp") {
+      if (event.key === "ArrowUp" || (event.ctrlKey && !event.metaKey && event.key === "p")) {
         event.preventDefault()
         setSelectedIndex((current) => (current - 1 + matches.length) % matches.length)
         return

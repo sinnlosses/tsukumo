@@ -136,4 +136,50 @@ describe("Composer", () => {
 
     expect(screen.queryAllByRole("listitem")).toHaveLength(0)
   })
+
+  it("(6) 候補が出ている間は Ctrl+N / Ctrl+P で選択が上下に動く（Meta 併用は無視）", () => {
+    renderComposer({
+      slashCommands: ["alpha", "beta"],
+      commandDescriptions: [
+        { name: "alpha", description: undefined },
+        { name: "beta", description: undefined },
+      ],
+    })
+
+    fireEvent.change(textArea(), { target: { value: "/" } })
+
+    const selected = (): string | undefined =>
+      screen.getAllByRole("listitem").find((item) => item.className.includes("is-selected"))
+        ?.textContent
+
+    expect(selected()).toBe("/alpha")
+
+    const forward = fireEvent.keyDown(textArea(), { key: "n", ctrlKey: true })
+    expect(forward).toBe(false) // preventDefault が呼ばれた
+    expect(selected()).toBe("/beta")
+
+    // Meta（Command）と組み合わせたときは反応しない。
+    const withMeta = fireEvent.keyDown(textArea(), { key: "n", ctrlKey: true, metaKey: true })
+    expect(withMeta).toBe(true) // preventDefault は呼ばれない
+    expect(selected()).toBe("/beta")
+
+    const backward = fireEvent.keyDown(textArea(), { key: "p", ctrlKey: true })
+    expect(backward).toBe(false)
+    expect(selected()).toBe("/alpha")
+  })
+
+  it("候補が出ていないときは Ctrl+N / Ctrl+P は何もしない（preventDefault も呼ばない）", () => {
+    const calls: unknown[] = []
+    renderComposer({}, (command) => calls.push(command))
+
+    fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
+
+    const forward = fireEvent.keyDown(textArea(), { key: "n", ctrlKey: true })
+    const backward = fireEvent.keyDown(textArea(), { key: "p", ctrlKey: true })
+
+    expect(forward).toBe(true) // preventDefault は呼ばれない
+    expect(backward).toBe(true)
+    expect(calls).toEqual([])
+    expect(textArea().value).toBe("架空の依頼")
+  })
 })

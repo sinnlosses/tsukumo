@@ -116,9 +116,9 @@
     "dependencies": [],
     "summary": "コマンド補完の上下移動に Ctrl+P / Ctrl+N を足す",
     "task": "## 背景\n\nユーザーの要望（2026-09-15）「Mac の場合、コマンド補完を ctrl+p や ctrl+n で上下に移動したい」。\n\n**いまは矢印キーだけ。** `src/ui/dispatch/composer.tsx` の `onKeyDown` が、補完の候補が出て\nいる間だけ `ArrowDown`（86行目付近）と `ArrowUp`（91行目付近）で選択を動かし、\n`Tab` / `Enter` で確定、`Escape` で閉じる。キーの割り当ては\n`docs/requirements.md` 4.2「入力欄」の (3) に書かれている\n（Tab・Enter はどちらも確定だけ、送信は Command+Enter）。\n\n**macOS では `Ctrl+P` / `Ctrl+N` がテキスト入力の標準の移動キー**（emacs 風のキーバインド）で、\n`<textarea>` にフォーカスがあるとキャレットが上下の行へ動く。**`preventDefault` が要る。**\n\n## 解くべき論点\n\n- **候補が出ていないときは何もしない**（既定の動きを妨げない）でよいか。候補が出ている間だけ\n  奪う形にすれば、普段のキャレット移動は残る\n\n## やること\n\n1. `src/ui/dispatch/composer.tsx` の `onKeyDown` で、**候補が出ている間だけ**\n   `Ctrl+P` を `ArrowUp` と同じ、`Ctrl+N` を `ArrowDown` と同じ扱いにする。\n   `event.preventDefault()` を忘れない（キャレットが動くため）\n2. `Meta`（Command）と組み合わせたときは反応しない（Command+Enter の送信と混ざらないよう、\n   `ctrlKey` だけを見る）\n3. `docs/requirements.md` 4.2「入力欄」の (3) に、追加したキーを書く\n4. `test/ui/dispatch/` の既存のテストに合わせてケースを足す\n\n## 完了条件\n\n- 候補が出ている間、`Ctrl+P` / `Ctrl+N` で選択が上下に動くことをテストで示す\n- **候補が出ていないときは選択が動かず、`preventDefault` も呼ばれない**ことをテストで示す\n- 矢印キー・`Tab` / `Enter` / `Escape` の既存の挙動が変わっていないこと（既存テストが通る）\n- `docs/requirements.md` 4.2 にキーの追加が書かれていて、**節の数が変わっていない**\n  （`grep -c '^#\\{2,3\\} ' docs/requirements.md` を前後で比較）\n- `bun run check` が通る（pass 件数の増減を `evidence` に書く）\n\n## 注意\n\n- **送信は Command+Enter のまま**（2026-09-12 の決定。`docs/requirements.md` 4.2）。\n  確定と送信を同じキーで兼ねない\n- IME の変換中（`composing`）の扱いを変えない\n- 確認は tsukumo 自身で行える（playwright で `Ctrl+P` / `Ctrl+N` を打って選択が動くかを見る）。\n  `loopable` は `\"Y\"`（`docs/workflow.md`「`loopable` の判定」）",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": "yes",
+    "evidence": "src/ui/dispatch/composer.tsx の onKeyDown で、候補が出ている間だけ Ctrl+N を ArrowDown、Ctrl+P を ArrowUp と同じ扱いにした（ctrlKey && !metaKey のときだけ）。\\ntest/ui/dispatch/composer.test.tsx に2件: 候補が出ている間の上下移動と Meta 併用の無視、候補が出ていないときは dispatch も preventDefault も起きないこと（keyDown の戻り値で判定）。\\ndocs/requirements.md 4.2 の入力欄 (3) に追記。節の数は 26 で不変。bun run check: 553 pass / 0 fail（変更前 551）。"
   },
   {
     "id": "T-129",
