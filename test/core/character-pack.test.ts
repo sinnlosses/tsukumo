@@ -114,26 +114,30 @@ describe("characterChangedEvent", () => {
 // **人格は手で書いた架空の一文だけ**（実物の人格ファイルも会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
+const SPEECH_CADENCE = "（セリフの間合い。テスト用の短い文）"
 const REPORT_NOTATION = "（レポートの記法。テスト用の短い文）"
+const RULES = [SPEECH_CADENCE, REPORT_NOTATION]
 
 describe("persona.md", () => {
-  it("パックの persona.md を読み、人格 → レポートの記法の順につなぐ", () => {
+  it("パックの persona.md を読み、人格 → tsukumo 側の規約の順につなぐ", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
     writeFileSync(join(dir, "persona.md"), PERSONA)
 
     const pack = readCharacterPack(dir)
 
     expect(pack.persona).toBe(PERSONA)
-    expect(buildSystemPromptAppend(pack, REPORT_NOTATION)).toBe(`${PERSONA}\n\n${REPORT_NOTATION}`)
+    expect(buildSystemPromptAppend(pack, RULES)).toBe(
+      `${PERSONA}\n\n${SPEECH_CADENCE}\n\n${REPORT_NOTATION}`,
+    )
   })
 
-  it("persona.md が無いパックでも起動する（append がレポートの記法だけになる）", () => {
+  it("persona.md が無いパックでも起動する（append が tsukumo 側の規約だけになる）", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
 
     const pack = readCharacterPack(dir)
 
     expect(pack.persona).toBeUndefined()
-    expect(buildSystemPromptAppend(pack, REPORT_NOTATION)).toBe(REPORT_NOTATION)
+    expect(buildSystemPromptAppend(pack, RULES)).toBe(`${SPEECH_CADENCE}\n\n${REPORT_NOTATION}`)
   })
 })
 

@@ -54,7 +54,7 @@ export type CharacterPack = {
   readonly definition: CharacterDefinition | undefined
   /**
    * 人格（`persona.md` の全文）。**無いパックでも起動する**（`systemPrompt` の append が
-   * レポートの記法だけになる。docs/design.md 7章）。
+   * tsukumo 側の規約（セリフの間合い・レポートの記法）だけになる。docs/design.md 7章）。
    */
   readonly persona: string | undefined
   /**
@@ -149,12 +149,15 @@ export function toCharacterPackChoices(
 }
 
 /**
- * `systemPrompt` の append を組み立てる。**人格 → レポートの記法の順**にするのは、記法
+ * `systemPrompt` の append を組み立てる。**人格 → tsukumo 側の規約の順**にするのは、規約
  * （機械的な決まりごと）を後ろに置いて人格の文章に埋もれさせないため。人格が無いパックでは
- * 記法だけになる（docs/design.md 7章）。
+ * 規約だけになる（docs/design.md 7章）。
+ *
+ * `rules` はパックによらず同じもの（`src/core/speech-cadence.ts` と
+ * `src/core/report-notation.ts`）で、**並べる順は呼び出し側（`src/cli.ts`）が決める**。
  */
-export function buildSystemPromptAppend(pack: CharacterPack, reportNotation: string): string {
-  return [pack.persona, reportNotation]
+export function buildSystemPromptAppend(pack: CharacterPack, rules: readonly string[]): string {
+  return [pack.persona, ...rules]
     .filter((part) => part !== undefined && part.trim() !== "")
     .join("\n\n")
 }

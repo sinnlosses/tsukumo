@@ -43,6 +43,7 @@ import {
   startSession,
 } from "./core/session-driver.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
+import { SPEECH_CADENCE_PROMPT } from "./core/speech-cadence.ts"
 import { watchTaskSummary } from "./core/task-summary.ts"
 import { watchUiSource } from "./core/ui-rebuild.ts"
 import { type ExpressionChoice, expressionChoices } from "./protocol/character.ts"
@@ -328,7 +329,10 @@ function startDriver(seed: DriverSeed, onEvent: (event: SessionEvent) => void): 
     cwd: seed.cwd,
     expressions: seed.expressions,
     permissionMode: DEFAULT_PERMISSION_MODE,
-    systemPromptAppend: buildSystemPromptAppend(seed.persona, REPORT_NOTATION_PROMPT),
+    systemPromptAppend: buildSystemPromptAppend(seed.persona, [
+      SPEECH_CADENCE_PROMPT,
+      REPORT_NOTATION_PROMPT,
+    ]),
     resume: seed.resume,
     tag: sessionTag(seed.persona.name),
     onEvent,

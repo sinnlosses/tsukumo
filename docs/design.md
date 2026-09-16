@@ -291,8 +291,8 @@ type ServerFrame =
 `SessionDriver` の契約（`prompt` / `interrupt` / `answer` / `pending` / `setModel` /
 `setPermissionMode` / `close`）と `onEvent` はそのまま。足すのは次の2つだけ。
 
-- `persona: string | undefined` を受け取り、`systemPrompt.append` に `REPORT_NOTATION_PROMPT` と
-  一緒に足す（7章）
+- `persona: string | undefined` を受け取り、`systemPrompt.append` に tsukumo 側の規約
+  （`SPEECH_CADENCE_PROMPT` / `REPORT_NOTATION_PROMPT`）と一緒に足す（7章）
 - `resume: string | undefined`（8章。T-078 のとおり）
 
 ### fake-driver.ts
@@ -484,7 +484,7 @@ CDN からは読まない（いまのまま）。`bun build` の出力は1本（
 ```
 characters/<name>/
   character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）/ speechMarker
-  persona.md         人格。tsukumo が systemPrompt.append で足す（speak の使い方・セリフと詳細の書き分けを含む）
+  persona.md         人格。tsukumo が systemPrompt.append で足す（口調・セリフと詳細の書き分け。セリフの間合いとレポートの記法は core 側）
   *.svg / *.png      素材
 ```
 

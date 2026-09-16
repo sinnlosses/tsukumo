@@ -48,6 +48,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-16 セリフの間合いを core の規約にした（T-150）
+
+`speak` を呼ぶ頻度（1ターン5〜10回）・契機・セリフに入れる中身を `src/core/speech-cadence.ts`
+に置き、3つの `persona.md` に重複していた「呼ぶタイミング」を消した。パックが決めるのは
+口調だけになった。**効くのは次にプロセスを起こしてから。**
+
 ### 2026-09-16 タスク一覧の表に loopable の列を足した（T-151）
 
 `src/protocol/task-summary.ts` が `loopable` を読み捨てていたので `TaskSummaryItem` に足し、
