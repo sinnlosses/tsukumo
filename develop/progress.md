@@ -75,17 +75,6 @@ fs に触らない3関数（`characterChangedEvent` / `buildSystemPromptAppend` 
 `.question-choice-description` の省略記号を外して折り返す形にした。選択肢そのものは広がらず、
 はみ出るぶんは `.question-card` の中でスクロールする。
 
-### 2026-09-16 追い越された中間レポートを畳むようにした（T-161）
-
-同じターンで後ろにレポートが出た中間レポートを `<details>` にし、`<summary>` に
-「中間レポート: <先頭行>」を出す。いちばん下の1件は開いたまま残る。
-
-### 2026-09-16 src/adapter/ を切り、core を純粋な判断に絞った（T-143・移行の段2）
-
-境界の 12 ファイルを `src/adapter/` へ移し、`core` から `node:` の import が 0 件になった。
-`test/architecture.test.ts` が `core → adapter` を落とすので、**純粋さがテストで守られる**。
-T-162 / T-163 のブロックが外れた。
-
 ## 未解決
 
 - **偽の駆動で質問の場面を自動操作したとき、`turnInProgress` が解消しないことがある**
