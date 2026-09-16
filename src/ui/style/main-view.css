@@ -130,6 +130,28 @@ h2.turn-request {
 .detail-block .note-ng {
   border-left-color: var(--state-ng);
 }
+/* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと。
+   `docs/glossary.md`「お願い」）。**状態の3色は増やさない**（13.1 原則5）ので、note-warn /
+   note-ng の系列には入れず、**縦罫の色・地・ラベルの文字**の3つで地の文と見分ける。
+   縦罫が accent なのは「依頼の見出しの縦罫」（.turn-request）と対になる場所だから
+   — 依頼が利用者からキャラクターへ、お願いがキャラクターから利用者へ向く（13.1 原則1 が
+   accent を許すのは文字ではなく罫線の側）。地を ground に落として枠で囲むのは
+   .main-step.is-interim と同じ手口で、親の地が surface でも ground でも塊として立つ。
+   ラベルを ::before で出すのは、**モデルが見出しの語を書き忘れても色だけで伝えないため**
+   （レポートの HTML を書くのはモデルなので、tsukumo 側が文字を保証できるのはここだけ）。 */
+.detail-block .note-favor {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  background: var(--ground);
+}
+.detail-block .note-favor::before {
+  content: "お願い";
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: var(--font-label);
+  letter-spacing: 0.08em;
+  color: var(--ink-quiet);
+}
 /* レポートの見出し（`##` / `###`）。`src/ui/report/markdown.tsx` が `h4` / `h5` として描く
    （タグは `h2.turn-request` と段が被らないよう一段落としてある）。**タイプスケールはこの4段だけ**
    （docs/design.md 13.3）なので新しい段は作らず、太さ・余白・罫線の3つで `##` と `###` を

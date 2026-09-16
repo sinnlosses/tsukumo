@@ -104,6 +104,17 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("details > summary")).not.toBeNull()
   })
 
+  it("お願い（note-favor）が塊のまま通る（class が落ちると地の文に紛れる）", () => {
+    const { container } = render(
+      <Markdown text={'<div class="note note-favor">架空のお願いの文。</div>'} />,
+    )
+
+    // 「お願い」のラベルは CSS の ::before が付けるので、ここで見るのは class が残ることだけ。
+    const favor = container.querySelector("div.note.note-favor")
+    expect(favor).not.toBeNull()
+    expect(favor?.textContent).toBe("架空のお願いの文。")
+  })
+
   it("<details> の中の Markdown が、空行を挟めば <details> の中で解釈される", () => {
     const { container } = render(
       <Markdown
