@@ -28,8 +28,13 @@ export function Turn(props: TurnProps): ReactElement {
       )}
       {turn.steps.length > 0 && (
         <div className="main-steps">
-          {turn.steps.map((step, index) => (
-            <Step step={step} key={index} />
+          {/* `key` は配列の添字ではなく `step.id`（`limitTurnEntries` が古いステップを落とす前に
+              振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
+              ずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open`
+              のような制御されていない DOM の状態が別のステップへ乗り移って見える
+              （2026-09-16 の指摘。`src/protocol/main-view.ts` の `MainViewStep.id` を参照）。 */}
+          {turn.steps.map((step) => (
+            <Step step={step} key={step.id} />
           ))}
         </div>
       )}

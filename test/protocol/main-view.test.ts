@@ -86,6 +86,31 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(turns[0]?.steps[0]?.report).not.toBe("レポート0")
   })
 
+  it("上限を超えて古いステップが落ちても、残ったステップの id は変わらない（T-165）", () => {
+    const entries = [
+      request("依頼"),
+      ...Array.from({ length: 45 }, (_, index) => detail(`レポート${String(index)}`)),
+    ]
+
+    const before = mainViewTurns(entries)
+    const idsBefore = (before[0]?.steps ?? []).map((step) => step.id)
+
+    // さらに記録が積まれ、前の呼び出しでは残っていたステップも古いほうから落ちる。
+    const after = mainViewTurns([...entries, detail("レポート45")])
+    const idsAfter = (after[0]?.steps ?? []).map((step) => step.id)
+
+    // 両方に残っているステップ（id の交わり）は、report の中身も id も変わらない。
+    const commonIds = idsAfter.filter((id) => idsBefore.includes(id))
+    expect(commonIds.length).toBeGreaterThan(0)
+    for (const id of commonIds) {
+      const stepBefore = before[0]?.steps.find((step) => step.id === id)
+      const stepAfter = after[0]?.steps.find((step) => step.id === id)
+      expect(stepAfter?.report).toBe(stepBefore?.report)
+    }
+    // id は作られた順の通し番号なので、添字（0始まりで詰め直したもの）とは違い連番のまま維持される。
+    expect(idsAfter[0]).toBeGreaterThan(idsBefore[0] ?? -1)
+  })
+
   it("短い実況は、ツールが続いた時点で落ちる（構造の印が無い）", () => {
     const turns = mainViewTurns([
       request("依頼"),

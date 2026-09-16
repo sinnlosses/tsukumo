@@ -39,8 +39,17 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  *
  * `firstLine` は `report` の先頭行（`report` が undefined なら undefined）。畳んだときの
  * `<summary>` に出す（`extractFirstLine`）。
+ *
+ * `id` は**追加されても番号がずれない**ように、そのやり取りの中で作られた順に先頭から数えた
+ * 通し番号（`MainViewTurn.id` と同じ考え方）。`limitTurnEntries` が上限を超えた分を古いほうから
+ * 落としても、残ったステップの `id` は変わらない（`groupIntoTurns` で、`limitTurnEntries` より
+ * 前に振る）。`src/ui/main-view/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
+ * すると**、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に、React が別のステップの
+ * DOM を使い回して描き直してしまう（`<details>` の `open` のような制御されていない DOM の状態が
+ * 別のステップへ乗り移って見える。2026-09-16 の指摘）。
  */
 export type MainViewStep = {
+  readonly id: number
   readonly report: string | undefined
   readonly interim: boolean
   readonly superseded: boolean
@@ -73,28 +82,45 @@ export function mainViewTurns(entries: readonly MainViewEntry[]): readonly MainV
     .map((turn) => limitTurnEntries(turn))
 }
 
+/**
+ * 組み立て中のやり取り。`nextStepId` は、そのやり取りの中で次に作るステップへ振る番号
+ * （`limitTurnEntries` で古いステップを落とす前に、作られた順で振り切る。落としたあとに
+ * 振り直すと `MainViewStep.id` が「番号がずれない」約束を満たせなくなる）。
+ */
+type PendingTurn = {
+  readonly id: number
+  readonly request: string | undefined
+  steps: MainViewStep[]
+  nextStepId: number
+}
+
 /** 時系列に積まれた記録を、利用者の依頼を境目にしてやり取りごとへまとめる。 */
 function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTurn[] {
   const turns: MainViewTurn[] = []
-  let current: { id: number; request: string | undefined; steps: MainViewStep[] } | undefined =
-    undefined
+  let current: PendingTurn | undefined = undefined
 
   const flush = () => {
     if (current !== undefined) {
-      turns.push({ ...current, droppedCount: 0 })
+      turns.push({
+        id: current.id,
+        request: current.request,
+        steps: current.steps,
+        droppedCount: 0,
+      })
     }
   }
 
   for (const entry of entries) {
     if (entry.kind === "request") {
       flush()
-      current = { id: turns.length, request: entry.text, steps: [] }
+      current = { id: turns.length, request: entry.text, steps: [], nextStepId: 0 }
       continue
     }
 
-    current ??= { id: 0, request: undefined, steps: [] }
+    current ??= { id: 0, request: undefined, steps: [], nextStepId: 0 }
     if (entry.kind === "detail") {
       current.steps.push({
+        id: current.nextStepId++,
         report: entry.markdown,
         interim: false,
         superseded: false,
@@ -110,6 +136,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
       step === undefined
         ? [
             {
+              id: current.nextStepId++,
               report: undefined,
               interim: false,
               superseded: false,

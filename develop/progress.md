@@ -48,6 +48,11 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-16 畳んだ中間レポートの開閉が入れ替わるのを直した（T-165）
+
+`<Step>` の `key` が配列の添字だったので、`limitTurnEntries` が古いステップを落とすと
+React が別のステップの DOM を使い回していた。`MainViewStep.id`（作成順の通し番号）に替えた。
+
 ### 2026-09-16 character-pack.ts を core と adapter に割らないと決めた（T-163）
 
 fs に触らない3関数（`characterChangedEvent` / `buildSystemPromptAppend` /
@@ -123,10 +128,6 @@ T-162 / T-163 のブロックが外れた。
 - **`docs/research/architecture-proposal.md` の段1〜段3は T-142 / T-143 / T-144 として
   登録済み**（2026-09-16）。メモ末尾の「次の一手」は消化したので、**重ねて起こさない**。
   段1（T-142）は T-140 の後に置いてある（どちらも `test/architecture.test.ts` を触る）
-- **`turn.tsx` の `<Step>` は `key={index}`**（`src/ui/main-view/turn.tsx` 32行）。
-  `limitTurnEntries` が古いほうから落とすと添字がずれ、**React が別のステップの DOM を
-  使い回す**。T-161 で中間レポートを `<details>` にしたので、開閉が入れ替わって見える。
-  直すのは T-165
 - **立ち絵の `working` は二役**（`speak` で選べる表情であり、ツールが動くと自動で被さる状態
   でもある）。**T-167 でクールダウン（4000ms）を入れたので隙間では往復しない**が、二役で
   あること自体は変わっていない。**クールダウン中の `speak` の表情は無視される**（明けてから出る）

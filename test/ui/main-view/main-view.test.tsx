@@ -275,6 +275,60 @@ describe("MainView（中間レポート）", () => {
     ])
     expect(screen.getByText("できたよ")).toBeDefined()
   })
+
+  it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない（T-165）", () => {
+    // 十分な数の中間レポート（それぞれ detail + tool の対）を積み、1つのやり取りの記録の
+    // 上限（40）を超えさせる。全部のあとに非中間の締めの report を置くので、
+    // 手前は全部 superseded = true になり <details> で畳まれる（既存の「複数の中間レポートが
+    // 追い越されると全部畳まれ」ケースと同じ形）。
+    const pair = (index: number): SessionRecord[] => [
+      detail(`## 見出し${String(index)}\n\n- 発見A\n- 発見B`),
+      tool({ toolUseId: `t${String(index)}`, name: "Write", input: { file_path: "src/a.ts" } }),
+    ]
+
+    const buildRecords = (pairCount: number): SessionRecord[] => [
+      request("依頼"),
+      ...Array.from({ length: pairCount }, (_, index) => pair(index)).flat(),
+      detail("できたよ"),
+    ]
+
+    // 26件（i=0..25）: 上限（40）を超えるので、前のほうの何件かは落ちる。
+    const result = renderMainView(buildRecords(26))
+
+    const findBySummary = (text: string): HTMLDetailsElement => {
+      const details = [...result.container.querySelectorAll(".main-step.is-interim")].find(
+        (node) => node.querySelector("summary")?.textContent === text,
+      )
+      if (details === undefined || details.tagName !== "DETAILS") {
+        throw new Error(`summary "${text}" を持つ <details> が見つからない`)
+      }
+      return details as HTMLDetailsElement
+    }
+
+    // 真ん中あたり（i=15）を利用者が開いたことにする。<details> の open はReactが制御しない
+    // ネイティブの状態なので、直接プロパティを立てて「開いた」を再現する。
+    const target = findBySummary("中間レポート: 見出し15")
+    target.open = true
+    expect(target.open).toBe(true)
+
+    // 別の1件（i=16、まだ開いていない）も、化けていないかの対照として控えておく。
+    const untouchedText = "中間レポート: 見出し16"
+    expect(findBySummary(untouchedText).open).toBe(false)
+
+    // 記録がさらに積まれ（27件）、前のほうがもう1件古いほうから落ちる
+    // （i=15 自体はまだ残る範囲）。
+    rerenderMainView(result, buildRecords(27))
+
+    // id を key にしていれば、i=15 の <details> は同じ DOM ノードのまま残り、
+    // 開いた状態も中身もそのまま。添字を key にしていた旧実装では、ステップが1つ前へ
+    // ずれた分だけ別のステップの中身にこの open な枠が使い回されてしまう。
+    const targetAfter = findBySummary("中間レポート: 見出し15")
+    expect(targetAfter.open).toBe(true)
+    expect(targetAfter).toBe(target)
+
+    // 触っていない別の1件も、化けて開いたままにならない。
+    expect(findBySummary(untouchedText).open).toBe(false)
+  })
 })
 
 describe("MainView（質問の記録）", () => {
