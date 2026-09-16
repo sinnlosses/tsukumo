@@ -73,15 +73,22 @@ describe("applySessionEvent", () => {
     expect(mainViewEntries(view)).toEqual([{ kind: "detail", markdown: "途中まで" }])
   })
 
-  it("セリフと表情を持ち、セリフが来ないターンでも消さない", () => {
+  it("セリフと表情を持つ", () => {
     const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
     expect(spoken.speeches).toEqual(["いくよ！"])
     expect(currentExpression(spoken, 0)).toBe("proud")
+  })
+
+  it("request で吹き出しと表情を既定に戻す（送信直後に次のターンへ移ったと分かるように）", () => {
+    const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
     const nextTurn = applySessionEvent(spoken, { kind: "request", text: "ダミーの依頼" }, 0)
 
-    expect(nextTurn.speeches).toEqual(["いくよ！"])
+    // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
+    // （src/ui/character-view/balloon-track.tsx）。
+    expect(nextTurn.speeches).toEqual([])
+    expect(currentExpression(nextTurn, 0)).toBe("default")
   })
 
   it("セリフは記録にも積むが、レポート（mainViewEntries）には出さない", () => {
@@ -117,7 +124,7 @@ describe("applySessionEvent", () => {
     expect(view.speeches).toEqual(["1つめ", "2つめ", "3つめ", "4つめ"])
   })
 
-  it("新しいターンの request の直後は、前のターンのセリフの最後の1件だけを残す", () => {
+  it("新しいターンの request の直後は吹き出しを空にし、次の speak でそのターンのものだけになる", () => {
     const firstTurn = apply(
       { kind: "request", text: "1つめの依頼" },
       { kind: "speech", text: "1つめのセリフ", expression: "default" },
@@ -129,9 +136,9 @@ describe("applySessionEvent", () => {
       { kind: "request", text: "2つめの依頼" },
       0,
     )
-    // 消すとキャラクターが消えたように見えるので最後の1件だけ残す。前のターンの並びを丸ごとは
-    // 持ち越さない（次のターンの冒頭に前のターンの並びが残らないようにする）。
-    expect(secondTurnStarted.speeches).toEqual(["1つめの2つめのセリフ"])
+    // 送信した時点で前のターンの一言は残さず空にする（次のターンに移ったことが画面から
+    // 分かるように。2026-09-16 決定）。
+    expect(secondTurnStarted.speeches).toEqual([])
 
     const secondTurnSpoken = applySessionEvent(
       secondTurnStarted,
@@ -547,7 +554,8 @@ describe("applySessionEvent", () => {
       { kind: "utterance", text: "架空のレポート" },
       { kind: "request", text: "/clear" },
     )
-    expect(before.speeches).toEqual(["架空のセリフ"])
+    // "/clear" 自体も request なので、この時点で吹き出しはすでに空（record は残る）。
+    expect(before.speeches).toEqual([])
     expect(before.records.length).toBeGreaterThan(0)
 
     const cleared = applySessionEvent(before, { kind: "conversation-cleared" }, 0)
@@ -566,7 +574,7 @@ describe("applySessionEvent", () => {
     expect(cleared.slashCommands).toEqual(["clear"])
   })
 
-  it("普通のターン（request）では前のターンの最後の1件を残す（空にするのは /clear だけ）", () => {
+  it("普通のターン（request）は records を残す（丸ごと空にするのは /clear だけ）", () => {
     const before = apply(
       { kind: "request", text: "架空の依頼" },
       { kind: "speech", text: "架空のセリフ1", expression: "default" },
@@ -574,7 +582,9 @@ describe("applySessionEvent", () => {
       { kind: "request", text: "次の架空の依頼" },
     )
 
-    expect(before.speeches).toEqual(["架空のセリフ2"])
+    // speeches は request のたびに空になる（送信直後に分かるように）が、records は
+    // 過去のターンを遡れるように残す。
+    expect(before.speeches).toEqual([])
     expect(before.records.length).toBeGreaterThan(0)
   })
 

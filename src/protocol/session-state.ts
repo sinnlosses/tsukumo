@@ -109,10 +109,10 @@ export type SessionRecord =
 export type SessionState = {
   /**
    * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。**件数の上限は無い**、
-   * ターンの境目だけで区切る）。**セリフが1つも来なかったターンでも消さない**
-   * （docs/requirements.md 4.2。`request` の時点では前のターンの並びの**最後の1件だけ**を残し、
-   * 次の `speech` が来た時点でそのターンのものだけに置き換わる。{@link applySessionEvent} の
-   * `request` / `speech` を参照）。まだ一度も `speak` が呼ばれていなければ空配列。
+   * ターンの境目だけで区切る）。**`request` の時点で空にする**（プレースホルダーに切り替わり、
+   * 次のターンに移ったことが画面から分かる。docs/requirements.md 4.2、2026-09-16 決定。
+   * {@link applySessionEvent} の `request` を参照）。まだ一度も `speak` が呼ばれていない・
+   * そのターンでまだ呼ばれていなければ空配列。
    */
   readonly speeches: readonly string[]
   /** 直近のセリフに添えられた表情。ツールの実行中は「作業中」が優先される。 */
@@ -261,9 +261,14 @@ export function applySessionEvent(
       return {
         ...state,
         records: trimToRecentTurns([...state.records, { kind: "request", text: event.text }]),
-        // 前のターンの並びは最後の1件だけ残す（消すとキャラクターが消えたように見えるが、
-        // 丸ごと持ち越すと次のターンの冒頭に前のターンの並びが残ってしまう）。
-        speeches: state.speeches.slice(-1),
+        // 送信した時点で吹き出しを空にする（プレースホルダー「（まだ発話がありません）」に
+        // 切り替わる。前のターンの一言が残ったままだと、次のターンに移ったことが画面から
+        // 分からない。2026-09-16 決定。以前は前のターンの並びの最後の1件を残していたが、
+        // それが「切り替わったのか分からない」の原因だった）。
+        speeches: [],
+        // 表情も既定へ戻す。ツールが動き始めれば `working` に切り替わる（expression.ts）ので、
+        // ここで戻すのはその手前の一瞬だけ。
+        speechExpression: INITIAL_SESSION_STATE.speechExpression,
         partialUtterance: "",
         turnInProgress: true,
         speechCalledInTurn: false,
@@ -337,8 +342,9 @@ export function applySessionEvent(
       // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**（2026-09-15 決定）。
       // 消すのは吹き出しとメインビューが読む値だけで、キャラクター・セッション情報・
       // 答え待ちの列は残す（`pending` の正典は core の待ち行列なので、状態側で空にすると
-      // 実際の待ちと食い違う）。**普通のターンの `speeches.slice(-1)`（docs/requirements.md
-      // 4.2）はそのまま**で、空にするのはここだけ。
+      // 実際の待ちと食い違う）。**普通の `request` と違うのは `records` も空にする点**
+      // （普通のターンは過去のターンを遡れるように records を残す。`/clear` は会話そのものを
+      // 消す操作なので records も落とす）。
       return {
         ...state,
         speeches: [],

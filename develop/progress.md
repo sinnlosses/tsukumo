@@ -48,6 +48,11 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-16 送信した時点で吹き出しが切り替わるようにした（T-160）
+
+`request` で `speeches` を空にし、既存のプレースホルダ「（まだ発話がありません）」の経路に
+乗せた。表情も既定へ戻す。2026-09-12 の「最後の1件だけ残す」を置き換えたもの。
+
 ### 2026-09-16 中間レポートを残し、実況だけを落とすようにした（T-159）
 
 `keepOnlyInterimReports`（旧 `dropNarration`）が本文の中身を見るようになり、構造の印を持つ
@@ -76,12 +81,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `src/protocol/task-summary.ts` が `loopable` を読み捨てていたので `TaskSummaryItem` に足し、
 モーダルの表（`src/ui/sidebar/task-board.tsx`）に難易度の次の列として出した。モーダルの幅は
 変えていない（1024px のまま）。
-
-### 2026-09-16 ツールの行をレポートから消し、「レポートだけを出す」に戻した（T-133）
-
-`toolVisibility` と `<ToolRun>` と `.step-tools` をまとめて撤去した（判断そのものが要らなく
-なったので器を残さない）。進行・失敗を見る場所はサイドバーの「いま何をしているか」に一本化。
-`MainViewStep.actions` のツールは残す（`dropNarration` が判定の材料に使う）。
 
 ## 未解決
 
