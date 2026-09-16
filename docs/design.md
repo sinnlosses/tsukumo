@@ -163,30 +163,124 @@ src/
     bundled-path.ts           同梱物の位置（import.meta.url）。tsukumo-home.ts は ~/.tsukumo/
     orca-host.ts              `orca` コマンドを起こす唯一の場所
   ui/
-    main.tsx                  入口。<App> を mount する（副作用はここだけ）
-    app.tsx                   接続・状態・コマンドの配り口（Context）
-    socket.ts                 WebSocket の接続・再接続・フレームの検証
-    layout/                   Layout・領域の枠・リサイザ
-    main-view/                TurnTabs・Turn・Report（Markdown）・QuestionRecord
-    character-view/           Portrait・BalloonTrack・Balloon・動きの hooks
-    sidebar/                  Activity・TaskList・TaskBoard（表のモーダル）・SessionInfo
-    dispatch/                 Composer・CommandSuggestions・PendingAnswer・TurnStatus
-    report/                   markdown.tsx（unified の設定）・sanitize-schema.ts・MermaidBlock・ChartBlock
-    style/                    いまの .css を部品ごとに置き直す
+    main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）
+    css-variable.d.ts         ui 全体に効く型拡張（import されない ambient 宣言）
+    features/                 機能。**機能どうしは import しない**
+      layout/                 Layout・領域の枠・リサイザ・比率の保存
+      main-view/              TurnTabs・Turn・Report・QuestionRecord と markdown/（unified 一式）
+      character-view/         Portrait・BalloonTrack・Balloon・動きの hooks
+      sidebar/                Activity・TaskList・TaskBoard（表のモーダル）・SessionInfo
+      dispatch/               Composer・CommandSuggestions・PendingAnswer・TurnStatus
+      appearance/             「見た目」の引き出し・使う人が変える色・立ち絵の差し替え
+    components/               機能の語彙を持たない React の部品（Select）
+    lib/                      機能の語彙を持たない道具（WebSocket・再読み込み・要約・設定の保存）
+    stores/                   画面全体で共有する状態の Context（セッション・選んでいるターン）
+    styles/                   CSS。main.css の @import で束ねる（機能と同居させない）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts（いまのまま）
 characters/<name>/            character.json・persona.md・素材
 vendor/                       mermaid・Chart.js・highlight のテーマ CSS（Idiomorph は消える）
 ```
 
-**ファイル名は概念**（原則5）。`helpers` / `utils` / `common` は作らない。ディレクトリもファイルも単数形
-（`main-view/` のように領域名は用語集の語に合わせる）。
+**ファイル名は概念**（原則5）。`helpers` / `utils` / `common` は作らない。**単数形の規約は
+`src/ui/` の置き場所のディレクトリ（`features/` `components/` `lib/` `stores/` `styles/`）だけ
+外れる**（2026-09-16。bullet-proof-react の名前をそのまま採る。`protocol` / `core` / `adapter` と、
+機能の中のファイル名は単数形のまま。`main-view/` のように機能の名前は用語集の語に合わせる）。
+
+**`src/ui/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
+「その機能しか読まないなら機能の中」が既定）:
+
+| 箱            | 置くもの                                                          | import してよい先                            |
+| ------------- | ----------------------------------------------------------------- | -------------------------------------------- |
+| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root） | すべて                                       |
+| `features/`   | 1つの機能に閉じた部品・状態・保存                                 | `components` / `lib` / `stores` / `protocol` |
+| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る） | `lib` / `protocol`                           |
+| `lib/`        | 機能の語彙を持たない道具（React の部品ではないもの）              | `protocol`                                   |
+| `stores/`     | **画面全体で共有する状態**の Context と、それを読む hook          | `lib` / `protocol`                           |
+| `styles/`     | CSS。`main.css` の `@import` が束ねる（読み込み順が正しさの一部） | —                                            |
+
+- **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
+  （zustand を入れない決定は 6.2 のまま。中身は `useReducer` + Context）。実体は2つあり、
+  `stores/session.tsx` は `SessionState` を畳んで全機能に配り、`stores/turn-selection.tsx` は
+  メインビューとキャラビューに同じターンの選択を配る。**どちらも複数の機能が読む**ので機能の中に
+  置けず、`main.tsx` に残すと機能が入口を import することになる（だから箱が要る）
+- **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。
+  入口の `main.tsx` は直下のまま（`app/` を作らない理由は下の表）
+- **機能どうしは import しない。** 機能をまたいで要るものは、**部品なら `components/`、
+  部品でないなら `lib/`、状態なら `stores/` へ上げる**。上げる引き金は「2つ目の読み手が出たとき」で、
+  1つの機能しか読まないものは機能の中に残す（`features/layout/split.ts`・
+  `features/appearance/appearance-color.ts` がその例）
+- **機能は `main.tsx` と `stores/` の中身を「組み立てる側」として import しない。** 機能が触れるのは
+  `stores/` が公開する hook（`useSession` / `useTurnSelection`）まで
+- **親が子を組む形も機能どうしの import に数える。** `<Layout>` は `<Appearance>` を直接
+  import せず、`main.tsx` から受け取る（下の「同時に直すもの」）
+- 検査は `test/architecture.test.ts`（いまの `UI_REGIONS` の検査を、上の辺に合わせて書き直す）
+
+**移動の対応表**（組み替えのときはこの表だけを見て動かす。**ファイルの中身は動かさない**）。
+**この表より後に出てくる `src/ui/` のパスは、すべて組み替え後の形で書いてある**（移動そのものは
+別のタスクで行うので、しばらくの間はコードの側が古い。12章の移行の記録だけは当時のまま）:
+
+| いまのパス                                                                                                                                                                 | 新しいパス                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `src/ui/main.tsx`                                                                                                                                                          | 変えない（`bun build` の入口）        |
+| `src/ui/css-variable.d.ts`                                                                                                                                                 | 変えない（ui 全体に効く）             |
+| `src/ui/app.tsx`                                                                                                                                                           | `src/ui/stores/session.tsx`           |
+| `src/ui/turn-selection.tsx`                                                                                                                                                | `src/ui/stores/turn-selection.tsx`    |
+| `src/ui/socket.ts`                                                                                                                                                         | `src/ui/lib/socket.ts`                |
+| `src/ui/refresh.ts`                                                                                                                                                        | `src/ui/lib/refresh.ts`               |
+| `src/ui/component/tool-summary.ts`                                                                                                                                         | `src/ui/lib/tool-summary.ts`          |
+| `src/ui/appearance/portrait-fixed.ts`                                                                                                                                      | `src/ui/lib/portrait-fixed.ts`        |
+| `src/ui/component/select.tsx`                                                                                                                                              | `src/ui/components/select.tsx`        |
+| `src/ui/layout/` の3件（`layout.tsx` / `layout-resizer.tsx` / `split.ts`）                                                                                                 | `src/ui/features/layout/`             |
+| `src/ui/main-view/` の5件（`main-view.tsx` / `turn.tsx` / `turn-tabs.tsx` / `report.tsx` / `question-record.tsx`）                                                         | `src/ui/features/main-view/`          |
+| `src/ui/report/` の7件（`markdown.tsx` / `sanitize-schema.ts` / `split-blocks.ts` / `mermaid-block.tsx` / `chart-block.tsx` / `vendor-script.ts` / `vendor-globals.d.ts`） | `src/ui/features/main-view/markdown/` |
+| `src/ui/character-view/` の4件（`character-view.tsx` / `portrait.tsx` / `balloon-track.tsx` / `balloon.tsx`）                                                              | `src/ui/features/character-view/`     |
+| `src/ui/sidebar/` の6件（`sidebar.tsx` / `activity.tsx` / `section.tsx` / `session-info.tsx` / `task-list.tsx` / `task-board.tsx`）                                        | `src/ui/features/sidebar/`            |
+| `src/ui/dispatch/` の5件（`dispatch.tsx` / `composer.tsx` / `command-suggestions.tsx` / `pending-answer.tsx` / `turn-status.tsx`）                                         | `src/ui/features/dispatch/`           |
+| `src/ui/appearance/` の残り3件（`appearance.tsx` / `appearance-color.ts` / `character-edit.tsx`）                                                                          | `src/ui/features/appearance/`         |
+| `src/ui/style/` の10件（`.css`。ファイル名は変えない）                                                                                                                     | `src/ui/styles/`                      |
+
+**同時に直すもの**（移動だけでは動かない点。振る舞いは変えない）:
+
+- `src/ui/app.tsx` が公開する `App` は **`SessionProvider` に改名**する（ファイル名が
+  `stores/session.tsx` になり、`<App>` という名前は「アプリ全体」を指していないため）。
+  読み替えるのは `src/ui/main.tsx` と部品のテストだけ（`SessionContext` / `useSession` の名前は変えない）
+- `src/ui/features/layout/layout.tsx` は `<Appearance>` を import せず、
+  `renderAppearance: (onResetSplit: () => void) => ReactNode` を props で受け取る。渡すのは
+  `src/ui/main.tsx`（比率を戻す関数は `<Layout>` の内側にあるので、素の `ReactNode` では渡せない）
+- `src/adapter/bundle.ts` の `buildStyleSheet` の入口が `src/ui/styles/main.css` になる
+  （`buildUiScript` の `src/ui/main.tsx` は変わらない。`ui-rebuild.ts` は `src/ui/` を丸ごと
+  見張っているので変わらない）
+- テストは `test/ui/<新しい相対パス>.test.ts` へ同じ形で移す（`test/ui/component/` は
+  `test/ui/lib/` と `test/ui/components/` に割れ、`test/ui/report/` は
+  `test/ui/features/main-view/markdown/` になる）
+- パスを本文に書いているコメントを追随させる（`src/core/report-notation.ts`・
+  `src/protocol/session-state.ts`・`src/protocol/session-socket.ts`・`src/adapter/server.ts`・
+  `test/dom-environment.ts`・`test/cli.test.ts`）。ドキュメントで残るのは
+  `docs/requirements.md` 4.3 の `src/ui/style/theme.css` 1件
+
+**採らなかった bullet-proof-react の要素**（実体が無い箱を先に作らないため。要るようになったら足す）:
+
+| 採らないもの                           | 理由                                                                                                                                                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app/`                                 | ルーティングもページも無く、中身は `main.tsx` 1つになる（状態は `stores/`、接続と再読み込みは `lib/` へ分かれる）。入口は `bun build` の入口でもあるので直下に置く。**機能が `app/` を import しない**という bullet-proof-react の向きも、箱を作らなければ破りようがない |
+| `api/`（機能の中も含む）               | REST も react-query も無い。サーバとの往復は WebSocket 1本で `lib/socket.ts` と `stores/` に閉じている                                                                                                                                                                   |
+| `types/`                               | 型の正典は `src/protocol/`。ui 側に置くと契約が二重になる（原則2）。ambient な `.d.ts` は import されないので使う場所の隣に置く                                                                                                                                          |
+| `utils/`                               | 実体は `tool-summary.ts` 1つで、置くと「どこにも属さない小物」の受け皿になる（原則5）。`lib/` に入れる                                                                                                                                                                   |
+| `hooks/`（共有）                       | 共有の hook が無い。`useSession` / `useTurnSelection` は Context の付属なので provider と同じファイルに置く                                                                                                                                                              |
+| `config/`                              | 設定と環境変数は `src/core/config.ts` と `src/cli.ts` が持ち、ui は `SessionState` で受け取るだけ                                                                                                                                                                        |
+| `assets/`                              | 立ち絵も vendor のライブラリもサーバが配る（`characters/` と `vendor/`）。ui に素材を置かない                                                                                                                                                                            |
+| `testing/`                             | テストは `test/` に `src/` の形を写す既存の規約がある（`test/dom-environment.ts` がその置き場）                                                                                                                                                                          |
+| `index.ts`（barrel file）              | 2026-09-13 の決定のまま禁止。bullet-proof-react 自身も tree-shaking の理由で外している                                                                                                                                                                                   |
+| `@/` の絶対 import                     | 相対パス + 拡張子付きの既存の書き方を変えない（`bun build` と `tsc` の設定を増やさない）                                                                                                                                                                                 |
+| 機能の中の `components/` `utils/`      | 1機能は3〜6ファイルなので階層を増やさない（例外は `main-view/markdown/`。置き場所ではなく概念の名前）                                                                                                                                                                    |
+| ESLint の `import/no-restricted-paths` | lint は oxlint で、同等の規則が無い。辺の検査は `test/architecture.test.ts` で行う                                                                                                                                                                                       |
 
 ## 3. 動きの流れ
 
 ### 起動
 
 1. `cli.ts` が `config.ts` で環境変数を読む（ポート・キャラクター・自動オープン・駆動の種類・新規起動）
-2. `bundle.ts` が `ui/main.tsx` と `ui/style/main.css` を `bun build` で束ね、メモリに持つ
+2. `bundle.ts` が `ui/main.tsx` と `ui/styles/main.css` を `bun build` で束ね、メモリに持つ
    （失敗は起動時の前提不足として即時終了。いまと同じ）
 3. `character-pack.ts` が既定のパック（または指定されたもの）を読む
 4. `server.ts` が `127.0.0.1` で listen し、**起動トークン**を1つ作る
@@ -404,7 +498,7 @@ type SessionHost = {
 ### 6.1 部品の木
 
 ```
-<App>                        socket.ts で接続。SessionState と dispatch(command) を Context で配る
+<SessionProvider>            lib/socket.ts で接続。SessionState と dispatch(command) を Context で配る
 └ <Layout>                   grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）
    ├ <MainView>              <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
    │   └ <Turn>              <RequestHeading> + [<Report> | <QuestionRecord>]*
@@ -420,34 +514,37 @@ type SessionHost = {
    │   ├ <Composer>          <textarea>。Enter 改行 / ⌘Enter 送信。<CommandSuggestions> を内包
    │   └ <TurnStatus>        送信 ⇄ 中断、経過 / 所要
    └ <Appearance>            「見た目」の引き出し（13.6）。色3つ・立ち絵の固定・比率のリセット。
-      │                      **一時的に重なるもの**で、常設の枠を増やさない
+      │                      **一時的に重なるもの**で、常設の枠を増やさない。**<Layout> は
+      │                      これを import せず、main.tsx から受け取る**（2章「同時に直すもの」）
       └ <CharacterEdit>      いま出しているパックの立ち絵（表情ごと）と差し色（衣装ごと）の差し替え（7.1）
 ```
 
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。
 
-**選んでいるターンは `<App>` の内側の `<TurnSelectionProvider>`（`ui/turn-selection.tsx`）が
-配る**（6.2）。`<MainView>` のタブだけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
+**選んでいるターンは `<SessionProvider>` の内側の `<TurnSelectionProvider>`
+（`ui/stores/turn-selection.tsx`）が配る**（6.2）。`<MainView>` のタブだけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
 従う**（過去のターンを選んでいる間は、そのターンのセリフと**最後のセリフの表情**に戻す。
 ターンごとのセリフは `protocol/turn-speech.ts` が記録から引く）。**立ち絵の「動き」は遡らない**
 （時間相対のアニメーションなので、遡るには `docs/requirements.md` 4.3 の決定の見直しが要る）。
 
 ### 6.2 状態の持ち方
 
-| 状態                                                             | 置き場所                                                                                  |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `SessionState`                                                   | `<App>` の `useReducer(applySessionEvent)`。`events` フレームを畳む。`hello` で置き換える |
-| 接続中 / 切断中、プロトコルの版違い                              | `<App>` のローカル状態                                                                    |
-| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `ui/turn-selection.tsx` の Context（メインビューとキャラビューの両方が読む。規則は同じ）  |
-| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                               |
-| 質問の選択（送る前）                                             | `<PendingAnswer>` のローカル状態                                                          |
-| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turnStartedAt` から計算）                                  |
-| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                         |
+| 状態                                                             | 置き場所                                                                                              |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `SessionState`                                                   | `<SessionProvider>` の `useReducer(applySessionEvent)`。`events` フレームを畳む。`hello` で置き換える |
+| 接続中 / 切断中、プロトコルの版違い                              | `<SessionProvider>` のローカル状態（`ui/stores/session.tsx`）                                         |
+| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `ui/stores/turn-selection.tsx` の Context（メインビューとキャラビューの両方が読む。規則は同じ）       |
+| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                           |
+| 質問の選択（送る前）                                             | `<PendingAnswer>` のローカル状態                                                                      |
+| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turnStartedAt` から計算）                                              |
+| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                     |
 
 zustand などの状態ライブラリは**入れない**。必要になるまで `useReducer` + Context で足りる。
+**`ui/stores/` はその「画面全体で共有する状態」の置き場であって、状態ライブラリの置き場ではない**
+（2章）。
 
-### 6.3 Markdown（`report/markdown.tsx`）
+### 6.3 Markdown（`features/main-view/markdown/markdown.tsx`）
 
 ```
 react-markdown
@@ -456,6 +553,9 @@ react-markdown
   components: { code: フェンスの言語で MermaidBlock / ChartBlock / 通常 に振り分け, a: 許可スキームだけ }
 ```
 
+- Markdown 一式（unified の設定・`sanitize-schema.ts`・`MermaidBlock` / `ChartBlock`・
+  `vendor-script.ts`）は**メインビューの機能の中**に置く（読み手が `<Report>` だけなので、
+  共有の箱に上げない。2章）
 - **`schema` はいまの `sanitizeReportHtml` の許可リストを写す**（54要素・42属性 + `class` の語彙
   `note` / `badge` / `cols` / `card` など）。`style` 属性は `url(` / `@import` を含むものを落とす
   規則も `schema` の `attributes` の正規表現で表す。**規約（`report-notation.ts`）・schema・CSS の
@@ -498,19 +598,25 @@ CDN からは読まない（いまのまま）。`bun build` の出力は1本（
 - 作るのは4つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に
   領域の中をゆっくり歩く）/ **完了の反応**（小さく跳ねる）/ **失敗でびくっ**（一瞬のけぞる）
 - **領域の外へ出さない。** `.character-region` の中で閉じる（レポートの上に被らせない）
-- **利用者は「固定」を選べる。** 値は `localStorage`（`src/ui/layout/split.ts` の前例）
-- `prefers-reduced-motion: reduce` を尊重する（`src/ui/style/theme.css`）
+- **利用者は「固定」を選べる。** 値は `localStorage`（`src/ui/features/layout/split.ts` の前例）。
+  読むのはキャラビュー、書くのは「見た目」の引き出しと、**機能をまたぐので `ui/lib/` に置く**（2章）
+- `prefers-reduced-motion: reduce` を尊重する（`src/ui/styles/theme.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）
 
-**既にあるもの**（`src/ui/style/character.css`）: `portrait-fade-in`（登場）・`balloon-appear`・
+**既にあるもの**（`src/ui/styles/character.css`）: `portrait-fade-in`（登場）・`balloon-appear`・
 `balloon-push-up`。登場はここで作り直さない。
 
 ### 6.6 CSS
 
-いまの `src/presentation/style/*.css` を `src/ui/style/` へ移し、部品ごとのファイルに置き直す。
-クラス名は用語集の語（`balloon` / `portrait` / `turn-tab` など）を保つ。CSS Modules は使わない
-（既存の資産をそのまま活かす）。`main.css` の `@import` を `bun build` で束ねる形はいまのまま。
+CSS は `src/ui/styles/` に集め、**機能と同居させない**（2026-09-16 の判断）。クラス名は用語集の語
+（`balloon` / `portrait` / `turn-tab` など）を保つ。CSS Modules は使わない（既存の資産をそのまま
+活かす）。`main.css` の `@import` を `bun build` で束ねる形もいまのまま。
+
+同居させない理由は2つ。**(1) クラス名がグローバルで、読み込み順（`narrow-screen.css` が最後）が
+正しさの一部**なので、束ねる場所が正典であり続ける必要がある。(2) 機能に1対1で対応しない CSS が
+ある（`theme.css` / `narrow-screen.css`）ので、同居させても半分は共有の箱に残り、「機能の中に
+あるのに機能に閉じていない」ファイルができる。
 
 ## 7. キャラクターパック
 
@@ -674,7 +780,7 @@ API を使わない形になる。
 
 ## 11. ビルドと依存
 
-- `bundle.ts` は `bun build src/ui/main.tsx --target=browser` と `bun build src/ui/style/main.css`
+- `bundle.ts` は `bun build src/ui/main.tsx --target=browser` と `bun build src/ui/styles/main.css`
   を起動時に起こす（いまと同じ形。JSX は tsconfig の `"jsx": "react-jsx"` で自動）
 - tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は `@types/bun` が持っているのでそのまま
 - **HMR（差分を当てる）は持たない。** 代わりに、**`src/ui/` を見張って組み立て直し、開いている
@@ -779,7 +885,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 ## 13. 画面のデザイン
 
 見た目の正典。**ここに書いてあるのは計画であって、CSS はこれを写したもの**（写す先は
-`src/ui/style/`。トークンは `theme.css` に置く）。
+`src/ui/styles/`。トークンは `theme.css` に置く）。
 
 いまの見た目は積み上げで決まったもので、**17色が 114 箇所**に直接書かれ、色と書体の
 カスタムプロパティは無く、`font-size` は7種類ばらばら、という状態から起こした。
