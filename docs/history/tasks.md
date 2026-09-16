@@ -7652,3 +7652,708 @@ T-129 で入れた「畳んで開く」形に対するユーザーの修正依�
 - 一度に見える件数（表）の実測値を `evidence` に書く
 - ページ全体が横にスクロールしない（`scrollWidth == clientWidth`）
 - `bun run check` が通る
+
+## T-143
+
+**タスク**: 境界のファイルを adapter/ へ移し、core を純粋な判断に絞る
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-142 / **passes**: True
+
+**evidence**:
+
+src/adapter/ を新設し、git mv で 12 件を移した（提案メモの 8 件に加え、メモ執筆後に増えた character-edit / tsukumo-home / ui-rebuild も node: を使っていたため）。session-driver は「protocol の語彙で書けるか / SDK の語彙を名乗るか」で割り、実装側を git mv で adapter/sdk-driver.ts にして履歴を繋いだ。fake-driver と character-pack はファイルごと adapter（後者を分けないのは T-163 の担当）。bun run check: 562 pass / 0 fail（HEAD を worktree に出して実測した同数）。grep -l 'from "node:' src/core/\*.ts は 0 件。core → adapter をわざと書くと architecture.test.ts が違反の辺を名指しして落ち、戻すと 8 pass に復帰。偽の駆動で2往復し、吹き出し・立ち絵（default → proud → flustered）・レポートが出ることを目視（pageerror 0 件、起こした pid だけ停止）。節の数は design 51 / architecture 10 / coding-standards 21 / requirements 26 で不変、glossary のみ 44→45（新語「アダプタ」の分）。CLAUDE.md は原則2・原則3 の2箇所のみ（5 insertions / 3 deletions）。
+
+## 背景
+
+`docs/research/architecture-proposal.md`（2026-09-15）が出した移行の段2。提案の核心で、
+**`core` に「純粋な判断」と「外の世界に触る境界」が混在している**のを、`src/adapter/` を新設して分ける。
+3層（`protocol` / `core` / `ui`）は変えず、サーバ側だけを2つに割る。
+
+**現物で裏を取った現状**（2026-09-16、`src/core/` は 17 ファイル）:
+
+- `node:` を import しているのは **8 ファイル**: `bundled-path.ts` / `character-pack.ts` / `bundle.ts` /
+  `orca-host.ts` / `server.ts` / `remembered-character.ts` / `task-summary.ts` / `fake-driver.ts`
+- SDK・`ws`・`node:child_process` に触るのは `session-driver.ts`（463 行）/ `server.ts` / `orca-host.ts` /
+  `bundle.ts`
+- 残り（`session-manager` / `pending-answer` / `sdk-message` / `session-restore` / `port-resolution` /
+  `config` / `report-notation` / `host`）は外の世界に触らない判断側
+
+提案の目標は `adapter/ ──▶ core ──▶ protocol ◀── ui`（**`core → adapter` は禁止**）で、
+`adapter/` は「1ファイル = 1つの境界。インターフェースは切らない」。
+
+## 解くべき論点
+
+- **`session-driver.ts`（463 行）の割り方。** 駆動の契約の型と既定値を `core/session-driver.ts` に残し、
+  Agent SDK を import する実装部を `adapter/sdk-driver.ts` へ出す。**境目をどこに引くか**
+- **`fake-driver.ts` の行き先。** 提案メモは「台本を fs から読むので `adapter`」と**仮定**しているが、
+  「偽の駆動は境界ではなく `core` の道具」と見るなら `core` に残し、`readFakeScript` だけを出す形もある
+  （移動対象が 8 → 7 に変わる）
+- **`character-pack.ts` を分けるか。** 提案メモはファイルごと `adapter` と**仮定**し、純粋な部分
+  （`characterChangedEvent` / `buildSystemPromptAppend` / `toCharacterPackChoices`）は分けないとしている。
+  分けるなら `core` と `adapter` の2ファイルになる
+- `test/` の対応（`src/<相対パス>` → `test/<相対パス>.test.ts`）をどう追随させるか
+
+## やること
+
+1. `src/adapter/` を作り、境界のファイルを `git mv` する（**`git mv` を使い、履歴を切らない**）
+2. `session-driver.ts` を型と実装に分割する
+3. `test/architecture.test.ts` の `Layer` に `adapter` を足し、`ALLOWED_IMPORTS` を
+   提案メモ「許す依存の辺」の表にする。**これで `core` の `node:` / SDK / `ws` 禁止が有効になる**
+4. テストの置き場を追随させる
+5. 正典（`docs/design.md` 2章の層の表、`docs/architecture.md`、`docs/glossary.md`）を更新する
+6. **調べた結果、論点の仮定（`fake-driver` / `character-pack` の置き場）が成り立たないと分かったら、
+   提案メモと違う置き方を選んでよい。** その場合は選んだ理由を `evidence` に書く
+
+## 完了条件
+
+- `bun run check` が通ること（**テストの件数が減っていないこと**。件数を `evidence` に書く）
+- `grep -l 'from "node:' src/core/*.ts` が **0 件**になること
+- `test/architecture.test.ts` が `core → adapter` の import を落とすこと（わざと書くと落ちる・戻すと通る、を
+  確かめた結果を `evidence` に書く）
+- 偽の駆動（`TSUKUMO_DRIVER=fake`）で1往復し、**レイアウトページに吹き出しとレポートが出ることを目視**した
+  結果が `evidence` にあること（`docs/architecture.md`「手で確かめること」）
+- `grep -c '^#\{2,3\} ' docs/design.md docs/architecture.md docs/glossary.md` が編集の前後で変わらないこと
+
+## 注意
+
+- **`ui/` は変えない**（提案メモの目標構造でも「変更なし」）
+- **ふるまいを変えない。** これは置き場所の移動で、判断のロジックには手を入れない
+- 起こして確かめるときは `TSUKUMO_VIEW_PORT` を既定（7327）以外にし、**止めるのは自分が起こした pid だけ**
+  （`lsof -ti :<port>` で引く。`pkill -f 'bun run'` のような広いパターンは常駐プロセスにも当たる）
+- **撮った画像をリポジトリに置かない**（ビューには会話の内容が写る）
+- `scripts/open-views.ts` は本体から呼ばれない道具なので、辺の検査の対象外のままでよい
+
+## T-150
+
+**タスク**: speak を呼ぶ頻度の目安（1ターン5〜10回）と話す中身を規約に焼き、置き場を決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+置き場は新しい src/core/speech-cadence.ts（SPEECH_CADENCE_PROMPT）にした。1ターン5〜10回の目安・ツールの前後という契機・「いま何をしていて、どう感じているか」の3点を書き、3つの persona.md（tsukumo / tsukumo-spirit / local）から重複していた「呼ぶタイミング」を消した。buildSystemPromptAppend は rules の配列を受け取る形に変え、並べる順は cli.ts が持つ。bun run check: 549 pass / 0 fail（変更前 546）。docs/requirements.md 4.2 と docs/design.md 5章・7章を追従（節の数は 26 / 51 で不変）。頻度が上がったかは次にプロセスを起こしてから画面で見る（systemPrompt の append なので動作中のセッションには当たらない）。
+
+## 背景
+
+キャラクターが `speak` を呼ぶ頻度の目安が、どこにも書かれていない。いま規約を持っているのは
+`characters/tsukumo/persona.md` の「### `speak` の呼び方」（79〜87行）だけで、そこにあるのは
+「呼ぶタイミング: 着手の一言 / ステップごとに1〜2回（ツールを使う前後、論点が切り替わるとき）/
+許可や質問を出す直前 / 完了の報告」と「1ターンに何十回も呼ばない」の2つ。**回数の目安が無く、
+セリフに何を含めるかの指定も無い**ため、実際には1ターン3〜5回に落ち着き、吹き出しが長く止まる。
+
+規約の置き場が2つある。口調と人格は `characters/tsukumo/persona.md`（キャラクターパックごと）、
+レポートの文体と記法は `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（全パック共通。
+どのパックでも本文の読みやすさが変わらないようにするため。同ファイルの docstring、2026-09-14 決定）。
+両方とも `src/core/character-pack.ts` の `buildSystemPromptAppend` が「人格 → レポートの記法」の順に
+連結して `systemPrompt` の append として渡す。**「どれくらいの頻度で話すか」がどちらの担当かは
+まだ決まっていない。**
+
+## 決まっていること（蒸し返さない）
+
+- 目安は **1ターン5〜10回**。ツールを走らせる前に1回、その結果で分かったことがあればもう1回。
+- 着手の一言と、ターンの最後のセリフ（persona.md 96〜111行）は今のまま残す。
+- セリフの中身は「**いま何をしていて、そこでどう感じているか**」が分かるものにする。
+  ユーザーへの問いかけを増やすのではない（ユーザーの言葉:「こちらに話しかけるというよりは
+  今何をしていてそこでどういう感情を持っているのかがうかがえると眺めていて楽しい」）。
+
+## 解くべき論点
+
+- **置き場**: `characters/tsukumo/persona.md` / `src/core/report-notation.ts` /
+  新しい `src/core/` のモジュールのどれに書くか。「どのパックでも黙りっぱなしにならない」は
+  tsukumo 全体の体験で、「何と言うか」はパックの個性、という切り分けが成り立つかを決める。
+  新しいモジュールを作るなら、ファイル名が概念になっているか（CLAUDE.md 原則5。
+  `helpers` / `utils` のような置き場所名にしない）を満たすこと。
+- **正典を2つにしない**: persona.md 79〜87行の「呼ぶタイミング」と重複する文面を別の場所に
+  作らない。別の場所へ移すなら persona.md 側から消す。
+- **既存の上限との整合**: persona.md 86行「1ターンに何十回も呼ばない（1回の `speak` はツール
+  呼び出し1回のぶん時間がかかる）」と 5〜10回の目安が矛盾して読めないようにする。
+
+## やること
+
+1. 上の論点を決め、決めた場所に頻度の目安・話す契機・セリフに含める中身を書く。
+2. `src/core/report-notation.ts` に書くなら `test/core/report-notation.test.ts` を、
+   新しいモジュールを作るなら対応するテストを足す（文面そのものの検査ではなく、
+   `buildSystemPromptAppend` に載ることの検査。既存のテストの粒度に合わせる）。
+3. `docs/requirements.md` 4.2 か `docs/design.md` に `speak` の頻度に触れた記述があれば
+   合わせて直す（無ければ足さない）。**編集するときは行頭を含めて位置を特定し、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で変わらないことを確かめる**
+   （CLAUDE.md「ドキュメントを編集するときの罠」）。
+
+## 完了条件
+
+- 決めた置き場に、(a) 1ターン5〜10回の目安、(b) ツールを走らせる前後という契機、
+  (c) セリフの中身は「いま何をしていて、どう感じているか」、の3点が書かれている。
+- persona.md 79〜87行と同じことを2箇所に書いていない（移したなら元から消えている）。
+- `bun run check` が通る。
+
+## 注意
+
+- 頻度が実際に上がったかは**次のターン以降に画面で見て分かる**もので、このタスクの中では
+  測れない。`evidence` には「どのファイルの何行目に何を書いたか」を書き、回数の実測は
+  求めない。
+- セリフの中身を増やすためにレポート側の規約（`REPORT_NOTATION_PROMPT` の「冗長さを止める」）を
+  緩めない。本文は中立・簡潔のまま。
+
+## T-151
+
+**タスク**: タスク一覧モーダルの表に loopable の列を足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/protocol/task-summary.ts に loopable を足し、task-board.tsx の表に難易度の次の列として出した（task-board.css の nth-child は (6) まで拡張）。bun run check: 546 pass / 0 fail（変更前 536）。docs/requirements.md 4.2 の列を直し、節の数は 26 で不変。fake ドライバ + Playwright（1400x900）で表を開き、見出しが ID / status / 難易度 / loopable / 依存 / 着手 / 要約 の順、値が Y / N で出ること、.task-board の幅が 1024px（変更前と同じ）であることを確認。
+
+## 背景
+
+サイドバーのタスク一覧モーダル（`src/ui/sidebar/task-board.tsx`）の表に `loopable` の列が無い。
+いまの列は `TaskTable` が出す **ID / status / 難易度 / 依存 / 着手 / 要約** の6つ。
+
+値がそもそも読まれていない。`src/protocol/task-summary.ts` の `TaskSummaryItem` は
+`id` / `summary` / `status` / `difficulty` / `dependencies` の5つだけで、`taskSummaryItem` が
+`develop/tasks.json` の `loopable` を捨てている。
+
+列幅は `src/ui/style/task-board.css` が持つ。92〜97行で `tbody th` と
+`td:nth-child(2)` 〜 `td:nth-child(5)`（status・難易度・依存・着手）を `white-space: nowrap` にし、
+`td:last-child`（要約）に `min-width: 24em` を置いている。**列を1つ増やすと nth-child の番号が
+ずれる。**
+
+## 決まっていること（蒸し返さない）
+
+- **モーダルの幅（`.task-board`）は変えない**（ユーザーの指示:「今のモーダル幅は変えなくて良いよ」）。
+  表は器より広がってよく、`.task-board-scroll` が横スクロールさせる（task-board.css 58〜62行の既存の作り）。
+- `loopable` が無いタスクは、他の列と同じ `—` で出す（`task-workflow` の `WORKFLOW.md` は
+  「フィールドが無い旧タスクは `\"Y\"` として扱う」と決めているが、**表は書いてある値を出す面**なので
+  補完しない）。
+
+## やること
+
+1. `src/protocol/task-summary.ts` の `TaskSummaryItem` に `readonly loopable: string | undefined` を足し、
+   `taskSummaryItem` で `optionalStringOf` を使って拾う（`difficulty` と同じ扱い。`?:` は使わない）。
+2. `task-board.tsx` の `TaskTable` / `TaskRow` に列を足す。**位置は難易度の次**
+   （`/list-tasks` が出す表と `task-workflow` の `scripts/status.py` の TSV の並び
+   id / status / difficulty / loopable / dependencies / readiness に揃える）。
+3. `src/ui/style/task-board.css` 92〜97行の `nth-child` を、増えた列に合わせて直す
+   （機械が付けた値の列は折り返さず、要約だけが残りの幅を使う、という既存の意図を保つ）。
+4. `docs/requirements.md` 4.2 の「表の列は `/list-tasks` に揃えて **ID / status / 難易度 / 依存 /
+   着手 / 要約**とし」を直す。**行頭を含めて位置を特定し、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で変わらないことを確かめる**
+   （CLAUDE.md「ドキュメントを編集するときの罠」）。`docs/design.md` にも列を並べた記述が
+   あれば合わせて直す。
+5. テストを足す: `test/protocol/task-summary.test.ts` に `loopable` を読む／壊れていたら
+   `undefined` になるケース、`test/ui/sidebar/task-board.test.tsx` に列が出るケース
+   （既存の「セルの並び」を見ているテストがあるので、そこに合わせて直す）。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- モーダルを開いて `loopable` の列が難易度の次に出ていること、**モーダルの幅が変更前と同じ**
+  であることを目視で確かめ、確かめた画面サイズと見えたものを `evidence` に書く
+  （CLAUDE.md「描画に関わる変更は、加えて何をどう確かめたか」）。
+
+## 注意
+
+- `develop/tasks.json` の中身は書き換えない（読むだけ）。
+- `src/protocol/task-summary.ts` は「会話の内容を一切扱わない」ファイル（冒頭のコメント）。
+  この性質を壊す変更をしない。
+
+## T-154
+
+**タスク**: レポートの ## / ### が見出しとして描かれないのを直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+sanitize-schema.ts の許可リストに h2 / h3 を足し（54→56要素）、markdown.tsx の components で h4 / h5 として描くようにした（h2.turn-request と段が被らないため）。h1 は通さない。main-view.css に .detail-block h4 / h5 を足し、太さ・余白・罫線で ## と ### を分けた（タイプスケールは増やさず --font-body）。bun run check: 552 pass / 0 fail（変更前 550）。目視（fake ドライバ + Playwright）で h4 が 15px/700/下罫線、h2.turn-request が 18px/700/罫線なしで別の段に見えることと、レポート内に h2/h3 が0件であることを確認。report-notation.ts と docs/requirements.md は既に正しく、変更不要だった（節の数 26 は未編集で不変）。
+
+## 背景
+
+**レポートに書いた `##` / `###` は見出しとして描かれていない。** `src/ui/report/sanitize-schema.ts` の
+`ALLOWED_TAG_NAMES`（54個）に `h1` / `h2` / `h3` が無く、`h4` / `h5` / `h6` だけが入っている。
+hast-util-sanitize は許可リストに無い要素を**中身のテキストだけ残して**落とすので、見出しが
+素のテキストになる。
+
+2026-09-16 に実測した（`src/ui/report/markdown.tsx` の `Markdown` を happy-dom で描画）:
+
+```
+入力: "## みだし2\n\n### みだし3\n\n#### みだし4\n\n本文"
+出力: みだし2
+      みだし3
+      <h4>みだし4</h4>
+      <p>本文</p>
+```
+
+一方 `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（78行）は
+「**見出しは `##` / `###` を数個まで。** レポートの見出しに `#` は使わない」と書いている。
+**規約が勧める記法をレンダラが落としている**（同ファイルの docstring が禁じている食い違い:
+「ここに並ぶ記法は `sanitize-schema.ts` が通すものと揃っている必要がある」）。
+
+ページにはレポートの外側に見出しが1つある。`src/ui/main-view/turn.tsx:94` の
+`<h2 className="turn-request">`（**利用者の依頼**の見出し。`src/ui/style/main-view.css` 34〜50行）。
+
+## 解くべき論点
+
+- **どこで揃えるか**: (a) `h1`〜`h3` を `ALLOWED_TAG_NAMES` に足す、(b) `markdown.tsx` の
+  `components` で `h2` / `h3` を `h4` / `h5` に写す、(c) 規約の側を `####` に変える、のどれか。
+  **`h2.turn-request` と同じ段にレポートの見出しが並ぶことをどう扱うか**（見出しの階層が
+  壊れないか）を判断の材料にする。
+- **見た目**: 見出しに使える文字の大きさは4段しかない（`docs/design.md` 13.3 のタイプスケール。
+  `--font-label` / `--font-secondary` / `--font-body` / `--font-heading`）。**新しい段を作らない**。
+  `##` と `###` を見分けられるようにするなら、太さ・余白・罫線で差を付ける。
+- `h1` を通すかどうか（規約は「レポートの見出しに `#` は使わない」と書いている。通す理由が
+  無ければ足さない）。
+
+## やること
+
+1. 上の論点を決め、`src/ui/report/sanitize-schema.ts` か `src/ui/report/markdown.tsx` の
+   どちらか（または規約の側）を直す。**許可リストを増やすなら、その要素の見た目も同じコミットで
+   `src/ui/style/main-view.css` に足す**（`.detail-block` の下に置く。既存の `.note` /
+   `.badge` の並びに合わせる）。
+2. `src/core/report-notation.ts` の78行と `docs/requirements.md` 4.2 の記述を、決めた形に合わせる
+   （記法の一覧とレンダラを同じコミットで揃える。`report-notation.ts` の docstring）。
+   `docs/requirements.md` を編集するときは行頭を含めて位置を特定し、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で 26 のままであることを確かめる。
+3. `test/ui/report/markdown.test.tsx` に、**`##` と `###` が決めた要素として DOM に出る**ことを
+   見るケースを足す（いまは `pre.mermaid` などの振り分けを見るケースが並んでいる）。
+   `test/core/report-notation.test.ts` が文面を見ているなら合わせて直す。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- `## みだし` と `### みだし` が、タグの落ちた素のテキストではなく**見出しの要素として**
+  DOM に出ることをテストで固定した。
+- 画面で目視する: `test/fixture/fake-session.json` の架空のレポート（`## 表現の一覧（架空）` を
+  含む）を `TSUKUMO_DRIVER=fake` で開き、見出しが本文と見分けられることと、`h2.turn-request`
+  （利用者の依頼）とレポートの中の見出しが混同されないことを確かめて `evidence` に書く。
+
+## 注意
+
+- **サニタイズの許可リストを広げるのは、このタスクで必要な見出しの要素だけ**にする
+  （`sanitize-schema.ts` は許可リスト方式で、載せたものが「通ってよい」の線になる）。
+- `src/ui/style/theme.css` のトークンだけを使う。16進の色や新しい文字サイズを直接書かない。
+
+## T-155
+
+**タスク**: 見出しをその塊の要約として書く条件を REPORT_NOTATION_PROMPT に足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-154 / **passes**: True
+
+**evidence**:
+
+src/core/report-notation.ts 78〜81行。既存の「数個まで」に「短い本文（3〜4行）には付けない」を足して「塊ごとに見出し」との対立を解き、「見出しはその塊の結論を言う語にする（『変更点』『まとめ』のようなどのレポートにも当てはまる語だけにしない）」を1行足した。箇条書き2点で上限どおり。bun run check: 561 pass / 0 fail（件数は変わらず、文面だけの変更）。docs/requirements.md は見出しの規則を列挙していないため未編集（節の数 26 で不変）。test/core/report-notation.test.ts も文面の中身を見ていないため変更なし。
+
+## 背景
+
+`src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` は**見出しの数**しか決めていない
+（78行「**見出しは `##` / `###` を数個まで。** レポートの見出しに `#` は使わない」）。
+**見出しに何を書くか**の条件が無いので、「### 変更点」のような内容を持たない見出しが出て、
+見出しだけを拾い読みしても中身が分からない。
+
+ユーザーの要望は「ひとかたまりごとに見出しがあって、そこが要約になっているとわかりやすい」。
+
+同じ文面には**逆向きに働く条項**がある: 「まず量を絞り、残ったものに構造を付ける。構造を付けられる
+ことは、書く量を増やしてよい理由にならない」「節の末尾に『まとめ』を置かない」。
+**「塊ごとに見出しを置く」と「見出しは数個まで」も、そのままでは両立しない。**
+
+## 解くべき論点
+
+- 「数個まで」を残すか、「塊ごとに1つ」に置き換えるか。**短いレポート（3〜4行）に見出しを
+  強制しない**書き方にする（見出しが中身より多いレポートを作らせない）。
+- 「要約になっている」を検証できる言い方にする。たとえば「見出しだけを読んで、その塊の結論が
+  分かる」「『変更点』『まとめ』のような、どのレポートにも当てはまる語を見出しにしない」。
+- 足す量。`REPORT_NOTATION_PROMPT` は短さ自体が条項（「冗長さを止める」）なので、**箇条書きで
+  2行を超えない**。
+
+## やること
+
+1. `REPORT_NOTATION_PROMPT` の78行の周辺に、見出しの中身の条件を書き足す（上の論点のとおり）。
+2. `test/core/report-notation.test.ts` が文面の中身を見ているなら合わせて直す。
+3. `docs/requirements.md` 4.2 にレポートの記法の条項が列挙されていれば、そちらも合わせる
+   （無ければ足さない）。編集するときは行頭を含めて位置を特定し、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で 26 のままであることを確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- 足した文面が箇条書きで2行以内であること、既存の「見出しは `##` / `###` を数個まで」と
+  矛盾しない形になっていることを `evidence` に引用して示す。
+
+## 注意
+
+- **レポートの文体を決めるのはここ1箇所**（`characters/<pack>/persona.md` ではない。
+  `report-notation.ts` の docstring。2026-09-14 決定）。人格の側に書かない。
+- 見出しが実際に描かれるようになるのは T-154。**先にそちらを通す**（依存に入れてある）。
+
+## T-156
+
+**タスク**: ユーザーへの依頼をレポート末尾の専用の印で出す（呼び名と見せ方を決める）
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-155 / **passes**: True
+
+**evidence**:
+
+呼び名は「お願い」、識別子は favor、class は note-favor（ask は PendingAsk / AskRequest が占有していたため使わない）。見せ方は縦罫 accent + 地 ground + rule の枠 + ::before のラベルで、状態の3色は増やしていない。persona.md は「記法で包んでもセリフはセリフ」を残したまま、末尾の note-favor 1つだけを例外に切り出した。bun run check: 562 pass / 0 fail（変更前 561）。目視（fake ドライバ + capture-view）で、地の文の下に一段暗い地・左だけ accent の縦罫・「お願い」のラベルが出ることと、.main-step の最後の要素であることを実測（.note-favor bottom 323.1 / .main-step bottom 344.1、横のはみ出し 0px）。docs/glossary.md 43→44、docs/requirements.md 26 で不変。
+
+## 背景
+
+レポートの中でユーザーに判断を求めることがあるのに、**それと分かる印が無い**。地の文に紛れて
+見落とされる（2026-09-16 のユーザーの指摘）。
+
+いまの規約は逆を言っている。`characters/tsukumo/persona.md` 91〜94行が
+「**記法で包んでもセリフはセリフ。** 語りかけ・提案・確認・『次はどうする？』の誘いは、
+引用・箇条書き・表のどれに入れても役割はセリフ」と決めていて、`src/core/report-notation.ts` の
+`REPORT_NOTATION_PROMPT` も「前置きと締めを書かない。…呼びかけ・感想は `speak` の担当」と
+書いている。**この線を引き直すのがこのタスク。**
+
+用語がぶつかる。**「依頼」は既に「利用者 → Claude」の意味で使われている**
+（`src/ui/main-view/turn.tsx:94` の `<h2 className="turn-request">`、
+`src/ui/style/main-view.css` 34行のコメント「依頼の見出し」、`docs/glossary.md` の「ターン」の
+定義「利用者の依頼1つに対する応答」）。逆向き（Claude → 利用者）には別の呼び名が要る。
+
+描くのに必要なものは揃っている。`src/ui/report/sanitize-schema.ts` は `className` を
+`GLOBAL_ATTRIBUTES` で通すので、**新しい class を足すのにサニタイズの変更は要らない**。
+見た目は `src/ui/style/main-view.css` の `.detail-block .note` / `.badge` の並びに足すだけでよい。
+
+## 決まっていること（蒸し返さない）
+
+- **置き場はレポートのいちばん最後に1つ**。依頼が複数あってもそこにまとめる（節ごとに散らさない）。
+- **吹き出し（`speak`）にも出す。** ただし**本文が正典**で、セリフは「依頼があるぞ」の一言に
+  留める（中身を二重に書かない）。
+- 依頼が2件以上でも `speak` の側は困らない: 同じターンの間、`speak` は呼んだ数だけ吹き出しが
+  積まれる（`src/protocol/session-state.ts` の `speeches` は `event.text` を追記するだけで
+  上限が無い。ターンをまたぐときだけ `slice(-1)` で直前の1件に絞られる）。
+
+## 解くべき論点
+
+- **呼び名**。「依頼」は上記のとおり使えない。決めたら `docs/glossary.md` に載せ、
+  **コード上の識別子も用語集の英語名に合わせる**（CLAUDE.md「用語」）。
+- **見せ方**。`.note` の系列に1つ足す（`note-ask` のような class）のか、別の塗りを作るのか。
+  **状態の3色（ok / warn / ng）は増やさない**（`docs/design.md` 13.1 原則5）。差し色を使うか、
+  既存のトークンで組むかを決める。**色だけで伝えない**ので、見出しの文字（「依頼」に代わる語）を
+  必ず添える。
+- **`persona.md` 91〜94行をどう書き換えるか**。「語りかけはセリフ」の原則は残したまま、
+  **末尾の依頼だけを例外として本文に許す**形にする。例外の範囲を狭く書く（雑談・感想・
+  「次はどうする？」の誘いは今までどおりセリフ）。
+- **無いターンでは何も出さない**ことを、規約の側にはっきり書く（空の塗りを毎回置かせない）。
+
+## やること
+
+1. 上の論点を決める。
+2. `src/ui/style/main-view.css` に見た目を足す（`.detail-block` の下。`theme.css` のトークン
+   だけを使い、16進の色を直接書かない）。**`sanitize-schema.ts` は変更しない**（`className` は
+   既に通る。もし要素を増やしたくなったら、それは論点に戻って見せ方を選び直す合図）。
+3. `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` に、置き場（レポートの末尾）・
+   印（決めた class）・無いときは出さないこと、を書く。表の「内容 / 使う印」の行として足すのが
+   収まりがよいかは書きながら判断してよい。
+4. `characters/tsukumo/persona.md` の91〜94行と、`speak` の側（「ターンの終わりは必ずセリフ」
+   96〜111行）に、依頼があるときのセリフの言い方を1行足す。
+5. `docs/glossary.md` に呼び名を足し、`docs/requirements.md` 4.2 にレポートの記法として1行足す。
+   **行頭を含めて位置を特定し**、`grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で
+   26 のままであることを確かめる。
+6. テスト: `test/ui/report/markdown.test.tsx` に、決めた class の塊がサニタイズで落ちずに
+   描かれることを見るケースを足す。`test/core/report-notation.test.ts` が文面を見ているなら
+   合わせて直す。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- 画面で目視する: `test/fixture/fake-session.json` の架空のレポートに、決めた印の塊を
+  一時的に足して `TSUKUMO_DRIVER=fake` で開き、(a) 地の文と見分けられること、
+  (b) レポートの末尾にあること、を確かめる。**確認したらフィクスチャは元に戻し、
+  足した状態をコミットしない**（フィクスチャ自体に足すかどうかを決めたい場合は、
+  足す判断と理由を `evidence` に書く）。
+- `docs/glossary.md` に呼び名が載っていて、コード上の class 名がそれと対応していること。
+
+## 注意
+
+- **「依頼」という語を新しい意味で使わない**（既存の `turn-request` と衝突する）。
+- 例外を広げない。**本文に許すのは末尾の依頼だけ**で、`REPORT_NOTATION_PROMPT` の
+  「前置きと締めを書かない」「効能書きを書かない」は残す。
+
+## T-157
+
+**タスク**: 委譲を背景にし、子狐からの節目の合図を受けて喋る作法を speech-cadence に書く
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/core/speech-cadence.ts 58〜68行に委譲中の段落（背景で委譲 / ツール5〜10回ごと＋長いコマンドの前 / 合図は「状況 | n/N | …」の1行 / 受けたらメインが speak で言い直す）を足した。test/core/speech-cadence.test.ts に4件目、docs/requirements.md 4.2 に1項目（節の数は 26 で不変）。bun run check: 550 pass / 0 fail（変更前 549）。文面自体は systemPrompt の append なので次にプロセスを起こしてから効く。ただし仕組みの実地確認はこのタスクの委譲で済んでいる: このタスク自身を背景で委譲し、子狐からの SendMessage が3通届いて、うち1通は長い check の前に来た。
+
+## 背景
+
+`src/core/speech-cadence.ts` の `SPEECH_CADENCE_PROMPT`（2026-09-16、T-150 で作った「セリフの
+間合い」の正典）は、**サブエージェントへ委譲している間のことを何も言っていない**。フォアグラウンドで
+委譲するとメインはツール呼び出しの中で止まるので、**吹き出しが数分止まる**（このセッションでは
+1回の委譲が 400〜440 秒だった）。
+
+2026-09-16 に実験して確かめたこと:
+
+- **背景**で動くサブエージェントから `SendMessage({ to: "main" })` を2通送らせ、**2通とも届いた**。
+  戻り値は `Message queued for the main conversation's next turn.`。**2通目はメインがターンを
+  終えて待っている状態で届き、メインが呼び起こされた**（ポーリングが要らない）
+- `TaskOutput` はサブエージェントに対して**非推奨**で、出力ファイルは会話まるごとの JSONL
+  （読むとコンテキストが溢れる）。**メインが覗きに行く道は使えない**
+- サブエージェントのツール1回あたりの平均は **5〜9秒**（このセッションの4件の実測:
+  haiku 3回/15秒、haiku 4回/37秒（`sleep 20` 込み）、sonnet 76回/440秒、opus 43回/400秒）
+
+**タスクの実行手順そのもの（委譲のやり方）は `~/.claude/skills/next-task/SKILL.md` が持っている。
+これはリポジトリの外にある全プロジェクト共通のスキルなので触らない。** tsukumo が効かせられるのは
+`systemPrompt` の append だけで、そこがこのタスクの作業場になる。
+
+## 決まっていること（蒸し返さない）
+
+- **委譲は背景で行う**（`run_in_background: true`）。メインが止まらないようにするため。
+- **間隔は30秒〜1分。** 子狐は時計を持たず、動けるのはツール呼び出しの区切りだけなので、
+  **「ツールを5〜10回呼ぶごとに1通」**という数え方に換算する（上の 5〜9秒/回 から）。
+- **長いコマンドを流す前にも1通**（その間は口を開けないため）。
+- 合図の形式は **`状況 | n/N | 何をした・何が分かった`** の1行（`SendMessage` は受け手に
+  1行目しかプレビューされない仕様なので、1行目を自己完結させる）。
+- **子狐自身に `speak` を呼ばせる案は、このタスクではやらない**（T-158 が持っていて、着手は保留）。
+- **tsukumo 側から定型句を出す案は採らない**（2026-09-16 ユーザー決定。「味気ないから」）。
+
+## 解くべき論点
+
+- **置き場**: `SPEECH_CADENCE_PROMPT` の中に節を足すか、同じファイルに2つ目の定数を作るか。
+  間合いの規約は**短さ自体が条項**なので、足す量を抑える。
+- **受け取った合図をメインがどう喋るか**: 届いた1行をそのまま `speak` に流すか、一言に
+  言い直すか。前者は安いが子狐の口調のまま出る。
+- 背景に投げるとメインは待っている間に手が空く。**何をしてよいかを書くか**。
+  Agent ツールの説明が既に「Do not duplicate this agent's work」と言っているので、
+  重ねて書かない判断もある。
+
+## やること
+
+1. 上の論点を決め、`src/core/speech-cadence.ts` に書く。
+2. `test/core/speech-cadence.test.ts` に、足した文面が append に載ることを見るケースを足す
+   （既存の3件と同じ粒度。文面の全文を写さない）。
+3. `docs/requirements.md` 4.2 の `speak` の節に1〜2行足す。**行頭を含めて位置を特定し**、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で 26 のままであることを確かめる。
+
+## 完了条件
+
+- 書いた文面に次の4点が入っている: (a) 委譲は背景で行う、(b) ツール5〜10回ごと＋長いコマンドの
+  前に1通、(c) 形式は `状況 | n/N | …` の1行、(d) 受け取ったらメインが `speak` で出す。
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- `evidence` に**どのファイルの何行目に何を書いたか**を書く。**実地の確認（実際に委譲して合図が
+  届くか）はこのタスクではやらない** —— `systemPrompt` の append は動作中のセッションに
+  当たらないので、次にプロセスを起こしてからになる。
+
+## 注意
+
+- **`~/.claude/skills/` の下を書き換えない。** グローバルなものの変更はユーザーの承認が要る
+  （CLAUDE.md「進捗管理とHandoff」の IMPORTANT）。
+- **`TaskOutput` の出力ファイルを読ませる指示を書かない**（会話まるごとの JSONL で、
+  コンテキストが溢れる）。
+- レポートの規約（`REPORT_NOTATION_PROMPT`）は触らない。
+
+## T-159
+
+**タスク**: 実況だけを落とし、まとまった本文は中間レポートとして残す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+判定の規則: あとにツールが続いた本文のうち、行頭の構造の印（見出し・表の行・箇条書き・番号付き・コードフェンス・引用・行頭 HTML）を1つ以上持ち、かつ空行を除いて3行以上または200文字以上のものだけを中間レポートとして残す。迷ったら落とす側に倒した（これまで全部落としていたので退行しない）。dropNarration を keepOnlyInterimReports に改名し、MainViewStep に interim を足した。bun run check: 560 pass / 0 fail（変更前 552）。目視（fake ドライバ + capture-view）で、1文の実況は枠ごと消え、表つきの本文が「中間レポート」のラベル付き・破線・地 ground で残ることを確認（.main-step 2件のうち is-interim 1件、横のはみ出し 0px）。docs/requirements.md 4.2 と docs/glossary.md（中間レポート / interim）を追従（節の数 26 / 43）。
+
+## 背景
+
+レポートに本文が一瞬だけ出て消える（2026-09-16 のユーザーの指摘「目がチラつく」）。
+
+`src/protocol/main-view.ts` の `dropNarration`（108行あたり）が、**あとにツール呼び出しが続いた
+ステップの `report` を丸ごと捨てている**。判定の材料は「ツールが続いたかどうか」だけで、
+**本文の中身を見ていない**。
+
+書きかけ（`partialUtterance`）はリアルタイムに流れるので、**一度画面に出てから、ツールが
+始まった時点で消える**（「出してから消す」＝ 2026-09-16 決定。`docs/requirements.md` 4.2 の
+455〜458行）。これがチラつきの正体。落とした本文は**どこにも出さず捨てている**（同 452行）。
+
+現状のまま残す部分: 質問（`AskUserQuestion`）はツールに数えない／ツールを1つも呼ばないターンでは
+何も落ちない。
+
+## 決まっていること（蒸し返さない）
+
+- **実況は今までどおり落とす。** 「ツールを使う」「これから何をする」の類は要らない
+  （ユーザーの言葉:「ツールを使う、とかこれから何をする、などは不要」）。
+- **まとまった資料は中間レポートとして残す。** 枠組みのある本文がツールの前に出ることがあり、
+  それは消さずに出してよい（「枠組みされたまとまった資料がたまに出てくるときがあり、
+  それは中間レポートという形で表示しても良いよ」）。
+- 「確定するまで出さない」案は採らない（2026-09-16 に一度見送っている。レポートが流れる感じを
+  失うため）。
+
+## 解くべき論点
+
+- **「まとまった資料」と「実況」をどう見分けるか。** 構造の印（見出し・表・箇条書き・
+  コードフェンス・`<div class="note">` などの HTML）を持つか、行数・文字数がしきい値を超えるか、
+  その組み合わせか。**判定は `protocol` 層（`main-view.ts`）に置き、テストで固定できる形にする**
+  （`ui` 側に散らさない）。**落とし過ぎと残し過ぎのどちらに倒すか**も決める。
+- **中間レポートの見た目。** 薄くする／畳む／印を付ける。**新しい色を作らない**
+  （`src/ui/style/theme.css` のトークンだけを使う）。レポート本体と見分けが付くこと。
+- 1つのターンに中間レポートが複数出たとき、全部積むか最後の1つだけ残すか。
+- `MAX_MAIN_VIEW_ENTRIES`（`limitTurnEntries`）との兼ね合い。中間レポートが増えると
+  古い記録から落ちる。
+
+## やること
+
+1. 上の論点を決め、`dropNarration` の判定を「ツールが続いた」**かつ**「まとまっていない」の
+   2条件にする。**関数名も実態に合わせて見直す**（落とすものが実況だけだと名前で分かるように）。
+2. `src/ui/main-view/turn.tsx` と CSS で中間レポートの見た目を分ける。
+3. `test/protocol/main-view.test.ts` に、(a) 短い実況は落ちる、(b) 構造を持つ本文は残る、
+   (c) 質問の直前の本文は今までどおり残る、のケースを足す。
+4. `docs/requirements.md` 4.2 の 445〜458行（「あとにツール呼び出しが続いた本文は出さない」と
+   「出してから消す」の段落）を、決めた形に書き換える。**行頭を含めて位置を特定し**、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で 26 のままであることを確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **目視で確かめる**: `test/fixture/fake-session.json` のターンに、(a) 1〜2文の実況のあとに
+  ツールが続く並びと、(b) 表や見出しを含む本文のあとにツールが続く並びの両方を一時的に作り、
+  `TSUKUMO_DRIVER=fake` で開いて **(a) だけが消え、(b) は中間レポートとして残る**ことを
+  確かめる。**確認したらフィクスチャを元に戻し、足した状態をコミットしない**。
+- 判定の規則を `evidence` に1行で書く（何をもって「まとまった資料」としたか）。
+
+## 注意
+
+- **落とす対象を広げない。** 質問（`AskUserQuestion`）の直前の本文は今までどおり残す。
+- `src/core/report-notation.ts` の「前置きと締めを書かない」は**残す**（素の TUI では
+  tsukumo 側の判定が効かないため。二重になるが害は無い。4.2）。
+- 落とした実況を**サイドバーへ回さない**（4.2 の既存の決定）。
+
+## T-160
+
+**タスク**: 送信した時点で吹き出しを切り替え、次のターンに移ったと分かるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+session-state.ts の request の畳み込みを speeches: [] + speechExpression を既定へ、に変えた（前は slice(-1)）。既存のプレースホルダ「（まだ発話がありません）」の経路に乗せたので character-view / balloon-track は変更なし。文言はコード側のまま（キャラクターパックには持たせない。UI の状態を表す定型句で人格ではない）。bun run check: 561 pass / 0 fail（変更前 560）。目視（fake ドライバ + playwright）で、Command+Enter の 150ms 後・次のセリフが来る 800ms 前に吹き出しがプレースホルダへ切り替わり、立ち絵は消えないことを確認。docs/requirements.md 4.2 の 279〜282行を書き換え（節の数 26 で不変）。/clear は同じ経路でロジック不変、実イベントは偽の駆動では再現できないためユニットテストで確認。
+
+## 背景
+
+入力欄から送信しても吹き出しが変わらないので、**次のターンに移ったことが画面で分からない**
+（2026-09-16 のユーザーの指摘）。
+
+`src/protocol/session-state.ts` の `request` の畳み込みが `speeches: state.speeches.slice(-1)` で、
+**前のターンの最後のセリフを1件だけ残す**（2026-09-12 決定。`docs/requirements.md` 4.2 の
+279〜282行「空にするとキャラクターが消えたように見えるため」）。そのため、送信直後は前のターンの
+最後の一言がそのまま出ている。
+
+受け皿は既にある。`src/ui/character-view/balloon-track.tsx` は `speeches` が空のとき
+`PLACEHOLDER_UTTERANCE`（`"（まだ発話がありません）"`）を吹き出し1件として出し、**呼び出し側が
+`emptyMessage` で文言を差し替えられる**（過去のターンを見ているときのために用意されている。
+`src/ui/character-view/character-view.tsx`）。`/clear` のときは実際に `speeches` を空にしていて、
+このプレースホルダが出る（4.2 の 283〜288行）。
+
+## 決まっていること（蒸し返さない）
+
+- **定型句でよい**（ユーザーの言葉:「(まだ発話がありません)のように定型句でもかまわないから
+  次のタスクに移ったことがわかるようにしてほしい」）。
+
+## 解くべき論点
+
+- `request` で `speeches` を**空にする**か、送信直後向けの1件に**差し替える**か。空にすると
+  既存のプレースホルダの経路にそのまま乗る。
+- **文言**。`"（まだ発話がありません）"` を流用するか、送信直後向けの言い回しを別に用意するか
+  （`emptyMessage` は呼び出し側から渡せる）。**キャラクターパック側に持たせるかどうか**も
+  1行で判断する（CLAUDE.md 原則4。いまの定型句はコードにある）。
+- **表情**（`speechExpression`）を既定へ戻すか、前のターンのまま残すか。ツールが走り始めれば
+  `working` に変わる（`src/protocol/expression.ts`）ので、その手前だけの話。
+
+## やること
+
+1. 上の論点を決め、`src/protocol/session-state.ts` の `request` の畳み込みを直す。
+2. 必要なら `src/ui/character-view/character-view.tsx` が渡す `emptyMessage` を足す。
+3. `test/protocol/session-state.test.ts` に、`request` のあとの `speeches` を見るケースを足す
+   （既存の「最後の1件だけ残す」を見ているテストがあるはずなので、そちらを直す）。
+   `test/ui/character-view/balloon-track.test.tsx` も必要なら直す。
+4. `docs/requirements.md` 4.2 の 279〜282行を、決めた形に書き換える。**行頭を含めて位置を
+   特定し**、`grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で 26 のままであることを
+   確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **目視で確かめる**: 画面から依頼を送って、**送信した時点で吹き出しが前のターンの一言から
+  切り替わる**ことを確かめる（`TSUKUMO_DRIVER=fake` でよい）。確かめた内容を `evidence` に書く。
+- `/clear` のあとの見た目が変わっていないことも確かめる（同じプレースホルダの経路を使うため）。
+
+## 注意
+
+- **`/clear` の扱い（吹き出しも記録も空にする。4.2 の 283〜288行）と衝突させない。**
+- **過去のターンを遡ったときの文言を壊さない**（`character-view.tsx` がそのターン向けの
+  `emptyMessage` を渡している。「まだ」＝これから来る、の言い方は今のターン専用）。
+- 立ち絵は消さない（吹き出しだけの話）。
+
+## T-161
+
+**タスク**: 追い越された中間レポートを畳んで出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+MainViewStep に superseded（自分より後ろに report を持つステップがあるか。markSupersededSteps が reduceRight で立てる）と firstLine を足し、turn.tsx が interim && superseded のときだけ <details> で畳む。先頭行は「空行を飛ばし、見出しなら # を落としてその語、それ以外はそのまま、40字で切る」。interim の判定（keepOnlyInterimReports）は変えていない。bun run check: 571 pass / 0 fail（変更前 562）。目視（fake ドライバ + Playwright）で、中間レポート2件が open=false の <details> で畳まれ summary に「中間レポート: <先頭行>」が出ること、最終レポートは <section> のまま開いていること、summary をクリックすると open=true になって本文が現れること（記録が消えていない）を確認。節の数は requirements 26 / glossary 45 で不変。
+
+## 背景
+
+中間レポートが**何件出ても全部開いたまま積まれる**ので、ターンが長いほど画面が伸びて見通しが
+悪い（2026-09-16 のユーザーの指摘）。
+
+いまの作り（T-159 で入れたもの）:
+
+- `src/protocol/main-view.ts` の `keepOnlyInterimReports` が、あとにツールが続いた本文のうち
+  まとまったものに `MainViewStep.interim` を立てる。
+- `src/ui/main-view/turn.tsx` の `Step` が `<section className="main-step is-interim">` で描き、
+  中に `<p className="step-heading">中間レポート</p>` を載せる。見た目は
+  `src/ui/style/main-view.css` の `.main-step.is-interim`（地 `ground`・破線の枠）。
+
+**「追い越されたか」を知る材料は既にある**。`MainViewTurn.steps` は順に並んでいるので、
+自分より後ろに `report` を持つステップがあるかを見れば決まる。
+
+## 決まっていること（蒸し返さない）
+
+- 畳む条件は「**同じターンの中で、そのあとにレポートを持つステップが現れたとき**」。
+  いちばん下の中間レポート（まだ追い越されていないもの）は**開いたまま**にする。
+- `<summary>` に出すのは「**中間レポート**」＋**本文の先頭行**（見出しならその語）。
+  複数畳まれたときにどれがどれか分かるようにするため。
+
+## 解くべき論点
+
+- **先頭行の取り方**。`##` などの記号を落とすか、長いときに何文字で切るか、空行や
+  `<div>` で始まる本文のときに何を拾うか。**判定は `protocol` 層（`main-view.ts`）に置く**
+  （`ui` 側で切らない。T-159 と同じ切り分け）。
+- **畳んだときの見た目**。`.main-step.is-interim` の破線・地 `ground` をそのまま使うか、
+  畳んでいる間だけ変えるか。**新しい色は作らない**（`theme.css` のトークンだけ）。
+- **過去のターンをタブで見返すとき**は、最後のレポートがあるので中間レポートが全部畳まれる。
+  それでよいかを決める（畳まれたままのほうが見通しが良い、という判断もありうる）。
+
+## やること
+
+1. `MainViewStep` に「追い越されたか」を表す値と、`<summary>` に出す文字列を足す
+   （名前は実態に合わせて決める）。`mainViewTurns` の畳み込みで立てる。
+2. `src/ui/main-view/turn.tsx` の `Step` を、畳むときだけ `<details>` + `<summary>` で描くように
+   する（開いたままのものは今の `<section>` のまま）。
+3. `src/ui/style/main-view.css` に、畳んだときの見た目を必要な分だけ足す。
+4. テスト: `test/protocol/main-view.test.ts` に「後ろにレポートがあれば追い越された印が立つ／
+   最後の中間レポートには立たない／`<summary>` の文字列が先頭行から作られる」、
+   `test/ui/main-view/main-view.test.tsx` に「畳まれたものが `<details>` で出る」。
+5. `docs/requirements.md` 4.2 の中間レポートの記述に1行足す。`docs/glossary.md` の
+   「中間レポート」にも要るなら1行。**行頭を含めて位置を特定し**、
+   `grep -c '^#\{2,3\} '` の値が編集の前後で変わらないことを確かめる（requirements は 26）。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **目視で確かめる**: `test/fixture/fake-session.json` に、中間レポート2件と最終レポート1件が
+  並ぶターンを一時的に作り、`TSUKUMO_DRIVER=fake` で開いて **上の2件が畳まれ、最後の
+  レポートが開いている**ことを確かめる。畳まれた `<summary>` に先頭行が出ていることも見る。
+  **確認したらフィクスチャを元に戻し、足した状態をコミットしない**。
+
+## 注意
+
+- **`interim` の判定そのもの（T-159）は変えない。** 足すのは「畳むかどうか」だけ。
+- 畳んだ中身は DOM に残す（`<details>` は閉じているだけ）。**記録から消さない。**
