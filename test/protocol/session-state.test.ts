@@ -587,6 +587,7 @@ describe("applySessionEvent", () => {
         summary: "架空のタスク",
         status: "todo",
         difficulty: "sonnet",
+        loopable: "Y",
         dependencies: [],
       },
     ]

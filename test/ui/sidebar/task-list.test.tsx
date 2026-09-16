@@ -13,13 +13,28 @@ afterEach(() => {
 })
 
 const TASKS: readonly TaskSummaryItem[] = [
-  { id: "X-001", summary: "架空のタスク1", status: "todo", difficulty: "sonnet", dependencies: [] },
-  { id: "X-002", summary: "架空のタスク2", status: "done", difficulty: "haiku", dependencies: [] },
+  {
+    id: "X-001",
+    summary: "架空のタスク1",
+    status: "todo",
+    difficulty: "sonnet",
+    loopable: "Y",
+    dependencies: [],
+  },
+  {
+    id: "X-002",
+    summary: "架空のタスク2",
+    status: "done",
+    difficulty: "haiku",
+    loopable: "Y",
+    dependencies: [],
+  },
   {
     id: "X-003",
     summary: "架空のタスク3",
     status: undefined,
     difficulty: undefined,
+    loopable: undefined,
     dependencies: [],
   },
 ]

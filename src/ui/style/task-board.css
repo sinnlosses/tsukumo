@@ -87,13 +87,14 @@
   font-weight: normal;
   vertical-align: top;
 }
-/* ID・status・難易度・依存は機械が付けた名前なので、折り返さず1行に置く
+/* ID・status・難易度・loopable・依存・着手は機械が付けた名前なので、折り返さず1行に置く
    （docs/design.md 13.1 原則3）。要約だけが残りの幅を使って折り返す。 */
 .task-board-table tbody th,
 .task-board-table td:nth-child(2),
 .task-board-table td:nth-child(3),
 .task-board-table td:nth-child(4),
-.task-board-table td:nth-child(5) {
+.task-board-table td:nth-child(5),
+.task-board-table td:nth-child(6) {
   white-space: nowrap;
 }
 .task-board-row.task-done {

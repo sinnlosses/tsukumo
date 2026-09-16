@@ -1,4 +1,4 @@
-// develop/tasks.json の内容から、タスク一覧の要約（id・summary・status・difficulty・依存）を読む。「読む」層。
+// develop/tasks.json の内容から、タスク一覧の要約（id・summary・status・difficulty・loopable・依存）を読む。「読む」層。
 //
 // develop/tasks.json は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは
 // 別物（`docs/workflow.md`「tasks.json のフィールド」）。ここは会話の内容を一切扱わない。
@@ -8,7 +8,7 @@
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
  *
- * `difficulty` と `dependencies` は**一覧の表（`src/ui/sidebar/task-board.tsx`）が使う**。
+ * `difficulty`・`loopable`・`dependencies` は**一覧の表（`src/ui/sidebar/task-board.tsx`）が使う**。
  * サイドバーの区画には出さないが、同じ読み取りから採れるものをここで揃えておく
  * （読み取りを2本に分けない）。
  */
@@ -17,6 +17,7 @@ export type TaskSummaryItem = {
   readonly summary: string
   readonly status: string | undefined
   readonly difficulty: string | undefined
+  readonly loopable: string | undefined
   readonly dependencies: readonly string[]
 }
 
@@ -89,6 +90,7 @@ function taskSummaryItem(task: unknown): readonly TaskSummaryItem[] {
       summary,
       status: optionalStringOf(task.status),
       difficulty: optionalStringOf(task.difficulty),
+      loopable: optionalStringOf(task.loopable),
       dependencies: dependenciesOf(task.dependencies),
     },
   ]

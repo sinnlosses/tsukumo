@@ -9,13 +9,14 @@ import {
 // すべて手で書いた架空のタスク一覧。develop/tasks.json の実物は使わない。
 
 describe("readTaskSummaries", () => {
-  it("id・summary・status・difficulty・依存をファイルの順で取り出す", () => {
+  it("id・summary・status・difficulty・loopable・依存をファイルの順で取り出す", () => {
     const content = JSON.stringify([
       {
         id: "X-001",
         summary: "架空のサイドバー実装",
         status: "done",
         difficulty: "sonnet",
+        loopable: "Y",
         dependencies: [],
       },
       {
@@ -23,6 +24,7 @@ describe("readTaskSummaries", () => {
         summary: "架空のタスク一覧",
         status: "todo",
         difficulty: "opus",
+        loopable: "N",
         dependencies: ["X-001"],
       },
     ])
@@ -33,6 +35,7 @@ describe("readTaskSummaries", () => {
         summary: "架空のサイドバー実装",
         status: "done",
         difficulty: "sonnet",
+        loopable: "Y",
         dependencies: [],
       },
       {
@@ -40,6 +43,7 @@ describe("readTaskSummaries", () => {
         summary: "架空のタスク一覧",
         status: "todo",
         difficulty: "opus",
+        loopable: "N",
         dependencies: ["X-001"],
       },
     ])
@@ -56,6 +60,7 @@ describe("readTaskSummaries", () => {
         summary: "架空のタスクの説明",
         status: "todo",
         difficulty: undefined,
+        loopable: undefined,
         dependencies: [],
       },
     ])
@@ -70,6 +75,7 @@ describe("readTaskSummaries", () => {
         summary: "代用元の説明",
         status: undefined,
         difficulty: undefined,
+        loopable: undefined,
         dependencies: [],
       },
     ])
@@ -93,12 +99,15 @@ describe("readTaskSummaries", () => {
     expect(readTaskSummaries(content)?.map((task) => task.id)).toEqual(["X-002"])
   })
 
-  it("status・difficulty が文字列でない・無いときは undefined にする", () => {
-    const content = JSON.stringify([{ id: "X-001", summary: "架空", status: 42, difficulty: [] }])
+  it("status・difficulty・loopable が文字列でない・無いときは undefined にする", () => {
+    const content = JSON.stringify([
+      { id: "X-001", summary: "架空", status: 42, difficulty: [], loopable: false },
+    ])
 
     expect(readTaskSummaries(content)?.[0]).toMatchObject({
       status: undefined,
       difficulty: undefined,
+      loopable: undefined,
     })
   })
 
@@ -123,6 +132,7 @@ describe("taskReadiness", () => {
     summary: `架空の${id}`,
     status,
     difficulty: undefined,
+    loopable: undefined,
     dependencies,
   })
 

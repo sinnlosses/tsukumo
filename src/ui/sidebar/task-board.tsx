@@ -86,6 +86,7 @@ function TaskTable(props: {
             <th scope="col">ID</th>
             <th scope="col">status</th>
             <th scope="col">難易度</th>
+            <th scope="col">loopable</th>
             <th scope="col">依存</th>
             <th scope="col">着手</th>
             <th scope="col">要約</th>
@@ -114,6 +115,7 @@ function TaskRow(props: {
       </th>
       <td>{props.task.status ?? "—"}</td>
       <td>{props.task.difficulty ?? "—"}</td>
+      <td>{props.task.loopable ?? "—"}</td>
       <td>{props.task.dependencies.length === 0 ? "—" : props.task.dependencies.join(", ")}</td>
       <td>
         <ReadinessCell readiness={taskReadiness(props.task, props.tasks)} />

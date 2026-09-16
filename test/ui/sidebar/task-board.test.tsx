@@ -12,13 +12,28 @@ afterEach(() => {
 })
 
 const TASKS: readonly TaskSummaryItem[] = [
-  { id: "X-001", summary: "架空の1件目", status: "done", difficulty: "haiku", dependencies: [] },
-  { id: "X-002", summary: "架空の2件目", status: "todo", difficulty: "opus", dependencies: [] },
+  {
+    id: "X-001",
+    summary: "架空の1件目",
+    status: "done",
+    difficulty: "haiku",
+    loopable: "Y",
+    dependencies: [],
+  },
+  {
+    id: "X-002",
+    summary: "架空の2件目",
+    status: "todo",
+    difficulty: "opus",
+    loopable: undefined,
+    dependencies: [],
+  },
   {
     id: "X-003",
     summary: "架空の3件目",
     status: "todo",
     difficulty: "sonnet",
+    loopable: "N",
     dependencies: ["X-002"],
   },
 ]
@@ -42,13 +57,14 @@ describe("TaskBoard", () => {
     expect(dialogIsOpen()).toBe(true)
   })
 
-  it("列は ID・status・難易度・依存・着手・要約", () => {
+  it("列は ID・status・難易度・loopable・依存・着手・要約", () => {
     render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
 
     expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
       "ID",
       "status",
       "難易度",
+      "loopable",
       "依存",
       "着手",
       "要約",
@@ -74,12 +90,21 @@ describe("TaskBoard", () => {
     expect(rows[2]?.querySelector(".task-blocked")?.textContent).toBe("待ち: X-002")
   })
 
-  it("依存と難易度が無いときは「—」で埋める", () => {
+  it("依存・難易度・loopable が無いときは「—」で埋める", () => {
     render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
 
     const cells = document.querySelectorAll(".task-board-row")[1]?.querySelectorAll("td")
     expect(cells?.[1]?.textContent).toBe("opus")
     expect(cells?.[2]?.textContent).toBe("—")
+    expect(cells?.[3]?.textContent).toBe("—")
+  })
+
+  it("loopable の値が付いているタスクはそのまま出す", () => {
+    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+
+    const rows = document.querySelectorAll(".task-board-row")
+    expect(rows[0]?.querySelectorAll("td")[2]?.textContent).toBe("Y")
+    expect(rows[2]?.querySelectorAll("td")[2]?.textContent).toBe("N")
   })
 
   it("閉じるボタンで閉じる", () => {
