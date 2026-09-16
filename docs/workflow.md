@@ -3,8 +3,8 @@
 **運用の正典は `~/.claude/skills/task-workflow/` の `WORKFLOW.md`**（複数のプロジェクトで
 共通。フィールド定義・`summary` の書き方・`difficulty` の基準・evidence の粒度・
 コミットメッセージ・指示メモ・アーカイブのトリガーと手順は、すべてそちらにある）。
-プロジェクト固有の値は `develop/workflow.json` が持つ（このリポジトリでは
-`checkCommand` = `bun run check`、`formatCommand` = `bun run format`）。
+プロジェクト固有の値は `CLAUDE.md` の「## タスク運用」節が持つ（このリポジトリでは
+検証コマンド = `bun run check`、整形コマンド = `bun run format`）。
 
 **2026-09-12 に、共通版と重複していた節をこの文書から落とした**（正典が二重になり、片方だけ
 直して気づかない事故を避けるため）。ここに残すのは、**共通版が知らないこのリポジトリの事情**だけ。
@@ -62,11 +62,11 @@ pid だけ**にする（`lsof -ti :<port>` で引く。`pkill -f 'bun run'` の�
 ## `summary` の長さ
 
 共通版は「1行に収める」とだけ言う。**このリポジトリでは全角40文字以内**を目安にする
-（サイドバーのタスク一覧が2列の行で出すため。`src/presentation/view.ts` の `taskItemHtml`）。
+（サイドバーのタスク一覧が2列の行で出すため。`src/ui/sidebar/task-list.tsx` の `TaskItem`）。
 
 ## 関連
 
 - 手順そのもの: `CLAUDE.md`「進捗管理とHandoff」
 - 運用の正典: `~/.claude/skills/task-workflow/WORKFLOW.md`
-- 完了タスク・過去セッションの記録: `docs/history/tasks-archive.md` /
-  `docs/history/progress-archive.md` / `docs/history/direction.md`
+- 完了タスク・過去セッションの記録: `docs/history/tasks.md` /
+  `docs/history/progress.md` / `docs/history/direction.md`

@@ -317,5 +317,38 @@
     "status": "done",
     "passes": true,
     "evidence": "session-state.ts の request の畳み込みを speeches: [] + speechExpression を既定へ、に変えた（前は slice(-1)）。既存のプレースホルダ「（まだ発話がありません）」の経路に乗せたので character-view / balloon-track は変更なし。文言はコード側のまま（キャラクターパックには持たせない。UI の状態を表す定型句で人格ではない）。bun run check: 561 pass / 0 fail（変更前 560）。目視（fake ドライバ + playwright）で、Command+Enter の 150ms 後・次のセリフが来る 800ms 前に吹き出しがプレースホルダへ切り替わり、立ち絵は消えないことを確認。docs/requirements.md 4.2 の 279〜282行を書き換え（節の数 26 で不変）。/clear は同じ経路でロジック不変、実イベントは偽の駆動では再現できないためユニットテストで確認。"
+  },
+  {
+    "id": "T-161",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "追い越された中間レポートを畳んで出す",
+    "task": "## 背景\n\n中間レポートが**何件出ても全部開いたまま積まれる**ので、ターンが長いほど画面が伸びて見通しが\n悪い（2026-09-16 のユーザーの指摘）。\n\nいまの作り（T-159 で入れたもの）:\n\n- `src/protocol/main-view.ts` の `keepOnlyInterimReports` が、あとにツールが続いた本文のうち\n  まとまったものに `MainViewStep.interim` を立てる。\n- `src/ui/main-view/turn.tsx` の `Step` が `<section className=\"main-step is-interim\">` で描き、\n  中に `<p className=\"step-heading\">中間レポート</p>` を載せる。見た目は\n  `src/ui/style/main-view.css` の `.main-step.is-interim`（地 `ground`・破線の枠）。\n\n**「追い越されたか」を知る材料は既にある**。`MainViewTurn.steps` は順に並んでいるので、\n自分より後ろに `report` を持つステップがあるかを見れば決まる。\n\n## 決まっていること（蒸し返さない）\n\n- 畳む条件は「**同じターンの中で、そのあとにレポートを持つステップが現れたとき**」。\n  いちばん下の中間レポート（まだ追い越されていないもの）は**開いたまま**にする。\n- `<summary>` に出すのは「**中間レポート**」＋**本文の先頭行**（見出しならその語）。\n  複数畳まれたときにどれがどれか分かるようにするため。\n\n## 解くべき論点\n\n- **先頭行の取り方**。`##` などの記号を落とすか、長いときに何文字で切るか、空行や\n  `<div>` で始まる本文のときに何を拾うか。**判定は `protocol` 層（`main-view.ts`）に置く**\n  （`ui` 側で切らない。T-159 と同じ切り分け）。\n- **畳んだときの見た目**。`.main-step.is-interim` の破線・地 `ground` をそのまま使うか、\n  畳んでいる間だけ変えるか。**新しい色は作らない**（`theme.css` のトークンだけ）。\n- **過去のターンをタブで見返すとき**は、最後のレポートがあるので中間レポートが全部畳まれる。\n  それでよいかを決める（畳まれたままのほうが見通しが良い、という判断もありうる）。\n\n## やること\n\n1. `MainViewStep` に「追い越されたか」を表す値と、`<summary>` に出す文字列を足す\n   （名前は実態に合わせて決める）。`mainViewTurns` の畳み込みで立てる。\n2. `src/ui/main-view/turn.tsx` の `Step` を、畳むときだけ `<details>` + `<summary>` で描くように\n   する（開いたままのものは今の `<section>` のまま）。\n3. `src/ui/style/main-view.css` に、畳んだときの見た目を必要な分だけ足す。\n4. テスト: `test/protocol/main-view.test.ts` に「後ろにレポートがあれば追い越された印が立つ／\n   最後の中間レポートには立たない／`<summary>` の文字列が先頭行から作られる」、\n   `test/ui/main-view/main-view.test.tsx` に「畳まれたものが `<details>` で出る」。\n5. `docs/requirements.md` 4.2 の中間レポートの記述に1行足す。`docs/glossary.md` の\n   「中間レポート」にも要るなら1行。**行頭を含めて位置を特定し**、\n   `grep -c '^#\\{2,3\\} '` の値が編集の前後で変わらないことを確かめる（requirements は 26）。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）。\n- **目視で確かめる**: `test/fixture/fake-session.json` に、中間レポート2件と最終レポート1件が\n  並ぶターンを一時的に作り、`TSUKUMO_DRIVER=fake` で開いて **上の2件が畳まれ、最後の\n  レポートが開いている**ことを確かめる。畳まれた `<summary>` に先頭行が出ていることも見る。\n  **確認したらフィクスチャを元に戻し、足した状態をコミットしない**。\n\n## 注意\n\n- **`interim` の判定そのもの（T-159）は変えない。** 足すのは「畳むかどうか」だけ。\n- 畳んだ中身は DOM に残す（`<details>` は閉じているだけ）。**記録から消さない。**",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-162",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-143"],
+    "summary": "Bun固有APIに寄せない規約を境界だけ緩めるかを決める",
+    "task": "## 背景\n\n`docs/research/architecture-proposal.md`「7. 未決事項」が、段2（`adapter/` を切る＝T-143）の\n**後でしか書けない**ものとして次を挙げている:\n\n> `docs/coding-standards.md`「Bun固有APIに寄せない」を**撤回するのではなく「境界のファイルだけは\n> 寄せてよい」に狭める**案は、段2の後でないと書けない（境界が1ディレクトリに集まっていることが\n> 前提）\n\nいまの規約は `docs/coding-standards.md`「Bun固有APIに寄せない」で、`CLAUDE.md` にも\n「**`Bun.*` の固有APIに寄せない。** ファイル・パス・プロセスは `node:` プレフィックスの標準APIを\n使う（唯一の例外は `bun:test`）」として載っている。この規約を根拠にした実装上の判断が既にある\n（例: `src/core/bundle.ts` は `Bun.build()` ではなく `bun build` のプロセスを起こす。\n`docs/architecture.md`）。\n\n**T-145（Bun のまま進めるか Node へ寄せるか）とは別の話**。あちらはランタイムの選択で、\nこちらは規約の文言をどこまで狭めるか。\n\n## 決まっていること（蒸し返さない）\n\n- **判断はサブエージェントに任せてよい**（2026-09-16 ユーザー回答）。段2が終わって境界が\n  1ディレクトリに集まっていれば、判断の材料はコード側に揃うため。\n- **撤回はしない。** 検討するのは「狭める」案だけ。\n\n## 解くべき論点\n\n- **どこまでを「境界」とするか**。`adapter/` の全ファイルか、外部プロセスを起こす\n  `server.ts` / `bundle.ts` だけか。\n- **緩めない**という結論もありうる。いまの規約のままで困っている箇所が実際にあるかを、\n  段2のあとのコードで確かめる。**困っていなければ、やらずに理由を `evidence` に書いて閉じる。**\n- T-145（Bun / Node）が先に決まると前提が変わるか。変わるなら、どちらを先にするかを\n  `evidence` に書き残す。\n\n## やること\n\n1. 段2（T-143）のあとの `adapter/` を読み、`node:` の標準APIで書いていることによる\n   不都合（遠回り・性能・書けないこと）が実際にあるかを数える。\n2. 上の論点を決め、狭めるなら `docs/coding-standards.md`「Bun固有APIに寄せない」の節と、\n   `CLAUDE.md` の「コーディング規約・レビュー方針」の該当行を**両方**直す（片方だけ直さない）。\n3. 狭めないなら、**規約は触らず**、確かめた結果を `evidence` に書いて閉じる。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）。\n- 狭めた場合: `docs/coding-standards.md` と `CLAUDE.md` の両方に同じ範囲が書かれていて、\n  食い違っていない。`grep -c '^#\\{2,3\\} ' docs/coding-standards.md` が編集の前後で変わらない。\n- 狭めなかった場合: **何を見て不要と判断したか**（どのファイルの、どの操作）が `evidence` に\n  書かれている。\n\n## 注意\n\n- **規約を撤回しない。** 狭めるか、そのままかの2択。\n- `docs/coding-standards.md` の他の節に手を入れない。",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-163",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-143"],
+    "summary": "character-pack.ts の純粋な部分を core へ切り出すかを設計する",
+    "task": "## 背景\n\n`docs/research/architecture-proposal.md`「7. 未決事項」が、`character-pack.ts` の扱いについて\n仮定を置いたうえで次のように書いている:\n\n> **`character-pack.ts` はファイルごと `adapter`**。中の純粋な部分（`characterChangedEvent` /\n> `buildSystemPromptAppend` / `toCharacterPackChoices`）は分けない ／ 分けるなら\n> `core/character-pack.ts`（純粋）と `adapter/character-pack.ts`（fs）。**この層の中の割り方は\n> `codebase-design` で別途設計する**\n\nいまの `src/core/character-pack.ts` は、fs を読む `readCharacterPack` と、外の世界に触らない\n`characterChangedEvent` / `buildSystemPromptAppend` / `toCharacterPackChoices` を同居させている。\n段2（T-143）はこのファイルを**丸ごと `adapter/` へ移す**仮定で進むので、移したあとは\n「純粋な関数が `adapter/` にある」状態になる。\n\n関連して T-125（新しいキャラクターパックを画面から作れるようにする）が入ると、書き込む側の\n関数が増える。提案は「パックの系統が3ファイル以上（読む・書く・覚える・検証）になったら\n`adapter/character-pack/` を切る」とも書いている。\n\n## 決まっていること（蒸し返さない）\n\n- 段2（T-143）で**いったんファイルごと `adapter/` へ移す**のは仮定どおり進める。\n  このタスクはその**後**に、割るかどうかを決める。\n\n## 解くべき論点\n\n- **そもそも割るか。** 純粋な3関数が `adapter/` にあることで実際に困るか（テストが書きにくい、\n  依存の辺が読めない、など）を具体的に挙げる。**困らなければ割らない**という結論でよい。\n- 割るなら**境目**。`buildSystemPromptAppend` は規約の連結（`speech-cadence` /\n  `report-notation` を並べる）だけなので `core` 寄り、`toCharacterPackChoices` は\n  定義ファイルの形に依存する、など性質が違う。まとめて動かすか、1つずつ見るか。\n- `codebase-design` の語彙（深いモジュール・シーム）で見たときに、割ることで\n  **インターフェースが増えるだけ**になっていないか。\n- T-125 で書き込む側が増えたときに `adapter/character-pack/` を切る判断と、どちらが先か。\n\n## やること\n\n1. `codebase-design` スキルを読み、その語彙で現状を見る。\n2. 上の論点を決める。**割らない結論なら、やらずに理由を `evidence` に書いて閉じる**\n   （そのとき提案書の仮定が確定するので、`docs/architecture.md` に1行残すかも判断する）。\n3. 割るなら実装し、`test/` の置き場もそれに合わせる。依存の辺は\n   `test/architecture.test.ts` が見ているので、そちらも通す。\n4. `docs/design.md` / `docs/architecture.md` の該当箇所を追従させる。**行頭を含めて位置を\n   特定し**、`grep -c '^#\\{2,3\\} '` の値が編集の前後で変わらないことを確かめる。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）。\n- 割った場合: `core` 側のファイルが `node:` を import していないこと\n  （`grep -l 'from \"node:' src/core/*.ts` に出ないこと）を確かめた。\n- 割らなかった場合: **何を見て不要と判断したか**が `evidence` に書かれている。\n\n## 注意\n\n- **T-143（段2）より先に着手しない。** 移したあとの姿を見てから決めるタスク。\n- キャラクターの中身（素材のパス・表情・衣装の対応）をコードへ持ち込まない（CLAUDE.md 原則4）。",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]

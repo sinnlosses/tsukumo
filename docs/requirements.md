@@ -496,7 +496,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   （`src/ui/report/split-blocks.ts`）。
   どちらの経路も**通すのは許可リストに載った要素・属性だけ**で、
   `script` / `style` / `iframe` は中身ごと、`on*` と `javascript:` は属性ごと落とす
-  （`src/presentation/report-html.ts` の `sanitizeReportHtml` 1箇所に集約）。ただし**コードスパン
+  （`src/ui/report/sanitize-schema.ts` の `REPORT_SANITIZE_SCHEMA` 1箇所に集約）。ただし**コードスパン
   （`` `code` ``）の中に書いた HTML はタグにせず、文字のまま出す**。
   `style` 属性は通すが、**外部を読みに行く記法（`url(` / `@import`）を含むものは落とす**。
   段組みは、レンダラー側が**ステップをカードにして縦に1本で積み**（横に並べてZ字に読ませない。
