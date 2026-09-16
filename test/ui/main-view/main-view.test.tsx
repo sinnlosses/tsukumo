@@ -227,6 +227,54 @@ describe("MainView（中間レポート）", () => {
     expect(container.querySelectorAll(".main-step")).toHaveLength(2)
     expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
   })
+
+  it("後ろに別のレポートが現れた中間レポートは <details> で畳んで出す（T-161）", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
+      detail("直したよ"),
+    ])
+
+    const interimSteps = container.querySelectorAll(".main-step.is-interim")
+    expect(interimSteps).toHaveLength(1)
+    expect(interimSteps[0]?.tagName).toBe("DETAILS")
+    expect((interimSteps[0] as HTMLDetailsElement).open).toBe(false)
+    expect(interimSteps[0]?.querySelector("summary")?.textContent).toBe("中間レポート: 調べた結果")
+  })
+
+  it("まだ追い越されていない最後の中間レポートは畳まず開いたまま（<section> のまま）", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
+    ])
+
+    const interimSteps = container.querySelectorAll(".main-step.is-interim")
+    expect(interimSteps).toHaveLength(1)
+    expect(interimSteps[0]?.tagName).toBe("SECTION")
+    expect(screen.getByText("1つ目の発見")).toBeDefined()
+  })
+
+  it("複数の中間レポートが追い越されると全部畳まれ、それぞれの <summary> に先頭行が出る", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/a.ts" } }),
+      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      tool({ toolUseId: "t2", name: "Write", input: { file_path: "src/b.ts" } }),
+      detail("できたよ"),
+    ])
+
+    const interimSteps = [...container.querySelectorAll(".main-step.is-interim")]
+    expect(interimSteps).toHaveLength(2)
+    expect(interimSteps.every((step) => step.tagName === "DETAILS")).toBe(true)
+    expect(interimSteps.map((step) => step.querySelector("summary")?.textContent)).toEqual([
+      "中間レポート: 調べた結果",
+      "中間レポート: 直した箇所",
+    ])
+    expect(screen.getByText("できたよ")).toBeDefined()
+  })
 })
 
 describe("MainView（質問の記録）", () => {

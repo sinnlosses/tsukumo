@@ -47,6 +47,11 @@ export function Turn(props: TurnProps): ReactElement {
  * **中間レポート（`step.interim`）は見分けが付く形で描く。** 話が途中の本文なので、
  * 小さなラベルを載せて地と枠を変える（`.main-step.is-interim`。判定そのものは
  * `src/protocol/main-view.ts` が済ませてある）。
+ *
+ * **後ろに別のレポートが現れた中間レポート（`step.superseded`）は畳む。** 何件も開いたまま
+ * 積まれると見通しが悪いため（2026-09-16 の指摘）。畳んだ分は `<details>` にするだけで
+ * 中身は DOM に残す（記録からは消さない）。まだ追い越されていない最後の中間レポートは
+ * 今までどおり開いた `<section>` のまま。
  */
 function Step(props: { readonly step: MainViewStep }): ReactElement | null {
   const { step } = props
@@ -56,15 +61,35 @@ function Step(props: { readonly step: MainViewStep }): ReactElement | null {
     return null
   }
 
-  return (
-    <section className={step.interim ? "main-step is-interim" : "main-step"}>
-      {step.interim && <p className="step-heading">中間レポート</p>}
+  const body = (
+    <>
       {step.report !== undefined && <Report markdown={step.report} />}
       {questions.map((question, index) => (
         <QuestionRecord entry={question} key={index} />
       ))}
+    </>
+  )
+
+  if (step.interim && step.superseded) {
+    return (
+      <details className="main-step is-interim">
+        <summary className="step-heading">{interimSummary(step.firstLine)}</summary>
+        {body}
+      </details>
+    )
+  }
+
+  return (
+    <section className={step.interim ? "main-step is-interim" : "main-step"}>
+      {step.interim && <p className="step-heading">中間レポート</p>}
+      {body}
     </section>
   )
+}
+
+/** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */
+function interimSummary(firstLine: string | undefined): string {
+  return firstLine === undefined || firstLine === "" ? "中間レポート" : `中間レポート: ${firstLine}`
 }
 
 function isQuestion(

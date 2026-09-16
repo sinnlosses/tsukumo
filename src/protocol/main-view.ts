@@ -31,10 +31,20 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  * `interim` は、その本文が**中間レポート**（あとにツールが続いたが、まとまった資料なので
  * 残した本文。`keepOnlyInterimReports`）かどうか。`report` が undefined のときは常に false。
  * 見分けを付けて描くのは `src/ui/main-view/turn.tsx` の仕事で、判定はここに置く。
+ *
+ * `superseded` は、**自分より後ろに `report` を持つステップがあるか**（`markSupersededSteps`）。
+ * 中間レポートが何件も積むと見通しが悪い問題（2026-09-16 の指摘）に対する材料で、
+ * `interim && superseded` のときだけ `turn.tsx` が畳んで描く。`report` を持たないステップでも
+ * 立つが、畳むかどうかの判定に使うのは中間レポートだけ。
+ *
+ * `firstLine` は `report` の先頭行（`report` が undefined なら undefined）。畳んだときの
+ * `<summary>` に出す（`extractFirstLine`）。
  */
 export type MainViewStep = {
   readonly report: string | undefined
   readonly interim: boolean
+  readonly superseded: boolean
+  readonly firstLine: string | undefined
   readonly actions: readonly MainViewAction[]
 }
 
@@ -59,6 +69,7 @@ export function mainViewTurns(entries: readonly MainViewEntry[]): readonly MainV
   return groupIntoTurns(entries)
     .slice(-MAX_MAIN_VIEW_TURNS)
     .map((turn) => keepOnlyInterimReports(turn))
+    .map((turn) => markSupersededSteps(turn))
     .map((turn) => limitTurnEntries(turn))
 }
 
@@ -83,7 +94,13 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 
     current ??= { id: 0, request: undefined, steps: [] }
     if (entry.kind === "detail") {
-      current.steps.push({ report: entry.markdown, interim: false, actions: [] })
+      current.steps.push({
+        report: entry.markdown,
+        interim: false,
+        superseded: false,
+        firstLine: undefined,
+        actions: [],
+      })
       continue
     }
 
@@ -91,7 +108,15 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
     // レポートより前に起きたことは、レポートを持たないステップにまとめる。
     current.steps =
       step === undefined
-        ? [{ report: undefined, interim: false, actions: [entry] }]
+        ? [
+            {
+              report: undefined,
+              interim: false,
+              superseded: false,
+              firstLine: undefined,
+              actions: [entry],
+            },
+          ]
         : [...current.steps.slice(0, -1), { ...step, actions: [...step.actions, entry] }]
   }
   flush()
@@ -159,6 +184,61 @@ function isInterimReport(markdown: string): boolean {
     (lines.length >= MIN_INTERIM_REPORT_LINES ||
       markdown.trim().length >= MIN_INTERIM_REPORT_LENGTH)
   )
+}
+
+/**
+ * 各ステップに「自分より後ろに `report` を持つステップがあるか」（`superseded`）と、
+ * `report` の先頭行（`firstLine`）を立てる。**`interim` の判定そのもの（`keepOnlyInterimReports`）
+ * は変えない**——このタスク（2026-09-16）で足すのは「畳むかどうか」の材料だけ。
+ * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
+ * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
+ * `src/ui/main-view/turn.tsx`）。
+ */
+function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
+  const { steps } = turn.steps.reduceRight<{
+    steps: readonly MainViewStep[]
+    followedByReport: boolean
+  }>(
+    (acc, step) => ({
+      steps: [
+        {
+          ...step,
+          superseded: acc.followedByReport,
+          firstLine: step.report === undefined ? undefined : extractFirstLine(step.report),
+        },
+        ...acc.steps,
+      ],
+      followedByReport: acc.followedByReport || step.report !== undefined,
+    }),
+    { steps: [], followedByReport: false },
+  )
+  return { ...turn, steps }
+}
+
+// 畳んだ `<summary>` に出す先頭行の長さの上限。「中間レポート」のラベルと並べる短い添え書きなので、
+// `summarizeToolInput` の1行要約（120字）より短く抑える。
+const MAX_STEP_SUMMARY_LENGTH = 40
+
+/**
+ * 本文の先頭行。空行は読み飛ばす。**見出し（`# `〜`###### `）ならマークを落としてその語だけ**を
+ * 返す（複数畳まれたときに「## 調べた結果」ではなく「調べた結果」の方が読みやすいため）。
+ * 見出し以外の行（表・箇条書き・引用・行頭の HTML タグなど）は**マークを落とさずそのまま**返す
+ * ——「見出しならその語」以上の踏み込みはせず、迷ったところは変えない側に倒す。
+ */
+function extractFirstLine(markdown: string): string {
+  const line = markdown
+    .split("\n")
+    .map((raw) => raw.trim())
+    .find((trimmed) => trimmed !== "")
+  if (line === undefined) {
+    return ""
+  }
+
+  const heading = /^#{1,6}\s+(.*)$/.exec(line)
+  const text = heading?.[1] === undefined ? line : heading[1].trim()
+  return text.length <= MAX_STEP_SUMMARY_LENGTH
+    ? text
+    : `${text.slice(0, MAX_STEP_SUMMARY_LENGTH)}…`
 }
 
 /** 1つのやり取りが持つ記録を上限まで切り詰める。落とすのは**古いほう**（今回の続きを残す）。 */

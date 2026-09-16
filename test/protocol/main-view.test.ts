@@ -205,3 +205,73 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(turns[0]?.steps[0]?.report).toBe("依頼より前のレポート")
   })
 })
+
+describe("mainViewTurns（追い越された中間レポートを畳む印。T-161）", () => {
+  it("後ろにレポートを持つステップがあれば superseded が立つ", () => {
+    const first = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
+    const turns = mainViewTurns([
+      request("依頼"),
+      detail(first),
+      edit("src/a.ts"),
+      detail("できたよ"),
+    ])
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.interim)).toEqual([true, false])
+    expect(steps.map((step) => step.superseded)).toEqual([true, false])
+  })
+
+  it("いちばん後ろの中間レポート（まだ追い越されていない）には superseded が立たない", () => {
+    const turns = mainViewTurns([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      edit("src/a.ts"),
+    ])
+
+    expect(turns[0]?.steps[0]?.interim).toBe(true)
+    expect(turns[0]?.steps[0]?.superseded).toBe(false)
+  })
+
+  it("<summary> に出す文字列は先頭行から作られる（見出しなら記号を落としてその語）", () => {
+    const turns = mainViewTurns([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      edit("src/a.ts"),
+      detail("できたよ"),
+    ])
+
+    expect(turns[0]?.steps[0]?.firstLine).toBe("調べた結果")
+  })
+
+  it("見出しでない先頭行は記号を落とさずそのまま使う", () => {
+    const turns = mainViewTurns([
+      request("依頼"),
+      detail("| 場所 | 状態 |\n| --- | --- |\n| src/a.ts | 直す |\n| src/b.ts | 直す |"),
+      edit("src/a.ts"),
+      detail("できたよ"),
+    ])
+
+    expect(turns[0]?.steps[0]?.firstLine).toBe("| 場所 | 状態 |")
+  })
+
+  it("先頭行が長いときは省略記号で切る", () => {
+    const longHeading = `## ${"とても長い見出し".repeat(10)}`
+    const turns = mainViewTurns([
+      request("依頼"),
+      detail(`${longHeading}\n\n- 1つ目の発見\n- 2つ目の発見`),
+      edit("src/a.ts"),
+      detail("できたよ"),
+    ])
+
+    const firstLine = turns[0]?.steps[0]?.firstLine ?? ""
+    expect(firstLine.endsWith("…")).toBe(true)
+    expect(firstLine.length).toBeLessThan(longHeading.length)
+  })
+
+  it("report を持たないステップの firstLine は undefined", () => {
+    const turns = mainViewTurns([request("依頼"), edit("src/first.ts"), detail("あとから説明")])
+
+    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+    expect(turns[0]?.steps[0]?.firstLine).toBeUndefined()
+  })
+})
