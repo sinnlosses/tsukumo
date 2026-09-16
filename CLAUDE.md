@@ -213,6 +213,16 @@ worktree だが、未コミットの変更はブランチをまたいで残る�
 `develop/tasks.json`・`develop/progress.md`・`develop/direction.md` で管理する。
 指示は `develop/direction.md` に溜め、`/plan-tasks` でタスク化して `/next-task` で進める。
 
+**2つのタスクを並行して進めるときは、触る層が重ならないものを選ぶ**（同じ作業ツリーを複数の
+セッションが共有するため。worktree で分けない理由は「Git運用」）:
+
+- 着手前に `doing` のタスクが触るファイル範囲を見る。重なるなら着手しない
+  （`doing` マークが排他ロックの役目を持つ。`/next-task` が `doing` で止まるのはこのため）
+- **検証コマンドは片方ずつ。** 相手が目視確認でフィクスチャを一時的に書き換えるタスクなら、
+  その間に出た失敗はまず相手の作業を疑う
+- **tsukumo を起こす目視確認が要るタスクは並行させない。** `TSUKUMO_VIEW_PORT` を変えても
+  `~/.tsukumo/state.json` は共有される
+
 ## 進捗管理とHandoff
 
 会話やセッションが切れても再開できるよう、状態はチャットではなく `develop/` 配下の
