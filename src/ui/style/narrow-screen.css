@@ -29,13 +29,20 @@
   .layout-dispatch {
     min-height: 10rem;
   }
-  /* .layout-sidebar もこの幅では高さ auto になるので、「いま何をしているか」「タスク一覧」の
-     flex-basis: 0（.sidebar-block-activity / .sidebar-block-tasks の既定）が同じ理由で
-     自身の中身を 0 扱いにしてしまう。狭い画面では元々スクロールさせる意図が無いので、
-     「セッション情報」と同じ「中身なりの高さ」に揃える。 */
+  /* .layout-sidebar もこの幅では高さ auto になり、区画どうしで高さを取り合う前提が消える。
+     狭い画面では元々スクロールさせる意図が無いので、3区画すべてを「中身なりの高さ」に揃える。
+     **タスク一覧の開閉でどちらが残りを取るかが入れ替わる**（sidebar.css）ので、
+     開いた状態の指定（クラス2つぶんの詳細度）もここで打ち消す。 */
   .sidebar-block-activity,
-  .sidebar-block-tasks {
+  .sidebar-block-tasks,
+  .sidebar-block-activity.sidebar-tasks-expanded,
+  .sidebar-block-tasks.sidebar-tasks-expanded {
     flex: 0 1 auto;
+  }
+  /* 高さが auto の文脈では割合の上限に基準が無い。明示して外す。 */
+  .sidebar-block-tasks,
+  .sidebar-block-activity.sidebar-tasks-expanded {
+    max-height: none;
   }
   /* .layout-region.layout-character もこの幅では高さ auto になり、割合で書いた高さの基準が
      消える（同じ理由の不具合の再発）。この幅ではページ自体が縦スクロールするので、立ち絵は

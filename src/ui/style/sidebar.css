@@ -39,8 +39,10 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  margin: 0 0 1rem;
-  padding-bottom: 1rem;
+  /* 区画の間の余白は3区画ぶん効くので、ここを詰めた分がそのまま一覧に見える件数になる
+     （1rem のときは上下で 80px を使っていた）。罫線があるので詰めても区画の境目は読める。 */
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--rule);
   font-size: var(--font-secondary);
 }
@@ -73,15 +75,66 @@
   min-height: 0;
   overflow-y: auto;
 }
-/* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。
-   「セッション情報」は3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの
-   高さで止める（等分すると中身が短いぶんだけ下に空白が間延びするため）。 */
-.sidebar-block-activity,
-.sidebar-block-tasks {
+/* 高さは**タスク一覧を畳んでいるか開いているかで入れ替わる**（docs/requirements.md 4.2）。
+   畳んでいる既定では、タスク一覧は数行ぶんの中身なりの高さで止まり（flex-grow: 0）、
+   残りは「いま何をしているか」が全部取る。「セッション情報」は3行固定の中身なので
+   どちらの状態でも伸びしろを持たない（等分すると中身が短いぶんだけ下に空白が間延びするため）。
+
+   **中身なりで止まる側は縮まない（flex-shrink: 0）かわりに上限を持つ。** 縮める余地を残すと、
+   中身の高い区画が取り合いに勝って相手を高さ 0 まで潰す（2026-09-16 実測。畳んだ状態で要約が
+   3行に折り返すとタスク一覧が 214px になり、「いま何をしているか」の中身が消えた。開いた状態で
+   一覧の全長 1327px を基準にすると、今度は「セッション情報」が 3px まで潰れた）。上限があるので
+   縮まなくても溢れず、残りを取る側には必ず場所が残る。溢れた分は .sidebar-block-scroll が
+   内側でスクロールする。 */
+.sidebar-block-activity {
   flex: 1 1 0;
 }
+.sidebar-block-tasks,
 .sidebar-block-session {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+}
+/* 畳んだタスク一覧の上限。**3件が折り返しても収まる**ところに置く（40% だと 1400x900 で
+   3件目が切れた）。 */
+.sidebar-block-tasks {
+  max-height: 50%;
+}
+/* 開いた状態では取り合いが逆になり、タスク一覧が残りの高さを全部取る。
+   **「いま何をしているか」には上限を置く**：失敗したツールの `<pre>`（.activity-failure）で
+   中身が膨らんでも、中身なりの高さのままだと開いたタスク一覧を押し潰してしまう
+   （失敗した回の引数と出力をサイドバーで読める形を残したまま両立させるための上限）。溢れた分は
+   .sidebar-block-scroll が内側でスクロールする。 */
+.sidebar-block-tasks.sidebar-tasks-expanded {
+  flex: 1 1 0;
+  max-height: none;
+}
+.sidebar-block-activity.sidebar-tasks-expanded {
+  flex: 0 0 auto;
+  max-height: 30%;
+}
+/* 見出しを押して開閉する区画の見出し。**見た目は押せない見出し（h2 の地の文）と同じ**にし、
+   h2 から font と色をそのまま受け取る（button はどちらも継承しないので明示する）。 */
+.sidebar-block-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sidebar-block-toggle-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* 開閉の状態を**文字でも**読めるようにする（印の ▸ / ▾ だけに頼らない。色でも伝えない）。 */
+.sidebar-block-toggle-hint {
+  flex: 0 0 auto;
+  font-size: var(--font-label);
 }
 .sidebar-empty {
   color: var(--ink-quiet);
@@ -149,6 +202,11 @@
 }
 .task-status-other {
   color: var(--state-warn);
+}
+/* 畳んだ状態で出していない残りの件数。一覧の行ではないので、補助の字の濃さに落とす。 */
+.task-more {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
 }
 /* ラベル列（`.session-info-label`）と値列（`.session-info-value`）を2列の grid で揃える。
    行ごとに別々の flex で並べると、ラベルの文字数の差（「モデル」3字 /「許可モード」5字）が
