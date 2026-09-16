@@ -43,4 +43,17 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(SPEECH_CADENCE_PROMPT).toContain("1ターンに5〜10回")
     expect(REPORT_NOTATION_PROMPT).not.toContain("5〜10回")
   })
+
+  it("委譲中の間合い（背景委譲・合図の形式）を持ち、append に載る", () => {
+    // 文面の全文は写さず、決めた4点（背景委譲・間隔・合図の形式）が入っているかだけを見る
+    // （2026-09-16 決定。フォアグラウンドの委譲は吹き出しを数分止める）。
+    const append = buildSystemPromptAppend(pack(PERSONA), [
+      SPEECH_CADENCE_PROMPT,
+      REPORT_NOTATION_PROMPT,
+    ])
+
+    expect(SPEECH_CADENCE_PROMPT).toContain("run_in_background")
+    expect(SPEECH_CADENCE_PROMPT).toContain("状況 | n/N")
+    expect(append).toContain("run_in_background")
+  })
 })
