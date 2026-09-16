@@ -99,12 +99,12 @@ describe("TaskBoard", () => {
     expect(cells?.[3]?.textContent).toBe("—")
   })
 
-  it("loopable の値が付いているタスクはそのまま出す", () => {
+  it("loopable は Y だけ出し、N は空欄にする", () => {
     render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
 
     const rows = document.querySelectorAll(".task-board-row")
     expect(rows[0]?.querySelectorAll("td")[2]?.textContent).toBe("Y")
-    expect(rows[2]?.querySelectorAll("td")[2]?.textContent).toBe("N")
+    expect(rows[2]?.querySelectorAll("td")[2]?.textContent).toBe("")
   })
 
   it("閉じるボタンで閉じる", () => {

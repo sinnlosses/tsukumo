@@ -115,7 +115,7 @@ function TaskRow(props: {
       </th>
       <td>{props.task.status ?? "—"}</td>
       <td>{props.task.difficulty ?? "—"}</td>
-      <td>{props.task.loopable ?? "—"}</td>
+      <td>{loopableMark(props.task.loopable)}</td>
       <td>{props.task.dependencies.length === 0 ? "—" : props.task.dependencies.join(", ")}</td>
       <td>
         <ReadinessCell readiness={taskReadiness(props.task, props.tasks)} />
@@ -123,6 +123,20 @@ function TaskRow(props: {
       <td>{props.task.summary}</td>
     </tr>
   )
+}
+
+/**
+ * `loopable`。**`N` は空欄にし、`Y` だけ文字を出す**（2026-09-16 決定。ユーザーの要望
+ * 「Nの場合は表示しないようにお願いできる? そうするとYがついてるものが視認しやすくなるから」）。
+ * 全行に文字が並ぶと、自動進行に載る `Y` が埋もれるため。**消すのは `N` だけ**で、値が無いときは
+ * 他の列と同じ「—」、想定外の値はそのまま出す（読み手が気づけるようにする）。
+ */
+function loopableMark(loopable: string | undefined): string {
+  if (loopable === undefined) {
+    return "—"
+  }
+
+  return loopable === "N" ? "" : loopable
 }
 
 /** 着手可否。**色だけで伝えない**ので、READY / 止めている依存のIDを文字でも出す。 */
