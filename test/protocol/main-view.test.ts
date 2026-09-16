@@ -16,6 +16,11 @@ const edit = (path: string): MainViewEntry => ({
   input: { file_path: path },
   result: { content: "ok", isError: false },
 })
+const question = (text: string): MainViewEntry => ({
+  kind: "question",
+  questions: [{ header: "架空", text, multiSelect: false, options: [] }],
+  answers: [],
+})
 
 describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("依頼を境目にやり取りへ分ける", () => {
@@ -60,9 +65,8 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
     const steps = turns[0]?.steps ?? []
     expect(steps).toHaveLength(2)
-    expect(steps[0]?.report).toBe("まず読むね")
     expect(steps[0]?.actions).toHaveLength(1)
-    expect(steps[1]?.report).toBe("次に直すね")
+    expect(steps[1]?.actions).toHaveLength(1)
   })
 
   it("レポートより前に実行されたツールは、レポートを持たないステップになる", () => {
@@ -85,6 +89,50 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(turns[0]?.droppedCount).toBeGreaterThan(0)
     expect(turns[0]?.steps.at(-1)?.report).toBe("レポート44")
     expect(turns[0]?.steps[0]?.report).not.toBe("レポート0")
+  })
+
+  it("ツール呼び出しが続いた本文は落とし、最後に書いた本文だけを残す", () => {
+    const turns = mainViewTurns([
+      request("依頼"),
+      detail("まず読むね"),
+      edit("src/a.ts"),
+      detail("次に直すね"),
+      edit("src/b.ts"),
+      detail("直した結果はこう"),
+    ])
+
+    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([
+      undefined,
+      undefined,
+      "直した結果はこう",
+    ])
+  })
+
+  it("ツールを1つも呼ばないターンでは何も落ちない", () => {
+    const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")])
+
+    expect(turns[0]?.steps[0]?.report).toBe("文章だけで答える")
+  })
+
+  it("質問はツールに数えないので、質問の直前に書いた本文は残る", () => {
+    const turns = mainViewTurns([
+      request("依頼"),
+      detail("比べた結果はこう"),
+      question("どれにする？"),
+    ])
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps[0]?.report).toBe("比べた結果はこう")
+    expect(steps[0]?.actions).toHaveLength(1)
+  })
+
+  it("落とすのは本文だけで、続いた出来事はステップに残る", () => {
+    const turns = mainViewTurns([request("依頼"), detail("まず直すね"), edit("src/a.ts")])
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps).toHaveLength(1)
+    expect(steps[0]?.report).toBeUndefined()
+    expect(steps[0]?.actions).toHaveLength(1)
   })
 
   it("最初の依頼より前の記録も、request 無しのターンとして残す", () => {

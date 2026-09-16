@@ -348,6 +348,84 @@
           "status": "success"
         }
       }
+    ],
+    [
+      {
+        "afterMs": 100,
+        "event": {
+          "kind": "utterance",
+          "text": "まず台本のファイルを読むね。"
+        }
+      },
+      {
+        "afterMs": 150,
+        "event": {
+          "kind": "tool-started",
+          "toolUseId": "fake-tool-narration-1",
+          "name": "Read",
+          "input": {
+            "file_path": "/tmp/dummy/notes.md"
+          }
+        }
+      },
+      {
+        "afterMs": 500,
+        "event": {
+          "kind": "tool-finished",
+          "toolUseId": "fake-tool-narration-1",
+          "content": "ダミーの読み取り結果（2行）",
+          "isError": false
+        }
+      },
+      {
+        "afterMs": 560,
+        "event": {
+          "kind": "utterance",
+          "text": "次は直すね。"
+        }
+      },
+      {
+        "afterMs": 620,
+        "event": {
+          "kind": "tool-started",
+          "toolUseId": "fake-tool-narration-2",
+          "name": "Edit",
+          "input": {
+            "file_path": "/tmp/dummy/notes.md"
+          }
+        }
+      },
+      {
+        "afterMs": 900,
+        "event": {
+          "kind": "tool-finished",
+          "toolUseId": "fake-tool-narration-2",
+          "content": "ダミーの書き換え結果",
+          "isError": false
+        }
+      },
+      {
+        "afterMs": 960,
+        "event": {
+          "kind": "speech",
+          "text": "実況は消えて、これだけ残るはずだぞ。",
+          "expression": "proud"
+        }
+      },
+      {
+        "afterMs": 1000,
+        "event": {
+          "kind": "utterance",
+          "text": "## 実況が落ちたあとに残る本文\n\nこれは架空の本文で、実物の会話ではない。**上の「まず台本のファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる**（`docs/requirements.md` 4.2）。\n"
+        }
+      },
+      {
+        "afterMs": 1100,
+        "event": {
+          "kind": "turn-finished",
+          "status": "success"
+        }
+      }
     ]
   ]
 }

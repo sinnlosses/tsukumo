@@ -51,6 +51,7 @@ export type MainViewTurn = {
 export function mainViewTurns(entries: readonly MainViewEntry[]): readonly MainViewTurn[] {
   return groupIntoTurns(entries)
     .slice(-MAX_MAIN_VIEW_TURNS)
+    .map((turn) => dropNarration(turn))
     .map((turn) => limitTurnEntries(turn))
 }
 
@@ -89,6 +90,29 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
   flush()
 
   return turns
+}
+
+/**
+ * **あとにツール呼び出しが続いた本文を落とす**（`docs/requirements.md` 4.2。2026-09-16 決定）。
+ * 「まず読むね」「次はテスト」のような実況は、ツールを呼ぶ合図としてしか書かれておらず、
+ * レポートとして読むものではない。**規約の条項（`src/core/report-notation.ts` の
+ * 「前置きと締めを書かない」）では抑えきれなかった**ので、ツールを呼んだという事実で落とす
+ * （4.2「なぜテキストの規約をやめたか」と同じ立場）。
+ *
+ * **質問（`question`）はツールに数えない。** 質問は利用者が答える手前で止まる場所なので、
+ * その直前に書いた本文は読むためのレポートとして残す。
+ *
+ * **ツールを1つも呼ばないターンでは何も落ちない**（どのステップにも `tool` が続かない）。
+ * 書きかけ（`partialUtterance`）は常に最後のステップなので、流れている間は消えない
+ * （ツールが始まった時点で落ちる。「出してから消す」＝ 2026-09-16 決定）。
+ */
+function dropNarration(turn: MainViewTurn): MainViewTurn {
+  return {
+    ...turn,
+    steps: turn.steps.map((step) =>
+      step.actions.some((action) => action.kind === "tool") ? { ...step, report: undefined } : step,
+    ),
+  }
 }
 
 /** 1つのやり取りが持つ記録を上限まで切り詰める。落とすのは**古いほう**（今回の続きを残す）。 */
