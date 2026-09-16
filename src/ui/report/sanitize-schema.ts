@@ -20,8 +20,16 @@
 import { type Options as Schema } from "rehype-sanitize"
 
 /**
- * 通してよい要素（54個）。ここに無い要素は、**中身のテキストだけを残して**タグが落ちる
+ * 通してよい要素（56個）。ここに無い要素は、**中身のテキストだけを残して**タグが落ちる
  * （`img` もここに無いので、`src`/`alt` を持たない裸のテキストにすら残らず消える）。
+ *
+ * `h2` / `h3` は `report-notation.ts` が勧める見出しの記法（`##` / `###`）が hast に変換された
+ * ときのタグ名（`h1` は無い。規約が「レポートの見出しに `#` は使わない」と決めているため通さない）。
+ * **DOM に出るのは実際には `h4` / `h5`**（`src/ui/report/markdown.tsx` の `components` が写す。
+ * ページには利用者の依頼を示す本物の `<h2 class="turn-request">` が1つあるので、レポート側の
+ * 見出しがそれと同じ段に並ぶと見出しの階層が壊れるため、タグを一段落とす）。ここで `h2`/`h3` を
+ * 許可リストに残すのは、その書き替えが起きる前に hast-util-sanitize が中身ごと落としてしまう
+ * （サニタイズは `components` より前に効く）のを防ぐため。
  */
 const ALLOWED_TAG_NAMES: readonly string[] = [
   "div",
@@ -29,6 +37,8 @@ const ALLOWED_TAG_NAMES: readonly string[] = [
   "p",
   "br",
   "hr",
+  "h2",
+  "h3",
   "h4",
   "h5",
   "h6",
@@ -176,7 +186,8 @@ const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/
 
 /**
  * レポートの HTML を削ぎ落とす rehype-sanitize の schema。**移行前の自前サニタイザと同じ許可リスト**
- * （54要素・42属性）を hast-util-sanitize の形に写したもの。
+ * （54要素・42属性）を hast-util-sanitize の形に写したものに、見出し（`h2`/`h3`。上の注記）の
+ * 2要素を足した56要素・42属性。
  *
  * - **`clobber: []`**（defaultSchema の既定は `id` 等に `user-content-` を前置してDOMクロバー対策
  *   をするが、それをやると SVG の `marker-end="url(#foo)"` が指す `id="foo"` と値がズレて

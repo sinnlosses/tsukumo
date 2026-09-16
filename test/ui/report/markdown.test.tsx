@@ -57,6 +57,21 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect((cells[2] as HTMLTableCellElement).style.textAlign).toBe("right")
   })
 
+  it("`##` が見出し（h4）として描かれる（タグの落ちた素のテキストにならない）", () => {
+    const { container } = render(<Markdown text="## みだし2" />)
+
+    expect(container.querySelector("h4")?.textContent).toBe("みだし2")
+    // ページ本体の依頼の見出し（h2.turn-request）と段を混同しないよう、DOM には h2 を残さない。
+    expect(container.querySelector("h2")).toBeNull()
+  })
+
+  it("`###` が見出し（h5）として描かれる", () => {
+    const { container } = render(<Markdown text="### みだし3" />)
+
+    expect(container.querySelector("h5")?.textContent).toBe("みだし3")
+    expect(container.querySelector("h3")).toBeNull()
+  })
+
   it("表は横スクロールの器（div.table-scroll）に包まれる", () => {
     const { container } = render(<Markdown text={"| 見出し | 値 |\n| --- | --- |\n| あ | 1 |"} />)
 

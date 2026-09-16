@@ -52,7 +52,7 @@ export function Markdown(props: MarkdownProps): ReactElement {
       // （src/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
       remarkPlugins={[remarkGfm, remarkCjkFriendly]}
       rehypePlugins={[rehypeRaw, [rehypeSanitize, REPORT_SANITIZE_SCHEMA], rehypeHighlight]}
-      components={{ pre: Pre, a: Anchor, table: Table }}
+      components={{ pre: Pre, a: Anchor, table: Table, h2: SectionHeading, h3: SubHeading }}
     >
       {props.text}
     </ReactMarkdown>
@@ -106,6 +106,29 @@ function hastNodeText(node: Element["children"][number]): string {
     return node.value
   }
   return node.type === "element" ? node.children.map(hastNodeText).join("") : ""
+}
+
+type SectionHeadingProps = JSX.IntrinsicElements["h2"] & ExtraProps
+
+/**
+ * レポートの見出し `##`（mdast の depth 2。hast では `h2`）を `h4` として描く。ページには
+ * 利用者の依頼を示す本物の `<h2 className="turn-request">` が1つあるので（`turn.tsx`）、
+ * レポートの中の見出しが同じ段に並ぶと見出しの階層が壊れる。**許可リスト
+ * （{@link REPORT_SANITIZE_SCHEMA}）には `h2` のまま残す**（サニタイズはここより前に効くので、
+ * 落としてしまうと書き替える前に中身が消える）。見た目は `.detail-block h4`
+ * （`src/ui/style/main-view.css`）。
+ */
+function SectionHeading(props: SectionHeadingProps): ReactElement {
+  const { node: _node, children, ...rest } = props
+  return <h4 {...rest}>{children as ReactNode}</h4>
+}
+
+type SubHeadingProps = JSX.IntrinsicElements["h3"] & ExtraProps
+
+/** レポートの見出し `###`（hast では `h3`）を `h5` として描く。{@link SectionHeading} と同じ理由。 */
+function SubHeading(props: SubHeadingProps): ReactElement {
+  const { node: _node, children, ...rest } = props
+  return <h5 {...rest}>{children as ReactNode}</h5>
 }
 
 type AnchorProps = JSX.IntrinsicElements["a"] & ExtraProps

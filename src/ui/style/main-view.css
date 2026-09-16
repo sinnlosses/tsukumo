@@ -122,6 +122,22 @@ h2.turn-request {
 .detail-block .note-ng {
   border-left-color: var(--state-ng);
 }
+/* レポートの見出し（`##` / `###`）。`src/ui/report/markdown.tsx` が `h4` / `h5` として描く
+   （タグは `h2.turn-request` と段が被らないよう一段落としてある）。**タイプスケールはこの4段だけ**
+   （docs/design.md 13.3）なので新しい段は作らず、太さ・余白・罫線の3つで `##` と `###` を
+   見分けられるようにする。 */
+.detail-block h4 {
+  margin: 1rem 0 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+.detail-block h5 {
+  margin: 0.75rem 0 0.4rem;
+  font-size: var(--font-body);
+  font-weight: 600;
+}
 .detail-block blockquote {
   margin: 0.5rem 0;
   padding-left: 0.75rem;
