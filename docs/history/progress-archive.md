@@ -1,5 +1,9 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 箱の方針（当面 Orca、載せ替えられる形を保つ）を正典に落とした（T-046）
+
+`docs/requirements.md` 7章の「Electron などのスタンドアロンに移るか」を条件付きの保留に書き換え（再検討の条件＝Orca のタブでは埋められない使い勝手の不足が実際に出たとき）、`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」節を「2つ目のアダプタを書くまでポートは `showView` 1つに保つ」に改めた。コードは変えていない。
+
 ### 2026-09-16 層の検査を広げ、旧パスと経路名の再掲を掃除した（T-142）
 
 `docs/research/architecture-proposal.md` の移行の段1。`src/protocol/session-socket.ts` を作って

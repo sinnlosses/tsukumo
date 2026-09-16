@@ -63,6 +63,8 @@
   衣装は実行中のモデル（`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` = 戦闘配置）
 - **キャラクターの素材を差し替えられる** — 立ち絵・表情・差し色はすべて定義ファイル側。
   コードにキャラクターの中身を書かない
+- **画面からキャラクターを切り替えられる** — サイドバーの `<select>` から選ぶと、
+  そのキャラクターのセッションに起こし直す（切り替えた相手は次回以降も覚えている）
 - **hook の登録が要らない** — 表情・衣装・作業の進行はすべて SDK のイベントから決まるので、
   `~/.claude/settings.json` に足すものは何も無い
 - **外部通信ゼロで表示する** — ビューは `127.0.0.1` にだけバインドし、外部ライブラリは
@@ -86,9 +88,20 @@ bun install
 # 2. tsukumo コマンドをグローバルに入れる（~/.bun/bin/tsukumo がこのリポジトリを指す）
 bun link
 
-# 3. 好きなプロジェクトのディレクトリで起動する
+# 3. コマンドが通っているか確かめる
+which tsukumo   # ~/.bun/bin/tsukumo が出れば通っている
+
+# 4. 好きなプロジェクトのディレクトリで起動する（characters/ も develop/ も無いディレクトリでよい）
 cd ~/path/to/your-project
 tsukumo
+```
+
+`which tsukumo` が何も出さないときは `command not found` になります。`~/.bun/bin` が `PATH` に
+通っていないのが原因なので、シェルの設定（`.zshrc` / `.bashrc` など）に追加してください
+（Bun 自体の導入手順は [Bun 公式](https://bun.com/docs/installation) を参照）:
+
+```bash
+export PATH="$HOME/.bun/bin:$PATH"
 ```
 
 `bun link` を消すときは、**このリポジトリの直下で** `bun unlink` を実行します。
@@ -164,7 +177,9 @@ bun run scripts/open-views.ts http://127.0.0.1:7327
 
 - **`/` を打つとコマンドの補完**が入力欄の上に重なって出ます。前方一致を先に、続けて部分一致を
   並べ、Tab で確定・Enter で実行・クリックでも確定できます
-- **セッションは毎回新規**で、再開はしません
+- **同じディレクトリ・同じキャラクターの前回のセッションがあれば、自動で続きから始まります**
+  （サイドバーにその印が出ます）。新規に始め直したいときは `TSUKUMO_NEW_SESSION=1` を付けて
+  起動します
 
 ### 許可プロンプトと質問に答える
 
@@ -178,11 +193,14 @@ bun run scripts/open-views.ts http://127.0.0.1:7327
 
 ### 環境変数
 
-| 変数名                  | 必須 | デフォルト                         | 説明                                                                                                                                                 |
-| ----------------------- | :--: | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TSUKUMO_VIEW_PORT`     |      | `7327`                             | ビューを配るポート。**既定のまま塞がっていたら20個先まで順にずらす**（明示的に指定したときはずらさずそのまま失敗する）。`0` を渡すと空きポートを使う |
-| `TSUKUMO_CHARACTER_DIR` |      | 同梱の `characters/tsukumo-spirit` | キャラクター定義ディレクトリ。相対パスは cwd 相対、絶対パスはそのまま                                                                                |
-| `TSUKUMO_OPEN_VIEW`     |      | 開く                               | 起動時にレイアウトページのタブを自動で開くか。`0` を渡すと開かない                                                                                   |
+| 変数名                | 必須 | デフォルト                         | 説明                                                                                                                                                 |
+| --------------------- | :--: | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TSUKUMO_VIEW_PORT`   |      | `7327`                             | ビューを配るポート。**既定のまま塞がっていたら20個先まで順にずらす**（明示的に指定したときはずらさずそのまま失敗する）。`0` を渡すと空きポートを使う |
+| `TSUKUMO_CHARACTER`   |      | 同梱の `characters/tsukumo-spirit` | キャラクター定義ディレクトリ。相対パスは cwd 相対、絶対パスはそのまま                                                                                |
+| `TSUKUMO_OPEN_VIEW`   |      | 開く                               | 起動時にレイアウトページのタブを自動で開くか。`0` を渡すと開かない                                                                                   |
+| `TSUKUMO_DRIVER`      |      | `sdk`                              | セッションの駆動。`fake` を渡すと本物の `claude` を起こさず、台本どおりにイベントを流す（目視確認・自動テスト用）                                    |
+| `TSUKUMO_NEW_SESSION` |      | 復元する                           | `1` を渡すと前回の続きから復元せず、新規にセッションを起こす                                                                                         |
+| `TSUKUMO_WATCH_UI`    |      | 見張らない                         | `1` を渡すと `src/ui/` を見張り、保存のたびに組み立て直す（`bun run dev` が設定する）                                                                |
 
 ### キャラクターを差し替える
 
@@ -191,7 +209,7 @@ bun run scripts/open-views.ts http://127.0.0.1:7327
 `.gitignore` 済みの `characters/local/` に素材と定義ファイルを置き、そこを指して起動します。
 
 ```bash
-TSUKUMO_CHARACTER_DIR=characters/local tsukumo
+TSUKUMO_CHARACTER=characters/local tsukumo
 ```
 
 ```json
@@ -242,11 +260,12 @@ TSUKUMO_CHARACTER_DIR=characters/local tsukumo
 bun run check
 
 # 個別実行
-bun run typecheck             # tsc --noEmit
-bun run lint                  # oxlint（--fix は lint:fix）
-bun run format                # oxfmt で自動整形（--check は format:check）
-bun test                      # テスト全体
-bun test test/index.test.ts   # 単体テストファイルのみ実行
+bun run typecheck                     # tsc --noEmit
+bun run lint                          # oxlint（--fix は lint:fix）
+bun run format                        # oxfmt で自動整形（--check は format:check）
+bun test --isolate                    # テスト全体（`mock.module` がファイルをまたいで漏れるため
+                                       #   素の `bun test` は使わない）
+bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 ```
 
 **ブラウザに出た絵は自動テストで守りません。** 配信（バインド先・経路・push）まではテストし、
@@ -257,16 +276,18 @@ bun test test/index.test.ts   # 単体テストファイルのみ実行
 ```
 .
 ├── src/
-│   ├── domain/             # 受け取る・決める（SDK イベントの変換、表情、キャラクター定義）
-│   ├── usecase/            # 決める（イベントを畳み込んで、いま画面に出す中身を決める）
-│   ├── presentation/       # 描く（HTML の組み立て・browser/ のブラウザ側スクリプト・style/ の CSS）
-│   └── infrastructure/     # ホスト・外部コマンド・OS 依存（SDK 駆動、HTTP サーバ、Orca アダプタ）
+│   ├── protocol/           # 両側で共有する契約（SessionEvent・SessionState・ClientCommand・
+│   │                       #   ServerFrame など。zod。node: も document も触らない）
+│   ├── core/               # サーバ（Bun）。SDK 駆動、HTTP/WebSocket、キャラクターパック、
+│   │                       #   環境変数の読み取り、Orca アダプタ
+│   ├── ui/                 # クライアント（ブラウザ）。React の部品、unified の Markdown 変換、CSS
+│   └── cli.ts              # 配線（composition root）。起動時の前提チェック・終了処理
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── vendor/                 # 同梱している外部ライブラリ（編集しない）
 ├── scripts/                # 閉じたタブを開き直す道具など
 ├── assets/                 # ロゴ
-├── docs/                   # 要件定義・アーキテクチャ・規約・用語集（正典）
+├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
 ├── develop/                # 進捗管理（tasks.json・progress.md・direction.md）。機能には関係しない
 ├── bin/tsukumo             # エントリポイント（bun link でグローバルに入る）
 └── package.json
@@ -278,6 +299,7 @@ bun test test/index.test.ts   # 単体テストファイルのみ実行
 ### ドキュメント
 
 - [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
+- [`docs/design.md`](./docs/design.md) — 設計書（`protocol` / `core` / `ui` の3層・プロトコル・部品・キャラクターパック）
 - [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図・設計判断・目視確認の手順・既知の制約）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）
