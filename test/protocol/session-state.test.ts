@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { WORKING_EXPRESSION_COOLDOWN_MS } from "../../src/protocol/expression.ts"
 import { type SessionEvent } from "../../src/protocol/session-event.ts"
 import {
   applySessionEvent,
@@ -149,7 +150,7 @@ describe("applySessionEvent", () => {
     expect(secondTurnSpoken.speeches).toEqual(["2つめのセリフ"])
   })
 
-  it("ツールが1秒以上実行中だと表情が作業中になり、終わると直前のセリフの表情に戻る", () => {
+  it("ツールが1秒以上実行中だと表情が作業中になり、終わってもクールダウンの間は作業中を保ち、明けると直前のセリフの表情に戻る", () => {
     const spoken = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "speech", text: "いくよ！", expression: "proud" },
@@ -188,7 +189,13 @@ describe("applySessionEvent", () => {
       2000,
     )
 
-    expect(currentExpression(finished, 2000)).toBe("proud")
+    // 終わった瞬間は working だったので、lastToolFinishedAt が打たれる（クールダウン開始）。
+    expect(finished.lastToolFinishedAt).toBe(2000)
+    // クールダウンの間（明ける前）は working のまま（T-167: ツールの隙間で往復しない）。
+    expect(currentExpression(finished, 2000)).toBe("working")
+    expect(currentExpression(finished, 2000 + WORKING_EXPRESSION_COOLDOWN_MS - 1)).toBe("working")
+    // クールダウンが明けると、直前のセリフの表情に戻る。
+    expect(currentExpression(finished, 2000 + WORKING_EXPRESSION_COOLDOWN_MS)).toBe("proud")
     expect(finished.runningTools).toEqual([])
     expect(finished.finishedTools).toEqual([
       {
@@ -200,6 +207,52 @@ describe("applySessionEvent", () => {
         failureOutput: undefined,
       },
     ])
+  })
+
+  it("クールダウン中に次のツールが始まると、隙間でも往復せず working のまま続く", () => {
+    // 1つ目のツールが 0〜1200 で走り（working を出した）、クールダウン中の 1300 に
+    // 2つ目のツールが始まって 1400 に終わる（1秒未満で単体では working を出さない）。
+    const firstFinished = applySessionEvent(
+      applySessionEvent(
+        INITIAL_SESSION_STATE,
+        {
+          kind: "tool-started",
+          toolUseId: "toolu_1",
+          name: "Read",
+          input: {},
+          parentToolUseId: undefined,
+        },
+        0,
+      ),
+      { kind: "tool-finished", toolUseId: "toolu_1", content: "1つ目の結果", isError: false },
+      1200,
+    )
+    const secondStarted = applySessionEvent(
+      firstFinished,
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_2",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
+      1300,
+    )
+
+    // 2つ目のツールはまだ開始から1秒経っていないが、クールダウン中に始まったので即座に working。
+    expect(currentExpression(secondStarted, 1300)).toBe("working")
+
+    const secondFinished = applySessionEvent(
+      secondStarted,
+      { kind: "tool-finished", toolUseId: "toolu_2", content: "2つ目の結果", isError: false },
+      1400,
+    )
+
+    // 2つ目も終わった瞬間 working だったので、クールダウンが 1400 から延びる。
+    expect(secondFinished.lastToolFinishedAt).toBe(1400)
+    expect(currentExpression(secondFinished, 1400 + WORKING_EXPRESSION_COOLDOWN_MS - 1)).toBe(
+      "working",
+    )
   })
 
   it("失敗して終わったツールは出力を failureOutput に残す（サイドバーで開いて読むため）", () => {
@@ -255,6 +308,9 @@ describe("applySessionEvent", () => {
     // 実行中だった間（500ms 経過時点）も、終わったあとも、作業中の表情は一度も出ない。
     expect(currentExpression(finished, 500)).toBe("proud")
     expect(currentExpression(finished, 5000)).toBe("proud")
+    // 一度も working を出さなかったので、クールダウンも始まらない
+    // （lastToolFinishedAt が undefined のまま。誤ってクールダウンが始まらないことの確認）。
+    expect(finished.lastToolFinishedAt).toBeUndefined()
   })
 
   it("サブエージェントの中のツール（parentToolUseId あり）は nested として持つ", () => {

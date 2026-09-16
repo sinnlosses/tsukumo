@@ -54,22 +54,42 @@ const PAST_TURN_EMPTY_MESSAGE = "（このターンでは発話がありませ�
 const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
 /**
- * 表情の「作業中」への遅延切り替えを、部品側のタイマーで再計算する。ツールの開始・終了だけでは
- * 遅延が経過した「その瞬間」に何のイベントも来ないので、実行中のツールがあってまだ「作業中」に
- * なっていないときだけ、遅延の残り時間ぶん先に1回だけ再描画するタイマーを立てる
- * （`nextWorkingTransitionDelayMs`。移行前は `usecase/event-sink.ts` がサーバ側で同じことをしていた）。
+ * 表情の「作業中」への遅延切り替え・クールダウン明けを、部品側のタイマーで再計算する。
+ * ツールの開始・終了だけでは遅延やクールダウンが経過した「その瞬間」に何のイベントも
+ * 来ないので、`nextWorkingTransitionDelayMs` の戻り値ぶん先に再描画するタイマーを立てる。
+ *
+ * **発火するたびに次の遅延を計算し直して立て直す**（`useNowForPortraitMotion` と同じ形。
+ * クールダウンが明める瞬間と、実行中のツールが遅延を超える瞬間の**両方が前後して控えている
+ * ことがある**ため、1回きりのタイマーでは後ろの一方を取りこぼす。移行前は
+ * `usecase/event-sink.ts` がサーバ側でこの再計算をしていた）。
  */
-function useNowForExpression(runningTools: readonly ToolActivity[]): number {
+function useNowForExpression(
+  runningTools: readonly ToolActivity[],
+  lastToolFinishedAt: number | undefined,
+): number {
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    const delay = nextWorkingTransitionDelayMs(runningTools, Date.now())
-    if (delay === undefined) {
-      return undefined
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    const scheduleNext = (): void => {
+      const delay = nextWorkingTransitionDelayMs(runningTools, lastToolFinishedAt, Date.now())
+      if (delay === undefined) {
+        return
+      }
+      timer = setTimeout(() => {
+        setNow(Date.now())
+        scheduleNext()
+      }, delay)
     }
-    const timer = setTimeout(() => setNow(Date.now()), delay)
-    return () => clearTimeout(timer)
-  }, [runningTools])
+
+    scheduleNext()
+    return () => {
+      if (timer !== undefined) {
+        clearTimeout(timer)
+      }
+    }
+  }, [runningTools, lastToolFinishedAt])
 
   return now
 }
@@ -142,7 +162,7 @@ function pastTurnSpeech(
 export function CharacterView(): ReactElement {
   const { state } = useSession()
   const { activeTurnId, newestTurnId } = useTurnSelection()
-  const now = useNowForExpression(state.runningTools)
+  const now = useNowForExpression(state.runningTools, state.lastToolFinishedAt)
   const pastTurn = pastTurnSpeech(state.records, activeTurnId, newestTurnId)
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
   // **ツール実行中の「作業中」への上書きは今回を見ているときだけ**（決定 2026-09-14）。

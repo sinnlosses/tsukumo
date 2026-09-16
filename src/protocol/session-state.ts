@@ -207,6 +207,14 @@ export type SessionState = {
    * と違って `request` での巻き戻しは要らない）。まだ一度も失敗していなければ undefined。
    */
   readonly lastToolFailureAt: number | undefined
+  /**
+   * 直近でツールが終わった時刻。**「終わった瞬間に working だったツール」のときだけ更新する**
+   * （{@link finishTool}。短く終わって一度も working を出さなかったツールの終了で、
+   * クールダウンが誤って始まらないようにするため）。表情の「作業中」を保つクールダウンの
+   * 判定にだけ使う（`resolveExpression` の `lastToolFinishedAt`。`src/protocol/expression.ts`
+   * 「4.3 状態連動」）。まだ一度もそうしたツールが終わっていなければ undefined。
+   */
+  readonly lastToolFinishedAt: number | undefined
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -232,6 +240,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
+  lastToolFinishedAt: undefined,
 }
 
 /**
@@ -421,7 +430,12 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
  * `now` は経過時間の判定に要る現在時刻（呼び出し側が渡す。`Date.now()` はここでは呼ばない）。
  */
 export function currentExpression(state: SessionState, now: number): Expression {
-  return resolveExpression(state.runningTools, state.speechExpression, now)
+  return resolveExpression(
+    state.runningTools,
+    state.speechExpression,
+    state.lastToolFinishedAt,
+    now,
+  )
 }
 
 /**
@@ -528,6 +542,12 @@ function withMarkerFallback(state: SessionState): SessionState {
  * （対応が取れない結果を作らない）。`isError` が true のときは `lastToolFailureAt` に `at` を
  * 打ち（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）、出力を
  * {@link ToolActivity.failureOutput} に移す（サイドバーで開いて読むため）。
+ *
+ * `lastToolFinishedAt` は、**この瞬間の表情が `working` だったときだけ** `at` に更新する
+ * （フィルタ前の `state.runningTools` で `resolveExpression` を引き直して判定する。フィルタ前を
+ * 使うのは、いま終わろうとしているツール自身がその `working` を出していた可能性があるため）。
+ * 一度も `working` を出さなかった短いツールの終了でクールダウンが誤って始まらないようにする
+ * ため（`src/protocol/expression.ts`「4.3 状態連動」）。
  */
 function finishTool(
   state: SessionState,
@@ -553,6 +573,10 @@ function finishTool(
     failureOutput: isError ? content : undefined,
   }
 
+  const wasWorking =
+    resolveExpression(state.runningTools, state.speechExpression, state.lastToolFinishedAt, at) ===
+    "working"
+
   return {
     ...state,
     records: [
@@ -563,6 +587,7 @@ function finishTool(
     runningTools: state.runningTools.filter((running) => running.toolUseId !== toolUseId),
     finishedTools: [activity, ...state.finishedTools].slice(0, MAX_RECENT_FINISHED_TOOLS),
     lastToolFailureAt: isError ? at : state.lastToolFailureAt,
+    lastToolFinishedAt: wasWorking ? at : state.lastToolFinishedAt,
   }
 }
 
