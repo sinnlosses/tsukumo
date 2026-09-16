@@ -77,12 +77,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `~/.tsukumo/characters/<name>/` で、画像は data URL を WebSocket のコマンドで受け取る（前段の決定どおり）。
 `default` と `working` を消す操作は protocol・core・ui の3層で弾く。常設のボタンは3つのまま。
 
-### 2026-09-16 README を現状に合わせ、command not found の対処を足した（T-121）
-
-`which tsukumo` での確認と `~/.bun/bin` を PATH に足す手順を Quick Start に追加。環境変数名
-（`TSUKUMO_CHARACTER`）・3層の構成・`bun test --isolate`・セッションの復元など、現状と食い違って
-いた7項目を直した。空のディレクトリで手順どおり起動できることを実際に確かめてある。
-
 ## 未解決
 
 - **キャラビューの中の配置は T-071 で決着**（立ち絵は下端に接して床に立ち、並びは下端起点で
@@ -123,6 +117,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
   `src/ui/report/sanitize-schema.ts` の `ALLOWED_TAG_NAMES` に `h1`〜`h3` が無く、タグが落ちて
   素のテキストになる（`h4` 以下だけが生きる）。**規約（`REPORT_NOTATION_PROMPT`）は `##` /
   `###` を勧めている**ので食い違っている。直すのは T-154 で、T-155 / T-156 がその上に乗る
+- **委譲のやり方そのものはリポジトリの外にある**（`~/.claude/skills/next-task/SKILL.md`。
+  全プロジェクト共通）。tsukumo が効かせられるのは `systemPrompt` の append だけなので、
+  「委譲するときはこうしろ」は `src/core/speech-cadence.ts` に書く（T-157）。グローバルな
+  スキルを書き換えるのはユーザーの承認が要る
+- **サブエージェントの `TaskOutput` を読まない**（2026-09-16 に仕様を確認）。出力ファイルは
+  会話まるごとの JSONL で、読むとコンテキストが溢れる。途中経過は
+  `SendMessage({ to: "main" })` で**子狐から押し込む**（背景で動いているときだけ使える）
 - **`develop/tasks.json` を書き換えたら `bun run format` を通す。** oxfmt は JSON も整形するので、
   python の `json.dump` で書いたままだと `bun run check` が落ちる（2026-09-13 に踏んだ）
 - **「目視が要る」だけを理由に `loopable: "N"` にしない**（2026-09-15 決定。
