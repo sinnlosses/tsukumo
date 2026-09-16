@@ -1,5 +1,11 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 立ち絵と差し色を画面から差し替えられるようにした（T-124）
+
+「見た目」の引き出しに立ち絵（表情ごと）と差し色（衣装4つ）の口を足した。書き込み先は
+`~/.tsukumo/characters/<name>/` で、画像は data URL を WebSocket のコマンドで受け取る（前段の決定どおり）。
+`default` と `working` を消す操作は protocol・core・ui の3層で弾く。常設のボタンは3つのまま。
+
 ### 2026-09-16 README を現状に合わせ、command not found の対処を足した（T-121）
 
 `which tsukumo` での確認と `~/.bun/bin` を PATH に足す手順を Quick Start に追加。環境変数名

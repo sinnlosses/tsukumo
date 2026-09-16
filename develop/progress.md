@@ -77,12 +77,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 候補が出ている間だけ矢印キーと同じ扱いにして `preventDefault` する（macOS では既定で
 キャレットが動くため）。Meta 併用は無視、候補が出ていないときは何もしない。
 
-### 2026-09-16 立ち絵と差し色を画面から差し替えられるようにした（T-124）
-
-「見た目」の引き出しに立ち絵（表情ごと）と差し色（衣装4つ）の口を足した。書き込み先は
-`~/.tsukumo/characters/<name>/` で、画像は data URL を WebSocket のコマンドで受け取る（前段の決定どおり）。
-`default` と `working` を消す操作は protocol・core・ui の3層で弾く。常設のボタンは3つのまま。
-
 ## 未解決
 
 - **キャラビューの中の配置は T-071 で決着**（立ち絵は下端に接して床に立ち、並びは下端起点で
@@ -123,6 +117,9 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
   `src/ui/report/sanitize-schema.ts` の `ALLOWED_TAG_NAMES` に `h1`〜`h3` が無く、タグが落ちて
   素のテキストになる（`h4` 以下だけが生きる）。**規約（`REPORT_NOTATION_PROMPT`）は `##` /
   `###` を勧めている**ので食い違っている。直すのは T-154 で、T-155 / T-156 がその上に乗る
+- **`dropNarration` は本文の中身を見ていない**（`src/protocol/main-view.ts`）。「あとにツールが
+  続いたか」だけで落とすので、まとまった資料も実況と同じ扱いで消える。**リアルタイムに流れてから
+  消える**ので目がチラつく。分け方を決めるのは T-159
 - **委譲のやり方そのものはリポジトリの外にある**（`~/.claude/skills/next-task/SKILL.md`。
   全プロジェクト共通）。tsukumo が効かせられるのは `systemPrompt` の append だけなので、
   「委譲するときはこうしろ」は `src/core/speech-cadence.ts` に書く（T-157）。グローバルな
