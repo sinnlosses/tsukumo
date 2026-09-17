@@ -527,6 +527,10 @@ type SessionHost = {
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。
 
+**質問が出ている間、`<Composer>` と `<TurnStatus>` は CSS で畳む**（`.dispatch:has(.pending-question)`。
+入力欄の領域を質問の箱に全部渡すため。`docs/requirements.md` 4.7）。**部品を外すのではなく隠す**ので、
+入力欄の下書きは `<Composer>` のローカル状態に残ったままになる（6.2）。
+
 **選んでいるターンは `<SessionProvider>` の内側の `<TurnSelectionProvider>`
 （`ui/stores/turn-selection.tsx`）が配る**（6.2）。`<MainView>` のタブだけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
 従う**（過去のターンを選んでいる間は、そのターンのセリフと**最後のセリフの表情**に戻す。

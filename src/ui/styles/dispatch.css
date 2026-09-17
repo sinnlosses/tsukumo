@@ -21,28 +21,53 @@
 }
 
 /* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。
-   **領域（.layout-dispatch）そのものを縦スクロールさせない**ため、箱の高さは `.dispatch` の
-   高さ基準の max-height で抑え、溢れるぶんは中の .question-card だけでスクロールさせる。
-   進捗と操作の行は縮めず（flex: 0 0 auto）常に見える位置に残す。
-   max-height は枠・内側の余白も込みで数えたいので、ここだけ border-box にする。
-   割合は 1400x900・既定の比率（領域 335px）で測って決めた。上げるほど選択肢が見えるが
-   textarea が潰れる（60% で選択肢1件・textarea 57px / 64% で2件・45px / 68% で2件・34px）。
-   説明を省略記号で切らず折り返す形に変えたあとも 64% のまま据え置いた（2026-09-16。同じ
-   1400x900 で長い説明を含む質問を測ると、.question-card の中身が箱の高さを超えて
-   （scrollHeight 281px / clientHeight 147px）中だけでスクロールし、.pending-answer 自体の
-   高さは選択肢を切り替えても hover しても変わらない。ここを上げるとテキストエリアが
-   潰れる問題は変わらないので、上げる理由が無い）。 */
+   **領域（.layout-dispatch）そのものを縦スクロールさせない**ため、箱は `.dispatch` の中で
+   伸び縮みさせ、溢れるぶんは中の .question-card だけでスクロールさせる。進捗と操作の行は
+   縮めず（flex: 0 0 auto）常に見える位置に残す。高さの上限は枠・内側の余白も込みで数えたいので、
+   ここだけ border-box にする。
+   **上限は許可要求と質問で違う**（下の2つ）。 */
 .pending-answer {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: 64%;
   margin: 0 0 0.5rem;
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--rule);
   border-radius: 0.75rem;
   background: var(--surface);
+}
+/* 許可要求は「ツール名＋2つのボタン」だけで狭く、下のテキスト入力欄を出したままで困らないので
+   上限を据え置く（1400x900・既定の比率で箱 108px・テキスト入力欄 134px。答える前に依頼を
+   書き足せる）。**質問と違って自由入力欄を持たない**ので、ここを畳むと打つ場所が無くなる。
+   割合そのものは、長いツール名や引数で箱が伸びてもテキスト入力欄が潰れないための歯止め。 */
+.pending-permission {
+  max-height: 64%;
+}
+/* 質問は**入力欄の領域を丸ごと受け取る**（2026-09-17 決定）。以前は許可要求と同じ 64% を上限に
+   していたが、1400x900・既定の比率（領域 335px）で選択肢3件＋自由入力の質問を測ると
+   .question-card の中身 236px が 126px の窓に入らず、**行の途中で横に割れたまま「答える」の
+   行と接して重なって見えた**（2026-09-17 の目視）。上限を上げるとテキスト入力欄が潰れる、
+   という当時の据え置きの理由は、**答え待ちの間もテキスト入力欄が要る**という前提に乗っていた。
+   質問の箱は自由入力欄（FreeTextOption）を自分で持つので前提が成り立たず、代わりに
+   テキスト入力欄と「送る」行を畳んで（下の .dispatch-form）領域を全部渡す。
+   同じ条件で .question-card は 126px から 241px に広がり、中身 236px がそのまま収まる。
+   それでも溢れる質問（説明の長い2問の台本で中身 281px）は中だけでスクロールする。 */
+.pending-question {
+  flex: 1 1 auto;
+  /* 領域を全部渡しても、台本の質問（選択肢3件＋自由入力＝中身 236px）はぎりぎりなので、
+     縦の内側の余白だけ 0.75rem から詰めて選択肢に回す（横は許可要求と揃える）。 */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0;
+}
+/* 質問が出ている間、テキスト入力欄と「送る」行（＝進行中は「中断」）を畳む。**描かないのではなく
+   display: none で隠す**（`<Composer>` を外すと下書きが React のローカル状態ごと消え、答えて
+   戻ってきたときに打ちかけの文字が無くなる。docs/design.md 6.2）。畳んでいる間は中断も押せない
+   のが代償で、質問に答えれば元に戻る。:has は Chromium で動く（.question-choice-checkbox と
+   同じ前提）。 */
+.dispatch:has(.pending-question) .dispatch-form {
+  display: none;
 }
 .pending-summary {
   margin: 0 0 0.5rem;
@@ -56,8 +81,15 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+/* 「答える / 次へ」の行。中身が溢れているとき .question-card のスクロールの下端は行を横に
+   割って切るので、**境目の線と余白でここを区切る**（割れた行がボタンに接して重なって見えた
+   2026-09-17 の目視への対処。行を割らずに切る方法は選択肢の高さがまちまちで取れない）。
+   線と余白のぶんだけ選択肢の見える高さが減るので、線は 1px・余白は 0.4rem に留める。 */
 .pending-answer-actions {
   flex: 0 0 auto;
+  margin-top: 0.35rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--rule);
 }
 .pending-action {
   padding: 0.35rem 0.9rem;
