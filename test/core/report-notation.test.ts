@@ -8,6 +8,30 @@ import { REPORT_SANITIZE_SCHEMA } from "../../src/ui/features/main-view/markdown
 // この規約は**レンダラが描けるものの一覧**でもある（docs/requirements.md 4.2）。文面だけが先に
 // 進んで「勧めた記法が描かれない」が起きないよう、名乗った要素と class を両側に突き合わせる。
 
+/**
+ * 同梱の mermaid（`vendor/mermaid.min.js` 11.15.0）で**実際に描けることを目視で確かめた種類**
+ * （2026-09-17。docs/requirements.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
+ * 先にメインビューへ出して描けることを確かめる**。
+ */
+const DRAWN_MERMAID_KINDS = [
+  "flowchart",
+  "sequenceDiagram",
+  "stateDiagram-v2",
+  "classDiagram",
+  "erDiagram",
+  "mindmap",
+  "timeline",
+  "gantt",
+  "gitGraph",
+  "quadrantChart",
+]
+
+/**
+ * 同じ場で**構文が通らなかった**種類と、`chart` のフェンスと用途が重なるので載せない種類。
+ * 規約に紛れ込んでいないかを見る。
+ */
+const KINDS_NOT_TO_OFFER = ["sankey", "architecture", "requirementDiagram", "journey", "xychart"]
+
 const namedTags = [...REPORT_NOTATION_PROMPT.matchAll(/<([a-z]+)[\s>]/g)].flatMap(
   ([, tag]) => tag ?? [],
 )
@@ -56,5 +80,31 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("描けない")
+  })
+
+  it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
+    for (const kind of DRAWN_MERMAID_KINDS) {
+      expect(REPORT_NOTATION_PROMPT).toContain(kind)
+    }
+    for (const kind of KINDS_NOT_TO_OFFER) {
+      expect(REPORT_NOTATION_PROMPT).not.toContain(kind)
+    }
+    expect(REPORT_NOTATION_PROMPT).toContain(`${String(DRAWN_MERMAID_KINDS.length)}種`)
+  })
+
+  it("印の使いどころは「文へ倒す条件」ではなく用途で書く", () => {
+    // 3列目を「迷ったときの判断」から「使う目安」へ反転させた決定（docs/requirements.md 4.2）。
+    // 下限（「3行以上あるときだけ」）を各行に並べると、印を使える内容まで文のまま残る。
+    expect(REPORT_NOTATION_PROMPT).toContain("| 内容 | 使う印 | 使う目安 |")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("迷ったときの判断")
+    expect(REPORT_NOTATION_PROMPT).toContain("文のままでよいのは次のときだけ")
+  })
+
+  it("印を勧めることが、書く量を増やす言い訳にならない", () => {
+    // 2026-09-15 の「まず量を絞り、残ったものに構造を付ける」と噛み合わせるための条項。
+    expect(REPORT_NOTATION_PROMPT).toContain(
+      "構造を付けられることは、書く量を増やしてよい理由に\nならない",
+    )
+    expect(REPORT_NOTATION_PROMPT).toContain("印は文の代わりに置くもので、文への足し算ではない")
   })
 })
