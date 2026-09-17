@@ -9,6 +9,7 @@ describe("readConfig", () => {
       character: undefined,
       openView: true,
       driver: "sdk",
+      fakeScene: undefined,
       newSession: false,
       watchUi: false,
     })
@@ -21,6 +22,7 @@ describe("readConfig", () => {
         TSUKUMO_CHARACTER: " characters/local ",
         TSUKUMO_OPEN_VIEW: "0",
         TSUKUMO_DRIVER: "fake",
+        TSUKUMO_FAKE_SCENE: " question-multi ",
         TSUKUMO_NEW_SESSION: "1",
         TSUKUMO_WATCH_UI: "1",
       }),
@@ -29,6 +31,7 @@ describe("readConfig", () => {
       character: "characters/local",
       openView: false,
       driver: "fake",
+      fakeScene: "question-multi",
       newSession: true,
       watchUi: true,
     })

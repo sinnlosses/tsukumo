@@ -12,6 +12,8 @@ export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
 /** セッションの駆動（`sdk` / `fake`）。 */
 export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
+/** 偽の駆動で、起こした直後に流す場面の名前（台本の `turns[].name`）。 */
+export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** `1` で復元せず新規に起こす（docs/requirements.md 4.8 の「逃げ道」）。 */
 export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 /** `1` で `src/ui/` を見張り、変更のたびに組み立て直す（開発中だけ。docs/design.md 11章）。 */
@@ -36,6 +38,12 @@ export type Config = {
   readonly character: string | undefined
   readonly openView: boolean
   readonly driver: DriverKind
+  /**
+   * 偽の駆動で名指しする場面（未設定なら undefined ＝ 依頼を受けるまで `opening` だけ）。
+   * **依頼を送らずに特定の画面を出す**ための口で、状態のカタログを撮るときに使う
+   * （`docs/architecture.md`「手で確かめること」）。`driver` が `sdk` のときは効かない。
+   */
+  readonly fakeScene: string | undefined
   readonly newSession: boolean
   /**
    * `src/ui/` を見張って組み立て直すか。**既定は見張らない。** `tsukumo` は `bun link` で
@@ -55,6 +63,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     character: nonEmpty(env[CHARACTER_ENV_NAME]),
     openView: env[OPEN_VIEW_ENV_NAME]?.trim() !== "0",
     driver: env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk",
+    fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     watchUi: env[WATCH_UI_ENV_NAME]?.trim() === "1",
   }

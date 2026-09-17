@@ -72,6 +72,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
   TSUKUMO_OPEN_VIEW   起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
   TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず台本を流す）
+  TSUKUMO_FAKE_SCENE  fake のとき、起こした直後に流す台本の場面の名前（既定は流さない。
+                      依頼を送らずにその画面を出すための口で、状態のカタログを撮る
+                      scripts/capture-catalog.ts が使う）
   TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす
                       （この起動の間は、切り替えた先のキャラクターも新規から始まる）
   TSUKUMO_WATCH_UI    1 を渡すと src/ui/ を見張り、保存のたびに組み立て直して開いているタブへ
@@ -234,7 +237,7 @@ async function main(args: readonly string[]): Promise<number> {
       watchTasks: (onEvent) =>
         watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack) => findPackSessionToResume(config, process.cwd(), pack.name),
-      startDriver: (seed, onEvent) => startDriver(seed, fakeScript, onEvent),
+      startDriver: (seed, onEvent) => startDriver(seed, fakeScript, config.fakeScene, onEvent),
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, process.cwd(), expressionChoices(pack.definition)),
     }),
@@ -307,15 +310,17 @@ function pushRefresh(
 
 /**
  * セッション駆動を1つ起こす。**台本があれば偽の駆動**（claude を起こさない。
- * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。
+ * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。`scene` は台本のときだけ効く
+ * （名指しした場面を起こした直後に流す。`TSUKUMO_FAKE_SCENE`）。
  */
 function startDriver(
   seed: SessionLaunchSeed<CharacterPack>,
   script: FakeScript | undefined,
+  scene: string | undefined,
   onEvent: (event: SessionEvent) => void,
 ): SessionDriver {
   if (script !== undefined) {
-    return startFakeSession({ script, onEvent })
+    return startFakeSession({ script, scene, onEvent })
   }
 
   return startSession({

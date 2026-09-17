@@ -433,6 +433,11 @@ type ServerFrame =
 `test/fixture/` に**手で書いた架空の会話**として置く（`docs/coding-standards.md`「会話内容の扱い」）。
 用途は 10章（目視・Playwright・スクリーンショット）。`TSUKUMO_DRIVER=fake` で選ぶ。
 
+**場面には名前が付く**（`turns[].name`。`{ name, steps }` の並び）。`TSUKUMO_FAKE_SCENE` で
+名指しすると、その場面を起こした直後に `opening` の続きとして流し、次の `prompt()` はその次の
+場面から続く。**依頼を手で送らずに特定の状態を出す**ための口で、状態のカタログを撮る
+`scripts/capture-catalog.ts` が使う（`docs/architecture.md`「手で確かめること」）。
+
 ### session-manager.ts（core）
 
 ```ts
@@ -492,6 +497,7 @@ type SessionHost = {
 | `TSUKUMO_CHARACTER`   | パックの名前（`characters/<name>`）または絶対パス | `tsukumo-spirit` |
 | `TSUKUMO_OPEN_VIEW`   | いまのまま                                        | 開く             |
 | `TSUKUMO_DRIVER`      | `sdk` / `fake`                                    | `sdk`            |
+| `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前         | 流さない         |
 | `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）         | 復元する         |
 | `TSUKUMO_WATCH_UI`    | `1` で `src/ui/` を見張って組み立て直す（11章）   | 見張らない       |
 
@@ -806,6 +812,7 @@ characters/<name>/
 | ui の部品                      | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                   | `test/ui/**`                          |
 | 層の検査                       | `protocol ← core` / `protocol ← ui` / `core ⟂ ui` の3辺。外部ツールは増やさない                                            | `test/architecture.test.ts`           |
 | 画面全体                       | **偽の駆動で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）      |
+| 状態のカタログ                 | 台本の場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                         | `scripts/capture-catalog.ts`          |
 
 **ブラウザに出た絵は自動テストで守らない**、という方針は変えない。変わるのは「claude を起こさずに
 絵を出せる」こと（偽の駆動）で、目視の手順が `docs/architecture.md`「手で確かめること」から

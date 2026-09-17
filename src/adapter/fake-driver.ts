@@ -22,25 +22,43 @@ const DEFAULT_SCRIPT_URL = new URL("../../test/fixture/fake-session.json", impor
 /** 台本の1手。`afterMs` は**その場面の始まりからの経過**（前の手からの差分ではない）。 */
 const scriptStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
 
+/** 依頼1回ぶんの場面。**名前で名指しできる**（{@link FakeDriverOptions.scene}）。 */
+const fakeSceneSchema = z.object({ name: z.string().min(1), steps: z.array(scriptStepSchema) })
+
 /**
  * 台本。`opening` は起こした直後に流す場面、`turns` は依頼を受けるたびに順に流す場面。
  * 依頼が場面の数を超えたら**先頭に戻って繰り返す**（起こしっぱなしで何度でも試せるように）。
  */
 const fakeScriptSchema = z.object({
   opening: z.array(scriptStepSchema),
-  turns: z.array(z.array(scriptStepSchema)),
+  turns: z.array(fakeSceneSchema),
 })
 
 /** 台本の1手（読み取り専用の形。zod の出力もこの形に収まる）。 */
 export type FakeScriptStep = { readonly afterMs: number; readonly event: SessionEvent }
 
+/**
+ * 名前の付いた場面。名前は台本の中で重ならない前提で、同じ名前があれば先に書いたほうを使う。
+ * **名前は画面の状態の呼び名**（`question-multi` など）で、会話の内容ではない。
+ */
+export type FakeScriptScene = {
+  readonly name: string
+  readonly steps: readonly FakeScriptStep[]
+}
+
 export type FakeScript = {
   readonly opening: readonly FakeScriptStep[]
-  readonly turns: readonly (readonly FakeScriptStep[])[]
+  readonly turns: readonly FakeScriptScene[]
 }
 
 export type FakeDriverOptions = {
   readonly script: FakeScript
+  /**
+   * 起こした直後に `opening` へ続けて流す場面の名前（`TSUKUMO_FAKE_SCENE`）。**依頼を送らずに
+   * 特定の状態を出す**ための口で、状態のカタログを撮る道具が使う
+   * （`docs/architecture.md`「手で確かめること」）。名前が台本に無ければ `opening` だけを流す。
+   */
+  readonly scene: string | undefined
   /** 内部イベントの受け取り口（本物の駆動と同じ契約）。 */
   readonly onEvent: (event: SessionEvent) => void
 }
@@ -74,11 +92,13 @@ export function readFakeScript(
  * 偽の駆動を起こす。`opening` の場面をすぐに流し始め、`prompt()` のたびに次の場面を流す。
  * 答え待ち（`pending-changed`）も台本から積まれ、`answer()` で解けて次の `pending-changed` が
  * 流れる（本物の `canUseTool` と同じ見え方になる）。
+ *
+ * `options.scene` に名前があれば、その場面を `opening` の続きとして流し、**次の `prompt()` は
+ * その次の場面から**続く（依頼を送らずに特定の状態へ着けるための口）。
  */
 export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const timers = new Set<ReturnType<typeof setTimeout>>()
   let pending: readonly PendingAsk[] = []
-  let playedTurns = 0
 
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
@@ -87,12 +107,12 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     options.onEvent(event)
   }
 
-  const play = (steps: readonly FakeScriptStep[]): void => {
+  const play = (steps: readonly FakeScriptStep[], startMs: number): void => {
     for (const step of steps) {
       const timer = setTimeout(() => {
         timers.delete(timer)
         emit(step.event)
-      }, step.afterMs)
+      }, startMs + step.afterMs)
       timers.add(timer)
     }
   }
@@ -111,7 +131,16 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     return true
   }
 
-  play(options.script.opening)
+  play(options.script.opening, 0)
+
+  // 名指しされた場面（無ければ findIndex が -1 を返すだけ）。`opening` と重ならないように、
+  // その終わりから続けて流す。
+  const namedIndex = options.script.turns.findIndex((scene) => scene.name === options.scene)
+  const namedScene = namedIndex < 0 ? undefined : options.script.turns[namedIndex]
+  if (namedScene !== undefined) {
+    play(namedScene.steps, openingSpanMs(options.script.opening))
+  }
+  let playedTurns = namedScene === undefined ? 0 : namedIndex + 1
 
   return {
     prompt: (text) => {
@@ -120,7 +149,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       const scene = turns.length === 0 ? undefined : turns[playedTurns % turns.length]
       playedTurns += 1
       if (scene !== undefined) {
-        play(scene)
+        play(scene.steps, 0)
       }
     },
     interrupt: () => {
@@ -144,6 +173,11 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       timers.clear()
     },
   }
+}
+
+/** `opening` が流れ終わる時刻（一番遅い手の `afterMs`）。名指しの場面はこの後ろに続ける。 */
+function openingSpanMs(opening: readonly FakeScriptStep[]): number {
+  return opening.reduce((span, step) => Math.max(span, step.afterMs), 0)
 }
 
 /**

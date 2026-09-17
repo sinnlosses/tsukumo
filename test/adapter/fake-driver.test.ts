@@ -8,10 +8,17 @@ import { type SessionEvent } from "../../src/protocol/session-event.ts"
 const SCRIPT = {
   opening: [{ afterMs: 0, event: { kind: "speech", text: "架空の挨拶", expression: "default" } }],
   turns: [
-    [
-      { afterMs: 0, event: { kind: "utterance", text: "架空の本文" } },
-      { afterMs: 0, event: { kind: "turn-finished", status: "success" } },
-    ],
+    {
+      name: "架空の場面1",
+      steps: [
+        { afterMs: 0, event: { kind: "utterance", text: "架空の本文" } },
+        { afterMs: 0, event: { kind: "turn-finished", status: "success" } },
+      ],
+    },
+    {
+      name: "架空の場面2",
+      steps: [{ afterMs: 0, event: { kind: "utterance", text: "架空の本文2" } }],
+    },
   ],
 } as const
 
@@ -30,7 +37,7 @@ function tick(): Promise<void> {
 describe("startFakeSession", () => {
   it("起こした直後に opening の場面を流す", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, onEvent: sink.onEvent })
+    const driver = startFakeSession({ script: SCRIPT, scene: undefined, onEvent: sink.onEvent })
     await tick()
     driver.close()
 
@@ -39,7 +46,7 @@ describe("startFakeSession", () => {
 
   it("prompt で request を流してから、次の場面を流す", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, onEvent: sink.onEvent })
+    const driver = startFakeSession({ script: SCRIPT, scene: undefined, onEvent: sink.onEvent })
     await tick()
     driver.prompt("架空の依頼")
     await tick()
@@ -50,6 +57,35 @@ describe("startFakeSession", () => {
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", status: "success" },
     ])
+  })
+
+  it("scene で名指しした場面は、依頼を待たずに opening の続きとして流れる", async () => {
+    const sink = collect()
+    const driver = startFakeSession({ script: SCRIPT, scene: "架空の場面2", onEvent: sink.onEvent })
+    await tick()
+    driver.close()
+
+    expect(sink.events.slice(1)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
+  })
+
+  it("scene で名指しした次の依頼は、その次の場面から続く（名指しした場面を繰り返さない）", async () => {
+    const sink = collect()
+    const driver = startFakeSession({ script: SCRIPT, scene: "架空の場面1", onEvent: sink.onEvent })
+    await tick()
+    driver.prompt("架空の依頼")
+    await tick()
+    driver.close()
+
+    expect(sink.events.at(-1)).toEqual({ kind: "utterance", text: "架空の本文2" })
+  })
+
+  it("台本に無い名前を名指ししても、opening だけを流す", async () => {
+    const sink = collect()
+    const driver = startFakeSession({ script: SCRIPT, scene: "無い場面", onEvent: sink.onEvent })
+    await tick()
+    driver.close()
+
+    expect(sink.events).toEqual([{ kind: "speech", text: "架空の挨拶", expression: "default" }])
   })
 
   it("台本から積まれた答え待ちに答えると、列から消える", async () => {
@@ -67,6 +103,7 @@ describe("startFakeSession", () => {
         ],
         turns: [],
       },
+      scene: undefined,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -85,6 +122,7 @@ describe("startFakeSession", () => {
         opening: [{ afterMs: 50, event: { kind: "utterance", text: "遅れて来る本文" } }],
         turns: [],
       },
+      scene: undefined,
       onEvent: sink.onEvent,
     })
     driver.close()
@@ -100,6 +138,8 @@ describe("readFakeScript", () => {
 
     expect(script?.opening.length).toBeGreaterThan(0)
     expect(script?.turns.length).toBeGreaterThan(0)
+    // 場面の名前は、状態のカタログを撮る道具（scripts/capture-catalog.ts）が名指しする鍵。
+    expect(script?.turns.map((scene) => scene.name)).toContain("question-multi")
   })
 
   it("無いファイル・形の違う JSON は undefined", () => {

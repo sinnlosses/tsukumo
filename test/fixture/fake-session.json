@@ -37,439 +37,460 @@
     }
   ],
   "turns": [
-    [
-      {
-        "afterMs": 100,
-        "event": {
-          "kind": "partial-utterance",
-          "text": "## 台本の"
-        }
-      },
-      {
-        "afterMs": 150,
-        "event": {
-          "kind": "partial-utterance",
-          "text": "レポート\n\n"
-        }
-      },
-      {
-        "afterMs": 200,
-        "event": {
-          "kind": "partial-utterance",
-          "text": "これは架空の本文で、実物の会話ではない。\n"
-        }
-      },
-      {
-        "afterMs": 300,
-        "event": {
-          "kind": "tool-started",
-          "toolUseId": "fake-tool-1",
-          "name": "Read",
-          "input": {
-            "file_path": "/tmp/dummy/notes.md"
+    {
+      "name": "report",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "## 台本の"
+          }
+        },
+        {
+          "afterMs": 150,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "レポート\n\n"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "これは架空の本文で、実物の会話ではない。\n"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/notes.md"
+            }
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 720,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-2",
+            "name": "Bash",
+            "input": {
+              "command": "dummy-command --check /tmp/dummy/nowhere"
+            }
+          }
+        },
+        {
+          "afterMs": 760,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-2",
+            "content": "dummy-command: /tmp/dummy/nowhere が無い（台本の作り物のエラー出力）\n終了コード 1",
+            "isError": true
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "speech",
+            "text": "読み終わったよ。中身はダミーだけどね。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": {
+            "kind": "utterance",
+            "text": "## 台本のレポート\n\nこれは架空の本文で、実物の会話ではない。\n\n- 段2 の配信の経路を確かめるための台本\n- 表・コードなどの記法は段6で unified に置き換わる\n"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
           }
         }
-      },
-      {
-        "afterMs": 700,
-        "event": {
-          "kind": "tool-finished",
-          "toolUseId": "fake-tool-1",
-          "content": "ダミーの読み取り結果（3行）",
-          "isError": false
-        }
-      },
-      {
-        "afterMs": 720,
-        "event": {
-          "kind": "tool-started",
-          "toolUseId": "fake-tool-2",
-          "name": "Bash",
-          "input": {
-            "command": "dummy-command --check /tmp/dummy/nowhere"
-          }
-        }
-      },
-      {
-        "afterMs": 760,
-        "event": {
-          "kind": "tool-finished",
-          "toolUseId": "fake-tool-2",
-          "content": "dummy-command: /tmp/dummy/nowhere が無い（台本の作り物のエラー出力）\n終了コード 1",
-          "isError": true
-        }
-      },
-      {
-        "afterMs": 800,
-        "event": {
-          "kind": "speech",
-          "text": "読み終わったよ。中身はダミーだけどね。",
-          "expression": "proud"
-        }
-      },
-      {
-        "afterMs": 900,
-        "event": {
-          "kind": "utterance",
-          "text": "## 台本のレポート\n\nこれは架空の本文で、実物の会話ではない。\n\n- 段2 の配信の経路を確かめるための台本\n- 表・コードなどの記法は段6で unified に置き換わる\n"
-        }
-      },
-      {
-        "afterMs": 1000,
-        "event": {
-          "kind": "turn-finished",
-          "status": "success"
-        }
-      }
-    ],
-    [
-      {
-        "afterMs": 100,
-        "event": {
-          "kind": "pending-changed",
-          "pending": [
-            {
-              "kind": "permission",
-              "id": "fake-ask-1",
-              "toolName": "Bash",
-              "input": {
-                "command": "echo 架空の確認"
+      ]
+    },
+    {
+      "name": "permission",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "permission",
+                "id": "fake-ask-1",
+                "toolName": "Bash",
+                "input": {
+                  "command": "echo 架空の確認"
+                }
               }
-            }
-          ]
-        }
-      },
-      {
-        "afterMs": 200,
-        "event": {
-          "kind": "speech",
-          "text": "許可がほしいところ。答えてみて。",
-          "expression": "flustered"
-        }
-      },
-      {
-        "afterMs": 1200,
-        "event": {
-          "kind": "utterance",
-          "text": "答え待ちの箱を出す場面（架空）。答えると箱が消える。\n"
-        }
-      },
-      {
-        "afterMs": 1300,
-        "event": {
-          "kind": "turn-finished",
-          "status": "success"
-        }
-      }
-    ],
-    [
-      {
-        "afterMs": 100,
-        "event": {
-          "kind": "pending-changed",
-          "pending": [
-            {
-              "kind": "question",
-              "id": "fake-ask-2",
-              "questions": [
-                {
-                  "header": "架空の選択",
-                  "text": "架空の質問：どの案を試す？",
-                  "multiSelect": true,
-                  "options": [
-                    {
-                      "label": "A案",
-                      "description": "架空の説明A"
-                    },
-                    {
-                      "label": "B案",
-                      "description": "架空の説明B"
-                    },
-                    {
-                      "label": "C案",
-                      "description": "架空の説明C"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "afterMs": 200,
-        "event": {
-          "kind": "speech",
-          "text": "複数選べる質問を出したよ。チェックボックスで選んでみて。",
-          "expression": "default"
-        }
-      },
-      {
-        "afterMs": 300,
-        "event": {
-          "kind": "speech",
-          "text": "選ぶのを待っている間の、架空のひとこと。",
-          "expression": "working"
-        }
-      },
-      {
-        "afterMs": 400,
-        "event": {
-          "kind": "speech",
-          "text": "吹き出しが3つ並ぶ場面（架空）。",
-          "expression": "proud"
-        }
-      },
-      {
-        "afterMs": 1200,
-        "event": {
-          "kind": "utterance",
-          "text": "multiSelect の質問に答える場面（架空）。答えると箱が消える。\n"
-        }
-      },
-      {
-        "afterMs": 1300,
-        "event": {
-          "kind": "turn-finished",
-          "status": "success"
-        }
-      }
-    ],
-    [
-      {
-        "afterMs": 100,
-        "event": {
-          "kind": "pending-changed",
-          "pending": [
-            {
-              "kind": "question",
-              "id": "fake-ask-3",
-              "questions": [
-                {
-                  "header": "架空の選択1",
-                  "text": "架空の質問1：どの道具で進める？",
-                  "multiSelect": false,
-                  "options": [
-                    {
-                      "label": "道具A（架空）",
-                      "description": "架空の説明：一番手早く終わるが、後から直しにくい。"
-                    },
-                    {
-                      "label": "道具B（架空）",
-                      "description": "架空の説明：手間はかかるが、途中で向きを変えやすい。"
-                    },
-                    {
-                      "label": "道具C（架空）",
-                      "description": "架空の説明：長い説明が折り返して最後まで見えることを確かめるための、わざと長めの架空の文面。ここから先は2行目以降に折り返し、省略記号で切られずに末尾まで読めるはず。"
-                    }
-                  ]
-                },
-                {
-                  "header": "架空の選択2",
-                  "text": "架空の質問2：どこから手を付ける？",
-                  "multiSelect": false,
-                  "options": [
-                    {
-                      "label": "入口（架空）",
-                      "description": "架空の説明：見えるところから順に触る。"
-                    },
-                    {
-                      "label": "土台（架空）",
-                      "description": "架空の説明：下の層から組み直す。"
-                    },
-                    {
-                      "label": "端（架空）",
-                      "description": "架空の説明：影響の小さいところで試してから広げる。"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "afterMs": 200,
-        "event": {
-          "kind": "speech",
-          "text": "質問を2つ出したよ。1問ずつ答えてね。",
-          "expression": "default"
-        }
-      },
-      {
-        "afterMs": 1200,
-        "event": {
-          "kind": "utterance",
-          "text": "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。\n"
-        }
-      },
-      {
-        "afterMs": 1300,
-        "event": {
-          "kind": "turn-finished",
-          "status": "success"
-        }
-      }
-    ],
-    [
-      {
-        "afterMs": 100,
-        "event": {
-          "kind": "partial-utterance",
-          "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- "
-        }
-      },
-      {
-        "afterMs": 200,
-        "event": {
-          "kind": "partial-utterance",
-          "text": "項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
-        }
-      },
-      {
-        "afterMs": 400,
-        "event": {
-          "kind": "speech",
-          "text": "記法の見本を出したよ。引用・ネスト・区切り線・表・図・グラフの架空の例。",
-          "expression": "proud"
-        }
-      },
-      {
-        "afterMs": 600,
-        "event": {
-          "kind": "utterance",
-          "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- 項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
-        }
-      },
-      {
-        "afterMs": 700,
-        "event": {
-          "kind": "turn-finished",
-          "status": "success"
-        }
-      }
-    ],
-    [
-      {
-        "afterMs": 100,
-        "event": {
-          "kind": "utterance",
-          "text": "まず台本のファイルを読むね。"
-        }
-      },
-      {
-        "afterMs": 150,
-        "event": {
-          "kind": "tool-started",
-          "toolUseId": "fake-tool-narration-1",
-          "name": "Read",
-          "input": {
-            "file_path": "/tmp/dummy/notes.md"
+            ]
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "許可がほしいところ。答えてみて。",
+            "expression": "flustered"
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "utterance",
+            "text": "答え待ちの箱を出す場面（架空）。答えると箱が消える。\n"
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
           }
         }
-      },
-      {
-        "afterMs": 500,
-        "event": {
-          "kind": "tool-finished",
-          "toolUseId": "fake-tool-narration-1",
-          "content": "ダミーの読み取り結果（2行）",
-          "isError": false
-        }
-      },
-      {
-        "afterMs": 560,
-        "event": {
-          "kind": "utterance",
-          "text": "次は直すね。"
-        }
-      },
-      {
-        "afterMs": 620,
-        "event": {
-          "kind": "tool-started",
-          "toolUseId": "fake-tool-narration-2",
-          "name": "Edit",
-          "input": {
-            "file_path": "/tmp/dummy/notes.md"
+      ]
+    },
+    {
+      "name": "question-multi",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-2",
+                "questions": [
+                  {
+                    "header": "架空の選択",
+                    "text": "架空の質問：どの案を試す？",
+                    "multiSelect": true,
+                    "options": [
+                      {
+                        "label": "A案",
+                        "description": "架空の説明A"
+                      },
+                      {
+                        "label": "B案",
+                        "description": "架空の説明B"
+                      },
+                      {
+                        "label": "C案",
+                        "description": "架空の説明C"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "複数選べる質問を出したよ。チェックボックスで選んでみて。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "選ぶのを待っている間の、架空のひとこと。",
+            "expression": "working"
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "speech",
+            "text": "吹き出しが3つ並ぶ場面（架空）。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "utterance",
+            "text": "multiSelect の質問に答える場面（架空）。答えると箱が消える。\n"
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
           }
         }
-      },
-      {
-        "afterMs": 900,
-        "event": {
-          "kind": "tool-finished",
-          "toolUseId": "fake-tool-narration-2",
-          "content": "ダミーの書き換え結果",
-          "isError": false
-        }
-      },
-      {
-        "afterMs": 960,
-        "event": {
-          "kind": "speech",
-          "text": "実況は消えて、これだけ残るはずだぞ。",
-          "expression": "proud"
-        }
-      },
-      {
-        "afterMs": 1000,
-        "event": {
-          "kind": "utterance",
-          "text": "## 実況が落ちたあとに残る本文\n\nこれは架空の本文で、実物の会話ではない。**上の「まず台本のファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる**（`docs/requirements.md` 4.2）。\n"
-        }
-      },
-      {
-        "afterMs": 1100,
-        "event": {
-          "kind": "turn-finished",
-          "status": "success"
-        }
-      }
-    ],
-    [
-      {
-        "afterMs": 100,
-        "event": {
-          "kind": "speech",
-          "text": "さっきの分は上手くいったよ。えへん。",
-          "expression": "proud"
-        }
-      },
-      {
-        "afterMs": 200,
-        "event": {
-          "kind": "tool-started",
-          "toolUseId": "fake-tool-long-1",
-          "name": "Bash",
-          "input": {
-            "command": "dummy-long-command"
+      ]
+    },
+    {
+      "name": "question-pair",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-3",
+                "questions": [
+                  {
+                    "header": "架空の選択1",
+                    "text": "架空の質問1：どの道具で進める？",
+                    "multiSelect": false,
+                    "options": [
+                      {
+                        "label": "道具A（架空）",
+                        "description": "架空の説明：一番手早く終わるが、後から直しにくい。"
+                      },
+                      {
+                        "label": "道具B（架空）",
+                        "description": "架空の説明：手間はかかるが、途中で向きを変えやすい。"
+                      },
+                      {
+                        "label": "道具C（架空）",
+                        "description": "架空の説明：長い説明が折り返して最後まで見えることを確かめるための、わざと長めの架空の文面。ここから先は2行目以降に折り返し、省略記号で切られずに末尾まで読めるはず。"
+                      }
+                    ]
+                  },
+                  {
+                    "header": "架空の選択2",
+                    "text": "架空の質問2：どこから手を付ける？",
+                    "multiSelect": false,
+                    "options": [
+                      {
+                        "label": "入口（架空）",
+                        "description": "架空の説明：見えるところから順に触る。"
+                      },
+                      {
+                        "label": "土台（架空）",
+                        "description": "架空の説明：下の層から組み直す。"
+                      },
+                      {
+                        "label": "端（架空）",
+                        "description": "架空の説明：影響の小さいところで試してから広げる。"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "質問を2つ出したよ。1問ずつ答えてね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "utterance",
+            "text": "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。\n"
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
           }
         }
-      },
-      {
-        "afterMs": 2600,
-        "event": {
-          "kind": "tool-finished",
-          "toolUseId": "fake-tool-long-1",
-          "content": "ダミーの実行結果（長め）",
-          "isError": false
+      ]
+    },
+    {
+      "name": "notation",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- "
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "speech",
+            "text": "記法の見本を出したよ。引用・ネスト・区切り線・表・図・グラフの架空の例。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "utterance",
+            "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- 項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
         }
-      },
-      {
-        "afterMs": 2700,
-        "event": {
-          "kind": "utterance",
-          "text": "## 長めのツールの場面\n\nこれは架空の本文で、実物の会話ではない。**ツールが「作業中」の遅延（1秒）を超えて走る**ので、立ち絵と吹き出しの両方が作業中になり、クールダウンが明けると上のセリフに戻る（`docs/requirements.md` 4.2 / 4.3）。\n"
+      ]
+    },
+    {
+      "name": "narration",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "utterance",
+            "text": "まず台本のファイルを読むね。"
+          }
+        },
+        {
+          "afterMs": 150,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-narration-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/notes.md"
+            }
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-narration-1",
+            "content": "ダミーの読み取り結果（2行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 560,
+          "event": {
+            "kind": "utterance",
+            "text": "次は直すね。"
+          }
+        },
+        {
+          "afterMs": 620,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-narration-2",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/notes.md"
+            }
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-narration-2",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 960,
+          "event": {
+            "kind": "speech",
+            "text": "実況は消えて、これだけ残るはずだぞ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "utterance",
+            "text": "## 実況が落ちたあとに残る本文\n\nこれは架空の本文で、実物の会話ではない。**上の「まず台本のファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる**（`docs/requirements.md` 4.2）。\n"
+          }
+        },
+        {
+          "afterMs": 1100,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
         }
-      },
-      {
-        "afterMs": 2800,
-        "event": {
-          "kind": "turn-finished",
-          "status": "success"
+      ]
+    },
+    {
+      "name": "long-tool",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "speech",
+            "text": "さっきの分は上手くいったよ。えへん。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-long-1",
+            "name": "Bash",
+            "input": {
+              "command": "dummy-long-command"
+            }
+          }
+        },
+        {
+          "afterMs": 2600,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-long-1",
+            "content": "ダミーの実行結果（長め）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2700,
+          "event": {
+            "kind": "utterance",
+            "text": "## 長めのツールの場面\n\nこれは架空の本文で、実物の会話ではない。**ツールが「作業中」の遅延（1秒）を超えて走る**ので、立ち絵と吹き出しの両方が作業中になり、クールダウンが明けると上のセリフに戻る（`docs/requirements.md` 4.2 / 4.3）。\n"
+          }
+        },
+        {
+          "afterMs": 2800,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
         }
-      }
-    ]
+      ]
+    }
   ]
 }

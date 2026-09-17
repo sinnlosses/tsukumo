@@ -682,6 +682,14 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 **偽の駆動（`TSUKUMO_DRIVER=fake`）で起こせる**ので、claude を起こさず（API を使わず）に
 下の手順を回せる（`docs/design.md` 5章・10章）。
 
+**状態ごとの画面を並べて見るときは `bun run scripts/capture-catalog.ts`。** 台本の場面
+（`test/fixture/fake-session.json` の `turns[].name`）を名指しして tsukumo を1件ずつ空きポートで
+起こし、広い窓（1400x900）と狭い窓（720x900・縦に積み替わるのでページ全体）で撮って、
+`/tmp/tsukumo-catalog/index.html` に並べる（`--only question-multi` で1件だけ、`--out` で置き場を
+変えられる）。**依頼を手で送らなくても狙った状態が出る**ので、答え待ちの箱・レポートの記法を
+直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを数値で読むのは `capture-view.ts`。
+**撮った画像はリポジトリに置かない**（台本は架空の会話なので、画像そのものは共有してよい）。
+
 **配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が
 表示されるので、`curl <URL>` で HTML が返るかを見る。WebSocket 側はブラウザの開発者ツールの
 Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届くかを見る。ここまで出ていれば
