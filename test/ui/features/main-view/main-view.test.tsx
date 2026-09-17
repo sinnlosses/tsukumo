@@ -200,6 +200,21 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
     expect(screen.queryByText("まず直すね")).toBeNull()
     expect(container.querySelectorAll(".main-step")).toHaveLength(0)
   })
+
+  it("ツールを何十件呼んだやり取りでも「省略した」の行は出ない（上限に数えない）", () => {
+    const { container } = renderMainView([
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つめ\n- 2つめ"),
+      ...Array.from({ length: 60 }, (_, index) =>
+        tool({ toolUseId: `t${String(index)}`, name: "Read", input: { file_path: "src/a.ts" } }),
+      ),
+      detail("直したよ"),
+    ])
+
+    expect(container.querySelector(".turn-dropped")).toBeNull()
+    expect(screen.getByText("直したよ")).not.toBeNull()
+    expect(screen.getByText("調べた結果")).not.toBeNull()
+  })
 })
 
 describe("MainView（中間レポート）", () => {
@@ -277,10 +292,11 @@ describe("MainView（中間レポート）", () => {
   })
 
   it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない（T-165）", () => {
-    // 十分な数の中間レポート（それぞれ detail + tool の対）を積み、1つのやり取りの記録の
-    // 上限（40）を超えさせる。全部のあとに非中間の締めの report を置くので、
-    // 手前は全部 superseded = true になり <details> で畳まれる（既存の「複数の中間レポートが
-    // 追い越されると全部畳まれ」ケースと同じ形）。
+    // 十分な数の中間レポート（それぞれ detail + tool の対）を積み、1つのやり取りが画面に出す
+    // 記録の上限（40。**ツールの実行は数えない**ので、数えるのはレポートの件数）を超えさせる。
+    // 全部のあとに非中間の締めの report を置くので、手前は全部 superseded = true になり
+    // <details> で畳まれる（既存の「複数の中間レポートが追い越されると全部畳まれ」ケースと
+    // 同じ形）。
     const pair = (index: number): SessionRecord[] => [
       detail(`## 見出し${String(index)}\n\n- 発見A\n- 発見B`),
       tool({ toolUseId: `t${String(index)}`, name: "Write", input: { file_path: "src/a.ts" } }),
@@ -292,8 +308,11 @@ describe("MainView（中間レポート）", () => {
       detail("できたよ"),
     ]
 
-    // 26件（i=0..25）: 上限（40）を超えるので、前のほうの何件かは落ちる。
-    const result = renderMainView(buildRecords(26))
+    // 45件（i=0..44）: レポート45件＋締めの1件が上限（40）を超えるので、前のほうは落ちる。
+    const result = renderMainView(buildRecords(45))
+
+    // 落ちていること自体をここで確かめておく（落ちなくなるとこのテストは何も試さなくなる）。
+    expect(result.container.querySelector(".turn-dropped")).not.toBeNull()
 
     const findBySummary = (text: string): HTMLDetailsElement => {
       const details = [...result.container.querySelectorAll(".main-step.is-interim")].find(
@@ -315,9 +334,9 @@ describe("MainView（中間レポート）", () => {
     const untouchedText = "中間レポート: 見出し16"
     expect(findBySummary(untouchedText).open).toBe(false)
 
-    // 記録がさらに積まれ（27件）、前のほうがもう1件古いほうから落ちる
+    // 記録がさらに積まれ（46件）、前のほうがもう1件古いほうから落ちる
     // （i=15 自体はまだ残る範囲）。
-    rerenderMainView(result, buildRecords(27))
+    rerenderMainView(result, buildRecords(46))
 
     // id を key にしていれば、i=15 の <details> は同じ DOM ノードのまま残り、
     // 開いた状態も中身もそのまま。添字を key にしていた旧実装では、ステップが1つ前へ

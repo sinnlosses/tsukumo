@@ -73,7 +73,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(steps[1]?.report).toBe("あとから説明")
   })
 
-  it("1つのやり取りの記録が上限を超えたら、古いほうから落として件数を残す", () => {
+  it("画面に出す記録が上限を超えたら、古いほうから落として件数を残す", () => {
     const entries = [
       request("依頼"),
       ...Array.from({ length: 45 }, (_, index) => detail(`レポート${String(index)}`)),
@@ -84,6 +84,21 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(turns[0]?.droppedCount).toBeGreaterThan(0)
     expect(turns[0]?.steps.at(-1)?.report).toBe("レポート44")
     expect(turns[0]?.steps[0]?.report).not.toBe("レポート0")
+  })
+
+  it("ツールの実行は上限に数えない（何十件呼んでも落ちない）", () => {
+    const entries = [
+      request("依頼"),
+      detail("## 調べた結果\n\n- 1つめ\n- 2つめ\n"),
+      ...Array.from({ length: 60 }, (_, index) => edit(`src/file${String(index)}.ts`)),
+      detail("直したよ"),
+    ]
+
+    const turns = mainViewTurns(entries)
+
+    expect(turns[0]?.droppedCount).toBe(0)
+    expect(turns[0]?.steps[0]?.report).toBe("## 調べた結果\n\n- 1つめ\n- 2つめ\n")
+    expect(turns[0]?.steps.at(-1)?.report).toBe("直したよ")
   })
 
   it("上限を超えて古いステップが落ちても、残ったステップの id は変わらない（T-165）", () => {

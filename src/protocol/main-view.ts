@@ -15,8 +15,21 @@ import { type MainViewEntry } from "./session-state.ts"
  */
 export const MAX_MAIN_VIEW_TURNS = 5
 
-// 1つのやり取りの中で出す記録の上限。超えた分は**古いほうから**落とし、件数だけを残す
-// （やり取りの境界を優先する。ユーザーの決定 2026-09-10）。
+/**
+ * 1つのやり取りの中で**画面に出す**記録の上限。超えた分は**古いほうから**落とし、件数だけを残す
+ * （やり取りの境界を優先する。ユーザーの決定 2026-09-10）。
+ *
+ * **数えるのは実際に画面へ出るもの（レポートと質問の記録）だけ**（{@link shownEntryCount}）。
+ * 2026-09-16 にツールの実行をメインビューから外したあとも、この上限だけはツールの記録を
+ * 数え続けていた: 過去のやり取り720件で測ると22件（3.1%）が上限に当たり、うち16件は
+ * **画面から何も消えていないのに**「これ以前の n 件は省略した」（最大62件）を出し、残り6件は
+ * レポート1件を出してから消していた（2026-09-17 実測）。画面に出るものだけを数えると1つの
+ * やり取りの最大は6件（中位数1・p99で4件。実況を落とす {@link keepOnlyInterimReports} が
+ * 効くため）で、この値には当たらない——**落とすための値ではなく、1つのやり取りが際限なく
+ * 伸びたときの止め**（`src/ui/features/main-view/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
+ * と同じ立場。常駐プロセスの持ち物の上限は `MAX_SESSION_STATE_TURNS` /
+ * {@link MAX_MAIN_VIEW_TURNS} が別に持つ）。
+ */
 const MAX_MAIN_VIEW_ENTRIES = 40
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
@@ -66,7 +79,7 @@ export type MainViewTurn = {
   readonly id: number
   readonly request: string | undefined
   readonly steps: readonly MainViewStep[]
-  /** 上限を超えて落とした記録の件数。0 のときは何も落としていない。 */
+  /** 上限を超えて落とした**画面に出す**記録の件数。0 のときは何も落としていない。 */
   readonly droppedCount: number
 }
 
@@ -268,9 +281,13 @@ function extractFirstLine(markdown: string): string {
     : `${text.slice(0, MAX_STEP_SUMMARY_LENGTH)}…`
 }
 
-/** 1つのやり取りが持つ記録を上限まで切り詰める。落とすのは**古いほう**（今回の続きを残す）。 */
+/**
+ * 1つのやり取りが**画面に出す**記録を上限まで切り詰める。落とすのは**古いほう**
+ * （今回の続きを残す）。数えるのは画面に出るものだけなので、**ツールを何十件呼んでも
+ * 落ちない**（2026-09-17。{@link MAX_MAIN_VIEW_ENTRIES}）。
+ */
 function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
-  const counts = turn.steps.map((step) => (step.report === undefined ? 0 : 1) + step.actions.length)
+  const counts = turn.steps.map(shownEntryCount)
   const total = counts.reduce((sum, count) => sum + count, 0)
   if (total <= MAX_MAIN_VIEW_ENTRIES) {
     return turn
@@ -288,4 +305,16 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
   }
 
   return { ...turn, steps: kept, droppedCount: total - (MAX_MAIN_VIEW_ENTRIES - remaining) }
+}
+
+/**
+ * そのステップが画面に出す記録の件数。**`src/ui/features/main-view/turn.tsx` が描くもの**
+ * （レポートと質問の記録）だけを数え、**ツールの実行は数えない**
+ * （メインビューに出ないため。2026-09-16 決定。`docs/requirements.md` 4.2）。
+ */
+function shownEntryCount(step: MainViewStep): number {
+  return (
+    (step.report === undefined ? 0 : 1) +
+    step.actions.filter((action) => action.kind === "question").length
+  )
 }
