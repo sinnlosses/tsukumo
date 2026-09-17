@@ -37,6 +37,14 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: undefined,
     dependencies: [],
   },
+  {
+    id: "X-004",
+    summary: "架空のタスク4",
+    status: "doing",
+    difficulty: "sonnet",
+    loopable: "N",
+    dependencies: [],
+  },
 ]
 
 describe("taskListTitle", () => {
@@ -44,8 +52,13 @@ describe("taskListTitle", () => {
     expect(taskListTitle(undefined)).toBe("タスク一覧")
   })
 
-  it("todo / done の件数を添える", () => {
-    expect(taskListTitle(TASKS)).toBe("タスク一覧 todo 1 / done 1")
+  it("todo は常に添え、doing / done は 0 件でないときだけ添える", () => {
+    expect(taskListTitle(TASKS)).toBe("タスク一覧 todo 1 / doing 1 / done 1")
+  })
+
+  it("doing が 0 件のときは doing を足さない", () => {
+    const noDoing = TASKS.filter((task) => task.status !== "doing")
+    expect(taskListTitle(noDoing)).toBe("タスク一覧 todo 1 / done 1")
   })
 })
 
@@ -66,13 +79,22 @@ describe("TaskList", () => {
     render(<TaskList tasks={TASKS} />)
 
     const items = screen.getAllByRole("listitem")
-    expect(items).toHaveLength(3)
+    expect(items).toHaveLength(4)
     expect(items[0]?.textContent).toContain("X-001")
     expect(items[0]?.textContent).toContain("架空のタスク1")
 
     const badge = items[0]?.querySelector(".task-status")
     expect(badge?.textContent).toBe("todo")
     expect(badge?.className).toContain("task-status-todo")
+  })
+
+  it("doing は差し色のクラスを持つ", () => {
+    render(<TaskList tasks={TASKS} />)
+
+    const items = screen.getAllByRole("listitem")
+    const badge = items[3]?.querySelector(".task-status")
+    expect(badge?.textContent).toBe("doing")
+    expect(badge?.className).toContain("task-status-doing")
   })
 
   it("done は薄く出すクラスを持つ", () => {

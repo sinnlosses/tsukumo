@@ -165,11 +165,17 @@
 .task-item .task-id {
   opacity: 0.8;
 }
+/* 枠の色は文字色に追随させる（currentColor）。todo は既定の文字色のまま、doing だけ差し色
+   （--accent）を使う。--state-* はここでは使わない（docs/design.md 13.1 原則5）。 */
 .task-status {
   padding: 0 0.3rem;
+  border: 1px solid currentColor;
   border-radius: 0.3rem;
   background: var(--surface);
   font-size: var(--font-label);
+}
+.task-status-doing {
+  color: var(--accent);
 }
 .task-status-done {
   color: var(--ink-quiet);

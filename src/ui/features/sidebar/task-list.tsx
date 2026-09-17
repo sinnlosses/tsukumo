@@ -14,8 +14,12 @@ export type TaskListProps = {
 }
 
 /**
- * サイドバーの「タスク一覧」の見出し。tasks が読めているときだけ todo / done の件数を添える
+ * サイドバーの「タスク一覧」の見出し。tasks が読めているときだけ件数を添える
  * （develop/tasks.json が不明なときは件数も不明なので、見出しはそのまま）。
+ *
+ * todo は常に出す。doing / done は 0 件のときは足さない（`loopable` の `N` を空欄にするのと
+ * 同じ理由。区画は 300px ほどしかなく、doing はほぼ常に 0〜1、done はアーカイブ直後は
+ * ほぼ常に 0 になるので、0 を並べても情報が無い。詳しい理由は docs/requirements.md 4.2）。
  */
 export function taskListTitle(tasks: readonly TaskSummaryItem[] | undefined): string {
   if (tasks === undefined) {
@@ -23,8 +27,12 @@ export function taskListTitle(tasks: readonly TaskSummaryItem[] | undefined): st
   }
 
   const todo = tasks.filter((task) => task.status === "todo").length
+  const doing = tasks.filter((task) => task.status === "doing").length
   const done = tasks.filter((task) => task.status === "done").length
-  return `タスク一覧 todo ${String(todo)} / done ${String(done)}`
+
+  const doingPart = doing > 0 ? ` / doing ${String(doing)}` : ""
+  const donePart = done > 0 ? ` / done ${String(done)}` : ""
+  return `タスク一覧 todo ${String(todo)}${doingPart}${donePart}`
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
@@ -67,10 +75,13 @@ function TaskStatusBadge(props: { readonly status: string }): ReactElement {
   return <span className={`task-status ${taskStatusClass(props.status)}`}>{props.status}</span>
 }
 
-/** todo / done は色で区別し、それ以外（in-progress など）は注意色にする。文字は status のまま出す。 */
+/** todo / doing / done は色で区別し、それ以外（想定外の値）は注意色にする。文字は status のまま出す。 */
 function taskStatusClass(status: string): string {
   if (status === "todo") {
     return "task-status-todo"
+  }
+  if (status === "doing") {
+    return "task-status-doing"
   }
   if (status === "done") {
     return "task-status-done"
