@@ -104,6 +104,37 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("details > summary")).not.toBeNull()
   })
 
+  it("数の要約（stats / stat）が塊のまま通る", () => {
+    const { container } = render(
+      <Markdown
+        text={
+          '<div class="stats"><div class="stat"><b>312</b>通ったテスト</div>' +
+          '<div class="stat"><strong>0</strong>失敗</div></div>'
+        }
+      />,
+    )
+
+    // 器と枚数（class が落ちると数が地の文に並ぶだけになる）。
+    expect(container.querySelectorAll("div.stats > div.stat")).toHaveLength(2)
+    // 数の側は <b> でも <strong> でも同じ見た目になる（CSS はどちらも受ける）。
+    expect(container.querySelector("div.stat > b")?.textContent).toBe("312")
+    expect(container.querySelector("div.stat > strong")?.textContent).toBe("0")
+  })
+
+  it("数のバー（meter / progress）は許可リストに無いので落ちる", () => {
+    // 数の見せ方を stats/stat の1通りに保つための線引き（src/core/report-notation.ts）。
+    // タグは落ちるが中身の文字は残るので、書いても数そのものは読める。
+    const { container } = render(
+      <Markdown
+        text={'<meter value="0.6">60%</meter>\n\n<progress value="60" max="100">60%</progress>'}
+      />,
+    )
+
+    expect(container.querySelector("meter")).toBeNull()
+    expect(container.querySelector("progress")).toBeNull()
+    expect(container.textContent).toContain("60%")
+  })
+
   it("お願い（note-favor）が塊のまま通る（class が落ちると地の文に紛れる）", () => {
     const { container } = render(
       <Markdown text={'<div class="note note-favor">架空のお願いの文。</div>'} />,
@@ -215,6 +246,20 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
 
     expect(container.querySelector(".chart-block > canvas")).not.toBeNull()
     await flushEffects()
+  })
+
+  it("```diff フェンスの足した行・消した行が色分けされる", () => {
+    // 規約が \`\`\`diff を勧めている根拠（src/core/report-notation.ts のコードの行）。
+    // rehype-highlight（lowlight の common に diff が入っている）が付ける class と、
+    // 同梱テーマ（vendor/highlight-theme.min.css）の .hljs-addition / .hljs-deletion が対。
+    const { container } = render(<Markdown text={"```diff\n-const a = 1\n+const a = 2\n```"} />)
+
+    expect(container.querySelector("pre code.language-diff .hljs-addition")?.textContent).toBe(
+      "+const a = 2",
+    )
+    expect(container.querySelector("pre code.language-diff .hljs-deletion")?.textContent).toBe(
+      "-const a = 1",
+    )
   })
 
   it("通常の言語名付きフェンスは色付け対象の <pre><code> のまま", () => {

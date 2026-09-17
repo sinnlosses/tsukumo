@@ -112,6 +112,40 @@ h2.turn-request {
   border-radius: 0.5rem;
   background: var(--surface);
 }
+/* 数の要約（KPI タイル）。**数そのものが結論になる値**（件数・前後の差）を、地の文に埋めずに
+   並べる塊。`.card` と違って中身は1つの数とそのラベルだけなので、器は `.cols` より狭く取り、
+   3〜4枚が1行に収まるようにする。
+   **タイプスケールの段は増やさない**（docs/design.md 13.3）ので、「大きい数」は段の上端
+   （--font-heading）と下端（--font-label）の落差・太さ・縦積みで出す。
+   **状態の3色は使わない**（13.1 原則5）。数そのものは良し悪しを持たず、良し悪しを言いたいときは
+   同じ塊の中に `.badge` を添えるほうが文字でも読める。 */
+.detail-block .stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+.detail-block .stat {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  font-size: var(--font-label);
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  color: var(--ink-quiet);
+}
+/* 数の側。**`<b>` と `<strong>` の両方を受ける**（レポートの HTML を書くのはモデルなので、
+   どちらで書かれても同じ見た目になるようにする）。 */
+.detail-block .stat b,
+.detail-block .stat strong {
+  display: block;
+  font-size: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: normal;
+  line-height: 1.3;
+  color: var(--ink);
+}
 .detail-block .badge {
   display: inline-block;
   padding: 0 0.5rem;
