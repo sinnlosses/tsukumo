@@ -426,6 +426,50 @@
           "status": "success"
         }
       }
+    ],
+    [
+      {
+        "afterMs": 100,
+        "event": {
+          "kind": "speech",
+          "text": "さっきの分は上手くいったよ。えへん。",
+          "expression": "proud"
+        }
+      },
+      {
+        "afterMs": 200,
+        "event": {
+          "kind": "tool-started",
+          "toolUseId": "fake-tool-long-1",
+          "name": "Bash",
+          "input": {
+            "command": "dummy-long-command"
+          }
+        }
+      },
+      {
+        "afterMs": 2600,
+        "event": {
+          "kind": "tool-finished",
+          "toolUseId": "fake-tool-long-1",
+          "content": "ダミーの実行結果（長め）",
+          "isError": false
+        }
+      },
+      {
+        "afterMs": 2700,
+        "event": {
+          "kind": "utterance",
+          "text": "## 長めのツールの場面\n\nこれは架空の本文で、実物の会話ではない。**ツールが「作業中」の遅延（1秒）を超えて走る**ので、立ち絵と吹き出しの両方が作業中になり、クールダウンが明けると上のセリフに戻る（`docs/requirements.md` 4.2 / 4.3）。\n"
+        }
+      },
+      {
+        "afterMs": 2800,
+        "event": {
+          "kind": "turn-finished",
+          "status": "success"
+        }
+      }
     ]
   ]
 }

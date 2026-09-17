@@ -401,6 +401,7 @@ export function applySessionEvent(
           portraits: event.portraits,
           outfitAccents: event.outfitAccents,
           speechMarker: event.speechMarker,
+          workingSpeech: event.workingSpeech,
           editable: event.editable,
         },
         characterPacks: event.packs,

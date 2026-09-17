@@ -80,6 +80,7 @@ characters/
   "license": "その素材をここに置いてよい根拠",
   "accent": "#f2b0a0",
   "speechMarker": "名前: ",
+  "workingSpeech": "いま手を動かしてるよ",
   "expressions": {
     "default": "通常",
     "working": "作業中",
@@ -110,6 +111,11 @@ characters/
 - **`speechMarker` はセリフの行頭マーカー**（`speak` が呼ばれなかったターンの補助。
   `docs/requirements.md` 4.2）。**書かなければ補助そのものが効かない**（`speak` だけが
   セリフの経路になる）。既定値はコード側に無い
+- **`workingSpeech` はツールを実行している間だけ吹き出しに重ねる一言**
+  （`docs/requirements.md` 4.2）。立ち絵が「作業中」になっているあいだ、直前のセリフが残って
+  表情と食い違うのを防ぐためのもの。**書かなければ `expressions` の `working` のラベルが出て、
+  それも無ければ何も重ねない**（既定の言い回しはコード側に無い）。**画面からは変えられない**
+  （「見た目」の引き出しが扱うのは立ち絵と差し色だけ）ので、手で書く
 - **`accent` はキャラクターの色**（吹き出し・選ばれたタブなど画面全体に効く。衣装ごとの
   差し色 `outfitAccents` とは別物）
 - **`portraits` は「あるものだけ」でよい。** 見つからない表情は `default` に落ちる。

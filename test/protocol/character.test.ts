@@ -24,6 +24,7 @@ const FULL_DEFINITION_JSON = JSON.stringify({
   license: "テスト用に手で書いたもの",
   accent: "#f2b0a0",
   speechMarker: "精霊: ",
+  workingSpeech: "いま手を動かしてるよ",
   expressions: {
     default: "通常",
     working: "作業中",
@@ -77,6 +78,12 @@ describe("parseCharacterDefinition", () => {
 
     expect(definition?.expressions.working).toBeUndefined()
     expect(definition?.speechMarker).toBeUndefined()
+  })
+
+  it("workingSpeech（作業中の一言）を読む", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+
+    expect(definition?.workingSpeech).toBe("いま手を動かしてるよ")
   })
 
   it("expressions / speechMarker の型が違うときも undefined に落ちる", () => {
@@ -148,6 +155,7 @@ describe("expressionChoices", () => {
         flustered: undefined,
       },
       speechMarker: undefined,
+      workingSpeech: undefined,
       portraits: {
         default: undefined,
         working: "working.svg",
@@ -334,6 +342,49 @@ describe("toCharacterInfo", () => {
     expect(info?.portraits.default).toBe("/character/default.svg")
   })
 
+  it("作業中の一言は定義の workingSpeech から来る（コード側に既定の言い回しを持たない）", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+
+    const info = toCharacterInfo({
+      definition,
+      pack: "fictional",
+      revision: undefined,
+      editable: true,
+    })
+
+    expect(info.workingSpeech).toBe("いま手を動かしてるよ")
+  })
+
+  it("workingSpeech が無ければ expressions.working のラベルに落ちる", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ expressions: { working: "作業中" }, portraits: { default: "default.svg" } }),
+    )
+
+    const info = toCharacterInfo({
+      definition,
+      pack: "fictional",
+      revision: undefined,
+      editable: true,
+    })
+
+    expect(info.workingSpeech).toBe("作業中")
+  })
+
+  it("workingSpeech も working のラベルも無ければ undefined（吹き出しを重ねない）", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.svg", working: "working.svg" } }),
+    )
+
+    const info = toCharacterInfo({
+      definition,
+      pack: "fictional",
+      revision: undefined,
+      editable: true,
+    })
+
+    expect(info.workingSpeech).toBeUndefined()
+  })
+
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
     const info = toCharacterInfo({
       definition: undefined,
@@ -346,6 +397,7 @@ describe("toCharacterInfo", () => {
     expect(info.name).toBeUndefined()
     expect(info.accent).toBeUndefined()
     expect(info.speechMarker).toBeUndefined()
+    expect(info.workingSpeech).toBeUndefined()
     expect(info.expressions).toEqual([{ name: "default", label: "default" }])
     expect(info.portraits.default).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()

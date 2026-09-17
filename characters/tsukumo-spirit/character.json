@@ -4,6 +4,7 @@
   "license": "このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。",
   "accent": "#f2b0a0",
   "speechMarker": "アスナ: ",
+  "workingSpeech": "いま手を動かしてるよ。少し待ってね",
   "expressions": {
     "default": "通常",
     "working": "作業中",

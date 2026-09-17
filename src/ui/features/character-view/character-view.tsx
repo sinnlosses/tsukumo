@@ -10,6 +10,9 @@
 // **立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる**
 // （docs/requirements.md 4.2「フォールバック」）。
 //
+// **ツールを実行している間は、立ち絵の表情と吹き出しの両方が「作業中」になる**（2026-09-17 決定。
+// 文言はキャラクターパックの `workingSpeech`）。どちらも `currentExpression` の1つの値から引く。
+//
 // **過去のターンのタブを選んでいる間は、そのターンの吹き出しと表情に戻す**
 // （`useTurnSelection`。ユーザーの指摘 2026-09-14「レポート同様にセリフも遡る」）。
 // **立ち絵の「動き」は遡らない**（時間相対のアニメーションで、遡るには
@@ -172,6 +175,12 @@ export function CharacterView(): ReactElement {
       : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
   const outfit = resolveOutfit(state.model)
   const character = state.character
+  // ツールを実行している間は、吹き出しにも作業中の一言を重ねる（2026-09-17 決定。
+  // `docs/requirements.md` 4.2「吹き出し」）。**判定は表情と同じ値から引く**ので、立ち絵が
+  // 「作業中」の顔をしているのに吹き出しだけ直前のセリフが残る食い違いが起きない。
+  // **過去のターンを見ているときは出さない**（表情の上書きと同じ扱い。決定 2026-09-14）。
+  const workingSpeech =
+    pastTurn === undefined && expression === "working" ? character?.workingSpeech : undefined
   const motion = usePortraitMotion({
     turnInProgress: state.turnInProgress,
     turnFinishedAt: state.turnFinishedAt,
@@ -205,6 +214,7 @@ export function CharacterView(): ReactElement {
         <BalloonTrack
           speeches={pastTurn === undefined ? state.speeches : pastTurn.speeches}
           emptyMessage={pastTurn === undefined ? undefined : PAST_TURN_EMPTY_MESSAGE}
+          workingSpeech={workingSpeech}
         />
       </div>
     </div>

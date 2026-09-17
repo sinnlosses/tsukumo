@@ -14,6 +14,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   name: "架空の精霊",
   accent: undefined,
   speechMarker: undefined,
+  workingSpeech: undefined,
   expressions: [
     { name: "default", label: "通常" },
     { name: "working", label: "作業中" },

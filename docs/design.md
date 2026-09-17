@@ -509,7 +509,8 @@ type SessionHost = {
    │       └ <Report>        Markdown（6.3）。書きかけはブロック単位で memo
    ├ <CharacterView>         <Portrait> + <BalloonTrack>
    │   ├ <Portrait>          立ち絵。SVG はインラインで差し色、ラスタは <img>。動きの hooks（6.5）
-   │   └ <BalloonTrack>      <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）
+   │   └ <BalloonTrack>      <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）。
+   │                         ツール実行中はパックの `workingSpeech` を最新として重ねる（4.2）
    ├ <Sidebar>               <Activity> + <TaskList> + <SessionInfo> + <TaskBoard>
    │   └ <TaskBoard>         タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
    │   └ <SessionInfo>       モデル / 許可モード の <select>、キャラクターの <select>（段8）、続きから始まった印
@@ -529,7 +530,8 @@ type SessionHost = {
 **選んでいるターンは `<SessionProvider>` の内側の `<TurnSelectionProvider>`
 （`ui/stores/turn-selection.tsx`）が配る**（6.2）。`<MainView>` のタブだけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
 従う**（過去のターンを選んでいる間は、そのターンのセリフと**最後のセリフの表情**に戻す。
-ターンごとのセリフは `protocol/turn-speech.ts` が記録から引く）。**立ち絵の「動き」は遡らない**
+ターンごとのセリフは `protocol/turn-speech.ts` が記録から引く）。**ツール実行中の作業中の一言も、
+今回を見ているときだけ重ねる**（過去のターンには出さない）。**立ち絵の「動き」は遡らない**
 （時間相対のアニメーションなので、遡るには `docs/requirements.md` 4.3 の決定の見直しが要る）。
 
 ### 6.2 状態の持ち方
@@ -626,7 +628,7 @@ CSS は `src/ui/styles/` に集め、**機能と同居させない**（2026-09-1
 
 ```
 characters/<name>/
-  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）/ speechMarker
+  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）/ speechMarker / workingSpeech
   persona.md         人格。tsukumo が systemPrompt.append で足す（口調・セリフと詳細の書き分け。セリフの間合いとレポートの記法は core 側）
   *.svg / *.png      素材
 ```
@@ -634,6 +636,10 @@ characters/<name>/
 - **`expressions` のラベルを定義に移す**（いまは `expression.ts` の `expressionLabel` にコードで
   持っている。原則4）。`speak` の enum と説明はここから作る
 - **`speechMarker`**（行頭マーカー。既定 `アスナ: `）も定義に移す（いまは `utterance.ts` の定数）
+- **`workingSpeech`**（ツールを実行している間に吹き出しへ重ねる一言。`docs/requirements.md` 4.2）も
+  定義に置く。**落とし先は `expressions.working` のラベル**で、それも無ければ重ねない
+  （既定の言い回しをコードに持たないため。原則4）。**画面からは編集しない**（7.1 が扱うのは
+  立ち絵と差し色だけ）
 - `persona.md` は**tsukumo 向けの人格**。グローバルの `~/.claude/output-styles/asuna.md` は
   TUI 向けの正典のまま触らない
 - **二重適用を避ける**: tsukumo のセッションではグローバルの出力スタイルも効くので、`persona.md` と

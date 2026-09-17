@@ -30,6 +30,7 @@ const CHARACTER_WITH_MARKER: SessionEvent = {
   name: "架空の精霊",
   accent: undefined,
   speechMarker: "精霊: ",
+  workingSpeech: "作業中の一言",
   expressions: [{ name: "default", label: "通常" }],
   portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
@@ -673,6 +674,7 @@ describe("applySessionEvent", () => {
       name: "架空の精霊",
       accent: "#f2b0a0",
       speechMarker: "精霊: ",
+      workingSpeech: "作業中の一言",
       expressions: [
         { name: "default", label: "通常" },
         { name: "working", label: "作業中" },
@@ -693,6 +695,7 @@ describe("applySessionEvent", () => {
       name: "架空の精霊",
       accent: "#f2b0a0",
       speechMarker: "精霊: ",
+      workingSpeech: "作業中の一言",
       expressions: [
         { name: "default", label: "通常" },
         { name: "working", label: "作業中" },

@@ -23,6 +23,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   name: "架空の精霊",
   accent: undefined,
   speechMarker: undefined,
+  workingSpeech: "（架空の作業中の一言）",
   expressions: [{ name: "default", label: "通常" }],
   portraits: {
     default: "/character/default.png",
@@ -185,6 +186,90 @@ describe("CharacterView", () => {
       })
 
       expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
+  it("ツールを実行している間は、吹き出しにも定義の作業中の一言が重なる（偽の時計）", () => {
+    const now = 1_700_000_000_000
+    const originalNow = Date.now
+    Date.now = () => now
+    try {
+      renderCharacterView({
+        speeches: ["さっき言ったセリフ"],
+        speechExpression: "proud",
+        runningTools: [
+          {
+            toolUseId: "toolu_1",
+            name: "Read",
+            input: {},
+            nested: false,
+            startedAt: now - 2000,
+            failureOutput: undefined,
+          },
+        ],
+        character: FIXTURE_CHARACTER,
+      })
+
+      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("working")
+      expect(
+        [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+      ).toEqual(["（架空の作業中の一言）", "さっき言ったセリフ"])
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
+  it("ツールが終わってクールダウンも明けていれば、作業中の吹き出しは消える（偽の時計）", () => {
+    const now = 1_700_000_000_000
+    const originalNow = Date.now
+    Date.now = () => now
+    try {
+      renderCharacterView({
+        speeches: ["さっき言ったセリフ"],
+        speechExpression: "proud",
+        runningTools: [],
+        lastToolFinishedAt: now - 10_000,
+        character: FIXTURE_CHARACTER,
+      })
+
+      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+      expect(
+        [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+      ).toEqual(["さっき言ったセリフ"])
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
+  it("過去のターンを見ているときは、ツールが動いていても作業中の吹き出しを出さない（偽の時計）", () => {
+    const now = 1_700_000_000_000
+    const originalNow = Date.now
+    Date.now = () => now
+    try {
+      renderCharacterView(
+        {
+          records: TWO_TURN_RECORDS,
+          speeches: ["2つ目のセリフ"],
+          runningTools: [
+            {
+              toolUseId: "toolu_1",
+              name: "Read",
+              input: {},
+              nested: false,
+              startedAt: now - 5000,
+              failureOutput: undefined,
+            },
+          ],
+          character: FIXTURE_CHARACTER,
+        },
+        { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+      )
+
+      expect(
+        [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+      ).toEqual(["1つ目のセリフB", "1つ目のセリフA"])
     } finally {
       Date.now = originalNow
     }

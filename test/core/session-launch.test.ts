@@ -35,6 +35,7 @@ function characterEventOf(pack: Pack): SessionEvent {
     name: pack.name,
     accent: undefined,
     speechMarker: undefined,
+    workingSpeech: undefined,
     editable: false,
     expressions: [{ name: "default", label: "通常" }],
     portraits: {
