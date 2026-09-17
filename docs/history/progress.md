@@ -1,5 +1,11 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 src/ui/ の箱どうしの import をテストで守るようにした（T-171）
+
+`docs/design.md` 2章の表を `ALLOWED_UI_BOX_IMPORTS` として `test/architecture.test.ts` に写した。
+`ui/` 直下に未知のディレクトリが増えたら `throw` するので、箱を足したときの直し忘れで検査が
+素通りしない。わざと違反させて2通りとも落ちることを確認済み。
+
 ### 2026-09-16 src/ui/ を bullet-proof-react の形に組み替えた（T-170）
 
 `git mv` で74件（`src/ui/` 50 + `test/ui/` 24）を移し、`features/` `components/` `lib/` `stores/`
