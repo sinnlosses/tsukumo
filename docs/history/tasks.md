@@ -9394,10 +9394,8 @@ cli.ts 431→379行（**150行には届かず**: import 48・USAGE 26・コメ�
 ## 背景
 
 レポートの ```mermaid フェンスが構文エラーのとき、**元のコードが読めなくなる**。
-`src/ui/report/mermaid-block.tsx` は `mermaid.run({ nodes: [node] })` を呼び、失敗したら
-`data-mermaid-failed="yes"` を立てるだけ。**mermaid 自身が先に `<pre class=\"mermaid\">` の中へ
-エラーの絵を描く**ので、画面に残るのは何が悪いか分からないエラー図になる。
-`data-mermaid-failed` に対応する CSS は `src/ui/style/` のどこにも無いので、この印は
+`src/ui/report/mermaid-block.tsx`は`mermaid.run({ nodes: [node] })`を呼び、失敗したら`data-mermaid-failed="yes"`を立てるだけ。**mermaid 自身が先に`<pre class=\"mermaid\">`の中へ
+エラーの絵を描く**ので、画面に残るのは何が悪いか分からないエラー図になる。`data-mermaid-failed`に対応する CSS は`src/ui/style/` のどこにも無いので、この印は
 いまのところ画面には出ていない。
 
 2026-09-16 に実際に踏んだ。ノードのラベルの中に `\"ok\"` と書いたのが原因で、mermaid の
@@ -9451,10 +9449,10 @@ cli.ts 431→379行（**150行には届かず**: import 48・USAGE 26・コメ�
 
 - `bun run check` が通る（テスト件数を `evidence` に書く）。
 - **壊れた mermaid を含むレポートを画面に出して目視で確かめる**: `test/fixture/fake-session.json`
-   の mermaid のブロック（架空の文面。2箇所ある）を一時的に壊し、`TSUKUMO_DRIVER=fake` で
-   画面を開いて、(a) mermaid のエラー図が出ないこと、(b) 元のコードが読めること、
-   (c) エラー文が出ていること、の3つを確認する。**確認したらフィクスチャは元に戻し、
-   壊した状態をコミットしない**。
+  の mermaid のブロック（架空の文面。2箇所ある）を一時的に壊し、`TSUKUMO_DRIVER=fake` で
+  画面を開いて、(a) mermaid のエラー図が出ないこと、(b) 元のコードが読めること、
+  (c) エラー文が出ていること、の3つを確認する。**確認したらフィクスチャは元に戻し、
+  壊した状態をコミットしない**。
 - 正しい mermaid が今までどおり図として描かれることも同じ画面で確認する（回帰の確認）。
 
 ## 注意
