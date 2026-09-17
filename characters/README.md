@@ -81,13 +81,13 @@ characters/
   "speechMarker": "名前: ",
   "expressions": {
     "default": "通常",
-    "thinking": "作業中",
+    "thinking": "思案",
     "proud": "どや顔",
     "flustered": "あわあわ"
   },
   "portraits": {
     "default": "通常時の画像",
-    "thinking": "作業中",
+    "thinking": "思案",
     "proud": "どや顔",
     "flustered": "あわあわ"
   },
