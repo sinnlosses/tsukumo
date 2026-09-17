@@ -73,13 +73,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `renderAppearance` を props で受け取る形の2点だけ変え、**見た目は1pxも変えていない**
 （移動前の HEAD を一時 worktree に出して撮り比べた）。
 
-### 2026-09-16 src/ui/ を bullet-proof-react の形にする設計を決めた（T-169）
-
-箱は `main.tsx`（直下）/ `features/` / `components/` / `lib/` / `stores/` / `styles/` の5つ。
-52ファイルの移動の対応表と、採らなかった12要素の理由を `docs/design.md` 2章に書いた。
-単数形の規約は「ファイルは単数形、ディレクトリも単数形だが `src/ui/` の置き場所だけ例外」に変わった。
-**ファイルはまだ動いていない**（組み替えは T-170）。
-
 ## 未解決
 
 - **偽の駆動で質問の場面を自動操作したとき、`turnInProgress` が解消しないことがある**
