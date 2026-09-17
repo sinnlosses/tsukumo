@@ -113,11 +113,11 @@
     "id": "T-144",
     "summary": "cli.ts の判断を core へ移し、配線だけに戻す",
     "task": "## 背景\n\n`docs/research/architecture-proposal.md`（2026-09-15）が出した移行の段3。提案メモの確度は\n**「試す価値あり」**（段1・段2の「固い」より低い）。\n\n`src/cli.ts` は **335 行**あり、提案メモの目標構造では「配線。環境変数を `core/config` へ渡し、\n`adapter` と `core` を結ぶ唯一の場所」で、**判断（パックの選択順位・復元の可否・履歴の再生）は置かない**。\nいまはそれが `cli.ts` に直接書かれている。\n\n## 解くべき論点\n\n- **`core/session-launch.ts` に起こす「一続き」の範囲。** 提案メモは、`switch-character` の起こし直し\n  （`session-manager.restart`）も同じ関数で通すと**仮定**しているが、`restart` は「画面を初期状態に戻す」\n  判断を持つので `session-manager` に残す形もある。**境目は実装時に決める**\n- **`core/character-selection.ts` に移す順位の範囲。** 環境変数・覚えた値・既定のどれを見るか\n- `cli.ts` に残すもの（起動順序・前提チェック・終了処理・1回分の `try`/`catch`）との切り分け\n\n## やること\n\n1. `cli.ts` から「起こす一続き」を `src/core/session-launch.ts` へ、初期パックの順位を\n   `src/core/character-selection.ts` へ移す\n2. テストを足す（提案メモが挙げている観点）:\n   - `test/core/session-launch.test.ts`: 偽の駆動で「続きから始まった印が流れる」\n     「再生が失敗しても駆動は動き続ける」\n   - `test/core/character-selection.test.ts`: 「知らない名前は既定」「環境変数 > 覚えた値」\n3. `cli.ts` は読む・組み立てる・つなぐだけにする\n4. **切り出してみて `cli.ts` の見通しが良くならない、あるいは `core` 側が `cli.ts` の都合を抱え込むと\n   分かったら、途中まで戻して理由を `evidence` に書いて閉じてよい**（提案メモの確度が「試す価値あり」なのは\n   ここが読み切れていないため）\n\n## 完了条件\n\n- `bun run check` が通ること（件数を `evidence` に書く）\n- `src/cli.ts` が **150 行以下**になること（提案メモの目標。**届かなかった場合は行数と理由を\n  `evidence` に書く**）\n- `src/core/session-launch.ts` と `src/core/character-selection.ts` が **`node:` を import していない**こと\n  （`core` の規律）\n- 手順2の2ファイルのテストが通ること\n- **本物の駆動で起動し、前回のキャラクターで続きから始まることを目視**した結果が `evidence` にあること\n\n## 注意\n\n- **`bun run start` は本物の claude を子プロセスで起こす**（API の利用が発生する）。確認は\n  `TSUKUMO_VIEW_PORT` を既定（7327）以外にして起こし、終わったら自分が起こした pid だけを落とす\n- **ふるまいを変えない。** 起動の順序・既定への落ち方を変えると、覚えたキャラクターの復元が黙って壊れる\n- 段2（`adapter/` を切る）とは独立しており、順序を入れ替えてよい。**ただし段1の検査が入った後**に行う\n- `T-116`（`TSUKUMO_CHARACTER` を撤去するか決める）と選択の順位で重なる。**このタスクでは環境変数を\n  増やしも減らしもせず、いまの順位をそのまま移す**",
-    "status": "todo",
+    "status": "done",
     "difficulty": "opus",
     "loopable": "Y",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "cli.ts 431→379行（**150行には届かず**: import 48・USAGE 26・コメント 82 を除く残り 241 行はすべて配線と、可変のパックに張り付いた見た目の書き込み）。判断を `core/session-launch.ts`（117行。`restart` の「画面を初期状態に戻す」判断は `session-manager` に残した）と`core/character-selection.ts`（53行）へ移し、両ファイルとも `node:` 非依存。\n`bun run check` 612 pass/57ファイル → **626 pass / 0 fail**/59ファイル（増分は新テスト14件）。`docs/design.md` 51 / `docs/architecture.md` 10 で節数は不変。\n本物の駆動を 7411 で1回起こし、`hello` が `pack=tsukumo`（覚えた値。同梱の既定は tsukumo-spirit）・`restored=true`・記録87件で、画面に立ち絵と吹き出しが出ることを確認して自分の pid のみ停止。",
     "dependencies": ["T-142"]
   },
   {

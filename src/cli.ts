@@ -23,7 +23,7 @@ import {
   readCharacterPackFile,
   toCharacterPackChoices,
 } from "./adapter/character-pack.ts"
-import { readFakeScript, startFakeSession } from "./adapter/fake-driver.ts"
+import { type FakeScript, readFakeScript, startFakeSession } from "./adapter/fake-driver.ts"
 import { createOrcaHost } from "./adapter/orca-host.ts"
 import {
   readRememberedCharacter,
@@ -33,6 +33,7 @@ import { findSessionToResume, readRestoredEvents, startSession } from "./adapter
 import { attachSessionSocket, createStartupToken, startViewServer } from "./adapter/server.ts"
 import { watchTaskSummary } from "./adapter/task-summary.ts"
 import { watchUiSource } from "./adapter/ui-rebuild.ts"
+import { selectCharacterPack, selectInitialCharacterPack } from "./core/character-selection.ts"
 import { type Config, readConfig, sessionTag, VIEW_PORT_ENV_NAME } from "./core/config.ts"
 import { type Host } from "./core/host.ts"
 import {
@@ -43,9 +44,10 @@ import {
 } from "./core/port-resolution.ts"
 import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
 import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./core/session-driver.ts"
+import { createSessionLaunch, type SessionLaunchSeed } from "./core/session-launch.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { SPEECH_CADENCE_PROMPT } from "./core/speech-cadence.ts"
-import { type ExpressionChoice, expressionChoices } from "./protocol/character.ts"
+import { expressionChoices } from "./protocol/character.ts"
 import { type CharacterCreateCommand, type CharacterEditCommand } from "./protocol/command.ts"
 import { type RefreshTarget, type ServerFrame } from "./protocol/frame.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
@@ -139,16 +141,15 @@ async function main(args: readonly string[]): Promise<number> {
     return found.some((pack) => pack.name === defaultPack.name) ? found : [...found, defaultPack]
   }
   let packs = findPacks()
-  // 知らない名前が来たら既定に落ちる（名前をパスとして組み立てない。docs/design.md 7章）。
-  const selectPack = (name: string | undefined): CharacterPack =>
-    packs.find((pack) => pack.name === name) ?? defaultPack
 
-  // 起動時の初期パック。優先順位は TSUKUMO_CHARACTER（config.character）> 覚えた値 > 同梱の既定
-  // （docs/design.md 13.6「第3の扱い」）。TSUKUMO_CHARACTER があるときはすでに defaultPack に
-  // 反映されているので覚えた値は見ない。無ければ覚えた名前を packs から引き、一覧に無ければ
-  // selectPack の既定（defaultPack）へ落ちる。
-  const remembered = config.character === undefined ? readRememberedCharacter() : undefined
-  const initialPack = remembered === undefined ? defaultPack : selectPack(remembered)
+  // 起動時の初期パック（順位も知らない名前の落とし方も src/core/character-selection.ts）。
+  // TSUKUMO_CHARACTER があるときはすでに defaultPack に反映されている。
+  const initialPack = selectInitialCharacterPack({
+    packs,
+    fallback: defaultPack,
+    specified: config.character,
+    readRemembered: readRememberedCharacter,
+  })
   let characterPack = initialPack
 
   // いま出しているパックを画面へ流す形。**立ち絵の URL・選択肢・画面から変えられるかの3つ**を
@@ -212,56 +213,29 @@ async function main(args: readonly string[]): Promise<number> {
     now: Date.now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
   })
+  // セッションを起こす一続き（順序は src/core/session-launch.ts）。**起動時も
+  // `switch-character` の起こし直しも同じ関数を通る**ので、外の世界に触る部分だけをここで渡す。
   manager.create({
     sessionId,
-    startDriver: async (toFrames, character) => {
-      // **`character` が入っているのは `switch-character` で起こし直したときだけ。**
-      // 無ければ起動時の初期パック（覚えた値、または同梱の既定）。パックが決まったら、
-      // 立ち絵の取り先と選択肢を1回流す（docs/design.md 7章）。
-      characterPack = character === undefined ? initialPack : selectPack(character)
-      // **覚えるのは画面から選んだときだけ。** 起動時にも書くと、その回だけの指定
-      // （TSUKUMO_CHARACTER）や同梱の既定が次の起動の初期値として残ってしまう
-      // （環境変数は「その回の上書き」なので残さない。docs/design.md 13.6）。
-      if (character !== undefined) {
-        writeRememberedCharacter(characterPack.name)
-      }
-      toFrames(characterEvent())
-
-      // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に畳んで読む
-      // （段3。docs/design.md 12章）。
-      const taskWatcher = watchTaskSummary(process.cwd(), (tasks) => {
-        toFrames({ kind: "tasks-changed", tasks })
-      })
-      // **キャラクターごとに別のセッションを持つ**（docs/design.md 7章）。起動時も切り替え時も、
-      // これから起こすパックの印を持つ最新のセッションを探して続きから始める。
-      const resume = await findPackSessionToResume(config, process.cwd(), characterPack.name)
-      const expressions = expressionChoices(characterPack.definition)
-      const started = startDriver(
-        {
-          cwd: process.cwd(),
-          expressions,
-          persona: characterPack,
-          script: fakeScript,
-          resume,
-        },
-        toFrames,
-      )
-
-      // 続きから始まったことは、履歴が組み上がるのを待たずに画面へ出す（サイドバーの
-      // 「セッション情報」。docs/requirements.md 4.8「いつ復元するか」）。
-      if (resume !== undefined) {
-        toFrames({ kind: "session-restored", sessionId: resume })
-        void replayRestoredSession(resume, process.cwd(), expressions, toFrames)
-      }
-
-      return {
-        ...started,
-        close: () => {
-          taskWatcher.close()
-          started.close()
-        },
-      }
-    },
+    startDriver: createSessionLaunch<CharacterPack>({
+      // 起こすパックが決まったら**配線層の持ち回りも入れ替える**（立ち絵を配る
+      // `/character/<file>` と見た目の編集がこの1つを見る）。
+      choosePack: (character) => {
+        characterPack =
+          character === undefined ? initialPack : selectCharacterPack(packs, defaultPack, character)
+        return characterPack
+      },
+      rememberPack: (pack) => writeRememberedCharacter(pack.name),
+      characterEvent: () => characterEvent(),
+      // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
+      // 畳んで読む（docs/design.md 12章）。
+      watchTasks: (onEvent) =>
+        watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
+      findResumeSession: (pack) => findPackSessionToResume(config, process.cwd(), pack.name),
+      startDriver: (seed, onEvent) => startDriver(seed, fakeScript, onEvent),
+      restoreEvents: (resumed, pack) =>
+        readRestoredEvents(resumed, process.cwd(), expressionChoices(pack.definition)),
+    }),
     editCharacter: (edit) => Promise.resolve(applyCharacterEdit(edit)),
     createCharacter: (create) => Promise.resolve(applyCharacterCreate(create)),
   })
@@ -322,36 +296,29 @@ function pushRefresh(
   }
 }
 
-/** 駆動を起こすときに要るもの。偽の駆動を選んだときだけ `script` が入る。 */
-type DriverSeed = {
-  readonly cwd: string
-  readonly expressions: readonly ExpressionChoice[]
-  /** 人格を持つキャラクターパック（`systemPrompt` の append を組み立てるために渡す）。 */
-  readonly persona: CharacterPack
-  readonly script: ReturnType<typeof readFakeScript>
-  /** 続きから始めるセッションのID（新規に起こすときは undefined）。 */
-  readonly resume: string | undefined
-}
-
 /**
  * セッション駆動を1つ起こす。**台本があれば偽の駆動**（claude を起こさない。
  * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。
  */
-function startDriver(seed: DriverSeed, onEvent: (event: SessionEvent) => void): SessionDriver {
-  if (seed.script !== undefined) {
-    return startFakeSession({ script: seed.script, onEvent })
+function startDriver(
+  seed: SessionLaunchSeed<CharacterPack>,
+  script: FakeScript | undefined,
+  onEvent: (event: SessionEvent) => void,
+): SessionDriver {
+  if (script !== undefined) {
+    return startFakeSession({ script, onEvent })
   }
 
   return startSession({
-    cwd: seed.cwd,
-    expressions: seed.expressions,
+    cwd: process.cwd(),
+    expressions: expressionChoices(seed.pack.definition),
     permissionMode: DEFAULT_PERMISSION_MODE,
-    systemPromptAppend: buildSystemPromptAppend(seed.persona, [
+    systemPromptAppend: buildSystemPromptAppend(seed.pack, [
       SPEECH_CADENCE_PROMPT,
       REPORT_NOTATION_PROMPT,
     ]),
     resume: seed.resume,
-    tag: sessionTag(seed.persona.name),
+    tag: sessionTag(seed.pack.name),
     onEvent,
   })
 }
@@ -372,25 +339,6 @@ async function findPackSessionToResume(
   return config.newSession || config.driver === "fake"
     ? undefined
     : findSessionToResume(cwd, sessionTag(characterName))
-}
-
-/**
- * 前のセッションの記録（メインビューのやり取りと吹き出しのセリフ）を組み直して流す。
- * **claude 側の会話は `resume` が繋いでいる**ので、ここが失敗しても続行する（読めなかったぶんの
- * 履歴が画面に出ないだけ。docs/requirements.md 4.8「復元できなかったときどうするか」）。
- *
- * 組み上がるのはこのプロセスのメモリの中だけで、**どこにも書き出さない**
- * （docs/coding-standards.md「会話内容の扱い」）。
- */
-async function replayRestoredSession(
-  sessionId: string,
-  cwd: string,
-  expressions: readonly ExpressionChoice[],
-  onEvent: (event: SessionEvent) => void,
-): Promise<void> {
-  for (const event of await readRestoredEvents(sessionId, cwd, expressions)) {
-    onEvent(event)
-  }
 }
 
 /**

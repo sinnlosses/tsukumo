@@ -89,6 +89,8 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/adapter/fake-driver.ts`                                                   | adapter    | 台本（`test/fixture/fake-session.json`）どおりにイベントを流す偽の駆動                        |
 | `src/core/pending-answer.ts`                                                   | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                |
 | `src/core/session-manager.ts`                                                  | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**              |
+| `src/core/session-launch.ts`                                                   | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）        |
+| `src/core/character-selection.ts`                                              | core       | 初期パックの順位（指定 > 覚えた値 > 既定）と、知らない名前を既定へ落とす判断                  |
 | `src/adapter/server.ts`                                                        | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                        |
 | `src/core/config.ts`                                                           | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                      |
 | `src/core/port-resolution.ts`                                                  | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                  |

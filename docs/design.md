@@ -144,6 +144,8 @@ src/
   core/                       サーバ側の純粋な判断。node: / SDK / ws を import しない
     session-driver.ts         駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
     session-manager.ts        sessionId → { driver, state, subscribers }。reducer をサーバ側でも回す
+    session-launch.ts         起こす一続きの順序（外に触る部分は cli.ts が渡す。起動も切り替えも同じ）
+    character-selection.ts    どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
     pending-answer.ts         答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
     sdk-message.ts            SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
     session-restore.ts        続きから始めるセッションを選ぶ・transcript を履歴イベントにする
