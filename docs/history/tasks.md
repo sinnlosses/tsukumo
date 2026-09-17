@@ -9095,3 +9095,753 @@ bullet-proof-react の核は「機能どうしは import し合わず、共有 �
 - 既存の層の辺の検査（`ALLOWED_IMPORTS`）と機能どうしの検査（`UI_REGIONS`）を壊さない。
 - **`src/` のファイルを変更しない**（テストとドキュメントだけ）。手順2で一時的に足した
   import は必ず戻す。
+
+## T-125
+
+**タスク**: 新しいキャラクターパックを画面から作れるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-123, T-124 / **passes**: True
+
+**evidence**:
+
+画面から `field-fox` を作ると `<select>` が `[local, tsukumo, tsukumo-spirit]` に `field-fox` が増え、切り替えると自作SVGの立ち絵と差し色 rgb(34,255,136)（指定は #22ff88）が出た。置き場は `~/.tsukumo/characters/field-fox/`（character.json + default.svg + working.svg）。
+ポート7466・偽の駆動・Chrome 1400x900。落として起こし直しても選択肢・初期選択・立ち絵が同じで 4xx/5xx なし。`git status` に作ったパックは出ない（確認後そのパックと state.json は元に戻した）。
+決定: 同名は弾く／名前は英数と `. _ -` のみ・`.` 始まり不可／作っても切り替えない／`default` と `working` の2枚必須。`bun run check` 595 → 612 pass / 0 fail。`docs/design.md` の節数は 51 で不変。
+
+## 背景
+
+ユーザーの指示（2026-09-15）「キャラ設定を画面上からできるようにしたい」のうち、
+**新しいキャラクターを画面から作る**側。置き場所・受け取り方は前段のタスクで、
+立ち絵と差し色を変える口は1つ前のタスクで、それぞれ決まっている前提。
+
+パック1つを成立させるのに要るもの（`src/core/character-pack.ts` / `characters/README.md`）:
+
+- ディレクトリ1つ（**ディレクトリ名がパックの名前**で、`switch-character` の鍵になる）
+- `character.json`（`name` / `license` / `portraits` / `outfitAccents`）
+- 立ち絵は**`default` と `working` の2つが必須**
+- `persona.md` は任意（無ければ `systemPrompt` の append がレポートの記法だけになる）
+
+`listCharacterPacks` は**同名は後勝ち**で、起動先側を後ろに置いてある。新しいパックを作れる
+ようにすると、**既存の名前とぶつかったときに既存が黙って隠れる**ことになるので、そこを決める。
+
+## 解くべき論点
+
+- **同名をどう扱うか。** 弾くのか、後勝ちのまま上書きさせるのか
+- **名前に使える文字。** ディレクトリ名になるので、パスの区切りや `..` を受け取らない形にする
+  （`switch-character` は「知らない名前が来たら既定に落ちる」で、名前をパスとして組み立てない
+  約束になっている。`src/cli.ts`。**その約束を壊さない**）
+- **作った直後にどうするか。** そのパックへ切り替えるのか、一覧に足すだけか
+- **最低限そろえさせるもの。** `default` と `working` が無いパックは作らせないのか、
+  `default` 1枚から両方に割り当てるのか
+
+## やること
+
+1. 新しいパックを作る口を画面に足す（名前・立ち絵・差し色）
+2. 前段で決めた置き場所にディレクトリと `character.json` を書く
+3. 作ったパックが**その場で `<select>` の選択肢に出る**ようにする
+4. 実機で、作って切り替えて、再起動しても残ることを確かめる
+
+## 完了条件
+
+- 画面から新しいパックを作ると、**`<select>` の選択肢に出て切り替えられる**ことを実機で
+  確かめて `evidence` に書く（作ったパックの名前と、置かれた場所のパス）
+- **再起動しても残る**ことを確かめて `evidence` に書く
+- **名前にパスの区切りや `..` を含む入力が弾かれる**ことをテストで示す
+- **`default` と `working` が欠けたパックが作られない**ことをテストで示す
+- 既存の名前とぶつかったときの扱いが、決めたとおりに動くことをテストで示す
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **置き場所・受け取り方・編集の口を決め直さない。** 前段の2タスクの結論に従う
+- **`switch-character` が名前をパスとして組み立てない約束を壊さない**
+  （知らない名前は既定に落ちる。`src/cli.ts`）
+- 権利のある画像をリポジトリにコミットしない（`README.md` / `characters/README.md`）。
+  書き込み先がリポジトリの外なら自然に守られるが、**作ったパックがリポジトリの作業ツリーに
+  現れていないこと**を `git status` で確かめて `evidence` に書く
+- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、
+  止めるのは自分が起こした pid だけ
+- 確認は tsukumo 自身で行える（作ったパックに切り替えて画面を撮る）。
+  `loopable` は `"Y"`（`docs/workflow.md`「`loopable` の判定」）
+
+## T-144
+
+**タスク**: cli.ts の判断を core へ移し、配線だけに戻す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-142 / **passes**: True
+
+**evidence**:
+
+cli.ts 431→379行（**150行には届かず**: import 48・USAGE 26・コメント 82 を除く残り 241 行はすべて配線と、可変のパックに張り付いた見た目の書き込み）。判断を `core/session-launch.ts`（117行。`restart` の「画面を初期状態に戻す」判断は `session-manager` に残した）と`core/character-selection.ts`（53行）へ移し、両ファイルとも `node:` 非依存。
+`bun run check` 612 pass/57ファイル → **626 pass / 0 fail**/59ファイル（増分は新テスト14件）。`docs/design.md` 51 / `docs/architecture.md` 10 で節数は不変。
+本物の駆動を 7411 で1回起こし、`hello` が `pack=tsukumo`（覚えた値。同梱の既定は tsukumo-spirit）・`restored=true`・記録87件で、画面に立ち絵と吹き出しが出ることを確認して自分の pid のみ停止。
+
+## 背景
+
+`docs/research/architecture-proposal.md`（2026-09-15）が出した移行の段3。提案メモの確度は
+**「試す価値あり」**（段1・段2の「固い」より低い）。
+
+`src/cli.ts` は **335 行**あり、提案メモの目標構造では「配線。環境変数を `core/config` へ渡し、
+`adapter` と `core` を結ぶ唯一の場所」で、**判断（パックの選択順位・復元の可否・履歴の再生）は置かない**。
+いまはそれが `cli.ts` に直接書かれている。
+
+## 解くべき論点
+
+- **`core/session-launch.ts` に起こす「一続き」の範囲。** 提案メモは、`switch-character` の起こし直し
+  （`session-manager.restart`）も同じ関数で通すと**仮定**しているが、`restart` は「画面を初期状態に戻す」
+  判断を持つので `session-manager` に残す形もある。**境目は実装時に決める**
+- **`core/character-selection.ts` に移す順位の範囲。** 環境変数・覚えた値・既定のどれを見るか
+- `cli.ts` に残すもの（起動順序・前提チェック・終了処理・1回分の `try`/`catch`）との切り分け
+
+## やること
+
+1. `cli.ts` から「起こす一続き」を `src/core/session-launch.ts` へ、初期パックの順位を
+   `src/core/character-selection.ts` へ移す
+2. テストを足す（提案メモが挙げている観点）:
+   - `test/core/session-launch.test.ts`: 偽の駆動で「続きから始まった印が流れる」
+     「再生が失敗しても駆動は動き続ける」
+   - `test/core/character-selection.test.ts`: 「知らない名前は既定」「環境変数 > 覚えた値」
+3. `cli.ts` は読む・組み立てる・つなぐだけにする
+4. **切り出してみて `cli.ts` の見通しが良くならない、あるいは `core` 側が `cli.ts` の都合を抱え込むと
+   分かったら、途中まで戻して理由を `evidence` に書いて閉じてよい**（提案メモの確度が「試す価値あり」なのは
+   ここが読み切れていないため）
+
+## 完了条件
+
+- `bun run check` が通ること（件数を `evidence` に書く）
+- `src/cli.ts` が **150 行以下**になること（提案メモの目標。**届かなかった場合は行数と理由を
+  `evidence` に書く**）
+- `src/core/session-launch.ts` と `src/core/character-selection.ts` が **`node:` を import していない**こと
+  （`core` の規律）
+- 手順2の2ファイルのテストが通ること
+- **本物の駆動で起動し、前回のキャラクターで続きから始まることを目視**した結果が `evidence` にあること
+
+## 注意
+
+- **`bun run start` は本物の claude を子プロセスで起こす**（API の利用が発生する）。確認は
+  `TSUKUMO_VIEW_PORT` を既定（7327）以外にして起こし、終わったら自分が起こした pid だけを落とす
+- **ふるまいを変えない。** 起動の順序・既定への落ち方を変えると、覚えたキャラクターの復元が黙って壊れる
+- 段2（`adapter/` を切る）とは独立しており、順序を入れ替えてよい。**ただし段1の検査が入った後**に行う
+- `T-116`（`TSUKUMO_CHARACTER` を撤去するか決める）と選択の順位で重なる。**このタスクでは環境変数を
+  増やしも減らしもせず、いまの順位をそのまま移す**
+
+## T-148
+
+**タスク**: ターンが進行中のあいだはキャラクターの切り替えを受け付けないようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+ターン進行中はキャラクターの `<select>` を `disabled` にし、理由を `title` で見せる（常設の枠は増やさない）。**サーバ側でも弾く**（`session-manager` の `dispatch` が `FRAME_ERROR_REASON.switchDuringTurn` で断る。文面は画面と同じ1つを `protocol` から引く）。モデルと許可モードは**塞がない**（駆動へのコマンドで会話が消えないため）。
+`bun run check` 626 → **631 pass / 0 fail**（新規テスト5件: select +1・session-info +3・session-manager +1）。
+実機（偽の駆動・ポート 7420）: 送信直後は `#tsukumo-character` が `disabled=true` で `title` が出、`select_option` がタイムアウト（押せない）。中断すると `disabled=false` に戻り `local` → `tsukumo` へ切り替えできた。常駐プロセス（pid 99828）は無傷。
+
+## 背景
+
+ユーザーの報告と決定（2026-09-16）「送信したあとはキャラを切り替えられないようにしないと」。
+**依頼を送ったあとにキャラクターを切り替えると、その場で作業が消える。**
+
+`switch-character` は「もう1体起こす」ではなく**起こし直し**で、
+`src/core/session-manager.ts` の `restart()` が順に:
+
+1. `live?.close()` → `SessionDriver.close()` = `input.end()` で **claude の子プロセスが終わる**
+2. `generation += 1` → **前の駆動が後から投げるイベントを捨てる**
+3. `state = INITIAL_SESSION_STATE` → 画面を初期状態に戻す
+
+**確認も警告も出ない。** `src/ui/sidebar/session-info.tsx` のキャラクターの `<select>` は
+`disabled={false}` が**直書き**（112行目付近）。
+
+**材料はそろっている。** `src/protocol/session-state.ts` の `SessionState` に
+`turnInProgress: boolean`（171行目）があり、`src/ui/component/select.tsx` の `Select` は
+`disabled: boolean` を受け取る形になっている。
+
+**閉じ込めにはならない。** 中断（`interrupt` コマンド。`src/protocol/command.ts`）が逃げ道で、
+「止めてから切り替える」手順が残る。
+
+## 解くべき論点
+
+- **切り替えられない理由を画面に出すか。** 灰色にするだけだと壊れて見える。
+  ただし**常設の要素を増やさない**制約がある（`docs/design.md` 13.1 原則2、
+  13.6「サイドバーは3区画のまま」）。**`title` 属性のような、常設の枠を増やさない形を既定とする**
+- **モデルと許可モードの `<select>` も同じ扱いにするか。** 同じファイルの130行目・148行目も
+  `disabled={false}` が直書き。ただしこの2つは**起こし直しではなく**駆動へのコマンド
+  （`setModel` / `setPermissionMode`）なので、ターン中に変えても**作業は消えない**。
+  同じ扱いにする理由が無ければ**キャラクターだけを塞ぐ**
+- **サーバ側でも弾くか。** いまは画面が押せてしまえば `restart()` が走る。
+  `session-manager` の `dispatch` で `turnInProgress` を見て断る手もある
+  （`DispatchResult` に `ok: false` と定型文の理由を返す口がある）。
+  **画面だけで足りるか、両方要るか**を決める
+
+## やること
+
+1. `src/ui/sidebar/session-info.tsx` のキャラクターの `<select>` の `disabled` を
+   `turnInProgress` に繋ぐ
+2. 論点のとおり、理由の見せ方を決めて入れる
+3. サーバ側でも弾くと決めたなら、`src/core/session-manager.ts` の `dispatch` に足す。
+   **理由は定型文だけを返す**（`FRAME_ERROR_REASON`。会話の内容を載せない）
+4. 単体テストを足す: ターン進行中は `<select>` が無効であること、終わると有効に戻ること
+
+## 完了条件
+
+- ターン進行中にキャラクターの `<select>` が無効になり、ターンが終わると戻ることを
+  単体テストで示す（`test/ui/sidebar/` の既存テストと同じ粒度）
+- **中断してから切り替えられる**ことを実機で確かめ、`evidence` に書く
+  （中断 → `<select>` が有効に戻る → 切り替わる）
+- ターン中に切り替えようとしたときに、**理由が分かる**ことを実機で目視して `evidence` に書く
+- モデル・許可モードの `<select>` をどう扱ったかが `evidence` に1行ある
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **並列で動かす案は採らない**（2026-09-16 決定）。`createSessionManager` は
+  `Map<string, SessionHost>` で複数を持てるが、塞いでいるのは画面のほう
+  （`SessionState` は立ち絵1つ・吹き出し1本・メインビュー1つで `character` も単数）。
+  `docs/design.md` 8章「複数化はまだしない」のまま。**並列が要るときは tsukumo をもう1つ起こす**
+  （ポートが 7327〜7346 で自動にずれる）
+- **常設の要素を増やさない**（`docs/design.md` 13.1 原則2）
+- 検証は `TSUKUMO_DRIVER=fake TSUKUMO_OPEN_VIEW=0 TSUKUMO_VIEW_PORT=<空きポート>` で
+  本物の claude を起こさずに立ち上げられる（台本の駆動でもターンは進行する）
+- コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-152
+
+**タスク**: タスクの status を枠付きの色分けラベルにし、doing を差し色で出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-151 / **passes**: True
+
+**evidence**:
+
+`.task-status` を枠付き（`border: 1px solid currentColor`）にし、`.task-status-doing` を `--accent` にした（`--state-*` は不変）。見出しは **todo を常に、doing / done は0件でないときだけ**添える（区画が 300px ほどで、doing は排他ロックでほぼ 0〜1、done はアーカイブ直後はほぼ 0 になるため）。モーダルの表の status 列は**素のテキストのまま**（同じ行に色付きラベルが2つ並んで騒がしくなる）。
+`bun run check` 631 → **633 pass / 0 fail**（+2件）。`grep -c '^#\{2,3\} ' docs/requirements.md` は編集の前後とも **26** で節数は不変。
+実機（偽の駆動・ポート 7501）: 見出しが `タスク一覧 todo 23 / doing 1 / done 3`、このタスクの行に `color`/`border` とも `rgb(111,227,205)`（パックの `--accent`）の `doing` バッジが出た。バッジ27件すべてが `border-width: 1px`。表の status セルは `doing` の素のテキスト。
+
+## 背景
+
+`develop/tasks.json` の `status` は `todo` / `doing` / `done` の3つ（`task-workflow` の
+`WORKFLOW.md`「tasks.json のフィールド」。`todo` → `doing` は `/next-task` が着手時に
+作業ツリー上だけに書く）。サイドバーは `doing` を知らない。
+
+- `src/ui/sidebar/task-list.tsx` の `taskStatusClass` は `todo` / `done` / それ以外の3分岐で、
+  `doing` は「それ以外」＝ `.task-status-other`（`--state-warn`）に落ちる。**異常な値と同じ
+  見え方**になる。
+- 見出しの `taskListTitle` は `todo` と `done` の件数だけを出す（`doing` は数に入らない）。
+- バッジ `.task-status`（`src/ui/style/sidebar.css` 168〜179行）は背景が `--surface`、
+  文字色だけで**枠線が無い**。
+- モーダルの表（`src/ui/sidebar/task-board.tsx` の `TaskRow`）は status を素のテキストで出す
+  （バッジになっていない）。
+
+## 決まっていること（蒸し返さない）
+
+- `doing` の色は**差し色（`--accent`）**を使う。状態の3色（`--state-ok` / `--state-warn` /
+  `--state-ng`）は増やさない（`docs/design.md` 13.1 原則5「状態の3色は誰が来ても変わらない」）。
+  パックを替えると `doing` の色も変わるのは承知のうえ。
+- ステータスは**色分けされた枠付きのラベル**にする（ユーザーの指示）。**色だけで意味を伝えない**
+  ので、ラベルの文字は status の値をそのまま出す（`docs/requirements.md` 4.2）。
+
+## 解くべき論点
+
+- 見出し（`taskListTitle`）に何を出すか。いまは `todo` と `done` の件数だけで、**`done` は
+  アーカイブ直後にほぼ常に 0 になる**（`task-workflow` の `scripts/archive.py` が `done` を
+  `docs/history/tasks.md` へ移すため。2026-09-16 のアーカイブ直後は「タスク一覧 todo 21 / done 0」）。
+  `doing` の件数を足すかだけでなく、**`done` を出し続ける意味があるか**もここで決める。
+  足すなら `doing` が 0 件のときも出すか（3つ並ぶと見出しが長くなる。サイドバーの区画は
+  300px ほどしかない）。
+- モーダルの表の status 列も同じラベルにするか、表は素のテキストのままにするか
+  （表は1行1タスクで縦に詰まっているので、枠が並ぶと騒がしくなりうる）。決めた側に倒して、
+  理由を `evidence` に1行書く。
+
+## やること
+
+1. `taskStatusClass` に `doing` を足し、`.task-status-doing` を `--accent` にする。
+   それ以外（想定外の値）は `--state-warn` のまま残す。
+2. `.task-status` に枠を足し、`todo` / `doing` / `done` / それ以外の4つとも枠付きで見えるようにする
+   （枠の色は文字色に追随させ、`sidebar.css` の既存のトークンだけで書く。16進の色を直接書かない。
+   `src/ui/style/theme.css` 冒頭のコメント）。
+3. 上の論点を決め、決めたとおりに `taskListTitle` と表を直す。
+4. `docs/requirements.md` 4.2 の「status のバッジを先頭に置いた行で出し、見出しに todo / done の
+   件数を添える」を、実装に合わせて直す。**行頭を含めて位置を特定し、
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で変わらないことを確かめる**
+   （CLAUDE.md「ドキュメントを編集するときの罠」）。
+5. `test/ui/sidebar/task-list.test.tsx` の `taskListTitle` と バッジの class を見ているテストを
+   直し、`doing` のケースを足す。表を変えたなら `test/ui/sidebar/task-board.test.tsx` も直す。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- `develop/tasks.json` の1件を `doing` にした状態で画面を開き、サイドバーの区画（と、表も
+  変えたなら表）で `doing` が差し色の枠付きラベルとして出ることを目視で確かめ、見えたものを
+  `evidence` に書く。**確かめたあとで `todo` に戻し、`doing` をコミットに含めない**
+  （`WORKFLOW.md`: `todo` → `doing` はコミットしない）。
+
+## 注意
+
+- 状態の3色（`--state-ok` / `--state-warn` / `--state-ng`）の値も意味も変えない。
+  `docs/design.md` 13.1 の表に4色目を足さない。
+
+## T-153
+
+**タスク**: mermaid が構文エラーのときコードとエラー文を出し、規約に落とし穴を1行足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`initialize({ suppressErrorRendering: true })` を立て、**既存の `run()` の `catch` 1本**で受ける（読み込み失敗も同じ経路。`parse()` の事前判定は使わない）。壊れていたら `.mermaid-broken` に `<pre><code>` で元のコード＋`.mermaid-error` にエラー文（`--state-ng` の左罫線。新しい色なし）。規約は表の mermaid 行に「ラベルの引用符は `#quot;`」を1文だけ足した。
+`bun run check` 633 → **634 pass / 0 fail**（+1件）。受け入れ時に `reason as { str: unknown }` のキャストを `in` の絞り込みだけに置き換えた（規約「型を迂回するキャストを書かない」）。
+実機（偽の駆動・ポート 18330/18331）: フィクスチャの閉じ括弧を抜くと `pre.mermaid` が消えて `.mermaid-broken pre > code` に元のコード、`.mermaid-error` に `Parse error on line 2 … got 'SQS'` が出た。復元後に再起動すると `pre.mermaid` に `svg` 1件でフローチャートが描かれた（回帰の確認）。
+
+## 背景
+
+レポートの ```mermaid フェンスが構文エラーのとき、**元のコードが読めなくなる**。
+`src/ui/report/mermaid-block.tsx` は `mermaid.run({ nodes: [node] })` を呼び、失敗したら
+`data-mermaid-failed="yes"` を立てるだけ。**mermaid 自身が先に `<pre class=\"mermaid\">` の中へ
+エラーの絵を描く**ので、画面に残るのは何が悪いか分からないエラー図になる。
+`data-mermaid-failed` に対応する CSS は `src/ui/style/` のどこにも無いので、この印は
+いまのところ画面には出ていない。
+
+2026-09-16 に実際に踏んだ。ノードのラベルの中に `\"ok\"` と書いたのが原因で、mermaid の
+ラベルは引用符をバックスラッシュで逃がせない（`#quot;` を使う）。
+
+同梱している mermaid は **11.15.0**（`vendor/README.md`）。この版には
+`mermaid.parse(text, { suppressErrors })` と、`initialize` の `suppressErrorRendering` が
+どちらも入っている（`vendor/mermaid.min.js` に文字列として存在することを確認済み）。
+**`vendor/` は編集しない。**
+
+型は `src/ui/report/vendor-globals.d.ts` に手で書いてあり、いまは `initialize` と `run` だけ。
+同ファイルの規約は「**使っている分だけ**を足す」。
+
+## 決まっていること（蒸し返さない）
+
+- **画面側と規約の両方をやる**（ユーザーの選択）。
+  - 画面側: 壊れていたらコードをそのまま読める形で出し、mermaid のエラー文を添える。
+  - 規約: `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` に落とし穴を**1行**足す
+    （ラベル内の引用符は `#quot;`。`\"` は構文エラー）。
+
+## 解くべき論点
+
+- **どちらの API で検出するか**: 描く前に `mermaid.parse()` で判定するか、
+  `initialize({ suppressErrorRendering: true })` を足して `run()` の失敗を拾うか。
+  **mermaid がエラーの絵を勝手に描かないこと**が要件なので、それを満たすほうを選ぶ
+  （両方要るなら両方でよい）。選んだ API だけを `vendor-globals.d.ts` に足す。
+- **壊れたときに何を出すか**: コードを `<pre><code>` のコードブロックとして出すのか、
+  `.mermaid` のまま文字として出すのか。**エラー文の置き場**（コードの上か下か）も決める。
+  レポートの語彙としては「問題」は `note-ng` があるので、それを使うかも含めて決める。
+- 規約に足す1行を、表の mermaid の行に入れるか、その下の箇条書きに入れるか。
+  **`REPORT_NOTATION_PROMPT` は短さを保つ**（同ファイルの docstring「冗長さを止める条項」）ので、
+  1行を超えない。
+
+## やること
+
+1. `src/ui/report/mermaid-block.tsx` で、構文エラーのときに mermaid のエラー図ではなく
+   **コードとエラー文**が出るようにする。読み込み自体の失敗（`loadVendorScript` の失敗）も
+   同じ経路でよいかを決め、決めたほうに倒す。
+2. `src/ui/report/vendor-globals.d.ts` に、使うことにした API の型だけを足す。
+3. 必要なら `src/ui/style/main-view.css` などに最小限の見た目を足す（**新しい色を作らない**。
+   `src/ui/style/theme.css` のトークンだけを使う）。
+4. `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` に落とし穴を1行足す。
+   `test/core/report-notation.test.ts` が文面を見ているなら合わせて直す。
+5. テストを足す: `test/ui/report/markdown.test.tsx` に `pre.mermaid` の振り分けを見ている
+   ケースがあるので、その近くに**壊れた記法のときの出方**を見るケースを足す。
+   `mermaid` はブラウザのグローバルなので、`vendor-globals.d.ts` の想定どおりに
+   差し替えられるかを確かめ、**差し替えが噛み合わなければテストは足さずに理由を
+   `evidence` に書く**（`bun run check` と目視は必須のまま）。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **壊れた mermaid を含むレポートを画面に出して目視で確かめる**: `test/fixture/fake-session.json`
+   の mermaid のブロック（架空の文面。2箇所ある）を一時的に壊し、`TSUKUMO_DRIVER=fake` で
+   画面を開いて、(a) mermaid のエラー図が出ないこと、(b) 元のコードが読めること、
+   (c) エラー文が出ていること、の3つを確認する。**確認したらフィクスチャは元に戻し、
+   壊した状態をコミットしない**。
+- 正しい mermaid が今までどおり図として描かれることも同じ画面で確認する（回帰の確認）。
+
+## 注意
+
+- **`vendor/mermaid.min.js` は編集しない**（`vendor/README.md`「ここのファイルは編集しない」）。
+  版も上げない。
+- 描画ループに `try` / `catch` を散らさない（CLAUDE.md「常駐プロセスは描画1回の失敗で落ちない」）。
+  失敗の受け止めは `MermaidBlock` の中で閉じる。
+- `src/ui/report/sanitize-schema.ts` が通す要素の一覧は変えない（新しい記法を増やす話ではない）。
+
+## T-162
+
+**タスク**: Bun固有APIに寄せない規約を境界だけ緩めるかを決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-143 / **passes**: True
+
+**evidence**:
+
+**緩めない**（規約・`CLAUDE.md` は未編集。`grep -c '^#\{2,3\} ' docs/coding-standards.md` は 21 → 21）。`src/adapter/` 12ファイルを読み、`node:` で**書けない**不都合は0件。意図的な遠回りは2件だけで実害なし: `bundle.ts`（`Bun.build()` ではなく `execFile("bun","build")`。実測 0.02〜0.03秒／出力 2.4MB で、`ui-rebuild.ts` の debounce 120ms 未満）と `server.ts`（`Bun.serve` ではなく `node:http`+`ws`。依存1つと glue 約25行）。
+決め手は構造: `src/` の `node:` import 25件のうち**23件が `adapter/` に集中**（残りは `cli.ts` の `randomUUID` / `process`）。「境界だけ緩める」は規約が効く対象をほぼゼロにする＝実質の撤回になる。狭める対象になりえたのは `server.ts` と `bundle.ts` の2つだけで、残る10ファイルは寄せ替える先の `Bun.*` が無い（`Bun.file()` / `Bun.write()` は非同期のみで、`character-edit.ts` の書き順の保証と `character-pack.ts` の同期読みを崩す）。
+**T-145 を先にすべき**。T-145 は同じ「保つ／狭める／いま決めない」の3択と、`docs/coding-standards.md` の**同じ節への編集**を自分の完了条件に持つので、ここで狭めると撤回し直しと衝突が起きる。`bun run check` 634 pass / 0 fail（件数は変わらず）。
+
+## 背景
+
+`docs/research/architecture-proposal.md`「7. 未決事項」が、段2（`adapter/` を切る＝T-143）の
+**後でしか書けない**ものとして次を挙げている:
+
+> `docs/coding-standards.md`「Bun固有APIに寄せない」を**撤回するのではなく「境界のファイルだけは
+> 寄せてよい」に狭める**案は、段2の後でないと書けない（境界が1ディレクトリに集まっていることが
+> 前提）
+
+いまの規約は `docs/coding-standards.md`「Bun固有APIに寄せない」で、`CLAUDE.md` にも
+「**`Bun.*` の固有APIに寄せない。** ファイル・パス・プロセスは `node:` プレフィックスの標準APIを
+使う（唯一の例外は `bun:test`）」として載っている。この規約を根拠にした実装上の判断が既にある
+（例: `src/core/bundle.ts` は `Bun.build()` ではなく `bun build` のプロセスを起こす。
+`docs/architecture.md`）。
+
+**T-145（Bun のまま進めるか Node へ寄せるか）とは別の話**。あちらはランタイムの選択で、
+こちらは規約の文言をどこまで狭めるか。
+
+## 決まっていること（蒸し返さない）
+
+- **判断はサブエージェントに任せてよい**（2026-09-16 ユーザー回答）。段2が終わって境界が
+  1ディレクトリに集まっていれば、判断の材料はコード側に揃うため。
+- **撤回はしない。** 検討するのは「狭める」案だけ。
+
+## 解くべき論点
+
+- **どこまでを「境界」とするか**。`adapter/` の全ファイルか、外部プロセスを起こす
+  `server.ts` / `bundle.ts` だけか。
+- **緩めない**という結論もありうる。いまの規約のままで困っている箇所が実際にあるかを、
+  段2のあとのコードで確かめる。**困っていなければ、やらずに理由を `evidence` に書いて閉じる。**
+- T-145（Bun / Node）が先に決まると前提が変わるか。変わるなら、どちらを先にするかを
+  `evidence` に書き残す。
+
+## やること
+
+1. 段2（T-143）のあとの `adapter/` を読み、`node:` の標準APIで書いていることによる
+   不都合（遠回り・性能・書けないこと）が実際にあるかを数える。
+2. 上の論点を決め、狭めるなら `docs/coding-standards.md`「Bun固有APIに寄せない」の節と、
+   `CLAUDE.md` の「コーディング規約・レビュー方針」の該当行を**両方**直す（片方だけ直さない）。
+3. 狭めないなら、**規約は触らず**、確かめた結果を `evidence` に書いて閉じる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- 狭めた場合: `docs/coding-standards.md` と `CLAUDE.md` の両方に同じ範囲が書かれていて、
+  食い違っていない。`grep -c '^#\{2,3\} ' docs/coding-standards.md` が編集の前後で変わらない。
+- 狭めなかった場合: **何を見て不要と判断したか**（どのファイルの、どの操作）が `evidence` に
+  書かれている。
+
+## 注意
+
+- **規約を撤回しない。** 狭めるか、そのままかの2択。
+- `docs/coding-standards.md` の他の節に手を入れない。
+
+## T-166
+
+**タスク**: メインビューの記録の上限と、省略の見せ方を決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-165 / **passes**: True
+
+**evidence**:
+
+実物のやり取り720件を本物の `mainViewTurns` に流して実測（数値だけを出し、会話の本文はどこにも複製していない）: 上限が数えていた件数は中位数5／p99 55／最大80 で **40超が22件（3.1%）＝当たっていた**。一方**画面に出る件数は最大6件**（中位数1）。22件のうち16件は画面から何も消えずに「n 件は省略した」（最大62）を出し、6件は可視レポートを1件出してから消していた（2026-09-16 のツール非表示化に上限が追随していなかった）。
+対処は値ではなく**数える対象**: `limitTurnEntries` を `shownEntryCount`（レポート＋質問のみ、ツールは数えない）に。40 は据え置き（実測最大6の6.6倍。落とすための値ではなく伸びすぎの止め）。直した実装で同じ720件を流すと落ちるターンは **22 → 0件**。`.turn-dropped` は「本当に消えたときだけ」出るので残した。
+`bun run check` 634 → **636 pass / 0 fail**（+2件）。`docs/requirements.md` 4.2 を追従（節数 26 → 26）。markup と CSS は不変で、確認は React を描いた DOM（ツール60件で行が出ない／レポート45件で出る）。
+
+## 背景
+
+「**これ以前の n 件は省略した**」で消えるものが、**いったん画面に出てから消える**。
+中間レポートが開閉するのと合わせて落ち着かない、というのがユーザーの指摘（2026-09-16）。
+
+`src/protocol/main-view.ts` の `limitTurnEntries` が `MAX_MAIN_VIEW_ENTRIES`（20行目、**40**）を
+超えたぶんを**古いほうから落とし**、`droppedCount` に数える。描くのは
+`src/ui/main-view/turn.tsx` の26〜28行（`.turn-dropped`）。
+
+**ターンが伸びるにつれて上限を超えるので、最初は出ていた記録が後から落ちる**のは、いまの
+作りでは避けられない（何件まで伸びるかは書き始めの時点では分からない）。
+
+## 解くべき論点
+
+- **そもそも上限が要るか。** `MAX_MAIN_VIEW_ENTRIES` が 40 で、`MAX_MAIN_VIEW_TURNS`（5）と
+  `MAX_SESSION_STATE_TURNS`（20）が別にある。**常駐プロセスの持ち物を抑えるのが目的**なら、
+  描画の上限と状態の上限は別の話になる。実測（今日のような長いターンで何件まで積むか）を
+  取ってから決める。
+- **上げるだけで足りるか。** 上限を 100 なり 200 なりにすれば実用上は当たらなくなる。
+  当たらない上限に意味があるかを判断する。
+- **「出してから消す」をやめる道があるか。** 出す前に落とすには、そのターンが最終的に何件に
+  なるか分かっている必要があるので、**進行中のターンでは無理**。ただし
+  「**進行中のターンでは落とさず、終わってから落とす**」ならできる。そのとき画面がどう動くかを
+  決める。
+- `.turn-dropped` の行自体を残すか。落とす件数が減るなら要らなくなるかもしれない。
+
+## やること
+
+1. 実測する: 今日の長いターン（`develop/tasks.json` の T-143 のような委譲つき）で、
+   1ターンあたりのステップ＋アクションが何件になるかを数える。**40 に当たっているのかを
+   まず確かめる**（当たっていなければ、指摘の原因は別のところにある）。
+2. 上の論点を決めて直す。**調べて「上限には当たっておらず、開閉の入れ替わり（T-165）だけが
+   原因だった」と分かったら、やらずに理由を `evidence` に書いて閉じる。**
+3. 変えたなら `docs/requirements.md` 4.2 の該当箇所を追従させる。**行頭を含めて位置を特定し**、
+   `bun run format` のあとに `grep -c '^#\{2,3\} ' docs/requirements.md` が 26 のままであることを
+   確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **1ターンあたりの実測値**（何件積まれたか）が `evidence` にある。
+- 変えた場合: 上限を動かしたなら新しい値とその根拠、落とす時機を変えたなら変えた形が
+  `evidence` にある。変えなかった場合: **何を見て不要と判断したか**が書かれている。
+
+## 注意
+
+- **`MAX_SESSION_STATE_TURNS`（状態が持つターン数）と `MAX_RECENT_FINISHED_TOOLS` は
+  このタスクの対象外**。常駐プロセスのメモリを抑えるための別の上限で、動かすなら別の判断が要る。
+- T-165（`key` を安定させる）を先に通すこと（依存に入れてある）。**開閉の入れ替わりが
+  そちらで直ると、この指摘の半分は消える可能性がある。**
+
+## T-172
+
+**タスク**: 入力欄のプレースホルダをキャラクターへの依頼の言い方にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+プレースホルダを `composerPlaceholder(state.character?.name)` で組み立てる形にした。名前があるとき `<名前>への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）`、届く前・名前が無いときは主語を落として `依頼を書く（…）`（`claude` へは戻さない）。パックに文言そのものを持たせる案は既定どおり採らなかった。
+実機（偽の駆動・ポート 7401）で入力欄が空のときに出た文言: `tsukumoへの依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）`（名前はパックの `character.json` 由来で、コードには固有名を置いていない＝原則4）。
+`dispatch.css` の同じ言い方のコメントも直した。`docs/requirements.md` 4.2 にはこの文言が書かれていなかったので未編集（節数 26 のまま）。`bun run check` 636 → **638 pass / 0 fail**（+2件）。
+
+## 背景
+
+入力欄のプレースホルダが「**claude への依頼を書く**」になっている（2026-09-16 のユーザーの指摘。
+「cluade じゃなく、やっぱりキャラクターにお願いするわけだからね!」）。tsukumo は
+**キャラクターと一緒に仕事をするための環境**なので、依頼先の呼び方がそこだけ素の claude に
+なっているのは目的と食い違う。
+
+実物は1箇所:
+
+```
+src/ui/features/dispatch/composer.tsx:33
+const PLACEHOLDER = "claude への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）"
+```
+
+同じ言い方が `src/ui/styles/dispatch.css:217` のコメント（「claude への依頼を送るフォームを持つ」）
+にもある。
+
+キャラクターの名前は**定義ファイル側**にある（`characters/<name>/character.json` の `"name"`。
+いまは `tsukumo` / `tsukumo-spirit` / `local` の3パック）。画面には `SessionState.character`
+（`CharacterView` 型。`src/protocol/character.ts`）として届いていて、`name` は
+`string | undefined`。**`CLAUDE.md` 原則4「キャラクターの中身をコードに書かない」**があるので、
+名前をコードに直接書くことはできない。
+
+## 決まっていること（蒸し返さない）
+
+- **依頼先の呼び方をキャラクターに変える**（2026-09-16 ユーザーの指示）。
+- **操作の案内（Enter で改行 / Command+Enter で送信 / `/` でコマンド補完）は残す**。
+  プレースホルダはこの3つを伝える役目も持っている。
+
+## 解くべき論点
+
+- **文言をどこから組み立てるか。** 既定は **`character.name` を使ってコード側でテンプレートを
+  組む**（文の骨格は tsukumo の画面の言葉で、キャラクターごとに変わるのは名前だけ、という
+  切り分け）。**パックに文言そのものを持たせる案（`character.json` に項目を足す）は採らない**
+  ——言い回しを変えたい2つ目のパックが出てきてからでよく、いま足すと3パックすべてと
+  `src/protocol/character.ts` の検証、画面からの編集（`features/appearance/`）に波及する。
+  **この既定を覆すなら理由を `evidence` に書く。**
+- **キャラクターが届く前（`character` が `undefined`、または `name` が `undefined`）の落とし先。**
+  接続直後の一瞬はここを通る。`claude` に戻すのは目的に反するので、名前を使わない言い方を決める。
+- `src/ui/styles/dispatch.css:217` のコメントも直すか（画面に出る文言ではないが、同じ言い方）。
+
+## やること
+
+1. `src/ui/features/dispatch/composer.tsx` のプレースホルダを、`character.name` から組み立てる形に
+   変える。`Composer` に名前がまだ渡っていなければ、渡し方も決める（`useSession` で読む・
+   props で受け取る、のどちらでもよい。既存の部品の作法に合わせる）。
+2. `test/ui/features/dispatch/composer.test.tsx` に、(a) 名前があるときその名前が出る、
+   (b) 名前が無いときの落とし先が出る、の2件を足す。
+3. `docs/requirements.md` 4.2 の入力欄の記述にプレースホルダの文言が書かれていれば追随させる。
+   **行頭を含めて位置を特定し**、`bun run format` のあとに
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が **26** のままであることを確かめる。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **目視で確かめる**: `TSUKUMO_DRIVER=fake` で起こし、入力欄が空のときのプレースホルダに
+  キャラクターの名前が出ていることを確かめ、**実際に出た文言をそのまま `evidence` に書く**。
+- コードに特定のキャラクターの名前が直接書かれていない（原則4）。
+- 節の数が `docs/requirements.md` 26 のまま。
+
+## 注意
+
+- **キャラクターの名前をコードに書かない**（原則4）。`"tsukumo"` という文字列をテスト以外の
+  `src/` に置かない（テストは自前の値を作ってよい）。
+- 入力欄の振る舞い（Enter で改行 / Command+Enter で送信 / `/` 補完）を変えない。
+
+## T-173
+
+**タスク**: ツール実行中は吹き出しにも作業中の一言を出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`speeches` には積まず、`BalloonTrack` に `workingSpeech` の口を足して**描くときに最新の1件として重ねる**（記録と `turn-speech` を汚さない）。判定は `currentExpression(...) === "working"` で**表情とまったく同じ値**から引き、`resolveExpression` の上書きもクールダウン 4000ms も触っていない。過去のターンでは出さない。セリフ0件のときはプレースホルダより作業中が勝つ。`PROTOCOL_VERSION` は 2 のまま（追加フィールド1つで、古いタブは吹き出しが出ないだけ。frame.ts の方針「形を変えたときだけ上げる」に従う）。
+文言は `character.json` の `workingSpeech`（3パックに追加）。落とし先は `expressions.working` のラベル、それも無ければ重ねない。解決は `toCharacterInfo` の1箇所。画面からは変えられない（引き出しは立ち絵と差し色だけ）。
+実機（偽の駆動・ポート 7398）: 250ms は `data-expression="proud"`／吹き出し「さっきの分は上手くいったよ。えへん。」→ **1251ms で `working`／最新の吹き出しが「ちょっと待っててな、いま手を動かしてるぞ」**（パックの定義そのまま）→ 6641ms で `proud` に戻り作業中の吹き出しは消えた。`bun run check` 638 → **647 pass / 0 fail**（+9件）。節数は requirements 26・design 51 のまま。台本に 2.4 秒走るツールの場面（架空の本文）を1つ足した（既存のどの場面も 1000ms 未満で `working` に到達せず、目視できなかったため）。
+
+## 背景
+
+**立ち絵が `working` になっているのに、吹き出しは直前の `speak` のセリフのまま**という食い違いが
+ある（2026-09-16 のユーザーの指摘）。ユーザーの言葉:
+
+> working の立ち絵の件だけど、吹き出しに表情がついているという原則があると思うんだ。だから、
+> ツール実行中に working になるならそこで吹き出しを作って(作業中...)とすることで working の
+> 表情に違和感がなくなると思う。今だと、最新のセリフが喜んでいるようなセリフでも
+> ツール実行中に working の表情になってしまって違和感があるからね。
+
+いまの仕組み（`src/protocol/expression.ts` の `resolveExpression`）は、表情だけを
+ツールの時刻で上書きしている:
+
+1. 実行中のツールがクールダウン中に始まった、または開始から `WORKING_EXPRESSION_DELAY_MS`
+   （1000ms）以上経っていれば `working`
+2. ツールが終わってから `WORKING_EXPRESSION_COOLDOWN_MS`（4000ms）以内なら `working`
+3. どちらでもなければ `speechExpression`（直近の `speak` の表情）
+
+**吹き出し（`SessionState.speeches`）はこの上書きを一切知らない。** `speeches` は `speak` が来た
+ときだけ伸び、ターンの開始とセッションのクリアで空になる（`src/protocol/session-state.ts`）。
+描くのは `src/ui/features/character-view/balloon-track.tsx` で、セリフが0件のときだけ
+プレースホルダ（「（まだ発話がありません）」）を1件出す。
+
+## 決まっていること（蒸し返さない）
+
+- **ツール実行中は吹き出しにも作業中の一言を出す**（2026-09-16 ユーザーの指示。上の引用が原文）。
+- **この件は T-167 の「往復は現状のまま許容する」という決定を上書きする**
+  （2026-09-16 ユーザーが明示的に承認）。往復を許容する前提はもう無い。ただし
+  **クールダウンの値（4000ms）そのものを調整して解こうとしない**——実測でツールの実行時間の
+  中央値が 1.3〜1.9 秒・ターン内の隙間の中央値が 3.5〜11.6 秒あり、値では解けないことが
+  分かっている（だから別の軸で切るこの案になった）。
+- **作業中の文言はキャラクターの言葉なので定義ファイル側に置く**（`CLAUDE.md` 原則4）。
+  コードに「作業中...」のような特定の言い回しを直接書かない。
+
+## 解くべき論点
+
+- **吹き出しをどう作るか。** `SessionState.speeches` に積むと**記録（`SessionRecord`）や
+  ターンごとのセリフ（`src/protocol/turn-speech.ts`）にも混ざる**。既定は
+  **`speeches` に積まず、描くときに「いま `working` なら作業中の吹き出しを重ねる」**形
+  （記録を汚さない）。覆すなら理由を `evidence` に書く。
+- **`resolveExpression` のツール時刻による上書きを残すか。** 吹き出し側で作業中を表せるなら、
+  表情の上書きは要らなくなるかもしれない（`speechExpression` を `working` にするだけで済む）。
+  **消す判断をしたら理由を `evidence` に書く。消さずに済むならそのままでよい**
+  （消すと `WORKING_EXPRESSION_DELAY_MS` / `WORKING_EXPRESSION_COOLDOWN_MS` /
+  `lastToolFinishedAt` / `nextWorkingTransitionDelayMs` と、それらのテストが一緒に動く）。
+- **定義ファイルのどこに文言を置くか。** `character.json` に項目を足すなら、3パック
+  （`characters/tsukumo` / `tsukumo-spirit` / `local`）と `src/protocol/character.ts` の検証、
+  画面からの編集（`src/ui/features/appearance/`）への波及まで決める。**項目が無いパックの
+  落とし先**も決める。
+- **過去のターンを選んでいるときは出さない。** `character-view.tsx` の `pastTurn` の分岐が
+  「今回を見ているときだけツール実行中の上書きをする」（2026-09-14 決定）になっているので、
+  吹き出しも同じ扱いに揃える。
+- **セリフが0件のときのプレースホルダとの関係。** ターンの開始直後にツールが走ると、
+  「（まだ発話がありません）」と作業中の吹き出しのどちらを出すか。
+
+## やること
+
+1. 上の論点を決め、`src/protocol/` と `src/ui/features/character-view/` を直す。
+2. 文言をキャラクターパック側に置き、3パックすべてに入れる（項目が無いパックの落とし先も作る）。
+3. テストを足す: (a) ツール実行中に作業中の吹き出しが出る、(b) ツールが終われば消える、
+   (c) 過去のターンを見ているときは出ない、(d) 文言がパックの定義から来る。
+4. `docs/requirements.md` の 4.2「表示」（吹き出し）と 4.3「状態連動」を追随させる。
+   **行頭を含めて位置を特定し**、`bun run format` のあとに
+   `grep -c '^#\{2,3\} ' docs/requirements.md` が **26** のままであることを確かめる。
+   `docs/design.md` 6.1 / 6.5 にも吹き出しと立ち絵の記述があるので、変わったなら直す
+   （節の数は **51** のまま）。
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）。
+- **目視で確かめる**: `TSUKUMO_DRIVER=fake` で起こし、**ツールが走っている間に立ち絵と吹き出しの
+  両方が作業中になり、終われば直前のセリフに戻る**ことを確かめる。何が見えたかを
+  `evidence` に書く（立ち絵の `data-expression` と吹き出しの文言の両方）。
+- 作業中の文言が `src/` のコードに直接書かれていない（原則4）。
+- 節の数が `docs/requirements.md` 26 / `docs/design.md` 51 のまま。
+
+## 注意
+
+- **`speak` が表情を選ぶ仕組みそのものは変えない。** 選択肢はキャラクターパックの
+  `character.json` から来る。
+- `PROTOCOL_VERSION`（`src/protocol/frame.ts`）を上げる必要があるかを判断すること
+  （`SessionState` の形が変わるなら上げる）。
+- 過去のターンを遡ったときの見え方（`docs/requirements.md` 4.3「注意が空いているときだけ」）を
+  壊さない。
+
+## T-174
+
+**タスク**: 組み立て直しに失敗した理由（bun build のエラー文）をターミナルに出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bundleWithBun()` を `BundleResult`（`{ok:true, content}` / `{ok:false, reason}` の直和）にして `bun build` の stderr を拾う。「理由が分からない失敗」を型から消す形（既存の `HostResult` と同じ作法）。`UI_REBUILD_FAILURE_REASON` は1行の見出しとして据え置き、具体的な理由は `UiRebuildFailure.detail` に分けた。起動時の失敗にも理由を添える（即時終了のふるまいは不変）。長さは先頭20行・2000文字で切り、切ったときだけ `…（長いので途中で切った）` を足す。**失敗後の再試行は現状維持**（直すには保存が要り、その保存でまた鳴るので同じ理由が二重に出るだけ。理由を `ui-rebuild.ts` にコメントで残した）。
+実機（`TSUKUMO_WATCH_UI=1`・偽の駆動・ポート 7399）で `src/ui/main.tsx` に `const brokenOnPurpose = (` を足して保存すると、定型文の次に `40 | const brokenOnPurpose = (` ／ キャレット ／ `error: Unexpected end of file` ／ `at …/src/ui/main.tsx:40:26` が出た。戻して保存すると組み立てが通り、プロセスは落ちていない。`git diff -- src/ui/` は空（`git checkout` は不使用）。
+`bun run check` 647 → **648 pass / 0 fail**（+1件。一時ディレクトリに書いた構文エラーの入口で `reason` に `error:` と入口名が入ることを検査。`src/ui/` の実物は壊していない）。常駐の 7327（pid 75727）は無傷。
+
+## 背景
+
+`TSUKUMO_WATCH_UI=1`（`bun run dev`）で走らせているとき、`src/ui/` を保存するたびに
+`src/adapter/ui-rebuild.ts` の `rebuild()` が `bun build` を2本（スクリプトと CSS）走らせる。
+どちらかが失敗すると `onFailure(UI_REBUILD_FAILURE_REASON.buildFailed)` を呼び、`src/cli.ts` の
+`watchUiSource({ onFailure })` が `tsukumo: ブラウザ側を組み立て直せなかった（前の版を配り続ける）`
+の1行を stderr に書く。
+
+**この文面が出ること自体は設計どおり**（組み立てに失敗しても前の版を配り続け、常駐プロセスを
+落とさない。`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」）。問題は
+**理由が一切残らない**こと。`src/adapter/bundle.ts` の `bundleWithBun()` が `execFile` の
+コールバックで `(error, stdout)` しか受け取らず、`bun build` が stderr に書いた構文エラーや
+解決できなかった import のメッセージを捨てて `undefined` を返している。
+`UI_REBUILD_FAILURE_REASON` のコメントも「**定型文だけ**を並べる（届いた値やパスを混ぜない）」と
+明記していて、いまはそれが守られている。
+
+2026-09-17 時点で `bun build src/ui/main.tsx --target=browser` と
+`bun build src/ui/styles/main.css --target=browser` はどちらも exit 0・stderr 0バイトで通る（実測）。
+つまり利用者が見た失敗は保存の途中の状態など一時的なもので、**いま再現できる不具合は「理由が
+分からない」ことだけ**。
+
+考え方は `T-153`（mermaid が構文エラーのときコードとエラー文を出す）と同じものを、ビルド側にも通す。
+
+## 決まっていること（蒸し返さない）
+
+- 理由の出し先は**ターミナル（stderr）**。ブラウザの画面には出さない（2026-09-17 ユーザー選択）
+- 「前の版を配り続けて常駐プロセスは落とさない」ふるまいは変えない
+
+## 解くべき論点
+
+- `UI_REBUILD_FAILURE_REASON` の「定型文だけを並べる」方針をどう改めるか。bun のエラー文には
+  リポジトリ内のパスとソースの断片が入るが、**利用者と Claude の会話は入らない**ので
+  `docs/coding-standards.md`「会話内容の扱い」の対象ではない。**この線引きをコメントに残す**
+- `bundleWithBun()` の戻り値の形をどう変えるか（`string | undefined` のままエラー文を別に返すか、
+  成功／失敗の直和にするか）。**この関数は起動時の組み立てからも呼ばれていて**、そちらは失敗を
+  「起動時の前提不足」として扱い即時終了する。起動時にも理由が出るようにするかを決める
+- エラー文が長いときに切るか。切るなら何行・何文字で、切ったことをどう示すか
+- **組み立てに失敗したあと再試行しないこと**の是非。`watchUiSource` の `flush()` は
+  `pendingTarget` が残っているときだけ再実行するので、失敗した回のあとは次の保存まで前の版が
+  配られ続ける。意図どおりなら現状維持でよい（**変えない結論も正しい**。理由を `evidence` に書く）
+
+## やること
+
+1. `src/adapter/bundle.ts` の `bundleWithBun()` で `execFile` の stderr を受け取り、失敗時に
+   呼び出し側へ渡せる形にする
+2. `src/adapter/ui-rebuild.ts` の `onFailure` に理由を添え、`src/cli.ts` が stderr に書く
+3. 起動時の失敗（`src/cli.ts` が組み立てを1度行う箇所）も同じ扱いにするかは、論点の結論に従う
+4. 構文エラーを含む一時ファイルを入口にしたとき `bundleWithBun()` が bun のエラー文を伴って
+   失敗することをテストに足す（**`src/ui/` の実物は壊さない**。一時ディレクトリに書く）
+5. 「失敗後に再試行しない」と結論したら、その理由を `src/adapter/ui-rebuild.ts` のコメントに1行残す
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数を `evidence` に書く）
+- 構文エラーを入口にした `bundleWithBun()` が bun のエラー文を伴って失敗することが、追加した
+  テストで示されている
+- `TSUKUMO_WATCH_UI=1` で走らせ、`src/ui/` のファイルをわざと壊して保存したとき、ターミナルに
+  定型文だけでなく bun のエラー文が出ることを目視で確かめ、**何が見えたか**を `evidence` に書く
+
+## 注意
+
+- 目視確認で tsukumo を起こすので、**他のセッションと並行させない**（CLAUDE.md「タスク運用」）
+- 確認のために `src/ui/` を壊したら必ず元に戻す。**`git checkout` / `git restore` は使わず**
+  行単位で戻す（CLAUDE.md「Git運用」）
