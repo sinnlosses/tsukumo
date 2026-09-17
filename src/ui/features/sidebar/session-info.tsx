@@ -31,8 +31,10 @@ const PERMISSION_MODE_FALLBACK: PermissionMode = "auto"
 const DANGEROUS_PERMISSION_MODE: PermissionMode = "bypassPermissions"
 const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
 
-// モデルのエイリアスと、日本語ラベル。値は `src/protocol/command.ts` の MODEL_ALIASES と同じ3つ。
+// モデルのエイリアスと、日本語ラベル。値は `src/protocol/command.ts` の MODEL_ALIASES と同じ4つ。
+// 並びは重い順（Fable は Opus の上の階層なので先頭。2026-09-17）。
 const MODEL_LABELS: ReadonlyArray<readonly [ModelAlias, string]> = [
+  ["fable", "Fable"],
   ["opus", "Opus"],
   ["sonnet", "Sonnet"],
   ["haiku", "Haiku"],

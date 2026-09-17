@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
+import { MODEL_ALIASES } from "../../../../src/protocol/command.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/protocol/session-state.ts"
 import { SessionInfo } from "../../../../src/ui/features/sidebar/session-info.tsx"
 import { SessionContext, type SessionContextValue } from "../../../../src/ui/stores/session.tsx"
@@ -120,6 +121,36 @@ describe("SessionInfo", () => {
     renderSessionInfo({})
 
     expect(screen.queryByLabelText("キャラクター")).toBeNull()
+  })
+
+  it("モデルの<select>の選択肢は MODEL_ALIASES と過不足なく一致する（片方だけの追加漏れを防ぐ）", () => {
+    renderSessionInfo({})
+
+    const select = screen.getByLabelText("モデル") as HTMLSelectElement
+    const optionValues = Array.from(select.options).map((option) => option.value)
+
+    expect([...optionValues].sort()).toEqual([...MODEL_ALIASES].sort())
+  })
+
+  it("model が fable を含むとき、モデルの<select>は fable を選択する", () => {
+    renderSessionInfo({ model: "claude-fable-5-1" })
+
+    expect(selectValue(screen.getByLabelText("モデル"))).toBe("fable")
+  })
+
+  it("model が opus のみを含むとき、fable を誤って選択しない", () => {
+    renderSessionInfo({ model: "claude-opus-5" })
+
+    expect(selectValue(screen.getByLabelText("モデル"))).toBe("opus")
+  })
+
+  it("model が sonnet / haiku のとき、fable を誤って選択しない", () => {
+    renderSessionInfo({ model: "claude-sonnet-5" })
+    expect(selectValue(screen.getByLabelText("モデル"))).toBe("sonnet")
+
+    cleanup()
+    renderSessionInfo({ model: "claude-haiku-5" })
+    expect(selectValue(screen.getByLabelText("モデル"))).toBe("haiku")
   })
 
   it("モデルを変更すると set-model が dispatch される", () => {

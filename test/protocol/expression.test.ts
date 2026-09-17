@@ -19,6 +19,14 @@ describe("resolveOutfit", () => {
     expect(resolveOutfit("opus")).toBe("heavy")
   })
 
+  it("fable は opus と同じ戦闘配置", () => {
+    expect(resolveOutfit("fable")).toBe("heavy")
+  })
+
+  it("fable の完全なモデルIDでも拾う", () => {
+    expect(resolveOutfit("claude-fable-5-1")).toBe("heavy")
+  })
+
   // 短い別名か完全なモデルIDかは場合によるため部分一致にしている（src/protocol/expression.ts の
   // コメント参照）。完全なモデルIDでも拾えることをここで固定する。
   it("完全なモデルIDに含まれていても拾う", () => {
