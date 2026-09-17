@@ -363,6 +363,38 @@ describe("applySessionEvent", () => {
     expect(view.slashCommands).toEqual(["clear", "model"])
   })
 
+  it("model-changed は知っている別名（MODEL_ALIASES）のときだけ先回りでモデルを更新する", () => {
+    const view = apply(
+      {
+        kind: "session-info",
+        sessionId: "s-1",
+        model: "claude-sonnet-5",
+        permissionMode: undefined,
+        slashCommands: [],
+        terminalSlashCommands: [],
+      },
+      { kind: "model-changed", model: "haiku" },
+    )
+
+    expect(view.model).toBe("haiku")
+  })
+
+  it("model-changed が知らない値（MODEL_ALIASES に無い）のときは state.model を変えない", () => {
+    const view = apply(
+      {
+        kind: "session-info",
+        sessionId: "s-1",
+        model: "claude-sonnet-5",
+        permissionMode: undefined,
+        slashCommands: [],
+        terminalSlashCommands: [],
+      },
+      { kind: "model-changed", model: "best" },
+    )
+
+    expect(view.model).toBe("claude-sonnet-5")
+  })
+
   it("セッションが終わると理由を持ち、実行中のツールを空にする", () => {
     const view = apply(
       {

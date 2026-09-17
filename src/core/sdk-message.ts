@@ -35,6 +35,10 @@ export const SPEAK_TOOL_NAME = "speak"
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
  * - **`conversation_reset` は `/clear` の合図**（2026-09-15 実測）。tsukumo は `/clear` という
  *   文字列を見ず、本体が会話を捨てたことをこのメッセージで知る
+ * - **`assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ
+ *   `model-changed` を出す**（2026-09-17 実測）。`command` が `model` 以外の局所コマンド
+ *   （`/clear` など）や、形が崩れている・`args` が無いときは出さない。エイリアスとして
+ *   知っているかどうかの検証はここでしない（docs/design.md 4.1、session-state.ts の仕事）
  * - 知らない `type`・壊れた形は空の並びを返す（落ちない）
  */
 export function toSessionEvents(
@@ -56,11 +60,14 @@ export function toSessionEvents(
     case "stream_event":
       return partialUtteranceEvents(message.event)
     case "assistant":
-      return assistantEvents(
-        message.message,
-        expressions,
-        optionalString(message.parent_tool_use_id),
-      )
+      return [
+        ...assistantEvents(
+          message.message,
+          expressions,
+          optionalString(message.parent_tool_use_id),
+        ),
+        ...modelChangeEvents(message.local_command_run),
+      ]
     case "user":
       return toolResultEvents(message.message)
     case "result":
@@ -125,6 +132,21 @@ function partialUtteranceEvents(event: unknown): readonly SessionEvent[] {
   }
 
   return [{ kind: "partial-utterance", text: delta.text }]
+}
+
+/**
+ * `assistant` に乗る `local_command_run` から `/model` の合図を取り出す。**`command` が
+ * `model` 以外の局所コマンド（`/clear` など）では何も出さない。** `args` が文字列でない・
+ * 無い・空（引数なしの `/model` はモデルの選択を出すだけで切り替えない）ときも同様
+ * （2026-09-17 実測。docs/design.md 4.1）。
+ */
+function modelChangeEvents(localCommandRun: unknown): readonly SessionEvent[] {
+  if (!isRecord(localCommandRun) || localCommandRun.command !== "model") {
+    return []
+  }
+
+  const args = optionalString(localCommandRun.args)?.trim()
+  return args === undefined || args === "" ? [] : [{ kind: "model-changed", model: args }]
 }
 
 function assistantEvents(

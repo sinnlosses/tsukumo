@@ -14,7 +14,10 @@ const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${SPEAK_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
-function assistantMessage(content: readonly unknown[], parentToolUseId?: string): unknown {
+function assistantMessage(
+  content: readonly unknown[],
+  parentToolUseId?: string,
+): Record<string, unknown> {
   return {
     type: "assistant",
     message: { role: "assistant", content },
@@ -126,6 +129,58 @@ describe("toSessionEvents", () => {
         input: { command: "echo dummy" },
         parentToolUseId: "toolu_agent",
       },
+    ])
+  })
+
+  it("local_command_run が /model のときモデル変更のイベントを出す（2026-09-17 実測）", () => {
+    const message = {
+      ...assistantMessage([{ type: "text", text: "ダミーの本文です。" }]),
+      local_command_run: { command: "model", args: "haiku" },
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "utterance", text: "ダミーの本文です。" },
+      { kind: "model-changed", model: "haiku" },
+    ])
+  })
+
+  it("local_command_run の args の前後の空白は除く", () => {
+    const message = {
+      ...assistantMessage([]),
+      local_command_run: { command: "model", args: "  opus  " },
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "model-changed", model: "opus" },
+    ])
+  })
+
+  it("local_command_run の command が model 以外のときは何も出さない", () => {
+    const message = {
+      ...assistantMessage([]),
+      local_command_run: { command: "clear", args: "" },
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
+  it("local_command_run に args が無いときは何も出さない", () => {
+    const message = { ...assistantMessage([]), local_command_run: { command: "model" } }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
+  it("引数なしの /model（args が空）では何も出さない", () => {
+    const message = { ...assistantMessage([]), local_command_run: { command: "model", args: " " } }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
+  it("local_command_run が無い通常のメッセージでは何も出さない", () => {
+    const message = assistantMessage([{ type: "text", text: "ダミーの本文です。" }])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "utterance", text: "ダミーの本文です。" },
     ])
   })
 

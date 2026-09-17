@@ -126,6 +126,19 @@ export type SessionEvent =
   /** `query()` の反復が終わった（正常終了・例外のどちらも）。プロセスは落とさない。 */
   | { readonly kind: "session-ended"; readonly reason: string }
   /**
+   * `/model` のローカルコマンドが実行された合図（`assistant` に乗る
+   * `local_command_run: { command: "model", args }`。2026-09-17 実測）。**`session-info`
+   * （`init`）を待たずに先回りでモデルの変更を伝える**ための別経路 — `init` はターンの頭に届くので、
+   * `/model haiku` を送ったそのターンの `init` はまだ古いモデルを返す（正しい値が載るのは次の
+   * 依頼の `init` から。docs/design.md 4.1）。
+   *
+   * `model` は `/model` に渡した引数をそのまま運ぶ（前後の空白だけ除いてある）。**エイリアスとして
+   * 知っているかどうかの検証はしていない** — `MODEL_ALIASES`（src/protocol/command.ts）と完全一致
+   * するときだけ状態を更新する判断は畳み込み側（session-state.ts）が持つ（知らない値では状態を
+   * 変えず、次の `init` を待つだけにする。2026-09-17 決定）。
+   */
+  | { readonly kind: "model-changed"; readonly model: string }
+  /**
    * 前のセッションの続きから始まった（`resume`。docs/requirements.md 4.8）。
    * **意図せず前の文脈が付いてくるのがこの方式の唯一の事故**なので、気づける表示のために
    * 状態へ畳む（サイドバーの「セッション情報」。docs/design.md 8章）。

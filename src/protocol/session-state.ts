@@ -8,6 +8,7 @@
 // （両側の状態が同じになるように、時刻はイベントの発生側が決める。docs/design.md 4.1）。
 
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
+import { isModelAlias } from "./command.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
@@ -264,6 +265,11 @@ export function applySessionEvent(
       }
     case "command-descriptions":
       return { ...state, commandDescriptions: event.descriptions }
+    case "model-changed":
+      // **`MODEL_ALIASES` に完全一致するときだけ先回りで更新する**（`/model best` のような
+      // tsukumo が知らない値では状態を変えない。次の依頼の `init` が正しい値で上書きするので、
+      // ここで間違った値に倒す必要は無い。2026-09-17 決定）。
+      return isModelAlias(event.model) ? { ...state, model: event.model } : state
     case "request":
       return {
         ...state,

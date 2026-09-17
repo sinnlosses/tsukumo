@@ -340,12 +340,20 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 
 いまの `src/domain/session-event.ts` の union をそのまま持ち越し、次を足す。
 
-| イベント            | 出どころ                    | 中身                                                              | 用途                                                                             |
-| ------------------- | --------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `tasks-changed`     | adapter（`task-summary`）   | `tasks: TaskSummaryItem[] \| undefined`                           | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
-| `character-changed` | adapter（`character-pack`） | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents` | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
-| `session-restored`  | core（`session-manager`）   | `sessionId`                                                       | 「続きから始まった」表示（8章）                                                  |
-| `session-started`   | core（`session-manager`）   | `sessionId`・`cwd`                                                | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
+| イベント            | 出どころ                                                  | 中身                                                              | 用途                                                                             |
+| ------------------- | --------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `tasks-changed`     | adapter（`task-summary`）                                 | `tasks: TaskSummaryItem[] \| undefined`                           | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
+| `character-changed` | adapter（`character-pack`）                               | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents` | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
+| `session-restored`  | core（`session-manager`）                                 | `sessionId`                                                       | 「続きから始まった」表示（8章）                                                  |
+| `session-started`   | core（`session-manager`）                                 | `sessionId`・`cwd`                                                | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
+| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） | `model: string`（`/model` の引数そのまま）                        | `state.model` の出どころを2つにする（下記）                                      |
+
+**`state.model` の出どころは `session-info`（`init`）だけではない**（2026-09-17）。`init` は
+ターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古いモデルを返し、
+正しい値が載るのは**次の依頼の** `init` から。そこで `assistant` に乗る `local_command_run:
+{ command: "model", args }` を先回りで見て、`args` が `MODEL_ALIASES`（4.3）と完全一致する
+ときだけ `state.model` を更新する（一致しなければ何もせず、次の `init` を待つだけにする。
+知らない値でサイドバーを誤った値に倒さないため）。
 
 イベントは**時刻を持って**送る: `StampedEvent = { at: number; event: SessionEvent }`。`at` は
 サーバの `Date.now()`。reducer は `applySessionEvent(state, event, at)`（いまの第3引数 `now` と同じ）。
