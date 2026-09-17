@@ -9948,7 +9948,7 @@ mermaid を **3種 → 10種**（flowchart / sequenceDiagram / stateDiagram-v2 /
 レポートに描ける視覚的な記法は既に揃っている:
 
 - ```mermaid のフェンス（`src/ui/features/main-view/markdown/mermaid-block.tsx`。`theme: "dark"`、
-  `securityLevel: "strict"`）
+`securityLevel: "strict"`）
 - ```chart のフェンス（Chart.js。同 `chart-block.tsx`。系列の色と暗い配色への追随は済んでいる）
 - 手で組む SVG（`src/ui/features/main-view/markdown/sanitize-schema.ts` が `svg`/`g`/`path`/`rect`/
   `line`/`text` などと座標・描画の属性を通す）
@@ -10016,9 +10016,9 @@ mermaid を **3種 → 10種**（flowchart / sequenceDiagram / stateDiagram-v2 /
 
 **evidence**:
 
-候補3つのうち **KPI タイル（`stats` / `stat`）1つだけ**を class + CSS で足した。`sanitize-schema.ts` は**変更なし**（`div` / `b` / `strong` / `className` は既に許可リストにある）。差分は `rehype-highlight` が **`language-diff` を既に色付けできた**ので記法を増やさず規約の1行に。ファイルツリーは ```text ＋ `├──` で代用できたので落とした。メーター（バー）は落とした（数の見せ方が2通りになり、長さは文字でも読めない。`meter`/`progress` は許可リストに載せず、**落ちることをテストで固定**）。
+候補3つのうち **KPI タイル（`stats` / `stat`）1つだけ**を class + CSS で足した。`sanitize-schema.ts` は**変更なし**（`div` / `b` / `strong` / `className` は既に許可リストにある）。差分は `rehype-highlight` が **`language-diff` を既に色付けできた**ので記法を増やさず規約の1行に。ファイルツリーは ``text ＋ `├──` で代用できたので落とした。メーター（バー）は落とした（数の見せ方が2通りになり、長さは文字でも読めない。`meter`/`progress` は許可リストに載せず、**落ちることをテストで固定**）。
 新しい色もタイプスケールの段も作っていない（`theme.css` のトークンだけ。状態の3色は使わない＝数そのものは良し悪しを持たないため）。`bun run check` 651 → **654 pass / 0 fail**（+3件）。
-実機（偽の駆動・ポート 7401）: KPI タイル4枚（654 / 0 / +3 / 26）が1行に並び、太い数の下に薄字のラベル。1400px で 228.5x56.78 ×4、700px でも 143.8px ×4 で1行のまま**横のはみ出し 0px**。```diff は `-` が赤地・`+` が緑地・文脈行は素のまま。`<meter>` はタグごと落ちて文字だけ残った。台本は md5 一致で復元済み。常駐の 7327 は無傷。
+実機（偽の駆動・ポート 7401）: KPI タイル4枚（654 / 0 / +3 / 26）が1行に並び、太い数の下に薄字のラベル。1400px で 228.5x56.78 ×4、700px でも 143.8px ×4 で1行のまま**横のはみ出し 0px**。``diff は `-` が赤地・`+` が緑地・文脈行は素のまま。`<meter>` はタグごと落ちて文字だけ残った。台本は md5 一致で復元済み。常駐の 7327 は無傷。
 
 ## 背景
 
@@ -10033,7 +10033,7 @@ mermaid を **3種 → 10種**（flowchart / sequenceDiagram / stateDiagram-v2 /
 
 記法を足す口は2つある。**新しい class を `sanitize-schema.ts` に通して CSS で見せる**
 （`note` / `badge` / `card` と同じやり方）か、**フェンスを作って専用の部品で描く**
-（```mermaid / ```chart と同じやり方。`src/ui/features/main-view/markdown/markdown.tsx` の `pre` の
+（`mermaid / `chart と同じやり方。`src/ui/features/main-view/markdown/markdown.tsx` の `pre` の
 上書きが `language-*` を見て振り分けている）か。
 
 ## 決まっていること（蒸し返さない）
@@ -10091,13 +10091,13 @@ mermaid を **3種 → 10種**（flowchart / sequenceDiagram / stateDiagram-v2 /
 切れた文字が「答える」ボタンと重なって見える。**2026-09-17 に偽の駆動（`TSUKUMO_DRIVER=fake`）で
 再現し、実測した**（1400x900・既定の比率）:
 
-| 測ったもの | 値 |
-| --- | ---: |
-| 入力欄の領域（`.layout-dispatch`） | 337px |
-| 答え待ちの箱（`.pending-answer`） | 199px |
+| 測ったもの                                                 |    値 |
+| ---------------------------------------------------------- | ----: |
+| 入力欄の領域（`.layout-dispatch`）                         | 337px |
+| 答え待ちの箱（`.pending-answer`）                          | 199px |
 | 選択肢が見えている高さ（`.question-card` の clientHeight） | 126px |
-| 選択肢の中身の高さ（同 scrollHeight） | 236px |
-| テキスト入力欄（`.dispatch-text`） | 45px |
+| 選択肢の中身の高さ（同 scrollHeight）                      | 236px |
+| テキスト入力欄（`.dispatch-text`）                         |  45px |
 
 選択肢3件・自由入力1件のうち**見えていたのは1.5件**で、残りは 126px の中をスクロールしないと
 出てこない。`.question-card` は `overflow-y: auto` で**行の途中で切る**ため、2件目の
@@ -10157,7 +10157,7 @@ mermaid を **3種 → 10種**（flowchart / sequenceDiagram / stateDiagram-v2 /
 ## 注意
 
 - 測り方は 2026-09-17 と同じでよい: `TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=<空きポート>
-  TSUKUMO_OPEN_VIEW=0 bun run start` で起こし、`scripts/capture-view.ts` か Playwright で
+TSUKUMO_OPEN_VIEW=0 bun run start` で起こし、`scripts/capture-view.ts` か Playwright で
   依頼を3回送ると複数選択の質問に届く（2回目は許可プロンプトなので「許可」を押す）
 - **止めるときに `pkill -f "src/cli.ts"` のような広いパターンを使わない**。同じ作業ツリーで
   `bun run dev` が動いていることがあり、巻き込む（2026-09-17 に実際にひやりとした）
@@ -10268,14 +10268,14 @@ bun run check 通過（627 pass / 0 fail、59ファイル。自動上書きを�
 
 **いま自動の上書きにぶら下がっている部品**:
 
-| ファイル | 消えるもの |
-| --- | --- |
-| `src/protocol/expression.ts` | `resolveExpression` の working 分岐（消すと恒等になる）、`WORKING_EXPRESSION_DELAY_MS`、`WORKING_EXPRESSION_COOLDOWN_MS`、`isToolImmediatelyWorking`、`nextWorkingTransitionDelayMs`、`RunningToolTiming` |
-| `src/protocol/session-state.ts` | `lastToolFinishedAt` フィールドと、`finishTool` の `wasWorking` 判定（590行目付近）。`currentExpression`（457行目付近）は `state.speechExpression` を返すだけになる |
-| `src/ui/features/character-view/character-view.tsx` | 75行目付近の `useEffect` タイマー（`nextWorkingTransitionDelayMs` で自分を配り直す）と、182行目の `workingSpeech` の解決 |
-| `src/ui/features/character-view/balloon-track.tsx` | `workingSpeech` prop と、40行目の重ね合わせ |
-| `src/protocol/character.ts` | `CharacterInfo.workingSpeech` / `CharacterDefinition.workingSpeech` / `workingSpeech()`（293行目付近）/ パースの該当行 |
-| `characters/*/character.json` | `workingSpeech` フィールド（3パックすべて） |
+| ファイル                                            | 消えるもの                                                                                                                                                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/protocol/expression.ts`                        | `resolveExpression` の working 分岐（消すと恒等になる）、`WORKING_EXPRESSION_DELAY_MS`、`WORKING_EXPRESSION_COOLDOWN_MS`、`isToolImmediatelyWorking`、`nextWorkingTransitionDelayMs`、`RunningToolTiming` |
+| `src/protocol/session-state.ts`                     | `lastToolFinishedAt` フィールドと、`finishTool` の `wasWorking` 判定（590行目付近）。`currentExpression`（457行目付近）は `state.speechExpression` を返すだけになる                                       |
+| `src/ui/features/character-view/character-view.tsx` | 75行目付近の `useEffect` タイマー（`nextWorkingTransitionDelayMs` で自分を配り直す）と、182行目の `workingSpeech` の解決                                                                                  |
+| `src/ui/features/character-view/balloon-track.tsx`  | `workingSpeech` prop と、40行目の重ね合わせ                                                                                                                                                               |
+| `src/protocol/character.ts`                         | `CharacterInfo.workingSpeech` / `CharacterDefinition.workingSpeech` / `workingSpeech()`（293行目付近）/ パースの該当行                                                                                    |
+| `characters/*/character.json`                       | `workingSpeech` フィールド（3パックすべて）                                                                                                                                                               |
 
 **作業中の吹き出し（2026-09-17 に入れたばかり）も一緒に消える。** 表示の条件が
 `character-view.tsx:183` の `expression === "working"` で表情にぶら下がっているため、
@@ -10369,16 +10369,16 @@ T-179 で自動の上書きを撤去すると、`working` という識別子か�
 
 **連動する場所**:
 
-| ファイル | 何が要るか |
-| --- | --- |
-| `src/protocol/expression.ts` | `Expression` の union、`EXPRESSIONS` 配列、`REQUIRED_EXPRESSIONS`（`default` だけに）、`RequiredExpression` / `RemovableExpression` の派生 |
-| `src/protocol/character.ts` | `toExpressionLabels` / `toPortraits` / `EMPTY_PORTRAITS` が4キーを直に並べている |
-| `src/protocol/command.ts` | 161行目付近、作成コマンドの `portraits` が `default` と `working` の2枚を required にしている。`default` だけにする |
-| `src/adapter/character-edit.ts` | 244行目付近の2枚必須の検証と、`portraitFileName` / 書き出し |
-| `src/ui/features/appearance/character-create.tsx` | `HeldPortraits` / 52行目の `every` / 118行目の一覧。立ち絵1枚で作れるようになる |
-| `src/ui/features/appearance/character-edit.tsx` | 10行目のコメントと `isRemovableExpression` の分岐（`thinking` も消せるようになる） |
-| `characters/*/character.json` | `expressions` と `portraits` のキー（3パック） |
-| 立ち絵のファイル名 | `characters/tsukumo/working.png` → `thinking.png`、`characters/tsukumo-spirit/working.svg` → `thinking.svg` |
+| ファイル                                          | 何が要るか                                                                                                                                 |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/protocol/expression.ts`                      | `Expression` の union、`EXPRESSIONS` 配列、`REQUIRED_EXPRESSIONS`（`default` だけに）、`RequiredExpression` / `RemovableExpression` の派生 |
+| `src/protocol/character.ts`                       | `toExpressionLabels` / `toPortraits` / `EMPTY_PORTRAITS` が4キーを直に並べている                                                           |
+| `src/protocol/command.ts`                         | 161行目付近、作成コマンドの `portraits` が `default` と `working` の2枚を required にしている。`default` だけにする                        |
+| `src/adapter/character-edit.ts`                   | 244行目付近の2枚必須の検証と、`portraitFileName` / 書き出し                                                                                |
+| `src/ui/features/appearance/character-create.tsx` | `HeldPortraits` / 52行目の `every` / 118行目の一覧。立ち絵1枚で作れるようになる                                                            |
+| `src/ui/features/appearance/character-edit.tsx`   | 10行目のコメントと `isRemovableExpression` の分岐（`thinking` も消せるようになる）                                                         |
+| `characters/*/character.json`                     | `expressions` と `portraits` のキー（3パック）                                                                                             |
+| 立ち絵のファイル名                                | `characters/tsukumo/working.png` → `thinking.png`、`characters/tsukumo-spirit/working.svg` → `thinking.svg`                                |
 
 ## 決まっていること（蒸し返さない）
 
