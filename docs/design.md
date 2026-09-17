@@ -340,13 +340,13 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 
 いまの `src/domain/session-event.ts` の union をそのまま持ち越し、次を足す。
 
-| イベント            | 出どころ                                                  | 中身                                                              | 用途                                                                             |
-| ------------------- | --------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `tasks-changed`     | adapter（`task-summary`）                                 | `tasks: TaskSummaryItem[] \| undefined`                           | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
-| `character-changed` | adapter（`character-pack`）                               | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents` | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
-| `session-restored`  | core（`session-manager`）                                 | `sessionId`                                                       | 「続きから始まった」表示（8章）                                                  |
-| `session-started`   | core（`session-manager`）                                 | `sessionId`・`cwd`                                                | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
-| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） | `model: string`（`/model` の引数そのまま）                        | `state.model` の出どころを2つにする（下記）                                      |
+| イベント            | 出どころ                                                                                               | 中身                                                                   | 用途                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryItem[] \| undefined`                                | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
+| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents`      | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
+| `session-restored`  | core（`session-manager`）                                                                              | `sessionId`                                                            | 「続きから始まった」表示（8章）                                                  |
+| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                     | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
+| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値） | `state.model` の出どころを3つにする（下記）                                      |
 
 **`state.model` の出どころは `session-info`（`init`）だけではない**（2026-09-17）。`init` は
 ターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古いモデルを返し、
@@ -354,6 +354,13 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 { command: "model", args }` を先回りで見て、`args` が `MODEL_ALIASES`（4.3）と完全一致する
 ときだけ `state.model` を更新する（一致しなければ何もせず、次の `init` を待つだけにする。
 知らない値でサイドバーを誤った値に倒さないため）。
+
+**サイドバーの `<select>` から `set-model` を送ったときも同じ `model-changed` を使う**
+（2026-09-17）。`src/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` の確定を
+待ってから出す（駆動を経ているので、これは「ブラウザ側のローカル echo」の禁止（3章「依頼」）
+には当たらない）。本物の駆動がこれを出していなかった間、選んだ直後に次のイベントで
+`state.model` が古い値へ戻って見える不具合があった（偽の駆動 `fake-driver.ts` は最初から
+`session-info` の再送でこれをやっていたため、目視確認では気づけなかった）。
 
 **`local_command_run` は SDK 0.3.274 で入った**（0.3.268 には無い。2026-09-17 に両方で実測）。
 古い SDK では `assistant` に `local_command_source`（英語の文面だけ）と `result` の

@@ -126,16 +126,24 @@ export type SessionEvent =
   /** `query()` の反復が終わった（正常終了・例外のどちらも）。プロセスは落とさない。 */
   | { readonly kind: "session-ended"; readonly reason: string }
   /**
-   * `/model` のローカルコマンドが実行された合図（`assistant` に乗る
-   * `local_command_run: { command: "model", args }`。2026-09-17 実測）。**`session-info`
-   * （`init`）を待たずに先回りでモデルの変更を伝える**ための別経路 — `init` はターンの頭に届くので、
-   * `/model haiku` を送ったそのターンの `init` はまだ古いモデルを返す（正しい値が載るのは次の
-   * 依頼の `init` から。docs/design.md 4.1）。
+   * モデルが変わったことを、`session-info`（`init`）を待たずに先回りで伝える。出どころは2つ:
    *
-   * `model` は `/model` に渡した引数をそのまま運ぶ（前後の空白だけ除いてある）。**エイリアスとして
-   * 知っているかどうかの検証はしていない** — `MODEL_ALIASES`（src/protocol/command.ts）と完全一致
-   * するときだけ状態を更新する判断は畳み込み側（session-state.ts）が持つ（知らない値では状態を
-   * 変えず、次の `init` を待つだけにする。2026-09-17 決定）。
+   * 1. `/model` のローカルコマンドが実行された合図（`assistant` に乗る
+   *    `local_command_run: { command: "model", args }`。2026-09-17 実測。`src/core/sdk-message.ts`）。
+   *    `init` はターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古い
+   *    モデルを返す（正しい値が載るのは次の依頼の `init` から。docs/design.md 4.1）
+   * 2. サイドバーの `<select>` からの `set-model` を駆動が確定させたとき
+   *    （`src/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
+   *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
+   *    駆動を経ずにこのイベントを合成することはない。2026-09-17 実測: 本物の駆動は元々これを
+   *    出しておらず、選んだ直後に次のイベントで古いモデルへ巻き戻って見えていた。偽の駆動
+   *    （fake-driver.ts）は最初から出していたので気づけなかった）
+   *
+   * `model` はそのまま状態へ運ぶ値。1 のときは `/model` に渡した引数（前後の空白だけ除いてある）で
+   * **エイリアスとして知っているかどうかの検証はしていない**。2 のときは `MODEL_ALIASES`
+   * （src/protocol/command.ts）の値そのもの。`MODEL_ALIASES` と完全一致するときだけ状態を
+   * 更新する判断は畳み込み側（session-state.ts）が持つ（知らない値では状態を変えず、次の
+   * `init` を待つだけにする。2026-09-17 決定）。
    */
   | { readonly kind: "model-changed"; readonly model: string }
   /**
