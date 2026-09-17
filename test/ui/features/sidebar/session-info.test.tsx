@@ -85,6 +85,37 @@ describe("SessionInfo", () => {
     expect(calls).toEqual([{ type: "switch-character", name: "local" }])
   })
 
+  it("ターン進行中はキャラクターの <select> が無効になり、理由が title に出る", () => {
+    renderSessionInfo({
+      turnInProgress: true,
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
+    })
+
+    const select = screen.getByLabelText("キャラクター") as HTMLSelectElement
+    expect(select.disabled).toBe(true)
+    expect(select.title.length).toBeGreaterThan(0)
+  })
+
+  it("ターンが終わるとキャラクターの <select> は有効に戻る", () => {
+    renderSessionInfo({
+      turnInProgress: false,
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
+    })
+
+    const select = screen.getByLabelText("キャラクター") as HTMLSelectElement
+    expect(select.disabled).toBe(false)
+    expect(select.title).toBe("")
+  })
+
+  it("ターン進行中でもモデル・許可モードの <select> は無効にしない（会話は消えないため）", () => {
+    renderSessionInfo({ turnInProgress: true })
+
+    expect((screen.getByLabelText("モデル") as HTMLSelectElement).disabled).toBe(false)
+    expect((screen.getByLabelText("許可モード") as HTMLSelectElement).disabled).toBe(false)
+  })
+
   it("パックの一覧が届いていなければ、キャラクターの <select> は出さない", () => {
     renderSessionInfo({})
 

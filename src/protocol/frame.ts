@@ -60,6 +60,7 @@ export const FRAME_ERROR_REASON = {
   driverFailed: "セッション駆動が受け付けなかった",
   characterEditFailed: "キャラクターの見た目を変えられなかった",
   characterCreateFailed: "キャラクターを作れなかった",
+  switchDuringTurn: "ターン進行中はキャラクターを切り替えられない（中断すると切り替えられる）",
 } as const
 
 /**

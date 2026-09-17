@@ -17,6 +17,8 @@ export type SelectProps = {
   readonly value: string
   readonly options: readonly SelectOption[]
   readonly disabled: boolean
+  /** `disabled` のときに理由を見せる（呼び出し側が渡さないときは `undefined`）。常設の枠は増やさず、ブラウザ既定のツールチップに任せる。 */
+  readonly title: string | undefined
   readonly onChange: (value: string) => void
 }
 
@@ -28,6 +30,7 @@ export function Select(props: SelectProps): ReactElement {
       className={props.className}
       value={props.value}
       disabled={props.disabled}
+      title={props.title}
       onChange={(event) => props.onChange(event.target.value)}
     >
       {props.options.map((option) => (

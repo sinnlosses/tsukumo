@@ -12,6 +12,7 @@ import {
   type ModelAlias,
   type PermissionMode,
 } from "../../../protocol/command.ts"
+import { FRAME_ERROR_REASON } from "../../../protocol/frame.ts"
 import { type SessionState } from "../../../protocol/session-state.ts"
 import { Select } from "../../components/select.tsx"
 import { useSession } from "../../stores/session.tsx"
@@ -42,6 +43,11 @@ const MODEL_FALLBACK: ModelAlias = "opus"
 const MODEL_SELECT_ID = "tsukumo-model"
 
 const CHARACTER_SELECT_ID = "tsukumo-character"
+
+// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。モデル・許可モードは
+// 駆動へのコマンドで会話は消えないので、進行中でも塞がない。理由の文面は**サーバが断るときと
+// 同じ1つ**（`protocol` の定型文）を使う。
+const CHARACTER_SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 
 /**
  * `session-info` の `model`（フルネームや実装依存の識別子）から、`<select>` に選択済みで
@@ -109,7 +115,8 @@ export function SessionInfo(): ReactElement {
               ariaLabel="キャラクター"
               className="character-select"
               value={currentPack}
-              disabled={false}
+              disabled={state.turnInProgress}
+              title={state.turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
               options={state.characterPacks.map(({ name, label }) => ({ value: name, label }))}
               onChange={(value) => {
                 dispatch({ type: "switch-character", name: value })
@@ -128,6 +135,7 @@ export function SessionInfo(): ReactElement {
           className="model-select"
           value={model}
           disabled={false}
+          title={undefined}
           options={MODEL_LABELS.map(([value, label]) => ({ value, label }))}
           onChange={(value) => {
             if (isModelAlias(value)) {
@@ -146,6 +154,7 @@ export function SessionInfo(): ReactElement {
           className={`permission-mode-select${dangerClass}`}
           value={permissionMode}
           disabled={false}
+          title={undefined}
           options={PERMISSION_MODE_LABELS.map(([value, label]) => ({ value, label }))}
           onChange={(value) => {
             if (isPermissionMode(value)) {

@@ -263,6 +263,11 @@ function createSessionHost(
   return {
     dispatch: (command) => {
       if (command.type === "switch-character") {
+        // 画面の `<select>` は進行中に無効化するが、ここでも同じ条件で弾く
+        // （画面を経ない依頼・無効化の描画が間に合わなかったときの取りこぼし対策）。
+        if (state.turnInProgress) {
+          return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
+        }
         return restart(command.name)
       }
       if (command.type === "create-character") {

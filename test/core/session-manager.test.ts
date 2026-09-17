@@ -271,6 +271,37 @@ describe("createSessionManager", () => {
     }
   })
 
+  it("ターン進行中の switch-character は定型文の理由で受け付けず、駆動を閉じない", async () => {
+    const { manager, stub } = startManagerWithStub()
+
+    expect(
+      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-1", text: "架空の依頼" }),
+    ).toEqual({ ok: true })
+    stub.emit({ kind: "request", text: "架空の依頼" })
+    await waitForBatch()
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-character",
+        commandId: "c-2",
+        name: "fictional",
+      }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
+    expect(stub.calls).not.toContain("close")
+
+    stub.emit({ kind: "turn-finished", status: "success" })
+    await waitForBatch()
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-character",
+        commandId: "c-3",
+        name: "fictional",
+      }),
+    ).toEqual({ ok: true })
+    expect(stub.calls).toContain("close")
+  })
+
   it("駆動が起き上がるのを待ってから、新しい hello を配る（続きから始めるセッションを探す間）", async () => {
     // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`startDriver` は待てる形で返る。
     const started: StubDriver[] = []

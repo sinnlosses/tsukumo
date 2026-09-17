@@ -17,6 +17,7 @@ describe("Select", () => {
         className="dummy-select"
         value="b"
         disabled={false}
+        title={undefined}
         options={[
           { value: "a", label: "A" },
           { value: "b", label: "B" },
@@ -31,6 +32,25 @@ describe("Select", () => {
     expect(screen.getByText("B")).toBeDefined()
   })
 
+  it("disabled のとき title を渡すと属性に出る（常設の枠を増やさず理由を見せる）", () => {
+    render(
+      <Select
+        id="dummy-select"
+        ariaLabel="ダミー"
+        className="dummy-select"
+        value="a"
+        disabled={true}
+        title="架空の理由"
+        options={[{ value: "a", label: "A" }]}
+        onChange={() => {}}
+      />,
+    )
+
+    const select = screen.getByLabelText("ダミー") as HTMLSelectElement
+    expect(select.disabled).toBe(true)
+    expect(select.title).toBe("架空の理由")
+  })
+
   it("変更で onChange に選ばれた値を渡す", () => {
     const calls: string[] = []
     render(
@@ -40,6 +60,7 @@ describe("Select", () => {
         className="dummy-select"
         value="a"
         disabled={false}
+        title={undefined}
         options={[
           { value: "a", label: "A" },
           { value: "b", label: "B" },
