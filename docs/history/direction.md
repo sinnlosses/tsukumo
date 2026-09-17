@@ -3,6 +3,36 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-17
+
+- 以下のエラーの原因がわかれば対応をお願いしたい
+
+> tsukumo: ブラウザ側を組み立て直せなかった（前の版を配り続ける）
+>
+> 28 | import { nextWorkingTransitionDelayMs, resolveOutfit } from "../../../protocol/expression
+>
+>               ^
+>
+> error: No matching export in "src/protocol/expression.ts" for import "nextWorkingTransitionDelayMs"
+>
+>     at /Users/sinnlos/ghq/github.com/sinnlosses/tsukumo/src/ui/features/character-view/character-view.tsx:28:10
+>
+> 36 |   currentExpression,
+>
+>        ^
+>
+> error: No matching export in "src/protocol/session-state.ts" for import "currentExpression"
+>
+>     at /Users/sinnlos/ghq/github.com/sinnlosses/tsukumo/src/ui/features/character-view/character-view.tsx:36:3
+>
+>
+
+タスクにしなかった。エラーは T-179（`e63f37e`）の作業途中に `bun run dev` の見張りが
+拾った一過性のもので、`bun build src/ui/main.tsx` も `tsc --noEmit` も現物では通る
+（`src/adapter/ui-rebuild.ts` が見張るのは `src/ui/` だけなので、`src/protocol/` の輸出を
+消してから import を直すまでの保存1回ぶんは必ずこの状態を通り、次の保存で回復する）。
+踏み外しやすい前提として `develop/progress.md` の「注意」に記録した。
+
 ## 2026-09-17 自動 working をやめ、working を speak で選ぶ表情に戻す
 
 - ツール実行中に自動で `working` の表情へ上書きするのをやめたい。`working` の表情は好きなので、
