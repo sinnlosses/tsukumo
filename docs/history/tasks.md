@@ -9843,3 +9843,730 @@ const PLACEHOLDER = "claude への依頼を書く（Enter で改行、Command+En
 - 目視確認で tsukumo を起こすので、**他のセッションと並行させない**（CLAUDE.md「タスク運用」）
 - 確認のために `src/ui/` を壊したら必ず元に戻す。**`git checkout` / `git restore` は使わず**
   行単位で戻す（CLAUDE.md「Git運用」）
+
+## T-145
+
+**タスク**: Bun のまま進めるか Node へ寄せるかを決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-122 / **passes**: True
+
+**evidence**:
+
+**いま寄せ替えない（Bun のまま）／規約「Bun固有APIに寄せない」は保つ（狭めない）。** 箱が Orca のタブである限り Node へ移す差し迫った理由が無く、適用範囲は T-162 で「境界だけ緩めるのは実質の撤回」と決着済み。**再検討の引き金は「箱が変わったとき」の1つだけ**（bun の不都合・参考資料の差・配布の形はユーザーが選ばなかったので書かない）。
+`docs/design.md` 1章から `T-046` を削除（`grep -c 'T-[0-9]\{3\}'` **14 → 13**）。`docs/coding-standards.md`「Bun固有APIに寄せない」に `src/adapter/bundle.ts` の `execFile("bun", ["build", ...])` 実行時依存を3行で明記（退避先は完全でない、と理由の側で認める）。`docs/requirements.md` 7章に条件付きの保留を1行追加（対応タスク列は引き金の条件で埋め、番号は使わない）。
+節数は 51 / 21 / 26 で前後不変。`bun run check` **657 pass / 0 fail**。コード・`package.json`・`docs/research/` は未変更。
+
+## 背景
+
+**正典の2箇所が、ランタイムについて逆を向いている。**
+
+- `docs/design.md` 1章: 「**Bun は「道具が1つで済む」以上の実利が無く**、Node 22.18 以降 + Vite + Vitest で
+  同じことができ参考資料はそちらが多い。それでも当面 Bun なのは移行の作業量を増やさないためで、
+  `Bun.*` に寄せない規約を保ち、**箱を決めるときに Node へ寄せるかを判断する**（Electron なら core を
+  Electron の Node で動かせるので Bun は不要になる）」
+- `docs/research/app-shell.md` の比較表（7軸）: 軸の2つ目が「**Bun プロセスを子として起こせるか・同梱**」で、
+  **Bun のプロセスが残る前提**で全候補を評価している。同文書の「箱の仕事の大きさは、tsukumo 側の形で
+  変わる」（2026-09-16 追記）は、`bun build --compile` で単一バイナリにすれば箱が抱えるのは
+  バイナリ1つになるとも書いている
+
+どちらを採るかで「Bun を採用できるか」「`Bun.*` に寄せてよいか」の答えが逆になる。app-shell.md は
+「**この食い違いを先に解く**」と書いていたが、**2026-09-16 に箱のタスクを「方針を正典に落とす」へ
+更新したとき、解くべき論点からランタイムの件が落ちた**（いまの論点は文言の3件だけで、「コードを
+変えない」とも書いてある）。この判断は宙に浮いている。
+
+**規約と実態のずれも同じところにある。** `docs/coding-standards.md`「Bun固有APIに寄せない」は理由を
+「退避先を残すため。標準APIに寄せておけば、Bun に不都合が出たとき Node へ移すのがランタイムの
+入れ替えだけで済む」と書いている。しかし `src/core/bundle.ts` は起動のたびに
+`execFile("bun", ["build", <entry>, "--target=browser"])` を呼ぶので、**`bun` コマンドへの実行時依存は
+すでにある**（`Bun.*` の API は使っていないが、ランタイムの入れ替えだけでは済まない）。
+
+**前提**: 2026-09-16 の方針で箱は**当面 Orca のブラウザタブ**に決まっている。つまり Electron の Node で
+core を動かす形は、いま存在しない。
+
+## 解くべき論点
+
+- **いま寄せ替えるか。** 箱が Orca のままである限り Node へ移す差し迫った理由は無い。**「いま寄せ替えない」を
+  結論にするなら、何が起きたら再検討するのかを条件として書き下す**（箱が変わったとき／`bun` に不都合が
+  出たとき／参考資料の差が効いたとき、など）
+- **規約「Bun固有APIに寄せない」を保つか、狭めるか。** `docs/research/architecture-proposal.md` は
+  「撤回するのではなく『**境界のファイルだけは寄せてよい**』に狭める案は、段2（`adapter/` を切る）の
+  後でないと書けない」と書いている。**段2は T-143 として登録済み**なので、狭めるならその後という
+  順序になる。保つ／狭める／いま決めないの3択
+- **`bundle.ts` の実行時依存をどう書くか。** 規約の理由（退避先を残す）と実態（`bun` が要る）のずれを、
+  規約側の文言で認めるか、`bundle.ts` を変える話（事前ビルドの同梱）に送るか。**事前ビルド化の評価は
+  T-122 が持っている**ので、ここでは決めない
+- `docs/research/app-shell.md` の比較表7軸を、決めた向きに合わせて読み直す注記を足すか（**比較表そのものは
+  調査メモなので結論を書き込まない**）
+
+## やること
+
+1. 上の論点を検討し、**「いま寄せ替えるか」と「規約をどうするか」を決める**
+2. `docs/design.md` 1章の該当文を、決めた内容に書き換える。**いまの文はタスク番号で先送り先を指しており、
+   その先はもう論点を持っていない。** 書き換えでタスク番号を消す（`CLAUDE.md`「コード・ドキュメントに
+   タスク番号を書かない」）
+3. `docs/coding-standards.md`「Bun固有APIに寄せない」の理由と実態のずれ（`bundle.ts` の `bun` 実行時依存）を
+   1〜2行で明記する
+4. 条件付きの保留として残す形になったなら、`docs/requirements.md` 7章の表に1行足す
+   （**7章の「対応タスク」列はタスク番号を書いてよい唯一の場所**）
+5. **検討の結果「正典を直すだけで、決めることは無い」と分かったら、その理由を `evidence` に書いて
+   手順2・3だけで閉じてよい**
+
+## 完了条件
+
+- 決めた向き（いま寄せ替えるか／規約を保つか狭めるか）と根拠が `evidence` に書かれていること
+- `docs/design.md` 1章の該当文から**タスク番号（`T-` + 3桁）が消えている**こと
+  （`grep -n 'T-[0-9]\{3\}' docs/design.md` の件数が減ること。**確認して件数を `evidence` に書く**）
+- `docs/coding-standards.md`「Bun固有APIに寄せない」に、`bundle.ts` の実行時依存への言及があること
+- `grep -c '^#\{2,3\} ' docs/design.md docs/coding-standards.md docs/requirements.md` が編集の前後で
+  変わらないこと（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `bun run check` が通ること（件数を `evidence` に書く）
+
+## 注意
+
+- **コードを変えない。** 正典の文言を決めるところまで（`bundle.ts` にも `package.json` にも触らない）
+- **`docs/research/app-shell.md` と `docs/research/architecture-rethink.md` は調査メモなので、結論を
+  書き込まない**（読み直す注記までは可）
+- 箱の選択（当面 Orca）を蒸し返さない。これは**決まったあとのランタイムの話**
+- **人の判断が要るので `loopable` は `"N"`。** 「いま寄せ替えない」と「Node へ寄せる」は、どちらも
+  コードからは決まらない（今後どんな箱に載せたいか・参考資料の多さをどれだけ重く見るかという
+  好みが入る）
+
+## T-175
+
+**タスク**: レポートの規約を視覚寄りに緩め、mermaid の描ける種類を規約に載せる
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+表の3列目を「迷ったときの判断」→「**使う目安**」に変え、下限を各行から外して用途を言う形にした。**文で通す条件は表の前に1箇所だけ**（一息で言い切れて関係が1つ／印にするとラベルを足すことになる／中身が1つ）。表とフェンスの下限は 3 → 2。「冗長さを止める」節とは「**印は文の代わりで、文への足し算ではない**」で噛み合わせ、「構造を付けられることは、書く量を増やしてよい理由にならない」はそのまま残した（テストで固定）。
+mermaid を **3種 → 10種**（flowchart / sequenceDiagram / stateDiagram-v2 / classDiagram / erDiagram / mindmap / timeline / gantt / gitGraph / quadrantChart）。同梱 11.15.0 の登録名32種を列挙したうえ、**10種を1レポートに入れて実機（偽の駆動・ポート 7398）で 10/10 が SVG で描かれた**のを目視。`pie`/`xychart-beta`（`chart` と用途が重なる）・`journey`・`sankey-beta`/`architecture-beta`/`requirementDiagram`（同じ場で構文エラー）は載せない。
+副産物として `mermaid-block.tsx` に**描画の直列化**を入れた（同時に `run()` すると図8つで毎回2〜3つが中身の無い SVG になる実測。鎖は失敗で切らない）。`sanitize-schema.ts` と `vendor/` は未変更、台本も復元済み。`bun run check` 648 → **651 pass / 0 fail**（+3件）。`docs/requirements.md` の節数は 26 → 26。
+
+## 背景
+
+レポートに描ける視覚的な記法は既に揃っている:
+
+- ```mermaid のフェンス（`src/ui/features/main-view/markdown/mermaid-block.tsx`。`theme: "dark"`、
+  `securityLevel: "strict"`）
+- ```chart のフェンス（Chart.js。同 `chart-block.tsx`。系列の色と暗い配色への追随は済んでいる）
+- 手で組む SVG（`src/ui/features/main-view/markdown/sanitize-schema.ts` が `svg`/`g`/`path`/`rect`/
+  `line`/`text` などと座標・描画の属性を通す）
+- コードの色付け（`rehype-highlight`。テーマは `vendor/highlight-theme.min.css`）
+- 表・`<div class="cols"><div class="card">`・`badge`・`note`・`details`・`dl`
+
+**視覚優先を妨げているのは描く側ではなく規約の側**。`src/core/report-notation.ts` の
+`REPORT_NOTATION_PROMPT` にある表の「迷ったときの判断」列が、どれも文へ倒す向きに書かれている:
+
+- 表: 「3行以上あるときだけ。1〜2行なら文で書く」
+- mermaid: 「関係するものが3つ以上あるときだけ。2つなら文で書く」
+- chart: 「数値そのものを読ませたいなら表にする」
+- cols/card: 「左右を**同時に**見るときだけ」
+
+また mermaid の欄が挙げているのは `flowchart` / `sequenceDiagram` / `stateDiagram` の3つだけで、
+同梱の mermaid が描ける他の種類（gantt・pie・erDiagram・timeline・mindmap・journey・gitGraph）は
+規約に載っていないぶん実質使われない。
+
+## 決まっていること（蒸し返さない）
+
+- 視覚優先化は「規約の閾値を緩める」と「新しい記法を足す」の2軸で進める（2026-09-17 ユーザー選択）。
+  **このタスクは前者だけ**を扱い、いま描けるものの範囲から出ない
+- 「見た目そのものを frontend-design で磨く」案は採らない
+
+## 解くべき論点
+
+- 閾値をどこまで緩めるか。**緩めすぎると短い答えにも図が付いて読みにくくなる**ので、
+  「図にする条件」を並べるのではなく「文のままでよい条件」を書く向きへ反転させるかを含めて決める
+- 「冗長さを止める」節（前置き・二度言わない・効能書き）との衝突。図を勧めることが**書く量を
+  増やす言い訳にならない**ようにする（「まず量を絞り、残ったものに構造を付ける。構造を付けられる
+  ことは、書く量を増やしてよい理由にならない」の一文は残す）
+- mermaid のどの種類を足すか。**同梱の `vendor/mermaid.min.js` が実際に描けるものだけ**を足す
+- 表の列そのものを作り替えるか（「迷ったときの判断」を「使う目安」に変える等）
+
+## やること
+
+1. `vendor/mermaid.min.js` で描ける種類を実際に確かめる（中のダイアグラム登録名を見るか、
+   ブラウザで1つずつ出す）。**描けないものは規約に載せない**
+2. `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` の表と判断の文面を書き替える
+3. `docs/requirements.md` 4.2 がこの文面の正典として指しているので、食い違いが出たら 4.2 も直す。
+   編集は CLAUDE.md「ドキュメントを編集するときの罠」に従い、行頭を含めて位置を特定する
+4. `test/` に `REPORT_NOTATION_PROMPT` の中身を見るテストがあれば揃える
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数を `evidence` に書く）
+- 規約に載せた mermaid の種類が**実際に描けること**を、その記法を含む本文をメインビューに出して
+  目視で確かめ、**何が見えたか**を `evidence` に書く
+- `src/ui/features/main-view/markdown/sanitize-schema.ts` を変えていない
+  （このタスクは描ける範囲を広げない）
+- `docs/requirements.md` を直した場合、節の数が変わっていない
+  （`grep -c '^#\{2,3\} ' docs/requirements.md` を前後で比較）
+
+## 注意
+
+- 規約とレンダラは同じコミットで揃える決まり（`src/core/report-notation.ts` 冒頭）。
+  **描けない記法を先に規約へ書かない**
+- 目視確認で tsukumo を起こすので、**他のセッションと並行させない**
+
+## T-176
+
+**タスク**: レポートに足す視覚的な記法を候補から選び、sanitize と規約を同じコミットで通す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-175 / **passes**: True
+
+**evidence**:
+
+候補3つのうち **KPI タイル（`stats` / `stat`）1つだけ**を class + CSS で足した。`sanitize-schema.ts` は**変更なし**（`div` / `b` / `strong` / `className` は既に許可リストにある）。差分は `rehype-highlight` が **`language-diff` を既に色付けできた**ので記法を増やさず規約の1行に。ファイルツリーは ```text ＋ `├──` で代用できたので落とした。メーター（バー）は落とした（数の見せ方が2通りになり、長さは文字でも読めない。`meter`/`progress` は許可リストに載せず、**落ちることをテストで固定**）。
+新しい色もタイプスケールの段も作っていない（`theme.css` のトークンだけ。状態の3色は使わない＝数そのものは良し悪しを持たないため）。`bun run check` 651 → **654 pass / 0 fail**（+3件）。
+実機（偽の駆動・ポート 7401）: KPI タイル4枚（654 / 0 / +3 / 26）が1行に並び、太い数の下に薄字のラベル。1400px で 228.5x56.78 ×4、700px でも 143.8px ×4 で1行のまま**横のはみ出し 0px**。```diff は `-` が赤地・`+` が緑地・文脈行は素のまま。`<meter>` はタグごと落ちて文字だけ残った。台本は md5 一致で復元済み。常駐の 7327 は無傷。
+
+## 背景
+
+視覚優先化の2軸目（1軸目は T-175 の閾値の緩和）。いま
+`src/ui/features/main-view/markdown/sanitize-schema.ts` が通す56要素・42属性と、CSS が持つ class
+（`note` / `note-warn` / `note-ng` / `note-favor` / `badge` / `cols` / `card`）では描けない見せ方が
+あり、それを足す。利用者へ候補として示したのは次の3つ:
+
+- ファイルツリー
+- 進捗メーター / KPI タイル（数字を大きく見せる塊）
+- 差分（diff）の強調
+
+記法を足す口は2つある。**新しい class を `sanitize-schema.ts` に通して CSS で見せる**
+（`note` / `badge` / `card` と同じやり方）か、**フェンスを作って専用の部品で描く**
+（```mermaid / ```chart と同じやり方。`src/ui/features/main-view/markdown/markdown.tsx` の `pre` の
+上書きが `language-*` を見て振り分けている）か。
+
+## 決まっていること（蒸し返さない）
+
+- 「新しい記法を足す」ことは承認済み（2026-09-17 ユーザー選択）。**足す記法の選定はこのタスクが行う**
+- 承認の範囲は上の候補3つ。**まったく別の記法を足したくなったら、やらずに理由を `evidence` に
+  書いて閉じる**
+
+## 解くべき論点
+
+- 候補のどれを足すか。**1つに絞ってよい**（1タスク＝1コミットで説明が付く大きさに収める）
+- 実現の形（class + CSS か、フェンス + 部品か）。**前者のほうが安い**ので、フェンスにする理由が
+  あるときだけ後者にする
+- 差分の強調は `rehype-highlight` が `language-diff` を既に色付けできるかを**先に確かめる**。
+  できているなら規約に1行足すだけで済むので、その場合は別の候補を選ぶ
+- 許可リストを広げることの妥当性（`sanitize-schema.ts` 冒頭の「載っているものだけを通す」思想を
+  崩さない。`img` を通さない判断も変えない）
+
+## やること
+
+1. 候補ごとに、いまある記法で代用できないかを確かめる。代用できるものは落とす
+2. 残ったものから1つ（多くて2つ）選ぶ
+3. `sanitize-schema.ts`（要れば CSS とレンダラ）と `src/core/report-notation.ts` の表を
+   **同じコミットで**直す（規約とレンダラを揃える決まり。`report-notation.ts` 冒頭）
+4. 足した要素・class が sanitize を通ること、通してはいけないものが落ちることをテストに足す
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数を `evidence` に書く）
+- 足した記法が実際に描けることを目視で確かめ、**何が見えたか**を `evidence` に書く
+- 規約の表に足した記法の行があり、`sanitize-schema.ts` の許可リストと食い違っていない
+- **候補を全部落として何も足さなかった場合**は、理由を `evidence` に書いて `passes: false` で
+  閉じてよい（正典の「着手しない判断」）
+
+## 注意
+
+- **T-175 が規約の表を書き替える**ので、先に T-175 を終える
+- 目視確認で tsukumo を起こすので、**他のセッションと並行させない**
+
+## T-177
+
+**タスク**: 答え待ちの間は入力欄の領域を質問の箱に全部渡す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`.pending-answer` の `max-height: 64%` を許可要求（`.pending-permission`）だけに残し、質問（`.pending-question`）は `flex: 1 1 auto` で領域を全部受け取る。テキスト入力欄と「送る」行は `.dispatch:has(.pending-question) .dispatch-form { display: none }` で**隠す**（描かない形にすると `<Composer>` のローカル状態ごと下書きが消えるため）。**代償として畳んでいる間は「中断」も押せない**（コメントに明記）。「答える」の行に `border-top: 1px var(--rule)` と余白を足して、割れた行と縁を切った。
+実測（偽の駆動・ポート 7411・Chrome 1400x900・既定の比率・台本の複数選択の質問）: `.question-card` が **126/236（溢れ110px）→ 241/241** で中身が収まり、`.pending-answer` は 197 → 309。`.dispatch-text` は 45 → 0、**答えたあと 258 に戻り打ちかけの文字も残っていた**。許可プロンプトは 108/185/134 で変わらず。
+収まらない質問（説明の長い2問・中身 281px）は 215/281 で割れた行が残るが、6px + 1px の線 + 6.4px の余白でボタンと**接していない**（変更前は 8px で重なって見えていた）。狭い画面 700x900 は領域が中身なりに伸びて内側スクロール無し。`bun run check` **654 pass / 0 fail**（CSS と Markdown だけなので件数は不変）。節数は requirements 26・design 51 のまま。
+
+## 背景
+
+質問（`AskUserQuestion`）が出ているとき、選択肢が入力欄の領域の上半分にしか出ず、行の途中で
+切れた文字が「答える」ボタンと重なって見える。**2026-09-17 に偽の駆動（`TSUKUMO_DRIVER=fake`）で
+再現し、実測した**（1400x900・既定の比率）:
+
+| 測ったもの | 値 |
+| --- | ---: |
+| 入力欄の領域（`.layout-dispatch`） | 337px |
+| 答え待ちの箱（`.pending-answer`） | 199px |
+| 選択肢が見えている高さ（`.question-card` の clientHeight） | 126px |
+| 選択肢の中身の高さ（同 scrollHeight） | 236px |
+| テキスト入力欄（`.dispatch-text`） | 45px |
+
+選択肢3件・自由入力1件のうち**見えていたのは1.5件**で、残りは 126px の中をスクロールしないと
+出てこない。`.question-card` は `overflow-y: auto` で**行の途中で切る**ため、2件目の
+「B案 架空の説明B」が横に半分だけ切れた状態で残り、その直下にある `.pending-answer-actions` の
+「答える」ボタンと接して**文字が重なって見える**。
+
+原因は `src/ui/styles/dispatch.css` の `.pending-answer { max-height: 64% }`。この値は 2026-09-16 に
+「上げるとテキストエリアが潰れる」として据え置かれた（同ファイルのコメントに測定値がある）。
+**その前提はテキスト入力欄が答え待ちの間も要ることを暗に置いていた**が、質問の箱には自由入力欄
+（`FreeTextOption`）が既にあるので、答え待ちの間は下のテキスト入力欄と「送る」行を出しておく
+必要が無い。
+
+## 決まっていること（蒸し返さない）
+
+- **答え待ちの間は入力欄の領域を質問の箱に全部渡す**（2026-09-17 ユーザー選択）。下のテキスト
+  入力欄と「送る」行は畳む
+- 「max-height を上げるだけ」「質問をメインビューなど別の場所に出す」の2案は採らない
+  （後者は「答え待ちは入力欄の上」という 2026-09-11 の決定を覆すため）
+- **完了の線引きは二段構えでよい**（2026-09-17 ユーザー承認）。選択肢が多い質問では中身が
+  領域に収まりきらないのが当たり前なので、「収まること」を常に求めない。収まらないときは
+  **行が横に割れたまま「答える」ボタンと接していないこと**を満たせばよい
+
+## 解くべき論点
+
+- **許可プロンプト（`.pending-permission`）も同じ扱いにするか。** 中身はツール名と2つのボタン
+  だけで狭くて困っていないので、質問（`.pending-question`）のときだけ畳む案が素直。どちらでも
+  よいが、**決めた理由をコメントに残す**
+- **畳み方**。`display: none` で消すか、高さ 0 にするか、`src/ui/features/dispatch/dispatch.tsx`
+  側で描かないか。**入力中の文字を捨てない**こと（答えたあとに戻ってきたとき、打ちかけが
+  消えていると驚く）
+- **行の途中で切らない見せ方**。領域を全部渡しても中身が溢れることはある（選択肢が多い・説明が
+  長い質問）。そのときスクロールの下端が行を横に割らないようにするか、割れていることが分かる
+  印（影・境目の線）を出すかを決める。**「答える」ボタンの行と中身が接して見えないよう余白を
+  確保する**
+- 狭い画面（`src/ui/styles/narrow-screen.css` の `max-width: 760px` で `.layout-dispatch` は
+  `min-height: 10rem`）で破綻しないか
+
+## やること
+
+1. `src/ui/styles/dispatch.css` の `.pending-answer` の `max-height: 64%` を、上の決定に沿った形へ
+   置き換える。**据え置きの理由を書いたコメント（2026-09-16 の測定値）も、新しい根拠に差し替える**
+2. 答え待ちの間、テキスト入力欄と「送る」行を畳む（`src/ui/features/dispatch/dispatch.tsx` か CSS）
+3. 中身が溢れたときに行の途中で切れて見えないようにする
+4. `docs/requirements.md` 4.7（画面レイアウト）と `docs/design.md` 6.1 に、答え待ちの間の
+   領域の渡し方が書かれていれば直す。編集は CLAUDE.md「ドキュメントを編集するときの罠」に従う
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数を `evidence` に書く）
+- 偽の駆動（`TSUKUMO_DRIVER=fake`）で質問の場面を出し、**`.question-card` の scrollHeight が
+  clientHeight 以下に収まる**（1400x900・既定の比率・台本 `test/fixture/fake-session.json` の
+  複数選択の質問で測る）ことを数値で示す。収まらない質問でも、**行が横に割れた状態で
+  「答える」ボタンと接していない**ことを画像で確かめる
+- 答えたあと、テキスト入力欄と「送る」行が元どおり戻ることを確かめる
+- 上の2つについて**何を測って何が見えたか**を `evidence` に書く
+
+## 注意
+
+- 測り方は 2026-09-17 と同じでよい: `TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=<空きポート>
+  TSUKUMO_OPEN_VIEW=0 bun run start` で起こし、`scripts/capture-view.ts` か Playwright で
+  依頼を3回送ると複数選択の質問に届く（2回目は許可プロンプトなので「許可」を押す）
+- **止めるときに `pkill -f "src/cli.ts"` のような広いパターンを使わない**。同じ作業ツリーで
+  `bun run dev` が動いていることがあり、巻き込む（2026-09-17 に実際にひやりとした）
+- tsukumo を起こすので、**他のセッションと並行させない**（CLAUDE.md「タスク運用」）
+
+## T-178
+
+**タスク**: 画面の状態を台本のカタログにして、一括で撮って並べて見られるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+台本の `turns` を `[[step]]` → `[{name, steps}]` にし、`TSUKUMO_FAKE_SCENE=<name>` で**起こした直後にその場面を流す**口を開けた（案 a。次の `prompt()` はその次の場面から続くので手で歩く使い方は壊れない）。カタログは5件（question-multi / question-pair / permission / report / notation）×2窓（広 1400x900・狭 720x900。狭いほうは `fullPage`）で、並べて見る形は画像1枚ずつ＋索引 HTML（依存ゼロ）。
+`bun run scripts/capture-catalog.ts` → `/tmp/tsukumo-catalog/` に **PNG 10枚＋index.html を 18.9秒**。受け入れ側で `--only question-multi --out /tmp/tsukumo-catalog-verify` を**自分で走らせて再現**: **4.47秒で2枚**、依頼を一度も送らずに質問（複数選択）の箱（選択肢3件＋自由入力＋「答える」）が画像に写っていることを目視。
+`package.json` の依存は不変、画像は `/tmp` のみで `git status` に出ない。常駐（pid 99828）は無傷。`bun run check` 654 → **657 pass / 0 fail**（+3件）。節数は architecture 10・design 51 のまま。
+
+## 背景
+
+描画に関わる変更は目視で確かめる決まり（`docs/architecture.md`「手で確かめること」）だが、
+**状態ごとの画面を並べて見る手段が無い**。いま揃っているのは次の2つ:
+
+- 偽の駆動（`src/adapter/fake-driver.ts`、`TSUKUMO_DRIVER=fake`）。台本
+  `test/fixture/fake-session.json` を `opening` と `turns` の並びで流す。**依頼を送るたびに
+  次の場面へ進む**形なので、特定の状態を出すには依頼を何回も送り、途中の許可プロンプトに
+  答える必要がある
+- `scripts/capture-view.ts`。配信中のビューを Chrome（`playwright-core`）で開き、画像に撮って
+  指定した要素の位置と大きさを数値で出す。**URL を開くだけ**で、画面を操作して特定の状態へ
+  進める口は持たない
+
+2026-09-17 に質問の箱の不具合（T-177）を調べたときは、この2つに加えて**その場限りの
+Playwright スクリプトを手で書いて**依頼を3回送り、許可プロンプトに答えて質問の場面へ進めた。
+同じことを毎回書き直している。
+
+## 決まっていること（蒸し返さない）
+
+- **いまの道具（偽の駆動＋`scripts/capture-view.ts`）を広げる**（2026-09-17 ユーザー選択）。
+  **Storybook は入れない**（依存とビルドが増え、いまの `bun build` 1本の形と別系統になるため）
+- 撮った画像は**リポジトリに置かない**（既定の出力先は `/tmp`。`capture-view.ts` 冒頭の決定を
+  引き継ぐ。台本は架空の会話なので画像そのものは共有してよい）
+
+## 解くべき論点
+
+- **状態をどう名前で呼び出すか。** 候補は (a) 台本に「場面」を名前付きで足し、環境変数か引数で
+  そこから始める / (b) 撮る道具の側に「この状態に着くまでの操作」を書く / (c) 台本ファイルを
+  状態ごとに分け、`TSUKUMO_DRIVER=fake` が読む台本のパスを差し替えられるようにする。
+  **いまの `readFakeScript()` は `test/fixture/fake-session.json` を決め打ちで読む**ので、
+  (c) を採るならそこに口を開ける
+- **カタログに何を並べるか。** 少なくとも T-177 で問題になった「質問（複数選択）」「質問
+  （2問・長い説明）」「許可プロンプト」は要る。他は、ツール実行中・レポートに図がある状態・
+  吹き出しが複数並ぶ状態・狭い画面などから選ぶ。**全部を網羅しようとしない**
+- **並べて見る形。** 画像を1枚ずつ開くか、1枚の連結画像にするか、簡単な HTML の索引を書き出すか
+- **窓の大きさをいくつ撮るか**（`capture-view.ts` の既定は 1400x900。狭い画面の規則は
+  `max-width: 760px` で切り替わる）
+
+## やること
+
+1. 論点の結論に沿って、状態のカタログと、それを一括で撮る道具を用意する
+   （`scripts/` に置く。tsukumo 本体からは呼ばれない）
+2. 台本を足す場合、**架空の会話だけ**を書く（`docs/coding-standards.md`「会話内容の扱い」。
+   実物の transcript は使わない）
+3. `docs/architecture.md`「手で確かめること」に、この道具の使い方を数行で足す
+4. 既存の `test/fixture/fake-session.json` を使っているテストを壊さない
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数を `evidence` に書く）
+- 道具を1回走らせると、カタログに並べた状態ぶんの画像が出来ることを示す
+  （出力先のパスと枚数を `evidence` に書く）
+- **少なくとも「質問（複数選択）」の状態が、依頼を手で送らずに1コマンドで撮れる**
+- `package.json` の依存が増えていない（増やす場合はユーザーの承認を得る）
+
+## 注意
+
+- **新しい外部コマンド・グローバルな道具を増やさない**（CLAUDE.md。`playwright-core` と Chrome は
+  既に使っている）
+- 撮った画像をリポジトリに置かない・コミットしない
+- tsukumo を起こすので、**他のセッションと並行させない**。止めるときに
+  `pkill -f "src/cli.ts"` のような広いパターンを使わない（`bun run dev` を巻き込む）
+
+## T-179
+
+**タスク**: ツール実行中の表情の自動上書きをやめ、作業中の吹き出しも撤去する
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（627 pass / 0 fail、59ファイル。自動上書きを固定していたテスト33件を削除し、`speak` の表情のまま変わらないことを固定するテストを session-state / character-view に計2件追加。差し引き657→627）。src の grep（WORKING_EXPRESSION / lastToolFinishedAt / workingSpeech）は0件、docs/requirements.md の節数は編集の前後とも26。
+目視: TSUKUMO_DRIVER=fake TSUKUMO_FAKE_SCENE=long-tool TSUKUMO_VIEW_PORT=7412 で起こし（台本の long-tool を20秒に延長）、ツール実行中に立ち絵が data-expression="proud"（直前の speak のまま）・吹き出しは speak の2件だけで「作業中…」が重ならないこと、ツール終了後も戻る動きが起きないことを確認。
+範囲外の付随削除: ToolActivity / SessionRecord の startedAt（唯一の読み手が resolveExpression だったため死にフィールドになる）と currentExpression（speechExpression を返すだけの別名になる）。
+
+## 背景
+
+ユーザーの指示（2026-09-17）「ツール実行中に自動で `working` の表情へ上書きするのをやめたい。
+`working` の表情は好きなので、場面に合えば `speak` で選ぶ対象としては残してほしい」。
+原則は「**表情と吹き出しはリンクしていること**（吹き出しが出ているときに表情が別のものになる
+ことはない）」で、自動の上書きがこの原則を壊す唯一の経路になっている。
+
+**自動の上書きは要件ではない。** `docs/requirements.md` 4.3 に書かれた根拠は「引数が来ない
+あいだも顔が止まらないようにするため」の1点だけで、旧 hook 方式の対応表（`PreToolUse` =
+作業中）の流用。その前提は 2026-09-16 に入った `src/core/speech-cadence.ts`（1ターン5〜10回・
+ツールを走らせる前に1回）で既に解消されている。
+
+**作業中を伝える経路は他に2本あり、どちらも自動の上書きに依存していない。** サイドバーの
+「いま何をしているか」（`runningTools` 由来）と、立ち絵の動き `waiting`
+（`src/protocol/portrait-motion.ts`。`turnInProgress` 由来で `portrait-walk` が無限ループ）。
+
+**いま自動の上書きにぶら下がっている部品**:
+
+| ファイル | 消えるもの |
+| --- | --- |
+| `src/protocol/expression.ts` | `resolveExpression` の working 分岐（消すと恒等になる）、`WORKING_EXPRESSION_DELAY_MS`、`WORKING_EXPRESSION_COOLDOWN_MS`、`isToolImmediatelyWorking`、`nextWorkingTransitionDelayMs`、`RunningToolTiming` |
+| `src/protocol/session-state.ts` | `lastToolFinishedAt` フィールドと、`finishTool` の `wasWorking` 判定（590行目付近）。`currentExpression`（457行目付近）は `state.speechExpression` を返すだけになる |
+| `src/ui/features/character-view/character-view.tsx` | 75行目付近の `useEffect` タイマー（`nextWorkingTransitionDelayMs` で自分を配り直す）と、182行目の `workingSpeech` の解決 |
+| `src/ui/features/character-view/balloon-track.tsx` | `workingSpeech` prop と、40行目の重ね合わせ |
+| `src/protocol/character.ts` | `CharacterInfo.workingSpeech` / `CharacterDefinition.workingSpeech` / `workingSpeech()`（293行目付近）/ パースの該当行 |
+| `characters/*/character.json` | `workingSpeech` フィールド（3パックすべて） |
+
+**作業中の吹き出し（2026-09-17 に入れたばかり）も一緒に消える。** 表示の条件が
+`character-view.tsx:183` の `expression === "working"` で表情にぶら下がっているため、
+自動の上書きが無くなると `speak` で `working` を選んだときだけ「作業中…」が重なる状態になり、
+かえって食い違う。**画面の編集項目には出ていない**ので UI の削除は不要。
+
+## 決まっていること（蒸し返さない）
+
+- 自動の上書きは**撤去する**（案 a-1）。作業中の吹き出しも一緒に消す。ユーザー承認済み
+- 表情そのもの（`speak` の選択肢としての `working`）は**残す**。消すのは自動で切り替える経路だけ
+- **「発話（吹き出し＋表情）を並びの単位にする」書き換えは行わない。** `SessionState.speeches`
+  （`readonly string[]` + 1つの `speechExpression`）はそのまま残す。自動の上書きが消えると
+  表情の源が `speak` の1つだけになり、源が一意であることでリンクが保たれるため。残る食い違いは
+  マーカー行の受け皿（`settleUtterance`）で拾ったセリフが直前の表情を引き継ぐ1点だけで、
+  実装5ファイル・テスト6ファイルの書き換えに見合わないとユーザーと確認した
+- クールダウンの値（4000ms）の調整は**しない**。2026-09-16 の実測で、定数では往復を消せないと
+  分かっている（`docs/history/direction.md` 2026-09-16「立ち絵の往復」）。定数ごと消す
+
+## 解くべき論点
+
+- `resolveExpression` を関数ごと消して呼び出し側が `state.speechExpression` を直接読むか、
+  名前を残して恒等のまま置くか。**消す方向を推奨**（残すと「何かを決めている」ように読める）
+- `currentExpression(state, now)` の `now` 引数が不要になる。署名を変えるか、呼び出し側
+  （`src/ui/features/character-view/character-view.tsx`、`test` 各所）をどう追従させるか
+- `docs/requirements.md` の書き換え範囲。4.3「状態連動」の該当3項目（自動で作業中／クール
+  ダウン／作業中の吹き出し）と、4.2「吹き出し」のツール実行中の段落。**消すのではなく、
+  「やめた」ことと理由を残す**（同じ案がまた出るため）
+- `docs/glossary.md`「表情」の定義文（「ツールの実行中は自動で『作業中』になる」）と
+  `docs/design.md` の該当箇所の追従
+
+## やること
+
+1. 上の表のコードを消す。`tsc --noEmit` が型の穴を教えてくれるので、それで漏れを洗い出す
+2. `docs/requirements.md` 4.2 / 4.3、`docs/glossary.md`「表情」、`docs/design.md`、
+   `characters/README.md` の該当記述を直す
+3. 連動するテストを直す。`working` に触れているテストは
+   `test/protocol/expression.test.ts`（32件）、`test/protocol/session-state.test.ts`（48件）、
+   `test/ui/features/character-view/character-view.test.tsx`（15件）、
+   `test/ui/features/character-view/balloon-track.test.tsx`（6件）、
+   `test/core/session-manager.test.ts`（25件）。**自動の上書きを固定していたケースは消し、
+   「ツールが動いていても `speak` の表情のまま」を固定するケースを1件足す**
+4. 目視で確かめる。`scripts/capture-catalog.ts` の台本に「ツール実行中」の状態があれば、
+   撮った絵で吹き出しに「作業中…」が出ていないこと・表情が直前の `speak` のままであることを
+   見る。台本に無ければ `TSUKUMO_DRIVER=fake TSUKUMO_OPEN_VIEW=0 TSUKUMO_VIEW_PORT=<空きポート>`
+   で起こして見る
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- `grep -rn "WORKING_EXPRESSION\|lastToolFinishedAt\|workingSpeech" src` が0件
+- ツールが動いている間も表情が直前の `speak` のまま変わらないことを固定するテストがある
+- 目視の結果を `evidence` に書く（何をどう起こして、何が見えたか）
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で合う
+
+## 注意
+
+- **識別子の改名（`working` → `thinking`）と `REQUIRED_EXPRESSIONS` の見直しは T-180 の担当。**
+  このタスクでは `working` という名前のままにする（1コミットで説明が付く大きさに保つため）
+- **パックのラベルと `persona.md` の書き換えは T-181 の担当。** `character.json` でこのタスクが
+  触るのは `workingSpeech` フィールドの削除だけ
+- `characters/local/` は `.gitignore` 済み（`workingSpeech` を消してもコミットには乗らない）
+- `docs/` の各ファイルは冒頭に節の索引の表があり、見出し名で位置を探すと索引の行に先に当たる。
+  **行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- **tsukumo を起こす目視確認が要るので、他の目視タスクと並行させない**（`~/.tsukumo/state.json`
+  が共有される）
+
+## T-180
+
+**タスク**: working を thinking に改名し、立ち絵の必須を default だけにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-179 / **passes**: True
+
+**evidence**:
+
+typecheck/lint 通過・`bun run test` 629 pass 0 fail 59ファイル（改修前 627 pass）。`grep -rn '"working"' src test characters` が0件、`grep -c '^#\{2,3\} ' docs/requirements.md` は前後とも26。立ち絵は `git mv` で `thinking.png` / `thinking.svg` へ改名。目視: 隔離した $HOME と空きポートで偽の駆動の tsukumo を起こし、Playwright で「見た目」の引き出しを開いて立ち絵の入力が `default` 1つだけであること・名前と1枚で「作る」が押せて成功の一言が出ること・書かれた character.json の portraits が default 1件だけであることを確認。`bun run check` は完走する（docs/history/direction.md の既存の整形崩れは別コミット `f4f0bc8` で解消した）。
+
+## 背景
+
+T-179 で自動の上書きを撤去すると、`working` という識別子から「作業中」の意味が剥がれる。
+残るのは `speak` で選ぶ感情だけなので、名前と中身がずれる（`docs/glossary.md`「コード上の
+識別子も用語集に合わせる」）。ユーザー承認のうえ `thinking` へ改名する。
+
+同時に、`REQUIRED_EXPRESSIONS`（`src/protocol/expression.ts:29`）に `working` が入っていた
+根拠も消える。コメントにある通り根拠は「コードが名前で直接参照する」ことだけで、それが
+自動の上書きの撤去で無くなる。**必須は `default` だけになる。**
+
+**`characters/local` は既に `portraits` が `default` 1枚だけ**で、`working` の立ち絵を
+持っていない。必須から外すのは実態に追いつく変更でもある（必須はパック作成・編集の画面と
+その境界でしか効いていない。ディスク上のパックは元から欠けていてよく、`resolvePortraitUrl` が
+`default` に落とす）。
+
+**連動する場所**:
+
+| ファイル | 何が要るか |
+| --- | --- |
+| `src/protocol/expression.ts` | `Expression` の union、`EXPRESSIONS` 配列、`REQUIRED_EXPRESSIONS`（`default` だけに）、`RequiredExpression` / `RemovableExpression` の派生 |
+| `src/protocol/character.ts` | `toExpressionLabels` / `toPortraits` / `EMPTY_PORTRAITS` が4キーを直に並べている |
+| `src/protocol/command.ts` | 161行目付近、作成コマンドの `portraits` が `default` と `working` の2枚を required にしている。`default` だけにする |
+| `src/adapter/character-edit.ts` | 244行目付近の2枚必須の検証と、`portraitFileName` / 書き出し |
+| `src/ui/features/appearance/character-create.tsx` | `HeldPortraits` / 52行目の `every` / 118行目の一覧。立ち絵1枚で作れるようになる |
+| `src/ui/features/appearance/character-edit.tsx` | 10行目のコメントと `isRemovableExpression` の分岐（`thinking` も消せるようになる） |
+| `characters/*/character.json` | `expressions` と `portraits` のキー（3パック） |
+| 立ち絵のファイル名 | `characters/tsukumo/working.png` → `thinking.png`、`characters/tsukumo-spirit/working.svg` → `thinking.svg` |
+
+## 決まっていること（蒸し返さない）
+
+- 識別子は `working` → **`thinking`**（ユーザー承認済み）
+- `REQUIRED_EXPRESSIONS` は **`default` だけ**にする（ユーザー承認済み）
+- 立ち絵のファイル名も合わせて改名する。`characters/local` は立ち絵を持たないので
+  `character.json` のキーだけ直す（`.gitignore` 済みなのでコミットには乗らない）
+- **日本語ラベルの変更は T-181 の担当。** このタスクではキーだけを変え、ラベルの文字列
+  （「本気」「作業中」）はそのまま残す
+
+## 解くべき論点
+
+- `git mv` で立ち絵を改名すると履歴がつながるが、`characters/local` は追跡外なので通常の
+  `mv` になる。両方を1つの手順にまとめるか分けるか
+- 作成画面が立ち絵1枚で完了するようになることで、`character-create.tsx` の文言
+  （何枚要るかの案内）が実態と合わなくなる箇所がないか
+
+## やること
+
+1. `src/protocol/expression.ts` の `Expression` / `EXPRESSIONS` / `REQUIRED_EXPRESSIONS` を直す
+2. `tsc --noEmit` の型エラーを頼りに、上の表の場所を追従させる
+   （`Readonly<Record<Expression, ...>>` が漏れを教えてくれる）
+3. 立ち絵を改名する（同梱2パックは `git mv`、`characters/local` は `character.json` のキーのみ）
+4. `docs/glossary.md`「表情」の英語識別子、`docs/requirements.md` 4.4 / 4.3、
+   `characters/README.md` の表情の一覧を直す
+5. テストを直す。`working` に触れているテストは18ファイルあるので、
+   `grep -rln "working" test` で洗い出してから進める
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- `grep -rn '"working"' src test characters` が0件（`docs/history/` は過去の記録なので対象外）
+- 立ち絵が `default` 1枚だけのパックで、作成画面が最後まで進めることを目視し `evidence` に書く
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で合う
+
+## 注意
+
+- **T-179 が終わってから着手する**（自動の上書きのコードが残っていると、改名対象が増える）
+- **素材（立ち絵）をリポジトリに新しく足さない**（`docs/requirements.md` 2.2）。既にある
+  2パックの絵を改名するだけ
+- コードにタスク番号（`T-` + 3桁）を書かない
+- **tsukumo を起こす目視確認が要るので、他の目視タスクと並行させない**
+
+## T-181
+
+**タスク**: thinking のラベルを「ふむ」にし、persona に表情の選び分けを書く
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-180 / **passes**: True
+
+**evidence**:
+
+characters/{tsukumo,tsukumo-spirit}/character.json の thinking を「ふむ」「思案」にし、各 persona.md に選び分けを1行足した（README と tsukumo-spirit/thinking.svg の残存語も追従。local は .gitignore 済みでコミットに乗らない）。bun run check 629 pass / 0 fail（T-180 と同数、テスト増減なし）。grep -rn "本気|作業中" characters は0件。実関数（parseCharacterDefinition → expressionChoices）で speak の説明を再現し「表情。default（にっと） / thinking（ふむ） / …」を目視（走行中のプロセスは起動時の旧ラベルのままで、次の起動から反映）。
+
+## 背景
+
+T-180 で識別子が `thinking` になるので、パックの日本語ラベルを合わせる。
+
+**きっかけはユーザーの問い（2026-09-17）**「本気とすると本気のときにしかその表情が出ない?
+であればもう少し色んな場面で見られるようにしたいな」。ラベルは
+`src/adapter/sdk-driver.ts:349` の `expressionGuide()` が `speak` ツールの説明
+（`表情。default（にっと）/ working（本気）/ …`）に組み込むので、**ラベルの語がそのまま
+出番の広さを決めている**。「本気」は気合を入れる場面を指す語で、1ターンに0〜1回しか当たらない。
+
+**立ち絵の実物は「本気」の絵ではない。** `characters/tsukumo/working.png` は、机の PC に
+向かって顎に手を当て、眉を少し寄せて画面を見ている絵。4枚のうち唯一のバストアップかつ
+唯一の「静」の構図で（`default` は全身で指差して笑う、`proud` は全身で両手を広げて喜ぶ）、
+描かれているのは思案の場面。
+
+**ラベルだけでは出番は増えない。** `characters/tsukumo/persona.md:81` は「`expression` は
+ツールの説明に並んでいる表情名から選ぶ（迷ったら `default`）」としか言っておらず、実際
+ほとんどが `default` になっている。どの表情がどの場面かはキャラクターごとに違うので、
+置き場所はコードではなくパック側（`docs/architecture.md` 原則4）。
+
+## 決まっていること（蒸し返さない）
+
+- `characters/tsukumo` のラベルは **「ふむ」**（ユーザー承認済み）。`persona.md` の
+  「たまに古い言い回しが顔を出す（「ふむ」）」とも一致する
+- `characters/tsukumo-spirit` と `characters/local` のラベルは **「思案」**。どちらも
+  「通常 / どや顔 / あわあわ」という中立の語で揃っているため（ユーザーが別の語を望んだ場合は
+  その場で差し替えてよい、程度の重さの決定）
+- `persona.md` に表情の選び分けを1行で足す。`characters/tsukumo` の案:
+
+  > `expression` はツールの説明に並んでいる表情名から選ぶ。**調べる前・結果を突き合わせる
+  > とき・判断に迷うときは `ふむ`**、うまくいったら `えへん`、外したら `あわわ`、
+  > それ以外は `にっと`
+
+## 解くべき論点
+
+- `characters/tsukumo-spirit/persona.md` と `characters/local/persona.md` にも同じ趣旨の
+  行を足すか。**足す方向を推奨**（ラベルだけでは出番が増えないのはどのパックでも同じ）。
+  ただし語り口はパックごとに違うので、文面はそのパックの口調に合わせる
+- 「迷ったら `default`」の既存の1行を置き換えるか、残したうえで場面の行を足すか
+
+## やること
+
+1. `characters/tsukumo/character.json` の `expressions.thinking` を「ふむ」にする
+2. `characters/tsukumo-spirit/character.json` と `characters/local/character.json` の
+   `expressions.thinking` を「思案」にする
+3. 各パックの `persona.md` に表情の選び分けを書く（上の案を、そのパックの口調に直して使う）
+4. `docs/requirements.md` 4.4（パック定義の説明）に表情の例としてラベルが載っていれば追従させる
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- `grep -rn "本気\|作業中" characters` が0件
+- 実機で `speak` ツールの説明に `thinking（ふむ）` が出ることを目視し `evidence` に書く
+  （`TSUKUMO_DRIVER=fake TSUKUMO_OPEN_VIEW=0 TSUKUMO_VIEW_PORT=<空きポート>` で起こせる）
+
+## 注意
+
+- **T-180 が終わってから着手する**（キーが `thinking` になっていないとラベルを置く先が無い）
+- `characters/local/` は `.gitignore` 済みで、ユーザーの手元のパック。**直してよいが、
+  コミットには乗らない**（`evidence` にその旨を書く）
+- **素材（立ち絵）をリポジトリに足さない**（`docs/requirements.md` 2.2）
+
+## T-183
+
+**タスク**: キャラクター画面（SPA の別画面）の中身とデザインを決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+2026-09-17 ユーザーと4点を決めた（hash で切り替え / 入る口はサイドバーのキャラクター行 / 作る画面は #character/new に分ける / 立ち絵の並びが主役）。docs/design.md 13.6・6.1・6.2・7.1・2章、docs/requirements.md 4.2/4.4/4.7、docs/glossary.md「画面」「キャラクター画面」に書き、T-184 / T-185 の本文を決めた形に合わせて書き直した。bun run check 通過（629 pass / 59 files）。見出し数は design.md 51 / requirements.md 26 で編集前後とも同じ
+
+## 背景
+
+キャラクターパックの新規作成（`src/ui/features/appearance/character-create.tsx`）と、立ち絵・
+差し色の差し替え（`src/ui/features/appearance/character-edit.tsx`）は、いま画面右下の「見た目」
+ボタンから開く `<dialog>`（`appearance.tsx`）の中にある。`docs/design.md` 13.6 が
+「常設の要素は差し引きゼロ」として、元々そこにあった「領域の比率を既定に戻す」ボタンと
+置き換えた形。
+
+ユーザーはこれを「結構UI的に難しいし、オプションみたいなイメージを持つ」として、作成・編集を
+別の画面へ出し、引き出しそのものを消す方針を決めた。
+
+いまのページは `src/ui/main.tsx` → `<Layout>`（`src/ui/features/layout/layout.tsx`）の1枚で、
+ルーターも画面の切り替えも無い。`<Layout>` は領域の比率の state を持ち、`renderAppearance` で
+`<Appearance>` を差し込んでいる（`<Layout>` は `<Appearance>` を import しない）。
+
+## 決まっていること（蒸し返さない）
+
+- 形は **SPA（同じ1枚のページの中で画面を切り替える）**。別 URL の独立したページは作らない
+  （ユーザー「SPAのようなものを想定していたよ」）
+- **色3つ（`ground` / `surface` / `ink`）もキャラクター画面に置く。** ユーザー「キャラクター作成と
+  テーマカラーはセットの認識だから、キャラクター画面で設定する手順の一環として捉えてほしい」
+- **「見た目」の引き出し（`<Appearance>` の `<dialog>`）は消す**（ユーザー「右下の「見た目」
+  そのものを消すほうが良さそう?」）
+- 右下に残すのは**「領域の比率を既定に戻す」ボタンだけ**
+- 「立ち絵の位置を固定する」は仕様から外す（T-182 の担当。新しい画面へ持ち込まない）
+- デザインはユーザーと一緒に決める（ユーザー「デザインとかどうかな?一緒に考えてほしい」）
+
+## 解くべき論点
+
+- **画面の切り替えの持ち方**: state 1つで入れ替えるか、`history.pushState` で URL を持たせるか
+  （リロードで戻れるか・Orca のタブの戻るが効くか。いま依存しているホストの口は `showView` だけ）
+- **入る口と戻る口**: サイドバー「セッション情報」のキャラクターの `<select>` の隣か、別の口か。
+  会話の画面へ戻る口をどこに置くか
+- **画面に何をどう並べるか**: いまの `<CharacterEdit>` は表情4つ × 立ち絵 ＋ 衣装4つ × 差し色、
+  `<CharacterCreate>` は名前 ＋ `default` の立ち絵 ＋ 差し色1色。作ると変えるを1画面に並べるのか、
+  一覧 → 個別のような段にするのか
+- **寿命の違うものを1画面に並べる見せ方**: 差し色（`accent` / `outfitAccents`）はパックの持ち物
+  （`~/.tsukumo/characters/<name>/character.json`）、色3つは利用者の設定（`localStorage`）。
+  `docs/design.md` 13.6 は「寿命で割り、置き場所そのものでその違いを表す」としているので、
+  **13.6 のこの原則をどう書き換えるかまで決める**
+- **会話が進んでいる最中にこの画面へ移ったとき**の扱い（`useSession` の state は生きたままなので、
+  戻ったときに追いついているか。セリフ・レポートの取りこぼしが起きないか）
+- 狭い画面（`src/ui/styles/narrow-screen.css` の 760px 以下）でどう見えるか
+- 実装が1コミットに収まるか。収まらないなら T-184 / T-185 の本文を分け直す
+
+## やること
+
+1. 上の論点に案を出し、`frontend-design` スキルでデザインの方向を付ける。**ユーザーと対話して
+   決める**（このタスクの成果物は決定で、コードは書かない）
+2. 決めた内容を `docs/design.md` に書く。少なくとも 13.6（設定の置き場所の表と前後の文）・
+   6.1（部品の木）・7.1（画面から作るときの置き場と受け取り方）に手が入る。**決定の日付と、
+   なぜその形なのかを添える**（採らなかった案も1行ずつ）
+3. 画面の仕様として `docs/requirements.md` 4 章に書くべきことがあれば足す
+4. T-184 / T-185 の `task` 本文を、決めた内容に合わせて書き直す
+
+## 完了条件
+
+- `docs/design.md` の 13.6 の表と 6.1 の部品の木が、決めた形と一致している
+- T-184 / T-185 の `task` 本文に、実装の手が迷わない粒度で決定が書かれている
+- `bun run check` が通る（ドキュメントだけの変更でも通す）
+- 編集の前後で `grep -c '^#\{2,3\} ' docs/design.md` と同 `docs/requirements.md` の数が変わらない
+
+## 注意
+
+- **実装しない。** `src/` は触らない
+- `docs/history/` には書かない
