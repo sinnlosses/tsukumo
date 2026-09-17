@@ -1,6 +1,11 @@
-// 画面から届いた立ち絵・差し色をキャラクターパックに書き込む。**書き込んでよいのは
-// `~/.tsukumo/characters/<name>/` の下だけ**（`docs/design.md` 7.1。`state.json` と同じ親の下で、
-// リポジトリの作業ツリーが汚れない）。読む側は `src/adapter/character-pack.ts`。
+// 画面から届いたキャラクターの変更（**新しいパックを作る**・立ち絵と差し色を差し替える）を
+// キャラクターパックに書き込む。**書き込んでよいのは `~/.tsukumo/characters/<name>/` の下だけ**
+// （`docs/design.md` 7.1。`state.json` と同じ親の下で、リポジトリの作業ツリーが汚れない）。
+// 読む側は `src/adapter/character-pack.ts`。
+//
+// **ディレクトリ名になる名前だけは外から受け取る**（新しいパックを作るときの `<name>`）ので、
+// 形は境界（`src/protocol/character.ts` の `isCharacterPackName`）で見てある。ここは**既にある
+// 名前とぶつかったら書かない**ことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
 //
 // **ファイル名を外から受け取らない。** 立ち絵の名前は表情と形式から組み立てる
 // （`src/protocol/portrait-image.ts` の `portraitFileName`）ので、届いた文字列がパスの一部に
@@ -33,8 +38,8 @@ import {
   definitionWithPortrait,
   parseCharacterDefinition,
 } from "../protocol/character.ts"
-import { type CharacterEditCommand } from "../protocol/command.ts"
-import { type Expression } from "../protocol/expression.ts"
+import { type CharacterCreateCommand, type CharacterEditCommand } from "../protocol/command.ts"
+import { type Expression, type RequiredExpression } from "../protocol/expression.ts"
 import { parsePortraitImage, portraitFileName } from "../protocol/portrait-image.ts"
 import {
   type CharacterPack,
@@ -74,6 +79,46 @@ export function editCharacterPack(
     copyPackOnce(pack, dir)
     return applyEdit(dir, edit) ? readCharacterPack(dir) : undefined
   } catch {
+    return undefined
+  }
+}
+
+/**
+ * 新しいキャラクターパックを1つ作り、**作れたパックを読み直して返す**（呼び出し側はそれを
+ * `characterChangedEvent` に渡し、増えた選択肢を画面へ流す）。作らないときは undefined:
+ *
+ * - `taken`（いま切り替えられるパックの名前）に同じ名前がある。**既存の名前は弾く** —
+ *   探索の順で後ろが勝つので、黙って既存のパックを隠してしまわないため
+ * - 書き込み先に同じ名前のディレクトリが既にある（一覧に出ていない壊れたパックの置き場）
+ * - ディスクに書けない（**書きかけのディレクトリは消す**ので、欠けたパックは残らない）
+ *
+ * **`default` と `working` の2枚がそろっていることは境界で済んでいる**
+ * （`src/protocol/command.ts` の `portraits` が両方 required）。ここは書く順だけを守る:
+ * 素材 → 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、
+ * パックとして一覧に出ない。
+ */
+export function createCharacterPack(
+  create: CharacterCreateCommand,
+  taken: readonly string[],
+  root: string = homeCharacterDir(),
+): CharacterPack | undefined {
+  const dir = join(root, create.name)
+  if (taken.includes(create.name) || existsSync(dir)) {
+    return undefined
+  }
+
+  try {
+    mkdirSync(dir, { recursive: true })
+    const fileNames = writeRequiredPortraits(dir, create.portraits)
+    if (fileNames === undefined) {
+      discardDir(dir)
+      return undefined
+    }
+
+    writeFileSync(join(dir, CHARACTER_DEFINITION_FILE_NAME), newDefinitionJson(create, fileNames))
+    return readCharacterPack(dir)
+  } catch {
+    discardDir(dir)
     return undefined
   }
 }
@@ -184,6 +229,59 @@ function portraitFileNames(definition: CharacterDefinition | undefined): readonl
  */
 function isPortraitFileName(name: string | undefined): name is string {
   return name !== undefined && basename(name) === name && classifyPortraitFile(name) !== undefined
+}
+
+/**
+ * 新しいパックの必須の2枚を書き、表情ごとのファイル名を返す。**ほどけなかったときは
+ * undefined**（境界で検証済みなので、ここで起きるのは配線の誤りのときだけ。型を迂回せず
+ * ほどくために、`editCharacterPack` と同じ関数をもう一度通す）。
+ */
+function writeRequiredPortraits(
+  dir: string,
+  portraits: CharacterCreateCommand["portraits"],
+): Readonly<Record<RequiredExpression, string>> | undefined {
+  const defaultImage = parsePortraitImage(portraits.default)
+  const workingImage = parsePortraitImage(portraits.working)
+  if (defaultImage === undefined || workingImage === undefined) {
+    return undefined
+  }
+
+  const fileNames = {
+    default: portraitFileName("default", defaultImage.format),
+    working: portraitFileName("working", workingImage.format),
+  }
+  writeFileSync(join(dir, fileNames.default), Buffer.from(defaultImage.base64, "base64"))
+  writeFileSync(join(dir, fileNames.working), Buffer.from(workingImage.base64, "base64"))
+  return fileNames
+}
+
+/**
+ * 新しいパックの `character.json`。**表示名はディレクトリ名と同じ**（画面から表示名を変える口は
+ * まだ無いので、あとから定義ファイルを手で直す前提。`characters/README.md`）。差し色は
+ * `default` の1色だけを入れ、衣装ごとの出し分けは作ったあと「見た目」の引き出しで変える。
+ */
+function newDefinitionJson(
+  create: CharacterCreateCommand,
+  fileNames: Readonly<Record<RequiredExpression, string>>,
+): string {
+  const portraits: readonly (readonly [RequiredExpression, string])[] = [
+    ["default", fileNames.default],
+    ["working", fileNames.working],
+  ]
+  const withPortraits = portraits.reduce(
+    (json, [expression, fileName]) => definitionWithPortrait(json, expression, fileName),
+    JSON.stringify({ name: create.name }),
+  )
+  return definitionWithOutfitAccent(withPortraits, "default", create.accent)
+}
+
+/** 書きかけのディレクトリを消す（消せなくてもそのまま続ける）。 */
+function discardDir(dir: string): void {
+  try {
+    rmSync(dir, { recursive: true, force: true })
+  } catch {
+    // 消せないだけ。定義ファイルを書く前に諦めているので、パックとしては一覧に出ない。
+  }
 }
 
 function copyIfExists(from: string, to: string): void {

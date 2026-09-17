@@ -23,6 +23,7 @@ import {
   type Outfit,
   OUTFITS,
 } from "../../../protocol/expression.ts"
+import { readDataUrl } from "../../lib/data-url.ts"
 import { useSession } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
 
@@ -136,21 +137,4 @@ export function CharacterEdit(): ReactElement | null {
       </fieldset>
     </>
   )
-}
-
-/**
- * 選ばれたファイルを data URL にする。**読めなかったときは undefined**（立ち絵が変わらないだけで、
- * 画面は落ちない）。
- */
-function readDataUrl(file: File): Promise<string | undefined> {
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      resolve(typeof reader.result === "string" ? reader.result : undefined)
-    }
-    reader.onerror = () => {
-      resolve(undefined)
-    }
-    reader.readAsDataURL(file)
-  })
 }

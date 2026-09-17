@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../src/protocol/character.ts"
 import {
   isCharacterEditCommand,
   MAX_PROMPT_TEXT_LENGTH,
@@ -9,6 +10,17 @@ import { MAX_PORTRAIT_BYTES } from "../../src/protocol/portrait-image.ts"
 
 // 立ち絵の代わりに使う、1バイトぶんの架空の data URL（中身は見ないので何でもよい）。
 const TINY_PNG_DATA_URL = "data:image/png;base64,AAAA"
+
+/** 名前だけを差し替えた `create-character`（ほかの欄は通る形で固定する）。 */
+function createCharacter(name: string): unknown {
+  return {
+    type: "create-character",
+    commandId: "c-1",
+    name,
+    portraits: { default: TINY_PNG_DATA_URL, working: TINY_PNG_DATA_URL },
+    accent: "#b8c7ff",
+  }
+}
 
 // 文面はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 describe("parseClientCommand（受け付ける形）", () => {
@@ -144,6 +156,24 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     ).toBeUndefined()
   })
 
+  it("create-character を受け付ける（必須の2枚と差し色が揃った形）", () => {
+    expect(
+      parseClientCommand({
+        type: "create-character",
+        commandId: "c-1",
+        name: "fictional-2",
+        portraits: { default: TINY_PNG_DATA_URL, working: TINY_PNG_DATA_URL },
+        accent: "#b8c7ff",
+      }),
+    ).toEqual({
+      type: "create-character",
+      commandId: "c-1",
+      name: "fictional-2",
+      portraits: { default: TINY_PNG_DATA_URL, working: TINY_PNG_DATA_URL },
+      accent: "#b8c7ff",
+    })
+  })
+
   it("isCharacterEditCommand が見た目の3つだけを true にする", () => {
     const edits = [
       { type: "set-portrait", commandId: "c-1", expression: "proud", image: TINY_PNG_DATA_URL },
@@ -181,6 +211,49 @@ describe("parseClientCommand（落とす形）", () => {
         type: "prompt",
         commandId: "c-1",
         text: "あ".repeat(MAX_PROMPT_TEXT_LENGTH + 1),
+      }),
+    ).toBeUndefined()
+  })
+
+  // **名前はディレクトリ名になる**ので、パスの区切りと `..` を通さない（docs/design.md 7.1）。
+  it("パックの区切り・`..`・隠しディレクトリになる名前では、新しいパックを作らせない", () => {
+    const rejected = [
+      "../escape",
+      "..",
+      ".hidden",
+      "nested/name",
+      "back\\slash",
+      "空白 入り",
+      "日本語",
+      "",
+      "a".repeat(MAX_CHARACTER_PACK_NAME_LENGTH + 1),
+    ]
+
+    for (const name of rejected) {
+      expect(parseClientCommand(createCharacter(name))).toBeUndefined()
+    }
+    // 半角の英数字と `.` `_` `-` だけなら通る（`.` で始まらないこと）。
+    expect(parseClientCommand(createCharacter("my_pack-2.0"))).toBeDefined()
+  })
+
+  // **`default` と `working` はここで required**（欠けたパックが書き込む側まで届かない）。
+  it("必須の立ち絵が欠けた create-character は undefined", () => {
+    expect(
+      parseClientCommand({
+        type: "create-character",
+        commandId: "c-1",
+        name: "fictional-2",
+        portraits: { default: TINY_PNG_DATA_URL },
+        accent: "#b8c7ff",
+      }),
+    ).toBeUndefined()
+    expect(
+      parseClientCommand({
+        type: "create-character",
+        commandId: "c-1",
+        name: "fictional-2",
+        portraits: { default: TINY_PNG_DATA_URL, working: "data:text/plain;base64,AAAA" },
+        accent: "#b8c7ff",
       }),
     ).toBeUndefined()
   })

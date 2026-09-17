@@ -179,6 +179,30 @@ export type CharacterPackChoice = {
   readonly label: string
 }
 
+/**
+ * キャラクターパックの名前（`characters/<name>` のディレクトリ名）として受け付ける長さの上限。
+ * **切り替えのときは長さしか見ない**（名前をパスとして組み立てず、一覧にある名前とだけ
+ * 突き合わせるので、`..` のような値は自然に「見つからない」に落ちる）。
+ */
+export const MAX_CHARACTER_PACK_NAME_LENGTH = 200
+
+/**
+ * **新しく作る**パックの名前として受け付ける形か（`docs/design.md` 7.1）。作るときだけは
+ * 受け取った文字列がディレクトリ名になるので、切り替えより厳しく見る:
+ *
+ * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・非 ASCII は入らない）
+ * - `.` で始まらない（`.` `..` と隠しディレクトリが名前として通らないので、パストラバーサルの
+ *   経路が生まれない）
+ *
+ * 表示名（`character.json` の `name`）はこの制限とは別で、パックを作ったあと定義ファイルを
+ * 手で直せば日本語も使える。
+ */
+export function isCharacterPackName(value: string): boolean {
+  return value.length <= MAX_CHARACTER_PACK_NAME_LENGTH && CHARACTER_PACK_NAME_PATTERN.test(value)
+}
+
+const CHARACTER_PACK_NAME_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/
+
 /** {@link toCharacterInfo} に渡すもの。パックそのもの（`adapter` の型）はここでは知らない。 */
 export type CharacterInfoSource = {
   readonly definition: CharacterDefinition | undefined

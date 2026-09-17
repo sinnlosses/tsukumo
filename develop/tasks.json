@@ -36,11 +36,11 @@
     "id": "T-125",
     "summary": "新しいキャラクターパックを画面から作れるようにする",
     "task": "## 背景\n\nユーザーの指示（2026-09-15）「キャラ設定を画面上からできるようにしたい」のうち、\n**新しいキャラクターを画面から作る**側。置き場所・受け取り方は前段のタスクで、\n立ち絵と差し色を変える口は1つ前のタスクで、それぞれ決まっている前提。\n\nパック1つを成立させるのに要るもの（`src/core/character-pack.ts` / `characters/README.md`）:\n\n- ディレクトリ1つ（**ディレクトリ名がパックの名前**で、`switch-character` の鍵になる）\n- `character.json`（`name` / `license` / `portraits` / `outfitAccents`）\n- 立ち絵は**`default` と `working` の2つが必須**\n- `persona.md` は任意（無ければ `systemPrompt` の append がレポートの記法だけになる）\n\n`listCharacterPacks` は**同名は後勝ち**で、起動先側を後ろに置いてある。新しいパックを作れる\nようにすると、**既存の名前とぶつかったときに既存が黙って隠れる**ことになるので、そこを決める。\n\n## 解くべき論点\n\n- **同名をどう扱うか。** 弾くのか、後勝ちのまま上書きさせるのか\n- **名前に使える文字。** ディレクトリ名になるので、パスの区切りや `..` を受け取らない形にする\n  （`switch-character` は「知らない名前が来たら既定に落ちる」で、名前をパスとして組み立てない\n  約束になっている。`src/cli.ts`。**その約束を壊さない**）\n- **作った直後にどうするか。** そのパックへ切り替えるのか、一覧に足すだけか\n- **最低限そろえさせるもの。** `default` と `working` が無いパックは作らせないのか、\n  `default` 1枚から両方に割り当てるのか\n\n## やること\n\n1. 新しいパックを作る口を画面に足す（名前・立ち絵・差し色）\n2. 前段で決めた置き場所にディレクトリと `character.json` を書く\n3. 作ったパックが**その場で `<select>` の選択肢に出る**ようにする\n4. 実機で、作って切り替えて、再起動しても残ることを確かめる\n\n## 完了条件\n\n- 画面から新しいパックを作ると、**`<select>` の選択肢に出て切り替えられる**ことを実機で\n  確かめて `evidence` に書く（作ったパックの名前と、置かれた場所のパス）\n- **再起動しても残る**ことを確かめて `evidence` に書く\n- **名前にパスの区切りや `..` を含む入力が弾かれる**ことをテストで示す\n- **`default` と `working` が欠けたパックが作られない**ことをテストで示す\n- 既存の名前とぶつかったときの扱いが、決めたとおりに動くことをテストで示す\n- `bun run check` が通る（pass 件数の増減を `evidence` に書く）\n\n## 注意\n\n- **置き場所・受け取り方・編集の口を決め直さない。** 前段の2タスクの結論に従う\n- **`switch-character` が名前をパスとして組み立てない約束を壊さない**\n  （知らない名前は既定に落ちる。`src/cli.ts`）\n- 権利のある画像をリポジトリにコミットしない（`README.md` / `characters/README.md`）。\n  書き込み先がリポジトリの外なら自然に守られるが、**作ったパックがリポジトリの作業ツリーに\n  現れていないこと**を `git status` で確かめて `evidence` に書く\n- **常駐している 7327 番を落とさない。** 起こすときは `TSUKUMO_VIEW_PORT` を変え、\n  止めるのは自分が起こした pid だけ\n- 確認は tsukumo 自身で行える（作ったパックに切り替えて画面を撮る）。\n  `loopable` は `\"Y\"`（`docs/workflow.md`「`loopable` の判定」）",
-    "status": "todo",
+    "status": "done",
     "difficulty": "opus",
     "loopable": "Y",
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "画面から `field-fox` を作ると `<select>` が `[local, tsukumo, tsukumo-spirit]` に `field-fox` が増え、切り替えると自作SVGの立ち絵と差し色 rgb(34,255,136)（指定は #22ff88）が出た。置き場は `~/.tsukumo/characters/field-fox/`（character.json + default.svg + working.svg）。\nポート7466・偽の駆動・Chrome 1400x900。落として起こし直しても選択肢・初期選択・立ち絵が同じで 4xx/5xx なし。`git status` に作ったパックは出ない（確認後そのパックと state.json は元に戻した）。\n決定: 同名は弾く／名前は英数と `. _ -` のみ・`.` 始まり不可／作っても切り替えない／`default` と `working` の2枚必須。`bun run check` 595 → 612 pass / 0 fail。`docs/design.md` の節数は 51 で不変。",
     "dependencies": ["T-123", "T-124"]
   },
   {

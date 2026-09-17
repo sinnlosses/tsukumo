@@ -1,7 +1,8 @@
 // 「見た目」の引き出し（docs/design.md 6.1 部品の木の `<Appearance>` / 13.6）。地・領域・字の色
 // （`ground` / `surface` / `ink`）・立ち絵を動かすか固定するか・領域の比率を既定に戻す、を
-// ここにまとめる。**キャラクターの立ち絵と差し色の差し替え（`<CharacterEdit>`）もここに入る**
-// （7.1。引き出しの中なので常設の要素は増えない）。**常設なのは開く口のボタン1つだけ**（
+// ここにまとめる。**キャラクターの立ち絵と差し色の差し替え（`<CharacterEdit>`）と、新しい
+// キャラクターパックを作る口（`<CharacterCreate>`）もここに入る**（7.1。引き出しの中なので
+// 常設の要素は増えない）。**常設なのは開く口のボタン1つだけ**（
 // 13.6「常設の要素は差し引きゼロ」）。
 //
 // 比率のリセットは `<Layout>` が state を持ったままなので、ここへは実行する関数だけを props
@@ -27,6 +28,7 @@ import {
   type AppearanceColorKey,
   type AppearanceColorOverride,
 } from "./appearance-color.ts"
+import { CharacterCreate } from "./character-create.tsx"
 import { CharacterEdit } from "./character-edit.tsx"
 
 export type AppearanceProps = {
@@ -116,6 +118,7 @@ export function Appearance(props: AppearanceProps): ReactElement {
             })}
           </fieldset>
           <CharacterEdit />
+          <CharacterCreate />
           <div className="appearance-field appearance-field-checkbox">
             <label>
               <input

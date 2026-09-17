@@ -3,9 +3,16 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { editCharacterPack, MAX_PORTRAIT_FILES_PER_PACK } from "../../src/adapter/character-edit.ts"
+import {
+  createCharacterPack,
+  editCharacterPack,
+  MAX_PORTRAIT_FILES_PER_PACK,
+} from "../../src/adapter/character-edit.ts"
 import { listCharacterPacks, readCharacterPack } from "../../src/adapter/character-pack.ts"
-import { type CharacterEditCommand } from "../../src/protocol/command.ts"
+import {
+  type CharacterCreateCommand,
+  type CharacterEditCommand,
+} from "../../src/protocol/command.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
 const DEFINITION_JSON = JSON.stringify({
@@ -42,6 +49,17 @@ function writeBundledPack(name: string): string {
 
 function setPortrait(expression: "default" | "proud", image: string): CharacterEditCommand {
   return { type: "set-portrait", commandId: "c-1", expression, image }
+}
+
+/** 新しいパックを作るコマンド（必須の2枚は境界で required なので、ここでも必ず両方入る）。 */
+function createCharacter(name: string): CharacterCreateCommand {
+  return {
+    type: "create-character",
+    commandId: "c-1",
+    name,
+    portraits: { default: SVG_DATA_URL, working: PNG_DATA_URL },
+    accent: "#b8c7ff",
+  }
 }
 
 beforeEach(() => {
@@ -222,5 +240,60 @@ describe("editCharacterPack（受け付けないもの）", () => {
       ),
     ).toBeUndefined()
     expect(existsSync(join(home(), "local"))).toBe(false)
+  })
+})
+
+describe("createCharacterPack", () => {
+  it("ホームに名前のディレクトリを作り、必須の2枚と定義を書く", () => {
+    const created = createCharacterPack(createCharacter("fictional-2"), [], home())
+
+    expect(created?.dir).toBe(join(home(), "fictional-2"))
+    // 表示名はディレクトリ名と同じ（画面から表示名を変える口はまだ無い）。
+    expect(created?.definition?.name).toBe("fictional-2")
+    // 立ち絵のファイル名は表情と形式から組み立てる（届いた文字列がパスの一部にならない）。
+    expect(created?.definition?.portraits.default).toBe("default.svg")
+    expect(created?.definition?.portraits.working).toBe("working.png")
+    expect(created?.definition?.outfitAccents.default).toBe("#b8c7ff")
+    expect(readFileSync(join(home(), "fictional-2", "default.svg"), "utf8")).toBe(PLAUSIBLE_SVG)
+    expect(existsSync(join(home(), "fictional-2", "working.png"))).toBe(true)
+  })
+
+  it("作ったパックは切り替えの一覧に出て、次の起動でも残る", () => {
+    const cwd = join(dir, "cwd")
+    writeBundledPack("tsukumo")
+    createCharacterPack(createCharacter("fictional-2"), ["tsukumo"], home())
+
+    const packs = listCharacterPacks(cwd, { bundled: join(dir, "bundled"), home: home() })
+    expect(packs.map((pack) => pack.name)).toEqual(["tsukumo", "fictional-2"])
+    expect(packs[1]?.definition?.portraits.working).toBe("working.png")
+  })
+
+  it("既にある名前は弾く（後勝ちで既存のパックを黙って隠さない）", () => {
+    writeBundledPack("tsukumo")
+
+    expect(createCharacterPack(createCharacter("tsukumo"), ["tsukumo"], home())).toBeUndefined()
+    // 書き込み先には何も作らない（同梱のパックも触っていない）。
+    expect(existsSync(join(home(), "tsukumo"))).toBe(false)
+    expect(readCharacterPack(join(dir, "bundled", "tsukumo")).definition?.portraits.default).toBe(
+      "default.svg",
+    )
+  })
+
+  it("一覧に無くても、書き込み先に同じ名前のディレクトリがあれば弾く", () => {
+    mkdirSync(join(home(), "fictional-2"), { recursive: true })
+    writeFileSync(join(home(), "fictional-2", "keep.txt"), "先にあったもの")
+
+    expect(createCharacterPack(createCharacter("fictional-2"), [], home())).toBeUndefined()
+    expect(existsSync(join(home(), "fictional-2", "keep.txt"))).toBe(true)
+  })
+
+  it("立ち絵を書けなかったら、定義の無いディレクトリを残さない", () => {
+    // 書き込み先の親をファイルにしておくと、ディレクトリを作る時点で失敗する。
+    writeFileSync(join(dir, "blocked"), "x")
+
+    expect(
+      createCharacterPack(createCharacter("fictional-2"), [], join(dir, "blocked")),
+    ).toBeUndefined()
+    expect(existsSync(join(dir, "blocked", "fictional-2"))).toBe(false)
   })
 })

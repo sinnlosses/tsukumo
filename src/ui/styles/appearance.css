@@ -67,7 +67,7 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
-/* 画面から変えられないパックのときの一言。 */
+/* 画面から変えられないパックのとき・新しいキャラクターを作れないときの一言。 */
 .appearance-note {
   margin: 0;
   color: var(--ink-quiet);
@@ -112,6 +112,19 @@
   align-items: center;
   gap: 0.4rem;
 }
+/* 新しいキャラクターを作る口（`character-create.tsx`）。名前の欄は行の右側に収める。 */
+.appearance-create-name {
+  max-width: 9.5rem;
+  min-width: 0;
+  padding: 0.15rem 0.3rem;
+  background: var(--ground);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+}
+.appearance-create-submit,
 .appearance-reset-split,
 .appearance-close {
   padding: 0.3rem 0.6rem;
@@ -123,6 +136,12 @@
   font-size: var(--font-label);
   cursor: pointer;
 }
+/* 名前が使えない・立ち絵がまだそろっていない間は押せない（理由は `.appearance-note`）。 */
+.appearance-create-submit:disabled {
+  color: var(--ink-quiet);
+  cursor: default;
+}
+.appearance-create-submit:hover,
 .appearance-reset-split:hover,
 .appearance-close:hover {
   border-color: var(--accent);

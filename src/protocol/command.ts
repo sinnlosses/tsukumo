@@ -8,6 +8,7 @@
 
 import { z } from "zod"
 
+import { isCharacterPackName, MAX_CHARACTER_PACK_NAME_LENGTH } from "./character.ts"
 import {
   type Expression,
   isExpression,
@@ -59,13 +60,6 @@ export function isModelAlias(value: string): value is ModelAlias {
 }
 
 /**
- * キャラクターパックの名前（`characters/<name>` のディレクトリ名）として受け付ける長さの上限。
- * **ここは長さしか見ない。** 名前をパスとして組み立てず、受け取った側（`src/cli.ts`）が
- * 一覧にある名前とだけ突き合わせるので、`..` のような値は自然に「見つからない」に落ちる。
- */
-const MAX_CHARACTER_PACK_NAME_LENGTH = 200
-
-/**
  * ブラウザが作る、コマンド1件の識別子（`crypto.randomUUID()`）。**`error` フレームの
  * 突き合わせにだけ使う**ので、サーバはこれを状態に持たない。
  */
@@ -86,6 +80,14 @@ const portraitDataUrlSchema = z
 
 /** 差し色（`<input type="color">` が渡す形）。**16進の値そのものはここに書かない。** */
 const accentColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
+
+/**
+ * **新しく作る**パックの名前。ここだけは受け取った文字列がディレクトリ名になるので、
+ * 切り替え（`switch-character`）の「長さだけ」より厳しく見る
+ * （`src/protocol/character.ts` の {@link isCharacterPackName}。パスの区切りと `..` を
+ * 名前として通さない）。
+ */
+const newCharacterPackNameSchema = z.string().refine(isCharacterPackName)
 
 const expressionSchema = z.custom<Expression>(
   (value) => typeof value === "string" && isExpression(value),
@@ -152,6 +154,15 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     outfit: outfitSchema,
     color: accentColorSchema,
   }),
+  z.object({
+    type: z.literal("create-character"),
+    commandId: commandIdSchema,
+    name: newCharacterPackNameSchema,
+    // **必須の2つ（`REQUIRED_EXPRESSIONS`）をここで required にする**ので、片方だけのパックは
+    // 書き込む側まで届かない（`docs/design.md` 7.1・`characters/README.md`）。
+    portraits: z.object({ default: portraitDataUrlSchema, working: portraitDataUrlSchema }),
+    accent: accentColorSchema,
+  }),
 ])
 
 export type ClientCommand = z.infer<typeof clientCommandSchema>
@@ -166,10 +177,18 @@ export type CharacterEditCommand = Extract<
   { readonly type: "set-portrait" | "clear-portrait" | "set-outfit-accent" }
 >
 
+/**
+ * 新しいキャラクターパックを作るコマンド。**これも駆動には渡らない**（書いたあと、選択肢の
+ * 増えた `character-changed` を流し直すだけ。**作った直後に切り替えはしない** —
+ * 切り替えは駆動の起こし直しで画面が初期化されるので、作る操作の副作用にしない。
+ * `docs/design.md` 7.1）。
+ */
+export type CharacterCreateCommand = Extract<ClientCommand, { readonly type: "create-character" }>
+
 /** 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる）。 */
 export type DriverCommand = Exclude<
   ClientCommand,
-  CharacterEditCommand | { readonly type: "switch-character" }
+  CharacterEditCommand | CharacterCreateCommand | { readonly type: "switch-character" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/core/session-manager.ts` の分岐で使う）。 */

@@ -2,7 +2,10 @@ import { describe, expect, it } from "bun:test"
 
 import { type SessionDriver } from "../../src/core/session-driver.ts"
 import { createSessionManager } from "../../src/core/session-manager.ts"
-import { type CharacterEditCommand } from "../../src/protocol/command.ts"
+import {
+  type CharacterCreateCommand,
+  type CharacterEditCommand,
+} from "../../src/protocol/command.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../src/protocol/frame.ts"
 import { type SessionEvent } from "../../src/protocol/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
@@ -77,9 +80,12 @@ const CHARACTER_EVENT: SessionEvent = {
   packs: [{ name: "fictional", label: "架空の精霊" }],
 }
 
-function startManagerWithStub(editResult: "written" | "rejected" = "written") {
+function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const stub = createStubDriver()
   const edits: CharacterEditCommand[] = []
+  const creates: CharacterCreateCommand[] = []
+  const written = (): SessionEvent | undefined =>
+    writeResult === "written" ? CHARACTER_EVENT : undefined
   const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
   manager.create({
     sessionId: SESSION_ID,
@@ -89,10 +95,14 @@ function startManagerWithStub(editResult: "written" | "rejected" = "written") {
     },
     editCharacter: (edit) => {
       edits.push(edit)
-      return Promise.resolve(editResult === "written" ? CHARACTER_EVENT : undefined)
+      return Promise.resolve(written())
+    },
+    createCharacter: (create) => {
+      creates.push(create)
+      return Promise.resolve(written())
     },
   })
-  return { manager, stub, edits }
+  return { manager, stub, edits, creates }
 }
 
 function waitForBatch(): Promise<void> {
@@ -219,6 +229,7 @@ describe("createSessionManager", () => {
         return Promise.resolve(stub.driver)
       },
       editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
     })
 
     const frames: ServerFrame[] = []
@@ -274,6 +285,7 @@ describe("createSessionManager", () => {
         return stub.driver
       },
       editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
     })
 
     const frames: ServerFrame[] = []
@@ -338,6 +350,53 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: true })
 
     expect(edits.map((edit) => edit.type)).toEqual(["set-outfit-accent"])
+  })
+
+  it("新しいパックを作るコマンドも駆動へ渡さず、選択肢の増えた character-changed を配る", async () => {
+    const { manager, stub, edits, creates } = startManagerWithStub()
+    const frames: ServerFrame[] = []
+    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "create-character",
+        commandId: "c-1",
+        name: "fictional-2",
+        portraits: {
+          default: "data:image/png;base64,AAAA",
+          working: "data:image/png;base64,AAAA",
+        },
+        accent: "#b8c7ff",
+      }),
+    ).toEqual({ ok: true })
+    await waitForBatch()
+
+    // 駆動には何も渡らない（**作っただけでは切り替えない**ので、起こし直しも起きない）。
+    expect(stub.calls).toEqual([])
+    expect(edits).toEqual([])
+    expect(creates.map((create) => create.name)).toEqual(["fictional-2"])
+    const events = frames.filter((frame) => frame.type === "events").at(-1)
+    if (events?.type === "events") {
+      expect(events.events.map((stamped) => stamped.event)).toEqual([CHARACTER_EVENT])
+    }
+    expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
+  })
+
+  it("パックを作れなかったら、作る側の定型文の理由を返す", async () => {
+    const { manager } = startManagerWithStub("rejected")
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "create-character",
+        commandId: "c-1",
+        name: "fictional",
+        portraits: {
+          default: "data:image/png;base64,AAAA",
+          working: "data:image/png;base64,AAAA",
+        },
+        accent: "#b8c7ff",
+      }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterCreateFailed })
   })
 
   it("書き込みが受け付けられなかったら定型文の理由を返し、状態は動かさない", async () => {

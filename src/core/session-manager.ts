@@ -3,15 +3,16 @@
 //
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
 // - コマンドの分岐（`switch (command.type)`）は**ここが唯一**。旧の POST 6本ぶんの判断が1つになる
-//   （`switch-character` は駆動へ渡すのではなく起こし直しとして、見た目の編集
-//   （`set-portrait` / `clear-portrait` / `set-outfit-accent`）は**書き込みと
-//   `character-changed` の流し直し**として、どちらも手前で捌く）
+//   （`switch-character` は駆動へ渡すのではなく起こし直しとして、キャラクターへの書き込み
+//   （`set-portrait` / `clear-portrait` / `set-outfit-accent` / `create-character`）は
+//   **書き込みと `character-changed` の流し直し**として、どちらも手前で捌く）
 // - **いまはセッションが1つだけ**。鍵（`sessionId`）を持たせてあるのは複数化（docs/design.md 8章）のため
 //
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
 
 import {
+  type CharacterCreateCommand,
   type CharacterEditCommand,
   type ClientCommand,
   type DriverCommand,
@@ -66,6 +67,15 @@ export type SessionCreateOptions = {
    * 起こしたときのままなので、立ち絵を足した表情をキャラクター自身が選べるのは次の起動から。**
    */
   readonly editCharacter: (edit: CharacterEditCommand) => Promise<SessionEvent | undefined>
+  /**
+   * 新しいキャラクターパックを作り、**選択肢の増えた `character-changed` イベントを返す**
+   * （書き込み先と受け付けない条件は `src/adapter/character-edit.ts`）。作れなかったときは
+   * undefined（呼び出し側は定型文の `error` を返す）。
+   *
+   * **作ったパックへ切り替えはしない**（一覧に足すだけ。切り替えは駆動の起こし直しで画面が
+   * 初期化されるので、作る操作の副作用にしない。`docs/design.md` 7.1）。
+   */
+  readonly createCharacter: (create: CharacterCreateCommand) => Promise<SessionEvent | undefined>
 }
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
@@ -229,19 +239,24 @@ function createSessionHost(
   }
 
   /**
-   * 立ち絵・差し色を変える。**書き込みは呼び出し側（配線層）に任せ**、戻ってきたイベントを
-   * ここで畳んで配る（`hello` は配り直さない — 状態はイベント1つで足りる）。
+   * キャラクターへの書き込み1件（立ち絵・差し色を変える、新しいパックを作る）。**書き込みは
+   * 呼び出し側（配線層）に任せ**、戻ってきたイベントをここで畳んで配る（`hello` は配り直さない
+   * — 状態はイベント1つで足りる）。受け付けられなかったときは定型文の理由を返すだけで、
+   * 常駐プロセスは落とさない。
    */
-  const edit = async (command: CharacterEditCommand): Promise<DispatchResult> => {
+  const write = async (
+    apply: () => Promise<SessionEvent | undefined>,
+    reason: string,
+  ): Promise<DispatchResult> => {
     try {
-      const event = await created.editCharacter(command)
+      const event = await apply()
       if (event === undefined) {
-        return { ok: false, reason: FRAME_ERROR_REASON.characterEditFailed }
+        return { ok: false, reason }
       }
       receive(event)
       return { ok: true }
     } catch {
-      return { ok: false, reason: FRAME_ERROR_REASON.characterEditFailed }
+      return { ok: false, reason }
     }
   }
 
@@ -250,8 +265,14 @@ function createSessionHost(
       if (command.type === "switch-character") {
         return restart(command.name)
       }
+      if (command.type === "create-character") {
+        return write(
+          () => created.createCharacter(command),
+          FRAME_ERROR_REASON.characterCreateFailed,
+        )
+      }
       if (isCharacterEditCommand(command)) {
-        return edit(command)
+        return write(() => created.editCharacter(command), FRAME_ERROR_REASON.characterEditFailed)
       }
       return dispatchToDriver(driver, command)
     },

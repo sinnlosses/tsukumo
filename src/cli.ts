@@ -11,7 +11,7 @@ import process from "node:process"
 
 import { buildStyleSheet, buildUiScript } from "./adapter/bundle.ts"
 import { resolveBundledDir } from "./adapter/bundled-path.ts"
-import { editCharacterPack } from "./adapter/character-edit.ts"
+import { createCharacterPack, editCharacterPack } from "./adapter/character-edit.ts"
 import {
   buildSystemPromptAppend,
   type CharacterPack,
@@ -46,7 +46,7 @@ import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./core/session-driv
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { SPEECH_CADENCE_PROMPT } from "./core/speech-cadence.ts"
 import { type ExpressionChoice, expressionChoices } from "./protocol/character.ts"
-import { type CharacterEditCommand } from "./protocol/command.ts"
+import { type CharacterCreateCommand, type CharacterEditCommand } from "./protocol/command.ts"
 import { type RefreshTarget, type ServerFrame } from "./protocol/frame.ts"
 import { type SessionEvent } from "./protocol/session-event.ts"
 
@@ -175,6 +175,23 @@ async function main(args: readonly string[]): Promise<number> {
     return characterEvent()
   }
 
+  /**
+   * 画面から届いた新しいパックを作り、**選択肢の増えた `character-changed` を返す**
+   * （作れなければ undefined）。**いま出しているパックは持ち替えない** — 作るだけでは
+   * 切り替えず、`<select>` から選んだときに起こし直す（docs/design.md 7.1）。
+   */
+  const applyCharacterCreate = (create: CharacterCreateCommand): SessionEvent | undefined => {
+    const created = createCharacterPack(
+      create,
+      packs.map((pack) => pack.name),
+    )
+    if (created === undefined) {
+      return undefined
+    }
+    packs = findPacks()
+    return characterEvent()
+  }
+
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
@@ -246,6 +263,7 @@ async function main(args: readonly string[]): Promise<number> {
       }
     },
     editCharacter: (edit) => Promise.resolve(applyCharacterEdit(edit)),
+    createCharacter: (create) => Promise.resolve(applyCharacterCreate(create)),
   })
 
   // 開いているタブ。**セッションのイベントとは別に押したいもの**（いまは `refresh` だけ）が
