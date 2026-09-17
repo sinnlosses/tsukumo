@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-16 src/ui/ を bullet-proof-react の形に組み替えた（T-170）
+
+`git mv` で74件（`src/ui/` 50 + `test/ui/` 24）を移し、`features/` `components/` `lib/` `stores/`
+`styles/` の形になった。中身は `App` → `SessionProvider` の改名と `<Layout>` が
+`renderAppearance` を props で受け取る形の2点だけ変え、**見た目は1pxも変えていない**
+（移動前の HEAD を一時 worktree に出して撮り比べた）。
+
 ### 2026-09-16 src/ui/ を bullet-proof-react の形にする設計を決めた（T-169）
 
 箱は `main.tsx`（直下）/ `features/` / `components/` / `lib/` / `stores/` / `styles/` の5つ。
