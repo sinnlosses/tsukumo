@@ -273,8 +273,8 @@ export function applySessionEvent(
         // 分からない。2026-09-16 決定。以前は前のターンの並びの最後の1件を残していたが、
         // それが「切り替わったのか分からない」の原因だった）。
         speeches: [],
-        // 表情も既定へ戻す。ツールが動き始めれば `working` に切り替わる（expression.ts）ので、
-        // ここで戻すのはその手前の一瞬だけ。
+        // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない
+        // （表情の源は `speak` の1つだけ。docs/requirements.md 4.3）。
         speechExpression: INITIAL_SESSION_STATE.speechExpression,
         partialUtterance: "",
         turnInProgress: true,

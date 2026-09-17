@@ -6,7 +6,7 @@
 // 反映はサーバ側**（`src/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を
 // data URL にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
-// **`default` と `working` には消す口を出さない**（立ち絵が必ず要る2つ。
+// **`default` には消す口を出さない**（立ち絵が必ず要る1つ。
 // `src/protocol/expression.ts` の `REQUIRED_EXPRESSIONS`。送られてきても
 // `src/protocol/command.ts` のスキーマが弾く）。
 //

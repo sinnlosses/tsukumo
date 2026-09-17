@@ -39,7 +39,7 @@ function characterEventOf(pack: Pack): SessionEvent {
     expressions: [{ name: "default", label: "通常" }],
     portraits: {
       default: `/character/${pack.name}.png`,
-      working: undefined,
+      thinking: undefined,
       proud: undefined,
       flustered: undefined,
     },

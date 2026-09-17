@@ -37,7 +37,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   accent: undefined,
   speechMarker: undefined,
   expressions: [{ name: "default", label: "通常" }],
-  portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
+  portraits: { default: undefined, thinking: undefined, proud: undefined, flustered: undefined },
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
   editable: true,
 }

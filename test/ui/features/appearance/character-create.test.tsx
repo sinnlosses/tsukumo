@@ -16,11 +16,11 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   speechMarker: undefined,
   expressions: [
     { name: "default", label: "通常" },
-    { name: "working", label: "作業中" },
+    { name: "thinking", label: "作業中" },
   ],
   portraits: {
     default: "/character/default.svg?v=fictional@1",
-    working: "/character/working.svg?v=fictional@1",
+    thinking: "/character/thinking.svg?v=fictional@1",
     proud: undefined,
     flustered: undefined,
   },
@@ -85,26 +85,25 @@ function typeName(name: string): void {
   fireEvent.change(screen.getByLabelText("名前"), { target: { value: name } })
 }
 
-/** 名前・必須の2枚・差し色をそろえる（押せる状態にする）。 */
+/** 名前・必須の1枚・差し色をそろえる（押せる状態にする）。 */
 async function fillForm(name: string): Promise<void> {
   typeName(name)
   await pickPortrait("通常の立ち絵", "<svg/>")
-  await pickPortrait("作業中の立ち絵", "<svg>working</svg>")
 }
 
 describe("CharacterCreate", () => {
-  it("名前・必須の2枚の立ち絵・差し色の口を出す（表情のラベルは定義の言葉）", () => {
+  it("名前・必須の1枚の立ち絵・差し色の口を出す（表情のラベルは定義の言葉）", () => {
     renderCharacterCreate(FIXTURE_CHARACTER)
 
     expect(screen.getByLabelText("名前")).toBeDefined()
     expect(screen.getByLabelText("通常の立ち絵")).toBeDefined()
-    expect(screen.getByLabelText("作業中の立ち絵")).toBeDefined()
     expect(screen.getByLabelText("差し色")).toBeDefined()
-    // 足せる表情は必須の2つだけ（`proud` などは作ったあと「立ち絵」の口から足す）。
+    // 足せる表情は必須の1つだけ（`thinking` / `proud` などは作ったあと「立ち絵」の口から足す）。
+    expect(screen.queryByLabelText("作業中の立ち絵")).toBeNull()
     expect(screen.queryByLabelText("proudの立ち絵")).toBeNull()
   })
 
-  it("名前と必須の2枚がそろうまで「作る」を押せない", async () => {
+  it("名前と必須の1枚がそろうまで「作る」を押せない", async () => {
     renderCharacterCreate(FIXTURE_CHARACTER)
     expect(submitButton().disabled).toBe(true)
 
@@ -112,10 +111,6 @@ describe("CharacterCreate", () => {
     expect(submitButton().disabled).toBe(true)
 
     await pickPortrait("通常の立ち絵", "<svg/>")
-    // `working` がまだ無い（片方だけのパックは作らせない）。
-    expect(submitButton().disabled).toBe(true)
-
-    await pickPortrait("作業中の立ち絵", "<svg>working</svg>")
     expect(submitButton().disabled).toBe(false)
   })
 
@@ -143,7 +138,7 @@ describe("CharacterCreate", () => {
     expect(document.querySelector(".appearance-note")?.textContent).toContain("もう使われている")
   })
 
-  it("そろった状態で押すと、名前・必須の2枚・差し色を載せた create-character を dispatch する", async () => {
+  it("そろった状態で押すと、名前・必須の1枚・差し色を載せた create-character を dispatch する", async () => {
     const calls: unknown[] = []
     renderCharacterCreate(FIXTURE_CHARACTER, (command) => calls.push(command))
     await fillForm("fictional-2")
@@ -157,7 +152,6 @@ describe("CharacterCreate", () => {
         name: "fictional-2",
         portraits: {
           default: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
-          working: `data:image/svg+xml;base64,${Buffer.from("<svg>working</svg>").toString("base64")}`,
         },
         accent: "#22ff88",
       },

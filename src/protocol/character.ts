@@ -251,8 +251,7 @@ export function definitionWithPortrait(
 
 /**
  * 立ち絵1件を消した JSON を返す。**受け取れるのは必須でない表情だけ**
- * （`default` / `working` は型で入らない。`src/protocol/expression.ts` の
- * {@link RemovableExpression}）。
+ * （`default` は型で入らない。`src/protocol/expression.ts` の {@link RemovableExpression}）。
  */
 export function definitionWithoutPortrait(
   content: string | undefined,
@@ -279,7 +278,7 @@ function portraitUrls(
   }
   return {
     default: portraitUrl(definition.portraits.default, cacheKey),
-    working: portraitUrl(definition.portraits.working, cacheKey),
+    thinking: portraitUrl(definition.portraits.thinking, cacheKey),
     proud: portraitUrl(definition.portraits.proud, cacheKey),
     flustered: portraitUrl(definition.portraits.flustered, cacheKey),
   }
@@ -322,7 +321,7 @@ function asRecord(value: unknown): Readonly<Record<string, unknown>> {
 
 const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
   default: undefined,
-  working: undefined,
+  thinking: undefined,
   proud: undefined,
   flustered: undefined,
 }
@@ -397,7 +396,7 @@ function toExpressionLabels(source: unknown): Readonly<Record<Expression, string
   const record = isRecord(source) ? source : {}
   return {
     default: stringField(record, "default"),
-    working: stringField(record, "working"),
+    thinking: stringField(record, "thinking"),
     proud: stringField(record, "proud"),
     flustered: stringField(record, "flustered"),
   }
@@ -407,7 +406,7 @@ function toPortraits(source: unknown): Readonly<Record<Expression, string | unde
   const record = isRecord(source) ? source : {}
   return {
     default: stringField(record, "default"),
-    working: stringField(record, "working"),
+    thinking: stringField(record, "thinking"),
     proud: stringField(record, "proud"),
     flustered: stringField(record, "flustered"),
   }

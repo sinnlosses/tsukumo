@@ -2,7 +2,7 @@
 // **常設の要素は1つも増えない** — 引き出し（`<dialog>`）の中に入るので、閉じている間は画面に
 // 出ているボタンの数が変わらない（13.1 原則2）。
 //
-// 受け取るのは**名前・必須の2枚の立ち絵・差し色1色**だけで、表情を足す・衣装ごとに差し色を
+// 受け取るのは**名前・必須の立ち絵1枚・差し色1色**だけで、表情を足す・衣装ごとに差し色を
 // 分けるのは作ったあと `<CharacterEdit>` の側で行う（作る口は最低限にする）。
 //
 // **作っても切り替わらない。** 増えるのはサイドバーの `<select>` の選択肢で、切り替えは
@@ -28,10 +28,10 @@ const INVALID_NAME_NOTE = "名前に使えるのは半角の英数字と . _ - �
 const TAKEN_NAME_NOTE = "その名前はもう使われている"
 const CREATED_NOTE = "作った。サイドバーのキャラクターの一覧から切り替えられる"
 
-/** 選んだ立ち絵（data URL）。**必須の2つぶん**で、そろうまで「作る」は押せない。 */
+/** 選んだ立ち絵（data URL）。**必須の1つぶん**で、そろうまで「作る」は押せない。 */
 type HeldPortraits = Readonly<Record<RequiredExpression, string | undefined>>
 
-const NO_PORTRAITS: HeldPortraits = { default: undefined, working: undefined }
+const NO_PORTRAITS: HeldPortraits = { default: undefined }
 
 export function CharacterCreate(): ReactElement | null {
   const { state, dispatch } = useSession()
@@ -81,15 +81,14 @@ export function CharacterCreate(): ReactElement | null {
 
   function create(): void {
     const defaultImage = portraits.default
-    const workingImage = portraits.working
-    if (!ready || defaultImage === undefined || workingImage === undefined) {
+    if (!ready || defaultImage === undefined) {
       return
     }
 
     dispatch({
       type: "create-character",
       name,
-      portraits: { default: defaultImage, working: workingImage },
+      portraits: { default: defaultImage },
       accent,
     })
     setSentName(name)

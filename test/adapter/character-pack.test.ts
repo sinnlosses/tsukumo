@@ -19,11 +19,11 @@ const DEFINITION_JSON = JSON.stringify({
   speechMarker: "精霊: ",
   expressions: {
     default: "通常",
-    working: "作業中",
+    thinking: "作業中",
   },
   portraits: {
     default: "default.svg",
-    working: "working.svg",
+    thinking: "thinking.svg",
   },
   outfitAccents: {
     default: "#b8c7ff",
@@ -81,12 +81,12 @@ describe("characterChangedEvent", () => {
       editable: true,
       expressions: [
         { name: "default", label: "通常" },
-        { name: "working", label: "作業中" },
+        { name: "thinking", label: "作業中" },
       ],
       packs: [{ name: basename(dir), label: "架空の精霊" }],
       portraits: {
         default: `/character/default.svg?v=${cacheKey}`,
-        working: `/character/working.svg?v=${cacheKey}`,
+        thinking: `/character/thinking.svg?v=${cacheKey}`,
         proud: undefined,
         flustered: undefined,
       },

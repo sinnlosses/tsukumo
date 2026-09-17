@@ -13,7 +13,7 @@ const FIXTURE_CHARACTER: CharacterInfo = {
   name: "架空の名前",
   accent: undefined,
   expressions: [],
-  portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
+  portraits: { default: undefined, thinking: undefined, proud: undefined, flustered: undefined },
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
   speechMarker: undefined,
   editable: false,

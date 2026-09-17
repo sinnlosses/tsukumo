@@ -18,7 +18,7 @@ import {
 const DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
-  portraits: { default: "default.svg", working: "working.svg", proud: "proud.svg" },
+  portraits: { default: "default.svg", thinking: "thinking.svg", proud: "proud.svg" },
   outfitAccents: { default: "#b8c7ff" },
 })
 const PLAUSIBLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'
@@ -41,7 +41,7 @@ function writeBundledPack(name: string): string {
   mkdirSync(packDir, { recursive: true })
   writeFileSync(join(packDir, "character.json"), DEFINITION_JSON)
   writeFileSync(join(packDir, "persona.md"), PERSONA)
-  for (const fileName of ["default.svg", "working.svg", "proud.svg"]) {
+  for (const fileName of ["default.svg", "thinking.svg", "proud.svg"]) {
     writeFileSync(join(packDir, fileName), PLAUSIBLE_SVG)
   }
   return packDir
@@ -51,13 +51,13 @@ function setPortrait(expression: "default" | "proud", image: string): CharacterE
   return { type: "set-portrait", commandId: "c-1", expression, image }
 }
 
-/** 新しいパックを作るコマンド（必須の2枚は境界で required なので、ここでも必ず両方入る）。 */
+/** 新しいパックを作るコマンド（必須の1枚は境界で required なので、ここでも必ず入る）。 */
 function createCharacter(name: string): CharacterCreateCommand {
   return {
     type: "create-character",
     commandId: "c-1",
     name,
-    portraits: { default: SVG_DATA_URL, working: PNG_DATA_URL },
+    portraits: { default: SVG_DATA_URL },
     accent: "#b8c7ff",
   }
 }
@@ -86,7 +86,7 @@ describe("editCharacterPack（立ち絵）", () => {
     // 写した先には人格とほかの表情の素材も並んでいる（次の起動で欠けない）。
     expect(edited?.persona).toBe(PERSONA)
     expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
-    expect(existsSync(join(home(), "tsukumo", "working.svg"))).toBe(true)
+    expect(existsSync(join(home(), "tsukumo", "thinking.svg"))).toBe(true)
     // 同梱側は触っていない。
     expect(readCharacterPack(bundled).definition?.portraits.proud).toBe("proud.svg")
   })
@@ -244,7 +244,7 @@ describe("editCharacterPack（受け付けないもの）", () => {
 })
 
 describe("createCharacterPack", () => {
-  it("ホームに名前のディレクトリを作り、必須の2枚と定義を書く", () => {
+  it("ホームに名前のディレクトリを作り、必須の1枚と定義を書く", () => {
     const created = createCharacterPack(createCharacter("fictional-2"), [], home())
 
     expect(created?.dir).toBe(join(home(), "fictional-2"))
@@ -252,10 +252,8 @@ describe("createCharacterPack", () => {
     expect(created?.definition?.name).toBe("fictional-2")
     // 立ち絵のファイル名は表情と形式から組み立てる（届いた文字列がパスの一部にならない）。
     expect(created?.definition?.portraits.default).toBe("default.svg")
-    expect(created?.definition?.portraits.working).toBe("working.png")
     expect(created?.definition?.outfitAccents.default).toBe("#b8c7ff")
     expect(readFileSync(join(home(), "fictional-2", "default.svg"), "utf8")).toBe(PLAUSIBLE_SVG)
-    expect(existsSync(join(home(), "fictional-2", "working.png"))).toBe(true)
   })
 
   it("作ったパックは切り替えの一覧に出て、次の起動でも残る", () => {
@@ -265,7 +263,7 @@ describe("createCharacterPack", () => {
 
     const packs = listCharacterPacks(cwd, { bundled: join(dir, "bundled"), home: home() })
     expect(packs.map((pack) => pack.name)).toEqual(["tsukumo", "fictional-2"])
-    expect(packs[1]?.definition?.portraits.working).toBe("working.png")
+    expect(packs[1]?.definition?.portraits.default).toBe("default.svg")
   })
 
   it("既にある名前は弾く（後勝ちで既存のパックを黙って隠さない）", () => {

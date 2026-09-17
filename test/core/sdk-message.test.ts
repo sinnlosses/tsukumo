@@ -10,7 +10,7 @@ import { type Expression } from "../../src/protocol/expression.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の会話は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。
-const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud"]
+const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${SPEAK_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 

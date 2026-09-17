@@ -26,7 +26,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   expressions: [{ name: "default", label: "通常" }],
   portraits: {
     default: "/character/default.png",
-    working: undefined,
+    thinking: undefined,
     proud: undefined,
     flustered: undefined,
   },
@@ -118,12 +118,12 @@ describe("CharacterView", () => {
         ...FIXTURE_CHARACTER,
         expressions: [
           { name: "default", label: "通常" },
-          { name: "working", label: "作業中" },
+          { name: "thinking", label: "作業中" },
           { name: "proud", label: "どや顔" },
         ],
         portraits: {
           default: "/character/default.png",
-          working: "/character/working.png",
+          thinking: "/character/thinking.png",
           proud: "/character/proud.png",
           flustered: undefined,
         },
@@ -256,7 +256,7 @@ describe("CharacterView", () => {
           ],
           portraits: {
             default: "/character/default.png",
-            working: undefined,
+            thinking: undefined,
             proud: undefined,
             flustered: "/character/flustered.png",
           },

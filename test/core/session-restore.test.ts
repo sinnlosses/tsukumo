@@ -8,7 +8,7 @@ import { type Expression } from "../../src/protocol/expression.ts"
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
 // （`listSessions` / `getSessionMessages` を呼ぶのは src/adapter/sdk-driver.ts の側）。
-const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud"]
+const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
 // 印はキャラクターパックごとに違う（`tsukumo:<パック名>`）。
 const TAG = sessionTag("架空のパック")

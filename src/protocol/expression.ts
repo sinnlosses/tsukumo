@@ -12,29 +12,28 @@
 // （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」、docs/design.md 7章）。
 // モデル名と衣装の対応だけは、どのキャラクターでも同じ「装備の重さ」の規則なのでここに残す。
 
-export type Expression = "default" | "working" | "proud" | "flustered"
+export type Expression = "default" | "thinking" | "proud" | "flustered"
 export type Outfit = "default" | "light" | "normal" | "heavy"
 
 /**
  * 表情名の全体。**`default` が先頭**で、キャラクター定義に立ち絵があるものだけを選ぶときの
  * 元になる（src/protocol/character.ts の `availableExpressions`）。
  */
-export const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud", "flustered"]
+export const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud", "flustered"]
 
 /**
  * **立ち絵が必ず要る表情**（`characters/README.md`）。`default` は表情の指定が無いときの
  * 落とし先で、コードが名前で直接参照するので「あるものだけ」で済ませられない。画面から
  * これを消せないのも同じ理由（消せる表情は {@link RemovableExpression} のほうだけ）。
  *
- * **`working` を必須に据えた根拠（ツールの実行中に自動で切り替える先）は、自動の上書きを
- * 撤去した 2026-09-17 に失効している。** いまは `speak` で選べる普通の表情の1つなので、
- * 必須から外せるかどうかは別途見直す。
+ * **必須はこの1つだけ。** 他の表情は立ち絵が無くてよく、`default` に落ちる
+ * （`src/protocol/character.ts` の `resolvePortraitUrl`）。
  */
-export const REQUIRED_EXPRESSIONS = ["default", "working"] as const
+export const REQUIRED_EXPRESSIONS = ["default"] as const
 
 export type RequiredExpression = (typeof REQUIRED_EXPRESSIONS)[number]
 
-/** 画面から立ち絵を**消せる**表情（必須の2つを除いた残り）。 */
+/** 画面から立ち絵を**消せる**表情（必須の `default` を除いた残り）。 */
 export type RemovableExpression = Exclude<Expression, RequiredExpression>
 
 /** 衣装の全体。並びは画面に出す順（軽いほうから重いほうへ）。 */

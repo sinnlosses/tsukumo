@@ -17,7 +17,7 @@ function createCharacter(name: string): unknown {
     type: "create-character",
     commandId: "c-1",
     name,
-    portraits: { default: TINY_PNG_DATA_URL, working: TINY_PNG_DATA_URL },
+    portraits: { default: TINY_PNG_DATA_URL },
     accent: "#b8c7ff",
   }
 }
@@ -89,7 +89,10 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     ).toEqual({ type: "set-outfit-accent", commandId: "c-7", outfit: "heavy", color: "#ffb3a7" })
   })
 
-  it("clear-portrait は必須でない表情（proud / flustered）だけを受け付ける", () => {
+  it("clear-portrait は必須でない表情（thinking / proud / flustered）だけを受け付ける", () => {
+    expect(
+      parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "thinking" }),
+    ).toEqual({ type: "clear-portrait", commandId: "c-8", expression: "thinking" })
     expect(
       parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "proud" }),
     ).toEqual({ type: "clear-portrait", commandId: "c-8", expression: "proud" })
@@ -98,13 +101,10 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     ).toBeDefined()
   })
 
-  // **必須の2つ（`docs/requirements.md` 4.4 / characters/README.md）を消す操作は境界で弾く。**
-  it("clear-portrait で default / working を消そうとすると undefined（必須の2つは消せない）", () => {
+  // **必須の1つ（`docs/requirements.md` 4.4 / characters/README.md）を消す操作は境界で弾く。**
+  it("clear-portrait で default を消そうとすると undefined（必須は消せない）", () => {
     expect(
       parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "default" }),
-    ).toBeUndefined()
-    expect(
-      parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "working" }),
     ).toBeUndefined()
   })
 
@@ -156,20 +156,20 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     ).toBeUndefined()
   })
 
-  it("create-character を受け付ける（必須の2枚と差し色が揃った形）", () => {
+  it("create-character を受け付ける（必須の1枚と差し色が揃った形）", () => {
     expect(
       parseClientCommand({
         type: "create-character",
         commandId: "c-1",
         name: "fictional-2",
-        portraits: { default: TINY_PNG_DATA_URL, working: TINY_PNG_DATA_URL },
+        portraits: { default: TINY_PNG_DATA_URL },
         accent: "#b8c7ff",
       }),
     ).toEqual({
       type: "create-character",
       commandId: "c-1",
       name: "fictional-2",
-      portraits: { default: TINY_PNG_DATA_URL, working: TINY_PNG_DATA_URL },
+      portraits: { default: TINY_PNG_DATA_URL },
       accent: "#b8c7ff",
     })
   })
@@ -236,23 +236,26 @@ describe("parseClientCommand（落とす形）", () => {
     expect(parseClientCommand(createCharacter("my_pack-2.0"))).toBeDefined()
   })
 
-  // **`default` と `working` はここで required**（欠けたパックが書き込む側まで届かない）。
+  // **`default` はここで required**（欠けたパックが書き込む側まで届かない）。
   it("必須の立ち絵が欠けた create-character は undefined", () => {
     expect(
       parseClientCommand({
         type: "create-character",
         commandId: "c-1",
         name: "fictional-2",
-        portraits: { default: TINY_PNG_DATA_URL },
+        portraits: {},
         accent: "#b8c7ff",
       }),
     ).toBeUndefined()
+  })
+
+  it("必須の立ち絵が data URL でない create-character は undefined", () => {
     expect(
       parseClientCommand({
         type: "create-character",
         commandId: "c-1",
         name: "fictional-2",
-        portraits: { default: TINY_PNG_DATA_URL, working: "data:text/plain;base64,AAAA" },
+        portraits: { default: "data:text/plain;base64,AAAA" },
         accent: "#b8c7ff",
       }),
     ).toBeUndefined()

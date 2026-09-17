@@ -218,7 +218,7 @@ TSUKUMO_CHARACTER=characters/local tsukumo
   "license": "その素材をここに置いてよい根拠",
   "portraits": {
     "default": "通常時の画像",
-    "working": "作業中",
+    "thinking": "作業中",
     "proud": "どや顔",
     "flustered": "あわあわ"
   },
@@ -232,7 +232,7 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 ```
 
 - **`portraits` は「あるものだけ」でよい。** 見つからない表情は `default` に落ちます
-- **ただし `default` と `working` の2つは必須**（コード側が名前で直接参照するため）
+- **ただし `default` は必須**（コード側が名前で直接参照するため）
 - **`outfitAccents` は衣装（実行中のモデル）ごとの差し色。** `light` = haiku /
   `normal` = sonnet / `heavy` = opus
 - **差し色が効くのはインラインで埋め込んだ SVG だけ**（PNG / GIF は表情と同じくファイルを分ける）

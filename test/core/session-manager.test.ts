@@ -72,7 +72,7 @@ const CHARACTER_EVENT: SessionEvent = {
   expressions: [{ name: "default", label: "通常" }],
   portraits: {
     default: "/character/default.png?v=fictional@2",
-    working: undefined,
+    thinking: undefined,
     proud: undefined,
     flustered: undefined,
   },
@@ -395,7 +395,6 @@ describe("createSessionManager", () => {
         name: "fictional-2",
         portraits: {
           default: "data:image/png;base64,AAAA",
-          working: "data:image/png;base64,AAAA",
         },
         accent: "#b8c7ff",
       }),
@@ -423,7 +422,6 @@ describe("createSessionManager", () => {
         name: "fictional",
         portraits: {
           default: "data:image/png;base64,AAAA",
-          working: "data:image/png;base64,AAAA",
         },
         accent: "#b8c7ff",
       }),

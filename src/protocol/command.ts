@@ -94,7 +94,7 @@ const expressionSchema = z.custom<Expression>(
 )
 
 /**
- * 立ち絵を**消せる**表情。`default` と `working` はここで弾かれる（必須の2つ。
+ * 立ち絵を**消せる**表情。`default` はここで弾かれる（必須の1つ。
  * `src/protocol/expression.ts` の `REQUIRED_EXPRESSIONS`）。
  */
 const removableExpressionSchema = z.custom<RemovableExpression>(
@@ -158,9 +158,9 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     type: z.literal("create-character"),
     commandId: commandIdSchema,
     name: newCharacterPackNameSchema,
-    // **必須の2つ（`REQUIRED_EXPRESSIONS`）をここで required にする**ので、片方だけのパックは
+    // **必須の1つ（`REQUIRED_EXPRESSIONS`）をここで required にする**ので、立ち絵が無いパックは
     // 書き込む側まで届かない（`docs/design.md` 7.1・`characters/README.md`）。
-    portraits: z.object({ default: portraitDataUrlSchema, working: portraitDataUrlSchema }),
+    portraits: z.object({ default: portraitDataUrlSchema }),
     accent: accentColorSchema,
   }),
 ])

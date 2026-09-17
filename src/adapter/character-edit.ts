@@ -92,8 +92,8 @@ export function editCharacterPack(
  * - 書き込み先に同じ名前のディレクトリが既にある（一覧に出ていない壊れたパックの置き場）
  * - ディスクに書けない（**書きかけのディレクトリは消す**ので、欠けたパックは残らない）
  *
- * **`default` と `working` の2枚がそろっていることは境界で済んでいる**
- * （`src/protocol/command.ts` の `portraits` が両方 required）。ここは書く順だけを守る:
+ * **`default` の1枚があることは境界で済んでいる**
+ * （`src/protocol/command.ts` の `portraits` が required）。ここは書く順だけを守る:
  * 素材 → 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、
  * パックとして一覧に出ない。
  */
@@ -232,7 +232,7 @@ function isPortraitFileName(name: string | undefined): name is string {
 }
 
 /**
- * 新しいパックの必須の2枚を書き、表情ごとのファイル名を返す。**ほどけなかったときは
+ * 新しいパックの必須の1枚を書き、表情ごとのファイル名を返す。**ほどけなかったときは
  * undefined**（境界で検証済みなので、ここで起きるのは配線の誤りのときだけ。型を迂回せず
  * ほどくために、`editCharacterPack` と同じ関数をもう一度通す）。
  */
@@ -241,17 +241,14 @@ function writeRequiredPortraits(
   portraits: CharacterCreateCommand["portraits"],
 ): Readonly<Record<RequiredExpression, string>> | undefined {
   const defaultImage = parsePortraitImage(portraits.default)
-  const workingImage = parsePortraitImage(portraits.working)
-  if (defaultImage === undefined || workingImage === undefined) {
+  if (defaultImage === undefined) {
     return undefined
   }
 
   const fileNames = {
     default: portraitFileName("default", defaultImage.format),
-    working: portraitFileName("working", workingImage.format),
   }
   writeFileSync(join(dir, fileNames.default), Buffer.from(defaultImage.base64, "base64"))
-  writeFileSync(join(dir, fileNames.working), Buffer.from(workingImage.base64, "base64"))
   return fileNames
 }
 
@@ -264,13 +261,10 @@ function newDefinitionJson(
   create: CharacterCreateCommand,
   fileNames: Readonly<Record<RequiredExpression, string>>,
 ): string {
-  const portraits: readonly (readonly [RequiredExpression, string])[] = [
-    ["default", fileNames.default],
-    ["working", fileNames.working],
-  ]
-  const withPortraits = portraits.reduce(
-    (json, [expression, fileName]) => definitionWithPortrait(json, expression, fileName),
+  const withPortraits = definitionWithPortrait(
     JSON.stringify({ name: create.name }),
+    "default",
+    fileNames.default,
   )
   return definitionWithOutfitAccent(withPortraits, "default", create.accent)
 }

@@ -6,14 +6,14 @@
   "speechMarker": "tsukumo: ",
   "expressions": {
     "default": "にっと",
-    "working": "本気",
+    "thinking": "本気",
     "proud": "えへん",
     "flustered": "あわわ"
   },
   "portraits": {
     "default": "default.png",
     "proud": "proud.png",
-    "working": "working.png",
+    "thinking": "thinking.png",
     "flustered": "flustered.png"
   }
 }

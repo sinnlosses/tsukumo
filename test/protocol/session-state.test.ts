@@ -29,7 +29,7 @@ const CHARACTER_WITH_MARKER: SessionEvent = {
   accent: undefined,
   speechMarker: "精霊: ",
   expressions: [{ name: "default", label: "通常" }],
-  portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
+  portraits: { default: undefined, thinking: undefined, proud: undefined, flustered: undefined },
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
   editable: true,
   packs: [{ name: "fictional", label: "架空の精霊" }],
@@ -586,12 +586,12 @@ describe("applySessionEvent", () => {
       speechMarker: "精霊: ",
       expressions: [
         { name: "default", label: "通常" },
-        { name: "working", label: "作業中" },
+        { name: "thinking", label: "作業中" },
       ],
       packs: [{ name: "fictional", label: "架空の精霊" }],
       portraits: {
         default: "/character/default.svg",
-        working: "/character/working.svg",
+        thinking: "/character/thinking.svg",
         proud: undefined,
         flustered: undefined,
       },
@@ -606,11 +606,11 @@ describe("applySessionEvent", () => {
       speechMarker: "精霊: ",
       expressions: [
         { name: "default", label: "通常" },
-        { name: "working", label: "作業中" },
+        { name: "thinking", label: "作業中" },
       ],
       portraits: {
         default: "/character/default.svg",
-        working: "/character/working.svg",
+        thinking: "/character/thinking.svg",
         proud: undefined,
         flustered: undefined,
       },

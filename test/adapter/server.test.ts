@@ -208,7 +208,7 @@ describe("attachSessionSocket", () => {
     client.close()
   })
 
-  // **必須の2つ（`default` / `working`）の立ち絵を消す操作は、駆動まで届かせない。**
+  // **必須の1つ（`default`）の立ち絵を消す操作は、駆動まで届かせない。**
   it("default の立ち絵を消す要求は受け口で弾き、dispatch まで届かない", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))

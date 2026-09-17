@@ -14,12 +14,12 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   speechMarker: undefined,
   expressions: [
     { name: "default", label: "通常" },
-    { name: "working", label: "作業中" },
+    { name: "thinking", label: "作業中" },
     { name: "proud", label: "どや顔" },
   ],
   portraits: {
     default: "/character/default.svg?v=fictional@1",
-    working: "/character/working.svg?v=fictional@1",
+    thinking: "/character/thinking.svg?v=fictional@1",
     proud: "/character/proud.svg?v=fictional@1",
     flustered: undefined,
   },
@@ -78,13 +78,19 @@ describe("CharacterEdit", () => {
     expect(screen.getByLabelText("戦闘配置（opus）")).toBeDefined()
   })
 
-  // **必須の2つは消せない**（`docs/requirements.md` 4.4）。画面にも口を出さない。
-  it("default と working には消す口を出さない（立ち絵があっても）", () => {
+  // **必須の1つ（default）は消せない**（`docs/requirements.md` 4.4）。画面にも口を出さない。
+  it("default には消す口を出さない（立ち絵があっても）", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     expect(screen.queryByRole("button", { name: "通常を消す" })).toBeNull()
-    expect(screen.queryByRole("button", { name: "作業中を消す" })).toBeNull()
     expect(screen.getByRole("button", { name: "どや顔を消す" })).toBeDefined()
+  })
+
+  // **必須から外れたので、thinking は立ち絵があれば消せる**（`src/protocol/expression.ts`）。
+  it("thinking は立ち絵があれば消す口を出す", () => {
+    renderCharacterEdit(FIXTURE_CHARACTER)
+
+    expect(screen.getByRole("button", { name: "作業中を消す" })).toBeDefined()
   })
 
   it("立ち絵が無い表情には消す口を出さない", () => {
