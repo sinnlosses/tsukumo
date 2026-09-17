@@ -4,7 +4,6 @@
   "license": "このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。",
   "accent": "#6fe3cd",
   "speechMarker": "tsukumo: ",
-  "workingSpeech": "ちょっと待っててな、いま手を動かしてるぞ",
   "expressions": {
     "default": "にっと",
     "working": "本気",

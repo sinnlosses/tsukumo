@@ -38,7 +38,6 @@ function tool(
     name: "Read",
     input: {},
     nested: false,
-    startedAt: 0,
     result: { content: "ok", isError: false },
     ...overrides,
   }

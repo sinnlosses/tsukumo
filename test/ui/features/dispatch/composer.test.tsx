@@ -16,7 +16,6 @@ const FIXTURE_CHARACTER: CharacterInfo = {
   portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
   speechMarker: undefined,
-  workingSpeech: undefined,
   editable: false,
 }
 

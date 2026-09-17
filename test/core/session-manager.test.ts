@@ -68,7 +68,6 @@ const CHARACTER_EVENT: SessionEvent = {
   name: "架空の精霊",
   accent: undefined,
   speechMarker: undefined,
-  workingSpeech: undefined,
   editable: true,
   expressions: [{ name: "default", label: "通常" }],
   portraits: {

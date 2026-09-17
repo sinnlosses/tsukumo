@@ -37,13 +37,6 @@ export type CharacterDefinition = {
    */
   readonly speechMarker: string | undefined
   /**
-   * ツールを実行している間だけ吹き出しに重ねる一言（docs/requirements.md 4.2「吹き出し」）。
-   * 立ち絵が「作業中」になっているのに吹き出しが直前の `speak` のまま残るのを防ぐためのもの。
-   * **言い回しはキャラクターごとの言葉なのでコードに持たない**（原則4）。落とし先は
-   * {@link CharacterInfo.workingSpeech}。
-   */
-  readonly workingSpeech: string | undefined
-  /**
    * キャラクターの色（`docs/design.md` 13.2 の `accent`）。**衣装ごとの差し色
    * （`outfitAccents`）とは別物**で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・
    * フォーカスの輪など、13.1 原則1が許す場所）に効く。無ければ画面側の既定値に落ちる。
@@ -169,13 +162,6 @@ export type CharacterInfo = {
   /** {@link CharacterDefinition.speechMarker} をそのまま持つ（畳み込みが行頭マーカーに使う）。 */
   readonly speechMarker: string | undefined
   /**
-   * ツールを実行している間に吹き出しへ重ねる一言（**解決済み**。キャラビューがそのまま出す）。
-   * 定義の `workingSpeech`、無ければ `expressions.working` のラベル、**どちらも無ければ
-   * undefined**（そのパックでは吹き出しを重ねない。`speechMarker` と同じ扱いで、既定の
-   * 言い回しをコードに持たない）。
-   */
-  readonly workingSpeech: string | undefined
-  /**
    * 立ち絵と差し色を**画面から変えられるか**。変えた結果の書き込み先は
    * `~/.tsukumo/characters/<name>/` の1箇所だけで（`docs/design.md` 7.1）、そこに書いた版が
    * 探索の順で**起動先の `characters/local` に負けるパックだけが false** になる
@@ -242,7 +228,6 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     portraits: portraitUrls(definition, characterAssetCacheKey(source.pack, source.revision)),
     outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
     speechMarker: definition?.speechMarker,
-    workingSpeech: workingSpeech(definition),
     editable: source.editable,
   }
 }
@@ -283,15 +268,6 @@ export function definitionWithOutfitAccent(
   color: string,
 ): string {
   return editedDefinitionJson(content, "outfitAccents", outfit, color)
-}
-
-/**
- * 作業中の一言を解く。**落とし先は `expressions.working` のラベル**（表情の呼び名も
- * キャラクターの言葉なので、一言を書いていないパックでも立ち絵と揃ったものを出せる）。
- * どちらも定義に無ければ undefined を返し、そのパックでは吹き出しを重ねない。
- */
-function workingSpeech(definition: CharacterDefinition | undefined): string | undefined {
-  return definition?.workingSpeech ?? definition?.expressions.working
 }
 
 function portraitUrls(
@@ -412,7 +388,6 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     accent: typeof value.accent === "string" ? value.accent : undefined,
     expressions: toExpressionLabels(value.expressions),
     speechMarker: typeof value.speechMarker === "string" ? value.speechMarker : undefined,
-    workingSpeech: typeof value.workingSpeech === "string" ? value.workingSpeech : undefined,
     portraits: toPortraits(value.portraits),
     outfitAccents: toOutfitAccents(value.outfitAccents),
   }

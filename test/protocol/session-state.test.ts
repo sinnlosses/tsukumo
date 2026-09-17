@@ -1,12 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
-import { WORKING_EXPRESSION_COOLDOWN_MS } from "../../src/protocol/expression.ts"
 import { type SessionEvent } from "../../src/protocol/session-event.ts"
 import {
   applySessionEvent,
   commandCandidates,
   commandSuggestions,
-  currentExpression,
   INITIAL_SESSION_STATE,
   mainViewEntries,
   type SessionState,
@@ -14,7 +12,7 @@ import {
 import { turnSpeeches } from "../../src/protocol/turn-speech.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
-// 時刻に依らないテストでは `now` を固定の 0 で流す（表情の遅延切り替えを見るテストは
+// 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
 // applySessionEvent を直接呼び、進める時刻を明示する）。
 function apply(...events: readonly SessionEvent[]): SessionState {
   return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_STATE)
@@ -30,7 +28,6 @@ const CHARACTER_WITH_MARKER: SessionEvent = {
   name: "架空の精霊",
   accent: undefined,
   speechMarker: "精霊: ",
-  workingSpeech: "作業中の一言",
   expressions: [{ name: "default", label: "通常" }],
   portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
@@ -79,7 +76,7 @@ describe("applySessionEvent", () => {
     const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
     expect(spoken.speeches).toEqual(["いくよ！"])
-    expect(currentExpression(spoken, 0)).toBe("proud")
+    expect(spoken.speechExpression).toBe("proud")
   })
 
   it("request で吹き出しと表情を既定に戻す（送信直後に次のターンへ移ったと分かるように）", () => {
@@ -90,7 +87,7 @@ describe("applySessionEvent", () => {
     // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
     // （src/ui/features/character-view/balloon-track.tsx）。
     expect(nextTurn.speeches).toEqual([])
-    expect(currentExpression(nextTurn, 0)).toBe("default")
+    expect(nextTurn.speechExpression).toBe("default")
   })
 
   it("セリフは記録にも積むが、レポート（mainViewEntries）には出さない", () => {
@@ -151,7 +148,10 @@ describe("applySessionEvent", () => {
     expect(secondTurnSpoken.speeches).toEqual(["2つめのセリフ"])
   })
 
-  it("ツールが1秒以上実行中だと表情が作業中になり、終わってもクールダウンの間は作業中を保ち、明けると直前のセリフの表情に戻る", () => {
+  it("ツールが動いていても表情は直前の speak のまま変わらない（自動の上書きは 2026-09-17 に撤去）", () => {
+    // 表情の源は `speak` の1つだけ（docs/requirements.md 4.3）。ツールの開始・終了・
+    // 時間の経過では表情が動かないことを固定する（以前はここで `working` へ自動で
+    // 切り替えていた。吹き出しと表情が食い違う唯一の経路だったのでやめた）。
     const spoken = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "speech", text: "いくよ！", expression: "proud" },
@@ -169,17 +169,13 @@ describe("applySessionEvent", () => {
       0,
     )
 
-    // 開始直後はまだ1秒経っていないので、直前のセリフの表情のまま。
-    expect(currentExpression(running, 0)).toBe("proud")
-    // 1秒経つと作業中に切り替わる。
-    expect(currentExpression(running, 1000)).toBe("working")
+    expect(running.speechExpression).toBe("proud")
     expect(running.runningTools).toEqual([
       {
         toolUseId: "toolu_1",
         name: "Read",
         input: {},
         nested: false,
-        startedAt: 0,
         failureOutput: undefined,
       },
     ])
@@ -187,16 +183,11 @@ describe("applySessionEvent", () => {
     const finished = applySessionEvent(
       running,
       { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: false },
-      2000,
+      60_000,
     )
 
-    // 終わった瞬間は working だったので、lastToolFinishedAt が打たれる（クールダウン開始）。
-    expect(finished.lastToolFinishedAt).toBe(2000)
-    // クールダウンの間（明ける前）は working のまま（T-167: ツールの隙間で往復しない）。
-    expect(currentExpression(finished, 2000)).toBe("working")
-    expect(currentExpression(finished, 2000 + WORKING_EXPRESSION_COOLDOWN_MS - 1)).toBe("working")
-    // クールダウンが明けると、直前のセリフの表情に戻る。
-    expect(currentExpression(finished, 2000 + WORKING_EXPRESSION_COOLDOWN_MS)).toBe("proud")
+    // どれだけ時間が経っても（ツールが長く走っても、終わったあとも）表情は変わらない。
+    expect(finished.speechExpression).toBe("proud")
     expect(finished.runningTools).toEqual([])
     expect(finished.finishedTools).toEqual([
       {
@@ -204,56 +195,9 @@ describe("applySessionEvent", () => {
         name: "Read",
         input: {},
         nested: false,
-        startedAt: 0,
         failureOutput: undefined,
       },
     ])
-  })
-
-  it("クールダウン中に次のツールが始まると、隙間でも往復せず working のまま続く", () => {
-    // 1つ目のツールが 0〜1200 で走り（working を出した）、クールダウン中の 1300 に
-    // 2つ目のツールが始まって 1400 に終わる（1秒未満で単体では working を出さない）。
-    const firstFinished = applySessionEvent(
-      applySessionEvent(
-        INITIAL_SESSION_STATE,
-        {
-          kind: "tool-started",
-          toolUseId: "toolu_1",
-          name: "Read",
-          input: {},
-          parentToolUseId: undefined,
-        },
-        0,
-      ),
-      { kind: "tool-finished", toolUseId: "toolu_1", content: "1つ目の結果", isError: false },
-      1200,
-    )
-    const secondStarted = applySessionEvent(
-      firstFinished,
-      {
-        kind: "tool-started",
-        toolUseId: "toolu_2",
-        name: "Read",
-        input: {},
-        parentToolUseId: undefined,
-      },
-      1300,
-    )
-
-    // 2つ目のツールはまだ開始から1秒経っていないが、クールダウン中に始まったので即座に working。
-    expect(currentExpression(secondStarted, 1300)).toBe("working")
-
-    const secondFinished = applySessionEvent(
-      secondStarted,
-      { kind: "tool-finished", toolUseId: "toolu_2", content: "2つ目の結果", isError: false },
-      1400,
-    )
-
-    // 2つ目も終わった瞬間 working だったので、クールダウンが 1400 から延びる。
-    expect(secondFinished.lastToolFinishedAt).toBe(1400)
-    expect(currentExpression(secondFinished, 1400 + WORKING_EXPRESSION_COOLDOWN_MS - 1)).toBe(
-      "working",
-    )
   })
 
   it("失敗して終わったツールは出力を failureOutput に残す（サイドバーで開いて読むため）", () => {
@@ -282,38 +226,6 @@ describe("applySessionEvent", () => {
     expect(failed.finishedTools[0]?.failureOutput).toBe("架空のエラー出力")
   })
 
-  it("1秒未満で終わったツールは作業中の表情を起こさない（チカチカ防止）", () => {
-    const spoken = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "speech", text: "いくよ！", expression: "proud" },
-      0,
-    )
-    const running = applySessionEvent(
-      spoken,
-      {
-        kind: "tool-started",
-        toolUseId: "toolu_1",
-        name: "Read",
-        input: {},
-        parentToolUseId: undefined,
-      },
-      0,
-    )
-
-    const finished = applySessionEvent(
-      running,
-      { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: false },
-      500,
-    )
-
-    // 実行中だった間（500ms 経過時点）も、終わったあとも、作業中の表情は一度も出ない。
-    expect(currentExpression(finished, 500)).toBe("proud")
-    expect(currentExpression(finished, 5000)).toBe("proud")
-    // 一度も working を出さなかったので、クールダウンも始まらない
-    // （lastToolFinishedAt が undefined のまま。誤ってクールダウンが始まらないことの確認）。
-    expect(finished.lastToolFinishedAt).toBeUndefined()
-  })
-
   it("サブエージェントの中のツール（parentToolUseId あり）は nested として持つ", () => {
     const running = apply({
       kind: "tool-started",
@@ -329,7 +241,6 @@ describe("applySessionEvent", () => {
         name: "Bash",
         input: {},
         nested: true,
-        startedAt: 0,
         failureOutput: undefined,
       },
     ])
@@ -367,7 +278,7 @@ describe("applySessionEvent", () => {
       { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: true },
     )
 
-    // ツールの記録そのものは `toolUseId` / `nested` / `startedAt` を持つ（サイドバー用途と
+    // ツールの記録そのものは `toolUseId` / `nested` を持つ（サイドバー用途と
     // 突き合わせ用。docs/requirements.md 4.2）。
     expect(view.records).toEqual([
       {
@@ -376,7 +287,6 @@ describe("applySessionEvent", () => {
         name: "Read",
         input: { path: "/tmp/a" },
         nested: false,
-        startedAt: 0,
         result: { content: "ダミーの結果", isError: true },
       },
     ])
@@ -674,7 +584,6 @@ describe("applySessionEvent", () => {
       name: "架空の精霊",
       accent: "#f2b0a0",
       speechMarker: "精霊: ",
-      workingSpeech: "作業中の一言",
       expressions: [
         { name: "default", label: "通常" },
         { name: "working", label: "作業中" },
@@ -695,7 +604,6 @@ describe("applySessionEvent", () => {
       name: "架空の精霊",
       accent: "#f2b0a0",
       speechMarker: "精霊: ",
-      workingSpeech: "作業中の一言",
       expressions: [
         { name: "default", label: "通常" },
         { name: "working", label: "作業中" },

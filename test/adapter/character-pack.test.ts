@@ -78,7 +78,6 @@ describe("characterChangedEvent", () => {
       name: "架空の精霊",
       accent: undefined,
       speechMarker: "精霊: ",
-      workingSpeech: "作業中",
       editable: true,
       expressions: [
         { name: "default", label: "通常" },

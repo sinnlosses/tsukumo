@@ -1,17 +1,13 @@
 // キャラビュー本体（<CharacterView>。docs/design.md 6.1）。立ち絵（<Portrait>）と吹き出しの並び
 // （<BalloonTrack>）を同じ領域に同居させる（`docs/glossary.md`「キャラビュー」）。
 //
-// 表情は `currentExpression(state, now)`（`protocol/session-state.ts`）、衣装は
-// `resolveOutfit(state.model)` で決める。**「作業中」への遅延切り替えのタイマーは、移行前は
-// サーバ（`usecase/event-sink.ts`）が持っていたが、段5でここの `useEffect` タイマーへ移した**
-// （キャラビューが React の部品になったので、サーバが配り直す必要が無くなった。
-// docs/design.md 4.1）。
+// 表情は `state.speechExpression`（直近の `speak` の引数）、衣装は `resolveOutfit(state.model)`
+// で決める。**表情の源は `speak` だけ**なので、時間経過で顔が変わることはない（ツールの実行中に
+// 「作業中」へ自動で切り替える経路と、そのための遅延タイマーは 2026-09-17 に撤去した。
+// docs/requirements.md 4.3）。
 //
 // **立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる**
 // （docs/requirements.md 4.2「フォールバック」）。
-//
-// **ツールを実行している間は、立ち絵の表情と吹き出しの両方が「作業中」になる**（2026-09-17 決定。
-// 文言はキャラクターパックの `workingSpeech`）。どちらも `currentExpression` の1つの値から引く。
 //
 // **過去のターンのタブを選んでいる間は、そのターンの吹き出しと表情に戻す**
 // （`useTurnSelection`。ユーザーの指摘 2026-09-14「レポート同様にセリフも遡る」）。
@@ -25,18 +21,14 @@ import {
   resolveOutfitAccent,
   resolvePortraitUrl,
 } from "../../../protocol/character.ts"
-import { nextWorkingTransitionDelayMs, resolveOutfit } from "../../../protocol/expression.ts"
+import { resolveOutfit } from "../../../protocol/expression.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../protocol/portrait-motion.ts"
-import {
-  currentExpression,
-  type SessionRecord,
-  type ToolActivity,
-} from "../../../protocol/session-state.ts"
+import { type SessionRecord } from "../../../protocol/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../protocol/turn-speech.ts"
 import { loadPortraitFixed } from "../../lib/portrait-fixed.ts"
 import { useSession } from "../../stores/session.tsx"
@@ -57,52 +49,10 @@ const PAST_TURN_EMPTY_MESSAGE = "（このターンでは発話がありませ�
 const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
 /**
- * 表情の「作業中」への遅延切り替え・クールダウン明けを、部品側のタイマーで再計算する。
- * ツールの開始・終了だけでは遅延やクールダウンが経過した「その瞬間」に何のイベントも
- * 来ないので、`nextWorkingTransitionDelayMs` の戻り値ぶん先に再描画するタイマーを立てる。
- *
- * **発火するたびに次の遅延を計算し直して立て直す**（`useNowForPortraitMotion` と同じ形。
- * クールダウンが明める瞬間と、実行中のツールが遅延を超える瞬間の**両方が前後して控えている
- * ことがある**ため、1回きりのタイマーでは後ろの一方を取りこぼす。移行前は
- * `usecase/event-sink.ts` がサーバ側でこの再計算をしていた）。
- */
-function useNowForExpression(
-  runningTools: readonly ToolActivity[],
-  lastToolFinishedAt: number | undefined,
-): number {
-  const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-
-    const scheduleNext = (): void => {
-      const delay = nextWorkingTransitionDelayMs(runningTools, lastToolFinishedAt, Date.now())
-      if (delay === undefined) {
-        return
-      }
-      timer = setTimeout(() => {
-        setNow(Date.now())
-        scheduleNext()
-      }, delay)
-    }
-
-    scheduleNext()
-    return () => {
-      if (timer !== undefined) {
-        clearTimeout(timer)
-      }
-    }
-  }, [runningTools, lastToolFinishedAt])
-
-  return now
-}
-
-/**
  * 立ち絵の動きの「完了の反応」「失敗でびくっ」を、時間の窓が過ぎた瞬間に読み直すための時計。
  *
- * `useNowForExpression`（表情の「作業中」への遅延切り替え）と違い、**この2つの窓は同時に
- * 効いていることがある**（ツールが失敗した直後にターンが終わる、など）。1回だけ先の
- * タイマーを立てる形だと、`nextPortraitMotionTransitionDelayMs` が返すのは
+ * **この2つの窓は同時に効いていることがある**（ツールが失敗した直後にターンが終わる、など）。
+ * 1回だけ先のタイマーを立てる形だと、`nextPortraitMotionTransitionDelayMs` が返すのは
  * **いちばん早く終わる窓**だけなので、そのタイマーが1回発火して `now` を進めたあとに
  * **もう一方の窓がまだ残っていても、次のタイマーが立たないまま止まってしまう**
  * （`lastToolFailureAt` / `turnFinishedAt` 自体はその後変わらないので、依存配列だけを見ている
@@ -165,22 +115,14 @@ function pastTurnSpeech(
 export function CharacterView(): ReactElement {
   const { state } = useSession()
   const { activeTurnId, newestTurnId } = useTurnSelection()
-  const now = useNowForExpression(state.runningTools, state.lastToolFinishedAt)
   const pastTurn = pastTurnSpeech(state.records, activeTurnId, newestTurnId)
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
-  // **ツール実行中の「作業中」への上書きは今回を見ているときだけ**（決定 2026-09-14）。
   const expression =
     pastTurn === undefined
-      ? currentExpression(state, now)
+      ? state.speechExpression
       : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
   const outfit = resolveOutfit(state.model)
   const character = state.character
-  // ツールを実行している間は、吹き出しにも作業中の一言を重ねる（2026-09-17 決定。
-  // `docs/requirements.md` 4.2「吹き出し」）。**判定は表情と同じ値から引く**ので、立ち絵が
-  // 「作業中」の顔をしているのに吹き出しだけ直前のセリフが残る食い違いが起きない。
-  // **過去のターンを見ているときは出さない**（表情の上書きと同じ扱い。決定 2026-09-14）。
-  const workingSpeech =
-    pastTurn === undefined && expression === "working" ? character?.workingSpeech : undefined
   const motion = usePortraitMotion({
     turnInProgress: state.turnInProgress,
     turnFinishedAt: state.turnFinishedAt,
@@ -214,7 +156,6 @@ export function CharacterView(): ReactElement {
         <BalloonTrack
           speeches={pastTurn === undefined ? state.speeches : pastTurn.speeches}
           emptyMessage={pastTurn === undefined ? undefined : PAST_TURN_EMPTY_MESSAGE}
-          workingSpeech={workingSpeech}
         />
       </div>
     </div>

@@ -23,7 +23,6 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   name: "架空の精霊",
   accent: undefined,
   speechMarker: undefined,
-  workingSpeech: "（架空の作業中の一言）",
   expressions: [{ name: "default", label: "通常" }],
   portraits: {
     default: "/character/default.png",
@@ -100,179 +99,44 @@ describe("CharacterView", () => {
     expect(document.querySelector(".balloon")?.textContent).toBe("やあ、調子はどう？")
   })
 
-  it("(4) 実行中のツールが作業中の遅延（1秒）を超えていれば、表情が working になる（偽の時計）", () => {
-    const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
-    try {
-      renderCharacterView({
-        speechExpression: "default",
-        runningTools: [
-          {
-            toolUseId: "toolu_1",
-            name: "Read",
-            input: {},
-            nested: false,
-            startedAt: now - 2000,
-            failureOutput: undefined,
-          },
-        ],
-        character: {
-          ...FIXTURE_CHARACTER,
-          expressions: [
-            { name: "default", label: "通常" },
-            { name: "working", label: "作業中" },
-          ],
-          portraits: {
-            default: "/character/default.png",
-            working: "/character/working.png",
-            proud: undefined,
-            flustered: undefined,
-          },
-          outfitAccents: {
-            default: undefined,
-            light: undefined,
-            normal: undefined,
-            heavy: undefined,
-          },
-        },
-      })
-
-      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("working")
-      expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
-        "/character/working.png",
-      )
-    } finally {
-      Date.now = originalNow
-    }
-  })
-
-  it("実行中のツールが遅延をまだ超えていなければ、直近のセリフの表情のまま", () => {
-    const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
-    try {
-      renderCharacterView({
-        speechExpression: "proud",
-        runningTools: [
-          {
-            toolUseId: "toolu_1",
-            name: "Read",
-            input: {},
-            nested: false,
-            startedAt: now - 100,
-            failureOutput: undefined,
-          },
-        ],
-        character: {
-          ...FIXTURE_CHARACTER,
-          expressions: [
-            { name: "default", label: "通常" },
-            { name: "proud", label: "どや顔" },
-          ],
-          portraits: {
-            default: "/character/default.png",
-            working: undefined,
-            proud: "/character/proud.png",
-            flustered: undefined,
-          },
-          outfitAccents: {
-            default: undefined,
-            light: undefined,
-            normal: undefined,
-            heavy: undefined,
-          },
-        },
-      })
-
-      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
-    } finally {
-      Date.now = originalNow
-    }
-  })
-
-  it("ツールを実行している間は、吹き出しにも定義の作業中の一言が重なる（偽の時計）", () => {
-    const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
-    try {
-      renderCharacterView({
-        speeches: ["さっき言ったセリフ"],
-        speechExpression: "proud",
-        runningTools: [
-          {
-            toolUseId: "toolu_1",
-            name: "Read",
-            input: {},
-            nested: false,
-            startedAt: now - 2000,
-            failureOutput: undefined,
-          },
-        ],
-        character: FIXTURE_CHARACTER,
-      })
-
-      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("working")
-      expect(
-        [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
-      ).toEqual(["（架空の作業中の一言）", "さっき言ったセリフ"])
-    } finally {
-      Date.now = originalNow
-    }
-  })
-
-  it("ツールが終わってクールダウンも明けていれば、作業中の吹き出しは消える（偽の時計）", () => {
-    const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
-    try {
-      renderCharacterView({
-        speeches: ["さっき言ったセリフ"],
-        speechExpression: "proud",
-        runningTools: [],
-        lastToolFinishedAt: now - 10_000,
-        character: FIXTURE_CHARACTER,
-      })
-
-      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
-      expect(
-        [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
-      ).toEqual(["さっき言ったセリフ"])
-    } finally {
-      Date.now = originalNow
-    }
-  })
-
-  it("過去のターンを見ているときは、ツールが動いていても作業中の吹き出しを出さない（偽の時計）", () => {
-    const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
-    try {
-      renderCharacterView(
+  it("(4) ツールが動いていても、表情は直近の speak のまま変わらない（自動の上書きは撤去済み）", () => {
+    // 表情の源は `speak` の1つだけ（docs/requirements.md 4.3）。ツールが動いていても
+    // 「作業中」へ勝手に切り替わらず、吹き出しにも作業中の一言は重ならない。
+    renderCharacterView({
+      speeches: ["さっき言ったセリフ"],
+      speechExpression: "proud",
+      runningTools: [
         {
-          records: TWO_TURN_RECORDS,
-          speeches: ["2つ目のセリフ"],
-          runningTools: [
-            {
-              toolUseId: "toolu_1",
-              name: "Read",
-              input: {},
-              nested: false,
-              startedAt: now - 5000,
-              failureOutput: undefined,
-            },
-          ],
-          character: FIXTURE_CHARACTER,
+          toolUseId: "toolu_1",
+          name: "Read",
+          input: {},
+          nested: false,
+          failureOutput: undefined,
         },
-        { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
-      )
+      ],
+      character: {
+        ...FIXTURE_CHARACTER,
+        expressions: [
+          { name: "default", label: "通常" },
+          { name: "working", label: "作業中" },
+          { name: "proud", label: "どや顔" },
+        ],
+        portraits: {
+          default: "/character/default.png",
+          working: "/character/working.png",
+          proud: "/character/proud.png",
+          flustered: undefined,
+        },
+      },
+    })
 
-      expect(
-        [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
-      ).toEqual(["1つ目のセリフB", "1つ目のセリフA"])
-    } finally {
-      Date.now = originalNow
-    }
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+    expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
+      "/character/proud.png",
+    )
+    expect(
+      [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+    ).toEqual(["さっき言ったセリフ"])
   })
 
   it("ターンが進行中でなく、直近の完了・失敗も無ければ data-motion は reading（呼吸だけ）", () => {
@@ -378,52 +242,33 @@ describe("CharacterView", () => {
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
   })
 
-  it("過去のターンでは、そのターンの最後のセリフの表情になる（ツール実行中でも作業中に上書きしない）", () => {
-    const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
-    try {
-      renderCharacterView(
-        {
-          records: TWO_TURN_RECORDS,
-          speeches: ["2つ目のセリフ"],
-          speechExpression: "default",
-          // 今回のターンでツールが動き続けていても、過去のターンの表情は上書きされない。
-          runningTools: [
-            {
-              toolUseId: "toolu_1",
-              name: "Read",
-              input: {},
-              nested: false,
-              startedAt: now - 5000,
-              failureOutput: undefined,
-            },
+  it("過去のターンでは、そのターンの最後のセリフの表情になる", () => {
+    renderCharacterView(
+      {
+        records: TWO_TURN_RECORDS,
+        speeches: ["2つ目のセリフ"],
+        speechExpression: "default",
+        character: {
+          ...FIXTURE_CHARACTER,
+          expressions: [
+            { name: "default", label: "通常" },
+            { name: "flustered", label: "あわてた" },
           ],
-          character: {
-            ...FIXTURE_CHARACTER,
-            expressions: [
-              { name: "default", label: "通常" },
-              { name: "working", label: "作業中" },
-              { name: "flustered", label: "あわてた" },
-            ],
-            portraits: {
-              default: "/character/default.png",
-              working: "/character/working.png",
-              proud: undefined,
-              flustered: "/character/flustered.png",
-            },
+          portraits: {
+            default: "/character/default.png",
+            working: undefined,
+            proud: undefined,
+            flustered: "/character/flustered.png",
           },
         },
-        { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
-      )
+      },
+      { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+    )
 
-      expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("flustered")
-      expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
-        "/character/flustered.png",
-      )
-    } finally {
-      Date.now = originalNow
-    }
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("flustered")
+    expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
+      "/character/flustered.png",
+    )
   })
 
   it("「固定」を localStorage に入れていると data-motion 属性ごと省略する（動かない）", () => {

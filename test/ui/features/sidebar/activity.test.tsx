@@ -17,7 +17,6 @@ function activity(overrides: Partial<ToolActivity>): ToolActivity {
     name: "Bash",
     input: { command: "echo dummy" },
     nested: false,
-    startedAt: 0,
     failureOutput: undefined,
     ...overrides,
   }

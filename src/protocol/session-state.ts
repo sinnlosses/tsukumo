@@ -8,7 +8,7 @@
 // （両側の状態が同じになるように、時刻はイベントの発生側が決める。docs/design.md 4.1）。
 
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
-import { type Expression, resolveExpression } from "./expression.ts"
+import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
@@ -39,11 +39,6 @@ export type ToolActivity = {
   readonly input: unknown
   /** サブエージェントの中で動いたか（`tool-started` の `parentToolUseId` があるか）。 */
   readonly nested: boolean
-  /**
-   * ツールが動き始めた時刻（呼び出し側が渡す現在時刻。`applySessionEvent` の `at`）。
-   * 表情を「作業中」に切り替えるかどうかの判定（`resolveExpression`）にだけ使う。
-   */
-  readonly startedAt: number
   /**
    * 失敗して終わったときの出力。成功したときと実行中は undefined
    * （**「失敗した」という印そのもの**を兼ねる）。**ツールの実行はレポートに出さない**
@@ -107,7 +102,6 @@ export type SessionRecord =
       readonly name: string
       readonly input: unknown
       readonly nested: boolean
-      readonly startedAt: number
       readonly result: { readonly content: string; readonly isError: boolean } | undefined
     }
 
@@ -128,7 +122,7 @@ export type SessionState = {
    * そのターンでまだ呼ばれていなければ空配列。
    */
   readonly speeches: readonly string[]
-  /** 直近のセリフに添えられた表情。ツールの実行中は「作業中」が優先される。 */
+  /** 直近のセリフ（`speak`）に添えられた表情。**表情の源はこれだけ**（自動の上書きは無い）。 */
   readonly speechExpression: Expression
   /**
    * 今のターンで `speak` が呼ばれたか（マーカー行の補助で拾ったセリフを、置き換えるか
@@ -220,14 +214,6 @@ export type SessionState = {
    * と違って `request` での巻き戻しは要らない）。まだ一度も失敗していなければ undefined。
    */
   readonly lastToolFailureAt: number | undefined
-  /**
-   * 直近でツールが終わった時刻。**「終わった瞬間に working だったツール」のときだけ更新する**
-   * （{@link finishTool}。短く終わって一度も working を出さなかったツールの終了で、
-   * クールダウンが誤って始まらないようにするため）。表情の「作業中」を保つクールダウンの
-   * 判定にだけ使う（`resolveExpression` の `lastToolFinishedAt`。`src/protocol/expression.ts`
-   * 「4.3 状態連動」）。まだ一度もそうしたツールが終わっていなければ undefined。
-   */
-  readonly lastToolFinishedAt: number | undefined
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -253,14 +239,13 @@ export const INITIAL_SESSION_STATE: SessionState = {
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
-  lastToolFinishedAt: undefined,
 }
 
 /**
  * イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。
  *
- * `at` はイベントが起きた時刻（`StampedEvent.at`）。`tool-started` の `startedAt` を記録する
- * ためだけに使う。`Date.now()` をここで呼ばないのは、この関数を純粋関数のまま保ち、
+ * `at` はイベントが起きた時刻（`StampedEvent.at`）。ターンの起点・終点と、ツールが失敗した
+ * 時刻を記録するのに使う。`Date.now()` をここで呼ばないのは、この関数を純粋関数のまま保ち、
  * **サーバとブラウザで同じ結果になる**ようにするため（docs/design.md 4.1）。
  */
 export function applySessionEvent(
@@ -328,7 +313,6 @@ export function applySessionEvent(
             name: event.name,
             input: event.input,
             nested,
-            startedAt: at,
             result: undefined,
           },
         ],
@@ -338,7 +322,6 @@ export function applySessionEvent(
             name: event.name,
             input: event.input,
             nested,
-            startedAt: at,
             failureOutput: undefined,
           },
           ...state.runningTools,
@@ -401,7 +384,6 @@ export function applySessionEvent(
           portraits: event.portraits,
           outfitAccents: event.outfitAccents,
           speechMarker: event.speechMarker,
-          workingSpeech: event.workingSpeech,
           editable: event.editable,
         },
         characterPacks: event.packs,
@@ -434,7 +416,7 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * docs/requirements.md 4.2）。落としても `request` の数と順番は変わらないので、
  * `protocol/main-view.ts` の `groupIntoTurns` が振るターンの通し番号はずれない。
  *
- * **`tool` は `toolUseId` / `nested` / `startedAt`（突き合わせや表情の判定にしか使わない内部の
+ * **`tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の
  * 付随情報）を落とす**（メインビューの部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。
  * docs/coding-standards.md「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを
  * 暗黙に持ち越さない）。
@@ -448,20 +430,6 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
     return [record]
   }
   return [{ kind: "tool", name: record.name, input: record.input, result: record.result }]
-}
-
-/**
- * いま出す表情。決め方の正典は `resolveExpression`（src/protocol/expression.ts）。ここは
- * `SessionState` の該当する値（実行中のツール・直近の `speak` の表情）を渡すだけ。
- * `now` は経過時間の判定に要る現在時刻（呼び出し側が渡す。`Date.now()` はここでは呼ばない）。
- */
-export function currentExpression(state: SessionState, now: number): Expression {
-  return resolveExpression(
-    state.runningTools,
-    state.speechExpression,
-    state.lastToolFinishedAt,
-    now,
-  )
 }
 
 /**
@@ -568,12 +536,6 @@ function withMarkerFallback(state: SessionState): SessionState {
  * （対応が取れない結果を作らない）。`isError` が true のときは `lastToolFailureAt` に `at` を
  * 打ち（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）、出力を
  * {@link ToolActivity.failureOutput} に移す（サイドバーで開いて読むため）。
- *
- * `lastToolFinishedAt` は、**この瞬間の表情が `working` だったときだけ** `at` に更新する
- * （フィルタ前の `state.runningTools` で `resolveExpression` を引き直して判定する。フィルタ前を
- * 使うのは、いま終わろうとしているツール自身がその `working` を出していた可能性があるため）。
- * 一度も `working` を出さなかった短いツールの終了でクールダウンが誤って始まらないようにする
- * ため（`src/protocol/expression.ts`「4.3 状態連動」）。
  */
 function finishTool(
   state: SessionState,
@@ -595,13 +557,8 @@ function finishTool(
     name: record.name,
     input: record.input,
     nested: record.nested,
-    startedAt: record.startedAt,
     failureOutput: isError ? content : undefined,
   }
-
-  const wasWorking =
-    resolveExpression(state.runningTools, state.speechExpression, state.lastToolFinishedAt, at) ===
-    "working"
 
   return {
     ...state,
@@ -613,7 +570,6 @@ function finishTool(
     runningTools: state.runningTools.filter((running) => running.toolUseId !== toolUseId),
     finishedTools: [activity, ...state.finishedTools].slice(0, MAX_RECENT_FINISHED_TOOLS),
     lastToolFailureAt: isError ? at : state.lastToolFailureAt,
-    lastToolFinishedAt: wasWorking ? at : state.lastToolFinishedAt,
   }
 }
 

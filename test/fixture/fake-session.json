@@ -468,7 +468,7 @@
           }
         },
         {
-          "afterMs": 2600,
+          "afterMs": 20000,
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-tool-long-1",
@@ -477,14 +477,14 @@
           }
         },
         {
-          "afterMs": 2700,
+          "afterMs": 20100,
           "event": {
             "kind": "utterance",
-            "text": "## 長めのツールの場面\n\nこれは架空の本文で、実物の会話ではない。**ツールが「作業中」の遅延（1秒）を超えて走る**ので、立ち絵と吹き出しの両方が作業中になり、クールダウンが明けると上のセリフに戻る（`docs/requirements.md` 4.2 / 4.3）。\n"
+            "text": "## 長めのツールの場面\n\nこれは架空の本文で、実物の会話ではない。**ツールが20秒走っているあいだも、立ち絵の表情と吹き出しは直前の `speak`（えへん顔）のまま変わらない**（自動の上書きは 2026-09-17 に撤去した。`docs/requirements.md` 4.3）。作業中であることはサイドバーの「いま何をしているか」が伝える（この台本は `request` を流さないので、ターン進行中の立ち絵の動き `waiting` はここには出ない）。\n"
           }
         },
         {
-          "afterMs": 2800,
+          "afterMs": 20200,
           "event": {
             "kind": "turn-finished",
             "status": "success"
