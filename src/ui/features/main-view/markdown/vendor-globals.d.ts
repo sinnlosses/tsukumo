@@ -19,6 +19,12 @@ declare global {
       readonly startOnLoad: boolean
       readonly theme: string
       readonly securityLevel: string
+      /**
+       * 失敗したときに mermaid 自身がエラーの絵を `<pre class="mermaid">` の中へ描くのを止める。
+       * `true` だと `run()` は絵を描くかわりに Promise を reject する
+       * （`src/ui/features/main-view/markdown/mermaid-block.tsx` が拾う）。
+       */
+      readonly suppressErrorRendering: boolean
     }) => void
     readonly run: (options: { readonly nodes: readonly Element[] }) => Promise<void>
   }

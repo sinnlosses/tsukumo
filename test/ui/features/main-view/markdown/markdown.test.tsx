@@ -190,6 +190,26 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     await flushEffects()
   })
 
+  it("MermaidBlock は失敗したら mermaid のエラー図を描かず、コードとエラー文を出す", async () => {
+    // この環境（happy-dom。実際のネットワークが無い）では同梱スクリプトの読み込み自体が失敗する
+    // （上のテストの flushEffects と同じ経路）。mermaid のグローバルを差し替えて構文エラーを
+    // 再現する代わりに、**この自然に起きる失敗を「壊れたときの経路」として検証する**
+    // （読み込み失敗も構文エラーも MermaidBlock は同じ catch で受け止める設計のため）。
+    const { container } = render(<Markdown text={"```mermaid\nflowchart TD\nA --> B\n```"} />)
+
+    await flushEffects()
+
+    // mermaid 自身のエラー図（pre.mermaid の中身が書き換わる形）ではなく、専用の表示に替わる。
+    expect(container.querySelector("pre.mermaid")).toBeNull()
+    const broken = container.querySelector(".mermaid-broken")
+    expect(broken).not.toBeNull()
+    // (b) 元のコードがそのまま読める。
+    expect(broken?.querySelector("pre > code")?.textContent).toContain("flowchart TD")
+    // (c) エラー文が出ている。
+    const errorText = container.querySelector(".mermaid-error")?.textContent
+    expect(errorText).toBeTruthy()
+  })
+
   it("```chart フェンスは ChartBlock（.chart-block > canvas）に振り分けられる", async () => {
     const { container } = render(<Markdown text={'```chart\n{"type":"bar","data":{}}\n```'} />)
 

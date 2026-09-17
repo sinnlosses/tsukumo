@@ -3,6 +3,15 @@
 //
 // もとは別ファイルの処理だったものを、部品の `useEffect` に持ち替えた（移行の段6。
 // docs/design.md 6.4）。
+//
+// **構文エラーのときはコードとエラー文を出す（mermaid のエラー図は出さない）**。
+// `initialize({ suppressErrorRendering: true })` を立てると、mermaid は失敗時に
+// 自分で `<pre class="mermaid">` の中へエラーの絵を描くかわりに `run()` の Promise を reject
+// する（`vendor/mermaid.min.js` を確認済み: このフラグが立っていると、内部の描画関数は
+// キャッチした例外をそのまま再送出する）。`mermaid.parse()` による事前判定は使わない
+// — 読み込み自体の失敗（同梱スクリプトが読めない）も含めて**1つの catch で受け止められる**ため
+// （読み込み失敗は `vendor-script.ts` が `Error(src)` を投げるので、エラー文はその URL になる。
+// まれにしか起きない経路なので、それ以上の作り込みはしない）。
 
 import { useEffect, useRef, useState, type ReactElement } from "react"
 
@@ -17,7 +26,7 @@ export type MermaidBlockProps = {
 
 export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   const nodeRef = useRef<HTMLPreElement>(null)
-  const [failed, setFailed] = useState(false)
+  const [error, setError] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     let cancelled = false
@@ -28,12 +37,17 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
         if (cancelled || node === null) {
           return
         }
-        mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict" })
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "dark",
+          securityLevel: "strict",
+          suppressErrorRendering: true,
+        })
         return mermaid.run({ nodes: [node] })
       })
-      .catch(() => {
+      .catch((reason: unknown) => {
         if (!cancelled) {
-          setFailed(true)
+          setError(mermaidErrorText(reason))
         }
       })
 
@@ -42,9 +56,36 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
     }
   }, [])
 
+  if (error !== undefined) {
+    return (
+      <div className="mermaid-broken">
+        <pre>
+          <code>{props.code}</code>
+        </pre>
+        <p className="mermaid-error">{error}</p>
+      </div>
+    )
+  }
+
   return (
-    <pre ref={nodeRef} className="mermaid" data-mermaid-failed={failed ? "yes" : undefined}>
+    <pre ref={nodeRef} className="mermaid">
       {props.code}
     </pre>
   )
+}
+
+/**
+ * mermaid が投げる例外からエラー文を取り出す。mermaid 自身の `handleError`
+ * （`vendor/mermaid.min.js`）が `"str" in error` で振り分けているのと同じ判定
+ * （構文エラーは `.str` に人が読める文面を持つが `Error` のインスタンスとは限らない）。
+ * どちらでもなければ `Error#message` を使い、それも無ければ文字列化する。
+ */
+function mermaidErrorText(reason: unknown): string {
+  if (typeof reason === "object" && reason !== null && "str" in reason) {
+    const { str } = reason
+    if (typeof str === "string") {
+      return str
+    }
+  }
+  return reason instanceof Error ? reason.message : String(reason)
 }

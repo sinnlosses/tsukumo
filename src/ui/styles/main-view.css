@@ -297,3 +297,14 @@ a:hover {
   padding: 0 0.25rem;
   border-radius: 0.25rem;
 }
+/* mermaid の構文エラー（MermaidBlock）。元のコードは通常のコードブロックと同じ見た目
+   （`.detail-block pre` に乗る）のまま残し、その下にエラー文を添える。**新しい色は作らない**
+   （state-ng は表の badge-ng / note-ng と同じ「問題」の色。13.1 原則5）。 */
+.mermaid-error {
+  margin: 0.4rem 0 0;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--state-ng);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  white-space: pre-wrap;
+}

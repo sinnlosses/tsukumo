@@ -63,7 +63,7 @@ export const REPORT_NOTATION_PROMPT = `## レポートの記法（tsukumo）
 | 比較・対応・件数 | GFM のテーブル（列揃えは \`:---:\` / \`---:\` が使える） | 3行以上あるときだけ。1〜2行なら文で書く |
 | 見比べる塊（案A と案B） | <div class="cols"><div class="card">…</div></div> | 左右を**同時に**見るときだけ。順に読むものは表か箇条書き |
 | 長い根拠・ログ・脇道 | <details><summary>見出し</summary>…</details> | 畳む前に、本文だけで結論が通るか確かめる |
-| 流れ・依存・状態の遷移 | \`\`\`mermaid のフェンス（flowchart / sequenceDiagram / stateDiagram） | 関係するものが3つ以上あるときだけ。2つなら文で書く |
+| 流れ・依存・状態の遷移 | \`\`\`mermaid のフェンス（flowchart / sequenceDiagram / stateDiagram） | 関係するものが3つ以上あるときだけ。2つなら文で書く。**ラベルの引用符は \`#quot;\`**（\`\\"\` は構文エラーになる） |
 | 数の推移・割合 | \`\`\`chart のフェンス（Chart.js の設定を JSON で書く） | 数値そのものを読ませたいなら表にする。**色は指定しなくてよい**（系列の色分けと暗い配色への追随は済んでいる） |
 | 座標のある図・mermaid の記法に無い図 | <svg viewBox="0 0 240 80"> の中に rect / line / path / text | mermaid で描ける形（流れ・依存・遷移）なら mermaid を使う |
 | 手順 | 番号付きリスト | 順番に意味が無いなら箇条書き |
