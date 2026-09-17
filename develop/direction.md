@@ -33,15 +33,29 @@
   `src/protocol/character.ts`（`CharacterInfo` / `CharacterDefinition` / パース）と
   `balloon-track.tsx` の prop から消える。**画面の編集項目には出ていない**ので UI の削除は不要
 
-### 一緒に決めるもの
+### 一緒に決めたこと（2026-09-17 の会話で確定）
 
-- `REQUIRED_EXPRESSIONS` から `working` を外すか。必須だった根拠は「コードが名前で直接参照する」
-  ことだけで、それが消える。外すと `working` は `proud` / `flustered` と同じ「あれば使う」
-  扱いになり、キャラクター作成画面で立ち絵2枚を要求している所（`character-create.tsx`）も
-  1枚になる。**外すのを推奨**
-- パック定義の `expressions.working` のラベル。`working` が感情に戻るので、`tsukumo` の
-  「本気」はそのままでよいが、`tsukumo-spirit` と `local` の「作業中」は状態の名前なので
-  合わなくなる
+- **`REQUIRED_EXPRESSIONS` から `working` を外す。** 必須だった根拠は「コードが名前で直接
+  参照する」ことだけで、それが消える。必須は `default` だけになり、キャラクター作成画面
+  （`src/ui/features/appearance/character-create.tsx`）と保存の境界
+  （`src/adapter/character-edit.ts`）で立ち絵2枚を要求している所も1枚になる。
+  **`characters/local` は既に `portraits` が `default` だけ**なので、実態に追いつく変更でもある
+- **識別子を `working` から `thinking` へ改名する。** 自動の上書きが消えて「作業中」の意味が
+  剥がれるため（`docs/glossary.md`「コード上の識別子も用語集に合わせる」）。連動するのは
+  `src/protocol/expression.ts` の `Expression` / `EXPRESSIONS`、`character.json` 3パックの
+  `expressions` と `portraits` のキー、立ち絵のファイル名（`tsukumo/working.png` →
+  `thinking.png`、`tsukumo-spirit/working.svg` → `thinking.svg`）、`src/adapter/character-edit.ts`、
+  `src/ui/features/appearance/`、テスト。**`characters/local` は立ち絵を持っていないので
+  `character.json` のキーだけ**（gitignore 済みなのでコミットには乗らない）
+- **ラベルは `tsukumo` が「ふむ」**（考えこむ）。立ち絵が顎に手を当てて画面を見る思案の絵で、
+  「本気」（気合）の絵ではないため。4枚のうち唯一の「静」の絵で、`persona.md` の「たまに古い
+  言い回しが顔を出す（「ふむ」）」とも一致する。`tsukumo-spirit` と `local` の「作業中」も
+  同じ枠の感情の語に直す
+- **`persona.md` に表情の選び分けを1行足す。** 出番を広げるにはラベルより「いつ選ぶか」を
+  書くほうが効く（今は「迷ったら `default`」しか無く、実際ほぼ `default` になっている）。
+  どの表情がどの場面かはキャラクターごとに違うので、置き場所はコードではなくパック側（原則4）。
+  `tsukumo` の案: 調べる前・結果を突き合わせるとき・判断に迷うときは「ふむ」、うまくいったら
+  「えへん」、外したら「あわわ」、それ以外は「にっと」
 
 ### タスクにしないと決めたこと
 
