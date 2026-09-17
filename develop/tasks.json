@@ -218,5 +218,49 @@
     "status": "done",
     "passes": true,
     "evidence": "characters/{tsukumo,tsukumo-spirit}/character.json の thinking を「ふむ」「思案」にし、各 persona.md に選び分けを1行足した（README と tsukumo-spirit/thinking.svg の残存語も追従。local は .gitignore 済みでコミットに乗らない）。bun run check 629 pass / 0 fail（T-180 と同数、テスト増減なし）。grep -rn \"本気|作業中\" characters は0件。実関数（parseCharacterDefinition → expressionChoices）で speak の説明を再現し「表情。default（にっと） / thinking（ふむ） / …」を目視（走行中のプロセスは起動時の旧ラベルのままで、次の起動から反映）。"
+  },
+  {
+    "id": "T-182",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "「立ち絵の位置を固定する」を仕様ごと撤去する",
+    "task": "## 背景\n\n「見た目」の引き出し（`src/ui/features/appearance/appearance.tsx`）にチェックボックス\n「立ち絵の位置を固定する」がある。値は `src/ui/lib/portrait-fixed.ts` が `localStorage` の\n`tsukumo-portrait-fixed` に持ち、読むのは `src/ui/features/character-view/character-view.tsx` の\n`resolveMotion`（固定なら `resolvePortraitMotion` を呼ばず `undefined` を返す）。\n\nユーザーが「見た目」の引き出しごと消す方針を決めたのに伴い、この設定は仕様から外す。\n動きを止める道は `prefers-reduced-motion: reduce`（`src/ui/styles/theme.css`）が残るので、\n止める手段がまるごと無くなるわけではない。\n\n## 決まっていること（蒸し返さない）\n\n- 撤去する（代わりの口は作らない）。ユーザーの指示「「立ち絵の位置を固定する」は仕様として外して」\n\n## やること\n\n1. `src/ui/lib/portrait-fixed.ts` と `test/ui/lib/portrait-fixed.test.ts` を消す\n2. `appearance.tsx` からチェックボックスと `portraitFixed` の state を外す\n3. `character-view.tsx` の `resolveMotion` を `resolvePortraitMotion` の呼び出しだけにする\n4. `test/ui/features/appearance/appearance.test.tsx` と\n   `test/ui/features/character-view/character-view.test.tsx` の、固定にまつわるケースを消す\n   （`PORTRAIT_STORAGE_KEY` / `PORTRAIT_FIXED_STORAGE_KEY` を使っているもの）\n5. `src/ui/styles/character.css` の「「固定」・reduced-motion のときは属性ごと無い」という説明を、\n   reduced-motion だけの話に直す\n6. ドキュメントを直す: `docs/requirements.md` 4.3 の「**利用者は「固定」を選べる**」の箇条、\n   `docs/design.md` 6.5 の同じ箇条、13.6 の表の「立ち絵を動かすか固定するか」の行、\n   6.1 部品の木の `<Appearance>` の説明（「色3つ・立ち絵の固定・比率のリセット」）\n\n## 完了条件\n\n- `grep -rn \"portrait-fixed\\|portraitFixed\\|立ち絵の位置を固定\\|動かすか固定\" src/ test/ docs/requirements.md docs/design.md` が 0 件\n- `bun run check` が通る（テストが減った分だけ件数が下がるのは可。減った数を evidence に書く）\n- 目視: `bun run start` で起こし、引き出しにチェックボックスが無いことと、立ち絵が今までどおり\n  動くことを確かめる\n\n## 注意\n\n- `docs/history/` は過去の記録なので直さない\n- 索引の行に本文を流し込む事故がある（CLAUDE.md「ドキュメントを編集するときの罠」）。\n  編集の前後で `grep -c '^#\\{2,3\\} ' docs/requirements.md` と同 `docs/design.md` の数が\n  変わっていないか確かめる\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-183",
+    "difficulty": "opus",
+    "loopable": "N",
+    "dependencies": [],
+    "summary": "キャラクター画面（SPA の別画面）の中身とデザインを決める",
+    "task": "## 背景\n\nキャラクターパックの新規作成（`src/ui/features/appearance/character-create.tsx`）と、立ち絵・\n差し色の差し替え（`src/ui/features/appearance/character-edit.tsx`）は、いま画面右下の「見た目」\nボタンから開く `<dialog>`（`appearance.tsx`）の中にある。`docs/design.md` 13.6 が\n「常設の要素は差し引きゼロ」として、元々そこにあった「領域の比率を既定に戻す」ボタンと\n置き換えた形。\n\nユーザーはこれを「結構UI的に難しいし、オプションみたいなイメージを持つ」として、作成・編集を\n別の画面へ出し、引き出しそのものを消す方針を決めた。\n\nいまのページは `src/ui/main.tsx` → `<Layout>`（`src/ui/features/layout/layout.tsx`）の1枚で、\nルーターも画面の切り替えも無い。`<Layout>` は領域の比率の state を持ち、`renderAppearance` で\n`<Appearance>` を差し込んでいる（`<Layout>` は `<Appearance>` を import しない）。\n\n## 決まっていること（蒸し返さない）\n\n- 形は **SPA（同じ1枚のページの中で画面を切り替える）**。別 URL の独立したページは作らない\n  （ユーザー「SPAのようなものを想定していたよ」）\n- **色3つ（`ground` / `surface` / `ink`）もキャラクター画面に置く。** ユーザー「キャラクター作成と\n  テーマカラーはセットの認識だから、キャラクター画面で設定する手順の一環として捉えてほしい」\n- **「見た目」の引き出し（`<Appearance>` の `<dialog>`）は消す**（ユーザー「右下の「見た目」\n  そのものを消すほうが良さそう?」）\n- 右下に残すのは**「領域の比率を既定に戻す」ボタンだけ**\n- 「立ち絵の位置を固定する」は仕様から外す（T-182 の担当。新しい画面へ持ち込まない）\n- デザインはユーザーと一緒に決める（ユーザー「デザインとかどうかな?一緒に考えてほしい」）\n\n## 解くべき論点\n\n- **画面の切り替えの持ち方**: state 1つで入れ替えるか、`history.pushState` で URL を持たせるか\n  （リロードで戻れるか・Orca のタブの戻るが効くか。いま依存しているホストの口は `showView` だけ）\n- **入る口と戻る口**: サイドバー「セッション情報」のキャラクターの `<select>` の隣か、別の口か。\n  会話の画面へ戻る口をどこに置くか\n- **画面に何をどう並べるか**: いまの `<CharacterEdit>` は表情4つ × 立ち絵 ＋ 衣装4つ × 差し色、\n  `<CharacterCreate>` は名前 ＋ `default` の立ち絵 ＋ 差し色1色。作ると変えるを1画面に並べるのか、\n  一覧 → 個別のような段にするのか\n- **寿命の違うものを1画面に並べる見せ方**: 差し色（`accent` / `outfitAccents`）はパックの持ち物\n  （`~/.tsukumo/characters/<name>/character.json`）、色3つは利用者の設定（`localStorage`）。\n  `docs/design.md` 13.6 は「寿命で割り、置き場所そのものでその違いを表す」としているので、\n  **13.6 のこの原則をどう書き換えるかまで決める**\n- **会話が進んでいる最中にこの画面へ移ったとき**の扱い（`useSession` の state は生きたままなので、\n  戻ったときに追いついているか。セリフ・レポートの取りこぼしが起きないか）\n- 狭い画面（`src/ui/styles/narrow-screen.css` の 760px 以下）でどう見えるか\n- 実装が1コミットに収まるか。収まらないなら T-184 / T-185 の本文を分け直す\n\n## やること\n\n1. 上の論点に案を出し、`frontend-design` スキルでデザインの方向を付ける。**ユーザーと対話して\n   決める**（このタスクの成果物は決定で、コードは書かない）\n2. 決めた内容を `docs/design.md` に書く。少なくとも 13.6（設定の置き場所の表と前後の文）・\n   6.1（部品の木）・7.1（画面から作るときの置き場と受け取り方）に手が入る。**決定の日付と、\n   なぜその形なのかを添える**（採らなかった案も1行ずつ）\n3. 画面の仕様として `docs/requirements.md` 4 章に書くべきことがあれば足す\n4. T-184 / T-185 の `task` 本文を、決めた内容に合わせて書き直す\n\n## 完了条件\n\n- `docs/design.md` の 13.6 の表と 6.1 の部品の木が、決めた形と一致している\n- T-184 / T-185 の `task` 本文に、実装の手が迷わない粒度で決定が書かれている\n- `bun run check` が通る（ドキュメントだけの変更でも通す）\n- 編集の前後で `grep -c '^#\\{2,3\\} ' docs/design.md` と同 `docs/requirements.md` の数が変わらない\n\n## 注意\n\n- **実装しない。** `src/` は触らない\n- `docs/history/` には書かない\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-184",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-183"],
+    "summary": "決めた形でキャラクター画面を作り、作成・編集・色の口を移す",
+    "task": "## 背景\n\nT-183 で決めた形に従って、`src/ui/features/appearance/` にある3つ — 色3つの欄（`appearance.tsx`）・\n立ち絵と差し色の差し替え（`character-edit.tsx`）・新しいパックを作る口（`character-create.tsx`）—\nを、ページの中の別画面へ移す。\n\nいまのページは `src/ui/main.tsx` → `<Layout>`（`src/ui/features/layout/layout.tsx`）の1枚で、\n画面の切り替えは無い。色の読み書きは `src/ui/features/appearance/appearance-color.ts`、\n立ち絵と差し色のコマンドは `src/protocol/command.ts` → `src/adapter/character-edit.ts` で、\n**サーバ側の経路はこのタスクで変えない**（動かすのは `src/ui/` の中だけ）。\n\n## やること\n\n1. T-183 が `docs/design.md` に書いた形をそのまま読み、そのとおりに作る。\n   **このタスクで設計を決め直さない**（読んで足りなければ、進めずに理由を `evidence` に書いて\n   T-183 へ差し戻す）\n2. 画面の切り替えと、入る口・戻る口を作る\n3. `<CharacterEdit>` / `<CharacterCreate>` と色3つの欄を新しい画面へ移す。\n   **`appearance-color.ts` の `localStorage` の鍵は変えない**（変えると使っている人の設定が消える）\n4. テストを移す（`test/ui/features/appearance/` の4つ）。**入る口・戻る口・画面が入れ替わること**の\n   テストを足す\n\n## 完了条件\n\n- `bun run check` が通る。テストの件数が減っているなら、どのテストをなぜ消したかを `evidence` に書く\n- 目視: `bun run start` で起こし、(i) 新しい画面へ入れる (ii) 立ち絵の差し替え・衣装ごとの差し色・\n  新規作成・色3つが今までどおり効く (iii) 会話の画面へ戻れて、戻ったあともセリフとレポートが\n  追いついている — の3点を確かめ、何をどう確かめたかを `evidence` に書く\n- `docs/design.md` の記述と実装が一致している（ズレたら design.md 側も同じコミットで直す）\n\n## 注意\n\n- **「見た目」の引き出しを消すのは T-185。** このタスクでは引き出しが残っていてよい（中身が減る）\n- 立ち絵の素材も会話も外へ出さない（CLAUDE.md「会話内容の扱い」）\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-185",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-182", "T-184"],
+    "summary": "「見た目」の引き出しを消し、右下を比率リセットに戻す",
+    "task": "## 背景\n\n`<Appearance>`（`src/ui/features/appearance/appearance.tsx`）は右下の「見た目」ボタンで開く\n`<dialog>` で、`docs/design.md` 13.6 が「常設の要素は差し引きゼロ」として、元々そこにあった\n「領域の比率を既定に戻す」ボタンと置き換えたもの。T-182 で立ち絵の固定が、T-184 で色3つと\n作成・編集の口が出ていくので、残るのは比率のリセットと「閉じる」だけになる。\n\n比率を戻す関数は `<Layout>` の内側にあり、`renderAppearance(onResetSplit)` という形で\n`<Appearance>` へ渡している（`layout.tsx` の冒頭のコメントに理由がある）。\n\n## やること\n\n1. `<Appearance>` と、`src/ui/styles/appearance.css` のうち引き出しだけのもの\n   （`.appearance-drawer` / `.appearance-trigger`）を消す。`trapTabKey` も一緒に消える\n2. 右下に「領域の比率を既定に戻す」ボタンを常設で戻す。`<Layout>` が比率の state を持っているので、\n   `renderAppearance` を介さず `<Layout>` の中で完結できるなら props を1つ減らす\n   （`layout.tsx` 冒頭のコメントと `src/ui/main.tsx` の配線も直す）\n3. `src/ui/styles/narrow-screen.css` の「畳んでいる間は仕切り・「見た目」を開く口を出さない」の\n   規則と説明を、新しい常設の要素に合わせて直す\n4. `test/ui/features/appearance/appearance.test.tsx` を、残った部品に合わせて直すか消す。\n   `test/ui/features/layout/` にリセットのボタンのテストが要るなら足す\n5. ドキュメント: `docs/design.md` 6.1 部品の木の `<Appearance>` の行、13.6 の表と\n   「引き出しは一時的に重なるもの」以下の段\n\n## 完了条件\n\n- `grep -rn \"appearance-drawer\\|appearance-trigger\\|renderAppearance\" src/ test/` が 0 件\n- `docs/design.md` に「見た目」の引き出しの説明が残っていない（`docs/history/` は対象外）\n- `bun run check` が通る\n- 目視: `bun run start` で起こし、広い画面と 760px 以下の両方で、右下のボタンが出ていて押すと\n  領域の比率が既定に戻ることを確かめる\n\n## 注意\n\n- T-184 が終わる前に着手しない（引き出しの中身がまだ残っている）\n- 索引の行に本文を流し込む事故がある（CLAUDE.md「ドキュメントを編集するときの罠」）\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
