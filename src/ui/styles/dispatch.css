@@ -214,7 +214,7 @@
   font: inherit;
 }
 
-/* 右下の入力ペイン（docs/requirements.md 4.7）。claude への依頼を送るフォームを持つ。 */
+/* 右下の入力ペイン（docs/requirements.md 4.7）。キャラクターへの依頼を送るフォームを持つ。 */
 .dispatch-form {
   display: flex;
   flex-direction: column;

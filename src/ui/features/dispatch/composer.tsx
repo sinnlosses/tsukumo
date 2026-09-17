@@ -30,7 +30,19 @@ import {
 } from "./command-suggestions.tsx"
 import { TurnStatus } from "./turn-status.tsx"
 
-const PLACEHOLDER = "claude への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）"
+const PLACEHOLDER_OPERATION_HINT = "（Enter で改行、Command+Enter で送信、/ でコマンド補完）"
+
+/**
+ * 入力欄のプレースホルダ。**依頼先はキャラクター**（2026-09-16
+ * ユーザーの指摘。「claude」は素の呼び方で目的と食い違う）なので、`character.name`
+ * から組み立てる。キャラクターがまだ届いていない・名前が無いときは、名前を使わずに
+ * 依頼を書く操作だけを伝える（`"claude"` へ戻さない。原則4「キャラクターの中身を
+ * コードに書かない」）。
+ */
+function composerPlaceholder(characterName: string | undefined): string {
+  const subject = characterName === undefined ? "" : `${characterName}への`
+  return `${subject}依頼を書く${PLACEHOLDER_OPERATION_HINT}`
+}
 
 /** IME の変換確定中か。`isComposing` に加え、対応していない古いブラウザ向けに `keyCode` も見る。 */
 function isComposingEvent(event: KeyboardEvent<HTMLTextAreaElement>): boolean {
@@ -44,6 +56,7 @@ export function Composer(): ReactElement {
   const [suggestionsDismissed, setSuggestionsDismissed] = useState(false)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 
+  const placeholder = composerPlaceholder(state.character?.name)
   const pendingActive = state.pending.length > 0
   const matches =
     suggestionsDismissed || !shouldShowCommandSuggestions(text, pendingActive)
@@ -129,7 +142,7 @@ export function Composer(): ReactElement {
         <textarea
           ref={textAreaRef}
           className="dispatch-text"
-          placeholder={PLACEHOLDER}
+          placeholder={placeholder}
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}

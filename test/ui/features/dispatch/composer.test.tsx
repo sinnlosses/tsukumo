@@ -2,11 +2,22 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
+import { type CharacterInfo } from "../../../../src/protocol/character.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/protocol/session-state.ts"
 import { Composer } from "../../../../src/ui/features/dispatch/composer.tsx"
 import { SessionContext, type SessionContextValue } from "../../../../src/ui/stores/session.tsx"
 
 // フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
+const FIXTURE_CHARACTER: CharacterInfo = {
+  pack: "架空パック",
+  name: "架空の名前",
+  accent: undefined,
+  expressions: [],
+  portraits: { default: undefined, working: undefined, proud: undefined, flustered: undefined },
+  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+  speechMarker: undefined,
+  editable: false,
+}
 
 afterEach(() => {
   cleanup()
@@ -181,5 +192,21 @@ describe("Composer", () => {
     expect(backward).toBe(true)
     expect(calls).toEqual([])
     expect(textArea().value).toBe("架空の依頼")
+  })
+
+  it("キャラクターの名前があるときは、プレースホルダにその名前が出る", () => {
+    renderComposer({ character: FIXTURE_CHARACTER })
+
+    expect(textArea().placeholder).toBe(
+      "架空の名前への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）",
+    )
+  })
+
+  it("キャラクターがまだ届いていない・名前が無いときは、名前を使わない言い方に落ちる", () => {
+    renderComposer({ character: undefined })
+
+    expect(textArea().placeholder).toBe(
+      "依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）",
+    )
   })
 })
