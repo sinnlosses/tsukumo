@@ -355,6 +355,12 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 ときだけ `state.model` を更新する（一致しなければ何もせず、次の `init` を待つだけにする。
 知らない値でサイドバーを誤った値に倒さないため）。
 
+**`local_command_run` は SDK 0.3.274 で入った**（0.3.268 には無い。2026-09-17 に両方で実測）。
+古い SDK では `assistant` に `local_command_source`（英語の文面だけ）と `result` の
+`local_command`（コマンド名だけで引数を持たない）しか来ず、**どちらからもモデル名を構造的に
+取り出せない**。`package.json` の下限をこれより下げると、この経路は黙って効かなくなる
+（`init` を待つ元の1ターン遅れに戻るだけで、テストは通ってしまう）。
+
 イベントは**時刻を持って**送る: `StampedEvent = { at: number; event: SessionEvent }`。`at` は
 サーバの `Date.now()`。reducer は `applySessionEvent(state, event, at)`（いまの第3引数 `now` と同じ）。
 **ブラウザ側で `Date.now()` を reducer に渡さない**（両側の状態が同じになるように、時刻はイベントの
