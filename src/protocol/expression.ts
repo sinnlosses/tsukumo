@@ -24,7 +24,7 @@ export const EXPRESSIONS: readonly Expression[] = ["default", "working", "proud"
 /**
  * **立ち絵が必ず要る表情**（`characters/README.md`）。`default` は表情の指定が無いときの
  * 落とし先で、コードが名前で直接参照するので「あるものだけ」で済ませられない。画面から
- * これを消せないのも同じ理由（消せる表情は {@link REMOVABLE_EXPRESSIONS} のほうだけ）。
+ * これを消せないのも同じ理由（消せる表情は {@link RemovableExpression} のほうだけ）。
  *
  * **`working` を必須に据えた根拠（ツールの実行中に自動で切り替える先）は、自動の上書きを
  * 撤去した 2026-09-17 に失効している。** いまは `speak` で選べる普通の表情の1つなので、
@@ -36,9 +36,6 @@ export type RequiredExpression = (typeof REQUIRED_EXPRESSIONS)[number]
 
 /** 画面から立ち絵を**消せる**表情（必須の2つを除いた残り）。 */
 export type RemovableExpression = Exclude<Expression, RequiredExpression>
-
-export const REMOVABLE_EXPRESSIONS: readonly RemovableExpression[] =
-  EXPRESSIONS.filter(isRemovableExpression)
 
 /** 衣装の全体。並びは画面に出す順（軽いほうから重いほうへ）。 */
 export const OUTFITS: readonly Outfit[] = ["default", "light", "normal", "heavy"]
