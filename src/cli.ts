@@ -104,18 +104,20 @@ async function main(args: readonly string[]): Promise<number> {
   // 乗せる）。ディスクに置かないので古い成果物を配る事故が起きず、`.ts` / `.css` を直して起こし直す
   // だけで反映される。組み立てに失敗したらページが動かないので、**ここは起動時の前提不足として
   // 即時終了する**（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の例外側）。
+  // **止めるときも `bun build` の理由を添える**（見張り中の失敗と同じ扱い。理由が無いと、
+  // 起動できない側は手元で `bun build` を打ち直すしか手が無くなる）。
   const [styleSheet, uiScript] = await Promise.all([buildStyleSheet(), buildUiScript()])
-  if (styleSheet === undefined) {
-    process.stderr.write("tsukumo: CSS を組み立てられない\n")
+  if (!styleSheet.ok) {
+    process.stderr.write(`tsukumo: CSS を組み立てられない\n${styleSheet.reason}\n`)
     return 1
   }
-  if (uiScript === undefined) {
-    process.stderr.write("tsukumo: ブラウザ側スクリプトを組み立てられない\n")
+  if (!uiScript.ok) {
+    process.stderr.write(`tsukumo: ブラウザ側スクリプトを組み立てられない\n${uiScript.reason}\n`)
     return 1
   }
   // 組み立てたものの持ち主はここ（ディスクに置かない）。**`TSUKUMO_WATCH_UI` のときだけ
   // 組み立て直したものへ丸ごと差し替わる**ので、サーバには取り出し口だけを渡す。
-  let viewAssets = { uiScript, styleSheet }
+  let viewAssets = { uiScript: uiScript.content, styleSheet: styleSheet.content }
 
   // 偽の駆動を選んだときは台本が要る。無ければ起こす意味が無いので、起動時の前提不足として扱う。
   const fakeScript = config.driver === "fake" ? readFakeScript() : undefined
@@ -268,7 +270,14 @@ async function main(args: readonly string[]): Promise<number> {
         pushRefresh(viewers, rebuilt.target)
       },
       // 組み立て直せなくても前の版が配られたままなので、知らせるだけで続ける。
-      onFailure: (reason) => process.stderr.write(`tsukumo: ${reason}\n`),
+      // 理由（`bun build` の出力）はターミナルにだけ出す — ブラウザの画面には出さない
+      // （2026-09-17 決定）。
+      onFailure: (failure) => {
+        process.stderr.write(`tsukumo: ${failure.reason}\n`)
+        if (failure.detail !== undefined && failure.detail !== "") {
+          process.stderr.write(`${failure.detail}\n`)
+        }
+      },
     })
   }
 

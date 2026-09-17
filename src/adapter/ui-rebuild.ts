@@ -29,11 +29,25 @@ const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "ui"]
  */
 const REBUILD_DEBOUNCE_MS = 120
 
-/** 組み立て直せなかったときの理由。**定型文だけ**を並べる（届いた値やパスを混ぜない）。 */
+/**
+ * 組み立て直せなかったときの見出し。**1行の定型文**で、届いた値やパスを混ぜない
+ * （具体的な理由は {@link UiRebuildFailure} の `detail` に分けて持つ）。
+ */
 export const UI_REBUILD_FAILURE_REASON = {
   buildFailed: "ブラウザ側を組み立て直せなかった（前の版を配り続ける）",
   watchFailed: "src/ui/ を見張れなくなった（上げ直すまで反映されない）",
 } as const
+
+/** 組み立て直せなかったことの知らせ。見出しと、あるなら具体的な理由。 */
+export type UiRebuildFailure = {
+  /** {@link UI_REBUILD_FAILURE_REASON} のどれか。 */
+  readonly reason: string
+  /**
+   * `bun build` が書いた理由（複数行。見張りが止まったときのように無いこともある）。
+   * 中身は `BundleResult` の `reason` と同じで、**会話は通らない**（bundle.ts の型の注記）。
+   */
+  readonly detail: string | undefined
+}
 
 /** 組み立て直した結果。**スクリプトと CSS の両方**が揃ったときだけ届く。 */
 export type Rebuilt = {
@@ -45,8 +59,8 @@ export type Rebuilt = {
 
 export type UiSourceWatchOptions = {
   readonly onRebuilt: (rebuilt: Rebuilt) => void
-  /** 理由は {@link UI_REBUILD_FAILURE_REASON} のどれか。呼び出し側が1行で知らせる。 */
-  readonly onFailure: (reason: string) => void
+  /** 呼び出し側が見出しの1行と、あれば理由を続けて知らせる。 */
+  readonly onFailure: (failure: UiRebuildFailure) => void
 }
 
 export type UiSourceWatcher = {
@@ -93,7 +107,7 @@ export function watchUiSource(options: UiSourceWatchOptions): UiSourceWatcher {
   // 見張りが続けられなくなっても常駐プロセスは落とさない（`error` を拾わないと throw になる）。
   watcher.on("error", () => {
     watcher.close()
-    options.onFailure(UI_REBUILD_FAILURE_REASON.watchFailed)
+    options.onFailure({ reason: UI_REBUILD_FAILURE_REASON.watchFailed, detail: undefined })
   })
 
   return {
@@ -112,12 +126,18 @@ export function watchUiSource(options: UiSourceWatchOptions): UiSourceWatcher {
  */
 async function rebuild(target: RefreshTarget, options: UiSourceWatchOptions): Promise<void> {
   const [uiScript, styleSheet] = await Promise.all([buildUiScript(), buildStyleSheet()])
-  if (uiScript === undefined || styleSheet === undefined) {
-    options.onFailure(UI_REBUILD_FAILURE_REASON.buildFailed)
+  if (!uiScript.ok || !styleSheet.ok) {
+    // **失敗した回は再試行しない**（`flush` は次の保存まで動かない）。直すには保存が要り、
+    // その保存でまた鳴るので、同じソースを組み立て直しても同じ理由が二重に出るだけになる。
+    const reasons = [uiScript, styleSheet].flatMap((result) => (result.ok ? [] : [result.reason]))
+    options.onFailure({
+      reason: UI_REBUILD_FAILURE_REASON.buildFailed,
+      detail: reasons.join("\n"),
+    })
     return
   }
 
-  options.onRebuilt({ target, uiScript, styleSheet })
+  options.onRebuilt({ target, uiScript: uiScript.content, styleSheet: styleSheet.content })
 }
 
 /**
