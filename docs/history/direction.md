@@ -17,15 +17,13 @@
 >
 >     at /Users/sinnlos/ghq/github.com/sinnlosses/tsukumo/src/ui/features/character-view/character-view.tsx:28:10
 >
-> 36 |   currentExpression,
+> 36 | currentExpression,
 >
 >        ^
 >
 > error: No matching export in "src/protocol/session-state.ts" for import "currentExpression"
 >
 >     at /Users/sinnlos/ghq/github.com/sinnlosses/tsukumo/src/ui/features/character-view/character-view.tsx:36:3
->
->
 
 タスクにしなかった。エラーは T-179（`e63f37e`）の作業途中に `bun run dev` の見張りが
 拾った一過性のもので、`bun build src/ui/main.tsx` も `tsc --noEmit` も現物では通る
