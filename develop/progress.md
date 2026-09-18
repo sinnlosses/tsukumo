@@ -1,6 +1,6 @@
 # 現在の状態
 
-最終更新: 2026-09-17（ユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
+最終更新: 2026-09-18（`docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
 原因は `src/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` を呼ぶだけで確認イベントを
 出しておらず、選んだ直後に次のバッチで `state.model` が古い値へ戻って見えていたこと（偽の駆動
 `fake-driver.ts` は最初から `session-info` の再送でこれをやっていたため、目視確認では気づけなかった）。
@@ -111,10 +111,21 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
   2026-09-16 実測で `docs/research/` の5ファイルと `docs/design.md` / `docs/requirements.md`。
   T-145 が `docs/design.md` 1章の1件だけを消す。**残りをまとめて直すかは未決**
 
+- **Tailwind を採るかは未決**（2026-09-18 に CSS の方式を検討して見送った）。採るなら
+  `--ground` / `--surface` / `--ink` / `--accent` と `color-mix` の導出を `@theme` へ移し、
+  `docs/design.md` 13章（正典）を書き直すことになる。**設計言語そのものの作り替え**なので、
+  CSS Modules（T-191）を通したあとに、それで足りたかどうかを見てから決める
+
 ## 注意
 
 次のセッションで踏み外しやすい点:
 
+- **CSS Modules へ移ると `bun build` の出力が2本になる**（2026-09-18 実測。
+  `error: cannot write multiple output files without an output directory`）。いまの
+  `src/adapter/bundle.ts` は stdout で受けてメモリに持つ形なので、そのままでは通らない。
+  あわせて `src/adapter/ui-rebuild.ts:148` が `.css` を**スタイルだけの差し替え**に倒しているが、
+  `.module.css` はハッシュ名が JS 側にも焼かれるので、**直さないと `bun run dev` の間だけ
+  古い JS + 新しい CSS で崩れた画面が残る**（T-191 の完了条件に入れてある）
 - **`SessionState.model` は「ターンの頭の値」**（2026-09-17 に SDK を直接叩いて実測）。
   出どころの `system` / `init` はターンのたびに、しかも**頭で**届くので、そのターンの中で
   `/model` が起こした変更は次の依頼まで載らない。**モデルまわりが「反映されない」ように
