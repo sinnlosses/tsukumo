@@ -1,5 +1,9 @@
 # 進捗のアーカイブ
 
+### 2026-09-17 ツール実行中の表情の自動上書きをやめた（T-179）
+
+`resolveExpression` とクールダウン（4000ms）・遅延（1000ms）の定数、`lastToolFinishedAt`、`currentExpression`、`workingSpeech`（3パック）と作業中の吹き出しを撤去し、**表情の源を `speak` の1つ**にした。撤去の理由は `docs/requirements.md` 4.3 に残してある（同じ案がまた出るため）。`working` は `speak` で選べる表情として残る。
+
 ### 2026-09-17 ランタイムは Bun のままと決めた（T-145）
 
 いま Node へ寄せ替えず、再検討は**箱が変わったときだけ**にした。規約「Bun固有APIに寄せない」は T-162 の決着どおり保ち、`src/adapter/bundle.ts` が `bun` コマンドに実行時依存している（退避先が完全でない）ことを規約の理由の側に明記した。`docs/design.md` 1章からタスク番号が消え、`docs/requirements.md` 7章に条件付きの保留が1行増えた。
