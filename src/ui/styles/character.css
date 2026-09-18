@@ -84,9 +84,7 @@
 }
 /* 立ち絵の動き（`docs/design.md` 6.5）。**「1枚の矩形」として transform（位置・大きさ・傾き・
    上下）と opacity だけを動かす**（素材の中身には触らない）。どの動きにするかは `<Portrait>`
-   が `data-motion` 属性で渡す（`src/protocol/portrait-motion.ts` の `resolvePortraitMotion`。
-   「固定」・reduced-motion のときは属性ごと無い＝この4つのどれも当たらず、
-   `portrait-fade-in`（登場）だけが残る）。
+   が `data-motion` 属性で渡す（`src/protocol/portrait-motion.ts` の `resolvePortraitMotion`）。
    `margin`（floor に立つ位置）は動かさない値なので、いずれの keyframes も **0%/100% を
    transform なし（＝上の margin だけで決まる位置）に揃えてある**。reduced-motion
    （`theme.css`）は `animation-iteration-count: 1` を強制するため、無限ループの呼吸・歩行も

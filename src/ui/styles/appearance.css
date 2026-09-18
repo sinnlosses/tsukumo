@@ -104,14 +104,6 @@
   justify-content: space-between;
   gap: 0.5rem;
 }
-.appearance-field-checkbox {
-  justify-content: flex-start;
-}
-.appearance-field-checkbox label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
 /* 新しいキャラクターを作る口（`character-create.tsx`）。名前の欄は行の右側に収める。 */
 .appearance-create-name {
   max-width: 9.5rem;

@@ -30,7 +30,6 @@ import {
 } from "../../../protocol/portrait-motion.ts"
 import { type SessionRecord } from "../../../protocol/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../protocol/turn-speech.ts"
-import { loadPortraitFixed } from "../../lib/portrait-fixed.ts"
 import { useSession } from "../../stores/session.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
@@ -87,13 +86,10 @@ function useNowForPortraitMotion(input: PortraitMotionInput): number {
   return now
 }
 
-/**
- * 立ち絵にいま当てる動き。「固定」（`loadPortraitFixed()`）を選んでいれば undefined
- * （`docs/requirements.md` 4.3「利用者は固定を選べる」）。
- */
-function usePortraitMotion(input: PortraitMotionInput): PortraitMotion | undefined {
+/** 立ち絵にいま当てる動き。 */
+function usePortraitMotion(input: PortraitMotionInput): PortraitMotion {
   const now = useNowForPortraitMotion(input)
-  return loadPortraitFixed() ? undefined : resolvePortraitMotion(input, now)
+  return resolvePortraitMotion(input, now)
 }
 
 /**

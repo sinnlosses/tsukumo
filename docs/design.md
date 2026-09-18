@@ -234,7 +234,6 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
 | `src/ui/socket.ts`                                                                                                                                                         | `src/ui/lib/socket.ts`                |
 | `src/ui/refresh.ts`                                                                                                                                                        | `src/ui/lib/refresh.ts`               |
 | `src/ui/component/tool-summary.ts`                                                                                                                                         | `src/ui/lib/tool-summary.ts`          |
-| `src/ui/appearance/portrait-fixed.ts`                                                                                                                                      | `src/ui/lib/portrait-fixed.ts`        |
 | `src/ui/component/select.tsx`                                                                                                                                              | `src/ui/components/select.tsx`        |
 | `src/ui/layout/` の3件（`layout.tsx` / `layout-resizer.tsx` / `split.ts`）                                                                                                 | `src/ui/features/layout/`             |
 | `src/ui/main-view/` の5件（`main-view.tsx` / `turn.tsx` / `turn-tabs.tsx` / `report.tsx` / `question-record.tsx`）                                                         | `src/ui/features/main-view/`          |
@@ -647,8 +646,6 @@ CDN からは読まない（いまのまま）。`bun build` の出力は1本（
 - 作るのは4つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に
   領域の中をゆっくり歩く）/ **完了の反応**（小さく跳ねる）/ **失敗でびくっ**（一瞬のけぞる）
 - **領域の外へ出さない。** `.character-region` の中で閉じる（レポートの上に被らせない）
-- **利用者は「固定」を選べる。** 値は `localStorage`（`src/ui/features/layout/split.ts` の前例）。
-  読むのはキャラビュー、書くのは「見た目」の引き出しと、**機能をまたぐので `ui/lib/` に置く**（2章）
 - `prefers-reduced-motion: reduce` を尊重する（`src/ui/styles/theme.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）
@@ -1089,7 +1086,6 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 | 許可モード                                       | セッション限り                                               | サイドバー「セッション情報」         |
 | キャラクターの切り替え                           | **選択はセッション限り（起こし直す）、次回の初期値は覚える** | サイドバー「セッション情報」         |
 | 地・領域・字の色（`ground` / `surface` / `ink`） | 利用者の設定（`localStorage`）                               | キャラクター画面                     |
-| 立ち絵を動かすか固定するか                       | 利用者の設定（`localStorage`）                               | 「見た目」の引き出し                 |
 | 領域の比率を既定に戻す                           | 利用者の設定（`localStorage`）                               | 会話の画面の右下（常設のボタン）     |
 | キャラクターの立ち絵・差し色                     | **ずっと**（`~/.tsukumo/characters/<name>/`。7.1）           | キャラクター画面                     |
 | 新しいパックを作る                               | **ずっと**（同上）                                           | 作る画面（キャラクター画面から入る） |
@@ -1103,7 +1099,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 
 **保存先ではなく「セッション限りかどうか」で割る理由**（2026-09-17）。2026-09-13 の決定は
 利用者の設定とパックの持ち物を寿命で分け、置き場所そのものでその違いを表すつもりだった。実際には
-両方が同じ引き出しに入り（色3つ・立ち絵4つ・差し色4つ・固定・比率・作る口で 14 個の操作子）、
+両方が同じ引き出しに入り（色3つ・立ち絵4つ・差し色4つ・比率・作る口で 13 個の操作子）、
 置き場所は違いを表さなくなっていた。ユーザーは「キャラクター作成とテーマカラーはセット」
 「オプションみたいなイメージ」と見ていて、**使う人にとっては「キャラクターを整える手順」が1つの
 まとまり**で、値がどこに保存されるかは手順の区切りにならない。だから保存先ではなく、

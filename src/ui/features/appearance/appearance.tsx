@@ -1,6 +1,6 @@
 // 「見た目」の引き出し（docs/design.md 6.1 部品の木の `<Appearance>` / 13.6）。地・領域・字の色
-// （`ground` / `surface` / `ink`）・立ち絵を動かすか固定するか・領域の比率を既定に戻す、を
-// ここにまとめる。**キャラクターの立ち絵と差し色の差し替え（`<CharacterEdit>`）と、新しい
+// （`ground` / `surface` / `ink`）・領域の比率を既定に戻す、をここにまとめる。
+// **キャラクターの立ち絵と差し色の差し替え（`<CharacterEdit>`）と、新しい
 // キャラクターパックを作る口（`<CharacterCreate>`）もここに入る**（7.1。引き出しの中なので
 // 常設の要素は増えない）。**常設なのは開く口のボタン1つだけ**（
 // 13.6「常設の要素は差し引きゼロ」）。
@@ -18,7 +18,6 @@
 
 import { useRef, useState, type KeyboardEvent, type ReactElement } from "react"
 
-import { loadPortraitFixed, savePortraitFixed } from "../../lib/portrait-fixed.ts"
 import {
   applyAppearanceColorOverride,
   changeAppearanceColor,
@@ -50,18 +49,12 @@ export function Appearance(props: AppearanceProps): ReactElement {
     applyAppearanceColorOverride(loaded)
     return loaded
   })
-  const [portraitFixed, setPortraitFixed] = useState<boolean>(loadPortraitFixed)
 
   function handleColorChange(key: AppearanceColorKey, value: string): void {
     const next = changeAppearanceColor(override, key, value)
     applyAppearanceColorOverride(next)
     saveAppearanceColorOverride(next)
     setOverride(next)
-  }
-
-  function handlePortraitFixedChange(value: boolean): void {
-    savePortraitFixed(value)
-    setPortraitFixed(value)
   }
 
   /** 最初と最後の focusable 要素の境界だけで Tab を折り返す。 */
@@ -119,16 +112,6 @@ export function Appearance(props: AppearanceProps): ReactElement {
           </fieldset>
           <CharacterEdit />
           <CharacterCreate />
-          <div className="appearance-field appearance-field-checkbox">
-            <label>
-              <input
-                type="checkbox"
-                checked={portraitFixed}
-                onChange={(event) => handlePortraitFixedChange(event.target.checked)}
-              />
-              立ち絵の位置を固定する
-            </label>
-          </div>
           <button type="button" className="appearance-reset-split" onClick={props.onResetSplit}>
             領域の比率を既定に戻す
           </button>

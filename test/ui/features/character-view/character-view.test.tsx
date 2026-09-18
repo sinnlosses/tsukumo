@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render } from "@testing-library/react"
 
@@ -15,8 +15,6 @@ import {
 } from "../../../../src/ui/stores/turn-selection.tsx"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
-
-const PORTRAIT_FIXED_STORAGE_KEY = "tsukumo-portrait-fixed"
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   pack: "fictional",
@@ -39,13 +37,8 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   editable: true,
 }
 
-beforeEach(() => {
-  localStorage.removeItem(PORTRAIT_FIXED_STORAGE_KEY)
-})
-
 afterEach(() => {
   cleanup()
-  localStorage.removeItem(PORTRAIT_FIXED_STORAGE_KEY)
 })
 
 /** ターンが1つも無い（タブも出ていない）ときの選択。今回を見ている扱いになる。 */
@@ -269,18 +262,5 @@ describe("CharacterView", () => {
     expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
       "/character/flustered.png",
     )
-  })
-
-  it("「固定」を localStorage に入れていると data-motion 属性ごと省略する（動かない）", () => {
-    localStorage.setItem(PORTRAIT_FIXED_STORAGE_KEY, "true")
-
-    renderCharacterView({
-      character: FIXTURE_CHARACTER,
-      turnInProgress: true,
-      turnFinishedAt: undefined,
-      lastToolFailureAt: undefined,
-    })
-
-    expect(document.querySelector(".portrait")?.hasAttribute("data-motion")).toBe(false)
   })
 })

@@ -7,13 +7,11 @@ import { Appearance } from "../../../../src/ui/features/appearance/appearance.ts
 import { SessionContext, type SessionContextValue } from "../../../../src/ui/stores/session.tsx"
 
 const COLOR_STORAGE_KEY = "tsukumo-appearance-color"
-const PORTRAIT_STORAGE_KEY = "tsukumo-portrait-fixed"
 
 let themeStyleElement: HTMLStyleElement | undefined
 
 beforeEach(() => {
   localStorage.removeItem(COLOR_STORAGE_KEY)
-  localStorage.removeItem(PORTRAIT_STORAGE_KEY)
   document.documentElement.style.removeProperty("--ground")
   document.documentElement.style.removeProperty("--surface")
   document.documentElement.style.removeProperty("--ink")
@@ -26,7 +24,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   localStorage.removeItem(COLOR_STORAGE_KEY)
-  localStorage.removeItem(PORTRAIT_STORAGE_KEY)
   document.documentElement.style.removeProperty("--ground")
   document.documentElement.style.removeProperty("--surface")
   document.documentElement.style.removeProperty("--ink")
@@ -43,7 +40,7 @@ function openDrawer(): void {
 /**
  * 引き出しを描く。中の `<CharacterEdit>` が `SessionContext` を読むので、`<App>` を経由せず
  * 値を差し込む（`src/ui/stores/session.tsx` が Context 自体を公開している）。**キャラクターが届いて
- * いない状態**を既定にしてあるので、ここの各テストは色と立ち絵の固定だけを見る。
+ * いない状態**を既定にしてあるので、ここの各テストは色だけを見る。
  */
 function renderAppearance(onResetSplit: () => void = () => {}): void {
   const value: SessionContextValue = {
@@ -104,19 +101,6 @@ describe("Appearance", () => {
       surface: undefined,
       ink: undefined,
     })
-  })
-
-  it("立ち絵の固定を切り替えると localStorage に残る", () => {
-    renderAppearance()
-    openDrawer()
-
-    const checkbox = screen.getByLabelText("立ち絵の位置を固定する") as HTMLInputElement
-    expect(checkbox.checked).toBe(false)
-
-    fireEvent.click(checkbox)
-
-    expect(checkbox.checked).toBe(true)
-    expect(localStorage.getItem(PORTRAIT_STORAGE_KEY)).toBe("true")
   })
 
   it("比率を既定に戻すボタンは props の onResetSplit を呼ぶ", () => {
