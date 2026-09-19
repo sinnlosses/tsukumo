@@ -84,11 +84,6 @@ T-183 で決めた形（`docs/design.md` 13.6）のとおり、`#character` / `#
 0.3.268 には無く**、実装だけでは効かなかったので `package.json` の下限を上げている
 （`docs/design.md` 4.1 に理由を書いた）。
 
-### 2026-09-17 サイドバーのモデルに Fable を足した（T-130）
-
-`setModel("fable")` が通ることを SDK で実測し（対照の無効な名前は reject）、`MODEL_ALIASES` と
-サイドバーの `MODEL_LABELS` に `fable` を足した。衣装は `opus` と同じ戦闘配置（`OUTFITS` は増やさない）。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**

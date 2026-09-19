@@ -1,5 +1,10 @@
 # 進捗のアーカイブ
 
+### 2026-09-17 サイドバーのモデルに Fable を足した（T-130）
+
+`setModel("fable")` が通ることを SDK で実測し（対照の無効な名前は reject）、`MODEL_ALIASES` と
+サイドバーの `MODEL_LABELS` に `fable` を足した。衣装は `opus` と同じ戦闘配置（`OUTFITS` は増やさない）。
+
 ### 2026-09-17 キャラクター画面の中身とデザインを決めた（T-183）
 
 会話の画面と入れ替わるキャラクター画面（`#character`）と作る画面（`#character/new`）を `location.hash` で
