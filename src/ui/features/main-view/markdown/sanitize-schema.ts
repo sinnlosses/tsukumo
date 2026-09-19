@@ -20,8 +20,25 @@
 import { type Options as Schema } from "rehype-sanitize"
 
 /**
- * 通してよい要素（56個）。ここに無い要素は、**中身のテキストだけを残して**タグが落ちる
+ * 通してよい要素（59個）。ここに無い要素は、**中身のテキストだけを残して**タグが落ちる
  * （`img` もここに無いので、`src`/`alt` を持たない裸のテキストにすら残らず消える）。
+ *
+ * **操作できる要素は1つも無い**（`input` / `button` / `meter` / `progress`）。レポートは読む面で、
+ * 押せるように見えて何も起きないものを混ぜない。チェックリスト（`- [ ]`）の
+ * `<input type="checkbox">` は、ここへ来る前に `task-check.ts` が静的な印の `<span>` に畳む。
+ *
+ * **記法（`src/core/report-notation.ts`）に無い要素も、次の条件のどちらかを満たすものは通す**
+ * （モデルの即興を落とさないため）:
+ *
+ * - `section` / `article` / `aside` のように、**見た目を持たない入れ物**（落としても中身は
+ *   そのまま出るので、通しても通さなくても読み手が見るものは変わらない）
+ * - `del` / `ins` / `sup` / `sub` のように、**ブラウザ既定の見た目がこの配色から浮かない**もの
+ * - `small` / `kbd` / `samp` / `figure` / `figcaption` のように、**既定のままだとタイプスケールや
+ *   配色から外れるので、`main-view.module.css` の `.detail-block` 配下で当て直した**もの
+ *
+ * **`mark` は通さない。** 既定の黄地に黒文字はこの配色から浮くうえ、当て直すと
+ * 強調の道具が `strong` / `badge` と並んで3通りになる（`meter` / `progress` を載せない理由と
+ * 同じ。`report-notation.ts`）。タグが落ちても中の文字は残る。
  *
  * `h2` / `h3` は `report-notation.ts` が勧める見出しの記法（`##` / `###`）が hast に変換された
  * ときのタグ名（`h1` は無い。規約が「レポートの見出しに `#` は使わない」と決めているため通さない）。
@@ -52,6 +69,7 @@ const ALLOWED_TAG_NAMES: readonly string[] = [
   "table",
   "thead",
   "tbody",
+  "tfoot",
   "tr",
   "th",
   "td",
@@ -64,7 +82,10 @@ const ALLOWED_TAG_NAMES: readonly string[] = [
   "b",
   "i",
   "small",
-  "mark",
+  "sup",
+  "sub",
+  // 取り消し線（GFM の `~~`）と、その対になる挿入。**CSS は当てない** — ブラウザ既定の
+  // 打ち消し線・下線は色を持たず、どの配色でも同じに読める。
   "del",
   "ins",
   "blockquote",
@@ -187,8 +208,9 @@ const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/
 
 /**
  * レポートの HTML を削ぎ落とす rehype-sanitize の schema。**移行前の自前サニタイザと同じ許可リスト**
- * （54要素・42属性）を hast-util-sanitize の形に写したものに、見出し（`h2`/`h3`。上の注記）の
- * 2要素を足した56要素・42属性。
+ * を hast-util-sanitize の形に写したものに、見出し（`h2`/`h3`。上の注記）と上付き・下付き
+ * （`sup`/`sub`）・表の脚（`tfoot`。`ancestors` には前からあった）を足し、`mark` を外した
+ * 59要素・42属性。
  *
  * - **`clobber: []`**（defaultSchema の既定は `id` 等に `user-content-` を前置してDOMクロバー対策
  *   をするが、それをやると SVG の `marker-end="url(#foo)"` が指す `id="foo"` と値がズレて

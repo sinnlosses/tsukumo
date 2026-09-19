@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 レポートで消えている表現3件を直し、無装飾の要素に手当てした（T-192）
+
+チェックリストは `markdown/task-check.ts` がサニタイズ前に `<input>` を静的な印の `<span>` へ
+畳む（許可リストに操作できる要素を入れない方針を保つ）。`sup`/`sub`/`tfoot` を通し、`mark` は
+配色から浮くので外した。脚注の英語ラベルは `remarkRehypeOptions` で「脚注」に替えた。
+`details` / `hr` / `figure` / `figcaption` / `small` / `kbd` / `samp` に装飾を当てた。
+
 ### 2026-09-20 src/ui/styles の CSS を CSS Modules へ移した（T-191）
 
 領域別の CSS を `features/<領域>/*.module.css` へ移し、`styles/` に残るのは `theme.css` 1枚。

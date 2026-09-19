@@ -136,6 +136,78 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.textContent).toContain("60%")
   })
 
+  it("チェックリストの `- [ ]` と `- [x]` が、済みと未了の分かる印になる", () => {
+    const { container } = render(<Markdown text={"- [ ] まだ\n- [x] 済み"} />)
+
+    // 操作できる要素は許可リストに無い（task-check.ts が静的な印の span に畳む）。
+    expect(container.querySelector("input")).toBeNull()
+    const marks = container.querySelectorAll("span.report-task-check")
+    expect(marks).toHaveLength(2)
+    // 未了は空の枠、済みは枠の中の印（色ではなく文字で見分ける）。
+    expect(marks[0]?.textContent).toBe("")
+    expect(marks[0]?.className).not.toContain("report-task-check-done")
+    expect(marks[1]?.textContent).toBe("✓")
+    expect(marks[1]?.className).toContain("report-task-check-done")
+    // 行頭の点と印が二重に並ばないようにする class（CSS が list-style を消す）。
+    expect(container.querySelectorAll("li.report-task-item")).toHaveLength(2)
+  })
+
+  it("レポートが直接書いたチェックボックスも印になり、それ以外の input は落ちる", () => {
+    const { container } = render(
+      <Markdown
+        text={
+          '<p><input type="checkbox" checked> 済みの行</p>\n\n' +
+          '<p><input type="text"> 入力欄のつもり</p>'
+        }
+      />,
+    )
+
+    expect(container.querySelector("input")).toBeNull()
+    expect(container.querySelector("span.report-task-check-done")?.textContent).toBe("✓")
+    expect(container.textContent).toContain("入力欄のつもり")
+  })
+
+  it("<sup> / <sub> が上付き・下付きとして通る", () => {
+    const { container } = render(<Markdown text="x<sup>2</sup> と H<sub>2</sub>O" />)
+
+    expect(container.querySelector("sup")?.textContent).toBe("2")
+    expect(container.querySelector("sub")?.textContent).toBe("2")
+  })
+
+  it("脚注の節の見出しが日本語で出る（英語の Footnotes が本文に見えない）", () => {
+    const { container } = render(<Markdown text={"結論[^1]\n\n[^1]: 補足の一行。"} />)
+
+    expect(container.textContent).not.toContain("Footnotes")
+    const label = container.querySelector("#footnote-label")
+    expect(label?.textContent).toBe("脚注")
+    // 見出しは `##` と同じく h4 に落ちる（依頼の見出しと段が被らない）。
+    expect(label?.tagName.toLowerCase()).toBe("h4")
+    // 参照の番号は <sup> で上付きに出る（許可リストに sup が無いと数字が地の文に紛れる）。
+    expect(container.querySelector("sup > a")?.getAttribute("href")).toBe("#user-content-fn-1")
+  })
+
+  it("表の脚（tfoot）が通る", () => {
+    const { container } = render(
+      <Markdown
+        text={
+          "<table><tbody><tr><td>あ</td></tr></tbody>" +
+          "<tfoot><tr><td>合計</td></tr></tfoot></table>"
+        }
+      />,
+    )
+
+    expect(container.querySelector("tfoot > tr > td")?.textContent).toBe("合計")
+  })
+
+  it("mark は許可リストに無いので落ちる（強調の道具を増やさない）", () => {
+    // 既定の黄地に黒文字はこの配色から浮き、当て直すと strong / badge と並んで3通りになる
+    // （meter / progress を載せない理由と同じ。src/core/report-notation.ts）。
+    const { container } = render(<Markdown text="<mark>目立たせたい語</mark>" />)
+
+    expect(container.querySelector("mark")).toBeNull()
+    expect(container.textContent).toContain("目立たせたい語")
+  })
+
   it("お願い（note-favor）が塊のまま通る（class が落ちると地の文に紛れる）", () => {
     const { container } = render(
       <Markdown text={'<div class="note note-favor">架空のお願いの文。</div>'} />,

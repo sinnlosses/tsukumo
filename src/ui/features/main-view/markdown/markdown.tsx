@@ -11,6 +11,8 @@
 //   （旧レンダラは素朴な正規表現 `/\*\*([^*]+)\*\*/g` だったので、この規則に関係なく通っていた）。
 //   このリポジトリのレポートは `**「…」**` を多用するため、このプラグインで直す
 // - `rehype-raw` で、Markdown の中に直接書いた HTML ブロック・インライン HTML を解釈する
+// - {@link rehypeTaskCheck} で、チェックリストの `<input type="checkbox">` を静的な印に畳む
+//   （**サニタイズより前**。理由は `task-check.ts`）
 // - `rehype-sanitize`（{@link REPORT_SANITIZE_SCHEMA}）で許可リストに無い要素・属性を落とす。
 //   **サニタイズはここ1箇所に集約**（docs/requirements.md 4.2）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。
@@ -29,7 +31,7 @@
 
 import { type Element } from "hast"
 import { type JSX, type ReactElement, type ReactNode } from "react"
-import ReactMarkdown, { type Components, type ExtraProps } from "react-markdown"
+import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
@@ -41,6 +43,7 @@ import { ChartBlock } from "./chart-block.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationBlock, NotationInline } from "./notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
+import { rehypeTaskCheck } from "./task-check.ts"
 
 /**
  * hast の要素をどの部品で描くか。**レンダーごとに作り直さない**（同じ参照でないと
@@ -56,6 +59,23 @@ const REPORT_COMPONENTS = {
   span: NotationInline,
 } satisfies Components
 
+/**
+ * 脚注（`[^1]`）の節に mdast-util-to-hast が付ける英語の語を、日本語に替える。既定は
+ * `<h2 class="sr-only">Footnotes</h2>` で、**`sr-only` の CSS はこのページに無い**（機能ごとの
+ * CSS Modules は class 名をハッシュ化するので、当てる側で受け取ることもできない）。
+ * **そのままだと英語の見出しが本文に見える。**
+ *
+ * **隠すのではなく見出しとして出す**（`footnoteLabelProperties` を空にして `sr-only` を外す）。
+ * 脚注の節は本文の続きに `<ol>` が現れるだけなので、見出しが無いと地の文の箇条書きと
+ * 見分けが付かない。タグは既定の `h2` のままにして、{@link SectionHeading} の書き替え
+ * （`h4`）と同じ段に乗せる。
+ */
+const FOOTNOTE_OPTIONS = {
+  footnoteLabel: "脚注",
+  footnoteLabelProperties: {},
+  footnoteBackLabel: "参照元へ戻る",
+} satisfies NonNullable<Options["remarkRehypeOptions"]>
+
 export type MarkdownProps = {
   readonly text: string
 }
@@ -70,7 +90,13 @@ export function Markdown(props: MarkdownProps): ReactElement {
       // remark-cjk-friendly-gfm-strikethrough が要る）。取り消し線はレポートの規約
       // （src/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
       remarkPlugins={[remarkGfm, remarkCjkFriendly]}
-      rehypePlugins={[rehypeRaw, [rehypeSanitize, REPORT_SANITIZE_SCHEMA], rehypeHighlight]}
+      rehypePlugins={[
+        rehypeRaw,
+        rehypeTaskCheck,
+        [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
+        rehypeHighlight,
+      ]}
+      remarkRehypeOptions={FOOTNOTE_OPTIONS}
       components={REPORT_COMPONENTS}
     >
       {props.text}
