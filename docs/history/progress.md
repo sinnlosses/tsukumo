@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-17 /model の切り替えをサイドバーへ即時反映した（T-186）
+
+`assistant` の `local_command_run` から `model-changed` を出し、`MODEL_ALIASES` に完全一致する
+ときだけ `state.model` を先回りで更新するようにした。**このフィールドは SDK 0.3.274 で入ったもので
+0.3.268 には無く**、実装だけでは効かなかったので `package.json` の下限を上げている
+（`docs/design.md` 4.1 に理由を書いた）。
+
 ### 2026-09-17 サイドバーのモデルに Fable を足した（T-130）
 
 `setModel("fable")` が通ることを SDK で実測し（対照の無効な名前は reject）、`MODEL_ALIASES` と

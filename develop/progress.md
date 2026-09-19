@@ -82,13 +82,6 @@ T-183 で決めた形（`docs/design.md` 13.6）のとおり、`#character` / `#
 動きを止める道は `prefers-reduced-motion: reduce` だけになった（`docs/requirements.md` 4.3 /
 `docs/design.md` 6.5・13.6 も更新）。
 
-### 2026-09-17 /model の切り替えをサイドバーへ即時反映した（T-186）
-
-`assistant` の `local_command_run` から `model-changed` を出し、`MODEL_ALIASES` に完全一致する
-ときだけ `state.model` を先回りで更新するようにした。**このフィールドは SDK 0.3.274 で入ったもので
-0.3.268 には無く**、実装だけでは効かなかったので `package.json` の下限を上げている
-（`docs/design.md` 4.1 に理由を書いた）。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
