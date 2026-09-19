@@ -88,11 +88,6 @@ CSS の両方に焼かれるため）、一時ディレクトリへ `--outdir` �
 構造で解いた。`layout.tsx` の ref 書き込みは `onCommit(percent)` への契約変更で、
 `turn-selection.tsx` の effect はレンダー中に前回値と見比べる形で消した。
 
-### 2026-09-20 サイドバーの「続きから」の印を仕様ごと撤去した（T-187）
-
-`session-restored` イベントと `SessionState.restored` を、表示・畳み込み・イベント型まで落とした
-（続きから起こし直すこと自体と `replayRestoredSession` は残した）。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**

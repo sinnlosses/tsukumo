@@ -11253,3 +11253,356 @@ T-183（2026-09-17）で決めた形は `docs/design.md` 13.6「設定の置き�
   書き終えてある**。規約の文面は直さない（直したくなったらそれ自体が別の判断）
 - 立ち絵とレイアウトに触るので、**目視確認が要る他のタスクと並行させない**
   （`CLAUDE.md`「タスク運用」）
+
+## T-190
+
+**タスク**: レポートの意味のクラス名を React 部品へ解決する変換層を置く
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（655 pass / 0 fail。646 → 655 で +9。notation.test.tsx 8件と markdown.test.tsx 1件）。`report-notation.ts` と `sanitize-schema.ts` は無変更。
+目視（偽の駆動・notation の場面。台本に note-favor / stats / 知らない class / style 属性を一時追記して撮り、元に戻した）: note 2・note-warn 1・note-favor 1・badge 1・badge-ok 1・cols 1・card 2・stats 1・stat 3 がすべて `report-` 付きに解決され、未解決の `.note` `.badge` `.cols` `.card` は 0 件。装飾も移行前の値のまま（cols は display:grid、note の左罫 3px、badge の角丸 999px、badge-ok は rgb(126,224,129)、favor の左罫は accent rgb(242,176,160)）。
+「お願い」のラベルは1つだけ（`::before` の content は none で二重に出ない）。`class="zzz"` は class 名ごと素通しし、`style="display:grid;grid-template-columns:1fr 1fr"` も grid として効いた。
+
+## 背景
+
+レポート（メインビューの本文）の HTML を書くのは**モデル自身**で、`src/core/report-notation.ts` が
+`class="note note-favor"` `class="badge badge-ok"` `class="cols"` `class="card"` `class="stats"`
+のような**意味の名前**を指示している。ブラウザ側はその class 名を素通しし、
+`src/ui/styles/main-view.css:104-191` の `.detail-block .note` のような**祖先セレクタ**で装飾を
+当てている。つまり記法と CSS が**文字列の一致だけ**でつながっていて、片方だけ足すと黙って
+崩れる。
+
+一方、`src/ui/features/main-view/markdown/markdown.tsx:55` には既に変換の仕組みがある:
+
+    components={{ pre: Pre, a: Anchor, table: Table, h2: SectionHeading, h3: SubHeading }}
+
+モデルの `##` は hast の `h2` になり、`SectionHeading` が `h4` へ書き替えて出している。
+**`div` / `span` を見ていないだけ**で、「骨格はモデル・装飾はシステム」はこのリポジトリの
+既定の設計になっている。
+
+`src/ui/features/main-view/markdown/sanitize-schema.ts` は `className` を
+`GLOBAL_ATTRIBUTES` に入れて**値を検査せず通している**ので、モデルが書いた任意の class 名が
+そのまま DOM に出る（装飾は付かない）。**これは変えない**（下の「決まっていること」）。
+
+この変換層は、CSS の方式（素の CSS / CSS Modules / Tailwind）と**独立に得がある**。
+CSS Modules へ移る前段としても要る（ハッシュ化された class 名にモデルが書いた文字列が
+当たらなくなるため）。
+
+## 決まっていること（蒸し返さない）
+
+- **モデルの書き方は変えない。** `report-notation.ts` の記法（`class="note note-favor"` など）は
+  そのまま。変換はブラウザ側で行う（ユーザーの判断 2026-09-18）
+- 対象は `report-notation.ts` が指示している5系統だけ:
+  `note` / `note-warn` / `note-ng` / `note-favor`、`badge` / `badge-ok` / `badge-warn` /
+  `badge-ng`、`cols`、`card`、`stats` / `stat`
+- 変換層を入れることと CSS を CSS Modules へ移すことは**別のタスク**にする（移行は T-191）
+- **知らない class 名は今と同じく素通しする（落とさない）。変換層は足し算だけ**
+  （ユーザーの判断 2026-09-18）。class 名そのものは無害で、危ない経路（`script` / `style` /
+  `iframe` の除去・`href` のスキーム検査・`style` の値の検査）はサニタイザが別に見ているので、
+  class 名を閉じた許可リストにしても安全上の利得は無い。代わりにモデルの即興
+  （記法の表に無い見せ方を `style` 属性や独自の class で作ること）が死ぬ
+
+## 解くべき論点
+
+- 振り分けの置き場所。`components` に `div` / `span` を足して `className` で分岐するか、
+  rehype のプラグインとして hast の段で書き替えるか（`components` 側のほうが既存の
+  `SectionHeading` と同じ形になる）
+- `note-favor` は `::before` でラベル（「お願い」）を足している（`main-view.css:191`）。
+  部品側でラベルを描く形に移すか、CSS のままにするか
+
+## やること
+
+1. 5系統を受け持つ部品を `src/ui/features/main-view/markdown/` に置く
+   （ファイル名は概念になるものにする。`docs/coding-standards.md` 原則5）
+2. `markdown.tsx` の `components` に `div` / `span` の振り分けを足す。
+   **`components` のオブジェクトはモジュール定数に上げる**（レンダーごとに作り直さない）
+3. `main-view.css` の `.detail-block .note` などのセレクタを、部品が付ける class に合わせる
+   （このタスクでは CSS Modules にしない。セレクタの付け替えだけ）
+4. 既存のテスト（`test/` の markdown 関連）に、5系統が部品へ解決されることの検証を足す
+5. **調べて「`components` では書き分けられない系統がある」と分かったら、その系統だけ
+   今のまま残し、理由を `evidence` に書く**
+
+## 完了条件
+
+- `bun run check` が通る
+- レポートに `<div class="note note-favor">` `<span class="badge badge-ok">`
+  `<div class="cols"><div class="card">` `<div class="stats"><div class="stat">` を含む本文を
+  流し、**移行前と同じに見えること**を目視で確かめる（`evidence` に何を出して何が見えたかを書く）
+- `report-notation.ts` を書き換えていないこと（モデルの書き方が変わっていない）
+- **知らない class 名（例: `class="zzz"`）と `style` 属性（例:
+  `<div style="display:grid;grid-template-columns:1fr 1fr">`）が、移行前と同じく素通しされること**
+  （2026-09-18 の実測で、どちらも今は通っている）
+
+## 注意
+
+- レポートの本文には**利用者と Claude の会話が入る**。テストのフィクスチャに実物を使わない
+  （`docs/coding-standards.md`「会話内容の扱い」。他のどの規約より優先する）
+- `sanitize-schema.ts` は許可リスト方式。**通すものを増やす方向の変更はしない**
+- 書きかけの本文は空行で塊に割られ、塊ごとに `memo` されている（`report.tsx`）。
+  変換層はこの仕組みを壊さない（走査は増やさない）
+
+## T-191
+
+**タスク**: src/ui/styles の CSS を CSS Modules へ移す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-190 / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（656 pass / 0 fail。655 → 656 で +1）。`src/ui/styles/` に残るのは theme.css 1枚。
+目視（偽の駆動・Playwright）: 1400x1000 の4領域（main 1007x565 / sidebar 336x565 / character・dispatch 671x377、はみ出し0）、720 幅で1列・仕切り0・比率ボタン none・立ち絵 144x187。キャラクター画面は会話の画面が hidden、立ち絵4枚（98x128）と色の入力7つ。
+立ち絵の動き: 組み立て後の CSS で @keyframes 7件に対し参照5件がすべて解決（breathe/walk/bounce/flinch）、実機で portrait-breathe_gZjy5g が running・currentTime 4500ms。レポートは note 左罫3px warn・badge 角丸999px ok色・cols 2列・card 枠・note-favor は左罫3px accent と ::before none でラベル1つ・stat の数は block 18px 700。
+配信は /assets/style.css 200 32479B・/assets/ui.js 200 2425923B で <head> の <link> は健在（無スタイル表示なし）。`bun run dev` で layout.module.css の outline を 3px → 4px にすると読み込み回数が 1 → 2 に増えて反映され、戻すと 3px に戻った。
+
+## 背景
+
+`src/ui/styles/` に10ファイル・1746行の CSS があり、`main.css` の `@import` で束ねて
+`src/adapter/bundle.ts` の `buildStyleSheet` が `bun build` にかけ、**stdout で受けてメモリに持つ**
+（ファイルに書き出さない。2026-09-12 決定）。`src/adapter/server.ts` の `<head>` が
+`<link rel="stylesheet" href="/style.css">` で配る。
+
+ユーザーの指示（2026-09-18）は「css modules にしてほしい」。2026-09-18 に実測した制約:
+
+- Bun 1.4.2 は CSS Modules を扱える（`.module.css` → ハッシュ化した class 名と、JS 側の
+  `{ title: "title_BLNoTg" }` の対応表）
+- ただし **TSX から `.module.css` を import すると出力が2本になり、stdout で受けられない**
+  （`error: cannot write multiple output files without an output directory`）。
+  `--outdir` が要る
+
+class 名の重複を調べたところ、148個のうち**偶発的な衝突は0件**で、2ファイル以上に出る19件は
+すべて `narrow-screen.css`（狭い画面用に6機能ぶんのセレクタを上書き）と `theme.css`
+（`:root` のトークン）という**横断ファイルが意図的に上書きしている**もの。
+
+## 決まっていること（蒸し返さない）
+
+- CSS Modules を採る。Tailwind は採らない（トークン体系ごと `@theme` へ作り直すことになり、
+  `docs/design.md` 13章が正典なので一段大きい判断。ユーザーの判断 2026-09-18）
+- **レポートの class 名（`note` / `badge` / `cols` / `card` / `stats`）は T-190 の変換層が
+  部品へ解決済み**であることを前提にする。だから `:global` で逃がす必要は無い
+- `theme.css` はグローバルのまま（`:root` のカスタムプロパティ。本来グローバル）
+- `bun build` のプロセスを起こす形は変えない（`Bun.build()` に寄せない。
+  `docs/coding-standards.md`「Bun固有APIに寄せない」）
+
+## 解くべき論点
+
+- `bundle.ts` の受け取り方。一時ディレクトリ（`node:fs/promises` の `mkdtemp`）へ `--outdir` で
+  出し、JS と CSS の2本を読んで消す形にするか、他に手があるか。
+  **「ディスクに成果物を残さない」という 2026-09-12 の決定の意図（古いものを配る事故を防ぐ）を
+  満たせているか**を確かめて、`docs/architecture.md` に記録する
+- `narrow-screen.css` の扱い。各モジュールの中のメディアクエリへ分解するか、横断ファイルとして
+  グローバルに残すか
+- 移行の順番。1領域で通してから残りを移すか、まとめて移すか
+
+## やること
+
+1. `bundle.ts` を CSS Modules が通る形にする（上の論点の判断に沿う）
+2. `src/ui/styles/` の領域別 CSS を `src/ui/features/<領域>/` へ `.module.css` として移し、
+   参照している部品の `className` を `styles.x` に書き替える
+3. `src/adapter/ui-rebuild.ts:148` の振り分けを直す。いまは拡張子が `.css` なら
+   **スタイルだけの差し替え**（`"style"`）に倒しているが、`.module.css` はハッシュ名が JS 側にも
+   焼かれるので、**古い JS + 新しい CSS で崩れた画面が残る**。`page` 更新へ倒す
+4. `docs/design.md` 12章（CSS の置き場）と 13章（トークン）の記述を実物に合わせる
+5. **調べて `bundle.ts` を「ディスクに成果物を残さない」まま通せないと分かったら、そこで止めて
+   理由を `evidence` に書いて閉じる**（決定を覆すのは別の判断）
+
+## 完了条件
+
+- `bun run check` が通る
+- `bun run start` で立ち上げ、**移行前と同じに見えること**を目視で確かめる。
+  少なくとも次を見る: レイアウトの4領域 / 立ち絵と吹き出し / レポートの装飾（note・badge・
+  cols・stats）/ サイドバー / 入力欄 / 狭い画面（ウィンドウを縮める）
+- **初回表示でスタイルの当たっていない画面が一瞬出ない**こと（`<head>` の
+  `<link rel="stylesheet">` が残っていて、JS からの注入になっていない）
+- `bun run dev` で `.module.css` を1つ書き換え、**ページが組み立て直されて正しく反映される**こと
+  （スタイルだけの差し替えで崩れないこと）
+- `evidence` に、目視で何をどう確かめたかを書く
+
+## 注意
+
+- 見た目を変えない。**移行であって、デザインの作り直しではない**
+- 16進の色は `theme.css` にしか書かない規約（`docs/design.md` 13章）を移行後も保つ
+- 全部品の `className` に触るので、**他のタスクと並行させない**（`CLAUDE.md`「タスク運用」）
+
+## T-192
+
+**タスク**: レポートで消えている表現3件を直し、無装飾の要素に手当てする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（662 pass / 0 fail。656 → 662 で +6）。16進の色は1つも足していない。
+目視（偽の駆動・notation の場面に6項目を一時追記して撮り、元に戻した）: チェックは input が DOM に残らず印の span が2つ（未了は空枠で ink-quiet、済みは ✓ で ink の実線、li の list-style は none）。x<sup>2</sup> は vertical-align: super、H<sub>2</sub>O も下付き。details は枠 1px・地 ground・summary が pointer。hr は border-top 1px rule で border-bottom 0（既定の溝が消えた）。mark はタグ 0 件で文字「強調」は残る。kbd は ui-monospace、small は 13px の ink-quiet。
+**脚注は参照と定義を同じ塊（空行を挟まない）に書いたときだけ成立する** — `report.tsx` が空行で塊に割って塊ごとに Markdown へ渡すため（`splitReportBlocks`。T-192 とは独立の既存の制約）。同じ塊に置いたときは見出しが H4 の「脚注」（sr-only なし）、参照は sup > a の #user-content-fn-a1、戻るリンクは aria-label「参照元へ戻る」で、英語の Footnotes も生の [^a1] も出ない。
+
+## 背景
+
+レポートの表現力の天井は class 名ではなく、
+`src/ui/features/main-view/markdown/sanitize-schema.ts` の**タグの許可リスト**と、
+`src/ui/styles/main-view.css` の**当たっているスタイル**にある。2026-09-18 に本物の経路
+（`remark-gfm` → `rehype-raw` → `rehype-sanitize` → `components`）へ記法を流して測ったところ、
+次が分かった。
+
+**モデルが書けるのに消えているもの（3件）**:
+
+- `- [ ] まだ` / `- [x] 済み` → `<li class="task-list-item"> まだ</li>`。`input` が許可リストに
+  無いのでチェックボックスが落ち、**済みと未了が見分けられない**。`remark-gfm` は読んでいる
+- `<sup>` / `<sub>` → タグごと落ちて `x2` / `H2O` になる
+- 脚注（`[^1]`）→ 動くが `<h4 class="sr-only">Footnotes</h4>` が出る。**`.sr-only` の CSS が
+  どこにも無いので、英語の見出しが本文に見える**
+
+**通すのにスタイルが無いもの**: サニタイザが通す43要素（SVG を除く）のうち、CSS が
+どこかに当たっているのは19個だけ。とくに次は**レポートの記法（`src/core/report-notation.ts`）が
+勧めているのに無装飾**:
+
+- `<details>` / `<summary>` — `main-view.css` の `summary` は `.turn-request > summary` と
+  `.main-step.is-interim > summary` だけで、**レポートの中に書いた `<details>` には当たらない**
+- `---`（`hr`）— CSS がどこにも無い
+
+記法に無く CSS も無いもの（ブラウザ既定のまま出る。`mark` は黄地に黒文字で、暗い配色から浮く）:
+`mark` / `kbd` / `samp` / `del` / `ins` / `figure` / `figcaption` / `aside` / `small`。
+
+## 決まっていること（蒸し返さない）
+
+- **記法（`report-notation.ts`）そのものの見直しはしない**（ユーザーの判断 2026-09-18）。
+  このタスクは「通す／通さない」と「装飾の有無」を揃えるところまで
+- 色を増やさない。`docs/design.md` 13.1 原則5（状態の3色は増やさない）と
+  「16進の色は `theme.css` にしか書かない」を守り、既存のトークンで組む
+- 画像（`img`）は通さないまま（意図した除外）
+
+## 解くべき論点
+
+- チェックボックスの通し方。(a) `input` を許可リストに足し、`type` を値の正規表現で
+  `checkbox` だけに絞る、(b) サニタイズより**前**の rehype プラグインで
+  `input[type=checkbox]` を `<span class="task-check">` のような通る形へ書き替える、の2通り。
+  **サニタイズは `components` より前に効く**ので、(b) はプラグインの順番が要点
+- `sup` / `sub` を通すか。通すなら他に漏れている軽い要素が無いかもここで見る
+- 無装飾の要素をどこまで手当てするか。**記法が勧めているもの（`details` / `hr`）は必須**。
+  記法に無いもの（`mark` / `kbd` など）は、当てるか・通すのをやめるかの二択
+
+## やること
+
+1. 上の3件（チェックボックス・`sup`/`sub`・脚注の見出し）を直す
+2. サニタイザが通す要素と `.detail-block` 配下のスタイルを突き合わせ、**記法が勧めている
+   要素に漏れが無い**ことを確かめる。`details` / `hr` には必ず当てる
+3. 記法に無く CSS も無い要素は、当てるか通すのをやめるかを決めて、理由をコメントに残す
+4. `test/` に、3件が期待どおり描かれることの検証を足す
+5. **調べて「(a) も (b) もサニタイザの思想（許可リスト方式）を崩す」と分かったら、
+   チェックボックスだけ見送って理由を `evidence` に書く**（残り2件は進める）
+
+## 完了条件
+
+- `bun run check` が通る
+- `- [ ]` と `- [x]` が**画面で見分けられる**こと
+- `x<sup>2</sup>` が `x²` の形で出ること
+- 脚注を含むレポートで、**英語の「Footnotes」が本文に見えない**こと
+- レポートの中の `<details>` が、開閉できると分かる見た目になっていること
+- `---` が地の文と区別できる見た目で出ること
+- `evidence` に、目視で何を出して何が見えたかを書く
+
+## 注意
+
+- サニタイザは**許可リスト方式**。通すものを増やすときは、値の検査まで含めて考える
+  （`src/ui/features/main-view/markdown/sanitize-schema.ts` 冒頭の注記）
+- レポートの本文には**利用者と Claude の会話が入る**。テストのフィクスチャに実物を使わない
+- T-190（変換層）と**同じファイルを触る**。`doing` が重なる間は着手しない
+
+## T-194
+
+**タスク**: src/ のディレクトリ構成を組み替える案を比べ、推奨を1つ出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+提案書は `docs/research/architecture-placement.md`（454行）。候補 A〜D を「4層との対応／失うもの／追随が要るファイル数」で比べ、**A を第1段階にして C**（`shared` / `server/{core,adapter}` / `browser/{screen,region,…}`）を推奨。要点を `develop/direction.md` の `## エージェントのドラフト` に追記した。
+依存の辺の数字は呼び出し元でも数え直して一致（ui→protocol 38 / adapter→protocol 18 / core→protocol 15 / cli→adapter 11 / cli→core 9 / adapter→core 7 / cli→protocol 4、**core→adapter と core↔ui は 0**）。つまり辺は設計どおりで、直すのは構造ではなく名前の読めなさ。
+`bun run check` 通過（662 pass / 0 fail。件数の増減なし）。`git status --porcelain -- src test CLAUDE.md docs/design.md` が空（このタスクは決めるだけ）で、2026-09-16 の `docs/research/architecture-proposal.md` も無傷。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「どこで何をしているのか src/ ディレクトリを見ても README.md の
+ディレクトリ構成を見てもわかりづらい印象を持った。根本的に解決していきたい」
+
+いまの `src/` は4層（`protocol` / `core` / `adapter` / `ui`）＋ `cli.ts`。2026-09-16 の判断
+（`docs/research/architecture-proposal.md`）が正典で、層の定義は `docs/design.md` 2章の表、
+原則は `CLAUDE.md` 原則2〜5、辺の強制は `test/architecture.test.ts`。実物は89ファイル
+（`src/ui/` 44・`protocol` 20・`core` 12・`adapter` 12・`cli.ts` 1）。
+
+わかりづらさとして実際に挙がっている点（ユーザーの指摘）:
+
+- 層の名前（`protocol` / `core` / `adapter`）から、どちらの実行環境で動くコードかが読めない
+- `src/ui/features/` に `layout` と `character-view` が入っている。features は theme のような
+  「まとまった機能に対する hooks や provider をパッケージしたもの」であって、画面の骨組みや
+  画面そのものの置き場ではない
+- バックエンド側に、ドメイン・コントローラー（入口）・インフラ依存の区別が名前に出ていない
+- 汎用的な処理や外部ライブラリのラッパーの置き場が片側（`src/ui/lib/`）にしか無い
+
+参考にする実物（どちらもローカルにある。2026-09-20 に確認済み）:
+
+- `/Users/sinnlos/ghq/github.com/sinnlosses/helm-yadokari` … `src/{domain,steps,lib,utils}`。
+  `lib/` が特定の技術・外部システム・ファイル形式に依存する処理、`utils/` がドメイン知識を
+  一切持たない汎用で、**どちらも `docs/architecture.md` に責務表を持っている**
+- `/Users/sinnlos/ghq/github.com/sinnlosses/Git-Bulk-Maestro/packages/web` …
+  `components/{layouts,pages,providers}` ＋ `features/{connection,namespace,theme,execution}` ＋
+  `lib/`。部品は `<名前>/<名前>.tsx` ＋ `<名前>.module.css` ＋ `hooks/use<名前>.ts` ＋ `index.ts`
+  の単位で入れ子になっている
+
+## 決まっていること（蒸し返さない）
+
+- ユーザーの素案は `src/{backend,frontend,shared}` ＋ 各側に `lib/` `utils/`（helm-yadokari と
+  同じ役割分担）
+- **他の案も並べて推す**（ユーザー 2026-09-20）。素案を前提に詰めるのではなく、いまの4層の
+  名前を保つ案なども比べて、推奨を1つ出す
+- このタスクではコードを動かさない（提案と推奨まで。移すのは T-195）
+
+## 解くべき論点
+
+- いまの4層と新しい置き場の対応（`protocol` → `shared`、`core` ＋ `adapter` → `backend`、
+  `ui` → `frontend` が素直か。`cli.ts`（配線）の置き場）
+- **`core` と `adapter` の区別を新しい名前でどう表すか。** 「純粋な判断」と「外の世界に触る境界
+  （1ファイル＝1つの境界）」の区別は `test/architecture.test.ts` が守っている実効のあるルール
+  なので、名前を変えても失わせない
+- `backend` の中の domain / 入口 / infra の切り方。**両側が読む語彙（`expression.ts`
+  `character.ts` など）はブラウザでも動く必要があるので `shared` に残る**。「ドメインは
+  backend に置く」と衝突しないか
+- `frontend` の `features` と `components` の線引き。Git-Bulk-Maestro の
+  `components/{layouts,pages,providers}` を当てると、いまの `layout` / `main-view` /
+  `character-view` / `sidebar` / `dispatch` はどこへ行くか
+- 各側の `lib/` `utils/` の責務の線。`CLAUDE.md` 原則5「`helpers` / `utils` / `common` のような
+  置き場所を名前にしたファイルは作らない」と `utils/` ディレクトリの両立をどう説明するか
+  （helm-yadokari は責務表で解いている）
+- CSS の置き場（`src/ui/styles/` は T-191 で CSS Modules へ移る予定。提案はその形と両立させる）
+- 移行を1回で動かすか段階に割るか（割るなら境目はどこか）
+- 追随が要るもの（`CLAUDE.md` 原則2〜5・`docs/design.md` 2章・`docs/architecture.md` 原則2/3・
+  `README.md` のツリー・`test/architecture.test.ts`）の数
+
+## やること
+
+1. `architecture-proposal` スキルを使う
+2. 現状を実物から読む（89ファイルの内訳、`test/architecture.test.ts` が守っている辺、
+   `docs/design.md` 2章の層の表）
+3. 参考の2リポジトリを読む（上のパス）
+4. 案を3つ程度まで作り、案ごとに「4層との対応表」「失うもの」「追随が要るファイル数」を出す
+5. 推奨を1つ選び、`docs/research/` に提案書として書く。**既存の
+   `docs/research/architecture-proposal.md` は 2026-09-16 の判断の記録なので上書きせず**、
+   別のファイル名にする
+6. 推奨案の要点を `develop/direction.md` の `## エージェントのドラフト` 節に追記する
+   （ユーザーが選んでから T-195 が動く）
+
+## 完了条件
+
+- `docs/research/` に提案書がある（案ごとの対応表と、推奨1案が書かれている）
+- `develop/direction.md` の `## エージェントのドラフト` に推奨案の要点がある
+- `src/` `test/` `CLAUDE.md` `docs/design.md` に差分が無い（このタスクは決めるだけ）
+- `bun run check` が通る
+
+## 注意
+
+- 提案の中で `CLAUDE.md` 原則2〜5 を書き換える必要が出たら、提案書に「どの原則をどう直すか」
+  まで書く。**この段階では `CLAUDE.md` を直さない**
+- T-190 / T-191（レポートの変換層と CSS Modules）が `src/ui/` を触る予定。提案はこの2件が
+  入ったあとの形でも成り立つように書く
