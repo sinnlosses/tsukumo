@@ -10570,3 +10570,367 @@ T-180 で識別子が `thinking` になるので、パックの日本語ラベ�
 
 - **実装しない。** `src/` は触らない
 - `docs/history/` には書かない
+
+## T-130
+
+**タスク**: Fable が set-model で通るかを実測し、通るならモデルの選択肢に足す
+
+**difficulty**: sonnet / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+2026-09-17 実測: SDK を直接叩き setModel("fable") が resolve し、init と assistant の model が claude-fable-5-1 になった（対照の setModel("not-a-real-model-xyz") は Error: Model ... not found で reject）。短い別名のままでよくフルネームは要らない。衣装は heavy（戦闘配置、opus と同じ。ユーザー決定）。MODEL_ALIASES / MODEL_LABELS / OUTFIT_BY_MODEL_SUBSTRING と docs/requirements.md 4.3 を揃え、bun run check 629 → 635 pass（+6、59 files）。実機（本物の駆動・ポート 7412）: <select> の選択肢が fable/opus/sonnet/haiku、Fable を選んで依頼を1つ送ったあとサーバの session-info でも fable のまま残り、立ち絵の data-outfit が default → heavy に変わった。
+
+## 背景
+
+ユーザーの要望（2026-09-15）「サイドバーで、Fable が選べる場合はモデルに Fable を追加する」。
+**「選べる場合は」という条件付き**なので、まず使えるかを確かめるところから始める。
+
+**いまの選択肢は3つ。** `src/protocol/command.ts` の
+`MODEL_ALIASES = ["opus", "sonnet", "haiku"]` が正典で、
+`src/ui/sidebar/session-info.tsx` の `MODEL_LABELS`（35〜37行目）がそれと同じ3つに日本語の
+ラベルを付けている。`resolveModelAlias`（51行目付近）は **`model.includes(alias)` の部分一致**で
+いまのモデルを選択済みにしている（フルネーム `claude-opus-4-1` のような値が来ても拾えるよう）。
+既定は `opus`（`src/core/session-driver.ts` の `DEFAULT_MODEL` と揃えてある）。
+
+**衣装がモデルに紐づいている。** `docs/requirements.md` 4.3「モデル別の衣装」で
+`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` = 戦闘配置と決まっており、`resolveOutfit(state.model)`
+が判定する。**4つ目のモデルを足すと、その衣装をどうするかが決まっていない。**
+
+**確かめるべきこと。** `MODEL_ALIASES` のコメントは「フルネームは渡さない」（2026-09-11 実測）と
+あり、**短い別名で渡す前提**になっている。`fable` という別名が SDK の `set-model` で通るのか、
+フルネーム（`claude-fable-5-1` の形）が要るのかは**この環境でその場で確かめる**
+（`docs/requirements.md` 5章の実測値と同じ扱いで、時間が経つと変わる）。
+
+## 解くべき論点
+
+- **`fable` の衣装をどれにするか。** 4.3 の3つに割り当てるか、4つ目を作るか。
+  **4つ目を作ると `outfitAccents`（`character.json`）の既定を持つパックすべてに影響する**
+  （`default` / `light` / `normal` / `heavy` の4つで、既存パックはこの名前で持っている）
+
+## やること
+
+1. **まず使えるかを確かめる。** この環境で `fable`（または SDK が要求する形）を
+   `set-model` に渡して通るかを実測する。**通らなければ、作らずに実測の結果を `evidence` に
+   書いて閉じる**（`status: "done"` / `passes: false`）
+2. 通るなら `src/protocol/command.ts` の `MODEL_ALIASES` と
+   `src/ui/sidebar/session-info.tsx` の `MODEL_LABELS` に足す。**2箇所を同じコミットで揃える**
+   （片方だけだと `<select>` に出るのに弾かれる、またはその逆になる）
+3. `resolveModelAlias` の部分一致が**新しい別名でも誤爆しない**ことを確かめる
+   （`fable` が他のモデル名の部分文字列にならないこと）
+4. 衣装の割り当てを決め、`docs/requirements.md` 4.3 に書く
+5. `docs/design.md` 5章にモデルの一覧があれば揃える
+
+## 完了条件
+
+- **実測の結果**（`fable` が通るか、通る形は何か）が `evidence` に書かれている
+- 足した場合:
+  - `MODEL_ALIASES` と `MODEL_LABELS` の**両方**に入っていることをテストで示す
+    （片方だけの状態を落とすテスト）
+  - `resolveModelAlias` が `fable` を含むモデル名で `fable` を返し、**他の3つを誤って
+    返さない**ことをテストで示す
+  - 衣装の割り当てが `docs/requirements.md` 4.3 に書かれている
+  - 実機でサイドバーから選んで**実際にモデルが切り替わる**ことを確認して `evidence` に書く
+- `docs/requirements.md` の節の数が変わっていない
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`~/.claude/settings.json` を触らない**（モデルの既定はユーザーのグローバル設定。
+  変えるのはこのセッションの `set-model` だけ）
+- **キャラクターパックの `persona.md` にある「出撃時の掛け声」のモデル分岐**（3つ）は
+  パック側の記述で、`characters/local/` は `.gitignore` 済み。**このタスクで書き換えない**
+  （必要ならユーザーに伝えるだけ）
+- **4つ目のモデルの衣装の割り当てをユーザーが決める**ので `loopable` は `"N"`
+
+## T-182
+
+**タスク**: 「立ち絵の位置を固定する」を仕様ごと撤去する
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+portrait-fixed.ts と設定を撤去。grep（portrait-fixed/portraitFixed/立ち絵の位置を固定/動かすか固定）0件、節の数は requirements 26・design 51 で前後一致。bun run check 通過（636 pass / 0 fail。643 から7件減＝portrait-fixed.test.ts 4件 + appearance/character-view/portrait 各1件）。目視: TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7411 で起こし、「見た目」の引き出しにチェックボックスが0件（色3・立ち絵4・差し色4・作る口・比率リセットだけ）、立ち絵は data-motion="reading" で animation-name が portrait-fade-in, portrait-breathe と従来どおり動いた。
+
+## 背景
+
+「見た目」の引き出し（`src/ui/features/appearance/appearance.tsx`）にチェックボックス
+「立ち絵の位置を固定する」がある。値は `src/ui/lib/portrait-fixed.ts` が `localStorage` の
+`tsukumo-portrait-fixed` に持ち、読むのは `src/ui/features/character-view/character-view.tsx` の
+`resolveMotion`（固定なら `resolvePortraitMotion` を呼ばず `undefined` を返す）。
+
+ユーザーが「見た目」の引き出しごと消す方針を決めたのに伴い、この設定は仕様から外す。
+動きを止める道は `prefers-reduced-motion: reduce`（`src/ui/styles/theme.css`）が残るので、
+止める手段がまるごと無くなるわけではない。
+
+## 決まっていること（蒸し返さない）
+
+- 撤去する（代わりの口は作らない）。ユーザーの指示「「立ち絵の位置を固定する」は仕様として外して」
+
+## やること
+
+1. `src/ui/lib/portrait-fixed.ts` と `test/ui/lib/portrait-fixed.test.ts` を消す
+2. `appearance.tsx` からチェックボックスと `portraitFixed` の state を外す
+3. `character-view.tsx` の `resolveMotion` を `resolvePortraitMotion` の呼び出しだけにする
+4. `test/ui/features/appearance/appearance.test.tsx` と
+   `test/ui/features/character-view/character-view.test.tsx` の、固定にまつわるケースを消す
+   （`PORTRAIT_STORAGE_KEY` / `PORTRAIT_FIXED_STORAGE_KEY` を使っているもの）
+5. `src/ui/styles/character.css` の「「固定」・reduced-motion のときは属性ごと無い」という説明を、
+   reduced-motion だけの話に直す
+6. ドキュメントを直す: `docs/requirements.md` 4.3 の「**利用者は「固定」を選べる**」の箇条、
+   `docs/design.md` 6.5 の同じ箇条、13.6 の表の「立ち絵を動かすか固定するか」の行、
+   6.1 部品の木の `<Appearance>` の説明（「色3つ・立ち絵の固定・比率のリセット」）
+
+## 完了条件
+
+- `grep -rn "portrait-fixed\|portraitFixed\|立ち絵の位置を固定\|動かすか固定" src/ test/ docs/requirements.md docs/design.md` が 0 件
+- `bun run check` が通る（テストが減った分だけ件数が下がるのは可。減った数を evidence に書く）
+- 目視: `bun run start` で起こし、引き出しにチェックボックスが無いことと、立ち絵が今までどおり
+  動くことを確かめる
+
+## 注意
+
+- `docs/history/` は過去の記録なので直さない
+- 索引の行に本文を流し込む事故がある（CLAUDE.md「ドキュメントを編集するときの罠」）。
+  編集の前後で `grep -c '^#\{2,3\} ' docs/requirements.md` と同 `docs/design.md` の数が
+  変わっていないか確かめる
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-186
+
+**タスク**: /model で切り替えたモデルをサイドバーに即時反映する
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 643 pass / 0 fail（変更前 635。テスト8件追加）。`local_command_run` は SDK 0.3.274 で入った機能で 0.3.268 には無く、package.json の下限を上げた。検証用インスタンス（7399）に WebSocket で繋ぎ applySessionEvent で畳んで実測: /model haiku → state.model="haiku"（同ターンの init は古い claude-fable-5-1）、/model best → claude-haiku-4-5-20251001 のまま変わらず、/model opus → "opus"。
+
+## 背景
+
+ユーザーの指摘（2026-09-17）「model コマンドでモードを切り替えたとき、サイドバーのモデルも
+切り替わるようになってるかな。なっていない場合、同期してほしい」。
+
+**なっていない。1ターン遅れる。** 2026-09-17 に SDK を直接叩いて実測した:
+
+- `/model` は**端末専用ではない**（`init` の `terminal_slash_commands` に `model` は入っていない）。
+  tsukumo の入力欄から送れて、モデルは**本当に切り替わる**
+- サイドバーの値は `SessionState.model` で、出どころは `session-info` イベント1つだけ
+  （`src/core/sdk-message.ts` の `sessionInfoEvents`。`system` / `init` から作る）。
+  **`init` はターンの頭に届く**ので、`/model haiku` を送ったターンの `init` は**まだ古い値**
+  （`claude-sonnet-5`）を返し、新しい値（`claude-haiku-4-5-20251001`）が載るのは**次の依頼の
+  `init`** から。だから `/model` の直後はサイドバーが古いモデルを指したままになる
+- **構造化された合図がある**（英語の文面を読む必要はない）。`/model haiku` のターンでは
+  `assistant` メッセージに `local_command_run: {"command":"model","args":"haiku"}` が乗り、
+  `result` に `local_command: "model"` が乗る。通常のターンにはどちらも無い
+- SDK に「いまのモデルを読む」口は無い。`initializationResult()` は**初回接続の結果を
+  キャッシュして返す**うえ `SDKControlInitializeResponse` に現在のモデルの欄が無く、
+  `reinitialize()` は hook の再登録や、応答待ちのツール呼び出しの deny/retry という副作用がある
+  （`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` の JSDoc）。**どちらも採らない**
+
+衣装（`resolveOutfit(state.model)`）も `state.model` から決まるので、同じ遅れがある。
+
+## 決まっていること（蒸し返さない）
+
+- **`local_command_run` の `args` を先回りで `state.model` に映す。** 次の依頼の `init` が
+  正しい値で上書きするので、間違いは残らない
+- **`args` が tsukumo の知っている別名（`MODEL_ALIASES` の4つ）に一致しないときは、その回は
+  何もしない**（ユーザー決定 2026-09-17）。`/model` には `best` / `opusplan` / `default` /
+  `sonnet[1m]` やフルネームも渡せるが、当てにいかない。**遅れるだけで、間違いは出さない**
+- **いま知らない値が来ると `<select>` が黙って Opus を選択済みにする**
+  （`session-info.tsx` の `resolveModelAlias` が `MODEL_FALLBACK` に倒す）。**これは直さない**
+  （上の決定の裏返し。直すなら `<select>` に「その他」の行を足す別の話になる）
+- 逆向き（サイドバーで選んだら `/model` を送る）は**やらない**。サイドバーは既に
+  `set-model` を送っていて、そちらは効いている
+
+## 解くべき論点
+
+- 新しいイベントを足すか、`session-info` を使い回すか。`session-info` は `sessionId` や
+  `slashCommands` も一緒に運ぶので、モデルだけを差すには向かない見込み
+- `args` の正規化をどこまでやるか（前後の空白の除去まではやる。`MODEL_ALIASES` との一致は
+  完全一致で見る。`resolveModelAlias` の部分一致とは別物なので混ぜない）
+
+## やること
+
+1. `src/core/sdk-message.ts` の `assistant` の分岐で、`local_command_run` が
+   `{ command: "model", args: <文字列> }` の形のときにモデルの変更を表すイベントを1つ出す。
+   **外部由来の値なので構造を信用せず検証する**（`isRecord` と `typeof` で見る。既存の
+   `optionalString` / `isRecord` の書き方に合わせる）。`command` が `model` 以外の局所コマンド
+   （`/clear` など）では出さない
+2. `src/protocol/session-event.ts` にそのイベントを足し、`src/protocol/session-state.ts` の
+   reducer で `state.model` を更新する。**`MODEL_ALIASES` に完全一致するときだけ**更新し、
+   一致しなければ状態を変えない
+3. テストを足す:
+   - `toSessionEvents`: `local_command_run` を持つ `assistant` からイベントが1つ出ること。
+     `command` が `model` 以外・`args` が無い・`local_command_run` が無い通常のメッセージでは
+     出ないこと
+   - reducer: 知っている別名で `state.model` が変わること、知らない値（`best` など）では
+     **変わらない**こと
+   - **フィクスチャは手で組んだ架空のメッセージにする**（CLAUDE.md「会話内容の扱い」。
+     実物の会話を使わない）
+4. `docs/design.md` 4.1（`SessionEvent`）か 4.2（`SessionState`）に、モデルの出どころが
+   `init` だけではなくなったことを1〜2行で足す。**`init` はターンの頭に届くので `/model` の
+   ターンには間に合わない**という理由まで書く（これが無いと次に読む人が二重の経路に見える）
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- 実機: `bun run start` で起こし、入力欄から `/model haiku` を送って、**次の依頼を送る前に**
+  サイドバーのモデルが Haiku に変わることを確かめる。続けて `/model opus` でも同じことを
+  確かめ、何をどう確かめたかを `evidence` に書く
+- 実機: `/model best`（tsukumo が知らない値）を送ったとき、サイドバーが**動かない**ことを
+  確かめる（Opus に飛ばない。決定どおり遅れるだけ）
+- `docs/design.md` の該当箇所に、モデルの出どころが2つになったことと理由が書かれている
+
+## 注意
+
+- **`/model` の引数の解釈を tsukumo 側で増やさない。** 別名の一覧は `MODEL_ALIASES` が正典で、
+  ここに無いものは扱わない
+- `~/.claude/settings.json` を触らない（`/model` はセッション限りの切り替え）
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-193
+
+**タスク**: TanStack の各ライブラリを実物のコードに当てて採否を決め、採用分はドラフトに出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+TanStack の公開24件を実測で当てて採否を決めた（採用は Query 1件のみ。当て先は src/ui/features/character-view/portrait.tsx の useSvgMarkup で、/character/ が no-store 配信のため 表情を戻すたびに同じ SVG を取り直している。gzip 実測 44KB）。見送りの内訳: 当て先はあるが釣り合わない5件（Table/Form/Store/Pacer/Highlight）、噛み合わない7件（Virtual/Router/DB/Ranger/Hotkeys/Markdown/Charts）、npm に無い3件（Select/Persist/Time）、無関係8件。採用分と T-188 の本文更新案は develop/direction.md の `## エージェントのドラフト` に記載（承認待ち）。bun run check 通過（636 pass / 0 fail / 58 files）、package.json と bun.lock は無差分。
+
+## 背景
+
+ユーザーの指示（2026-09-19）:「tanstack のライブラリを組み込むことで得られる恩恵を洗い出し、
+採用する前提で考えてもらいたい。もちろん、採用するメリットが薄い場合はその限りではない。」
+
+2026-09-19 時点のブラウザ側（`src/ui/`）の作り。**評価はこの実物に当てて行う**:
+
+- 状態は WebSocket 1本の push だけで届き、`src/ui/stores/session.tsx` が `useReducer(applyFrame)` で
+  持つ。畳み込みの本体は `src/protocol/session-state.ts` の `applySessionEvent` で、
+  **サーバとブラウザで共有する層**にある。HTTP で取りに行くデータは無い
+  （`src/adapter/server.ts` の GET は UI スクリプト・スタイル・同梱物・キャラクター素材の配信だけ）
+- 画面は1枚でルーティングが無い（`src/ui/features/layout/layout.tsx` が4領域を並べる）
+- 一覧は上限で抑えてある。`MAX_MAIN_VIEW_TURNS = 5` / `MAX_MAIN_VIEW_ENTRIES = 40`
+  （`src/protocol/main-view.ts`）、`MAX_RECENT_FINISHED_TOOLS = 50`
+  （`src/protocol/session-state.ts`）。メインビューが描くのは選んだ1ターンだけ
+- 表は `src/ui/features/sidebar/task-board.tsx` の7列が1つで、並べ替え・絞り込み・ページングは
+  無い（ファイルの順で出す）
+- 入力は `src/ui/features/dispatch/composer.tsx`（textarea と `/` 補完）と
+  `src/ui/features/appearance/character-create.tsx`（`useState` 5個）。フォームのライブラリは無い
+- 依存は React 19 + react-markdown 系 + ws + zod だけ（`package.json`）。ブラウザ向けの束ねは
+  `bun build` のプロセスを起こす形（`src/adapter/bundle.ts`）で、stdout で受けてメモリに持つ
+
+未完了のタスクのうち評価に関わるものが3件ある: T-188（`@` のファイル補完。HTTP の GET を1本足す）、
+T-190（レポートの class 名を React 部品へ解決する変換層）、T-191（CSS Modules への移行）。
+
+## 決まっていること（蒸し返さない）
+
+- 出口は**洗い出しと採否の判断まで**。採用すると判断したものの実装は
+  `develop/direction.md` の `## エージェントのドラフト` 節に項目として書いて承認を待つ
+  （ユーザーの選択 2026-09-19）
+- **このタスクでは `package.json` / `bun.lock` を触らない。** 依存の追加も置き換えもしない
+- 出発点は「採用する前提」。ただしメリットが薄いものは見送ってよい（ユーザーの指示そのもの）
+- 決めた理由はタスクの `evidence` に残す（設計の正典に書くのは決まった形そのものだけ。T-188 と同じ扱い）
+
+## 解くべき論点
+
+- **どのライブラリを見るか。** TanStack が出しているもの（Query / Router / Table / Virtual /
+  Form / Store / Pacer / Ranger / DB など）を一度ずつ当て、関係が無いものは1行で落とす。
+  **版と現状は一次情報（公式ドキュメント・リポジトリ）で確かめる**（記憶で書かない）
+- **「恩恵」を何で測るか。** このリポジトリで実際に減る行数・消える `useEffect`・機械で守れる
+  ようになる規約（`docs/coding-standards.md`「React」節）を根拠にする。
+  「保守性が上がる」のような一般論を理由にしない
+- **コスト側。** 依存が増えること、束ねたスクリプトの大きさ、規約との相性（`Bun.*` に寄せない／
+  `null` を自前の型に出さない／`useEffect` は4類型／定義は `satisfies` で検査）、層の制約
+  （`src/ui/` の外でも使うなら `protocol` の共有に影響する。`test/architecture.test.ts`）
+- **状態の持ち方に触る提案（Store / Query）は、`protocol` の畳み込みが正典であることと
+  両立するか。** `applySessionEvent` をサーバとブラウザで共有している形を崩さずに入るか
+- **既存タスクとぶつからないか。** T-188 / T-190 / T-191 が触る場所に重なる提案は、
+  新しいタスクではなく**そのタスクの本文を更新する案**として書く
+
+## やること
+
+1. 論点に沿って、ライブラリごとに「このリポジトリで何が良くなるか／何が増えるか」を書き出す。
+   当てる先は**実物のファイル名と行**で示す
+2. 採用・見送りを1件ずつ決める。**見送りの理由も残す**（後で同じ調査を繰り返さないため）
+3. 採用と決めたものがあれば、`develop/direction.md` の `## エージェントのドラフト` 節に
+   1件ずつ項目を書く（節が無ければ見出しを作る）。項目は「何を、どのファイルに、何のために
+   入れるか」を1〜2行で。**`develop/tasks.json` に直接登録しない**（承認ゲートは `/plan-tasks`）
+4. 全部見送りになったら、その旨と理由を `evidence` に書いて閉じる。
+   **「採用する前提」に引きずられて薄い根拠で採らない**
+5. 調査の結果で `docs/` に新しいファイルを作らない。`evidence` と（採用分は）ドラフトの項目に収める
+
+## 完了条件
+
+- 見たライブラリ全件について採否と理由が `evidence` に残っている（見送りも1件1行以上）
+- 採用と決めたものが `develop/direction.md` の `## エージェントのドラフト` 節に項目として
+  書かれている（採用が0件なら、書かないことが `evidence` に書かれている）
+- `git diff` で `package.json` と `bun.lock` に差分が無い
+- `bun run check` が通る
+
+## 注意
+
+- **依存を足さない。** 実際に入れるのは承認を経た別タスク
+- 一次情報で確かめる。TanStack は版で名前と作りが変わる（Query の v4 → v5 など）
+- `docs/requirements.md`「2.2 対象外とすること」を先に見る。ライブラリの導入がそこで外した
+  機能を呼び戻していないか確かめる
+
+## T-205
+
+**タスク**: 入力欄の質問で選択肢のラベルと説明が重なる件を再現させて直す
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+1400x900・新しい場面 question-long（ラベル11〜25字＋説明45〜80字）の複数選択で再現。ラベルが行の箱から右へ74pxはみ出して説明に重なり、<label> 側だけ content-box で箱が21px溢れていた。dispatch.css の .question-choice に box-sizing: border-box、.question-choice-checkbox-row を flex: 0 0 auto に変更。1400px / 720px で重なりが消え選択肢3件＋自由入力が見えることを目視（/tmp/t205-after-multi-\*-crop.png）。bun run check 緑（636 pass / 0 fail）。
+
+## 背景
+
+入力欄の質問は `src/ui/features/dispatch/pending-answer.tsx` の `QuestionCard` が描く。選択肢1件は `.question-choice` の flex 行で、太字のラベル（`.question-choice-label`）と説明（`.question-choice-description`）を**横に並べる**。ユーザーの目視で、このラベルと説明の文字が重なって見えることがある（2026-09-20）。**再現条件は分かっていない。**
+
+2026-09-20 に実物のスクリーンショットで次を確認している（複数選択の質問、幅 1400px 相当、選択肢3件・説明はどれも1行に収まらない長さ）:
+
+- ラベルの文字の**末尾に説明の先頭が重なって**描かれている（「見出しと質問文」＋「短い見出し（例…」が同じ位置に出ている）
+- 説明は右端で窓の外へ切れ、2行目だけが左にずれた位置に折り返している
+
+**有力な原因**: `.question-choice-label` が `flex: 0 0 auto`（縮まない）なのに、その親（複数選択なら `.question-choice-checkbox-row`、単一選択なら `.question-choice` の中のラベル）は `min-width: 0` で縮む。説明が長いと取り合いでラベル側のボックスだけが縮み、中のラベルの文字がボックスからはみ出して右隣の説明に重なる。**確かめてから直すこと**（スクリーンショット1枚では、チェックボックス版だけの問題か単一選択でも起きるかは分からない）。
+
+CSS（`src/ui/styles/dispatch.css`）の現状:
+
+- `.question-choice`: `display: flex; align-items: baseline; gap: 0.5rem; min-width: 0; overflow-wrap: anywhere`
+- `.question-choice-label`: `flex: 0 0 auto; font-weight: bold`（`min-width` の指定なし＝縮まない）
+- `.question-choice-description`: `flex: 1 1 auto; min-width: 0`
+- 複数選択（multiSelect）はチェックボックス版で、ラベルは `.question-choice-checkbox-row`（`align-items: center` の入れ子の flex）の中に入る。**単一選択と構造が違う**ので、両方で確かめる
+
+「重なって見える」の前例が1つある: 2026-09-17 に、箱の高さが足りず `.question-card` のスクロール窓の下端で行が横に割れ、「答える」の行と接して重なって見えた件を、`.pending-question` に領域を丸ごと渡し `.pending-answer-actions` に境目の線を足して直している（`dispatch.css` の該当コメント）。**今回は場所が違う**ので、同じ対処がそのまま効くとは限らない。
+
+偽の駆動で質問を出せる（`src/adapter/fake-driver.ts`、`TSUKUMO_DRIVER=fake` と `TSUKUMO_FAKE_SCENE`）。台本 `test/fixture/fake-session.json` に `question-multi`（複数選択3件）と `question-pair`（単一選択2問。3件目の説明をわざと長くしてある）がある。
+
+## 決まっていること（蒸し返さない）
+
+- 被って見えるのは**選択肢のラベルと、その右に並ぶ説明文**（2026-09-20 にユーザーへ確認）。見出し（`.question-header`）と質問文（`.question-text`）の組、および「答える」の行との重なりは今回の対象ではない。
+
+## 解くべき論点
+
+- 上の原因が本当か。単一選択（`<button>` 版）でも起きるか、複数選択（`<label>` 版）だけかを分けて確かめる
+- 直し方。ラベルを縮めて折り返させるのか、幅の上限を与えるのか、ラベルと説明を縦に積むのか。**縦に積むのは既存の決定と衝突する**（`.question-choice` のコメント「縦に積むと選択肢3件で入力欄の領域の高さを使い切ってしまい、1件しか見えなくなる」）。採るなら理由をコメントに残し、選択肢3件が同時に見えることを目視で確かめる
+
+## やること
+
+1. 偽の駆動で質問を出し、重なりを再現させる。既存の2つの台本は**ラベルも説明も短く、これでは出ない可能性が高い**（上のスクリーンショットの質問はラベル・説明ともに長い）。出なければ長いラベルと長い説明の場面を足して探す
+2. 再現したら原因を特定して直す。**どうしても再現しなければ、直さずに試した条件の一覧と結論を `evidence` に書いて閉じてよい**
+3. 直したあと、同じ条件で重ならないこと・選択肢が潰れていないことをスクリーンショットで確かめる（手順は `docs/architecture.md`「手で確かめること」）
+4. 再現のために台本を足したなら `test/fixture/fake-session.json` に残す（**架空の文面のまま**。実物の会話は使わない）
+
+## 完了条件
+
+- `bun run check` が通る
+- 再現した条件（画面の幅・場面の名前・ラベルと説明の長さ）と、直した後に重ならないことを目視で確かめた結果を `evidence` に書く。再現しなかった場合は、試した条件の一覧を `evidence` に書いて閉じる
+
+## 注意
+
+- `src/ui/styles/dispatch.css` は T-191（CSS Modules へ移す）も触る。**並行させない**
+- tsukumo を起こす目視確認が要るので、同じく起動を伴うタスクと同時に進めない（CLAUDE.md「タスク運用」）
