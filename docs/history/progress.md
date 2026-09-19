@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-18 「立ち絵の位置を固定する」を仕様ごと撤去した（T-182）
+
+`src/ui/lib/portrait-fixed.ts` と「見た目」の引き出しのチェックボックスを消し、`usePortraitMotion` を
+`resolvePortraitMotion` の呼び出しだけにした。`<Portrait>` の `motion` も `undefined` を取らない形にし、
+動きを止める道は `prefers-reduced-motion: reduce` だけになった（`docs/requirements.md` 4.3 /
+`docs/design.md` 6.5・13.6 も更新）。
+
 ### 2026-09-17 /model の切り替えをサイドバーへ即時反映した（T-186）
 
 `assistant` の `local_command_run` から `model-changed` を出し、`MODEL_ALIASES` に完全一致する

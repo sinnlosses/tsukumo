@@ -80,13 +80,6 @@ T-183 で決めた形（`docs/design.md` 13.6）のとおり、`#character` / `#
 
 公開されている24件をこのリポジトリの実物に当てて採否を決め、採用は TanStack Query 1件に絞った（`portrait.tsx` の `useSvgMarkup` と、T-188 が足す GET が当て先）。採用分と T-188 の本文更新案は `develop/direction.md` の `## エージェントのドラフト` に置いてあり、承認待ち。
 
-### 2026-09-18 「立ち絵の位置を固定する」を仕様ごと撤去した（T-182）
-
-`src/ui/lib/portrait-fixed.ts` と「見た目」の引き出しのチェックボックスを消し、`usePortraitMotion` を
-`resolvePortraitMotion` の呼び出しだけにした。`<Portrait>` の `motion` も `undefined` を取らない形にし、
-動きを止める道は `prefers-reduced-motion: reduce` だけになった（`docs/requirements.md` 4.3 /
-`docs/design.md` 6.5・13.6 も更新）。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
