@@ -89,12 +89,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 CSS の両方に焼かれるため）、一時ディレクトリへ `--outdir` して読んで消す形にした。
 `narrow-screen.css` は各モジュールの `@media` へ分解。`ui-rebuild.ts` は `page` 更新へ倒した。
 
-### 2026-09-20 レポートの意味のクラス名を React 部品へ解決する変換層を置いた（T-190）
-
-`markdown/notation.tsx` が `div` / `span` を受け、記法の5系統だけを `report-` 付きの class に
-置き換える（知らない class 名と `style` 属性は素通し）。「お願い」のラベルは CSS の `::before`
-から部品が描く文字へ移した。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**

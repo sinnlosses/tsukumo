@@ -1,5 +1,11 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 レポートの意味のクラス名を React 部品へ解決する変換層を置いた（T-190）
+
+`markdown/notation.tsx` が `div` / `span` を受け、記法の5系統だけを `report-` 付きの class に
+置き換える（知らない class 名と `style` 属性は素通し）。「お願い」のラベルは CSS の `::before`
+から部品が描く文字へ移した。
+
 ### 2026-09-20 oxlint の react プラグインを有効にし、既存7件を直した（T-189）
 
 `.oxlintrc.json` に `react` を足し（`react-in-jsx-scope` だけ off）、指摘7件を lint の抑制ではなく
