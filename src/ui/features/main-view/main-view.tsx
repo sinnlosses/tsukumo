@@ -33,9 +33,12 @@ export function MainView(): ReactElement {
   // 見ているターンが変わったら（自分でタブを選んだ・新しいターンに連れていかれた・選んでいた
   // ターンが窓から外れた）、そのターンのレポートの先頭から読ませる。
   useEffect(() => {
-    if (scrollerRef.current !== null) {
-      scrollerRef.current.scrollTop = 0
+    const scroller = scrollerRef.current
+    // 出ているターンが無い（下で placeholder を返す）ときは、戻す先そのものが無い。
+    if (scroller === null || activeTurnId === undefined) {
+      return
     }
+    scroller.scrollTop = 0
   }, [activeTurnId])
 
   if (turnsNewestFirst.length === 0) {

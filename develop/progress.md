@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 oxlint の react プラグインを有効にし、既存7件を直した（T-189）
+
+`.oxlintrc.json` に `react` を足し（`react-in-jsx-scope` だけ off）、指摘7件を lint の抑制ではなく
+構造で解いた。`layout.tsx` の ref 書き込みは `onCommit(percent)` への契約変更で、
+`turn-selection.tsx` の effect はレンダー中に前回値と見比べる形で消した。
+
 ### 2026-09-20 サイドバーの「続きから」の印を仕様ごと撤去した（T-187）
 
 `session-restored` イベントと `SessionState.restored` を、表示・畳み込み・イベント型まで落とした

@@ -26,15 +26,6 @@ export function Layout(props: LayoutProps): ReactElement {
   const gridRef = useRef<HTMLDivElement>(null)
   const rowTopRef = useRef<HTMLDivElement>(null)
   const rowBottomRef = useRef<HTMLDivElement>(null)
-  // ドラッグの終わり（onCommit）で保存する値は、そのときの最新の split（レンダーのたびに
-  // 更新しておく。onCommit のクロージャは pointerdown の瞬間に固定されるため、state を
-  // 直接は読めない）。
-  const latestSplitRef = useRef(split)
-  latestSplitRef.current = split
-
-  function commit(): void {
-    saveSplit(latestSplitRef.current)
-  }
 
   function reset(): void {
     setSplit(DEFAULT_SPLIT)
@@ -55,6 +46,9 @@ export function Layout(props: LayoutProps): ReactElement {
     "--layout-bottom-right": `${String(100 - split.bottomLeft)}fr`,
   }
 
+  // ドラッグの終わり（onCommit）は、**動かした仕切りの位置だけ**を受け取った値で差し替えて
+  // 保存する。ここの `split` は pointerdown の時点のもので、動かした仕切りの値だけが古い
+  // （他の2本は同時に動かせないので、そのまま使える）。
   return (
     <>
       <div className="layout-grid" ref={gridRef} style={gridStyle}>
@@ -67,7 +61,9 @@ export function Layout(props: LayoutProps): ReactElement {
             onChange={(percent) => {
               setSplit((current) => ({ ...current, topLeft: percent }))
             }}
-            onCommit={commit}
+            onCommit={(percent) => {
+              saveSplit({ ...split, topLeft: percent })
+            }}
           />
           <section className="layout-region layout-sidebar">{props.sidebar}</section>
         </div>
@@ -78,7 +74,9 @@ export function Layout(props: LayoutProps): ReactElement {
           onChange={(percent) => {
             setSplit((current) => ({ ...current, rowTop: percent }))
           }}
-          onCommit={commit}
+          onCommit={(percent) => {
+            saveSplit({ ...split, rowTop: percent })
+          }}
         />
         <div className="layout-row layout-row-bottom" ref={rowBottomRef} style={rowBottomStyle}>
           <section className="layout-region layout-character">{props.character}</section>
@@ -89,7 +87,9 @@ export function Layout(props: LayoutProps): ReactElement {
             onChange={(percent) => {
               setSplit((current) => ({ ...current, bottomLeft: percent }))
             }}
-            onCommit={commit}
+            onCommit={(percent) => {
+              saveSplit({ ...split, bottomLeft: percent })
+            }}
           />
           <section className="layout-region layout-dispatch">{props.dispatch}</section>
         </div>

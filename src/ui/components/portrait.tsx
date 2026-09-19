@@ -37,39 +37,46 @@ export type PortraitProps = {
 }
 
 /**
+ * 読み終わった SVG。**どの URL のものか**を一緒に持つ（URL が変わった直後に前の立ち絵の
+ * 中身を出さないため。「いまの URL のものが無い」の判定はレンダー中に見比べて決める）。
+ */
+type LoadedSvg = {
+  readonly url: string
+  readonly markup: string
+}
+
+/**
  * SVG の中身を `fetch` する。URL が変わるたびに読み直し、コンポーネントが外れた・URL が
- * 変わったあとの古い応答は捨てる。読めない・失敗したときは undefined のまま
- * （立ち絵が一瞬出ないだけで、落ちない）。
+ * 変わったあとの古い応答は捨てる。
+ *
+ * **読めなかったときは何も記録しない。** 読み込みが終わっていないときと同じ「いまの URL の
+ * 中身が無い」になり、呼び出し側の描き分けも同じ（立ち絵が出ないだけで、落ちない）。
  */
 function useSvgMarkup(url: string | undefined): string | undefined {
-  const [markup, setMarkup] = useState<string | undefined>(undefined)
+  const [loaded, setLoaded] = useState<LoadedSvg | undefined>(undefined)
 
   useEffect(() => {
     if (url === undefined) {
-      setMarkup(undefined)
       return undefined
     }
 
     let cancelled = false
-    setMarkup(undefined)
     fetch(url)
       .then((response) => (response.ok ? response.text() : undefined))
       .then((text) => {
-        if (!cancelled) {
-          setMarkup(text)
+        if (!cancelled && text !== undefined) {
+          setLoaded({ url, markup: text })
         }
       })
       .catch(() => {
-        if (!cancelled) {
-          setMarkup(undefined)
-        }
+        // 読めなかった。前の URL の中身が残っていても、下の見比べで捨てられる。
       })
     return () => {
       cancelled = true
     }
   }, [url])
 
-  return markup
+  return loaded !== undefined && loaded.url === url ? loaded.markup : undefined
 }
 
 /**

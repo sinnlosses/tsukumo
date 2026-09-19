@@ -9,15 +9,7 @@
 // 新しいターンが始まったら先頭（今回）へ戻す / 利用者が過去のタブを見ている間は動かさない /
 // 選んでいたターンが窓（`MAX_MAIN_VIEW_TURNS` 件）から外れたら今回に戻す。
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactElement,
-  type ReactNode,
-} from "react"
+import { createContext, useContext, useState, type ReactElement, type ReactNode } from "react"
 
 import { mainViewTurns } from "../../protocol/main-view.ts"
 import { mainViewEntries } from "../../protocol/session-state.ts"
@@ -60,23 +52,22 @@ export function TurnSelectionProvider(props: TurnSelectionProviderProps): ReactE
   const newestTurnId = turnIds.at(-1)
 
   const [selectedTurnId, setSelectedTurnId] = useState<number | undefined>(undefined)
-  const lastNewestIdRef = useRef<number | undefined>(undefined)
+  // 前のレンダーの「今回」。追従は**レンダー中に見比べて**決める（画面の外と同期する処理では
+  // なく、届いた記録から決まる選択の更新なので `useEffect` は使わない。
+  // docs/coding-standards.md「useEffect の代わりに使うもの」）。
+  const [previousNewestTurnId, setPreviousNewestTurnId] = useState<number | undefined>(undefined)
 
-  useEffect(() => {
-    const previousNewest = lastNewestIdRef.current
-    const started =
-      previousNewest !== undefined && newestTurnId !== undefined && newestTurnId !== previousNewest
+  if (previousNewestTurnId !== newestTurnId) {
+    setPreviousNewestTurnId(newestTurnId)
+    const started = previousNewestTurnId !== undefined && newestTurnId !== undefined
     // 「今回」を見ていた人だけを新しいターンへ連れていく。選んでいたターンが無い
     // （最初の1回）か、直前の「今回」を選んだままだったときだけ追従する。
-    const wasFollowingNewest = selectedTurnId === undefined || selectedTurnId === previousNewest
-
+    const wasFollowingNewest =
+      selectedTurnId === undefined || selectedTurnId === previousNewestTurnId
     if (started && wasFollowingNewest) {
       setSelectedTurnId(newestTurnId)
     }
-    lastNewestIdRef.current = newestTurnId
-    // 依存はあえて newestTurnId だけ（selectedTurnId は判定に読むだけで、依存に含めると
-    // 選択を変えるたびに「新しいターンが始まったか」の判定まで走り直ってしまう）。
-  }, [newestTurnId])
+  }
 
   // 選んでいたターンが窓（`MAX_MAIN_VIEW_TURNS` 件）から外れたら今回に戻す。
   const activeTurnId =

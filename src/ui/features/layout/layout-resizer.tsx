@@ -13,8 +13,12 @@ export type LayoutResizerProps = {
   readonly ariaLabel: string
   /** ドラッグ中、位置（%）が変わるたびに呼ばれる。 */
   readonly onChange: (percent: number) => void
-  /** ドラッグが終わったら1回呼ばれる（保存のタイミング）。 */
-  readonly onCommit: () => void
+  /**
+   * ドラッグが終わったら、最後に渡した位置（%）で1回だけ呼ばれる（保存のタイミング）。
+   * **一度も動かさずに離したときは呼ばない**（保存する変化が無く、仕切りを掴んだだけで
+   * 位置が動いて見えるのを防ぐ）。
+   */
+  readonly onCommit: (percent: number) => void
 }
 
 export function LayoutResizer(props: LayoutResizerProps): ReactElement {
@@ -28,17 +32,24 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
       return
     }
 
+    // ドラッグ中に最後に渡した位置。onCommit へそのまま渡すので、受け取る側は「いまの state」を
+    // 読み直さなくてよい（onCommit のクロージャは pointerdown の瞬間に固定されるため、
+    // state から読むと1回ぶん古い値になる）。
+    let lastPercent: number | undefined
     const onMove = (moveEvent: globalThis.PointerEvent): void => {
       const raw =
         props.orientation === "horizontal"
           ? ((moveEvent.clientY - rect.top) / rect.height) * 100
           : ((moveEvent.clientX - rect.left) / rect.width) * 100
-      props.onChange(clampPercent(raw))
+      lastPercent = clampPercent(raw)
+      props.onChange(lastPercent)
     }
     const onUp = (): void => {
       target.removeEventListener("pointermove", onMove)
       target.removeEventListener("pointerup", onUp)
-      props.onCommit()
+      if (lastPercent !== undefined) {
+        props.onCommit(lastPercent)
+      }
     }
     target.addEventListener("pointermove", onMove)
     target.addEventListener("pointerup", onUp)

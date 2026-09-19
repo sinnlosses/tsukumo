@@ -1,5 +1,5 @@
 {
-  "plugins": ["typescript"],
+  "plugins": ["typescript", "react"],
   "env": {
     "es2024": true
   },
@@ -9,6 +9,7 @@
   },
   "rules": {
     "no-console": "off",
+    "react/react-in-jsx-scope": "off",
     "typescript/consistent-type-imports": [
       "error",
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }

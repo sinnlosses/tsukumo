@@ -59,13 +59,19 @@ const DEFAULT_PAST_TURN_EXPRESSION = "default"
  * 自分で次の窓までの遅延を計算し直して、無くなるまで立て直す**。
  */
 function useNowForPortraitMotion(input: PortraitMotionInput): number {
+  // 材料の3つは分解して受ける（入れ物ごと依存にすると、中身が同じでもレンダーのたびに
+  // 別物になり、タイマーを張り直してしまう）。
+  const { turnInProgress, turnFinishedAt, lastToolFailureAt } = input
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
 
     const scheduleNext = (): void => {
-      const delay = nextPortraitMotionTransitionDelayMs(input, Date.now())
+      const delay = nextPortraitMotionTransitionDelayMs(
+        { turnInProgress, turnFinishedAt, lastToolFailureAt },
+        Date.now(),
+      )
       if (delay === undefined) {
         return
       }
@@ -81,7 +87,7 @@ function useNowForPortraitMotion(input: PortraitMotionInput): number {
         clearTimeout(timer)
       }
     }
-  }, [input.turnInProgress, input.turnFinishedAt, input.lastToolFailureAt])
+  }, [turnInProgress, turnFinishedAt, lastToolFailureAt])
 
   return now
 }
