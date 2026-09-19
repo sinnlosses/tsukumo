@@ -333,3 +333,138 @@
 **申し送り**: T-192 の目視で分かった「**脚注は参照と定義を空行を挟まず同じ塊に書いたときだけ成立する**」
 （`report.tsx` の `splitReportBlocks` が本文を空行で割るため）は、草案には入れていない。
 勧めていない記法の制約を毎ターン渡すのは逆なので、**`split-blocks.ts` のコメントに畳むのが筋**。
+
+### `.claude/settings.json` に入れる hooks / rules の候補（T-201 の提案。要 採否）
+
+**設定ファイルは1つも作っていない。** `~/.claude/settings.json` は読んだだけで、1バイトも書いて
+いない（`md5 68b1bcda158380df34a8efde03f99f3a` が前後で同じ）。`.claude/` の中身も
+`scheduled_tasks.lock` のまま。
+
+先に確かめた前提（`update-config` スキルの settings スキーマ）:
+
+- **hooks はイベントごとに配列が足し算される。** プロジェクト側 `.claude/settings.json` に書いても
+  ユーザー側（orca が持つ 13 イベント: `SessionStart` `UserPromptSubmit` `Stop` `StopFailure`
+  `SubagentStart` `SubagentStop` `TeammateIdle` `PreToolUse` `PostToolUse` `PostToolUseFailure`
+  `PermissionRequest` `PostCompact` `SessionEnd`）と `statusLine` は消えない。
+  **上書きが起きるのはスカラー値だけ**（優先順位は user < project < local）
+- `.claude/` は `.prettierignore` にあるので、`.claude/settings.json` を置いても
+  `bun run format:check` は動かない（`docs/coding-standards.md`「整形の対象外」）
+- `PreToolUse` の hook は stdin に `{"tool_name","tool_input"}` を受け、
+  `hookSpecificOutput.permissionDecision` に `deny` / `ask` / `allow` を返せる。
+  **deny はその1回のツール呼び出しが落ちるだけ**で、理由の文字列はモデルに返るので書き直せる
+
+**下の1〜3の判定は実際に stdin へ JSON を流して確かめた**（12通り。`bun run test` と
+`bun run check` と `grep 'bun test' CLAUDE.md` は通り、`bun test` 単体と
+`cd /x && bun test test/a.test.ts` は落ちた）。
+
+#### hooks / rules にできるもの（7件。効き目の順）
+
+**1. 素の `bun test` を止める** — `PreToolUse` / matcher `Bash` / `deny`
+
+- 実行するもの: `.tool_input.command` を jq で取り、`(^|[;&|(])bun[[:space:]]+test\b` に当たって
+  かつ `--isolate` を含まないなら deny を返す
+- 誤爆したとき: **そのツール呼び出し1回が落ち、理由がモデルに返るだけ**。`bun run test` と
+  `bun run check` は `bun` の次が `run` なので当たらない。`grep 'bun test' ...` も
+  直前が `'` なので当たらない。**止まるのは書き直しの1往復**
+- 置き換える記述: `CLAUDE.md`「よく使うコマンド」の
+  「**素の `bun test` は使わない** — `mock.module` がファイルをまたいで漏れ、19件が落ちる」。
+  **いまは19件の失敗を見てから思い出す形**で、しかも並行セッションの失敗と見分けがつかない
+
+**2. 作業ツリーを戻す git を止める** — `PreToolUse` / matcher `Bash` / `deny`
+
+- 実行するもの: `git[[:space:]]+(restore|checkout)[[:space:]]+(--([[:space:]]|$)|[^-])` に
+  当たったら deny（フラグで始まる `git checkout -b foo` は通す）
+- 誤爆したとき: **自分が戻したかった変更を手で戻す手間が増えるだけ**。`git checkout main` も
+  落ちるが、`CLAUDE.md`「Git運用」はブランチを切らないので実害が無い。
+  **通してしまったときの損（他のセッションの未コミット変更が消える。reflog も残らない）と
+  釣り合わない**ので、この1件は deny を推す
+- 置き換える記述: `CLAUDE.md`「Git運用」の「**`git checkout <file>` / `git restore <file>` で
+  作業ツリーを戻さない**」
+
+**3. `git add -A` / `git add .` / `git commit -a` を止める** — `PreToolUse` / matcher `Bash` / `deny`
+
+- 実行するもの: `git[[:space:]]+add[[:space:]]+(-A|--all|\.)` と
+  `git[[:space:]]+commit[[:space:]]+[^;&|]*-[a-zA-Z]*a` に当たったら deny
+- 誤爆したとき: **触ったファイルを個別に足す形へ書き直す1往復**。
+  `git add develop/direction.md` は通る
+- 置き換える記述: `CLAUDE.md`「Git運用」の「コミットは `git add -A` を使わず、触ったファイルを
+  個別に足す」
+
+**4. `~/.claude/settings.json` を書かせない** — `permissions.deny` の rule ＋ `PreToolUse` / `Bash`
+
+- 実行するもの: (a) `permissions.deny` に `Edit(//Users/sinnlos/.claude/settings.json)`
+  （パスの rule は Write / Edit / NotebookEdit の全部に効く）、(b) Bash からの
+  `> ~/.claude/settings.json` 系のリダイレクトを deny する hook。**両方要る**（(a) だけでは
+  `cat > ~/.claude/settings.json` を素通しする）
+- 誤爆したとき: **人間が承認した書き換えまで止まる。** deny の rule はセッション中に外せないので、
+  そのときは人間が自分で開いて直すか、`.claude/settings.local.json` で一時的に緩める。
+  **orca の hooks と statusLine が黙って死ぬ損のほうが大きい**
+- 置き換える記述: `CLAUDE.md`「進捗管理とHandoff」の
+  「**`~/.claude/settings.json` の hooks と statusLine は orca が専有している。設定を足すときは
+  既存エントリを壊さず追記する**」（＝ この節を「機械が止めるので手順は要らない」に縮められる）
+
+**5. `docs/` の節の数が変わったら知らせる** — `PreToolUse` ＋ `PostToolUse` / `Edit|Write` / 非ブロッキング
+
+- 実行するもの: `if: "Edit(docs/**)"` で、Pre で `grep -c '^#\{2,3\} '` の値を一時ファイルに置き、
+  Post で数え直す。違っていたら `hookSpecificOutput.additionalContext` で
+  「節が 26 → 24 になった。索引の表に本文を流し込んでいないか」と返す（**ブロックしない**）
+- 誤爆したとき: **節を足す/削る正当な編集のたびに毎回鳴る。** 返すのは文章だけなので作業は
+  止まらないが、**鳴りっぱなしだと読まれなくなる**のが本当の損。並行セッションが同じファイルを
+  触ると一時ファイルの基準がずれて、数字だけ間違ったものが出る
+- 置き換える記述: `CLAUDE.md`「ドキュメントを編集するときの罠」の
+  「置換後は**節の一覧が変わっていないか**を確かめる」（2026-09-10 の事故。数えるのを人間と
+  モデルが覚えている必要がなくなる）
+
+**6. `tasks.json` の `done` が未コミットのまま終わった** — `Stop` / `systemMessage` / 非ブロッキング
+
+- 実行するもの: `git diff -- develop/tasks.json` に `"status": "done"` の追加行があるときだけ
+  `{"systemMessage":"tasks.json の done が未コミット"}` を出す
+- 誤爆したとき: **表示が1行増えるだけ**（`continue` は触らない）。`/next-task` が着手時に書く
+  `todo` → `doing` は仕様どおり未コミットなので、**`done` の追加行に絞らないと毎ターン鳴る**。
+  `Stop` は `/clear` や `/compact` でも鳴るので、重い処理は置かない
+- 置き換える記述: `CLAUDE.md`「Git運用」の「`develop/tasks.json` を書き換えたら、その場で
+  ファイル指定でコミットまで済ませる。**例外は `/next-task` が着手時に書く `todo` → `doing` だけ**」
+
+**7. 新しく書く行にタスク番号を混ぜない** — `PostToolUse` / `Edit|Write` / 非ブロッキング
+
+- 実行するもの: **`tool_input.new_string`（＝ 今このターンで足した文字列）だけ**を `T-[0-9]{3}` で
+  見て、当たったら `additionalContext` で知らせる。対象は `src/**` と `docs/**`（`docs/history/**` と
+  `docs/requirements.md` は除く）
+- 誤爆したとき: **文章が1つ返るだけ。** 既存の記述は見ないので、いま `T-nnn` が残っている
+  12ファイル（`src/ui/features/main-view/main-view.module.css` の1件と `docs/` の11件。
+  うち `docs/research/` が7件）を触っても鳴らない。**Bash でファイルを書いたときは見えない**
+- 置き換える記述: `CLAUDE.md`「コーディング規約・レビュー方針」の
+  「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」
+
+#### 文章のまま残すもの（5件）
+
+- **「変更後は必ず `bun run check` を通す」。** `Stop` で走らせられはするが、(a) `bun run check` は
+  typecheck → lint → format:check → test の4本で数分かかり、`Stop` は `/clear` `/compact`
+  `resume` でも鳴る、(b) **同じ作業ツリーを複数セッションが共有していて、`CLAUDE.md`
+  「タスク運用」が「検証コマンドは片方ずつ」と決めている** — hook は相手の都合を知らないので、
+  もう一方の check と噛み合って両方の結果を汚す。**機械化すると規約そのものを破る**
+- **ブラウザに出た絵の目視確認。** `CLAUDE.md`「テスト方針」が「ブラウザに出た絵は自動テストで
+  守らない」と決めている。hook が判定できるのは配信までで、見えているかは人間にしか分からない
+- **並行して進めるタスクの選び方**（触る層が重ならないものを選ぶ、`doing` が排他ロック）。
+  「重なる」の判定が設計の読みなので、文字列では書けない
+- **会話内容の扱い**（最優先の規約）。「この文字列が利用者と Claude の生の会話かどうか」は
+  機械には決められない。**ただし1つだけ機械化できる部分がある**: `~/.claude/projects/**/*.jsonl`
+  （transcript の実体）の読み出しを `permissions.ask` にする。deny にしない理由は、SDK の
+  イベントの形を調べるのに開くことが実際にあったため（`scratchpad/sdk-spike`）
+- **設計の原則1〜5**（層の切り方・ファイル名が概念か・`satisfies`・`useEffect` の4類型など）。
+  **層の依存の辺だけは既に `test/architecture.test.ts` が落とす**ので、hook を足す意味が無い
+
+#### 決めてほしいこと
+
+- (a) 1〜3 を `deny` にするか `ask` にするか。**`ask` なら誤爆しても人間が1回押せば通る**が、
+  自動進行（`/loop /next-task`）は止まる
+- (b) 5〜7 の非ブロッキング勢を入れるか。効き目は薄いが、誤爆の損も「文章が1つ増える」だけ
+- (c) `.claude/settings.json` をコミットするか（いま `.gitignore` に `.claude/` の行は無い）。
+  4 の deny に絶対パス `/Users/sinnlos/...` が入るので、**個人用なら
+  `.claude/settings.local.json` のほうが筋**（その場合は `.gitignore` に1行足す）
+
+**採用するときの最初の一手**: 「hooks はイベントごとに足し算される」は `update-config` スキルの
+記述で、このリポジトリで実際に試してはいない。**orca の hooks と statusLine が消えると黙って
+壊れる**ので、`.claude/settings.json` を置いた直後に (1) statusLine が出ていること、
+(2) orca の hooks が動いていること（`~/.orca/agent-hooks/` のログか、hook が書くファイル）を
+確かめてから次へ進む。消えていたら設定を消して戻す。

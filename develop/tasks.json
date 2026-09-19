@@ -204,9 +204,9 @@
     "dependencies": [],
     "summary": "このリポジトリに置く hooks の候補を提案する",
     "task": "## 背景\n\nユーザーの指示（2026-09-20）:「このリポジトリにあると良さそうな hooks や rules 、今の記述を\nhooks や rules にしたほうがいいものはあるかな。提案してほしい。」\n\n2026-09-20 時点で、このリポジトリの `.claude/` には `scheduled_tasks.lock` しか無い\n（`settings.json` も hooks も無い）。スキルはすべて `~/.claude/skills/` にあり、リポジトリ内の\n複製は 2026-09-12 に消した。**`~/.claude/settings.json` の hooks と statusLine は orca\n（`~/.orca/agent-hooks/`）が専有している**ので、提案はプロジェクト側（`.claude/settings.json`）に\n閉じる。\n\n`CLAUDE.md` と `docs/coding-standards.md` には、機械的に効かせられそうな約束が並んでいる:\n\n- 変更後は必ず `bun run check` を通す\n- **素の `bun test` を使わない**（`--isolate` が無いと `mock.module` が漏れて19件落ちる）\n- `git add -A` を使わない／`git checkout <file>` `git restore <file>` で作業ツリーを戻さない\n  （同じ作業ツリーで複数セッションが動くため、他のセッションの変更を巻き込む）\n- `develop/tasks.json` を書き換えたらその場でファイル指定でコミットする\n- `docs/` の節を置き換えたら見出しの数を数え直す（`grep -c '^#\\{2,3\\} '`）\n- `~/.claude/settings.json` を上書きしない\n\n## やること\n\n1. いま使える仕組みを確かめる（`update-config` スキルが正典。hooks のイベント名・\n   `.claude/settings.json` の形・プロジェクト設定とユーザー設定の優先順位）\n2. 上の約束を「hooks で機械的に効かせられる」「文章のまま残すしかない」に分ける\n3. 候補ごとに **どのイベントで・何を実行し・誤爆したときに何が起きるか** を書く\n   （少なくとも上の6点は検討する）\n4. `develop/direction.md` の `## エージェントのドラフト` に、採否を決められる形で書く\n5. **`.claude/settings.json` を作らない**（承認後に別のタスクで入れる）\n\n## 完了条件\n\n- ドラフト節に候補が1件ずつ（イベント・実行するもの・誤爆時の影響・`CLAUDE.md` のどの記述を\n  置き換えるか）書かれている\n- hooks に向かない約束は「文章のまま残す」と理由つきで挙がっている\n- `.claude/` と `~/.claude/` に差分が無い。`bun run check` が通る\n\n## 注意\n\n- **`~/.claude/settings.json`（グローバル）は触らない。** orca が hooks と statusLine を\n  専有していて、上書きすると orca 側が黙って動かなくなる（`CLAUDE.md`）\n- グローバルなツールの導入・ユーザーのグローバル設定の書き換えは人間の承認が要る。\n  このタスクは提案だけで、設定ファイルを1つも作らない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`develop/direction.md` の `## エージェントのドラフト` に候補7件を効き目の順で追記（既存4件は無傷）。1件ずつ「イベント・実行するもの・**誤爆時の影響**・CLAUDE.md のどの記述を置き換えるか」を書いた。上位3件はどれも `PreToolUse` / matcher `Bash` / `deny`（素の `bun test` / 作業ツリーを戻す git / `git add -A`）。hooks に向かない5件（`bun run check` の自動実行・絵の目視・並行タスクの選び方・会話内容の扱い・設計の原則）は理由つきで「文章のまま残す」。\n**設定ファイルは1つも作っていない**ことを呼び出し元でも確認: `git status --short -- .claude/` が空で中身は `scheduled_tasks.lock` のみ、`~/.claude/settings.json` は md5 `68b1bcda158380df34a8efde03f99f3a`・mtime `Sep 20 02:25:32 2026` が作業前のまま。\n呼び出し元で1点補った: 「hooks はイベントごとに足し算される」は `update-config` スキルの記述でこのリポジトリで試していないため、**採用直後に orca の statusLine と hooks が生きているかを確かめる**手順を「決めてほしいこと」に足した（消えると黙って壊れるため）。\n`bun run check` 通過（666 pass / 0 fail）。"
   },
   {
     "id": "T-202",
