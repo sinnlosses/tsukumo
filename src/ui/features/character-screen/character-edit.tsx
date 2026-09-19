@@ -13,8 +13,12 @@
 //
 // **16進の色をここに書かない**（差し色はキャラクター定義の値で、定義に無い衣装の初期値は
 // `--accent` から読む。`appearance-color.ts` の `readAccentColor`）。
+//
+// 差し色を引きずっている間は、**見た目（この立ち絵の `accent` と `<input>` の表示）だけ
+// その場で更新し、`set-outfit-accent` の送信は `useDebouncedCallback` で 200ms まとめる**
+// （`src/adapter/character-edit.ts` が送信のたびに `character.json` を書き直すため）。
 
-import { type ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 
 import { resolveExpressionLabel, resolveOutfitAccent } from "../../../protocol/character.ts"
 import {
@@ -26,6 +30,7 @@ import {
 } from "../../../protocol/expression.ts"
 import { Portrait } from "../../components/portrait.tsx"
 import { readDataUrl } from "../../lib/data-url.ts"
+import { useDebouncedCallback } from "../../lib/debounce.ts"
 import { useSession } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
 import styles from "./character-screen.module.css"
@@ -53,15 +58,29 @@ const NOT_EDITABLE_NOTE = "起動先の characters/local のパックは、画�
 /** カードの立ち絵に当てる衣装。並びでは衣装の違いを出さない（差し色の行がその役目）。 */
 const GALLERY_OUTFIT: Outfit = "default"
 
+/** 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。 */
+const OUTFIT_ACCENT_DEBOUNCE_MS = 200
+
 export function CharacterEdit(): ReactElement | null {
   const { state, dispatch } = useSession()
+  // 引きずっている間だけ見た目を先に進める上書き（衣装ごと）。**サーバへ送るのは
+  // `sendOutfitAccent` 側でまとめる**ので、ここは表示専用（`docs/coding-standards.md`
+  // 「useEffect の代わりに使うもの」の「利用者の操作で起きること」＝イベントハンドラで足す）。
+  const [pendingAccents, setPendingAccents] = useState<Partial<Record<Outfit, string>>>({})
+  const sendOutfitAccent = useDebouncedCallback<Outfit, string>((outfit, color) => {
+    dispatch({ type: "set-outfit-accent", outfit, color })
+  }, OUTFIT_ACCENT_DEBOUNCE_MS)
+
   const character = state.character
   // まだ `character-changed` が届いていない（接続直後の一瞬）。口を出すものが決まらない。
   if (character === undefined) {
     return null
   }
   const disabled = !character.editable
-  const accent = resolveOutfitAccent(character.outfitAccents, GALLERY_OUTFIT) ?? readAccentColor()
+  const accent =
+    pendingAccents[GALLERY_OUTFIT] ??
+    resolveOutfitAccent(character.outfitAccents, GALLERY_OUTFIT) ??
+    readAccentColor()
 
   /**
    * 選ばれた画像を data URL にして送る。**同じファイルをもう一度選べるように `value` を戻す**
@@ -147,9 +166,15 @@ export function CharacterEdit(): ReactElement | null {
                   id={inputId}
                   type="color"
                   disabled={disabled}
-                  value={resolveOutfitAccent(character.outfitAccents, outfit) ?? readAccentColor()}
+                  value={
+                    pendingAccents[outfit] ??
+                    resolveOutfitAccent(character.outfitAccents, outfit) ??
+                    readAccentColor()
+                  }
                   onChange={(event) => {
-                    dispatch({ type: "set-outfit-accent", outfit, color: event.target.value })
+                    const color = event.target.value
+                    setPendingAccents((current) => ({ ...current, [outfit]: color }))
+                    sendOutfitAccent(outfit, color)
                   }}
                 />
               </div>

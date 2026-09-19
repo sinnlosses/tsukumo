@@ -67,6 +67,11 @@ function renderCharacterScreen(state: Partial<SessionState> = {}): void {
   )
 }
 
+// 画面の色の書き込みは200ms（`APPEARANCE_COLOR_DEBOUNCE_MS`）まとめるので、それより長く待つ。
+function waitForDebounce(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 250))
+}
+
 describe("CharacterScreen", () => {
   it("会話へ戻る口と、パックのラベル・名前・「新しく作る」を出す", () => {
     renderCharacterScreen()
@@ -91,14 +96,19 @@ describe("CharacterScreen", () => {
     expect(document.querySelector(".character-screen-pending")?.textContent).toBe("答え待ち")
   })
 
-  it("画面の色を変えると documentElement に反映し、localStorage に残る", () => {
+  it("画面の色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
     renderCharacterScreen()
 
     fireEvent.change(screen.getByLabelText("画面の地"), { target: { value: "#101010" } })
 
+    // 見た目（documentElement）は onChange のたびそのまま反映する（書き込みだけをまとめる）。
     expect(getComputedStyle(document.documentElement).getPropertyValue("--ground").trim()).toBe(
       "#101010",
     )
+    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
+
+    await waitForDebounce()
+
     expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
       ground: "#101010",
       surface: undefined,
@@ -106,7 +116,47 @@ describe("CharacterScreen", () => {
     })
   })
 
-  it("ground を ink と同じ色にしようとすると受け取らず、既定へ落ちる", () => {
+  it("開いただけでは localStorage に書き込まない", async () => {
+    renderCharacterScreen()
+
+    await waitForDebounce()
+
+    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
+  })
+
+  it("連続して色を変えても、書き込みは最後の値の1回にまとまる", async () => {
+    renderCharacterScreen()
+    const input = screen.getByLabelText("画面の地")
+
+    fireEvent.change(input, { target: { value: "#111111" } })
+    fireEvent.change(input, { target: { value: "#222222" } })
+    fireEvent.change(input, { target: { value: "#333333" } })
+    await waitForDebounce()
+
+    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
+      ground: "#333333",
+      surface: undefined,
+      ink: undefined,
+    })
+  })
+
+  // 引きずったまま画面を閉じても、まだ書いていない最後の値を落とさない
+  // （`src/ui/lib/debounce.ts` のアンマウント時のフラッシュ）。
+  it("書き込み前に画面を閉じても、待っていた最後の値をそのまま書く", () => {
+    renderCharacterScreen()
+
+    fireEvent.change(screen.getByLabelText("画面の地"), { target: { value: "#101010" } })
+    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
+    cleanup()
+
+    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
+      ground: "#101010",
+      surface: undefined,
+      ink: undefined,
+    })
+  })
+
+  it("ground を ink と同じ色にしようとすると受け取らず、既定へ落ちる", async () => {
     renderCharacterScreen()
 
     // 疑似 :root の --ink は #e8e3ea。同じ値にしようとする。
@@ -115,6 +165,8 @@ describe("CharacterScreen", () => {
     expect(getComputedStyle(document.documentElement).getPropertyValue("--ground").trim()).toBe(
       "#191720",
     )
+    await waitForDebounce()
+
     expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
       ground: undefined,
       surface: undefined,

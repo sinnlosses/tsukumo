@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 色の連続変更を自前の debounce でまとめて書き込むようにした（T-204）
+
+`src/ui/lib/debounce.ts` の `useDebouncedCallback` を足し、差し色の送信と画面の色の
+`localStorage` 書き込みを 200ms まとめた。見た目は `onChange` のまま即時で、引きずったまま
+画面を閉じたときは待機中の値を flush する（落とさない）。
+
 ### 2026-09-20 TanStack Query を入れて立ち絵の SVG 取得を useQuery にした（T-203）
 
 `components/portrait.tsx` の `useSvgMarkup` を `useQuery`（`queryKey: [url]`、`staleTime`/`gcTime`

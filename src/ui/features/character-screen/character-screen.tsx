@@ -8,9 +8,14 @@
 // 画面の色は `localStorage`（`appearance-color.ts`）。**保存済みの上書きを反映する1回は
 // 入口（`src/ui/main.tsx`）が済ませている** — この画面は開かれるまでマウントされないので、
 // ここで反映すると開くまで色が戻らない。
+//
+// 色を引きずっている間、`documentElement` への反映（見た目）は `onChange` のたびそのまま行い、
+// `localStorage` への書き込みだけ `useDebouncedCallback` で 200ms まとめる（離れて書き込みが
+// 落ち着いた1回にする）。
 
 import { useState, type ReactElement } from "react"
 
+import { useDebouncedCallback } from "../../lib/debounce.ts"
 import { screenHash } from "../../stores/screen.tsx"
 import { useSession } from "../../stores/session.tsx"
 import {
@@ -34,18 +39,27 @@ const COLOR_FIELDS = [
 /** 答え待ちの印（`state.pending` が空でないとき）。**色だけにしない**ので字も出す。 */
 const PENDING_NOTE = "答え待ち"
 
+/** 画面の色の書き込みをまとめる間隔。 */
+const APPEARANCE_COLOR_DEBOUNCE_MS = 200
+
 export function CharacterScreen(): ReactElement {
   const { state } = useSession()
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
   const [override, setOverride] = useState<AppearanceColorOverride>(loadAppearanceColorOverride)
   const character = state.character
+  const saveOverride = useDebouncedCallback<AppearanceColorKey, AppearanceColorOverride>(
+    (_key, value) => {
+      saveAppearanceColorOverride(value)
+    },
+    APPEARANCE_COLOR_DEBOUNCE_MS,
+  )
 
   function handleColorChange(key: AppearanceColorKey, value: string): void {
     const next = changeAppearanceColor(override, key, value)
     applyAppearanceColorOverride(next)
-    saveAppearanceColorOverride(next)
     setOverride(next)
+    saveOverride(key, next)
   }
 
   return (

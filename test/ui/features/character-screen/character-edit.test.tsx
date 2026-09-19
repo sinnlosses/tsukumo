@@ -72,6 +72,11 @@ function renderCharacterEdit(
   )
 }
 
+// 差し色の送信は200ms（`OUTFIT_ACCENT_DEBOUNCE_MS`）まとめるので、それより長く実時間で待つ。
+function waitForDebounce(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 250))
+}
+
 describe("CharacterEdit", () => {
   it("4つの表情ぶんの立ち絵の口と、4つの衣装ぶんの差し色を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -146,11 +151,52 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
-  it("差し色を変えると set-outfit-accent を dispatch する", () => {
+  // 送信は200msまとめる（`src/ui/lib/debounce.ts`）ので、待ってから確かめる。
+  it("差し色を変えると、少し待ってから set-outfit-accent を dispatch する", async () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
     fireEvent.change(screen.getByLabelText("戦闘配置（opus）"), { target: { value: "#123456" } })
+    expect(calls).toEqual([])
+    await waitForDebounce()
+
+    expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#123456" }])
+  })
+
+  // 画面を開いただけでは何も送らない（`docs/coding-standards.md`「useEffect は4類型だけ」の
+  // タイマーは効かせるが、起こすのは onChange だけ）。
+  it("開いただけでは何も送らない", async () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+    await waitForDebounce()
+
+    expect(calls).toEqual([])
+  })
+
+  // ドラッグ中に何度も変わっても、離れてからの1回にまとまる。
+  it("連続して差し色を変えても、送信は最後の値の1回にまとまる", async () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+    const input = screen.getByLabelText("戦闘配置（opus）")
+
+    fireEvent.change(input, { target: { value: "#111111" } })
+    fireEvent.change(input, { target: { value: "#222222" } })
+    fireEvent.change(input, { target: { value: "#333333" } })
+    await waitForDebounce()
+
+    expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#333333" }])
+  })
+
+  // 引きずったまま画面を閉じても、まだ送っていない最後の値を落とさない
+  // （`src/ui/lib/debounce.ts` のアンマウント時のフラッシュ）。
+  it("送信前に画面を閉じても、待っていた最後の値をそのまま送る", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+    fireEvent.change(screen.getByLabelText("戦闘配置（opus）"), { target: { value: "#123456" } })
+    expect(calls).toEqual([])
+    cleanup()
 
     expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#123456" }])
   })
