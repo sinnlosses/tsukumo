@@ -98,9 +98,10 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
       />,
     )
 
-    expect(container.querySelector("div.note.note-warn")).not.toBeNull()
-    expect(container.querySelector("span.badge.badge-ok")).not.toBeNull()
-    expect(container.querySelectorAll("div.cols > div.card")).toHaveLength(2)
+    // class 名は `notation.tsx` が tsukumo の名前に付け替える（notation.test.tsx が対応表を見る）。
+    expect(container.querySelector("div.report-note.report-note-warn")).not.toBeNull()
+    expect(container.querySelector("span.report-badge.report-badge-ok")).not.toBeNull()
+    expect(container.querySelectorAll("div.report-cols > div.report-card")).toHaveLength(2)
     expect(container.querySelector("details > summary")).not.toBeNull()
   })
 
@@ -115,10 +116,10 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     )
 
     // 器と枚数（class が落ちると数が地の文に並ぶだけになる）。
-    expect(container.querySelectorAll("div.stats > div.stat")).toHaveLength(2)
+    expect(container.querySelectorAll("div.report-stats > div.report-stat")).toHaveLength(2)
     // 数の側は <b> でも <strong> でも同じ見た目になる（CSS はどちらも受ける）。
-    expect(container.querySelector("div.stat > b")?.textContent).toBe("312")
-    expect(container.querySelector("div.stat > strong")?.textContent).toBe("0")
+    expect(container.querySelector("div.report-stat > b")?.textContent).toBe("312")
+    expect(container.querySelector("div.report-stat > strong")?.textContent).toBe("0")
   })
 
   it("数のバー（meter / progress）は許可リストに無いので落ちる", () => {
@@ -140,10 +141,30 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
       <Markdown text={'<div class="note note-favor">架空のお願いの文。</div>'} />,
     )
 
-    // 「お願い」のラベルは CSS の ::before が付けるので、ここで見るのは class が残ることだけ。
-    const favor = container.querySelector("div.note.note-favor")
+    // ラベル（「お願い」）は `notation.tsx` が足すので、本文はそのあとに続く。
+    const favor = container.querySelector("div.report-note.report-note-favor")
     expect(favor).not.toBeNull()
-    expect(favor?.textContent).toBe("架空のお願いの文。")
+    expect(favor?.textContent).toBe("お願い架空のお願いの文。")
+  })
+
+  it("記法に無い class 名と style 属性は、素通しして描かれる", () => {
+    // 記法の変換は足し算だけで、規約の表に無い見せ方（モデルの即興）を落とさない
+    // （危ない経路は sanitize-schema.ts が別に見ている）。
+    const { container } = render(
+      <Markdown
+        text={
+          '<div class="zzz">知らない印</div>\n\n' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr">即興の段組み</div>'
+        }
+      />,
+    )
+
+    expect(container.querySelector("div.zzz")?.textContent).toBe("知らない印")
+    const improvised = [...container.querySelectorAll("div")].find(
+      (div) => div.textContent === "即興の段組み",
+    )
+    expect(improvised?.style.display).toBe("grid")
+    expect(improvised?.style.gridTemplateColumns).toBe("1fr 1fr")
   })
 
   it("<details> の中の Markdown が、空行を挟めば <details> の中で解釈される", () => {

@@ -605,8 +605,13 @@ react-markdown
   共有の箱に上げない。2章）
 - **`schema` はいまの `sanitizeReportHtml` の許可リストを写す**（54要素・42属性 + `class` の語彙
   `note` / `badge` / `cols` / `card` など）。`style` 属性は `url(` / `@import` を含むものを落とす
-  規則も `schema` の `attributes` の正規表現で表す。**規約（`report-notation.ts`）・schema・CSS の
-  3つは同じコミットで揃える**（いまの決定のまま）
+  規則も `schema` の `attributes` の正規表現で表す。**規約（`report-notation.ts`）・schema・部品
+  （`notation.tsx`）・CSS の4つは同じコミットで揃える**（いまの決定のまま）
+- **記法の class 名は部品に解決する**（`notation.tsx` を `components` の `div` / `span` に挿す）。
+  モデルが書くのは骨格（`note` / `badge` / `cols` / `card` / `stats` / `stat`）で、**CSS が受ける
+  class 名（`report-` 付き）は tsukumo が付ける**ので、モデルの書いた文字列とセレクタが直接
+  つながらない。**知らない class 名と `style` 属性は素通し**（変換は足し算だけで、規約の表に無い
+  見せ方を落とさない）。お願いのラベル（「お願い」の文字）もここが描く
 - 引用 `> `・ネストしたリスト・水平線・列揃え（`:---:`）は GFM でそのまま描ける。
   `report-notation.ts` から「描けない記法」の迂回の記述を外す（T-063 はこの段で閉じる）
 - **流れる本文**: 書きかけの Markdown を空行で塊に割り、塊ごとに `memo`（鍵は塊の文字列）。

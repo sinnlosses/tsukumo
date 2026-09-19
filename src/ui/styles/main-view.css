@@ -99,33 +99,36 @@ h2.turn-request {
 .main-step.is-interim[open] > summary {
   margin-bottom: 0.5rem;
 }
-/* レポートが直接書ける HTML（rehype-sanitize の schema が通すもの。
-   `src/ui/features/main-view/markdown/sanitize-schema.ts`）から使う見た目の語彙。**クラス名は意味で付ける**。色だけに頼らず、文字でも区別が付くようにして使う。 */
-.detail-block .cols {
+/* レポートの記法（`src/core/report-notation.ts` がモデルに指示する `note` / `badge` / `cols` /
+   `card` / `stats` / `stat`）に当てる見た目の語彙。**ここが受けるのはモデルが書いた class 名
+   そのものではなく、`src/ui/features/main-view/markdown/notation.tsx` が付け直した `report-` の
+   class**（モデルの文字列と CSS のセレクタを直接つながないため）。**クラス名は意味で付ける**。
+   色だけに頼らず、文字でも区別が付くようにして使う。 */
+.detail-block .report-cols {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 0.75rem;
 }
-.detail-block .card {
+.detail-block .report-card {
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--surface);
 }
 /* 数の要約（KPI タイル）。**数そのものが結論になる値**（件数・前後の差）を、地の文に埋めずに
-   並べる塊。`.card` と違って中身は1つの数とそのラベルだけなので、器は `.cols` より狭く取り、
-   3〜4枚が1行に収まるようにする。
+   並べる塊。`.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より
+   狭く取り、3〜4枚が1行に収まるようにする。
    **タイプスケールの段は増やさない**（docs/design.md 13.3）ので、「大きい数」は段の上端
    （--font-heading）と下端（--font-label）の落差・太さ・縦積みで出す。
    **状態の3色は使わない**（13.1 原則5）。数そのものは良し悪しを持たず、良し悪しを言いたいときは
-   同じ塊の中に `.badge` を添えるほうが文字でも読める。 */
-.detail-block .stats {
+   同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
+.detail-block .report-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: 0.75rem;
   margin: 0.5rem 0;
 }
-.detail-block .stat {
+.detail-block .report-stat {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
@@ -137,8 +140,8 @@ h2.turn-request {
 }
 /* 数の側。**`<b>` と `<strong>` の両方を受ける**（レポートの HTML を書くのはモデルなので、
    どちらで書かれても同じ見た目になるようにする）。 */
-.detail-block .stat b,
-.detail-block .stat strong {
+.detail-block .report-stat b,
+.detail-block .report-stat strong {
   display: block;
   font-size: var(--font-heading);
   font-weight: 700;
@@ -146,50 +149,49 @@ h2.turn-request {
   line-height: 1.3;
   color: var(--ink);
 }
-.detail-block .badge {
+.detail-block .report-badge {
   display: inline-block;
   padding: 0 0.5rem;
   border: 1px solid currentColor;
   border-radius: 999px;
   font-size: var(--font-secondary);
 }
-.detail-block .badge-ok {
+.detail-block .report-badge-ok {
   color: var(--state-ok);
 }
-.detail-block .badge-warn {
+.detail-block .report-badge-warn {
   color: var(--state-warn);
 }
-.detail-block .badge-ng {
+.detail-block .report-badge-ng {
   color: var(--state-ng);
 }
-.detail-block .note {
+.detail-block .report-note {
   margin: 0.5rem 0;
   padding: 0.5rem 0.75rem;
   border-left: 3px solid var(--ink-quiet);
   background: var(--surface);
 }
-.detail-block .note-warn {
+.detail-block .report-note-warn {
   border-left-color: var(--state-warn);
 }
-.detail-block .note-ng {
+.detail-block .report-note-ng {
   border-left-color: var(--state-ng);
 }
 /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと。
-   `docs/glossary.md`「お願い」）。**状態の3色は増やさない**（13.1 原則5）ので、note-warn /
-   note-ng の系列には入れず、**縦罫の色・地・ラベルの文字**の3つで地の文と見分ける。
+   `docs/glossary.md`「お願い」）。**状態の3色は増やさない**（13.1 原則5）ので、report-note-warn /
+   report-note-ng の系列には入れず、**縦罫の色・地・ラベルの文字**の3つで地の文と見分ける。
    縦罫が accent なのは「依頼の見出しの縦罫」（.turn-request）と対になる場所だから
    — 依頼が利用者からキャラクターへ、お願いがキャラクターから利用者へ向く（13.1 原則1 が
    accent を許すのは文字ではなく罫線の側）。地を ground に落として枠で囲むのは
    .main-step.is-interim と同じ手口で、親の地が surface でも ground でも塊として立つ。
-   ラベルを ::before で出すのは、**モデルが見出しの語を書き忘れても色だけで伝えないため**
-   （レポートの HTML を書くのはモデルなので、tsukumo 側が文字を保証できるのはここだけ）。 */
-.detail-block .note-favor {
+   ラベル（`.report-note-favor-label`）を tsukumo 側で足すのは、**モデルが見出しの語を書き忘れても
+   色だけで伝えないため**（文字そのものは `notation.tsx` が描く）。 */
+.detail-block .report-note-favor {
   border: 1px solid var(--rule);
   border-left: 3px solid var(--accent);
   background: var(--ground);
 }
-.detail-block .note-favor::before {
-  content: "お願い";
+.detail-block .report-note-favor-label {
   display: block;
   margin-bottom: 0.2rem;
   font-size: var(--font-label);
@@ -333,7 +335,7 @@ a:hover {
 }
 /* mermaid の構文エラー（MermaidBlock）。元のコードは通常のコードブロックと同じ見た目
    （`.detail-block pre` に乗る）のまま残し、その下にエラー文を添える。**新しい色は作らない**
-   （state-ng は表の badge-ng / note-ng と同じ「問題」の色。13.1 原則5）。 */
+   （state-ng は表の report-badge-ng / report-note-ng と同じ「問題」の色。13.1 原則5）。 */
 .mermaid-error {
   margin: 0.4rem 0 0;
   padding-left: 0.6rem;

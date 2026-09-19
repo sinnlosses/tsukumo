@@ -1,9 +1,17 @@
-import { describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it } from "bun:test"
 import { readdirSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+import { cleanup, render } from "@testing-library/react"
+import { createElement } from "react"
+
 import { REPORT_NOTATION_PROMPT } from "../../src/core/report-notation.ts"
+import { NotationBlock } from "../../src/ui/features/main-view/markdown/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../src/ui/features/main-view/markdown/sanitize-schema.ts"
+
+afterEach(() => {
+  cleanup()
+})
 
 // この規約は**レンダラが描けるものの一覧**でもある（docs/requirements.md 4.2）。文面だけが先に
 // 進んで「勧めた記法が描かれない」が起きないよう、名乗った要素と class を両側に突き合わせる。
@@ -58,11 +66,20 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("名乗った class に見た目が付いている", () => {
+  it("名乗った class が部品に解決され、その先に見た目が付いている", () => {
+    // 規約 → 部品（`notation.tsx`）→ CSS の鎖をひと続きで見る。CSS が受けるのはモデルが
+    // 書いた名前ではなく部品が付け直した名前なので、**実際に描いてから**その class を CSS に
+    // 突き合わせる（片方だけ足したときにここで落ちる）。
     expect(namedClasses.length).toBeGreaterThan(0)
 
     for (const className of new Set(namedClasses)) {
-      expect(STYLE_SHEET_SOURCE).toContain(`.${className}`)
+      const { container } = render(createElement(NotationBlock, { className }, "中身"))
+      const element = container.firstElementChild
+
+      expect(element?.className).not.toBe(className)
+      for (const resolved of element?.className.split(" ") ?? []) {
+        expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
+      }
     }
   })
 

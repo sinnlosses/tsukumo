@@ -20,13 +20,16 @@
 // （{@link MermaidBlock} / {@link ChartBlock}）。`pre` を上書きし、中の `code` 要素の
 // `className`（`language-mermaid` / `language-chart`）を見て振り分ける。
 //
+// **レポートの記法の class 名（`note` / `badge` / `cols` / `card` / `stats` / `stat`）は
+// `div` / `span` の上書きで部品に解決する**（{@link NotationBlock} / {@link NotationInline}）。
+//
 // **表は横スクロールの器で包む**（{@link Table}）。器をここで作るのは、**`rehype-raw` が生の
 // HTML も同じ hast の木に入れる**ので、`table` の上書き1つで Markdown の表とレポートが直接
 // 書いた `<table>` の両方に効くため。
 
 import { type Element } from "hast"
 import { type JSX, type ReactElement, type ReactNode } from "react"
-import ReactMarkdown, { type ExtraProps } from "react-markdown"
+import ReactMarkdown, { type Components, type ExtraProps } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
@@ -35,7 +38,22 @@ import remarkGfm from "remark-gfm"
 
 import { ChartBlock } from "./chart-block.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
+import { NotationBlock, NotationInline } from "./notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
+
+/**
+ * hast の要素をどの部品で描くか。**レンダーごとに作り直さない**（同じ参照でないと
+ * react-markdown が木を作り直す）ので、モジュールの定数に置く。
+ */
+const REPORT_COMPONENTS = {
+  pre: Pre,
+  a: Anchor,
+  table: Table,
+  h2: SectionHeading,
+  h3: SubHeading,
+  div: NotationBlock,
+  span: NotationInline,
+} satisfies Components
 
 export type MarkdownProps = {
   readonly text: string
@@ -52,7 +70,7 @@ export function Markdown(props: MarkdownProps): ReactElement {
       // （src/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
       remarkPlugins={[remarkGfm, remarkCjkFriendly]}
       rehypePlugins={[rehypeRaw, [rehypeSanitize, REPORT_SANITIZE_SCHEMA], rehypeHighlight]}
-      components={{ pre: Pre, a: Anchor, table: Table, h2: SectionHeading, h3: SubHeading }}
+      components={REPORT_COMPONENTS}
     >
       {props.text}
     </ReactMarkdown>
