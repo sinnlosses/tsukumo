@@ -86,7 +86,11 @@ function Step(props: { readonly step: MainViewStep }): ReactElement | null {
   }
 
   return (
-    <section className={step.interim ? "main-step is-interim" : "main-step"}>
+    <section
+      className={
+        step.interim ? `${styles["main-step"]} ${styles["is-interim"]}` : styles["main-step"]
+      }
+    >
       {step.interim && <p className={styles["step-heading"]}>中間レポート</p>}
       {body}
     </section>
