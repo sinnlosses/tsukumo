@@ -11606,3 +11606,314 @@ class 名の重複を調べたところ、148個のうち**偶発的な衝突は
   まで書く。**この段階では `CLAUDE.md` を直さない**
 - T-190 / T-191（レポートの変換層と CSS Modules）が `src/ui/` を触る予定。提案はこの2件が
   入ったあとの形でも成り立つように書く
+
+## T-197
+
+**タスク**: react-best-practices を src/ui/ に当てて改善点を洗い出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`develop/direction.md` の `## エージェントのドラフト` に17件を直す価値の順で追記（既存2件は無傷）。当たらなかった分類（`async-` 6 / `server-` 10 / `bundle-` の一部）と、当たる分類の中で既に満たしている22ルールも理由つきで列挙。
+根拠の土台は実測2つ: サーバは 100ms ごとにフレームを押す（`src/core/session-manager.ts:34` の `EVENT_BATCH_INTERVAL_MS = 100`。ターン中は毎秒10回の再描画）と、`src/ui/stores/session.tsx:126` が `value={{ state, connection, dispatch }}` を毎レンダー新オブジェクトで配る（`useSession()` を読む14部品が全部再描画）。どちらも呼び出し元で現物を確認済み。
+`bun run check` 通過（662 pass / 0 fail）。`git status --porcelain -- src` が空（このタスクは洗い出しだけ）。T-203 と重なるのは `client-swr-dedup` の1件のみ。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices
+のルールを参考にフロントのコードをレビューして改善点を洗い出してほしい」
+
+そのスキルは8分類・70件のルールを持ち、`rules/<ルール名>.md` に1件ずつ本文がある
+（一覧は `SKILL.md`。`https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/react-best-practices/SKILL.md`
+から取れる。2026-09-20 に確認）。
+
+**Next.js / RSC を前提にした分類は tsukumo に当たらない。** `src/ui/` はブラウザだけで動く
+1枚の React アプリで、SSR もルーティングも無く、サーバ（`src/adapter/server.ts`）は束ねた JS を
+配るだけ。当たるのは `rerender-*`（15件）・`rendering-*`（11件）・`client-*`（4件）・
+`advanced-*`（4件）・`js-*`（14件）で、`server-*`（10件）と `async-*`（6件）は前提が違う。
+
+いまの `src/ui/` は44ファイル。状態は WebSocket 1本の push だけで届き、
+`src/ui/stores/session.tsx` の `useReducer(applyFrame)` が畳む（HTTP で取りに行くのは
+立ち絵の SVG だけ）。
+
+## やること
+
+1. スキルの `SKILL.md` と、当たる分類の `rules/*.md` を読む
+2. `src/ui/` の全ファイルに当て、**実際に当たっている箇所**を挙げる
+   （ファイル名・行・ルール名・何が起きるか・直し方）
+3. 直す価値の順に並べ、`develop/direction.md` の `## エージェントのドラフト` に書く
+4. **コードは直さない**（承認後に別のタスクで直す）
+
+## 完了条件
+
+- ドラフト節に、当たったものが1件ずつ（ルール名・対象ファイルと行・直し方）書かれている
+- 当たらなかった分類は「当たらない」と理由つきで1行ずつ書かれている
+- `src/` に差分が無い。`bun run check` が通る
+
+## 注意
+
+- T-189（oxlint の react プラグインを有効にして既存7件を直す）と重なるものは、lint が落とす
+  ので除く
+- T-203（TanStack Query の導入）が `client-swr-dedup` の一部を先に解く。重なる分はそう書く
+- 一般論（「memo を付けると速くなる」）ではなく、**その部品で実際に何が再描画されるか**を
+  根拠に挙げる。根拠を示せないものは挙げない
+
+## T-198
+
+**タスク**: レポートの記法の規約を短くする案と対応表を作る
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+提案書は `docs/research/report-notation-shortening.md`（311行）。条項26項目を 残す20 / 削る3 / 畳む3 に分け、短縮版の草案を4本フェンスで全文載せた。要点は `develop/direction.md` の `## エージェントのドラフト` に追記（既存3件は無傷）。
+短縮は **4372文字 → 3589文字（−約17%）**（呼び出し元で測り直した実測。報告値 4322 → 3588 との差は切り出し範囲の1行ぶん）。記法の表が草案の45%を占めるので、これ以上はレンダラ側の許可リストを同じコミットで減らさない限り縮まない。
+突き合わせは呼び出し元でも検算して**食い違い0件**: 草案が名乗るタグ9個（b/dd/details/div/dl/dt/span/summary/svg）は `sanitize-schema.ts` の59要素すべてに含まれ、class 8個（note/note-favor/badge/badge-ok/cols/card/stats/stat）は `notation.tsx` の対応表12個すべてに含まれる。記法は1つも増減していない。
+`bun run check` 通過（662 pass / 0 fail）。`git status --porcelain -- src` が空（このタスクは案を出すだけ）。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「https://github.com/ayghri/i-have-adhd/blob/main/skills/i-have-adhd/SKILL.md
+を参考にレポートのプロンプトをシンプルにできないかな?」
+
+いま `systemPrompt` の append で毎ターン渡しているものは3つ（2026-09-20 実測）:
+
+| 出どころ | 大きさ | 中身 |
+| --- | --- | --- |
+| `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` | 約13KB | レポートの記法と文体。印の一覧の表（17行）＋冗長さを止める条項＋細かい約束 |
+| `src/core/speech-cadence.ts` | 約5.6KB | セリフの間合い |
+| キャラクターパックの `persona.md`（`characters/tsukumo/`） | 約9KB | 人格と話し方 |
+
+レポートの記法には 2026-09-15〜17 の決定が条項として積んである（冗長さを止める条項、表の
+3列目の書き方、mermaid の10種、`stats` の追加、`note-favor` の例外）。
+
+参考の i-have-adhd は約1850語で、10個の命令＋5つの上書き条件＋送信前チェックリストという形。
+主な作り: 行動を先に書かせる・番号付きにする・箇条書きは5件まで・前置きと締めを書かせない・
+状態を毎ターン言い直す。
+
+## 決まっていること（蒸し返さない）
+
+- **案を出すところまで**（ユーザー 2026-09-20）。`src/core/report-notation.ts` の差し替えは
+  承認後の別タスク（全ターンの出力が変わるので、目で見てから決める）
+
+## 解くべき論点
+
+- 短くすると失うもの: **記法の一覧は
+  `src/ui/features/main-view/markdown/sanitize-schema.ts` が通す要素と揃っている必要がある**
+  （削ると勧めた記法が画面で落ちる）。**mermaid は同梱の 11.15.0 で実際に描けた10種だけ**を
+  挙げている（挙げていない種類は構文が通らないものが混ざる）
+- 条項のうち「決定の記録」として積まれたもの（なぜそうなったか）と「毎ターン効かせる必要が
+  あるもの」の区別。前者はコメントや `docs/` へ移せるか
+- i-have-adhd の形（短い命令の列＋送信前チェックリスト）が、表の情報量を保ったまま入るか
+- `speech-cadence.ts` と `persona.md` も対象に含めるか（3つの間で重複している指示があるか）
+
+## やること
+
+1. 3つの文面を読み、条項ごとに「残す／削る／畳む（コメントや `docs/` へ移す）」の対応表を作る
+2. 短縮版の草案を書き、`docs/research/` にファイルとして置く（前後の文字数を出す）
+3. 草案が挙げる記法と `sanitize-schema.ts` が通す要素が1対1であることを確かめる
+4. `develop/direction.md` の `## エージェントのドラフト` に、対応表の要点と草案の置き場を書く
+5. **コードは直さない**
+
+## 完了条件
+
+- 対応表がある（条項ごとに残す／削る／畳む＋理由）
+- `docs/research/` に短縮版の草案があり、短縮の前後の文字数が書かれている
+- 草案の記法と `sanitize-schema.ts` の許可リストの対応が確かめられている（食い違いは0件、
+  または食い違いを列挙してある）
+- `src/` に差分が無い。`bun run check` が通る
+
+## 注意
+
+- **記法を減らす提案をするなら、レンダラ側（`sanitize-schema.ts`）も同じコミットで減らす前提で
+  書く**（片方だけ直すと、勧めた記法が画面で落ちる。`docs/requirements.md` 4.2）
+- キャラクターの口調は `persona.md` の担当で、レポートの文体は `report-notation.ts` の担当
+  （2026-09-14 決定）。この分担は崩さない
+
+## T-199
+
+**タスク**: 使い捨ての scratchpad/sdk-spike を消す
+
+**difficulty**: haiku / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`scratchpad/` を丸ごと削除（git 管理下は bun.lock / package.json / spike.ts の3ファイル）。`git ls-files scratchpad` は 0 件で実体も無い。**`104e27a` から3ファイルとも取り出せることを確認済み**。
+`grep -rn scratchpad`（node_modules と .git を除く）の残りは `docs/history/`（履歴）と `develop/tasks.json`（このタスク自身と T-200 のユーザー指示の引用）・`develop/progress.md:3`（履歴の要約）だけで、`src/` `test/` `scripts/` `docs/`（history 以外）`README.md` `CLAUDE.md` には0件。
+`bun run check` 通過（662 pass / 0 fail。件数の増減なし）。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「scratchpad や vendor など、整理したいな。…scratchpad はまだ使う?
+不要なら削除したりライブラリで代用できるならそうしたり。」
+
+`scratchpad/sdk-spike/` は 2026-09-11 の「SDK で claude を起こす前提4点の実機確認」のための
+**使い捨てのスパイク**（`spike.ts` の冒頭コメントにそう書いてある）。`spike.ts`（227行）・
+`package.json`・`bun.lock` がコミット済み（`104e27a`）で、`node_modules/` は `.gitignore` の
+`node_modules/` で無視されている。**本体のコード（`src/` `test/` `scripts/`）からの参照は0件**、
+言及は `docs/history/progress.md` と `docs/history/tasks.md` だけ（2026-09-20 に `grep` で確認）。
+
+## 決まっていること（蒸し返さない）
+
+- **消す**（ユーザーの承認 2026-09-20）。必要になれば `104e27a` から取り出せる
+- `vendor/` の整理は T-200 で別に扱う（このタスクは `scratchpad/` だけ）
+
+## やること
+
+1. `scratchpad/` に `sdk-spike` 以外の中身が無いことを確かめ、`scratchpad/` を丸ごと削除する
+2. `docs/history/` は履歴なので**直さない**
+3. `scratchpad` の言及が `docs/history/` 以外に残っていないか確かめる
+   （`grep -rn scratchpad . --exclude-dir=node_modules --exclude-dir=.git`）
+
+## 完了条件
+
+- `scratchpad/` が無い（`git ls-files scratchpad` が空）
+- 上の `grep` の結果が `docs/history/` の行だけ
+- `bun run check` が通る
+
+## 注意
+
+- 他のセッションの未コミット変更を巻き込まない（`git add -A` を使わず、削除したパスだけを
+  個別に足す）
+
+## T-200
+
+**タスク**: vendor の3ファイルを npm 依存に移し node_modules から配る
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`vendor/` を削除し、mermaid 11.15.0 / chart.js 4.4.1 / highlight.js ^11.11.2 を package.json の依存に移した。`src/adapter/vendor-asset.ts` が node_modules の実ファイルを要求のたびに読み、`/vendor/<名前>` の経路と「記法が出たときだけ読む」性質は据え置き（束ねには入れない）。`git ls-files vendor` は 0 件。
+**版は据え置き**。呼び出し元で検算: mermaid は同梱物と**バイト一致**（3312967B）、highlight のテーマも**バイト一致**（1315B）なので mermaid の10種の実測はそのまま有効。chart.js だけ 200807B → 205125B（cdnjs が独自に再圧縮していたぶんの差で、版は同じ 4.4.1）。
+目視（偽の駆動・Playwright、1200x1000。台本にコードブロックを一時追記して撮り、元に戻した）: **通信先のホストは 127.0.0.1 だけで外部ゼロ、4xx/5xx も0件**。`/vendor/` の3種とも 200（3312967B / 205125B / 1315B、Content-Type も正しい。経路外の名前は 404）。chart の棒グラフは軸・凡例・グリッド・系列の色が描かれ、mermaid の SVG も出て mermaid-broken は0件。コードの色付けは github-dark が当たっている（hljs-keyword rgb(255,123,114) / 地 rgb(13,17,23)）。
+`bun run check` 通過（**666 pass / 0 fail**。662 → +4 は新設の vendor-asset.test.ts のぶん）。README / requirements / design / architecture の見出し数は編集前後で 16 / 26 / 51 / 10 のまま。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「scratchpad や vendor など、整理したいな。外部ライブラリは
+package.json に定義したり。」
+
+いま `vendor/` に3ファイルを同梱している（`vendor/README.md` の表。cdnjs から落としたものを
+そのまま置いてある）:
+
+| ファイル | 版 | 用途 |
+| --- | --- | --- |
+| `mermaid.min.js` | 11.15.0（3.2MB） | 図 |
+| `chart.umd.min.js` | 4.4.1 | グラフ |
+| `highlight-theme.min.css` | 11.9.0（github-dark） | コードの色付けのテーマ |
+
+配る経路: `src/adapter/server.ts` の `writeVendorAsset` が `/vendor/<名前>` で返す。名前は
+`src/protocol/vendor-asset.ts` の allowlist（`VENDOR_ASSET_CONTENT_TYPES`）で固定していて、
+**リクエストのパスからファイル名を組み立てない**（`..` で外へ出る経路を作らないため）。
+ブラウザ側は `src/ui/features/main-view/markdown/vendor-script.ts` が `<script src>` で読み、
+**その記法が実際に出てきたときだけ**読み込む（`mermaid-block.tsx` / `chart-block.tsx`）。
+グローバルの型は同ディレクトリの `vendor-globals.d.ts`。
+
+**同梱している理由は、表示時の外部通信をゼロにすること**（2026-09-10 のユーザーの決定。
+レポート本文が載ったページなので CDN を踏ませない。`docs/coding-standards.md`「会話内容の扱い」）。
+
+## 決まっていること（蒸し返さない）
+
+- **npm 依存へ移す**（ユーザー 2026-09-20）。`package.json` に入れ、`node_modules` から読んで
+  自分のサーバ（`127.0.0.1`）で配る
+- **表示時の外部通信ゼロは保つ**（CDN から読む形にはしない）
+
+## 解くべき論点
+
+- 版を上げるか据え置くか。**mermaid 11.15.0 は「実際に描けた10種」の根拠**
+  （`src/core/report-notation.ts` がその10種を挙げている）。上げるなら10種が描けることを
+  確かめ直す
+- 配る経路: `node_modules` の実ファイルを読んで配るか、束ね（`src/adapter/bundle.ts`）に
+  入れるか。**mermaid は 3.2MB なので束ねに入れると最初の読み込みが重くなる**——
+  「その記法が出てきたときだけ読む」性質を失わせない
+- allowlist（`VENDOR_ASSET_CONTENT_TYPES`）をどう保つか。`node_modules` の中のパス解決は
+  外の世界に触る仕事なので `src/adapter/` 側に置く（`protocol` は名前だけを持つまま。原則2）
+- highlight のテーマ CSS の取り出し先（`highlight.js` パッケージの
+  `styles/github-dark.min.css`。`rehype-highlight` が持つ `lowlight` はテーマを持たない）
+- `vendor/README.md` を消すか、npm に移したことの記録として書き換えるか
+
+## やること
+
+1. 3つを `package.json` の依存に足す（`mermaid` / `chart.js` / `highlight.js`。版は上の論点で決める）
+2. 配る側を `node_modules` から読む形に変える
+3. `vendor/` のバイナリを削除する
+4. ドキュメントを追随させる: `vendor/README.md`・`docs/design.md`（同梱の話と 12章）・
+   `docs/requirements.md` 4.2・`vendor-globals.d.ts` のコメント。
+   **`docs/` の節を置き換えたら見出しの数を数え直す**（`grep -c '^#\{2,3\} ' docs/requirements.md`）
+5. `bun run format`
+
+## 完了条件
+
+- `git ls-files vendor` に `.js` / `.css` が無い
+- `bun run check` が通る
+- 目視: tsukumo を起こし、mermaid と ```chart を含むレポートを出して、図とグラフが描かれること・
+  コードの色付けのテーマが当たっていることを確かめる。**ブラウザの通信先が `127.0.0.1` だけで
+  あること**（外部へ出ていないこと）も確かめ、何を見たかを `evidence` に書く
+- 版を上げた場合のみ、`src/core/report-notation.ts` が挙げる mermaid の10種が描けることを
+  確かめ直す
+
+## 注意
+
+- 版を上げて10種のどれかが描けなくなったら、上げずに据え置く（`report-notation.ts` の一覧を
+  減らす判断はこのタスクではしない）
+- 依存を足す以外に外部コマンドを増やさない（増やすならユーザーの承認が要る。`CLAUDE.md`）
+
+## T-201
+
+**タスク**: このリポジトリに置く hooks の候補を提案する
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`develop/direction.md` の `## エージェントのドラフト` に候補7件を効き目の順で追記（既存4件は無傷）。1件ずつ「イベント・実行するもの・**誤爆時の影響**・CLAUDE.md のどの記述を置き換えるか」を書いた。上位3件はどれも `PreToolUse` / matcher `Bash` / `deny`（素の `bun test` / 作業ツリーを戻す git / `git add -A`）。hooks に向かない5件（`bun run check` の自動実行・絵の目視・並行タスクの選び方・会話内容の扱い・設計の原則）は理由つきで「文章のまま残す」。
+**設定ファイルは1つも作っていない**ことを呼び出し元でも確認: `git status --short -- .claude/` が空で中身は `scheduled_tasks.lock` のみ、`~/.claude/settings.json` は md5 `68b1bcda158380df34a8efde03f99f3a`・mtime `Sep 20 02:25:32 2026` が作業前のまま。
+呼び出し元で1点補った: 「hooks はイベントごとに足し算される」は `update-config` スキルの記述でこのリポジトリで試していないため、**採用直後に orca の statusLine と hooks が生きているかを確かめる**手順を「決めてほしいこと」に足した（消えると黙って壊れるため）。
+`bun run check` 通過（666 pass / 0 fail）。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「このリポジトリにあると良さそうな hooks や rules 、今の記述を
+hooks や rules にしたほうがいいものはあるかな。提案してほしい。」
+
+2026-09-20 時点で、このリポジトリの `.claude/` には `scheduled_tasks.lock` しか無い
+（`settings.json` も hooks も無い）。スキルはすべて `~/.claude/skills/` にあり、リポジトリ内の
+複製は 2026-09-12 に消した。**`~/.claude/settings.json` の hooks と statusLine は orca
+（`~/.orca/agent-hooks/`）が専有している**ので、提案はプロジェクト側（`.claude/settings.json`）に
+閉じる。
+
+`CLAUDE.md` と `docs/coding-standards.md` には、機械的に効かせられそうな約束が並んでいる:
+
+- 変更後は必ず `bun run check` を通す
+- **素の `bun test` を使わない**（`--isolate` が無いと `mock.module` が漏れて19件落ちる）
+- `git add -A` を使わない／`git checkout <file>` `git restore <file>` で作業ツリーを戻さない
+  （同じ作業ツリーで複数セッションが動くため、他のセッションの変更を巻き込む）
+- `develop/tasks.json` を書き換えたらその場でファイル指定でコミットする
+- `docs/` の節を置き換えたら見出しの数を数え直す（`grep -c '^#\{2,3\} '`）
+- `~/.claude/settings.json` を上書きしない
+
+## やること
+
+1. いま使える仕組みを確かめる（`update-config` スキルが正典。hooks のイベント名・
+   `.claude/settings.json` の形・プロジェクト設定とユーザー設定の優先順位）
+2. 上の約束を「hooks で機械的に効かせられる」「文章のまま残すしかない」に分ける
+3. 候補ごとに **どのイベントで・何を実行し・誤爆したときに何が起きるか** を書く
+   （少なくとも上の6点は検討する）
+4. `develop/direction.md` の `## エージェントのドラフト` に、採否を決められる形で書く
+5. **`.claude/settings.json` を作らない**（承認後に別のタスクで入れる）
+
+## 完了条件
+
+- ドラフト節に候補が1件ずつ（イベント・実行するもの・誤爆時の影響・`CLAUDE.md` のどの記述を
+  置き換えるか）書かれている
+- hooks に向かない約束は「文章のまま残す」と理由つきで挙がっている
+- `.claude/` と `~/.claude/` に差分が無い。`bun run check` が通る
+
+## 注意
+
+- **`~/.claude/settings.json`（グローバル）は触らない。** orca が hooks と statusLine を
+  専有していて、上書きすると orca 側が黙って動かなくなる（`CLAUDE.md`）
+- グローバルなツールの導入・ユーザーのグローバル設定の書き換えは人間の承認が要る。
+  このタスクは提案だけで、設定ファイルを1つも作らない

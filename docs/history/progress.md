@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 src/ のディレクトリ構成を組み替える案を比べ、推奨を1つ出した（T-194）
+
+`docs/research/architecture-placement.md` に候補 A〜D を並べ、**A を第1段階にして C**
+（`shared` / `server/{core,adapter}` / `browser/{screen,region,…}`）を推した。依存の辺は
+実測で設計どおり（`core → adapter` 0本）なので、直すのは構造ではなく名前の読めさ。
+採否はユーザー待ちで、`develop/direction.md` のドラフトに置いた。
+
 ### 2026-09-20 レポートで消えている表現3件を直し、無装飾の要素に手当てした（T-192）
 
 チェックリストは `markdown/task-check.ts` がサニタイズ前に `<input>` を静的な印の `<span>` へ

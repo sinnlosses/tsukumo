@@ -86,13 +86,6 @@ mermaid とテーマ CSS は同梱物とバイト一致。表示時の外部通�
 新オブジェクトで、`useSession()` を読む14部品が全部再描画されること。採否はユーザー待ちで
 `develop/direction.md` のドラフトに置いた。
 
-### 2026-09-20 src/ のディレクトリ構成を組み替える案を比べ、推奨を1つ出した（T-194）
-
-`docs/research/architecture-placement.md` に候補 A〜D を並べ、**A を第1段階にして C**
-（`shared` / `server/{core,adapter}` / `browser/{screen,region,…}`）を推した。依存の辺は
-実測で設計どおり（`core → adapter` 0本）なので、直すのは構造ではなく名前の読めさ。
-採否はユーザー待ちで、`develop/direction.md` のドラフトに置いた。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
