@@ -84,13 +84,6 @@ CSS の両方に焼かれるため）、一時ディレクトリへ `--outdir` �
 `<Appearance>` と `appearance.css` を削除し、`<Layout>` が「領域の比率を既定に戻す」ボタンを直接
 描くようにした（`renderAppearance` prop が消え、1列表示では仕切りと一緒に隠れる）。
 
-### 2026-09-20 キャラクター画面を別画面として作り、作成・編集・色の口を移した（T-184）
-
-T-183 で決めた形（`docs/design.md` 13.6）のとおり、`#character` / `#character/new` の2画面を `stores/screen.tsx` の
-`useScreen`（`useSyncExternalStore` で hash を読む）と `main.tsx` の `<Root>` で出し分け、会話の画面は `hidden` で隠して
-下書き・選んでいるターン・スクロール位置を保つようにした。`<Portrait>` は `components/` へ、色と編集と作成は
-`features/character-screen/` へ移した（「見た目」の引き出しの撤去は T-185）。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
