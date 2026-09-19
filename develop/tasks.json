@@ -328,5 +328,27 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-206",
+    "difficulty": "opus",
+    "loopable": "N",
+    "dependencies": [],
+    "summary": "質問の選択肢でラベルを折り返させ、説明の幅が潰れないようにする",
+    "task": "## 背景\n\nT-205（2026-09-20）で、複数選択の選択肢でラベルの文字が右隣の説明に重なる件を直した。直し方は `src/ui/styles/dispatch.css` の `.question-choice-checkbox-row` を `min-width: 0` から `flex: 0 0 auto` に変えて**行を縮めない**ようにしたもの。その結果、**ラベルは一切折り返さず、長いラベルほど右の説明の幅を食う**。ユーザーが実機で「重なってはいないけど、ラベルが折り返されないから説明欄が狭いね」と指摘した（2026-09-20）。\n\nいまの形（`src/ui/styles/dispatch.css`）:\n\n- `.question-choice`: `display: flex; align-items: baseline; gap: 0.5rem; box-sizing: border-box; width: 100%; min-width: 0; overflow-wrap: anywhere`\n- `.question-choice-label`: `flex: 0 0 auto; font-weight: bold`\n- `.question-choice-description`: `flex: 1 1 auto; min-width: 0`\n- 複数選択はチェックボックスとラベルを `.question-choice-checkbox-row`（`flex: 0 0 auto`）に入れる\n\n2026-09-20 の実機のスクリーンショットでは、1400px の窓でもラベル 20 文字前後の選択肢で説明が3行に折り返し、右側だけが詰まって見えていた。\n\n窓を 420px まで狭めると、25文字のラベルが選択肢の幅（331px）を超えて説明の幅が 0 になり、**説明が1文字ずつ縦に並ぶ**（T-205 の目視で確認。単一選択でも同じに起きる）。**根は同じ**なので一緒に解く。\n\n再現用の場面は `test/fixture/fake-session.json` の `question-long`（複数選択と単一選択の2問。ラベル11〜25字＋説明45〜80字）。`scripts/capture-catalog.ts` にも入っているので `TSUKUMO_FAKE_SCENE=question-long` で出せる。\n\n## 決まっていること（蒸し返さない）\n\n- この件をタスクとして直してよい（2026-09-20 ユーザー承認）。\n- **ラベルと説明を横に並べる形そのものは変えない**（`.question-choice` のコメントにある「縦に積むと選択肢3件で入力欄の領域の高さを使い切ってしまい、1件しか見えなくなる」という既存の決定）。並べ方ごと変えたくなったら T-207（意匠の練り直し）の側で扱う。\n\n## 解くべき論点\n\n- ラベルを折り返させつつ、T-205 の重なりを**再発させない**形。ラベル側に `min-width: 0` を戻すだけだと重なりが再発するので、`flex-shrink` と `overflow-wrap` の組み合わせを実測で決める\n- ラベルと説明の幅の配分をどう決めるか（ラベルに最大幅を与える／`flex-basis` を割合で与える／grid の2列にする）。grid ならラベル列の幅が全選択肢で揃う利点がある\n- 420px で説明の幅が 0 になる件も同じ手で解けるか。解けないなら、別に手を打つか見送るかを決める\n\n## やること\n\n1. `TSUKUMO_DRIVER=fake TSUKUMO_FAKE_SCENE=question-long` で現状を撮り、ラベルと説明の実際の幅を測る\n2. 論点を決めて `src/ui/styles/dispatch.css` を直す。**なぜその形にしたかをコメントに残す**（T-205 のコメントを打ち消す形になるなら、そちらも書き換える）\n3. 1400px / 720px / 420px で撮り直し、(a) 重なりが無い (b) ラベルが折り返す (c) 説明の幅が 0 にならない (d) 選択肢3件＋自由入力＋「答える」が見える、の4点を確かめる\n4. 単一選択（`<button>`）と複数選択（`<label>`）の両方で確かめる。420px の件が解けないと分かったら、**やらずに理由と測った値を `evidence` に書いて閉じてよい**（その場合も (a)(b)(d) は満たすこと）\n\n## 完了条件\n\n- `bun run check` が通る\n- 上の4点を3つの幅・2つの選択形式で目視し、見えたものを `evidence` に書く\n\n## 注意\n\n- `src/ui/styles/dispatch.css` は T-191（CSS Modules へ移す）も触る。**並行させない**\n- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと同時に進めない\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-207",
+    "difficulty": "opus",
+    "loopable": "N",
+    "dependencies": ["T-206"],
+    "summary": "質問の選択肢の意匠を練り直す（チェックボックスを含む）",
+    "task": "## 背景\n\n入力欄に出る質問の選択肢は、素の `<input type=\"checkbox\">` と枠付きの箱だけで作ってある（`src/ui/features/dispatch/pending-answer.tsx` の `QuestionCard`、`src/ui/styles/dispatch.css` の `.question-choice` 一式）。**チェックボックスには CSS の手当てが無く、OS 既定の見た目がそのまま出る。** ユーザーが実機で「チェックボックスもちょっと無骨だからデザインを練り直せるといいな」と指摘した（2026-09-20）。\n\n2026-09-20 の実機のスクリーンショットで見えていたこと: チェックの入った印が **OS 既定の青**で、テーマの `--accent`（水色）と合っていない。チェックボックスの大きさもラベルの文字に対して小さく、枠の角丸や余白とも揃っていない。\n\nいまの構造:\n\n- 単一選択は `<button class=\"question-choice question-option-button\">`、複数選択は `<label class=\"question-choice question-choice-checkbox\">` の中に `.question-choice-checkbox-row`（チェックボックス＋ラベル）\n- 選ばれている印は `.is-selected`（枠の色と背景色）、フォーカスは `.question-choice-checkbox:has(:focus-visible)` の輪\n- 色は `src/ui/styles/theme.css` の変数（`--accent` / `--surface` / `--surface-accent` / `--rule` / `--ink-quiet`）\n\n## 決まっていること（蒸し返さない）\n\n- 選択肢の意匠を練り直してよい（2026-09-20 ユーザー承認）。\n- **`frontend-design` スキルを使う。**\n\n## 解くべき論点\n\n- チェックボックスを自前で描くか（`appearance: none` ＋ 疑似要素）、既定のまま大きさと余白だけ整えるか\n- 単一選択（`<button>`）と複数選択（`<label>`）で見た目をどこまで揃えるか。構造が違うので、揃えるなら片方の構造を変える判断が要る\n- 選択・フォーカス・hover の3つの印を**色だけに頼らずに**出せるか\n- テーマの色変数の中で収めるか、新しい変数を足すか\n\n## やること\n\n1. `frontend-design` スキルを読む。いまの見た目を撮って出発点にする\n2. 意匠を決めて `src/ui/styles/dispatch.css`（必要なら `pending-answer.tsx` の構造）を直す\n3. `question-multi` / `question-long` / `question-pair` の3つの場面を 1400px と 720px で撮り、選択・フォーカス・hover の3状態を確かめる\n4. 質問の箱の高さの制約を壊していないことを確かめる（`.pending-question` が入力欄の領域を丸ごと使い、選択肢3件＋自由入力＋「答える」が同時に見える）\n\n## 完了条件\n\n- `bun run check` が通る\n- 3つの場面 × 2つの幅を目視し、選択・フォーカス・hover の3状態が色以外でも見分けられることを `evidence` に書く\n- 720px で選択肢3件＋自由入力＋「答える」が同時に見える\n\n## 注意\n\n- `src/ui/styles/dispatch.css` は T-191（CSS Modules へ移す）も触る。**並行させない**\n- 構造を変えるなら `test/ui/features/dispatch/pending-answer.test.tsx` の期待も追随させる\n- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと同時に進めない\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
