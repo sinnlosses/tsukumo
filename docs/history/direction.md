@@ -3,6 +3,86 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-20 src/ の構成の組み替え・整理・レポートのチラつき
+
+### ユーザーから
+
+- どこで何をしているのかsrc/ディレクトリを見てもREADME.mdのディレクトリ構成を見てもわかりづらい印象を持ったよ。根本的に解決していきたい
+  - ローカル環境のファイルを読み書きする TypeScript のフルスタック構成のメジャーなディレクトリ構造を提案して
+    - 感覚的に、バックエンド側、フロントエンド側が分かれているなら以下のように分けられると思っている
+      - src/
+        - backend/
+        - frontend/
+        - shared/
+  - バックエンド側、フロントエンド側それぞれにlib/やutils/など、/Users/sinnlos/ghq/github.com/sinnlosses/helm-yadokari と同様の役割でディレクトリを作り、汎用的な機能やライブラリのラッパーなどの定義場所を作るとわかりやすい
+  - feature/ディレクトリにlayoutやcharacter-viewが定義されてるけど、featureはまとまった機能(例えばtheme)に対するhooksやproviderなどをパッケージしたものだから場所が違うとおもう。/Users/sinnlos/ghq/github.com/sinnlosses/Git-Bulk-Maestro/packages/web/components を参考にしつつ、配置を考え直してもらえると助かる
+  - バックエンドはどこがドメインなのか、どこがコントローラーなのか、インフラに依存しているところはどこかなどもわかりやすく責務を明確にしてほしい
+  - 1つのファイルで色んなことをしている印象があって、責務を明確に、分割してほしい
+  - https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices のルールを参考にフロントのコードをレビューして改善点を洗い出してほしい
+  - https://github.com/ayghri/i-have-adhd/blob/main/skills/i-have-adhd/SKILL.md を参考にレポートのプロンプトをシンプルにできないかな?
+- scratchpad や vendor など、整理したいな。外部ライブラリは package.json に定義したり。scratchpad はまだ使う?不要なら削除したりライブラリで代用できるならそうしたり。
+- このリポジトリにあると良さそうな hooks や rules 、今の記述を hooks や rules にしたほうがいいものはあるかな。提案してほしい。
+- 中間レポートと最終レポート以外に出てくる本文が表示されたあと削除されることによって中間レポートが折りたたみされてまた展開して、と視覚的にチラつく問題が残ってるので解決方法を模索したい
+  - 本文の出し方が今どうなっているのか
+  - 省略されるものは最初から省略できないか
+
+### エージェントのドラフト（3件すべて承認を得た）
+
+（出典: エージェントのドラフト / 承認: 「3件すべて」 2026-09-20）
+
+- TanStack Query（`@tanstack/react-query` v5）を `src/ui/` に入れ、`src/ui/features/character-view/portrait.tsx`
+  の `useSvgMarkup`（`useState` + `useEffect` + `cancelled` フラグの29行）を `useQuery` に置き換える。
+  `/character/<file>` は `src/adapter/server.ts` が `cache-control: no-store` で配っているので、表情を
+  戻すたびに同じ SVG を取り直している。`queryKey: [url]` のキャッシュでこの往復が消え、`useEffect` も1つ減る
+  （`docs/coding-standards.md`「React」節）。`QueryClientProvider` は `src/ui/main.tsx` に1枚足す
+  （T-193 の調査で採用と判断。2026-09-20）
+- T-188（`@` のファイル補完）の本文を更新する案: 候補一覧の GET を TanStack Query で取る形に決め、
+  論点「一覧の取り直し（毎回取る／起動時に1回／時間で古くする）」は `staleTime` の値を決める話に置き換える。
+  打鍵ごとの再取得の重複排除も `useQuery` が持つので、`composer.tsx` 側に取得の配線を書かずに済む
+  （上の Query 導入が先に入っている前提。新しいタスクは立てない）
+
+- カラーピッカーの連続書き込みを直す（ユーザーの承認 2026-09-20）。
+  `src/ui/features/appearance/character-edit.tsx` の `<input type="color">` は `onChange` ごとに
+  `set-outfit-accent` を投げ、`src/adapter/character-edit.ts` が毎回 `writeFileSync` で character.json を
+  書き直して全クライアントへ push する（`src/ui/features/appearance/appearance.tsx` の地・領域・字の色も
+  同じ形で `localStorage` に書く）。**react-use の `useDebounce` は使わない**: 2026-09-20 に 17.6.1 を
+  実測したところ、`useTimeoutFn` が `useEffect` の中で即 `set()` するため**マウントしただけで1回発火**し、
+  編集画面を開くだけで書き込みが走る（束ねへの増分は gzip 320B で軽いが、この挙動が用途と合わない）。
+  自前の debounce（10行程度）か、`onChange` ではなく確定時にだけ送る形のどちらかで直す
+
+### 対応表
+
+| 指示・発言                                                                                                                                                                                                                                                                           | タスク                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| src/ を見てもわかりづらい／メジャーなディレクトリ構造を提案して（backend・frontend・shared）／両側に lib・utils／feature に layout や character-view があるのは場所が違う（Git-Bulk-Maestro の components を参考に）／バックエンドのドメイン・コントローラー・インフラの責務を明確に | T-194（案を比べて推す）→ T-195（選ばれた案へ移す）                                                 |
+| 1つのファイルで色んなことをしている印象があって、責務を明確に、分割してほしい                                                                                                                                                                                                        | T-196                                                                                              |
+| react-best-practices のルールを参考にフロントのコードをレビューして改善点を洗い出してほしい                                                                                                                                                                                          | T-197                                                                                              |
+| i-have-adhd を参考にレポートのプロンプトをシンプルにできないかな?                                                                                                                                                                                                                    | T-198（案を出すところまで。差し替えは承認後）                                                      |
+| scratchpad はまだ使う? 不要なら削除したり                                                                                                                                                                                                                                            | T-199                                                                                              |
+| 外部ライブラリは package.json に定義したり（vendor の整理）                                                                                                                                                                                                                          | T-200                                                                                              |
+| このリポジトリにあると良さそうな hooks や rules を提案してほしい                                                                                                                                                                                                                     | T-201                                                                                              |
+| 中間レポートが折りたたみされてまた展開してチラつく／本文の出し方が今どうなっているのか／省略されるものは最初から省略できないか                                                                                                                                                       | T-202                                                                                              |
+| ドラフト: TanStack Query を入れて useSvgMarkup を useQuery に                                                                                                                                                                                                                        | T-203                                                                                              |
+| ドラフト: T-188 の本文を更新する（新しいタスクは立てない）                                                                                                                                                                                                                           | T-188 の本文を更新（`## 決まっていること` に追記、論点を `staleTime` へ、`dependencies` に T-203） |
+| ドラフト: カラーピッカーの連続書き込みを直す                                                                                                                                                                                                                                         | T-204（自前の debounce で直す。ユーザーの選択 2026-09-20）                                         |
+
+### タスクにしなかったもの
+
+- **「rules」という仕組み**: Claude Code の仕組みとして hooks・skills・CLAUDE.md はあるが、
+  「rules」という独立した置き場は無い。T-201 の中で「文章のまま残すもの／hooks へ移せるもの」の
+  切り分けとして扱う（別タスクにしない）
+- **`vendor/README.md` と `src/core/report-notation.ts` が指す `src/ui/report/...` の古いパス**:
+  指示ではないが作業中に見つかった。T-195 の追随の対象に含めた
+
+### 登録時に聞いたこと（回答）
+
+- ドラフトの3件 → **3件すべて**タスク化してよい
+- ディレクトリ構成の提案 → **他の案も並べて推す**（素案を前提に詰めるのではない）
+- `scratchpad/sdk-spike/` → **消す**
+- `vendor/` の3ファイル → **npm へ移す**（表示時の外部通信ゼロは保つ）
+- カラーピッカー → **自前の debounce**
+- レポートの記法の簡素化 → **案を出すまで**（差し替えは承認後の別タスク）
+
 ## 2026-09-19 TanStack のライブラリの採否
 
 - tanstack のライブラリを組み込むことで得られる恩恵を洗い出し、採用する前提で考えてもらいたい。

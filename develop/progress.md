@@ -1,6 +1,6 @@
 # 現在の状態
 
-最終更新: 2026-09-18（`docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
+最終更新: 2026-09-20（`/plan-tasks` で `develop/direction.md` の指示（`src/` の構成の組み替え・`scratchpad` と `vendor` の整理・hooks の提案・レポートのチラつき）をT-194〜T-204 に起こし、ドラフト3件は承認を得て T-203 / T-204 と T-188 の本文更新に落とした。指示とタスクの対応表は `docs/history/direction.md` の 2026-09-20。2026-09-18 は `docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
 原因は `src/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` を呼ぶだけで確認イベントを
 出しておらず、選んだ直後に次のバッチで `state.model` が古い値へ戻って見えていたこと（偽の駆動
 `fake-driver.ts` は最初から `session-info` の再送でこれをやっていたため、目視確認では気づけなかった）。
@@ -84,13 +84,18 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 切り替える形にし、入る口はサイドバーのキャラクター行の「整える」、中身は立ち絵の並びが主役と決めて
 `docs/design.md` 13.6 に書いた（採らなかった案つき）。T-184 / T-185 の本文をその形に合わせて書き直した。
 
-### 2026-09-17 thinking のラベルを「ふむ」にし、表情の選び分けを persona に書いた（T-181）
-
-`characters/tsukumo` の `thinking` を「本気」→「ふむ」、`tsukumo-spirit` と `local` を
-「作業中」→「思案」にし、各 `persona.md` に「調べる前・迷うときは thinking」の1行を足した
-（ラベルだけでは出番が増えないため）。
-
 ## 未解決
+
+- **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
+  （2026-09-20 に登録。「他の案も並べて推す」がユーザーの指定）。**T-195（移す側）は
+  `loopable: "N"`**——提案が出た時点では案そのものが無く、登録時に決めておけないため。
+  `/loop /next-task` では拾われないので、提案を読んだユーザーが自分で `/next-task` を呼ぶ。
+  T-196（責務が同居したファイルの分割）はその後
+- **提案で終わるタスクが4件ある**（T-194 / T-197 / T-198 / T-201）。どれも結果を
+  `develop/direction.md` の `## エージェントのドラフト` に書いて閉じ、**実装は承認後に
+  `/plan-tasks` で起こす**。ドラフト節にものが溜まったらタスク化の合図
+- **レポートのチラつき（T-202）は `loopable: "N"`**。流れている途中の見た目なので、実際に
+  ターンを流して目で見ないと受け入れを判定できない（テストで言えるのは「畳みが反転しない」まで）
 
 - **偽の駆動で質問の場面を自動操作したとき、`turnInProgress` が解消しないことがある**
   （2026-09-16、T-134 の目視確認中に複数回。**再現条件が分かっておらず、手で触ったときには
@@ -126,6 +131,16 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ## 注意
 
 次のセッションで踏み外しやすい点:
+
+- **`react-use` の `useDebounce` を使わない**（2026-09-20 に 17.6.1 で実測）。`useTimeoutFn` が
+  `useEffect` の中で即 `set()` するため**マウントしただけで1回発火**し、編集画面を開くだけで
+  `character.json` への書き込みが走る。色の連続書き込み（T-204）は**自前の debounce**で直す
+- **`vendor/` を npm 依存へ移すと決めた**（T-200、ユーザー 2026-09-20）。**mermaid の版を
+  上げると `src/core/report-notation.ts` が挙げる「描ける10種」の根拠が崩れる**（11.15.0 で
+  実測した一覧）。上げるなら10種が描けることを確かめ直し、崩れるなら版を据え置く
+- **`docs/history/` に移した指示メモは書き換えない。** 2026-09-20 の `/plan-tasks` で
+  `develop/direction.md` の2節は空に戻してある（`docs/history/direction.md` の
+  「2026-09-20」が当時の記述）
 
 - **CSS Modules へ移ると `bun build` の出力が2本になる**（2026-09-18 実測。
   `error: cannot write multiple output files without an output directory`）。いまの
