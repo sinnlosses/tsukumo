@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 TanStack の各ライブラリの採否を決めた（T-193）
+
+公開されている24件をこのリポジトリの実物に当てて採否を決め、採用は TanStack Query 1件に絞った（`portrait.tsx` の `useSvgMarkup` と、T-188 が足す GET が当て先）。採用分と T-188 の本文更新案は `develop/direction.md` の `## エージェントのドラフト` に置いてあり、承認待ち。
+
 ### 2026-09-18 「立ち絵の位置を固定する」を仕様ごと撤去した（T-182）
 
 `src/ui/lib/portrait-fixed.ts` と「見た目」の引き出しのチェックボックスを消し、`usePortraitMotion` を
