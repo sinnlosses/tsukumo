@@ -8,7 +8,7 @@ import {
   readCurrentColor,
   saveAppearanceColorOverride,
   type AppearanceColorOverride,
-} from "../../../../src/ui/features/appearance/appearance-color.ts"
+} from "../../../../src/ui/features/character-screen/appearance-color.ts"
 
 const STORAGE_KEY = "tsukumo-appearance-color"
 

@@ -4,8 +4,9 @@ import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@tes
 import { type ReactElement } from "react"
 
 import { type CharacterPackChoice } from "../../../../src/protocol/character.ts"
+import { FRAME_ERROR_REASON } from "../../../../src/protocol/frame.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/protocol/session-state.ts"
-import { CharacterCreate } from "../../../../src/ui/features/appearance/character-create.tsx"
+import { CharacterCreate } from "../../../../src/ui/features/character-screen/character-create.tsx"
 import { SessionContext, type SessionContextValue } from "../../../../src/ui/stores/session.tsx"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
@@ -37,15 +38,17 @@ const FIXTURE_PACKS: readonly CharacterPackChoice[] = [{ name: "fictional", labe
 
 afterEach(() => {
   cleanup()
+  window.location.hash = ""
 })
 
 function characterCreate(
   character: SessionState["character"],
   dispatch: SessionContextValue["dispatch"] = () => {},
   packs: readonly CharacterPackChoice[] = FIXTURE_PACKS,
+  turnInProgress = false,
 ): ReactElement {
   const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, character, characterPacks: packs },
+    state: { ...INITIAL_SESSION_STATE, character, characterPacks: packs, turnInProgress },
     connection: "open",
     dispatch,
   }
@@ -62,6 +65,11 @@ function renderCharacterCreate(
   packs: readonly CharacterPackChoice[] = FIXTURE_PACKS,
 ): RenderResult {
   return render(characterCreate(character, dispatch, packs))
+}
+
+/** 作ったあとの一覧（送った名前が増えた状態）。 */
+function packsWith(name: string): readonly CharacterPackChoice[] {
+  return [...FIXTURE_PACKS, { name, label: name }]
 }
 
 /**
@@ -120,14 +128,14 @@ describe("CharacterCreate", () => {
     await fillForm("../escape")
 
     expect(submitButton().disabled).toBe(true)
-    expect(document.querySelector(".appearance-note")?.textContent).toContain("英数字")
+    expect(document.querySelector(".character-screen-note")?.textContent).toContain("英数字")
 
     typeName("nested/name")
     expect(submitButton().disabled).toBe(true)
 
     typeName("fictional-2")
     expect(submitButton().disabled).toBe(false)
-    expect(document.querySelector(".appearance-note")).toBeNull()
+    expect(document.querySelector(".character-screen-note")).toBeNull()
   })
 
   it("既にある名前では押せず、使われていることを出す", async () => {
@@ -135,7 +143,9 @@ describe("CharacterCreate", () => {
     await fillForm("fictional")
 
     expect(submitButton().disabled).toBe(true)
-    expect(document.querySelector(".appearance-note")?.textContent).toContain("もう使われている")
+    expect(document.querySelector(".character-screen-note")?.textContent).toContain(
+      "もう使われている",
+    )
   })
 
   it("そろった状態で押すと、名前・必須の1枚・差し色を載せた create-character を dispatch する", async () => {
@@ -158,25 +168,64 @@ describe("CharacterCreate", () => {
     ])
   })
 
-  it("送った名前が一覧に出たら、作れたことを出す（切り替えは一覧から）", async () => {
+  it("送った名前が一覧に出たら、作れたことと切り替える口を出す", async () => {
     const view = renderCharacterCreate(FIXTURE_CHARACTER)
     await fillForm("fictional-2")
     fireEvent.click(submitButton())
 
     // まだ `character-changed` が戻っていないので、一覧には出ていない。
-    expect(document.querySelector(".appearance-note")).toBeNull()
+    expect(document.querySelector(".character-screen-note")).toBeNull()
+    expect(screen.queryByRole("button", { name: "このキャラクターに切り替える" })).toBeNull()
 
     // 選択肢の増えたイベントが届いたあと。
-    view.rerender(
-      characterCreate(FIXTURE_CHARACTER, () => {}, [
-        ...FIXTURE_PACKS,
-        { name: "fictional-2", label: "fictional-2" },
-      ]),
-    )
+    view.rerender(characterCreate(FIXTURE_CHARACTER, () => {}, packsWith("fictional-2")))
 
-    expect(document.querySelector(".appearance-note")?.textContent).toContain("切り替えられる")
+    expect(document.querySelector(".character-screen-note")?.textContent).toContain("作った")
+    expect(screen.getByRole("button", { name: "このキャラクターに切り替える" })).toBeDefined()
     // 同じ名前でもう一度は作れない。
     expect(submitButton().disabled).toBe(true)
+  })
+
+  it("切り替える口は switch-character を送り、キャラクター画面へ戻す", async () => {
+    const calls: unknown[] = []
+    const view = renderCharacterCreate(FIXTURE_CHARACTER, (command) => calls.push(command))
+    await fillForm("fictional-2")
+    fireEvent.click(submitButton())
+    view.rerender(
+      characterCreate(
+        FIXTURE_CHARACTER,
+        (command) => calls.push(command),
+        packsWith("fictional-2"),
+      ),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "このキャラクターに切り替える" }))
+
+    expect(calls.at(-1)).toEqual({ type: "switch-character", name: "fictional-2" })
+    expect(window.location.hash).toBe("#character")
+  })
+
+  // 切り替えは起こし直し（会話が消える）なので、ターン進行中は押せない（サイドバーの
+  // `<select>` と同じ理由・同じ文言）。
+  it("ターン進行中は切り替える口を押せず、理由を title に出す", async () => {
+    const view = renderCharacterCreate(FIXTURE_CHARACTER)
+    await fillForm("fictional-2")
+    fireEvent.click(submitButton())
+    view.rerender(characterCreate(FIXTURE_CHARACTER, () => {}, packsWith("fictional-2"), true))
+
+    const button = screen.getByRole("button", {
+      name: "このキャラクターに切り替える",
+    }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    expect(button.title).toBe(FRAME_ERROR_REASON.switchDuringTurn)
+  })
+
+  // 作る画面は1枚の画面なので、行き止まりにしない（キャラクターが届く前でも戻れる）。
+  it("キャラクターへ戻る口を出す", () => {
+    renderCharacterCreate(undefined)
+
+    const back = screen.getByRole("link", { name: "← キャラクターへ戻る" })
+    expect(back.getAttribute("href")).toBe("#character")
   })
 
   it("キャラクターが届く前は何も出さない", () => {

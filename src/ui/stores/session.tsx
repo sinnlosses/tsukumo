@@ -111,7 +111,7 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
   // `document.documentElement` に差し替える。`<Layout>` の外まで届く唯一の場所がここ
   // （`document.title` を差し替える `src/ui/features/dispatch/dispatch.tsx` と同じ、ホスト側の値を
   // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
-  // 手口で `src/ui/features/appearance/appearance-color.ts` が持つ）。届いていない・パックに `accent`
+  // 手口で `src/ui/features/character-screen/appearance-color.ts` が持つ）。届いていない・パックに `accent`
   // が無いときは既定値（theme.css の `:root`）に戻す。
   const accent = state.character?.accent
   useEffect(() => {

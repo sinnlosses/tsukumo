@@ -1,6 +1,7 @@
-// 「見た目」の引き出しの中の、**キャラクターの立ち絵と差し色を差し替える口**
-// （`docs/design.md` 7.1 / 13.6）。**常設の要素は1つも増えない** — 引き出し（`<dialog>`）の中に
-// 入るので、閉じている間は画面に出ているボタンの数が変わらない（13.1 原則2）。
+// キャラクター画面の主役、**立ち絵の並びと差し色**（`docs/design.md` 13.6 / 7.1）。
+// **立ち絵そのものが差し替えの口になる** — 表情ごとに1枚のカードを `EXPRESSIONS` の順に並べ、
+// カードの中で「差し替える」「消す」を出す。立ち絵が無い表情は点線の枠の空きにラベルと
+// 「選ぶ」だけを出す（大きさと枠は `src/ui/styles/character-screen.css`）。
 //
 // 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` の3つで、**書き込み先と
 // 反映はサーバ側**（`src/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を
@@ -23,6 +24,7 @@ import {
   type Outfit,
   OUTFITS,
 } from "../../../protocol/expression.ts"
+import { Portrait } from "../../components/portrait.tsx"
 import { readDataUrl } from "../../lib/data-url.ts"
 import { useSession } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
@@ -47,6 +49,9 @@ const OUTFIT_LABELS: Readonly<Record<Outfit, string>> = {
 /** 画面から変えられないパックのときに出す一言（理由は探索の順。`docs/design.md` 7.1）。 */
 const NOT_EDITABLE_NOTE = "起動先の characters/local のパックは、画面からは変えられない"
 
+/** カードの立ち絵に当てる衣装。並びでは衣装の違いを出さない（差し色の行がその役目）。 */
+const GALLERY_OUTFIT: Outfit = "default"
+
 export function CharacterEdit(): ReactElement | null {
   const { state, dispatch } = useSession()
   const character = state.character
@@ -55,6 +60,7 @@ export function CharacterEdit(): ReactElement | null {
     return null
   }
   const disabled = !character.editable
+  const accent = resolveOutfitAccent(character.outfitAccents, GALLERY_OUTFIT) ?? readAccentColor()
 
   /**
    * 選ばれた画像を data URL にして送る。**同じファイルをもう一度選べるように `value` を戻す**
@@ -75,65 +81,79 @@ export function CharacterEdit(): ReactElement | null {
 
   return (
     <>
-      {disabled ? <p className="appearance-note">{NOT_EDITABLE_NOTE}</p> : null}
-      <fieldset className="appearance-fieldset">
-        <legend>立ち絵</legend>
+      {disabled ? <p className="character-screen-note">{NOT_EDITABLE_NOTE}</p> : null}
+      <div className="character-gallery">
         {EXPRESSIONS.map((expression) => {
-          const inputId = `appearance-portrait-${expression}`
           const label = resolveExpressionLabel(character.expressions, expression)
+          const url = character.portraits[expression]
           return (
-            <div className="appearance-field" key={expression}>
-              <label htmlFor={inputId}>{label}</label>
-              <span className="appearance-portrait-controls">
+            <div className="character-gallery-card" key={expression}>
+              {url === undefined ? (
+                <span className="character-gallery-blank" />
+              ) : (
+                <Portrait
+                  url={url}
+                  accent={accent}
+                  altText={label}
+                  expression={expression}
+                  outfit={GALLERY_OUTFIT}
+                  motion={undefined}
+                />
+              )}
+              <span className="character-gallery-label">{label}</span>
+              {/* 見える字は「差し替える」「選ぶ」だけ（カードが狭い）。**どの表情のことかは
+                  読み上げに残す**ので、`<input>` 側に aria-label を置く。 */}
+              <label className="character-gallery-pick">
+                {url === undefined ? "選ぶ" : "差し替える"}
                 <input
-                  id={inputId}
                   type="file"
-                  className="appearance-portrait-file"
+                  className="character-gallery-file"
+                  aria-label={`${label}を${url === undefined ? "選ぶ" : "差し替える"}`}
                   accept={PORTRAIT_FILE_ACCEPT}
                   disabled={disabled}
                   onChange={(event) => {
                     void sendPortrait(expression, event.currentTarget)
                   }}
                 />
-                {isRemovableExpression(expression) &&
-                character.portraits[expression] !== undefined ? (
-                  <button
-                    type="button"
-                    className="appearance-portrait-clear"
-                    // 見える字は「消す」だけ（行が狭い）。**どの表情を消すのかは読み上げに残す。**
-                    aria-label={`${label}を消す`}
-                    disabled={disabled}
-                    onClick={() => {
-                      dispatch({ type: "clear-portrait", expression })
-                    }}
-                  >
-                    消す
-                  </button>
-                ) : null}
-              </span>
+              </label>
+              {isRemovableExpression(expression) && url !== undefined ? (
+                <button
+                  type="button"
+                  className="character-gallery-clear"
+                  aria-label={`${label}を消す`}
+                  disabled={disabled}
+                  onClick={() => {
+                    dispatch({ type: "clear-portrait", expression })
+                  }}
+                >
+                  消す
+                </button>
+              ) : null}
             </div>
           )
         })}
-      </fieldset>
-      <fieldset className="appearance-fieldset">
+      </div>
+      <fieldset className="character-screen-fieldset">
         <legend>差し色</legend>
-        {OUTFITS.map((outfit) => {
-          const inputId = `appearance-outfit-accent-${outfit}`
-          return (
-            <div className="appearance-field" key={outfit}>
-              <label htmlFor={inputId}>{OUTFIT_LABELS[outfit]}</label>
-              <input
-                id={inputId}
-                type="color"
-                disabled={disabled}
-                value={resolveOutfitAccent(character.outfitAccents, outfit) ?? readAccentColor()}
-                onChange={(event) => {
-                  dispatch({ type: "set-outfit-accent", outfit, color: event.target.value })
-                }}
-              />
-            </div>
-          )
-        })}
+        <div className="character-screen-row">
+          {OUTFITS.map((outfit) => {
+            const inputId = `character-outfit-accent-${outfit}`
+            return (
+              <div className="character-screen-field" key={outfit}>
+                <label htmlFor={inputId}>{OUTFIT_LABELS[outfit]}</label>
+                <input
+                  id={inputId}
+                  type="color"
+                  disabled={disabled}
+                  value={resolveOutfitAccent(character.outfitAccents, outfit) ?? readAccentColor()}
+                  onChange={(event) => {
+                    dispatch({ type: "set-outfit-accent", outfit, color: event.target.value })
+                  }}
+                />
+              </div>
+            )
+          })}
+        </div>
       </fieldset>
     </>
   )

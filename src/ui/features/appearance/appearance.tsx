@@ -1,9 +1,8 @@
-// 「見た目」の引き出し（docs/design.md 6.1 部品の木の `<Appearance>` / 13.6）。地・領域・字の色
-// （`ground` / `surface` / `ink`）・領域の比率を既定に戻す、をここにまとめる。
-// **キャラクターの立ち絵と差し色の差し替え（`<CharacterEdit>`）と、新しい
-// キャラクターパックを作る口（`<CharacterCreate>`）もここに入る**（7.1。引き出しの中なので
-// 常設の要素は増えない）。**常設なのは開く口のボタン1つだけ**（
-// 13.6「常設の要素は差し引きゼロ」）。
+// 「見た目」の引き出し（docs/design.md 6.1 部品の木の `<Appearance>` / 13.6）。**残っているのは
+// 「領域の比率を既定に戻す」だけ** — 画面の色3つ・立ち絵と差し色の差し替え・新しいパックを
+// 作る口は、2026-09-17 の決定でキャラクター画面（`features/character-screen/`）へ移した。
+// **この引き出し自体を畳んで右下を比率リセットのボタンに戻すのは別のタスク**（13.6
+// 「右下は『領域の比率を既定に戻す』だけに戻る」）。
 //
 // 比率のリセットは `<Layout>` が state を持ったままなので、ここへは実行する関数だけを props
 // で受け取る（`docs/design.md` 6.1「部品は SessionState と dispatch だけを見る」と同じ形で、
@@ -16,46 +15,14 @@
 // 留める先は「開いている間に存在する focusable 要素の最初と最後」だけで、途中の周回は
 // ブラウザの既定の Tab 移動に任せる。
 
-import { useRef, useState, type KeyboardEvent, type ReactElement } from "react"
-
-import {
-  applyAppearanceColorOverride,
-  changeAppearanceColor,
-  loadAppearanceColorOverride,
-  readCurrentColor,
-  saveAppearanceColorOverride,
-  type AppearanceColorKey,
-  type AppearanceColorOverride,
-} from "./appearance-color.ts"
-import { CharacterCreate } from "./character-create.tsx"
-import { CharacterEdit } from "./character-edit.tsx"
+import { useRef, type KeyboardEvent, type ReactElement } from "react"
 
 export type AppearanceProps = {
   readonly onResetSplit: () => void
 }
 
-const COLOR_FIELDS: ReadonlyArray<{ readonly key: AppearanceColorKey; readonly label: string }> = [
-  { key: "ground", label: "画面の地" },
-  { key: "surface", label: "領域の地" },
-  { key: "ink", label: "字の色" },
-]
-
 export function Appearance(props: AppearanceProps): ReactElement {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  // 保存済みの上書きは、マウント時に一度だけ documentElement へ反映する
-  // （リロード後も色が残っている、という要件はこの1回で満たす）。
-  const [override, setOverride] = useState<AppearanceColorOverride>(() => {
-    const loaded = loadAppearanceColorOverride()
-    applyAppearanceColorOverride(loaded)
-    return loaded
-  })
-
-  function handleColorChange(key: AppearanceColorKey, value: string): void {
-    const next = changeAppearanceColor(override, key, value)
-    applyAppearanceColorOverride(next)
-    saveAppearanceColorOverride(next)
-    setOverride(next)
-  }
 
   /** 最初と最後の focusable 要素の境界だけで Tab を折り返す。 */
   function trapTabKey(event: KeyboardEvent<HTMLFormElement>): void {
@@ -93,25 +60,6 @@ export function Appearance(props: AppearanceProps): ReactElement {
       <dialog ref={dialogRef} className="appearance-drawer" aria-label="見た目の設定">
         <form method="dialog" className="appearance-drawer-body" onKeyDown={trapTabKey}>
           <h2 className="appearance-drawer-heading">見た目</h2>
-          <fieldset className="appearance-fieldset">
-            <legend>色</legend>
-            {COLOR_FIELDS.map((field) => {
-              const inputId = `appearance-color-${field.key}`
-              return (
-                <div className="appearance-field" key={field.key}>
-                  <label htmlFor={inputId}>{field.label}</label>
-                  <input
-                    id={inputId}
-                    type="color"
-                    value={readCurrentColor(field.key)}
-                    onChange={(event) => handleColorChange(field.key, event.target.value)}
-                  />
-                </div>
-              )
-            })}
-          </fieldset>
-          <CharacterEdit />
-          <CharacterCreate />
           <button type="button" className="appearance-reset-split" onClick={props.onResetSplit}>
             領域の比率を既定に戻す
           </button>

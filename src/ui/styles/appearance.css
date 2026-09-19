@@ -1,4 +1,6 @@
 /* 「見た目」の引き出し（`src/ui/features/appearance/appearance.tsx`。docs/design.md 13.6）。
+   **中身は「領域の比率を既定に戻す」だけ**（色・立ち絵・差し色・作る口は 2026-09-17 に
+   キャラクター画面へ移した。`character-screen.css`）。
    開く口（`.appearance-trigger`）は画面右下に固定で置く
    （常設の要素は差し引きゼロ。仕切りのドラッグ操作と取り合わない場所という理由も同じ）。
    引き出し本体（`.appearance-drawer`。`<dialog>`）は一時的に重なるものなので、常設の枠を
@@ -52,71 +54,6 @@
   flex-direction: column;
   gap: 0.75rem;
 }
-/* 引き出しの中の組（色・立ち絵・差し色）。枠は持たず、`<legend>` を小さな見出しとして使う
-   （13.1 原則2「常設の枠を増やさない」）。 */
-.appearance-fieldset {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-.appearance-fieldset > legend {
-  padding: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
-/* 画面から変えられないパックのとき・新しいキャラクターを作れないときの一言。 */
-.appearance-note {
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
-/* 立ち絵の行は「選ぶ」と「消す」が並ぶので、ラベルの右側をひとまとめにする。 */
-.appearance-portrait-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
-}
-.appearance-portrait-file {
-  max-width: 9.5rem;
-  font: inherit;
-  font-size: var(--font-label);
-}
-.appearance-portrait-clear {
-  padding: 0.15rem 0.4rem;
-  background: var(--surface);
-  color: inherit;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  font: inherit;
-  font-size: var(--font-label);
-  cursor: pointer;
-}
-.appearance-portrait-clear:hover {
-  border-color: var(--accent);
-}
-.appearance-field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-/* 新しいキャラクターを作る口（`character-create.tsx`）。名前の欄は行の右側に収める。 */
-.appearance-create-name {
-  max-width: 9.5rem;
-  min-width: 0;
-  padding: 0.15rem 0.3rem;
-  background: var(--ground);
-  color: inherit;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  font: inherit;
-  font-size: var(--font-label);
-}
-.appearance-create-submit,
 .appearance-reset-split,
 .appearance-close {
   padding: 0.3rem 0.6rem;
@@ -128,12 +65,6 @@
   font-size: var(--font-label);
   cursor: pointer;
 }
-/* 名前が使えない・立ち絵がまだそろっていない間は押せない（理由は `.appearance-note`）。 */
-.appearance-create-submit:disabled {
-  color: var(--ink-quiet);
-  cursor: default;
-}
-.appearance-create-submit:hover,
 .appearance-reset-split:hover,
 .appearance-close:hover {
   border-color: var(--accent);

@@ -30,10 +30,10 @@ import {
 } from "../../../protocol/portrait-motion.ts"
 import { type SessionRecord } from "../../../protocol/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../protocol/turn-speech.ts"
+import { Portrait } from "../../components/portrait.tsx"
 import { useSession } from "../../stores/session.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
-import { Portrait } from "./portrait.tsx"
 
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"

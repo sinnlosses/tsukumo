@@ -9,23 +9,40 @@
 // 複数の root だった。docs/design.md 12章）。機能の組み立て（`<Layout>` に4領域と
 // `<Appearance>` を渡す）は `ui/features/` をまたいで import してよい**この入口の役目**
 // （機能どうしは互いを import しない。`test/architecture.test.ts`「ui/ の機能どうしの import」）。
+//
+// **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / 13.6）。`<Layout>` は
+// 他の機能を知らないので、画面の入れ替えを機能の側に持たせると機能どうしの import になる。
 
+import { type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
 import { Appearance } from "./features/appearance/appearance.tsx"
+import {
+  applyAppearanceColorOverride,
+  loadAppearanceColorOverride,
+} from "./features/character-screen/appearance-color.ts"
+import { CharacterCreate } from "./features/character-screen/character-create.tsx"
+import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
 import { CharacterView } from "./features/character-view/character-view.tsx"
 import { Dispatch } from "./features/dispatch/dispatch.tsx"
 import { Layout } from "./features/layout/layout.tsx"
 import { MainView } from "./features/main-view/main-view.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
+import { useScreen } from "./stores/screen.tsx"
 import { SessionProvider } from "./stores/session.tsx"
 import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
 
-const appRoot = document.querySelector("#app")
-if (appRoot !== null) {
-  createRoot(appRoot).render(
-    <SessionProvider>
-      <TurnSelectionProvider>
+/**
+ * 出している画面を選ぶ（`location.hash`。docs/design.md 13.6）。**会話の画面は外さず
+ * `hidden` で隠す** — 入力欄の下書き・選んでいるターン・スクロール位置はどれも部品の
+ * ローカル状態なので、外すと戻ったときに失われる（`<SessionProvider>` はこの上に居るので
+ * 会話そのものは隠れている間も進み続ける）。
+ */
+function Root(): ReactElement {
+  const screen = useScreen()
+  return (
+    <>
+      <div hidden={screen !== "conversation"}>
         <Layout
           main={<MainView />}
           sidebar={<Sidebar />}
@@ -33,6 +50,23 @@ if (appRoot !== null) {
           dispatch={<Dispatch />}
           renderAppearance={(onResetSplit) => <Appearance onResetSplit={onResetSplit} />}
         />
+      </div>
+      {screen === "character" ? <CharacterScreen /> : null}
+      {screen === "character-create" ? <CharacterCreate /> : null}
+    </>
+  )
+}
+
+// 保存済みの画面の色を `documentElement` へ反映する1回。**キャラクター画面は開かれるまで
+// マウントされない**ので、色を持つ部品の初期化に任せるとリロード後に色が戻らない。
+applyAppearanceColorOverride(loadAppearanceColorOverride())
+
+const appRoot = document.querySelector("#app")
+if (appRoot !== null) {
+  createRoot(appRoot).render(
+    <SessionProvider>
+      <TurnSelectionProvider>
+        <Root />
       </TurnSelectionProvider>
     </SessionProvider>,
   )

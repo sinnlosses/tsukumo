@@ -213,7 +213,7 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
 - **機能どうしは import しない。** 機能をまたいで要るものは、**部品なら `components/`、
   部品でないなら `lib/`、状態なら `stores/` へ上げる**。上げる引き金は「2つ目の読み手が出たとき」で、
   1つの機能しか読まないものは機能の中に残す（`features/layout/split.ts`・
-  `features/appearance/appearance-color.ts` がその例）
+  `features/character-screen/appearance-color.ts` がその例）
 - **機能は `main.tsx` と `stores/` の中身を「組み立てる側」として import しない。** 機能が触れるのは
   `stores/` が公開する hook（`useSession` / `useTurnSelection`）まで
 - **親が子を組む形も機能どうしの import に数える。** `<Layout>` は領域の中身を props で

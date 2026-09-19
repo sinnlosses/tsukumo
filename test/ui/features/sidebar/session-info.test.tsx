@@ -66,6 +66,16 @@ describe("SessionInfo", () => {
     expect((select as HTMLSelectElement).options).toHaveLength(1)
   })
 
+  // キャラクター画面への入る口は**キャラクターの行**に置く（docs/design.md 13.6）。
+  it("キャラクターの行に、キャラクター画面への「整える」を出す", () => {
+    renderSessionInfo({
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
+    })
+
+    expect(screen.getByRole("link", { name: "整える" }).getAttribute("href")).toBe("#character")
+  })
+
   it("キャラクターを変更すると switch-character が dispatch される", () => {
     const calls: unknown[] = []
     renderSessionInfo(

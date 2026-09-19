@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render, waitFor } from "@testing-library/react"
 
-import { Portrait } from "../../../../src/ui/features/character-view/portrait.tsx"
+import { Portrait } from "../../../src/ui/components/portrait.tsx"
 
 // フィクスチャはすべて手で書いた架空の SVG・URL（docs/coding-standards.md「会話内容の扱い」）。
 

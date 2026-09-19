@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 キャラクター画面を別画面として作り、作成・編集・色の口を移した（T-184）
+
+T-183 で決めた形（`docs/design.md` 13.6）のとおり、`#character` / `#character/new` の2画面を `stores/screen.tsx` の
+`useScreen`（`useSyncExternalStore` で hash を読む）と `main.tsx` の `<Root>` で出し分け、会話の画面は `hidden` で隠して
+下書き・選んでいるターン・スクロール位置を保つようにした。`<Portrait>` は `components/` へ、色と編集と作成は
+`features/character-screen/` へ移した（「見た目」の引き出しの撤去は T-185）。
+
 ### 2026-09-20 入力欄の質問でラベルと説明が重なる件を直した（T-205）
 
 複数選択の選択肢だけで、ラベルの文字が行の箱からはみ出して右隣の説明に重なっていた（`.question-choice-checkbox-row` が縮むのに中のラベルが `flex: 0 0 auto` で縮まない）。あわせて `<label>` 版だけ `content-box` で箱が横に溢れていたのも直した。再現用の場面 `question-long` を台本とカタログに足してある。

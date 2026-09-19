@@ -1,4 +1,6 @@
-// 立ち絵1件（<Portrait>。docs/design.md 6.1・6.5）。**SVG は `fetch` して中身をそのまま
+// 立ち絵1件（<Portrait>。docs/design.md 6.1・6.5 / 13.6）。**キャラビューとキャラクター画面の
+// 立ち絵の並びの2つが読む**ので `components/`（機能の語彙を持たない部品）に置く（2章
+// 「上げる引き金」）。**動きを決めるのは呼び出し側**で、ここは受け取った値を属性に渡すだけ。**SVG は `fetch` して中身をそのまま
 // インライン**にし（差し色の CSS 変数 `--outfit-accent` を効かせるため。`<img>` で読み込むと
 // 独立した文書扱いになり届かない。`characters/README.md` の実測）、ラスタは `<img>` で出す
 // （docs/requirements.md 4.4）。
@@ -13,9 +15,9 @@
 
 import { useEffect, useState, type CSSProperties, type ReactElement } from "react"
 
-import { classifyPortraitFile } from "../../../protocol/character.ts"
-import { type Expression, type Outfit } from "../../../protocol/expression.ts"
-import { type PortraitMotion } from "../../../protocol/portrait-motion.ts"
+import { classifyPortraitFile } from "../../protocol/character.ts"
+import { type Expression, type Outfit } from "../../protocol/expression.ts"
+import { type PortraitMotion } from "../../protocol/portrait-motion.ts"
 
 export type PortraitProps = {
   /** `/character/<file>` の URL。 */
@@ -25,8 +27,13 @@ export type PortraitProps = {
   readonly altText: string
   readonly expression: Expression
   readonly outfit: Outfit
-  /** いまの動き。決めるのは呼び出し側（`character-view.tsx` の `resolvePortraitMotion`）。 */
-  readonly motion: PortraitMotion
+  /**
+   * いまの動き。決めるのは呼び出し側（`features/character-view/character-view.tsx` の
+   * `resolvePortraitMotion`）。**動かさない置き方もある**ので `undefined` を許す
+   * （キャラクター画面の立ち絵の並び。13.6）。そのときは `data-motion` が付かず、
+   * `character.css` の動きの規則はどれも当たらない。
+   */
+  readonly motion: PortraitMotion | undefined
 }
 
 /**

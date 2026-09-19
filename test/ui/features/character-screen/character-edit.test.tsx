@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/protocol/session-state.ts"
-import { CharacterEdit } from "../../../../src/ui/features/appearance/character-edit.tsx"
+import { CharacterEdit } from "../../../../src/ui/features/character-screen/character-edit.tsx"
 import { SessionContext, type SessionContextValue } from "../../../../src/ui/stores/session.tsx"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
@@ -17,10 +17,13 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     { name: "thinking", label: "作業中" },
     { name: "proud", label: "どや顔" },
   ],
+  // **ラスタにしてある**（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
+  // テストの関心ではない非同期がまぎれる）。SVG の読み込みは
+  // `test/ui/components/portrait.test.tsx` が見る。
   portraits: {
-    default: "/character/default.svg?v=fictional@1",
-    thinking: "/character/thinking.svg?v=fictional@1",
-    proud: "/character/proud.svg?v=fictional@1",
+    default: "/character/default.png?v=fictional@1",
+    thinking: "/character/thinking.png?v=fictional@1",
+    proud: "/character/proud.png?v=fictional@1",
     flustered: undefined,
   },
   outfitAccents: {
@@ -68,10 +71,12 @@ describe("CharacterEdit", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     // ラベルはキャラクター定義の言葉。定義に無い表情（flustered）は表情名がそのまま出る。
-    expect(screen.getByLabelText("通常")).toBeDefined()
-    expect(screen.getByLabelText("作業中")).toBeDefined()
-    expect(screen.getByLabelText("どや顔")).toBeDefined()
-    expect(screen.getByLabelText("flustered")).toBeDefined()
+    // 立ち絵がある表情は「差し替える」、無い表情は「選ぶ」（見える字は短く、どの表情かは
+    // 読み上げに残す）。
+    expect(screen.getByLabelText("通常を差し替える")).toBeDefined()
+    expect(screen.getByLabelText("作業中を差し替える")).toBeDefined()
+    expect(screen.getByLabelText("どや顔を差し替える")).toBeDefined()
+    expect(screen.getByLabelText("flusteredを選ぶ")).toBeDefined()
     expect(screen.getByLabelText("既定")).toBeDefined()
     expect(screen.getByLabelText("軽装（haiku）")).toBeDefined()
     expect(screen.getByLabelText("通常装備（sonnet）")).toBeDefined()
@@ -93,10 +98,15 @@ describe("CharacterEdit", () => {
     expect(screen.getByRole("button", { name: "作業中を消す" })).toBeDefined()
   })
 
-  it("立ち絵が無い表情には消す口を出さない", () => {
+  // **立ち絵が無い表情は点線の枠の空きにラベルと「選ぶ」だけ**（docs/design.md 13.6）。
+  it("立ち絵が無い表情には消す口を出さず、「選ぶ」を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     expect(screen.queryByRole("button", { name: "flusteredを消す" })).toBeNull()
+    const pick = screen.getByLabelText("flusteredを選ぶ")
+    expect(pick.closest("label")?.textContent).toContain("選ぶ")
+    // 立ち絵そのものは無いので、点線の枠の空きが代わりに出る。
+    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(1)
   })
 
   it("消す口を押すと clear-portrait を dispatch する", () => {
@@ -111,7 +121,7 @@ describe("CharacterEdit", () => {
   it("立ち絵を選ぶと data URL を載せた set-portrait を dispatch し、入力欄を空に戻す", async () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = screen.getByLabelText("どや顔") as HTMLInputElement
+    const input = screen.getByLabelText("どや顔を差し替える") as HTMLInputElement
 
     fireEvent.change(input, {
       target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
@@ -160,14 +170,17 @@ describe("CharacterEdit", () => {
   it("画面から変えられないパックでは、口を出すが操作できない（理由も出す）", () => {
     renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false })
 
-    expect((screen.getByLabelText("通常") as HTMLInputElement).disabled).toBe(true)
+    expect((screen.getByLabelText("通常を差し替える") as HTMLInputElement).disabled).toBe(true)
     expect((screen.getByLabelText("既定") as HTMLInputElement).disabled).toBe(true)
-    expect(document.querySelector(".appearance-note")?.textContent).toContain("characters/local")
+    expect(document.querySelector(".character-screen-note")?.textContent).toContain(
+      "characters/local",
+    )
   })
 
   it("キャラクターが届く前は何も出さない", () => {
     renderCharacterEdit(undefined)
 
     expect(document.querySelectorAll("fieldset")).toHaveLength(0)
+    expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
   })
 })
