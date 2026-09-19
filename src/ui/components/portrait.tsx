@@ -17,7 +17,8 @@
 // 「1枚の矩形」として位置・大きさ・傾き・上下・不透明度だけを動かす割り切りなので、
 // ここでは属性を渡すだけで動き自体は作らない（docs/design.md 6.5）。
 
-import { useEffect, useState, type CSSProperties, type ReactElement } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { type CSSProperties, type ReactElement } from "react"
 
 import { classifyPortraitFile } from "../../protocol/character.ts"
 import { type Expression, type Outfit } from "../../protocol/expression.ts"
@@ -47,46 +48,31 @@ export type PortraitProps = {
 }
 
 /**
- * 読み終わった SVG。**どの URL のものか**を一緒に持つ（URL が変わった直後に前の立ち絵の
- * 中身を出さないため。「いまの URL のものが無い」の判定はレンダー中に見比べて決める）。
- */
-type LoadedSvg = {
-  readonly url: string
-  readonly markup: string
-}
-
-/**
- * SVG の中身を `fetch` する。URL が変わるたびに読み直し、コンポーネントが外れた・URL が
- * 変わったあとの古い応答は捨てる。
+ * SVG の中身を `fetch` する（TanStack Query）。**`/character/<file>` の URL は
+ * パックの名前と素材の版を問い合わせ文字列に含む**（`characterAssetCacheKey`）ので、立ち絵や
+ * 差し色を変えると URL 自体が変わる。`queryKey` を URL だけにすれば、中身が変わったときは
+ * 別のキャッシュ行になり、**同じ URL の中身はセッション中変わらない**ので取り直す理由が無い
+ * （`staleTime` / `gcTime` を `Infinity` にする）。
  *
- * **読めなかったときは何も記録しない。** 読み込みが終わっていないときと同じ「いまの URL の
+ * **読めなかったときは `undefined` を返す。** 読み込みが終わっていないときと同じ「いまの URL の
  * 中身が無い」になり、呼び出し側の描き分けも同じ（立ち絵が出ないだけで、落ちない）。
  */
 function useSvgMarkup(url: string | undefined): string | undefined {
-  const [loaded, setLoaded] = useState<LoadedSvg | undefined>(undefined)
+  const { data } = useQuery({
+    queryKey: [url] as const,
+    queryFn: async ({ queryKey: [target] }) => {
+      if (target === undefined) {
+        return undefined
+      }
+      const response = await fetch(target)
+      return response.ok ? await response.text() : undefined
+    },
+    enabled: url !== undefined,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
 
-  useEffect(() => {
-    if (url === undefined) {
-      return undefined
-    }
-
-    let cancelled = false
-    fetch(url)
-      .then((response) => (response.ok ? response.text() : undefined))
-      .then((text) => {
-        if (!cancelled && text !== undefined) {
-          setLoaded({ url, markup: text })
-        }
-      })
-      .catch(() => {
-        // 読めなかった。前の URL の中身が残っていても、下の見比べで捨てられる。
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [url])
-
-  return loaded !== undefined && loaded.url === url ? loaded.markup : undefined
+  return data
 }
 
 /**

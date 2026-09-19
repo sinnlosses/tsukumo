@@ -15,6 +15,7 @@
 // **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / 13.6）。`<Layout>` は
 // 他の機能を知らないので、画面の入れ替えを機能の側に持たせると機能どうしの import になる。
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
@@ -64,13 +65,19 @@ function Root(): ReactElement {
 // マウントされない**ので、色を持つ部品の初期化に任せるとリロード後に色が戻らない。
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
+// 立ち絵の SVG 取得（`components/portrait.tsx`）が使う。**キャッシュの既定値は個々の
+// `useQuery` 側**（URL がパックの版を含むので、取り直す条件は呼び出し側にしか分からない）。
+const queryClient = new QueryClient()
+
 const appRoot = document.querySelector("#app")
 if (appRoot !== null) {
   createRoot(appRoot).render(
-    <SessionProvider>
-      <TurnSelectionProvider>
-        <Root />
-      </TurnSelectionProvider>
-    </SessionProvider>,
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider>
+        <TurnSelectionProvider>
+          <Root />
+        </TurnSelectionProvider>
+      </SessionProvider>
+    </QueryClientProvider>,
   )
 }

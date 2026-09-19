@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/protocol/session-state.ts"
@@ -50,6 +51,8 @@ afterEach(() => {
   themeStyleElement = undefined
 })
 
+// `<CharacterEdit>` は立ち絵に `<Portrait>`（`useQuery`）を使うので `QueryClientProvider` が要る
+// （このフィクスチャの立ち絵はラスタなので実際には fetch しないが、hook 自体は呼ばれる）。
 function renderCharacterEdit(
   character: SessionState["character"],
   dispatch: SessionContextValue["dispatch"] = () => {},
@@ -59,10 +62,13 @@ function renderCharacterEdit(
     connection: "open",
     dispatch,
   }
+  const queryClient = new QueryClient()
   render(
-    <SessionContext.Provider value={value}>
-      <CharacterEdit />
-    </SessionContext.Provider>,
+    <QueryClientProvider client={queryClient}>
+      <SessionContext.Provider value={value}>
+        <CharacterEdit />
+      </SessionContext.Provider>
+    </QueryClientProvider>,
   )
 }
 

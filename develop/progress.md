@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 TanStack Query を入れて立ち絵の SVG 取得を useQuery にした（T-203）
+
+`components/portrait.tsx` の `useSvgMarkup` を `useQuery`（`queryKey: [url]`、`staleTime`/`gcTime`
+は `Infinity`）に置き換え、`useEffect` を消した。URL が `?v=<パック>@<版>` を含むので、素材を
+差し替えると別のキャッシュ行になる。サーバの `no-store` は変えていない。
+
 ### 2026-09-20 このリポジトリに置く hooks の候補を提案した（T-201）
 
 `develop/direction.md` に候補7件（上位3件は `PreToolUse` / `Bash` / `deny` で、素の `bun test`・

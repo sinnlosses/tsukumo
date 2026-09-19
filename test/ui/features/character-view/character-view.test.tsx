@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render } from "@testing-library/react"
 
 import {
@@ -48,6 +49,7 @@ const NO_TURN_SELECTION: TurnSelectionValue = {
   selectTurn: () => {},
 }
 
+// `<CharacterView>` は立ち絵に `<Portrait>`（`useQuery`）を使うので `QueryClientProvider` が要る。
 function renderCharacterView(
   stateOverrides: Partial<SessionState>,
   selection: TurnSelectionValue = NO_TURN_SELECTION,
@@ -57,12 +59,15 @@ function renderCharacterView(
     connection: "open",
     dispatch: () => {},
   }
+  const queryClient = new QueryClient()
   render(
-    <SessionContext.Provider value={value}>
-      <TurnSelectionContext.Provider value={selection}>
-        <CharacterView />
-      </TurnSelectionContext.Provider>
-    </SessionContext.Provider>,
+    <QueryClientProvider client={queryClient}>
+      <SessionContext.Provider value={value}>
+        <TurnSelectionContext.Provider value={selection}>
+          <CharacterView />
+        </TurnSelectionContext.Provider>
+      </SessionContext.Provider>
+    </QueryClientProvider>,
   )
 }
 
