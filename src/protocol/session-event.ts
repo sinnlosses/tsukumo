@@ -147,12 +147,6 @@ export type SessionEvent =
    */
   | { readonly kind: "model-changed"; readonly model: string }
   /**
-   * 前のセッションの続きから始まった（`resume`。docs/requirements.md 4.8）。
-   * **意図せず前の文脈が付いてくるのがこの方式の唯一の事故**なので、気づける表示のために
-   * 状態へ畳む（サイドバーの「セッション情報」。docs/design.md 8章）。
-   */
-  | { readonly kind: "session-restored"; readonly sessionId: string }
-  /**
    * develop/tasks.json が変わった（core の `task-summary.ts` が mtime を見て起こす）。
    * ファイルが読めない・消えたときは `tasks: undefined`（サイドバーの「不明」表示に対応する）。
    */

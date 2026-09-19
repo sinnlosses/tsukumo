@@ -145,12 +145,12 @@
   {
     "id": "T-187",
     "summary": "サイドバーの「続きから」の印を仕様ごと撤去する",
-    "status": "todo",
+    "status": "done",
     "difficulty": "sonnet",
     "loopable": "Y",
     "dependencies": [],
-    "passes": false,
-    "evidence": "",
+    "passes": true,
+    "evidence": "`bun run check` 通過（646 pass / 0 fail。削除した3件ぶん 649 → 646、expect も 1309 → 1303）。`grep -rn \"session-restored\" src/ test/ docs/design.md docs/requirements.md` は 0 件、`restored` の残りは session-restore.ts の局所変数・関数名のみ。\n目視（偽の駆動・capture-view.ts、1400x900）: サイドバーの「セッション情報」はキャラクター／モデル／許可モードの3行だけになり、`.session-info-restored` は存在せず、2列の grid も崩れていない。\n**履歴の組み直しは未目視**（偽の駆動は resume を探さないので、本物の claude を起こさないと再現できない）。`replayRestoredSession` の呼び出しは変えておらず、session-launch.test.ts が restoreEvents の呼び出しを検証している。",
     "task": "## 背景\n\nサイドバーの「セッション情報」は、前のセッションの続きから始まったときに\nいちばん上へ `セッション ／ 続きから` の行を出す\n（`src/ui/features/sidebar/session-info.tsx` の `state.restored` の分岐。\n見た目は `src/ui/styles/sidebar.css` の `.session-info-restored`）。\n\nこの印は `docs/requirements.md` 4.8「いつ復元するか」が\n「続きから始まったことが画面から分かるようにする」と決めたもので、経路は\n`src/core/session-launch.ts` が `resume` を見つけたときに流す `session-restored` イベント →\n`src/protocol/session-state.ts` の `restored: boolean` → 上の表示、の1本だけ。\n`session-restored` はこの表示のためだけに存在し（`session-state.ts` の畳み込みは\n`restored: true` を立てるだけ）、履歴の組み直し（`replayRestoredSession`）は同じ分岐の中で\n別に呼ばれているので、イベントを消しても復元そのものは動く。\n\nユーザーの判断で、この印は要らないことになった（「特に必要な情報じゃないから」）。\n\n## 決まっていること（蒸し返さない）\n\n- 「続きから」の表示は出さない（ユーザーの指示。2026-09-18）\n- 表示だけでなく `session-restored` イベントと `restored` の値まで撤去する\n  （表示のためだけの値なので、表示を消すと使い道が無くなる）\n- **続きから始めること自体は残す**（撤去するのは印だけ）\n\n## やること\n\n1. `src/ui/features/sidebar/session-info.tsx` の `state.restored` の分岐と、\n   `src/ui/styles/sidebar.css` の `.session-info-restored` を消す\n2. `src/protocol/session-state.ts` の `restored` フィールド・`INITIAL_SESSION_STATE` の初期値・\n   `session-restored` の畳み込みを消す\n3. `src/protocol/session-event.ts` の `session-restored` のイベント種を消す\n4. `src/core/session-launch.ts` の `onEvent({ kind: \"session-restored\", ... })` を消す。\n   **`if (resume !== undefined)` の分岐と `replayRestoredSession` の呼び出しは残す**\n5. 上記に対応するテストを消す（`test/ui/features/sidebar/session-info.test.tsx` の\n   「続きから」2件、`test/protocol/session-state.test.ts` の `session-restored` の件、\n   `test/core/session-launch.test.ts` が流れたイベント列で `session-restored` を期待している箇所）\n6. ドキュメントを直す:\n   - `docs/requirements.md` 4.8「いつ復元するか」から「続きから始まったことが画面から\n     分かるようにする」の段落を落とす（**自動で続きから始めることと、新規で起こす逃げ道は残す**）\n   - `docs/design.md` の `session-restored` / `restored` の行（イベント表・状態の表・\n     8章・13章あたりの4箇所）を、実物に合わせて落とす\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数が減ることは想定どおり。減った件数を `evidence` に書く）\n- `grep -rn \"session-restored\\|restored\" src/ test/` の結果に、\n  `session-restore.ts` 内の局所変数・関数名（`restoredMessageEvents` など）以外が残っていない\n- `grep -rn \"続きから\" docs/requirements.md docs/design.md` の結果が、\n  「続きから始める」動作の説明だけになっていて、画面に印を出すという記述が無い\n- 目視確認: `bun run start` で、前のセッションがある状態で起こしてもサイドバーに\n  「続きから」の行が出ず、会話の履歴は今までどおり組み直されていること\n  （何を見たかを `evidence` に書く）\n\n## 注意\n\n- `docs/` の節の見出しを壊さないこと（CLAUDE.md「ドキュメントを編集するときの罠」。\n  編集の前後で `grep -c '^#\\{2,3\\} ' docs/requirements.md` の数が合うか確かめる）\n- `docs/history/` は過去の記録なので触らない\n"
   },
   {

@@ -324,7 +324,7 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
 
 WebSocket が切れたらブラウザは指数バックオフで繋ぎ直し、**新しい `hello` の snapshot で状態を
 置き換える**（差分の取りこぼしを気にしない）。プロセスが落ちている間は「接続が切れている」印を
-Layout に出す。復帰したときの「セッションは新規か続きか」は 8章。
+Layout に出す。復帰したときにセッションを続きから起こし直す話は 8章。
 
 ## 4. protocol
 
@@ -344,7 +344,6 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 | ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryItem[] \| undefined`                                | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
 | `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents`      | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
-| `session-restored`  | core（`session-manager`）                                                                              | `sessionId`                                                            | 「続きから始まった」表示（8章）                                                  |
 | `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                     | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
 | `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値） | `state.model` の出どころを3つにする（下記）                                      |
 
@@ -382,7 +381,6 @@ Layout に出す。復帰したときの「セッションは新規か続きか�
 | `turnStartedAt` / `turnFinishedAt`                                 | `request` / `turn-finished` の `at`   | いまは `event-sink.ts` が畳み込みの外で持っている。`at` が来るので中に入れられる |
 | `tasks`                                                            | `tasks-changed`                       | サイドバー                                                                       |
 | `character`（`name`・`portraits`・`outfitAccents`・`expressions`） | `character-changed`                   | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）                           |
-| `restored: boolean`                                                | `session-restored`                    | 続きから始まったことの表示                                                       |
 | `connection`                                                       | **ブラウザだけ**が持つ（`ui` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い）              |
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・行頭マーカーの
@@ -550,7 +548,7 @@ type SessionHost = {
       │  ├ <Sidebar>         <Activity> + <TaskList> + <SessionInfo> + <TaskBoard>
       │  │   └ <TaskBoard>   タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
       │  │   └ <SessionInfo> モデル / 許可モード の <select>、キャラクターの <select> と、その右の
-      │  │                   「整える」（#character へのリンク。13.6）、続きから始まった印
+      │  │                   「整える」（#character へのリンク。13.6）
       │  └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
       │      ├ <PendingAnswer> 許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）
       │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。<CommandSuggestions> を内包
@@ -693,7 +691,7 @@ characters/<name>/
   起こすパックの印を持つ最新のセッションを探して `resume` する**（無ければ新規）。印の組み立ては
   `core/config.ts` の `sessionTag` 1箇所で、`cli.ts` はそれを `findSessionToResume` と
   `startSession` の `tag` の両方に渡す。**戻ってくれば、そのパックの会話も口調も戻る**
-  - 画面の履歴は `session-restored` → `readRestoredEvents` の再生をそのまま使う（8章）
+  - 画面の履歴は `readRestoredEvents` の再生をそのまま使う（8章）
   - **前は「切り替えると会話は続かない」としていた。** 変えたのは2つ揃ったから: (1) 段9で
     transcript から画面の履歴を組み直せるようになり、復元の材料が増えた (2) **`resume` した
     セッションは最初に起こしたときの人格を保つ**と分かった（2026-09-14 スパイク。`systemPrompt`
@@ -808,7 +806,6 @@ characters/<name>/
 - 画面の履歴の組み直しは「`getSessionMessages` → `SessionEvent[]`（時刻付き）→ `session-manager` の
   `state` に畳む」だけ。接続したブラウザは `hello` の snapshot でそのまま同じ姿になる
   （**ブラウザ側に復元の特別な経路は要らない**）
-- 「続きから始まった」は `session-restored` イベント → `state.restored` → `<SessionInfo>` の印
 - 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と `new-session` コマンド（画面から。段9）
 
 **複数化はまだしない。** `SessionManager` が `sessionId` を鍵に持っているので、後から
@@ -935,7 +932,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 | 6   | **メインビュー**を React にし、**Markdown を unified に置き換える**。`report-notation.ts` から迂回の記述を外す                                                                                                                                   | 部品のテスト（タブの規則・追従・引用 / ネスト / 水平線 / 列揃え・`note` / `badge` / `cols` / `card` が通り `script` が落ちる・流れる本文の末尾だけ描き直す）。偽の駆動 + Playwright で1往復。**T-063 が閉じる**                   | `/events/main`、`presentation/view.ts`、`report-html.ts`、`browser/` 全部、`vendor/idiomorph.min.js`、`view.test.ts`（3,224行） |
 | 7   | **後始末**: `presentation/` `usecase/` `domain/` `infrastructure/` のディレクトリを消し、`index.ts` → `cli.ts`。`docs/architecture.md`「現在の実装状況」を「移行完了」に                                                                         | `src/` に3層と `cli.ts` だけ。`bun run check`。実機で1往復（Orca のタブ）                                                                                                                                                         | 旧の4層                                                                                                                         |
 | 8   | **キャラクターパック**（`persona.md`・`expressions` のラベル・`speechMarker` の定義への移動・切り替え）。**最初に二重適用のスパイク**                                                                                                            | スパイクの結果が `evidence` にある。`<select>` で切り替わり、吹き出し・立ち絵・メインが消えて新しいキャラで1往復。**T-064 / T-065 が閉じる**                                                                                      | `expressionLabel` / `DEFAULT_SPEECH_MARKER` のコード上の定数                                                                    |
-| 9   | **セッションの復元**を新しい形に載せる（T-078 の本文どおり。`session-restored`・`new-session`）                                                                                                                                                  | T-078 の完了条件                                                                                                                                                                                                                  | —                                                                                                                               |
+| 9   | **セッションの復元**を新しい形に載せる（T-078 の本文どおり。`new-session`）                                                                                                                                                                      | T-078 の完了条件                                                                                                                                                                                                                  | —                                                                                                                               |
 
 段2〜6 は**1段ずつ**進める（次の段に入る前に前の段の「消えるもの」を実際に消す。併走を長引かせない）。
 
@@ -993,17 +990,17 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 **差せるつまみは4つだけ**にする。残りは導出するか固定する。つまみが少ないほど、
 どのパック・どの設定でも壊れない。
 
-| トークン     | 既定値（つくもの精霊） | 役割                     | 誰が差すか                     |
-| ------------ | ---------------------- | ------------------------ | ------------------------------ |
-| `ground`     | `#191720`              | 画面の地                 | **使う人**                     |
-| `surface`    | `#221f2b`              | 領域の地                 | **使う人**                     |
-| `ink`        | `#e8e3ea`              | 本文の字                 | **使う人**                     |
-| `accent`     | `#f2b0a0`              | キャラクターの色         | **パック**（`character.json`） |
-| `ink-quiet`  | —                      | 補助の字・弱い見出し     | 固定（`ink` から導出）         |
-| `rule`       | —                      | 罫線・領域の境目         | 固定（`surface` から導出）     |
-| `state-ok`   | `#7ee081`              | 成功・完了               | **固定**                       |
-| `state-warn` | `#e3c766`              | 注意・答え待ち・続きから | **固定**                       |
-| `state-ng`   | `#e88b8b`              | 失敗・エラー             | **固定**                       |
+| トークン     | 既定値（つくもの精霊） | 役割                 | 誰が差すか                     |
+| ------------ | ---------------------- | -------------------- | ------------------------------ |
+| `ground`     | `#191720`              | 画面の地             | **使う人**                     |
+| `surface`    | `#221f2b`              | 領域の地             | **使う人**                     |
+| `ink`        | `#e8e3ea`              | 本文の字             | **使う人**                     |
+| `accent`     | `#f2b0a0`              | キャラクターの色     | **パック**（`character.json`） |
+| `ink-quiet`  | —                      | 補助の字・弱い見出し | 固定（`ink` から導出）         |
+| `rule`       | —                      | 罫線・領域の境目     | 固定（`surface` から導出）     |
+| `state-ok`   | `#7ee081`              | 成功・完了           | **固定**                       |
+| `state-warn` | `#e3c766`              | 注意・答え待ち       | **固定**                       |
+| `state-ng`   | `#e88b8b`              | 失敗・エラー         | **固定**                       |
 
 **既定値の選び方。** `accent` の `#f2b0a0` は**立ち絵の頬と耳から採った色**で、原則1を文字どおりに
 した結果。移行前まで使っていた `#8ab4ff` は、VS Code や GitHub Dark をはじめ開発者向けの

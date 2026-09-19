@@ -53,7 +53,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  *
  * 順序は**起動時も起こし直しも同じ**:
  * パックを決める → 画面から選んだときだけ覚える → `character-changed` を流す → 見張りを起こす →
- * 続きのセッションを探す → 駆動を起こす → 続きから始まったなら印を流して履歴を組み直す。
+ * 続きのセッションを探す → 駆動を起こす → 続きから始まったなら履歴を組み直す。
  */
 export function createSessionLaunch<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
@@ -76,10 +76,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const resume = await ports.findResumeSession(pack)
     const driver = ports.startDriver({ pack, resume }, onEvent)
 
-    // 続きから始まったことは、履歴が組み上がるのを待たずに画面へ出す
-    // （docs/requirements.md 4.8「いつ復元するか」）。
     if (resume !== undefined) {
-      onEvent({ kind: "session-restored", sessionId: resume })
       void replayRestoredSession(ports, resume, pack, onEvent)
     }
 

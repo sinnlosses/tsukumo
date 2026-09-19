@@ -167,12 +167,6 @@ export type SessionState = {
   /** セッションが終わった理由。動いている間は undefined。 */
   readonly endedReason: string | undefined
   /**
-   * 前のセッションの続きから始まったか（`session-restored`）。**画面に出すためだけ**に持つ
-   * （意図せず前の文脈が付いてくるのに気づけるように。docs/requirements.md 4.8）。
-   * 新規に起きたセッションでは false のまま。
-   */
-  readonly restored: boolean
-  /**
    * ターンが進行中か。`request` で始まり、`turn-finished` / `session-ended` で終わる
    * （入力欄が送信と中断を切り替える判断材料。docs/requirements.md 4.7）。
    */
@@ -232,7 +226,6 @@ export const INITIAL_SESSION_STATE: SessionState = {
   slashCommands: [],
   commandDescriptions: [],
   endedReason: undefined,
-  restored: false,
   turnInProgress: false,
   tasks: undefined,
   character: undefined,
@@ -375,8 +368,6 @@ export function applySessionEvent(
         records: [],
         partialUtterance: "",
       }
-    case "session-restored":
-      return { ...state, restored: true }
     case "tasks-changed":
       return { ...state, tasks: event.tasks }
     case "character-changed":

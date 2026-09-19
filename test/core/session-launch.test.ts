@@ -93,7 +93,7 @@ function settle(): Promise<void> {
 }
 
 describe("createSessionLaunch", () => {
-  it("起動時は覚えた値のパックで起こし、続きから始まった印を流す", async () => {
+  it("起動時は覚えた値のパックで起こし、続きの履歴を流す", async () => {
     const harness = createHarness()
 
     const driver = await createSessionLaunch(harness.ports)(harness.receive, undefined)
@@ -106,14 +106,10 @@ describe("createSessionLaunch", () => {
       "startDriver:tsukumo-spirit:prev-session",
       "restoreEvents:prev-session",
     ])
-    expect(harness.events.map((event) => event.kind)).toEqual([
-      "character-changed",
-      "session-restored",
-      "utterance",
-    ])
+    expect(harness.events.map((event) => event.kind)).toEqual(["character-changed", "utterance"])
   })
 
-  it("続きから始めるセッションが無ければ、印も履歴も流さない", async () => {
+  it("続きから始めるセッションが無ければ、履歴を流さない", async () => {
     const harness = createHarness({
       findResumeSession: () => Promise.resolve(undefined),
     })
@@ -134,10 +130,7 @@ describe("createSessionLaunch", () => {
     await settle()
     driver.prompt("架空の依頼")
 
-    expect(harness.events.map((event) => event.kind)).toEqual([
-      "character-changed",
-      "session-restored",
-    ])
+    expect(harness.events.map((event) => event.kind)).toEqual(["character-changed"])
     expect(harness.stub.calls).toEqual(["prompt:架空の依頼"])
   })
 

@@ -18,11 +18,6 @@
   color: var(--ink);
   font: inherit;
 }
-/* 「続きから」の印。**状態の色**（誰が来ても変わらない 3 色。docs/design.md 13.1 原則5）の
-   注意の側を使う — 前の文脈が付いてきたことに気づけるための表示なので、読む面の字とは区別する。 */
-.session-info-restored {
-  color: var(--state-warn);
-}
 /* キャラクター画面への入る口（docs/design.md 13.6）。**字だけ**にして、色は `ink` のまま
    下線でリンクだと分かるようにする（13.1 原則1）。 */
 .session-info-tune {
