@@ -182,9 +182,9 @@
     "dependencies": [],
     "summary": "使い捨ての scratchpad/sdk-spike を消す",
     "task": "## 背景\n\nユーザーの指示（2026-09-20）:「scratchpad や vendor など、整理したいな。…scratchpad はまだ使う?\n不要なら削除したりライブラリで代用できるならそうしたり。」\n\n`scratchpad/sdk-spike/` は 2026-09-11 の「SDK で claude を起こす前提4点の実機確認」のための\n**使い捨てのスパイク**（`spike.ts` の冒頭コメントにそう書いてある）。`spike.ts`（227行）・\n`package.json`・`bun.lock` がコミット済み（`104e27a`）で、`node_modules/` は `.gitignore` の\n`node_modules/` で無視されている。**本体のコード（`src/` `test/` `scripts/`）からの参照は0件**、\n言及は `docs/history/progress.md` と `docs/history/tasks.md` だけ（2026-09-20 に `grep` で確認）。\n\n## 決まっていること（蒸し返さない）\n\n- **消す**（ユーザーの承認 2026-09-20）。必要になれば `104e27a` から取り出せる\n- `vendor/` の整理は T-200 で別に扱う（このタスクは `scratchpad/` だけ）\n\n## やること\n\n1. `scratchpad/` に `sdk-spike` 以外の中身が無いことを確かめ、`scratchpad/` を丸ごと削除する\n2. `docs/history/` は履歴なので**直さない**\n3. `scratchpad` の言及が `docs/history/` 以外に残っていないか確かめる\n   （`grep -rn scratchpad . --exclude-dir=node_modules --exclude-dir=.git`）\n\n## 完了条件\n\n- `scratchpad/` が無い（`git ls-files scratchpad` が空）\n- 上の `grep` の結果が `docs/history/` の行だけ\n- `bun run check` が通る\n\n## 注意\n\n- 他のセッションの未コミット変更を巻き込まない（`git add -A` を使わず、削除したパスだけを\n  個別に足す）\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`scratchpad/` を丸ごと削除（git 管理下は bun.lock / package.json / spike.ts の3ファイル）。`git ls-files scratchpad` は 0 件で実体も無い。**`104e27a` から3ファイルとも取り出せることを確認済み**。\n`grep -rn scratchpad`（node_modules と .git を除く）の残りは `docs/history/`（履歴）と `develop/tasks.json`（このタスク自身と T-200 のユーザー指示の引用）・`develop/progress.md:3`（履歴の要約）だけで、`src/` `test/` `scripts/` `docs/`（history 以外）`README.md` `CLAUDE.md` には0件。\n`bun run check` 通過（662 pass / 0 fail。件数の増減なし）。"
   },
   {
     "id": "T-200",
