@@ -318,6 +318,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* @ 補完のパス1件。機械が付けた名前なので等幅（13.1 原則3）。**説明が無いぶん横幅を全部使える**
+   ので、深いパスは折り返さず末尾を省略記号で切る（候補一覧そのものを横に広げない）。 */
+.dispatch-suggestion-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .dispatch-row {
   display: flex;
   align-items: center;

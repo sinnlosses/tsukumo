@@ -1,6 +1,7 @@
 // tsukumo が配る唯一のサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信
 // と、フレーム・コマンドが通る WebSocket（`GET /ws?t=<起動トークン>`）の両方をここが持つ**
-// （docs/design.md 5章「server.ts」）。
+// （docs/design.md 5章「server.ts」）。入力欄の `@` 補完が引くファイル一覧
+// （`GET /repository-file?t=<起動トークン>`）もここから配る。
 //
 // **`Bun.serve` は使わない**（`node:http` + `ws` パッケージ。docs/coding-standards.md
 // 「Bun固有APIに寄せない」）。
@@ -8,7 +9,9 @@
 // 安全のための決まり（docs/design.md 9章）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
 //   - **起動トークン**（起動ごとの乱数。ディスクに書かない）が合わないと ws の upgrade をしない
-//     （静的配信・ページそのものは会話を含まないので、トークンは求めない。いまのまま）
+//     （ページ・同梱物・素材そのものは会話を含まないので、トークンは求めない。いまのまま）。
+//     **`/repository-file` も同じトークンで守る** — 配るのは利用者の作業ディレクトリの中身で、
+//     誰にでも配ってよい静的な物ではない
 //   - `Origin` があれば ws は自分のオリジンと一致すること（無ければ通す）
 //   - 送り返す `error` の理由は定型文だけ（会話の内容を混ぜない）
 
@@ -23,6 +26,7 @@ import { type DispatchResult } from "../core/session-manager.ts"
 import { CHARACTER_ASSET_PATH_PREFIX } from "../protocol/character.ts"
 import { type ClientCommand, parseClientCommand } from "../protocol/command.ts"
 import { FRAME_ERROR_REASON, type ServerFrame } from "../protocol/frame.ts"
+import { REPOSITORY_FILE_PATH } from "../protocol/repository-file.ts"
 import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../protocol/session-socket.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../protocol/vendor-asset.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
@@ -172,7 +176,7 @@ function messageText(data: RawData): string {
     : Buffer.from(new Uint8Array(data)).toString("utf8")
 }
 
-// ここから静的配信（ページ・`/assets`・`/vendor`・`/character`）。
+// ここから GET の経路（ページ・`/assets`・`/vendor`・`/character`・`/repository-file`）。
 
 /** レイアウトページの URL パス。利用者が開くのはこの1本だけ。 */
 export const LAYOUT_PATH = "/"
@@ -214,8 +218,37 @@ export type CharacterAssetFile = {
  */
 export type ServeCharacterAsset = (fileName: string) => CharacterAssetFile | undefined
 
+/**
+ * 入力欄の `@` 補完に配るファイルのパス（`src/adapter/repository-file.ts` の
+ * `listRepositoryFiles` を束ねたもの）。**git 管理下でない・`git` が無いときは空**を返す契約で、
+ * サーバは失敗を区別しない。
+ */
+export type ListRepositoryFiles = () => Promise<readonly string[]>
+
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
+
+/** {@link startViewServer} が配るために要るもの一式（渡すのは `src/cli.ts`）。 */
+export type ViewServerOptions = {
+  /**
+   * ブラウザ側スクリプトと CSS の取り出し口（`src/adapter/bundle.ts` が組み立てたもの）。
+   * ディスクには置かないので、**持ち主は呼び出し側 = `src/cli.ts`** で、ここは要求のたびに
+   * 引きに行く。
+   */
+  readonly assets: ViewAssets
+  /**
+   * `/character/<file>` の1件を配ってよい形にする（`src/adapter/character-pack.ts` の
+   * `readCharacterPackFile` を束ねたもの）。
+   */
+  readonly serveCharacterAsset: ServeCharacterAsset
+  /** `/repository-file` に配るファイルのパス。 */
+  readonly listRepositoryFiles: ListRepositoryFiles
+  /**
+   * 起動トークン（{@link createStartupToken}）。**`/repository-file` はこれが合わないと配らない**
+   * （`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
+   */
+  readonly token: string
+}
 
 export type ViewServer = {
   /**
@@ -232,23 +265,10 @@ export type ViewServer = {
  * ビューサーバを起動する。`port` に 0 を渡すと空きポートが割り当てられる。
  * ポートが塞がっているときは reject する（起動時の前提不足なので、呼び出し側は即時終了する）。
  */
-export function startViewServer(
-  port: number,
-  /**
-   * ブラウザ側スクリプトと CSS の取り出し口（`src/adapter/bundle.ts` が組み立てたもの）。
-   * ディスクには置かないので、**持ち主は呼び出し側 = `src/cli.ts`** で、ここは要求のたびに
-   * 引きに行く。
-   */
-  assets: ViewAssets,
-  /**
-   * `/character/<file>` の1件を配ってよい形にする（`src/adapter/character-pack.ts` の
-   * `readCharacterPackFile` を束ねたもの。呼び出し側 = `src/cli.ts` が渡す）。
-   */
-  serveCharacterAsset: ServeCharacterAsset,
-): Promise<ViewServer> {
+export function startViewServer(port: number, options: ViewServerOptions): Promise<ViewServer> {
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, assets, serveCharacterAsset)
+    respond(request, path, response, options)
   })
 
   return new Promise((resolve, reject) => {
@@ -284,8 +304,7 @@ function respond(
   request: IncomingMessage,
   path: string,
   response: ServerResponse,
-  assets: ViewAssets,
-  serveCharacterAsset: ServeCharacterAsset,
+  options: ViewServerOptions,
 ): void {
   if (path === LAYOUT_PATH) {
     writeHtml(response, buildLayoutPage())
@@ -299,7 +318,7 @@ function respond(
       "content-type": "text/javascript; charset=utf-8",
       "cache-control": "no-store",
     })
-    response.end(assets.uiScript())
+    response.end(options.assets.uiScript())
     return
   }
 
@@ -308,7 +327,7 @@ function respond(
       "content-type": "text/css; charset=utf-8",
       "cache-control": "no-store",
     })
-    response.end(assets.styleSheet())
+    response.end(options.assets.styleSheet())
     return
   }
 
@@ -321,8 +340,13 @@ function respond(
     writeCharacterAsset(
       response,
       path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
-      serveCharacterAsset,
+      options.serveCharacterAsset,
     )
+    return
+  }
+
+  if (path === REPOSITORY_FILE_PATH && request.method === "GET") {
+    writeRepositoryFileList(request, response, options)
     return
   }
 
@@ -390,6 +414,42 @@ function writeCharacterAsset(
 
   response.writeHead(200, { "content-type": asset.contentType, "cache-control": "no-store" })
   response.end(asset.content)
+}
+
+/**
+ * 入力欄の `@` 補完が引くファイルのパスを JSON の並びで配る。**起動トークンが合わなければ
+ * 403**（理由は返さない。`/ws` と同じ）。一覧を作れなかった回は空の並びを配る
+ * （候補が出ないだけで、配信は続く）。
+ */
+function writeRepositoryFileList(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: ViewServerOptions,
+): void {
+  if (!hasStartupToken(request, options.token)) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
+    response.end("forbidden\n")
+    return
+  }
+
+  options.listRepositoryFiles().then(
+    (files) => writeJson(response, files),
+    () => writeJson(response, []),
+  )
+}
+
+/** 起動トークン（`?t=<token>`）が合うか。経路の照合は呼び出し側が済ませている。 */
+function hasStartupToken(request: IncomingMessage, token: string): boolean {
+  const url = new URL(request.url ?? "/", `http://${BIND_HOST}`)
+  return url.searchParams.get(SESSION_TOKEN_QUERY_NAME) === token
+}
+
+function writeJson(response: ServerResponse, value: unknown): void {
+  response.writeHead(200, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+  })
+  response.end(JSON.stringify(value))
 }
 
 function writeHtml(response: ServerResponse, html: string): void {

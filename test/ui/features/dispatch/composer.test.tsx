@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 
 import { type CharacterInfo } from "../../../../src/protocol/character.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/protocol/session-state.ts"
@@ -19,10 +20,37 @@ const FIXTURE_CHARACTER: CharacterInfo = {
   editable: false,
 }
 
+// 架空のファイル一覧（`@` 補完が引く `GET /repository-file` の代役）。
+const FIXTURE_FILE_PATHS = [
+  "src/ui/features/dispatch/composer.tsx",
+  "src/ui/features/dispatch/file-suggestions.tsx",
+  "src/cli.ts",
+]
+
+let originalFetch: typeof globalThis.fetch | undefined = undefined
+let fetchCalls: string[] = []
+
 afterEach(() => {
   cleanup()
+  if (originalFetch !== undefined) {
+    globalThis.fetch = originalFetch
+    originalFetch = undefined
+  }
+  fetchCalls = []
 })
 
+/** ファイル一覧の経路を、架空の一覧を返す代役に差し替え、呼ばれた URL を記録する。 */
+function stubFileListFetch(paths: readonly string[] = FIXTURE_FILE_PATHS): void {
+  originalFetch = globalThis.fetch
+  const stub = (url: string): Promise<{ ok: true; json: () => Promise<unknown> }> => {
+    fetchCalls.push(url)
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(paths) })
+  }
+  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+}
+
+// `@` 補完は `useQuery`（`file-suggestions.tsx`）で一覧を取るので `QueryClientProvider` が要る。
+// **キャッシュはテストをまたがせない**ので、テストごとに新しい `QueryClient` を作る。
 function renderComposer(
   stateOverrides: Partial<SessionState> = {},
   dispatch: SessionContextValue["dispatch"] = () => {},
@@ -32,10 +60,13 @@ function renderComposer(
     connection: "open",
     dispatch,
   }
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <SessionContext.Provider value={value}>
-      <Composer />
-    </SessionContext.Provider>,
+    <QueryClientProvider client={client}>
+      <SessionContext.Provider value={value}>
+        <Composer />
+      </SessionContext.Provider>
+    </QueryClientProvider>,
   )
 }
 
@@ -198,7 +229,7 @@ describe("Composer", () => {
     renderComposer({ character: FIXTURE_CHARACTER })
 
     expect(textArea().placeholder).toBe(
-      "架空の名前への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）",
+      "架空の名前への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完）",
     )
   })
 
@@ -206,7 +237,100 @@ describe("Composer", () => {
     renderComposer({ character: undefined })
 
     expect(textArea().placeholder).toBe(
-      "依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完）",
+      "依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完）",
     )
+  })
+
+  it("@ で git 管理下のファイルの候補が出て、Tab で `@<パス> ` が入り送信しない", async () => {
+    stubFileListFetch()
+    const calls: unknown[] = []
+    renderComposer({}, (command) => calls.push(command))
+
+    fireEvent.change(textArea(), { target: { value: "@src/ui/fe" } })
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(2)
+    })
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "src/ui/features/dispatch/composer.tsx",
+      "src/ui/features/dispatch/file-suggestions.tsx",
+    ])
+
+    fireEvent.keyDown(textArea(), { key: "Tab" })
+
+    expect(textArea().value).toBe("@src/ui/features/dispatch/composer.tsx ")
+    expect(calls).toEqual([])
+  })
+
+  it("一覧は起動トークンを付けて1回だけ取りに行く（打鍵ごとに取り直さない）", async () => {
+    stubFileListFetch()
+    renderComposer()
+
+    fireEvent.change(textArea(), { target: { value: "@src" } })
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem").length).toBeGreaterThan(0)
+    })
+    fireEvent.change(textArea(), { target: { value: "@src/cli" } })
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1)
+    })
+
+    expect(fetchCalls).toEqual(["/repository-file?t="])
+  })
+
+  it("文の途中の @ を確定しても、前後に書いた文はそのまま残る", async () => {
+    stubFileListFetch()
+    renderComposer()
+
+    fireEvent.change(textArea(), { target: { value: "これを見て @src/cli" } })
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1)
+    })
+
+    fireEvent.keyDown(textArea(), { key: "Tab" })
+
+    expect(textArea().value).toBe("これを見て @src/cli.ts ")
+  })
+
+  it("キャレットが文の途中にあっても、その位置の @ だけを置き換える", async () => {
+    stubFileListFetch()
+    renderComposer()
+
+    // 「@src/cli」の直後（8文字目）にキャレットがある状態。
+    fireEvent.change(textArea(), { target: { value: "@src/cli と書いた", selectionStart: 8 } })
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1)
+    })
+
+    fireEvent.keyDown(textArea(), { key: "Tab" })
+
+    // すぐ後ろがすでに空白なので、空白を2つ並べない。
+    expect(textArea().value).toBe("@src/cli.ts と書いた")
+    expect(textArea().selectionStart).toBe(11)
+  })
+
+  it("/ の補完が出ている間はファイルの一覧を取りに行かない（候補は同時に出ない）", () => {
+    stubFileListFetch()
+    renderComposer({
+      slashCommands: ["clear"],
+      commandDescriptions: [{ name: "clear", description: undefined }],
+    })
+
+    fireEvent.change(textArea(), { target: { value: "/cl" } })
+
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["/clear"])
+    expect(fetchCalls).toEqual([])
+  })
+
+  it("答え待ちがある間は @ の候補も出さない", () => {
+    stubFileListFetch()
+    renderComposer({
+      pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
+    })
+
+    fireEvent.change(textArea(), { target: { value: "@src" } })
+
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0)
+    expect(fetchCalls).toEqual([])
   })
 })

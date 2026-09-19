@@ -29,6 +29,7 @@ import {
   readRememberedCharacter,
   writeRememberedCharacter,
 } from "./adapter/remembered-character.ts"
+import { listRepositoryFiles } from "./adapter/repository-file.ts"
 import { findSessionToResume, readRestoredEvents, startSession } from "./adapter/sdk-driver.ts"
 import { attachSessionSocket, createStartupToken, startViewServer } from "./adapter/server.ts"
 import { watchTaskSummary } from "./adapter/task-summary.ts"
@@ -194,14 +195,19 @@ async function main(args: readonly string[]): Promise<number> {
     return characterEvent()
   }
 
+  // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
+  // ビューサーバ（`/repository-file`）と WebSocket の両方が同じ1つを見る。
+  const token = createStartupToken()
+
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
-    startViewServer(
-      port,
-      { uiScript: () => viewAssets.uiScript, styleSheet: () => viewAssets.styleSheet },
-      (fileName) => readCharacterPackFile(characterPack, fileName),
-    ),
+    startViewServer(port, {
+      assets: { uiScript: () => viewAssets.uiScript, styleSheet: () => viewAssets.styleSheet },
+      serveCharacterAsset: (fileName) => readCharacterPackFile(characterPack, fileName),
+      listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
+      token,
+    }),
   )
   if (!startResult.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${startResult.reason}\n`)
@@ -245,8 +251,6 @@ async function main(args: readonly string[]): Promise<number> {
   // あるので、購読を manager に渡すついでにここでも持つ。
   const viewers = new Set<(frame: ServerFrame) => void>()
 
-  // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
-  const token = createStartupToken()
   attachSessionSocket({
     httpServer: server.httpServer,
     token,

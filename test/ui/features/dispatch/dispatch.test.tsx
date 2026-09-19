@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/protocol/session-state.ts"
@@ -17,10 +18,15 @@ function renderDispatch(stateOverrides: Partial<SessionState>): void {
     connection: "open",
     dispatch: () => {},
   }
+  // 中の `<Composer>` が `@` 補完の一覧を `useQuery` で取るので Provider が要る
+  // （この検査では取りに行かないが、hook そのものは呼ばれる）。
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <SessionContext.Provider value={value}>
-      <Dispatch />
-    </SessionContext.Provider>,
+    <QueryClientProvider client={client}>
+      <SessionContext.Provider value={value}>
+        <Dispatch />
+      </SessionContext.Provider>
+    </QueryClientProvider>,
   )
 }
 

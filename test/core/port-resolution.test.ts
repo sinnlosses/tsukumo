@@ -1,7 +1,12 @@
 import { describe, expect, it } from "bun:test"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
-import { startViewServer, type ViewAssets, type ViewServer } from "../../src/adapter/server.ts"
+import {
+  startViewServer,
+  type ViewAssets,
+  type ViewServer,
+  type ViewServerOptions,
+} from "../../src/adapter/server.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
@@ -12,6 +17,14 @@ import {
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewAssets: ViewAssets = { uiScript: () => "", styleSheet: () => "" }
+
+/** 同じく、配るものの中身は見ない（素材もファイル一覧も空で足りる）。 */
+const emptyViewServerOptions: ViewServerOptions = {
+  assets: emptyViewAssets,
+  serveCharacterAsset: () => undefined,
+  listRepositoryFiles: () => Promise.resolve([]),
+  token: "架空の起動トークン",
+}
 
 /** `node:http` の `listen` が投げるエラーに似せた、`code` 付きのエラーを作る。 */
 function errnoError(code: string): NodeJS.ErrnoException {
@@ -136,7 +149,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "default", port: blockedPort }, (port) =>
-        startViewServer(port, emptyViewAssets, () => undefined),
+        startViewServer(port, emptyViewServerOptions),
       )
 
       expect(result.ok).toBe(true)
@@ -157,7 +170,7 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
 
     try {
       const result = await startOnResolvedPort({ kind: "explicit", port: blockedPort }, (port) =>
-        startViewServer(port, emptyViewAssets, () => undefined),
+        startViewServer(port, emptyViewServerOptions),
       )
 
       expect(result.ok).toBe(false)

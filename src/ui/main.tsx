@@ -65,8 +65,9 @@ function Root(): ReactElement {
 // マウントされない**ので、色を持つ部品の初期化に任せるとリロード後に色が戻らない。
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
-// 立ち絵の SVG 取得（`components/portrait.tsx`）が使う。**キャッシュの既定値は個々の
-// `useQuery` 側**（URL がパックの版を含むので、取り直す条件は呼び出し側にしか分からない）。
+// 立ち絵の SVG 取得（`components/portrait.tsx`）と入力欄の `@` 補完のファイル一覧
+// （`features/dispatch/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
+// `useQuery` 側**（取り直す条件は呼び出し側にしか分からない）。
 const queryClient = new QueryClient()
 
 const appRoot = document.querySelector("#app")

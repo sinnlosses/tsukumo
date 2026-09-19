@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 入力欄に @ のファイル補完を足した（T-188）
+
+`GET /repository-file?t=<起動トークン>` を1本生やし、`adapter/repository-file.ts` が
+`git ls-files -z` を起こす唯一の境界になった（失敗時は空）。絞り込みはブラウザ側で、一覧は
+`useQuery`（`staleTime` 30秒、`@` を打っている間だけ `enabled`）。候補は判別可能な合併型に
+畳んで `/` のコマンド補完と同時に出ないことを型で保証した。
+
 ### 2026-09-20 色の連続変更を自前の debounce でまとめて書き込むようにした（T-204）
 
 `src/ui/lib/debounce.ts` の `useDebouncedCallback` を足し、差し色の送信と画面の色の

@@ -97,11 +97,15 @@ describe("Agent SDK を import する箇所", () => {
   })
 })
 
-// `node:child_process` を起こすのはホスト（orca）とビルド（bun build）の2つの境界に閉じ込める
-// （docs/architecture.md 原則3）。
+// `node:child_process` を起こすのはホスト（orca）・ビルド（bun build）・git 管理下のファイルの
+// 列挙（git ls-files）の3つの境界に閉じ込める（docs/architecture.md 原則3）。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは src/adapter/orca-host.ts と src/adapter/bundle.ts だけ", () => {
-    const allowed = new Set(["adapter/orca-host.ts", "adapter/bundle.ts"])
+  it("`node:child_process` を import するのは src/adapter/ の orca-host.ts・bundle.ts・repository-file.ts だけ", () => {
+    const allowed = new Set([
+      "adapter/orca-host.ts",
+      "adapter/bundle.ts",
+      "adapter/repository-file.ts",
+    ])
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))
       .filter((relPath) =>

@@ -98,6 +98,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/adapter/bundled-path.ts`                                                  | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く |
 | `src/adapter/character-pack.ts`                                                | adapter    | キャラクターパックの列挙・読み込みと `/character/<file>` が配ってよい1件の判定                       |
 | `src/adapter/task-summary.ts`                                                  | adapter    | `develop/tasks.json` の読み直し。mtime が変わったときだけ `tasks-changed` を起こす                   |
+| `src/adapter/repository-file.ts`                                               | adapter    | 入力欄の `@` 補完に配るパスの列挙。**`git ls-files` を起こすのはここだけ**（失敗したら空）           |
 | `src/core/host.ts`                                                             | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                        |
 | `src/adapter/orca-host.ts`                                                     | adapter    | `src/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                          |
 | `src/ui/main.tsx`                                                              | ui         | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                          |

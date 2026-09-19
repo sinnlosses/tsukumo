@@ -142,6 +142,7 @@ src/
     frame.ts                  ServerFrame（zod）・PROTOCOL_VERSION
     expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
                               語彙（いまの domain のうち、両側が使うもの）
+    repository-file.ts        ファイル一覧の経路名と読み取り（入力欄の @ 補完。両側が見る）
   core/                       サーバ側の純粋な判断。node: / SDK / ws を import しない
     session-driver.ts         駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
     session-manager.ts        sessionId → { driver, state, subscribers }。reducer をサーバ側でも回す
@@ -162,6 +163,7 @@ src/
     character-edit.ts         画面から変えた立ち絵・差し色を ~/.tsukumo/characters/ へ書く
     remembered-character.ts   覚えたキャラクター名（~/.tsukumo/state.json）
     task-summary.ts           develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
+    repository-file.ts        git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
     bundle.ts / ui-rebuild.ts bun build（ui の入口と CSS）と src/ui/ の見張り
     bundled-path.ts           同梱物の位置（import.meta.url）。tsukumo-home.ts は ~/.tsukumo/
     orca-host.ts              `orca` コマンドを起こす唯一の場所
@@ -174,7 +176,7 @@ src/
       main-view/              TurnTabs・Turn・Report・QuestionRecord と markdown/（unified 一式）
       character-view/         Portrait・BalloonTrack・Balloon・動きの hooks
       sidebar/                Activity・TaskList・TaskBoard（表のモーダル）・SessionInfo
-      dispatch/               Composer・CommandSuggestions・PendingAnswer・TurnStatus
+      dispatch/               Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
       character-screen/       キャラクター画面と作る画面（13.6）。立ち絵・差し色の差し替え、使う人が変える色
                               （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
     components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
@@ -272,7 +274,7 @@ characters/<name>/            character.json・persona.md・素材
 | 採らないもの                           | 理由                                                                                                                                                                                                                                                                                                                                                                    |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `app/`                                 | 画面の切り替えは `location.hash` を読む hook 1つ（`stores/screen.tsx`）で、ルーターも `app/` に置くほどの配線も無い。入口の中身は `main.tsx` 1つになる（状態は `stores/`、接続と再読み込みは `lib/` へ分かれる）。入口は `bun build` の入口でもあるので直下に置く。**機能が `app/` を import しない**という bullet-proof-react の向きも、箱を作らなければ破りようがない |
-| `api/`（機能の中も含む）               | REST は無く、サーバとの往復は WebSocket 1本で `lib/socket.ts` と `stores/` に閉じている。TanStack Query は入れたが、使うのは立ち絵の素材を取る `components/portrait.tsx` 1箇所だけで、機能ごとの `api/` は要らない                                                                                                                                                      |
+| `api/`（機能の中も含む）               | 会話の往復は WebSocket 1本で `lib/socket.ts` と `stores/` に閉じている。TanStack Query で取りに行く GET は、立ち絵の素材（`components/portrait.tsx`）と `@` 補完のファイル一覧（`features/dispatch/file-suggestions.tsx`）の2つだけで、どちらも読む機能の隣に置けば足りる                                                                                               |
 | `types/`                               | 型の正典は `src/protocol/`。ui 側に置くと契約が二重になる（原則2）。ambient な `.d.ts` は import されないので使う場所の隣に置く                                                                                                                                                                                                                                         |
 | `utils/`                               | 実体は `tool-summary.ts` 1つで、置くと「どこにも属さない小物」の受け皿になる（原則5）。`lib/` に入れる                                                                                                                                                                                                                                                                  |
 | `hooks/`（共有）                       | 共有の hook が無い。`useSession` / `useTurnSelection` は Context の付属なので provider と同じファイルに置く                                                                                                                                                                                                                                                             |
@@ -509,9 +511,12 @@ type SessionHost = {
 | `GET /assets/ui.js` / `style.css` | 束ねたもの（メモリ。11章の見張りで差し替わる）                                                                        | 不要     |
 | `GET /vendor/<name>`              | allowlist の対応表にある外部ライブラリだけ（実ファイルは `node_modules`。`vendor-asset.ts`）                          | 不要     |
 | `GET /character/<file>`           | いまのパックの素材。**`character.json` に書かれたファイル名だけ**を配る（パスから組み立てない）                       | 不要     |
+| `GET /repository-file?t=<token>`  | git 管理下のファイルのパス（入力欄の `@` 補完。実体は `repository-file.ts` の `git ls-files`）                        | **必要** |
 | `GET /ws?t=<token>`               | WebSocket。Origin とトークンを確かめてから upgrade                                                                    | **必要** |
 
-会話の内容が乗るのは `/ws` だけ。他は静的な物か素材なので、トークン無しでよい。
+会話の内容が乗るのは `/ws` だけ。ページ・同梱物・素材は静的な物なのでトークン無しでよい。
+**`/repository-file` は会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの
+中身（パスだけ。ファイルは開かない）で、誰にでも配ってよい静的な物ではない。
 
 ### config.ts（core）
 
@@ -552,7 +557,8 @@ type SessionHost = {
       │  │                   「整える」（#character へのリンク。13.6）
       │  └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
       │      ├ <PendingAnswer> 許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）
-      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。<CommandSuggestions> を内包
+      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。<CommandSuggestions>（`/`）と
+      │      │                <FileSuggestions>（`@`。同時には出さない）を内包
       │      └ <TurnStatus>  送信 ⇄ 中断、経過 / 所要
       ├ <CharacterScreen>    キャラクター画面（#character。13.6）。戻る口「← 会話へ戻る」（答え待ちの印つき）・
       │   │                  パックのラベルと名前・「新しく作る」（#character/new へ）

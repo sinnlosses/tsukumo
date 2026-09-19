@@ -18,6 +18,7 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../src/protocol/frame.ts"
+import { REPOSITORY_FILE_PATH } from "../../src/protocol/repository-file.ts"
 import { SESSION_SOCKET_PATH } from "../../src/protocol/session-socket.ts"
 import { INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
 
@@ -295,18 +296,33 @@ function noCharacterAsset(): undefined {
   return undefined
 }
 
+/** ファイル一覧の代役。既定では一覧そのものが空（git リポジトリでないときと同じ）。 */
+function noRepositoryFile(): Promise<readonly string[]> {
+  return Promise.resolve([])
+}
+
 async function startView(
   serveCharacterAsset: (
     fileName: string,
   ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
+  listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
 ): Promise<ViewServer> {
-  const server = await startViewServer(
-    0,
-    { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
+  const server = await startViewServer(0, {
+    assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
     serveCharacterAsset,
-  )
+    listRepositoryFiles,
+    token: TOKEN,
+  })
   runningView = server
   return server
+}
+
+/** ファイル一覧の URL（起動トークン付き）。 */
+function repositoryFileUrl(server: ViewServer, token: string | undefined): string {
+  const origin = viewOrigin(server)
+  return token === undefined
+    ? `${origin}${REPOSITORY_FILE_PATH}`
+    : `${origin}${REPOSITORY_FILE_PATH}?t=${token}`
 }
 
 afterEach(async () => {
@@ -425,6 +441,39 @@ describe("startViewServer", () => {
     const response = await fetch(`${viewOrigin(server)}/character/not-defined.svg`)
 
     expect(response.status).toBe(404)
+  })
+
+  it("/repository-file は、正しいトークンなら候補のパスを JSON の並びで返す", async () => {
+    const server = await startView(noCharacterAsset, () =>
+      Promise.resolve(["src/cli.ts", "docs/design.md"]),
+    )
+
+    const response = await fetch(repositoryFileUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("application/json")
+    expect(await response.json()).toEqual(["src/cli.ts", "docs/design.md"])
+  })
+
+  it("/repository-file は、git リポジトリでない（一覧が空の）ときも空の並びを返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(repositoryFileUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual([])
+  })
+
+  it("/repository-file は、トークンが無い・違うときは 403（一覧を作りにも行かない）", async () => {
+    let asked = 0
+    const server = await startView(noCharacterAsset, () => {
+      asked += 1
+      return Promise.resolve(["src/cli.ts"])
+    })
+
+    expect((await fetch(repositoryFileUrl(server, undefined))).status).toBe(403)
+    expect((await fetch(repositoryFileUrl(server, "ちがう"))).status).toBe(403)
+    expect(asked).toBe(0)
   })
 
   it("/character/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {
