@@ -86,10 +86,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 「作業中」→「思案」にし、各 `persona.md` に「調べる前・迷うときは thinking」の1行を足した
 （ラベルだけでは出番が増えないため）。
 
-### 2026-09-17 working を thinking に改名し、必須の立ち絵を default だけにした（T-180）
-
-`Expression` の `working` を `thinking` へ改め、`REQUIRED_EXPRESSIONS` を `default` 1つに絞った（自動の上書きを撤去した T-179 で、必須に据えた根拠が失効したため）。作成画面は立ち絵1枚で最後まで進むようになり、`thinking` は画面から消せる表情になった。日本語ラベル（「作業中」）はそのままで、変更は T-181 の担当。
-
 ## 未解決
 
 - **偽の駆動で質問の場面を自動操作したとき、`turnInProgress` が解消しないことがある**

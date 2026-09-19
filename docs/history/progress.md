@@ -1,5 +1,9 @@
 # 進捗のアーカイブ
 
+### 2026-09-17 working を thinking に改名し、必須の立ち絵を default だけにした（T-180）
+
+`Expression` の `working` を `thinking` へ改め、`REQUIRED_EXPRESSIONS` を `default` 1つに絞った（自動の上書きを撤去した T-179 で、必須に据えた根拠が失効したため）。作成画面は立ち絵1枚で最後まで進むようになり、`thinking` は画面から消せる表情になった。日本語ラベル（「作業中」）はそのままで、変更は T-181 の担当。
+
 ### 2026-09-17 ツール実行中の表情の自動上書きをやめた（T-179）
 
 `resolveExpression` とクールダウン（4000ms）・遅延（1000ms）の定数、`lastToolFinishedAt`、`currentExpression`、`workingSpeech`（3パック）と作業中の吹き出しを撤去し、**表情の源を `speak` の1つ**にした。撤去の理由は `docs/requirements.md` 4.3 に残してある（同じ案がまた出るため）。`working` は `speak` で選べる表情として残る。
