@@ -10934,3 +10934,322 @@ CSS（`src/ui/styles/dispatch.css`）の現状:
 
 - `src/ui/styles/dispatch.css` は T-191（CSS Modules へ移す）も触る。**並行させない**
 - tsukumo を起こす目視確認が要るので、同じく起動を伴うタスクと同時に進めない（CLAUDE.md「タスク運用」）
+
+## T-184
+
+**タスク**: 決めた形でキャラクター画面を作り、作成・編集・色の口を移す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-183 / **passes**: True
+
+**evidence**:
+
+bun run check 通過: 649 pass / 0 fail / 60 files（着手前 631 から +18。消したテストは無く、appearance.test.tsx の色2件は character-screen.test.tsx へ移動）。grep -rn "features/appearance/character-\|features/appearance/appearance-color" src/ test/ は 0 件。docs/design.md 2章の1行を追随（節数 51 のまま）。 目視: HOME を差し替えたサンドボックスで TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7399 で起こし、Playwright(Chromium 1440x900) で (i) 整える→#character、リロードで復帰 (ii) 差し替え／消す／差し色／画面の色3つが並びと localStorage に反映 (iii) 作る→「このキャラクターに切り替える」で #character へ戻り見出しが変わる (iv) ターン進行中に移って戻っても下書き・レポート・セリフが残る／答え待ちの印が出る、を確認。 未確認: 本物の claude（TSUKUMO_DRIVER=sdk）での起動と、Orca のタブでの見え方。
+
+## 背景
+
+T-183（2026-09-17）で決めた形は `docs/design.md` 13.6「設定の置き場所」（正典）・6.1「部品の木」・
+6.2・7.1・2章の箱の表と、`docs/requirements.md` 4.7、`docs/glossary.md`「画面」「キャラクター画面」に
+書いてある。ここではその形をそのまま作る。**設計を決め直さない**（読んで足りなければ、進めずに理由を
+`evidence` に書いて T-183 へ差し戻す）。
+
+いまのページは `src/ui/main.tsx` → `<Layout>` の1枚で、画面の切り替えは無い。色3つの欄・
+`<CharacterEdit>`・`<CharacterCreate>` は右下の「見た目」の引き出し（`src/ui/features/appearance/`）の
+中にある。サーバ側の経路（`src/protocol/command.ts` → `src/adapter/character-edit.ts`）は**変えない**
+（動かすのは `src/ui/` の中だけ）。
+
+## 決まっていること（design.md 13.6 の写し。食い違ったら design.md が正）
+
+- 画面は3つ: 会話（hash 無し）/ キャラクター（`#character`）/ 作る（`#character/new`）。
+  `src/ui/stores/screen.tsx` に `useScreen(): "conversation" | "character" | "character-create"`
+  （`useSyncExternalStore` で `hashchange` を読む）と `navigateTo(screen)`（`location.hash` を書く）を
+  置く。**ルーターのライブラリは入れない**
+- `src/ui/main.tsx` の中に `<Root>`（export しない関数部品）を置き、`useScreen()` で出す画面を選ぶ。
+  **会話の画面（`<Layout>` 一式）は外さず `<div hidden>` で隠す**（入力欄の下書き・選んでいるターン・
+  スクロール位置を保つ）。`<CharacterScreen>` / `<CharacterCreate>` はその画面のときだけ描く
+- 入る口: `<SessionInfo>` のキャラクターの `<select>` の右に `<a href="#character">整える</a>`
+  （字だけ。`--font-label`、色は `ink`、下線で区別。13.1 原則1）
+- 戻る口: キャラクター画面の左上に `<a href="#">← 会話へ戻る</a>`。**`state.pending` が空でないときは
+  その右に「答え待ち」の印**（`--state-warn`。文字も出す）。作る画面の左上は
+  `<a href="#character">← キャラクターへ戻る</a>`
+- キャラクター画面（`src/ui/features/character-screen/character-screen.tsx`）の並び: 戻る口 →
+  パックのラベル（`state.character.label`）と名前（`state.character.pack`。等幅）と、その行の右端に
+  `<a href="#character/new">新しく作る</a>` → `<CharacterEdit>` → 画面の色（3つ。いまの `<Appearance>` の
+  `COLOR_FIELDS` と `handleColorChange` をそのまま移す）
+- `<CharacterEdit>`（同じ機能の `character-edit.tsx` へ移す）は立ち絵の並び＋差し色。並びは
+  `EXPRESSIONS` の順に `display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr))`。
+  1枚のカード: 立ち絵（`<Portrait>`。`outfit: "default"`、`motion: undefined`、`accent` は
+  `resolveOutfitAccent(character.outfitAccents, "default") ?? readAccentColor()`）→ 表情のラベル
+  （`resolveExpressionLabel`）→ 「差し替える」（`<input type="file">` を `<label>` で包み、いまの
+  `sendPortrait` を呼ぶ）→ 「消す」（`isRemovableExpression` かつ立ち絵があるとき。いまの
+  `clear-portrait`）。**立ち絵が無い表情は点線の枠の空きにラベルと「選ぶ」だけ**。立ち絵は枠も地も
+  持たない（`ground` の上に直接）。`editable: false` のときは並びの上に一言を出して口を無効にする
+  （いまの `NOT_EDITABLE_NOTE`）
+- 差し色は `OUTFITS` の4つを1行に（`<input type="color">` ＋ラベル）。画面の色も3つを1行に
+- **`<Portrait>` を `src/ui/components/portrait.tsx` へ移す**（2つ目の読み手。design.md 2章
+  「上げる引き金」）。中身は変えない。`test/ui/features/character-view/portrait.test.tsx` →
+  `test/ui/components/portrait.test.tsx`。並びでの大きさは `styles/character-screen.css` の
+  `.character-gallery .portrait` で決める（`character.css` の `height: var(--portrait-height)` 等は
+  `.character-region` の外では変数が無く効かない）
+- 作る画面（同じ機能の `character-create.tsx`）: いまの `<CharacterCreate>` を移す。作れたら
+  （`sentName` が `state.characterPacks` に現れたら）「作った」の一言の横に
+  **「このキャラクターに切り替える」**（`switch-character` を dispatch → `navigateTo("character")`。
+  `state.turnInProgress` の間は `disabled`、`title` は `FRAME_ERROR_REASON.switchDuringTurn`）。
+  `<form method="dialog">` の外に出るので、Enter を留める `onKeyDown` は外してよい
+- CSS: `src/ui/styles/character-screen.css` を新設し、`main.css` の `@import` に足す
+  （`narrow-screen.css` より前）。`appearance.css` のうち移すもの（`.appearance-fieldset` /
+  `.appearance-field` / `.appearance-note` / `.appearance-portrait-*` / `.appearance-create-*`）は
+  `character-screen-*` に改名して移す。引き出しだけのもの（`.appearance-trigger` /
+  `.appearance-drawer*` / `.appearance-reset-split` / `.appearance-close`）は残す（消すのは T-185）
+- `appearance-color.ts` は `src/ui/features/character-screen/appearance-color.ts` へ移す。
+  **`localStorage` の鍵 `tsukumo-appearance-color` は変えない**（変えると使っている人の設定が消える）。
+  保存済みの上書きを `documentElement` へ反映する1回は、いまは `<Appearance>` の `useState` の初期化が
+  やっている。**キャラクター画面は開かれるまでマウントされない**ので、`main.tsx` の入口で
+  `applyAppearanceColorOverride(loadAppearanceColorOverride())` を1回呼ぶ形に移す
+- 狭い画面（760px 以下）用の規則は書かない（並びが折り返すだけ）
+
+## やること
+
+1. `stores/screen.tsx` と `main.tsx` の `<Root>`。テスト `test/ui/stores/screen.test.ts`
+   （hash 無し → `conversation`、`#character` → `character`、`#character/new` → `character-create`、
+   `hashchange` で更新される）
+2. `<Portrait>` を `components/` へ移す（テストも）
+3. `<CharacterScreen>` / `<CharacterEdit>`（並び）/ 画面の色 / `<CharacterCreate>`（切り替えボタン）を
+   作る。`<Appearance>` からは `<CharacterEdit>` `<CharacterCreate>` と色3つを外す（引き出しには
+   比率リセットと閉じる、T-182 が未了なら固定のチェックボックスが残る。それでよい）
+4. `<SessionInfo>` に「整える」
+5. テスト: `test/ui/features/appearance/` の `character-edit` / `character-create` /
+   `appearance-color` を `test/ui/features/character-screen/` へ移し、`appearance.test.tsx` は残った
+   中身に合わせる。足すのは (a) 「整える」が `#character` へのリンクであること (b) `<CharacterScreen>` に
+   戻る口があり、`pending` があるとき「答え待ち」が出ること (c) 立ち絵が無い表情に「消す」が出ず
+   「選ぶ」が出ること (d) 作れたあと「このキャラクターに切り替える」が `switch-character` を送り、
+   ターン進行中は押せないこと
+6. `docs/design.md` 2章の箱の表・6.1・13.6 と実装がズレたら design.md 側も同じコミットで直す。
+   `docs/architecture.md` に「見た目」の引き出しを前提にした記述があれば追随させる
+
+## 完了条件
+
+- `bun run check` が通る。テストの件数が減っているなら、どのテストをなぜ消したかを `evidence` に書く
+- `grep -rn "features/appearance/character-\|features/appearance/appearance-color" src/ test/` が 0 件
+- 目視: `bun run start` で起こし、(i) サイドバーの「整える」から入り、リロードしても同じ画面に戻る
+  (ii) 立ち絵の差し替え・消す・衣装ごとの差し色・画面の色3つが効き、立ち絵の並びに反映される
+  (iii) 「新しく作る」→ 作る → 「このキャラクターに切り替える」で切り替わってキャラクター画面に戻る
+  (iv) 依頼を送ってからキャラクター画面へ移り、戻ったあとセリフとレポートが追いつき、入力欄の打ちかけが
+  残っている — の4点を確かめ、何をどう確かめたかを `evidence` に書く
+- `docs/design.md` の記述と実装が一致している
+
+## 注意
+
+- **「見た目」の引き出しを消すのは T-185。** このタスクでは引き出しが残っていてよい（中身が減る）
+- 立ち絵の素材も会話も外へ出さない（CLAUDE.md「会話内容の扱い」）
+- `src/ui/features/` の機能どうしは import しない（`test/architecture.test.ts` が落とす）。
+  `components/` は `stores/` を import できない（だから画面の選択は `main.tsx` の `<Root>`）
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-185
+
+**タスク**: 「見た目」の引き出しを消し、右下を比率リセットに戻す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-182, T-184 / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（649 pass / 0 fail）。`grep -rn "appearance-drawer|appearance-trigger|renderAppearance|features/appearance" src/ test/` は 0 件。
+目視（偽の駆動・capture-view.ts）: 1400x900 で `.layout-reset-split` が右下 12px/12px に常設（幅132.92×高30.84）、720x900 では `.layout-resizer` ともども描画されない。
+押下: 比率を {rowTop:25,topLeft:30,bottomLeft:70} へ崩してから押すと localStorage が既定 {60,75,50} に戻り、grid-template-rows も 210.6px → 505.4px へ追随した。
+
+## 背景
+
+`<Appearance>`（`src/ui/features/appearance/appearance.tsx`）は右下の「見た目」ボタンで開く
+`<dialog>` で、元々そこにあった「領域の比率を既定に戻す」ボタンと置き換えたもの。T-182 で立ち絵の
+固定が、T-184 で色3つと作成・編集の口がキャラクター画面へ出ていくので、残るのは比率のリセットと
+「閉じる」だけになる。**決めた形は `docs/design.md` 13.6**（右下は「領域の比率を既定に戻す」だけに
+戻る。2026-09-17 決定）。
+
+比率を戻す関数は `<Layout>` の内側にあり、`renderAppearance(onResetSplit)` という形で
+`<Appearance>` へ渡している（`layout.tsx` の冒頭のコメントに理由がある）。
+
+## やること
+
+1. `<Appearance>` と `src/ui/styles/appearance.css` を消す（T-184 が移すものを移し終えていれば、
+   残っているのは引き出しだけのもの）。`trapTabKey` も一緒に消える。`main.css` の `@import` から外す
+2. 右下に「領域の比率を既定に戻す」ボタンを常設で戻す。`<Layout>` が比率の state を持っているので、
+   `renderAppearance` を介さず `<Layout>` の中で完結させ、props を1つ減らす
+   （`layout.tsx` 冒頭のコメントと `src/ui/main.tsx` の配線も直す）。**キャラクター画面に居る間は
+   会話の画面ごと `hidden` なので、ボタンも一緒に隠れる**（別に隠す規則は要らない）
+3. `src/ui/styles/narrow-screen.css` の「畳んでいる間は仕切り・「見た目」を開く口を出さない」の規則と
+   説明を、新しい常設のボタンに合わせて直す（1列表示では動かせる比率が無いので隠してよい。
+   引き出しのときに隠さなかった理由「色と固定もその中にある」は消えている）
+4. `test/ui/features/appearance/appearance.test.tsx` を消し、`test/ui/features/layout/` にリセットの
+   ボタンのテストを足す（押すと `DEFAULT_SPLIT` に戻る）
+5. ドキュメント: `docs/design.md` 2章の箱の表と「同時に直すもの」の `renderAppearance` の記述、
+   6.1 部品の木、13.6 のうち引き出しが**今もあるかのように読める**記述を直す（経緯として触れて
+   いる箇所は残す）。`docs/requirements.md` 4.7 の「引き出しは無くす」は完了形に
+
+## 完了条件
+
+- `grep -rn "appearance-drawer\|appearance-trigger\|renderAppearance\|features/appearance" src/ test/` が 0 件
+- `docs/design.md` / `docs/requirements.md` に、引き出しが今もあるかのような説明が残っていない
+  （`docs/history/` と、経緯として「引き出しから移した」と書いてある箇所は対象外）
+- `bun run check` が通る
+- 目視: `bun run start` で起こし、広い画面と 760px 以下の両方で右下のボタンの出方を確かめ、
+  広い画面で押すと領域の比率が既定に戻ることを確かめる
+
+## 注意
+
+- T-182 と T-184 が終わる前に着手しない（引き出しの中身がまだ残っている）
+- 索引の行に本文を流し込む事故がある（CLAUDE.md「ドキュメントを編集するときの罠」）
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-187
+
+**タスク**: サイドバーの「続きから」の印を仕様ごと撤去する
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（646 pass / 0 fail。削除した3件ぶん 649 → 646、expect も 1309 → 1303）。`grep -rn "session-restored" src/ test/ docs/design.md docs/requirements.md` は 0 件、`restored` の残りは session-restore.ts の局所変数・関数名のみ。
+目視（偽の駆動・capture-view.ts、1400x900）: サイドバーの「セッション情報」はキャラクター／モデル／許可モードの3行だけになり、`.session-info-restored` は存在せず、2列の grid も崩れていない。
+**履歴の組み直しは未目視**（偽の駆動は resume を探さないので、本物の claude を起こさないと再現できない）。`replayRestoredSession` の呼び出しは変えておらず、session-launch.test.ts が restoreEvents の呼び出しを検証している。
+
+## 背景
+
+サイドバーの「セッション情報」は、前のセッションの続きから始まったときに
+いちばん上へ `セッション ／ 続きから` の行を出す
+（`src/ui/features/sidebar/session-info.tsx` の `state.restored` の分岐。
+見た目は `src/ui/styles/sidebar.css` の `.session-info-restored`）。
+
+この印は `docs/requirements.md` 4.8「いつ復元するか」が
+「続きから始まったことが画面から分かるようにする」と決めたもので、経路は
+`src/core/session-launch.ts` が `resume` を見つけたときに流す `session-restored` イベント →
+`src/protocol/session-state.ts` の `restored: boolean` → 上の表示、の1本だけ。
+`session-restored` はこの表示のためだけに存在し（`session-state.ts` の畳み込みは
+`restored: true` を立てるだけ）、履歴の組み直し（`replayRestoredSession`）は同じ分岐の中で
+別に呼ばれているので、イベントを消しても復元そのものは動く。
+
+ユーザーの判断で、この印は要らないことになった（「特に必要な情報じゃないから」）。
+
+## 決まっていること（蒸し返さない）
+
+- 「続きから」の表示は出さない（ユーザーの指示。2026-09-18）
+- 表示だけでなく `session-restored` イベントと `restored` の値まで撤去する
+  （表示のためだけの値なので、表示を消すと使い道が無くなる）
+- **続きから始めること自体は残す**（撤去するのは印だけ）
+
+## やること
+
+1. `src/ui/features/sidebar/session-info.tsx` の `state.restored` の分岐と、
+   `src/ui/styles/sidebar.css` の `.session-info-restored` を消す
+2. `src/protocol/session-state.ts` の `restored` フィールド・`INITIAL_SESSION_STATE` の初期値・
+   `session-restored` の畳み込みを消す
+3. `src/protocol/session-event.ts` の `session-restored` のイベント種を消す
+4. `src/core/session-launch.ts` の `onEvent({ kind: "session-restored", ... })` を消す。
+   **`if (resume !== undefined)` の分岐と `replayRestoredSession` の呼び出しは残す**
+5. 上記に対応するテストを消す（`test/ui/features/sidebar/session-info.test.tsx` の
+   「続きから」2件、`test/protocol/session-state.test.ts` の `session-restored` の件、
+   `test/core/session-launch.test.ts` が流れたイベント列で `session-restored` を期待している箇所）
+6. ドキュメントを直す:
+   - `docs/requirements.md` 4.8「いつ復元するか」から「続きから始まったことが画面から
+     分かるようにする」の段落を落とす（**自動で続きから始めることと、新規で起こす逃げ道は残す**）
+   - `docs/design.md` の `session-restored` / `restored` の行（イベント表・状態の表・
+     8章・13章あたりの4箇所）を、実物に合わせて落とす
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数が減ることは想定どおり。減った件数を `evidence` に書く）
+- `grep -rn "session-restored\|restored" src/ test/` の結果に、
+  `session-restore.ts` 内の局所変数・関数名（`restoredMessageEvents` など）以外が残っていない
+- `grep -rn "続きから" docs/requirements.md docs/design.md` の結果が、
+  「続きから始める」動作の説明だけになっていて、画面に印を出すという記述が無い
+- 目視確認: `bun run start` で、前のセッションがある状態で起こしてもサイドバーに
+  「続きから」の行が出ず、会話の履歴は今までどおり組み直されていること
+  （何を見たかを `evidence` に書く）
+
+## 注意
+
+- `docs/` の節の見出しを壊さないこと（CLAUDE.md「ドキュメントを編集するときの罠」。
+  編集の前後で `grep -c '^#\{2,3\} ' docs/requirements.md` の数が合うか確かめる）
+- `docs/history/` は過去の記録なので触らない
+
+## T-189
+
+**タスク**: oxlint の react プラグインを有効にし、既存の7件を直す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（646 pass / 0 fail、件数の増減なし）。`--react-plugin` を付けずに `bunx oxlint src test scripts` が exit 0（`.oxlintrc.json` だけで効く）。
+目視（偽の駆動・Playwright、1400x900）: SVG のパック（tsukumo-spirit）へ切り替えて立ち絵が描かれ（188x244）、表情が default → proud に変わった直後も中身が差し替わる。仕切りのドラッグで rowTop が 45.9 に保存され、掴んで動かさず離したときは保存しない。タブは2ターン目で今回へ追従し、過去のタブを選んだ状態で新ターンが来ても選択は動かない。
+**完了条件4つ目（タブ切替で先頭へスクロール）は移行前から効いていない**ことを実測で確認（`.main-turns` は overflowY: visible で scrollHeight === clientHeight。スクロールは親の region）。今回の変更による退行ではなく、develop/direction.md のドラフトに記録した。
+
+## 背景
+
+`.oxlintrc.json` の `plugins` は `["typescript"]` だけで、**react / react-hooks の規則が1つも
+効いていない**。2026-09-18 に `docs/coding-standards.md`「React」節と `CLAUDE.md` のルール一覧へ
+「`useEffect` は4類型だけ」「依存配列を手で間引かない」「レンダー中に ref を読み書きしない」を
+書いたので、**機械で守る側を揃える**のがこのタスク。
+
+同日の実測（`bunx oxlint src test scripts --react-plugin -A react-in-jsx-scope`）で7件出る:
+
+- `src/ui/features/character-view/portrait.tsx:47` `react(set-state-in-effect)` —
+  `useSvgMarkup` が effect の中で同期的に `setMarkup(undefined)` を呼んでいる
+- `src/ui/features/layout/layout.tsx:35` `react(refs)` —
+  レンダー中に `latestSplitRef.current = split` を書いている
+- `src/ui/stores/turn-selection.tsx:71` `react-hooks(exhaustive-deps)` — `selectedTurnId` が無い
+  （「判定に読むだけ」という理由のコメント付きで意図的に外してある）
+- `src/ui/stores/turn-selection.tsx:79` `react(exhaustive-effect-dependencies)`
+- `src/ui/features/character-view/character-view.tsx:69` `react-hooks(exhaustive-deps)` — `input` が無い
+- `src/ui/features/character-view/character-view.tsx:69` `react(exhaustive-effect-dependencies)`
+- `src/ui/features/main-view/main-view.tsx:39` `react(exhaustive-effect-dependencies)` — 余分な依存
+
+`react-in-jsx-scope` は新しい JSX 変換（tsconfig の `"jsx": "react-jsx"`）では誤検知なので off に
+する。`useEffectEvent` は React 19.3 に**安定版として入っている**ことを確認済み
+（`node_modules/react` が `exports.useEffectEvent` を持ち、`@types/react` にも宣言がある）。
+
+## 決まっていること（蒸し返さない）
+
+- react プラグインを入れる。カテゴリは error（`warn` で様子見にしない。ユーザーの判断 2026-09-18）
+- `react-in-jsx-scope` だけ off にする
+- 既存7件は**このタスクの中で直す**。`bun run check` を赤いまま残さない
+- 「読むだけの値だから依存から外す」は採らない。`useEffectEvent` に包んで依存から正しく消す
+  （`docs/coding-standards.md`「依存配列を手で間引かない」）
+
+## 解くべき論点
+
+- `portrait.tsx` の `useSvgMarkup` で、「まだ読んでいない」と「読めなかった」を同じ `undefined` で
+  表している。`set-state-in-effect` を消すついでに状態の持ち方を変えるか、lint を通すだけに
+  留めるか（規約「複数の『無い』が1つの状態」が効く場所だが、**このタスクの主目的ではない**）
+- `layout.tsx` の `latestSplitRef` は「pointerdown の瞬間に固定されるクロージャから最新の split を
+  読む」ためのもの。`useEffectEvent` で `commit` を包むと ref ごと不要になるか、
+  `<LayoutResizer>` への渡し方まで変える必要があるか
+- `turn-selection.tsx` の effect は「新しいターンが始まったら先頭へ戻す」という**派生状態の更新**。
+  `useEffectEvent` で足りるか、レンダー中に前回値と比べる形へ組み替えるほうが素直か
+
+## やること
+
+1. `.oxlintrc.json` の `plugins` に `react` を足し、`rules` に
+   `"react/react-in-jsx-scope": "off"` を書く
+2. `bunx oxlint src test scripts` で出る指摘を、上の論点の判断に沿って直す
+3. 直した5ファイルについて `bun run start` で目視確認する（下の完了条件）
+4. **調べた結果 `useEffectEvent` では解けない箇所があれば、そこだけ lint の抑制ではなく
+   構造を変える。それも無理なら、やらずに理由を `evidence` に書いて閉じる**
+   （規約に例外を足すのは別の判断なので、このタスクで規約を書き換えない）
+
+## 完了条件
+
+- `bun run check` が通る（`oxlint` の指摘が0件）
+- `bunx oxlint src test scripts --react-plugin` を別途付けなくても react の規則が効くこと
+  （`.oxlintrc.json` だけで再現する）
+- 目視確認で、次の4つが移行前と同じに見えること。**何をどう確かめたかを `evidence` に書く**:
+  立ち絵が表示される（`portrait.tsx`）/ 領域の境目をドラッグして比率が保存される
+  （`layout.tsx`）/ 新しいターンでタブが今回へ移り、過去のタブを見ている間は動かない
+  （`turn-selection.tsx`）/ タブを切り替えるとメインビューが先頭にスクロールする
+  （`main-view.tsx`）
+
+## 注意
+
+- `docs/coding-standards.md`「React」節と `CLAUDE.md` のルール一覧は**このタスクの前に
+  書き終えてある**。規約の文面は直さない（直したくなったらそれ自体が別の判断）
+- 立ち絵とレイアウトに触るので、**目視確認が要る他のタスクと並行させない**
+  （`CLAUDE.md`「タスク運用」）
