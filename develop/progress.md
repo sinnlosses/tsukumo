@@ -87,13 +87,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 配色から浮くので外した。脚注の英語ラベルは `remarkRehypeOptions` で「脚注」に替えた。
 `details` / `hr` / `figure` / `figcaption` / `small` / `kbd` / `samp` に装飾を当てた。
 
-### 2026-09-20 src/ui/styles の CSS を CSS Modules へ移した（T-191）
-
-領域別の CSS を `features/<領域>/*.module.css` へ移し、`styles/` に残るのは `theme.css` 1枚。
-`buildUiScript` / `buildStyleSheet` は `buildUiBundle` 1本に統合し（class 名のハッシュが JS と
-CSS の両方に焼かれるため）、一時ディレクトリへ `--outdir` して読んで消す形にした。
-`narrow-screen.css` は各モジュールの `@media` へ分解。`ui-rebuild.ts` は `page` 更新へ倒した。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
