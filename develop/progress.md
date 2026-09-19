@@ -89,12 +89,6 @@ CSS の両方に焼かれるため）、一時ディレクトリへ `--outdir` �
 置き換える（知らない class 名と `style` 属性は素通し）。「お願い」のラベルは CSS の `::before`
 から部品が描く文字へ移した。
 
-### 2026-09-20 oxlint の react プラグインを有効にし、既存7件を直した（T-189）
-
-`.oxlintrc.json` に `react` を足し（`react-in-jsx-scope` だけ off）、指摘7件を lint の抑制ではなく
-構造で解いた。`layout.tsx` の ref 書き込みは `onCommit(percent)` への契約変更で、
-`turn-selection.tsx` の effect はレンダー中に前回値と見比べる形で消した。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
