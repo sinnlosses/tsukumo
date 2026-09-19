@@ -144,8 +144,7 @@ describe("経路名のリテラル", () => {
 })
 
 // `ui/features/` の中の横断 import を禁じる（`docs/design.md` 2章「`src/ui/` の箱と、置く基準」）。
-// 機能は `layout` / `main-view` / `character-view` / `character-screen` / `sidebar` / `dispatch` /
-// `appearance`。
+// 機能は `layout` / `main-view` / `character-view` / `character-screen` / `sidebar` / `dispatch`。
 // `ui/components/` `ui/lib/` `ui/stores/` `ui/styles/` と `ui/main.tsx`（`ui/features/` の
 // 直下に無いもの。`UI_REGIONS` に無ければ自動的にここに入る）は誰から引いてもよい共有部分
 // なので、ここでは見ない。
@@ -159,7 +158,6 @@ const UI_REGIONS = [
   "character-screen",
   "sidebar",
   "dispatch",
-  "appearance",
 ] as const
 type UiRegion = (typeof UI_REGIONS)[number]
 

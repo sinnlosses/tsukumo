@@ -1,7 +1,6 @@
 // レイアウト全体（`<Layout>`。docs/design.md 6.1）。4領域（メイン・サイドバー・キャラビュー・
-// 入力欄）を grid に並べ、3本の仕切りをドラッグで動かせるようにする。**既定の比率に戻す実行だけ
-// ここに残し、UI（開く口・引き出し）は `<Appearance>` に出す**。比率を戻す関数はこの部品の内側に
-// あるので、`<Appearance>` は素の `ReactNode` ではなく `renderAppearance` で受け取る。
+// 入力欄）を grid に並べ、3本の仕切りをドラッグで動かせるようにする。**既定の比率に戻す実行も
+// UI（右下の常設ボタン）もここに持つ**（docs/design.md 13.6）。
 //
 // もとは静的な HTML の組み立てとブラウザ側の配線に分かれていた処理だった（移行の段6で
 // React の部品にし、段3〜5の複数の root を1つにまとめた。docs/design.md 12章）。
@@ -20,7 +19,6 @@ export type LayoutProps = {
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
-  readonly renderAppearance: (onResetSplit: () => void) => ReactNode
 }
 
 export function Layout(props: LayoutProps): ReactElement {
@@ -96,7 +94,9 @@ export function Layout(props: LayoutProps): ReactElement {
           <section className="layout-region layout-dispatch">{props.dispatch}</section>
         </div>
       </div>
-      {props.renderAppearance(reset)}
+      <button type="button" className="layout-reset-split" onClick={reset}>
+        領域の比率を既定に戻す
+      </button>
     </>
   )
 }

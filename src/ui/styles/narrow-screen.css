@@ -1,7 +1,7 @@
 /* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
    （docs/requirements.md 4.7「狭い画面での崩れ方」）。各行の中身は DOM の並び順どおり
    （main→sidebar、character→dispatch）に積むだけで済むので、grid-template-areas は
-   使わない。畳んでいる間は仕切り・「見た目」を開く口を出さない（動かせる比率が無いため）。 */
+   使わない。畳んでいる間は仕切り・比率を戻すボタンを出さない（動かせる比率が無いため）。 */
 @media (max-width: 760px) {
   /* レポートの「用語 → 説明」の対は、狭い画面では2列をやめて1列で積む
      （用語の列に幅を取られると説明が1文字ずつ折り返すため。src/ui/styles/main-view.css）。 */
@@ -21,9 +21,11 @@
   .layout-row-bottom {
     grid-template-columns: 1fr;
   }
-  /* 仕切りは1列表示では意味を持たないので隠す。**`.appearance-trigger` をここに足さない**
-     （色と立ち絵の固定もその中にあり、隠すと狭い窓から設定に一切たどり着けなくなる）。 */
-  .layout-resizer {
+  /* 仕切りは1列表示では意味を持たないので隠す。比率を戻すボタンも同じ理由で隠す
+     （動かせる比率が無い1列表示では戻す先が無い。色と立ち絵の固定はキャラクター画面へ
+     移っているので、隠しても設定にたどり着けなくなることはない）。 */
+  .layout-resizer,
+  .layout-reset-split {
     display: none;
   }
   .layout-dispatch {

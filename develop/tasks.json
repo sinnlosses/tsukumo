@@ -138,9 +138,9 @@
     "dependencies": ["T-182", "T-184"],
     "summary": "「見た目」の引き出しを消し、右下を比率リセットに戻す",
     "task": "## 背景\n\n`<Appearance>`（`src/ui/features/appearance/appearance.tsx`）は右下の「見た目」ボタンで開く\n`<dialog>` で、元々そこにあった「領域の比率を既定に戻す」ボタンと置き換えたもの。T-182 で立ち絵の\n固定が、T-184 で色3つと作成・編集の口がキャラクター画面へ出ていくので、残るのは比率のリセットと\n「閉じる」だけになる。**決めた形は `docs/design.md` 13.6**（右下は「領域の比率を既定に戻す」だけに\n戻る。2026-09-17 決定）。\n\n比率を戻す関数は `<Layout>` の内側にあり、`renderAppearance(onResetSplit)` という形で\n`<Appearance>` へ渡している（`layout.tsx` の冒頭のコメントに理由がある）。\n\n## やること\n\n1. `<Appearance>` と `src/ui/styles/appearance.css` を消す（T-184 が移すものを移し終えていれば、\n   残っているのは引き出しだけのもの）。`trapTabKey` も一緒に消える。`main.css` の `@import` から外す\n2. 右下に「領域の比率を既定に戻す」ボタンを常設で戻す。`<Layout>` が比率の state を持っているので、\n   `renderAppearance` を介さず `<Layout>` の中で完結させ、props を1つ減らす\n   （`layout.tsx` 冒頭のコメントと `src/ui/main.tsx` の配線も直す）。**キャラクター画面に居る間は\n   会話の画面ごと `hidden` なので、ボタンも一緒に隠れる**（別に隠す規則は要らない）\n3. `src/ui/styles/narrow-screen.css` の「畳んでいる間は仕切り・「見た目」を開く口を出さない」の規則と\n   説明を、新しい常設のボタンに合わせて直す（1列表示では動かせる比率が無いので隠してよい。\n   引き出しのときに隠さなかった理由「色と固定もその中にある」は消えている）\n4. `test/ui/features/appearance/appearance.test.tsx` を消し、`test/ui/features/layout/` にリセットの\n   ボタンのテストを足す（押すと `DEFAULT_SPLIT` に戻る）\n5. ドキュメント: `docs/design.md` 2章の箱の表と「同時に直すもの」の `renderAppearance` の記述、\n   6.1 部品の木、13.6 のうち引き出しが**今もあるかのように読める**記述を直す（経緯として触れて\n   いる箇所は残す）。`docs/requirements.md` 4.7 の「引き出しは無くす」は完了形に\n\n## 完了条件\n\n- `grep -rn \"appearance-drawer\\|appearance-trigger\\|renderAppearance\\|features/appearance\" src/ test/` が 0 件\n- `docs/design.md` / `docs/requirements.md` に、引き出しが今もあるかのような説明が残っていない\n  （`docs/history/` と、経緯として「引き出しから移した」と書いてある箇所は対象外）\n- `bun run check` が通る\n- 目視: `bun run start` で起こし、広い画面と 760px 以下の両方で右下のボタンの出方を確かめ、\n  広い画面で押すと領域の比率が既定に戻ることを確かめる\n\n## 注意\n\n- T-182 と T-184 が終わる前に着手しない（引き出しの中身がまだ残っている）\n- 索引の行に本文を流し込む事故がある（CLAUDE.md「ドキュメントを編集するときの罠」）\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`bun run check` 通過（649 pass / 0 fail）。`grep -rn \"appearance-drawer|appearance-trigger|renderAppearance|features/appearance\" src/ test/` は 0 件。\n目視（偽の駆動・capture-view.ts）: 1400x900 で `.layout-reset-split` が右下 12px/12px に常設（幅132.92×高30.84）、720x900 では `.layout-resizer` ともども描画されない。\n押下: 比率を {rowTop:25,topLeft:30,bottomLeft:70} へ崩してから押すと localStorage が既定 {60,75,50} に戻り、grid-template-rows も 210.6px → 505.4px へ追随した。"
   },
   {
     "id": "T-187",

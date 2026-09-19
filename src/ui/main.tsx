@@ -6,8 +6,8 @@
 // 吹き出しが同じ選択に従うため。`src/ui/stores/turn-selection.tsx`）。
 //
 // **移行の段6で `<div id="app">` に1つの root をまとめた**（段3〜5は `.layout-sidebar` 等の
-// 複数の root だった。docs/design.md 12章）。機能の組み立て（`<Layout>` に4領域と
-// `<Appearance>` を渡す）は `ui/features/` をまたいで import してよい**この入口の役目**
+// 複数の root だった。docs/design.md 12章）。機能の組み立て（`<Layout>` に4領域を渡す）は
+// `ui/features/` をまたいで import してよい**この入口の役目**
 // （機能どうしは互いを import しない。`test/architecture.test.ts`「ui/ の機能どうしの import」）。
 //
 // **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / 13.6）。`<Layout>` は
@@ -16,7 +16,6 @@
 import { type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
-import { Appearance } from "./features/appearance/appearance.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
@@ -48,7 +47,6 @@ function Root(): ReactElement {
           sidebar={<Sidebar />}
           character={<CharacterView />}
           dispatch={<Dispatch />}
-          renderAppearance={(onResetSplit) => <Appearance onResetSplit={onResetSplit} />}
         />
       </div>
       {screen === "character" ? <CharacterScreen /> : null}

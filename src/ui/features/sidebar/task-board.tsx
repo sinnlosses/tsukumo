@@ -2,7 +2,7 @@
 // 300px ほどしかなく要約が2〜3行に折り返すので、**一覧を見渡すのは画面いっぱいの表**に任せる
 // （docs/requirements.md 4.2）。列は `/list-tasks` が出す表に揃える。
 //
-// **`<dialog>` の `showModal()` を使う**（`src/ui/features/appearance/appearance.tsx` と同じ作り）。
+// **`<dialog>` の `showModal()` を使う**。
 // Esc で閉じるのと、閉じたときにフォーカスを開く口へ戻すのはブラウザのモーダル挙動に任せ、
 // 外側（backdrop）のクリックだけを自前で拾う。**`<dialog>` は top layer に出る**ので、
 // サイドバー領域の `overflow` には切り取られない。

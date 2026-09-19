@@ -249,9 +249,10 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
 - `src/ui/app.tsx` が公開する `App` は **`SessionProvider` に改名**する（ファイル名が
   `stores/session.tsx` になり、`<App>` という名前は「アプリ全体」を指していないため）。
   読み替えるのは `src/ui/main.tsx` と部品のテストだけ（`SessionContext` / `useSession` の名前は変えない）
-- `src/ui/features/layout/layout.tsx` は `<Appearance>` を import せず、
-  `renderAppearance: (onResetSplit: () => void) => ReactNode` を props で受け取る。渡すのは
-  `src/ui/main.tsx`（比率を戻す関数は `<Layout>` の内側にあるので、素の `ReactNode` では渡せない）
+- `src/ui/features/layout/layout.tsx` は `<Appearance>` を import しない（段7の時点では
+  `renderAppearance: (onResetSplit: () => void) => ReactNode` を props で受け取っていたが、
+  「見た目」の引き出し自体を 2026-09-20 に無くしたので、いまは `<Layout>` が比率を戻すボタンを
+  直接描く。13.6）
 - `src/adapter/bundle.ts` の `buildStyleSheet` の入口が `src/ui/styles/main.css` になる
   （`buildUiScript` の `src/ui/main.tsx` は変わらない。`ui-rebuild.ts` は `src/ui/` を丸ごと
   見張っているので変わらない）
