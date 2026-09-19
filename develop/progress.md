@@ -86,11 +86,6 @@ CSS の両方に焼かれるため）、一時ディレクトリへ `--outdir` �
 `session-restored` イベントと `SessionState.restored` を、表示・畳み込み・イベント型まで落とした
 （続きから起こし直すこと自体と `replayRestoredSession` は残した）。
 
-### 2026-09-20 「見た目」の引き出しを消し、右下を比率リセットに戻した（T-185）
-
-`<Appearance>` と `appearance.css` を削除し、`<Layout>` が「領域の比率を既定に戻す」ボタンを直接
-描くようにした（`renderAppearance` prop が消え、1列表示では仕切りと一緒に隠れる）。
-
 ## 未解決
 
 - **`src/` の構成をどう組み替えるかは T-194 が案を出し、どれを採るかはユーザーが選ぶ**
