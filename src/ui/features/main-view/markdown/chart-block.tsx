@@ -1,6 +1,6 @@
 // レポートの ```chart フェンスの中身（Chart.js の設定を JSON で書いたもの）をグラフとして描く。
-// **Chart.js は `vendor/` に同梱し、その記法が実際に出てきたときだけ `<script>` で読み込む**
-// （`docs/requirements.md` 4.2）。
+// **Chart.js は tsukumo 自身のサーバから配り、その記法が実際に出てきたときだけ `<script>` で
+// 読み込む**（`docs/requirements.md` 4.2）。
 //
 // もとは別ファイルの処理だったものを、部品の `useEffect` に持ち替えた（移行の段6。
 // docs/design.md 6.4）。
@@ -32,8 +32,8 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
         }
 
         // Chart.js の既定は明るい背景向けで、目盛りの文字（`#666`）と線
-        // （`rgba(0,0,0,0.1)`）がこの配色では読めない。**データ系列の色は同梱の colors
-        // プラグインが割り当てる**ので、ここで寄せるのは文字と線だけ（値は
+        // （`rgba(0,0,0,0.1)`）がこの配色では読めない。**データ系列の色は Chart.js 内蔵の
+        // colors プラグインが割り当てる**ので、ここで寄せるのは文字と線だけ（値は
         // `main-view.module.css` に合わせてある）。
         Chart.defaults.color = "#b9c0d0"
         Chart.defaults.borderColor = "#3a4256"

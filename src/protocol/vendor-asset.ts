@@ -1,9 +1,10 @@
-// 同梱した外部ライブラリ（`vendor/README.md`）を配る経路の名前。**サーバ（core が配る）と
+// 外部ライブラリ（npm の依存）を配る経路の名前。**サーバ（`src/adapter/server.ts` が配る）と
 // ブラウザ（ui が `<script src>` に使う）の両方が同じ名前を見る**ので、protocol に置く
 // （docs/design.md 4章と同じ考え方。ここは値だけで `node:` にも `document` にも触らない）。
 //
 // **名前は allowlist の固定の対応表**で、リクエストのパスからファイル名を組み立てない
-// （`..` で外へ出る経路を作らない）。
+// （`..` で外へ出る経路を作らない）。**その名前が `node_modules` のどのファイルを指すか**は
+// 外の世界に触る仕事なので `src/adapter/vendor-asset.ts` が持つ（原則2）。
 
 export const VENDOR_PATH_PREFIX = "/vendor/"
 

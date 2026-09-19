@@ -183,7 +183,6 @@ src/
     styles/                   グローバルな CSS はこの1枚だけ（theme.css。トークン・body・リンク）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts（いまのまま）
 characters/<name>/            character.json・persona.md・素材
-vendor/                       mermaid・Chart.js・highlight のテーマ CSS（Idiomorph は消える）
 ```
 
 **ファイル名は概念**（原則5）。`helpers` / `utils` / `common` は作らない。**単数形の規約は
@@ -278,7 +277,7 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
 | `utils/`                               | 実体は `tool-summary.ts` 1つで、置くと「どこにも属さない小物」の受け皿になる（原則5）。`lib/` に入れる                                                                                                                                                                                                                                                                  |
 | `hooks/`（共有）                       | 共有の hook が無い。`useSession` / `useTurnSelection` は Context の付属なので provider と同じファイルに置く                                                                                                                                                                                                                                                             |
 | `config/`                              | 設定と環境変数は `src/core/config.ts` と `src/cli.ts` が持ち、ui は `SessionState` で受け取るだけ                                                                                                                                                                                                                                                                       |
-| `assets/`                              | 立ち絵も vendor のライブラリもサーバが配る（`characters/` と `vendor/`）。ui に素材を置かない                                                                                                                                                                                                                                                                           |
+| `assets/`                              | 立ち絵も外部ライブラリもサーバが配る（`characters/` と `node_modules/`）。ui に素材を置かない                                                                                                                                                                                                                                                                           |
 | `testing/`                             | テストは `test/` に `src/` の形を写す既存の規約がある（`test/dom-environment.ts` がその置き場）                                                                                                                                                                                                                                                                         |
 | `index.ts`（barrel file）              | 2026-09-13 の決定のまま禁止。bullet-proof-react 自身も tree-shaking の理由で外している                                                                                                                                                                                                                                                                                  |
 | `@/` の絶対 import                     | 相対パス + 拡張子付きの既存の書き方を変えない（`bun build` と `tsc` の設定を増やさない）                                                                                                                                                                                                                                                                                |
@@ -508,7 +507,7 @@ type SessionHost = {
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
 | `GET /`                           | ページ（`<div id="app">` と `<script src="/assets/ui.js">` と `<link href="/assets/style.css">`。**本文は入れない**） | 不要     |
 | `GET /assets/ui.js` / `style.css` | 束ねたもの（メモリ。11章の見張りで差し替わる）                                                                        | 不要     |
-| `GET /vendor/<name>`              | allowlist の対応表にある同梱物だけ（いまのまま）                                                                      | 不要     |
+| `GET /vendor/<name>`              | allowlist の対応表にある外部ライブラリだけ（実ファイルは `node_modules`。`vendor-asset.ts`）                          | 不要     |
 | `GET /character/<file>`           | いまのパックの素材。**`character.json` に書かれたファイル名だけ**を配る（パスから組み立てない）                       | 不要     |
 | `GET /ws?t=<token>`               | WebSocket。Origin とトークンを確かめてから upgrade                                                                    | **必要** |
 
@@ -626,15 +625,16 @@ react-markdown
 
 ### 6.4 重いライブラリ
 
-| もの                                                               | 読み方                                                                                                                         | 置き場所           |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `bun build` が npm から束ねる                                                                                                  | `node_modules`     |
-| highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS は `vendor/` のまま                                        | 束ねる / `vendor/` |
-| mermaid（3.3MB）・Chart.js                                         | いまのまま **`vendor/` に置き、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く | `vendor/`          |
-| Idiomorph                                                          | **消える**                                                                                                                     | —                  |
+| もの                                                               | 読み方                                                                                                                      | 置き場所            |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `bun build` が npm から束ねる                                                                                               | `node_modules`      |
+| highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS だけ `/vendor/` で配る                                  | 束ねる / `/vendor/` |
+| mermaid（3.3MB）・Chart.js                                         | **束ねず `/vendor/` で配り、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く | `/vendor/`          |
+| Idiomorph                                                          | **消える**                                                                                                                  | —                   |
 
-CDN からは読まない（いまのまま）。`bun build` の出力は1本（コード分割はしない。分割すると
-ディスクに置かないメモリ配信と噛み合わない）。
+`/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/adapter/vendor-asset.ts`）で、
+**CDN からは読まない**。`bun build` の出力は1本（コード分割はしない。分割するとディスクに
+置かないメモリ配信と噛み合わない）。
 
 ### 6.5 立ち絵の動き
 
@@ -932,14 +932,15 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 **足す依存**（`CLAUDE.md`「外部依存を増やすときは承認を得る」。**2026-09-13 に「移行しようか」の
 決定で一括して承認済み**。ここに無いものを足すときは改めて承認を得る）:
 
-| 種別    | パッケージ                                                                         | 用途                                                             |
-| ------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| runtime | `react` `react-dom`                                                                | ui                                                               |
-| runtime | `ws`                                                                               | core の WebSocket サーバ                                         |
-| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                         |
-| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）。2026-09-13 にユーザーの承認を得て追加 |
-| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                       |
-| dev     | `playwright-core`                                                                  | 画面全体の確認（10章）                                           |
+| 種別    | パッケージ                                                                         | 用途                                                                                  |
+| ------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| runtime | `react` `react-dom`                                                                | ui                                                                                    |
+| runtime | `ws`                                                                               | core の WebSocket サーバ                                                              |
+| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                                              |
+| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）。2026-09-13 にユーザーの承認を得て追加                      |
+| runtime | `mermaid` `chart.js` `highlight.js`                                                | ブラウザへそのまま配る外部ライブラリ（6.4）。2026-09-20 に `vendor/` の同梱から移した |
+| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                                            |
+| dev     | `playwright-core`                                                                  | 画面全体の確認（10章）                                                                |
 
 `zod` はある。`@anthropic-ai/claude-agent-sdk` はある。**`Bun.*` の固有 API に寄せない**規約は続く
 （`ws` を選ぶのはそのため）。

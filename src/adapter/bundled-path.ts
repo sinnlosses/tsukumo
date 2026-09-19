@@ -1,4 +1,4 @@
-// tsukumo が自分で持ち歩く同梱物（`vendor/` の外部ライブラリ、既定の立ち絵など）の置き場所を
+// tsukumo が自分で持ち歩くもの（既定の立ち絵、`node_modules` の外部ライブラリなど）の置き場所を
 // 解く。**cwd には依存しない。** どのプロジェクトのディレクトリで起こしても、同梱物は
 // tsukumo 自身が置かれている場所から読む（docs/requirements.md 4.6）。
 
@@ -28,7 +28,8 @@ export function resolveBundledDir(
  * 同梱物のパスを、tsukumo 自身の場所からの相対パスで解く。基準はこのファイルの2つ上
  * （`src/core/` からリポジトリのルートへ）。呼び出し側は cwd を渡さない・気にしない。
  *
- * 例: `bundledFilePath("vendor", "htmx.min.js")` / `bundledFilePath("characters", "tsukumo-spirit")`
+ * 例: `bundledFilePath("characters", "tsukumo-spirit")` /
+ * `bundledFilePath("node_modules", "mermaid", "dist", "mermaid.min.js")`
  */
 export function bundledFilePath(...relativeSegments: readonly string[]): string {
   return join(fileURLToPath(new URL("../..", import.meta.url)), ...relativeSegments)

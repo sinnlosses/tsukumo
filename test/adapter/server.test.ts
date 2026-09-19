@@ -363,7 +363,7 @@ describe("startViewServer", () => {
     expect(await response.text()).toBe(TEST_STYLE_SHEET)
   })
 
-  it("同梱した外部ライブラリを配る（allowlist に載っている名前だけ）", async () => {
+  it("外部ライブラリを配る（allowlist に載っている名前だけ）", async () => {
     const server = await startView()
     const origin = viewOrigin(server)
 
@@ -377,7 +377,7 @@ describe("startViewServer", () => {
     expect((await chart.text()).length).toBeGreaterThan(1000)
   })
 
-  it("消えた同梱ファイル（highlight.min.js / idiomorph.min.js）はもう配らない（移行の段6）", async () => {
+  it("消えたファイル（highlight.min.js / idiomorph.min.js）はもう配らない（移行の段6）", async () => {
     const server = await startView()
     const origin = viewOrigin(server)
 
@@ -385,7 +385,7 @@ describe("startViewServer", () => {
     expect((await fetch(`${origin}/vendor/idiomorph.min.js`)).status).toBe(404)
   })
 
-  it("同梱していない名前・上のディレクトリを指す名前は配らない", async () => {
+  it("allowlist に無い名前・上のディレクトリを指す名前は配らない", async () => {
     const server = await startView()
     const origin = viewOrigin(server)
 

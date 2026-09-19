@@ -18,7 +18,7 @@ export function applyRefresh(target: RefreshTarget): void {
     return
   }
 
-  // 同梱の `vendor/` の分もまとめて取り直すことになるが、`max-age` が効いていて実害が無い
+  // 外部ライブラリのテーマ CSS もまとめて取り直すことになるが、`max-age` が効いていて実害が無い
   // （経路名で選り分けると、その名前を ui 側に書くことになる）。
   for (const link of document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')) {
     const url = new URL(link.href)

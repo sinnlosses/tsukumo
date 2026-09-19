@@ -1,8 +1,8 @@
-// `vendor/` に同梱した外部ライブラリが、ブラウザのグローバルに置くものの型。
+// 外部ライブラリが、ブラウザのグローバルに置くものの型。
 //
-// **ライブラリ本体は npm から入れていない**（`vendor/README.md`。CDN も使わず、自分のサーバから
-// 配る）ので、型定義も付いてこない。ここに**使っている分だけ**を手で書く。使っていない API を
-// 足さない（書いた分が「使ってよい」の線になる）。
+// **パッケージは npm にあるが、束ねずに素の JavaScript を `<script>` で読む**ので、そこから型は
+// 付いてこない（`src/adapter/vendor-asset.ts`）。ここに**使っている分だけ**を手で書く。
+// 使っていない API を足さない（書いた分が「使ってよい」の線になる）。
 //
 // **DOM を morph するライブラリと hljs は無い**（移行の段6。領域の差し替えごと DOM を書き換える経路は消え、
 // コードの色付けは `rehype-highlight` が hast の時点で済ませるので、ブラウザ側で
@@ -10,7 +10,7 @@
 
 declare global {
   /**
-   * mermaid（`vendor/mermaid.min.js`）。**`src/ui/features/main-view/markdown/mermaid-block.tsx`
+   * mermaid（`/vendor/mermaid.min.js` から読む）。**`src/ui/features/main-view/markdown/mermaid-block.tsx`
    * が図の記法を見つけたときだけ**動的に読み込むので、参照する時点（読み込みの `then` の中）
    * では必ず存在する。
    */
@@ -30,7 +30,7 @@ declare global {
   }
 
   /**
-   * Chart.js（`vendor/chart.umd.min.js`）。mermaid と同じく、必要になったときだけ読み込む。
+   * Chart.js（`/vendor/chart.umd.min.js` から読む）。mermaid と同じく、必要になったときだけ読み込む。
    * `defaults` は**明るい背景向けの既定値**（文字 `#666`・目盛り線 `rgba(0,0,0,0.1)`）を
    * 暗い配色へ寄せるためだけに触る（`src/ui/features/main-view/markdown/chart-block.tsx`）。
    */

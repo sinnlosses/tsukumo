@@ -1,5 +1,6 @@
-// 同梱ライブラリ（`vendor/`）を `<script>` で読み込む。**その記法が実際に出てきたときだけ**
-// 読む（`docs/requirements.md` 4.2）ので、`<head>` へ置くのはここが最初に呼ばれた瞬間。
+// 外部ライブラリを `<script>` で読み込む（配るのは tsukumo 自身のサーバ。
+// `src/adapter/vendor-asset.ts`）。**その記法が実際に出てきたときだけ**読む
+// （`docs/requirements.md` 4.2）ので、`<head>` へ置くのはここが最初に呼ばれた瞬間。
 //
 // 同じ URL を何度読み込んでも1回のリクエストで済むよう、**読み込み中の Promise をモジュールの
 // トップレベルで覚えておく**（`src/ui/features/main-view/markdown/mermaid-block.tsx` / `chart-block.tsx` の両方、
@@ -7,7 +8,7 @@
 
 const loaded = new Map<string, Promise<void>>()
 
-/** `src` の同梱スクリプトを読み込む。2回目以降は同じ Promise を返す（キャッシュ）。 */
+/** `src` のスクリプトを読み込む。2回目以降は同じ Promise を返す（キャッシュ）。 */
 export function loadVendorScript(src: string): Promise<void> {
   const existing = loaded.get(src)
   if (existing !== undefined) {

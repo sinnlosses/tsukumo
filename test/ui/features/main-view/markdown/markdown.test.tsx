@@ -344,7 +344,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   it("```diff フェンスの足した行・消した行が色分けされる", () => {
     // 規約が \`\`\`diff を勧めている根拠（src/core/report-notation.ts のコードの行）。
     // rehype-highlight（lowlight の common に diff が入っている）が付ける class と、
-    // 同梱テーマ（vendor/highlight-theme.min.css）の .hljs-addition / .hljs-deletion が対。
+    // テーマ（highlight.js の github-dark）の .hljs-addition / .hljs-deletion が対。
     const { container } = render(<Markdown text={"```diff\n-const a = 1\n+const a = 2\n```"} />)
 
     expect(container.querySelector("pre code.language-diff .hljs-addition")?.textContent).toBe(

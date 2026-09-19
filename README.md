@@ -68,7 +68,7 @@
 - **hook の登録が要らない** — 表情・衣装・作業の進行はすべて SDK のイベントから決まるので、
   `~/.claude/settings.json` に足すものは何も無い
 - **外部通信ゼロで表示する** — ビューは `127.0.0.1` にだけバインドし、外部ライブラリは
-  `vendor/` に同梱して自前で配る
+  `node_modules` から自前で配る（CDN を踏ませない）
 
 ## Quick Start
 
@@ -247,9 +247,9 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 - SDK は `claude` を子プロセスとして起こすだけ、`speak` は tsukumo のプロセス内の MCP サーバ
   （戻り値は `"ok"` だけ）、ビューは `127.0.0.1` にだけバインドする
 - **ビューはファイルに書き出さない。** 本文はメモリに持ち、HTTP で配るだけ
-- **外部ライブラリは `vendor/` に同梱する**（[`vendor/README.md`](./vendor/README.md)）。
-  CDN から読むと、レポート本文が載ったページで外部スクリプトが動き、表示のたびに外部へ
-  リクエストが飛ぶため。同梱することで**表示時の外部通信はゼロ**になる
+- **外部ライブラリは CDN から読まず、自分のサーバ（`node_modules` の実ファイル）から配る**
+  （`src/adapter/vendor-asset.ts`）。CDN から読むと、レポート本文が載ったページで外部スクリプトが
+  動き、表示のたびに外部へリクエストが飛ぶため。自分で配れば**表示時の外部通信はゼロ**になる
 
 詳細は [`docs/coding-standards.md`](./docs/coding-standards.md)「会話内容の扱い」が正典です。
 
@@ -284,7 +284,6 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 │   └── cli.ts              # 配線（composition root）。起動時の前提チェック・終了処理
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
-├── vendor/                 # 同梱している外部ライブラリ（編集しない）
 ├── scripts/                # 閉じたタブを開き直す道具など
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）

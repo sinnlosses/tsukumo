@@ -13,7 +13,6 @@
 //   - 送り返す `error` の理由は定型文だけ（会話の内容を混ぜない）
 
 import { randomBytes } from "node:crypto"
-import { readFileSync } from "node:fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import process from "node:process"
 import { type Duplex } from "node:stream"
@@ -25,12 +24,8 @@ import { CHARACTER_ASSET_PATH_PREFIX } from "../protocol/character.ts"
 import { type ClientCommand, parseClientCommand } from "../protocol/command.ts"
 import { FRAME_ERROR_REASON, type ServerFrame } from "../protocol/frame.ts"
 import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../protocol/session-socket.ts"
-import {
-  VENDOR_ASSET_CONTENT_TYPES,
-  VENDOR_PATH_PREFIX,
-  vendorAssetPath,
-} from "../protocol/vendor-asset.ts"
-import { bundledFilePath } from "./bundled-path.ts"
+import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../protocol/vendor-asset.ts"
+import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
  * 受け取るメッセージ1件の上限（バイト）。**立ち絵1枚（デコード後 2 MiB）を data URL で運べる
@@ -361,28 +356,20 @@ function buildLayoutPage(): string {
 }
 
 /**
- * 同梱した外部ライブラリ（`vendor/`）を配る。**名前は allowlist の対応表に載っているものだけ**で、
- * リクエストのパスからファイル名を組み立てないので、`..` で外のファイルを読み出す経路が無い。
- * 置き場所はモジュールからの相対で解決する（cwd に依存させない）。
+ * 外部ライブラリ（`src/adapter/vendor-asset.ts` が `node_modules` から読む）を配る。名前が指す
+ * 中身の判断はそちらに任せ、ここは結果をそのまま配るか404にするだけ。**依存が入っていなくても
+ * 配信は続ける**（表示物が1つ欠けても起動失敗にしない）。
  */
 function writeVendorAsset(response: ServerResponse, name: string): void {
-  const contentType = VENDOR_ASSET_CONTENT_TYPES[name]
-  if (contentType === undefined) {
+  const asset = readVendorAsset(name)
+  if (asset === undefined) {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
     response.end("not found\n")
     return
   }
 
-  const content = readOptionalFile(bundledFilePath("vendor", name))
-  if (content === undefined) {
-    // 同梱ファイルが無くても配信は続ける（表示物が1つ欠けても起動失敗にしない）。
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-    response.end("not found\n")
-    return
-  }
-
-  response.writeHead(200, { "content-type": contentType, "cache-control": "max-age=3600" })
-  response.end(content)
+  response.writeHead(200, { "content-type": asset.contentType, "cache-control": "max-age=3600" })
+  response.end(asset.content)
 }
 
 /**
@@ -403,14 +390,6 @@ function writeCharacterAsset(
 
   response.writeHead(200, { "content-type": asset.contentType, "cache-control": "no-store" })
   response.end(asset.content)
-}
-
-function readOptionalFile(path: string): Buffer | undefined {
-  try {
-    return readFileSync(path)
-  } catch {
-    return undefined
-  }
 }
 
 function writeHtml(response: ServerResponse, html: string): void {
