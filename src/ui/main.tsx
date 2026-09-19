@@ -1,5 +1,7 @@
 // ブラウザ側の入口。**`bun build src/ui/main.tsx --target=browser` がここから辿って束ねる**
-// （tsconfig の `"jsx": "react-jsx"`）。副作用（`createRoot(...).render(...)`）を持つのは
+// （tsconfig の `"jsx": "react-jsx"`）。**CSS もここから辿る**（下の `styles/theme.css` と、
+// 各機能が import する `*.module.css`）ので、スクリプトと CSS は1回の組み立てから出る対になる
+// （`src/adapter/bundle.ts`）。副作用（`createRoot(...).render(...)`）を持つのは
 // ここだけ（`docs/architecture.md`「入口だけに副作用を置く」）。
 //
 // **選んでいるターンは `<TurnSelectionProvider>` が配る**（メインビューのタブとキャラビューの
@@ -30,6 +32,9 @@ import { Sidebar } from "./features/sidebar/sidebar.tsx"
 import { useScreen } from "./stores/screen.tsx"
 import { SessionProvider } from "./stores/session.tsx"
 import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
+// ページ全体の下地（トークン・body・リンク）。**グローバルな CSS はこれだけ**で、機能ごとの
+// 見た目は各機能の `*.module.css` にある（docs/design.md 6.6）。
+import "./styles/theme.css"
 
 /**
  * 出している画面を選ぶ（`location.hash`。docs/design.md 13.6）。**会話の画面は外さず

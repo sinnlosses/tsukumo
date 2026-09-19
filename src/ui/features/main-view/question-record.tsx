@@ -10,6 +10,7 @@ import { type ReactElement } from "react"
 
 import { type MainViewQuestion } from "../../../protocol/main-view.ts"
 import { type Question, type QuestionAnswer } from "../../../protocol/question.ts"
+import styles from "./main-view.module.css"
 
 export type QuestionRecordProps = {
   readonly entry: MainViewQuestion
@@ -17,9 +18,9 @@ export type QuestionRecordProps = {
 
 export function QuestionRecord(props: QuestionRecordProps): ReactElement {
   return (
-    <section className="tool-block tool-block-question">
+    <section className={`${styles["tool-block"]} ${styles["tool-block-question"]}`}>
       {props.entry.questions.map((question, index) => (
-        <div className="question-record" key={`${question.header}-${String(index)}`}>
+        <div className={styles["question-record"]} key={`${question.header}-${String(index)}`}>
           <h4>
             {question.header}: {question.text}
           </h4>
@@ -40,17 +41,23 @@ function QuestionAnswers(props: {
   )
 
   return (
-    <ul className="question-options">
+    <ul className={styles["question-options"]}>
       {props.question.options.map((option) => {
         const chosen = props.answer.includes(option.label)
         return (
-          <li className={`question-option${chosen ? " is-chosen" : ""}`} key={option.label}>
+          <li
+            className={`${styles["question-option"]}${chosen ? ` ${styles["is-chosen"]}` : ""}`}
+            key={option.label}
+          >
             {chosen ? "●" : "○"} {option.label}
           </li>
         )
       })}
       {freeTexts.map((text) => (
-        <li className="question-option is-chosen is-free-text" key={text}>
+        <li
+          className={`${styles["question-option"]} ${styles["is-chosen"]} ${styles["is-free-text"]}`}
+          key={text}
+        >
           ● {text}（自由入力）
         </li>
       ))}

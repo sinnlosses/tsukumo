@@ -67,9 +67,9 @@
   gap: 0.4rem;
 }
 /* **立ち絵は枠も地も持たない**（13.1 原則2。`ground` の上に直接置く）。大きさはここで決める
-   — `character.css` の割合指定（`--portrait-height` / `--portrait-drop`）は `.character-region`
-   が持つ変数なので、この画面では解決されない（＝ height: auto に落ちる）。 */
-.character-gallery .portrait {
+   （`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は
+   `.character-region` が持つ変数なので、この画面では解決されない）。 */
+.character-gallery .character-gallery-portrait {
   margin: 0;
   height: 8rem;
   max-width: 100%;

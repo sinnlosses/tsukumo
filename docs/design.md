@@ -168,6 +168,7 @@ src/
   ui/
     main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）
     css-variable.d.ts         ui 全体に効く型拡張（import されない ambient 宣言）
+    css-module.d.ts           `*.module.css` を import したときの型（同上）
     features/                 機能。**機能どうしは import しない**
       layout/                 Layout・領域の枠・リサイザ・比率の保存
       main-view/              TurnTabs・Turn・Report・QuestionRecord と markdown/（unified 一式）
@@ -175,10 +176,11 @@ src/
       sidebar/                Activity・TaskList・TaskBoard（表のモーダル）・SessionInfo
       dispatch/               Composer・CommandSuggestions・PendingAnswer・TurnStatus
       character-screen/       キャラクター画面と作る画面（13.6）。立ち絵・差し色の差し替え、使う人が変える色
-    components/               機能の語彙を持たない React の部品（Select・Portrait）
+                              （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
+    components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
     lib/                      機能の語彙を持たない道具（WebSocket・再読み込み・要約・設定の保存）
     stores/                   画面全体で共有する状態（セッション・選んでいるターン・出している画面）
-    styles/                   CSS。main.css の @import で束ねる（機能と同居させない）
+    styles/                   グローバルな CSS はこの1枚だけ（theme.css。トークン・body・リンク）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts（いまのまま）
 characters/<name>/            character.json・persona.md・素材
 vendor/                       mermaid・Chart.js・highlight のテーマ CSS（Idiomorph は消える）
@@ -199,7 +201,7 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
 | `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る） | `lib` / `protocol`                           |
 | `lib/`        | 機能の語彙を持たない道具（React の部品ではないもの）              | `protocol`                                   |
 | `stores/`     | **画面全体で共有する状態**の Context と、それを読む hook          | `lib` / `protocol`                           |
-| `styles/`     | CSS。`main.css` の `@import` が束ねる（読み込み順が正しさの一部） | —                                            |
+| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）  | —                                            |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
   （zustand を入れない決定は 6.2 のまま。中身は `useReducer` + Context）。実体は3つあり、
@@ -288,7 +290,7 @@ vendor/                       mermaid・Chart.js・highlight のテーマ CSS（
 ### 起動
 
 1. `cli.ts` が `config.ts` で環境変数を読む（ポート・キャラクター・自動オープン・駆動の種類・新規起動）
-2. `bundle.ts` が `ui/main.tsx` と `ui/styles/main.css` を `bun build` で束ね、メモリに持つ
+2. `bundle.ts` が `ui/main.tsx` を `bun build` で束ね、**スクリプトと CSS の1組**をメモリに持つ
    （失敗は起動時の前提不足として即時終了。いまと同じ）
 3. `character-pack.ts` が既定のパック（または指定されたもの）を読む
 4. `server.ts` が `127.0.0.1` で listen し、**起動トークン**を1つ作る
@@ -654,19 +656,44 @@ CDN からは読まない（いまのまま）。`bun build` の出力は1本（
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）
 
-**既にあるもの**（`src/ui/styles/character.css`）: `portrait-fade-in`（登場）・`balloon-appear`・
-`balloon-push-up`。登場はここで作り直さない。
+**既にあるもの**: `portrait-fade-in`（登場。`components/portrait.module.css`）・`balloon-appear`・
+`balloon-push-up`（`features/character-view/character-view.module.css`）。登場はここで作り直さない。
 
 ### 6.6 CSS
 
-CSS は `src/ui/styles/` に集め、**機能と同居させない**（2026-09-16 の判断）。クラス名は用語集の語
-（`balloon` / `portrait` / `turn-tab` など）を保つ。CSS Modules は使わない（既存の資産をそのまま
-活かす）。`main.css` の `@import` を `bun build` で束ねる形もいまのまま。
+**CSS Modules（`*.module.css`）を機能と同居させる**（2026-09-20 の判断。2026-09-16 の
+「`src/ui/styles/` に集め、機能と同居させない」を置き換えた）。置き場は**機能ごとに1枚**
+（`features/<機能>/<機能>.module.css`）と、**自分の見た目を持つ共有部品の隣**
+（`components/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
+トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
+**16進の色を書いてよいのもそこだけ**（13.2）。
 
-同居させない理由は2つ。**(1) クラス名がグローバルで、読み込み順（`narrow-screen.css` が最後）が
-正しさの一部**なので、束ねる場所が正典であり続ける必要がある。(2) 機能に1対1で対応しない CSS が
-ある（`theme.css` / `narrow-screen.css`）ので、同居させても半分は共有の箱に残り、「機能の中に
-あるのに機能に閉じていない」ファイルができる。
+class 名は用語集の語（`balloon` / `portrait` / `turn-tab` など）を**そのまま**保ち、部品からは
+`styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
+`balloon-track_uHH43w` のように**組み立てのたびにハッシュ化される**ので、外から要素を指す口が
+要るところは `data-*` を持つ（4領域の `data-region`。`scripts/capture-view.ts` が使う）。
+
+同居に移した理由は3つ。
+
+1. **読み込み順に頼らなくなった。** 以前の反対理由（クラス名がグローバルで、読み込み順が
+   正しさの一部）は `narrow-screen.css` が他のファイルの選択子を後から上書きしていたためだった。
+   狭い画面の規則を**各機能の `@media` へ分解**したので、上書きは同じファイルの中で閉じる
+2. **名前の衝突が起こらない。** 機能をまたいだ `.question-*`（質問の記録と答え待ち）のように、
+   同じ語を別の意味で使っても混ざらない
+3. **機能に1対1で対応しない CSS はほぼ消えた**（もう1つの反対理由）。残ったグローバルは
+   `theme.css` 1枚で、これは「機能の中にあるのに機能に閉じていない」ファイルではなく
+   **ページの下地**である
+
+**機能をまたいで見た目が要るときは className を渡す**（CSS の選択子で他の機能の class を
+指さない）。`<Portrait>` が例で、立ち絵そのものの中身と動きは `components/portrait.module.css`、
+**どこにどれだけの大きさで置くか**は呼び出し側（キャラビュー／キャラクター画面）が
+`className` で足す。打ち消しは**親の class から**書いて（`.character-layout .portrait`）、
+読み込み順ではなく詳細度で勝たせる。
+
+**テストの中では class 名が CSS に書いた綴りのまま届く**（`test/css-module-loader.ts` が
+`bun test` の読み込みに差し込む）。`bun` のテストランナーは CSS を組み立てないので、これが無いと
+対応表が空で届いて class 名が全部 `undefined` になる。CSS に無い名前は `undefined` のままなので、
+**綴りを間違えるとテストで落ちる**。
 
 ## 7. キャラクターパック
 
@@ -852,8 +879,12 @@ API を使わない形になる。
 
 ## 11. ビルドと依存
 
-- `bundle.ts` は `bun build src/ui/main.tsx --target=browser` と `bun build src/ui/styles/main.css`
-  を起動時に起こす（いまと同じ形。JSX は tsconfig の `"jsx": "react-jsx"` で自動）
+- `bundle.ts` は `bun build src/ui/main.tsx --target=browser --outdir <一時ディレクトリ>` を
+  起動時に1回起こし、**出てきた `.js` と `.css` を読んでから消す**（JSX は tsconfig の
+  `"jsx": "react-jsx"` で自動。CSS は `main.tsx` から import で辿れるものが1本にまとまる）。
+  **成果物をディスクに残さない**という 2026-09-12 の決定は変わらない（`--outdir` が要るのは
+  CSS Modules で出力が2本になるため。`docs/architecture.md`「CSS Modules の成果物は一時
+  ディレクトリへ出して読み、すぐ消す」）
 - tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は `@types/bun` が持っているのでそのまま
 - **HMR（差分を当てる）は持たない。** 代わりに、**`src/ui/` を見張って組み立て直し、開いている
   タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。**Vite は足していない**し、
@@ -867,12 +898,16 @@ API を使わない形になる。
 
 **救えるのはブラウザに配る側だけ**で、`src/` を直すたびに上げ直さずに済むわけではない:
 
-| 直した場所                  | どうなるか                                                                         |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `src/ui/**/*.css`           | CSS だけ取り直す（`refresh` の `style`）。**ターンの選択も入力欄の書きかけも残る** |
-| `src/ui/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る       |
-| `src/protocol/`             | **プロセスの上げ直しが要る**（下）                                                 |
-| `src/core/` `src/cli.ts`    | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある       |
+| 直した場所                  | どうなるか                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `src/ui/**/*.css`           | ページを読み込み直す（下の注記）。状態は繋ぎ直しの `hello` で戻る            |
+| `src/ui/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る |
+| `src/protocol/`             | **プロセスの上げ直しが要る**（下）                                           |
+| `src/core/` `src/cli.ts`    | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある |
+
+**CSS だけを取り直す道（`refresh` の `style`）は使わない**（2026-09-20）。CSS Modules の class 名は
+ハッシュ化されて JS 側の対応表にも焼かれるので、片方だけ新しくすると綴りが食い違って崩れた画面が
+残る。`protocol` には `style` が残っているが、押すのは常に `page`。
 
 `src/protocol/` を見張らないのは、**畳み込み（`session-state.ts`）がサーバ側でも回っている**から。
 ブラウザ側だけ新しくすると、新旧が食い違ったまま動く状態ができる。片方だけ救うより
@@ -957,7 +992,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 ## 13. 画面のデザイン
 
 見た目の正典。**ここに書いてあるのは計画であって、CSS はこれを写したもの**（写す先は
-`src/ui/styles/`。トークンは `theme.css` に置く）。
+各機能の `*.module.css`。トークンは `src/ui/styles/theme.css` に置く。6.6）。
 
 いまの見た目は積み上げで決まったもので、**17色が 114 箇所**に直接書かれ、色と書体の
 カスタムプロパティは無く、`font-size` は7種類ばらばら、という状態から起こした。
@@ -1166,8 +1201,8 @@ import 先が解けないとき（＝書きかけを保存したとき）。
   ラベルと「選ぶ」だけ
 - **`<Portrait>` は `components/portrait.tsx` へ上げる**（2つ目の読み手が出た。2章）。中身は
   変えず、キャラビューの動きの hooks はキャラビューに残る。並びでの大きさは
-  `styles/character-screen.css` が決める（`character.css` の割合指定は `.character-region` の
-  変数が無いので効かない）
+  `character-screen.module.css` が決め、`<Portrait>` に `className` で渡す（キャラビュー側の
+  割合指定は `.character-region` の変数が無いので効かない。6.6）
 - 変えられないパック（`editable: false`）は、並びの上に一言を出して口を無効にする（7.1）
 - 差し色は衣装4つを1行に（色見本＋ラベル）、画面の色は3つを1行に。どちらも
   `<input type="color">` のまま

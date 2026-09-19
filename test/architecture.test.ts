@@ -184,10 +184,11 @@ describe("ui/ の機能どうしの import", () => {
 // `main.tsx` / `features/` / `components/` / `lib/` / `stores/` という箱をまたぐ辺を見る
 // （`protocol` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
-// `ui/css-variable.d.ts`（ui 直下にあり箱に属さない ambient 宣言）と `ui/styles/`（CSS のみで
-// `.ts`/`.tsx` を持たない）はどの箱にも属さないので、import 元・import 先のどちらでも無視する。
-// 未知のディレクトリが `ui/` 直下に増えたときにテストの直し忘れで素通りしないよう、
-// `main.tsx` でも `css-variable.d.ts`/`styles` でもない未知の区画は `layerOf` と同じく `throw` する。
+// `ui/` 直下の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
+// `ui/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
+// import 元・import 先のどちらでも無視する。未知のディレクトリが `ui/` 直下に増えたときに
+// テストの直し忘れで素通りしないよう、`main.tsx` でも `*.d.ts`/`styles` でもない未知の区画は
+// `layerOf` と同じく `throw` する。
 const UI_BOXES = ["main", "features", "components", "lib", "stores"] as const
 type UiBox = (typeof UI_BOXES)[number]
 
@@ -247,7 +248,7 @@ function uiBoxOf(relPath: string): UiBox | undefined {
   if (relPath === "ui/main.tsx") {
     return "main"
   }
-  if (relPath === "ui/css-variable.d.ts") {
+  if (relPath.endsWith(".d.ts") && relPath.split("/").length === 2) {
     return undefined
   }
   const [, second] = relPath.split("/")

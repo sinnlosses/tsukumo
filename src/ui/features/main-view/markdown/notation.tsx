@@ -11,23 +11,25 @@
 import { type JSX, type ReactElement, type ReactNode } from "react"
 import { type ExtraProps } from "react-markdown"
 
+import styles from "../main-view.module.css"
+
 /**
- * モデルが書く class 名 → tsukumo が装飾に使う class 名（見た目は `src/ui/styles/main-view.css`）。
- * ここに無い名前は素通しする。
+ * モデルが書く class 名 → tsukumo が装飾に使う class 名（`main-view.module.css` のもの。
+ * 組み立て時にハッシュ化される）。ここに無い名前は素通しする。
  */
-const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map([
-  ["note", "report-note"],
-  ["note-warn", "report-note-warn"],
-  ["note-ng", "report-note-ng"],
-  ["note-favor", "report-note-favor"],
-  ["badge", "report-badge"],
-  ["badge-ok", "report-badge-ok"],
-  ["badge-warn", "report-badge-warn"],
-  ["badge-ng", "report-badge-ng"],
-  ["cols", "report-cols"],
-  ["card", "report-card"],
-  ["stats", "report-stats"],
-  ["stat", "report-stat"],
+const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map([
+  ["note", styles["report-note"]],
+  ["note-warn", styles["report-note-warn"]],
+  ["note-ng", styles["report-note-ng"]],
+  ["note-favor", styles["report-note-favor"]],
+  ["badge", styles["report-badge"]],
+  ["badge-ok", styles["report-badge-ok"]],
+  ["badge-warn", styles["report-badge-warn"]],
+  ["badge-ng", styles["report-badge-ng"]],
+  ["cols", styles["report-cols"]],
+  ["card", styles["report-card"]],
+  ["stats", styles["report-stats"]],
+  ["stat", styles["report-stat"]],
 ])
 
 /** お願い（`docs/glossary.md`「お願い」）の class 名と、tsukumo が付けるラベル。 */
@@ -51,7 +53,7 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
   if (isFavor(className)) {
     return (
       <div {...rest} className={resolved}>
-        <span className="report-note-favor-label">{FAVOR_LABEL}</span>
+        <span className={styles["report-note-favor-label"]}>{FAVOR_LABEL}</span>
         {children as ReactNode}
       </div>
     )

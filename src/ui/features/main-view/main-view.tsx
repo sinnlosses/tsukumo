@@ -16,6 +16,7 @@ import { mainViewTurns } from "../../../protocol/main-view.ts"
 import { mainViewEntries } from "../../../protocol/session-state.ts"
 import { useSession } from "../../stores/session.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
+import styles from "./main-view.module.css"
 import { TurnTabs } from "./turn-tabs.tsx"
 import { Turn } from "./turn.tsx"
 
@@ -42,13 +43,13 @@ export function MainView(): ReactElement {
   }, [activeTurnId])
 
   if (turnsNewestFirst.length === 0) {
-    return <p className="placeholder">{EMPTY_MESSAGE}</p>
+    return <p className={styles["placeholder"]}>{EMPTY_MESSAGE}</p>
   }
 
   const activeTurn = turnsNewestFirst.find((turn) => turn.id === activeTurnId)
 
   return (
-    <div className="main-turns" ref={scrollerRef}>
+    <div className={styles["main-turns"]} ref={scrollerRef}>
       <TurnTabs turnIds={turnIds} activeTurnId={activeTurnId} onSelect={selectTurn} />
       {activeTurn !== undefined && <Turn turn={activeTurn} />}
     </div>

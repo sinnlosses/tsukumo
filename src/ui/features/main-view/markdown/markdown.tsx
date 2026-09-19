@@ -36,6 +36,7 @@ import rehypeSanitize from "rehype-sanitize"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
+import styles from "../main-view.module.css"
 import { ChartBlock } from "./chart-block.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationBlock, NotationInline } from "./notation.tsx"
@@ -130,11 +131,11 @@ type SectionHeadingProps = JSX.IntrinsicElements["h2"] & ExtraProps
 
 /**
  * レポートの見出し `##`（mdast の depth 2。hast では `h2`）を `h4` として描く。ページには
- * 利用者の依頼を示す本物の `<h2 className="turn-request">` が1つあるので（`turn.tsx`）、
+ * 利用者の依頼を示す本物の `<h2 className={styles["turn-request"]}>` が1つあるので（`turn.tsx`）、
  * レポートの中の見出しが同じ段に並ぶと見出しの階層が壊れる。**許可リスト
  * （{@link REPORT_SANITIZE_SCHEMA}）には `h2` のまま残す**（サニタイズはここより前に効くので、
  * 落としてしまうと書き替える前に中身が消える）。見た目は `.detail-block h4`
- * （`src/ui/styles/main-view.css`）。
+ * （`main-view.module.css`）。
  */
 function SectionHeading(props: SectionHeadingProps): ReactElement {
   const { node: _node, children, ...rest } = props
@@ -169,14 +170,14 @@ type TableProps = JSX.IntrinsicElements["table"] & ExtraProps
 
 /**
  * 表。**列が多い表は領域の内幅に収まらない**ので、横スクロールの器で包んで表だけを転がす
- * （ページ全体は横スクロールさせない。`.table-scroll` の CSS は `src/ui/styles/main-view.css`）。
+ * （ページ全体は横スクロールさせない。`.table-scroll` の CSS は `main-view.module.css`）。
  * **器は React 側で作るので、{@link REPORT_SANITIZE_SCHEMA} の許可リストは通らない**
  * （レポートの記法は増えない）。
  */
 function Table(props: TableProps): ReactElement {
   const { node: _node, children, ...rest } = props
   return (
-    <div className="table-scroll">
+    <div className={styles["table-scroll"]}>
       <table {...rest}>{children as ReactNode}</table>
     </div>
   )

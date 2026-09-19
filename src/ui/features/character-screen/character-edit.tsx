@@ -1,7 +1,7 @@
 // キャラクター画面の主役、**立ち絵の並びと差し色**（`docs/design.md` 13.6 / 7.1）。
 // **立ち絵そのものが差し替えの口になる** — 表情ごとに1枚のカードを `EXPRESSIONS` の順に並べ、
 // カードの中で「差し替える」「消す」を出す。立ち絵が無い表情は点線の枠の空きにラベルと
-// 「選ぶ」だけを出す（大きさと枠は `src/ui/styles/character-screen.css`）。
+// 「選ぶ」だけを出す（大きさと枠は `character-screen.module.css`）。
 //
 // 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` の3つで、**書き込み先と
 // 反映はサーバ側**（`src/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を
@@ -28,6 +28,7 @@ import { Portrait } from "../../components/portrait.tsx"
 import { readDataUrl } from "../../lib/data-url.ts"
 import { useSession } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
+import styles from "./character-screen.module.css"
 
 /**
  * `<input type="file">` に出す受け付ける種類。**中身の検証はサーバ側**
@@ -81,15 +82,15 @@ export function CharacterEdit(): ReactElement | null {
 
   return (
     <>
-      {disabled ? <p className="character-screen-note">{NOT_EDITABLE_NOTE}</p> : null}
-      <div className="character-gallery">
+      {disabled ? <p className={styles["character-screen-note"]}>{NOT_EDITABLE_NOTE}</p> : null}
+      <div className={styles["character-gallery"]}>
         {EXPRESSIONS.map((expression) => {
           const label = resolveExpressionLabel(character.expressions, expression)
           const url = character.portraits[expression]
           return (
-            <div className="character-gallery-card" key={expression}>
+            <div className={styles["character-gallery-card"]} key={expression}>
               {url === undefined ? (
-                <span className="character-gallery-blank" />
+                <span className={styles["character-gallery-blank"]} />
               ) : (
                 <Portrait
                   url={url}
@@ -98,16 +99,17 @@ export function CharacterEdit(): ReactElement | null {
                   expression={expression}
                   outfit={GALLERY_OUTFIT}
                   motion={undefined}
+                  className={styles["character-gallery-portrait"]}
                 />
               )}
-              <span className="character-gallery-label">{label}</span>
+              <span className={styles["character-gallery-label"]}>{label}</span>
               {/* 見える字は「差し替える」「選ぶ」だけ（カードが狭い）。**どの表情のことかは
                   読み上げに残す**ので、`<input>` 側に aria-label を置く。 */}
-              <label className="character-gallery-pick">
+              <label className={styles["character-gallery-pick"]}>
                 {url === undefined ? "選ぶ" : "差し替える"}
                 <input
                   type="file"
-                  className="character-gallery-file"
+                  className={styles["character-gallery-file"]}
                   aria-label={`${label}を${url === undefined ? "選ぶ" : "差し替える"}`}
                   accept={PORTRAIT_FILE_ACCEPT}
                   disabled={disabled}
@@ -119,7 +121,7 @@ export function CharacterEdit(): ReactElement | null {
               {isRemovableExpression(expression) && url !== undefined ? (
                 <button
                   type="button"
-                  className="character-gallery-clear"
+                  className={styles["character-gallery-clear"]}
                   aria-label={`${label}を消す`}
                   disabled={disabled}
                   onClick={() => {
@@ -133,13 +135,13 @@ export function CharacterEdit(): ReactElement | null {
           )
         })}
       </div>
-      <fieldset className="character-screen-fieldset">
+      <fieldset className={styles["character-screen-fieldset"]}>
         <legend>差し色</legend>
-        <div className="character-screen-row">
+        <div className={styles["character-screen-row"]}>
           {OUTFITS.map((outfit) => {
             const inputId = `character-outfit-accent-${outfit}`
             return (
-              <div className="character-screen-field" key={outfit}>
+              <div className={styles["character-screen-field"]} key={outfit}>
                 <label htmlFor={inputId}>{OUTFIT_LABELS[outfit]}</label>
                 <input
                   id={inputId}

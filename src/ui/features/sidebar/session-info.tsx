@@ -17,6 +17,7 @@ import { type SessionState } from "../../../protocol/session-state.ts"
 import { Select } from "../../components/select.tsx"
 import { screenHash } from "../../stores/screen.tsx"
 import { useSession } from "../../stores/session.tsx"
+import styles from "./sidebar.module.css"
 
 // 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
 const PERMISSION_MODE_LABELS: ReadonlyArray<readonly [PermissionMode, string]> = [
@@ -85,7 +86,7 @@ function resolveCharacterPack(state: SessionState): string {
 }
 
 /**
- * `.session-info` は2列の grid（`src/ui/styles/sidebar.css`）で、ラベルと値（`<select>`）を
+ * `.session-info` は2列の grid（`sidebar.module.css`）で、ラベルと値（`<select>`）を
  * 直接の子として並べる。行ごとに別々の flex で並べると、ラベルの文字数の差がそのまま
  * `<select>` の左端のズレになるため、行の境目を div で区切らずグリッド1つに任せる
  * （2026-09-13）。`bypassPermissions` を選んでいるときは警告色を付ける
@@ -97,20 +98,22 @@ export function SessionInfo(): ReactElement {
   const model = resolveModelAlias(state.model)
   const permissionMode = resolvePermissionMode(state.permissionMode)
   const dangerClass =
-    permissionMode === DANGEROUS_PERMISSION_MODE ? " permission-mode-select-danger" : ""
+    permissionMode === DANGEROUS_PERMISSION_MODE
+      ? ` ${styles["permission-mode-select-danger"]}`
+      : ""
 
   return (
-    <div className="session-info">
+    <div className={styles["session-info"]}>
       {state.characterPacks.length > 0 ? (
         <>
-          <label htmlFor={CHARACTER_SELECT_ID} className="session-info-label">
+          <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
             キャラクター
           </label>
-          <span className="session-info-value">
+          <span className={styles["session-info-value"]}>
             <Select
               id={CHARACTER_SELECT_ID}
               ariaLabel="キャラクター"
-              className="character-select"
+              className={styles["character-select"] ?? ""}
               value={currentPack}
               disabled={state.turnInProgress}
               title={state.turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
@@ -122,20 +125,20 @@ export function SessionInfo(): ReactElement {
             {/* キャラクター画面への入る口。**キャラクターのことはキャラクターの行に集まる**
                 （docs/design.md 13.6。ページ最上部のナビは置かない）。字だけのリンクで、
                 常設の要素は増えない。 */}
-            <a className="session-info-tune" href={screenHash("character")}>
+            <a className={styles["session-info-tune"]} href={screenHash("character")}>
               {TUNE_LINK_LABEL}
             </a>
           </span>
         </>
       ) : null}
-      <label htmlFor={MODEL_SELECT_ID} className="session-info-label">
+      <label htmlFor={MODEL_SELECT_ID} className={styles["session-info-label"]}>
         モデル
       </label>
-      <span className="session-info-value">
+      <span className={styles["session-info-value"]}>
         <Select
           id={MODEL_SELECT_ID}
           ariaLabel="モデル"
-          className="model-select"
+          className={styles["model-select"] ?? ""}
           value={model}
           disabled={false}
           title={undefined}
@@ -147,14 +150,14 @@ export function SessionInfo(): ReactElement {
           }}
         />
       </span>
-      <label htmlFor={PERMISSION_MODE_SELECT_ID} className="session-info-label">
+      <label htmlFor={PERMISSION_MODE_SELECT_ID} className={styles["session-info-label"]}>
         許可モード
       </label>
-      <span className="session-info-value">
+      <span className={styles["session-info-value"]}>
         <Select
           id={PERMISSION_MODE_SELECT_ID}
           ariaLabel="許可モード"
-          className={`permission-mode-select${dangerClass}`}
+          className={`${styles["permission-mode-select"]}${dangerClass}`}
           value={permissionMode}
           disabled={false}
           title={undefined}

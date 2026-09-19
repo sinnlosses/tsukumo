@@ -10,6 +10,7 @@ import {
   type MainViewStep,
   type MainViewTurn,
 } from "../../../protocol/main-view.ts"
+import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { Report } from "./report.tsx"
 
@@ -24,10 +25,10 @@ export function Turn(props: TurnProps): ReactElement {
     <div>
       {turn.request !== undefined && <RequestHeading request={turn.request} />}
       {turn.droppedCount > 0 && (
-        <p className="turn-dropped">これ以前の {turn.droppedCount} 件は省略した</p>
+        <p className={styles["turn-dropped"]}>これ以前の {turn.droppedCount} 件は省略した</p>
       )}
       {turn.steps.length > 0 && (
-        <div className="main-steps">
+        <div className={styles["main-steps"]}>
           {/* `key` は配列の添字ではなく `step.id`（`limitTurnEntries` が古いステップを落とす前に
               振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
               ずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open`
@@ -77,8 +78,8 @@ function Step(props: { readonly step: MainViewStep }): ReactElement | null {
 
   if (step.interim && step.superseded) {
     return (
-      <details className="main-step is-interim">
-        <summary className="step-heading">{interimSummary(step.firstLine)}</summary>
+      <details className={`${styles["main-step"]} ${styles["is-interim"]}`}>
+        <summary className={styles["step-heading"]}>{interimSummary(step.firstLine)}</summary>
         {body}
       </details>
     )
@@ -86,7 +87,7 @@ function Step(props: { readonly step: MainViewStep }): ReactElement | null {
 
   return (
     <section className={step.interim ? "main-step is-interim" : "main-step"}>
-      {step.interim && <p className="step-heading">中間レポート</p>}
+      {step.interim && <p className={styles["step-heading"]}>中間レポート</p>}
       {body}
     </section>
   )
@@ -126,16 +127,16 @@ function RequestHeading(props: { readonly request: string }): ReactElement {
   const lineBreak = text.indexOf("\n")
 
   if (lineBreak === -1) {
-    return <h2 className="turn-request">{text}</h2>
+    return <h2 className={styles["turn-request"]}>{text}</h2>
   }
 
   const firstLine = text.slice(0, lineBreak)
   const rest = text.slice(lineBreak + 1)
 
   return (
-    <details className="turn-request" open>
+    <details className={styles["turn-request"]} open>
       <summary>{firstLine}</summary>
-      <div className="turn-request-full">
+      <div className={styles["turn-request-full"]}>
         {rest.split("\n").map((line, index) => (
           <Fragment key={index}>
             {index > 0 && <br />}

@@ -9,7 +9,7 @@
 import { randomUUID } from "node:crypto"
 import process from "node:process"
 
-import { buildStyleSheet, buildUiScript } from "./adapter/bundle.ts"
+import { buildUiBundle } from "./adapter/bundle.ts"
 import { resolveBundledDir } from "./adapter/bundled-path.ts"
 import { createCharacterPack, editCharacterPack } from "./adapter/character-edit.ts"
 import {
@@ -109,18 +109,14 @@ async function main(args: readonly string[]): Promise<number> {
   // 即時終了する**（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の例外側）。
   // **止めるときも `bun build` の理由を添える**（見張り中の失敗と同じ扱い。理由が無いと、
   // 起動できない側は手元で `bun build` を打ち直すしか手が無くなる）。
-  const [styleSheet, uiScript] = await Promise.all([buildStyleSheet(), buildUiScript()])
-  if (!styleSheet.ok) {
-    process.stderr.write(`tsukumo: CSS を組み立てられない\n${styleSheet.reason}\n`)
-    return 1
-  }
-  if (!uiScript.ok) {
-    process.stderr.write(`tsukumo: ブラウザ側スクリプトを組み立てられない\n${uiScript.reason}\n`)
+  const built = await buildUiBundle()
+  if (!built.ok) {
+    process.stderr.write(`tsukumo: ブラウザ側を組み立てられない\n${built.reason}\n`)
     return 1
   }
   // 組み立てたものの持ち主はここ（ディスクに置かない）。**`TSUKUMO_WATCH_UI` のときだけ
   // 組み立て直したものへ丸ごと差し替わる**ので、サーバには取り出し口だけを渡す。
-  let viewAssets = { uiScript: uiScript.content, styleSheet: styleSheet.content }
+  let viewAssets = built.bundle
 
   // 偽の駆動を選んだときは台本が要る。無ければ起こす意味が無いので、起動時の前提不足として扱う。
   const fakeScript = config.driver === "fake" ? readFakeScript() : undefined
@@ -268,9 +264,12 @@ async function main(args: readonly string[]): Promise<number> {
 
   if (config.watchUi) {
     watchUiSource({
-      onRebuilt: (rebuilt) => {
-        viewAssets = { uiScript: rebuilt.uiScript, styleSheet: rebuilt.styleSheet }
-        pushRefresh(viewers, rebuilt.target)
+      // **CSS だけを取り直させない**（`refresh` の `style`）。CSS Modules の class 名は
+      // ハッシュ化されて JS 側の対応表にも焼かれるので、片方だけ新しくすると綴りが食い違って
+      // 崩れた画面が残る。ページごと読み込み直す（選択も書きかけも `hello` で戻る）。
+      onRebuilt: (bundle) => {
+        viewAssets = bundle
+        pushRefresh(viewers, "page")
       },
       // 組み立て直せなくても前の版が配られたままなので、知らせるだけで続ける。
       // 理由（`bun build` の出力）はターミナルにだけ出す — ブラウザの画面には出さない

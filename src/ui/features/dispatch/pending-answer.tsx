@@ -19,6 +19,7 @@ import { type Answer, type PendingAsk } from "../../../protocol/pending-ask.ts"
 import { type Question } from "../../../protocol/question.ts"
 import { summarizeToolInput } from "../../lib/tool-summary.ts"
 import { useSession } from "../../stores/session.tsx"
+import styles from "./dispatch.module.css"
 
 /** `AskUserQuestion` の自由入力の選択肢。このラベルの選択肢だけ、テキスト欄で受け取る。 */
 const FREE_TEXT_OPTION_LABEL = "その他"
@@ -47,22 +48,22 @@ function PermissionAsk(props: {
   }
 
   return (
-    <div className="pending-answer pending-permission">
-      <p className="pending-summary">
-        <span className="pending-tool">{props.pending.toolName}</span>
+    <div className={`${styles["pending-answer"]} ${styles["pending-permission"]}`}>
+      <p className={styles["pending-summary"]}>
+        <span className={styles["pending-tool"]}>{props.pending.toolName}</span>
         {summary === "" ? "" : `: ${summary}`}
       </p>
-      <div className="pending-actions">
+      <div className={styles["pending-actions"]}>
         <button
           type="button"
-          className="pending-action pending-allow"
+          className={`${styles["pending-action"]} ${styles["pending-allow"]}`}
           onClick={() => send({ kind: "allow" })}
         >
           許可
         </button>
         <button
           type="button"
-          className="pending-action pending-deny"
+          className={`${styles["pending-action"]} ${styles["pending-deny"]}`}
           onClick={() => send({ kind: "deny" })}
         >
           拒否
@@ -151,14 +152,14 @@ function QuestionAsk(props: {
   const showAdvance = question.multiSelect || (freeTexts[index]?.trim() ?? "") !== ""
 
   return (
-    <div className="pending-answer pending-question">
+    <div className={`${styles["pending-answer"]} ${styles["pending-question"]}`}>
       {questions.length > 1 ? (
-        <div className="question-progress">
+        <div className={styles["question-progress"]}>
           <span>{`${String(questions.length)}問中${String(index + 1)}問目`}</span>
           {showBack ? (
             <button
               type="button"
-              className="pending-answer-back"
+              className={styles["pending-answer-back"]}
               onClick={() => setIndex(index - 1)}
             >
               戻る
@@ -176,10 +177,10 @@ function QuestionAsk(props: {
         onFreeTextEnter={() => advance(index, answerFor(index))}
       />
       {showAdvance ? (
-        <div className="pending-answer-actions">
+        <div className={styles["pending-answer-actions"]}>
           <button
             type="button"
-            className="pending-action pending-answer-submit"
+            className={styles["pending-action"]}
             disabled={currentAnswer.length === 0}
             onClick={() => advance(index, currentAnswer)}
           >
@@ -207,13 +208,13 @@ function QuestionCard(props: {
   )
 
   return (
-    <div className="question-card">
-      <p className="question-header">
+    <div className={styles["question-card"]}>
+      <p className={styles["question-header"]}>
         {question.header}
         {question.multiSelect ? "（複数選べる）" : ""}
       </p>
-      <p className="question-text">{question.text}</p>
-      <ul className="question-choices">
+      <p className={styles["question-text"]}>{question.text}</p>
+      <ul className={styles["question-choices"]}>
         {question.options.map((option) =>
           option.label === FREE_TEXT_OPTION_LABEL ? (
             <FreeTextOption
@@ -224,29 +225,31 @@ function QuestionCard(props: {
             />
           ) : question.multiSelect ? (
             <li key={option.label}>
-              <label className="question-choice question-choice-checkbox">
-                <span className="question-choice-checkbox-row">
+              <label
+                className={`${styles["question-choice"]} ${styles["question-choice-checkbox"]}`}
+              >
+                <span className={styles["question-choice-checkbox-row"]}>
                   <input
                     type="checkbox"
                     checked={props.selected.includes(option.label)}
                     onChange={() => props.onToggleMulti(option.label)}
                   />
-                  <span className="question-choice-label">{option.label}</span>
+                  <span className={styles["question-choice-label"]}>{option.label}</span>
                 </span>
-                <span className="question-choice-description">{option.description}</span>
+                <span className={styles["question-choice-description"]}>{option.description}</span>
               </label>
             </li>
           ) : (
             <li key={option.label}>
               <button
                 type="button"
-                className={`question-choice question-option-button${
-                  props.selected.includes(option.label) ? " is-selected" : ""
+                className={`${styles["question-choice"]}${
+                  props.selected.includes(option.label) ? ` ${styles["is-selected"]}` : ""
                 }`}
                 onClick={() => props.onSelectSingle(option.label)}
               >
-                <span className="question-choice-label">{option.label}</span>
-                <span className="question-choice-description">{option.description}</span>
+                <span className={styles["question-choice-label"]}>{option.label}</span>
+                <span className={styles["question-choice-description"]}>{option.description}</span>
               </button>
             </li>
           ),
@@ -276,10 +279,10 @@ function FreeTextOption(props: {
   readonly onEnter: () => void
 }): ReactElement {
   return (
-    <li className="question-choice-other">
+    <li className={styles["question-choice-other"]}>
       <input
         type="text"
-        className="question-other-input"
+        className={styles["question-other-input"]}
         placeholder="自由入力"
         aria-label={FREE_TEXT_OPTION_LABEL}
         value={props.value}

@@ -19,6 +19,7 @@
 import { useEffect, useRef, useState, type ReactElement } from "react"
 
 import { vendorAssetPath } from "../../../../protocol/vendor-asset.ts"
+import styles from "../main-view.module.css"
 import { loadVendorScript } from "./vendor-script.ts"
 
 const MERMAID_SRC = vendorAssetPath("mermaid.min.js")
@@ -73,7 +74,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
         <pre>
           <code>{props.code}</code>
         </pre>
-        <p className="mermaid-error">{error}</p>
+        <p className={styles["mermaid-error"]}>{error}</p>
       </div>
     )
   }

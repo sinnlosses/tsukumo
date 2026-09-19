@@ -2,4 +2,6 @@
 # ui/ の部品テスト（@testing-library/react）が使う DOM のグローバルを、全テストの前に1回だけ
 # 用意する（test/dom-environment.ts）。他のテスト（実際の fetch / WebSocket を使うもの）に
 # 影響しないよう、borrow するのは DOM 関連の名前だけに絞ってある。
-preload = ["./test/dom-environment.ts"]
+# `*.module.css` の import も、テストの中では CSS に書いた class 名をそのまま返す形に解決する
+# （test/css-module-loader.ts）。
+preload = ["./test/dom-environment.ts", "./test/css-module-loader.ts"]

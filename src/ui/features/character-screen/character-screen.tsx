@@ -23,6 +23,7 @@ import {
   type AppearanceColorOverride,
 } from "./appearance-color.ts"
 import { CharacterEdit } from "./character-edit.tsx"
+import styles from "./character-screen.module.css"
 
 const COLOR_FIELDS = [
   { key: "ground", label: "画面の地" },
@@ -48,34 +49,36 @@ export function CharacterScreen(): ReactElement {
   }
 
   return (
-    <div className="character-screen">
-      <div className="character-screen-bar">
-        <a className="character-screen-back" href={screenHash("conversation")}>
+    <div className={styles["character-screen"]}>
+      <div className={styles["character-screen-bar"]}>
+        <a className={styles["character-screen-back"]} href={screenHash("conversation")}>
           ← 会話へ戻る
         </a>
         {state.pending.length > 0 ? (
-          <span className="character-screen-pending">{PENDING_NOTE}</span>
+          <span className={styles["character-screen-pending"]}>{PENDING_NOTE}</span>
         ) : null}
       </div>
-      <div className="character-screen-headline">
+      <div className={styles["character-screen-headline"]}>
         {character === undefined ? null : (
           <>
-            <h1 className="character-screen-label">{character.name ?? character.pack ?? ""}</h1>
-            <span className="character-screen-pack">{character.pack}</span>
+            <h1 className={styles["character-screen-label"]}>
+              {character.name ?? character.pack ?? ""}
+            </h1>
+            <span className={styles["character-screen-pack"]}>{character.pack}</span>
           </>
         )}
-        <a className="character-screen-new" href={screenHash("character-create")}>
+        <a className={styles["character-screen-new"]} href={screenHash("character-create")}>
           新しく作る
         </a>
       </div>
       <CharacterEdit />
-      <fieldset className="character-screen-fieldset">
+      <fieldset className={styles["character-screen-fieldset"]}>
         <legend>画面の色</legend>
-        <div className="character-screen-row">
+        <div className={styles["character-screen-row"]}>
           {COLOR_FIELDS.map((field) => {
             const inputId = `character-color-${field.key}`
             return (
-              <div className="character-screen-field" key={field.key}>
+              <div className={styles["character-screen-field"]} key={field.key}>
                 <label htmlFor={inputId}>{field.label}</label>
                 <input
                   id={inputId}

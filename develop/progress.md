@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 src/ui/styles の CSS を CSS Modules へ移した（T-191）
+
+領域別の CSS を `features/<領域>/*.module.css` へ移し、`styles/` に残るのは `theme.css` 1枚。
+`buildUiScript` / `buildStyleSheet` は `buildUiBundle` 1本に統合し（class 名のハッシュが JS と
+CSS の両方に焼かれるため）、一時ディレクトリへ `--outdir` して読んで消す形にした。
+`narrow-screen.css` は各モジュールの `@media` へ分解。`ui-rebuild.ts` は `page` 更新へ倒した。
+
 ### 2026-09-20 レポートの意味のクラス名を React 部品へ解決する変換層を置いた（T-190）
 
 `markdown/notation.tsx` が `div` / `span` を受け、記法の5系統だけを `report-` 付きの class に

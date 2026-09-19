@@ -1,3 +1,6 @@
+/* メインビュー（`src/ui/features/main-view/`）。ターンのタブ・依頼の見出し・ステップの
+   カード・レポートの本文（Markdown と記法）・質問の記録まで**この1枚**に持つ。 */
+
 .placeholder {
   color: var(--ink-quiet);
 }
@@ -252,18 +255,6 @@ h2.turn-request {
   letter-spacing: 0.08em;
   color: var(--ink-quiet);
 }
-/* リンクも「読む面」の一部（13.1 原則1）。色はキャラクターのものではなく本文と同じ。 */
-/* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない。docs/design.md 13.1）。
-   **色を取り上げるかわりに下線で区別する。** 色だけに頼らないので、どのパックの accent が来ても
-   リンクだと分かる。 */
-a {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-a:hover {
-  text-decoration-color: var(--accent);
-}
 .tool-block {
   margin: 0 0 1rem;
   padding: 0.75rem;
@@ -271,8 +262,12 @@ a:hover {
   border-radius: 0.5rem;
   background: var(--surface);
 }
+/* コードは機械の側の文字なので等幅（docs/design.md 13.1 原則3）。ブラウザ既定でも等幅には
+   なるが、それは汎用の monospace で、インラインのコード（下の `:not(pre) > code`）だけが
+   --font-mono になる不揃いが出る。書体そのものの定義は `src/ui/styles/theme.css` のトークン。 */
 .detail-block pre {
   margin: 0.4rem 0 0;
+  font-family: var(--font-mono);
   padding: 0.5rem;
   background: var(--ground);
   border-radius: 0.4rem;
@@ -310,7 +305,7 @@ a:hover {
 }
 /* 「用語 → 説明」の対。**用語と説明を2列に組み、説明の左端を揃える**（対応が一目で分かる）。
    1列目は max-content なので用語は折り返さない。用語が長くて2列が入らない狭い画面では
-   1列へ戻す（src/ui/styles/narrow-screen.css。境目は他の領域と同じ 760px）。
+   1列へ戻す（このファイルの末尾の @media。境目は他の領域と同じ 760px）。
    1つの dt に dd が2つ以上ぶら下がっても崩れないよう、列は grid-column で固定する。 */
 .detail-block dl {
   display: grid;
@@ -330,6 +325,7 @@ a:hover {
 }
 .detail-block :not(pre) > code {
   background: var(--ground);
+  font-family: var(--font-mono);
   padding: 0 0.25rem;
   border-radius: 0.25rem;
 }
@@ -343,4 +339,16 @@ a:hover {
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
   white-space: pre-wrap;
+}
+
+/* 狭い画面（1列に畳む幅。docs/requirements.md 4.7）。 */
+@media (max-width: 760px) {
+  /* レポートの「用語 → 説明」の対は、狭い画面では2列をやめて1列で積む
+     （用語の列に幅を取られると説明が1文字ずつ折り返すため）。 */
+  .detail-block dl {
+    display: block;
+  }
+  .detail-block dd {
+    margin: 0 0 0.5rem;
+  }
 }

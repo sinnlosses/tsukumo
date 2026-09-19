@@ -3,6 +3,8 @@
 
 import { type ReactElement } from "react"
 
+import styles from "./main-view.module.css"
+
 export type TurnTabsProps = {
   /** 新しい順（今回が先頭）に並んだ、やり取りの通し番号。 */
   readonly turnIds: readonly number[]
@@ -22,11 +24,13 @@ export function TurnTabs(props: TurnTabsProps): ReactElement | null {
   }
 
   return (
-    <div className="turn-tabs" role="tablist">
+    <div className={styles["turn-tabs"]} role="tablist">
       {props.turnIds.map((turnId, index) => (
         <button
           type="button"
-          className={`turn-tab${turnId === props.activeTurnId ? " is-active" : ""}`}
+          className={`${styles["turn-tab"]}${
+            turnId === props.activeTurnId ? ` ${styles["is-active"]}` : ""
+          }`}
           key={turnId}
           onClick={() => {
             props.onSelect(turnId)

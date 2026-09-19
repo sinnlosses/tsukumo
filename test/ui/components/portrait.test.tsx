@@ -37,6 +37,7 @@ describe("Portrait", () => {
         expression="default"
         outfit="default"
         motion="reading"
+        className={undefined}
       />,
     )
 
@@ -54,6 +55,7 @@ describe("Portrait", () => {
         expression="default"
         outfit="default"
         motion="reading"
+        className={undefined}
       />,
     )
 
@@ -73,6 +75,7 @@ describe("Portrait", () => {
         expression="default"
         outfit="normal"
         motion="reading"
+        className={undefined}
       />,
     )
 
@@ -89,6 +92,7 @@ describe("Portrait", () => {
         expression="default"
         outfit="default"
         motion="reading"
+        className={undefined}
       />,
     )
 
@@ -105,6 +109,7 @@ describe("Portrait", () => {
         expression="default"
         outfit="default"
         motion="waiting"
+        className={undefined}
       />,
     )
 

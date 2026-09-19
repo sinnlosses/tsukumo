@@ -6,6 +6,7 @@ import { useEffect, useRef, type ReactElement } from "react"
 
 import { useSession } from "../../stores/session.tsx"
 import { Composer } from "./composer.tsx"
+import styles from "./dispatch.module.css"
 import { PendingAnswer } from "./pending-answer.tsx"
 
 export function Dispatch(): ReactElement {
@@ -23,8 +24,10 @@ export function Dispatch(): ReactElement {
   }, [pendingActive])
 
   return (
-    <div className="dispatch">
-      {pendingActive ? <div className="dispatch-pending-glow" aria-hidden="true" /> : null}
+    <div className={styles["dispatch"]}>
+      {pendingActive ? (
+        <div className={styles["dispatch-pending-glow"]} aria-hidden="true" />
+      ) : null}
       <PendingAnswer />
       <Composer />
     </div>

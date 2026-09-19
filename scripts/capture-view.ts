@@ -12,7 +12,7 @@
 //   TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7398 bun run start &
 //   bun run scripts/capture-view.ts 'http://127.0.0.1:7398/?t=<起動時に出るトークン>'
 //   bun run scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
-//     --measure '.balloon:last-child' --measure '.layout-sidebar'
+//     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
 //
 // **撮った画像はリポジトリに置かない**（既定の出力先は /tmp）。ビューには会話の内容が写るので、
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
@@ -31,6 +31,12 @@ const DEFAULT_OUT = "/tmp/tsukumo-view.png"
 
 /** ページの中身が落ち着くまで待つ上限（ミリ秒）。SSE が繋ぎっぱなしなので networkidle は待たない。 */
 const SETTLE_TIMEOUT_MS = 10_000
+
+/**
+ * 本文が入る領域（メインビュー）。**class 名は組み立てのたびにハッシュ化される**（CSS Modules）
+ * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
+ */
+const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
 const USAGE = `使い方: bun run scripts/capture-view.ts <URL> [オプション]
 
@@ -65,7 +71,7 @@ async function main(argv: readonly string[]): Promise<number> {
     // SSE / WebSocket を繋ぎっぱなしにするページなので `networkidle` は永遠に来ない。
     // 最初の描画が落ち着くのを、本文が入る領域が現れるまでで待つ。
     await page
-      .waitForSelector(".layout-main", { timeout: SETTLE_TIMEOUT_MS })
+      .waitForSelector(MAIN_REGION_SELECTOR, { timeout: SETTLE_TIMEOUT_MS })
       .catch(() => undefined)
     await page.waitForTimeout(500)
 

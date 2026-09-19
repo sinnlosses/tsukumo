@@ -94,7 +94,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/adapter/server.ts`                                                        | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                        |
 | `src/core/config.ts`                                                           | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                      |
 | `src/core/port-resolution.ts`                                                  | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                  |
-| `src/adapter/bundle.ts`                                                        | adapter    | `bun build` で `ui/main.tsx` と `ui/style/main.css` を起動時に束ねる（ディスクに置かない）    |
+| `src/adapter/bundle.ts`                                                        | adapter    | `bun build` で `ui/main.tsx` からスクリプトと CSS の1組を作る（成果物をディスクに残さない）   |
 | `src/adapter/bundled-path.ts`                                                  | adapter    | 同梱物（`characters/`・`vendor/`）の置き場所を、起動先のディレクトリに依存せず解く            |
 | `src/adapter/character-pack.ts`                                                | adapter    | キャラクターパックの列挙・読み込みと `/character/<file>` が配ってよい1件の判定                |
 | `src/adapter/task-summary.ts`                                                  | adapter    | `develop/tasks.json` の読み直し。mtime が変わったときだけ `tasks-changed` を起こす            |
@@ -226,6 +226,27 @@ tsukumo の画面だけになる。
 残すもの（SDK 駆動・`speak`・答え待ちの列・畳み込み・会話を外へ出さない）と、変えるもの、
 採らなかった案（Python・Rust・Next.js・HTMX・Svelte）と、判断の基準は
 `docs/research/architecture-rethink.md` に経緯として残してある。
+
+#### CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）
+
+**`bun build` の出力を標準出力で受ける形をやめ、`--outdir` に一時ディレクトリ
+（`node:fs/promises` の `mkdtemp`）を渡して `.js` と `.css` を読み、その場で消す。**
+「**成果物をディスクに残さない**」という 2026-09-12 の決定は変えていない——変えたのは
+受け取り方だけ。
+
+そうする理由。CSS Modules（`*.module.css`）を使うと**1つの入口から出力が2本**（スクリプトと
+CSS）出るので、`bun build` は `--outdir` を求める（`error: cannot write multiple output files
+without an output directory`。2026-09-18 の実測）。標準出力で受けられるのは1本までで、
+**スクリプトと CSS を別々に組み立てる道は採れない**（class 名のハッシュが JS と CSS の両方に
+焼かれるので、別々に組み立てると綴りの違う対ができる）。
+
+**決定の意図（古いものを配る事故を防ぐ・`.gitignore` に足す必要を出さない）は保てている。**
+出し先は OS の一時ディレクトリの下に毎回新しく作り、読んだ直後に `rm` する。リポジトリの中には
+何も置かず、サーバが配るのは**メモリ上の文字列だけ**（`src/adapter/server.ts` は `bundle.ts` が
+返した文字列を持つ関数を受け取る）。次の起動が前の成果物を拾う経路は無い。
+
+**残る差は「一瞬ディスクに出る」こと**だけで、消し損ねても次の組み立ては別のディレクトリを
+作るので古いものが混ざらない（消せなかったぶんは OS が片付ける）。
 
 #### Claude Code の TUI を捨て、SDK で動かす
 

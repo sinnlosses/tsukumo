@@ -3,7 +3,10 @@
    それぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は
    CSS カスタムプロパティで持つ（<Layout> がドラッグに応じて style で書き換える）。
    ここに書いた var() の第2引数（フォールバック値）は src/ui/features/layout/split.ts の
-   DEFAULT_SPLIT と一致させること。 */
+   DEFAULT_SPLIT と一致させること。
+
+   狭い画面での畳み方は、このファイルの末尾の @media にある（他の領域のぶんはそれぞれの
+   *.module.css の末尾。docs/requirements.md 4.7）。 */
 .layout-grid {
   position: relative;
   display: grid;
@@ -58,7 +61,7 @@
   flex-direction: column;
   overflow-y: hidden;
 }
-/* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。src/ui/styles/dispatch.css）は、
+/* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。features/dispatch/dispatch.module.css）は、
    `<Dispatch>` の兄弟としてではなく、この領域（`<Layout>` が描く `.layout-dispatch` の
    `<section>`）自身の内側の縁に沿わせたい。そこに `position: absolute; inset: 0` を
    置くための基準をここで用意する（部品は自分の subtree の外の DOM を直接いじらない。
@@ -120,4 +123,30 @@
 }
 .layout-reset-split:hover {
   border-color: var(--accent);
+}
+
+/* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
+   （docs/requirements.md 4.7「狭い画面での崩れ方」）。各行の中身は DOM の並び順どおり
+   （main→sidebar、character→dispatch）に積むだけで済むので、grid-template-areas は
+   使わない。畳んでいる間は仕切り・比率を戻すボタンを出さない（動かせる比率が無いため）。 */
+@media (max-width: 760px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    height: auto;
+  }
+  .layout-row-top,
+  .layout-row-bottom {
+    grid-template-columns: 1fr;
+  }
+  /* 仕切りは1列表示では意味を持たないので隠す。比率を戻すボタンも同じ理由で隠す
+     （動かせる比率が無い1列表示では戻す先が無い。色と立ち絵の固定はキャラクター画面へ
+     移っているので、隠しても設定にたどり着けなくなることはない）。 */
+  .layout-resizer,
+  .layout-reset-split {
+    display: none;
+  }
+  .layout-dispatch {
+    min-height: 10rem;
+  }
 }

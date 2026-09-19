@@ -4,6 +4,7 @@
 
 import { memo, type ReactElement } from "react"
 
+import styles from "./main-view.module.css"
 import { Markdown } from "./markdown/markdown.tsx"
 import { splitReportBlocks } from "./markdown/split-blocks.ts"
 
@@ -15,7 +16,7 @@ export function Report(props: ReportProps): ReactElement {
   const blocks = splitReportBlocks(props.markdown)
 
   return (
-    <div className="detail-block">
+    <div className={styles["detail-block"]}>
       {blocks.map((block) => (
         <ReportBlock key={block} text={block} />
       ))}

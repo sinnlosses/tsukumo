@@ -28,6 +28,7 @@ import {
   matchingCommands,
   shouldShowCommandSuggestions,
 } from "./command-suggestions.tsx"
+import styles from "./dispatch.module.css"
 import { TurnStatus } from "./turn-status.tsx"
 
 const PLACEHOLDER_OPERATION_HINT = "（Enter で改行、Command+Enter で送信、/ でコマンド補完）"
@@ -137,11 +138,11 @@ export function Composer(): ReactElement {
   }
 
   return (
-    <form className="dispatch-form" onSubmit={handleSubmit}>
-      <div className="dispatch-text-wrap">
+    <form className={styles["dispatch-form"]} onSubmit={handleSubmit}>
+      <div className={styles["dispatch-text-wrap"]}>
         <textarea
           ref={textAreaRef}
-          className="dispatch-text"
+          className={styles["dispatch-text"]}
           placeholder={placeholder}
           value={text}
           onChange={handleChange}

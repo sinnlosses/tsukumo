@@ -10,6 +10,7 @@
 import { useEffect, useState, type ReactElement } from "react"
 
 import { useSession } from "../../stores/session.tsx"
+import styles from "./dispatch.module.css"
 
 const SEND_LABEL = "送信"
 const INTERRUPT_LABEL = "中断"
@@ -51,23 +52,27 @@ export function TurnStatus(): ReactElement {
   const elapsedLabel = state.turnFinishedAt === undefined ? ELAPSED_LABEL : FINISHED_LABEL
 
   return (
-    <div className="dispatch-row">
+    <div className={styles["dispatch-row"]}>
       {state.turnInProgress ? (
         <button
           type="button"
-          className="dispatch-send"
+          className={styles["dispatch-send"]}
           onClick={() => dispatch({ type: "interrupt" })}
         >
           {INTERRUPT_LABEL}
         </button>
       ) : (
-        <button type="submit" className="dispatch-send" data-shortcut={SEND_SHORTCUT_HINT}>
+        <button
+          type="submit"
+          className={styles["dispatch-send"]}
+          data-shortcut={SEND_SHORTCUT_HINT}
+        >
           {SEND_LABEL}
         </button>
       )}
-      <span className="dispatch-elapsed-row">
-        <span className="dispatch-elapsed-label">{elapsedLabel}</span>:{" "}
-        <span className="dispatch-elapsed">{elapsedText}</span>
+      <span className={styles["dispatch-elapsed-row"]}>
+        <span>{elapsedLabel}</span>:{" "}
+        <span className={styles["dispatch-elapsed"]}>{elapsedText}</span>
       </span>
     </div>
   )

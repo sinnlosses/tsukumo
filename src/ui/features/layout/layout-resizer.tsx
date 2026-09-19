@@ -4,6 +4,7 @@
 
 import { type PointerEvent, type ReactElement, type RefObject } from "react"
 
+import styles from "./layout.module.css"
 import { clampPercent } from "./split.ts"
 
 export type LayoutResizerProps = {
@@ -57,7 +58,7 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
 
   return (
     <div
-      className={`layout-resizer layout-resizer-${props.orientation}`}
+      className={`${styles["layout-resizer"]} ${styles[`layout-resizer-${props.orientation}`]}`}
       role="separator"
       aria-orientation={props.orientation}
       aria-label={props.ariaLabel}

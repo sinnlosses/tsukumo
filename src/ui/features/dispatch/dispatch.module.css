@@ -9,7 +9,7 @@
 /* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
    （permission-mode-select-danger の var(--state-ng)、破壊的操作向け）とは別の、注意を引くための
    var(--state-warn) にしてある（2026-09-11 決定）。`.layout-dispatch` の内側の縁に沿わせる
-   （`position: relative` は `src/ui/styles/layout.css` 側で用意してある）。 */
+   （`position: relative` は features/layout/layout.module.css 側で用意してある）。 */
 .dispatch-pending-glow {
   position: absolute;
   inset: 0;
@@ -72,7 +72,10 @@
 .pending-summary {
   margin: 0 0 0.5rem;
 }
+/* ツール名は機械が付けた名前なので等幅（docs/design.md 13.1 原則3）。書体そのものの定義は
+   `src/ui/styles/theme.css` のトークンにあり、ここは宛てるだけ。 */
 .pending-tool {
+  font-family: var(--font-mono);
   font-weight: bold;
 }
 .pending-actions,
@@ -301,8 +304,10 @@
   background: var(--surface-accent);
   color: var(--ink);
 }
+/* コマンドの名前は機械が付けた名前なので等幅（13.1 原則3）。 */
 .dispatch-suggestion-name {
   flex: 0 0 auto;
+  font-family: var(--font-mono);
 }
 .dispatch-suggestion-description {
   flex: 1 1 auto;
@@ -350,6 +355,8 @@
 .dispatch-send[data-shortcut]::after {
   content: " " attr(data-shortcut);
   color: var(--ink-quiet);
+  /* キーは機械の側の名前なので等幅（13.1 原則3）。 */
+  font-family: var(--font-mono);
   font-weight: 400;
 }
 .dispatch-text {
@@ -370,6 +377,8 @@
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
+/* 経過時間は機械が数えた値なので等幅（13.1 原則3）。 */
 .dispatch-elapsed {
   color: var(--ink);
+  font-family: var(--font-mono);
 }

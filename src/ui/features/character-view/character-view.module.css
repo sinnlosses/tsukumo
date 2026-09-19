@@ -1,4 +1,8 @@
-/* 領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
+/* キャラビュー（`<CharacterView>`。src/ui/features/character-view/）。立ち絵と吹き出しの並びを
+   同じ領域に同居させ、**立ち絵をどこにどれだけの大きさで置くか**もここが決める
+   （立ち絵そのものの中身と動きは src/ui/components/portrait.module.css）。
+
+   領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
    領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく
    なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
 .character-region {
@@ -22,24 +26,6 @@
   --portrait-drop: 2.25rem;
   --balloon-tail: 14px;
   --balloon-bottom-gap: 7rem;
-
-  /* 立ち絵の動きの速さ・大きさ（docs/requirements.md 4.3・docs/design.md 6.5）。**この4組が
-     唯一の調整箇所**（変えたい人はここだけ触ればよい）。動かすのは transform（位置・傾き）と
-     opacity だけで、素材の中身には触らない（「1枚の矩形」の割り切り）。控えめの初期値にして
-     ある（ユーザーと詰めて調整する前提）。
-     --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
-     --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
-     --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
-     --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。 */
-  --portrait-breathe-amount: 0.2rem;
-  --portrait-breathe-duration: 3.2s;
-  --portrait-walk-amount: 0.5rem;
-  --portrait-walk-duration: 4.5s;
-  --portrait-bounce-amount: 0.55rem;
-  --portrait-bounce-duration: 0.5s;
-  --portrait-flinch-amount: 0.3rem;
-  --portrait-flinch-rotate: 3deg;
-  --portrait-flinch-duration: 0.35s;
 }
 
 /* 立ち絵も吹き出しの並びも**下端で揃える**（2026-09-12 ユーザーの指示。床に立つ見え方にする
@@ -58,119 +44,17 @@
   height: 100%;
   overflow: hidden;
 }
-/* 立ち絵の大きさは**領域の高さ**を基準にする（幅は画の縦横比で決まる）。幅を基準にすると、
-   キャラビューが横長・浅めの領域（既定で画面の 40% の高さ）のときに小さくなりすぎる。
-   いっぱいには広げず --portrait-height ぶんに留め、下端で揃えたうえで --portrait-drop ぶん
-   下へずらして床に置く（2026-09-12 ユーザーの指示）。max-width は、領域が細いときに吹き出しの場所（.balloon-track の
-   flex-basis）を食い潰さないための上限。 */
+/* 立ち絵の置き方（`<Portrait>` に className で渡す）。大きさは**領域の高さ**を基準にする
+   （幅は画の縦横比で決まる）。幅を基準にすると、キャラビューが横長・浅めの領域（既定で画面の
+   40% の高さ）のときに小さくなりすぎる。いっぱいには広げず --portrait-height ぶんに留め、
+   下端で揃えたうえで --portrait-drop ぶん下へずらして床に置く（2026-09-12 ユーザーの指示）。
+   max-width は、領域が細いときに吹き出しの場所（.balloon-track の flex-basis）を食い潰さない
+   ための上限。 */
 .portrait {
   margin: 0 0 calc(-1 * var(--portrait-drop));
   flex: 0 1 auto;
   height: var(--portrait-height);
   max-width: 45%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  text-align: center;
-  animation: portrait-fade-in 0.25s ease-out;
-}
-.portrait svg,
-.portrait-image {
-  display: block;
-  width: auto;
-  height: 100%;
-  max-width: 100%;
-  margin: 0 auto;
-}
-/* 立ち絵の動き（`docs/design.md` 6.5）。**「1枚の矩形」として transform（位置・大きさ・傾き・
-   上下）と opacity だけを動かす**（素材の中身には触らない）。どの動きにするかは `<Portrait>`
-   が `data-motion` 属性で渡す（`src/protocol/portrait-motion.ts` の `resolvePortraitMotion`）。
-   `margin`（floor に立つ位置）は動かさない値なので、いずれの keyframes も **0%/100% を
-   transform なし（＝上の margin だけで決まる位置）に揃えてある**。reduced-motion
-   （`theme.css`）は `animation-iteration-count: 1` を強制するため、無限ループの呼吸・歩行も
-   1周目の終わり（＝ transform なしの姿勢）で止まり、足元が床から浮いたまま止まることはない。 */
-.portrait[data-motion="reading"] {
-  animation:
-    portrait-fade-in 0.25s ease-out,
-    portrait-breathe var(--portrait-breathe-duration) ease-in-out infinite;
-}
-.portrait[data-motion="waiting"] {
-  animation:
-    portrait-fade-in 0.25s ease-out,
-    portrait-walk var(--portrait-walk-duration) ease-in-out infinite;
-}
-.portrait[data-motion="success"] {
-  animation:
-    portrait-fade-in 0.25s ease-out,
-    portrait-bounce var(--portrait-bounce-duration) ease-out 1;
-}
-.portrait[data-motion="failure"] {
-  animation:
-    portrait-fade-in 0.25s ease-out,
-    portrait-flinch var(--portrait-flinch-duration) ease-out 1;
-}
-@keyframes portrait-breathe {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(calc(-1 * var(--portrait-breathe-amount)));
-  }
-}
-/* 領域の中を歩く。**横方向だけ**（`.character-layout` の overflow: hidden が領域の外を切る。
-   固定の rem 量なので、領域の幅がどれだけ狭くても外へは出ない）。中央（transform 無し）から
-   左右へ振れて中央へ戻る、往復1回ぶんを1周期にする。 */
-@keyframes portrait-walk {
-  0%,
-  50%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(var(--portrait-walk-amount));
-  }
-  75% {
-    transform: translateX(calc(-1 * var(--portrait-walk-amount)));
-  }
-}
-/* 完了の反応。小さく跳ねて着地する（完了の合図も兼ねる）。ターンが終わった直後の窓
-   （`SUCCESS_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
-@keyframes portrait-bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(calc(-1 * var(--portrait-bounce-amount)));
-  }
-  65% {
-    transform: translateY(calc(var(--portrait-bounce-amount) * 0.2));
-  }
-}
-/* 失敗でびくっ。横に引いて傾き、戻る。ツールが失敗した直後の窓
-   （`FAILURE_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
-@keyframes portrait-flinch {
-  0%,
-  100% {
-    transform: translateX(0) rotate(0deg);
-  }
-  30% {
-    transform: translateX(calc(-1 * var(--portrait-flinch-amount)))
-      rotate(calc(-1 * var(--portrait-flinch-rotate)));
-  }
-  60% {
-    transform: translateX(calc(var(--portrait-flinch-amount) * 0.4))
-      rotate(calc(var(--portrait-flinch-rotate) * 0.4));
-  }
-}
-@keyframes portrait-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 /* 吹き出しの並び。**DOM は新しい順**（`src/ui/features/character-view/balloon-track.tsx`）なので、
    column-reverse で並べると最新が一番下に来て、過去のセリフほど上へ積み上がる（2026-09-12
@@ -299,5 +183,38 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* 狭い画面（1列に畳む幅。docs/requirements.md 4.7）。この領域も高さが auto になり、割合で
+   書いた高さの基準が消えるので、立ち絵は幅を基準にした元の大きさに戻し、吹き出しは中身なりの
+   高さで積むだけにする。**立ち絵側の打ち消しは `.character-layout` から書く**
+   （src/ui/components/portrait.module.css の規則より強く当てるため。読み込み順に頼らない）。 */
+@media (max-width: 760px) {
+  .character-layout {
+    align-items: stretch;
+    overflow: visible;
+  }
+  .character-layout .portrait {
+    height: auto;
+    max-width: none;
+    display: block;
+    margin-bottom: 0;
+  }
+  .character-layout .portrait svg,
+  .character-layout .portrait img {
+    width: 100%;
+    height: auto;
+    max-width: 9rem;
+  }
+  /* 最新の吹き出しの下端を固定する余白（--balloon-bottom-gap）は、領域の高さが割合で
+     決まっている前提の指定。この幅では高さが auto になり「下端」が無いので、余白だけが
+     吹き出しの下に居座る。戻す。 */
+  .balloon-track {
+    align-self: stretch;
+    flex: 0 1 auto;
+    margin-bottom: 0;
+    max-height: none;
+    overflow-y: visible;
   }
 }

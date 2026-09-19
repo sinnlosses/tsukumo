@@ -9,6 +9,7 @@ import { type ReactElement } from "react"
 
 import { type ToolActivity } from "../../../protocol/session-state.ts"
 import { summarizeToolInput } from "../../lib/tool-summary.ts"
+import styles from "./sidebar.module.css"
 
 // ツールの入力・出力は数十KBになることがある（実測: あるツールの --json 出力が170KB）。
 // 切り詰めは表示を壊さないためであって秘匿のためではないので、切り詰めた旨だけ添えて残りは捨てる。
@@ -23,11 +24,11 @@ export type ActivityProps = {
 
 export function Activity(props: ActivityProps): ReactElement {
   if (props.running.length === 0 && props.finished.length === 0) {
-    return <p className="sidebar-empty">いま動いているツールは無い</p>
+    return <p className={styles["sidebar-empty"]}>いま動いているツールは無い</p>
   }
 
   return (
-    <ul className="sidebar-list activity-list">
+    <ul className={styles["sidebar-list"]}>
       {props.running.map((activity) => (
         <ActivityItem key={activity.toolUseId} activity={activity} finished={false} />
       ))}
@@ -51,12 +52,12 @@ function ActivityItem(props: {
   const label = summary === "" ? props.activity.name : `${props.activity.name}: ${summary}`
   const { failureOutput } = props.activity
   const classes = [
-    "activity-item",
-    props.finished ? "activity-finished" : "activity-running",
-    props.activity.nested ? "activity-nested" : "",
-    failureOutput === undefined ? "" : "activity-failed",
+    styles["activity-item"],
+    props.finished ? styles["activity-finished"] : styles["activity-running"],
+    props.activity.nested ? styles["activity-nested"] : "",
+    failureOutput === undefined ? "" : styles["activity-failed"],
   ]
-    .filter((name) => name !== "")
+    .filter((name) => name !== undefined && name !== "")
     .join(" ")
 
   return (
@@ -80,15 +81,15 @@ function FailureDetail(props: {
   readonly output: string
 }): ReactElement {
   return (
-    <details className="activity-failure">
+    <details className={styles["activity-failure"]}>
       <summary>
-        <span className="activity-failure-mark">失敗</span> {props.label}
+        <span className={styles["activity-failure-mark"]}>失敗</span> {props.label}
       </summary>
       {/* 出力が先。開いてまず読みたいのは「何が起きたか」で、引数はその裏取りに使う。 */}
-      <pre className="activity-failure-output">
+      <pre className={styles["activity-failure-output"]}>
         <code>{truncateForDisplay(props.output)}</code>
       </pre>
-      <pre className="activity-failure-input">
+      <pre className={styles["activity-failure-input"]}>
         <code>{truncateForDisplay(stringifyToolInput(props.input))}</code>
       </pre>
     </details>

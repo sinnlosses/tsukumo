@@ -50,7 +50,7 @@ const CATALOG: readonly CatalogEntry[] = [
 
 /**
  * 撮る窓の大きさ。**広いほうは `capture-view.ts` の既定と同じ**で、狭いほうは切り替えの規則
- * （`src/ui/styles/narrow-screen.css` の `max-width: 760px`）の内側に入る幅にしてある。
+ * （各機能の `*.module.css` の `max-width: 760px`）の内側に入る幅にしてある。
  *
  * 狭いほうだけページ全体を撮る。**縦に積み替わる**ので、窓に収まる範囲だけでは下の領域
  * （吹き出しと答え待ちの箱）が1枚に入らない。
@@ -68,6 +68,12 @@ const LAUNCH_TIMEOUT_MS = 30_000
 
 /** ページの中身が落ち着くまで待つ上限（ミリ秒）。SSE / WebSocket があるので networkidle は待たない。 */
 const SETTLE_TIMEOUT_MS = 10_000
+
+/**
+ * 本文が入る領域（メインビュー）。**class 名は組み立てのたびにハッシュ化される**（CSS Modules）
+ * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
+ */
+const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
 /** 最後の手が流れ終わるまでの余裕（ミリ秒）。台本の一番長い場面（約1.3秒）より後に撮る。 */
 const SCENE_TAIL_MS = 1500
@@ -156,7 +162,7 @@ async function captureShot(
   try {
     await page.goto(url, { waitUntil: "domcontentloaded" })
     await page
-      .waitForSelector(".layout-main", { timeout: SETTLE_TIMEOUT_MS })
+      .waitForSelector(MAIN_REGION_SELECTOR, { timeout: SETTLE_TIMEOUT_MS })
       .catch(() => undefined)
     await page.waitForTimeout(SCENE_TAIL_MS)
     await page.screenshot({ path: file, fullPage: size.fullPage })

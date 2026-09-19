@@ -12,6 +12,7 @@
 import { type ReactElement } from "react"
 
 import { type CommandDescription } from "../../../protocol/session-event.ts"
+import styles from "./dispatch.module.css"
 
 export const MAX_COMMAND_SUGGESTIONS = 10
 
@@ -51,7 +52,7 @@ export type CommandSuggestionsProps = {
 
 /**
  * `/` 補完の候補一覧。`matches` が空のときは何も出さない（`<Composer>` の `.dispatch-text-wrap`
- * の中で `position: absolute` の重ねポップアップになる。src/ui/styles/dispatch.css）。
+ * の中で `position: absolute` の重ねポップアップになる。dispatch.module.css）。
  */
 export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement | null {
   if (props.matches.length === 0) {
@@ -59,11 +60,13 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
   }
 
   return (
-    <ul className="dispatch-suggestions">
+    <ul className={styles["dispatch-suggestions"]}>
       {props.matches.map((command, index) => (
         <li
           key={command.name}
-          className={`dispatch-suggestion-item${index === props.selectedIndex ? " is-selected" : ""}`}
+          className={`${styles["dispatch-suggestion-item"]}${
+            index === props.selectedIndex ? ` ${styles["is-selected"]}` : ""
+          }`}
           onMouseDown={(event) => {
             // mousedown の既定動作（フォーカス移動）を止め、textarea にフォーカスを残す
             // （旧 command-suggestions.ts と同じ理由）。
@@ -71,9 +74,9 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
             props.onSelect(index)
           }}
         >
-          <span className="dispatch-suggestion-name">/{command.name}</span>
+          <span className={styles["dispatch-suggestion-name"]}>/{command.name}</span>
           {command.description === undefined || command.description === "" ? null : (
-            <span className="dispatch-suggestion-description">{command.description}</span>
+            <span className={styles["dispatch-suggestion-description"]}>{command.description}</span>
           )}
         </li>
       ))}

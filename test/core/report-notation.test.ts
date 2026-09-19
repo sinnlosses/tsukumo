@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test"
-import { readdirSync, readFileSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { cleanup, render } from "@testing-library/react"
@@ -47,14 +47,13 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
   ([, names]) => names?.split(" ") ?? [],
 )
 
-// 見た目は src/ui/styles/*.css にある（移行の段6で src/presentation/style/ から移った）。
-// ページは <link> で読むだけで中身を持たないので、main.css（@import で束ねる入口）が指す先を
-// そのまま連結して検査する。
-const STYLE_DIR = fileURLToPath(new URL("../../src/ui/styles", import.meta.url))
-const STYLE_SHEET_SOURCE = readdirSync(STYLE_DIR)
-  .filter((name) => name.endsWith(".css") && name !== "main.css")
-  .map((name) => readFileSync(`${STYLE_DIR}/${name}`, "utf8"))
-  .join("\n")
+// 見た目はレポートを描く機能の CSS（`main-view.module.css`）にある。**テストの中では class 名が
+// CSS に書いた綴りのまま届く**（test/css-module-loader.ts）ので、部品が付け直した名前を
+// そのファイルの選択子とそのまま突き合わせられる。
+const STYLE_SHEET_SOURCE = readFileSync(
+  fileURLToPath(new URL("../../src/ui/features/main-view/main-view.module.css", import.meta.url)),
+  "utf8",
+)
 
 describe("REPORT_NOTATION_PROMPT", () => {
   it("名乗った要素を rehype-sanitize の schema が通す", () => {

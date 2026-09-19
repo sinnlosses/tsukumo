@@ -22,6 +22,7 @@ import { readDataUrl } from "../../lib/data-url.ts"
 import { navigateTo, screenHash } from "../../stores/screen.tsx"
 import { useSession } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
+import styles from "./character-screen.module.css"
 
 /** `<input type="file">` に出す受け付ける種類（`<CharacterEdit>` と同じ3つ）。 */
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
@@ -109,23 +110,23 @@ export function CharacterCreate(): ReactElement {
 
   const noteText = note()
   return (
-    <div className="character-screen">
-      <div className="character-screen-bar">
-        <a className="character-screen-back" href={screenHash("character")}>
+    <div className={styles["character-screen"]}>
+      <div className={styles["character-screen-bar"]}>
+        <a className={styles["character-screen-back"]} href={screenHash("character")}>
           ← キャラクターへ戻る
         </a>
       </div>
       {/* まだ `character-changed` が届いていない（接続直後の一瞬）間は、表情のラベルが
           決まらないので口を出さない。**戻る口だけは常に出す**（行き止まりにしない）。 */}
       {character === undefined ? null : (
-        <fieldset className="character-screen-fieldset">
+        <fieldset className={styles["character-screen-fieldset"]}>
           <legend>新しいキャラクター</legend>
-          <div className="character-screen-field">
+          <div className={styles["character-screen-field"]}>
             <label htmlFor="character-create-name">名前</label>
             <input
               id="character-create-name"
               type="text"
-              className="character-screen-create-name"
+              className={styles["character-screen-create-name"]}
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
@@ -136,12 +137,12 @@ export function CharacterCreate(): ReactElement {
             // パックのラベルを借りる（定義に無ければ表情名がそのまま出る）。
             const label = `${resolveExpressionLabel(character.expressions, expression)}の立ち絵`
             return (
-              <div className="character-screen-field" key={expression}>
+              <div className={styles["character-screen-field"]} key={expression}>
                 <label htmlFor={inputId}>{label}</label>
                 <input
                   id={inputId}
                   type="file"
-                  className="character-screen-create-file"
+                  className={styles["character-screen-create-file"]}
                   accept={PORTRAIT_FILE_ACCEPT}
                   onChange={(event) => {
                     void holdPortrait(expression, event.currentTarget)
@@ -150,7 +151,7 @@ export function CharacterCreate(): ReactElement {
               </div>
             )
           })}
-          <div className="character-screen-field">
+          <div className={styles["character-screen-field"]}>
             <label htmlFor="character-create-accent">差し色</label>
             <input
               id="character-create-accent"
@@ -160,12 +161,12 @@ export function CharacterCreate(): ReactElement {
             />
           </div>
           {noteText === undefined ? null : (
-            <p className="character-screen-note">
+            <p className={styles["character-screen-note"]}>
               {noteText}
               {created ? (
                 <button
                   type="button"
-                  className="character-screen-switch"
+                  className={styles["character-screen-switch"]}
                   disabled={state.turnInProgress}
                   title={state.turnInProgress ? SWITCH_BLOCKED_TITLE : undefined}
                   onClick={switchToCreated}
@@ -177,7 +178,7 @@ export function CharacterCreate(): ReactElement {
           )}
           <button
             type="button"
-            className="character-screen-create-submit"
+            className={styles["character-screen-create-submit"]}
             disabled={!ready}
             onClick={create}
           >

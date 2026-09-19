@@ -8,6 +8,7 @@
 import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../protocol/task-summary.ts"
+import styles from "./sidebar.module.css"
 
 export type TaskListProps = {
   readonly tasks: readonly TaskSummaryItem[] | undefined
@@ -37,14 +38,14 @@ export function taskListTitle(tasks: readonly TaskSummaryItem[] | undefined): st
 
 export function TaskList(props: TaskListProps): ReactElement {
   if (props.tasks === undefined) {
-    return <p className="sidebar-empty">不明</p>
+    return <p className={styles["sidebar-empty"]}>不明</p>
   }
   if (props.tasks.length === 0) {
-    return <p className="sidebar-empty">タスクが無い</p>
+    return <p className={styles["sidebar-empty"]}>タスクが無い</p>
   }
 
   return (
-    <ul className="sidebar-list task-list">
+    <ul className={`${styles["sidebar-list"]} ${styles["task-list"]}`}>
       {props.tasks.map((task) => (
         <TaskItem key={task.id} task={task} />
       ))}
@@ -54,37 +55,41 @@ export function TaskList(props: TaskListProps): ReactElement {
 
 /**
  * タスク一覧1件分。バッジ（status）を先頭列、ID＋summary を2列目に置く2列の grid 行
- * （`.task-item` の `grid-template-columns: auto 1fr`。`src/ui/styles/sidebar.css`）。
+ * （`.task-item` の `grid-template-columns: auto 1fr`。`sidebar.module.css`）。
  */
 function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElement {
-  const doneClass = props.task.status === "done" ? " task-done" : ""
+  const doneClass = props.task.status === "done" ? ` ${styles["task-done"]}` : ""
 
   return (
-    <li className={`task-item${doneClass}`}>
-      <span className="task-status-cell">
+    <li className={`${styles["task-item"]}${doneClass}`}>
+      <span>
         {props.task.status === undefined ? null : <TaskStatusBadge status={props.task.status} />}
       </span>
-      <span className="task-body">
-        <span className="task-id">{props.task.id}</span> {props.task.summary}
+      <span>
+        <span className={styles["task-id"]}>{props.task.id}</span> {props.task.summary}
       </span>
     </li>
   )
 }
 
 function TaskStatusBadge(props: { readonly status: string }): ReactElement {
-  return <span className={`task-status ${taskStatusClass(props.status)}`}>{props.status}</span>
+  return (
+    <span className={`${styles["task-status"]} ${taskStatusClass(props.status)}`}>
+      {props.status}
+    </span>
+  )
 }
 
 /** todo / doing / done は色で区別し、それ以外（想定外の値）は注意色にする。文字は status のまま出す。 */
 function taskStatusClass(status: string): string {
   if (status === "todo") {
-    return "task-status-todo"
+    return styles["task-status-todo"] ?? ""
   }
   if (status === "doing") {
-    return "task-status-doing"
+    return styles["task-status-doing"] ?? ""
   }
   if (status === "done") {
-    return "task-status-done"
+    return styles["task-status-done"] ?? ""
   }
-  return "task-status-other"
+  return styles["task-status-other"] ?? ""
 }

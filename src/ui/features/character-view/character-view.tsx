@@ -34,6 +34,7 @@ import { Portrait } from "../../components/portrait.tsx"
 import { useSession } from "../../stores/session.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
+import styles from "./character-view.module.css"
 
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
@@ -143,8 +144,8 @@ export function CharacterView(): ReactElement {
   )}）`
 
   return (
-    <div className="character-region">
-      <div className="character-layout">
+    <div className={styles["character-region"]}>
+      <div className={styles["character-layout"]}>
         {portraitUrl !== undefined && (
           <Portrait
             url={portraitUrl}
@@ -153,6 +154,7 @@ export function CharacterView(): ReactElement {
             expression={expression}
             outfit={outfit}
             motion={motion}
+            className={styles["portrait"]}
           />
         )}
         <BalloonTrack

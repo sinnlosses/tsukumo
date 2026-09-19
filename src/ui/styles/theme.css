@@ -1,6 +1,7 @@
-/* 色・書体のトークンの定義先（docs/design.md 13章が正典。ここはそれを写したもの）。
-   他の style/*.css は 16進の色・font-size・font-family を直接書かず、ここの
-   カスタムプロパティを参照する。 */
+/* 色・書体のトークンの定義先と、ページ全体の下地（docs/design.md 13章が正典。ここはそれを
+   写したもの）。**このファイルだけがグローバル**で、機能ごとの見た目は各機能の `*.module.css`
+   にある（docs/design.md 6.6）。16進の色を書いてよいのもここだけで、各機能は
+   カスタムプロパティを参照する（font-size / font-family も同じ）。 */
 :root {
   color-scheme: dark;
 
@@ -67,17 +68,14 @@ body {
   }
 }
 
-/* 機械が付けた名前は等幅、人の言葉は本文書体（13.1 原則3）。font-family はこのファイルにだけ
-   書く（冒頭のコメント）ので、各コンポーネントの選択子をここへ集めて宛てる。書体以外の
-   宣言（色・大きさ・余白など）は各コンポーネントの CSS 側に残る。 */
-.task-item .task-id,
-/* コードブロックはブラウザ既定でも等幅になるが、それは汎用の monospace で、インラインの
-   コードだけが --font-mono になる不揃いが出る。明示して揃える。 */
-pre,
-.detail-block :not(pre) > code,
-.dispatch-elapsed,
-.pending-tool,
-.dispatch-suggestion-name,
-.dispatch-send[data-shortcut]::after {
-  font-family: var(--font-mono);
+/* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない。docs/design.md 13.1）。
+   **色を取り上げるかわりに下線で区別する。** 色だけに頼らないので、どのパックの accent が来ても
+   リンクだと分かる。 */
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+a:hover {
+  text-decoration-color: var(--accent);
 }

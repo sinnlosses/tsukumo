@@ -14,6 +14,7 @@ import {
   type TaskReadiness,
   type TaskSummaryItem,
 } from "../../../protocol/task-summary.ts"
+import styles from "./sidebar.module.css"
 
 export type TaskBoardProps = {
   readonly tasks: readonly TaskSummaryItem[] | undefined
@@ -49,15 +50,15 @@ export function TaskBoard(props: TaskBoardProps): ReactElement {
   return (
     <dialog
       ref={dialogRef}
-      className="task-board"
+      className={styles["task-board"]}
       aria-label="タスク一覧"
       onClose={props.onClose}
       onClick={handleClick}
     >
-      <div className="task-board-body">
-        <div className="task-board-head">
-          <h2 className="task-board-heading">タスク一覧</h2>
-          <button type="button" className="task-board-close" onClick={props.onClose}>
+      <div className={styles["task-board-body"]}>
+        <div className={styles["task-board-head"]}>
+          <h2 className={styles["task-board-heading"]}>タスク一覧</h2>
+          <button type="button" className={styles["task-board-close"]} onClick={props.onClose}>
             閉じる
           </button>
         </div>
@@ -72,15 +73,15 @@ function TaskTable(props: {
 }): ReactElement {
   const tasks = props.tasks
   if (tasks === undefined) {
-    return <p className="sidebar-empty">develop/tasks.json が読めない</p>
+    return <p className={styles["sidebar-empty"]}>develop/tasks.json が読めない</p>
   }
   if (tasks.length === 0) {
-    return <p className="sidebar-empty">タスクが無い</p>
+    return <p className={styles["sidebar-empty"]}>タスクが無い</p>
   }
 
   return (
-    <div className="task-board-scroll">
-      <table className="task-board-table">
+    <div className={styles["task-board-scroll"]}>
+      <table className={styles["task-board-table"]}>
         <thead>
           <tr>
             <th scope="col">ID</th>
@@ -106,11 +107,11 @@ function TaskRow(props: {
   readonly task: TaskSummaryItem
   readonly tasks: readonly TaskSummaryItem[]
 }): ReactElement {
-  const doneClass = props.task.status === "done" ? " task-done" : ""
+  const doneClass = props.task.status === "done" ? ` ${styles["task-done"]}` : ""
 
   return (
-    <tr className={`task-board-row${doneClass}`}>
-      <th scope="row" className="task-id">
+    <tr className={`${styles["task-board-row"]}${doneClass}`}>
+      <th scope="row" className={styles["task-id"]}>
         {props.task.id}
       </th>
       <td>{props.task.status ?? "—"}</td>
@@ -145,8 +146,12 @@ function ReadinessCell(props: { readonly readiness: TaskReadiness | undefined })
     return <>—</>
   }
   if (props.readiness.kind === "ready") {
-    return <span className="task-ready">READY</span>
+    return <span className={styles["task-ready"]}>READY</span>
   }
 
-  return <span className="task-blocked">{`待ち: ${props.readiness.blockedBy.join(", ")}`}</span>
+  return (
+    <span
+      className={styles["task-blocked"]}
+    >{`待ち: ${props.readiness.blockedBy.join(", ")}`}</span>
+  )
 }

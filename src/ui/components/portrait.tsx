@@ -9,7 +9,11 @@
 //
 // **`expression` / `outfit` は表情・衣装の差し替えにだけ使う**（立ち絵そのものの差し替えで
 // 表す。docs/requirements.md 4.3）。**`motion` が立ち絵の動き**（呼吸・待っている間の移動・
-// 完了の反応・失敗でびくっ）を `data-motion` 属性で CSS 側（`ui/style/character.css`）に渡す。
+// 完了の反応・失敗でびくっ）を `data-motion` 属性で CSS 側（`portrait.module.css`）に渡す。
+//
+// **どこに・どれだけの大きさで置くかは呼び出し側**（`className`）。ここが持つのは中身の
+// 収め方と動きだけで、置き方は領域ごとに違う（キャラビューは床に立たせ、キャラクター画面の
+// 並びは固定の高さで畳に並べる）。
 // 「1枚の矩形」として位置・大きさ・傾き・上下・不透明度だけを動かす割り切りなので、
 // ここでは属性を渡すだけで動き自体は作らない（docs/design.md 6.5）。
 
@@ -18,6 +22,7 @@ import { useEffect, useState, type CSSProperties, type ReactElement } from "reac
 import { classifyPortraitFile } from "../../protocol/character.ts"
 import { type Expression, type Outfit } from "../../protocol/expression.ts"
 import { type PortraitMotion } from "../../protocol/portrait-motion.ts"
+import styles from "./portrait.module.css"
 
 export type PortraitProps = {
   /** `/character/<file>` の URL。 */
@@ -34,6 +39,11 @@ export type PortraitProps = {
    * `character.css` の動きの規則はどれも当たらない。
    */
   readonly motion: PortraitMotion | undefined
+  /**
+   * 置き方（余白・高さ・幅の上限）を足す class 名。呼び出し側の `*.module.css` のもので、
+   * **立ち絵自身の見た目は持たない**。足すものが無ければ `undefined`。
+   */
+  readonly className: string | undefined
 }
 
 /**
@@ -93,7 +103,10 @@ export function Portrait(props: PortraitProps): ReactElement {
     props.accent === undefined ? undefined : { "--outfit-accent": props.accent }
 
   const wrapperProps = {
-    className: "portrait",
+    className:
+      props.className === undefined
+        ? styles["portrait"]
+        : `${styles["portrait"]} ${props.className}`,
     style,
     role: "img",
     "aria-label": props.altText,
@@ -117,7 +130,9 @@ export function Portrait(props: PortraitProps): ReactElement {
 
   return (
     <div {...wrapperProps}>
-      {kind === "raster" && <img className="portrait-image" src={props.url} alt={props.altText} />}
+      {kind === "raster" && (
+        <img className={styles["portrait-image"]} src={props.url} alt={props.altText} />
+      )}
     </div>
   )
 }

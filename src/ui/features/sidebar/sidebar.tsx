@@ -15,6 +15,7 @@ import { useSession } from "../../stores/session.tsx"
 import { Activity } from "./activity.tsx"
 import { SidebarSection } from "./section.tsx"
 import { SessionInfo } from "./session-info.tsx"
+import styles from "./sidebar.module.css"
 import { TaskBoard } from "./task-board.tsx"
 import { TaskList, taskListTitle } from "./task-list.tsx"
 
@@ -26,14 +27,14 @@ export function Sidebar(): ReactElement {
     <>
       <SidebarSection
         title="いま何をしているか"
-        extraClass="sidebar-block-activity"
+        extraClass={styles["sidebar-block-activity"] ?? ""}
         action={undefined}
       >
         <Activity running={state.runningTools} finished={state.finishedTools} />
       </SidebarSection>
       <SidebarSection
         title={taskListTitle(state.tasks)}
-        extraClass="sidebar-block-tasks"
+        extraClass={styles["sidebar-block-tasks"] ?? ""}
         action={{
           label: "一覧を見る",
           onAction: () => {
@@ -43,7 +44,11 @@ export function Sidebar(): ReactElement {
       >
         <TaskList tasks={state.tasks} />
       </SidebarSection>
-      <SidebarSection title="セッション情報" extraClass="sidebar-block-session" action={undefined}>
+      <SidebarSection
+        title="セッション情報"
+        extraClass={styles["sidebar-block-session"] ?? ""}
+        action={undefined}
+      >
         <SessionInfo />
       </SidebarSection>
       <TaskBoard

@@ -8,10 +8,15 @@
 // **領域の中身（`<MainView>` / `<Sidebar>` / `<CharacterView>` / `<Dispatch>`）は props で
 // 受け取る。** ここから他の `features/` を import しない（`test/architecture.test.ts`
 // 「ui/ の機能どうしの import」）。組み立てるのは入口の `src/ui/main.tsx`。
+//
+// **4領域は `data-region` でも名乗る。** class 名は組み立てのたびにハッシュ化される
+// （CSS Modules）ので、外から領域を指す口——画面を撮って位置と大きさを測る
+// `scripts/capture-view.ts` や、開発者ツールで測るとき——はこちらを使う。
 
 import { useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react"
 
 import { LayoutResizer } from "./layout-resizer.tsx"
+import styles from "./layout.module.css"
 import { DEFAULT_SPLIT, loadSplit, saveSplit, type Split } from "./split.ts"
 
 export type LayoutProps = {
@@ -51,9 +56,15 @@ export function Layout(props: LayoutProps): ReactElement {
   // （他の2本は同時に動かせないので、そのまま使える）。
   return (
     <>
-      <div className="layout-grid" ref={gridRef} style={gridStyle}>
-        <div className="layout-row layout-row-top" ref={rowTopRef} style={rowTopStyle}>
-          <section className="layout-region layout-main">{props.main}</section>
+      <div className={styles["layout-grid"]} ref={gridRef} style={gridStyle}>
+        <div
+          className={`${styles["layout-row"]} ${styles["layout-row-top"]}`}
+          ref={rowTopRef}
+          style={rowTopStyle}
+        >
+          <section className={styles["layout-region"]} data-region="main">
+            {props.main}
+          </section>
           <LayoutResizer
             orientation="vertical"
             containerRef={rowTopRef}
@@ -65,7 +76,12 @@ export function Layout(props: LayoutProps): ReactElement {
               saveSplit({ ...split, topLeft: percent })
             }}
           />
-          <section className="layout-region layout-sidebar">{props.sidebar}</section>
+          <section
+            className={`${styles["layout-region"]} ${styles["layout-sidebar"]}`}
+            data-region="sidebar"
+          >
+            {props.sidebar}
+          </section>
         </div>
         <LayoutResizer
           orientation="horizontal"
@@ -78,8 +94,17 @@ export function Layout(props: LayoutProps): ReactElement {
             saveSplit({ ...split, rowTop: percent })
           }}
         />
-        <div className="layout-row layout-row-bottom" ref={rowBottomRef} style={rowBottomStyle}>
-          <section className="layout-region layout-character">{props.character}</section>
+        <div
+          className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}
+          ref={rowBottomRef}
+          style={rowBottomStyle}
+        >
+          <section
+            className={`${styles["layout-region"]} ${styles["layout-character"]}`}
+            data-region="character"
+          >
+            {props.character}
+          </section>
           <LayoutResizer
             orientation="vertical"
             containerRef={rowBottomRef}
@@ -91,10 +116,15 @@ export function Layout(props: LayoutProps): ReactElement {
               saveSplit({ ...split, bottomLeft: percent })
             }}
           />
-          <section className="layout-region layout-dispatch">{props.dispatch}</section>
+          <section
+            className={`${styles["layout-region"]} ${styles["layout-dispatch"]}`}
+            data-region="dispatch"
+          >
+            {props.dispatch}
+          </section>
         </div>
       </div>
-      <button type="button" className="layout-reset-split" onClick={reset}>
+      <button type="button" className={styles["layout-reset-split"]} onClick={reset}>
         領域の比率を既定に戻す
       </button>
     </>
