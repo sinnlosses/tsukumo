@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 react-best-practices を src/ui/ に当てて改善点を洗い出した（T-197）
+
+17件が当たった（`rerender-` 7 / `js-` 5 / `client-` 2 / `rendering-` 2 / `advanced-` 1）。
+根拠はサーバが 100ms ごとにフレームを押すことと、`session.tsx` の context value が毎レンダー
+新オブジェクトで、`useSession()` を読む14部品が全部再描画されること。採否はユーザー待ちで
+`develop/direction.md` のドラフトに置いた。
+
 ### 2026-09-20 src/ のディレクトリ構成を組み替える案を比べ、推奨を1つ出した（T-194）
 
 `docs/research/architecture-placement.md` に候補 A〜D を並べ、**A を第1段階にして C**

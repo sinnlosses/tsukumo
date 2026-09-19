@@ -160,9 +160,9 @@
     "dependencies": [],
     "summary": "react-best-practices を src/ui/ に当てて改善点を洗い出す",
     "task": "## 背景\n\nユーザーの指示（2026-09-20）:「https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices\nのルールを参考にフロントのコードをレビューして改善点を洗い出してほしい」\n\nそのスキルは8分類・70件のルールを持ち、`rules/<ルール名>.md` に1件ずつ本文がある\n（一覧は `SKILL.md`。`https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/react-best-practices/SKILL.md`\nから取れる。2026-09-20 に確認）。\n\n**Next.js / RSC を前提にした分類は tsukumo に当たらない。** `src/ui/` はブラウザだけで動く\n1枚の React アプリで、SSR もルーティングも無く、サーバ（`src/adapter/server.ts`）は束ねた JS を\n配るだけ。当たるのは `rerender-*`（15件）・`rendering-*`（11件）・`client-*`（4件）・\n`advanced-*`（4件）・`js-*`（14件）で、`server-*`（10件）と `async-*`（6件）は前提が違う。\n\nいまの `src/ui/` は44ファイル。状態は WebSocket 1本の push だけで届き、\n`src/ui/stores/session.tsx` の `useReducer(applyFrame)` が畳む（HTTP で取りに行くのは\n立ち絵の SVG だけ）。\n\n## やること\n\n1. スキルの `SKILL.md` と、当たる分類の `rules/*.md` を読む\n2. `src/ui/` の全ファイルに当て、**実際に当たっている箇所**を挙げる\n   （ファイル名・行・ルール名・何が起きるか・直し方）\n3. 直す価値の順に並べ、`develop/direction.md` の `## エージェントのドラフト` に書く\n4. **コードは直さない**（承認後に別のタスクで直す）\n\n## 完了条件\n\n- ドラフト節に、当たったものが1件ずつ（ルール名・対象ファイルと行・直し方）書かれている\n- 当たらなかった分類は「当たらない」と理由つきで1行ずつ書かれている\n- `src/` に差分が無い。`bun run check` が通る\n\n## 注意\n\n- T-189（oxlint の react プラグインを有効にして既存7件を直す）と重なるものは、lint が落とす\n  ので除く\n- T-203（TanStack Query の導入）が `client-swr-dedup` の一部を先に解く。重なる分はそう書く\n- 一般論（「memo を付けると速くなる」）ではなく、**その部品で実際に何が再描画されるか**を\n  根拠に挙げる。根拠を示せないものは挙げない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`develop/direction.md` の `## エージェントのドラフト` に17件を直す価値の順で追記（既存2件は無傷）。当たらなかった分類（`async-` 6 / `server-` 10 / `bundle-` の一部）と、当たる分類の中で既に満たしている22ルールも理由つきで列挙。\n根拠の土台は実測2つ: サーバは 100ms ごとにフレームを押す（`src/core/session-manager.ts:34` の `EVENT_BATCH_INTERVAL_MS = 100`。ターン中は毎秒10回の再描画）と、`src/ui/stores/session.tsx:126` が `value={{ state, connection, dispatch }}` を毎レンダー新オブジェクトで配る（`useSession()` を読む14部品が全部再描画）。どちらも呼び出し元で現物を確認済み。\n`bun run check` 通過（662 pass / 0 fail）。`git status --porcelain -- src` が空（このタスクは洗い出しだけ）。T-203 と重なるのは `client-swr-dedup` の1件のみ。"
   },
   {
     "id": "T-198",
