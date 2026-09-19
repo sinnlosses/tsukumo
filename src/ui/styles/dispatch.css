@@ -176,6 +176,9 @@
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  /* <button> は既定で border-box だが <label> は content-box。揃えないと複数選択の側だけ
+     padding と枠のぶん横に広がり、説明の末尾が箱の外へ出る（2026-09-20）。 */
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -222,11 +225,14 @@
   color: var(--ink-quiet);
 }
 /* 複数選択（multiSelect）はチェックボックス（docs/design.md 6.1）。ラベル・説明を
-   チェックボックスと同じ行の先頭に置く。 */
+   チェックボックスと同じ行の先頭に置く。
+   **この行は縮めない**（単一選択でラベルが直接 .question-choice の子になるのと同じ扱い）。
+   縮むようにすると、中のラベルは .question-choice-label が縮まないぶん行の箱からはみ出し、
+   右隣の説明の文字と重なって描かれる（2026-09-20）。 */
 .question-choice-checkbox-row {
   display: flex;
   align-items: center;
-  min-width: 0;
+  flex: 0 0 auto;
   gap: 0.5rem;
 }
 .question-choice-other {

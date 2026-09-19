@@ -42,6 +42,7 @@ type CatalogEntry = {
 const CATALOG: readonly CatalogEntry[] = [
   { scene: "question-multi", label: "質問（複数選択）" },
   { scene: "question-pair", label: "質問（2問・長い説明）" },
+  { scene: "question-long", label: "質問（長いラベルと長い説明・複数選択と単一選択）" },
   { scene: "permission", label: "許可プロンプト" },
   { scene: "report", label: "レポートとツールの進行" },
   { scene: "notation", label: "レポートの記法（表・図・グラフ）" },
