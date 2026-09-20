@@ -1,5 +1,9 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 責務が同居していた大きいファイルを分けた（T-196）
+
+`shared` を4つ（`command-suggestion` / `character-definition` / `character-asset` / `expression-choice`）に割り、`mainViewEntries` は既存の `main-view.ts` へ寄せ、`adapter/server.ts` から WebSocket の境界を `session-socket.ts` に出した。`sdk-driver.ts`・`cli.ts`・`session-manager.ts` は概念が1つなので分けていない（理由は tasks.json の evidence）。
+
 ### 2026-09-20 中間レポートが畳まれてすぐ開き直すチラつきを直した（T-202）
 
 ターンが進行中のあいだ、いちばん新しいターンの最後のステップの本文を「まとまった資料」と
