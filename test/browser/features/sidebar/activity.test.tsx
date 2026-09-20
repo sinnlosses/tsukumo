@@ -97,7 +97,6 @@ describe("Activity", () => {
       />,
     )
 
-    expect(container.querySelector("details.activity-failure")).toBeDefined()
     expect(container.querySelector("pre.activity-failure-input")?.textContent).toContain(
       "架空のコマンド",
     )

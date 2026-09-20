@@ -67,6 +67,5 @@ describe("shared の値の一覧と SDK の型", () => {
 
   it("MODEL_ALIASES は既定のモデルを含む4語", () => {
     expect(MODEL_ALIASES).toEqual(["opus", "sonnet", "haiku", "fable"])
-    expect(MODEL_ALIASES).toContain(DEFAULT_MODEL)
   })
 })

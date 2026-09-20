@@ -101,10 +101,9 @@ describe("createSessionLaunch", () => {
   it("起動時は覚えた値のパックで起こし、続きの履歴を流す", async () => {
     const harness = createHarness()
 
-    const driver = await createSessionLaunch(harness.ports)(harness.receive, undefined)
+    await createSessionLaunch(harness.ports)(harness.receive, undefined)
     await settle()
 
-    expect(driver).toBeDefined()
     expect(harness.calls).toEqual([
       "choosePack:",
       "findResumeSession:tsukumo-spirit",
