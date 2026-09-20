@@ -65,7 +65,7 @@ describe("Layout", () => {
   })
 
   it("比率を戻すボタンを押すと、保存済みの比率が DEFAULT_SPLIT に戻る", () => {
-    saveSplit({ rowTop: 20, topLeft: 30, bottomLeft: 40 })
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 20, topLeft: 30, bottomLeft: 40 })
     renderLayout()
 
     fireEvent.click(screen.getByRole("button", { name: "領域の比率を既定に戻す" }))
@@ -95,7 +95,7 @@ describe("Layout", () => {
   })
 
   it("上下の仕切りは行の比率だけを動かし、他の2本の位置を巻き込まない", () => {
-    saveSplit({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 60, topLeft: 30, bottomLeft: 40 })
     renderLayout()
     const grid = requireElement(rowTopElement().parentElement, "grid")
     stubBoundingRect(grid, 1000, 500)
@@ -106,7 +106,7 @@ describe("Layout", () => {
     fireEvent.pointerUp(resizer, { clientX: 0, clientY: 100 })
 
     expect(grid.style.getPropertyValue("--layout-row-top")).toBe("20fr")
-    expect(loadSplit()).toEqual({ rowTop: 20, topLeft: 30, bottomLeft: 40 })
+    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 20, topLeft: 30, bottomLeft: 40 })
   })
 
   // 狭い画面でどちらの領域を出すかは CSS（@media）が data-narrow-pane を見て決めるので、
@@ -125,23 +125,63 @@ describe("Layout", () => {
     expect(document.querySelector('[data-region="main"]')).not.toBeNull()
   })
 
-  it("キャラビューを畳むと、その領域と2本の仕切りが消える（雑談モード）", () => {
+  it("キャラビューを畳むと、その領域と左右の仕切りが消える（雑談モード）", () => {
     renderLayout(true)
 
     expect(screen.queryByText("character")).toBe(null)
     expect(screen.queryByLabelText("キャラビューと入力欄の境界")).toBe(null)
-    // 上段の高さが固定されるので、掴めるのに効かない仕切りを残さない。
-    expect(screen.queryByLabelText("上段と下段の境界")).toBe(null)
+    // 上下の仕切りは残る（入力欄の高さは雑談中も変えられる）。
+    expect(screen.getByLabelText("上段と下段の境界")).toBeTruthy()
     // 入力欄は残る（下段が入力欄だけになる）。
     expect(screen.getByText("dispatch")).toBeTruthy()
   })
 
-  it("畳んでいる間も、使う人が決めた比率は保存したまま", () => {
-    // 描くときだけ固定の高さを当てる（state は触らない）。仕事へ戻すとそのまま効く。
-    saveSplit({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+  it("雑談用の比率がまだ無いときは、畳んでも仕事の比率で開く", () => {
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 35 })
     renderLayout(true)
 
-    expect(loadSplit()).toEqual({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+    const grid = requireElement(rowTopElement().parentElement, "grid")
+    expect(grid.style.getPropertyValue("--layout-row-top")).toBe("35fr")
+    expect(grid.style.getPropertyValue("--layout-row-bottom")).toBe("65fr")
+  })
+
+  it("畳んでいる間に上下の仕切りを動かすと、雑談用の比率だけが変わる", () => {
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 60 })
+    renderLayout(true)
+    const grid = requireElement(rowTopElement().parentElement, "grid")
+    stubBoundingRect(grid, 1000, 500)
+    const resizer = screen.getByRole("separator", { name: "上段と下段の境界" })
+
+    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 0, clientY: 300 })
+    fireEvent.pointerMove(resizer, { clientX: 0, clientY: 400 })
+    fireEvent.pointerUp(resizer, { clientX: 0, clientY: 400 })
+
+    // 離したあとのレンダーでも動かした位置のまま（掴んだ手を離しても戻らない）。
+    expect(grid.style.getPropertyValue("--layout-row-top")).toBe("80fr")
+    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 60, collapsedRowTop: 80 })
+  })
+
+  it("仕事の側で上下の仕切りを動かしても、雑談用の比率は動かない", () => {
+    saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
+    renderLayout(false)
+    const grid = requireElement(rowTopElement().parentElement, "grid")
+    stubBoundingRect(grid, 1000, 500)
+    const resizer = screen.getByRole("separator", { name: "上段と下段の境界" })
+
+    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 0, clientY: 300 })
+    fireEvent.pointerMove(resizer, { clientX: 0, clientY: 200 })
+    fireEvent.pointerUp(resizer, { clientX: 0, clientY: 200 })
+
+    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 40, collapsedRowTop: 80 })
+  })
+
+  it("比率を戻すボタンは、雑談用の比率も未設定に戻す", () => {
+    saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
+    renderLayout(true)
+
+    fireEvent.click(screen.getByRole("button", { name: "領域の比率を既定に戻す" }))
+
+    expect(loadSplit().collapsedRowTop).toBeUndefined()
   })
 
   it("畳むのをやめると、キャラビューと仕切りが戻る", () => {
@@ -153,7 +193,7 @@ describe("Layout", () => {
   })
 
   it("一度も動かさずに離したときは保存しない", () => {
-    saveSplit({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 60, topLeft: 30, bottomLeft: 40 })
     renderLayout()
     stubBoundingRect(rowTopElement(), 1000, 400)
     const resizer = screen.getByRole("separator", { name: "メインビューとサイドバーの境界" })
@@ -162,6 +202,6 @@ describe("Layout", () => {
     fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 750, clientY: 0 })
     fireEvent.pointerUp(resizer, { clientX: 750, clientY: 0 })
 
-    expect(loadSplit()).toEqual({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 60, topLeft: 30, bottomLeft: 40 })
   })
 })

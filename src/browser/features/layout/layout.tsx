@@ -40,14 +40,6 @@ export type LayoutProps = {
   readonly collapseCharacter: boolean
 }
 
-/**
- * キャラビューを畳んでいるとき（雑談モード）の、上段の高さ（%）。**使う人が決めた比率
- * （`split.rowTop`）は state に残したまま、描くときだけこちらを使う** — 下段に残るのは
- * 入力欄だけなので、仕事のときの比率（既定 60%）をそのまま当てると入力欄が画面の4割を占める。
- * 戻したときは使う人の比率がそのまま効く。
- */
-const COLLAPSED_CHARACTER_ROW_TOP = 82
-
 /** 狭い画面のとき、上段に出している領域。 */
 type NarrowPane = "main" | "sidebar"
 
@@ -62,6 +54,8 @@ const NARROW_PANES = [
 // CSS 側のフォールバック値（layout.module.css）は DEFAULT_SPLIT と一致させること。
 const SPLIT_VARIABLES = {
   rowTop: ["--layout-row-top", "--layout-row-bottom"],
+  // 畳んでいる間の上下比は、同じ仕切りが同じ2つの名前を動かす（覚える先だけが別）。
+  collapsedRowTop: ["--layout-row-top", "--layout-row-bottom"],
   topLeft: ["--layout-top-left", "--layout-top-right"],
   bottomLeft: ["--layout-bottom-left", "--layout-bottom-right"],
 } satisfies Record<keyof Split, readonly [`--${string}`, `--${string}`]>
@@ -86,16 +80,29 @@ export function Layout(props: LayoutProps): ReactElement {
     commitSplit(() => DEFAULT_SPLIT)
   }
 
+  // 上下の仕切りが動かす項。**畳んでいる間（雑談モード）は別の項に覚える**ので、どちらの
+  // モードでドラッグしても相手の比率は動かない。畳んでいて雑談の比率がまだ無いときは、
+  // 仕事の比率をそのまま使う（`collapsedRowTop` に既定値は持たせない。split.ts）。
+  const rowTopKey = props.collapseCharacter ? "collapsedRowTop" : "rowTop"
+  const rowTopPercent = props.collapseCharacter
+    ? (split.collapsedRowTop ?? split.rowTop)
+    : split.rowTop
+
+  function commitRowTop(percent: number): void {
+    commitSplit((current) =>
+      props.collapseCharacter
+        ? { ...current, collapsedRowTop: percent }
+        : { ...current, rowTop: percent },
+    )
+  }
+
   return (
     <>
       <div
         className={styles["layout-grid"]}
         ref={gridRef}
         data-collapse-character={props.collapseCharacter}
-        style={fractionStyle(
-          "rowTop",
-          props.collapseCharacter ? COLLAPSED_CHARACTER_ROW_TOP : split.rowTop,
-        )}
+        style={fractionStyle(rowTopKey, rowTopPercent)}
       >
         <div className={styles["layout-tabs"]} role="tablist">
           {NARROW_PANES.map((entry) => (
@@ -145,22 +152,17 @@ export function Layout(props: LayoutProps): ReactElement {
             {props.sidebar}
           </section>
         </div>
-        {/* **畳んでいる間は上下の仕切りも出さない。** 高さが
-            `COLLAPSED_CHARACTER_ROW_TOP` に固定されるので、動かしても離した瞬間に
-            戻ってしまい、掴めるのに効かない仕切りになる。 */}
-        {!props.collapseCharacter && (
-          <LayoutResizer
-            orientation="horizontal"
-            containerRef={gridRef}
-            ariaLabel="上段と下段の境界"
-            onChange={(percent) => {
-              writeFraction(gridRef.current, "rowTop", percent)
-            }}
-            onCommit={(percent) => {
-              commitSplit((current) => ({ ...current, rowTop: percent }))
-            }}
-          />
-        )}
+        {/* **畳んでいる間もこの仕切りは出す**（雑談中でも入力欄の高さを変えられる）。
+            覚える先が `rowTopKey` で切り替わるだけで、仕切りそのものは1本。 */}
+        <LayoutResizer
+          orientation="horizontal"
+          containerRef={gridRef}
+          ariaLabel="上段と下段の境界"
+          onChange={(percent) => {
+            writeFraction(gridRef.current, rowTopKey, percent)
+          }}
+          onCommit={commitRowTop}
+        />
         <div
           className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}
           ref={rowBottomRef}
