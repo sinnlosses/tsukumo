@@ -27,6 +27,7 @@ import {
   EVENT_BATCH_INTERVAL_MS,
 } from "./server/core/session-manager.ts"
 import { sessionRules } from "./server/core/session-rule.ts"
+import { CHAT_COMPACT_THRESHOLD_BYTES } from "./shared/chat-log.ts"
 import { type ClientCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
@@ -60,6 +61,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
   const manager = createSessionManager({
     now: Date.now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
+    chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
   })
 
   manager.create({

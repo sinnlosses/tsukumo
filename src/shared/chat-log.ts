@@ -41,3 +41,19 @@ export function chatLogEntries(records: readonly SessionRecord[]): readonly Chat
     return []
   })
 }
+
+/**
+ * 雑談の記憶を畳む閾値（バイト）。値の根拠は `docs/requirements.md` 4.9「記憶の圧縮と忘却」。
+ */
+export const CHAT_COMPACT_THRESHOLD_BYTES = 32_768 satisfies number
+
+const textEncoder = new TextEncoder()
+
+/**
+ * 雑談のログの文面（利用者の依頼とキャラクターのセリフ）の UTF-8 バイト数を数える。
+ * **添えた画像とツールの入出力は数えない**（`docs/requirements.md` 4.9「数え落としは許す」）——
+ * `entries` は {@link chatLogEntries} の出力なので、本文・ツール・質問は最初から入っていない。
+ */
+export function chatLogByteSize(entries: readonly ChatLogEntry[]): number {
+  return entries.reduce((total, entry) => total + textEncoder.encode(entry.text).length, 0)
+}

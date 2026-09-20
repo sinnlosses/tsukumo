@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { chatLogEntries } from "../../src/shared/chat-log.ts"
+import { chatLogByteSize, chatLogEntries } from "../../src/shared/chat-log.ts"
 import { type SessionRecord } from "../../src/shared/session-state.ts"
 
 // 雑談のログは**素直な時系列**（docs/design.md 13.7）。`mainViewEntries` のように依頼で
@@ -53,5 +53,51 @@ describe("chatLogEntries", () => {
 
   it("記録が空なら空（まだ何も話していない場面）", () => {
     expect(chatLogEntries([])).toEqual([])
+  })
+})
+
+describe("chatLogByteSize", () => {
+  it("空なら0", () => {
+    expect(chatLogByteSize([])).toBe(0)
+  })
+
+  it("利用者だけの文面を UTF-8 バイト数で数える", () => {
+    // "あ" は UTF-8 で3バイト。
+    const entries = chatLogEntries([{ kind: "request", text: "あああ", images: [] }])
+
+    expect(chatLogByteSize(entries)).toBe(9)
+  })
+
+  it("セリフだけの文面も数える", () => {
+    const entries = chatLogEntries([
+      { kind: "speech", text: "架空のセリフ", expression: "default" },
+    ])
+
+    expect(chatLogByteSize(entries)).toBe(new TextEncoder().encode("架空のセリフ").length)
+  })
+
+  it("画像つきの依頼でも、添えた画像は数えない", () => {
+    const withImages = chatLogEntries([
+      {
+        kind: "request",
+        text: "あああ",
+        images: ["data:image/png;base64,architecture-tallying-decoy"],
+      },
+    ])
+    const withoutImages = chatLogEntries([{ kind: "request", text: "あああ", images: [] }])
+
+    expect(chatLogByteSize(withImages)).toBe(chatLogByteSize(withoutImages))
+  })
+
+  it("複数件は合算する", () => {
+    const entries = chatLogEntries([
+      { kind: "request", text: "1つめの依頼", images: [] },
+      { kind: "speech", text: "1つめのセリフ", expression: "default" },
+    ])
+
+    expect(chatLogByteSize(entries)).toBe(
+      new TextEncoder().encode("1つめの依頼").length +
+        new TextEncoder().encode("1つめのセリフ").length,
+    )
   })
 })

@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test"
 import { type SessionDriver } from "../../../src/server/core/session-driver.ts"
 import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
 import { createSessionManager } from "../../../src/server/core/session-manager.ts"
+import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"
 import {
   type CharacterCreateCommand,
   type CharacterEditCommand,
@@ -97,7 +98,11 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const creates: CharacterCreateCommand[] = []
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
-  const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+  const manager = createSessionManager({
+    now: () => 1_000,
+    batchIntervalMs: BATCH_MS,
+    chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+  })
   manager.create({
     sessionId: SESSION_ID,
     startDriver: (onEvent) => {
@@ -235,7 +240,11 @@ describe("createSessionManager", () => {
   it("switch-character で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
     // 起こされた駆動を順に覚える（`startDriver` に渡るパックの名前もここで見る）。
     const started: { readonly character: string | undefined; readonly stub: StubDriver }[] = []
-    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    })
     manager.create({
       sessionId: SESSION_ID,
       startDriver: (onEvent, request) => {
@@ -327,7 +336,11 @@ describe("createSessionManager", () => {
     // 雑談の切り替えは `systemPrompt` の差し替えなので、`switch-character` と同じ起こし直しに
     // なる（docs/requirements.md 4.9）。**パックは変えない**ことをここで見る。
     const started: SessionLaunchRequest[] = []
-    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    })
     manager.create({
       sessionId: SESSION_ID,
       startDriver: (onEvent, request) => {
@@ -354,7 +367,11 @@ describe("createSessionManager", () => {
 
   it("雑談から仕事へ戻すときも起こし直す", async () => {
     const started: SessionLaunchRequest[] = []
-    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    })
     manager.create({
       sessionId: SESSION_ID,
       startDriver: (onEvent, request) => {
@@ -397,7 +414,11 @@ describe("createSessionManager", () => {
   it("駆動が起き上がるのを待ってから、新しい hello を配る（続きから始めるセッションを探す間）", async () => {
     // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`startDriver` は待てる形で返る。
     const started: StubDriver[] = []
-    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    })
     manager.create({
       sessionId: SESSION_ID,
       startDriver: async (onEvent) => {
@@ -437,6 +458,101 @@ describe("createSessionManager", () => {
     expect(started).toHaveLength(2)
     expect(started[0]?.calls).toContain("close")
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(2)
+  })
+
+  describe("雑談の記憶の圧縮", () => {
+    // 本番の閾値（32 KiB）だと架空の短い文面では届かないので、**`SessionManagerOptions` の
+    // フィールドに小さい閾値を渡して**テストする（`batchIntervalMs` と同じ形。
+    // docs/requirements.md 4.9）。
+    const TINY_THRESHOLD_BYTES = 10
+
+    function startChatManagerWithStub(thresholdBytes: number) {
+      const stub = createStubDriver()
+      const manager = createSessionManager({
+        now: () => 1_000,
+        batchIntervalMs: BATCH_MS,
+        chatCompactThresholdBytes: thresholdBytes,
+      })
+      manager.create({
+        sessionId: SESSION_ID,
+        startDriver: (onEvent) => {
+          stub.attach(onEvent)
+          return Promise.resolve(stub.driver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+      })
+      return { manager, stub }
+    }
+
+    it("閾値を超えたターンの終わりに /compact を1回だけ送る", async () => {
+      const { stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
+      // 駆動が起き上がる（`live` が入る）のを待ってから、雑談へ入って往復する。
+      await waitForBatch()
+
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
+      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      const compactCalls = stub.calls.filter((call) => call.startsWith("prompt:/compact "))
+      expect(compactCalls).toHaveLength(1)
+
+      // 送ったら走行合計が0に戻るので、続けて終わっただけの次のターンでは再送しない
+      // （「投げたら数え直す」）。
+      stub.emit({ kind: "request", text: "b", images: [] })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(stub.calls.filter((call) => call.startsWith("prompt:/compact "))).toHaveLength(1)
+    })
+
+    it("閾値を超えていなければ送らない", async () => {
+      const { stub } = startChatManagerWithStub(1_000_000)
+      await waitForBatch()
+
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
+      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(stub.calls.some((call) => call.startsWith("prompt:/compact "))).toBe(false)
+    })
+
+    it("仕事のモード（雑談に入っていない）では、閾値を超えていても送らない", async () => {
+      const { stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
+      await waitForBatch()
+
+      // chat-mode-changed を流さないので chatMode は既定の false のまま。
+      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
+      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(stub.calls.some((call) => call.startsWith("prompt:/compact "))).toBe(false)
+    })
+
+    it("画面の窓（雑談は直近100ターン）で state.records が切り詰められたあとでも、走行合計は届く", async () => {
+      // 1ターンあたり "xxxxx"（5バイト）+ "yyyyy"（5バイト）＝10バイト。
+      // 閾値 1,200 は「窓に残る直近100ターンぶん」（1,000バイト）より大きく、
+      // 「150ターン分の総量」（1,500バイト）より小さい —
+      // `state.records`（`trimToRecentTurns` で直近100ターンに切り詰められる）から数えていたら
+      // 一生届かない値を、あえて選んでいる（`docs/requirements.md` 4.9）。
+      const { stub } = startChatManagerWithStub(1_200)
+      await waitForBatch()
+
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      for (let turn = 0; turn < 150; turn += 1) {
+        stub.emit({ kind: "request", text: "xxxxx", images: [] })
+        stub.emit({ kind: "speech", text: "yyyyy", expression: "default" })
+        stub.emit({ kind: "turn-finished", status: "success" })
+      }
+      await waitForBatch()
+
+      expect(stub.calls.filter((call) => call.startsWith("prompt:/compact "))).toHaveLength(1)
+    })
   })
 
   it("立ち絵を変えるコマンドは駆動へ渡さず、書けたら character-changed を畳んで配る", async () => {
@@ -543,7 +659,11 @@ describe("createSessionManager", () => {
   })
 
   it("起こし直しに失敗したら定型文の理由を返し、常駐プロセスは落ちない", async () => {
-    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    })
     manager.create({
       sessionId: SESSION_ID,
       startDriver: (onEvent, character) => {
@@ -573,7 +693,11 @@ describe("createSessionManager", () => {
   })
 
   it("キャラクターへの書き込みが例外を投げても定型文の理由を返す", async () => {
-    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    })
     const stub = createStubDriver()
     manager.create({
       sessionId: SESSION_ID,
@@ -595,7 +719,11 @@ describe("createSessionManager", () => {
   })
 
   it("駆動が例外を投げても定型文の理由を返し、常駐プロセスは落ちない", async () => {
-    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    })
     manager.create({
       sessionId: SESSION_ID,
       startDriver: () =>

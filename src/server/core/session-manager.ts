@@ -11,6 +11,7 @@
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
 
+import { chatLogByteSize } from "../../shared/chat-log.ts"
 import {
   type CharacterCreateCommand,
   type CharacterEditCommand,
@@ -25,6 +26,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../shared/session-state.ts"
+import { CHAT_COMPACT_COMMAND } from "./chat-compact.ts"
 import { type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
 
@@ -39,6 +41,12 @@ export type SessionManagerOptions = {
   readonly now: () => number
   /** イベントをまとめる間隔（ミリ秒）。既定は {@link EVENT_BATCH_INTERVAL_MS}。 */
   readonly batchIntervalMs: number
+  /**
+   * 雑談の記憶を畳む閾値（バイト）。**呼び出し側が明示的に渡す**（`batchIntervalMs` と同じ形。
+   * 本番は `CHAT_COMPACT_THRESHOLD_BYTES`、`src/shared/chat-log.ts`）。テストは架空の短い文面の
+   * まま閾値に届かせるため、小さい値を渡す。
+   */
+  readonly chatCompactThresholdBytes: number
 }
 
 export type SessionCreateOptions = {
@@ -143,6 +151,13 @@ function createSessionHost(
   // 起き上がったあとの駆動。**閉じるのを待たない**ために値でも持つ（プロセスの終了は
   // `process.exit` ですぐ進むので、待っていると claude の子プロセスが閉じられずに残る）。
   let live: SessionDriver | undefined = undefined
+  // 雑談のログの文面を**受け取るたびに足していく走行合計**（docs/requirements.md 4.9
+  // 「数える範囲は前の圧縮点から先だけ」）。**`state.records` からは数えない** —
+  // `trimToRecentTurns`（`src/shared/session-state.ts`）で直近何ターンかに切り詰められるので、
+  // そこから数えると古いターンが落ちるたびに減り、閾値へ一生届かないことがある
+  // （雑談は100ターンの窓）。`/compact` を送れたら 0 に戻し（＝そこが新しい圧縮点）、
+  // 起こし直す（restart）でも同じ理由で 0 に戻す。
+  let chatLogBytesSinceCompact = 0
 
   const cancelFlush = (): void => {
     if (flushTimer !== undefined) {
@@ -169,6 +184,29 @@ function createSessionHost(
   })
 
   /**
+   * 雑談のログが閾値を超えていたら `/compact` を1回投げる（docs/requirements.md 4.9
+   * 「記憶の圧縮と忘却」）。数えるのは {@link chatLogBytesSinceCompact}
+   * （前の圧縮点から先の走行合計）で、超えていたら送って 0 に戻す（＝そこが新しい圧縮点）。
+   *
+   * 駆動がまだ無い・送信が失敗したときは**その回を諦めて次のターンでまた試す**
+   * （走行合計を戻さない。docs/coding-standards.md「エラーハンドリング」）。
+   */
+  const requestChatCompactIfNeeded = (): void => {
+    if (!state.chatMode || live === undefined) {
+      return
+    }
+    if (chatLogBytesSinceCompact < options.chatCompactThresholdBytes) {
+      return
+    }
+    try {
+      live.prompt(CHAT_COMPACT_COMMAND, [])
+      chatLogBytesSinceCompact = 0
+    } catch {
+      // 次のターンでまた閾値を超えていれば試す。
+    }
+  }
+
+  /**
    * イベント1件を畳んで次のバッチに積む。**駆動から届いたものと、見た目の編集で起こした
    * `character-changed` の両方がここを通る**（サーバ側の状態とブラウザへ配る内容を1本にする）。
    */
@@ -181,6 +219,16 @@ function createSessionHost(
     buffered = [...buffered, { at, event }]
     if (flushTimer === undefined) {
       flushTimer = setTimeout(flush, options.batchIntervalMs)
+    }
+    // 雑談のログに乗る文面（依頼とセリフ）だけ、届いたその場で走行合計に足す
+    // （`state.records` の切り詰めに影響されない。docs/requirements.md 4.9）。
+    if (state.chatMode) {
+      chatLogBytesSinceCompact += chatLogEventByteSize(event)
+    }
+    // **ターンの終わりに1回だけ見る**（docs/requirements.md 4.9）。仕事のときは何もしない
+    // （`requestChatCompactIfNeeded` が `state.chatMode` を見て弾く）。
+    if (event.kind === "turn-finished") {
+      requestChatCompactIfNeeded()
     }
   }
 
@@ -232,6 +280,9 @@ function createSessionHost(
       cancelFlush()
       state = INITIAL_SESSION_STATE
       buffered = []
+      // 起こし直した直後の記録は、復元されたログがそのまま圧縮点から先になる
+      // （docs/requirements.md 4.9）。走行合計も一緒に戻す。
+      chatLogBytesSinceCompact = 0
       driver = start(request)
       await driver
       cancelFlush()
@@ -346,6 +397,23 @@ async function dispatchToDriver(
   } catch {
     return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
   }
+}
+
+/**
+ * イベント1件ぶんの、雑談のログに乗る文面の UTF-8 バイト数。拾うのは
+ * `chatLogEntries`（`src/shared/chat-log.ts`）と同じ2種類（依頼とセリフ）だけで、
+ * それ以外は0（画像とツールの入出力は数えない。docs/requirements.md 4.9）。
+ */
+function chatLogEventByteSize(event: SessionEvent): number {
+  if (event.kind === "request") {
+    return chatLogByteSize([{ speaker: "user", text: event.text, images: event.images }])
+  }
+  if (event.kind === "speech") {
+    return chatLogByteSize([
+      { speaker: "character", text: event.text, expression: event.expression },
+    ])
+  }
+  return 0
 }
 
 /**
