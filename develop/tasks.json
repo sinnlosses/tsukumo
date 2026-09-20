@@ -1,16 +1,5 @@
 [
   {
-    "id": "T-115",
-    "difficulty": "opus",
-    "loopable": "N",
-    "dependencies": [],
-    "summary": "レポートの書き込み位置にミニ立ち絵を添えるかを決める（4.3「レポートの上に被らせない」の見直し）",
-    "task": "## 背景\n\nユーザーの指示（2026-09-14）: 「レポートを書くときに、キャラクターが書いているようにカーソルに\n合わせてミニキャラになった立ち絵が動くと楽しいよねきっと」。\n\n**この案は、いま記録されている決定のうち1つと正面から衝突する。** `docs/requirements.md` 4.3 に\n「**動ける範囲はキャラビューの領域の中だけ。レポートの上に被らせない**（読書を妨げないため）」\n（2026-09-13 決定）とある。ミニキャラをレポートの書き込み位置に添えるのは、この線を越える。\n**だからこれは「決める」タスクで、決定の見直しを含む。**\n\n技術的な足場はある。\n\n- **書き込み位置はブラウザ側に既にある。** ターン中の未確定の本文は\n  `src/protocol/session-state.ts` の `partialUtterance` として流れ、`mainViewEntries()`\n  （同 348 行）が末尾に `{ kind: \"detail\" }` として足す。**いま伸びているのは常に最後の\n  レポート1件の末尾**なので、「カーソル」はその DOM の末尾として取れる\n- **動きの置き場所は決まっている。** 立ち絵の演出はブラウザ側の `Portrait` 部品の中に閉じる\n  （`docs/design.md` 6.5、`src/ui/character-view/portrait.tsx`）。ミニキャラはキャラビューの\n  外に出るので、**この「部品の中に閉じる」形も崩れる**\n- **素材は増やせない。** 4.3 の「立ち絵は1枚の矩形として扱う」（位置・大きさ・傾き・上下・\n  不透明度だけを動かし、素材の中身に触らない）と 4.4 の「パック作者に何も要求しない」があるので、\n  **ミニキャラ専用の画像をパックに要求する形は採れない**。既存の立ち絵を縮小して使うなら\n  矩形のままなので成り立つ\n- `prefers-reduced-motion: reduce` を尊重する規則が `src/ui/style/theme.css` にある\n\n## 解くべき論点\n\n1. **4.3 の「レポートの上に被らせない」を見直すか。** この線は「読書を妨げない」ために引かれた。\n   ミニキャラを認めるなら、**何を条件に認めるのか**を書き直す（例: ターン進行中で、まだ\n   読み終えていない末尾の近くだけ / 文字に重ならない余白に置く / 固定を選べる）。\n   **見直さないと決めるのも結論として正しい**（そのときは着手しない判断で閉じる）\n2. **どこに出すか。** 候補は (a) レポートの末尾に行内で添える（テキストの流れの一部にする）/\n   (b) メインビューの領域の中に絶対配置し、末尾の座標へ追従させる / (c) キャラビューの立ち絵\n   そのものを小さくしてメインビュー側へ寄せる。**(b) は座標の計算が要る**（末尾の要素の\n   `getBoundingClientRect` とスクロール位置）\n3. **素材をどうするか。** 既存の立ち絵の縮小で足りるか、`character.json` に\n   ミニキャラ用の項目を足すか。**足すなら 4.4 の「パック作者に何も要求しない」に例外を作る\n   ことになる**ので、無いパックでも成り立つ形（縮小に落ちる）を用意できるかを決める\n4. **読書の邪魔をしない止め方。** 過去のタブを見ているとき・スクロールして末尾から離れている\n   とき・ターンが終わったあとにどうするか。`prefers-reduced-motion` と「固定」の設定\n   （4.3 の `localStorage`）の扱いも決める\n5. **立ち絵が2つ見えることをどう扱うか。** キャラビューの立ち絵とミニキャラが同時に見えると\n   同じキャラクターが2体いる。片方を隠すのか、両方出すのか\n\n## やること\n\n1. 上の論点1を**先に決める**。4.3 の線を維持する結論になったら、**実装はせず、理由を\n   `evidence` に書いて閉じる**（`status: \"done\"` / `passes: false`。正典の「着手しない判断」）\n2. 見直す結論になったら、論点2〜5を決めて `docs/requirements.md` 4.3（必要なら\n   `docs/design.md` 6.5）に書く\n3. 実装は**この決定のあと**。このタスクに含めるか別タスクに切るかは、決まった案の大きさで\n   判断する（座標の追従が要る (b) なら切る）\n4. どちらの結論でも、**決めた内容を `docs/requirements.md` 4.3 に反映して閉じる**\n\n## 完了条件\n\n- 論点1の結論が `docs/requirements.md` 4.3 に書かれている（維持なら「なぜ維持したか」、\n  見直すなら「何を条件に認めるか」）\n- 実装した場合: 立ち絵が2体見える状態・読書中に動き続ける状態が起きないことを実機で確認し、\n  見えたものを `evidence` に書く\n- `prefers-reduced-motion: reduce` で止まることを確認する（実装した場合）\n- `docs/requirements.md` の節の数が変わっていない\n  （`grep -c '^#\\{2,3\\} ' docs/requirements.md` を前後で比較）\n- `bun run check` が通る（pass 件数を `evidence` に書く。実装しない結論でも、文面の変更後に走らせる）\n\n## 注意\n\n- **これは「楽しさ」のための機能で、読みやすさとぶつかる。** tsukumo の目的は\n  「キャラクターと一緒に楽しく仕事をする」（`CLAUDE.md`）なので**却下ありきで考えない**が、\n  4.3 の線を引いたときの理由（読書を妨げない）は実際に効いている。**どちらを採るかは\n  ユーザーに確認する**\n- **`Portrait` の中の既存の4つの動き**（呼吸・待っている間の移動・完了の反応・失敗でびくっ。\n  T-107 で実装済み）を壊さない\n- ミニキャラ用の画像を**このリポジトリに同梱しない**（2.2「キャラクター素材そのものの同梱・\n  配布」は対象外）\n- **論点1（4.3 の「レポートの上に被らせない」を見直すか）をユーザーが決める**ので `loopable` は `\"N\"`",
-    "status": "done",
-    "passes": true,
-    "evidence": "論点1〜5をユーザーとの対話で決め、`docs/requirements.md` 4.3 と `docs/design.md` 6.5 に書いた。\n結論: (1) 「レポートの上に被らせない」はミニ立ち絵に限って見直す。(2) 完成した DOM を段階的に\n見せ、筆先の座標は `Range` から取る（文字を足して変換し直す形は採らない。mermaid / Chart.js が\n未完成のソースで作り直されるため）。(3) 素材は `character.json` の任意の `mini`。無ければ\n`portraits.default` の縮小に落ちる（4.4 に例外を作らない）。(4) 上限1.5〜2秒で出し切り、\nスクロール・クリック・キー入力で即スキップ。過去のタブは演出しない。`reduced-motion` で演出ごと\n無効。(5) 2体見えるのは「分身」として受け入れ、ミニを小さく・半透明にする（キャラビューを空ける\n案は吹き出しの持ち主が居なくなるので不採用）。\n実装は T-225（演出の土台）と T-226（ミニ立ち絵の追従）に切った。\n節の数は編集の前後で変わらず（`docs/requirements.md` 26 / `docs/design.md` 51）。\n`bun run check` 通過（725 pass / 0 fail / 72ファイル）。"
-  },
-  {
     "id": "T-116",
     "difficulty": "sonnet",
     "loopable": "N",
@@ -88,17 +77,6 @@
     "evidence": ""
   },
   {
-    "id": "T-168",
-    "difficulty": "opus",
-    "loopable": "N",
-    "dependencies": [],
-    "summary": "スマホの幅でレイアウトを整える（frontend-design を使う）",
-    "task": "## 背景\n\nスマホでの表示を整えたい（2026-09-16 のユーザーの指摘）。`frontend-design` スキルを使う。\n\nいまある狭い画面向けの手当ては `src/ui/style/narrow-screen.css`（**69行**）だけで、\n**切れ目は `@media (max-width: 760px)` の1つ**。`docs/requirements.md` 4.7 が言う「1列表示」に\n落とすためのもので、**スマホの幅（375〜430px）で測って作ったものではない**。\n\n4領域（メインビュー・キャラビュー・サイドバー・入力欄）の並びは\n`src/ui/layout/layout.tsx` と `src/ui/style/layout.css` が持ち、仕切りのドラッグは\n`src/ui/layout/layout-resizer.tsx`。**狭い画面では高さの基準が無いので内側スクロールが働かず、\n中身なりに伸びる**（`docs/requirements.md` 4.2 の末尾）。\n\n## 決まっていること（蒸し返さない）\n\n- **`frontend-design` スキルを使う**（ユーザーの指示）。\n- **着手はユーザーの目の前で行う**（`loopable` が `\"N\"`。下の注意）。\n\n## 解くべき論点\n\n- **どの幅を狙うか。** 375px（iPhone SE）/ 390px（iPhone 14）/ 430px（Pro Max）のどれを\n  基準にするか。`@media` の切れ目を 760px の1つのままにするか、増やすか。\n- **4領域をスマホでどう並べるか。** 縦に4つ積むと立ち絵とサイドバーが場所を食う。\n  タブで切り替える・サイドバーを畳む・キャラビューを小さくする、などの案を比べる。\n  **仕切りのドラッグ（`layout-resizer.tsx`）をスマホで使えるようにするか**も決める。\n- **入力欄の扱い。** スマホでは画面の下に固定したいが、ソフトウェアキーボードが出たときの\n  挙動（`100vh` の問題）を考える必要がある。\n- **どこまでやるか。** 「読める」までか、「操作できる」までか。`frontend-design` の助言を\n  受けたうえで、**このタスクで届く範囲を決めて `evidence` に書く**。\n\n## やること\n\n1. `frontend-design` スキルを読み、その語彙で現状を見る。\n2. 上の論点を決め、`src/ui/style/narrow-screen.css` を中心に直す。\n   **新しい色を作らない**（`src/ui/style/theme.css` のトークンだけを使う）。\n3. `docs/requirements.md` 4.7 の記述を追従させる。**行頭を含めて位置を特定し**、\n   `bun run format` のあとに `grep -c '^#\\{2,3\\} '` が 26 のままであることを確かめる。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）。\n- **スマホの幅で目視する**: `TSUKUMO_DRIVER=fake` で起こし、`scripts/capture-view.ts` の\n  `--size 390x844` で撮る。**(a) 横スクロールが出ない（`document.documentElement.scrollWidth`\n  が `clientWidth` 以下）、(b) 文字が潰れていない、(c) 入力欄に手が届く**、の3つを数値と\n  画像で確かめる。\n- 広い画面（1400x900）で**見た目が変わっていない**ことも確かめる（狭い画面向けの手当てが\n  広い画面に漏れていないこと）。\n\n## 注意\n\n- **見た目の良し悪しはユーザーが見て決める**。`loopable` を `\"N\"` にしてあるのはこのため\n  （数値の条件は満たしても「整った」かは別）。\n- **`src/ui/layout/` のレイアウトの仕組みそのものを作り直さない。** 狭い画面での見え方を\n  整えるのが目的で、4領域の考え方（`docs/requirements.md` 4.7）は変えない。",
-    "status": "done",
-    "passes": true,
-    "evidence": "狭い画面を「画面の高さに固定＋上段をタブで切替＋下段常設」にした。390x844 で入力欄の top が 1623→555、ページ全体は 1808px→844px（縦スクロール 0・横のはみ出し 0px）。375x812 でも同じ形で収まり、1400x900 は変更前と測定値が完全一致（main 16/16/1006.8/505.44 ほか4領域）。bun run check 733 pass / 0 fail。requirements.md の節数は 26 のまま。到達点は「操作できる」まで（打つ・送る・レポートを読む・タブでサイドバーを見るが指で完結することを Playwright で操作して確認）。　追記: 「一覧を見る」の表が 390px で 367px 横に溢れていた（要約の列が画面外）ため、狭い画面では1タスク＝1枚のカードに組み替えた。734 pass / 0 fail。"
-  },
-  {
     "id": "T-206",
     "difficulty": "opus",
     "loopable": "N",
@@ -152,39 +130,6 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-222",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "カバレッジを見て、消す候補と埋める穴を確定させる",
-    "task": "## 背景\n\nユーザーの指示（2026-09-20）:「そろそろ一度テストカバレッジを見て冗長なテストを整理して\n削れるテストを削ろう & 不足しているテストを足そう!」\n\n**カバレッジは設定なしで取れる**（2026-09-20 に実測）。`bun test --isolate --coverage` が\nそのまま動き、701 pass / 64ファイルで**全体 91.60% funcs / 92.47% lines**。行が9割を\n切るのは次の10ファイル:\n\n| ファイル | % Lines |\n| --- | ---: |\n| `src/browser/lib/socket.ts` | 6.56 |\n| `src/adapter/sdk-driver.ts` | 11.59 |\n| `src/browser/stores/session.tsx` | 15.49 |\n| `src/browser/features/layout/layout-resizer.tsx` | 28.57 |\n| `src/browser/features/main-view/markdown/chart-block.tsx` | 62.16 |\n| `src/browser/features/layout/split.ts` | 71.05 |\n| `src/adapter/tsukumo-home.ts` | 75.00 |\n| `src/browser/features/main-view/turn.tsx` | 78.38 |\n| `src/adapter/fake-driver.ts` | 79.00 |\n| `src/browser/lib/data-url.ts` | 88.89 |\n\n**判断の基準はすでに書いてある。** `docs/coding-standards.md`「テスト」節の\n「カバレッジに閾値を設けない」「消すかどうか」（7行の表）「足すかどうか」（2類型）が正典。\n**このタスクはその表を実物に当てるだけで、基準を作り直さない。**\n\n## 決まっていること（蒸し返さない）\n\n- **閾値は設けない。** 数値を上げること自体を目的にしない\n  （`docs/coding-standards.md`「カバレッジに閾値を設けない」）\n- **消す・足すの実施は別タスク。** ここは決めて書くところまで\n\n## 解くべき論点\n\n- 低いファイルのうち、どれが**「外の世界の境界だから埋めない」**ものか。`sdk-driver.ts` は\n  Agent SDK の境界、`socket.ts` は WebSocket の境界で、どちらも `adapter` / `lib` の\n  1ファイル = 1つの境界にあたる。埋めないと決めるなら理由を書き残す\n- 701件の中から「**同じ入力分岐を別のテストが既に通している**」ものをどう見つけるか。\n  機械的に出せる指標があるのか、読んで判断するしかないのか\n- 消す候補ごとに「**その振る舞いを上位で守っているテスト**」をどう特定するか\n  （特定できないものは消さない）\n\n## やること\n\n1. `bun test --isolate --coverage` を取り、未到達の行を「埋める／埋めない」に振り分ける。\n   **埋めるのは `docs/coding-standards.md`「足すかどうか」の2類型だけ**（エラー方針の分岐・\n   `docs/requirements.md` が明示している振る舞い）。到達不能な防御的コードと、\n   エラーメッセージの文面だけが変わる分岐は埋めない\n2. 「消すかどうか」の表の**消す候補3種**（同じ入力分岐の重複・型が保証している性質の実行時\n   確認・内部構造をなぞるだけのもの）に当たるテストを洗い出す。1件ずつ「代わりに守っている\n   テスト」を添える。**添えられないものは候補から外す**\n3. 結果を `docs/research/test-coverage.md` に書く（消す候補の一覧・埋める穴の一覧・\n   **埋めないと決めた穴とその理由**）\n4. **洗った結果どちらも出なければ、その旨と根拠の数字を `evidence` に書いて閉じる**\n   （後続の2件も同じ理由で閉じる）\n\n## 完了条件\n\n- `docs/research/test-coverage.md` がある。消す候補は**ファイル・テスト名・代わりに守って\n  いるテスト**が1件ずつ、埋める穴は**ファイル・行・該当する類型**が1件ずつ書いてある\n- **`src/` と `test/` に差分が無い**（`git status --porcelain -- src test` が空。決めるだけ）\n- `bun run check` が通る\n\n## 注意\n\n- ここではテストを消さない・足さない\n- カバレッジの数値そのものを完了条件にしない（閾値を作ることになるため）\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "docs/research/test-coverage.md（204行）に結論・消す候補・埋める穴・埋めない理由を書いた。カバレッジを取り直したら 725 pass / 94.11% funcs / 94.48% lines（本文の 701 pass・91.60/92.47 より上がっていた）。消す候補はテスト1件（expression.test.ts の fable の完全なモデルID。代替は同ファイルの部分一致のテストと表の固定）と、型が保証している性質を実行時に見ている assertion 3行。代わりに守るテストを添えられなかったものは候補から外した（回帰テストは規約の表で「残す」側）。埋める穴は6件（エラー方針の分岐4＝session-manager の driverFailed・起こし直しの失敗・書き込みの例外と server の listen 後の error、requirements が明示したフォールバック2＝repository-file の配列でない値と split の可動域外）。いずれも境界を偽装せずに到達できる。埋めないと決めたのは SDK・WebSocket・orca・ws・FileReader・fs.watch の各境界と、描画・到達不能な防御的コードで、理由を1行ずつ残した。受け入れ: git status --porcelain -- src test が空（テストを1件も消さず足さず直していない）、bun run check 725 pass / 0 fail、レポートにタスク番号なし。"
-  },
-  {
-    "id": "T-223",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-222"],
-    "summary": "消すと決めた冗長なテストを消す",
-    "task": "## 背景\n\n前段の調査（`docs/research/test-coverage.md`）が「消す」と決めたテストを実際に消す。\n**前段が「消す候補なし」で閉じたなら、このタスクはやることが無いので、その旨を\n`evidence` に書いて閉じる。**\n\n判断はすでに済んでいる。ここでやるのは一覧どおりに消すことと、消した記録を残すこと。\n基準の正典は `docs/coding-standards.md`「テスト」節の「消すかどうか」。\n\n## やること\n\n1. `docs/research/test-coverage.md` の「消す候補」の一覧どおりにテストを消す。\n   **一覧に無いものを判断で足さない**（増やしたくなったら前段へ差し戻す）\n2. 消す前後で `bun test --isolate --coverage` を取り、**到達行が減っていないこと**を確かめる。\n   減ったらそのテストは戻す（一覧の側が間違っていたということなので、`evidence` に書く）\n3. 消したものごとに「**その振る舞いを上位で守っているテストがどれか**」をコミットメッセージに\n   書く（`docs/coding-standards.md`「消すかどうか」の最後の段落）\n\n## 完了条件\n\n- `bun run check` が通る\n- テストの件数が減っており、**減った数が一覧の件数と一致する**（`evidence` に前後の数を書く）\n- カバレッジの到達行が消す前より減っていない（`evidence` に前後の % を書く）\n\n## 注意\n\n- テストの中身を書き換えない（消すだけ）。書き換えたくなったら前段へ差し戻す\n- **コミットメッセージ以外にタスク番号を書かない**（`CLAUDE.md`「コード・ドキュメントに\n  タスク番号を書かない」）\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "一覧どおりに4件を消した（テスト単位1件: expression.test.ts の「fable の完全なモデルIDでも拾う」／assertion 単位3行: session-launch.test.ts の toBeDefined、activity.test.tsx の querySelector を toBeDefined で見ていた行、sdk-driver.test.ts の toContain）。session-launch.test.ts は assertion を消した帰結で代入が未使用になったため束縛だけに縮めた（主張の中身は変えていない）。受け入れ: テスト件数 725 → 724（一覧のテスト1件と一致）、expect 呼び出し 1464 → 1460（assertion 3行 + テスト1件ぶん）。カバレッジは前後とも 94.11% funcs / 94.48% lines で到達行が減っていないことをメイン側でも取り直して確認した。git status --porcelain -- src が空（src は触っていない）。差分は純粋な削除のみで、テストの中身は書き換えていない。bun run check 724 pass / 0 fail。"
-  },
-  {
-    "id": "T-224",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-222"],
-    "summary": "埋めると決めたテストの穴を埋める",
-    "task": "## 背景\n\n前段の調査（`docs/research/test-coverage.md`）が「埋める」と決めた穴にテストを足す。\n**前段が「埋める穴なし」で閉じたなら、このタスクはやることが無いので、その旨を\n`evidence` に書いて閉じる。**\n\n埋める対象は `docs/coding-standards.md`「足すかどうか」の2類型に限られている\n（エラー方針の分岐・`docs/requirements.md` が明示している振る舞い）。**未到達の行を\n全部は埋めない。**\n\n## やること\n\n1. `docs/research/test-coverage.md` の「埋める穴」の一覧どおりにテストを足す。\n   置き場所は `test/<src と同じ相対パス>.test.ts`、モックするのはシステム境界だけ\n   （`docs/coding-standards.md`「置き場所とモック」）\n2. **一覧に無い行を「ついでに」埋めない**（閾値を作ることになるため）\n3. 前段が「埋めない」と決めた穴の**理由を `docs/coding-standards.md`「足すかどうか」節に\n   書き足す**（同節の「埋めないと決めた穴は、理由を添えてこの節に書き残す」）。\n   次にカバレッジを見た人が同じ調査を繰り返さずに済む粒度にする\n\n## 完了条件\n\n- `bun run check` が通る\n- **一覧の穴が到達になっている**（`bun test --isolate --coverage` の該当ファイルの\n  「Uncovered Line #s」から消えていることを `evidence` に書く）\n- `docs/coding-standards.md`「足すかどうか」に、埋めないと決めた穴の理由が書かれている\n  （節の見出しの数は増やさない。`grep -c '^#\\{2,3\\} ' docs/coding-standards.md` が前後で同じ）\n\n## 注意\n\n- 描画そのものを自動テストで守ろうとしない（`CLAUDE.md`「ブラウザに出た絵は自動テストで\n  守らない」）。テストで守るのは「受け取る」「決める」と配信まで\n- テストのために `export` を増やさない（`docs/coding-standards.md`「置き場所とモック」）\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "一覧の6件すべてを埋めた。エラー方針の分岐4件は session-manager（起こし直しの失敗・書き込みの例外・駆動の例外）とserver（listen 後の error で stderr に1行書いて配信を続ける。httpServer.emit(\"error\") で誘発）。要件が明示したフォールバック2件は shared/repository-file（配列でない値は空）と layout/split（保存無し・壊れた JSON・可動域の外は既定へ）で、どちらも新しいテストファイルを作った。受け入れ: Uncovered がメイン側の取り直しでも対象行だけ消えた —— split.ts は 37,41,52-54 → 37、server.ts は 134,136,320 → 320、session-manager.ts は 147-148,155,236,258,287,331-332 → 147-148,155,287、shared/repository-file.ts は 22 → 空（100%）。残した行は前段が「埋めない」と決めたものか、そもそも一覧に無いもの。テスト 724 → 732 pass / 0 fail、lines 94.48% → 94.81%。docs/coding-standards.md の「足すかどうか」に、埋めないと決めた穴を7カテゴリで書き足した（行番号はレポート側に逃がした）。節の見出しの数は 31 のまま。"
   },
   {
     "id": "T-225",

@@ -76,10 +76,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `docs/research/test-coverage.md` に、消す候補（テスト1件＋assertion 3行）と埋める穴6件（エラー方針の分岐4・要件が明示したフォールバック2）、埋めないと決めた境界の一覧を書いた。カバレッジは 94.11% funcs / 94.48% lines。実施は後続の2件。
 
-### 2026-09-20 案を選ぶときの指標を規約に足した（T-220）
-
-「コードの把握のしやすさ」を3つの物差し（開くファイルの数／呼ぶ側が外の事情を知らずに済むか／黙って効かなくならないか）にして、`CLAUDE.md` の一覧と `docs/coding-standards.md` の節に分けて書いた。工数と行数は指標にしない。`/code-review` の Standards 軸はこの2ファイルを読むので、足した時点でレビュー観点にも入る。
-
 ## 未解決
 
 - **カバレッジの棚卸し（T-222）で、後続タスクの範囲外の気づきが2つ出た。** (1) `test/shared/main-view.test.ts` と `test/browser/features/main-view/main-view.test.tsx` の回帰テスト名に**タスク番号が残っている**（`CLAUDE.md` の「コード・ドキュメントにタスク番号を書かない」に反する）。(2) `test/browser/features/sidebar/activity.test.tsx` の `querySelector(...)` を `toBeDefined()` で見ているassertion は **`null` でも通る**ので事実上効いていない。どちらも消す/埋めるの2件には入っていないので、別に起こすかどうかの判断が要る
