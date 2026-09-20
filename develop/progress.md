@@ -86,13 +86,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 （`server/` 直下の未分類ファイルは `throw`）。正典のドキュメントは追随させ、
 **`docs/research/` は当時の記録なので書き換えない**ことにした。
 
-### 2026-09-20 protocol を shared に、ui を browser に移した（T-195）
-
-`git mv` で115ファイル（`src/` 74・`test/` 41）を `shared/` と `browser/` へ移し、層の名前を
-「どの実行環境で動くか」に揃えた（`core` / `adapter` は段3＝T-210 のまま）。
-`test/architecture.test.ts` の辺は9本とも残し、README のツリーと `docs/architecture.md` の
-置き場の表（実行場所の列）も実態に追随させた。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、

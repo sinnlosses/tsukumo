@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 protocol を shared に、ui を browser に移した（T-195）
+
+`git mv` で115ファイル（`src/` 74・`test/` 41）を `shared/` と `browser/` へ移し、層の名前を
+「どの実行環境で動くか」に揃えた（`core` / `adapter` は段3＝T-210 のまま）。
+`test/architecture.test.ts` の辺は9本とも残し、README のツリーと `docs/architecture.md` の
+置き場の表（実行場所の列）も実態に追随させた。
+
 ### 2026-09-20 入力欄に @ のファイル補完を足した（T-188）
 
 `GET /repository-file?t=<起動トークン>` を1本生やし、`adapter/repository-file.ts` が
