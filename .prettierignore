@@ -2,3 +2,6 @@ node_modules/
 
 # 上流（mattpocock/skills）由来のスキル。取り直したときに差分が汚れるので整形しない
 .claude/
+
+# 過去の記録。oxfmt の折り返しが強調記法とコード中の `*` を壊すので整形しない
+docs/history/
