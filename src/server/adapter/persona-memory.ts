@@ -1,0 +1,157 @@
+// 雑談で覚えたことを人格へ書き足す（`docs/design.md` 7.1「覚えたことを人格に書き足す」）。
+// 書き込んでよいのは他の編集と同じ `~/.tsukumo/characters/<pack>/persona.md` の1つだけで、
+// ホームへ写す道（`src/server/adapter/character-edit.ts` の `copyPackOnce`）を共有する。
+//
+// **何を書いてよいかはここが決めない。** 判断はモデル側の条（`src/server/core/chat-manner.ts`）が
+// 持ち、ここが持つのは「受け取った1行をどこにどう書くか」と上限だけ
+// （`docs/requirements.md` 4.9。**会話を読んで判定しない**ので、
+// `docs/coding-standards.md`「会話内容の扱い」とぶつからない）。
+//
+// **書くのは末尾の `## 覚えたこと` の節だけで、節より前は1バイトも触らない。** 人が書いた
+// 見出しと表、機械が書いた領域の境目が、ファイルの中で1本に決まる（節を消せば書き足す前の
+// 人格に戻る）。
+//
+// 上限に当たった回も**何も知らせない**（呼び出し側が返すのは `"ok"` だけ）。失敗しても例外を
+// 投げない（常駐プロセスは1回の失敗で落ちない。`docs/coding-standards.md`「エラーハンドリング」）。
+
+import { readFileSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+
+import { type PersonaMemory } from "../core/session-driver.ts"
+import { copyPackOnce } from "./character-edit.ts"
+import {
+  type CharacterPack,
+  homeCharacterDir,
+  isEditableCharacterPack,
+  PERSONA_FILE_NAME,
+} from "./character-pack.ts"
+
+/** 書き足す節の見出し。**`persona.md` のいちばん最後に置く**（7.1）。 */
+export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"
+
+/** 1行の長さの上限（超えた行は書かない。7.1 の表）。 */
+export const MAX_REMEMBERED_LINE_LENGTH = 120
+
+/** 節が持てる行数（超えたらいちばん古い行を落とす。7.1 の表）。 */
+export const MAX_REMEMBERED_LINES = 20
+
+/**
+ * 覚えたことの書き足し口を1つ作る（**雑談モードのときだけ**呼ばれ、`remember` ツールの裏に
+ * 立つ。`src/session-start.ts`）。
+ *
+ * 書かずに黙って捨てるのは次の4つ（どれも呼び出し側には伝えない。7.1）:
+ *
+ * - そのターンで既に1行書いている（{@link PersonaMemory.finishTurn} まで受け付けない）
+ * - 空の行・改行を含む行・{@link MAX_REMEMBERED_LINE_LENGTH} を超える行
+ * - 起動先の `characters/local` と同じ名前のパック（`isEditableCharacterPack`。書いても
+ *   探索の順で負ける）
+ * - ディスクに書けない
+ *
+ * `root` は書き込み先の親（既定は `~/.tsukumo/characters`。差し替えられるのは置き場所だけで、
+ * テストがホームを汚さないためにある）。
+ */
+export function createPersonaMemory(
+  pack: CharacterPack,
+  cwd: string,
+  root: string = homeCharacterDir(),
+): PersonaMemory {
+  // このターンで既に1行書いたか（1ターン1行の上限。ターンの終わりは駆動が知らせる）。
+  let written = false
+
+  return {
+    remember: (line) => {
+      const trimmed = line.trim()
+      if (written || !isWritableLine(trimmed) || !isEditableCharacterPack(pack, cwd)) {
+        return
+      }
+
+      written = writeRememberedLine(pack, join(root, pack.name), trimmed)
+    },
+    finishTurn: () => {
+      written = false
+    },
+  }
+}
+
+/** 1行として受け取れる形か（空でない・改行を含まない・長さが上限以内）。 */
+function isWritableLine(line: string): boolean {
+  return line !== "" && !/[\n\r]/.test(line) && [...line].length <= MAX_REMEMBERED_LINE_LENGTH
+}
+
+/** ホームのパックの `persona.md` に1行書き足す。書けたら true。 */
+function writeRememberedLine(pack: CharacterPack, dir: string, line: string): boolean {
+  try {
+    copyPackOnce(pack, dir)
+    const path = join(dir, PERSONA_FILE_NAME)
+    writeFileSync(path, personaWithRememberedLine(readOptionalFile(path) ?? "", line))
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 節に1行足した `persona.md` の全文。**節が無ければ見出しごと末尾に作り**、あれば箇条書きを
+ * 1行足して {@link MAX_REMEMBERED_LINES} までに詰める（溢れるのはいちばん古い行）。
+ *
+ * **節より前の文字は足しも引きもしない。** 節を作るときに足すのは、見出しの前の改行だけ。
+ */
+function personaWithRememberedLine(content: string, line: string): string {
+  const start = rememberedSectionStart(content)
+  if (start === undefined) {
+    return `${content}${headingSeparator(content)}${REMEMBERED_SECTION_HEADING}\n\n- ${line}\n`
+  }
+
+  const kept = [...rememberedLines(content.slice(start)), `- ${line}`].slice(-MAX_REMEMBERED_LINES)
+  return `${content.slice(0, start)}${REMEMBERED_SECTION_HEADING}\n\n${kept.join("\n")}\n`
+}
+
+/**
+ * 節の見出しが始まる位置（無ければ undefined）。**見出しは最後のものを見る** —
+ * 節はいちばん最後に置くと決めてあるので、そこから末尾までが機械の書いた領域になる。
+ */
+function rememberedSectionStart(content: string): number | undefined {
+  const marker = `\n${REMEMBERED_SECTION_HEADING}`
+  for (let at = content.lastIndexOf(marker); at >= 0; at = content.lastIndexOf(marker, at - 1)) {
+    if (isHeadingLine(content, at + 1)) {
+      return at + 1
+    }
+  }
+
+  return isHeadingLine(content, 0) ? 0 : undefined
+}
+
+/** その位置から見出しの1行がちょうど始まっているか（`## 覚えたことメモ` のような行は別物）。 */
+function isHeadingLine(content: string, at: number): boolean {
+  if (!content.startsWith(REMEMBERED_SECTION_HEADING, at)) {
+    return false
+  }
+
+  const next = content.charAt(at + REMEMBERED_SECTION_HEADING.length)
+  return next === "" || next === "\n" || next === "\r"
+}
+
+/** 節の中の箇条書きの行（見出しと空行、人が書いた地の文は持ち越さない）。 */
+function rememberedLines(section: string): readonly string[] {
+  return section
+    .split("\n")
+    .map((line) => line.replace(/\r$/, ""))
+    .filter((line) => line.startsWith("- "))
+}
+
+/** 節を新しく作るときに、見出しの前に入れる改行（元の末尾と合わせて空行1つになる形）。 */
+function headingSeparator(content: string): string {
+  if (content === "" || content.endsWith("\n\n")) {
+    return ""
+  }
+
+  return content.endsWith("\n") ? "\n" : "\n\n"
+}
+
+function readOptionalFile(path: string): string | undefined {
+  try {
+    return readFileSync(path, "utf8")
+  } catch {
+    return undefined
+  }
+}

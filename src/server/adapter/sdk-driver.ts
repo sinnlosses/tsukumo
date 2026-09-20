@@ -35,13 +35,14 @@ import { type Expression } from "../../shared/expression.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import {
-  SPEAK_MCP_SERVER_NAME,
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
   toSessionEvents,
+  TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
 import {
   DEFAULT_MODEL,
+  type PersonaMemory,
   type SessionDriver,
   type SessionDriverOptions,
 } from "../core/session-driver.ts"
@@ -67,6 +68,18 @@ const SPEAK_TOOL_DESCRIPTION =
   "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想・完了報告はこのツールで言う。" +
   "手順・コード・表・判断とその理由は本文に書き、ここには入れない。"
 
+/** 覚えたことを書き足すツールの名前（docs/glossary.md「remember ツール」）。 */
+const REMEMBER_TOOL_NAME = "remember"
+
+/**
+ * モデルに見せる `remember` ツールの説明。**何を書いてよいかの条は
+ * `src/server/core/chat-manner.ts` が持つ**ので、ここには置き場所と形だけを書く
+ * （二重に書かない）。
+ */
+const REMEMBER_TOOL_DESCRIPTION =
+  "キャラクター自身について決まったことを1行だけ覚える（好み・口調・呼び方・来歴）。" +
+  "ユーザーについて知ったことは覚えない。呼ぶ条件は雑談モードの規約に従う。"
+
 /**
  * セッションを起こす。**この関数は待たない**（`query()` の反復はバックグラウンドで回り続け、
  * 結果は `onEvent` に流れる）。
@@ -90,7 +103,9 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      mcpServers: { [SPEAK_MCP_SERVER_NAME]: speakServer(options.expressions) },
+      mcpServers: {
+        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.personaMemory),
+      },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),
     },
@@ -218,8 +233,13 @@ async function relayMessages(
         if (event.kind === "session-info") {
           sessionId = event.sessionId
         }
-        if (event.kind === "turn-finished" && sessionId !== undefined) {
-          scheduleMarkSession(sessionId, options)
+        if (event.kind === "turn-finished") {
+          // **1ターンに書けるのは1行**（docs/design.md 7.1）。ターンの区切りを知っているのは
+          // ここだけなので、終わるたびに次の1行を受け付けさせる。
+          options.personaMemory?.finishTurn()
+          if (sessionId !== undefined) {
+            scheduleMarkSession(sessionId, options)
+          }
         }
         options.onEvent(event)
       }
@@ -313,16 +333,22 @@ function askForAnswer(
 }
 
 /**
- * プロセス内の MCP サーバとして `speak` を提供する。**戻り値は "ok" だけ**にして、
- * tsukumo からモデルへ情報が戻る経路を作らない（docs/architecture.md「セリフはテキストの
- * 規約ではなく、ツール呼び出しで受け取る」）。
+ * プロセス内の MCP サーバ。**どのツールも戻り値は "ok" だけ**にして、tsukumo からモデルへ
+ * 情報が戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
+ * 呼び出しで受け取る」・docs/design.md 7.1）。
+ *
+ * 常に載るのは `speak` の1つで、**`remember` は雑談モードのときだけ**（`memory` が渡った
+ * ときだけ）載る。仕事のときに出すと、作業の文脈が人格に入り込む経路になる（7.1）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
  */
-function speakServer(expressions: readonly ExpressionChoice[]) {
+function tsukumoServer(
+  expressions: readonly ExpressionChoice[],
+  memory: PersonaMemory | undefined,
+) {
   return createSdkMcpServer({
-    name: SPEAK_MCP_SERVER_NAME,
+    name: TSUKUMO_MCP_SERVER_NAME,
     version: "0.0.0",
     tools: [
       tool(
@@ -336,8 +362,26 @@ function speakServer(expressions: readonly ExpressionChoice[]) {
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
+      ...(memory === undefined ? [] : [rememberTool(memory)]),
     ],
   })
+}
+
+/**
+ * 覚えたことを書き足すツール。**上限に当たった回も "ok" を返す**（受け付けたかどうかを
+ * モデルへ戻さない。docs/design.md 7.1）。どこにどう書くかは
+ * src/server/adapter/persona-memory.ts の仕事。
+ */
+function rememberTool(memory: PersonaMemory) {
+  return tool(
+    REMEMBER_TOOL_NAME,
+    REMEMBER_TOOL_DESCRIPTION,
+    { line: z.string().describe("覚えること。キャラクター自身についての1行（120文字まで）") },
+    async ({ line }) => {
+      memory.remember(line)
+      return { content: [{ type: "text" as const, text: "ok" }] }
+    },
+  )
 }
 
 /**

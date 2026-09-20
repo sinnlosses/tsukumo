@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { sessionTag } from "../../../src/server/core/config.ts"
-import { SPEAK_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../../src/server/core/sdk-message.ts"
+import { TSUKUMO_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../../src/server/core/sdk-message.ts"
 import {
   selectSessionToResume,
   toRestoredEvents,
@@ -17,7 +17,7 @@ const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 const TAG = sessionTag("架空のパック")
 const OTHER_PACK_TAG = sessionTag("別の架空のパック")
 
-const SPEAK_TOOL_FULL_NAME = `mcp__${SPEAK_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
+const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
 function sessionInfo(overrides: Readonly<Record<string, unknown>>): unknown {
   return { sessionId: "s-0", summary: "架空のセッション", lastModified: 1_000, ...overrides }

@@ -11,6 +11,7 @@ import process from "node:process"
 import { type CurrentCharacter } from "./current-character.ts"
 import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
 import { type FakeScript, startFakeSession } from "./server/adapter/fake-driver.ts"
+import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
 import {
   findSessionToResume,
   readRestoredEvents,
@@ -109,6 +110,9 @@ function startDriver(
     systemPromptAppend: buildSystemPromptAppend(seed.pack, sessionRules(seed.chat)),
     resume: seed.resume,
     tag: sessionTag(seed.pack.name),
+    // **覚えたことを書き足す口は雑談のときだけ渡す**（渡ったときだけ `remember` ツールが
+    // 載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
+    personaMemory: seed.chat ? createPersonaMemory(seed.pack, process.cwd()) : undefined,
     onEvent,
   })
 }

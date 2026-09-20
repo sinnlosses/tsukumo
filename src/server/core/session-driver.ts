@@ -32,6 +32,20 @@ export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto"
  */
 export const DEFAULT_MODEL: ModelAlias = "opus"
 
+/**
+ * 覚えたことを人格に書き足す口（`docs/design.md` 7.1）。**実装は `adapter` 側**
+ * （`src/server/adapter/persona-memory.ts`）で、ここにあるのは契約だけ。
+ *
+ * **上限に当たった回も何も返さない** — 受け付けたかどうかをモデルへ戻さないため
+ * （ツールの戻り値は `"ok"` だけ）。
+ */
+export type PersonaMemory = {
+  /** 覚えた1行を書き足す（受け付けられない行は黙って捨てる）。 */
+  readonly remember: (line: string) => void
+  /** ターンが終わった合図（次のターンでまた1行受け付ける）。 */
+  readonly finishTurn: () => void
+}
+
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */
   readonly cwd: string
@@ -56,6 +70,12 @@ export type SessionDriverOptions = {
    * `SESSION_TAG_DELAY_MS`）。
    */
   readonly tag: string
+  /**
+   * 覚えたことの書き足し口。**雑談モードのときだけ渡り**（`docs/design.md` 7.1）、渡ったときだけ
+   * `remember` ツールが `mcpServers` に載る。仕事のときは undefined（作業の文脈が人格に
+   * 入り込む経路を作らない）。
+   */
+  readonly personaMemory: PersonaMemory | undefined
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }

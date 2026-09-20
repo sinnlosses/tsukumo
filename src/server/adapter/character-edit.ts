@@ -133,8 +133,11 @@ export function createCharacterPack(
 /**
  * ホームにまだ同じ名前のパックが無ければ、いま出しているパックを丸ごと写す。**人格
  * （`persona.md`）も写す**（写し忘れると、次の起動でそのパックの人格が消える）。
+ *
+ * **ホームへ書く前に必ず通る道**なので、立ち絵の差し替え以外の書き込み
+ * （`src/server/adapter/persona-memory.ts`）もここを共有する（写す規則を二重に書かない）。
  */
-function copyPackOnce(pack: CharacterPack, dir: string): void {
+export function copyPackOnce(pack: CharacterPack, dir: string): void {
   mkdirSync(dir, { recursive: true })
   if (dir === pack.dir || existsSync(join(dir, CHARACTER_DEFINITION_FILE_NAME))) {
     return

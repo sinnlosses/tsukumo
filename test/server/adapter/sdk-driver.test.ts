@@ -20,6 +20,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
   resume: undefined,
   tag: "tsukumo-test",
+  personaMemory: undefined,
   onEvent: () => {},
 }
 

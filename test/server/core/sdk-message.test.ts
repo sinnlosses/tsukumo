@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import {
-  SPEAK_MCP_SERVER_NAME,
+  TSUKUMO_MCP_SERVER_NAME,
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
   toSessionEvents,
@@ -12,7 +12,7 @@ import { type Expression } from "../../../src/shared/expression.ts"
 // （docs/coding-standards.md「会話内容の扱い」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
-const SPEAK_TOOL_FULL_NAME = `mcp__${SPEAK_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
+const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
 function assistantMessage(
   content: readonly unknown[],

@@ -17,7 +17,7 @@ import {
 } from "../../shared/session-event.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
-export const SPEAK_MCP_SERVER_NAME = "tsukumo"
+export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
 /** セリフを受け取るツールの名前（docs/glossary.md「speak ツール」）。 */
 export const SPEAK_TOOL_NAME = "speak"
 
@@ -211,7 +211,7 @@ function speechEvents(input: unknown, expressions: readonly Expression[]): reado
 
 /** モデルから見えるツールのフルネーム。MCP サーバ名とツール名から決まる（2026-09-11 実測）。 */
 function speakToolFullName(): string {
-  return `mcp__${SPEAK_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
+  return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 }
 
 function toExpression(value: unknown, expressions: readonly Expression[]): Expression {

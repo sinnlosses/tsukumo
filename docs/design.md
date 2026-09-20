@@ -175,6 +175,7 @@ src/
       session-socket.ts       ws（フレームとコマンド）。listen 済みのサーバに upgrade を足す
       character-pack.ts       パックの列挙・読み込み（character.json / persona.md / 素材）
       character-edit.ts       画面から変えた立ち絵・差し色を ~/.tsukumo/characters/ へ書く
+      persona-memory.ts       雑談で覚えた1行を ~/.tsukumo/characters/<pack>/persona.md の末尾の節へ書く
       remembered-character.ts 覚えたキャラクター名（~/.tsukumo/state.json）
       task-summary.ts         develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
       repository-file.ts      git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
