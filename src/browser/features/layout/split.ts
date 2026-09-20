@@ -15,7 +15,7 @@ export const DEFAULT_SPLIT: Split = { rowTop: 60, topLeft: 75, bottomLeft: 50 }
 export const MIN_PERCENT = 15
 export const MAX_PERCENT = 85
 
-const STORAGE_KEY = "tsukumo-layout-split"
+const STORAGE_KEY = "tsukumo-layout-split:v1"
 
 export function clampPercent(value: number): number {
   return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))

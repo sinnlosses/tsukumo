@@ -27,7 +27,7 @@ export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
 // WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
 export const MIN_CONTRAST = 4.5
 
-const STORAGE_KEY = "tsukumo-appearance-color"
+const STORAGE_KEY = "tsukumo-appearance-color:v1"
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
 const TOKEN_NAME: Readonly<Record<AppearanceColorKey, string>> = {
   ground: "--ground",

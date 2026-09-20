@@ -10,7 +10,7 @@ import {
   type AppearanceColorOverride,
 } from "../../../../src/browser/features/character-screen/appearance-color.ts"
 
-const STORAGE_KEY = "tsukumo-appearance-color"
+const STORAGE_KEY = "tsukumo-appearance-color:v1"
 
 // 本物の theme.css は読み込まないので、「上書きが無いときの既定値」だけを疑似 :root として
 // 用意する（`<style>` 要素。カスケードの優先度は inline style より低いので、

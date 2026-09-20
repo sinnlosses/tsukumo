@@ -8,7 +8,7 @@ import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
-const COLOR_STORAGE_KEY = "tsukumo-appearance-color"
+const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 // **立ち絵は持たせない** — この画面の並びそのものは `character-edit.test.tsx` が見るので、

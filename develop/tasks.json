@@ -149,9 +149,9 @@
     "dependencies": [],
     "summary": "localStorage のキーに版を足す",
     "task": "## 背景\n\nT-197 の調査で当たった1件。保存キーに版が無い:\n\n- `src/ui/features/layout/split.ts:18` の `\"tsukumo-layout-split\"`\n- `src/ui/features/character-screen/appearance-color.ts:30` の `\"tsukumo-appearance-color\"`\n\n`try` / `catch` と値の検証はどちらも**すでに満たしている**ので、残るのはキーに版を足すこと\nだけ。**いまの形を変えるときに困る**というだけの話で、直す価値は高くない。\n\n## やること\n\n1. 2つのキーに `:v1` を足す\n2. 既存のキーに入っている値は**読み替えない**（版が変わったら既定値に戻る、で足りる）\n3. テストがキーの文字列を見ていれば追随させる\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 目視: 仕切りの位置と色を変え、再読み込みして保たれることを確かめる\n\n## 注意\n\n- **`src/ui/` を触る他のタスクと同時に進めない**\n- 移行のコード（旧キーからの読み替え）は足さない。足すならそれは別の判断",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "保存キー2つに :v1 を足した（tsukumo-layout-split:v1 / tsukumo-appearance-color:v1）。localStorage の getItem/setItem は src/ 全体でこの2箇所だけで、旧キーの文字列は src/ にも test/ にも残っていない（grep で確認）。旧キーからの読み替えは本文の決定どおり足していないので、適用時に保存済みの仕切りの位置と画面の色は一度だけ既定に戻る。テストは appearance-color.test.ts と character-screen.test.tsx の定数2つが追随した。受け入れ: bun run check 719 pass / 0 fail（変更前と同数）。目視: fake 駆動 + ヘッドレス Chrome で、仕切りをドラッグし色を #1a2d40 に変えると localStorage のキーが[\"tsukumo-appearance-color:v1\", \"tsukumo-layout-split:v1\"] の2つになり、再読み込み後も --layout-row-top 48.18fr と --ground #1a2d40 が保たれることを確認した（検証で書いた値は消してある）。"
   },
   {
     "id": "T-217",
