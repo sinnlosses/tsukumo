@@ -35,11 +35,8 @@ import {
   readRestoredEvents,
   startSession,
 } from "./server/adapter/sdk-driver.ts"
-import {
-  attachSessionSocket,
-  createStartupToken,
-  startViewServer,
-} from "./server/adapter/server.ts"
+import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
+import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import {
@@ -59,8 +56,8 @@ import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./server/core/sessi
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./server/core/session-manager.ts"
 import { SPEECH_CADENCE_PROMPT } from "./server/core/speech-cadence.ts"
-import { expressionChoices } from "./shared/character.ts"
 import { type CharacterCreateCommand, type CharacterEditCommand } from "./shared/command.ts"
+import { expressionChoices } from "./shared/expression-choice.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
 

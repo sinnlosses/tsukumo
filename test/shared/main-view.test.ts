@@ -1,7 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
-import { MAX_MAIN_VIEW_TURNS, mainViewTurns } from "../../src/shared/main-view.ts"
-import { type MainViewEntry } from "../../src/shared/session-state.ts"
+import {
+  MAX_MAIN_VIEW_TURNS,
+  type MainViewEntry,
+  mainViewTurns,
+} from "../../src/shared/main-view.ts"
 
 const request = (text: string): MainViewEntry => ({ kind: "request", text })
 const detail = (markdown: string): MainViewEntry => ({ kind: "detail", markdown })

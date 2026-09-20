@@ -1,145 +1,14 @@
-// キャラクター定義ファイル（character.json）を読み、表情・衣装から立ち絵の参照先を決める。
-// 「読む」「決める」の両方を持つ小さいモジュール（キャラクター定義に閉じた変換なので分けるほど
-// 概念が増えない。docs/architecture.md 原則5）。
+// いま出しているキャラクターの姿（`CharacterInfo`）と、切り替えの選択肢・パックの名前。
+// **画面（キャラビュー・サイドバーの `<select>`・キャラクター画面）が読む形**で、定義ファイルの
+// 生の形（`character-definition.ts`）から `toCharacterInfo` が1回だけ変換する。
 //
-// character.json は利用者が用意する外部由来のファイル（`characters/local/` に置く想定を含む）
-// なので構造を信用しない。unknown で受けて検証し、壊れている・キーが無いときは undefined に落とす
-// （docs/coding-standards.md「型を迂回するキャストを使わない」）。
-//
-// ファイルI/O（character.json 自体・立ち絵の画像ファイルを読むこと）は
-// src/server/adapter/character-pack.ts に集約する。ここが返すのはファイル名の文字列までで、
-// 実際に中身を読むのは呼び出し側。
+// **立ち絵の中身は持たない**（`portraits` の値は `/character/<file>` の URL。組み立ては
+// `character-asset.ts`）。ファイルI/Oは src/server/adapter/character-pack.ts に集約する。
 
-import {
-  type Expression,
-  EXPRESSIONS,
-  type Outfit,
-  type RemovableExpression,
-} from "./expression.ts"
-
-/**
- * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」
- * （docs/requirements.md 4.4）。無い表情・衣装はキーごと消すのではなく値を undefined にして持つ
- * （`?:` は使わない。docs/coding-standards.md「無いかもしれない値」）。
- */
-export type CharacterDefinition = {
-  readonly name: string | undefined
-  /**
-   * 表情名 → 日本語ラベル。**表情の呼び名はキャラクターごとの言葉**なのでコードに持たない
-   * （docs/design.md 7章。`speak` の説明と立ち絵の alt に出る）。定義に無い表情は
-   * {@link expressionChoices} が表情名そのものをラベルにする。
-   */
-  readonly expressions: Readonly<Record<Expression, string | undefined>>
-  /**
-   * セリフの行頭マーカー（`speak` が呼ばれなかったターンの補助。docs/requirements.md 4.2）。
-   * **定義に無ければ補助そのものが効かない**（`speak` だけがセリフの経路になる）。
-   * 既定値をコードに持たないのは、マーカーがキャラクターの名前だから（原則4）。
-   */
-  readonly speechMarker: string | undefined
-  /**
-   * キャラクターの色（`docs/design.md` 13.2 の `accent`）。**衣装ごとの差し色
-   * （`outfitAccents`）とは別物**で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・
-   * フォーカスの輪など、13.1 原則1が許す場所）に効く。無ければ画面側の既定値に落ちる。
-   */
-  readonly accent: string | undefined
-  readonly portraits: Readonly<Record<Expression, string | undefined>>
-  readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
-}
-
-/**
- * character.json の内容をパースする。JSON として不正、またはトップレベルがオブジェクトで
- * ないときは undefined を返す（定義ファイルが無いのと同じ「立ち絵なし」扱いにするため）。
- */
-export function parseCharacterDefinition(content: string): CharacterDefinition | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(content)
-  } catch {
-    return undefined
-  }
-
-  return toCharacterDefinition(parsed)
-}
-
-/** `speak` で選べる表情1つ分。名前はコード側の語彙、ラベルは定義ファイル側の言葉。 */
-export type ExpressionChoice = {
-  readonly name: Expression
-  readonly label: string
-}
-
-/**
- * `speak` ツールが受け付ける表情と、そのラベル。**出どころは定義ファイル**
- * （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」）。
- *
- * - 選べるのは**立ち絵かラベルのどちらかが定義にある表情**（立ち絵が無い表情は `default` の
- *   絵に落ちるので、ラベルだけでも選ばせてよい。docs/requirements.md 4.4）
- * - **`default` は定義に無くても必ず含む**（未知の表情の落とし先なので、これが無いと
- *   受け付けられる名前が1つも無くなる）
- * - ラベルが定義に無ければ**表情名そのもの**をラベルにする（既定の日本語をコードに持たない）
- */
-export function expressionChoices(
-  definition: CharacterDefinition | undefined,
-): readonly ExpressionChoice[] {
-  if (definition === undefined) {
-    return [{ name: "default", label: "default" }]
-  }
-
-  return EXPRESSIONS.filter(
-    (expression) =>
-      expression === "default" ||
-      definition.portraits[expression] !== undefined ||
-      definition.expressions[expression] !== undefined,
-  ).map((expression) => ({
-    name: expression,
-    label: definition.expressions[expression] ?? expression,
-  }))
-}
-
-/** 表情の一覧から名前だけを取り出す（`speak` の引数の照合など、ラベルが要らない側）。 */
-export function expressionNames(choices: readonly ExpressionChoice[]): readonly Expression[] {
-  return choices.map((choice) => choice.name)
-}
-
-/**
- * 表情に対応するラベルを解く。一覧に無い表情（定義から消えたあとに残った状態など）は
- * 表情名をそのまま返す。
- */
-export function resolveExpressionLabel(
-  choices: readonly ExpressionChoice[],
-  expression: Expression,
-): string {
-  return choices.find((choice) => choice.name === expression)?.label ?? expression
-}
-
-/**
- * `/character/<file>` の URL の作り方。**`character.json` に書かれたファイル名だけ**を渡す前提
- * （`src/server/adapter/character-pack.ts` の allowlist と同じ考え方。パスから組み立てない）。
- *
- * `cacheKey` は**ブラウザに再取得させるためだけ**の問い合わせ文字列（{@link characterAssetCacheKey}
- * が組み立てる）。2つのパックが同じファイル名（`default.png` など）を使うと URL が一致し、
- * `<img src>` が書き換わらないので再取得が起きない。**画面から立ち絵を差し替えたときも
- * ファイル名が同じまま中身だけが変わる**ので、パックの名前だけでは足りず素材の版も混ぜる。
- * **配る側（`src/server/adapter/server.ts`）はこの値を見ない**（`?` 以降を落としてから配信ファイルを
- * 決める）。中身を決めるのは呼び出し側が渡す `CharacterPack` のほう。
- */
-export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
-
-export function characterAssetPath(fileName: string, cacheKey: string | undefined): string {
-  const path = `${CHARACTER_ASSET_PATH_PREFIX}${fileName}`
-  return cacheKey === undefined ? path : `${path}?v=${encodeURIComponent(cacheKey)}`
-}
-
-/**
- * 取り直しの印を組み立てる。パックの名前と素材の版（`revision`）を混ぜたもので、**どちらも
- * 無いときだけ undefined**（問い合わせ文字列そのものが付かない）。
- */
-export function characterAssetCacheKey(
-  pack: string | undefined,
-  revision: string | undefined,
-): string | undefined {
-  const parts = [pack, revision].filter((part): part is string => part !== undefined)
-  return parts.length === 0 ? undefined : parts.join("@")
-}
+import { characterAssetCacheKey, characterAssetPath } from "./character-asset.ts"
+import { type CharacterDefinition } from "./character-definition.ts"
+import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
+import { type Expression, type Outfit } from "./expression.ts"
 
 /**
  * キャラビューに渡す、キャラクター定義の姿（`character-changed` イベント・`SessionState.character`
@@ -232,43 +101,6 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
   }
 }
 
-/**
- * 生の `character.json` の文字列に、立ち絵1件の差し替えを重ねた JSON を返す。
- * **`portraits` の当該の表情だけを差し替え、ほかのキー（`name` / `license` / `persona` の
- * 指定など）はそのまま残す**（画面から変えられるのは立ち絵と差し色だけなので、定義を
- * 組み直して書き戻すと利用者が手で書いた値が消えてしまう）。
- *
- * 読めない・オブジェクトでない内容は**空の定義として作り直す**（定義がまだ無いパックに
- * 立ち絵を足せるようにするため）。
- */
-export function definitionWithPortrait(
-  content: string | undefined,
-  expression: Expression,
-  fileName: string,
-): string {
-  return editedDefinitionJson(content, "portraits", expression, fileName)
-}
-
-/**
- * 立ち絵1件を消した JSON を返す。**受け取れるのは必須でない表情だけ**
- * （`default` は型で入らない。`src/shared/expression.ts` の {@link RemovableExpression}）。
- */
-export function definitionWithoutPortrait(
-  content: string | undefined,
-  expression: RemovableExpression,
-): string {
-  return editedDefinitionJson(content, "portraits", expression, undefined)
-}
-
-/** 差し色1件を差し替えた JSON を返す。ほかのキーはそのまま残す。 */
-export function definitionWithOutfitAccent(
-  content: string | undefined,
-  outfit: Outfit,
-  color: string,
-): string {
-  return editedDefinitionJson(content, "outfitAccents", outfit, color)
-}
-
 function portraitUrls(
   definition: CharacterDefinition | undefined,
   cacheKey: string | undefined,
@@ -291,34 +123,6 @@ function portraitUrl(
   cacheKey: string | undefined,
 ): string | undefined {
   return fileName === undefined ? undefined : characterAssetPath(fileName, cacheKey)
-}
-
-/**
- * 定義の入れ子のキー1つを差し替えた JSON 文字列を作る。**値が undefined のキーは
- * `JSON.stringify` が落とす**ので、それが「消す」になる。整形は2スペース（利用者が
- * あとから手で編集する前提のファイルなので、1行に潰さない）。
- */
-function editedDefinitionJson(
-  content: string | undefined,
-  group: "portraits" | "outfitAccents",
-  key: string,
-  value: string | undefined,
-): string {
-  const source = asRecord(content === undefined ? undefined : parseJson(content))
-  const edited = { ...asRecord(source[group]), [key]: value }
-  return `${JSON.stringify({ ...source, [group]: edited }, undefined, 2)}\n`
-}
-
-function parseJson(content: string): unknown {
-  try {
-    return JSON.parse(content)
-  } catch {
-    return undefined
-  }
-}
-
-function asRecord(value: unknown): Readonly<Record<string, unknown>> {
-  return isRecord(value) ? value : {}
 }
 
 const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
@@ -356,103 +160,4 @@ export function resolveOutfitAccent(
   outfit: Outfit,
 ): string | undefined {
   return outfitAccents[outfit] ?? outfitAccents.default
-}
-
-/**
- * 立ち絵の種類を拡張子だけで分ける。**ファイル名でも `characterAssetPath` が返した URL でも
- * 受け取る**（`?v=` が付いていても拡張子を見失わない）。**利用者が `characters/local/` に置いた任意の
- * ファイルを無検証で流し込まないための最低限の仕分け**（このタスクの注意事項）。
- * SVG はインラインで埋め込む（ページの CSS 変数 `--outfit-accent` を効かせるため。
- * `<img>` で読み込むと独立した文書扱いになり届かない。実測は `characters/README.md`）。
- * それ以外は `<img>` で出す。対応しないラスタ形式（拡張子が既知のものでない）は undefined を返し、
- * 立ち絵なし扱いにする。
- */
-export function classifyPortraitFile(fileName: string): "svg" | "raster" | undefined {
-  const extension = fileExtension(fileName)
-  if (extension === ".svg") {
-    return "svg"
-  }
-
-  return RASTER_MIME_BY_EXTENSION[extension] === undefined ? undefined : "raster"
-}
-
-/** ラスタ画像の MIME タイプ。`classifyPortraitFile` が `"raster"` を返したときだけ意味を持つ。 */
-export function rasterMimeType(fileName: string): string | undefined {
-  return RASTER_MIME_BY_EXTENSION[fileExtension(fileName)]
-}
-
-function toCharacterDefinition(value: unknown): CharacterDefinition | undefined {
-  if (!isRecord(value)) {
-    return undefined
-  }
-
-  return {
-    name: typeof value.name === "string" ? value.name : undefined,
-    accent: typeof value.accent === "string" ? value.accent : undefined,
-    expressions: toExpressionLabels(value.expressions),
-    speechMarker: typeof value.speechMarker === "string" ? value.speechMarker : undefined,
-    portraits: toPortraits(value.portraits),
-    outfitAccents: toOutfitAccents(value.outfitAccents),
-  }
-}
-
-function toExpressionLabels(source: unknown): Readonly<Record<Expression, string | undefined>> {
-  const record = isRecord(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    thinking: stringField(record, "thinking"),
-    proud: stringField(record, "proud"),
-    flustered: stringField(record, "flustered"),
-    serious: stringField(record, "serious"),
-    curious: stringField(record, "curious"),
-  }
-}
-
-function toPortraits(source: unknown): Readonly<Record<Expression, string | undefined>> {
-  const record = isRecord(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    thinking: stringField(record, "thinking"),
-    proud: stringField(record, "proud"),
-    flustered: stringField(record, "flustered"),
-    serious: stringField(record, "serious"),
-    curious: stringField(record, "curious"),
-  }
-}
-
-function toOutfitAccents(source: unknown): Readonly<Record<Outfit, string | undefined>> {
-  const record = isRecord(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    light: stringField(record, "light"),
-    normal: stringField(record, "normal"),
-    heavy: stringField(record, "heavy"),
-  }
-}
-
-function stringField(record: Readonly<Record<string, unknown>>, key: string): string | undefined {
-  const value = record[key]
-  return typeof value === "string" ? value : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-const RASTER_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
-  ".png": "image/png",
-  ".gif": "image/gif",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-}
-
-/**
- * 拡張子を小文字で返す。**問い合わせ文字列は落としてから見る**（`characterAssetPath` が
- * 付ける `?v=` で拡張子を見失わないため）。無ければ空文字。
- */
-function fileExtension(fileName: string): string {
-  const path = fileName.split("?")[0] ?? fileName
-  const dotIndex = path.lastIndexOf(".")
-  return dotIndex === -1 ? "" : path.slice(dotIndex).toLowerCase()
 }

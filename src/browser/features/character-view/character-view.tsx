@@ -16,11 +16,8 @@
 
 import { useEffect, useState, type ReactElement } from "react"
 
-import {
-  resolveExpressionLabel,
-  resolveOutfitAccent,
-  resolvePortraitUrl,
-} from "../../../shared/character.ts"
+import { resolveOutfitAccent, resolvePortraitUrl } from "../../../shared/character.ts"
+import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { resolveOutfit } from "../../../shared/expression.ts"
 import {
   nextPortraitMotionTransitionDelayMs,

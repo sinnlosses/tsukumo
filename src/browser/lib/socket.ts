@@ -1,7 +1,7 @@
 // サーバの WebSocket（`/ws?t=<token>`）へつなぎ、届いたフレームを封筒だけ検証してから渡す
 // （docs/design.md 6.1 / 6.2「接続・再接続・フレームの zod 検証」）。**core を import しない**
 // （原則2/3。`browser` が触れる契約は `shared` だけ）。`/ws` の経路名・トークンのクエリ名の値は
-// `shared/session-socket.ts` が正典で、`adapter/server.ts` と両方から import する（値の再掲は
+// `shared/session-socket.ts` が正典で、`adapter/session-socket.ts` と両方から import する（値の再掲は
 // しない）。
 //
 // 接続が切れたら、間隔を指数的に伸ばしながら再接続する。読めないフレームは黙って捨てて

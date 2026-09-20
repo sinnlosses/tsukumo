@@ -6,8 +6,13 @@
 //
 // 時刻は畳み込みの中で `Date.now()` を呼ばず、イベントに打たれた `at` を受け取る
 // （両側の状態が同じになるように、時刻はイベントの発生側が決める。docs/design.md 4.1）。
+//
+// **姿から導くだけのものはここに置かない**（メインビューに出す形は `main-view.ts`、
+// 入力欄の `/` 補完の候補は `command-suggestion.ts`）。ここが持つのは「状態そのもの」と
+// 「イベント1件でどう変わるか」だけ。
 
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
+import { commandCandidates } from "./command-suggestion.ts"
 import { isModelAlias } from "./command.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
@@ -50,36 +55,12 @@ export type ToolActivity = {
 }
 
 /**
- * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
- * 発話の詳細の3種類。**描く側（`src/browser/features/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
- * （{@link mainViewEntries}）。
- */
-export type MainViewEntry =
-  | { readonly kind: "request"; readonly text: string }
-  /**
-   * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
-   * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
-   */
-  | {
-      readonly kind: "question"
-      readonly questions: readonly Question[]
-      readonly answers: readonly QuestionAnswer[]
-    }
-  | {
-      readonly kind: "tool"
-      readonly name: string
-      readonly input: unknown
-      /** まだ結果が届いていない（作業中の）ツールは undefined になる。 */
-      readonly result: { readonly content: string; readonly isError: boolean } | undefined
-    }
-  | { readonly kind: "detail"; readonly markdown: string }
-
-/**
- * セッションの中で起きたことを起きた順に並べたもの。{@link MainViewEntry} とほぼ同じだが、
+ * セッションの中で起きたことを起きた順に並べたもの。メインビューに出す形（`MainViewEntry`。
+ * `shared/main-view.ts`）とほぼ同じだが、
  * **ツールは `toolUseId` を持つ**（あとから届く結果を突き合わせるため。表示には使わない）。
  *
- * **`speech` はここにしか無い**（{@link MainViewEntry} には対応する種類が無く、
- * {@link mainViewEntries} が落とす）。セリフが出るのは吹き出しだけで、レポートには混ぜない
+ * **`speech` はここにしか無い**（`MainViewEntry` には対応する種類が無く、
+ * `mainViewEntries` が落とす）。セリフが出るのは吹き出しだけで、レポートには混ぜない
  * （docs/requirements.md 4.2）。記録に残すのは、過去のターンの吹き出しを引き直せるように
  * するため（`shared/turn-speech.ts` の `turnSpeeches`）。
  */
@@ -89,7 +70,8 @@ export type SessionRecord =
   /**
    * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
    * 書き換えない（2026-09-16 決定。docs/requirements.md 4.2「許可と質問」）。形は
-   * {@link MainViewEntry} の `question` と同じなので、{@link mainViewEntries} はそのまま通す。
+   * `MainViewEntry` の `question` と同じなので、`mainViewEntries` はそのまま通す
+   * （`shared/main-view.ts`）。
    */
   | {
       readonly kind: "question"
@@ -148,17 +130,17 @@ export type SessionState = {
   readonly permissionMode: string | undefined
   /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
-   * （`terminal_slash_commands`）は除いてある**（{@link commandCandidates}。
+   * （`terminal_slash_commands`）は除いてある**（`commandCandidates`。
    * docs/requirements.md 4.2「入力欄」）。**`init`（`session-info`）は最初の依頼を送るまで
    * 届かない**（2026-09-12 実測。SDK の `system`/`init` はターンのたびに届く仕組みで、
    * セッション開始直後には来ない）ので、それまでは空配列のまま。その間の名前の出どころは
-   * {@link commandSuggestions} が `commandDescriptions` 側に振る。
+   * `commandSuggestions`（`shared/command-suggestion.ts`）が `commandDescriptions` 側に振る。
    */
   readonly slashCommands: readonly string[]
   /**
    * SDK から届いたコマンドの説明（名前と説明の組）。**端末専用のものも混ざったままの生の一覧**。
    * `supportedCommands()`（駆動側が起動直後に呼ぶ）はセッション開始後すぐに届く（2026-09-12
-   * 実測。`init` を待たない）ので、`slashCommands` が空の間は {@link commandSuggestions} が
+   * 実測。`init` を待たない）ので、`slashCommands` が空の間は `commandSuggestions` が
    * ここを名前の出どころとして使う（端末専用の除外はまだ効かせられない。`init` が届き
    * `slashCommands` が埋まった時点で、除外込みの一覧に戻る）。説明がまだ届いていなければ
    * 空配列。
@@ -386,84 +368,6 @@ export function applySessionEvent(
         characterPacks: event.packs,
       }
   }
-}
-
-/**
- * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`browser/main-view/` の部品はそのまま
- * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
- *
- * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
- * `[<Report> | <QuestionRecord>]*`」）が、`src/browser/features/main-view/turn.tsx` はそこから描かない
- * （2026-09-16 決定。`docs/requirements.md` 4.2）。**`groupIntoTurns` / `keepOnlyInterimReports`
- * （`shared/main-view.ts`）が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
- * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /
- * `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
- */
-export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
-  const settled = state.records.flatMap(toMainViewEntries)
-  return state.partialUtterance === ""
-    ? settled
-    : [...settled, { kind: "detail", markdown: state.partialUtterance }]
-}
-
-/**
- * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
- *
- * **`speech` は落とす**（セリフは吹き出しだけに出し、レポートに混ぜない。
- * docs/requirements.md 4.2）。落としても `request` の数と順番は変わらないので、
- * `shared/main-view.ts` の `groupIntoTurns` が振るターンの通し番号はずれない。
- *
- * **`tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の
- * 付随情報）を落とす**（メインビューの部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。
- * docs/coding-standards.md「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを
- * 暗黙に持ち越さない）。
- */
-function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
-  if (record.kind === "speech") {
-    return []
-  }
-  // `request` / `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。
-  if (record.kind !== "tool") {
-    return [record]
-  }
-  return [{ kind: "tool", name: record.name, input: record.input, result: record.result }]
-}
-
-/**
- * 入力欄の `/` 補完に出す候補（名前と、あれば説明）。
- *
- * `slashCommands`（`init` 由来）が届いていればそれが並びの出どころで、`commandDescriptions` は
- * 同じ名前のものを引き当てるためだけに使う（説明が届いていない・説明を持たないコマンドは
- * `description` が undefined になり、名前だけで出る）。
- *
- * **`slashCommands` がまだ空（`init` が届く前）は `commandDescriptions` をそのまま名前の出どころに
- * する。** `supportedCommands()` は `init` を待たずに届くため、これで最初の依頼を送る前でも
- * 候補が出せる（2026-09-12 実測。docs/requirements.md 4.2）。ただしこの間は端末専用
- * （`doctor` など）の除外がまだ効かない。**`init` が届き `slashCommands` が埋まった時点で、
- * 除外込みの一覧に戻る**ので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
- */
-export function commandSuggestions(state: SessionState): readonly CommandDescription[] {
-  if (state.slashCommands.length === 0) {
-    return state.commandDescriptions
-  }
-
-  const descriptions = new Map(
-    state.commandDescriptions.map((command) => [command.name, command.description]),
-  )
-  return state.slashCommands.map((name) => ({ name, description: descriptions.get(name) }))
-}
-
-/**
- * 入力欄の `/` 補完に出せるコマンド名。`slashCommands` から端末専用
- * （`terminalSlashCommands`。`doctor` / `color` / `reload-plugins` など）を除く
- * （docs/requirements.md 4.2「入力欄」）。
- */
-export function commandCandidates(
-  slashCommands: readonly string[],
-  terminalSlashCommands: readonly string[],
-): readonly string[] {
-  const terminalOnly = new Set(terminalSlashCommands)
-  return slashCommands.filter((command) => !terminalOnly.has(command))
 }
 
 /**

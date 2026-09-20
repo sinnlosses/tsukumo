@@ -27,8 +27,8 @@ import {
   type ReactElement,
 } from "react"
 
+import { commandSuggestions } from "../../../shared/command-suggestion.ts"
 import { type CommandDescription } from "../../../shared/session-event.ts"
-import { commandSuggestions } from "../../../shared/session-state.ts"
 import { useSession } from "../../stores/session.tsx"
 import {
   CommandSuggestions,

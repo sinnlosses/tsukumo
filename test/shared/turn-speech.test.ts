@@ -1,11 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { MAX_MAIN_VIEW_TURNS, mainViewTurns } from "../../src/shared/main-view.ts"
-import {
-  INITIAL_SESSION_STATE,
-  mainViewEntries,
-  type SessionRecord,
-} from "../../src/shared/session-state.ts"
+import { MAX_MAIN_VIEW_TURNS, mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
+import { INITIAL_SESSION_STATE, type SessionRecord } from "../../src/shared/session-state.ts"
 import { turnSpeeches } from "../../src/shared/turn-speech.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・セリフ（docs/coding-standards.md「会話内容の扱い」）。

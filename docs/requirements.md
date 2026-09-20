@@ -673,7 +673,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
     合わせて `speak` の引数で選ぶ**
   - 語の系統が違う同梱パック（`characters/tsukumo-spirit` / `characters/local`。
     通常 / 思案 / どや顔 / あわあわ）のラベルは**真顔** / **きょとん**
-  - **選択肢に出るのは、立ち絵かラベルのどちらかが定義にある表情**（`src/shared/character.ts` の
+  - **選択肢に出るのは、立ち絵かラベルのどちらかが定義にある表情**（`src/shared/expression-choice.ts` の
     `expressionChoices`。ここから `speak` の enum を作るのは `src/server/adapter/sdk-driver.ts` の
     `speakExpressionEnum`）。**`default` は定義に無くても必ず出る**（未知の表情の落とし先なので、
     これが無いと受け付けられる名前が1つも無くなる）

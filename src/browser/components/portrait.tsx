@@ -20,7 +20,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { type CSSProperties, type ReactElement } from "react"
 
-import { classifyPortraitFile } from "../../shared/character.ts"
+import { classifyPortraitFile } from "../../shared/character-asset.ts"
 import { type Expression, type Outfit } from "../../shared/expression.ts"
 import { type PortraitMotion } from "../../shared/portrait-motion.ts"
 import styles from "./portrait.module.css"

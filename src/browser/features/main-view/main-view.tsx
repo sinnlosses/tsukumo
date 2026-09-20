@@ -12,8 +12,7 @@
 
 import { useEffect, useRef, type ReactElement } from "react"
 
-import { mainViewTurns } from "../../../shared/main-view.ts"
-import { mainViewEntries } from "../../../shared/session-state.ts"
+import { mainViewEntries, mainViewTurns } from "../../../shared/main-view.ts"
 import { useSession } from "../../stores/session.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import styles from "./main-view.module.css"

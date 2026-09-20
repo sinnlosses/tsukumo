@@ -6,7 +6,7 @@
 // 長さから計算するので、この層でデコードは要らない。
 //
 // **受け付ける種類は `.svg` / `.png` / `.gif` の3つだけ**（`docs/design.md` 7.1）。
-// `classifyPortraitFile`（`src/shared/character.ts`）はほかのラスタ形式も知っているが、
+// `classifyPortraitFile`（`src/shared/character-asset.ts`）はほかのラスタ形式も知っているが、
 // **書き込む経路では allowlist をこの3つに絞る**（外から届いたものをそのままディスクに
 // 置くため）。差し色が効くのはインラインで埋め込んだ SVG だけ（`characters/README.md`）。
 

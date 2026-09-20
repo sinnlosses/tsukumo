@@ -1,182 +1,35 @@
-// tsukumo が配る唯一のサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信
-// と、フレーム・コマンドが通る WebSocket（`GET /ws?t=<起動トークン>`）の両方をここが持つ**
+// ビューサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信**を持つ
 // （docs/design.md 5章「server.ts」）。入力欄の `@` 補完が引くファイル一覧
-// （`GET /repository-file?t=<起動トークン>`）もここから配る。
+// （`GET /repository-file?t=<起動トークン>`）もここから配る。**フレームとコマンドが通る
+// WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに受け口を足す）。
 //
-// **`Bun.serve` は使わない**（`node:http` + `ws` パッケージ。docs/coding-standards.md
-// 「Bun固有APIに寄せない」）。
+// **`Bun.serve` は使わない**（`node:http`。docs/coding-standards.md「Bun固有APIに寄せない」）。
 //
 // 安全のための決まり（docs/design.md 9章）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
-//   - **起動トークン**（起動ごとの乱数。ディスクに書かない）が合わないと ws の upgrade をしない
+//   - **起動トークン**（起動ごとの乱数。ディスクに書かない）は `/repository-file` を守る
 //     （ページ・同梱物・素材そのものは会話を含まないので、トークンは求めない。いまのまま）。
-//     **`/repository-file` も同じトークンで守る** — 配るのは利用者の作業ディレクトリの中身で、
-//     誰にでも配ってよい静的な物ではない
-//   - `Origin` があれば ws は自分のオリジンと一致すること（無ければ通す）
-//   - 送り返す `error` の理由は定型文だけ（会話の内容を混ぜない）
+//     配るのは利用者の作業ディレクトリの中身で、誰にでも配ってよい静的な物ではない。
+//     **同じ1つを WebSocket の upgrade も見る**（`session-socket.ts`）
 
 import { randomBytes } from "node:crypto"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import process from "node:process"
-import { type Duplex } from "node:stream"
 
-import { type RawData, WebSocketServer } from "ws"
-
-import { CHARACTER_ASSET_PATH_PREFIX } from "../../shared/character.ts"
-import { type ClientCommand, parseClientCommand } from "../../shared/command.ts"
-import { FRAME_ERROR_REASON, type ServerFrame } from "../../shared/frame.ts"
+import { CHARACTER_ASSET_PATH_PREFIX } from "../../shared/character-asset.ts"
 import { REPOSITORY_FILE_PATH } from "../../shared/repository-file.ts"
-import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
+import { SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../shared/vendor-asset.ts"
-import { type DispatchResult } from "../core/session-manager.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
-
-/**
- * 受け取るメッセージ1件の上限（バイト）。**立ち絵1枚（デコード後 2 MiB）を data URL で運べる
- * 大きさ**にしてある（base64 の33%増と JSON のぶんを足して 4 MiB。`docs/design.md` 7.1 の表）。
- *
- * **依頼の文面の上限はこれとは別に効いている**（zod の `MAX_PROMPT_TEXT_LENGTH`。
- * `src/shared/command.ts`）ので、ここを上げても送れる文面は長くならない。
- */
-const MAX_MESSAGE_BYTES = 4 * 1024 * 1024
 
 /**
  * 起動トークンを1つ作る。**起動ごとに変わり、メモリにしか置かない**（ディスクに書かない。
  * docs/design.md 9章）。同じマシンの別プロセスが `127.0.0.1` を読めるという割り切りを塞ぐ。
+ * **配信（`/repository-file`）と WebSocket の upgrade（`session-socket.ts`）が同じ1つを見る。**
  */
 export function createStartupToken(): string {
   return randomBytes(24).toString("hex")
 }
-
-export type SessionSocketOptions = {
-  /** listen 済みの HTTP サーバ（{@link startViewServer} が立てたもの）。 */
-  readonly httpServer: Server
-  readonly token: string
-  /** 自分のオリジン（`http://127.0.0.1:<port>`）。`Origin` ヘッダの照合に使う。 */
-  readonly origin: string
-  /** 接続を購読に加える（`session-manager` の `subscribe`）。外すための関数を返す契約。 */
-  readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
-  /** コマンドを渡す（`session-manager` の `dispatch`）。 */
-  readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
-}
-
-export type SessionSocket = {
-  /** upgrade の受け口を外し、開いている接続を閉じる。 */
-  readonly close: () => void
-}
-
-/**
- * HTTP サーバに WebSocket の受け口を足す。**listen はしない**（呼び出し側が済ませている）。
- *
- * 接続が確立したら `subscribe` に加わり、`hello` が1つ届いてから `events` が流れ始める
- * （順序を決めているのは `session-manager` 側）。
- */
-export function attachSessionSocket(options: SessionSocketOptions): SessionSocket {
-  const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE_BYTES })
-
-  const onUpgrade = (request: IncomingMessage, socket: Duplex, head: Buffer): void => {
-    if (!isAllowedUpgrade(request, options)) {
-      // 理由は返さない（トークンの有無を探る手掛かりを増やさない）。
-      socket.write("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n")
-      socket.end()
-      return
-    }
-
-    sockets.handleUpgrade(request, socket, head, (connection) => {
-      sockets.emit("connection", connection, request)
-    })
-  }
-
-  options.httpServer.on("upgrade", onUpgrade)
-
-  sockets.on("connection", (connection) => {
-    const send = (frame: ServerFrame): void => {
-      if (connection.readyState === connection.OPEN) {
-        connection.send(JSON.stringify(frame))
-      }
-    }
-
-    const unsubscribe = options.subscribe(send)
-    connection.on("message", (data: RawData) => {
-      receive(data, send, options.dispatch)
-    })
-    connection.on("close", unsubscribe)
-  })
-
-  return {
-    close: () => {
-      options.httpServer.off("upgrade", onUpgrade)
-      for (const connection of sockets.clients) {
-        connection.terminate()
-      }
-      sockets.close()
-    },
-  }
-}
-
-/**
- * upgrade を通してよいか。**経路・起動トークン・`Origin` の3つ**を見る（docs/design.md 9章）。
- * `Origin` が無いとき（ブラウザ経由でない呼び出し）を通すのは、旧の POST と同じ規則。
- */
-function isAllowedUpgrade(request: IncomingMessage, options: SessionSocketOptions): boolean {
-  const url = new URL(request.url ?? "/", options.origin)
-  if (url.pathname !== SESSION_SOCKET_PATH) {
-    return false
-  }
-  if (url.searchParams.get(SESSION_TOKEN_QUERY_NAME) !== options.token) {
-    return false
-  }
-
-  const origin = request.headers.origin
-  return origin === undefined || origin === options.origin
-}
-
-/**
- * 届いたメッセージ1件をコマンドとして受け取る。**読めない・受け付けられないときは定型文の
- * `error` を返す**（届いた値を理由に混ぜない。docs/coding-standards.md「会話内容の扱い」）。
- */
-function receive(
-  data: RawData,
-  send: (frame: ServerFrame) => void,
-  dispatch: (command: ClientCommand) => Promise<DispatchResult>,
-): void {
-  const command = parseClientCommand(decodeJson(data))
-  if (command === undefined) {
-    send({ type: "error", commandId: undefined, reason: FRAME_ERROR_REASON.invalidCommand })
-    return
-  }
-
-  dispatch(command)
-    .then((result) => {
-      if (!result.ok) {
-        send({ type: "error", commandId: command.commandId, reason: result.reason })
-      }
-    })
-    .catch(() => {
-      send({ type: "error", commandId: command.commandId, reason: FRAME_ERROR_REASON.driverFailed })
-    })
-}
-
-/** WebSocket の1メッセージを JSON として読む。読めなければ undefined（呼び出し側が弾く）。 */
-function decodeJson(data: RawData): unknown {
-  try {
-    return JSON.parse(messageText(data))
-  } catch {
-    return undefined
-  }
-}
-
-/** `ws` が渡してくる3つの形（Buffer / Buffer の並び / ArrayBuffer）を文字列にする。 */
-function messageText(data: RawData): string {
-  if (Array.isArray(data)) {
-    return Buffer.concat(data).toString("utf8")
-  }
-  return Buffer.isBuffer(data)
-    ? data.toString("utf8")
-    : Buffer.from(new Uint8Array(data)).toString("utf8")
-}
-
-// ここから GET の経路（ページ・`/assets`・`/vendor`・`/character`・`/repository-file`）。
 
 /** レイアウトページの URL パス。利用者が開くのはこの1本だけ。 */
 export const LAYOUT_PATH = "/"

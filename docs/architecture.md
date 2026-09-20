@@ -80,10 +80,15 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | ---------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
 | `src/shared/session-event.ts`                                                | shared     | 内部イベント（判別可能な union）の型と、境界で見る**封筒だけ**のスキーマ                             |
 | `src/shared/session-state.ts`                                                | shared     | `SessionState` と `applySessionEvent(state, event, at)`。**サーバとブラウザが同じものを回す**        |
+| `src/shared/main-view.ts`                                                    | shared     | メインビューに出す形（`MainViewEntry`）と、やり取り（ターン）ごとのまとめ                            |
+| `src/shared/command-suggestion.ts`                                           | shared     | 入力欄の `/` 補完に出す候補（姿から導くだけ。端末専用のコマンドを除く）                              |
 | `src/shared/command.ts`                                                      | shared     | ブラウザ → サーバのコマンド（**zod が正典**）と、許可モード・モデルの値の一覧                        |
 | `src/shared/frame.ts`                                                        | shared     | サーバ → ブラウザのフレームと `PROTOCOL_VERSION`。断られた理由の定型文もここ                         |
 | `src/shared/pending-ask.ts`                                                  | shared     | 答え待ちの語彙（`PendingAsk` / `Answer`）と、届いた答えの検証                                        |
-| `src/shared/expression.ts` / `character.ts` / `question.ts` / `utterance.ts` | shared     | 表情と衣装・キャラクター定義・質問・セリフと詳細の分け方（どれも純粋関数）                           |
+| `src/shared/expression.ts` / `character.ts` / `question.ts` / `utterance.ts` | shared     | 表情と衣装・いま出しているキャラクターの姿・質問・セリフと詳細の分け方（どれも純粋関数）             |
+| `src/shared/character-definition.ts`                                         | shared     | `character.json` そのものの形。解析と、1件を重ねた書き戻しの文字列（I/Oは持たない）                  |
+| `src/shared/character-asset.ts`                                              | shared     | `/character/<file>` の URL・取り直しの印・拡張子による立ち絵の仕分け                                 |
+| `src/shared/expression-choice.ts`                                            | shared     | `speak` が選べる表情とラベル（ラベルの出どころはキャラクター定義）                                   |
 | `src/shared/task-summary.ts`                                                 | shared     | `develop/tasks.json` の要約の型と読み取り（ファイルI/Oは持たない）                                   |
 | `src/server/core/sdk-message.ts`                                             | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                     |
 | `src/server/core/session-driver.ts`                                          | core       | 駆動の契約（`SessionDriver` / `SessionDriverOptions` と既定値）。実装は持たない                      |
@@ -93,7 +98,8 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/core/session-manager.ts`                                         | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                     |
 | `src/server/core/session-launch.ts`                                          | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）               |
 | `src/server/core/character-selection.ts`                                     | core       | 初期パックの順位（指定 > 覚えた値 > 既定）と、知らない名前を既定へ落とす判断                         |
-| `src/server/adapter/server.ts`                                               | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                               |
+| `src/server/adapter/server.ts`                                               | adapter    | ページ・同梱物・立ち絵・ファイル一覧の配信（`127.0.0.1` に listen するのはここ）                     |
+| `src/server/adapter/session-socket.ts`                                       | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                               |
 | `src/server/core/config.ts`                                                  | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                             |
 | `src/server/core/port-resolution.ts`                                         | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                         |
 | `src/server/adapter/bundle.ts`                                               | adapter    | `bun build` で `browser/main.tsx` からスクリプトと CSS の1組を作る（成果物をディスクに残さない）     |
@@ -109,7 +115,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 
 - **`utterance.ts` はファイルI/Oを持たない。** 入力は文字列だけなので、フィクスチャの文字列で
   そのままテストできる
-- **`server.ts` はテストする。** 「描く」側の入り口だが、配った結果は HTTP と WebSocket の
+- **`server.ts` / `session-socket.ts` はテストする。** 「描く」側の入り口だが、配った結果は HTTP と WebSocket の
   両方で外から観測できるので、バインド先・経路・フレームの往復は自動で守れる。目視でしか
   確かめられないのは**ブラウザに出た絵**の側
 - **`orca-host.ts` は自動テストの対象外。** 実際に Orca が動いていないと結果を確かめられない。
@@ -122,7 +128,8 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 - **`sdk-message.ts` は SDK の型を import しない。** 依存を `adapter/sdk-driver.ts` の1ファイルに
   閉じるため、届くメッセージは `unknown` で受けて検証する（外部由来の値なので、どのみち構造は
   信用しない）。おかげで変換のテストは SDK を起動しない
-- **`session-state.ts` は純粋な畳み込み。** 状態を持つのはサーバ側の `session-manager` と
+- **`session-state.ts` は純粋な畳み込み。** 姿から導くだけのもの（メインビューに出す形・`/`
+  補完の候補）は `main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
   ブラウザ側だけで、「イベント1件でどう変わるか」はすべてここのテストで守れる
 - **`speak` のセリフは MCP の handler ではなく `assistant` メッセージの変換から取り出す。**
   handler は `"ok"` を返すだけにして、イベントの流れを1本に保つ

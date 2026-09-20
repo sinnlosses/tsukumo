@@ -56,8 +56,8 @@ export type SessionEvent =
       /**
        * `slash_commands` のうち、端末専用（UX が端末に結び付く。`doctor` / `color` /
        * `reload-plugins` など）のもの。**入力欄の補完からは除く**
-       * （docs/requirements.md 4.2「入力欄」。除く計算は src/shared/session-state.ts の
-       * `commandCandidates`）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
+       * （docs/requirements.md 4.2「入力欄」。除く計算は
+       * src/shared/command-suggestion.ts の `commandCandidates`）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
        */
       readonly terminalSlashCommands: readonly string[]
     }
@@ -65,7 +65,7 @@ export type SessionEvent =
    * コマンドの説明が届いた。**名前の一覧（`session-info`）とは別の経路で来る**ので、別の
    * イベントにしてある（駆動側の `supportedCommands()` の結果と、`system` の
    * `commands_changed` の押し出しの両方がここに入る）。端末専用かどうかは分からないので、
-   * 補完に出す/出さないの判断は名前の一覧の側が持つ（src/shared/session-state.ts）。
+   * 補完に出す/出さないの判断は名前の一覧の側が持つ（src/shared/command-suggestion.ts）。
    */
   | {
       readonly kind: "command-descriptions"

@@ -26,11 +26,11 @@ import {
 } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
+import { type PermissionMode } from "../../shared/command.ts"
 import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
-} from "../../shared/character.ts"
-import { type PermissionMode } from "../../shared/command.ts"
+} from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"

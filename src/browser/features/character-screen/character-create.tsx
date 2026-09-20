@@ -15,7 +15,8 @@
 
 import { useState, type ReactElement } from "react"
 
-import { isCharacterPackName, resolveExpressionLabel } from "../../../shared/character.ts"
+import { isCharacterPackName } from "../../../shared/character.ts"
+import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { REQUIRED_EXPRESSIONS, type RequiredExpression } from "../../../shared/expression.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { readDataUrl } from "../../lib/data-url.ts"

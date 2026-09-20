@@ -10,8 +10,8 @@
 // 名乗るもの（`DEFAULT_EFFORT` の `EffortLevel`、`query()` の options、`listSessions` /
 // `getSessionMessages` を使う関数）は `src/server/adapter/sdk-driver.ts` に置く。
 
-import { type ExpressionChoice } from "../../shared/character.ts"
 import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
+import { type ExpressionChoice } from "../../shared/expression-choice.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 

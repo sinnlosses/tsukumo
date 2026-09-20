@@ -20,7 +20,8 @@
 
 import { useState, type ReactElement } from "react"
 
-import { resolveExpressionLabel, resolveOutfitAccent } from "../../../shared/character.ts"
+import { resolveOutfitAccent } from "../../../shared/character.ts"
+import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import {
   type Expression,
   EXPRESSIONS,

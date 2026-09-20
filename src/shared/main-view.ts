@@ -1,5 +1,5 @@
-// メインビューに出す前段の「決める」ロジック。**`MainViewEntry`（`session-state.ts`）を、
-// やり取り（ターン）ごとにまとめる**純粋関数だけを置く。
+// メインビューに出す形（`MainViewEntry`）と、それを**やり取り（ターン）ごとにまとめる**
+// 「決める」ロジック。**セッションの姿（`session-state.ts`）から導くだけ**で、状態は持たない。
 //
 // `groupIntoTurns` / `limitTurnEntries` はもとは1つのファイルにまとまっていた（移行の段6で
 // HTML の組み立てが `src/browser/features/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
@@ -7,7 +7,8 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import { type MainViewEntry } from "./session-state.ts"
+import { type Question, type QuestionAnswer } from "./question.ts"
+import { type SessionRecord, type SessionState } from "./session-state.ts"
 
 /**
  * 出すやり取りの数。もとは5だったが、2026-09-10 にユーザーの指定
@@ -31,6 +32,31 @@ export const MAX_MAIN_VIEW_TURNS = 5
  * {@link MAX_MAIN_VIEW_TURNS} が別に持つ）。
  */
 const MAX_MAIN_VIEW_ENTRIES = 40
+
+/**
+ * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
+ * 発話の詳細の3種類。**描く側（`src/browser/features/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
+ * （{@link mainViewEntries}）。
+ */
+export type MainViewEntry =
+  | { readonly kind: "request"; readonly text: string }
+  /**
+   * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
+   * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
+   */
+  | {
+      readonly kind: "question"
+      readonly questions: readonly Question[]
+      readonly answers: readonly QuestionAnswer[]
+    }
+  | {
+      readonly kind: "tool"
+      readonly name: string
+      readonly input: unknown
+      /** まだ結果が届いていない（作業中の）ツールは undefined になる。 */
+      readonly result: { readonly content: string; readonly isError: boolean } | undefined
+    }
+  | { readonly kind: "detail"; readonly markdown: string }
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
 export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question" }>
@@ -84,6 +110,24 @@ export type MainViewTurn = {
 }
 
 /**
+ * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`browser/main-view/` の部品はそのまま
+ * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
+ *
+ * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
+ * `[<Report> | <QuestionRecord>]*`」）が、`src/browser/features/main-view/turn.tsx` はそこから描かない
+ * （2026-09-16 決定。`docs/requirements.md` 4.2）。**{@link groupIntoTurns} /
+ * {@link keepOnlyInterimReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
+ * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /
+ * `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
+ */
+export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
+  const settled = state.records.flatMap(toMainViewEntries)
+  return state.partialUtterance === ""
+    ? settled
+    : [...settled, { kind: "detail", markdown: state.partialUtterance }]
+}
+
+/**
  * 時系列の記録を、やり取り（ターン）ごとにまとめ、直近 {@link MAX_MAIN_VIEW_TURNS} 件へ絞る。
  * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
  *
@@ -102,6 +146,29 @@ export function mainViewTurns(
     .map((turn) => keepOnlyInterimReports(turn))
     .map((turn) => markSupersededSteps(turn))
     .map((turn) => limitTurnEntries(turn))
+}
+
+/**
+ * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
+ *
+ * **`speech` は落とす**（セリフは吹き出しだけに出し、レポートに混ぜない。
+ * docs/requirements.md 4.2）。落としても `request` の数と順番は変わらないので、
+ * {@link groupIntoTurns} が振るターンの通し番号はずれない。
+ *
+ * **`tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の
+ * 付随情報）を落とす**（メインビューの部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。
+ * docs/coding-standards.md「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを
+ * 暗黙に持ち越さない）。
+ */
+function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
+  if (record.kind === "speech") {
+    return []
+  }
+  // `request` / `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。
+  if (record.kind !== "tool") {
+    return [record]
+  }
+  return [{ kind: "tool", name: record.name, input: record.input, result: record.result }]
 }
 
 /**

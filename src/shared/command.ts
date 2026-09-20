@@ -1,7 +1,7 @@
 // ブラウザからサーバへ送るコマンド。**書き込みの経路なので zod のスキーマが正典**で、
 // 型は `z.infer` で得る（2026-09-13 決定。docs/design.md 4.3）。
 //
-// 検証するのは境界（WebSocket の受け口。src/server/adapter/server.ts）で1回だけ。中では検証済みの型を使う。
+// 検証するのは境界（WebSocket の受け口。src/server/adapter/session-socket.ts）で1回だけ。中では検証済みの型を使う。
 //
 // **依頼の文面（`text`）は会話の内容そのもの。** 検証に落ちたときの理由に文面を含めない
 // （docs/coding-standards.md「会話内容の扱い」。理由の定型文は src/shared/frame.ts）。

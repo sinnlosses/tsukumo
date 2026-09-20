@@ -141,10 +141,15 @@ src/
   shared/
     session-event.ts          SessionEvent（zod と z.infer）
     session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
+    main-view.ts              メインビューに出す形（MainViewEntry）と、ターンごとのまとめ
+    command-suggestion.ts     入力欄の / 補完に出す候補（姿から導くだけ）
     command.ts                ClientCommand（zod）
     frame.ts                  ServerFrame（zod）・PROTOCOL_VERSION
     expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
                               語彙（いまの domain のうち、両側が使うもの）
+    character-definition.ts   character.json そのものの形。解析と、1件を重ねた書き戻しの文字列
+    character-asset.ts        /character/<file> の URL・取り直しの印・拡張子による仕分け
+    expression-choice.ts      speak が選べる表情とラベル（ラベルの出どころは定義ファイル）
     repository-file.ts        ファイル一覧の経路名と読み取り（入力欄の @ 補完。両側が見る）
   server/                     サーバ（Bun）側。判断（core/）と境界（adapter/）の2段
     core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
@@ -162,7 +167,8 @@ src/
     adapter/                  外の世界に触る場所。1ファイル = 1つの境界
       sdk-driver.ts           SDK を import する唯一の場所。SessionDriver の本物の実装
       fake-driver.ts          台本どおりに SessionEvent を流す SessionDriver（台本は fs から読む）
-      server.ts               http（ページ・/assets・/vendor・/character）+ ws（フレームとコマンド）
+      server.ts               http（ページ・/assets・/vendor・/character・/repository-file）
+      session-socket.ts       ws（フレームとコマンド）。listen 済みのサーバに upgrade を足す
       character-pack.ts       パックの列挙・読み込み（character.json / persona.md / 素材）
       character-edit.ts       画面から変えた立ち絵・差し色を ~/.tsukumo/characters/ へ書く
       remembered-character.ts 覚えたキャラクター名（~/.tsukumo/state.json）
@@ -471,7 +477,12 @@ type SessionHost = {
 いまの読み直し係を、**mtime が変わったときだけ `tasks-changed` を起こす**形にする（1〜2秒の
 ポーリング。`fs.watch` は macOS でも取りこぼすことがあるので使わない）。
 
-### server.ts（adapter）
+### server.ts と session-socket.ts（adapter）
+
+**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている（2026-09-20）。静的配信と
+`/repository-file` は `server.ts`（listen するのもここ）、`/ws` の upgrade とコマンドの受け口は
+`session-socket.ts`（listen 済みのサーバに受け口を足すだけ）。**起動トークンは1つ**で、
+`server.ts` の `createStartupToken` が作ったものを両方が見る。
 
 | 経路                              | 中身                                                                                                                  | トークン |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
@@ -482,7 +493,8 @@ type SessionHost = {
 | `GET /repository-file?t=<token>`  | git 管理下のファイルのパス（入力欄の `@` 補完。実体は `repository-file.ts` の `git ls-files`）                        | **必要** |
 | `GET /ws?t=<token>`               | WebSocket。Origin とトークンを確かめてから upgrade                                                                    | **必要** |
 
-会話の内容が乗るのは `/ws` だけ。ページ・同梱物・素材は静的な物なのでトークン無しでよい。
+会話の内容が乗るのは `/ws` だけ（`session-socket.ts`）。ページ・同梱物・素材は静的な物なので
+トークン無しでよい。
 **`/repository-file` は会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの
 中身（パスだけ。ファイルは開かない）で、誰にでも配ってよい静的な物ではない。
 

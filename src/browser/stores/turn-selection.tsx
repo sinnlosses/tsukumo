@@ -11,8 +11,7 @@
 
 import { createContext, useContext, useState, type ReactElement, type ReactNode } from "react"
 
-import { mainViewTurns } from "../../shared/main-view.ts"
-import { mainViewEntries } from "../../shared/session-state.ts"
+import { mainViewEntries, mainViewTurns } from "../../shared/main-view.ts"
 import { useSession } from "./session.tsx"
 
 export type TurnSelectionValue = {

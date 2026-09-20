@@ -359,7 +359,7 @@ function joinPartialUtterances(events: readonly StampedEvent[]): readonly Stampe
   }, [])
 }
 
-/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（src/server/adapter/server.ts）の仕事。 */
+/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（src/server/adapter/session-socket.ts）の仕事。 */
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)

@@ -30,14 +30,14 @@ import {
 } from "node:fs"
 import { basename, join } from "node:path"
 
+import { classifyPortraitFile } from "../../shared/character-asset.ts"
 import {
   type CharacterDefinition,
-  classifyPortraitFile,
   definitionWithOutfitAccent,
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
-} from "../../shared/character.ts"
+} from "../../shared/character-definition.ts"
 import { type CharacterCreateCommand, type CharacterEditCommand } from "../../shared/command.ts"
 import { type Expression, type RequiredExpression } from "../../shared/expression.ts"
 import { parsePortraitImage, portraitFileName } from "../../shared/portrait-image.ts"
