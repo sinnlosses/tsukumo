@@ -3,18 +3,28 @@
 
    **筆先の座標はビューポート基準**（`src/browser/stores/brush-tip.ts`）なので position: fixed で
    そのまま置ける。レポートの領域は overflow-y: auto だが、祖先に transform / filter が無いので
-   fixed はそれに切られない（切られるようになったら、ここが領域の中で迷子になる合図）。 */
+   fixed はそれに切られない（切られるようになったら、ここが領域の中で迷子になる合図）。
+   **縁取りは入れ物ではなく中身（`.mini-portrait-body`）に掛ける**ので、この fixed の祖先に
+   filter は増えない。 */
 .mini-portrait {
-  /* 大きさ・薄さ・追従の間合い（2026-09-20 のユーザーの決定）。**この4つが唯一の調整箇所**。
-     --mini-portrait-height: 本文の行の高さの2倍（`--font-body` × `--line-height-body` × 2）。
+  /* 大きさ・薄さ・追従の間合い（2026-09-20 のユーザーの決定）。**ここと下の縁取りの2組が
+     唯一の調整箇所**。
+     --mini-portrait-height: 本文の行の高さの3倍（`--font-body` × `--line-height-body` × 3）。
+       **2倍（53px）では姿が判別できなかった**（2026-09-21 の目視: 下の縁取りを足しても、
+       線画の細部が地に沈んで「光る塊」にしか見えない）。3倍でも**キャラビューの立ち絵の
+       半分以下**なので、「明確に小さく」は保つ（4.3）。
      --mini-portrait-opacity: 地の文が透けて読める薄さ（分身であることの印でもある）。
+       **濃くしない**（本文が読めなくなり、分身としての見分けも弱まる）。判別は下の縁取りで作る。
      --mini-portrait-gap: 筆先と立ち絵のあいだの余白（書いたばかりの文字に被せない）。
      --mini-portrait-follow-duration: 遅れの目安。**毎フレーム引き直される遷移**なので、
-       この長さがそのままばねの時定数になる（長くすると重く、短くすると張り付く）。 */
-  --mini-portrait-height: calc(var(--font-body) * var(--line-height-body) * 2);
+       この長さがそのままばねの時定数になる（長くすると重く、短くすると張り付く）。
+       **遅れの幅は「筆の速さ × この長さ」でそのまま決まる**（2026-09-21 の実測: 筆が
+       0.78px/ms で進む場面で 0.12s のとき 90px、0.05s のとき 43px。どちらも実測が
+       「速さ × 長さ」に一致する）。**立ち絵の幅に収まる遅れ**にしてあり、筆先が姿の中に入る。 */
+  --mini-portrait-height: calc(var(--font-body) * var(--line-height-body) * 3);
   --mini-portrait-opacity: 0.45;
   --mini-portrait-gap: 0.4rem;
-  --mini-portrait-follow-duration: 0.12s;
+  --mini-portrait-follow-duration: 0.05s;
 
   position: fixed;
   top: 0;
@@ -26,7 +36,27 @@
   pointer-events: none;
   transition: transform var(--mini-portrait-follow-duration) linear;
 }
-/* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。 */
+/* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。
+
+   **薄さと小ささはそのままに、姿だけを判別できるようにする**（2026-09-21）。濃くも大きくも
+   すると本文が読みにくくなり、キャラビューの立ち絵との見分け（分身であることの印）も弱まる
+   ので、**地との境目を作る側**で解く:
+
+   --mini-portrait-rim: 地の色の縁。**本文の文字の上に来たときに輪郭が埋もれない**。
+   --mini-portrait-glow: 差し色の暈。**地（暗い面）の上で姿が浮かぶ**。差し色は
+     キャラクター定義の `accent`（`--outfit-accent` は `<Portrait>` がこの要素に置く）で、
+     無いパックでは画面の差し色に落ちる。
+
+   `drop-shadow` は**素材の alpha をなぞる**ので、矩形ではなく姿の形に付く（素材の中身には
+   触らない、という 4.3 の割り切りを守ったまま輪郭だけを立てられる）。**同じ影を重ねる**のは、
+   1回では入れ物側の薄さ（--mini-portrait-opacity）に負けて見えないため——重ねた回数だけ
+   濃くなる（drop-shadow は前の結果にさらに掛かる）。 */
 .mini-portrait-body {
+  --mini-portrait-rim: color-mix(in srgb, var(--surface) 85%, transparent);
+  --mini-portrait-glow: color-mix(in srgb, var(--outfit-accent, var(--accent)) 80%, transparent);
+
   height: 100%;
+  filter: drop-shadow(0 0 4px var(--mini-portrait-glow))
+    drop-shadow(0 0 4px var(--mini-portrait-glow)) drop-shadow(0 0 1px var(--mini-portrait-rim))
+    drop-shadow(0 0 1px var(--mini-portrait-rim));
 }
