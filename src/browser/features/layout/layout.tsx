@@ -16,6 +16,10 @@
 // **仕切りの位置が state に入るのはドラッグを離した1回だけ。** 動かしている間の位置は
 // 過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く
 // （`writeFraction`）。
+//
+// **狭い画面では上段の2領域をタブで切り替える**（docs/requirements.md 4.7）。どちらを隠すかは
+// CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、**ここは幅を測らない**
+// — 広い画面ではタブ自身が `display: none` で、選んでいる側の値は何にも効かない。
 
 import { useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react"
 
@@ -30,6 +34,15 @@ export type LayoutProps = {
   readonly dispatch: ReactNode
 }
 
+/** 狭い画面のとき、上段に出している領域。 */
+type NarrowPane = "main" | "sidebar"
+
+// 狭い画面のタブ。**名前は用語集の語のまま**（docs/glossary.md）。
+const NARROW_PANES = [
+  { pane: "main", label: "メインビュー" },
+  { pane: "sidebar", label: "サイドバー" },
+] satisfies readonly { readonly pane: NarrowPane; readonly label: string }[]
+
 // 仕切り1本が動かす CSS カスタムプロパティの組（手前の領域・奥の領域）。レンダー時の `style` と
 // ドラッグ中の直接書き込みが同じ名前を見るように、名前はここにだけ書く。
 // CSS 側のフォールバック値（layout.module.css）は DEFAULT_SPLIT と一致させること。
@@ -41,6 +54,7 @@ const SPLIT_VARIABLES = {
 
 export function Layout(props: LayoutProps): ReactElement {
   const [split, setSplit] = useState<Split>(loadSplit)
+  const [narrowPane, setNarrowPane] = useState<NarrowPane>("main")
   const gridRef = useRef<HTMLDivElement>(null)
   const rowTopRef = useRef<HTMLDivElement>(null)
   const rowBottomRef = useRef<HTMLDivElement>(null)
@@ -65,12 +79,34 @@ export function Layout(props: LayoutProps): ReactElement {
         ref={gridRef}
         style={fractionStyle("rowTop", split.rowTop)}
       >
+        <div className={styles["layout-tabs"]} role="tablist">
+          {NARROW_PANES.map((entry) => (
+            <button
+              type="button"
+              key={entry.pane}
+              role="tab"
+              aria-selected={entry.pane === narrowPane}
+              className={`${styles["layout-tab"]}${
+                entry.pane === narrowPane ? ` ${styles["is-active"]}` : ""
+              }`}
+              onClick={() => {
+                setNarrowPane(entry.pane)
+              }}
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
         <div
           className={`${styles["layout-row"]} ${styles["layout-row-top"]}`}
           ref={rowTopRef}
+          data-narrow-pane={narrowPane}
           style={fractionStyle("topLeft", split.topLeft)}
         >
-          <section className={styles["layout-region"]} data-region="main">
+          <section
+            className={`${styles["layout-region"]} ${styles["layout-main"]}`}
+            data-region="main"
+          >
             {props.main}
           </section>
           <LayoutResizer

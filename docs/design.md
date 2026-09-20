@@ -525,7 +525,8 @@ type SessionHost = {
    └ <Root>                  main.tsx の中（export しない）。useScreen() で出す画面を選ぶ（6.2・13.6）。
       │                      **会話の画面は外さず hidden で隠す**（下書き・選んでいるターン・スクロール位置を保つ）
       ├ <Layout>             会話の画面。grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
-      │  │                   右下に「領域の比率を既定に戻す」を常設（13.6）
+      │  │                   右下に「領域の比率を既定に戻す」を常設（13.6）。**狭い画面では画面の高さに
+      │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
       │  ├ <MainView>        <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
       │  │   └ <Turn>        <RequestHeading> + [<Report> | <QuestionRecord>]*
       │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo

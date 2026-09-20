@@ -186,35 +186,26 @@
   }
 }
 
-/* 狭い画面（1列に畳む幅。docs/requirements.md 4.7）。この領域も高さが auto になり、割合で
-   書いた高さの基準が消えるので、立ち絵は幅を基準にした元の大きさに戻し、吹き出しは中身なりの
-   高さで積むだけにする。**立ち絵側の打ち消しは `.character-layout` から書く**
-   （src/browser/components/portrait.module.css の規則より強く当てるため。読み込み順に頼らない）。 */
+/* 狭い画面（docs/requirements.md 4.7）。**領域は下段に 9.5rem で固定される**
+   （features/layout/layout.module.css の @media）ので、高さの基準そのものは残る。変えるのは
+   割合と固定量のほうで、広い領域向けの既定（立ち絵 78% ＋ 2.25rem 沈める、吹き出しの下に
+   7rem の余白）をそのまま当てると、低い領域では立ち絵の顔が切れ、吹き出しが余白に押し出されて
+   領域の外へ出る。立ち絵は領域いっぱいまで使い、下の余白は接地ぶんだけに詰める。 */
 @media (max-width: 760px) {
-  .character-layout {
-    align-items: stretch;
-    overflow: visible;
+  .character-region {
+    --portrait-height: 100%;
+    --portrait-drop: 0.4rem;
+    --balloon-bottom-gap: 0.4rem;
   }
-  .character-layout .portrait {
-    height: auto;
-    max-width: none;
-    display: block;
-    margin-bottom: 0;
+  /* 立ち絵の幅の上限は、低い領域では高さ側が先に当たって効かなくなるぶん、吹き出しの場所を
+     守るために詰める。 */
+  .portrait {
+    max-width: 33%;
   }
-  .character-layout .portrait svg,
-  .character-layout .portrait img {
-    width: 100%;
-    height: auto;
-    max-width: 9rem;
-  }
-  /* 最新の吹き出しの下端を固定する余白（--balloon-bottom-gap）は、領域の高さが割合で
-     決まっている前提の指定。この幅では高さが auto になり「下端」が無いので、余白だけが
-     吹き出しの下に居座る。戻す。 */
+  /* 吹き出しは低い領域の中で収まるだけ出し、溢れたぶんは自分の中でスクロールする
+     （最新は column-reverse で常に下端に居る）。 */
   .balloon-track {
-    align-self: stretch;
-    flex: 0 1 auto;
-    margin-bottom: 0;
-    max-height: none;
-    overflow-y: visible;
+    flex-basis: 8rem;
+    max-height: 100%;
   }
 }

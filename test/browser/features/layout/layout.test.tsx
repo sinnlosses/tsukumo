@@ -101,6 +101,22 @@ describe("Layout", () => {
     expect(loadSplit()).toEqual({ rowTop: 20, topLeft: 30, bottomLeft: 40 })
   })
 
+  // 狭い画面でどちらの領域を出すかは CSS（@media）が data-narrow-pane を見て決めるので、
+  // 部品の側で確かめられるのは「タブを押すと印が入れ替わる」ところまで。
+  it("上段のタブを押すと、出す領域の印が入れ替わる", () => {
+    renderLayout()
+    const sidebarTab = screen.getByRole("tab", { name: "サイドバー" })
+
+    expect(rowTopElement().dataset["narrowPane"]).toBe("main")
+
+    fireEvent.click(sidebarTab)
+
+    expect(rowTopElement().dataset["narrowPane"]).toBe("sidebar")
+    expect(sidebarTab.getAttribute("aria-selected")).toBe("true")
+    // 領域そのものは4つとも残る（タブは見せる側を選ぶだけ。docs/requirements.md 4.7）。
+    expect(document.querySelector('[data-region="main"]')).not.toBeNull()
+  })
+
   it("一度も動かさずに離したときは保存しない", () => {
     saveSplit({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
     renderLayout()

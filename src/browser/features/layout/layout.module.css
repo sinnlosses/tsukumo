@@ -5,8 +5,8 @@
    ここに書いた var() の第2引数（フォールバック値）は src/browser/features/layout/split.ts の
    DEFAULT_SPLIT と一致させること。
 
-   狭い画面での畳み方は、このファイルの末尾の @media にある（他の領域のぶんはそれぞれの
-   *.module.css の末尾。docs/requirements.md 4.7）。 */
+   狭い画面での畳み方（画面の高さに固定し、上段はタブで1つずつ出す）は、このファイルの末尾の
+   @media にある（他の領域のぶんはそれぞれの *.module.css の末尾。docs/requirements.md 4.7）。 */
 .layout-grid {
   position: relative;
   display: grid;
@@ -52,10 +52,8 @@
 }
 /* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、
    3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」
-   「セッション情報」の見出しが画面の外に流れないようにするため）。狭い画面
-   （@media (max-width: 760px)）では .layout-grid の行が高さ auto になり、この領域にも
-   定まった高さが無くなるので、flex-grow は働かず中身なりの高さに自然に伸びる
-   （メインビュー・キャラビューの overflow-y: auto はここでは変えない）。 */
+   「セッション情報」の見出しが画面の外に流れないようにするため）。狭い画面でも
+   .layout-grid の高さが画面に固定されるので、区画の伸び縮みと内側のスクロールは同じように働く。 */
 .layout-sidebar {
   display: flex;
   flex-direction: column;
@@ -104,6 +102,34 @@
 .layout-resizer:hover::after {
   background: var(--accent);
 }
+/* 狭い画面でだけ出る、上段の2領域（メインビュー・サイドバー）を切り替えるタブ
+   （docs/requirements.md 4.7）。**広い画面では display: none** なので grid の item にもならず、
+   .layout-grid の行の数は変わらない（両方の領域が今までどおり並ぶ）。
+   どちらを隠すかは下の @media が .layout-row-top[data-narrow-pane] で決める。 */
+.layout-tabs {
+  display: none;
+  gap: 0.25rem;
+}
+/* 指で押す口なので、字の大きさではなく**押せる高さ**（上下の余白込みで 2.5rem 前後）で決める。 */
+.layout-tab {
+  flex: 1 1 0;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+/* 選ばれたタブは accent を出してよい場所（docs/design.md 13.1 原則1）。**色だけに頼らない**
+   ので、地の濃さ（--surface-accent）と文字の濃さも一緒に変える。 */
+.layout-tab.is-active {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+
 /* 領域の比率を既定に戻す常設ボタン（`<Layout>` が直接描く。docs/design.md 13.6）。
    画面右下に固定で置く
    （常設の要素は差し引きゼロ。仕切りのドラッグ操作と取り合わない場所という理由も同じ）。 */
@@ -125,19 +151,39 @@
   border-color: var(--accent);
 }
 
-/* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
-   （docs/requirements.md 4.7「狭い画面での崩れ方」）。各行の中身は DOM の並び順どおり
-   （main→sidebar、character→dispatch）に積むだけで済むので、grid-template-areas は
-   使わない。畳んでいる間は仕切り・比率を戻すボタンを出さない（動かせる比率が無いため）。 */
+/* 狭い画面（スマホの幅で会話を回せるようにする形。docs/requirements.md 4.7）。
+   **画面の高さに固定して、スクロールするのは上段の中だけ**にする。上段はメインビューと
+   サイドバーをタブで1つずつ出し、下段（キャラビュー・入力欄）は常に見えたままにする
+   （入力欄にたどり着くまでにタスク一覧を全部スクロールしていた 2026-09-20 の実測への対処）。
+   高さの単位は **dvh**（vh だとソフトウェアキーボードが出たときにページごと押し上がる）。
+   各行の中身は DOM の並び順どおりに積むだけで済むので、grid-template-areas は使わない。 */
 @media (max-width: 760px) {
   .layout-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: none;
-    height: auto;
+    /* タブ / 上段（残り全部） / 下段（中身なり）。body の padding ぶんを差し引く。 */
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: calc(100dvh - 2rem);
+  }
+  .layout-tabs {
+    display: flex;
   }
   .layout-row-top,
   .layout-row-bottom {
     grid-template-columns: 1fr;
+  }
+  /* 出していないほうの領域は隠す。**4領域はそのまま4つある**（data-region も残る）ので、
+     広い画面に戻せば両方が並ぶ。 */
+  .layout-row-top[data-narrow-pane="main"] .layout-sidebar,
+  .layout-row-top[data-narrow-pane="sidebar"] .layout-main {
+    display: none;
+  }
+  /* 下段はキャラビューを低く固定し、残りを入力欄に渡す。**固定するのは、立ち絵と吹き出しの
+     大きさが領域の高さの割合で決まっているから**（割合の詰め直しは
+     features/character-view/character-view.module.css の @media）。答え待ちの箱で下段が
+     伸びても上段が消えないように、下段全体の上限を切る。 */
+  .layout-row-bottom {
+    grid-template-rows: 9.5rem minmax(0, 1fr);
+    max-height: 58dvh;
   }
   /* 仕切りは1列表示では意味を持たないので隠す。比率を戻すボタンも同じ理由で隠す
      （動かせる比率が無い1列表示では戻す先が無い。色と立ち絵の固定はキャラクター画面へ
@@ -147,6 +193,6 @@
     display: none;
   }
   .layout-dispatch {
-    min-height: 10rem;
+    min-height: 9rem;
   }
 }

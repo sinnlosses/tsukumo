@@ -94,9 +94,9 @@
     "dependencies": [],
     "summary": "スマホの幅でレイアウトを整える（frontend-design を使う）",
     "task": "## 背景\n\nスマホでの表示を整えたい（2026-09-16 のユーザーの指摘）。`frontend-design` スキルを使う。\n\nいまある狭い画面向けの手当ては `src/ui/style/narrow-screen.css`（**69行**）だけで、\n**切れ目は `@media (max-width: 760px)` の1つ**。`docs/requirements.md` 4.7 が言う「1列表示」に\n落とすためのもので、**スマホの幅（375〜430px）で測って作ったものではない**。\n\n4領域（メインビュー・キャラビュー・サイドバー・入力欄）の並びは\n`src/ui/layout/layout.tsx` と `src/ui/style/layout.css` が持ち、仕切りのドラッグは\n`src/ui/layout/layout-resizer.tsx`。**狭い画面では高さの基準が無いので内側スクロールが働かず、\n中身なりに伸びる**（`docs/requirements.md` 4.2 の末尾）。\n\n## 決まっていること（蒸し返さない）\n\n- **`frontend-design` スキルを使う**（ユーザーの指示）。\n- **着手はユーザーの目の前で行う**（`loopable` が `\"N\"`。下の注意）。\n\n## 解くべき論点\n\n- **どの幅を狙うか。** 375px（iPhone SE）/ 390px（iPhone 14）/ 430px（Pro Max）のどれを\n  基準にするか。`@media` の切れ目を 760px の1つのままにするか、増やすか。\n- **4領域をスマホでどう並べるか。** 縦に4つ積むと立ち絵とサイドバーが場所を食う。\n  タブで切り替える・サイドバーを畳む・キャラビューを小さくする、などの案を比べる。\n  **仕切りのドラッグ（`layout-resizer.tsx`）をスマホで使えるようにするか**も決める。\n- **入力欄の扱い。** スマホでは画面の下に固定したいが、ソフトウェアキーボードが出たときの\n  挙動（`100vh` の問題）を考える必要がある。\n- **どこまでやるか。** 「読める」までか、「操作できる」までか。`frontend-design` の助言を\n  受けたうえで、**このタスクで届く範囲を決めて `evidence` に書く**。\n\n## やること\n\n1. `frontend-design` スキルを読み、その語彙で現状を見る。\n2. 上の論点を決め、`src/ui/style/narrow-screen.css` を中心に直す。\n   **新しい色を作らない**（`src/ui/style/theme.css` のトークンだけを使う）。\n3. `docs/requirements.md` 4.7 の記述を追従させる。**行頭を含めて位置を特定し**、\n   `bun run format` のあとに `grep -c '^#\\{2,3\\} '` が 26 のままであることを確かめる。\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）。\n- **スマホの幅で目視する**: `TSUKUMO_DRIVER=fake` で起こし、`scripts/capture-view.ts` の\n  `--size 390x844` で撮る。**(a) 横スクロールが出ない（`document.documentElement.scrollWidth`\n  が `clientWidth` 以下）、(b) 文字が潰れていない、(c) 入力欄に手が届く**、の3つを数値と\n  画像で確かめる。\n- 広い画面（1400x900）で**見た目が変わっていない**ことも確かめる（狭い画面向けの手当てが\n  広い画面に漏れていないこと）。\n\n## 注意\n\n- **見た目の良し悪しはユーザーが見て決める**。`loopable` を `\"N\"` にしてあるのはこのため\n  （数値の条件は満たしても「整った」かは別）。\n- **`src/ui/layout/` のレイアウトの仕組みそのものを作り直さない。** 狭い画面での見え方を\n  整えるのが目的で、4領域の考え方（`docs/requirements.md` 4.7）は変えない。",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "狭い画面を「画面の高さに固定＋上段をタブで切替＋下段常設」にした。390x844 で入力欄の top が 1623→555、ページ全体は 1808px→844px（縦スクロール 0・横のはみ出し 0px）。375x812 でも同じ形で収まり、1400x900 は変更前と測定値が完全一致（main 16/16/1006.8/505.44 ほか4領域）。bun run check 733 pass / 0 fail。requirements.md の節数は 26 のまま。到達点は「操作できる」まで（打つ・送る・レポートを読む・タブでサイドバーを見るが指で完結することを Playwright で操作して確認）。"
   },
   {
     "id": "T-206",

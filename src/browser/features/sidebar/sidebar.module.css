@@ -333,14 +333,3 @@
 .task-blocked {
   color: var(--state-warn);
 }
-
-/* 狭い画面（1列に畳む幅。docs/requirements.md 4.7）。 */
-@media (max-width: 760px) {
-  /* .layout-sidebar もこの幅では高さ auto になるので、「いま何をしているか」「タスク一覧」の
-     flex-basis: 0（上の既定）が自身の中身を 0 扱いにしてしまう。狭い画面では元々スクロール
-     させる意図が無いので、「セッション情報」と同じ「中身なりの高さ」に揃える。 */
-  .sidebar-block-activity,
-  .sidebar-block-tasks {
-    flex: 0 1 auto;
-  }
-}
