@@ -41,6 +41,8 @@ describe("resolvePortraitUrl", () => {
     flustered: undefined,
     serious: undefined,
     curious: undefined,
+    sad: undefined,
+    excited: undefined,
   }
 
   it("該当する表情があればそれを使う", () => {
@@ -64,6 +66,8 @@ describe("resolvePortraitUrl", () => {
       flustered: undefined,
       serious: undefined,
       curious: undefined,
+      sad: undefined,
+      excited: undefined,
     }
 
     expect(resolvePortraitUrl(empty, "thinking")).toBeUndefined()

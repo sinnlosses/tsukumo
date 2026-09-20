@@ -71,6 +71,8 @@ describe("expressionChoices", () => {
         flustered: undefined,
         serious: undefined,
         curious: undefined,
+        sad: undefined,
+        excited: undefined,
       },
       speechMarker: undefined,
       portraits: {
@@ -80,6 +82,8 @@ describe("expressionChoices", () => {
         flustered: undefined,
         serious: undefined,
         curious: undefined,
+        sad: undefined,
+        excited: undefined,
       },
       mini: undefined,
       outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },

@@ -10,7 +10,9 @@
     "proud": "どや顔",
     "flustered": "あわあわ",
     "serious": "真顔",
-    "curious": "きょとん"
+    "curious": "きょとん",
+    "sad": "しょげ",
+    "excited": "そわそわ"
   },
   "portraits": {
     "default": "default.svg",

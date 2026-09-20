@@ -12,7 +12,15 @@
 // （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」、docs/design.md 7章）。
 // モデル名と衣装の対応だけは、どのキャラクターでも同じ「装備の重さ」の規則なのでここに残す。
 
-export type Expression = "default" | "thinking" | "proud" | "flustered" | "serious" | "curious"
+export type Expression =
+  | "default"
+  | "thinking"
+  | "proud"
+  | "flustered"
+  | "serious"
+  | "curious"
+  | "sad"
+  | "excited"
 export type Outfit = "default" | "light" | "normal" | "heavy"
 
 /**
@@ -27,6 +35,8 @@ export const EXPRESSIONS: readonly Expression[] = [
   "flustered",
   "serious",
   "curious",
+  "sad",
+  "excited",
 ]
 
 /**
