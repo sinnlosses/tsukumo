@@ -12,6 +12,11 @@
 // 色を引きずっている間、`documentElement` への反映（見た目）は `onChange` のたびそのまま行い、
 // `localStorage` への書き込みだけ `useDebouncedCallback` で 200ms まとめる（離れて書き込みが
 // 落ち着いた1回にする）。
+//
+// `<input type="color">` に出す表示値は `displayColor` に持つ。マウント時に一度だけ
+// `readCurrentColor`（`getComputedStyle`）で読み、以降は**書いた値をそのまま state へ流す**
+// （書く → 描画中に読み直す、を避ける。読みが描画のたびに起きない・書いた値と読み戻す値が
+// ずれない、の両方を1つの形で満たす）。
 
 import { useState, type ReactElement } from "react"
 
@@ -48,6 +53,13 @@ export function CharacterScreen(): ReactElement {
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
   const [override, setOverride] = useState<AppearanceColorOverride>(loadAppearanceColorOverride)
+  // `<input>` に出す表示値。入口が反映済みの状態を、マウント時に1回だけ読んで持つ
+  // （`readCurrentColor` を描画のたびに呼ばない）。
+  const [displayColor, setDisplayColor] = useState<Record<AppearanceColorKey, string>>(() => ({
+    ground: readCurrentColor("ground"),
+    surface: readCurrentColor("surface"),
+    ink: readCurrentColor("ink"),
+  }))
   const saveOverride = useDebouncedCallback<AppearanceColorKey, AppearanceColorOverride>(
     (_key, value) => {
       saveAppearanceColorOverride(value)
@@ -60,6 +72,12 @@ export function CharacterScreen(): ReactElement {
     applyAppearanceColorOverride(next)
     setOverride(next)
     saveOverride(key, next)
+    // 受け取られたときだけ表示値を進める（`next` は受け取らなければ `override` と同じ参照の
+    // まま返る）。書いた値がそのまま documentElement に反映されるので、書き戻しを読み直さず
+    // その値をそのまま表示値にできる。
+    if (next !== override) {
+      setDisplayColor((current) => ({ ...current, [key]: value }))
+    }
   }
 
   return (
@@ -97,7 +115,7 @@ export function CharacterScreen(): ReactElement {
                 <input
                   id={inputId}
                   type="color"
-                  value={readCurrentColor(field.key)}
+                  value={displayColor[field.key]}
                   onChange={(event) => {
                     handleColorChange(field.key, event.target.value)
                   }}
