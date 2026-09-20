@@ -29,17 +29,24 @@
   display: flex;
   flex: 1 1 18rem;
   flex-direction: column;
-  /* **下端から積む。** 件数が少ないうちに上へ貼り付くと、立ち絵の顔の高さと話が合わない
-     （LINE / Discord も新しい発言が下に来る）。溢れたら上へ伸びる。 */
-  justify-content: flex-end;
   gap: 0.6rem;
   min-width: 0;
   height: 100%;
   padding: 0.5rem 0.25rem;
   overflow-y: auto;
 }
-/* `justify-content: flex-end` は溢れたときに**上側がはみ出して掴めなくなる**ので、
-   子の側で縮まないことを明示して、スクロールで届くようにする。 */
+/* **下端から積む。** 件数が少ないうちに上へ貼り付くと、立ち絵の顔の高さと話が合わない
+   （LINE / Discord も新しい発言が下に来る）。`justify-content: flex-end` は使わない
+   — column flex で使うと、溢れた分が block-start（上）側へ出るのに scrollable overflow は
+   end 方向にしか伸びないため、上へ出た分がクリップされて掴めなくなる（docs/design.md 13.7）。
+   代わりに先頭の子へ `margin-top: auto` を当てる。中身が容器より低いうちはその子が
+   余白を全部吸って下へ押し下げ、溢れたら margin は 0 に落ちて通常の overflow のまま
+   上へスクロールできる。 */
+.chat-log > *:first-child {
+  margin-top: auto;
+}
+/* 子要素が縮んで文字が読みにくくなるのを防ぐ（overflow の向きとは無関係。既定の
+   `flex-shrink: 1` のままだと、容器より背が高くなったときに各発言が押し潰される）。 */
 .chat-log > * {
   flex-shrink: 0;
 }
