@@ -75,10 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `TaskTable` と `Report` を `memo` で包み、`<thead>` と2つの正規表現をモジュール定数へ上げた。`taskReadiness` は第2引数に未完了IDの `Set` を取る形にして、一覧全体で1回だけ作るようにした。`taskListTitle` の `filter` 3回は1回の走査に畳んだ。
 
-### 2026-09-20 モバイルの orca から届くかを調べた（T-225）
-
-モバイルの orca は Mac の runtime にペアリングした薄い遠隔クライアントで、ブラウザタブは画面配信として送られる。だからタブの中の `127.0.0.1` は Mac を指し、**tsukumo 側の変更なしで届く見込み**。推奨は orca のリモートの仕組みに乗る道で、ペアリングを `local-only` にすることが要件 2.2 との整合の条件。レポートは `docs/research/mobile-orca-reach.md`（実機では未確認）。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、

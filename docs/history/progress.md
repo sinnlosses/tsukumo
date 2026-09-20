@@ -1,5 +1,9 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 モバイルの orca から届くかを調べた（T-225）
+
+モバイルの orca は Mac の runtime にペアリングした薄い遠隔クライアントで、ブラウザタブは画面配信として送られる。だからタブの中の `127.0.0.1` は Mac を指し、**tsukumo 側の変更なしで届く見込み**。推奨は orca のリモートの仕組みに乗る道で、ペアリングを `local-only` にすることが要件 2.2 との整合の条件。レポートは `docs/research/mobile-orca-reach.md`（実機では未確認）。
+
 ### 2026-09-20 姿の配りを useSyncExternalStore + セレクタにした（T-211）
 
 `stores/session.tsx` を React の外の store にし、Context が配るのは store そのもの（参照不変）にした。部品は `useSessionSelector` で読む値だけを購読し、送るだけの部品は `useSessionDispatch` を読む。毎フレーム2回計算していたメインビューのターンは `stores/main-view-turn.ts` の WeakMap で1本化した。`pending` が動いたフレームだけ即時で、他は `startTransition`（ただし `useSyncExternalStore` の描き直しは同期レーン固定なので、効いているのは購読の絞り込みのほう）。
