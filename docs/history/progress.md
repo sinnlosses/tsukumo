@@ -1,5 +1,16 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 雑談モードの切り替えと systemPrompt を作った（T-227）
+
+作業ツリーに未コミットで残っていた実装を土台に仕上げた。足りていなかったのは `systemPrompt`
+の中身を確かめるテストで、`src/cli.ts` の直書きを `src/server/core/session-rule.ts` の
+`sessionRules(chat)` に切り出して固定した（起動時に固定される値はあとから覗けないため）。
+実機（port 7411、本物の claude）で仕事→雑談の切り替えをまたいで会話が `resume` で続くことを
+確認。commit accd9b3、787 pass / 0 fail（+11）。
+
+**T-228 の分（`src/browser/features/chat-view/`・`src/shared/chat-log.ts`・`main.tsx`・
+`layout.tsx`）は同じツリーに未コミットのまま残してある。** T-227 のコミットには含めていない。
+
 ### 2026-09-20 筆先に添うミニ立ち絵を出した（T-226）
 
 `stores/brush-tip.ts` の筆先を読む `MiniPortrait` を `features/main-view/` に置き、行の高さの2倍・

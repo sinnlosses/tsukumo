@@ -1,6 +1,6 @@
 # 現在の状態
 
-最終更新: 2026-09-20（`/plan-tasks` で `develop/direction.md` の指示6件を T-229〜T-233 に起こした。エントリポイントの整理2件は同じ関心なので T-229 に1本化し、雑談モードのレビュー4件は T-230〜T-233 へ。対応表は `docs/history/direction.md` の 2026-09-20。同日 `/plan-tasks` で起動時のコマンド表示とハイライトの切れを T-208 / T-209 に起こし、承認を得たドラフト3件を T-210〜T-218 に落とした（`src/` の改名の段3・React の見直し6件・レポートの記法の短縮）。`.claude/settings.json` の hooks の案はユーザーが全件見送り。T-195 は決定を焼き込んで `loopable: "Y"` にし、T-196 の依存を T-210 に付け替えた。同日 `/plan-tasks` で `develop/direction.md` の指示（`src/` の構成の組み替え・`scratchpad` と `vendor` の整理・hooks の提案・レポートのチラつき）をT-194〜T-204 に起こし、ドラフト3件は承認を得て T-203 / T-204 と T-188 の本文更新に落とした。指示とタスクの対応表は `docs/history/direction.md` の 2026-09-20。2026-09-18 は `docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
+最終更新: 2026-09-21（`/plan-tasks` で `develop/direction.md` の指示4件を T-242〜T-247 に起こした。ミニ立ち絵の演出を T-242、レポートの記法（図・表の見出し）を T-243、中間レポートの囲いの出方を T-244、吹き出しの押し上げを T-245、persona.md の自動更新を T-246（決める）／T-247（実装）へ。対応表は `docs/history/direction.md` の 2026-09-21。2026-09-20 は `/plan-tasks` で `develop/direction.md` の指示6件を T-229〜T-233 に起こした。エントリポイントの整理2件は同じ関心なので T-229 に1本化し、雑談モードのレビュー4件は T-230〜T-233 へ。対応表は `docs/history/direction.md` の 2026-09-20。同日 `/plan-tasks` で起動時のコマンド表示とハイライトの切れを T-208 / T-209 に起こし、承認を得たドラフト3件を T-210〜T-218 に落とした（`src/` の改名の段3・React の見直し6件・レポートの記法の短縮）。`.claude/settings.json` の hooks の案はユーザーが全件見送り。T-195 は決定を焼き込んで `loopable: "Y"` にし、T-196 の依存を T-210 に付け替えた。同日 `/plan-tasks` で `develop/direction.md` の指示（`src/` の構成の組み替え・`scratchpad` と `vendor` の整理・hooks の提案・レポートのチラつき）をT-194〜T-204 に起こし、ドラフト3件は承認を得て T-203 / T-204 と T-188 の本文更新に落とした。指示とタスクの対応表は `docs/history/direction.md` の 2026-09-20。2026-09-18 は `docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
 原因は `src/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` を呼ぶだけで確認イベントを
 出しておらず、選んだ直後に次のバッチで `state.model` が古い値へ戻って見えていたこと（偽の駆動
 `fake-driver.ts` は最初から `session-info` の再送でこれをやっていたため、目視確認では気づけなかった）。
@@ -90,18 +90,16 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 **立ち絵が素材の縦横比を保っていない**（`object-fit: fill` のまま 246x203 を 314x543 で
 描画）。これは T-233 の担当なのでこのタスクでは触っていない。
 
-### 2026-09-20 雑談モードの切り替えと systemPrompt を作った（T-227）
-
-作業ツリーに未コミットで残っていた実装を土台に仕上げた。足りていなかったのは `systemPrompt`
-の中身を確かめるテストで、`src/cli.ts` の直書きを `src/server/core/session-rule.ts` の
-`sessionRules(chat)` に切り出して固定した（起動時に固定される値はあとから覗けないため）。
-実機（port 7411、本物の claude）で仕事→雑談の切り替えをまたいで会話が `resume` で続くことを
-確認。commit accd9b3、787 pass / 0 fail（+11）。
-
-**T-228 の分（`src/browser/features/chat-view/`・`src/shared/chat-log.ts`・`main.tsx`・
-`layout.tsx`）は同じツリーに未コミットのまま残してある。** T-227 のコミットには含めていない。
-
 ## 未解決
+
+- **persona.md の自動更新（T-246）は、線引き次第で成り立たない。** キャラクター自身の設定を
+  書き戻すだけなら問題ないが、**利用者について知ったことを書くと `CLAUDE.md`「会話内容の扱い」の
+  「別の場所に複製しない」に当たる**（T-239 の要約の件と同じ緊張）。T-246 の論点1がそれで、
+  「入れない」結論が指示の狙いを外すなら `develop/direction.md` の
+  `## エージェントのドラフト` へ差し戻す段取りにしてある
+- **ミニ立ち絵が「追いつけない」原因は未特定**（T-242）。候補は追従の遷移 0.12s・Z字の進みの
+  速さ・**中間レポートには演出が掛からないこと**（`turn.tsx` の `reveal` は最後の確定レポート
+  だけ）の3つで、3番目だった場合は `docs/requirements.md` 4.3 の決定に触るのでユーザーの承認が要る
 
 - **雑談と仕事は claude 側の文脈ごと分ける**（2026-09-20 ユーザー決定。T-237）。印を
   `tsukumo:<パック名>` から分ける形で、**`docs/requirements.md` 4.9 の「雑談に入ってからも
@@ -171,6 +169,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ## 注意
 
 次のセッションで踏み外しやすい点:
+
+- **2026-09-21 に起こした6件のうち5件（T-242〜T-246 の一部）は tsukumo を起こす目視確認が要る。**
+  T-240 / T-241（レポートの色付け）も同じなので、**同時に走らせない**（`TSUKUMO_VIEW_PORT` を
+  変えても `~/.tsukumo/state.json` は共有される）
+- **吹き出しの押し上げ（`balloon-push-up`）が効いていないのは CSS ではなく key が原因**
+  （`balloon-track.tsx` の `key={index}`。2026-09-21 に実機で確認し、ユーザーの観測は
+  「押し上げられず、ポンと出てくるように見える」）。**アニメーションの定義を疑って CSS を
+  いじらない**
 
 - **雑談モードの実装（T-227 / T-228）は 2026-09-20 時点で作業ツリーに未コミットで残っている**
   （`src/browser/features/chat-view/`・`src/server/core/chat-manner.ts`・`src/shared/chat-log.ts`
