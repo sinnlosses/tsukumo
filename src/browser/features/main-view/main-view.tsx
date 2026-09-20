@@ -21,7 +21,7 @@ import { Turn } from "./turn.tsx"
 const EMPTY_MESSAGE = "（まだ作業がありません）"
 
 export function MainView(): ReactElement {
-  const { activeTurnId, selectTurn } = useTurnSelection()
+  const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   // 畳んだ結果は `stores/main-view-turn.ts` が姿ごとに1回だけ作る（昇順。タブの追従を決める
   // `stores/turn-selection.tsx` と同じものを読む）。タブは新しい順に並べるので反転する。
   const turns = useMainViewTurns()
@@ -53,7 +53,12 @@ export function MainView(): ReactElement {
   return (
     <div className={styles["main-turns"]} ref={scrollerRef}>
       <TurnTabs turnIds={turnIds} activeTurnId={activeTurnId} onSelect={selectTurn} />
-      {activeTurn !== undefined && <Turn turn={activeTurn} />}
+      {/* **`key` にやり取りの番号を渡す。** タブを切り替えても同じ位置の `<Turn>` を使い回すと、
+          「このやり取りを出し始めた時点で既にあった本文」（演出の対象を決める材料。`turn.tsx`）が
+          最初のやり取りのものに留まってしまう。 */}
+      {activeTurn !== undefined && (
+        <Turn turn={activeTurn} newest={activeTurn.id === newestTurnId} key={activeTurn.id} />
+      )}
     </div>
   )
 }

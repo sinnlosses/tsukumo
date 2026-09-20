@@ -3,7 +3,7 @@
 // 「ステップは縦に1本で積む」。番号は振らない）。**ツールの実行は描かない**
 // （`docs/requirements.md` 4.2「メインビュー」。2026-09-16 決定。進行はサイドバーが持つ）。
 
-import { Fragment, type ReactElement } from "react"
+import { Fragment, useState, type ReactElement } from "react"
 
 import {
   type MainViewAction,
@@ -16,10 +16,22 @@ import { Report } from "./report.tsx"
 
 export type TurnProps = {
   readonly turn: MainViewTurn
+  /**
+   * 今回（いちばん新しい）のやり取りか。**演出（`report-reveal.ts`）を掛けてよいのは今回だけ**
+   * で、過去のタブでは本文が最初から全部出ている（`docs/requirements.md` 4.3）。
+   */
+  readonly newest: boolean
 }
 
 export function Turn(props: TurnProps): ReactElement {
   const { turn } = props
+  const writingStepId = settledReportStepId(turn)
+  // **このやり取りを出し始めた時点で既にあった本文は演出しない。** 過去のタブを開いたとき・
+  // ページを読み込み直したときは「確定済みの本文が一度も書かれない」ので、**あとから現れた
+  // 本文だけ**が対象になる（`<MainView>` がやり取りの番号を `key` に渡すので、この初期値は
+  // やり取りごとに取り直される）。
+  const [stepIdAtMount] = useState(writingStepId)
+  const revealStepId = props.newest && writingStepId !== stepIdAtMount ? writingStepId : undefined
 
   return (
     <div>
@@ -35,7 +47,7 @@ export function Turn(props: TurnProps): ReactElement {
               のような制御されていない DOM の状態が別のステップへ乗り移って見える
               （2026-09-16 の指摘。`src/shared/main-view.ts` の `MainViewStep.id` を参照）。 */}
           {turn.steps.map((step) => (
-            <Step step={step} key={step.id} />
+            <Step step={step} reveal={step.id === revealStepId} key={step.id} />
           ))}
         </div>
       )}
@@ -59,7 +71,10 @@ export function Turn(props: TurnProps): ReactElement {
  * 中身は DOM に残す（記録からは消さない）。まだ追い越されていない最後の中間レポートは
  * 今までどおり開いた `<section>` のまま。
  */
-function Step(props: { readonly step: MainViewStep }): ReactElement | null {
+function Step(props: {
+  readonly step: MainViewStep
+  readonly reveal: boolean
+}): ReactElement | null {
   const { step } = props
   const questions = props.step.actions.filter(isQuestion)
 
@@ -69,7 +84,7 @@ function Step(props: { readonly step: MainViewStep }): ReactElement | null {
 
   const body = (
     <>
-      {step.report !== undefined && <Report markdown={step.report} />}
+      {step.report !== undefined && <Report markdown={step.report} reveal={props.reveal} />}
       {questions.map((question, index) => (
         <QuestionRecord entry={question} key={index} />
       ))}
@@ -95,6 +110,15 @@ function Step(props: { readonly step: MainViewStep }): ReactElement | null {
       {body}
     </section>
   )
+}
+
+/**
+ * 演出を掛ける候補のステップ（**確定したレポートを持つ最後のステップ**）。中間レポートは
+ * 流れている最中に少しずつ出る本文なので、ここでは選ばない（`docs/requirements.md` 4.3
+ * 「中間レポート・既に出し切った本文には掛けない」）。
+ */
+function settledReportStepId(turn: MainViewTurn): number | undefined {
+  return turn.steps.findLast((step) => step.report !== undefined && !step.interim)?.id
 }
 
 /** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */

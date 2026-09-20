@@ -138,9 +138,9 @@
     "dependencies": ["T-115"],
     "summary": "レポートを書き上げていくように見せる演出を作る",
     "task": "## 背景\n\nT-115 で決めた5点のうち、**ミニ立ち絵を除く土台**を作る（`docs/requirements.md` 4.3）。\n\n**最終レポートは確定するまで出ない**（4.2 の `hideUnsettledReport`。2026-09-20 決定）ので、\n筆先が実在するのは中間レポートが流れている間だけ。**確定した本文も「書き上げていくように\n見せる」**ことで、どちらのターンでも同じ1本の仕組みにする。\n\n## 決まっていること（蒸し返さない）\n\n- **文字を足していく実装にしない。** Markdown のソースを1文字ずつ増やして変換し直すと、表・\n  mermaid・Chart.js が未完成のソースで作り直され、非同期に描く mermaid は途中の形で失敗する\n  （`src/browser/features/main-view/report.tsx` の塊ごとの `memo` も全部無効になる）。\n  **DOM は完成品を一度に作り、見せる範囲だけを CSS で進める**\n- **読み始めを遅らせない。** 本文は既に完成しているので、演出はそのまま待ち時間になる。\n  **全体で1.5〜2秒を上限に出し切る**（文字数に比例させない）\n- **過去のタブを見返すときは演出しない**（確定済みの本文は一度も「書かれない」）\n- `prefers-reduced-motion: reduce` では**演出ごと無効**（規則は `src/browser/styles/theme.css`）\n\n## やること\n\n1. 確定したレポート1件を、完成した DOM のまま**見える範囲だけ進めて**出す仕組みを作る。\n   進め方（マスク／クリップ／塊ごとのフェード）は実装者が選んでよいが、**mermaid と\n   Chart.js の塊を二度描かないこと**を満たす\n2. スクロール・クリック・キー入力のどれかで**即座に全部出す**（スキップ）\n3. いちばん新しいターンの**最後のレポートだけ**を対象にする。過去のタブ・中間レポート・\n   既に出し切った本文には掛けない\n4. `prefers-reduced-motion: reduce` で演出ごと無効にする\n\n## 完了条件\n\n- 確定したレポートが段階的に現れ、**1.5〜2秒以内に出し切る**（長い本文でも超えない）。\n  `bun run scripts/capture-view.ts` で時間を計るか、経過時間を測って `evidence` に数値で書く\n- スキップの3経路（スクロール・クリック・キー入力）がそれぞれ効くことを実機で確かめる\n- mermaid / Chart.js を含むレポートで、図が**一度しか描かれない**ことを確かめる\n  （途中の形でのエラー・チラつきが出ない）\n- 過去のタブへ切り替えたとき、本文が最初から全部出ている\n- `prefers-reduced-motion: reduce` で演出が起きない\n- `bun run check` が通る（pass 件数を `evidence` に書く）\n\n## 注意\n\n- **ミニ立ち絵はこのタスクに含めない**（T-226）。ここで作るのは「見える範囲が進む」土台だけ\n- 目視確認は `TSUKUMO_DRIVER=fake` で足りる（`docs/workflow.md`「`loopable` の判定」）。\n  起こすときは `TSUKUMO_VIEW_PORT` を既定以外にし、止めるのは自分が起こした pid だけ\n- **「書き上げているように見えて気持ちよいか」をユーザーが決める**ので `loopable` は `\"N\"`\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check: typecheck/lint 通過、bun test --isolate 756 pass / 0 fail（新規22件: reveal-plan 7・report-reveal 6・turn 6・brush-tip 3）。format:check は develop/direction.md 1件だけ落ちるが HEAD 時点から既に同じ（末尾の空行1つ。T-225 の変更とは無関係）。\n実機（TSUKUMO_DRIVER=fake, TSUKUMO_VIEW_PORT=7411, Chrome 1400x900）: 出し切りまで 1413ms/1408ms、短い本文でも 1415ms（長さに比例しない）。clip-path のポリゴンを34通り記録し、同じ行の中で x が右へ進むことを数値で確認。\nスキップ: wheel 381ms・click 334ms・keydown 341ms で終了。mermaid svg 1個・data-processed=true・chart canvas 1個は演出あり/スキップ/reduced-motion の5パターンで同値。過去タブとリロードでは data-revealing が一度も立たず、reduced-motion でも演出なし。"
   },
   {
     "id": "T-226",

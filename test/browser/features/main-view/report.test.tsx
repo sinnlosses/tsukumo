@@ -34,25 +34,25 @@ afterAll(() => {
 
 describe("Report（空行で塊に割り、塊ごとに memo）", () => {
   it("最初の描画では、すべての塊を1回ずつ描く", () => {
-    render(<Report markdown={"固定の段落\n\n可変の段落1"} />)
+    render(<Report reveal={false} markdown={"固定の段落\n\n可変の段落1"} />)
 
     expect(calls).toEqual(["固定の段落", "可変の段落1"])
   })
 
   it("変わらない塊は再描画せず、変わった塊だけ描き直す", () => {
-    const { rerender } = render(<Report markdown={"固定の段落\n\n可変の段落1"} />)
+    const { rerender } = render(<Report reveal={false} markdown={"固定の段落\n\n可変の段落1"} />)
     calls = []
 
-    rerender(<Report markdown={"固定の段落\n\n可変の段落2"} />)
+    rerender(<Report reveal={false} markdown={"固定の段落\n\n可変の段落2"} />)
 
     expect(calls).toEqual(["可変の段落2"])
   })
 
   it("何も変わらなければ、どの塊も再描画しない", () => {
-    const { rerender } = render(<Report markdown={"段落A\n\n段落B"} />)
+    const { rerender } = render(<Report reveal={false} markdown={"段落A\n\n段落B"} />)
     calls = []
 
-    rerender(<Report markdown={"段落A\n\n段落B"} />)
+    rerender(<Report reveal={false} markdown={"段落A\n\n段落B"} />)
 
     expect(calls).toEqual([])
   })
