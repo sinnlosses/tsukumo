@@ -4,7 +4,7 @@
 //
 // **`@anthropic-ai/claude-agent-sdk` を import するのはこのファイルだけ**（原則3。`orca` を
 // 呼ぶのが src/adapter/orca-host.ts だけなのと同じ扱い）。SDK の語彙を外へ漏らさないため、
-// 外に出す型は `src/core/session-driver.ts` か protocol から取る（**境目の基準は「protocol の
+// 外に出す型は `src/core/session-driver.ts` か shared から取る（**境目の基準は「shared の
 // 語彙で書けるか / SDK の語彙を名乗るか」**）。
 //
 // **セッションは1プロセスに1つ**。起こし直したときは前の続きから始める（`resume`。
@@ -39,13 +39,10 @@ import {
   type SessionDriverOptions,
 } from "../core/session-driver.ts"
 import { selectSessionToResume, toRestoredEvents } from "../core/session-restore.ts"
-import {
-  type ExpressionChoice,
-  expressionNames as toExpressionNames,
-} from "../protocol/character.ts"
-import { type PermissionMode } from "../protocol/command.ts"
-import { type Expression } from "../protocol/expression.ts"
-import { type SessionEvent } from "../protocol/session-event.ts"
+import { type ExpressionChoice, expressionNames as toExpressionNames } from "../shared/character.ts"
+import { type PermissionMode } from "../shared/command.ts"
+import { type Expression } from "../shared/expression.ts"
+import { type SessionEvent } from "../shared/session-event.ts"
 
 /**
  * 既定の reasoning effort。ユーザーの指示（2026-09-12）で high に固定した

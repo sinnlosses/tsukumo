@@ -1,5 +1,5 @@
 // キャラクターパックを読む。character.json とその立ち絵ファイルの実際の I/O はここに閉じる
-// （「外に触るのはここだけ」の側。定義の解釈は src/protocol/character.ts の仕事。
+// （「外に触るのはここだけ」の側。定義の解釈は src/shared/character.ts の仕事。
 // docs/design.md 5章「character-pack.ts」）。
 //
 // **fs に触らない関数（`buildSystemPromptAppend` / `toCharacterPackChoices` /
@@ -19,8 +19,8 @@ import {
   parseCharacterDefinition,
   rasterMimeType,
   toCharacterInfo,
-} from "../protocol/character.ts"
-import { type SessionEvent } from "../protocol/session-event.ts"
+} from "../shared/character.ts"
+import { type SessionEvent } from "../shared/session-event.ts"
 import { bundledFilePath } from "./bundled-path.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
@@ -64,7 +64,7 @@ export type CharacterPack = {
   /**
    * 素材の版（定義と立ち絵のファイルの更新時刻のうち、いちばん新しいもの）。
    * **`/character/<file>` の URL に混ぜて、差し替えた立ち絵をブラウザに取り直させるためだけ**に
-   * ある（`src/protocol/character.ts` の `characterAssetCacheKey`）。読めなければ undefined。
+   * ある（`src/shared/character.ts` の `characterAssetCacheKey`）。読めなければ undefined。
    */
   readonly revision: string | undefined
 }

@@ -5,14 +5,14 @@ import { join } from "node:path"
 
 import { buildUiBundle, bundleWithBun } from "../../src/adapter/bundle.ts"
 
-// `bun build` を実際に起こす統合的なテスト。src/ui/ が壊れていないことも合わせて確かめる
+// `bun build` を実際に起こす統合的なテスト。src/browser/ が壊れていないことも合わせて確かめる
 // （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない test/cli.test.ts と
 // 同じ考え方で、ここは「組み立てられるか」までを見る）。
 //
-// **失敗の側は src/ui/ を壊さず、一時ディレクトリに書いた入口で確かめる。**
+// **失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口で確かめる。**
 
 describe("buildUiBundle", () => {
-  it("src/ui/ を JS と CSS の1組にまとめて返す", async () => {
+  it("src/browser/ を JS と CSS の1組にまとめて返す", async () => {
     const result = await buildUiBundle()
 
     expect(result.ok).toBe(true)

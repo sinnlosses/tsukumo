@@ -41,7 +41,7 @@ function watch(onChange: (tasks: unknown) => void): TaskSummaryWatcher {
   return created
 }
 
-/** 通知されるはずの1件。**フィールドの一覧は protocol 側の仕事**なので、ここでは1箇所にまとめて
+/** 通知されるはずの1件。**フィールドの一覧は shared 側の仕事**なので、ここでは1箇所にまとめて
  * 置き、この層が見ている「読み直したかどうか」だけがテストの主題であることを保つ。 */
 function notified(id: string, summary: string, status: string): Record<string, unknown> {
   return { id, summary, status, difficulty: undefined, dependencies: [] }

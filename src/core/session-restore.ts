@@ -9,8 +9,8 @@
 // スナップショットも作らない。ここを通るのは会話の内容そのものなので、ログにもファイルにも
 // 出さない（docs/coding-standards.md「会話内容の扱い」）。
 
-import { type Expression } from "../protocol/expression.ts"
-import { type SessionEvent } from "../protocol/session-event.ts"
+import { type Expression } from "../shared/expression.ts"
+import { type SessionEvent } from "../shared/session-event.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 
 /**

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { readFakeScript, startFakeSession } from "../../src/adapter/fake-driver.ts"
-import { type SessionEvent } from "../../src/protocol/session-event.ts"
+import { type SessionEvent } from "../../src/shared/session-event.ts"
 
 // 台本は手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。

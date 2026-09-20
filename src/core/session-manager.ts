@@ -17,14 +17,14 @@ import {
   type ClientCommand,
   type DriverCommand,
   isCharacterEditCommand,
-} from "../protocol/command.ts"
-import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../protocol/frame.ts"
-import { type SessionEvent, type StampedEvent } from "../protocol/session-event.ts"
+} from "../shared/command.ts"
+import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../shared/frame.ts"
+import { type SessionEvent, type StampedEvent } from "../shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../protocol/session-state.ts"
+} from "../shared/session-state.ts"
 import { type SessionDriver } from "./session-driver.ts"
 
 /**

@@ -107,8 +107,8 @@ export PATH="$HOME/.bun/bin:$PATH"
 `bun link` を消すときは、**このリポジトリの直下で** `bun unlink` を実行します。
 
 リポジトリ直下で開発しながら動かす場合は `bun run start` が `tsukumo` と同じ意味になります。
-`bun run dev` は `start` と同じものを起こしつつ `src/ui/` を見張り、保存のたびに組み立て直して
-開いているタブへ反映します（`src/core/` と `src/protocol/` を直したときは上げ直しが要ります）。
+`bun run dev` は `start` と同じものを起こしつつ `src/browser/` を見張り、保存のたびに組み立て直して
+開いているタブへ反映します（`src/core/` と `src/shared/` を直したときは上げ直しが要ります）。
 
 ## 仕組み
 
@@ -200,7 +200,7 @@ bun run scripts/open-views.ts http://127.0.0.1:7327
 | `TSUKUMO_OPEN_VIEW`   |      | 開く                               | 起動時にレイアウトページのタブを自動で開くか。`0` を渡すと開かない                                                                                   |
 | `TSUKUMO_DRIVER`      |      | `sdk`                              | セッションの駆動。`fake` を渡すと本物の `claude` を起こさず、台本どおりにイベントを流す（目視確認・自動テスト用）                                    |
 | `TSUKUMO_NEW_SESSION` |      | 復元する                           | `1` を渡すと前回の続きから復元せず、新規にセッションを起こす                                                                                         |
-| `TSUKUMO_WATCH_UI`    |      | 見張らない                         | `1` を渡すと `src/ui/` を見張り、保存のたびに組み立て直す（`bun run dev` が設定する）                                                                |
+| `TSUKUMO_WATCH_UI`    |      | 見張らない                         | `1` を渡すと `src/browser/` を見張り、保存のたびに組み立て直す（`bun run dev` が設定する）                                                           |
 
 ### キャラクターを差し替える
 
@@ -273,15 +273,20 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 
 ### プロジェクト構成
 
+**層の名前は「どの実行環境で動くか」を表します**（サーバとブラウザの両方 = `shared/`、
+サーバ = `core/` と `adapter/`、ブラウザ = `browser/`）。
+
 ```
 .
 ├── src/
-│   ├── protocol/           # 両側で共有する契約（SessionEvent・SessionState・ClientCommand・
-│   │                       #   ServerFrame など。zod。node: も document も触らない）
-│   ├── core/               # サーバ（Bun）。SDK 駆動、HTTP/WebSocket、キャラクターパック、
-│   │                       #   環境変数の読み取り、Orca アダプタ
-│   ├── ui/                 # クライアント（ブラウザ）。React の部品、unified の Markdown 変換、CSS
-│   └── cli.ts              # 配線（composition root）。起動時の前提チェック・終了処理
+│   ├── shared/             # サーバとブラウザの両方で動く契約（SessionEvent・SessionState・
+│   │                       #   ClientCommand・ServerFrame など。zod。node: も document も触らない）
+│   ├── core/               # サーバ（Bun）の純粋な判断。セッション管理・イベントの検証・設定の解釈
+│   │                       #   （node: も SDK も ws も import しない）
+│   ├── adapter/            # サーバ（Bun）が外の世界に触る境界。1ファイル = 1つの境界
+│   │                       #   （SDK 駆動、HTTP/WebSocket、キャラクターパック、ビルド、Orca）
+│   ├── browser/            # ブラウザ。React の部品、unified の Markdown 変換、CSS
+│   └── cli.ts              # 配線（composition root）。環境変数の受け取り・前提チェック・終了処理
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── scripts/                # 閉じたタブを開き直す道具など
@@ -298,7 +303,7 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 ### ドキュメント
 
 - [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
-- [`docs/design.md`](./docs/design.md) — 設計書（`protocol` / `core` / `ui` の3層・プロトコル・部品・キャラクターパック）
+- [`docs/design.md`](./docs/design.md) — 設計書（`shared` / `core` / `adapter` / `browser` の層・プロトコル・部品・キャラクターパック）
 - [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図・設計判断・目視確認の手順・既知の制約）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）

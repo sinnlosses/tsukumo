@@ -5,19 +5,19 @@ import { fileURLToPath } from "node:url"
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
-// **3層（protocol / core / ui）＋サーバ側の境界（adapter）と配線（cli.ts）**。
-// `adapter ──▶ core ──▶ protocol ◀── ui` で、**`core → adapter` は禁止**
+// **3層（shared / core / browser）＋サーバ側の境界（adapter）と配線（cli.ts）**。
+// `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**
 // （docs/research/architecture-proposal.md 3章「許す依存の辺」。2026-09-16 の段2で切った）。
 
-type Layer = "protocol" | "core" | "adapter" | "ui" | "cli"
+type Layer = "shared" | "core" | "adapter" | "browser" | "cli"
 
 // 各層が import してよい先（docs/coding-standards.md「層と依存の向き」の表そのもの）。
 const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
-  protocol: new Set(["protocol"]),
-  core: new Set(["protocol", "core"]),
-  adapter: new Set(["protocol", "core", "adapter"]),
-  ui: new Set(["protocol", "ui"]),
-  cli: new Set(["protocol", "core", "adapter", "ui", "cli"]),
+  shared: new Set(["shared"]),
+  core: new Set(["shared", "core"]),
+  adapter: new Set(["shared", "core", "adapter"]),
+  browser: new Set(["shared", "browser"]),
+  cli: new Set(["shared", "core", "adapter", "browser", "cli"]),
 }
 
 // `core` を「純粋な判断」に保つための禁止（3章「許す依存の辺」）。外の世界に触るものは
@@ -35,7 +35,7 @@ type Violation = {
 }
 
 describe("層と依存の向き", () => {
-  it("src/ の相対 import は、許した辺（protocol/core/adapter/ui + cli）だけで構成されている", () => {
+  it("src/ の相対 import は、許した辺（shared/core/adapter/browser + cli）だけで構成されている", () => {
     const files = listSourceFiles(SRC_ROOT)
     expect(files.length).toBeGreaterThan(0)
 
@@ -44,17 +44,17 @@ describe("層と依存の向き", () => {
     expect(violationsMessage(violations)).toBe("")
   })
 
-  it("protocol と core は node: / SDK / ws に触らない。protocol は document/window/localStorage にも", () => {
+  it("shared と core は node: / SDK / ws に触らない。shared は document/window/localStorage にも", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => {
         const layer = layerOf(relPath)
-        return layer === "protocol" || layer === "core"
+        return layer === "shared" || layer === "core"
       })
       .filter((relPath) => {
         const code = nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
         return (
           OUTSIDE_WORLD_IMPORT.test(code) ||
-          (layerOf(relPath) === "protocol" && /\b(document|window|localStorage)\b/.test(code))
+          (layerOf(relPath) === "shared" && /\b(document|window|localStorage)\b/.test(code))
         )
       })
 
@@ -131,13 +131,13 @@ describe("process.env を読む箇所", () => {
   })
 })
 
-// 経路名のリテラルは protocol にだけ書く。両側（core と ui）が見る値は import で共有し、
-// 文字列リテラルとして再掲しない（`src/protocol/session-socket.ts` が代表例）。
+// 経路名のリテラルは shared にだけ書く。両側（core と browser）が見る値は import で共有し、
+// 文字列リテラルとして再掲しない（`src/shared/session-socket.ts` が代表例）。
 describe("経路名のリテラル", () => {
-  it('"/ws" "/character/" "/vendor/" を文字列リテラルで書くのは protocol/ だけ', () => {
+  it('"/ws" "/character/" "/vendor/" を文字列リテラルで書くのは shared/ だけ', () => {
     const pathLiteralPatterns = [/["']\/ws["']/, /["']\/character\/["']/, /["']\/vendor\/["']/]
     const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => !relPath.startsWith("protocol/"))
+      .filter((relPath) => !relPath.startsWith("shared/"))
       .filter((relPath) => {
         const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
         return pathLiteralPatterns.some((pattern) => pattern.test(content))
@@ -147,15 +147,15 @@ describe("経路名のリテラル", () => {
   })
 })
 
-// `ui/features/` の中の横断 import を禁じる（`docs/design.md` 2章「`src/ui/` の箱と、置く基準」）。
+// `browser/features/` の中の横断 import を禁じる（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」）。
 // 機能は `layout` / `main-view` / `character-view` / `character-screen` / `sidebar` / `dispatch`。
-// `ui/components/` `ui/lib/` `ui/stores/` `ui/styles/` と `ui/main.tsx`（`ui/features/` の
-// 直下に無いもの。`UI_REGIONS` に無ければ自動的にここに入る）は誰から引いてもよい共有部分
+// `browser/components/` `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx`（`browser/features/` の
+// 直下に無いもの。`BROWSER_REGIONS` に無ければ自動的にここに入る）は誰から引いてもよい共有部分
 // なので、ここでは見ない。
 //
-// **`markdown/` は `main-view` の中**（`ui/features/main-view/markdown/`）なので、機能の
+// **`markdown/` は `main-view` の中**（`browser/features/main-view/markdown/`）なので、機能の
 // 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
-const UI_REGIONS = [
+const BROWSER_REGIONS = [
   "layout",
   "main-view",
   "character-view",
@@ -163,41 +163,41 @@ const UI_REGIONS = [
   "sidebar",
   "dispatch",
 ] as const
-type UiRegion = (typeof UI_REGIONS)[number]
+type BrowserRegion = (typeof BROWSER_REGIONS)[number]
 
-type UiRegionViolation = {
+type BrowserRegionViolation = {
   readonly fromPath: string
-  readonly fromRegion: UiRegion
+  readonly fromRegion: BrowserRegion
   readonly toPath: string
-  readonly toRegion: UiRegion
+  readonly toRegion: BrowserRegion
 }
 
-describe("ui/ の機能どうしの import", () => {
-  it("ui/features/<機能>/ から別の ui/features/<機能>/ への import が無い", () => {
-    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("ui/"))
+describe("browser/ の機能どうしの import", () => {
+  it("browser/features/<機能>/ から別の browser/features/<機能>/ への import が無い", () => {
+    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
     expect(files.length).toBeGreaterThan(0)
 
-    const violations = files.flatMap((relPath) => findUiRegionViolations(relPath))
+    const violations = files.flatMap((relPath) => findBrowserRegionViolations(relPath))
 
-    expect(uiRegionViolationsMessage(violations)).toBe("")
+    expect(browserRegionViolationsMessage(violations)).toBe("")
   })
 })
 
-// `src/ui/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/ui/` の箱と、置く基準」の表そのもの）。
-// 上の `UI_REGIONS` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
+// `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
+// 上の `BROWSER_REGIONS` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
 // `main.tsx` / `features/` / `components/` / `lib/` / `stores/` という箱をまたぐ辺を見る
-// （`protocol` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
+// （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
-// `ui/` 直下の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
-// `ui/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
-// import 元・import 先のどちらでも無視する。未知のディレクトリが `ui/` 直下に増えたときに
+// `browser/` 直下の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
+// `browser/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
+// import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下に増えたときに
 // テストの直し忘れで素通りしないよう、`main.tsx` でも `*.d.ts`/`styles` でもない未知の区画は
 // `layerOf` と同じく `throw` する。
-const UI_BOXES = ["main", "features", "components", "lib", "stores"] as const
-type UiBox = (typeof UI_BOXES)[number]
+const BROWSER_BOXES = ["main", "features", "components", "lib", "stores"] as const
+type BrowserBox = (typeof BROWSER_BOXES)[number]
 
 // 各箱が import してよい先（docs/design.md 2章の表そのもの。`main` は「すべて」なので全箱を許す）。
-const ALLOWED_UI_BOX_IMPORTS: Readonly<Record<UiBox, ReadonlySet<UiBox>>> = {
+const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
   main: new Set(["main", "features", "components", "lib", "stores"]),
   features: new Set(["features", "components", "lib", "stores"]),
   components: new Set(["components", "lib"]),
@@ -205,36 +205,36 @@ const ALLOWED_UI_BOX_IMPORTS: Readonly<Record<UiBox, ReadonlySet<UiBox>>> = {
   stores: new Set(["stores", "lib"]),
 }
 
-type UiBoxViolation = {
+type BrowserBoxViolation = {
   readonly fromPath: string
-  readonly fromBox: UiBox
+  readonly fromBox: BrowserBox
   readonly toPath: string
-  readonly toBox: UiBox
+  readonly toBox: BrowserBox
 }
 
-describe("ui/ の箱をまたぐ import", () => {
-  it("src/ui/ の箱どうしの import は、docs/design.md 2章の表にある辺だけで構成されている", () => {
-    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("ui/"))
+describe("browser/ の箱をまたぐ import", () => {
+  it("src/browser/ の箱どうしの import は、docs/design.md 2章の表にある辺だけで構成されている", () => {
+    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
     expect(files.length).toBeGreaterThan(0)
 
-    const violations = files.flatMap((relPath) => findUiBoxViolations(relPath))
+    const violations = files.flatMap((relPath) => findBrowserBoxViolations(relPath))
 
-    expect(uiBoxViolationsMessage(violations)).toBe("")
+    expect(browserBoxViolationsMessage(violations)).toBe("")
   })
 })
 
 /** ファイル1件の相対 import から、許した箱の辺に無いものだけを違反として返す。 */
-function findUiBoxViolations(relPath: string): readonly UiBoxViolation[] {
-  const fromBox = uiBoxOf(relPath)
+function findBrowserBoxViolations(relPath: string): readonly BrowserBoxViolation[] {
+  const fromBox = browserBoxOf(relPath)
   if (fromBox === undefined) {
     return []
   }
 
   const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
-  const allowed = ALLOWED_UI_BOX_IMPORTS[fromBox]
+  const allowed = ALLOWED_BROWSER_BOX_IMPORTS[fromBox]
   return relativeImportSpecifiers(content).flatMap((specifier) => {
     const toPath = resolveRelativeImport(relPath, specifier)
-    const toBox = uiBoxOf(toPath)
+    const toBox = browserBoxOf(toPath)
     return toBox === undefined || allowed.has(toBox)
       ? []
       : [{ fromPath: relPath, fromBox, toPath, toBox }]
@@ -242,14 +242,14 @@ function findUiBoxViolations(relPath: string): readonly UiBoxViolation[] {
 }
 
 /**
- * `ui/` 相対パスから箱を決める。箱に属さない `ui/css-variable.d.ts` と `ui/styles/`（CSS のみ）は
- * `undefined`（import 元・import 先のどちらでも無視する）。`ui/` の外は対象外なので `undefined`。
+ * `browser/` 相対パスから箱を決める。箱に属さない `browser/css-variable.d.ts` と `browser/styles/`（CSS のみ）は
+ * `undefined`（import 元・import 先のどちらでも無視する）。`browser/` の外は対象外なので `undefined`。
  */
-function uiBoxOf(relPath: string): UiBox | undefined {
-  if (!relPath.startsWith("ui/")) {
+function browserBoxOf(relPath: string): BrowserBox | undefined {
+  if (!relPath.startsWith("browser/")) {
     return undefined
   }
-  if (relPath === "ui/main.tsx") {
+  if (relPath === "browser/main.tsx") {
     return "main"
   }
   if (relPath.endsWith(".d.ts") && relPath.split("/").length === 2) {
@@ -263,19 +263,19 @@ function uiBoxOf(relPath: string): UiBox | undefined {
     return undefined
   }
   throw new Error(
-    `src/${relPath} の ui 箱を判定できない（新しい箱なら UI_BOXES と ALLOWED_UI_BOX_IMPORTS を足す）`,
+    `src/${relPath} の browser 箱を判定できない（新しい箱なら BROWSER_BOXES と ALLOWED_BROWSER_BOX_IMPORTS を足す）`,
   )
 }
 
-function uiBoxViolationsMessage(violations: readonly UiBoxViolation[]): string {
+function browserBoxViolationsMessage(violations: readonly BrowserBoxViolation[]): string {
   return violations
     .map((v) => `src/${v.fromPath}（${v.fromBox}） → src/${v.toPath}（${v.toBox}）`)
     .join("\n")
 }
 
-/** ファイル1件の相対 import から、別の ui 領域を指すものだけを違反として返す。 */
-function findUiRegionViolations(relPath: string): readonly UiRegionViolation[] {
-  const fromRegion = uiRegionOf(relPath)
+/** ファイル1件の相対 import から、別の browser 領域を指すものだけを違反として返す。 */
+function findBrowserRegionViolations(relPath: string): readonly BrowserRegionViolation[] {
+  const fromRegion = browserRegionOf(relPath)
   if (fromRegion === undefined) {
     return []
   }
@@ -283,27 +283,27 @@ function findUiRegionViolations(relPath: string): readonly UiRegionViolation[] {
   const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
   return relativeImportSpecifiers(content).flatMap((specifier) => {
     const toPath = resolveRelativeImport(relPath, specifier)
-    const toRegion = uiRegionOf(toPath)
+    const toRegion = browserRegionOf(toPath)
     return toRegion === undefined || toRegion === fromRegion
       ? []
       : [{ fromPath: relPath, fromRegion, toPath, toRegion }]
   })
 }
 
-/** `ui/features/<機能>/...` の形なら機能名を返す。共有部分（`ui/lib/` など）は undefined。 */
-function uiRegionOf(relPath: string): UiRegion | undefined {
+/** `browser/features/<機能>/...` の形なら機能名を返す。共有部分（`browser/lib/` など）は undefined。 */
+function browserRegionOf(relPath: string): BrowserRegion | undefined {
   const [top, second, third] = relPath.split("/")
-  if (top !== "ui" || second !== "features" || third === undefined) {
+  if (top !== "browser" || second !== "features" || third === undefined) {
     return undefined
   }
-  return isUiRegion(third) ? third : undefined
+  return isBrowserRegion(third) ? third : undefined
 }
 
-function isUiRegion(value: string): value is UiRegion {
-  return UI_REGIONS.some((region) => region === value)
+function isBrowserRegion(value: string): value is BrowserRegion {
+  return BROWSER_REGIONS.some((region) => region === value)
 }
 
-function uiRegionViolationsMessage(violations: readonly UiRegionViolation[]): string {
+function browserRegionViolationsMessage(violations: readonly BrowserRegionViolation[]): string {
   return violations
     .map((v) => `src/${v.fromPath}（${v.fromRegion}） → src/${v.toPath}（${v.toRegion}）`)
     .join("\n")
@@ -322,7 +322,7 @@ function nonCommentContent(content: string): string {
     .join("\n")
 }
 
-/** `src/` 配下の `.ts` / `.tsx` を再帰的に集める。相対パス（`protocol/character.ts`）で返す。 */
+/** `src/` 配下の `.ts` / `.tsx` を再帰的に集める。相対パス（`shared/character.ts`）で返す。 */
 function listSourceFiles(root: string, dir = root): readonly string[] {
   return readdirSync(dir).flatMap((name) => {
     const fullPath = `${dir}/${name}`
@@ -377,7 +377,7 @@ function layerOf(relPath: string): Layer {
     return "cli"
   }
   const [top] = relPath.split("/")
-  if (top === "protocol" || top === "core" || top === "adapter" || top === "ui") {
+  if (top === "shared" || top === "core" || top === "adapter" || top === "browser") {
     return top
   }
   throw new Error(`src/${relPath} の層を判定できない（層のディレクトリの外にある）`)

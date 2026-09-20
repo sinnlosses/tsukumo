@@ -11,13 +11,13 @@ import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/core/port
 //
 // 追従・状態ファイル・立ち絵のフォールバック・ビューの中身を端から端まで見ていたテストは、
 // この変更で対象そのものが無くなった。振る舞い自体は次のテストが守っている:
-//   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/ui/main-view/**
-//   - Markdown の変換（unified）: test/ui/report/**
+//   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/features/main-view/**
+//   - Markdown の変換（unified）: test/browser/features/main-view/markdown/**
 //   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
 //     （トークン・Origin・hello・コマンド）: test/adapter/server.test.ts
-//   - キャラクター定義の解釈と立ち絵の選び方: test/protocol/character.test.ts
+//   - キャラクター定義の解釈と立ち絵の選び方: test/shared/character.test.ts
 //   - SDK のイベントの変換・答え待ち・畳み込み: test/core/sdk-message.test.ts /
-//     test/core/pending-answer.test.ts / test/protocol/session-state.test.ts
+//     test/core/pending-answer.test.ts / test/shared/session-state.test.ts
 // 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
 
 const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname

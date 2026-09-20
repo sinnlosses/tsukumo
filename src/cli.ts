@@ -2,8 +2,8 @@
 // `session-manager` に渡して WebSocket のフレームとして配り続ける。
 //
 // ここは「配線」の層。引数・環境変数の受け取り、起動時の前提チェック、状態を1つ持つこと、
-// 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。`protocol` / `core` /
-// `adapter` / `ui` のすべてを import してよい唯一の場所（docs/design.md 2章「層と依存の向き」。
+// 1回分の `try`/`catch` がここの仕事で、判断そのものは持たない。`shared` / `core` /
+// `adapter` / `browser` のすべてを import してよい唯一の場所（docs/design.md 2章「層と依存の向き」。
 // **`core` から `adapter` を引くのは禁じてあり、両者を結ぶのはここだけ**）。
 
 import { randomUUID } from "node:crypto"
@@ -48,10 +48,10 @@ import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./core/session-driv
 import { createSessionLaunch, type SessionLaunchSeed } from "./core/session-launch.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
 import { SPEECH_CADENCE_PROMPT } from "./core/speech-cadence.ts"
-import { expressionChoices } from "./protocol/character.ts"
-import { type CharacterCreateCommand, type CharacterEditCommand } from "./protocol/command.ts"
-import { type RefreshTarget, type ServerFrame } from "./protocol/frame.ts"
-import { type SessionEvent } from "./protocol/session-event.ts"
+import { expressionChoices } from "./shared/character.ts"
+import { type CharacterCreateCommand, type CharacterEditCommand } from "./shared/command.ts"
+import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
+import { type SessionEvent } from "./shared/session-event.ts"
 
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
 
@@ -78,9 +78,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       scripts/capture-catalog.ts が使う）
   TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす
                       （この起動の間は、切り替えた先のキャラクターも新規から始まる）
-  TSUKUMO_WATCH_UI    1 を渡すと src/ui/ を見張り、保存のたびに組み立て直して開いているタブへ
+  TSUKUMO_WATCH_UI    1 を渡すと src/browser/ を見張り、保存のたびに組み立て直して開いているタブへ
                       取り直しを押す（tsukumo 自身を直しながら動かすとき用。既定は見張らない。
-                      src/core/ と src/protocol/ を直したときは上げ直しが要る）
+                      src/core/ と src/shared/ を直したときは上げ直しが要る）
 `
 
 /**

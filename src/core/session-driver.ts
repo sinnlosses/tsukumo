@@ -5,21 +5,21 @@
 // 契約をここに置いてあるので、`session-manager` は駆動の実装を import せずに済む
 // （どちらが動いているかを知らない。docs/design.md 5章）。
 //
-// **境目の基準は「protocol の語彙で書けるか / SDK の語彙を名乗るか」**。protocol の語彙だけで
+// **境目の基準は「shared の語彙で書けるか / SDK の語彙を名乗るか」**。shared の語彙だけで
 // 書けるもの（契約の型・`DEFAULT_PERMISSION_MODE` / `DEFAULT_MODEL`）はここに、SDK の語彙を
 // 名乗るもの（`DEFAULT_EFFORT` の `EffortLevel`、`query()` の options、`listSessions` /
 // `getSessionMessages` を使う関数）は `src/adapter/sdk-driver.ts` に置く。
 
-import { type ExpressionChoice } from "../protocol/character.ts"
-import { type ModelAlias, type PermissionMode } from "../protocol/command.ts"
-import { type Answer, type PendingAsk } from "../protocol/pending-ask.ts"
-import { type SessionEvent } from "../protocol/session-event.ts"
+import { type ExpressionChoice } from "../shared/character.ts"
+import { type ModelAlias, type PermissionMode } from "../shared/command.ts"
+import { type Answer, type PendingAsk } from "../shared/pending-ask.ts"
+import { type SessionEvent } from "../shared/session-event.ts"
 
 /**
  * 既定の許可モード。`auto` は Claude Code 側が読み取り専用の操作を自動で通し、書き込みなどは
  * `canUseTool` に回す（2026-09-11 実測。docs/requirements.md 4.1）。
  *
- * **許可モードとモデルの値の一覧そのものは protocol にある**（`src/protocol/command.ts` の
+ * **許可モードとモデルの値の一覧そのものは shared にある**（`src/shared/command.ts` の
  * `PERMISSION_MODES` / `MODEL_ALIASES`。docs/design.md 4.3）。SDK の型と同じ値であることは
  * test/adapter/sdk-driver.test.ts が型で確かめる。
  */
@@ -28,7 +28,7 @@ export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto"
 /**
  * 既定のモデル。ユーザーの指示（2026-09-12）で Opus に固定した
  * （docs/requirements.md 4.1）。画面の `<select>` 側の見た目上の既定値
- * （`src/ui/features/sidebar/session-info.tsx` の `MODEL_FALLBACK`）も同じ値に揃える。
+ * （`src/browser/features/sidebar/session-info.tsx` の `MODEL_FALLBACK`）も同じ値に揃える。
  */
 export const DEFAULT_MODEL: ModelAlias = "opus"
 

@@ -186,7 +186,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### キャラクター画面
 
-- **英語識別子（予定）**: `character-screen`（`src/ui/features/character-screen/`。hash は
+- **英語識別子（予定）**: `character-screen`（`src/browser/features/character-screen/`。hash は
   `#character`。作る画面は同じ機能の中の `character-create`、hash は `#character/new`）
 - **定義**: いま出しているパックの立ち絵と差し色を差し替え、画面の色3つを変える画面。
   新しいパックを作る**作る画面**へ入る口もここ（`docs/design.md` 13.6）
@@ -270,7 +270,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子（予定）**: `interim`（`MainViewStep.interim`）
 - **定義**: **ターンの途中で出た、まとまった資料としての本文**。あとにツール呼び出しが続いた本文の
-  うち、構造の印を持ち短くないもの（`src/protocol/main-view.ts` の `keepOnlyInterimReports`）。
+  うち、構造の印を持ち短くないもの（`src/shared/main-view.ts` の `keepOnlyInterimReports`）。
   メインビューには印を付けた枠で残る
 - **注記**: 同じ位置に出る**実況**（「まず読むね」「次はテスト」）は落とす。落とす／残すの規則は
   `docs/requirements.md` 4.2 が正典
@@ -284,7 +284,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子（予定）**: `favor`（レポートの中では `<div class="note note-favor">`）
 - **定義**: **キャラクターから利用者への1件**。利用者にしか決められない・できないこと
   （判断・作業・情報）を、レポートの**いちばん最後**に1つだけ置く。印を付けた塊で描かれ、
-  「お願い」のラベルは tsukumo 側（`src/ui/features/main-view/markdown/notation.tsx`）が
+  「お願い」のラベルは tsukumo 側（`src/browser/features/main-view/markdown/notation.tsx`）が
   文字として付ける
 - **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ（`turn-request`）、お願いは
   キャラクターから利用者へ。画面でも、依頼の見出しの縦罫とお願いの縦罫が同じ `accent` で対になる
@@ -373,11 +373,13 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### プロトコル
 
-- **英語識別子**: `protocol`（ディレクトリ `src/protocol/`）
-- **定義**: サーバ（core）とブラウザ（ui）の**両方が import する契約**。イベント・状態・reducer・
+- **英語識別子**: `shared`（ディレクトリ `src/shared/`）
+- **定義**: サーバ（core）とブラウザ（browser）の**両方が import する契約**。イベント・状態・reducer・
   コマンドとフレームの zod スキーマ・`PROTOCOL_VERSION`
-- **注記**: `node:` にも `document` にも触らない。zod のスキーマが正典で、型は `z.infer`
-- **避ける言い方**: 共通、shared、API
+- **注記**: `node:` にも `document` にも触らない。zod のスキーマが正典で、型は `z.infer`。
+  **ディレクトリ名は 2026-09-20 に `protocol` から `shared` へ改めた**（層の名前を「どの実行環境で
+  動くか」に合わせたため。`docs/research/architecture-placement.md`）
+- **避ける言い方**: 共通、API、コントラクト
 
 ### アダプタ
 
@@ -394,8 +396,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子**: `ServerFrame`（`hello` / `events` / `error`）
 - **定義**: サーバがブラウザへ WebSocket で送る1件。`hello` は接続直後の snapshot、`events` は
   まとめたイベント、`error` はコマンドの失敗
-- **注記**: 経路名 `/ws` とトークンのクエリ名は `src/protocol/session-socket.ts` が正典で、
-  `adapter` と `ui` は値を再掲しない
+- **注記**: 経路名 `/ws` とトークンのクエリ名は `src/shared/session-socket.ts` が正典で、
+  `adapter` と `browser` は値を再掲しない
 - **避ける言い方**: メッセージ（SDK の `SDKMessage` と紛れる）、パケット
 
 ### コマンド

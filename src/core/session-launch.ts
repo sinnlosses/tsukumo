@@ -9,7 +9,7 @@
 // 外の世界（パックの読み込み・覚えた値・claude の transcript・見張り）には触らず、すべて
 // 渡された関数（{@link SessionLaunchPorts}）越しに頼む。結ぶのは配線層（`src/cli.ts`）。
 
-import { type SessionEvent } from "../protocol/session-event.ts"
+import { type SessionEvent } from "../shared/session-event.ts"
 import { type NamedCharacterPack } from "./character-selection.ts"
 import { type SessionDriver } from "./session-driver.ts"
 

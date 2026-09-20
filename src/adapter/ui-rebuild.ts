@@ -1,8 +1,8 @@
-// `src/ui/` を見張り、変更のたびにブラウザ側スクリプトと CSS を組み立て直す。**開発中だけ**
+// `src/browser/` を見張り、変更のたびにブラウザ側スクリプトと CSS を組み立て直す。**開発中だけ**
 // 呼ばれる（`TSUKUMO_WATCH_UI`。docs/design.md 11章）。組み立てそのものは `src/adapter/bundle.ts`
 // が持ち、ここは「いつ組み立て直すか」だけを決める（組み上がったものを誰に押すかは `src/cli.ts`）。
 //
-// **見張るのは `src/ui/` だけ。** `src/protocol/` はサーバ側でも畳み込みに使われていて、
+// **見張るのは `src/browser/` だけ。** `src/shared/` はサーバ側でも畳み込みに使われていて、
 // ブラウザ側だけ新しくすると両側の食い違った状態が動いてしまう（docs/design.md 11章）。
 //
 // **`fs.watch` を使う**のは、`src/adapter/task-summary.ts` が `develop/tasks.json` で選んだ
@@ -18,7 +18,7 @@ import { buildUiBundle, type UiBundle } from "./bundle.ts"
 import { bundledFilePath } from "./bundled-path.ts"
 
 /** 見張る場所。tsukumo 自身の置き場所からの相対で解く（cwd に依存させない）。 */
-const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "ui"]
+const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "browser"]
 
 /**
  * 最後の通知からこれだけ静かになってから組み立て直す。**エディタの保存1回で `fs.watch` は
@@ -33,7 +33,7 @@ const REBUILD_DEBOUNCE_MS = 120
  */
 export const UI_REBUILD_FAILURE_REASON = {
   buildFailed: "ブラウザ側を組み立て直せなかった（前の版を配り続ける）",
-  watchFailed: "src/ui/ を見張れなくなった（上げ直すまで反映されない）",
+  watchFailed: "src/browser/ を見張れなくなった（上げ直すまで反映されない）",
 } as const
 
 /** 組み立て直せなかったことの知らせ。見出しと、あるなら具体的な理由。 */
@@ -59,7 +59,7 @@ export type UiSourceWatcher = {
 }
 
 /**
- * `src/ui/` を見張り始める。**呼んだ時点では組み立て直さない**（起動時のぶんは呼び出し側が
+ * `src/browser/` を見張り始める。**呼んだ時点では組み立て直さない**（起動時のぶんは呼び出し側が
  * すでに持っている）。
  *
  * 組み立てに失敗しても `onRebuilt` は呼ばず、**前の版が配られたまま**になる。途中まで書いた

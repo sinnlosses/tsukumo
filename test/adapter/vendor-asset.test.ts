@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
 import { readVendorAsset } from "../../src/adapter/vendor-asset.ts"
-import { VENDOR_ASSET_CONTENT_TYPES } from "../../src/protocol/vendor-asset.ts"
+import { VENDOR_ASSET_CONTENT_TYPES } from "../../src/shared/vendor-asset.ts"
 
-// 配る名前（protocol）と `node_modules` の中のファイル（adapter）は別のファイルに分かれている
+// 配る名前（shared）と `node_modules` の中のファイル（adapter）は別のファイルに分かれている
 // ので、**allowlist の側から全件を辿って**片方だけ足した・パッケージが版を上げてファイルの
 // 場所が変わった、を落とす。本物の `node_modules` を読む（依存が入っていることは
 // `bun install` 済みの前提。docs/coding-standards.md「テスト」）。
@@ -30,7 +30,7 @@ describe("readVendorAsset", () => {
     const asset = readVendorAsset("mermaid.min.js")
 
     // ブラウザ側は `<script src>` で読んでグローバルの `mermaid` を使う
-    // （`src/ui/features/main-view/markdown/vendor-globals.d.ts`）ので、ESM 版を配ると
+    // （`src/browser/features/main-view/markdown/vendor-globals.d.ts`）ので、ESM 版を配ると
     // 読めても何も生えない。
     expect(asset?.content.toString("utf8")).toContain("mermaid")
     expect(asset?.content.toString("utf8", 0, 200)).not.toContain("import")

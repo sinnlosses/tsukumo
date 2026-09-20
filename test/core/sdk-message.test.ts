@@ -6,7 +6,7 @@ import {
   toCommandDescriptions,
   toSessionEvents,
 } from "../../src/core/sdk-message.ts"
-import { type Expression } from "../../src/protocol/expression.ts"
+import { type Expression } from "../../src/shared/expression.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の会話は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。

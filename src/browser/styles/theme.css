@@ -1,0 +1,81 @@
+/* 色・書体のトークンの定義先と、ページ全体の下地（docs/design.md 13章が正典。ここはそれを
+   写したもの）。**このファイルだけがグローバル**で、機能ごとの見た目は各機能の `*.module.css`
+   にある（docs/design.md 6.6）。16進の色を書いてよいのもここだけで、各機能は
+   カスタムプロパティを参照する（font-size / font-family も同じ）。 */
+:root {
+  color-scheme: dark;
+
+  /* 差せる4つのつまみ（13.2）。ground / surface / ink は使う人が差す経路をまだ持たない
+     （13.5。受け渡しの経路は未決）。accent だけ character.json から流し込む
+     （`src/shared/character.ts` の `accent` → `src/browser/stores/session.tsx` が
+     `document.documentElement` にこの変数を差し替える）。ここに書く値は
+     tsukumo-spirit（`characters/tsukumo-spirit/character.json`）と同じ、パックが
+     届く前・パックに `accent` が無いときの既定値。 */
+  --ground: #191720;
+  --surface: #221f2b;
+  --ink: #e8e3ea;
+  --accent: #f2b0a0;
+
+  /* 固定の導出（使う人にもパックにも差せない。13.2）。 */
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  /* surface を accent でわずかに染めた地。**新しいつまみではない**（accent 1つから
+     計算するだけの導出値）。「選ばれたタブ」と同じ扱いでよい場所
+     （最新の吹き出し・選ばれた選択肢・送信ボタン）にだけ使う。13.1 原則1。 */
+  --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+
+  /* 状態の3色。誰が来ても変わらない（13.1 原則5）。 */
+  --state-ok: #7ee081;
+  --state-warn: #e3c766;
+  --state-ng: #e88b8b;
+
+  /* タイプスケール。段はこの4つだけ（13.3）。 */
+  --font-label: 0.6875rem;
+  --font-secondary: 0.8125rem;
+  --font-body: 0.9375rem;
+  --font-heading: 1.125rem;
+  --line-height-body: 1.75;
+
+  /* 書体は system-ui と等幅の2本のまま（13.3）。 */
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  margin: 0;
+  padding: 1rem;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}
+
+/* フォーカスの輪は、キャラクターの色（accent）を出してよい場所の1つ（13.1 原則1）。 */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない。docs/design.md 13.1）。
+   **色を取り上げるかわりに下線で区別する。** 色だけに頼らないので、どのパックの accent が来ても
+   リンクだと分かる。 */
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+a:hover {
+  text-decoration-color: var(--accent);
+}

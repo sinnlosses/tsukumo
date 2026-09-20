@@ -1,0 +1,152 @@
+/* まとめたレイアウト（`<Layout>`。src/browser/features/layout/layout.tsx）。上段（メイン・サイドバー）と
+   下段（キャラビュー・入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行を
+   それぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は
+   CSS カスタムプロパティで持つ（<Layout> がドラッグに応じて style で書き換える）。
+   ここに書いた var() の第2引数（フォールバック値）は src/browser/features/layout/split.ts の
+   DEFAULT_SPLIT と一致させること。
+
+   狭い画面での畳み方は、このファイルの末尾の @media にある（他の領域のぶんはそれぞれの
+   *.module.css の末尾。docs/requirements.md 4.7）。 */
+.layout-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: var(--layout-row-top, 60fr) auto var(--layout-row-bottom, 40fr);
+  gap: 0.5rem;
+  /* body の padding（上下 1rem ずつ）ぶんを差し引いて、grid 自体は画面の高さぴったりにする。 */
+  height: calc(100vh - 2rem);
+}
+.layout-row {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+}
+.layout-row-top {
+  grid-template-columns: var(--layout-top-left, 75fr) auto var(--layout-top-right, 25fr);
+}
+.layout-row-bottom {
+  grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
+}
+/* **領域そのものは横に転がらない**（2026-09-15 決定。ユーザーの指摘「横にスクロールできたのが
+   気になった。スクロールできないのが使い勝手良さそうだよ」）。`overflow-y: auto` だけを書くと、
+   CSS では片方の軸が visible でなくなったときにもう片方の visible も auto に計算されるので、
+   書いていない overflow-x が auto になって4領域すべてが横に転がっていた。
+   **横に長いものは、中身の側が自前のスクロール容器を持つ**（レポートの表は .table-scroll、
+   コードは pre-wrap、svg は max-width: 100%、長い語は overflow-wrap: anywhere で折り返す）。 */
+.layout-region {
+  min-width: 0;
+  min-height: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+/* キャラビューだけは枠も地も持たない。付喪神は器物に宿るのであって、ウィジェットの中に
+   座っているのではない（`ground` の上に直接立つ。docs/design.md 13.1 原則2 / 13.4）。 */
+.layout-character {
+  border: none;
+  background: none;
+}
+/* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、
+   3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」
+   「セッション情報」の見出しが画面の外に流れないようにするため）。狭い画面
+   （@media (max-width: 760px)）では .layout-grid の行が高さ auto になり、この領域にも
+   定まった高さが無くなるので、flex-grow は働かず中身なりの高さに自然に伸びる
+   （メインビュー・キャラビューの overflow-y: auto はここでは変えない）。 */
+.layout-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+/* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。features/dispatch/dispatch.module.css）は、
+   `<Dispatch>` の兄弟としてではなく、この領域（`<Layout>` が描く `.layout-dispatch` の
+   `<section>`）自身の内側の縁に沿わせたい。そこに `position: absolute; inset: 0` を
+   置くための基準をここで用意する（部品は自分の subtree の外の DOM を直接いじらない。
+   基準を用意するのは CSS 側で、JS の配線ではない）。 */
+.layout-dispatch {
+  position: relative;
+}
+/* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。 */
+.layout-resizer {
+  position: relative;
+  touch-action: none;
+}
+.layout-resizer-vertical {
+  width: 0.6rem;
+  cursor: col-resize;
+}
+.layout-resizer-horizontal {
+  height: 0.6rem;
+  cursor: row-resize;
+}
+.layout-resizer::after {
+  content: "";
+  position: absolute;
+  background: var(--rule);
+}
+.layout-resizer-vertical::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+}
+.layout-resizer-horizontal::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+}
+.layout-resizer:hover::after {
+  background: var(--accent);
+}
+/* 領域の比率を既定に戻す常設ボタン（`<Layout>` が直接描く。docs/design.md 13.6）。
+   画面右下に固定で置く
+   （常設の要素は差し引きゼロ。仕切りのドラッグ操作と取り合わない場所という理由も同じ）。 */
+.layout-reset-split {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 20;
+  padding: 0.3rem 0.6rem;
+  background: var(--surface);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.layout-reset-split:hover {
+  border-color: var(--accent);
+}
+
+/* grid が窮屈になる幅では、上から メイン→サイドバー→キャラビュー→送信欄 の1列に畳む
+   （docs/requirements.md 4.7「狭い画面での崩れ方」）。各行の中身は DOM の並び順どおり
+   （main→sidebar、character→dispatch）に積むだけで済むので、grid-template-areas は
+   使わない。畳んでいる間は仕切り・比率を戻すボタンを出さない（動かせる比率が無いため）。 */
+@media (max-width: 760px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    height: auto;
+  }
+  .layout-row-top,
+  .layout-row-bottom {
+    grid-template-columns: 1fr;
+  }
+  /* 仕切りは1列表示では意味を持たないので隠す。比率を戻すボタンも同じ理由で隠す
+     （動かせる比率が無い1列表示では戻す先が無い。色と立ち絵の固定はキャラクター画面へ
+     移っているので、隠しても設定にたどり着けなくなることはない）。 */
+  .layout-resizer,
+  .layout-reset-split {
+    display: none;
+  }
+  .layout-dispatch {
+    min-height: 10rem;
+  }
+}

@@ -1,4 +1,4 @@
-// ブラウザ側スクリプト（`src/ui/`）と CSS を `bun build` で1本ずつにまとめ、**中身を文字列で
+// ブラウザ側スクリプト（`src/browser/`）と CSS を `bun build` で1本ずつにまとめ、**中身を文字列で
 // 返す**。失敗したときは `bun build` が stderr に書いた理由を添えて返す（呼び出し側が起動を
 // 止めるか、前の版を配り続けるかを決める）。
 //
@@ -65,12 +65,12 @@ export type BundleResult =
   | { readonly ok: false; readonly reason: string }
 
 /**
- * ブラウザ側（`src/ui/`）を組み立てる。JSX は tsconfig の `"jsx": "react-jsx"` で自動変換され、
+ * ブラウザ側（`src/browser/`）を組み立てる。JSX は tsconfig の `"jsx": "react-jsx"` で自動変換され、
  * CSS Modules は `bun build` が class 名をハッシュ化して JS 側の対応表に入れる
  * （docs/design.md 11章）。
  */
 export function buildUiBundle(): Promise<BundleResult> {
-  return bundleWithBun(bundledFilePath("src", "ui", UI_ENTRY))
+  return bundleWithBun(bundledFilePath("src", "browser", UI_ENTRY))
 }
 
 /**

@@ -1,0 +1,198 @@
+/* キャラクター画面と作る画面（`src/browser/features/character-screen/`。docs/design.md 13.6）。
+   **会話の画面と入れ替わる**（重ねない）ので、ここは1枚のページとして縦に流す — 4領域の
+   grid も仕切りも持たない。**立ち絵の並びが主役**で、残りは静かな行に保つ。
+   狭い画面（760px 以下）用の規則は書かない（並びが折り返すだけ）。 */
+.character-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 0.25rem 2rem;
+}
+.character-screen-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+/* 戻る口と「新しく作る」は**字だけ**（13.1 原則1）。色は `ink` のままで、下線だけで
+   リンクだと分かるようにする。 */
+.character-screen-back,
+.character-screen-new {
+  color: var(--ink);
+  font-size: var(--font-label);
+  text-decoration: underline;
+}
+.character-screen-back:hover,
+.character-screen-new:hover {
+  color: var(--accent);
+}
+/* 隠れている間に来た答え待ちの印。**色だけにしない**ので字も出す（13.6）。 */
+.character-screen-pending {
+  margin-left: auto;
+  color: var(--state-warn);
+  font-size: var(--font-label);
+}
+.character-screen-headline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.character-screen-label {
+  margin: 0;
+  font-size: var(--font-heading);
+  font-weight: normal;
+}
+/* パックの名前はディレクトリ名なので等幅（13.1 原則3）。 */
+.character-screen-pack {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+}
+.character-screen-new {
+  margin-left: auto;
+}
+
+/* 立ち絵の並び。`EXPRESSIONS` の順に横へ並べ、入りきらなければ折り返す（13.6）。 */
+.character-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 1rem;
+}
+.character-gallery-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+/* **立ち絵は枠も地も持たない**（13.1 原則2。`ground` の上に直接置く）。大きさはここで決める
+   （`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は
+   `.character-region` が持つ変数なので、この画面では解決されない）。 */
+.character-gallery .character-gallery-portrait {
+  margin: 0;
+  height: 8rem;
+  max-width: 100%;
+}
+/* 立ち絵が無い表情は**点線の枠の空き**（そこに置けることだけを示す）。 */
+.character-gallery-blank {
+  width: 100%;
+  height: 8rem;
+  border: 1px dashed var(--rule);
+  border-radius: 0.75rem;
+}
+.character-gallery-label {
+  font-size: var(--font-secondary);
+}
+/* 「差し替える」「選ぶ」の口は `<label>`（中の `<input type="file">` は隠す — ブラウザごとに
+   見た目が違い、カードの幅に収まらない）。読み上げ用の名前は `<input>` の aria-label にある。 */
+.character-gallery-pick,
+.character-gallery-clear {
+  padding: 0.15rem 0.5rem;
+  background: var(--surface);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.character-gallery-pick:hover,
+.character-gallery-clear:hover {
+  border-color: var(--accent);
+}
+/* 変えられないパック（`editable: false`）。`<label>` 自体は disabled にできないので、
+   中の `<input>` の状態を見て見た目を合わせる。 */
+.character-gallery-pick:has(.character-gallery-file:disabled) {
+  color: var(--ink-quiet);
+  cursor: default;
+}
+/* 見えないが読み上げとクリックの対象には残す（`display: none` にすると `<label>` から
+   たどれなくなる）。 */
+.character-gallery-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 組（差し色・画面の色・新しいキャラクター）。枠は持たず、`<legend>` を小さな見出しとして
+   使う（13.1 原則2）。 */
+.character-screen-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.character-screen-fieldset > legend {
+  padding: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 差し色（衣装4つ）も画面の色（3つ）も**1行に**並べ、入りきらなければ折り返す。 */
+.character-screen-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+.character-screen-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--font-secondary);
+}
+/* 変えられないパックのとき・名前が使えないときの一言。 */
+.character-screen-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 作る画面（`character-create.tsx`）。行は縦に積む（名前・立ち絵・差し色の3行）。 */
+.character-screen-create-name {
+  max-width: 12rem;
+  min-width: 0;
+  padding: 0.15rem 0.3rem;
+  background: var(--ground);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+}
+.character-screen-create-file {
+  font: inherit;
+  font-size: var(--font-label);
+}
+.character-screen-create-submit,
+.character-screen-switch {
+  align-self: flex-start;
+  padding: 0.3rem 0.6rem;
+  background: var(--surface);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.character-screen-create-submit:hover,
+.character-screen-switch:hover {
+  border-color: var(--accent);
+}
+/* 名前が使えない・立ち絵がまだそろっていない間、切り替えがターン進行中で塞がっている間は
+   押せない（理由は `.character-screen-note` と `title`）。 */
+.character-screen-create-submit:disabled,
+.character-screen-switch:disabled {
+  color: var(--ink-quiet);
+  cursor: default;
+}

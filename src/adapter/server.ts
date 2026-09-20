@@ -23,12 +23,12 @@ import { type Duplex } from "node:stream"
 import { type RawData, WebSocketServer } from "ws"
 
 import { type DispatchResult } from "../core/session-manager.ts"
-import { CHARACTER_ASSET_PATH_PREFIX } from "../protocol/character.ts"
-import { type ClientCommand, parseClientCommand } from "../protocol/command.ts"
-import { FRAME_ERROR_REASON, type ServerFrame } from "../protocol/frame.ts"
-import { REPOSITORY_FILE_PATH } from "../protocol/repository-file.ts"
-import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../protocol/session-socket.ts"
-import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../protocol/vendor-asset.ts"
+import { CHARACTER_ASSET_PATH_PREFIX } from "../shared/character.ts"
+import { type ClientCommand, parseClientCommand } from "../shared/command.ts"
+import { FRAME_ERROR_REASON, type ServerFrame } from "../shared/frame.ts"
+import { REPOSITORY_FILE_PATH } from "../shared/repository-file.ts"
+import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../shared/session-socket.ts"
+import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../shared/vendor-asset.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
@@ -36,7 +36,7 @@ import { readVendorAsset } from "./vendor-asset.ts"
  * 大きさ**にしてある（base64 の33%増と JSON のぶんを足して 4 MiB。`docs/design.md` 7.1 の表）。
  *
  * **依頼の文面の上限はこれとは別に効いている**（zod の `MAX_PROMPT_TEXT_LENGTH`。
- * `src/protocol/command.ts`）ので、ここを上げても送れる文面は長くならない。
+ * `src/shared/command.ts`）ので、ここを上げても送れる文面は長くならない。
  */
 const MAX_MESSAGE_BYTES = 4 * 1024 * 1024
 
@@ -182,7 +182,7 @@ function messageText(data: RawData): string {
 export const LAYOUT_PATH = "/"
 
 /**
- * **自前のブラウザ側スクリプト**（`src/ui/` を `bun build` でまとめたもの）と CSS を配る経路。
+ * **自前のブラウザ側スクリプト**（`src/browser/` を `bun build` でまとめたもの）と CSS を配る経路。
  * ディスクには置かずメモリに持つ（`src/adapter/bundle.ts`）。
  */
 const ASSET_PATH_PREFIX = "/assets/"
@@ -312,7 +312,7 @@ function respond(
   }
 
   if (path === uiScriptPath() && request.method === "GET") {
-    // 組み立てたブラウザ側スクリプト（`src/ui/`）。**ディスクには無い**ので、vendor と違って
+    // 組み立てたブラウザ側スクリプト（`src/browser/`）。**ディスクには無い**ので、vendor と違って
     // ファイルを読みに行かない。
     response.writeHead(200, {
       "content-type": "text/javascript; charset=utf-8",
@@ -356,7 +356,7 @@ function respond(
 
 /**
  * ページ本体。**中身は `<div id="app">` だけ**（メインビュー・キャラビュー・サイドバー・
- * 入力欄のすべてが React の部品になり、`src/ui/main.tsx` が1つの root として mount する。
+ * 入力欄のすべてが React の部品になり、`src/browser/main.tsx` が1つの root として mount する。
  * 移行の段6。docs/design.md 12章）。ページを丸ごと再読み込みしない理由は
  * `docs/architecture.md`「ビューの更新は Server-Sent Events で押す」（更新は今は WebSocket）
  * を参照。

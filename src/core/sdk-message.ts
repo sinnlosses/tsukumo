@@ -1,4 +1,4 @@
-// SDK から届いたメッセージを、tsukumo 内部のイベント（src/protocol/session-event.ts）に変換する。
+// SDK から届いたメッセージを、tsukumo 内部のイベント（src/shared/session-event.ts）に変換する。
 //
 // **SDK の型を import しない。** SDK への依存は src/adapter/sdk-driver.ts の1ファイルに閉じる
 // （docs/design.md 5章）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
@@ -9,12 +9,12 @@
 // **会話の内容がここを通る。** 持ち出す先は呼び出し側のイベントの流れだけで、ログにもファイルにも
 // 書かない（docs/coding-standards.md「会話内容の扱い」）。
 
-import { type Expression } from "../protocol/expression.ts"
+import { type Expression } from "../shared/expression.ts"
 import {
   type CommandDescription,
   type SessionEvent,
   type TurnStatus,
-} from "../protocol/session-event.ts"
+} from "../shared/session-event.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const SPEAK_MCP_SERVER_NAME = "tsukumo"

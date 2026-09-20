@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 protocol を shared に、ui を browser に移した（T-195）
+
+`git mv` で115ファイル（`src/` 74・`test/` 41）を `shared/` と `browser/` へ移し、層の名前を
+「どの実行環境で動くか」に揃えた（`core` / `adapter` は段3＝T-210 のまま）。
+`test/architecture.test.ts` の辺は9本とも残し、README のツリーと `docs/architecture.md` の
+置き場の表（実行場所の列）も実態に追随させた。
+
 ### 2026-09-20 入力欄に @ のファイル補完を足した（T-188）
 
 `GET /repository-file?t=<起動トークン>` を1本生やし、`adapter/repository-file.ts` が
@@ -143,6 +150,10 @@ mermaid とテーマ CSS は同梱物とバイト一致。表示時の外部通�
 ## 注意
 
 次のセッションで踏み外しやすい点:
+
+- **2026-09-20 に `src/protocol/` → `src/shared/`、`src/ui/` → `src/browser/` へ改名した（T-195）。**
+  `develop/tasks.json` の各タスク本文は旧パスのまま（T-196・T-202・T-206〜T-219 など）なので、
+  本文の `src/ui/...` は `src/browser/...` と読み替える。`core` / `adapter` は T-210 まで動かない
 
 - **`src/` の改名（T-195 / T-210）と React の見直し（T-211〜T-216）を同時に進めない。**
   改名が `src/ui/` を `src/browser/` へ移すので、同じ作業ツリーを共有する並行セッションでは

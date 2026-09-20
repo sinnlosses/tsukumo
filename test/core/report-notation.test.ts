@@ -5,9 +5,9 @@ import { fileURLToPath } from "node:url"
 import { cleanup, render } from "@testing-library/react"
 import { createElement } from "react"
 
+import { NotationBlock } from "../../src/browser/features/main-view/markdown/notation.tsx"
+import { REPORT_SANITIZE_SCHEMA } from "../../src/browser/features/main-view/markdown/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../src/core/report-notation.ts"
-import { NotationBlock } from "../../src/ui/features/main-view/markdown/notation.tsx"
-import { REPORT_SANITIZE_SCHEMA } from "../../src/ui/features/main-view/markdown/sanitize-schema.ts"
 
 afterEach(() => {
   cleanup()
@@ -51,7 +51,9 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
 // CSS に書いた綴りのまま届く**（test/css-module-loader.ts）ので、部品が付け直した名前を
 // そのファイルの選択子とそのまま突き合わせられる。
 const STYLE_SHEET_SOURCE = readFileSync(
-  fileURLToPath(new URL("../../src/ui/features/main-view/main-view.module.css", import.meta.url)),
+  fileURLToPath(
+    new URL("../../src/browser/features/main-view/main-view.module.css", import.meta.url),
+  ),
   "utf8",
 )
 

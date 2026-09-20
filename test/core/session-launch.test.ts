@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 
 import { type SessionDriver } from "../../src/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchPorts } from "../../src/core/session-launch.ts"
-import { type SessionEvent } from "../../src/protocol/session-event.ts"
+import { type SessionEvent } from "../../src/shared/session-event.ts"
 
 // 台本もセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。

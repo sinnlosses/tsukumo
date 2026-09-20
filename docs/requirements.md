@@ -330,7 +330,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   **`persona.md` の側には書かない**
 - **HTML・mermaid・chart の規約は tsukumo が持つ。** `query()` の
   `systemPrompt: { type: "preset", preset: "claude_code", append }` で足す。正典がリポジトリ内に
-  来るので、**描ける記法の一覧が `src/ui/features/main-view/markdown/sanitize-schema.ts` と同じコミットで動く**
+  来るので、**描ける記法の一覧が `src/browser/features/main-view/markdown/sanitize-schema.ts` と同じコミットで動く**
   （レンダラを直したのに規約が古いまま、が起きない）
 - **`~/.claude/settings.json` には触らない**（`outputStyle` も、orca が専有する hooks /
   statusLine も無傷のまま）。書き換えるのは `asuna.md` 1ファイルだけ
@@ -421,7 +421,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   `pie` / `xychart-beta`（`chart` のフェンスと用途が重なる。選ぶ手が止まる）、`journey`
   （レポートに合う用途が無い）、`sankey-beta` / `architecture-beta` / `requirementDiagram`
   （同じ場で構文エラーになった）
-- **1つのレポートに図が複数あるときは1つずつ描く**（`src/ui/features/main-view/markdown/mermaid-block.tsx`）。
+- **1つのレポートに図が複数あるときは1つずつ描く**（`src/browser/features/main-view/markdown/mermaid-block.tsx`）。
   `mermaid.run()` を同時に走らせると一部が**中身の無い SVG** になり、図を8つ置くと毎回2〜3つが
   空で描かれた（落ちるものは実行のたびに変わる。同日の実測）。種類を増やすと図の同居が起きやすく
   なるので、**規約とレンダラを同じコミットで揃える**決まりに従って直列にした
@@ -485,12 +485,12 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   やり取りのタブに限る**（`MAX_MAIN_VIEW_TURNS`。それより古いぶんは画面から落ちる）
 - **メインビュー**: **レポートだけを出す**（2026-09-11 決定。作業の**進行**（いま何をしているか、
   実行中／終わったものの一覧）と、失敗したツールの引数・出力はサイドバーの「いま何をしているか」
-  （`src/ui/features/sidebar/activity.tsx`）が持つ）。**ファイルを変えた操作・サブエージェントの起動だけを
+  （`src/browser/features/sidebar/activity.tsx`）が持つ）。**ファイルを変えた操作・サブエージェントの起動だけを
   レポートと同じ並びに残していた `toolVisibility` の判定（2026-09-10 決定）は 2026-09-16 に
   外した**（ユーザーの指示「作業中のコマンドはメイン画面に出さなくていい」）。**ツールの実行は
-  種類を問わずレポートに出ない。** `src/protocol/main-view.ts` の `MainViewStep.actions` には
+  種類を問わずレポートに出ない。** `src/shared/main-view.ts` の `MainViewStep.actions` には
   ツールの記録がそのまま残るが（実況を落とす判定 `keepOnlyInterimReports` などが材料に使う）、
-  `src/ui/features/main-view/turn.tsx` はそこから質問の記録だけを描く。
+  `src/browser/features/main-view/turn.tsx` はそこから質問の記録だけを描く。
   **あとにツール呼び出しが続いた本文は、実況なら出さず、まとまった資料なら中間レポートとして
   出す**（2026-09-16 決定。ユーザーの指摘「『Now the tests.』とか、これもレポートに出てほしく
   ないやつだね」と、同日の「枠組みされたまとまった資料がたまに出てくるときがあり、それは
@@ -543,10 +543,10 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   **ブロックの中に空行を入れてよい**（2026-09-16 決定）。**HTML の中で Markdown を解釈させるには
   CommonMark の規則で空行が要る**ので、「空行を入れない」と規約で縛ると `<details>` の中で表や
   箇条書きが使えなくなる。縛る代わりに、塊に割る側が閉じタグまで割らないようにした
-  （`src/ui/features/main-view/markdown/split-blocks.ts`）。
+  （`src/browser/features/main-view/markdown/split-blocks.ts`）。
   どちらの経路も**通すのは許可リストに載った要素・属性だけ**で、
   `script` / `style` / `iframe` は中身ごと、`on*` と `javascript:` は属性ごと落とす
-  （`src/ui/features/main-view/markdown/sanitize-schema.ts` の `REPORT_SANITIZE_SCHEMA` 1箇所に集約）。ただし**コードスパン
+  （`src/browser/features/main-view/markdown/sanitize-schema.ts` の `REPORT_SANITIZE_SCHEMA` 1箇所に集約）。ただし**コードスパン
   （`` `code` ``）の中に書いた HTML はタグにせず、文字のまま出す**。
   `style` 属性は通すが、**外部を読みに行く記法（`url(` / `@import`）を含むものは落とす**。
   段組みは、レンダラー側が**ステップをカードにして縦に1本で積み**（横に並べてZ字に読ませない。
@@ -654,7 +654,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
     解消済み
   - **作業中であることは別の2本が伝える**（どちらも自動の上書きに依存しない）: サイドバーの
     「いま何をしているか」（`runningTools` 由来）と、立ち絵の動き `waiting`
-    （`turnInProgress` 由来。`src/protocol/portrait-motion.ts`）
+    （`turnInProgress` 由来。`src/shared/portrait-motion.ts`）
   - **定数の調整では往復を消せない**と 2026-09-16 の実測で分かっている（ツールの実行時間の
     中央値 1.3〜1.9秒・ターン内の隙間の中央値 3.5〜11.6秒）ので、値をいじる案には戻らない
   - **表情そのものとしての `thinking`（旧 `working`）は残る**（`speak` で場面に合えば選べる。
@@ -683,7 +683,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   領域の中をゆっくり歩く）/ **完了の反応**（ターンが終わると小さく跳ねる。完了の合図も兼ねる）/
   **失敗でびくっ**（ツールが失敗すると一瞬のけぞる）。
   **長いアイドルのふるまい（座る・うとうと）は作らない**（席を外している時間で誰も見ていない）
-- `prefers-reduced-motion: reduce` を尊重する（規則は `src/ui/styles/theme.css` にある）
+- `prefers-reduced-motion: reduce` を尊重する（規則は `src/browser/styles/theme.css` にある）
 
 ### 4.4 キャラクター定義
 

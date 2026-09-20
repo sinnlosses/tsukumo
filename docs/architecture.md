@@ -38,12 +38,12 @@ sed -n '/^#### hookは状態ファイルを書くだけにする/,/^#\{2,4\} /p'
 ## 現在の実装状況
 
 **2026-09-13 に「描く」層をブラウザ側へ移すと決め、同日中に段7まで終えた。** 移行後の形
-（`protocol` / `core` / `ui` の3層、WebSocket 1本のプロトコル、React の部品、unified の
-Markdown、キャラクターパック）の正典は **`docs/design.md`**。**`src/` は `protocol` / `core` /
-`ui` の3層と配線（`src/cli.ts`）だけになった**（旧の `usecase` / `presentation` /
+（`shared` / `core` / `browser` の3層、WebSocket 1本のプロトコル、React の部品、unified の
+Markdown、キャラクターパック）の正典は **`docs/design.md`**。**`src/` は `shared` / `core` /
+`browser` の3層と配線（`src/cli.ts`）だけになった**（旧の `usecase` / `presentation` /
 `infrastructure` は消えた）。**2026-09-16 にサーバ側だけをもう一段割り、外の世界に触る
 ファイルを `src/adapter/` に出した**（`core` は純粋な判断だけになり、`node:` / SDK / `ws` を
-import しない。辺は `adapter ──▶ core ──▶ protocol ◀── ui` で **`core → adapter` は禁止**。
+import しない。辺は `adapter ──▶ core ──▶ shared ◀── browser` で **`core → adapter` は禁止**。
 経緯は `docs/research/architecture-proposal.md`）。以下「採用アーキテクチャ」はこの新しい経路（WebSocket 1本・
 React の部品）を書いている。残るのは段8（キャラクターパック本体の移動・切り替え）と段9
 （セッションの復元）で、これは独立した機能追加として `develop/tasks.json` に別タスクである。
@@ -61,49 +61,49 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 
 **拾うもの・捨てるもの・足すもの**（2026-09-11 の決定。「作り直し前提で始め、使えるものだけ拾う」）:
 
-| 扱い       | もの                                                                                                                                                                                                                    |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **拾う**   | キャラクター定義（`src/protocol/character.ts`）・表情と衣装の対応（`src/protocol/expression.ts`）・レポートの Markdown 化（`src/ui/features/main-view/markdown/markdown.tsx`）・ページと配信（`src/adapter/server.ts`） |
-| **捨てる** | transcript の追従と乗り換え（`src/transcript.ts` / `src/transcript-target.ts`）・hook と状態ファイル（`hooks/state.sh` / `src/state.ts`）・Orca 経由の入力送信とキー送信（**2026-09-12 に撤去済み**）                   |
-| **足す**   | セッション駆動（SDK を起こし、イベントを内部の型に変える）・`speak` の MCP サーバ・入力と回答を受ける WebSocket                                                                                                         |
+| 扱い       | もの                                                                                                                                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **拾う**   | キャラクター定義（`src/shared/character.ts`）・表情と衣装の対応（`src/shared/expression.ts`）・レポートの Markdown 化（`src/browser/features/main-view/markdown/markdown.tsx`）・ページと配信（`src/adapter/server.ts`） |
+| **捨てる** | transcript の追従と乗り換え（`src/transcript.ts` / `src/transcript-target.ts`）・hook と状態ファイル（`hooks/state.sh` / `src/state.ts`）・Orca 経由の入力送信とキー送信（**2026-09-12 に撤去済み**）                    |
+| **足す**   | セッション駆動（SDK を起こし、イベントを内部の型に変える）・`speak` の MCP サーバ・入力と回答を受ける WebSocket                                                                                                          |
 
 ### 各ファイルの責務
 
-**2026-09-13 に段7まで進み、`src/` は新3層（`protocol` / `core` / `ui`）と配線（`cli.ts`）
+**2026-09-13 に段7まで進み、`src/` は新3層（`shared` / `core` / `browser`）と配線（`cli.ts`）
 だけになった**（`docs/design.md` 12章。旧の `domain` / `usecase` / `presentation` /
 `infrastructure` はすべて消えた）。**2026-09-16 に `src/adapter/`（外の世界に触る境界）を
 足した**ので、サーバ側は `core`（判断）と `adapter`（境界）の2つに分かれている。
 
-| ファイル                                                                       | 層         | 責務                                                                                                 |
-| ------------------------------------------------------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------- |
-| `src/protocol/session-event.ts`                                                | protocol   | 内部イベント（判別可能な union）の型と、境界で見る**封筒だけ**のスキーマ                             |
-| `src/protocol/session-state.ts`                                                | protocol   | `SessionState` と `applySessionEvent(state, event, at)`。**サーバとブラウザが同じものを回す**        |
-| `src/protocol/command.ts`                                                      | protocol   | ブラウザ → サーバのコマンド（**zod が正典**）と、許可モード・モデルの値の一覧                        |
-| `src/protocol/frame.ts`                                                        | protocol   | サーバ → ブラウザのフレームと `PROTOCOL_VERSION`。断られた理由の定型文もここ                         |
-| `src/protocol/pending-ask.ts`                                                  | protocol   | 答え待ちの語彙（`PendingAsk` / `Answer`）と、届いた答えの検証                                        |
-| `src/protocol/expression.ts` / `character.ts` / `question.ts` / `utterance.ts` | protocol   | 表情と衣装・キャラクター定義・質問・セリフと詳細の分け方（どれも純粋関数）                           |
-| `src/protocol/task-summary.ts`                                                 | protocol   | `develop/tasks.json` の要約の型と読み取り（ファイルI/Oは持たない）                                   |
-| `src/core/sdk-message.ts`                                                      | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                     |
-| `src/core/session-driver.ts`                                                   | core       | 駆動の契約（`SessionDriver` / `SessionDriverOptions` と既定値）。実装は持たない                      |
-| `src/adapter/sdk-driver.ts`                                                    | adapter    | SDK でセッションを起こし、入力・中断・許可の応答を渡す。**SDK を呼ぶのはここだけ**                   |
-| `src/adapter/fake-driver.ts`                                                   | adapter    | 台本（`test/fixture/fake-session.json`）どおりにイベントを流す偽の駆動                               |
-| `src/core/pending-answer.ts`                                                   | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                       |
-| `src/core/session-manager.ts`                                                  | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                     |
-| `src/core/session-launch.ts`                                                   | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）               |
-| `src/core/character-selection.ts`                                              | core       | 初期パックの順位（指定 > 覚えた値 > 既定）と、知らない名前を既定へ落とす判断                         |
-| `src/adapter/server.ts`                                                        | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                               |
-| `src/core/config.ts`                                                           | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                             |
-| `src/core/port-resolution.ts`                                                  | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                         |
-| `src/adapter/bundle.ts`                                                        | adapter    | `bun build` で `ui/main.tsx` からスクリプトと CSS の1組を作る（成果物をディスクに残さない）          |
-| `src/adapter/bundled-path.ts`                                                  | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く |
-| `src/adapter/character-pack.ts`                                                | adapter    | キャラクターパックの列挙・読み込みと `/character/<file>` が配ってよい1件の判定                       |
-| `src/adapter/task-summary.ts`                                                  | adapter    | `develop/tasks.json` の読み直し。mtime が変わったときだけ `tasks-changed` を起こす                   |
-| `src/adapter/repository-file.ts`                                               | adapter    | 入力欄の `@` 補完に配るパスの列挙。**`git ls-files` を起こすのはここだけ**（失敗したら空）           |
-| `src/core/host.ts`                                                             | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                        |
-| `src/adapter/orca-host.ts`                                                     | adapter    | `src/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                          |
-| `src/ui/main.tsx`                                                              | ui         | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                          |
-| `src/cli.ts`                                                                   | （配線）   | 環境変数の受け取り、起動時の前提チェック、セッションを起こす配線、1回分の `try`/`catch`              |
-| `scripts/open-views.ts`                                                        | （道具）   | 配信中のビューをホストの中に開く。tsukumo 本体からは呼ばれない                                       |
+| ファイル                                                                     | 層         | 責務                                                                                                 |
+| ---------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `src/shared/session-event.ts`                                                | shared     | 内部イベント（判別可能な union）の型と、境界で見る**封筒だけ**のスキーマ                             |
+| `src/shared/session-state.ts`                                                | shared     | `SessionState` と `applySessionEvent(state, event, at)`。**サーバとブラウザが同じものを回す**        |
+| `src/shared/command.ts`                                                      | shared     | ブラウザ → サーバのコマンド（**zod が正典**）と、許可モード・モデルの値の一覧                        |
+| `src/shared/frame.ts`                                                        | shared     | サーバ → ブラウザのフレームと `PROTOCOL_VERSION`。断られた理由の定型文もここ                         |
+| `src/shared/pending-ask.ts`                                                  | shared     | 答え待ちの語彙（`PendingAsk` / `Answer`）と、届いた答えの検証                                        |
+| `src/shared/expression.ts` / `character.ts` / `question.ts` / `utterance.ts` | shared     | 表情と衣装・キャラクター定義・質問・セリフと詳細の分け方（どれも純粋関数）                           |
+| `src/shared/task-summary.ts`                                                 | shared     | `develop/tasks.json` の要約の型と読み取り（ファイルI/Oは持たない）                                   |
+| `src/core/sdk-message.ts`                                                    | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                     |
+| `src/core/session-driver.ts`                                                 | core       | 駆動の契約（`SessionDriver` / `SessionDriverOptions` と既定値）。実装は持たない                      |
+| `src/adapter/sdk-driver.ts`                                                  | adapter    | SDK でセッションを起こし、入力・中断・許可の応答を渡す。**SDK を呼ぶのはここだけ**                   |
+| `src/adapter/fake-driver.ts`                                                 | adapter    | 台本（`test/fixture/fake-session.json`）どおりにイベントを流す偽の駆動                               |
+| `src/core/pending-answer.ts`                                                 | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                       |
+| `src/core/session-manager.ts`                                                | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                     |
+| `src/core/session-launch.ts`                                                 | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）               |
+| `src/core/character-selection.ts`                                            | core       | 初期パックの順位（指定 > 覚えた値 > 既定）と、知らない名前を既定へ落とす判断                         |
+| `src/adapter/server.ts`                                                      | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                               |
+| `src/core/config.ts`                                                         | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                             |
+| `src/core/port-resolution.ts`                                                | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                         |
+| `src/adapter/bundle.ts`                                                      | adapter    | `bun build` で `browser/main.tsx` からスクリプトと CSS の1組を作る（成果物をディスクに残さない）     |
+| `src/adapter/bundled-path.ts`                                                | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く |
+| `src/adapter/character-pack.ts`                                              | adapter    | キャラクターパックの列挙・読み込みと `/character/<file>` が配ってよい1件の判定                       |
+| `src/adapter/task-summary.ts`                                                | adapter    | `develop/tasks.json` の読み直し。mtime が変わったときだけ `tasks-changed` を起こす                   |
+| `src/adapter/repository-file.ts`                                             | adapter    | 入力欄の `@` 補完に配るパスの列挙。**`git ls-files` を起こすのはここだけ**（失敗したら空）           |
+| `src/core/host.ts`                                                           | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                        |
+| `src/adapter/orca-host.ts`                                                   | adapter    | `src/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                          |
+| `src/browser/main.tsx`                                                       | browser    | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                          |
+| `src/cli.ts`                                                                 | （配線）   | 環境変数の受け取り、起動時の前提チェック、セッションを起こす配線、1回分の `try`/`catch`              |
+| `scripts/open-views.ts`                                                      | （道具）   | 配信中のビューをホストの中に開く。tsukumo 本体からは呼ばれない                                       |
 
 - **`utterance.ts` はファイルI/Oを持たない。** 入力は文字列だけなので、フィクスチャの文字列で
   そのままテストできる
@@ -131,8 +131,8 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 要点だけ書く。
 
 tsukumo は**1つのプロセス**で、Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を
-子プロセスとして起こし、受け取ったイベントを `protocol` の型で `core` が畳み、WebSocket 1本で
-`ui`（ブラウザの React の部品）へ配る。**Claude Code の TUI は開かない**ので、利用者が見るのは
+子プロセスとして起こし、受け取ったイベントを `shared` の型で `core` が畳み、WebSocket 1本で
+`browser`（ブラウザの React の部品）へ配る。**Claude Code の TUI は開かない**ので、利用者が見るのは
 tsukumo の画面だけになる。
 
 データの流れは3本ある。
@@ -156,22 +156,23 @@ tsukumo の画面だけになる。
 
 ## 新しいコードを置く場所
 
-**新しいコードは `src/protocol/` / `src/core/` / `src/adapter/` / `src/ui/` に置く**
-（`docs/design.md` 2章）。**外の世界（SDK・HTTP/WebSocket・ホスト・ファイル・子プロセス）に
-触るなら `src/adapter/`、触らない判断なら `src/core/`。**
+**新しいコードは `src/shared/` / `src/core/` / `src/adapter/` / `src/browser/` に置く**
+（`docs/design.md` 2章）。**層の名前は「どの実行環境で動くか」を表す**（2026-09-20。
+`docs/research/architecture-placement.md`）。**外の世界（SDK・HTTP/WebSocket・ホスト・ファイル・
+子プロセス）に触るなら `src/adapter/`、触らない判断なら `src/core/`。**
 
 ディレクトリの割り当ては次のとおり。
 
-| 置き場所        | 何を置くか                                                                           |
-| --------------- | ------------------------------------------------------------------------------------ |
-| `src/`          | tsukumo 本体。`src/cli.ts` が CLI の入口（配線）                                     |
-| `src/protocol/` | 語彙・イベント・状態・畳み込み・コマンドとフレーム。**両側が読む契約**               |
-| `src/core/`     | サーバ側の純粋な判断。`node:` / SDK / `ws` を import しない                          |
-| `src/adapter/`  | 外の世界に触る境界。1ファイル = 1つの境界（SDK・HTTP・fs・子プロセス）               |
-| `src/ui/`       | ブラウザ側の React の部品。中は `features/` `components/` `lib/` `stores/` `styles/` |
-| `test/`         | テスト。`src/<相対パス>.ts` → `test/<相対パス>.test.ts` で対応させる                 |
-| `characters/`   | キャラクター定義とサンプル素材                                                       |
-| `scripts/`      | 開発・調査用のスクリプト。本体から呼ばれない                                         |
+| 置き場所       | 実行場所         | 何を置くか                                                                           |
+| -------------- | ---------------- | ------------------------------------------------------------------------------------ |
+| `src/`         | —                | tsukumo 本体。`src/cli.ts` が CLI の入口（配線。サーバで動く）                       |
+| `src/shared/`  | サーバとブラウザ | 語彙・イベント・状態・畳み込み・コマンドとフレーム。**両側が読む契約**               |
+| `src/core/`    | サーバ（Bun）    | サーバ側の純粋な判断。`node:` / SDK / `ws` を import しない                          |
+| `src/adapter/` | サーバ（Bun）    | 外の世界に触る境界。1ファイル = 1つの境界（SDK・HTTP・fs・子プロセス）               |
+| `src/browser/` | ブラウザ         | ブラウザ側の React の部品。中は `features/` `components/` `lib/` `stores/` `styles/` |
+| `test/`        | —                | テスト。`src/<相対パス>.ts` → `test/<相対パス>.test.ts` で対応させる                 |
+| `characters/`  | —                | キャラクター定義とサンプル素材                                                       |
+| `scripts/`     | —                | 開発・調査用のスクリプト。本体から呼ばれない                                         |
 
 **`scripts/` は本体から呼ばれない調査用の道具置き場**（端末の実測幅を測るプローブなど）。
 `src/` に混ぜると「tsukumo が動くのに必要なもの」と区別がつかなくなる。
@@ -182,9 +183,9 @@ tsukumo の画面だけになる。
 - **原則1**: **Claude Code の TUI を使わない。** TUI には割り込めないので、パイプ・hook の
   stdout・本体へのパッチを経路にせず、SDK で動かす側に回る。理由は
   `docs/requirements.md`「3. 技術制約」
-- **原則2**: **両側で共有する契約（`protocol`）／サーバ（`core` と `adapter`）／
-  クライアント（`ui`）に分け、層をディレクトリで表す**（詳細と理由の正典は
-  `docs/design.md` 2章）。`protocol` に置くのは両側の契約と、`SessionState` から純粋に導ける
+- **原則2**: **両側で共有する契約（`shared`）／サーバ（`core` と `adapter`）／
+  クライアント（`browser`）に分け、層をディレクトリで表す**（詳細と理由の正典は
+  `docs/design.md` 2章）。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
   ものだけで、「受け取る／決める／描く」という役割の分割ではない。**サーバ側は判断（`core`）と
   外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `cli.ts`
   だけ）。**許した依存の辺以外は `test/architecture.test.ts` が落とす**
@@ -197,7 +198,7 @@ tsukumo の画面だけになる。
 - **原則5**: 1ファイルにまとめるか分けるかは、行数でも関数の数でもなく
   「**ファイル名が概念になっているか**」で決める。`helpers` / `utils` / `common` のような
   **置き場所を名前にしたファイルは作らない**。**ファイルは単数形**にし、複数は「複数返す」
-  関数名の側で表す（`readTaskSummaries`）。**ディレクトリも単数形。ただし `src/ui/` の置き場所
+  関数名の側で表す（`readTaskSummaries`）。**ディレクトリも単数形。ただし `src/browser/` の置き場所
   （`features/` `components/` `lib/` `stores/` `styles/`）だけは bullet-proof-react の名前を
   そのまま使う**（2026-09-16。箱ごとに何を置くか・何を採らなかったかは `docs/design.md` 2章）
 
@@ -323,12 +324,12 @@ Chart.js）を使うことにした（2026-09-10 のユーザーの決定。2026
 外部スクリプトはそのページの中身を読めるうえ、表示のたびに外部へリクエストが飛ぶ。
 ローカルの HTTP サーバ（`127.0.0.1`）から配れば、**機能はそのまま・表示時の外部通信はゼロ**に
 できる。配る名前は allowlist の対応表で、リクエストのパスからファイル名を組み立てない
-（`..` で外へ出る経路を作らない。`src/protocol/vendor-asset.ts` と `src/adapter/server.ts`）。
+（`..` で外へ出る経路を作らない。`src/shared/vendor-asset.ts` と `src/adapter/server.ts`）。
 
 **実ファイルは `node_modules` から読む**（2026-09-20。ユーザーの指示「外部ライブラリは
 package.json に定義したり」で、cdnjs から落としたものを `vendor/` に置く形をやめた）。
 名前が `node_modules` のどのファイルを指すかは `src/adapter/vendor-asset.ts` の対応表1つが持ち、
-`src/protocol/` には名前と Content-Type しか置かない（パス解決は外の世界に触る仕事なので
+`src/shared/` には名前と Content-Type しか置かない（パス解決は外の世界に触る仕事なので
 adapter 側）。**mermaid と chart.js は `package.json` で版を固定する**（`^` を付けない）。素の
 JavaScript をそのままブラウザへ配っていて描けるかどうかは目で見るまで分からず、mermaid の版は
 `src/core/report-notation.ts` が挙げる図の10種の根拠でもあるため。highlight.js のテーマだけは
@@ -647,7 +648,7 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 
 #### 層をディレクトリで表し、依存の向きをテストで縛る
 
-> **層の割り方は 2026-09-13 の移行で `protocol` / `core` / `ui` の3つに変わり、2026-09-16 に
+> **層の割り方は 2026-09-13 の移行で `shared` / `core` / `browser` の3つに変わり、2026-09-16 に
 > サーバ側が `core` と `adapter` に割れた**（`docs/design.md` 2章）。
 > 「層をディレクトリで表し、辺をテストで落とす」という考え方はそのまま。
 
@@ -677,7 +678,7 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 （いまは `adapter/sdk-driver.ts`）、という境界（原則3）はそのまま生きる。
 
 **ディレクトリもファイルも単数形にする。** 複数は「複数返す」関数名の側で表す
-（`readTaskSummaries`）。**このうちディレクトリの側は 2026-09-16 に `src/ui/` だけ例外にした**
+（`readTaskSummaries`）。**このうちディレクトリの側は 2026-09-16 に `src/browser/` だけ例外にした**
 （上の原則5）。この規則に合っていなかった2つは改名する:
 `tasks.ts` → `task-summary.ts`、`bundled-files.ts` → `bundled-path.ts`（中身は同梱物の
 **置き場所を解く**関数2つで、ファイルそのものは扱っていない）。

@@ -1,5 +1,5 @@
 // ブラウザへそのまま配る外部ライブラリ（npm の依存）の実ファイルを読む。**`node_modules` の
-// どのファイルを指すかを知っているのはここだけ**で、`src/protocol/vendor-asset.ts` は配る名前と
+// どのファイルを指すかを知っているのはここだけ**で、`src/shared/vendor-asset.ts` は配る名前と
 // Content-Type しか持たない（原則2・原則3。パス解決は外の世界に触る仕事）。
 //
 // **束ね（`src/adapter/bundle.ts`）には入れない。** mermaid だけで 3.3MB あり、入れると
@@ -13,7 +13,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { VENDOR_ASSET_CONTENT_TYPES } from "../protocol/vendor-asset.ts"
+import { VENDOR_ASSET_CONTENT_TYPES } from "../shared/vendor-asset.ts"
 import { bundledFilePath } from "./bundled-path.ts"
 
 /** 依存の置き場。tsukumo 自身の場所の直下にある（`bun install` が作るもの）。 */

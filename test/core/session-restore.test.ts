@@ -3,7 +3,7 @@ import { describe, expect, it } from "bun:test"
 import { sessionTag } from "../../src/core/config.ts"
 import { SPEAK_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../src/core/sdk-message.ts"
 import { selectSessionToResume, toRestoredEvents } from "../../src/core/session-restore.ts"
-import { type Expression } from "../../src/protocol/expression.ts"
+import { type Expression } from "../../src/shared/expression.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない

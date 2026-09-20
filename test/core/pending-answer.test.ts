@@ -5,7 +5,7 @@ import {
   type AskRequest,
   type PendingAnswerHandlers,
 } from "../../src/core/pending-answer.ts"
-import { type PendingAsk } from "../../src/protocol/pending-ask.ts"
+import { type PendingAsk } from "../../src/shared/pending-ask.ts"
 
 /** 合図を見ないときの受け口。 */
 function noHandlers(): PendingAnswerHandlers {

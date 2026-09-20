@@ -1,12 +1,12 @@
 // `bun run check` の `bun test` の前に1回だけ読まれる（`bunfig.toml` の `preload`）。
-// `src/ui/` の部品テスト（`@testing-library/react`）が要る DOM のグローバルを用意する。
+// `src/browser/` の部品テスト（`@testing-library/react`）が要る DOM のグローバルを用意する。
 //
 // **`happy-dom` の `Window` が持つ全部を `globalThis` へコピーしない。** `fetch` / `WebSocket` /
 // `setTimeout` / `console` まで happy-dom のものに差し替わると、実際の HTTP・WebSocket を使う
 // 他のテスト（`test/adapter/server.test.ts` など）が巻き添えになる。**DOM を組み立てる部品だけを
 // 借りる。**（`bun test --isolate` でテストファイルごとにプロセスが分かれるようになった今も、
 // 1ファイルの中では同じ `globalThis` を共有するので、借りる範囲は絞ったままにする。
-// `--isolate` を付けている理由は `package.json` と `test/ui/main-view/report.test.tsx`）
+// `--isolate` を付けている理由は `package.json` と `test/browser/features/main-view/report.test.tsx`）
 //
 // `@happy-dom/global-registrator`（this 一式を1関数でやってくれる別パッケージ）は使わない
 // （`docs/design.md` 11章の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。
@@ -51,11 +51,11 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "getComputedStyle",
   "requestAnimationFrame",
   "cancelAnimationFrame",
-  // `src/ui/features/layout/split.ts` 系（利用者の設定を `localStorage` に持つモジュール）のテストが
+  // `src/browser/features/layout/split.ts` 系（利用者の設定を `localStorage` に持つモジュール）のテストが
   // 要る。DOM を組み立てる部品ではないが、他のテスト（`fetch` / `WebSocket` を使うもの）には
   // 影響しない値の保管場所なので、ここに含めてよい。
   "localStorage",
-  // `src/ui/features/character-screen/character-edit.tsx`（選んだ立ち絵を data URL にする）のテストが要る。
+  // `src/browser/features/character-screen/character-edit.tsx`（選んだ立ち絵を data URL にする）のテストが要る。
   // **2つセットで借りる** — 片方だけ差し替えると `FileReader` が相手の `Blob` を受け取れない。
   "File",
   "FileReader",

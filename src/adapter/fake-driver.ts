@@ -13,8 +13,8 @@ import { fileURLToPath } from "node:url"
 import { z } from "zod"
 
 import { type SessionDriver } from "../core/session-driver.ts"
-import { type Answer, type PendingAsk } from "../protocol/pending-ask.ts"
-import { type SessionEvent, sessionEventSchema } from "../protocol/session-event.ts"
+import { type Answer, type PendingAsk } from "../shared/pending-ask.ts"
+import { type SessionEvent, sessionEventSchema } from "../shared/session-event.ts"
 
 /** 既定の台本。tsukumo 自身の場所から解く（cwd に依存させない）。 */
 const DEFAULT_SCRIPT_URL = new URL("../../test/fixture/fake-session.json", import.meta.url)

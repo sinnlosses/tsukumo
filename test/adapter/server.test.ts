@@ -11,16 +11,16 @@ import {
   type ViewServer,
 } from "../../src/adapter/server.ts"
 import { type DispatchResult } from "../../src/core/session-manager.ts"
-import { type ClientCommand } from "../../src/protocol/command.ts"
+import { type ClientCommand } from "../../src/shared/command.ts"
 import {
   FRAME_ERROR_REASON,
   parseServerFrame,
   PROTOCOL_VERSION,
   type ServerFrame,
-} from "../../src/protocol/frame.ts"
-import { REPOSITORY_FILE_PATH } from "../../src/protocol/repository-file.ts"
-import { SESSION_SOCKET_PATH } from "../../src/protocol/session-socket.ts"
-import { INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
+} from "../../src/shared/frame.ts"
+import { REPOSITORY_FILE_PATH } from "../../src/shared/repository-file.ts"
+import { SESSION_SOCKET_PATH } from "../../src/shared/session-socket.ts"
+import { INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
 
 // 会話は流さない（フレームの中身は初期状態と架空のセリフだけ）。
 const TOKEN = createStartupToken()

@@ -9,10 +9,7 @@ import {
   MAX_PORTRAIT_FILES_PER_PACK,
 } from "../../src/adapter/character-edit.ts"
 import { listCharacterPacks, readCharacterPack } from "../../src/adapter/character-pack.ts"
-import {
-  type CharacterCreateCommand,
-  type CharacterEditCommand,
-} from "../../src/protocol/command.ts"
+import { type CharacterCreateCommand, type CharacterEditCommand } from "../../src/shared/command.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
 const DEFINITION_JSON = JSON.stringify({

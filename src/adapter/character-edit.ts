@@ -4,11 +4,11 @@
 // 読む側は `src/adapter/character-pack.ts`。
 //
 // **ディレクトリ名になる名前だけは外から受け取る**（新しいパックを作るときの `<name>`）ので、
-// 形は境界（`src/protocol/character.ts` の `isCharacterPackName`）で見てある。ここは**既にある
+// 形は境界（`src/shared/character.ts` の `isCharacterPackName`）で見てある。ここは**既にある
 // 名前とぶつかったら書かない**ことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
 //
 // **ファイル名を外から受け取らない。** 立ち絵の名前は表情と形式から組み立てる
-// （`src/protocol/portrait-image.ts` の `portraitFileName`）ので、届いた文字列がパスの一部に
+// （`src/shared/portrait-image.ts` の `portraitFileName`）ので、届いた文字列がパスの一部に
 // なる経路がそもそも無い。
 //
 // **書き込む前に、いま出しているパックをホームへ丸ごと写す**（同梱のパックを直さないため）。
@@ -37,10 +37,10 @@ import {
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
-} from "../protocol/character.ts"
-import { type CharacterCreateCommand, type CharacterEditCommand } from "../protocol/command.ts"
-import { type Expression, type RequiredExpression } from "../protocol/expression.ts"
-import { parsePortraitImage, portraitFileName } from "../protocol/portrait-image.ts"
+} from "../shared/character.ts"
+import { type CharacterCreateCommand, type CharacterEditCommand } from "../shared/command.ts"
+import { type Expression, type RequiredExpression } from "../shared/expression.ts"
+import { parsePortraitImage, portraitFileName } from "../shared/portrait-image.ts"
 import {
   type CharacterPack,
   CHARACTER_DEFINITION_FILE_NAME,
@@ -93,7 +93,7 @@ export function editCharacterPack(
  * - ディスクに書けない（**書きかけのディレクトリは消す**ので、欠けたパックは残らない）
  *
  * **`default` の1枚があることは境界で済んでいる**
- * （`src/protocol/command.ts` の `portraits` が required）。ここは書く順だけを守る:
+ * （`src/shared/command.ts` の `portraits` が required）。ここは書く順だけを守る:
  * 素材 → 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、
  * パックとして一覧に出ない。
  */
@@ -158,7 +158,7 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
       return true
     }
     case "set-portrait": {
-      // 検証は境界（`src/protocol/command.ts` の `portraitDataUrlSchema`）で済んでいるので、
+      // 検証は境界（`src/shared/command.ts` の `portraitDataUrlSchema`）で済んでいるので、
       // ここで undefined になるのは配線の誤りのときだけ。型を迂回せずほどくために、もう一度
       // 同じ関数を通す。
       const image = parsePortraitImage(edit.image)

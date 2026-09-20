@@ -16,7 +16,7 @@ export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** `1` で復元せず新規に起こす（docs/requirements.md 4.8 の「逃げ道」）。 */
 export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
-/** `1` で `src/ui/` を見張り、変更のたびに組み立て直す（開発中だけ。docs/design.md 11章）。 */
+/** `1` で `src/browser/` を見張り、変更のたびに組み立て直す（開発中だけ。docs/design.md 11章）。 */
 export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
 
 /** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */
@@ -46,7 +46,7 @@ export type Config = {
   readonly fakeScene: string | undefined
   readonly newSession: boolean
   /**
-   * `src/ui/` を見張って組み立て直すか。**既定は見張らない。** `tsukumo` は `bun link` で
+   * `src/browser/` を見張って組み立て直すか。**既定は見張らない。** `tsukumo` は `bun link` で
    * リポジトリを指しているので普段使いと開発が同じ経路になり、常に入れると仕事中の保存で
    * ページが読み込み直されうる（docs/design.md 11章）。
    */

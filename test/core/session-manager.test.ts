@@ -2,13 +2,10 @@ import { describe, expect, it } from "bun:test"
 
 import { type SessionDriver } from "../../src/core/session-driver.ts"
 import { createSessionManager } from "../../src/core/session-manager.ts"
-import {
-  type CharacterCreateCommand,
-  type CharacterEditCommand,
-} from "../../src/protocol/command.ts"
-import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../src/protocol/frame.ts"
-import { type SessionEvent } from "../../src/protocol/session-event.ts"
-import { INITIAL_SESSION_STATE } from "../../src/protocol/session-state.ts"
+import { type CharacterCreateCommand, type CharacterEditCommand } from "../../src/shared/command.ts"
+import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../src/shared/frame.ts"
+import { type SessionEvent } from "../../src/shared/session-event.ts"
+import { INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
 
 // 台本もセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"

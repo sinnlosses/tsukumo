@@ -3,7 +3,7 @@
 // `tasks-changed` イベントに変えて、他のセッションのイベントと同じ経路へ流す。
 //
 // develop/tasks.json はセッションに依存しない、tsukumo 自身の進捗管理ファイルなので、
-// **cwd 相対**で読む。中身の解釈は src/protocol/task-summary.ts の `readTaskSummaries` の仕事で、
+// **cwd 相対**で読む。中身の解釈は src/shared/task-summary.ts の `readTaskSummaries` の仕事で、
 // ここは読み直すかどうかの判断とファイルの読み取りだけを持つ。
 //
 // **`fs.watch` は使わない**（macOS でも取りこぼすことがある。2026-09-13 決定）。ポーリングで
@@ -12,7 +12,7 @@
 import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-import { readTaskSummaries, type TaskSummaryItem } from "../protocol/task-summary.ts"
+import { readTaskSummaries, type TaskSummaryItem } from "../shared/task-summary.ts"
 
 const TASKS_FILE_RELATIVE_PATH: readonly string[] = ["develop", "tasks.json"]
 
