@@ -2,6 +2,11 @@
 // 300px ほどしかなく要約が2〜3行に折り返すので、**一覧を見渡すのは画面いっぱいの表**に任せる
 // （docs/requirements.md 4.2）。列は `/list-tasks` が出す表に揃える。
 //
+// **狭い画面では、この表が1タスク＝1枚のカードに組み替わる**（docs/requirements.md 4.7）。
+// 組み替えるのは CSS（sidebar.module.css の @media）だけで、**ここは幅を測らず表のまま書く**。
+// 見出しの行が隠れるぶん意味が読み取れなくなるセルにだけ `data-label` を持たせ、CSS が
+// `::before` でラベルを出す（ID・status・要約は値そのもので分かるので持たせない）。
+//
 // **`<dialog>` の `showModal()` を使う**。
 // Esc で閉じるのと、閉じたときにフォーカスを開く口へ戻すのはブラウザのモーダル挙動に任せ、
 // 外側（backdrop）のクリックだけを自前で拾う。**`<dialog>` は top layer に出る**ので、
@@ -136,9 +141,11 @@ function TaskRow(props: {
       </th>
       <td>{props.task.status ?? "—"}</td>
       <td>{props.task.difficulty ?? "—"}</td>
-      <td>{loopableMark(props.task.loopable)}</td>
-      <td>{props.task.dependencies.length === 0 ? "—" : props.task.dependencies.join(", ")}</td>
-      <td>
+      <td data-label="loopable">{loopableMark(props.task.loopable)}</td>
+      <td data-label="依存">
+        {props.task.dependencies.length === 0 ? "—" : props.task.dependencies.join(", ")}
+      </td>
+      <td data-label="着手">
         <ReadinessCell readiness={taskReadiness(props.task, props.unfinishedTaskIds)} />
       </td>
       <td>{props.task.summary}</td>

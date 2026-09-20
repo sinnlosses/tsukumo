@@ -71,6 +71,23 @@ describe("TaskBoard", () => {
     ])
   })
 
+  // 狭い画面では見出しの行が隠れてカードになる（sidebar.module.css の @media）。そのとき
+  // 値だけでは意味が取れないセルのラベルは `data-label` から出すので、ここが消えると
+  // カードの「依存」「着手」が名無しの値になる。
+  it("見出しが隠れても読めるよう、意味が取れないセルは data-label を持つ", () => {
+    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+
+    const cells = document.querySelectorAll(".task-board-row")[1]?.querySelectorAll("td")
+    expect(Array.from(cells ?? []).map((cell) => cell.getAttribute("data-label"))).toEqual([
+      null,
+      null,
+      "loopable",
+      "依存",
+      "着手",
+      null,
+    ])
+  })
+
   it("全件をファイルの順で出し、done も薄く出すクラス付きで残す", () => {
     render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
 
