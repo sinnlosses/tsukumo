@@ -15323,3 +15323,394 @@ tsukumo 側で落とすようにした件）。
 - tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと並行させない
 - `docs/` の節の索引の罠に注意
 - コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-237
+
+**タスク**: 雑談のセッションを仕事と分け、画面のログも claude の文脈も両側で分離する
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+印を `tsukumo:<パック名>` / `tsukumo:<パック名>:chat` に分け、`findResumeSession` にモードを通した。実機実測（本物の claude・空の cwd・Chrome 1400x900・`[data-speaker]` と `[data-region="main"]` を計数）: 仕事1ターン後=メイン3区画/65文字・ログ0件 → 雑談へ=ログ0件（仕事の会話は並ばない） → 雑談1ターン後=3件（利用者1/セリフ2） → 仕事へ=3区画/65文字（場面1と一致・ログ0件） → 雑談へ=3件（場面3と一致）。transcript も2本に分かれた。
+論点2は受け入れ（初回の雑談はログが空から始まる。印を早める手は本体がターンの終わりに書く要約に消される — `SESSION_TAG_DELAY_MS` の 2026-09-13 実測）。論点3・4は印を分けた時点で閉じ、`SessionState` は `restart` で捨てて resume から組み直す形のまま。却下: 画面だけ分ける案・雑談に入った時刻で切る案は、どちらも claude 側の文脈が仕事のまま残り口調と話題が引かれる。
+`bun run check` 876 pass / 0 fail（変更前 872。新しく5件足し、うち既存と同じ入力分岐を通す1件は規約「消すかどうか」に従って落としたので差し引き +4）。`grep -c '^#\{2,3\} '` は requirements 28 / design 53 で前後一致。
+
+## 背景
+
+`src/server/core/config.ts` の `sessionTag` は **`tsukumo:<パック名>` だけ**で、
+**雑談かどうかを区別しない**。雑談への切り替えは起こし直しで
+（`src/server/core/session-manager.ts` の `restart` → `src/server/core/session-launch.ts` の
+`findResumeSession`）、**同じ印のセッションが見つかればそれを resume する**。
+
+つまり**雑談へ入ると仕事のセッションを resume し、その transcript が雑談のログとして並ぶ**。
+`src/shared/chat-log.ts` の `chatLogEntries` が拾うのは `request` と `speech` の2種類なので、
+レポートやツールは落ちるが、**仕事中の依頼文とセリフはそのまま雑談のログに出る**。
+ユーザーが別のセッションを立ち上げたときにこれを目撃している（2026-09-20）。
+
+**もう1つ分かっていること**: 印は `turn-finished` の3秒後にしか付かない
+（`src/server/adapter/sdk-driver.ts`）。そのパックでターンを1つも終えていなければ resume は
+見つからず、雑談へ入った時点でログは空になる。
+
+## 決まっていること（蒸し返さない）
+
+- 仕事の会話が雑談のログに並ぶのは**直す**（2026-09-20 ユーザー指示「ここは分離したほうが
+  良さそう」）
+- 分け方は**セッションの印を分け、claude 側の文脈ごと切る**（2026-09-20 ユーザー決定）。
+  画面だけ分ける案・雑談に入った時刻より後だけ並べる案は採らない
+- **両側で分ける**。仕事へ戻ったときも、雑談の会話をメインビューに出さない（同）
+- この決定は `docs/requirements.md` 4.9 の「会話は `resume` で続くので、雑談に入ってからも
+  直前までのやり取りを踏まえて話せる」を**覆す**。4.9 は書き換えてよい
+
+## 解くべき論点
+
+1. **印の形**（`tsukumo:<パック名>:chat` でよいか）。`config.ts` の `sessionTag` の組み立てを
+   モード込みにする
+2. 印が分かれると **resume の探索も分かれる**。雑談で一度もターンを終えていないうちは
+   resume が見つからずログが空から始まる。これを受け入れるか、印を付ける時機を早めるか
+3. モードを切り替えるたびに起こし直しが走る。**雑談⇄仕事の往復で、それぞれが自分の側の
+   セッションへ戻れること**をどう保証するか（`findResumeSession` が印で引く）
+4. `SessionState` の記録は起こし直しでリセットされる（`restart` が `INITIAL_SESSION_STATE` に
+   戻す）。両側の記録を同時に持つのか、切り替えのたびに捨てて resume から組み直すのか
+
+## やること
+
+1. `docs/requirements.md` 4.9 と `docs/design.md` 13.7 を上の決定に合わせて書き換える
+   （「直前までのやり取りを踏まえて話せる」を外し、文脈ごと分ける理由を書く）
+2. `src/server/core/config.ts` の `sessionTag` をモード込みにし、
+   `src/server/core/session-launch.ts` の `findResumeSession` が雑談と仕事で別の印を引くようにする
+3. 論点2〜4 を実装しながら決め、結論を `evidence` に書く
+
+## 完了条件
+
+- 実機で雑談へ切り替えたあとのログに**仕事の会話が並ばない**ことを測って `evidence` に書く
+  （件数と要素の種類だけ。会話の中身は写さない）
+- 仕事へ戻ったあとのメインビューに**雑談の会話が並ばない**ことも測る
+- 雑談→仕事→雑談と往復して、**それぞれのログが自分の側の履歴に戻る**ことを測る
+- `docs/requirements.md` 4.9 が新しい決定を書いている（覆した旨も含む）
+- 却下した案（画面だけ分ける／時刻で切る）とその理由が `evidence` に残っている
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- `grep -c '^#\{2,3\} ' docs/requirements.md docs/design.md` が編集の前後で合う
+
+## 注意
+
+- **`TSUKUMO_DRIVER=fake` では `findPackSessionToResume` が常に `undefined` を返す**ので、
+  resume の経路そのものが走らない。実測には本物の claude が要る。**本物を起こすなら
+  ユーザーに確認してから**
+- **会話の中身を写さない**（`CLAUDE.md`「会話内容の扱い」）。件数と要素の位置だけを書く
+- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと並行させない
+- `docs/` の節の索引の罠に注意（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-245
+
+**タスク**: 過去の吹き出しが毎回上へ押し上げられて見えるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+key を位置（`newestFirst` の index）から**古い側から数えた通し番号**へ変えた。`speeches` は末尾へ積むだけなので、増えても既存のセリフの番号が変わらず、自分の DOM ノードを保ったまま `:first-child` から外れる瞬間が起きる（＝`animation-name` が `balloon-appear` → `balloon-push-up` へ変わり再生される）。**`shared` は触っていない。**押し上げ量 `translateY(2.75rem)` は当て推量のまま（既存の割り切りを維持）。\n目視（headless Chrome、`TSUKUMO_DRIVER=fake`、ポート 7434-7437）: **`animationstart` のタイムスタンプ列で実測**し、新着の `balloon-appear` と直前の1件の `balloon-push-up` が両方発火することを確認（100ms 連続・2秒間隔の両方）。1件だけのとき・プレースホルダのときも壊れず、尻尾（`::before` の `borderRightColor` が `--accent`）は全ケースで最新の吹き出しに付いたまま。\n**制約が1つ残る**: 2つ以上前へ落ちる吹き出しは `animation-name` の値が変わらないので再生されない（最終位置は正しく動くが揺れて見えない）。揺れるのは「直前まで最新だった1件」だけ。CSS のコメントに実測として明記した。`bun run check` 847 → **848 pass** / 0 fail（回帰テスト1件）。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「キャラ画面の吹き出しは新しい吹き出しの登場時はアニメーションにして
+上にスライドするようにフェードイン、過去の吹き出しも上にスライドするようにするとリッチで良さそう」。
+
+**新着のフェードインは既に効いている**（`balloon-appear 0.3s ease-out`。
+`src/browser/features/character-view/character-view.module.css:107`）。
+**押し上げ（`balloon-push-up 0.3s ease-out`、同:158）が効いていない**——同日に実機で
+`speak` を3回続けて確かめ、ユーザーの観測は「押し上げられず、ポンと出てくるように見える」。
+
+**原因は key**: `src/browser/features/character-view/balloon-track.tsx` が
+`newestFirst.map((speech, index) => <Balloon key={index} …>)` と**位置ベースの key** を使う。
+セリフが増えると同じ位置の DOM ノードが中身だけ差し替わって再利用されるため、
+`.balloon:not(:first-child)` に当たる要素は**新しくマウントされず、CSS アニメーションが
+再生されない**。CSS のコメント（同:160 以降）もこの制約を既に認めている。
+
+**押し上げ量は当て推量**（`translateY(2.75rem)` = 最新の吹き出し1つぶんの見積もり）なので、
+セリフが長いと実際の高さとずれる。
+
+## 解くべき論点
+
+1. **key を何にするか。** セリフの文字列は重複しうる（同じ一言を二度言う）ので、そのままでは
+   key にできない。**サーバから届く `SessionState.speeches` は文字列の配列**
+   （`src/shared/` 側）なので、識別子を増やすなら層をまたぐ変更になる。
+   **ブラウザ側だけで解ける手**（並びの古い側から数える key にして、増えても既存の要素の key が
+   変わらないようにする）を先に検討する
+2. **押し上げ量の当て推量をそのまま残すか。** ずれても「動きの向きが伝わればよい」という
+   既存の割り切りを維持するか、実寸に合わせるか（後者は測定が要る）
+
+## やること
+
+1. `balloon-track.tsx` の key を、**吹き出しが増えても既存の要素の key が変わらない**形に直す
+   （論点1）
+2. 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）で `speak` を3回以上続け、
+   **過去の吹き出しが上へ動いて薄くなる**ことを目視で確かめる
+3. 押し上げ量を直した場合は、その根拠を `evidence` に書く
+4. `character-view.module.css` の「毎回再生されるとは限らない」旨のコメントを、直した後の
+   実態に合わせて書き換える
+
+## 完了条件
+
+- 実機で `speak` を3回以上続け、**新着のフェードインと過去の押し上げが両方見える**ことを
+  目視で確かめ、どの端末で何が見えたかを `evidence` に書く
+- 吹き出しが1件だけのとき・プレースホルダのときに壊れていないことを確かめる
+- `.balloon:first-child` の尻尾（`::before` / `::after`）が最新の吹き出しに付いたままであることを
+  確かめる
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`shared` の `SessionState.speeches` の形を変えない**で済むなら変えない（層をまたぐため）
+- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと並行させない
+- コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-246
+
+**タスク**: 雑談で出たプロフィールを persona.md に書き戻す形を決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+**線引き（論点1）: キャラクター自身の設定だけ。利用者について知ったことは書かない。** 書いてよいのは3条件を全部満たす1行だけ（主語がキャラクター自身 / 次のセッションでも成り立つ属性 / 会話の文面を写していない）。規約と衝突しない根拠: `persona.md` は 2.2 が**キャラクター素材**に数えており（同梱パックに「好きなもの」節が既にコミットされている）、そこに入る種類の情報はもともと会話ではなく素材として扱われている。\n**tsukumo 側に会話を解析する経路を作らない**のが設計の決定打: キャラクター自身が MCP ツールを呼び（引数は1行の文字列1つ、戻り値は `\"ok\"` だけ）、**雑談モードのときだけツールを載せる**。書き先は `~/.tsukumo/characters/<pack>/persona.md` の末尾の `## 覚えたこと` 節のみで、**節より前は1バイトも触らない**。上限は 1ターン1行 / 120文字 / 20行FIFO。戻す手は「節を消す」「ホームのパックごと消す」の2つで、バックアップは作らない（会話をきっかけに書いたものの複製を増やさない）。\n却下: 利用者について書く（禁止の中心）/ 同梱パックへ書く（作業ツリーが汚れる）/ tsukumo が会話を見て判定（正面衝突）/ 別のモデルに抜き出させる（2.2 が対象外と明記）/ 仕事のときもツールを出す（プロジェクトの事情が人格に入る）/ 既存の節へ挟み込む（構造が崩れる）/ 上限で書くのをやめる（古い1行が居座る）。`bun run check` 848 pass / 0 fail、節の数は requirements 28 → 28・design 53 → 53、`git status --porcelain -- src test characters` は空。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「雑談モードで、プロフィールに関わることをやり取りしたら
+persona.md を自動で更新する仕組みにしたい」。**決めるところまで**がこのタスクで、実装は T-247。
+
+**いまの persona.md**: キャラクターパックの中身（`characters/<pack>/persona.md`）で、
+読むのは `src/server/adapter/character-pack.ts`（`PERSONA_FILE_NAME` / `readCharacterPack`）。
+`systemPrompt` の append として毎ターン渡る（同ファイル 162 行目付近）。
+**同梱パックは3つ**（`characters/tsukumo` / `characters/tsukumo-spirit` / `characters/local`）で、
+`characters/tsukumo/persona.md` には既に「好きなもの」節がある（食べ物・季節・色・動物・音楽・本）。
+
+**書き込みの口は既にある**: `src/server/adapter/character-edit.ts` が立ち絵と差し色を書き込む。
+**書き込んでよいのは `~/.tsukumo/characters/<name>/` の下だけ**（`docs/design.md` 7.1。
+リポジトリの作業ツリーを汚さないため）で、書き込む前に**いま出しているパックをホームへ
+丸ごと写す**（`persona.md` も写す。同ファイル 128 行目付近のコメント）。つまり
+**ホーム側の `persona.md` を書き換える下地はもうある**。
+
+**雑談モード**: `src/server/core/chat-manner.ts` の `CHAT_MANNER_PROMPT` が
+`systemPrompt` の append で渡る（`docs/requirements.md` 4.9）。仕事のときの
+`report-notation.ts` / `speech-cadence.ts` と**入れ替わる**。
+
+**規約との緊張**: `docs/coding-standards.md`「会話内容の扱い」は**会話を別の場所に複製しない**と
+定めており、これは他のどの規約よりも優先する。プロフィールを persona.md に書き戻すことは
+**会話から抜き出した内容をファイルに残す**行為なので、どこまでを「プロフィール」として
+書き戻してよいかの線引きが要る。`docs/requirements.md` 2.2 の
+「`persona.md` に書く人格の記述もキャラクター素材に数える（＝リポジトリに同梱しない）」とも
+突き合わせる。
+
+## 決まっていること（蒸し返さない）
+
+- **書き換えは自動で行う。事前の承認は挟まない**（2026-09-21 ユーザーの判断）
+- **書き換えたことをレポートで知らせることもしない**（同）
+
+## 解くべき論点
+
+1. **何を「プロフィールに関わること」とみなすか。** キャラクター自身の設定（好きなもの・
+   口調・来歴）だけか、利用者について知ったことも含むか。**利用者のことを書くなら
+   会話内容の複製に当たる**ので、ここが一番の線引き
+2. **どこに書くか。** `~/.tsukumo/characters/<pack>/persona.md`（`character-edit.ts` の既存の
+   規則に従う）か、リポジトリ内のパックか。**同梱パックを書き換えると git の作業ツリーが汚れる**
+3. **誰が書くか。** キャラクター自身が MCP ツール（`speak` と同じ口）を呼んで書くのか、
+   tsukumo がターンの終わりに判定して書くのか。前者なら**判断がプロンプト側に乗る**ので
+   `chat-manner.ts` に条が要る
+4. **どう書くか。** 節を丸ごと置き換えるのか、既存の節に追記するのか。
+   **`persona.md` は構造を持った文書**（見出しと表）なので、雑に追記すると壊れる
+5. **暴走をどう防ぐか。** 承認を挟まないので、**書き換えが積み上がって人格が崩れる**経路がある。
+   上限（1ターンに1回・1節まで等）か、書き換えの履歴を残すかを決める
+6. **元に戻す手はあるか。** ホーム側は git 管理外なので、書き換えた内容を戻す道が無い
+
+## やること
+
+1. `src/server/adapter/character-pack.ts` と `character-edit.ts` を読み、**ホーム側の
+   persona.md を書き換える既存の経路**を書き出す
+2. 上の論点ごとに案を比べ、**推奨を1つ決める**（却下した案も残す）
+3. 決めた形を `docs/requirements.md` の 4.9（雑談モード）と `docs/design.md` 7.1
+   （キャラクターパック）の該当節に書く
+4. **T-247 の本文に、決めた設計を指す形で書き足す**
+5. 論点1で「利用者について書くのは会話内容の複製に当たるので入れない」という結論になった場合、
+   **その結論が指示の狙いを満たすかをユーザーに確かめる必要がある**ので、
+   `develop/direction.md` の `## エージェントのドラフト` にその旨を書いて閉じる
+
+## 完了条件
+
+- 6つの論点それぞれに結論と理由が書かれている
+- **会話内容の扱いの規約と衝突しない線引き**が明記されている
+- 書き込み先のパス（ホーム側かリポジトリ内か）が決まっている
+- 暴走を防ぐ上限と、元に戻す手の有無が決まっている
+- 提案が `docs/requirements.md` と `docs/design.md` に書かれ、T-247 の本文が決めた設計を指している
+- 却下した案とその理由が `evidence` に残っている
+- `bun run check` が通る（ドキュメントだけの変更でも回す）
+- `grep -c '^#\{2,3\} ' docs/requirements.md` と同 `docs/design.md` が編集の前後で合う
+
+## 注意
+
+- **コードは変えない**（実装は T-247）
+- **`docs/coding-standards.md`「会話内容の扱い」は他のどの規約よりも優先する**
+- **同梱パック（`characters/` 配下）を書き換える設計にしない**（2.2「素材は利用者が自分で
+  用意する」と、作業ツリーを汚さない規則）
+- `docs/` の節の索引の罠に注意
+- コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-247
+
+**タスク**: 決めた形で雑談中の persona.md 自動更新を実装する
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-246 / **passes**: True
+
+**evidence**:
+
+ツール名は **`remember`**（`mcp__tsukumo__remember`、引数は `line` 1本・戻り値は `\"ok\"` だけ）。`docs/glossary.md` に「remember ツール」と「覚えたこと」を先に足してからコードを書いた（見出し 48 → 50）。書き込みは `src/server/adapter/persona-memory.ts` に閉じ、`session-start.ts` が `seed.chat` のときだけ渡すので**雑談モードのときだけツールが載る**。`copyPackOnce` は `character-edit.ts` から公開して共有した。MCP サーバ名の定数は 1サーバ2ツールになったので `SPEAK_MCP_SERVER_NAME` → `TSUKUMO_MCP_SERVER_NAME` に改名（値 `\"tsukumo\"` は不変）。\n3つの上限はそれぞれテストで固定: 1ターン1行（3回呼んでも1行、`finishTurn()` 後だけ2行目。**弾かれた行は枠を消費しない**ことも固定）/ 120文字（ちょうどは書き、超過・改行入り・空白だけはファイルごと生成されない）/ 20行FIFO（21回書いて20行、先頭が2番目・末尾が21番目）。**節より前のバイト列の一致**は専用テストで `Buffer` 同士を突き合わせ。利用者について書かせない条は `chat-manner.ts` に入り、先頭が「ユーザーについて知ったこと…ユーザーのことは覚えない」。テストのフィクスチャは架空の文字列だけ。\n実機（本物の会話、`TSUKUMO_VIEW_PORT=7788`）: 1往復目はツールが呼ばれず、2往復目で `mcp__tsukumo__remember` が1回。`persona.md` の差分は**末尾に4行の追加だけ**（`diff` は `143a144,147` の1ハンク）で節より前は1バイトも変わらず、`readCharacterPack` も正常。確認で書いた節は**削除して同梱と完全一致に戻した**（`diff` で確認済み）。同梱の `characters/` は `git status --porcelain` で差分0件。`bun run check` 848 → **857 pass** / 0 fail。
+
+## 背景
+
+T-246 で決めた形を実装する。雑談モードでプロフィールに関わるやり取りがあったら
+`persona.md` を自動で更新する（ユーザーの指示、2026-09-21）。
+
+**書き込みの口は既にある**: `src/server/adapter/character-edit.ts` が
+`~/.tsukumo/characters/<name>/` の下だけに書き、書き込む前にいま出しているパックを
+ホームへ丸ごと写す（`persona.md` も写る）。読む側は
+`src/server/adapter/character-pack.ts`（`PERSONA_FILE_NAME` / `readCharacterPack`）。
+雑談モードの文面は `src/server/core/chat-manner.ts` の `CHAT_MANNER_PROMPT`。
+
+**`persona.md` は `systemPrompt` の append として毎ターン渡る**ので、書き換えても
+**その場のセッションには効かない**（次に `query()` を起こすときから効く）。この挙動を
+利用者に説明なしで飲ませてよいかは T-246 の結論に従う。
+
+## 決まっていること（蒸し返さない）
+
+- **書き換えは自動で行う。事前の承認は挟まない**（2026-09-21 ユーザーの判断）
+- **書き換えたことをレポートで知らせることもしない**（同）
+
+## 決まった形（決めるタスクの結論。ここで決め直さない）
+
+**正典は2つ。** 何を書いてよいかは `docs/requirements.md` 4.9「プロフィールの書き戻し」、
+どこに・誰が・どう書くかと上限・戻す手は `docs/design.md` 7.1「覚えたことを人格に書き足す」。
+
+- **書く範囲**: **キャラクター自身の設定だけ**（好み・口調・呼び方・来歴）。
+  **利用者について知ったことは書かない。** 3条件（主語がキャラクター自身／次のセッションでも
+  成り立つ属性／会話の文面を写していない）を全部満たすものだけ
+- **書き込み先**: `~/.tsukumo/characters/<pack>/persona.md` の1箇所。初回は
+  `character-edit.ts` の `copyPackOnce` でホームへ丸ごと写す既存の道に乗る。
+  `isEditableCharacterPack` が false のパックには書かない
+- **書き手**: キャラクター自身。`speak` と同じプロセス内 MCP サーバにツールを1つ足す。
+  引数は**1行の文字列1つ**、戻り値は `"ok"` だけ。**雑談モードのときだけ `mcpServers` に
+  載せる**（`core/session-rule.ts` が `CHAT_MANNER_PROMPT` を選ぶのと同じ単位）。
+  何を書くかの条は `core/chat-manner.ts` に足す（4.9 の3条件と書かないものの一覧を写す）
+- **書き方**: `persona.md` の**いちばん最後**に `## 覚えたこと` の節を置き、`- ` の箇条書きを
+  1行ずつ足す。節が無ければ見出しごと作る。**節より前は1バイトも触らない**
+- **上限**: 1ターンに1行／1行 120 文字（超えたら書かない・改行を含む行も弾く）／節は 20 行で
+  いちばん古い行を落とす／触るファイルはそのパックの `persona.md` 1つだけ。
+  **上限に当たった回も戻り値は `"ok"` のまま**（拒否したことを知らせない）
+- **元に戻す手**: 節を消せば元に戻る／ホームの `<pack>` ごと消せば同梱が読まれる。
+  **バックアップも画面から消す口も作らない**
+- **遅れて効くことは説明しない**（`systemPrompt` の append なので効くのは次に起こしてから）
+
+**置き場所の目安**: 書き込みは `src/server/adapter/` の新しい1ファイル（節の読み書きと上限が
+概念になる名前。`remembered-character.ts` の隣）。`copyPackOnce` 相当は `character-edit.ts`
+から公開して共有し、写す規則を二重に書かない。**ツール名と「覚えたこと」の対応は、コードより
+先に `docs/glossary.md` へ足す**（CLAUDE.md「用語」）。
+
+## やること
+
+1. T-246 が決めた形に沿って実装する（書き込み先・書き手・書き方・上限は T-246 の結論に従う。
+   **このタスクで決め直さない**）
+2. 書き込みは `src/server/adapter/` の中に閉じる（原則3。`core → adapter` は禁止）
+3. 書き換えが `persona.md` の構造（見出しと表）を壊さないことをテストで守る
+4. **T-246 が「やらない」結論だった場合は、その旨を `evidence` に書いて閉じる**
+
+## 完了条件
+
+- 実機（`TSUKUMO_DRIVER=fake` は使えない——**本物の会話が要る**ので、雑談モードで
+  プロフィールに関わるやり取りを1往復する）で、`~/.tsukumo/characters/<pack>/persona.md` が
+  **T-246 の決めた範囲でだけ**書き換わることを確かめ、書き換わった差分の行数を `evidence` に書く
+- 書き換え後の `persona.md` が読み直せる（`readCharacterPack` が壊れない）ことを確かめる
+- **T-246 が定めた上限を超えて書き換わらない**ことをテストで守る
+- 同梱パック（`characters/` 配下）が書き換わっていないことを `git status` で確かめる
+- **利用者について書かせない条**が `chat-manner.ts` に入っていることを目視で確かめる
+- **節より前のバイト列が書き換えの前後で一致する**ことをテストで守る（構造を壊さないの正典）
+- 1ターン1行・120文字・20行FIFO の3つの上限それぞれにテストがある
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`docs/coding-standards.md`「会話内容の扱い」は他のどの規約よりも優先する**。
+  会話の生の文字列を `persona.md` に写さない
+- **テストのフィクスチャに実物の会話を使わない**（同）
+- **同梱パックを書き換えない**
+- `~/.tsukumo/` の下を消す操作を書かない（既存のパックを壊す）
+- 同梱の `characters/*/persona.md` は 2026-09-21 に規約の実体が参照1行へ縮んでいる。
+  **このタスクは同梱側を触らない**（書くのはホーム側だけ）
+- コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-248
+
+**タスク**: 決めた形で入力欄への画像の添付を実装する（貼り付け・ドロップ → SDK → 控え）
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-232 / **passes**: True
+
+**evidence**:
+
+**原寸は `src/server/adapter/sdk-driver.ts:498` の1箇所しか通らない**（`grep -rn '\\.full\\b' src/` で確認。他はコメントだけ）。経路は Composer のローカル state → WebSocket の `prompt` → `session-manager` → `sdk-driver.prompt` → `image` ブロックにして1回 `yield` → SDK の子プロセスで終わり。`request` に載るのは `images.map((i) => i.thumbnail)` だけで、`SessionState`・`localStorage`・ディスクのどこにも原寸は入らない。`content` の型は `SDKUserMessage` から取り自前の型を作っていない。\nテストは `prompt-image.test.ts` 10件（4形式 / `.svg` ほか形式外 / 読めない data URL / 上限超過 / ちょうどは通る / 控えは原寸と同じ表で上限だけ厳しい）と `command.test.ts` 5件（枚数超過はコマンドごと undefined ほか）。フィクスチャは手で作った最小の data URL だけ。控えの上限 128 KiB は実装上の歯止めだったので、**`docs/requirements.md` 4.10 の上限の表に足した**。\n目視（macOS / Chrome、**本物の claude**、`TSUKUMO_VIEW_PORT=7431`）: (1) 貼ると札が出て `×` で0枚に戻り枠ごと消える (2) 文字入りの PNG を送るとレポートがその文字列を返した (3) 仕事は依頼の見出しの下、雑談は利用者の吹き出しの中に控えが出た (4) **390x844 で札4枚を並べても `scrollWidth === clientWidth === 390`**（入力欄の領域も 356 で一致、札は2列に折り返す）。`bun run check` 857 → **872 pass** / 0 fail。`docs/design.md` の節の数は 53 → 53。
+
+## 背景
+
+T-232 が `docs/requirements.md` 4.10「画像の添付」で形を決めた。**そこに書かれた形だけ**を作る
+（受け取り方・上限・見え方・原寸を持たないこと。**蒸し返さない**）。
+
+**渡す道は確かめてある**: `SDKUserMessage.message` は Messages API の `MessageParam` そのもので、
+`content` は文字列でも内容ブロックの配列でもよい。tsukumo は最初からストリーミング入力の側に
+いる（`createPromptStream` が `query` に非同期イテレータを渡している）ので、**渡し方を変えずに
+`content` を配列にして `image` ブロックを載せるだけ**で届く。
+
+**前例がある。** 画像を data URL で WebSocket のコマンドに載せる道は、キャラクター素材の
+受け取りで既に通っている（`src/shared/image-data-url.ts` / `src/shared/portrait-image.ts` /
+`src/shared/character-background.ts` / `src/browser/lib/data-url.ts`）。**同じ作りにする。**
+
+## やること
+
+1. `src/shared/` に画像添付のスキーマを1つ足す（受け付けるのは `.png` / `.jpg` / `.gif` /
+   `.webp` の4つ、1枚 2 MiB、1依頼 4 枚。**`image-data-url.ts` を再利用**し、形式の表だけを
+   別に持つ）。`prompt` コマンドに**原寸と控えの対**を運ばせる
+2. `src/server/adapter/session-socket.ts` の `maxPayload` を 12 MiB へ
+3. `src/server/core/session-manager.ts` の `case "prompt"` と `SessionDriver.prompt` の型に
+   画像を通す
+4. `src/server/adapter/sdk-driver.ts` の `createPromptStream` が `content` を配列にして
+   `image` ブロックを載せる（**`MessageParam` の型をそのまま使い、自前の型を作らない**）
+5. `src/browser/features/dispatch/composer.tsx` に `onPaste` / `onDrop`、`src/browser/lib/` に
+   控えを作る縮小を1ファイル、札の部品を足す
+6. メインビューの依頼の見出しの下と、雑談の利用者の吹き出しの中に控えを出す
+7. `docs/design.md` の `ClientCommand`・`SessionEvent` の `request`・部品の木・13.7 を追随させる
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- **検証の単体テストがある**: 形式外・大きすぎる・枚数超過の値が落ちること
+  （`character-background.ts` の既存テストと同じ粒度）
+- **原寸をどこにも保持していない**ことを確かめる（`SessionState` にも `localStorage` にも
+  ディスクにも置かない。4.10「会話内容の扱い」がこの機能の形そのもの）
+- 実機で目視し、`evidence` に書く:
+  1. 画像を貼ると札が出て、`×` で外せる
+  2. 送るとモデルが画像の中身に言及する
+  3. 仕事と雑談の両方で控えが出る
+  4. **狭い画面（390x844）で横に転がらない**（既定の場面だけでなく、札が並んだ状態でも測る）
+- `docs/design.md` の節の数が変わっていないこと
+  （`grep -c '^#\{2,3\} ' docs/design.md` を前後で比較）
+
+## 注意
+
+- **`.svg` は渡せない**（`Base64ImageSource.media_type` が png/jpeg/gif/webp の4つしか取らない）。
+  立ち絵は `.svg` を受け付けるが、あちらは画面に描くだけでモデルへ渡らない。**同じ「画像の
+  上限」に見えて別の制約**なので、立ち絵のスキーマをそのまま使い回さない
+- **サーバは画像を加工しない**（縮めるのはブラウザ側。サーバは受け取った控えをそのまま
+  `request` に載せる）
+- **テストのフィクスチャに実物の画像を使わない**（手で作った最小の data URL だけ。
+  `CLAUDE.md`「会話内容の扱い」）
+- **新しい POST を作らない**（起動トークン・`Origin` の照合・zod・定型文の `error` が効く
+  既存の WebSocket の `prompt` に足す）
+- コードにタスク番号（`T-` + 3桁）を書かない
