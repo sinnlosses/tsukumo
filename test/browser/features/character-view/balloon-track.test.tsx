@@ -40,4 +40,19 @@ describe("BalloonTrack", () => {
     expect(screen.getByText("（架空の文言）")).toBeDefined()
     expect(document.querySelectorAll(".balloon")).toHaveLength(1)
   })
+
+  it("(4) セリフが増えても、既存のセリフの DOM ノードは自分のまま（別のセリフに差し替わらない）", () => {
+    const { rerender } = render(<BalloonTrack speeches={["1つめ"]} emptyMessage={undefined} />)
+    const firstNode = screen.getByText("1つめ")
+
+    rerender(<BalloonTrack speeches={["1つめ", "2つめ"]} emptyMessage={undefined} />)
+
+    // 位置ベースの key（index）だと、この時点で最新の位置（先頭）のノードの中身だけが
+    // 「1つめ」→「2つめ」に差し替わり、firstNode がそのまま「2つめ」を指してしまう
+    // （React がノードを再利用するため）。古い側からの通し番号なら、firstNode は
+    // 「1つめ」のノードのまま残る（:first-child から外れて非最新の見た目になるだけ）。
+    expect(screen.getByText("1つめ")).toBe(firstNode)
+    expect(firstNode.getAttribute("data-latest")).toBe("false")
+    expect(screen.getByText("2つめ").getAttribute("data-latest")).toBe("true")
+  })
 })

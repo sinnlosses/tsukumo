@@ -37,12 +37,22 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
   }
 
   // DOM は新しい順（先頭が最新）。`.balloon-track` の column-reverse で視覚上は下端に出る。
+  // key は props.speeches の古い側から数えた位置（＝配列に足される前からの通し番号）。
+  // speeches はターンの中で末尾へ積むだけ（src/shared/session-state.ts）なので、この番号は
+  // セリフが増えても既存のセリフでは変わらない。**位置（newestFirst の index）を key にすると、
+  // 増えるたびに既存のセリフの key がずれて、別のセリフの内容が同じ DOM ノードへ上書きされる**
+  // （React がノードを再利用してしまい、`:first-child` から外れる瞬間が起きないので
+  // balloon-push-up が再生されない）。古い側からの通し番号なら、増えても自分のノードのまま
+  // 位置だけ動く（＝CSS の `:first-child` から外れる瞬間が起きるので押し上げが再生される。
+  // character-view.module.css の `.balloon:not(:first-child)` のコメント参照）。
   const newestFirst = [...props.speeches].reverse()
+  const oldestIndexOf = (indexFromNewest: number): number =>
+    props.speeches.length - 1 - indexFromNewest
 
   return (
     <div className={styles["balloon-track"]}>
       {newestFirst.map((speech, index) => (
-        <Balloon key={index} text={speech} latest={index === 0} />
+        <Balloon key={oldestIndexOf(index)} text={speech} latest={index === 0} />
       ))}
     </div>
   )

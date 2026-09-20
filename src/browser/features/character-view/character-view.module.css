@@ -162,14 +162,18 @@
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
   animation: balloon-push-up 0.3s ease-out;
 }
-/* 差し替えは React の再描画（`src/browser/features/character-view/balloon-track.tsx`）。**位置ベースの key**
-   （`index`）を使うため、新しい吹き出しが増えて既存の吹き出しの位置がずれると、その位置の
-   ノードは中身だけが更新されて同じ DOM ノードのまま残ることがある（React が key の一致で
-   ノードを再利用する）。そのため balloon-push-up（過去のセリフの押し上げ）は、既存セリフ全件で
-   毎回再生されるとは限らない。「最新が並びの下端に差し込まれ、過去のセリフは1つぶん上へ
-   押し上げられて薄くなる」動きの向きと最終状態（class・字の色）は変わらない。押し上げる量は
-   最新の吹き出し1つぶんの当て推量なので、セリフが長いと少しずれるが、動きの向きが伝われば
-   よい。 */
+/* 差し替えは React の再描画（`src/browser/features/character-view/balloon-track.tsx`）。key は
+   セリフの古い側から数えた通し番号（`props.speeches` に足された時点の位置。**speeches はターンの
+   中で末尾へ積むだけなので、増えても既存のセリフの番号は変わらない**）。そのため既存の吹き出しは
+   中身の差し替えで使い回されず、**最新から1つ落ちて `:first-child` から外れた瞬間に
+   `animation-name` が `balloon-appear` → `balloon-push-up` へ変わり、押し上げが毎回そこで
+   再生される**（CSS アニメーションは `animation-name` の値が変わったときに生成し直されるため）。
+   ただし**2つ以上前へ落ちる吹き出し**（既に `:not(:first-child)` だったものがさらに上へ
+   押し出される場合）は `animation-name` の値そのものは変わらないので再生されない
+   （2026-09-21、実機の `getAnimations`/`animationstart` の実測で確認）。最終位置は React の
+   再配置で正しく動くので見た目は破綻しないが、揺れて見えるのは「直前まで最新だった1件」だけ。
+   押し上げる量（`balloon-push-up` の `from`）は最新の吹き出し1つぶんの当て推量のままで、
+   セリフが長いと少しずれるが、動きの向きが伝わればよい（同上、直していない）。 */
 @keyframes balloon-push-up {
   from {
     transform: translateY(2.75rem);
