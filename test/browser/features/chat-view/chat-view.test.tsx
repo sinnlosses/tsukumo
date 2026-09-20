@@ -21,9 +21,9 @@ afterEach(() => {
 // 見かけを反転していない）。文面は手で書いた架空のもの。
 
 const RECORDS: readonly SessionRecord[] = [
-  { kind: "request", text: "1つめの依頼" },
+  { kind: "request", text: "1つめの依頼", images: [] },
   { kind: "speech", text: "1つめのセリフ", expression: "default" },
-  { kind: "request", text: "2つめの依頼" },
+  { kind: "request", text: "2つめの依頼", images: [] },
   { kind: "speech", text: "2つめのセリフ", expression: "proud" },
 ]
 
@@ -101,7 +101,7 @@ describe("ChatView", () => {
   it("本文（レポート）は積まない（雑談中はレポートを出さない）", () => {
     renderChatView({
       records: [
-        { kind: "request", text: "架空の依頼" },
+        { kind: "request", text: "架空の依頼", images: [] },
         { kind: "detail", markdown: "## 架空のレポート" },
       ],
     })

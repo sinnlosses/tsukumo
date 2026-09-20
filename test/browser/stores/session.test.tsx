@@ -63,7 +63,7 @@ describe("姿の store の購読", () => {
     act(() => {
       store.receive({
         type: "events",
-        events: [{ at: 0, event: { kind: "request", text: "架空の依頼" } }],
+        events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
       })
     })
 
@@ -98,7 +98,7 @@ describe("姿の store の購読", () => {
     act(() => {
       store.receive({
         type: "events",
-        events: [{ at: 0, event: { kind: "request", text: "架空の依頼" } }],
+        events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
       })
     })
 

@@ -14,10 +14,12 @@ import { type SessionRecord } from "./session-state.ts"
  * 会話のログ1件。**話したのがどちらか**と文面だけを持つ（`docs/design.md` 13.7 の
  * 「利用者の発言とキャラクターのセリフが交互に並ぶ」）。
  *
- * `expression` はキャラクターの側にだけ付く（話者の印に使う）。利用者の側は undefined。
+ * `expression` はキャラクターの側にだけ付く（話者の印に使う）。利用者の側は代わりに、
+ * 添えた画像の**控え**（`images`。添えていなければ空）を持つ（`docs/requirements.md` 4.10。
+ * 吹き出しの中に並ぶ）。
  */
 export type ChatLogEntry =
-  | { readonly speaker: "user"; readonly text: string }
+  | { readonly speaker: "user"; readonly text: string; readonly images: readonly string[] }
   | { readonly speaker: "character"; readonly text: string; readonly expression: Expression }
 
 /**
@@ -31,7 +33,7 @@ export type ChatLogEntry =
 export function chatLogEntries(records: readonly SessionRecord[]): readonly ChatLogEntry[] {
   return records.flatMap((record): readonly ChatLogEntry[] => {
     if (record.kind === "request") {
-      return [{ speaker: "user", text: record.text }]
+      return [{ speaker: "user", text: record.text, images: record.images }]
     }
     if (record.kind === "speech") {
       return [{ speaker: "character", text: record.text, expression: record.expression }]

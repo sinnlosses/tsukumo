@@ -71,7 +71,11 @@ export type ToolActivity = {
  * するため（`shared/turn-speech.ts` の `turnSpeeches`）。
  */
 export type SessionRecord =
-  | { readonly kind: "request"; readonly text: string }
+  /**
+   * 利用者の依頼。`images` は添えた画像の**控え**だけ（`docs/requirements.md` 4.10）。
+   * **原寸は記録に入らない**ので、ここから拡大して見る道は無い。
+   */
+  | { readonly kind: "request"; readonly text: string; readonly images: readonly string[] }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
    * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
@@ -264,7 +268,7 @@ export function applySessionEvent(
       return {
         ...state,
         records: trimToRecentTurns(
-          [...state.records, { kind: "request", text: event.text }],
+          [...state.records, { kind: "request", text: event.text, images: event.images }],
           state.chatMode,
         ),
         // 送信した時点で吹き出しを空にする（プレースホルダー「（まだ発話がありません）」に

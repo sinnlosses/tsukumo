@@ -7,9 +7,21 @@ import {
   parseClientCommand,
 } from "../../src/shared/command.ts"
 import { MAX_PORTRAIT_BYTES } from "../../src/shared/portrait-image.ts"
+import {
+  MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
+  MAX_PROMPT_IMAGES,
+} from "../../src/shared/prompt-image.ts"
 
 // 立ち絵の代わりに使う、1バイトぶんの架空の data URL（中身は見ないので何でもよい）。
 const TINY_PNG_DATA_URL = "data:image/png;base64,AAAA"
+
+/** 依頼に添える画像1枚ぶん（原寸と控えの対）。**どちらも手で作った最小の data URL。** */
+const TINY_PROMPT_IMAGE = { full: TINY_PNG_DATA_URL, thumbnail: TINY_PNG_DATA_URL }
+
+/** 画像を `count` 枚添えた `prompt`（ほかの欄は通る形で固定する）。 */
+function promptWithImages(images: readonly unknown[]): unknown {
+  return { type: "prompt", commandId: "c-1", text: "架空の依頼", images }
+}
 
 /** 名前だけを差し替えた `create-character`（ほかの欄は通る形で固定する）。 */
 function createCharacter(name: string): unknown {
@@ -29,6 +41,8 @@ describe("parseClientCommand（受け付ける形）", () => {
       type: "prompt",
       commandId: "c-1",
       text: "架空の依頼",
+      // 画像を添えない依頼は、field ごと省いた形で届いて空に畳まれる。
+      images: [],
     })
   })
 
@@ -193,6 +207,52 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       const command = parseClientCommand(value)
       expect(command !== undefined && isCharacterEditCommand(command)).toBe(false)
     }
+  })
+})
+
+describe("parseClientCommand（依頼に添える画像）", () => {
+  it("上限の枚数までは、原寸と控えの対をそのまま通す", () => {
+    const images = Array.from({ length: MAX_PROMPT_IMAGES }, () => TINY_PROMPT_IMAGE)
+
+    expect(parseClientCommand(promptWithImages(images))).toEqual({
+      type: "prompt",
+      commandId: "c-1",
+      text: "架空の依頼",
+      images,
+    })
+  })
+
+  it("枚数が上限を超えたら undefined（1枚だけ落とさず、コマンドごと受け付けない）", () => {
+    const tooMany = Array.from({ length: MAX_PROMPT_IMAGES + 1 }, () => TINY_PROMPT_IMAGE)
+
+    expect(parseClientCommand(promptWithImages(tooMany))).toBeUndefined()
+  })
+
+  it("受け付けない形式は undefined（`.svg` は API が取らないので渡せない）", () => {
+    const svg = "data:image/svg+xml;base64,AAAA"
+
+    expect(parseClientCommand(promptWithImages([{ full: svg, thumbnail: svg }]))).toBeUndefined()
+    expect(
+      parseClientCommand(promptWithImages([{ full: svg, thumbnail: TINY_PNG_DATA_URL }])),
+    ).toBeUndefined()
+  })
+
+  it("data URL でない値・対の片側が欠けた形は undefined", () => {
+    expect(parseClientCommand(promptWithImages(["架空の文字列"]))).toBeUndefined()
+    expect(parseClientCommand(promptWithImages([{ full: TINY_PNG_DATA_URL }]))).toBeUndefined()
+    expect(parseClientCommand(promptWithImages([{ thumbnail: TINY_PNG_DATA_URL }]))).toBeUndefined()
+  })
+
+  it("控えが大きすぎる依頼は undefined（記録に残るのは控えなので、原寸より厳しく見る）", () => {
+    const tooLargeThumbnail = `data:image/png;base64,${"A".repeat(
+      MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
+    )}`
+
+    expect(
+      parseClientCommand(
+        promptWithImages([{ full: TINY_PNG_DATA_URL, thumbnail: tooLargeThumbnail }]),
+      ),
+    ).toBeUndefined()
   })
 })
 

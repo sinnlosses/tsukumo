@@ -48,12 +48,12 @@ describe("startFakeSession", () => {
     const sink = collect()
     const driver = startFakeSession({ script: SCRIPT, scene: undefined, onEvent: sink.onEvent })
     await tick()
-    driver.prompt("架空の依頼")
+    driver.prompt("架空の依頼", [])
     await tick()
     driver.close()
 
     expect(sink.events.slice(1)).toEqual([
-      { kind: "request", text: "架空の依頼" },
+      { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", status: "success" },
     ])
@@ -72,7 +72,7 @@ describe("startFakeSession", () => {
     const sink = collect()
     const driver = startFakeSession({ script: SCRIPT, scene: "架空の場面1", onEvent: sink.onEvent })
     await tick()
-    driver.prompt("架空の依頼")
+    driver.prompt("架空の依頼", [])
     await tick()
     driver.close()
 

@@ -11,7 +11,7 @@ import { INITIAL_SESSION_STATE, type SessionState } from "../../../src/shared/se
 const FIXTURE_STATE: SessionState = {
   ...INITIAL_SESSION_STATE,
   records: [
-    { kind: "request", text: "架空の依頼" },
+    { kind: "request", text: "架空の依頼", images: [] },
     { kind: "detail", markdown: "架空のレポート" },
   ],
 }

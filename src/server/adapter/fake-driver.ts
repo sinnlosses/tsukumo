@@ -143,8 +143,10 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   let playedTurns = namedScene === undefined ? 0 : namedIndex + 1
 
   return {
-    prompt: (text) => {
-      emit({ kind: "request", text })
+    prompt: (text, images) => {
+      // 台本を流すだけの駆動でも、**控えだけを記録へ渡す**のは本物と同じ
+      // （原寸はここで手放す。`docs/requirements.md` 4.10）。
+      emit({ kind: "request", text, images: images.map((image) => image.thumbnail) })
       const turns = options.script.turns
       const scene = turns.length === 0 ? undefined : turns[playedTurns % turns.length]
       playedTurns += 1

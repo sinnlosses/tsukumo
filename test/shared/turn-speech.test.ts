@@ -6,7 +6,7 @@ import { turnSpeeches } from "../../src/shared/turn-speech.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
-const request = (text: string): SessionRecord => ({ kind: "request", text })
+const request = (text: string): SessionRecord => ({ kind: "request", text, images: [] })
 const detail = (markdown: string): SessionRecord => ({ kind: "detail", markdown })
 const speech = (text: string, expression: "default" | "proud" = "default"): SessionRecord => ({
   kind: "speech",

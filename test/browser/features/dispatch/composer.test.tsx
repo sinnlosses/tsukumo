@@ -90,7 +90,8 @@ describe("Composer", () => {
     fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })
 
-    expect(calls).toEqual([{ type: "prompt", text: "架空の依頼" }])
+    // 画像を添えていない依頼は、空の `images` を伴って送られる。
+    expect(calls).toEqual([{ type: "prompt", text: "架空の依頼", images: [] }])
     expect(textArea().value).toBe("")
   })
 
@@ -237,7 +238,7 @@ describe("Composer", () => {
     renderComposer({ character: FIXTURE_CHARACTER })
 
     expect(textArea().placeholder).toBe(
-      "架空の名前への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完）",
+      "架空の名前への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完、画像は貼り付け）",
     )
   })
 
@@ -245,7 +246,7 @@ describe("Composer", () => {
     renderComposer({ character: undefined })
 
     expect(textArea().placeholder).toBe(
-      "依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完）",
+      "依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完、画像は貼り付け）",
     )
   })
 

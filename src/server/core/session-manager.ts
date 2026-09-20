@@ -327,7 +327,7 @@ async function dispatchToDriver(
     const started = await driver
     switch (command.type) {
       case "prompt":
-        started.prompt(command.text)
+        started.prompt(command.text, command.images)
         return { ok: true }
       case "interrupt":
         await started.interrupt()

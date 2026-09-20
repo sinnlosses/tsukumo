@@ -357,6 +357,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 取り出せない**。`package.json` の下限をこれより下げると、この経路は黙って効かなくなる
 （`init` を待つ元の1ターン遅れに戻るだけで、テストは通ってしまう）。
 
+**`request` は文面だけでなく、添えた画像の控え（`images: string[]`）も運ぶ**（2026-09-21。
+`docs/requirements.md` 4.10）。**原寸は載らない** — 原寸は `prompt` コマンドからモデルへ渡って
+終わりで、記録（`SessionState`）に残るのは縮めた控えだけになる。控えを作るのはブラウザ側で、
+**サーバは画像を加工しない**。
+
 イベントは**時刻を持って**送る: `StampedEvent = { at: number; event: SessionEvent }`。`at` は
 サーバの `Date.now()`。reducer は `applySessionEvent(state, event, at)`（いまの第3引数 `now` と同じ）。
 **ブラウザ側で `Date.now()` を reducer に渡さない**（両側の状態が同じになるように、時刻はイベントの
@@ -383,7 +388,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ```ts
 type ClientCommand =
-  | { type: "prompt"; commandId: string; text: string }
+  | { type: "prompt"; commandId: string; text: string; images: PromptImage[] }
   | { type: "interrupt"; commandId: string }
   | { type: "answer"; commandId: string; id: string; answer: Answer }
   | { type: "set-model"; commandId: string; model: ModelAlias }
@@ -394,6 +399,10 @@ type ClientCommand =
 
 - `commandId` はブラウザが作る（`crypto.randomUUID()`）。`error` フレームの突き合わせにだけ使う
 - `text` の上限はいまの `MAX_DISPATCH_TEXT_LENGTH`（20,000 文字）を zod の `max` に移す
+- `images` は**原寸と控えの対**（`PromptImage = { full: string; thumbnail: string }`。どちらも
+  data URL）。上限・形式・枚数は `shared/prompt-image.ts` が持ち、値そのものは
+  `docs/requirements.md` 4.10 が正典。**1枚も無いのが普通**なので、field ごと省いた形も受け取って
+  空に畳む。`maxPayload`（session-socket.ts）は原寸4枚が通る 12 MiB
 - `PermissionMode` と `ModelAlias` の値の一覧は **`shared` に1つだけ置く**（いまは
   `session-driver.ts` と `view.ts` に写しがある。SDK の型との一致は `core` 側のテストで守る）
 
@@ -538,7 +547,8 @@ type SessionHost = {
       │  │                   右下に「領域の比率を既定に戻す」を常設（13.6）。**狭い画面では画面の高さに
       │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
       │  ├ <MainView>        <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
-      │  │   └ <Turn>        <RequestHeading> + [<Report> | <QuestionRecord>]*
+      │  │   └ <Turn>        <RequestHeading>（依頼の見出し + <PromptImageThumbnails>）
+      │  │                    + [<Report> | <QuestionRecord>]*
       │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
       │  ├ <CharacterView>   <Portrait> + <BalloonTrack>
       │  │   ├ <Portrait>    立ち絵。**components/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
@@ -551,8 +561,9 @@ type SessionHost = {
       │  │                   「整える」（#character へのリンク。13.6）
       │  └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
       │      ├ <PendingAnswer> 許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）
-      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。<CommandSuggestions>（`/`）と
-      │      │                <FileSuggestions>（`@`。同時には出さない）を内包
+      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。貼り付け / ドロップで画像を添える
+      │      │                （**ボタンは置かない**。4.10）。<CommandSuggestions>（`/`）と
+      │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包
       │      └ <TurnStatus>  送信 ⇄ 中断、経過 / 所要
       ├ <CharacterScreen>    キャラクター画面（#character。13.6）。戻る口「← 会話へ戻る」（答え待ちの印つき）・
       │   │                  パックのラベルと名前・「新しく作る」（#character/new へ）
@@ -564,6 +575,12 @@ type SessionHost = {
 
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。
+
+**依頼に添えた画像は `components/prompt-image.tsx` の2つが出す**（`docs/requirements.md` 4.10）:
+送る前の札（`<PromptImageChips>`。縮めた絵と外す `×`）と、送ったあとの控え
+（`<PromptImageThumbnails>`。依頼の見出しの下と、雑談の利用者の吹き出しの中）。**どちらも1枚も
+無ければ何も描かない**ので常設の枠にならず、**控えは押せない**（拡大の面を作らない）。
+原寸を持つのは `<Composer>` のローカル状態だけで、送った時点で手放す。
 
 **質問が出ている間、`<Composer>` と `<TurnStatus>` は CSS で畳む**（`.dispatch:has(.pending-question)`。
 入力欄の領域を質問の箱に全部渡すため。`docs/requirements.md` 4.7）。**部品を外すのではなく隠す**ので、
@@ -1434,6 +1451,8 @@ import 先が解けないとき（＝書きかけを保存したとき）。
   セリフの記録を落とし続け、**雑談のログは `shared/chat-log.ts` の `chatLogEntries` が
   別に組む**（2026-09-20、プロトタイプで確かめて決めた）。`mainViewEntries` は依頼を境目に
   やり取りへまとめてタブで遡る形を作っており、**素直な時系列で積む雑談とは並びの規則が違う**
+- **利用者の発言に添えた画像の控えは、吹き出しの中に並ぶ**（`docs/requirements.md` 4.10。
+  LINE / Discord と同じ見え方になるのはここ）。控えは押せない
 - **読む面の原則（13.1 原則1）はログにも効く。** 話者を分ける縁や印には `accent` を使ってよいが、
   **セリフの文字そのものは `ink`**。長い往復でも濃さが変わらない
 - 寸法は 13.3 の段のまま（セリフは本文の 0.9375rem）。**立ち絵とログの比率はプロトタイプで

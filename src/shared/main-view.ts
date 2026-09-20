@@ -39,7 +39,7 @@ const MAX_MAIN_VIEW_ENTRIES = 40
  * （{@link mainViewEntries}）。
  */
 export type MainViewEntry =
-  | { readonly kind: "request"; readonly text: string }
+  | { readonly kind: "request"; readonly text: string; readonly images: readonly string[] }
   /**
    * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
    * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
@@ -103,13 +103,22 @@ export type MainViewStep = {
 }
 
 /**
+ * やり取りの頭に出す依頼。**文面と、添えた画像の控えで1つ**（`docs/requirements.md` 4.10。
+ * 控えは見出しの下に並ぶ）。添えていなければ `images` は空。
+ */
+export type MainViewRequest = {
+  readonly text: string
+  readonly images: readonly string[]
+}
+
+/**
  * 利用者の依頼1件と、それ以降のステップ。`request` が undefined なのは、最初の依頼より前の記録
  * （セッションの途中から追い始めたときに起こる）。`id` は**追加されても番号がずれない**ように
  * 先頭から数えた通し番号で、タブの選択を保つのに使う（`src/browser/features/main-view/main-view.tsx`）。
  */
 export type MainViewTurn = {
   readonly id: number
-  readonly request: string | undefined
+  readonly request: MainViewRequest | undefined
   readonly steps: readonly MainViewStep[]
   /**
    * このやり取りに中間レポートが1つ以上あるか（`markFinalReport`）。**最終レポートのラベルを
@@ -191,7 +200,7 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
  */
 type PendingTurn = {
   readonly id: number
-  readonly request: string | undefined
+  readonly request: MainViewRequest | undefined
   steps: MainViewStep[]
   nextStepId: number
 }
@@ -216,7 +225,12 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
   for (const entry of entries) {
     if (entry.kind === "request") {
       flush()
-      current = { id: turns.length, request: entry.text, steps: [], nextStepId: 0 }
+      current = {
+        id: turns.length,
+        request: { text: entry.text, images: entry.images },
+        steps: [],
+        nextStepId: 0,
+      }
       continue
     }
 

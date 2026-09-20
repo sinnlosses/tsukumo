@@ -6,7 +6,7 @@ import {
   mainViewTurns,
 } from "../../src/shared/main-view.ts"
 
-const request = (text: string): MainViewEntry => ({ kind: "request", text })
+const request = (text: string): MainViewEntry => ({ kind: "request", text, images: [] })
 const detail = (markdown: string): MainViewEntry => ({ kind: "detail", markdown })
 const edit = (path: string): MainViewEntry => ({
   kind: "tool",
@@ -32,7 +32,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       false,
     )
 
-    expect(turns.map((turn) => turn.request)).toEqual(["前の依頼", "今回の依頼"])
+    expect(turns.map((turn) => turn.request?.text)).toEqual(["前の依頼", "今回の依頼"])
     expect(turns[0]?.steps[0]?.report).toBe("前のレポート")
     expect(turns[1]?.steps[0]?.report).toBe("今回のレポート")
   })
@@ -47,7 +47,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(entries, false)
 
     expect(turns).toHaveLength(MAX_MAIN_VIEW_TURNS)
-    expect(turns.map((turn) => turn.request)).toEqual(
+    expect(turns.map((turn) => turn.request?.text)).toEqual(
       Array.from({ length: MAX_MAIN_VIEW_TURNS }, (_, index) => {
         const originalIndex = turnCount - MAX_MAIN_VIEW_TURNS + index
         return `依頼${String(originalIndex)}`

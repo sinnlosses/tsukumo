@@ -185,7 +185,12 @@ describe("createSessionManager", () => {
     const { manager, stub } = startManagerWithStub()
 
     expect(
-      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-1", text: "架空の依頼" }),
+      await manager.dispatch(SESSION_ID, {
+        type: "prompt",
+        commandId: "c-1",
+        text: "架空の依頼",
+        images: [],
+      }),
     ).toEqual({ ok: true })
     expect(await manager.dispatch(SESSION_ID, { type: "interrupt", commandId: "c-2" })).toEqual({
       ok: true,
@@ -286,9 +291,14 @@ describe("createSessionManager", () => {
     const { manager, stub } = startManagerWithStub()
 
     expect(
-      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-1", text: "架空の依頼" }),
+      await manager.dispatch(SESSION_ID, {
+        type: "prompt",
+        commandId: "c-1",
+        text: "架空の依頼",
+        images: [],
+      }),
     ).toEqual({ ok: true })
-    stub.emit({ kind: "request", text: "架空の依頼" })
+    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
     await waitForBatch()
 
     expect(
@@ -368,9 +378,14 @@ describe("createSessionManager", () => {
     const { manager, stub } = startManagerWithStub()
 
     expect(
-      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-1", text: "架空の依頼" }),
+      await manager.dispatch(SESSION_ID, {
+        type: "prompt",
+        commandId: "c-1",
+        text: "架空の依頼",
+        images: [],
+      }),
     ).toEqual({ ok: true })
-    stub.emit({ kind: "request", text: "架空の依頼" })
+    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
     await waitForBatch()
 
     expect(
@@ -401,7 +416,12 @@ describe("createSessionManager", () => {
 
     // 起き上がる前に届いた依頼も、待ってから渡る（取りこぼさない）。
     expect(
-      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-1", text: "架空の依頼" }),
+      await manager.dispatch(SESSION_ID, {
+        type: "prompt",
+        commandId: "c-1",
+        text: "架空の依頼",
+        images: [],
+      }),
     ).toEqual({ ok: true })
     expect(started[0]?.calls).toEqual(["prompt:架空の依頼"])
 
@@ -599,7 +619,12 @@ describe("createSessionManager", () => {
 
     // 落ちていないので、次のコマンドも受け付ける。
     expect(
-      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-2", text: "架空の依頼" }),
+      await manager.dispatch(SESSION_ID, {
+        type: "prompt",
+        commandId: "c-2",
+        text: "架空の依頼",
+        images: [],
+      }),
     ).toEqual({ ok: true })
   })
 

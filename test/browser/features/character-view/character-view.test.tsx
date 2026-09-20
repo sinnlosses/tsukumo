@@ -74,7 +74,7 @@ function renderCharacterView(
   )
 }
 
-const request = (text: string): SessionRecord => ({ kind: "request", text })
+const request = (text: string): SessionRecord => ({ kind: "request", text, images: [] })
 const speech = (
   text: string,
   expression: "default" | "proud" | "flustered" = "default",

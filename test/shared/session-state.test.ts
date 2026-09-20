@@ -47,14 +47,14 @@ const CHARACTER_WITH_MARKER: SessionEvent = {
 describe("applySessionEvent", () => {
   it("書きかけの本文をつなぎ、完成した本文が来たら置き換える（二重に積まない）", () => {
     const streaming = apply(
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "partial-utterance", text: "ダミ" },
       { kind: "partial-utterance", text: "ーの本文" },
     )
 
     expect(streaming.partialUtterance).toBe("ダミーの本文")
     expect(mainViewEntries(streaming)).toEqual([
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーの本文" },
     ])
 
@@ -66,7 +66,7 @@ describe("applySessionEvent", () => {
 
     expect(settled.partialUtterance).toBe("")
     expect(mainViewEntries(settled)).toEqual([
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーの本文です。" },
     ])
   })
@@ -91,7 +91,11 @@ describe("applySessionEvent", () => {
   it("request で吹き出しと表情を既定に戻す（送信直後に次のターンへ移ったと分かるように）", () => {
     const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
-    const nextTurn = applySessionEvent(spoken, { kind: "request", text: "ダミーの依頼" }, 0)
+    const nextTurn = applySessionEvent(
+      spoken,
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      0,
+    )
 
     // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
     // （src/browser/features/character-view/balloon-track.tsx）。
@@ -101,20 +105,20 @@ describe("applySessionEvent", () => {
 
   it("セリフは記録にも積むが、レポート（mainViewEntries）には出さない", () => {
     const view = apply(
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "speech", text: "いくよ！", expression: "proud" },
       { kind: "utterance", text: "ダミーのレポート" },
     )
 
     // 記録には残す（過去のターンの吹き出しを引き直すため。shared/turn-speech.ts）。
     expect(view.records).toEqual([
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "speech", text: "いくよ！", expression: "proud" },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
     // メインビューにはセリフを出さない（吹き出しだけ。docs/requirements.md 4.2）。
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
     // `MainViewEntry` には `speech` の種類そのものが無い（型の側でも混ざらない）。
@@ -122,7 +126,7 @@ describe("applySessionEvent", () => {
 
   it("同じターン内のセリフは件数を絞らず、古い→新しいの順に並べる", () => {
     const view = apply(
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "speech", text: "1つめ", expression: "default" },
       { kind: "speech", text: "2つめ", expression: "default" },
       { kind: "speech", text: "3つめ", expression: "default" },
@@ -134,14 +138,14 @@ describe("applySessionEvent", () => {
 
   it("新しいターンの request の直後は吹き出しを空にし、次の speak でそのターンのものだけになる", () => {
     const firstTurn = apply(
-      { kind: "request", text: "1つめの依頼" },
+      { kind: "request", text: "1つめの依頼", images: [] },
       { kind: "speech", text: "1つめのセリフ", expression: "default" },
       { kind: "speech", text: "1つめの2つめのセリフ", expression: "default" },
     )
 
     const secondTurnStarted = applySessionEvent(
       firstTurn,
-      { kind: "request", text: "2つめの依頼" },
+      { kind: "request", text: "2つめの依頼", images: [] },
       0,
     )
     // 送信した時点で前のターンの一言は残さず空にする（次のターンに移ったことが画面から
@@ -313,7 +317,7 @@ describe("applySessionEvent", () => {
 
   it("mainViewEntries はツール系の entry も含む（`groupIntoTurns` / `keepOnlyInterimReports` の材料になる）", () => {
     const view = apply(
-      { kind: "request", text: "依頼" },
+      { kind: "request", text: "依頼", images: [] },
       {
         kind: "tool-started",
         toolUseId: "toolu_1",
@@ -326,7 +330,7 @@ describe("applySessionEvent", () => {
     )
 
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "依頼" },
+      { kind: "request", text: "依頼", images: [] },
       {
         kind: "tool",
         name: "Read",
@@ -423,7 +427,7 @@ describe("applySessionEvent", () => {
   it("request でターンが進行中になり、turn-finished で止まる（入力欄の送信/中断の切り替えに使う）", () => {
     expect(INITIAL_SESSION_STATE.turnInProgress).toBe(false)
 
-    const started = apply({ kind: "request", text: "ダミーの依頼" })
+    const started = apply({ kind: "request", text: "ダミーの依頼", images: [] })
     expect(started.turnInProgress).toBe(true)
 
     const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" }, 0)
@@ -431,7 +435,7 @@ describe("applySessionEvent", () => {
   })
 
   it("session-ended でも進行中を止める（中断・異常終了のどちらでも入力欄を送信可能に戻す）", () => {
-    const started = apply({ kind: "request", text: "ダミーの依頼" })
+    const started = apply({ kind: "request", text: "ダミーの依頼", images: [] })
 
     const ended = applySessionEvent(
       started,
@@ -448,7 +452,7 @@ describe("applySessionEvent", () => {
 
     const started = applySessionEvent(
       INITIAL_SESSION_STATE,
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       100,
     )
     expect(started.turnStartedAt).toBe(100)
@@ -459,7 +463,11 @@ describe("applySessionEvent", () => {
     expect(finished.turnFinishedAt).toBe(300)
 
     // 次の依頼で0から数え直す（turnFinishedAt が undefined に戻る）。
-    const restarted = applySessionEvent(finished, { kind: "request", text: "次の依頼" }, 400)
+    const restarted = applySessionEvent(
+      finished,
+      { kind: "request", text: "次の依頼", images: [] },
+      400,
+    )
     expect(restarted.turnStartedAt).toBe(400)
     expect(restarted.turnFinishedAt).toBeUndefined()
   })
@@ -467,7 +475,7 @@ describe("applySessionEvent", () => {
   it("session-ended でも turnFinishedAt を打つ（中断・異常終了でも経過時間表示が止まる）", () => {
     const started = applySessionEvent(
       INITIAL_SESSION_STATE,
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       100,
     )
 
@@ -546,10 +554,10 @@ describe("applySessionEvent", () => {
         slashCommands: ["clear"],
         terminalSlashCommands: [],
       },
-      { kind: "request", text: "架空の依頼" },
+      { kind: "request", text: "架空の依頼", images: [] },
       { kind: "speech", text: "架空のセリフ", expression: "proud" },
       { kind: "utterance", text: "架空のレポート" },
-      { kind: "request", text: "/clear" },
+      { kind: "request", text: "/clear", images: [] },
     )
     // "/clear" 自体も request なので、この時点で吹き出しはすでに空（record は残る）。
     expect(before.speeches).toEqual([])
@@ -573,10 +581,10 @@ describe("applySessionEvent", () => {
 
   it("普通のターン（request）は records を残す（丸ごと空にするのは /clear だけ）", () => {
     const before = apply(
-      { kind: "request", text: "架空の依頼" },
+      { kind: "request", text: "架空の依頼", images: [] },
       { kind: "speech", text: "架空のセリフ1", expression: "default" },
       { kind: "speech", text: "架空のセリフ2", expression: "default" },
-      { kind: "request", text: "次の架空の依頼" },
+      { kind: "request", text: "次の架空の依頼", images: [] },
     )
 
     // speeches は request のたびに空になる（送信直後に分かるように）が、records は
@@ -673,13 +681,13 @@ describe("applySessionEvent", () => {
   it("speak が1回も呼ばれなかったターンでは、行頭マーカーの補助で吹き出しを埋め、本文からマーカー行を除く", () => {
     const view = apply(
       CHARACTER_WITH_MARKER,
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "utterance", text: "精霊: 補助で拾ったセリフ\n本文はこちら" },
     )
 
     expect(view.speeches).toEqual(["補助で拾ったセリフ"])
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "本文はこちら" },
     ])
   })
@@ -687,14 +695,14 @@ describe("applySessionEvent", () => {
   it("speak が呼ばれたターンでも、本文に紛れたマーカー行は吹き出しへ回して本文から除く", () => {
     const view = apply(
       CHARACTER_WITH_MARKER,
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "speech", text: "本物のセリフ", expression: "proud" },
       { kind: "utterance", text: "精霊: マーカー行\n本文はこちら" },
     )
 
     expect(view.speeches).toEqual(["本物のセリフ", "マーカー行"])
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "本文はこちら" },
     ])
   })
@@ -702,7 +710,7 @@ describe("applySessionEvent", () => {
   it("行頭マーカーの補助で拾ったセリフも記録に積む（過去のターンで消えないため）", () => {
     const view = apply(
       CHARACTER_WITH_MARKER,
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "speech", text: "本物のセリフ", expression: "proud" },
       { kind: "utterance", text: "精霊: マーカー行\n本文はこちら" },
     )
@@ -715,13 +723,13 @@ describe("applySessionEvent", () => {
   it("speechMarker が無いパックでは補助が効かず、本文はそのままレポートになる", () => {
     const view = apply(
       { ...CHARACTER_WITH_MARKER, speechMarker: undefined },
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "utterance", text: "精霊: マーカーのつもりの行\n本文はこちら" },
     )
 
     expect(view.speeches).toEqual([])
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼" },
+      { kind: "request", text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "精霊: マーカーのつもりの行\n本文はこちら" },
     ])
   })
@@ -729,13 +737,13 @@ describe("applySessionEvent", () => {
   it("記録はターン数の窓（直近20ターン）だけを残し、古いターンは落とす", () => {
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
-      events.push({ kind: "request", text: `依頼${String(turn)}` })
+      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
       events.push({ kind: "utterance", text: `レポート${String(turn)}` })
     }
 
     const view = apply(...events)
     const requestTexts = mainViewEntries(view)
-      .filter((entry): entry is { kind: "request"; text: string } => entry.kind === "request")
+      .filter((entry) => entry.kind === "request")
       .map((entry) => entry.text)
 
     expect(requestTexts).toHaveLength(20)
@@ -746,13 +754,13 @@ describe("applySessionEvent", () => {
   it("雑談モードでは窓が100ターンに広がる（仕事の20ターンより後ろまで残る）", () => {
     const events: SessionEvent[] = [{ kind: "chat-mode-changed", chat: true }]
     for (let turn = 0; turn < 105; turn += 1) {
-      events.push({ kind: "request", text: `依頼${String(turn)}` })
+      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
       events.push({ kind: "utterance", text: `雑談${String(turn)}` })
     }
 
     const view = apply(...events)
     const requestTexts = mainViewEntries(view)
-      .filter((entry): entry is { kind: "request"; text: string } => entry.kind === "request")
+      .filter((entry) => entry.kind === "request")
       .map((entry) => entry.text)
 
     expect(requestTexts).toHaveLength(100)
@@ -790,7 +798,7 @@ describe("applySessionEvent（質問の記録）", () => {
 
   it("質問に答えると、そのやり取りの記録に質問1件が残る", () => {
     const entries = questionEntries(
-      { kind: "request", text: "架空の依頼" },
+      { kind: "request", text: "架空の依頼", images: [] },
       {
         kind: "question-answered",
         questions: [singleQuestion],
@@ -803,7 +811,7 @@ describe("applySessionEvent（質問の記録）", () => {
 
   it("自由入力の答えも、選んだものとして記録に残る", () => {
     const entries = questionEntries(
-      { kind: "request", text: "架空の依頼" },
+      { kind: "request", text: "架空の依頼", images: [] },
       {
         kind: "question-answered",
         questions: [singleQuestion],
@@ -822,7 +830,7 @@ describe("applySessionEvent（質問の記録）", () => {
 
   it("複数選択の答えは1つの文字列に畳まれず、選んだぶんだけ並ぶ", () => {
     const entries = questionEntries(
-      { kind: "request", text: "架空の依頼" },
+      { kind: "request", text: "架空の依頼", images: [] },
       {
         kind: "question-answered",
         questions: [multiQuestion],
@@ -837,7 +845,7 @@ describe("applySessionEvent（質問の記録）", () => {
 
   it("答えていない質問（pending-changed だけ）は記録に残らない", () => {
     const entries = questionEntries(
-      { kind: "request", text: "架空の依頼" },
+      { kind: "request", text: "架空の依頼", images: [] },
       {
         kind: "pending-changed",
         pending: [{ kind: "question", id: "toolu_q", questions: [singleQuestion] }],
@@ -849,9 +857,9 @@ describe("applySessionEvent（質問の記録）", () => {
 
   it("記録は前のやり取りに残り、次の依頼で消えない", () => {
     const view = apply(
-      { kind: "request", text: "架空の依頼1" },
+      { kind: "request", text: "架空の依頼1", images: [] },
       { kind: "question-answered", questions: [singleQuestion], answers: [["案A"]] },
-      { kind: "request", text: "架空の依頼2" },
+      { kind: "request", text: "架空の依頼2", images: [] },
     )
 
     expect(mainViewEntries(view).map((entry) => entry.kind)).toEqual([

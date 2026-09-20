@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 function request(text: string): SessionRecord {
-  return { kind: "request", text }
+  return { kind: "request", text, images: [] }
 }
 
 function detail(markdown: string): SessionRecord {

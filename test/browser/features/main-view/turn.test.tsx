@@ -43,7 +43,13 @@ function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainV
 }
 
 function turn(steps: readonly MainViewStep[]): MainViewTurn {
-  return { id: 0, request: "架空の依頼", steps, hasInterimReport: false, droppedCount: 0 }
+  return {
+    id: 0,
+    request: { text: "架空の依頼", images: [] },
+    steps,
+    hasInterimReport: false,
+    droppedCount: 0,
+  }
 }
 
 /** 演出を掛けると言われた本文（`reveal` が立っているもの）。 */

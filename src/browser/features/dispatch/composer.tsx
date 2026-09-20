@@ -22,13 +22,18 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ClipboardEvent,
+  type DragEvent,
   type FormEvent,
   type KeyboardEvent,
   type ReactElement,
 } from "react"
 
 import { commandSuggestions } from "../../../shared/command-suggestion.ts"
+import { MAX_PROMPT_IMAGES, type PromptImage } from "../../../shared/prompt-image.ts"
 import { type CommandDescription } from "../../../shared/session-event.ts"
+import { PromptImageChips } from "../../components/prompt-image.tsx"
+import { carriesFiles, promptImageFiles, readPromptImage } from "../../lib/prompt-image.ts"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import {
   CommandSuggestions,
@@ -45,8 +50,10 @@ import {
 } from "./file-suggestions.tsx"
 import { TurnStatus } from "./turn-status.tsx"
 
+// **画像の受け取り方はボタンではなくこの1行で伝える**（操作子を増やさない。
+// `docs/requirements.md` 4.10「受け取り方」）。
 const PLACEHOLDER_OPERATION_HINT =
-  "（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完）"
+  "（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完、画像は貼り付け）"
 
 /** 打ちかけの文面と、その中のキャレットの位置。**2つで1つの状態**なので一緒に持つ。 */
 type Draft = {
@@ -137,6 +144,9 @@ export function Composer(): ReactElement {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [suggestionsDismissed, setSuggestionsDismissed] = useState(false)
+  // 添えた画像（送るまでの間だけ持つ）。**原寸もここにしか無く**、送った時点で捨てる
+  // （`docs/requirements.md` 4.10。`localStorage` にもディスクにも置かない）。
+  const [images, setImages] = useState<readonly PromptImage[]>([])
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 
   const placeholder = composerPlaceholder(characterName)
@@ -188,11 +198,55 @@ export function Composer(): ReactElement {
     if (trimmed === "") {
       return
     }
-    dispatch({ type: "prompt", text: trimmed })
+    dispatch({ type: "prompt", text: trimmed, images })
     setDraft(EMPTY_DRAFT)
+    // **送った時点で原寸を手放す**（札が消え、以降どこからも開けない）。
+    setImages([])
     setSelectedIndex(0)
     setSuggestionsDismissed(false)
     textAreaRef.current?.focus()
+  }
+
+  /**
+   * 貼られた・落ちてきたファイルを札に足す。**枚数の上限（{@link MAX_PROMPT_IMAGES}）で頭を
+   * 打ち**、読めなかった1枚は黙って落ちる（画面は1回の失敗で落ちない）。
+   */
+  const attachFiles = (files: readonly File[]): void => {
+    void (async () => {
+      const read = await Promise.all(files.slice(0, MAX_PROMPT_IMAGES).map(readPromptImage))
+      const added = read.flatMap((image) => (image === undefined ? [] : [image]))
+      if (added.length === 0) {
+        return
+      }
+      setImages((current) => [...current, ...added].slice(0, MAX_PROMPT_IMAGES))
+    })()
+  }
+
+  const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>): void => {
+    const files = promptImageFiles(event.clipboardData)
+    if (files.length === 0) {
+      return
+    }
+    // 画像を貼ったときだけ既定の貼り付けを止める（文字の貼り付けはそのまま通す）。
+    event.preventDefault()
+    attachFiles(files)
+  }
+
+  const handleDragOver = (event: DragEvent<HTMLTextAreaElement>): void => {
+    // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは `<textarea>` の
+    // 既定の振る舞いのまま）。
+    if (carriesFiles(event.dataTransfer)) {
+      event.preventDefault()
+    }
+  }
+
+  const handleDrop = (event: DragEvent<HTMLTextAreaElement>): void => {
+    const files = promptImageFiles(event.dataTransfer)
+    if (files.length === 0) {
+      return
+    }
+    event.preventDefault()
+    attachFiles(files)
   }
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>): void => {
@@ -247,6 +301,12 @@ export function Composer(): ReactElement {
   return (
     <form className={styles["dispatch-form"]} onSubmit={handleSubmit}>
       <div className={styles["dispatch-text-wrap"]}>
+        <PromptImageChips
+          images={images}
+          onRemove={(index) => {
+            setImages((current) => current.filter((_, at) => at !== index))
+          }}
+        />
         <textarea
           ref={textAreaRef}
           className={styles["dispatch-text"]}
@@ -254,6 +314,9 @@ export function Composer(): ReactElement {
           value={draft.text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
           required
         />
         {suggestions.kind === "command" && (

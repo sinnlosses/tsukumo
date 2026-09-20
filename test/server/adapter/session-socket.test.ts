@@ -182,10 +182,14 @@ describe("attachSessionSocket", () => {
     const client = await connect(socketUrl(started.origin, TOKEN))
     await nextFrame(client)
 
-    client.send(JSON.stringify({ type: "prompt", commandId: "c-1", text: "架空の依頼" }))
+    client.send(
+      JSON.stringify({ type: "prompt", commandId: "c-1", text: "架空の依頼", images: [] }),
+    )
     await new Promise((resolve) => setTimeout(resolve, 30))
 
-    expect(started.dispatched).toEqual([{ type: "prompt", commandId: "c-1", text: "架空の依頼" }])
+    expect(started.dispatched).toEqual([
+      { type: "prompt", commandId: "c-1", text: "架空の依頼", images: [] },
+    ])
     client.close()
   })
 

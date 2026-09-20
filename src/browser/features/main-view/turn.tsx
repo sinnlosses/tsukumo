@@ -7,9 +7,11 @@ import { Fragment, useState, type ReactElement } from "react"
 
 import {
   type MainViewAction,
+  type MainViewRequest,
   type MainViewStep,
   type MainViewTurn,
 } from "../../../shared/main-view.ts"
+import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { Report } from "./report.tsx"
@@ -164,7 +166,8 @@ function truncateRequestText(request: string): string {
 }
 
 /**
- * 依頼の見出し。**全行を既定で見せる**（ユーザーの指摘 2026-09-12「複数行の依頼が1行しか
+ * 依頼の見出しと、添えた画像の控え（`docs/requirements.md` 4.10。**控えは見出しの下**に並び、
+ * 添えていなければ何も出ない）。**全行を既定で見せる**（ユーザーの指摘 2026-09-12「複数行の依頼が1行しか
  * 出ない」）。
  *
  * - **1行の依頼は `<h2>` のまま。** 畳む先が無いのに開閉の三角を出さない
@@ -172,28 +175,36 @@ function truncateRequestText(request: string): string {
  *   閉じて1行目だけにできる。**`<summary>` に1行目、中の `<div>` には2行目以降**を入れて
  *   1行目が二重に出ないようにする
  */
-function RequestHeading(props: { readonly request: string }): ReactElement {
-  const text = truncateRequestText(props.request)
+function RequestHeading(props: { readonly request: MainViewRequest }): ReactElement {
+  const text = truncateRequestText(props.request.text)
   const lineBreak = text.indexOf("\n")
 
   if (lineBreak === -1) {
-    return <h2 className={styles["turn-request"]}>{text}</h2>
+    return (
+      <>
+        <h2 className={styles["turn-request"]}>{text}</h2>
+        <PromptImageThumbnails images={props.request.images} />
+      </>
+    )
   }
 
   const firstLine = text.slice(0, lineBreak)
   const rest = text.slice(lineBreak + 1)
 
   return (
-    <details className={styles["turn-request"]} open>
-      <summary>{firstLine}</summary>
-      <div className={styles["turn-request-full"]}>
-        {rest.split("\n").map((line, index) => (
-          <Fragment key={index}>
-            {index > 0 && <br />}
-            {line}
-          </Fragment>
-        ))}
-      </div>
-    </details>
+    <>
+      <details className={styles["turn-request"]} open>
+        <summary>{firstLine}</summary>
+        <div className={styles["turn-request-full"]}>
+          {rest.split("\n").map((line, index) => (
+            <Fragment key={index}>
+              {index > 0 && <br />}
+              {line}
+            </Fragment>
+          ))}
+        </div>
+      </details>
+      <PromptImageThumbnails images={props.request.images} />
+    </>
   )
 }

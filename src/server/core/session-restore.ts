@@ -116,7 +116,11 @@ function restoredMessageEvents(
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {
   const text = requestText(message)
-  return text === undefined ? toSessionEvents(message, expressions) : [{ kind: "request", text }]
+  // 組み直した依頼に画像は付かない（**tsukumo は原寸も控えもどこにも残していない**ので、
+  // 読み直せるのは文面だけ。`docs/requirements.md` 4.10）。
+  return text === undefined
+    ? toSessionEvents(message, expressions)
+    : [{ kind: "request", text, images: [] }]
 }
 
 /**

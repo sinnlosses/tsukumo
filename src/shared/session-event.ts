@@ -71,8 +71,14 @@ export type SessionEvent =
       readonly kind: "command-descriptions"
       readonly descriptions: readonly CommandDescription[]
     }
-  /** 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。 */
-  | { readonly kind: "request"; readonly text: string }
+  /**
+   * 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。
+   *
+   * `images` は添えた画像の**控え**（縮めた data URL の並び。添えていなければ空）。
+   * **原寸はここに載らない** — 原寸はモデルへ渡って終わりで、記録に残るのは控えだけ
+   * （`docs/requirements.md` 4.10）。
+   */
+  | { readonly kind: "request"; readonly text: string; readonly images: readonly string[] }
   /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/requirements.md 4.2）。 */
   | { readonly kind: "partial-utterance"; readonly text: string }
   /** 完成したターンの本文。仮の本文を置き換える。 */

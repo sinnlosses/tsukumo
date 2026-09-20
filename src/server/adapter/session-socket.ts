@@ -22,13 +22,15 @@ import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../shared/sess
 import { type DispatchResult } from "../core/session-manager.ts"
 
 /**
- * 受け取るメッセージ1件の上限（バイト）。**立ち絵1枚（デコード後 2 MiB）を data URL で運べる
- * 大きさ**にしてある（base64 の33%増と JSON のぶんを足して 4 MiB。`docs/design.md` 7.1 の表）。
+ * 受け取るメッセージ1件の上限（バイト）。**1件の依頼に添えられる画像（原寸 2 MiB × 4 枚）を
+ * data URL で運べる大きさ**にしてある（base64 の33%増で約 10.7 MiB、控えと文面と JSON の
+ * ぶんを足して 12 MiB。`docs/requirements.md` 4.10 の表）。立ち絵・背景の1枚（2 MiB）は
+ * この中に収まる。
  *
  * **依頼の文面の上限はこれとは別に効いている**（zod の `MAX_PROMPT_TEXT_LENGTH`。
  * `src/shared/command.ts`）ので、ここを上げても送れる文面は長くならない。
  */
-const MAX_MESSAGE_BYTES = 4 * 1024 * 1024
+const MAX_MESSAGE_BYTES = 12 * 1024 * 1024
 
 export type SessionSocketOptions = {
   /** listen 済みの HTTP サーバ（`server.ts` の `startViewServer` が立てたもの）。 */

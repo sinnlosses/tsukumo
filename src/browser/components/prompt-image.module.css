@@ -1,0 +1,61 @@
+/* 依頼に添えた画像の札と控え（src/browser/components/prompt-image.tsx）。
+   **横に転がらないことが要件**（狭い画面 390x844 でも並ぶ）なので、並びは必ず折り返し、
+   1枚の幅は器を超えない。 */
+.prompt-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+/* 札（送る前）。`×` を右上の角に重ねるので、ここが基準になる。 */
+.prompt-image-chip {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 0;
+  line-height: 0;
+}
+/* 控え（送ったあと）。外す口を持たないので、重ねるものが無い。 */
+.prompt-image-thumbnail {
+  flex: 0 0 auto;
+  min-width: 0;
+  line-height: 0;
+}
+/* 縮めた絵そのもの。**高さで揃え、横は絵の比率のまま**（並べたときに底が揃う）。
+   器より広い絵は幅で頭打ちにして、領域を横へ押し広げない。 */
+.prompt-image {
+  display: block;
+  max-width: 100%;
+  height: 4rem;
+  width: auto;
+  object-fit: contain;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+/* 外す `×`。**札にだけ付く**（控えは押せない）。絵の右上の角に重ね、絵の外へはみ出さない
+   （はみ出すと入力欄の領域がスクロールする）。 */
+.prompt-image-remove {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--ground);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-secondary);
+  line-height: 1;
+  cursor: pointer;
+}
+.prompt-image-remove:hover {
+  border-color: var(--accent);
+}

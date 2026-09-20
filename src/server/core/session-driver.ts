@@ -13,6 +13,7 @@
 import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
 import { type ExpressionChoice } from "../../shared/expression-choice.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
+import { type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 
 /**
@@ -81,8 +82,14 @@ export type SessionDriverOptions = {
 }
 
 export type SessionDriver = {
-  /** 依頼を1つ送る（ストリーミング入力への追加）。`request` イベントも同時に流れる。 */
-  readonly prompt: (text: string) => void
+  /**
+   * 依頼を1つ送る（ストリーミング入力への追加）。`request` イベントも同時に流れる。
+   *
+   * `images` は添えた画像の**原寸と控えの対**（`docs/requirements.md` 4.10）。原寸は
+   * モデルへ渡すだけ、控えは `request` イベントに載せる——**分けるのは駆動の側**で、
+   * ここから先へ原寸は出ない。
+   */
+  readonly prompt: (text: string, images: readonly PromptImage[]) => void
   /** 実行中のターンを中断する。中断されたターンは `turn-finished` の `error` で終わる。 */
   readonly interrupt: () => Promise<void>
   /** 答え待ちに答える。解決済み・知らない id のときは `false`。 */

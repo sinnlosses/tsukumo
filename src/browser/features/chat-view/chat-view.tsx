@@ -20,6 +20,7 @@ import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
 import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression } from "../../../shared/expression.ts"
 import { Portrait } from "../../components/portrait.tsx"
+import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
 import { useSessionSelector } from "../../stores/session.tsx"
 import styles from "./chat-view.module.css"
 
@@ -175,12 +176,14 @@ function ChatLog(props: {
             </button>
           ) : (
             // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
+            // **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。
             <div
               key={index}
               className={`${styles["chat-entry"]} ${styles["chat-entry-user"]}`}
               data-speaker="user"
             >
               {entry.text}
+              <PromptImageThumbnails images={entry.images} />
             </div>
           ),
         )

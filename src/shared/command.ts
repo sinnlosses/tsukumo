@@ -20,6 +20,13 @@ import {
 } from "./expression.ts"
 import { answerSchema } from "./pending-ask.ts"
 import { MAX_PORTRAIT_DATA_URL_LENGTH, parsePortraitImage } from "./portrait-image.ts"
+import {
+  MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
+  MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
+  MAX_PROMPT_IMAGES,
+  parsePromptImage,
+  parsePromptImageThumbnail,
+} from "./prompt-image.ts"
 
 /**
  * 依頼として送れる文面の上限。送信のための素朴な上限であって、秘匿・検閲のためではない
@@ -90,6 +97,26 @@ const backgroundDataUrlSchema = z
   .max(MAX_BACKGROUND_DATA_URL_LENGTH)
   .refine((value) => parseBackgroundImage(value) !== undefined)
 
+/**
+ * 依頼に添える画像1枚（`docs/requirements.md` 4.10）。**原寸と控えの対**で、大きさと種類は
+ * `src/shared/prompt-image.ts` が見る（受け取るのは `.png` / `.jpg` / `.gif` / `.webp` の4つ
+ * だけ。**`.svg` は API が取らないので渡せない**）。
+ *
+ * **上限が2つあるのは、2つの寿命が違うから**（原寸は送った時点で手放し、記録に残るのは
+ * 控えだけ）。立ち絵と同じく文字列のまま持ち、`{ mediaType, base64 }` へのほどきは渡す側
+ * （`src/server/adapter/sdk-driver.ts`）が同じ関数で行う。
+ */
+const promptImageSchema = z.object({
+  full: z
+    .string()
+    .max(MAX_PROMPT_IMAGE_DATA_URL_LENGTH)
+    .refine((value) => parsePromptImage(value) !== undefined),
+  thumbnail: z
+    .string()
+    .max(MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH)
+    .refine((value) => parsePromptImageThumbnail(value) !== undefined),
+})
+
 /** 差し色（`<input type="color">` が渡す形）。**16進の値そのものはここに書かない。** */
 const accentColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
 
@@ -126,6 +153,9 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
       .string()
       .max(MAX_PROMPT_TEXT_LENGTH)
       .refine((text) => text.trim() !== ""),
+    // **添えた画像**（`docs/requirements.md` 4.10）。1枚も無いのが普通なので、field ごと
+    // 省いた形も受け取って空に畳む（画像を知らない送り手から届いても弾かない）。
+    images: z.array(promptImageSchema).max(MAX_PROMPT_IMAGES).readonly().default([]),
   }),
   z.object({ type: z.literal("interrupt"), commandId: commandIdSchema }),
   z.object({

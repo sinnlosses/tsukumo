@@ -32,6 +32,7 @@ import {
   expressionNames as toExpressionNames,
 } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
+import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import {
@@ -116,9 +117,11 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
   void relayCommandDescriptions(session, options)
 
   return {
-    prompt: (text) => {
-      options.onEvent({ kind: "request", text })
-      input.push(text)
+    prompt: (text, images) => {
+      // **原寸と控えはここで分かれる。** 控えだけが記録（`request`）へ行き、原寸は
+      // ストリーミング入力へ流れてこの場で手放す（`docs/requirements.md` 4.10）。
+      options.onEvent({ kind: "request", text, images: images.map((image) => image.thumbnail) })
+      input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     interrupt: async () => {
       await session.interrupt()
@@ -409,16 +412,32 @@ function labelOf(expressions: readonly ExpressionChoice[], name: Expression): st
   return expressions.find((choice) => choice.name === name)?.label ?? name
 }
 
+/** 送る依頼1件。**原寸の画像はここまでで、`stream()` が渡したあとは誰も持たない。** */
+type Prompt = {
+  readonly text: string
+  readonly images: readonly PromptContentBlock[]
+}
+
+/**
+ * user メッセージの内容ブロック1つ。**`MessageParam` の型をそのまま使う**（自前の型を作らない。
+ * `docs/requirements.md` 4.10 の裏取り）。
+ */
+type PromptContentBlock = Extract<SDKUserMessage["message"]["content"], readonly unknown[]>[number]
+
 /**
  * ストリーミング入力。`query` には「まだ終わらない」非同期イテレータを渡し、依頼が届くたびに
  * user メッセージを1つ流す（docs/requirements.md 4.1「同じ `query` への追加入力」）。
+ *
+ * **画像を添えられるのはストリーミング入力だけ**（単発入力は受け付けない。
+ * `docs/requirements.md` 4.10）。添えたときは `content` を配列にし、画像のブロックを先に、
+ * 文面を後ろに置く。
  */
 function createPromptStream(): {
-  readonly push: (text: string) => void
+  readonly push: (prompt: Prompt) => void
   readonly end: () => void
   readonly stream: () => AsyncIterable<SDKUserMessage>
 } {
-  const waiting: string[] = []
+  const waiting: Prompt[] = []
   let wake: (() => void) | undefined = undefined
   let closed = false
 
@@ -429,8 +448,8 @@ function createPromptStream(): {
   }
 
   return {
-    push: (text) => {
-      waiting.push(text)
+    push: (prompt) => {
+      waiting.push(prompt)
       notify()
     },
     end: () => {
@@ -439,8 +458,8 @@ function createPromptStream(): {
     },
     stream: async function* () {
       while (true) {
-        const text = waiting.shift()
-        if (text === undefined) {
+        const prompt = waiting.shift()
+        if (prompt === undefined) {
           if (closed) {
             return
           }
@@ -452,13 +471,39 @@ function createPromptStream(): {
 
         yield {
           type: "user",
-          message: { role: "user", content: text },
+          message: { role: "user", content: promptContent(prompt) },
           parent_tool_use_id: null,
           session_id: "",
         }
       }
     },
   }
+}
+
+/** 依頼1件の `content`。画像が無ければ文字列のまま（いままでと同じ形）。 */
+function promptContent(prompt: Prompt): SDKUserMessage["message"]["content"] {
+  return prompt.images.length === 0
+    ? prompt.text
+    : [...prompt.images, { type: "text", text: prompt.text }]
+}
+
+/**
+ * 依頼に添えられた画像1枚を、モデルへ渡す内容ブロックにする。**渡せない形・大きすぎるものは
+ * 空**（その1枚を諦めて依頼そのものは送る。docs/coding-standards.md「エラーハンドリング」）。
+ *
+ * 形は境界（`src/shared/command.ts` の zod）で見てあるので、ここは同じ関数でほどくだけ
+ * （立ち絵を書き込む側が `parsePortraitImage` でほどくのと同じ扱い）。
+ */
+function toImageBlocks(image: PromptImage): readonly PromptContentBlock[] {
+  const source = parsePromptImage(image.full)
+  return source === undefined
+    ? []
+    : [
+        {
+          type: "image",
+          source: { type: "base64", media_type: source.mediaType, data: source.base64 },
+        },
+      ]
 }
 
 function describeError(error: unknown): string {
