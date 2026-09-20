@@ -24,12 +24,6 @@ import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 import { publishBrushTip, type BrushTip } from "../../stores/brush-tip.ts"
 import { planReveal, type RevealBlock, type RevealElement } from "./reveal-plan.ts"
 
-/**
- * 演出に使ってよい時間。**本文の長さに比例させない**（本文は既に完成しているので、演出は
- * そのまま待ち時間になる。`docs/requirements.md` 4.3「全体で1.5〜2秒を上限に出し切る」）。
- */
-const REVEAL_BUDGET_MS = 1400
-
 /** 見せる範囲を進めているあいだだけ根に立てる印（目視確認と、外から終わりを知るための口）。 */
 const REVEALING_ATTRIBUTE = "data-revealing"
 
@@ -77,7 +71,7 @@ export function useReportReveal(reveal: boolean): RefObject<HTMLDivElement | nul
  * （スキップと、部品が外れたときの後始末を兼ねる）。
  */
 function startReveal(root: HTMLElement): () => void {
-  const blocks = planReveal(root, REVEAL_BUDGET_MS)
+  const blocks = planReveal(root)
   if (blocks.length === 0) {
     return () => undefined
   }
