@@ -12248,3 +12248,347 @@ T-195 が段1（ドキュメントの追従）と段2（`protocol` → `shared`�
 - `git add -A` を使わず、移したパスを個別に足す
 - **`src/ui/` を触る他のタスク（T-211〜T-216）と同時に進めない**（同じ作業ツリーを複数の
   セッションが共有するため。`CLAUDE.md`「タスク運用」）
+
+## T-136
+
+**タスク**: 表情を増やすかと、増やすなら何を足すかを決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-181 / **passes**: True
+
+**evidence**:
+
+docs/requirements.md 4.3 に表情6つの表（識別子・ラベル・出す場面）を追加。serious=きりっ / curious=きょとん を末尾に足すと決定（2026-09-20 ユーザー判断。curious は質問時に必ず出すものではない）。docs/glossary.md の表情の項に一覧の正典を指す注記を足し、古い例「作業中」を「思案」に直した。bun run check 701 pass / 0 fail、`grep -c '^#\{2,3\} '` は前後とも 26。コードは未変更（実装は後続タスク）。
+
+## 背景
+
+ユーザーの問い（2026-09-15）「立ち絵ってもっとあったほうがいい? どういう表情が他に欲しいかな?」。
+
+**いまの表情は4つに固定されている。** `src/protocol/expression.ts` の
+`export type Expression = "default" | "working" | "proud" | "flustered"` と、その直下の
+`EXPRESSIONS` 配列（20行目付近）が全体。パックの `character.json` の `expressions` は
+**この4つのキーにだけ**読み込まれる（`src/protocol/character.ts` の `toExpressionLabels`・
+`toPortraits`。どちらも4キーを直に並べている）。
+
+**増やすコストは思ったより軽い。** 立ち絵が無い表情は `resolvePortraitUrl` が `default` に
+落とすので（`src/protocol/character.ts`）、**絵が揃っていなくてもコードは動く**。
+`expressionChoices` は「立ち絵があるものだけ」を選択肢にするため、絵の無い表情は
+`speak` の enum にも出ない（`src/core/session-driver.ts` の `speakExpressionEnum` が
+パックの選択肢から作る）。つまり**足しても、絵を用意したパックだけが使える**。
+
+**ドキュメントに、いまの4つでは表せない場面が1つ名指しで書かれている。**
+`characters/tsukumo/persona.md` は「危険な操作を確認するときだけは、はしゃぐのをやめて
+真顔で止める」と指示しているが、対応する表情が無い（`default` = にっと で言うことになる）。
+
+## 決まっていること（蒸し返さない）
+
+**2026-09-17 の会話で、このタスクの論点のうち2つが先に決着した**（T-179 / T-180 / T-181 として
+登録済み。`docs/history/direction.md` 2026-09-17）:
+
+- **「自動で切り替える対象にするか」は決着済み: 表情に自動切り替えを持たせない。** ツール実行中の
+  `working` への自動上書きそのものを撤去すると決めた（T-179）。足す表情も `speak` の引数から
+  だけ選ばせる。`docs/requirements.md` 4.3 の優先順位の規則は消えるので、複雑さを理由に
+  候補を絞る必要はなくなった
+- **候補の `thinking`（思案）は、新規追加ではなく既存 `working` の改名で満たされる**（T-180）。
+  ラベルは `characters/tsukumo` が「ふむ」（T-181）。**このタスクで `thinking` を「足す」対象
+  として検討しない**
+
+残る候補は `serious`（真顔）。`characters/tsukumo/persona.md` が名指ししている「危険な操作を
+確認するときだけは、はしゃぐのをやめて真顔で止める」場面に対応する表情が無い、という根拠は
+そのまま有効。
+
+## 解くべき論点
+
+- **そもそも増やすか。** 増やすほど、パックを作る人が描く枚数が増える（絵が無ければ
+  `default` に落ちるので必須ではないが、揃っていない見た目にはなる）。据え置きも結論として有り
+- **足すなら何を足すか。** 残る出発点の案は1つ。**これは提案であって決定ではない**:
+  - `serious`（真顔）: `persona.md` が名指ししている「危険な操作を止める」場面。
+    **いま表せない場面が実在する**という点で根拠がいちばん強い
+  - 見送りの候補: 「質問」「照れ」など。**場面が `persona.md` や
+    `docs/requirements.md` 4.3 に書かれていないものは、根拠が弱いので足さない**
+- **既定の並び順。** `EXPRESSIONS` は `default` が先頭という規則がある（`expressionChoices`
+  の元）。足す位置を決める
+
+## やること
+
+1. 上の論点を、`src/protocol/expression.ts` / `src/protocol/character.ts` /
+   `characters/*/persona.md` / `docs/requirements.md` 4.3 の現物を読んで詰める
+2. **ユーザーに決を採る**（足すか / 足すなら何を / 自動切り替えの有無）。
+   このタスクは決めるところまでで、コードは触らない
+3. 決めた内容を `docs/requirements.md` 4.3 に書く（表情の一覧と、それぞれを出す場面）。
+   **据え置きと決めたときも、その判断と理由を 4.3 に1行残して閉じる**
+4. 実装は後続タスクに任せる（依存で後ろに置いてある）
+
+## 完了条件
+
+- 足すか据え置くかが決まり、足すなら**表情名（英語識別子）と日本語ラベル、出す場面**が
+  `docs/requirements.md` 4.3 に書かれている
+- `docs/glossary.md` の表情の項と食い違っていない（識別子は用語集に合わせる。
+  変えるなら**用語集を先に直す**）
+- `bun run check` が通る（ドキュメントだけの変更でも回す）
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で合う
+
+## 注意
+
+- **コードは変えない。** `Expression` 型に手を入れるのは後続タスク
+- **素材（立ち絵）は同梱しない**（`docs/requirements.md` 2.2）。足す表情の絵を
+  リポジトリに追加しない。`characters/local/` は `.gitignore` 済み
+- `docs/` の各ファイルは冒頭に節の索引の表があり、見出し名で位置を探すと索引の行に先に当たる。
+  **行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `loopable` は `"N"`。**どの表情が欲しいかはユーザーの好みで、コードから導けない**
+
+## T-137
+
+**タスク**: 決めた表情を Expression 型・パック定義・speak ツールに通す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-136 / **passes**: True
+
+**evidence**:
+
+src/shared/expression.ts の Expression / EXPRESSIONS 末尾に serious / curious を足し、src/shared/character.ts の4つの Record（toExpressionLabels・toPortraits・portraitUrls・EMPTY_PORTRAITS）を型の穴埋めで洗い出して埋めた。同梱2パックと local の character.json にラベル（tsukumo=きりっ/きょとん、他=真顔/きょとん）と persona.md の使い分けを追加。bun run check 703 pass / 0 fail（701 から +2。expressionChoices と resolvePortraitUrl の新テスト）。character-edit の空き枠数 1→3 のズレを検出して直した。実機（TSUKUMO_DRIVER=fake, port 7397）でキャラクター画面を撮り、6つの表情が全部ラベル付きで立ち絵込みで並ぶことと、/character/serious.png と curious.png が 200 で配られることを確認。docs/requirements.md 4.3 の「立ち絵が無い表情は選択肢に出ない」は実装（ラベルか立ち絵のどちらかがあれば出る OR）と食い違っていたので文面を実装に合わせて直し、4.4 のパック表に characters/tsukumo/ を足した。立ち絵2枚はユーザーの判断でコミットする（同梱は自作パックのみ、という 4.4 の既存方針どおり）。
+
+## 背景
+
+T-136 で決めた表情を実際に通す。**T-136 が「据え置き」で閉じたなら、このタスクは
+やることが無いのでその旨を `evidence` に書いて閉じる。**
+
+表情の集合は `src/protocol/expression.ts` の `Expression` 型と `EXPRESSIONS` 配列が
+唯一の出どころで、そこから次へ波及する:
+
+| 触る場所 | 何が要るか |
+| --- | --- |
+| `src/protocol/expression.ts` | `Expression` の union と `EXPRESSIONS` 配列に足す |
+| `src/protocol/character.ts` | `toExpressionLabels` / `toPortraits` が4キーを直に並べているので足す。`EMPTY_PORTRAITS` も同じ |
+| `characters/tsukumo/character.json` ほか | `expressions` に日本語ラベルを足す（**絵が無ければ選択肢に出ないだけ**で壊れない） |
+| `characters/*/persona.md` | 新しい表情をいつ使うかの説明 |
+
+`speak` ツールの enum はパックの `expressions` から動的に作られる
+（`src/core/session-driver.ts` の `speakExpressionEnum`）ので、**ツール定義を手で書き換える
+必要は無い**。読んで確かめること。
+
+## やること
+
+1. T-136 が `docs/requirements.md` 4.3 に書いた表情の一覧を読む。**そこに書かれたものだけ**を足す
+2. 上の表の場所を直す。`Readonly<Record<Expression, ...>>` を使っている箇所は
+   `tsc --noEmit` が漏れを教えてくれるので、**型の穴埋めで洗い出す**
+3. 同梱パック（`characters/tsukumo` / `characters/tsukumo-spirit`）の `character.json` に
+   ラベルを足し、`persona.md` にその表情を使う場面を書く。**絵は足さない**
+4. 既存テストの表情の一覧を前提にしたケースを直す
+   （`test/protocol/character.test.ts` の `expressionChoices` まわりなど）
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- **立ち絵が無い表情がパックに足されても、選択肢に出ず `default` に落ちる**ことを確かめる
+  テストがある（`expressionChoices` は立ち絵があるものだけを返す、という既存の性質）
+- 実機で `speak` の表情の選択肢に**絵のある表情だけ**が出ることを目視し、`evidence` に書く
+  （検証は `TSUKUMO_DRIVER=fake TSUKUMO_OPEN_VIEW=0 TSUKUMO_VIEW_PORT=<空きポート>` で
+  本物の claude を起こさずに立ち上げられる）
+
+## 注意
+
+- **素材（立ち絵）はリポジトリに足さない**（`docs/requirements.md` 2.2）
+- 識別子は `docs/glossary.md` の「英語識別子」に合わせる。変えたくなったら**用語集を先に直す**
+- コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-196
+
+**タスク**: 責務が同居している大きいファイルを分ける
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-210 / **passes**: True
+
+**evidence**:
+
+shared を4つに割った（command-suggestion / character-definition / character-asset / expression-choice）。mainViewEntries は既存の main-view.ts へ寄せ、adapter/server.ts から WebSocket の境界を session-socket.ts に出した。対応するテストも同じ数だけ分割。分けなかったもの: sdk-driver.ts（SDK の import を1ファイルに閉じる不変条件を割ると崩れる）／cli.ts（composition root で、architecture.test.ts の layerOf が src/ 直下を cli.ts だけに縛っている）／session-manager.ts（外に出せる名前は joinPartialUtterances 1つだけで、浅いモジュールが増えるだけ）／buildLayoutPage（16行。出すと uiScriptPath などの公開面が増える）。受け入れ: bun run check が 708 pass / 0 fail（architecture.test.ts 込み。件数は分割前と同数）。コード行の集合を分割前後で突き合わせ、差は import 文の断片4行のみ＝純粋な移動であることを確認した。目視: TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=39871 で起こし、ページ 200 / assets/ui.js 200 / WebSocket で hello を受けて prompt を送り events 5フレームが返る往復を確認した。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「1つのファイルで色んなことをしている印象があって、責務を明確に、
+分割してほしい」「バックエンドはどこがドメインなのか、どこがコントローラーなのか、インフラに
+依存しているところはどこかなどもわかりやすく責務を明確にしてほしい」
+
+T-195（段1・段2）と T-210（段3）で置き場が変わったあと、**1ファイルの中に複数の責務が同居しているもの**を分ける。
+2026-09-20 時点で大きいのは次（**パスは T-195 / T-210 で `src/shared/` `src/server/` `src/browser/` に
+変わっている**ので、移動後の位置で読む）:
+
+| ファイル | 行 | 中でしていること |
+| --- | --- | --- |
+| `src/protocol/session-state.ts` | 597 | 状態の型・`applySessionEvent`・メインビュー用の記録の抽出（`mainViewEntries`）・コマンド候補（`commandSuggestions` / `commandCandidates`）・書きかけの畳み（`settleUtterance` / `withMarkerFallback`）・ツールの完了（`finishTool`）・古いターンの切り落とし（`trimToRecentTurns`） |
+| `src/protocol/character.ts` | 450 | 定義の解析・表情の選択肢・素材の URL とキャッシュキー・パック名の検査・`CharacterInfo` への変換・定義の書き換え3種（`definitionWith*`） |
+| `src/adapter/server.ts` | 432 | WebSocket の upgrade と受信（`attachSessionSocket`）・HTTP のルーティング（`respond`）・ページの HTML の組み立て（`buildLayoutPage`）・同梱物の配信・キャラクター素材の配信 |
+| `src/adapter/sdk-driver.ts` | 422 | SDK の駆動・再開するセッションの探索・出力スタイルの中立化・コマンド一覧の中継・`speak` の MCP サーバの組み立て・プロンプトのストリーム |
+| `src/cli.ts` | 393 | 環境変数の受け取り・起動時の前提チェック・配線・終了処理（`main` 1本が200行超） |
+| `src/core/session-manager.ts` | 367 | セッションの台帳・イベントの束ね（`joinPartialUtterances`）・購読者への配信・駆動への差し込み |
+
+## 解くべき論点
+
+- **どれを分けるか。** 行数は理由にならない（`CLAUDE.md` 原則5: まとめるか分けるかは
+  「ファイル名が概念になっているか」で決める）。上の表のうち、名前が概念になっていない
+  ものだけを対象にする
+- `src/adapter/server.ts` は「1ファイル＝1つの境界」（原則3）だが、HTTP と WebSocket は
+  別の境界と見るか。`cli.ts` は配線（composition root）なので長くてよいのか
+- `protocol` を分けると両側の import が増える。契約の層が細切れになる害と釣り合うか
+
+## やること
+
+1. 上のファイルを読み、責務ごとに「名前が付く概念」を洗い出す
+2. 分けると決めたものだけを分ける。**分けないと決めたものは理由を `evidence` に1行ずつ書く**
+3. import の付け替えと、対応するテストファイルの分割を同じコミットで行う
+4. `docs/design.md`「ディレクトリ」の一覧と `docs/architecture.md` の全体図を追随させる
+5. `bun run format`
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 分けたファイルの名前がすべて概念になっている（`helper` / `util` / `common` / `misc` を
+  名前に使っていない）
+- `test/architecture.test.ts` が通る（層の辺を増やしていない）
+- 目視: tsukumo を起こし、ページが出て会話が1往復できることを確かめる
+
+## 注意
+
+- **振る舞いを変えない。** 分割だけで、条件や既定値を直さない（直したくなったら別のタスクに
+  起こす）
+- 公開する関数を増やさない（`CLAUDE.md`「テストのためだけに公開しない」）
+
+## T-202
+
+**タスク**: 中間レポートが畳まれてすぐ開き直すチラつきを直す
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（703→708 pass / 0 fail、64ファイル）。足した5件のうち3件は修正前に落ちることを確認（superseded の反転を捉えるもの1件を含む）。目視: 台本の場面 interim-flicker を Playwright で250msごとに標本。修正前は4787msで中間レポートが details(open=false) へ畳まれ11861msで section へ開き直した（チラつき）が、修正後は591msから開いたままで18955msの最終レポートで一度だけ畳まれた。docs/requirements.md 4.2 の「出してから消す」（2026-09-16）を覆した。節数 26→26。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「中間レポートと最終レポート以外に出てくる本文が表示されたあと
+削除されることによって中間レポートが折りたたみされてまた展開して、と視覚的にチラつく問題が
+残ってるので解決方法を模索したい」（あわせて「本文の出し方が今どうなっているのか」
+「省略されるものは最初から省略できないか」）
+
+いまの経路（2026-09-20 に実物で確認）:
+
+- 書きかけの本文は `src/protocol/session-state.ts` の `partialUtterance` に積まれ、メインビュー用の
+  記録を作るときに **`{ kind: "detail" }` として末尾に足される**（同ファイル 411〜415行の
+  `mainViewEntries`）。つまり**流れている実況も1つのステップになり、`report` を持つ**
+- `src/protocol/main-view.ts` の `mainViewTurns` は `groupIntoTurns` → `keepOnlyInterimReports`
+  → `markSupersededSteps` → `limitTurnEntries` の順で畳む
+- `keepOnlyInterimReports` は「**あとにツールが続いた**本文のうち、まとまった資料でないもの」の
+  `report` を落とす（`isInterimReport`: 行頭に構造の印があり、かつ3行以上か200字以上）
+- `markSupersededSteps` は「自分より後ろに `report` を持つステップがあるか」を立て、
+  `src/ui/features/main-view/turn.tsx` が `interim && superseded` のときだけ `<details>` で畳む
+
+**チラつきの筋**: 実況が流れている間、その本文はまだ「あとにツールが続いていない」ので落ちず
+`report` を持つ → 前の中間レポートが `superseded` になって**畳まれる** → ツールが始まって実況が
+落ちた瞬間に `superseded` が戻り、**また開く**。
+
+## 解くべき論点
+
+- 実況か資料かは「あとにツールが続くか」に依存するので、**流れている時点では確定しない**。
+  それでも出す前に決められるか（`isInterimReport` の判定だけで先に決める＝資料でない本文は
+  最初から出さない、に倒せるか）
+- **「出してから消す」は 2026-09-16 の決定**（`docs/requirements.md` 4.2）。覆すならその条項も
+  直す。覆さずに畳みの判定だけ直す道（`superseded` に数えるのを資料と確定したレポートだけに
+  する／`<details>` を一度開いたら保つ、など）と比べる
+- ターンの最後のレポートも「あとにツールが続かない本文」なので、流れている実況と同じ形をして
+  いる。両者を取り違えない条件は何か
+- `limitTurnEntries` と `MainViewStep.id` の約束（2026-09-16 に配列の添字を `key` にして起きた
+  「別のステップの DOM が乗り移る」問題）を壊さないこと
+
+## やること
+
+1. 上の経路を実物で読み直す（`src/protocol/main-view.ts` / `src/protocol/session-state.ts` /
+   `src/ui/features/main-view/turn.tsx`）
+2. 案を2つ以上比べてから1つ選ぶ。**選んだ理由と、選ばなかった案が失うものを `evidence` に書く**
+3. 直す
+4. `test/protocol/main-view.test.ts` に、**流れている実況 → ツール開始**の順で状態を進めても
+   前の中間レポートの畳み（`superseded`）が反転しないことを確かめるテストを足す
+5. 決定を覆すなら `docs/requirements.md` 4.2 を同じコミットで直す
+   （`grep -c '^#\{2,3\} ' docs/requirements.md` の数が前後で合うことを確かめる）
+6. `bun run format`
+
+## 完了条件
+
+- `bun run check` が通る（増えたテスト件数を `evidence` に書く）
+- 畳みが反転しないことのテストがある（**直す前に落ち、直したあと通る**ことを確かめて
+  `evidence` に書く）
+- 目視: tsukumo を起こし、**ツールを複数回呼ぶターン**を1つ流して、中間レポートが畳まれてから
+  開き直さないことを確かめる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- `loopable` は `N`。チラつきは流れている途中の見た目なので、実際にターンを流して目で見ないと
+  受け入れを判定できない（テストだけでは「畳みが反転しない」までしか言えない）
+- 記録からは消さない（`docs/requirements.md` 4.2。畳んだ中間レポートの中身は DOM に残す）
+
+## T-211
+
+**タスク**: 状態の配りを useSyncExternalStore + セレクタにし、フレームの緊急度を種類で分ける
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+stores/session.tsx を createSessionStore + useSyncExternalStore に書き直し、Context が配るのは store そのもの（参照不変）。useSessionSelector で必要な値だけ購読し、送るだけの部品は useSessionDispatch を読む。同じ導出の二重計算は stores/main-view-turn.ts の WeakMap（姿ごとに1回）で1本化した。緊急度は receive の中で state.pending の参照が動いたフレームだけ即時 publish、他は startTransition。ただし React 19 は useSyncExternalStore の描き直しを同期レーンで流すのでレーンは下がらず、入力との競合に効いているのは購読の絞り込みのほう（この制約はコード内にコメントで残した）。受け入れ: bun run check 714 pass / 0 fail（708 から +6。Profiler で PendingAnswer の commit 回数を数えるテスト4件＋導出キャッシュ2件）。目視: fake 駆動 + scripts/capture-view.ts / capture-catalog.ts（ヘッドレス Chrome 1400x900）で、(a) 依頼→レポート 87字・ツール一覧・吹き出しと表情の更新が流れること、(b) ターン進行中に入力欄へ打った「進行中の追記」が後続フレームで消えないこと（400ms 間隔で12回サンプル）、(c) permission / question-multi の場面で許可の箱とチェックボックスの質問が出ることを画像で確認した。
+
+## 背景
+
+`docs/research/` に無い調査（T-197、`develop/direction.md` のドラフト）で分かったこと:
+
+- サーバは 100ms ごとにイベントを束ねて1フレーム押す（`src/core/session-manager.ts:34`
+  `EVENT_BATCH_INTERVAL_MS = 100`）。**ターンが流れている間、下は毎秒10回**起きる
+- `src/ui/stores/session.tsx:126` が `value={{ state, connection, dispatch }}` を**毎レンダー
+  新しいオブジェクトで**配るので、`useSession()` を呼ぶ**14部品が、読んでいる値が変わって
+  いなくても全部**再描画される（`TurnSelectionProvider` / `MainView` / `CharacterView` /
+  `Sidebar` / `SessionInfo` / `CharacterEdit` / `CharacterScreen` / `CharacterCreate` /
+  `Dispatch` / `Composer` / `TurnStatus` / `PendingAnswer` / `PermissionAsk` / `QuestionAsk`）
+- 同じ `mainViewTurns(mainViewEntries(state))` を毎フレーム2回計算している
+  （`src/ui/stores/turn-selection.tsx:51` が結果から `id` だけ取って捨て、
+  `src/ui/features/main-view/main-view.tsx:28-30` がもう一度）。中身は
+  `groupIntoTurns` → `keepOnlyInterimReports` → `markSupersededSteps` → `limitTurnEntries` の
+  4パス（`src/protocol/main-view.ts:90-95`）で、記録は最大20ターン分ある
+- `src/ui/features/dispatch/pending-answer.tsx:44,79` は `dispatch` しか使わないのに
+  state の変化を全部購読している。`src/ui/features/dispatch/dispatch.tsx:14` が要るのは
+  `state.pending.length > 0` の真偽1つ、`turn-status.tsx:33` は3つ、`sidebar.tsx:23` は3つ
+- `src/ui/stores/session.tsx:95` の `applyOne(frame)` が**緊急の更新**として走るので、
+  毎秒10回の描き直しが `composer.tsx:143` の入力と競合する
+
+## 決まっていること（蒸し返さない）
+
+- 手当ては **`useSyncExternalStore` + セレクタ**。判断の基準は「工数ではなく、可読性・
+  保守性・拡張性」で、状態の出どころが WebSocket（React の外）なので、外の store と同期する
+  React 公式の口に合わせる形を採る（`docs/coding-standards.md`「React」節の `useEffect` 4類型の
+  考え方とも揃う）。`dispatch` は state とは別に、参照が変わらない形で配る
+- フレームは**種類で緊急度を分ける**。`pending`（許可要求・質問）が入るフレームはすぐ反映し、
+  それ以外（レポート・ツールの進行）は `startTransition` に載せる
+
+## 解くべき論点
+
+- **セレクタの戻り値の同一性**。`useSyncExternalStore` の `getSnapshot` が毎回新しい
+  オブジェクト／配列を返すと無限に描き直す。`mainViewTurns` のような導出は
+  **state の同一性をキーにして1回だけ計算し、使い回す**形にする（どこに持たせるか）
+- 導出（`mainViewTurns`）を store 側に置くか、セレクタの中でキャッシュするか
+- `connection` を state と同じ store に入れるか、別に配るか
+- **`src/protocol/` は両側が読む契約の層**なので、store の実装はそこに置かない（原則2）
+
+## やること
+
+1. `src/ui/stores/session.tsx` を store の形に書き直す。`useSession()` の呼び出し側は
+   セレクタで必要な値だけを読む
+2. `turn-selection.tsx` と `main-view.tsx` が同じ導出を2回計算している形を1本化する
+3. `applyOne` をフレームの種類で分け、`pending` を含むフレーム以外を `startTransition` に載せる
+4. `test/ui/` の既存のテストを新しい口に合わせる。**テストのためだけに公開しない**（規約）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `dispatch` しか使わない部品（`PermissionAsk` / `QuestionAsk`）が、state の変化だけでは
+  再描画されないことをテストか計測で示す（示し方を `evidence` に書く）
+- 目視: tsukumo を起こし、(a) セリフ・レポート・サイドバーの進行が今までどおり流れる、
+  (b) ターンが流れている間に入力欄へ打てる、(c) 許可要求・質問の箱が遅れずに出る
+
+## 注意
+
+- **`src/ui/` を触る他のタスク（T-210 / T-212〜T-216）と同時に進めない**
+- `useEffect` の4類型（`docs/coding-standards.md`「React」節）から外れる effect を足さない

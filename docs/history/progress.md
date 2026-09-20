@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 core と adapter を src/server/ の下へ移した（T-210）
+
+改名の段3。`src/core/` と `src/adapter/`（と対応する `test/`）を `src/server/` の下へ入れ子にし、
+`architecture.test.ts` の `layerOf` を2段対応にして禁止していた辺を1本も減らさずに移した
+（`server/` 直下の未分類ファイルは `throw`）。正典のドキュメントは追随させ、
+**`docs/research/` は当時の記録なので書き換えない**ことにした。
+
 ### 2026-09-20 protocol を shared に、ui を browser に移した（T-195）
 
 `git mv` で115ファイル（`src/` 74・`test/` 41）を `shared/` と `browser/` へ移し、層の名前を

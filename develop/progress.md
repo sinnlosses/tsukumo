@@ -83,13 +83,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `docs/requirements.md` 4.3 の表に書いた。`curious` は質問を出すときに必ず出すものではない
 （ユーザーの判断）。コードは変えていないので、実装は T-137 で通す。
 
-### 2026-09-20 core と adapter を src/server/ の下へ移した（T-210）
-
-改名の段3。`src/core/` と `src/adapter/`（と対応する `test/`）を `src/server/` の下へ入れ子にし、
-`architecture.test.ts` の `layerOf` を2段対応にして禁止していた辺を1本も減らさずに移した
-（`server/` 直下の未分類ファイルは `throw`）。正典のドキュメントは追随させ、
-**`docs/research/` は当時の記録なので書き換えない**ことにした。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、
