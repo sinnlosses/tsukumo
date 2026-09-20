@@ -1,20 +1,14 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 
 import { MainView } from "../../../../src/browser/features/main-view/main-view.tsx"
 import { QuestionRecord } from "../../../../src/browser/features/main-view/question-record.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
 import { type MainViewQuestion } from "../../../../src/shared/main-view.ts"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionRecord,
-  type SessionState,
-} from "../../../../src/shared/session-state.ts"
+import { INITIAL_SESSION_STATE, type SessionRecord } from "../../../../src/shared/session-state.ts"
+import { putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -46,33 +40,30 @@ function tool(
   }
 }
 
+// 姿は store に入れる（**描き直しはフレームが届いたときだけ**起きるので、記録を足すのも
+// サーバと同じ経路で行う）。
+let store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE)
+
 function renderMainView(records: readonly SessionRecord[]): RenderResult {
-  const state: SessionState = { ...INITIAL_SESSION_STATE, records }
-  const value: SessionContextValue = { state, connection: "open", dispatch: () => {} }
+  store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records })
   return render(
-    <SessionContext.Provider value={value}>
+    <SessionStoreContext.Provider value={store}>
       <TurnSelectionProvider>
         <MainView />
       </TurnSelectionProvider>
-    </SessionContext.Provider>,
+    </SessionStoreContext.Provider>,
   )
 }
 
-function rerenderMainView(result: RenderResult, records: readonly SessionRecord[]): void {
-  const state: SessionState = { ...INITIAL_SESSION_STATE, records }
-  const value: SessionContextValue = { state, connection: "open", dispatch: () => {} }
-  result.rerender(
-    <SessionContext.Provider value={value}>
-      <TurnSelectionProvider>
-        <MainView />
-      </TurnSelectionProvider>
-    </SessionContext.Provider>,
-  )
+function rerenderMainView(records: readonly SessionRecord[]): void {
+  act(() => {
+    putState(store, { ...INITIAL_SESSION_STATE, records })
+  })
 }
 
 describe("MainView（タブの規則）", () => {
   it("3ターンまでタブが出て、新しいターンで先頭（今回）へ戻る", () => {
-    const result = renderMainView([
+    renderMainView([
       request("1つ目"),
       detail("1つ目のレポート"),
       request("2つ目"),
@@ -89,7 +80,7 @@ describe("MainView（タブの規則）", () => {
     expect(screen.getByText("3つ目のレポート")).toBeDefined()
 
     // 4つ目が始まると、先頭（今回）は自動でそちらに変わる。
-    rerenderMainView(result, [
+    rerenderMainView([
       request("1つ目"),
       detail("1つ目のレポート"),
       request("2つ目"),
@@ -105,7 +96,7 @@ describe("MainView（タブの規則）", () => {
   })
 
   it("過去のタブを見ている間は、新しいターンが来ても動かない", () => {
-    const result = renderMainView([
+    renderMainView([
       request("1つ目"),
       detail("1つ目のレポート"),
       request("2つ目"),
@@ -119,7 +110,7 @@ describe("MainView（タブの規則）", () => {
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
 
     // 新しいターンが始まっても、選んだタブのままでいる。
-    rerenderMainView(result, [
+    rerenderMainView([
       request("1つ目"),
       detail("1つ目のレポート"),
       request("2つ目"),
@@ -338,7 +329,7 @@ describe("MainView（中間レポート）", () => {
 
     // 記録がさらに積まれ（46件）、前のほうがもう1件古いほうから落ちる
     // （i=15 自体はまだ残る範囲）。
-    rerenderMainView(result, buildRecords(46))
+    rerenderMainView(buildRecords(46))
 
     // id を key にしていれば、i=15 の <details> は同じ DOM ノードのまま残り、
     // 開いた状態も中身もそのまま。添字を key にしていた旧実装では、ステップが1つ前へ

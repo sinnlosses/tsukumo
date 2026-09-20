@@ -3,12 +3,10 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { PendingAnswer } from "../../../../src/browser/features/dispatch/pending-answer.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空の許可要求・質問（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -18,14 +16,14 @@ afterEach(() => {
 
 function renderPendingAnswer(
   pending: readonly PendingAsk[],
-  dispatch: SessionContextValue["dispatch"] = () => {},
+  dispatch: CommandSpy = () => {},
 ): void {
   const state: SessionState = { ...INITIAL_SESSION_STATE, pending }
-  const value: SessionContextValue = { state, connection: "open", dispatch }
+  const store = sessionStoreWith(state, dispatch)
   render(
-    <SessionContext.Provider value={value}>
+    <SessionStoreContext.Provider value={store}>
       <PendingAnswer />
-    </SessionContext.Provider>,
+    </SessionStoreContext.Provider>,
   )
 }
 
@@ -77,11 +75,9 @@ function twoQuestions(id: string): PendingAsk {
 describe("PendingAnswer", () => {
   it("答え待ちが無いときは何も描かない", () => {
     const { container } = render(
-      <SessionContext.Provider
-        value={{ state: INITIAL_SESSION_STATE, connection: "open", dispatch: () => {} }}
-      >
+      <SessionStoreContext.Provider value={sessionStoreWith(INITIAL_SESSION_STATE)}>
         <PendingAnswer />
-      </SessionContext.Provider>,
+      </SessionStoreContext.Provider>,
     )
 
     expect(container.innerHTML).toBe("")
@@ -234,15 +230,11 @@ describe("PendingAnswer", () => {
 
   it("質問が2件あっても、同時に見えるのは1問だけ", () => {
     const { container } = render(
-      <SessionContext.Provider
-        value={{
-          state: { ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-6")] },
-          connection: "open",
-          dispatch: () => {},
-        }}
+      <SessionStoreContext.Provider
+        value={sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-6")] })}
       >
         <PendingAnswer />
-      </SessionContext.Provider>,
+      </SessionStoreContext.Provider>,
     )
 
     expect(container.querySelectorAll(".question-card")).toHaveLength(1)
@@ -309,15 +301,11 @@ describe("PendingAnswer", () => {
 
   it("単一選択で自由入力に打つと、直前に押した選択肢の選択が外れる", () => {
     const { container } = render(
-      <SessionContext.Provider
-        value={{
-          state: { ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-11")] },
-          connection: "open",
-          dispatch: () => {},
-        }}
+      <SessionStoreContext.Provider
+        value={sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-11")] })}
       >
         <PendingAnswer />
-      </SessionContext.Provider>,
+      </SessionStoreContext.Provider>,
     )
 
     fireEvent.click(screen.getByText("A案"))

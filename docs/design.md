@@ -212,14 +212,16 @@ characters/<name>/            character.json・persona.md・素材
 | `features/`   | 1つの機能に閉じた部品・状態・保存                                 | `components` / `lib` / `stores` / `shared` |
 | `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る） | `lib` / `shared`                           |
 | `lib/`        | 機能の語彙を持たない道具（React の部品ではないもの）              | `shared`                                   |
-| `stores/`     | **画面全体で共有する状態**の Context と、それを読む hook          | `lib` / `shared`                           |
+| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook   | `lib` / `shared`                           |
 | `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）  | —                                          |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
-  （zustand を入れない決定は 6.2 のまま。中身は `useReducer` + Context）。実体は3つあり、
-  `stores/session.tsx` は `SessionState` を畳んで全機能に配り、`stores/turn-selection.tsx` は
+  （zustand を入れない決定は 6.2 のまま）。実体は4つあり、
+  `stores/session.tsx` は `SessionState` を畳んで全機能に配り（`useSyncExternalStore` + セレクタ。
+  Context で配るのは store そのもの）、`stores/main-view-turn.ts` はそこから**ターンの畳み**を
+  姿ごとに1回だけ導き、`stores/turn-selection.tsx` は
   メインビューとキャラビューに同じターンの選択を配り、`stores/screen.tsx` は `location.hash` から
-  **出している画面**を読む（Context ではなく `useSyncExternalStore`。書く口 `navigateTo` も同じ
+  **出している画面**を読む（書く口 `navigateTo` も同じ
   ファイル。13.6）。**どれも複数の機能が読む**ので機能の中に置けず、`main.tsx` に残すと機能が
   入口を import することになる（だから箱が要る）
 - **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。
@@ -229,7 +231,8 @@ characters/<name>/            character.json・persona.md・素材
   1つの機能しか読まないものは機能の中に残す（`features/layout/split.ts`・
   `features/character-screen/appearance-color.ts` がその例）
 - **機能は `main.tsx` と `stores/` の中身を「組み立てる側」として import しない。** 機能が触れるのは
-  `stores/` が公開する hook（`useSession` / `useTurnSelection`）まで
+  `stores/` が公開する hook（`useSessionSelector` / `useSessionDispatch` / `useMainViewTurns` /
+  `useTurnSelection`）まで
 - **親が子を組む形も機能どうしの import に数える。** `<Layout>` は領域の中身を props で
   受け取るだけで他の機能を知らず、**どの画面を出すかは `main.tsx` の中の `<Root>` が選ぶ**
   （6.1・13.6）
@@ -251,7 +254,7 @@ characters/<name>/            character.json・persona.md・素材
 | `api/`（機能の中も含む）               | 会話の往復は WebSocket 1本で `lib/socket.ts` と `stores/` に閉じている。TanStack Query で取りに行く GET は、立ち絵の素材（`components/portrait.tsx`）と `@` 補完のファイル一覧（`features/dispatch/file-suggestions.tsx`）の2つだけで、どちらも読む機能の隣に置けば足りる                                                                                               |
 | `types/`                               | 型の正典は `src/shared/`。browser 側に置くと契約が二重になる（原則2）。ambient な `.d.ts` は import されないので使う場所の隣に置く                                                                                                                                                                                                                                      |
 | `utils/`                               | 実体は `tool-summary.ts` 1つで、置くと「どこにも属さない小物」の受け皿になる（原則5）。`lib/` に入れる                                                                                                                                                                                                                                                                  |
-| `hooks/`（共有）                       | 共有の hook が無い。`useSession` / `useTurnSelection` は Context の付属なので provider と同じファイルに置く                                                                                                                                                                                                                                                             |
+| `hooks/`（共有）                       | 共有の hook が無い。`useSessionSelector` / `useTurnSelection` は store・Context の付属なので同じファイルに置く                                                                                                                                                                                                                                                          |
 | `config/`                              | 設定と環境変数は `src/server/core/config.ts` と `src/cli.ts` が持ち、browser は `SessionState` で受け取るだけ                                                                                                                                                                                                                                                           |
 | `assets/`                              | 立ち絵も外部ライブラリもサーバが配る（`characters/` と `node_modules/`）。browser に素材を置かない                                                                                                                                                                                                                                                                      |
 | `testing/`                             | テストは `test/` に `src/` の形を写す既存の規約がある（`test/dom-environment.ts` がその置き場）                                                                                                                                                                                                                                                                         |
@@ -517,7 +520,7 @@ type SessionHost = {
 ### 6.1 部品の木
 
 ```
-<SessionProvider>            lib/socket.ts で接続。SessionState と dispatch(command) を Context で配る
+<SessionProvider>            lib/socket.ts で接続。SessionState を持つ store を Context で配る（6.2）
 └ <TurnSelectionProvider>    選んでいるターンを配る（6.2）
    └ <Root>                  main.tsx の中（export しない）。useScreen() で出す画面を選ぶ（6.2・13.6）。
       │                      **会話の画面は外さず hidden で隠す**（下書き・選んでいるターン・スクロール位置を保つ）
@@ -563,18 +566,22 @@ type SessionHost = {
 
 ### 6.2 状態の持ち方
 
-| 状態                                                             | 置き場所                                                                                                       |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `SessionState`                                                   | `<SessionProvider>` の `useReducer(applySessionEvent)`。`events` フレームを畳む。`hello` で置き換える          |
-| 接続中 / 切断中、プロトコルの版違い                              | `<SessionProvider>` のローカル状態（`browser/stores/session.tsx`）                                             |
-| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `browser/stores/turn-selection.tsx` の Context（メインビューとキャラビューの両方が読む。規則は同じ）           |
-| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                    |
-| 質問の選択（送る前）                                             | `<PendingAnswer>` のローカル状態                                                                               |
-| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turnStartedAt` から計算）                                                       |
-| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                              |
-| 出している画面（会話 / キャラクター / 作る）                     | `location.hash`（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6） |
+| 状態                                                             | 置き場所                                                                                                                                                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SessionState`                                                   | `<SessionProvider>` が持つ**React の外の store**（`applySessionEvent` で `events` を畳み、`hello` で置き換える）。部品は `useSessionSelector` で**自分が読む値だけ**を購読する |
+| 接続中 / 切断中、プロトコルの版違い                              | 同じ store の snapshot に相乗りさせる（`browser/stores/session.tsx`。`SessionState` には入れない）                                                                             |
+| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `browser/stores/turn-selection.tsx` の Context（メインビューとキャラビューの両方が読む。規則は同じ）                                                                           |
+| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                    |
+| 質問の選択（送る前）                                             | `<PendingAnswer>` のローカル状態                                                                                                                                               |
+| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turnStartedAt` から計算）                                                                                                                       |
+| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                              |
+| 出している画面（会話 / キャラクター / 作る）                     | `location.hash`（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）                                                                 |
 
-zustand などの状態ライブラリは**入れない**。必要になるまで `useReducer` + Context で足りる。
+zustand などの状態ライブラリは**入れない**。`useSyncExternalStore` + セレクタで足りる
+（畳み込みは `shared` の `applySessionEvent` のまま。**姿そのものを Context で配らない** —
+読んでいる値が変わっていない部品まで毎フレーム描き直しになるため。2026-09-20）。
+**答え待ち（`pending`）が動くフレームだけ緊急**にし、レポートやツールの進行は
+`startTransition` に載せる。
 **`browser/stores/` はその「画面全体で共有する状態」の置き場であって、状態ライブラリの置き場ではない**
 （2章）。
 

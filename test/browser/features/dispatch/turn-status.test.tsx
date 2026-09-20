@@ -3,11 +3,9 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { TurnStatus } from "../../../../src/browser/features/dispatch/turn-status.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -15,17 +13,13 @@ afterEach(() => {
 
 function renderTurnStatus(
   stateOverrides: Partial<SessionState>,
-  dispatch: SessionContextValue["dispatch"] = () => {},
+  dispatch: CommandSpy = () => {},
 ): void {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, ...stateOverrides },
-    connection: "open",
-    dispatch,
-  }
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
-    <SessionContext.Provider value={value}>
+    <SessionStoreContext.Provider value={store}>
       <TurnStatus />
-    </SessionContext.Provider>,
+    </SessionStoreContext.Provider>,
   )
 }
 

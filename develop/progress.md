@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 姿の配りを useSyncExternalStore + セレクタにした（T-211）
+
+`stores/session.tsx` を React の外の store にし、Context が配るのは store そのもの（参照不変）にした。部品は `useSessionSelector` で読む値だけを購読し、送るだけの部品は `useSessionDispatch` を読む。毎フレーム2回計算していたメインビューのターンは `stores/main-view-turn.ts` の WeakMap で1本化した。`pending` が動いたフレームだけ即時で、他は `startTransition`（ただし `useSyncExternalStore` の描き直しは同期レーン固定なので、効いているのは購読の絞り込みのほう）。
+
 ### 2026-09-20 責務が同居していた大きいファイルを分けた（T-196）
 
 `shared` を4つ（`command-suggestion` / `character-definition` / `character-asset` / `expression-choice`）に割り、`mainViewEntries` は既存の `main-view.ts` へ寄せ、`adapter/server.ts` から WebSocket の境界を `session-socket.ts` に出した。`sdk-driver.ts`・`cli.ts`・`session-manager.ts` は概念が1つなので分けていない（理由は tasks.json の evidence）。

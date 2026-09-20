@@ -1,6 +1,6 @@
 // 入力欄の `/` コマンド補完。**入力の先頭が `/` で、まだ空白が無く、答え待ちが無いときだけ**
 // 候補を出す（docs/requirements.md 4.2「入力欄」）。候補は `SessionState` から直接引ける
-// （`commandSuggestions(state)`。旧の GET の経路で毎回取りに行く fetch は無くなった —
+// （`commandSuggestions`。旧の GET の経路で毎回取りに行く fetch は無くなった —
 // `SessionState.commandDescriptions` / `slashCommands` がすでに WebSocket で届いている）。
 //
 // **前方一致を先に、続けて部分一致を出す。各グループの中はアルファベット順で、合計最大

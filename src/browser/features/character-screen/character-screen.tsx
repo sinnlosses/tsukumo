@@ -17,7 +17,7 @@ import { useState, type ReactElement } from "react"
 
 import { useDebouncedCallback } from "../../lib/debounce.ts"
 import { screenHash } from "../../stores/screen.tsx"
-import { useSession } from "../../stores/session.tsx"
+import { useSessionSelector } from "../../stores/session.tsx"
 import {
   applyAppearanceColorOverride,
   changeAppearanceColor,
@@ -43,11 +43,11 @@ const PENDING_NOTE = "答え待ち"
 const APPEARANCE_COLOR_DEBOUNCE_MS = 200
 
 export function CharacterScreen(): ReactElement {
-  const { state } = useSession()
+  const character = useSessionSelector((session) => session.state.character)
+  const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
   const [override, setOverride] = useState<AppearanceColorOverride>(loadAppearanceColorOverride)
-  const character = state.character
   const saveOverride = useDebouncedCallback<AppearanceColorKey, AppearanceColorOverride>(
     (_key, value) => {
       saveAppearanceColorOverride(value)
@@ -68,7 +68,7 @@ export function CharacterScreen(): ReactElement {
         <a className={styles["character-screen-back"]} href={screenHash("conversation")}>
           ← 会話へ戻る
         </a>
-        {state.pending.length > 0 ? (
+        {pendingActive ? (
           <span className={styles["character-screen-pending"]}>{PENDING_NOTE}</span>
         ) : null}
       </div>

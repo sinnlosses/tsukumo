@@ -4,12 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 
 import { Composer } from "../../../../src/browser/features/dispatch/composer.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type CharacterInfo } from "../../../../src/shared/character.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: CharacterInfo = {
@@ -63,19 +61,15 @@ function stubFileListFetch(paths: readonly string[] = FIXTURE_FILE_PATHS): void 
 // **キャッシュはテストをまたがせない**ので、テストごとに新しい `QueryClient` を作る。
 function renderComposer(
   stateOverrides: Partial<SessionState> = {},
-  dispatch: SessionContextValue["dispatch"] = () => {},
+  dispatch: CommandSpy = () => {},
 ): void {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, ...stateOverrides },
-    connection: "open",
-    dispatch,
-  }
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <SessionContext.Provider value={value}>
+      <SessionStoreContext.Provider value={store}>
         <Composer />
-      </SessionContext.Provider>
+      </SessionStoreContext.Provider>
     </QueryClientProvider>,
   )
 }

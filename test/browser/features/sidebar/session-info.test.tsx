@@ -3,12 +3,10 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { SessionInfo } from "../../../../src/browser/features/sidebar/session-info.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { MODEL_ALIASES } from "../../../../src/shared/command.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -20,17 +18,13 @@ afterEach(() => {
  */
 function renderSessionInfo(
   stateOverrides: Partial<SessionState>,
-  dispatch: SessionContextValue["dispatch"] = () => {},
+  dispatch: CommandSpy = () => {},
 ): void {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, ...stateOverrides },
-    connection: "open",
-    dispatch,
-  }
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
-    <SessionContext.Provider value={value}>
+    <SessionStoreContext.Provider value={store}>
       <SessionInfo />
-    </SessionContext.Provider>,
+    </SessionStoreContext.Provider>,
   )
 }
 

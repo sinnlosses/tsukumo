@@ -28,7 +28,7 @@ import {
 import { type SessionRecord } from "../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../shared/turn-speech.ts"
 import { Portrait } from "../../components/portrait.tsx"
-import { useSession } from "../../stores/session.tsx"
+import { useSessionSelector } from "../../stores/session.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
@@ -113,21 +113,23 @@ function pastTurnSpeech(
 }
 
 export function CharacterView(): ReactElement {
-  const { state } = useSession()
   const { activeTurnId, newestTurnId } = useTurnSelection()
-  const pastTurn = pastTurnSpeech(state.records, activeTurnId, newestTurnId)
+  const records = useSessionSelector((session) => session.state.records)
+  const speeches = useSessionSelector((session) => session.state.speeches)
+  const speechExpression = useSessionSelector((session) => session.state.speechExpression)
+  const model = useSessionSelector((session) => session.state.model)
+  const character = useSessionSelector((session) => session.state.character)
+  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const turnFinishedAt = useSessionSelector((session) => session.state.turnFinishedAt)
+  const lastToolFailureAt = useSessionSelector((session) => session.state.lastToolFailureAt)
+  const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
   const expression =
     pastTurn === undefined
-      ? state.speechExpression
+      ? speechExpression
       : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
-  const outfit = resolveOutfit(state.model)
-  const character = state.character
-  const motion = usePortraitMotion({
-    turnInProgress: state.turnInProgress,
-    turnFinishedAt: state.turnFinishedAt,
-    lastToolFailureAt: state.lastToolFailureAt,
-  })
+  const outfit = resolveOutfit(model)
+  const motion = usePortraitMotion({ turnInProgress, turnFinishedAt, lastToolFailureAt })
 
   const portraitUrl =
     character === undefined ? undefined : resolvePortraitUrl(character.portraits, expression)
@@ -155,7 +157,7 @@ export function CharacterView(): ReactElement {
           />
         )}
         <BalloonTrack
-          speeches={pastTurn === undefined ? state.speeches : pastTurn.speeches}
+          speeches={pastTurn === undefined ? speeches : pastTurn.speeches}
           emptyMessage={pastTurn === undefined ? undefined : PAST_TURN_EMPTY_MESSAGE}
         />
       </div>

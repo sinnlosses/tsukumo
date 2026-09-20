@@ -4,13 +4,11 @@ import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@tes
 import { type ReactElement } from "react"
 
 import { CharacterCreate } from "../../../../src/browser/features/character-screen/character-create.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type CharacterPackChoice } from "../../../../src/shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
@@ -48,25 +46,24 @@ afterEach(() => {
 
 function characterCreate(
   character: SessionState["character"],
-  dispatch: SessionContextValue["dispatch"] = () => {},
+  dispatch: CommandSpy = () => {},
   packs: readonly CharacterPackChoice[] = FIXTURE_PACKS,
   turnInProgress = false,
 ): ReactElement {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, character, characterPacks: packs, turnInProgress },
-    connection: "open",
+  const store = sessionStoreWith(
+    { ...INITIAL_SESSION_STATE, character, characterPacks: packs, turnInProgress },
     dispatch,
-  }
+  )
   return (
-    <SessionContext.Provider value={value}>
+    <SessionStoreContext.Provider value={store}>
       <CharacterCreate />
-    </SessionContext.Provider>
+    </SessionStoreContext.Provider>
   )
 }
 
 function renderCharacterCreate(
   character: SessionState["character"],
-  dispatch: SessionContextValue["dispatch"] = () => {},
+  dispatch: CommandSpy = () => {},
   packs: readonly CharacterPackChoice[] = FIXTURE_PACKS,
 ): RenderResult {
   return render(characterCreate(character, dispatch, packs))

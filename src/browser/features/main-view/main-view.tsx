@@ -12,8 +12,7 @@
 
 import { useEffect, useRef, type ReactElement } from "react"
 
-import { mainViewEntries, mainViewTurns } from "../../../shared/main-view.ts"
-import { useSession } from "../../stores/session.tsx"
+import { useMainViewTurns } from "../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import styles from "./main-view.module.css"
 import { TurnTabs } from "./turn-tabs.tsx"
@@ -22,11 +21,11 @@ import { Turn } from "./turn.tsx"
 const EMPTY_MESSAGE = "（まだ作業がありません）"
 
 export function MainView(): ReactElement {
-  const { state } = useSession()
   const { activeTurnId, selectTurn } = useTurnSelection()
-  const entries = mainViewEntries(state)
-  // mainViewTurns は昇順（古い→新しい）を返す。タブは新しい順に並べるので反転する。
-  const turnsNewestFirst = [...mainViewTurns(entries, state.turnInProgress)].reverse()
+  // 畳んだ結果は `stores/main-view-turn.ts` が姿ごとに1回だけ作る（昇順。タブの追従を決める
+  // `stores/turn-selection.tsx` と同じものを読む）。タブは新しい順に並べるので反転する。
+  const turns = useMainViewTurns()
+  const turnsNewestFirst = [...turns].reverse()
   const turnIds = turnsNewestFirst.map((turn) => turn.id)
   const scrollerRef = useRef<HTMLDivElement>(null)
 

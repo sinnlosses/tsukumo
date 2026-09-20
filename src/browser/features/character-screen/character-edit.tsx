@@ -32,7 +32,7 @@ import {
 import { Portrait } from "../../components/portrait.tsx"
 import { readDataUrl } from "../../lib/data-url.ts"
 import { useDebouncedCallback } from "../../lib/debounce.ts"
-import { useSession } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
 import styles from "./character-screen.module.css"
 
@@ -63,7 +63,8 @@ const GALLERY_OUTFIT: Outfit = "default"
 const OUTFIT_ACCENT_DEBOUNCE_MS = 200
 
 export function CharacterEdit(): ReactElement | null {
-  const { state, dispatch } = useSession()
+  const dispatch = useSessionDispatch()
+  const character = useSessionSelector((session) => session.state.character)
   // 引きずっている間だけ見た目を先に進める上書き（衣装ごと）。**サーバへ送るのは
   // `sendOutfitAccent` 側でまとめる**ので、ここは表示専用（`docs/coding-standards.md`
   // 「useEffect の代わりに使うもの」の「利用者の操作で起きること」＝イベントハンドラで足す）。
@@ -72,7 +73,6 @@ export function CharacterEdit(): ReactElement | null {
     dispatch({ type: "set-outfit-accent", outfit, color })
   }, OUTFIT_ACCENT_DEBOUNCE_MS)
 
-  const character = state.character
   // まだ `character-changed` が届いていない（接続直後の一瞬）。口を出すものが決まらない。
   if (character === undefined) {
     return null

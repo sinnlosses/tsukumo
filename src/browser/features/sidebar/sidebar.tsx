@@ -11,7 +11,7 @@
 
 import { type ReactElement, useState } from "react"
 
-import { useSession } from "../../stores/session.tsx"
+import { useSessionSelector } from "../../stores/session.tsx"
 import { Activity } from "./activity.tsx"
 import { SidebarSection } from "./section.tsx"
 import { SessionInfo } from "./session-info.tsx"
@@ -20,7 +20,9 @@ import { TaskBoard } from "./task-board.tsx"
 import { TaskList, taskListTitle } from "./task-list.tsx"
 
 export function Sidebar(): ReactElement {
-  const { state } = useSession()
+  const runningTools = useSessionSelector((session) => session.state.runningTools)
+  const finishedTools = useSessionSelector((session) => session.state.finishedTools)
+  const tasks = useSessionSelector((session) => session.state.tasks)
   const [boardOpen, setBoardOpen] = useState(false)
 
   return (
@@ -30,10 +32,10 @@ export function Sidebar(): ReactElement {
         extraClass={styles["sidebar-block-activity"] ?? ""}
         action={undefined}
       >
-        <Activity running={state.runningTools} finished={state.finishedTools} />
+        <Activity running={runningTools} finished={finishedTools} />
       </SidebarSection>
       <SidebarSection
-        title={taskListTitle(state.tasks)}
+        title={taskListTitle(tasks)}
         extraClass={styles["sidebar-block-tasks"] ?? ""}
         action={{
           label: "一覧を見る",
@@ -42,7 +44,7 @@ export function Sidebar(): ReactElement {
           },
         }}
       >
-        <TaskList tasks={state.tasks} />
+        <TaskList tasks={tasks} />
       </SidebarSection>
       <SidebarSection
         title="セッション情報"
@@ -52,7 +54,7 @@ export function Sidebar(): ReactElement {
         <SessionInfo />
       </SidebarSection>
       <TaskBoard
-        tasks={state.tasks}
+        tasks={tasks}
         open={boardOpen}
         onClose={() => {
           setBoardOpen(false)

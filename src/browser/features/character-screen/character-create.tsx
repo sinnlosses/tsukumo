@@ -21,7 +21,7 @@ import { REQUIRED_EXPRESSIONS, type RequiredExpression } from "../../../shared/e
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { readDataUrl } from "../../lib/data-url.ts"
 import { navigateTo, screenHash } from "../../stores/screen.tsx"
-import { useSession } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
 import styles from "./character-screen.module.css"
 
@@ -42,7 +42,10 @@ type HeldPortraits = Readonly<Record<RequiredExpression, string | undefined>>
 const NO_PORTRAITS: HeldPortraits = { default: undefined }
 
 export function CharacterCreate(): ReactElement {
-  const { state, dispatch } = useSession()
+  const dispatch = useSessionDispatch()
+  const character = useSessionSelector((session) => session.state.character)
+  const characterPacks = useSessionSelector((session) => session.state.characterPacks)
+  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
   const [name, setName] = useState("")
   const [portraits, setPortraits] = useState<HeldPortraits>(NO_PORTRAITS)
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
@@ -50,9 +53,7 @@ export function CharacterCreate(): ReactElement {
   // 最後に送った名前。**作れたかどうかは一覧に出たかで見る**（`error` フレームは画面に
   // 出していないので、成否の手がかりはこれだけ）。
   const [sentName, setSentName] = useState<string | undefined>(undefined)
-  const character = state.character
-
-  const taken = state.characterPacks.some((pack) => pack.name === name)
+  const taken = characterPacks.some((pack) => pack.name === name)
   const filled = REQUIRED_EXPRESSIONS.every((expression) => portraits[expression] !== undefined)
   const ready = isCharacterPackName(name) && !taken && filled
   // 送った名前が一覧に出た ＝ サーバ側に書けた。
@@ -168,8 +169,8 @@ export function CharacterCreate(): ReactElement {
                 <button
                   type="button"
                   className={styles["character-screen-switch"]}
-                  disabled={state.turnInProgress}
-                  title={state.turnInProgress ? SWITCH_BLOCKED_TITLE : undefined}
+                  disabled={turnInProgress}
+                  title={turnInProgress ? SWITCH_BLOCKED_TITLE : undefined}
                   onClick={switchToCreated}
                 >
                   このキャラクターに切り替える

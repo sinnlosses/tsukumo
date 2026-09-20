@@ -8,11 +8,22 @@
 // 規則（もとは `<MainView>` のローカル状態。振る舞いは変えていない）:
 // 新しいターンが始まったら先頭（今回）へ戻す / 利用者が過去のタブを見ている間は動かさない /
 // 選んでいたターンが窓（`MAX_MAIN_VIEW_TURNS` 件）から外れたら今回に戻す。
+//
+// **姿からはターンの通し番号しか読まない**（畳んだ結果そのものは `stores/main-view-turn.ts` が
+// 姿ごとに覚えていて、中身を出す `features/main-view/` と同じものを使う）。番号が変わらない
+// フレームではここは描き直さないので、配る値も変わらない。
 
-import { createContext, useContext, useState, type ReactElement, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from "react"
 
-import { mainViewEntries, mainViewTurns } from "../../shared/main-view.ts"
-import { useSession } from "./session.tsx"
+import { mainViewTurnsOf } from "./main-view-turn.ts"
+import { useSessionSelector } from "./session.tsx"
 
 export type TurnSelectionValue = {
   /**
@@ -27,7 +38,7 @@ export type TurnSelectionValue = {
 
 /**
  * 部品のテストが Provider を経由せず値を差し込めるよう、Context 自体を公開する
- * （`src/browser/stores/session.tsx` の `SessionContext` と同じ扱い。部品は必ず {@link useTurnSelection} を通す）。
+ * （`src/browser/stores/session.tsx` の `SessionStoreContext` と同じ扱い。部品は必ず {@link useTurnSelection} を通す）。
  */
 export const TurnSelectionContext = createContext<TurnSelectionValue | undefined>(undefined)
 
@@ -45,10 +56,8 @@ export type TurnSelectionProviderProps = {
 }
 
 export function TurnSelectionProvider(props: TurnSelectionProviderProps): ReactElement {
-  const { state } = useSession()
-  // タブに出るターン（窓の中）の通し番号。昇順なので末尾が今回。
-  const turnIds = mainViewTurns(mainViewEntries(state), state.turnInProgress).map((turn) => turn.id)
-  const newestTurnId = turnIds.at(-1)
+  // タブに出るターン（窓の中）は昇順なので、末尾が今回。
+  const newestTurnId = useSessionSelector((session) => mainViewTurnsOf(session.state).at(-1)?.id)
 
   const [selectedTurnId, setSelectedTurnId] = useState<number | undefined>(undefined)
   // 前のレンダーの「今回」。追従は**レンダー中に見比べて**決める（画面の外と同期する処理では
@@ -69,14 +78,19 @@ export function TurnSelectionProvider(props: TurnSelectionProviderProps): ReactE
   }
 
   // 選んでいたターンが窓（`MAX_MAIN_VIEW_TURNS` 件）から外れたら今回に戻す。
-  const activeTurnId =
-    selectedTurnId !== undefined && turnIds.includes(selectedTurnId) ? selectedTurnId : newestTurnId
+  const selectedStillShown = useSessionSelector(
+    (session) =>
+      selectedTurnId !== undefined &&
+      mainViewTurnsOf(session.state).some((turn) => turn.id === selectedTurnId),
+  )
+  const activeTurnId = selectedStillShown ? selectedTurnId : newestTurnId
+
+  const value = useMemo<TurnSelectionValue>(
+    () => ({ activeTurnId, newestTurnId, selectTurn: setSelectedTurnId }),
+    [activeTurnId, newestTurnId],
+  )
 
   return (
-    <TurnSelectionContext.Provider
-      value={{ activeTurnId, newestTurnId, selectTurn: setSelectedTurnId }}
-    >
-      {props.children}
-    </TurnSelectionContext.Provider>
+    <TurnSelectionContext.Provider value={value}>{props.children}</TurnSelectionContext.Provider>
   )
 }

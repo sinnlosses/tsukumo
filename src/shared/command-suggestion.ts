@@ -6,10 +6,12 @@
 // するかの判断がここの仕事**で、畳み込み（`applySessionEvent`）は `init` の値を
 // {@link commandCandidates} で絞ってから持つ。
 //
+// **受け取るのは姿まるごとではなくその2つ**（入力欄は他のフィールドの変化で描き直したくない。
+// `mainViewTurns` が記録ではなく畳んだ結果を受け取るのと同じ絞り方）。
+//
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { type CommandDescription } from "./session-event.ts"
-import { type SessionState } from "./session-state.ts"
 
 /**
  * 入力欄の `/` 補完に出す候補（名前と、あれば説明）。
@@ -24,15 +26,18 @@ import { type SessionState } from "./session-state.ts"
  * （`doctor` など）の除外がまだ効かない。**`init` が届き `slashCommands` が埋まった時点で、
  * 除外込みの一覧に戻る**ので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
  */
-export function commandSuggestions(state: SessionState): readonly CommandDescription[] {
-  if (state.slashCommands.length === 0) {
-    return state.commandDescriptions
+export function commandSuggestions(
+  slashCommands: readonly string[],
+  commandDescriptions: readonly CommandDescription[],
+): readonly CommandDescription[] {
+  if (slashCommands.length === 0) {
+    return commandDescriptions
   }
 
   const descriptions = new Map(
-    state.commandDescriptions.map((command) => [command.name, command.description]),
+    commandDescriptions.map((command) => [command.name, command.description]),
   )
-  return state.slashCommands.map((name) => ({ name, description: descriptions.get(name) }))
+  return slashCommands.map((name) => ({ name, description: descriptions.get(name) }))
 }
 
 /**

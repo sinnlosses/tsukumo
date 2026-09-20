@@ -4,11 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { CharacterEdit } from "../../../../src/browser/features/character-screen/character-edit.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
@@ -60,19 +58,15 @@ afterEach(() => {
 // （このフィクスチャの立ち絵はラスタなので実際には fetch しないが、hook 自体は呼ばれる）。
 function renderCharacterEdit(
   character: SessionState["character"],
-  dispatch: SessionContextValue["dispatch"] = () => {},
+  dispatch: CommandSpy = () => {},
 ): void {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, character },
-    connection: "open",
-    dispatch,
-  }
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, character }, dispatch)
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <SessionContext.Provider value={value}>
+      <SessionStoreContext.Provider value={store}>
         <CharacterEdit />
-      </SessionContext.Provider>
+      </SessionStoreContext.Provider>
     </QueryClientProvider>,
   )
 }

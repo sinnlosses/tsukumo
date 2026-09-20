@@ -4,11 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { Dispatch } from "../../../../src/browser/features/dispatch/dispatch.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -16,19 +14,15 @@ afterEach(() => {
 })
 
 function renderDispatch(stateOverrides: Partial<SessionState>): void {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, ...stateOverrides },
-    connection: "open",
-    dispatch: () => {},
-  }
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   // 中の `<Composer>` が `@` 補完の一覧を `useQuery` で取るので Provider が要る
   // （この検査では取りに行かないが、hook そのものは呼ばれる）。
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <SessionContext.Provider value={value}>
+      <SessionStoreContext.Provider value={store}>
         <Dispatch />
-      </SessionContext.Provider>
+      </SessionStoreContext.Provider>
     </QueryClientProvider>,
   )
 }

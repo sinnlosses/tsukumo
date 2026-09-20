@@ -1,18 +1,21 @@
-// <SessionProvider> の中身。`lib/socket.ts` で接続し、`SessionState` を
-// `useReducer(applySessionEvent)` で持つ。
-// `dispatch(command)` は Context で子孫へ配る（docs/design.md 6.1 / 6.2）。
+// <SessionProvider> の中身。`lib/socket.ts` で接続し、`SessionState` を **React の外の store**
+// （{@link createSessionStore}）に持つ。部品は {@link useSessionSelector} で**自分が読む値だけ**を
+// 購読し、送るだけの部品は {@link useSessionDispatch} を読む（docs/design.md 6.1 / 6.2）。
+//
+// **Context に配るのは store そのもの**（参照が変わらない）。姿を Context で配ると、読んでいる値が
+// 変わっていない部品まで毎フレーム描き直しになる — サーバは 100ms ごとにフレームを押すので、
+// ターンが流れている間は毎秒10回それが起きていた（2026-09-20 に `useSyncExternalStore` へ移した）。
 //
 // **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線は持たない
 // （docs/design.md 6.1「部品の木」冒頭）。
 
 import {
   createContext,
-  useCallback,
+  startTransition,
   useContext,
   useEffect,
-  useReducer,
-  useRef,
   useState,
+  useSyncExternalStore,
   type ReactElement,
   type ReactNode,
 } from "react"
@@ -37,26 +40,183 @@ type DispatchableCommand<T = ClientCommand> = T extends { readonly commandId: st
   ? Omit<T, "commandId">
   : never
 
-export type SessionContextValue = {
-  readonly state: SessionState
-  readonly connection: ConnectionStatus
-  readonly dispatch: (command: DispatchableCommand) => void
+/** コマンドを1件送る口。**参照が変わらない**ので、これしか読まない部品は姿の変化で描き直されない。 */
+export type SessionDispatch = (command: DispatchableCommand) => void
+
+/** コマンドの送り先。`lib/socket.ts` の接続がそのまま満たす（閉じるのは store の関心ではない）。 */
+export type CommandSocket = {
+  readonly send: (command: ClientCommand) => void
 }
 
 /**
- * 部品のテストが本物の WebSocket 接続を経由せず値を差し込めるよう、Context 自体を公開する
- * （`<SessionContext.Provider value={...}>` で包む。`src/browser/stores/session.tsx` 以外はこの Context を
- * 直接読まず、必ず {@link useSession} を通す）。
+ * 部品が読む姿。**接続の状態（`connection`）はブラウザだけが持つ**ので `SessionState` には
+ * 入れず、同じ購読に相乗りさせる（docs/design.md 4.2 / 6.2）。まだ画面には出していない。
  */
-export const SessionContext = createContext<SessionContextValue | undefined>(undefined)
+export type SessionSnapshot = {
+  readonly state: SessionState
+  readonly connection: ConnectionStatus
+}
+
+/**
+ * React の外に姿を持つ store。`subscribe` / `getSnapshot` は `useSyncExternalStore` の口そのもので、
+ * `receive` と `setConnection` は接続（`lib/socket.ts`）から呼ばれる。
+ */
+export type SessionStore = {
+  readonly subscribe: (onStoreChange: () => void) => () => void
+  /** **同じ姿なら同じオブジェクト**を返す（セレクタの結果が毎回変わると描き直しが止まらない）。 */
+  readonly getSnapshot: () => SessionSnapshot
+  readonly dispatch: SessionDispatch
+  /** 届いたフレームを畳む。`refresh` は姿を動かさないので呼び出し側が手前で捌く。 */
+  readonly receive: (frame: ServerFrame) => void
+  readonly setConnection: (status: ConnectionStatus) => void
+  /** いま繋がっている接続を持たせる（切れたら undefined）。{@link SessionStore.dispatch} の送り先。 */
+  readonly attachSocket: (socket: CommandSocket | undefined) => void
+}
+
+/**
+ * 部品のテストが本物の WebSocket 接続を経由せず姿を差し込めるよう、Context 自体を公開する
+ * （`<SessionStoreContext.Provider value={createSessionStore(...)}>` で包む。`src/browser/stores/` の外は
+ * この Context を直接読まず、必ず {@link useSessionSelector} / {@link useSessionDispatch} を通す）。
+ */
+export const SessionStoreContext = createContext<SessionStore | undefined>(undefined)
+
+/**
+ * 姿から**必要な値だけ**を取り出して購読する。`select` が返してよいのは
+ * **同じ姿なら同じものになる値**（そのままのフィールド・プリミティブ・`stores/` が姿ごとに
+ * 覚えている導出）だけで、その場で作った配列やオブジェクトを返すと描き直しが止まらなくなる。
+ * 複数のフィールドが要るなら、その数だけ呼ぶ。
+ */
+export function useSessionSelector<T>(select: (session: SessionSnapshot) => T): T {
+  return useStoreSelector(useSessionStore(), select)
+}
+
+/** コマンドを送る口だけを受け取る（姿を購読しない）。 */
+export function useSessionDispatch(): SessionDispatch {
+  return useSessionStore().dispatch
+}
+
+/**
+ * 姿とコマンドの口を持つ store を作る。**接続はあとから持たせる**（繋ぎ直しで入れ替わるのに
+ * `dispatch` の参照は変えたくない。`commandId` を振るのもここ）。
+ */
+export function createSessionStore(): SessionStore {
+  const listeners = new Set<() => void>()
+  let snapshot: SessionSnapshot = { state: INITIAL_SESSION_STATE, connection: "connecting" }
+  let socket: CommandSocket | undefined = undefined
+
+  const publish = (next: SessionSnapshot): void => {
+    snapshot = next
+    for (const listener of listeners) {
+      listener()
+    }
+  }
+
+  return {
+    subscribe: (onStoreChange) => {
+      listeners.add(onStoreChange)
+      return () => {
+        listeners.delete(onStoreChange)
+      }
+    },
+    getSnapshot: () => snapshot,
+    dispatch: (command) => {
+      socket?.send({ ...command, commandId: crypto.randomUUID() })
+    },
+    receive: (frame) => {
+      const state = applyFrame(snapshot.state, frame)
+      if (state === snapshot.state) {
+        return
+      }
+      // **答え待ち（許可要求・質問）が動いたフレームだけ緊急**にする。人が待っている箱なので
+      // 遅らせない。レポートやツールの進行は毎秒10回届くので、入力欄の操作を優先できるよう
+      // トランジションに載せる（2026-09-20 決定）。**React は `useSyncExternalStore` の描き直しを
+      // 同期レーンで走らせる**（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは
+      // 購読の絞り込み（セレクタ）のほう。緊急かどうかの境目はここ1箇所に置く。
+      if (state.pending !== snapshot.state.pending) {
+        publish({ state, connection: snapshot.connection })
+        return
+      }
+      startTransition(() => {
+        publish({ state, connection: snapshot.connection })
+      })
+    },
+    setConnection: (status) => {
+      if (status !== snapshot.connection) {
+        publish({ state: snapshot.state, connection: status })
+      }
+    },
+    attachSocket: (next) => {
+      socket = next
+    },
+  }
+}
+
+export type SessionProviderProps = {
+  readonly children: ReactNode
+}
+
+export function SessionProvider(props: SessionProviderProps): ReactElement {
+  // store は1つのままにする（作り直すと購読も姿も切れる）。
+  const [store] = useState(createSessionStore)
+
+  useEffect(() => {
+    const socket = connectSessionSocket({
+      // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く
+      // （開発中だけ届く。docs/design.md 11章）。
+      onFrame: (frame) => {
+        if (frame.type === "refresh") {
+          applyRefresh(frame.target)
+          return
+        }
+        store.receive(frame)
+      },
+      onStatusChange: store.setConnection,
+    })
+    store.attachSocket(socket)
+    return () => {
+      socket.close()
+      store.attachSocket(undefined)
+    }
+  }, [store])
+
+  // パックが差す `accent`（docs/design.md 13.2 / 13.5）を、`:root` の既定値の上から
+  // `document.documentElement` に差し替える。`<Layout>` の外まで届く唯一の場所がここ
+  // （`document.title` を差し替える `src/browser/features/dispatch/dispatch.tsx` と同じ、ホスト側の値を
+  // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
+  // 手口で `src/browser/features/character-screen/appearance-color.ts` が持つ）。届いていない・パックに `accent`
+  // が無いときは既定値（theme.css の `:root`）に戻す。
+  //
+  // **Context の外なので store を直に読む**（自分が配っている Context は自分では読めない）。
+  const accent = useStoreSelector(store, (session) => session.state.character?.accent)
+  useEffect(() => {
+    if (accent === undefined) {
+      document.documentElement.style.removeProperty("--accent")
+    } else {
+      document.documentElement.style.setProperty("--accent", accent)
+    }
+  }, [accent])
+
+  return <SessionStoreContext.Provider value={store}>{props.children}</SessionStoreContext.Provider>
+}
 
 /** `<SessionProvider>` の内側でだけ呼べる。外で呼ぶのは配線の誤りなので例外にする。 */
-export function useSession(): SessionContextValue {
-  const value = useContext(SessionContext)
-  if (value === undefined) {
-    throw new Error("useSession は <SessionProvider> の内側でだけ呼べる")
+function useSessionStore(): SessionStore {
+  const store = useContext(SessionStoreContext)
+  if (store === undefined) {
+    throw new Error(
+      "useSessionSelector / useSessionDispatch は <SessionProvider> の内側でだけ呼べる",
+    )
   }
-  return value
+  return store
+}
+
+function useStoreSelector<T>(store: SessionStore, select: (session: SessionSnapshot) => T): T {
+  // サーバ側で描くことは無いので、スナップショットは3つとも同じ読み取りでよい（`stores/screen.tsx` と同じ）。
+  return useSyncExternalStore(
+    store.subscribe,
+    () => select(store.getSnapshot()),
+    () => select(store.getSnapshot()),
+  )
 }
 
 function applyFrame(state: SessionState, frame: ServerFrame): SessionState {
@@ -70,61 +230,6 @@ function applyFrame(state: SessionState, frame: ServerFrame): SessionState {
     )
   }
   // "error" は commandId の突き合わせだけに使う（8章以降）。段3の時点では状態を変えない。
-  // "refresh" はここまで来ない（状態を動かさないので、下の `onFrame` が手前で捌く）。
+  // "refresh" はここまで来ない（状態を動かさないので、`<SessionProvider>` の `onFrame` が手前で捌く）。
   return state
-}
-
-export type SessionProviderProps = {
-  readonly children: ReactNode
-}
-
-export function SessionProvider(props: SessionProviderProps): ReactElement {
-  const [state, applyOne] = useReducer(applyFrame, INITIAL_SESSION_STATE)
-  const [connection, setConnection] = useState<ConnectionStatus>("connecting")
-  const socketRef = useRef<ReturnType<typeof connectSessionSocket> | undefined>(undefined)
-
-  useEffect(() => {
-    const socket = connectSessionSocket({
-      // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く
-      // （開発中だけ届く。docs/design.md 11章）。
-      onFrame: (frame) => {
-        if (frame.type === "refresh") {
-          applyRefresh(frame.target)
-          return
-        }
-        applyOne(frame)
-      },
-      onStatusChange: setConnection,
-    })
-    socketRef.current = socket
-    return () => {
-      socket.close()
-      socketRef.current = undefined
-    }
-  }, [])
-
-  const dispatch = useCallback((command: DispatchableCommand) => {
-    socketRef.current?.send({ ...command, commandId: crypto.randomUUID() })
-  }, [])
-
-  // パックが差す `accent`（docs/design.md 13.2 / 13.5）を、`:root` の既定値の上から
-  // `document.documentElement` に差し替える。`<Layout>` の外まで届く唯一の場所がここ
-  // （`document.title` を差し替える `src/browser/features/dispatch/dispatch.tsx` と同じ、ホスト側の値を
-  // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
-  // 手口で `src/browser/features/character-screen/appearance-color.ts` が持つ）。届いていない・パックに `accent`
-  // が無いときは既定値（theme.css の `:root`）に戻す。
-  const accent = state.character?.accent
-  useEffect(() => {
-    if (accent === undefined) {
-      document.documentElement.style.removeProperty("--accent")
-    } else {
-      document.documentElement.style.setProperty("--accent", accent)
-    }
-  }, [accent])
-
-  return (
-    <SessionContext.Provider value={{ state, connection, dispatch }}>
-      {props.children}
-    </SessionContext.Provider>
-  )
 }

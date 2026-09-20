@@ -18,15 +18,14 @@ import { useState, type ReactElement } from "react"
 import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
 import { type Question } from "../../../shared/question.ts"
 import { summarizeToolInput } from "../../lib/tool-summary.ts"
-import { useSession } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./dispatch.module.css"
 
 /** `AskUserQuestion` の自由入力の選択肢。このラベルの選択肢だけ、テキスト欄で受け取る。 */
 const FREE_TEXT_OPTION_LABEL = "その他"
 
 export function PendingAnswer(): ReactElement | null {
-  const { state } = useSession()
-  const pending = state.pending[0]
+  const pending = useSessionSelector((session) => session.state.pending[0])
   if (pending === undefined) {
     return null
   }
@@ -41,7 +40,7 @@ export function PendingAnswer(): ReactElement | null {
 function PermissionAsk(props: {
   readonly pending: Extract<PendingAsk, { readonly kind: "permission" }>
 }): ReactElement {
-  const { dispatch } = useSession()
+  const dispatch = useSessionDispatch()
   const summary = summarizeToolInput(props.pending.toolName, props.pending.input)
   const send = (answer: Extract<Answer, { readonly kind: "allow" | "deny" }>): void => {
     dispatch({ type: "answer", id: props.pending.id, answer })
@@ -76,7 +75,7 @@ function PermissionAsk(props: {
 function QuestionAsk(props: {
   readonly pending: Extract<PendingAsk, { readonly kind: "question" }>
 }): ReactElement | null {
-  const { dispatch } = useSession()
+  const dispatch = useSessionDispatch()
   const questions = props.pending.questions
   // 答えは質問ごとに持ち続ける（「戻る」で前の質問に戻ったとき、選んだものが残っているように）。
   const [selections, setSelections] = useState<readonly (readonly string[])[]>(

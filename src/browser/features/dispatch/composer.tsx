@@ -14,8 +14,8 @@
 // （{@link ActiveSuggestions}）に畳んであり、選択位置と閉じたかどうかはその1つに対して持つ。
 //
 // **下書き・候補の開閉と選択位置は `<Composer>` のローカル状態**（docs/design.md 6.2）。候補は
-// `SessionState`（`commandSuggestions(state)`）・取得したファイルの一覧と、下書きの文字列から
-// 毎回計算するだけの導出値で、別に持たない。
+// 姿の `slashCommands` / `commandDescriptions`（`commandSuggestions`）・取得したファイルの一覧と、
+// 下書きの文字列から毎回計算するだけの導出値で、別に持たない。
 
 import {
   useEffect,
@@ -29,7 +29,7 @@ import {
 
 import { commandSuggestions } from "../../../shared/command-suggestion.ts"
 import { type CommandDescription } from "../../../shared/session-event.ts"
-import { useSession } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import {
   CommandSuggestions,
   matchingCommands,
@@ -128,14 +128,18 @@ function confirmedDraft(
 }
 
 export function Composer(): ReactElement {
-  const { state, dispatch } = useSession()
+  const dispatch = useSessionDispatch()
+  const characterName = useSessionSelector((session) => session.state.character?.name)
+  const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
+  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const slashCommands = useSessionSelector((session) => session.state.slashCommands)
+  const commandDescriptions = useSessionSelector((session) => session.state.commandDescriptions)
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [suggestionsDismissed, setSuggestionsDismissed] = useState(false)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 
-  const placeholder = composerPlaceholder(state.character?.name)
-  const pendingActive = state.pending.length > 0
+  const placeholder = composerPlaceholder(characterName)
   const commandActive =
     !suggestionsDismissed && shouldShowCommandSuggestions(draft.text, pendingActive)
   // `/` の候補が出ている間は `@` を見ない（同時に出さない）。
@@ -146,7 +150,13 @@ export function Composer(): ReactElement {
   const filePaths = useRepositoryFilePaths(fileQuery !== undefined)
 
   const suggestions: ActiveSuggestions = commandActive
-    ? { kind: "command", matches: matchingCommands(commandSuggestions(state), draft.text) }
+    ? {
+        kind: "command",
+        matches: matchingCommands(
+          commandSuggestions(slashCommands, commandDescriptions),
+          draft.text,
+        ),
+      }
     : fileQuery === undefined
       ? { kind: "none" }
       : { kind: "file", matches: matchingFilePaths(filePaths, fileQuery.term), query: fileQuery }
@@ -221,14 +231,14 @@ export function Composer(): ReactElement {
       return
     }
     event.preventDefault()
-    if (!state.turnInProgress) {
+    if (!turnInProgress) {
       submit()
     }
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    if (state.turnInProgress) {
+    if (turnInProgress) {
       return
     }
     submit()

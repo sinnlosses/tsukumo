@@ -3,12 +3,10 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { CharacterScreen } from "../../../../src/browser/features/character-screen/character-screen.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { sessionStoreWith } from "../../session-store.ts"
 
 const COLOR_STORAGE_KEY = "tsukumo-appearance-color"
 
@@ -65,15 +63,15 @@ afterEach(() => {
 })
 
 function renderCharacterScreen(state: Partial<SessionState> = {}): void {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, character: FIXTURE_CHARACTER, ...state },
-    connection: "open",
-    dispatch: () => {},
-  }
+  const store = sessionStoreWith({
+    ...INITIAL_SESSION_STATE,
+    character: FIXTURE_CHARACTER,
+    ...state,
+  })
   render(
-    <SessionContext.Provider value={value}>
+    <SessionStoreContext.Provider value={store}>
       <CharacterScreen />
-    </SessionContext.Provider>,
+    </SessionStoreContext.Provider>,
   )
 }
 

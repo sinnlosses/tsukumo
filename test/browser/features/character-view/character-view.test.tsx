@@ -4,10 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render } from "@testing-library/react"
 
 import { CharacterView } from "../../../../src/browser/features/character-view/character-view.tsx"
-import {
-  SessionContext,
-  type SessionContextValue,
-} from "../../../../src/browser/stores/session.tsx"
+import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import {
   TurnSelectionContext,
   type TurnSelectionValue,
@@ -17,6 +14,7 @@ import {
   type SessionRecord,
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
+import { sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -59,19 +57,15 @@ function renderCharacterView(
   stateOverrides: Partial<SessionState>,
   selection: TurnSelectionValue = NO_TURN_SELECTION,
 ): void {
-  const value: SessionContextValue = {
-    state: { ...INITIAL_SESSION_STATE, ...stateOverrides },
-    connection: "open",
-    dispatch: () => {},
-  }
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <SessionContext.Provider value={value}>
+      <SessionStoreContext.Provider value={store}>
         <TurnSelectionContext.Provider value={selection}>
           <CharacterView />
         </TurnSelectionContext.Provider>
-      </SessionContext.Provider>
+      </SessionStoreContext.Provider>
     </QueryClientProvider>,
   )
 }

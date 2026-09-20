@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { commandCandidates, commandSuggestions } from "../../src/shared/command-suggestion.ts"
-import { type SessionEvent } from "../../src/shared/session-event.ts"
+import { type CommandDescription, type SessionEvent } from "../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
@@ -12,6 +12,11 @@ import {
 // 候補は時刻に依らないので、畳み込みは固定の 0 で流す。
 function apply(...events: readonly SessionEvent[]): SessionState {
   return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_STATE)
+}
+
+/** 姿から出どころの2つを渡す（呼び出し側 `<Composer>` がしているのと同じこと）。 */
+function suggestionsOf(state: SessionState): readonly CommandDescription[] {
+  return commandSuggestions(state.slashCommands, state.commandDescriptions)
 }
 
 describe("commandSuggestions", () => {
@@ -25,7 +30,7 @@ describe("commandSuggestions", () => {
   }
 
   it("説明が届く前は名前だけ（description は undefined）を返す", () => {
-    expect(commandSuggestions(apply(info))).toEqual([
+    expect(suggestionsOf(apply(info))).toEqual([
       { name: "clear", description: undefined },
       { name: "model", description: undefined },
     ])
@@ -41,7 +46,7 @@ describe("commandSuggestions", () => {
     })
 
     expect(view.slashCommands).toEqual([])
-    expect(commandSuggestions(view)).toEqual([
+    expect(suggestionsOf(view)).toEqual([
       { name: "clear", description: "会話をリセットする" },
       { name: "model", description: undefined },
     ])
@@ -57,7 +62,7 @@ describe("commandSuggestions", () => {
       ],
     })
 
-    expect(commandSuggestions(view)).toEqual([
+    expect(suggestionsOf(view)).toEqual([
       { name: "clear", description: "会話をリセットする" },
       { name: "model", description: undefined },
     ])
@@ -72,7 +77,7 @@ describe("commandSuggestions", () => {
       info,
     )
 
-    expect(commandSuggestions(view)).toEqual([
+    expect(suggestionsOf(view)).toEqual([
       { name: "clear", description: "会話をリセットする" },
       { name: "model", description: undefined },
     ])

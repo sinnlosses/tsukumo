@@ -9,7 +9,7 @@
 
 import { useEffect, useState, type ReactElement } from "react"
 
-import { useSession } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./dispatch.module.css"
 
 const SEND_LABEL = "送信"
@@ -30,30 +30,31 @@ function formatElapsed(totalSeconds: number): string {
 }
 
 export function TurnStatus(): ReactElement {
-  const { state, dispatch } = useSession()
+  const dispatch = useSessionDispatch()
+  const turnStartedAt = useSessionSelector((session) => session.state.turnStartedAt)
+  const turnFinishedAt = useSessionSelector((session) => session.state.turnFinishedAt)
+  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
   const [now, setNow] = useState(() => Date.now())
 
   // 進行中（開始していて、まだ終わっていない）間だけ1秒ごとに刻む。終わったら止める
   // （turnFinishedAt の値で経過時間が固定されるので、タイマーは要らない）。
   useEffect(() => {
-    if (state.turnStartedAt === undefined || state.turnFinishedAt !== undefined) {
+    if (turnStartedAt === undefined || turnFinishedAt !== undefined) {
       return undefined
     }
     const timer = setInterval(() => setNow(Date.now()), TICK_INTERVAL_MS)
     return () => clearInterval(timer)
-  }, [state.turnStartedAt, state.turnFinishedAt])
+  }, [turnStartedAt, turnFinishedAt])
 
   const elapsedText =
-    state.turnStartedAt === undefined
+    turnStartedAt === undefined
       ? "-"
-      : formatElapsed(
-          Math.max(0, Math.floor(((state.turnFinishedAt ?? now) - state.turnStartedAt) / 1000)),
-        )
-  const elapsedLabel = state.turnFinishedAt === undefined ? ELAPSED_LABEL : FINISHED_LABEL
+      : formatElapsed(Math.max(0, Math.floor(((turnFinishedAt ?? now) - turnStartedAt) / 1000)))
+  const elapsedLabel = turnFinishedAt === undefined ? ELAPSED_LABEL : FINISHED_LABEL
 
   return (
     <div className={styles["dispatch-row"]}>
-      {state.turnInProgress ? (
+      {turnInProgress ? (
         <button
           type="button"
           className={styles["dispatch-send"]}

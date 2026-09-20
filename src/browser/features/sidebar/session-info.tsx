@@ -6,6 +6,7 @@
 
 import { type ReactElement } from "react"
 
+import { type CharacterPackChoice } from "../../../shared/character.ts"
 import {
   isModelAlias,
   isPermissionMode,
@@ -13,10 +14,9 @@ import {
   type PermissionMode,
 } from "../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { type SessionState } from "../../../shared/session-state.ts"
 import { Select } from "../../components/select.tsx"
 import { screenHash } from "../../stores/screen.tsx"
-import { useSession } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./sidebar.module.css"
 
 // 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
@@ -79,9 +79,10 @@ function resolvePermissionMode(mode: string | undefined): PermissionMode {
  * `<select>` は出す**（無いように見えるほうが分かりにくい。docs/design.md 7章）ので、
  * いま出しているパックが分からないときは一覧の先頭に倒す。
  */
-function resolveCharacterPack(state: SessionState): string {
-  const packs = state.characterPacks
-  const current = state.character?.pack
+function resolveCharacterPack(
+  packs: readonly CharacterPackChoice[],
+  current: string | undefined,
+): string {
   return packs.some((pack) => pack.name === current) ? (current ?? "") : (packs[0]?.name ?? "")
 }
 
@@ -93,10 +94,15 @@ function resolveCharacterPack(state: SessionState): string {
  * （`.permission-mode-select-danger`）。
  */
 export function SessionInfo(): ReactElement {
-  const { state, dispatch } = useSession()
-  const currentPack = resolveCharacterPack(state)
-  const model = resolveModelAlias(state.model)
-  const permissionMode = resolvePermissionMode(state.permissionMode)
+  const dispatch = useSessionDispatch()
+  const characterPacks = useSessionSelector((session) => session.state.characterPacks)
+  const currentPackName = useSessionSelector((session) => session.state.character?.pack)
+  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const modelName = useSessionSelector((session) => session.state.model)
+  const permissionModeName = useSessionSelector((session) => session.state.permissionMode)
+  const currentPack = resolveCharacterPack(characterPacks, currentPackName)
+  const model = resolveModelAlias(modelName)
+  const permissionMode = resolvePermissionMode(permissionModeName)
   const dangerClass =
     permissionMode === DANGEROUS_PERMISSION_MODE
       ? ` ${styles["permission-mode-select-danger"]}`
@@ -104,7 +110,7 @@ export function SessionInfo(): ReactElement {
 
   return (
     <div className={styles["session-info"]}>
-      {state.characterPacks.length > 0 ? (
+      {characterPacks.length > 0 ? (
         <>
           <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
             キャラクター
@@ -115,9 +121,9 @@ export function SessionInfo(): ReactElement {
               ariaLabel="キャラクター"
               className={styles["character-select"] ?? ""}
               value={currentPack}
-              disabled={state.turnInProgress}
-              title={state.turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
-              options={state.characterPacks.map(({ name, label }) => ({ value: name, label }))}
+              disabled={turnInProgress}
+              title={turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
+              options={characterPacks.map(({ name, label }) => ({ value: name, label }))}
               onChange={(value) => {
                 dispatch({ type: "switch-character", name: value })
               }}
