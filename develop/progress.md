@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 仕切りのドラッグを直接書き込みにした（T-215）
+
+ドラッグ中は grid の要素へ `--layout-*` を直接書き、`pointerup` のときだけ state を更新する形にした。ハンドラを最新に保つのは `useEffectEvent`（規約が既に指名していた口）で、「`split` は pointerdown の時点のもの」という回避策の注記が要らなくなった。`docs/coding-standards.md` の React 節に、`useEffectEvent` をレンダー中に呼べないことを3行足した。
+
 ### 2026-09-20 getComputedStyle の読みを描画の外へ移した（T-214）
 
 キャラクター画面が描画のたびに呼んでいた `getComputedStyle`（色3回・衣装の差し色5回）を、マウント時の1回だけにした。色を動かしたときの「書く → setState → 描画中に読み直す」も、書いた値をそのまま表示の state へ流す形に崩した。

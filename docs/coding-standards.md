@@ -339,6 +339,10 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 | 外部ストアの購読                  | `useSyncExternalStore`                           |
 | DOM ノードの取り付け・取り外し    | ref コールバック（React 19 は cleanup を返せる） |
 
+`useEffectEvent` で包んだ関数は**レンダー中には呼べない**（React が投げる）。呼んでよいのは
+effect の中と、イベントハンドラ・そこで登録した寿命の長いリスナの中
+（`browser/features/layout/layout-resizer.tsx` の、ドラッグの間だけ生きる `pointermove`）。
+
 いちばん多い誤りは、**props や state から計算できる値を state に入れて effect で更新する**もの。
 レンダーのたびに計算すればよく、effect を挟むと「計算し終わる前の1フレーム」が画面に出るうえ、
 更新の連鎖が起きる。

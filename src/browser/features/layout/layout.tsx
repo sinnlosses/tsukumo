@@ -12,6 +12,10 @@
 // **4領域は `data-region` でも名乗る。** class 名は組み立てのたびにハッシュ化される
 // （CSS Modules）ので、外から領域を指す口——画面を撮って位置と大きさを測る
 // `scripts/capture-view.ts` や、開発者ツールで測るとき——はこちらを使う。
+//
+// **仕切りの位置が state に入るのはドラッグを離した1回だけ。** 動かしている間の位置は
+// 過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く
+// （`writeFraction`）。
 
 import { useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react"
 
@@ -26,41 +30,45 @@ export type LayoutProps = {
   readonly dispatch: ReactNode
 }
 
+// 仕切り1本が動かす CSS カスタムプロパティの組（手前の領域・奥の領域）。レンダー時の `style` と
+// ドラッグ中の直接書き込みが同じ名前を見るように、名前はここにだけ書く。
+// CSS 側のフォールバック値（layout.module.css）は DEFAULT_SPLIT と一致させること。
+const SPLIT_VARIABLES = {
+  rowTop: ["--layout-row-top", "--layout-row-bottom"],
+  topLeft: ["--layout-top-left", "--layout-top-right"],
+  bottomLeft: ["--layout-bottom-left", "--layout-bottom-right"],
+} satisfies Record<keyof Split, readonly [`--${string}`, `--${string}`]>
+
 export function Layout(props: LayoutProps): ReactElement {
   const [split, setSplit] = useState<Split>(loadSplit)
   const gridRef = useRef<HTMLDivElement>(null)
   const rowTopRef = useRef<HTMLDivElement>(null)
   const rowBottomRef = useRef<HTMLDivElement>(null)
 
+  // 仕切りを離したとき・既定に戻すときだけ通る、比率の唯一の更新点。ドラッグ中は state を
+  // 触らないので、ここの `split` は最後に確定した比率そのもの（`<LayoutResizer>` は常に
+  // 最新のハンドラを呼ぶ）。
+  function commitSplit(update: (current: Split) => Split): void {
+    const next = update(split)
+    setSplit(next)
+    saveSplit(next)
+  }
+
   function reset(): void {
-    setSplit(DEFAULT_SPLIT)
-    saveSplit(DEFAULT_SPLIT)
+    commitSplit(() => DEFAULT_SPLIT)
   }
 
-  // CSS カスタムプロパティの index signature は `src/browser/css-variable.d.ts` が足している。
-  const gridStyle: CSSProperties = {
-    "--layout-row-top": `${String(split.rowTop)}fr`,
-    "--layout-row-bottom": `${String(100 - split.rowTop)}fr`,
-  }
-  const rowTopStyle: CSSProperties = {
-    "--layout-top-left": `${String(split.topLeft)}fr`,
-    "--layout-top-right": `${String(100 - split.topLeft)}fr`,
-  }
-  const rowBottomStyle: CSSProperties = {
-    "--layout-bottom-left": `${String(split.bottomLeft)}fr`,
-    "--layout-bottom-right": `${String(100 - split.bottomLeft)}fr`,
-  }
-
-  // ドラッグの終わり（onCommit）は、**動かした仕切りの位置だけ**を受け取った値で差し替えて
-  // 保存する。ここの `split` は pointerdown の時点のもので、動かした仕切りの値だけが古い
-  // （他の2本は同時に動かせないので、そのまま使える）。
   return (
     <>
-      <div className={styles["layout-grid"]} ref={gridRef} style={gridStyle}>
+      <div
+        className={styles["layout-grid"]}
+        ref={gridRef}
+        style={fractionStyle("rowTop", split.rowTop)}
+      >
         <div
           className={`${styles["layout-row"]} ${styles["layout-row-top"]}`}
           ref={rowTopRef}
-          style={rowTopStyle}
+          style={fractionStyle("topLeft", split.topLeft)}
         >
           <section className={styles["layout-region"]} data-region="main">
             {props.main}
@@ -70,10 +78,10 @@ export function Layout(props: LayoutProps): ReactElement {
             containerRef={rowTopRef}
             ariaLabel="メインビューとサイドバーの境界"
             onChange={(percent) => {
-              setSplit((current) => ({ ...current, topLeft: percent }))
+              writeFraction(rowTopRef.current, "topLeft", percent)
             }}
             onCommit={(percent) => {
-              saveSplit({ ...split, topLeft: percent })
+              commitSplit((current) => ({ ...current, topLeft: percent }))
             }}
           />
           <section
@@ -88,16 +96,16 @@ export function Layout(props: LayoutProps): ReactElement {
           containerRef={gridRef}
           ariaLabel="上段と下段の境界"
           onChange={(percent) => {
-            setSplit((current) => ({ ...current, rowTop: percent }))
+            writeFraction(gridRef.current, "rowTop", percent)
           }}
           onCommit={(percent) => {
-            saveSplit({ ...split, rowTop: percent })
+            commitSplit((current) => ({ ...current, rowTop: percent }))
           }}
         />
         <div
           className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}
           ref={rowBottomRef}
-          style={rowBottomStyle}
+          style={fractionStyle("bottomLeft", split.bottomLeft)}
         >
           <section
             className={`${styles["layout-region"]} ${styles["layout-character"]}`}
@@ -110,10 +118,10 @@ export function Layout(props: LayoutProps): ReactElement {
             containerRef={rowBottomRef}
             ariaLabel="キャラビューと入力欄の境界"
             onChange={(percent) => {
-              setSplit((current) => ({ ...current, bottomLeft: percent }))
+              writeFraction(rowBottomRef.current, "bottomLeft", percent)
             }}
             onCommit={(percent) => {
-              saveSplit({ ...split, bottomLeft: percent })
+              commitSplit((current) => ({ ...current, bottomLeft: percent }))
             }}
           />
           <section
@@ -129,4 +137,23 @@ export function Layout(props: LayoutProps): ReactElement {
       </button>
     </>
   )
+}
+
+// 確定済みの比率を描くときの `style`。CSS カスタムプロパティの index signature は
+// `src/browser/css-variable.d.ts` が足している。
+function fractionStyle(key: keyof Split, percent: number): CSSProperties {
+  const [near, far] = SPLIT_VARIABLES[key]
+  return { [near]: `${String(percent)}fr`, [far]: `${String(100 - percent)}fr` }
+}
+
+// ドラッグ中の書き込み。**state を更新せず DOM へ直接書く**ので、pointermove のたびに
+// `<Layout>` を描き直さない。離した瞬間に `commitSplit` が同じ値を state へ戻すので、
+// 次のレンダーの `style` と食い違わない。
+function writeFraction(element: HTMLElement | null, key: keyof Split, percent: number): void {
+  if (element === null) {
+    return
+  }
+  const [near, far] = SPLIT_VARIABLES[key]
+  element.style.setProperty(near, `${String(percent)}fr`)
+  element.style.setProperty(far, `${String(100 - percent)}fr`)
 }

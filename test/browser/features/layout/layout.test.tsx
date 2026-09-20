@@ -17,6 +17,29 @@ function renderLayout(): void {
   render(<Layout main="main" sidebar="sidebar" character="character" dispatch="dispatch" />)
 }
 
+/** 仕切りの位置（%）は container の矩形から出るので、happy-dom の 0 のままでは測れない。 */
+function stubBoundingRect(element: HTMLElement, width: number, height: number): void {
+  Object.defineProperty(element, "getBoundingClientRect", {
+    configurable: true,
+    value: () => ({ top: 0, left: 0, width, height, right: width, bottom: height, x: 0, y: 0 }),
+  })
+}
+
+/** 仕切りが動かす対象（上段の行・grid 全体）は、領域の `<section>` の親をたどって取る。 */
+function requireElement(element: HTMLElement | null | undefined, what: string): HTMLElement {
+  if (element === null || element === undefined) {
+    throw new Error(`${what} が見つからない`)
+  }
+  return element
+}
+
+function rowTopElement(): HTMLElement {
+  return requireElement(
+    document.querySelector<HTMLElement>('[data-region="main"]')?.parentElement,
+    "上段の行",
+  )
+}
+
 beforeEach(() => {
   saveSplit(DEFAULT_SPLIT)
 })
@@ -40,5 +63,54 @@ describe("Layout", () => {
     fireEvent.click(screen.getByRole("button", { name: "領域の比率を既定に戻す" }))
 
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
+  })
+
+  it("ドラッグ中は CSS カスタムプロパティだけが追随し、離したときに保存される", () => {
+    renderLayout()
+    const rowTop = rowTopElement()
+    stubBoundingRect(rowTop, 1000, 400)
+    const resizer = screen.getByRole("separator", { name: "メインビューとサイドバーの境界" })
+
+    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 750, clientY: 0 })
+    fireEvent.pointerMove(resizer, { clientX: 400, clientY: 0 })
+
+    expect(rowTop.style.getPropertyValue("--layout-top-left")).toBe("40fr")
+    expect(rowTop.style.getPropertyValue("--layout-top-right")).toBe("60fr")
+    // 動かしている間は保存しない（効くのは CSS カスタムプロパティだけ）。
+    expect(loadSplit()).toEqual(DEFAULT_SPLIT)
+
+    fireEvent.pointerUp(resizer, { clientX: 400, clientY: 0 })
+
+    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, topLeft: 40 })
+    // 離したあとのレンダーでも動かした位置のまま（state と DOM が食い違わない）。
+    expect(rowTop.style.getPropertyValue("--layout-top-left")).toBe("40fr")
+  })
+
+  it("上下の仕切りは行の比率だけを動かし、他の2本の位置を巻き込まない", () => {
+    saveSplit({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+    renderLayout()
+    const grid = requireElement(rowTopElement().parentElement, "grid")
+    stubBoundingRect(grid, 1000, 500)
+    const resizer = screen.getByRole("separator", { name: "上段と下段の境界" })
+
+    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 0, clientY: 300 })
+    fireEvent.pointerMove(resizer, { clientX: 0, clientY: 100 })
+    fireEvent.pointerUp(resizer, { clientX: 0, clientY: 100 })
+
+    expect(grid.style.getPropertyValue("--layout-row-top")).toBe("20fr")
+    expect(loadSplit()).toEqual({ rowTop: 20, topLeft: 30, bottomLeft: 40 })
+  })
+
+  it("一度も動かさずに離したときは保存しない", () => {
+    saveSplit({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+    renderLayout()
+    stubBoundingRect(rowTopElement(), 1000, 400)
+    const resizer = screen.getByRole("separator", { name: "メインビューとサイドバーの境界" })
+
+    // 掴んだ位置（75%）は保存済みの比率（30%）と違うので、掴んだだけで保存されれば落ちる。
+    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 750, clientY: 0 })
+    fireEvent.pointerUp(resizer, { clientX: 750, clientY: 0 })
+
+    expect(loadSplit()).toEqual({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
   })
 })

@@ -2,7 +2,7 @@
 // `pointerup` で書く（`docs/coding-standards.md`「Bun固有APIに寄せない」と同じ考えで、
 // ブラウザ標準の API に留める）。
 
-import { type PointerEvent, type ReactElement, type RefObject } from "react"
+import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"
 
 import styles from "./layout.module.css"
 import { clampPercent } from "./split.ts"
@@ -23,6 +23,16 @@ export type LayoutResizerProps = {
 }
 
 export function LayoutResizer(props: LayoutResizerProps): ReactElement {
+  // `pointerdown` で登録するリスナはドラッグが終わるまで生き続けるので、素のクロージャだと
+  // `pointerdown` の時点の props を握ったままになる。`useEffectEvent` で包むと、呼ぶのは
+  // いつも最新のハンドラになる（`docs/coding-standards.md`「React」節）。
+  const change = useEffectEvent((percent: number): void => {
+    props.onChange(percent)
+  })
+  const commit = useEffectEvent((percent: number): void => {
+    props.onCommit(percent)
+  })
+
   function onPointerDown(event: PointerEvent<HTMLDivElement>): void {
     const target = event.currentTarget
     if (typeof target.setPointerCapture === "function") {
@@ -33,9 +43,7 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
       return
     }
 
-    // ドラッグ中に最後に渡した位置。onCommit へそのまま渡すので、受け取る側は「いまの state」を
-    // 読み直さなくてよい（onCommit のクロージャは pointerdown の瞬間に固定されるため、
-    // state から読むと1回ぶん古い値になる）。
+    // ドラッグ中に最後に渡した位置。一度も動かさずに離したかどうかは、これが未定義かで分かる。
     let lastPercent: number | undefined
     const onMove = (moveEvent: globalThis.PointerEvent): void => {
       const raw =
@@ -43,13 +51,13 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
           ? ((moveEvent.clientY - rect.top) / rect.height) * 100
           : ((moveEvent.clientX - rect.left) / rect.width) * 100
       lastPercent = clampPercent(raw)
-      props.onChange(lastPercent)
+      change(lastPercent)
     }
     const onUp = (): void => {
       target.removeEventListener("pointermove", onMove)
       target.removeEventListener("pointerup", onUp)
       if (lastPercent !== undefined) {
-        props.onCommit(lastPercent)
+        commit(lastPercent)
       }
     }
     target.addEventListener("pointermove", onMove)
