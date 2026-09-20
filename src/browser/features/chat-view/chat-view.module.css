@@ -50,7 +50,9 @@
 .chat-log > * {
   flex-shrink: 0;
 }
-/* 1件の発言。**話者で左右に寄せる**（LINE / Discord と同じ読み方）。 */
+/* 1件の発言。**話者で左右に寄せる**（LINE / Discord と同じ読み方）。
+   キャラクターの側は `<button>` で出す（下の `.chat-entry-character`）ので、地の見た目が
+   話者で変わらないよう、ボタンの既定値をここで揃えておく。 */
 .chat-entry {
   max-width: 80%;
   padding: 0.6rem 1rem;
@@ -59,17 +61,32 @@
   background: var(--surface);
   /* **セリフの文字は `ink`**（docs/design.md 13.1 原則1。長い往復でも濃さを変えない）。 */
   color: var(--ink);
+  font: inherit;
   font-size: var(--font-body);
   line-height: var(--line-height-body);
+  text-align: left;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* キャラクターの発言は立ち絵の側（左）に寄せ、差し色の縁で話者を示す。 */
+/* キャラクターの発言は立ち絵の側（左）に寄せ、差し色の縁で話者を示す。
+   **行そのものが押せる**（押すとその時の表情へ立ち絵が遡る。docs/design.md 13.7）。
+   **操作子も枠も増やさない**（13.1 原則2）ので、行の外に印や矢印は足さない。 */
 .chat-entry-character {
   align-self: flex-start;
   border-color: var(--accent);
   background: var(--surface-accent);
   border-bottom-left-radius: 0.3rem;
+  cursor: pointer;
+}
+/* 押せることは、いまある地を差し色の側へ寄せるだけで示す。 */
+.chat-entry-character:hover:not(.is-selected) {
+  background: color-mix(in srgb, var(--surface), var(--accent) 18%);
+}
+/* 遡って見ている行。**縁は太らせない**（行の高さが動いて並び全体がずれる）ので、
+   内側の影で1px ぶん重ねて濃くし、地も差し色の側へさらに寄せる。 */
+.chat-entry-character.is-selected {
+  background: color-mix(in srgb, var(--surface), var(--accent) 26%);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 /* 利用者の発言は右。**差し色は使わない**（色が現れるのはキャラクターが居る場所だけ。
    13.1 原則1）ので、地の濃さだけで区別する。 */
