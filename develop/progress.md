@@ -75,10 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `src/browser/main.tsx` の `<div hidden>` を `<Activity mode="hidden">` にした。`hidden` 属性は描画を止めないので、キャラクター画面を開いている間も会話側が毎フレーム描き直されていた。下書き・選んでいるターン・スクロール位置が残る性質はそのまま。
 
-### 2026-09-20 毎フレーム組み直していた箇所を memo と1回計算に直した（T-212）
-
-`TaskTable` と `Report` を `memo` で包み、`<thead>` と2つの正規表現をモジュール定数へ上げた。`taskReadiness` は第2引数に未完了IDの `Set` を取る形にして、一覧全体で1回だけ作るようにした。`taskListTitle` の `filter` 3回は1回の走査に畳んだ。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、
