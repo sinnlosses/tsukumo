@@ -48,7 +48,7 @@ export type TurnSelectionProviderProps = {
 export function TurnSelectionProvider(props: TurnSelectionProviderProps): ReactElement {
   const { state } = useSession()
   // タブに出るターン（窓の中）の通し番号。昇順なので末尾が今回。
-  const turnIds = mainViewTurns(mainViewEntries(state)).map((turn) => turn.id)
+  const turnIds = mainViewTurns(mainViewEntries(state), state.turnInProgress).map((turn) => turn.id)
   const newestTurnId = turnIds.at(-1)
 
   const [selectedTurnId, setSelectedTurnId] = useState<number | undefined>(undefined)

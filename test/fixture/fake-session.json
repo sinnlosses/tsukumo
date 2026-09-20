@@ -570,6 +570,115 @@
           }
         }
       ]
+    },
+    {
+      "name": "interim-flicker",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "中間レポートのチラつきを確かめたい（架空の依頼）"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "utterance",
+            "text": "## 台本の場面はここに並んでいる\n\n| 場面 | 何を出すか |\n| --- | --- |\n| `report` | レポートとツールの進行 |\n| `narration` | 実況が落ちるところ |\n\nこれは架空の本文で、実物の会話ではない。**この塊は構造の印を持つので中間レポートとして残る。**\n"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-flicker-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/script.json"
+            }
+          }
+        },
+        {
+          "afterMs": 4000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-flicker-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 5000,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "次は "
+          }
+        },
+        {
+          "afterMs": 5600,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "`src/a.ts` を"
+          }
+        },
+        {
+          "afterMs": 6200,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "直すね。"
+          }
+        },
+        {
+          "afterMs": 10000,
+          "event": {
+            "kind": "utterance",
+            "text": "次は `src/a.ts` を直すね。"
+          }
+        },
+        {
+          "afterMs": 12000,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-flicker-2",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 16000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-flicker-2",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 17000,
+          "event": {
+            "kind": "speech",
+            "text": "ほら、途中で開き直さなかっただろ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 18000,
+          "event": {
+            "kind": "utterance",
+            "text": "## 中間レポートは畳まれたまま開き直さない\n\nこれは架空の本文で、実物の会話ではない。**上のステップに実況の本文は一度も出ていない**（`docs/requirements.md` 4.2。2026-09-20 決定）。\n"
+          }
+        },
+        {
+          "afterMs": 19000,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
     }
   ]
 }

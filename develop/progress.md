@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 中間レポートが畳まれてすぐ開き直すチラつきを直した（T-202）
+
+ターンが進行中のあいだ、いちばん新しいターンの最後のステップの本文を「まとまった資料」と
+判定できたときだけ出す形にし（`hideUnsettledReport`）、出した本文が消えないようにして
+`superseded` の反転を止めた。`docs/requirements.md` 4.2 の「出してから消す」（2026-09-16）は
+同日の決定で覆した。
+
 ### 2026-09-20 表情 serious / curious を実装に通した（T-137）
 
 `Expression` 型・`EXPRESSIONS`・`character.json` 3種・`persona.md` 3種に `serious`（きりっ）と
@@ -88,18 +95,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `git ls-files -z` を起こす唯一の境界になった（失敗時は空）。絞り込みはブラウザ側で、一覧は
 `useQuery`（`staleTime` 30秒、`@` を打っている間だけ `enabled`）。候補は判別可能な合併型に
 畳んで `/` のコマンド補完と同時に出ないことを型で保証した。
-
-### 2026-09-20 色の連続変更を自前の debounce でまとめて書き込むようにした（T-204）
-
-`src/ui/lib/debounce.ts` の `useDebouncedCallback` を足し、差し色の送信と画面の色の
-`localStorage` 書き込みを 200ms まとめた。見た目は `onChange` のまま即時で、引きずったまま
-画面を閉じたときは待機中の値を flush する（落とさない）。
-
-### 2026-09-20 TanStack Query を入れて立ち絵の SVG 取得を useQuery にした（T-203）
-
-`components/portrait.tsx` の `useSvgMarkup` を `useQuery`（`queryKey: [url]`、`staleTime`/`gcTime`
-は `Infinity`）に置き換え、`useEffect` を消した。URL が `?v=<パック>@<版>` を含むので、素材を
-差し替えると別のキャッシュ行になる。サーバの `no-store` は変えていない。
 
 ## 未解決
 

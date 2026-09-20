@@ -27,7 +27,7 @@ export function MainView(): ReactElement {
   const { activeTurnId, selectTurn } = useTurnSelection()
   const entries = mainViewEntries(state)
   // mainViewTurns は昇順（古い→新しい）を返す。タブは新しい順に並べるので反転する。
-  const turnsNewestFirst = [...mainViewTurns(entries)].reverse()
+  const turnsNewestFirst = [...mainViewTurns(entries, state.turnInProgress)].reverse()
   const turnIds = turnsNewestFirst.map((turn) => turn.id)
   const scrollerRef = useRef<HTMLDivElement>(null)
 

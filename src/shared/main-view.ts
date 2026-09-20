@@ -86,10 +86,19 @@ export type MainViewTurn = {
 /**
  * 時系列の記録を、やり取り（ターン）ごとにまとめ、直近 {@link MAX_MAIN_VIEW_TURNS} 件へ絞る。
  * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
+ *
+ * `turnInProgress` はそのときの `SessionState` の同名のフィールドで、**確定していない本文を
+ * 出さない**ために要る（{@link hideUnsettledReport}）。
  */
-export function mainViewTurns(entries: readonly MainViewEntry[]): readonly MainViewTurn[] {
-  return groupIntoTurns(entries)
-    .slice(-MAX_MAIN_VIEW_TURNS)
+export function mainViewTurns(
+  entries: readonly MainViewEntry[],
+  turnInProgress: boolean,
+): readonly MainViewTurn[] {
+  const turns = groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)
+  return turns
+    .map((turn, index) =>
+      turnInProgress && index === turns.length - 1 ? hideUnsettledReport(turn) : turn,
+    )
     .map((turn) => keepOnlyInterimReports(turn))
     .map((turn) => markSupersededSteps(turn))
     .map((turn) => limitTurnEntries(turn))
@@ -165,6 +174,33 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 }
 
 /**
+ * **ターンが進行中のあいだ、いちばん新しいやり取りの最後のステップの本文は、まとまった資料
+ * （{@link isInterimReport}）と判定できたときだけ出す**（`docs/requirements.md` 4.2。
+ * 2026-09-20 決定。それまでの「出してから消す」を覆したもの）。
+ *
+ * 実況か資料かは「あとにツールが続くか」で決まるので、**流れている時点では確定しない**。
+ * 確定しないものを出してから消すと、前の中間レポートの `superseded`（{@link markSupersededSteps}）が
+ * true→false へ反転し、`<details>` が畳まれてから開き直してチラつく（2026-09-20 の指摘）。
+ * 確定するまで出さなければ、**一度出した本文は二度と消えない**ので反転も起きない。
+ *
+ * **最後のステップだけを見れば足りる。** `tool` の記録は `groupIntoTurns` が
+ * `current.steps.at(-1)` にしか足さないので、最後でないステップは二度と `tool` を得ず、
+ * {@link keepOnlyInterimReports} に本文を落とされることがない——つまり**最後以外の本文は
+ * もう確定している**。
+ *
+ * 代わりに、構造の印が無く短い**最終レポート**はターンが終わるまで出ない（終わった瞬間に出る）。
+ * 流れて見える感じを失うのはその範囲だけで、長い本文・構造を持つ本文は今までどおり閾値を
+ * 越えた時点から流れる。
+ */
+function hideUnsettledReport(turn: MainViewTurn): MainViewTurn {
+  const last = turn.steps.at(-1)
+  if (last === undefined || last.report === undefined || isInterimReport(last.report)) {
+    return turn
+  }
+  return { ...turn, steps: [...turn.steps.slice(0, -1), { ...last, report: undefined }] }
+}
+
+/**
  * **あとにツール呼び出しが続いた本文のうち、実況だけを落とす**（`docs/requirements.md` 4.2。
  * 2026-09-16 決定）。「まず読むね」「次はテスト」のような実況は、ツールを呼ぶ合図としてしか
  * 書かれておらず、レポートとして読むものではない。**規約の条項（`src/server/core/report-notation.ts` の
@@ -179,8 +215,9 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
  * その直前に書いた本文は読むためのレポートとして残す（中間レポートにもしない）。
  *
  * **ツールを1つも呼ばないターンでは何も落ちない**（どのステップにも `tool` が続かない）。
- * 書きかけ（`partialUtterance`）は常に最後のステップなので、流れている間は消えない
- * （ツールが始まった時点で落ちるか、中間レポートに変わる。「出してから消す」＝ 2026-09-16 決定）。
+ * 書きかけ（`partialUtterance`）は常に最後のステップなので、ここには掛からない——**出すか
+ * どうかは先に {@link hideUnsettledReport} が決めている**（2026-09-20 に「出してから消す」＝
+ * 2026-09-16 決定を覆した）。
  */
 function keepOnlyInterimReports(turn: MainViewTurn): MainViewTurn {
   return {

@@ -19,12 +19,15 @@ const question = (text: string): MainViewEntry => ({
 
 describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("依頼を境目にやり取りへ分ける", () => {
-    const turns = mainViewTurns([
-      request("前の依頼"),
-      detail("前のレポート"),
-      request("今回の依頼"),
-      detail("今回のレポート"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("前の依頼"),
+        detail("前のレポート"),
+        request("今回の依頼"),
+        detail("今回のレポート"),
+      ],
+      false,
+    )
 
     expect(turns.map((turn) => turn.request)).toEqual(["前の依頼", "今回の依頼"])
     expect(turns[0]?.steps[0]?.report).toBe("前のレポート")
@@ -38,7 +41,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       detail(`レポート${String(index)}`),
     ]).flat()
 
-    const turns = mainViewTurns(entries)
+    const turns = mainViewTurns(entries, false)
 
     expect(turns).toHaveLength(MAX_MAIN_VIEW_TURNS)
     expect(turns.map((turn) => turn.request)).toEqual(
@@ -50,13 +53,16 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("レポートとその後のツールの実行が1つのステップにまとまる", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("まず読むね"),
-      edit("src/a.ts"),
-      detail("次に直すね"),
-      edit("src/b.ts"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail("まず読むね"),
+        edit("src/a.ts"),
+        detail("次に直すね"),
+        edit("src/b.ts"),
+      ],
+      false,
+    )
 
     const steps = turns[0]?.steps ?? []
     expect(steps).toHaveLength(2)
@@ -65,7 +71,10 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("レポートより前に実行されたツールは、レポートを持たないステップになる", () => {
-    const turns = mainViewTurns([request("依頼"), edit("src/first.ts"), detail("あとから説明")])
+    const turns = mainViewTurns(
+      [request("依頼"), edit("src/first.ts"), detail("あとから説明")],
+      false,
+    )
 
     const steps = turns[0]?.steps ?? []
     expect(steps).toHaveLength(2)
@@ -79,7 +88,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       ...Array.from({ length: 45 }, (_, index) => detail(`レポート${String(index)}`)),
     ]
 
-    const turns = mainViewTurns(entries)
+    const turns = mainViewTurns(entries, false)
 
     expect(turns[0]?.droppedCount).toBeGreaterThan(0)
     expect(turns[0]?.steps.at(-1)?.report).toBe("レポート44")
@@ -94,7 +103,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       detail("直したよ"),
     ]
 
-    const turns = mainViewTurns(entries)
+    const turns = mainViewTurns(entries, false)
 
     expect(turns[0]?.droppedCount).toBe(0)
     expect(turns[0]?.steps[0]?.report).toBe("## 調べた結果\n\n- 1つめ\n- 2つめ\n")
@@ -107,11 +116,11 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       ...Array.from({ length: 45 }, (_, index) => detail(`レポート${String(index)}`)),
     ]
 
-    const before = mainViewTurns(entries)
+    const before = mainViewTurns(entries, false)
     const idsBefore = (before[0]?.steps ?? []).map((step) => step.id)
 
     // さらに記録が積まれ、前の呼び出しでは残っていたステップも古いほうから落ちる。
-    const after = mainViewTurns([...entries, detail("レポート45")])
+    const after = mainViewTurns([...entries, detail("レポート45")], false)
     const idsAfter = (after[0]?.steps ?? []).map((step) => step.id)
 
     // 両方に残っているステップ（id の交わり）は、report の中身も id も変わらない。
@@ -127,21 +136,23 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("短い実況は、ツールが続いた時点で落ちる（構造の印が無い）", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("まず `src/a.ts` を読むね。それから直す。"),
-      edit("src/a.ts"),
-    ])
+    const turns = mainViewTurns(
+      [request("依頼"), detail("まず `src/a.ts` を読むね。それから直す。"), edit("src/a.ts")],
+      false,
+    )
 
     expect(turns[0]?.steps[0]?.report).toBeUndefined()
   })
 
   it("構造の印を持つまとまった本文は、ツールが続いても中間レポートとして残る", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("## 調べた結果\n\n| 場所 | 状態 |\n| --- | --- |\n| src/a.ts | 直す |"),
-      edit("src/a.ts"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail("## 調べた結果\n\n| 場所 | 状態 |\n| --- | --- |\n| src/a.ts | 直す |"),
+        edit("src/a.ts"),
+      ],
+      false,
+    )
 
     const step = turns[0]?.steps[0]
     expect(step?.report).toBe(
@@ -151,24 +162,23 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("構造の印があっても短ければ実況として落とす（迷ったら落とす側）", () => {
-    const turns = mainViewTurns([request("依頼"), detail("- まず読むね"), edit("src/a.ts")])
+    const turns = mainViewTurns([request("依頼"), detail("- まず読むね"), edit("src/a.ts")], false)
 
     expect(turns[0]?.steps[0]?.report).toBeUndefined()
   })
 
   it("構造の印が無ければ、長くても落とす", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("これから直す。".repeat(60)),
-      edit("src/a.ts"),
-    ])
+    const turns = mainViewTurns(
+      [request("依頼"), detail("これから直す。".repeat(60)), edit("src/a.ts")],
+      false,
+    )
 
     expect(turns[0]?.steps[0]?.report).toBeUndefined()
   })
 
   it("見出し1行と長い段落だけの本文も、文字数の下限で中間レポートになる", () => {
     const markdown = `## 調べた結果\n\n${"この段落は行数こそ伸びないが、まとまった分量のある資料である。".repeat(8)}`
-    const turns = mainViewTurns([request("依頼"), detail(markdown), edit("src/a.ts")])
+    const turns = mainViewTurns([request("依頼"), detail(markdown), edit("src/a.ts")], false)
 
     const step = turns[0]?.steps[0]
     expect(step?.report).toBe(markdown)
@@ -178,28 +188,34 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("中間レポートは1つのやり取りに何件でも積む（最後の1つに絞らない）", () => {
     const first = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
     const second = "## 直した箇所\n\n- src/a.ts\n- src/b.ts"
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail(first),
-      edit("src/a.ts"),
-      detail(second),
-      edit("src/b.ts"),
-      detail("できたよ"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail(first),
+        edit("src/a.ts"),
+        detail(second),
+        edit("src/b.ts"),
+        detail("できたよ"),
+      ],
+      false,
+    )
 
     expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([first, second, "できたよ"])
     expect((turns[0]?.steps ?? []).map((step) => step.interim)).toEqual([true, true, false])
   })
 
   it("ツール呼び出しが続いた本文は落とし、最後に書いた本文だけを残す", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("まず読むね"),
-      edit("src/a.ts"),
-      detail("次に直すね"),
-      edit("src/b.ts"),
-      detail("直した結果はこう"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail("まず読むね"),
+        edit("src/a.ts"),
+        detail("次に直すね"),
+        edit("src/b.ts"),
+        detail("直した結果はこう"),
+      ],
+      false,
+    )
 
     expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([
       undefined,
@@ -209,17 +225,16 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("ツールを1つも呼ばないターンでは何も落ちない", () => {
-    const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")])
+    const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")], false)
 
     expect(turns[0]?.steps[0]?.report).toBe("文章だけで答える")
   })
 
   it("質問はツールに数えないので、質問の直前に書いた本文は残る", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("比べた結果はこう"),
-      question("どれにする？"),
-    ])
+    const turns = mainViewTurns(
+      [request("依頼"), detail("比べた結果はこう"), question("どれにする？")],
+      false,
+    )
 
     const steps = turns[0]?.steps ?? []
     expect(steps[0]?.report).toBe("比べた結果はこう")
@@ -229,7 +244,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("落とすのは本文だけで、続いた出来事はステップに残る", () => {
-    const turns = mainViewTurns([request("依頼"), detail("まず直すね"), edit("src/a.ts")])
+    const turns = mainViewTurns([request("依頼"), detail("まず直すね"), edit("src/a.ts")], false)
 
     const steps = turns[0]?.steps ?? []
     expect(steps).toHaveLength(1)
@@ -238,7 +253,10 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("最初の依頼より前の記録も、request 無しのターンとして残す", () => {
-    const turns = mainViewTurns([detail("依頼より前のレポート"), request("依頼"), detail("今回")])
+    const turns = mainViewTurns(
+      [detail("依頼より前のレポート"), request("依頼"), detail("今回")],
+      false,
+    )
 
     expect(turns).toHaveLength(2)
     expect(turns[0]?.request).toBeUndefined()
@@ -249,12 +267,10 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 describe("mainViewTurns（追い越された中間レポートを畳む印。T-161）", () => {
   it("後ろにレポートを持つステップがあれば superseded が立つ", () => {
     const first = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail(first),
-      edit("src/a.ts"),
-      detail("できたよ"),
-    ])
+    const turns = mainViewTurns(
+      [request("依頼"), detail(first), edit("src/a.ts"), detail("できたよ")],
+      false,
+    )
 
     const steps = turns[0]?.steps ?? []
     expect(steps.map((step) => step.interim)).toEqual([true, false])
@@ -262,46 +278,54 @@ describe("mainViewTurns（追い越された中間レポートを畳む印。T-1
   })
 
   it("いちばん後ろの中間レポート（まだ追い越されていない）には superseded が立たない", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
-      edit("src/a.ts"),
-    ])
+    const turns = mainViewTurns(
+      [request("依頼"), detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"), edit("src/a.ts")],
+      false,
+    )
 
     expect(turns[0]?.steps[0]?.interim).toBe(true)
     expect(turns[0]?.steps[0]?.superseded).toBe(false)
   })
 
   it("<summary> に出す文字列は先頭行から作られる（見出しなら記号を落としてその語）", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
-      edit("src/a.ts"),
-      detail("できたよ"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+        edit("src/a.ts"),
+        detail("できたよ"),
+      ],
+      false,
+    )
 
     expect(turns[0]?.steps[0]?.firstLine).toBe("調べた結果")
   })
 
   it("見出しでない先頭行は記号を落とさずそのまま使う", () => {
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail("| 場所 | 状態 |\n| --- | --- |\n| src/a.ts | 直す |\n| src/b.ts | 直す |"),
-      edit("src/a.ts"),
-      detail("できたよ"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail("| 場所 | 状態 |\n| --- | --- |\n| src/a.ts | 直す |\n| src/b.ts | 直す |"),
+        edit("src/a.ts"),
+        detail("できたよ"),
+      ],
+      false,
+    )
 
     expect(turns[0]?.steps[0]?.firstLine).toBe("| 場所 | 状態 |")
   })
 
   it("先頭行が長いときは省略記号で切る", () => {
     const longHeading = `## ${"とても長い見出し".repeat(10)}`
-    const turns = mainViewTurns([
-      request("依頼"),
-      detail(`${longHeading}\n\n- 1つ目の発見\n- 2つ目の発見`),
-      edit("src/a.ts"),
-      detail("できたよ"),
-    ])
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail(`${longHeading}\n\n- 1つ目の発見\n- 2つ目の発見`),
+        edit("src/a.ts"),
+        detail("できたよ"),
+      ],
+      false,
+    )
 
     const firstLine = turns[0]?.steps[0]?.firstLine ?? ""
     expect(firstLine.endsWith("…")).toBe(true)
@@ -309,9 +333,58 @@ describe("mainViewTurns（追い越された中間レポートを畳む印。T-1
   })
 
   it("report を持たないステップの firstLine は undefined", () => {
-    const turns = mainViewTurns([request("依頼"), edit("src/first.ts"), detail("あとから説明")])
+    const turns = mainViewTurns(
+      [request("依頼"), edit("src/first.ts"), detail("あとから説明")],
+      false,
+    )
 
     expect(turns[0]?.steps[0]?.report).toBeUndefined()
     expect(turns[0]?.steps[0]?.firstLine).toBeUndefined()
+  })
+})
+
+describe("mainViewTurns（ターンが進行中のあいだは、確定していない本文を出さない）", () => {
+  const material = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
+
+  it("流れている実況が積まれてもツールが始まっても、前の中間レポートの superseded が反転しない", () => {
+    const streaming = mainViewTurns(
+      [request("依頼"), detail(material), edit("src/a.ts"), detail("次は直すね")],
+      true,
+    )
+    const afterToolStarted = mainViewTurns(
+      [request("依頼"), detail(material), edit("src/a.ts"), detail("次は直すね"), edit("src/b.ts")],
+      true,
+    )
+
+    expect(streaming[0]?.steps[0]?.superseded).toBe(false)
+    expect(afterToolStarted[0]?.steps[0]?.superseded).toBe(false)
+  })
+
+  it("進行中は、いちばん新しいターンの最後のステップの実況を出さない", () => {
+    const turns = mainViewTurns([request("依頼"), detail("まず `src/a.ts` を読むね")], true)
+
+    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+  })
+
+  it("進行中でも、資料と判定できる本文は最後のステップでも出す", () => {
+    const turns = mainViewTurns([request("依頼"), detail(material)], true)
+
+    expect(turns[0]?.steps[0]?.report).toBe(material)
+  })
+
+  it("ターンが終われば、短い最終レポートも出る", () => {
+    const turns = mainViewTurns([request("依頼"), detail("直したよ")], false)
+
+    expect(turns[0]?.steps[0]?.report).toBe("直したよ")
+  })
+
+  it("進行中に隠すのはいちばん新しいターンだけで、前のターンの最終レポートは残る", () => {
+    const turns = mainViewTurns(
+      [request("前の依頼"), detail("直したよ"), request("今回の依頼"), detail("まず読むね")],
+      true,
+    )
+
+    expect(turns[0]?.steps[0]?.report).toBe("直したよ")
+    expect(turns[1]?.steps[0]?.report).toBeUndefined()
   })
 })
