@@ -12874,3 +12874,319 @@ docs/research/mobile-orca-reach.md（230行）に結論・比較表・推奨を�
   会話やトークンを外部のサービスへ送らない。**レポートに実物のトークンを書かない**
 - `docs/research/` の文書は正典ではないので、節の索引の表は作らない
 - コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-208
+
+**タスク**: 復元したターンの依頼からコマンドのタグを畳んで `/clear` の形に揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+session-restore.ts の requestText() を requestTextFromRawText() 経由にし、非公開の foldSlashCommand() と isLocalCommandStdoutOnly() を足した（別ファイルには出さない。requestText の下請けで、呼び出し元も1箇所だけ）。論点の結論: 引数は /<name> <args> に繋ぐ（command-name には先頭の / が入っている）、<local-command-stdout> だけのメッセージは依頼として起こさず toSessionEvents 側に回す、<command-message> は名前の重複なので常に落とす。タグの並びと <command-message> の有無が入り方によって一定しないので、順序に依存しない抽出にし、メッセージ全体がタグだけで出来ているときだけ畳む（地の文にタグが混じる壊れた形は素通し）という安全側のガードを入れた。受け入れ: bun run check 725 pass / 0 fail（721 から +4）。テストの入力はすべて架空（架空コマンド / 架空の引数 / 架空の普通の依頼 / 架空の出力）で、実物の transcript は使っていないことを差分で確認した。実機の目視はしていない（確認には実会話の復元が要り、会話内容の扱いに触れるため）。見え方の担保はテスト4件。
+
+## 背景
+
+ユーザーの指摘（2026-09-20、スクリーンショット添付）:「tsukumo 起動時のみ、コマンドが色んな
+タグに囲まれて表示される。入力画面から打ったときは /clear のように / のみなので統一感がなく、
+起動時も同様に /clear のような表示が良い」。
+
+経路が2本あり、**依頼の文面の出どころが違う**のが原因:
+
+- **入力欄から打ったとき**: `src/adapter/sdk-driver.ts` の `prompt()` が、打たれた文字列を
+  そのまま `{ kind: "request", text }` として流す（SDK が展開する前の生の `/clear`）
+- **起動時（セッションの復元）**: `src/core/session-restore.ts` の `requestText()` が、
+  transcript に残っている `user` メッセージのテキストブロックをそのまま読む。transcript には
+  **SDK が展開した後**の姿が入っていて、`<command-name>/clear</command-name>` /
+  `<command-message>clear</command-message>` / `<command-args></command-args>` の3行になっている
+
+`requestText()` の戻り値がそのまま `src/ui/features/main-view/turn.tsx` の `RequestHeading` に
+届く。**複数行なので `<details open>` になり**、スクリーンショットのとおり三角つきで3行が出る。
+
+## 決まっていること（蒸し返さない）
+
+- 復元側を入力欄側の見え方（`/clear`）に合わせる。逆（入力欄側をタグの形にする）はしない
+
+## 解くべき論点
+
+- `<command-args>` に中身があるとき（`/loop 5m /foo` のような形）にどう畳むか。
+  `/<name> <args>` に繋ぐのが素直だが、**実際の transcript で args がどう入るか**を先に見る
+- `<command-message>` は名前の重複なので落とす。**`<local-command-stdout>` を含む `user`
+  メッセージは依頼ではない**ので、依頼として起こすかどうかを決める（落とすなら
+  `requestText()` が `undefined` を返し、既存の `toSessionEvents()` 側に回る）
+- 畳む処理の置き場。`session-restore.ts` の中に閉じるか、`src/core/` の別ファイルに出すか
+  （`CLAUDE.md` 原則5: ファイル名が概念になっているか）
+
+## やること
+
+1. `~/.claude/projects/` 配下の transcript を1つ開いて、コマンドが展開された `user`
+   メッセージの**形だけ**を確かめる（タグの並び・インデント・args の入り方）。
+   **`IMPORTANT`: 会話の中身は読み取らない／写さない／テストのフィクスチャに使わない**
+   （`docs/coding-standards.md`「会話内容の扱い」。この規約は他のどの規約よりも優先する）
+2. `src/core/session-restore.ts` の `requestText()` に、タグの形を `/<name>` に畳む変換を足す。
+   **タグが無いときは今までどおり素通し**にする
+3. `test/core/session-restore.test.ts` に、架空のコマンド名で組んだ入力の検査を足す
+   （引数なし・引数あり・タグが無い普通の依頼・`<local-command-stdout>` の4通り）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 追加したテストが、タグに囲まれた入力から `/<name>` の1行だけを起こすことを示している
+
+## 注意
+
+- **transcript の中身をテストに持ち込まない。** 入力は架空のコマンド名で自分で組む
+- 入力欄からの経路（`sdk-driver.ts` の `prompt()`）は触らない
+
+## T-209
+
+**タスク**: サイドバーで選択中の枠が切れるのを、スクロール領域に余白を足して直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+.sidebar-block-scroll に padding: 4px を足した（outline 2px + offset 2px = 外側4px にちょうど合わせ、その理由をコメントに残した）。overflow の scrollport は padding box の内側までを含むので、上端・下端とも同じ仕組みで切られない。.sidebar-block の margin は触っていない。受け入れ: bun run check 721 pass / 0 fail（変更前と同数。CSS だけの変更）。目視: fake 駆動 + ヘッドレス Chrome 1400x900 で Tab 経由に focus を当てて実測。キャラクターの select は枠の上端 396.3px = 器の上端 396.3px（上のゆとり 0.0px）、許可モードの select は枠の下端 491.4px = 器の下端 491.4px（下のゆとり 0.0px）で、どちらもはみ出さずに収まっている。画像でも両方の select の水色の枠が4辺とも出ていること、サイドバーの3区画の見え方と区画どうしの間隔が変わっていないことを確認した。ゆとりが 0.0px なのは padding を outline の幅ちょうどに合わせたためで、outline を太くしたらまた切れる（コメントに前提を残してある）。
+
+## 背景
+
+ユーザーの指摘（2026-09-20、スクリーンショット添付）:「キャラクターを選択したときの
+ハイライトが上部分だけ切れている。許可モードの下部分もおそらく同じ事象が発生する」。
+
+`src/ui/styles/theme.css:56-59` の `:focus-visible` は `outline: 2px solid var(--accent)` ＋
+`outline-offset: 2px` で、**要素の境界から 4px 外側**まで枠が出る。その枠を囲っているのが
+`src/ui/features/sidebar/sidebar.module.css` の `.sidebar-block-scroll`（`overflow-y: auto`。
+`src/ui/features/sidebar/section.tsx` が3区画すべての中身を包む）で、**padding が 0 なので
+上端・下端の枠が切られる**。`.session-info` は grid の1行目がキャラクターの `<select>`、
+最終行が許可モードの `<select>` なので、指摘どおり上と下の両方で起きる。
+
+## 決まっていること（蒸し返さない）
+
+- 直し方は「**スクロール領域に余白を足す**」（`.sidebar-block-scroll` に 4px 程度の padding）。
+  outline-offset を内側にする案・区画ごとに overflow を visible にする案は採らない
+
+## やること
+
+1. `.sidebar-block-scroll` に padding を足す。**中身が 4px ぶん内側へ寄る**ので、3区画
+   （いま何をしているか・タスク一覧・セッション情報）の見え方が崩れないかを見る
+2. 余白のぶん、区画どうしの間隔が広く見えるなら `.sidebar-block` 側の margin で釣り合いを取る
+3. 上端だけでなく**下端**（許可モードの `<select>`）でも切れないことを確かめる
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視: キャラクターの `<select>` と許可モードの `<select>` に focus を当て、枠が
+  4辺とも切れずに出ることを確かめ、確かめ方（撮った画像・窓の大きさ）を `evidence` に書く。
+  `bun run scripts/capture-view.ts` は focus を作れないので、focus を当ててから撮る手立てを
+  自分で用意する（`webapp-testing` スキルの Playwright など）
+- サイドバーの3区画が今までどおり見えている（スクロールが効く・見出しが動かない）
+
+## 注意
+
+- `theme.css` の `:focus-visible` は全画面で共有しているので**触らない**
+- **焦点の当たった状態を撮れないときは、直したうえで「目視できていない」と `evidence` に
+  書いて閉じ、ユーザーに預ける**（見えていないのに通ったことにしない）
+
+## T-216
+
+**タスク**: localStorage のキーに版を足す
+
+**difficulty**: haiku / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+保存キー2つに :v1 を足した（tsukumo-layout-split:v1 / tsukumo-appearance-color:v1）。localStorage の getItem/setItem は src/ 全体でこの2箇所だけで、旧キーの文字列は src/ にも test/ にも残っていない（grep で確認）。旧キーからの読み替えは本文の決定どおり足していないので、適用時に保存済みの仕切りの位置と画面の色は一度だけ既定に戻る。テストは appearance-color.test.ts と character-screen.test.tsx の定数2つが追随した。受け入れ: bun run check 719 pass / 0 fail（変更前と同数）。目視: fake 駆動 + ヘッドレス Chrome で、仕切りをドラッグし色を #1a2d40 に変えると localStorage のキーが["tsukumo-appearance-color:v1", "tsukumo-layout-split:v1"] の2つになり、再読み込み後も --layout-row-top 48.18fr と --ground #1a2d40 が保たれることを確認した（検証で書いた値は消してある）。
+
+## 背景
+
+T-197 の調査で当たった1件。保存キーに版が無い:
+
+- `src/ui/features/layout/split.ts:18` の `"tsukumo-layout-split"`
+- `src/ui/features/character-screen/appearance-color.ts:30` の `"tsukumo-appearance-color"`
+
+`try` / `catch` と値の検証はどちらも**すでに満たしている**ので、残るのはキーに版を足すこと
+だけ。**いまの形を変えるときに困る**というだけの話で、直す価値は高くない。
+
+## やること
+
+1. 2つのキーに `:v1` を足す
+2. 既存のキーに入っている値は**読み替えない**（版が変わったら既定値に戻る、で足りる）
+3. テストがキーの文字列を見ていれば追随させる
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 目視: 仕切りの位置と色を変え、再読み込みして保たれることを確かめる
+
+## 注意
+
+- **`src/ui/` を触る他のタスクと同時に進めない**
+- 移行のコード（旧キーからの読み替え）は足さない。足すならそれは別の判断
+
+## T-219
+
+**タスク**: タブを切り替えたときの先頭スクロールを scrollIntoView に直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+main-view.tsx の effect を scrollTop = 0 から scrollIntoView({ block: "start" }) に替え、「なぜ scrollTop ではないのか（転がる祖先が画面幅で入れ替わる）」をコメントに残した。CSS は触っていない。happy-dom は scrollIntoView をメソッドとして持つが中身が no-op なので、spyOn で差し替えて「切り替えで1回呼ばれる」「出ているターンが無いときは呼ばれない」の2件を足した。受け入れ: bun run check 721 pass / 0 fail（719 から +2）。目視: fake 駆動（TSUKUMO_FAKE_SCENE=notation）+ ヘッドレス Chrome。狭い窓 720x900 では領域が1列に畳まれてページ自身が転がり、825px まで下げてからタブを切り替えると 29px（＝そのターンの先頭位置。表示直後と同じ値）に戻った。広い窓は 1400x900 だと notation でも転がる余地が出なかったので 1400x420 にして region を転がる状態にし、89px → 0px に戻ることを確認した。どちらもタブの並び（今回 / 1つ前 / …）が画面の上端に見えたままで、sticky が効いている。
+
+## 背景
+
+T-189 の目視中に見つけた（2026-09-20）。**「タブを切り替えたらそのターンを先頭から読ませる」
+配線が no-op になっている。**
+
+`src/ui/features/main-view/main-view.tsx:44` の effect は `.main-turns` に付けた ref へ
+`scrollTop = 0` を書く。ところが `.main-turns` は
+`src/ui/features/main-view/main-view.module.css:7-10` で `display: flex; flex-direction: column`
+を持つだけで **`overflow` を持たない**。`overflow: visible` の要素は
+`scrollHeight === clientHeight` なので、代入しても何も起きない（例外も出ない）。
+
+**実際に転がっている要素は画面幅で入れ替わる:**
+
+| 幅 | 転がる要素 | 理由 |
+| --- | --- | --- |
+| > 760px | `section[data-region="main"]` | `.layout-region` の `overflow-y: auto`（`layout.module.css:37-46`）。`.layout-grid` が `height: calc(100vh - 2rem)` で画面に収まる |
+| ≤ 760px | ページ自身（body） | `@media (max-width: 760px)` で `.layout-grid` が `grid-template-rows: none; height: auto` に畳まれ、**領域に定まった高さが無くなる**ので `overflow-y: auto` が発火しない |
+
+見え方としては、長いターンを下まで読んでから別のタブを押すと**スクロール位置が残ったまま**
+次のターンの途中が出る。新しいターンに連れていかれたときも同じ。
+
+**T-189 による退行ではない**（あのとき CSS もスクロール対象も変えていない）。
+
+## 決まっていること（蒸し返さない）
+
+ユーザーが 2026-09-20 に案 c を採った。選んだ基準は**コードの把握のしやすさ**
+（「おすすめでいいけど、それが最もコードの把握を簡単にする方法であることが条件かな」。
+この基準自体を規約にするのが T-220）:
+
+- **採るのは `scrollIntoView({ block: "start" })`。** 呼ぶ側が「どの祖先が転がっているか」を
+  知らなくてよく、`main-view.tsx` 1ファイルで完結し、**画面幅が変わっても効き続ける**
+- **CSS は1行も触らない**（見え方を変えない）
+- 採らない2案と理由: (a) `.main-turns` に `overflow` を持たせる、(b) `scrollTop` の書き先を
+  親の region に変える —— **どちらも狭い画面（≤760px）では領域に定まった高さが無く、
+  広い画面でだけ直って狭い画面では no-op のまま**になる。(b) は
+  `layout.module.css:67` の「部品は自分の subtree の外の DOM を直接いじらない」ともぶつかる
+
+## 解くべき論点
+
+- **`happy-dom` が `Element.prototype.scrollIntoView` を実装しているか**（`src` / `test` に
+  既存の利用は0件）。実装していなければテストでスタブか spy が要る。**実装の有無を先に
+  確かめてから**テストの形を決める
+- ref の付け先。`.main-turns` の先頭の子が `position: sticky` の `.turn-tabs` なので、
+  `.main-turns` そのものに `block: "start"` を当てれば今の意図（タブごと先頭に戻す）と一致する。
+  ターンの本文だけに当てると**タブの下に潜る**ので、そちらは採らない
+
+## やること
+
+1. `main-view.tsx:44` の effect の中身を `scrollTop = 0` から
+   `scrollIntoView({ block: "start" })` に替える。**`activeTurnId === undefined` のときに
+   何もしない今の早期リターンは残す**
+2. `happy-dom` での実装の有無を確かめ、テストを足す（タブを切り替えたときに1回呼ばれること、
+   出ているターンが無いときに呼ばれないこと）
+3. コメントを1行直す。**「なぜ `scrollTop` ではないのか」**（転がる要素が画面幅で入れ替わる）を
+   残す——コードから読み取れない前提なので、`docs/coding-standards.md`「コメント」の
+   「今の挙動の制約・前提は残す」に当たる
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 目視を**2つの幅で**行い、結果を `evidence` に書く:
+  - 広い窓（1400x900）: 長いレポートのターンを下まで転がしてから別のタブを押し、**先頭
+    （タブの並びが見える位置）から出る**こと
+  - 狭い窓（720x900・1列に畳んだ状態）: 同じ操作で同じように戻ること。**ここが (a)(b) では
+    直らない側**なので必ず見る
+- `.turn-tabs` の `position: sticky` が今までどおり効いている（転がしても見出しが残る）
+
+## 注意
+
+- **CSS を触らない。** 触りたくなったらそれは案 a に戻っているということ
+- **`src/ui/` を触る他のタスク（T-195 / T-210 / T-211〜T-216）と同時に進めない**
+- `scrollIntoView` は**転がる祖先を全部動かす**。狭い画面ではページごと動くのが正しい挙動なので、
+  それを止める細工はしない
+
+## T-220
+
+**タスク**: 案を選ぶときの指標（コードの把握のしやすさ）を規約に足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+CLAUDE.md の規約の一覧に3行（ルール本体と3つの物差しの名前）、docs/coding-standards.md に節「案を選ぶときの指標（コードの把握のしやすさ）」を足した。節の中身は3つの物差し（開くファイルの数／呼ぶ側が外の事情を知らずに済むか／黙って効かなくならないか）、同点のときの決め方、提案の書き方、実例1つ（結論2行）。受け入れ: 節の数は編集前 30 → 編集後 31（足した分だけ増えた）。索引の表は48行目、本文は466行目に別々に入っていて、索引へ本文を流し込む事故は起きていない。CLAUDE.md 側は3つの名前だけ、節は理由と測り方という分担になっていて二度書きになっていないことを差分で確認した。追加行にタスク番号（T- + 3桁）が入っていないことも grep で確認済み（実例は「メインビューのスクロール位置を親へ戻す3案」と内容で指している）。bun run check 725 pass / 0 fail（ドキュメントだけの変更で、変更前と同数）。
+
+## 背景
+
+ユーザーの指示（2026-09-20、会話から）:「今の指摘(コードの把握のしやすさ)を1つの提案の指標に
+してもらえるかな。ルールづけしてもらっていい?」。直前に「おすすめでいいけど、それが最も
+コードの把握を簡単にする方法であることが条件かな」と言ったうえでの指示。
+
+**この指標を実際に当てたら、推していた案がひっくり返った。** メインビューのスクロール戻し
+（T-219）で、当初は「見え方が変わらないから」という理由で案 b（親の region に `scrollTop` を
+書く）を推していた。把握のしやすさで当て直すと、(1) 呼ぶ側が「どの祖先が転がっているか」を
+知らなくていい、(2) 開くファイルが1つで済む、(3) 画面幅で前提が変わっても黙って効かなくならない、
+の3点で案 c（`scrollIntoView`）が勝った。**指標が無かったから遠回りした**というのが、この
+ルールを足す理由。
+
+いまの規約に同じことは書かれていない:
+
+- `CLAUDE.md`「コーディング規約・レビュー方針」の一覧に、案を選ぶときの指標が無い
+- `docs/architecture.md` の原則1〜5 は「**新しいコードを置く場所**」の判断で、原則5
+  （まとめるか分けるかは「ファイル名が概念になっているか」で決める）が最も近いが、
+  **複数の案から1つを選ぶ場面**は扱っていない
+- `docs/coding-standards.md` は実装のルール（理由と例外）で、配置・分割は
+  `docs/architecture.md` が正典と冒頭に書いてある
+
+## 決まっていること（蒸し返さない）
+
+- **置き場は `CLAUDE.md`「コーディング規約・レビュー方針」の一覧に1行 ＋
+  `docs/coding-standards.md` に新しい節**（ルール本体は `CLAUDE.md` が正典、理由と測り方は
+  `docs/coding-standards.md`。同ファイル冒頭が定めている分担そのまま）。
+  `docs/architecture.md` の原則6 にはしない——原則1〜5 は「置き場所」の判断で、対象が違う
+- `/code-review` の Standards 軸がこの2ファイルを読むので、**足した時点でレビュー観点にも入る**
+  （スキル側の変更は要らない）
+- **工数・行数の少なさは指標にしない**（ユーザーの明言:「工数は問題ではないよ」）
+
+## やること
+
+1. `CLAUDE.md`「コーディング規約・レビュー方針」のルールの一覧に、次の1行を足す（文面は
+   このとおりでよい。前後の行と語調を揃えるだけの調整は可）:
+
+   > - **案が2つ以上あるときは、書いたあとのコードを読む人が把握しやすいほうを選ぶ。**
+   >   物差しは「開くファイルの数」「呼ぶ側が自分の外の事情を知らずに済むか」「前提が変わった
+   >   ときに黙って効かなくならないか」の3つで、工数と行数は指標にしない
+
+2. `docs/coding-standards.md` に節 `## 案を選ぶときの指標（コードの把握のしやすさ）` を足す。
+   中身は次の3つの物差しと、同点のときの決め方、提案の書き方:
+
+   - **1. 開くファイルの数。** その変更を理解するのに何ファイル開く必要があるか。1ファイルで
+     完結する案を、2ファイル以上に散る案より上に置く
+   - **2. 呼ぶ側が知らずに済むか。** 呼ぶ側が、自分のファイルの外の事情（親の DOM の構造・
+     別ファイルの CSS・他の層の都合）を知らないと正しく書けない案は下げる。
+     `layout.module.css` の「部品は自分の subtree の外の DOM を直接いじらない」と同じ考え方
+   - **3. 黙って効かなくならないか。** 暗黙の前提（画面幅・件数・並び順）に乗っていて、前提が
+     変わると**エラーも出さずに何もしなくなる**案は採らない。読んだ人の理解が裏切られるため
+   - **同点のときだけ**、既存の書き方との一貫性・実行の速さで決める。**工数と行数は指標に
+     しない**
+   - **提案で案を並べるときは、この3つでの優劣と理由を必ず添える**（並べただけで終わらせない）
+
+3. 実例を1つ添える（T-219 の3案。**結論だけを1〜2行**で。経緯は書かない）
+4. `docs/coding-standards.md` の「節の索引」の表に、足した節の行を入れる
+
+## 完了条件
+
+- `bun run check` が通る
+- `docs/coding-standards.md` の節の数が**足した分だけ**増えている
+  （`grep -c '^#\{2,3\} ' docs/coding-standards.md` を編集の前後で比べ、両方の数を
+  `evidence` に書く）
+- `CLAUDE.md` の一覧と `docs/coding-standards.md` の節で**同じことを二度書いていない**
+  （一覧はルール本体、節は理由と測り方）
+
+## 注意
+
+- **索引の表に本文を流し込む事故に注意**（2026-09-10 に `docs/requirements.md` で発生）。
+  行頭を含めて位置を特定する（`\n### ` のように改行から始める）。`CLAUDE.md`
+  「ドキュメントを編集するときの罠」
+- `docs/architecture.md` の原則1〜5 は触らない

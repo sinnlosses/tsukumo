@@ -75,10 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `tsukumo-layout-split:v1` と `tsukumo-appearance-color:v1` にした。旧キーからの読み替えは足していないので、**保存済みの仕切りの位置と画面の色は一度だけ既定に戻る**。
 
-### 2026-09-20 仕切りのドラッグを直接書き込みにした（T-215）
-
-ドラッグ中は grid の要素へ `--layout-*` を直接書き、`pointerup` のときだけ state を更新する形にした。ハンドラを最新に保つのは `useEffectEvent`（規約が既に指名していた口）で、「`split` は pointerdown の時点のもの」という回避策の注記が要らなくなった。`docs/coding-standards.md` の React 節に、`useEffectEvent` をレンダー中に呼べないことを3行足した。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、
