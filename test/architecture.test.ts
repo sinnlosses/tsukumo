@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url"
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
 // **3層（shared / server / browser）で、サーバ側は判断（`server/core/`）と境界
-// （`server/adapter/`）の2段**。配線は `cli.ts`。
+// （`server/adapter/`）の2段**。配線は `src/` 直下のファイル（`cli.ts` / `main.ts` と、
+// そこから呼ばれる起動の段取り）。
 // `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**
 // （docs/research/architecture-proposal.md 3章「許す依存の辺」。2026-09-16 の段2で切った）。
 
@@ -373,12 +374,13 @@ function resolveRelativeImport(fromRelPath: string, specifier: string): string {
 }
 
 /**
- * `src/` 相対パスから層を決める。`cli.ts` は配線層、`shared/` と `browser/` は先頭ディレクトリ、
- * サーバ側は2段（`server/core/` と `server/adapter/`）で決まる。`server/` の直下に置いた
- * ファイルは判断か境界かを名乗っていないので `throw` する。
+ * `src/` 相対パスから層を決める。**`src/` 直下のファイルは配線層**（`cli.ts` と `main.ts`、
+ * そこから呼ばれる起動の段取り。`core` と `adapter` を結べるのはここだけ）、`shared/` と
+ * `browser/` は先頭ディレクトリ、サーバ側は2段（`server/core/` と `server/adapter/`）で決まる。
+ * `server/` の直下に置いたファイルは判断か境界かを名乗っていないので `throw` する。
  */
 function layerOf(relPath: string): Layer {
-  if (relPath === "cli.ts") {
+  if (!relPath.includes("/")) {
     return "cli"
   }
   const [top, second] = relPath.split("/")

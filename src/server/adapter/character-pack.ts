@@ -156,7 +156,7 @@ export function toCharacterPackChoices(
  * 規約だけになる（docs/design.md 7章）。
  *
  * `rules` はパックによらず同じもの（`src/server/core/speech-cadence.ts` と
- * `src/server/core/report-notation.ts`）で、**並べる順は呼び出し側（`src/cli.ts`）が決める**。
+ * `src/server/core/report-notation.ts`）で、**並べる順は呼び出し側（`src/session-start.ts`）が決める**。
  */
 export function buildSystemPromptAppend(pack: CharacterPack, rules: readonly string[]): string {
   return [pack.persona, ...rules]

@@ -275,9 +275,9 @@ transcript と同じ扱いにする。**
 二重に書かず `docs/design.md` 2章「層と依存の向き」を正典とする**（`src/browser/` の箱の表と
 同じ扱い）。ここには、その表だけでは読み取れない決まりを書く。
 
-`src/cli.ts` は配線なので全部を import してよい。**`core` と `browser` は互いを import しない。**
+`src/` 直下（`cli.ts` / `main.ts` と起動の段取り）は配線なので全部を import してよい。**`core` と `browser` は互いを import しない。**
 **`core → adapter` も禁止**で、`core` は `node:` / `@anthropic-ai/*` / `ws` を import しない
-（外の世界へ出る道が無い）。両者を結ぶのは `cli.ts` だけ。`adapter` は**1ファイル = 1つの境界**で、
+（外の世界へ出る道が無い）。両者を結ぶのは `src/` 直下だけ。`adapter` は**1ファイル = 1つの境界**で、
 インターフェースは切らない（実装が2つあるもの — 駆動とホスト — だけ契約の型を `core` に置く）。
 `shared` は `node:` にも `document` にも触らない（両方の実行場所で動くため）。**許した辺以外は
 `test/architecture.test.ts` が落とす**ので、向きを変えたくなったら先にこのテストと `docs/design.md`

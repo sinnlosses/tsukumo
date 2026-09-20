@@ -1,5 +1,5 @@
 // develop/tasks.json を見張る。ファイルの mtime が変わったときだけ読み直し、`onChange` を呼ぶ
-// （docs/design.md 5章「task-summary.ts」）。呼び出し側（src/cli.ts）がこれを
+// （docs/design.md 5章「task-summary.ts」）。呼び出し側（src/session-start.ts）がこれを
 // `tasks-changed` イベントに変えて、他のセッションのイベントと同じ経路へ流す。
 //
 // develop/tasks.json はセッションに依存しない、tsukumo 自身の進捗管理ファイルなので、

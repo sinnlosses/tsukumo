@@ -9,7 +9,7 @@ import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation
 import { sessionRules } from "../../../src/server/core/session-rule.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../src/server/core/speech-cadence.ts"
 
-// **雑談かどうかで `systemPrompt` の中身が入れ替わる**ことを、`src/cli.ts` が組み立てるのと
+// **雑談かどうかで `systemPrompt` の中身が入れ替わる**ことを、`src/session-start.ts` が組み立てるのと
 // 同じ道（`sessionRules` → `buildSystemPromptAppend`）で見る（docs/requirements.md 4.9）。
 // `buildSystemPromptAppend` を adapter から引く理由は `speech-cadence.test.ts` と同じ。
 //

@@ -40,7 +40,7 @@ sed -n '/^#### hookは状態ファイルを書くだけにする/,/^#\{2,4\} /p'
 **2026-09-13 に「描く」層をブラウザ側へ移すと決め、同日中に段7まで終えた。** 移行後の形
 （`shared` / `server` / `browser` の3層、WebSocket 1本のプロトコル、React の部品、unified の
 Markdown、キャラクターパック）の正典は **`docs/design.md`**。**`src/` は `shared` / `server` /
-`browser` の3層と配線（`src/cli.ts`）だけになった**（旧の `usecase` / `presentation` /
+`browser` の3層と配線（`src/` 直下）だけになった**（旧の `usecase` / `presentation` /
 `infrastructure` は消えた）。**2026-09-16 にサーバ側だけをもう一段割り、外の世界に触る
 ファイルを `src/server/adapter/` に出した**（2026-09-20 に `core` と `adapter` を `src/server/` の
 下へ入れ子にした。`core` は純粋な判断だけになり、`node:` / SDK / `ws` を
@@ -70,8 +70,8 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 
 ### 各ファイルの責務
 
-**2026-09-13 に段7まで進み、`src/` は新3層（`shared` / `server` / `browser`）と配線（`cli.ts`）
-だけになった**（`docs/design.md` 12章。旧の `domain` / `usecase` / `presentation` /
+**2026-09-13 に段7まで進み、`src/` は新3層（`shared` / `server` / `browser`）と配線
+（`src/` 直下のファイル）だけになった**（`docs/design.md` 12章。旧の `domain` / `usecase` / `presentation` /
 `infrastructure` はすべて消えた）。**2026-09-16 に外の世界に触る境界を足した**ので、サーバ側は
 `core`（判断）と `adapter`（境界）の2つに分かれている（2026-09-20 に両方を `src/server/` の
 下へ入れ子にした）。
@@ -110,7 +110,11 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/core/host.ts`                                                    | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                        |
 | `src/server/adapter/orca-host.ts`                                            | adapter    | `src/server/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                   |
 | `src/browser/main.tsx`                                                       | browser    | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                          |
-| `src/cli.ts`                                                                 | （配線）   | 環境変数の受け取り、起動時の前提チェック、セッションを起こす配線、1回分の `try`/`catch`              |
+| `src/cli.ts`                                                                 | （配線）   | 入口。引数の受け取り・環境変数の読み出し・終了コードの返し方だけ                                     |
+| `src/main.ts`                                                                | （配線）   | 起動の段取り。**即時終了する前提不足（ポート・組み立て・台本）はここに集めてある**                   |
+| `src/current-character.ts`                                                   | （配線）   | いま出しているパックと選択肢の持ち主。切り替え・画面からの編集で入れ替わるのはここだけ               |
+| `src/view-delivery.ts`                                                       | （配線）   | ビューの配信。組み立てたブラウザ側と開いているタブを持ち、サーバ・`/ws`・見張りを束ねる              |
+| `src/session-start.ts`                                                       | （配線）   | セッションを1つ起こす。どの駆動で起こすか・続きをどう探すかを決め、順序は `core` に任せる            |
 | `scripts/open-views.ts`                                                      | （道具）   | 配信中のビューをホストの中に開く。tsukumo 本体からは呼ばれない                                       |
 
 - **`utterance.ts` はファイルI/Oを持たない。** 入力は文字列だけなので、フィクスチャの文字列で
@@ -174,7 +178,7 @@ tsukumo の画面だけになる。
 
 | 置き場所              | 実行場所         | 何を置くか                                                                           |
 | --------------------- | ---------------- | ------------------------------------------------------------------------------------ |
-| `src/`                | —                | tsukumo 本体。`src/cli.ts` が CLI の入口（配線。サーバで動く）                       |
+| `src/`                | —                | tsukumo 本体。直下は配線（`cli.ts` が入口、`main.ts` が起動の段取り。サーバで動く）  |
 | `src/shared/`         | サーバとブラウザ | 語彙・イベント・状態・畳み込み・コマンドとフレーム。**両側が読む契約**               |
 | `src/server/core/`    | サーバ（Bun）    | サーバ側の純粋な判断。`node:` / SDK / `ws` を import しない                          |
 | `src/server/adapter/` | サーバ（Bun）    | 外の世界に触る境界。1ファイル = 1つの境界（SDK・HTTP・fs・子プロセス）               |
@@ -196,8 +200,8 @@ tsukumo の画面だけになる。
   クライアント（`browser`）に分け、層をディレクトリで表す**（詳細と理由の正典は
   `docs/design.md` 2章）。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
   ものだけで、「受け取る／決める／描く」という役割の分割ではない。**サーバ側は判断（`core`）と
-  外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `cli.ts`
-  だけ）。**許した依存の辺以外は `test/architecture.test.ts` が落とす**
+  外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `src/` 直下の
+  配線だけ）。**許した依存の辺以外は `test/architecture.test.ts` が落とす**
 - **原則3**: ホスト（ターミナル環境）・外部コマンド・OSに依存するものは
   **`src/server/adapter/` の1ファイルに閉じ込める**（1ファイル = 1つの境界）。ホストが Orca から
   別のものに変わっても、差し替えがここだけで済むようにする
@@ -214,7 +218,7 @@ tsukumo の画面だけになる。
 **境界のファイルの中に、外の世界に触らない関数が混じっていてよい**（2026-09-16 決定）。層は
 「外の世界に触るか」で決め、**ファイルの中身の純度で割り直さない**。`adapter/character-pack.ts` の
 `characterChangedEvent` / `buildSystemPromptAppend` / `toCharacterPackChoices` は fs を読まないが
-`core` へは出さない。呼び出し側が `cli.ts` だけで、パックの供給元も fs の1つしかないので、割っても
+`core` へは出さない。呼び出し側が配線層だけで、パックの供給元も fs の1つしかないので、割っても
 「型1つ + 一行関数3つ」の浅いモジュールが増え、同じ名前のファイルが2つの層に並ぶだけになる
 （`docs/research/architecture-proposal.md` 7章が仮定として置いていた分岐は、これで確定）。
 **`core` からパックの判断が要るようになったら、層を写した `core/character-pack.ts` ではなく概念で切る**

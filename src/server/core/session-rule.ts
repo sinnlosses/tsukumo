@@ -2,13 +2,13 @@
 // 文面そのものは {@link ./report-notation.ts} / {@link ./speech-cadence.ts} /
 // {@link ./chat-manner.ts} が持ち、ここが決めるのは**どれを渡すか**だけ。
 //
-// **なぜ `src/cli.ts` の中に書かないのか**: 雑談のときに何が載って何が載らないかは
-// 体験そのものの決めごとで、配線の都合ではない。`cli.ts` に直書きすると、選び方を
+// **なぜ配線層（`src/session-start.ts`）の中に書かないのか**: 雑談のときに何が載って何が
+// 載らないかは体験そのものの決めごとで、配線の都合ではない。配線に直書きすると、選び方を
 // 確かめるのに本物の駆動を起こすしかなくなる（`systemPrompt` はセッションを起こすときに
 // 固定されるため、あとから覗けない）。
 //
 // 「決める」内容で、外の世界には触らない（原則2）。`buildSystemPromptAppend` に通して
-// `query()` へ渡すのは呼び出し側（`src/cli.ts`）。
+// `query()` へ渡すのは呼び出し側（`src/session-start.ts`）。
 
 import { CHAT_MANNER_PROMPT } from "./chat-manner.ts"
 import { REPORT_NOTATION_PROMPT } from "./report-notation.ts"

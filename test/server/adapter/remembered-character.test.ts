@@ -39,10 +39,10 @@ describe("readRememberedCharacter", () => {
 })
 
 // `readRememberedCharacter` 自身はパックの一覧を知らない（一覧との突き合わせは呼び出し側
-// ＝ src/cli.ts の `selectPack` の仕事）。ここでは cli.ts と同じ組み立て方
+// ＝ src/current-character.ts の仕事）。ここでは同じ組み立て方
 // （`packs.find(...) ?? defaultPack` / `config.character` があれば読みに行かない）を
 // 使って、覚えた値の使われ方を確かめる。
-describe("覚えた値の使いどころ（src/cli.ts の組み立て方を模して確かめる）", () => {
+describe("覚えた値の使いどころ（src/current-character.ts の組み立て方を模して確かめる）", () => {
   type Pack = { readonly name: string }
   const defaultPack: Pack = { name: "tsukumo-spirit" }
 

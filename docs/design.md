@@ -99,7 +99,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 │ Claude Code（SDK が起こす子プロセス）                         │
 └────────────────────────────────────────────────────────────┘
       shared（語彙・イベント・状態・reducer・zod スキーマ。browser と core の両方が import する）
-      辺は adapter ──▶ core ──▶ shared ◀── browser（**core → adapter は禁止**。結ぶのは cli.ts だけ）
+      辺は adapter ──▶ core ──▶ shared ◀── browser（**core → adapter は禁止**。結ぶのは src/ 直下だけ）
 ```
 
 ### 層と依存の向き
@@ -118,11 +118,11 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈 | `shared` / `core`                 | サーバ（Bun）    |
 | `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・偽の駆動           | `shared` / `core` / `adapter`     | サーバ（Bun）    |
 | `browser`        | React の部品・hooks・CSS・Markdown の変換                                                  | `shared`（React などの npm は可） | ブラウザ         |
-| `cli.ts`         | 配線（composition root）                                                                   | すべて                            | サーバ           |
+| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                              | すべて                            | サーバ           |
 
 - **`core` と `browser` は互いを import しない。** 両者が知っているのは `shared` だけ
 - **`core → adapter` は禁止。** 辺は `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、
-  `core` と `adapter` を結ぶのは `cli.ts` だけ。**`core` は `node:` / SDK（`@anthropic-ai/*`）/
+  `core` と `adapter` を結ぶのは `src/` 直下の配線だけ。**`core` は `node:` / SDK（`@anthropic-ai/*`）/
   `ws` を import しない**ので、`core` から外の世界へ出る道は無い
 - **`adapter` は1ファイル = 1つの境界。** インターフェースは切らない（実装が2つあるもの —
   駆動とホスト — だけ、契約の型を `core` に置く: `server/core/session-driver.ts` /
@@ -137,7 +137,11 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 ```
 src/
-  cli.ts                      配線。環境変数の受け取り・起動時の前提チェック・終了処理
+  cli.ts                      入口。引数の受け取り・環境変数の読み出し・終了コードの返し方だけ
+  main.ts                     起動の段取り。即時終了する前提不足（ポート・組み立て・台本）もここ
+  current-character.ts        いま出しているパックと選択肢の持ち主（切り替えと画面からの編集で入れ替わる）
+  view-delivery.ts            ビューの配信。組み立てたブラウザ側と開いているタブを持ち、/ws と見張りを束ねる
+  session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
   shared/
     session-event.ts          SessionEvent（zod と z.infer）
     session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
@@ -155,7 +159,7 @@ src/
     core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
       session-driver.ts       駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
       session-manager.ts      sessionId → { driver, state, subscribers }。reducer をサーバ側でも回す
-      session-launch.ts       起こす一続きの順序（外に触る部分は cli.ts が渡す。起動も切り替えも同じ）
+      session-launch.ts       起こす一続きの順序（外に触る部分は session-start.ts が渡す。起動も切り替えも同じ）
       character-selection.ts  どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
       pending-answer.ts       答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
       sdk-message.ts          SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
@@ -267,13 +271,18 @@ characters/<name>/            character.json・persona.md・素材
 
 ### 起動
 
-1. `cli.ts` が `config.ts` で環境変数を読む（ポート・キャラクター・自動オープン・駆動の種類・新規起動）
-2. `bundle.ts` が `browser/main.tsx` を `bun build` で束ね、**スクリプトと CSS の1組**をメモリに持つ
-   （失敗は起動時の前提不足として即時終了。いまと同じ）
-3. `character-pack.ts` が既定のパック（または指定されたもの）を読む
-4. `server.ts` が `127.0.0.1` で listen し、**起動トークン**を1つ作る
-5. `session-manager.ts` がセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が `fake` なら偽の駆動、
-   それ以外は SDK。復元（8章）はここで判定する
+1. `cli.ts` が `config.ts` で環境変数を読み、`main.ts` の `run(config)` を呼ぶ
+   （ポート・キャラクター・自動オープン・駆動の種類・新規起動）
+2. `main.ts` が**即時終了する前提**を3つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
+   `bundle.ts` が `browser/main.tsx` を `bun build` で束ねられるか（**スクリプトと CSS の1組**を
+   メモリに持つ）、偽の駆動なら台本を読めるか
+3. `current-character.ts` が `character-pack.ts` で一覧を引き、既定のパック（または指定されたもの・
+   覚えていたもの）を初期パックに決める。**以降このパックの持ち回りはここに閉じる**
+4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
+   （`TSUKUMO_WATCH_UI` のときは `src/browser/` の見張りもここで始める）
+5. `session-start.ts` が `session-manager.ts` にセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が
+   `fake` なら偽の駆動、それ以外は SDK。復元（8章）はここで判定する。起こしたセッションは
+   `view-delivery.ts` の `connect` で `/ws` に繋ぐ
 6. ホストのポートで `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）
 
 ### 接続
@@ -467,7 +476,7 @@ type SessionHost = {
 **`remembered-character.ts`** はその隣に置く別モジュールで、直前に出していたパックの名前だけを
 `~/.tsukumo/state.json` に読み書きする（`readRememberedCharacter` / `writeRememberedCharacter`。
 書き込みの失敗で例外を投げない）。外の世界（ホームのファイル）に触るのはここだけで、覚えた名前が
-`listCharacterPacks` の一覧に無いときに既定へ落とす判断は呼び出し側（`cli.ts`）が持つ。選択そのものは
+`listCharacterPacks` の一覧に無いときに既定へ落とす判断は呼び出し側（`current-character.ts`）が持つ。選択そのものは
 セッション限りだが、次の起動の初期値としては覚える（13.6「第3の扱い」）。
 
 **`character-edit.ts`** は書き込む側（7.1）。画面から届いた立ち絵・差し色を
@@ -719,7 +728,7 @@ characters/<name>/
 - **キャラクターごとに別のセッションを持つ**（2026-09-14 決定。「キャラクターごとに別の部屋が
   ある」）。セッションの印を **`tsukumo:<パック名>`** にし、**起動時も切り替え時も、これから
   起こすパックの印を持つ最新のセッションを探して `resume` する**（無ければ新規）。印の組み立ては
-  `core/config.ts` の `sessionTag` 1箇所で、`cli.ts` はそれを `findSessionToResume` と
+  `core/config.ts` の `sessionTag` 1箇所で、`session-start.ts` はそれを `findSessionToResume` と
   `startSession` の `tag` の両方に渡す。**戻ってくれば、そのパックの会話も口調も戻る**
   - 画面の履歴は `readRestoredEvents` の再生をそのまま使う（8章）
   - **前は「切り替えると会話は続かない」としていた。** 変えたのは2つ揃ったから: (1) 段9で
@@ -895,7 +904,7 @@ API を使わない形になる。
 
 **作り直しを押す仕組み。** `src/server/adapter/ui-rebuild.ts` が `node:fs` の `watch` で `src/browser/` を**再帰に**見張り、保存が静まって
 から（120ms）`bundle.ts` の `buildUiScript` / `buildStyleSheet` を呼び直す。組み上がったものは
-`src/cli.ts` が持ち替え、`shared` の `refresh` フレーム（4.4）で開いているタブへ押す。
+`src/view-delivery.ts` が持ち替え、`shared` の `refresh` フレーム（4.4）で開いているタブへ押す。
 **差分は当てない**（当てた時点で HMR そのものになり、規模が跳ねる）。成果物は前と同じくメモリに
 だけ持つ。
 
@@ -906,7 +915,7 @@ API を使わない形になる。
 | `src/browser/**/*.css`           | ページを読み込み直す（下の注記）。状態は繋ぎ直しの `hello` で戻る            |
 | `src/browser/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る |
 | `src/shared/`                    | **プロセスの上げ直しが要る**（下）                                           |
-| `src/server/core/` `src/cli.ts`  | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある |
+| `src/server/core/` `src/` 直下   | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある |
 
 **CSS だけを取り直す道（`refresh` の `style`）は使わない**（2026-09-20）。CSS Modules の class 名は
 ハッシュ化されて JS 側の対応表にも焼かれるので、片方だけ新しくすると綴りが食い違って崩れた画面が

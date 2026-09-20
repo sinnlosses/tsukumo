@@ -1,6 +1,7 @@
 // `src/browser/` を見張り、変更のたびにブラウザ側スクリプトと CSS を組み立て直す。**開発中だけ**
 // 呼ばれる（`TSUKUMO_WATCH_UI`。docs/design.md 11章）。組み立てそのものは `src/server/adapter/bundle.ts`
-// が持ち、ここは「いつ組み立て直すか」だけを決める（組み上がったものを誰に押すかは `src/cli.ts`）。
+// が持ち、ここは「いつ組み立て直すか」だけを決める（組み上がったものを誰に押すかは
+// `src/view-delivery.ts`）。
 //
 // **見張るのは `src/browser/` だけ。** `src/shared/` はサーバ側でも畳み込みに使われていて、
 // ブラウザ側だけ新しくすると両側の食い違った状態が動いてしまう（docs/design.md 11章）。

@@ -288,7 +288,12 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 │   │   └── adapter/        #   外の世界に触る境界。1ファイル = 1つの境界
 │   │                       #     （SDK 駆動、HTTP/WebSocket、キャラクターパック、ビルド、Orca）
 │   ├── browser/            # ブラウザ。React の部品、unified の Markdown 変換、CSS
-│   └── cli.ts              # 配線（composition root）。環境変数の受け取り・前提チェック・終了処理
+│   ├── cli.ts              # エントリポイント。引数・環境変数の読み出し・終了コードだけ
+│   ├── main.ts             # 起動の段取り（前提チェック → キャラクター → 配信 → セッション）
+│   ├── current-character.ts  # いま出しているパックと選択肢の持ち主
+│   ├── view-delivery.ts    # ビューの配信（起動トークン・組み立てたもの・開いているタブ）
+│   └── session-start.ts    # セッションを1つ起こす（駆動の選択・続きの探索・配線）
+│                           #   ※ src/ 直下は配線層。全層を import してよい唯一の場所
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── scripts/                # 閉じたタブを開き直す道具など

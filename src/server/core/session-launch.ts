@@ -7,7 +7,7 @@
 // `src/server/core/session-manager.ts` の `restart` にある。ここは「どちらから来ても同じ順序」だけ。
 //
 // 外の世界（パックの読み込み・覚えた値・claude の transcript・見張り）には触らず、すべて
-// 渡された関数（{@link SessionLaunchPorts}）越しに頼む。結ぶのは配線層（`src/cli.ts`）。
+// 渡された関数（{@link SessionLaunchPorts}）越しに頼む。結ぶのは配線層（`src/session-start.ts`）。
 
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { type NamedCharacterPack } from "./character-selection.ts"
@@ -39,7 +39,7 @@ export type SessionLaunchRequest = {
   readonly chat: boolean | undefined
 }
 
-/** 一続きの中で外の世界に頼むこと。実装はすべて配線層（`src/cli.ts`）が `adapter` から渡す。 */
+/** 一続きの中で外の世界に頼むこと。実装はすべて配線層（`src/session-start.ts`）が `adapter` から渡す。 */
 export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /**
    * これから起こすパックを決める。**`character` が入っているのは画面から選んだときだけ**で、

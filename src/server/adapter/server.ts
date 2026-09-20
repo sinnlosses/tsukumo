@@ -81,11 +81,11 @@ export type ListRepositoryFiles = () => Promise<readonly string[]>
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
 
-/** {@link startViewServer} が配るために要るもの一式（渡すのは `src/cli.ts`）。 */
+/** {@link startViewServer} が配るために要るもの一式（渡すのは `src/view-delivery.ts`）。 */
 export type ViewServerOptions = {
   /**
    * ブラウザ側スクリプトと CSS の取り出し口（`src/server/adapter/bundle.ts` が組み立てたもの）。
-   * ディスクには置かないので、**持ち主は呼び出し側 = `src/cli.ts`** で、ここは要求のたびに
+   * ディスクには置かないので、**持ち主は呼び出し側 = `src/view-delivery.ts`** で、ここは要求のたびに
    * 引きに行く。
    */
   readonly assets: ViewAssets
@@ -106,7 +106,7 @@ export type ViewServerOptions = {
 export type ViewServer = {
   /**
    * 待ち受けている HTTP サーバそのもの。**{@link attachSessionSocket} を足すためだけに
-   * 外へ出している**（配線するのは `src/cli.ts`）。
+   * 外へ出している**（配線するのは `src/view-delivery.ts`）。
    */
   readonly httpServer: Server
   /** ページの URL。利用者が実際に開くのもこれ1つでよい。 */
