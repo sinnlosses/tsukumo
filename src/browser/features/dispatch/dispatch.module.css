@@ -168,17 +168,36 @@
   margin: 0;
   padding: 0;
   display: grid;
-  /* grid の既定（auto）だと中身の最小幅で列が広がり、長いラベルで横に溢れる。 */
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.35rem;
+  /* **ラベル列と説明列はここで1度だけ決める。** 各選択肢（と間に挟まる <li>）は subgrid で
+     この2列に乗るので、ラベル列の幅が全選択肢で揃い、説明の左端が縦に一直線に並ぶ。
+     1列目の fit-content(40%) は「ラベルが短ければその幅のまま、長ければ 40% で頭打ちにして
+     折り返す」。**頭打ちがあるぶん説明の列は必ず残りを確保できる**ので、狭い窓でラベルが
+     選択肢の幅を超えて説明の幅が 0 になる（＝説明が1文字ずつ縦に並ぶ）ことが起きない。
+     2列目の minmax(0, 1fr) は、長い語で列が最小幅まで押し広げられて横に溢れるのを止める。 */
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  /* 行の間は 0.35rem、ラベルと説明の間は 0.5rem（subgrid 側は既定でこの値を受け継ぐ）。 */
+  gap: 0.35rem 0.5rem;
+}
+/* <li> は選択肢の箱と上の2列の間に挟まる包みなので、自身も subgrid にして列をそのまま通す。
+   **自由入力の <li> だけは除く**（2列に割ると入力欄がラベル列の幅しか使えない）。 */
+.question-choices > li:not(.question-choice-other) {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
 }
 /* 選択肢1件（単一選択の <button>、複数選択の <label> のどちらにも使う）。
    **ラベルと説明は1行に並べる**（/ 補完の候補一覧 .dispatch-suggestion-item と同じ形）。
    縦に積むと選択肢3件で入力欄の領域の高さを使い切ってしまい、1件しか見えなくなる。 */
 .question-choice {
-  display: flex;
+  /* **幅の配分は flex ではなく grid の2列で解く**（2026-09-21）。flex だと「ラベルを縮めない
+     （＝重ならない）」と「ラベルを折り返す（＝説明の幅を残す）」が flex-shrink の綱引きになり、
+     どちらかを立てるともう一方が崩れた（T-205 の重なりと、その直しで起きたラベルの非折り返し）。
+     列の幅を .question-choices 側で先に決めてしまえば、ラベルは自分の列の中で折り返すだけに
+     なり、隣の説明へはみ出す経路そのものが無くなる。 */
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: baseline;
-  gap: 0.5rem;
   /* <button> は既定で border-box だが <label> は content-box。揃えないと複数選択の側だけ
      padding と枠のぶん横に広がり、説明の末尾が箱の外へ出る（2026-09-20）。 */
   box-sizing: border-box;
@@ -213,7 +232,6 @@
   outline-offset: 2px;
 }
 .question-choice-label {
-  flex: 0 0 auto;
   font-weight: bold;
 }
 /* 説明はラベルの右の余りに収め、幅が足りなければ折り返して全文を出す（省略しない。
@@ -221,25 +239,26 @@
    変えた）。折り返しても選択肢そのものは縦にも横にも広げず、はみ出るぶんは
    .question-card の中でスクロールする。 */
 .question-choice-description {
-  flex: 1 1 auto;
-  min-width: 0;
   overflow-wrap: anywhere;
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
-/* 複数選択（multiSelect）はチェックボックス（docs/design.md 6.1）。ラベル・説明を
-   チェックボックスと同じ行の先頭に置く。
-   **この行は縮めない**（単一選択でラベルが直接 .question-choice の子になるのと同じ扱い）。
-   縮むようにすると、中のラベルは .question-choice-label が縮まないぶん行の箱からはみ出し、
-   右隣の説明の文字と重なって描かれる（2026-09-20）。 */
+/* 複数選択（multiSelect）はチェックボックス（docs/design.md 6.1）。チェックボックスとラベルで
+   ラベル列の1マスを埋める（単一選択でラベルが直接 .question-choice の子になるのと同じ位置）。
+   **縮める／縮めないの指定は持たない**。列の幅は .question-choices が決めていて、この行は
+   その幅に収まるだけなので、はみ出して右隣の説明と重なる余地が無い（2026-09-20 の重なりは
+   flex で幅を取り合っていたことが原因で、2026-09-21 に grid の2列へ移して消した）。
+   ラベルが折り返すので、チェックボックスは行の中央ではなく**1行目の文字に揃える**（baseline）。 */
 .question-choice-checkbox-row {
   display: flex;
-  align-items: center;
-  flex: 0 0 auto;
+  align-items: baseline;
   gap: 0.5rem;
+  min-width: 0;
 }
+/* 自由入力の行だけは選択肢ではないので、2列にまたがって幅を全部使う。 */
 .question-choice-other {
   display: flex;
+  grid-column: 1 / -1;
   min-width: 0;
   gap: 0.4rem;
 }
