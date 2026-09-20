@@ -28,12 +28,20 @@
   --portrait-flinch-rotate: 3deg;
   --portrait-flinch-duration: 0.35s;
 }
+/* 素材の縦横比を保つ（2026-09-20 実測）。`height: 100%` と `max-width` を同時に掛けると、
+   置換要素は「幅だけ縮む」（CSS 2.1 §10.4 の制約表。高さが auto でないまま max-width に
+   当たったとき、対になる max-height 側の再計算が起きない）ので、雑談ビュー（max-width が
+   キャラビューより厳しい 32%）で幅だけ潰れていた。**両方 auto ＋ max-width/max-height の
+   組にする**と、どちらの上限に当たっても縦横比を保ったまま縮む（置換要素の代替算法が
+   ratio を保って両辺を再計算する）。領域いっぱいを埋めない側の余白は `.portrait` の
+   align-items: flex-end で下端に寄る。 */
 .portrait svg,
 .portrait-image {
   display: block;
   width: auto;
-  height: 100%;
+  height: auto;
   max-width: 100%;
+  max-height: 100%;
   margin: 0 auto;
 }
 /* 立ち絵の動き（`docs/design.md` 6.5）。**「1枚の矩形」として transform（位置・大きさ・傾き・
