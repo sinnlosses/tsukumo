@@ -138,9 +138,9 @@
     "dependencies": [],
     "summary": "サイドバーで選択中の枠が切れるのを、スクロール領域に余白を足して直す",
     "task": "## 背景\n\nユーザーの指摘（2026-09-20、スクリーンショット添付）:「キャラクターを選択したときの\nハイライトが上部分だけ切れている。許可モードの下部分もおそらく同じ事象が発生する」。\n\n`src/ui/styles/theme.css:56-59` の `:focus-visible` は `outline: 2px solid var(--accent)` ＋\n`outline-offset: 2px` で、**要素の境界から 4px 外側**まで枠が出る。その枠を囲っているのが\n`src/ui/features/sidebar/sidebar.module.css` の `.sidebar-block-scroll`（`overflow-y: auto`。\n`src/ui/features/sidebar/section.tsx` が3区画すべての中身を包む）で、**padding が 0 なので\n上端・下端の枠が切られる**。`.session-info` は grid の1行目がキャラクターの `<select>`、\n最終行が許可モードの `<select>` なので、指摘どおり上と下の両方で起きる。\n\n## 決まっていること（蒸し返さない）\n\n- 直し方は「**スクロール領域に余白を足す**」（`.sidebar-block-scroll` に 4px 程度の padding）。\n  outline-offset を内側にする案・区画ごとに overflow を visible にする案は採らない\n\n## やること\n\n1. `.sidebar-block-scroll` に padding を足す。**中身が 4px ぶん内側へ寄る**ので、3区画\n   （いま何をしているか・タスク一覧・セッション情報）の見え方が崩れないかを見る\n2. 余白のぶん、区画どうしの間隔が広く見えるなら `.sidebar-block` 側の margin で釣り合いを取る\n3. 上端だけでなく**下端**（許可モードの `<select>`）でも切れないことを確かめる\n\n## 完了条件\n\n- `bun run check` が通る\n- 目視: キャラクターの `<select>` と許可モードの `<select>` に focus を当て、枠が\n  4辺とも切れずに出ることを確かめ、確かめ方（撮った画像・窓の大きさ）を `evidence` に書く。\n  `bun run scripts/capture-view.ts` は focus を作れないので、focus を当ててから撮る手立てを\n  自分で用意する（`webapp-testing` スキルの Playwright など）\n- サイドバーの3区画が今までどおり見えている（スクロールが効く・見出しが動かない）\n\n## 注意\n\n- `theme.css` の `:focus-visible` は全画面で共有しているので**触らない**\n- **焦点の当たった状態を撮れないときは、直したうえで「目視できていない」と `evidence` に\n  書いて閉じ、ユーザーに預ける**（見えていないのに通ったことにしない）",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": ".sidebar-block-scroll に padding: 4px を足した（outline 2px + offset 2px = 外側4px にちょうど合わせ、その理由をコメントに残した）。overflow の scrollport は padding box の内側までを含むので、上端・下端とも同じ仕組みで切られない。.sidebar-block の margin は触っていない。受け入れ: bun run check 721 pass / 0 fail（変更前と同数。CSS だけの変更）。目視: fake 駆動 + ヘッドレス Chrome 1400x900 で Tab 経由に focus を当てて実測。キャラクターの select は枠の上端 396.3px = 器の上端 396.3px（上のゆとり 0.0px）、許可モードの select は枠の下端 491.4px = 器の下端 491.4px（下のゆとり 0.0px）で、どちらもはみ出さずに収まっている。画像でも両方の select の水色の枠が4辺とも出ていること、サイドバーの3区画の見え方と区画どうしの間隔が変わっていないことを確認した。ゆとりが 0.0px なのは padding を outline の幅ちょうどに合わせたためで、outline を太くしたらまた切れる（コメントに前提を残してある）。"
   },
   {
     "id": "T-216",

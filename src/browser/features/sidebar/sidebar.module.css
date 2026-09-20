@@ -78,10 +78,14 @@
    スクロール範囲の回帰として発覚）。flex-basis: auto なら親の高さが定まっている（.layout-sidebar
    配下）ときは今まで通り内側でスクロールし、定まっていない（狭い画面）ときは
    中身なりの高さに自然に広がる。 */
+/* padding は `theme.css` の `:focus-visible`（outline 2px + outline-offset 2px = 要素の外側
+   4px）とちょうど合わせている。overflow の scrollport は padding box の内側までを含むので、
+   この 4px の中に収まる outline は上端・下端とも切られない。 */
 .sidebar-block-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  padding: 4px;
 }
 /* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。
    「セッション情報」は3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの
