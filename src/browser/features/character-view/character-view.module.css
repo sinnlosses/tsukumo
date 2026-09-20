@@ -152,9 +152,14 @@
   border-bottom-width: calc(var(--balloon-tail) - 2px);
   border-right-color: var(--surface-accent);
 }
+/* 過去の吹き出しは**地ごと薄めず、文字の色だけを地へ混ぜて薄める**（docs/design.md 13.8）。
+   要素ごと `opacity` で薄めると吹き出しの地まで半透明になり、背景を敷いたときに画像が文字の
+   裏へ透ける（覆いを 0.9 まで濃くしても比は 4.27 で、`veil` をいくら上げても 4.5 に届かない）。
+   **混ぜる量の上限は 45%**（4.83。50% だと 4.24 で下回る）。背景を敷かなくても、旧の
+   `opacity: 0.5` は 4.20 で下限を割っていた。 */
 .balloon:not(:first-child) {
   font-size: var(--font-secondary);
-  opacity: 0.5;
+  color: color-mix(in srgb, var(--ink) 55%, var(--surface));
   animation: balloon-push-up 0.3s ease-out;
 }
 /* 差し替えは React の再描画（`src/browser/features/character-view/balloon-track.tsx`）。**位置ベースの key**
@@ -162,17 +167,15 @@
    ノードは中身だけが更新されて同じ DOM ノードのまま残ることがある（React が key の一致で
    ノードを再利用する）。そのため balloon-push-up（過去のセリフの押し上げ）は、既存セリフ全件で
    毎回再生されるとは限らない。「最新が並びの下端に差し込まれ、過去のセリフは1つぶん上へ
-   押し上げられて薄くなる」動きの向きと最終状態（class・opacity）は変わらない。押し上げる量は
+   押し上げられて薄くなる」動きの向きと最終状態（class・字の色）は変わらない。押し上げる量は
    最新の吹き出し1つぶんの当て推量なので、セリフが長いと少しずれるが、動きの向きが伝われば
    よい。 */
 @keyframes balloon-push-up {
   from {
     transform: translateY(2.75rem);
-    opacity: 0.85;
   }
   to {
     transform: translateY(0);
-    opacity: 0.5;
   }
 }
 @keyframes balloon-appear {

@@ -100,6 +100,7 @@ describe("characterChangedEvent", () => {
         normal: "#b8c7ff",
         heavy: undefined,
       },
+      background: undefined,
     })
   })
 

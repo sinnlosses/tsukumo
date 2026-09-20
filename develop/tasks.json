@@ -39,9 +39,9 @@
     "loopable": "Y",
     "dependencies": ["T-138"],
     "task": "## 背景\n\nT-138 で決めた形で背景の差し替えを作る。**T-138 が「据え置き」で閉じたなら、このタスクは\nやることが無いのでその旨を `evidence` に書いて閉じる。**\n\n差し込み先は CSS 変数で、既存の仕組みがそのまま手本になる:\n\n- 4領域の塗りは `src/ui/style/layout.css` の `.layout-region`（`var(--surface)`）、\n  キャラビューは `src/ui/style/character.css`\n- 利用者の設定は `src/ui/appearance/appearance-color.ts` が `localStorage` に持ち、\n  **既定の16進は `src/ui/style/theme.css` の `:root` にしか無い**（「上書きしない」は\n  `undefined` で表す）。引き出しの画面は `src/ui/appearance/appearance.tsx`\n- パック側の値は `character.json` → `src/protocol/character.ts` の\n  `toCharacterInfo` → `CharacterInfo` → `character-changed` イベントで届く\n  （`accent` / `outfitAccents` と同じ道）\n\n## やること\n\n1. T-138 が `docs/design.md` に書いた結論を読み、**そこに書かれた形だけ**を作る\n2. 値の受け取りを1箇所に封じ込める。**外部由来の値（`localStorage` / `character.json` /\n   画像）は境界で検証してから CSS 変数に流す**（`docs/coding-standards.md`、13.5）\n3. 画像を扱うなら、T-138 が決めた可読性の担保（覆い・不透明度の下限など）を一緒に入れる\n4. 実機で目視する（メイン画面・キャラ画面それぞれ、背景を差した状態と既定の状態）\n\n## 完了条件\n\n- `bun run check` が通る（pass 件数の増減を `evidence` に書く）\n- **検証の単体テストがある**: 壊れた値・範囲外の値が来たら既定に落ちること\n  （`appearance-color.ts` の既存テストと同じ粒度）\n- 実機で**背景が差し替わること**と、**差し替えた状態でレポートの文字が読めること**を\n  目視して `evidence` に書く（T-138 が数で書いた下限を満たしているか）\n- 既定（何も差していない状態）の見た目が変わっていないことを目視して `evidence` に書く\n\n## 注意\n\n- **`theme.css` 以外に16進の色を書かない**（コーディング規約）\n- **素材（背景画像）はリポジトリに同梱しない**（`docs/requirements.md` 2.2）\n- **常駐プロセスは描画1回の失敗で落ちない。** 画像が読めないときは背景なしで描き続ける\n  （描画ループの中に `try`/`catch` を散らさない）\n- 検証は `TSUKUMO_DRIVER=fake TSUKUMO_OPEN_VIEW=0 TSUKUMO_VIEW_PORT=<空きポート>` で\n  本物の claude を起こさずに立ち上げられる\n- コードにタスク番号（`T-` + 3桁）を書かない",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`bun run check` 通過（835 pass / 0 fail / 84ファイル。804 → 835 で +31）。T-138 が決めた形（`character.json` の `background: {image, veil}` / 効くのはキャラビューだけ / 覆い 0.7 以上・既定 0.75）だけを実装し、検証は `src/shared/character-background.ts` に封じた。\\n目視（Playwright + Chrome 1400x900、`TSUKUMO_DRIVER=fake` / `HOME` をスクラッチへ）: キャラビューだけ背景が入れ替わり、計算値は覆い 0.75・下限 0.70 で実効 max = 0.75、`background-size: cover` / `position: 50% 100%` / `border-radius: 0`。吹き出しの文字は読めた。\\n既定（背景なし）は変更前後のピクセル比較で、差は過去の吹き出しの矩形だけ（13.8 が指示した `opacity: 0.5` → `color-mix(ink 55%)` の変更そのもの。旧 4.20 → 新 4.84）。「消す」を押した後は変更後の既定状態と差分0。"
   },
   {
     "id": "T-141",

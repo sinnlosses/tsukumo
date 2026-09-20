@@ -37,6 +37,7 @@ const CHARACTER_WITH_MARKER: SessionEvent = {
   },
   mini: undefined,
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+  background: undefined,
   editable: true,
   packs: [{ name: "fictional", label: "架空の精霊" }],
 }
@@ -626,6 +627,7 @@ describe("applySessionEvent", () => {
       },
       mini: undefined,
       outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+      background: undefined,
       editable: true,
     })
 
@@ -648,6 +650,7 @@ describe("applySessionEvent", () => {
       },
       mini: undefined,
       outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
+      background: undefined,
       editable: true,
     })
   })

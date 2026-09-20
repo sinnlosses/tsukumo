@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
 import {
+  definitionWithBackground,
   definitionWithOutfitAccent,
+  definitionWithoutBackground,
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
@@ -100,6 +102,19 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition("null")).toBeUndefined()
   })
 
+  it("background（素材のファイル名と覆いの濃さ）を読む。壊れた値は背景なしに落ちる", () => {
+    const withBackground = parseCharacterDefinition(
+      JSON.stringify({ background: { image: "background.png", veil: 0.8 } }),
+    )
+    expect(withBackground?.background).toEqual({ image: "background.png", veil: 0.8 })
+
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.background).toBeUndefined()
+    expect(
+      parseCharacterDefinition(JSON.stringify({ background: { image: "../evil.png" } }))
+        ?.background,
+    ).toBeUndefined()
+  })
+
   it("portraits / outfitAccents が無い・型が違っても、キーはすべて undefined として持つ", () => {
     const definition = parseCharacterDefinition(JSON.stringify({ portraits: "not an object" }))
 
@@ -155,5 +170,31 @@ describe("definitionWithPortrait / definitionWithoutPortrait / definitionWithOut
 
     expect(edited.endsWith("\n")).toBe(true)
     expect(edited).toContain('\n  "outfitAccents": {')
+  })
+})
+
+describe("definitionWithBackground / definitionWithoutBackground", () => {
+  it("背景の素材を差し替え、ほかのキーは残す", () => {
+    const edited = definitionWithBackground(FULL_DEFINITION_JSON, "background.png")
+    const definition = parseCharacterDefinition(edited)
+
+    expect(definition?.background?.image).toBe("background.png")
+    expect(definition?.name).toBe("架空の精霊")
+    expect(definition?.portraits.default).toBe("default.svg")
+  })
+
+  it("差し替えても覆いの濃さ（veil）はそのまま残る", () => {
+    const withVeil = JSON.stringify({ background: { image: "old.jpg", veil: 0.9 } })
+    const definition = parseCharacterDefinition(definitionWithBackground(withVeil, "new.png"))
+
+    expect(definition?.background).toEqual({ image: "new.png", veil: 0.9 })
+  })
+
+  it("消すと背景なしになる（濃さは残るが、素材が無いので出ない）", () => {
+    const withVeil = JSON.stringify({ background: { image: "old.jpg", veil: 0.9 } })
+    const edited = definitionWithoutBackground(withVeil)
+
+    expect(parseCharacterDefinition(edited)?.background).toBeUndefined()
+    expect(JSON.parse(edited)["background"]).toEqual({ veil: 0.9 })
   })
 })

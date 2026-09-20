@@ -200,6 +200,30 @@ describe("toCharacterInfo", () => {
     ).toBe("/character/default.svg?v=fictional%402")
   })
 
+  it("背景も /character/<file> の URL にする（覆いの濃さはそのまま）", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ background: { image: "background.png", veil: 0.8 } }),
+    )
+
+    expect(
+      definition === undefined
+        ? undefined
+        : toCharacterInfo({ definition, pack: "fictional", revision: "2", editable: true })
+            .background,
+    ).toEqual({ image: "/character/background.png?v=fictional%402", veil: 0.8 })
+  })
+
+  it("背景が無いパックでは undefined（背景を出さない）", () => {
+    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+
+    expect(
+      definition === undefined
+        ? undefined
+        : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
+            .background,
+    ).toBeUndefined()
+  })
+
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
     const info = toCharacterInfo({
       definition: undefined,
@@ -216,6 +240,7 @@ describe("toCharacterInfo", () => {
     expect(info.portraits.default).toBeUndefined()
     expect(info.mini).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()
+    expect(info.background).toBeUndefined()
     expect(info.editable).toBe(false)
   })
 })

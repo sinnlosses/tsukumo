@@ -196,6 +196,27 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
     }
   }, [accent])
 
+  // パックが差す背景（docs/design.md 13.8）も同じ手口で流す。**敷くのはキャラビューの領域だけ**で、
+  // どう敷くか（覆いを1枚重ねる・下端で合わせる）は CSS
+  // （`src/browser/features/layout/layout.module.css` の `.layout-character`）が持つ。ここは
+  // 素材の URL と覆いの濃さを渡すだけ。**素材の名前は `character.json` 由来の外部の値**だが、
+  // `url()` を抜け出せない形であることは境界（`src/shared/character-background.ts` の
+  // `isBackgroundFileName`）で見てある。背景が無いパックでは変数ごと外すので、`var()` の
+  // フォールバックが効いて**いままでと同じ見え方**（`ground` の上に立ち絵が直接立つ）に戻る。
+  const background = useStoreSelector(store, (session) => session.state.character?.background)
+  const backgroundImage = background?.image
+  const backgroundVeil = background?.veil
+  useEffect(() => {
+    const style = document.documentElement.style
+    if (backgroundImage === undefined || backgroundVeil === undefined) {
+      style.removeProperty("--character-background-image")
+      style.removeProperty("--character-background-veil")
+      return
+    }
+    style.setProperty("--character-background-image", `url("${backgroundImage}")`)
+    style.setProperty("--character-background-veil", String(backgroundVeil))
+  }, [backgroundImage, backgroundVeil])
+
   return <SessionStoreContext.Provider value={store}>{props.children}</SessionStoreContext.Provider>
 }
 

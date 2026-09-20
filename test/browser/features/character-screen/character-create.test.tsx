@@ -35,6 +35,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     normal: undefined,
     heavy: undefined,
   },
+  background: undefined,
   editable: true,
 }
 

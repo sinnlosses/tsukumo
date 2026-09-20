@@ -2,15 +2,43 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
 import {
   applyAppearanceColorOverride,
+  backgroundVeilFloor,
   changeAppearanceColor,
   DEFAULT_APPEARANCE_COLOR_OVERRIDE,
   loadAppearanceColorOverride,
   readCurrentColor,
   saveAppearanceColorOverride,
   type AppearanceColorOverride,
+  MIN_CONTRAST,
 } from "../../../../src/browser/features/character-screen/appearance-color.ts"
+import {
+  MAX_BACKGROUND_VEIL,
+  MIN_BACKGROUND_VEIL,
+} from "../../../../src/shared/character-background.ts"
 
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
+
+/**
+ * 覆いの下に1色の画像があるときの地と、字のコントラスト比（テスト側で独立に計算する。
+ * 実装と同じ式を書き写すのではなく、WCAG の定義そのままを短く書く）。
+ */
+function contrastOfVeiled(ground: string, image: string, veil: number, ink: string): number {
+  const mixed = [1, 3, 5].map(
+    (at) =>
+      Number.parseInt(ground.slice(at, at + 2), 16) * veil +
+      Number.parseInt(image.slice(at, at + 2), 16) * (1 - veil),
+  )
+  const luminance = (channels: readonly number[]): number =>
+    [0.2126, 0.7152, 0.0722].reduce((sum, weight, index) => {
+      const channel = (channels[index] ?? 0) / 255
+      return (
+        sum + weight * (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+      )
+    }, 0)
+  const inkChannels = [1, 3, 5].map((at) => Number.parseInt(ink.slice(at, at + 2), 16))
+  const [lighter, darker] = [luminance(mixed), luminance(inkChannels)].sort((a, b) => b - a)
+  return ((lighter ?? 0) + 0.05) / ((darker ?? 0) + 0.05)
+}
 
 // 本物の theme.css は読み込まないので、「上書きが無いときの既定値」だけを疑似 :root として
 // 用意する（`<style>` 要素。カスケードの優先度は inline style より低いので、
@@ -72,6 +100,39 @@ describe("saveAppearanceColorOverride / applyAppearanceColorOverride", () => {
     expect(readCurrentColor("surface")).toBe("#654321")
     // ink は上書き無し（undefined）。既定に落ちて --ink の値（このテストでは疑似 :root）が残る。
     expect(readCurrentColor("ink")).toBe("#e8e3ea")
+  })
+})
+
+describe("backgroundVeilFloor", () => {
+  it("既定の3色では下限（0.7）のまま引き上げない", () => {
+    expect(backgroundVeilFloor("#191720", "#e8e3ea")).toBe(MIN_BACKGROUND_VEIL)
+  })
+
+  it("地と字が下限ぎりぎりの組では、覆いを不透明まで引き上げる（行き止まらない）", () => {
+    // #767676 と #ffffff の比はちょうど 4.5 前後。覆いを薄くするとどちらの端でも割るので、
+    // 上限まで上がる。
+    expect(backgroundVeilFloor("#767676", "#ffffff")).toBe(MAX_BACKGROUND_VEIL)
+  })
+
+  it("引き上げた覆いは、画像が真っ白でも真っ黒でも 4.5 を満たす", () => {
+    const ground = "#3a3a3a"
+    const ink = "#ffffff"
+    const veil = backgroundVeilFloor(ground, ink)
+
+    expect(veil).toBeGreaterThanOrEqual(MIN_BACKGROUND_VEIL)
+    for (const image of ["#ffffff", "#000000"]) {
+      expect(contrastOfVeiled(ground, image, veil, ink)).toBeGreaterThanOrEqual(MIN_CONTRAST)
+    }
+  })
+
+  it("documentElement に下限を差す（背景を敷く CSS が読む）", () => {
+    applyAppearanceColorOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
+
+    expect(
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--character-background-veil-floor")
+        .trim(),
+    ).toBe(String(MIN_BACKGROUND_VEIL))
   })
 })
 

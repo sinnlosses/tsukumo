@@ -1,4 +1,4 @@
-// 画面から届いたキャラクターの変更（**新しいパックを作る**・立ち絵と差し色を差し替える）を
+// 画面から届いたキャラクターの変更（**新しいパックを作る**・立ち絵と差し色と背景を差し替える）を
 // キャラクターパックに書き込む。**書き込んでよいのは `~/.tsukumo/characters/<name>/` の下だけ**
 // （`docs/design.md` 7.1。`state.json` と同じ親の下で、リポジトリの作業ツリーが汚れない）。
 // 読む側は `src/server/adapter/character-pack.ts`。
@@ -7,13 +7,14 @@
 // 形は境界（`src/shared/character.ts` の `isCharacterPackName`）で見てある。ここは**既にある
 // 名前とぶつかったら書かない**ことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
 //
-// **ファイル名を外から受け取らない。** 立ち絵の名前は表情と形式から組み立てる
-// （`src/shared/portrait-image.ts` の `portraitFileName`）ので、届いた文字列がパスの一部に
+// **ファイル名を外から受け取らない。** 立ち絵の名前は表情と形式から組み立て
+// （`src/shared/portrait-image.ts` の `portraitFileName`）、背景の名前は形式だけから組み立てる
+// （`src/shared/character-background.ts` の `backgroundFileName`）ので、届いた文字列がパスの一部に
 // なる経路がそもそも無い。
 //
 // **書き込む前に、いま出しているパックをホームへ丸ごと写す**（同梱のパックを直さないため）。
-// 写すのは定義・人格・`portraits` に載っている素材で、ホームに既に同じ名前のパックがあるときは
-// 写さない（画面から重ねた変更を上書きしてしまわないため）。
+// 写すのは定義・人格・定義が指している素材（立ち絵・背景）で、ホームに既に同じ名前のパックが
+// あるときは写さない（画面から重ねた変更を上書きしてしまわないため）。
 //
 // 失敗しても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。受け付けられなかった回は undefined を
@@ -31,9 +32,12 @@ import {
 import { basename, join } from "node:path"
 
 import { classifyPortraitFile } from "../../shared/character-asset.ts"
+import { backgroundFileName, parseBackgroundImage } from "../../shared/character-background.ts"
 import {
   type CharacterDefinition,
+  definitionWithBackground,
   definitionWithOutfitAccent,
+  definitionWithoutBackground,
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
@@ -50,15 +54,18 @@ import {
   readCharacterPack,
 } from "./character-pack.ts"
 
-/** 1つのパックが持てる立ち絵の数（`docs/design.md` 7.1 の表）。 */
-export const MAX_PORTRAIT_FILES_PER_PACK = 8
+/**
+ * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**背景もこの数に入る**
+ * （表情6 + ミニ立ち絵1 + 背景1 = 8 でちょうど収まるので、据え置く。13.8）。
+ */
+export const MAX_IMAGE_FILES_PER_PACK = 8
 
 /**
- * 立ち絵1枚・差し色1色を書き込み、**書けたパックを読み直して返す**（呼び出し側はそれを
+ * 立ち絵1枚・差し色1色・背景1枚を書き込み、**書けたパックを読み直して返す**（呼び出し側はそれを
  * `characterChangedEvent` に渡して画面へ流す）。受け付けられなかったときは undefined:
  *
  * - 起動先の `characters/local` と同じ名前のパック（書いても次の起動で読まれない。7.1）
- * - 立ち絵の数が {@link MAX_PORTRAIT_FILES_PER_PACK} を超える
+ * - 画像（立ち絵・背景）の数が {@link MAX_IMAGE_FILES_PER_PACK} を超える
  * - ディスクに書けない
  *
  * `root` は書き込み先の親（既定は `~/.tsukumo/characters`。差し替えられるのは置き場所だけで、
@@ -136,7 +143,7 @@ function copyPackOnce(pack: CharacterPack, dir: string): void {
   for (const name of [
     CHARACTER_DEFINITION_FILE_NAME,
     PERSONA_FILE_NAME,
-    ...portraitFileNames(pack.definition),
+    ...referencedImageFileNames(pack.definition),
   ]) {
     copyIfExists(join(pack.dir, name), join(dir, name))
   }
@@ -154,7 +161,7 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
     case "clear-portrait": {
       const previous = portraitFileNameOf(content, edit.expression)
       writeFileSync(definitionPath, definitionWithoutPortrait(content, edit.expression))
-      removeUnreferencedPortrait(dir, previous)
+      removeUnreferencedImage(dir, previous)
       return true
     }
     case "set-portrait": {
@@ -167,14 +174,39 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
       }
 
       const fileName = portraitFileName(edit.expression, image.format)
-      if (!withinPortraitFileLimit(dir, fileName)) {
+      if (!withinImageFileLimit(dir, fileName)) {
         return false
       }
 
       const previous = portraitFileNameOf(content, edit.expression)
       writeFileSync(join(dir, fileName), Buffer.from(image.base64, "base64"))
       writeFileSync(definitionPath, definitionWithPortrait(content, edit.expression, fileName))
-      removeUnreferencedPortrait(dir, previous)
+      removeUnreferencedImage(dir, previous)
+      return true
+    }
+    case "clear-background": {
+      const previous = backgroundFileNameOf(content)
+      writeFileSync(definitionPath, definitionWithoutBackground(content))
+      removeUnreferencedImage(dir, previous)
+      return true
+    }
+    case "set-background": {
+      // 立ち絵と同じく、検証は境界（`src/shared/command.ts`）で済んでいる。ここで undefined に
+      // なるのは配線の誤りのときだけ。
+      const image = parseBackgroundImage(edit.image)
+      if (image === undefined) {
+        return false
+      }
+
+      const fileName = backgroundFileName(image.format)
+      if (!withinImageFileLimit(dir, fileName)) {
+        return false
+      }
+
+      const previous = backgroundFileNameOf(content)
+      writeFileSync(join(dir, fileName), Buffer.from(image.base64, "base64"))
+      writeFileSync(definitionPath, definitionWithBackground(content, fileName))
+      removeUnreferencedImage(dir, previous)
       return true
     }
   }
@@ -190,18 +222,23 @@ function portraitFileNameOf(
     : parseCharacterDefinition(content)?.portraits[expression]
 }
 
+/** 書き換える前の背景のファイル名（定義が無い・背景が無いときは undefined）。 */
+function backgroundFileNameOf(content: string | undefined): string | undefined {
+  return content === undefined ? undefined : parseCharacterDefinition(content)?.background?.image
+}
+
 /**
- * 差し替え・消去で参照が外れた立ち絵のファイルを消す（**書いた先のディレクトリの中の、
- * どの表情からも参照されていない画像だけ**）。形式を変えて差し替えたときに古い拡張子の
+ * 差し替え・消去で参照が外れた素材のファイルを消す（**書いた先のディレクトリの中の、
+ * 定義のどこからも参照されていない画像だけ**）。形式を変えて差し替えたときに古い拡張子の
  * ファイルが残り続けるのを防ぐ。消せなくてもそのまま続ける。
  */
-function removeUnreferencedPortrait(dir: string, fileName: string | undefined): void {
-  if (fileName === undefined || !isPortraitFileName(fileName)) {
+function removeUnreferencedImage(dir: string, fileName: string | undefined): void {
+  if (fileName === undefined || !isCharacterImageFileName(fileName)) {
     return
   }
 
   const definition = readCharacterPack(dir).definition
-  if (portraitFileNames(definition).includes(fileName)) {
+  if (referencedImageFileNames(definition).includes(fileName)) {
     return
   }
 
@@ -209,25 +246,32 @@ function removeUnreferencedPortrait(dir: string, fileName: string | undefined): 
 }
 
 /**
- * 立ち絵の数の上限を超えないか。**同じ名前を上書きするだけなら増えない**ので、既にある名前は
- * そのまま通す。
+ * 画像の数の上限を超えないか（**背景も同じ数に入る**。7.1 / 13.8）。**同じ名前を上書きする
+ * だけなら増えない**ので、既にある名前はそのまま通す。
  */
-function withinPortraitFileLimit(dir: string, fileName: string): boolean {
-  const existing = readdirSync(dir).filter(isPortraitFileName)
-  return existing.includes(fileName) || existing.length < MAX_PORTRAIT_FILES_PER_PACK
+function withinImageFileLimit(dir: string, fileName: string): boolean {
+  const existing = readdirSync(dir).filter(isCharacterImageFileName)
+  return existing.includes(fileName) || existing.length < MAX_IMAGE_FILES_PER_PACK
 }
 
-/** `portraits` に載っている素材のファイル名（重複なし・ディレクトリを跨がないものだけ）。 */
-function portraitFileNames(definition: CharacterDefinition | undefined): readonly string[] {
-  const names = Object.values(definition?.portraits ?? {}).filter(isPortraitFileName)
+/**
+ * 定義が指している素材のファイル名（立ち絵・ミニ立ち絵・背景。重複なし・ディレクトリを
+ * 跨がないものだけ）。**写す先と消してよいものの両方がこの一覧で決まる。**
+ */
+function referencedImageFileNames(definition: CharacterDefinition | undefined): readonly string[] {
+  const names = [
+    ...Object.values(definition?.portraits ?? {}),
+    definition?.mini,
+    definition?.background?.image,
+  ].filter(isCharacterImageFileName)
   return [...new Set(names)]
 }
 
 /**
- * 立ち絵の素材として扱ってよいファイル名か。**定義ファイルに書かれた名前も外部由来**なので、
- * ディレクトリを跨ぐ名前（`../foo`）はここで落とす（写す・消すのがホームの1階層に閉じる）。
+ * キャラクターの素材として扱ってよいファイル名か。**定義ファイルに書かれた名前も外部由来**な
+ * ので、ディレクトリを跨ぐ名前（`../foo`）はここで落とす（写す・消すのがホームの1階層に閉じる）。
  */
-function isPortraitFileName(name: string | undefined): name is string {
+function isCharacterImageFileName(name: string | undefined): name is string {
   return name !== undefined && basename(name) === name && classifyPortraitFile(name) !== undefined
 }
 

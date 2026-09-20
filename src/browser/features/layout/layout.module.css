@@ -50,10 +50,37 @@
   overflow-y: auto;
 }
 /* キャラビューだけは枠も地も持たない。付喪神は器物に宿るのであって、ウィジェットの中に
-   座っているのではない（`ground` の上に直接立つ。docs/design.md 13.1 原則2 / 13.4）。 */
+   座っているのではない（`ground` の上に直接立つ。docs/design.md 13.1 原則2 / 13.4）。
+
+   **背景（13.8）を敷くのもこの領域だけ。** 枠も角丸も付けないのは変えない — 背景はウィジェットの
+   地ではなく、`ground` がこの領域だけ絵に替わったものとして扱う（角丸のままだと絵の四隅が
+   欠けて「ウィジェットの中の絵」に見える）。
+   敷き方は**覆いを1枚重ねた形**で、覆いは `ground` 一色を `--character-background-veil` の
+   不透明度にしたもの。画像が見えるのは最大でも 30%（下限は
+   `src/shared/character-background.ts` の MIN_BACKGROUND_VEIL が定義の側で保証し、いまの地と
+   字の色で足りないぶんは `--character-background-veil-floor`
+   （src/browser/features/character-screen/appearance-color.ts）が押し上げる。**両方の大きいほう**を採る）。
+   下端で合わせる（background-position）のは、立ち絵が床に立つ見え方（--portrait-drop）と
+   地面の位置をそろえるため。
+   **背景が無いときは変数が差さっていない**ので、覆いは不透明な `ground`（＝この領域の地は
+   いままでと同じ色）、画像は `none` に落ちる。 */
 .layout-character {
+  --character-veil: color-mix(
+    in srgb,
+    var(--ground)
+      calc(
+        max(var(--character-background-veil, 1), var(--character-background-veil-floor, 0.7)) * 100%
+      ),
+    transparent
+  );
   border: none;
-  background: none;
+  border-radius: 0;
+  background-color: transparent;
+  background-image:
+    linear-gradient(var(--character-veil), var(--character-veil)),
+    var(--character-background-image, none);
+  background-position: center bottom;
+  background-size: cover;
 }
 /* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、
    3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」

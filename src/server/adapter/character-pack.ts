@@ -60,8 +60,8 @@ export type CharacterPack = {
    */
   readonly persona: string | undefined
   /**
-   * 素材の版（定義と立ち絵のファイルの更新時刻のうち、いちばん新しいもの）。
-   * **`/character/<file>` の URL に混ぜて、差し替えた立ち絵をブラウザに取り直させるためだけ**に
+   * 素材の版（定義と素材のファイルの更新時刻のうち、いちばん新しいもの）。
+   * **`/character/<file>` の URL に混ぜて、差し替えた素材をブラウザに取り直させるためだけ**に
    * ある（`src/shared/character-asset.ts` の `characterAssetCacheKey`）。読めなければ undefined。
    */
   readonly revision: string | undefined
@@ -188,8 +188,8 @@ export type CharacterAssetFile = {
 }
 
 /**
- * `/character/<file>` が配ってよい1件を読む。**character.json の `portraits` と `mini` に
- * 載っているファイル名だけ**を許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
+ * `/character/<file>` が配ってよい1件を読む。**character.json の `portraits` `mini`
+ * `background` に載っているファイル名だけ**を許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
  * `..` を含む要求や定義に無い名前は自然に undefined になる）。呼び出し側
  * （src/server/adapter/server.ts）はこの結果をそのまま配るか、undefined なら404にする。
  */
@@ -211,17 +211,19 @@ export function readCharacterPackFile(
 }
 
 /**
- * character.json の `portraits` と `mini` に載っているファイル名の一覧（重複なし）。
- * **ミニ立ち絵も同じ経路（`/character/<file>`）で配る**ので、ここに入れないと 404 になる。
+ * character.json の `portraits` `mini` `background` に載っているファイル名の一覧（重複なし）。
+ * **ミニ立ち絵も背景も同じ経路（`/character/<file>`）で配る**ので、ここに入れないと 404 になる。
  */
 function characterPackFileNames(pack: CharacterPack): readonly string[] {
   if (pack.definition === undefined) {
     return []
   }
 
-  const fileNames = [...Object.values(pack.definition.portraits), pack.definition.mini].filter(
-    isDefined,
-  )
+  const fileNames = [
+    ...Object.values(pack.definition.portraits),
+    pack.definition.mini,
+    pack.definition.background?.image,
+  ].filter(isDefined)
   return [...new Set(fileNames)]
 }
 
@@ -262,8 +264,9 @@ function localPackDir(cwd: string): string {
 }
 
 /**
- * 素材の版。定義ファイルと `portraits` の各ファイルの更新時刻のうち、いちばん新しいものを
- * そのまま文字列にする。**中身は読まない**（更新時刻だけで足りる）。1つも読めなければ undefined。
+ * 素材の版。定義ファイルと、定義が指している素材（立ち絵・背景）の更新時刻のうち、いちばん
+ * 新しいものをそのまま文字列にする。**中身は読まない**（更新時刻だけで足りる）。1つも
+ * 読めなければ undefined。
  */
 function readPackRevision(
   dir: string,
@@ -271,7 +274,9 @@ function readPackRevision(
 ): string | undefined {
   const fileNames = [
     CHARACTER_DEFINITION_FILE_NAME,
-    ...Object.values(definition?.portraits ?? {}).filter(isDefined),
+    ...[...Object.values(definition?.portraits ?? {}), definition?.background?.image].filter(
+      isDefined,
+    ),
   ]
   const times = fileNames.map((name) => modifiedAtMs(join(dir, name))).filter(isDefined)
   return times.length === 0 ? undefined : String(Math.max(...times))

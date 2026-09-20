@@ -45,6 +45,15 @@ import styles from "./character-screen.module.css"
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
 
 /**
+ * 背景に選べる種類（`docs/design.md` 7.1 / 13.8）。**`.gif` は入れない**（動く背景は読む面の
+ * 隣で気が散る）。中身の検証はここでもサーバ側（`src/shared/character-background.ts`）。
+ */
+const BACKGROUND_FILE_ACCEPT = ".png,.jpg,.jpeg,.webp"
+
+/** 背景の行の、いまの状態を表す字（**印だけにしない**。13.1 原則1）。 */
+const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } as const
+
+/**
  * 衣装のラベル。**モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じ**なので画面側が
  * 持つ（`docs/requirements.md` 4.3。表情のラベルはキャラクター定義から取る）。
  */
@@ -101,6 +110,20 @@ export function CharacterEdit(): ReactElement | null {
     const image = await readDataUrl(file)
     if (image !== undefined) {
       dispatch({ type: "set-portrait", expression, image })
+    }
+  }
+
+  /** 背景も立ち絵と同じ受け渡し（data URL）。読めなかった回は何も送らない。 */
+  async function sendBackground(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0]
+    input.value = ""
+    if (file === undefined) {
+      return
+    }
+
+    const image = await readDataUrl(file)
+    if (image !== undefined) {
+      dispatch({ type: "set-background", image })
     }
   }
 
@@ -185,6 +208,55 @@ export function CharacterEdit(): ReactElement | null {
               </div>
             )
           })}
+        </div>
+      </fieldset>
+      {/* 背景（`docs/design.md` 13.8）。**口は「差し替える」と「消す」の2つだけ**で、覆いの
+          濃さは画面から変えない（定義ファイルを手で直す）。敷かれるのはキャラビューだけ。 */}
+      <fieldset className={styles["character-screen-fieldset"]}>
+        <legend>背景</legend>
+        <div className={styles["character-screen-row"]}>
+          <div className={styles["character-screen-field"]}>
+            {character.background === undefined ? (
+              <span className={styles["character-background-blank"]} />
+            ) : (
+              <img
+                className={styles["character-background-preview"]}
+                src={character.background.image}
+                alt={BACKGROUND_LABEL.present}
+              />
+            )}
+            <span>
+              {character.background === undefined
+                ? BACKGROUND_LABEL.absent
+                : BACKGROUND_LABEL.present}
+            </span>
+            <label className={styles["character-gallery-pick"]}>
+              差し替える
+              <input
+                type="file"
+                className={styles["character-gallery-file"]}
+                aria-label="背景を差し替える"
+                accept={BACKGROUND_FILE_ACCEPT}
+                disabled={disabled}
+                onChange={(event) => {
+                  void sendBackground(event.currentTarget)
+                }}
+              />
+            </label>
+            {character.background === undefined ? null : (
+              <button
+                type="button"
+                className={styles["character-gallery-clear"]}
+                aria-label="背景を消す"
+                disabled={disabled}
+                onClick={() => {
+                  dispatch({ type: "clear-background" })
+                }}
+              >
+                消す
+              </button>
+            )}
+          </div>
         </div>
       </fieldset>
     </>

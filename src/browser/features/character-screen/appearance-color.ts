@@ -9,6 +9,8 @@
 // キャストを使わない」の境界の考え方）。`localStorage` から読み戻す値・`<input type="color">`
 // が渡す値のどちらも、ここでしか型を確定させない。
 
+import { MAX_BACKGROUND_VEIL, MIN_BACKGROUND_VEIL } from "../../../shared/character-background.ts"
+
 export type AppearanceColorKey = "ground" | "surface" | "ink"
 
 export type AppearanceColorOverride = {
@@ -35,6 +37,12 @@ const TOKEN_NAME: Readonly<Record<AppearanceColorKey, string>> = {
   ink: "--ink",
 }
 const ACCENT_TOKEN_NAME = "--accent"
+/**
+ * 背景の覆いの不透明度の下限を渡す先（`docs/design.md` 13.8）。**敷くのはキャラビューの領域
+ * だけ**なので、読むのは `src/browser/features/layout/layout.module.css` の `.layout-character`
+ * 1箇所。パックが書いた `veil` とこの下限の**大きいほう**が効く。
+ */
+const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"
 
 export function loadAppearanceColorOverride(): AppearanceColorOverride {
   let raw: string | null = null
@@ -71,11 +79,21 @@ export function saveAppearanceColorOverride(value: AppearanceColorOverride): voi
   }
 }
 
-/** `document.documentElement` に反映する。`undefined` は「上書きしない」＝ 既定に戻す。 */
+/**
+ * `document.documentElement` に反映する。`undefined` は「上書きしない」＝ 既定に戻す。
+ *
+ * **背景の覆いの下限（{@link backgroundVeilFloor}）も一緒に差し直す。** 下限はいまの
+ * `ground` と `ink` から決まるので、色を変えるたびに計算し直さないと、字を変えたあとに
+ * 背景の上の本文が読めなくなる（docs/design.md 13.8）。
+ */
 export function applyAppearanceColorOverride(value: AppearanceColorOverride): void {
   setOrRemoveToken("ground", value.ground)
   setOrRemoveToken("surface", value.surface)
   setOrRemoveToken("ink", value.ink)
+  document.documentElement.style.setProperty(
+    BACKGROUND_VEIL_FLOOR_TOKEN_NAME,
+    String(backgroundVeilFloor(readCurrentColor("ground"), readCurrentColor("ink"))),
+  )
 }
 
 /** 今その色に見えている16進値。上書き中ならその値、無ければ `:root` の既定値。 */
@@ -121,6 +139,30 @@ export function changeAppearanceColor(
   return { ...current, [key]: value }
 }
 
+/**
+ * 背景（docs/design.md 13.8）の覆いの不透明度の下限。**画像の中身を1ピクセルも読まずに
+ * 決める**: 覆いの下の色は必ず `ground` と画像の色を結ぶ線分の上に来るので、線分の端
+ * （真っ白・真っ黒）で {@link MIN_CONTRAST} を満たせば、どんな画像でも満たす。
+ *
+ * 定義の側の下限（`MIN_BACKGROUND_VEIL`）から 0.01 ずつ上げ、**両端とも満たす最初の値**を返す。
+ * `ground` と `ink` の組は 13.2 の境界が 4.5 以上に保っているので、覆いが不透明になる端
+ * （`MAX_BACKGROUND_VEIL`）まで上げれば必ず満たせる（＝引き上げが行き止まらない）。
+ */
+export function backgroundVeilFloor(ground: string, ink: string): number {
+  const inkLuminance = relativeLuminance(ink)
+  for (let step = MIN_BACKGROUND_VEIL * VEIL_STEPS; step < VEIL_STEPS; step += 1) {
+    const veil = step / VEIL_STEPS
+    const readable = WORST_IMAGE_CHANNELS.every(
+      (channel) =>
+        contrastOfLuminance(veiledLuminance(ground, channel, veil), inkLuminance) >= MIN_CONTRAST,
+    )
+    if (readable) {
+      return veil
+    }
+  }
+  return MAX_BACKGROUND_VEIL
+}
+
 function readToken(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
@@ -143,21 +185,53 @@ function setOrRemoveToken(key: AppearanceColorKey, value: string | undefined): v
 
 /** WCAG 2.1 のコントラスト比（1〜21）。 */
 function contrastRatio(hexA: string, hexB: string): number {
-  const luminanceA = relativeLuminance(hexA)
-  const luminanceB = relativeLuminance(hexB)
+  return contrastOfLuminance(relativeLuminance(hexA), relativeLuminance(hexB))
+}
+
+function contrastOfLuminance(luminanceA: number, luminanceB: number): number {
   const lighter = Math.max(luminanceA, luminanceB)
   const darker = Math.min(luminanceA, luminanceB)
   return (lighter + 0.05) / (darker + 0.05)
 }
 
 function relativeLuminance(hex: string): number {
-  const r = channelLuminance(hex, 1)
-  const g = channelLuminance(hex, 3)
-  const b = channelLuminance(hex, 5)
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return luminanceOfChannels(
+    channelByte(hex, RED_AT),
+    channelByte(hex, GREEN_AT),
+    channelByte(hex, BLUE_AT),
+  )
 }
 
-function channelLuminance(hex: string, start: number): number {
-  const channel = Number.parseInt(hex.slice(start, start + 2), 16) / 255
+/**
+ * 覆い（`ground` 一色を `veil` の不透明度にしたもの）の下に、全チャンネルが `channel` の画像が
+ * あるときの地の相対輝度。**合成は sRGB のまま**（ブラウザの重ね合わせと同じ）。
+ */
+function veiledLuminance(ground: string, channel: number, veil: number): number {
+  const mixed = (at: number): number => channelByte(ground, at) * veil + channel * (1 - veil)
+  return luminanceOfChannels(mixed(RED_AT), mixed(GREEN_AT), mixed(BLUE_AT))
+}
+
+function luminanceOfChannels(red: number, green: number, blue: number): number {
+  return 0.2126 * srgbChannel(red) + 0.7152 * srgbChannel(green) + 0.0722 * srgbChannel(blue)
+}
+
+/** 0〜255 のチャンネル値を、WCAG の式が使う線形の値にする。 */
+function srgbChannel(value: number): number {
+  const channel = value / 255
   return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
 }
+
+function channelByte(hex: string, start: number): number {
+  return Number.parseInt(hex.slice(start, start + 2), 16)
+}
+
+const [RED_AT, GREEN_AT, BLUE_AT] = [1, 3, 5]
+
+/**
+ * 覆いの下でいちばん危ない画像の色（真っ白と真っ黒）を、チャンネル値で持つ。**16進では
+ * 書かない**（16進を書いてよいのは `src/browser/styles/theme.css` だけ）。
+ */
+const WORST_IMAGE_CHANNELS = [0, 255] as const
+
+/** 覆いの不透明度を刻む細かさ（1/100 刻みで探す）。 */
+const VEIL_STEPS = 100

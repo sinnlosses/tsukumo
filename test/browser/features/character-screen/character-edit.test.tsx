@@ -37,6 +37,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     normal: undefined,
     heavy: "#ffb3a7",
   },
+  background: undefined,
   editable: true,
 }
 
@@ -229,6 +230,63 @@ describe("CharacterEdit", () => {
     expect(document.querySelector(".character-screen-note")?.textContent).toContain(
       "characters/local",
     )
+  })
+
+  // 背景（`docs/design.md` 13.8）。**口は「差し替える」と「消す」の2つだけ**で、覆いの濃さの
+  // つまみは出さない。
+  it("背景が無いパックでは、点線の枠と「背景なし」を出し、消す口は出さない", () => {
+    renderCharacterEdit(FIXTURE_CHARACTER)
+
+    expect(document.querySelectorAll(".character-background-blank")).toHaveLength(1)
+    expect(screen.getByText("背景なし")).toBeDefined()
+    expect(screen.getByLabelText("背景を差し替える")).toBeDefined()
+    expect(screen.queryByRole("button", { name: "背景を消す" })).toBeNull()
+  })
+
+  it("背景があるパックでは、いまの背景を小さく出して消す口も出す", () => {
+    renderCharacterEdit({
+      ...FIXTURE_CHARACTER,
+      background: { image: "/character/background.png?v=fictional@1", veil: 0.75 },
+    })
+
+    expect((screen.getByAltText("いまの背景") as HTMLImageElement).getAttribute("src")).toBe(
+      "/character/background.png?v=fictional@1",
+    )
+    expect(screen.getByRole("button", { name: "背景を消す" })).toBeDefined()
+  })
+
+  it("背景を消す口を押すと clear-background を dispatch する", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(
+      {
+        ...FIXTURE_CHARACTER,
+        background: { image: "/character/background.png?v=fictional@1", veil: 0.75 },
+      },
+      (command) => calls.push(command),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "背景を消す" }))
+
+    expect(calls).toEqual([{ type: "clear-background" }])
+  })
+
+  it("背景を選ぶと data URL を載せた set-background を dispatch し、入力欄を空に戻す", async () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+    const input = screen.getByLabelText("背景を差し替える") as HTMLInputElement
+
+    fireEvent.change(input, {
+      target: { files: [new File(["png"], "forest.png", { type: "image/png" })] },
+    })
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(calls).toEqual([
+      {
+        type: "set-background",
+        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+      },
+    ])
+    expect(input.value).toBe("")
   })
 
   it("キャラクターが届く前は何も出さない", () => {

@@ -6,6 +6,7 @@
 // `character-asset.ts`）。ファイルI/Oは src/server/adapter/character-pack.ts に集約する。
 
 import { characterAssetCacheKey, characterAssetPath } from "./character-asset.ts"
+import { type CharacterBackground } from "./character-background.ts"
 import { type CharacterDefinition } from "./character-definition.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
 import { type Expression, type Outfit } from "./expression.ts"
@@ -35,6 +36,12 @@ export type CharacterInfo = {
    */
   readonly mini: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
+  /**
+   * キャラビューに敷く背景（`docs/design.md` 13.8）。**`image` は `/character/<file>` の URL**
+   * （立ち絵と同じ経路・同じ取り直しの印）。無ければ背景は出ない（`ground` の上に立ち絵が
+   * 直接立つ、いままでの見え方）。**効くのはキャラビューだけ。**
+   */
+  readonly background: CharacterBackground | undefined
   /** {@link CharacterDefinition.speechMarker} をそのまま持つ（畳み込みが行頭マーカーに使う）。 */
   readonly speechMarker: string | undefined
   /**
@@ -106,9 +113,20 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     portraits,
     mini: portraitUrl(definition?.mini, cacheKey) ?? portraits.default,
     outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
+    background: backgroundWithUrl(definition?.background, cacheKey),
     speechMarker: definition?.speechMarker,
     editable: source.editable,
   }
+}
+
+/** 背景の素材のファイル名を `/character/<file>` の URL に変える（覆いの濃さはそのまま）。 */
+function backgroundWithUrl(
+  background: CharacterBackground | undefined,
+  cacheKey: string | undefined,
+): CharacterBackground | undefined {
+  return background === undefined
+    ? undefined
+    : { image: characterAssetPath(background.image, cacheKey), veil: background.veil }
 }
 
 function portraitUrls(

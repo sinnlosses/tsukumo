@@ -148,6 +148,24 @@
   gap: 0.5rem;
   font-size: var(--font-secondary);
 }
+/* 背景の行（13.8）。行の左に**いまの背景を小さく**出す。立ち絵の並びと違って主役ではないので、
+   高さは1行ぶんに収める。**敷いたときと同じ切り取り方**（cover・下端合わせ）にして、
+   キャラビューで見えるところが見本になるようにする。 */
+.character-background-preview {
+  width: 4rem;
+  height: 2.25rem;
+  border-radius: 0.25rem;
+  object-fit: cover;
+  object-position: center bottom;
+}
+/* 背景が無いときは、立ち絵の空きと同じ点線の枠（そこに置けることだけを示す）。 */
+.character-background-blank {
+  width: 4rem;
+  height: 2.25rem;
+  border: 1px dashed var(--rule);
+  border-radius: 0.25rem;
+}
+
 /* 変えられないパックのとき・名前が使えないときの一言。 */
 .character-screen-note {
   display: flex;

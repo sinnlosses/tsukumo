@@ -9,6 +9,7 @@
 // src/server/adapter/character-pack.ts と src/server/adapter/character-edit.ts に集約する。
 // ここが扱うのは文字列までで、実際に読み書きするのは呼び出し側。
 
+import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
 import { type Expression, type Outfit, type RemovableExpression } from "./expression.ts"
 
 /**
@@ -44,6 +45,12 @@ export type CharacterDefinition = {
    */
   readonly mini: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
+  /**
+   * キャラビューに敷く背景（`docs/design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
+   * 組で、**無ければ背景そのものが出ない**（既定の絵には落ちない）。読めない値は
+   * `src/shared/character-background.ts` が undefined か帯の中の値に畳む。
+   */
+  readonly background: CharacterBackground | undefined
 }
 
 /**
@@ -98,6 +105,22 @@ export function definitionWithOutfitAccent(
   return editedDefinitionJson(content, "outfitAccents", outfit, color)
 }
 
+/**
+ * 背景の素材を差し替えた JSON を返す。**覆いの不透明度（`veil`）はそのまま残す** — 画面から
+ * 変えられるのは素材だけで、濃さは定義ファイルを手で直す（`docs/design.md` 13.6 / 13.8）。
+ */
+export function definitionWithBackground(content: string | undefined, fileName: string): string {
+  return editedDefinitionJson(content, "background", "image", fileName)
+}
+
+/**
+ * 背景を消した JSON を返す。**消すのは素材の指定だけ**で、`veil` は残る（もう一度差したときに
+ * その人が書いた濃さが戻る。素材が無ければ背景は出ない）。
+ */
+export function definitionWithoutBackground(content: string | undefined): string {
+  return editedDefinitionJson(content, "background", "image", undefined)
+}
+
 function toCharacterDefinition(value: unknown): CharacterDefinition | undefined {
   if (!isRecord(value)) {
     return undefined
@@ -111,6 +134,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
     outfitAccents: toOutfitAccents(value.outfitAccents),
+    background: toCharacterBackground(value.background),
   }
 }
 
@@ -160,7 +184,7 @@ function stringField(record: Readonly<Record<string, unknown>>, key: string): st
  */
 function editedDefinitionJson(
   content: string | undefined,
-  group: "portraits" | "outfitAccents",
+  group: "portraits" | "outfitAccents" | "background",
   key: string,
   value: string | undefined,
 ): string {

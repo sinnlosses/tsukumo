@@ -6,12 +6,13 @@ import { join } from "node:path"
 import {
   createCharacterPack,
   editCharacterPack,
-  MAX_PORTRAIT_FILES_PER_PACK,
+  MAX_IMAGE_FILES_PER_PACK,
 } from "../../../src/server/adapter/character-edit.ts"
 import {
   listCharacterPacks,
   readCharacterPack,
 } from "../../../src/server/adapter/character-pack.ts"
+import { DEFAULT_BACKGROUND_VEIL } from "../../../src/shared/character-background.ts"
 import {
   type CharacterCreateCommand,
   type CharacterEditCommand,
@@ -30,6 +31,8 @@ const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。
 /** 差し替えに使う架空の PNG（中身は見ないので数バイトでよい）。 */
 const PNG_DATA_URL = "data:image/png;base64,AAECAwQ="
 const SVG_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(PLAUSIBLE_SVG).toString("base64")}`
+/** 背景の差し替えに使う架空の WebP（中身は見ないので数バイトでよい）。 */
+const WEBP_DATA_URL = "data:image/webp;base64,AAECAwQ="
 
 let dir: string
 
@@ -182,7 +185,7 @@ describe("editCharacterPack（立ち絵）", () => {
       home(),
     )
     expect(edited).toBeDefined()
-    for (let index = 0; index < MAX_PORTRAIT_FILES_PER_PACK; index += 1) {
+    for (let index = 0; index < MAX_IMAGE_FILES_PER_PACK; index += 1) {
       writeFileSync(join(home(), "tsukumo", `spare-${String(index)}.png`), "x")
     }
 
@@ -224,6 +227,77 @@ describe("editCharacterPack（差し色）", () => {
 
     expect(edited?.definition?.outfitAccents.heavy).toBe("#ffb3a7")
     expect(edited?.definition?.outfitAccents.default).toBe("#b8c7ff")
+  })
+})
+
+describe("editCharacterPack（背景）", () => {
+  it("背景を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      { type: "set-background", commandId: "c-1", image: PNG_DATA_URL },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.background?.image).toBe("background.png")
+    // 覆いの濃さは書かなくても、読むときに既定へ落ちる（画面からは変えない）。
+    expect(edited?.definition?.background?.veil).toBe(DEFAULT_BACKGROUND_VEIL)
+    expect(existsSync(join(home(), "tsukumo", "background.png"))).toBe(true)
+    // 同梱側は触っていない。
+    expect(readCharacterPack(bundled).definition?.background).toBeUndefined()
+  })
+
+  it("形式を変えて差し替えると、参照が外れた古い背景は残らない", () => {
+    const bundled = writeBundledPack("tsukumo")
+    const cwd = join(dir, "cwd")
+
+    const first = editCharacterPack(
+      readCharacterPack(bundled),
+      { type: "set-background", commandId: "c-1", image: PNG_DATA_URL },
+      cwd,
+      home(),
+    )
+    expect(first).toBeDefined()
+    if (first === undefined) {
+      return
+    }
+    const second = editCharacterPack(
+      first,
+      { type: "set-background", commandId: "c-2", image: WEBP_DATA_URL },
+      cwd,
+      home(),
+    )
+
+    expect(second?.definition?.background?.image).toBe("background.webp")
+    expect(existsSync(join(home(), "tsukumo", "background.png"))).toBe(false)
+  })
+
+  it("背景を消すと定義から外れ、ファイルも残らない（立ち絵は残る）", () => {
+    const bundled = writeBundledPack("tsukumo")
+    const cwd = join(dir, "cwd")
+
+    const withBackground = editCharacterPack(
+      readCharacterPack(bundled),
+      { type: "set-background", commandId: "c-1", image: PNG_DATA_URL },
+      cwd,
+      home(),
+    )
+    expect(withBackground).toBeDefined()
+    if (withBackground === undefined) {
+      return
+    }
+    const cleared = editCharacterPack(
+      withBackground,
+      { type: "clear-background", commandId: "c-2" },
+      cwd,
+      home(),
+    )
+
+    expect(cleared?.definition?.background).toBeUndefined()
+    expect(existsSync(join(home(), "tsukumo", "background.png"))).toBe(false)
+    expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
   })
 })
 

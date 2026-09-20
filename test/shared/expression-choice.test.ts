@@ -83,6 +83,7 @@ describe("expressionChoices", () => {
       },
       mini: undefined,
       outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+      background: undefined,
     }
 
     expect(expressionNames(expressionChoices(definition))).toEqual(["default", "thinking"])

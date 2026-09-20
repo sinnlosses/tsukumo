@@ -8,6 +8,7 @@
 
 import { z } from "zod"
 
+import { MAX_BACKGROUND_DATA_URL_LENGTH, parseBackgroundImage } from "./character-background.ts"
 import { isCharacterPackName, MAX_CHARACTER_PACK_NAME_LENGTH } from "./character.ts"
 import {
   type Expression,
@@ -78,6 +79,16 @@ const portraitDataUrlSchema = z
   .string()
   .max(MAX_PORTRAIT_DATA_URL_LENGTH)
   .refine((value) => parsePortraitImage(value) !== undefined)
+
+/**
+ * 背景1枚の data URL（`docs/design.md` 13.8）。**受け取るのは `.png` / `.jpg` / `.webp` の
+ * 3つだけ**（`src/shared/character-background.ts`。`.gif` は入れない — 動く背景は読む面の隣で
+ * 気が散る）。立ち絵と同じく文字列のまま持ち、ほどくのは書き込む側。
+ */
+const backgroundDataUrlSchema = z
+  .string()
+  .max(MAX_BACKGROUND_DATA_URL_LENGTH)
+  .refine((value) => parseBackgroundImage(value) !== undefined)
 
 /** 差し色（`<input type="color">` が渡す形）。**16進の値そのものはここに書かない。** */
 const accentColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
@@ -165,6 +176,16 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     outfit: outfitSchema,
     color: accentColorSchema,
   }),
+  /**
+   * キャラビューに敷く背景を差し替える／消す（`docs/design.md` 13.8）。**覆いの濃さは
+   * 画面から変えない**ので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
+   */
+  z.object({
+    type: z.literal("set-background"),
+    commandId: commandIdSchema,
+    image: backgroundDataUrlSchema,
+  }),
+  z.object({ type: z.literal("clear-background"), commandId: commandIdSchema }),
   z.object({
     type: z.literal("create-character"),
     commandId: commandIdSchema,
@@ -179,13 +200,20 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
 export type ClientCommand = z.infer<typeof clientCommandSchema>
 
 /**
- * いま出しているキャラクターパックの見た目（立ち絵・差し色）を変えるコマンド。**どれも
+ * いま出しているキャラクターパックの見た目（立ち絵・差し色・背景）を変えるコマンド。**どれも
  * 駆動には渡らない**（書き込みと `character-changed` の流し直しで済むので、セッションは
  * 起こし直さない。`docs/design.md` 7.1）。
  */
 export type CharacterEditCommand = Extract<
   ClientCommand,
-  { readonly type: "set-portrait" | "clear-portrait" | "set-outfit-accent" }
+  {
+    readonly type:
+      | "set-portrait"
+      | "clear-portrait"
+      | "set-outfit-accent"
+      | "set-background"
+      | "clear-background"
+  }
 >
 
 /**
@@ -214,6 +242,8 @@ const CHARACTER_EDIT_COMMAND_TYPES = [
   "set-portrait",
   "clear-portrait",
   "set-outfit-accent",
+  "set-background",
+  "clear-background",
 ] as const
 
 /**
