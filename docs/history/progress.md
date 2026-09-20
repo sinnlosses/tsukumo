@@ -1,5 +1,11 @@
 # 進捗のアーカイブ
 
+### 2026-09-21 cli.ts をエントリポイントに戻し、起動の段取りを割った（T-229）
+
+`src/cli.ts` を 400 → 57行に縮め、段取りを `main.ts` / `current-character.ts` /
+`view-delivery.ts` / `session-start.ts` へ割った。境目は可変の値の持ち主ごと。層の規則は
+「`src/cli.ts` だけが配線」から「`src/` 直下が配線層」へ広げた（振る舞いは変えていない）。
+
 ### 2026-09-21 UI をカタログで見る仕組みの案を比べ、推奨を1つ出した（T-221）
 
 `docs/research/ui-catalog.md` に案5つと比較表を書いた。推奨は `capture-catalog.ts` に

@@ -14598,3 +14598,336 @@ tsukumo を空きポート（`TSUKUMO_VIEW_PORT=0`・`TSUKUMO_DRIVER=fake`）で
   なってから着手する**
 - `Bun.*` の固有APIに寄せない（`node:` プレフィックスの標準API）
 - コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-232
+
+**タスク**: 入力欄に画像を添付できるようにする形を決める（2.2 の除外を覆す）
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+**SDK に画像を渡す道はある**（`sdk.d.ts` 5847-5852 の `SDKUserMessage.message: MessageParam`、`@anthropic-ai/sdk` の `messages.d.ts` 2037-2040 で `content: string | Array<ContentBlockParam>`、95-99 で `Base64ImageSource.media_type` は png/jpeg/gif/webp の4つだけ。行番号は実物で照合済み）。tsukumo は既にストリーミング入力なので `content` を配列にするだけで届く。\n`docs/requirements.md` に 4.10「画像の添付」を新設（節 27 → 28、増えたのは 4.10 の1つだけ。索引の表も1行）。2.2 は画像だけを覆し、ファイルは `@` の補完が既に道を持つので対象外のまま。4.2 (5) の「画像・ファイルの貼り付けはしない」も追随（**4.7 ではなく 4.2 にあった**）。\n決めた形: 貼り付けとドロップだけ（ボタンを置かない）/ 1枚 2MiB・1依頼 4枚・`maxPayload` 12MiB / 送る前は札、送った後は縮めた控え、どちらも押せない / **原寸はディスクに書かず送った時点で手放す**（一時ファイル案を採らなかったので「どこに置きいつ消すか」が生まれない）。`bun run check` 通過（835 pass / 0 fail）。`git status --porcelain -- src test` は空。実装は後続タスク。
+
+## 背景
+
+ユーザーの指示（2026-09-20、雑談モードのレビュー）「Discordのように画像を添付できると良いね」。
+
+**この指示は既存の除外を覆す。** `docs/requirements.md` 2.2 は
+「**画像やファイルの貼り付け**（2026-09-11）。入力欄が受け取るのはテキストだけ」を対象外に
+挙げており、4.7 にも「画像・ファイルの貼り付けはしない（2.2）」がある。
+
+**手がかり（前例がある）**: キャラクター素材の受け取りで同じ問題を既に解いている。
+`docs/requirements.md` 4.4 が「画像の受け取り方（data URL を WebSocket のコマンドに載せる）・
+大きさの上限」を決めていて、`src/browser/lib/data-url.ts` と `src/shared/command.ts` の
+`character-edit` がその道を通っている。
+
+**送る側**: `src/server/adapter/sdk-driver.ts` の `startSession` が Agent SDK にセッションを
+起こし、依頼を渡している。**SDK が画像をどう受け取るか（content block か、ファイルのパスか、
+そもそも受け取るか）はまだ確かめていない。**
+
+## 決まっていること（蒸し返さない）
+
+- **2.2 の除外を覆す**（2026-09-20、ユーザーの決定。「覆す。まず形を決める」）
+- **このタスクは形を決めるところまで。** 実装は後続タスクとして登録する
+
+## 解くべき論点
+
+1. **Agent SDK に画像をどう渡すか。** `@anthropic-ai/claude-agent-sdk` の型定義と公式の
+   ドキュメント（一次情報）で確かめる。**渡す道が無ければ、やらずに理由を `evidence` に書いて
+   閉じる**（2.2 はそのまま残す）
+2. **入力欄でどう受け取るか。** 貼り付け（`paste`）/ ドラッグ&ドロップ / ボタン。**枠を増やさない**
+   （`docs/design.md` 13.1 原則2）
+3. **大きさと枚数の上限。** 4.4 の上限をそのまま使えるか、別に要るか
+4. **添付したものを画面のどこに出すか。** 入力欄の中の小さな札 / メインビューの記録 /
+   雑談のログ（`docs/design.md` 13.7）
+5. **`docs/requirements.md` 2.2 の行をどう書き換えるか。** 画像だけを覆すのか、「ファイルの
+   貼り付け」も一緒に覆すのか（`@` のファイル補完が既にあるので、ファイルは別の道で足りている
+   可能性がある — `src/browser/features/dispatch/file-suggestions.tsx`）
+
+## やること
+
+1. **論点1を先に確かめる。** 渡す道が無ければここで閉じる（残りの論点は無意味になる）
+2. 残りの論点を詰め、`docs/requirements.md` 2.2 の該当行と 4.7 の該当行を書き換え、決めた形を
+   4章の新しい節に書く
+3. 実装を後続タスクとして `develop/tasks.json` に登録する（このタスクでは作らない）
+
+## 完了条件
+
+- **SDK に画像を渡す道があるか**が、一次情報の出典（型定義のファイルと行、または公式ドキュメントの
+  URL）つきで `evidence` に書かれている
+- 入れると決めたなら、**受け取り方・上限・画面での見え方・2.2 の書き換え**の4つが
+  `docs/requirements.md` に書かれている
+- 入れないと決めたなら、その理由が 2.2 に残っている
+- 入れると決めたなら、実装の後続タスクが `develop/tasks.json` に登録されている
+- `bun run check` が通る（ドキュメントだけの変更でも回す）
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で合う
+
+## 注意
+
+- **コードは変えない。** 実装は後続タスク
+- **会話内容の扱いが最優先**（`CLAUDE.md`）。**画像も会話の内容**なので、外部に送らない・
+  別の場所に複製しない・ログに出さない・テストのフィクスチャに実物を使わない。**決める段階で
+  この制約を形に織り込む**（例: 一時ファイルに書き出す設計を採るなら、どこに置きいつ消すかまで決める）
+- `docs/` の節の索引の罠に注意（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-234
+
+**タスク**: 表情に sad（しょんぼり）と excited（わくわく）を足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（835 pass / 0 fail。件数は変わらず expect() が 1678 → 1680 で +2 — `character-edit.test.tsx` に sad/excited のラベルの assert を足したぶん）。`docs/requirements.md` の節の数は 28 → 28、「表情は6つ」も 4.4 の「4.3 の6つ」も 8 に直した。\n**`speak` の enum は実機で確かめた**（説明文は読んでいない）: 本物の駆動で起こし、中の claude に `zzz-not-a-real-expression` を投げさせたところ4回とも入力検証で拒否され、拒否メッセージの有効値は 毎回8件。`sad` と `excited` はどちらも `ok` が返り、吹き出しに「しょんぼりのテスト」「わくわくのテスト」が出た。\n目視（`TSUKUMO_DRIVER=fake` / `TSUKUMO_VIEW_PORT=7513`）: キャラクター画面に8枚が全部ラベル付きで 並び（にっと・ふむ・えへん・あわわ・きりっ・きょとん・しょんぼり・わくわく）、絵を同梱していない 2枠だけ点線の空き。吹き出しが `excited` の状態でも立ち絵は default のまま崩れなかった。
+
+## 背景
+
+**表情を2つ足したい**（しょんぼり・わくわく）。**先例は T-137**（`serious` / `curious` を足した
+コミット `ca25d08`）で、触る場所はそのときと同じ。
+
+いまの表情は6つ（`src/shared/expression.ts` の `Expression` 型と `EXPRESSIONS`）。
+**足すものは末尾に積む**（既存の並びを動かさない。`docs/requirements.md` 4.3）。
+`speak` ツールの enum は `src/shared/expression-choice.ts` の `expressionChoices` から
+`src/server/adapter/sdk-driver.ts` の `speakExpressionEnum` が組み立てるので、**型と定義ファイルに
+通せば `speak` の選択肢は自動で広がる**。
+
+**`docs/requirements.md` 4.3 は「`persona.md` にも 4.3 にも場面が書かれていないものは足さない」**
+としている（「照れ」「うとうと」を見送った理由）ので、場面の1行が要る。それは下の
+「決まっていること」で決まっている。
+
+## 決まっていること（蒸し返さない）
+
+- **識別子は `sad`（しょんぼり）と `excited`（わくわく）**。`EXPRESSIONS` の末尾に
+  `sad` → `excited` の順で積む
+- **場面はこう書く**（`docs/requirements.md` 4.3 の表と `persona.md` の両方に入れる）:
+  - `sad` = **思ったように行かず凹むとき・断られたとき・自分の見立てが外れたと認めるとき**。
+    `flustered`（あわわ）は「外した瞬間」、`sad` は「そのあと凹んでいる」で切り分ける
+  - `excited` = **面白そうなものを見つけたとき・これから始めるとき**
+- **立ち絵（PNG）は同梱しない。ラベルだけ先に通す。** 絵が無い表情は `default` に落ちる
+  （`src/shared/character.ts` の `resolvePortraitUrl`）ので仕組みとして正当。あとから
+  `characters/tsukumo/sad.png` / `excited.png` を置けばそのまま効く
+- 各パックのラベル: `characters/tsukumo` は**しょんぼり** / **わくわく**、
+  `characters/tsukumo-spirit` と `characters/local` は語の系統が違うので**しょげ** / **そわそわ**
+
+## やること
+
+1. `src/shared/expression.ts` の `Expression` と `EXPRESSIONS` の末尾に `sad` / `excited` を足す
+2. **`src/shared/character.ts` の `Record` を型の穴埋めで洗い出して埋める。** T-137 では
+   `toExpressionLabels` / `toPortraits` / `portraitUrls` / `EMPTY_PORTRAITS` の4つが該当した
+   （`tsc --noEmit` が落ちる場所を潰していけば漏れない）
+3. 3つの `character.json`（`characters/tsukumo` / `tsukumo-spirit` / `local`）の `expressions` に
+   ラベルを足す。**`portraits` には足さない**（絵を同梱しないので）
+4. 3つの `persona.md` の表情の使い分けの箇条書きに1行ずつ足す（`きりっ` / `きょとん` の行の
+   すぐ下。`characters/tsukumo/persona.md` は84〜85行目あたり）
+5. `docs/requirements.md` 4.3 の表情の表に2行足し、**「表情は6つ」と書いてある本文の数**も直す
+6. テストの追随。T-137 で触ったのは
+   `test/browser/features/character-screen/*`（**空き枠の数が変わる**）・
+   `character-view` ・`dispatch/composer` ・`sidebar/session-info` ・
+   `test/server/adapter/character-pack.test.ts` ・`test/server/core/session-launch.test.ts` ・
+   `session-manager.test.ts` ・`test/shared/character.test.ts` ・`session-state.test.ts`
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- **`speak` の enum に `sad` と `excited` が出ている**ことを確かめる。説明文の並びは当てに
+  ならないので、**でたらめな表情名を投げて拒否され、`sad` / `excited` が受け付けられる**ことで
+  確かめる
+- 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）でキャラクター画面を開き、
+  **8つの表情が全部ラベル付きで並ぶ**ことと、**絵の無い2つが `default` の立ち絵に落ちている**
+  ことを目視して `evidence` に書く
+- `grep -c '^#\{2,3\} ' docs/requirements.md` が編集の前後で変わらない
+
+## 注意
+
+- **`docs/requirements.md` は冒頭に「節の索引」があり、見出し名で位置を探すと索引の行に先に
+  当たる。** 行頭を含めて位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- **立ち絵の PNG をリポジトリに足さない**（このタスクではラベルだけ）
+- 同じ作業ツリーで別のセッションが動いている。`git add -A` を使わず触ったファイルを個別に足し、
+  `git checkout <file>` / `git restore <file>` で作業ツリーを戻さない
+- コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-235
+
+**タスク**: 雑談ログを上へ遡れるようにし、読み返し中に下端へ攫われないようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-231 / **passes**: True
+
+**evidence**:
+
+`justify-content: flex-end` をやめ、`.chat-log > *:first-child { margin-top: auto }` に差し替えた（溢れたら margin が 0 に落ちて通常の overflow で上へ届く）。自動スクロールは scroll の購読で `nearBottomRef` を保ち、件数が増えたときに下端付近だったときだけ寄せる（閾値 120px、根拠はコメント）。\n実測（1400x900、`TSUKUMO_DRIVER=fake` / `TSUKUMO_VIEW_PORT=58217`、20ターン投入）: `scrollHeight` 2454 > `clientHeight` 495 で、`scrollTop=0` にすると先頭の1件が見える（以前は `scrollHeight` が 495 のまま 1px も動かなかった）。\n両方向を確認: `scrollTop=0` で新着が来ても 0 のまま動かず、下端（`maxScroll` 1959）に居るときは 新着後の `scrollTop` 1907 が新しい `maxScroll`（2402-495）と一致して追従した。1〜3件のときは最後の発言の下辺が容器の下辺の 8〜9px 内側＝下端に張り付いている。`bun run check` 通過（835 pass / 0 fail。テストの増減なし）。
+
+## 背景
+
+T-231 の実測で、雑談のログが**上へ1pxもスクロールできない**ことが分かった。決定は
+`docs/design.md` 13.7「会話を遡る」にある（**ふつうのスクロールだけで遡る**／
+**自動スクロールは下端付近に居たときだけ寄せる**）。このタスクはそれを実装する。
+
+**測った値**（1400x900、ログ43件。2026-09-20）:
+
+| 測った値 | 実測 |
+| --- | --- |
+| `.chat-log` の `clientHeight` | 495px |
+| `.chat-log` の `scrollHeight` | 495px（内容があるのに伸びていない） |
+| 子要素の総高さ（gap込み） | 2496px |
+| 枠外・上に出た件数 | 43件中35件（見えるのは8件） |
+| `scrollTop` の代入・ホイール | 0 から動かない |
+
+**原因**: `src/browser/features/chat-view/chat-view.module.css` の `.chat-log` が
+`flex-direction: column` ＋ `justify-content: flex-end`。溢れた分は block-start（上）側へ
+出るが、**CSS の scrollable overflow は end 方向にしか伸びない**ので上側はクリップされる。
+同ファイルの `.chat-log > * { flex-shrink: 0 }` はこの手当てにならない（原因は縮みではなく
+overflow の向き）。**ブラウザ側で `justify-content: flex-start` に差し替えると
+`scrollHeight` 495 → 2511、`maxScroll` 0 → 2016 になることは確認済み。**
+
+**「下端から積む」という意図そのものは残す**（13.7。件数が少ないうちに上へ貼り付くと
+立ち絵の顔の高さと話が合わない）。手段だけを差し替える。
+
+## やること
+
+1. `.chat-log` の `justify-content: flex-end` をやめ、**先頭の子に `margin-top: auto` を当てる**
+   などの、scrollable overflow を壊さない手段で「下端から積む」を作り直す。
+   **`.chat-log > * { flex-shrink: 0 }` に付いているコメントも、実態に合わせて直す**
+   （いまのコメントは「これで上へ届くようになる」と書いてあるが、そうなっていない）
+2. `src/browser/features/chat-view/chat-view.tsx` の自動スクロールを
+   **「寄せる前に下端付近に居たときだけ寄せる」**に変える。いまの依存配列は `[count]` だけで、
+   利用者がどこを読んでいるかを見ていない（実測: 最上部で新着1件が来ると `scrollTop` が
+   0 → 1907px へ飛ぶ）。**「下端付近」の閾値を決めて定数にし、根拠をコメントに残す**
+3. 件数が0→1になった最初の1件と、モードを切り替えた直後は今までどおり最新が見えること
+
+## 完了条件
+
+- 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）で 20 ターン以上を投入し、
+  **`scrollHeight > clientHeight` かつ上へ遡って最古の1件まで届く**ことを測って `evidence` に
+  書く（`scrollHeight` / `clientHeight` / `maxScroll` の数で）
+- **上へ遡った位置で新着が来ても `scrollTop` が動かない**ことを測って `evidence` に書く
+- **下端に居るときは新着で最新へ寄る**ことも測る（両方向を確かめる）
+- 件数が少ないとき（1〜3件）にログが**下端に寄っている**ことを目視で確かめる
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **`justify-content: flex-end` へ戻さない。** 戻すと同じクリップが再発する
+- **`useEffect` は「React の外と同期する」4類型の範囲**（`docs/coding-standards.md`「React」）。
+  依存配列を手で間引かない
+- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと並行させない
+- 16進の色を `src/browser/styles/theme.css` 以外に書かない
+- コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-236
+
+**タスク**: 雑談のときだけ記録の上限を 100 ターンにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-235 / **passes**: True
+
+**evidence**:
+
+`MAX_SESSION_STATE_TURNS` を `{ work: 20, chat: 100 } satisfies …` の1つのテーブルにし、`trimToRecentTurns` が `state.chatMode` で閾値を選ぶ。呼び出し元は `case \"request\"` の1箇所だけ。`MAX_MAIN_VIEW_TURNS` は触っていない（記録の窓とタブの窓は別々の二段構えのまま）。\n`bun run check` 通過（835 → **836 pass** / 0 fail。足した単体テスト1件ぶん）。テストは雑談モードで105ターン投入 → 100件残り、先頭が「依頼5」・末尾が「依頼104」。仕事の20ターンを示す既存テストはそのまま通る。\n実機（`TSUKUMO_DRIVER=fake` / `TSUKUMO_VIEW_PORT=7399`）: 雑談へ切り替えて架空の依頼を27件投入し、ログを最上部まで遡って**27件すべてが残っている**ことを確認（欠落0件。以前は20件で頭が落ちていた）。テストも実機もプレースホルダーの文字列で、実物の会話は使っていない。
+
+## 背景
+
+**雑談だけ記録の上限を上げる**（2026-09-20 決定。`docs/requirements.md` 4.9「どこまで遡れるか」）。
+仕事は 20 ターンのまま、**雑談は 100 ターン**を持つ。雑談の1ターンはセリフ1〜2件で軽く、
+20往復は会話としては短いため。
+
+いまは `src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS = 20` が1つだけあり、
+`trimToRecentTurns`（同ファイル）が `request` の数で切っている。**`speech` / `tool` / `detail` は
+単独では切られず、次の `request` のときに一緒に落ちる。**
+
+**実測の裏取り**（2026-09-20）: 雑談モードで 25 回 prompt を投入したところ、画面に残った
+利用者の発言はちょうど 20 件で、最初の7件は記録ごと消えていた。
+
+**復元側には件数の上限が無い**（`src/server/adapter/sdk-driver.ts` の `readRestoredEvents` は
+`getSessionMessages` を丸ごと読む）ので、切っているのは `trimToRecentTurns` だけ。上限を上げれば
+そのぶん復元した履歴も残る。
+
+## やること
+
+1. 上限を**モードごとの値**にする。雑談かどうかは `SessionState` が既に持っている
+   （`set-chat-mode` / `restart` の経路。`src/server/core/session-manager.ts`）ので、
+   **`trimToRecentTurns` がモードを見て閾値を選ぶ**形にする
+2. **定数は2つとも名前を持たせる**（仕事＝20 / 雑談＝100）。`satisfies` で検査し、
+   **なぜ値が違うのかを JSDoc に1行**書く（既存の「常駐プロセスの記録を無限に増やさない」を消さない）
+3. `src/shared/session-state.ts` のテストに、**モードごとに切れる位置が違う**ことを足す
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- **単体テストで両方の閾値を示す**: 仕事は 20 ターンで切れ、雑談は 100 ターンで切れること
+- 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）で雑談に 25 ターン以上を投入し、
+  **投入した全件が遡って見える**ことを測って `evidence` に書く（T-235 が入っている前提）
+- **仕事のメインビューの挙動が変わっていない**ことを確かめる（タブは `MAX_MAIN_VIEW_TURNS` の
+  ままで、記録の窓とタブの窓は別々の二段構え）
+
+## 注意
+
+- **`MAX_MAIN_VIEW_TURNS`（`src/shared/main-view.ts`）は触らない。** 仕事のタブの窓は別の話
+- **上限そのものを消さない**（`docs/requirements.md` 4.9 で「そのセッションの全部」は採らないと
+  決めている）
+- **会話の中身をテストのフィクスチャに実物で使わない**（`CLAUDE.md`「会話内容の扱い」）
+- コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-238
+
+**タスク**: 雑談のログでセリフを選ぶと、その時の表情を立ち絵に出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-235 / **passes**: True
+
+**evidence**:
+
+論点の結論: (1) 戻し方は**同じ行をもう一度押すトグルだけ**（専用のボタンは操作子が増える）(2) 印は地の濃さ（12% → 26%）と `inset` の1px の輪だけで、**縁を太らせない**（行の高さが動いて並びがずれる）(3) 利用者の行は遡る先が無いので `<div>` のまま押せない (4) **選択中に新着が来ても解除しない**（選ぶこと自体が読み返しの意思表示。T-235 の「下端付近だけ寄せる」と同じ立場）。\n`useState` で選択を持ち、`useEffect` は既存の2本のまま増やしていない。16進は書かず `color-mix` と `var(--accent)` の導出だけ。立ち絵の動きは触っていない。\n実機（`TSUKUMO_DRIVER=fake` / `TSUKUMO_VIEW_PORT=7411`、Chrome 1400x900）: 1件目のセリフを押すと `data-expression` が `proud` → `default`（alt も「えへん」→「にっと」）、もう一度押すと最新の `flustered` へ戻った。利用者の行はクリックしても何も変わらず（5行中 `BUTTON` は3つ）。選択中に新しいセリフが積まれても立ち絵は選んだ表情のまま。行の高さは 47px で動かない。`bun run check` 通過（836 → **840 pass** / 0 fail。足したテスト4件）。`docs/design.md` の節の数は 53 → 53。
+
+## 背景
+
+ユーザーの指示（2026-09-20）「あるセリフをクリックすればその時の表情が見れるよね、きっと楽しい」。
+
+**記録側は既に揃っている**: `src/shared/chat-log.ts` の `ChatLogEntry` は
+`speaker: "character"` の側に `expression` を持ち、`chatLogEntries` が `SessionRecord` の
+`speech` からそれを引いている。足りないのは**画面の側**。
+
+`src/browser/features/chat-view/chat-view.tsx` の `ChatView` は立ち絵の表情を
+`session.state.speechExpression`（**いまの最新の1件**）だけから決めており、ログのどの行も
+押せない（`ChatLog` は `<div>` を並べるだけ）。
+
+**仕事の側には前例がある**: `src/shared/turn-speech.ts` の `turnSpeeches` と
+`src/browser/features/character-view/character-view.tsx` が、過去のターンのタブを選ぶと
+そのターンの吹き出しと表情へ遡る（`docs/requirements.md` 4.2）。雑談ビューにはこれが無い。
+
+## 解くべき論点
+
+1. **選んだあとどう戻すか**（同じ行をもう一度押す / 新着で自動的に最新へ戻る / 別の行を
+   押すまで保つ）。仕事側はタブの選択が残る形
+2. **選んでいる行をどう見せるか。** **枠を増やさない**（`docs/design.md` 13.1 原則2）
+3. **利用者の発言の行は押せるか。** `ChatLogEntry` の `user` 側は `expression` を持たないので、
+   押せないのが素直
+4. **選んでいる最中に新着のセリフが来たとき**、立ち絵は選んだ表情のままか、最新へ動くか。
+   T-235 が決めた「下端付近に居たときだけ寄せる」と揃えるのが自然かを見る
+5. **立ち絵の動き（`motion`）まで遡るか。** T-120 が仕事側で同じ問いを持っているので、
+   **ここでは動きを触らず表情だけ**に留めるのが既定（揃えたくなったら T-120 の結論のあとで
+   後続タスクにする）
+
+## やること
+
+1. `chat-view.tsx` に「選んでいるログの行」を状態として持たせ、立ち絵の `expression` を
+   そこから決める（選んでいなければ `speechExpression`）
+2. 論点1〜4を決めて実装する。決めた理由は `evidence` に書く
+3. 立ち絵の alt テキスト（`resolveExpressionLabel` を使っている箇所）も選んだ表情に合わせる
+
+## 完了条件
+
+- 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）で、**過去のセリフを選ぶと
+  立ち絵の表情が変わる**ことを確かめて `evidence` に書く（何件目を選び、どの表情が出たか）
+- **選択を解除したときに最新の表情へ戻る**ことを確かめる
+- **利用者の発言の行を押しても何も起きない**ことを確かめる
+- 選んでいる行が見て分かることを目視で確かめる（どの端末で何が見えたか）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **立ち絵の動き（`motion`）は触らない**（T-120 の決定待ち）
+- 16進の色を `src/browser/styles/theme.css` 以外に書かない
+- **`useEffect` は「React の外と同期する」4類型の範囲**（`docs/coding-standards.md`「React」）。
+  依存配列を手で間引かない
+- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと並行させない
+- **会話の中身を写さない**（`CLAUDE.md`「会話内容の扱い」）
+- コードにタスク番号（`T-` + 3桁）を書かない
