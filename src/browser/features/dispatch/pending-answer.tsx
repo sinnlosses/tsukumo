@@ -230,6 +230,7 @@ function QuestionCard(props: {
                 <span className={styles["question-choice-checkbox-row"]}>
                   <input
                     type="checkbox"
+                    className={styles["question-choice-mark"]}
                     checked={props.selected.includes(option.label)}
                     onChange={() => props.onToggleMulti(option.label)}
                   />
@@ -242,7 +243,7 @@ function QuestionCard(props: {
             <li key={option.label}>
               <button
                 type="button"
-                className={`${styles["question-choice"]}${
+                className={`${styles["question-choice"]} ${styles["question-choice-single"]}${
                   props.selected.includes(option.label) ? ` ${styles["is-selected"]}` : ""
                 }`}
                 onClick={() => props.onSelectSingle(option.label)}

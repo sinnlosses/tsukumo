@@ -224,6 +224,13 @@
   border-color: var(--accent);
   background: var(--surface-accent);
 }
+/* 複数選択のカードは `<label>` なので `.is-selected` が付かない（選んだかどうかは中の
+   チェックボックスが持つ）。単一選択の `.is-selected` と同じ地と枠をここで当て、2つの
+   選択肢が同じ見え方になるようにする（:has は Chromium で動く）。 */
+.question-choice-checkbox:has(:checked) {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+}
 /* チェックボックス版（`<label class="question-choice question-choice-checkbox">`）は
    フォーカスが乗るのは中の `<input type="checkbox">` 自身。カード全体にも輪を出す
    （:has は Chromium で動く。webapp-testing の Chrome もこれで確かめる）。 */
@@ -231,8 +238,73 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* 輪はカードの側だけに出す。印自身にも出ると1件の選択肢に輪が二重に重なり、キーボードの
+   居場所がどちらなのか読めなくなる（カードの輪のほうが大きく、隠れることはない）。 */
+.question-choice-mark:focus-visible {
+  outline: none;
+}
 .question-choice-label {
   font-weight: bold;
+}
+/* 選んだ印。**複数選択と単一選択で同じ骨格を共有する**（2026-09-21 決定）。大きさ・左端・
+   baseline が揃うので2つの選択肢の並びが同じ形になり、四角か丸かだけが「いくつ選べるか」を
+   表す。単一選択は `<button>` で入れ物を足せないため、印はラベルの `::before` で作る。
+   どちらも中身を持たない箱なので baseline は下端になり、ラベルの1行目の文字に揃う。
+   地は surface より暗い ground にして、押せる窪みだとカードの面と区別する。 */
+.question-choice-mark,
+.question-choice-single .question-choice-label::before {
+  box-sizing: border-box;
+  width: 1.05em;
+  height: 1.05em;
+  border: 1px solid var(--rule);
+  background-color: var(--ground);
+}
+.question-choice-mark {
+  appearance: none;
+  flex: 0 0 auto;
+  /* 選んだ印（::before）を中に収めるための基準。 */
+  position: relative;
+  margin: 0;
+  /* em をラベルの文字に合わせる（`<input>` は font を継承しない）。 */
+  font: inherit;
+  border-radius: 0.3em;
+  cursor: pointer;
+}
+.question-choice-single .question-choice-label::before {
+  content: "";
+  display: inline-block;
+  /* .question-choice-checkbox-row の gap と同じ。印とラベルの間を2つで揃える。 */
+  margin-right: 0.5rem;
+  border-radius: 50%;
+}
+/* 印のぶんだけ1行目を左へ吊るす（padding と同じ幅の負の text-indent）。ラベルが折り返した
+   とき、2行目以降がチェックボックス版と同じ位置（印の右）に揃う。 */
+.question-choice-single .question-choice-label {
+  padding-left: calc(1.05em + 0.5rem);
+  text-indent: calc(-1.05em - 0.5rem);
+}
+/* 選ばれている印には中身が入る（四角はチェック、丸は中心の点）。**色を変えるだけにしない** —
+   形が入ったかどうかで選択が分かる。 */
+.question-choice-mark:checked::before {
+  content: "";
+  position: absolute;
+  inset: 0.16em;
+  background-color: var(--accent);
+  clip-path: polygon(13% 45%, 0 60%, 42% 100%, 100% 20%, 85% 5%, 40% 68%);
+}
+.question-choice-single.is-selected .question-choice-label::before {
+  background-image: radial-gradient(circle at center, var(--accent) 0 30%, transparent 32%);
+}
+.question-choice-mark:checked,
+.question-choice-single.is-selected .question-choice-label::before {
+  border-color: var(--accent);
+}
+/* hover は**印の輪郭を太くする**（1px → 2px）。カードの枠の色が変わるだけだと色だけが頼りに
+   なるので、線の太さでも分かるようにする。box-sizing が border-box で大きさは変わらないので、
+   指す先が動かない。 */
+.question-choice:hover .question-choice-mark,
+.question-choice-single:hover .question-choice-label::before {
+  border-width: 2px;
 }
 /* 説明はラベルの右の余りに収め、幅が足りなければ折り返して全文を出す（省略しない。
    2026-09-16 決定。以前は省略記号で切っていたが、途中で切れて読めないとの指摘で全文表示に
