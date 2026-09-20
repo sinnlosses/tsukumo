@@ -3,6 +3,37 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-20 メインビューの先頭スクロールを c 案でタスク化
+
+### 会話から
+
+- じゃあ direction.md のほうも c 案でタスク化してもらっていいかな
+
+→ T-219
+
+（エージェントのドラフト / 承認: 上の発言）。**同日の「起動時のコマンド表示とハイライトの切れ／
+ドラフト4件の採否」では「採否で選ばれず節に残した」と書いたが、そのあと直し方を3案並べて
+説明し、案 c（`scrollIntoView`）で承認を得た。** 採らなかった2案（a: `.main-turns` に overflow を
+持たせる / b: 書き先を親の region に変える）は、狭い画面（≤760px）で領域に定まった高さが無く
+効かないため。理由は T-219 の `## 決まっていること（蒸し返さない）` にある。
+
+#### 当時のドラフト全文
+
+### メインビューの「タブを切り替えたら先頭から読ませる」が効いていない（T-189 の目視中に発見）
+
+`main-view.tsx` は `scrollerRef` を `.main-turns` に付けて `scrollTop = 0` にしているが、
+`.main-turns` は `src/ui/styles/main-view.css` で `display:flex; flex-direction:column` を
+持つだけで **overflow を持たない**。実際にスクロールしているのは親の
+`.layout-region.layout-main`（`src/ui/styles/layout.css` の `overflow-y:auto`）。
+
+実測（偽の駆動、1200x520、ターン3件）: `.main-turns` は `overflowY: visible` で
+`scrollHeight === clientHeight`、親の region は `overflowY: auto` で
+`scrollHeight 304 > clientHeight 275`。つまり `scrollTop = 0` は無害な no-op になっている。
+
+**T-189 による退行ではない**（今回 CSS もスクロール対象も変えていない）。直すなら
+(a) `.main-turns` に overflow を持たせる (b) スクロール対象を親の region に変える の
+どちらかで、どちらもレイアウトの見え方に影響するので判断が要る。
+
 ## 2026-09-20 案を選ぶときの指標（コードの把握のしやすさ）
 
 ### 会話から
