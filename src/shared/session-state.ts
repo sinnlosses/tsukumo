@@ -31,8 +31,14 @@ const MAX_RECENT_FINISHED_TOOLS = 50
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。**過去のやり取りは
  * `buildMainBody` 側のタブ（`MAX_MAIN_VIEW_TURNS`）でさらに絞られる**が、常駐プロセスが
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
+ *
+ * **モードごとに値が違う**（2026-09-20 決定。`docs/requirements.md` 4.9）。雑談の1ターンは
+ * セリフ1〜2件で軽く、仕事と同じ20往復では会話として短すぎるため、雑談だけ100まで持つ。
  */
-const MAX_SESSION_STATE_TURNS = 20
+const MAX_SESSION_STATE_TURNS = {
+  work: 20,
+  chat: 100,
+} satisfies Record<"work" | "chat", number>
 
 /**
  * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は表示側
@@ -257,7 +263,10 @@ export function applySessionEvent(
     case "request":
       return {
         ...state,
-        records: trimToRecentTurns([...state.records, { kind: "request", text: event.text }]),
+        records: trimToRecentTurns(
+          [...state.records, { kind: "request", text: event.text }],
+          state.chatMode,
+        ),
         // 送信した時点で吹き出しを空にする（プレースホルダー「（まだ発話がありません）」に
         // 切り替わる。前のターンの一言が残ったままだと、次のターンに移ったことが画面から
         // 分からない。2026-09-16 決定。以前は前のターンの並びの最後の1件を残していたが、
@@ -488,18 +497,23 @@ function finishTool(
 }
 
 /**
- * 直近 {@link MAX_SESSION_STATE_TURNS} ターンぶんだけを残す。**ターンの境目は `request`**
- * なので、古い `request` から数えて窓の外に出たものをまとめて落とす。
+ * 直近何ターンぶんだけを残す。**ターンの境目は `request`** なので、古い `request` から数えて
+ * 窓の外に出たものをまとめて落とす。窓の広さは `chatMode` で選ぶ
+ * （{@link MAX_SESSION_STATE_TURNS}）。
  */
-function trimToRecentTurns(records: readonly SessionRecord[]): readonly SessionRecord[] {
+function trimToRecentTurns(
+  records: readonly SessionRecord[],
+  chatMode: boolean,
+): readonly SessionRecord[] {
+  const limit = chatMode ? MAX_SESSION_STATE_TURNS.chat : MAX_SESSION_STATE_TURNS.work
   const requestIndexes = records.reduce<readonly number[]>(
     (indexes, record, index) => (record.kind === "request" ? [...indexes, index] : indexes),
     [],
   )
-  if (requestIndexes.length <= MAX_SESSION_STATE_TURNS) {
+  if (requestIndexes.length <= limit) {
     return records
   }
 
-  const cutAt = requestIndexes[requestIndexes.length - MAX_SESSION_STATE_TURNS]
+  const cutAt = requestIndexes[requestIndexes.length - limit]
   return cutAt === undefined ? records : records.slice(cutAt)
 }

@@ -83,9 +83,9 @@
     "loopable": "Y",
     "dependencies": ["T-235"],
     "task": "## 背景\n\n**雑談だけ記録の上限を上げる**（2026-09-20 決定。`docs/requirements.md` 4.9「どこまで遡れるか」）。\n仕事は 20 ターンのまま、**雑談は 100 ターン**を持つ。雑談の1ターンはセリフ1〜2件で軽く、\n20往復は会話としては短いため。\n\nいまは `src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS = 20` が1つだけあり、\n`trimToRecentTurns`（同ファイル）が `request` の数で切っている。**`speech` / `tool` / `detail` は\n単独では切られず、次の `request` のときに一緒に落ちる。**\n\n**実測の裏取り**（2026-09-20）: 雑談モードで 25 回 prompt を投入したところ、画面に残った\n利用者の発言はちょうど 20 件で、最初の7件は記録ごと消えていた。\n\n**復元側には件数の上限が無い**（`src/server/adapter/sdk-driver.ts` の `readRestoredEvents` は\n`getSessionMessages` を丸ごと読む）ので、切っているのは `trimToRecentTurns` だけ。上限を上げれば\nそのぶん復元した履歴も残る。\n\n## やること\n\n1. 上限を**モードごとの値**にする。雑談かどうかは `SessionState` が既に持っている\n   （`set-chat-mode` / `restart` の経路。`src/server/core/session-manager.ts`）ので、\n   **`trimToRecentTurns` がモードを見て閾値を選ぶ**形にする\n2. **定数は2つとも名前を持たせる**（仕事＝20 / 雑談＝100）。`satisfies` で検査し、\n   **なぜ値が違うのかを JSDoc に1行**書く（既存の「常駐プロセスの記録を無限に増やさない」を消さない）\n3. `src/shared/session-state.ts` のテストに、**モードごとに切れる位置が違う**ことを足す\n\n## 完了条件\n\n- `bun run check` が通る（pass 件数の増減を `evidence` に書く）\n- **単体テストで両方の閾値を示す**: 仕事は 20 ターンで切れ、雑談は 100 ターンで切れること\n- 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）で雑談に 25 ターン以上を投入し、\n  **投入した全件が遡って見える**ことを測って `evidence` に書く（T-235 が入っている前提）\n- **仕事のメインビューの挙動が変わっていない**ことを確かめる（タブは `MAX_MAIN_VIEW_TURNS` の\n  ままで、記録の窓とタブの窓は別々の二段構え）\n\n## 注意\n\n- **`MAX_MAIN_VIEW_TURNS`（`src/shared/main-view.ts`）は触らない。** 仕事のタブの窓は別の話\n- **上限そのものを消さない**（`docs/requirements.md` 4.9 で「そのセッションの全部」は採らないと\n  決めている）\n- **会話の中身をテストのフィクスチャに実物で使わない**（`CLAUDE.md`「会話内容の扱い」）\n- コードにタスク番号（`T-` + 3桁）を書かない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`MAX_SESSION_STATE_TURNS` を `{ work: 20, chat: 100 } satisfies …` の1つのテーブルにし、`trimToRecentTurns` が `state.chatMode` で閾値を選ぶ。呼び出し元は `case \\\"request\\\"` の1箇所だけ。`MAX_MAIN_VIEW_TURNS` は触っていない（記録の窓とタブの窓は別々の二段構えのまま）。\\n`bun run check` 通過（835 → **836 pass** / 0 fail。足した単体テスト1件ぶん）。テストは雑談モードで105ターン投入 → 100件残り、先頭が「依頼5」・末尾が「依頼104」。仕事の20ターンを示す既存テストはそのまま通る。\\n実機（`TSUKUMO_DRIVER=fake` / `TSUKUMO_VIEW_PORT=7399`）: 雑談へ切り替えて架空の依頼を27件投入し、ログを最上部まで遡って**27件すべてが残っている**ことを確認（欠落0件。以前は20件で頭が落ちていた）。テストも実機もプレースホルダーの文字列で、実物の会話は使っていない。"
   },
   {
     "id": "T-237",

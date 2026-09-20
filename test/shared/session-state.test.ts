@@ -742,6 +742,23 @@ describe("applySessionEvent", () => {
     expect(requestTexts[0]).toBe("依頼5")
     expect(requestTexts.at(-1)).toBe("依頼24")
   })
+
+  it("雑談モードでは窓が100ターンに広がる（仕事の20ターンより後ろまで残る）", () => {
+    const events: SessionEvent[] = [{ kind: "chat-mode-changed", chat: true }]
+    for (let turn = 0; turn < 105; turn += 1) {
+      events.push({ kind: "request", text: `依頼${String(turn)}` })
+      events.push({ kind: "utterance", text: `雑談${String(turn)}` })
+    }
+
+    const view = apply(...events)
+    const requestTexts = mainViewEntries(view)
+      .filter((entry): entry is { kind: "request"; text: string } => entry.kind === "request")
+      .map((entry) => entry.text)
+
+    expect(requestTexts).toHaveLength(100)
+    expect(requestTexts[0]).toBe("依頼5")
+    expect(requestTexts.at(-1)).toBe("依頼104")
+  })
 })
 
 describe("applySessionEvent（質問の記録）", () => {

@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-21 雑談のときだけ記録の上限を100ターンにした（T-236）
+
+`MAX_SESSION_STATE_TURNS` をモードごとのテーブルにし、`trimToRecentTurns` が `chatMode` で
+閾値を選ぶようにした（仕事20 / 雑談100）。タブの窓（`MAX_MAIN_VIEW_TURNS`）は別のままで、
+記録の窓とタブの窓の二段構えは変えていない。
+
 ### 2026-09-21 雑談ログを上へ遡れるようにした（T-235）
 
 `justify-content: flex-end` が scrollable overflow の向きと噛み合わず上側がクリップされて
