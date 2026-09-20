@@ -451,6 +451,87 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "events")).toEqual([])
   })
 
+  it("起こし直しに失敗したら定型文の理由を返し、常駐プロセスは落ちない", async () => {
+    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: (onEvent, character) => {
+        if (character === undefined) {
+          const stub = createStubDriver()
+          stub.attach(onEvent)
+          return Promise.resolve(stub.driver)
+        }
+        return Promise.reject(new Error("架空の起こし直し失敗"))
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+    })
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-character",
+        commandId: "c-1",
+        name: "fictional",
+      }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.driverFailed })
+
+    // 常駐プロセスは落ちない。subscribe はそのまま動く。
+    const frames: ServerFrame[] = []
+    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    expect(frames).toHaveLength(1)
+  })
+
+  it("キャラクターへの書き込みが例外を投げても定型文の理由を返す", async () => {
+    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    const stub = createStubDriver()
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: (onEvent) => {
+        stub.attach(onEvent)
+        return Promise.resolve(stub.driver)
+      },
+      editCharacter: () => Promise.reject(new Error("架空の書き込み失敗")),
+      createCharacter: () => Promise.resolve(undefined),
+    })
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "clear-portrait",
+        commandId: "c-1",
+        expression: "proud",
+      }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterEditFailed })
+  })
+
+  it("駆動が例外を投げても定型文の理由を返し、常駐プロセスは落ちない", async () => {
+    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: () =>
+        Promise.resolve({
+          prompt: () => {},
+          interrupt: () => Promise.reject(new Error("架空の駆動エラー")),
+          answer: () => true,
+          pending: () => [],
+          setModel: () => Promise.resolve(),
+          setPermissionMode: () => Promise.resolve(),
+          close: () => {},
+        }),
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+    })
+
+    expect(await manager.dispatch(SESSION_ID, { type: "interrupt", commandId: "c-1" })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.driverFailed,
+    })
+
+    // 落ちていないので、次のコマンドも受け付ける。
+    expect(
+      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-2", text: "架空の依頼" }),
+    ).toEqual({ ok: true })
+  })
+
   it("close で駆動を閉じ、購読も外れる", async () => {
     const { manager, stub } = startManagerWithStub()
     const frames: ServerFrame[] = []

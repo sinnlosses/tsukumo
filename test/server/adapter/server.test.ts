@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it, spyOn } from "bun:test"
 
 import {
   createStartupToken,
@@ -216,5 +216,20 @@ describe("startViewServer", () => {
 
     expect((await fetch(`${origin}/character/%2e%2e/package.json`)).status).toBe(404)
     expect((await fetch(`${origin}/character/..%2Fdefault.svg`)).status).toBe(404)
+  })
+
+  it("listen 後に error が起きても閉じない。stderr に1行書いて配信を続ける", async () => {
+    const server = await startView()
+    const stderr = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    try {
+      server.httpServer.emit("error", new Error("架空のエラー"))
+
+      expect(stderr).toHaveBeenCalledWith(expect.stringContaining("架空のエラー"))
+      // プロセスは落ちず、配信も続く。
+      expect((await fetch(server.layoutUrl)).status).toBe(200)
+    } finally {
+      stderr.mockRestore()
+    }
   })
 })
