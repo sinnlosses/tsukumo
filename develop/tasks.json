@@ -105,9 +105,9 @@
     "dependencies": [],
     "summary": "レポートの記法の規約を草案に差し替える（地の文 −19%）",
     "task": "## 背景\n\nT-198 の提案。草案の全文・対応表・突き合わせの結果は\n`docs/research/report-notation-shortening.md` にある（**コードはまだ1行も変えていない**）。\n\n結論は「短くできるのは地の文だけで、**記法の表（17行）は縮まない**」。表はレンダラ\n（`src/ui/features/main-view/markdown/sanitize-schema.ts` / `notation.tsx` / 同梱 mermaid）が\n描けるものの一覧そのもので、行を削ることはレンダラ側の許可リストを同じコミットで削ることを\n意味する（`docs/requirements.md` 4.2）。\n\n草案の形: 前書き2段 → 10か条 → 内容ごとの印（いまの表をそのまま） → 上の条を曲げてよいとき\n（4件） → 送る前に消すもの（5件＋検算1行）。速記は 4322字 → 3588字（−17.0%）、うち地の文が\n2432 → 1968字（−19.1%）。対応表は26項目を **残す20 / 削る3 / 畳む3**。\n\n確かめ済み: 草案が名乗る要素9個は `ALLOWED_TAG_NAMES`（59個）に全部載っていて、class 8個は\n`notation.tsx` で解決されて CSS まで届く。**食い違い0件**（記法を増やしても減らしてもいない）。\n`test/core/report-notation.test.ts` ほかの文字列の検査26件も0件失敗。\n\n## 決まっていること（蒸し返さない）\n\nユーザーが 2026-09-20 に決めた3つを、草案に**足したうえで**差し替える:\n\n- **「送る前に消すもの」の5行を置く**（i-have-adhd の作りの要。再掲になる点は承知のうえ）\n- **チェックリスト（`- [ ]`）を記法の表に足す**（`markdown/task-check.ts` で描けるのに規約が\n  名乗っていない唯一の記法。＋約70字、レンダラ側の変更は不要）\n- **「本文にセリフを書かない」の三重掲載を1箇所へ寄せる**。`src/core/report-notation.ts` の\n  条2を正典にし、`src/core/speech-cadence.ts` は参照1行へ（−90字）。\n  **`persona.md` は別タスク**（キャラクターパックの中身なので T-218）\n\n## やること\n\n1. `docs/research/report-notation-shortening.md` の草案を `src/core/report-notation.ts` に\n   差し替える（上の3つを反映した形で）\n2. `src/core/speech-cadence.ts` の「本文にセリフを書かない」を参照1行に縮める\n3. `test/core/report-notation.test.ts` ほかの文字列の検査が落ちないことを確かめる\n   （草案は同じ集合を名乗るので、テストは1行も直さなくてよいはず。**直さないと通らない\n   ものが出たら、それは集合が変わった合図**なので止めて理由を書く）\n4. 申し送り: T-192 の目視で分かった「脚注は参照と定義を空行を挟まず同じ塊に書いたときだけ\n   成立する」は**草案に入れない**。`src/ui/features/main-view/markdown/split-blocks.ts` の\n   コメントに畳む\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- **目視: 短くなったことではなく「出力が痩せていないこと」**を確かめる。新しい規約で実際に\n  ターンを流し、表・mermaid・`note` / `badge` / `stats` が今までどおり出るか、レポートが\n  結論から始まるかを見て、`evidence` に書く\n\n## 注意\n\n- **`loopable` は `N`。** 受け入れの判定が「新しい規約で出たレポートが痩せていないか」で、\n  これは人が何ターンか見ないと決まらない（事前の承認では解けない）\n- 記法を**増やしても減らしてもいけない**（レンダラの許可リストと1対1）",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 734 pass / 0 fail（テストは1行も直していない）。REPORT_NOTATION_PROMPT 4322→3702字（−14.3%）、うち地の文 2431→1998字（−17.8%）、表は17行→18行（チェックリストを足した）。SPEECH_CADENCE_PROMPT 1296→1275字。\n目視: TSUKUMO_VIEW_PORT=7411 で2つ目を起こし実ターンを2回流した。表3・mermaid 2・note-ng・note-favor・details・dl・chart・stats 4枚・badge の ok/warn/ng がすべて描かれ、両ターンとも結論の見出しから始まった（画像は /tmp。会話が写るのでリポジトリに置かない）。\ndocs/requirements.md 4.2 に 2026-09-20 の決定を1項足した（節の数は 26 のまま）。"
   },
   {
     "id": "T-218",

@@ -1,6 +1,10 @@
 // 書きかけの本文を、**空行を境にした塊へ割る**（`docs/design.md` 6.3）。呼び出し側
 // （`src/browser/features/main-view/report.tsx`）が塊ごとに `Markdown` を独立して描き、変わらない塊は
 // `React.memo` で描き直さない。ここは純粋関数だけを置く（React を import しない）。
+//
+// **塊をまたぐ Markdown の参照は成立しない。** 脚注（`[^1]`）は参照と定義が別の塊に落ちると
+// 記号のまま出るので、**空行を挟まず同じ塊に書いたときだけ**成立する（目視で確認済み）。
+// `src/server/core/report-notation.ts` の規約が脚注を名乗っていないのはこのため。
 
 /**
  * 通してよい HTML（`sanitize-schema.ts`）のうち、**閉じタグが必須で中身を囲む要素**。ここに
