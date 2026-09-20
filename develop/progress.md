@@ -87,13 +87,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 作業ツリーを戻す git・`git add -A` を止める）と、hooks に向かない5件を理由つきで置いた。
 設定ファイルは1つも作っていない（`.claude/` も `~/.claude/settings.json` も無傷）。採否はユーザー待ち。
 
-### 2026-09-20 vendor の3ファイルを npm 依存に移し node_modules から配った（T-200）
-
-`vendor/` を削除し、mermaid / chart.js / highlight.js を `package.json` の依存にした。
-`src/adapter/vendor-asset.ts` が `node_modules` の実ファイルを読み、`/vendor/<名前>` の経路と
-「記法が出たときだけ読む」性質は据え置き（3.3MB の mermaid を束ねに入れない）。版は据え置きで、
-mermaid とテーマ CSS は同梱物とバイト一致。表示時の外部通信ゼロも目視で確認した。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、

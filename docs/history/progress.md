@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 vendor の3ファイルを npm 依存に移し node_modules から配った（T-200）
+
+`vendor/` を削除し、mermaid / chart.js / highlight.js を `package.json` の依存にした。
+`src/adapter/vendor-asset.ts` が `node_modules` の実ファイルを読み、`/vendor/<名前>` の経路と
+「記法が出たときだけ読む」性質は据え置き（3.3MB の mermaid を束ねに入れない）。版は据え置きで、
+mermaid とテーマ CSS は同梱物とバイト一致。表示時の外部通信ゼロも目視で確認した。
+
 ### 2026-09-20 使い捨ての scratchpad/sdk-spike を消した（T-199）
 
 2026-09-11 の SDK スパイク（役目を終えていた）を `scratchpad/` ごと削除した。本体からの
