@@ -75,10 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 起動時の復元は transcript に残る**展開後**の姿（`<command-name>` など）を読むので、複数行になって三角つきで出ていた。`/<name> <args>` の1行に畳んで入力欄から打ったときと見え方を揃えた。メッセージ全体がタグだけのときだけ畳む（壊れた形は素通し）。
 
-### 2026-09-20 サイドバーで選択中の枠が切れるのを直した（T-209）
-
-`.sidebar-block-scroll` に `padding: 4px` を足した。`:focus-visible` の枠が要素の外側 4px まで出るのにスクロール領域の padding が 0 で、上端（キャラクター）と下端（許可モード）の枠が切られていた。
-
 ## 未解決
 
 - **カバレッジの棚卸し（T-222）で、後続タスクの範囲外の気づきが2つ出た。** (1) `test/shared/main-view.test.ts` と `test/browser/features/main-view/main-view.test.tsx` の回帰テスト名に**タスク番号が残っている**（`CLAUDE.md` の「コード・ドキュメントにタスク番号を書かない」に反する）。(2) `test/browser/features/sidebar/activity.test.tsx` の `querySelector(...)` を `toBeDefined()` で見ているassertion は **`null` でも通る**ので事実上効いていない。どちらも消す/埋めるの2件には入っていないので、別に起こすかどうかの判断が要る
