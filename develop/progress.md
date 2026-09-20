@@ -1,6 +1,6 @@
 # 現在の状態
 
-最終更新: 2026-09-20（`/plan-tasks` で起動時のコマンド表示とハイライトの切れを T-208 / T-209 に起こし、承認を得たドラフト3件を T-210〜T-218 に落とした（`src/` の改名の段3・React の見直し6件・レポートの記法の短縮）。`.claude/settings.json` の hooks の案はユーザーが全件見送り。T-195 は決定を焼き込んで `loopable: "Y"` にし、T-196 の依存を T-210 に付け替えた。同日 `/plan-tasks` で `develop/direction.md` の指示（`src/` の構成の組み替え・`scratchpad` と `vendor` の整理・hooks の提案・レポートのチラつき）をT-194〜T-204 に起こし、ドラフト3件は承認を得て T-203 / T-204 と T-188 の本文更新に落とした。指示とタスクの対応表は `docs/history/direction.md` の 2026-09-20。2026-09-18 は `docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
+最終更新: 2026-09-20（`/plan-tasks` で `develop/direction.md` の指示6件を T-229〜T-233 に起こした。エントリポイントの整理2件は同じ関心なので T-229 に1本化し、雑談モードのレビュー4件は T-230〜T-233 へ。対応表は `docs/history/direction.md` の 2026-09-20。同日 `/plan-tasks` で起動時のコマンド表示とハイライトの切れを T-208 / T-209 に起こし、承認を得たドラフト3件を T-210〜T-218 に落とした（`src/` の改名の段3・React の見直し6件・レポートの記法の短縮）。`.claude/settings.json` の hooks の案はユーザーが全件見送り。T-195 は決定を焼き込んで `loopable: "Y"` にし、T-196 の依存を T-210 に付け替えた。同日 `/plan-tasks` で `develop/direction.md` の指示（`src/` の構成の組み替え・`scratchpad` と `vendor` の整理・hooks の提案・レポートのチラつき）をT-194〜T-204 に起こし、ドラフト3件は承認を得て T-203 / T-204 と T-188 の本文更新に落とした。指示とタスクの対応表は `docs/history/direction.md` の 2026-09-20。2026-09-18 は `docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
 原因は `src/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` を呼ぶだけで確認イベントを
 出しておらず、選んだ直後に次のバッチで `state.model` が古い値へ戻って見えていたこと（偽の駆動
 `fake-driver.ts` は最初から `session-info` の再送でこれをやっていたため、目視確認では気づけなかった）。
@@ -82,11 +82,11 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 前段の一覧どおりにテスト1件と assertion 3行を消した。725 → 724 pass、カバレッジは 94.11% funcs / 94.48% lines で変わらず（到達行は減っていない）。
 
-### 2026-09-20 レポートの筆先にミニ立ち絵を添えると決めた（T-115）
-
-`docs/requirements.md` 4.3 の「レポートの上に被らせない」を**ミニ立ち絵に限って**見直した。最終レポートは確定するまで出ない（4.2 の `hideUnsettledReport`）ので筆先が実在しないターンがあるが、**確定した本文も「書き上げていくように見せる」**ことで1本の仕組みにする。文字を足して変換し直す形は採らない（mermaid / Chart.js が未完成のソースで作り直される）——完成した DOM を作り、見せる範囲だけを進めて `Range` で筆先を取る。素材は `character.json` の任意の `mini` で、無ければ `portraits.default` の縮小に落ちる（4.4 に例外を作らない）。上限1.5〜2秒で出し切り、操作で即スキップ、過去のタブと `reduced-motion` では演出しない。2体見えるのは「分身」として受け入れる。`docs/design.md` 6.5 も書き分けた。実装は T-225（演出の土台）と T-226（ミニ立ち絵の追従）。
-
 ## 未解決
+
+- **画像の添付は `docs/requirements.md` 2.2 の除外を覆す方向で決まった**（2026-09-20、ユーザー
+  「覆す。まず形を決める」）。ただし **Agent SDK に画像を渡す道があるかはまだ確かめていない**。
+  T-232 の最初の論点がそれで、**渡す道が無ければ 2.2 の除外はそのまま残して閉じる**
 
 - **カバレッジの棚卸し（T-222）で、後続タスクの範囲外の気づきが2つ出た。** (1) `test/shared/main-view.test.ts` と `test/browser/features/main-view/main-view.test.tsx` の回帰テスト名に**タスク番号が残っている**（`CLAUDE.md` の「コード・ドキュメントにタスク番号を書かない」に反する）。(2) `test/browser/features/sidebar/activity.test.tsx` の `querySelector(...)` を `toBeDefined()` で見ているassertion は **`null` でも通る**ので事実上効いていない。どちらも消す/埋めるの2件には入っていないので、別に起こすかどうかの判断が要る
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、
@@ -143,6 +143,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ## 注意
 
 次のセッションで踏み外しやすい点:
+
+- **雑談モードの実装（T-227 / T-228）は 2026-09-20 時点で作業ツリーに未コミットで残っている**
+  （`src/browser/features/chat-view/`・`src/server/core/chat-manner.ts`・`src/shared/chat-log.ts`
+  と、`layout.tsx` / `session-manager.ts` / `session-launch.ts` ほかの変更）。**T-229〜T-233 の
+  うち4件がこれに依存する**ので、着手前に `doing` と作業ツリーの両方を見る
+  （`CLAUDE.md`「Git運用」「タスク運用」）
 
 - **2026-09-20 に `src/protocol/` → `src/shared/`、`src/ui/` → `src/browser/` へ改名した（T-195）。**
   `develop/tasks.json` の各タスク本文は旧パスのまま（T-196・T-202・T-206〜T-219 など）なので、
