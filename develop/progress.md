@@ -75,13 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `shared` を4つ（`command-suggestion` / `character-definition` / `character-asset` / `expression-choice`）に割り、`mainViewEntries` は既存の `main-view.ts` へ寄せ、`adapter/server.ts` から WebSocket の境界を `session-socket.ts` に出した。`sdk-driver.ts`・`cli.ts`・`session-manager.ts` は概念が1つなので分けていない（理由は tasks.json の evidence）。
 
-### 2026-09-20 中間レポートが畳まれてすぐ開き直すチラつきを直した（T-202）
-
-ターンが進行中のあいだ、いちばん新しいターンの最後のステップの本文を「まとまった資料」と
-判定できたときだけ出す形にし（`hideUnsettledReport`）、出した本文が消えないようにして
-`superseded` の反転を止めた。`docs/requirements.md` 4.2 の「出してから消す」（2026-09-16）は
-同日の決定で覆した。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、

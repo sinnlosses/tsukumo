@@ -1,5 +1,12 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 中間レポートが畳まれてすぐ開き直すチラつきを直した（T-202）
+
+ターンが進行中のあいだ、いちばん新しいターンの最後のステップの本文を「まとまった資料」と
+判定できたときだけ出す形にし（`hideUnsettledReport`）、出した本文が消えないようにして
+`superseded` の反転を止めた。`docs/requirements.md` 4.2 の「出してから消す」（2026-09-16）は
+同日の決定で覆した。
+
 ### 2026-09-20 表情 serious / curious を実装に通した（T-137）
 
 `Expression` 型・`EXPRESSIONS`・`character.json` 3種・`persona.md` 3種に `serious`（きりっ）と
