@@ -14262,3 +14262,339 @@ dispatch.module.css +72行 / pending-answer.tsx はクラス2つ追加のみ（D
   （`docs/requirements.md` 4.3 / `docs/design.md` 6.5）。素材の中身に触る方向へ広げない
 - 16進の色を `src/browser/styles/theme.css` 以外に書かない
 - コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-138
+
+**タスク**: メイン画面とキャラ画面の背景を差し替える仕組みの置き場と受け取り方を決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+背景はパックの持ち物（character.json の background: {image, veil}）で効くのはキャラビューだけ、と決めて docs/design.md に 13.8「背景」を新設（7.1/13.2/13.5/13.6 にも追記）。見出し 52→53、索引は ## のみで追記不要。可読性は覆いの不透明度 veil >= 0.7（既定 0.75）で担保。実測: 0.65 で 4.35 と MIN_CONTRAST 4.5 割れ、0.66 で 4.50、0.70 で 5.18。画像を #ffffff/#000000 と仮定すれば全ピクセル読まずに検算できる。却下: 色の延長のみ（問いの楽しさの出どころが絵。13.2 のつまみが4つ増える）／localStorage（置き場所が二重）／4領域すべて（読む面の地がパック次第、13.1 原則1 と衝突）／canvas で自動調整（走査の経路と測り方の判断が増える）／別経路 POST・枚数上限の引き上げ（6+1+1=8 で収まる）。bun run check 通過（804 pass / 0 fail / 83ファイル）。
+
+## 背景
+
+ユーザーの問い（2026-09-15）「メイン画面、キャラ画面は背景をカスタマイズできたほうが
+楽しいと思ったけどどうかな?」。
+
+**いま背景は色1つだけで、画像は差せない。** 4領域はどれも CSS 変数で塗られている
+（`src/ui/style/layout.css` の `.layout-region { background: var(--surface) }`、
+キャラビューは `src/ui/style/character.css`）。利用者が変えられるのは
+`ground` / `surface` / `ink` の**3色だけ**で、`localStorage` に持ち
+（`src/ui/appearance/appearance-color.ts`）、「見た目」の引き出しから変える
+（`docs/design.md` 13.6 の表）。
+
+**画像を受け取る仕組みはすでに決まっている。** T-123 が「画面から作るキャラクターパック」の
+ために決めた: 書き込み先は `~/.tsukumo/characters/<name>/`、画像は **data URL を既存の
+WebSocket のコマンドに載せて**渡し、上限は 1枚 2 MiB / パック 8 枚 / `maxPayload` 4 MiB
+（`docs/design.md` 7.1）。背景もこれに乗れるかが最初の論点。
+
+## 解くべき論点
+
+- **背景は「パックのもの」か「利用者のもの」か。** `docs/design.md` 13.6 は画面から
+  変えられるものを**寿命**で割り、置き場所でその違いを表している。キャラごとの背景
+  （精霊なら森、など）なら `character.json` 側＝パックのもの。キャラに依らない好みなら
+  `localStorage`＝「見た目」の引き出し。**両方を持つと置き場所が二重になる**ので、
+  どちらかに寄せるか、寄せない理由を決める
+- **画像の受け取りを T-123 の仕組みに乗せるか。** 乗せるなら書き込み先
+  （`~/.tsukumo/characters/<name>/` は「パックのもの」を前提にした置き場）と枚数の上限を
+  背景のぶん見直す必要がある。乗せないなら別の経路を1つ増やすことになる
+- **色だけで済ませる案も比べる**（背景画像ではなく、領域ごとの色・グラデーションだけを
+  変えられるようにする）。**いまの3色の仕組みの延長で済み、可読性も壊れにくい**ので、
+  採らない理由を示せないなら有力
+- **文字が読めることをどう守るか。** `docs/design.md` 13.2 はコントラストの下限
+  （`MIN_CONTRAST = 4.5`、`appearance-color.ts`）を守る規則を持ち、色は境界で検証して
+  弾いている。**画像にはこの検算が効かない。** 覆いを1枚挟む・不透明度の下限を決める、など
+  どう担保するかを決める
+- **どの領域に効かせるか。** 問いはメイン画面とキャラ画面の2つ。サイドバーと入力欄も
+  同じ扱いにするのか、しないのか
+
+## やること
+
+1. 上の論点を、`src/ui/appearance/appearance-color.ts` / `src/ui/style/layout.css` /
+   `src/ui/style/character.css` / `docs/design.md` 13.2・13.5・13.6・7.1 の現物を読んで詰める
+2. 候補を**並べて比べ、1つを選ぶ**。却下した案は理由とともに残す（T-123 の
+   `evidence` と同じ書き方）
+3. 決めた内容を `docs/design.md` に記録する。**13.6 の表に行を足す**（何を・寿命は・どこで）。
+   画像を受け取るなら 7.1 との関係も書く
+4. **調べた結果「色の延長で足りる」「持たせる場所を1つに決められない」と分かったら、
+   その理由を `evidence` に書いて閉じてよい**（無理に画像対応へ進めない）
+
+## 完了条件
+
+- 背景を「パックのもの」「利用者のもの」のどちらにするかが決まり、`docs/design.md` 13.6 の
+  表に行が足されている（据え置きの結論なら、その判断と理由が 13 章に1行ある）
+- 画像を扱うなら、**可読性をどう担保するか**が検証可能な言葉で書かれている
+  （「覆いの不透明度は 0.6 以上」のような数で。「読みやすく」では通さない）
+- 却下した案とその理由が `evidence` に残っている
+- `bun run check` が通る
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/design.md` が編集の前後で合う
+
+## 注意
+
+- **コードは変えない。** 実装は後続タスク
+- **素材（背景画像）はリポジトリに同梱しない**（`docs/requirements.md` 2.2「素材は利用者が
+  自分で用意する」）
+- **サイドバーは3区画のまま**（`docs/design.md` 13.6 末尾）。常設の操作子を増やさない
+  （13.1 原則2）
+- `docs/` の節の索引の罠に注意（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `loopable` は `"N"`。**パックのものか利用者のものかは好みの問題で、コードから導けない**
+
+## T-139
+
+**タスク**: 決めた形で背景の差し替えを実装する
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-138 / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（835 pass / 0 fail / 84ファイル。804 → 835 で +31）。T-138 が決めた形（`character.json` の `background: {image, veil}` / 効くのはキャラビューだけ / 覆い 0.7 以上・既定 0.75）だけを実装し、検証は `src/shared/character-background.ts` に封じた。\n目視（Playwright + Chrome 1400x900、`TSUKUMO_DRIVER=fake` / `HOME` をスクラッチへ）: キャラビューだけ背景が入れ替わり、計算値は覆い 0.75・下限 0.70 で実効 max = 0.75、`background-size: cover` / `position: 50% 100%` / `border-radius: 0`。吹き出しの文字は読めた。\n既定（背景なし）は変更前後のピクセル比較で、差は過去の吹き出しの矩形だけ（13.8 が指示した `opacity: 0.5` → `color-mix(ink 55%)` の変更そのもの。旧 4.20 → 新 4.84）。「消す」を押した後は変更後の既定状態と差分0。
+
+## 背景
+
+T-138 で決めた形で背景の差し替えを作る。**T-138 が「据え置き」で閉じたなら、このタスクは
+やることが無いのでその旨を `evidence` に書いて閉じる。**
+
+差し込み先は CSS 変数で、既存の仕組みがそのまま手本になる:
+
+- 4領域の塗りは `src/ui/style/layout.css` の `.layout-region`（`var(--surface)`）、
+  キャラビューは `src/ui/style/character.css`
+- 利用者の設定は `src/ui/appearance/appearance-color.ts` が `localStorage` に持ち、
+  **既定の16進は `src/ui/style/theme.css` の `:root` にしか無い**（「上書きしない」は
+  `undefined` で表す）。引き出しの画面は `src/ui/appearance/appearance.tsx`
+- パック側の値は `character.json` → `src/protocol/character.ts` の
+  `toCharacterInfo` → `CharacterInfo` → `character-changed` イベントで届く
+  （`accent` / `outfitAccents` と同じ道）
+
+## やること
+
+1. T-138 が `docs/design.md` に書いた結論を読み、**そこに書かれた形だけ**を作る
+2. 値の受け取りを1箇所に封じ込める。**外部由来の値（`localStorage` / `character.json` /
+   画像）は境界で検証してから CSS 変数に流す**（`docs/coding-standards.md`、13.5）
+3. 画像を扱うなら、T-138 が決めた可読性の担保（覆い・不透明度の下限など）を一緒に入れる
+4. 実機で目視する（メイン画面・キャラ画面それぞれ、背景を差した状態と既定の状態）
+
+## 完了条件
+
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- **検証の単体テストがある**: 壊れた値・範囲外の値が来たら既定に落ちること
+  （`appearance-color.ts` の既存テストと同じ粒度）
+- 実機で**背景が差し替わること**と、**差し替えた状態でレポートの文字が読めること**を
+  目視して `evidence` に書く（T-138 が数で書いた下限を満たしているか）
+- 既定（何も差していない状態）の見た目が変わっていないことを目視して `evidence` に書く
+
+## 注意
+
+- **`theme.css` 以外に16進の色を書かない**（コーディング規約）
+- **素材（背景画像）はリポジトリに同梱しない**（`docs/requirements.md` 2.2）
+- **常駐プロセスは描画1回の失敗で落ちない。** 画像が読めないときは背景なしで描き続ける
+  （描画ループの中に `try`/`catch` を散らさない）
+- 検証は `TSUKUMO_DRIVER=fake TSUKUMO_OPEN_VIEW=0 TSUKUMO_VIEW_PORT=<空きポート>` で
+  本物の claude を起こさずに立ち上げられる
+- コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-218
+
+**タスク**: persona.md の「本文にセリフを書かない」を参照1行に縮める
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-217 / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（835 pass / 0 fail。文面だけの変更でテストは増減なし）。3パックとも「本文にセリフを書かない」に `（正典は「レポートの記法」の条2）` を添え、`### 本文の書き方` 節の実体を落とした（tsukumo −402字 / local −232字 / tsukumo-spirit −151字）。言い回しは `speech-cadence.ts` の参照行に揃えた。\n落とした中身が条2に載っていることを突き合わせた: 「記法で包んでも役割はセリフ」と「本文に置いてよい例外は末尾の『お願い』1つだけ」が `report-notation.ts` の条2、`note-favor` の書き方が同ファイルの表にある。\n目視（`TSUKUMO_VIEW_PORT=7411` で2つ目を起こし、本物の claude で1ターン）: 吹き出しに tsukumo の口調のセリフが出て、レポートは条2の要約1文だけで語りかけ・締めが混ざらなかった。画像はスクラッチへ（会話が写るためリポジトリに置かない）。`characters/local/` は gitignore 対象。
+
+## 背景
+
+T-198 の提案のうち、キャラクターパック側に残る分。「本文にセリフを書かない」は
+`src/core/report-notation.ts` / `src/core/speech-cadence.ts` / `characters/*/persona.md` の
+3つに実体があり、**どれも正典を名乗っていない**。T-217 で `report-notation` の条2を正典に
+決めるので、`persona.md` 側は参照1行に縮める（−180字）。
+
+`persona.md` は**キャラクターパックの中身**（`characters/tsukumo/persona.md` ほか）で、
+コードではない（`CLAUDE.md` 原則4: キャラクターの中身をコードに書かない）。分けてあるのは
+そのため。
+
+## やること
+
+1. `characters/` 配下の各 `persona.md` から「本文にセリフを書かない」の実体を外し、
+   `report-notation` を正典として指す1行に置き換える
+2. **パックが3つある**（`characters/local` / `characters/tsukumo` / `characters/tsukumo-spirit`）
+   ので、どれを直すかを見てから決める（中身が違うなら同じ文面で揃えない）
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視: tsukumo を起こし、セリフが吹き出しに出て、**本文（レポート）に語りかけの文が
+  混ざらない**ことを1ターン分確かめ、`evidence` に書く
+
+## 注意
+
+- T-217 が `report-notation` 側を正典にした**後**に行う（先にやると参照先が無い）
+- キャラクターの人格・口調そのものは変えない
+
+## T-221
+
+**タスク**: UI をカタログで見る仕組みの案を比べ、推奨を1つ出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`docs/research/ui-catalog.md`（289行）に案5つと4観点の比較表を書き、**推奨は案2**（`capture-catalog.ts` に「撮る前の操作」を持たせ、台本の見本を厚くする）。Storybook は採らない（直接3 + 推移で新規126、optional 込み222。368 に対し +34%〜+60%。Vite が焼く class 名が `bun build` と別の綴りになり、カタログの絵が配る成果物でなくなる）。\n実測: `notation` の場面は `[data-region=\"main\"]` が clientHeight 503 / scrollHeight 1358 で **63% が1枚に入らず**、mermaid の図と chart.js のグラフは一度も撮れていなかった。`notation.tsx` の12 class のうち台本が出すのは4つだけ。未撮影の6件は Playwright の4操作で撮れた。\n`bun run check` 通過（835 pass / 0 fail）。`git status --porcelain -- src test` は空、`package.json` / `bun.lock` も無変更（決めるだけでパッケージは入れていない）。要点は `develop/direction.md` の `## エージェントのドラフト` に積んだ（承認はユーザー）。
+
+## 背景
+
+ユーザーの指示（2026-09-20）:「そろそろ storybook など、UIの状況をカタログで見ることが
+できるものを作ってもいいかもね。」
+
+**カタログの仕組みは部分的にすでにある。** `scripts/capture-catalog.ts` が Playwright で
+tsukumo を空きポート（`TSUKUMO_VIEW_PORT=0`・`TSUKUMO_DRIVER=fake`）で起こし、
+`test/fixture/fake-session.json` の8場面（`report` / `permission` / `question-multi` /
+`question-pair` / `question-long` / `notation` / `narration` / `long-tool`）を
+1400x900 と 720x900 で撮って `/tmp/tsukumo-catalog/index.html` に並べる。1枚だけ撮って
+要素の位置と大きさを数値で読むのは `scripts/capture-view.ts`。
+
+**足りないのは部品の単位。** いまの経路はページを丸ごと撮るので、部品ひとつの状態違い
+（選択肢の長いラベル・答え待ちの箱・`note` の4種・`badge` の3種）を見るには台本に場面を
+足すしかない。`src/browser/` の `.tsx` は35個で、共有の部品は `src/browser/components/`
+（`portrait.tsx` と `select.tsx`）の2つだけ。残りは `features/` の下にある。
+
+ユーザーは 2026-09-20 に「Storybook を入れる」「capture-catalog を広げる」ではなく
+**「まず調べて決める」**を選んだ。
+
+## 決まっていること（蒸し返さない）
+
+- **このタスクは決めるだけで、実装しない**（`docs/research/` に提案書を書くところまで。
+  2026-09-20 の `docs/research/architecture-placement.md` → その実装タスク、と同じ形）
+- 新しい依存を入れる案を推す場合でも、**ここでは入れない**。承認はユーザーが別途行う
+  （`CLAUDE.md`「`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る」）
+
+## 解くべき論点
+
+- **何を見たいのか。** 部品の状態違いか、画面の状態違いか、レポートの記法の見本か。
+  いまの `capture-catalog.ts` が満たしている範囲はどこまでで、どこから足りないのか
+- **Storybook は組み立てをもう1系統増やす。** このリポジトリの束ねは
+  `src/adapter/bundle.ts` の `bun build` で、Storybook の既定は Vite。CSS Modules・
+  vendor script の読み込み（`src/browser/features/main-view/markdown/vendor-script.ts`）・
+  TanStack Query の Provider を、カタログ側でどう用意するか
+- **「絵は目視で確かめる」方針との関係**（`docs/architecture.md`「手で確かめること」、
+  `CLAUDE.md`「ブラウザに出た絵は自動テストで守らない」）。カタログは目視の道具のままか、
+  自動の比較に踏み込むのか
+- 置き場所（`scripts/` か `src/browser/` の下か）と、**撮った画像をリポジトリに置かない**原則
+
+## やること
+
+1. `capture-catalog.ts` と `capture-view.ts` を実際に走らせ、何が撮れて何が撮れないかを
+   実測で確かめる（推測で書かない）
+2. 案を**3つ以上**並べて比べる。最低限この3つを含める: (a) Storybook を入れる、
+   (b) `capture-catalog.ts` に部品を名指しして描く経路を足す、(c) 部品を並べるだけの軽い
+   ページを自前で作る。比べる観点は**「増える依存の数と種類」「`bun build` との相性」
+   「部品の状態を1つ足すときの手数」「目視の手順（`docs/architecture.md`）への効き方」**
+3. 推奨を1つ選んで `docs/research/ui-catalog.md` に書く。要点を
+   `develop/direction.md` の `## エージェントのドラフト` に追記する
+4. **調べた結果「いまの `capture-catalog.ts` で足りている」と分かったら、案を作らずに
+   その理由と実測の根拠を提案書と `evidence` に書いて閉じる**
+
+## 完了条件
+
+- `docs/research/ui-catalog.md` がある。案が3つ以上、上の4観点の比較表つきで、推奨が1つ
+  明示されている
+- 新しい依存を推す案には、**増える devDependency の名前と数**、`bun build` との関係が
+  具体的に書いてある
+- **`src/` と `test/` に差分が無い**（`git status --porcelain -- src test` が空。決めるだけ）
+- `bun run check` が通る
+
+## 注意
+
+- **パッケージを入れない**（`bun add` しない）。入れるかどうかはこのタスクの結論であって
+  前提ではない
+- 撮った画像はリポジトリに置かない（`docs/architecture.md`「手で確かめること」）
+
+## T-229
+
+**タスク**: cli.ts をエントリポイントに徹させ、起動の段取りを main.ts へ割る
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-227 / **passes**: True
+
+**evidence**:
+
+`src/cli.ts` 400 → **57行**（引数・環境変数の読み出し・終了コードだけ）。段取りは `main.ts` 112 / `current-character.ts` 128 / `view-delivery.ts` 129 / `session-start.ts` 132 へ。境目は**可変の値の持ち主ごと**に引いた（`characterPack`+`packs` / `viewAssets`+開いているタブ / `sessionId` がそれぞれ1ファイルの外に出ない）。置き場は `src/` 直下で、`test/architecture.test.ts` の `layerOf` を「`src/` 直下 = 配線層」に広げた（`server/` 直下は従来どおり throw）。\n`bun run check` 通過（835 pass / 0 fail / 84ファイル。一時 worktree で測った before と増減なし）。節の数は architecture 10 / design 53 / coding-standards 31 で前後一致。README のディレクトリ図も追随させた。\n目視（`bun run start`、`TSUKUMO_VIEW_PORT=7391`）: `orca tab list --json` に該当 URL のタブが1件（`loadError: null`）、子に `claude --output-format stream-json`、`/ws` の最初のフレームが `hello`。Playwright で立ち絵・メインビュー・サイドバーが描けていた。終了は PID 指定。
+
+## 背景
+
+ユーザーの指示（2026-09-20）2件。「cli.ts はエントリポイントだと思うんだけど、エントリポイント
+としての役割以外も果たしていそう?」「ソースの流れが把握しづらくなっていて、エントリポイントから
+どのように処理されるか、処理のまとまりごとに整理されていると嬉しい」。
+
+**現物**: `src/cli.ts` は407行、import 31件（`server/adapter` 15・`server/core` 10・`shared` 5）。
+`main()` の中で次を順に行っている — `--help` の返し / `readConfig` / `resolveViewPort` /
+`buildUiBundle` / 偽の駆動の台本の読み込み / `createOrcaHost` / キャラクターパックの一覧と初期選択と
+`characterEvent`・`applyCharacterEdit`・`applyCharacterCreate` の3つのクロージャ / 起動トークン /
+`startOnResolvedPort` / `createSessionManager` と `createSessionLaunch` の配線 /
+`attachSessionSocket` / `watchUiSource` / 終了時の後始末 / タブを開く。
+加えてファイルの末尾に `pushRefresh` / `startDriver` / `findPackSessionToResume` /
+`stopSessionOnExit` / `openLayoutView` / `announce` の6関数と `USAGE` を持つ。
+
+**手本**（ユーザーが挙げた `/Users/sinnlos/ghq/github.com/sinnlosses/helm-yadokari`）:
+`src/index.ts` が16行（`loadEnvConfig()` を読んで `run()` を呼び、`FatalError` を仕分けて
+`process.exit` するだけ）、`src/main.ts` が144行（`run` → `runProcess` → `runPipeline` の3段）、
+個々の段取りは `src/steps/<段取り>/<段取り>.ts` に分かれている。
+
+**層の制約**: `CLAUDE.md` 原則2 で **`src/cli.ts` は `shared` / `server/core` / `server/adapter` /
+`browser` のすべてを import してよい唯一の場所**。`core → adapter` は禁止で
+`test/architecture.test.ts` が落とす。**割った先のファイルも同じ辺の制限に掛かる**ので、
+どこに置くかで import できるものが変わる。
+
+## 決まっていること（蒸し返さない）
+
+- **helm-yadokari の形を採る**（2026-09-20、ユーザーの決定）。`cli.ts` は引数・環境変数・終了
+  コードだけを持ち、起動の段取りは `main.ts` と名前の付いた単位へ割る
+- 割り方（どの単位に割るか・どこに置くか）はこのタスクで設計してよい
+
+## 解くべき論点
+
+1. **割った先をどの層に置くか。** `cli.ts` 以外は `core → adapter` の禁止に掛かるので、
+   `adapter` を呼ぶ段取りは `cli.ts` と同じ立場の場所に要る。`src/` 直下に `main.ts` を置いて
+   段取りもそこに並べるのか、配線用の置き場を1つ作るのか。`test/architecture.test.ts` の
+   許した辺を足す必要があるなら、その形もここで決める
+2. **段取りの境目をどこに引くか。** 候補は「使い方の文面」「起動時の前提チェック（ポート・
+   組み立て・台本）」「キャラクターパックの持ち回り」「ビューサーバ」「セッション」
+   「見張りと後始末」。**名前が概念になること**（`CLAUDE.md` 原則5。`setup.ts` / `wiring.ts` の
+   ような置き場所を名前にしたファイルを作らない）
+3. **持ち回っている可変の値を誰が持つか。** `characterPack` / `packs` / `viewAssets` の3つが
+   `let` で `main()` のスコープに置かれ、クロージャ越しに読み書きされている。割ったあとで
+   引数として渡すのか、1つの入れ物にまとめるのか、持ち主を1ファイルに閉じるのか
+4. **どこまで分けるか。** 開くファイルの数が増えすぎると逆に追えなくなる
+   （`CLAUDE.md`「案が2つ以上あるときは、書いたあとのコードを読む人が把握しやすいほうを選ぶ」の
+   3つの物差しで判断し、選んだ理由を `evidence` に1行で書く）
+
+## やること
+
+1. 上の論点を詰め、`src/cli.ts` を**引数の受け取り・環境変数の読み出し・終了コードの返し方だけ**の
+   ファイルに縮める
+2. 起動の段取りを `src/main.ts` と名前の付いた単位へ割る。**振る舞いは変えない**（純粋な組み替えで、
+   機能を足すのも削るのもこのタスクの外）
+3. `docs/architecture.md`「各ファイルの責務」の表と、`docs/design.md`「2. 全体構成」
+   「3. 動きの流れ」を新しい形に直す（全体図の正典は `docs/design.md` 側）
+4. `test/architecture.test.ts` の許した辺を、割った先の配置に合わせて直す
+5. **調べて `cli.ts` 以外に置けない段取りが出てきたら、その段取りだけ `cli.ts` に残し、
+   残した理由を `evidence` に書く**（全部を割り切ることを目的にしない）
+
+## 完了条件
+
+- `src/cli.ts` が引数の受け取り・環境変数の読み出し・終了コードの返し方だけを持ち、それ以外は
+  import して呼ぶだけになっている（行数の before/after を `evidence` に書く。before は407行）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+- `test/architecture.test.ts` が新しい配置で通る
+- `bun run start` で実際に起動し、**タブが開いてセッションが起こる**ことを確かめて `evidence` に
+  書く（組み替えなので振る舞いが変わっていないことの裏取り）
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/architecture.md docs/design.md` が
+  編集の前後で合う
+
+## 注意
+
+- **T-227 が `src/cli.ts` を触っている**（雑談の `systemPrompt` の組み立て）。**T-227 が `done` に
+  なってから着手する**
+- `Bun.*` の固有APIに寄せない（`node:` プレフィックスの標準API）
+- コードにタスク番号（`T-` + 3桁）を書かない
