@@ -16,7 +16,7 @@
 // 他の機能を知らないので、画面の入れ替えを機能の側に持たせると機能どうしの import になる。
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { type ReactElement } from "react"
+import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
 import {
@@ -39,22 +39,23 @@ import "./styles/theme.css"
 
 /**
  * 出している画面を選ぶ（`location.hash`。docs/design.md 13.6）。**会話の画面は外さず
- * `hidden` で隠す** — 入力欄の下書き・選んでいるターン・スクロール位置はどれも部品の
- * ローカル状態なので、外すと戻ったときに失われる（`<SessionProvider>` はこの上に居るので
- * 会話そのものは隠れている間も進み続ける）。
+ * `<Activity mode="hidden">` で隠す** — 入力欄の下書き・選んでいるターン・スクロール位置は
+ * どれも部品のローカル状態なので、外すと戻ったときに失われる（`<SessionProvider>` はこの上に
+ * 居るので会話そのものは隠れている間も進み続ける）。`hidden` 属性と違い描画も止まるので、
+ * キャラクター画面を開いている間の再描画が減る。
  */
 function Root(): ReactElement {
   const screen = useScreen()
   return (
     <>
-      <div hidden={screen !== "conversation"}>
+      <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
         <Layout
           main={<MainView />}
           sidebar={<Sidebar />}
           character={<CharacterView />}
           dispatch={<Dispatch />}
         />
-      </div>
+      </Activity>
       {screen === "character" ? <CharacterScreen /> : null}
       {screen === "character-create" ? <CharacterCreate /> : null}
     </>
