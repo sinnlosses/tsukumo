@@ -79,10 +79,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `docs/requirements.md` 4.3 の「レポートの上に被らせない」を**ミニ立ち絵に限って**見直した。最終レポートは確定するまで出ない（4.2 の `hideUnsettledReport`）ので筆先が実在しないターンがあるが、**確定した本文も「書き上げていくように見せる」**ことで1本の仕組みにする。文字を足して変換し直す形は採らない（mermaid / Chart.js が未完成のソースで作り直される）——完成した DOM を作り、見せる範囲だけを進めて `Range` で筆先を取る。素材は `character.json` の任意の `mini` で、無ければ `portraits.default` の縮小に落ちる（4.4 に例外を作らない）。上限1.5〜2秒で出し切り、操作で即スキップ、過去のタブと `reduced-motion` では演出しない。2体見えるのは「分身」として受け入れる。`docs/design.md` 6.5 も書き分けた。実装は T-225（演出の土台）と T-226（ミニ立ち絵の追従）。
 
-### 2026-09-20 カバレッジを見て消す候補と埋める穴を確定させた（T-222）
-
-`docs/research/test-coverage.md` に、消す候補（テスト1件＋assertion 3行）と埋める穴6件（エラー方針の分岐4・要件が明示したフォールバック2）、埋めないと決めた境界の一覧を書いた。カバレッジは 94.11% funcs / 94.48% lines。実施は後続の2件。
-
 ## 未解決
 
 - **カバレッジの棚卸し（T-222）で、後続タスクの範囲外の気づきが2つ出た。** (1) `test/shared/main-view.test.ts` と `test/browser/features/main-view/main-view.test.tsx` の回帰テスト名に**タスク番号が残っている**（`CLAUDE.md` の「コード・ドキュメントにタスク番号を書かない」に反する）。(2) `test/browser/features/sidebar/activity.test.tsx` の `querySelector(...)` を `toBeDefined()` で見ているassertion は **`null` でも通る**ので事実上効いていない。どちらも消す/埋めるの2件には入っていないので、別に起こすかどうかの判断が要る
