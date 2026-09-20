@@ -146,6 +146,8 @@ describe("expressionChoices", () => {
         thinking: undefined,
         proud: undefined,
         flustered: undefined,
+        serious: undefined,
+        curious: undefined,
       },
       speechMarker: undefined,
       portraits: {
@@ -153,6 +155,8 @@ describe("expressionChoices", () => {
         thinking: "thinking.svg",
         proud: undefined,
         flustered: undefined,
+        serious: undefined,
+        curious: undefined,
       },
       outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
     }
@@ -170,6 +174,16 @@ describe("expressionChoices", () => {
 
   it("定義が無いときは default だけを返す（受け付ける表情名が空にならない）", () => {
     expect(expressionChoices(undefined)).toEqual([{ name: "default", label: "default" }])
+  })
+
+  // 表情を足しても（EXPRESSIONS 側に serious / curious が増えても）、そのパックの定義に
+  // 立ち絵もラベルも無ければ選択肢に出ない（docs/requirements.md 4.3。default だけは必ず残る）。
+  it("新しく足した表情（serious / curious）も、立ち絵とラベルのどちらも無ければ選択肢に出ない", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.png" } }),
+    )
+
+    expect(expressionNames(expressionChoices(definition))).toEqual(["default"])
   })
 })
 
@@ -191,6 +205,8 @@ describe("resolvePortraitUrl", () => {
     thinking: undefined,
     proud: undefined,
     flustered: undefined,
+    serious: undefined,
+    curious: undefined,
   }
 
   it("該当する表情があればそれを使う", () => {
@@ -201,12 +217,19 @@ describe("resolvePortraitUrl", () => {
     expect(resolvePortraitUrl(portraitsWithoutThinking, "thinking")).toBe("default.svg")
   })
 
+  it("新しく足した表情（serious / curious）も、立ち絵が無ければ default に落ちる", () => {
+    expect(resolvePortraitUrl(portraitsWithoutThinking, "serious")).toBe("default.svg")
+    expect(resolvePortraitUrl(portraitsWithoutThinking, "curious")).toBe("default.svg")
+  })
+
   it("default も無ければ undefined（立ち絵なしにフォールバック）", () => {
     const empty = {
       default: undefined,
       thinking: undefined,
       proud: undefined,
       flustered: undefined,
+      serious: undefined,
+      curious: undefined,
     }
 
     expect(resolvePortraitUrl(empty, "thinking")).toBeUndefined()

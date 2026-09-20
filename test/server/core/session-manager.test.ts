@@ -79,6 +79,8 @@ const CHARACTER_EVENT: SessionEvent = {
     thinking: undefined,
     proud: undefined,
     flustered: undefined,
+    serious: undefined,
+    curious: undefined,
   },
   outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
   packs: [{ name: "fictional", label: "架空の精霊" }],

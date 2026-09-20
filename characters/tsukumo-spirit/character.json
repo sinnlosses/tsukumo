@@ -8,7 +8,9 @@
     "default": "通常",
     "thinking": "思案",
     "proud": "どや顔",
-    "flustered": "あわあわ"
+    "flustered": "あわあわ",
+    "serious": "真顔",
+    "curious": "きょとん"
   },
   "portraits": {
     "default": "default.svg",

@@ -31,6 +31,8 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     thinking: undefined,
     proud: undefined,
     flustered: undefined,
+    serious: undefined,
+    curious: undefined,
   },
   outfitAccents: {
     default: undefined,
@@ -127,6 +129,8 @@ describe("CharacterView", () => {
           thinking: "/character/thinking.png",
           proud: "/character/proud.png",
           flustered: undefined,
+          serious: undefined,
+          curious: undefined,
         },
       },
     })
@@ -260,6 +264,8 @@ describe("CharacterView", () => {
             thinking: undefined,
             proud: undefined,
             flustered: "/character/flustered.png",
+            serious: undefined,
+            curious: undefined,
           },
         },
       },

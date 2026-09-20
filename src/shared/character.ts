@@ -281,6 +281,8 @@ function portraitUrls(
     thinking: portraitUrl(definition.portraits.thinking, cacheKey),
     proud: portraitUrl(definition.portraits.proud, cacheKey),
     flustered: portraitUrl(definition.portraits.flustered, cacheKey),
+    serious: portraitUrl(definition.portraits.serious, cacheKey),
+    curious: portraitUrl(definition.portraits.curious, cacheKey),
   }
 }
 
@@ -324,6 +326,8 @@ const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
   thinking: undefined,
   proud: undefined,
   flustered: undefined,
+  serious: undefined,
+  curious: undefined,
 }
 
 const EMPTY_OUTFIT_ACCENTS: Readonly<Record<Outfit, string | undefined>> = {
@@ -399,6 +403,8 @@ function toExpressionLabels(source: unknown): Readonly<Record<Expression, string
     thinking: stringField(record, "thinking"),
     proud: stringField(record, "proud"),
     flustered: stringField(record, "flustered"),
+    serious: stringField(record, "serious"),
+    curious: stringField(record, "curious"),
   }
 }
 
@@ -409,6 +415,8 @@ function toPortraits(source: unknown): Readonly<Record<Expression, string | unde
     thinking: stringField(record, "thinking"),
     proud: stringField(record, "proud"),
     flustered: stringField(record, "flustered"),
+    serious: stringField(record, "serious"),
+    curious: stringField(record, "curious"),
   }
 }
 

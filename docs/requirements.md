@@ -662,9 +662,13 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
     合わせて `speak` の引数で選ぶ**
   - 語の系統が違う同梱パック（`characters/tsukumo-spirit` / `characters/local`。
     通常 / 思案 / どや顔 / あわあわ）のラベルは**真顔** / **きょとん**
-  - **立ち絵が無い表情は選択肢に出ない**（`src/shared/character.ts` の `availableExpressions`、
-    `speak` の enum を作る `src/server/core/session-driver.ts`）。落とし先の `default` があるので
-    **絵が揃っていないパックでも壊れない**。つまり足しても、絵を用意したパックだけが使える
+  - **選択肢に出るのは、立ち絵かラベルのどちらかが定義にある表情**（`src/shared/character.ts` の
+    `expressionChoices`。ここから `speak` の enum を作るのは `src/server/adapter/sdk-driver.ts` の
+    `speakExpressionEnum`）。**`default` は定義に無くても必ず出る**（未知の表情の落とし先なので、
+    これが無いと受け付けられる名前が1つも無くなる）
+  - つまり**ラベルだけ足したパックでも、その表情を選べる**（立ち絵は `default` に落ちる。
+    `characters/README.md`）。**絵が揃っていないパックでも壊れない**のはこのため。
+    選択肢から外れるのは、立ち絵もラベルも定義に無い表情だけ
   - **見送ったもの**: 「照れ」「うとうと」など。**`persona.md` にも 4.3 にも場面が書かれて
     いないものは足さない**（「うとうと」は下の「長いアイドルのふるまいは作らない」とも当たる）
 
@@ -719,7 +723,8 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 
 | 場所                            | 中身                                                       |
 | ------------------------------- | ---------------------------------------------------------- |
-| `characters/tsukumo-spirit/`    | 既定のキャラクター。**このリポジトリのために自作**したもの |
+| `characters/tsukumo/`           | 既定のキャラクター。**このリポジトリのために自作**したもの |
+| `characters/tsukumo-spirit/`    | もう1体。同じく**このリポジトリのために自作**したもの      |
 | `characters/local/`             | 利用者が自分で用意した素材。**`.gitignore` 済み**          |
 | `~/.tsukumo/characters/<name>/` | **画面から作ったパック**（2026-09-15 決定）                |
 
@@ -735,7 +740,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 
 **定義ファイル**（`character.json`）は次を持つ:
 
-- `portraits`: 表情（`default` / `thinking` / `proud` / `flustered`）→ 画像ファイル。
+- `portraits`: 表情（4.3 の6つ）→ 画像ファイル。
   **「あるものだけ」でよく、見つからない表情は `default` に落ちる。** 1枚から始められる
 - `outfitAccents`: 衣装（`default` / `light` / `normal` / `heavy`）→ 差し色。
   表情×衣装の全組み合わせぶんの画像を要求しないための仕組み

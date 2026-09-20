@@ -89,6 +89,8 @@ describe("characterChangedEvent", () => {
         thinking: `/character/thinking.svg?v=${cacheKey}`,
         proud: undefined,
         flustered: undefined,
+        serious: undefined,
+        curious: undefined,
       },
       outfitAccents: {
         default: "#b8c7ff",

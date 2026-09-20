@@ -27,6 +27,8 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     thinking: "/character/thinking.svg?v=fictional@1",
     proud: undefined,
     flustered: undefined,
+    serious: undefined,
+    curious: undefined,
   },
   outfitAccents: {
     default: "#b8c7ff",

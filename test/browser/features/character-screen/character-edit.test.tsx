@@ -29,6 +29,8 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     thinking: "/character/thinking.png?v=fictional@1",
     proud: "/character/proud.png?v=fictional@1",
     flustered: undefined,
+    serious: undefined,
+    curious: undefined,
   },
   outfitAccents: {
     default: "#b8c7ff",
@@ -81,16 +83,18 @@ function waitForDebounce(): Promise<void> {
 }
 
 describe("CharacterEdit", () => {
-  it("4つの表情ぶんの立ち絵の口と、4つの衣装ぶんの差し色を出す", () => {
+  it("6つの表情ぶんの立ち絵の口と、4つの衣装ぶんの差し色を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
-    // ラベルはキャラクター定義の言葉。定義に無い表情（flustered）は表情名がそのまま出る。
-    // 立ち絵がある表情は「差し替える」、無い表情は「選ぶ」（見える字は短く、どの表情かは
-    // 読み上げに残す）。
+    // ラベルはキャラクター定義の言葉。定義に無い表情（flustered / serious / curious）は
+    // 表情名がそのまま出る。立ち絵がある表情は「差し替える」、無い表情は「選ぶ」
+    // （見える字は短く、どの表情かは読み上げに残す）。
     expect(screen.getByLabelText("通常を差し替える")).toBeDefined()
     expect(screen.getByLabelText("作業中を差し替える")).toBeDefined()
     expect(screen.getByLabelText("どや顔を差し替える")).toBeDefined()
     expect(screen.getByLabelText("flusteredを選ぶ")).toBeDefined()
+    expect(screen.getByLabelText("seriousを選ぶ")).toBeDefined()
+    expect(screen.getByLabelText("curiousを選ぶ")).toBeDefined()
     expect(screen.getByLabelText("既定")).toBeDefined()
     expect(screen.getByLabelText("軽装（haiku）")).toBeDefined()
     expect(screen.getByLabelText("通常装備（sonnet）")).toBeDefined()
@@ -119,8 +123,8 @@ describe("CharacterEdit", () => {
     expect(screen.queryByRole("button", { name: "flusteredを消す" })).toBeNull()
     const pick = screen.getByLabelText("flusteredを選ぶ")
     expect(pick.closest("label")?.textContent).toContain("選ぶ")
-    // 立ち絵そのものは無いので、点線の枠の空きが代わりに出る。
-    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(1)
+    // 立ち絵そのものは無いので、点線の枠の空きが代わりに出る（flustered / serious / curious の3枠）。
+    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(3)
   })
 
   it("消す口を押すと clear-portrait を dispatch する", () => {
