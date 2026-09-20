@@ -76,6 +76,11 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  * `interim && superseded` のときだけ `turn.tsx` が畳んで描く。`report` を持たないステップでも
  * 立つが、畳むかどうかの判定に使うのは中間レポートだけ。
  *
+ * `final` は、その本文が**最終レポート**（そのやり取りで最後の、中間でない本文）かどうか
+ * （`markFinalReport`）。地を1段上げる印（`.main-step.is-final`）で、書き上げる演出を掛ける
+ * 相手を選ぶのにも使う（`src/browser/features/main-view/turn.tsx`）。**ラベルを出すかどうかは
+ * これだけでは決まらない**（`MainViewTurn.hasInterimReport` と組み合わせる）。
+ *
  * `firstLine` は `report` の先頭行（`report` が undefined なら undefined）。畳んだときの
  * `<summary>` に出す（`extractFirstLine`）。
  *
@@ -92,6 +97,7 @@ export type MainViewStep = {
   readonly report: string | undefined
   readonly interim: boolean
   readonly superseded: boolean
+  readonly final: boolean
   readonly firstLine: string | undefined
   readonly actions: readonly MainViewAction[]
 }
@@ -105,6 +111,12 @@ export type MainViewTurn = {
   readonly id: number
   readonly request: string | undefined
   readonly steps: readonly MainViewStep[]
+  /**
+   * このやり取りに中間レポートが1つ以上あるか（`markFinalReport`）。**最終レポートのラベルを
+   * 出す条件**で、本文が1つしか無いやり取りでは「最終」が何も区別しないので出さない
+   * （`src/browser/features/main-view/turn.tsx`）。
+   */
+  readonly hasInterimReport: boolean
   /** 上限を超えて落とした**画面に出す**記録の件数。0 のときは何も落としていない。 */
   readonly droppedCount: number
 }
@@ -145,6 +157,7 @@ export function mainViewTurns(
     )
     .map((turn) => keepOnlyInterimReports(turn))
     .map((turn) => markSupersededSteps(turn))
+    .map((turn) => markFinalReport(turn))
     .map((turn) => limitTurnEntries(turn))
 }
 
@@ -194,6 +207,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
         id: current.id,
         request: current.request,
         steps: current.steps,
+        hasInterimReport: false,
         droppedCount: 0,
       })
     }
@@ -213,6 +227,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
         report: entry.markdown,
         interim: false,
         superseded: false,
+        final: false,
         firstLine: undefined,
         actions: [],
       })
@@ -229,6 +244,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
               report: undefined,
               interim: false,
               superseded: false,
+              final: false,
               firstLine: undefined,
               actions: [entry],
             },
@@ -383,6 +399,27 @@ function extractFirstLine(markdown: string): string {
   return text.length <= MAX_STEP_SUMMARY_LENGTH
     ? text
     : `${text.slice(0, MAX_STEP_SUMMARY_LENGTH)}…`
+}
+
+/**
+ * **最終レポート**（そのやり取りで最後の、中間でない本文）に印を立て、同じやり取りに中間レポートが
+ * あるかどうかを畳む。**引くのは1箇所だけ**にして、描く側（`src/browser/features/main-view/turn.tsx`）が
+ * 「最後の、中間でない本文」の条件を持たずに済むようにする。
+ *
+ * 2つに分かれているのは、**地の段とラベルで条件が違う**ため（`docs/design.md` 13.2）:
+ * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りだけに
+ * 出す——本文が1つしか無いやり取りでは「最終」が何も区別せず、内容を持たない行になる。
+ *
+ * `interim` の判定（{@link keepOnlyInterimReports}）も `superseded`（{@link markSupersededSteps}）も
+ * 変えない。
+ */
+function markFinalReport(turn: MainViewTurn): MainViewTurn {
+  const finalId = turn.steps.findLast((step) => step.report !== undefined && !step.interim)?.id
+  return {
+    ...turn,
+    steps: turn.steps.map((step) => ({ ...step, final: step.id === finalId })),
+    hasInterimReport: turn.steps.some((step) => step.interim),
+  }
 }
 
 /**

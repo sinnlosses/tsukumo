@@ -346,6 +346,40 @@ describe("mainViewTurns（追い越された中間レポートを畳む印。T-1
   })
 })
 
+describe("mainViewTurns（最終レポートの印）", () => {
+  const interim = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
+
+  it("最後の、中間でない本文に final が立つ", () => {
+    const turns = mainViewTurns(
+      [request("依頼"), detail(interim), edit("src/a.ts"), detail("できたよ")],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.final)).toEqual([false, true])
+  })
+
+  it("中間レポートには立たない（本文がそれしか無くても）", () => {
+    const turns = mainViewTurns([request("依頼"), detail(interim), edit("src/a.ts")], false)
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.interim)).toEqual([true])
+    expect(steps.map((step) => step.final)).toEqual([false])
+  })
+
+  it("中間レポートがあるやり取りだけ hasInterimReport が立つ（ラベルを出す条件）", () => {
+    const withInterim = mainViewTurns(
+      [request("依頼"), detail(interim), edit("src/a.ts"), detail("できたよ")],
+      false,
+    )
+    const alone = mainViewTurns([request("依頼"), detail("できたよ")], false)
+
+    expect(withInterim[0]?.hasInterimReport).toBe(true)
+    expect(alone[0]?.hasInterimReport).toBe(false)
+    expect(alone[0]?.steps.map((step) => step.final)).toEqual([true])
+  })
+})
+
 describe("mainViewTurns（ターンが進行中のあいだは、確定していない本文を出さない）", () => {
   const material = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
 

@@ -92,6 +92,13 @@ h2.turn-request {
   background: var(--ground);
   border-style: dashed;
 }
+/* 最終レポート（そのやり取りの最後の、中間でない本文。`src/shared/main-view.ts` の
+   `MainViewStep.final`）。中間（沈む）・本文（基準）・最終（浮く）の3段で、**色だけに頼らずに**
+   並べたときの上下を付ける（docs/design.md 13.2）。ラベルを出すかどうかは turn.tsx が決める
+   （中間レポートのあるやり取りだけ）。 */
+.main-step.is-final {
+  background: var(--surface-raised);
+}
 /* 追い越された中間レポートは `<details>` で畳む（`src/browser/features/main-view/turn.tsx` の `Step`）。
    地・枠は `.main-step.is-interim` のままで、開閉できることだけ `summary` のカーソルで示す
    （`.turn-request > summary` と同じ手口。新しい色は作らない）。 */
@@ -112,11 +119,13 @@ h2.turn-request {
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 0.75rem;
 }
+/* カードは「浮く」塊（docs/design.md 13.2）。地を親のステップと同じ surface にしていたときは
+   枠しか効いていなかった。 */
 .detail-block .report-card {
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: var(--surface);
+  background: var(--surface-raised);
 }
 /* 数の要約（KPI タイル）。**数そのものが結論になる値**（件数・前後の差）を、地の文に埋めずに
    並べる塊。`.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より
@@ -168,17 +177,24 @@ h2.turn-request {
 .detail-block .report-badge-ng {
   color: var(--state-ng);
 }
+/* 結論の塊（`note`）。**いちばん読ませたい印がいちばん弱かった**（引用と同じ灰色の3px の縦罫で、
+   地の差も無かった。2026-09-21 の実測）ので、縦罫を ink まで上げ、地を「浮く」段にする。
+   引用（blockquote）は目立たせないための印なので今のまま。docs/design.md 13.2。 */
 .detail-block .report-note {
   margin: 0.5rem 0;
   padding: 0.5rem 0.75rem;
-  border-left: 3px solid var(--ink-quiet);
-  background: var(--surface);
+  border-left: 3px solid var(--ink);
+  background: var(--surface-raised);
 }
+/* 注意・問題の塊は、**既にある状態の色で地を1割だけ染める**（新しい色相は足さない。
+   docs/design.md 13.2）。1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。 */
 .detail-block .report-note-warn {
   border-left-color: var(--state-warn);
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 10%);
 }
 .detail-block .report-note-ng {
   border-left-color: var(--state-ng);
+  background: color-mix(in srgb, var(--surface), var(--state-ng) 10%);
 }
 /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと。
    `docs/glossary.md`「お願い」）。**状態の3色は増やさない**（13.1 原則5）ので、report-note-warn /
@@ -355,6 +371,11 @@ h2.turn-request {
   padding: 0.3rem 0.5rem;
   text-align: left;
 }
+/* 見出し行は表の中の「浮く」塊（docs/design.md 13.2）。太字は Markdown の th の既定で付くが、
+   **行そのものが見出しだと分かる**のは地の段のほう。 */
+.detail-block th {
+  background: var(--surface-raised);
+}
 /* **どのセルも最低4全角は1行で出す。** これが無いと `width: 100%` の表は列の数だけ詰まって
    セルが1〜2字ずつの折り返しになり（実測: 12列で最小41px）、上の `overflow-x` も働かない
    （表が縮んで器に収まってしまうため）。`em` はセル自身の字の大きさ基準で、全角の字は 1em
@@ -390,7 +411,9 @@ h2.turn-request {
 .detail-block kbd,
 .detail-block samp,
 .detail-block :not(pre) > code {
-  background: var(--ground);
+  /* 機械の名前は本文の上に**浮かせる**（docs/design.md 13.2）。ground に落とすと本文との比が
+     1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（2026-09-21 の実測）。 */
+  background: var(--surface-raised);
   font-family: var(--font-mono);
   padding: 0 0.25rem;
   border-radius: 0.25rem;

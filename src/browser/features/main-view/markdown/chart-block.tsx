@@ -31,12 +31,12 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
           return
         }
 
-        // Chart.js の既定は明るい背景向けで、目盛りの文字（`#666`）と線
-        // （`rgba(0,0,0,0.1)`）がこの配色では読めない。**データ系列の色は Chart.js 内蔵の
-        // colors プラグインが割り当てる**ので、ここで寄せるのは文字と線だけ（値は
-        // `main-view.module.css` に合わせてある）。
-        Chart.defaults.color = "#b9c0d0"
-        Chart.defaults.borderColor = "#3a4256"
+        // Chart.js の既定は明るい背景向けで、目盛りの文字も目盛り線もこの配色では読めない。
+        // **データ系列の色は Chart.js 内蔵の colors プラグインが割り当てる**ので、ここで寄せるのは
+        // 文字と線だけ。**色は書かずにトークンの実効値を読んで渡す**（16進を持ってよいのは
+        // `src/browser/styles/theme.css` だけ。docs/design.md 13.2）。
+        Chart.defaults.color = resolveColor(canvas, "--ink-quiet")
+        Chart.defaults.borderColor = resolveColor(canvas, "--rule")
 
         // JSON.parse の失敗もまとめて拾いたいので、あえて戻り値は使わない。
         void new Chart(canvas, JSON.parse(props.spec))
@@ -57,4 +57,18 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
       <canvas ref={canvasRef} />
     </div>
   )
+}
+
+/**
+ * カスタムプロパティの実効値（`rgb(...)` / `rgba(...)`）。**`getComputedStyle` からカスタム
+ * プロパティを直接読むと `color-mix(...)` の式のまま返る**（式が色になるのは色のプロパティに
+ * 載ったときだけ）ので、いったん要素の `color` に載せてから読み戻す。Chart.js は受け取った
+ * 文字列を canvas の色として使うので、式のままでは渡せない。
+ */
+function resolveColor(element: HTMLElement, property: string): string {
+  const before = element.style.color
+  element.style.color = `var(${property})`
+  const resolved = getComputedStyle(element).color
+  element.style.color = before
+  return resolved
 }
