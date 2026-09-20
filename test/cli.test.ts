@@ -3,6 +3,15 @@ import { spawnSync } from "node:child_process"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
 import {
+  CHARACTER_ENV_NAME,
+  DRIVER_ENV_NAME,
+  FAKE_SCENE_ENV_NAME,
+  NEW_SESSION_ENV_NAME,
+  OPEN_VIEW_ENV_NAME,
+  VIEW_PORT_ENV_NAME,
+  WATCH_UI_ENV_NAME,
+} from "../src/server/core/config.ts"
+import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../src/server/core/port-resolution.ts"
@@ -25,9 +34,25 @@ import {
 
 const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname
 
+/**
+ * CLI が読む環境変数（名前は `src/server/core/config.ts` が持つ）。**引き継がずに落とす**
+ * ——tsukumo が起こした claude の中でテストを走らせると、その tsukumo 自身の設定が spawn 先へ
+ * 漏れて結果が変わる（`TSUKUMO_VIEW_PORT` を渡して起こした環境では、既定ポートを前提にした
+ * 下のテストが「明示指定」の経路に落ちて20秒待たされた）。渡すのは各テストが明示した分だけ。
+ */
+const CLI_ENV_NAMES: ReadonlySet<string> = new Set([
+  VIEW_PORT_ENV_NAME,
+  CHARACTER_ENV_NAME,
+  OPEN_VIEW_ENV_NAME,
+  DRIVER_ENV_NAME,
+  FAKE_SCENE_ENV_NAME,
+  NEW_SESSION_ENV_NAME,
+  WATCH_UI_ENV_NAME,
+])
+
 function runCliToExit(args: readonly string[], env: Readonly<Record<string, string>>) {
   const inherited = Object.entries(process.env).flatMap(([key, value]) =>
-    value === undefined ? [] : [[key, value] as const],
+    value === undefined || CLI_ENV_NAMES.has(key) ? [] : [[key, value] as const],
   )
 
   return spawnSync("bun", ["run", ENTRY, ...args], {
