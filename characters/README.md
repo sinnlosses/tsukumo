@@ -91,6 +91,7 @@ characters/
     "proud": "どや顔",
     "flustered": "あわあわ"
   },
+  "mini": "書いている様子に添える小さい画像",
   "outfitAccents": {
     "default": "#b8c7ff",
     "light": "#a8e6c0",
@@ -117,6 +118,10 @@ characters/
   コード側が名前で直接参照するので、他の表情名のように「あるものだけ」で済ませられない。
   かつては `working`（ツールの実行中に自動で切り替える先。いまの `thinking`）も必須だったが、
   その根拠は自動の上書きを撤去した 2026-09-17 に失効し、必須から外した
+- **`mini` はミニ立ち絵の素材**（レポートを書き上げていくあいだ、筆先に添って出る小さい1体。
+  `docs/requirements.md` 4.3）。**書かなくてよい**——無ければ `portraits.default` を縮めて
+  出す。本文の行の高さの2倍まで小さくなるので、顔が分かる構図の絵を別に用意したいときだけ
+  足す。表情では変わらない1枚
 - **`outfitAccents` は衣装（実行中のモデル）ごとの差し色。** `light` = haiku /
   `normal` = sonnet / `heavy` = opus（`docs/requirements.md` 4.3）
 

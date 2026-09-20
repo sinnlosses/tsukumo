@@ -191,6 +191,14 @@ export type SessionState = {
    * と違って `request` での巻き戻しは要らない）。まだ一度も失敗していなければ undefined。
    */
   readonly lastToolFailureAt: number | undefined
+  /**
+   * 雑談モードに入っているか（`docs/requirements.md` 4.9）。入っている間はレポートを出さず、
+   * メインビューが立ち絵と会話のログになる（`docs/design.md` 13.7）。
+   *
+   * **源は `chat-mode-changed` だけ。** 切り替えは駆動の起こし直しなので、起こし直したあとに
+   * サーバから流れ直す（起こし直しで状態が初期値へ戻るため）。
+   */
+  readonly chatMode: boolean
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -215,6 +223,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
+  chatMode: false,
 }
 
 /**
@@ -361,12 +370,15 @@ export function applySessionEvent(
           accent: event.accent,
           expressions: event.expressions,
           portraits: event.portraits,
+          mini: event.mini,
           outfitAccents: event.outfitAccents,
           speechMarker: event.speechMarker,
           editable: event.editable,
         },
         characterPacks: event.packs,
       }
+    case "chat-mode-changed":
+      return { ...state, chatMode: event.chat }
   }
 }
 

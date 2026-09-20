@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-20 筆先に添うミニ立ち絵を出した（T-226）
+
+`stores/brush-tip.ts` の筆先を読む `MiniPortrait` を `features/main-view/` に置き、行の高さの2倍・
+不透明度 0.45 で筆先の右に立たせた（追従は `transform` の 0.12s の遷移。**調整箇所は
+`mini-portrait.module.css` の4変数だけ**）。素材は `character.json` の任意の `mini` で、
+無いパックは `portraits.default` に落ちる。
+
 ### 2026-09-20 レポートを書き上げていくように見せる演出を作った（T-225）
 
 完成した DOM のまま、文字の塊は `Range` から取った筆先まで `clip-path` で見せ、図・グラフの塊は

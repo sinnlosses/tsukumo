@@ -27,6 +27,13 @@ export type CharacterInfo = {
   readonly accent: string | undefined
   readonly expressions: readonly ExpressionChoice[]
   readonly portraits: Readonly<Record<Expression, string | undefined>>
+  /**
+   * ミニ立ち絵の URL（`/character/<file>`。レポートの筆先に添う1体。
+   * docs/requirements.md 4.3）。**定義に `mini` が無ければ `portraits.default` に落として
+   * 持つ**ので、読む側は「あるかどうか」だけを見れば足りる（縮小するのは画面側）。
+   * `default` も無いパックでは undefined（ミニ立ち絵そのものが出ない）。
+   */
+  readonly mini: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /** {@link CharacterDefinition.speechMarker} をそのまま持つ（畳み込みが行頭マーカーに使う）。 */
   readonly speechMarker: string | undefined
@@ -89,12 +96,15 @@ export type CharacterInfoSource = {
  */
 export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
   const definition = source.definition
+  const cacheKey = characterAssetCacheKey(source.pack, source.revision)
+  const portraits = portraitUrls(definition, cacheKey)
   return {
     pack: source.pack,
     name: definition?.name,
     accent: definition?.accent,
     expressions: expressionChoices(definition),
-    portraits: portraitUrls(definition, characterAssetCacheKey(source.pack, source.revision)),
+    portraits,
+    mini: portraitUrl(definition?.mini, cacheKey) ?? portraits.default,
     outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
     speechMarker: definition?.speechMarker,
     editable: source.editable,

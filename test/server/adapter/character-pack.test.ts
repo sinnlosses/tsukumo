@@ -92,6 +92,8 @@ describe("characterChangedEvent", () => {
         serious: undefined,
         curious: undefined,
       },
+      // 定義に mini が無いパックなので、ミニ立ち絵は portraits.default に落ちる。
+      mini: `/character/default.svg?v=${cacheKey}`,
       outfitAccents: {
         default: "#b8c7ff",
         light: undefined,
@@ -261,6 +263,18 @@ describe("readCharacterPackFile", () => {
     const file = readCharacterPackFile(readCharacterPack(dir), "default.svg")
 
     expect(file?.contentType).toBe("image/svg+xml; charset=utf-8")
+    expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
+  })
+
+  it("character.json の mini（ミニ立ち絵）も同じ経路で配れる", () => {
+    writeFileSync(
+      join(dir, "character.json"),
+      JSON.stringify({ portraits: { default: "default.svg" }, mini: "mini.svg" }),
+    )
+    writeFileSync(join(dir, "mini.svg"), PLAUSIBLE_SVG)
+
+    const file = readCharacterPackFile(readCharacterPack(dir), "mini.svg")
+
     expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
   })
 

@@ -170,6 +170,36 @@ describe("toCharacterInfo", () => {
     expect(info?.portraits.default).toBe("/character/default.svg")
   })
 
+  it("mini があればその URL、無ければ portraits.default に落ちる（縮小して使う）", () => {
+    const withMini = parseCharacterDefinition(
+      JSON.stringify({ mini: "mini.png", portraits: { default: "default.svg" } }),
+    )
+    const withoutMini = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.svg" } }),
+    )
+
+    expect(
+      withMini === undefined
+        ? undefined
+        : toCharacterInfo({
+            definition: withMini,
+            pack: "fictional",
+            revision: "2",
+            editable: true,
+          }).mini,
+    ).toBe("/character/mini.png?v=fictional%402")
+    expect(
+      withoutMini === undefined
+        ? undefined
+        : toCharacterInfo({
+            definition: withoutMini,
+            pack: "fictional",
+            revision: "2",
+            editable: true,
+          }).mini,
+    ).toBe("/character/default.svg?v=fictional%402")
+  })
+
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
     const info = toCharacterInfo({
       definition: undefined,
@@ -184,6 +214,7 @@ describe("toCharacterInfo", () => {
     expect(info.speechMarker).toBeUndefined()
     expect(info.expressions).toEqual([{ name: "default", label: "default" }])
     expect(info.portraits.default).toBeUndefined()
+    expect(info.mini).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()
     expect(info.editable).toBe(false)
   })

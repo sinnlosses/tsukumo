@@ -1,0 +1,32 @@
+/* 筆先に添うミニ立ち絵の置き方（`src/browser/features/main-view/mini-portrait.tsx`）。
+   立ち絵そのものの中身は `src/browser/components/portrait.module.css`。
+
+   **筆先の座標はビューポート基準**（`src/browser/stores/brush-tip.ts`）なので position: fixed で
+   そのまま置ける。レポートの領域は overflow-y: auto だが、祖先に transform / filter が無いので
+   fixed はそれに切られない（切られるようになったら、ここが領域の中で迷子になる合図）。 */
+.mini-portrait {
+  /* 大きさ・薄さ・追従の間合い（2026-09-20 のユーザーの決定）。**この4つが唯一の調整箇所**。
+     --mini-portrait-height: 本文の行の高さの2倍（`--font-body` × `--line-height-body` × 2）。
+     --mini-portrait-opacity: 地の文が透けて読める薄さ（分身であることの印でもある）。
+     --mini-portrait-gap: 筆先と立ち絵のあいだの余白（書いたばかりの文字に被せない）。
+     --mini-portrait-follow-duration: 遅れの目安。**毎フレーム引き直される遷移**なので、
+       この長さがそのままばねの時定数になる（長くすると重く、短くすると張り付く）。 */
+  --mini-portrait-height: calc(var(--font-body) * var(--line-height-body) * 2);
+  --mini-portrait-opacity: 0.45;
+  --mini-portrait-gap: 0.4rem;
+  --mini-portrait-follow-duration: 0.12s;
+
+  position: fixed;
+  top: 0;
+  left: var(--mini-portrait-gap);
+  z-index: 2;
+  height: var(--mini-portrait-height);
+  opacity: var(--mini-portrait-opacity);
+  /* 本文の上に重なるので、選択もクリックも素通りさせる（読む邪魔をしない）。 */
+  pointer-events: none;
+  transition: transform var(--mini-portrait-follow-duration) linear;
+}
+/* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。 */
+.mini-portrait-body {
+  height: 100%;
+}

@@ -23,6 +23,7 @@ const FIXTURE_CHARACTER: CharacterInfo = {
     serious: undefined,
     curious: undefined,
   },
+  mini: undefined,
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
   speechMarker: undefined,
   editable: false,

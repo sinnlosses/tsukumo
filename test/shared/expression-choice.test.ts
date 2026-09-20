@@ -81,6 +81,7 @@ describe("expressionChoices", () => {
         serious: undefined,
         curious: undefined,
       },
+      mini: undefined,
       outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
     }
 

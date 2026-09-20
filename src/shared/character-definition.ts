@@ -37,6 +37,12 @@ export type CharacterDefinition = {
    */
   readonly accent: string | undefined
   readonly portraits: Readonly<Record<Expression, string | undefined>>
+  /**
+   * ミニ立ち絵の素材のファイル名（レポートの筆先に添う1体。docs/requirements.md 4.3）。
+   * **任意**で、無いパックは `portraits.default` の縮小に落ちる（4.4「あるものだけでよい」に
+   * 例外を作らない）。表情では変わらないので `portraits` とは別の1件で持つ。
+   */
+  readonly mini: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
 }
 
@@ -103,6 +109,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     expressions: toExpressionLabels(value.expressions),
     speechMarker: typeof value.speechMarker === "string" ? value.speechMarker : undefined,
     portraits: toPortraits(value.portraits),
+    mini: typeof value.mini === "string" ? value.mini : undefined,
     outfitAccents: toOutfitAccents(value.outfitAccents),
   }
 }

@@ -188,8 +188,8 @@ export type CharacterAssetFile = {
 }
 
 /**
- * `/character/<file>` が配ってよい1件を読む。**character.json の `portraits` に載っている
- * ファイル名だけ**を許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
+ * `/character/<file>` が配ってよい1件を読む。**character.json の `portraits` と `mini` に
+ * 載っているファイル名だけ**を許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
  * `..` を含む要求や定義に無い名前は自然に undefined になる）。呼び出し側
  * （src/server/adapter/server.ts）はこの結果をそのまま配るか、undefined なら404にする。
  */
@@ -210,13 +210,18 @@ export function readCharacterPackFile(
   return content === undefined ? undefined : { contentType, content }
 }
 
-/** character.json の `portraits` に載っているファイル名の一覧（重複なし）。 */
+/**
+ * character.json の `portraits` と `mini` に載っているファイル名の一覧（重複なし）。
+ * **ミニ立ち絵も同じ経路（`/character/<file>`）で配る**ので、ここに入れないと 404 になる。
+ */
 function characterPackFileNames(pack: CharacterPack): readonly string[] {
   if (pack.definition === undefined) {
     return []
   }
 
-  const fileNames = Object.values(pack.definition.portraits).filter(isDefined)
+  const fileNames = [...Object.values(pack.definition.portraits), pack.definition.mini].filter(
+    isDefined,
+  )
   return [...new Set(fileNames)]
 }
 

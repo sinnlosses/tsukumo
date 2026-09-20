@@ -52,6 +52,12 @@ describe("parseCharacterDefinition", () => {
     expect(definition?.outfitAccents.default).toBeUndefined()
   })
 
+  it("任意の mini（ミニ立ち絵の素材）を読む。無ければ undefined", () => {
+    expect(parseCharacterDefinition(JSON.stringify({ mini: "mini.png" }))?.mini).toBe("mini.png")
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.mini).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ mini: 3 }))?.mini).toBeUndefined()
+  })
+
   it("expressions（表情名 → ラベル）と speechMarker を読む", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
 

@@ -48,6 +48,7 @@ function characterEventOf(pack: Pack): SessionEvent {
       serious: undefined,
       curious: undefined,
     },
+    mini: undefined,
     outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
     packs: [{ name: pack.name, label: pack.name }],
   }

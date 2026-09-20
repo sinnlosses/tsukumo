@@ -15,6 +15,7 @@ import { useEffect, useRef, type ReactElement } from "react"
 import { useMainViewTurns } from "../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import styles from "./main-view.module.css"
+import { MiniPortrait } from "./mini-portrait.tsx"
 import { TurnTabs } from "./turn-tabs.tsx"
 import { Turn } from "./turn.tsx"
 
@@ -59,6 +60,9 @@ export function MainView(): ReactElement {
       {activeTurn !== undefined && (
         <Turn turn={activeTurn} newest={activeTurn.id === newestTurnId} key={activeTurn.id} />
       )}
+      {/* 筆先に添うミニ立ち絵。**ビューポート基準に置く**（`position: fixed`）ので、ここは
+          「レポートを出す場所と一緒に現れて消える」ことだけを決めている。 */}
+      <MiniPortrait />
     </div>
   )
 }
