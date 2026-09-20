@@ -3,6 +3,403 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-20 起動時のコマンド表示とハイライトの切れ／ドラフト4件の採否
+
+### ユーザーから
+
+- /Users/sinnlos/ghq/github.com/sinnlosses/tsukumo/スクリーンショット 2026-09-20 11.10.42.png を見てほしい。赤枠で囲んだ部分を確認して、改善してくれる?
+  - tsukumo 起動時のみ、コマンドが色んなタグに囲まれて表示される。入力画面から打ったときは/clearのように/のみなので統一感がなく、起動時も同様に/clearのような表示が良い
+  - キャラクターを選択したときのハイライトが上部分だけ切れている。許可モードの下部分もおそらく同じ事象が発生する
+
+→ コマンドの表示: T-208 / ハイライトの切れ: T-209
+
+登録時に直し方を確認し、「スクロール領域に余白を足す」を選んだ（T-209 の
+`## 決まっていること（蒸し返さない）` に焼き込んである）。
+
+### エージェントのドラフト（承認を得た分）
+
+承認: 「今回タスク化するものを選んで」への回答で「React の見直し17件（再描画・メモ化）、
+レポートの記法の規約を短くする、src/ の置き場所の改名（protocol→shared 等）」を選択。
+`.claude/settings.json` の案は同じ回で「タスク化する」を選んだあと、中身を見て
+「全部不要で。auto mode に任せる。」「特にいらない」となった。
+
+| ドラフト | タスク |
+| --- | --- |
+| `src/` の置き場所の名前を揃える（T-194 の提案。提案書は `docs/research/architecture-placement.md`） | 段1・段2: T-195（本文を更新）/ 段3: T-210。段4と `main.tsx` の分は**やらない** |
+| `src/ui/` を react-best-practices に当てた結果（T-197。全文は下） | T-211（状態の配り）/ T-212（memo と1回計算）/ T-213（`<Activity>`）/ T-214（getComputedStyle）/ T-215（仕切りのドラッグ）/ T-216（localStorage の版） |
+| レポートの記法の規約を短くする案（T-198 の提案。提案書は `docs/research/report-notation-shortening.md`） | T-217 / `persona.md` の分: T-218 |
+| `.claude/settings.json` の hooks / rules（T-201 の提案。全文は下） | **タスクにしない**（下記） |
+
+ユーザーの回答（登録時に聞いた分。各タスクの `## 決まっていること（蒸し返さない）` に
+焼き込んである）:
+
+- 層の名前: 「tsukumo は1プロセスってあるけど、この構成のメジャーなプロジェクトって
+  GitHubにある?そこに倣おう」→ 前例（Vite の `client`/`node`/`shared`、VS Code の
+  `common`/`browser`/`node`/`electron-*`）を示したうえで **`server` / `browser` / `shared`**
+- 改名の段階: 「段3 まで」、会話画面の組み立て: 「今は下ろさない」
+- レポートの記法: 「『本文にセリフを書かない』を 1箇所へ寄せる、『送る前に消すもの』5行を置く、
+  チェックリストを表に足す」（3つとも草案に足す）
+- 状態の配り方: 「どれが最もコードとして可読性、保守性、拡張性に優れるかによるね。工数は
+  問題ではないよ」→ `useSyncExternalStore` + セレクタを採った
+- `startTransition`: 「フレームの種類で分ける」
+
+**タスクにしなかったもの:**
+
+- `.claude/settings.json` の hooks / rules 7件: ユーザーが「全部不要で。auto mode に任せる。」
+  （1〜3 の deny / ask）、「全部不要そうだけどどうかな」（5〜7 の非ブロッキング）、
+  「特にいらない」（設定の置き場）と判断した
+- メインビューの「タブを切り替えたら先頭から読ませる」が効いていない（T-189 の目視中に発見）:
+  採否の選択で選ばれなかったので、`develop/direction.md` の `## エージェントのドラフト` に残した
+- T-197 の「付記」（`turn.tsx:89` が CSS Modules を通していない）: **確かめたところ既に
+  `styles["main-step"]` / `styles["is-interim"]` に直っていた**ので、タスクにしていない
+
+### 当時のドラフト全文（他に残る場所が無い分）
+
+### `src/ui/` を vercel の react-best-practices に当てた結果（T-197。要 採否）
+
+出典は `vercel-labs/agent-skills` の `skills/react-best-practices`（8分類70件。`SKILL.md` と
+`AGENTS.md` を 2026-09-20 に取得）。**当てた範囲は `src/ui/` の55ファイル**（`.ts` / `.tsx` が44、
+`*.module.css` が7＋`theme.css`、`*.d.ts` が3）。
+
+前提として押さえた数字:
+
+- **サーバは 100ms ごとにイベントをまとめて1フレーム押す**（`src/core/session-manager.ts:34`
+`EVENT_BATCH_INTERVAL_MS = 100`）。**ターンが流れている間、下の「毎フレーム」は毎秒10回**
+- `src/ui/stores/session.tsx:126` が `value={{ state, connection, dispatch }}` を**毎レンダー
+新しいオブジェクトで**配るので、`useSession()` を呼ぶ部品は**読んでいる値が変わっていなくても
+全部**再描画される。該当するのは `TurnSelectionProvider` / `MainView` / `CharacterView` /
+`Sidebar` / `SessionInfo` / `CharacterEdit` / `CharacterScreen` / `CharacterCreate` /
+`Dispatch` / `Composer` / `TurnStatus` / `PendingAnswer` / `PermissionAsk` / `QuestionAsk`
+- `src/ui/` に `useMemo` は0件、`memo` は1件（`report.tsx:32` の `ReportBlock`）、
+`useCallback` は1件（`session.tsx:106`）
+
+**T-189 で直った分（`layout.tsx` の ref 書き込み・`turn-selection.tsx` の effect・`portrait.tsx` の
+同期 setState・依存配列）と、oxlint が落とすものは下に入れていない。**
+
+#### 当たったもの（17件。直す価値の順）
+
+1. `**rerender-memo` — `src/ui/features/sidebar/sidebar.tsx:54` の `<TaskBoard>` が、閉じている間も
+フレーム表を組み直す。** `<dialog>` は開閉を `showModal()` / `close()` で切り替える作りなので
+*常にマウントされている**（`task-board.tsx:30-41`）。`Sidebar` は `useSession()` を読むので
+フレーム再描画され、そのたびに `task-board.tsx:97-99` が `develop/tasks.json` の全件
+いま24件）× 7列を組み直す。**画面に1ピクセルも出ていない間の仕事。**
+し方: `TaskTable` を `memo` で包んで `tasks` だけを props に取る、または `props.open` が
+false`のとき`` の中身を描かない（`` 自体は残す）。
+2. `**js-index-maps` — `src/ui/features/sidebar/task-board.tsx:122` が行ごとに `taskReadiness` を
+び、その中（`src/protocol/task-summary.ts:75-77`）で毎回「未完了のID」の `Set` を作り直す。**
+4行なら `Set` を24個作って 24×24 走査する。1と重なって毎フレーム起きている。
+し方: `Set` は表で1回だけ作り、行へ渡す（`taskReadiness` の引数を `tasks` から
+unfinishedIds: ReadonlySet` に変える）。**1を直すと発生頻度は下がるが、
+を開いている間は残る。**
+3. `**rerender-memo` — 同じ `mainViewTurns(mainViewEntries(state))` を毎フレーム2回計算している。**
+src/ui/stores/turn-selection.tsx:51`（結果から` id `だけ取って捨てる）と src/ui/features/main-view/main-view.tsx:28-30`。中身は `groupIntoTurns` →
+keepOnlyInterimReports`→`markSupersededSteps`→`limitTurnEntries`の4パス`src/protocol/main-view.ts:90-95`）で、記録は最大20ターン分ある` session-state.ts:30`` MAX_SESSION_STATE_TURNS`）。 し方: 導出を `` に1本化して、`turns `を Context に載せて <MainView>` へ配る（`activeTurnId` と同じ経路）。
+4. `**rerender-memo` — `src/ui/features/main-view/report.tsx:16` の `splitReportBlocks` が毎フレーム
+ポート全文を走査する。** `ReportBlock` の `memo`（32行目）が守っているのは
+*Markdown → React の変換だけ**で、**割る仕事そのものは毎回**走る。`split-blocks.ts:55-70` は
+行ずつ正規表現を当てる。`Report` / `Turn` / `Step`（`turn.tsx:21,62`）にも `memo` が無いので、
+ているターンの全ステップが毎フレーム通る。
+し方: `Report` を `memo`（props は `markdown` の文字列1つなので浅い比較で足りる）。
+5. `**rerender-defer-reads` — `src/ui/features/dispatch/pending-answer.tsx:44` と `:79` が
+const { dispatch } = useSession() `で、`dispatch`をコールバックでしか使わないのに tate の変化を全部購読している。**`QuestionAsk`は選択肢を`useState`で持つ箱なので、 フレームまるごと描き直されている（選択肢の数だけ``/``を作り直す）。 し方:`SessionContext `を「state を配る Context」と「`dispatch `を配る Context」に割る。 dispatch` は `useCallback(..., [])` で既に安定しているので、割るだけで
+PermissionAsk`/`QuestionAsk` はフレームで再描画されなくなる。
+6. `**rerender-derived-state` — 生の `state` ではなく導出した値を購読するべき部品が3つ。**
+src/ui/features/dispatch/dispatch.tsx:14`が要るのは`state.pending.length &gt; 0 `の真偽1つ、 src/ui/features/dispatch/turn-status.tsx:33` が要るのは `turnStartedAt` / `turnFinishedAt` /
+turnInProgress `の3つ、`src/ui/features/sidebar/sidebar.tsx:23 `が要るのは runningTools` / `finishedTools` / `tasks` の3つ。いまはどれも `state` 全体に繋がっている。
+し方: 5と同じ手当て（`useSyncExternalStore` + セレクタ、または Context の分割）。
+*5と6は同じ1回の作業になる。**
+7. `**rerender-transitions` / `rerender-use-deferred-value` — `src/ui/stores/session.tsx:95` の
+applyOne(frame)`が緊急の更新として走る。** ターンが流れている間は毎秒10回、上の1〜4を む木が同期で描き直されるので、その間の`&lt;/body&gt;`（`composer.tsx:143`）への入力と 合する。 し方:` startTransition(() =&gt; applyOne(frame))`。**ただし` pending`（許可要求・質問）の 着まで遅らせてよいかは判断が要る**ので、フレームの種類で分けるか、`useDeferredValue `を <MainView>` 側に置くかの選択になる。
+8. `**rendering-activity` — `src/ui/main.tsx:49` の `<div hidden={screen !== "conversation"}>`。**
+hidden`で隠しているだけなので、**キャラクター画面を開いている間も**`MainView `/ Sidebar` / `TaskBoard` / `CharacterView` が毎フレーム再描画され続ける（1〜4がそのまま裏で
+く）。React は 19.2 から `<Activity>` が安定していて、このリポジトリは 19.3.0
+`package.json`）。
+し方: `<Activity mode={screen === "conversation" ? "visible" : "hidden"}>` に替える。
+**hidden `で隠している理由（下書き・選んでいるターン・スクロール位置を失わない）は <Activity>` でもそのまま満たされる。**
+9. `**js-batch-dom-css`（レイアウトスラッシング） — 描画中に `getComputedStyle` を呼んでいる。**
+src/ui/features/character-screen/appearance-color.ts:125`の`readToken `が getComputedStyle(document.documentElement).getPropertyValue(...)` で、これを
+character-edit.tsx:150`が`OUTFITS.map `の中から**衣装の数だけ（4回）**、 character-edit.tsx:64` が1回、`character-screen.tsx:86` が `COLOR_FIELDS.map` の中から
+*3回**、`character-create.tsx:48` が1回呼ぶ。さらに `character-screen.tsx:45-48` は
+*書いて（`applyAppearanceColorOverride`）→ setState → 描画中に読む**の順なので、
+` を動かしている間ずっと書き／読みが交互に起きる。
+し方: 読みを描画の外（イベントハンドラ）へ移し、1回読んだ値を state に持つ。
+10. `**js-cache-function-results` — 9と同じ `readToken`。** 呼ぶたびに
+`getComputedStyle()` の戻り（`CSSStyleDeclaration`）を作り直している。1回のレンダーで
+最大4回（`character-edit.tsx` の衣装のループ）。9を直すと一緒に消える。
+11. `**rerender-use-ref-transient-values` — `src/ui/features/layout/layout.tsx:72,90,112` の
+`setSplit` が `pointermove` ごとに走る。** 仕切りの位置は「ドラッグ中だけの過渡的な値」で、
+最終的に効くのは `--layout-*` の CSS 変数だけ（`layout.tsx:41-52`）。
+毎 `pointermove` で `<Layout>` が再描画される（4領域の中身は `<Root>` が作った同じ要素
+なので React が飛ばすが、grid とスタイルの3オブジェクトは作り直している）。
+直し方: ドラッグ中は `gridRef.current.style.setProperty("--layout-row-top", ...)` を直接
+書き、`pointerup` のときだけ `setSplit` する。
+12. `**advanced-use-latest` / `advanced-event-handler-refs` — `src/ui/features/layout/layout-resizer.tsx:26-57`
+のハンドラが `pointerdown` の時点の `props` を握り続ける。** そのせいで
+`layout.tsx:75,93,116` の `onCommit` は `{ ...split, topLeft: percent }` と書かざるを得ず、
+`layout.tsx:54-56` に「`split` は pointerdown の時点のもの」という**回避策の注記が要る状態**に
+なっている（いまは仕切りを同時に2本動かせないので**動作は正しい**）。
+直し方: `onChange` / `onCommit` を ref（または `useEffectEvent`）に載せて常に最新を呼ぶ。
+そうすると `layout.tsx` 側は `setSplit((current) => ...)` の形に揃い、注記が要らなくなる。
+13. `**client-swr-dedup` — `src/ui/components/portrait.tsx:74` の `fetch` に重複除去も
+キャッシュも無い。** `/character/<file>` は `src/adapter/server.ts:404` で
+`cache-control: no-store` を返すので**ブラウザのキャッシュも効かない**。結果:
+(a) `speak` で表情が変わるたびに SVG を取り直す（4表情を行き来しても毎回往復）、
+(b) 取り直しが終わるまで `portrait.tsx:89` が `undefined` を返すので**中身が空の瞬間が挟まる**、
+(c) `character-edit.tsx:95` の立ち絵の並びは最大4枚を同時にマウントするので4本同時に飛ぶ。
+直し方: URL をキーにしたモジュール単位のキャッシュ（`vendor-script.ts:8` と同じ手口）。
+`**no-store` は画面から素材を差し替えられるための設定なので、`character-changed` が来たら
+キャッシュを捨てる必要がある。** → **T-203（TanStack Query）と重なる。**
+14. `**rendering-hoist-jsx` — `src/ui/features/sidebar/task-board.tsx:85-95` の `<thead>`。**
+7つの `<th>` は完全に静的なのに毎フレーム作り直している。1を直すと一緒に消える。
+15. `**js-combine-iterations` — `src/ui/features/sidebar/task-list.tsx:30-32`。**
+`todo` / `doing` / `done` を数えるのに `filter` を3回、全件に対して回している。
+`Sidebar` の見出しなので毎フレーム。1回のループで3つ数える形にする。
+16. `**js-hoist-regexp` — `src/ui/features/main-view/markdown/split-blocks.ts:79` の
+`isFenceDelimiterLine`。** 正規表現リテラルを関数の中に置いているので、**レポートの行数だけ**
+`RegExp` を作る（4のとおり毎フレーム全行を通る）。同じファイルの他の3つ
+（`HTML_TAG_PATTERN` など）はすでにモジュール定数になっているので、揃える。
+`src/ui/features/dispatch/command-suggestions.tsx:21` の `/\s/` も同じ（こちらは
+`Composer` のレンダーごとに1回なので、揃える以上の意味は無い）。
+17. `**client-localstorage-schema` — 保存キーに版が無い。**
+`src/ui/features/layout/split.ts:18` の `"tsukumo-layout-split"` と
+`src/ui/features/character-screen/appearance-color.ts:30` の `"tsukumo-appearance-color"`。
+`**try` / `catch` と値の検証はどちらもすでに満たしている**（ルールが求めるもう半分）ので、
+残るのはキーに `:v1` を足すことだけ。**いまの形を変えるときに困る**というだけの話なので、
+直す価値は低い。
+
+#### 当たらなかった分類・ルール（理由つき）
+
+**分類ごと:**
+
+- `async-`（6件）: RSC / サーバ側の `await` の並べ方の話。`src/ui/` に `await` を跨ぐ
+データ取得が無い（唯一の非同期は13の `fetch` と `readDataUrl`）
+- `server-`（10件）: RSC / Next.js のサーバ実行前提。tsukumo のサーバは束ねた JS と素材を配るだけ
+（`src/adapter/server.ts`）で、React をサーバで描かない
+- `bundle-`（6件。**タスク本文が触れていない分類**）: `bundle-dynamic-imports` /
+`bundle-analyzable-paths` / `bundle-preload` は `next/dynamic` とファイルシステムルーティング
+前提。`bundle-barrel-imports` は**該当なし**（`src/` に `index.ts` が0件）。
+`bundle-conditional` と `bundle-defer-third-party` は**すでに満たしている**
+（mermaid / Chart.js はその記法が出たときだけ読む。`markdown/vendor-script.ts`）
+
+**当たる分類の中で、すでに満たしている・該当が無いもの:**
+
+- `rerender-no-inline-components`: 該当なし。部品はすべてモジュール直下に置かれている
+- `rerender-lazy-state-init`: 満たしている（`layout.tsx:30` `useState(loadSplit)`、
+`character-screen.tsx:41`、`turn-status.tsx:34`、`character-create.tsx:48`）
+- `rerender-derived-state-no-effect`: 満たしている。`turn-selection.tsx:60-70` は
+`useEffect` ではなくレンダー中に前後を見比べる形
+- `rerender-functional-setstate`: 満たしている（`pending-answer.tsx:121-144`、
+`layout.tsx` の `onChange`）。唯一の例外が12の `onCommit`
+- `rerender-simple-expression-in-memo`: 該当なし。`useMemo` が0件
+- `rerender-dependencies`: 満たしている。`character-view.tsx:65` が入れ物を分解してから
+依存に渡す（理由も 51-61行目に書かれている）
+- `rerender-split-combined-hooks`: 分けるべき計算を抱えた hook が無い（`useSession` の分割は
+5/6に入れた）
+- `rerender-move-effect-to-event`: 該当なし。`useEffect` は規約（`docs/coding-standards.md`）の
+4類型に絞られていて、操作の結果を effect で追っている箇所が無い
+- `rerender-memo-with-default-value`: 該当なし。`memo` した部品は `ReportBlock` 1つで、
+非プリミティブの既定値を持つ props が無い
+- `rendering-animate-svg-wrapper`: **満たしている。** 動きは wrapper の `<div>`
+（`portrait.tsx:124,132`）に `data-motion` で当たり、`portrait.module.css:50-72` も
+`.portrait[data-motion=...]` を animate している。SVG 要素自身は動かしていない
+- `rendering-script-defer-async`: 満たしている。`server.ts:357` は
+`<script type="module">`（既定で defer）
+- `rendering-conditional-render`: 該当なし。`&&` の左辺を全部見たが、`turn.tsx:26,27,31,90`・
+`main-view.tsx:54`・`portrait.tsx:133` はいずれも真偽値（`!== undefined` / `> 0` /
+`=== "raster"` / boolean のフィールド）で、`0` や `""` が漏れる形が1つも無い
+- `rendering-content-visibility`: 該当なし。いちばん長い一覧でも
+`MAX_RECENT_FINISHED_TOOLS = 50`（`session-state.ts:23`）＋タスク24件で、
+`content-visibility` や仮想化が要る長さではない
+- `rendering-hydration-no-flicker` / `rendering-hydration-suppress-warning`: SSR が無い
+- `rendering-svg-precision`: 立ち絵の SVG は利用者のキャラクターパックの素材で、`src/` に無い
+（原則4）
+- `rendering-usetransition-loading`: 該当なし。「読み込み中」を state で持つ箇所が無い
+（`portrait.tsx:89` は `undefined` を返すだけ）
+- `rendering-resource-hints`: 採らない。同梱スクリプトは「その記法が出たときだけ読む」のが
+要件（`docs/requirements.md` 4.2）なので、先読みは要件と逆
+- `client-event-listeners`: 該当なし。global に張るのは `screen.tsx:46` の `hashchange` 1つで、
+読み手は `<Root>` だけ。`layout-resizer.tsx:55` は要素に張って `pointerup` で外す
+- `client-passive-event-listeners`: 該当なし。`wheel` / `touchstart` の listener が0件
+（ドラッグは pointer イベント。`preventDefault` が要る `mousedown` は
+`command-suggestions.tsx:70` の1つで、passive にできない）
+- `js-cache-property-access` / `js-early-exit` / `js-length-check-first` / `js-min-max-loop` /
+`js-set-map-lookups` / `js-flatmap-filter`: 該当なし。ループの中で同じプロパティを読み直す
+箇所・`sort` で最大最小を取る箇所・`filter().map()` の連鎖・配列を `includes` で舐める
+ホットパスが `src/ui/` に無い（`commandSuggestions` はすでに `Map`、
+`commandCandidates` はすでに `Set`）
+- `js-tosorted-immutable`: 満たしている（`command-suggestions.tsx:39,42` が `toSorted`）
+- `js-request-idle-callback`: 該当なし。描画の後回しにできる副次的な仕事（計測・送信）が無い
+（会話をプロセスの外に出さないので、そもそも analytics が無い）
+- `advanced-init-once`: 満たしている（`main.tsx:65` の1回と `vendor-script.ts:8` の Map）
+- `advanced-effect-event-deps`: 該当なし。`useEffectEvent` をまだ使っていない
+（12で入れるなら、そのとき守る規則になる）
+
+#### T-203（TanStack Query）と重なる分
+
+**13（`client-swr-dedup`）だけ。** `src/ui/components/portrait.tsx:74` の `fetch` が
+`src/ui/` で唯一の HTTP 取得で、T-203 がこれを置き換えるなら重複除去とキャッシュは
+そちらで解ける。**ただし `/character/*` が `no-store` である（`server.ts:404`）ことと、
+`character-changed` が来たら捨てる必要があることは T-203 側でも要る判断なので、
+そのタスクへ申し送る。** 他の16件はどれもデータ取得ではないので重ならない。
+
+#### 付記（ルールの外で見つけた1件）
+
+`**src/ui/features/main-view/turn.tsx:89` が CSS Modules を通していない。**
+
+```tsx
+<section className={step.interim ? "main-step is-interim" : "main-step"}>
+```
+
+同じファイルの81行目は `styles["main-step"]` / `styles["is-interim"]` で引いているのに、
+ここだけ生の文字列。`.main-step` と `.main-step.is-interim` は
+`main-view.module.css:76,91` に**実在する**が、class 名は組み立てのたびにハッシュ化されるので
+**この `<section>` には枠も地も当たっていない**。効いていないのは「追い越されていない
+中間レポート」と「通常のステップ」の見た目で、畳んだ中間レポート（81行目の `
+
+<details class="orca-details">
+<summary>`）は 正しく当たっている。T-191（CSS Modules への移行）の取りこぼしと思われる。 **目視で確かめていない**（コードと CSS の照合だけ）ので、直すなら目視確認を付ける。[[ORCA_RICH_MD:514b86a08aa3a4762704262a36b31d05:inline-html:%3C%2Fsummary%3E]]</summary>
+
+
+
+</details>
+
+</details>
+
+### `.claude/settings.json` に入れる hooks / rules の候補（T-201 の提案。要 採否）
+
+**設定ファイルは1つも作っていない。** `~/.claude/settings.json` は読んだだけで、1バイトも書いて
+いない（`md5 68b1bcda158380df34a8efde03f99f3a` が前後で同じ）。`.claude/` の中身も
+`scheduled_tasks.lock` のまま。
+
+先に確かめた前提（`update-config` スキルの settings スキーマ）:
+
+- **hooks はイベントごとに配列が足し算される。** プロジェクト側 `.claude/settings.json` に書いても
+ユーザー側（orca が持つ 13 イベント: `SessionStart` `UserPromptSubmit` `Stop` `StopFailure`
+`SubagentStart` `SubagentStop` `TeammateIdle` `PreToolUse` `PostToolUse` `PostToolUseFailure`
+`PermissionRequest` `PostCompact` `SessionEnd`）と `statusLine` は消えない。
+**上書きが起きるのはスカラー値だけ**（優先順位は user &lt; project &lt; local）
+- `.claude/` は `.prettierignore` にあるので、`.claude/settings.json` を置いても
+`bun run format:check` は動かない（`docs/coding-standards.md`「整形の対象外」）
+- `PreToolUse` の hook は stdin に `{"tool_name","tool_input"}` を受け、
+`hookSpecificOutput.permissionDecision` に `deny` / `ask` / `allow` を返せる。
+**deny はその1回のツール呼び出しが落ちるだけ**で、理由の文字列はモデルに返るので書き直せる
+
+**下の1〜3の判定は実際に stdin へ JSON を流して確かめた**（12通り。`bun run test` と
+`bun run check` と `grep 'bun test' CLAUDE.md` は通り、`bun test` 単体と
+`cd /x && bun test test/a.test.ts` は落ちた）。
+
+#### hooks / rules にできるもの（7件。効き目の順）
+
+**1. 素の `bun test` を止める** — `PreToolUse` / matcher `Bash` / `deny`
+
+- 実行するもの: `.tool_input.command` を jq で取り、`(^|[;&|(])bun[[:space:]]+test\b` に当たって
+かつ `--isolate` を含まないなら deny を返す
+- 誤爆したとき: **そのツール呼び出し1回が落ち、理由がモデルに返るだけ**。`bun run test` と
+`bun run check` は `bun` の次が `run` なので当たらない。`grep 'bun test' ...` も
+直前が `'` なので当たらない。**止まるのは書き直しの1往復**
+- 置き換える記述: `CLAUDE.md`「よく使うコマンド」の
+「**素の `bun test` は使わない** — `mock.module` がファイルをまたいで漏れ、19件が落ちる」。
+**いまは19件の失敗を見てから思い出す形**で、しかも並行セッションの失敗と見分けがつかない
+
+**2. 作業ツリーを戻す git を止める** — `PreToolUse` / matcher `Bash` / `deny`
+
+- 実行するもの: `git[[:space:]]+(restore|checkout)[[:space:]]+(--([[:space:]]|$)|[^-])` に
+当たったら deny（フラグで始まる `git checkout -b foo` は通す）
+- 誤爆したとき: **自分が戻したかった変更を手で戻す手間が増えるだけ**。`git checkout main` も
+落ちるが、`CLAUDE.md`「Git運用」はブランチを切らないので実害が無い。
+**通してしまったときの損（他のセッションの未コミット変更が消える。reflog も残らない）と
+釣り合わない**ので、この1件は deny を推す
+- 置き換える記述: `CLAUDE.md`「Git運用」の「`**git checkout <file>` / `git restore <file>` で
+作業ツリーを戻さない**」
+
+**3. `git add -A` / `git add .` / `git commit -a` を止める** — `PreToolUse` / matcher `Bash` / `deny`
+
+- 実行するもの: `git[[:space:]]+add[[:space:]]+(-A|--all|\.)` と
+`git[[:space:]]+commit[[:space:]]+[^;&|]*-[a-zA-Z]*a` に当たったら deny
+- 誤爆したとき: **触ったファイルを個別に足す形へ書き直す1往復**。
+`git add develop/direction.md` は通る
+- 置き換える記述: `CLAUDE.md`「Git運用」の「コミットは `git add -A` を使わず、触ったファイルを
+個別に足す」
+
+**4. `~/.claude/settings.json` を書かせない** — `permissions.deny` の rule ＋ `PreToolUse` / `Bash`
+
+- 実行するもの: (a) `permissions.deny` に `Edit(//Users/sinnlos/.claude/settings.json)`
+（パスの rule は Write / Edit / NotebookEdit の全部に効く）、(b) Bash からの
+`> ~/.claude/settings.json` 系のリダイレクトを deny する hook。**両方要る**（(a) だけでは
+`cat > ~/.claude/settings.json` を素通しする）
+- 誤爆したとき: **人間が承認した書き換えまで止まる。** deny の rule はセッション中に外せないので、
+そのときは人間が自分で開いて直すか、`.claude/settings.local.json` で一時的に緩める。
+**orca の hooks と statusLine が黙って死ぬ損のほうが大きい**
+- 置き換える記述: `CLAUDE.md`「進捗管理とHandoff」の
+「`**~/.claude/settings.json` の hooks と statusLine は orca が専有している。設定を足すときは
+既存エントリを壊さず追記する**」（＝ この節を「機械が止めるので手順は要らない」に縮められる）
+
+**5. `docs/` の節の数が変わったら知らせる** — `PreToolUse` ＋ `PostToolUse` / `Edit|Write` / 非ブロッキング
+
+- 実行するもの: `if: "Edit(docs/**)"` で、Pre で `grep -c '^#\{2,3\} '` の値を一時ファイルに置き、
+Post で数え直す。違っていたら `hookSpecificOutput.additionalContext` で
+「節が 26 → 24 になった。索引の表に本文を流し込んでいないか」と返す（**ブロックしない**）
+- 誤爆したとき: **節を足す/削る正当な編集のたびに毎回鳴る。** 返すのは文章だけなので作業は
+止まらないが、**鳴りっぱなしだと読まれなくなる**のが本当の損。並行セッションが同じファイルを
+触ると一時ファイルの基準がずれて、数字だけ間違ったものが出る
+- 置き換える記述: `CLAUDE.md`「ドキュメントを編集するときの罠」の
+「置換後は**節の一覧が変わっていないか**を確かめる」（2026-09-10 の事故。数えるのを人間と
+モデルが覚えている必要がなくなる）
+
+**6. `tasks.json` の `done` が未コミットのまま終わった** — `Stop` / `systemMessage` / 非ブロッキング
+
+- 実行するもの: `git diff -- develop/tasks.json` に `"status": "done"` の追加行があるときだけ
+`{"systemMessage":"tasks.json の done が未コミット"}` を出す
+- 誤爆したとき: **表示が1行増えるだけ**（`continue` は触らない）。`/next-task` が着手時に書く
+`todo` → `doing` は仕様どおり未コミットなので、`**done` の追加行に絞らないと毎ターン鳴る**。
+`Stop` は `/clear` や `/compact` でも鳴るので、重い処理は置かない
+- 置き換える記述: `CLAUDE.md`「Git運用」の「`develop/tasks.json` を書き換えたら、その場で
+ファイル指定でコミットまで済ませる。**例外は `/next-task` が着手時に書く `todo` → `doing` だけ**」
+
+**7. 新しく書く行にタスク番号を混ぜない** — `PostToolUse` / `Edit|Write` / 非ブロッキング
+
+- 実行するもの: `**tool_input.new_string`（＝ 今このターンで足した文字列）だけ**を `T-[0-9]{3}` で
+見て、当たったら `additionalContext` で知らせる。対象は `src/**` と `docs/**`（`docs/history/**` と
+`docs/requirements.md` は除く）
+- 誤爆したとき: **文章が1つ返るだけ。** 既存の記述は見ないので、いま `T-nnn` が残っている
+12ファイル（`src/ui/features/main-view/main-view.module.css` の1件と `docs/` の11件。
+うち `docs/research/` が7件）を触っても鳴らない。**Bash でファイルを書いたときは見えない**
+- 置き換える記述: `CLAUDE.md`「コーディング規約・レビュー方針」の
+「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」
+
+#### 文章のまま残すもの（5件）
+
+- **「変更後は必ず `bun run check` を通す」。** `Stop` で走らせられはするが、(a) `bun run check` は
+typecheck → lint → format:check → test の4本で数分かかり、`Stop` は `/clear` `/compact`
+`resume` でも鳴る、(b) **同じ作業ツリーを複数セッションが共有していて、`CLAUDE.md`
+「タスク運用」が「検証コマンドは片方ずつ」と決めている** — hook は相手の都合を知らないので、
+もう一方の check と噛み合って両方の結果を汚す。**機械化すると規約そのものを破る**
+- **ブラウザに出た絵の目視確認。** `CLAUDE.md`「テスト方針」が「ブラウザに出た絵は自動テストで
+守らない」と決めている。hook が判定できるのは配信までで、見えているかは人間にしか分からない
+- **並行して進めるタスクの選び方**（触る層が重ならないものを選ぶ、`doing` が排他ロック）。
+「重なる」の判定が設計の読みなので、文字列では書けない
+- **会話内容の扱い**（最優先の規約）。「この文字列が利用者と Claude の生の会話かどうか」は
+機械には決められない。**ただし1つだけ機械化できる部分がある**: `~/.claude/projects/**/*.jsonl`
+（transcript の実体）の読み出しを `permissions.ask` にする。deny にしない理由は、SDK の
+イベントの形を調べるのに開くことが実際にあったため（`scratchpad/sdk-spike`）
+- **設計の原則1〜5**（層の切り方・ファイル名が概念か・`satisfies`・`useEffect` の4類型など）。
+**層の依存の辺だけは既に `test/architecture.test.ts` が落とす**ので、hook を足す意味が無い
+
+#### 決めてほしいこと
+
+- (a) 1〜3 を `deny` にするか `ask` にするか。`**ask` なら誤爆しても人間が1回押せば通る**が、
+自動進行（`/loop /next-task`）は止まる
+- (b) 5〜7 の非ブロッキング勢を入れるか。効き目は薄いが、誤爆の損も「文章が1つ増える」だけ
+- (c) `.claude/settings.json` をコミットするか（いま `.gitignore` に `.claude/` の行は無い）。
+4 の deny に絶対パス `/Users/sinnlos/...` が入るので、**個人用なら
+`.claude/settings.local.json` のほうが筋**（その場合は `.gitignore` に1行足す）
+
+**採用するときの最初の一手**: 「hooks はイベントごとに足し算される」は `update-config` スキルの
+記述で、このリポジトリで実際に試してはいない。**orca の hooks と statusLine が消えると黙って
+壊れる**ので、`.claude/settings.json` を置いた直後に (1) statusLine が出ていること、
+(2) orca の hooks が動いていること（`~/.orca/agent-hooks/` のログか、hook が書くファイル）を
+確かめてから次へ進む。消えていたら設定を消して戻す。
+
 ## 2026-09-20 選択肢のラベルの折り返しと、選択肢の意匠
 
 ### 会話から
