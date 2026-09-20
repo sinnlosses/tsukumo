@@ -13931,3 +13931,334 @@ commit 9812ec9。左に立ち絵・右にログ（`shared/chat-log.ts` が記録
 - **16進の色を `src/browser/styles/theme.css` 以外に書かない**（コーディング規約）
 - コードにタスク番号（`T-` + 3桁）を書かない
 - **立ち絵とログの比率が気持ちよいかをユーザーが決める**ので `loopable` は `"N"`
+
+## T-206
+
+**タスク**: 質問の選択肢でラベルを折り返させ、説明の幅が潰れないようにする
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+選択肢を .question-choices の grid 2列 `fit-content(40%) minmax(0,1fr)` + subgrid に移し、ラベル列を全選択肢で揃えた（dispatch.module.css）。25字ラベルの実測 1400px: ラベル374→235px / 説明211→350px、420px: 説明 幅0・高さ1115px → 幅180px・高さ91px。3幅×2形式の6通りで重なり無し・ラベル折り返し・説明の幅0なしを目視（/tmp のカタログと 420px の撮り直し、横のはみ出し0px）。bun run check 804 pass / 0 fail。
+
+## 背景
+
+T-205（2026-09-20）で、複数選択の選択肢でラベルの文字が右隣の説明に重なる件を直した。直し方は `src/ui/styles/dispatch.css` の `.question-choice-checkbox-row` を `min-width: 0` から `flex: 0 0 auto` に変えて**行を縮めない**ようにしたもの。その結果、**ラベルは一切折り返さず、長いラベルほど右の説明の幅を食う**。ユーザーが実機で「重なってはいないけど、ラベルが折り返されないから説明欄が狭いね」と指摘した（2026-09-20）。
+
+いまの形（`src/ui/styles/dispatch.css`）:
+
+- `.question-choice`: `display: flex; align-items: baseline; gap: 0.5rem; box-sizing: border-box; width: 100%; min-width: 0; overflow-wrap: anywhere`
+- `.question-choice-label`: `flex: 0 0 auto; font-weight: bold`
+- `.question-choice-description`: `flex: 1 1 auto; min-width: 0`
+- 複数選択はチェックボックスとラベルを `.question-choice-checkbox-row`（`flex: 0 0 auto`）に入れる
+
+2026-09-20 の実機のスクリーンショットでは、1400px の窓でもラベル 20 文字前後の選択肢で説明が3行に折り返し、右側だけが詰まって見えていた。
+
+窓を 420px まで狭めると、25文字のラベルが選択肢の幅（331px）を超えて説明の幅が 0 になり、**説明が1文字ずつ縦に並ぶ**（T-205 の目視で確認。単一選択でも同じに起きる）。**根は同じ**なので一緒に解く。
+
+再現用の場面は `test/fixture/fake-session.json` の `question-long`（複数選択と単一選択の2問。ラベル11〜25字＋説明45〜80字）。`scripts/capture-catalog.ts` にも入っているので `TSUKUMO_FAKE_SCENE=question-long` で出せる。
+
+## 決まっていること（蒸し返さない）
+
+- この件をタスクとして直してよい（2026-09-20 ユーザー承認）。
+- **ラベルと説明を横に並べる形そのものは変えない**（`.question-choice` のコメントにある「縦に積むと選択肢3件で入力欄の領域の高さを使い切ってしまい、1件しか見えなくなる」という既存の決定）。並べ方ごと変えたくなったら T-207（意匠の練り直し）の側で扱う。
+
+## 解くべき論点
+
+- ラベルを折り返させつつ、T-205 の重なりを**再発させない**形。ラベル側に `min-width: 0` を戻すだけだと重なりが再発するので、`flex-shrink` と `overflow-wrap` の組み合わせを実測で決める
+- ラベルと説明の幅の配分をどう決めるか（ラベルに最大幅を与える／`flex-basis` を割合で与える／grid の2列にする）。grid ならラベル列の幅が全選択肢で揃う利点がある
+- 420px で説明の幅が 0 になる件も同じ手で解けるか。解けないなら、別に手を打つか見送るかを決める
+
+## やること
+
+1. `TSUKUMO_DRIVER=fake TSUKUMO_FAKE_SCENE=question-long` で現状を撮り、ラベルと説明の実際の幅を測る
+2. 論点を決めて `src/ui/styles/dispatch.css` を直す。**なぜその形にしたかをコメントに残す**（T-205 のコメントを打ち消す形になるなら、そちらも書き換える）
+3. 1400px / 720px / 420px で撮り直し、(a) 重なりが無い (b) ラベルが折り返す (c) 説明の幅が 0 にならない (d) 選択肢3件＋自由入力＋「答える」が見える、の4点を確かめる
+4. 単一選択（`<button>`）と複数選択（`<label>`）の両方で確かめる。420px の件が解けないと分かったら、**やらずに理由と測った値を `evidence` に書いて閉じてよい**（その場合も (a)(b)(d) は満たすこと）
+
+## 完了条件
+
+- `bun run check` が通る
+- 上の4点を3つの幅・2つの選択形式で目視し、見えたものを `evidence` に書く
+
+## 注意
+
+- `src/ui/styles/dispatch.css` は T-191（CSS Modules へ移す）も触る。**並行させない**
+- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと同時に進めない
+
+## T-207
+
+**タスク**: 質問の選択肢の意匠を練り直す（チェックボックスを含む）
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-206 / **passes**: True
+
+**evidence**:
+
+dispatch.module.css +72行 / pending-answer.tsx はクラス2つ追加のみ（DOM 不変・theme.css 未変更）。印は 1.05em の box-sizing: border-box で共有し、複数選択＝四角＋clip-path のチェック、単一選択＝ラベルの ::before の丸＋radial-gradient の点。bun run check 804 pass / 0 fail / 83ファイル（変更前と同数。テストは未変更）。目視: scripts/capture-catalog.ts で question-multi / question-long / question-pair を 1400x900・720x900 の2幅（/tmp/t207-before と /tmp/t207-after）＋ Playwright で3状態を撮り、PNG を開いて確認。選択＝印の中に形が入る、フォーカス＝カードの外に離れた輪、hover＝印の輪郭 1px→2px で、色を無視しても3状態を見分けられた。四角と丸は左端 x=54.98・baseline とも一致。720x900 の question-multi で選択肢3件（y=640.9 / 687.5 / 734.2）＋自由入力（770.1）＋「答える」（下端 862.0）がすべて 900px の内側に同時に見えることを実測。question-long では両方の2行目が印の右に揃った。
+
+## 背景
+
+入力欄に出る質問の選択肢は、素の `<input type="checkbox">` と枠付きの箱だけで作ってある（`src/ui/features/dispatch/pending-answer.tsx` の `QuestionCard`、`src/ui/styles/dispatch.css` の `.question-choice` 一式）。**チェックボックスには CSS の手当てが無く、OS 既定の見た目がそのまま出る。** ユーザーが実機で「チェックボックスもちょっと無骨だからデザインを練り直せるといいな」と指摘した（2026-09-20）。
+
+2026-09-20 の実機のスクリーンショットで見えていたこと: チェックの入った印が **OS 既定の青**で、テーマの `--accent`（水色）と合っていない。チェックボックスの大きさもラベルの文字に対して小さく、枠の角丸や余白とも揃っていない。
+
+いまの構造:
+
+- 単一選択は `<button class="question-choice question-option-button">`、複数選択は `<label class="question-choice question-choice-checkbox">` の中に `.question-choice-checkbox-row`（チェックボックス＋ラベル）
+- 選ばれている印は `.is-selected`（枠の色と背景色）、フォーカスは `.question-choice-checkbox:has(:focus-visible)` の輪
+- 色は `src/ui/styles/theme.css` の変数（`--accent` / `--surface` / `--surface-accent` / `--rule` / `--ink-quiet`）
+
+## 決まっていること（蒸し返さない）
+
+- 選択肢の意匠を練り直してよい（2026-09-20 ユーザー承認）。
+- **`frontend-design` スキルを使う。**
+
+## 解くべき論点
+
+- チェックボックスを自前で描くか（`appearance: none` ＋ 疑似要素）、既定のまま大きさと余白だけ整えるか
+- 単一選択（`<button>`）と複数選択（`<label>`）で見た目をどこまで揃えるか。構造が違うので、揃えるなら片方の構造を変える判断が要る
+- 選択・フォーカス・hover の3つの印を**色だけに頼らずに**出せるか
+- テーマの色変数の中で収めるか、新しい変数を足すか
+
+## やること
+
+1. `frontend-design` スキルを読む。いまの見た目を撮って出発点にする
+2. 意匠を決めて `src/ui/styles/dispatch.css`（必要なら `pending-answer.tsx` の構造）を直す
+3. `question-multi` / `question-long` / `question-pair` の3つの場面を 1400px と 720px で撮り、選択・フォーカス・hover の3状態を確かめる
+4. 質問の箱の高さの制約を壊していないことを確かめる（`.pending-question` が入力欄の領域を丸ごと使い、選択肢3件＋自由入力＋「答える」が同時に見える）
+
+## 完了条件
+
+- `bun run check` が通る
+- 3つの場面 × 2つの幅を目視し、選択・フォーカス・hover の3状態が色以外でも見分けられることを `evidence` に書く
+- 720px で選択肢3件＋自由入力＋「答える」が同時に見える
+
+## 注意
+
+- `src/ui/styles/dispatch.css` は T-191（CSS Modules へ移す）も触る。**並行させない**
+- 構造を変えるなら `test/ui/features/dispatch/pending-answer.test.tsx` の期待も追随させる
+- tsukumo を起こす目視確認が要るので、起動を伴う他のタスクと同時に進めない
+
+## T-230
+
+**タスク**: 雑談モードで入力欄が低いまま伸ばせないのを直す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-228 / **passes**: True
+
+**evidence**:
+
+実機（fake駆動・Playwright・ポート4791・1400x900）で雑談中の入力欄が 155px→337px（textarea 79→261）。雑談で仕切りを 32.7% へ動かすと 567px になり、離してもリロードしても保持（localStorage の collapsedRowTop に入る）。雑談で動かしたあと仕事は 60% のまま、仕事を 78.8% へ動かしても雑談は 32.7% のまま（両方向で不干渉）。collapsedRowTop 未設定なら仕事の比率で開き、「既定に戻す」で未設定へ戻る。760x900 でも横スクロール無し（入力欄 170px、before と同値）。保存キーは v1 据え置き（この項だけ個別に undefined へ畳むので旧い保存値も読める）。bun run check 797→804 pass / 0 fail（split.test.ts +4、layout.test.tsx +3）。
+
+## 背景
+
+ユーザーの指示（2026-09-20、雑談モードのレビュー）「入力画面の高さが小さいね」。
+スクリーンショットの添付あり（リポジトリ直下の `スクリーンショット 2026-09-20 19.43.25.png`）。
+**同日の追加の指示**「入力画面の高さは仕事モードの高さをデフォルトとして、split でドラッグして
+調整可能にしてほしかったな」。
+
+**現物**: `src/browser/features/layout/layout.tsx` が雑談中だけ `COLLAPSED_CHARACTER_ROW_TOP = 82`
+を使い、`fractionStyle` 経由で**上段82%・下段18%に固定**する。加えて上下の仕切り
+（`<LayoutResizer orientation="horizontal">`）を `{!props.collapseCharacter && ...}` で描かないので、
+**雑談中は入力欄の高さを掴んで変えられない**。
+
+どちらにも JSDoc の理由が付いている（**今回の決定で両方とも前提が崩れる**ので、コメントごと
+差し替える）:
+
+- 82 にした理由 —「下段に残るのは入力欄だけなので、仕事のときの比率（既定60%）をそのまま当てると
+  入力欄が画面の4割を占める」
+- 仕切りを出さない理由 —「高さが `COLLAPSED_CHARACTER_ROW_TOP` に固定されるので、動かしても
+  離した瞬間に戻ってしまい、掴めるのに効かない仕切りになる」
+
+比率そのものは `src/browser/features/layout/split.ts` の `Split`（`rowTop` / `bottomLeft` /
+`topLeft`）が持ち、`localStorage`（`tsukumo-layout-split:v1`）に保存される。`layout.tsx` の
+`SPLIT_VARIABLES` が `satisfies Record<keyof Split, ...>` なので、**`Split` に項を足したら
+そこにも組を足すことになる**（雑談用の項は上下と同じ `--layout-row-top` / `--layout-row-bottom`
+を指す）。
+
+## 決まっていること（蒸し返さない）
+
+2026-09-20 のユーザー決定。**論点は残っていないので、下の形をそのまま作る。**
+
+- **雑談中も上下の仕切りを出し、掴んで動かせるようにする。** `COLLAPSED_CHARACTER_ROW_TOP` に
+  よる固定はやめる（82 という値も、雑談専用の別の既定値も置かない）
+- **既定は仕事モードの比率（`split.rowTop`）をそのまま使う**
+- **雑談中に動かした比率は雑談用に別で覚える。** `Split` に雑談用の項を1つ足し、
+  **「まだ動かしていない」は `undefined` で表して読み出し側で `rowTop` に落とす**
+  （`?:` は使わない。初期値として `rowTop` の値をコピーして焼き付けない —— 焼き付けると
+  仕事側をあとから変えたときに追随しなくなる）
+- **雑談でドラッグしても仕事モードの比率は動かない。逆も同じ**
+- 既定値をユーザーに見せて決める手順は要らなくなった（既定＝仕事の比率なので当たり外れが無い）
+
+## やること
+
+1. 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）で雑談モードに入り、入力欄の
+   領域と textarea の実寸を測る（before の px）
+2. `split.ts` の `Split` に雑談用の上下比を足す。`loadSplit` は**保存値に雑談用の項が無い・
+   壊れている場合を `undefined` に畳む**（他の3項と違い、無効でも `DEFAULT_SPLIT` 全体には
+   落とさない）。`saveSplit` は `undefined` のまま往復できること
+3. `layout.tsx` の `COLLAPSED_CHARACTER_ROW_TOP` を撤去し、雑談中も
+   `<LayoutResizer orientation="horizontal">` を描く。`fractionStyle` に渡す値と `onCommit` の
+   書き込み先を、雑談中かどうかで振り分ける
+4. **前提が崩れた2つの JSDoc / コメントを書き直す**（残すのは「今の挙動の制約・前提」だけ。
+   `CLAUDE.md` のコメントの規約）
+5. 入力欄の中の縦の配り方を実機で見る。`.dispatch-form` と `.dispatch-text-wrap` は
+   `flex: 1 1 auto` で領域の高さを受け取る作りなので、領域が広がれば textarea も伸びるはず。
+   **領域の高さ以外に詰まっている箇所が無いか**を確かめてから触る
+6. 「領域の比率を既定に戻す」ボタンが雑談用の項も未設定へ戻すことを確かめる
+
+## 完了条件
+
+- 雑談中の入力欄の高さを実機で測って before / after の px を `evidence` に書く
+- **掴んで動かした値が離しても戻らない**ことを実機で確かめて `evidence` に書く
+- **雑談でドラッグしたあと仕事へ戻すと仕事モードの比率が動いていない**こと、**その逆**
+  （仕事で動かしても雑談の比率が動かない）を実機で確かめて `evidence` に書く
+- **雑談用の項が未設定のとき、雑談は仕事モードと同じ比率で開く**ことを確かめる。
+  仕事側を動かしてから雑談へ入ると、動かしたあとの比率で開く
+- 保存値に雑談用の項が無い・壊れている場合の畳み込みを単体テストで示す
+  （`split.ts` の既存テストと同じ粒度）
+- 狭い画面（`@media (max-width: 760px)`。`docs/requirements.md` 4.7）でも崩れないことを測る
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **tsukumo を起こす目視確認が要るので、他の目視タスクと並行させない**（`CLAUDE.md`「タスク運用」）
+- `localStorage` の保存キーは `tsukumo-layout-split:v1`。**項を足すだけで既存の保存値も読める**
+  形にする（読めないなら `v2` へ上げる判断を `evidence` に書く）
+- 16進の色を `src/browser/styles/theme.css` 以外に書かない
+- コードにタスク番号（`T-` + 3桁）を書かない
+
+## T-231
+
+**タスク**: 雑談中の会話をどこまで遡れるようにするかを決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-228 / **passes**: True
+
+**evidence**:
+
+真因は (a)(b)(c) のどれでもなく chat-view.module.css の `justify-content: flex-end` による上方向クリップ。実測（fake駆動・Playwright・1400x900・ログ43件）で clientHeight 495 / scrollHeight 495 / 子要素の総高さ 2496px、43件中35件が枠外の上で見えるのは8件、scrollTop は代入でもホイールでも 0 から動かず（flex-start に差し替えると scrollHeight 2511 / maxScroll 2016）。(b) は該当（25投入→20ターンで打ち切り、PROMPT-01〜07 が消えた）、(c) は潜在（最上部で新着1件 → scrollTop 0→1907）、(a) は非該当（restart → findResumeSession は雑談でも必ず通る。session-launch.ts:98。fake では resume 経路が走らないためコード読解で断定）。決定4件: 雑談だけ上限100ターン / ふつうのスクロールだけ / 仕事とは揃えない / 下端付近に居たときだけ寄せる。却下: 「そのセッションの全部」＝trimToRecentTurns の前提と正面衝突、「20のまま」＝雑談の幅として短い、「もっと見る」「継ぎ足し」＝操作子か仕掛けが1つ増える（13.1 原則2）、「仕事と揃える」＝依頼の見出しで区切るタブの利点を崩す。docs/requirements.md 4.9 と docs/design.md 13.7 に記載（節の数は 27 / 52 で前後一致）。後続 T-235 / T-236 / T-237 を登録。
+
+## 背景
+
+ユーザーの指示（2026-09-20、雑談モードのレビュー）「会話をどこまで遡れるようにするかは
+相談させてほしいな。今は遡れない様子」。**「相談させてほしい」と明示されているので、
+決めるところまでのタスク。**
+
+**現物で分かっていること**（原因はまだ特定していない）:
+
+- `src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS = 20` が記録を直近20ターンで切る
+  （`trimToRecentTurns`。ターンの境目は `request`）。JSDoc の理由は「常駐プロセスが
+  セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない」
+- **雑談への切り替えはセッションの起こし直し**（`docs/requirements.md` 4.9）で、
+  `src/server/core/session-manager.ts` の `restart` が `state = INITIAL_SESSION_STATE` に戻す。
+  そのあと `src/server/core/session-launch.ts` の `replayRestoredSession` が、`resume` が
+  見つかったときだけ transcript を読み直して履歴を流す
+  （`src/server/adapter/sdk-driver.ts` の `readRestoredEvents`）
+- `src/browser/features/chat-view/chat-view.tsx` の `ChatLog` は `overflow-y: auto` の容器で、
+  件数が増えるたび `scrollTop = scrollHeight` で下端へ寄せる。**上へのスクロール自体は塞いでいない**
+
+つまり「遡れない」の原因は (a) 起こし直しのあと履歴が流れていない (b) 流れているが20ターンで
+切れている (c) 件数が増えるたびの自動スクロールが掴んだ位置を奪っている、のいずれか。
+
+**関連する既存の決定**: `docs/requirements.md` 4.8（復元は常に自動で続きから）、
+2.2（セッションを選ばせる画面・過去のセッションの一覧は作らない）。
+
+## 解くべき論点
+
+1. **まず原因を切り分ける**（上の (a) (b) (c)）。実機で測ってから議論に入る
+2. **どこまで遡れれば足りるか。** transcript が正典なので上限は「そのセッションの全部」まで
+   伸ばせるが、`MAX_SESSION_STATE_TURNS` の前提（常駐プロセスの記録を無限に増やさない）と衝突する
+3. **遡る操作をどう出すか。** 上へスクロールしたら古いぶんを継ぎ足す / 最初から全部持つ /
+   「もっと見る」を置く。**枠を増やさない**（`docs/design.md` 13.1 原則2）
+4. **仕事のときと揃えるか。** 仕事のメインビューは `MAX_MAIN_VIEW_TURNS` のタブで遡る別の形を
+   持っている。雑談だけ別の仕組みにするか、両方に効かせるか
+5. 自動スクロールの条件（いまは件数が変わるたび無条件）。**読み返している最中に下へ攫われない**
+   形にするか
+
+## やること
+
+1. 論点1を実機（`TSUKUMO_DRIVER=fake`）で切り分け、原因を `evidence` に書く
+2. **ユーザーと議論して決を採る**（指示が「相談させてほしい」と言っているので、案を並べて
+   選んでもらう）。このタスクは決めるところまでで、コードは触らない
+3. 決めた内容を `docs/requirements.md` 4.9 と `docs/design.md` 13.7 に書く
+4. 実装が要るなら後続タスクとして登録する（このタスクでは作らない）
+
+## 完了条件
+
+- 「今は遡れない」の原因が実機の測定つきで `evidence` に書かれている
+- どこまで遡れるようにするか・遡る操作をどう出すか・仕事のときと揃えるかの3つが決まり、
+  `docs/requirements.md` か `docs/design.md` に書かれている
+- 却下した案とその理由が `evidence` に残っている
+- 実装が要るなら後続タスクが登録されている
+- `bun run check` が通る（ドキュメントだけの変更でも回す）
+- 節の一覧が壊れていないこと: `grep -c '^#\{2,3\} ' docs/requirements.md docs/design.md` が
+  編集の前後で合う
+
+## 注意
+
+- **コードは変えない**（原因の切り分けのための一時的な計測は、終わったら戻す）。実装は後続タスク
+- **T-228 が雑談中のメインビューを作っている。** T-228 が `done` になってから着手する
+- `docs/` の節の索引の罠に注意（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- **会話の中身を写さない**（`CLAUDE.md`「会話内容の扱い」）。件数と要素の位置だけを書く
+
+## T-233
+
+**タスク**: 雑談ビューの立ち絵が素材の縦横比を保つようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-228 / **passes**: True
+
+**evidence**:
+
+実測（fake駆動・Playwright・ポート47231）で雑談ビューだけ横潰れを確認: 1400px で表示比 0.578 / 375px で 0.226（素材 default.png 830×1254 = 0.662）。キャラビュー（0.662）とキャラクター画面（6表情とも自然比）はズレ無し。portrait.module.css の .portrait svg,.portrait-image を height:100% → height:auto + max-height:100% に直し、3箇所×wide/narrow の全測定で比 0.662 に一致。立ち絵の4つの動きは data-motion の遷移と transform の実値で継続を確認（breathe: Y -3.14〜0、walk: X 0→7.8）。bun run check 797 pass / 0 fail（増減なし）。
+
+## 背景
+
+ユーザーの指示（2026-09-20、雑談モードのレビュー）「キャラのアスペクト比がやや長細いように
+見える?から改善してほしいな」。
+
+**現物で分かっていること**（原因は2つ候補があり、どちらがどれだけ効いているかは未確認）:
+
+- `src/browser/components/portrait.module.css` の `.portrait svg, .portrait-image` は
+  `width: auto; height: 100%; max-width: 100%` で、**`object-fit` を持たない**。置換要素は
+  「高さが `auto` でないまま `max-width` に当たった」とき**幅だけが縮む**（CSS 2.1 §10.4 の
+  制約表）ので、`max-width` が効いた瞬間に横だけ潰れる。`<img>` の `object-fit` は既定が `fill`
+  なので、中身も一緒に潰れる
+- 雑談ビュー（`src/browser/features/chat-view/chat-view.module.css`）の `.chat-portrait` は
+  `height: 80%` と `max-width: 32%` を同時に掛けている。キャラビュー
+  （`src/browser/features/character-view/character-view.module.css`）は 78% / 45% で、
+  **雑談のほうが幅の上限が厳しい**ぶん `max-width` に当たりやすい
+- **素材の側も揃っていない**: `characters/tsukumo/` の `default.png` は 830×1254（縦横比 0.66）、
+  `curious` / `flustered` / `proud` / `serious` は 1145×1374（0.83）、`thinking` は
+  1214×1295（0.94）。**表情を変えると形が変わる**
+
+つまり原因の候補は (a) `max-width` による横潰れ (b) 素材そのものの縦横比の差 の2つ。
+
+## やること
+
+1. **先に測る。** 実機（`TSUKUMO_DRIVER=fake`、`TSUKUMO_VIEW_PORT` は既定以外）で雑談ビューを
+   出し、立ち絵の要素の実寸（`getBoundingClientRect`）と素材の自然な寸法
+   （`naturalWidth` / `naturalHeight`）を突き合わせて、**潰れているかどうかを確かめる**
+2. 潰れていたら `portrait.module.css` 側で直す。**同じ規則をキャラビューとキャラクター画面の
+   立ち絵の並びも共有している**（`src/browser/features/character-screen/`）ので、3箇所すべてで
+   見た目が変わらないことを確かめる
+3. **潰れておらず素材の縦横比の差だけだったら、コードは直さない。** 測った値と「素材の側の差で
+   ある」ことを `evidence` に書いて閉じる（素材はリポジトリに同梱しないので、揃えるのは
+   利用者の側の作業。`docs/requirements.md` 2.2）
+
+## 完了条件
+
+- 立ち絵の表示上の縦横比と素材の自然な縦横比が**一致する**ことを実機で測って `evidence` に書く
+  （雑談ビュー・キャラビュー・キャラクター画面の3箇所ぶん。数値で書く）
+- 狭い画面（`@media (max-width: 760px)`。`docs/requirements.md` 4.7）でも測る
+- 立ち絵の動き（呼吸・歩行・跳ね・びくっ）が今までどおり出ることを実機で確かめる
+  （`transform` を使う規則と噛み合うかの裏取り）
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **T-228 が雑談ビューを作っている。** T-228 が `done` になってから着手する
+- **tsukumo を起こす目視確認が要るので、他の目視タスクと並行させない**（`CLAUDE.md`「タスク運用」）
+- **立ち絵は「1枚の矩形」として位置・大きさ・傾き・上下・不透明度だけを動かす**割り切り
+  （`docs/requirements.md` 4.3 / `docs/design.md` 6.5）。素材の中身に触る方向へ広げない
+- 16進の色を `src/browser/styles/theme.css` 以外に書かない
+- コードにタスク番号（`T-` + 3桁）を書かない
