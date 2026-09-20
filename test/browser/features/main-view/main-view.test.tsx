@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it, spyOn } from "bun:test"
 
 import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 
@@ -123,6 +123,36 @@ describe("MainView（タブの規則）", () => {
 
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
     expect(screen.queryByText("4つ目のレポート")).toBeNull()
+  })
+})
+
+describe("MainView（タブ切り替えでレポートの先頭へ戻す）", () => {
+  it("タブを切り替えると、先頭へ戻す scrollIntoView が1回呼ばれる", () => {
+    renderMainView([
+      request("1つ目"),
+      detail("1つ目のレポート"),
+      request("2つ目"),
+      detail("2つ目のレポート"),
+    ])
+
+    const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
+
+    fireEvent.click(screen.getByText("1つ前"))
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    expect(scrollIntoView.mock.calls[0]?.[0]).toEqual({ block: "start" })
+
+    scrollIntoView.mockRestore()
+  })
+
+  it("出ているターンが無いときは呼ばれない", () => {
+    const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
+
+    renderMainView([])
+
+    expect(scrollIntoView).not.toHaveBeenCalled()
+
+    scrollIntoView.mockRestore()
   })
 })
 

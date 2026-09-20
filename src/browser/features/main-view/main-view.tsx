@@ -37,7 +37,11 @@ export function MainView(): ReactElement {
     if (scroller === null || activeTurnId === undefined) {
       return
     }
-    scroller.scrollTop = 0
+    // `scrollTop` ではなく `scrollIntoView`: 実際に転がる祖先が画面幅で入れ替わる
+    // （広い画面は `section[data-region="main"]`、狭い画面（≤760px）はページ自身）。
+    // `scrollIntoView` は「どの祖先が転がっているか」を呼ぶ側が知らなくても、転がる祖先を
+    // 全部たどって動かす。
+    scroller.scrollIntoView({ block: "start" })
   }, [activeTurnId])
 
   if (turnsNewestFirst.length === 0) {
