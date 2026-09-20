@@ -28,6 +28,17 @@
 .layout-row-bottom {
   grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
 }
+/* キャラビューを畳んだとき（雑談モード。立ち絵が上段へ移る。docs/design.md 13.7）。
+   **領域と仕切りは <Layout> が描かない**ので、ここは残った入力欄に全幅を渡すだけ。 */
+.layout-row-bottom[data-collapse-character="true"] {
+  grid-template-columns: 1fr;
+}
+/* **上下の仕切りを描かないときは、その `auto` のトラックも消す。** 残したままだと下段が
+   `auto`（中身の高さ）に入り、`--layout-row-bottom` のトラックが空のまま画面のいちばん下に
+   帯として残る（実測: 1400x900 で 117px)。 */
+.layout-grid[data-collapse-character="true"] {
+  grid-template-rows: var(--layout-row-top, 60fr) var(--layout-row-bottom, 40fr);
+}
 /* **領域そのものは横に転がらない**（2026-09-15 決定。ユーザーの指摘「横にスクロールできたのが
    気になった。スクロールできないのが使い勝手良さそうだよ」）。`overflow-y: auto` だけを書くと、
    CSS では片方の軸が visible でなくなったときにもう片方の visible も auto に計算されるので、
@@ -184,6 +195,17 @@
   .layout-row-bottom {
     grid-template-rows: 9.5rem minmax(0, 1fr);
     max-height: 58dvh;
+  }
+  /* **畳んでも1列表示の行は変わらない**（タブ / 上段 / 下段の3本のまま）。広い画面の側の
+     override は上下の仕切りを消すためのもので、こちらには仕切りがそもそも無い
+     （`.layout-resizer` を隠している）。当たったままにすると、タブ行が上段のトラックに
+     入って上段が潰れる（実測: 760x900 で上段が 125px）。 */
+  .layout-grid[data-collapse-character="true"] {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  /* 下段に残るのは入力欄だけなので、キャラビューの 9.5rem のトラックは要らない。 */
+  .layout-row-bottom[data-collapse-character="true"] {
+    grid-template-rows: minmax(0, 1fr);
   }
   /* 仕切りは1列表示では意味を持たないので隠す。比率を戻すボタンも同じ理由で隠す
      （動かせる比率が無い1列表示では戻す先が無い。色と立ち絵の固定はキャラクター画面へ

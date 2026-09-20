@@ -26,12 +26,13 @@ import {
 import { CharacterCreate } from "./features/character-screen/character-create.tsx"
 import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
 import { CharacterView } from "./features/character-view/character-view.tsx"
+import { ChatView } from "./features/chat-view/chat-view.tsx"
 import { Dispatch } from "./features/dispatch/dispatch.tsx"
 import { Layout } from "./features/layout/layout.tsx"
 import { MainView } from "./features/main-view/main-view.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
 import { useScreen } from "./stores/screen.tsx"
-import { SessionProvider } from "./stores/session.tsx"
+import { SessionProvider, useSessionSelector } from "./stores/session.tsx"
 import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
 // ページ全体の下地（トークン・body・リンク）。**グローバルな CSS はこれだけ**で、機能ごとの
 // 見た目は各機能の `*.module.css` にある（docs/design.md 6.6）。
@@ -46,14 +47,19 @@ import "./styles/theme.css"
  */
 function Root(): ReactElement {
   const screen = useScreen()
+  // **雑談モードではメインビューを雑談ビューに差し替え、キャラビューを畳む**
+  // （立ち絵が上段へ移るため。docs/requirements.md 4.9 / docs/design.md 13.7）。
+  // 差し替えを入口が持つのは、`<Layout>` が他の機能を知らないのと同じ理由。
+  const chatMode = useSessionSelector((session) => session.state.chatMode)
   return (
     <>
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
         <Layout
-          main={<MainView />}
+          main={chatMode ? <ChatView /> : <MainView />}
           sidebar={<Sidebar />}
           character={<CharacterView />}
           dispatch={<Dispatch />}
+          collapseCharacter={chatMode}
         />
       </Activity>
       {screen === "character" ? <CharacterScreen /> : null}

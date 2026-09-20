@@ -1,0 +1,98 @@
+/* 雑談ビュー（`<ChatView>`。docs/design.md 13.7）。**メインビューの領域を左右に割り**、
+   左に立ち絵、右に会話のログを置く。
+
+   **これはプロトタイプ**（2026-09-20）。立ち絵とログの比率は目視で仮に決めたもので、
+   手触りを見てから詰める前提。 */
+.chat-region {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  height: 100%;
+  overflow: hidden;
+  /* 立ち絵の大きさ（領域の高さに対する割合）。メインビューはキャラビューより背が高いので、
+     割合はキャラビュー（78%）より控えめにして、ログの側の幅を確保する。 */
+  --chat-portrait-height: 80%;
+  --chat-portrait-drop: 1.5rem;
+}
+/* 立ち絵は左。キャラビューと同じく下端で揃え、少し沈めて床に置く。 */
+.chat-portrait {
+  margin: 0 0 calc(-1 * var(--chat-portrait-drop));
+  flex: 0 1 auto;
+  height: var(--chat-portrait-height);
+  /* 立ち絵が縦長だと高さ側だけでは幅が読めないので、ログの場所を守る上限をここで引く
+     （キャラビューの 45% より狭い — メインビューは背が高く、同じ割合だと幅を食いすぎる）。 */
+  max-width: 32%;
+}
+/* 会話のログ。**古い→新しいが縦に積む**ので、DOM の順そのままに並べ、下端へスクロールする
+   （`chat-view.tsx` が最新へ寄せる）。 */
+.chat-log {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  /* **下端から積む。** 件数が少ないうちに上へ貼り付くと、立ち絵の顔の高さと話が合わない
+     （LINE / Discord も新しい発言が下に来る）。溢れたら上へ伸びる。 */
+  justify-content: flex-end;
+  gap: 0.6rem;
+  min-width: 0;
+  height: 100%;
+  padding: 0.5rem 0.25rem;
+  overflow-y: auto;
+}
+/* `justify-content: flex-end` は溢れたときに**上側がはみ出して掴めなくなる**ので、
+   子の側で縮まないことを明示して、スクロールで届くようにする。 */
+.chat-log > * {
+  flex-shrink: 0;
+}
+/* 1件の発言。**話者で左右に寄せる**（LINE / Discord と同じ読み方）。 */
+.chat-entry {
+  max-width: 80%;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 1.1rem;
+  background: var(--surface);
+  /* **セリフの文字は `ink`**（docs/design.md 13.1 原則1。長い往復でも濃さを変えない）。 */
+  color: var(--ink);
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* キャラクターの発言は立ち絵の側（左）に寄せ、差し色の縁で話者を示す。 */
+.chat-entry-character {
+  align-self: flex-start;
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  border-bottom-left-radius: 0.3rem;
+}
+/* 利用者の発言は右。**差し色は使わない**（色が現れるのはキャラクターが居る場所だけ。
+   13.1 原則1）ので、地の濃さだけで区別する。 */
+.chat-entry-user {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--surface), var(--ink) 8%);
+  border-bottom-right-radius: 0.3rem;
+}
+/* まだ一度も話していないときの案内。 */
+.chat-empty {
+  align-self: center;
+  margin: auto 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+
+/* 狭い画面（docs/requirements.md 4.7）。立ち絵を小さくしてログの幅を残す。 */
+@media (max-width: 760px) {
+  .chat-region {
+    /* 狭い画面では領域が縦に長いので、割合を上げないと立ち絵の上に空きが広く残る。 */
+    --chat-portrait-height: 76%;
+    --chat-portrait-drop: 0.4rem;
+  }
+  .chat-portrait {
+    max-width: 28%;
+  }
+  .chat-log {
+    flex-basis: 10rem;
+  }
+  .chat-entry {
+    max-width: 92%;
+  }
+}

@@ -13,8 +13,16 @@ import {
  * 4領域は中身の判別さえできればよいので、部品名の文字列だけ渡す
  * （`<Layout>` は他の `features/` を import しない。test/architecture.test.ts）。
  */
-function renderLayout(): void {
-  render(<Layout main="main" sidebar="sidebar" character="character" dispatch="dispatch" />)
+function renderLayout(collapseCharacter = false): void {
+  render(
+    <Layout
+      main="main"
+      sidebar="sidebar"
+      character="character"
+      dispatch="dispatch"
+      collapseCharacter={collapseCharacter}
+    />,
+  )
 }
 
 /** 仕切りの位置（%）は container の矩形から出るので、happy-dom の 0 のままでは測れない。 */
@@ -115,6 +123,33 @@ describe("Layout", () => {
     expect(sidebarTab.getAttribute("aria-selected")).toBe("true")
     // 領域そのものは4つとも残る（タブは見せる側を選ぶだけ。docs/requirements.md 4.7）。
     expect(document.querySelector('[data-region="main"]')).not.toBeNull()
+  })
+
+  it("キャラビューを畳むと、その領域と2本の仕切りが消える（雑談モード）", () => {
+    renderLayout(true)
+
+    expect(screen.queryByText("character")).toBe(null)
+    expect(screen.queryByLabelText("キャラビューと入力欄の境界")).toBe(null)
+    // 上段の高さが固定されるので、掴めるのに効かない仕切りを残さない。
+    expect(screen.queryByLabelText("上段と下段の境界")).toBe(null)
+    // 入力欄は残る（下段が入力欄だけになる）。
+    expect(screen.getByText("dispatch")).toBeTruthy()
+  })
+
+  it("畳んでいる間も、使う人が決めた比率は保存したまま", () => {
+    // 描くときだけ固定の高さを当てる（state は触らない）。仕事へ戻すとそのまま効く。
+    saveSplit({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+    renderLayout(true)
+
+    expect(loadSplit()).toEqual({ rowTop: 60, topLeft: 30, bottomLeft: 40 })
+  })
+
+  it("畳むのをやめると、キャラビューと仕切りが戻る", () => {
+    renderLayout(false)
+
+    expect(screen.getByText("character")).toBeTruthy()
+    expect(screen.getByLabelText("キャラビューと入力欄の境界")).toBeTruthy()
+    expect(screen.getByLabelText("上段と下段の境界")).toBeTruthy()
   })
 
   it("一度も動かさずに離したときは保存しない", () => {

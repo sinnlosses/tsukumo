@@ -32,7 +32,21 @@ export type LayoutProps = {
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
+  /**
+   * キャラビューの領域を畳み、下段を入力欄だけにするか。**立ち絵が上段へ移ったときに使う**
+   * （雑談モード。docs/design.md 13.7）。**ここは「なぜ畳むか」を知らない** — 領域の数が
+   * 変わることだけを受け取る。
+   */
+  readonly collapseCharacter: boolean
 }
+
+/**
+ * キャラビューを畳んでいるとき（雑談モード）の、上段の高さ（%）。**使う人が決めた比率
+ * （`split.rowTop`）は state に残したまま、描くときだけこちらを使う** — 下段に残るのは
+ * 入力欄だけなので、仕事のときの比率（既定 60%）をそのまま当てると入力欄が画面の4割を占める。
+ * 戻したときは使う人の比率がそのまま効く。
+ */
+const COLLAPSED_CHARACTER_ROW_TOP = 82
 
 /** 狭い画面のとき、上段に出している領域。 */
 type NarrowPane = "main" | "sidebar"
@@ -77,7 +91,11 @@ export function Layout(props: LayoutProps): ReactElement {
       <div
         className={styles["layout-grid"]}
         ref={gridRef}
-        style={fractionStyle("rowTop", split.rowTop)}
+        data-collapse-character={props.collapseCharacter}
+        style={fractionStyle(
+          "rowTop",
+          props.collapseCharacter ? COLLAPSED_CHARACTER_ROW_TOP : split.rowTop,
+        )}
       >
         <div className={styles["layout-tabs"]} role="tablist">
           {NARROW_PANES.map((entry) => (
@@ -127,39 +145,51 @@ export function Layout(props: LayoutProps): ReactElement {
             {props.sidebar}
           </section>
         </div>
-        <LayoutResizer
-          orientation="horizontal"
-          containerRef={gridRef}
-          ariaLabel="上段と下段の境界"
-          onChange={(percent) => {
-            writeFraction(gridRef.current, "rowTop", percent)
-          }}
-          onCommit={(percent) => {
-            commitSplit((current) => ({ ...current, rowTop: percent }))
-          }}
-        />
+        {/* **畳んでいる間は上下の仕切りも出さない。** 高さが
+            `COLLAPSED_CHARACTER_ROW_TOP` に固定されるので、動かしても離した瞬間に
+            戻ってしまい、掴めるのに効かない仕切りになる。 */}
+        {!props.collapseCharacter && (
+          <LayoutResizer
+            orientation="horizontal"
+            containerRef={gridRef}
+            ariaLabel="上段と下段の境界"
+            onChange={(percent) => {
+              writeFraction(gridRef.current, "rowTop", percent)
+            }}
+            onCommit={(percent) => {
+              commitSplit((current) => ({ ...current, rowTop: percent }))
+            }}
+          />
+        )}
         <div
           className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}
           ref={rowBottomRef}
+          data-collapse-character={props.collapseCharacter}
           style={fractionStyle("bottomLeft", split.bottomLeft)}
         >
-          <section
-            className={`${styles["layout-region"]} ${styles["layout-character"]}`}
-            data-region="character"
-          >
-            {props.character}
-          </section>
-          <LayoutResizer
-            orientation="vertical"
-            containerRef={rowBottomRef}
-            ariaLabel="キャラビューと入力欄の境界"
-            onChange={(percent) => {
-              writeFraction(rowBottomRef.current, "bottomLeft", percent)
-            }}
-            onCommit={(percent) => {
-              commitSplit((current) => ({ ...current, bottomLeft: percent }))
-            }}
-          />
+          {/* **畳むときは仕切りごと出さない。** 比率（`split.bottomLeft`）は state に残って
+              いるので、戻したときに使う人が決めた幅がそのまま戻る。 */}
+          {!props.collapseCharacter && (
+            <>
+              <section
+                className={`${styles["layout-region"]} ${styles["layout-character"]}`}
+                data-region="character"
+              >
+                {props.character}
+              </section>
+              <LayoutResizer
+                orientation="vertical"
+                containerRef={rowBottomRef}
+                ariaLabel="キャラビューと入力欄の境界"
+                onChange={(percent) => {
+                  writeFraction(rowBottomRef.current, "bottomLeft", percent)
+                }}
+                onCommit={(percent) => {
+                  commitSplit((current) => ({ ...current, bottomLeft: percent }))
+                }}
+              />
+            </>
+          )}
           <section
             className={`${styles["layout-region"]} ${styles["layout-dispatch"]}`}
             data-region="dispatch"
