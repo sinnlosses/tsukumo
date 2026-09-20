@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test"
 import {
   readTaskSummaries,
   taskReadiness,
+  unfinishedTaskIds,
   type TaskSummaryItem,
 } from "../../src/shared/task-summary.ts"
 
@@ -148,27 +149,49 @@ describe("taskReadiness", () => {
     AFTER_UNFINISHED,
     AFTER_ARCHIVED,
   ]
+  const UNFINISHED = unfinishedTaskIds(TASKS)
 
   it("todo 以外は判定しない", () => {
-    expect(taskReadiness(FINISHED, TASKS)).toBeUndefined()
+    expect(taskReadiness(FINISHED, UNFINISHED)).toBeUndefined()
   })
 
   it("依存が無ければ着手できる", () => {
-    expect(taskReadiness(FREE, TASKS)).toEqual({ kind: "ready" })
+    expect(taskReadiness(FREE, UNFINISHED)).toEqual({ kind: "ready" })
   })
 
   it("依存が done なら着手できる", () => {
-    expect(taskReadiness(AFTER_FINISHED, TASKS)).toEqual({ kind: "ready" })
+    expect(taskReadiness(AFTER_FINISHED, UNFINISHED)).toEqual({ kind: "ready" })
   })
 
   it("done でない依存があると、その ID を並べて止める", () => {
-    expect(taskReadiness(AFTER_UNFINISHED, TASKS)).toEqual({
+    expect(taskReadiness(AFTER_UNFINISHED, UNFINISHED)).toEqual({
       kind: "blocked",
       blockedBy: ["X-002"],
     })
   })
 
   it("一覧に無い依存は止めない（アーカイブ済みは完了扱い）", () => {
-    expect(taskReadiness(AFTER_ARCHIVED, TASKS)).toEqual({ kind: "ready" })
+    expect(taskReadiness(AFTER_ARCHIVED, UNFINISHED)).toEqual({ kind: "ready" })
+  })
+})
+
+describe("unfinishedTaskIds", () => {
+  const item = (id: string, status: string): TaskSummaryItem => ({
+    id,
+    summary: `架空の${id}`,
+    status,
+    difficulty: undefined,
+    loopable: undefined,
+    dependencies: [],
+  })
+
+  it("done でないタスクのIDだけを集める", () => {
+    const tasks: readonly TaskSummaryItem[] = [
+      item("X-001", "done"),
+      item("X-002", "todo"),
+      item("X-003", "doing"),
+    ]
+
+    expect(unfinishedTaskIds(tasks)).toEqual(new Set(["X-002", "X-003"]))
   })
 })

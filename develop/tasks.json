@@ -149,9 +149,9 @@
     "dependencies": ["T-211"],
     "summary": "毎フレーム組み直している箇所を memo と1回計算に直す",
     "task": "## 背景\n\nT-197 の調査（`develop/direction.md` のドラフト）で当たった、**画面に出ていない／変わって\nいないのに毎フレーム（ターン中は毎秒10回）作り直している**箇所。T-211 で購読が絞られると\n発生頻度は下がるが、**残るものだけ**をここで潰す。\n\n1. `src/ui/features/sidebar/sidebar.tsx:54` の `<TaskBoard>` は `<dialog>` を\n   `showModal()` / `close()` で開閉する作りなので**閉じている間も常にマウントされている**\n   （`task-board.tsx:30-41`）。そのたびに `task-board.tsx:97-99` がタスク全件（いま24件）×\n   7列を組み直す\n2. `task-board.tsx:122` が行ごとに `taskReadiness` を呼び、その中\n   （`src/protocol/task-summary.ts:75-77`）で毎回「未完了のID」の `Set` を作り直す。\n   24行なら `Set` を24個作って 24×24 走査する\n3. `src/ui/features/main-view/report.tsx:16` の `splitReportBlocks` がレポート全文を毎回走査\n   する。`ReportBlock` の `memo`（32行目）が守っているのは Markdown → React の変換だけで、\n   **割る仕事そのものは毎回**走る\n4. `task-board.tsx:85-95` の `<thead>` は7つの `<th>` が完全に静的なのに毎回作り直している\n5. `src/ui/features/sidebar/task-list.tsx:30-32` が `todo` / `doing` / `done` を数えるのに\n   `filter` を3回、全件に対して回している\n6. `src/ui/features/main-view/markdown/split-blocks.ts:79` の `isFenceDelimiterLine` が\n   正規表現リテラルを関数の中に置いているので、**レポートの行数だけ** `RegExp` を作る\n   （同じファイルの `HTML_TAG_PATTERN` などはモジュール定数になっている）。\n   `src/ui/features/dispatch/command-suggestions.tsx:21` の `/\\s/` も同じ\n\n## やること\n\n1. 上の6件を順に直す。**1と4は同じ `task-board.tsx`**、2は `src/protocol/task-summary.ts` の\n   `taskReadiness` の引数を「未完了のIDの `Set`」に変える形\n2. 3は `Report` を `memo` で包む（props は `markdown` の文字列1つなので浅い比較で足りる）\n3. 6はモジュール定数へ上げるだけ\n4. `test/protocol/task-summary.test.ts` が `taskReadiness` の引数の形に追随する\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 目視: タスク一覧の表を開いて7列が今までどおり出る、レポートが今までどおり描かれる\n\n## 注意\n\n- **`src/ui/` を触る他のタスクと同時に進めない**\n- `taskReadiness` は `src/protocol/` にあるので、**両側が読む契約**として形を変える\n  （`node:` にも `document` にも触らない。原則2）",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "6件すべてに手を入れた（T-211 だけで解消していたものは無し。T-211 は再描画の頻度を下げただけで、無駄な再計算そのものは残っていた）。TaskTable を memo で包み、<thead> はモジュール定数 TASK_TABLE_HEAD に上げた。taskReadiness の第2引数を未完了IDの ReadonlySet にし、unfinishedTaskIds(tasks) を一覧全体で1回だけ呼ぶ形にした。Report 本体を memo で包み、taskListTitle の filter 3回を1回の for に、isFenceDelimiterLine と shouldShowCommandSuggestions の正規表現をモジュール定数へ上げた。受け入れ: bun run check 715 pass / 0 fail（714 から +1。unfinishedTaskIds のテスト1件）。目視: fake 駆動 + ヘッドレス Chrome 1400x900 で、レポートが87字で描かれること、「一覧を見る」で開く表の見出しが ID / status / 難易度 / loopable / 依存 / 着手 / 要約 の7列で27行出ること、依存待ちの行の色分けが残っていることを画像で確認した。"
   },
   {
     "id": "T-213",

@@ -27,13 +27,32 @@ export function taskListTitle(tasks: readonly TaskSummaryItem[] | undefined): st
     return "タスク一覧"
   }
 
-  const todo = tasks.filter((task) => task.status === "todo").length
-  const doing = tasks.filter((task) => task.status === "doing").length
-  const done = tasks.filter((task) => task.status === "done").length
+  const { todo, doing, done } = taskStatusCounts(tasks)
 
   const doingPart = doing > 0 ? ` / doing ${String(doing)}` : ""
   const donePart = done > 0 ? ` / done ${String(done)}` : ""
   return `タスク一覧 todo ${String(todo)}${doingPart}${donePart}`
+}
+
+/** todo / doing / done の件数を、全件を1回だけ走査して数える。 */
+function taskStatusCounts(tasks: readonly TaskSummaryItem[]): {
+  readonly todo: number
+  readonly doing: number
+  readonly done: number
+} {
+  let todo = 0
+  let doing = 0
+  let done = 0
+  for (const task of tasks) {
+    if (task.status === "todo") {
+      todo += 1
+    } else if (task.status === "doing") {
+      doing += 1
+    } else if (task.status === "done") {
+      done += 1
+    }
+  }
+  return { todo, doing, done }
 }
 
 export function TaskList(props: TaskListProps): ReactElement {

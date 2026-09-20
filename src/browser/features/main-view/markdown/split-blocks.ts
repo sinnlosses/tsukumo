@@ -40,6 +40,9 @@ const HTML_BLOCK_START_PATTERN = /^ {0,3}<([a-zA-Z][a-zA-Z0-9-]*)/
 /** コードスパン（`` `…` ``）。中に書かれたタグは文字であって要素ではない。 */
 const CODE_SPAN_PATTERN = /`[^`]*`/g
 
+/** フェンス付きコードブロックの区切り行（`` ``` `` / `~~~`、行頭インデント3つまで）。 */
+const FENCE_DELIMITER_PATTERN = /^ {0,3}(`{3,}|~{3,})/
+
 /**
  * **フェンス付きコードブロックと HTML ブロックの中の空行では割らない。** 閉じていないもの
  * （発話が途中で切れた等）は最後の塊の中に閉じるので、続きの行が表や見出しに化けたり、
@@ -76,7 +79,7 @@ export function splitReportBlocks(markdown: string): readonly string[] {
 }
 
 function isFenceDelimiterLine(line: string): boolean {
-  return /^ {0,3}(`{3,}|~{3,})/.test(line)
+  return FENCE_DELIMITER_PATTERN.test(line)
 }
 
 function startsHtmlBlock(line: string): boolean {

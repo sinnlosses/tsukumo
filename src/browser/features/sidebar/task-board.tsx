@@ -7,14 +7,33 @@
 // 外側（backdrop）のクリックだけを自前で拾う。**`<dialog>` は top layer に出る**ので、
 // サイドバー領域の `overflow` には切り取られない。
 
-import { useEffect, useRef, type MouseEvent, type ReactElement } from "react"
+import { memo, useEffect, useRef, type MouseEvent, type ReactElement } from "react"
 
 import {
   taskReadiness,
+  unfinishedTaskIds,
   type TaskReadiness,
   type TaskSummaryItem,
 } from "../../../shared/task-summary.ts"
 import styles from "./sidebar.module.css"
+
+/**
+ * 表の見出し行。7列とも中身が完全に静的なので、モジュール定数として1回だけ作る
+ * （`<TaskTable>` を描き直すたびに作り直さない）。
+ */
+const TASK_TABLE_HEAD = (
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">status</th>
+      <th scope="col">難易度</th>
+      <th scope="col">loopable</th>
+      <th scope="col">依存</th>
+      <th scope="col">着手</th>
+      <th scope="col">要約</th>
+    </tr>
+  </thead>
+)
 
 export type TaskBoardProps = {
   readonly tasks: readonly TaskSummaryItem[] | undefined
@@ -68,7 +87,14 @@ export function TaskBoard(props: TaskBoardProps): ReactElement {
   )
 }
 
-function TaskTable(props: {
+/**
+ * `tasks` の参照が変わらない限り描き直さない（`memo`）。**`<TaskBoard>` は閉じている間も
+ * `<dialog>` ごとマウントされたままなので**、サイドバーの他の区画（進行中のツールなど）が
+ * 変わるたびにここまで再描画が届く。`tasks` はタスク一覧が実際に変わったときしか参照が
+ * 変わらない（`src/shared/session-state.ts` の `tasks-changed`）ので、`memo` だけで
+ * 「閉じている間・無関係な変化では組み直さない」が満たせる。
+ */
+const TaskTable = memo(function TaskTable(props: {
   readonly tasks: readonly TaskSummaryItem[] | undefined
 }): ReactElement {
   const tasks = props.tasks
@@ -79,33 +105,27 @@ function TaskTable(props: {
     return <p className={styles["sidebar-empty"]}>タスクが無い</p>
   }
 
+  // 「まだ done でないタスクのID」は一覧全体から1回だけ作り、行ごとの `taskReadiness` へ
+  // 使い回す（`src/shared/task-summary.ts` 参照。以前は行ごとに作り直していた）。
+  const unfinished = unfinishedTaskIds(tasks)
+
   return (
     <div className={styles["task-board-scroll"]}>
       <table className={styles["task-board-table"]}>
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">status</th>
-            <th scope="col">難易度</th>
-            <th scope="col">loopable</th>
-            <th scope="col">依存</th>
-            <th scope="col">着手</th>
-            <th scope="col">要約</th>
-          </tr>
-        </thead>
+        {TASK_TABLE_HEAD}
         <tbody>
           {tasks.map((task) => (
-            <TaskRow key={task.id} task={task} tasks={tasks} />
+            <TaskRow key={task.id} task={task} unfinishedTaskIds={unfinished} />
           ))}
         </tbody>
       </table>
     </div>
   )
-}
+})
 
 function TaskRow(props: {
   readonly task: TaskSummaryItem
-  readonly tasks: readonly TaskSummaryItem[]
+  readonly unfinishedTaskIds: ReadonlySet<string>
 }): ReactElement {
   const doneClass = props.task.status === "done" ? ` ${styles["task-done"]}` : ""
 
@@ -119,7 +139,7 @@ function TaskRow(props: {
       <td>{loopableMark(props.task.loopable)}</td>
       <td>{props.task.dependencies.length === 0 ? "—" : props.task.dependencies.join(", ")}</td>
       <td>
-        <ReadinessCell readiness={taskReadiness(props.task, props.tasks)} />
+        <ReadinessCell readiness={taskReadiness(props.task, props.unfinishedTaskIds)} />
       </td>
       <td>{props.task.summary}</td>
     </tr>

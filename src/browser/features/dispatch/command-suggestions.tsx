@@ -16,9 +16,12 @@ import styles from "./dispatch.module.css"
 
 export const MAX_COMMAND_SUGGESTIONS = 10
 
+/** 空白1文字。入力に空白が混じっていないかの判定に使う。 */
+const WHITESPACE_PATTERN = /\s/
+
 /** 入力の先頭が `/` で、まだ空白が無く、答え待ちが無いときだけ候補を出す。 */
 export function shouldShowCommandSuggestions(value: string, pendingActive: boolean): boolean {
-  return value.startsWith("/") && !/\s/.test(value) && !pendingActive
+  return value.startsWith("/") && !WHITESPACE_PATTERN.test(value) && !pendingActive
 }
 
 function byName(left: CommandDescription, right: CommandDescription): number {

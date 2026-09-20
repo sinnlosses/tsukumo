@@ -1,6 +1,10 @@
 // 1ステップぶんのレポート本文（Markdown）。**書きかけの本文を空行で塊に割り、塊ごとに
 // `memo`**（`docs/design.md` 6.3）。描き直すのは変わった塊（たいてい末尾の1つ）だけで、
 // 確定済みの塊は Markdown の変換をやり直さない。
+//
+// `Report` 自体も `memo` で包む。`markdown` が変わっていないステップ（確定済みの過去の
+// ターン）では、`splitReportBlocks` による塊への分割そのものを省く（props は `markdown` の
+// 文字列1つだけなので、既定の浅い比較で足りる）。
 
 import { memo, type ReactElement } from "react"
 
@@ -12,7 +16,7 @@ export type ReportProps = {
   readonly markdown: string
 }
 
-export function Report(props: ReportProps): ReactElement {
+export const Report = memo(function Report(props: ReportProps): ReactElement {
   const blocks = splitReportBlocks(props.markdown)
 
   return (
@@ -22,7 +26,7 @@ export function Report(props: ReportProps): ReactElement {
       ))}
     </div>
   )
-}
+})
 
 /**
  * 塊1つぶんの Markdown。**鍵（`key`）も props もその塊の文字列そのもの**なので、塊の内容が

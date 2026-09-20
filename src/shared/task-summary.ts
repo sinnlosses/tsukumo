@@ -57,20 +57,25 @@ export function readTaskSummaries(content: string): readonly TaskSummaryItem[] |
  * 1件の着手可否。**`task-workflow` の `status.py` と同じ規則**にする: `todo` 以外は判定せず、
  * 止めているのは「一覧に存在していて、まだ `done` でない依存」だけ。
  * **一覧に無いIDは止めない**（アーカイブ済み＝完了扱い）。
+ *
+ * 第2引数には**一覧全体から一度だけ**作った「まだ `done` でないタスクのID」の集合
+ * （{@link unfinishedTaskIds}）を渡す（行ごとに呼ぶ側で毎回作り直さない）。
  */
 export function taskReadiness(
   task: TaskSummaryItem,
-  tasks: readonly TaskSummaryItem[],
+  unfinished: ReadonlySet<string>,
 ): TaskReadiness | undefined {
   if (task.status !== "todo") {
     return undefined
   }
 
-  const unfinished = new Set(
-    tasks.filter((other) => other.status !== "done").map((other) => other.id),
-  )
   const blockedBy = task.dependencies.filter((id) => unfinished.has(id))
   return blockedBy.length === 0 ? { kind: "ready" } : { kind: "blocked", blockedBy }
+}
+
+/** 一覧のうち、まだ `done` でないタスクのID集合。`taskReadiness` へ渡す前に一覧全体から1回だけ作る。 */
+export function unfinishedTaskIds(tasks: readonly TaskSummaryItem[]): ReadonlySet<string> {
+  return new Set(tasks.filter((task) => task.status !== "done").map((task) => task.id))
 }
 
 function taskSummaryItem(task: unknown): readonly TaskSummaryItem[] {
