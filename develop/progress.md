@@ -78,13 +78,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `superseded` の反転を止めた。`docs/requirements.md` 4.2 の「出してから消す」（2026-09-16）は
 同日の決定で覆した。
 
-### 2026-09-20 表情 serious / curious を実装に通した（T-137）
-
-`Expression` 型・`EXPRESSIONS`・`character.json` 3種・`persona.md` 3種に `serious`（きりっ）と
-`curious`（きょとん）を通し、利用者が用意した立ち絵2枚を `characters/tsukumo/` に入れた。実機で
-キャラクター画面に6つ並ぶことを確認。あわせて T-136 で 4.3 に書いた「立ち絵が無い表情は選択肢に
-出ない」が実装と食い違っていたので、実装（ラベルか立ち絵のどちらかがあれば出る）に合わせて直した。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、
