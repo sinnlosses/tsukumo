@@ -75,14 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `.sidebar-block-scroll` に `padding: 4px` を足した。`:focus-visible` の枠が要素の外側 4px まで出るのにスクロール領域の padding が 0 で、上端（キャラクター）と下端（許可モード）の枠が切られていた。
 
-### 2026-09-20 タブを切り替えたときの先頭スクロールを直した（T-219）
-
-`scrollTop = 0` は `.main-turns` が `overflow` を持たないので no-op だった。実際に転がる要素は画面幅で入れ替わる（広い画面は region、狭い画面はページ自身）ので、`scrollIntoView({ block: "start" })` にして呼ぶ側が転がる祖先を知らなくてよい形にした。CSS は触っていない。
-
-### 2026-09-20 localStorage のキーに版を足した（T-216）
-
-`tsukumo-layout-split:v1` と `tsukumo-appearance-color:v1` にした。旧キーからの読み替えは足していないので、**保存済みの仕切りの位置と画面の色は一度だけ既定に戻る**。
-
 ## 未解決
 
 - **カバレッジの棚卸し（T-222）で、後続タスクの範囲外の気づきが2つ出た。** (1) `test/shared/main-view.test.ts` と `test/browser/features/main-view/main-view.test.tsx` の回帰テスト名に**タスク番号が残っている**（`CLAUDE.md` の「コード・ドキュメントにタスク番号を書かない」に反する）。(2) `test/browser/features/sidebar/activity.test.tsx` の `querySelector(...)` を `toBeDefined()` で見ているassertion は **`null` でも通る**ので事実上効いていない。どちらも消す/埋めるの2件には入っていないので、別に起こすかどうかの判断が要る

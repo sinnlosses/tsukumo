@@ -1,5 +1,13 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 タブを切り替えたときの先頭スクロールを直した（T-219）
+
+`scrollTop = 0` は `.main-turns` が `overflow` を持たないので no-op だった。実際に転がる要素は画面幅で入れ替わる（広い画面は region、狭い画面はページ自身）ので、`scrollIntoView({ block: "start" })` にして呼ぶ側が転がる祖先を知らなくてよい形にした。CSS は触っていない。
+
+### 2026-09-20 localStorage のキーに版を足した（T-216）
+
+`tsukumo-layout-split:v1` と `tsukumo-appearance-color:v1` にした。旧キーからの読み替えは足していないので、**保存済みの仕切りの位置と画面の色は一度だけ既定に戻る**。
+
 ### 2026-09-20 仕切りのドラッグを直接書き込みにした（T-215）
 
 ドラッグ中は grid の要素へ `--layout-*` を直接書き、`pointerup` のときだけ state を更新する形にした。ハンドラを最新に保つのは `useEffectEvent`（規約が既に指名していた口）で、「`split` は pointerdown の時点のもの」という回避策の注記が要らなくなった。`docs/coding-standards.md` の React 節に、`useEffectEvent` をレンダー中に呼べないことを3行足した。
