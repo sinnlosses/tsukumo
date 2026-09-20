@@ -89,13 +89,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 `test/architecture.test.ts` の辺は9本とも残し、README のツリーと `docs/architecture.md` の
 置き場の表（実行場所の列）も実態に追随させた。
 
-### 2026-09-20 入力欄に @ のファイル補完を足した（T-188）
-
-`GET /repository-file?t=<起動トークン>` を1本生やし、`adapter/repository-file.ts` が
-`git ls-files -z` を起こす唯一の境界になった（失敗時は空）。絞り込みはブラウザ側で、一覧は
-`useQuery`（`staleTime` 30秒、`@` を打っている間だけ `enabled`）。候補は判別可能な合併型に
-畳んで `/` のコマンド補完と同時に出ないことを型で保証した。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、
