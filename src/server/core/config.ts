@@ -21,6 +21,8 @@ export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
 
 /** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */
 const SESSION_TAG_PREFIX = "tsukumo"
+/** 雑談のセッションの印に足す後置き。**仕事のときは足さない**（{@link sessionTag}）。 */
+const SESSION_TAG_CHAT_SUFFIX = "chat"
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、台本どおりにイベントを流す
@@ -70,19 +72,25 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
 }
 
 /**
- * キャラクターパック1つぶんのセッションの印（SDK の `tagSession`）。**続きから始めるセッションを
- * 選ぶ鍵の片方**で、もう片方は起動した作業ディレクトリ（docs/requirements.md 4.8「鍵」）。
+ * キャラクターパック1つぶんの、そのモードのセッションの印（SDK の `tagSession`）。**続きから
+ * 始めるセッションを選ぶ鍵の片方**で、もう片方は起動した作業ディレクトリ
+ * （docs/requirements.md 4.8「鍵」）。
  *
  * 印にパックの名前を混ぜるのは、**キャラクターごとに別のセッションを持つ**ため
  * （docs/design.md 7章）。印の無いセッション（同じディレクトリで使った素の `claude`）も、
  * 別のパックのセッションも、これで外れる。
  *
+ * **雑談のときだけ後ろに足す**のは、雑談と仕事で claude 側の文脈ごと分けるため
+ * （docs/requirements.md 4.9）。**仕事の側の文字列は変えない** — 変えると、いま続いている
+ * 仕事のセッションが次の起動で見つからなくなる。
+ *
  * **印は会話の内容ではない**ので、claude 自身の transcript に付けても「会話内容の扱い」には
  * 触れない。環境変数ではないが、**外の世界（transcript）に書かれる値**なので、組み立てを
  * 集約するこのモジュールに置く（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
  */
-export function sessionTag(characterName: string): string {
-  return `${SESSION_TAG_PREFIX}:${characterName}`
+export function sessionTag(characterName: string, chat: boolean): string {
+  const packTag = `${SESSION_TAG_PREFIX}:${characterName}`
+  return chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

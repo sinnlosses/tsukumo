@@ -53,8 +53,12 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly characterEvent: (pack: Pack) => SessionEvent
   /** 駆動と同じ間だけ動く見張りを起こす。流すイベントは駆動のものと同じ受け口へ。 */
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
-  /** そのパックの、続きから始めるセッションを探す（無ければ undefined ＝ 新規に起こす）。 */
-  readonly findResumeSession: (pack: Pack) => Promise<string | undefined>
+  /**
+   * そのパックの、そのモードの続きから始めるセッションを探す（無ければ undefined ＝ 新規に
+   * 起こす）。**雑談と仕事は別のセッション**なので、引く印も分かれる
+   * （`docs/requirements.md` 4.9）。
+   */
+  readonly findResumeSession: (pack: Pack, chat: boolean) => Promise<string | undefined>
   /** 駆動を1つ起こす（本物か偽物かはここが選ぶ）。 */
   readonly startDriver: (
     seed: SessionLaunchSeed<Pack>,
@@ -93,9 +97,9 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     onEvent({ kind: "chat-mode-changed", chat })
 
     const watcher = ports.watchTasks(onEvent)
-    // **キャラクターごとに別のセッションを持つ**（docs/design.md 7章）。起動時も切り替え時も、
-    // これから起こすパックの続きを探す。
-    const resume = await ports.findResumeSession(pack)
+    // **キャラクターごと・モードごとに別のセッションを持つ**（docs/design.md 7章、
+    // docs/requirements.md 4.9）。起動時も切り替え時も、これから起こす側の続きを探す。
+    const resume = await ports.findResumeSession(pack, chat)
     const driver = ports.startDriver({ pack, resume, chat }, onEvent)
 
     if (resume !== undefined) {

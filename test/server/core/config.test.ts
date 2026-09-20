@@ -44,12 +44,18 @@ describe("readConfig", () => {
 
 describe("sessionTag", () => {
   it("キャラクターパックごとに違う印を組み立てる（キャラクターごとに別のセッション）", () => {
-    expect(sessionTag("tsukumo")).toBe("tsukumo:tsukumo")
-    expect(sessionTag("tsukumo-spirit")).toBe("tsukumo:tsukumo-spirit")
-    expect(sessionTag("tsukumo")).not.toBe(sessionTag("tsukumo-spirit"))
+    expect(sessionTag("tsukumo", false)).toBe("tsukumo:tsukumo")
+    expect(sessionTag("tsukumo-spirit", false)).toBe("tsukumo:tsukumo-spirit")
+    expect(sessionTag("tsukumo", false)).not.toBe(sessionTag("tsukumo-spirit", false))
+  })
+
+  it("雑談と仕事でも違う印になる（同じパックでも別のセッション）", () => {
+    expect(sessionTag("tsukumo", true)).toBe("tsukumo:tsukumo:chat")
+    expect(sessionTag("tsukumo", true)).not.toBe(sessionTag("tsukumo", false))
+    expect(sessionTag("tsukumo", true)).not.toBe(sessionTag("tsukumo-spirit", true))
   })
 
   it("印の無い素の claude のセッションとも混ざらない（前置きが付く）", () => {
-    expect(sessionTag("tsukumo")).not.toBe("tsukumo")
+    expect(sessionTag("tsukumo", false)).not.toBe("tsukumo")
   })
 })

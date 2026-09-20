@@ -13,9 +13,11 @@ import { type Expression } from "../../../src/shared/expression.ts"
 // （`listSessions` / `getSessionMessages` を呼ぶのは src/server/adapter/sdk-driver.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
-// 印はキャラクターパックごとに違う（`tsukumo:<パック名>`）。
-const TAG = sessionTag("架空のパック")
-const OTHER_PACK_TAG = sessionTag("別の架空のパック")
+// 印はキャラクターパックごと・雑談かどうかで違う（`tsukumo:<パック名>` と
+// `tsukumo:<パック名>:chat`）。
+const TAG = sessionTag("架空のパック", false)
+const CHAT_TAG = sessionTag("架空のパック", true)
+const OTHER_PACK_TAG = sessionTag("別の架空のパック", false)
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
@@ -88,7 +90,25 @@ describe("selectSessionToResume", () => {
       sessionInfo({ sessionId: "s-bare", lastModified: 800 }),
     ]
 
-    expect(selectSessionToResume(sessions, sessionTag("まだ起こしていないパック"))).toBeUndefined()
+    expect(
+      selectSessionToResume(sessions, sessionTag("まだ起こしていないパック", false)),
+    ).toBeUndefined()
+  })
+
+  it("同じパックでも雑談と仕事で別のセッションを選ぶ（文脈ごと分ける）", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-work", lastModified: 900, tag: TAG }),
+      sessionInfo({ sessionId: "s-chat", lastModified: 100, tag: CHAT_TAG }),
+    ]
+
+    expect(selectSessionToResume(sessions, TAG)).toBe("s-work")
+    expect(selectSessionToResume(sessions, CHAT_TAG)).toBe("s-chat")
+  })
+
+  it("仕事のセッションしか無ければ、雑談は新規に起こす（仕事の続きを拾わない）", () => {
+    const sessions = [sessionInfo({ sessionId: "s-work", lastModified: 900, tag: TAG })]
+
+    expect(selectSessionToResume(sessions, CHAT_TAG)).toBeUndefined()
   })
 
   it("形が壊れているときは復元しない（落ちない）", () => {

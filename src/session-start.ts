@@ -72,7 +72,8 @@ export function startSession(options: SessionStartOptions): RunningSession {
       // 畳んで読む（docs/design.md 12章）。
       watchTasks: (onEvent) =>
         watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
-      findResumeSession: (pack) => findPackSessionToResume(config, process.cwd(), pack.name),
+      findResumeSession: (pack, chat) =>
+        findPackSessionToResume(config, process.cwd(), pack.name, chat),
       startDriver: (seed, onEvent) => startDriver(seed, script, config.fakeScene, onEvent),
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, process.cwd(), expressionChoices(pack.definition)),
@@ -109,7 +110,7 @@ function startDriver(
     permissionMode: DEFAULT_PERMISSION_MODE,
     systemPromptAppend: buildSystemPromptAppend(seed.pack, sessionRules(seed.chat)),
     resume: seed.resume,
-    tag: sessionTag(seed.pack.name),
+    tag: sessionTag(seed.pack.name, seed.chat),
     // **覚えたことを書き足す口は雑談のときだけ渡す**（渡ったときだけ `remember` ツールが
     // 載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
     personaMemory: seed.chat ? createPersonaMemory(seed.pack, process.cwd()) : undefined,
@@ -118,10 +119,14 @@ function startDriver(
 }
 
 /**
- * これから起こすキャラクターパックの、続きから始めるセッションを探す（docs/requirements.md 4.8）。
- * 無ければ undefined（新規に起こす）。
+ * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す
+ * （docs/requirements.md 4.8）。無ければ undefined（新規に起こす）。
  *
- * **印はターンが終わって3秒後に付く**ので、ターンを1つも終えずに離れたパックのセッションは
+ * **雑談と仕事で引く印が違う**（docs/requirements.md 4.9）。雑談へ入っても仕事の会話が続きに
+ * ならないのはここで、代わりに**そのパックで一度も雑談のターンを終えていなければ新規から
+ * 始まる**。
+ *
+ * **印はターンが終わって3秒後に付く**ので、ターンを1つも終えずに離れたセッションは
  * 次に来たときに見つからず、新規から始まる（`SESSION_TAG_DELAY_MS`。4.8「復元できなかったとき
  * どうするか」の範囲）。偽の駆動は claude を起こさないので、そもそも探さない。
  */
@@ -129,8 +134,9 @@ async function findPackSessionToResume(
   config: Config,
   cwd: string,
   characterName: string,
+  chat: boolean,
 ): Promise<string | undefined> {
   return config.newSession || config.driver === "fake"
     ? undefined
-    : findSessionToResume(cwd, sessionTag(characterName))
+    : findSessionToResume(cwd, sessionTag(characterName, chat))
 }

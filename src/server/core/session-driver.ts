@@ -66,7 +66,7 @@ export type SessionDriverOptions = {
   readonly resume: string | undefined
   /**
    * このセッションに付ける印（組み立ては `src/server/core/config.ts` の `sessionTag`。キャラクター
-   * パックごとに違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
+   * パックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
    * セッションだけを見分ける。付け直す理由は `src/server/adapter/sdk-driver.ts` の
    * `SESSION_TAG_DELAY_MS`）。
    */

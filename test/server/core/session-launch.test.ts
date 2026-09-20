@@ -78,12 +78,12 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     rememberPack: (pack) => calls.push(`rememberPack:${pack.name}`),
     characterEvent: (pack) => characterEventOf(pack),
     watchTasks: () => ({ close: () => calls.push("watchTasks:close") }),
-    findResumeSession: (pack) => {
-      calls.push(`findResumeSession:${pack.name}`)
-      return Promise.resolve("prev-session")
+    findResumeSession: (pack, chat) => {
+      calls.push(`findResumeSession:${pack.name}:${modeOf(chat)}`)
+      return Promise.resolve(`prev-${modeOf(chat)}-session`)
     },
     startDriver: (seed) => {
-      calls.push(`startDriver:${seed.pack.name}:${seed.resume ?? ""}`)
+      calls.push(`startDriver:${seed.pack.name}:${modeOf(seed.chat)}:${seed.resume ?? ""}`)
       return stub.driver
     },
     restoreEvents: (sessionId) => {
@@ -94,6 +94,11 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
   }
 
   return { ports, events, calls, stub, receive: (event) => events.push(event) }
+}
+
+/** 呼ばれ方の記録に混ぜる、そのときのモード。 */
+function modeOf(chat: boolean): string {
+  return chat ? "chat" : "work"
 }
 
 /** 投げっぱなしの再生（`void`）が流れ終わるのを待つ。 */
@@ -113,9 +118,9 @@ describe("createSessionLaunch", () => {
 
     expect(harness.calls).toEqual([
       "choosePack:",
-      "findResumeSession:tsukumo-spirit",
-      "startDriver:tsukumo-spirit:prev-session",
-      "restoreEvents:prev-session",
+      "findResumeSession:tsukumo-spirit:work",
+      "startDriver:tsukumo-spirit:work:prev-work-session",
+      "restoreEvents:prev-work-session",
     ])
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
@@ -171,7 +176,24 @@ describe("createSessionLaunch", () => {
     await settle()
 
     expect(harness.calls).toContain("rememberPack:kagami")
-    expect(harness.calls).toContain("startDriver:kagami:prev-session")
+    expect(harness.calls).toContain("startDriver:kagami:work:prev-work-session")
+  })
+
+  it("雑談で起こすと、雑談の側の続きを探して雑談の駆動を起こす（仕事の続きを拾わない）", async () => {
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, {
+      character: undefined,
+      chat: true,
+    })
+    await settle()
+
+    expect(harness.calls).toEqual([
+      "choosePack:",
+      "findResumeSession:tsukumo-spirit:chat",
+      "startDriver:tsukumo-spirit:chat:prev-chat-session",
+      "restoreEvents:prev-chat-session",
+    ])
   })
 
   it("起動時（画面から選んでいないとき）は覚えない", async () => {
