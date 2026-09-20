@@ -1,4 +1,4 @@
-// 筆先（いま書かれている本文の、見えている最後の文字の右端）を配る。**書いているのは
+// 筆先（いま本文を書いている筆の先。塊の上をZ字になぞる）を配る。**書いているのは
 // `features/main-view/report-reveal.ts` だが、読むのは立ち絵の側**（キャラビュー）になるので、
 // 機能どうしの import にならないよう `stores/` に置く（`docs/design.md` 2章。
 // `stores/turn-selection.tsx` と同じ理由）。
@@ -14,8 +14,9 @@ import { useSyncExternalStore } from "react"
  * 筆先の位置。**ビューポート座標**（`getBoundingClientRect()` / `getClientRects()` と同じ原点）
  * なので、追従する側は `position: fixed` でそのまま置ける。
  *
- * `top` / `bottom` はその文字が乗っている行の上端と下端。塊ごと出す図・グラフでは、`x` が
- * 塊の左端、`top` / `bottom` が塊の上端と下端になる（脇に立たせるため）。
+ * `top` / `bottom` は**いま書いている帯**（Z字の1画。`report-reveal.ts`）の上端と下端。
+ * 帯は**トピック（見出しから次の見出しまで）の行を上下に割ったもの**で、要素をまたいで伸びる。
+ * 行が1つしか取れないトピックでは、その上端と下端がそのまま入る。
  */
 export type BrushTip = {
   readonly x: number

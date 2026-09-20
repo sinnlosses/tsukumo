@@ -4,12 +4,15 @@
 // **文字を足していく実装にしない**（`docs/requirements.md` 4.3）。DOM は完成品のまま置き、
 // 見せる範囲だけを進めるので、ここが返すのは「塊ごとの出し始めと出し終わりの時刻」だけになる。
 //
-// 塊は2種類に分ける:
+// **塊は「トピック」**（2026-09-20 のユーザーの判断）。見出し・水平線を境に、そこから次の
+// 境目までの要素をひとまとめにする。**段落や表の1つ1つではない**——細かく割ると筆が何度も
+// 折り返して落ち着かず、目で追えなくなる。1つのトピックを大きく1回のZ字で書く。
 //
-// - **文字の塊（`text`）**: 行の途中で止まる（`report-reveal.ts` が `Range` から筆先を取り、
-//   `clip-path` で「その文字まで」を見せる）
-// - **図・グラフの塊（`figure`）**: 文字の位置が取れない・取っても意味が無いので**塊ごと**出す
-//   （`docs/requirements.md` 4.3「文字を持たない図・グラフの塊は塊ごと出し」）。mermaid と
+// トピックの中の要素は、見せ方が2種類ある:
+//
+// - **文字の要素（`text`）**: `report-reveal.ts` が `clip-path` で見せる範囲を進める
+// - **図・グラフの要素（`figure`）**: 文字の位置が取れない・取っても意味が無いので `opacity` で
+//   出す（`docs/requirements.md` 4.3「文字を持たない図・グラフの塊は塊ごと出し」）。mermaid と
 //   Chart.js は**非同期に描いたあとで中身が入れ替わる**ので、中身ではなく入れ物の class
 //   （`mermaid` / `chart-block`。`markdown/mermaid-block.tsx` / `markdown/chart-block.tsx` が付ける）
 //   で見分ける——描き終わる前でも後でも同じ判定になる
@@ -19,94 +22,107 @@ export type RevealElement = HTMLElement | SVGElement
 
 export type RevealBlockKind = "text" | "figure"
 
-/** 塊1つと、その塊を出している時間帯（演出を始めてからの経過ミリ秒）。 */
-export type RevealBlock = {
+/** トピックを構成する要素1つ。 */
+export type RevealMember = {
   readonly element: RevealElement
   readonly kind: RevealBlockKind
+}
+
+/** 塊（トピック）1つと、それを書いている時間帯（演出を始めてからの経過ミリ秒）。 */
+export type RevealBlock = {
+  readonly members: readonly [RevealMember, ...(readonly RevealMember[])]
   readonly startMs: number
   readonly endMs: number
 }
 
 /**
- * 図・グラフの塊に与える重み（文字数に換算した値）。**図は文字数を持たない**ので、
- * 文字の塊と同じ物差しに載せるために決め打ちの重みを置く。短い段落1つぶんより少し重い程度。
+ * 図・グラフに与える重み（文字数に換算した値）。**図は文字数を持たない**ので、文字と同じ
+ * 物差しに載せるために決め打ちの重みを置く。段落1つぶんに相当させる。
  */
-const FIGURE_WEIGHT = 40
-
-/**
- * 図・グラフ1つのフェードに使ってよい時間の上限。図は位置が動かないので、文字と同じだけ
- * 掛けると**ただ遅いフェード**にしか見えない。
- */
-const MAX_FIGURE_FADE_MS = 320
+const FIGURE_WEIGHT = 100
 
 const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, img"
 
-/**
- * 文字1つぶんの持ち時間。**筆先を目で追える速さ**がこの値で決まる（2026-09-20 のユーザーの
- * 判断。それまではレポート全体で 1400ms 固定だったが、長い本文では1文字 1ms を切って
- * 追えなかった）。
- */
-const MS_PER_CHARACTER = 10
+/** ここから新しいトピックが始まる、という境目。見出しと水平線。 */
+const TOPIC_START_SELECTOR = "h1, h2, h3, h4, h5, h6, hr"
 
 /**
- * 文字の塊1つに使ってよい時間の上限。**上限を掛けるのは塊ごとで、レポート全体には掛けない**
- * （2026-09-20 のユーザーの判断）——全体に予算を置いて按分すると、**長いレポートほど1文字が
- * 速くなり**、目で追える速さという狙いがレポートの長さで崩れる。塊ごとなら
- * {@link MS_PER_CHARACTER} がどのレポートでも守られ、打ち切られるのは極端に長い1塊だけになる。
+ * 文字1つぶんの持ち時間。トピックの大きさを時間に直す物差しで、**筆の速さはこの値で決まる**
+ * （同じ道を倍の時間で通れば、半分の速さになる）。
+ *
+ * **20ms から倍にした**（2026-09-20 のユーザーの判断:「もう半分ぐらいの速さが良さそう」）。
  */
-const MAX_TEXT_BLOCK_MS = 2000
+const MS_PER_CHARACTER = 40
 
 /**
- * 根の直下の塊を、書く順（文書の順）に並べて時間を割り当てる。**塊1つぶんの時間はその塊の
- * 文字数で決まる**（レポート全体の長さに左右されない）。
+ * トピック1つに使ってよい時間の**下限と上限**。**どちらも塊ごとに掛け、レポート全体には
+ * 掛けない**（2026-09-20 のユーザーの判断）——全体に予算を置いて按分すると、**長いレポートほど
+ * 1文字が速くなり**、目で追える速さという狙いがレポートの長さで崩れる。**塊の数で全体が
+ * 伸びるのは受け入れる**（同日のユーザーの判断）。
+ *
+ * **下限が大きいのは、1回のZ字をゆっくり書くため**（同日の方針変更）。短いトピックでも2画を
+ * 書き切るので、文字数に素直に比例させると筆が飛んで見える。上下とも {@link MS_PER_CHARACTER}
+ * と一緒に倍にしてある（筆の速さを一律に半分にするため）。
+ */
+const MIN_BLOCK_MS = 2400
+const MAX_BLOCK_MS = 8000
+
+/**
+ * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。**1つぶんの時間は
+ * そのトピックの大きさで決まる**（レポート全体の長さに左右されない）。
  *
  * 塊の間に隙間は空けない（前の塊が終わった時刻が次の塊の始まり）。
  */
 export function planReveal(root: Element): readonly RevealBlock[] {
-  return [...root.children]
-    .filter(isRevealElement)
-    .map(toShape)
-    .reduce<{ blocks: readonly RevealBlock[]; at: number }>(
-      (acc, shape) => {
-        const endMs = acc.at + blockDurationMs(shape)
-        return {
-          blocks: [
-            ...acc.blocks,
-            { element: shape.element, kind: shape.kind, startMs: acc.at, endMs },
-          ],
-          at: endMs,
-        }
-      },
-      { blocks: [], at: 0 },
-    ).blocks
+  return toTopics([...root.children].filter(isRevealElement)).reduce<{
+    blocks: readonly RevealBlock[]
+    at: number
+  }>(
+    (acc, members) => {
+      const endMs = acc.at + topicDurationMs(members)
+      return {
+        blocks: [...acc.blocks, { members, startMs: acc.at, endMs }],
+        at: endMs,
+      }
+    },
+    { blocks: [], at: 0 },
+  ).blocks
 }
 
-function blockDurationMs(shape: RevealShape): number {
-  const span = shape.weight * MS_PER_CHARACTER
-  return Math.min(span, shape.kind === "figure" ? MAX_FIGURE_FADE_MS : MAX_TEXT_BLOCK_MS)
+/** 見出し・水平線の手前で切って、続く要素をひとまとめにする。 */
+function toTopics(
+  elements: readonly RevealElement[],
+): readonly (readonly [RevealMember, ...(readonly RevealMember[])])[] {
+  return elements.reduce<readonly (readonly [RevealMember, ...(readonly RevealMember[])])[]>(
+    (topics, element) => {
+      const member: RevealMember = { element, kind: blockKind(element) }
+      const last = topics.at(-1)
+      return last === undefined || startsTopic(element)
+        ? [...topics, [member]]
+        : [...topics.slice(0, -1), [last[0], ...last.slice(1), member]]
+    },
+    [],
+  )
 }
 
-/** 時間を割り当てる前の塊（種類と重みだけ）。 */
-type RevealShape = {
-  readonly element: RevealElement
-  readonly kind: RevealBlockKind
-  readonly weight: number
+function startsTopic(element: RevealElement): boolean {
+  return element.matches(TOPIC_START_SELECTOR)
 }
 
-function toShape(element: RevealElement): RevealShape {
-  const kind = blockKind(element)
-  return {
-    element,
-    kind,
-    // 空の段落で時間が 0 にならないよう、文字の塊の重みは最低 1。
-    weight: kind === "figure" ? FIGURE_WEIGHT : Math.max(1, textLength(element)),
-  }
+function topicDurationMs(members: readonly RevealMember[]): number {
+  const weight = members.reduce((sum, member) => sum + memberWeight(member), 0)
+  return Math.min(Math.max(weight * MS_PER_CHARACTER, MIN_BLOCK_MS), MAX_BLOCK_MS)
+}
+
+function memberWeight(member: RevealMember): number {
+  // 空の段落で時間が 0 にならないよう、文字の要素の重みは最低 1。
+  return member.kind === "figure" ? FIGURE_WEIGHT : Math.max(1, textLength(member.element))
 }
 
 /**
- * 塊ごと出すか、文字を追って出すか。**入れ物の class で見分ける**（mermaid は描き終わると
- * `<svg>` に中身が入れ替わり、そこに文字（ラベル）が現れるので、文字の有無だけでは足りない）。
- * 文字を1つも持たない塊（画像だけの段落など）も塊ごと出す。
+ * `clip-path` で進めるか、`opacity` で出すか。**入れ物の class で見分ける**（mermaid は描き
+ * 終わると `<svg>` に中身が入れ替わり、そこに文字（ラベル）が現れるので、文字の有無だけでは
+ * 足りない）。文字を1つも持たない要素（画像だけの段落など）も `opacity` で出す。
  */
 function blockKind(element: RevealElement): RevealBlockKind {
   if (element.matches(FIGURE_SELECTOR) || element.querySelector(FIGURE_SELECTOR) !== null) {
