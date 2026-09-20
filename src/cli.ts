@@ -51,11 +51,10 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "./server/core/port-resolution.ts"
-import { REPORT_NOTATION_PROMPT } from "./server/core/report-notation.ts"
 import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./server/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./server/core/session-manager.ts"
-import { SPEECH_CADENCE_PROMPT } from "./server/core/speech-cadence.ts"
+import { sessionRules } from "./server/core/session-rule.ts"
 import { type CharacterCreateCommand, type CharacterEditCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
@@ -338,10 +337,7 @@ function startDriver(
     cwd: process.cwd(),
     expressions: expressionChoices(seed.pack.definition),
     permissionMode: DEFAULT_PERMISSION_MODE,
-    systemPromptAppend: buildSystemPromptAppend(seed.pack, [
-      SPEECH_CADENCE_PROMPT,
-      REPORT_NOTATION_PROMPT,
-    ]),
+    systemPromptAppend: buildSystemPromptAppend(seed.pack, sessionRules(seed.chat)),
     resume: seed.resume,
     tag: sessionTag(seed.pack.name),
     onEvent,

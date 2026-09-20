@@ -132,6 +132,44 @@ describe("SessionInfo", () => {
     expect((screen.getByLabelText("許可モード") as HTMLSelectElement).disabled).toBe(false)
   })
 
+  it("状態の chatMode をモードの <select> に選択する", () => {
+    renderSessionInfo({ chatMode: false })
+    expect(selectValue(screen.getByLabelText("モード"))).toBe("work")
+
+    cleanup()
+    renderSessionInfo({ chatMode: true })
+    expect(selectValue(screen.getByLabelText("モード"))).toBe("chat")
+  })
+
+  it("モードを変更すると set-chat-mode が dispatch される", () => {
+    const calls: unknown[] = []
+    renderSessionInfo({ chatMode: false }, (command) => {
+      calls.push(command)
+    })
+
+    fireEvent.change(screen.getByLabelText("モード"), { target: { value: "chat" } })
+
+    expect(calls).toEqual([{ type: "set-chat-mode", chat: true }])
+  })
+
+  it("ターン進行中はモードの <select> が無効になり、理由が title に出る", () => {
+    // 切り替えは駆動の起こし直しで画面が初期化されるので、キャラクターの <select> と
+    // 同じ条件で塞ぐ（docs/requirements.md 4.9）。
+    renderSessionInfo({ turnInProgress: true })
+
+    const select = screen.getByLabelText("モード") as HTMLSelectElement
+    expect(select.disabled).toBe(true)
+    expect(select.title.length).toBeGreaterThan(0)
+  })
+
+  it("ターンが終わるとモードの <select> は有効に戻る", () => {
+    renderSessionInfo({ turnInProgress: false })
+
+    const select = screen.getByLabelText("モード") as HTMLSelectElement
+    expect(select.disabled).toBe(false)
+    expect(select.title).toBe("")
+  })
+
   it("パックの一覧が届いていなければ、キャラクターの <select> は出さない", () => {
     renderSessionInfo({})
 

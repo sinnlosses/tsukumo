@@ -15,6 +15,7 @@
 }
 .permission-mode-select,
 .model-select,
+.chat-mode-select,
 .character-select {
   padding: 0.15rem 0.4rem;
   border: 1px solid var(--rule);

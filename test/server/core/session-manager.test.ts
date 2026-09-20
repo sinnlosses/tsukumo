@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { type SessionDriver } from "../../../src/server/core/session-driver.ts"
+import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
 import { createSessionManager } from "../../../src/server/core/session-manager.ts"
 import {
   type CharacterCreateCommand,
@@ -229,10 +230,10 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
     manager.create({
       sessionId: SESSION_ID,
-      startDriver: (onEvent, character) => {
+      startDriver: (onEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
-        started.push({ character, stub })
+        started.push({ character: request.character, stub })
         return Promise.resolve(stub.driver)
       },
       editCharacter: () => Promise.resolve(undefined),
@@ -307,6 +308,72 @@ describe("createSessionManager", () => {
       }),
     ).toEqual({ ok: true })
     expect(stub.calls).toContain("close")
+  })
+
+  it("set-chat-mode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
+    // 雑談の切り替えは `systemPrompt` の差し替えなので、`switch-character` と同じ起こし直しに
+    // なる（docs/requirements.md 4.9）。**パックは変えない**ことをここで見る。
+    const started: SessionLaunchRequest[] = []
+    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: (onEvent, request) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        started.push(request)
+        return Promise.resolve(stub.driver)
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+    })
+    manager.subscribe(SESSION_ID, () => {})
+
+    expect(
+      await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-1", chat: true }),
+    ).toEqual({ ok: true })
+
+    expect(started).toHaveLength(2)
+    expect(started[1]?.chat).toBe(true)
+    // パックは画面が知っているものをそのまま渡す（`character-changed` がまだ届いていないので
+    // undefined = 呼び出し側の既定）。
+    expect(started[1]?.character).toBe(undefined)
+  })
+
+  it("雑談から仕事へ戻すときも起こし直す", async () => {
+    const started: SessionLaunchRequest[] = []
+    const manager = createSessionManager({ now: () => 1_000, batchIntervalMs: BATCH_MS })
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: (onEvent, request) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        started.push(request)
+        return Promise.resolve(stub.driver)
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+    })
+    manager.subscribe(SESSION_ID, () => {})
+
+    await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-1", chat: true })
+    await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-2", chat: false })
+
+    expect(started.map((request) => request.chat)).toEqual([undefined, true, false])
+  })
+
+  it("ターン進行中の set-chat-mode は定型文の理由で受け付けず、駆動を閉じない", async () => {
+    const { manager, stub } = startManagerWithStub()
+
+    expect(
+      await manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c-1", text: "架空の依頼" }),
+    ).toEqual({ ok: true })
+    stub.emit({ kind: "request", text: "架空の依頼" })
+    await waitForBatch()
+
+    expect(
+      await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-2", chat: true }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
+    expect(stub.calls).not.toContain("close")
   })
 
   it("駆動が起き上がるのを待ってから、新しい hello を配る（続きから始めるセッションを探す間）", async () => {

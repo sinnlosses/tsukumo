@@ -133,6 +133,16 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     commandId: commandIdSchema,
     mode: z.enum(PERMISSION_MODES),
   }),
+  /**
+   * 雑談モードへ入る／出る（`docs/requirements.md` 4.9）。**`switch-character` と同じく
+   * 駆動の起こし直し**になる（`systemPrompt` はセッションを起こすときに固定されるので、
+   * レポートの記法を外すには起こし直すしかない）。
+   */
+  z.object({
+    type: z.literal("set-chat-mode"),
+    commandId: commandIdSchema,
+    chat: z.boolean(),
+  }),
   z.object({
     type: z.literal("switch-character"),
     commandId: commandIdSchema,
@@ -189,7 +199,10 @@ export type CharacterCreateCommand = Extract<ClientCommand, { readonly type: "cr
 /** 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる）。 */
 export type DriverCommand = Exclude<
   ClientCommand,
-  CharacterEditCommand | CharacterCreateCommand | { readonly type: "switch-character" }
+  | CharacterEditCommand
+  | CharacterCreateCommand
+  | { readonly type: "switch-character" }
+  | { readonly type: "set-chat-mode" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */

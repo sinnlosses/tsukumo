@@ -102,7 +102,10 @@ describe("createSessionLaunch", () => {
   it("起動時は覚えた値のパックで起こし、続きの履歴を流す", async () => {
     const harness = createHarness()
 
-    await createSessionLaunch(harness.ports)(harness.receive, undefined)
+    await createSessionLaunch(harness.ports)(harness.receive, {
+      character: undefined,
+      chat: undefined,
+    })
     await settle()
 
     expect(harness.calls).toEqual([
@@ -111,7 +114,11 @@ describe("createSessionLaunch", () => {
       "startDriver:tsukumo-spirit:prev-session",
       "restoreEvents:prev-session",
     ])
-    expect(harness.events.map((event) => event.kind)).toEqual(["character-changed", "utterance"])
+    expect(harness.events.map((event) => event.kind)).toEqual([
+      "character-changed",
+      "chat-mode-changed",
+      "utterance",
+    ])
   })
 
   it("続きから始めるセッションが無ければ、履歴を流さない", async () => {
@@ -119,11 +126,17 @@ describe("createSessionLaunch", () => {
       findResumeSession: () => Promise.resolve(undefined),
     })
 
-    await createSessionLaunch(harness.ports)(harness.receive, undefined)
+    await createSessionLaunch(harness.ports)(harness.receive, {
+      character: undefined,
+      chat: undefined,
+    })
     await settle()
 
     expect(harness.calls.some((call) => call.startsWith("restoreEvents:"))).toBe(false)
-    expect(harness.events.map((event) => event.kind)).toEqual(["character-changed"])
+    expect(harness.events.map((event) => event.kind)).toEqual([
+      "character-changed",
+      "chat-mode-changed",
+    ])
   })
 
   it("再生が失敗しても駆動は動き続ける", async () => {
@@ -131,18 +144,27 @@ describe("createSessionLaunch", () => {
       restoreEvents: () => Promise.reject(new Error("架空の読み取り失敗")),
     })
 
-    const driver = await createSessionLaunch(harness.ports)(harness.receive, undefined)
+    const driver = await createSessionLaunch(harness.ports)(harness.receive, {
+      character: undefined,
+      chat: undefined,
+    })
     await settle()
     driver.prompt("架空の依頼")
 
-    expect(harness.events.map((event) => event.kind)).toEqual(["character-changed"])
+    expect(harness.events.map((event) => event.kind)).toEqual([
+      "character-changed",
+      "chat-mode-changed",
+    ])
     expect(harness.stub.calls).toEqual(["prompt:架空の依頼"])
   })
 
   it("画面から選んで起こし直したときだけ、そのパックを覚える", async () => {
     const harness = createHarness()
 
-    await createSessionLaunch(harness.ports)(harness.receive, "kagami")
+    await createSessionLaunch(harness.ports)(harness.receive, {
+      character: "kagami",
+      chat: undefined,
+    })
     await settle()
 
     expect(harness.calls).toContain("rememberPack:kagami")
@@ -152,7 +174,10 @@ describe("createSessionLaunch", () => {
   it("起動時（画面から選んでいないとき）は覚えない", async () => {
     const harness = createHarness()
 
-    await createSessionLaunch(harness.ports)(harness.receive, undefined)
+    await createSessionLaunch(harness.ports)(harness.receive, {
+      character: undefined,
+      chat: undefined,
+    })
     await settle()
 
     expect(harness.calls.some((call) => call.startsWith("rememberPack:"))).toBe(false)
@@ -161,7 +186,10 @@ describe("createSessionLaunch", () => {
   it("駆動を閉じると、駆動と同じ間だけ動く見張りも閉じる", async () => {
     const harness = createHarness()
 
-    const driver = await createSessionLaunch(harness.ports)(harness.receive, undefined)
+    const driver = await createSessionLaunch(harness.ports)(harness.receive, {
+      character: undefined,
+      chat: undefined,
+    })
     driver.close()
 
     expect(harness.calls).toContain("watchTasks:close")
@@ -176,7 +204,10 @@ describe("createSessionLaunch", () => {
       },
     })
 
-    await createSessionLaunch(harness.ports)(harness.receive, undefined)
+    await createSessionLaunch(harness.ports)(harness.receive, {
+      character: undefined,
+      chat: undefined,
+    })
     await settle()
 
     expect(harness.events.map((event) => event.kind)).toContain("tasks-changed")

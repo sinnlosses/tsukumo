@@ -26,6 +26,7 @@ import {
   type SessionState,
 } from "../../shared/session-state.ts"
 import { type SessionDriver } from "./session-driver.ts"
+import { type SessionLaunchRequest } from "./session-launch.ts"
 
 /**
  * イベントをまとめて配る間隔。**旧の `PUBLISH_INTERVAL_MS` と同じ 100ms**（2026-09-13 決定）。
@@ -46,16 +47,17 @@ export type SessionCreateOptions = {
    * 駆動を起こす。**渡された `onEvent` を駆動に配線する**のは呼び出し側の仕事で、
    * ここは種類（SDK か偽の駆動か）を知らない。
    *
-   * `character` は起こすキャラクターパックの名前で、**最初の1回は undefined**
+   * `request.character` は起こすキャラクターパックの名前で、**最初の1回は undefined**
    * （呼び出し側の既定にまかせる）。`switch-character` で起こし直すときだけ名前が入る
    * （docs/design.md 7章）。知らない名前のときに何を起こすかも呼び出し側が決める。
+   * `request.chat` は雑談モードで起こすか（`docs/requirements.md` 4.9）。
    *
    * **待てる形（Promise）で返す**のは、そのパックの続きから始めるセッションを探すのに
    * 外の世界（claude 自身の transcript の一覧）を読むから（docs/requirements.md 4.8）。
    */
   readonly startDriver: (
     onEvent: (event: SessionEvent) => void,
-    character: string | undefined,
+    request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
    * いま出しているキャラクターパックの立ち絵・差し色を変え、**画面へ流す
@@ -182,14 +184,14 @@ function createSessionHost(
     }
   }
 
-  const start = (character: string | undefined): Promise<SessionDriver> => {
+  const start = (request: SessionLaunchRequest): Promise<SessionDriver> => {
     const born = generation
     const starting = created.startDriver((event) => {
       if (born !== generation) {
         return
       }
       receive(event)
-    }, character)
+    }, request)
 
     void starting.then(
       (started) => {
@@ -207,11 +209,14 @@ function createSessionHost(
     return starting
   }
 
-  let driver = start(undefined)
+  let driver = start({ character: undefined, chat: undefined })
 
   /**
-   * 別のキャラクターパックで駆動を起こし直す（docs/design.md 7章。**そのパックのセッションの
+   * 駆動を起こし直す（docs/design.md 7章。**そのパックのセッションの
    * 続きから始まる** — 会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる）。
+   * **契機は2つ**: 別のキャラクターパックに切り替えたとき（`switch-character`）と、
+   * 雑談モードを切り替えたとき（`set-chat-mode`。`systemPrompt` を差し替えるため。
+   * `docs/requirements.md` 4.9）。
    * **画面は初期状態に戻す** — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
    * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）は
    * その `hello` の状態に入っているので、二重に配らない。
@@ -219,7 +224,7 @@ function createSessionHost(
    * 起こし直しに失敗しても**常駐プロセスは落とさない**（`dispatchToDriver` と同じ扱いで、
    * 定型文の理由を返すだけ。docs/coding-standards.md「エラーハンドリング」）。
    */
-  const restart = async (character: string): Promise<DispatchResult> => {
+  const restart = async (request: SessionLaunchRequest): Promise<DispatchResult> => {
     try {
       live?.close()
       live = undefined
@@ -227,7 +232,7 @@ function createSessionHost(
       cancelFlush()
       state = INITIAL_SESSION_STATE
       buffered = []
-      driver = start(character)
+      driver = start(request)
       await driver
       cancelFlush()
       buffered = []
@@ -268,7 +273,17 @@ function createSessionHost(
         if (state.turnInProgress) {
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
         }
-        return restart(command.name)
+        // **雑談かどうかは切り替えをまたいで保つ**（パックを変えただけで仕事へ戻らない）。
+        return restart({ character: command.name, chat: state.chatMode })
+      }
+      if (command.type === "set-chat-mode") {
+        // 起こし直しなので `switch-character` と同じ条件で弾く。
+        if (state.turnInProgress) {
+          return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
+        }
+        // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
+        // とは決めていない）。
+        return restart({ character: state.character?.pack, chat: command.chat })
       }
       if (command.type === "create-character") {
         return write(

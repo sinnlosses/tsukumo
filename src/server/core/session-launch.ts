@@ -16,11 +16,27 @@ import { type SessionDriver } from "./session-driver.ts"
 /** 駆動と同じ間だけ動く見張り（いまは `develop/tasks.json`）。駆動を閉じると一緒に閉じる。 */
 export type SessionWatcher = { readonly close: () => void }
 
-/** これから起こす駆動の種。**`core` はパックの中身を知らない**ので、決まった2つだけを渡す。 */
+/** これから起こす駆動の種。**`core` はパックの中身を知らない**ので、決まった3つだけを渡す。 */
 export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
   readonly pack: Pack
   /** 続きから始めるセッションのID（新規に起こすときは undefined）。 */
   readonly resume: string | undefined
+  /**
+   * 雑談モードで起こすか（`docs/requirements.md` 4.9）。**`systemPrompt` はセッションを
+   * 起こすときに固定される**ので、レポートの記法を外すにはここで決まっている必要がある。
+   */
+  readonly chat: boolean
+}
+
+/**
+ * 起こし直しの指定（`character` と `chat` のどちらも「変えない」がありうる）。**2つの
+ * `| undefined` が別々の意味を持つ**ので、まとめて1つの入れ物で受ける。
+ */
+export type SessionLaunchRequest = {
+  /** 起こすキャラクターパックの名前。undefined なら呼び出し側の既定（起動時の初期パック）。 */
+  readonly character: string | undefined
+  /** 雑談モードで起こすか。undefined なら仕事（既定）。 */
+  readonly chat: boolean | undefined
 }
 
 /** 一続きの中で外の世界に頼むこと。実装はすべて配線層（`src/cli.ts`）が `adapter` から渡す。 */
@@ -52,16 +68,19 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * セッションを起こす関数を作る（`session-manager` の `startDriver` にそのまま渡せる形）。
  *
  * 順序は**起動時も起こし直しも同じ**:
- * パックを決める → 画面から選んだときだけ覚える → `character-changed` を流す → 見張りを起こす →
- * 続きのセッションを探す → 駆動を起こす → 続きから始まったなら履歴を組み直す。
+ * パックを決める → 画面から選んだときだけ覚える → `character-changed` と `chat-mode-changed` を
+ * 流す → 見張りを起こす → 続きのセッションを探す → 駆動を起こす → 続きから始まったなら履歴を
+ * 組み直す。
  */
 export function createSessionLaunch<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
 ): (
   onEvent: (event: SessionEvent) => void,
-  character: string | undefined,
+  request: SessionLaunchRequest,
 ) => Promise<SessionDriver> {
-  return async (onEvent, character) => {
+  return async (onEvent, request) => {
+    const { character } = request
+    const chat = request.chat ?? false
     const pack = ports.choosePack(character)
     // **覚えるのは画面から選んだときだけ。** 起動時にも覚えると、その回だけの指定や同梱の既定が
     // 次の起動の初期値として残ってしまう（docs/design.md 13.6）。
@@ -69,12 +88,15 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
       ports.rememberPack(pack)
     }
     onEvent(ports.characterEvent(pack))
+    // **起こし直すと状態が初期値へ戻る**ので、雑談かどうかもここで流し直す（画面は
+    // `chat-mode-changed` でしか知れない。`docs/requirements.md` 4.9）。
+    onEvent({ kind: "chat-mode-changed", chat })
 
     const watcher = ports.watchTasks(onEvent)
     // **キャラクターごとに別のセッションを持つ**（docs/design.md 7章）。起動時も切り替え時も、
     // これから起こすパックの続きを探す。
     const resume = await ports.findResumeSession(pack)
-    const driver = ports.startDriver({ pack, resume }, onEvent)
+    const driver = ports.startDriver({ pack, resume, chat }, onEvent)
 
     if (resume !== undefined) {
       void replayRestoredSession(ports, resume, pack, onEvent)

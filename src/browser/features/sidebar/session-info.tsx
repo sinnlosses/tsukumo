@@ -48,6 +48,17 @@ const MODEL_SELECT_ID = "tsukumo-model"
 
 const CHARACTER_SELECT_ID = "tsukumo-character"
 
+// 雑談モードの `<select>`（docs/requirements.md 4.9 / docs/design.md 13.7）。**区画は増やさず**
+// セッション情報の行を1つ足すだけ。切り替えは駆動の起こし直しなので、キャラクターの `<select>`
+// と同じ条件（ターン進行中は塞ぐ）・同じ文言を使う。
+const CHAT_MODE_SELECT_ID = "tsukumo-chat-mode"
+const CHAT_MODE_WORK = "work"
+const CHAT_MODE_CHAT = "chat"
+const CHAT_MODE_LABELS: ReadonlyArray<readonly [string, string]> = [
+  [CHAT_MODE_WORK, "仕事"],
+  [CHAT_MODE_CHAT, "雑談"],
+]
+
 // キャラクター画面へ入る口の字（docs/design.md 13.6）。立ち絵・差し色・画面の色を整えるのは
 // 別の画面で、ここはその入口を1つ置くだけ。
 const TUNE_LINK_LABEL = "整える"
@@ -98,6 +109,7 @@ export function SessionInfo(): ReactElement {
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
   const currentPackName = useSessionSelector((session) => session.state.character?.pack)
   const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const chatMode = useSessionSelector((session) => session.state.chatMode)
   const modelName = useSessionSelector((session) => session.state.model)
   const permissionModeName = useSessionSelector((session) => session.state.permissionMode)
   const currentPack = resolveCharacterPack(characterPacks, currentPackName)
@@ -137,6 +149,23 @@ export function SessionInfo(): ReactElement {
           </span>
         </>
       ) : null}
+      <label htmlFor={CHAT_MODE_SELECT_ID} className={styles["session-info-label"]}>
+        モード
+      </label>
+      <span className={styles["session-info-value"]}>
+        <Select
+          id={CHAT_MODE_SELECT_ID}
+          ariaLabel="モード"
+          className={styles["chat-mode-select"] ?? ""}
+          value={chatMode ? CHAT_MODE_CHAT : CHAT_MODE_WORK}
+          disabled={turnInProgress}
+          title={turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
+          options={CHAT_MODE_LABELS.map(([value, label]) => ({ value, label }))}
+          onChange={(value) => {
+            dispatch({ type: "set-chat-mode", chat: value === CHAT_MODE_CHAT })
+          }}
+        />
+      </span>
       <label htmlFor={MODEL_SELECT_ID} className={styles["session-info-label"]}>
         モデル
       </label>

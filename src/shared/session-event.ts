@@ -163,6 +163,14 @@ export type SessionEvent =
   | ({ readonly kind: "character-changed" } & CharacterInfo & {
         readonly packs: readonly CharacterPackChoice[]
       })
+  /**
+   * 雑談モードに入っている／出ている（`docs/requirements.md` 4.9）。**駆動を起こしたときと、
+   * `set-chat-mode` で起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機）。
+   *
+   * 起こし直すと状態が初期値へ戻るので、**このイベントが無いと画面は雑談中かどうかを
+   * 見失う**（`INITIAL_SESSION_STATE.chatMode` は `false`）。
+   */
+  | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で
