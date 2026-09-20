@@ -11917,3 +11917,334 @@ hooks や rules にしたほうがいいものはあるかな。提案してほ�
   専有していて、上書きすると orca 側が黙って動かなくなる（`CLAUDE.md`）
 - グローバルなツールの導入・ユーザーのグローバル設定の書き換えは人間の承認が要る。
   このタスクは提案だけで、設定ファイルを1つも作らない
+
+## T-188
+
+**タスク**: 入力欄に @ のファイル補完を足す（git 管理下のファイル／HTTP の GET）
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-203 / **passes**: True
+
+**evidence**:
+
+`adapter/repository-file.ts`（`git ls-files -z` を起こす唯一の境界。失敗時は必ず空）／`protocol/repository-file.ts`（経路名と読み取り）／`ui/features/dispatch/file-suggestions.tsx`（純粋関数＋`useQuery`＋部品）を足し、`GET /repository-file?t=<起動トークン>` を1本生やした。絞り込みはブラウザ側（一覧は213件・7KBと軽く、サーバ側で絞ると打鍵ごとに子プロセスが立つ）。`staleTime` 30秒・`enabled` は `@` を打っている間だけ。候補は判別可能な合併型で `/` と同時に出ない。
+**起動トークンを必須にした**（配るのが利用者の作業ディレクトリの中身なので、静的な物の側に入れない）。呼び出し元で検算: 正しいトークン → 200 / 7530B / 213件（`git ls-files | wc -l` と一致、composer.tsx を含む）、トークン無しと違いは 403。`node:child_process` を import する src/ のファイルは3つで、うち git を呼ぶのは repository-file.ts だけ。
+`bun run check` 通過（**701 pass / 0 fail**。673 → +28）。requirements / design / architecture の見出し数は 26 / 51 / 10 のまま。
+目視（偽の駆動・Playwright）: `@src/ui/fe` で候補10件が出て、パスは等幅（ui-monospace）・`text-overflow: ellipsis` / `white-space: nowrap` で横に広がらない。Tab で `@src/ui/features/character-screen/appearance-color.ts `（末尾に空白1つ）が入り、候補が閉じて**送信されない**。`/` ではコマンド補完7件だけでファイルのパスは混ざらない。
+文の途中での確定も確認: `これ @src/clとあれ` → Tab → `これ @src/cli.ts とあれ` で、**後ろの文字が残り、キャレットは差し込んだ直後（15）**、空白も2つ並ばない。
+
+## 背景
+
+入力欄（`src/ui/features/dispatch/composer.tsx`）は `/` のコマンド補完だけを持つ
+（`src/ui/features/dispatch/command-suggestions.tsx`。候補は `SessionState` から引ける
+`commandSuggestions(state)` を絞り込むだけの導出値で、キー操作と確定は `composer.tsx` が持つ）。
+`@` でファイル名を補完する口は無く、パスは手で打つしかない。
+
+ファイルの一覧は `SessionState` に載っていない。サーバからブラウザへ押している
+ファイル由来のものは `tasks-changed`（`src/adapter/task-summary.ts` の `watchTaskSummary`）だけで、
+ブラウザからサーバへ問い合わせる形は `src/adapter/server.ts` の GET の経路
+（UI スクリプト・スタイル・同梱物・キャラクター素材）しか無い。WebSocket
+（`src/protocol/session-socket.ts`）は片方向のイベントとコマンドで、要求→応答の形を持たない。
+
+## 決まっていること（蒸し返さない）
+
+- 候補の経路は **HTTP の GET を1本足す**（`src/adapter/server.ts` の既存の GET の隣）。
+  WebSocket に要求→応答の仕組みを足さない（ユーザーの選択。2026-09-18）
+- 候補の範囲は **git 管理下のファイル**（`git ls-files`）。git リポジトリでないディレクトリでは
+  候補を空にして黙って出さない（ユーザーの選択。2026-09-18）
+- `/` 補完はそのまま残す。`@` はその隣に生やす
+- **候補一覧の GET は TanStack Query（`useQuery`）で取る**（T-193 の採否の決定と、ユーザーの
+  承認。2026-09-20）。打鍵ごとの再取得の重複排除は `useQuery` が持つので、`composer.tsx` 側に
+  取得の配線を書かない。`QueryClientProvider` は T-203 が `src/ui/main.tsx` に入れてある前提
+
+## 解くべき論点
+
+- **絞り込みをどちら側で行うか。** GET にクエリを渡してサーバ側で絞るか、一覧を1回取って
+  ブラウザ側で絞るか（`git ls-files` の結果はこのリポジトリで数百件規模。打鍵ごとの
+  再取得の重さと、巨大なリポジトリでの一覧の重さの釣り合いで決める）
+- **`@` を候補の合図とみなす条件。** `/` は「先頭かつ空白なし」だが、`@` は文中に出る。
+  キャレットの直前の語をどう切り出すか（行頭または空白の直後の `@` から、次の空白までを見る、など）
+- **絞り方と並び。** `/` 補完に合わせて前方一致→部分一致にするか、パスの区切りを跨ぐ
+  あいまい一致（`ui/comp` で `src/ui/features/...` に当たる形）まで見るか。最大件数
+- **`composer.tsx` の状態をどう分けるか。** いまの `selectedIndex` / `suggestionsDismissed` /
+  キー操作の分岐は `/` 補完のためのもので、2種類の候補が同時に出ないことを何で保証するか
+- **一覧の取り直し。** `useQuery` の `staleTime` をどう置くか（ファイルの増減にどこまで
+  追随させるか。0 なら打鍵のたびに取り直す、`Infinity` なら起動時の1回で固定する）
+
+## やること
+
+1. 論点を決める。決めた理由は `docs/architecture.md` ではなくタスクの `evidence` に1〜2行で残す
+   （設計の正典に書くのは、決まった形そのものだけ）
+2. `git ls-files` を呼ぶ境界を `src/adapter/` に1ファイルとして置く（原則3。1ファイル＝1つの境界）。
+   **`src/core/` から `src/adapter/` を参照しない**（`test/architecture.test.ts` が落とす）
+3. `src/adapter/server.ts` に GET の経路を足す。**起動トークンの扱いを既存の経路に揃える**
+   （`src/protocol/session-socket.ts` の `GET /ws?t=<起動トークン>` と、他の GET が
+   どう守られているかを読んでから決める）
+4. 絞り込みの純粋関数を、`/` 補完と同じ形で切り出してテストする
+   （`command-suggestions.tsx` の `matchingCommands` が前例）
+5. `composer.tsx` に `@` 補完を繋ぐ。確定で入力欄に入るのは `@<リポジトリ相対パス> `
+   （末尾に空白1つ。`/` 補完の `confirmSelected` と同じ手触り）
+6. `docs/requirements.md` 4.2「各表示物」の「**入力欄**」の箇条書きに、`@` 補完を
+   `/` 補完と同じ粒度で書き足す（v1 で持つものの数え上げも直す）。
+   `docs/design.md` にも足したファイルと経路を1行ずつ足す
+7. git リポジトリでなければ候補を出さないこと、`git` が落ちてもプロセスが死なないことを
+   確かめる（CLAUDE.md「常駐プロセスは描画1回の失敗で落ちない」）
+
+## 完了条件
+
+- `bun run check` が通る（増えたテスト件数を `evidence` に書く）
+- 絞り込みの純粋関数に、前方一致・部分一致・上限件数・候補なしのテストがある
+- GET の経路に、候補が返ることと、git リポジトリでないときに空が返ることのテストがある
+- 目視確認: `bun run start` で入力欄に `@src/ui/fe` と打つと候補が出て、
+  Tab で `@src/ui/features/...` が入ること、`/` と打ったときは今までどおりコマンド補完だけが
+  出ることを確かめ、何を見たかを `evidence` に書く
+
+## 注意
+
+- **`git` 以外の外部コマンドを増やさない**（増やすならユーザーの承認が要る。CLAUDE.md）
+- 候補に出すのはファイルのパスだけで、**中身は読まない**（会話内容の扱いとは別に、
+  取り込む情報を最小に保つ）
+- `src/protocol/` にファイル一覧の型を置くかは、経路が HTTP なら両側で共有する契約に
+  当たるかどうかで決める（`protocol` は「両側で共有する契約」。`docs/design.md` 2章）
+
+## T-195
+
+**タスク**: protocol を shared に、ui を browser に移す（改名の段1と段2）
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+git mv で115ファイル（src/ 74・test/ 41）を shared/ と browser/ へ。typecheck・oxlint・bun test --isolate が 701 pass / 0 fail / 1424 expect / 64ファイル（移行前と同数）。format:check は docs/history/direction.md 1件だけ落ちるが HEAD でも同じ失敗で、oxfmt が強調記法と `--layout-*` を壊すので整形せず据え置いた。
+test/architecture.test.ts: core→adapter と browser→core の違反を1つずつ仕込むと 8 pass / 1 fail、消すと 9 pass / 0 fail。禁止の辺は9本とも残っている。
+目視: scripts/capture-catalog.ts --only report（fake 駆動・1400x900）でメインビュー・キャラビュー・サイドバー・入力欄の4領域が出ることを確認。旧パスの grep は docs/history/ と docs/research/ のみ（research は当時の記録なので意図的に残した）。
+
+## 背景
+
+T-194 が `docs/research/architecture-placement.md` に書いた提案を、ユーザーが 2026-09-20 に
+採った。**選ばれた案に `src/` と `test/` を移す**のがこのタスク（段1と段2の分）。
+
+いまの形: `src/{protocol,core,adapter,ui}` ＋ `src/cli.ts`（89ファイル）。`test/` は `src/` と
+同じ構成＋ `test/architecture.test.ts`（58個のテストファイル）。層の辺は
+`test/architecture.test.ts` が強制し、定義は `docs/design.md` 2章・`docs/architecture.md`
+原則2/3・`CLAUDE.md` 原則2〜5・`README.md` のツリーにある。
+
+## 決まっていること（蒸し返さない）
+
+ユーザーが 2026-09-20 に候補 C を採った（提案書は `docs/research/architecture-placement.md`）:
+
+- 語は **`server` / `browser` / `shared`**（`backend` / `frontend` は採らない。前例を調べた結果、
+  Vite は `packages/vite/src/{client,node,shared}`、VS Code はモジュールごとに
+  `common` / `browser` / `node` / `electron-*` で「どの実行環境で動くか」で割っていて、
+  `backend` / `frontend` で割っている大物が見つからなかったため）
+- **このタスクの範囲は段1と段2だけ**。段1＝ドキュメントの追従（`README.md` のツリーが
+  2026-09-16 の `adapter/` 分割前のまま。`docs/architecture.md` の置き場の表に「実行場所」列を
+  足す）、段2＝`protocol` → `src/shared/`、`ui` → `src/browser/`（移動111）。
+  **段3（`core` / `adapter` を `src/server/` の下へ）は T-210**
+- **段4（`features/` を `screen/` と `region/` に割る）はやらない**
+- 会話画面の組み立てを `src/ui/main.tsx` から下ろすのも**やらない**
+- 素案の `lib/` `utils/` は採らない（サーバ側に「外に触らずドメインも知らない」ファイルが実測0件）
+
+## やること
+
+1. `docs/research/architecture-placement.md` の段1（ドキュメントの追従）を先に済ませる
+2. `git mv` でファイルを移す（`protocol` → `src/shared/`、`ui` → `src/browser/` だけ。
+   **`core` / `adapter` は動かさない**）。import のパスを付け替える（相対の `../` の深さが変わる）
+3. `test/` を同じ構成に合わせる
+4. `test/architecture.test.ts` の層の名前と辺を書き換える。**禁止していた辺を減らさない**——
+   「純粋な判断の層は `node:` / SDK / `ws` を import しない」「両側が読む層は `node:` も
+   `document` も触らない」「判断の層から境界の層へ向かう辺は禁止」は新しい名前でも残す
+5. ドキュメントを同じコミットで追随させる: `CLAUDE.md` 原則2〜5 と「関連リンク」・
+   `docs/design.md` 2章・`docs/architecture.md` 原則2/3・`README.md` のツリー。
+   **すでに古くなっているコメントも直す**（`vendor/README.md` と
+   `src/core/report-notation.ts` が `src/ui/report/...` を指している）
+6. `bun run format` をかける
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数は移行前と同じか増えている。件数を `evidence` に書く）
+- 旧パスが残っていない: `grep -rn "src/\(protocol\|ui\)/" src test docs *.md` の結果が
+  `docs/history/` の行だけになっている
+- `test/architecture.test.ts` が新しい層で効くことを確かめる（違反を1つ書いて fail し、
+  消して pass することを確かめ、`evidence` に書く）
+- 目視: tsukumo を起こし、ページが出てメインビュー・キャラビュー・サイドバー・入力欄が
+  見えることを確かめる（`docs/architecture.md`「手で確かめること」）
+
+## 注意
+
+- `docs/history/` は履歴なので直さない
+- **1コミットで済ませる**（途中の状態では `bun run check` が通らない）
+- 他のセッションの未コミット変更を巻き込まない（`git add -A` を使わず、移したパスを個別に足す）
+- **`src/ui/` を触る他のタスク（T-211〜T-216）と同時に進めない**（同じ作業ツリーを複数の
+  セッションが共有するため。`CLAUDE.md`「タスク運用」）
+
+## T-203
+
+**タスク**: TanStack Query を入れて立ち絵の SVG 取得を useQuery にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`@tanstack/react-query@^5.103.1` を依存に足し、`main.tsx` に `QueryClientProvider` を1枚、`components/portrait.tsx` の `useSvgMarkup` を `useQuery`（`queryKey: [url]` / `staleTime` と `gcTime` は `Infinity`）へ。`portrait.tsx` から `useEffect` が消えた。**サーバの `no-store` は変えていない**（Query のキャッシュは JS メモリで完結し、`no-store` は「画面から素材を差し替えられる」機能を守るため）。
+`bun run check` 通過（**667 pass / 0 fail**。666 → +1 は往復のテスト）。
+目視（偽の駆動・Playwright、SVG のパック tsukumo-spirit）: 会話画面の立ち絵が SVG で出たあとキャラクター画面を開くと `/character/{thinking,proud,flustered}.svg?v=tsukumo-spirit@…` の3本だけ飛び（default は取得済み）、**いったん戻ってから開き直すと追加の要求は0件**で立ち絵5枚とも欠けずに描かれた。
+差し色を変える経路は目視していない（リポジトリ内の `characters/tsukumo-spirit/character.json` を書き換えるため）。URL が `?v=<パック>@<版>` を含むことは実測済みで、`queryKey` が URL そのものなので版が変われば別のキャッシュ行になる。
+呼び出し元で2点直した: コメントに入っていたタスク番号（規約違反）を外し、`docs/design.md` の「REST も react-query も無い」を実物に合わせた（見出し数は 51 のまま）。
+
+## 背景
+
+T-193 の調査で **TanStack Query（`@tanstack/react-query` v5）の採用を決めた**（2026-09-20。
+ユーザーの承認済み）。
+
+`src/ui/features/character-view/portrait.tsx` の `useSvgMarkup`（37〜66行）は `useState` ＋
+`useEffect` ＋ `cancelled` フラグの29行で SVG を取ってくる。`/character/<ファイル>` は
+`src/adapter/server.ts` が `cache-control: no-store` で配っている（404行）ので、**表情を戻す
+たびに同じ SVG を取り直している**。
+
+## 決まっていること（蒸し返さない）
+
+- `@tanstack/react-query` v5 を入れる（採否は T-193 で決定済み。蒸し返さない）
+- `QueryClientProvider` は `src/ui/main.tsx` に1枚足す
+- `useSvgMarkup` を `useQuery`（`queryKey: [url]`）に置き換え、`useEffect` と `cancelled` フラグを
+  消す
+
+## 解くべき論点
+
+- `staleTime` / `gcTime` の値。立ち絵の SVG はセッション中に変わらないが、
+  `src/ui/features/appearance/character-edit.tsx` で色を変えたときは取り直す必要がある——
+  **そのとき `queryKey` の何が変わるか**（`src/protocol/character.ts` の
+  `characterAssetCacheKey` / `characterAssetPath` が URL にキャッシュキーを載せている）
+- サーバ側の `no-store` を変えるか（変えずに Query 側のキャッシュだけで足りるか）
+
+## やること
+
+1. `@tanstack/react-query` を依存に足す
+2. `src/ui/main.tsx` に `QueryClientProvider` を足す
+3. `portrait.tsx` の `useSvgMarkup` を `useQuery` に置き換える
+4. `test/ui/features/character-view/portrait.test.tsx` など、Provider が要るテストに包みを足す
+   （`test/ui/` の他の部品テストと同じ形で）
+5. `bun run format`
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `portrait.tsx` に `useEffect` が無い
+- 同じ URL を2回見に行かないことがテストで確かめられている（`fetch` の呼び出し回数）
+- 目視: tsukumo を起こし、表情が往復する（`thinking` → `default` → `thinking`）ときに立ち絵が
+  欠けずに出ること、キャラクター編集で色を変えたら新しい色の立ち絵に変わることを確かめ、
+  `evidence` に書く
+
+## 注意
+
+- `src/ui/lib/` に取得のラッパーを増やさない（`CLAUDE.md` 原則5。置き場所を名前にしたファイルを
+  作らない）
+- `useEffect` の4類型（`docs/coding-standards.md`「React」節）から外れる形にしない
+- T-195（ディレクトリの組み替え）と同じ `src/ui/` を触る。`doing` が重なったら着手しない
+
+## T-204
+
+**タスク**: 色の連続変更を自前の debounce でまとめて書き込む
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`src/ui/lib/debounce.ts` の `useDebouncedCallback`（鍵ごとにタイマーを持ち、アンマウント時は待機中の値を落とさず flush）を足し、`character-edit.tsx` の `set-outfit-accent` と `character-screen.tsx` の `localStorage` への書き込みを 200ms まとめた。**見た目は `onChange` のまま即時**（差し色はローカル state、画面の色は documentElement への反映）。
+`bun run check` 通過（**673 pass / 0 fail**。667 → +6）。
+目視（偽の駆動・Playwright、画面の色で実測）: 開いただけの書き込み **0回**。6回続けて変えた直後は書き込み 0回のまま `--ground` は最後の値 `#252525` に追従済みで、200ms 後に **1回だけ**（`{"ground":"#252525"}`）書かれた。引きずったまま `#character` を閉じると、待機中 0回 → 閉じた直後に **1回**（`{"ground":"#0a0a0a"}`）で flush が効いた。
+差し色（`character.json` への書き込み）は編集可能なパックを作る必要があり、`~/.tsukumo/` に副作用が残るので目視していない（テストで担保。リポジトリの `characters/` は無傷）。
+呼び出し元で1点直した: flush の判定が `value !== undefined` で、`Value` が `undefined` を取りうる型のときためた値を落とす穴があったので、`{ value }` で包んで持つ形にした（キャストは使っていない）。
+
+## 背景
+
+`src/ui/features/appearance/character-edit.tsx` の `<input type="color">`（127〜132行）は
+`onChange` ごとに `set-outfit-accent` を投げ、`src/adapter/character-edit.ts` が毎回
+`writeFileSync` で `character.json` を書き直して（152行）全クライアントへ push する。
+ピッカーを引きずると1回の操作で何十回も書き込みと push が走る。
+`src/ui/features/appearance/appearance.tsx` の地・領域・字の色（105〜107行の `handleColorChange`）も
+同じ形で `localStorage` に書く。
+
+## 決まっていること（蒸し返さない）
+
+- 直す（ユーザーの承認 2026-09-20）
+- **自前の debounce（10行程度）で直す**（ユーザー 2026-09-20）。見た目の即時反映は `onChange` の
+  ままにして、**送信と書き込みだけを 200ms まとめる**
+- **`react-use` は使わない**: 17.6.1 の `useDebounce` は `useTimeoutFn` が `useEffect` の中で
+  即 `set()` するため、**マウントしただけで1回発火する**（2026-09-20 実測。編集画面を開くだけで
+  書き込みが走る）
+
+## やること
+
+1. debounce を1つ書く（置き場は `CLAUDE.md` 原則5 に従う。`utils` のような置き場所を名前にした
+   ファイルを作らない）
+2. `character-edit.tsx` の `set-outfit-accent` の送信をまとめる
+3. `appearance.tsx` の3色の `localStorage` への書き込みも同じ形にする
+4. **編集画面を開いただけでは送信も書き込みも起きないこと**をテストで確かめる
+   （`test/ui/features/appearance/character-edit.test.tsx` /
+   `test/ui/features/appearance/appearance.test.tsx`）
+5. `bun run format`
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 開いただけで送信が0回であることのテストがある
+- 連続した色の変更が1回の送信にまとまることのテストがある
+- 目視: tsukumo を起こし、色を引きずって変えたときに立ち絵の色が滑らかに追従すること、離してから
+  `characters/local/character.json` が1回だけ書き変わることを確かめ、`evidence` に書く
+
+## 注意
+
+- `useEffect` の4類型（`docs/coding-standards.md`「React」節）から外れる形にしない
+  （タイマーは4類型に入る）
+- 部品がアンマウントされるときに、まだ送っていない色を落とさない（引きずったまま画面を閉じた
+  ときの扱いを決めて `evidence` に書く）
+
+## T-210
+
+**タスク**: core と adapter を src/server/ の下へ移す（改名の段3）
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-195 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（701 pass / 0 fail / 64 files、段2と同数）。git mv 47件（src/server/{core,adapter}・test/server/{core,adapter}）。architecture.test.ts は2段の名前で効くことを実測（core→adapter の辺・shared の node:・orca リテラル・server/ 直下の未分類ファイルの4通りを仮に入れて fail、復元して pass）。grep の旧パス参照は docs/history/ と docs/research/ のみ（docs/research/ は当時の記録なので書き換えを取り消した）。目視: 偽の駆動で 127.0.0.1:4599 に起こし capture-view.ts で撮影、main/sidebar/character/dispatch の4領域が 1400x900 ではみ出し 0px で出た。
+
+## 背景
+
+`docs/research/architecture-placement.md` の候補 C を、ユーザーが 2026-09-20 に採った。
+T-195 が段1（ドキュメントの追従）と段2（`protocol` → `shared`、`ui` → `browser`）を済ませる。
+**このタスクは段3**で、`src/core/` と `src/adapter/` を `src/server/` の下へ入れ子にする
+（移動43ファイル）。
+
+## 決まっていること（蒸し返さない）
+
+- 語は `server` / `browser` / `shared`（`backend` / `frontend` は採らない）
+- 段4（`features/` を `screen/` と `region/` に割る）は**やらない**。今回は段3で止める
+- 会話画面の組み立てを `main.tsx` から下ろすのも**やらない**
+
+## やること
+
+1. `git mv` で `src/core/` → `src/server/core/`、`src/adapter/` → `src/server/adapter/`。
+   `test/` も同じ構成に合わせる
+2. import のパスを付け替える（相対の `../` の深さが変わる）
+3. `test/architecture.test.ts` の `layerOf` が2段を読めるようにする。**禁止していた辺を
+   1本も減らさない**（`core → adapter` 禁止、`shared` が `node:` も `document` も触らない、
+   判断の層が SDK / `ws` を import しない）
+4. `CLAUDE.md` の原則2（層の名前）・原則3（`src/server/adapter/`）と、`docs/design.md` 2章・
+   `docs/architecture.md` の置き場の表・`README.md` のツリーを同じコミットで追随させる
+5. `bun run format`
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数が段2の時点と同じか増えている。件数を `evidence` に書く）
+- `grep -rn "src/\(core\|adapter\)/" src test docs *.md` の結果が `docs/history/` の行だけ
+- `test/architecture.test.ts` が新しい2段の名前で効く（違反を1つ書いて fail し、消して pass
+  することを確かめ、`evidence` に書く）
+- 目視: tsukumo を起こし、4領域が見えること
+
+## 注意
+
+- **1コミットで済ませる**（途中では `bun run check` が通らない）
+- `git add -A` を使わず、移したパスを個別に足す
+- **`src/ui/` を触る他のタスク（T-211〜T-216）と同時に進めない**（同じ作業ツリーを複数の
+  セッションが共有するため。`CLAUDE.md`「タスク運用」）

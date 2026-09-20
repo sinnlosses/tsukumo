@@ -1,5 +1,11 @@
 # 進捗のアーカイブ
 
+### 2026-09-20 このリポジトリに置く hooks の候補を提案した（T-201）
+
+`develop/direction.md` に候補7件（上位3件は `PreToolUse` / `Bash` / `deny` で、素の `bun test`・
+作業ツリーを戻す git・`git add -A` を止める）と、hooks に向かない5件を理由つきで置いた。
+設定ファイルは1つも作っていない（`.claude/` も `~/.claude/settings.json` も無傷）。採否はユーザー待ち。
+
 ### 2026-09-20 vendor の3ファイルを npm 依存に移し node_modules から配った（T-200）
 
 `vendor/` を削除し、mermaid / chart.js / highlight.js を `package.json` の依存にした。

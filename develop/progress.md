@@ -88,12 +88,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 は `Infinity`）に置き換え、`useEffect` を消した。URL が `?v=<パック>@<版>` を含むので、素材を
 差し替えると別のキャッシュ行になる。サーバの `no-store` は変えていない。
 
-### 2026-09-20 このリポジトリに置く hooks の候補を提案した（T-201）
-
-`develop/direction.md` に候補7件（上位3件は `PreToolUse` / `Bash` / `deny` で、素の `bun test`・
-作業ツリーを戻す git・`git add -A` を止める）と、hooks に向かない5件を理由つきで置いた。
-設定ファイルは1つも作っていない（`.claude/` も `~/.claude/settings.json` も無傷）。採否はユーザー待ち。
-
 ## 未解決
 
 - **`src/` の改名は 2026-09-20 に決着した**（語は `server` / `browser` / `shared`、段3まで、
