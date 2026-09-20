@@ -265,10 +265,12 @@ transcript と同じ扱いにする。**
 
 **2026-09-13 の移行後、`src/` は層をディレクトリで表す**（設計は `docs/design.md` 2章）。
 **2026-09-16 にサーバ側を `core`（判断）と `adapter`（境界）に割り、2026-09-20 に層の名前を
-実行環境に合わせて `shared`（サーバとブラウザ）/ `browser`（ブラウザ）へ改名した。**
+実行環境に合わせて `shared`（サーバとブラウザ）/ `browser`（ブラウザ）へ改名し、サーバ側の
+2つを `src/server/` の下へ入れ子にした。**
 **新しいファイルは、まずどの層かを決めてから置く。**
 
-**4つの層（`shared` / `core` / `adapter` / `browser`）が何を置き、どこへ import してよいかの表は
+**4つの層（`shared` / `server/core` / `server/adapter` / `browser`）が何を置き、どこへ import して
+よいかの表は
 二重に書かず `docs/design.md` 2章「層と依存の向き」を正典とする**（`src/browser/` の箱の表と
 同じ扱い）。ここには、その表だけでは読み取れない決まりを書く。
 
@@ -291,7 +293,7 @@ import してよい先が決まっている**（表は二重に書かず `docs/d
 **ディレクトリも単数形。ただし `src/browser/` の置き場所のディレクトリだけ例外**（2026-09-16）。
 `features/` `components/` `lib/` `stores/` `styles/` は bullet-proof-react の名前をそのまま使う
 （名前が広く知られていることのほうが、単数形で揃うことより読み手の助けになる、というユーザーの
-選択）。**例外はこの5つだけ**で、`src/shared/` `src/core/` `src/adapter/` と、機能の中の
+選択）。**例外はこの5つだけ**で、`src/shared/` `src/server/core/` `src/server/adapter/` と、機能の中の
 ディレクトリ・ファイル名は単数形のまま（`features/main-view/markdown/` のように**概念の名前**を
 付ける）。**`utils/` `helpers/` `common/` は引き続き作らない**（bullet-proof-react にある
 `utils/` も採らない。理由と、`src/browser/` の箱ごとの置く基準は `docs/design.md` 2章）。
@@ -417,7 +419,7 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 内蔵していて、依存が最小で済む」からであって、Bun でなければ書けない処理があるからではない。
 標準APIに寄せておけば、Bun に不都合が出たとき Node へ移すのがランタイムの入れ替えだけで済む。
 
-**ただし退避先は完全ではない。** `src/adapter/bundle.ts` は `execFile("bun", ["build", ...])` で
+**ただし退避先は完全ではない。** `src/server/adapter/bundle.ts` は `execFile("bun", ["build", ...])` で
 **`bun` コマンドそのものに実行時依存している**ので（`Bun.*` の API は使っていない）、Node へ移す
 ときは束ねる仕組みの差し替えが別に要る。この規約が守っているのは、その一点を除いた残り全部。
 

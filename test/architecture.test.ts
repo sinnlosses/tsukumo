@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url"
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
-// **3層（shared / core / browser）＋サーバ側の境界（adapter）と配線（cli.ts）**。
+// **3層（shared / server / browser）で、サーバ側は判断（`server/core/`）と境界
+// （`server/adapter/`）の2段**。配線は `cli.ts`。
 // `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**
 // （docs/research/architecture-proposal.md 3章「許す依存の辺」。2026-09-16 の段2で切った）。
 
@@ -63,14 +64,14 @@ describe("層と依存の向き", () => {
 })
 
 // `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md 原則3、
-// src/adapter/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
+// src/server/adapter/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
 // コマンド名の文字列リテラル "orca" を伴うので、それを orca-host.ts の外から探す。
 // ファイル名（`orca-host.ts`）やバッククォートで囲んだ日本語の説明文はクォートされた文字列
 // リテラルではないので拾わない。
 describe("orca コマンドを起こす箇所", () => {
-  it("`orca` コマンドを呼ぶのは src/adapter/orca-host.ts だけ", () => {
+  it("`orca` コマンドを呼ぶのは src/server/adapter/orca-host.ts だけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath !== "adapter/orca-host.ts")
+      .filter((relPath) => relPath !== "server/adapter/orca-host.ts")
       .filter((relPath) => /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
 
     expect(offenders).toEqual([])
@@ -80,13 +81,13 @@ describe("orca コマンドを起こす箇所", () => {
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
 // SDK（`@anthropic-ai/claude-agent-sdk`）を起こすのは駆動のファイル1つに閉じ込める
-// （docs/architecture.md 原則3、src/adapter/sdk-driver.ts 冒頭コメント）。import 文の
+// （docs/architecture.md 原則3、src/server/adapter/sdk-driver.ts 冒頭コメント）。import 文の
 // クォートされた specifier だけを拾うので、バッククォートで囲んだ日本語の説明文は拾わない
 // （orca の検査と同じやり方）。
 describe("Agent SDK を import する箇所", () => {
-  it("`@anthropic-ai/claude-agent-sdk` を import するのは src/adapter/sdk-driver.ts だけ", () => {
+  it("`@anthropic-ai/claude-agent-sdk` を import するのは src/server/adapter/sdk-driver.ts だけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath !== "adapter/sdk-driver.ts")
+      .filter((relPath) => relPath !== "server/adapter/sdk-driver.ts")
       .filter((relPath) =>
         /from\s+["']@anthropic-ai\/claude-agent-sdk["']/.test(
           readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"),
@@ -100,11 +101,11 @@ describe("Agent SDK を import する箇所", () => {
 // `node:child_process` を起こすのはホスト（orca）・ビルド（bun build）・git 管理下のファイルの
 // 列挙（git ls-files）の3つの境界に閉じ込める（docs/architecture.md 原則3）。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは src/adapter/ の orca-host.ts・bundle.ts・repository-file.ts だけ", () => {
+  it("`node:child_process` を import するのは src/server/adapter/ の orca-host.ts・bundle.ts・repository-file.ts だけ", () => {
     const allowed = new Set([
-      "adapter/orca-host.ts",
-      "adapter/bundle.ts",
-      "adapter/repository-file.ts",
+      "server/adapter/orca-host.ts",
+      "server/adapter/bundle.ts",
+      "server/adapter/repository-file.ts",
     ])
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))
@@ -371,14 +372,21 @@ function resolveRelativeImport(fromRelPath: string, specifier: string): string {
   return resolved.join("/")
 }
 
-/** `src/` 相対パスから層を決める。`cli.ts` は配線層で、それ以外は先頭ディレクトリで決まる。 */
+/**
+ * `src/` 相対パスから層を決める。`cli.ts` は配線層、`shared/` と `browser/` は先頭ディレクトリ、
+ * サーバ側は2段（`server/core/` と `server/adapter/`）で決まる。`server/` の直下に置いた
+ * ファイルは判断か境界かを名乗っていないので `throw` する。
+ */
 function layerOf(relPath: string): Layer {
   if (relPath === "cli.ts") {
     return "cli"
   }
-  const [top] = relPath.split("/")
-  if (top === "shared" || top === "core" || top === "adapter" || top === "browser") {
+  const [top, second] = relPath.split("/")
+  if (top === "shared" || top === "browser") {
     return top
+  }
+  if (top === "server" && (second === "core" || second === "adapter")) {
+    return second
   }
   throw new Error(`src/${relPath} の層を判定できない（層のディレクトリの外にある）`)
 }

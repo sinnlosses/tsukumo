@@ -17,7 +17,7 @@
 //   **サニタイズはここ1箇所に集約**（docs/requirements.md 4.2）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。
 //   テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る。
-//   `src/adapter/vendor-asset.ts`）
+//   `src/server/adapter/vendor-asset.ts`）
 //
 // **```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする**
 // （{@link MermaidBlock} / {@link ChartBlock}）。`pre` を上書きし、中の `code` 要素の
@@ -89,7 +89,7 @@ export function Markdown(props: MarkdownProps): ReactElement {
       // **効くのは `**` と `*` だけで、GFM の取り消し線 `~~` には効かない**（あちらは
       // micromark-extension-gfm-strikethrough の別の判定を通るため。直すには
       // remark-cjk-friendly-gfm-strikethrough が要る）。取り消し線はレポートの規約
-      // （src/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
+      // （src/server/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
       remarkPlugins={[remarkGfm, remarkCjkFriendly]}
       rehypePlugins={[
         rehypeRaw,

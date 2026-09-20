@@ -1,5 +1,5 @@
 // 外部ライブラリを `<script>` で読み込む（配るのは tsukumo 自身のサーバ。
-// `src/adapter/vendor-asset.ts`）。**その記法が実際に出てきたときだけ**読む
+// `src/server/adapter/vendor-asset.ts`）。**その記法が実際に出てきたときだけ**読む
 // （`docs/requirements.md` 4.2）ので、`<head>` へ置くのはここが最初に呼ばれた瞬間。
 //
 // 同じ URL を何度読み込んでも1回のリクエストで済むよう、**読み込み中の Promise をモジュールの

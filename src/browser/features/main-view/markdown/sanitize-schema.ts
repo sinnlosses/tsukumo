@@ -27,7 +27,7 @@ import { type Options as Schema } from "rehype-sanitize"
  * 押せるように見えて何も起きないものを混ぜない。チェックリスト（`- [ ]`）の
  * `<input type="checkbox">` は、ここへ来る前に `task-check.ts` が静的な印の `<span>` に畳む。
  *
- * **記法（`src/core/report-notation.ts`）に無い要素も、次の条件のどちらかを満たすものは通す**
+ * **記法（`src/server/core/report-notation.ts`）に無い要素も、次の条件のどちらかを満たすものは通す**
  * （モデルの即興を落とさないため）:
  *
  * - `section` / `article` / `aside` のように、**見た目を持たない入れ物**（落としても中身は

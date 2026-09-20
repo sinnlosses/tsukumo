@@ -167,7 +167,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 /**
  * **あとにツール呼び出しが続いた本文のうち、実況だけを落とす**（`docs/requirements.md` 4.2。
  * 2026-09-16 決定）。「まず読むね」「次はテスト」のような実況は、ツールを呼ぶ合図としてしか
- * 書かれておらず、レポートとして読むものではない。**規約の条項（`src/core/report-notation.ts` の
+ * 書かれておらず、レポートとして読むものではない。**規約の条項（`src/server/core/report-notation.ts` の
  * 「前置きと締めを書かない」）では抑えきれなかった**ので、tsukumo の側で落とす
  * （4.2「なぜテキストの規約をやめたか」と同じ立場）。
  *

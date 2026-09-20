@@ -1,7 +1,7 @@
 // セッションの中で起きた出来事（`SessionEvent`）の語彙。**サーバとブラウザの両方が読む契約**
 // なので shared に置く（docs/design.md 4.1）。
 //
-// **ここは型だけ**で、SDK のメッセージからの変換は core（src/core/sdk-message.ts）にある
+// **ここは型だけ**で、SDK のメッセージからの変換は core（src/server/core/sdk-message.ts）にある
 // （変換は SDK の形に結び付いた「外部由来の値の検証」なので、両側が共有する契約には入れない）。
 //
 // **`SessionEvent` の union は zod にしない**（2026-09-13 決定）。状態にフィールドを足すたびに
@@ -34,7 +34,7 @@ export type CommandDescription = {
 }
 
 /**
- * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/adapter/sdk-driver.ts）が
+ * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/server/adapter/sdk-driver.ts）が
  * 自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざる。
  * 受け取る側（src/shared/session-state.ts）はどちらから来たかを区別しない。
  *
@@ -129,11 +129,11 @@ export type SessionEvent =
    * モデルが変わったことを、`session-info`（`init`）を待たずに先回りで伝える。出どころは2つ:
    *
    * 1. `/model` のローカルコマンドが実行された合図（`assistant` に乗る
-   *    `local_command_run: { command: "model", args }`。2026-09-17 実測。`src/core/sdk-message.ts`）。
+   *    `local_command_run: { command: "model", args }`。2026-09-17 実測。`src/server/core/sdk-message.ts`）。
    *    `init` はターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古い
    *    モデルを返す（正しい値が載るのは次の依頼の `init` から。docs/design.md 4.1）
    * 2. サイドバーの `<select>` からの `set-model` を駆動が確定させたとき
-   *    （`src/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
+   *    （`src/server/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
    *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
    *    駆動を経ずにこのイベントを合成することはない。2026-09-17 実測: 本物の駆動は元々これを
    *    出しておらず、選んだ直後に次のイベントで古いモデルへ巻き戻って見えていた。偽の駆動
@@ -177,7 +177,7 @@ export type StampedEvent = {
  * 外から届いた値を {@link SessionEvent} として受け取るための**封筒だけ**のスキーマ
  * （`kind` を持つオブジェクトであること）。**中身は検証しない**（2026-09-13 決定。union を
  * zod で二重に持たない）。使うのは境界の2箇所だけ — フレームの読み取り（src/shared/frame.ts）と
- * 偽の駆動の台本（src/adapter/fake-driver.ts）。
+ * 偽の駆動の台本（src/server/adapter/fake-driver.ts）。
  */
 export const sessionEventSchema = z.custom<SessionEvent>(
   (value) => isRecord(value) && typeof value.kind === "string",

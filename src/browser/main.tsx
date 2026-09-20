@@ -1,7 +1,7 @@
 // ブラウザ側の入口。**`bun build src/browser/main.tsx --target=browser` がここから辿って束ねる**
 // （tsconfig の `"jsx": "react-jsx"`）。**CSS もここから辿る**（下の `styles/theme.css` と、
 // 各機能が import する `*.module.css`）ので、スクリプトと CSS は1回の組み立てから出る対になる
-// （`src/adapter/bundle.ts`）。副作用（`createRoot(...).render(...)`）を持つのは
+// （`src/server/adapter/bundle.ts`）。副作用（`createRoot(...).render(...)`）を持つのは
 // ここだけ（`docs/architecture.md`「入口だけに副作用を置く」）。
 //
 // **選んでいるターンは `<TurnSelectionProvider>` が配る**（メインビューのタブとキャラビューの

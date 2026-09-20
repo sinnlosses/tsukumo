@@ -2,8 +2,9 @@
 
 最終更新: 2026-09-13（起こした日。**移行の決定は同日**。経緯と採らなかった案は
 `docs/research/architecture-rethink.md`）
-ステータス: **正典**。**構造の移行は段7まで完了**（`shared` / `core` / `browser` の3層 +
-`cli.ts`。2026-09-16 に**サーバ側を `core`（判断）と `adapter`（境界）に割った**。
+ステータス: **正典**。**構造の移行は段7まで完了**（`shared` / `server` / `browser` の3層 +
+`cli.ts`。2026-09-16 に**サーバ側を `core`（判断）と `adapter`（境界）に割り**、2026-09-20 に
+**その2つを `src/server/` の下へ入れ子にした**。
 `docs/architecture.md`「現在の実装状況」）。**段9（セッションの復元）も入った**
 （2026-09-13。`docs/requirements.md` 4.8。画面からの `new-session` コマンドだけは、セッションを
 起こし直す仕組みを作る段8と一緒に入れる）。残る段8（キャラクターパック）は末尾「移行の段階」の
@@ -24,7 +25,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | 節                             | 中身                                                                       |
 | ------------------------------ | -------------------------------------------------------------------------- |
 | ## 1. 何を変え、何を残すか     | 決定の要約。**最初にここ**                                                 |
-| ## 2. 全体構成                 | 層（shared / core / adapter / browser）の図、依存の向き、ディレクトリ      |
+| ## 2. 全体構成                 | 層（shared / server / browser）の図、依存の向き、ディレクトリ              |
 | ## 3. 動きの流れ               | 起動・接続・依頼・答え待ち・再接続の順序                                   |
 | ## 4. shared                   | **両側が共有する契約**。イベント・状態・reducer・コマンド・フレーム・版    |
 | ## 5. core と adapter          | サーバ側のモジュールと責務。判断（core）と外の世界に触る境界（adapter）    |
@@ -82,13 +83,13 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
                │  hello（snapshot）/ events  │  prompt / answer / …
                │        WebSocket 1本（127.0.0.1、起動トークン付き）
 ┌──────────────┴───────────────────────────▼─────────────────┐
-│ core（サーバ側の純粋な判断。外の世界に触らない）              │
+│ server/core（サーバ側の純粋な判断。外の世界に触らない）       │
 │   session-manager ／ session-driver（駆動の契約）／ config    │
 │   sdk-message ／ session-restore ／ pending-answer ／ host    │
 └──────────────▲───────────────────────────┬─────────────────┘
                │ 呼ばれる                   │ core を import する
 ┌──────────────┴───────────────────────────▼─────────────────┐
-│ adapter（外の世界に触る場所。1ファイル = 1つの境界）          │
+│ server/adapter（外の世界に触る場所。1ファイル = 1つの境界）   │
 │   sdk-driver（SDK）／ fake-driver（台本）                     │
 │   server（http: ページ・束ねた JS/CSS・vendor・立ち絵 / ws）  │
 │   character-pack ／ task-summary ／ bundle ／ orca-host       │
@@ -107,23 +108,25 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 写し）とは別物**。`shared` は TypeScript のモノレポでいう `packages/shared` / `contracts`
 の位置（サーバとブラウザの両方が import する契約）、`browser` はクライアント、`core` と `adapter` は
 サーバで、「受け取る／決める／描く」という役割の分割ではなく「どちらの実行環境で動くか」で
-分けている。**サーバ側だけをもう一段、「純粋な判断（`core`）」と「外の世界に触る境界
-（`adapter`）」に割ってある**（2026-09-16。`docs/research/architecture-proposal.md`）。
+分けている。**サーバ側だけをもう一段、「純粋な判断（`server/core/`）」と「外の世界に触る境界
+（`server/adapter/`）」に割ってある**（2026-09-16 に割り、2026-09-20 に `src/server/` の下へ
+入れ子にした。`docs/research/architecture-proposal.md` / `docs/research/architecture-placement.md`）。
 
-| 層        | 置くもの                                                                                   | import してよい先                 | 実行場所         |
-| --------- | ------------------------------------------------------------------------------------------ | --------------------------------- | ---------------- |
-| `shared`  | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod  | `shared` のみ（`zod` は可）       | サーバとブラウザ |
-| `core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈 | `shared` / `core`                 | サーバ（Bun）    |
-| `adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・偽の駆動           | `shared` / `core` / `adapter`     | サーバ（Bun）    |
-| `browser` | React の部品・hooks・CSS・Markdown の変換                                                  | `shared`（React などの npm は可） | ブラウザ         |
-| `cli.ts`  | 配線（composition root）                                                                   | すべて                            | サーバ           |
+| 層               | 置くもの                                                                                   | import してよい先                 | 実行場所         |
+| ---------------- | ------------------------------------------------------------------------------------------ | --------------------------------- | ---------------- |
+| `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod  | `shared` のみ（`zod` は可）       | サーバとブラウザ |
+| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈 | `shared` / `core`                 | サーバ（Bun）    |
+| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・偽の駆動           | `shared` / `core` / `adapter`     | サーバ（Bun）    |
+| `browser`        | React の部品・hooks・CSS・Markdown の変換                                                  | `shared`（React などの npm は可） | ブラウザ         |
+| `cli.ts`         | 配線（composition root）                                                                   | すべて                            | サーバ           |
 
 - **`core` と `browser` は互いを import しない。** 両者が知っているのは `shared` だけ
 - **`core → adapter` は禁止。** 辺は `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、
   `core` と `adapter` を結ぶのは `cli.ts` だけ。**`core` は `node:` / SDK（`@anthropic-ai/*`）/
   `ws` を import しない**ので、`core` から外の世界へ出る道は無い
 - **`adapter` は1ファイル = 1つの境界。** インターフェースは切らない（実装が2つあるもの —
-  駆動とホスト — だけ、契約の型を `core` に置く: `core/session-driver.ts` / `core/host.ts`）
+  駆動とホスト — だけ、契約の型を `core` に置く: `server/core/session-driver.ts` /
+  `server/core/host.ts`）
 - **`shared` は `node:` も `document` も触らない。** これは設計上の好みではなく**物理的な制約**
   である。`shared` はサーバ（Bun/Node）とブラウザの両方の実行環境で読み込まれるので、
   片方にしか無い API（`node:fs` や `document` など）に触れた時点でもう片方で動かなくなる。
@@ -143,30 +146,31 @@ src/
     expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
                               語彙（いまの domain のうち、両側が使うもの）
     repository-file.ts        ファイル一覧の経路名と読み取り（入力欄の @ 補完。両側が見る）
-  core/                       サーバ側の純粋な判断。node: / SDK / ws を import しない
-    session-driver.ts         駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
-    session-manager.ts        sessionId → { driver, state, subscribers }。reducer をサーバ側でも回す
-    session-launch.ts         起こす一続きの順序（外に触る部分は cli.ts が渡す。起動も切り替えも同じ）
-    character-selection.ts    どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
-    pending-answer.ts         答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
-    sdk-message.ts            SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
-    session-restore.ts        続きから始めるセッションを選ぶ・transcript を履歴イベントにする
-    port-resolution.ts        どのポートで試すかの決定（listen そのものは adapter/server.ts）
-    config.ts                 環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
-    report-notation.ts / speech-cadence.ts   systemPrompt に足す規約の文面
-    host.ts                   ホストのポート（showView）。実装は adapter/orca-host.ts
-  adapter/                    外の世界に触る場所。1ファイル = 1つの境界
-    sdk-driver.ts             SDK を import する唯一の場所。SessionDriver の本物の実装
-    fake-driver.ts            台本どおりに SessionEvent を流す SessionDriver（台本は fs から読む）
-    server.ts                 http（ページ・/assets・/vendor・/character）+ ws（フレームとコマンド）
-    character-pack.ts         パックの列挙・読み込み（character.json / persona.md / 素材）
-    character-edit.ts         画面から変えた立ち絵・差し色を ~/.tsukumo/characters/ へ書く
-    remembered-character.ts   覚えたキャラクター名（~/.tsukumo/state.json）
-    task-summary.ts           develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
-    repository-file.ts        git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
-    bundle.ts / ui-rebuild.ts bun build（browser の入口と CSS）と src/browser/ の見張り
-    bundled-path.ts           同梱物の位置（import.meta.url）。tsukumo-home.ts は ~/.tsukumo/
-    orca-host.ts              `orca` コマンドを起こす唯一の場所
+  server/                     サーバ（Bun）側。判断（core/）と境界（adapter/）の2段
+    core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
+      session-driver.ts       駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
+      session-manager.ts      sessionId → { driver, state, subscribers }。reducer をサーバ側でも回す
+      session-launch.ts       起こす一続きの順序（外に触る部分は cli.ts が渡す。起動も切り替えも同じ）
+      character-selection.ts  どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
+      pending-answer.ts       答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
+      sdk-message.ts          SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
+      session-restore.ts      続きから始めるセッションを選ぶ・transcript を履歴イベントにする
+      port-resolution.ts      どのポートで試すかの決定（listen そのものは adapter/server.ts）
+      config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
+      report-notation.ts / speech-cadence.ts   systemPrompt に足す規約の文面
+      host.ts                 ホストのポート（showView）。実装は adapter/orca-host.ts
+    adapter/                  外の世界に触る場所。1ファイル = 1つの境界
+      sdk-driver.ts           SDK を import する唯一の場所。SessionDriver の本物の実装
+      fake-driver.ts          台本どおりに SessionEvent を流す SessionDriver（台本は fs から読む）
+      server.ts               http（ページ・/assets・/vendor・/character）+ ws（フレームとコマンド）
+      character-pack.ts       パックの列挙・読み込み（character.json / persona.md / 素材）
+      character-edit.ts       画面から変えた立ち絵・差し色を ~/.tsukumo/characters/ へ書く
+      remembered-character.ts 覚えたキャラクター名（~/.tsukumo/state.json）
+      task-summary.ts         develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
+      repository-file.ts      git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
+      bundle.ts / ui-rebuild.ts bun build（browser の入口と CSS）と src/browser/ の見張り
+      bundled-path.ts         同梱物の位置（import.meta.url）。tsukumo-home.ts は ~/.tsukumo/
+      orca-host.ts            `orca` コマンドを起こす唯一の場所
   browser/
     main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）
     css-variable.d.ts         browser 全体に効く型拡張（import されない ambient 宣言）
@@ -189,7 +193,8 @@ characters/<name>/            character.json・persona.md・素材
 
 **ファイル名は概念**（原則5）。`helpers` / `utils` / `common` は作らない。**単数形の規約は
 `src/browser/` の置き場所のディレクトリ（`features/` `components/` `lib/` `stores/` `styles/`）だけ
-外れる**（2026-09-16。bullet-proof-react の名前をそのまま採る。`shared` / `core` / `adapter` と、
+外れる**（2026-09-16。bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
+`adapter` と、
 機能の中のファイル名は単数形のまま。`main-view/` のように機能の名前は用語集の語に合わせる）。
 
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
@@ -241,7 +246,7 @@ characters/<name>/            character.json・persona.md・素材
 | `types/`                               | 型の正典は `src/shared/`。browser 側に置くと契約が二重になる（原則2）。ambient な `.d.ts` は import されないので使う場所の隣に置く                                                                                                                                                                                                                                      |
 | `utils/`                               | 実体は `tool-summary.ts` 1つで、置くと「どこにも属さない小物」の受け皿になる（原則5）。`lib/` に入れる                                                                                                                                                                                                                                                                  |
 | `hooks/`（共有）                       | 共有の hook が無い。`useSession` / `useTurnSelection` は Context の付属なので provider と同じファイルに置く                                                                                                                                                                                                                                                             |
-| `config/`                              | 設定と環境変数は `src/core/config.ts` と `src/cli.ts` が持ち、browser は `SessionState` で受け取るだけ                                                                                                                                                                                                                                                                  |
+| `config/`                              | 設定と環境変数は `src/server/core/config.ts` と `src/cli.ts` が持ち、browser は `SessionState` で受け取るだけ                                                                                                                                                                                                                                                           |
 | `assets/`                              | 立ち絵も外部ライブラリもサーバが配る（`characters/` と `node_modules/`）。browser に素材を置かない                                                                                                                                                                                                                                                                      |
 | `testing/`                             | テストは `test/` に `src/` の形を写す既存の規約がある（`test/dom-environment.ts` がその置き場）                                                                                                                                                                                                                                                                         |
 | `index.ts`（barrel file）              | 2026-09-13 の決定のまま禁止。bullet-proof-react 自身も tree-shaking の理由で外している                                                                                                                                                                                                                                                                                  |
@@ -321,7 +326,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 知らない値でサイドバーを誤った値に倒さないため）。
 
 **サイドバーの `<select>` から `set-model` を送ったときも同じ `model-changed` を使う**
-（2026-09-17）。`src/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` の確定を
+（2026-09-17）。`src/server/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` の確定を
 待ってから出す（駆動を経ているので、これは「ブラウザ側のローカル echo」の禁止（3章「依頼」）
 には当たらない）。本物の駆動がこれを出していなかった間、選んだ直後に次のイベントで
 `state.model` が古い値へ戻って見える不具合があった（偽の駆動 `fake-driver.ts` は最初から
@@ -601,7 +606,7 @@ react-markdown
 | mermaid（3.3MB）・Chart.js                                         | **束ねず `/vendor/` で配り、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く | `/vendor/`          |
 | Idiomorph                                                          | **消える**                                                                                                                  | —                   |
 
-`/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/adapter/vendor-asset.ts`）で、
+`/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/adapter/vendor-asset.ts`）で、
 **CDN からは読まない**。`bun build` の出力は1本（コード分割はしない。分割するとディスクに
 置かないメモリ配信と噛み合わない）。
 
@@ -736,7 +741,7 @@ characters/<name>/
 - **「同名は起動先が勝つ」という既存の規則は変えない。** ホームはその手前に挟まる
 
 **画像は data URL を JSON に載せ、いまの WebSocket のコマンドで受け取る。**
-`src/shared/command.ts` に `ClientCommand` を1つ足すだけで、`src/adapter/server.ts` に新しい
+`src/shared/command.ts` に `ClientCommand` を1つ足すだけで、`src/server/adapter/server.ts` に新しい
 書き込み経路を作らない。起動トークンと `Origin` の照合・zod の検証・定型文の `error` が
 そのまま効く。`multipart/form-data` の POST は node:http にパーサーが無く外部依存が要るので採らない。
 生バイトの POST は照合と上限をもう一組書くことになるので採らない。
@@ -830,17 +835,17 @@ characters/<name>/
 
 ## 10. テスト
 
-| 対象                           | 方法                                                                                                                       | 置き場所                            |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                               | `test/shared/session-state.test.ts` |
-| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                            | `test/shared/command.test.ts` など  |
-| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                       | `test/adapter/sdk-driver.test.ts`   |
-| `session-manager`              | 偽の駆動を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/core/session-manager.test.ts` |
-| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                    | `test/adapter/server.test.ts`       |
-| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                   | `test/browser/**`                   |
-| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                      | `test/architecture.test.ts`         |
-| 画面全体                       | **偽の駆動で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）    |
-| 状態のカタログ                 | 台本の場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                         | `scripts/capture-catalog.ts`        |
+| 対象                           | 方法                                                                                                                       | 置き場所                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                               | `test/shared/session-state.test.ts`        |
+| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                            | `test/shared/command.test.ts` など         |
+| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                       | `test/server/adapter/sdk-driver.test.ts`   |
+| `session-manager`              | 偽の駆動を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/server/core/session-manager.test.ts` |
+| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                    | `test/server/adapter/server.test.ts`       |
+| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                   | `test/browser/**`                          |
+| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                      | `test/architecture.test.ts`                |
+| 画面全体                       | **偽の駆動で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）           |
+| 状態のカタログ                 | 台本の場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                         | `scripts/capture-catalog.ts`               |
 
 **ブラウザに出た絵は自動テストで守らない**、という方針は変えない。変わるのは「claude を起こさずに
 絵を出せる」こと（偽の駆動）で、目視の手順が `docs/architecture.md`「手で確かめること」から
@@ -859,7 +864,7 @@ API を使わない形になる。
   タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。**Vite は足していない**し、
   `Bun.serve` の HMR も `Bun.build()` も使わない（「Bun固有APIに寄せない」規約のまま）
 
-**作り直しを押す仕組み。** `src/adapter/ui-rebuild.ts` が `node:fs` の `watch` で `src/browser/` を**再帰に**見張り、保存が静まって
+**作り直しを押す仕組み。** `src/server/adapter/ui-rebuild.ts` が `node:fs` の `watch` で `src/browser/` を**再帰に**見張り、保存が静まって
 から（120ms）`bundle.ts` の `buildUiScript` / `buildStyleSheet` を呼び直す。組み上がったものは
 `src/cli.ts` が持ち替え、`shared` の `refresh` フレーム（4.4）で開いているタブへ押す。
 **差分は当てない**（当てた時点で HMR そのものになり、規模が跳ねる）。成果物は前と同じくメモリに
@@ -872,7 +877,7 @@ API を使わない形になる。
 | `src/browser/**/*.css`           | ページを読み込み直す（下の注記）。状態は繋ぎ直しの `hello` で戻る            |
 | `src/browser/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る |
 | `src/shared/`                    | **プロセスの上げ直しが要る**（下）                                           |
-| `src/core/` `src/cli.ts`         | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある |
+| `src/server/core/` `src/cli.ts`  | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある |
 
 **CSS だけを取り直す道（`refresh` の `style`）は使わない**（2026-09-20）。CSS Modules の class 名は
 ハッシュ化されて JS 側の対応表にも焼かれるので、片方だけ新しくすると綴りが食い違って崩れた画面が
@@ -883,7 +888,7 @@ API を使わない形になる。
 「`src/browser/` だけが救える」という1本の線のほうが信用できる。
 
 割り切ってよいと判断した根拠は、直近30コミットで `src/` の各層が触られた回数（2026-09-16 の実測）:
-`src/browser/**` が 112回で**全体の52%**、`src/shared/**` が 49回、`src/core/**` が 43回、
+`src/browser/**` が 112回で**全体の52%**、`src/shared/**` が 49回、`src/server/core/**` が 43回、
 `src/cli.ts` が 11回。手を入れる場所の半分が上げ直し無しで済む。
 
 **見張るのは `TSUKUMO_WATCH_UI=1` のときだけ**（既定は見張らない）。`tsukumo` は `bun link` で
@@ -932,17 +937,17 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 
 ### 段と完了条件
 
-| 段  | やること                                                                                                                                                                                                                                       | 完了条件                                                                                                                                                                                                                          | 消えるもの                                                                                                                      |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **正典を直す**（この設計書、`docs/architecture.md`、`docs/requirements.md`、`docs/coding-standards.md`、`docs/glossary.md`、`CLAUDE.md`）                                                                                                      | 節の数が変わらない。`bun run check` が通る                                                                                                                                                                                        | —                                                                                                                               |
-| 2   | **`src/shared/` を切る**（`domain` + `session-view.ts` を移し、`command.ts` / `frame.ts` を足す）。**`src/core/` に `session-manager` / `server`（ws）/ `fake-driver` / `config` を足す。** 依存を入れ、`ui.js` の空の入口を束ねてページに読む | ws のテスト（接続 → `hello`、トークン、Origin、`prompt` → 駆動）。偽の駆動で起こして `hello` の snapshot が `curl`（`websocat` 相当）で読める。`test/architecture.test.ts` が3辺で通る。**見た目は変わらない**                    | `usecase/event-sink.ts` の状態保持（`session-manager` へ）                                                                      |
-| 3   | **サイドバー**を React にする。`tasks-changed` イベントを足す                                                                                                                                                                                  | 部品のテスト（進行・タスク一覧・セッション情報の3区画が状態から出る。`<select>` が `set-model` / `set-permission-mode` を送る）。偽の駆動 + Playwright で3区画が出る。**見た目が変わらない**（CDP で列揃えなどの数値が段2と同じ） | `/events/sidebar`、`buildSidebarBody`、`browser/session-info.ts`                                                                |
-| 4   | **入力欄**を React にする（Composer・候補・答え待ち・経過時間）                                                                                                                                                                                | 部品のテスト（⌘Enter 送信・Enter 改行・IME 中は送らない・候補の絞り方・**複数選択がチェックボックス**・許可 / 拒否）。偽の駆動で許可と質問に答えられる                                                                            | `/events/turn-status`、`/events/pending-answer`、`/api/*` の5本、`browser/dispatch.ts` ほか3本                                  |
-| 5   | **キャラビュー**を React にする。`character-changed` イベントと `/character/<file>` を足す                                                                                                                                                     | 部品のテスト（最新が一番下・件数によらず下端が同じ・立ち絵なしのフォールバック）。偽の駆動 + CDP で最新の `rect` が段4と同じ                                                                                                      | `/events/character`、`buildCharacterBody`、`character-asset.ts` の埋め込み                                                      |
-| 6   | **メインビュー**を React にし、**Markdown を unified に置き換える**。`report-notation.ts` から迂回の記述を外す                                                                                                                                 | 部品のテスト（タブの規則・追従・引用 / ネスト / 水平線 / 列揃え・`note` / `badge` / `cols` / `card` が通り `script` が落ちる・流れる本文の末尾だけ描き直す）。偽の駆動 + Playwright で1往復。**T-063 が閉じる**                   | `/events/main`、`presentation/view.ts`、`report-html.ts`、`browser/` 全部、`vendor/idiomorph.min.js`、`view.test.ts`（3,224行） |
-| 7   | **後始末**: `presentation/` `usecase/` `domain/` `infrastructure/` のディレクトリを消し、`index.ts` → `cli.ts`。`docs/architecture.md`「現在の実装状況」を「移行完了」に                                                                       | `src/` に3層と `cli.ts` だけ。`bun run check`。実機で1往復（Orca のタブ）                                                                                                                                                         | 旧の4層                                                                                                                         |
-| 8   | **キャラクターパック**（`persona.md`・`expressions` のラベル・`speechMarker` の定義への移動・切り替え）。**最初に二重適用のスパイク**                                                                                                          | スパイクの結果が `evidence` にある。`<select>` で切り替わり、吹き出し・立ち絵・メインが消えて新しいキャラで1往復。**T-064 / T-065 が閉じる**                                                                                      | `expressionLabel` / `DEFAULT_SPEECH_MARKER` のコード上の定数                                                                    |
-| 9   | **セッションの復元**を新しい形に載せる（T-078 の本文どおり。`new-session`）                                                                                                                                                                    | T-078 の完了条件                                                                                                                                                                                                                  | —                                                                                                                               |
+| 段  | やること                                                                                                                                                                                                                                              | 完了条件                                                                                                                                                                                                                          | 消えるもの                                                                                                                      |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **正典を直す**（この設計書、`docs/architecture.md`、`docs/requirements.md`、`docs/coding-standards.md`、`docs/glossary.md`、`CLAUDE.md`）                                                                                                             | 節の数が変わらない。`bun run check` が通る                                                                                                                                                                                        | —                                                                                                                               |
+| 2   | **`src/shared/` を切る**（`domain` + `session-view.ts` を移し、`command.ts` / `frame.ts` を足す）。**`src/server/core/` に `session-manager` / `server`（ws）/ `fake-driver` / `config` を足す。** 依存を入れ、`ui.js` の空の入口を束ねてページに読む | ws のテスト（接続 → `hello`、トークン、Origin、`prompt` → 駆動）。偽の駆動で起こして `hello` の snapshot が `curl`（`websocat` 相当）で読める。`test/architecture.test.ts` が3辺で通る。**見た目は変わらない**                    | `usecase/event-sink.ts` の状態保持（`session-manager` へ）                                                                      |
+| 3   | **サイドバー**を React にする。`tasks-changed` イベントを足す                                                                                                                                                                                         | 部品のテスト（進行・タスク一覧・セッション情報の3区画が状態から出る。`<select>` が `set-model` / `set-permission-mode` を送る）。偽の駆動 + Playwright で3区画が出る。**見た目が変わらない**（CDP で列揃えなどの数値が段2と同じ） | `/events/sidebar`、`buildSidebarBody`、`browser/session-info.ts`                                                                |
+| 4   | **入力欄**を React にする（Composer・候補・答え待ち・経過時間）                                                                                                                                                                                       | 部品のテスト（⌘Enter 送信・Enter 改行・IME 中は送らない・候補の絞り方・**複数選択がチェックボックス**・許可 / 拒否）。偽の駆動で許可と質問に答えられる                                                                            | `/events/turn-status`、`/events/pending-answer`、`/api/*` の5本、`browser/dispatch.ts` ほか3本                                  |
+| 5   | **キャラビュー**を React にする。`character-changed` イベントと `/character/<file>` を足す                                                                                                                                                            | 部品のテスト（最新が一番下・件数によらず下端が同じ・立ち絵なしのフォールバック）。偽の駆動 + CDP で最新の `rect` が段4と同じ                                                                                                      | `/events/character`、`buildCharacterBody`、`character-asset.ts` の埋め込み                                                      |
+| 6   | **メインビュー**を React にし、**Markdown を unified に置き換える**。`report-notation.ts` から迂回の記述を外す                                                                                                                                        | 部品のテスト（タブの規則・追従・引用 / ネスト / 水平線 / 列揃え・`note` / `badge` / `cols` / `card` が通り `script` が落ちる・流れる本文の末尾だけ描き直す）。偽の駆動 + Playwright で1往復。**T-063 が閉じる**                   | `/events/main`、`presentation/view.ts`、`report-html.ts`、`browser/` 全部、`vendor/idiomorph.min.js`、`view.test.ts`（3,224行） |
+| 7   | **後始末**: `presentation/` `usecase/` `domain/` `infrastructure/` のディレクトリを消し、`index.ts` → `cli.ts`。`docs/architecture.md`「現在の実装状況」を「移行完了」に                                                                              | `src/` に3層と `cli.ts` だけ。`bun run check`。実機で1往復（Orca のタブ）                                                                                                                                                         | 旧の4層                                                                                                                         |
+| 8   | **キャラクターパック**（`persona.md`・`expressions` のラベル・`speechMarker` の定義への移動・切り替え）。**最初に二重適用のスパイク**                                                                                                                 | スパイクの結果が `evidence` にある。`<select>` で切り替わり、吹き出し・立ち絵・メインが消えて新しいキャラで1往復。**T-064 / T-065 が閉じる**                                                                                      | `expressionLabel` / `DEFAULT_SPEECH_MARKER` のコード上の定数                                                                    |
+| 9   | **セッションの復元**を新しい形に載せる（T-078 の本文どおり。`new-session`）                                                                                                                                                                           | T-078 の完了条件                                                                                                                                                                                                                  | —                                                                                                                               |
 
 段2〜6 は**1段ずつ**進める（次の段に入る前に前の段の「消えるもの」を実際に消す。併走を長引かせない）。
 

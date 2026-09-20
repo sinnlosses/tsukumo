@@ -237,9 +237,9 @@
     "dependencies": ["T-195"],
     "summary": "core と adapter を src/server/ の下へ移す（改名の段3）",
     "task": "## 背景\n\n`docs/research/architecture-placement.md` の候補 C を、ユーザーが 2026-09-20 に採った。\nT-195 が段1（ドキュメントの追従）と段2（`protocol` → `shared`、`ui` → `browser`）を済ませる。\n**このタスクは段3**で、`src/core/` と `src/adapter/` を `src/server/` の下へ入れ子にする\n（移動43ファイル）。\n\n## 決まっていること（蒸し返さない）\n\n- 語は `server` / `browser` / `shared`（`backend` / `frontend` は採らない）\n- 段4（`features/` を `screen/` と `region/` に割る）は**やらない**。今回は段3で止める\n- 会話画面の組み立てを `main.tsx` から下ろすのも**やらない**\n\n## やること\n\n1. `git mv` で `src/core/` → `src/server/core/`、`src/adapter/` → `src/server/adapter/`。\n   `test/` も同じ構成に合わせる\n2. import のパスを付け替える（相対の `../` の深さが変わる）\n3. `test/architecture.test.ts` の `layerOf` が2段を読めるようにする。**禁止していた辺を\n   1本も減らさない**（`core → adapter` 禁止、`shared` が `node:` も `document` も触らない、\n   判断の層が SDK / `ws` を import しない）\n4. `CLAUDE.md` の原則2（層の名前）・原則3（`src/server/adapter/`）と、`docs/design.md` 2章・\n   `docs/architecture.md` の置き場の表・`README.md` のツリーを同じコミットで追随させる\n5. `bun run format`\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数が段2の時点と同じか増えている。件数を `evidence` に書く）\n- `grep -rn \"src/\\(core\\|adapter\\)/\" src test docs *.md` の結果が `docs/history/` の行だけ\n- `test/architecture.test.ts` が新しい2段の名前で効く（違反を1つ書いて fail し、消して pass\n  することを確かめ、`evidence` に書く）\n- 目視: tsukumo を起こし、4領域が見えること\n\n## 注意\n\n- **1コミットで済ませる**（途中では `bun run check` が通らない）\n- `git add -A` を使わず、移したパスを個別に足す\n- **`src/ui/` を触る他のタスク（T-211〜T-216）と同時に進めない**（同じ作業ツリーを複数の\n  セッションが共有するため。`CLAUDE.md`「タスク運用」）",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（701 pass / 0 fail / 64 files、段2と同数）。git mv 47件（src/server/{core,adapter}・test/server/{core,adapter}）。architecture.test.ts は2段の名前で効くことを実測（core→adapter の辺・shared の node:・orca リテラル・server/ 直下の未分類ファイルの4通りを仮に入れて fail、復元して pass）。grep の旧パス参照は docs/history/ と docs/research/ のみ（docs/research/ は当時の記録なので書き換えを取り消した）。目視: 偽の駆動で 127.0.0.1:4599 に起こし capture-view.ts で撮影、main/sidebar/character/dispatch の4領域が 1400x900 ではみ出し 0px で出た。"
   },
   {
     "id": "T-211",

@@ -1,7 +1,7 @@
 // 入力欄の `@` ファイル補完。**キャレットの直前の語が「行頭または空白の直後の `@`」で始まり、
 // まだ空白を含まないときだけ**候補を出す（docs/requirements.md 4.2「入力欄」）。候補は
 // git 管理下のファイルのパス（`GET /repository-file`。サーバ側は
-// `src/adapter/repository-file.ts` の `git ls-files`）で、**中身は読まない**。
+// `src/server/adapter/repository-file.ts` の `git ls-files`）で、**中身は読まない**。
 //
 // **一覧は1回取ってブラウザ側で絞る**（打鍵のたびにサーバへ問い合わせない。`git ls-files` を
 // 打鍵ごとに起こすと子プロセスがその回数だけ立つ）。取得は TanStack Query に任せるので、

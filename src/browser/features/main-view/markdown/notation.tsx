@@ -1,4 +1,4 @@
-// レポートの記法（`src/core/report-notation.ts` がモデルに指示している class 名）を、tsukumo 側の
+// レポートの記法（`src/server/core/report-notation.ts` がモデルに指示している class 名）を、tsukumo 側の
 // 部品に解決する層。**骨格を決めるのはモデル、装飾に使う class 名を決めるのは tsukumo**という
 // 分担にして、モデルが書いた文字列と CSS のセレクタが直接つながらないようにする
 // （つながっていると、片方だけ足したときに黙って崩れる）。

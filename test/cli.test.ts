@@ -2,7 +2,10 @@ import { describe, expect, it } from "bun:test"
 import { spawnSync } from "node:child_process"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
-import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/core/port-resolution.ts"
+import {
+  DEFAULT_VIEW_PORT,
+  VIEW_PORT_FALLBACK_ATTEMPTS,
+} from "../src/server/core/port-resolution.ts"
 
 // **このファイルは CLI を起動しきらないものだけを扱う。**
 // 2026-09-11 に起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
@@ -14,10 +17,10 @@ import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/core/port
 //   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/features/main-view/**
 //   - Markdown の変換（unified）: test/browser/features/main-view/markdown/**
 //   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
-//     （トークン・Origin・hello・コマンド）: test/adapter/server.test.ts
+//     （トークン・Origin・hello・コマンド）: test/server/adapter/server.test.ts
 //   - キャラクター定義の解釈と立ち絵の選び方: test/shared/character.test.ts
-//   - SDK のイベントの変換・答え待ち・畳み込み: test/core/sdk-message.test.ts /
-//     test/core/pending-answer.test.ts / test/shared/session-state.test.ts
+//   - SDK のイベントの変換・答え待ち・畳み込み: test/server/core/sdk-message.test.ts /
+//     test/server/core/pending-answer.test.ts / test/shared/session-state.test.ts
 // 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
 
 const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname

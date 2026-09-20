@@ -2,7 +2,7 @@
 // （2026-09-13 決定）。中身（`state` / `events`）は TS の型のままで、スキーマを二重に持たない
 // ——状態にフィールドを1つ足すたびにスキーマも直す手間が、移行の各段で効いてくるため。
 //
-// 押す側（src/core/session-manager.ts）は型の付いた値を組み立てるだけなので、検証が要るのは
+// 押す側（src/server/core/session-manager.ts）は型の付いた値を組み立てるだけなので、検証が要るのは
 // 受け取る側（ブラウザ）の1箇所。
 //
 // **会話の内容がフレームに乗る**（`state` と `events`）。`error` の `reason` は定型文だけで、
@@ -33,7 +33,7 @@ export type RefreshTarget = "page" | "style"
  * サーバ → ブラウザのフレーム。
  *
  * - `hello`: 接続ごとに1回。`state` は**サーバ側の畳み込みが持っている今の姿**
- * - `events`: 起きたイベントをまとめたもの（`src/core/session-manager.ts` が間引く）
+ * - `events`: 起きたイベントをまとめたもの（`src/server/core/session-manager.ts` が間引く）
  * - `error`: コマンドを受け付けられなかった。`reason` は定型文（{@link FRAME_ERROR_REASON}）
  * - `refresh`: 配っているものを組み立て直したので取り直せ。**セッションとは無関係**で、
  *   `src/browser/` を見張っている開発中だけ届く（docs/design.md 11章）。会話の内容は乗らない

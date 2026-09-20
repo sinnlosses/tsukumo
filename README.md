@@ -108,7 +108,7 @@ export PATH="$HOME/.bun/bin:$PATH"
 
 リポジトリ直下で開発しながら動かす場合は `bun run start` が `tsukumo` と同じ意味になります。
 `bun run dev` は `start` と同じものを起こしつつ `src/browser/` を見張り、保存のたびに組み立て直して
-開いているタブへ反映します（`src/core/` と `src/shared/` を直したときは上げ直しが要ります）。
+開いているタブへ反映します（`src/server/core/` と `src/shared/` を直したときは上げ直しが要ります）。
 
 ## 仕組み
 
@@ -248,7 +248,7 @@ TSUKUMO_CHARACTER=characters/local tsukumo
   （戻り値は `"ok"` だけ）、ビューは `127.0.0.1` にだけバインドする
 - **ビューはファイルに書き出さない。** 本文はメモリに持ち、HTTP で配るだけ
 - **外部ライブラリは CDN から読まず、自分のサーバ（`node_modules` の実ファイル）から配る**
-  （`src/adapter/vendor-asset.ts`）。CDN から読むと、レポート本文が載ったページで外部スクリプトが
+  （`src/server/adapter/vendor-asset.ts`）。CDN から読むと、レポート本文が載ったページで外部スクリプトが
   動き、表示のたびに外部へリクエストが飛ぶため。自分で配れば**表示時の外部通信はゼロ**になる
 
 詳細は [`docs/coding-standards.md`](./docs/coding-standards.md)「会話内容の扱い」が正典です。
@@ -274,17 +274,19 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 ### プロジェクト構成
 
 **層の名前は「どの実行環境で動くか」を表します**（サーバとブラウザの両方 = `shared/`、
-サーバ = `core/` と `adapter/`、ブラウザ = `browser/`）。
+サーバ = `server/`、ブラウザ = `browser/`）。**サーバ側はもう一段、判断（`server/core/`）と
+外の世界に触る境界（`server/adapter/`）に割れています。**
 
 ```
 .
 ├── src/
 │   ├── shared/             # サーバとブラウザの両方で動く契約（SessionEvent・SessionState・
 │   │                       #   ClientCommand・ServerFrame など。zod。node: も document も触らない）
-│   ├── core/               # サーバ（Bun）の純粋な判断。セッション管理・イベントの検証・設定の解釈
-│   │                       #   （node: も SDK も ws も import しない）
-│   ├── adapter/            # サーバ（Bun）が外の世界に触る境界。1ファイル = 1つの境界
-│   │                       #   （SDK 駆動、HTTP/WebSocket、キャラクターパック、ビルド、Orca）
+│   ├── server/             # サーバ（Bun）。判断と境界の2段に割れる
+│   │   ├── core/           #   純粋な判断。セッション管理・イベントの検証・設定の解釈
+│   │   │                   #     （node: も SDK も ws も import しない）
+│   │   └── adapter/        #   外の世界に触る境界。1ファイル = 1つの境界
+│   │                       #     （SDK 駆動、HTTP/WebSocket、キャラクターパック、ビルド、Orca）
 │   ├── browser/            # ブラウザ。React の部品、unified の Markdown 変換、CSS
 │   └── cli.ts              # 配線（composition root）。環境変数の受け取り・前提チェック・終了処理
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
@@ -303,7 +305,7 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 ### ドキュメント
 
 - [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
-- [`docs/design.md`](./docs/design.md) — 設計書（`shared` / `core` / `adapter` / `browser` の層・プロトコル・部品・キャラクターパック）
+- [`docs/design.md`](./docs/design.md) — 設計書（`shared` / `server`（`core`・`adapter`）/ `browser` の層・プロトコル・部品・キャラクターパック）
 - [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図・設計判断・目視確認の手順・既知の制約）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）

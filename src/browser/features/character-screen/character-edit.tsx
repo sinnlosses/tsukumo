@@ -4,7 +4,7 @@
 // 「選ぶ」だけを出す（大きさと枠は `character-screen.module.css`）。
 //
 // 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` の3つで、**書き込み先と
-// 反映はサーバ側**（`src/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を
+// 反映はサーバ側**（`src/server/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を
 // data URL にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
 // **`default` には消す口を出さない**（立ち絵が必ず要る1つ。
@@ -16,7 +16,7 @@
 //
 // 差し色を引きずっている間は、**見た目（この立ち絵の `accent` と `<input>` の表示）だけ
 // その場で更新し、`set-outfit-accent` の送信は `useDebouncedCallback` で 200ms まとめる**
-// （`src/adapter/character-edit.ts` が送信のたびに `character.json` を書き直すため）。
+// （`src/server/adapter/character-edit.ts` が送信のたびに `character.json` を書き直すため）。
 
 import { useState, type ReactElement } from "react"
 

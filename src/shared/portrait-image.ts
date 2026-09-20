@@ -2,7 +2,7 @@
 // コマンドで渡す形**（`docs/design.md` 7.1。multipart の POST も生バイトの POST も採らない）。
 //
 // ここは両側で共有する契約なので、**検証だけを持ち、バイト列には触らない**（base64 を
-// `Buffer` にするのは書き込む側 = `src/adapter/character-edit.ts`）。大きさの上限は base64 の
+// `Buffer` にするのは書き込む側 = `src/server/adapter/character-edit.ts`）。大きさの上限は base64 の
 // 長さから計算するので、この層でデコードは要らない。
 //
 // **受け付ける種類は `.svg` / `.png` / `.gif` の3つだけ**（`docs/design.md` 7.1）。

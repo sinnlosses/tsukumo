@@ -1,7 +1,7 @@
 // 答え待ち（許可要求とキャラクターからの質問）の語彙と、画面から返ってくる答えの形。
 // **サーバとブラウザの両方が読む契約**なので shared に置く（docs/design.md 2章）。
 //
-// **列そのもの（Promise を保留する仕掛け）は core（src/core/pending-answer.ts）にある**
+// **列そのもの（Promise を保留する仕掛け）は core（src/server/core/pending-answer.ts）にある**
 // （SDK の `canUseTool` に結び付くため）。ここは型と、外から届いた答えの検証だけ。
 //
 // 許可要求の入力と質問文は会話の内容そのものなので、ログにもファイルにも書かない
@@ -33,7 +33,7 @@ export type Answer =
    *
    * **1つの文字列に畳まない**（2026-09-16 変更。以前は画面側が「、」でつないだ1つの文字列を
    * 入れていたが、それだと記録（`question-answered`）の側で選択肢と突き合わせられなくなる。
-   * SDK へ渡す形へ畳むのは src/core/pending-answer.ts の役目）。
+   * SDK へ渡す形へ畳むのは src/server/core/pending-answer.ts の役目）。
    */
   | { readonly kind: "answers"; readonly labels: readonly QuestionAnswer[] }
 

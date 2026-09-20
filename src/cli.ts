@@ -9,9 +9,9 @@
 import { randomUUID } from "node:crypto"
 import process from "node:process"
 
-import { buildUiBundle } from "./adapter/bundle.ts"
-import { resolveBundledDir } from "./adapter/bundled-path.ts"
-import { createCharacterPack, editCharacterPack } from "./adapter/character-edit.ts"
+import { buildUiBundle } from "./server/adapter/bundle.ts"
+import { resolveBundledDir } from "./server/adapter/bundled-path.ts"
+import { createCharacterPack, editCharacterPack } from "./server/adapter/character-edit.ts"
 import {
   buildSystemPromptAppend,
   type CharacterPack,
@@ -22,32 +22,43 @@ import {
   readCharacterPack,
   readCharacterPackFile,
   toCharacterPackChoices,
-} from "./adapter/character-pack.ts"
-import { type FakeScript, readFakeScript, startFakeSession } from "./adapter/fake-driver.ts"
-import { createOrcaHost } from "./adapter/orca-host.ts"
+} from "./server/adapter/character-pack.ts"
+import { type FakeScript, readFakeScript, startFakeSession } from "./server/adapter/fake-driver.ts"
+import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import {
   readRememberedCharacter,
   writeRememberedCharacter,
-} from "./adapter/remembered-character.ts"
-import { listRepositoryFiles } from "./adapter/repository-file.ts"
-import { findSessionToResume, readRestoredEvents, startSession } from "./adapter/sdk-driver.ts"
-import { attachSessionSocket, createStartupToken, startViewServer } from "./adapter/server.ts"
-import { watchTaskSummary } from "./adapter/task-summary.ts"
-import { watchUiSource } from "./adapter/ui-rebuild.ts"
-import { selectCharacterPack, selectInitialCharacterPack } from "./core/character-selection.ts"
-import { type Config, readConfig, sessionTag, VIEW_PORT_ENV_NAME } from "./core/config.ts"
-import { type Host } from "./core/host.ts"
+} from "./server/adapter/remembered-character.ts"
+import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
+import {
+  findSessionToResume,
+  readRestoredEvents,
+  startSession,
+} from "./server/adapter/sdk-driver.ts"
+import {
+  attachSessionSocket,
+  createStartupToken,
+  startViewServer,
+} from "./server/adapter/server.ts"
+import { watchTaskSummary } from "./server/adapter/task-summary.ts"
+import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
+import {
+  selectCharacterPack,
+  selectInitialCharacterPack,
+} from "./server/core/character-selection.ts"
+import { type Config, readConfig, sessionTag, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
+import { type Host } from "./server/core/host.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "./core/port-resolution.ts"
-import { REPORT_NOTATION_PROMPT } from "./core/report-notation.ts"
-import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./core/session-driver.ts"
-import { createSessionLaunch, type SessionLaunchSeed } from "./core/session-launch.ts"
-import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./core/session-manager.ts"
-import { SPEECH_CADENCE_PROMPT } from "./core/speech-cadence.ts"
+} from "./server/core/port-resolution.ts"
+import { REPORT_NOTATION_PROMPT } from "./server/core/report-notation.ts"
+import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./server/core/session-driver.ts"
+import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
+import { createSessionManager, EVENT_BATCH_INTERVAL_MS } from "./server/core/session-manager.ts"
+import { SPEECH_CADENCE_PROMPT } from "./server/core/speech-cadence.ts"
 import { expressionChoices } from "./shared/character.ts"
 import { type CharacterCreateCommand, type CharacterEditCommand } from "./shared/command.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
@@ -80,7 +91,7 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       （この起動の間は、切り替えた先のキャラクターも新規から始まる）
   TSUKUMO_WATCH_UI    1 を渡すと src/browser/ を見張り、保存のたびに組み立て直して開いているタブへ
                       取り直しを押す（tsukumo 自身を直しながら動かすとき用。既定は見張らない。
-                      src/core/ と src/shared/ を直したときは上げ直しが要る）
+                      src/server/core/ と src/shared/ を直したときは上げ直しが要る）
 `
 
 /**
@@ -93,7 +104,7 @@ async function main(args: readonly string[]): Promise<number> {
     return 0
   }
 
-  // 環境変数を読むのはここ1回だけ（src/core/config.ts）。
+  // 環境変数を読むのはここ1回だけ（src/server/core/config.ts）。
   const config = readConfig(process.env)
 
   // 起動時に前提（ポート番号として読める）が満たされていないときだけ即時終了する
@@ -144,7 +155,7 @@ async function main(args: readonly string[]): Promise<number> {
   }
   let packs = findPacks()
 
-  // 起動時の初期パック（順位も知らない名前の落とし方も src/core/character-selection.ts）。
+  // 起動時の初期パック（順位も知らない名前の落とし方も src/server/core/character-selection.ts）。
   // TSUKUMO_CHARACTER があるときはすでに defaultPack に反映されている。
   const initialPack = selectInitialCharacterPack({
     packs,
@@ -200,7 +211,7 @@ async function main(args: readonly string[]): Promise<number> {
   const token = createStartupToken()
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
-  // ずらして再挑戦する（src/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
+  // ずらして再挑戦する（src/server/core/port-resolution.ts）。明示的に渡されたときは一度だけ試してそのまま失敗する。
   const startResult = await startOnResolvedPort(portResolution, (port) =>
     startViewServer(port, {
       assets: { uiScript: () => viewAssets.uiScript, styleSheet: () => viewAssets.styleSheet },
@@ -220,7 +231,7 @@ async function main(args: readonly string[]): Promise<number> {
     now: Date.now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
   })
-  // セッションを起こす一続き（順序は src/core/session-launch.ts）。**起動時も
+  // セッションを起こす一続き（順序は src/server/core/session-launch.ts）。**起動時も
   // `switch-character` の起こし直しも同じ関数を通る**ので、外の世界に触る部分だけをここで渡す。
   manager.create({
     sessionId,

@@ -28,7 +28,7 @@ const PERMISSION_MODE_LABELS: ReadonlyArray<readonly [PermissionMode, string]> =
   ["bypassPermissions", "全部許す"],
 ]
 // `permissionMode` がまだ届いていないとき（session-info 前）の見た目上の既定値。
-// `src/core/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
+// `src/server/core/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
 const PERMISSION_MODE_FALLBACK: PermissionMode = "auto"
 const DANGEROUS_PERMISSION_MODE: PermissionMode = "bypassPermissions"
 const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
@@ -42,7 +42,7 @@ const MODEL_LABELS: ReadonlyArray<readonly [ModelAlias, string]> = [
   ["haiku", "Haiku"],
 ]
 // `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。値は
-// `src/core/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）。
+// `src/server/core/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）。
 const MODEL_FALLBACK: ModelAlias = "opus"
 const MODEL_SELECT_ID = "tsukumo-model"
 

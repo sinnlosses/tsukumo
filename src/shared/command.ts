@@ -1,7 +1,7 @@
 // ブラウザからサーバへ送るコマンド。**書き込みの経路なので zod のスキーマが正典**で、
 // 型は `z.infer` で得る（2026-09-13 決定。docs/design.md 4.3）。
 //
-// 検証するのは境界（WebSocket の受け口。src/adapter/server.ts）で1回だけ。中では検証済みの型を使う。
+// 検証するのは境界（WebSocket の受け口。src/server/adapter/server.ts）で1回だけ。中では検証済みの型を使う。
 //
 // **依頼の文面（`text`）は会話の内容そのもの。** 検証に落ちたときの理由に文面を含めない
 // （docs/coding-standards.md「会話内容の扱い」。理由の定型文は src/shared/frame.ts）。
@@ -29,7 +29,7 @@ export const MAX_PROMPT_TEXT_LENGTH = 20_000
 /**
  * 許可モードの値の全体。**この一覧は shared に1つだけ置く**（docs/design.md 4.3）。
  * SDK の `PermissionMode` と同じ値であることは core 側のテスト
- * （test/adapter/sdk-driver.test.ts）が型で守る。画面に出す日本語ラベルは描く側が持つ。
+ * （test/server/adapter/sdk-driver.test.ts）が型で守る。画面に出す日本語ラベルは描く側が持つ。
  */
 export const PERMISSION_MODES = [
   "default",
@@ -70,7 +70,7 @@ const commandIdSchema = z.string().min(1).max(200)
  * 立ち絵1枚の data URL。**大きさと種類はここで見る**（`src/shared/portrait-image.ts`。
  * 受け取るのは `.svg` / `.png` / `.gif` の3つだけ）。
  *
- * 文字列のまま持ち、`{ format, base64 }` へのほどきは書き込む側（`src/adapter/character-edit.ts`）が
+ * 文字列のまま持ち、`{ format, base64 }` へのほどきは書き込む側（`src/server/adapter/character-edit.ts`）が
  * 同じ `parsePortraitImage` で行う。**zod の `transform` で形を変えない**のは、ブラウザ側が
  * 送るときの型（`ClientCommand`）が受け取ったあとの形にすり替わってしまうため。
  */
@@ -192,7 +192,7 @@ export type DriverCommand = Exclude<
   CharacterEditCommand | CharacterCreateCommand | { readonly type: "switch-character" }
 >
 
-/** 見た目の編集のコマンドかどうか（`src/core/session-manager.ts` の分岐で使う）。 */
+/** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */
 export function isCharacterEditCommand(command: ClientCommand): command is CharacterEditCommand {
   return CHARACTER_EDIT_COMMAND_TYPES.some((type) => type === command.type)
 }

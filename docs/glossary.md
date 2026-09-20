@@ -73,8 +73,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子（予定）**: `host`
 - **定義**: tsukumo のページを出す相手。実測環境では Orca。**頼む仕事はビューを見せること
   （`showView`）だけ**で、それ以外の依存は持たない
-- **注記**: ホストに依存する操作は1つのポート（`src/core/host.ts`）の裏に置き、実装は
-  アダプタ（`src/adapter/orca-host.ts`）に閉じ込める（`docs/architecture.md`
+- **注記**: ホストに依存する操作は1つのポート（`src/server/core/host.ts`）の裏に置き、実装は
+  アダプタ（`src/server/adapter/orca-host.ts`）に閉じ込める（`docs/architecture.md`
   「ホスト依存の操作は1つのポートにまとめる」。「アダプタ」の項は「通信（移行後）」にある）
 - **注記**: **「本体」とは別のもの**。本体は Claude Code の CLI を指す
 - **避ける言い方**: 端末環境、プラットフォーム、シェル
@@ -289,7 +289,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ（`turn-request`）、お願いは
   キャラクターから利用者へ。画面でも、依頼の見出しの縦罫とお願いの縦罫が同じ `accent` で対になる
 - **注記**: **本文が正典**で、`speak` の側では「お願いがある」ことだけを言う（中身を二重に
-  書かない）。**無いターンでは置かない**。規約は `src/core/report-notation.ts` と
+  書かない）。**無いターンでは置かない**。規約は `src/server/core/report-notation.ts` と
   各パックの `persona.md`
 - **避ける言い方**: 依頼（逆向き。`turn-request` が使っている）、質問（選択肢を出して答えを待つ
   `AskUserQuestion` は別物で、そちらは `PendingAsk`）、宿題・TODO（やり残しと読める）
@@ -383,7 +383,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### アダプタ
 
-- **英語識別子**: `adapter`（ディレクトリ `src/adapter/`）
+- **英語識別子**: `adapter`（ディレクトリ `src/server/adapter/`）
 - **定義**: 外の世界（Agent SDK・HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るコードの
   置き場所。**1ファイル = 1つの境界**。判断は持たず、`core` から呼ばれるか `cli.ts` が結ぶ
 - **注記**: インターフェースは**実装が2つあるもの（駆動・ホスト）にだけ** `core` に置く
@@ -419,8 +419,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 偽の駆動
 
 - **英語識別子**: `fakeDriver`（`TSUKUMO_DRIVER=fake`）
-- **定義**: `SessionDriver`（`src/core/session-driver.ts` の契約）と同じ形で、手で書いた架空の
-  台本どおりにイベントを流す実装（`src/adapter/fake-driver.ts`）。claude を起こさずに画面全体を
+- **定義**: `SessionDriver`（`src/server/core/session-driver.ts` の契約）と同じ形で、手で書いた架空の
+  台本どおりにイベントを流す実装（`src/server/adapter/fake-driver.ts`）。claude を起こさずに画面全体を
   動かすための道具
 - **注記**: 台本は**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: モック（テストの中の置き換え一般と紛れる）、スタブ

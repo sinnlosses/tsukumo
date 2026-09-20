@@ -26,7 +26,7 @@ export type Question = {
  * `src/browser/features/main-view/question-record.tsx`）。複数選択のときは選んだぶんだけ要素が並ぶ。
  *
  * **SDK へ返すときは1つの文字列に畳む**（質問1件に対して1つの文字列という `AskUserQuestion` の
- * 形。畳むのは `src/core/pending-answer.ts` の役目で、画面側はこの形のまま送る）。
+ * 形。畳むのは `src/server/core/pending-answer.ts` の役目で、画面側はこの形のまま送る）。
  */
 export type QuestionAnswer = readonly string[]
 

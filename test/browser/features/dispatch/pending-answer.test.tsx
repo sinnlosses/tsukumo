@@ -150,7 +150,7 @@ describe("PendingAnswer", () => {
         id: "ask-2",
         // labels[i] は questions[i] に対して選んだ答えの並び（shared/pending-ask.ts の
         // 契約）。複数選んだぶんはそのまま並べて送り、1つの文字列には畳まない
-        // （畳むのは src/core/pending-answer.ts）。
+        // （畳むのは src/server/core/pending-answer.ts）。
         answer: { kind: "answers", labels: [["A案", "C案"]] },
       },
     ])
