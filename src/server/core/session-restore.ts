@@ -130,13 +130,13 @@ function requestText(message: unknown): string | undefined {
 
   const content = message.message.content
   if (typeof content === "string") {
-    return nonEmpty(content)
+    return requestTextFromRawText(content)
   }
   if (!Array.isArray(content) || content.some((block) => isToolResultBlock(block))) {
     return undefined
   }
 
-  return nonEmpty(content.map((block) => textBlock(block)).join("\n"))
+  return requestTextFromRawText(content.map((block) => textBlock(block)).join("\n"))
 }
 
 function isToolResultBlock(block: unknown): boolean {
@@ -147,6 +147,51 @@ function textBlock(block: unknown): string {
   return isRecord(block) && block.type === "text" && typeof block.text === "string"
     ? block.text
     : ""
+}
+
+/**
+ * `user` の生のテキストから依頼の文面を組み立てる。**`<local-command-stdout>` だけの
+ * メッセージ**（`/model` などローカルコマンドの出力）は依頼ではないので undefined にし、
+ * それ以外は {@link foldSlashCommand} で入力欄からの見え方に畳んでから返す。
+ */
+function requestTextFromRawText(text: string): string | undefined {
+  return isLocalCommandStdoutOnly(text) ? undefined : nonEmpty(foldSlashCommand(text))
+}
+
+const COMMAND_TAG = /<(command-name|command-message|command-args)>[\s\S]*?<\/\1>/g
+const COMMAND_NAME_TAG = /<command-name>([\s\S]*?)<\/command-name>/
+const COMMAND_ARGS_TAG = /<command-args>([\s\S]*?)<\/command-args>/
+const LOCAL_COMMAND_STDOUT_TAG = /<local-command-stdout>[\s\S]*?<\/local-command-stdout>/g
+
+/**
+ * SDK が展開したスラッシュコマンド（`<command-name>` / `<command-message>` /
+ * `<command-args>` の3タグ。**並びと `<command-message>` の有無は入り方によって違う**）を、
+ * 入力欄から打ったときと同じ `/<name> <args>` の1行に畳む。`<command-message>` は
+ * `<command-name>` と同じ名前の重複なので落とす。
+ *
+ * **メッセージ全体がこれらのタグだけで出来ているときだけ畳む**（地の文の途中にたまたま
+ * タグが混じっている壊れた形は、素通しに倒して安全側に振る）。`<command-name>` が
+ * 無ければ何もしない。
+ */
+function foldSlashCommand(text: string): string {
+  const name = text.match(COMMAND_NAME_TAG)?.[1]
+  if (name === undefined || text.replace(COMMAND_TAG, "").trim() !== "") {
+    return text
+  }
+
+  const args = text.match(COMMAND_ARGS_TAG)?.[1]?.trim()
+  return args === undefined || args === "" ? name : `${name} ${args}`
+}
+
+/**
+ * メッセージ全体が `<local-command-stdout>` だけで出来ているかどうか（ローカルコマンドの
+ * 出力で、利用者の依頼ではない）。
+ */
+function isLocalCommandStdoutOnly(text: string): boolean {
+  return (
+    text.includes("<local-command-stdout>") &&
+    text.replace(LOCAL_COMMAND_STDOUT_TAG, "").trim() === ""
+  )
 }
 
 function nonEmpty(text: string): string | undefined {

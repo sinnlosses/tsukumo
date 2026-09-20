@@ -182,4 +182,57 @@ describe("toRestoredEvents", () => {
       { kind: "turn-finished", status: "success" },
     ])
   })
+
+  // SDK が展開したスラッシュコマンドは、入力欄から打ったときの見え方（`/<name>` の1行）に
+  // 畳む。**入力は架空のコマンド名で自分で組む**（実物の transcript は使わない）。
+  it("引数の無いスラッシュコマンドは `/<name>` の1行に畳む", () => {
+    const messages = [
+      userMessage(
+        "<command-name>/架空コマンド</command-name>\n" +
+          "            <command-message>架空コマンド</command-message>\n" +
+          "            <command-args></command-args>",
+      ),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "/架空コマンド" },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
+  it("引数のあるスラッシュコマンドは `/<name> <args>` に畳む", () => {
+    const messages = [
+      userMessage(
+        "<command-name>/架空コマンド</command-name>\n<command-args>架空の引数</command-args>",
+      ),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "/架空コマンド 架空の引数" },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
+  it("タグの無い普通の依頼はそのまま通す", () => {
+    const messages = [userMessage([{ type: "text", text: "架空の普通の依頼" }])]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "架空の普通の依頼" },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
+  it("`<local-command-stdout>` だけの user メッセージは依頼として起こさない", () => {
+    const messages = [
+      userMessage("<local-command-stdout>架空の出力</local-command-stdout>"),
+      userMessage([{ type: "text", text: "架空の依頼" }]),
+      assistantMessage([{ type: "text", text: "架空の本文" }]),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "架空の依頼" },
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
 })
