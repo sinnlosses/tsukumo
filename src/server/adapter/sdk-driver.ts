@@ -84,6 +84,18 @@ const REMEMBER_TOOL_DESCRIPTION =
   "キャラクター自身について決まったことを1行だけ覚える（好み・口調・呼び方・来歴）。" +
   "ユーザーについて知ったことは覚えない。呼ぶ条件は雑談モードの規約に従う。"
 
+/** 覚えた1行を忘れるツールの名前（docs/glossary.md「forget ツール」）。 */
+const FORGET_TOOL_NAME = "forget"
+
+/**
+ * モデルに見せる `forget` ツールの説明。**何を消してよいかの条は
+ * `src/server/core/chat-manner.ts` が持つ**ので、ここには指し方と範囲だけを書く
+ * （二重に書かない）。
+ */
+const FORGET_TOOL_DESCRIPTION =
+  "「覚えたこと」に並んでいる1行を忘れる。消したい行の文面をそのまま渡す（完全一致。番号では指せない）。" +
+  "消せるのは自分で覚えた行だけで、それ以外の人格の文面は消せない。呼ぶ条件は雑談モードの規約に従う。"
+
 /**
  * セッションを起こす。**この関数は待たない**（`query()` の反復はバックグラウンドで回り続け、
  * 結果は `onEvent` に流れる）。
@@ -391,8 +403,8 @@ function askForAnswer(
  * 情報が戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
  * 呼び出しで受け取る」・docs/design.md 7.1）。
  *
- * 常に載るのは `speak` の1つで、**`remember` は雑談モードのときだけ**（`memory` が渡った
- * ときだけ）載る。仕事のときに出すと、作業の文脈が人格に入り込む経路になる（7.1）。
+ * 常に載るのは `speak` の1つで、**`remember` と `forget` は雑談モードのときだけ**（`memory` が
+ * 渡ったときだけ）載る。仕事のときに出すと、作業の文脈が人格に入り込む経路になる（7.1）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -416,7 +428,7 @@ function tsukumoServer(
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
-      ...(memory === undefined ? [] : [rememberTool(memory)]),
+      ...(memory === undefined ? [] : [rememberTool(memory), forgetTool(memory)]),
     ],
   })
 }
@@ -433,6 +445,23 @@ function rememberTool(memory: PersonaMemory) {
     { line: z.string().describe("覚えること。キャラクター自身についての1行（120文字まで）") },
     async ({ line }) => {
       memory.remember(line)
+      return { content: [{ type: "text" as const, text: "ok" }] }
+    },
+  )
+}
+
+/**
+ * 覚えた1行を忘れるツール。**一致する行が無かった回も "ok" を返す**（消せたかどうかを
+ * モデルへ戻さない。docs/design.md 7.1）。どの行と突き合わせるかは
+ * src/server/adapter/persona-memory.ts の仕事。
+ */
+function forgetTool(memory: PersonaMemory) {
+  return tool(
+    FORGET_TOOL_NAME,
+    FORGET_TOOL_DESCRIPTION,
+    { line: z.string().describe("忘れること。「覚えたこと」に並んでいる1行の文面そのまま") },
+    async ({ line }) => {
+      memory.forget(line)
       return { content: [{ type: "text" as const, text: "ok" }] }
     },
   )

@@ -1,18 +1,20 @@
-// 雑談で覚えたことを人格へ書き足す（`docs/design.md` 7.1「覚えたことを人格に書き足す」）。
+// 雑談で覚えたことを人格へ書き足し、覚えた1行を忘れる
+// （`docs/design.md` 7.1「覚えたことを人格に書き足す・1行だけ忘れる」）。
 // 書き込んでよいのは他の編集と同じ `~/.tsukumo/characters/<pack>/persona.md` の1つだけで、
 // ホームへ写す道（`src/server/adapter/character-edit.ts` の `copyPackOnce`）を共有する。
 //
-// **何を書いてよいかはここが決めない。** 判断はモデル側の条（`src/server/core/chat-manner.ts`）が
-// 持ち、ここが持つのは「受け取った1行をどこにどう書くか」と上限だけ
-// （`docs/requirements.md` 4.9。**会話を読んで判定しない**ので、
-// `docs/coding-standards.md`「会話内容の扱い」とぶつからない）。
+// **何を書いてよいか・何を消してよいかはここが決めない。** 判断はモデル側の条
+// （`src/server/core/chat-manner.ts`）が持ち、ここが持つのは「受け取った1行をどこにどう書くか
+// /どの行と突き合わせるか」と上限だけ（`docs/requirements.md` 4.9。**会話を読んで判定しない**
+// ので、`docs/coding-standards.md`「会話内容の扱い」とぶつからない）。
 //
-// **書くのは末尾の `## 覚えたこと` の節だけで、節より前は1バイトも触らない。** 人が書いた
+// **触るのは末尾の `## 覚えたこと` の節だけで、節より前は1バイトも触らない。** 人が書いた
 // 見出しと表、機械が書いた領域の境目が、ファイルの中で1本に決まる（節を消せば書き足す前の
-// 人格に戻る）。
+// 人格に戻り、**消せるのは自分で書き足した行だけ**という線もこの境目がそのまま担う）。
 //
-// 上限に当たった回も**何も知らせない**（呼び出し側が返すのは `"ok"` だけ）。失敗しても例外を
-// 投げない（常駐プロセスは1回の失敗で落ちない。`docs/coding-standards.md`「エラーハンドリング」）。
+// 上限に当たった回も、消す行が見つからなかった回も**何も知らせない**（呼び出し側が返すのは
+// `"ok"` だけ）。失敗しても例外を投げない（常駐プロセスは1回の失敗で落ちない。
+// `docs/coding-standards.md`「エラーハンドリング」）。
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
@@ -36,8 +38,8 @@ export const MAX_REMEMBERED_LINE_LENGTH = 120
 export const MAX_REMEMBERED_LINES = 20
 
 /**
- * 覚えたことの書き足し口を1つ作る（**雑談モードのときだけ**呼ばれ、`remember` ツールの裏に
- * 立つ。`src/session-start.ts`）。
+ * 覚えたことの書き足し・忘れる口を1つ作る（**雑談モードのときだけ**呼ばれ、`remember` と
+ * `forget` のツールの裏に立つ。`src/session-start.ts`）。
  *
  * 書かずに黙って捨てるのは次の4つ（どれも呼び出し側には伝えない。7.1）:
  *
@@ -47,6 +49,9 @@ export const MAX_REMEMBERED_LINES = 20
  *   探索の順で負ける）
  * - ディスクに書けない
  *
+ * 消さずに黙って何もしないのは、そのターンで既に1行消しているとき・節に一致する行が無いとき・
+ * 上の3つ目と4つ目。**書いた数と消した数は別に数える**ので、同じターンで覚え直せる（7.1）。
+ *
  * `root` は書き込み先の親（既定は `~/.tsukumo/characters`。差し替えられるのは置き場所だけで、
  * テストがホームを汚さないためにある）。
  */
@@ -55,8 +60,10 @@ export function createPersonaMemory(
   cwd: string,
   root: string = homeCharacterDir(),
 ): PersonaMemory {
-  // このターンで既に1行書いたか（1ターン1行の上限。ターンの終わりは駆動が知らせる）。
+  // このターンで既に1行書いたか・消したか（どちらも1ターン1行の上限。**別々に数える**ので、
+  // 覚え違いを同じターンで言い直せる。ターンの終わりは駆動が知らせる）。
   let written = false
+  let forgotten = false
 
   return {
     remember: (line) => {
@@ -67,8 +74,17 @@ export function createPersonaMemory(
 
       written = writeRememberedLine(pack, join(root, pack.name), trimmed)
     },
+    forget: (line) => {
+      const target = forgetTarget(line)
+      if (forgotten || target === "" || !isEditableCharacterPack(pack, cwd)) {
+        return
+      }
+
+      forgotten = eraseRememberedLine(pack, join(root, pack.name), target)
+    },
     finishTurn: () => {
       written = false
+      forgotten = false
     },
   }
 }
@@ -104,6 +120,69 @@ function personaWithRememberedLine(content: string, line: string): string {
 
   const kept = [...rememberedLines(content.slice(start)), `- ${line}`].slice(-MAX_REMEMBERED_LINES)
   return `${content.slice(0, start)}${REMEMBERED_SECTION_HEADING}\n\n${kept.join("\n")}\n`
+}
+
+/**
+ * 消す行として突き合わせる文面。**箇条書きの印（`- `）と前後の空白だけを落とす** —
+ * モデルは `systemPrompt` に載った節をそのまま写すので、印の付いた形でも来る。
+ */
+function forgetTarget(line: string): string {
+  return line
+    .trim()
+    .replace(/^-[ \t]+/, "")
+    .trim()
+}
+
+/**
+ * ホームのパックの `persona.md` から1行消す。消せたら true（一致が無ければ false）。
+ *
+ * **突き合わせる相手は、ホームの写しがあればそれ、無ければいま出しているパックの人格**
+ * （写しが無い＝このセッションではまだ1行も書いていない、なので起動時に読んだ全文で足りる）。
+ * **ホームへ写すのは消す行が見つかってから** — 一致しない呼び出しで写しだけが増えると、次の
+ * 起動から同梱のパックが写しに隠れる。
+ */
+function eraseRememberedLine(pack: CharacterPack, dir: string, target: string): boolean {
+  try {
+    const path = join(dir, PERSONA_FILE_NAME)
+    const current = readOptionalFile(path) ?? pack.persona ?? ""
+    const erased = personaWithoutRememberedLine(current, target)
+    if (erased === undefined) {
+      return false
+    }
+
+    copyPackOnce(pack, dir)
+    writeFileSync(path, erased)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 節から1行消した `persona.md` の全文（節が無い・一致する行が無いときは undefined）。
+ * **同じ文面が2行あるときに消すのはいちばん古い1つだけ**（{@link MAX_REMEMBERED_LINES} で
+ * 落ちるのと同じ向き。7.1）。
+ *
+ * **節より前の文字は足しも引きもしない。** 最後の1行を消したときは**見出しごと落とす**ので、
+ * 残るのは節を作るときに入れた見出しの前の改行だけになる（空の節を `systemPrompt` に載せない）。
+ */
+function personaWithoutRememberedLine(content: string, target: string): string | undefined {
+  const start = rememberedSectionStart(content)
+  if (start === undefined) {
+    return undefined
+  }
+
+  const lines = rememberedLines(content.slice(start))
+  const at = lines.findIndex((line) => line.slice(2).trim() === target)
+  if (at < 0) {
+    return undefined
+  }
+
+  const before = content.slice(0, start)
+  const kept = lines.filter((_, index) => index !== at)
+  return kept.length === 0
+    ? before
+    : `${before}${REMEMBERED_SECTION_HEADING}\n\n${kept.join("\n")}\n`
 }
 
 /**

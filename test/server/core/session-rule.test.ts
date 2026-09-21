@@ -54,4 +54,12 @@ describe("sessionRules", () => {
     expect(CHAT_MANNER_PROMPT).toContain("speak")
     expect(CHAT_MANNER_PROMPT).not.toContain("一人称")
   })
+
+  it("雑談の作法は覚える条と忘れる条の両方を持つ（ツールを載せるのと同じ単位）", () => {
+    // 2つのツールは雑談のときだけ載るので、呼ぶ条件もこの文面だけが持つ
+    // （docs/design.md 7.1・docs/requirements.md 4.9）。
+    expect(CHAT_MANNER_PROMPT).toContain("remember")
+    expect(CHAT_MANNER_PROMPT).toContain("forget")
+    expect(buildSystemPromptAppend(FIXTURE_PACK, sessionRules(false))).not.toContain("forget")
+  })
 })

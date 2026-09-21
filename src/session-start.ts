@@ -145,8 +145,8 @@ function startDriver(
     systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
     resume: seed.resume,
     tag: sessionTag(seed.pack.name, seed.chat),
-    // **覚えたことを書き足す口は雑談のときだけ渡す**（渡ったときだけ `remember` ツールが
-    // 載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
+    // **覚えたことを書き足す・忘れる口は雑談のときだけ渡す**（渡ったときだけ `remember` と
+    // `forget` のツールが載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
     personaMemory: seed.chat ? createPersonaMemory(seed.pack, process.cwd()) : undefined,
     chatSummary,
     onEvent,

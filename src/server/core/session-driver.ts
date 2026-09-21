@@ -35,16 +35,21 @@ export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto"
 export const DEFAULT_MODEL: ModelAlias = "opus"
 
 /**
- * 覚えたことを人格に書き足す口（`docs/design.md` 7.1）。**実装は `adapter` 側**
- * （`src/server/adapter/persona-memory.ts`）で、ここにあるのは契約だけ。
+ * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口（`docs/design.md` 7.1）。
+ * **実装は `adapter` 側**（`src/server/adapter/persona-memory.ts`）で、ここにあるのは契約だけ。
  *
- * **上限に当たった回も何も返さない** — 受け付けたかどうかをモデルへ戻さないため
- * （ツールの戻り値は `"ok"` だけ）。
+ * **上限に当たった回も、消す行が見つからなかった回も何も返さない** — 受け付けたかどうかを
+ * モデルへ戻さないため（ツールの戻り値は `"ok"` だけ）。
  */
 export type PersonaMemory = {
   /** 覚えた1行を書き足す（受け付けられない行は黙って捨てる）。 */
   readonly remember: (line: string) => void
-  /** ターンが終わった合図（次のターンでまた1行受け付ける）。 */
+  /**
+   * 覚えた1行を忘れる（**文面の完全一致で指す**。一致する行が無いときは黙って何もしない）。
+   * **書き足しとは別に数える**ので、同じターンで覚え直せる。
+   */
+  readonly forget: (line: string) => void
+  /** ターンが終わった合図（次のターンでまた1行ずつ受け付ける）。 */
   readonly finishTurn: () => void
 }
 
@@ -161,9 +166,9 @@ export type SessionDriverOptions = {
    */
   readonly tag: string
   /**
-   * 覚えたことの書き足し口。**雑談モードのときだけ渡り**（`docs/design.md` 7.1）、渡ったときだけ
-   * `remember` ツールが `mcpServers` に載る。仕事のときは undefined（作業の文脈が人格に
-   * 入り込む経路を作らない）。
+   * 覚えたことの書き足し・忘れる口。**雑談モードのときだけ渡り**（`docs/design.md` 7.1）、渡った
+   * ときだけ `remember` と `forget` のツールが `mcpServers` に載る。仕事のときは undefined
+   * （作業の文脈が人格に入り込む経路を作らない）。
    */
   readonly personaMemory: PersonaMemory | undefined
   /**
