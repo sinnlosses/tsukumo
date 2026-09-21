@@ -11,15 +11,14 @@
 // 保存で inode ごと差し替わると監視が古い実体に残って鳴らなくなる。ここは**ディレクトリを
 // 再帰で**見張るので、中のファイルが差し替わっても鳴る。
 //
-// 組み立てた結果は文字列で返すだけで、**ディスクには書かない**（bundle.ts 冒頭の 2026-09-12 決定）。
+// 組み立て直したものは `dist/browser/` に置き直す（bundle.ts 冒頭の 2026-09-21 決定）。**開発中に
+// 直したぶんがそのまま次の起動に乗る**ので、`bun run dev` を閉じたあとに `bun run build` を
+// 打ち直さなくてよい。
 
 import { watch } from "node:fs"
 
-import { buildUiBundle, type UiBundle } from "./bundle.ts"
+import { buildUiBundle, UI_SOURCE_DIR_RELATIVE_PATH, type UiBundle } from "./bundle.ts"
 import { bundledFilePath } from "./bundled-path.ts"
-
-/** 見張る場所。tsukumo 自身の置き場所からの相対で解く（cwd に依存させない）。 */
-const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "browser"]
 
 /**
  * 最後の通知からこれだけ静かになってから組み立て直す。**エディタの保存1回で `fs.watch` は

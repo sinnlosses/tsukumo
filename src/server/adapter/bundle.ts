@@ -1,27 +1,33 @@
-// ブラウザ側スクリプト（`src/browser/`）と CSS を `bun build` で1本ずつにまとめ、**中身を文字列で
-// 返す**。失敗したときは `bun build` が stderr に書いた理由を添えて返す（呼び出し側が起動を
-// 止めるか、前の版を配り続けるかを決める）。
+// ブラウザ側スクリプト（`src/browser/`）と CSS を `bun build` で1本ずつにまとめる。**作る口と
+// 読む口を分けてある**: 作るのは `bun run build`（と `bun run dev` の見張り）だけで、
+// **起動は置いてある成果物を読むだけ**（{@link readUiBundle}）。
 //
 // **スクリプトと CSS は1回の `bun build` から出る対**。CSS Modules（`*.module.css`）は
 // ハッシュ化した class 名を JS と CSS の両方へ焼き込むので、別々に組み立てると綴りの違う対が
 // できてしまう。入口は `main.tsx` の1つだけで、CSS はそこから import で辿れるもの
 // （`styles/theme.css` と各機能の `*.module.css`）が1本にまとまる。
 //
-// **成果物をディスクに残さない**（2026-09-12 決定）。CSS Modules を通すには `--outdir` が
-// 要る（出力が2本になり、標準出力では受けられない）ので、**一時ディレクトリへ出し、読んで
-// すぐ消す**。残るのはメモリ上の文字列だけで、`src/server/adapter/server.ts` はそこから配る
-// ——リポジトリに成果物が残らないので、古いものを配る事故も `.gitignore` への追加も出ない。
+// **成果物は `dist/browser/` に置く**（2026-09-21 決定）。2026-09-12 には「成果物をディスクに
+// 残さない」と決めていた（`--outdir` に一時ディレクトリを渡し、読んですぐ消す。2026-09-20）が、
+// **起動のたびに `bun build` を起こすのをやめる**ために置く側へ変えた。当時挙げていた理由は
+// こう引き継ぐ:
+//
+// - **古い成果物を配る事故** — 起動時に `src/browser/` と成果物の新しさを比べ、古ければ1行で
+//   知らせる（{@link readUiBundle} の `outdated`）。**黙って配らない**のが答えで、画面は動くので
+//   止めはしない
+// - **`.gitignore` への追加が出ない** — 出た。`dist/` を無視する（2.6MB の生成物を、
+//   `src/browser/` を直すたびに履歴へ入れない）。代わりに `bun install` のあと `bun run build` を
+//   1回打つ手数が増える
 //
 // **`Bun.build()` ではなく `bun build` のプロセスを起こす**のは、`Bun.*` の固有 API に寄せない
-// 規約（`docs/coding-standards.md`「Bun固有APIに寄せない」）のため。`bun` は tsukumo 自身を
-// 動かしている実行環境なので、外部コマンドの依存が増えるわけではない。
+// 規約（`docs/coding-standards.md`「Bun固有APIに寄せない」）のため。`bun` が要るのは
+// **組み立てるときだけ**になり、起動の経路からは消えた。
 //
 // 型検査はここではしない（`bun build` はトランスパイルだけで型を見ない）。型は
 // `bun run check` の `tsc --noEmit` が見る。
 
 import { execFile } from "node:child_process"
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { readdir, readFile, stat } from "node:fs/promises"
 import { join } from "node:path"
 
 import { bundledFilePath } from "./bundled-path.ts"
@@ -29,8 +35,25 @@ import { bundledFilePath } from "./bundled-path.ts"
 /** ブラウザ側の入口。ここから辿れる `.tsx` と `.css` が1本ずつにまとまる。 */
 const UI_ENTRY = "main.tsx"
 
-/** 一時ディレクトリの名前の頭。`bun build --outdir` の出し先で、読んだらすぐ消す。 */
-const OUT_DIR_PREFIX = "tsukumo-ui-"
+/**
+ * ブラウザ側のソースの置き場。組み立ての入口であり、**新しさを比べる相手**でもあるので
+ * ここが持つ（`src/server/adapter/ui-rebuild.ts` の見張り先も同じ1つ）。
+ */
+export const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "browser"]
+
+/**
+ * 成果物の新しさを比べる相手。**束ねに入るソースの置き場**で、`src/browser/` は `src/shared/` を
+ * import している。見張り（`src/server/adapter/ui-rebuild.ts`）が `src/browser/` しか見ないのとは
+ * 別の話で、あちらは**動作中に**サーバ側とブラウザ側が食い違うのを避けるため。起動時は
+ * プロセスごと入れ替わるので、`src/shared/` も見てよい。
+ */
+const BUNDLED_SOURCE_DIR_RELATIVE_PATHS: readonly (readonly string[])[] = [
+  UI_SOURCE_DIR_RELATIVE_PATH,
+  ["src", "shared"],
+]
+
+/** 成果物の置き場。`.gitignore` してあるので、各自が `bun run build` で作る。 */
+const BUILT_DIR_RELATIVE_PATH: readonly string[] = ["dist", "browser"]
 
 /**
  * `bun build` 自身の出力（進捗の要約と、失敗したときの理由）の受け取り上限。**成果物は
@@ -65,31 +88,66 @@ export type BundleResult =
   | { readonly ok: false; readonly reason: string }
 
 /**
- * ブラウザ側（`src/browser/`）を組み立てる。JSX は tsconfig の `"jsx": "react-jsx"` で自動変換され、
- * CSS Modules は `bun build` が class 名をハッシュ化して JS 側の対応表に入れる
- * （docs/design.md 11章）。
+ * 置いてある成果物を読んだ結果。**読めたときは古いかどうかも一緒に返す** — 古さは
+ * 「配れない理由」ではなく「配るけれど知らせること」なので、失敗の側には寄せない。
  */
-export function buildUiBundle(): Promise<BundleResult> {
-  return bundleWithBun(bundledFilePath("src", "browser", UI_ENTRY))
+export type StoredBundleResult =
+  | { readonly ok: true; readonly bundle: UiBundle; readonly outdated: boolean }
+  | { readonly ok: false; readonly reason: string }
+
+/** 成果物の置き場（絶対パス）。起こす場所（cwd）には依存しない。 */
+export function builtUiDir(): string {
+  return bundledFilePath(...BUILT_DIR_RELATIVE_PATH)
 }
 
 /**
- * `entry` を `bun build --target=browser` でまとめ、**スクリプトと CSS の中身を返す**。
- * 失敗（プロセスの異常終了・出力が揃わない）のときは `bun build` が書いた理由を添えて返す
- * （起動時の前提不足として扱うかどうかは呼び出し側の判断）。
+ * 置いてある成果物を読む。**`bun build` は起こさない**（起動の経路はここだけを通る。
+ * docs/design.md 11章）。無ければ起動時の前提不足として扱えるよう、`bun run build` を促す理由を
+ * 添えて失敗を返す。
  */
-export async function bundleWithBun(entry: string): Promise<BundleResult> {
-  const outDir = await mkdtemp(join(tmpdir(), OUT_DIR_PREFIX))
-  const result = await buildInto(entry, outDir)
-  // 掃除に失敗しても組み立ての結果は返す（消せなかった一時ディレクトリは OS が片付ける）。
-  await rm(outDir, { recursive: true, force: true }).catch(() => undefined)
-  return result
+export async function readUiBundle(): Promise<StoredBundleResult> {
+  const builtDir = builtUiDir()
+  const bundle = await readPair(builtDir)
+  if (bundle === undefined) {
+    return {
+      ok: false,
+      reason: `${builtDir} にスクリプトと CSS の対が無い（bun run build で作る）`,
+    }
+  }
+
+  return { ok: true, bundle, outdated: await isOutdated(builtDir) }
 }
 
-/** `outDir` に出させ、出てきた1組を読む。**このディレクトリの後始末は呼び出し側**。 */
-async function buildInto(entry: string, outDir: string): Promise<BundleResult> {
+/**
+ * ブラウザ側（`src/browser/`）を組み立てて `dist/browser/` に置き、置いたものを読んで返す。
+ * JSX は tsconfig の `"jsx": "react-jsx"` で自動変換され、CSS Modules は `bun build` が class 名を
+ * ハッシュ化して JS 側の対応表に入れる（docs/design.md 11章）。
+ *
+ * 呼ぶのは `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張り
+ * （`src/server/adapter/ui-rebuild.ts`）の2つだけ。**見張りも同じ場所へ出す**ので、
+ * 開発中に直したぶんはそのまま次の起動に乗る。
+ */
+export function buildUiBundle(): Promise<BundleResult> {
+  return bundleWithBun(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH, UI_ENTRY), builtUiDir())
+}
+
+/**
+ * `entry` を `bun build --target=browser` で `outDir` へまとめ、**出た対の中身を返す**。
+ * 失敗（プロセスの異常終了・出力が揃わない）のときは `bun build` が書いた理由を添えて返す。
+ *
+ * **失敗しても `outDir` には手を触れない**ので、前に置いた成果物はそのまま残る
+ * （書きかけを保存したときに、配っているものが消えない）。
+ */
+export async function bundleWithBun(entry: string, outDir: string): Promise<BundleResult> {
   const failure = await runBunBuild(entry, outDir)
-  return failure ?? (await readBuilt(outDir))
+  if (failure !== undefined) {
+    return failure
+  }
+
+  const bundle = await readPair(outDir)
+  return bundle === undefined
+    ? { ok: false, reason: "bun build がスクリプトと CSS の対を出さなかった" }
+    : { ok: true, bundle }
 }
 
 /** `bun build` を起こす。うまくいったら `undefined`、だめなら理由を持った結果を返す。 */
@@ -107,22 +165,60 @@ function runBunBuild(entry: string, outDir: string): Promise<BundleResult | unde
 }
 
 /**
- * 出し先から `.js` と `.css` を1本ずつ読む。**どちらかが無ければ失敗**として返す
- * （対で配れないものを「組み上がった」と呼ばない）。
+ * 置き場から `.js` と `.css` を1本ずつ読む。**どちらかが無ければ `undefined`**
+ * （対で配れないものを「組み上がった」と呼ばない）。置き場そのものが無いときも同じ。
  */
-async function readBuilt(outDir: string): Promise<BundleResult> {
-  const fileNames = await readdir(outDir)
-  const scriptName = fileNames.find((name) => name.endsWith(".js"))
-  const styleName = fileNames.find((name) => name.endsWith(".css"))
+async function readPair(dir: string): Promise<UiBundle | undefined> {
+  const fileNames = await readdir(dir).catch(() => undefined)
+  const scriptName = fileNames?.find((name) => name.endsWith(".js"))
+  const styleName = fileNames?.find((name) => name.endsWith(".css"))
   if (scriptName === undefined || styleName === undefined) {
-    return { ok: false, reason: "bun build がスクリプトと CSS の対を出さなかった" }
+    return undefined
   }
 
   const [uiScript, styleSheet] = await Promise.all([
-    readFile(join(outDir, scriptName), "utf8"),
-    readFile(join(outDir, styleName), "utf8"),
+    readFile(join(dir, scriptName), "utf8"),
+    readFile(join(dir, styleName), "utf8"),
   ])
-  return { ok: true, bundle: { uiScript, styleSheet } }
+  return { uiScript, styleSheet }
+}
+
+/**
+ * ソースのほうが成果物より新しいか。**どちらかの時刻を見られなかったときは古いと言わない** —
+ * 「分からない」を「古い」に寄せると、出どころの怪しい警告が毎回出て読まれなくなる。
+ *
+ * 見るのは {@link BUNDLED_SOURCE_DIR_RELATIVE_PATHS} の下だけで、依存（`node_modules`）や
+ * tsconfig の変化は拾わない。そこまで見るなら組み立て直すほうが早いので、**気づく口**として
+ * 割り切っている。
+ */
+async function isOutdated(builtDir: string): Promise<boolean> {
+  const [builtAt, ...sourceTimes] = await Promise.all([
+    newestModifiedAt(builtDir),
+    ...BUNDLED_SOURCE_DIR_RELATIVE_PATHS.map((segments) =>
+      newestModifiedAt(bundledFilePath(...segments)),
+    ),
+  ])
+  const known = sourceTimes.filter((time) => time !== undefined)
+  return builtAt !== undefined && known.some((time) => time > builtAt)
+}
+
+/** `dir` の下（再帰）でいちばん新しい更新時刻。読めなければ `undefined`。 */
+async function newestModifiedAt(dir: string): Promise<number | undefined> {
+  const names = await readdir(dir, { recursive: true }).catch(() => undefined)
+  if (names === undefined) {
+    return undefined
+  }
+
+  const times = await Promise.all(names.map((name) => modifiedAt(join(dir, name))))
+  const known = times.filter((time) => time !== undefined)
+  return known.length === 0 ? undefined : Math.max(...known)
+}
+
+/** 1件の更新時刻。消えた直後などで読めなければ `undefined`（そこだけ飛ばす）。 */
+function modifiedAt(path: string): Promise<number | undefined> {
+  return stat(path)
+    .then((stats) => stats.mtimeMs)
+    .catch(() => undefined)
 }
 
 /**

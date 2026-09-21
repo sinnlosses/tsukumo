@@ -1230,22 +1230,34 @@ API を使わない形になる。
 
 ## 11. ビルドと依存
 
-- `bundle.ts` は `bun build src/browser/main.tsx --target=browser --outdir <一時ディレクトリ>` を
-  起動時に1回起こし、**出てきた `.js` と `.css` を読んでから消す**（JSX は tsconfig の
-  `"jsx": "react-jsx"` で自動。CSS は `main.tsx` から import で辿れるものが1本にまとまる）。
-  **成果物をディスクに残さない**という 2026-09-12 の決定は変わらない（`--outdir` が要るのは
-  CSS Modules で出力が2本になるため。`docs/architecture.md`「CSS Modules の成果物は一時
-  ディレクトリへ出して読み、すぐ消す」）
+- **成果物は事前に組み立てて `dist/browser/` に置く**（2026-09-21 決定。それまでは起動のたびに
+  組み立てていた）。作るのは `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張りの
+  2つだけで、**起動（`src/main.ts`）は置いてあるものを読む**。`bun build` の子プロセスは起動の
+  経路から消えた（`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）
+- `bun run build` が起こすのは `bun build src/browser/main.tsx --target=browser --outdir dist/browser`
+  の1本で、`main.js` と `main.css` の対が置かれる（JSX は tsconfig の `"jsx": "react-jsx"` で自動。
+  CSS は `main.tsx` から import で辿れるものが1本にまとまる。`--outdir` が要るのは CSS Modules で
+  出力が2本になるため）
+- **`dist/` は `.gitignore` する。** 2.6MB の生成物を `src/browser/` を直すたびに履歴へ入れない。
+  代わりに、リポジトリを取り直したら `bun install` のあとに `bun run build` を1回打つ
+  （`tsukumo` は `bun link` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
+  そのもの**）
+- **成果物が無ければ起動しない**（起動時の前提不足として終了コード1。理由に `bun run build` を
+  添える）。**ソース（`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま
+  配る** — 2026-09-12 の決定が挙げていた「古い成果物を配る事故」には**黙って配らない**ことで
+  答える（古くても画面は動くので止めない）。**見張りが `src/browser/` しか見ないのと違い、
+  ここは `src/shared/` も見る**（起動時はプロセスごと入れ替わるので、両側が食い違わない）
 - tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は `@types/bun` が持っているのでそのまま
 - **HMR（差分を当てる）は持たない。** 代わりに、**`src/browser/` を見張って組み立て直し、開いている
   タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。**Vite は足していない**し、
   `Bun.serve` の HMR も `Bun.build()` も使わない（「Bun固有APIに寄せない」規約のまま）
 
 **作り直しを押す仕組み。** `src/server/adapter/ui-rebuild.ts` が `node:fs` の `watch` で `src/browser/` を**再帰に**見張り、保存が静まって
-から（120ms）`bundle.ts` の `buildUiScript` / `buildStyleSheet` を呼び直す。組み上がったものは
-`src/view-delivery.ts` が持ち替え、`shared` の `refresh` フレーム（4.4）で開いているタブへ押す。
-**差分は当てない**（当てた時点で HMR そのものになり、規模が跳ねる）。成果物は前と同じくメモリに
-だけ持つ。
+から（120ms）`bundle.ts` の `buildUiBundle()` を呼び直す。**出し先は起動が読むのと同じ
+`dist/browser/`** なので、開発中に直したぶんはそのまま次の起動に乗る（`bun run dev` を閉じたあとに
+`bun run build` を打ち直さなくてよい）。組み上がったものは `src/view-delivery.ts` が持ち替え、
+`shared` の `refresh` フレーム（4.4）で開いているタブへ押す。**差分は当てない**（当てた時点で
+HMR そのものになり、規模が跳ねる）。配るのは前と同じくメモリに持った文字列。
 
 **救えるのはブラウザに配る側だけ**で、`src/` を直すたびに上げ直さずに済むわけではない:
 

@@ -13,6 +13,10 @@
 // 1枚だけ撮る・要素の位置と大きさを数値で読むのは `capture-view.ts`（別の道具）。こちらは
 // 「起こす → 撮る → 落とす」を繰り返す側で、測りはしない。
 //
+// **先に `bun run build` が要る。** 起こす tsukumo は `dist/browser/` に置いた成果物を読むだけで、
+// 自分では組み立てない（2026-09-21 決定。`src/server/adapter/bundle.ts` 冒頭）。無いと1件ずつ
+// 起動に失敗する。
+//
 // 使い方:
 //   bun run scripts/capture-catalog.ts                      # カタログ全部
 //   bun run scripts/capture-catalog.ts --only question-multi # 1つだけ

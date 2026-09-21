@@ -43,7 +43,9 @@ Orca 経由の入力送信はコードごと消えた**ので、ホストに依�
 ## セットアップ / 環境構築
 
 - Bun 1.3 以上（TypeScript をそのまま実行し、テストランナーも内蔵している）
-- `bun install` で依存関係をインストール
+- `bun install` で依存関係をインストールし、**`bun run build` でブラウザ側を1回組み立てる**
+  （成果物は `dist/browser/`。`.gitignore` してあるので取り直すたびに要る。無いと起動が
+  前提不足で止まる。2026-09-21 に起動時の組み立てをやめた）
 - **`tsukumo` コマンドは `bun link` でグローバルに入っている**（2026-09-12 実施。
   `~/.bun/bin/tsukumo` がリポジトリの `bin/tsukumo` を指すシンボリックリンク。開発中の変更が
   そのまま反映される）。**消すときはリポジトリの直下で `bun unlink`**。
@@ -68,13 +70,16 @@ bun test --isolate test/cli.test.ts  # 単体テストファイルのみ実行
 bun run typecheck             # tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
 bun run format                # oxfmt で自動整形（--check は format:check）
+bun run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。**起動時には
+                              #   組み立てない**ので、bun install のあとと src/browser/ を直したあとに打つ
 bun run start                 # セッションを起こし、レイアウトページのタブを Orca 内に自動で開く
                               # （`tsukumo` コマンドと同じ。TSUKUMO_OPEN_VIEW=0 で自動オープンを
                               #   止める。**本物の claude を子プロセスで起こす**ので、テストから
-                              #   起動しきらない）
-bun run dev                   # start と同じだが src/browser/ を見張る（開発用。保存すると開いている
-                              #   タブが組み立て直したものに入れ替わる。src/server/core/ と src/shared/ を
-                              #   直したときは上げ直しが要る。docs/design.md 11章）
+                              #   起動しきらない。**成果物を読むだけ**で、無ければ前提不足で止まり、
+                              #   ソースのほうが新しければ1行知らせて古いまま配る）
+bun run dev                   # start と同じだが src/browser/ を見張る（開発用。保存すると組み立て直して
+                              #   dist/browser/ に置き直し、開いているタブが入れ替わる。src/server/core/ と
+                              #   src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具
 ```
 

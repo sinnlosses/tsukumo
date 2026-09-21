@@ -103,7 +103,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/adapter/session-socket.ts`                                       | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                               |
 | `src/server/core/config.ts`                                                  | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                             |
 | `src/server/core/port-resolution.ts`                                         | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                         |
-| `src/server/adapter/bundle.ts`                                               | adapter    | `bun build` で `browser/main.tsx` からスクリプトと CSS の1組を作る（成果物をディスクに残さない）     |
+| `src/server/adapter/bundle.ts`                                               | adapter    | `bun build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                     |
 | `src/server/adapter/bundled-path.ts`                                         | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く |
 | `src/server/adapter/character-pack.ts`                                       | adapter    | キャラクターパックの列挙・読み込みと `/character/<file>` が配ってよい1件の判定                       |
 | `src/server/adapter/task-summary.ts`                                         | adapter    | `develop/tasks.json` の読み直し。mtime が変わったときだけ `tasks-changed` を起こす                   |
@@ -247,6 +247,9 @@ tsukumo の画面だけになる。
 
 #### CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）
 
+**2026-09-21 に置き場を `dist/browser/` へ変えた**（起動のたびの `bun build` をやめるため。
+下の「ブラウザ側は事前に組み立てて置く」）。以下は、そこへ至るまでの受け取り方の決定。
+
 **`bun build` の出力を標準出力で受ける形をやめ、`--outdir` に一時ディレクトリ
 （`node:fs/promises` の `mkdtemp`）を渡して `.js` と `.css` を読み、その場で消す。**
 「**成果物をディスクに残さない**」という 2026-09-12 の決定は変えていない——変えたのは
@@ -265,6 +268,35 @@ without an output directory`。2026-09-18 の実測）。標準出力で受け�
 
 **残る差は「一瞬ディスクに出る」こと**だけで、消し損ねても次の組み立ては別のディレクトリを
 作るので古いものが混ざらない（消せなかったぶんは OS が片付ける）。
+
+#### ブラウザ側は事前に組み立てて置く（2026-09-21）
+
+**`bun build` を起動のたびに起こすのをやめ、`dist/browser/` に置いた成果物を読むだけにした。**
+作る口は `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張りの2つで、どちらも
+同じ `dist/browser/` へ出す。起動（`src/main.ts`）から子プロセスは1つも出なくなった。
+
+**`.gitignore` して、コミットはしない。** `tsukumo` は `bun link` でこのリポジトリを指している
+ので「配布」の実体はこのリポジトリそのものだが、成果物は 2.6MB あって `src/browser/` を直すたびに
+丸ごと変わる。**同じ作業ツリーを複数のセッションが共有する**この運用では、触っていない 2.6MB の
+生成物が毎コミットに乗るほうが害が大きい。代わりに `bun install` のあと `bun run build` を1回打つ。
+
+**2026-09-12 の「成果物をディスクに残さない」決定が挙げていた理由は、こう引き継いだ:**
+
+| 当時の理由                       | いまの答え                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 古い成果物を配る事故が起きない   | 起動時にソースと成果物の新しさを比べ、**古ければ1行知らせてから配る**（黙って配らない）          |
+| 直して起こし直すだけで反映される | 反映には `bun run build` が1回要る。`bun run dev` の見張りは同じ場所へ出すので、開発中は要らない |
+| `.gitignore` への追加が出ない    | 出た（`dist/`）。**無視する側を選んだ**のは上のとおり                                            |
+
+**古いときに落とさない**のは、古くても画面は動くからで、落とすと `git pull` の直後や
+`src/browser/` を直した直後に仕事が止まる。**無いときだけ落とす**（起動時の前提不足。
+`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の「起動時の前提不足だけが
+即時終了」の側）。
+
+新しさを見るのは `src/browser/` と `src/shared/`（ブラウザ側が import している）の下だけで、
+依存（`node_modules`）や tsconfig の変化は拾わない。そこまで見るなら組み立て直すほうが早いので、
+**気づく口**として割り切っている。**見張りが `src/browser/` しか見ないのとは別の話**で、あちらは
+動作中に両側が食い違うのを避けるため、こちらは起動時でプロセスごと入れ替わる。
 
 #### Claude Code の TUI を捨て、SDK で動かす
 
@@ -762,7 +794,9 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届くかを見る。ここまで出ていれば
 配信はシロで、原因はページの側かホストの側にある。
 
-1. Orca のターミナルで `bun run start` を1つ起動する（Claude Code の TUI は開かない）
+1. **`bun run build` を打ってから** Orca のターミナルで `bun run start` を1つ起動する
+   （Claude Code の TUI は開かない）。成果物が無いと起動は前提不足で止まり、`src/browser/` の
+   ほうが新しいと「古い画面が出る」1行が出る
 2. **tsukumo 自身がレイアウトページのタブを開く**ので、それが**Orca 内のブラウザタブ**に
    出ること（外部ブラウザに出ないこと）を見る。タブだけ閉じてしまったときは
    `bun run scripts/open-views.ts <URL>` で開き直せる

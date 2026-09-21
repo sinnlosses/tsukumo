@@ -19,7 +19,10 @@ import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `src/server/core/port-resolution.ts`）。 */
   readonly portResolution: ResolvedViewPort
-  /** 起動のときに組み立てたブラウザ側の1組。**ディスクに置かないので持ち主はここ。** */
+  /**
+   * 起動のときに読んだブラウザ側の1組（`dist/browser/` に置いてあるもの）。**見張りが組み立て
+   * 直すとここで差し替わる**ので、持ち主はサーバではなくこちら側。
+   */
   readonly bundle: UiBundle
   /** `/character/<file>` に配る1件の出どころ。 */
   readonly character: CurrentCharacter

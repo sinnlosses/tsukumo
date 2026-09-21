@@ -36,7 +36,8 @@ export const LAYOUT_PATH = "/"
 
 /**
  * **自前のブラウザ側スクリプト**（`src/browser/` を `bun build` でまとめたもの）と CSS を配る経路。
- * ディスクには置かずメモリに持つ（`src/server/adapter/bundle.ts`）。
+ * 成果物は `dist/browser/` にあり、**起動のときに読んでメモリに持つ**
+ * （`src/server/adapter/bundle.ts`）。
  */
 const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
@@ -84,9 +85,9 @@ const BIND_HOST = "127.0.0.1"
 /** {@link startViewServer} が配るために要るもの一式（渡すのは `src/view-delivery.ts`）。 */
 export type ViewServerOptions = {
   /**
-   * ブラウザ側スクリプトと CSS の取り出し口（`src/server/adapter/bundle.ts` が組み立てたもの）。
-   * ディスクには置かないので、**持ち主は呼び出し側 = `src/view-delivery.ts`** で、ここは要求のたびに
-   * 引きに行く。
+   * ブラウザ側スクリプトと CSS の取り出し口（`src/server/adapter/bundle.ts` が読んだもの）。
+   * 見張りが組み立て直すと差し替わるので、**持ち主は呼び出し側 = `src/view-delivery.ts`** で、
+   * ここは要求のたびに引きに行く。
    */
   readonly assets: ViewAssets
   /**
