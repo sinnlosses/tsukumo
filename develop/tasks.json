@@ -97,5 +97,126 @@
     "passes": true,
     "evidence": "docs/research/undefined-reduction.md を新規作成（317行 / 7節）。src/ の `| undefined` 297行を9種類に分類し（層×種類の表）、置き換え先・残してよい例外5条件・書き換えになる既存の条（coding-standards 8条 / CLAUDE.md 159・161・163-165行）・規約どうしの衝突5件・適用案（1つの状態ごとに7タスク、計約50行）を書いた。結論は「禁止にせず、書いてよい5つの場所の列挙に変える」で、採否はユーザーに預ける。src/・docs/coding-standards.md・CLAUDE.md は未変更（git status で確認）。bun run check 1053 pass / 0 fail / 2101 assertions / 90ファイル。",
     "task": "## 背景\n\nユーザーの指示（2026-09-22）「`undefined` はできるだけ使いたくない。すべて `undefined` を\n使わず表現できると仮定して、基本は使わず表現して。それでも難しいと判断したものは残していいよ」。\n\n**これは既存の規約と正面からぶつかる。** `docs/coding-standards.md` には今こう書いてある\n（CLAUDE.md の「コーディング規約」節にも要約がある）:\n\n- 「無いかもしれない」プロパティは `readonly x: T | undefined` で書き、`?:` は使わない\n- 2つ以上の `| undefined` が1つの状態を表しているなら判別可能な合併型にする。「無い」は\n  入口で畳み、内側の関数は「必ず値がある」型で受ける\n- `null` を自前の型・関数の戻り値・`shared` に出さない（外来の `null` は境界で `undefined` に畳む）\n\nつまり**「無い」の表し方として `undefined` を正式に採用している**ので、方針を変えるなら\n規約の側を書き直すのが先になる。\n\n実測（2026-09-22 時点）: `| undefined` が型の位置に出るのは `src/` で 297 箇所、`test/` で 28 箇所。\n多いのは `src/shared/character.ts`（25）・`src/shared/character-definition.ts`（20）・\n`src/shared/session-state.ts`（11）・`src/server/adapter/character-pack.ts`（11）で、\n**表情名ごとに `readonly <表情>: T | undefined` を並べる形**（立ち絵とラベルの対応表）が\nかたまりになっている。React の作法（`useRef` の初期値）や外来APIの戻り値も混ざっている。\n\nユーザーの選択（2026-09-22）により、**まず方針を決めるこのタスクを置き、適用は方針が決まった\nあとに層ごとの別タスクへ起こす**。\n\n## 解くべき論点\n\n- **297 箇所はどういう種類に割れるか。** 少なくとも「あるかないかの2値」「表情名など鍵ごとに\n  埋まるとは限らない対応表」「外来APIの戻り値」「React の作法」「オプション引数」が混ざって\n  いる。種類ごとに置き換え先が違う\n- **何で置き換えるか。** 判別可能な合併型 / 全域なレコード（全ての鍵に値が入る形）/\n  入口での既定値の畳み込み / 空配列・空文字列のような「無いを表さない値」。\n  どれをどの種類に当てるか\n- **`readonly x: T | undefined` を禁止すると、代わりに何が増えるか。** 例えば表情ごとの\n  立ち絵の対応表を「あるものだけの `Map`」にすると、`?:` を使わない規約と\n  「`null` を出さない」規約との整合を取り直す必要がある。**規約を1つ直すと別の条が効かなく\n  なる箇所を洗う**\n- **残してよい例外の条件。** ユーザーは「難しいと判断したものは残していい」と言っているので、\n  「難しい」を読み手によって結論が変わらない言葉で書く必要がある\n  （例: 外来APIの戻り値／React が型で要求するもの／丸ごと省略できるオプション引数の中身）\n- **適用をどう割るか**（層ごと / 種類ごと / ファイルのかたまりごと）\n\n## やること\n\n1. `src/` と `test/` の `| undefined` を数えて**種類ごとに分類し、件数を出す**。\n   分類の軸は上の「解くべき論点」の1つめ\n2. 種類ごとに置き換え先の案を書き、**置き換えない例外の条件**を検証可能な言葉で書く\n3. 既存の規約のどの条が書き換えになるか、どの条と衝突するかを列挙する\n   （`docs/coding-standards.md` の該当節と、CLAUDE.md の要約行の両方）\n4. 1〜3 を `docs/research/undefined-reduction.md` に書く（`docs/research/` の既存のファイルの\n   書き方に合わせる。`docs/research/report-notation-shortening.md` が先例）\n5. **適用の割り方の案（タスクの分け方と件数の見積もり）まで書いて、そこで止める。**\n   規約本文（`docs/coding-standards.md`）とコードは、**ユーザーが方針を選んだあとに直す**\n6. 調べた結果「種類のほとんどが例外に当たり、置き換えられるのはごく一部」と分かった場合は、\n   **その根拠（種類と件数）を書いて、方針を変えないことを提案してよい**\n\n## 完了条件\n\n- `bun run check` が通る（コードを変えないので件数は変わらないはず。件数を `evidence` に書く）\n- `docs/research/undefined-reduction.md` が次の4つを持つ: 種類ごとの分類と件数 /\n  種類ごとの置き換え先の案 / 残してよい例外の条件 / 書き換えになる既存の条の一覧\n- 置き換えの適用案が、層または種類で割った**タスクの分け方と件数の見積もり**として書かれている\n- `docs/coding-standards.md`・CLAUDE.md・`src/` を**変更していない**（方針を決めるだけのタスク）\n\n## 注意\n\n- **コードを直さない。** 規約が決まる前に置き換えると、方針が変わったときに全部やり直しになる\n- `docs/research/` に置くのは調査と提案で、正典ではない。正典（`docs/coding-standards.md`）は\n  ユーザーが方針を選んだあとに直す\n- `loopable` が `\"N\"` なのは、**このタスクが「ユーザーが方針を選ぶ」ところで終わる**ため\n  （提案の採否は事前に聞いても決められない。調査結果を見ないと選択肢が出ない）\n"
+  },
+  {
+    "id": "T-307",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "undefined の規約を「書いてよい5つの場所」の列挙に書き直す",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`docs/research/undefined-reduction.md`（2026-09-22）の調査で、`src/` の `| undefined` 297行の\nうち置き換えられるのは約50行（17%）だけで、残りは例外に当たると分かった。ユーザーは同文書\n7節の選択肢から **(b)「禁止にはせず、`| undefined` を書いてよい5つの場所を列挙する形に\n規約を変える」** を選んだ。\n\nいま `docs/coding-standards.md` の「## 「無いかもしれない」値」は「`readonly x: T | undefined`\nで書き、`?:` は使わない」という **「こう書く」形**で、書いてよい場所を絞っていない。\n`CLAUDE.md`「コーディング規約・レビュー方針」159行目にその要約がある。\n\n**このタスクは規約本文だけを直す。コードは1行も触らない**（適用は後続の7タスク）。\n\n## 決まっていること（蒸し返さない）\n\n- 方針は (b)。**`| undefined` を禁止にしない。**「書いてよい5つの場所」の列挙に変える\n  （5条件は `docs/research/undefined-reduction.md` 3節の表がそのまま使える）\n- **`?:` を解禁しない。** React の props の約15行は「例外3（React が型で要求するもの）」に\n  当たるものだけ `| undefined` のまま残す。**当たらないものは合併型か既定値に畳む**\n  （ユーザーの言葉: 「局所的にここだけは undefined を使ってもいいという場所に該当するなら\n  推奨案でいいよ」）\n- **`null` の条（`docs/coding-standards.md`「### null は自前の型に出さない」）は変更しない。**\n  禁止にしないので「外来の `null` を `undefined` に畳む」の畳み先は消えない\n- **「「無い」を型から消すことを目的にしない」の段落は書き換える。** 削らず、\n  「消す手は2つ（判別可能な合併型 / 入口で全域に畳む）だけで、それで消えないものは\n  本物の「無い」」という形にする\n\n## 解くべき論点\n\n- 5条件の表を `docs/coding-standards.md` にどう収めるか。`docs/research/undefined-reduction.md`\n  3節の表は件数の列を持つが、**件数は時間が経つと合わなくなる**ので正典には持ち込まない\n- 「### 複数の「無い」が1つの状態」と「### 「無い」を層をまたいで運ばない」の2条は\n  **文面を変えない**（未適用なだけ）。ただし新しい5条件の表との重複をどう避けるか\n- `CLAUDE.md` 159行目の1行をどう書き換えるか。**CLAUDE.md は要約で、正典は\n  `docs/coding-standards.md`** なので、5条件を全部は書かない\n- 「型を迂回するキャストを書かない」条との優先順位を明記する必要があるか\n  （禁止にしないので `!` への圧力は生まれないはずだが、確かめる）\n\n## やること\n\n1. `docs/coding-standards.md`「## 「無いかもしれない」値」を、\n   **「こう書く」から「ここでだけ書いてよい」へ形を変える**。5条件は\n   `docs/research/undefined-reduction.md` 3節の「判定（コードを見れば決まる）」列を使い、\n   **件数の列は持ち込まない**\n2. 同節に「1に当てはまらないのに `| undefined` を書くときの3条件」\n   （同文書3節の後半）を足す。ただし**既存の2条と重複する部分は既存の条へのリンクで済ませる**\n3. 「「無い」を型から消すことを目的にしない」の段落を上の「決まっていること」の形に書き換える\n4. `CLAUDE.md` 159行目を、5条件に触れる1行に書き換える（正典は\n   `docs/coding-standards.md` である旨を残す）\n5. **`docs/coding-standards.md` の「節の索引」の表を追随させる。** 見出し名を変えたなら\n   索引の行も同時に直す（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n6. 節の数が編集の前後で合うことを確かめる:\n   `grep -c '^#\\{2,3\\} ' docs/coding-standards.md`\n\n## 完了条件\n\n- `bun run check` が通る（コードを変えないのでテスト件数は変わらないはず。件数を `evidence` に書く）\n- `docs/coding-standards.md`「## 「無いかもしれない」値」が **「書いてよい5つの場所」の列挙**に\n  なっている（「こう書く」形の断定文が残っていない）\n- 「「無い」を型から消すことを目的にしない」の段落が、「消す手は2つだけ」の形に書き換わっている\n- `docs/coding-standards.md` の節の索引の行数が、見出しの数と一致している\n  （`grep -c '^#\\{2,3\\} '` の値を `evidence` に書く）\n- `CLAUDE.md` 159行目相当の1行が書き換わっている\n- **`src/` と `test/` を変更していない**（`git status` で確認して `evidence` に書く）\n\n## 注意\n\n- **コードを直さない。** 適用は後続の7タスク\n- `docs/research/undefined-reduction.md` は**正典ではない**ので書き換えない（調査の記録として残す）\n- `docs/coding-standards.md` は「コメントに日付を書かない規約を足す」タスクと**同じファイルを触る**。\n  片方が `doing` の間は着手しない\n"
+  },
+  {
+    "id": "T-308",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-307"],
+    "summary": "雑談モードの4つの口を1つの合併型にまとめる",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`src/server/core/session-driver.ts:263,269,275,281` の `personaMemory` / `chatSummary` /\n`chatKeep` / `chatRecall` は、それぞれ `| undefined` を持つ別々のフィールドになっている。\nしかし `src/session-start.ts:160,164,168` を見ると **3つとも `seed.chat ? ... : undefined`**\nで作られ、`chatSummary` も同じ分岐で決まる。**4つが同時に入るか同時に無いかの2択**で、\n「片方だけ `undefined`」という状態は実在しない。\n\nこれは `docs/coding-standards.md`「### 複数の「無い」が1つの状態」が命じている形の\n**未適用箇所**で、規約を変えなくても直せる（調査は `docs/research/undefined-reduction.md`\n2.1 の #1）。\n\n## やること\n\n1. 4つのフィールドを **`mode: { kind: \"work\" } | { kind: \"chat\"; personaMemory; chatSummary;\n   chatKeep; chatRecall }`** の判別可能な合併型にまとめる\n2. `src/session-start.ts` の組み立てを、`seed.chat` の分岐1回で `mode` を作る形にする\n3. 読む側（`src/server/adapter/sdk-driver.ts` ほか）を `mode.kind === \"chat\"` の分岐に直す\n4. 型が通らない箇所は `!` や `as` で潰さない（`docs/coding-standards.md`\n   「型を迂回するキャストを使わない」）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/server/core/session-driver.ts` から `personaMemory` / `chatSummary` / `chatKeep` /\n  `chatRecall` の `| undefined` が4行とも消えている\n- 雑談モードで起こしたセッションで、人格の記憶・雑談の要約・思い出しが従来どおり働く\n  （**雑談モードで tsukumo を起こし、何を確かめたかを `evidence` に書く**）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- 雑談まわりのトークン消費を減らすタスク群と**同じファイル（`session-driver.ts` /\n  `sdk-driver.ts`）を触る**。片方が `doing` の間は着手しない\n"
+  },
+  {
+    "id": "T-309",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-307"],
+    "summary": "セッションの起こし方（resume）を合併型にする",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`resume: string | undefined` が「新規に起こす」と「続きから起こす」の2つの状態を表していて、\n4箇所に散っている——`src/server/core/session-driver.ts:250` /\n`src/server/core/session-launch.ts:23` / `src/server/adapter/sdk-driver.ts:227` /\n`src/server/core/chat-memory-prompt.ts:95`。\n\n`undefined` が「セッションIDが無い」ではなく「**新規である**」という意味を運んでいるので、\n`docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所に当たる\n（調査は `docs/research/undefined-reduction.md` 2.1 の #5）。\n\n## やること\n\n1. `resume` を **`start: { kind: \"new\" } | { kind: \"resume\"; sessionId: string }`** の\n   判別可能な合併型にする\n2. 上の4箇所と、`findResumeSession` の戻り値の扱い（`session-launch.ts:67,116`）を直す\n3. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 上の4ファイルから `resume: string | undefined` が消えている\n- 新規の起動と、続きからの起動（`findResumeSession` が当たる場合）の両方が従来どおり働く\n  （**tsukumo を2回起こして続きから繋がることを確かめ、`evidence` に書く**）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- 雑談まわりのトークン消費を減らすタスク群と**同じファイルを触る**。片方が `doing` の間は着手しない\n"
+  },
+  {
+    "id": "T-310",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-307"],
+    "summary": "ターンの進み具合を1つの合併型にする",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`src/shared/session-state.ts:194,200` の `turnStartedAt` / `turnFinishedAt` と\n`turnInProgress: boolean` の3つが、**1つの状態（ターンの進み具合）**を表している。\n`src/shared/portrait-motion.ts:20` にも同じ写しがある。\n\nこれは `docs/coding-standards.md`「### 複数の「無い」が1つの状態」の**「避ける」例が\nそのままの形で生き残っている**箇所で、いまの型は「`turnFinishedAt` があるのに\n`turnInProgress` が true」のような**書けるのに起きない組み合わせ**を許している\n（調査は `docs/research/undefined-reduction.md` 2.1 の #2 #3）。\n\n**減る行数は2行だが、書き換わる行数は十数行**。得は行数ではなく、ありえない組み合わせが\n型から消えること。`turnInProgress` を `boolean` として読んでいるのは\n`src/server/core/session-manager.ts:382,392,408` / `src/shared/main-view.ts:161` /\n`src/browser/features/sidebar/session-info.tsx:111` など6箇所以上ある。\n\n## 解くべき論点\n\n- `finished` の状態が `startedAt` を持ち続けるか。いまは `turnStartedAt` が\n  「次の `request` まではそのまま持ち続ける」契約で、入力欄の経過時間表示が使っている\n  （`src/browser/features/dispatch/turn-status.tsx`）\n- `idle`（まだ一度も依頼が無い）と `finished`（終わった）を分けるか。\n  いまは `turnStartedAt === undefined` で区別している\n- 立ち絵の動き（`portrait-motion.ts`）が4つの動きをどう選んでいるか。合併型にしたとき\n  同じ分岐が保てるか\n\n## やること\n\n1. 3つのフィールドを **`turn: { kind: \"idle\" } | { kind: \"running\"; startedAt } |\n   { kind: \"finished\"; startedAt; finishedAt }`** の判別可能な合併型にする\n2. `turnInProgress` を読んでいる6箇所以上を `state.turn.kind === \"running\"` に読み替える\n3. `src/shared/portrait-motion.ts` が同じ形を受け取るようにする\n4. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts` から `turnStartedAt` / `turnFinishedAt` の `| undefined` が\n  消え、`turnInProgress: boolean` が無くなっている\n- **目視確認**: tsukumo を起こし、(1) 立ち絵の4つの動きが従来どおり切り替わる、\n  (2) 入力欄の経過時間がターン中に増えてターン後も残る、(3) ターン開始前の初期状態で\n  経過時間が出ない——の3つを確かめて `evidence` に書く（どの端末で何が見えたか）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **`SessionState` を触る3つのタスク（これと `init` の3点・ツールの結果と本文）は\n  並行させない。** `dependencies` で直列にしてある\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n  （`~/.tsukumo/state.json` が共有される）\n"
+  },
+  {
+    "id": "T-311",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-307", "T-310"],
+    "summary": "init がまだ届いていない状態を合併型にする",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`src/shared/session-state.ts:143,144,145` の `sessionId` / `model` / `permissionMode` は\n3つとも `| undefined` で、**「`init` がまだ届いていない」という1つの状態**を表している。\n偽の駆動側（`src/server/adapter/fake-driver.ts:206,207`）にも `model` / `permissionMode` の\n同じ写しがある。\n\n`docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所\n（調査は `docs/research/undefined-reduction.md` 2.1 の #4 #8）。\n\n## やること\n\n1. 3つを **`session: { kind: \"starting\" } | { kind: \"running\"; sessionId; model;\n   permissionMode }`** の判別可能な合併型にする\n2. `src/server/adapter/fake-driver.ts:206,207` の写しを同じ形に合わせる\n3. 読む側（サイドバーのセッション情報・モデル切り替え）を `session.kind` の分岐に直す\n4. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts` から `sessionId` / `model` / `permissionMode` の\n  `| undefined` が3行とも消えている\n- **目視確認**: tsukumo を起こし、(1) 起動直後にサイドバーがセッション情報の欄で崩れない、\n  (2) `init` 到着後にセッションID・モデル・許可モードが出る、(3) サイドバーからモデルを\n  切り替えると即座に反映される——の3つを確かめて `evidence` に書く\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **`SessionState` を触る3つのタスクは並行させない。** `dependencies` で直列にしてある\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
+  },
+  {
+    "id": "T-312",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-307", "T-311"],
+    "summary": "ツールの結果と本文の「まだ来ていない」を合併型にする",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n2つの組が「まだ来ていない」を `| undefined` で表している\n（調査は `docs/research/undefined-reduction.md` 2.1 の #6 #7）。\n\n- `src/shared/session-state.ts:97` / `src/shared/main-view.ts:58` の `result: {...} | undefined`\n  ——**ツールがまだ終わっていない**\n- `src/shared/main-view.ts:98,102` の `report` / `firstLine` ——**本文がまだ来ていない**\n  （2つは同時に入るか同時に無いかの2択）\n\nどちらも `docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所。\n\n## やること\n\n1. ツールの結果を **`{ kind: \"running\" } | { kind: \"finished\"; result }`** にする\n2. 本文を **`body: { kind: \"none\" } | { kind: \"text\"; report; firstLine }`** にする\n3. 読む側（メインビューのレポート描画・ツールの行）を `kind` の分岐に直す\n4. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts:97` と `src/shared/main-view.ts:58,98,102` の\n  `| undefined` が4行とも消えている\n- **目視確認**: tsukumo を起こし、(1) ツール実行中の表示と完了後の表示が従来どおり切り替わる、\n  (2) 中間レポートと最終レポートが従来どおり出る、(3) 本文が空のターンで崩れない——の3つを\n  確かめて `evidence` に書く\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **`SessionState` を触る3つのタスクは並行させない。** `dependencies` で直列にしてある\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
+  },
+  {
+    "id": "T-313",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-307"],
+    "summary": "タスク一覧の「不明」を2つの意味に割る",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\nタスク一覧の「不明」に、**意味の違う2つの `undefined` が合流している**\n（調査は `docs/research/undefined-reduction.md` 2.3 の例外）。\n\n- `src/shared/task-summary.ts:41` の `readTaskSummaries` が返す `undefined` は\n  「**ファイルの形が信用できない**」\n- `src/shared/session-state.ts:175` の `tasks: ... | undefined` は「**まだ届いていない**」\n\n画面上（`src/browser/features/sidebar/task-list.tsx:14,25` /\n`task-board.tsx:45,104`）では**どちらも同じ「不明」として表示される**。これは\n`docs/coding-standards.md` が「避ける」と書いている3パターンの2つめ\n（1つの `undefined` に複数の意味が乗っている）に当たる。\n\nなお `parse*` 全体を結果型にする案は**採らない**（同調査 2.3。zod の `safeParse` を\n境界で意図的に畳んでいるので、戻すのは畳んだものを開き直す作業になる）。ここだけが例外。\n\n## やること\n\n1. `tasks` を **`{ kind: \"unknown\" } | { kind: \"known\"; items }`** に割る。\n   「まだ届いていない」と「読めない」を型で区別できる形にするか、\n   **区別しないと決めるならその理由を `evidence` に書く**\n2. `src/shared/session-event.ts:169` と画面側4箇所を読み替える\n3. 空配列に畳む案は採らない（「タスク0件」と「読めない」が混ざるため。同調査 2.4）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts:175` の `tasks: ... | undefined` が合併型になっている\n- **目視確認**: tsukumo を起こし、(1) タスク一覧が従来どおり出る、(2) `develop/tasks.json`\n  が無いプロジェクト（または一時的に読めない形）で「不明」の表示が崩れない——の2つを\n  確かめて `evidence` に書く。**フィクスチャを一時的に書き換えたら必ず元に戻す**\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
+  },
+  {
+    "id": "T-314",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-307"],
+    "summary": "立ち絵・差し色の対応表を入口で全域に畳む",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`Readonly<Record<Expression, string | undefined>>` が**2つの用途に兼用されている**\n（調査は `docs/research/undefined-reduction.md` 2.2）。\n\n| 用途 | 持ち主 | 「この表情だけ無い」が意味を持つか |\n| --- | --- | --- |\n| 定義ファイルの写し | `CharacterDefinition.portraits`（`src/shared/character-definition.ts:34`） | **持つ**（`src/shared/expression-choice.ts:37` が `speak` の選択肢を作るのに使う） |\n| 画面へ渡す姿 | `CharacterInfo.portraits`（`src/shared/character.ts:30`） | **持たない**（読む側が `resolvePortraitUrl` で必ず `?? portraits.default` に落としている。`character.ts:183`） |\n| 編集画面の手持ち | `HeldPortraits`（`character-create.tsx:40`） | **持つ**（「まだ入れていない枠」を数える。`character-create.tsx:57`） |\n\n**真ん中だけが畳める。** `CharacterInfo.portraits` を作る時点で `default` への\nフォールバックを済ませ、**`Readonly<Record<Expression, string>>` の全域なレコード**にする。\n`outfitAccents` も同じ。\n\nこれは `docs/coding-standards.md`「### 「無い」を層をまたいで運ばない」そのもので、\n規約の変更は要らない。**7件のうち一番大きく、13〜17行が消える。**\n\n## 解くべき論点\n\n- `default` の立ち絵すら無いパックをどう扱うか。調査の提案は「**表ごと持たない**」\n  （`portraits: Readonly<Record<Expression, string>> | undefined` が1つ残る）\n- `resolvePortraitUrl` / `resolveOutfitAccent` は**関数ごと不要になる**（表を引くだけになる）。\n  呼ぶ側の `??` も落ちる。消して良いか、名前を残す価値があるか\n\n## やること\n\n1. `CharacterInfo.portraits` と `CharacterInfo.outfitAccents` を、入口で `default` に\n   畳んだ**全域なレコード**にする\n2. `src/shared/character.ts` の 30 / 38 / 130 / 132 / 149 / 150 / 151 / 155（`EMPTY_PORTRAITS`）/\n   166（`EMPTY_OUTFIT_ACCENTS`）/ 180 / 182 / 188 / 190 を直す\n3. 呼ぶ側の `??` を落とす（`character-view.tsx:135,137` / `chat-view.tsx:99,101` /\n   `mini-portrait.tsx:50` / `character-edit.tsx:96,199`）\n4. **`CharacterDefinition.portraits` と `HeldPortraits` は畳まない**（「この表情だけ無い」が\n   意味を持つため）\n5. **`ReadonlyMap<Expression, string>` にする案は採らない**（`Map.get` の戻り値が\n   `string | undefined` なので、型注釈から消えるだけで使う側の `undefined` は減らない）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/character.ts` から `EMPTY_PORTRAITS` / `EMPTY_OUTFIT_ACCENTS` が消えている\n- `| undefined` の減った行数を `evidence` に書く（`grep -c '| undefined' src/shared/character.ts`\n  の前後の値）\n- **目視確認**: tsukumo を起こし、(1) 立ち絵が表情ごとに切り替わる、(2) ミニ立ち絵が出る、\n  (3) キャラクター編集画面で立ち絵と差し色が従来どおり出る、(4) 一部の表情の絵が無いパックで\n  `default` に落ちる——の4つを確かめて `evidence` に書く\n- **`speak` の表情の選択肢が減っていない**（`expression-choice.ts` は定義ファイル側を見ており、\n  畳んだ表とは別であることを確かめる）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。** 目視で確かめるときは\n  どちらが出ているかを意識する\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n- 表情に `bored` を足すタスクと**同じファイル（`character.ts` / `character-definition.ts`）を\n  触る**。片方が `doing` の間は着手しない\n"
+  },
+  {
+    "id": "T-315",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "雑談モードのモデルと effort を仕事より下げる",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n雑談モードが仕事と同じ重さで動いている。`src/server/core/session-driver.ts:35` の\n`DEFAULT_MODEL` が `\"opus\"`、`src/server/adapter/sdk-driver.ts:62` の `DEFAULT_EFFORT` が\n`\"high\"` で、**雑談も仕事も同じ値**を使う（`sdk-driver.ts:241,242` で `query()` に渡る）。\n\n雑談モードかどうかは既に adapter まで届いている——`src/server/core/session-launch.ts:117` が\n`ports.startDriver({ pack, resume, chat }, onEvent)` で `chat` を渡しているので、\n**分岐点は新しく作らなくてよい**。\n\n**`DEFAULT_EFFORT` の `high` はユーザーの 2026-09-12 の指示で固定したもの**\n（`sdk-driver.ts:59` のコメント）。雑談モードはその後に入った機能なので、\n**仕事側の `high` は変えない。雑談のときだけ下げる。**\n\n## 決まっていること（蒸し返さない）\n\n- 雑談モードのときだけ **`sonnet` ＋ `high` より1段低い effort** に落とす。\n  仕事側の `DEFAULT_MODEL` / `DEFAULT_EFFORT` は**変えない**\n- 下げ先の effort の具体値は、SDK の `EffortLevel` が取りうる値を確かめて\n  **`high` の1段下**を選ぶ（値の名前は実装時に確認する）\n\n## やること\n\n1. `chat` が true のときの既定のモデルと effort を、仕事用とは別の定数として置く\n   （`DEFAULT_MODEL` / `DEFAULT_EFFORT` の隣に、雑談用の既定を名前付きで置く）\n2. `src/server/adapter/sdk-driver.ts` が `query()` に渡す値を、`chat` で振り分ける\n3. **サイドバーからのモデル切り替えは従来どおり効く**ようにする（既定値を変えるだけで、\n   ユーザーが選んだモデルを上書きしない）\n4. SDK の `EffortLevel` が取りうる値を確かめ、`high` の1段下を選ぶ。**1段下が無ければ\n   その旨を `evidence` に書いて effort は変えず、モデルだけ下げる**\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 雑談モードで起こしたときのモデルが `sonnet`、仕事モードで起こしたときが `opus` であることが\n  テストで固定されている（テストを1件以上足す）\n- **目視確認**: tsukumo を雑談モードで起こし、サイドバーのモデル表示が `sonnet` になり、\n  そこから手で `opus` に切り替えられることを確かめて `evidence` に書く\n\n## 注意\n\n- **仕事モードの既定は変えない**（`high` はユーザーの明示の指示で固定されている）\n- `undefined` を減らすタスク群のうち「雑談モードの4つの口を合併型に」「起こし方を合併型に」は\n  **同じファイル（`session-driver.ts` / `sdk-driver.ts`）を触る**。片方が `doing` の間は着手しない\n"
+  },
+  {
+    "id": "T-316",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-315"],
+    "summary": "雑談セッションに CLAUDE.md を載せない",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n雑談セッションにも `CLAUDE.md`（24,798 バイト）が載っている。中身はタスク運用・Git運用・\nコーディング規約・ドキュメントの罠で、**雑談には一文字も要らない**。人格を運ぶ\n`persona.md` の倍の大きさがある。\n\n`src/server/adapter/sdk-driver.ts:237,239` が `query()` に `cwd` と\n`systemPrompt: { type: \"preset\", preset: \"claude_code\", append: ... }` を渡している。\n**`settingSources` の指定は `src/` のどこにも無い**ので、`CLAUDE.md` は SDK の既定の\n振る舞いで載っている。どの経路で載るかを確かめるところから始める。\n\n雑談モードかどうかは `src/server/core/session-launch.ts:117` の `startDriver({ pack, resume,\nchat })` で既に adapter まで届いている。\n\n## 解くべき論点\n\n- **SDK が `CLAUDE.md` を読み込む経路はどれか。** `settingSources` の既定値か、`cwd` を\n  起点にした自動読み込みか。SDK のバージョン（`package.json` の\n  `@anthropic-ai/claude-agent-sdk`）で確かめる\n- 外す手が `settingSources` で足りるか、`cwd` を変える必要があるか。**`cwd` を変えると\n  雑談セッションからファイルが読めなくなる**ので、記憶まわり（`~/.tsukumo/`）への影響を見る\n- 外したときに失われるものがあるか（対話言語を日本語にする指示は `CLAUDE.md` の冒頭にある）\n\n## やること\n\n1. SDK が `CLAUDE.md` を載せる経路を実測で特定する（雑談セッションを起こして確かめる）\n2. 雑談モードのときだけ載せない道を実装する\n3. **対話言語の指示など、雑談にも要る内容が `CLAUDE.md` にしか無いなら、\n   `systemPrompt` の `append` 側へ移す**\n4. **調べた結果「SDK の仕組み上、雑談だけ外す道が無い」と分かったら、やらずに\n   その根拠を `evidence` に書いて閉じる**\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 雑談セッションのシステムプロンプトに `CLAUDE.md` の内容が含まれていないことを、\n  **実測で確かめて `evidence` に書く**（どう確かめたかを書く。会話の生データは載せない）\n- 仕事モードのセッションには従来どおり `CLAUDE.md` が載っている\n- **目視確認**: 雑談モードで tsukumo を起こし、日本語で応答し、人格（口調・一人称）が\n  従来どおりであることを確かめて `evidence` に書く\n\n## 注意\n\n- **SDK のイベントと transcript には利用者と Claude の生の会話が入っている。**\n  実測の根拠を `evidence` やログに書くとき、会話の中身を写さない\n  （`docs/coding-standards.md`「会話内容の扱い」）\n- 雑談のモデルと effort を下げるタスクと**同じファイルを触る**。`dependencies` で直列にしてある\n"
+  },
+  {
+    "id": "T-317",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-315", "T-316"],
+    "summary": "雑談セッションに渡す道具を絞る",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n雑談セッションに Edit / Write / 全スキルまで渡っていて、**道具の説明文が毎ターン積まれる**。\n雑談で要るのは `speak` と記憶まわり（`remember` / `keep` / `index` / `recall` / `forget`）と\n読み取り系くらい。\n\n`src/server/adapter/sdk-driver.ts` が `query()` に渡す options に\n**`allowedTools` / `disallowedTools` の指定は `src/` のどこにも無い**（grep で確認済み）ので、\nSDK の既定で全部渡っている。\n\n雑談モードかどうかは `src/server/core/session-launch.ts:117` で adapter まで届いている。\n\n## 解くべき論点\n\n- 雑談に残す道具の一覧をどこに置くか。**キャラクターの中身をコードに書かない**（原則4）に\n  触れるか——`speak` と記憶まわりは tsukumo の機能なのでコード側でよいはず\n- 読み取り系をどこまで残すか。雑談で「さっきのファイル見て」と言われる使い方が実在するか\n- スキルの説明文を落とす手段があるか（`allowedTools` で Skill を外すと全スキルが消える）\n\n## やること\n\n1. 雑談モードのときだけ `allowedTools`（または `disallowedTools`）で道具を絞る\n2. 残す一覧は最低限 `speak` と記憶まわり5つ。読み取り系を残すかは上の論点で決め、\n   **決めた理由を `evidence` に書く**\n3. Edit / Write は雑談から外す\n4. **調べた結果「絞ると記憶まわりが動かない」など実害が出たら、やらずに根拠を\n   `evidence` に書いて閉じる**\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 雑談モードのときに渡る道具の一覧がテストで固定されている（テストを1件以上足す）\n- 仕事モードの道具は従来どおり全部渡っている\n- **目視確認**: 雑談モードで tsukumo を起こし、(1) セリフが出る、(2) 記憶の書き込みと\n  思い出しが従来どおり働く——の2つを確かめて `evidence` に書く\n\n## 注意\n\n- 雑談のモデルと effort を下げるタスク・`CLAUDE.md` を載せないタスクと**同じファイルを触る**。\n  `dependencies` で直列にしてある\n- 記憶まわりの道具を1つでも落とすと雑談の人格が壊れる。**残す一覧は実測で確かめる**\n"
   }
 ]
