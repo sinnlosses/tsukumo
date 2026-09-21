@@ -85,13 +85,6 @@ data URL は書かない。ファイルに触るのは `adapter/chat-archive.ts`
 `docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」に、選択の置き場所と
 2つ目のアダプタを書くときに考える旨を追記した。実装は無し。
 
-### 2026-09-21 復元で流し直すイベントを別の口に分けた（T-254）
-
-`createSessionLaunch` の受け口を `onEvent` / `onRestoredEvent` の2つにし、transcript から
-組み直した履歴の再生だけを後者へ流すようにした。`session-manager` は `EventOrigin`
-（`"driver"` | `"restored"`）で `receive` に印を渡すところまでで、**区別はまだ使っていない**
-（使うのは雑談の会話のアーカイブを書く次のタスク）。畳み方と配り方は今までどおり。
-
 ## 未解決
 
 - **雑談の記憶を「直近は生のまま＋それより前は要約」に変える方針（T-261）は、規約の例外の
