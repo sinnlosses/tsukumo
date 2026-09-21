@@ -14,6 +14,12 @@ const edit = (path: string): MainViewEntry => ({
   input: { file_path: path },
   result: { content: "ok", isError: false },
 })
+/**
+ * まとまった資料（構造の印を持ち、短くない本文）。**実況として落ちない本文**が要るところで使う
+ * （`selectShownReports` は印の無い本文を、締めの本文でなければ落とす）。
+ */
+const materialReport = (label: string): string => `## ${label}\n\n- 1つ目の発見\n- 2つ目の発見`
+
 const question = (text: string): MainViewEntry => ({
   kind: "question",
   questions: [{ header: "架空", text, multiSelect: false, options: [] }],
@@ -88,14 +94,16 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("画面に出す記録が上限を超えたら、古いほうから落として件数を残す", () => {
     const entries = [
       request("依頼"),
-      ...Array.from({ length: 45 }, (_, index) => detail(`レポート${String(index)}`)),
+      ...Array.from({ length: 45 }, (_, index) =>
+        detail(materialReport(`レポート${String(index)}`)),
+      ),
     ]
 
     const turns = mainViewTurns(entries, false)
 
     expect(turns[0]?.droppedCount).toBeGreaterThan(0)
-    expect(turns[0]?.steps.at(-1)?.report).toBe("レポート44")
-    expect(turns[0]?.steps[0]?.report).not.toBe("レポート0")
+    expect(turns[0]?.steps.at(-1)?.report).toBe(materialReport("レポート44"))
+    expect(turns[0]?.steps[0]?.report).not.toBe(materialReport("レポート0"))
   })
 
   it("ツールの実行は上限に数えない（何十件呼んでも落ちない）", () => {
@@ -116,14 +124,16 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("上限を超えて古いステップが落ちても、残ったステップの id は変わらない（T-165）", () => {
     const entries = [
       request("依頼"),
-      ...Array.from({ length: 45 }, (_, index) => detail(`レポート${String(index)}`)),
+      ...Array.from({ length: 45 }, (_, index) =>
+        detail(materialReport(`レポート${String(index)}`)),
+      ),
     ]
 
     const before = mainViewTurns(entries, false)
     const idsBefore = (before[0]?.steps ?? []).map((step) => step.id)
 
     // さらに記録が積まれ、前の呼び出しでは残っていたステップも古いほうから落ちる。
-    const after = mainViewTurns([...entries, detail("レポート45")], false)
+    const after = mainViewTurns([...entries, detail(materialReport("レポート45"))], false)
     const idsAfter = (after[0]?.steps ?? []).map((step) => step.id)
 
     // 両方に残っているステップ（id の交わり）は、report の中身も id も変わらない。
@@ -227,10 +237,43 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     ])
   })
 
-  it("ツールを1つも呼ばないターンでは何も落ちない", () => {
+  it("短い返事だけのターン（ツールを1度も呼ばない）でも、締めの本文は残る", () => {
     const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")], false)
 
     expect(turns[0]?.steps[0]?.report).toBe("文章だけで答える")
+    expect(turns[0]?.steps[0]?.final).toBe(true)
+  })
+
+  it("ツールが1つも続かない実況でも、次の本文が出た時点で落ちる（`speak` を挟む並び）", () => {
+    // 本文（実況1）→ `speak` → 本文（実況2）→ ツール → 最終レポート、という規約どおりの並び。
+    // `speak` は `speech` になって `tool` の記録にならないので、実況1にはツールが1つも付かない。
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail("さいしょに台本を読むね。"),
+        detail("つづいて `src/a.ts` を直すね。"),
+        edit("src/a.ts"),
+        detail(materialReport("直した結果")),
+      ],
+      false,
+    )
+
+    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([
+      undefined,
+      undefined,
+      materialReport("直した結果"),
+    ])
+  })
+
+  it("ツールが1つも続かなくても、まとまった資料は中間レポートとして残る", () => {
+    const turns = mainViewTurns(
+      [request("依頼"), detail(materialReport("調べた結果")), detail("できたよ")],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.report)).toEqual([materialReport("調べた結果"), "できたよ"])
+    expect(steps.map((step) => step.interim)).toEqual([true, false])
   })
 
   it("質問はツールに数えないので、質問の直前に書いた本文は残る", () => {
@@ -437,6 +480,24 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
     const turns = mainViewTurns([request("依頼"), detail("直したよ")], false)
 
     expect(turns[0]?.steps[0]?.report).toBe("直したよ")
+  })
+
+  it("進行中に次の本文が始まっても、ツールの続かない実況は露出しない", () => {
+    // 実況1が「最後のステップ」でなくなった瞬間に出てしまう経路（2026-09-21 に塞いだ）。
+    const turns = mainViewTurns(
+      [request("依頼"), detail("さいしょに台本を読むね。"), detail("つづいて ")],
+      true,
+    )
+
+    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([undefined, undefined])
+  })
+
+  it("進行中でも、ツールの続かない資料は次の本文が始まれば中間レポートになる", () => {
+    const turns = mainViewTurns([request("依頼"), detail(material), detail("つづいて ")], true)
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.report)).toEqual([material, undefined])
+    expect(steps.map((step) => step.interim)).toEqual([true, false])
   })
 
   it("進行中に隠すのはいちばん新しいターンだけで、前のターンの最終レポートは残る", () => {

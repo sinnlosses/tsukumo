@@ -342,8 +342,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 中間レポート
 
 - **英語識別子（予定）**: `interim`（`MainViewStep.interim`）
-- **定義**: **ターンの途中で出た、まとまった資料としての本文**。あとにツール呼び出しが続いた本文の
-  うち、構造の印を持ち短くないもの（`src/shared/main-view.ts` の `keepOnlyInterimReports`）。
+- **定義**: **ターンの途中で出た、まとまった資料としての本文**。やり取りの締めではない本文の
+  うち、構造の印を持ち短くないもの（`src/shared/main-view.ts` の `selectShownReports`）。
   メインビューには印を付けた枠で残る
 - **注記**: 同じ位置に出る**実況**（「まず読むね」「次はテスト」）は落とす。落とす／残すの規則は
   `docs/requirements.md` 4.2 が正典

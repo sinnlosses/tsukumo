@@ -25,7 +25,7 @@ export const MAX_MAIN_VIEW_TURNS = 5
  * 数え続けていた: 過去のやり取り720件で測ると22件（3.1%）が上限に当たり、うち16件は
  * **画面から何も消えていないのに**「これ以前の n 件は省略した」（最大62件）を出し、残り6件は
  * レポート1件を出してから消していた（2026-09-17 実測）。画面に出るものだけを数えると1つの
- * やり取りの最大は6件（中位数1・p99で4件。実況を落とす {@link keepOnlyInterimReports} が
+ * やり取りの最大は6件（中位数1・p99で4件。実況を落とす {@link selectShownReports} が
  * 効くため）で、この値には当たらない——**落とすための値ではなく、1つのやり取りが際限なく
  * 伸びたときの止め**（`src/browser/features/main-view/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
  * と同じ立場。常駐プロセスの持ち物の上限は `MAX_SESSION_STATE_TURNS` /
@@ -67,8 +67,8 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
 /**
  * 1ステップ＝レポート1件と、それに続く出来事（ユーザーの決定 2026-09-10）。
  *
- * `interim` は、その本文が**中間レポート**（あとにツールが続いたが、まとまった資料なので
- * 残した本文。`keepOnlyInterimReports`）かどうか。`report` が undefined のときは常に false。
+ * `interim` は、その本文が**中間レポート**（やり取りの締めではないが、まとまった資料なので
+ * 残した本文。`selectShownReports`）かどうか。`report` が undefined のときは常に false。
  * 見分けを付けて描くのは `src/browser/features/main-view/turn.tsx` の仕事で、判定はここに置く。
  *
  * `superseded` は、**自分より後ろに `report` を持つステップがあるか**（`markSupersededSteps`）。
@@ -137,7 +137,7 @@ export type MainViewTurn = {
  * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
  * `[<Report> | <QuestionRecord>]*`」）が、`src/browser/features/main-view/turn.tsx` はそこから描かない
  * （2026-09-16 決定。`docs/requirements.md` 4.2）。**{@link groupIntoTurns} /
- * {@link keepOnlyInterimReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
+ * {@link selectShownReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
  * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /
  * `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
  */
@@ -153,21 +153,21 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
  *
  * `turnInProgress` はそのときの `SessionState` の同名のフィールドで、**確定していない本文を
- * 出さない**ために要る（{@link hideUnsettledReport}）。
+ * 出さない**ために要る（{@link selectShownReports}）。
  */
 export function mainViewTurns(
   entries: readonly MainViewEntry[],
   turnInProgress: boolean,
 ): readonly MainViewTurn[] {
   const turns = groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)
-  return turns
-    .map((turn, index) =>
-      turnInProgress && index === turns.length - 1 ? hideUnsettledReport(turn) : turn,
-    )
-    .map((turn) => keepOnlyInterimReports(turn))
-    .map((turn) => markSupersededSteps(turn))
-    .map((turn) => markFinalReport(turn))
-    .map((turn) => limitTurnEntries(turn))
+  return (
+    turns
+      // 動いているのはいちばん新しいやり取りだけで、それ以外の本文はもう確定している。
+      .map((turn, index) => selectShownReports(turn, !turnInProgress || index !== turns.length - 1))
+      .map((turn) => markSupersededSteps(turn))
+      .map((turn) => markFinalReport(turn))
+      .map((turn) => limitTurnEntries(turn))
+  )
 }
 
 /**
@@ -274,64 +274,54 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 }
 
 /**
- * **ターンが進行中のあいだ、いちばん新しいやり取りの最後のステップの本文は、まだツールが1つも
- * 付いていないなら出さない**（`docs/requirements.md` 4.2。2026-09-21 決定。2026-09-20 に置いた
- * 「まとまった資料（{@link isInterimReport}）なら流れている最中でも出す」例外を外し、**確定した
- * 本文だけを出す**形へ揃えたもの）。
+ * **出す本文を選ぶ**（`docs/requirements.md` 4.2）。本文は3つに分かれ、残すのは前の2つ:
  *
- * 実況か資料かは「あとにツールが続くか」で決まるので、**ツールが付くまで確定しない**。
- * 確定しないものを出すと、`superseded`（{@link markSupersededSteps}）が true→false へ反転して
- * `<details>` が畳まれてから開き直す（2026-09-20 の指摘）ほか、外した例外の下では
- * **書きかけがまず最終レポートの囲い（実線）で出て、ツールが始まった瞬間に中間レポートの囲い
- * （破線）へ反転**し、**`markFinalReport` が書きかけのまま `final` を立てるので、書き上げる演出
- * （`src/browser/features/main-view/report-reveal.ts`）が始めた時点の DOM しか相手にしない**
- * （2026-09-21 の実測で、演出が相手にしたのは開始した時点の 74 文字だけ。最終的な本文
- * 1303 文字の 94% には筆が一度も通っていなかった）。
- * 確定してから出せば、一度出した本文は二度と消えず、囲いも演出の相手も最初から決まる。
+ * - **最終レポート**: そのやり取りの**締めの本文**（最後のステップの本文で、あとにツールが
+ *   続いていないもの）。**中身を問わず残す**——短い返事だけのターン（「直しておいたよ」）で
+ *   本文が空になってしまうため
+ * - **中間レポート**: それ以外の本文のうち、まとまった資料（{@link isInterimReport}）。
+ *   `interim` を立てて残す
+ * - **実況**: それ以外（構造の印が無いか、印があっても短い本文）。落とす。「まず読むね」
+ *   「次はテスト」のような実況はツールを呼ぶ合図としてしか書かれておらず、レポートとして読む
+ *   ものではない。**規約の条項（`src/server/core/report-notation.ts` の「前置きと締めを書かない」）
+ *   では抑えきれなかった**ので、tsukumo の側で落とす（4.2「なぜテキストの規約をやめたか」と
+ *   同じ立場）
  *
- * **最後のステップだけを見れば足りる。** `tool` の記録は `groupIntoTurns` が
- * `current.steps.at(-1)` にしか足さないので、最後でないステップは二度と `tool` を得ず、
- * {@link keepOnlyInterimReports} に本文を落とされることがない——つまり**最後以外の本文は
- * もう確定している**。
+ * **実況かどうかに「あとにツールが続いたか」を使わない**（2026-09-21 決定。それまでは
+ * ツールが続いた本文だけを落としていた）。`speak` は `speech` になって `tool` の記録にならないので、
+ * **本文 → `speak` → 本文 → ツール**という規約どおりの並びでは1つめの実況にツールが1つも付かず、
+ * 2つめの本文が始まって「最後のステップ」でなくなった瞬間に**露出したまま最後まで残っていた**
+ * （2026-09-21 の実測。場面 `narration-stuck`）。判定を構造の印1つへ寄せると、この並びでも
+ * 実況は一度も出ない。
  *
- * 代わりに、**進行中の本文はどれも流れて見えない**（ツールが始まるか、ターンが終わった時点で
- * 一度に出る）。ツールが始まった時点で出るほうは {@link keepOnlyInterimReports} が同時に
- * `interim` を立てるので、**中間レポートは最初から中間の囲いで出る**。
+ * `settled` は**そのやり取りがもう動いていないか**（進行中なのはいちばん新しいやり取りだけ。
+ * {@link mainViewTurns}）。**進行中のあいだ、締めの本文は出さない**（2026-09-21 決定。2026-09-20 に
+ * 置いた「まとまった資料なら流れている最中でも出す」例外も外してある）: 書きかけ
+ * （`partialUtterance`）は常に最後のステップへ積まれるので、締めの本文はまだ伸びる途中かも
+ * しれない。出してしまうと **(1)** 前の中間レポートの `superseded`（{@link markSupersededSteps}）が
+ * true→false へ反転して `<details>` が畳まれてから開き直し、**(2)** 書きかけのまま `final` が
+ * 立つので、書き上げる演出（`src/browser/features/main-view/report-reveal.ts`）が**始めた時点の
+ * DOM しか相手にしない**（2026-09-21 の実測で、演出が相手にしたのは開始した時点の 74 文字だけ。
+ * 最終的な本文 1303 文字の 94% には筆が一度も通っていなかった）。確定してから出せば、一度出した
+ * 本文は二度と消えず、囲いも演出の相手も最初から決まる。
+ *
+ * **締めかどうかは最後のステップだけを見れば決まる。** `tool` の記録は {@link groupIntoTurns} が
+ * `current.steps.at(-1)` にしか足さないので、最後でないステップにはもうツールが続かない。
+ *
+ * 代わりに、**進行中の本文はどれも流れて見えない**（資料はツールが始まった時点で中間レポートと
+ * して出て、締めの本文はターンが終わった時点で出る）。中間レポートは出た瞬間に `interim` が
+ * 立つので、**囲いは最初から破線**で、あとから反転しない。
  */
-function hideUnsettledReport(turn: MainViewTurn): MainViewTurn {
-  const last = turn.steps.at(-1)
-  if (last === undefined || last.report === undefined || hasToolRun(last)) {
-    return turn
-  }
-  return { ...turn, steps: [...turn.steps.slice(0, -1), { ...last, report: undefined }] }
-}
-
-/**
- * **あとにツール呼び出しが続いた本文のうち、実況だけを落とす**（`docs/requirements.md` 4.2。
- * 2026-09-16 決定）。「まず読むね」「次はテスト」のような実況は、ツールを呼ぶ合図としてしか
- * 書かれておらず、レポートとして読むものではない。**規約の条項（`src/server/core/report-notation.ts` の
- * 「前置きと締めを書かない」）では抑えきれなかった**ので、tsukumo の側で落とす
- * （4.2「なぜテキストの規約をやめたか」と同じ立場）。
- *
- * **まとまった資料（{@link isInterimReport}）は中間レポートとして残す**（同日にユーザーの指摘
- * 「枠組みされたまとまった資料がたまに出てくる」で、判定の材料を「ツールが続いたか」だけから
- * 「ツールが続いた**かつ**まとまっていない」の2条件へ狭めた）。
- *
- * **質問（`question`）はツールに数えない。** 質問は利用者が答える手前で止まる場所なので、
- * その直前に書いた本文は読むためのレポートとして残す（中間レポートにもしない）。
- *
- * **ツールを1つも呼ばないターンでは何も落ちない**（どのステップにも `tool` が続かない）。
- * 書きかけ（`partialUtterance`）は常に最後のステップなので、ここには掛からない——**出すか
- * どうかは先に {@link hideUnsettledReport} が決めている**（2026-09-20 に「出してから消す」＝
- * 2026-09-16 決定を覆した）。**その判定もここと同じ {@link hasToolRun} を見る**ので、進行中に
- * 出てくる本文は必ず「ツールが付いてから」で、`interim` は出た瞬間に立つ（2026-09-21）。
- */
-function keepOnlyInterimReports(turn: MainViewTurn): MainViewTurn {
+function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn {
   return {
     ...turn,
-    steps: turn.steps.map((step) => {
-      if (step.report === undefined || !hasToolRun(step)) {
+    steps: turn.steps.map((step, index) => {
+      if (step.report === undefined) {
         return step
+      }
+      // そのやり取りの締めの本文。終わっていれば最終レポート、動いている最中ならまだ伸びる。
+      if (index === turn.steps.length - 1 && !hasToolRun(step)) {
+        return settled ? step : { ...step, report: undefined }
       }
       return isInterimReport(step.report)
         ? { ...step, interim: true }
@@ -341,8 +331,11 @@ function keepOnlyInterimReports(turn: MainViewTurn): MainViewTurn {
 }
 
 /**
- * そのステップにツールの実行が続いたか（＝本文が実況か資料かを決められるか）。
- * **質問（`question`）はツールに数えない**（{@link keepOnlyInterimReports}）。
+ * そのステップのあとにツールの実行が続いたか。**その本文がやり取りの締めかどうか**の判定に使う
+ * （{@link selectShownReports}）——ツールが続いていれば、キャラクターはそのあとも作業をしている。
+ *
+ * **質問（`question`）はツールに数えない。** 質問は利用者が答える手前で止まる場所なので、
+ * その直前に書いた本文は締めの本文として扱う（中間レポートにもしない）。
  */
 function hasToolRun(step: MainViewStep): boolean {
   return step.actions.some((action) => action.kind === "tool")
@@ -366,8 +359,8 @@ const MIN_INTERIM_REPORT_LENGTH = 200
 /**
  * 「まとまった資料」か（＝中間レポートとして残すか）。**構造の印を持ち、かつ短くない**ものだけを
  * 資料と見なす。**迷ったら落とす側に倒してある**（印が無ければ長くても落とし、印があっても
- * 短ければ落とす）: 実況が残るとチラつきの指摘がそのまま戻るのに対し、これまでは同じ本文を
- * すべて落としていたので、残す側を絞っても以前より悪くはならない。
+ * 短ければ落とす）——実況が残るとチラつきの指摘がそのまま戻るのに対し、落としすぎても
+ * **締めの本文は必ず残る**（{@link selectShownReports}）ので、やり取りの結論は画面から消えない。
  */
 function isInterimReport(markdown: string): boolean {
   const lines = markdown.split("\n").filter((line) => line.trim() !== "")
@@ -380,7 +373,7 @@ function isInterimReport(markdown: string): boolean {
 
 /**
  * 各ステップに「自分より後ろに `report` を持つステップがあるか」（`superseded`）と、
- * `report` の先頭行（`firstLine`）を立てる。**`interim` の判定そのもの（`keepOnlyInterimReports`）
+ * `report` の先頭行（`firstLine`）を立てる。**`interim` の判定そのもの（`selectShownReports`）
  * は変えない**——このタスク（2026-09-16）で足すのは「畳むかどうか」の材料だけ。
  * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
  * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
@@ -442,7 +435,7 @@ function extractFirstLine(markdown: string): string {
  * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りだけに
  * 出す——本文が1つしか無いやり取りでは「最終」が何も区別せず、内容を持たない行になる。
  *
- * `interim` の判定（{@link keepOnlyInterimReports}）も `superseded`（{@link markSupersededSteps}）も
+ * `interim` の判定（{@link selectShownReports}）も `superseded`（{@link markSupersededSteps}）も
  * 変えない。
  */
 function markFinalReport(turn: MainViewTurn): MainViewTurn {
