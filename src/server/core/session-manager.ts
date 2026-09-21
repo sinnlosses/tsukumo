@@ -68,9 +68,10 @@ export type SessionCreateOptions = {
    * 同じように畳む）——分かれているのは「どちらから来たか」を呼び出し側が知れるようにする
    * ためだけ。
    *
-   * `request.character` は起こすキャラクターパックの名前で、**最初の1回は undefined**
-   * （呼び出し側の既定にまかせる）。`switch-character` で起こし直すときだけ名前が入る
-   * （docs/design.md 7章）。知らない名前のときに何を起こすかも呼び出し側が決める。
+   * `request.selection` は**これから起こすパックの決め方**で、起動時は「初期パック」、
+   * `switch-character` は「画面から選ばれた名前」、`set-chat-mode` は「いま出しているパックの
+   * まま」の3つ（docs/design.md 7章・13.6）。知らない名前のときに何を起こすかも、名前を
+   * 覚えるかどうかも呼び出し側が決める。
    * `request.chat` は雑談モードで起こすか（`docs/requirements.md` 4.9）。
    *
    * **待てる形（Promise）で返す**のは、そのパックの続きから始めるセッションを探すのに
@@ -297,7 +298,9 @@ function createSessionHost(
     return starting
   }
 
-  let driver = start({ character: undefined, chat: undefined })
+  // **起動時は覚えない** — その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の
+  // 初期値として残らないように（docs/design.md 13.6）。
+  let driver = start({ selection: { by: "initial" }, chat: undefined })
 
   /**
    * 駆動を起こし直す（docs/design.md 7章。**そのパックのセッションの
@@ -367,7 +370,9 @@ function createSessionHost(
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
         }
         // **雑談かどうかは切り替えをまたいで保つ**（パックを変えただけで仕事へ戻らない）。
-        return restart({ character: command.name, chat: state.chatMode })
+        // 画面から名前が届いた唯一の口なので、**ここで選んだパックだけが次の起動の初期値に
+        // なる**（docs/design.md 13.6）。
+        return restart({ selection: { by: "name", name: command.name }, chat: state.chatMode })
       }
       if (command.type === "set-chat-mode") {
         // 起こし直しなので `switch-character` と同じ条件で弾く。
@@ -375,8 +380,9 @@ function createSessionHost(
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
         }
         // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
-        // とは決めていない）。
-        return restart({ character: state.character?.pack, chat: command.chat })
+        // とは決めていない）。**名前では渡さない** — 渡すと「画面から選ばれた名前」と
+        // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（docs/design.md 13.6）。
+        return restart({ selection: { by: "current" }, chat: command.chat })
       }
       if (command.type === "nudge") {
         // 画面のボタンも同じ2つの条件で塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が

@@ -10,6 +10,19 @@
  */
 export type NamedCharacterPack = { readonly name: string }
 
+/**
+ * これから起こすパックの決め方。**「画面から選ばれた名前」と「起こし直しに使ういま出している
+ * パック」を1つの欄で兼ねない**ための判別可能な合併型（兼ねていたせいで、モードを切り替えた
+ * だけの起こし直しでも覚えた値が書き換わっていた。docs/design.md 13.6）。
+ */
+export type CharacterSelection =
+  /** 起動時の初期パック（順位は {@link selectInitialCharacterPack}）。 */
+  | { readonly by: "initial" }
+  /** 画面から選ばれた名前。**覚えるのはこれだけ**（`src/server/core/session-launch.ts`）。 */
+  | { readonly by: "name"; readonly name: string }
+  /** いま出しているパックのまま起こし直す（モードの切り替え）。**名前は運ばない。** */
+  | { readonly by: "current" }
+
 /** 起動時の初期パックを決めるのに要るもの。 */
 export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> = {
   /** いま選べるパックの一覧。 */
@@ -29,8 +42,10 @@ export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> = {
  * 起動時の初期パック。優先順位は **その回の指定（`TSUKUMO_CHARACTER`）> 覚えた値 > 同梱の既定**
  * （docs/design.md 13.6「第3の扱い」）。
  *
- * 指定があるときは覚えた値を**読みに行かない**。環境変数は「その回の上書き」なので、覚えた値を
- * 上書きも参照もしない（覚えるのは画面から選んだときだけ）。
+ * 指定があるときは覚えた値を**読みに行かない**（環境変数は「その回の上書き」なので、前回の値に
+ * 勝つ）。**覚えた値への書き込みはここの持ち分ではない** — 書くのは画面から選んだときだけで、
+ * `TSUKUMO_CHARACTER` を指定していても画面から選べばそのとき覚える
+ * （`src/server/core/session-launch.ts`。docs/design.md 13.6）。
  */
 export function selectInitialCharacterPack<Pack extends NamedCharacterPack>(
   options: InitialCharacterPackOptions<Pack>,

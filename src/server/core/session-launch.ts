@@ -1,7 +1,7 @@
 // セッションを起こす一続き。**パックを決めて
 // 続きのセッションを探し、駆動を起こし、復元した履歴と `character-changed` を流すまでの順序**を
-// 持つのがここで、起動時（`session-manager.create`）と `switch-character` の起こし直し
-// （`session-manager.restart`）の両方がこの1つを通る。
+// 持つのがここで、起動時（`session-manager.create`）と起こし直し（`session-manager.restart`。
+// `switch-character` と `set-chat-mode`）の3つともこの1つを通る。
 //
 // **画面を初期状態に戻すかどうかは持たない** — それは起こし直しだけの判断で、
 // `src/server/core/session-manager.ts` の `restart` にある。ここは「どちらから来ても同じ順序」だけ。
@@ -10,7 +10,7 @@
 // 渡された関数（{@link SessionLaunchPorts}）越しに頼む。結ぶのは配線層（`src/session-start.ts`）。
 
 import { type SessionEvent } from "../../shared/session-event.ts"
-import { type NamedCharacterPack } from "./character-selection.ts"
+import { type CharacterSelection, type NamedCharacterPack } from "./character-selection.ts"
 import { type SessionDriver } from "./session-driver.ts"
 
 /** 駆動と同じ間だけ動く見張り（いまは `develop/tasks.json`）。駆動を閉じると一緒に閉じる。 */
@@ -29,12 +29,18 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
 }
 
 /**
- * 起こし直しの指定（`character` と `chat` のどちらも「変えない」がありうる）。**2つの
- * `| undefined` が別々の意味を持つ**ので、まとめて1つの入れ物で受ける。
+ * 起こす（起こし直す）ときの指定。**起こし方は3つ**で、パックの決め方（{@link CharacterSelection}）が
+ * そのまま「覚えるかどうか」も分ける:
+ *
+ * | 起こし方           | `selection`     | 覚えるか |
+ * | ------------------ | --------------- | -------- |
+ * | 起動               | `initial`       | 覚えない |
+ * | `switch-character` | `name`          | **覚える** |
+ * | `set-chat-mode`    | `current`       | 覚えない |
  */
 export type SessionLaunchRequest = {
-  /** 起こすキャラクターパックの名前。undefined なら呼び出し側の既定（起動時の初期パック）。 */
-  readonly character: string | undefined
+  /** これから起こすパックの決め方。 */
+  readonly selection: CharacterSelection
   /** 雑談モードで起こすか。undefined なら仕事（既定）。 */
   readonly chat: boolean | undefined
 }
@@ -42,11 +48,11 @@ export type SessionLaunchRequest = {
 /** 一続きの中で外の世界に頼むこと。実装はすべて配線層（`src/session-start.ts`）が `adapter` から渡す。 */
 export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /**
-   * これから起こすパックを決める。**`character` が入っているのは画面から選んだときだけ**で、
-   * 無ければ起動時の初期パック（`selectInitialCharacterPack` の結果）。知らない名前が
-   * 既定へ落ちるのも呼ばれた側（`selectCharacterPack`）の仕事。
+   * これから起こすパックを決める。**決め方の3つ（起動時の初期パック・画面から選ばれた名前・
+   * いま出しているパックのまま）を持ち主が区別する**ので、ここは選び方をそのまま渡すだけ。
+   * 知らない名前が既定へ落ちるのも呼ばれた側（`selectCharacterPack`）の仕事。
    */
-  readonly choosePack: (character: string | undefined) => Pack
+  readonly choosePack: (selection: CharacterSelection) => Pack
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly rememberPack: (pack: Pack) => void
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
@@ -72,7 +78,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * セッションを起こす関数を作る（`session-manager` の `startDriver` にそのまま渡せる形）。
  *
  * 順序は**起動時も起こし直しも同じ**:
- * パックを決める → 画面から選んだときだけ覚える → `character-changed` と `chat-mode-changed` を
+ * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed` と `chat-mode-changed` を
  * 流す → 見張りを起こす → 続きのセッションを探す → 駆動を起こす → 続きから始まったなら履歴を
  * 組み直す。
  *
@@ -90,12 +96,13 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
   request: SessionLaunchRequest,
 ) => Promise<SessionDriver> {
   return async (onEvent, onRestoredEvent, request) => {
-    const { character } = request
+    const { selection } = request
     const chat = request.chat ?? false
-    const pack = ports.choosePack(character)
-    // **覚えるのは画面から選んだときだけ。** 起動時にも覚えると、その回だけの指定や同梱の既定が
-    // 次の起動の初期値として残ってしまう（docs/design.md 13.6）。
-    if (character !== undefined) {
+    const pack = ports.choosePack(selection)
+    // **覚えるのは画面から名前が届いたときだけ。** 起動時やモードの切り替えでも覚えると、
+    // その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の初期値として残ってしまう
+    // （docs/design.md 13.6）。
+    if (selection.by === "name") {
       ports.rememberPack(pack)
     }
     onEvent(ports.characterEvent(pack))

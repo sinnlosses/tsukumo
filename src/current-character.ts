@@ -25,6 +25,7 @@ import {
   writeRememberedCharacter,
 } from "./server/adapter/remembered-character.ts"
 import {
+  type CharacterSelection,
   selectCharacterPack,
   selectInitialCharacterPack,
 } from "./server/core/character-selection.ts"
@@ -40,10 +41,10 @@ export type CurrentCharacter = {
    */
   readonly event: () => SessionEvent
   /**
-   * これから起こすパックへ持ち替える（`name` が入っているのは画面から選んだときだけで、
-   * 無ければ起動時の初期パック）。**知らない名前は既定へ落ちる。**
+   * これから起こすパックへ持ち替える（決め方の3つは {@link CharacterSelection}）。
+   * **知らない名前は既定へ落ちる。**
    */
-  readonly choose: (name: string | undefined) => CharacterPack
+  readonly choose: (selection: CharacterSelection) => CharacterPack
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly remember: (pack: CharacterPack) => void
   /**
@@ -96,10 +97,24 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
       isEditableCharacterPack(current, process.cwd()),
     )
 
+  // これから起こすパックを決め方から引く。**「画面から選ばれた名前」と「いま出しているパックの
+  // まま」を分けて受ける**ので、モードを切り替えただけの起こし直しが名前として届かない
+  // （docs/design.md 13.6）。
+  const chosen = (selection: CharacterSelection): CharacterPack => {
+    switch (selection.by) {
+      case "initial":
+        return initialPack
+      case "name":
+        return selectCharacterPack(packs, defaultPack, selection.name)
+      case "current":
+        return current
+    }
+  }
+
   return {
     event,
-    choose: (name) => {
-      current = name === undefined ? initialPack : selectCharacterPack(packs, defaultPack, name)
+    choose: (selection) => {
+      current = chosen(selection)
       return current
     },
     remember: (pack) => writeRememberedCharacter(pack.name),

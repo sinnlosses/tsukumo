@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { type CharacterSelection } from "../../../src/server/core/character-selection.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../src/server/core/chat-nudge.ts"
 import {
   type ChatArchive,
@@ -256,8 +257,8 @@ describe("createSessionManager", () => {
   })
 
   it("switch-character で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
-    // 起こされた駆動を順に覚える（`startDriver` に渡るパックの名前もここで見る）。
-    const started: { readonly character: string | undefined; readonly stub: StubDriver }[] = []
+    // 起こされた駆動を順に覚える（`startDriver` に渡るパックの決め方もここで見る）。
+    const started: { readonly selection: CharacterSelection; readonly stub: StubDriver }[] = []
     const manager = createSessionManager({
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
@@ -269,7 +270,7 @@ describe("createSessionManager", () => {
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
-        started.push({ character: request.character, stub })
+        started.push({ selection: request.selection, stub })
         return Promise.resolve(stub.driver)
       },
       editCharacter: () => Promise.resolve(undefined),
@@ -289,10 +290,11 @@ describe("createSessionManager", () => {
       }),
     ).toEqual({ ok: true })
 
-    // 前の駆動は閉じ、新しい駆動がパックの名前付きで起きている。
+    // 前の駆動は閉じ、新しい駆動が**画面から選ばれた名前**で起きている（＝覚える側。
+    // docs/design.md 13.6）。
     expect(started[0]?.stub.calls).toContain("close")
     expect(started).toHaveLength(2)
-    expect(started[1]?.character).toBe("fictional")
+    expect(started[1]?.selection).toEqual({ by: "name", name: "fictional" })
 
     // 購読者には、初期状態に戻した新しい hello が届く（吹き出し・立ち絵・メインビューが消える）。
     const hello = frames.filter((frame) => frame.type === "hello")
@@ -380,9 +382,12 @@ describe("createSessionManager", () => {
 
     expect(started).toHaveLength(2)
     expect(started[1]?.chat).toBe(true)
-    // パックは画面が知っているものをそのまま渡す（`character-changed` がまだ届いていないので
-    // undefined = 呼び出し側の既定）。
-    expect(started[1]?.character).toBe(undefined)
+    // **パックは「いま出しているまま」として渡す**（名前では渡さない）。名前で渡すと画面から
+    // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
+    // （docs/design.md 13.6）。
+    expect(started[1]?.selection).toEqual({ by: "current" })
+    // 起動の1回目は初期パック（こちらも覚えない側）。
+    expect(started[0]?.selection).toEqual({ by: "initial" })
   })
 
   it("雑談から仕事へ戻すときも起こし直す", async () => {
@@ -731,7 +736,7 @@ describe("createSessionManager", () => {
     manager.create({
       sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
-        if (request.character === undefined) {
+        if (request.selection.by === "initial") {
           const stub = createStubDriver()
           stub.attach(onEvent)
           return Promise.resolve(stub.driver)

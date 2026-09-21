@@ -98,7 +98,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/core/pending-answer.ts`                                          | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                       |
 | `src/server/core/session-manager.ts`                                         | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                     |
 | `src/server/core/session-launch.ts`                                          | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）               |
-| `src/server/core/character-selection.ts`                                     | core       | 初期パックの順位（指定 > 覚えた値 > 既定）と、知らない名前を既定へ落とす判断                         |
+| `src/server/core/character-selection.ts`                                     | core       | 初期パックの順位（指定 > 覚えた値 > 既定）・決め方の3つ・知らない名前を既定へ落とす判断              |
 | `src/server/adapter/server.ts`                                               | adapter    | ページ・同梱物・立ち絵・ファイル一覧の配信（`127.0.0.1` に listen するのはここ）                     |
 | `src/server/adapter/session-socket.ts`                                       | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                               |
 | `src/server/core/config.ts`                                                  | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                             |

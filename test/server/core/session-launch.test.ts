@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { type CharacterSelection } from "../../../src/server/core/character-selection.ts"
 import { type SessionDriver } from "../../../src/server/core/session-driver.ts"
 import {
   createSessionLaunch,
@@ -80,9 +81,9 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
   const stub = createStubDriver()
 
   const ports: SessionLaunchPorts<Pack> = {
-    choosePack: (character) => {
-      calls.push(`choosePack:${character ?? ""}`)
-      return character === undefined ? INITIAL : SWITCHED
+    choosePack: (selection) => {
+      calls.push(`choosePack:${labelOf(selection)}`)
+      return selection.by === "name" ? SWITCHED : INITIAL
     },
     rememberPack: (pack) => calls.push(`rememberPack:${pack.name}`),
     characterEvent: (pack) => characterEventOf(pack),
@@ -120,6 +121,11 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
   }
 }
 
+/** 呼ばれ方の記録に混ぜる、そのときのパックの決め方。 */
+function labelOf(selection: CharacterSelection): string {
+  return selection.by === "name" ? `name:${selection.name}` : selection.by
+}
+
 /** 呼ばれ方の記録に混ぜる、そのときのモード。 */
 function modeOf(chat: boolean): string {
   return chat ? "chat" : "work"
@@ -135,13 +141,13 @@ describe("createSessionLaunch", () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      character: undefined,
+      selection: { by: "initial" },
       chat: undefined,
     })
     await settle()
 
     expect(harness.calls).toEqual([
-      "choosePack:",
+      "choosePack:initial",
       "findResumeSession:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:prev-work-session",
       "restoreEvents:prev-work-session",
@@ -159,7 +165,7 @@ describe("createSessionLaunch", () => {
     })
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      character: undefined,
+      selection: { by: "initial" },
       chat: undefined,
     })
     await settle()
@@ -180,7 +186,7 @@ describe("createSessionLaunch", () => {
       harness.receive,
       harness.receiveRestored,
       {
-        character: undefined,
+        selection: { by: "initial" },
         chat: undefined,
       },
     )
@@ -198,7 +204,7 @@ describe("createSessionLaunch", () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      character: "kagami",
+      selection: { by: "name", name: "kagami" },
       chat: undefined,
     })
     await settle()
@@ -211,13 +217,13 @@ describe("createSessionLaunch", () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      character: undefined,
+      selection: { by: "initial" },
       chat: true,
     })
     await settle()
 
     expect(harness.calls).toEqual([
-      "choosePack:",
+      "choosePack:initial",
       "findResumeSession:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
       "restoreEvents:prev-chat-session",
@@ -228,11 +234,32 @@ describe("createSessionLaunch", () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      character: undefined,
+      selection: { by: "initial" },
       chat: undefined,
     })
     await settle()
 
+    expect(harness.calls.some((call) => call.startsWith("rememberPack:"))).toBe(false)
+  })
+
+  it("いま出しているパックのまま起こし直す（モードの切り替え）ときは覚えない", async () => {
+    // `set-chat-mode` の起こし直しがここを通る。**同じパックを起こすのは「画面から選ばれた」
+    // ことではない**ので、覚えた値（`~/.tsukumo/state.json`）は書き換わらない
+    // （docs/design.md 13.6）。
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "current" },
+      chat: true,
+    })
+    await settle()
+
+    expect(harness.calls).toEqual([
+      "choosePack:current",
+      "findResumeSession:tsukumo-spirit:chat",
+      "startDriver:tsukumo-spirit:chat:prev-chat-session",
+      "restoreEvents:prev-chat-session",
+    ])
     expect(harness.calls.some((call) => call.startsWith("rememberPack:"))).toBe(false)
   })
 
@@ -243,7 +270,7 @@ describe("createSessionLaunch", () => {
       harness.receive,
       harness.receiveRestored,
       {
-        character: undefined,
+        selection: { by: "initial" },
         chat: undefined,
       },
     )
@@ -262,7 +289,7 @@ describe("createSessionLaunch", () => {
     })
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      character: undefined,
+      selection: { by: "initial" },
       chat: undefined,
     })
     await settle()
@@ -274,7 +301,7 @@ describe("createSessionLaunch", () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      character: undefined,
+      selection: { by: "initial" },
       chat: undefined,
     })
     await settle()

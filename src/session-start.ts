@@ -1,7 +1,7 @@
 // セッションを1つ起こす配線。**どの駆動で起こすか（本物の SDK か疑似セッションの fake driver
 // か）と、続きから始めるセッションをどう探すか**をここで決め、起こす順序そのものは
-// `src/server/core/session-launch.ts` に任せる（起動時も `switch-character` の起こし直しも
-// 同じ関数を通る）。
+// `src/server/core/session-launch.ts` に任せる（起動時も起こし直し（`switch-character` /
+// `set-chat-mode`）も同じ関数を通る）。
 //
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
 
@@ -82,7 +82,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
   manager.create({
     sessionId,
     startDriver: createSessionLaunch<CharacterPack>({
-      choosePack: (name) => character.choose(name),
+      choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
       characterEvent: () => character.event(),
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
