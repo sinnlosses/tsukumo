@@ -101,10 +101,12 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
   **`src/server/adapter/` の1ファイルに閉じ込める**（1ファイル = 1つの境界）
 - **原則4**: **キャラクターの中身をコードに書かない**（素材のパス・表情・衣装の対応は定義ファイル側）
 - **原則5**: まとめるか分けるかは、行数でも関数の数でもなく「**ファイル名が概念になっているか**」で
-  決める。`helpers` / `utils` / `common` のような**置き場所を名前にしたファイルは作らない**。
+  決める。`helpers.ts` / `utils.ts` / `common.ts` のような**置き場所を名前にしたファイルは作らない**。
   **ファイルは単数形**にし、複数は「複数返す」関数名の側で表す。**ディレクトリも単数形。ただし
-  `src/browser/` の置き場所（`features/` `components/` `lib/` `stores/` `styles/`）だけ
-  bullet-proof-react の名前をそのまま使う**（`docs/design.md` 2章）
+  置き場所を名前にしたディレクトリ（`src/browser/` の `features/` `components/` `stores/` `styles/` と、
+  どの層にも作ってよい `lib/` `utils/`）だけ bullet-proof-react の名前をそのまま使う**。
+  **`lib/` と `utils/` のどちらに置くかの基準は `docs/design.md` 2章
+  「`lib/` と `utils/` に置く基準」が正典**（`helpers/` と `common/` は作らない）
 
 **3層・プロトコル・部品・段階の設計は [`docs/design.md`](./docs/design.md) が正典。
 実装の全体図、過去の設計判断（なぜこの形なのか）、描画の目視確認の手順、既知の制約は

@@ -349,8 +349,11 @@ import してよい先が決まっている**（表は二重に書かず `docs/d
 （名前が広く知られていることのほうが、単数形で揃うことより読み手の助けになる、というユーザーの
 選択）。**例外はこの5つだけ**で、`src/shared/` `src/server/core/` `src/server/adapter/` と、機能の中の
 ディレクトリ・ファイル名は単数形のまま（`features/main-view/markdown/` のように**概念の名前**を
-付ける）。**`utils/` `helpers/` `common/` は引き続き作らない**（bullet-proof-react にある
-`utils/` も採らない。理由と、`src/browser/` の箱ごとの置く基準は `docs/design.md` 2章）。
+付ける）。**置き場所を名前にしたディレクトリのうち、`lib/` と `utils/` はどの層の中にも作ってよく、
+`helpers/` と `common/` は作らない**（2026-09-21 決定。どちらの箱に置くかの判定手順・`utils/` を
+受け皿にしないための歯止め・層ごとの読み方は二重に書かず `docs/design.md` 2章
+「`lib/` と `utils/` に置く基準」を正典とする）。**ファイル名としての `utils.ts` / `helpers.ts` /
+`common.ts` は引き続き作らない**（許したのはディレクトリの名前だけで、ファイル名は概念のまま）。
 
 **barrel file を作らない。** ディレクトリに `index.ts` を置いて中身をまとめて re-export しない
 （import は実ファイルを直接指す）。理由は2つ: (1) 束ねるときの tree-shaking が効かなくなる

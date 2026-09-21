@@ -201,14 +201,15 @@ src/
       character-screen/       キャラクター画面と作る画面（13.6）。立ち絵・差し色の差し替え、使う人が変える色
                               （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
     components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
-    lib/                      機能の語彙を持たない道具（WebSocket・再読み込み・要約・設定の保存）
+    lib/                      名指しできる技術を知っている道具（WebSocket・`FileReader`・React の hook）
     stores/                   画面全体で共有する状態（セッション・選んでいるターン・出している画面）
     styles/                   グローバルな CSS はこの1枚だけ（theme.css。トークン・body・リンク）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts（いまのまま）
 characters/<name>/            character.json・persona.md・素材
 ```
 
-**ファイル名は概念**（原則5）。`helpers` / `utils` / `common` は作らない。**単数形の規約は
+**ファイル名は概念**（原則5）。`helpers/` と `common/` は作らない（`lib/` と `utils/` を
+置く基準は下の「`lib/` と `utils/` に置く基準」）。**単数形の規約は
 `src/browser/` の置き場所のディレクトリ（`features/` `components/` `lib/` `stores/` `styles/`）だけ
 外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
 `adapter` と、
@@ -217,14 +218,15 @@ characters/<name>/            character.json・persona.md・素材
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
 「その機能しか読まないなら機能の中」が既定）:
 
-| 箱            | 置くもの                                                          | import してよい先                          |
-| ------------- | ----------------------------------------------------------------- | ------------------------------------------ |
-| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root） | すべて                                     |
-| `features/`   | 1つの機能に閉じた部品・状態・保存                                 | `components` / `lib` / `stores` / `shared` |
-| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る） | `lib` / `shared`                           |
-| `lib/`        | 機能の語彙を持たない道具（React の部品ではないもの）              | `shared`                                   |
-| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook   | `lib` / `shared`                           |
-| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）  | —                                          |
+| 箱            | 置くもの                                                            | import してよい先                                    |
+| ------------- | ------------------------------------------------------------------- | ---------------------------------------------------- |
+| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）   | すべて                                               |
+| `features/`   | 1つの機能に閉じた部品・状態・保存                                   | `components` / `lib` / `utils` / `stores` / `shared` |
+| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）   | `lib` / `utils` / `shared`                           |
+| `lib/`        | **名指しできる技術**を知っている道具（React の部品ではないもの）    | `utils` / `shared`                                   |
+| `utils/`      | **どの技術も知らない**小物（下の「`lib/` と `utils/` に置く基準」） | —（何も import しない）                              |
+| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook     | `lib` / `utils` / `shared`                           |
+| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）    | —                                                    |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
   （zustand を入れない決定は 6.2 のまま）。実体は4つあり、
@@ -250,11 +252,82 @@ characters/<name>/            character.json・persona.md・素材
 - 検査は `test/architecture.test.ts`（`BROWSER_REGIONS` が機能どうしの横の辺を、
   `BROWSER_BOXES` が箱をまたぐ縦の辺を落とす）
 
-**採らなかった bullet-proof-react の要素**（`app/` `api/` `types/` `utils/` `hooks/` `config/`
+**採らなかった bullet-proof-react の要素**（`app/` `api/` `types/` `hooks/` `config/`
 `assets/` `testing/`・barrel file・`@/` の絶対 import・機能の中の下位ディレクトリ・ESLint の
 `import/no-restricted-paths`）は、**実体が無い箱を先に作らない**ため。要るようになったら足す
 （1つずつの理由は `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（採らなかった
-bullet-proof-react の要素）」）。
+bullet-proof-react の要素）」）。**`utils/` だけは 2026-09-21 に採ることにした**（次の節）。
+
+### `lib/` と `utils/` に置く基準
+
+**どの層の中にも `lib/` と `utils/` を作ってよい**（2026-09-21 決定。それまでは「作らない」と
+明記していた）。層（`shared` / `server/core` / `server/adapter` / `browser`）が表すのは
+**どの実行環境の話か**で、`lib/` と `utils/` はその**層の中**で「tsukumo の語彙を名乗らない道具」を
+2つに分ける箱。**層をまたぐ import の可否は変わらない**（上の「層と依存の向き」の表がそのまま
+効く。`lib/` に入れても `core → adapter` は禁止のまま）。
+
+**判定は、ファイル名が指している概念1つで決める**（原則5「ファイル名が概念になっているか」の
+続き）。手順は2つで、手順1で箱に入ると決まったものだけが手順2に進む。
+
+**手順1 — そもそも箱に入れるか**
+
+- ファイル名が指すのが **tsukumo の語彙**（`docs/glossary.md` に載る語。セッション・ターン・
+  立ち絵・表情・キャラクターパック・フレーム・覆い…）なら、`lib/` にも `utils/` にも置かない。
+  層の直下に平置きする
+- `src/browser/features/` の中のものは、**その機能しか読まないなら機能の中に残す**
+  （上げる引き金は「2つ目の読み手が出たとき」。`features/layout/split.ts` と
+  `features/main-view/markdown/split-blocks.ts` がその例で、名前が形式（Markdown）を指していても
+  読み手が1つなので機能の中）
+
+**手順2 — `lib/` か `utils/` か**
+
+| ファイル名が指しているもの                                                                                                             | 箱       | 例                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| **名指しできる技術・外部システム・ファイル形式**（React・DOM・WebSocket・`node:fs`・`git`・Agent SDK・Claude Code のツール・data URL） | `lib/`   | `browser/lib/socket.ts`（WebSocket）・`browser/lib/data-url.ts`（`FileReader`） |
+| **どの技術にも属さない一般的な手法・演算**（説明に固有名詞が1つも要らないもの）                                                        | `utils/` | `retry.ts` / `partition.ts` / `clamp.ts`                                        |
+
+**「複数箇所から呼ばれる」は `lib/` にも `utils/` にも置く理由にならない**（helm-yadokari の原則2と
+同じ）。読み手が2つになったら箱へ**上げる**が、上げた先がどちらかは上の表だけで決める。
+`browser/lib/debounce.ts` は**手法の名前**だが React の hook（`useEffect` / `useRef`）なので
+`lib/` 側、というのが境目の例。
+
+**`utils/` を「どこにも属さない小物」の受け皿にしないための歯止め**（3つとも満たすものだけ置ける）:
+
+1. **import が同じ `utils/` の中だけ**であること。外部パッケージ・`node:` プレフィックス・
+   `shared/` の型のどれか1つでも引いたら、その時点で `utils/` ではない
+   （技術を引いたなら `lib/`、`shared/` の型を引いたなら層の直下）
+2. **ファイル名が動詞か、名前の付いた手法**であること。`string.ts` `object.ts` `format.ts` の
+   ような**型・種類の名前**と、`misc.ts` は置けない
+3. **別のプロジェクトへ1文字も変えずにコピーして意味が通る**こと
+
+**`helpers/` と `common/` は引き続き作らない。**「助ける」「共通」は上のような判定の問いを1つも
+持たず、何を置いてよいかが決まらないため（`lib/` と `utils/` は表の1行で判定できるから許した）。
+**ファイル名としての `utils.ts` / `helpers.ts` / `common.ts` も引き続き作らない** — 許したのは
+**ディレクトリの名前**だけで、ファイル名は概念のまま（原則5）。
+
+**層ごとの読み方**:
+
+- `server/adapter/` の直下は**1ファイル = 1つの境界**（`orca-host.ts` / `sdk-driver.ts`）。
+  `adapter/lib/` はその下の段で、**境界を名乗らず、技術の扱い方だけを知っている道具**
+  （「JSONL を1行ずつ読む」「`~` を展開する」）が入る。`adapter` にあるから `lib/` になるのではなく、
+  **ファイル名が tsukumo の境界を名乗るかどうか**で分かれる
+- `server/core/` は外の世界に触れないので、`core/lib/` に入れてよいのは **`node:` を要求しない
+  技術**（zod の扱いなど）だけ。`core` の小物はたいてい `core/utils/` 側になる
+- `shared/` の `lib/` は**両方の実行環境で動く技術**だけ（`node:` も `document` も触らない）
+- **`src/browser/utils/` を実際に作るときは、`test/architecture.test.ts` の `BROWSER_BOXES` と
+  `ALLOWED_BROWSER_BOX_IMPORTS` に上の表と同じ辺を足す**（足さないと `browserBoxOf` が throw する）
+
+**いまのファイルの行き先**（2026-09-21 時点の分類。移動そのものは別タスク）:
+
+- `browser/lib/` の6つは**すべて `lib/` のまま**。`socket.ts`=WebSocket、`refresh.ts`=`<link>` と
+  `location`、`data-url.ts`=`FileReader`、`debounce.ts`=React、`prompt-image.ts`=`canvas`、
+  `tool-summary.ts`=Claude Code のツール名。いずれも技術を名乗っている
+- `shared/image-data-url.ts` は **`shared/lib/` へ**。名前が指すのは data URL という**形式**で、
+  tsukumo の語彙を名乗らず、import も持たない（読み手は `portrait-image.ts` /
+  `character-background.ts` / `prompt-image.ts` の3つ）
+- **`utils/` に入るものは、いまは1つも無い。** `shared/` `server/core/` `server/adapter/` の平置きは
+  すべて tsukumo の語彙を名乗っている（手順1）ので動かさない。**実体が無い箱は先に作らない**ので、
+  `utils/` は最初の1件が出たときに作る
 
 ## 3. 動きの流れ
 
