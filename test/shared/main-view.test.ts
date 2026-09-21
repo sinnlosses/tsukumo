@@ -403,10 +403,34 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
     expect(turns[0]?.steps[0]?.report).toBeUndefined()
   })
 
-  it("進行中でも、資料と判定できる本文は最後のステップでも出す", () => {
+  it("進行中は、資料と判定できる本文でも、ツールが付くまで出さない", () => {
     const turns = mainViewTurns([request("依頼"), detail(material)], true)
 
-    expect(turns[0]?.steps[0]?.report).toBe(material)
+    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+  })
+
+  it("書きかけのあいだは final が立たない（書き上げる演出が途中の本文を相手にしない）", () => {
+    const streaming = mainViewTurns([request("依頼"), detail(material)], true)
+    const settled = mainViewTurns([request("依頼"), detail(material)], false)
+
+    expect(streaming[0]?.steps.map((step) => step.final)).toEqual([false])
+    expect(settled[0]?.steps.map((step) => step.final)).toEqual([true])
+  })
+
+  it("ツールが付いた資料は、出たその時点から中間レポート（囲いが実線から反転しない）", () => {
+    const beforeTool = mainViewTurns([request("依頼"), detail(material)], true)
+    const afterTool = mainViewTurns([request("依頼"), detail(material), edit("src/a.ts")], true)
+
+    expect(beforeTool[0]?.steps[0]?.report).toBeUndefined()
+    expect(afterTool[0]?.steps[0]?.report).toBe(material)
+    expect(afterTool[0]?.steps[0]?.interim).toBe(true)
+    expect(afterTool[0]?.steps[0]?.final).toBe(false)
+  })
+
+  it("質問はツールに数えないので、その手前の本文は進行中のあいだ出ない", () => {
+    const turns = mainViewTurns([request("依頼"), detail(material), question("どっち？")], true)
+
+    expect(turns[0]?.steps[0]?.report).toBeUndefined()
   })
 
   it("ターンが終われば、短い最終レポートも出る", () => {

@@ -274,27 +274,33 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 }
 
 /**
- * **ターンが進行中のあいだ、いちばん新しいやり取りの最後のステップの本文は、まとまった資料
- * （{@link isInterimReport}）と判定できたときだけ出す**（`docs/requirements.md` 4.2。
- * 2026-09-20 決定。それまでの「出してから消す」を覆したもの）。
+ * **ターンが進行中のあいだ、いちばん新しいやり取りの最後のステップの本文は、まだツールが1つも
+ * 付いていないなら出さない**（`docs/requirements.md` 4.2。2026-09-21 決定。2026-09-20 に置いた
+ * 「まとまった資料（{@link isInterimReport}）なら流れている最中でも出す」例外を外し、**確定した
+ * 本文だけを出す**形へ揃えたもの）。
  *
- * 実況か資料かは「あとにツールが続くか」で決まるので、**流れている時点では確定しない**。
- * 確定しないものを出してから消すと、前の中間レポートの `superseded`（{@link markSupersededSteps}）が
- * true→false へ反転し、`<details>` が畳まれてから開き直してチラつく（2026-09-20 の指摘）。
- * 確定するまで出さなければ、**一度出した本文は二度と消えない**ので反転も起きない。
+ * 実況か資料かは「あとにツールが続くか」で決まるので、**ツールが付くまで確定しない**。
+ * 確定しないものを出すと、`superseded`（{@link markSupersededSteps}）が true→false へ反転して
+ * `<details>` が畳まれてから開き直す（2026-09-20 の指摘）ほか、外した例外の下では
+ * **書きかけがまず最終レポートの囲い（実線）で出て、ツールが始まった瞬間に中間レポートの囲い
+ * （破線）へ反転**し、**`markFinalReport` が書きかけのまま `final` を立てるので、書き上げる演出
+ * （`src/browser/features/main-view/report-reveal.ts`）が始めた時点の DOM しか相手にしない**
+ * （2026-09-21 の実測で、演出が相手にしたのは開始した時点の 74 文字だけ。最終的な本文
+ * 1303 文字の 94% には筆が一度も通っていなかった）。
+ * 確定してから出せば、一度出した本文は二度と消えず、囲いも演出の相手も最初から決まる。
  *
  * **最後のステップだけを見れば足りる。** `tool` の記録は `groupIntoTurns` が
  * `current.steps.at(-1)` にしか足さないので、最後でないステップは二度と `tool` を得ず、
  * {@link keepOnlyInterimReports} に本文を落とされることがない——つまり**最後以外の本文は
  * もう確定している**。
  *
- * 代わりに、構造の印が無く短い**最終レポート**はターンが終わるまで出ない（終わった瞬間に出る）。
- * 流れて見える感じを失うのはその範囲だけで、長い本文・構造を持つ本文は今までどおり閾値を
- * 越えた時点から流れる。
+ * 代わりに、**進行中の本文はどれも流れて見えない**（ツールが始まるか、ターンが終わった時点で
+ * 一度に出る）。ツールが始まった時点で出るほうは {@link keepOnlyInterimReports} が同時に
+ * `interim` を立てるので、**中間レポートは最初から中間の囲いで出る**。
  */
 function hideUnsettledReport(turn: MainViewTurn): MainViewTurn {
   const last = turn.steps.at(-1)
-  if (last === undefined || last.report === undefined || isInterimReport(last.report)) {
+  if (last === undefined || last.report === undefined || hasToolRun(last)) {
     return turn
   }
   return { ...turn, steps: [...turn.steps.slice(0, -1), { ...last, report: undefined }] }
@@ -317,13 +323,14 @@ function hideUnsettledReport(turn: MainViewTurn): MainViewTurn {
  * **ツールを1つも呼ばないターンでは何も落ちない**（どのステップにも `tool` が続かない）。
  * 書きかけ（`partialUtterance`）は常に最後のステップなので、ここには掛からない——**出すか
  * どうかは先に {@link hideUnsettledReport} が決めている**（2026-09-20 に「出してから消す」＝
- * 2026-09-16 決定を覆した）。
+ * 2026-09-16 決定を覆した）。**その判定もここと同じ {@link hasToolRun} を見る**ので、進行中に
+ * 出てくる本文は必ず「ツールが付いてから」で、`interim` は出た瞬間に立つ（2026-09-21）。
  */
 function keepOnlyInterimReports(turn: MainViewTurn): MainViewTurn {
   return {
     ...turn,
     steps: turn.steps.map((step) => {
-      if (step.report === undefined || !step.actions.some((action) => action.kind === "tool")) {
+      if (step.report === undefined || !hasToolRun(step)) {
         return step
       }
       return isInterimReport(step.report)
@@ -331,6 +338,14 @@ function keepOnlyInterimReports(turn: MainViewTurn): MainViewTurn {
         : { ...step, report: undefined }
     }),
   }
+}
+
+/**
+ * そのステップにツールの実行が続いたか（＝本文が実況か資料かを決められるか）。
+ * **質問（`question`）はツールに数えない**（{@link keepOnlyInterimReports}）。
+ */
+function hasToolRun(step: MainViewStep): boolean {
+  return step.actions.some((action) => action.kind === "tool")
 }
 
 /**
