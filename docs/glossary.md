@@ -451,8 +451,9 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: Claude Code の応答の人格・口調を定義する設定。実測環境では `Asuna` が有効
 - **注記**: 衣装のモデル分岐は、この output style の「出撃時の掛け声」と対応させる。
   **`speak` を呼ぶタイミングの規約もここに書く**（`docs/requirements.md` 4.2）
-- **注記**: **SDK で効くかは未確認**（`docs/requirements.md`「7. 未決事項」）。効かないときは
-  `systemPrompt` の preset に中身を足す形に倒す
+- **注記**: **人格は毎ターン `systemPrompt` の append として渡っている**
+  （`src/server/adapter/sdk-driver.ts` が `{ type: "preset", preset: "claude_code", append }` を組む）。
+  2026-09-11 のスパイクで確かめてあり、未決ではない
 
 ## 通信（移行後）
 
