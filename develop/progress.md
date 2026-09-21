@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-21 台本に描かれていなかった記法の class を足した（T-264）
+
+`notation` の場面に `note` / `note-ng` / `note-favor` / `badge-warn` / `badge-ng` / `stats` / `stat` を架空の文面で足し、上限に触れて外した `note-warn` は `report` の場面へ移した。これで 12個の class がすべてどこかの場面で描かれる。
+
 ### 2026-09-21 雑談の記憶の逐語の読み戻しを実装した（T-262）
 
 `ChatArchive.readRecent` を `adapter` に足し、`chat-summary-prompt.ts` を `chat-memory-prompt.ts` へ改名して要約の写しと直近 16 KiB の逐語を1回で組み立てるようにした。写しがまだ無くても逐語は載る。

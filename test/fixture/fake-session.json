@@ -113,7 +113,7 @@
           "afterMs": 900,
           "event": {
             "kind": "utterance",
-            "text": "## 台本のレポート\n\nこれは架空の本文で、実物の会話ではない。\n\n- 段2 の配信の経路を確かめるための台本\n- 表・コードなどの記法は段6で unified に置き換わる\n"
+            "text": "## 台本のレポート\n\nこれは架空の本文で、実物の会話ではない。\n\n- 段2 の配信の経路を確かめるための台本\n- 表・コードなどの記法は段6で unified に置き換わる\n\n<div class=\"note note-warn\">注意：この台本の中身はすべて架空で、実物の会話ではない。</div>\n"
           }
         },
         {
@@ -493,14 +493,14 @@
           "afterMs": 200,
           "event": {
             "kind": "partial-utterance",
-            "text": "項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
+            "text": "項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note\">結論：ここに並べた記法はすべて架空の例。</div>\n\n<div class=\"note note-ng\">問題：架空の数値なので実際の判断には使えない。</div>\n\n<span class=\"badge badge-ok\">OK</span> <span class=\"badge badge-warn\">要注意</span> <span class=\"badge badge-ng\">NG</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n<div class=\"stats\"><div class=\"stat\"><b>4</b>色</div><div class=\"stat\"><b>9</b>種類</div><div class=\"stat\"><b>2</b>段階</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n\n<div class=\"note note-favor\">この一覧の見え方に気づいた点があれば教えてください（架空の例）。</div>\n"
           }
         },
         {
           "afterMs": 400,
           "event": {
             "kind": "speech",
-            "text": "記法の見本を出したよ。引用・ネスト・区切り線・表・図・グラフの架空の例。",
+            "text": "記法の見本を出したよ。引用・ネスト・区切り線・表・注意・状態・見比べ・数の塊・図・グラフ・お願いの架空の例。",
             "expression": "proud"
           }
         },
@@ -508,7 +508,7 @@
           "afterMs": 600,
           "event": {
             "kind": "utterance",
-            "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- 項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note note-warn\">注意：これは架空のテスト文面。</div>\n\n<span class=\"badge badge-ok\">OK</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n"
+            "text": "## 表現の一覧（架空）\n\n> これは引用のテスト。実物の会話ではない。\n\n- 項目1\n  - 子項目1\n  - 子項目2\n- 項目2\n\n---\n\n| 項目 | 状態 | 値 |\n| --- | :---: | ---: |\n| A | ok | 12 |\n| B | ng | 3 |\n\n<div class=\"note\">結論：ここに並べた記法はすべて架空の例。</div>\n\n<div class=\"note note-ng\">問題：架空の数値なので実際の判断には使えない。</div>\n\n<span class=\"badge badge-ok\">OK</span> <span class=\"badge badge-warn\">要注意</span> <span class=\"badge badge-ng\">NG</span>\n\n<div class=\"cols\"><div class=\"card\">案A（架空）</div><div class=\"card\">案B（架空）</div></div>\n\n<div class=\"stats\"><div class=\"stat\"><b>4</b>色</div><div class=\"stat\"><b>9</b>種類</div><div class=\"stat\"><b>2</b>段階</div></div>\n\n```mermaid\nflowchart TD\n  A[開始] --> B[確認]\n  B --> C[完了]\n```\n\n```chart\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\",\"C\"],\"datasets\":[{\"label\":\"架空の値\",\"data\":[1,2,3]}]}}\n```\n\n<div class=\"note note-favor\">この一覧の見え方に気づいた点があれば教えてください（架空の例）。</div>\n"
           }
         },
         {

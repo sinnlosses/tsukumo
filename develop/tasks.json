@@ -6,9 +6,9 @@
     "dependencies": [],
     "summary": "台本の notation の場面に、描かれていない7つの class を足す",
     "task": "## 背景\n\n提案書 `docs/research/ui-catalog.md`（2026-09-21）の実測: **記法は\n`src/browser/features/main-view/markdown/notation.tsx` が12の class を解決するのに、台本\n（`test/fixture/fake-session.json`）の `notation` の場面が出すのは4つだけ**。\n\n**未描画の7つ**: `note` / `note-ng` / `note-favor` / `badge-warn` / `badge-ng` / `stats` /\n`stat`。\n\n描かれていない記法は、壊れても目視で気づけない。\n\n## やること\n\n1. `src/browser/features/main-view/markdown/notation.tsx` を読み、解決している class を\n   実際に数え上げる（提案書の「12の class」「4つだけ」が今も正しいか確かめる。ズレていたら\n   実測のほうを採る）\n2. `test/fixture/fake-session.json` の `notation` の場面に、未描画の class を使う本文を\n   書き足す。**架空の文面**にする（実物の会話は使わない）\n3. `src/server/core/report-notation.ts` の記法の表に載っている使い方に沿った書き方にする\n   （`note` は1〜2個まで、`note-favor` はいちばん最後に1つ、など）\n\n## 完了条件\n\n- `bun run check` が通る\n- `bun run scripts/capture-catalog.ts --only notation` で撮った画像に、足した7つの class が\n  それぞれ描かれていることを目で確かめた証拠が `evidence` にある\n  （領域の下のほうが1枚に入らない場合は、T-263 を待たずにスクロールさせて撮ってよい）\n\n## 注意\n\n- 台本の既存の場面を壊さない（`turns[].name` を変えない）\n- 実物の会話をフィクスチャに使わない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`notation.tsx` の `NOTATION_CLASS_NAMES` は実測 12個で提案書と一致。台本の `notation` の場面に `note`（素）・`note-ng`・`note-favor`（最後に1つ）・`badge-warn`・`badge-ng`・`stats`/`stat`（3枚）を架空の文面で足した。「note は1つのレポートに1〜2個まで」を守るため `notation` からは `note-warn` を外したので、代わりに **`report` の場面のレポートに `note-warn` を1つ置いた**（別のレポートなので上限に触れない）。`bun run check` 952 pass / 0 fail（着手前と同数）。目視は実ブラウザ（1400x900）で class の有無を数え、`notation` が 12個中 11個（note-warn 以外）、`report` が `note` と `note-warn` を描いていることを確認——**合わせて 12個すべてが描かれている**。画像でも確認: notation-wide に note（灰の箱）と note-ng（赤の縦罫）、notation-figure-wide に cols/card と stats の3枚のタイル（4色／9種類／2段階）、report-wide に note-warn（黄の縦罫）。badge の3色と note-favor は class の走査で確認。"
   },
   {
     "id": "T-265",
