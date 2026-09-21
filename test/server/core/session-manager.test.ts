@@ -27,7 +27,12 @@ const SESSION_ID = "s-test"
 const BATCH_MS = 5
 
 /** 雑談の会話のアーカイブを気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_CHAT_ARCHIVE: ChatArchive = { append: () => {}, readRecent: () => [] }
+const NOOP_CHAT_ARCHIVE: ChatArchive = {
+  append: () => {},
+  keep: () => {},
+  finishTurn: () => {},
+  readRecent: () => ({ kept: [], recent: [] }),
+}
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
@@ -540,7 +545,9 @@ describe("createSessionManager", () => {
         append: (_packName, entry) => {
           entries.push(entry)
         },
-        readRecent: () => [],
+        keep: () => {},
+        finishTurn: () => {},
+        readRecent: () => ({ kept: [], recent: [] }),
       }
     }
 
@@ -928,12 +935,17 @@ describe("createSessionManager", () => {
     function startArchiveManagerWithStub() {
       const stub = createStubDriver()
       const archiveCalls: { readonly packName: string; readonly entry: ChatArchiveEntry }[] = []
+      const finishTurnCalls = { count: 0 }
       const chatArchive: ChatArchive = {
         append: (packName, entry) => {
           archiveCalls.push({ packName, entry })
         },
+        keep: () => {},
+        finishTurn: () => {
+          finishTurnCalls.count += 1
+        },
         // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
-        readRecent: () => [],
+        readRecent: () => ({ kept: [], recent: [] }),
       }
       const manager = createSessionManager({
         now: () => 1_000,
@@ -951,7 +963,7 @@ describe("createSessionManager", () => {
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
       })
-      return { manager, stub, archiveCalls }
+      return { manager, stub, archiveCalls, finishTurnCalls }
     }
 
     it("雑談で駆動から届いた依頼とセリフが、表情つきで1行ずつアーカイブへ渡る", async () => {
@@ -1043,6 +1055,34 @@ describe("createSessionManager", () => {
           entry: { speaker: "user", at: 1_000, text: "新しい依頼", images: undefined },
         },
       ])
+    })
+
+    it("ターンの終わりにアーカイブへ合図を出す（旗の立った1往復を書く機会がここ）", async () => {
+      const { stub, finishTurnCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      await waitForBatch()
+      expect(finishTurnCalls.count).toBe(0)
+
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(finishTurnCalls.count).toBe(1)
+    })
+
+    it("復元で流し直されたターンの終わりでは合図を出さない", async () => {
+      const { stub, finishTurnCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emitRestored(CHARACTER_EVENT)
+      stub.emitRestored({ kind: "chat-mode-changed", chat: true })
+      stub.emitRestored({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(finishTurnCalls.count).toBe(0)
     })
 
     it("本文（レポート）・ツールの入出力は書かない", async () => {

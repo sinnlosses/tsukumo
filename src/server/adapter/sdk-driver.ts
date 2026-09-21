@@ -44,6 +44,7 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
 import {
+  type ChatKeep,
   type ChatSummary,
   DEFAULT_MODEL,
   type PersonaMemory,
@@ -96,6 +97,18 @@ const FORGET_TOOL_DESCRIPTION =
   "「覚えたこと」に並んでいる1行を忘れる。消したい行の文面をそのまま渡す（完全一致。番号では指せない）。" +
   "消せるのは自分で覚えた行だけで、それ以外の人格の文面は消せない。呼ぶ条件は雑談モードの規約に従う。"
 
+/** いまのやり取りに「残す」旗を立てるツールの名前（docs/glossary.md「keep ツール」）。 */
+const KEEP_TOOL_NAME = "keep"
+
+/**
+ * モデルに見せる `keep` ツールの説明。**いつ立てるかの条は
+ * `src/server/core/chat-manner.ts` が持つ**ので、ここには何が起きるかと指せる範囲だけを書く
+ * （二重に書かない）。
+ */
+const KEEP_TOOL_DESCRIPTION =
+  "いま話しているやり取りに「残す」印を付ける。引数は無く、指せるのはこのターンの1往復だけ。" +
+  "印の付いたやり取りは、直近を読み戻す窓から溢れても忘れずに残る。呼ぶ条件は雑談モードの規約に従う。"
+
 /**
  * セッションを起こす。**この関数は待たない**（`query()` の反復はバックグラウンドで回り続け、
  * 結果は `onEvent` に流れる）。
@@ -121,7 +134,11 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
       ...buildQuerySeedOptions(options),
       hooks: chatSummaryHooks(options.chatSummary),
       mcpServers: {
-        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.personaMemory),
+        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
+          options.expressions,
+          options.personaMemory,
+          options.chatKeep,
+        ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),
@@ -409,8 +426,9 @@ function askForAnswer(
  * 情報が戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
  * 呼び出しで受け取る」・docs/design.md 7.1）。
  *
- * 常に載るのは `speak` の1つで、**`remember` と `forget` は雑談モードのときだけ**（`memory` が
- * 渡ったときだけ）載る。仕事のときに出すと、作業の文脈が人格に入り込む経路になる（7.1）。
+ * 常に載るのは `speak` の1つで、**`remember` / `forget` / `keep` は雑談モードのときだけ**
+ * （`memory` / `chatKeep` が渡ったときだけ）載る。仕事のときに出すと、作業の文脈が人格に
+ * 入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -418,6 +436,7 @@ function askForAnswer(
 function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   memory: PersonaMemory | undefined,
+  chatKeep: ChatKeep | undefined,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -435,6 +454,7 @@ function tsukumoServer(
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
       ...(memory === undefined ? [] : [rememberTool(memory), forgetTool(memory)]),
+      ...(chatKeep === undefined ? [] : [keepTool(chatKeep)]),
     ],
   })
 }
@@ -471,6 +491,20 @@ function forgetTool(memory: PersonaMemory) {
       return { content: [{ type: "text" as const, text: "ok" }] }
     },
   )
+}
+
+/**
+ * いまのやり取りに「残す」旗を立てるツール。**引数を取らない** — 指せるのはそのターンの
+ * 1往復だけで、**会話の文面がツールの引数を通って戻ってくる経路を作らない**
+ * （docs/coding-standards.md「会話内容の扱い」）。**旗が立ったかどうかもモデルへ戻さない**
+ * （返すのは "ok" だけ。docs/design.md 7章）。どこにどう書くかは
+ * src/server/adapter/chat-archive.ts の仕事。
+ */
+function keepTool(chatKeep: ChatKeep) {
+  return tool(KEEP_TOOL_NAME, KEEP_TOOL_DESCRIPTION, {}, async () => {
+    chatKeep.keep()
+    return { content: [{ type: "text" as const, text: "ok" }] }
+  })
 }
 
 /**

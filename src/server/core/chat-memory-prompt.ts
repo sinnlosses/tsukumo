@@ -20,6 +20,7 @@
 import {
   type ChatArchive,
   type ChatArchiveRecentEntry,
+  type ChatReadbackLimits,
   type ChatSummary,
 } from "./session-driver.ts"
 
@@ -45,6 +46,18 @@ const CHAT_RECENT_PREFACE =
   "`あなた:` があなた自身の過去のセリフ。`### ` で始まる行は日付の見出しで、会話の発言ではない。" +
   "続きとして踏まえてよいが、読み上げたり引用したりしない。"
 
+/**
+ * 旗の付いたやり取りの前置き。**直近と別の節に分けてある**ので、ここで断るのは
+ * **時系列が続いていないこと**（直近より前で、間に抜けた会話がある）だけでよい
+ * （`docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」）。日付の見出しは
+ * 直近と同じ形で挟むので、いつごろの話かはそれで読める。
+ */
+const CHAT_KEPT_PREFACE =
+  "## 残すと決めた雑談（そのままの文面）\n\n" +
+  "以下はあなた自身が `keep` で「残す」と決めた、過去の雑談のやり取りそのもの（要約ではない）。" +
+  "**下の「直近の雑談」より前のもので、間には残っていない会話がある**（続きとして読まない）。" +
+  "話者の見分け方と日付の見出しは下と同じ。踏まえてよいが、読み上げたり引用したりしない。"
+
 /** 逐語の1行の頭に置く話者の印。 */
 const SPEAKER_LABEL = {
   user: "利用者",
@@ -61,13 +74,16 @@ export type ChatMemorySources = {
   readonly chatArchive: ChatArchive
   /** これから起こすキャラクターパックの名前。 */
   readonly packName: string
-  /** 逐語で読み戻す量（バイト。`CHAT_RECENT_READBACK_BYTES`）。 */
-  readonly recentLimitBytes: number
+  /**
+   * 逐語で読み戻す量（バイト。`CHAT_RECENT_READBACK_BYTES` と `CHAT_KEPT_READBACK_BYTES`）。
+   */
+  readonly readbackLimits: ChatReadbackLimits
 }
 
 /**
  * `systemPrompt` に足す、雑談の記憶ぶんの文面（載せないときは空。**古い→新しいの順**で、
- * 要約が先、直近の逐語が後）。
+ * 要約・旗の付いたやり取り・直近の逐語の3つ）。**旗のぶんを間に置くのは、直近より前だから**
+ * （要約とどちらが古いかは決まらないが、逐語どうしの前後は決まる）。
  *
  * **載せる条件は2つで、どちらかに当たれば載せる**（`docs/design.md` 7章。**要約と逐語に共通**）:
  *
@@ -98,11 +114,12 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
   }
 
   const summary = record === undefined || record.summary === "" ? undefined : record.summary
-  const recent = recentPart(
-    sources.chatArchive.readRecent(sources.packName, sources.recentLimitBytes),
-  )
+  const readback = sources.chatArchive.readRecent(sources.packName, sources.readbackLimits)
+  const kept = verbatimPart(CHAT_KEPT_PREFACE, readback.kept)
+  const recent = verbatimPart(CHAT_RECENT_PREFACE, readback.recent)
   const parts = [
     ...(summary === undefined ? [] : [`${CHAT_SUMMARY_PREFACE}\n\n${summary}`]),
+    ...(kept === undefined ? [] : [kept]),
     ...(recent === undefined ? [] : [recent]),
   ]
   if (parts.length === 0) {
@@ -114,12 +131,18 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
 }
 
 /**
- * 直近の逐語ぶんの文面（1件も無いときは undefined）。**日付が変わるところに `### <日付>` の
+ * 逐語ぶんの1節（1件も無いときは undefined）。**日付が変わるところに `### <日付>` の
  * 見出しを挟む**（同じ日が続く間は見出しを重ねない。1日ぶんしか無ければ見出しは1つだけ）。
  * **並べ替えない** — `entries` は `readRecent` が返した順のまま並べるだけで、中身を読んで
  * 落としたり並べ替えたりしない。
+ *
+ * **旗の付いたぶんと直近で同じ組み立てを使う**（違うのは前置きだけ。並べ方が節によって
+ * 変わると、読む側が話者の印と見出しを2通り覚えることになる）。
  */
-function recentPart(entries: readonly ChatArchiveRecentEntry[]): string | undefined {
+function verbatimPart(
+  preface: string,
+  entries: readonly ChatArchiveRecentEntry[],
+): string | undefined {
   if (entries.length === 0) {
     return undefined
   }
@@ -133,5 +156,5 @@ function recentPart(entries: readonly ChatArchiveRecentEntry[]): string | undefi
     }
     lines.push(`${SPEAKER_LABEL[entry.speaker]}: ${entry.text}`)
   }
-  return `${CHAT_RECENT_PREFACE}\n\n${lines.join("\n")}`
+  return `${preface}\n\n${lines.join("\n")}`
 }

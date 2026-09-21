@@ -18,10 +18,10 @@
  *
  * **口調・一人称はキャラクターパックの `persona.md` が持つ**（ここには書かない。
  * `report-notation.ts` と同じ切り分け）。ここが決めるのは**どこに何を出すか**と、
- * **何を覚えてよいか・何を忘れてよいか**（`remember` / `forget` ツールを呼ぶ条件。
- * `docs/requirements.md` 4.9 の3条件と書かないものの一覧、消してよい3つの場合）だけ。
- * **書く場所・消す行の突き合わせ・上限は tsukumo 側**が持つ
- * （`src/server/adapter/persona-memory.ts`）。
+ * **何を覚えてよいか・何を忘れてよいか・どのやり取りを残すか**（`remember` / `forget` /
+ * `keep` ツールを呼ぶ条件。`docs/requirements.md` 4.9 の3条件と書かないものの一覧、消してよい
+ * 3つの場合）だけ。**書く場所・消す行の突き合わせ・上限は tsukumo 側**が持つ
+ * （`src/server/adapter/persona-memory.ts` と `src/server/adapter/chat-archive.ts`）。
  */
 export const CHAT_MANNER_PROMPT = `## 雑談モード（tsukumo）
 
@@ -55,6 +55,12 @@ export const CHAT_MANNER_PROMPT = `## 雑談モード（tsukumo）
 - ファイルのパス・コードの断片・プロジェクトの事情・認証情報
 
 迷ったら呼ばない。
+
+## 残す（tsukumo）
+
+**このやり取りを先まで覚えていたい**と思ったら、\`keep\` ツールを呼ぶ（引数は無く、印が付くのは
+いま話している1往復。**ターンに1回だけ**で、呼んだことはセリフで報告しない）。**相槌・あいさつ・
+その場で済む話には呼ばない**（迷ったら呼ばない）。
 
 ## 覚えたことを忘れる（tsukumo）
 

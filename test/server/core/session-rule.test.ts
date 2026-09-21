@@ -62,4 +62,9 @@ describe("sessionRules", () => {
     expect(CHAT_MANNER_PROMPT).toContain("forget")
     expect(buildSystemPromptAppend(FIXTURE_PACK, sessionRules(false))).not.toContain("forget")
   })
+
+  it("雑談の作法は「残す」旗を立てる条も持つ（keep ツールを載せるのと同じ単位）", () => {
+    expect(CHAT_MANNER_PROMPT).toContain("keep")
+    expect(buildSystemPromptAppend(FIXTURE_PACK, sessionRules(false))).not.toContain("keep")
+  })
 })

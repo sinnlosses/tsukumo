@@ -34,7 +34,11 @@ import {
   EVENT_BATCH_INTERVAL_MS,
 } from "./server/core/session-manager.ts"
 import { sessionRules } from "./server/core/session-rule.ts"
-import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECENT_READBACK_BYTES } from "./shared/chat-log.ts"
+import {
+  CHAT_COMPACT_THRESHOLD_BYTES,
+  CHAT_KEPT_READBACK_BYTES,
+  CHAT_RECENT_READBACK_BYTES,
+} from "./shared/chat-log.ts"
 import { type ClientCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
@@ -135,7 +139,10 @@ function startDriver(
     chatSummary,
     chatArchive,
     packName: seed.pack.name,
-    recentLimitBytes: CHAT_RECENT_READBACK_BYTES,
+    readbackLimits: {
+      recentBytes: CHAT_RECENT_READBACK_BYTES,
+      keptBytes: CHAT_KEPT_READBACK_BYTES,
+    },
   })
   const rules = [...sessionRules(seed.chat), ...chatMemoryParts]
 
@@ -150,6 +157,9 @@ function startDriver(
     // `forget` のツールが載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
     personaMemory: seed.chat ? createPersonaMemory(seed.pack, process.cwd()) : undefined,
     chatSummary,
+    // **旗を立てる口も雑談のときだけ渡す**（渡ったときだけ `keep` ツールが載る）。渡すのは
+    // 書き口と同じ1つのアーカイブで、駆動から見えるのは旗を立てる動き1つだけ（`ChatKeep`）。
+    chatKeep: seed.chat ? chatArchive : undefined,
     onEvent,
   })
 }

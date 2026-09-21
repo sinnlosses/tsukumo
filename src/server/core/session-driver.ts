@@ -89,7 +89,8 @@ export type ChatSummaryRecord = {
  *
  * **読む口は {@link readRecent} の1つだけ**（2026-09-21 に足した。直近の雑談を逐語のまま
  * `systemPrompt` へ戻す唯一の出どころ。`docs/requirements.md` 4.9「直近の会話は逐語のまま
- * 読み戻す」）。**それ以外の読み戻しは作らない。**
+ * 読み戻す」）。**それ以外の読み戻しは作らない** — 旗の付いたやり取りも同じ1つの口が一緒に
+ * 返す（窓と重なった件をここで落とせるのは、両方を1度に見ているときだけ）。
  */
 export type ChatArchive = {
   /**
@@ -99,14 +100,60 @@ export type ChatArchive = {
    */
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
   /**
-   * そのパックの**直近の会話**を、新しいほうから遡って `limitBytes`（文面の UTF-8 バイト数の
-   * 合計）まで読む。**返すのは古い→新しいの順**で、呼ぶ側に順序の都合を持たせない。
+   * いま進行中のやり取りに「残す」旗を立てる（{@link ChatKeep.keep} の実体。
+   * `docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」）。**書くのは
+   * {@link finishTurn} のとき**なので、ターンの途中のどこで呼んでも同じ1往復に付く。
+   */
+  readonly keep: () => void
+  /**
+   * ターンが終わった合図。旗が立っていれば、**このターンで書いた行を指す印**をここで書く
+   * （文面は複製しない）。旗が立っていなければ、覚えていた行を忘れるだけ。
+   */
+  readonly finishTurn: () => void
+  /**
+   * そのパックの**直近の会話**と**旗の付いたやり取り**を、新しいほうから遡って
+   * {@link ChatReadbackLimits} のバイト数まで読む。**返すのはどちらも古い→新しいの順**で、
+   * 呼ぶ側に順序の都合を持たせない。
    *
    * **1件を単位にし、途中では切らない**（溢れる1件は載せない）。読めない行（壊れた JSON・
    * 知らない版・鍵が足りない）は1行ずつ落とし、**例外は投げない**（読めなければ空を返し、
    * そのセッションは逐語なしで始まる）。
    */
-  readonly readRecent: (packName: string, limitBytes: number) => readonly ChatArchiveRecentEntry[]
+  readonly readRecent: (packName: string, limits: ChatReadbackLimits) => ChatArchiveReadback
+}
+
+/**
+ * 「残す」旗を立てる口（`docs/design.md` 7章）。**`ChatArchive` を駆動へそのまま渡さないため
+ * だけに分けてある** — 駆動に要るのは旗を立てる1つの動きで、書き口も読み口も要らない。
+ * **雑談モードのときだけ渡り**、渡ったときだけ `keep` ツールが `mcpServers` に載る。
+ */
+export type ChatKeep = {
+  /** いま進行中のやり取りに旗を立てる（**引数は無い**。指せるのはそのターンだけ）。 */
+  readonly keep: () => void
+}
+
+/**
+ * {@link ChatArchive.readRecent} に渡す2つの上限（どちらも文面の UTF-8 バイト数の合計）。
+ * **旗のぶんは窓の外に足す**ので、読み戻し全体の上限は2つの和で決まる
+ * （`src/shared/chat-log.ts` の `CHAT_RECENT_READBACK_BYTES` と `CHAT_KEPT_READBACK_BYTES`）。
+ */
+export type ChatReadbackLimits = {
+  /** 直近の窓（古い順に落ちる側）。 */
+  readonly recentBytes: number
+  /** 旗の付いたやり取り（窓から溢れたぶんだけを、旗の新しい順に拾う）。 */
+  readonly keptBytes: number
+}
+
+/**
+ * {@link ChatArchive.readRecent} が返すもの。**2つに分かれているのは、載せる場所が分かれて
+ * いるから** — 旗のぶんは直近より前で、間に抜けた会話がある（時系列がつながらない）。
+ * 混ぜて1つの並びにすると、読む側にその断絶が見えない（`docs/requirements.md` 4.9）。
+ */
+export type ChatArchiveReadback = {
+  /** 旗が付いていて、かつ**窓に入らなかった**件（窓に入っている件はここに重ねない）。 */
+  readonly kept: readonly ChatArchiveRecentEntry[]
+  /** 直近の窓に入った件。 */
+  readonly recent: readonly ChatArchiveRecentEntry[]
 }
 
 /**
@@ -177,6 +224,12 @@ export type SessionDriverOptions = {
    * 仕事のときは undefined（会話の内容を読みも書きもしない）。
    */
   readonly chatSummary: ChatSummary | undefined
+  /**
+   * 「残す」旗を立てる口。**雑談モードのときだけ渡り**（`docs/design.md` 7章）、渡ったときだけ
+   * `keep` ツールが `mcpServers` に載る。仕事のときは undefined（仕事の会話はそもそも
+   * アーカイブに残さない）。
+   */
+  readonly chatKeep: ChatKeep | undefined
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }

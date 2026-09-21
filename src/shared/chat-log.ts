@@ -69,6 +69,17 @@ export const CHAT_COMPACT_THRESHOLD_BYTES = 131_072 satisfies number
  */
 export const CHAT_RECENT_READBACK_BYTES = 65_536 satisfies number
 
+/**
+ * 「残す」旗の付いたやり取りを、上の窓（{@link CHAT_RECENT_READBACK_BYTES}）の**外側に足して**
+ * 読み戻す量（バイト）。数えるものは同じ（各行の文面だけ）。値の根拠は
+ * `docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」。
+ *
+ * **窓とは別に持つ。** 窓の中で優先すると、旗の付いた件が増えるほど直近が押し出され、
+ * 「いまの話が通じなくなる」ほうへ倒れる。外に足せば、読み戻し全体の上限は
+ * **64 KiB + 8 KiB** で決まったままになる。
+ */
+export const CHAT_KEPT_READBACK_BYTES = 8_192 satisfies number
+
 const textEncoder = new TextEncoder()
 
 /**

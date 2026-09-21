@@ -263,6 +263,13 @@ function createSessionHost(
     if (origin === "driver" && state.chatMode) {
       appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
     }
+    // 「残す」旗が立っていれば、**このターンで書いた行を指す印**をここで書く
+    // （旗を立てるのはターンの途中、書くのは終わり。docs/requirements.md 4.9
+    // 「残すと決めた1往復は窓から落とさない」）。立っていなければ覚えていた行を忘れるだけ
+    // なので、雑談かどうかで呼び分けない。
+    if (origin === "driver" && event.kind === "turn-finished") {
+      options.chatArchive.finishTurn()
+    }
     // **ターンの終わりに1回だけ見る**（docs/requirements.md 4.9）。仕事のときは何もしない
     // （`requestChatCompactIfNeeded` が `state.chatMode` を見て弾く）。
     if (event.kind === "turn-finished") {

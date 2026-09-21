@@ -16,6 +16,12 @@
 // 読んだものの行き先は**雑談のセッションの `systemPrompt`** だけで、画面にも `error` フレームにも
 // stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
+//
+// **「残す」旗は、同じディレクトリの `kept.jsonl` に「時刻だけ」の索引として積む**
+// （`docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」）。**日付のファイルは
+// 書き換えない**（追記のまま）し、**文面も複製しない** — ディスクの上に会話は1つだけで、
+// `docs/coding-standards.md`「会話内容の扱い」の例外表は2つのままになる。**どのやり取りに
+// 立てるかの判断はここが決めない**（モデルが `keep` ツールを呼ぶかどうかだけ）。
 
 import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -27,7 +33,9 @@ import { type Expression } from "../../shared/expression.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
+  type ChatArchiveReadback,
   type ChatArchiveRecentEntry,
+  type ChatReadbackLimits,
 } from "../core/session-driver.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
@@ -41,6 +49,12 @@ const ARCHIVE_FORMAT_VERSION = 1 satisfies number
 const ARCHIVE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 
 /**
+ * 「残す」旗の索引の名前（`docs/design.md` 7章）。**日付のファイルと同じディレクトリに置くが、
+ * {@link ARCHIVE_FILE_NAME} を通らないので窓の側は読まない。**
+ */
+const KEPT_INDEX_FILE_NAME = "kept.jsonl"
+
+/**
  * 読み戻すときに要る鍵だけを検査する（`v` が知らない版・鍵が足りない行はここで落ちる）。
  * **`expression` と `images` は読まないので、形も見ない。**
  */
@@ -49,6 +63,15 @@ const archiveLineSchema = z.object({
   at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
   speaker: z.enum(["user", "character"]),
   text: z.string(),
+})
+
+/**
+ * 索引の1行。**照合に使うのは `at` だけ**（`pack` は行だけで意味が決まるように書いてあるが、
+ * 置き場所で既に決まっているので読まない）。
+ */
+const keptLineSchema = z.object({
+  v: z.literal(ARCHIVE_FORMAT_VERSION),
+  at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
 })
 
 const textEncoder = new TextEncoder()
@@ -74,26 +97,58 @@ export function chatArchiveDir(): string {
  * 違うが、触るファイルは同じ1つなので境界は増やさない（原則3。`docs/design.md` 7章）。
  */
 export function createChatArchive(root: string = chatArchiveDir()): ChatArchive {
+  // このターンで書いた行の宛先（旗が立ったときに索引へ写す。**文面は持たない**）。
+  // ターンが終わるたびに空に戻すので、覚えている量は1ターンぶんで頭打ちになる。
+  let turnMarks: readonly KeptMark[] = []
+  // 旗が立ったか。**立てるのはターンの途中、書くのはターンの終わり**なので、ここで待たせる。
+  let keeping = false
+
   return {
     append: (packName, entry) => {
       if (!isCharacterPackName(packName)) {
         return
       }
       const date = new Date(entry.at)
-      const path = join(root, packName, `${localDateKey(date)}.jsonl`)
-      appendLine(path, toArchiveRecord(packName, date, entry))
+      const record = toArchiveRecord(packName, date, entry)
+      appendLine(join(root, packName, `${localDateKey(date)}.jsonl`), record)
+      turnMarks = [...turnMarks, { pack: packName, at: record.at }]
     },
-    readRecent: (packName, limitBytes) => readRecentEntries(root, packName, limitBytes),
+    keep: () => {
+      keeping = true
+    },
+    finishTurn: () => {
+      if (keeping) {
+        appendKeptMarks(root, turnMarks)
+      }
+      keeping = false
+      turnMarks = []
+    },
+    readRecent: (packName, limits) => readReadback(root, packName, limits),
   }
 }
 
 /** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
-function appendLine(path: string, record: ArchiveRecord): void {
+function appendLine(path: string, record: KeptRecord | ArchiveRecord): void {
   try {
     mkdirSync(dirname(path), { recursive: true })
     appendFileSync(path, `${JSON.stringify(record)}\n`)
   } catch {
     // 書けなかった回は諦めて次へ進む。
+  }
+}
+
+/**
+ * 旗の立ったターンの行を、パックごとの索引へ1行ずつ書く。**書くのは版・時刻・パック名だけ**で、
+ * **文面は複製しない**（`docs/coding-standards.md`「会話内容の扱い」の例外表を増やさないため。
+ * 文面はアーカイブの日付のファイルに1つだけある）。
+ */
+function appendKeptMarks(root: string, marks: readonly KeptMark[]): void {
+  for (const mark of marks) {
+    appendLine(join(root, mark.pack, KEPT_INDEX_FILE_NAME), {
+      v: ARCHIVE_FORMAT_VERSION,
+      at: mark.at,
+      pack: mark.pack,
+    })
   }
 }
 
@@ -111,6 +166,22 @@ type ArchiveRecord = {
   readonly text: string
   readonly expression: Expression | undefined
   readonly images: number | undefined
+}
+
+/**
+ * 索引の1行の形（`docs/design.md` 7章）。**文面を持たない** — 指すだけで、会話はアーカイブの
+ * 日付のファイルに1つだけある。
+ */
+type KeptRecord = {
+  readonly v: typeof ARCHIVE_FORMAT_VERSION
+  readonly at: string
+  readonly pack: string
+}
+
+/** このターンで書いた1行の宛先（索引へ写すときの材料。**文面は持たない**）。 */
+type KeptMark = {
+  readonly pack: string
+  readonly at: string
 }
 
 /**
@@ -133,7 +204,30 @@ function toArchiveRecord(packName: string, date: Date, entry: ChatArchiveEntry):
 }
 
 /**
- * 直近の会話を新しいほうから遡って集める（{@link ChatArchive.readRecent} の実装）。
+ * 直近の窓と、旗の付いたやり取りを1度に読む（{@link ChatArchive.readRecent} の実装）。
+ *
+ * **窓を先に決め、旗のほうは窓に入らなかった件だけを足す。** 順序が逆だと、旗の付いた件が
+ * 窓の中にも外にも出て二重になる。
+ */
+function readReadback(
+  root: string,
+  packName: string,
+  limits: ChatReadbackLimits,
+): ChatArchiveReadback {
+  if (!isCharacterPackName(packName)) {
+    return { kept: [], recent: [] }
+  }
+
+  const dir = join(root, packName)
+  const recent = readRecentEntries(dir, limits.recentBytes)
+  return {
+    kept: readKeptEntries(dir, limits.keptBytes, new Set(recent.map(entryKey))),
+    recent: recent.map((timed) => timed.entry),
+  }
+}
+
+/**
+ * 直近の会話を新しいほうから遡って集める（返すのは古い→新しいの順）。
  *
  * **ディレクトリの日付のファイル名を降順に並べ、各ファイルは末尾の行から遡る。** 文面の
  * バイト数の合計が `limitBytes` に届いたところで**それ以上は読まない**ので、アーカイブが
@@ -142,32 +236,23 @@ function toArchiveRecord(packName: string, date: Date, entry: ChatArchiveEntry):
  * **溢れる1件は載せない**（`docs/requirements.md` 4.9「切り方」）。1件だけで `limitBytes` を
  * 超える行が先頭に来たときは空を返す——行の途中で切るくらいなら逐語なしで始める。
  */
-function readRecentEntries(
-  root: string,
-  packName: string,
-  limitBytes: number,
-): readonly ChatArchiveRecentEntry[] {
-  if (!isCharacterPackName(packName)) {
-    return []
-  }
-
-  const dir = join(root, packName)
+function readRecentEntries(dir: string, limitBytes: number): readonly TimedEntry[] {
   // 新しい→古いの順に集め、最後にひっくり返して「古い→新しい」で返す。
-  const collected: ChatArchiveRecentEntry[] = []
+  const collected: TimedEntry[] = []
   let usedBytes = 0
   for (const fileName of newestFirstFileNames(dir)) {
     let reachedLimit = false
     for (const line of [...readArchiveLines(join(dir, fileName))].reverse()) {
-      const entry = toRecentEntry(line)
-      if (entry === undefined) {
+      const timed = toTimedEntry(line)
+      if (timed === undefined) {
         continue
       }
-      const bytes = byteLength(entry.text)
+      const bytes = byteLength(timed.entry.text)
       if (usedBytes + bytes > limitBytes) {
         reachedLimit = true
         break
       }
-      collected.push(entry)
+      collected.push(timed)
       usedBytes += bytes
     }
     if (reachedLimit) {
@@ -176,6 +261,74 @@ function readRecentEntries(
   }
 
   return [...collected].reverse()
+}
+
+/**
+ * 旗の付いた行のうち、**窓に入らなかったもの**を新しいほうから集める（返すのは古い→新しいの
+ * 順）。`taken` は窓に入った件の鍵で、ここに載っている件は飛ばす（**数にも入れない**）。
+ *
+ * **索引は時刻しか持たない**ので、指された日付のファイルを開いて文面を取りに行く。開くのは
+ * **旗の立った日だけ**で、しかも `limitBytes` が埋まったところで止まるため、旗が何年ぶん
+ * 増えても開くファイルの数は上限で頭打ちになる。
+ *
+ * **切り方は窓と同じ**（1件を単位にし、溢れる1件は載せない。そこで止める）。**同じ秒に
+ * 書かれた行は区別しない** — 索引が指すのは「その秒に書いた行」で、隣の1件が一緒に載ることは
+ * ありうる（足りないより多いほうへ倒す）。
+ */
+function readKeptEntries(
+  dir: string,
+  limitBytes: number,
+  taken: ReadonlySet<string>,
+): readonly ChatArchiveRecentEntry[] {
+  const marks = readKeptMarks(join(dir, KEPT_INDEX_FILE_NAME))
+  if (marks.size === 0) {
+    return []
+  }
+
+  const seen = new Set(taken)
+  const collected: ChatArchiveRecentEntry[] = []
+  let usedBytes = 0
+  for (const date of newestFirstMarkedDates(marks)) {
+    let reachedLimit = false
+    for (const line of [...readArchiveLines(join(dir, `${date}.jsonl`))].reverse()) {
+      const timed = toTimedEntry(line)
+      if (timed === undefined || !marks.has(timed.at) || seen.has(entryKey(timed))) {
+        continue
+      }
+      const bytes = byteLength(timed.entry.text)
+      if (usedBytes + bytes > limitBytes) {
+        reachedLimit = true
+        break
+      }
+      seen.add(entryKey(timed))
+      collected.push(timed.entry)
+      usedBytes += bytes
+    }
+    if (reachedLimit) {
+      break
+    }
+  }
+
+  return [...collected].reverse()
+}
+
+/** 索引が指している時刻（読めない行・知らない版は落とす。索引が無いときは空）。 */
+function readKeptMarks(path: string): ReadonlySet<string> {
+  const marks = readArchiveLines(path).flatMap((line) => {
+    const record = keptLineSchema.safeParse(parseJson(line))
+    return record.success ? [record.data.at] : []
+  })
+  return new Set(marks)
+}
+
+/** 旗の立った日付を新しい順に並べる（開くファイルをそこだけに絞る）。 */
+function newestFirstMarkedDates(marks: ReadonlySet<string>): readonly string[] {
+  return [...new Set([...marks].map((at) => at.slice(0, 10)))].sort().reverse()
+}
+
+/** 同じ1行を指す鍵（窓と旗で同じ件を二重に載せないため）。 */
+function entryKey(timed: TimedEntry): string {
+  return `${timed.at}\u0000${timed.entry.speaker}\u0000${timed.entry.text}`
 }
 
 /** 日付のファイル名だけを新しい順に並べる（読めないディレクトリは空）。 */
@@ -209,20 +362,31 @@ function readArchiveLines(path: string): readonly string[] {
  * `docs/requirements.md` 4.9）。日付は `at` の頭10文字で、**行だけで意味が決まる**
  * （ファイル名には頼らない）。
  */
-function toRecentEntry(line: string): ChatArchiveRecentEntry | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(line)
-  } catch {
-    return undefined
-  }
-
-  const record = archiveLineSchema.safeParse(parsed)
+function toTimedEntry(line: string): TimedEntry | undefined {
+  const record = archiveLineSchema.safeParse(parseJson(line))
   if (!record.success) {
     return undefined
   }
   const { at, speaker, text } = record.data
-  return { speaker, text, date: at.slice(0, 10) }
+  return { at, entry: { speaker, text, date: at.slice(0, 10) } }
+}
+
+/**
+ * 載せる形に、**索引と突き合わせるための時刻**を添えたもの。`at` は外へ出さない
+ * （{@link ChatArchiveRecentEntry} が持つのは日付までで、時刻は渡さない）。
+ */
+type TimedEntry = {
+  readonly at: string
+  readonly entry: ChatArchiveRecentEntry
+}
+
+/** JSON として読む（壊れていれば undefined。JSONL は壊れても被害が1行）。 */
+function parseJson(line: string): unknown {
+  try {
+    return JSON.parse(line)
+  } catch {
+    return undefined
+  }
 }
 
 /** ローカル時刻での `YYYY-MM-DD`（日の境目はそのマシンのローカル時刻。`docs/design.md` 7章）。 */
