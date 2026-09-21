@@ -1,9 +1,17 @@
 import { describe, expect, it } from "bun:test"
 
-import { type PermissionMode as SdkPermissionMode } from "@anthropic-ai/claude-agent-sdk"
-
-import { buildQuerySeedOptions, DEFAULT_EFFORT } from "../../../src/server/adapter/sdk-driver.ts"
 import {
+  type PermissionMode as SdkPermissionMode,
+  type PostCompactHookInput,
+} from "@anthropic-ai/claude-agent-sdk"
+
+import {
+  buildQuerySeedOptions,
+  chatSummaryHooks,
+  DEFAULT_EFFORT,
+} from "../../../src/server/adapter/sdk-driver.ts"
+import {
+  type ChatSummary,
   DEFAULT_MODEL,
   DEFAULT_PERMISSION_MODE,
   type SessionDriverOptions,
@@ -21,6 +29,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   resume: undefined,
   tag: "tsukumo-test",
   personaMemory: undefined,
+  chatSummary: undefined,
   onEvent: () => {},
 }
 
@@ -48,6 +57,48 @@ describe("buildQuerySeedOptions", () => {
   it("続きから始めるセッションのIDを resume として渡す（新規のときは undefined）", () => {
     expect(buildQuerySeedOptions(BASE_OPTIONS).resume).toBeUndefined()
     expect(buildQuerySeedOptions({ ...BASE_OPTIONS, resume: "s-1" }).resume).toBe("s-1")
+  })
+})
+
+/** メモリ上の `ChatSummary`（テスト用）。`write` に渡った引数を控える。 */
+function fakeChatSummary(): ChatSummary & { readonly writtenSummaries: () => readonly string[] } {
+  const written: string[] = []
+  return {
+    read: () => undefined,
+    write: (summary) => {
+      written.push(summary)
+    },
+    markUndelivered: () => {},
+    markDelivered: () => {},
+    writtenSummaries: () => written,
+  }
+}
+
+// フィクスチャは手で書いた架空の要約だけ（実物の会話は使わない。
+// docs/coding-standards.md「会話内容の扱い」）。
+const POST_COMPACT_INPUT: PostCompactHookInput = {
+  session_id: "s-1",
+  transcript_path: "/tmp/tsukumo-test/fake.jsonl",
+  cwd: "/tmp/tsukumo-test",
+  hook_event_name: "PostCompact",
+  trigger: "manual",
+  compact_summary: "（テスト用の架空の要約）最近読んだ本の話をした。",
+}
+
+describe("chatSummaryHooks", () => {
+  it("chatSummary が undefined（仕事のとき）は hooks を登録しない", () => {
+    expect(chatSummaryHooks(undefined)).toBeUndefined()
+  })
+
+  it("chatSummary が渡ったとき（雑談のとき）だけ PostCompact を登録し、compact_summary をそのまま write へ渡す", async () => {
+    const chatSummary = fakeChatSummary()
+    const hooks = chatSummaryHooks(chatSummary)
+
+    const callback = hooks?.PostCompact?.[0]?.hooks[0]
+    expect(callback).toBeDefined()
+    await callback?.(POST_COMPACT_INPUT, undefined, { signal: new AbortController().signal })
+
+    expect(chatSummary.writtenSummaries()).toEqual([POST_COMPACT_INPUT.compact_summary])
   })
 })
 

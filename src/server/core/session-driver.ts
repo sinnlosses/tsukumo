@@ -47,6 +47,35 @@ export type PersonaMemory = {
   readonly finishTurn: () => void
 }
 
+/**
+ * 雑談の要約の写しの読み書き口（`docs/design.md` 7章「雑談の記憶の要約はどこに置くか」）。
+ * **実装は `adapter` 側**（`src/server/adapter/chat-summary.ts`）で、ここにあるのは契約だけ。
+ *
+ * **中身を読んで判定する口は無い。** 載せるかどうかの判断は
+ * `src/server/core/chat-summary-prompt.ts` が持ち、ここは「どこに・どう書き、どう渡すか」の
+ * 4つの動きだけを持つ。
+ */
+export type ChatSummary = {
+  /** 写しと印を読む（ファイルが無い・読めないときは undefined）。 */
+  readonly read: () => ChatSummaryRecord | undefined
+  /**
+   * 圧縮でできた要約を写す（上書き）。**呼ぶと印は「渡し済み」になる**——同じ機会にできた
+   * 要約は、いま動いているこのセッション自身がすでに持っている（`docs/design.md` 7章の表の
+   * 「起こし直し（resume）」の行）。
+   */
+  readonly write: (summary: string) => void
+  /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
+  readonly markUndelivered: () => void
+  /** 印を「渡し済み」にする（読んで `systemPrompt` へ載せたとき）。 */
+  readonly markDelivered: () => void
+}
+
+/** {@link ChatSummary.read} が返す1件。`delivered` が写しの1行目の印。 */
+export type ChatSummaryRecord = {
+  readonly summary: string
+  readonly delivered: boolean
+}
+
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */
   readonly cwd: string
@@ -77,6 +106,12 @@ export type SessionDriverOptions = {
    * 入り込む経路を作らない）。
    */
   readonly personaMemory: PersonaMemory | undefined
+  /**
+   * 雑談の要約の写しの読み書き口。**雑談モードのときだけ渡り**（`docs/design.md` 7章）、渡った
+   * ときだけ `PostCompact` フックが登録され、`/clear` を見て印を戻す（`sdk-driver.ts`）。
+   * 仕事のときは undefined（会話の内容を読みも書きもしない）。
+   */
+  readonly chatSummary: ChatSummary | undefined
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }

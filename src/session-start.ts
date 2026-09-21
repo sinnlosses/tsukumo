@@ -10,6 +10,7 @@ import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
 import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
+import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { type FakeScript, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
 import {
@@ -18,6 +19,7 @@ import {
   startSession as startSdkSession,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
+import { takeChatSummaryPromptPart } from "./server/core/chat-summary-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
 import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./server/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
@@ -106,16 +108,29 @@ function startDriver(
     return startFakeSession({ script, scene, onEvent })
   }
 
+  // **雑談の要約の写しの口も、覚えたことの口と同じ単位で切り替わる**（雑談のときだけ渡る。
+  // docs/design.md 7章）。読み書きはこの口を通してだけ起きるので、仕事のときは undefined の
+  // まま渡し、`PostCompact` フックの登録も `/clear` の巻き戻しも sdk-driver.ts 側で起きない。
+  const chatSummary = seed.chat ? createChatSummary(seed.pack.name) : undefined
+  // **載せるかどうかの判断は core（takeChatSummaryPromptPart）が閉じている**——ここは決まった
+  // 文面を規約の並びへ足すだけ。載せたときは呼んだ側で印が「渡し済み」に戻る。
+  const chatSummaryPart = takeChatSummaryPromptPart(seed.resume, chatSummary)
+  const rules = [
+    ...sessionRules(seed.chat),
+    ...(chatSummaryPart === undefined ? [] : [chatSummaryPart]),
+  ]
+
   return startSdkSession({
     cwd: process.cwd(),
     expressions: expressionChoices(seed.pack.definition),
     permissionMode: DEFAULT_PERMISSION_MODE,
-    systemPromptAppend: buildSystemPromptAppend(seed.pack, sessionRules(seed.chat)),
+    systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
     resume: seed.resume,
     tag: sessionTag(seed.pack.name, seed.chat),
     // **覚えたことを書き足す口は雑談のときだけ渡す**（渡ったときだけ `remember` ツールが
     // 載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
     personaMemory: seed.chat ? createPersonaMemory(seed.pack, process.cwd()) : undefined,
+    chatSummary,
     onEvent,
   })
 }

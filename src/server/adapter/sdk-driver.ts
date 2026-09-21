@@ -17,6 +17,8 @@ import {
   createSdkMcpServer,
   type EffortLevel,
   getSessionMessages,
+  type HookCallbackMatcher,
+  type HookEvent,
   listSessions,
   type PermissionResult,
   query,
@@ -42,6 +44,7 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
 import {
+  type ChatSummary,
   DEFAULT_MODEL,
   type PersonaMemory,
   type SessionDriver,
@@ -104,6 +107,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
+      hooks: chatSummaryHooks(options.chatSummary),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.personaMemory),
       },
@@ -179,6 +183,41 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 }
 
 /**
+ * 雑談の要約の写しへ書き込む `PostCompact` フック（`docs/design.md` 7章）。**口
+ * （`options.chatSummary`）が渡ったとき（＝雑談のとき）だけ登録する**——仕事のときは `hooks`
+ * そのものを渡さない（undefined。`query()` 側は省略と同じ扱い）。
+ *
+ * `compact_summary` は**ログに出さず**、中身を読まずに {@link ChatSummary.write} へそのまま
+ * 渡す（`docs/coding-standards.md`「会話内容の扱い」）。フックは `trigger` が `"manual"` でも
+ * `"auto"` でも同じ扱いにする（`docs/design.md` 7章）。
+ *
+ * `startSession` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
+ * ようにするため（{@link buildQuerySeedOptions} と同じ理由）。
+ */
+export function chatSummaryHooks(
+  chatSummary: ChatSummary | undefined,
+): Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined {
+  if (chatSummary === undefined) {
+    return undefined
+  }
+
+  return {
+    PostCompact: [
+      {
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name === "PostCompact") {
+              chatSummary.write(input.compact_summary)
+            }
+            return {}
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/**
  * 続きから始めるセッションを探す（起動時と、キャラクターを切り替えるたび。
  * docs/requirements.md 4.8）。**同じ作業ディレクトリで、渡された印を持つもの**のうち最新の1つを
  * 返し、無ければ undefined（新規に起こす）。
@@ -243,6 +282,13 @@ async function relayMessages(
           if (sessionId !== undefined) {
             scheduleMarkSession(sessionId, options)
           }
+        }
+        if (event.kind === "conversation-cleared") {
+          // `/clear` を見た合図。写しの印を「未渡し」に戻す——印はターンが終わるたびに
+          // そのときのセッションIDへ付け直されるので、`/clear` のあと1ターン回すと空のほうが
+          // 印を持つ（`docs/requirements.md` 4.9「印はターンが終わるたびに…」）。ここで戻さないと
+          // 次に起こしたとき記憶が二度と戻らない。
+          options.chatSummary?.markUndelivered()
         }
         options.onEvent(event)
       }
