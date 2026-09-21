@@ -3,6 +3,11 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { PendingAnswer } from "../../../../src/browser/features/dispatch/pending-answer.tsx"
+import {
+  QuestionFocusContext,
+  QuestionFocusProvider,
+  type QuestionFocusValue,
+} from "../../../../src/browser/stores/question-focus.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
@@ -22,9 +27,30 @@ function renderPendingAnswer(
   const store = sessionStoreWith(state, dispatch)
   render(
     <SessionStoreContext.Provider value={store}>
-      <PendingAnswer />
+      <QuestionFocusProvider>
+        <PendingAnswer />
+      </QuestionFocusProvider>
     </SessionStoreContext.Provider>,
   )
+}
+
+/** 選択肢が `preview` を持つ質問（比較の面が出る側）。 */
+function withPreview(id: string): PendingAsk {
+  return {
+    kind: "question",
+    id,
+    questions: [
+      {
+        header: "架空の選択",
+        text: "架空の質問",
+        multiSelect: false,
+        options: [
+          { label: "A案", description: "架空の説明A", preview: "Aの比較（架空）" },
+          { label: "B案", description: "架空の説明B", preview: "Bの比較（架空）" },
+        ],
+      },
+    ],
+  }
 }
 
 function oneQuestion(id: string): PendingAsk {
@@ -37,8 +63,8 @@ function oneQuestion(id: string): PendingAsk {
         text: "架空の質問",
         multiSelect: false,
         options: [
-          { label: "A案", description: "架空の説明A" },
-          { label: "B案", description: "架空の説明B" },
+          { label: "A案", description: "架空の説明A", preview: undefined },
+          { label: "B案", description: "架空の説明B", preview: undefined },
         ],
       },
     ],
@@ -55,8 +81,8 @@ function twoQuestions(id: string): PendingAsk {
         text: "架空の質問1",
         multiSelect: false,
         options: [
-          { label: "A案", description: "架空の説明A" },
-          { label: "B案", description: "架空の説明B" },
+          { label: "A案", description: "架空の説明A", preview: undefined },
+          { label: "B案", description: "架空の説明B", preview: undefined },
         ],
       },
       {
@@ -64,8 +90,8 @@ function twoQuestions(id: string): PendingAsk {
         text: "架空の質問2",
         multiSelect: false,
         options: [
-          { label: "C案", description: "架空の説明C" },
-          { label: "D案", description: "架空の説明D" },
+          { label: "C案", description: "架空の説明C", preview: undefined },
+          { label: "D案", description: "架空の説明D", preview: undefined },
         ],
       },
     ],
@@ -76,7 +102,9 @@ describe("PendingAnswer", () => {
   it("答え待ちが無いときは何も描かない", () => {
     const { container } = render(
       <SessionStoreContext.Provider value={sessionStoreWith(INITIAL_SESSION_STATE)}>
-        <PendingAnswer />
+        <QuestionFocusProvider>
+          <PendingAnswer />
+        </QuestionFocusProvider>
       </SessionStoreContext.Provider>,
     )
 
@@ -121,9 +149,9 @@ describe("PendingAnswer", () => {
               text: "架空の質問：どれを試す？",
               multiSelect: true,
               options: [
-                { label: "A案", description: "架空の説明" },
-                { label: "B案", description: "架空の説明" },
-                { label: "C案", description: "架空の説明" },
+                { label: "A案", description: "架空の説明", preview: undefined },
+                { label: "B案", description: "架空の説明", preview: undefined },
+                { label: "C案", description: "架空の説明", preview: undefined },
               ],
             },
           ],
@@ -163,8 +191,8 @@ describe("PendingAnswer", () => {
             text: "架空の質問",
             multiSelect: false,
             options: [
-              { label: "A案", description: "" },
-              { label: "B案", description: "" },
+              { label: "A案", description: "", preview: undefined },
+              { label: "B案", description: "", preview: undefined },
             ],
           },
         ],
@@ -185,8 +213,8 @@ describe("PendingAnswer", () => {
             text: "架空の質問",
             multiSelect: false,
             options: [
-              { label: "A案", description: "" },
-              { label: "その他", description: "" },
+              { label: "A案", description: "", preview: undefined },
+              { label: "その他", description: "", preview: undefined },
             ],
           },
         ],
@@ -209,8 +237,8 @@ describe("PendingAnswer", () => {
               text: "架空の質問",
               multiSelect: false,
               options: [
-                { label: "A案", description: "" },
-                { label: "B案", description: "" },
+                { label: "A案", description: "", preview: undefined },
+                { label: "B案", description: "", preview: undefined },
               ],
             },
           ],
@@ -233,7 +261,9 @@ describe("PendingAnswer", () => {
       <SessionStoreContext.Provider
         value={sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-6")] })}
       >
-        <PendingAnswer />
+        <QuestionFocusProvider>
+          <PendingAnswer />
+        </QuestionFocusProvider>
       </SessionStoreContext.Provider>,
     )
 
@@ -304,7 +334,9 @@ describe("PendingAnswer", () => {
       <SessionStoreContext.Provider
         value={sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [twoQuestions("ask-11")] })}
       >
-        <PendingAnswer />
+        <QuestionFocusProvider>
+          <PendingAnswer />
+        </QuestionFocusProvider>
       </SessionStoreContext.Provider>,
     )
 
@@ -367,5 +399,37 @@ describe("PendingAnswer", () => {
 
     expect(screen.getByText("次へ")).toBeDefined()
     expect(screen.queryByText("答える")).toBeNull()
+  })
+
+  it("選択肢に preview があるときだけ、比較がメインビューにある案内を出す", () => {
+    renderPendingAnswer([oneQuestion("ask-16")])
+    expect(screen.queryByText(/比較はメインビューに出ている/)).toBeNull()
+    cleanup()
+
+    renderPendingAnswer([withPreview("ask-17")])
+    expect(screen.getByText(/比較はメインビューに出ている/)).toBeDefined()
+  })
+
+  it("選択肢に触れると、そのラベルを目を置いた札として store へ渡す", () => {
+    const focused: (string | undefined)[] = []
+    const value: QuestionFocusValue = {
+      questionIndex: 0,
+      focusedLabel: undefined,
+      setQuestionIndex: () => {},
+      setFocusedLabel: (label) => focused.push(label),
+    }
+    render(
+      <SessionStoreContext.Provider
+        value={sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [withPreview("ask-18")] })}
+      >
+        <QuestionFocusContext.Provider value={value}>
+          <PendingAnswer />
+        </QuestionFocusContext.Provider>
+      </SessionStoreContext.Provider>,
+    )
+
+    fireEvent.mouseEnter(screen.getByRole("button", { name: /B案/ }))
+
+    expect(focused).toEqual(["B案"])
   })
 })

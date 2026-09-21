@@ -38,18 +38,21 @@ import { fileURLToPath } from "node:url"
 import { type Browser, chromium, type Page } from "playwright-core"
 
 /**
- * 撮る前に当てる操作。**この4種だけ**にする（`docs/research/ui-catalog.md` 1.4 で、これだけで
- * 撮れていなかった状態が全部撮れることを確かめた）。当てない件は空の並びで表し、「操作が無い」を
+ * 撮る前に当てる操作。**この5種だけ**にする（もとは4種で、`docs/research/ui-catalog.md` 1.4 が
+ * 根拠。`hover` は 2026-09-21 に足した — 触れている間だけ出る状態（質問の箱と、メインビューの
+ * 比較の札の連動）は押しても出ない）。当てない件は空の並びで表し、「操作が無い」を
  * `undefined` で書かない。
  *
  * - `scroll`: その要素が見えるところまで、**それを囲む領域の内側**を送る
  * - `click`: 押す（モーダルを開く口・狭い窓のタブ）
+ * - `hover`: 触れる（押すと状態が進んでしまう場所）
  * - `type`: 入力欄に打つ（`/` と `@` の補完）
  * - `hash`: `location.hash` を書いて画面を移す（キャラクター画面・作る画面）
  */
 type Preparation =
   | { readonly kind: "scroll"; readonly selector: string }
   | { readonly kind: "click"; readonly selector: string }
+  | { readonly kind: "hover"; readonly selector: string }
   | { readonly kind: "type"; readonly selector: string; readonly text: string }
   | { readonly kind: "hash"; readonly hash: string }
 
@@ -98,6 +101,18 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "question-long",
     label: "質問（長いラベルと長い説明・複数選択と単一選択）",
     prepare: [],
+  },
+  {
+    name: "question-preview",
+    scene: "question-preview",
+    label: "質問（選択肢ごとの preview をメインビューに出す）",
+    prepare: [],
+  },
+  {
+    name: "question-preview-focus",
+    scene: "question-preview",
+    label: "質問（箱で触れた選択肢の札が光る）",
+    prepare: [{ kind: "hover", selector: 'button:has-text("図の案")' }],
   },
   { name: "permission", scene: "permission", label: "許可プロンプト", prepare: [] },
   { name: "report", scene: "report", label: "レポートとツールの進行", prepare: [] },
@@ -301,6 +316,9 @@ async function applyPreparation(page: Page, step: Preparation): Promise<void> {
       case "click":
         await page.locator(step.selector).first().click({ timeout: PREPARE_TIMEOUT_MS })
         break
+      case "hover":
+        await page.locator(step.selector).first().hover({ timeout: PREPARE_TIMEOUT_MS })
+        break
       case "type":
         await page
           .locator(step.selector)
@@ -325,6 +343,8 @@ function describePreparation(step: Preparation): string {
       return `${step.selector} が見えるまで送る`
     case "click":
       return `${step.selector} を押す`
+    case "hover":
+      return `${step.selector} に触れる`
     case "type":
       return `${step.selector} に ${step.text} と打つ`
     case "hash":

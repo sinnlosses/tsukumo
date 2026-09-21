@@ -16,6 +16,7 @@ import { useMainViewTurns } from "../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import styles from "./main-view.module.css"
 import { MiniPortrait } from "./mini-portrait.tsx"
+import { PendingQuestion } from "./pending-question.tsx"
 import { TurnTabs } from "./turn-tabs.tsx"
 import { Turn } from "./turn.tsx"
 
@@ -46,13 +47,21 @@ export function MainView(): ReactElement {
   }, [activeTurnId])
 
   if (turnsNewestFirst.length === 0) {
-    return <p className={styles["placeholder"]}>{EMPTY_MESSAGE}</p>
+    return (
+      <>
+        <PendingQuestion />
+        <p className={styles["placeholder"]}>{EMPTY_MESSAGE}</p>
+      </>
+    )
   }
 
   const activeTurn = turnsNewestFirst.find((turn) => turn.id === activeTurnId)
 
   return (
     <div className={styles["main-turns"]} ref={scrollerRef}>
+      {/* 答え待ちの質問の比較。**タブより上**に出す（聞かれている間はそれが最優先で読むもの
+          だから）。`preview` が1つも無い質問では何も描かない。 */}
+      <PendingQuestion />
       <TurnTabs turnIds={turnIds} activeTurnId={activeTurnId} onSelect={selectTurn} />
       {/* **`key` にやり取りの番号を渡す。** タブを切り替えても同じ位置の `<Turn>` を使い回すと、
           「このやり取りを出し始めた時点で既にあった本文」（演出の対象を決める材料。`turn.tsx`）が

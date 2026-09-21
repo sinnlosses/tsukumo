@@ -32,6 +32,7 @@ import { Dispatch } from "./features/dispatch/dispatch.tsx"
 import { Layout } from "./features/layout/layout.tsx"
 import { MainView } from "./features/main-view/main-view.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
+import { QuestionFocusProvider } from "./stores/question-focus.tsx"
 import { useScreen } from "./stores/screen.tsx"
 import { SessionProvider, useSessionSelector } from "./stores/session.tsx"
 import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
@@ -84,7 +85,11 @@ if (appRoot !== null) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <TurnSelectionProvider>
-          <Root />
+          {/* 答え待ちの質問の「何問目・どの選択肢に目を置いているか」は、入力欄の箱と
+              メインビューの比較の両方が読む（`stores/question-focus.tsx`）。 */}
+          <QuestionFocusProvider>
+            <Root />
+          </QuestionFocusProvider>
         </TurnSelectionProvider>
       </SessionProvider>
     </QueryClientProvider>,

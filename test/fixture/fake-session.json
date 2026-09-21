@@ -480,6 +480,59 @@
       ]
     },
     {
+      "name": "question-preview",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-preview",
+                "questions": [
+                  {
+                    "header": "架空の選択",
+                    "text": "架空の質問：どの案で進める？",
+                    "multiSelect": false,
+                    "options": [
+                      {
+                        "label": "表の案",
+                        "description": "架空の説明A",
+                        "preview": "| 段 | 触る場所 | 目で見える差 |\n| --- | --- | :---: |\n| 1 | `shared/question.ts` | 無し |\n| 2 | メインビュー | **比較の札が出る** |\n"
+                      },
+                      {
+                        "label": "図の案",
+                        "description": "架空の説明B",
+                        "preview": "```mermaid\nflowchart LR\n  Q[質問] --> H[入力欄の箱]\n  Q --> M[メインビューの比較]\n  H -->|触れた選択肢| M\n```\n"
+                      },
+                      {
+                        "label": "注意つきの案",
+                        "description": "架空の説明C",
+                        "preview": "<div class=\"note note-warn\">戻せない操作が1つ混ざる案（架空）。</div>\n\n- 架空の利点: 速い\n- 架空の欠点: 後から直せない\n"
+                      },
+                      {
+                        "label": "preview が無い案",
+                        "description": "架空の説明D"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "選択肢ごとの比較をメインビューに出したよ。触れると光る。",
+            "expression": "excited"
+          }
+        }
+      ]
+    },
+    {
       "name": "notation",
       "steps": [
         {
@@ -761,7 +814,13 @@
     {
       "name": "chat-compact-boundary",
       "steps": [
-        { "afterMs": 0, "event": { "kind": "chat-mode-changed", "chat": true } },
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "chat-mode-changed",
+            "chat": true
+          }
+        },
         {
           "afterMs": 100,
           "event": {
@@ -778,7 +837,12 @@
             "expression": "default"
           }
         },
-        { "afterMs": 300, "event": { "kind": "compact-boundary" } },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "compact-boundary"
+          }
+        },
         {
           "afterMs": 400,
           "event": {

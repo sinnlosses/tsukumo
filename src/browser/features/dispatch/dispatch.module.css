@@ -163,6 +163,13 @@
   margin: 0 0 0.5rem;
   font-weight: bold;
 }
+/* 選択肢に `preview` があるときだけ出る案内（`pending-answer.tsx`）。比べる面はメインビューに
+   あるので、**この箱だけ見ている人を上へ向ける**ための1行。 */
+.question-preview-hint {
+  margin: 0 0 0.5rem;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
 .question-choices {
   list-style: none;
   margin: 0;

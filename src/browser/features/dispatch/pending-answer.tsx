@@ -7,6 +7,11 @@
 //
 // **`multiSelect` はチェックボックスで複数選べる**（docs/design.md 6.1「複数選択はチェックボックス」）。
 //
+// **選択肢に `preview` があるときは、比べる面をメインビューが出す**
+// （`features/main-view/pending-question.tsx`。2026-09-21）。ここは狭いので押す場所に徹し、
+// **何問目を見ているか・どの選択肢に目を置いているかは `stores/question-focus.tsx` が配る**
+// （両方の機能が同じ選択に従うため。`index` をここのローカル状態に戻さないこと）。
+//
 // **`answer.labels[i]` は `questions[i]` に対して選んだ答えの並び**（`shared/pending-ask.ts` の
 // 契約）。複数選択で2つ以上選んだときはそのまま複数の要素として送り、自由入力に書いた文字列は
 // 同じ並びの末尾に足す。**1つの文字列に畳むのはここではない**（2026-09-16 変更。SDK が求める
@@ -18,6 +23,7 @@ import { useState, type ReactElement } from "react"
 import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
 import { type Question } from "../../../shared/question.ts"
 import { summarizeToolInput } from "../../lib/tool-summary.ts"
+import { useQuestionFocus } from "../../stores/question-focus.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./dispatch.module.css"
 
@@ -82,7 +88,8 @@ function QuestionAsk(props: {
     questions.map(() => []),
   )
   const [freeTexts, setFreeTexts] = useState<readonly string[]>(questions.map(() => ""))
-  const [index, setIndex] = useState(0)
+  // 何問目を見ているかはメインビューの比較も読むので、ここではなく store が持つ。
+  const { questionIndex: index, setQuestionIndex: setIndex, setFocusedLabel } = useQuestionFocus()
 
   const question = questions[index]
   if (question === undefined) {
@@ -107,6 +114,8 @@ function QuestionAsk(props: {
   const advance = (target: number, answer: readonly string[]): void => {
     if (target < questions.length - 1) {
       setIndex(target + 1)
+      // 次の質問の選択肢に、前の質問で置いた目が残らないようにする。
+      setFocusedLabel(undefined)
       return
     }
     dispatch({
@@ -159,7 +168,10 @@ function QuestionAsk(props: {
             <button
               type="button"
               className={styles["pending-answer-back"]}
-              onClick={() => setIndex(index - 1)}
+              onClick={() => {
+                setIndex(index - 1)
+                setFocusedLabel(undefined)
+              }}
             >
               戻る
             </button>
@@ -174,6 +186,7 @@ function QuestionAsk(props: {
         onToggleMulti={toggleMulti}
         onFreeTextChange={setFreeText}
         onFreeTextEnter={() => advance(index, answerFor(index))}
+        onFocusOption={setFocusedLabel}
       />
       {showAdvance ? (
         <div className={styles["pending-answer-actions"]}>
@@ -199,12 +212,15 @@ function QuestionCard(props: {
   readonly onToggleMulti: (label: string) => void
   readonly onFreeTextChange: (value: string) => void
   readonly onFreeTextEnter: () => void
+  /** 目を置いた選択肢をメインビューの比較へ伝える。どれからも外れたら undefined。 */
+  readonly onFocusOption: (label: string | undefined) => void
 }): ReactElement {
   const { question } = props
 
   const hasFreeTextOption = question.options.some(
     (option) => option.label === FREE_TEXT_OPTION_LABEL,
   )
+  const hasPreview = question.options.some((option) => option.preview !== undefined)
 
   return (
     <div className={styles["question-card"]}>
@@ -213,6 +229,11 @@ function QuestionCard(props: {
         {question.multiSelect ? "（複数選べる）" : ""}
       </p>
       <p className={styles["question-text"]}>{question.text}</p>
+      {hasPreview ? (
+        <p className={styles["question-preview-hint"]}>
+          ↑ 選択肢の比較はメインビューに出ている（触れると光る）
+        </p>
+      ) : null}
       <ul className={styles["question-choices"]}>
         {question.options.map((option) =>
           option.label === FREE_TEXT_OPTION_LABEL ? (
@@ -226,6 +247,8 @@ function QuestionCard(props: {
             <li key={option.label}>
               <label
                 className={`${styles["question-choice"]} ${styles["question-choice-checkbox"]}`}
+                onMouseEnter={() => props.onFocusOption(option.label)}
+                onFocus={() => props.onFocusOption(option.label)}
               >
                 <span className={styles["question-choice-checkbox-row"]}>
                   <input
@@ -246,6 +269,8 @@ function QuestionCard(props: {
                 className={`${styles["question-choice"]} ${styles["question-choice-single"]}${
                   props.selected.includes(option.label) ? ` ${styles["is-selected"]}` : ""
                 }`}
+                onMouseEnter={() => props.onFocusOption(option.label)}
+                onFocus={() => props.onFocusOption(option.label)}
                 onClick={() => props.onSelectSingle(option.label)}
               >
                 <span className={styles["question-choice-label"]}>{option.label}</span>

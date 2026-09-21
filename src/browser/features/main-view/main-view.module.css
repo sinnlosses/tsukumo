@@ -316,6 +316,48 @@ h2.turn-request {
   height: auto;
 }
 
+/* 答え待ちの質問の「比べる面」（`pending-question.tsx`）。**タブより上に出る一時的な塊**なので、
+   ターンのカード（`.tool-block`）とは違う地（--surface-raised）で浮かせて、いま読むものだと
+   分かるようにする。答えると消える。 */
+.pending-question-previews {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface-raised);
+}
+.pending-question-heading {
+  margin: 0 0 0.6rem;
+  font-size: var(--font-body);
+}
+/* 札は横に並べ、入り切らなければ折り返す（`.report-cols` と同じ考え方だが、preview は表や図が
+   入るぶん1枚を広く取る）。 */
+.pending-question-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 0.75rem;
+}
+.pending-question-card {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+/* 入力欄の箱で目を置いている札。**枠の太さと地**で示す（色だけに頼らない。13.1 原則5）。 */
+.pending-question-card.is-focused {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.pending-question-card-label {
+  margin: 0 0 0.2rem;
+  font-weight: bold;
+}
+.pending-question-card-description {
+  margin: 0 0 0.5rem;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+
 /* メインビューに残す質問の記録。 */
 .tool-block-question .question-record h4 {
   margin: 0 0 0.3rem;

@@ -7,10 +7,19 @@
 // 質問文と選択肢は会話の内容そのものなので、**ログや状態ファイルには書かない**
 // （`docs/coding-standards.md`「会話内容の扱い」）。画面に出す経路だけで扱う。
 
-/** 1つの選択肢。`preview` は数十行になることがあるので、読み取りの時点で捨てる。 */
+/**
+ * 1つの選択肢。`preview` は**その選択肢を選ぶと何が起きるかを比べるための本文**（Markdown。
+ * 表・mermaid・レポートの記法がそのまま書ける）で、メインビューが
+ * `src/browser/features/main-view/pending-question.tsx` で描く。
+ *
+ * **2026-09-21 まではここで捨てていた**（「数十行になるので持ち回らない」）。選択肢が
+ * 文章だけになって比べられないという指摘（同日）で、読んで運ぶように変えた。数十行になるのは
+ * 変わらないが、**運ぶ先は画面だけ**（ログにも状態ファイルにも書かない。ファイル冒頭の注記）。
+ */
 export type QuestionOption = {
   readonly label: string
   readonly description: string
+  readonly preview: string | undefined
 }
 
 export type Question = {
@@ -36,7 +45,7 @@ export type QuestionAnswer = readonly string[]
  *
  * - `question` / `header` が文字列でない要素は**その要素だけ**捨てる
  * - `options` は `label` が文字列のものだけを採る。`description` は無ければ空文字にする
- * - **`preview` は読まない。** 表示に使わないものを持ち回らないため
+ * - `preview` は文字列のときだけ採る（空文字は「無い」と同じ扱いにして undefined に畳む）
  */
 export function parseQuestions(input: unknown): readonly Question[] | undefined {
   if (!isRecord(input) || !Array.isArray(input.questions)) {
@@ -69,10 +78,14 @@ function toOption(value: unknown): readonly QuestionOption[] {
     return []
   }
 
+  const preview =
+    typeof value.preview === "string" && value.preview.trim() !== "" ? value.preview : undefined
+
   return [
     {
       label: value.label,
       description: typeof value.description === "string" ? value.description : "",
+      preview,
     },
   ]
 }

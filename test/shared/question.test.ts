@@ -5,7 +5,7 @@ import { parseQuestions } from "../../src/shared/question.ts"
 // 手で書いた架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
 
 describe("parseQuestions", () => {
-  it("質問文・見出し・選択肢を取り出す（preview は捨てる）", () => {
+  it("質問文・見出し・選択肢を取り出し、preview も運ぶ", () => {
     const input = {
       questions: [
         {
@@ -13,8 +13,8 @@ describe("parseQuestions", () => {
           question: "質問をどのビューに出す？",
           multiSelect: false,
           options: [
-            { label: "メインビュー", description: "作業の記録として出す", preview: "AAの図…" },
-            { label: "吹き出し", description: "キャラビューに出す" },
+            { label: "メインビュー", description: "作業の記録として出す", preview: "| 案 | 差 |" },
+            { label: "吹き出し", description: "キャラビューに出す", preview: undefined },
           ],
         },
       ],
@@ -28,12 +28,22 @@ describe("parseQuestions", () => {
         text: "質問をどのビューに出す？",
         multiSelect: false,
         options: [
-          { label: "メインビュー", description: "作業の記録として出す" },
-          { label: "吹き出し", description: "キャラビューに出す" },
+          { label: "メインビュー", description: "作業の記録として出す", preview: "| 案 | 差 |" },
+          { label: "吹き出し", description: "キャラビューに出す", preview: undefined },
         ],
       },
     ])
-    expect(JSON.stringify(questions)).not.toContain("AAの図")
+  })
+
+  it("preview が文字列でない・空白だけのときは undefined に畳む", () => {
+    const previewsOf = (preview: unknown) =>
+      parseQuestions({
+        questions: [{ header: "h", question: "q", options: [{ label: "l", preview }] }],
+      })?.[0]?.options[0]?.preview
+
+    expect(previewsOf(42)).toBeUndefined()
+    expect(previewsOf("   ")).toBeUndefined()
+    expect(previewsOf("# 見出し")).toBe("# 見出し")
   })
 
   it("multiSelect は true のときだけ true になる", () => {
@@ -63,7 +73,9 @@ describe("parseQuestions", () => {
 
     expect(questions).toHaveLength(1)
     expect(questions?.[0]?.text).toBe("残る")
-    expect(questions?.[0]?.options).toEqual([{ label: "残る選択肢", description: "" }])
+    expect(questions?.[0]?.options).toEqual([
+      { label: "残る選択肢", description: "", preview: undefined },
+    ])
   })
 
   it("入力の形が違う・質問が1つも無いときは undefined", () => {

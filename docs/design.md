@@ -609,7 +609,9 @@ type SessionHost = {
       ├ <Layout>             会話の画面。grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
       │  │                   右下に「領域の比率を既定に戻す」を常設（13.6）。**狭い画面では画面の高さに
       │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
-      │  ├ <MainView>        <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
+      │  ├ <MainView>        <PendingQuestion> + <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
+      │  │   └ <PendingQuestion> 答え待ちの質問の**比べる面**。選択肢の `preview`（Markdown）を札に並べる。
+      │  │                    `preview` を持つ選択肢が1つも無ければ何も描かない（2026-09-21）
       │  │   └ <Turn>        <RequestHeading>（依頼の見出し + <PromptImageThumbnails>）
       │  │                    + [<Report> | <QuestionRecord>]*
       │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
@@ -623,7 +625,9 @@ type SessionHost = {
       │  │   └ <SessionInfo> モデル / 許可モード の <select>、キャラクターの <select> と、その右の
       │  │                   「整える」（#character へのリンク。13.6）
       │  └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
-      │      ├ <PendingAnswer> 許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）
+      │      ├ <PendingAnswer> 許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）。
+      │      │                何問目・どの選択肢に目を置いているかは `stores/question-focus.tsx`
+      │      │                （触れた選択肢が <PendingQuestion> の札で光る）
       │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。貼り付け / ドロップで画像を添える
       │      │                （**ボタンは置かない**。4.10）。<CommandSuggestions>（`/`）と
       │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包

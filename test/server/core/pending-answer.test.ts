@@ -34,8 +34,8 @@ function questionRequest(overrides: Partial<AskRequest> = {}): AskRequest {
           header: "選択",
           multiSelect: false,
           options: [
-            { label: "こっち", description: "ダミーの説明" },
-            { label: "あっち", description: "ダミーの説明" },
+            { label: "こっち", description: "ダミーの説明", preview: undefined },
+            { label: "あっち", description: "ダミーの説明", preview: undefined },
           ],
         },
       ],
@@ -121,8 +121,8 @@ describe("createPendingAnswerQueue", () => {
             text: "どちらにする？",
             multiSelect: false,
             options: [
-              { label: "こっち", description: "ダミーの説明" },
-              { label: "あっち", description: "ダミーの説明" },
+              { label: "こっち", description: "ダミーの説明", preview: undefined },
+              { label: "あっち", description: "ダミーの説明", preview: undefined },
             ],
           },
         ],
@@ -183,8 +183,8 @@ describe("createPendingAnswerQueue", () => {
             text: "どちらにする？",
             multiSelect: false,
             options: [
-              { label: "こっち", description: "ダミーの説明" },
-              { label: "あっち", description: "ダミーの説明" },
+              { label: "こっち", description: "ダミーの説明", preview: undefined },
+              { label: "あっち", description: "ダミーの説明", preview: undefined },
             ],
           },
         ],

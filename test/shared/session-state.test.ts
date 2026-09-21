@@ -836,8 +836,8 @@ describe("applySessionEvent（質問の記録）", () => {
     text: "どちらの案で進める？",
     multiSelect: false,
     options: [
-      { label: "案A", description: "架空の説明A" },
-      { label: "案B", description: "架空の説明B" },
+      { label: "案A", description: "架空の説明A", preview: undefined },
+      { label: "案B", description: "架空の説明B", preview: undefined },
     ],
   }
 
@@ -846,9 +846,9 @@ describe("applySessionEvent（質問の記録）", () => {
     text: "どれを試す？",
     multiSelect: true,
     options: [
-      { label: "案A", description: "架空の説明A" },
-      { label: "案B", description: "架空の説明B" },
-      { label: "案C", description: "架空の説明C" },
+      { label: "案A", description: "架空の説明A", preview: undefined },
+      { label: "案B", description: "架空の説明B", preview: undefined },
+      { label: "案C", description: "架空の説明C", preview: undefined },
     ],
   }
 

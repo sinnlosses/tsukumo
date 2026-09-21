@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@tes
 
 import { MainView } from "../../../../src/browser/features/main-view/main-view.tsx"
 import { QuestionRecord } from "../../../../src/browser/features/main-view/question-record.tsx"
+import { QuestionFocusProvider } from "../../../../src/browser/stores/question-focus.tsx"
 import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
 import { type MainViewQuestion } from "../../../../src/shared/main-view.ts"
@@ -49,7 +50,9 @@ function renderMainView(records: readonly SessionRecord[]): RenderResult {
   return render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionProvider>
-        <MainView />
+        <QuestionFocusProvider>
+          <MainView />
+        </QuestionFocusProvider>
       </TurnSelectionProvider>
     </SessionStoreContext.Provider>,
   )
@@ -385,8 +388,8 @@ describe("MainView（質問の記録）", () => {
           text: "どちらにする？",
           multiSelect: false,
           options: [
-            { label: "案A", description: "" },
-            { label: "案B", description: "" },
+            { label: "案A", description: "", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
           ],
         },
       ],
@@ -412,9 +415,9 @@ describe("MainView（質問の記録）", () => {
           text: "どれを試す？",
           multiSelect: true,
           options: [
-            { label: "案A", description: "" },
-            { label: "案B", description: "" },
-            { label: "案C", description: "" },
+            { label: "案A", description: "", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
+            { label: "案C", description: "", preview: undefined },
           ],
         },
       ],
@@ -438,8 +441,8 @@ describe("MainView（質問の記録）", () => {
           text: "どちらにする？",
           multiSelect: false,
           options: [
-            { label: "案A", description: "" },
-            { label: "案B", description: "" },
+            { label: "案A", description: "", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
           ],
         },
       ],
@@ -464,8 +467,8 @@ describe("MainView（質問の記録）", () => {
           text: "1つ目は？",
           multiSelect: false,
           options: [
-            { label: "案A", description: "" },
-            { label: "案B", description: "" },
+            { label: "案A", description: "", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
           ],
         },
         {
@@ -473,8 +476,8 @@ describe("MainView（質問の記録）", () => {
           text: "2つ目は？",
           multiSelect: false,
           options: [
-            { label: "案A", description: "" },
-            { label: "案C", description: "" },
+            { label: "案A", description: "", preview: undefined },
+            { label: "案C", description: "", preview: undefined },
           ],
         },
       ],
