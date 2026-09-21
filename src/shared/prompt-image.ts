@@ -29,8 +29,11 @@ export const PROMPT_IMAGE_MEDIA_TYPES = [
 
 export type PromptImageMediaType = (typeof PROMPT_IMAGE_MEDIA_TYPES)[number]
 
-/** 画像1枚（デコード後）の上限。立ち絵・背景と同じ値（`docs/requirements.md` 4.10 の表）。 */
-export const MAX_PROMPT_IMAGE_BYTES = 2 * 1024 * 1024
+/**
+ * 画像1枚（デコード後）の上限。**なぜ 5 MiB か**: API の天井（base64 で1枚 10 MB）の内側で、
+ * 利用者が貼るスクリーンショットが収まる幅を取った（`docs/requirements.md` 4.10 の表）。
+ */
+export const MAX_PROMPT_IMAGE_BYTES = 5 * 1024 * 1024
 
 /** 原寸の data URL の文字列の上限（{@link MAX_PROMPT_IMAGE_BYTES} を base64 の長さに直したもの）。 */
 export const MAX_PROMPT_IMAGE_DATA_URL_LENGTH = maxImageDataUrlLength(MAX_PROMPT_IMAGE_BYTES)
@@ -48,8 +51,12 @@ export const MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH = maxImageDataUrlLength(
   MAX_PROMPT_IMAGE_THUMBNAIL_BYTES,
 )
 
-/** 1件の依頼に添えられる枚数（`docs/requirements.md` 4.10 の表）。 */
-export const MAX_PROMPT_IMAGES = 4
+/**
+ * 1件の依頼に添えられる枚数。**なぜ 2 枚か**: 1枚あたりの上限を緩める代わりに枚数を絞り、
+ * リクエスト全体が API の天井（32 MB）に当たらないことを構造で保証する
+ * （`docs/requirements.md` 4.10 の表）。
+ */
+export const MAX_PROMPT_IMAGES = 2
 
 /**
  * 依頼に添える画像1枚。**原寸と控えの対**で、対のまま `prompt` コマンドに乗る。

@@ -92,11 +92,11 @@ describe("isPromptImageMediaType", () => {
 })
 
 describe("上限の値", () => {
-  it("1件の依頼に添えられるのは4枚", () => {
-    expect(MAX_PROMPT_IMAGES).toBe(4)
+  it("1件の依頼に添えられるのは2枚", () => {
+    expect(MAX_PROMPT_IMAGES).toBe(2)
   })
 
-  it("1枚の上限は 2 MiB", () => {
-    expect(MAX_PROMPT_IMAGE_BYTES).toBe(2 * 1024 * 1024)
+  it("1枚の上限は 5 MiB", () => {
+    expect(MAX_PROMPT_IMAGE_BYTES).toBe(5 * 1024 * 1024)
   })
 })

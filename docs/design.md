@@ -461,7 +461,7 @@ type ClientCommand =
 - `images` は**原寸と控えの対**（`PromptImage = { full: string; thumbnail: string }`。どちらも
   data URL）。上限・形式・枚数は `shared/prompt-image.ts` が持ち、値そのものは
   `docs/requirements.md` 4.10 が正典。**1枚も無いのが普通**なので、field ごと省いた形も受け取って
-  空に畳む。`maxPayload`（session-socket.ts）は原寸4枚が通る 12 MiB
+  空に畳む。`maxPayload`（session-socket.ts）は原寸が上限まで全部通る大きさにしてある（値は同じく 4.10）
 - `PermissionMode` と `ModelAlias` の値の一覧は **`shared` に1つだけ置く**（いまは
   `session-driver.ts` と `view.ts` に写しがある。SDK の型との一致は `core` 側のテストで守る）
 
@@ -843,14 +843,15 @@ characters/<name>/
 そのまま効く。`multipart/form-data` の POST は node:http にパーサーが無く外部依存が要るので採らない。
 生バイトの POST は照合と上限をもう一組書くことになるので採らない。
 
-| 何                        | 上限                                  |
-| ------------------------- | ------------------------------------- |
-| 画像1枚（デコード後）     | 2 MiB                                 |
-| 1つのパックが持てる画像   | 表情の数 + 2 枚（いまは 10 枚）       |
-| WebSocket の `maxPayload` | 4 MiB（base64 の 33% 増と JSON の分） |
+| 何                        | 上限                                                         |
+| ------------------------- | ------------------------------------------------------------ |
+| 画像1枚（デコード後）     | 2 MiB                                                        |
+| 1つのパックが持てる画像   | 表情の数 + 2 枚（いまは 10 枚）                              |
+| WebSocket の `maxPayload` | 16 MiB（依頼に添える画像の上限で決まる。4.10「上限」と同じ） |
 
-- `MAX_MESSAGE_BYTES` はいま `MAX_PROMPT_TEXT_LENGTH * 4`。**依頼の文面の上限（zod の
-  20,000 文字）は別に効いている**ので、`maxPayload` を上げても文面の上限は緩まない
+- `MAX_MESSAGE_BYTES` はいま 16 MiB（依頼に添える画像2枚の base64 ＋ 控え ＋ 文面から置いた値。
+  内訳は `docs/requirements.md` 4.10「上限」）。**依頼の文面の上限（zod の 20,000 文字）は
+  別に効いている**ので、`maxPayload` を上げても文面の上限は緩まない
 - **書いてよいのは `~/.tsukumo/characters/<name>/` の下だけ。** `<name>` とファイル名は受け取った
   文字列からパスを組み立てる前に shared のスキーマで検証する（`[A-Za-z0-9._-]` だけ・`.` で
   始まらない・区切り文字を含まない）。`..` が名前として通らないので、パストラバーサルの経路が
