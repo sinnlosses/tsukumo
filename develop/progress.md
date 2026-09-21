@@ -79,10 +79,6 @@ direction.md のドラフトと T-272 の本文へ回した。
 
 `sdk-message.ts` が `parent_tool_use_id` を見るようにして、サブエージェントの `result` で本体のターンが終わったことにならないようにした（案4-c の保険）。SDK が実際にこの形で流すかは未確認のまま。
 
-### 2026-09-21 ツールが続かない実況が本文に残る経路を塞いだ（T-274）
-
-`hideUnsettledReport` と `keepOnlyInterimReports` を `selectShownReports` 1つに畳み、実況の判定を構造の印だけに寄せた。締めの本文だけを例外にして、短い返事のターンでも本文が残る。
-
 ## 未解決
 
 - **`docs/design.md` の章番号に穴がある**（2026-09-21。T-272 で12章を history へ移したが、**詰めていない**ので 11章の次が13章）。詰めなかったのは、13.x を指す参照が `src`/`test`/`docs` に約100箇所あり、うち12件が `docs/requirements.md`（T-272 では触れない制約）だったため。`docs/requirements.md` 4.5 と同じ扱い。詰めるなら**参照の一括置換を1タスクとして切る**
