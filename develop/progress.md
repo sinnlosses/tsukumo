@@ -75,10 +75,6 @@ T-277 の基準だと動くのが1件だけで `utils/` が空になることを
 
 用語集を先に直してから30ファイルを置き換えた。識別子も `readFakeSession` / `FakeSession` 系へ。環境変数名とファイル名は変えていない。
 
-### 2026-09-21 design.md の経緯を history へ移した（T-272）
-
-26件を `docs/history/decision.md` へ移し、正典を 1932行 → 1755行にした。12章「移行の段階」が丸ごと消えて章は 13 → 12 だが、**章番号は詰めていない**（11章の次が13章）。
-
 ## 未解決
 
 - **`bun install` のあとは `bun run build` が1回要る**（2026-09-21 の T-279 から）。忘れると `bun run start` が「ブラウザ側の成果物を読めない」で終了コード1になる。`dist/` を `.gitignore` に置いたことの代償で、`CLAUDE.md` のセットアップにも書いた。`scripts/capture-catalog.ts` のように tsukumo を spawn する道具も同じ
