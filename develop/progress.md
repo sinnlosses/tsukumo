@@ -75,14 +75,6 @@ T-277 の基準だと動くのが1件だけで `utils/` が空になることを
 
 26件を `docs/history/decision.md` へ移し、正典を 1932行 → 1755行にした。12章「移行の段階」が丸ごと消えて章は 13 → 12 だが、**章番号は詰めていない**（11章の次が13章）。
 
-### 2026-09-21 requirements.md の経緯を history へ移した（T-271）
-
-`docs/history/decision.md` を新設して 28件を移し、正典を 1798行 → 1571行にした。索引も本文の節数と一致するよう作り直した。design.md は T-272。
-
-### 2026-09-21 設定と永続状態を棚卸しして提案書にまとめた（T-280）
-
-`docs/research/configuration-and-state.md`。主因は環境変数ではなく「画面で選んだのに覚えてくれない」ことだと分かり、`state.json` を育てる案Cを推した。DB は要らないと結論。
-
 ## 未解決
 
 - **`bun install` のあとは `bun run build` が1回要る**（2026-09-21 の T-279 から）。忘れると `bun run start` が「ブラウザ側の成果物を読めない」で終了コード1になる。`dist/` を `.gitignore` に置いたことの代償で、`CLAUDE.md` のセットアップにも書いた。`scripts/capture-catalog.ts` のように tsukumo を spawn する道具も同じ
