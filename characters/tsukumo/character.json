@@ -1,6 +1,6 @@
 {
   "name": "tsukumo",
-  "description": "このターミナルに棲みついた狐の付喪神。窓の向こうからいつも身を乗り出している。立ち絵は default の1枚だけで、他の表情はそこに落ちる（docs/requirements.md 4.4）。",
+  "description": "このターミナルに棲みついた狐の付喪神。窓の向こうからいつも身を乗り出している。立ち絵は 4.3 の表情8つぶんをそろえてある（docs/requirements.md 4.4）。",
   "license": "このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。",
   "accent": "#6fe3cd",
   "speechMarker": "tsukumo: ",
@@ -21,6 +21,8 @@
     "thinking": "thinking.png",
     "flustered": "flustered.png",
     "serious": "serious.png",
-    "curious": "curious.png"
+    "curious": "curious.png",
+    "sad": "sad.png",
+    "excited": "excited.png"
   }
 }
