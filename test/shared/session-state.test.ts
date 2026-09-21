@@ -456,6 +456,25 @@ describe("applySessionEvent", () => {
     expect(finished.turnInProgress).toBe(false)
   })
 
+  it("turn-started はターンを始めるが、記録を1件も積まない（話しかけてもらった一言を残さない）", () => {
+    const spoken = apply(
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+    )
+
+    const started = applySessionEvent(spoken, { kind: "turn-started" }, 700)
+
+    // 記録は前のターンのまま（送った文面はどこにも入らないので、雑談のログにも
+    // メインビューにも出ようが無い。docs/design.md 13.7）。
+    expect(started.records).toEqual(spoken.records)
+    // ターンの始まりとしての効き目は `request` と同じ。
+    expect(started.turnInProgress).toBe(true)
+    expect(started.turnStartedAt).toBe(700)
+    expect(started.speeches).toEqual([])
+    expect(started.speechExpression).toBe("default")
+    expect(started.speechCalledInTurn).toBe(false)
+  })
+
   it("session-ended でも進行中を止める（中断・異常終了のどちらでも入力欄を送信可能に戻す）", () => {
     const started = apply({ kind: "request", text: "ダミーの依頼", images: [] })
 

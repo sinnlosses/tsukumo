@@ -184,6 +184,13 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     commandId: commandIdSchema,
     chat: z.boolean(),
   }),
+  /**
+   * キャラクターから話しかけてもらう（`docs/design.md` 13.7）。**文面はここを通らない** —
+   * 送る一言は `src/server/core/chat-nudge.ts` が持ち、押した事実だけが届く（原則4。話題は
+   * tsukumo が列挙しない）。**送った文面はログにも記録にも残さない**（2026-09-21 決定）ので、
+   * `prompt` とは別のコマンドにしてある。
+   */
+  z.object({ type: z.literal("nudge"), commandId: commandIdSchema }),
   z.object({
     type: z.literal("switch-character"),
     commandId: commandIdSchema,
@@ -254,13 +261,17 @@ export type CharacterEditCommand = Extract<
  */
 export type CharacterCreateCommand = Extract<ClientCommand, { readonly type: "create-character" }>
 
-/** 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる）。 */
+/**
+ * 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる。
+ * `nudge` も文面をサーバ側が足すので外れる）。
+ */
 export type DriverCommand = Exclude<
   ClientCommand,
   | CharacterEditCommand
   | CharacterCreateCommand
   | { readonly type: "switch-character" }
   | { readonly type: "set-chat-mode" }
+  | { readonly type: "nudge" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */

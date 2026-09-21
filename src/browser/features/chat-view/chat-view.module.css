@@ -107,6 +107,33 @@
   border: none;
   border-top: 1px solid var(--rule);
 }
+/* キャラクターから話しかけてもらうボタン（`chat-view.tsx` の `<NudgeButton>`。13.7）。
+   **ログの末尾に1つ置くだけ**で、区画も帯も新しい枠も作らない（13.1 原則2。増えるのは
+   操作子1つだけ、というのがユーザーの決定の範囲）。キャラクターのセリフと同じ左側に置き、
+   **地を持たない字だけの操作子**にして発言の行と見分けられるようにする。 */
+.chat-nudge {
+  align-self: flex-start;
+  margin: 0.1rem 0 0.2rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px dashed var(--rule);
+  border-radius: 1rem;
+  background: none;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+/* 押せることは、機械が指し示す縁の色（13.1 原則1）と文字の濃さだけで示す。 */
+.chat-nudge:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+/* ターン進行中（返事を待っている間）は押せない。 */
+.chat-nudge:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* まだ一度も話していないときの案内。 */
 .chat-empty {
   align-self: center;

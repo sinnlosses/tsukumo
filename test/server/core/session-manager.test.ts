@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { CHAT_NUDGE_PROMPT } from "../../../src/server/core/chat-nudge.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
@@ -46,6 +47,7 @@ function createStubDriver(): StubDriver {
   const stub = {
     driver: {
       prompt: (text: string) => calls.push(`prompt:${text}`),
+      promptWithoutRecord: (text: string) => calls.push(`promptWithoutRecord:${text}`),
       interrupt: () => {
         calls.push("interrupt")
         return Promise.resolve()
@@ -480,6 +482,46 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(2)
   })
 
+  describe("キャラクターから話しかけてもらう（nudge）", () => {
+    it("雑談モードなら、記録に残さない口へ core が持つ文面を渡す（依頼としては送らない）", async () => {
+      const { manager, stub } = startManagerWithStub()
+      await waitForBatch()
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+
+      expect(await manager.dispatch(SESSION_ID, { type: "nudge", commandId: "c-1" })).toEqual({
+        ok: true,
+      })
+
+      // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
+      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/design.md 13.7）。
+      expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
+    })
+
+    it("仕事のモードでは受け付けない（メインビューにキャラクター発のターンを混ぜない）", async () => {
+      const { manager, stub } = startManagerWithStub()
+      await waitForBatch()
+
+      expect(await manager.dispatch(SESSION_ID, { type: "nudge", commandId: "c-1" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.nudgeOutsideChat,
+      })
+      expect(stub.calls).toEqual([])
+    })
+
+    it("ターン進行中は受け付けない（画面のボタンと同じ条件をサーバでも見る）", async () => {
+      const { manager, stub } = startManagerWithStub()
+      await waitForBatch()
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+
+      expect(await manager.dispatch(SESSION_ID, { type: "nudge", commandId: "c-1" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.nudgeDuringTurn,
+      })
+      expect(stub.calls).toEqual([])
+    })
+  })
+
   describe("雑談の記憶の圧縮", () => {
     // 本番の閾値（32 KiB）だと架空の短い文面では届かないので、**`SessionManagerOptions` の
     // フィールドに小さい閾値を渡して**テストする（`batchIntervalMs` と同じ形。
@@ -753,6 +795,7 @@ describe("createSessionManager", () => {
       startDriver: () =>
         Promise.resolve({
           prompt: () => {},
+          promptWithoutRecord: () => {},
           interrupt: () => Promise.reject(new Error("架空の駆動エラー")),
           answer: () => true,
           pending: () => [],

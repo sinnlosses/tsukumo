@@ -27,6 +27,7 @@ import {
   type SessionState,
 } from "../../shared/session-state.ts"
 import { CHAT_COMPACT_COMMAND } from "./chat-compact.ts"
+import { CHAT_NUDGE_PROMPT } from "./chat-nudge.ts"
 import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
 
@@ -377,6 +378,19 @@ function createSessionHost(
         // とは決めていない）。
         return restart({ character: state.character?.pack, chat: command.chat })
       }
+      if (command.type === "nudge") {
+        // 画面のボタンも同じ2つの条件で塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が
+        // 間に合わなかったときの取りこぼし対策。`switch-character` と同じ立場）。
+        // **雑談のときだけ**（`docs/design.md` 13.7）——仕事のメインビューは記録を積んで
+        // レポートを出す面なので、キャラクターから始まるターンを混ぜない。
+        if (!state.chatMode) {
+          return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.nudgeOutsideChat })
+        }
+        if (state.turnInProgress) {
+          return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.nudgeDuringTurn })
+        }
+        return nudge(driver)
+      }
       if (command.type === "create-character") {
         return write(
           () => created.createCharacter(command),
@@ -435,6 +449,23 @@ async function dispatchToDriver(
         await started.setPermissionMode(command.mode)
         return { ok: true }
     }
+  } catch {
+    return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
+  }
+}
+
+/**
+ * キャラクターから話しかけてもらう（`docs/design.md` 13.7）。**文面は core が持ち**
+ * （{@link CHAT_NUDGE_PROMPT}）、**記録に残さない口**（`promptWithoutRecord`）で渡すので、
+ * 利用者が打っていない一言はログにも記録にも雑談の会話のアーカイブにも並ばない。
+ *
+ * 駆動が例外を投げても常駐プロセスは落とさず、定型文の理由を返す（`dispatchToDriver` と同じ）。
+ */
+async function nudge(driver: Promise<SessionDriver>): Promise<DispatchResult> {
+  try {
+    const started = await driver
+    started.promptWithoutRecord(CHAT_NUDGE_PROMPT)
+    return { ok: true }
   } catch {
     return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
   }

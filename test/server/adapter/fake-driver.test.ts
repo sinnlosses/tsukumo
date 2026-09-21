@@ -59,6 +59,22 @@ describe("startFakeSession", () => {
     ])
   })
 
+  it("promptWithoutRecord は request を流さず、turn-started だけを流して次の場面へ進む", async () => {
+    const sink = collect()
+    const driver = startFakeSession({ script: SCRIPT, scene: undefined, onEvent: sink.onEvent })
+    await tick()
+    driver.promptWithoutRecord("架空の合図")
+    await tick()
+    driver.close()
+
+    // 送った文面はどのイベントにも乗らない（docs/design.md 13.7）。
+    expect(sink.events.slice(1)).toEqual([
+      { kind: "turn-started" },
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
   it("scene で名指しした場面は、依頼を待たずに opening の続きとして流れる", async () => {
     const sink = collect()
     const driver = startFakeSession({ script: SCRIPT, scene: "架空の場面2", onEvent: sink.onEvent })

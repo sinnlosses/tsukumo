@@ -21,6 +21,7 @@ function createStubDriver(): { readonly driver: SessionDriver; readonly calls: s
     calls,
     driver: {
       prompt: (text: string) => calls.push(`prompt:${text}`),
+      promptWithoutRecord: (text: string) => calls.push(`promptWithoutRecord:${text}`),
       interrupt: () => Promise.resolve(),
       answer: () => true,
       pending: () => [],

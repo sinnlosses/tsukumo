@@ -272,25 +272,16 @@ export function applySessionEvent(
       return isModelAlias(event.model) ? { ...state, model: event.model } : state
     case "request":
       return {
-        ...state,
+        ...beginTurn(state, at),
         records: trimToRecentTurns(
           [...state.records, { kind: "request", text: event.text, images: event.images }],
           state.chatMode,
         ),
-        // 送信した時点で吹き出しを空にする（プレースホルダー「（まだ発話がありません）」に
-        // 切り替わる。前のターンの一言が残ったままだと、次のターンに移ったことが画面から
-        // 分からない。2026-09-16 決定。以前は前のターンの並びの最後の1件を残していたが、
-        // それが「切り替わったのか分からない」の原因だった）。
-        speeches: [],
-        // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない
-        // （表情の源は `speak` の1つだけ。docs/requirements.md 4.3）。
-        speechExpression: INITIAL_SESSION_STATE.speechExpression,
-        partialUtterance: "",
-        turnInProgress: true,
-        speechCalledInTurn: false,
-        turnStartedAt: at,
-        turnFinishedAt: undefined,
       }
+    case "turn-started":
+      // **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。docs/design.md 13.7）。
+      // 積むものが無いだけで、吹き出し・表情・進行中の印は `request` と同じに動かす。
+      return beginTurn(state, at)
     case "partial-utterance":
       return { ...state, partialUtterance: state.partialUtterance + event.text }
     case "utterance":
@@ -401,6 +392,29 @@ export function applySessionEvent(
       return { ...state, chatMode: event.chat }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
+  }
+}
+
+/**
+ * ターンの始まりを畳む（記録は動かさない）。**`request` と「記録を持たないターンの始まり」
+ * （`turn-started`）で共通**の部分で、積むものがあるかどうかだけが違う。
+ */
+function beginTurn(state: SessionState, at: number): SessionState {
+  return {
+    ...state,
+    // 送信した時点で吹き出しを空にする（プレースホルダー「（まだ発話がありません）」に
+    // 切り替わる。前のターンの一言が残ったままだと、次のターンに移ったことが画面から
+    // 分からない。2026-09-16 決定。以前は前のターンの並びの最後の1件を残していたが、
+    // それが「切り替わったのか分からない」の原因だった）。
+    speeches: [],
+    // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない
+    // （表情の源は `speak` の1つだけ。docs/requirements.md 4.3）。
+    speechExpression: INITIAL_SESSION_STATE.speechExpression,
+    partialUtterance: "",
+    turnInProgress: true,
+    speechCalledInTurn: false,
+    turnStartedAt: at,
+    turnFinishedAt: undefined,
   }
 }
 

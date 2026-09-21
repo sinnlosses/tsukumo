@@ -142,17 +142,28 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   }
   let playedTurns = namedScene === undefined ? 0 : namedIndex + 1
 
+  /** 次の場面を流す（依頼でも、記録に残さない依頼でも同じ）。 */
+  const playNextTurn = (): void => {
+    const turns = options.script.turns
+    const scene = turns.length === 0 ? undefined : turns[playedTurns % turns.length]
+    playedTurns += 1
+    if (scene !== undefined) {
+      play(scene.steps, 0)
+    }
+  }
+
   return {
     prompt: (text, images) => {
       // 台本を流すだけの駆動でも、**控えだけを記録へ渡す**のは本物と同じ
       // （原寸はここで手放す。`docs/requirements.md` 4.10）。
       emit({ kind: "request", text, images: images.map((image) => image.thumbnail) })
-      const turns = options.script.turns
-      const scene = turns.length === 0 ? undefined : turns[playedTurns % turns.length]
-      playedTurns += 1
-      if (scene !== undefined) {
-        play(scene.steps, 0)
-      }
+      playNextTurn()
+    },
+    promptWithoutRecord: () => {
+      // 記録に残さない依頼（`docs/design.md` 13.7）。本物と同じく `request` の代わりに
+      // ターンの始まりだけを流し、**文面はどこにも残さない**（台本は次の場面へ進む）。
+      emit({ kind: "turn-started" })
+      playNextTurn()
     },
     interrupt: () => {
       emit({ kind: "turn-finished", status: "error" })

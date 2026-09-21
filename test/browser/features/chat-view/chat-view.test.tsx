@@ -10,7 +10,7 @@ import {
   type SessionRecord,
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
-import { putState, sessionStoreWith } from "../../session-store.ts"
+import { type CommandSpy, putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -29,8 +29,11 @@ const RECORDS: readonly SessionRecord[] = [
 
 // 立ち絵（`<Portrait>`）は `useQuery` を使うので `QueryClientProvider` が要る。表情を見る
 // テストだけがキャラクター定義を差し込む（定義が無いと立ち絵そのものが出ない）。
-function renderChatView(stateOverrides: Partial<SessionState>): SessionStore {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, () => {})
+function renderChatView(
+  stateOverrides: Partial<SessionState>,
+  spy: CommandSpy = () => {},
+): SessionStore {
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
   render(
     <QueryClientProvider client={new QueryClient()}>
       <SessionStoreContext.Provider value={store}>
@@ -185,5 +188,47 @@ describe("ChatView のセリフを遡る", () => {
     })
 
     expect(portraitExpression()).toBe("default")
+  })
+})
+
+describe("ChatView の話しかけてもらうボタン", () => {
+  /** ボタンの字は `chat-view.tsx` が持つ（docs/design.md 13.7）。 */
+  const NUDGE_LABEL = "話しかけてもらう"
+
+  it("押すと nudge を1つ送る（文面は持たない）", () => {
+    const sent: unknown[] = []
+    renderChatView({ records: RECORDS }, (command) => sent.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: NUDGE_LABEL }))
+
+    // **送るのは押した事実だけ**（文面は `src/server/core/chat-nudge.ts` が持つ）。
+    expect(sent).toEqual([{ type: "nudge" }])
+  })
+
+  it("押してもログには何も積まない（送った文面が並ばない）", () => {
+    renderChatView({ records: RECORDS })
+    const before = logEntries().length
+
+    fireEvent.click(screen.getByRole("button", { name: NUDGE_LABEL }))
+
+    // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/design.md 13.7）。
+    expect(logEntries()).toHaveLength(before)
+  })
+
+  it("ターン進行中は押せない（返事を待つ）", () => {
+    const sent: unknown[] = []
+    renderChatView({ records: RECORDS, turnInProgress: true }, (command) => sent.push(command))
+
+    const button = screen.getByRole("button", { name: NUDGE_LABEL })
+    expect(button.hasAttribute("disabled")).toBe(true)
+
+    fireEvent.click(button)
+    expect(sent).toEqual([])
+  })
+
+  it("まだ何も話していないときも出る（案内のすぐ下）", () => {
+    renderChatView({ records: [] })
+
+    expect(screen.getByRole("button", { name: NUDGE_LABEL })).toBeTruthy()
   })
 })

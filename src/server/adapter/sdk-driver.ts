@@ -139,6 +139,12 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
       options.onEvent({ kind: "request", text, images: images.map((image) => image.thumbnail) })
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
+    promptWithoutRecord: (text) => {
+      // **`request` を流さない**（送った文面をログにも記録にも残さない。docs/design.md 13.7）。
+      // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
+      options.onEvent({ kind: "turn-started" })
+      input.push({ text, images: [] })
+    },
     interrupt: async () => {
       await session.interrupt()
     },

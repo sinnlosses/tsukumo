@@ -9,6 +9,10 @@
 // 「ターン」ではなく「1件のセリフ」なのは、雑談のログが依頼で区切られていないため。
 // **立ち絵の動きは遡らない**（キャラビューと同じ。時間相対のアニメーションなので別タスク）。
 //
+// **キャラクターから話しかけてもらうボタン**はログの末尾にある（docs/design.md 13.7）。
+// 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
+// （`src/server/core/chat-nudge.ts`）。送った文面はログにも記録にも残らない。
+//
 // **これはプロトタイプ**（2026-09-20）。立ち絵の動きは「待っているか」だけで決めていて、
 // キャラビューが持つ4つの動き（`features/character-view/` の `usePortraitMotion`）は
 // 再現していない。手触りを見てから詰める。
@@ -19,9 +23,10 @@ import { resolveOutfitAccent, resolvePortraitUrl } from "../../../shared/charact
 import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
 import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression } from "../../../shared/expression.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { Portrait } from "../../components/portrait.tsx"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
-import { useSessionSelector } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./chat-view.module.css"
 
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
@@ -29,6 +34,15 @@ const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
 /** まだ一度も話していないときの案内（吹き出しの「（まだ発話がありません）」と同じ立場）。 */
 const EMPTY_LOG_MESSAGE = "（まだ何も話していません）"
+
+/** キャラクターから話しかけてもらうボタンの字（docs/design.md 13.7）。 */
+const NUDGE_LABEL = "話しかけてもらう"
+
+/**
+ * ターン進行中に押せない理由。**サーバが断るときと同じ1つの定型文**（`shared` の
+ * `FRAME_ERROR_REASON`）を使う（サイドバーのキャラクターの `<select>` と同じ形）。
+ */
+const NUDGE_BLOCKED_TITLE = FRAME_ERROR_REASON.nudgeDuringTurn
 
 /**
  * 「下端付近」とみなす、下端からの残り距離（px）。0 にすると、フォントの読み込みや
@@ -193,6 +207,35 @@ function ChatLog(props: {
           ),
         )
       )}
+      {/* **ログの末尾に置く**（docs/design.md 13.7）。区画も帯も作らないので、増えるのは
+          操作子1つだけ（13.1 原則2）。ログが空のときは案内のすぐ下に出る。 */}
+      <NudgeButton />
     </div>
+  )
+}
+
+/**
+ * キャラクターから話しかけてもらう（docs/design.md 13.7）。**押した事実だけを送る** —
+ * 文面は `src/server/core/chat-nudge.ts` が持ち、ブラウザは話題も一言も持たない（原則4）。
+ *
+ * **ターンが動いている間は押せない**（キャラクターの `<select>` と同じ立場。サーバ側も
+ * 同じ条件で断る）。
+ */
+function NudgeButton(): ReactElement {
+  const dispatch = useSessionDispatch()
+  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+
+  return (
+    <button
+      type="button"
+      className={styles["chat-nudge"]}
+      disabled={turnInProgress}
+      title={turnInProgress ? NUDGE_BLOCKED_TITLE : undefined}
+      onClick={() => {
+        dispatch({ type: "nudge" })
+      }}
+    >
+      {NUDGE_LABEL}
+    </button>
   )
 }

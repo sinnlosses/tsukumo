@@ -190,6 +190,14 @@ export type SessionDriver = {
    * ここから先へ原寸は出ない。
    */
   readonly prompt: (text: string, images: readonly PromptImage[]) => void
+  /**
+   * 依頼を1つ送るが、**記録に残さない**（`docs/design.md` 13.7「キャラクターから話しかけて
+   * もらう」）。流れるのは `request` ではなく `turn-started` なので、**送った文面は画面のログにも
+   * 記録にも雑談の会話のアーカイブにも残らない**（落とすのは組み立ての側ではなく、この時点）。
+   *
+   * 画像は添えられない（tsukumo が自分で足す一言のための口で、利用者の持ち物を運ばない）。
+   */
+  readonly promptWithoutRecord: (text: string) => void
   /** 実行中のターンを中断する。中断されたターンは `turn-finished` の `error` で終わる。 */
   readonly interrupt: () => Promise<void>
   /** 答え待ちに答える。解決済み・知らない id のときは `false`。 */

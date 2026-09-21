@@ -79,6 +79,16 @@ export type SessionEvent =
    * （`docs/requirements.md` 4.10）。
    */
   | { readonly kind: "request"; readonly text: string; readonly images: readonly string[] }
+  /**
+   * **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。`docs/design.md` 13.7）。
+   * `request` と同じくターンの境目になるが、**文面を持たない** — 送った一言はログにも記録にも
+   * 残さないと決めたので（2026-09-21 ユーザーの選択）、イベントにも載せない。
+   *
+   * **落とすのは組み立ての側ではなく、ここ。** 記録に積まないので、雑談のログ
+   * （`src/shared/chat-log.ts`）にも仕事のメインビュー（`src/shared/main-view.ts`）にも
+   * 雑談の会話のアーカイブにも、初めから流れようが無い。
+   */
+  | { readonly kind: "turn-started" }
   /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/requirements.md 4.2）。 */
   | { readonly kind: "partial-utterance"; readonly text: string }
   /** 完成したターンの本文。仮の本文を置き換える。 */
