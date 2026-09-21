@@ -528,7 +528,7 @@ describe("createSessionManager", () => {
   })
 
   describe("雑談の記憶の圧縮", () => {
-    // 本番の閾値（32 KiB）だと架空の短い文面では届かないので、**`SessionManagerOptions` の
+    // 本番の閾値（128 KiB）だと架空の短い文面では届かないので、**`SessionManagerOptions` の
     // フィールドに小さい閾値を渡して**テストする（`batchIntervalMs` と同じ形。
     // docs/requirements.md 4.9）。
     const TINY_THRESHOLD_BYTES = 10

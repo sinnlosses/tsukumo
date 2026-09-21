@@ -17,7 +17,7 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
 ]
 
 const PACK_NAME = "fictional-pack"
-const LIMIT_BYTES = 16_384
+const LIMIT_BYTES = 65_536
 
 /** メモリ上の `ChatSummary`（テスト用）。呼ばれた回数も数える。 */
 function fakeChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary & {

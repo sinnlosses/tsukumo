@@ -51,20 +51,23 @@ export function chatLogEntries(records: readonly SessionRecord[]): readonly Chat
 }
 
 /**
- * 雑談の記憶を畳む閾値（バイト）。値の根拠は `docs/requirements.md` 4.9「記憶の圧縮と忘却」。
+ * 雑談の記憶を畳む閾値（バイト）。**逐語で読み戻す量（{@link CHAT_RECENT_READBACK_BYTES}）の
+ * 2倍**で、絶対値はその倍率から出ている——揃えると畳んだ範囲を次のセッションが丸ごと逐語で
+ * 戻すことになり、忘却が起きない。値の根拠は `docs/requirements.md` 4.9「記憶の圧縮と忘却」。
  */
-export const CHAT_COMPACT_THRESHOLD_BYTES = 32_768 satisfies number
+export const CHAT_COMPACT_THRESHOLD_BYTES = 131_072 satisfies number
 
 /**
  * 雑談を起こし直すときに、アーカイブから**逐語のまま**読み戻す量（バイト）。数えるのは各行の
  * 文面だけで、時刻・話者・表情は数えない。値の根拠は `docs/requirements.md` 4.9「直近の会話は
  * 逐語のまま読み戻す」。
  *
- * **畳む閾値（{@link CHAT_COMPACT_THRESHOLD_BYTES}）とは別の値。** 前者は「いつ畳むか」、
- * こちらは「新しいセッションへ逐語で何を渡すか」で、揃える理由が無い（隣に置いてあるのは、
- * 同じ物差し＝文面のバイト数で測るものだから）。
+ * **畳む閾値（{@link CHAT_COMPACT_THRESHOLD_BYTES}）とは別の値で、閾値のほうが大きい。**
+ * 前者は「いつ畳むか」、こちらは「新しいセッションへ逐語で何を渡すか」。**こちらが「覚えている
+ * 距離」そのもの**で、閾値はその2倍に置く（隣に置いてあるのは、同じ物差し＝文面のバイト数で
+ * 測るものだから）。
  */
-export const CHAT_RECENT_READBACK_BYTES = 16_384 satisfies number
+export const CHAT_RECENT_READBACK_BYTES = 65_536 satisfies number
 
 const textEncoder = new TextEncoder()
 
