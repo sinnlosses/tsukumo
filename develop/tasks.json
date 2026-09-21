@@ -69,9 +69,7 @@
     "id": "T-304",
     "difficulty": "sonnet",
     "loopable": "Y",
-    "dependencies": [
-      "T-303"
-    ],
+    "dependencies": ["T-303"],
     "summary": "src/server/ のコメントから日付の記述を消す",
     "status": "todo",
     "passes": false,
@@ -82,9 +80,7 @@
     "id": "T-305",
     "difficulty": "sonnet",
     "loopable": "Y",
-    "dependencies": [
-      "T-303"
-    ],
+    "dependencies": ["T-303"],
     "summary": "src/browser/ のコメントから日付の記述を消す（CSS を含む）",
     "status": "todo",
     "passes": false,
@@ -97,9 +93,9 @@
     "loopable": "N",
     "dependencies": [],
     "summary": "undefined を使わない表現への方針を決めて規約に書き直す",
-    "status": "todo",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "docs/research/undefined-reduction.md を新規作成（317行 / 7節）。src/ の `| undefined` 297行を9種類に分類し（層×種類の表）、置き換え先・残してよい例外5条件・書き換えになる既存の条（coding-standards 8条 / CLAUDE.md 159・161・163-165行）・規約どうしの衝突5件・適用案（1つの状態ごとに7タスク、計約50行）を書いた。結論は「禁止にせず、書いてよい5つの場所の列挙に変える」で、採否はユーザーに預ける。src/・docs/coding-standards.md・CLAUDE.md は未変更（git status で確認）。bun run check 1053 pass / 0 fail / 2101 assertions / 90ファイル。",
     "task": "## 背景\n\nユーザーの指示（2026-09-22）「`undefined` はできるだけ使いたくない。すべて `undefined` を\n使わず表現できると仮定して、基本は使わず表現して。それでも難しいと判断したものは残していいよ」。\n\n**これは既存の規約と正面からぶつかる。** `docs/coding-standards.md` には今こう書いてある\n（CLAUDE.md の「コーディング規約」節にも要約がある）:\n\n- 「無いかもしれない」プロパティは `readonly x: T | undefined` で書き、`?:` は使わない\n- 2つ以上の `| undefined` が1つの状態を表しているなら判別可能な合併型にする。「無い」は\n  入口で畳み、内側の関数は「必ず値がある」型で受ける\n- `null` を自前の型・関数の戻り値・`shared` に出さない（外来の `null` は境界で `undefined` に畳む）\n\nつまり**「無い」の表し方として `undefined` を正式に採用している**ので、方針を変えるなら\n規約の側を書き直すのが先になる。\n\n実測（2026-09-22 時点）: `| undefined` が型の位置に出るのは `src/` で 297 箇所、`test/` で 28 箇所。\n多いのは `src/shared/character.ts`（25）・`src/shared/character-definition.ts`（20）・\n`src/shared/session-state.ts`（11）・`src/server/adapter/character-pack.ts`（11）で、\n**表情名ごとに `readonly <表情>: T | undefined` を並べる形**（立ち絵とラベルの対応表）が\nかたまりになっている。React の作法（`useRef` の初期値）や外来APIの戻り値も混ざっている。\n\nユーザーの選択（2026-09-22）により、**まず方針を決めるこのタスクを置き、適用は方針が決まった\nあとに層ごとの別タスクへ起こす**。\n\n## 解くべき論点\n\n- **297 箇所はどういう種類に割れるか。** 少なくとも「あるかないかの2値」「表情名など鍵ごとに\n  埋まるとは限らない対応表」「外来APIの戻り値」「React の作法」「オプション引数」が混ざって\n  いる。種類ごとに置き換え先が違う\n- **何で置き換えるか。** 判別可能な合併型 / 全域なレコード（全ての鍵に値が入る形）/\n  入口での既定値の畳み込み / 空配列・空文字列のような「無いを表さない値」。\n  どれをどの種類に当てるか\n- **`readonly x: T | undefined` を禁止すると、代わりに何が増えるか。** 例えば表情ごとの\n  立ち絵の対応表を「あるものだけの `Map`」にすると、`?:` を使わない規約と\n  「`null` を出さない」規約との整合を取り直す必要がある。**規約を1つ直すと別の条が効かなく\n  なる箇所を洗う**\n- **残してよい例外の条件。** ユーザーは「難しいと判断したものは残していい」と言っているので、\n  「難しい」を読み手によって結論が変わらない言葉で書く必要がある\n  （例: 外来APIの戻り値／React が型で要求するもの／丸ごと省略できるオプション引数の中身）\n- **適用をどう割るか**（層ごと / 種類ごと / ファイルのかたまりごと）\n\n## やること\n\n1. `src/` と `test/` の `| undefined` を数えて**種類ごとに分類し、件数を出す**。\n   分類の軸は上の「解くべき論点」の1つめ\n2. 種類ごとに置き換え先の案を書き、**置き換えない例外の条件**を検証可能な言葉で書く\n3. 既存の規約のどの条が書き換えになるか、どの条と衝突するかを列挙する\n   （`docs/coding-standards.md` の該当節と、CLAUDE.md の要約行の両方）\n4. 1〜3 を `docs/research/undefined-reduction.md` に書く（`docs/research/` の既存のファイルの\n   書き方に合わせる。`docs/research/report-notation-shortening.md` が先例）\n5. **適用の割り方の案（タスクの分け方と件数の見積もり）まで書いて、そこで止める。**\n   規約本文（`docs/coding-standards.md`）とコードは、**ユーザーが方針を選んだあとに直す**\n6. 調べた結果「種類のほとんどが例外に当たり、置き換えられるのはごく一部」と分かった場合は、\n   **その根拠（種類と件数）を書いて、方針を変えないことを提案してよい**\n\n## 完了条件\n\n- `bun run check` が通る（コードを変えないので件数は変わらないはず。件数を `evidence` に書く）\n- `docs/research/undefined-reduction.md` が次の4つを持つ: 種類ごとの分類と件数 /\n  種類ごとの置き換え先の案 / 残してよい例外の条件 / 書き換えになる既存の条の一覧\n- 置き換えの適用案が、層または種類で割った**タスクの分け方と件数の見積もり**として書かれている\n- `docs/coding-standards.md`・CLAUDE.md・`src/` を**変更していない**（方針を決めるだけのタスク）\n\n## 注意\n\n- **コードを直さない。** 規約が決まる前に置き換えると、方針が変わったときに全部やり直しになる\n- `docs/research/` に置くのは調査と提案で、正典ではない。正典（`docs/coding-standards.md`）は\n  ユーザーが方針を選んだあとに直す\n- `loopable` が `\"N\"` なのは、**このタスクが「ユーザーが方針を選ぶ」ところで終わる**ため\n  （提案の採否は事前に聞いても決められない。調査結果を見ないと選択肢が出ない）\n"
   }
 ]
