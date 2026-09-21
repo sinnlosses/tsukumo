@@ -3,7 +3,8 @@
 // UI（右下の常設ボタン）もここに持つ**（docs/design.md 13.6）。
 //
 // もとは静的な HTML の組み立てとブラウザ側の配線に分かれていた処理だった（移行の段6で
-// React の部品にし、段3〜5の複数の root を1つにまとめた。docs/design.md 12章）。
+// React の部品にし、段3〜5の複数の root を1つにまとめた。段の記録は
+// `docs/history/decision.md`「design.md 12. 移行の段階」）。
 //
 // **領域の中身（`<MainView>` / `<Sidebar>` / `<CharacterView>` / `<Dispatch>`）は props で
 // 受け取る。** ここから他の `features/` を import しない（`test/architecture.test.ts`

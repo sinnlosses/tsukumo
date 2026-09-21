@@ -1,5 +1,6 @@
 // 領域をまたいで使う `<select>`。サイドバー（モデル・許可モード）と、段4の入力欄が両方
-// 要るため `browser/component/` に置く（`browser/` の作法1。docs/design.md 12章 段3）。
+// 要るため `browser/component/` に置く（`browser/` の作法1。移行の段3。段の記録は
+// `docs/history/decision.md`「design.md 12. 移行の段階」）。
 //
 // **領域固有の見た目・意味は持たない。** 選択肢・値・変更時の呼び先はすべて呼び出し側が渡す。
 

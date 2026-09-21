@@ -210,7 +210,7 @@ function respond(
 /**
  * ページ本体。**中身は `<div id="app">` だけ**（メインビュー・キャラビュー・サイドバー・
  * 入力欄のすべてが React の部品になり、`src/browser/main.tsx` が1つの root として mount する。
- * 移行の段6。docs/design.md 12章）。ページを丸ごと再読み込みしない理由は
+ * 移行の段6。段の記録は `docs/history/decision.md`「design.md 12. 移行の段階」）。ページを丸ごと再読み込みしない理由は
  * `docs/architecture.md`「ビューの更新は Server-Sent Events で押す」（更新は今は WebSocket）
  * を参照。
  */

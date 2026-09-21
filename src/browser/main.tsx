@@ -8,7 +8,8 @@
 // 吹き出しが同じ選択に従うため。`src/browser/stores/turn-selection.tsx`）。
 //
 // **移行の段6で `<div id="app">` に1つの root をまとめた**（段3〜5は `.layout-sidebar` 等の
-// 複数の root だった。docs/design.md 12章）。機能の組み立て（`<Layout>` に4領域を渡す）は
+// 複数の root だった。段の記録は `docs/history/decision.md`「design.md 12. 移行の段階」）。
+// 機能の組み立て（`<Layout>` に4領域を渡す）は
 // `browser/features/` をまたいで import してよい**この入口の役目**
 // （機能どうしは互いを import しない。`test/architecture.test.ts`「browser/ の機能どうしの import」）。
 //

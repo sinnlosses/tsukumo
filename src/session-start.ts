@@ -85,7 +85,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
       rememberPack: (pack) => character.remember(pack),
       characterEvent: () => character.event(),
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
-      // 畳んで読む（docs/design.md 12章）。
+      // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
       watchTasks: (onEvent) =>
         watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>

@@ -48,7 +48,8 @@ import しない。辺は `adapter ──▶ core ──▶ shared ◀── bro
 経緯は `docs/research/architecture-proposal.md`）。以下「採用アーキテクチャ」はこの新しい経路（WebSocket 1本・
 React の部品）を書いている。残るのは段8（キャラクターパック本体の移動・切り替え）と段9
 （セッションの復元）で、これは独立した機能追加として `develop/tasks.json` に別タスクである。
-段階と完了条件は `docs/design.md`「12. 移行の段階」。
+段階と完了条件は `docs/history/decision.md`「design.md 12. 移行の段階」
+（`docs/design.md` からは 2026-09-21 に移した。章番号は詰めていない）。
 
 **2026-09-11 に方針を全面的に見直した**（`docs/requirements.md` 3章）。新方針（Agent SDK で
 Claude Code を動かす）の核（セッション駆動・イベントの変換・`speak` ツール・答え待ちの列）は
@@ -71,7 +72,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 ### 各ファイルの責務
 
 **2026-09-13 に段7まで進み、`src/` は新3層（`shared` / `server` / `browser`）と配線
-（`src/` 直下のファイル）だけになった**（`docs/design.md` 12章。旧の `domain` / `usecase` / `presentation` /
+（`src/` 直下のファイル）だけになった**（旧の `domain` / `usecase` / `presentation` /
 `infrastructure` はすべて消えた）。**2026-09-16 に外の世界に触る境界を足した**ので、サーバ側は
 `core`（判断）と `adapter`（境界）の2つに分かれている（2026-09-20 に両方を `src/server/` の
 下へ入れ子にした）。

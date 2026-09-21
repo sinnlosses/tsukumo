@@ -11,7 +11,8 @@ export const VENDOR_PATH_PREFIX = "/vendor/"
 /**
  * 配ってよい同梱ファイルと Content-Type。**highlight.min.js と idiomorph.min.js は無い**
  * （移行の段6。コードの色付けは `rehype-highlight` が描く時点で済ませるので実行時に読む
- * スクリプトが要らなくなり、領域の差し替えを DOM の書き換えで行っていた仕組みも消えた。docs/design.md 6.4 / 12章）。
+ * スクリプトが要らなくなり、領域の差し替えを DOM の書き換えで行っていた仕組みも消えた。
+ * docs/design.md 6.4、段の記録は `docs/history/decision.md`「design.md 12. 移行の段階」）。
  */
 export const VENDOR_ASSET_CONTENT_TYPES: Readonly<Record<string, string>> = {
   "highlight-theme.min.css": "text/css; charset=utf-8",

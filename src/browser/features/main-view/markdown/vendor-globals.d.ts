@@ -6,7 +6,8 @@
 //
 // **DOM を morph するライブラリと hljs は無い**（移行の段6。領域の差し替えごと DOM を書き換える経路は消え、
 // コードの色付けは `rehype-highlight` が hast の時点で済ませるので、ブラウザ側で
-// `hljs.highlightElement` を呼ぶ経路も無くなった。docs/design.md 6.4 / 12章）。
+// `hljs.highlightElement` を呼ぶ経路も無くなった。docs/design.md 6.4、段の記録は
+// `docs/history/decision.md`「design.md 12. 移行の段階」）。
 
 declare global {
   /**

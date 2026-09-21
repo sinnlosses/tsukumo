@@ -357,8 +357,8 @@ import してよい先が決まっている**（表は二重に書かず `docs/d
 （`browser` は `bun build` で1本に束ねる。`docs/design.md` 11章）。(2) `index.ts` という名前自体が
 「置き場所を名前にしたファイル」になり、原則5に反する（ディレクトリ名がすでに概念や置き場所を
 表すのに、その中の `index.ts` は何も指さない。**ディレクトリ名の例外を足した後も、ファイル名は
-概念のまま**）。2026-09-13、`src/browser/` を切った段（`docs/design.md`
-12章 段3）で bulletproof-react の実例と突き合わせて決めた。
+概念のまま**）。2026-09-13、`src/browser/` を切った段（`docs/history/decision.md`
+「design.md 12. 移行の段階」の段3）で bulletproof-react の実例と突き合わせて決めた。
 
 ## React
 
