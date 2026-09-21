@@ -387,6 +387,32 @@ describe("toSessionEvents", () => {
     ])
   })
 
+  it("parent_tool_use_id のある result はターンの終わりにしない（案4-c）", () => {
+    const message = {
+      type: "result",
+      subtype: "success",
+      num_turns: 1,
+      duration_ms: 10,
+      parent_tool_use_id: "toolu_sub_1",
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
+  it("parent_tool_use_id が null の result は今までどおりターンの終わりにする", () => {
+    const message = {
+      type: "result",
+      subtype: "success",
+      num_turns: 1,
+      duration_ms: 10,
+      parent_tool_use_id: null,
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
   it("知らない種別は無視する（種別は本体の更新で増える）", () => {
     expect(toSessionEvents({ type: "some_future_message", payload: {} }, EXPRESSIONS)).toEqual([])
   })

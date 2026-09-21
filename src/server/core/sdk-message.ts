@@ -33,6 +33,9 @@ export const SPEAK_TOOL_NAME = "speak"
  * - **`tool-started` の `parentToolUseId`** は、メッセージ本体（`message.message` の外）にある
  *   `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。2026-09-11 実測）。
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
+ * - **`result` も `parent_tool_use_id` が非 null なら `turn-finished` にしない。**
+ *   サブエージェント（Task ツール）の中の `result` を本体のターンの終わりと取り違えない
+ *   ための保険（未確認。SDK が実際にこの形で流すかは 2026-09-21 時点で再現していない）
  * - **`conversation_reset` は `/clear` の合図**（2026-09-15 実測）。tsukumo は `/clear` という
  *   文字列を見ず、本体が会話を捨てたことをこのメッセージで知る
  * - **`system` / `compact_boundary` は `compact-boundary` にする**（docs/glossary.md
@@ -79,7 +82,13 @@ export function toSessionEvents(
     case "user":
       return toolResultEvents(message.message)
     case "result":
-      return [{ kind: "turn-finished", status: turnStatus(message.subtype) }]
+      // サブエージェント（Task ツール）の中の `result` が `parent_tool_use_id` 付きで届くなら
+      // （`assistant` の `tool_use` と同じ形のはずだが、SDK が実際にこの形で流すかは未確認）、
+      // それをターンの終わりとして扱うと、本体のターンが終わっていないのに `turn-finished` が
+      // 挟まり `turnInProgress` が落ちてしまうので無視する（案4-c）。
+      return optionalString(message.parent_tool_use_id) === undefined
+        ? [{ kind: "turn-finished", status: turnStatus(message.subtype) }]
+        : []
     case "conversation_reset":
       // `/clear` で本体が会話を捨てたとき（2026-09-15 実測）。**`/compact` では届かない。**
       return [{ kind: "conversation-cleared" }]
