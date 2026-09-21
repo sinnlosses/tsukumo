@@ -13,7 +13,7 @@ import {
  * 4領域は中身の判別さえできればよいので、部品名の文字列だけ渡す
  * （`<Layout>` は他の `features/` を import しない。test/architecture.test.ts）。
  */
-function renderLayout(collapseCharacter = false): void {
+function renderLayout(collapseCharacter = false, mainAsGround = collapseCharacter): void {
   render(
     <Layout
       main="main"
@@ -21,6 +21,7 @@ function renderLayout(collapseCharacter = false): void {
       character="character"
       dispatch="dispatch"
       collapseCharacter={collapseCharacter}
+      mainAsGround={mainAsGround}
     />,
   )
 }
@@ -39,6 +40,13 @@ function requireElement(element: HTMLElement | null | undefined, what: string): 
     throw new Error(`${what} が見つからない`)
   }
   return element
+}
+
+function regionClassName(region: "main" | "character"): string {
+  return requireElement(
+    document.querySelector<HTMLElement>(`[data-region="${region}"]`),
+    `${region} の領域`,
+  ).className
 }
 
 function rowTopElement(): HTMLElement {
@@ -123,6 +131,22 @@ describe("Layout", () => {
     expect(sidebarTab.getAttribute("aria-selected")).toBe("true")
     // 領域そのものは4つとも残る（タブは見せる側を選ぶだけ。docs/requirements.md 4.7）。
     expect(document.querySelector('[data-region="main"]')).not.toBeNull()
+  })
+
+  // 枠と角丸を外して背景を敷く class（`.layout-ground`）は、キャラビューと雑談中のメインビューが
+  // 共有する（docs/design.md 13.8）。**見えているかは目視**で、ここが見るのは class の付き方だけ
+  // （*.module.css の class 名はテストではそのまま返る。test/css-module-loader.ts）。
+  it("枠を持たない領域の class は、既定ではキャラビューにだけ付く", () => {
+    renderLayout()
+
+    expect(regionClassName("main")).not.toContain("layout-ground")
+    expect(regionClassName("character")).toContain("layout-ground")
+  })
+
+  it("地そのものとして描くよう言われたら、メインの領域にも同じ class が付く（雑談モード）", () => {
+    renderLayout(true)
+
+    expect(regionClassName("main")).toContain("layout-ground")
   })
 
   it("キャラビューを畳むと、その領域と左右の仕切りが消える（雑談モード）", () => {

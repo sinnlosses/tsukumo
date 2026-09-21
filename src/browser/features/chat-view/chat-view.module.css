@@ -110,14 +110,20 @@
 /* キャラクターから話しかけてもらうボタン（`chat-view.tsx` の `<NudgeButton>`。13.7）。
    **ログの末尾に1つ置くだけ**で、区画も帯も新しい枠も作らない（13.1 原則2。増えるのは
    操作子1つだけ、というのがユーザーの決定の範囲）。キャラクターのセリフと同じ左側に置き、
-   **地を持たない字だけの操作子**にして発言の行と見分けられるようにする。 */
+   **地を持たない字だけの操作子**にして発言の行と見分けられるようにする。
+
+   **地は `ground` 一色を1枚だけ敷く**（2026-09-21。雑談のメインビューに背景を敷く決定に伴う。
+   docs/design.md 13.8）。吹き出しと違ってこの操作子と下の案内は地を持たないので、背景のある
+   パックでは**字の背後に絵が回り込む**（13.8 の「吹き出しの地は不透明を保つ」が成り立たない）。
+   `surface` ではなく `ground` を敷くのは、**背景の無いパックでは領域の地と同じ色**になり、
+   「地を持たない字だけ」の見え方がそのまま残るため（不透明なので絵は透けない）。 */
 .chat-nudge {
   align-self: flex-start;
   margin: 0.1rem 0 0.2rem;
   padding: 0.25rem 0.7rem;
   border: 1px dashed var(--rule);
   border-radius: 1rem;
-  background: none;
+  background: var(--ground);
   color: var(--ink-quiet);
   font: inherit;
   font-size: var(--font-secondary);
@@ -128,16 +134,24 @@
   border-color: var(--accent);
   color: var(--ink);
 }
-/* ターン進行中（返事を待っている間）は押せない。 */
+/* ターン進行中（返事を待っている間）は押せない。**要素の `opacity` では薄めない**
+   （地ごと透けて、敷いた1枚の意味が無くなる。docs/design.md 13.8 の「過去の吹き出しは
+   要素の opacity で薄めない」と同じ理由）ので、字と縁の色だけを地へ混ぜる。 */
 .chat-nudge:disabled {
-  opacity: 0.5;
+  border-color: color-mix(in srgb, var(--rule), var(--ground) 45%);
+  color: color-mix(in srgb, var(--ink-quiet), var(--ground) 45%);
   cursor: default;
 }
 
-/* まだ一度も話していないときの案内。 */
+/* まだ一度も話していないときの案内。**地は `.chat-nudge` と同じ理由で `ground` 一色を1枚**
+   （背景の絵を字の背後に回り込ませない。13.8）。余白と角丸はその1枚のためのもので、背景の
+   無いパックでは地と同じ色なので見えない。 */
 .chat-empty {
   align-self: center;
   margin: auto 0;
+  padding: 0.2rem 0.7rem;
+  border-radius: 0.8rem;
+  background: var(--ground);
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
 }

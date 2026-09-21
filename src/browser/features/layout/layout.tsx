@@ -14,6 +14,9 @@
 // （CSS Modules）ので、外から領域を指す口——画面を撮って位置と大きさを測る
 // `scripts/capture-view.ts` や、開発者ツールで測るとき——はこちらを使う。
 //
+// **枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を
+// 共有する**（覆いの式を1箇所にしか書かないため。docs/design.md 13.8）。
+//
 // **仕切りの位置が state に入るのはドラッグを離した1回だけ。** 動かしている間の位置は
 // 過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く
 // （`writeFraction`）。
@@ -39,6 +42,12 @@ export type LayoutProps = {
    * 変わることだけを受け取る。
    */
   readonly collapseCharacter: boolean
+  /**
+   * メインの領域を、枠を持つウィジェットではなく**地そのもの**として描くか（枠と角丸を外し、
+   * 背景があればそこへ敷く。docs/design.md 13.8）。**ここも「なぜそうするか」を知らない** —
+   * キャラビューと同じ立場になることだけを受け取る（立てるのは雑談モードの入口。13.7）。
+   */
+  readonly mainAsGround: boolean
 }
 
 /** 狭い画面のとき、上段に出している領域。 */
@@ -130,7 +139,9 @@ export function Layout(props: LayoutProps): ReactElement {
           style={fractionStyle("topLeft", split.topLeft)}
         >
           <section
-            className={`${styles["layout-region"]} ${styles["layout-main"]}`}
+            className={`${styles["layout-region"]} ${styles["layout-main"]}${
+              props.mainAsGround ? ` ${styles["layout-ground"]}` : ""
+            }`}
             data-region="main"
           >
             {props.main}
@@ -175,7 +186,7 @@ export function Layout(props: LayoutProps): ReactElement {
           {!props.collapseCharacter && (
             <>
               <section
-                className={`${styles["layout-region"]} ${styles["layout-character"]}`}
+                className={`${styles["layout-region"]} ${styles["layout-ground"]}`}
                 data-region="character"
               >
                 {props.character}
