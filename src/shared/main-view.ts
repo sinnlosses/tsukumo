@@ -3,7 +3,8 @@
 //
 // `groupIntoTurns` / `limitTurnEntries` はもとは1つのファイルにまとまっていた（移行の段6で
 // HTML の組み立てが `src/browser/features/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
-// どちらでも同じ結果になる `shared` へ残した。docs/design.md 12章 段6）。
+// どちらでも同じ結果になる `shared` へ残した。段の記録は
+// `docs/history/decision.md`「design.md 12. 移行の段階」）。
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
@@ -277,8 +278,9 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
  * **出す本文を選ぶ**（`docs/requirements.md` 4.2）。本文は3つに分かれ、残すのは前の2つ:
  *
  * - **最終レポート**: そのやり取りの**締めの本文**（最後のステップの本文で、あとにツールが
- *   続いていないもの）。**中身を問わず残す**——短い返事だけのターン（「直しておいたよ」）で
- *   本文が空になってしまうため
+ *   続いていないもの）。**資料がほかに1つも無いときは中身を問わず残す**——短い返事だけの
+ *   ターン（「直しておいたよ」）で本文が空になってしまうため。**資料があるときは実況と同じに
+ *   落とし、最後の資料が最終レポートへ繰り上がる**（{@link promotedReportId}）
  * - **中間レポート**: それ以外の本文のうち、まとまった資料（{@link isInterimReport}）。
  *   `interim` を立てて残す
  * - **実況**: それ以外（構造の印が無いか、印があっても短い本文）。落とす。「まず読むね」
@@ -313,6 +315,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
  * 立つので、**囲いは最初から破線**で、あとから反転しない。
  */
 function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn {
+  const promotedId = settled ? promotedReportId(turn) : undefined
   return {
     ...turn,
     steps: turn.steps.map((step, index) => {
@@ -320,14 +323,40 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
         return step
       }
       // そのやり取りの締めの本文。終わっていれば最終レポート、動いている最中ならまだ伸びる。
+      // **繰り上げが起きたときは実況として落とす**（{@link promotedReportId}）。
       if (index === turn.steps.length - 1 && !hasToolRun(step)) {
-        return settled ? step : { ...step, report: undefined }
+        return settled && promotedId === undefined ? step : { ...step, report: undefined }
       }
       return isInterimReport(step.report)
-        ? { ...step, interim: true }
+        ? { ...step, interim: step.id !== promotedId }
         : { ...step, report: undefined }
     }),
   }
+}
+
+/**
+ * 締めの本文が実況でしかないときに、代わりに最終レポートへ繰り上げる資料の id
+ * （繰り上げないなら undefined）。
+ *
+ * **締めの本文を「中身を問わず残す」のは、資料が1つも無いやり取りで本文が空になるのを
+ * 防ぐため**（{@link selectShownReports}）。資料がほかにあるなら、その理由は消える。
+ * 2026-09-21 の指摘：**資料 → `speak` → 「また呼んでください」** という並びで、挨拶のほうが
+ * 位置だけで最終レポートの席を取り、中身のある資料が `<details>` に畳まれていた。規約
+ * （`src/server/core/report-notation.ts` の「締めを書かない」）で抑えきれない点は、ほかの
+ * 実況と同じ（`docs/requirements.md` 4.2「分離を文章の規約で表す案は採らない」）。
+ *
+ * **繰り上げるのは確定したやり取りだけ**（呼ぶ側が `settled` で絞る）。書きかけの本文は
+ * 実況から資料へ育つ途中かもしれず、繰り上げが途中で外れると前の資料の `interim` が
+ * true→false へ反転して `<details>` が開き直る。
+ */
+function promotedReportId(turn: MainViewTurn): number | undefined {
+  const closing = turn.steps.at(-1)
+  if (closing?.report === undefined || hasToolRun(closing) || isInterimReport(closing.report)) {
+    return undefined
+  }
+  return turn.steps
+    .slice(0, -1)
+    .findLast((step) => step.report !== undefined && isInterimReport(step.report))?.id
 }
 
 /**

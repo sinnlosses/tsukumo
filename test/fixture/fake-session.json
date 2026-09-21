@@ -940,6 +940,76 @@
           }
         }
       ]
+    },
+    {
+      "name": "closing-narration",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "締めの一言が最終レポートを押しのける並びを見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "speech",
+            "text": "見てくるぞ。",
+            "expression": "thinking"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-closing-1",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-closing-1",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2000,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景の差し替えが弾かれていた\n\nこれは架空の本文で、実物の会話ではない。**この塊が最終レポートとして出る**こと（＝下の締めの一言に席を取られないこと）を見るための場面。\n\n| 何 | 結果 |\n| --- | --- |\n| 架空の検証1 | 通った |\n| 架空の検証2 | 通った |\n\n- 架空の変更1\n- 架空の変更2\n"
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "speech",
+            "text": "ほら、片付いたぞ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 2600,
+          "event": {
+            "kind": "utterance",
+            "text": "狐火を落とします。また何かあれば呼んでください。"
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
     }
   ]
 }

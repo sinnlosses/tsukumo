@@ -111,14 +111,14 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       request("依頼"),
       detail("## 調べた結果\n\n- 1つめ\n- 2つめ\n"),
       ...Array.from({ length: 60 }, (_, index) => edit(`src/file${String(index)}.ts`)),
-      detail("直したよ"),
+      detail(materialReport("直した")),
     ]
 
     const turns = mainViewTurns(entries, false)
 
     expect(turns[0]?.droppedCount).toBe(0)
     expect(turns[0]?.steps[0]?.report).toBe("## 調べた結果\n\n- 1つめ\n- 2つめ\n")
-    expect(turns[0]?.steps.at(-1)?.report).toBe("直したよ")
+    expect(turns[0]?.steps.at(-1)?.report).toBe(materialReport("直した"))
   })
 
   it("上限を超えて古いステップが落ちても、残ったステップの id は変わらない（T-165）", () => {
@@ -201,6 +201,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("中間レポートは1つのやり取りに何件でも積む（最後の1つに絞らない）", () => {
     const first = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
     const second = "## 直した箇所\n\n- src/a.ts\n- src/b.ts"
+    const third = materialReport("片付いた")
     const turns = mainViewTurns(
       [
         request("依頼"),
@@ -208,12 +209,12 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
         edit("src/a.ts"),
         detail(second),
         edit("src/b.ts"),
-        detail("できたよ"),
+        detail(third),
       ],
       false,
     )
 
-    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([first, second, "できたよ"])
+    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([first, second, third])
     expect((turns[0]?.steps ?? []).map((step) => step.interim)).toEqual([true, true, false])
   })
 
@@ -267,12 +268,15 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
   it("ツールが1つも続かなくても、まとまった資料は中間レポートとして残る", () => {
     const turns = mainViewTurns(
-      [request("依頼"), detail(materialReport("調べた結果")), detail("できたよ")],
+      [request("依頼"), detail(materialReport("調べた結果")), detail(materialReport("片付いた"))],
       false,
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.report)).toEqual([materialReport("調べた結果"), "できたよ"])
+    expect(steps.map((step) => step.report)).toEqual([
+      materialReport("調べた結果"),
+      materialReport("片付いた"),
+    ])
     expect(steps.map((step) => step.interim)).toEqual([true, false])
   })
 
@@ -314,7 +318,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印。T-1
   it("後ろにレポートを持つステップがあれば superseded が立つ", () => {
     const first = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
     const turns = mainViewTurns(
-      [request("依頼"), detail(first), edit("src/a.ts"), detail("できたよ")],
+      [request("依頼"), detail(first), edit("src/a.ts"), detail(materialReport("片付いた"))],
       false,
     )
 
@@ -394,12 +398,65 @@ describe("mainViewTurns（最終レポートの印）", () => {
 
   it("最後の、中間でない本文に final が立つ", () => {
     const turns = mainViewTurns(
-      [request("依頼"), detail(interim), edit("src/a.ts"), detail("できたよ")],
+      [request("依頼"), detail(interim), edit("src/a.ts"), detail(materialReport("片付いた"))],
       false,
     )
 
     const steps = turns[0]?.steps ?? []
     expect(steps.map((step) => step.final)).toEqual([false, true])
+  })
+
+  it("締めが実況でしかないときは落とし、最後の資料を最終レポートへ繰り上げる", () => {
+    // 規約どおりの並び（資料 → `speak` → 締めの一言）。挨拶が位置だけで席を取っていた
+    // （2026-09-21 の指摘）。`speak` は `speech` になるのでステップの区切りにしか出てこない。
+    const turns = mainViewTurns(
+      [request("依頼"), detail(interim), detail("狐火を落とします。また呼んでください。")],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.report)).toEqual([interim, undefined])
+    expect(steps.map((step) => step.interim)).toEqual([false, false])
+    expect(steps.map((step) => step.final)).toEqual([true, false])
+    // 繰り上げた1件しか残らないので、「最終レポート」のラベルは出さない。
+    expect(turns[0]?.hasInterimReport).toBe(false)
+  })
+
+  it("繰り上げても、手前の資料は中間レポートのまま残る（最後の1つだけが上がる）", () => {
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail(materialReport("調べた")),
+        edit("src/a.ts"),
+        detail(materialReport("直した")),
+        detail("では、また。"),
+      ],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.interim)).toEqual([true, false, false])
+    expect(steps.map((step) => step.final)).toEqual([false, true, false])
+    expect(turns[0]?.hasInterimReport).toBe(true)
+  })
+
+  it("資料が1つも無ければ、締めの短い本文はそのまま最終レポートになる", () => {
+    const turns = mainViewTurns(
+      [request("依頼"), edit("src/a.ts"), detail("直しておいたよ")],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.at(-1)?.report).toBe("直しておいたよ")
+    expect(steps.at(-1)?.final).toBe(true)
+  })
+
+  it("進行中は繰り上げない（資料の interim が反転して details が開き直るため）", () => {
+    const turns = mainViewTurns([request("依頼"), detail(interim), detail("では、ま")], true)
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.interim)).toEqual([true, false])
+    expect(steps.map((step) => step.final)).toEqual([false, false])
   })
 
   it("中間レポートには立たない（本文がそれしか無くても）", () => {
@@ -412,7 +469,7 @@ describe("mainViewTurns（最終レポートの印）", () => {
 
   it("中間レポートがあるやり取りだけ hasInterimReport が立つ（ラベルを出す条件）", () => {
     const withInterim = mainViewTurns(
-      [request("依頼"), detail(interim), edit("src/a.ts"), detail("できたよ")],
+      [request("依頼"), detail(interim), edit("src/a.ts"), detail(materialReport("片付いた"))],
       false,
     )
     const alone = mainViewTurns([request("依頼"), detail("できたよ")], false)

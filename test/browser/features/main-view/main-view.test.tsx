@@ -231,11 +231,11 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
       ...Array.from({ length: 60 }, (_, index) =>
         tool({ toolUseId: `t${String(index)}`, name: "Read", input: { file_path: "src/a.ts" } }),
       ),
-      detail("直したよ"),
+      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     expect(container.querySelector(".turn-dropped")).toBeNull()
-    expect(screen.getByText("直したよ")).not.toBeNull()
+    expect(screen.getByText("直した箇所")).not.toBeNull()
     expect(screen.getByText("調べた結果")).not.toBeNull()
   })
 })
@@ -258,10 +258,10 @@ describe("MainView（中間レポート）", () => {
       request("依頼"),
       detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      detail("直したよ"),
+      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
-    expect(screen.getByText("直したよ")).toBeDefined()
+    expect(screen.getByText("直した箇所")).toBeDefined()
     expect(container.querySelectorAll(".main-step")).toHaveLength(2)
     expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
   })
@@ -271,7 +271,7 @@ describe("MainView（中間レポート）", () => {
       request("依頼"),
       detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      detail("直したよ"),
+      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     const interimSteps = container.querySelectorAll(".main-step.is-interim")
@@ -301,7 +301,7 @@ describe("MainView（中間レポート）", () => {
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/a.ts" } }),
       detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
       tool({ toolUseId: "t2", name: "Write", input: { file_path: "src/b.ts" } }),
-      detail("できたよ"),
+      detail("## 片付いた\n\n- 1件目\n- 2件目"),
     ])
 
     const interimSteps = [...container.querySelectorAll(".main-step.is-interim")]
@@ -311,7 +311,7 @@ describe("MainView（中間レポート）", () => {
       "中間レポート: 調べた結果",
       "中間レポート: 直した箇所",
     ])
-    expect(screen.getByText("できたよ")).toBeDefined()
+    expect(screen.getByText("片付いた")).toBeDefined()
   })
 
   it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない（T-165）", () => {
