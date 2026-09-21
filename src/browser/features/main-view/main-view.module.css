@@ -220,16 +220,27 @@ h2.turn-request {
 /* レポートの見出し（`##` / `###`）。`src/browser/features/main-view/markdown/markdown.tsx` が `h4` / `h5` として描く
    （タグは `h2.turn-request` と段が被らないよう一段落としてある）。**タイプスケールはこの4段だけ**
    （docs/design.md 13.3）なので新しい段は作らず、太さ・余白・罫線の3つで `##` と `###` を
-   見分けられるようにする。 */
+   見分けられるようにする。
+   **罫線の側にだけキャラクターの色を混ぜる**（docs/design.md 13.2「レポートの見出しと表に」。
+   文字は `ink` のまま — 13.1 原則1 が accent を許すのは文字ではなく罫線の側）。`##` は領域の幅
+   いっぱいの1本、`###` は文字の幅だけの1本（`width: fit-content`）で、**段の深さを運ぶのは罫線の
+   長さ**のほう（色は段の違いを運ばない）。
+   混ぜる割合は `rule` に6割で、**依頼の見出し・お願いの縦罫（素の accent）より一段弱い** —
+   レポートの中で何度も出る線なので、素のまま出すと差し色が地の色になって何も指さなくなる。 */
 .detail-block h4 {
   margin: 1rem 0 0.5rem;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
   font-size: var(--font-body);
   font-weight: 700;
 }
 .detail-block h5 {
   margin: 0.75rem 0 0.4rem;
+  /* 下罫を文字の幅で止めるためだけの `fit-content`（入りきらない見出しは今までどおり折り返し、
+     そのときは領域の幅いっぱいになる）。 */
+  width: fit-content;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
   font-size: var(--font-body);
   font-weight: 600;
 }
@@ -372,9 +383,14 @@ h2.turn-request {
   text-align: left;
 }
 /* 見出し行は表の中の「浮く」塊（docs/design.md 13.2）。太字は Markdown の th の既定で付くが、
-   **行そのものが見出しだと分かる**のは地の段のほう。 */
+   **行そのものが見出しだと分かる**のは地の段のほう。
+   **見出し行と中身の境目の1本にだけ、見出し（上の h4 / h5）と同じ割合でキャラクターの色を
+   混ぜる**（13.2「レポートの見出しと表に」）。太さが 2px なのは `border-collapse` の解決で
+   下の行の 1px に勝たせるため（同じ太さだと、どちらの色が残るかが文書順まかせになる）。
+   残りの罫線・セルの地・文字はそのまま。 */
 .detail-block th {
   background: var(--surface-raised);
+  border-bottom: 2px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
 }
 /* **どのセルも最低4全角は1行で出す。** これが無いと `width: 100%` の表は列の数だけ詰まって
    セルが1〜2字ずつの折り返しになり（実測: 12列で最小41px）、上の `overflow-x` も働かない
