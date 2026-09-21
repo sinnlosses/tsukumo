@@ -207,7 +207,7 @@ function advanceBlock(block: RevealBlock, progress: number): BrushTip | undefine
     applyStep(shape, step)
   }
 
-  return { x: step.tipX, top: step.tipTop, bottom: step.tipBottom }
+  return { x: step.tipX, top: step.tipTop, bottom: step.tipBottom, stroke: step.stroke }
 }
 
 /**

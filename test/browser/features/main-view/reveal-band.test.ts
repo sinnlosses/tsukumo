@@ -91,6 +91,7 @@ describe("brushStep（帯の上の筆の居場所）", () => {
       tipX: 300,
       tipTop: 0,
       tipBottom: 20,
+      stroke: "sweep",
     })
   })
 
@@ -114,6 +115,7 @@ describe("brushStep（帯の上の筆の居場所）", () => {
     // 上の帯の横画は 0.675 で終わり、0.775 までが戻り。その真ん中を見る。
     const step = brushStep(bands, 0.725)
 
+    expect(step.stroke).toBe("return")
     expect(step.swept).toBe(0)
     expect(step.filled).toBe(20)
     expect(step.bottom).toBe(20)

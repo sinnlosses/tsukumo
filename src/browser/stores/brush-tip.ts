@@ -11,17 +11,30 @@
 import { useSyncExternalStore } from "react"
 
 /**
+ * いまなぞっている画の種別。**Z字のどの画か**で追従の間合いが変わる（`mini-portrait.tsx`）ので、
+ * 「書いているか」を `| undefined` の組み合わせではなく**この1つの印**で表す。
+ *
+ * - `sweep`: 横画。左から右へ**文字を出しながら**進む
+ * - `return`: 斜めの戻り。行末から次の帯の頭へ**筆を上げたまま**戻る（文字は出さない）
+ */
+export type BrushStroke = "sweep" | "return"
+
+/**
  * 筆先の位置。**ビューポート座標**（`getBoundingClientRect()` / `getClientRects()` と同じ原点）
  * なので、追従する側は `position: fixed` でそのまま置ける。
  *
  * `top` / `bottom` は**いま書いている帯**（Z字の1画。`report-reveal.ts`）の上端と下端。
  * 帯は**トピック（見出しから次の見出しまで）の行を上下に割ったもの**で、要素をまたいで伸びる。
  * 行が1つしか取れないトピックでは、その上端と下端がそのまま入る。
+ *
+ * `stroke` は**どの画をなぞっているか**の印で、位置と同じ1つの値の中に持つ（画ごとに別の口で
+ * 配ると、位置と種別がずれたフレームができる）。
  */
 export type BrushTip = {
   readonly x: number
   readonly top: number
   readonly bottom: number
+  readonly stroke: BrushStroke
 }
 
 /** 筆先を配る。演出が終わったら undefined を配って消す。 */

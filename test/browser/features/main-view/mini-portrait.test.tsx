@@ -40,7 +40,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   editable: true,
 }
 
-const TIP: BrushTip = { x: 320, top: 180, bottom: 206 }
+const TIP: BrushTip = { x: 320, top: 180, bottom: 206, stroke: "sweep" }
 
 afterEach(() => {
   cleanup()
@@ -98,10 +98,25 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
       publishBrushTip(TIP)
     })
     act(() => {
-      publishBrushTip({ x: 96, top: 206, bottom: 232 })
+      publishBrushTip({ x: 96, top: 206, bottom: 232, stroke: "sweep" })
     })
 
     expect(placement().style.transform).toBe("translate3d(96px, 232px, 0) translateY(-100%)")
+  })
+
+  it("斜めの戻りをなぞっているあいだは、追従の間合いを差し替える印が付く", () => {
+    renderMiniPortrait(FIXTURE_CHARACTER)
+    act(() => {
+      publishBrushTip(TIP)
+    })
+
+    expect(placement().className).not.toContain("mini-portrait-returning")
+
+    act(() => {
+      publishBrushTip({ ...TIP, stroke: "return" })
+    })
+
+    expect(placement().className).toContain("mini-portrait-returning")
   })
 
   it("出し切って筆先が消えたら、ミニ立ち絵も消える", () => {

@@ -14,6 +14,12 @@
 // **横画の時間は帯の幅で按分する**（同日）。右端が帯ごとに変わるのに時間を等分したままだと、
 // 筆の速さが帯ごとに変わる（実測で同じ塊の中でも 2.2倍）。塊の持ち時間はもともと文字数で
 // 決まる（`reveal-plan.ts`）ので、帯へ配り直すときも**幅＝その帯の文字数の目安**で分ける。
+//
+// **いまどの画をなぞっているかも返す**（`BrushStep.stroke`。2026-09-21）。横画と斜めの戻りでは
+// 筆の速さが数倍ちがうので、筆先に付いて歩くミニ立ち絵が追従の間合いを画ごとに変えられるように
+// する（`mini-portrait.tsx`）。
+
+import { type BrushStroke } from "../../stores/brush-tip.ts"
 
 /**
  * 行1つの位置（ビューポート座標）。**左端は持たない**——筆はどの帯も塊の左端から書き始めるので、
@@ -60,6 +66,8 @@ export type BrushStep = {
   readonly tipX: number
   readonly tipTop: number
   readonly tipBottom: number
+  /** いまなぞっている画（横画か、斜めの戻りか）。 */
+  readonly stroke: BrushStroke
 }
 
 /** Z字の横画ぜんぶに与える時間の割合を、帯1つあたりに直した値。残りが斜めの戻り。 */
@@ -124,6 +132,7 @@ export function brushStep(bands: RevealBands, progress: number): BrushStep {
       tipX: writtenX,
       tipTop: band.top,
       tipBottom: band.bottom,
+      stroke: "sweep",
     }
   }
 
@@ -136,6 +145,7 @@ export function brushStep(bands: RevealBands, progress: number): BrushStep {
     tipX: band.left + (1 - returned) * widthOf(band),
     tipTop: band.top + (next.top - band.top) * returned,
     tipBottom: band.bottom + (next.bottom - band.bottom) * returned,
+    stroke: "return",
   }
 }
 

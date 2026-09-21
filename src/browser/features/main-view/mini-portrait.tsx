@@ -20,7 +20,7 @@ import { type CSSProperties, type ReactElement } from "react"
 import { resolveOutfitAccent } from "../../../shared/character.ts"
 import { resolveOutfit } from "../../../shared/expression.ts"
 import { Portrait } from "../../components/portrait.tsx"
-import { useBrushTip, type BrushTip } from "../../stores/brush-tip.ts"
+import { useBrushTip, type BrushStroke, type BrushTip } from "../../stores/brush-tip.ts"
 import { useSessionSelector } from "../../stores/session.tsx"
 import styles from "./mini-portrait.module.css"
 
@@ -44,7 +44,7 @@ export function MiniPortrait(): ReactElement | null {
   const outfit = resolveOutfit(model)
 
   return (
-    <div className={styles["mini-portrait"]} style={followStyle(tip)}>
+    <div className={followClassName(tip.stroke)} style={followStyle(tip)}>
       <Portrait
         url={url}
         accent={resolveOutfitAccent(character.outfitAccents, outfit)}
@@ -59,13 +59,26 @@ export function MiniPortrait(): ReactElement | null {
 }
 
 /**
+ * 追従の間合いを**画ごとに変える**（2026-09-21）。横画のあいだは遅れて寄り、斜めの戻りの
+ * あいだは筆先に張り付く——**戻りは横画の4〜7倍の速さで動く**ので、同じ間合いのままでは
+ * 立ち絵の幅より大きく置いていかれる。**長さは `mini-portrait.module.css` の2つの custom
+ * property が持つ**ので、ここは class を選ぶだけにする。
+ */
+function followClassName(stroke: BrushStroke): string {
+  return [styles["mini-portrait"], stroke === "return" ? styles["mini-portrait-returning"] : ""]
+    .filter((name) => name !== undefined && name !== "")
+    .join(" ")
+}
+
+/**
  * 筆先の**右・帯の下端**に立たせる（いまなぞっている帯と同じ高さで、書き進む先の側。
  * 2026-09-20 のユーザーの決定）。Z字の斜めの戻りでは筆先が右から左へ動くので、立ち絵も
  * 一緒に戻ってくる。
  *
  * 置き方は `left` ではなく `transform`: **CSS の遷移（`mini-portrait.module.css` の
- * `transition`）が毎フレーム引き直されて、少し遅れてばねで寄る動きになる**。行が変わるときも
- * 縦横が同時に補間されるので、飛ばずに滑る。
+ * `transition`）が毎フレーム引き直される**ので、横画では少し遅れてばねで寄り、戻りでは
+ * （間合いが 0 なので）そのフレームの筆先にそのまま乗る。行が変わるときも縦横が同時に
+ * 動くので、飛ばずに滑る。
  */
 function followStyle(tip: BrushTip): CSSProperties {
   return { transform: `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)` }
