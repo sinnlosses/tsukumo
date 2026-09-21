@@ -6,7 +6,7 @@
 
 /** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
-/** キャラクターパックの名前（`characters/<name>`）または絶対パス。 */
+/** キャラクターパック定義ディレクトリのパス（相対は cwd 相対、絶対はそのまま）。 */
 export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 /** 起動時にタブを自動で開くか（`0` のときだけ開かない）。 */
 export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"

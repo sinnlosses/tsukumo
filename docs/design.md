@@ -527,14 +527,19 @@ type SessionHost = {
 | 環境変数              | 意味                                                 | 既定             |
 | --------------------- | ---------------------------------------------------- | ---------------- |
 | `TSUKUMO_VIEW_PORT`   | いまのまま（既定 7327、塞がっていれば +1 で20個）    | 7327             |
-| `TSUKUMO_CHARACTER`   | パックの名前（`characters/<name>`）または絶対パス    | `tsukumo-spirit` |
+| `TSUKUMO_CHARACTER`   | パック定義ディレクトリのパス（相対は cwd 相対）      | `tsukumo-spirit` |
 | `TSUKUMO_OPEN_VIEW`   | いまのまま                                           | 開く             |
 | `TSUKUMO_DRIVER`      | `sdk` / `fake`                                       | `sdk`            |
 | `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前            | 流さない         |
 | `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）            | 復元する         |
 | `TSUKUMO_WATCH_UI`    | `1` で `src/browser/` を見張って組み立て直す（11章） | 見張らない       |
 
-`TSUKUMO_CHARACTER_DIR` は `TSUKUMO_CHARACTER` に統合する（ディレクトリの指定は絶対パスで足りる）。
+`TSUKUMO_CHARACTER` は**パスとしてだけ解く**（`src/server/adapter/bundled-path.ts` の
+`resolveBundledDir`。相対は cwd 相対、絶対はそのまま）。**パックの名前では指せない** —
+`TSUKUMO_CHARACTER=local` は `<cwd>/local` に解かれる。一覧（`listCharacterPacks`）は同梱の
+`characters/` ・ `~/.tsukumo/characters/` ・起動先の `characters/local` を常に返すので、
+**この口が要るのはその3つの外にパックを置いたときだけ**。`TSUKUMO_CHARACTER_DIR` は
+`TSUKUMO_CHARACTER` に統合済みで、いまは無い。
 
 ## 6. browser
 
