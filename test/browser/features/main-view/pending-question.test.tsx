@@ -94,6 +94,17 @@ describe("PendingQuestion", () => {
     expect(marked[0]?.textContent).toContain("案B")
   })
 
+  it("札は送られた順ではなく、箱と同じラベルの辞書順に並べる", () => {
+    const container = renderPendingQuestion([
+      questionAsk([option("案C", "Cの比較"), option("案A", "Aの比較"), option("案B", "Bの比較")]),
+    ])
+
+    const labels = [...container.querySelectorAll(".pending-question-card-label")].map(
+      (el) => el.textContent,
+    )
+    expect(labels).toEqual(["案A", "案B", "案C"])
+  })
+
   it("箱が見ている質問（questionIndex）の選択肢を出す", () => {
     const two: PendingAsk = {
       kind: "question",

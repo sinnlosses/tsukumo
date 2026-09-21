@@ -410,6 +410,93 @@ describe("PendingAnswer", () => {
     expect(screen.getByText(/比較はメインビューに出ている/)).toBeDefined()
   })
 
+  it("送られた順がアルファベット順でなくても、上から辞書順に並べ替えて出す", () => {
+    renderPendingAnswer([
+      {
+        kind: "question",
+        id: "ask-19",
+        questions: [
+          {
+            header: "架空の選択",
+            text: "架空の質問",
+            multiSelect: false,
+            options: [
+              { label: "C案", description: "", preview: undefined },
+              { label: "A案", description: "", preview: undefined },
+              { label: "B案", description: "", preview: undefined },
+            ],
+          },
+        ],
+      },
+    ])
+
+    const labels = [...document.querySelectorAll(".question-choice-label")].map(
+      (el) => el.textContent,
+    )
+    expect(labels).toEqual(["A案", "B案", "C案"])
+  })
+
+  it("並べ替えても、選んだラベルは labels[i] に正しく入る", () => {
+    const calls: unknown[] = []
+    renderPendingAnswer(
+      [
+        {
+          kind: "question",
+          id: "ask-20",
+          questions: [
+            {
+              header: "架空の選択",
+              text: "架空の質問",
+              multiSelect: false,
+              options: [
+                { label: "C案", description: "", preview: undefined },
+                { label: "A案", description: "", preview: undefined },
+                { label: "B案", description: "", preview: undefined },
+              ],
+            },
+          ],
+        },
+      ],
+      (command) => calls.push(command),
+    )
+
+    // 並べ替え後は A案・B案・C案 の順で出る。真ん中（並べ替え前は末尾だった B案）を選ぶ。
+    fireEvent.click(screen.getByText("B案"))
+
+    expect(calls).toEqual([
+      { type: "answer", id: "ask-20", answer: { kind: "answers", labels: [["B案"]] } },
+    ])
+  })
+
+  it("自由入力（その他）は並べ替えに混ぜず、末尾に固定する", () => {
+    renderPendingAnswer([
+      {
+        kind: "question",
+        id: "ask-21",
+        questions: [
+          {
+            header: "架空の選択",
+            text: "架空の質問",
+            multiSelect: false,
+            options: [
+              { label: "その他", description: "", preview: undefined },
+              { label: "C案", description: "", preview: undefined },
+              { label: "A案", description: "", preview: undefined },
+            ],
+          },
+        ],
+      },
+    ])
+
+    const labels = [...document.querySelectorAll(".question-choice-label")].map(
+      (el) => el.textContent,
+    )
+    // 「その他」は自由入力欄そのもの（.question-choice-label ではなく input）になるので、
+    // ここに現れるのは通常の選択肢だけ。並びが辞書順（A案→C案）であることを確かめる。
+    expect(labels).toEqual(["A案", "C案"])
+    expect(screen.getAllByLabelText("その他")).toHaveLength(1)
+  })
+
   it("選択肢に触れると、そのラベルを目を置いた札として store へ渡す", () => {
     const focused: (string | undefined)[] = []
     const value: QuestionFocusValue = {

@@ -17,18 +17,23 @@
 // 同じ並びの末尾に足す。**1つの文字列に畳むのはここではない**（2026-09-16 変更。SDK が求める
 // 「質問1件に対して1つの文字列」へ畳むのは `src/server/core/pending-answer.ts` の役目。ここで畳むと、
 // メインビューに残す記録の側で選択肢と突き合わせられなくなる）。
+//
+// **選択肢はモデルが送ってきた順ではなくラベルの辞書順で出す**（`shared/question.ts` の
+// `sortQuestionOptions`。2026-09-21 決定。docs/requirements.md 4.2。並べ替えは表示だけの都合
+// なので、答えは選んだ「ラベル」で持ち、並べ替えても `answer.labels[i]` の中身は崩れない）。
 
 import { useState, type ReactElement } from "react"
 
 import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
-import { type Question } from "../../../shared/question.ts"
+import {
+  FREE_TEXT_OPTION_LABEL,
+  sortQuestionOptions,
+  type Question,
+} from "../../../shared/question.ts"
 import { summarizeToolInput } from "../../lib/tool-summary.ts"
 import { useQuestionFocus } from "../../stores/question-focus.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./dispatch.module.css"
-
-/** `AskUserQuestion` の自由入力の選択肢。このラベルの選択肢だけ、テキスト欄で受け取る。 */
-const FREE_TEXT_OPTION_LABEL = "その他"
 
 export function PendingAnswer(): ReactElement | null {
   const pending = useSessionSelector((session) => session.state.pending[0])
@@ -221,6 +226,9 @@ function QuestionCard(props: {
     (option) => option.label === FREE_TEXT_OPTION_LABEL,
   )
   const hasPreview = question.options.some((option) => option.preview !== undefined)
+  // **並びはラベルの辞書順**（2026-09-21 決定。docs/requirements.md 4.2。自由入力は
+  // sortQuestionOptions が末尾に固定する）。
+  const sortedOptions = sortQuestionOptions(question.options)
 
   return (
     <div className={styles["question-card"]}>
@@ -235,7 +243,7 @@ function QuestionCard(props: {
         </p>
       ) : null}
       <ul className={styles["question-choices"]}>
-        {question.options.map((option) =>
+        {sortedOptions.map((option) =>
           option.label === FREE_TEXT_OPTION_LABEL ? (
             <FreeTextOption
               key={option.label}

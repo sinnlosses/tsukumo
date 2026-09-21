@@ -458,6 +458,30 @@ describe("MainView（質問の記録）", () => {
     expect(container.querySelector(".question-option.is-free-text")).not.toBeNull()
   })
 
+  it("選択肢は送られた順ではなくラベルの辞書順で出す（並べ替えても答えの印は崩れない）", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [
+        {
+          header: "確認",
+          text: "どれにする？",
+          multiSelect: false,
+          options: [
+            { label: "案C", description: "", preview: undefined },
+            { label: "案A", description: "", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
+          ],
+        },
+      ],
+      answers: [["案B"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    const options = [...container.querySelectorAll(".question-option")]
+    expect(options.map((option) => option.textContent)).toEqual(["○ 案A", "● 案B", "○ 案C"])
+  })
+
   it("質問が2件あると、答えは質問ごとに突き合わせる", () => {
     const entry: MainViewQuestion = {
       kind: "question",

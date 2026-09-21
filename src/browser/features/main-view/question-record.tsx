@@ -13,7 +13,11 @@
 import { useState, type ReactElement } from "react"
 
 import { type MainViewQuestion } from "../../../shared/main-view.ts"
-import { type Question, type QuestionAnswer } from "../../../shared/question.ts"
+import {
+  sortQuestionOptions,
+  type Question,
+  type QuestionAnswer,
+} from "../../../shared/question.ts"
 import styles from "./main-view.module.css"
 import { Markdown } from "./markdown/markdown.tsx"
 
@@ -37,7 +41,11 @@ export function QuestionRecord(props: QuestionRecordProps): ReactElement {
   )
 }
 
-/** 1問ぶんの選択肢と答え。選択肢に無い答え（自由入力）は並びの末尾に足す。 */
+/**
+ * 1問ぶんの選択肢と答え。選択肢に無い答え（自由入力）は並びの末尾に足す。**選択肢そのものは
+ * 箱と同じ並び**（ラベルの辞書順。`sortQuestionOptions`）で出す。答えとの突き合わせは
+ * ラベル文字列で行うので、並べ替えても選ばれた印は崩れない。
+ */
 function QuestionAnswers(props: {
   readonly question: Question
   readonly answer: QuestionAnswer
@@ -48,7 +56,7 @@ function QuestionAnswers(props: {
 
   return (
     <ul className={styles["question-options"]}>
-      {props.question.options.map((option) => {
+      {sortQuestionOptions(props.question.options).map((option) => {
         const chosen = props.answer.includes(option.label)
         return (
           <li
@@ -85,7 +93,7 @@ function QuestionPreviews(props: {
 }): ReactElement | null {
   const [opened, setOpened] = useState(false)
 
-  const previews = props.question.options.flatMap((option) =>
+  const previews = sortQuestionOptions(props.question.options).flatMap((option) =>
     option.preview === undefined
       ? []
       : [

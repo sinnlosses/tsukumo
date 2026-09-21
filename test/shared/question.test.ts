@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
-import { parseQuestions } from "../../src/shared/question.ts"
+import {
+  parseQuestions,
+  sortQuestionOptions,
+  type QuestionOption,
+} from "../../src/shared/question.ts"
 
 // 手で書いた架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -84,5 +88,45 @@ describe("parseQuestions", () => {
     expect(parseQuestions({ questions: "まとも？" })).toBeUndefined()
     expect(parseQuestions({ questions: [] })).toBeUndefined()
     expect(parseQuestions({ questions: ["壊れ"] })).toBeUndefined()
+  })
+})
+
+describe("sortQuestionOptions", () => {
+  function option(label: string): QuestionOption {
+    return { label, description: "", preview: undefined }
+  }
+
+  it("送られた順がアルファベット順でなくても、上からラベルの辞書順に並べ替える", () => {
+    const sorted = sortQuestionOptions([option("C案"), option("A案"), option("B案")])
+
+    expect(sorted.map((o) => o.label)).toEqual(["A案", "B案", "C案"])
+  })
+
+  it("自由入力（その他）は並べ替えに混ぜず、末尾に固定する", () => {
+    const sorted = sortQuestionOptions([option("その他"), option("C案"), option("A案")])
+
+    expect(sorted.map((o) => o.label)).toEqual(["A案", "C案", "その他"])
+  })
+
+  it("漢字のラベルは ja の並びに揃える（実行環境の既定ロケールに引きずられない）", () => {
+    // 既定ロケールに任せると Bun（en-US）とブラウザ（ja）で並びが食い違う組み合わせ。
+    const sorted = sortQuestionOptions([
+      option("本文だけ（架空）"),
+      option("見出しと質問文（架空）"),
+      option("とても長いラベル（架空）"),
+    ])
+
+    expect(sorted.map((o) => o.label)).toEqual([
+      "とても長いラベル（架空）",
+      "見出しと質問文（架空）",
+      "本文だけ（架空）",
+    ])
+  })
+
+  it("元の配列を書き換えない", () => {
+    const original = [option("B案"), option("A案")]
+    sortQuestionOptions(original)
+
+    expect(original.map((o) => o.label)).toEqual(["B案", "A案"])
   })
 })

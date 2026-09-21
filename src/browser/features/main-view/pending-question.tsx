@@ -12,10 +12,13 @@
 // 箱で目を置いた選択肢（`stores/question-focus.tsx` の `focusedLabel`）に印を付け、その札まで
 // スクロールする。**押せるのは箱のほうだけ**で、ここは読む面に徹する（選ぶ操作を2箇所に
 // 分けると、複数選択と自由入力の扱いが両側に散る）。
+//
+// **札の並びは箱と同じ**（`sortQuestionOptions`。ラベルの辞書順、自由入力は末尾。2026-09-21
+// 決定。箱と順が食い違うと、押した位置と光る札の位置がずれて見える）。
 
 import { useEffect, useRef, type ReactElement } from "react"
 
-import { type Question } from "../../../shared/question.ts"
+import { sortQuestionOptions, type Question } from "../../../shared/question.ts"
 import { useQuestionFocus } from "../../stores/question-focus.tsx"
 import { useSessionSelector } from "../../stores/session.tsx"
 import styles from "./main-view.module.css"
@@ -57,7 +60,7 @@ function QuestionPreviews(props: { readonly question: Question }): ReactElement 
         {props.question.header}: {props.question.text}
       </h3>
       <div className={styles["pending-question-cards"]}>
-        {props.question.options.map((option) => {
+        {sortQuestionOptions(props.question.options).map((option) => {
           const focused = option.label === focusedLabel
           return (
             <div
