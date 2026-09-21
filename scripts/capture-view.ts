@@ -14,6 +14,9 @@
 //   bun run scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
 //     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
 //
+// **`--measure` に class セレクタを書くときは `[class*="…"]`。** CSS Modules が `名前_ハッシュ`
+// （`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
+//
 // **撮った画像はリポジトリに置かない**（既定の出力先は /tmp）。ビューには会話の内容が写るので、
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
 // 偽の駆動の台本は架空の会話なので、その画像は共有してよい）。
