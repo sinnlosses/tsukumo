@@ -1,11 +1,11 @@
-// 偽のセッション駆動。**claude を起こさずに**、台本どおりのイベントを時間の順に流す
+// fake driver。**claude を起こさずに**、疑似セッションどおりのイベントを時間の順に流す
 // （docs/design.md 5章「fake-driver.ts」）。`TSUKUMO_DRIVER=fake` で選ぶ。
 //
-// 用途は目視確認と Playwright（docs/design.md 10章）。**台本は手で書いた架空の会話だけ**で、
+// 用途は目視確認と Playwright（docs/design.md 10章）。**疑似セッションは手で書いた架空の会話だけ**で、
 // 実物の transcript は使わない（docs/coding-standards.md「会話内容の扱い」）。
 //
 // 契約は本物の駆動（src/server/core/session-driver.ts の `SessionDriver`）と同じ。違うのは中身が
-// 台本であることだけなので、`session-manager` はどちらが動いているかを知らない。
+// 疑似セッションであることだけなので、`session-manager` はどちらが動いているかを知らない。
 
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
@@ -16,47 +16,51 @@ import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type SessionEvent, sessionEventSchema } from "../../shared/session-event.ts"
 import { type SessionDriver } from "../core/session-driver.ts"
 
-/** 既定の台本。tsukumo 自身の場所から解く（cwd に依存させない）。 */
-const DEFAULT_SCRIPT_URL = new URL("../../../test/fixture/fake-session.json", import.meta.url)
+/** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
+const DEFAULT_SESSION_URL = new URL("../../../test/fixture/fake-session.json", import.meta.url)
 
-/** 台本の1手。`afterMs` は**その場面の始まりからの経過**（前の手からの差分ではない）。 */
-const scriptStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
+/** 疑似セッションの1手。`afterMs` は**その場面の始まりからの経過**（前の手からの差分ではない）。 */
+const fakeSessionStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
 
 /** 依頼1回ぶんの場面。**名前で名指しできる**（{@link FakeDriverOptions.scene}）。 */
-const fakeSceneSchema = z.object({ name: z.string().min(1), steps: z.array(scriptStepSchema) })
-
-/**
- * 台本。`opening` は起こした直後に流す場面、`turns` は依頼を受けるたびに順に流す場面。
- * 依頼が場面の数を超えたら**先頭に戻って繰り返す**（起こしっぱなしで何度でも試せるように）。
- */
-const fakeScriptSchema = z.object({
-  opening: z.array(scriptStepSchema),
-  turns: z.array(fakeSceneSchema),
+const fakeSessionSceneSchema = z.object({
+  name: z.string().min(1),
+  steps: z.array(fakeSessionStepSchema),
 })
 
-/** 台本の1手（読み取り専用の形。zod の出力もこの形に収まる）。 */
-export type FakeScriptStep = { readonly afterMs: number; readonly event: SessionEvent }
+/**
+ * 疑似セッション。`opening` は起こした直後に流す場面、`turns` は依頼を受けるたびに順に流す場面。
+ * 依頼が場面の数を超えたら**先頭に戻って繰り返す**（起こしっぱなしで何度でも試せるように）。
+ */
+const fakeSessionSchema = z.object({
+  opening: z.array(fakeSessionStepSchema),
+  turns: z.array(fakeSessionSceneSchema),
+})
+
+/** 疑似セッションの1手（読み取り専用の形。zod の出力もこの形に収まる）。 */
+export type FakeSessionStep = { readonly afterMs: number; readonly event: SessionEvent }
 
 /**
- * 名前の付いた場面。名前は台本の中で重ならない前提で、同じ名前があれば先に書いたほうを使う。
- * **名前は画面の状態の呼び名**（`question-multi` など）で、会話の内容ではない。
+ * 名前の付いた場面。名前は疑似セッションの中で重ならない前提で、同じ名前があれば先に書いたほうを
+ * 使う。**名前は画面の状態の呼び名**（`question-multi` など）で、会話の内容ではない。
  */
-export type FakeScriptScene = {
+export type FakeSessionScene = {
   readonly name: string
-  readonly steps: readonly FakeScriptStep[]
+  readonly steps: readonly FakeSessionStep[]
 }
 
-export type FakeScript = {
-  readonly opening: readonly FakeScriptStep[]
-  readonly turns: readonly FakeScriptScene[]
+export type FakeSession = {
+  readonly opening: readonly FakeSessionStep[]
+  readonly turns: readonly FakeSessionScene[]
 }
 
 export type FakeDriverOptions = {
-  readonly script: FakeScript
+  readonly session: FakeSession
   /**
    * 起こした直後に `opening` へ続けて流す場面の名前（`TSUKUMO_FAKE_SCENE`）。**依頼を送らずに
    * 特定の状態を出す**ための口で、状態のカタログを撮る道具が使う
-   * （`docs/architecture.md`「手で確かめること」）。名前が台本に無ければ `opening` だけを流す。
+   * （`docs/architecture.md`「手で確かめること」）。名前が疑似セッションに無ければ `opening` だけを
+   * 流す。
    */
   readonly scene: string | undefined
   /** 内部イベントの受け取り口（本物の駆動と同じ契約）。 */
@@ -64,12 +68,12 @@ export type FakeDriverOptions = {
 }
 
 /**
- * 台本を読む。**読めない・形が違うときは undefined**（呼び出し側が起動を止める。台本が無ければ
- * 偽の駆動には意味が無いので、起動時の前提不足として扱ってよい）。
+ * 疑似セッションを読む。**読めない・形が違うときは undefined**（呼び出し側が起動を止める。
+ * 疑似セッションが無ければ fake driver には意味が無いので、起動時の前提不足として扱ってよい）。
  */
-export function readFakeScript(
-  path: string = fileURLToPath(DEFAULT_SCRIPT_URL),
-): FakeScript | undefined {
+export function readFakeSession(
+  path: string = fileURLToPath(DEFAULT_SESSION_URL),
+): FakeSession | undefined {
   let content: string
   try {
     content = readFileSync(path, "utf8")
@@ -84,14 +88,14 @@ export function readFakeScript(
     return undefined
   }
 
-  const script = fakeScriptSchema.safeParse(parsed)
-  return script.success ? script.data : undefined
+  const session = fakeSessionSchema.safeParse(parsed)
+  return session.success ? session.data : undefined
 }
 
 /**
- * 偽の駆動を起こす。`opening` の場面をすぐに流し始め、`prompt()` のたびに次の場面を流す。
- * 答え待ち（`pending-changed`）も台本から積まれ、`answer()` で解けて次の `pending-changed` が
- * 流れる（本物の `canUseTool` と同じ見え方になる）。
+ * fake driver を起こす。`opening` の場面をすぐに流し始め、`prompt()` のたびに次の場面を流す。
+ * 答え待ち（`pending-changed`）も疑似セッションから積まれ、`answer()` で解けて次の
+ * `pending-changed` が流れる（本物の `canUseTool` と同じ見え方になる）。
  *
  * `options.scene` に名前があれば、その場面を `opening` の続きとして流し、**次の `prompt()` は
  * その次の場面から**続く（依頼を送らずに特定の状態へ着けるための口）。
@@ -107,7 +111,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     options.onEvent(event)
   }
 
-  const play = (steps: readonly FakeScriptStep[], startMs: number): void => {
+  const play = (steps: readonly FakeSessionStep[], startMs: number): void => {
     for (const step of steps) {
       const timer = setTimeout(() => {
         timers.delete(timer)
@@ -123,7 +127,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       return false
     }
     // 本物の駆動（src/server/core/pending-answer.ts）と同じで、質問に答えが付いたら記録を流す。
-    // これが無いと、台本で目視するときだけ質問の記録が残らない。
+    // これが無いと、疑似セッションで目視するときだけ質問の記録が残らない。
     if (ask.kind === "question" && answer.kind === "answers") {
       emit({ kind: "question-answered", questions: ask.questions, answers: answer.labels })
     }
@@ -131,20 +135,20 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     return true
   }
 
-  play(options.script.opening, 0)
+  play(options.session.opening, 0)
 
   // 名指しされた場面（無ければ findIndex が -1 を返すだけ）。`opening` と重ならないように、
   // その終わりから続けて流す。
-  const namedIndex = options.script.turns.findIndex((scene) => scene.name === options.scene)
-  const namedScene = namedIndex < 0 ? undefined : options.script.turns[namedIndex]
+  const namedIndex = options.session.turns.findIndex((scene) => scene.name === options.scene)
+  const namedScene = namedIndex < 0 ? undefined : options.session.turns[namedIndex]
   if (namedScene !== undefined) {
-    play(namedScene.steps, openingSpanMs(options.script.opening))
+    play(namedScene.steps, openingSpanMs(options.session.opening))
   }
   let playedTurns = namedScene === undefined ? 0 : namedIndex + 1
 
   /** 次の場面を流す（依頼でも、記録に残さない依頼でも同じ）。 */
   const playNextTurn = (): void => {
-    const turns = options.script.turns
+    const turns = options.session.turns
     const scene = turns.length === 0 ? undefined : turns[playedTurns % turns.length]
     playedTurns += 1
     if (scene !== undefined) {
@@ -154,14 +158,14 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
 
   return {
     prompt: (text, images) => {
-      // 台本を流すだけの駆動でも、**控えだけを記録へ渡す**のは本物と同じ
+      // 疑似セッションを流すだけの駆動でも、**控えだけを記録へ渡す**のは本物と同じ
       // （原寸はここで手放す。`docs/requirements.md` 4.10）。
       emit({ kind: "request", text, images: images.map((image) => image.thumbnail) })
       playNextTurn()
     },
     promptWithoutRecord: () => {
       // 記録に残さない依頼（`docs/design.md` 13.7）。本物と同じく `request` の代わりに
-      // ターンの始まりだけを流し、**文面はどこにも残さない**（台本は次の場面へ進む）。
+      // ターンの始まりだけを流し、**文面はどこにも残さない**（疑似セッションは次の場面へ進む）。
       emit({ kind: "turn-started" })
       playNextTurn()
     },
@@ -189,12 +193,12 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
 }
 
 /** `opening` が流れ終わる時刻（一番遅い手の `afterMs`）。名指しの場面はこの後ろに続ける。 */
-function openingSpanMs(opening: readonly FakeScriptStep[]): number {
+function openingSpanMs(opening: readonly FakeSessionStep[]): number {
   return opening.reduce((span, step) => Math.max(span, step.afterMs), 0)
 }
 
 /**
- * `session-info` の土台。**偽の駆動なので固定値**（本物は SDK の `init` から来る）。
+ * `session-info` の土台。**fake driver なので固定値**（本物は SDK の `init` から来る）。
  * ここに会話の内容は入らない。
  */
 function sessionInfo(): {

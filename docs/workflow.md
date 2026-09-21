@@ -39,7 +39,7 @@
 
 | 道具                                                         | 何ができるか                                                                                                |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `TSUKUMO_DRIVER=fake` ＋ `test/fixture/fake-session.json`    | **`claude` を起こさずに**画面全体を出す（架空の台本。API を使わない）                                       |
+| `TSUKUMO_DRIVER=fake` ＋ `test/fixture/fake-session.json`    | **`claude` を起こさずに**画面全体を出す（架空の疑似セッション。API を使わない）                             |
 | `bun run scripts/capture-view.ts <URL> --measure <selector>` | 画像に撮り、指定した要素の位置と大きさを**数値で**出す                                                      |
 | `playwright-core`（devDependency）＋ 手元の Chrome           | ページを操作する（キーを打つ、タブを押す、`<select>` を変える）・`getComputedStyle` や `scrollWidth` を読む |
 | 撮った画像を読む                                             | **絵として見て事実を確かめる**（どの要素が出ているか、切れていないか、絵柄が入れ替わったか）                |

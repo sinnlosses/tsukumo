@@ -94,7 +94,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/core/sdk-message.ts`                                             | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                     |
 | `src/server/core/session-driver.ts`                                          | core       | 駆動の契約（`SessionDriver` / `SessionDriverOptions` と既定値）。実装は持たない                      |
 | `src/server/adapter/sdk-driver.ts`                                           | adapter    | SDK でセッションを起こし、入力・中断・許可の応答を渡す。**SDK を呼ぶのはここだけ**                   |
-| `src/server/adapter/fake-driver.ts`                                          | adapter    | 台本（`test/fixture/fake-session.json`）どおりにイベントを流す偽の駆動                               |
+| `src/server/adapter/fake-driver.ts`                                          | adapter    | 疑似セッション（`test/fixture/fake-session.json`）どおりにイベントを流す fake driver                 |
 | `src/server/core/pending-answer.ts`                                          | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                       |
 | `src/server/core/session-manager.ts`                                         | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                     |
 | `src/server/core/session-launch.ts`                                          | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）               |
@@ -112,7 +112,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/adapter/orca-host.ts`                                            | adapter    | `src/server/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                   |
 | `src/browser/main.tsx`                                                       | browser    | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                          |
 | `src/cli.ts`                                                                 | （配線）   | 入口。引数の受け取り・環境変数の読み出し・終了コードの返し方だけ                                     |
-| `src/main.ts`                                                                | （配線）   | 起動の段取り。**即時終了する前提不足（ポート・組み立て・台本）はここに集めてある**                   |
+| `src/main.ts`                                                                | （配線）   | 起動の段取り。**即時終了する前提不足（ポート・組み立て・疑似セッション）はここに集めてある**         |
 | `src/current-character.ts`                                                   | （配線）   | いま出しているパックと選択肢の持ち主。切り替え・画面からの編集で入れ替わるのはここだけ               |
 | `src/view-delivery.ts`                                                       | （配線）   | ビューの配信。組み立てたブラウザ側と開いているタブを持ち、サーバ・`/ws`・見張りを束ねる              |
 | `src/session-start.ts`                                                       | （配線）   | セッションを1つ起こす。どの駆動で起こすか・続きをどう探すかを決め、順序は `core` に任せる            |
@@ -152,7 +152,7 @@ tsukumo の画面だけになる。
 データの流れは3本ある。
 
 1. **入力欄 → セッション駆動**: `<Composer>` が `ClientCommand`（`prompt` / `interrupt` など）を
-   WebSocket で送り、`session-manager` が駆動（SDK または偽の駆動）へ渡す
+   WebSocket で送り、`session-manager` が駆動（SDK または fake driver）へ渡す
 2. **イベント → 各ビュー**: `assistant` のテキストはメインビューの**レポート**、`speak` の
    引数はキャラビューの**セリフと表情**、`tool_use` / `tool_result` はサイドバーの**進行**に
    なる。`applySessionEvent` で畳んだ `SessionState` を、サーバとブラウザが同じ形で持つ
@@ -737,21 +737,21 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 その結果を `evidence` に書く（`~/.claude/skills/task-workflow/WORKFLOW.md`
 「良いevidenceの書き方」と `docs/workflow.md`「タスクを書くとき・受け入れるとき」）。
 
-**偽の駆動（`TSUKUMO_DRIVER=fake`）で起こせる**ので、claude を起こさず（API を使わず）に
+**fake driver（`TSUKUMO_DRIVER=fake`）で起こせる**ので、claude を起こさず（API を使わず）に
 下の手順を回せる（`docs/design.md` 5章・10章）。
 
-**状態ごとの画面を並べて見るときは `bun run scripts/capture-catalog.ts`。** 台本の場面
+**状態ごとの画面を並べて見るときは `bun run scripts/capture-catalog.ts`。** 疑似セッションの場面
 （`test/fixture/fake-session.json` の `turns[].name`）ごとに tsukumo を1件ずつ空きポートで起こし、
 広い窓（1400x900）と狭い窓（720x900・縦に積み替わるのでページ全体）で撮る。**同じ場面を別の
 操作で何枚も撮る件があるので、名指しは場面の名前ではなく件の名前**（`--only notation-figure`
 のように。`--only` に使える名前の一覧はオプション無しで実行すると出る）。**件によっては撮る前に
 操作を当ててから撮る**（領域の内側を送る・ボタンを押す・入力欄に打つ・`location.hash` を書く、
-の4種だけ） — 台本を流しただけでは出ない状態（記法の見本の下側・タスク一覧のモーダル・
+の4種だけ） — 疑似セッションを流しただけでは出ない状態（記法の見本の下側・タスク一覧のモーダル・
 `/`と`@`の補完・キャラクター画面）をこれで出している。`/tmp/tsukumo-catalog/index.html` に
 並べる（`--out` で置き場を変えられる）。**依頼を手で送らなくても狙った状態が出る**ので、
 答え待ちの箱・レポートの記法を直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを
 数値で読むのは `capture-view.ts`（class セレクタで測るときは `[class*="…"]` — CSS Modules が
-`名前_ハッシュ` に焼くため）。**撮った画像はリポジトリに置かない。** 台本の会話は架空でも、
+`名前_ハッシュ` に焼くため）。**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
 **タスク一覧のモーダルを撮る件には `develop/tasks.json` の実データのタスク一覧が写る**ので、
 画像そのものを他所へ共有・複製しない。
 

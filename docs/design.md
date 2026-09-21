@@ -38,7 +38,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | ## 7. キャラクターパック       | `character.json` + `persona.md` + 素材。人格の注入と切り替え、書き戻し、雑談の要約とアーカイブ   |
 | ## 8. セッションの復元と複数化 | 復元（4.8）を新しい形に載せる。複数セッションへ広げる余地                                        |
 | ## 9. 会話内容と安全           | `127.0.0.1`・Origin・起動トークン・ディスクに書く2つの例外と直近を読み戻す口・ブラウザ側のメモリ |
-| ## 10. テスト                  | reducer・スキーマ・部品・偽の駆動 + Playwright・層の検査                                         |
+| ## 10. テスト                  | reducer・スキーマ・部品・fake driver + Playwright・層の検査                                      |
 | ## 11. ビルドと依存            | `bun build` の入口、tsconfig、**足す依存の一覧（承認済み）**                                     |
 | ## 13. 画面のデザイン          | 色・書体・レイアウトの計画とトークン。**誰が差せるか**。雑談モードの画面                         |
 
@@ -57,7 +57,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | 答え待ちの列（`canUseTool` の Promise を保留する）                           | 4層（domain / usecase / presentation / infrastructure）→ 3層         |
 | 会話をプロセスの外へ出さない。`127.0.0.1` だけ。ディスクに書かない           | キャラクター定義 → 人格を含む**パック**                              |
 | 起動時に `bun build` で束ねてメモリから配る（ディスクに成果物を置かない）    | 1プロセス = 1セッション固定 → 鍵付きの `SessionManager`（いまは1つ） |
-| ホストのポート（`showView` 1つ）と Orca のアダプタ                           | HTML の文字列一致のテスト → 部品のテストと偽の駆動                   |
+| ホストのポート（`showView` 1つ）と Orca のアダプタ                           | HTML の文字列一致のテスト → 部品のテストと fake driver               |
 
 **決めたこと**（迷ったら蒸し返さない。理由は `docs/research/architecture-rethink.md`）:
 
@@ -94,7 +94,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
                │ 呼ばれる                   │ core を import する
 ┌──────────────┴───────────────────────────▼─────────────────┐
 │ server/adapter（外の世界に触る場所。1ファイル = 1つの境界）   │
-│   sdk-driver（SDK）／ fake-driver（台本）                     │
+│   sdk-driver（SDK）／ fake-driver（疑似セッション）           │
 │   server（http: ページ・束ねた JS/CSS・vendor・立ち絵 / ws）  │
 │   character-pack ／ task-summary ／ bundle ／ orca-host       │
 └──────────────▲───────────────────────────┬─────────────────┘
@@ -120,7 +120,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | ---------------- | ------------------------------------------------------------------------------------------ | --------------------------------- | ---------------- |
 | `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod  | `shared` のみ（`zod` は可）       | サーバとブラウザ |
 | `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈 | `shared` / `core`                 | サーバ（Bun）    |
-| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・偽の駆動           | `shared` / `core` / `adapter`     | サーバ（Bun）    |
+| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver        | `shared` / `core` / `adapter`     | サーバ（Bun）    |
 | `browser`        | React の部品・hooks・CSS・Markdown の変換                                                  | `shared`（React などの npm は可） | ブラウザ         |
 | `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                              | すべて                            | サーバ           |
 
@@ -142,7 +142,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 ```
 src/
   cli.ts                      入口。引数の受け取り・環境変数の読み出し・終了コードの返し方だけ
-  main.ts                     起動の段取り。即時終了する前提不足（ポート・組み立て・台本）もここ
+  main.ts                     起動の段取り。即時終了する前提不足（ポート・組み立て・疑似セッション）もここ
   current-character.ts        いま出しているパックと選択肢の持ち主（切り替えと画面からの編集で入れ替わる）
   view-delivery.ts            ビューの配信。組み立てたブラウザ側と開いているタブを持ち、/ws と見張りを束ねる
   session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
@@ -174,7 +174,7 @@ src/
       host.ts                 ホストのポート（showView）。実装は adapter/orca-host.ts
     adapter/                  外の世界に触る場所。1ファイル = 1つの境界
       sdk-driver.ts           SDK を import する唯一の場所。SessionDriver の本物の実装
-      fake-driver.ts          台本どおりに SessionEvent を流す SessionDriver（台本は fs から読む）
+      fake-driver.ts          疑似セッションどおりに SessionEvent を流す SessionDriver（疑似セッションは fs から読む）
       server.ts               http（ページ・/assets・/vendor・/character・/repository-file）
       session-socket.ts       ws（フレームとコマンド）。listen 済みのサーバに upgrade を足す
       character-pack.ts       パックの列挙・読み込み（character.json / persona.md / 素材）
@@ -264,13 +264,13 @@ bullet-proof-react の要素）」）。
    （ポート・キャラクター・自動オープン・駆動の種類・新規起動）
 2. `main.ts` が**即時終了する前提**を3つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
    `bundle.ts` が `browser/main.tsx` を `bun build` で束ねられるか（**スクリプトと CSS の1組**を
-   メモリに持つ）、偽の駆動なら台本を読めるか
+   メモリに持つ）、fake driver なら疑似セッションを読めるか
 3. `current-character.ts` が `character-pack.ts` で一覧を引き、既定のパック（または指定されたもの・
    覚えていたもの）を初期パックに決める。**以降このパックの持ち回りはここに閉じる**
 4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
    （`TSUKUMO_WATCH_UI` のときは `src/browser/` の見張りもここで始める）
 5. `session-start.ts` が `session-manager.ts` にセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が
-   `fake` なら偽の駆動、それ以外は SDK。復元（8章）はここで判定する。起こしたセッションは
+   `fake` なら fake driver、それ以外は SDK。復元（8章）はここで判定する。起こしたセッションは
    `view-delivery.ts` の `connect` で `/ws` に繋ぐ
 6. ホストのポートで `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）
 
@@ -436,8 +436,8 @@ type ServerFrame =
 
 ### fake-driver.ts（adapter）
 
-`SessionDriver` と同じ契約で、**台本（`StampedEvent[]` の JSON）を時間どおりに流す**。`prompt()` を
-受けたら台本の次の場面を再生し、`canUseTool` 相当の答え待ちも積む（`answer()` で解決）。台本は
+`SessionDriver` と同じ契約で、**疑似セッション（`StampedEvent[]` の JSON）を時間どおりに流す**。`prompt()` を
+受けたら疑似セッションの次の場面を再生し、`canUseTool` 相当の答え待ちも積む（`answer()` で解決）。疑似セッションは
 `test/fixture/` に**手で書いた架空の会話**として置く（`docs/coding-standards.md`「会話内容の扱い」）。
 用途は 10章（目視・Playwright・スクリーンショット）。`TSUKUMO_DRIVER=fake` で選ぶ。
 
@@ -1122,37 +1122,37 @@ characters/<name>/
 
 `docs/coding-standards.md`「会話内容の扱い」は最優先のまま。新しい形で変わる点と変わらない点:
 
-| 項目                                 | 扱い                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| バインド先                           | `127.0.0.1` だけ。変えない                                                                                                                                                                                                                                                                                                                                                                                       |
-| Origin                               | WebSocket の upgrade で確かめる（いまの POST と同じ規則。`Origin` が無ければ通す、あれば自分と一致）                                                                                                                                                                                                                                                                                                             |
-| 起動トークン                         | 起動ごとに乱数を1つ作り、`/ws?t=` で要求する。ページの URL に付けて配る（`showView` に渡す URL に含む）。同じマシンの別プロセスが `127.0.0.1:7327` を読める、という既知の割り切りを塞ぐ                                                                                                                                                                                                                          |
-| ディスク                             | 会話を**書く**のは**2つの例外だけ**（下の「雑談の要約の写し」と「雑談の会話のアーカイブ」。その次の行は書かずに**読む**ほう）。`bun build` の出力もメモリ。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                              |
-| ブラウザ側のメモリ                   | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**（いまも DOM として持っている。持ち方が変わるだけ）                                                                                                                                                                                                                                                                      |
-| ログ                                 | `error` フレームの `reason` は定型文。サーバの stderr に会話を出さない（いまのまま）                                                                                                                                                                                                                                                                                                                             |
-| 雑談の記憶の要約                     | 作るのは claude 自身の圧縮（`/compact`）で、tsukumo がするのは容量を数えて圧縮を頼むことと、区切りを画面に出すことだけ。**要約の文面は画面にも `error` フレームにも stderr にも出さない**                                                                                                                                                                                                                        |
-| 雑談の要約の写し                     | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで）。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の1つ目**（範囲と理由は `docs/requirements.md` 4.9、形と上限は7章）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（写しの1行目の印が持つ）                                                    |
-| 雑談の会話のアーカイブ               | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の2つ目**（範囲と理由は `docs/requirements.md` 4.9、形と上限は7章）。**画面の 100 ターンには影響されない。** 画面にも `error` フレームにも stderr にも出さない                                                                                    |
-| 直近の雑談を逐語で読み戻す           | アーカイブの**新しいほうから 16 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件は要約の写しと同じ2つ。**渡す先はそこだけ**で、画面にも `error` フレームにも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/requirements.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口は7章） |
-| 人格への書き戻し（覚えたこと）       | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲は `docs/requirements.md` 4.9、形と上限は 7.1）。会話の文面はディスクに届かない                                                                                                                                                                                                          |
-| テストのフィクスチャ・偽の駆動の台本 | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                         |
+| 項目                                               | 扱い                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| バインド先                                         | `127.0.0.1` だけ。変えない                                                                                                                                                                                                                                                                                                                                                                                       |
+| Origin                                             | WebSocket の upgrade で確かめる（いまの POST と同じ規則。`Origin` が無ければ通す、あれば自分と一致）                                                                                                                                                                                                                                                                                                             |
+| 起動トークン                                       | 起動ごとに乱数を1つ作り、`/ws?t=` で要求する。ページの URL に付けて配る（`showView` に渡す URL に含む）。同じマシンの別プロセスが `127.0.0.1:7327` を読める、という既知の割り切りを塞ぐ                                                                                                                                                                                                                          |
+| ディスク                                           | 会話を**書く**のは**2つの例外だけ**（下の「雑談の要約の写し」と「雑談の会話のアーカイブ」。その次の行は書かずに**読む**ほう）。`bun build` の出力もメモリ。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                              |
+| ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**（いまも DOM として持っている。持ち方が変わるだけ）                                                                                                                                                                                                                                                                      |
+| ログ                                               | `error` フレームの `reason` は定型文。サーバの stderr に会話を出さない（いまのまま）                                                                                                                                                                                                                                                                                                                             |
+| 雑談の記憶の要約                                   | 作るのは claude 自身の圧縮（`/compact`）で、tsukumo がするのは容量を数えて圧縮を頼むことと、区切りを画面に出すことだけ。**要約の文面は画面にも `error` フレームにも stderr にも出さない**                                                                                                                                                                                                                        |
+| 雑談の要約の写し                                   | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで）。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の1つ目**（範囲と理由は `docs/requirements.md` 4.9、形と上限は7章）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（写しの1行目の印が持つ）                                                    |
+| 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の2つ目**（範囲と理由は `docs/requirements.md` 4.9、形と上限は7章）。**画面の 100 ターンには影響されない。** 画面にも `error` フレームにも stderr にも出さない                                                                                    |
+| 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 16 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件は要約の写しと同じ2つ。**渡す先はそこだけ**で、画面にも `error` フレームにも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/requirements.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口は7章） |
+| 人格への書き戻し（覚えたこと）                     | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲は `docs/requirements.md` 4.9、形と上限は 7.1）。会話の文面はディスクに届かない                                                                                                                                                                                                          |
+| テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                         |
 
 ## 10. テスト
 
-| 対象                           | 方法                                                                                                                       | 置き場所                                   |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                               | `test/shared/session-state.test.ts`        |
-| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                            | `test/shared/command.test.ts` など         |
-| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                       | `test/server/adapter/sdk-driver.test.ts`   |
-| `session-manager`              | 偽の駆動を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/server/core/session-manager.test.ts` |
-| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                    | `test/server/adapter/server.test.ts`       |
-| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                   | `test/browser/**`                          |
-| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                      | `test/architecture.test.ts`                |
-| 画面全体                       | **偽の駆動で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）           |
-| 状態のカタログ                 | 台本の場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                         | `scripts/capture-catalog.ts`               |
+| 対象                           | 方法                                                                                                                           | 置き場所                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                                   | `test/shared/session-state.test.ts`        |
+| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                | `test/shared/command.test.ts` など         |
+| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                           | `test/server/adapter/sdk-driver.test.ts`   |
+| `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/server/core/session-manager.test.ts` |
+| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                        | `test/server/adapter/server.test.ts`       |
+| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                       | `test/browser/**`                          |
+| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                          | `test/architecture.test.ts`                |
+| 画面全体                       | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）           |
+| 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                   | `scripts/capture-catalog.ts`               |
 
 **ブラウザに出た絵は自動テストで守らない**、という方針は変えない。変わるのは「claude を起こさずに
-絵を出せる」こと（偽の駆動）で、目視の手順が `docs/architecture.md`「手で確かめること」から
+絵を出せる」こと（fake driver）で、目視の手順が `docs/architecture.md`「手で確かめること」から
 API を使わない形になる。
 
 ## 11. ビルドと依存

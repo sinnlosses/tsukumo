@@ -251,7 +251,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(
       [
         request("依頼"),
-        detail("さいしょに台本を読むね。"),
+        detail("さいしょに資料を読むね。"),
         detail("つづいて `src/a.ts` を直すね。"),
         edit("src/a.ts"),
         detail(materialReport("直した結果")),
@@ -542,7 +542,7 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
   it("進行中に次の本文が始まっても、ツールの続かない実況は露出しない", () => {
     // 実況1が「最後のステップ」でなくなった瞬間に出てしまう経路（2026-09-21 に塞いだ）。
     const turns = mainViewTurns(
-      [request("依頼"), detail("さいしょに台本を読むね。"), detail("つづいて ")],
+      [request("依頼"), detail("さいしょに資料を読むね。"), detail("つづいて ")],
       true,
     )
 

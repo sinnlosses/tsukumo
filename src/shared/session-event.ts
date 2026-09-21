@@ -152,8 +152,8 @@ export type SessionEvent =
    *    （`src/server/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
    *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
    *    駆動を経ずにこのイベントを合成することはない。2026-09-17 実測: 本物の駆動は元々これを
-   *    出しておらず、選んだ直後に次のイベントで古いモデルへ巻き戻って見えていた。偽の駆動
-   *    （fake-driver.ts）は最初から出していたので気づけなかった）
+   *    出しておらず、選んだ直後に次のイベントで古いモデルへ巻き戻って見えていた。fake
+   *    driver（fake-driver.ts）は最初から出していたので気づけなかった）
    *
    * `model` はそのまま状態へ運ぶ値。1 のときは `/model` に渡した引数（前後の空白だけ除いてある）で
    * **エイリアスとして知っているかどうかの検証はしていない**。2 のときは `MODEL_ALIASES`
@@ -210,7 +210,7 @@ export type StampedEvent = {
  * 外から届いた値を {@link SessionEvent} として受け取るための**封筒だけ**のスキーマ
  * （`kind` を持つオブジェクトであること）。**中身は検証しない**（2026-09-13 決定。union を
  * zod で二重に持たない）。使うのは境界の2箇所だけ — フレームの読み取り（src/shared/frame.ts）と
- * 偽の駆動の台本（src/server/adapter/fake-driver.ts）。
+ * fake driver の疑似セッション（src/server/adapter/fake-driver.ts）。
  */
 export const sessionEventSchema = z.custom<SessionEvent>(
   (value) => isRecord(value) && typeof value.kind === "string",

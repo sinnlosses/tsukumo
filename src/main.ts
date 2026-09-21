@@ -3,7 +3,7 @@
 // 中身は同じ `src/` 直下のファイル（`current-character.ts` / `view-delivery.ts` /
 // `session-start.ts`）が持つ。
 //
-// **即時終了する前提不足はこの1つの関数に集めてある**（ポート・組み立て・台本の3つ。
+// **即時終了する前提不足はこの1つの関数に集めてある**（ポート・組み立て・疑似セッションの3つ。
 // docs/coding-standards.md「常駐プロセスは描画1回の失敗で落ちない」— 動作中の一時的な失敗は
 // その回を諦めて次へ進む）。
 //
@@ -15,7 +15,7 @@ import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
 import { buildUiBundle } from "./server/adapter/bundle.ts"
-import { readFakeScript } from "./server/adapter/fake-driver.ts"
+import { readFakeSession } from "./server/adapter/fake-driver.ts"
 import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { type Host } from "./server/core/host.ts"
@@ -46,10 +46,11 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // 偽の駆動を選んだときは台本が要る。無ければ起こす意味が無いので、起動時の前提不足として扱う。
-  const script = config.driver === "fake" ? readFakeScript() : undefined
-  if (config.driver === "fake" && script === undefined) {
-    process.stderr.write("tsukumo: 偽の駆動の台本を読めない\n")
+  // fake driver を選んだときは疑似セッションが要る。無ければ起こす意味が無いので、起動時の
+  // 前提不足として扱う。
+  const fakeSession = config.driver === "fake" ? readFakeSession() : undefined
+  if (config.driver === "fake" && fakeSession === undefined) {
+    process.stderr.write("tsukumo: fake driver の疑似セッションを読めない\n")
     return 1
   }
 
@@ -66,7 +67,7 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  const session = startSession({ config, character, script })
+  const session = startSession({ config, character, fakeSession })
   view.connect(session)
 
   stopSessionOnExit(session.close)

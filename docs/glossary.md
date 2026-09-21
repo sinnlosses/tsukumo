@@ -28,7 +28,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 | ## 会話の駆動             | セッション / セッション駆動 / ターン / speak ツール / remember ツール / forget ツール / 覚えたこと / 雑談の要約 / 雑談のアーカイブ / 圧縮の区切り / 許可プロンプト / transcript / セッションスラッグ / 発話 |
 | ## 表示                   | ビュー / 画面 / キャラクター画面 / メインビュー / キャラビュー / ビューサーバ / 立ち絵 / 吹き出し / セリフ / 詳細 / 中間レポート / お願い / 表情 / 衣装 / 覆い / キャラクター定義 / フォールバック          |
 | ## Claude Code 側の仕組み | hook / 状態ファイル / statusline / output style                                                                                                                                                             |
-| ## 通信（移行後）         | プロトコル / アダプタ / フレーム / コマンド / セッションの姿 / 偽の駆動                                                                                                                                     |
+| ## 通信（移行後）         | プロトコル / アダプタ / フレーム / コマンド / セッションの姿 / fake driver / 疑似セッション                                                                                                                 |
 
 ## 実行構成
 
@@ -503,11 +503,19 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: 時刻はイベントの `at`（サーバの時計）から入る。ブラウザの時計を reducer に渡さない
 - **避ける言い方**: ビューモデル、ストア、状態（単に「状態」と言うと接続中かどうかなどと紛れる）
 
-### 偽の駆動
+### fake driver
 
 - **英語識別子**: `fakeDriver`（`TSUKUMO_DRIVER=fake`）
-- **定義**: `SessionDriver`（`src/server/core/session-driver.ts` の契約）と同じ形で、手で書いた架空の
-  台本どおりにイベントを流す実装（`src/server/adapter/fake-driver.ts`）。claude を起こさずに画面全体を
-  動かすための道具
-- **注記**: 台本は**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
+- **定義**: `SessionDriver`（`src/server/core/session-driver.ts` の契約）と同じ形で、手で書いた
+  疑似セッションどおりにイベントを流す実装（`src/server/adapter/fake-driver.ts`）。claude を起こさずに
+  画面全体を動かすための道具
+- **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: モック（テストの中の置き換え一般と紛れる）、スタブ
+
+### 疑似セッション
+
+- **英語識別子**: `fakeSession`
+- **定義**: fake driver（`src/server/adapter/fake-driver.ts`）が流すために手で書いた架空のイベント列
+  （`test/fixture/fake-session.json`）。claude を起こさずに画面全体を動かすための材料
+- **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
+- **避ける言い方**: シナリオ、スクリプト（脚本という含みが強すぎる）

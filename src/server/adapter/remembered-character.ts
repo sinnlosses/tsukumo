@@ -21,7 +21,7 @@ const stateSchema = z.object({ character: z.string() })
  * （呼び出し側が同梱の既定へ落ちる。指すパックが一覧に無いかどうかは呼び出し側の判断で、
  * ここでは確かめない）。
  *
- * `path` は `readFakeScript` の `path` 引数と同じで、差し替えられるのは置き場所だけ
+ * `path` は `readFakeSession` の `path` 引数と同じで、差し替えられるのは置き場所だけ
  * （テストがホームを汚さないため）。
  */
 export function readRememberedCharacter(path: string = defaultStatePath()): string | undefined {

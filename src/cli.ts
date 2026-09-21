@@ -26,8 +26,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       characters/tsukumo-spirit。自分の素材を使うときは起動先の
                       characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
   TSUKUMO_OPEN_VIEW   起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）
-  TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず台本を流す）
-  TSUKUMO_FAKE_SCENE  fake のとき、起こした直後に流す台本の場面の名前（既定は流さない。
+  TSUKUMO_DRIVER      セッションの駆動（既定 sdk。fake は claude を起こさず疑似セッションを
+                      流す）
+  TSUKUMO_FAKE_SCENE  fake のとき、起こした直後に流す疑似セッションの場面の名前（既定は流さない。
                       依頼を送らずにその画面を出すための口で、状態のカタログを撮る
                       scripts/capture-catalog.ts が使う）
   TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす

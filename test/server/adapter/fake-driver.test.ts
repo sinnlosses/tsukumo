@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { readFakeScript, startFakeSession } from "../../../src/server/adapter/fake-driver.ts"
+import { readFakeSession, startFakeSession } from "../../../src/server/adapter/fake-driver.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
-// 台本は手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は使わない
-// （docs/coding-standards.md「会話内容の扱い」）。
-const SCRIPT = {
+// 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
+// 使わない（docs/coding-standards.md「会話内容の扱い」）。
+const FAKE_SESSION = {
   opening: [{ afterMs: 0, event: { kind: "speech", text: "架空の挨拶", expression: "default" } }],
   turns: [
     {
@@ -37,7 +37,11 @@ function tick(): Promise<void> {
 describe("startFakeSession", () => {
   it("起こした直後に opening の場面を流す", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, scene: undefined, onEvent: sink.onEvent })
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: undefined,
+      onEvent: sink.onEvent,
+    })
     await tick()
     driver.close()
 
@@ -46,7 +50,11 @@ describe("startFakeSession", () => {
 
   it("prompt で request を流してから、次の場面を流す", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, scene: undefined, onEvent: sink.onEvent })
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: undefined,
+      onEvent: sink.onEvent,
+    })
     await tick()
     driver.prompt("架空の依頼", [])
     await tick()
@@ -61,7 +69,11 @@ describe("startFakeSession", () => {
 
   it("promptWithoutRecord は request を流さず、turn-started だけを流して次の場面へ進む", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, scene: undefined, onEvent: sink.onEvent })
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: undefined,
+      onEvent: sink.onEvent,
+    })
     await tick()
     driver.promptWithoutRecord("架空の合図")
     await tick()
@@ -77,7 +89,11 @@ describe("startFakeSession", () => {
 
   it("scene で名指しした場面は、依頼を待たずに opening の続きとして流れる", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, scene: "架空の場面2", onEvent: sink.onEvent })
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: "架空の場面2",
+      onEvent: sink.onEvent,
+    })
     await tick()
     driver.close()
 
@@ -86,7 +102,11 @@ describe("startFakeSession", () => {
 
   it("scene で名指しした次の依頼は、その次の場面から続く（名指しした場面を繰り返さない）", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, scene: "架空の場面1", onEvent: sink.onEvent })
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: "架空の場面1",
+      onEvent: sink.onEvent,
+    })
     await tick()
     driver.prompt("架空の依頼", [])
     await tick()
@@ -95,19 +115,23 @@ describe("startFakeSession", () => {
     expect(sink.events.at(-1)).toEqual({ kind: "utterance", text: "架空の本文2" })
   })
 
-  it("台本に無い名前を名指ししても、opening だけを流す", async () => {
+  it("疑似セッションに無い名前を名指ししても、opening だけを流す", async () => {
     const sink = collect()
-    const driver = startFakeSession({ script: SCRIPT, scene: "無い場面", onEvent: sink.onEvent })
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: "無い場面",
+      onEvent: sink.onEvent,
+    })
     await tick()
     driver.close()
 
     expect(sink.events).toEqual([{ kind: "speech", text: "架空の挨拶", expression: "default" }])
   })
 
-  it("台本から積まれた答え待ちに答えると、列から消える", async () => {
+  it("疑似セッションから積まれた答え待ちに答えると、列から消える", async () => {
     const sink = collect()
     const driver = startFakeSession({
-      script: {
+      session: {
         opening: [
           {
             afterMs: 0,
@@ -131,10 +155,10 @@ describe("startFakeSession", () => {
     driver.close()
   })
 
-  it("close したあとは台本の続きを流さない", async () => {
+  it("close したあとは疑似セッションの続きを流さない", async () => {
     const sink = collect()
     const driver = startFakeSession({
-      script: {
+      session: {
         opening: [{ afterMs: 50, event: { kind: "utterance", text: "遅れて来る本文" } }],
         turns: [],
       },
@@ -148,17 +172,17 @@ describe("startFakeSession", () => {
   })
 })
 
-describe("readFakeScript", () => {
-  it("同梱の台本（test/fixture/fake-session.json）を読める", () => {
-    const script = readFakeScript()
+describe("readFakeSession", () => {
+  it("同梱の疑似セッション（test/fixture/fake-session.json）を読める", () => {
+    const session = readFakeSession()
 
-    expect(script?.opening.length).toBeGreaterThan(0)
-    expect(script?.turns.length).toBeGreaterThan(0)
+    expect(session?.opening.length).toBeGreaterThan(0)
+    expect(session?.turns.length).toBeGreaterThan(0)
     // 場面の名前は、状態のカタログを撮る道具（scripts/capture-catalog.ts）が名指しする鍵。
-    expect(script?.turns.map((scene) => scene.name)).toContain("question-multi")
+    expect(session?.turns.map((scene) => scene.name)).toContain("question-multi")
   })
 
   it("無いファイル・形の違う JSON は undefined", () => {
-    expect(readFakeScript("/tmp/tsukumo-no-such-script.json")).toBeUndefined()
+    expect(readFakeSession("/tmp/tsukumo-no-such-session.json")).toBeUndefined()
   })
 })

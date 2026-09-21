@@ -21,7 +21,7 @@ import {
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
 
-// 台本もセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
+// 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
 const BATCH_MS = 5
 

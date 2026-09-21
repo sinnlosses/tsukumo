@@ -1,5 +1,5 @@
-// セッションを1つ起こす配線。**どの駆動で起こすか（本物の SDK か台本の偽物か）と、続きから
-// 始めるセッションをどう探すか**をここで決め、起こす順序そのものは
+// セッションを1つ起こす配線。**どの駆動で起こすか（本物の SDK か疑似セッションの fake driver
+// か）と、続きから始めるセッションをどう探すか**をここで決め、起こす順序そのものは
 // `src/server/core/session-launch.ts` に任せる（起動時も `switch-character` の起こし直しも
 // 同じ関数を通る）。
 //
@@ -12,7 +12,7 @@ import { type CurrentCharacter } from "./current-character.ts"
 import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
 import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
-import { type FakeScript, startFakeSession } from "./server/adapter/fake-driver.ts"
+import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
 import {
   findSessionToResume,
@@ -57,13 +57,14 @@ export type SessionStartOptions = {
   readonly config: Config
   /** いま出しているキャラクター。起こすパックを決めるのも覚えるのもこれ越し。 */
   readonly character: CurrentCharacter
-  /** 偽の駆動の台本（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を起こさない。 */
-  readonly script: FakeScript | undefined
+  /** fake driver の疑似セッション（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を
+   * 起こさない。 */
+  readonly fakeSession: FakeSession | undefined
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export function startSession(options: SessionStartOptions): RunningSession {
-  const { config, character, script } = options
+  const { config, character, fakeSession } = options
   const sessionId = randomUUID()
   // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
@@ -91,7 +92,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
       findResumeSession: (pack, chat) =>
         findPackSessionToResume(config, process.cwd(), pack.name, chat),
       startDriver: (seed, onEvent) =>
-        startDriver(seed, chatArchive, script, config.fakeScene, onEvent),
+        startDriver(seed, chatArchive, fakeSession, config.fakeScene, onEvent),
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, process.cwd(), expressionChoices(pack.definition)),
     }),
@@ -107,19 +108,19 @@ export function startSession(options: SessionStartOptions): RunningSession {
 }
 
 /**
- * セッション駆動を1つ起こす。**台本があれば偽の駆動**（claude を起こさない。
- * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。`scene` は台本のときだけ効く
+ * セッション駆動を1つ起こす。**疑似セッションがあれば fake driver**（claude を起こさない。
+ * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。`scene` は fake driver のときだけ効く
  * （名指しした場面を起こした直後に流す。`TSUKUMO_FAKE_SCENE`）。
  */
 function startDriver(
   seed: SessionLaunchSeed<CharacterPack>,
   chatArchive: ChatArchive,
-  script: FakeScript | undefined,
+  fakeSession: FakeSession | undefined,
   scene: string | undefined,
   onEvent: (event: SessionEvent) => void,
 ): SessionDriver {
-  if (script !== undefined) {
-    return startFakeSession({ script, scene, onEvent })
+  if (fakeSession !== undefined) {
+    return startFakeSession({ session: fakeSession, scene, onEvent })
   }
 
   // **雑談の要約の写しの口も、覚えたことの口と同じ単位で切り替わる**（雑談のときだけ渡る。
@@ -163,7 +164,7 @@ function startDriver(
  *
  * **印はターンが終わって3秒後に付く**ので、ターンを1つも終えずに離れたセッションは
  * 次に来たときに見つからず、新規から始まる（`SESSION_TAG_DELAY_MS`。4.8「復元できなかったとき
- * どうするか」の範囲）。偽の駆動は claude を起こさないので、そもそも探さない。
+ * どうするか」の範囲）。fake driver は claude を起こさないので、そもそも探さない。
  */
 async function findPackSessionToResume(
   config: Config,

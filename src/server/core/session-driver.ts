@@ -1,6 +1,6 @@
 // セッション駆動の契約（docs/glossary.md「セッション駆動」）。**ここにあるのは型と既定値だけ**で、
 // 実際に何かを起こすコードは持たない。実装は2つあり、どちらも `src/server/adapter/` にある
-// （Agent SDK の `sdk-driver.ts` と、台本を流す `fake-driver.ts`）。
+// （Agent SDK の `sdk-driver.ts` と、疑似セッションを流す `fake-driver.ts`）。
 //
 // 契約をここに置いてあるので、`session-manager` は駆動の実装を import せずに済む
 // （どちらが動いているかを知らない。docs/design.md 5章）。

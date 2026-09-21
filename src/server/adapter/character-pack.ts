@@ -124,7 +124,7 @@ export function isEditableCharacterPack(pack: CharacterPack, cwd: string): boole
  * 読めないディレクトリは黙って飛ばす（一覧が短くなるだけで、起動は止めない。
  * docs/coding-standards.md「エラーハンドリング」）。
  *
- * `roots` は同梱とホームの置き場（既定は {@link defaultCharacterPackRoots}。`readFakeScript` の
+ * `roots` は同梱とホームの置き場（既定は {@link defaultCharacterPackRoots}。`readFakeSession` の
  * `path` と同じで、差し替えられるのは置き場所だけ）。
  */
 export function listCharacterPacks(

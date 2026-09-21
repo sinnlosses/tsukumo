@@ -12,7 +12,7 @@ export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
 /** セッションの駆動（`sdk` / `fake`）。 */
 export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
-/** 偽の駆動で、起こした直後に流す場面の名前（台本の `turns[].name`）。 */
+/** fake driver で、起こした直後に流す場面の名前（疑似セッションの `turns[].name`）。 */
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** `1` で復元せず新規に起こす（docs/requirements.md 4.8 の「逃げ道」）。 */
 export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
@@ -25,8 +25,8 @@ const SESSION_TAG_PREFIX = "tsukumo"
 const SESSION_TAG_CHAT_SUFFIX = "chat"
 
 /**
- * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、台本どおりにイベントを流す
- * （src/server/adapter/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
+ * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、疑似セッションどおりにイベントを
+ * 流す（src/server/adapter/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
  */
 export type DriverKind = "sdk" | "fake"
 
@@ -41,7 +41,7 @@ export type Config = {
   readonly openView: boolean
   readonly driver: DriverKind
   /**
-   * 偽の駆動で名指しする場面（未設定なら undefined ＝ 依頼を受けるまで `opening` だけ）。
+   * fake driver で名指しする場面（未設定なら undefined ＝ 依頼を受けるまで `opening` だけ）。
    * **依頼を送らずに特定の画面を出す**ための口で、状態のカタログを撮るときに使う
    * （`docs/architecture.md`「手で確かめること」）。`driver` が `sdk` のときは効かない。
    */

@@ -60,7 +60,7 @@ export type SessionCreateOptions = {
   readonly sessionId: string
   /**
    * 駆動を起こす。**渡された `onEvent` / `onRestoredEvent` を駆動に配線する**のは呼び出し側の
-   * 仕事で、ここは種類（SDK か偽の駆動か）を知らない。
+   * 仕事で、ここは種類（SDK か fake driver か）を知らない。
    *
    * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
    * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md` 7章「雑談の会話の

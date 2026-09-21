@@ -174,11 +174,11 @@ characters/<name>/
   `tagSession` / `deleteSession` / `renameSession` がある）
 - `startup()`（CLI の事前起動）で最初の依頼までの待ちを縮める
 
-### テスト: 「偽の駆動」を1つ持つ
+### テスト: 「fake driver」を1つ持つ
 
 - **reducer のテスト**（`protocol`）はいまの `session-view.test.ts` をそのまま持ち越す
 - **部品のテスト**は Testing Library の流儀（役割・文言で当てる）。HTML の文字列一致はやめる
-- **偽の駆動**（`SessionDriver` を台本どおりに `SessionEvent` を流す実装に差し替える。
+- **fake driver**（`SessionDriver` を疑似セッションどおりに `SessionEvent` を流す実装に差し替える。
   `TSUKUMO_DRIVER=fake` など）を用意する。**claude を起こさずに画面全体が動く**ので、目視・
   Playwright・スクリーンショットが決定的にできる。「7327 番の常駐を落とさない」「API を消費する」
   という運用上の気遣いが減る
@@ -242,7 +242,7 @@ characters/<name>/
 | 1   | `src/protocol/` を切り、`SessionEvent` / reducer / `ClientCommand`・`ServerFrame` の zod を置く。`/ws` を1本足す（既存の SSE と POST は残す）    | 通信が1本に。サーバ側の配線が `switch` 1つに縮む                                                      | 可   |
 | 2   | `src/ui/` に React の部品を**サイドバー → 入力欄 → キャラビュー → メインビュー**の順で作る。領域ごとに `data-event-path` の購読を外していく      | 領域ごとに置き換わる。いつでも止められる                                                              | 可   |
 | 3   | 旧 `presentation/view.ts` と `view.test.ts` と `browser/` を消す。SSE と POST を消す                                                             | 約 6,000 行が消える                                                                                   | —    |
-| 4   | 偽の駆動 + Playwright の目視                                                                                                                     | claude 無しで画面が動く                                                                               | 可   |
+| 4   | fake driver + Playwright の目視                                                                                                                  | claude 無しで画面が動く                                                                               | 可   |
 | 5   | キャラクターパック（`persona.md`）と切り替え（T-064 / T-065）                                                                                    | 人格と素材が1単位に                                                                                   | —    |
 | 6   | `SessionManager` を鍵付きにし、必要なら client–daemon へ                                                                                         | 複数プロジェクト・ポートずらしの廃止                                                                  | —    |
 | 7   | 箱（Electron or Tauri）                                                                                                                          | `loadURL` するだけ                                                                                    | —    |

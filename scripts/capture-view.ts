@@ -5,7 +5,7 @@
 // **手元の Google Chrome を使う**（`channel: "chrome"`）。Playwright のブラウザは落とさないので、
 // 入っているのは `playwright-core`（driver だけ、13MB）。Chrome が無い環境では起動に失敗する。
 //
-// **偽の駆動（`TSUKUMO_DRIVER=fake`）と組み合わせて使う。** 本物の claude を起こさずに画面全体を
+// **fake driver（`TSUKUMO_DRIVER=fake`）と組み合わせて使う。** 本物の claude を起こさずに画面全体を
 // 出せるので、API を使わずに何度でも撮り直せる（`docs/design.md` 10章）。
 //
 // 使い方:
@@ -19,7 +19,7 @@
 //
 // **撮った画像はリポジトリに置かない**（既定の出力先は /tmp）。ビューには会話の内容が写るので、
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
-// 偽の駆動の台本は架空の会話なので、その画像は共有してよい）。
+// fake driver の疑似セッションは架空の会話なので、その画像は共有してよい）。
 
 import process from "node:process"
 

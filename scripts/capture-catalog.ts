@@ -1,14 +1,14 @@
-// 画面の**状態のカタログ**を一括で撮る道具。偽の駆動（`TSUKUMO_DRIVER=fake`）の場面を
+// 画面の**状態のカタログ**を一括で撮る道具。fake driver（`TSUKUMO_DRIVER=fake`）の場面を
 // 名前で名指しして tsukumo を1件ずつ起こし、広い窓と狭い窓の2枚を撮って、並べて見るための
 // 索引 HTML を書き出す。描画に関わる変更の `evidence`（`docs/architecture.md`
 // 「手で確かめること」）を作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
-// **依頼を手で送らずに、狙った状態が出る。** 場面の名前は台本（test/fixture/fake-session.json）の
+// **依頼を手で送らずに、狙った状態が出る。** 場面の名前は疑似セッション（test/fixture/fake-session.json）の
 // `turns[].name` で、`TSUKUMO_FAKE_SCENE` で名指しすると起こした直後に流れる。
 //
 // **手を動かさないと出ない状態は、撮る前に操作を当てて出す**（{@link Preparation} の4種）。
 // 領域の内側は転がっても**ページ自体は転がらない**ので、`fullPage` では下の方が1枚も撮れない
-// （図とグラフがそれ）。台本にもサーバにも手を入れず、開いたページを操作して撮る。
+// （図とグラフがそれ）。疑似セッションにもサーバにも手を入れず、開いたページを操作して撮る。
 //
 // 1枚だけ撮る・要素の位置と大きさを数値で読むのは `capture-view.ts`（別の道具）。こちらは
 // 「起こす → 撮る → 落とす」を繰り返す側で、測りはしない。
@@ -19,7 +19,7 @@
 //   bun run scripts/capture-catalog.ts --out /tmp/別の置き場
 //
 // **撮った画像はリポジトリに置かない**（既定の出力先は /tmp。`capture-view.ts` 冒頭の決定を
-// 引き継ぐ）。台本は架空の会話なので画像そのものは共有してよい。
+// 引き継ぐ）。疑似セッションは架空の会話なので画像そのものは共有してよい。
 //
 // **キャラクターは指定しない。** 起こす側が覚えている立ち絵（`~/.tsukumo/state.json`）を
 // そのまま使う — ここで `TSUKUMO_CHARACTER` を渡すと、利用者が最後に選んだ立ち絵を
@@ -50,7 +50,7 @@ type Preparation =
   | { readonly kind: "hash"; readonly hash: string }
 
 /**
- * カタログの1件。`scene` は台本（test/fixture/fake-session.json）の場面の名前で、`name` は
+ * カタログの1件。`scene` は疑似セッション（test/fixture/fake-session.json）の場面の名前で、`name` は
  * **画像のファイル名と `--only` の名指しに使う一意の名前**（同じ場面を別の操作で何枚も撮るので、
  * 場面の名前では足りない）。
  */
@@ -67,7 +67,7 @@ type CatalogEntry = {
  */
 const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
-/** 本文が入る領域の中で、**領域の外まではみ出して1枚に入らない**もの（台本の `notation`）。 */
+/** 本文が入る領域の中で、**領域の外まではみ出して1枚に入らない**もの（疑似セッションの `notation`）。 */
 const MERMAID_SELECTOR = `${MAIN_REGION_SELECTOR} svg`
 const CHART_SELECTOR = `${MAIN_REGION_SELECTOR} canvas`
 
@@ -83,7 +83,7 @@ const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
  * 並べて見たい状態。**網羅はしない** — 直したときに崩れやすい場所（答え待ちの箱・ツールの進行・
- * レポートの記法・補完の候補・キャラクター画面）だけを選ぶ。足すときは台本に場面を足して、
+ * レポートの記法・補完の候補・キャラクター画面）だけを選ぶ。足すときは疑似セッションに場面を足して、
  * その名前と、撮る前に当てる操作をここに書く。
  */
 const CATALOG: readonly CatalogEntry[] = [
@@ -168,7 +168,7 @@ const LAUNCH_TIMEOUT_MS = 30_000
 /** ページの中身が落ち着くまで待つ上限（ミリ秒）。SSE / WebSocket があるので networkidle は待たない。 */
 const SETTLE_TIMEOUT_MS = 10_000
 
-/** 最後の手が流れ終わるまでの余裕（ミリ秒）。台本の一番長い場面（約1.3秒）より後に撮る。 */
+/** 最後の手が流れ終わるまでの余裕（ミリ秒）。疑似セッションの一番長い場面（約1.3秒）より後に撮る。 */
 const SCENE_TAIL_MS = 1500
 
 /**
@@ -265,7 +265,7 @@ async function captureShot(
     await page
       .waitForSelector(MAIN_REGION_SELECTOR, { timeout: SETTLE_TIMEOUT_MS })
       .catch(() => undefined)
-    // **台本が流れ終わってから操作を当てる。** 流れている途中で押すと、狙った状態の手前で
+    // **疑似セッションが流れ終わってから操作を当てる。** 流れている途中で押すと、狙った状態の手前で
     // 画面が組み直されて操作が空振りする。
     await page.waitForTimeout(SCENE_TAIL_MS)
     for (const step of entry.prepare) {
@@ -330,7 +330,7 @@ function describePreparation(step: Preparation): string {
 
 /**
  * tsukumo を1つ起こす。**空きポート（`TSUKUMO_VIEW_PORT=0`）**なので、常駐している tsukumo と
- * ぶつからない。タブは開かず（`TSUKUMO_OPEN_VIEW=0`）、駆動は台本だけ。
+ * ぶつからない。タブは開かず（`TSUKUMO_OPEN_VIEW=0`）、駆動は fake driver だけ。
  */
 function spawnTsukumo(scene: string): ChildProcess {
   const root = fileURLToPath(new URL("..", import.meta.url))
@@ -397,7 +397,7 @@ function indexHtml(shots: readonly Shot[]): string {
         .join("\n")
       return (
         `<section id="${escapeHtml(entry.name)}"><h2>${escapeHtml(entry.label)}</h2>` +
-        `<p><code>${escapeHtml(entry.name)}</code>（台本の場面 <code>${escapeHtml(entry.scene)}</code>）</p>` +
+        `<p><code>${escapeHtml(entry.name)}</code>（疑似セッションの場面 <code>${escapeHtml(entry.scene)}</code>）</p>` +
         `${images}</section>`
       )
     })
@@ -407,7 +407,7 @@ function indexHtml(shots: readonly Shot[]): string {
 <html lang="ja"><head><meta charset="utf-8"><title>tsukumo 画面の状態のカタログ</title>
 <style>body{font-family:sans-serif;margin:2rem;background:#111;color:#eee}img{max-width:100%;border:1px solid #444}section{margin-bottom:2rem}figure{margin:0 0 1rem}figcaption{color:#aaa;font-size:.85rem}a{color:#7fd}</style>
 </head><body>
-<h1>画面の状態のカタログ（台本の架空の会話）</h1>
+<h1>画面の状態のカタログ（疑似セッションの架空の会話）</h1>
 <nav><ul>
 ${links}
 </ul></nav>

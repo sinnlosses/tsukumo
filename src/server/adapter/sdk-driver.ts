@@ -155,7 +155,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
       // サイドバーの `<select>` は `state.model` をそのまま出すので、ここで確認の合図を
       // 出さないと次のターンの `init` まで古い値に居座る（`/model` チャットコマンドのために
       // 足した `model-changed` を、駆動が確定させた切り替えにもそのまま使う。2026-09-17 実測:
-      // 偽の駆動（fake-driver.ts）は最初からこれをやっていたが、本物の駆動は抜けていた）。
+      // fake driver（fake-driver.ts）は最初からこれをやっていたが、本物の駆動は抜けていた）。
       if (model !== undefined) {
         options.onEvent({ kind: "model-changed", model })
       }

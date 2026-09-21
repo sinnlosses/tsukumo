@@ -198,7 +198,7 @@ bun run scripts/open-views.ts http://127.0.0.1:7327
 | `TSUKUMO_VIEW_PORT`   |      | `7327`                             | ビューを配るポート。**既定のまま塞がっていたら20個先まで順にずらす**（明示的に指定したときはずらさずそのまま失敗する）。`0` を渡すと空きポートを使う |
 | `TSUKUMO_CHARACTER`   |      | 同梱の `characters/tsukumo-spirit` | キャラクター定義ディレクトリ。相対パスは cwd 相対、絶対パスはそのまま                                                                                |
 | `TSUKUMO_OPEN_VIEW`   |      | 開く                               | 起動時にレイアウトページのタブを自動で開くか。`0` を渡すと開かない                                                                                   |
-| `TSUKUMO_DRIVER`      |      | `sdk`                              | セッションの駆動。`fake` を渡すと本物の `claude` を起こさず、台本どおりにイベントを流す（目視確認・自動テスト用）                                    |
+| `TSUKUMO_DRIVER`      |      | `sdk`                              | セッションの駆動。`fake` を渡すと本物の `claude` を起こさず、疑似セッションどおりにイベントを流す（目視確認・自動テスト用）                          |
 | `TSUKUMO_NEW_SESSION` |      | 復元する                           | `1` を渡すと前回の続きから復元せず、新規にセッションを起こす                                                                                         |
 | `TSUKUMO_WATCH_UI`    |      | 見張らない                         | `1` を渡すと `src/browser/` を見張り、保存のたびに組み立て直す（`bun run dev` が設定する）                                                           |
 
