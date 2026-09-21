@@ -36,6 +36,7 @@ import {
 import { type Expression } from "../../shared/expression.ts"
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
+import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import {
   SPEAK_TOOL_NAME,
@@ -45,6 +46,7 @@ import {
 } from "../core/sdk-message.ts"
 import {
   type ChatKeep,
+  type ChatRecall,
   type ChatSummary,
   DEFAULT_MODEL,
   type PersonaMemory,
@@ -109,6 +111,30 @@ const KEEP_TOOL_DESCRIPTION =
   "いま話しているやり取りに「残す」印を付ける。引数は無く、指せるのはこのターンの1往復だけ。" +
   "印の付いたやり取りは、直近を読み戻す窓から溢れても忘れずに残る。呼ぶ条件は雑談モードの規約に従う。"
 
+/** その日の見出しを索引に残すツールの名前（docs/glossary.md「index ツール」）。 */
+const INDEX_TOOL_NAME = "index"
+
+/**
+ * モデルに見せる `index` ツールの説明。**いつ書くかの条は
+ * `src/server/core/chat-manner.ts` が持つ**ので、ここには何が起きるかと指せる範囲だけを書く
+ * （二重に書かない）。
+ */
+const INDEX_TOOL_DESCRIPTION =
+  "今日の雑談に、あとで探すための見出しを1行だけ付ける。付くのは今日の日付で、前の日には付け直せない。" +
+  "この見出しは `recall` で引く索引になる。呼ぶ条件は雑談モードの規約に従う。"
+
+/** 索引を引いて古い雑談を思い出すツールの名前（docs/glossary.md「recall ツール」）。 */
+const RECALL_TOOL_NAME = "recall"
+
+/**
+ * モデルに見せる `recall` ツールの説明。**いつ引くかの条は
+ * `src/server/core/chat-manner.ts` が持つ**ので、ここには何が返るかと引ける回数だけを書く
+ * （二重に書かない）。
+ */
+const RECALL_TOOL_DESCRIPTION =
+  "日ごとの見出しの索引を言葉で引き、当たった日の雑談をそのままの文面で思い出す。" +
+  "当たらなければ何も返らない。引けるのは1ターンに1回だけ。呼ぶ条件は雑談モードの規約に従う。"
+
 /**
  * セッションを起こす。**この関数は待たない**（`query()` の反復はバックグラウンドで回り続け、
  * 結果は `onEvent` に流れる）。
@@ -138,6 +164,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
           options.expressions,
           options.personaMemory,
           options.chatKeep,
+          options.chatRecall,
         ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
@@ -437,6 +464,7 @@ function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   memory: PersonaMemory | undefined,
   chatKeep: ChatKeep | undefined,
+  chatRecall: ChatRecall | undefined,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -455,6 +483,7 @@ function tsukumoServer(
       ),
       ...(memory === undefined ? [] : [rememberTool(memory), forgetTool(memory)]),
       ...(chatKeep === undefined ? [] : [keepTool(chatKeep)]),
+      ...(chatRecall === undefined ? [] : [indexTool(chatRecall), recallTool(chatRecall)]),
     ],
   })
 }
@@ -505,6 +534,41 @@ function keepTool(chatKeep: ChatKeep) {
     chatKeep.keep()
     return { content: [{ type: "text" as const, text: "ok" }] }
   })
+}
+
+/**
+ * その日の見出しを索引に1行残すツール。**上限に当たった回も "ok" を返す**（受け付けたかどうかを
+ * モデルへ戻さない。`remember` と同じ）。どこにどう書くかは
+ * src/server/adapter/chat-archive.ts の仕事。
+ */
+function indexTool(chatRecall: ChatRecall) {
+  return tool(
+    INDEX_TOOL_NAME,
+    INDEX_TOOL_DESCRIPTION,
+    { line: z.string().describe("今日の見出し。あとで探すための1行（120文字まで）") },
+    async ({ line }) => {
+      chatRecall.index(line)
+      return { content: [{ type: "text" as const, text: "ok" }] }
+    },
+  )
+}
+
+/**
+ * 索引を引いて古い雑談を思い出すツール。**戻り値が "ok" でない唯一のツール**で、返すのは
+ * **その会話自身の過去**だけ（tsukumo の状態も画面の事情も載せない。
+ * docs/requirements.md 4.9「古い雑談は索引を引いて思い出す」）。**文面に組み立てるのは core**
+ * （src/server/core/chat-memory-prompt.ts）で、**どの日を開くかを決めるのは
+ * src/server/adapter/chat-archive.ts**。
+ */
+function recallTool(chatRecall: ChatRecall) {
+  return tool(
+    RECALL_TOOL_NAME,
+    RECALL_TOOL_DESCRIPTION,
+    { keyword: z.string().describe("引く言葉。語を空白で区切ると、どれかに当たった日が返る") },
+    async ({ keyword }) => ({
+      content: [{ type: "text" as const, text: chatRecallText(chatRecall.recall(keyword)) }],
+    }),
+  )
 }
 
 /**

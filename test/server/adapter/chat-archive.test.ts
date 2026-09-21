@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test"
+import * as fs from "node:fs"
 import {
   existsSync,
   mkdirSync,
@@ -577,5 +578,206 @@ describe("createChatArchive の「残す」旗", () => {
     mkdirSync(keptIndexPath(), { recursive: true })
 
     expect(() => chatArchive.finishTurn()).not.toThrow()
+  })
+})
+
+describe("createChatArchive の日ごとの索引", () => {
+  // フィクスチャは手で書いた架空の見出し・依頼だけ（実物の会話は使わない。
+  // docs/coding-standards.md「会話内容の扱い」）。
+  const READ_ALL = 1024
+
+  /** 見出しの索引の置き場（パックごとに1つ）。 */
+  function dayIndexPath(): string {
+    return join(root(), "fictional-pack", "index.jsonl")
+  }
+
+  /** ローカル時刻での今日（見出しが付く日）。 */
+  function today(): string {
+    const now = new Date()
+    const pad = (value: number): string => String(value).padStart(2, "0")
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  }
+
+  /** 架空の見出しを索引に直接置く（日付を選ぶため、ツールの口は通さない）。 */
+  function writeIndexFixture(headings: readonly { date: string; line: string }[]): void {
+    mkdirSync(join(root(), "fictional-pack"), { recursive: true })
+    writeFileSync(
+      dayIndexPath(),
+      headings
+        .map(
+          (heading) =>
+            `${JSON.stringify({ v: 1, date: heading.date, pack: "fictional-pack", line: heading.line })}\n`,
+        )
+        .join(""),
+    )
+  }
+
+  /** 架空の依頼を1件だけ持つ、その日のファイルを置く。 */
+  function writeDayFixture(date: string, texts: readonly string[]): void {
+    mkdirSync(join(root(), "fictional-pack"), { recursive: true })
+    writeFileSync(
+      join(root(), "fictional-pack", `${date}.jsonl`),
+      texts
+        .map(
+          (text, index) =>
+            `${JSON.stringify({
+              v: 1,
+              at: `${date}T12:0${index}:00+09:00`,
+              pack: "fictional-pack",
+              speaker: "user",
+              text,
+            })}\n`,
+        )
+        .join(""),
+    )
+  }
+
+  it("見出しは今日の日付の行として積まれ、書けるのは1ターンに1行", () => {
+    const chatArchive = createChatArchive(root())
+
+    chatArchive.writeIndex("fictional-pack", "架空の見出しその1")
+    chatArchive.writeIndex("fictional-pack", "同じターンの2行目")
+    chatArchive.finishTurn()
+    chatArchive.writeIndex("fictional-pack", "次のターンの見出し")
+
+    expect(readLines(dayIndexPath())).toEqual([
+      { v: 1, date: today(), pack: "fictional-pack", line: "架空の見出しその1" },
+      { v: 1, date: today(), pack: "fictional-pack", line: "次のターンの見出し" },
+    ])
+  })
+
+  it("空・改行つき・長すぎる見出しは書かない（1ターンの1行も使わない）", () => {
+    const chatArchive = createChatArchive(root())
+
+    chatArchive.writeIndex("fictional-pack", "   ")
+    chatArchive.writeIndex("fictional-pack", "架空の見出し\n2行目")
+    chatArchive.writeIndex("fictional-pack", "あ".repeat(121))
+    chatArchive.writeIndex("../evil", "パック名が通らない見出し")
+    chatArchive.writeIndex("fictional-pack", "書ける見出し")
+
+    expect(readLines(dayIndexPath())).toEqual([
+      { v: 1, date: today(), pack: "fictional-pack", line: "書ける見出し" },
+    ])
+  })
+
+  it("索引に当たった日のファイルだけを開き、当たらない日のファイルは開かない", () => {
+    writeIndexFixture([
+      { date: "2026-09-19", line: "架空の見出し: 散歩の話" },
+      { date: "2026-09-20", line: "架空の見出し: 料理の話" },
+    ])
+    writeDayFixture("2026-09-19", ["散歩の日の架空の依頼"])
+    writeDayFixture("2026-09-20", ["料理の日の架空の依頼"])
+    const chatArchive = createChatArchive(root())
+
+    const spy = spyOn(fs, "readFileSync")
+    const result = chatArchive.recall("fictional-pack", "散歩", READ_ALL)
+    const opened = spy.mock.calls.map((call) => String(call[0]))
+    spy.mockRestore()
+
+    expect(result).toEqual({
+      kind: "found",
+      entries: [{ speaker: "user", text: "散歩の日の架空の依頼", date: "2026-09-19" }],
+    })
+    expect(opened).toEqual([dayIndexPath(), join(root(), "fictional-pack", "2026-09-19.jsonl")])
+  })
+
+  it("索引に当たる日が無ければ、日のファイルを1つも開かない", () => {
+    writeIndexFixture([{ date: "2026-09-19", line: "架空の見出し: 散歩の話" }])
+    writeDayFixture("2026-09-19", ["散歩の日の架空の依頼"])
+    const chatArchive = createChatArchive(root())
+
+    const spy = spyOn(fs, "readFileSync")
+    const result = chatArchive.recall("fictional-pack", "当たらない言葉", READ_ALL)
+    const opened = spy.mock.calls.map((call) => String(call[0]))
+    spy.mockRestore()
+
+    expect(result).toEqual({ kind: "not-found" })
+    expect(opened).toEqual([dayIndexPath()])
+  })
+
+  it("同じ日に2行あれば、あとの行が索引になる", () => {
+    writeIndexFixture([
+      { date: "2026-09-19", line: "架空の見出し: 散歩の話" },
+      { date: "2026-09-19", line: "架空の見出し: 書き直した見出し" },
+    ])
+    writeDayFixture("2026-09-19", ["その日の架空の依頼"])
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.recall("fictional-pack", "書き直した", READ_ALL).kind).toBe("found")
+    chatArchive.finishTurn()
+    expect(chatArchive.recall("fictional-pack", "散歩", READ_ALL).kind).toBe("not-found")
+  })
+
+  it("日付そのものでも引ける（語は空白で分け、どれかに当たれば拾う）", () => {
+    writeIndexFixture([{ date: "2026-09-19", line: "架空の見出し: 散歩の話" }])
+    writeDayFixture("2026-09-19", ["その日の架空の依頼"])
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.recall("fictional-pack", "当たらない言葉 2026-09-19", READ_ALL)).toEqual({
+      kind: "found",
+      entries: [{ speaker: "user", text: "その日の架空の依頼", date: "2026-09-19" }],
+    })
+  })
+
+  it("引けるのは1ターンに1回で、ターンが終わればまた引ける", () => {
+    writeIndexFixture([{ date: "2026-09-19", line: "架空の見出し: 散歩の話" }])
+    writeDayFixture("2026-09-19", ["その日の架空の依頼"])
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.recall("fictional-pack", "散歩", READ_ALL).kind).toBe("found")
+
+    const spy = spyOn(fs, "readFileSync")
+    const second = chatArchive.recall("fictional-pack", "散歩", READ_ALL)
+    const opened = spy.mock.calls.length
+    spy.mockRestore()
+
+    expect(second).toEqual({ kind: "already-recalled" })
+    expect(opened).toBe(0)
+
+    chatArchive.finishTurn()
+    expect(chatArchive.recall("fictional-pack", "散歩", READ_ALL).kind).toBe("found")
+  })
+
+  it("当たった日が大きくても、渡した上限を超えて読まない（新しい側から1件ずつ）", () => {
+    writeIndexFixture([{ date: "2026-09-19", line: "架空の見出し: 散歩の話" }])
+    writeDayFixture("2026-09-19", ["古いほうの架空の依頼", "新しいほうの架空の依頼"])
+    const chatArchive = createChatArchive(root())
+
+    const limitBytes = Buffer.byteLength("新しいほうの架空の依頼")
+    const result = chatArchive.recall("fictional-pack", "散歩", limitBytes)
+
+    expect(result).toEqual({
+      kind: "found",
+      entries: [{ speaker: "user", text: "新しいほうの架空の依頼", date: "2026-09-19" }],
+    })
+  })
+
+  it("索引が無い・壊れていても、直近の読み戻しはそのまま動く", () => {
+    writeDayFixture("2026-09-21", ["索引を知らないころの架空の依頼"])
+    const chatArchive = createChatArchive(root())
+    const limits: ChatReadbackLimits = { recentBytes: 1024, keptBytes: 1024 }
+
+    expect(chatArchive.recall("fictional-pack", "散歩", READ_ALL)).toEqual({ kind: "not-found" })
+    expect(chatArchive.readRecent("fictional-pack", limits)).toEqual({
+      kept: [],
+      recent: [{ speaker: "user", text: "索引を知らないころの架空の依頼", date: "2026-09-21" }],
+    })
+
+    // 壊れた索引（JSON として読めない行・知らない版）を置いても同じ。
+    mkdirSync(join(root(), "fictional-pack"), { recursive: true })
+    writeFileSync(
+      dayIndexPath(),
+      `{壊れた行\n${JSON.stringify({ v: 2, date: "2026-09-19", pack: "fictional-pack", line: "散歩の話" })}\n`,
+    )
+    chatArchive.finishTurn()
+
+    expect(() => chatArchive.recall("fictional-pack", "散歩", READ_ALL)).not.toThrow()
+    expect(chatArchive.readRecent("fictional-pack", limits).recent).toHaveLength(1)
+  })
+
+  it("パック名が名前として通らないときは引かない", () => {
+    expect(createChatArchive(root()).recall("../evil", "散歩", READ_ALL)).toEqual({
+      kind: "not-found",
+    })
   })
 })

@@ -31,6 +31,8 @@ const NOOP_CHAT_ARCHIVE: ChatArchive = {
   append: () => {},
   keep: () => {},
   finishTurn: () => {},
+  writeIndex: () => {},
+  recall: () => ({ kind: "not-found" }),
   readRecent: () => ({ kept: [], recent: [] }),
 }
 
@@ -547,6 +549,8 @@ describe("createSessionManager", () => {
         },
         keep: () => {},
         finishTurn: () => {},
+        writeIndex: () => {},
+        recall: () => ({ kind: "not-found" }),
         readRecent: () => ({ kept: [], recent: [] }),
       }
     }
@@ -944,6 +948,8 @@ describe("createSessionManager", () => {
         finishTurn: () => {
           finishTurnCalls.count += 1
         },
+        writeIndex: () => {},
+        recall: () => ({ kind: "not-found" }),
         // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
         readRecent: () => ({ kept: [], recent: [] }),
       }

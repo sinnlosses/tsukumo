@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
-import { takeChatMemoryPromptParts } from "../../../src/server/core/chat-memory-prompt.ts"
+import {
+  chatRecallText,
+  takeChatMemoryPromptParts,
+} from "../../../src/server/core/chat-memory-prompt.ts"
 import {
   type ChatArchive,
   type ChatArchiveRecentEntry,
@@ -54,6 +57,8 @@ function fakeChatArchive(
     append: () => {},
     keep: () => {},
     finishTurn: () => {},
+    writeIndex: () => {},
+    recall: () => ({ kind: "not-found" }),
     readRecent: (packName, limits) => {
       calls.push({ packName, limits })
       return { kept, recent: entries }
@@ -285,5 +290,31 @@ describe("takeChatMemoryPromptParts", () => {
 
     expect(parts.join("\n")).not.toContain("delivered")
     expect(parts.join("\n")).not.toContain("undelivered")
+  })
+})
+
+describe("chatRecallText", () => {
+  it("当たった日の逐語を、話者の印と日付の見出しを付けて返す", () => {
+    const text = chatRecallText({ kind: "found", entries: RECENT })
+
+    expect(text).toContain("### 2026-09-20\n利用者: ただいま")
+    expect(text).toContain("### 2026-09-21\nあなた: おかえり")
+    // いまの話の続きではないことを前置きで断る。
+    expect(text).toContain("続きではなく")
+  })
+
+  it("当たらなかったときは、会話の文面を1バイトも返さない", () => {
+    const text = chatRecallText({ kind: "not-found" })
+
+    expect(text).not.toContain("利用者:")
+    expect(text).not.toContain("###")
+    expect(text).toContain("索引に当たる日が無かった")
+  })
+
+  it("そのターンで既に引いているときは、当たらなかったときと別の一言を返す", () => {
+    const text = chatRecallText({ kind: "already-recalled" })
+
+    expect(text).not.toBe(chatRecallText({ kind: "not-found" }))
+    expect(text).toContain("1ターンに1回")
   })
 })

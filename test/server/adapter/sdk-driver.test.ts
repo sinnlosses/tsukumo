@@ -30,6 +30,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   tag: "tsukumo-test",
   personaMemory: undefined,
   chatSummary: undefined,
+  chatRecall: undefined,
   chatKeep: undefined,
   onEvent: () => {},
 }

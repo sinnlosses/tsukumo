@@ -24,6 +24,7 @@ import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
 import {
   type ChatArchive,
+  type ChatRecall,
   DEFAULT_PERMISSION_MODE,
   type SessionDriver,
 } from "./server/core/session-driver.ts"
@@ -37,6 +38,7 @@ import { sessionRules } from "./server/core/session-rule.ts"
 import {
   CHAT_COMPACT_THRESHOLD_BYTES,
   CHAT_KEPT_READBACK_BYTES,
+  CHAT_RECALL_READBACK_BYTES,
   CHAT_RECENT_READBACK_BYTES,
 } from "./shared/chat-log.ts"
 import { type ClientCommand } from "./shared/command.ts"
@@ -160,8 +162,24 @@ function startDriver(
     // **旗を立てる口も雑談のときだけ渡す**（渡ったときだけ `keep` ツールが載る）。渡すのは
     // 書き口と同じ1つのアーカイブで、駆動から見えるのは旗を立てる動き1つだけ（`ChatKeep`）。
     chatKeep: seed.chat ? chatArchive : undefined,
+    // **索引を書く口・引く口も雑談のときだけ渡す**（渡ったときだけ `index` と `recall` の
+    // ツールが載る）。**パックの名前と読む量をここで縛ってから渡す**ので、駆動から見えるのは
+    // 「1行残す」「引く」の2つだけ（`ChatRecall`。`docs/design.md` 7章）。
+    chatRecall: seed.chat ? chatRecallFor(chatArchive, seed.pack.name) : undefined,
     onEvent,
   })
+}
+
+/**
+ * 索引の書き口・引く口を、1つのパックに縛って駆動へ渡す形にする（`docs/design.md` 7章）。
+ * **読む量を決めるのも配線層**で、アーカイブ側は渡されたバイト数までしか読まない
+ * （`readRecent` に窓と旗の上限を渡すのと同じ手）。
+ */
+function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
+  return {
+    index: (line) => chatArchive.writeIndex(packName, line),
+    recall: (keyword) => chatArchive.recall(packName, keyword, CHAT_RECALL_READBACK_BYTES),
+  }
 }
 
 /**

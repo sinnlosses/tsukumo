@@ -3,6 +3,10 @@
 // `docs/requirements.md` 4.9「直近の会話は逐語のまま読み戻す」）。`chat-manner.ts` の隣に置く
 // （モデルに見せる文面は core 側）。
 //
+// **ターンの途中で `recall` が返す文面もここが組み立てる**（`docs/requirements.md` 4.9「古い雑談は
+// 索引を引いて思い出す」）。載る場所は違う（`systemPrompt` か、ツールの戻り値か）が、**逐語の
+// 並べ方（話者の印・日付の見出し）は同じ1つ**で、読む側が2通りを覚えずに済む。
+//
 // **判断は1箇所にまとめる。** 載せる条件は2つの記憶に共通で、載せたら写しの印を「渡し済み」に
 // 戻す——2つの口に分けると、先に呼ばれたほうが印を戻して**あとの1つが黙って載らない**
 // （`docs/design.md` 7章）。
@@ -21,6 +25,7 @@ import {
   type ChatArchive,
   type ChatArchiveRecentEntry,
   type ChatReadbackLimits,
+  type ChatRecallResult,
   type ChatSummary,
 } from "./session-driver.ts"
 
@@ -57,6 +62,26 @@ const CHAT_KEPT_PREFACE =
   "以下はあなた自身が `keep` で「残す」と決めた、過去の雑談のやり取りそのもの（要約ではない）。" +
   "**下の「直近の雑談」より前のもので、間には残っていない会話がある**（続きとして読まない）。" +
   "話者の見分け方と日付の見出しは下と同じ。踏まえてよいが、読み上げたり引用したりしない。"
+
+/**
+ * `recall` が当たったときの前置き（`docs/requirements.md` 4.9「古い雑談は索引を引いて思い出す」）。
+ * **`systemPrompt` の3つと違って、これはツールの戻り値としてターンの途中で入る**ので、
+ * **いまの話の続きではないこと**をここで断る。日付の見出しと話者の印は他の節と同じ。
+ */
+const CHAT_RECALL_PREFACE =
+  "索引に当たった日の雑談そのもの（要約ではない）。" +
+  "**いま話していることの続きではなく、引いた日のやり取りをそのまま抜いたもの**で、" +
+  "前後には残っていない会話がある。`利用者:` が利用者の発言、`あなた:` があなた自身の過去のセリフ。" +
+  "`### ` で始まる行は日付の見出しで、会話の発言ではない。" +
+  "思い出した内容として踏まえてよいが、読み上げたり引用したりしない。"
+
+/** 索引に当たる日が無かったときの戻り値。**どの日のファイルも開いていない。** */
+const CHAT_RECALL_NOT_FOUND =
+  "索引に当たる日が無かった。別の言葉で引き直すか、覚えていないことを正直に言う。"
+
+/** そのターンで既に1回引いたときの戻り値（`docs/design.md` 7章の「1ターンに1回」）。 */
+const CHAT_RECALL_ALREADY_RECALLED =
+  "このターンではもう引けない（引けるのは1ターンに1回）。次のターンで引き直す。"
 
 /** 逐語の1行の頭に置く話者の印。 */
 const SPEAKER_LABEL = {
@@ -128,6 +153,25 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
 
   chatSummary.markDelivered()
   return parts
+}
+
+/**
+ * `recall` の結果をモデルへ返す文面に変える（`src/server/adapter/sdk-driver.ts` の `recall`
+ * ツールの戻り値）。**当たったときだけ逐語が入る**——当たらなかったときと、そのターンで既に
+ * 引いたときは短い一言だけで、会話の文面は1バイトも入らない。
+ *
+ * **ここが「戻り値は `"ok"` だけ」の唯一の例外**（`docs/requirements.md` 4.9）。返しているのは
+ * tsukumo の状態ではなく**その会話自身の過去**なので、`docs/architecture.md`「戻り値は `"ok"`
+ * だけにする」が塞いでいる逆流路（tsukumo → モデル）は開かない。
+ */
+export function chatRecallText(result: ChatRecallResult): string {
+  if (result.kind === "already-recalled") {
+    return CHAT_RECALL_ALREADY_RECALLED
+  }
+  if (result.kind === "not-found") {
+    return CHAT_RECALL_NOT_FOUND
+  }
+  return verbatimPart(CHAT_RECALL_PREFACE, result.entries) ?? CHAT_RECALL_NOT_FOUND
 }
 
 /**

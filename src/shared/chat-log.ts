@@ -80,6 +80,18 @@ export const CHAT_RECENT_READBACK_BYTES = 65_536 satisfies number
  */
 export const CHAT_KEPT_READBACK_BYTES = 8_192 satisfies number
 
+/**
+ * `recall` で索引を引いたとき、**当たった日から一度に読み戻す量**（バイト）。数えるものは
+ * 上の2つと同じ（各行の文面だけ）。値の根拠は `docs/requirements.md` 4.9「古い雑談は索引を
+ * 引いて思い出す」。
+ *
+ * **窓（{@link CHAT_RECENT_READBACK_BYTES}）とも旗（{@link CHAT_KEPT_READBACK_BYTES}）とも
+ * 別に持つ。** あの2つは起こすときの `systemPrompt` に1回載るもので、こちらは**ターンの途中で
+ * モデルが引いたときに戻り値として入るもの**。**1ターンに1回だけ**引けるので、1ターンで増える
+ * 文脈はこの値で頭打ちになる。
+ */
+export const CHAT_RECALL_READBACK_BYTES = 8_192 satisfies number
+
 const textEncoder = new TextEncoder()
 
 /**

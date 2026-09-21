@@ -120,7 +120,50 @@ export type ChatArchive = {
    * そのセッションは逐語なしで始まる）。
    */
   readonly readRecent: (packName: string, limits: ChatReadbackLimits) => ChatArchiveReadback
+  /**
+   * その日の**見出しを1行**、索引に残す（{@link ChatRecall.index} の実体。
+   * `docs/requirements.md` 4.9「古い雑談は索引を引いて思い出す」）。**付くのは書いた日**で、
+   * 前の日を指し直せない。書けない行（空・改行つき・長すぎる）と、そのターンで2行目に当たる
+   * 呼び出しは黙って捨てる。
+   */
+  readonly writeIndex: (packName: string, line: string) => void
+  /**
+   * 索引を `keyword` で引き、**当たった日の逐語だけ**を新しいほうから `limitBytes` まで読む
+   * （{@link ChatRecall.recall} の実体）。**当たらない日のファイルは開かない**のがこの口の要点で、
+   * アーカイブが何年ぶん増えても開くファイルの数は上限で頭打ちになる。
+   *
+   * **引けるのは1ターンに1回**（2回目以降は読まずに `already-recalled` を返す）。切り方・
+   * 読めない行の扱い・例外を投げないことは {@link readRecent} と同じ。
+   */
+  readonly recall: (packName: string, keyword: string, limitBytes: number) => ChatRecallResult
 }
+
+/**
+ * 古い雑談を索引から思い出す口（`docs/design.md` 7章）。**`ChatArchive` を駆動へそのまま
+ * 渡さないために分けてある**のは {@link ChatKeep} と同じで、パックの名前と読む量は配線層
+ * （`src/session-start.ts`）が縛ってから渡す。**雑談モードのときだけ渡り**、渡ったときだけ
+ * `index` と `recall` のツールが `mcpServers` に載る。
+ */
+export type ChatRecall = {
+  /** その日の見出しを索引に1行残す（**1ターンに1行**。書けたかどうかは返さない）。 */
+  readonly index: (line: string) => void
+  /** 索引を引き、当たった日の逐語を返す（**1ターンに1回**）。 */
+  readonly recall: (keyword: string) => ChatRecallResult
+}
+
+/**
+ * {@link ChatRecall.recall} が返すもの。**判別可能な合併型**にしてあるのは、「当たらなかった」と
+ * 「このターンではもう引けない」がモデルへ返す文面の違う別の状態だから
+ * （`docs/coding-standards.md`「無いかもしれない値」）。文面に変えるのは
+ * `src/server/core/chat-memory-prompt.ts`。
+ */
+export type ChatRecallResult =
+  /** 当たった日の逐語（**古い→新しいの順**。空の配列にはならない）。 */
+  | { readonly kind: "found"; readonly entries: readonly ChatArchiveRecentEntry[] }
+  /** 索引に当たる日が無かった（**どの日のファイルも開いていない**）。 */
+  | { readonly kind: "not-found" }
+  /** そのターンで既に1回引いている（**索引も日のファイルも開いていない**）。 */
+  | { readonly kind: "already-recalled" }
 
 /**
  * 「残す」旗を立てる口（`docs/design.md` 7章）。**`ChatArchive` を駆動へそのまま渡さないため
@@ -230,6 +273,12 @@ export type SessionDriverOptions = {
    * アーカイブに残さない）。
    */
   readonly chatKeep: ChatKeep | undefined
+  /**
+   * 古い雑談を索引から思い出す口。**雑談モードのときだけ渡り**（`docs/design.md` 7章）、渡った
+   * ときだけ `index` と `recall` のツールが `mcpServers` に載る。仕事のときは undefined
+   * （仕事の会話はそもそもアーカイブに残さないので、引く先が無い）。
+   */
+  readonly chatRecall: ChatRecall | undefined
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }

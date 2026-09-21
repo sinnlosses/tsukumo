@@ -17,10 +17,16 @@
 // stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
+// **古い雑談は、同じディレクトリの `index.jsonl`（1日1行の見出し）を引いてから、当たった日の
+// ファイルだけを開く**（`docs/requirements.md` 4.9「古い雑談は索引を引いて思い出す」）。
+// **当たらない日のファイルは開かない**のがこの口の要点で、**引くのに外部コマンド（`grep`）を
+// 起こさない** — 索引は1日1行なので `node:fs` で読んで絞るだけで足りる。**見出しの文面を
+// 決めるのはモデル**で、ここが持つのは置き場と形と上限だけ。
+//
 // **「残す」旗は、同じディレクトリの `kept.jsonl` に「時刻だけ」の索引として積む**
 // （`docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」）。**日付のファイルは
 // 書き換えない**（追記のまま）し、**文面も複製しない** — ディスクの上に会話は1つだけで、
-// `docs/coding-standards.md`「会話内容の扱い」の例外表は2つのままになる。**どのやり取りに
+// `docs/coding-standards.md`「会話内容の扱い」の書き出しの例外表に数えずに済む。**どのやり取りに
 // 立てるかの判断はここが決めない**（モデルが `keep` ツールを呼ぶかどうかだけ）。
 
 import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
@@ -36,6 +42,7 @@ import {
   type ChatArchiveReadback,
   type ChatArchiveRecentEntry,
   type ChatReadbackLimits,
+  type ChatRecallResult,
 } from "../core/session-driver.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
@@ -55,6 +62,15 @@ const ARCHIVE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 const KEPT_INDEX_FILE_NAME = "kept.jsonl"
 
 /**
+ * 日ごとの見出しの索引の名前（`docs/design.md` 7章）。**`kept.jsonl` と同じく
+ * {@link ARCHIVE_FILE_NAME} を通らない**ので、窓の走査には混ざらない。
+ */
+const DAY_INDEX_FILE_NAME = "index.jsonl"
+
+/** 見出しの1行の長さの上限（超えた行は書かない。`remember` の1行と同じ値）。 */
+const MAX_INDEX_LINE_LENGTH = 120
+
+/**
  * 読み戻すときに要る鍵だけを検査する（`v` が知らない版・鍵が足りない行はここで落ちる）。
  * **`expression` と `images` は読まないので、形も見ない。**
  */
@@ -72,6 +88,16 @@ const archiveLineSchema = z.object({
 const keptLineSchema = z.object({
   v: z.literal(ARCHIVE_FORMAT_VERSION),
   at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
+})
+
+/**
+ * 日ごとの見出しの1行。**照合に使うのは `date` と `line` の2つ**（`pack` は置き場所で既に
+ * 決まっているので読まない）。
+ */
+const dayIndexLineSchema = z.object({
+  v: z.literal(ARCHIVE_FORMAT_VERSION),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  line: z.string(),
 })
 
 const textEncoder = new TextEncoder()
@@ -102,6 +128,10 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
   let turnMarks: readonly KeptMark[] = []
   // 旗が立ったか。**立てるのはターンの途中、書くのはターンの終わり**なので、ここで待たせる。
   let keeping = false
+  // そのターンで既に見出しを書いたか・既に索引を引いたか（**どちらも1ターンに1回**。
+  // `remember` の1ターン1行と同じ縛りで、別々に数える）。
+  let indexed = false
+  let recalled = false
 
   return {
     append: (packName, entry) => {
@@ -122,13 +152,38 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
       }
       keeping = false
       turnMarks = []
+      indexed = false
+      recalled = false
     },
     readRecent: (packName, limits) => readReadback(root, packName, limits),
+    writeIndex: (packName, line) => {
+      const trimmed = line.trim()
+      if (indexed || !isCharacterPackName(packName) || !isWritableIndexLine(trimmed)) {
+        return
+      }
+      indexed = true
+      appendLine(join(root, packName, DAY_INDEX_FILE_NAME), {
+        v: ARCHIVE_FORMAT_VERSION,
+        date: localDateKey(new Date()),
+        pack: packName,
+        line: trimmed,
+      })
+    },
+    recall: (packName, keyword, limitBytes) => {
+      if (recalled) {
+        return { kind: "already-recalled" }
+      }
+      if (!isCharacterPackName(packName)) {
+        return { kind: "not-found" }
+      }
+      recalled = true
+      return readRecalled(join(root, packName), keyword, limitBytes)
+    },
   }
 }
 
 /** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
-function appendLine(path: string, record: KeptRecord | ArchiveRecord): void {
+function appendLine(path: string, record: KeptRecord | ArchiveRecord | DayIndexRecord): void {
   try {
     mkdirSync(dirname(path), { recursive: true })
     appendFileSync(path, `${JSON.stringify(record)}\n`)
@@ -176,6 +231,17 @@ type KeptRecord = {
   readonly v: typeof ARCHIVE_FORMAT_VERSION
   readonly at: string
   readonly pack: string
+}
+
+/**
+ * 日ごとの見出しの1行の形（`docs/design.md` 7章）。**`line` を書くのはモデル**で、tsukumo が
+ * 足すのは版・日付・パック名だけ。
+ */
+type DayIndexRecord = {
+  readonly v: typeof ARCHIVE_FORMAT_VERSION
+  readonly date: string
+  readonly pack: string
+  readonly line: string
 }
 
 /** このターンで書いた1行の宛先（索引へ写すときの材料。**文面は持たない**）。 */
@@ -237,10 +303,26 @@ function readReadback(
  * 超える行が先頭に来たときは空を返す——行の途中で切るくらいなら逐語なしで始める。
  */
 function readRecentEntries(dir: string, limitBytes: number): readonly TimedEntry[] {
+  return readEntriesBackward(dir, newestFirstFileNames(dir), limitBytes)
+}
+
+/**
+ * 渡された順のファイルを、**各ファイルは末尾の行から遡って**集める（返すのは古い→新しいの順）。
+ * 文面のバイト数の合計が `limitBytes` に届いたところで**それ以上は読まない**（**残りの
+ * ファイルは開かない**）。
+ *
+ * **窓（新しい日から全部）と `recall`（索引に当たった日だけ）で同じ1つの走査を使う** — 違うのは
+ * 渡すファイルの並びだけで、切り方（1件を単位にし、溢れる1件は載せない）は1箇所にある。
+ */
+function readEntriesBackward(
+  dir: string,
+  fileNames: readonly string[],
+  limitBytes: number,
+): readonly TimedEntry[] {
   // 新しい→古いの順に集め、最後にひっくり返して「古い→新しい」で返す。
   const collected: TimedEntry[] = []
   let usedBytes = 0
-  for (const fileName of newestFirstFileNames(dir)) {
+  for (const fileName of fileNames) {
     let reachedLimit = false
     for (const line of [...readArchiveLines(join(dir, fileName))].reverse()) {
       const timed = toTimedEntry(line)
@@ -319,6 +401,72 @@ function readKeptMarks(path: string): ReadonlySet<string> {
     return record.success ? [record.data.at] : []
   })
   return new Set(marks)
+}
+
+/**
+ * 索引を引き、当たった日のファイルだけを新しい順に開く（{@link ChatArchive.recall} の実装）。
+ *
+ * **索引に当たる日が1つも無ければ、日のファイルは1つも開かない**（`not-found` を返す。
+ * `docs/requirements.md` 4.9「古い雑談は索引を引いて思い出す」）。当たった日を全部読んでも
+ * 1件も残らなかったとき（指す先が消えている・全部壊れている）も `not-found` にする——
+ * 呼ぶ側に「空の found」を持たせない。
+ */
+function readRecalled(dir: string, keyword: string, limitBytes: number): ChatRecallResult {
+  const dates = matchedIndexDates(dir, keyword)
+  if (dates.length === 0) {
+    return { kind: "not-found" }
+  }
+
+  const entries = readEntriesBackward(
+    dir,
+    dates.map((date) => `${date}.jsonl`),
+    limitBytes,
+  ).map((timed) => timed.entry)
+  return entries.length === 0 ? { kind: "not-found" } : { kind: "found", entries }
+}
+
+/**
+ * `keyword` に当たった日を新しい順に並べる（索引が無い・当たらないときは空）。
+ *
+ * **照合は小文字にしての部分一致**で、空白で分けた語は**どれか1つでも当たれば**その日を拾う
+ * （言葉のずれを吸収するのが索引の役。足りないより多いほうへ倒す）。**日付そのものも照合の
+ * 対象**なので、`2026-09-21` のような鍵でも引ける。
+ */
+function matchedIndexDates(dir: string, keyword: string): readonly string[] {
+  const terms = keyword
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((term) => term !== "")
+  if (terms.length === 0) {
+    return []
+  }
+
+  const headings = readDayIndexHeadings(join(dir, DAY_INDEX_FILE_NAME))
+  const matched = [...headings]
+    .filter(([date, line]) => terms.some((term) => `${date} ${line}`.toLowerCase().includes(term)))
+    .map(([date]) => date)
+  return matched.sort().reverse()
+}
+
+/**
+ * 索引の日付と見出しの対（読めない行・知らない版は落とす。索引が無いときは空）。
+ * **同じ日に2行以上あれば、あとの行が勝つ**（1日1行の索引を、書き換えずに追記だけで保つ形。
+ * `docs/design.md` 7章）。
+ */
+function readDayIndexHeadings(path: string): ReadonlyMap<string, string> {
+  const headings = new Map<string, string>()
+  for (const line of readArchiveLines(path)) {
+    const record = dayIndexLineSchema.safeParse(parseJson(line))
+    if (record.success) {
+      headings.set(record.data.date, record.data.line)
+    }
+  }
+  return headings
+}
+
+/** 索引に書いてよい見出しか（空・改行つき・長すぎる行は書かない）。 */
+function isWritableIndexLine(line: string): boolean {
+  return line !== "" && !line.includes("\n") && line.length <= MAX_INDEX_LINE_LENGTH
 }
 
 /** 旗の立った日付を新しい順に並べる（開くファイルをそこだけに絞る）。 */
