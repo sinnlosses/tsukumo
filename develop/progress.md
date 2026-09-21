@@ -78,13 +78,6 @@ SDK の `system` / `compact_boundary` を `compact-boundary` イベントにし�
 `docs/glossary.md`「圧縮の区切り」（`compactBoundary`）で、文言を出さない判断はユーザーの決定。
 復元でも拾えるよう `getSessionMessages` に `includeSystemMessages: true` を渡した。
 
-### 2026-09-21 雑談の会話をアーカイブとして書き残すようにした（T-255）
-
-`~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl` へ、依頼とセリフを表情つきで1行ずつ
-追記するようにした。書くのは `session-manager` の `receive` が**駆動由来（`"driver"`）かつ
-雑談のとき**だけで、復元の再生では書かない（起こし直しても二重に積まれない）。画像は枚数だけで、
-data URL は書かない。ファイルに触るのは `adapter/chat-archive.ts` 1つ。
-
 ## 未解決
 
 - **書き上げる演出が長い（T-258 の副作用）。** 確定した本文の全体に筆が通るようになった分、1233文字の台本で**演出が約39.9秒続く**（測ったのは `long-report` の場面）。`docs/requirements.md` 4.3 が「塊が増えて出ている時間が数十秒に伸びる」と予告していたとおりで、**速さ（文字1つ 40ms・塊ごとの上限 8000ms）の調整は別の判断**として手を付けていない。長すぎると感じるかはユーザーが決める
