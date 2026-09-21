@@ -117,7 +117,7 @@ export type ChatArchive = {
 export type ChatArchiveRecentEntry = {
   readonly speaker: "user" | "character"
   readonly text: string
-  /** その行のローカル日付（`YYYY-MM-DD`）。前置きに添える「窓の最初と最後の日付」に使う。 */
+  /** その行のローカル日付（`YYYY-MM-DD`）。日付が変わるところに挟む見出しに使う。 */
   readonly date: string
 }
 

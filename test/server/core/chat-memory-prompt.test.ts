@@ -71,6 +71,11 @@ function take(
   })
 }
 
+/** `text` の中に `needle` が何回出てくるか（重ならない出現だけを数える）。 */
+function countOccurrences(text: string, needle: string): number {
+  return text.split(needle).length - 1
+}
+
 describe("takeChatMemoryPromptParts", () => {
   it("新規の雑談（resume が undefined）では要約も逐語も載る。載せたら印が「渡し済み」に戻る", () => {
     const chatSummary = fakeChatSummary({ summary: SUMMARY, delivered: false })
@@ -185,17 +190,38 @@ describe("takeChatMemoryPromptParts", () => {
     expect(chatArchive.readRecentArgs()).toEqual([{ packName: PACK_NAME, limitBytes: LIMIT_BYTES }])
   })
 
-  it("逐語には窓の最初と最後の日付が1行添う（同じ日なら1つだけ）", () => {
-    const spanned = take(undefined, fakeChatSummary(undefined), fakeChatArchive(RECENT))
-    expect(spanned[0]).toContain("2026-09-20 〜 2026-09-21")
+  it("2日ぶんの逐語を渡すと、日付ごとに見出しが1つずつ入る（並べ替えない）", () => {
+    const twoDays: readonly ChatArchiveRecentEntry[] = [
+      { speaker: "user", text: "きょうは晴れの話をした", date: "2026-09-20" },
+      { speaker: "character", text: "そうだねと返した", date: "2026-09-20" },
+      { speaker: "user", text: "つぎの日にまた話しかけた", date: "2026-09-21" },
+    ]
 
-    const sameDay = take(
+    const parts = take(undefined, fakeChatSummary(undefined), fakeChatArchive(twoDays))
+    const text = parts[0] ?? ""
+
+    expect(countOccurrences(text, "### 2026-09-20")).toBe(1)
+    expect(countOccurrences(text, "### 2026-09-21")).toBe(1)
+    // 見出しのあとに、その日の発言が届いた順のまま続く。
+    expect(text.indexOf("### 2026-09-20")).toBeLessThan(text.indexOf("きょうは晴れの話をした"))
+    expect(text.indexOf("そうだねと返した")).toBeLessThan(text.indexOf("### 2026-09-21"))
+    expect(text.indexOf("### 2026-09-21")).toBeLessThan(text.indexOf("つぎの日にまた話しかけた"))
+  })
+
+  it("1日ぶんしか無いときは見出しが1つだけで、二重にならない", () => {
+    const oneDay = take(
       undefined,
       fakeChatSummary(undefined),
-      fakeChatArchive([{ speaker: "user", text: "ただいま", date: "2026-09-21" }]),
+      fakeChatArchive([
+        { speaker: "user", text: "ただいま", date: "2026-09-21" },
+        { speaker: "character", text: "おかえり", date: "2026-09-21" },
+      ]),
     )
-    expect(sameDay[0]).toContain("2026-09-21")
-    expect(sameDay[0]).not.toContain("〜")
+    const text = oneDay[0] ?? ""
+
+    expect(countOccurrences(text, "### 2026-09-21")).toBe(1)
+    expect(text).not.toContain("範囲:")
+    expect(text).not.toContain("〜")
   })
 
   it("表情も画像の枚数も載らない（口が渡さないので、文面と話者の別だけが並ぶ）", () => {

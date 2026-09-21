@@ -35,13 +35,15 @@ const CHAT_SUMMARY_PREFACE =
 
 /**
  * 逐語の前置き。**要約と違って会話の文面そのもの**であることと、話者の見分け方を添える。
- * いつごろの話かは**窓の最初と最後の日付を1行添える**ことで足りる（`docs/requirements.md` 4.9。
- * 表情も画像の枚数も載せない）。
+ * いつごろの話かは**日付が変わるところに `### <日付>` の見出しを挟む**ことで足りる
+ * （`docs/requirements.md` 4.9。表情も画像の枚数も載せない）。見出しは会話の発言ではない
+ * ことをここで断る。
  */
 const CHAT_RECENT_PREFACE =
   "## 直近の雑談（そのままの文面）\n\n" +
   "以下は直近の雑談のやり取りそのもの（要約ではない）。`利用者:` が利用者の発言、" +
-  "`あなた:` があなた自身の過去のセリフ。続きとして踏まえてよいが、読み上げたり引用したりしない。"
+  "`あなた:` があなた自身の過去のセリフ。`### ` で始まる行は日付の見出しで、会話の発言ではない。" +
+  "続きとして踏まえてよいが、読み上げたり引用したりしない。"
 
 /** 逐語の1行の頭に置く話者の印。 */
 const SPEAKER_LABEL = {
@@ -112,17 +114,24 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
 }
 
 /**
- * 直近の逐語ぶんの文面（1件も無いときは undefined）。**窓の最初と最後の日付を前置きに1行
- * 添える**（同じ日なら1つだけ）。
+ * 直近の逐語ぶんの文面（1件も無いときは undefined）。**日付が変わるところに `### <日付>` の
+ * 見出しを挟む**（同じ日が続く間は見出しを重ねない。1日ぶんしか無ければ見出しは1つだけ）。
+ * **並べ替えない** — `entries` は `readRecent` が返した順のまま並べるだけで、中身を読んで
+ * 落としたり並べ替えたりしない。
  */
 function recentPart(entries: readonly ChatArchiveRecentEntry[]): string | undefined {
-  const oldest = entries[0]
-  const newest = entries[entries.length - 1]
-  if (oldest === undefined || newest === undefined) {
+  if (entries.length === 0) {
     return undefined
   }
 
-  const span = oldest.date === newest.date ? oldest.date : `${oldest.date} 〜 ${newest.date}`
-  const lines = entries.map((entry) => `${SPEAKER_LABEL[entry.speaker]}: ${entry.text}`)
-  return `${CHAT_RECENT_PREFACE}\n\n範囲: ${span}\n\n${lines.join("\n")}`
+  const lines: string[] = []
+  let lastDate: string | undefined
+  for (const entry of entries) {
+    if (entry.date !== lastDate) {
+      lines.push(`### ${entry.date}`)
+      lastDate = entry.date
+    }
+    lines.push(`${SPEAKER_LABEL[entry.speaker]}: ${entry.text}`)
+  }
+  return `${CHAT_RECENT_PREFACE}\n\n${lines.join("\n")}`
 }

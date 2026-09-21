@@ -61,9 +61,9 @@
     "dependencies": [],
     "summary": "雑談の逐語の読み戻しに日付の見出しを入れる",
     "task": "## 背景\n\nエージェントのドラフト（2026-09-21 の雑談から。ユーザー承認済み）:\n「いまキャラクターは『今日か今日でないか』しか区別できない。読み戻しに日付の見出しを入れ、\n『昨日の話だけど』が通じる形にする。」\n\n`src/server/core/chat-memory-prompt.ts` の `recentPart()` は、窓の**最初と最後の日付を\n`範囲: <日付> 〜 <日付>` の1行**にまとめ、あとは `利用者: …` / `あなた: …` を改行で並べるだけ。\n1件ごとの日付は `ChatArchiveRecentEntry.date`（`src/server/core/session-driver.ts`）として\nすでに手元にあるが、**行には出していない**。そのため逐語を読んだモデルは、どの発言がいつの\nものか分けられない。\n\n読み戻しの量は `CHAT_RECENT_READBACK_BYTES`（`src/shared/chat-log.ts` 67行）で、T-286 で\n64 KiB へ上げる予定。**窓が広がるほど日付の区別が要る**。\n\n## 解くべき論点\n\n- 見出しの形（`### 2026-09-20` / `— 2026-09-20 —` など）と、`CHAT_RECENT_PREFACE` の\n  前置きにどう説明を足すか。**日付の見出しは会話ではない**ことが読み手（モデル）に分かる形にする\n- `範囲:` の1行を残すか、日ごとの見出しで置き換えるか\n- 見出しのぶんだけ `systemPrompt` が増える。1日あたり十数バイトで、`readRecent` の\n  `limitBytes` の数え方（文面のバイト数だけを数えている）を変える必要があるか\n\n## やること\n\n1. `recentPart()` に、日付が変わるところで見出しを挟む処理を足す（`date` が同じ間は続けて並べる）\n2. `CHAT_RECENT_PREFACE` の文面を、日付の見出しが入ることに合わせて直す\n3. `test/server/core/chat-memory-prompt.test.ts` に、2日ぶんの逐語を渡したとき見出しが\n   日付ごとに1つずつ入ることのテストを足す（**架空の文面で書く**）\n4. `docs/requirements.md` 4.9 の「渡し方」の記述を、日付の見出しが入る形に直す\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を着手前と並べて `evidence` に書く）\n- 2日ぶんの逐語を渡したときに、日付ごとの見出しがそれぞれ1回だけ入る（テストで示す）\n- 1日ぶんしか無いときに見出しが二重にならない（`範囲:` と重複しない形になっている）\n- `grep -c '^#\\{2,3\\} ' docs/requirements.md` の値が編集の前後で変わらない\n\n## 注意\n\n- **会話の実物をテストにも `evidence` にも使わない**（`docs/coding-standards.md`\n  「会話内容の扱い」が最優先）\n- `chat-memory-prompt.ts` は**中身を読んで載せる・載せないを決めない**という線を持っている。\n  日付で並べ替えたり、日付を見て落としたりしない（並べるのは `readRecent` が返した順のまま）\n- T-286（読み戻しを 64 KiB にする）と `docs/requirements.md` 4.9 で近い場所を触る。\n  どちらかが `doing` のときは並行させない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過。テスト 1019 pass / 90 files → 1020 pass / 90 files（0 fail, 2032 expect）。test/server/core/chat-memory-prompt.test.ts で2日ぶん・1日ぶんの見出しをそれぞれ検査（架空の文面）。grep -c '^#\\{2,3\\} ' docs/requirements.md は編集の前後とも 27。"
   },
   {
     "id": "T-293",
