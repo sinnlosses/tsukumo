@@ -177,13 +177,16 @@ export function mainViewTurns(
  * docs/requirements.md 4.2）。落としても `request` の数と順番は変わらないので、
  * {@link groupIntoTurns} が振るターンの通し番号はずれない。
  *
+ * **`compact-boundary` も落とす**（`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
+ * 圧縮の区切りは雑談のログ（`shared/chat-log.ts`）だけに出し、**仕事のメインビューには出さない**。
+ *
  * **`tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の
  * 付随情報）を落とす**（メインビューの部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。
  * docs/coding-standards.md「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを
  * 暗黙に持ち越さない）。
  */
 function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
-  if (record.kind === "speech") {
+  if (record.kind === "speech" || record.kind === "compact-boundary") {
     return []
   }
   // `request` / `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。

@@ -177,6 +177,15 @@ export type SessionEvent =
    * 見失う**（`INITIAL_SESSION_STATE.chatMode` は `false`）。
    */
   | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
+  /**
+   * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`。
+   * docs/glossary.md「圧縮の区切り」）。**数値（`compact_metadata` の `pre_tokens` /
+   * `post_tokens` / `duration_ms`）は運ばない** — 画面に出さないものを契約に入れない
+   * （`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
+   *
+   * 画面に出すのは雑談のログの細い線1本だけで、**文言は添えない**（2026-09-21 決定）。
+   */
+  | { readonly kind: "compact-boundary" }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

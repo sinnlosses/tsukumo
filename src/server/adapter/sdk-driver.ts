@@ -240,6 +240,11 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
  * 前のセッションの transcript を読み直して、画面の履歴を組み直すためのイベントにする
  * （docs/requirements.md 4.8）。**読めなければ空**（会話（`resume`）だけ生きていれば続行する）。
  *
+ * **`includeSystemMessages: true` を渡す**（2026-09-21 実測）。既定では `system` のメッセージ
+ * （`compact_boundary` を含む）が返らず、`getSessionMessages` は親子の鎖をたどるので、圧縮が
+ * 起きたセッションでは**そこより前が既定では返らない**（docs/glossary.md「圧縮の区切り」）。
+ * 他の `system` メッセージが混ざっても、`toSessionEvents` 側が知らない種別を空へ倒すので落ちない。
+ *
  * 読んだ内容はそのままイベントの流れに渡すだけで、**どこにも書き出さない**
  * （docs/coding-standards.md「会話内容の扱い」）。
  */
@@ -250,7 +255,7 @@ export async function readRestoredEvents(
 ): Promise<readonly SessionEvent[]> {
   try {
     return toRestoredEvents(
-      await getSessionMessages(sessionId, { dir: cwd }),
+      await getSessionMessages(sessionId, { dir: cwd, includeSystemMessages: true }),
       toExpressionNames(expressions),
     )
   } catch {

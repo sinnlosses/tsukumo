@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-21 圧縮の区切りを雑談のログへ1本出すようにした（T-250）
+
+SDK の `system` / `compact_boundary` を `compact-boundary` イベントにして記録まで畳み、雑談のログへ
+**文言を添えない細い線1本**（`<hr>`）として出すようにした。仕事のメインビューには出さない。用語は
+`docs/glossary.md`「圧縮の区切り」（`compactBoundary`）で、文言を出さない判断はユーザーの決定。
+復元でも拾えるよう `getSessionMessages` に `includeSystemMessages: true` を渡した。
+
 ### 2026-09-21 雑談の会話をアーカイブとして書き残すようにした（T-255）
 
 `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl` へ、依頼とセリフを表情つきで1行ずつ

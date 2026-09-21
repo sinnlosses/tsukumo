@@ -116,6 +116,27 @@ describe("ChatView", () => {
     expect(document.querySelectorAll("[data-speaker]")).toHaveLength(0)
     expect(screen.getByText("（まだ何も話していません）")).toBeTruthy()
   })
+
+  it("圧縮の区切りは文言を添えない細い線1本（`<hr>`）で出し、押せない", () => {
+    renderChatView({
+      records: [
+        { kind: "request", text: "1つめの依頼", images: [] },
+        { kind: "compact-boundary" },
+        { kind: "speech", text: "2つめのセリフ", expression: "default" },
+      ],
+    })
+
+    const entries = [...document.querySelectorAll("[data-speaker]")]
+    expect(entries.map((entry) => entry.getAttribute("data-speaker"))).toEqual([
+      "user",
+      "boundary",
+      "character",
+    ])
+    const boundary = entries[1]
+    expect(boundary?.tagName).toBe("HR")
+    expect(boundary?.textContent).toBe("")
+    expect(boundary?.tagName).not.toBe("BUTTON")
+  })
 })
 
 describe("ChatView のセリフを遡る", () => {

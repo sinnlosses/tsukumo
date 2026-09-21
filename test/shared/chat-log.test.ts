@@ -54,6 +54,20 @@ describe("chatLogEntries", () => {
   it("記録が空なら空（まだ何も話していない場面）", () => {
     expect(chatLogEntries([])).toEqual([])
   })
+
+  it("圧縮の区切り（compact-boundary）は1件のイベントから1件のログの区切りになる", () => {
+    const entries = chatLogEntries([
+      { kind: "request", text: "1つめの依頼", images: [] },
+      { kind: "compact-boundary" },
+      { kind: "speech", text: "2つめのセリフ", expression: "default" },
+    ])
+
+    expect(entries).toEqual([
+      { speaker: "user", text: "1つめの依頼", images: [] },
+      { speaker: "boundary" },
+      { speaker: "character", text: "2つめのセリフ", expression: "default" },
+    ])
+  })
 })
 
 describe("chatLogByteSize", () => {
@@ -87,6 +101,16 @@ describe("chatLogByteSize", () => {
     const withoutImages = chatLogEntries([{ kind: "request", text: "あああ", images: [] }])
 
     expect(chatLogByteSize(withImages)).toBe(chatLogByteSize(withoutImages))
+  })
+
+  it("圧縮の区切りは文面を持たないので数えない", () => {
+    const withBoundary = chatLogEntries([
+      { kind: "request", text: "あああ", images: [] },
+      { kind: "compact-boundary" },
+    ])
+    const withoutBoundary = chatLogEntries([{ kind: "request", text: "あああ", images: [] }])
+
+    expect(chatLogByteSize(withBoundary)).toBe(chatLogByteSize(withoutBoundary))
   })
 
   it("複数件は合算する", () => {

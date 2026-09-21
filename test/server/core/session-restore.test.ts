@@ -255,4 +255,36 @@ describe("toRestoredEvents", () => {
       { kind: "turn-finished", status: "success" },
     ])
   })
+
+  // 圧縮（`/compact`）が起きると transcript の鎖が切れ、`includeSystemMessages: true` で読んだ
+  // 並びは区切りの行から始まる（`src/server/adapter/sdk-driver.ts` の `readRestoredEvents`。
+  // 2026-09-21 実測）。**起こし直したあとに区切りがログのいちばん上に来る**ことをここで示す。
+  it("圧縮の区切り（system の compact_boundary）が並びの先頭に来る", () => {
+    const messages = [
+      { type: "system", subtype: "compact_boundary", compact_metadata: { trigger: "auto" } },
+      userMessage([{ type: "text", text: "架空の依頼" }]),
+      assistantMessage([{ type: "text", text: "架空の本文" }]),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "compact-boundary" },
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
+  it("知らない system メッセージが混ざっても落ちない（読めたものだけ残る）", () => {
+    const messages = [
+      { type: "system", subtype: "compact_boundary", compact_metadata: { trigger: "manual" } },
+      { type: "system", subtype: "架空の未知の通知", text: "架空のお知らせ" },
+      userMessage([{ type: "text", text: "架空の依頼" }]),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "compact-boundary" },
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
 })

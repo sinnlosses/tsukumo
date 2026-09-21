@@ -333,8 +333,18 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(status, EXPRESSIONS)).toEqual([])
   })
 
-  it("init 以外の system は無視する", () => {
-    expect(toSessionEvents({ type: "system", subtype: "compact_boundary" }, EXPRESSIONS)).toEqual(
+  it("system の compact_boundary を compact-boundary にする（数値は運ばない）", () => {
+    const message = {
+      type: "system",
+      subtype: "compact_boundary",
+      compact_metadata: { trigger: "auto", pre_tokens: 29_998, post_tokens: 3_844 },
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([{ kind: "compact-boundary" }])
+  })
+
+  it("init・commands_changed・compact_boundary 以外の system は無視する", () => {
+    expect(toSessionEvents({ type: "system", subtype: "架空の未知の種別" }, EXPRESSIONS)).toEqual(
       [],
     )
   })

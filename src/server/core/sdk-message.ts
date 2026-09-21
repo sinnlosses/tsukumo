@@ -35,6 +35,8 @@ export const SPEAK_TOOL_NAME = "speak"
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
  * - **`conversation_reset` は `/clear` の合図**（2026-09-15 実測）。tsukumo は `/clear` という
  *   文字列を見ず、本体が会話を捨てたことをこのメッセージで知る
+ * - **`system` / `compact_boundary` は `compact-boundary` にする**（docs/glossary.md
+ *   「圧縮の区切り」）。`compact_metadata` の数値は運ばない
  * - **`assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ
  *   `model-changed` を出す**（2026-09-17 実測）。`command` が `model` 以外の局所コマンド
  *   （`/clear` など）や、形が崩れている・`args` が無いときは出さない。エイリアスとして
@@ -54,9 +56,15 @@ export function toSessionEvents(
       if (message.subtype === "init") {
         return sessionInfoEvents(message)
       }
-      return message.subtype === "commands_changed"
-        ? [{ kind: "command-descriptions", descriptions: toCommandDescriptions(message.commands) }]
-        : []
+      if (message.subtype === "commands_changed") {
+        return [
+          { kind: "command-descriptions", descriptions: toCommandDescriptions(message.commands) },
+        ]
+      }
+      // `compact_boundary` は claude 自身の圧縮が起きた合図（`compact_metadata` に
+      // `trigger` / `pre_tokens` / `post_tokens` / `duration_ms` が乗るが、画面には
+      // 出さないので運ばない。docs/requirements.md 4.9「記憶の圧縮と忘却」）。
+      return message.subtype === "compact_boundary" ? [{ kind: "compact-boundary" }] : []
     case "stream_event":
       return partialUtteranceEvents(message.event)
     case "assistant":

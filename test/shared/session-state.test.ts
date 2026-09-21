@@ -124,6 +124,28 @@ describe("applySessionEvent", () => {
     // `MainViewEntry` には `speech` の種類そのものが無い（型の側でも混ざらない）。
   })
 
+  it("圧縮の区切り（compact-boundary）は記録に積むが、レポート（mainViewEntries）には出さない", () => {
+    const view = apply(
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+      { kind: "compact-boundary" },
+      { kind: "request", text: "2つめの依頼", images: [] },
+    )
+
+    // 記録には積む（雑談のログ側 shared/chat-log.ts が読む）。
+    expect(view.records).toEqual([
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+      { kind: "compact-boundary" },
+      { kind: "request", text: "2つめの依頼", images: [] },
+    ])
+    // 仕事のメインビューには出さない（docs/requirements.md 4.9）。
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "request", text: "2つめの依頼", images: [] },
+    ])
+  })
+
   it("同じターン内のセリフは件数を絞らず、古い→新しいの順に並べる", () => {
     const view = apply(
       { kind: "request", text: "ダミーの依頼", images: [] },
@@ -766,6 +788,25 @@ describe("applySessionEvent", () => {
     expect(requestTexts).toHaveLength(100)
     expect(requestTexts[0]).toBe("依頼5")
     expect(requestTexts.at(-1)).toBe("依頼104")
+  })
+
+  it("圧縮の区切り（compact-boundary）を挟んでも、窓の数え方（request の数）は変わらない", () => {
+    const events: SessionEvent[] = []
+    for (let turn = 0; turn < 25; turn += 1) {
+      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
+      if (turn === 10) {
+        events.push({ kind: "compact-boundary" })
+      }
+    }
+
+    const view = apply(...events)
+    const requestTexts = view.records
+      .filter((record) => record.kind === "request")
+      .map((record) => record.text)
+
+    expect(requestTexts).toHaveLength(20)
+    expect(requestTexts[0]).toBe("依頼5")
+    expect(requestTexts.at(-1)).toBe("依頼24")
   })
 })
 

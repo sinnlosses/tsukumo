@@ -95,6 +95,18 @@
   background: color-mix(in srgb, var(--surface), var(--ink) 8%);
   border-bottom-right-radius: 0.3rem;
 }
+/* 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない細い線1本だけ**
+   （docs/requirements.md 4.9「記憶の圧縮と忘却」）。他の発言と違って左右に寄せず、
+   ログの幅いっぱいに伸ばす。押せない・畳めないので、hover やクリックの見た目は付けない。 */
+.chat-boundary {
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  height: 0;
+  margin: 0.2rem 0;
+  border: none;
+  border-top: 1px solid var(--rule);
+}
 /* まだ一度も話していないときの案内。 */
 .chat-empty {
   align-self: center;

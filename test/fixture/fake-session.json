@@ -680,6 +680,45 @@
           }
         }
       ]
+    },
+    {
+      "name": "chat-compact-boundary",
+      "steps": [
+        { "afterMs": 0, "event": { "kind": "chat-mode-changed", "chat": true } },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "request",
+            "text": "架空の雑談その1（区切りより前）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "区切りより前のセリフだよ。",
+            "expression": "default"
+          }
+        },
+        { "afterMs": 300, "event": { "kind": "compact-boundary" } },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "request",
+            "text": "架空の雑談その2（区切りより後）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "speech",
+            "text": "区切りより後のセリフだよ。",
+            "expression": "proud"
+          }
+        }
+      ]
     }
   ]
 }

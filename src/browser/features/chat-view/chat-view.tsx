@@ -158,7 +158,12 @@ function ChatLog(props: {
         <p className={styles["chat-empty"]}>{EMPTY_LOG_MESSAGE}</p>
       ) : (
         props.entries.map((entry, index) =>
-          entry.speaker === "character" ? (
+          // 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない細い線1本**で、
+          // 押せない・畳めない（利用者の操作の対象にしない。docs/requirements.md 4.9）。`<hr>`
+          // は元々「文言を持たない区切り」を表す要素なので、ここに説明文を足す必要が無い。
+          entry.speaker === "boundary" ? (
+            <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
+          ) : entry.speaker === "character" ? (
             <button
               type="button"
               // 並びは末尾に積むだけで、途中に差し込まれることも並べ替えもない。

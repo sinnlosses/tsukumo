@@ -21,11 +21,16 @@ import { type SessionRecord } from "./session-state.ts"
 export type ChatLogEntry =
   | { readonly speaker: "user"; readonly text: string; readonly images: readonly string[] }
   | { readonly speaker: "character"; readonly text: string; readonly expression: Expression }
+  /**
+   * 圧縮の区切り（`docs/glossary.md`「圧縮の区切り」）。**中身を持たない** — 出すのは細い線
+   * 1本だけで、文言は添えない（`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
+   */
+  | { readonly speaker: "boundary" }
 
 /**
  * 記録から雑談のログを組む（**古い→新しいの順**）。拾うのは利用者の依頼（`request`）と
- * セリフ（`speech`）の2種類だけで、**本文（`detail`）とツールは落とす**
- * （雑談中はレポートを出さないと決めた。`docs/requirements.md` 4.9）。
+ * セリフ（`speech`）、そして圧縮の区切り（`compact-boundary`）の3種類だけで、**本文
+ * （`detail`）とツールは落とす**（雑談中はレポートを出さないと決めた。`docs/requirements.md` 4.9）。
  *
  * **落としたぶんを「省略した」と見せない。** 雑談中に本文が出るのは規約が守られなかった
  * ときだけで、画面にその事実を出しても利用者にできることが無い。
@@ -37,6 +42,9 @@ export function chatLogEntries(records: readonly SessionRecord[]): readonly Chat
     }
     if (record.kind === "speech") {
       return [{ speaker: "character", text: record.text, expression: record.expression }]
+    }
+    if (record.kind === "compact-boundary") {
+      return [{ speaker: "boundary" }]
     }
     return []
   })
@@ -53,7 +61,12 @@ const textEncoder = new TextEncoder()
  * 雑談のログの文面（利用者の依頼とキャラクターのセリフ）の UTF-8 バイト数を数える。
  * **添えた画像とツールの入出力は数えない**（`docs/requirements.md` 4.9「数え落としは許す」）——
  * `entries` は {@link chatLogEntries} の出力なので、本文・ツール・質問は最初から入っていない。
+ * **圧縮の区切り（`boundary`）は文面を持たないので数えない。**
  */
 export function chatLogByteSize(entries: readonly ChatLogEntry[]): number {
-  return entries.reduce((total, entry) => total + textEncoder.encode(entry.text).length, 0)
+  return entries.reduce(
+    (total, entry) =>
+      total + (entry.speaker === "boundary" ? 0 : textEncoder.encode(entry.text).length),
+    0,
+  )
 }

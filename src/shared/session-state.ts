@@ -97,6 +97,12 @@ export type SessionRecord =
       readonly nested: boolean
       readonly result: { readonly content: string; readonly isError: boolean } | undefined
     }
+  /**
+   * 圧縮の区切り（`compact-boundary`。docs/glossary.md）。**中身を持たない**（画面に出すのは
+   * 細い線1本だけで、文言も数値も添えない）。`trimToRecentTurns` の数え方（`request` の数）は
+   * 変えない — 他の記録と同じく、窓から外れれば一緒に落ちる。
+   */
+  | { readonly kind: "compact-boundary" }
 
 /**
  * セッションの今の姿。**イベントを1件ずつ畳んで作る**ので、ここに無い情報は画面にも出ない。
@@ -393,6 +399,8 @@ export function applySessionEvent(
       }
     case "chat-mode-changed":
       return { ...state, chatMode: event.chat }
+    case "compact-boundary":
+      return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
   }
 }
 

@@ -13,6 +13,7 @@ const speech = (text: string, expression: "default" | "proud" = "default"): Sess
   text,
   expression,
 })
+const compactBoundary = (): SessionRecord => ({ kind: "compact-boundary" })
 
 describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
   it("依頼ごとに分かれ、各ターンのセリフだけを古い→新しいの順で返す", () => {
@@ -100,6 +101,20 @@ describe("turnSpeeches（通し番号）", () => {
       speeches: ["依頼より前のセリフ"],
       expression: "default",
     })
+  })
+
+  it("先頭が圧縮の区切りだけのときは、通し番号が mainViewTurns と揃う（前のまとまりを作らない）", () => {
+    const records: readonly SessionRecord[] = [
+      compactBoundary(),
+      request("1つ目の依頼"),
+      speech("1つ目のセリフ"),
+    ]
+
+    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
+    const speechTurns = turnSpeeches(records)
+
+    expect(speechTurns.map((turn) => turn.id)).toEqual(viewTurns.map((turn) => turn.id))
+    expect(speechTurns).toEqual([{ id: 0, speeches: ["1つ目のセリフ"], expression: "default" }])
   })
 
   it(`直近${String(MAX_MAIN_VIEW_TURNS)}ターンに絞られたあとも、窓の中の番号でそのターンのセリフが引ける`, () => {

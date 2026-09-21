@@ -71,8 +71,13 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
  * 最初の依頼より前に、メインビューに出る記録（セリフ以外）があるか。あるときは
  * `mainViewTurns` 側に通し番号 0 のまとまりができる（`groupIntoTurns` が最初の非 `request` の
  * 記録でまとまりを起こすため）。
+ *
+ * **`compact-boundary` も `speech` と同じく除く**（`mainViewEntries` がどちらも落とすので、
+ * どちらだけが先頭にあってもまとまりは起きない。`shared/main-view.ts`）。
  */
 function hasPreRequestTurn(records: readonly SessionRecord[]): boolean {
-  const first = records.find((record) => record.kind !== "speech")
+  const first = records.find(
+    (record) => record.kind !== "speech" && record.kind !== "compact-boundary",
+  )
   return first !== undefined && first.kind !== "request"
 }
