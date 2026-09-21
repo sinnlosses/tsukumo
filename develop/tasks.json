@@ -72,9 +72,9 @@
     "dependencies": ["T-258"],
     "summary": "本文が一瞬出て消える残りの経路を洗い出してドラフトに書く",
     "task": "## 背景\n\nユーザーの指示（2026-09-21）「中間レポート以外に進捗が本文に一瞬現れる事象がまだ出るから、\n一旦本文に表示される、その後消えるメカニズムについて教えてくれる? 対応はその時相談しよう」。\n\n**T-258（案B）で閉じる経路が1つある**（書きかけが `final` として出て、ツールが始まった瞬間に\n中間へ反転する）。このタスクが探すのは**それ以外**。\n\nいま本文が出たり消えたりし得る箇所:\n\n- `src/shared/main-view.ts` の `hideUnsettledReport`（出すか決める）と\n  `keepOnlyInterimReports`（**ツールが続いた本文のうち実況だけを落とす**＝出たあとに消える経路）\n- `groupIntoTurns` / `limitTurnEntries` / `trimToRecentTurns`（記録の切り詰め）\n- `joinPartialUtterances`（`src/server/core/session-manager.ts` のバッファ）\n- `src/browser/features/main-view/turn.tsx` と `report.tsx`（描く側）\n\n**このタスクは直さない。** 経路を突き止めて説明と案を出すところまで（「対応はその時相談」）。\n\n## 解くべき論点\n\n- T-258 のあとにも残る「出てから消える」経路はどれか。`keepOnlyInterimReports` が実況を\n  落とす経路は**仕様として残す**ものなので、それが一瞬見えるのが避けられないのかどうか\n- 見えてしまう時間はどれくらいか（実測）\n- 消さずに済ませる案と、そもそも出さない案の得失\n\n## やること\n\n1. 上の関数を読み、本文が「出る → 消える」に至る経路を列挙する\n2. `TSUKUMO_DRIVER=fake` と `test/fixture/fake-session.json` で**再現する場面を作り**、\n   出てから消えるまでの時間を測る（Playwright。`scripts/capture-view.ts` が手本）\n3. 経路ごとに「直すならどうするか」の案を挙げる\n4. 結果を `develop/direction.md` の `## エージェントのドラフト` に見出し付きで追記する\n\n## 完了条件\n\n- `develop/direction.md` の `## エージェントのドラフト` に、残る経路の一覧・再現の手順・\n  実測値・案が書かれている\n- 再現できなかった経路は「再現しなかった」と手順つきで書く（憶測で埋めない）\n- `bun run check` が通る（台本を足したなら、そのぶんも含めて）\n\n## 注意\n\n- **直さない。** ユーザーと相談してから\n- 実物の会話は使わない。台本は架空のものを書き足す\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`develop/direction.md` の `## エージェントのドラフト` に `### 本文が「出てから消える」経路の棚卸し（T-258 のあと。2026-09-21）` を追記（159行）。経路10本を一覧にし、主経路（実況が出てから tool-started で落ちる）は T-258 で閉じたこと、残る2本（(4) ターン途中の turn-finished で実況が露出し次のツールで消える、(5) ツールが続かない実況が露出してそのまま残る）を実測した: (4) は場面 narration-flash で露出 1197ms、(5) は場面 narration-stuck で出たまま消えない。再現していない経路（サブエージェントの result・復元と依頼の競合・limitTurnEntries）は手順つきで明記。案は (4) 4-a〜4-d、(5) 5-a〜5-d、(3) 3-a〜3-c を並べ、推奨は「まず切り分け、(5) なら案5-a、両方出るなら案4-a 1本」。台本に架空の narration-flash / narration-stuck を足した。`bun run check` 937 pass / 0 fail（着手前と同数。コードは変えていない）。"
   },
   {
     "id": "T-260",

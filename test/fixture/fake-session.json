@@ -796,6 +796,150 @@
           }
         }
       ]
+    },
+    {
+      "name": "narration-stuck",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "実況が本文に残る並びを見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 6000,
+          "event": {
+            "kind": "utterance",
+            "text": "さいしょに台本を読むね。"
+          }
+        },
+        {
+          "afterMs": 6100,
+          "event": {
+            "kind": "speech",
+            "text": "つぎに何をするかは、ここで言うぞ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 9000,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "つづいて "
+          }
+        },
+        {
+          "afterMs": 9600,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "`src/a.ts` を直すね。"
+          }
+        },
+        {
+          "afterMs": 10000,
+          "event": {
+            "kind": "utterance",
+            "text": "つづいて `src/a.ts` を直すね。"
+          }
+        },
+        {
+          "afterMs": 10500,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-stuck-1",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 11500,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-stuck-1",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 12500,
+          "event": {
+            "kind": "utterance",
+            "text": "## 実況が1件だけ本文に残る\n\nこれは架空の本文で、実物の会話ではない。**1つめの実況には `speak` しか続かなかった**ので、\n`keepOnlyInterimReports` の「ツールが続いた本文」に当たらず、2つめの本文が始まった瞬間に露出したまま残る\n（`docs/requirements.md` 4.2）。2つめの実況はツールが続いたので落ちている。"
+          }
+        },
+        {
+          "afterMs": 13000,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
+    },
+    {
+      "name": "narration-flash",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "実況が一瞬だけ本文に出る並びを見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 6000,
+          "event": {
+            "kind": "utterance",
+            "text": "さいしょに台本を読むね。"
+          }
+        },
+        {
+          "afterMs": 9000,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        },
+        {
+          "afterMs": 10200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-flash-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/script.json"
+            }
+          }
+        },
+        {
+          "afterMs": 10700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-flash-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 11700,
+          "event": {
+            "kind": "utterance",
+            "text": "## 実況が 1.2 秒だけ出て消える\n\nこれは架空の本文で、実物の会話ではない。**ターンの途中で `turn-finished` が挟まると**\n`hideUnsettledReport` が効かなくなり、1つめの実況が本文に出る。次の `tool-started` が届くと\n`keepOnlyInterimReports` が同じ本文を落とすので、出ていた時間はその2つの間隔ぶんだけになる。"
+          }
+        },
+        {
+          "afterMs": 12200,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
     }
   ]
 }
