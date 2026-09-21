@@ -19099,3 +19099,339 @@ T-277 が `lib/` と `utils/` の置く基準を決めて正典に書く。こ�
 - **`docs/` の編集は索引の罠に注意**（`CLAUDE.md`「ドキュメントを編集するときの罠」）。行頭を
   含めて位置を特定する
 - 会話の実物をテストや `evidence` に使わない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-287
+
+**タスク**: 質問の箱の選択肢をアルファベット順に並べる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/shared/question.ts に sortQuestionOptions（ラベルの localeCompare、ロケールは "ja" 固定。自由入力「その他」は並べ替えに混ぜず末尾）を足し、pending-answer.tsx / question-record.tsx / pending-question.tsx の3箇所から呼ぶようにした。docs/requirements.md 4.2 に規則を1文追加（grep -c '^#\{2,3\} ' は前後とも 27）。bun run check 1032 pass / 0 fail / 91 files（着手前 1023 → +9）。目視は macOS の Chromium（capture-catalog.ts の fake driver、1400x900 と 720x900）で question-preview（箱とメインビューの比較の面が同じ並び: preview が無い案→図の案→注意つきの案→表の案）、question-pair（2問中1問目、道具A→B→C、自由入力は末尾）、question-multi（複数選択のチェックが A案→B案→C案）を確認。ロケール省略だと Bun は en-US・ブラウザは ja に解決されて漢字の並びが食い違うのを目視で見つけ、"ja" 固定とその回帰テストを足した。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「質問の並びがアルファベット順ではないときがある。上から順に
+アルファベット順で並べてほしい」。同日の確認で、指しているのは **`AskUserQuestion` の質問の箱**
+だと分かった（`/` コマンド補完のほうは既にアルファベット順）。
+
+いまは `question.options` を**モデルが送ってきた順のまま** `map` で描いている
+（`src/browser/features/dispatch/pending-answer.tsx` の `QuestionCard`）。並べ替えは無い。
+メインビューに残る記録の側（`src/browser/features/main-view/question-record.tsx` の
+`question-options`）も送られた順のまま。
+
+前例として `/` コマンド補完は**ブラウザ側で**並べ替えている
+（`src/browser/features/dispatch/command-suggestions.tsx` の `byName`。サーバは SDK の並びを
+そのまま返す）。`docs/requirements.md` 4.2 の414〜430行が質問の箱の正典。
+
+## 決まっていること（蒸し返さない）
+
+- 並べ替えるのは**選択肢の並び**。質問そのものは1問ずつ出す形（「N問中M問目」）なので
+  「上から順」が当たらず、送られた順のまま
+- 並べ替えは**ブラウザ側**で行う（`/` 補完と同じ立場。サーバは SDK の並びをそのまま渡す）
+
+## 解くべき論点
+
+- 自由入力（「その他」）の位置。いまはモデルが `その他` を選択肢に含めてきたときはその位置、
+  含めてこなければ末尾（`QuestionCard` の `hasFreeTextOption`）。**並べ替えに混ぜるか末尾に
+  固定するか**
+- 比較の仕方。`command-suggestions.tsx` の `byName` は素の `<` 比較だが、選択肢のラベルは日本語が
+  普通なので `localeCompare`（`src/server/adapter/character-pack.ts` 256行の前例）のほうが合うか
+  を決める
+- 記録の側（`question-record.tsx`）も同じ順にするか。**答えとラベルの突き合わせはラベル文字列で
+  行っている**（同ファイル40行）ので、並べ替えても壊れないことを確かめる
+
+## やること
+
+1. 選択肢の並べ替えを純粋関数として切り出し、`pending-answer.tsx` と `question-record.tsx` の
+   両方から使えるようにする（置き場所は `src/browser/lib/` か `src/shared/question.ts`。
+   どちらにするかは呼ぶ側の層で決める）
+2. `test/browser/features/dispatch/`（無ければ新規）に、送られた順がアルファベット順でない選択肢が
+   上から順に並ぶテストと、選んだラベルが `labels[i]` に正しく入るテストを足す
+3. `docs/requirements.md` 4.2 の質問の箱の節（414〜430行付近）に並べ替えの規則を1行足す
+4. 目視で1問・複数問・複数選択の3つを確かめる
+
+## 完了条件
+
+- `bun run check` が通る
+- 送られた順がアルファベット順でない選択肢が上から順に並ぶテストがある
+- 選んだ答えが `labels[i]` の並び（`src/shared/pending-ask.ts` の契約）を崩さない
+- `docs/requirements.md` 4.2 に並べ替えの規則が書かれている
+- `grep -c '^#\{2,3\} ' docs/requirements.md` の値が編集の前後で変わらない
+
+## 注意
+
+- **ユーザーの言い方は「質問の並び」だった。** 質問そのものの順も並べ替えたいという意図だった
+  場合は追加の指示を待つ（このタスクでは選択肢だけを直す）
+- 目視確認で tsukumo を起こすので、T-279 / T-281 / T-282 / T-285 と並行させない
+
+## T-288
+
+**タスク**: 行頭マーカー（speechMarker）の経路を撤去する
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/shared/utterance.ts と test/shared/utterance.test.ts をファイルごと削除し、session-state.ts の withMarkerFallback（settleUtterance は partialUtterance をそのまま detail へ積むだけに）、character.ts / character-definition.ts の speechMarker、characters/*/character.json の3件と characters/README.md を撤去。grep -rn 'speechMarker|splitUtterance' src test characters は空。docs/requirements.md 4.2 を「撤去した」に直し、追随漏れだった docs/design.md 440行・docs/glossary.md の3箇所（speak の注記・セリフの注記・キャラクターパックの注記）・docs/architecture.md 346行（過去の判断に「2026-09-21 に撤去した」の注記）も直した。grep -c '^#\{2,3\} ' は requirements 27 / design 50 / glossary 56 / architecture 10 で前後とも不変。bun run check 1019 pass / 0 fail / 90 files（着手前 1032 / 91 → utterance.test.ts の9件と session-state.test.ts のマーカー専用4件を削除して -13）。「speak を呼ばないターンは前のセリフのまま」との矛盾は無し: 4.2 は 2026-09-16 に「request で吹き出しを空にしてプレースホルダー」へ変わっており、かつ withMarkerFallback はマーカー一致行が無ければ speeches に触れない no-op だった。目視は macOS の Chromium（capture-catalog.ts の fake driver、1400x900 / 720x900）で report の場面を撮り、本文がレポートとしてメインビューに出て吹き出しが3件並ぶことを確認。
+
+## 背景
+
+`develop/direction.md` の `## エージェントのドラフト` の1件目。2026-09-21 にユーザーの承認を得た。
+
+`docs/requirements.md` 286〜290行に「**行頭のマーカーの経路は撤去する**（2026-09-21 決定。実装は
+別タスク）」と結論が書いてある。根拠は「同梱のどの `persona.md` もマーカーを使えと書いていない＝
+この経路は発火していない」。マーカーの値は既に `character.json` の `speechMarker` から来ている。
+
+経路の実体:
+
+- `src/shared/utterance.ts`（ファイルごと。`splitUtterance` / `classifyLines` / `extractSpeech` /
+  `stripSpeechMarker`）
+- `src/shared/session-state.ts` の `withMarkerFallback`（446〜480行付近）と、そこを呼ぶ
+  `settleUtterance`（430行付近）。386行の `speechMarker` の受け渡し
+- `src/shared/character.ts` 45〜46行・117行、`src/shared/character-definition.ts` 33行・133行
+- `characters/local/character.json` 5行・`characters/tsukumo/character.json` 6行・
+  `characters/tsukumo-spirit/character.json` 6行 の `speechMarker`
+- `characters/README.md` 81行・114行
+- `test/shared/utterance.test.ts`（ファイルごと）、`test/shared/session-state.test.ts` /
+  `character.test.ts` / `character-definition.test.ts` のマーカー関連のケース
+
+## 解くべき論点
+
+- `withMarkerFallback` を消すと、**`speak` を1度も呼ばなかったターンは吹き出しが前のセリフのまま**
+  になる。それが `docs/requirements.md` 4.2「吹き出しは直前のセリフを出し続ける」と矛盾しないことを
+  確かめる（**矛盾する・消すと本文が記録へ積まれなくなるなら、消さずに理由を `evidence` に書いて
+  閉じる**）
+- `settleUtterance` は `withMarkerFallback` の戻りから `partialUtterance` を受け取って記録へ積む。
+  **本文が記録へ積まれる道が細らないこと**をテストで押さえる
+
+## やること
+
+1. 上の一覧のコードとテストを消す
+2. `characters/*/character.json` から `speechMarker` を消し、`characters/README.md` の説明を消す
+3. `docs/requirements.md` 286〜290行を「撤去した」の形に直す（「実装は別タスク」を消す）
+4. `docs/design.md` の `speechMarker` の記述（738行・745行）を現状に合わせる。**1315行の段8の表は
+   過去の段の記録なので直さない**
+5. `grep -rn "speechMarker\|splitUtterance" src test characters` が空になることを確かめる
+
+## 完了条件
+
+- `bun run check` が通る
+- `grep -rn "speechMarker\|splitUtterance" src test characters` が空
+- `docs/requirements.md` 4.2 に「撤去する（実装は別タスク）」が残っていない
+- `grep -c '^#\{2,3\} ' docs/requirements.md` の値が編集の前後で変わらない
+
+## 注意
+
+- **ホームのパック（`~/.tsukumo/characters/tsukumo/character.json`）にも `speechMarker` がある**が、
+  定義の読み取りから消えれば無視されるだけなので触らない（利用者の領域）
+- **T-272（`docs/design.md` の経緯を history へ移す）と同じファイルを触る。** 並行させない
+  （どちらが先でもよい）
+
+## T-289
+
+**タスク**: glossary の output style の「SDK で効くかは未確認」を現状に直す
+
+**difficulty**: haiku / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`docs/glossary.md` の `### output style` の注記を、「**SDK で効くかは未確認**。効かないときは `systemPrompt` の preset に中身を足す形に倒す」から「**人格は毎ターン `systemPrompt` の append として渡っている**（`src/server/adapter/sdk-driver.ts` が `{ type: "preset", preset: "claude_code", append }` を組む）。2026-09-11 のスパイクで確かめてあり、未決ではない」に直した。裏は実物で取った——`sdk-driver.ts:195` に `systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend }`、`session-start.ts` が `buildSystemPromptAppend` で組んでいる。サブエージェントの初稿が「Claude SDK に渡される」と書いていたが、**リポジトリの語は「Agent SDK」でこの1箇所だけの言い方**だったので、呼び名を出さず参照先で示す形に直した。`grep -n "効くかは未確認" docs/glossary.md` は空。節数は前後とも 55。**作業ツリーが別セッションの作業中で `bun run check` 全体は相手の未追跡ファイルの lint で落ちる**ため、`bunx oxfmt docs/glossary.md --check`（通る）と `test/architecture.test.ts`（9 tests / 0 fail）で確かめた。
+
+## 背景
+
+`develop/direction.md` の `## エージェントのドラフト` の2件目。2026-09-21 にユーザーの承認を得た。
+
+`docs/glossary.md` の `### output style` 節（454〜455行）に「**SDK で効くかは未確認**
+（`docs/requirements.md`「7. 未決事項」）。効かないときは `systemPrompt` の preset に中身を足す形に
+倒す」という注記がある。**この未確認は 2026-09-11 のスパイクで解消していて**、
+`docs/requirements.md` の7章（未決事項）に残っているのはランタイムの1件だけで、output style の
+項目は無い。
+
+## やること
+
+1. `docs/glossary.md` 454〜455行の注記を、いまの事実（人格は `systemPrompt` の append として毎ターン
+   効いている）に1行で直す
+2. 同じ節の他の注記（450〜453行）と食い違わないことを確かめる
+
+## 完了条件
+
+- `grep -n "効くかは未確認" docs/glossary.md` が空
+- `grep -c '^#\{2,3\} ' docs/glossary.md` の値が編集の前後で変わらない
+- `bun run check` が通る
+
+## 注意
+
+- 直すのはこの1節だけ。`docs/requirements.md` 7章には手を出さない（すでに項目が無い）
+
+## T-291
+
+**タスク**: bun run dev を、組み立ててから起動するようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+package.json の dev を `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` にし、CLAUDE.md / README.md 110行 / docs/design.md 11章の2箇所 / docs/coding-standards.md 511行を追随（T-279 の決定は残した）。bun run check 1019 pass / 0 fail / 91 files、oxfmt 270 files。src/browser/main.tsx を touch して dist を古くした状態から TSUKUMO_OPEN_VIEW=0 bun run dev を起こすと dist/browser/main.js の mtime が 21:09:24 → 21:09:49 へ更新され「ソースのほうが新しい」警告は出ず（子プロセスは kill 済み）、build 単体でも main.js が main.tsx より 0.21 秒新しくなることを再確認。start の文字列は無変更、grep -c '^#\{2,3\} ' docs/design.md は前後とも 50。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「dev のときは build してから起動するように package.json に記載する
+のが良さそう?」。
+
+T-279 で起動時の `bun build` をやめたため、`src/main.ts` の `run()` は `readUiBundle()`
+（`src/server/adapter/bundle.ts`）で `dist/browser/` を読むだけになっている。**`bun run dev` も
+同じ経路を通る**ので、成果物が古ければ stderr に1行出したうえで古い画面を配る。
+
+`src/server/adapter/ui-rebuild.ts` の `watchUiSource()` は**呼ばれた時点では組み立てない**
+（「起動時のぶんは呼び出し側がすでに持っている」というコメントのとおり）。最初の保存まで
+組み立て直しは走らないので、`dev` には成果物を最新化する口が無い。
+
+とくに `src/shared/` だけが古いときは、見張りが `src/browser/` しか見ないので
+**`src/browser/` 側を保存するまで自然には直らない**。
+
+## 決まっていること（蒸し返さない）
+
+- `package.json` の `dev` を `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` にする
+  （2026-09-21 にユーザーが選択）
+- **`start` は変えない**。普段使いの起動に組み立てを混ぜない、という T-279 の判断
+  （`docs/design.md` 11章「作る口と読む口を分ける」）をそのまま残す
+- 組み立ての所要は実測 0.04〜0.12 秒（2.6MB の `main.js` を毎回書き直しても）。遅延を理由に
+  この形を避けない
+- 副作用として **`src/browser/` が壊れた状態では `dev` が起動しなくなる**ことを受け入れる
+  （いまは前の版で起動できる）。`&&` を `;` に緩めない
+
+## やること
+
+1. `package.json` の `dev` スクリプトを上の形にする
+2. `CLAUDE.md`「よく使うコマンド」の `dev` の行と `README.md` 110行の説明を、
+   「起動の前に組み立てる」形に直す
+3. `docs/design.md` 11章（1234行あたりの「作るのは `bun run build` と `bun run dev` の見張りの
+   2つ」と 1282行の `dev` の定義）を新しい形に合わせる。**T-279 の決定は消さず、いつ何を
+   足したかを1行で残す**
+4. `docs/coding-standards.md` 511行の「起動の経路には残っていない」が、`dev` の前置きと
+   矛盾して読めないか確かめる（矛盾するなら1行添える）
+
+## 完了条件
+
+- `bun run check` が通る
+- `src/browser/` のファイルを1つ `touch` して `dist/browser/` を古くした状態から
+  `TSUKUMO_OPEN_VIEW=0 bun run dev` を起こすと、**`dist/browser/main.js` の mtime が起動時刻へ
+  更新され**、`src/main.ts` の「ソースのほうが新しい」警告が出ない（確かめた手順と mtime を
+  `evidence` に書く。URL の行が出たらプロセスは落としてよい）
+- `bun run start` の挙動は変わっていない（`package.json` の `start` が編集前と同じ文字列）
+- `grep -c '^#\{2,3\} ' docs/design.md` の値が編集の前後で変わらない
+
+## 注意
+
+- **確認で tsukumo を起こす**ので、目視確認が要るタスク（T-281 / T-282 / T-285 など）と
+  並行させない（`~/.tsukumo/state.json` を共有するため。`CLAUDE.md`「タスク運用」）
+- `dev` を起こすと**本物の claude が子プロセスで上がる**。確認が済んだら確実に落とす
+
+## T-292
+
+**タスク**: 雑談の逐語の読み戻しに日付の見出しを入れる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過。テスト 1019 pass / 90 files → 1020 pass / 90 files（0 fail, 2032 expect）。test/server/core/chat-memory-prompt.test.ts で2日ぶん・1日ぶんの見出しをそれぞれ検査（架空の文面）。grep -c '^#\{2,3\} ' docs/requirements.md は編集の前後とも 27。
+
+## 背景
+
+エージェントのドラフト（2026-09-21 の雑談から。ユーザー承認済み）:
+「いまキャラクターは『今日か今日でないか』しか区別できない。読み戻しに日付の見出しを入れ、
+『昨日の話だけど』が通じる形にする。」
+
+`src/server/core/chat-memory-prompt.ts` の `recentPart()` は、窓の**最初と最後の日付を
+`範囲: <日付> 〜 <日付>` の1行**にまとめ、あとは `利用者: …` / `あなた: …` を改行で並べるだけ。
+1件ごとの日付は `ChatArchiveRecentEntry.date`（`src/server/core/session-driver.ts`）として
+すでに手元にあるが、**行には出していない**。そのため逐語を読んだモデルは、どの発言がいつの
+ものか分けられない。
+
+読み戻しの量は `CHAT_RECENT_READBACK_BYTES`（`src/shared/chat-log.ts` 67行）で、T-286 で
+64 KiB へ上げる予定。**窓が広がるほど日付の区別が要る**。
+
+## 解くべき論点
+
+- 見出しの形（`### 2026-09-20` / `— 2026-09-20 —` など）と、`CHAT_RECENT_PREFACE` の
+  前置きにどう説明を足すか。**日付の見出しは会話ではない**ことが読み手（モデル）に分かる形にする
+- `範囲:` の1行を残すか、日ごとの見出しで置き換えるか
+- 見出しのぶんだけ `systemPrompt` が増える。1日あたり十数バイトで、`readRecent` の
+  `limitBytes` の数え方（文面のバイト数だけを数えている）を変える必要があるか
+
+## やること
+
+1. `recentPart()` に、日付が変わるところで見出しを挟む処理を足す（`date` が同じ間は続けて並べる）
+2. `CHAT_RECENT_PREFACE` の文面を、日付の見出しが入ることに合わせて直す
+3. `test/server/core/chat-memory-prompt.test.ts` に、2日ぶんの逐語を渡したとき見出しが
+   日付ごとに1つずつ入ることのテストを足す（**架空の文面で書く**）
+4. `docs/requirements.md` 4.9 の「渡し方」の記述を、日付の見出しが入る形に直す
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を着手前と並べて `evidence` に書く）
+- 2日ぶんの逐語を渡したときに、日付ごとの見出しがそれぞれ1回だけ入る（テストで示す）
+- 1日ぶんしか無いときに見出しが二重にならない（`範囲:` と重複しない形になっている）
+- `grep -c '^#\{2,3\} ' docs/requirements.md` の値が編集の前後で変わらない
+
+## 注意
+
+- **会話の実物をテストにも `evidence` にも使わない**（`docs/coding-standards.md`
+  「会話内容の扱い」が最優先）
+- `chat-memory-prompt.ts` は**中身を読んで載せる・載せないを決めない**という線を持っている。
+  日付で並べ替えたり、日付を見て落としたりしない（並べるのは `readRecent` が返した順のまま）
+- T-286（読み戻しを 64 KiB にする）と `docs/requirements.md` 4.9 で近い場所を触る。
+  どちらかが `doing` のときは並行させない
+
+## T-296
+
+**タスク**: タスク一覧の表の doing の文字をアクセント色にする
+
+**difficulty**: haiku / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+task-board.tsx の TaskRow の status セルに、task-list.tsx の taskStatusClass（export に変更）を当てた。判定は1箇所のまま（sidebar.tsx が taskListTitle を同じ形で使っている前例に合わせた）。CSS は既存の .task-status-doing（color: var(--accent)）がそのまま効くので追加なし。ID・要約・着手列・行の class は触っていない。test/browser/features/sidebar/task-board.test.tsx に「doing の status は差し色の class を持つ」を1件追加。bun run check 1021 pass / 0 fail / 90 files（着手前 1020 → +1）。目視は macOS の Chromium（capture-catalog.ts の fake driver、--only task-board）で、1400x900 の表で T-296 の doing だけがアクセント色になり、同じ行の ID・要約は既定の文字色、着手列の READY は --state-ok の緑、done の行は薄いままであることを確認。720x900 の積み替わる版は T-296 の行がモーダル内のスクロールの下で写らなかったが、同じ要素・同じ class で色の規則は media query の外にある。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「doing の場合、タスク一覧のタスクIDと要約もアクセント色に、
+一覧を見るも着手以外はアクセント色がいいかな」。**同日、ユーザーが「少し過剰だったかも。
+一覧を見る、の doing の文字列をアクセントカラーにするだけでいいかも」と範囲を絞った。**
+
+絞れる理由: **サイドバーの一覧の `doing` は既にアクセント色**（`src/browser/features/sidebar/
+task-list.tsx` の `taskStatusClass` が `.task-status-doing` を当て、`sidebar.module.css` が
+`color: var(--accent)` にしている）。色が付いていないのは「一覧を見る」で開く表のほうだけで、
+`src/browser/features/sidebar/task-board.tsx` の `TaskRow` は status を素の
+`<td>{props.task.status ?? "—"}</td>` で出している（行に付く class は `done` のときの
+`.task-done` だけ）。
+
+## やること
+
+1. `task-board.tsx` の `TaskRow` の status セルの文字に、一覧と同じ状態別の class を当てる
+   （`task-list.tsx` の `taskStatusClass` と同じ対応。**判定を2箇所に書かない**）
+2. 表の `doing` の文字が `color: var(--accent)` になるようにする。必要なら
+   `sidebar.module.css` のセレクタを表からも効く形に広げる
+
+## やらないこと（2026-09-21 にユーザーが降ろした）
+
+- **タスクIDと要約は染めない。** 一覧も表も既定の文字色のまま
+- **行ごと染めない。** `.task-board-row.task-doing` のような行の class は足さない
+- **着手列（READY / 待ち: …）は触らない。** `--state-ok` / `--state-warn` のまま
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視: 「一覧を見る」で開く表で、`doing` の行の status の文字がアクセント色になっている
+  （どの端末・解像度で見たかを `evidence` に書く）
+- 同じ表のID・要約・着手列の見え方が変わっていない
+
+## 注意
+
+- 新しい色のつまみ（トークン）を作らない。`src/browser/styles/theme.css` にあるものだけ使う
+- 目視のために `develop/tasks.json` の1件を一時的に `doing` にしたら、確認後に必ず戻す。
+  **他のセッションの未コミット変更を巻き込まない**
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
