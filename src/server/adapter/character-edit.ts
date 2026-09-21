@@ -43,7 +43,7 @@ import {
   parseCharacterDefinition,
 } from "../../shared/character-definition.ts"
 import { type CharacterCreateCommand, type CharacterEditCommand } from "../../shared/command.ts"
-import { type Expression, type RequiredExpression } from "../../shared/expression.ts"
+import { type Expression, EXPRESSIONS, type RequiredExpression } from "../../shared/expression.ts"
 import { parsePortraitImage, portraitFileName } from "../../shared/portrait-image.ts"
 import {
   type CharacterPack,
@@ -54,11 +54,18 @@ import {
   readCharacterPack,
 } from "./character-pack.ts"
 
+/** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1）。 */
+const EXTRA_IMAGE_FILES_PER_PACK = 2
+
 /**
- * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**背景もこの数に入る**
- * （表情6 + ミニ立ち絵1 + 背景1 = 8 でちょうど収まるので、据え置く。13.8）。
+ * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**立ち絵・ミニ立ち絵・背景を
+ * 全部入れた数**で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1。
+ *
+ * **数を直に書かないのは、表情を足したときに黙って足りなくなるから。** 2026-09-21 に表情が
+ * 6つから8つに増えたあとも 8 のまま据え置かれていて、立ち絵を全部そろえたパックでは背景の
+ * 差し替えだけが弾かれていた（13.8）。
  */
-export const MAX_IMAGE_FILES_PER_PACK = 8
+export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_PER_PACK
 
 /**
  * 立ち絵1枚・差し色1色・背景1枚を書き込み、**書けたパックを読み直して返す**（呼び出し側はそれを

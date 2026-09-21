@@ -17,6 +17,7 @@ import {
   type CharacterCreateCommand,
   type CharacterEditCommand,
 } from "../../../src/shared/command.ts"
+import { EXPRESSIONS } from "../../../src/shared/expression.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
 const DEFINITION_JSON = JSON.stringify({
@@ -50,6 +51,26 @@ function writeBundledPack(name: string): string {
   for (const fileName of ["default.svg", "thinking.svg", "proud.svg"]) {
     writeFileSync(join(packDir, fileName), PLAUSIBLE_SVG)
   }
+  return packDir
+}
+
+/**
+ * 立ち絵を全表情そろえ、ミニ立ち絵も持つパックを置く（実際に使われているパックと同じ形）。
+ * **背景はまだ無い**ので、ここに背景を1枚足せることが画像の数の上限の下限になる。
+ */
+function writeFullPack(name: string): string {
+  const packDir = join(dir, "bundled", name)
+  mkdirSync(packDir, { recursive: true })
+  const portraits = Object.fromEntries(
+    EXPRESSIONS.map((expression) => [expression, `${expression}.png`]),
+  )
+  for (const fileName of [...Object.values(portraits), "mini.png"]) {
+    writeFileSync(join(packDir, fileName), "x")
+  }
+  writeFileSync(
+    join(packDir, "character.json"),
+    JSON.stringify({ name, portraits, mini: "mini.png" }),
+  )
   return packDir
 }
 
@@ -247,6 +268,19 @@ describe("editCharacterPack（背景）", () => {
     expect(existsSync(join(home(), "tsukumo", "background.png"))).toBe(true)
     // 同梱側は触っていない。
     expect(readCharacterPack(bundled).definition?.background).toBeUndefined()
+  })
+
+  it("立ち絵を全表情そろえミニ立ち絵も持つパックでも、背景を差せる", () => {
+    const bundled = writeFullPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      { type: "set-background", commandId: "c-1", image: PNG_DATA_URL },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.background?.image).toBe("background.png")
   })
 
   it("形式を変えて差し替えると、参照が外れた古い背景は残らない", () => {
