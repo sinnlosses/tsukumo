@@ -17,9 +17,9 @@
     "dependencies": ["T-263", "T-264"],
     "summary": "カタログの撮り方と class セレクタの落とし穴を docs へ追従する",
     "task": "## 背景\n\nT-263 で `scripts/capture-catalog.ts` が「撮る前に操作を当ててから撮る」形になり、T-264 で\n台本の記法の見本が厚くなる。**`docs/architecture.md`「手で確かめること」がそれを知らない。**\n\n提案書 `docs/research/ui-catalog.md`（2026-09-21）が挙げた追従の項目:\n\n- 操作を当ててから撮ること\n- 撮った画像に**実データのタスク一覧が写る**こと（タスク一覧のモーダルを撮るようになるため。\n  画像を共有するときの注意）\n\n## やること\n\n1. `docs/architecture.md`「手で確かめること」に上の2点を足す\n2. T-263 / T-264 の結果と食い違っていないか確かめる（撮れる場面の一覧・出力先）\n3. `docs/research/ui-catalog.md` に「採った / 採らなかった」の結論が反映されているか見る。\n   提案書は提案のままでよいので、**結論だけ1行足す**（正典は `docs/architecture.md` 側）\n\n## 完了条件\n\n- `bun run check` が通る\n- `docs/architecture.md` の節の数が編集の前後で変わっていない\n  （`grep -c '^#\\{2,3\\} ' docs/architecture.md`）\n- 「手で確かめること」を読んだだけで、いまのカタログの撮り方が再現できる\n\n## 注意\n\n- `docs/` の各ファイルは冒頭に「節の索引」を持つ。**行頭を含めて位置を特定する**\n  （`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- 正典を二重に書かない（撮り方の正典は `docs/architecture.md`、提案の経緯は\n  `docs/research/ui-catalog.md`）\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`docs/architecture.md`「手で確かめること」の `capture-catalog.ts` の段落を書き直した: `--only` が**場面の名前ではなく件の名前**であること（例を `--only notation-figure` に差し替え、一覧はオプション無しで実行すると出る）、**件によっては撮る前に操作を当てる**こと（領域の内側を送る・押す・打つ・`location.hash` の4種だけ）、**タスク一覧のモーダルを撮る件には `develop/tasks.json` の実データが写る**ので画像を他所へ共有しないこと。旧文の「画像そのものは共有してよい」という断定は正しくなくなっていたので削った。`capture-view.ts` の `[class*=…]` の注意も同じ段落に合流させた（同じ道具の使い方を散らさない）。`docs/research/ui-catalog.md` には結論の1行だけを足した（正典は architecture 側）。`bun run check` 952 pass / 0 fail（着手前と同数）。節数は `docs/architecture.md` 10 で前後不変。"
   },
   {
     "id": "T-267",

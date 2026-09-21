@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-21 カタログの撮り方を docs へ追従させた（T-265）
+
+`docs/architecture.md`「手で確かめること」に、`--only` が件の名前であること・撮る前に当てる4種の操作・**撮った画像に実データのタスク一覧が写る**ことを書いた。
+
 ### 2026-09-21 台本に描かれていなかった記法の class を足した（T-264）
 
 `notation` の場面に `note` / `note-ng` / `note-favor` / `badge-warn` / `badge-ng` / `stats` / `stat` を架空の文面で足し、上限に触れて外した `note-warn` は `report` の場面へ移した。これで 12個の class がすべてどこかの場面で描かれる。
