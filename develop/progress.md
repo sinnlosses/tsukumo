@@ -79,14 +79,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `src/shared/utterance.ts` と `session-state.ts` の `withMarkerFallback` を消し、キャラクターパックの `speechMarker` も落とした。実運用ではマーカー一致行が無く no-op だったので、吹き出しの見え方は変わらない。`docs/requirements.md` 4.2 のほか、追随漏れだった `docs/design.md` / `docs/glossary.md` の3箇所 / `docs/architecture.md` の過去の判断も直した。
 
-### 2026-09-21 質問の箱の選択肢をラベルの辞書順に並べるようにした（T-287）
-
-`src/shared/question.ts` の `sortQuestionOptions` を入力欄の箱・メインビューの記録・比較の面の3箇所から呼び、モデルが送ってきた順ではなくラベルの辞書順（自由入力「その他」は末尾に固定）で出すようにした。比較のロケールを省くと Bun（`en-US`）とブラウザ（`ja`）で漢字の並びが食い違うことが目視で分かったので、`"ja"` に固定した。
-
-### 2026-09-21 bun run dev を組み立ててから起動するようにした（T-291）
-
-`package.json` の `dev` を `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` にし、`src/shared/` だけが古いときに見張りが拾えない穴を埋めた。`start` は T-279 の判断どおり組み立てを混ぜないまま残した。
-
 ## 未解決
 
 - **作業ツリーを別のセッションと共有していると `bun run check` 全体が相手の作業中の変更で落ちる**（2026-09-21 に T-286 で実際に起きた。相手の未追跡ファイルの lint エラーで止まる）。**自分のぶんだけを確かめる手が要る**——HEAD から一時 worktree を切って自分が触ったファイルだけを載せて回すのが確実で、軽く済ませるなら触ったファイルの lint と整形 ＋ 関係するテストファイルだけを名指しで回す

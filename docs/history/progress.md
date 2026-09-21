@@ -1,5 +1,13 @@
 # 進捗のアーカイブ
 
+### 2026-09-21 質問の箱の選択肢をラベルの辞書順に並べるようにした（T-287）
+
+`src/shared/question.ts` の `sortQuestionOptions` を入力欄の箱・メインビューの記録・比較の面の3箇所から呼び、モデルが送ってきた順ではなくラベルの辞書順（自由入力「その他」は末尾に固定）で出すようにした。比較のロケールを省くと Bun（`en-US`）とブラウザ（`ja`）で漢字の並びが食い違うことが目視で分かったので、`"ja"` に固定した。
+
+### 2026-09-21 bun run dev を組み立ててから起動するようにした（T-291）
+
+`package.json` の `dev` を `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` にし、`src/shared/` だけが古いときに見張りが拾えない穴を埋めた。`start` は T-279 の判断どおり組み立てを混ぜないまま残した。
+
 ### 2026-09-21 glossary の output style の「SDK で効くかは未確認」を現状に直した（T-289）
 
 人格は毎ターン `systemPrompt` の append として渡っていることを `sdk-driver.ts` で裏を取ってから書いた。
