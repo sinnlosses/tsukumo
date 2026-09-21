@@ -73,10 +73,10 @@ export function Turn(props: TurnProps): ReactElement {
  * 小さなラベルを載せて地と枠を変える（`.main-step.is-interim`。判定そのものは
  * `src/shared/main-view.ts` が済ませてある）。
  *
- * **最終レポート（`step.final`）は地を1段上げ（`.main-step.is-final`）、ラベルを載せる。**
- * ラベルを出すのは `finalLabel` が立っているとき——**中間レポートのあるやり取りだけ**で、
- * 本文が1つしか無いやり取りでは「最終」が何も区別しない（条件は `src/shared/main-view.ts` の
- * `markFinalReport` が畳んである）。
+ * **最終レポート（`step.final`）は地を中間レポートと同じ ground にし（`.main-step.is-final`）、
+ * ラベルを載せる。** ラベルを出すのは `finalLabel` が立っているとき——**中間レポートの
+ * あるやり取りだけ**で、本文が1つしか無いやり取りでは「最終」が何も区別しない（条件は
+ * `src/shared/main-view.ts` の `markFinalReport` が畳んである）。
  *
  * **後ろに別のレポートが現れた中間レポート（`step.superseded`）は畳む。** 何件も開いたまま
  * 積まれると見通しが悪いため（2026-09-16 の指摘）。畳んだ分は `<details>` にするだけで

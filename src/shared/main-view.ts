@@ -78,7 +78,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  * 立つが、畳むかどうかの判定に使うのは中間レポートだけ。
  *
  * `final` は、その本文が**最終レポート**（そのやり取りで最後の、中間でない本文）かどうか
- * （`markFinalReport`）。地を1段上げる印（`.main-step.is-final`）で、書き上げる演出を掛ける
+ * （`markFinalReport`）。ラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける
  * 相手を選ぶのにも使う（`src/browser/features/main-view/turn.tsx`）。**ラベルを出すかどうかは
  * これだけでは決まらない**（`MainViewTurn.hasInterimReport` と組み合わせる）。
  *

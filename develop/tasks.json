@@ -17,9 +17,9 @@
     "dependencies": [],
     "summary": "最終レポートの地を、中間レポートと同じ ground に揃える",
     "task": "## 背景\n\nユーザーの指示（2026-09-21）「中間レポートと最終レポートで背景色は変えなくてよく、\n中間レポートと同じ背景色に統一したい」。\n\n`src/browser/features/main-view/main-view.module.css` で、ステップの地は3段になっている:\n中間（`.main-step.is-interim` → `var(--ground)`）・本文（`.main-step` → `var(--surface)`）・\n最終（`.main-step.is-final` → `var(--surface-raised)`）。これを中間と最終で同じ `var(--ground)` にする。\n\n`--surface-raised` は同じファイルの他の5か所（インラインコード・表の見出し行・カード・note ほか）でも\n使っているので、**トークンそのものと他の用途は触らない**。\n\n## 決まっていること（蒸し返さない）\n\n- 揃えるのは背景色だけ。中間レポートの破線の枠と、最終レポートの「最終レポート」ラベル\n  （中間レポートのあるやり取りだけに出る）は今のまま残す（ユーザー承認 2026-09-21）\n\n## やること\n\n1. `.main-step.is-final` の `background` を `var(--ground)` にする\n2. 同ファイルの `.is-interim` / `.is-final` のコメント（「中間（沈む）・本文（基準）・最終（浮く）の\n   3段」）を実態に合わせて書き直す\n3. `docs/design.md` 13.2 の該当記述（「地を `surface-raised` に上げる」と、`surface-raised` を使う\n   場所の一覧に最終レポートが入っているところ）を直す。\n   `grep -c '^#\\{2,4\\} ' docs/design.md` を編集の前後で取り、節の数が変わっていないことを確かめる\n4. `src/shared/main-view.ts` の `final` / 最終レポートの印を付ける処理は残す（ラベルの判定に要る）\n\n## 完了条件\n\n- `bun run check` が通る\n- `.main-step.is-final` の背景が `var(--ground)` になっている\n- 目視: 中間レポートと最終レポートが並ぶやり取りで、2つの地の色が同じに見え、中間だけが破線の枠で、\n  最終に「最終レポート」のラベルが載っている（どの端末・解像度で見たかを `evidence` に書く）\n- `docs/design.md` の節の数が編集の前後で変わっていない\n\n## 注意\n\n- `--surface-raised` のトークン定義（`src/browser/styles/theme.css`）と、他の5か所の用途は触らない\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "main-view.module.css の .main-step.is-final を var(--ground) にし、コメント（同ファイル / turn.tsx / src/shared/main-view.ts）と docs/design.md 13.2 を実態に合わせた。bun run check 1053 pass / 0 fail / 2101 assertions。docs/design.md の節数は編集前後とも 62。目視（macOS / Chrome / 1400x900、fake driver の一時的な場面を撮って revert）: 中間と最終の地の実効値がどちらも rgb(25,23,32)=#191720（--ground）で一致、中間だけ破線、最終に「最終レポート」ラベル。"
   },
   {
     "id": "T-298",
