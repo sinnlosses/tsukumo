@@ -17,7 +17,7 @@
 // キャラビューが持つ4つの動き（`features/character-view/` の `usePortraitMotion`）は
 // 再現していない。手触りを見てから詰める。
 
-import { useEffect, useRef, useState, type ReactElement } from "react"
+import { useEffect, useRef, useState, type MouseEvent, type ReactElement } from "react"
 
 import { resolveOutfitAccent, resolvePortraitUrl } from "../../../shared/character.ts"
 import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
@@ -51,6 +51,18 @@ const NUDGE_BLOCKED_TITLE = FRAME_ERROR_REASON.nudgeDuringTurn
  * 少し広めに取る。
  */
 const NEAR_BOTTOM_THRESHOLD_PX = 120
+
+/**
+ * 「押した」ではなく「ドラッグで文字を選んだ」とみなす、押し始めからの距離（px）。文字を1つ
+ * 選ぶだけでも1文字ぶん（本文の大きさなら十数px）は動くので、手のぶれ（数px）と混ざらない。
+ */
+const DRAG_THRESHOLD_PX = 4
+
+/** 押し始めた場所（ドラッグと押すの見分けに使う。{@link isSelectionDrag}）。 */
+type PressOrigin = {
+  readonly x: number
+  readonly y: number
+}
 
 export function ChatView(): ReactElement {
   const records = useSessionSelector((session) => session.state.records)
@@ -132,6 +144,9 @@ function ChatLog(props: {
   readonly onToggle: (index: number) => void
 }): ReactElement {
   const logRef = useRef<HTMLDivElement>(null)
+  // 押し始めた場所。**セリフの行は文字をドラッグで選べる**ので、選び終えて手を離したときの
+  // click と、押した click を、動いた距離で見分ける（{@link isSelectionDrag}）。
+  const pressOriginRef = useRef<PressOrigin | undefined>(undefined)
   // 利用者が下端付近を読んでいるかどうか。新着が来た「あと」に測ったのでは元の位置が
   // わからないので、スクロール操作のたびに更新しておく（初期値は true — まだ何も
   // 積まれていない・積まれたばかりの状態は下端に等しい）。
@@ -178,21 +193,43 @@ function ChatLog(props: {
           entry.speaker === "boundary" ? (
             <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
           ) : entry.speaker === "character" ? (
-            <button
-              type="button"
+            // **`<button>` ではなく `role="button"` の `<div>`**（2026-09-21）。ブラウザは
+            // `<button>` の中の文字をドラッグで掴ませず（`user-select` を何にしても選べないことを
+            // 実機の Chrome で確認した）、**セリフをコピーできなかった**。押せることは role と
+            // `aria-pressed` で表し、キーの受けだけ自前で足す（{@link isActivationKey}）。
+            <div
               // 並びは末尾に積むだけで、途中に差し込まれることも並べ替えもない。
               key={index}
               className={`${styles["chat-entry"]} ${styles["chat-entry-character"]}${
                 index === props.selectedIndex ? ` ${styles["is-selected"]}` : ""
               }`}
               data-speaker="character"
+              role="button"
+              tabIndex={0}
               aria-pressed={index === props.selectedIndex}
-              onClick={() => {
+              onMouseDown={(event) => {
+                pressOriginRef.current = { x: event.clientX, y: event.clientY }
+              }}
+              onClick={(event) => {
+                const origin = pressOriginRef.current
+                pressOriginRef.current = undefined
+                // **文字を選んだだけのときは遡らない**（選び終えて手を離すと click も飛ぶ）。
+                if (isSelectionDrag(origin, event)) {
+                  return
+                }
+                props.onToggle(index)
+              }}
+              onKeyDown={(event) => {
+                if (!isActivationKey(event.key)) {
+                  return
+                }
+                // Space はログを1画面送る既定の動作を持つので、押したことにする側で止める。
+                event.preventDefault()
                 props.onToggle(index)
               }}
             >
               {entry.text}
-            </button>
+            </div>
           ) : (
             // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
             // **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。
@@ -212,6 +249,34 @@ function ChatLog(props: {
       <NudgeButton />
     </div>
   )
+}
+
+/**
+ * その click が「押した」ではなく「文字をドラッグで選び終えた」ものか。**選び終えて手を離した
+ * 瞬間にも click は飛ぶ**ので、見分けないとコピーしようとするたびに立ち絵が遡ってしまう。
+ *
+ * 見るのは**押し始めてから動いた距離**だけ（{@link DRAG_THRESHOLD_PX}）。
+ * **いま選ばれている文字（`window.getSelection()`）は見ない** — 選んだ直後にその行を押すと、
+ * 選択が消えるのは手を離したあと（ブラウザが「選択を掴んで運ぶ」動きを待つため）なので、
+ * その回の click が丸ごと落ちて押せなくなる（2026-09-21、実機の Chrome で確認）。
+ *
+ * `detail === 0` はマウスから来ていない click（支援技術が送るもの）で、押し始めの場所を
+ * 持たないので、押したものとして扱う。
+ */
+function isSelectionDrag(origin: PressOrigin | undefined, event: MouseEvent<HTMLElement>): boolean {
+  if (origin === undefined || event.detail === 0) {
+    return false
+  }
+  return Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > DRAG_THRESHOLD_PX
+}
+
+/**
+ * 押したことにするキー（WAI-ARIA の button パターンと同じ Enter と Space）。
+ * **`<button>` と違って `role="button"` の要素にはブラウザが click を送らない**ので、
+ * キーボードで遡る道はここで自分で開ける。
+ */
+function isActivationKey(key: string): boolean {
+  return key === "Enter" || key === " "
 }
 
 /**

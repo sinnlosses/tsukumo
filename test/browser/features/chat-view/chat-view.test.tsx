@@ -49,7 +49,19 @@ function portraitExpression(): string | null | undefined {
   return document.querySelector("[data-expression]")?.getAttribute("data-expression")
 }
 
-/** ログの行。押せる行（キャラクターのセリフ）は `<button>` で出る。 */
+/**
+ * マウスで押す1回ぶん（押し始めから手を離すまで）。`moveX` だけ横に動かすと、
+ * **文字をドラッグで選んだ**ことになる（`chat-view.tsx` の `isSelectionDrag`）。
+ *
+ * 文字がほんとうに選べるかはテストでは見られない（DOM の実装では選択が起きない）ので、
+ * そちらは目視で確かめる（`docs/architecture.md`「手で確かめること」）。
+ */
+function pressWithMouse(entry: Element, moveX: number): void {
+  fireEvent.mouseDown(entry, { clientX: 20, clientY: 30 })
+  fireEvent.click(entry, { clientX: 20 + moveX, clientY: 30, detail: 1 })
+}
+
+/** ログの行。押せる行（キャラクターのセリフ）は `role="button"` の `<div>` で出る。 */
 function logEntries(): readonly Element[] {
   return [...document.querySelectorAll("[data-speaker]")]
 }
@@ -138,7 +150,7 @@ describe("ChatView", () => {
     const boundary = entries[1]
     expect(boundary?.tagName).toBe("HR")
     expect(boundary?.textContent).toBe("")
-    expect(boundary?.tagName).not.toBe("BUTTON")
+    expect(boundary?.getAttribute("role")).toBe(null)
   })
 })
 
@@ -164,10 +176,97 @@ describe("ChatView のセリフを遡る", () => {
     expect(firstSpeech.getAttribute("aria-pressed")).toBe("false")
   })
 
-  it("利用者の発言の行は押せない（ボタンにしない）", () => {
+  it("利用者の発言の行は押せない（押せるのはキャラクターのセリフだけ）", () => {
     renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER })
 
-    expect(logEntries().map((entry) => entry.tagName)).toEqual(["DIV", "BUTTON", "DIV", "BUTTON"])
+    const entries = logEntries()
+    // **どちらの話者も `<div>`**（`<button>` の中の文字はドラッグで掴めないため）。
+    expect(entries.map((entry) => entry.tagName)).toEqual(["DIV", "DIV", "DIV", "DIV"])
+    expect(entries.map((entry) => entry.getAttribute("role"))).toEqual([
+      null,
+      "button",
+      null,
+      "button",
+    ])
+  })
+
+  it("押せる行はキーボードで辿り着ける（tabindex を持つ）", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER })
+
+    expect(logEntries().map((entry) => entry.getAttribute("tabindex"))).toEqual([
+      null,
+      "0",
+      null,
+      "0",
+    ])
+  })
+
+  it("キーボード（Enter / Space）で遡る", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    // `role="button"` の `<div>` にはブラウザが click を送らないので、キーは自前で受ける。
+    fireEvent.keyDown(firstSpeech, { key: "Enter" })
+    expect(portraitExpression()).toBe("default")
+    expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
+
+    fireEvent.keyDown(firstSpeech, { key: " " })
+    expect(portraitExpression()).toBe("proud")
+    expect(firstSpeech.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  it("遡るキー以外は何も起こさない", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    fireEvent.keyDown(firstSpeech, { key: "a" })
+    fireEvent.keyDown(firstSpeech, { key: "ArrowDown" })
+
+    expect(portraitExpression()).toBe("proud")
+    expect(firstSpeech.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  it("マウスで押しても遡る（手が動いていないとき）", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    pressWithMouse(firstSpeech, 0)
+
+    expect(portraitExpression()).toBe("default")
+    expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
+  })
+
+  it("文字をドラッグで選んだだけでは遡らない（コピーしても立ち絵が動かない）", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    // 選び終えて手を離した瞬間にも click は飛ぶ。
+    pressWithMouse(firstSpeech, 120)
+
+    expect(portraitExpression()).toBe("proud")
+    expect(firstSpeech.getAttribute("aria-pressed")).toBe("false")
+  })
+
+  it("手が数pxぶれただけなら遡る（押したつもりを取りこぼさない）", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    pressWithMouse(firstSpeech, 3)
+
+    expect(portraitExpression()).toBe("default")
+    expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
+  })
+
+  it("マウスから来ていない click（detail 0）は、押し始めの場所に関わらず遡る", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    // 支援技術が送る click には押し始めが無い（直前のドラッグの場所を引きずらない）。
+    fireEvent.mouseDown(firstSpeech, { clientX: 20, clientY: 30 })
+    fireEvent.click(firstSpeech, { clientX: 0, clientY: 0, detail: 0 })
+
+    expect(portraitExpression()).toBe("default")
+    expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
   })
 
   it("遡っている最中に新しいセリフが来ても、選んだ表情のまま動かない", () => {
