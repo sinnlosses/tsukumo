@@ -55,6 +55,17 @@ export function chatLogEntries(records: readonly SessionRecord[]): readonly Chat
  */
 export const CHAT_COMPACT_THRESHOLD_BYTES = 32_768 satisfies number
 
+/**
+ * 雑談を起こし直すときに、アーカイブから**逐語のまま**読み戻す量（バイト）。数えるのは各行の
+ * 文面だけで、時刻・話者・表情は数えない。値の根拠は `docs/requirements.md` 4.9「直近の会話は
+ * 逐語のまま読み戻す」。
+ *
+ * **畳む閾値（{@link CHAT_COMPACT_THRESHOLD_BYTES}）とは別の値。** 前者は「いつ畳むか」、
+ * こちらは「新しいセッションへ逐語で何を渡すか」で、揃える理由が無い（隣に置いてあるのは、
+ * 同じ物差し＝文面のバイト数で測るものだから）。
+ */
+export const CHAT_RECENT_READBACK_BYTES = 16_384 satisfies number
+
 const textEncoder = new TextEncoder()
 
 /**

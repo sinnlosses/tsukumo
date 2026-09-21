@@ -20,9 +20,13 @@ import {
   startSession as startSdkSession,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
-import { takeChatSummaryPromptPart } from "./server/core/chat-summary-prompt.ts"
+import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
-import { DEFAULT_PERMISSION_MODE, type SessionDriver } from "./server/core/session-driver.ts"
+import {
+  type ChatArchive,
+  DEFAULT_PERMISSION_MODE,
+  type SessionDriver,
+} from "./server/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import {
   createSessionManager,
@@ -30,7 +34,7 @@ import {
   EVENT_BATCH_INTERVAL_MS,
 } from "./server/core/session-manager.ts"
 import { sessionRules } from "./server/core/session-rule.ts"
-import { CHAT_COMPACT_THRESHOLD_BYTES } from "./shared/chat-log.ts"
+import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECENT_READBACK_BYTES } from "./shared/chat-log.ts"
 import { type ClientCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
@@ -61,13 +65,17 @@ export type SessionStartOptions = {
 export function startSession(options: SessionStartOptions): RunningSession {
   const { config, character, script } = options
   const sessionId = randomUUID()
+  // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
+  // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
+  // 境界は増やさない（原則3）。
+  const chatArchive = createChatArchive()
   const manager = createSessionManager({
     now: Date.now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
-    // 雑談の会話のアーカイブ（`docs/design.md` 7章）。書き先の判定（雑談かどうか）は
-    // `session-manager` の `receive` が持つので、ここは口を渡すだけ。
-    chatArchive: createChatArchive(),
+    // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を
+    // 渡すだけ。
+    chatArchive,
   })
 
   manager.create({
@@ -82,7 +90,8 @@ export function startSession(options: SessionStartOptions): RunningSession {
         watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
         findPackSessionToResume(config, process.cwd(), pack.name, chat),
-      startDriver: (seed, onEvent) => startDriver(seed, script, config.fakeScene, onEvent),
+      startDriver: (seed, onEvent) =>
+        startDriver(seed, chatArchive, script, config.fakeScene, onEvent),
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, process.cwd(), expressionChoices(pack.definition)),
     }),
@@ -104,6 +113,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
  */
 function startDriver(
   seed: SessionLaunchSeed<CharacterPack>,
+  chatArchive: ChatArchive,
   script: FakeScript | undefined,
   scene: string | undefined,
   onEvent: (event: SessionEvent) => void,
@@ -116,13 +126,17 @@ function startDriver(
   // docs/design.md 7章）。読み書きはこの口を通してだけ起きるので、仕事のときは undefined の
   // まま渡し、`PostCompact` フックの登録も `/clear` の巻き戻しも sdk-driver.ts 側で起きない。
   const chatSummary = seed.chat ? createChatSummary(seed.pack.name) : undefined
-  // **載せるかどうかの判断は core（takeChatSummaryPromptPart）が閉じている**——ここは決まった
-  // 文面を規約の並びへ足すだけ。載せたときは呼んだ側で印が「渡し済み」に戻る。
-  const chatSummaryPart = takeChatSummaryPromptPart(seed.resume, chatSummary)
-  const rules = [
-    ...sessionRules(seed.chat),
-    ...(chatSummaryPart === undefined ? [] : [chatSummaryPart]),
-  ]
+  // **載せるかどうかの判断は core（takeChatMemoryPromptParts）が閉じている**——ここは決まった
+  // 文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**ので、
+  // 載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
+  const chatMemoryParts = takeChatMemoryPromptParts({
+    resume: seed.resume,
+    chatSummary,
+    chatArchive,
+    packName: seed.pack.name,
+    recentLimitBytes: CHAT_RECENT_READBACK_BYTES,
+  })
+  const rules = [...sessionRules(seed.chat), ...chatMemoryParts]
 
   return startSdkSession({
     cwd: process.cwd(),

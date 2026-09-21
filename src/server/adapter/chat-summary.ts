@@ -2,7 +2,7 @@
 // ここだけ（原則3。1ファイル = 1つの境界）。置き場は `~/.tsukumo/chat-summary/<パック名>.md`、
 // パックごとに1ファイルで `cwd` には依存させない。
 //
-// **何を載せるかの判断はここが決めない。** 判断は `src/server/core/chat-summary-prompt.ts` が
+// **何を載せるかの判断はここが決めない。** 判断は `src/server/core/chat-memory-prompt.ts` が
 // 持ち、ここが持つのは「どこに・どう書き、どう渡すか」——写しと印の読み書きだけ
 // （`docs/coding-standards.md`「会話内容の扱い」とぶつからないための切り分け。
 // `src/server/adapter/persona-memory.ts` と同じ形）。

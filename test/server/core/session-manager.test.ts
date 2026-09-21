@@ -25,7 +25,7 @@ const SESSION_ID = "s-test"
 const BATCH_MS = 5
 
 /** 雑談の会話のアーカイブを気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_CHAT_ARCHIVE: ChatArchive = { append: () => {} }
+const NOOP_CHAT_ARCHIVE: ChatArchive = { append: () => {}, readRecent: () => [] }
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
@@ -804,6 +804,8 @@ describe("createSessionManager", () => {
         append: (packName, entry) => {
           archiveCalls.push({ packName, entry })
         },
+        // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
+        readRecent: () => [],
       }
       const manager = createSessionManager({
         now: () => 1_000,

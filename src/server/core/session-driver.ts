@@ -53,7 +53,7 @@ export type PersonaMemory = {
  * **実装は `adapter` 側**（`src/server/adapter/chat-summary.ts`）で、ここにあるのは契約だけ。
  *
  * **中身を読んで判定する口は無い。** 載せるかどうかの判断は
- * `src/server/core/chat-summary-prompt.ts` が持ち、ここは「どこに・どう書き、どう渡すか」の
+ * `src/server/core/chat-memory-prompt.ts` が持ち、ここは「どこに・どう書き、どう渡すか」の
  * 4つの動きだけを持つ。
  */
 export type ChatSummary = {
@@ -78,12 +78,13 @@ export type ChatSummaryRecord = {
 }
 
 /**
- * 雑談の会話のアーカイブの書き込み口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
+ * 雑談の会話のアーカイブの読み書き口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
  * 置くか」）。**実装は `adapter` 側**（`src/server/adapter/chat-archive.ts`）で、ここにあるのは
  * 契約だけ。
  *
- * **読む口は持たない**（tsukumo 自身は書いたものを読み返さない。あとで活用するのは利用者。
- * `docs/requirements.md` 4.9）。
+ * **読む口は {@link readRecent} の1つだけ**（2026-09-21 に足した。直近の雑談を逐語のまま
+ * `systemPrompt` へ戻す唯一の出どころ。`docs/requirements.md` 4.9「直近の会話は逐語のまま
+ * 読み戻す」）。**それ以外の読み戻しは作らない。**
  */
 export type ChatArchive = {
   /**
@@ -92,6 +93,27 @@ export type ChatArchive = {
    * `docs/coding-standards.md`「エラーハンドリング」）。
    */
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
+  /**
+   * そのパックの**直近の会話**を、新しいほうから遡って `limitBytes`（文面の UTF-8 バイト数の
+   * 合計）まで読む。**返すのは古い→新しいの順**で、呼ぶ側に順序の都合を持たせない。
+   *
+   * **1件を単位にし、途中では切らない**（溢れる1件は載せない）。読めない行（壊れた JSON・
+   * 知らない版・鍵が足りない）は1行ずつ落とし、**例外は投げない**（読めなければ空を返し、
+   * そのセッションは逐語なしで始まる）。
+   */
+  readonly readRecent: (packName: string, limitBytes: number) => readonly ChatArchiveRecentEntry[]
+}
+
+/**
+ * {@link ChatArchive.readRecent} が返す1件。**話者の別・文面・その行の日付だけ**で、
+ * `expression` も `images` も持たない（`docs/requirements.md` 4.9。**読む側が落とすのではなく、
+ * 口が最初から渡さない**）。
+ */
+export type ChatArchiveRecentEntry = {
+  readonly speaker: "user" | "character"
+  readonly text: string
+  /** その行のローカル日付（`YYYY-MM-DD`）。前置きに添える「窓の最初と最後の日付」に使う。 */
+  readonly date: string
 }
 
 /**
