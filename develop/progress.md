@@ -55,6 +55,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-21 ホストを選ぶ口は作らないと決めた（T-141）
+
+アダプタが `orca-host.ts` の1つだけなので、選択は配線層 `src/main.ts:76` の
+`createOrcaHost()` 1行で足りると判断し、環境変数・引数・ファクトリはいずれも置かなかった
+（環境変数案は `TSUKUMO_CHARACTER` の撤去を検討する T-116 と向きが逆になる）。
+`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」に、選択の置き場所と
+2つ目のアダプタを書くときに考える旨を追記した。実装は無し。
+
 ### 2026-09-21 復元で流し直すイベントを別の口に分けた（T-254）
 
 `createSessionLaunch` の受け口を `onEvent` / `onRestoredEvent` の2つにし、transcript から
