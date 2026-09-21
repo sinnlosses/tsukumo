@@ -21,6 +21,7 @@ import {
   type TaskSummaryItem,
 } from "../../../shared/task-summary.ts"
 import styles from "./sidebar.module.css"
+import { taskStatusClass } from "./task-list.tsx"
 
 /**
  * 表の見出し行。7列とも中身が完全に静的なので、モジュール定数として1回だけ作る
@@ -132,14 +133,15 @@ function TaskRow(props: {
   readonly task: TaskSummaryItem
   readonly unfinishedTaskIds: ReadonlySet<string>
 }): ReactElement {
-  const doneClass = props.task.status === "done" ? ` ${styles["task-done"]}` : ""
+  const status = props.task.status
+  const doneClass = status === "done" ? ` ${styles["task-done"]}` : ""
 
   return (
     <tr className={`${styles["task-board-row"]}${doneClass}`}>
       <th scope="row" className={styles["task-id"]}>
         {props.task.id}
       </th>
-      <td>{props.task.status ?? "—"}</td>
+      <td className={status === undefined ? "" : taskStatusClass(status)}>{status ?? "—"}</td>
       <td>{props.task.difficulty ?? "—"}</td>
       <td data-label="loopable">{loopableMark(props.task.loopable)}</td>
       <td data-label="依存">

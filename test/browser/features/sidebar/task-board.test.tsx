@@ -57,6 +57,23 @@ describe("TaskBoard", () => {
     expect(dialogIsOpen()).toBe(true)
   })
 
+  it("doing の status は差し色の class を持つ（一覧のバッジと同じ判定）", () => {
+    const doing: TaskSummaryItem = {
+      id: "X-004",
+      summary: "架空の着手中",
+      status: "doing",
+      difficulty: "haiku",
+      loopable: "Y",
+      dependencies: [],
+    }
+    render(<TaskBoard tasks={[...TASKS, doing]} open={true} onClose={() => {}} />)
+
+    const cell = screen.getByText("doing")
+    expect(cell.className).toContain("task-status-doing")
+    // todo は別の class（状態ごとに分かれていることを押さえる）。
+    expect(screen.getAllByText("todo")[0]?.className).toContain("task-status-todo")
+  })
+
   it("列は ID・status・難易度・loopable・依存・着手・要約", () => {
     render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
 

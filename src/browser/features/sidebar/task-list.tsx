@@ -100,7 +100,7 @@ function TaskStatusBadge(props: { readonly status: string }): ReactElement {
 }
 
 /** todo / doing / done は色で区別し、それ以外（想定外の値）は注意色にする。文字は status のまま出す。 */
-function taskStatusClass(status: string): string {
+export function taskStatusClass(status: string): string {
   if (status === "todo") {
     return styles["task-status-todo"] ?? ""
   }
