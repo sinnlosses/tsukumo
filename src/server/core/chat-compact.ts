@@ -12,5 +12,9 @@ const CHAT_COMPACT_INSTRUCTION =
   "覚えておくことだけを短く、自分の言葉で書き直してください。発言をそのまま引用せず、" +
   "利用者について知ったことは書かないでください。"
 
-/** `/compact` へそのまま渡す依頼の文面（`SessionDriver.prompt` の `text` にそのまま渡る）。 */
+/**
+ * `/compact` へそのまま渡す依頼の文面（`SessionDriver.promptWithoutRecord` の `text` に
+ * そのまま渡る。記録に残さない口を使うので、この文面自体は雑談のログにも会話のアーカイブにも
+ * 残らない）。
+ */
 export const CHAT_COMPACT_COMMAND = `/compact ${CHAT_COMPACT_INSTRUCTION}`

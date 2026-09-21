@@ -209,6 +209,12 @@ function createSessionHost(
    * 「記憶の圧縮と忘却」）。数えるのは {@link chatLogBytesSinceCompact}
    * （前の圧縮点から先の走行合計）で、超えていたら送って 0 に戻す（＝そこが新しい圧縮点）。
    *
+   * **記録に残さない口（`promptWithoutRecord`）で渡す。** 流れるのは `request` ではなく
+   * `turn-started` だけなので、利用者が打っていない `/compact` の文面が雑談のログにも
+   * 会話のアーカイブにも並ばない（docs/requirements.md 4.9「記憶の圧縮と忘却」）。圧縮が
+   * 起きたこと自体は、SDK から届く `compact-boundary`（`sdk-message.ts`）が別に画面の区切りへ
+   * 変換するので、ここで文面を残さなくても失われない。
+   *
    * 駆動がまだ無い・送信が失敗したときは**その回を諦めて次のターンでまた試す**
    * （走行合計を戻さない。docs/coding-standards.md「エラーハンドリング」）。
    */
@@ -220,7 +226,7 @@ function createSessionHost(
       return
     }
     try {
-      live.prompt(CHAT_COMPACT_COMMAND, [])
+      live.promptWithoutRecord(CHAT_COMPACT_COMMAND)
       chatLogBytesSinceCompact = 0
     } catch {
       // 次のターンでまた閾値を超えていれば試す。

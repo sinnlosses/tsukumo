@@ -533,13 +533,28 @@ describe("createSessionManager", () => {
     // docs/requirements.md 4.9）。
     const TINY_THRESHOLD_BYTES = 10
 
-    function startChatManagerWithStub(thresholdBytes: number) {
+    /** 追記された内容を覚える、テスト用の雑談の会話のアーカイブ。 */
+    function createCapturingChatArchive(): ChatArchive & { readonly entries: ChatArchiveEntry[] } {
+      const entries: ChatArchiveEntry[] = []
+      return {
+        entries,
+        append: (_packName, entry) => {
+          entries.push(entry)
+        },
+        readRecent: () => [],
+      }
+    }
+
+    function startChatManagerWithStub(
+      thresholdBytes: number,
+      archive: ChatArchive = NOOP_CHAT_ARCHIVE,
+    ) {
       const stub = createStubDriver()
       const manager = createSessionManager({
         now: () => 1_000,
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
-        chatArchive: NOOP_CHAT_ARCHIVE,
+        chatArchive: archive,
       })
       manager.create({
         sessionId: SESSION_ID,
@@ -553,7 +568,7 @@ describe("createSessionManager", () => {
       return { manager, stub }
     }
 
-    it("閾値を超えたターンの終わりに /compact を1回だけ送る", async () => {
+    it("閾値を超えたターンの終わりに /compact を1回だけ、記録に残さない口で送る", async () => {
       const { stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
       // 駆動が起き上がる（`live` が入る）のを待ってから、雑談へ入って往復する。
       await waitForBatch()
@@ -564,8 +579,14 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "turn-finished", status: "success" })
       await waitForBatch()
 
-      const compactCalls = stub.calls.filter((call) => call.startsWith("prompt:/compact "))
+      const compactCalls = stub.calls.filter((call) =>
+        call.startsWith("promptWithoutRecord:/compact "),
+      )
       expect(compactCalls).toHaveLength(1)
+      // `prompt`（`request` の記録を積む口）は一度も呼ばない —
+      // 利用者が打っていない `/compact` の文面が雑談のログにもアーカイブにも並ばない
+      // （docs/requirements.md 4.9「記憶の圧縮と忘却」）。
+      expect(stub.calls.some((call) => call.startsWith("prompt:"))).toBe(false)
 
       // 送ったら走行合計が0に戻るので、続けて終わっただけの次のターンでは再送しない
       // （「投げたら数え直す」）。
@@ -573,7 +594,61 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "turn-finished", status: "success" })
       await waitForBatch()
 
-      expect(stub.calls.filter((call) => call.startsWith("prompt:/compact "))).toHaveLength(1)
+      expect(
+        stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
+      ).toHaveLength(1)
+    })
+
+    it("圧縮を送っても、雑談の会話のアーカイブに /compact の文面は積まれない", async () => {
+      const archive = createCapturingChatArchive()
+      const { stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES, archive)
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
+      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      // 圧縮は `promptWithoutRecord` で送るので `request` イベントを一切生まない
+      // （`session-driver.ts` の契約）。アーカイブへ積まれるのは実際に届いた依頼とセリフの
+      // 2件だけで、`/compact` の文面は混ざらない。
+      expect(archive.entries).toHaveLength(2)
+      expect(archive.entries.map((entry) => entry.text)).toEqual([
+        "架空の依頼です",
+        "架空のセリフです",
+      ])
+    })
+
+    it("圧縮を送っても、T-250 の圧縮の区切り（compact-boundary）はいままでどおり events に乗る", async () => {
+      const { manager, stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
+      const frames: ServerFrame[] = []
+      manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+      await waitForBatch()
+
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
+      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(
+        stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
+      ).toHaveLength(1)
+
+      // T-250: 実際に本体が圧縮した合図（SDK の `compact_boundary`）は、`/compact` の依頼文面とは
+      // 別に `sdk-message.ts` が `compact-boundary` へ変換して流す。ここでは駆動から届いたその
+      // イベントが、記録に残さない口へ差し替えたあとも変わらず events に乗ることを見る。
+      stub.emit({ kind: "compact-boundary" })
+      await waitForBatch()
+
+      const events = frames
+        .filter(
+          (frame): frame is Extract<ServerFrame, { type: "events" }> => frame.type === "events",
+        )
+        .flatMap((frame) => frame.events.map((stamped) => stamped.event))
+      expect(events).toContainEqual({ kind: "compact-boundary" })
     })
 
     it("閾値を超えていなければ送らない", async () => {
@@ -586,7 +661,9 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "turn-finished", status: "success" })
       await waitForBatch()
 
-      expect(stub.calls.some((call) => call.startsWith("prompt:/compact "))).toBe(false)
+      expect(stub.calls.some((call) => call.startsWith("promptWithoutRecord:/compact "))).toBe(
+        false,
+      )
     })
 
     it("仕事のモード（雑談に入っていない）では、閾値を超えていても送らない", async () => {
@@ -599,7 +676,9 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "turn-finished", status: "success" })
       await waitForBatch()
 
-      expect(stub.calls.some((call) => call.startsWith("prompt:/compact "))).toBe(false)
+      expect(stub.calls.some((call) => call.startsWith("promptWithoutRecord:/compact "))).toBe(
+        false,
+      )
     })
 
     it("画面の窓（雑談は直近100ターン）で state.records が切り詰められたあとでも、走行合計は届く", async () => {
@@ -619,7 +698,9 @@ describe("createSessionManager", () => {
       }
       await waitForBatch()
 
-      expect(stub.calls.filter((call) => call.startsWith("prompt:/compact "))).toHaveLength(1)
+      expect(
+        stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
+      ).toHaveLength(1)
     })
   })
 

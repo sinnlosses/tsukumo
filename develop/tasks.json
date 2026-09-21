@@ -28,9 +28,9 @@
     "dependencies": [],
     "summary": "雑談の /compact の文面をログとアーカイブに残さない",
     "task": "## 背景\n\n2026-09-21 に T-268 の作業で気づいた。**雑談の `/compact` の文面が、雑談のログと\n`~/.tsukumo/chat-archive/` に「利用者の依頼」として残る。**\n\n`src/server/core/session-manager.ts` の 222 行目が\n`live.prompt(CHAT_COMPACT_COMMAND, [])` で送っており、`prompt` は `request` の記録を積む。\n`CHAT_COMPACT_COMMAND`（`src/server/core/chat-compact.ts`）は `/compact ` で始まる長い指示文\nなので、**利用者が打っていない一言が雑談のログに並ぶ**。\n\n**直す口は既にある。** T-268 で `SessionDriver` に `promptWithoutRecord(text)` を足した\n（記録を積まず、文面を持たない `turn-started` だけを流す）。**1行の差し替えで済む。**\n\n`docs/requirements.md` 4.9 は「依頼として流す案は採らない（利用者が打っていない一言が雑談の\nログに並ぶ）」と、**逐語の読み戻しについては**同じ立場を既に取っている。`/compact` だけが\nその線の外に残っている形。\n\n## 解くべき論点\n\n- **圧縮の合図をログから消すと、利用者から見て「何が起きたか」が分からなくならないか。**\n  T-250 で「圧縮の区切りを雑談のログへ1本出す」ようにしてあるので、**区切りの印は別に出ている**\n  （そちらが役目を持つ）。確かめてから消す\n- アーカイブ（`chat-archive`）から消えることの影響。逐語の読み戻し（4.9）が拾う 16 KiB に\n  `/compact` の指示文が混ざらなくなるので、**読み戻しの中身は良くなる**方向\n- `turn-started` を流すことで画面のターンが始まる。圧縮は利用者の操作ではないので、\n  **入力欄が「中断」に変わる**のが妥当かどうか\n\n## やること\n\n1. 上の論点を確かめ、結論を `docs/requirements.md` 4.9 に1行足す（`/compact` の合図も\n   ログに残さない、という線）\n2. `session-manager.ts` の 222 行目を `promptWithoutRecord` へ差し替える\n3. テストを足す。**圧縮のときに `request` の記録が積まれないこと**と、T-250 の区切りの印が\n   いままでどおり出ることを示す\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を着手前と並べて `evidence` に書く）\n- 雑談で圧縮が走ったときに、ログにもアーカイブにも `/compact` の文面が出ないことを\n  確かめた証拠がある（**会話の中身は `evidence` に写さない** — 件数と、`/compact` の行が\n  無いことだけ書く）\n- `docs/requirements.md` の節の数が編集の前後で変わっていない\n\n## 注意\n\n- `docs/coding-standards.md`「会話内容の扱い」が最優先\n- T-250 の区切りの印を壊さない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "`session-manager.ts` の `live.prompt(CHAT_COMPACT_COMMAND, [])` を `live.promptWithoutRecord(CHAT_COMPACT_COMMAND)` に差し替えた（1行）。**先に区切りの印が別経路で出ていることを確かめた**——`compact-boundary` は SDK が返す `system` / `compact_boundary` を `sdk-message.ts` が変換するもので、**tsukumo が送る依頼の文面とは無関係に発火する**（`session-state.ts` が `records` へ積み、`chat-log.ts` が文言を持たない1行にする）。つまり文面を消しても「圧縮が起きたこと」は残る。`turn-started` で入力欄が「中断」に変わるのは、圧縮中は実際にターンが動いているので実態に即している（同じ取り合わせは「話しかけてもらう」の口が先例）。テストを2件足した: 圧縮を送ってもアーカイブに積まれるのは実際の依頼とセリフの2件だけで `/compact` の行は0件（`prompt:` で始まる呼び出しも0件）、差し替え後も `compact-boundary` が配信フレームに乗ること。`bun run check` **1004 pass / 0 fail**（着手前 1002、+2）。`docs/requirements.md` 4.9 に1行追記し、節数は前後とも 27。`~/.tsukumo/state.json` は前後とも `{\"character\":\"tsukumo\"}`。"
   },
   {
     "id": "T-285",
