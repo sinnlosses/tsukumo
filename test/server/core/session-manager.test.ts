@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
-import { type SessionDriver } from "../../../src/server/core/session-driver.ts"
+import {
+  type ChatArchive,
+  type ChatArchiveEntry,
+  type SessionDriver,
+} from "../../../src/server/core/session-driver.ts"
 import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
 import { createSessionManager } from "../../../src/server/core/session-manager.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"
@@ -20,11 +24,17 @@ import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
 const SESSION_ID = "s-test"
 const BATCH_MS = 5
 
+/** 雑談の会話のアーカイブを気にしないテストに渡す、何もしない書き込み口。 */
+const NOOP_CHAT_ARCHIVE: ChatArchive = { append: () => {} }
+
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
   readonly driver: SessionDriver
   readonly emit: (event: SessionEvent) => void
   readonly attach: (onEvent: (event: SessionEvent) => void) => void
+  /** 復元の再生（`onRestoredEvent`）を流す。**駆動由来（`emit`）とは別の口**（`docs/design.md` 7章）。 */
+  readonly emitRestored: (event: SessionEvent) => void
+  readonly attachRestored: (onRestoredEvent: (event: SessionEvent) => void) => void
   readonly calls: string[]
   answerable: boolean
 }
@@ -32,6 +42,7 @@ type StubDriver = {
 function createStubDriver(): StubDriver {
   const calls: string[] = []
   let onEvent: (event: SessionEvent) => void = () => {}
+  let onRestoredEvent: (event: SessionEvent) => void = () => {}
   const stub = {
     driver: {
       prompt: (text: string) => calls.push(`prompt:${text}`),
@@ -57,6 +68,10 @@ function createStubDriver(): StubDriver {
     emit: (event: SessionEvent) => onEvent(event),
     attach: (next: (event: SessionEvent) => void) => {
       onEvent = next
+    },
+    emitRestored: (event: SessionEvent) => onRestoredEvent(event),
+    attachRestored: (next: (event: SessionEvent) => void) => {
+      onRestoredEvent = next
     },
     calls,
     answerable: true,
@@ -102,6 +117,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
     now: () => 1_000,
     batchIntervalMs: BATCH_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    chatArchive: NOOP_CHAT_ARCHIVE,
   })
   manager.create({
     sessionId: SESSION_ID,
@@ -244,6 +260,7 @@ describe("createSessionManager", () => {
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -340,6 +357,7 @@ describe("createSessionManager", () => {
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -371,6 +389,7 @@ describe("createSessionManager", () => {
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -418,6 +437,7 @@ describe("createSessionManager", () => {
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -472,6 +492,7 @@ describe("createSessionManager", () => {
         now: () => 1_000,
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
+        chatArchive: NOOP_CHAT_ARCHIVE,
       })
       manager.create({
         sessionId: SESSION_ID,
@@ -663,6 +684,7 @@ describe("createSessionManager", () => {
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -697,6 +719,7 @@ describe("createSessionManager", () => {
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
     })
     const stub = createStubDriver()
     manager.create({
@@ -723,6 +746,7 @@ describe("createSessionManager", () => {
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -767,5 +791,147 @@ describe("createSessionManager", () => {
 
     expect(stub.calls).toContain("close")
     expect(frames.filter((frame) => frame.type === "events")).toHaveLength(0)
+  })
+
+  describe("雑談の会話のアーカイブ", () => {
+    // `chatArchive` の実装（ファイルI/O）は adapter のテストが持つ。ここで見るのは
+    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/requirements.md 4.9）。
+
+    function startArchiveManagerWithStub() {
+      const stub = createStubDriver()
+      const archiveCalls: { readonly packName: string; readonly entry: ChatArchiveEntry }[] = []
+      const chatArchive: ChatArchive = {
+        append: (packName, entry) => {
+          archiveCalls.push({ packName, entry })
+        },
+      }
+      const manager = createSessionManager({
+        now: () => 1_000,
+        batchIntervalMs: BATCH_MS,
+        chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        chatArchive,
+      })
+      manager.create({
+        sessionId: SESSION_ID,
+        startDriver: (onEvent, onRestoredEvent) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvent)
+          return Promise.resolve(stub.driver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+      })
+      return { manager, stub, archiveCalls }
+    }
+
+    it("雑談で駆動から届いた依頼とセリフが、表情つきで1行ずつアーカイブへ渡る", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      stub.emit({ kind: "speech", text: "架空のセリフ", expression: "proud" })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([
+        {
+          packName: "fictional",
+          entry: { speaker: "user", at: 1_000, text: "架空の依頼", images: undefined },
+        },
+        {
+          packName: "fictional",
+          entry: { speaker: "character", at: 1_000, text: "架空のセリフ", expression: "proud" },
+        },
+      ])
+    })
+
+    it("添えた画像は枚数だけ渡る（控えそのものは渡さない）", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({
+        kind: "request",
+        text: "架空の依頼",
+        images: ["data:image/png;base64,AAAA", "data:image/png;base64,BBBB"],
+      })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([
+        {
+          packName: "fictional",
+          entry: { speaker: "user", at: 1_000, text: "架空の依頼", images: 2 },
+        },
+      ])
+    })
+
+    it("仕事のとき（雑談に入っていない）は1バイトも書かない", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      stub.emit({ kind: "speech", text: "架空のセリフ", expression: "default" })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([])
+    })
+
+    it("パックがまだ分からない（character-changed が届く前）ときは書かない", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([])
+    })
+
+    it("復元で流し直されたイベントは書かない（起こし直しても同じ行が二重に積まれない）", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      // 前のセッションの記録を組み直した再生（`onRestoredEvent`）。
+      stub.emitRestored(CHARACTER_EVENT)
+      stub.emitRestored({ kind: "chat-mode-changed", chat: true })
+      stub.emitRestored({ kind: "request", text: "前のセッションの依頼", images: [] })
+      stub.emitRestored({ kind: "speech", text: "前のセッションのセリフ", expression: "default" })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([])
+
+      // 駆動から新しく届いたぶんは、いつもどおり書く。
+      stub.emit({ kind: "request", text: "新しい依頼", images: [] })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([
+        {
+          packName: "fictional",
+          entry: { speaker: "user", at: 1_000, text: "新しい依頼", images: undefined },
+        },
+      ])
+    })
+
+    it("本文（レポート）・ツールの入出力は書かない", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "utterance", text: "本文はここに出ない" })
+      stub.emit({
+        kind: "tool-started",
+        toolUseId: "t-1",
+        name: "Bash",
+        input: {},
+        parentToolUseId: undefined,
+      })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([])
+    })
   })
 })

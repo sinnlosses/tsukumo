@@ -12,6 +12,7 @@
 
 import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
 import { type ExpressionChoice } from "../../shared/expression-choice.ts"
+import { type Expression } from "../../shared/expression.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
@@ -75,6 +76,43 @@ export type ChatSummaryRecord = {
   readonly summary: string
   readonly delivered: boolean
 }
+
+/**
+ * 雑談の会話のアーカイブの書き込み口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
+ * 置くか」）。**実装は `adapter` 側**（`src/server/adapter/chat-archive.ts`）で、ここにあるのは
+ * 契約だけ。
+ *
+ * **読む口は持たない**（tsukumo 自身は書いたものを読み返さない。あとで活用するのは利用者。
+ * `docs/requirements.md` 4.9）。
+ */
+export type ChatArchive = {
+  /**
+   * 依頼またはセリフを1件、追記する。`packName` が {@link isCharacterPackName} を通らない・
+   * 書けないときは黙って何もしない（常駐プロセスは1回の失敗で落ちない。
+   * `docs/coding-standards.md`「エラーハンドリング」）。
+   */
+  readonly append: (packName: string, entry: ChatArchiveEntry) => void
+}
+
+/**
+ * {@link ChatArchive.append} に渡す1件。`at` は届いた時刻（エポックミリ秒。`session-manager` の
+ * `options.now()` をそのまま渡す）。**判別可能な合併型**にして、`images` はユーザーの行だけ、
+ * `expression` はキャラクターの行だけが持つ形を型で表す。
+ */
+export type ChatArchiveEntry =
+  | {
+      readonly speaker: "user"
+      readonly at: number
+      readonly text: string
+      /** 添えた画像の枚数。1枚以上あるときだけ値を持つ（`docs/design.md` 7章）。 */
+      readonly images: number | undefined
+    }
+  | {
+      readonly speaker: "character"
+      readonly at: number
+      readonly text: string
+      readonly expression: Expression
+    }
 
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */

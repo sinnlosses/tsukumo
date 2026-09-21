@@ -10,6 +10,7 @@ import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
 import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
+import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { type FakeScript, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
@@ -64,6 +65,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
     now: Date.now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    // 雑談の会話のアーカイブ（`docs/design.md` 7章）。書き先の判定（雑談かどうか）は
+    // `session-manager` の `receive` が持つので、ここは口を渡すだけ。
+    chatArchive: createChatArchive(),
   })
 
   manager.create({

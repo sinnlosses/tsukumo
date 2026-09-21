@@ -27,7 +27,7 @@ import {
   type SessionState,
 } from "../../shared/session-state.ts"
 import { CHAT_COMPACT_COMMAND } from "./chat-compact.ts"
-import { type SessionDriver } from "./session-driver.ts"
+import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
 
 /**
@@ -47,6 +47,12 @@ export type SessionManagerOptions = {
    * まま閾値に届かせるため、小さい値を渡す。
    */
   readonly chatCompactThresholdBytes: number
+  /**
+   * 雑談の会話のアーカイブの書き込み口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
+   * 置くか」）。本番は `createChatArchive()`（`src/server/adapter/chat-archive.ts`）、テストは
+   * 呼ばれた引数だけを覚えるスタブを渡す。
+   */
+  readonly chatArchive: ChatArchive
 }
 
 export type SessionCreateOptions = {
@@ -223,12 +229,13 @@ function createSessionHost(
    * イベント1件を畳んで次のバッチに積む。**駆動から届いたものと、見た目の編集で起こした
    * `character-changed` の両方がここを通る**（サーバ側の状態とブラウザへ配る内容を1本にする）。
    *
-   * `_origin` は「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印
+   * `origin` は「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印
    * （`docs/design.md` 7章「雑談の会話のアーカイブはどこに置くか」）。**畳み方と配り方は
-   * どちらも同じ**——ここではまだ分岐に使わない（使うのは雑談の会話のアーカイブを書く
-   * 次のタスク。それまでは未使用のまま `_` を付けて渡す）。
+   * どちらも同じ**——分かれているのは、雑談の会話のアーカイブへ書くのを**駆動由来の依頼と
+   * セリフだけ**に絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が
+   * 二重に積まれる）。
    */
-  const receive = (event: SessionEvent, _origin: EventOrigin): void => {
+  const receive = (event: SessionEvent, origin: EventOrigin): void => {
     if (closed) {
       return
     }
@@ -242,6 +249,11 @@ function createSessionHost(
     // （`state.records` の切り詰めに影響されない。docs/requirements.md 4.9）。
     if (state.chatMode) {
       chatLogBytesSinceCompact += chatLogEventByteSize(event)
+    }
+    // 雑談の会話のアーカイブへ1行足す。**駆動由来（`"driver"`）・雑談モード・パックが
+    // 分かっているときだけ**（docs/requirements.md 4.9「誰がいつ書くか」）。
+    if (origin === "driver" && state.chatMode) {
+      appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
     }
     // **ターンの終わりに1回だけ見る**（docs/requirements.md 4.9）。仕事のときは何もしない
     // （`requestChatCompactIfNeeded` が `state.chatMode` を見て弾く）。
@@ -425,6 +437,41 @@ async function dispatchToDriver(
     }
   } catch {
     return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
+  }
+}
+
+/**
+ * イベント1件を雑談の会話のアーカイブへ渡す。拾うのは `chatLogEntries`
+ * （`src/shared/chat-log.ts`）と同じ2種類（依頼とセリフ）だけ——本文・ツールの入出力・
+ * 許可プロンプト・質問は渡さない（`docs/requirements.md` 4.9「広げていないこと」）。
+ *
+ * `packName` がまだ分からない（`character-changed` が一度も届いていない）ときは何もしない。
+ */
+function appendChatArchiveEntry(
+  chatArchive: ChatArchive,
+  packName: string | undefined,
+  at: number,
+  event: SessionEvent,
+): void {
+  if (packName === undefined) {
+    return
+  }
+  if (event.kind === "request") {
+    chatArchive.append(packName, {
+      speaker: "user",
+      at,
+      text: event.text,
+      images: event.images.length > 0 ? event.images.length : undefined,
+    })
+    return
+  }
+  if (event.kind === "speech") {
+    chatArchive.append(packName, {
+      speaker: "character",
+      at,
+      text: event.text,
+      expression: event.expression,
+    })
   }
 }
 

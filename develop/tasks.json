@@ -83,8 +83,8 @@
     "dependencies": ["T-254"],
     "summary": "雑談の会話を ~/.tsukumo/chat-archive/ へ表情つきで書き残す",
     "task": "## 背景\n\n**雑談の会話を tsukumo 自身がディスクへ残す**（2026-09-21 ユーザー決定。\n`docs/requirements.md` 4.9「雑談の会話のアーカイブ」、形と上限は `docs/design.md` 7章\n「雑談の会話のアーカイブはどこに置くか」）。**画面の 100 ターンは画面の上限であって、\n残す量の上限ではない。**\n\n**これは `docs/coding-standards.md`「会話内容の扱い」の「別の場所に複製しない」に認められた\n例外の2つ目。** 同節の表と「広げていないこと」の線を越えない（**雑談だけ・依頼とセリフと\n表情だけ・画像そのものは書かない・ログにも画面にも出さない**）。\n\n## 決まっていること（蒸し返さない）\n\n- 置き場は `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`（パックごと・日ごと。\n  日の境目はローカル時刻）\n- 形式は JSONL の1行1件。鍵は `v` / `at` / `pack` / `speaker` / `text` / `expression`（セリフの\n  行だけ）/ `images`（依頼の行が、添えた画像が1枚以上あるときだけ持つ枚数）。\n  **tsukumo の内部の型をそのまま JSON にしない**\n- 書くのは `src/server/core/session-manager.ts` の `receive` で、**雑談のときだけ**、依頼と\n  セリフが届いたその場で1行。**`state.records` からは書かない**（`trimToRecentTurns` に\n  影響されない）。**復元で流し直されたぶんは書かない**\n- 層は要約の写しと同じ: 口（型）は `core/session-driver.ts`、ファイルに触るのは\n  `adapter/chat-archive.ts`、結ぶのは `src/session-start.ts`。置き場を差し替えられる `root`\n  引数を持つ（テストがホームを汚さない）\n- 保持期間も総量の上限も持たない。消す手はファイルを消すこと。**画面から消す口は作らない**\n- **遡って取り込まない**（claude の transcript からの移行はしない）\n\n## やること\n\n1. `src/server/adapter/chat-archive.ts` を足す（`createChatSummary` と同じ形の口。\n   `isCharacterPackName` を通してからパスを組み立てる。**書けなくても例外を投げない**）\n2. `core/session-driver.ts` に口の型を足し、`session-manager` の `receive` から**駆動由来の**\n   依頼とセリフだけを渡す\n3. `src/session-start.ts` で結ぶ（**雑談のときだけ**）\n4. テスト: 1行の形（鍵と値）・パックごと日ごとに割れること・雑談でないときは書かないこと・\n   復元の再生では書かないこと・書けないときに落ちないこと\n\n## 完了条件\n\n- 雑談で往復すると `~/.tsukumo/chat-archive/<パック名>/<日付>.jsonl` に依頼とセリフが\n  表情つきで1行ずつ増える（テストは `root` を差し替えた一時ディレクトリで確かめる）\n- 仕事のときは1バイトも書かれない\n- 起こし直しても同じ行が二重に積まれない\n- 画面・`error` フレーム・stderr に文面が出ない\n- `bun run check` が通る\n\n## 注意\n\n- **フィクスチャは手で書いた架空の会話**（実物の会話を使わない）\n- 画像の控え（data URL）を書かない。書くのは枚数だけ\n- `Bun.*` に寄せない（`node:` の標準API）\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "src/server/adapter/chat-archive.ts を足し（JSONL 1行=7鍵、書けなくても投げない）、session-manager の receive が origin===\"driver\" かつ雑談のときだけ依頼とセリフを渡す。session-start.ts で結んだ。test/server/adapter/chat-archive.test.ts と session-manager.test.ts の「雑談の会話のアーカイブ」で、行の形・パック/日ごとの分割・仕事では書かない・復元の再生では書かない・書けなくても落ちないを固定。bun run check 925 pass / 0 fail。"
   }
 ]
