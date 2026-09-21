@@ -64,6 +64,15 @@ type PressOrigin = {
   readonly y: number
 }
 
+/**
+ * 遡って見ているセリフ。**押した行の番号だけでなく、押した時点のセリフの件数も持つ** —
+ * 件数が変われば選択は失効し、立ち絵は最新の表情へ戻る（{@link viewedIndex}）。
+ */
+type ViewedSpeech = {
+  readonly index: number
+  readonly speechCount: number
+}
+
 export function ChatView(): ReactElement {
   const records = useSessionSelector((session) => session.state.records)
   const speechExpression = useSessionSelector((session) => session.state.speechExpression)
@@ -73,11 +82,17 @@ export function ChatView(): ReactElement {
   const entries = chatLogEntries(records)
   const outfit = resolveOutfit(model)
 
-  // 遡って見ているセリフの行（ログの並びの何件目か）。選んでいなければ undefined で、
-  // 立ち絵は最新の表情に従う。**新しいセリフが来ても解除しない** — 選ぶこと自体が
-  // 「読み返している」という意思表示なので、下端付近に居るときだけ最新へ寄せる
-  // スクロールの規則（{@link NEAR_BOTTOM_THRESHOLD_PX}）と同じ立場に置く。
-  const [selectedIndex, setSelectedIndex] = useState<number | undefined>(undefined)
+  // 遡って見ているセリフ。選んでいなければ undefined で、立ち絵は最新の表情に従う。
+  // **新しいセリフが来たらその場で失効する**（2026-09-21 決定） — 立ち絵は常に「いまのセリフ」を
+  // 表す側へ倒す。読み返しの最中でも下へ攫わないスクロールの規則
+  // （{@link NEAR_BOTTOM_THRESHOLD_PX}）とは**揃えない**: 流れていった行の印は画面の外にあるので、
+  // 表情だけが遡ったまま動かないと、なぜ古いのかが画面から分からなくなる。
+  //
+  // 失効は effect で追いかけず、**レンダー中に件数を突き合わせて決める**（state から計算できる値。
+  // docs/coding-standards.md「useEffect の代わりに使うもの」）。
+  const [viewed, setViewed] = useState<ViewedSpeech | undefined>(undefined)
+  const speechCount = countSpeeches(entries)
+  const selectedIndex = viewedIndex(viewed, speechCount)
   const expression = selectedSpeechExpression(entries, selectedIndex) ?? speechExpression
 
   const portraitUrl =
@@ -106,8 +121,8 @@ export function ChatView(): ReactElement {
         entries={entries}
         selectedIndex={selectedIndex}
         onToggle={(index) => {
-          // もう一度押したら解除する（最新の表情へ戻る道は、遡るのに使ったのと同じ操作だけ）。
-          setSelectedIndex((current) => (current === index ? undefined : index))
+          // もう一度押したら解除する（新しいセリフを待たずに最新へ戻す道）。
+          setViewed(selectedIndex === index ? undefined : { index, speechCount })
         }}
       />
     </div>
@@ -115,12 +130,34 @@ export function ChatView(): ReactElement {
 }
 
 /**
+ * ログに並んでいるキャラクターのセリフの件数。**選択がまだ生きているか**を測る物差しで、
+ * これが変われば {@link viewedIndex} が選択を失効させる。
+ */
+function countSpeeches(entries: readonly ChatLogEntry[]): number {
+  return entries.reduce((count, entry) => (entry.speaker === "character" ? count + 1 : count), 0)
+}
+
+/**
+ * いま印を付けて立ち絵を合わせる行。**押した時点から件数が変わっていれば undefined**
+ * （新しいセリフが来た、または窓から古い記録が落ちた）。
+ *
+ * 件数1つで両方を捌けるのは、**セリフは末尾に積むだけ**で、窓
+ * （`MAX_SESSION_STATE_TURNS`）を当てるのは利用者の発言が来たときだけだから
+ * （`shared/session-state.ts` の `speech` と `request`）。つまり件数が同じなら並びは前へ
+ * 詰まっておらず、押した番号は押した行を指したままになる。
+ */
+function viewedIndex(viewed: ViewedSpeech | undefined, speechCount: number): number | undefined {
+  if (viewed === undefined || viewed.speechCount !== speechCount) {
+    return undefined
+  }
+  return viewed.index
+}
+
+/**
  * 選んでいる行のセリフに添えられた表情。選んでいなければ undefined（立ち絵は最新のまま）。
  *
- * **選べるのはキャラクターのセリフだけ**だが、窓（`MAX_SESSION_STATE_TURNS`）から古い記録が
- * 落ちると並びが前へ詰まるので、選んだ番号が利用者の発言に当たることがある。そのときも
- * 最新へ戻すだけで、選択そのものは持ったままにする（押した行の印も同じ番号で決まるので、
- * 立ち絵と印が食い違うことはない）。
+ * **選べるのはキャラクターのセリフだけ**だが、番号で持っている以上は型の上で外れうるので、
+ * 外れたら最新へ戻す（印も同じ番号で決まるので、立ち絵と印が食い違うことはない）。
  */
 function selectedSpeechExpression(
   entries: readonly ChatLogEntry[],

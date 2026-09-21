@@ -268,7 +268,30 @@ describe("ChatView のセリフを遡る", () => {
     expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
   })
 
-  it("遡っている最中に新しいセリフが来ても、選んだ表情のまま動かない", () => {
+  it("遡っている最中に新しいセリフが来たら選択が解け、新しいセリフの表情へ戻る", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    fireEvent.click(firstSpeech)
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [...RECORDS, { kind: "speech", text: "3つめのセリフ", expression: "curious" }],
+        character: FIXTURE_CHARACTER,
+        speechExpression: "curious",
+      })
+    })
+
+    // 立ち絵は「いまのセリフ」を表す側へ戻り、押した行の印も一緒に消える。
+    expect(portraitExpression()).toBe("curious")
+    expect(screen.getByText("1つめのセリフ").getAttribute("aria-pressed")).toBe("false")
+  })
+
+  it("窓から古い記録が落ちて並びが前へ詰まっても、選択は失効して最新へ戻る", () => {
     const store = renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
@@ -279,13 +302,38 @@ describe("ChatView のセリフを遡る", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [...RECORDS, { kind: "speech", text: "3つめのセリフ", expression: "curious" }],
+        // 古い1往復が落ちた姿（番号で持った選択が別の行を指す）。
+        records: RECORDS.slice(2),
         character: FIXTURE_CHARACTER,
-        speechExpression: "curious",
+        speechExpression: "proud",
       })
     })
 
-    expect(portraitExpression()).toBe("default")
+    expect(portraitExpression()).toBe("proud")
+    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([null, "false"])
+  })
+
+  it("利用者が発言しただけでは選択は解けない（解くのは新しいセリフ）", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+
+    fireEvent.click(screen.getByText("2つめのセリフ"))
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [...RECORDS, { kind: "request", text: "3つめの依頼", images: [] }],
+        character: FIXTURE_CHARACTER,
+        // 送った時点でターンが始まり、最新の表情は既定へ戻っている（`beginTurn`）。
+        speechExpression: INITIAL_SESSION_STATE.speechExpression,
+        turnInProgress: true,
+      })
+    })
+
+    expect(portraitExpression()).toBe("proud")
+    expect(screen.getByText("2つめのセリフ").getAttribute("aria-pressed")).toBe("true")
   })
 })
 
