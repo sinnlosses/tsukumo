@@ -24,5 +24,8 @@
     "curious": "curious.png",
     "sad": "sad.png",
     "excited": "excited.png"
+  },
+  "background": {
+    "image": "background.png"
   }
 }
