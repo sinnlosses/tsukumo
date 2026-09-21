@@ -75,10 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `notation` の場面に `note` / `note-ng` / `note-favor` / `badge-warn` / `badge-ng` / `stats` / `stat` を架空の文面で足し、上限に触れて外した `note-warn` は `report` の場面へ移した。これで 12個の class がすべてどこかの場面で描かれる。
 
-### 2026-09-21 雑談の記憶の逐語の読み戻しを実装した（T-262）
-
-`ChatArchive.readRecent` を `adapter` に足し、`chat-summary-prompt.ts` を `chat-memory-prompt.ts` へ改名して要約の写しと直近 16 KiB の逐語を1回で組み立てるようにした。写しがまだ無くても逐語は載る。
-
 ## 未解決
 
 - **正典に食い違いが2つある**（2026-09-21 に T-269 の洗い出しで判明。どちらも T-270 の問い）。**レポートの文体**——`docs/requirements.md` 4.2 に「文体はどちらもキャラクターのまま」（2026-09-10）と「本文は中立の技術文にし、口調を担うのは `speak` のほう」（2026-09-14）が**併記されている**。**音声・口パク**——2.2 は「VOICEVOX 連携も検討しない」、4.2 の末尾は「VOICEVOX の口パク同期は後回しでよい」。**どちらも正典どうしの矛盾なので、T-270 で先に畳む**
