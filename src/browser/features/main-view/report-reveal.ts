@@ -8,6 +8,9 @@
 // 左から右へなぞって、あいだを斜めに戻る——つまりZ字の3画。**帯の切れ目は実際の行の box に
 // 合わせる**ので、文字が上下に切れることはない（1行しかない塊は1画で書く）。
 //
+// **ここは測って書くだけ**で、帯の割り出しと帯の上の筆の居場所は `reveal-band.ts`（純粋な計算）。
+// なぞる右端は**帯ごとに、その帯にある行のいちばん右**（2026-09-21。同ファイル冒頭）。
+//
 // 帯は**要素をまたいで1本に伸びる**（見出しと段落と表が同じ帯に入る）。だから筆の居場所は
 // ビューポート座標で1つだけ持ち、要素ごとの見せ方へ {@link applyStep} で翻訳する:
 //
@@ -31,7 +34,19 @@ import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
 import { publishBrushTip, type BrushTip } from "../../stores/brush-tip.ts"
 import { brushScroller } from "./brush-scroll.ts"
-import { planReveal, type RevealBlock, type RevealMember } from "./reveal-plan.ts"
+import {
+  brushStep,
+  toBands,
+  type BrushStep,
+  type LineBox,
+  type RevealFrame,
+} from "./reveal-band.ts"
+import {
+  planReveal,
+  type RevealBlock,
+  type RevealElement,
+  type RevealMember,
+} from "./reveal-plan.ts"
 
 /** 見せる範囲を進めているあいだだけ根に立てる印（目視確認と、外から終わりを知るための口）。 */
 const REVEALING_ATTRIBUTE = "data-revealing"
@@ -169,45 +184,10 @@ function showBlock(block: RevealBlock): void {
   }
 }
 
-/** Z字の1画ぶんの帯。**ビューポート座標**（塊はトピックなので、要素をまたいで1本に伸びる）。 */
-type RevealBand = {
-  readonly top: number
-  readonly bottom: number
-}
-
-/** 塊1つぶんの帯。**必ず1つ以上ある**ので、使う側で「無い」を考えなくてよい。 */
-type RevealBands = readonly [RevealBand, ...(readonly RevealBand[])]
-
-/** 塊を囲む枠（ビューポート座標）。筆先の横の振れ幅はこの幅で決まる。 */
-type RevealFrame = {
-  readonly left: number
-  readonly width: number
-}
-
 /** 要素1つと、そのいまの位置。1フレームの中で box を2度測らないために組で持ち回る。 */
 type MemberShape = {
   readonly member: RevealMember
   readonly box: DOMRect
-}
-
-/** Z字の横画1つに与える時間の割合。残り（{@link RETURN_SHARE}）が斜めの戻り。 */
-const SWEEP_SHARE = 0.45
-
-/** 斜めに戻るのに与える時間の割合。**横画より短い**（戻りは書いていないので、速く抜ける）。 */
-const RETURN_SHARE = 0.1
-
-/** 筆がいまどこにいるか。縦はビューポート座標、横は塊の幅に対する割合。 */
-type BrushStep = {
-  /** ここより上は全幅が出ている（`clip-path` の肩）。 */
-  readonly filled: number
-  /** いま書いている帯の下端。 */
-  readonly bottom: number
-  /** 帯の中で出ている横幅（0〜1）。戻りのあいだは 0。 */
-  readonly written: number
-  /** 筆先の横位置（0〜1）。戻りのあいだは右から左へ動く。 */
-  readonly tipX: number
-  readonly tipTop: number
-  readonly tipBottom: number
 }
 
 /** 塊1つを `progress`（0〜1）まで出し、そのときの筆先を返す。 */
@@ -222,19 +202,18 @@ function advanceBlock(block: RevealBlock, progress: number): BrushTip | undefine
     return undefined
   }
 
-  const step = brushStep(bandsOf(shapes), progress)
+  const step = brushStep(toBands(shapes.flatMap(lineBoxesOf), frame), progress)
   for (const shape of shapes) {
     applyStep(shape, step)
   }
 
-  return {
-    x: frame.left + step.tipX * frame.width,
-    top: step.tipTop,
-    bottom: step.tipBottom,
-  }
+  return { x: step.tipX, top: step.tipTop, bottom: step.tipBottom }
 }
 
-/** 塊の中で、いちばん左といちばん広い要素に合わせる（要素ごとに幅が違っても筆が枠から出ない）。 */
+/**
+ * 塊を囲む枠。**筆が枠から出ないための落とし先**で、なぞる右端そのものではない
+ * （右端は帯ごとに決まる。`reveal-band.ts`）。
+ */
 function frameOf(shapes: readonly MemberShape[]): RevealFrame | undefined {
   const boxes = shapes.map((shape) => shape.box).filter((box) => box.width > 0 || box.height > 0)
   const first = boxes.at(0)
@@ -244,98 +223,44 @@ function frameOf(shapes: readonly MemberShape[]): RevealFrame | undefined {
 
   return {
     left: boxes.reduce((left, box) => Math.min(left, box.left), first.left),
-    width: boxes.reduce((width, box) => Math.max(width, box.width), first.width),
+    right: boxes.reduce((right, box) => Math.max(right, box.right), first.right),
   }
 }
 
 /**
- * 塊をZ字の2画に割る。**切れ目は真ん中の行の下端**なので、帯の境目が文字を上下に切らない。
- * 行が1つしか取れない塊（見出しだけ・図だけ）は1画で書く。
+ * 要素の中の行。**文字そのものの矩形だけ**を返す——文字の要素に `range.selectNodeContents` を
+ * かけると、箇条書きの `<li>` や表の `<tr>` のような**ブロックの箱まで混じって右端が行の幅では
+ * なく欄の幅になる**ので、文字の節点を1つずつ測る。
+ *
+ * **図・グラフは行を持たない**ので、その要素の box をまるごと1行として扱う（筆はその上を
+ * 1画で通る）。
  */
-function bandsOf(shapes: readonly MemberShape[]): RevealBands {
-  const lines = mergeLines(shapes.flatMap(lineBoxesOf))
-  const first = lines.at(0)
-  const last = lines.at(-1)
-  const middle = lines.at(Math.ceil(lines.length / 2) - 1)
-  if (first === undefined || last === undefined) {
-    return [{ top: 0, bottom: 0 }]
-  }
-  if (lines.length < 2 || middle === undefined) {
-    return [{ top: first.top, bottom: last.bottom }]
-  }
-
-  return [
-    { top: first.top, bottom: middle.bottom },
-    { top: middle.bottom, bottom: last.bottom },
-  ]
-}
-
-/**
- * 要素の中の行。**図・グラフは行を持たない**ので、その要素の box をまるごと1行として扱う
- * （筆はその上を1画で通る）。
- */
-function lineBoxesOf(shape: MemberShape): readonly RevealBand[] {
+function lineBoxesOf(shape: MemberShape): readonly LineBox[] {
   if (shape.member.kind === "figure") {
-    return shape.box.height > 0 ? [{ top: shape.box.top, bottom: shape.box.bottom }] : []
+    return shape.box.height > 0
+      ? [{ top: shape.box.top, bottom: shape.box.bottom, right: shape.box.right }]
+      : []
   }
 
-  const range = document.createRange()
-  range.selectNodeContents(shape.member.element)
-  return [...range.getClientRects()]
-    .filter((rect) => rect.height > 0)
-    .map((rect) => ({ top: rect.top, bottom: rect.bottom }))
+  return textNodesOf(shape.member.element).flatMap((node) => {
+    const range = document.createRange()
+    range.selectNodeContents(node)
+    return [...range.getClientRects()]
+      .filter((rect) => rect.height > 0 && rect.width > 0)
+      .map((rect) => ({ top: rect.top, bottom: rect.bottom, right: rect.right }))
+  })
 }
 
-/**
- * 縦に重なる行を1本にまとめる。`getClientRects()` は**行ごと・インラインの箱ごと**に返すので、
- * 段落の中の `<code>` や、同じ行に並ぶ表のセルが別々の矩形になる。
- */
-function mergeLines(boxes: readonly RevealBand[]): readonly RevealBand[] {
-  return [...boxes]
-    .sort((left, right) => left.top - right.top)
-    .reduce<readonly RevealBand[]>((lines, box) => {
-      const last = lines.at(-1)
-      return last !== undefined && box.top < last.bottom
-        ? [...lines.slice(0, -1), { top: last.top, bottom: Math.max(last.bottom, box.bottom) }]
-        : [...lines, box]
-    }, [])
-}
-
-/**
- * Z字の上で、`progress` の時点の筆の居場所を求める。横画 → 斜めの戻り → 横画の順に時間を
- * 配り、**戻りのあいだは何も出さない**（直前の帯を出し切った状態のまま筆だけが動く）ので、
- * 見せる範囲が戻ることはない。
- */
-function brushStep(bands: RevealBands, progress: number): BrushStep {
-  const cycle = SWEEP_SHARE + RETURN_SHARE
-  const span = bands.length * SWEEP_SHARE + (bands.length - 1) * RETURN_SHARE
-  const at = clamp(progress, 0, 1) * span
-  const index = Math.min(Math.floor(at / cycle), bands.length - 1)
-  const band = bands[index] ?? bands[0]
-  const next = bands.at(index + 1)
-  const within = at - index * cycle
-
-  if (within <= SWEEP_SHARE || next === undefined) {
-    const written = clamp(within / SWEEP_SHARE, 0, 1)
-    return {
-      filled: band.top,
-      bottom: band.bottom,
-      written,
-      tipX: written,
-      tipTop: band.top,
-      tipBottom: band.bottom,
+/** 要素の下にある文字の節点。**空白だけのもの**（タグのあいだの改行）は数えない。 */
+function textNodesOf(element: RevealElement): readonly Node[] {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+  const nodes: Node[] = []
+  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+    if ((node.nodeValue ?? "").trim().length > 0) {
+      nodes.push(node)
     }
   }
-
-  const returned = clamp((within - SWEEP_SHARE) / RETURN_SHARE, 0, 1)
-  return {
-    filled: band.bottom,
-    bottom: band.bottom,
-    written: 0,
-    tipX: 1 - returned,
-    tipTop: band.top + (next.top - band.top) * returned,
-    tipBottom: band.bottom + (next.bottom - band.bottom) * returned,
-  }
+  return nodes
 }
 
 /** 塊ぜんたいの筆の居場所を、要素1つぶんの見せ方に翻訳する。 */
@@ -345,14 +270,14 @@ function applyStep(shape: MemberShape, step: BrushStep): void {
   const bottom = clamp(step.bottom - box.top, filled, box.height)
 
   if (shape.member.kind === "figure") {
-    // 筆がこの要素の上を通り過ぎた割合。戻りのあいだは `written` が 0 なので薄くならない。
-    const swept = filled + (bottom - filled) * step.written
+    // 筆がこの要素の上を通り過ぎた割合。戻りのあいだは `swept` が 0 なので薄くならない。
+    const swept = filled + (bottom - filled) * step.swept
     shape.member.element.style.opacity =
       box.height === 0 ? "0" : String(clamp(swept / box.height, 0, 1))
     return
   }
 
-  const x = clamp(step.written * box.width, 0, box.width)
+  const x = clamp(step.writtenX - box.left, 0, box.width)
   shape.member.element.style.clipPath =
     `polygon(0px 0px, ${px(box.width)} 0px, ${px(box.width)} ${px(filled)}, ` +
     `${px(x)} ${px(filled)}, ${px(x)} ${px(bottom)}, 0px ${px(bottom)})`
