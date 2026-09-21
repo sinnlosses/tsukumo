@@ -79,7 +79,6 @@ characters/
   "name": "表示名",
   "license": "その素材をここに置いてよい根拠",
   "accent": "#f2b0a0",
-  "speechMarker": "名前: ",
   "expressions": {
     "default": "通常",
     "thinking": "思案",
@@ -112,9 +111,6 @@ characters/
   **表情の呼び名はキャラクターの言葉なのでコード側に持たない**ので、ここに無い表情は
   表情名（`default` などの英語）がそのままラベルになる。**立ち絵が無くてもラベルがあれば
   `speak` で選べる**（絵は `default` に落ちる）
-- **`speechMarker` はセリフの行頭マーカー**（`speak` が呼ばれなかったターンの補助。
-  `docs/requirements.md` 4.2）。**書かなければ補助そのものが効かない**（`speak` だけが
-  セリフの経路になる）。既定値はコード側に無い
 - **`accent` はキャラクターの色**（吹き出し・選ばれたタブなど画面全体に効く。衣装ごとの
   差し色 `outfitAccents` とは別物）
 - **`portraits` は「あるものだけ」でよい。** 見つからない表情は `default` に落ちる。

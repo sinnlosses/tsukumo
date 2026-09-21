@@ -437,8 +437,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 | `character`（`name`・`portraits`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）              |
 | `connection`                                                       | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い） |
 
-`speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・行頭マーカーの
-補助・`MAX_SESSION_VIEW_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。
+`speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
+`MAX_SESSION_VIEW_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。
 
 **経過時間の表示**は `turnStartedAt` / `turnFinishedAt` から browser が計算する（1秒ごとの刻みは browser の
 ローカルな時計。`SessionState` に秒数は入れない）。
@@ -782,14 +782,13 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-tab` など）を**
 
 ```
 characters/<name>/
-  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）/ speechMarker
+  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）
   persona.md         人格。tsukumo が systemPrompt.append で足す（口調・セリフと詳細の書き分け。セリフの間合いとレポートの記法は core 側）
   *.svg / *.png      素材
 ```
 
 - **`expressions` のラベルを定義に移す**（いまは `expression.ts` の `expressionLabel` にコードで
   持っている。原則4）。`speak` の enum と説明はここから作る
-- **`speechMarker`**（行頭マーカー。既定 `アスナ: `）も定義に移す（いまは `utterance.ts` の定数）
 - `persona.md` は**tsukumo 向けの人格**。グローバルの `~/.claude/output-styles/asuna.md` は
   TUI 向けの正典のまま触らない
 - **二重適用を避ける**: tsukumo のセッションではグローバルの出力スタイルも効くので、`persona.md` と

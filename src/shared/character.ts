@@ -42,8 +42,6 @@ export type CharacterInfo = {
    * 直接立つ、いままでの見え方）。**効くのはキャラビューだけ。**
    */
   readonly background: CharacterBackground | undefined
-  /** {@link CharacterDefinition.speechMarker} をそのまま持つ（畳み込みが行頭マーカーに使う）。 */
-  readonly speechMarker: string | undefined
   /**
    * 立ち絵と差し色を**画面から変えられるか**。変えた結果の書き込み先は
    * `~/.tsukumo/characters/<name>/` の1箇所だけで（`docs/design.md` 7.1）、そこに書いた版が
@@ -114,7 +112,6 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     mini: portraitUrl(definition?.mini, cacheKey) ?? portraits.default,
     outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
     background: backgroundWithUrl(definition?.background, cacheKey),
-    speechMarker: definition?.speechMarker,
     editable: source.editable,
   }
 }

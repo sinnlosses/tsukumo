@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-21 行頭マーカー（speechMarker）の経路を撤去した（T-288）
+
+`src/shared/utterance.ts` と `session-state.ts` の `withMarkerFallback` を消し、キャラクターパックの `speechMarker` も落とした。実運用ではマーカー一致行が無く no-op だったので、吹き出しの見え方は変わらない。`docs/requirements.md` 4.2 のほか、追随漏れだった `docs/design.md` / `docs/glossary.md` の3箇所 / `docs/architecture.md` の過去の判断も直した。
+
 ### 2026-09-21 質問の箱の選択肢をラベルの辞書順に並べるようにした（T-287）
 
 `src/shared/question.ts` の `sortQuestionOptions` を入力欄の箱・メインビューの記録・比較の面の3箇所から呼び、モデルが送ってきた順ではなくラベルの辞書順（自由入力「その他」は末尾に固定）で出すようにした。比較のロケールを省くと Bun（`en-US`）とブラウザ（`ja`）で漢字の並びが食い違うことが目視で分かったので、`"ja"` に固定した。

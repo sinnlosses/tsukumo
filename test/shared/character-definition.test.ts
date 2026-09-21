@@ -14,7 +14,6 @@ const FULL_DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
   accent: "#f2b0a0",
-  speechMarker: "精霊: ",
   expressions: {
     default: "通常",
     thinking: "作業中",
@@ -60,29 +59,24 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ mini: 3 }))?.mini).toBeUndefined()
   })
 
-  it("expressions（表情名 → ラベル）と speechMarker を読む", () => {
+  it("expressions（表情名 → ラベル）を読む", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
 
     expect(definition?.expressions.thinking).toBe("作業中")
-    expect(definition?.speechMarker).toBe("精霊: ")
   })
 
-  it("expressions / speechMarker が無ければ undefined に落ちる（既定はコード側に持たない）", () => {
+  it("expressions が無ければ undefined に落ちる（既定はコード側に持たない）", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ portraits: { default: "default.svg" } }),
     )
 
     expect(definition?.expressions.thinking).toBeUndefined()
-    expect(definition?.speechMarker).toBeUndefined()
   })
 
-  it("expressions / speechMarker の型が違うときも undefined に落ちる", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ expressions: "not an object", speechMarker: 42 }),
-    )
+  it("expressions の型が違うときも undefined に落ちる", () => {
+    const definition = parseCharacterDefinition(JSON.stringify({ expressions: "not an object" }))
 
     expect(definition?.expressions.default).toBeUndefined()
-    expect(definition?.speechMarker).toBeUndefined()
   })
 
   it("name が無くても壊れない", () => {

@@ -19,7 +19,6 @@ import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
-import { splitUtterance } from "./utterance.ts"
 
 /**
  * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
@@ -124,8 +123,8 @@ export type SessionState = {
   /** 直近のセリフ（`speak`）に添えられた表情。**表情の源はこれだけ**（自動の上書きは無い）。 */
   readonly speechExpression: Expression
   /**
-   * 今のターンで `speak` が呼ばれたか（マーカー行の補助で拾ったセリフを、置き換えるか
-   * 並べるかの判定に使う。{@link settleUtterance}）。`request` で false に戻る。
+   * 今のターンで `speak` が呼ばれたか（前のターンのセリフを捨てて今のターンだけの並びにするか、
+   * 今のターンに積み重ねるかの判定に使う。`speech` イベントを参照）。`request` で false に戻る。
    */
   readonly speechCalledInTurn: boolean
   /** 確定した記録。書きかけの本文は含まない。 */
@@ -383,7 +382,6 @@ export function applySessionEvent(
           mini: event.mini,
           outfitAccents: event.outfitAccents,
           background: event.background,
-          speechMarker: event.speechMarker,
           editable: event.editable,
         },
         characterPacks: event.packs,
@@ -420,63 +418,19 @@ function beginTurn(state: SessionState, at: number): SessionState {
 
 /**
  * 書きかけの本文を確定した記録に移す。空のときは何もしない（空の本文を積まない）。
- *
- * **行頭マーカーの補助をここで効かせる**（docs/requirements.md 4.2「行頭のマーカーは補助に
- * 格下げ」）。拾えたセリフは吹き出しへ、本文からはマーカー行を除く。`speak` が呼ばれたターンでも
- * 同じ（規約が守られずに本文へ紛れたセリフの受け皿。以前は本文をそのまま出していたが、締めの
- * 一言がメインビューに残った。2026-09-12）。
  */
 function settleUtterance(state: SessionState): SessionState {
   if (state.partialUtterance.trim() === "") {
     return { ...state, partialUtterance: "" }
   }
 
-  const settled = withMarkerFallback(state)
-  const markdown = settled.partialUtterance
-
-  return {
-    ...settled,
-    records:
-      markdown.trim() === "" ? settled.records : [...settled.records, { kind: "detail", markdown }],
-    partialUtterance: "",
-  }
-}
-
-/**
- * 行頭マーカーの補助を1回効かせる。拾えたセリフは、そのターンに `speak` があればその後ろに
- * 並べ、無ければ**そのターン最初のセリフとして**置き換える（前のターンの並びと混ざらない。
- * `speech` イベントの扱いと同じ規約）。
- * `partialUtterance` にはマーカー行を除いた本文を残す（呼び出し側が確定した記録へ積む）。
- */
-function withMarkerFallback(state: SessionState): SessionState {
-  // マーカーはキャラクターパックの定義から来る。**定義に無いパックでは補助そのものが効かない**
-  // （コードに既定のマーカーを持たない。docs/design.md 7章）。
-  const speechMarker = state.character?.speechMarker
-  if (speechMarker === undefined || speechMarker === "") {
-    return state
-  }
-
-  const parts = splitUtterance(state.partialUtterance, speechMarker)
-  if (parts.speech === undefined) {
-    return { ...state, partialUtterance: parts.detail }
-  }
-
-  // speak を呼んだターンでも、本文に紛れたマーカー行は吹き出しへ回す（規約が守られなかった
-  // ときの受け皿。speak のあとに並べて、同じターンのまとまりとして出す）。
-  const speeches = state.speechCalledInTurn ? [...state.speeches, parts.speech] : [parts.speech]
+  const markdown = state.partialUtterance
 
   return {
     ...state,
-    // **記録にも積む**（`speech` イベントと同じ扱い）。積まないと、この経路で拾ったセリフだけが
-    // 過去のターンで消える（今のターンは `speeches` から出るので気づきにくい。
-    // `shared/turn-speech.ts`）。マーカー行に表情は添えられないので、いまの表情を残す。
-    records: [
-      ...state.records,
-      { kind: "speech", text: parts.speech, expression: state.speechExpression },
-    ],
-    speeches,
-    speechCalledInTurn: true,
-    partialUtterance: parts.detail,
+    records:
+      markdown.trim() === "" ? state.records : [...state.records, { kind: "detail", markdown }],
+    partialUtterance: "",
   }
 }
 

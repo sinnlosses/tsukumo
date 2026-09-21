@@ -15,7 +15,6 @@ const FULL_DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
   accent: "#f2b0a0",
-  speechMarker: "精霊: ",
   expressions: {
     default: "通常",
     thinking: "作業中",
@@ -74,7 +73,6 @@ describe("expressionChoices", () => {
         sad: undefined,
         excited: undefined,
       },
-      speechMarker: undefined,
       portraits: {
         default: undefined,
         thinking: "thinking.svg",

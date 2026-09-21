@@ -26,12 +26,6 @@ export type CharacterDefinition = {
    */
   readonly expressions: Readonly<Record<Expression, string | undefined>>
   /**
-   * セリフの行頭マーカー（`speak` が呼ばれなかったターンの補助。docs/requirements.md 4.2）。
-   * **定義に無ければ補助そのものが効かない**（`speak` だけがセリフの経路になる）。
-   * 既定値をコードに持たないのは、マーカーがキャラクターの名前だから（原則4）。
-   */
-  readonly speechMarker: string | undefined
-  /**
    * キャラクターの色（`docs/design.md` 13.2 の `accent`）。**衣装ごとの差し色
    * （`outfitAccents`）とは別物**で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・
    * フォーカスの輪など、13.1 原則1が許す場所）に効く。無ければ画面側の既定値に落ちる。
@@ -130,7 +124,6 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     name: typeof value.name === "string" ? value.name : undefined,
     accent: typeof value.accent === "string" ? value.accent : undefined,
     expressions: toExpressionLabels(value.expressions),
-    speechMarker: typeof value.speechMarker === "string" ? value.speechMarker : undefined,
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
     outfitAccents: toOutfitAccents(value.outfitAccents),

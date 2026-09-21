@@ -7,7 +7,6 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../src/shared/session-state.ts"
-import { turnSpeeches } from "../../src/shared/turn-speech.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
@@ -16,16 +15,12 @@ function apply(...events: readonly SessionEvent[]): SessionState {
   return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_STATE)
 }
 
-/**
- * 行頭マーカーを持つ架空のキャラクターパックが決まったところ。**マーカーは定義ファイル側から
- * 来る**ので、補助を見るテストはこれを先に流す（docs/design.md 7章）。
- */
-const CHARACTER_WITH_MARKER: SessionEvent = {
+/** 架空のキャラクターパックが決まったところ。 */
+const CHARACTER_FIXTURE: SessionEvent = {
   kind: "character-changed",
   pack: "fictional",
   name: "架空の精霊",
   accent: undefined,
-  speechMarker: "精霊: ",
   expressions: [{ name: "default", label: "通常" }],
   portraits: {
     default: undefined,
@@ -586,7 +581,7 @@ describe("applySessionEvent", () => {
 
   it("conversation-cleared で吹き出しと記録を空にする（/clear。キャラクターとセッション情報は残す）", () => {
     const before = apply(
-      CHARACTER_WITH_MARKER,
+      CHARACTER_FIXTURE,
       {
         kind: "session-info",
         sessionId: "session-dummy",
@@ -662,7 +657,6 @@ describe("applySessionEvent", () => {
       pack: "fictional",
       name: "架空の精霊",
       accent: "#f2b0a0",
-      speechMarker: "精霊: ",
       expressions: [
         { name: "default", label: "通常" },
         { name: "thinking", label: "作業中" },
@@ -688,7 +682,6 @@ describe("applySessionEvent", () => {
       pack: "fictional",
       name: "架空の精霊",
       accent: "#f2b0a0",
-      speechMarker: "精霊: ",
       expressions: [
         { name: "default", label: "通常" },
         { name: "thinking", label: "作業中" },
@@ -717,62 +710,6 @@ describe("applySessionEvent", () => {
     })
 
     expect(view.pending.map((ask) => ask.id)).toEqual(["toolu_1"])
-  })
-
-  it("speak が1回も呼ばれなかったターンでは、行頭マーカーの補助で吹き出しを埋め、本文からマーカー行を除く", () => {
-    const view = apply(
-      CHARACTER_WITH_MARKER,
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "utterance", text: "精霊: 補助で拾ったセリフ\n本文はこちら" },
-    )
-
-    expect(view.speeches).toEqual(["補助で拾ったセリフ"])
-    expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "detail", markdown: "本文はこちら" },
-    ])
-  })
-
-  it("speak が呼ばれたターンでも、本文に紛れたマーカー行は吹き出しへ回して本文から除く", () => {
-    const view = apply(
-      CHARACTER_WITH_MARKER,
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "speech", text: "本物のセリフ", expression: "proud" },
-      { kind: "utterance", text: "精霊: マーカー行\n本文はこちら" },
-    )
-
-    expect(view.speeches).toEqual(["本物のセリフ", "マーカー行"])
-    expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "detail", markdown: "本文はこちら" },
-    ])
-  })
-
-  it("行頭マーカーの補助で拾ったセリフも記録に積む（過去のターンで消えないため）", () => {
-    const view = apply(
-      CHARACTER_WITH_MARKER,
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "speech", text: "本物のセリフ", expression: "proud" },
-      { kind: "utterance", text: "精霊: マーカー行\n本文はこちら" },
-    )
-
-    expect(turnSpeeches(view.records)).toEqual([
-      { id: 0, speeches: ["本物のセリフ", "マーカー行"], expression: "proud" },
-    ])
-  })
-
-  it("speechMarker が無いパックでは補助が効かず、本文はそのままレポートになる", () => {
-    const view = apply(
-      { ...CHARACTER_WITH_MARKER, speechMarker: undefined },
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "utterance", text: "精霊: マーカーのつもりの行\n本文はこちら" },
-    )
-
-    expect(view.speeches).toEqual([])
-    expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "detail", markdown: "精霊: マーカーのつもりの行\n本文はこちら" },
-    ])
   })
 
   it("記録はターン数の窓（直近20ターン）だけを残し、古いターンは落とす", () => {

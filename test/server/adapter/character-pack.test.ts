@@ -16,7 +16,6 @@ import {
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
-  speechMarker: "精霊: ",
   expressions: {
     default: "通常",
     thinking: "作業中",
@@ -77,7 +76,6 @@ describe("characterChangedEvent", () => {
       pack: basename(dir),
       name: "架空の精霊",
       accent: undefined,
-      speechMarker: "精霊: ",
       editable: true,
       expressions: [
         { name: "default", label: "通常" },

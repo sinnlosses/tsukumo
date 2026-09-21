@@ -71,7 +71,6 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   pack: "fictional",
   name: "架空の精霊",
   accent: undefined,
-  speechMarker: undefined,
   expressions: [{ name: "default", label: "通常" }],
   portraits: {
     default: "/character/default.png",

@@ -12,7 +12,6 @@ const FULL_DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
   accent: "#f2b0a0",
-  speechMarker: "精霊: ",
   expressions: {
     default: "通常",
     thinking: "作業中",
@@ -113,7 +112,6 @@ describe("toCharacterInfo", () => {
     expect(info?.editable).toBe(true)
     expect(info?.name).toBe("架空の精霊")
     expect(info?.accent).toBe("#f2b0a0")
-    expect(info?.speechMarker).toBe("精霊: ")
     expect(info?.expressions.map((choice) => choice.name)).toEqual([
       "default",
       "thinking",
@@ -239,7 +237,6 @@ describe("toCharacterInfo", () => {
     expect(info.pack).toBeUndefined()
     expect(info.name).toBeUndefined()
     expect(info.accent).toBeUndefined()
-    expect(info.speechMarker).toBeUndefined()
     expect(info.expressions).toEqual([{ name: "default", label: "default" }])
     expect(info.portraits.default).toBeUndefined()
     expect(info.mini).toBeUndefined()
