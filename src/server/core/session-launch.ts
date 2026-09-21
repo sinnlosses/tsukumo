@@ -75,14 +75,21 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * パックを決める → 画面から選んだときだけ覚える → `character-changed` と `chat-mode-changed` を
  * 流す → 見張りを起こす → 続きのセッションを探す → 駆動を起こす → 続きから始まったなら履歴を
  * 組み直す。
+ *
+ * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
+ * 前のセッションの記録を組み直した再生だけを流す（`docs/design.md` 7章「雑談の会話のアーカイブは
+ * どこに置くか」の「誰がいつ書くか」）。**畳み方と配り方はどちらも同じ**（呼び出し側
+ * — `session-manager` — が両方を同じように畳む）。分けるのは「どちらの口から来たか」を
+ * 呼び出し側が知れるようにするためだけ。
  */
 export function createSessionLaunch<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
 ): (
   onEvent: (event: SessionEvent) => void,
+  onRestoredEvent: (event: SessionEvent) => void,
   request: SessionLaunchRequest,
 ) => Promise<SessionDriver> {
-  return async (onEvent, request) => {
+  return async (onEvent, onRestoredEvent, request) => {
     const { character } = request
     const chat = request.chat ?? false
     const pack = ports.choosePack(character)
@@ -103,7 +110,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const driver = ports.startDriver({ pack, resume, chat }, onEvent)
 
     if (resume !== undefined) {
-      void replayRestoredSession(ports, resume, pack, onEvent)
+      void replayRestoredSession(ports, resume, pack, onRestoredEvent)
     }
 
     return {
@@ -122,17 +129,18 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
  * docs/requirements.md 4.8「復元できなかったときどうするか」）。
  *
  * 組み上がるのはこのプロセスのメモリの中だけで、**どこにも書き出さない**
- * （docs/coding-standards.md「会話内容の扱い」）。
+ * （docs/coding-standards.md「会話内容の扱い」）。**駆動から新しく届くイベントとは別の口
+ * （`onRestoredEvent`）へ流す**ので、呼び出し側はどちらから来たかを区別できる。
  */
 async function replayRestoredSession<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
   sessionId: string,
   pack: Pack,
-  onEvent: (event: SessionEvent) => void,
+  onRestoredEvent: (event: SessionEvent) => void,
 ): Promise<void> {
   try {
     for (const event of await ports.restoreEvents(sessionId, pack)) {
-      onEvent(event)
+      onRestoredEvent(event)
     }
   } catch {
     // 履歴が出ないだけで、セッションそのものは続く。

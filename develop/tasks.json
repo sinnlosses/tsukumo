@@ -72,9 +72,9 @@
     "dependencies": [],
     "summary": "復元で流し直すイベントを別の口（onRestoredEvent）に分ける",
     "task": "## 背景\n\n**雑談の会話のアーカイブ（`docs/requirements.md` 4.9「雑談の会話のアーカイブ」）を書くための\n下ごしらえ。** アーカイブは `src/server/core/session-manager.ts` の `receive` で**駆動から\n新しく届いたイベントだけ**を書くが、いまは `createSessionLaunch`（`src/server/core/session-launch.ts`）が\ntranscript から組み直した履歴を**駆動と同じ `onEvent`** へ流しているので、区別する手段が無い。\nこのまま書くと**起こし直すたびに同じ会話がもう一度積まれる**。\n\n## 決まっていること（蒸し返さない）\n\n- **復元の再生を別の口（`onRestoredEvent`）に分ける**（`docs/design.md` 7章「雑談の会話の\n  アーカイブはどこに置くか」の「誰がいつ書くか」）\n- **畳み方と配り方は今までどおり**。復元のイベントも `applySessionEvent` で状態に畳み、\n  同じようにブラウザへ配る。**変わるのは「どちらの口から来たか」を `session-manager` が\n  知れるようになることだけ**\n- 復元の決定（`docs/requirements.md` 4.8）は変えない\n\n## やること\n\n1. `SessionLaunchPorts` を使う側（`createSessionLaunch` が返す関数）が受け取る口を2つにし、\n   `restoreEvents` の再生だけを `onRestoredEvent` へ流す\n2. `session-manager` の `create`（`startDriver`）を追随させ、`receive` が「駆動から新しく\n   届いたか、復元の再生か」を区別できる形にする。**この段階では区別を使わない**\n   （使うのは次のタスク）\n3. 偽の駆動（`fake-driver.ts`）と SDK の駆動（`sdk-driver.ts`）の `onEvent` は1つのまま\n   （分けるのは起こす側の口だけ）\n\n## 完了条件\n\n- 復元の再生が `onRestoredEvent` を通り、駆動から届くイベントと区別できる\n- 画面の見え方・`hello` の中身・イベントの順序は今までと同じ（既存テストが通る）\n- `test/server/core/session-launch.test.ts` に「復元は別の口へ流れる」テストがある\n- `bun run check` が通る\n\n## 注意\n\n- **層の辺を増やさない**（`core → adapter` は禁止。`test/architecture.test.ts`）\n- テストのフィクスチャは**手で書いた架空の会話**（`docs/coding-standards.md`「会話内容の扱い」）\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "createSessionLaunch の戻り値を (onEvent, onRestoredEvent, request) にし、replayRestoredSession だけを onRestoredEvent へ流した。session-manager は EventOrigin（\"driver\" | \"restored\"）で receive に印を渡す（この段階では未使用）。test/server/core/session-launch.test.ts に「復元は別の口へ流れ、駆動のイベントと区別できる」を追加。bun run check 909 pass / 0 fail（復元の口のテストを1件追加）。"
   },
   {
     "id": "T-255",

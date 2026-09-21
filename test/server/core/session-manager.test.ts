@@ -247,7 +247,7 @@ describe("createSessionManager", () => {
     })
     manager.create({
       sessionId: SESSION_ID,
-      startDriver: (onEvent, request) => {
+      startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push({ character: request.character, stub })
@@ -343,7 +343,7 @@ describe("createSessionManager", () => {
     })
     manager.create({
       sessionId: SESSION_ID,
-      startDriver: (onEvent, request) => {
+      startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -374,7 +374,7 @@ describe("createSessionManager", () => {
     })
     manager.create({
       sessionId: SESSION_ID,
-      startDriver: (onEvent, request) => {
+      startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -666,8 +666,8 @@ describe("createSessionManager", () => {
     })
     manager.create({
       sessionId: SESSION_ID,
-      startDriver: (onEvent, character) => {
-        if (character === undefined) {
+      startDriver: (onEvent, _onRestoredEvent, request) => {
+        if (request.character === undefined) {
           const stub = createStubDriver()
           stub.attach(onEvent)
           return Promise.resolve(stub.driver)

@@ -52,8 +52,14 @@ export type SessionManagerOptions = {
 export type SessionCreateOptions = {
   readonly sessionId: string
   /**
-   * 駆動を起こす。**渡された `onEvent` を駆動に配線する**のは呼び出し側の仕事で、
-   * ここは種類（SDK か偽の駆動か）を知らない。
+   * 駆動を起こす。**渡された `onEvent` / `onRestoredEvent` を駆動に配線する**のは呼び出し側の
+   * 仕事で、ここは種類（SDK か偽の駆動か）を知らない。
+   *
+   * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
+   * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md` 7章「雑談の会話の
+   * アーカイブはどこに置くか」）。**畳み方と配り方はどちらも同じ**（`receive` が両方を
+   * 同じように畳む）——分かれているのは「どちらから来たか」を呼び出し側が知れるようにする
+   * ためだけ。
    *
    * `request.character` は起こすキャラクターパックの名前で、**最初の1回は undefined**
    * （呼び出し側の既定にまかせる）。`switch-character` で起こし直すときだけ名前が入る
@@ -65,6 +71,7 @@ export type SessionCreateOptions = {
    */
   readonly startDriver: (
     onEvent: (event: SessionEvent) => void,
+    onRestoredEvent: (event: SessionEvent) => void,
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
@@ -127,6 +134,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     },
   }
 }
+
+/**
+ * `receive` に渡るイベントが「駆動から新しく届いたか（`"driver"`）、復元の再生か
+ * （`"restored"`）」の印（docs/design.md 7章「雑談の会話のアーカイブはどこに置くか」）。
+ */
+type EventOrigin = "driver" | "restored"
 
 /** セッション1つぶんの持ち物（docs/design.md 5章の `SessionHost`）。 */
 type SessionHost = {
@@ -209,8 +222,13 @@ function createSessionHost(
   /**
    * イベント1件を畳んで次のバッチに積む。**駆動から届いたものと、見た目の編集で起こした
    * `character-changed` の両方がここを通る**（サーバ側の状態とブラウザへ配る内容を1本にする）。
+   *
+   * `_origin` は「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印
+   * （`docs/design.md` 7章「雑談の会話のアーカイブはどこに置くか」）。**畳み方と配り方は
+   * どちらも同じ**——ここではまだ分岐に使わない（使うのは雑談の会話のアーカイブを書く
+   * 次のタスク。それまでは未使用のまま `_` を付けて渡す）。
    */
-  const receive = (event: SessionEvent): void => {
+  const receive = (event: SessionEvent, _origin: EventOrigin): void => {
     if (closed) {
       return
     }
@@ -234,12 +252,21 @@ function createSessionHost(
 
   const start = (request: SessionLaunchRequest): Promise<SessionDriver> => {
     const born = generation
-    const starting = created.startDriver((event) => {
-      if (born !== generation) {
-        return
-      }
-      receive(event)
-    }, request)
+    const starting = created.startDriver(
+      (event) => {
+        if (born !== generation) {
+          return
+        }
+        receive(event, "driver")
+      },
+      (event) => {
+        if (born !== generation) {
+          return
+        }
+        receive(event, "restored")
+      },
+      request,
+    )
 
     void starting.then(
       (started) => {
@@ -309,7 +336,9 @@ function createSessionHost(
       if (event === undefined) {
         return { ok: false, reason }
       }
-      receive(event)
+      // 見た目の編集で起こした `character-changed` は、駆動から届くのと同じ「新しい」もの
+      // （復元の再生ではない）。
+      receive(event, "driver")
       return { ok: true }
     } catch {
       return { ok: false, reason }

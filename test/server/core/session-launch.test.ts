@@ -59,14 +59,22 @@ function characterEventOf(pack: Pack): SessionEvent {
 
 type Harness = {
   readonly ports: SessionLaunchPorts<Pack>
+  /** 駆動（と見張り）から新しく届いたイベントと、復元の再生の両方を時系列に混ぜたもの。 */
   readonly events: SessionEvent[]
+  /** `onEvent` を通ったイベントだけ（復元の再生は入らない）。 */
+  readonly driverEvents: SessionEvent[]
+  /** `onRestoredEvent` を通ったイベントだけ（駆動から新しく届いたものは入らない）。 */
+  readonly restoredEvents: SessionEvent[]
   readonly calls: string[]
   readonly stub: ReturnType<typeof createStubDriver>
   readonly receive: (event: SessionEvent) => void
+  readonly receiveRestored: (event: SessionEvent) => void
 }
 
 function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harness {
   const events: SessionEvent[] = []
+  const driverEvents: SessionEvent[] = []
+  const restoredEvents: SessionEvent[] = []
   const calls: string[] = []
   const stub = createStubDriver()
 
@@ -93,7 +101,22 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     ...overrides,
   }
 
-  return { ports, events, calls, stub, receive: (event) => events.push(event) }
+  return {
+    ports,
+    events,
+    driverEvents,
+    restoredEvents,
+    calls,
+    stub,
+    receive: (event) => {
+      events.push(event)
+      driverEvents.push(event)
+    },
+    receiveRestored: (event) => {
+      events.push(event)
+      restoredEvents.push(event)
+    },
+  }
 }
 
 /** 呼ばれ方の記録に混ぜる、そのときのモード。 */
@@ -110,7 +133,7 @@ describe("createSessionLaunch", () => {
   it("起動時は覚えた値のパックで起こし、続きの履歴を流す", async () => {
     const harness = createHarness()
 
-    await createSessionLaunch(harness.ports)(harness.receive, {
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       character: undefined,
       chat: undefined,
     })
@@ -134,7 +157,7 @@ describe("createSessionLaunch", () => {
       findResumeSession: () => Promise.resolve(undefined),
     })
 
-    await createSessionLaunch(harness.ports)(harness.receive, {
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       character: undefined,
       chat: undefined,
     })
@@ -152,10 +175,14 @@ describe("createSessionLaunch", () => {
       restoreEvents: () => Promise.reject(new Error("架空の読み取り失敗")),
     })
 
-    const driver = await createSessionLaunch(harness.ports)(harness.receive, {
-      character: undefined,
-      chat: undefined,
-    })
+    const driver = await createSessionLaunch(harness.ports)(
+      harness.receive,
+      harness.receiveRestored,
+      {
+        character: undefined,
+        chat: undefined,
+      },
+    )
     await settle()
     driver.prompt("架空の依頼", [])
 
@@ -169,7 +196,7 @@ describe("createSessionLaunch", () => {
   it("画面から選んで起こし直したときだけ、そのパックを覚える", async () => {
     const harness = createHarness()
 
-    await createSessionLaunch(harness.ports)(harness.receive, {
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       character: "kagami",
       chat: undefined,
     })
@@ -182,7 +209,7 @@ describe("createSessionLaunch", () => {
   it("雑談で起こすと、雑談の側の続きを探して雑談の駆動を起こす（仕事の続きを拾わない）", async () => {
     const harness = createHarness()
 
-    await createSessionLaunch(harness.ports)(harness.receive, {
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       character: undefined,
       chat: true,
     })
@@ -199,7 +226,7 @@ describe("createSessionLaunch", () => {
   it("起動時（画面から選んでいないとき）は覚えない", async () => {
     const harness = createHarness()
 
-    await createSessionLaunch(harness.ports)(harness.receive, {
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       character: undefined,
       chat: undefined,
     })
@@ -211,10 +238,14 @@ describe("createSessionLaunch", () => {
   it("駆動を閉じると、駆動と同じ間だけ動く見張りも閉じる", async () => {
     const harness = createHarness()
 
-    const driver = await createSessionLaunch(harness.ports)(harness.receive, {
-      character: undefined,
-      chat: undefined,
-    })
+    const driver = await createSessionLaunch(harness.ports)(
+      harness.receive,
+      harness.receiveRestored,
+      {
+        character: undefined,
+        chat: undefined,
+      },
+    )
     driver.close()
 
     expect(harness.calls).toContain("watchTasks:close")
@@ -229,12 +260,36 @@ describe("createSessionLaunch", () => {
       },
     })
 
-    await createSessionLaunch(harness.ports)(harness.receive, {
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       character: undefined,
       chat: undefined,
     })
     await settle()
 
     expect(harness.events.map((event) => event.kind)).toContain("tasks-changed")
+  })
+
+  it("復元は別の口（onRestoredEvent）へ流れ、駆動のイベントと区別できる", async () => {
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      character: undefined,
+      chat: undefined,
+    })
+    await settle()
+
+    // 起動そのものが流す `character-changed` / `chat-mode-changed` は onEvent 側だけに乗る。
+    expect(harness.driverEvents.map((event) => event.kind)).toEqual([
+      "character-changed",
+      "chat-mode-changed",
+    ])
+    // restoreEvents が組み直した履歴は onRestoredEvent 側だけに乗る。
+    expect(harness.restoredEvents.map((event) => event.kind)).toEqual(["utterance"])
+    // 両方を混ぜた時系列は今までどおり（画面の見え方・順序は変わらない）。
+    expect(harness.events.map((event) => event.kind)).toEqual([
+      "character-changed",
+      "chat-mode-changed",
+      "utterance",
+    ])
   })
 })
