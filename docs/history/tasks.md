@@ -19435,3 +19435,424 @@ task-list.tsx` の `taskStatusClass` が `.task-status-doing` を当て、`sideb
 - 目視のために `develop/tasks.json` の1件を一時的に `doing` にしたら、確認後に必ず戻す。
   **他のセッションの未コミット変更を巻き込まない**
 - 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-293
+
+**タスク**: 雑談の1件に「残す」旗を立て、読み戻しの窓から落とさない
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 通過（1021 pass/90 files → 1036 pass/0 fail/2066 expect/90 files、+15）。旗は `kept.jsonl` に時刻だけの索引として積み（文面は複製せず日付のファイルは追記のまま）、読み戻しは窓 64 KiB の外に 8 KiB を足す形。`keep` ツールは引数なしでそのターンの1往復を指す。テストで示したもの: 窓を使い切っても旗の件が入る / 旗が増えても上限を超えず古い旗から落ちる / 旗の無い `v: 1` の行がそのまま読める（フィクスチャは架空の文面、`root` は一時ディレクトリ）。
+
+## 背景
+
+エージェントのドラフト（2026-09-21 の雑談から。ユーザー承認済み）:
+「逐語の読み戻しを増やすだけでは、大事な一言と相槌が同じ重さで古い順に落ちる。雑談の1件に
+『残す』印を付けられるようにし、読み戻しの窓から溢れても印の付いた件は落とさない。」
+
+いまの読み戻しは**古い順に落ちるだけ**。`src/server/adapter/chat-archive.ts` の
+`readRecentEntries()` が、日付のファイルを新しい順に開いて末尾の行から遡り、文面のバイト数の
+合計が `limitBytes` に届いたところで打ち切る。重み付けは無い。
+
+似て非なる口が既に2つある:
+
+- **`remember` / `forget`**（`src/server/adapter/persona-memory.ts`）は、覚えたことを
+  `persona.md` の `## 覚えたこと` へ**要約した1行**として書き足す（120文字・20行の上限）。
+  **逐語ではない**
+- **要約の写し**（`src/server/adapter/chat-summary.ts`）は `/compact` の産物で、こちらも逐語ではない
+
+このタスクが足すのは3つ目——**逐語の1件を、窓から溢れても落とさない**仕組み。
+
+## 決まっていること（蒸し返さない）
+
+- **旗を立てるのはキャラクター自身**（2026-09-21 にユーザーが選択）。`remember` / `forget` と
+  同じく MCP ツールを1つ足す形にする。**利用者が画面から指す UI は作らない**ので、
+  `src/browser/features/chat-view/` は触らない（T-285 と衝突させない）
+
+## 解くべき論点
+
+- **どの1件に立てるのか**をツールがどう指せるか。ツールを呼ぶ時点で直前のやり取りはまだ
+  アーカイブに書かれていない可能性がある（書くのは `src/server/core/session-manager.ts` の
+  `receive`）。「直前の1往復」を指すのか、ツールに文面を渡させるのか
+- **保存の形**。`ArchiveRecord`（`chat-archive.ts`）は `v: 1` の JSONL で、
+  `archiveLineSchema` は `v` を `literal(1)` で見ている。鍵を足すときに版を上げるか、
+  上げずに済ませるか（zod は余分な鍵を落とすだけなので古い行は読める）。**行を書き換える**
+  必要があるなら、追記しかしていない今の作りをどう変えるか
+- **読み戻しでの扱い**。印の付いた件を `limitBytes` の外で足すのか、中で優先するのか。
+  外で足すなら**上限を別に持つ**（際限なく増やさない）
+- 印の付いた件が窓の外から来ると、**時系列が飛ぶ**。前置き（`chat-memory-prompt.ts` の
+  `CHAT_RECENT_PREFACE`）でどう説明するか
+- **消す口**を用意するか（`forget` に当たるもの）
+
+## やること
+
+1. 上の論点に答えを出し、決めた形を `docs/requirements.md` 4.9 と `docs/design.md` 7章に書く
+2. ツールを足す（`src/session-start.ts` の配線と、口の型は `src/server/core/session-driver.ts`）
+3. `chat-archive.ts` の書き口・読み口を、決めた形に合わせる
+4. モデル側の条（`src/server/core/chat-manner.ts`）に、**いつ旗を立てるか**を1〜2行で足す
+   （`remember` の条の隣。文面の判断はモデル側が持つ）
+5. テストを足す（**架空の文面で**）: 旗の付いた件が窓から溢れても読み戻しに入ること、
+   上限を超えたときの落とし方
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を着手前と並べて `evidence` に書く）
+- 旗の付いた1件が、`limitBytes` を使い切った状態でも読み戻しに入る（テストで示す）
+- 旗の付いた件が増え続けても、読み戻し全体が決めた上限を超えない（テストで示す）
+- 旗の無い既存の行（`v: 1`）がそのまま読めて落ちない（テストで示す）
+- `~/.tsukumo/chat-archive/` の実物を読み書きするテストを書いていない
+  （テストは `root` を差し替える既存の手に従う）
+
+## 注意
+
+- **会話内容の扱いが最優先**（`docs/coding-standards.md`）。旗の判断はモデル側に置き、
+  tsukumo 側で文面を読んで決めない。`evidence` にも実物の会話を写さない
+- `chat-archive.ts` は「どこに・どんな形で書くか」だけを持つ境界。**何を残すかの判断を
+  ここへ移さない**（冒頭のコメントの線）
+- `src/browser/` は触らない（上の「決まっていること」）
+
+## T-294
+
+**タスク**: 雑談のアーカイブに日付ごとの索引を持ち、当たった日だけ逐語で読む
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-292 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1051 pass / 0 fail、90ファイル。typecheck・oxlint・format:check も通過。着手前は 1038 で、本タスクぶんは +13）。
+索引は ~/.tsukumo/chat-archive/<パック名>/index.jsonl に1日1行。書く口/引く口は src/server/adapter/chat-archive.ts の writeIndex/recall、契機は sdk-driver.ts の index/recall ツール（recall だけ戻り値が "ok" でない唯一の例外。理由は docs/requirements.md 4.9）。
+当たった日だけ開くことは test/server/adapter/chat-archive.test.ts が spyOn(fs,"readFileSync") の呼び出しパスで確認。節数は requirements 27 / design 50 で前後とも同じ（4.9 の追加は並行セッションの 70b8d77 に巻き込まれて先にコミットされている）。
+
+## 背景
+
+エージェントのドラフト（2026-09-21 の雑談から。ユーザー承認済み）:
+「1日1行の索引ファイルを持ち、まず索引を grep して当たった日のアーカイブだけを逐語で読む。
+`docs/` の『節の索引』と同じ作り。全文検索の仕組みは要らない（1日20KB・1年7MB の規模なので
+grep で足りる）。」「足りないのは探す手段ではなく、探しに行く契機と、言葉のずれを吸収する索引のほう。」
+
+いまアーカイブ（`~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`）を読む口は
+`src/server/adapter/chat-archive.ts` の `readRecent` の1つだけで、**セッションを起こすときに
+直近のぶんを遡って読むだけ**。日付を指して読む口も、探す口も無い。読んだものの行き先は
+`systemPrompt` だけで、画面にも stderr にも出さない（冒頭のコメント）。
+
+そのため「昨日の話だけど」より古い話は、`/compact` の要約と `persona.md` の
+`## 覚えたこと`（`src/server/adapter/persona-memory.ts`）に残ったぶんしか辿れない。
+
+## 解くべき論点
+
+- **索引の1行を誰が・いつ書くか**。`/compact` のときにモデルに書かせるのか、日が変わった
+  ことを tsukumo 側が見て起こすのか。**モデルに書かせるなら文面の判断はモデル側**に置く
+  （`docs/coding-standards.md`「会話内容の扱い」）
+- **索引の置き場と形**。`~/.tsukumo/chat-archive/<パック名>/index.md` に1日1行か、パックを
+  またぐか。`ARCHIVE_FILE_NAME` が日付の `.jsonl` 以外を読まない作りとの兼ね合い
+- **探しに行く契機**。キャラクターが自分で引くツールを足すのか、セッションを起こすときに
+  引くのか。ツールなら、返した逐語が `systemPrompt` ではなくツールの戻り値として会話に入る
+  ——**`speak` の戻り値が `"ok"` だけ**という今の線（`CLAUDE.md`「アーキテクチャ概要」）と
+  ぶつからないか確かめる
+- **読む量の上限**。当たった日の `.jsonl` をまるごと返すと 20KB 級になる。どこで切るか
+- `grep` を外部コマンドとして起こすのか、`node:fs` で読んで絞るのか
+  （**外部コマンド依存を増やすときはユーザーの承認が要る**。`CLAUDE.md`）
+
+## やること
+
+1. 上の論点に答えを出し、決めた形を `docs/requirements.md` 4.9 と `docs/design.md` 7章に書く
+2. 索引を書く口と読む口を `src/server/adapter/chat-archive.ts`（またはその隣の1ファイル）に足す
+3. 探しに行く契機を配線する（`src/session-start.ts` / `src/server/core/session-driver.ts`）
+4. テストを足す（**架空の文面で**）: 索引に当たった日だけを読むこと、当たらないときに
+   何も読まないこと、上限で切れること
+5. **調べて成り立たなければ、やらずに理由を `evidence` に書いて閉じてよい**
+   （例: 契機をどこに置いても `systemPrompt` が膨らむだけで拾い上げにならない、と分かったとき）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を着手前と並べて `evidence` に書く）
+- 索引に当たった日の逐語だけが読まれ、当たらない日のファイルは開かれない（テストで示す）
+- 索引が無い・壊れているときに、いまの読み戻し（`readRecent`）がそのまま動く（テストで示す）
+- 決めた上限を超える量を一度に読まない（テストで示す）
+- `grep -c '^#\{2,3\} ' docs/requirements.md` と `docs/design.md` の値が編集の前後で変わらない
+
+## 注意
+
+- **会話内容の扱いが最優先**（`docs/coding-standards.md`）。索引も逐語も tsukumo のプロセスの
+  外へ出さない。`evidence` に実物を写さない
+- **外部コマンドを増やすならユーザーの承認を得る**（`grep` を起こす案を採る場合）
+- T-292（日付の見出し）と同じ逐語の経路を触るので、`dependencies` に置いてある。
+  T-293（残す旗）も `chat-archive.ts` を触るため、どちらかが `doing` のときは並行させない
+
+## T-295
+
+**タスク**: 雑談モードのメインビューにパックの背景を敷く
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 1053 pass / 0 fail（90ファイル）。`.layout-character` を `.layout-ground` に改名してキャラビューと雑談中のメインで共有し、`<Layout>` に `mainAsGround` を足した（覆いの式は CSS 1箇所のまま）。
+目視（Chromium 1400x900 と 700x900、使い捨ての HOME に背景入りパックを置いて fake driver で起動）: 雑談のメインは枠も角丸も無く絵が出る（computed で border 0px / radius 0px / 覆い+url()）。サイドバーと入力欄は枠と `surface` のまま background-image: none。仕事へ戻すと枠1px・角丸12px が戻り、絵はキャラビューへ移る。
+地を持たない字（「話しかけてもらう」「空のときの案内」）に `ground` 一色を敷き、吹き出しを含め字が乗る要素の地が全て不透明であることを computed で確認。`docs/design.md` の節数は編集前後とも 50。`~/.tsukumo/` は触っていない。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「雑談モードで、メイン画面に背景を設定したい。設定する背景は仕事
+モードの背景と同じでかまわない(今のところ分けたり複数枚設定して日時や天気で切り替えなどは
+考えてはいない)」。
+
+いま背景（`docs/design.md` 13.8）が効くのはキャラビューの領域だけ。
+`src/browser/stores/session.tsx` が `character.background` から
+`--character-background-image` / `--character-background-veil` を `document.documentElement` に
+差し、`src/browser/features/layout/layout.module.css` の `.layout-character` が
+「覆い1枚（`ground` を `veil` の不透明度で `linear-gradient`）＋ `url()`」の形で敷いている。
+
+**雑談モードではキャラビューの領域ごと畳む**（`src/browser/main.tsx` が `chatMode` で
+`<MainView>` を `<ChatView>` に差し替え、同時に `<Layout>` の `collapseCharacter` を立てる）ので、
+立ち絵と一緒に背景も消える。
+
+`docs/design.md` 13.8「どう敷くか」は**「雑談モードでは背景も消える。メインビューへは持ち込まない
+（読む面の地は変えない）」と明記している**。この指示はその決定の変更なので、コードだけ直して
+正典を古いまま残さない。
+
+素材は仕事モードと同じもの（パックの `background`）を使う。モードごとに分ける・複数枚持つ・
+日時や天気で切り替えるのは**対象外**（ユーザーが明示）。
+
+## 決まっていること（蒸し返さない）
+
+- 敷くのは雑談モードのメインビューだけ。サイドバー・入力欄・仕事モードのメインビューには敷かない
+- 素材は `character.json` の `background` をそのまま使う。雑談用の別のキーは足さない
+- **雑談中だけ、メインビューの領域の枠と角丸を外す**（2026-09-21 にユーザーが選択）。背景は
+  ウィジェットの地ではなく「`ground` がこの領域だけ絵に替わったもの」として扱う（13.8 の
+  「どう敷くか」がキャラビューについて言っているのと同じ立場）。仕事モードへ戻せば枠は戻る
+
+## 解くべき論点
+
+- 敷く先を `<Layout>` が描くメインの領域（`.layout-region`。枠と角丸を持つのはこちら）にするか、
+  `<ChatView>` の `.chat-region` にするか。**枠を外す口は前者にしか無い**一方、「いま雑談か」を
+  知っているのは `src/browser/main.tsx` で、`<Layout>` は 13.7 のとおり「なぜ畳むか」を知らない
+  （`collapseCharacter` は領域の数しか受け取らない）。`<Layout>` に雑談を教えずに済ませるか、
+  props を1つ増やすかを決める
+- **覆いの式を2箇所に書き散らさない。** `.layout-character` と同じ式が要るので、共通化の形
+  （CSS のカスタムプロパティを親に置く・クラスを分ける等）を決める
+- 覆いの下限（`MIN_BACKGROUND_VEIL` と `--character-background-veil-floor`）は `ground` と `ink` の
+  比だけで決めてあり、色は両ビューで同じ。**13.8「読めることをどう守るか」の1の論法が雑談の
+  メインでもそのまま成り立つか**を確かめる
+- 雑談のログで**地を持たない字**（`<ChatView>` の「話しかけてもらう」ボタン、空のときの案内
+  `EMPTY_LOG_MESSAGE`）は背景の上に直接乗る。吹き出し（`.chat-entry`）の地が不透明かどうかも
+  含め、13.8 の2（吹き出しの地は不透明を保つ）が雑談のログでも成り立つかを見る。**成り立たない
+  要素があるなら、その要素に不透明な地を与えて守る**
+- `background-size: cover` / `background-position: center bottom` をそのまま使うか。メインビューは
+  キャラビューより横長で、立ち絵は左端へ寄る（`.chat-portrait`）
+
+## やること
+
+1. 上の論点を決め、雑談モードのメインビューに背景を敷く
+2. 雑談中だけメインビューの枠と角丸を外す（仕事モードでは変わらないこと）
+3. 可読性を検算する。13.8 の下限の論法（真っ白・真っ黒の画像を仮定した合成）が雑談のログで
+   成り立たないと分かったら、**字が乗る要素の側に不透明な地を与えて守る**（雑談用に `veil` の
+   下限を別に持つのは最後の手段）
+4. `docs/design.md` の 13.8「どう敷くか」の「雑談モードでは背景も消える。メインビューへは
+   持ち込まない」と、13.7 でキャラビューを畳む記述の背景に触れている箇所を、決めたとおりに
+   書き直す。**日付と出典（ユーザーの指示）を添える**（13.8 の既存の書き方に合わせる）。編集は
+   CLAUDE.md「ドキュメントを編集するときの罠」に従い、節の数を編集の前後で照合する
+5. 目視確認する。`bun run build` して tsukumo を起こし、雑談モードで背景が出ること・枠と角丸が
+   消えていること・ログの字が読めること・仕事モードへ戻すとメインビューの枠が戻ってキャラビューに
+   背景が出ることを見る。**素材はリポジトリに同梱しない**ので、`~/.tsukumo/characters/` 側の
+   パックに背景を置いて確かめる（ホームのパックが同梱パックを覆う）
+
+## 完了条件
+
+- `bun run check` が通る
+- 雑談モードのメインビューに `character.json` の `background` が敷かれ、仕事モードのメインビュー・
+  サイドバー・入力欄には敷かれていない（目視）
+- 雑談中はメインビューの枠と角丸が消え、仕事モードへ戻すと戻る（目視）
+- 背景のあるパックで、雑談のログの字（吹き出し・「話しかけてもらう」・空のときの案内）が読める
+  （目視。どう確かめたかを `evidence` に書く）
+- `docs/design.md` 13.8 に「メインビューへは持ち込まない」が残っておらず、新しい決定とその
+  日付・出典が書かれている
+- 目視で見たことを `evidence` に書く（どの画面幅で、何が見えたか）
+
+## 注意
+
+- **背景の素材（画像）をリポジトリに追加しない**（`docs/requirements.md` 2.2）
+- 目視確認で tsukumo を起こすので、**同じことをする他のタスクと並行させない**
+  （CLAUDE.md「タスク運用」。`~/.tsukumo/state.json` を共有するため）
+- 確認のために `~/.tsukumo/characters/` 側を触ったら、確認後に戻すか、戻さない理由を
+  `evidence` に書く
+
+## T-300
+
+**タスク**: 雑談でセリフを押したまま新着が来ると立ち絵が居座る件を直す
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1038 pass / 0 fail、90ファイル。typecheck・oxlint・format:check も clean）。chat-view.tsx の選択を「行番号＋押した時点のセリフ件数」に変え、件数が変わればレンダー中に失効させた（useEffect は足していない）。docs/design.md 13.7 も書き換え。
+目視（2026-09-21、Orca のタブ）: (1) セリフを押すと印と立ち絵がその行の表情になる (2) 新しいセリフが出ると印が消えて立ち絵が新しい表情へ戻る (3) 同じ行をもう一度押すと解除される——の3つをユーザーが確認し「いいと思う」と判定。
+1ターンに複数 speak の件と beginTurn の既定リセットは、症状と無関係と判断して触らず（雑談は speak 1件＝ログ1行で各行が表情を持つため構造上食い違わない）。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「雑談モードで、吹き出しが現れた瞬間、それに合わせた表情が出てきて
+ないような。確認してほしい。／セリフをクリックで表情が出るのは確認済み。そこは問題なし。」
+
+**同日の追加の申告**: 「やっぱり表情がセリフに合ってないときがある。**多分セリフをクリックして
+いるとき**だと思う。」——これで筋が1つに絞れた。
+
+雑談ビュー `src/browser/features/chat-view/chat-view.tsx` の `<ChatView>` は、押した行を
+`selectedIndex`（79行）に持ち、81行で
+
+    const expression = selectedSpeechExpression(entries, selectedIndex) ?? speechExpression
+
+と決める。**この選択は新しいセリフが来ても解除されない**（76〜78行のコメントが理由ごと明記して
+いる。「下端付近に居るときだけ最新へ寄せる」スクロールの規則と同じ立場に置いた）。そのため
+**一度どれかのセリフを押すと、以後の新着では立ち絵が遡ったまま動かない**。解除の道は同じ行を
+もう一度押すことだけ（109行）。ユーザーが「クリックで表情が出るのは確認済み」と確かめた操作
+そのものが、以後の追従を止めていた。
+
+解除されないあいだ印（`is-selected`）は選んだ行に付いたままだが、**ログが伸びればその行は画面の
+外へ流れる**ので、画面からは「なぜ表情が古いのか」が分からない。
+
+最初に立てた別筋——**1ターンに `speak` が複数あると、吹き出しは全件出るのに表情は最後の1件で
+上書きされる**（`src/shared/session-state.ts` 288〜302行。`records` には積み、`speechExpression`
+は上書きする）——は**まだ潰れていない**。選択の件を直しても残るので、目視のときに一緒に見る。
+
+素材の欠けは原因ではない。`~/.tsukumo/characters/tsukumo/character.json` は8表情すべてに
+立ち絵ファイルを持つ（2026-09-21 確認）。
+
+## 決まっていること（蒸し返さない）
+
+- **新着のセリフが来たら選択を解除し、最新の表情へ戻す**（2026-09-21 にユーザーが選択）。
+  **下端付近かどうかで分けない** — スクロールの規則（`NEAR_BOTTOM_THRESHOLD_PX`）とは揃えず、
+  表情は常に「いまのセリフ」を表す側へ倒す。76〜78行のコメントはこの決定に合わせて書き直す
+- 押した行をもう一度押して解除する道（109行）は残す
+- ターンの始まりで表情を既定へ戻すこと（`src/shared/session-state.ts` 410行 `beginTurn`）の
+  是非は、再現を見てからこのタスクの中で決めてよい（2026-09-21 にユーザーが委ねた）。
+  仕事モードの挙動まで変えるならその旨を `evidence` に書く
+
+## 解くべき論点
+
+- 解除の引き金をどこに置くか（セリフの記録が1件増えたこと／`speechExpression` が変わったこと／
+  ターンの始まり）。**`useEffect` の4類型には当たらない**ので、effect で状態を追いかける形に
+  しない。`docs/coding-standards.md`「React」節の代替の表を先に見ること
+- 窓（`src/shared/session-state.ts` の `trimToRecentTurns` / `MAX_SESSION_STATE_TURNS.chat`）で
+  古い記録が落ちると並びが前へ詰まり、**番号で持った選択が別の行を指す**。常に解除するなら
+  居座る時間が短くなるので実害は減るが、番号ではなく件そのものを指す持ち方に変えるかは
+  ここで決める
+- 1ターンに `speak` が複数あるとき、立ち絵は最後の1件でよいか（上の別筋）
+
+## やること
+
+1. `bun run build` してから `bun run start` で起こし、雑談モードで次の2つを目視する。
+   - (a) セリフを1つ押してから次の発言をして、新着が来たときの立ち絵を見る
+   - (b) 何も押さずに、**1ターンに複数のセリフが出る**やり取りをして、吹き出しごとの表情を見る
+2. (a) を「決まっていること」のとおりに直す（新着で解除して最新へ戻す）
+3. (b) で食い違いが残るなら、`session-state.ts` の上書きまで含めて直すか、**直さない理由を
+   `evidence` に書いて閉じる**（推測で直さない）
+4. 表情の決まり方が `shared` に閉じるなら畳み込みのテストを足す。ブラウザに出た絵は自動テストで
+   守らない（`CLAUDE.md`「テスト方針」）
+
+## 完了条件
+
+- `bun run check` が通る
+- **セリフを1つ押したあとに新しいセリフが来ると、立ち絵が新しいセリフの表情へ戻る**ことを
+  目視で確かめた結果が `evidence` にある
+- **押した行をもう一度押すと解除できる**ことを目視で確かめた結果が `evidence` にある
+- 何も押していないときの新着について、1ターンに複数のセリフが出るやり取りで吹き出しと表情が
+  一致しているか（していないなら3の判断）を `evidence` に書いた
+
+## 注意
+
+- `src/browser/features/chat-view/` は T-295（雑談モードの背景）も触る。`doing` のうちは
+  着手しない
+- キャラビュー（`src/browser/features/character-view/`）は同じ `speechExpression` を読む。
+  雑談モードだけを直すつもりで `shared` の意味を変えると、仕事モードの吹き出しの表情も動く
+
+## T-301
+
+**タスク**: 依頼に添える画像1枚の上限を 5 MiB に上げ、枚数を2枚に絞る
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1051 pass / 0 fail、90ファイル。typecheck・oxlint・format:check も通過）。
+MAX_PROMPT_IMAGE_BYTES=5 MiB / MAX_PROMPT_IMAGES=2 / MAX_MESSAGE_BYTES=16 MiB に変更し、直接値を見るテストを更新。
+docs/requirements.md 4.10 の表と docs/design.md 7.1・4.3 を追随（節見出しの数は前後とも 49）。
+
+## 背景
+
+依頼に添える画像には上限があり、いまは `src/shared/prompt-image.ts` の
+`MAX_PROMPT_IMAGE_BYTES` が 2 MiB（`2 * 1024 * 1024`）、`MAX_PROMPT_IMAGES` が 4 枚。
+2 MiB という値は API の制約ではなく、`docs/requirements.md` 4.10 の表が
+「7.1 の立ち絵・背景と同じ値にそろえる」と言って置いた tsukumo 側の判断で、
+`MAX_PORTRAIT_BYTES` / `MAX_BACKGROUND_BYTES`（どちらも 2 MiB）と数が揃っているだけ。
+
+ユーザーの指示（2026-09-21）は「5MB くらいまでは許容したい」。
+Messages API 側の天井は base64 で **1枚 10 MB**（Bedrock / Vertex は 5 MB）、
+リクエスト全体が **32 MB**、200k 文脈のモデルで 100 枚（公式ドキュメント Vision の
+「Image limits and costs」を 2026-09-21 に確認）。5 MiB は API の天井の内側に収まる。
+
+上限を上げると WebSocket の受け口も連動する。`src/server/adapter/session-socket.ts` の
+`MAX_MESSAGE_BYTES`（いま 12 MiB）が `WebSocketServer` の `maxPayload` に渡っていて、
+これは「4 枚 × 2 MiB の base64 ≒ 10.7 MiB ＋ 文面」から置かれた値。
+
+## 決まっていること（蒸し返さない）
+
+- 画像1枚（デコード後）の上限は **5 MiB**（`5 * 1024 * 1024`）にする。
+- **枚数は 4 枚から 2 枚に減らす。** 1枚あたりを緩める代わりに枚数を絞り、
+  リクエスト全体が API の 32 MB に当たらないことを構造で保証する
+  （2 枚 × 5 MiB の base64 ≒ 13.3 MiB）。
+- **控えの上限（`MAX_PROMPT_IMAGE_THUMBNAIL_BYTES` = 128 KiB）は変えない。**
+  記録に残るのは控えだけなので、原寸を緩めても記録の大きさは動かない。
+- **立ち絵・背景の上限（`MAX_PORTRAIT_BYTES` / `MAX_BACKGROUND_BYTES`）は 2 MiB のまま。**
+  依頼の画像と数が揃わなくなるが、揃えること自体に理由は無かった。
+- 完了の確かめは `bun run check` まで。tsukumo を起こして実物の 5MB 画像を貼る目視確認は行わない。
+
+## やること
+
+1. `src/shared/prompt-image.ts` の `MAX_PROMPT_IMAGE_BYTES` を `5 * 1024 * 1024` に、
+   `MAX_PROMPT_IMAGES` を `2` にする。`MAX_PROMPT_IMAGE_DATA_URL_LENGTH` は
+   `maxImageDataUrlLength` から導かれるので手で直さない。
+2. `MAX_PROMPT_IMAGE_BYTES` の doc コメントは「立ち絵・背景と同じ値（4.10 の表）」と
+   言っているが、この変更で事実でなくなる。**なぜ 5 MiB なのか**（API の base64 10 MB の
+   内側で、利用者が貼るスクリーンショットが収まる幅）に書き換える。
+   `MAX_PROMPT_IMAGES` の doc コメントも 2 枚にした理由（リクエスト全体を 32 MB の
+   内側に保つ）へ書き換える。
+3. `src/server/adapter/session-socket.ts` の `MAX_MESSAGE_BYTES` を上げる。
+   2 枚 × 5 MiB の base64 ≒ 13.33 MiB ＋ 控え2枚（≒ 0.34 MiB）＋ 文面（20,000 文字）で
+   約 13.7 MiB なので **16 MiB** を置き、その場のコメントに内訳を1行で残す。
+4. `docs/requirements.md` 4.10「上限」の表を直す（画像1枚 2 MiB → 5 MiB、枚数 4 → 2、
+   `maxPayload` 12 MiB → 16 MiB と、その括弧内の内訳）。表の下の箇条書きのうち、
+   「4 枚は『スクリーンショットを1〜2枚貼る』…」の行も枚数に合わせて書き直す。
+   **節の見出しの数が変わっていないこと**を `grep -c '^#\{2,4\} ' docs/requirements.md` で
+   編集の前後に確かめる（CLAUDE.md「ドキュメントを編集するときの罠」）。
+5. `docs/design.md` 7.1 の上限の表の `WebSocket の maxPayload` 行が **4 MiB** のまま残っていて、
+   その下の「`MAX_MESSAGE_BYTES` はいま `MAX_PROMPT_TEXT_LENGTH * 4`」も実物（12 MiB）と
+   合っていない。この機会に実測値へ合わせる。
+   **7.1 の「画像1枚（デコード後）2 MiB」はパックの素材の話なので変えない。**
+6. テストを追随させる。`test/shared/prompt-image.test.ts` が
+   `expect(MAX_PROMPT_IMAGES).toBe(4)` と `expect(MAX_PROMPT_IMAGE_BYTES).toBe(2 * 1024 * 1024)`
+   を直接置いているので新しい値にする。`test/shared/command.test.ts` の枚数まわり
+   （`MAX_PROMPT_IMAGES` から配列を作っている2箇所）は定数から導いているので、
+   落ちるかどうかを実際に走らせて確かめる。
+7. `src/browser/features/dispatch/composer.tsx` は `MAX_PROMPT_IMAGES` で頭打ちにしているだけで
+   定数を経由しているので**直さない**。直す必要が出たらその理由を `evidence` に書く。
+
+## 完了条件
+
+- `bun run check` が通る（typecheck・oxlint・format:check・テスト全部）。
+- `MAX_PROMPT_IMAGE_BYTES === 5 * 1024 * 1024` かつ `MAX_PROMPT_IMAGES === 2` で、
+  それを直接確かめるテストがある。
+- `MAX_MESSAGE_BYTES` が「2 枚 × 5 MiB の base64 ＋ 控え ＋ 文面」を上回っている。
+- `docs/requirements.md` 4.10 の上限の表と `docs/design.md` 7.1 の表に、コードと違う数が
+  1つも残っていない（`grep -n 'MiB' docs/requirements.md docs/design.md` で該当行を見て確かめる）。
+- `docs/requirements.md` の節見出しの数が編集の前後で変わっていない。
+
+## 注意
+
+- **立ち絵・背景の上限（`MAX_PORTRAIT_BYTES` / `MAX_BACKGROUND_BYTES`）を巻き込まない。**
+  同じ `2 * 1024 * 1024` なので一括置換すると一緒に動く。
+- **控えの上限を上げない。** 記録（`SessionState`）の大きさが有界であることは 4.10
+  「会話内容の扱い」が形そのものとして置いた約束で、原寸の話とは独立している。
+- 他のセッションの未コミット変更を巻き込まない（`git add -A` を使わず、触ったファイルを個別に足す）。
