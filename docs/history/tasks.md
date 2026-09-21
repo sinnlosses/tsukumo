@@ -16072,3 +16072,308 @@ tsukumo がするのは**容量を数えて、閾値を超えたターンの終�
 - 会話のログそのもの・transcript・ツールの入出力は**今までどおり書かない**。認められた例外は
   要約の写し1つだけで、それ以上に広げない
 - `docs/requirements.md` / `docs/design.md` の節の数を変えない
+
+## T-141
+
+**タスク**: ホストを選ぶ口を作るかを決める（いまは cli.ts に直書き）
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-046 / **passes**: True
+
+**evidence**:
+
+作らないと決めた。アダプタは src/server/adapter/orca-host.ts の1つだけで、選択は配線層 src/main.ts:76 の createOrcaHost() 1行（scripts/open-views.ts:26 も直接呼ぶ）で足りる。環境変数案は TSUKUMO_CHARACTER の撤去を検討する T-116 と向きが逆になるため採らない。docs/architecture.md「ホスト依存の操作は1つのポートにまとめる」に、選択が main.ts の1行であることと2つ目のアダプタを書くときに考える旨を追記（見出し数 29 で前後同一）。実装は無し。
+
+## 背景
+
+2026-09-16 の方針（T-046）「他の技術に適用することもあるから、ドメインが特定の技術に依存しないようにする」を受けて、**ホストを選ぶ口が無い**ことが残っている。`src/cli.ts` が `const host = createOrcaHost()` と直書きし、`scripts/open-views.ts` も同じく `createOrcaHost()` を直接呼ぶ。別のホスト（VS Code、Electron、素のブラウザ）のアダプタを足しても、**選ぶには `cli.ts` を編集するしかない**。
+
+ポート（`src/core/host.ts`。操作は `showView` 1つ）とアダプタ（`src/core/orca-host.ts`）の分離自体はできている。足りていないのは「どのアダプタを使うか」の決め方だけ。
+
+**ただし作らない判断も十分ありうる。** `cli.ts` は配線層で、具体的な選択を置く場所として正しい（`docs/design.md` 2章）。`docs/architecture.md` は「アダプタは当面 Orca の1つだけ」と書き、`codebase-design` の「アダプタが1つならそれは仮説上のシーム」を意図的に外す理由を説明している。実装が1つしかないうちに選択の仕組みを足すのは、`docs/research/architecture-proposal.md`「やりがちな失敗」の**抽象を先に足す**に当たる。
+
+## 解くべき論点
+
+- **そもそも要るか。** 2つ目のアダプタを実際に書く見込みが近いかが決め手。近くないなら「`cli.ts` の1行を書き換える」で足りる
+- 要るとして、どの形か。候補: 環境変数（`TSUKUMO_HOST`。`src/core/config.ts` に1つ足す）、コマンド引数、`core` にファクトリ関数を置く、`Host` を外から `main` に渡す
+- `scripts/open-views.ts` も同じ口を通すか
+- **T-116（`TSUKUMO_CHARACTER` を撤去するか決める）と向きが逆にならないか。** 環境変数を減らす方向の検討が別に走っているので、環境変数案を採るなら理由を揃える
+
+## やること
+
+1. 上の論点を検討し、**作る/作らないを決める**
+2. **作らないと決めたら、実装せずに理由を `evidence` に書いて閉じる。** そのうえで `docs/architecture.md` の該当節に「選択は `cli.ts` の1行。2つ目のアダプタを書くときに考える」という趣旨の1行を足すかを判断する
+3. 作ると決めたら、形を決めて `develop/direction.md` に実装タスクの下書きを書く（**このタスクでは実装しない**）
+
+## 完了条件
+
+- 作る/作らないの判断と根拠が `evidence` に書かれていること
+- 作ると決めた場合、選んだ形と `scripts/open-views.ts` の扱いが `evidence` に書かれていること
+- `bun run check` が通ること
+
+## 注意
+
+- **実装しない**（決めるところまで）
+- 外部依存を増やす案は出さない（ホストのアダプタを1つ足すだけで済む形に限る）
+
+## T-253
+
+**タスク**: 雑談の会話をアーカイブとして残す形を決める（規約の複製の条を広げる）
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+置き場は `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`（1行1件・7鍵 `v/at/pack/speaker/text/expression/images`。**内部の型をそのまま JSON にしない**のが「設計変更に耐える」の中身で、`v` が逃げ道）。書くのは `receive` で届いたその場で1件ずつ、雑談のときだけ。`state.records` からは書かないので 100 ターンの切り詰めに影響されない。**復元で流し直されたぶんは書かない**（二重に積まれるため。下ごしらえが T-254）。
+保持期間も総量の上限も持たない（歯止めは日ごとに割ること。1日20往復で 10 KiB 前後）。遡っての取り込みはしない（鎖が切れていて最後の圧縮点から先しか取れず、「transcript を読んでディスクへ書き出す」という今回より広い口を常駐プロセスに残すため）。
+規約は「別の場所に複製しない」の1条だけを広げ、例外を表で2つ（要約の写し・雑談のアーカイブ）に固定。「ここに3つ目を足すにはユーザーの決定が要る」と「広げていないこと」6項目（仕事の会話／transcript からの書き出し／本文とツールの入出力／画像そのもの／ブラウザ側の永続化／残る3条）を併記した。却下: `cleanupPeriodDays` を延ばす／両方やる／JSON 配列1つ／Markdown／セッションごとに割る／ターン末にまとめ書き／容量上限。後続 T-254 / T-255 を登録。`bun run check` 908 pass / 0 fail（増減なし）。節の数 28 / 53 で前後一致。
+
+## 背景
+
+**ユーザーが 2026-09-21 に、記憶の方針の前半を明確にした。** 指示（2026-09-20）の
+「会話ログはその表情とセットですべて残しつつも」について、こう言っている:
+
+> 100ターン上限は画面上としての上限。会話そのものはアーカイブとしては残して保存し、
+> あとで活用できるようにあるいは設計変更に耐えられるようにしたくて
+
+**いまの決定はこれを満たしていない。** `docs/requirements.md` 4.9 は
+「指示の『すべて残す』は、**プロセスが動いている間の 100 ターンまで**と読み替える」と書いて
+閉じており、その根拠に「消えないようにするには会話を tsukumo 側のディスクへ複製するしかなく、
+それは会話内容の扱いと正面からぶつかる」を置いている。**ユーザーはその複製を認める判断をした。**
+
+## 確かめ済みのこと（2026-09-21。蒸し返さない）
+
+- **圧縮は transcript の行を消さない。** 鎖（`parentUuid`）が切れるだけで、前の会話は残っている
+  （実測: 総行数 49 のセッションで `compact_boundary` は 34 行目、総行数 2202 のもので 164 行目）
+- **`getSessionMessages` には鎖を無視して全部読む口が無い**（オプションは `dir` / `limit` /
+  `offset` / `includeSystemMessages` / `sessionStore` だけ）
+- **claude の transcript は当てにできない。** `~/.claude/settings.json` に `cleanupPeriodDays` が
+  無いので既定（30日）が効く。このプロジェクトの transcript は 383 ファイル・2026-09-09 以降で、
+  まだ1件も消えていないが **2026-10-09 ごろから古い順に消え始める**
+- 形式も保持期間も Claude Code の都合なので、「設計変更に耐える」という狙いとも合わない
+
+## 決まっていること（蒸し返さない）
+
+- **tsukumo が自分でアーカイブを保存する**（2026-09-21 ユーザー決定）。`cleanupPeriodDays` を
+  延ばす案・両方やる案は採らない
+- **100 ターンは画面の上限であって、アーカイブの上限ではない。** 2つは別物として書き分ける
+- **`docs/coding-standards.md`「会話内容の扱い」の「別の場所に複製しない」を、要約だけでなく
+  生のログへ広げる。** ユーザーはこの規約変更を承知のうえで選んでいる
+- **外部に送らないことは変わらない**（規約の残る3条はそのまま）
+
+## 解くべき論点
+
+1. **範囲。** 雑談だけか、仕事の会話も含むか。**既定は雑談だけ**（この決定の文脈が雑談モードの
+   記憶で、仕事の会話を残す理由は出ていない）。広げるならユーザーに確認する
+2. **置き場と形式。** `~/.tsukumo/` の下のどこか。追記で伸びるものなので、パックごと・日ごと・
+   セッションごとのどれで割るか。**あとで活用できる形**（機械で読める）と
+   **設計変更に耐える形**（tsukumo の内部の型に縛られない）の両方を満たす形を決める
+3. **誰がいつ書くか。** 届いたイベントをその場で追記するのか、ターンの終わりにまとめるのか。
+   **`SessionState` の 100 ターン上限に影響されない経路**にすること（切り詰められる前に書く）
+4. **表情とセットで残す。** 指示は「その表情とセットで」なので、セリフの表情も一緒に残す
+5. **保持期間と大きさ。** 無限に伸ばすのか、上限を持つのか。**消す手**（利用者が消したいとき）
+6. **既に claude の transcript にあるぶんを遡って取り込むか**（2026-10-09 に消え始めるので、
+   やるなら期限がある）
+7. **規約の書き換えをどこまで広げるか。** **広げるのはこの1つだけ**にし、ログ・テストの
+   フィクスチャ・外部送信の条は動かさない。**規約に「何を・どこへ・なぜ書いてよいか」を
+   明記する**（次に読む人が範囲を読み違えないように）
+
+## やること
+
+1. 論点1〜7を決める
+2. `docs/coding-standards.md`「会話内容の扱い」を書き換える（**最優先の規約なので、
+   広げた範囲と、広げていない範囲を両方はっきり書く**）
+3. `docs/requirements.md` 4.9 の「すべて残す」の読み替えを**覆す**（覆した旨と理由を残す）。
+   2.2 に追随が要るなら足す
+4. `docs/design.md` 7章（置き場と形式）と 9章の表に追随させる
+5. `docs/glossary.md` に用語が要るなら先に足す
+6. 実装は後続タスクとして登録する（このタスクではコードを変えない）
+
+## 完了条件
+
+- 7つの論点それぞれに結論と理由がある
+- `docs/coding-standards.md`「会話内容の扱い」が新しい範囲を書いている（**広げていない条も
+  明示されている**）
+- `docs/requirements.md` 4.9 が読み替えを覆している（覆した旨も含む）
+- **画面の上限（100ターン）とアーカイブが別物として書き分けられている**
+- `docs/design.md` 7章と9章の表が追随している
+- 却下した案とその理由が `evidence` に残っている
+- 実装が要るなら後続タスクが登録されている
+- `bun run check` が通る（ドキュメントだけの変更でも回す）
+- `grep -c '^#\{2,3\} ' docs/requirements.md docs/design.md` が編集の前後で合う
+
+## 注意
+
+- **コードは変えない**（実装は後続タスク）
+- **外部への送信は対象外のまま**。広げるのは「別の場所に複製しない」の1条だけ
+- **テストのフィクスチャに実物の会話を使わない**（この条は動かさない）
+- `docs/` の節の索引の罠に注意
+- コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない
+
+## T-250
+
+**タスク**: compact_boundary を SessionEvent にし、雑談のログへ圧縮の区切りを1本出す
+
+**difficulty**: sonnet / **loopable**: N / **dependencies**: T-239, T-249 / **passes**: True
+
+**evidence**:
+
+SessionEvent / SessionRecord / ChatLogEntry に compact-boundary を足し、雑談のログへ文言なしの <hr> を1本出す（仕事のメインビューには出さない）。復元は getSessionMessages に includeSystemMessages: true。用語は docs/glossary.md「圧縮の区切り」/ compactBoundary、文言を出さない決定を requirements 4.9 に反映（節数は前後とも 28）。 bun run check 通過: 925 -> 934 pass（+9）/ 0 fail、typecheck・lint・format:check も通過。 目視: TSUKUMO_DRIVER=fake TSUKUMO_FAKE_SCENE=chat-compact-boundary を scripts/capture-view.ts で撮影。720x900 で boundary が left 234.36 / 幅 452.64 / 高さ 1px、1400x900 で 幅 642.95 / 高さ 1px、いずれも横のはみ出し 0px。前のセリフと次の依頼の間に1本だけ出ることを画像で確認した。
+
+## 背景
+
+圧縮が起きたことを画面に1本の区切りとして出す（`docs/requirements.md` 4.9「記憶の圧縮と忘却」の
+「忘却は画面に1本の区切りとして出す」）。**セリフでは知らせない** — セリフの文面を決めるのは
+claude だけで、tsukumo がキャラクターの言葉を作らない。
+
+**確かめ済みのこと**（2026-09-21 の実測。蒸し返さない）:
+
+- 圧縮が起きると `type: "system"` / `subtype: "compact_boundary"` のメッセージが流れてくる
+  （`compact_metadata` に `trigger` / `pre_tokens` / `post_tokens` / `duration_ms`）
+- transcript では**区切りの行が親を持たず、鎖が切れる**。その直後に要約の行が1つ入る。
+  `getSessionMessages` は鎖をたどるので、**既定では区切りより前を返さない**
+- `getSessionMessages` の `includeSystemMessages: true` で区切りの行も受け取れる
+
+## やること
+
+1. **`SessionEvent` に区切りを足す**（`src/shared/session-event.ts`）。名前は
+   `docs/glossary.md` に合わせてから決める（用語集を先に直す）。**`compact_metadata` の数値は
+   運ばない** — 画面に出さないものを契約に入れない
+2. **変換を足す**（`src/server/core/sdk-message.ts`）。`compact_boundary` をそのイベントにする
+3. **復元でも拾う**（`src/server/adapter/sdk-driver.ts` の `readRestoredEvents` に
+   `includeSystemMessages: true`）。**他の system メッセージが混ざっても落ちない**ことを
+   `toRestoredEvents` 側で確かめる
+4. **記録に畳む**（`src/shared/session-state.ts`）。`SessionRecord` に区切りを足す。
+   **`trimToRecentTurns` の数え方（`request` の数）は変えない**
+5. **雑談のログに出す**（`src/shared/chat-log.ts` の `ChatLogEntry` と
+   `src/browser/features/` の雑談のログ）。**細い区切りを1本**、「ここから前は要約になっている」
+   に当たる短い文言を添えて出す。**仕事のメインビューには出さない**
+6. **目視で確かめる。** 偽の駆動（`test/fixture/fake-session.json`）に場面を1つ足し、
+   `TSUKUMO_FAKE_SCENE` で名指しして雑談の画面に区切りが出ることを見る。**狭い窓でも横スクロールが
+   出ないこと**を確かめる（`docs/architecture.md`「手で確かめること」）
+
+## 完了条件
+
+- 変換・畳み込み・ログの組み立てのテスト（区切りが1件のイベントから1件のログの区切りになること、
+  仕事のメインビューには現れないこと）
+- **起こし直したあとに区切りがログのいちばん上に来る**ことを、復元のテストで示す
+- 目視確認の結果を `evidence` に書く（どの場面で、どの窓の幅で、何が見えたか）
+- **フィクスチャは架空の文面だけ**
+- `bun run check` が通る（pass 件数の増減を `evidence` に書く）
+
+## 注意
+
+- **圧縮の数値（トークン数・かかった時間）を画面に出さない。** 出すのは「ここから前は要約」だけ
+- 用語を決めるときは `docs/glossary.md` を先に直してからコードを直す
+- 区切りは**利用者の操作の対象にしない**（押せない・畳めない）
+- `docs/requirements.md` / `docs/design.md` の節の数を変えない
+
+## T-254
+
+**タスク**: 復元で流し直すイベントを別の口（onRestoredEvent）に分ける
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+createSessionLaunch の戻り値を (onEvent, onRestoredEvent, request) にし、replayRestoredSession だけを onRestoredEvent へ流した。session-manager は EventOrigin（"driver" | "restored"）で receive に印を渡す（この段階では未使用）。test/server/core/session-launch.test.ts に「復元は別の口へ流れ、駆動のイベントと区別できる」を追加。bun run check 909 pass / 0 fail（復元の口のテストを1件追加）。
+
+## 背景
+
+**雑談の会話のアーカイブ（`docs/requirements.md` 4.9「雑談の会話のアーカイブ」）を書くための
+下ごしらえ。** アーカイブは `src/server/core/session-manager.ts` の `receive` で**駆動から
+新しく届いたイベントだけ**を書くが、いまは `createSessionLaunch`（`src/server/core/session-launch.ts`）が
+transcript から組み直した履歴を**駆動と同じ `onEvent`** へ流しているので、区別する手段が無い。
+このまま書くと**起こし直すたびに同じ会話がもう一度積まれる**。
+
+## 決まっていること（蒸し返さない）
+
+- **復元の再生を別の口（`onRestoredEvent`）に分ける**（`docs/design.md` 7章「雑談の会話の
+  アーカイブはどこに置くか」の「誰がいつ書くか」）
+- **畳み方と配り方は今までどおり**。復元のイベントも `applySessionEvent` で状態に畳み、
+  同じようにブラウザへ配る。**変わるのは「どちらの口から来たか」を `session-manager` が
+  知れるようになることだけ**
+- 復元の決定（`docs/requirements.md` 4.8）は変えない
+
+## やること
+
+1. `SessionLaunchPorts` を使う側（`createSessionLaunch` が返す関数）が受け取る口を2つにし、
+   `restoreEvents` の再生だけを `onRestoredEvent` へ流す
+2. `session-manager` の `create`（`startDriver`）を追随させ、`receive` が「駆動から新しく
+   届いたか、復元の再生か」を区別できる形にする。**この段階では区別を使わない**
+   （使うのは次のタスク）
+3. 偽の駆動（`fake-driver.ts`）と SDK の駆動（`sdk-driver.ts`）の `onEvent` は1つのまま
+   （分けるのは起こす側の口だけ）
+
+## 完了条件
+
+- 復元の再生が `onRestoredEvent` を通り、駆動から届くイベントと区別できる
+- 画面の見え方・`hello` の中身・イベントの順序は今までと同じ（既存テストが通る）
+- `test/server/core/session-launch.test.ts` に「復元は別の口へ流れる」テストがある
+- `bun run check` が通る
+
+## 注意
+
+- **層の辺を増やさない**（`core → adapter` は禁止。`test/architecture.test.ts`）
+- テストのフィクスチャは**手で書いた架空の会話**（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-255
+
+**タスク**: 雑談の会話を ~/.tsukumo/chat-archive/ へ表情つきで書き残す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-254 / **passes**: True
+
+**evidence**:
+
+src/server/adapter/chat-archive.ts を足し（JSONL 1行=7鍵、書けなくても投げない）、session-manager の receive が origin==="driver" かつ雑談のときだけ依頼とセリフを渡す。session-start.ts で結んだ。test/server/adapter/chat-archive.test.ts と session-manager.test.ts の「雑談の会話のアーカイブ」で、行の形・パック/日ごとの分割・仕事では書かない・復元の再生では書かない・書けなくても落ちないを固定。bun run check 925 pass / 0 fail。
+
+## 背景
+
+**雑談の会話を tsukumo 自身がディスクへ残す**（2026-09-21 ユーザー決定。
+`docs/requirements.md` 4.9「雑談の会話のアーカイブ」、形と上限は `docs/design.md` 7章
+「雑談の会話のアーカイブはどこに置くか」）。**画面の 100 ターンは画面の上限であって、
+残す量の上限ではない。**
+
+**これは `docs/coding-standards.md`「会話内容の扱い」の「別の場所に複製しない」に認められた
+例外の2つ目。** 同節の表と「広げていないこと」の線を越えない（**雑談だけ・依頼とセリフと
+表情だけ・画像そのものは書かない・ログにも画面にも出さない**）。
+
+## 決まっていること（蒸し返さない）
+
+- 置き場は `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`（パックごと・日ごと。
+  日の境目はローカル時刻）
+- 形式は JSONL の1行1件。鍵は `v` / `at` / `pack` / `speaker` / `text` / `expression`（セリフの
+  行だけ）/ `images`（依頼の行が、添えた画像が1枚以上あるときだけ持つ枚数）。
+  **tsukumo の内部の型をそのまま JSON にしない**
+- 書くのは `src/server/core/session-manager.ts` の `receive` で、**雑談のときだけ**、依頼と
+  セリフが届いたその場で1行。**`state.records` からは書かない**（`trimToRecentTurns` に
+  影響されない）。**復元で流し直されたぶんは書かない**
+- 層は要約の写しと同じ: 口（型）は `core/session-driver.ts`、ファイルに触るのは
+  `adapter/chat-archive.ts`、結ぶのは `src/session-start.ts`。置き場を差し替えられる `root`
+  引数を持つ（テストがホームを汚さない）
+- 保持期間も総量の上限も持たない。消す手はファイルを消すこと。**画面から消す口は作らない**
+- **遡って取り込まない**（claude の transcript からの移行はしない）
+
+## やること
+
+1. `src/server/adapter/chat-archive.ts` を足す（`createChatSummary` と同じ形の口。
+   `isCharacterPackName` を通してからパスを組み立てる。**書けなくても例外を投げない**）
+2. `core/session-driver.ts` に口の型を足し、`session-manager` の `receive` から**駆動由来の**
+   依頼とセリフだけを渡す
+3. `src/session-start.ts` で結ぶ（**雑談のときだけ**）
+4. テスト: 1行の形（鍵と値）・パックごと日ごとに割れること・雑談でないときは書かないこと・
+   復元の再生では書かないこと・書けないときに落ちないこと
+
+## 完了条件
+
+- 雑談で往復すると `~/.tsukumo/chat-archive/<パック名>/<日付>.jsonl` に依頼とセリフが
+  表情つきで1行ずつ増える（テストは `root` を差し替えた一時ディレクトリで確かめる）
+- 仕事のときは1バイトも書かれない
+- 起こし直しても同じ行が二重に積まれない
+- 画面・`error` フレーム・stderr に文面が出ない
+- `bun run check` が通る
+
+## 注意
+
+- **フィクスチャは手で書いた架空の会話**（実物の会話を使わない）
+- 画像の控え（data URL）を書かない。書くのは枚数だけ
+- `Bun.*` に寄せない（`node:` の標準API）
