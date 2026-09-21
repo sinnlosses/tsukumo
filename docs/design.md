@@ -20,6 +20,10 @@
 sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 ```
 
+**このファイルには「いまどうなっているか」だけを書く**（2026-09-21 決定）。却下した案の理由・
+値の根拠の実測・覆した決定の記録は `docs/history/` に置き、ここからは1行で参照する。何を残して
+何を移すかの表は `docs/requirements.md`「正典に残すもの・`docs/history/` へ移すもの」。
+
 ### 節の索引
 
 | 節                             | 中身                                                                                             |
@@ -1169,10 +1173,12 @@ characters/<name>/
   （**ブラウザ側に復元の特別な経路は要らない**）
 - 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と `new-session` コマンド（画面から。段9）
 
-**複数化はまだしない。** `SessionManager` が `sessionId` を鍵に持っているので、後から
-(1) 複数プロジェクトを1つの画面で切り替える、(2) `tsukumo` コマンドを常駐へ接続するクライアントにする
-（client–daemon）、へ広げられる。そのときの `hello` は `sessions: SessionSummary[]` を持ち、
-`ClientCommand` に `select-session` が加わる。**いま作るのは鍵だけ**（`docs/requirements.md` 7章の未決事項）。
+**複数化は当面やらない**（2026-09-21 決定。`docs/requirements.md` 2.2。それ以前は未決事項
+だった）。`SessionManager` は `sessionId` を鍵に持つが、**これは「将来のため」ではなく、
+セッションを起こし直すときに古い側と新しい側が同時に存在する一瞬を表す形**である。広げたく
+なったら (1) 複数プロジェクトを1つの画面で切り替える、(2) `tsukumo` コマンドを常駐へ接続する
+クライアントにする（client–daemon）へ進める余地はあり、そのときの `hello` は
+`sessions: SessionSummary[]` を持ち、`ClientCommand` に `select-session` が加わる。
 
 ## 9. 会話内容と安全
 
