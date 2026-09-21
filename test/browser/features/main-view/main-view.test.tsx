@@ -492,3 +492,86 @@ describe("MainView（質問の記録）", () => {
     ).toEqual(["● 案B", "● 案A"])
   })
 })
+
+describe("MainView（質問の記録に残す preview）", () => {
+  function entryWithPreview(): MainViewQuestion {
+    return {
+      kind: "question",
+      questions: [
+        {
+          header: "確認",
+          text: "どちらにする？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "", preview: "### 案Aの下書き" },
+            { label: "案B", description: "", preview: "### 案Bの下書き" },
+          ],
+        },
+      ],
+      answers: [["案B"]],
+    }
+  }
+
+  function openDetails(container: HTMLElement): void {
+    const details = container.querySelector("details")
+    if (details === null) {
+      throw new Error("折りたたみが無い")
+    }
+    details.open = true
+    fireEvent(details, new Event("toggle"))
+  }
+
+  it("preview を持つ選択肢が無ければ、折りたたみを作らない", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [
+        {
+          header: "確認",
+          text: "どちらにする？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
+          ],
+        },
+      ],
+      answers: [["案B"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    expect(container.querySelector("details")).toBeNull()
+  })
+
+  it("preview は折りたたまれていて、開くまで描かない", () => {
+    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
+
+    expect(container.querySelector("details")?.open).toBe(false)
+    expect(screen.queryByText("案Aの下書き")).toBeNull()
+  })
+
+  it("開くと、選択肢ごとの preview が Markdown として出る", () => {
+    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
+
+    act(() => {
+      openDetails(container)
+    })
+
+    // `###` はレポートと同じ段下げで `h5` になる（`markdown.tsx` の SubHeading）。
+    expect(screen.getByText("案Aの下書き").tagName).toBe("H5")
+    expect(screen.getByText("案Bの下書き").tagName).toBe("H5")
+  })
+
+  it("開いた preview にも、選ばれた答えの印が付く", () => {
+    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
+
+    act(() => {
+      openDetails(container)
+    })
+
+    const labels = [...container.querySelectorAll(".question-preview-label")].map(
+      (label) => label.textContent,
+    )
+    expect(labels).toEqual(["○ 案A", "● 案B"])
+  })
+})

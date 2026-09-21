@@ -379,6 +379,28 @@ h2.turn-request {
 .question-option.is-free-text {
   font-style: italic;
 }
+/* 比べた内容の折りたたみ（`question-record.tsx`）。`.detail-block details` と同じ見た目だが、
+   こちらは `.detail-block` の外側にいるので、そのセレクタが届かない。 */
+.question-previews {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--ground);
+}
+.question-previews > summary {
+  cursor: pointer;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+.question-previews[open] > summary {
+  margin-bottom: 0.5rem;
+}
+/* preview の持ち主の札。答え待ちの面のカードの見出しと同じ役割。 */
+.question-preview-label {
+  margin: 0.75rem 0 0.25rem;
+  font-weight: 600;
+}
 .step-heading {
   margin: 0 0 0.5rem;
   font-size: var(--font-label);
