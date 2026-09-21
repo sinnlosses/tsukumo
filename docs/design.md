@@ -1238,8 +1238,11 @@ API を使わない形になる。
 
 - **成果物は事前に組み立てて `dist/browser/` に置く**（2026-09-21 決定。それまでは起動のたびに
   組み立てていた）。作るのは `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張りの
-  2つだけで、**起動（`src/main.ts`）は置いてあるものを読む**。`bun build` の子プロセスは起動の
-  経路から消えた（`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）
+  2つで、**起動（`src/main.ts`）は置いてあるものを読む**。`bun build` の子プロセスは起動の
+  経路から消えた（`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。**同日のうちに
+  追加で、`bun run dev` は起こす前に `bun run build` を1回打つようにした**（`package.json` の
+  `dev` が `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` になる。見張りが直すのは
+  保存のたび、この前置きは起動の1回だけで、上の「起動は置いてあるものを読む」は変わらない）
 - `bun run build` が起こすのは `bun build src/browser/main.tsx --target=browser --outdir dist/browser`
   の1本で、`main.js` と `main.css` の対が置かれる（JSX は tsconfig の `"jsx": "react-jsx"` で自動。
   CSS は `main.tsx` から import で辿れるものが1本にまとまる。`--outdir` が要るのは CSS Modules で
@@ -1285,7 +1288,7 @@ HMR そのものになり、規模が跳ねる）。配るのは前と同じく�
 **見張るのは `TSUKUMO_WATCH_UI=1` のときだけ**（既定は見張らない）。`tsukumo` は `bun link` で
 リポジトリを指していて**普段使いと開発が同じ経路**なので、常に入れると仕事中の保存でページが
 読み込み直されうる（入力欄の書きかけが消える）。tsukumo 自身を直しながら動かすときだけ
-**`bun run dev`**（= `TSUKUMO_WATCH_UI=1 bun run src/cli.ts`）で入れる。
+**`bun run dev`**（= `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts`）で入れる。
 `bun run start` は見張らないままにしてある（普段使いと開発を打ち分けで分ける）。
 
 **組み立て直しが失敗したときは、前の版を配り続ける。** `onRebuilt` を呼ばず `refresh` も押さない

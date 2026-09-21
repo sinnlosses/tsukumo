@@ -77,7 +77,8 @@ bun run start                 # セッションを起こし、レイアウトペ
                               #   止める。**本物の claude を子プロセスで起こす**ので、テストから
                               #   起動しきらない。**成果物を読むだけ**で、無ければ前提不足で止まり、
                               #   ソースのほうが新しければ1行知らせて古いまま配る）
-bun run dev                   # start と同じだが src/browser/ を見張る（開発用。保存すると組み立て直して
+bun run dev                   # 起動の前に bun run build で組み立ててから、start と同じ経路を
+                              #   src/browser/ の見張りつきで起こす（開発用。保存すると組み立て直して
                               #   dist/browser/ に置き直し、開いているタブが入れ替わる。src/server/core/ と
                               #   src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具

@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/cli.ts",
-    "dev": "TSUKUMO_WATCH_UI=1 bun run src/cli.ts",
+    "dev": "bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts",
     "build": "bun run scripts/build-ui.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src test scripts",

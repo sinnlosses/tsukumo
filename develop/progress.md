@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-21 bun run dev を組み立ててから起動するようにした（T-291）
+
+`package.json` の `dev` を `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` にし、`src/shared/` だけが古いときに見張りが拾えない穴を埋めた。`start` は T-279 の判断どおり組み立てを混ぜないまま残した。
+
 ### 2026-09-21 glossary の output style の「SDK で効くかは未確認」を現状に直した（T-289）
 
 人格は毎ターン `systemPrompt` の append として渡っていることを `sdk-driver.ts` で裏を取ってから書いた。

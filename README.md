@@ -107,8 +107,9 @@ export PATH="$HOME/.bun/bin:$PATH"
 `bun link` を消すときは、**このリポジトリの直下で** `bun unlink` を実行します。
 
 リポジトリ直下で開発しながら動かす場合は `bun run start` が `tsukumo` と同じ意味になります。
-`bun run dev` は `start` と同じものを起こしつつ `src/browser/` を見張り、保存のたびに組み立て直して
-開いているタブへ反映します（`src/server/core/` と `src/shared/` を直したときは上げ直しが要ります）。
+`bun run dev` は起動の前に `bun run build` で1回組み立ててから `start` と同じものを起こしつつ
+`src/browser/` を見張り、保存のたびに組み立て直して開いているタブへ反映します（`src/server/core/` と
+`src/shared/` を直したときは上げ直しが要ります）。
 
 ## 仕組み
 
