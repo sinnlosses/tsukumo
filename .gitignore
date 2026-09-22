@@ -11,3 +11,6 @@ dist/
 
 # キャラクター素材（権利のあるものを公開リポジトリに入れないため）
 characters/local/
+
+# Claude Code のセッションが作るロック（設定ファイルだけを履歴に入れる）
+.claude/scheduled_tasks.lock
