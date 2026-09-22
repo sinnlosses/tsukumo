@@ -45,7 +45,9 @@ const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.sessionSwitchDuringTurn
 export function SessionSwitch(): ReactElement | null {
   const dispatch = useSessionDispatch()
   const sessions = useSessionSelector((session) => session.state.sessions)
-  const currentSessionId = useSessionSelector((session) => session.state.sessionId)
+  const currentSessionId = useSessionSelector((session) =>
+    session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
+  )
   const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
 
   if (sessions.length === 0) {

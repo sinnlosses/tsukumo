@@ -279,7 +279,7 @@ function createSessionHost(
   const appendTokenUsage = (cumulative: readonly ModelTokenUsage[], at: number): void => {
     const models = tokenUsageDelta(cumulativeTokenUsage, cumulative)
     cumulativeTokenUsage = cumulative
-    const sessionId = state.sessionId
+    const sessionId = state.session.kind === "starting" ? undefined : state.session.sessionId
     if (models.length === 0 || sessionId === undefined) {
       return
     }

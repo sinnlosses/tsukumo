@@ -42,9 +42,18 @@ function renderList(spy: CommandSpy = () => {}, overrides: Partial<SessionState>
   renderWithStore(<TaskList tasks={TASKS} />, spy, overrides)
 }
 
-/** 見出しの「一覧を見る」で開く表（開いた状態で描く）。 */
-function renderBoard(spy: CommandSpy = () => {}): void {
-  renderWithStore(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />, spy)
+/** 見出しの「一覧を見る」で開く表（開いた状態で描く）。閉じる要求は `closed` に溜まる。 */
+function renderBoard(spy: CommandSpy = () => {}, closed: string[] = []): void {
+  renderWithStore(
+    <TaskBoard
+      tasks={TASKS}
+      open={true}
+      onClose={() => {
+        closed.push("表")
+      }}
+    />,
+    spy,
+  )
 }
 
 function renderWithStore(
@@ -153,6 +162,30 @@ describe("タスクIDから実行を頼む", () => {
     fireEvent.click(screen.getByRole("button", { name: "実行する" }))
 
     expect(sent).toEqual([{ type: "prompt", text: "/next-task X-002", images: [] }])
+  })
+
+  // 送ったあとに表が残っていると、メインビューに並んだ依頼が画面いっぱいの表に隠れる。
+  it("表から送ったときは、確認と表の両方が閉じる", () => {
+    const closed: string[] = []
+    renderBoard(() => {}, closed)
+
+    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
+    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+
+    expect(closed).toEqual(["表"])
+    expect(confirmDialog()).toBeNull()
+  })
+
+  it("表から断ったときは確認だけ閉じ、一覧へ戻れる", () => {
+    const closed: string[] = []
+    renderBoard(() => {}, closed)
+
+    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
+
+    expect(closed).toEqual([])
+    expect(confirmDialog()).toBeNull()
+    expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
 
   // 確認は表の `<dialog>` の中に組み立てられるので、その backdrop のクリックが表まで

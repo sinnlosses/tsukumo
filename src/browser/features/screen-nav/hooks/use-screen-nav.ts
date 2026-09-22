@@ -71,7 +71,9 @@ export function useScreenNav(): ScreenNavView {
   const current = useScreen()
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
   const model = useSessionSelector((session) => session.state.model)
-  const permissionMode = useSessionSelector((session) => session.state.permissionMode)
+  const permissionMode = useSessionSelector((session) =>
+    session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
+  )
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
 

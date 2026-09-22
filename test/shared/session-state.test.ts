@@ -16,6 +16,27 @@ function apply(...events: readonly SessionEvent[]): SessionState {
   return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_STATE)
 }
 
+/**
+ * `state.session` が `running`（`init` 済みで `permissionMode` も分かっている）である前提で
+ * 取り出す。まだなら失敗させる。**`running` という名前は他のテストがローカル変数として
+ * 使っている**（ツールが動いている状態の意味）ので、ここでは衝突しないよう `runningSession`
+ * にする。**`model` はここに無い**（`SessionState.model` を直接読む。`session` の外にある
+ * 理由は `SessionInfo` 冒頭のコメント）。
+ */
+function runningSession(
+  state: SessionState,
+): Extract<SessionState["session"], { kind: "running" }> {
+  if (state.session.kind !== "running") {
+    throw new Error("session-info がまだ届いていない、または permissionMode が未確定")
+  }
+  return state.session
+}
+
+/** `sessionId` が分かっている（`identified` か `running`）ときだけ返す。まだなら undefined。 */
+function sessionIdOf(state: SessionState): string | undefined {
+  return state.session.kind === "starting" ? undefined : state.session.sessionId
+}
+
 /** 架空のキャラクターパックが決まったところ。 */
 const CHARACTER_FIXTURE: SessionEvent = {
   kind: "character-changed",
@@ -373,7 +394,7 @@ describe("applySessionEvent", () => {
       },
     )
 
-    expect(view.permissionMode).toBe("default")
+    expect(runningSession(view).permissionMode).toBe("default")
     expect(view.slashCommands).toEqual(["clear", "model"])
   })
 
@@ -383,7 +404,7 @@ describe("applySessionEvent", () => {
         kind: "session-info",
         sessionId: "s-1",
         model: "claude-sonnet-5",
-        permissionMode: undefined,
+        permissionMode: "auto",
         slashCommands: [],
         terminalSlashCommands: [],
       },
@@ -399,7 +420,7 @@ describe("applySessionEvent", () => {
         kind: "session-info",
         sessionId: "s-1",
         model: "claude-sonnet-5",
-        permissionMode: undefined,
+        permissionMode: "auto",
         slashCommands: [],
         terminalSlashCommands: [],
       },
@@ -407,6 +428,19 @@ describe("applySessionEvent", () => {
     )
 
     expect(view.model).toBe("claude-sonnet-5")
+  })
+
+  // 実機で確かめた回帰: 1件も依頼を送っていない（`init` がまだ届いていない）うちにサイドバーで
+  // モデルを切り替えると、駆動は切り替わっているのに表示だけ5秒ほどで古い値に戻っていた
+  // （`model-changed` を `session.kind === "running"` のときだけ効かせていたときの不具合）。
+  // `model` は `session` の外にあるので、`starting`/`identified` の間でも更新できる。
+  it("model-changed は init より前（session が starting）でも効く", () => {
+    expect(INITIAL_SESSION_STATE.session.kind).toBe("starting")
+
+    const view = apply({ kind: "model-changed", model: "sonnet" })
+
+    expect(view.session.kind).toBe("starting")
+    expect(view.model).toBe("sonnet")
   })
 
   it("セッションが終わると理由を持ち、実行中のツールを空にする", () => {
@@ -597,9 +631,9 @@ describe("applySessionEvent", () => {
     // 画面が壊れないように、キャラクターとセッション情報は残す。
     expect(cleared.character).toEqual(before.character)
     expect(cleared.characterPacks).toEqual(before.characterPacks)
-    expect(cleared.sessionId).toBe("session-dummy")
+    expect(runningSession(cleared).sessionId).toBe("session-dummy")
     expect(cleared.model).toBe("claude-opus-5")
-    expect(cleared.permissionMode).toBe("auto")
+    expect(runningSession(cleared).permissionMode).toBe("auto")
     expect(cleared.slashCommands).toEqual(["clear"])
   })
 
@@ -647,26 +681,75 @@ describe("applySessionEvent", () => {
     ]
     const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
     expect(listed.sessions).toEqual(sessions)
-    // **`init` を待たずに居場所が決まる**（続きから始めたときだけ）。
-    expect(listed.sessionId).toBe("s-架空-1")
+    // **`init` を待たずに居場所が決まる**（続きから始めたときだけ）。`model` / `permissionMode`
+    // はまだなので `identified`（`sessionId` だけ）に留まる。
+    expect(listed.session.kind).toBe("identified")
+    expect(sessionIdOf(listed)).toBe("s-架空-1")
+  })
+
+  it("sessions-changed が running のときに来たら、sessionId だけ差し替えて permissionMode は引き継ぐ（model は session と無関係にそのまま残る）", () => {
+    const withInit = apply({
+      kind: "session-info",
+      sessionId: "s-架空-旧",
+      model: "claude-opus-5",
+      permissionMode: "auto",
+      slashCommands: [],
+      terminalSlashCommands: [],
+    })
+
+    const listed = applySessionEvent(
+      withInit,
+      {
+        kind: "sessions-changed",
+        sessions: [{ viewPort: 7327, sessionId: "s-架空-新", lastModified: 0 }],
+        current: "s-架空-新",
+      },
+      0,
+    )
+
+    expect(runningSession(listed).sessionId).toBe("s-架空-新")
+    expect(runningSession(listed).permissionMode).toBe("auto")
+    expect(listed.model).toBe("claude-opus-5")
   })
 
   it("sessions-changed が新規（current なし）なら、いまのセッションのIDは変えない", () => {
+    // model / permissionMode の片方だけ届いても sessionId だけの identified に畳む。
     const withId = apply({
       kind: "session-info",
       sessionId: "s-架空-init",
-      model: undefined,
+      model: "claude-opus-5",
       permissionMode: undefined,
       slashCommands: [],
       terminalSlashCommands: [],
     })
+    expect(withId.session.kind).toBe("identified")
 
     const listed = applySessionEvent(
       withId,
       { kind: "sessions-changed", sessions: [], current: undefined },
       0,
     )
-    expect(listed.sessionId).toBe("s-架空-init")
+    expect(sessionIdOf(listed)).toBe("s-架空-init")
+  })
+
+  // 回帰: `permissionMode` がまだ届かず `identified` のままでも、`model-changed` は
+  // `model` だけを更新できる（`session` はそのまま）。実機で確かめたサイドバーのモデル切り替えが
+  // 戻ってしまう不具合はこれが効いていなかったために起きた。
+  it("model-changed は identified（permissionMode がまだ）でも model を更新し、session は動かさない", () => {
+    const identified = apply({
+      kind: "session-info",
+      sessionId: "s-架空-identified",
+      model: undefined,
+      permissionMode: undefined,
+      slashCommands: [],
+      terminalSlashCommands: [],
+    })
+    expect(identified.session.kind).toBe("identified")
+
+    const after = applySessionEvent(identified, { kind: "model-changed", model: "haiku" }, 0)
+
+    expect(after.session).toEqual(identified.session)
+    expect(after.model).toBe("haiku")
   })
 
   it("character-changed でキャラクターパックの姿を持ち、届くまでは undefined", () => {

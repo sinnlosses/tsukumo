@@ -200,14 +200,14 @@ function openingSpanMs(opening: readonly FakeSessionStep[]): number {
 /**
  * `session-info` の土台。**fake driver なので固定値**（本物は SDK の `init` から来る）。
  * ここに会話の内容は入らない。
+ *
+ * 形は `SessionEvent`（`kind: "session-info"`）と同じものを使う（同じ「無い」を2箇所で
+ * 書き直さない）。**`model` / `permissionMode` がここで `| undefined` なのは、SDK の `init`
+ * をそのまま写す境界だから**（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
+ * 状態側（`src/shared/session-state.ts`）では `model` は `SessionState.model` へ独立に写り、
+ * `permissionMode` が無ければ `session` は `sessionId` だけの `identified` に畳まれる。
  */
-function sessionInfo(): {
-  readonly sessionId: string
-  readonly model: string | undefined
-  readonly permissionMode: string | undefined
-  readonly slashCommands: readonly string[]
-  readonly terminalSlashCommands: readonly string[]
-} {
+function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "kind"> {
   return {
     sessionId: "fake-session",
     model: undefined,
