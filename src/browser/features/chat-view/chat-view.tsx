@@ -9,6 +9,11 @@
 // 「ターン」ではなく「1件のセリフ」なのは、雑談のログが依頼で区切られていないため。
 // **立ち絵の動きは遡らない**（キャラビューと同じ。時間相対のアニメーションなので別タスク）。
 //
+// **印は「立ち絵がいま従っている行」に付き、既定では最新のセリフに付いている**
+// （docs/design.md 13.7。何も押していないと印がどこにも無く、行が押せること自体に
+// 気づけなかった）。**行に載せると 0.2 秒ほどで立ち絵が先に応える**（{@link useHoverPreview}）
+// のも同じ狙いで、どちらも**枠も操作子も増やさない**（13.1 原則2）。
+//
 // **キャラクターから話しかけてもらうボタン**はログの末尾にある（docs/design.md 13.7）。
 // 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
 // （`src/server/core/chat-nudge.ts`）。送った文面はログにも記録にも残らない。
@@ -58,6 +63,13 @@ const NEAR_BOTTOM_THRESHOLD_PX = 120
  */
 const DRAG_THRESHOLD_PX = 4
 
+/**
+ * 行に載せてから立ち絵が応えるまでの間（ミリ秒。docs/design.md 13.7）。ログの上をただ
+ * 通り過ぎただけで表情が点滅しないように少し待つ。**CSS の `transition-delay` では作れない**
+ * （表情は画像そのものの差し替えなので、遅らせる対象になる遷移が無い）。
+ */
+const HOVER_PREVIEW_DELAY_MS = 200
+
 /** 押し始めた場所（ドラッグと押すの見分けに使う。{@link isSelectionDrag}）。 */
 type PressOrigin = {
   readonly x: number
@@ -65,13 +77,18 @@ type PressOrigin = {
 }
 
 /**
- * 遡って見ているセリフ。**押した行の番号だけでなく、押した時点のセリフの件数も持つ** —
- * 件数が変われば選択は失効し、立ち絵は最新の表情へ戻る（{@link viewedIndex}）。
+ * 立ち絵がいま従っているセリフ。**既定は「最新」**（何も押していない状態。docs/design.md 13.7）で、
+ * 行を押すと「留めた」へ移る。
+ *
+ * 留めた側は**行の番号だけでなく、押した時点のセリフの件数も持つ** — 件数が変われば留めた
+ * 選択は失効し、「最新」と同じ見え方へ戻る（{@link pinnedSpeechIndex}）。
+ * **「最新」と「留めた」を `undefined` で書き分けない**のは、既定が「印がどこにも無い」では
+ * なく「最新の行に印が付いている」になったため（`docs/coding-standards.md`
+ * 「複数の「無い」が1つの状態」）。
  */
-type ViewedSpeech = {
-  readonly index: number
-  readonly speechCount: number
-}
+type ViewedSpeech =
+  | { readonly kind: "latest" }
+  | { readonly kind: "pinned"; readonly index: number; readonly speechCount: number }
 
 export function ChatView(): ReactElement {
   const records = useSessionSelector((session) => session.state.records)
@@ -82,23 +99,37 @@ export function ChatView(): ReactElement {
   const entries = chatLogEntries(records)
   const outfit = resolveOutfit(model)
 
-  // 遡って見ているセリフ。選んでいなければ undefined で、立ち絵は最新の表情に従う。
-  // **新しいセリフが来たらその場で失効する** — 立ち絵は常に「いまのセリフ」を
+  // 立ち絵がいま従っているセリフ。押していなければ「最新」で、印は最新のセリフの行に付く。
+  // **新しいセリフが来たら留めた選択はその場で失効する** — 立ち絵は常に「いまのセリフ」を
   // 表す側へ倒す。読み返しの最中でも下へ攫わないスクロールの規則
   // （{@link NEAR_BOTTOM_THRESHOLD_PX}）とは**揃えない**: 流れていった行の印は画面の外にあるので、
   // 表情だけが遡ったまま動かないと、なぜ古いのかが画面から分からなくなる。
   //
   // 失効は effect で追いかけず、**レンダー中に件数を突き合わせて決める**（state から計算できる値。
   // docs/coding-standards.md「useEffect の代わりに使うもの」）。
-  const [viewed, setViewed] = useState<ViewedSpeech | undefined>(undefined)
+  const [viewed, setViewed] = useState<ViewedSpeech>({ kind: "latest" })
   const speechCount = countSpeeches(entries)
-  const selectedIndex = viewedIndex(viewed, speechCount)
-  const expression = selectedSpeechExpression(entries, selectedIndex) ?? speechExpression
+  const pinnedIndex = pinnedSpeechIndex(viewed, speechCount)
+  // 印を付ける行 = 立ち絵が従っている行（docs/design.md 13.7）。留めていなければ最新のセリフ。
+  const selectedIndex = pinnedIndex ?? lastSpeechIndex(entries)
+  const hover = useHoverPreview()
+  // 表情は「載せている行 → 留めた行 → 最新」の順に決まる（docs/design.md 13.7）。
+  // **留めていないときに読むのは `speechExpression`** で、最新の行の表情ではない —
+  // 次のターンが始まると `speak` が来るまで既定へ戻る（キャラビューと同じ扱い。表情の源は
+  // `speak` の1つだけ。docs/requirements.md 4.3）。印はその間も最新のセリフの行に残る。
+  const expression =
+    speechExpressionAt(entries, hover.previewIndex) ??
+    speechExpressionAt(entries, pinnedIndex) ??
+    speechExpression
 
   const portraitUrl =
     character === undefined ? undefined : resolvePortraitUrl(character.portraits, expression)
   const accent =
     character === undefined ? undefined : resolveOutfitAccent(character.outfitAccents, outfit)
+  // **alt はホバーの先見せでも書き換わる**（出ている絵をそのまま説明する）。支援技術への
+  // 手当ては足していない: 立ち絵は `aria-live` の中に居ないので alt が変わっても読み上げに
+  // 割り込まず、そもそもホバーはポインタだけの道で、キーボードでは起きない
+  // （docs/design.md 13.7）。
   const altText = `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(
     character?.expressions ?? [],
     expression,
@@ -121,52 +152,121 @@ export function ChatView(): ReactElement {
         entries={entries}
         selectedIndex={selectedIndex}
         onToggle={(index) => {
-          // もう一度押したら解除する（新しいセリフを待たずに最新へ戻す道）。
-          setViewed(selectedIndex === index ? undefined : { index, speechCount })
+          // **留めた行をもう一度押したら「最新」へ戻す**（新しいセリフを待たずに追従へ戻す道）。
+          // 見るのは `selectedIndex` ではなく `pinnedIndex` — 既定で印が付いている最新の行を
+          // 押したときは、解くものが無いので**留める**側に倒す（印の位置は変わらないが、
+          // 次のターンが始まっても表情がその行に留まる）。
+          setViewed(
+            pinnedIndex === index ? { kind: "latest" } : { kind: "pinned", index, speechCount },
+          )
         }}
+        onHoverEntry={hover.onHoverEntry}
+        onLeaveEntry={hover.onLeaveEntry}
       />
     </div>
   )
 }
 
 /**
- * ログに並んでいるキャラクターのセリフの件数。**選択がまだ生きているか**を測る物差しで、
- * これが変われば {@link viewedIndex} が選択を失効させる。
+ * ホバーで先に見せている行（docs/design.md 13.7）。**載せてから
+ * {@link HOVER_PREVIEW_DELAY_MS} 経ったときだけ入り、離すとすぐ抜ける**。
+ *
+ * 遅らせるのは**利用者の操作で起きること**なので、state を effect で追いかけず
+ * ハンドラの中でタイマーを引く（docs/coding-standards.md「useEffect の代わりに使うもの」）。
+ * effect が要るのは**畳まれたときに走りかけのタイマーを止める**ぶんだけ。
+ */
+function useHoverPreview(): {
+  readonly previewIndex: number | undefined
+  readonly onHoverEntry: (index: number) => void
+  readonly onLeaveEntry: () => void
+} {
+  const [previewIndex, setPreviewIndex] = useState<number | undefined>(undefined)
+  // React の外の資源（走っているタイマー）を持つ入れ物。
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  // タイマー（docs/coding-standards.md「useEffect は4類型だけ」）。**取り外しのときに
+  // 止めるためだけ**に張るので、依存は空でよい（張り直す材料を持たない）。
+  useEffect(() => {
+    return () => {
+      const timer = timerRef.current
+      if (timer !== undefined) {
+        clearTimeout(timer)
+      }
+    }
+  }, [])
+
+  const stopTimer = (): void => {
+    const timer = timerRef.current
+    if (timer !== undefined) {
+      clearTimeout(timer)
+      timerRef.current = undefined
+    }
+  }
+
+  return {
+    previewIndex,
+    onHoverEntry: (index) => {
+      // 隣の行へ滑らせたときは、前の行の待ちを捨てて数え直す。
+      stopTimer()
+      timerRef.current = setTimeout(() => {
+        timerRef.current = undefined
+        setPreviewIndex(index)
+      }, HOVER_PREVIEW_DELAY_MS)
+    },
+    onLeaveEntry: () => {
+      stopTimer()
+      setPreviewIndex(undefined)
+    },
+  }
+}
+
+/**
+ * ログに並んでいるキャラクターのセリフの件数。**留めた選択がまだ生きているか**を測る物差しで、
+ * これが変われば {@link pinnedSpeechIndex} が選択を失効させる。
  */
 function countSpeeches(entries: readonly ChatLogEntry[]): number {
   return entries.reduce((count, entry) => (entry.speaker === "character" ? count + 1 : count), 0)
 }
 
 /**
- * いま印を付けて立ち絵を合わせる行。**押した時点から件数が変わっていれば undefined**
- * （新しいセリフが来た、または窓から古い記録が落ちた）。
+ * 押して留めている行。**押した時点から件数が変わっていれば undefined**（新しいセリフが来た、
+ * または窓から古い記録が落ちた）で、印も立ち絵も「最新」の側へ戻る。
  *
  * 件数1つで両方を捌けるのは、**セリフは末尾に積むだけ**で、窓
  * （`MAX_SESSION_STATE_TURNS`）を当てるのは利用者の発言が来たときだけだから
  * （`shared/session-state.ts` の `speech` と `request`）。つまり件数が同じなら並びは前へ
  * 詰まっておらず、押した番号は押した行を指したままになる。
  */
-function viewedIndex(viewed: ViewedSpeech | undefined, speechCount: number): number | undefined {
-  if (viewed === undefined || viewed.speechCount !== speechCount) {
+function pinnedSpeechIndex(viewed: ViewedSpeech, speechCount: number): number | undefined {
+  if (viewed.kind === "latest" || viewed.speechCount !== speechCount) {
     return undefined
   }
   return viewed.index
 }
 
 /**
- * 選んでいる行のセリフに添えられた表情。選んでいなければ undefined（立ち絵は最新のまま）。
- *
- * **選べるのはキャラクターのセリフだけ**だが、番号で持っている以上は型の上で外れうるので、
- * 外れたら最新へ戻す（印も同じ番号で決まるので、立ち絵と印が食い違うことはない）。
+ * いちばん新しいキャラクターのセリフの行。**何も押していないときに印が付く行**
+ * （docs/design.md 13.7）。まだ1件も話していなければ undefined で、印はどこにも付かない。
  */
-function selectedSpeechExpression(
+function lastSpeechIndex(entries: readonly ChatLogEntry[]): number | undefined {
+  const index = entries.findLastIndex((entry) => entry.speaker === "character")
+  return index === -1 ? undefined : index
+}
+
+/**
+ * その行のセリフに添えられた表情。行を指していなければ undefined（呼び出し側が次の手へ倒す）。
+ *
+ * **番号が指せるのはキャラクターのセリフだけ**だが、番号で持っている以上は型の上で外れうるので、
+ * 外れたら undefined を返す（印も同じ番号で決まるので、立ち絵と印が食い違うことはない）。
+ */
+function speechExpressionAt(
   entries: readonly ChatLogEntry[],
-  selectedIndex: number | undefined,
+  index: number | undefined,
 ): Expression | undefined {
-  if (selectedIndex === undefined) {
+  if (index === undefined) {
     return undefined
   }
-  const entry = entries[selectedIndex]
+  const entry = entries[index]
   return entry === undefined || entry.speaker !== "character" ? undefined : entry.expression
 }
 
@@ -177,8 +277,11 @@ function selectedSpeechExpression(
  */
 function ChatLog(props: {
   readonly entries: readonly ChatLogEntry[]
+  /** 印を付ける行（= 立ち絵が従っている行）。セリフが1件も無ければどこにも付かない。 */
   readonly selectedIndex: number | undefined
   readonly onToggle: (index: number) => void
+  readonly onHoverEntry: (index: number) => void
+  readonly onLeaveEntry: () => void
 }): ReactElement {
   const logRef = useRef<HTMLDivElement>(null)
   // 押し始めた場所。**セリフの行は文字をドラッグで選べる**ので、選び終えて手を離したときの
@@ -246,6 +349,15 @@ function ChatLog(props: {
               aria-pressed={index === props.selectedIndex}
               onMouseDown={(event) => {
                 pressOriginRef.current = { x: event.clientX, y: event.clientY }
+              }}
+              // **ホバーで立ち絵が先に応える**（docs/design.md 13.7）。載せた・離したを数える
+              // のは `mouseenter` / `mouseleave`（行の中で動くたびに飛ぶ `mouseover` では
+              // 間の数え直しが止まらない）。
+              onMouseEnter={() => {
+                props.onHoverEntry(index)
+              }}
+              onMouseLeave={() => {
+                props.onLeaveEntry()
               }}
               onClick={(event) => {
                 const origin = pressOriginRef.current

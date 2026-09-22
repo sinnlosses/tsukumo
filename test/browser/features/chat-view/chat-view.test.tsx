@@ -67,6 +67,19 @@ function logEntries(): readonly Element[] {
   return [...document.querySelectorAll("[data-speaker]")]
 }
 
+/**
+ * ホバーで立ち絵が応えるまでの間（`chat-view.tsx` の `HOVER_PREVIEW_DELAY_MS`）を実際に待つ。
+ * **時計を差し替えない** — 遅れを作っているのは素の `setTimeout` 1つで、待つ長さも
+ * 0.2 秒ほどなので、そのまま待ったほうが仕掛けが少ない。
+ */
+async function waitForHoverPreview(): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 300)
+    })
+  })
+}
+
 // 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   portraits: portraits({ default: "/character/default.png" }),
@@ -133,6 +146,53 @@ describe("ChatView", () => {
 })
 
 describe("ChatView のセリフを遡る", () => {
+  it("何も押していなければ、最新のセリフに印が付いている", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    // 印は「立ち絵がいま従っている行」を指す（docs/design.md 13.7）。押す前から最新に付く。
+    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([
+      null,
+      "false",
+      null,
+      "true",
+    ])
+  })
+
+  it("新しいセリフが来ると、印が最新へ移る", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [...RECORDS, { kind: "speech", text: "3つめのセリフ", expression: "curious" }],
+        character: FIXTURE_CHARACTER,
+        speechExpression: "curious",
+      })
+    })
+
+    // 続けて話した2件は、依頼を挟まずそのまま積む。
+    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([
+      null,
+      "false",
+      null,
+      "false",
+      "true",
+    ])
+  })
+
+  it("まだ何も話していなければ印はどこにも付かない", () => {
+    renderChatView({
+      records: [{ kind: "request", turnId: 5, text: "架空の依頼", images: [] }],
+      character: FIXTURE_CHARACTER,
+    })
+
+    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([null])
+  })
+
   it("過去のセリフの行を押すと、立ち絵の表情がその行のものになる", () => {
     renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
 
@@ -289,7 +349,8 @@ describe("ChatView のセリフを遡る", () => {
     })
 
     expect(portraitExpression()).toBe("proud")
-    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([null, "false"])
+    // 留めた選択は失効し、印は残った最新のセリフへ移る。
+    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([null, "true"])
   })
 
   it("利用者が発言しただけでは選択は解けない（解くのは新しいセリフ）", () => {
@@ -313,6 +374,65 @@ describe("ChatView のセリフを遡る", () => {
 
     expect(portraitExpression()).toBe("proud")
     expect(screen.getByText("2つめのセリフ").getAttribute("aria-pressed")).toBe("true")
+  })
+})
+
+describe("ChatView のホバーで先に応える", () => {
+  it("行に載せて少し待つと立ち絵がその行の表情になり、離すと戻る", async () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    // `mouseenter` / `mouseleave` は React が `mouseover` / `mouseout` から組み立てる。
+    fireEvent.mouseEnter(firstSpeech)
+    // 載せた直後はまだ動かない（ログの上を通り過ぎただけで点滅させない）。
+    expect(portraitExpression()).toBe("proud")
+
+    await waitForHoverPreview()
+    expect(portraitExpression()).toBe("default")
+
+    // 離すのは待たずにすぐ。
+    fireEvent.mouseLeave(firstSpeech)
+    expect(portraitExpression()).toBe("proud")
+  })
+
+  it("載せたまま離れた行へ滑らせても、いま載っている行の表情になる", async () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "curious" })
+
+    const firstSpeech = screen.getByText("1つめのセリフ")
+    fireEvent.mouseEnter(firstSpeech)
+    fireEvent.mouseLeave(firstSpeech)
+    fireEvent.mouseEnter(screen.getByText("2つめのセリフ"))
+
+    await waitForHoverPreview()
+    // 前の行の待ちは捨てられている（`default` にならない）。
+    expect(portraitExpression()).toBe("proud")
+  })
+
+  it("ホバーでは印は動かない（動くのは立ち絵だけ）", async () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    fireEvent.mouseEnter(screen.getByText("1つめのセリフ"))
+    await waitForHoverPreview()
+
+    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([
+      null,
+      "false",
+      null,
+      "true",
+    ])
+  })
+
+  it("留めた行より、いま載せている行が優先される", async () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "curious" })
+
+    fireEvent.click(screen.getByText("1つめのセリフ"))
+    fireEvent.mouseEnter(screen.getByText("2つめのセリフ"))
+    await waitForHoverPreview()
+    expect(portraitExpression()).toBe("proud")
+
+    // 離すと、留めた行へ戻る（最新ではない）。
+    fireEvent.mouseLeave(screen.getByText("2つめのセリフ"))
+    expect(portraitExpression()).toBe("default")
   })
 })
 
