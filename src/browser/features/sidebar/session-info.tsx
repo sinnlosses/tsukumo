@@ -81,7 +81,9 @@ export function SessionInfo(): ReactElement {
   const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
   const chatMode = useSessionSelector((session) => session.state.chatMode)
   const modelName = useSessionSelector((session) => session.state.model)
-  const permissionModeName = useSessionSelector((session) => session.state.permissionMode)
+  const permissionModeName = useSessionSelector((session) =>
+    session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
+  )
   const currentPack = resolveCharacterPack(characterPacks, currentPackName)
   const model = resolveModelAlias(modelName)
   const permissionMode = resolvePermissionMode(permissionModeName)

@@ -113,6 +113,40 @@ export type SessionRecord =
   | { readonly kind: "compact-boundary" }
 
 /**
+ * `init`（`session-info`）と、続きから始めたときの `sessions-changed` がどこまで届いたか。
+ * **`sessionId` / `permissionMode` はそれぞれ独立に `| undefined` だった旧い形**
+ * （`docs/coding-standards.md`「複数の「無い」が1つの状態」）。`sessionId` が分かる口は2つ
+ * （`init` と `sessions-changed`）、`permissionMode` は1つ（`init`）なので、どこまで届いたかが
+ * 3つの状態になる。
+ *
+ * - `starting`: セッションがまだ起こったばかりで、`init` も `sessions-changed`
+ *   （続きから始めたときの居場所）もまだ届いていない
+ * - `identified`: `sessionId` だけ分かっている。**続きから始めたときに `sessions-changed` が
+ *   `init` より先に届く経路がある**ので実在する状態（`sessionId` が分かっているかどうかと
+ *   `permissionMode` が分かっているかどうかは、無くなる理由が違う ——
+ *   「片方だけが `undefined` になる状態が実在するか」の目安どおり分けてある）
+ * - `running`: `sessionId` / `permissionMode` の両方が分かっている。**`permissionMode` を
+ *   決める口は `init` だけ**（サイドバーの `set-permission-mode` には確定の合図が無い）で、
+ *   その `init` は必ず `sessionId` も連れてくるので、`permissionMode` だけ分かっている状態は
+ *   実在しない。だから3つ目の状態を足さずにこの2つを束ねられる
+ *
+ * **`model` はここに入れない**（`SessionState.model` に外へ出してある）。`sessionId` /
+ * `permissionMode` は `init` の1つの口でしか決まらないが、**`model` はそれに加えて
+ * `model-changed`（`/model` チャットコマンドやサイドバーの `set-model` の確定）でも決まり、
+ * `sessionId` より先に分かることがある**（続きから始める前、`init` が来る前の
+ * `identified`/`starting` の間にサイドバーでモデルを切り替える経路が実機にある）。
+ * ここへ押し込めると `model-changed` が `running` 以外では効かなくなり、切り替えても
+ * 5秒ほどで古い値に戻って見える不具合になる（実機で確認済み。修正の経緯は
+ * `src/server/adapter/sdk-driver.ts` の `setModel` のコメントを参照）。「無い」を型から
+ * 消すことを目的にせず、消える理由が違う値は素直に分けて残す
+ * （`docs/coding-standards.md`「「無いかもしれない」値」）。
+ */
+export type SessionInfo =
+  | { readonly kind: "starting" }
+  | { readonly kind: "identified"; readonly sessionId: string }
+  | { readonly kind: "running"; readonly sessionId: string; readonly permissionMode: string }
+
+/**
  * ターンの進み具合。`request` で `running` になり、`turn-finished` / `session-ended` で
  * `finished` になる（入力欄が送信と中断を切り替える判断材料。docs/requirements.md 4.7）。
  *
@@ -168,9 +202,16 @@ export type SessionState = {
   readonly finishedTools: readonly ToolActivity[]
   /** 答え待ちの列（許可プロンプトと質問）。 */
   readonly pending: readonly PendingAsk[]
-  readonly sessionId: string | undefined
+  /** `init` がまだ届いていないか、届いてセッションID・許可モードが分かっているか。 */
+  readonly session: SessionInfo
+  /**
+   * いま動いているモデル。**`session` の外に置く**（{@link SessionInfo} の冒頭のコメント）
+   * ——`init`（`session-info`）だけでなく `model-changed`（`/model` コマンドやサイドバーの
+   * `set-model` の確定）でも決まり、`sessionId` より先に分かることがあるため。まだどちらの
+   * 口からも届いていなければ undefined（本物の「無い」——`init` 前に何を出すかは読む側が
+   * 見た目上の既定へ畳む。`src/browser/lib/model-label.ts` の `resolveModelAlias`）。
+   */
   readonly model: string | undefined
-  readonly permissionMode: string | undefined
   /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
    * （`terminal_slash_commands`）は除いてある**（`commandCandidates`。
@@ -255,9 +296,8 @@ export const INITIAL_SESSION_STATE: SessionState = {
   runningTools: [],
   finishedTools: [],
   pending: [],
-  sessionId: undefined,
+  session: { kind: "starting" },
   model: undefined,
-  permissionMode: undefined,
   slashCommands: [],
   commandDescriptions: [],
   endedReason: undefined,
@@ -287,9 +327,12 @@ export function applySessionEvent(
     case "session-info":
       return {
         ...state,
-        sessionId: event.sessionId,
+        session:
+          event.permissionMode !== undefined
+            ? { kind: "running", sessionId: event.sessionId, permissionMode: event.permissionMode }
+            : { kind: "identified", sessionId: event.sessionId },
+        // `model` は `session` とは独立に更新する（{@link SessionInfo} 冒頭のコメント）。
         model: event.model,
-        permissionMode: event.permissionMode,
         slashCommands: commandCandidates(event.slashCommands, event.terminalSlashCommands),
       }
     case "command-descriptions":
@@ -297,7 +340,10 @@ export function applySessionEvent(
     case "model-changed":
       // **`MODEL_ALIASES` に完全一致するときだけ先回りで更新する**（`/model best` のような
       // tsukumo が知らない値では状態を変えない。次の依頼の `init` が正しい値で上書きするので、
-      // ここで間違った値に倒す必要は無い）。
+      // ここで間違った値に倒す必要は無い）。**`session.kind` は見ない**——`model` は `init` の
+      // 前でも `set-model` の確定で決まることが実機で確認されている（`identified`/`starting`
+      // の間に届いても更新できる）。ここで `running` に絞ると、切り替えても数秒で古い値に
+      // 戻って見える不具合になる（`src/server/adapter/sdk-driver.ts` の `setModel` 参照）。
       return isModelAlias(event.model) ? { ...state, model: event.model } : state
     case "request":
       return {
@@ -410,11 +456,19 @@ export function applySessionEvent(
     case "sessions-changed":
       // **`sessionId` もここで決まる**（`session-info` は最初の依頼まで届かないので、それまで
       // 「いまどのセッションに居るか」を言えるのはこの経路だけ）。新規に起こしたときは
-      // undefined のままで、`init` が届いたら本物のIDで上書きされる。
+      // `current` が undefined で、そのときは今の `session` を動かさない（`init` が届いたら
+      // 本物のIDで上書きされる）。すでに `running`（`init` 済み）なら `permissionMode` は
+      // 引き継ぎ、`sessionId` だけ差し替える。`starting` / `identified` からは（`init` が
+      // まだなので）`sessionId` だけの `identified` になる。
       return {
         ...state,
         sessions: event.sessions,
-        sessionId: event.current ?? state.sessionId,
+        session:
+          event.current === undefined
+            ? state.session
+            : state.session.kind === "running"
+              ? { ...state.session, sessionId: event.current }
+              : { kind: "identified", sessionId: event.current },
       }
     case "character-changed":
       return {

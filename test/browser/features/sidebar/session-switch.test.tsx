@@ -6,7 +6,11 @@ import { SessionSwitch } from "../../../../src/browser/features/sidebar/session-
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
 import { type SessionChoice } from "../../../../src/shared/session-choice.ts"
-import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionInfo,
+  type SessionState,
+} from "../../../../src/shared/session-state.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -21,6 +25,15 @@ const SESSIONS: readonly SessionChoice[] = [
   { viewPort: 7328, sessionId: "s-other", lastModified: LATER.epochMilliseconds },
   { viewPort: 7327, sessionId: "s-current", lastModified: EARLIER.epochMilliseconds },
 ]
+
+/**
+ * `sessionId` だけ分かっている架空の土台。**このテストが見るのはセッションの切り替えだけ**
+ * （`model` / `permissionMode` は関係ない）ので、`init` 前でも `sessionId` だけ分かる
+ * `identified` を使う（`sessions-changed` が `init` より先に届く経路と同じ形）。
+ */
+function identifiedSession(sessionId: string): Extract<SessionInfo, { kind: "identified" }> {
+  return { kind: "identified", sessionId }
+}
 
 function renderSessionSwitch(
   stateOverrides: Partial<SessionState>,
@@ -57,7 +70,7 @@ describe("SessionSwitch", () => {
 
   // 目印は**部屋の名前**として出す（`src/shared/room.ts`。ポートの並び順に割り当たる）。
   it("部屋の名前と最終更新時刻（ローカル時刻）を並べ、いま出しているものに印を付ける", () => {
-    renderSessionSwitch({ sessions: SESSIONS, sessionId: "s-current" })
+    renderSessionSwitch({ sessions: SESSIONS, session: identifiedSession("s-current") })
 
     const select = screen.getByLabelText("セッション")
     expect((select as HTMLSelectElement).value).toBe("s-current")
@@ -71,7 +84,7 @@ describe("SessionSwitch", () => {
   it("名前が無いポートの行は、ポート番号をそのまま出す", () => {
     renderSessionSwitch({
       sessions: [{ viewPort: 9000, sessionId: "s-far", lastModified: LATER.epochMilliseconds }],
-      sessionId: "s-far",
+      session: identifiedSession("s-far"),
     })
 
     expect(options(screen.getByLabelText("セッション"))).toEqual([
@@ -90,7 +103,7 @@ describe("SessionSwitch", () => {
   })
 
   it("一覧の上限から漏れたセッションに居るときは、先頭に「いまのセッション」を出す", () => {
-    renderSessionSwitch({ sessions: SESSIONS, sessionId: "s-old" })
+    renderSessionSwitch({ sessions: SESSIONS, session: identifiedSession("s-old") })
 
     const select = screen.getByLabelText("セッション")
     expect((select as HTMLSelectElement).value).toBe("s-old")
@@ -99,9 +112,12 @@ describe("SessionSwitch", () => {
 
   it("選ぶと switch-session が dispatch される", () => {
     const sent: unknown[] = []
-    renderSessionSwitch({ sessions: SESSIONS, sessionId: "s-current" }, (command) => {
-      sent.push(command)
-    })
+    renderSessionSwitch(
+      { sessions: SESSIONS, session: identifiedSession("s-current") },
+      (command) => {
+        sent.push(command)
+      },
+    )
 
     fireEvent.change(screen.getByLabelText("セッション"), { target: { value: "s-other" } })
 
@@ -110,9 +126,12 @@ describe("SessionSwitch", () => {
 
   it("いま出しているものを選び直しても、起こし直さない", () => {
     const sent: unknown[] = []
-    renderSessionSwitch({ sessions: SESSIONS, sessionId: "s-current" }, (command) => {
-      sent.push(command)
-    })
+    renderSessionSwitch(
+      { sessions: SESSIONS, session: identifiedSession("s-current") },
+      (command) => {
+        sent.push(command)
+      },
+    )
 
     fireEvent.change(screen.getByLabelText("セッション"), { target: { value: "s-current" } })
 
@@ -122,7 +141,7 @@ describe("SessionSwitch", () => {
   it("ターン進行中は塞ぎ、理由をサーバと同じ定型文で見せる", () => {
     renderSessionSwitch({
       sessions: SESSIONS,
-      sessionId: "s-current",
+      session: identifiedSession("s-current"),
       turn: { kind: "running", startedAt: 0 },
     })
 
