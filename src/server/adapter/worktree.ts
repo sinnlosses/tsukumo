@@ -8,18 +8,18 @@
 // 1つにまとめない。
 //
 // 置き場は `git rev-parse --git-common-dir` の下の `tsukumo/worktree/<名前>`、使用中の印は
-// 同じ親の下の `tsukumo/mark/<名前>`（T-349 の決定4）。**git に1回聞けば worktree も印も
-// 見つかる**ので、置き場をもう1つ決めて回らない。
+// 同じ親の下（T-349 の決定4）。**git に1回聞けば worktree も印も見つかる**ので、置き場を
+// もう1つ決めて回らない。**印そのものの読み書きは `mark.ts`**（タスクの着手の印と同じ仕組みで、
+// 二度書きしない）。
 //
 // **`node_modules` と `characters/local` の symlink は `git status` に `??` で出る**
 // （`.gitignore` の `node_modules/` は末尾が `/` なので、ディレクトリではない symlink に
 // 当たらない。2026-09-22 実測）。畳んでよいかを見るときは、この2つを除いてから数える。
 
 import { execFile } from "node:child_process"
-import { lstat, mkdir, readdir, readFile, rm, rmdir, symlink, writeFile } from "node:fs/promises"
+import { lstat, mkdir, readFile, rm, rmdir, symlink } from "node:fs/promises"
 // `resolve` は下の `new Promise((resolve) => …)` と名前がぶつかるので、別名で取る。
 import { dirname, join, resolve as resolvePath } from "node:path"
-import process from "node:process"
 
 import { isPlainObject } from "remeda"
 
@@ -33,6 +33,13 @@ import {
   type WorktreeState,
 } from "../core/workspace.ts"
 import { bundledFilePath } from "./bundled-path.ts"
+import {
+  isWorktreeInUse,
+  listWorktreeMarkNames,
+  removeWorktreeMark,
+  tsukumoGitDir,
+  writeWorktreeMark,
+} from "./mark.ts"
 
 /** `git` の応答を待つ上限。**切るのも畳むのも起動時**なので、待たせ続けない。 */
 const GIT_TIMEOUT_MS = 15000
@@ -43,10 +50,8 @@ const BUILD_TIMEOUT_MS = 60000
 /** 受け取る標準出力の上限（`git status` が長くなる余地を見込む）。 */
 const MAX_OUTPUT_BYTES = 8 * 1024 * 1024
 
-/** `.git` の下に作る、tsukumo の持ち物の親。worktree も印もこの下に並ぶ。 */
-const WORKTREE_HOME_DIR_NAME = "tsukumo"
+/** 切った worktree の実体を並べる場所（`.git` の下の tsukumo の持ち物の親から1段下）。 */
 const WORKTREE_DIR_NAME = "worktree"
-const MARK_DIR_NAME = "mark"
 
 /**
  * 切った直後に張る symlink（**元にあって、切った先に無いときだけ**）。git 管理下に無いもので、
@@ -152,8 +157,7 @@ function firstWorktreePath(stdout: string): string | undefined {
  * **ここで失敗しても起動は続ける**（掃除は今回のセッションの前提ではない。次の起動がもう一度見る）。
  */
 async function foldIdleWorktrees(repository: WorkspaceRepository): Promise<readonly string[]> {
-  const markDir = join(repository.gitDir, WORKTREE_HOME_DIR_NAME, MARK_DIR_NAME)
-  const names = await readdir(markDir).catch(() => [])
+  const names = await listWorktreeMarkNames(repository.gitDir)
   if (names.length === 0) {
     return []
   }
@@ -194,7 +198,7 @@ async function foldIdleWorktree(
   }
   await runGit(repository.root, ["worktree", "remove", path])
   await runGit(repository.root, ["branch", "-d", branch])
-  await rm(markPath(repository, name), { force: true })
+  await removeWorktreeMark(repository.gitDir, name)
   return undefined
 }
 
@@ -203,7 +207,7 @@ async function readWorktreeState(
   repository: WorkspaceRepository,
   name: string,
 ): Promise<WorktreeState> {
-  const running = await isMarkRunning(markPath(repository, name))
+  const running = await isWorktreeInUse(repository.gitDir, name)
   if (running) {
     return { running: true, changed: false, unmerged: false }
   }
@@ -219,24 +223,6 @@ async function readWorktreeState(
     changed: status.ok && countChanges(status.stdout) > 0,
     // 読めなかったとき（ブランチがもう無い）は「未マージのコミットは無い」側へ倒す。
     unmerged: unmerged.ok && unmerged.stdout.trim() !== "0",
-  }
-}
-
-/** 印に書かれた pid のプロセスが生きているか。**読めない印は生きていない扱い**（掃除の対象）。 */
-async function isMarkRunning(path: string): Promise<boolean> {
-  const written = await readFile(path, "utf8").catch(() => undefined)
-  const pid = Number(written?.trim())
-  if (!Number.isInteger(pid) || pid <= 0) {
-    return false
-  }
-
-  try {
-    // シグナル 0 は届けずに存在だけを見る。**別の利用者のプロセスなら EPERM** で、
-    // これも「生きている」。
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return isPlainObject(error) && error["code"] === "EPERM"
   }
 }
 
@@ -287,7 +273,7 @@ async function cutWorktree(
     // 同じ名前のブランチが残っているなど、名前ごと使えないとき。作った印とディレクトリを
     // 戻してから次の候補へ。
     reasons.push(added.reason)
-    await rm(markPath(repository, name), { force: true })
+    await removeWorktreeMark(repository.gitDir, name)
     await rmdir(path).catch(() => undefined)
   }
 
@@ -312,8 +298,7 @@ async function claimWorktreeName(
     return false
   }
 
-  await mkdir(dirname(markPath(repository, name)), { recursive: true })
-  await writeFile(markPath(repository, name), `${String(process.pid)}\n`, "utf8")
+  await writeWorktreeMark(repository.gitDir, name)
   return true
 }
 
@@ -424,11 +409,7 @@ async function exists(path: string): Promise<boolean> {
 }
 
 function worktreePath(repository: WorkspaceRepository, name: string): string {
-  return join(repository.gitDir, WORKTREE_HOME_DIR_NAME, WORKTREE_DIR_NAME, name)
-}
-
-function markPath(repository: WorkspaceRepository, name: string): string {
-  return join(repository.gitDir, WORKTREE_HOME_DIR_NAME, MARK_DIR_NAME, name)
+  return join(tsukumoGitDir(repository.gitDir), WORKTREE_DIR_NAME, name)
 }
 
 /** コマンド1回の結果。**失敗には必ず理由が付く**（起動を止めるときにそのまま出す）。 */

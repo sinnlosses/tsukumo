@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 着手の印を `.git` 共有に置き、二重着手を防げるようにした（T-351）
+
+`<gitDir>/tsukumo/claim/<タスクid>` に `wx` で作る印で、worktree をまたいでも同じタスクを
+2つのセッションが取れないようにした（判断は `src/server/core/task-claim.ts`、読み書きは
+`src/server/adapter/mark.ts`）。T-350 の「使用中」の印も同じファイルへ寄せて二度書きを消した。
+**呼び出し元の配線はまだ無い**（誰がいつ取るかは T-353 で決める）。
+
 ### 2026-09-22 起動時に worktree を切り、そこで claude を起こすようにした（T-350）
 
 `.git/tsukumo/worktree/<時刻>` に毎回切って `cwd` をそちらへ向け、プロジェクト設定は
