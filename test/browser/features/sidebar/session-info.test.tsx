@@ -230,45 +230,9 @@ describe("SessionInfo", () => {
   })
 })
 
-// 架空の作業場所（`docs/architecture.md`「worktree でセッションを分ける」）。
-const FIXTURE_WORKSPACE: NonNullable<SessionState["workspace"]> = {
-  source: "/repo",
-  workdir: {
-    kind: "worktree",
-    path: "/repo/.git/tsukumo/worktree/20260922-153012",
-    branch: "tsukumo/20260922-153012",
-    origin: "/repo",
-  },
-}
-
-describe("SessionInfo の作業先", () => {
-  it("claude の作業先（worktree）と、tsukumo のコードの出所を両方出す", () => {
-    renderSessionInfo({ workspace: FIXTURE_WORKSPACE })
-
-    expect(screen.getByText("作業先")).toBeDefined()
-    expect(screen.getByText("/repo/.git/tsukumo/worktree/20260922-153012")).toBeDefined()
-    expect(screen.getByText("ブランチ")).toBeDefined()
-    expect(screen.getByText("tsukumo/20260922-153012")).toBeDefined()
-    expect(screen.getByText("コードの出所")).toBeDefined()
-    expect(screen.getByText("/repo")).toBeDefined()
-  })
-
-  it("切っていないときはブランチの行を出さない", () => {
-    renderSessionInfo({
-      workspace: { source: "/repo", workdir: { kind: "direct", path: "/tmp/somewhere" } },
-    })
-
-    expect(screen.getByText("/tmp/somewhere")).toBeDefined()
-    expect(screen.queryByText("ブランチ")).toBeNull()
-  })
-
-  it("まだ届いていなければ行ごと出さない", () => {
-    renderSessionInfo({})
-
-    expect(screen.queryByText("作業先")).toBeNull()
-    expect(screen.queryByText("コードの出所")).toBeNull()
-  })
-
+// 作業先・ブランチ・コードの出所の行は T-365 で外した（ブランチは帯の読みへ、パスは部屋の名前の
+// title へ移った。`workspace-notice.tsx` の冒頭コメント）。ここに残るのは知らせと並び順だけ。
+describe("SessionInfo の知らせと並び", () => {
   it("作業場所の知らせを、改行を保ったまま出す", () => {
     const notice = [
       "マージが衝突したので止めた（本体は元に戻した）",
@@ -276,7 +240,7 @@ describe("SessionInfo の作業先", () => {
       "次の手: worktree で git merge main して解き、もう一度マージを頼む",
     ].join("\n")
 
-    renderSessionInfo({ workspace: FIXTURE_WORKSPACE, workspaceNotices: [notice] })
+    renderSessionInfo({ workspaceNotices: [notice] })
 
     expect(screen.getByText("知らせ")).toBeDefined()
     // 既定の照合は空白を畳むので、改行ごと残っていることは中身そのもので確かめる。
@@ -284,8 +248,49 @@ describe("SessionInfo の作業先", () => {
   })
 
   it("知らせが無ければ知らせの行を出さない", () => {
-    renderSessionInfo({ workspace: FIXTURE_WORKSPACE })
+    renderSessionInfo({})
 
     expect(screen.queryByText("知らせ")).toBeNull()
+  })
+
+  it("作業先・ブランチ・コードの出所の行はもう出さない", () => {
+    renderSessionInfo({
+      workspace: {
+        source: "/repo",
+        workdir: {
+          kind: "worktree",
+          path: "/repo/.git/tsukumo/worktree/20260922-153012",
+          branch: "tsukumo/20260922-153012",
+          origin: "/repo",
+        },
+      },
+    })
+
+    expect(screen.queryByText("作業先")).toBeNull()
+    expect(screen.queryByText("ブランチ")).toBeNull()
+    expect(screen.queryByText("コードの出所")).toBeNull()
+  })
+
+  it("並びは 知らせ・モード・モデル・許可モード・キャラクター・セッション の順", () => {
+    renderSessionInfo({
+      workspaceNotices: ["畳めなかった worktree がある"],
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
+      sessions: [{ sessionId: "s1", viewPort: 7327, lastModified: 0 }],
+      sessionId: "s1",
+    })
+
+    const labels = screen
+      .getAllByText(/^(知らせ|モード|モデル|許可モード|キャラクター|セッション)$/)
+      .map((element) => element.textContent)
+
+    expect(labels).toEqual([
+      "知らせ",
+      "モード",
+      "モデル",
+      "許可モード",
+      "キャラクター",
+      "セッション",
+    ])
   })
 })

@@ -1,7 +1,8 @@
 // セッションが動いている場所（`docs/architecture.md`「worktree でセッションを分ける」）。
 // **サーバとブラウザの両方が読む**ので shared に置く——サーバは claude を起こす `cwd` と
 // プロジェクト設定の出どころをここから導き（`src/server/core/workspace.ts`）、ブラウザは
-// サイドバーに出す（`src/browser/features/sidebar/workspace-location.tsx`）。
+// 部屋の名前の `title` に出す（`src/browser/features/screen-nav/hooks/use-screen-nav.ts`。
+// サイドバーの行だった時期は T-365 で終わった。`docs/design.md` 13.9「部屋の名前」）。
 //
 // **2つの場所が常に食い違っている**のがこの型の存在理由。tsukumo のプロセスは `bun link` が
 // 指すコードで動き、claude はそのつど切った worktree で動くので、「どこのコードが動いていて、

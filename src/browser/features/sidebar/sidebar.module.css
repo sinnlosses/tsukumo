@@ -14,14 +14,7 @@
   gap: 0.4rem;
   min-width: 0;
 }
-/* 作業先・コードの出所のパス（`workspace-location.tsx`）。**どこでも折り返してよい**
-   （長いパスでサイドバーに横スクロールを出さない）。 */
-.workspace-path {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-family: var(--font-mono);
-}
-/* 作業場所についての知らせ（`workspace-location.tsx`）。**改行をそのまま出す** — 止まった
+/* 作業場所についての知らせ（`workspace-notice.tsx`）。**改行をそのまま出す** — 止まった
    理由はブランチ・パス・次の手を行で並べた文面で、畳むと読み取れない。 */
 .workspace-notice {
   min-width: 0;
@@ -192,4 +185,14 @@
      子（ラベル／値）の片方だけに置くと、もう片方が .sidebar-block の var(--font-secondary) に戻る。 */
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
+}
+/* 段の切れ目（知らせ→モード、許可モード→キャラクター/セッション。`session-info.tsx`。T-365）。
+   `row-gap` は grid 全体に1つの値しか持てないので、境目の行にだけ margin を足して
+   0.4rem（既定の row-gap）+ 0.5rem = 0.9rem の見た目にする。**区切り線は引かない**
+   （区画の下罫線と同じ太さの線を中に引くと、3区画が6区画に見えるため）。 */
+.session-info-group-start {
+  margin-top: 0.5rem;
+}
+.session-info-group-end {
+  margin-bottom: 0.5rem;
 }

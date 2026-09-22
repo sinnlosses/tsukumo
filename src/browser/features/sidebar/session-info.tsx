@@ -1,8 +1,13 @@
-// サイドバーの「セッション情報」。キャラクター・セッション・モデル・許可モードの `<select>`（共有部品。
-// `src/browser/components/select.tsx`）を並べ、変更で `switch-character` / `set-model` /
-// `set-permission-mode` を `dispatch` する。**次に届く `session-info` で `<select>` の選択が
-// 上書きされる**（サーバ側の値が正になる）。キャラクターの `<select>` は**選択肢が1つでも出す**
-// （docs/design.md 7章）。
+// サイドバーの「セッション情報」。モード・モデル・許可モード・キャラクター・セッションの
+// `<select>`（共有部品。`src/browser/components/select.tsx`）を並べ、変更で `set-chat-mode` /
+// `set-model` / `set-permission-mode` / `switch-character` を `dispatch` する。**次に届く
+// `session-info` で `<select>` の選択が上書きされる**（サーバ側の値が正になる）。キャラクターの
+// `<select>` は**選択肢が1つでも出す**（docs/design.md 7章）。
+//
+// **並びは寿命順ではなく触る頻度順**（T-365）: 知らせ（あるときだけ） → モード → モデル →
+// 許可モード → キャラクター → セッション。区画は内側スクロールなので、寿命順だと下の行が
+// 押し出されるため。作業先・ブランチ・コードの出所の行は外した（`workspace-notice.tsx` の
+// 冒頭コメント）。
 
 import { type ReactElement } from "react"
 
@@ -19,7 +24,7 @@ import {
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
-import { WorkspaceLocation } from "./workspace-location.tsx"
+import { WorkspaceNotice } from "./workspace-notice.tsx"
 
 // ラベルと畳み方（`resolveModelAlias` / `resolvePermissionMode`）は **帯の読みと同じものを読む**
 // （`src/browser/lib/model-label.ts` / `permission-mode-label.ts`）。サイドバーは触らせる側、
@@ -63,6 +68,14 @@ function resolveCharacterPack(
  * `<select>` の左端のズレになるため、行の境目を div で区切らずグリッド1つに任せる。
  * `bypassPermissions` を選んでいるときは警告色を付ける
  * （`.permission-mode-select-danger`）。
+ *
+ * **段の切れ目は区切り線ではなく `row-gap` の分だけ余白を足して示す**（T-365。区画の下罫線と
+ * 同じ太さの線を中に引くと3区画が6区画に見えるため）。段の境目に来る行は
+ * `.session-info-group-start` / `-group-end` を持つ。**境目は「知らせ→モード」と
+ * 「許可モード→キャラクター/セッション」の2箇所で固定**なので、その両端（モード＝段の先頭・
+ * 許可モード＝段の末尾）にだけ付ける。知らせ・キャラクター・セッションはどれも0件のことがあり
+ * `:nth-child` では境目の位置が動いてしまうため、両端は必ず出るモード・許可モードの側に付けて
+ * 動かないようにする。
  */
 export function SessionInfo(): ReactElement {
   const dispatch = useSessionDispatch()
@@ -79,40 +92,20 @@ export function SessionInfo(): ReactElement {
     ? ` ${styles["permission-mode-select-danger"]}`
     : ""
 
+  const groupStartLabelClass = `${styles["session-info-label"]} ${styles["session-info-group-start"] ?? ""}`
+  const groupStartValueClass = `${styles["session-info-value"]} ${styles["session-info-group-start"] ?? ""}`
+  const groupEndLabelClass = `${styles["session-info-label"]} ${styles["session-info-group-end"] ?? ""}`
+  const groupEndValueClass = `${styles["session-info-value"]} ${styles["session-info-group-end"] ?? ""}`
+
   return (
     <div className={styles["session-info"]}>
-      {characterPacks.length > 0 ? (
-        <>
-          <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
-            キャラクター
-          </label>
-          <span className={styles["session-info-value"]}>
-            <Select
-              id={CHARACTER_SELECT_ID}
-              ariaLabel="キャラクター"
-              className={styles["character-select"] ?? ""}
-              value={currentPack}
-              disabled={turnInProgress}
-              title={turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
-              options={characterPacks.map(({ name, label }) => ({ value: name, label }))}
-              onChange={(value) => {
-                dispatch({ type: "switch-character", name: value })
-              }}
-            />
-          </span>
-        </>
-      ) : null}
-      {/* セッションの行（`session-switch.tsx`）。**2列の grid の直の子**として並ぶよう、
-          入れ物を挟まずラベルと値の対だけを返す部品にしてある。切り替え先が無ければ
-          何も出さない。 */}
-      <SessionSwitch />
-      {/* どこで動いているかの行（`workspace-location.tsx`）。セッションの行と同じく、
-          2列の grid の直の子としてラベルと値の対だけを返す。 */}
-      <WorkspaceLocation />
-      <label htmlFor={CHAT_MODE_SELECT_ID} className={styles["session-info-label"]}>
+      {/* 知らせ（`workspace-notice.tsx`）。あるときだけ区画の先頭に出る。**2列の grid の
+          直の子**として並ぶよう、入れ物を挟まずラベルと値の対だけを返す部品にしてある。 */}
+      <WorkspaceNotice />
+      <label htmlFor={CHAT_MODE_SELECT_ID} className={groupStartLabelClass}>
         モード
       </label>
-      <span className={styles["session-info-value"]}>
+      <span className={groupStartValueClass}>
         <Select
           id={CHAT_MODE_SELECT_ID}
           ariaLabel="モード"
@@ -145,10 +138,10 @@ export function SessionInfo(): ReactElement {
           }}
         />
       </span>
-      <label htmlFor={PERMISSION_MODE_SELECT_ID} className={styles["session-info-label"]}>
+      <label htmlFor={PERMISSION_MODE_SELECT_ID} className={groupEndLabelClass}>
         許可モード
       </label>
-      <span className={styles["session-info-value"]}>
+      <span className={groupEndValueClass}>
         <Select
           id={PERMISSION_MODE_SELECT_ID}
           ariaLabel="許可モード"
@@ -164,6 +157,31 @@ export function SessionInfo(): ReactElement {
           }}
         />
       </span>
+      {characterPacks.length > 0 ? (
+        <>
+          <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
+            キャラクター
+          </label>
+          <span className={styles["session-info-value"]}>
+            <Select
+              id={CHARACTER_SELECT_ID}
+              ariaLabel="キャラクター"
+              className={styles["character-select"] ?? ""}
+              value={currentPack}
+              disabled={turnInProgress}
+              title={turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
+              options={characterPacks.map(({ name, label }) => ({ value: name, label }))}
+              onChange={(value) => {
+                dispatch({ type: "switch-character", name: value })
+              }}
+            />
+          </span>
+        </>
+      ) : null}
+      {/* セッションの行（`session-switch.tsx`）。**2列の grid の直の子**として並ぶよう、
+          入れ物を挟まずラベルと値の対だけを返す部品にしてある。切り替え先が無ければ
+          何も出さない。 */}
+      <SessionSwitch />
     </div>
   )
 }
