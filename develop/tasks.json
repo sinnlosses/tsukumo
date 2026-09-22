@@ -2,10 +2,10 @@
   {
     "id": "T-332",
     "difficulty": "opus",
-    "loopable": "Y",
+    "loopable": "N",
     "dependencies": [],
     "summary": "雑談中のサイドバーを雑談で要るものに差し替える",
-    "status": "doing",
+    "status": "todo",
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n**雑談中もサイドバーが仕事のまま**になっている。`src/browser/main.tsx` の `<Root>` は\n`chatMode` を見てメインビューを `<ChatView>` に差し替え、キャラビューを畳む\n（`collapseCharacter`）が、**`sidebar={<Sidebar />}` は分岐していない**。その結果、雑談中も\n「いま何をしているか」（進行中のツール）と「タスク一覧」（`develop/tasks.json`）が出続ける。\n\n`src/browser/features/sidebar/sidebar.tsx` の3区画は独立している（`<Activity>` /\n`<TaskList>` / `<SessionInfo>`）。**モードの切り替えの `<select>` は「セッション情報」の中**\n（`docs/design.md` 13.7「モードの操作子はどこに置くか」）なので、サイドバーを丸ごと畳むと\n仕事へ戻る道が消える。\n\n辛口レビューの指摘（2026-09-22、ユーザーが「刺さる」として採った）: 「雑談していても画面の\n一部が仕事の話を続けている」。\n\n## 決まっていること（蒸し返さない）\n\n- **雑談で要るものに差し替える**（2026-09-22 ユーザーの選択）。丸ごと畳む案と、何もしない案は\n  採らなかった\n- **「セッション情報」の区画は残す**（モードの切り替えの `<select>` がここにあり、仕事へ戻る\n  唯一の道）\n- 差し替えるのは中身。**区画の数は増やさない**（13.6「サイドバーは3区画のまま」/ 13.1 原則2）\n\n## 解くべき論点\n\n- 「いま何をしているか」と「タスク一覧」の2区画を、雑談では何に差し替えるか。すでに\n  サーバ側にあって画面に出ていないものから選ぶ（`src/server/adapter/chat-archive.ts` の\n  「残す」旗の索引 `kept.jsonl`・`src/server/adapter/chat-summary.ts` の要約・\n  `src/server/core/chat-memory-prompt.ts` が渡している記憶・`src/shared/chat-log.ts` の\n  `chatLogByteSize` と `CHAT_COMPACT_THRESHOLD_BYTES` から出せる「圧縮までの距離」）。\n  **無いものを新しく作るなら、そのぶんサーバ側の契約が増える**ので、出す価値があるかで決める\n- 2区画とも差し替えるか、1区画だけにして残りを畳むか（区画の数を増やさないという制約の中で）\n- 差し替えた区画を誰が組むか。`chatMode` を知っているのは `main.tsx` の `<Root>` だけで、\n  `<Sidebar />` は `chatMode` を見ていない。`<Root>` が別の部品を渡す形にするか、\n  `<Sidebar>` が自分で `chatMode` を見る形にするか（後者は `<Layout>` の形を変えずに済む）\n- 雑談の区画をどの機能に置くか（`features/sidebar/` の中か、雑談の側か）\n\n## やること\n\n1. 上の論点を決め、**`docs/design.md` 13.7 と 13.6 に決めた形を書く**（雑談のときの3区画が\n   何か・誰が組むか・採らなかった案の理由）\n2. 決めた形を実装する。**サーバ側の契約を増やす必要が出たら、増やす前にそれが出す価値を\n   evidence に書く**\n3. `docs/requirements.md` 4.9「雑談モードで変わるもの」の表に、サイドバーの行を足す\n   （いまはメインビューとキャラビューの行しか無い）\n4. 調べて「出せるものが無く、差し替えると空の区画が並ぶだけ」と分かったら、**差し替えずに\n   その理由を evidence に書いて閉じる**（勝手に「畳む」へ倒さない）\n\n## 完了条件\n\n- `bun run check` が通る\n- `docs/requirements.md` 4.9 の表にサイドバーの行がある\n- 目視: 雑談モードに入ると2区画の中身が差し替わり、「セッション情報」からモードを仕事へ\n  戻せる。仕事へ戻すと3区画が元に戻る。何が見えたかを evidence に書く\n\n## 注意\n\n- **雑談⇄仕事の切り替えはセッションの起こし直し**（`docs/requirements.md` 4.9）。画面が\n  初期化されるのは既定の挙動で、これは直す対象ではない\n- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）\n"
