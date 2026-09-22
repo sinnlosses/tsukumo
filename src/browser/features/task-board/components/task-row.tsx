@@ -11,6 +11,7 @@ import { taskStatusClass } from "../domain/task-status.ts"
 import { type BoardRow } from "../hooks/use-task-board.ts"
 import styles from "../task-board.module.css"
 import { ReadinessCell } from "./readiness-cell.tsx"
+import { TaskRunButton } from "./task-run-button.tsx"
 
 export function TaskRow(props: { readonly row: BoardRow }): ReactElement {
   const row = props.row
@@ -19,7 +20,7 @@ export function TaskRow(props: { readonly row: BoardRow }): ReactElement {
   return (
     <tr className={`${styles["task-board-row"]}${doneClass}`}>
       <th scope="row" className={styles["task-id"]}>
-        {row.id}
+        <TaskRunButton taskId={row.id} />
       </th>
       <td className={row.status === undefined ? "" : taskStatusClass(row.status)}>
         {row.statusText}

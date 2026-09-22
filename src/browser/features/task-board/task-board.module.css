@@ -32,6 +32,30 @@
   opacity: 0.8;
   font-family: var(--font-mono);
 }
+/* 押せるID（`components/task-run-button.tsx`。一覧と表の両方が同じ形で置く）。ボタンの既定の
+   見た目（背景・枠・余白）を落として、周りの文字の並びに割り込まないようにする。
+   **押せることを色だけで示さない**ので、常に点線の下線を敷き、ホバーで実線にする
+   （下線があれば、差し色を見分けられなくても押す口だと分かる）。 */
+.task-id-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-family: var(--font-mono);
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.task-id-button:hover {
+  text-decoration: underline solid;
+  color: var(--accent);
+}
+/* キーボードで回ってきたときの輪郭。下線だけだとホバーと見分けが付かないので枠で出す。 */
+.task-id-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 /* 枠の色は文字色に追随させる（currentColor）。todo は既定の文字色のまま、doing だけ差し色
    （--accent）を使う。--state-* はここでは使わない（意味が固定されている色なので、todo / doing に
    宛てると ok / warn / ng / ask の意味が動く。docs/design.md 13.1 原則5）。 */
@@ -177,6 +201,67 @@
   color: var(--state-warn);
 }
 
+/* タスクを実行する確認（`components/task-run-confirm.tsx`）。**表の上に重ねて開く**——
+   `showModal()` は top layer に積むので、下の表より必ず上に出る。常設の枠ではないので
+   ここでも枠を増やさない（docs/design.md 13.1 原則2）。 */
+.task-run-confirm {
+  box-sizing: border-box;
+  width: min(28rem, calc(100vw - 2rem));
+  margin: auto;
+  padding: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  font: inherit;
+  font-size: var(--font-secondary);
+}
+.task-run-confirm::backdrop {
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+}
+.task-run-question {
+  margin: 0;
+  font-size: var(--font-heading);
+  font-weight: 600;
+}
+/* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。 */
+.task-run-note {
+  margin: 0.5rem 0 0;
+  color: var(--ink-quiet);
+}
+.task-run-prompt {
+  font-family: var(--font-mono);
+}
+/* 押す口は右寄せで、**実行するほうを端に置く**（キャンセルが先に来る）。 */
+.task-run-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.task-run-cancel,
+.task-run-ok {
+  padding: 0.2rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.task-run-cancel:hover {
+  border-color: var(--accent);
+}
+/* 実行するほうだけ枠を差し色にして、既定の行き先だと分かるようにする。 */
+.task-run-ok {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.task-run-ok:hover {
+  background: var(--surface-accent);
+}
+
 /* 狭い画面では、タスク一覧の表を**1タスク＝1枚のカード**に組み替える
    （docs/requirements.md 4.7）。390px の器に7列の表を入れると 691px に広がり、いちばん
    知りたい要約の列が丸ごと画面の外へ出てしまう（実測）。組み替えるのは
@@ -197,8 +282,8 @@
   }
   /* 1行目に ID・status・難易度・loopable、2行目に要約、3行目に依存・着手。
      **DOM の並び（要約が最後）とは違う順に置く**——要約が読み手の主で、metadata を
-     読んでから意味にたどり着く形にしたくないため。中に押せる口は無いので、
-     読み上げの順（DOM のまま）と見た目の順が食い違っても操作の妨げにならない。 */
+     読んでから意味にたどり着く形にしたくないため。押せる口はIDだけで、そのIDは DOM でも
+     見た目でもカードの先頭に来るので、並べ替えてもキーボードで回る順は見た目の順のまま。 */
   .task-board-row {
     display: grid;
     grid-template-columns: auto auto auto 1fr;
