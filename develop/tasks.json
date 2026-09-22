@@ -135,7 +135,7 @@
     "id": "T-314",
     "difficulty": "opus",
     "loopable": "Y",
-    "dependencies": ["T-307"],
+    "dependencies": ["T-307", "T-327"],
     "summary": "立ち絵・差し色の対応表を入口で全域に畳む",
     "status": "todo",
     "passes": false,
@@ -159,7 +159,7 @@
     "loopable": "Y",
     "dependencies": ["T-318"],
     "summary": "記録を期間で切って畳む集計の口を core に置く",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n記録（T-318・T-319）は日付ごとの JSONL なので、**期間で切って足す口が無いと分析ページが作れない**。\n読む（ファイルを選んで開く）のは adapter、足す（期間で切る・モデル別やツール別に畳む）のは core\nという切り分けにする（原則2・原則3。`core → adapter` は禁止で、`test/architecture.test.ts` が落とす）。\n\n前例は `src/server/adapter/chat-archive.ts` の `readRecent`（遡って集めることと並べ替えだけを\nadapter が持ち、何を載せるかは呼ぶ側が決める）。\n\n## 決まっていること（蒸し返さない）\n\n- 集計は**純関数**として core に置く（ファイルに触らない。テストで固定できる形）\n- 期間の指定は呼ぶ側から渡す（この口が「今日」「今週」を自分で決めない）\n- **`v` が 2 以外の行は読まずに落とす**（壊れた行と同じ扱いで、黙って飛ばして続ける）。まだ開発中で、版1の行（ツール別の内訳が無い）を残す価値が無いとユーザーが判断した。「内訳を空として読む」ことはしない\n\n## 解くべき論点\n\n- **日付の境界をどのタイムゾーンで切るか。** 記録は ISO 8601（UTC）で、利用者が見たいのは\n  ローカルの日付。どちらで畳むかを決めてテストで固定する\n- 畳む軸をどこまで用意するか（日ごと・モデル別・モード別・ツール別）。**分析ページ（T-321）が\n  要る軸だけ**にして、使わない軸を先に作らない\n- 記録が無い日・壊れた行が混じっている日の扱い（**壊れた行は落として続ける**。常駐プロセスは\n  1回の失敗で落ちない）\n\n## やること\n\n1. adapter に読み口を足す（日付の範囲からファイルを選んで、行の並びを返す）\n2. core に集計の純関数を置く（期間で切り、決めた軸で畳む）\n3. テストを足す: 日またぎの境界・記録が無い日・壊れた行が混じる場合\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- テストを3件以上足している（日またぎ・空の期間・壊れた行。**版1の行が混じっても落として続く**ことも固定する）\n- `test/architecture.test.ts` が通る（`core → adapter` の辺を作っていない）\n\n## 注意\n\n- 読んだ記録を**ログにも画面のエラーにも出さない**（数だけを扱う口にする）\n- T-318 が決めた行の形に依存するので、先に T-318 を終わらせる（`dependencies` にしてある）\n"
@@ -207,5 +207,38 @@
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n`note` の系統はいま4つで（`src/browser/features/main-view/markdown/notation.tsx` の\n`NOTATION_CLASS_NAMES`: `note` / `note-warn` / `note-ng` / `note-favor`）、**種別のラベルが文字で\n出るのは `note-favor` だけ**（`FAVOR_LABEL = \"お願い\"` を `NotationBlock` が `span` として描く）。\n残る3つは縦罫の色と地の染まり方しか違わない。\n\n実測: 画面のスクリーンショットで、無印の `note` は縦罫と地があるだけで**何の塊なのか読み取れない**\n（利用者の指摘「左側に縦線＋背景色を変える文章はすごく見やすい。ただ種別を左上に表示したい」）。\n\n関わるファイル:\n\n- 色: `src/browser/features/main-view/main-view.module.css` の `.report-note*` の節\n  （注意・問題は状態の色で地を1割染め、縦罫は実色。お願いは `rule` の枠＋`accent` の縦罫＋`ground` の地）\n- 状態の3色: `src/browser/styles/theme.css` の `--state-ok` / `--state-warn` / `--state-ng`\n- 記法: `src/server/core/report-notation.ts` の「内容ごとの印」の表（`note` の行と、お願いの行）\n\n## 決まっていること（蒸し返さない）\n\n- 種別は**挙がった6つで行く**（統合しない）: お願い・情報・注意・異常（危険）・メモ・疑問。\n  **4つは既存の印の写像**で、新しく増えるのは「メモ」と「疑問」の2つだけ\n  （お願い＝`note-favor` / 情報＝`note`（無印。結論を言う役）/ 注意＝`note-warn` / 異常＝`note-ng`）\n- **ラベルは tsukumo 側（`notation.tsx`）が文字として描く**（`note-favor` と同じ手口。CSS の\n  `::before` にしない。モデルが書き忘れても種別が消えないため）\n- **`docs/design.md` 13.1 原則5（状態の3色は増やさない）を崩してよい。** 利用者の判断\n  「原則5は崩してもいいよ。見やすくなるためであれば」。原則5 の本文と、それを根拠に引いている\n  コメント（`main-view.module.css` のお願いの節・`theme.css` の状態の3色の節・\n  `sidebar.module.css` の着手可否の節）も合わせて直す\n\n## 解くべき論点\n\n- **6つの色をどう決めるか。** 新しいトークンを `theme.css` に足すか、`accent` / `ink-quiet` /\n  `rule` から導くか。既存の手口（**地は1割染め・縦罫は実色**）を守るか\n- 「情報」と「メモ」、「注意」と「異常（危険）」が**色で見分けられるか**（文字は必ず出るので\n  色だけで伝えることにはならないが、近すぎると種別の意味が薄れる）\n- class 名（`note-info` / `note-memo` / `note-ask` など）。**モデルが手で書く名前**なので、\n  短く・間違えにくく・既存の4つと衝突しないもの\n- 記法の表をどう書き換えるか。**6行に割ると表が膨らむ**（`report-notation.ts` は毎ターン\n  system prompt に効く）。既存の上限「1つのレポートに1〜2個まで」を種別ごとに持つか全体で持つか\n- 原則5 の本文を何に置き換えるか（「増やさない」をやめたあと、色の足し方に代わる歯止めを置くか）\n\n## やること\n\n1. 色・class 名・ラベルの文字を決める\n2. `notation.tsx` を**種別ごとのテーブル（class 名 → ラベル）に一般化**する\n   （`note-favor` の特別扱いと `FAVOR_LABEL` をやめ、6つが同じ道を通る形にする）\n3. CSS に6種を足す（`main-view.module.css`。必要なら `theme.css` にトークンを足す）\n4. `report-notation.ts` の `note` の行を種別ごとに書き換える\n5. `docs/design.md` 13.1 原則5 と、それを引いている CSS のコメントを直す\n6. テストを足す\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- テストを3件以上足している（6種すべてでラベルが出る・知らない class 名は素通しのまま・\n  お願いの既存の振る舞いが変わらない）\n- **目視確認**: 6種すべてを含むレポートを画面に出し、**ラベルが読め、種別が色でも見分けられる**\n  ことを確かめて `evidence` に書く（どの端末で何が見えたか）\n\n## 注意\n\n- **色だけで意味を伝えない**（文字のラベルを必ず添える。`docs/design.md` 13.1）\n- **目視確認が要るので、他の目視確認が要るタスクと並行させない**（`CLAUDE.md`「## タスク運用」）\n- `docs/design.md` を直すときは**行頭を含めて位置を特定し**、節の数が変わっていないことを\n  確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n"
+  },
+  {
+    "id": "T-325",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "起こし直しと資源の戻し方を docs/workflow.md に足す",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`docs/workflow.md` には「**起こすときの作法**」（`docs/workflow.md:57`、`## \\`loopable\\` の判定`\n節の末尾）と「## タスクを書くとき・受け入れるとき」（同 12行目）がある。どちらにも、実際に\n踏んだ次の2つが書かれていない。\n\n**1. 起動時に作られるものは、動いているセッション自身では確かめられない。** 表情 `bored` を\n足したタスクの完了条件「`speak` の enum に `bored` が入っている」を、そのセッションから\n確かめようとして空振りした。enum は**セッション起動時**に `expressionChoices(pack.definition)`\n（`src/shared/expression-choice.ts:34`）から組まれるので、定義ファイルを直しても走っている\nプロセスの候補は変わらない（実測: でたらめな表情名を投げても候補は8件のまま）。さらに別の\nインスタンスを既定のまま起こすと**同じ作業ツリーの直近セッションを resume する**ため、\n確かめ直すには `TSUKUMO_NEW_SESSION=1` が要る（`docs/design.md:590`）。\n\n**2. 「触らない」と書いた資源を、完了条件の確認手順が触ることがある。** 同じタスクの\n`## 注意` は「`~/.tsukumo/state.json` には触らない」だったが、完了条件「`characters/local` に\n切り替えても壊れない」を確かめると画面のパック切り替えが state.json を書き換える\n（実測: `{\"character\":\"tsukumo\"}` → `local`。確認後に画面から戻して復旧した）。禁止と手順が\n矛盾していた。\n\n## やること\n\n1. 「起こすときの作法」に、`TSUKUMO_VIEW_PORT` と並べて `TSUKUMO_NEW_SESSION=1` を足し、\n   「**起動時に作られるもの（`speak` の enum・キャラクターパックの読み込み）は起こし直さないと\n   変わらない**」を1行で書く\n2. 「## タスクを書くとき・受け入れるとき」の箇条書きに、**確認手順が触る資源は「触らない」では\n   なく「確認後に元の値へ戻す」と書く**を1項目足す\n3. どちらかが既に別の節（`CLAUDE.md` / `docs/architecture.md` / `task-workflow` の\n   `WORKFLOW.md`）に書かれていたら、そこへは足さずに在り処を `evidence` に書いて閉じる\n\n## 完了条件\n\n- `bun run check` が通る\n- `docs/workflow.md` に `TSUKUMO_NEW_SESSION` の文字列がある\n- 「## タスクを書くとき・受け入れるとき」節の箇条書きが1項目増え、そこに「元の値へ戻す」旨が\n  書かれている\n- `grep -c '^#\\{2,3\\} ' docs/workflow.md` の値が編集の前後で変わらない（現在 5）\n\n## 注意\n\n- **ドキュメントにタスク番号（`T-` + 3桁）を書かない**（`docs/coding-standards.md`\n  「タスク番号を書かない」）。背景で触れた実例は、番号ではなく内容で書く\n- `docs/workflow.md` は「**共通版が知らないこのリポジトリの事情だけ**」を置く文書。\n  `~/.claude/skills/task-workflow/WORKFLOW.md` に既にあることを写さない\n- 編集は**行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n"
+  },
+  {
+    "id": "T-326",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "語彙の長さに依存する期待値の扱いを規約に足す",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`EXPRESSIONS`（`src/shared/expression.ts:32`）に `bored` を足したとき、`bun run typecheck` が\n挙げた漏れ（`src/shared/character-definition.ts` / `src/shared/character.ts` / テストの\nフィクスチャ）を全部埋めてもテストが1件落ちた。\n`test/browser/features/character-screen/character-edit.test.tsx` が「立ち絵の無い枠」の数を\n`5` と直書きしていて、語彙が1つ伸びた結果 `6` になったため。**型検査には挙がらず\n`bun test` で初めて出る**ので、「typecheck が通った」を作業の完了の合図にすると踏む。\n\n`docs/coding-standards.md` の「## テスト」節（450行目。小節は「置き場所とモック」\n「カバレッジに閾値を設けない」「消すかどうか」「足すかどうか」「描画は自動テストで守らない」）\nには、この形の漏れに触れた記述が無い。\n\n## 解くべき論点\n\n- 出し先が2つありうる。**テストの書き方の規約**（期待値を `EXPRESSIONS.length` のような定数から\n  導く）なら `docs/coding-standards.md`「## テスト」節、**作業の進め方**（typecheck の\n  あとに必ず test も見る）なら `docs/workflow.md`。どちらか一方に書く（両方に書くと正典が\n  二重になる）\n\n## やること\n\n1. 論点を決め、**語彙（全域を列挙する定数）の長さに依存する期待値をテストに直書きするときの\n   扱い**を1箇所に書く\n2. `docs/coding-standards.md` に書く場合は、冒頭の「### 節の索引」表（25行目）の `## テスト`\n   行の「中身」欄を、足した内容が索引から引ける語に直す。`###` の小節を新設したなら索引に\n   行を足す\n3. 既に同じことを言っている記述が見つかったら足さず、在り処を `evidence` に書いて閉じる\n\n## 完了条件\n\n- `bun run check` が通る\n- 足した記述が、語彙を増やす側の読み手から引ける（索引の表か節見出しに、語彙・表情・期待値の\n  いずれかの語がある）\n- `grep -c '^#\\{2,3\\} ' docs/coding-standards.md` の値が、小節を足していないなら編集の前後で\n  変わらない（足したなら +1 で、索引にも1行増えている）\n\n## 注意\n\n- **ドキュメントにタスク番号（`T-` + 3桁）を書かない**\n- 編集は**行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）。\n  索引表に本文を流し込む事故が過去にある\n- テストのフィクスチャを1つに寄せるタスクとは**出し先が違う**（あちらはコード、こちらは規約）。\n  片方をやればもう片方が要らなくなるわけではない\n"
+  },
+  {
+    "id": "T-327",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "キャラクターのテスト用の値を組み立て関数1つに寄せる",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n`test/` 配下の**15ファイル**が、キャラクターの値を**手で全キー書き下している**。表情キーを\n1行ずつ並べた行は **222行**、`accent:` の行は **29行**ある（実測。内訳は\n`grep -rcE \"^\\s+(default|thinking|proud|flustered|serious|curious|sad|excited|bored):\" test/`）。\n\n```\ntest/shared/character.test.ts                                  28\ntest/shared/session-state.test.ts                              27\ntest/shared/expression-choice.test.ts                          27\ntest/browser/features/character-view/character-view.test.tsx   28\ntest/server/adapter/character-pack.test.ts                     15\n（ほか10ファイル 9〜11行ずつ）\n```\n\n`Readonly<Record<Expression, string | undefined>>` は `?:` を使わない規約\n（`CLAUDE.md`「`| undefined` は5つの場所でだけ」）のため**全キーが必須**で、`EXPRESSIONS`\n（`src/shared/expression.ts:32`）に1つ足すたび、振る舞いを何も変えないまま各ファイルに1行ずつ\n増える（実測: 表情 `bored` を足したタスクの diff 22行のうち **20行が `bored: undefined` の1行**）。\n\n`test/fixture/` には `fake-session.json` しか無い。\n`docs/coding-standards.md`「### 消すかどうか」の表は既に「同じモックの準備が複数ファイルに\n重複している → 準備を共通のフィクスチャに寄せる」と言っているので、**規約の変更は要らない**\n（守れていないだけ）。\n\n## 解くべき論点\n\n- **組み立て関数のシグネチャ。** 差分だけ渡す形で、`portraits` のような入れ子を部分的に\n  上書きできるようにするか、浅い上書きに留めるか\n- **既定値の中身。** 立ち絵の URL を全表情に入れるか `default` だけにするか。「立ち絵の無い枠」\n  の数を期待値にしているテスト（`character-edit.test.tsx` / `character-create.test.tsx`）が\n  あるので、既定を変えるとそちらの期待値が動く\n- **寄せる範囲。** `CharacterInfo` を素で作っているテストと、`CharacterDefinition`\n  （`src/shared/character-definition.ts`。「この表情だけ無い」が意味を持つ側）を作っている\n  テストは形が違う。片方だけ寄せるか、2つの組み立て関数を置くか\n\n## やること\n\n1. `test/fixture/character.ts` に既定値と組み立て関数を置く。**オプション引数の中身は `?:` を\n   使ってよい5つ目の場所**に当たる（`CLAUDE.md`「`| undefined` は5つの場所でだけ」）\n2. 上の15ファイルを、**差分だけ渡す**形に書き換える\n3. 寄せると読みにくくなるテスト（立ち絵の有無そのものが主題のもの）は**寄せずに残し**、\n   どれをなぜ残したかを `evidence` に書く\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く。**件数が減っていない**こと）\n- 表情キーの行数が 222 から減っている（上の `grep` の合計値を前後で `evidence` に書く）\n- `test/fixture/character.ts` があり、**2ファイル以上**のテストから import されている\n- テストの期待値を弱めていない（`toBe` を `toBeDefined` に緩めるような変更をしていない）\n\n## 注意\n\n- **立ち絵・差し色の対応表を入口で全域に畳むタスクより先に行う**（あちらの `dependencies` に\n  入れてある）。あちらは `CharacterInfo.portraits` を `Record<Expression, string>` に変えるので、\n  先に寄せておかないと同じ15ファイルを二度触ることになる\n- テストが**何を確かめているか**は変えない。寄せるのは値の組み立てだけ\n- `test/` は `src/` と同じディレクトリ構成で置く規約（`docs/coding-standards.md`\n  「### 置き場所とモック」）だが、`test/fixture/` は既にその例外\n- **会話の内容をフィクスチャに写さない**（`docs/coding-standards.md`「会話内容の扱い」）\n"
   }
 ]
