@@ -214,6 +214,8 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
 export type QuerySeedOptions = {
   readonly cwd: string
+  /** 切った worktree で起こしても、プロジェクト設定は元の作業ツリーから読ませる。 */
+  readonly projectConfigRoot: string
   readonly includePartialMessages: true
   readonly systemPrompt: {
     readonly type: "preset"
@@ -241,6 +243,7 @@ export type QuerySeedOptions = {
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
   return {
     cwd: options.cwd,
+    projectConfigRoot: options.projectConfigRoot,
     includePartialMessages: true,
     systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },
     permissionMode: options.permissionMode,
@@ -291,15 +294,17 @@ export function chatSummaryHooks(
  * docs/requirements.md 4.8）。**同じ作業ディレクトリで、渡された印を持つもの**のうち最新の1つを
  * 返し、無ければ undefined（新規に起こす）。
  *
- * `includeWorktrees` を切ってあるのは、鍵が「起動した作業ディレクトリ ＋ 印」の2つだから
- * （同じリポジトリの別の worktree は別の作業対象）。
+ * **`includeWorktrees` を入れてある**のは、**セッションごとに worktree を切るようになった**
+ * ため（`docs/architecture.md`「worktree でセッションを分ける」）。切った先は起こすたびに違う
+ * ディレクトリなので、作業ディレクトリだけで絞ると**前の続きが一度も見つからなくなる**。
+ * 同じリポジトリの worktree を全部見たうえで、印（`tsukumo:<パック>@<ポート>`）で絞る。
  *
  * **一覧が読めなくても落とさない**（前提不足ではなく動作中の一時的な失敗として扱い、新規に
  * 起こす。docs/coding-standards.md「エラーハンドリング」）。
  */
 export async function findSessionToResume(cwd: string, tag: string): Promise<string | undefined> {
   try {
-    return selectSessionToResume(await listSessions({ dir: cwd, includeWorktrees: false }), tag)
+    return selectSessionToResume(await listSessions({ dir: cwd, includeWorktrees: true }), tag)
   } catch {
     return undefined
   }
@@ -310,7 +315,7 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
  * `docs/requirements.md` 4.8）。**同じ作業ディレクトリの、同じ一族の印**（同じパック・同じ
  * モード）を持つものだけが残り、**新しい順**に並ぶ。
  *
- * 絞り込みの鍵も `includeWorktrees` を切る理由も {@link findSessionToResume} と同じで、違うのは
+ * 絞り込みの鍵も `includeWorktrees` を入れる理由も {@link findSessionToResume} と同じで、違うのは
  * 「最新の1つ」ではなく「目印の違うものを全部」返すところだけ。
  *
  * **一覧が読めなくても落とさない**（切り替えの選択肢が出ないだけ。
@@ -321,7 +326,7 @@ export async function listSwitchableSessions(
   family: string,
 ): Promise<readonly SessionChoice[]> {
   try {
-    return listMarkedSessions(await listSessions({ dir: cwd, includeWorktrees: false }), family)
+    return listMarkedSessions(await listSessions({ dir: cwd, includeWorktrees: true }), family)
   } catch {
     return []
   }
@@ -336,17 +341,21 @@ export async function listSwitchableSessions(
  * 起きたセッションでは**そこより前が既定では返らない**（docs/glossary.md「圧縮の区切り」）。
  * 他の `system` メッセージが混ざっても、`toSessionEvents` 側が知らない種別を空へ倒すので落ちない。
  *
+ * **`dir` は渡さない**（SDK 側はすべてのプロジェクトから探す）。続きから始めるセッションは
+ * **前に切った worktree で起きたもの**なので、いまの作業ディレクトリで絞ると見つからない
+ * （`findSessionToResume` が `includeWorktrees` を入れてあるのと同じ理由）。指しているのは
+ * 一意なセッションIDなので、絞らなくても別のものには当たらない。
+ *
  * 読んだ内容はそのままイベントの流れに渡すだけで、**どこにも書き出さない**
  * （docs/coding-standards.md「会話内容の扱い」）。
  */
 export async function readRestoredEvents(
   sessionId: string,
-  cwd: string,
   expressions: readonly ExpressionChoice[],
 ): Promise<readonly SessionEvent[]> {
   try {
     return toRestoredEvents(
-      await getSessionMessages(sessionId, { dir: cwd, includeSystemMessages: true }),
+      await getSessionMessages(sessionId, { includeSystemMessages: true }),
       toExpressionNames(expressions),
     )
   } catch {

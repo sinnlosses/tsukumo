@@ -21,6 +21,7 @@ import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
 import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
+import { type Workspace } from "./workspace.ts"
 
 /** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
 export type TurnStatus = "success" | "error"
@@ -239,6 +240,15 @@ export type SessionEvent =
        */
       readonly current: string | undefined
     }
+  /**
+   * いまどこで動いているか（`docs/architecture.md`「worktree でセッションを分ける」）。
+   * **駆動を起こしたときと、起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機。
+   * 起こし直すと状態が初期値へ戻るので、変わらない値でも流し直す）。
+   *
+   * **プロセスが動いている間は中身が変わらない**（worktree を切るのは起動時の1回だけ）。
+   * それでもイベントで運ぶのは、**画面がサーバの値を知る道が畳み込みしか無い**ため。
+   */
+  | { readonly kind: "workspace"; readonly workspace: Workspace }
   /**
    * 雑談モードに入っている／出ている（`docs/requirements.md` 4.9）。**駆動を起こしたときと、
    * `set-chat-mode` で起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機）。

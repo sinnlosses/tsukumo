@@ -275,8 +275,17 @@ export type SessionStart =
   | { readonly kind: "resume"; readonly sessionId: string }
 
 export type SessionDriverOptions = {
-  /** セッションの作業ディレクトリ。 */
+  /**
+   * セッションの作業ディレクトリ。**worktree を切ったときはそちら**
+   * （`docs/architecture.md`「worktree でセッションを分ける」）。
+   */
   readonly cwd: string
+  /**
+   * プロジェクト設定（hooks・permissions・`.mcp.json`・`.claude` の各ツリー・
+   * `CLAUDE_PROJECT_DIR`）の出どころ。**`cwd` が worktree のときはここだけが元の作業ツリーを
+   * 指す**ので、切ったブランチが持っている `.claude/` ではなく元のものが効く。
+   */
+  readonly projectConfigRoot: string
   /** `speak` の `expression` で受け付ける表情と、そのラベル（キャラクターパックから作る）。 */
   readonly expressions: readonly ExpressionChoice[]
   readonly permissionMode: PermissionMode

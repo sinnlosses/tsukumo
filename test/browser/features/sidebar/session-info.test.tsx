@@ -229,3 +229,43 @@ describe("SessionInfo", () => {
     )
   })
 })
+
+// 架空の作業場所（`docs/architecture.md`「worktree でセッションを分ける」）。
+const FIXTURE_WORKSPACE: NonNullable<SessionState["workspace"]> = {
+  source: "/repo",
+  workdir: {
+    kind: "worktree",
+    path: "/repo/.git/tsukumo/worktree/20260922-153012",
+    branch: "tsukumo/20260922-153012",
+    origin: "/repo",
+  },
+}
+
+describe("SessionInfo の作業先", () => {
+  it("claude の作業先（worktree）と、tsukumo のコードの出所を両方出す", () => {
+    renderSessionInfo({ workspace: FIXTURE_WORKSPACE })
+
+    expect(screen.getByText("作業先")).toBeDefined()
+    expect(screen.getByText("/repo/.git/tsukumo/worktree/20260922-153012")).toBeDefined()
+    expect(screen.getByText("ブランチ")).toBeDefined()
+    expect(screen.getByText("tsukumo/20260922-153012")).toBeDefined()
+    expect(screen.getByText("コードの出所")).toBeDefined()
+    expect(screen.getByText("/repo")).toBeDefined()
+  })
+
+  it("切っていないときはブランチの行を出さない", () => {
+    renderSessionInfo({
+      workspace: { source: "/repo", workdir: { kind: "direct", path: "/tmp/somewhere" } },
+    })
+
+    expect(screen.getByText("/tmp/somewhere")).toBeDefined()
+    expect(screen.queryByText("ブランチ")).toBeNull()
+  })
+
+  it("まだ届いていなければ行ごと出さない", () => {
+    renderSessionInfo({})
+
+    expect(screen.queryByText("作業先")).toBeNull()
+    expect(screen.queryByText("コードの出所")).toBeNull()
+  })
+})

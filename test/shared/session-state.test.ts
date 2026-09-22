@@ -872,3 +872,25 @@ describe("applySessionEvent（質問の記録）", () => {
     ])
   })
 })
+
+describe("workspace", () => {
+  it("いま動いている場所を持ち、届くまでは undefined", () => {
+    expect(INITIAL_SESSION_STATE.workspace).toBeUndefined()
+
+    const view = apply({
+      kind: "workspace",
+      workspace: {
+        source: "/repo",
+        workdir: {
+          kind: "worktree",
+          path: "/repo/.git/tsukumo/worktree/20260922-153012",
+          branch: "tsukumo/20260922-153012",
+          origin: "/repo",
+        },
+      },
+    })
+
+    expect(view.workspace?.source).toBe("/repo")
+    expect(view.workspace?.workdir.path).toBe("/repo/.git/tsukumo/worktree/20260922-153012")
+  })
+})

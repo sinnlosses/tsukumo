@@ -24,6 +24,7 @@ import { MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
 // うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",
+  projectConfigRoot: "/tmp/tsukumo-test-origin",
   expressions: [{ name: "default", label: "通常" }],
   permissionMode: DEFAULT_PERMISSION_MODE,
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",

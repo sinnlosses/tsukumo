@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 起動時に worktree を切り、そこで claude を起こすようにした（T-350）
+
+`.git/tsukumo/worktree/<時刻>` に毎回切って `cwd` をそちらへ向け、プロジェクト設定は
+`projectConfigRoot` で切り出し元から読ませる（判断は `src/server/core/workspace.ts`、git と
+symlink は `src/server/adapter/worktree.ts`）。起こし直しで続きが見つからなくなるのを防ぐため
+`listSessions` の `includeWorktrees` を入れた。
+
 ### 2026-09-22 部屋の表示名を決め、帯とサイドバーに出した（T-357）
 
 和の色名12個（7327＝浅葱の間）をポートの並び順に割り当て、語彙の外はポート番号をそのまま

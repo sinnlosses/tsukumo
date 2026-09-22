@@ -251,7 +251,9 @@ tsukumo の画面だけになる。
 決まっていた前提（1セッション = 1 worktree を tsukumo が用意して畳む・`cwd` は worktree で
 `projectConfigRoot` は本体・排他の印は `.git` 配下・マージは1タスクごと）は
 `docs/history/direction.md` の 2026-09-22 が正典。**ここには、そこで残っていた4つの分かれ道の
-結論だけ**を書く。**実装はまだ入っていない**（`develop/tasks.json` の該当タスクが入れる）。
+結論だけ**を書く。**実装は入っている**（判断は `src/server/core/workspace.ts`、git を起こすのは
+`src/server/adapter/worktree.ts`。`docs/design.md` 5章「workspace.ts（core）と
+worktree.ts（adapter）」）。**マージ（下の3）だけはまだ**で、別のタスクが入れる。
 
 **1. 1つ目のセッションも切る。本体で作業するセッションを作らない。**
 「最初の1つは本体、2つ目から worktree」にすると、**自分が何番目かを起動のたびに判断する**ことに
@@ -268,6 +270,14 @@ tsukumo の画面だけになる。
 - **git リポジトリなのに worktree を用意できなかったときは止める**（起動時の前提不足。
   `docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の即時終了の側）。
   黙って本体で動くと、**分離されているつもりで本体を書く**という最悪の形になる
+
+- **続きから始めるセッションの鍵は「作業ディレクトリ ＋ 印」のままだが、ディレクトリは
+  worktree をまたいで探す**（2026-09-22 実装時に判明）。切った先は起こすたびに違うディレクトリ
+  なので、そのままだと**前の続きが一度も見つからず、起動のたびに新規になる**。SDK の
+  `listSessions` に `includeWorktrees: true` を渡して同じリポジトリの worktree を全部見たうえで、
+  印（`tsukumo:<パック>@<ポート>`）で絞る（`docs/requirements.md` 4.8「鍵」の鍵そのものは
+  変わっていない）。履歴を読み直す `getSessionMessages` は**ディレクトリで絞らない**
+  （セッションIDは一意なので、絞らなくても別のものには当たらない）
 
 **2. tsukumo のプロセスは常に本体のコードで動き、worktree のコードでは動かない。**
 `tsukumo` は `bun link` 越しに本体の `bin/tsukumo` を指しているので、打った時点でそれは決まる。
@@ -316,7 +326,14 @@ worktree とブランチを消さないのは、**解くのに要る材料がそ
   本体の `git status` は最後まで clean で、取り残しのディレクトリも出ない。
   **`bun test` は `.git` の下を走査しない**（本体で走らせても worktree 側のテストを拾わない）
 - **`--git-common-dir` は本体で起こすと相対パス（`.git`）を返し、worktree からは絶対パスを返す。**
-  読んだ側で必ず絶対パスに直す
+  読んだ側で必ず絶対パスに直す（`--path-format=absolute` を付ける）
+- 2026-09-22 に実装しながら分かったこと:
+  **張った symlink は `git status` に `?? node_modules` として出続ける**（`.gitignore` の
+  `node_modules/` は末尾が `/` なのでディレクトリにしか当たらず、symlink には当たらない）。
+  worktree ごとの `info/exclude` は効かない（git が見るのは共通の `.git/info/exclude` の1つだけ）
+  ので、**畳んでよいかを数えるときにこの2行を除く**ことで折り合いを付けた。
+  `git worktree remove` は**symlink を自分で外してから**渡す（辿らせない。外しておけば
+  `.gitignore` 済みの `dist/` が残っていても `--force` なしで通る）
 - 採らなかった置き場:
 
 | 案                              | 採らない理由                                                                                                      |

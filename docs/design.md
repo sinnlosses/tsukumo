@@ -504,12 +504,13 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 いまの `src/domain/session-event.ts` の union をそのまま持ち越し、次を足す。
 
-| イベント            | 出どころ                                                                                               | 中身                                                                   | 用途                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryItem[] \| undefined`                                | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
-| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents`      | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
-| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                     | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
-| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値） | `state.model` の出どころを3つにする（下記）                                      |
+| イベント            | 出どころ                                                                                               | 中身                                                                   | 用途                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryItem[] \| undefined`                                | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                         |
+| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents`      | キャラビューが立ち絵を取りに行く先。切り替え（7章）                                |
+| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                     | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ   |
+| `workspace`         | core（`session-launch`。値の出どころは adapter の `worktree`）                                         | `workspace: Workspace`（コードの出所と claude の作業先）               | サイドバーの「作業先」。起こし直すたびに流し直す（`character-changed` と同じ契機） |
+| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値） | `state.model` の出どころを3つにする（下記）                                        |
 
 **`state.model` の出どころは `session-info`（`init`）だけではない**（2026-09-17）。`init` は
 ターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古いモデルを返し、
@@ -548,6 +549,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 | `turnStartedAt` / `turnFinishedAt`                                 | `request` / `turn-finished` の `at`        | `at` がイベントに乗るので、畳み込みの中で持てる                     |
 | `tasks`                                                            | `tasks-changed`                            | サイドバー                                                          |
 | `character`（`name`・`portraits`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）              |
+| `workspace`（`source`・`workdir`）                                 | `workspace`                                | サイドバーの「作業先」「ブランチ」「コードの出所」                  |
 | `connection`                                                       | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い） |
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
@@ -691,6 +693,26 @@ type SessionHost = {
 **`/repository-file` は会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの
 中身（パスだけ。ファイルは開かない）で、誰にでも配ってよい静的な物ではない。
 
+### workspace.ts（core）と worktree.ts（adapter）
+
+セッションをどこで動かすかの**判断**が `core/workspace.ts`、実際に `git` を起こして切る・畳むのが
+`adapter/worktree.ts`（決定の経緯と採らなかった置き場は `docs/architecture.md`
+「worktree でセッションを分ける」）。
+
+- `core` が持つのは**切るかどうか**（`planWorkspace`。git リポジトリかどうかと `TSUKUMO_WORKTREE`
+  の2つだけで決まる）、**どの名前で切るか**（`YYYYMMDD-HHMMSS` と、同じ秒に負けたときの
+  `-2`, `-3`）、**使い終えたものを畳むかどうか**（`decideWorktreeFold`）の3つ。時計は読まず、
+  「いま何時か」は引数で受け取る
+- `adapter` が持つのは `git rev-parse` / `git worktree add` / `git worktree remove` /
+  `git branch -d`、symlink 2本（`node_modules` と `characters/local`）、切った先での
+  `bun run build`、使用中の印（pid）の読み書き
+- 置き場は `git rev-parse --git-common-dir` の下の `tsukumo/worktree/<名前>`、印は同じ親の下の
+  `tsukumo/mark/<名前>`。ブランチは `tsukumo/<名前>`
+- **`cwd` は worktree、`projectConfigRoot` は切り出し元**（`SessionDriverOptions`）。
+  claude の作業先だけが切り替わり、hooks・permissions・`.claude` の各ツリーは元のものが効く
+- **用意できなかったら起動時の前提不足として止める**（`src/main.ts`）。畳めなかった worktree と
+  切った先の組み立ての失敗は**知らせるだけ**で起動を続ける
+
 ### config.ts（core）
 
 | 環境変数              | 意味                                                 | 既定             |
@@ -702,6 +724,7 @@ type SessionHost = {
 | `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前            | 流さない         |
 | `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）            | 復元する         |
 | `TSUKUMO_WATCH_UI`    | `1` で `src/browser/` を見張って組み立て直す（11章） | 見張らない       |
+| `TSUKUMO_WORKTREE`    | `0` でセッション用の worktree を切らない             | 切る             |
 | `TSUKUMO_HOME`        | tsukumo の持ち物を置くホーム（相対は cwd 相対）      | `~/.tsukumo`     |
 
 `TSUKUMO_CHARACTER` は**パスとしてだけ解く**（`src/server/adapter/bundled-path.ts` の

@@ -18,6 +18,7 @@ import { Select } from "../../components/select.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
+import { WorkspaceLocation } from "./workspace-location.tsx"
 
 // 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
 const PERMISSION_MODE_LABELS: ReadonlyArray<readonly [PermissionMode, string]> = [
@@ -143,6 +144,9 @@ export function SessionInfo(): ReactElement {
           入れ物を挟まずラベルと値の対だけを返す部品にしてある。切り替え先が無ければ
           何も出さない。 */}
       <SessionSwitch />
+      {/* どこで動いているかの行（`workspace-location.tsx`）。セッションの行と同じく、
+          2列の grid の直の子としてラベルと値の対だけを返す。 */}
+      <WorkspaceLocation />
       <label htmlFor={CHAT_MODE_SELECT_ID} className={styles["session-info-label"]}>
         モード
       </label>

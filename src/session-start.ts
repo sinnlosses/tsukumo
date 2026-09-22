@@ -6,7 +6,6 @@
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
 
 import { randomUUID } from "node:crypto"
-import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
 import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
@@ -39,6 +38,7 @@ import {
 } from "./server/core/session-manager.ts"
 import { sessionRules } from "./server/core/session-rule.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
+import { workspaceCwd, workspaceProjectConfigRoot } from "./server/core/workspace.ts"
 import {
   CHAT_COMPACT_THRESHOLD_BYTES,
   CHAT_KEPT_READBACK_BYTES,
@@ -50,6 +50,7 @@ import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
+import { type Workspace } from "./shared/workspace.ts"
 
 /**
  * 起こしたセッション。**`sessionId` は外へ出さない** — 繋ぐ側（`src/view-delivery.ts`）が
@@ -82,11 +83,18 @@ export type SessionStartOptions = {
    * ポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
    */
   readonly viewPort: number
+  /**
+   * claude を起こす場所（`docs/architecture.md`「worktree でセッションを分ける」）。**作業先を
+   * 指すものはすべてここから取る**——`process.cwd()` は tsukumo を打ったディレクトリで、
+   * worktree を切ったあとは claude の作業先ではない。
+   */
+  readonly workspace: Workspace
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export function startSession(options: SessionStartOptions): RunningSession {
-  const { config, character, fakeSession, tokenUsageLog, viewPort } = options
+  const { config, character, fakeSession, tokenUsageLog, viewPort, workspace } = options
+  const cwd = workspaceCwd(workspace)
   const sessionId = randomUUID()
   // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
@@ -109,20 +117,21 @@ export function startSession(options: SessionStartOptions): RunningSession {
   manager.create({
     sessionId,
     startDriver: createSessionLaunch<CharacterPack>({
+      workspace,
       choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
       characterEvent: () => character.event(),
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
       // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
       watchTasks: (onEvent) =>
-        watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
+        watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
-        findPackSessionToResume(config, process.cwd(), pack.name, chat, viewPort),
-      listSessions: (pack, chat) => listPackSessions(config, process.cwd(), pack.name, chat),
+        findPackSessionToResume(config, cwd, pack.name, chat, viewPort),
+      listSessions: (pack, chat) => listPackSessions(config, cwd, pack.name, chat),
       startDriver: (seed, onEvent) =>
-        startDriver(seed, chatArchive, fakeSession, config.fakeScene, viewPort, onEvent),
+        startDriver(seed, chatArchive, fakeSession, config.fakeScene, viewPort, workspace, onEvent),
       restoreEvents: (resumed, pack) =>
-        readRestoredEvents(resumed, process.cwd(), expressionChoices(pack.definition)),
+        readRestoredEvents(resumed, expressionChoices(pack.definition)),
     }),
     editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
     createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
@@ -146,6 +155,7 @@ function startDriver(
   fakeSession: FakeSession | undefined,
   scene: string | undefined,
   viewPort: number,
+  workspace: Workspace,
   onEvent: (event: SessionEvent) => void,
 ): SessionDriver {
   if (fakeSession !== undefined) {
@@ -154,7 +164,7 @@ function startDriver(
 
   // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
-  const mode = sessionMode(seed, chatArchive)
+  const mode = sessionMode(seed, chatArchive, workspace)
   // **載せるかどうかの判断は core（takeChatMemoryPromptParts）が閉じている**——ここは決まった
   // 文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**ので、
   // 載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
@@ -171,7 +181,10 @@ function startDriver(
   const rules = [...sessionRules(seed.chat), ...chatMemoryParts]
 
   return startSdkSession({
-    cwd: process.cwd(),
+    // **`cwd` は worktree、`projectConfigRoot` は切り出し元**（T-349 の決定）。切ったブランチが
+    // 持っている `.claude/` ではなく、元の作業ツリーのものを効かせる。
+    cwd: workspaceCwd(workspace),
+    projectConfigRoot: workspaceProjectConfigRoot(workspace),
     expressions: expressionChoices(seed.pack.definition),
     permissionMode: DEFAULT_PERMISSION_MODE,
     systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
@@ -193,6 +206,7 @@ function startDriver(
 function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   chatArchive: ChatArchive,
+  workspace: Workspace,
 ): SessionMode {
   if (!seed.chat) {
     return { kind: "work" }
@@ -200,7 +214,7 @@ function sessionMode(
 
   return {
     kind: "chat",
-    personaMemory: createPersonaMemory(seed.pack, process.cwd()),
+    personaMemory: createPersonaMemory(seed.pack, workspaceCwd(workspace)),
     chatSummary: createChatSummary(seed.pack.name),
     chatKeep: chatArchive,
     chatRecall: chatRecallFor(chatArchive, seed.pack.name),

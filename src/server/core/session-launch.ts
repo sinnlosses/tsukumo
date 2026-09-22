@@ -11,6 +11,7 @@
 
 import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
+import { type Workspace } from "../../shared/workspace.ts"
 import { type CharacterSelection, type NamedCharacterPack } from "./character-selection.ts"
 import { type SessionDriver, type SessionStart } from "./session-driver.ts"
 
@@ -66,6 +67,12 @@ export type SessionResume =
 /** 一続きの中で外の世界に頼むこと。実装はすべて配線層（`src/session-start.ts`）が `adapter` から渡す。 */
 export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /**
+   * いま動いている場所（起動時に1回決まり、**プロセスが動いている間は変わらない**）。
+   * 頼みごとではなく値なのは、`adapter` に聞き直す必要が無いから——起こし直すたびに
+   * 画面へ流し直すためだけにここが持つ。
+   */
+  readonly workspace: Workspace
+  /**
    * これから起こすパックを決める。**決め方の3つ（起動時の初期パック・画面から選ばれた名前・
    * いま出しているパックのまま）を持ち主が区別する**ので、ここは選び方をそのまま渡すだけ。
    * 知らない名前が既定へ落ちるのも呼ばれた側（`selectCharacterPack`）の仕事。
@@ -105,8 +112,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * セッションを起こす関数を作る（`session-manager` の `startDriver` にそのまま渡せる形）。
  *
  * 順序は**起動時も起こし直しも同じ**:
- * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed` と `chat-mode-changed` を
- * 流す → 見張りを起こす → 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
+ * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed` と `workspace` と
+ * `chat-mode-changed` を流す → 見張りを起こす → 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
  * 続きから始まったなら履歴を組み直す。
  *
  * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
@@ -133,6 +140,9 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
       ports.rememberPack(pack)
     }
     onEvent(ports.characterEvent(pack))
+    // **どこで動いているかも流し直す。** claude の作業先（worktree）と tsukumo のコードの
+    // 出所（元の作業ツリー）は常に食い違うので、読み取れない状態にしない（T-349 の決定2）。
+    onEvent({ kind: "workspace", workspace: ports.workspace })
     // **起こし直すと状態が初期値へ戻る**ので、雑談かどうかもここで流し直す（画面は
     // `chat-mode-changed` でしか知れない。`docs/requirements.md` 4.9）。
     onEvent({ kind: "chat-mode-changed", chat })

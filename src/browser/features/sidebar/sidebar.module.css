@@ -14,6 +14,13 @@
   gap: 0.4rem;
   min-width: 0;
 }
+/* 作業先・コードの出所のパス（`workspace-location.tsx`）。**どこでも折り返してよい**
+   （長いパスでサイドバーに横スクロールを出さない）。 */
+.workspace-path {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+}
 .permission-mode-select,
 .model-select,
 .chat-mode-select,

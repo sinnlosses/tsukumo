@@ -20,6 +20,7 @@ import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
+import { type Workspace } from "./workspace.ts"
 
 /**
  * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
@@ -233,6 +234,12 @@ export type SessionState = {
    */
   readonly lastToolFailureAt: number | undefined
   /**
+   * いまどこで動いているか（`docs/architecture.md`「worktree でセッションを分ける」）。
+   * `workspace` が届くまでは undefined（サイドバーは何も出さない）。**プロセスが動いている間は
+   * 中身が変わらない**が、起こし直すと状態が初期値へ戻るので `character` と同じく流し直される。
+   */
+  readonly workspace: Workspace | undefined
+  /**
    * 雑談モードに入っているか（`docs/requirements.md` 4.9）。入っている間はレポートを出さず、
    * メインビューが立ち絵と会話のログになる（`docs/design.md` 13.7）。
    *
@@ -266,6 +273,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
+  workspace: undefined,
   chatMode: false,
 }
 
@@ -290,6 +298,8 @@ export function applySessionEvent(
         permissionMode: event.permissionMode,
         slashCommands: commandCandidates(event.slashCommands, event.terminalSlashCommands),
       }
+    case "workspace":
+      return { ...state, workspace: event.workspace }
     case "command-descriptions":
       return { ...state, commandDescriptions: event.descriptions }
     case "model-changed":
