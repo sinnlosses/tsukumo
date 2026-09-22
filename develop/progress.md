@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 キャラクター画面の2つのフォームを、決めた型で分けた（T-338）
+
+`character-edit.tsx` と `character-create.tsx` を container / presentational / `hooks/` に割り（編集は `components/` の2部品も）、フックを部品を起こさずに測るテストを足した。
+
 ### 2026-09-23 composer と pending-answer を、決めた型で分けた（T-337）
 
 `composer.tsx` と `pending-answer.tsx` を container / presentational / `hooks/` に割り、質問の箱は別の container にした。フックを部品を起こさずに測るテストを足した。
