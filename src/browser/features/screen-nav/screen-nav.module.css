@@ -1,6 +1,6 @@
 /* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
-   **全画面の最上部に1本**。左に3つの口（会話 / キャラクター / トークン消費）、右端に
-   答え待ちの印。高さは `--screen-nav-height`（40px）で、**同じ値を `<Layout>` も読む**
+   **全画面の最上部に1本**。左端に部屋の名前、その右に3つの口（会話 / キャラクター /
+   トークン消費）、右端に答え待ちの印。高さは `--screen-nav-height`（40px）で、**同じ値を `<Layout>` も読む**
    （帯と gap のぶんだけ grid を縮めるため。layout.module.css）。
 
    **口の見た目は狭い画面のタブ（`.layout-tab`）に合わせる**（押せる高さ・丸い枠）。
@@ -15,6 +15,14 @@
   gap: 0.4rem;
   height: var(--screen-nav-height);
   margin-bottom: var(--screen-nav-gap);
+}
+/* 部屋の名前は押せない字（13.9）。**口より控えめに**して、並んだ口のほうが先に目に入るように
+   する（部屋の名前は「どれを見ているか」を確かめるときだけ要る）。 */
+.screen-nav-room {
+  margin-right: 0.3rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  white-space: nowrap;
 }
 .screen-nav-gates {
   display: flex;
@@ -71,8 +79,9 @@
     height: auto;
     margin-bottom: 0.5rem;
   }
-  /* 並んだ3つの口と帯の右端の印は「≡」の中へ移る。 */
+  /* 並んだ3つの口と、帯の右端の印・左端の部屋の名前は「≡」の中へ移る。 */
   .screen-nav-gates,
+  .screen-nav > .screen-nav-room,
   .screen-nav > .screen-nav-pending {
     display: none;
   }
@@ -119,6 +128,10 @@
     background: var(--surface);
   }
   .screen-nav-panel .screen-nav-gate {
+    text-align: center;
+  }
+  .screen-nav-panel .screen-nav-room {
+    margin-right: 0;
     text-align: center;
   }
   .screen-nav-panel .screen-nav-pending {

@@ -1,9 +1,9 @@
 // 画面のナビの帯の**器だけ**（docs/design.md 2章「機能の中を分ける」/ 13.9）。フックも算出も
 // 持たず、受け取った値と呼び先をそのまま置く。
 //
-// **全画面の最上部に出る1本の帯**で、3つの口（会話 / キャラクター / トークン消費）が左、
-// 答え待ちの印が右端。**狭い画面では `<ScreenNavMenu>` の「≡」に畳む**（どちらを出すかは
-// `screen-nav.module.css` の `@media` が決める）。
+// **全画面の最上部に出る1本の帯**で、部屋の名前が左端、3つの口（会話 / キャラクター /
+// トークン消費）がその右、答え待ちの印が右端。**狭い画面では `<ScreenNavMenu>` の「≡」に畳む**
+// （どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
 //
 // **`data-screen` でいま出している画面を名乗る**のは、狭い画面で帯の置き方が変わるため
 // （会話の画面だけは、いまあるタブ帯の右端に重ねる。13.9）。
@@ -14,11 +14,14 @@ import { type Screen } from "../../stores/screen.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavPending } from "./components/screen-nav-pending.tsx"
+import { ScreenNavRoom } from "./components/screen-nav-room.tsx"
 import { type ScreenNavGate as Gate } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"
 
 export type PresentationalScreenNavProps = {
   readonly current: Screen
+  /** この tsukumo の部屋の名前（13.9）。 */
+  readonly room: string
   readonly gates: readonly Gate[]
   readonly pendingActive: boolean
   readonly menuOpen: boolean
@@ -34,6 +37,7 @@ export type PresentationalScreenNavProps = {
  */
 export function PresentationalScreenNav({
   current,
+  room,
   gates,
   pendingActive,
   menuOpen,
@@ -43,6 +47,7 @@ export function PresentationalScreenNav({
 }: PresentationalScreenNavProps): ReactElement {
   return (
     <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
+      <ScreenNavRoom name={room} />
       <div className={styles["screen-nav-gates"]}>
         {gates.map((gate) => (
           <ScreenNavGate key={gate.screen} gate={gate} onSelect={onSelect} />
@@ -50,6 +55,7 @@ export function PresentationalScreenNav({
       </div>
       {pendingActive ? <ScreenNavPending /> : null}
       <ScreenNavMenu
+        room={room}
         gates={gates}
         open={menuOpen}
         pendingActive={pendingActive}

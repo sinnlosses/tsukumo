@@ -79,3 +79,14 @@ target["document"] = window.document
 target["navigator"] = window.navigator
 // React の act() まわりの警告（テスト環境だと自動検出できない）を止める公式の合図。
 target["IS_REACT_ACT_ENVIRONMENT"] = true
+
+/**
+ * テストの中でページの URL を差し替える（**ポートを見る部品のため**。`src/shared/room.ts` の
+ * 部屋の名前は、このページを配っているポートから決まる）。
+ *
+ * ここに置くのは、**差し替えの口を持っているのが happy-dom の `Window` だけ**だから
+ * （`globalThis.window` は DOM の型なので、テスト側から触るとキャストが要る）。
+ */
+export function setPageUrl(url: string): void {
+  window.happyDOM.setURL(url)
+}

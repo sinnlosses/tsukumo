@@ -8,11 +8,12 @@
 // grid（`sidebar.module.css` の `.session-info`）に、ラベルと値の対として並ぶ。
 //
 // **一覧に会話の内容は入らない**（`src/shared/session-choice.ts`）ので、見分けるのは
-// 目印と最終更新時刻だけ。
+// 目印と最終更新時刻だけ。**目印は部屋の名前として出す**（`src/shared/room.ts`。13.9）。
 
 import { type ReactElement } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { roomName } from "../../../shared/room.ts"
 import { type SessionChoice } from "../../../shared/session-choice.ts"
 import { Select } from "../../components/select.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
@@ -99,11 +100,15 @@ function sessionOptions(
 }
 
 /**
- * 1行の見え方。**目印と最終更新時刻の両方**を出す（`docs/requirements.md` 4.8）——同じ目印の
- * 行が複数並ぶことがあるので、どれがどの作業かは時刻で見分ける。
+ * 1行の見え方。**部屋の名前と最終更新時刻の両方**を出す（`docs/requirements.md` 4.8）——同じ
+ * 部屋の行が複数並ぶことがあるので、どれがどの作業かは時刻で見分ける。
+ *
+ * **ポート番号は名前と並べて出さない**（名前はポート番号の言い換えなので、見分けの助けに
+ * ならない。`docs/design.md` 13.9）。語彙の外のポートは `roomName` がポート番号を名乗るので、
+ * 今までの見え方のまま残る。
  */
 function sessionLabel(session: SessionChoice, isCurrent: boolean): string {
-  const label = `${String(session.viewPort)}・${localTimestamp(session.lastModified)}`
+  const label = `${roomName(session.viewPort)}・${localTimestamp(session.lastModified)}`
   return isCurrent ? `${label}${CURRENT_SUFFIX}` : label
 }
 

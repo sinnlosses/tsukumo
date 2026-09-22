@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
+import { roomName } from "../../../../shared/room.ts"
 import { screenHash, useScreen, type Screen } from "../../../stores/screen.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 
@@ -25,6 +26,8 @@ export type ScreenNavGate = {
 export type ScreenNavView = {
   /** いま出している画面。**狭い画面での帯の置き方**（タブ帯へ畳むか）を CSS が決めるのに使う。 */
   readonly current: Screen
+  /** この tsukumo の部屋の名前（`src/shared/room.ts`。13.9）。 */
+  readonly room: string
   readonly gates: readonly ScreenNavGate[]
   readonly pendingActive: boolean
   readonly menuOpen: boolean
@@ -84,6 +87,7 @@ export function useScreenNav(): ScreenNavView {
 
   return {
     current,
+    room: currentRoomName(),
     gates: NAV_SCREENS.map((entry) => ({
       screen: entry.screen,
       label: entry.label,
@@ -96,4 +100,19 @@ export function useScreenNav(): ScreenNavView {
     closeMenu,
     ref,
   }
+}
+
+/** `location.port` が空文字のときに補う、http の既定ポート（URL がポートを省いた形のとき）。 */
+const DEFAULT_HTTP_PORT = 80
+
+/**
+ * この tsukumo の部屋の名前。**どの部屋かの正典は、このページを配っている URL のポート**
+ * （サーバがそのポートで待っている。`src/server/core/port-resolution.ts`）——サーバから
+ * 送り直してもらう値ではないので、状態には乗せない。
+ *
+ * **購読はしない**（ポートはページの一生の間変わらない）。
+ */
+function currentRoomName(): string {
+  const port = window.location.port
+  return roomName(port === "" ? DEFAULT_HTTP_PORT : Number(port))
 }

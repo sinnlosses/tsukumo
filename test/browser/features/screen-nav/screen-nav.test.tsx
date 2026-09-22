@@ -6,6 +6,7 @@ import { ScreenNav } from "../../../../src/browser/features/screen-nav/screen-na
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { setPageUrl } from "../../../dom-environment.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件。docs/coding-standards.md「会話内容の扱い」）。
@@ -16,8 +17,13 @@ const FIXTURE_PENDING: PendingAsk = {
   input: {},
 }
 
+// 部屋の名前はこのページを配っているポートから決まる（`src/shared/room.ts`）ので、
+// ポートを見るテストは URL ごと差し替える。既定へ戻すのは afterEach。
+const DEFAULT_PAGE_URL = "http://127.0.0.1/"
+
 afterEach(() => {
   cleanup()
+  setPageUrl(DEFAULT_PAGE_URL)
   window.location.hash = ""
 })
 
@@ -85,6 +91,23 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-pending")?.textContent).toBe("答え待ち")
   })
 
+  // 部屋の名前は帯の左端（13.9）。**ポートの並び順に割り当たる**（`src/shared/room.ts`）ので、
+  // 出ている名前でどの tsukumo を見ているかが分かる。
+  it("帯の左端に、このページのポートの部屋の名前を出す", () => {
+    setPageUrl("http://127.0.0.1:7329/")
+    renderScreenNav()
+
+    expect(document.querySelector(".screen-nav > .screen-nav-room")?.textContent).toBe("山吹の間")
+  })
+
+  // 語彙の外のポートは番号のまま（13個め以降・`TSUKUMO_VIEW_PORT` で遠い番号を指したとき）。
+  it("語彙の外のポートでは、番号をそのまま帯に出す", () => {
+    setPageUrl("http://127.0.0.1:9000/")
+    renderScreenNav()
+
+    expect(document.querySelector(".screen-nav > .screen-nav-room")?.textContent).toBe("9000")
+  })
+
   // 狭い画面の「≡」（広い画面では CSS が消す。ここでは DOM の有無だけを見る）。
   it("「≡」を押すと3つの口が落ちてきて、もう一度押すと閉じる", () => {
     renderScreenNav()
@@ -121,6 +144,18 @@ describe("ScreenNav", () => {
     fireEvent.pointerDown(document.body)
 
     expect(document.querySelector(".screen-nav-panel")).toBeNull()
+  })
+
+  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、名前は落ちてくる面の先頭に出す（13.9）。
+  it("「≡」を開くと、落ちてきた面の先頭にも部屋の名前が出る", () => {
+    setPageUrl("http://127.0.0.1:7328/")
+    renderScreenNav()
+
+    fireEvent.click(screen.getByRole("button", { name: "画面を選ぶ" }))
+
+    expect(document.querySelector(".screen-nav-panel .screen-nav-room")?.textContent).toBe(
+      "萌黄の間",
+    )
   })
 
   // 狭い画面では「答え待ち」の字を置く幅が無いので、閉じている間は「≡」に印を添える（13.9）。

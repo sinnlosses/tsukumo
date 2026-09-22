@@ -55,14 +55,27 @@ describe("SessionSwitch", () => {
     expect(screen.queryByLabelText("セッション")).toBeNull()
   })
 
-  it("目印と最終更新時刻（ローカル時刻）を並べ、いま出しているものに印を付ける", () => {
+  // 目印は**部屋の名前**として出す（`src/shared/room.ts`。ポートの並び順に割り当たる）。
+  it("部屋の名前と最終更新時刻（ローカル時刻）を並べ、いま出しているものに印を付ける", () => {
     renderSessionSwitch({ sessions: SESSIONS, sessionId: "s-current" })
 
     const select = screen.getByLabelText("セッション")
     expect((select as HTMLSelectElement).value).toBe("s-current")
     expect(options(select)).toEqual([
-      `7328・${localLabel(LATER)}`,
-      `7327・${localLabel(EARLIER)}（表示中）`,
+      `萌黄の間・${localLabel(LATER)}`,
+      `浅葱の間・${localLabel(EARLIER)}（表示中）`,
+    ])
+  })
+
+  // 語彙の外のポート（13個め以降・遠い番号）は、今までどおり番号のまま出る。
+  it("名前が無いポートの行は、ポート番号をそのまま出す", () => {
+    renderSessionSwitch({
+      sessions: [{ viewPort: 9000, sessionId: "s-far", lastModified: LATER.epochMilliseconds }],
+      sessionId: "s-far",
+    })
+
+    expect(options(screen.getByLabelText("セッション"))).toEqual([
+      `9000・${localLabel(LATER)}（表示中）`,
     ])
   })
 
