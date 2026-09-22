@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@tes
 
 import { MainView } from "../../../../src/browser/features/main-view/main-view.tsx"
 import { QuestionRecord } from "../../../../src/browser/features/main-view/question-record.tsx"
+import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../src/browser/stores/brush-tip.ts"
 import { QuestionFocusProvider } from "../../../../src/browser/stores/question-focus.tsx"
 import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
@@ -63,6 +64,17 @@ function rerenderMainView(records: readonly SessionRecord[]): void {
     putState(store, { ...INITIAL_SESSION_STATE, records })
   })
 }
+
+describe("MainView（ミニ立ち絵を置く原点）", () => {
+  // 筆先の座標はこの入れ物の左上が原点（`stores/brush-tip.ts`）。**印が外れると、書き終わった
+  // ミニ立ち絵の置き場所が黙って消える**ので、名前が付いていることだけをここで見る
+  // （実際にどこに見えるかは目視。`docs/architecture.md`「手で確かめること」）。
+  it("ターンを載せる入れ物に、筆先の原点の印が付く", () => {
+    const { container } = renderMainView([request("1つ目", 0), detail("1つ目のレポート")])
+
+    expect(container.querySelector(`[${BRUSH_ORIGIN_ATTRIBUTE}]`)).not.toBeNull()
+  })
+})
 
 describe("MainView（タブの規則）", () => {
   it("3ターンまでタブが出て、新しいターンで先頭（今回）へ戻る", () => {

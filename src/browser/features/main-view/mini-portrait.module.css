@@ -1,11 +1,15 @@
 /* 筆先に添うミニ立ち絵の置き方（`src/browser/features/main-view/mini-portrait.tsx`）。
    立ち絵そのものの中身は `src/browser/components/portrait.module.css`。
 
-   **筆先の座標はビューポート基準**（`src/browser/stores/brush-tip.ts`）なので position: fixed で
-   そのまま置ける。レポートの領域は overflow-y: auto だが、祖先に transform / filter が無いので
-   fixed はそれに切られない（切られるようになったら、ここが領域の中で迷子になる合図）。
-   **縁取りは入れ物ではなく中身（`.mini-portrait-body`）に掛ける**ので、この fixed の祖先に
-   filter は増えない。 */
+   **筆先の座標は本文の入れ物（`.main-turns`）の左上が原点**（`src/browser/stores/brush-tip.ts`）
+   なので、その入れ物の中に position: absolute で置く。**書き上げたあとも筆先はそこに残る**ので、
+   ビューポート基準（position: fixed）のままだと、本文を転がしたときに関係ない場所へ浮いたまま
+   居座る。
+   **基準を作っているのは `main-view.module.css` の `.main-turns { position: relative }`**——
+   ミニ立ち絵はその直の子で、あいだに position を持つ入れ物を挟むと、置く先だけがそちらへ
+   ずれる（座標を測る側は `data-brush-origin` の印で `.main-turns` を探し続ける）。
+   **縁取りは入れ物ではなく中身（`.mini-portrait-body`）に掛ける**ので、この入れ物の祖先に
+   transform / filter は増えない（増えると position の基準を横取りされる）。 */
 .mini-portrait {
   /* 大きさ・不透明度・追従の間合い。**ここと下の縁取りの2組が
      唯一の調整箇所**。
@@ -43,7 +47,7 @@
   --mini-portrait-follow-duration: 0.05s;
   --mini-portrait-return-duration: 0s;
 
-  position: fixed;
+  position: absolute;
   top: 0;
   left: var(--mini-portrait-gap);
   z-index: 2;

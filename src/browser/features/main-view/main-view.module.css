@@ -7,6 +7,10 @@
 .main-turns {
   display: flex;
   flex-direction: column;
+  /* **筆先に添うミニ立ち絵を置く基準**（`mini-portrait.module.css`）。本文と一緒に転がって
+     ほしいので、ビューポートではなくここを原点にする。座標を測る側は `data-brush-origin` の
+     印でこの要素を探す（`stores/brush-tip.ts`）。 */
+  position: relative;
 }
 .turn-tabs {
   position: sticky;

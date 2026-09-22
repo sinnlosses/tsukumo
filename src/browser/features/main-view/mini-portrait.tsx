@@ -9,8 +9,12 @@
 // **出る条件は「筆先があること」だけ**（`stores/brush-tip.ts`）。筆先を配るのは演出
 // （`report-reveal.ts`）で、演出が掛かるのは**いちばん新しいターンの最後の確定レポートが
 // 現れたとき**だけ（`turn.tsx`）。`prefers-reduced-motion: reduce` と過去のタブでは演出自体が
-// 走らないので、ここに同じ判定を書き足さなくても出ない。出し切れば筆先が undefined に
-// 戻って消える。
+// 走らないので、ここに同じ判定を書き足さなくても出ない。
+//
+// **書き上げたあとも消えない**（2026-09-21 の決定）。筆先が `resting` になってその場に留まり、
+// **本文と一緒に転がる**——座標が本文の入れ物の原点基準（`stores/brush-tip.ts`）なので、
+// `position: absolute` で置くだけで貼り付く。次のターンで書き始めると、そのまま新しい筆先へ
+// 滑って移る（同じ原点の座標どうしなので、遷移を外さなくても飛ばない）。
 //
 // 素材は `CharacterInfo.mini`（`character.json` の任意の `mini`。無いパックは
 // `portraits.default` に落ちたものが届く。畳むのは `shared/character.ts`）。
@@ -20,7 +24,7 @@ import { type CSSProperties, type ReactElement } from "react"
 import { resolveOutfitAccent } from "../../../shared/character.ts"
 import { resolveOutfit } from "../../../shared/expression.ts"
 import { Portrait } from "../../components/portrait.tsx"
-import { useBrushTip, type BrushStroke, type BrushTip } from "../../stores/brush-tip.ts"
+import { useBrushTip, type BrushTip } from "../../stores/brush-tip.ts"
 import { useSessionSelector } from "../../stores/session.tsx"
 import styles from "./mini-portrait.module.css"
 
@@ -36,7 +40,7 @@ export function MiniPortrait(): ReactElement | null {
   const model = useSessionSelector((session) => session.state.model)
   const url = character?.mini
 
-  // 筆先が無い（演出が走っていない・出し切った）ときと、縮小する素材すら無いパックでは出さない。
+  // 筆先が無い（まだ一度も書かれていない）ときと、縮小する素材すら無いパックでは出さない。
   if (tip === undefined || character === undefined || url === undefined) {
     return null
   }
@@ -44,7 +48,7 @@ export function MiniPortrait(): ReactElement | null {
   const outfit = resolveOutfit(model)
 
   return (
-    <div className={followClassName(tip.stroke)} style={followStyle(tip)}>
+    <div className={followClassName(tip)} style={followStyle(tip)}>
       <Portrait
         url={url}
         accent={resolveOutfitAccent(character.outfitAccents, outfit)}
@@ -63,15 +67,20 @@ export function MiniPortrait(): ReactElement | null {
  * あいだは筆先に張り付く——**戻りは横画の4〜7倍の速さで動く**ので、同じ間合いのままでは
  * 立ち絵の幅より大きく置いていかれる。**長さは `mini-portrait.module.css` の2つの custom
  * property が持つ**ので、ここは class を選ぶだけにする。
+ *
+ * 書き終わって残っているあいだ（`resting`）は座標が動かないので、どちらの間合いでも同じ
+ * 見え方になる——横画のほうに揃えておく。
  */
-function followClassName(stroke: BrushStroke): string {
-  return [styles["mini-portrait"], stroke === "return" ? styles["mini-portrait-returning"] : ""]
+function followClassName(tip: BrushTip): string {
+  const returning = tip.phase === "writing" && tip.stroke === "return"
+  return [styles["mini-portrait"], returning ? styles["mini-portrait-returning"] : ""]
     .filter((name) => name !== undefined && name !== "")
     .join(" ")
 }
 
 /**
- * 筆先の**右・帯の下端**に立たせる（いまなぞっている帯と同じ高さで、書き進む先の側）。
+ * 筆先の**右・帯の下端**に立たせる（なぞっている帯と同じ高さで、書き進む先の側）。座標は
+ * 本文の入れ物の原点基準（`stores/brush-tip.ts`）なので、置いた先は本文と一緒に転がる。
  * Z字の斜めの戻りでは筆先が右から左へ動くので、立ち絵も
  * 一緒に戻ってくる。
  *

@@ -4,7 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, render } from "@testing-library/react"
 
 import { MiniPortrait } from "../../../../src/browser/features/main-view/mini-portrait.tsx"
-import { publishBrushTip, type BrushTip } from "../../../../src/browser/stores/brush-tip.ts"
+import {
+  publishBrushTip,
+  restBrushTip,
+  type BrushTip,
+} from "../../../../src/browser/stores/brush-tip.ts"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { sessionStoreWith } from "../../session-store.ts"
@@ -40,7 +44,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
   editable: true,
 }
 
-const TIP: BrushTip = { x: 320, top: 180, bottom: 206, stroke: "sweep" }
+const TIP: BrushTip = { phase: "writing", x: 320, top: 180, bottom: 206, stroke: "sweep" }
 
 afterEach(() => {
   cleanup()
@@ -65,7 +69,7 @@ function miniImage(): HTMLElement | null {
   return node instanceof HTMLElement ? node : null
 }
 
-/** 置き方を持つ入れ物（`position: fixed` の `transform` に筆先の座標が入る）。 */
+/** 置き方を持つ入れ物（`position: absolute` の `transform` に筆先の座標が入る）。 */
 function placement(): HTMLElement {
   const image = miniImage()
   const node = image?.parentElement?.parentElement
@@ -98,7 +102,7 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
       publishBrushTip(TIP)
     })
     act(() => {
-      publishBrushTip({ x: 96, top: 206, bottom: 232, stroke: "sweep" })
+      publishBrushTip({ phase: "writing", x: 96, top: 206, bottom: 232, stroke: "sweep" })
     })
 
     expect(placement().style.transform).toBe("translate3d(96px, 232px, 0) translateY(-100%)")
@@ -119,16 +123,47 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     expect(placement().className).toContain("mini-portrait-returning")
   })
 
-  it("出し切って筆先が消えたら、ミニ立ち絵も消える", () => {
+  it("書き終わっても消えず、書き終わりの位置に残る", () => {
+    renderMiniPortrait(FIXTURE_CHARACTER)
+    act(() => {
+      publishBrushTip(TIP)
+    })
+
+    act(() => {
+      restBrushTip()
+    })
+
+    expect(miniImage()).not.toBeNull()
+    expect(placement().style.transform).toBe("translate3d(320px, 206px, 0) translateY(-100%)")
+  })
+
+  it("残っているあいだは、追従の間合いを差し替える印を持たない", () => {
+    renderMiniPortrait(FIXTURE_CHARACTER)
+    act(() => {
+      publishBrushTip({ ...TIP, stroke: "return" })
+    })
+
+    act(() => {
+      restBrushTip()
+    })
+
+    expect(placement().className).not.toContain("mini-portrait-returning")
+  })
+
+  it("次のターンで書き始めると、新しい筆先へ移る", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {
       publishBrushTip(TIP)
     })
     act(() => {
-      publishBrushTip(undefined)
+      restBrushTip()
     })
 
-    expect(miniImage()).toBeNull()
+    act(() => {
+      publishBrushTip({ phase: "writing", x: 12, top: 40, bottom: 66, stroke: "sweep" })
+    })
+
+    expect(placement().style.transform).toBe("translate3d(12px, 66px, 0) translateY(-100%)")
   })
 
   it("縮小する素材が無いパック（mini も portraits.default も無い）では出ない", () => {

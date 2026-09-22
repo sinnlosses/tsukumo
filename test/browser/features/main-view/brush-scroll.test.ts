@@ -33,7 +33,7 @@ describe("brushScroller（筆先を画面の中に保つ）", () => {
     scroller.scrollTop = 100
 
     // 下の縁（500）から 96px の内側は 404。450 はそれを 46px 超えている。
-    brushScroller(rootIn(scroller)).follow({ x: 0, top: 430, bottom: 450, stroke: "sweep" })
+    brushScroller(rootIn(scroller)).follow({ tipTop: 430, tipBottom: 450 })
 
     expect(scroller.scrollTop).toBe(146)
   })
@@ -43,7 +43,7 @@ describe("brushScroller（筆先を画面の中に保つ）", () => {
     scroller.scrollTop = 300
 
     // 上の縁（0）から 96px の内側は 96。50 はそれより 46px 上にある。
-    brushScroller(rootIn(scroller)).follow({ x: 0, top: 50, bottom: 70, stroke: "sweep" })
+    brushScroller(rootIn(scroller)).follow({ tipTop: 50, tipBottom: 70 })
 
     expect(scroller.scrollTop).toBe(254)
   })
@@ -52,7 +52,7 @@ describe("brushScroller（筆先を画面の中に保つ）", () => {
     const scroller = scrollerWith({ top: 0, bottom: 500 })
     scroller.scrollTop = 100
 
-    brushScroller(rootIn(scroller)).follow({ x: 0, top: 200, bottom: 220, stroke: "sweep" })
+    brushScroller(rootIn(scroller)).follow({ tipTop: 200, tipBottom: 220 })
 
     expect(scroller.scrollTop).toBe(100)
   })
@@ -72,7 +72,7 @@ describe("brushScroller（筆先を画面の中に保つ）", () => {
     const brush = brushScroller(rootIn(scroller))
 
     window.dispatchEvent(new Event("wheel"))
-    brush.follow({ x: 0, top: 430, bottom: 450, stroke: "sweep" })
+    brush.follow({ tipTop: 430, tipBottom: 450 })
 
     expect(scroller.scrollTop).toBe(100)
     brush.stop()
@@ -85,7 +85,7 @@ describe("brushScroller（筆先を画面の中に保つ）", () => {
 
     brush.stop()
     window.dispatchEvent(new Event("wheel"))
-    brush.follow({ x: 0, top: 430, bottom: 450, stroke: "sweep" })
+    brush.follow({ tipTop: 430, tipBottom: 450 })
 
     expect(scroller.scrollTop).toBe(146)
   })
@@ -96,7 +96,7 @@ describe("brushScroller（筆先を画面の中に保つ）", () => {
 
     // 器を見つけられずに投げたり、根そのものを送ったりしない。
     expect(() => {
-      brushScroller(root).follow({ x: 0, top: 10, bottom: 20, stroke: "sweep" })
+      brushScroller(root).follow({ tipTop: 10, tipBottom: 20 })
     }).not.toThrow()
     expect(root.scrollTop).toBe(0)
   })

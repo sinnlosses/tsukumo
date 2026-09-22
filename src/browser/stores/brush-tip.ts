@@ -4,11 +4,22 @@
 // `stores/turn-selection.tsx` と同じ理由）。
 //
 // **`SessionState` には入れない。** サーバから来るものではなく、ブラウザの描画のあいだだけ
-// 存在する値だから。演出が終われば undefined に戻る（筆先は消える）。
+// 存在する値だから。
+//
+// **書き上げたあとも筆先は消えない。** 書き終わった位置に `resting` として残り、**次に
+// 書き始めたときだけ**そちらへ移る（2026-09-21 の決定）。undefined に戻るのは、まだ一度も
+// 書いていないときと、測れないフレームだけ。
 //
 // React の外に1つだけ持つ（演出は同時に1つしか走らない。`report-reveal.ts`）。
 
 import { useSyncExternalStore } from "react"
+
+/**
+ * 筆先の座標の原点になる入れ物の印（`features/main-view/main-view.tsx` が
+ * `.main-turns` に付ける）。**座標系の定義と同じところに置く**——原点が動くと座標の意味が
+ * 変わるので、印の名前と {@link BrushPlace} の説明を離さない。
+ */
+export const BRUSH_ORIGIN_ATTRIBUTE = "data-brush-origin"
 
 /**
  * いまなぞっている画の種別。**Z字のどの画か**で追従の間合いが変わる（`mini-portrait.tsx`）ので、
@@ -20,24 +31,37 @@ import { useSyncExternalStore } from "react"
 export type BrushStroke = "sweep" | "return"
 
 /**
- * 筆先の位置。**ビューポート座標**（`getBoundingClientRect()` / `getClientRects()` と同じ原点）
- * なので、追従する側は `position: fixed` でそのまま置ける。
+ * 筆先の位置。**本文の入れ物**（{@link BRUSH_ORIGIN_ATTRIBUTE} を付けた要素）の左上が原点で、
+ * ビューポート座標ではない。追従する側はその入れ物の中に `position: absolute` で置く。
+ *
+ * **原点を本文側に取るのは、書き終わった筆先がそこに残るから**（`mini-portrait.tsx`）。
+ * ビューポート基準のまま残すと、本文を転がしたときに関係ない場所へ浮いたまま居座る。測るのは
+ * ビューポート座標（`getBoundingClientRect()`）なので、写すのは `report-reveal.ts` の仕事。
  *
  * `top` / `bottom` は**いま書いている帯**（Z字の1画。`report-reveal.ts`）の上端と下端。
  * 帯は**トピック（見出しから次の見出しまで）の行を上下に割ったもの**で、要素をまたいで伸びる。
  * 行が1つしか取れないトピックでは、その上端と下端がそのまま入る。
- *
- * `stroke` は**どの画をなぞっているか**の印で、位置と同じ1つの値の中に持つ（画ごとに別の口で
- * 配ると、位置と種別がずれたフレームができる）。
  */
-export type BrushTip = {
+export type BrushPlace = {
   readonly x: number
   readonly top: number
   readonly bottom: number
-  readonly stroke: BrushStroke
 }
 
-/** 筆先を配る。演出が終わったら undefined を配って消す。 */
+/**
+ * 筆先。**書いている最中と、書き終わってそこに残っているのを1つの印で見分ける**
+ * （2つの `| undefined` で1つの状態を表さない。`CLAUDE.md`）。
+ *
+ * - `writing`: なぞっている最中。`stroke` は**どの画か**の印で、位置と同じ1つの値の中に持つ
+ *   （画ごとに別の口で配ると、位置と種別がずれたフレームができる）
+ * - `resting`: 書き終わってその場に残っている。**次に書き始めるまで消えない**ので、
+ *   なぞる画も持たない
+ */
+export type BrushTip =
+  | (BrushPlace & { readonly phase: "writing"; readonly stroke: BrushStroke })
+  | (BrushPlace & { readonly phase: "resting" })
+
+/** 筆先を配る。 */
 export function publishBrushTip(next: BrushTip | undefined): void {
   tip = next
   for (const listener of listeners) {
@@ -45,7 +69,19 @@ export function publishBrushTip(next: BrushTip | undefined): void {
   }
 }
 
-/** いまの筆先（書かれていなければ undefined）。 */
+/**
+ * 書いていた筆先を**その場に残す**（書き上げたときと、演出を飛ばしたとき）。位置は最後に
+ * 配ったところのままで、消えるのは次に書き始めたときだけ。**書いていなければ何もしない**
+ * ——測れないまま終わった演出が、前に残した筆先を消さないようにする。
+ */
+export function restBrushTip(): void {
+  if (tip === undefined || tip.phase === "resting") {
+    return
+  }
+  publishBrushTip({ phase: "resting", x: tip.x, top: tip.top, bottom: tip.bottom })
+}
+
+/** いまの筆先（まだ一度も書かれていなければ undefined）。 */
 export function useBrushTip(): BrushTip | undefined {
   return useSyncExternalStore(subscribeBrushTip, brushTipSnapshot, brushTipSnapshot)
 }

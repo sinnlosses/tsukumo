@@ -21,7 +21,10 @@
 // どちらもレイアウトを動かさない（`clip-path` も `opacity` も場所を取ったまま隠す）ので、
 // 本文の高さは最初から最後まで変わらない。
 //
-// **筆先が画面から出たら器を送る**（`brush-scroll.ts`）。
+// **筆先が画面から出たら器を送る**（`brush-scroll.ts`）。**器を送るのはビューポート座標のまま**
+// だが、配る筆先は本文の入れ物（`data-brush-origin`）の座標へ写す——書き上げたあとも筆先は
+// その場に残るので、ビューポート基準のままだと転がすたびに関係ない場所へずれる
+// （`stores/brush-tip.ts`）。
 //
 // **打ち切る口は2つ**（クリック・キー入力）。**ホイールと指では打ち切らない**——先を読もうと
 // して転がすのは「もう要らない」ではなく「見ていたい」の側なので、打ち切ると筆を追うたびに
@@ -34,7 +37,12 @@
 
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
-import { publishBrushTip, type BrushTip } from "../../stores/brush-tip.ts"
+import {
+  BRUSH_ORIGIN_ATTRIBUTE,
+  publishBrushTip,
+  restBrushTip,
+  type BrushTip,
+} from "../../stores/brush-tip.ts"
 import { brushScroller } from "./brush-scroll.ts"
 import {
   brushStep,
@@ -112,6 +120,9 @@ function startReveal(root: HTMLElement): () => void {
   root.setAttribute(REVEALING_ATTRIBUTE, "yes")
 
   const scroller = brushScroller(root)
+  // 筆先の座標の原点（`stores/brush-tip.ts`）。**印が見つからなければ筆先を配らない**
+  // ——ミニ立ち絵は出ないが、本文を書き上げる演出そのものは進む。
+  const origin = root.closest(`[${BRUSH_ORIGIN_ATTRIBUTE}]`)
   const startedAt = performance.now()
   let frame = 0
   let shown = 0
@@ -127,14 +138,16 @@ function startReveal(root: HTMLElement): () => void {
       showBlock(block)
     }
     root.removeAttribute(REVEALING_ATTRIBUTE)
-    publishBrushTip(undefined)
+    // **書き終わっても筆先は消さない**（飛ばされたときも同じ）。書いたところに残して、
+    // 次に書き始めたときにそちらへ移る。
+    restBrushTip()
     scroller.stop()
     for (const name of SKIP_EVENT_NAMES) {
       window.removeEventListener(name, finish, SKIP_LISTENER_OPTIONS)
     }
   }
 
-  const step = (): void => {
+  const tick = (): void => {
     // 出し切ったあとに積み残しのフレームが走っても、隠し直さない。
     if (finished) {
       return
@@ -152,13 +165,15 @@ function startReveal(root: HTMLElement): () => void {
       finish()
       return
     }
-    const tip = advanceBlock(current, blockProgress(current, elapsed))
-    publishBrushTip(tip)
-    scroller.follow(tip)
-    frame = requestAnimationFrame(step)
+    const step = advanceBlock(current, blockProgress(current, elapsed))
+    scroller.follow(step)
+    if (origin !== null) {
+      publishBrushTip(step === undefined ? undefined : brushTipAt(step, origin))
+    }
+    frame = requestAnimationFrame(tick)
   }
 
-  frame = requestAnimationFrame(step)
+  frame = requestAnimationFrame(tick)
   for (const name of SKIP_EVENT_NAMES) {
     window.addEventListener(name, finish, SKIP_LISTENER_OPTIONS)
   }
@@ -192,8 +207,11 @@ type MemberShape = {
   readonly box: DOMRect
 }
 
-/** 塊1つを `progress`（0〜1）まで出し、そのときの筆先を返す。 */
-function advanceBlock(block: RevealBlock, progress: number): BrushTip | undefined {
+/**
+ * 塊1つを `progress`（0〜1）まで出し、そのときの筆の居場所を返す（**ビューポート座標**。
+ * 配るときに原点を移す。{@link brushTipAt}）。
+ */
+function advanceBlock(block: RevealBlock, progress: number): BrushStep | undefined {
   const shapes = block.members.map((member) => ({
     member,
     box: member.element.getBoundingClientRect(),
@@ -209,7 +227,23 @@ function advanceBlock(block: RevealBlock, progress: number): BrushTip | undefine
     applyStep(shape, step)
   }
 
-  return { x: step.tipX, top: step.tipTop, bottom: step.tipBottom, stroke: step.stroke }
+  return step
+}
+
+/**
+ * 測った筆の居場所（ビューポート座標）を、**本文の入れ物を原点にした筆先**へ写す
+ * （`stores/brush-tip.ts`）。入れ物の矩形は**毎フレーム測り直す**——書いているあいだは器が
+ * 送られ、窓の幅も変わりうるので、始めに測った1回では合わなくなる。
+ */
+function brushTipAt(step: BrushStep, origin: Element): BrushTip {
+  const box = origin.getBoundingClientRect()
+  return {
+    phase: "writing",
+    x: step.tipX - box.left,
+    top: step.tipTop - box.top,
+    bottom: step.tipBottom - box.top,
+    stroke: step.stroke,
+  }
 }
 
 /**

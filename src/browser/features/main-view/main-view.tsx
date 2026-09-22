@@ -58,7 +58,10 @@ export function MainView(): ReactElement {
   const activeTurn = turnsNewestFirst.find((turn) => turn.id === activeTurnId)
 
   return (
-    <div className={styles["main-turns"]} ref={scrollerRef}>
+    // `data-brush-origin`: ミニ立ち絵を置く座標の原点（印の名前は `stores/brush-tip.ts` の
+    // `BRUSH_ORIGIN_ATTRIBUTE`。JSX の属性名に定数を書けないので直に置き、ずれていないことは
+    // テストが見る）。
+    <div className={styles["main-turns"]} ref={scrollerRef} data-brush-origin="">
       {/* 答え待ちの質問の比較。**タブより上**に出す（聞かれている間はそれが最優先で読むもの
           だから）。`preview` が1つも無い質問では何も描かない。 */}
       <PendingQuestion />
@@ -69,8 +72,8 @@ export function MainView(): ReactElement {
       {activeTurn !== undefined && (
         <Turn turn={activeTurn} newest={activeTurn.id === newestTurnId} key={activeTurn.id} />
       )}
-      {/* 筆先に添うミニ立ち絵。**ビューポート基準に置く**（`position: fixed`）ので、ここは
-          「レポートを出す場所と一緒に現れて消える」ことだけを決めている。 */}
+      {/* 筆先に添うミニ立ち絵。**この入れ物の原点を基準に置く**（`position: absolute`）ので、
+          書き上げたあと残っているあいだも本文と一緒に転がる。 */}
       <MiniPortrait />
     </div>
   )
