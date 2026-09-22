@@ -5,7 +5,12 @@
 // **集計は純関数**（{@link summarizeTokenUsage}）で、ファイルに触らない。期間で切ったあとの
 // 行を渡されて畳むだけなので、どの行を読むか（日付の範囲からファイルを選ぶ）は
 // `src/server/adapter/token-usage-log.ts` の仕事のまま（`core → adapter` は禁止。
-// `test/architecture.test.ts`）。
+// `test/architecture.test.ts`）。**分析の画面が引く口は
+// {@link summarizeRecentTokenUsage}** で、こちらは読み口（{@link TokenUsageLog}）を受け取って
+// 「今日を含む直近 n 日」に切る——**今日が何日かは呼ぶ側が渡す。**
+//
+// **集計の形（{@link TokenUsageSummary}）は `src/shared/token-usage-summary.ts`**（ブラウザも
+// 同じ形を読むので shared に置いてある。配る経路の名前もそちら）。
 //
 // SDK の `result` に乗る `modelUsage` は **`query()` の中の累計**（サブエージェントと内部の
 // 呼び出しも含む。`usage` のほうはメインループだけなので集計に使わない）。ターンごとの消費を
@@ -18,6 +23,13 @@
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
 import { type SessionEvent } from "../../shared/session-event.ts"
+import {
+  type DailyTokenUsage,
+  type ModelUsageTotal,
+  type TokenUsageDays,
+  type TokenUsageSummary,
+  type TokenUsageTotals,
+} from "../../shared/token-usage-summary.ts"
 import {
   type ModelTokenUsage,
   type ScopeUsage,
@@ -71,35 +83,6 @@ export type TokenUsageEntry = {
 }
 
 /**
- * {@link summarizeTokenUsage} の戻り値。**分析画面が要る3つの軸だけ**（日ごと・モデル別・
- * ツール別）を持つ。
- */
-export type TokenUsageSummary = {
-  /** 日ごとの合計（期間に入る日だけを古い→新しい順に並べる。記録が無い日は含まない）。 */
-  readonly byDay: readonly DailyTokenUsage[]
-  /** モデルごとの合計（モデル名の昇順）。 */
-  readonly byModel: readonly ModelUsageTotal[]
-  /** ツールごとの合計（メインループとサブエージェントの内訳を足し合わせる。結果の長さの
-   * 降順、同じなら名前順 — {@link foldToolCalls} と同じ並べ方）。 */
-  readonly byTool: readonly ToolUsageCount[]
-}
-
-/** モデル別の数から `model` を除いた形（日ごと・モデル別のどちらでも同じ数の並びを使う）。 */
-export type TokenUsageTotals = Omit<ModelTokenUsage, "model">
-
-/** ある1日（ローカル日付）の合計。 */
-export type DailyTokenUsage = {
-  readonly date: string
-  readonly totals: TokenUsageTotals
-}
-
-/** あるモデル1つの合計。 */
-export type ModelUsageTotal = {
-  readonly model: string
-  readonly totals: TokenUsageTotals
-}
-
-/**
  * ターンの途中で積み上げる内訳の入れ物。**ターンの終わりに {@link turnUsageBreakdown} で畳んで
  * 書き出し、{@link EMPTY_TURN_USAGE_TALLY} に戻す**（持ち主は `session-manager.ts`）。
  *
@@ -143,6 +126,8 @@ const EMPTY_TOTALS = {
   cacheCreationInputTokens: 0,
   costUsd: 0,
 } satisfies TokenUsageTotals
+
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 const textEncoder = new TextEncoder()
 
@@ -252,6 +237,32 @@ export function summarizeTokenUsage(
     byModel: summarizeByModel(withinPeriod),
     byTool: summarizeByTool(withinPeriod),
   }
+}
+
+/**
+ * 「今日を含む直近 `days` 日」を期間にして、記録を読んで畳む（分析の画面が引く口）。
+ *
+ * **今日が何日かはここが決めない**（`endDate` を受け取る。OS のタイムゾーンに依るので、
+ * 今日のローカル日付を作るのは `adapter/local-time.ts` の仕事）。**期間の両端を含む**ので、
+ * 7日なら `endDate` の6日前から。
+ */
+export function summarizeRecentTokenUsage(
+  log: TokenUsageLog,
+  endDate: string,
+  days: TokenUsageDays,
+): TokenUsageSummary {
+  const period = { startDate: shiftDate(endDate, -(days - 1)), endDate }
+  return summarizeTokenUsage(log.readRange(period), period)
+}
+
+/**
+ * ローカル日付（`YYYY-MM-DD`）を日数ぶんずらす。**UTC の正午を経由して数える** — 日付だけの
+ * 文字列には時差が無く、ここで OS のタイムゾーンを持ち込むと同じ入力でも境目が動いてしまう
+ * （夏時間のある地域で 00:00 が存在しない日を跨いでも、正午からなら日付は変わらない）。
+ */
+function shiftDate(date: string, days: number): string {
+  const noon = new Date(`${date}T12:00:00Z`).getTime()
+  return new Date(noon + days * MILLISECONDS_PER_DAY).toISOString().slice(0, 10)
 }
 
 /** 1つでも数が減っていれば、そのモデルの走行合計は振り出しに戻っている。 */

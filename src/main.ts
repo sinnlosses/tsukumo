@@ -17,6 +17,7 @@ import { createCurrentCharacter } from "./current-character.ts"
 import { readUiBundle } from "./server/adapter/bundle.ts"
 import { readFakeSession } from "./server/adapter/fake-driver.ts"
 import { createOrcaHost } from "./server/adapter/orca-host.ts"
+import { createTokenUsageLog } from "./server/adapter/token-usage-log.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { type Host } from "./server/core/host.ts"
 import { resolveViewPort } from "./server/core/port-resolution.ts"
@@ -64,10 +65,15 @@ export async function run(config: Config): Promise<number> {
 
   const character = createCurrentCharacter(config)
 
+  // トークン消費の記録の口は**1つをここで作って両側へ渡す**（書くのはセッション、読むのは
+  // 分析の画面へ配る側）。置き場（`~/.tsukumo/token-usage/`）を知っているファイルを増やさない。
+  const tokenUsageLog = createTokenUsageLog()
+
   const view = await startViewDelivery({
     portResolution,
     bundle: built.bundle,
     character,
+    tokenUsageLog,
     watchSource: config.watchUi,
   })
   if (!view.ok) {
@@ -75,7 +81,7 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  const session = startSession({ config, character, fakeSession })
+  const session = startSession({ config, character, fakeSession, tokenUsageLog })
   view.connect(session)
 
   stopSessionOnExit(session.close)

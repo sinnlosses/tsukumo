@@ -20,7 +20,6 @@ import {
   startSession as startSdkSession,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
-import { createTokenUsageLog } from "./server/adapter/token-usage-log.ts"
 import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
 import {
@@ -36,6 +35,7 @@ import {
   EVENT_BATCH_INTERVAL_MS,
 } from "./server/core/session-manager.ts"
 import { sessionRules } from "./server/core/session-rule.ts"
+import { type TokenUsageLog } from "./server/core/token-usage.ts"
 import {
   CHAT_COMPACT_THRESHOLD_BYTES,
   CHAT_KEPT_READBACK_BYTES,
@@ -67,19 +67,21 @@ export type SessionStartOptions = {
   /** fake driver の疑似セッション（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を
    * 起こさない。 */
   readonly fakeSession: FakeSession | undefined
+  /**
+   * トークン消費の記録の口。**持ち主は `src/main.ts`** — 分析の画面へ配る側（`view-delivery.ts`）も
+   * 同じ口から読むので、置き場を知っているファイルを1つに保つ。
+   */
+  readonly tokenUsageLog: TokenUsageLog
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export function startSession(options: SessionStartOptions): RunningSession {
-  const { config, character, fakeSession } = options
+  const { config, character, fakeSession, tokenUsageLog } = options
   const sessionId = randomUUID()
   // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
   // 境界は増やさない（原則3）。
   const chatArchive = createChatArchive()
-  // トークン消費の記録の口。書くかどうか・何を書くかを決めるのは
-  // `session-manager` なので、ここも口を渡すだけ。
-  const tokenUsageLog = createTokenUsageLog()
   const manager = createSessionManager({
     now: Date.now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
@@ -87,6 +89,8 @@ export function startSession(options: SessionStartOptions): RunningSession {
     // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を
     // 渡すだけ。
     chatArchive,
+    // トークン消費の記録の口。書くかどうか・何を書くかを決めるのは `session-manager` なので、
+    // ここも受け取った口を渡すだけ。
     tokenUsageLog,
   })
 

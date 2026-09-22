@@ -1,5 +1,5 @@
-// いま出している画面（会話 / キャラクター / 作る）を `location.hash` から読む
-// （`docs/design.md` 13.6 / 6.2。**ルーターのライブラリは入れない** — 画面は3つで、
+// いま出している画面（会話 / キャラクター / 作る / トークン消費）を `location.hash` から読む
+// （`docs/design.md` 13.6 / 6.2。**ルーターのライブラリは入れない** — 画面は4つで、
 // 分岐は hook 1つで足りる）。
 //
 // **Context ではなく `useSyncExternalStore`** にしてあるのは、正典が React の外
@@ -14,7 +14,7 @@
 import { useSyncExternalStore } from "react"
 
 /** 出している画面。hash が対応しない値のときは会話の画面に落ちる。 */
-export type Screen = "conversation" | "character" | "character-create"
+export type Screen = "conversation" | "character" | "character-create" | "token-usage"
 
 /**
  * 画面と `location.hash` の対応。**会話の画面は `"#"`**（`location.hash` としては空文字に
@@ -25,6 +25,7 @@ const SCREEN_HASH = {
   conversation: "#",
   character: "#character",
   "character-create": "#character/new",
+  "token-usage": "#token-usage",
 } as const satisfies Readonly<Record<Screen, string>>
 
 export function useScreen(): Screen {
@@ -56,6 +57,9 @@ function readScreen(): Screen {
   }
   if (hash === SCREEN_HASH["character-create"]) {
     return "character-create"
+  }
+  if (hash === SCREEN_HASH["token-usage"]) {
+    return "token-usage"
   }
   return "conversation"
 }

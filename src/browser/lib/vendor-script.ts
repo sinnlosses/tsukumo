@@ -3,8 +3,8 @@
 // （`docs/requirements.md` 4.2）ので、`<head>` へ置くのはここが最初に呼ばれた瞬間。
 //
 // 同じ URL を何度読み込んでも1回のリクエストで済むよう、**読み込み中の Promise をモジュールの
-// トップレベルで覚えておく**（`src/browser/features/main-view/markdown/mermaid-block.tsx` / `chart-block.tsx` の両方、
-// 複数のブロックが同時に現れても、実際に `<script>` を足すのは最初の1回だけ）。
+// トップレベルで覚えておく**（図もグラフも、複数のブロックが同時に現れて実際に `<script>` を
+// 足すのは最初の1回だけ）。**読み手が2つ以上ある**ので `lib/` に置く（`docs/design.md` 2章）。
 
 const loaded = new Map<string, Promise<void>>()
 

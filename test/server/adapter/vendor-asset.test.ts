@@ -30,7 +30,7 @@ describe("readVendorAsset", () => {
     const asset = readVendorAsset("mermaid.min.js")
 
     // ブラウザ側は `<script src>` で読んでグローバルの `mermaid` を使う
-    // （`src/browser/features/main-view/markdown/vendor-globals.d.ts`）ので、ESM 版を配ると
+    // （`src/browser/vendor-global.d.ts`）ので、ESM 版を配ると
     // 読めても何も生えない。
     expect(asset?.content.toString("utf8")).toContain("mermaid")
     expect(asset?.content.toString("utf8", 0, 200)).not.toContain("import")

@@ -8,11 +8,13 @@ import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
 import { type UiBundle } from "./server/adapter/bundle.ts"
+import { localDateKey } from "./server/adapter/local-time.ts"
 import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
+import { summarizeRecentTokenUsage, type TokenUsageLog } from "./server/core/token-usage.ts"
 import { type RunningSession } from "./session-start.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
 
@@ -26,6 +28,11 @@ export type ViewDeliveryOptions = {
   readonly bundle: UiBundle
   /** `/character/<file>` に配る1件の出どころ。 */
   readonly character: CurrentCharacter
+  /**
+   * トークン消費の記録の読み口（`/token-usage` に配る集計の出どころ。持ち主は `src/main.ts`）。
+   * **ここで読むのは要求が来たときだけ**で、配信を始める時点ではファイルに触らない。
+   */
+  readonly tokenUsageLog: TokenUsageLog
   /**
    * `src/browser/` を見張り、保存のたびに組み立て直して開いているタブへ取り直しを押すか
    * （`TSUKUMO_WATCH_UI`）。
@@ -50,7 +57,7 @@ export type ViewDeliveryResult =
  */
 export async function startViewDelivery(options: ViewDeliveryOptions): Promise<ViewDeliveryResult> {
   // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
-  // ビューサーバ（`/repository-file`）と WebSocket の両方が同じ1つを見る。
+  // ビューサーバ（`/repository-file` と `/token-usage`）と WebSocket の3つが同じ1つを見る。
   const token = createStartupToken()
   // **`TSUKUMO_WATCH_UI` のときだけ組み立て直したものへ丸ごと差し替わる**ので、サーバには
   // 取り出し口だけを渡す。
@@ -67,6 +74,10 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       assets: { uiScript: () => assets.uiScript, styleSheet: () => assets.styleSheet },
       serveCharacterAsset: (fileName) => options.character.serveAsset(fileName),
       listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
+      // **「今日」を決めるのは配線層**（core は今日が何日かを知らない。OS のタイムゾーンに
+      // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
+      readTokenUsageSummary: (days) =>
+        summarizeRecentTokenUsage(options.tokenUsageLog, localDateKey(new Date()), days),
       token,
     }),
   )

@@ -6,6 +6,12 @@ import {
   type ViewServer,
 } from "../../../src/server/adapter/server.ts"
 import { REPOSITORY_FILE_PATH } from "../../../src/shared/repository-file.ts"
+import {
+  EMPTY_TOKEN_USAGE_SUMMARY,
+  TOKEN_USAGE_SUMMARY_PATH,
+  type TokenUsageDays,
+  type TokenUsageSummary,
+} from "../../../src/shared/token-usage-summary.ts"
 
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。
 const TOKEN = createStartupToken()
@@ -31,16 +37,23 @@ function noRepositoryFile(): Promise<readonly string[]> {
   return Promise.resolve([])
 }
 
+/** 集計の代役。既定では記録が1件も無い期間と同じ（3つの軸がどれも空）。 */
+function noTokenUsage(): TokenUsageSummary {
+  return EMPTY_TOKEN_USAGE_SUMMARY
+}
+
 async function startView(
   serveCharacterAsset: (
     fileName: string,
   ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
   listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
+  readTokenUsageSummary: (days: TokenUsageDays) => TokenUsageSummary = noTokenUsage,
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
     serveCharacterAsset,
     listRepositoryFiles,
+    readTokenUsageSummary,
     token: TOKEN,
   })
   runningView = server
@@ -53,6 +66,18 @@ function repositoryFileUrl(server: ViewServer, token: string | undefined): strin
   return token === undefined
     ? `${origin}${REPOSITORY_FILE_PATH}`
     : `${origin}${REPOSITORY_FILE_PATH}?t=${token}`
+}
+
+/** 集計の URL（起動トークンと、指定があれば期間の長さ付き）。 */
+function tokenUsageUrl(server: ViewServer, token: string | undefined, days?: number): string {
+  const url = new URL(`${viewOrigin(server)}${TOKEN_USAGE_SUMMARY_PATH}`)
+  if (token !== undefined) {
+    url.searchParams.set("t", token)
+  }
+  if (days !== undefined) {
+    url.searchParams.set("days", String(days))
+  }
+  return url.toString()
 }
 
 afterEach(async () => {
@@ -203,6 +228,67 @@ describe("startViewServer", () => {
 
     expect((await fetch(repositoryFileUrl(server, undefined))).status).toBe(403)
     expect((await fetch(repositoryFileUrl(server, "ちがう"))).status).toBe(403)
+    expect(asked).toBe(0)
+  })
+
+  it("/token-usage は、正しいトークンなら集計を JSON で返す", async () => {
+    const summary = {
+      byDay: [
+        {
+          date: "2026-09-21",
+          totals: {
+            inputTokens: 12,
+            outputTokens: 34,
+            thinkingTokens: 5,
+            cacheReadInputTokens: 6,
+            cacheCreationInputTokens: 7,
+            costUsd: 0.5,
+          },
+        },
+      ],
+      byModel: [],
+      byTool: [{ name: "Bash", calls: 3, resultBytes: 800 }],
+    } satisfies TokenUsageSummary
+    const server = await startView(noCharacterAsset, noRepositoryFile, () => summary)
+
+    const response = await fetch(tokenUsageUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("application/json")
+    expect(await response.json()).toEqual(summary)
+  })
+
+  it("/token-usage は、days をそのまま畳む側へ渡す（選べない値は既定の7日に落ちる）", async () => {
+    const asked: number[] = []
+    const server = await startView(noCharacterAsset, noRepositoryFile, (days) => {
+      asked.push(days)
+      return EMPTY_TOKEN_USAGE_SUMMARY
+    })
+
+    await fetch(tokenUsageUrl(server, TOKEN, 30))
+    await fetch(tokenUsageUrl(server, TOKEN, 999))
+
+    expect(asked).toEqual([30, 7])
+  })
+
+  it("/token-usage は、記録が1件も無くても空の集計を 200 で返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(tokenUsageUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(EMPTY_TOKEN_USAGE_SUMMARY)
+  })
+
+  it("/token-usage は、トークンが無い・違うときは 403（集計を作りにも行かない）", async () => {
+    let asked = 0
+    const server = await startView(noCharacterAsset, noRepositoryFile, () => {
+      asked += 1
+      return EMPTY_TOKEN_USAGE_SUMMARY
+    })
+
+    expect((await fetch(tokenUsageUrl(server, undefined))).status).toBe(403)
+    expect((await fetch(tokenUsageUrl(server, "ちがう"))).status).toBe(403)
     expect(asked).toBe(0)
   })
 

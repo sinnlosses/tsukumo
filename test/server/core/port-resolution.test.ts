@@ -14,15 +14,17 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../../src/server/core/port-resolution.ts"
+import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../src/shared/token-usage-summary.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewAssets: ViewAssets = { uiScript: () => "", styleSheet: () => "" }
 
-/** 同じく、配るものの中身は見ない（素材もファイル一覧も空で足りる）。 */
+/** 同じく、配るものの中身は見ない（素材もファイル一覧も集計も空で足りる）。 */
 const emptyViewServerOptions: ViewServerOptions = {
   assets: emptyViewAssets,
   serveCharacterAsset: () => undefined,
   listRepositoryFiles: () => Promise.resolve([]),
+  readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
   token: "架空の起動トークン",
 }
 

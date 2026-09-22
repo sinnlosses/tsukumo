@@ -1,0 +1,144 @@
+/* トークン消費の画面（`src/browser/features/token-usage/`）。**会話の画面と入れ替わる**ので、
+   キャラクター画面と同じく1枚のページとして縦に流す — 4領域の grid も仕切りも持たない。
+   **横スクロールを出さない**のがこの画面の要点で、表は必ず幅いっぱいに収め、はみ出しうる
+   ものは数の単位（k / M）と行数の上限で先に減らしてある。 */
+.token-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 0.25rem 2rem;
+}
+.token-usage-bar {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+/* 戻る口は**字だけ**（13.1 原則1）。色は `ink` のままで、下線だけでリンクだと分かる。 */
+.token-usage-back {
+  color: var(--ink);
+  font-size: var(--font-label);
+  text-decoration: underline;
+}
+.token-usage-back:hover {
+  color: var(--accent);
+}
+.token-usage-title {
+  margin: 0;
+  font-size: var(--font-heading);
+  font-weight: normal;
+}
+.token-usage-period {
+  display: flex;
+  margin-left: auto;
+  gap: 0.4rem;
+}
+/* 期間の切り替え。**選ばれている側は地を1段上げる**（`aria-pressed`。色だけに頼らない）。 */
+.token-usage-choice {
+  padding: 0.15rem 0.6rem;
+  background: none;
+  color: var(--ink-quiet);
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.token-usage-choice:hover {
+  border-color: var(--accent);
+}
+.token-usage-choice[aria-pressed="true"] {
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+
+/* 期間の合計。**1行に並べ、入りきらなければ折り返す**（狭い画面でも横に溢れない）。 */
+.token-usage-total {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+  margin: 0;
+}
+.token-usage-figure {
+  display: flex;
+  flex-direction: column;
+}
+.token-usage-figure-label {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 数が主（13.3 のタイプスケールの中で最大の段）。桁が動いても揃うよう等幅の数字にする。 */
+.token-usage-figure-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.token-usage-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.token-usage-section-label {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+
+/* グラフの入れ物。**高さをここで決める**（`maintainAspectRatio: false` なので、この箱の
+   大きさがそのままグラフの大きさになる。`position: relative` は Chart.js が縮むために要る —
+   静的な位置のままだと、親が縮んでも canvas が縮まず横に溢れる）。 */
+.token-usage-canvas {
+  position: relative;
+  width: 100%;
+  height: 16rem;
+}
+
+/* 表は**必ず幅いっぱいに収める**（`table-layout: fixed`。列の中身で幅が決まる auto だと、
+   モデル名が長い回に横へ溢れる）。長い名前は折り返す（body の `overflow-wrap: anywhere`）。 */
+.token-usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--font-secondary);
+}
+.token-usage-table th,
+.token-usage-table td {
+  padding: 0.2rem 0.4rem;
+  text-align: right;
+}
+/* 見出しの行は本文の地の上に**浮かせる**（13.2 の3段目）。 */
+.token-usage-table thead th {
+  background: var(--surface-raised);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+.token-usage-table thead th:first-child {
+  text-align: left;
+}
+.token-usage-table tbody tr + tr {
+  border-top: 1px solid var(--rule);
+}
+/* 数は等幅・桁揃え（大小を縦に読むため）。 */
+.token-usage-table td {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* 機械の名前（モデル・ツール）は等幅（13.1 原則3）。 */
+.token-usage-name {
+  font-family: var(--font-mono);
+  font-weight: normal;
+  text-align: left;
+}
+
+/* 記録が無い・取れなかった・描けなかった・続きがある、の一言。 */
+.token-usage-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}

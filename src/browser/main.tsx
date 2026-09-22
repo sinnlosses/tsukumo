@@ -32,6 +32,7 @@ import { Dispatch } from "./features/dispatch/dispatch.tsx"
 import { Layout } from "./features/layout/layout.tsx"
 import { MainView } from "./features/main-view/main-view.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
+import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
 import { QuestionFocusProvider } from "./stores/question-focus.tsx"
 import { useScreen } from "./stores/screen.tsx"
 import { SessionProvider, useSessionSelector } from "./stores/session.tsx"
@@ -70,6 +71,7 @@ function Root(): ReactElement {
       </Activity>
       {screen === "character" ? <CharacterScreen /> : null}
       {screen === "character-create" ? <CharacterCreate /> : null}
+      {screen === "token-usage" ? <TokenUsageScreen /> : null}
     </>
   )
 }

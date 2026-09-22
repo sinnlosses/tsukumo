@@ -13,14 +13,14 @@
 // する（mermaid 11.15.0 と 12.0.0 の `dist/mermaid.min.js` で確認済み: このフラグが立っていると、
 // 内部の描画関数はキャッチした例外をそのまま再送出する）。`mermaid.parse()` による事前判定は使わない
 // — 読み込み自体の失敗（スクリプトが読めない）も含めて**1つの catch で受け止められる**ため
-// （読み込み失敗は `vendor-script.ts` が `Error(src)` を投げるので、エラー文はその URL になる。
+// （読み込み失敗は `lib/vendor-script.ts` が `Error(src)` を投げるので、エラー文はその URL になる。
 // まれにしか起きない経路なので、それ以上の作り込みはしない）。
 
 import { useEffect, useRef, useState, type ReactElement } from "react"
 
 import { vendorAssetPath } from "../../../../shared/vendor-asset.ts"
+import { loadVendorScript } from "../../../lib/vendor-script.ts"
 import styles from "../main-view.module.css"
-import { loadVendorScript } from "./vendor-script.ts"
 
 const MERMAID_SRC = vendorAssetPath("mermaid.min.js")
 
