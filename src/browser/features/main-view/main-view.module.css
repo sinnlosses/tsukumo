@@ -386,6 +386,20 @@ h2.turn-request {
   margin: 0 0 0.3rem;
   font-size: var(--font-body);
 }
+/* 問と答えの塊（`.question-record`）どうしの区切り。塊の中（問と答えの間 0.3rem・答えと
+   preview の間 0.5rem）より広い間隔と罫線を、2つ目以降の塊にだけ足す（最初の塊の上には
+   要らない。`.tool-block` 自体の枠がすでに境目を作っている）。罫線は `rule` のままにし、
+   `accent` を混ぜない — `accent` は同じ画面の中で「選んだ答え」の印（`.question-mark`）に
+   使っていて、区切り線まで染めると同じ色が2つの意味（選んだ・区切り）を指すことになる
+   （13.1 原則5、重ねがけを避ける）。地の段差（13.2）も採らない —
+   `.question-record` は `.tool-block` の地（`surface`）をそのまま使う本文の並びで、塊ごとに
+   `ground` / `surface-raised` を挟むと「沈む・基準・浮く」の意味（13.2）が
+   問答の順序ではなく塊の境目を指すことになり、他の場所の地の段差と意味がぶつかる。 */
+.question-record + .question-record {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule);
+}
 .question-options {
   list-style: none;
   margin: 0;
@@ -401,6 +415,13 @@ h2.turn-request {
 /* 自由入力の答え（選択肢に無いので、並びの末尾に別の行で出る）。 */
 .question-option.is-free-text {
   font-style: italic;
+}
+/* 選んだ印（`●`/`○`）。`question-record.tsx` の `QuestionMark` が文字を包む。選んだ側だけ
+   `accent` を当て、選ばなかった `○` は親（`.question-option` / `.question-preview-label`）の
+   色をそのまま継ぐ。`●`/`○` の形の違いがすでに選択を運んでいる（13.1 原則5）ので、色は
+   その上への重ねがけになる。 */
+.question-mark.is-chosen {
+  color: var(--accent);
 }
 /* 比べた内容の折りたたみ（`question-record.tsx`）。`.detail-block details` と同じ見た目だが、
    こちらは `.detail-block` の外側にいるので、そのセレクタが届かない。 */

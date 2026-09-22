@@ -63,7 +63,7 @@ function QuestionAnswers(props: {
             className={`${styles["question-option"]}${chosen ? ` ${styles["is-chosen"]}` : ""}`}
             key={option.label}
           >
-            {chosen ? "●" : "○"} {option.label}
+            <QuestionMark chosen={chosen} /> {option.label}
           </li>
         )
       })}
@@ -72,7 +72,7 @@ function QuestionAnswers(props: {
           className={`${styles["question-option"]} ${styles["is-chosen"]} ${styles["is-free-text"]}`}
           key={text}
         >
-          ● {text}（自由入力）
+          <QuestionMark chosen={true} /> {text}（自由入力）
         </li>
       ))}
     </ul>
@@ -123,12 +123,30 @@ function QuestionPreviews(props: {
             // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ）に乗せる。
             <div className={styles["detail-block"]} key={preview.label}>
               <p className={styles["question-preview-label"]}>
-                {preview.chosen ? "●" : "○"} {preview.label}
+                <QuestionMark chosen={preview.chosen} /> {preview.label}
               </p>
               <Markdown text={preview.preview} />
             </div>
           ))
         : null}
     </details>
+  )
+}
+
+/**
+ * 選んだ印（`●`/`○`）を包む要素。**文字そのものは常に DOM に残す**（`::before` に移すと
+ * 支援技術とコピーで拾えなくなるため）。色は文字の上への重ねがけで付け、選んだ側
+ * （`chosen`）だけに `accent` を当てる。選ばなかった `○` は親の `.question-option` の色を
+ * そのまま継ぎ、素の `accent` を当てない（`docs/design.md` 13.1 原則1が許すのは
+ * 「選んだ選択肢」で、選ばなかった側ではない）。答え待ちの箱
+ * （`dispatch.module.css` の `.question-choice-mark:checked::before`）と同じ、
+ * 「選んだ＝accent」という意味を記録の側にも揃える。折りたたみの中の preview の札
+ * （`question-preview-label`）も同じ印を使うので、ここで共有する。
+ */
+function QuestionMark(props: { readonly chosen: boolean }): ReactElement {
+  return (
+    <span className={`${styles["question-mark"]}${props.chosen ? ` ${styles["is-chosen"]}` : ""}`}>
+      {props.chosen ? "●" : "○"}
+    </span>
   )
 }

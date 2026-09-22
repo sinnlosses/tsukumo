@@ -18,6 +18,11 @@
 // {@link ChatSpeech} と `hooks/use-speech-growth.ts`）。**サーバの契約は変えていない** —
 // 1件まるごと届いたセリフを、ブラウザ側が1文字ずつ出すだけ。
 //
+// **返事を待っている間はログの末尾に「...」を出す**（docs/design.md 13.7「返事を待つ間の
+// 「...」」。{@link ChatTyping}）。育つ吹き出しとは別の行で、そのターンの `speech` が届くと
+// 入れ替わる。**サーバの契約は増やしていない** — 今のターンでまだ `speak` が呼ばれていないかは
+// `SessionState.speechCalledInTurn` にすでにある。
+//
 // **立ち絵をつつくと話しかけてくれる**（docs/design.md 13.7。{@link NudgePortrait}）。
 // 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
 // （`src/server/core/chat-nudge.ts`）。送った文面はログにも記録にも残らない。
@@ -106,6 +111,7 @@ export function ChatView(): ReactElement {
   const model = useSessionSelector((session) => session.state.model)
   const character = useSessionSelector((session) => session.state.character)
   const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const speechCalledInTurn = useSessionSelector((session) => session.state.speechCalledInTurn)
   const entries = chatLogEntries(records)
   const outfit = resolveOutfit(model)
 
@@ -128,6 +134,10 @@ export function ChatView(): ReactElement {
   // ためのログが、開くたびに端から書き直されることになる。
   const [initialSpeechCount] = useState(speechCount)
   const growingIndex = speechCount > initialSpeechCount ? latestSpeechIndex : undefined
+  // 返事を待っている間だけ、ログの末尾に「...」を出す（docs/design.md 13.7「返事を待つ間の
+  // 「...」」）。**`SessionState` に新しい旗は増やさない** — 今のターンでまだ `speak` が
+  // 呼ばれていないかは `speechCalledInTurn` が既に持っている。
+  const showTyping = turnInProgress && !speechCalledInTurn
   // 表情は「留めた行 → 最新」の順に決まる（docs/design.md 13.7）。
   // **留めていないときに読むのは `speechExpression`** で、最新の行の表情ではない —
   // 次のターンが始まると `speak` が来るまで既定へ戻る（キャラビューと同じ扱い。表情の源は
@@ -160,6 +170,7 @@ export function ChatView(): ReactElement {
         entries={entries}
         selectedIndex={selectedIndex}
         growingIndex={growingIndex}
+        showTyping={showTyping}
         onToggle={(index) => {
           // **留めた行をもう一度押したら「最新」へ戻す**（新しいセリフを待たずに追従へ戻す道）。
           // 見るのは `selectedIndex` ではなく `pinnedIndex` — 既定で印が付いている最新の行を
@@ -299,6 +310,10 @@ function ChatLog(props: {
   readonly selectedIndex: number | undefined
   /** 育てる行（docs/design.md 13.7）。届いたばかりのセリフが無ければどこも育たない。 */
   readonly growingIndex: number | undefined
+  /**
+   * 返事を待っている間、末尾に「...」を出すか（docs/design.md 13.7「返事を待つ間の「...」」）。
+   */
+  readonly showTyping: boolean
   readonly onToggle: (index: number) => void
 }): ReactElement {
   const logRef = useRef<HTMLDivElement>(null)
@@ -368,40 +383,73 @@ function ChatLog(props: {
 
   return (
     <div className={styles["chat-log"]} ref={logRef}>
-      {count === 0 ? (
+      {count === 0 && !props.showTyping ? (
         <p className={styles["chat-empty"]}>{EMPTY_LOG_MESSAGE}</p>
       ) : (
-        props.entries.map((entry, index) =>
-          // 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない細い線1本**で、
-          // 押せない・畳めない（利用者の操作の対象にしない。docs/requirements.md 4.9）。`<hr>`
-          // は元々「文言を持たない区切り」を表す要素なので、ここに説明文を足す必要が無い。
-          entry.speaker === "boundary" ? (
-            <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
-          ) : entry.speaker === "character" ? (
-            <ChatSpeech
-              // 並びは末尾に積むだけで、途中に差し込まれることも並べ替えもない。
-              key={index}
-              text={entry.text}
-              selected={index === props.selectedIndex}
-              grow={index === props.growingIndex}
-              onToggle={() => {
-                props.onToggle(index)
-              }}
-            />
-          ) : (
-            // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
-            // **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。
-            <div
-              key={index}
-              className={`${styles["chat-entry"]} ${styles["chat-entry-user"]}`}
-              data-speaker="user"
-            >
-              {entry.text}
-              <PromptImageThumbnails images={entry.images} />
-            </div>
-          ),
-        )
+        <>
+          {props.entries.map((entry, index) =>
+            // 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない細い線1本**で、
+            // 押せない・畳めない（利用者の操作の対象にしない。docs/requirements.md 4.9）。`<hr>`
+            // は元々「文言を持たない区切り」を表す要素なので、ここに説明文を足す必要が無い。
+            entry.speaker === "boundary" ? (
+              <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
+            ) : entry.speaker === "character" ? (
+              <ChatSpeech
+                // 並びは末尾に積むだけで、途中に差し込まれることも並べ替えもない。
+                key={index}
+                text={entry.text}
+                selected={index === props.selectedIndex}
+                grow={index === props.growingIndex}
+                onToggle={() => {
+                  props.onToggle(index)
+                }}
+              />
+            ) : (
+              // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
+              // **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。
+              <div
+                key={index}
+                className={`${styles["chat-entry"]} ${styles["chat-entry-user"]}`}
+                data-speaker="user"
+              >
+                {entry.text}
+                <PromptImageThumbnails images={entry.images} />
+              </div>
+            ),
+          )}
+          {/* 返事を待っている間だけ末尾に出す「...」（docs/design.md 13.7「返事を待つ間の
+              「...」」）。育つ吹き出しとは別の行で、そのターンの `speech` が届くとこの行は
+              消え、届いたセリフの行が育ち始める。 */}
+          {props.showTyping && <ChatTyping />}
+        </>
       )}
+    </div>
+  )
+}
+
+/**
+ * 返事を待っている間、ログの末尾に出す「...」（docs/design.md 13.7「返事を待つ間の「...」」。
+ * Discord などと同じ、キャラクター側の吹き出しとしての typing indicator）。
+ *
+ * **育つ吹き出し（{@link ChatSpeech}）の初期状態ではなく、別の行**——セリフの文字がまだ
+ * 無いので育てようが無い。そのターンの `speech` が届くと `showTyping` が下りてこの行は消え、
+ * 入れ替わりに届いたセリフの行（{@link ChatSpeech}）が育ち始める。
+ *
+ * **押せる行にしない**（利用者の発言の行と同じ立場。遡る先の表情を持たないので `role="button"`
+ * も `tabIndex` も付けない）。ドット3つは装飾で、待っていること自体は `<TurnStatus>` の経過
+ * 表示（`features/dispatch/turn-status.tsx`）が文字で伝えているので、支援技術の木からは
+ * `aria-hidden` で外す。
+ */
+function ChatTyping(): ReactElement {
+  return (
+    <div
+      className={`${styles["chat-entry"]} ${styles["chat-entry-typing"]}`}
+      data-speaker="typing"
+      aria-hidden="true"
+    >
+      <span className={styles["chat-typing-dot"]} />
+      <span className={styles["chat-typing-dot"]} />
+      <span className={styles["chat-typing-dot"]} />
     </div>
   )
 }
