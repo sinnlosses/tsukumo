@@ -14,6 +14,10 @@
 // 気づけなかった）。**枠も操作子も増やさない**（13.1 原則2）。**遡るのは押したときだけ**で、
 // 行に載せただけでは立ち絵は動かない（2026-09-22 ユーザーの指示で、先に応える仕掛けを戻した）。
 //
+// **届いたばかりのセリフは末尾の行で育つ**（docs/design.md 13.7「末尾のセリフは育つ」。
+// {@link ChatSpeech} と `hooks/use-speech-growth.ts`）。**サーバの契約は変えていない** —
+// 1件まるごと届いたセリフを、ブラウザ側が1文字ずつ出すだけ。
+//
 // **立ち絵をつつくと話しかけてくれる**（docs/design.md 13.7。{@link NudgePortrait}）。
 // 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
 // （`src/server/core/chat-nudge.ts`）。送った文面はログにも記録にも残らない。
@@ -22,7 +26,15 @@
 // キャラビューが持つ4つの動き（`features/character-view/` の `usePortraitMotion`）は
 // 再現していない。手触りを見てから詰める。
 
-import { useEffect, useId, useRef, useState, type MouseEvent, type ReactElement } from "react"
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactElement,
+} from "react"
 
 import { resolveOutfitAccent, resolvePortraitUrl } from "../../../shared/character.ts"
 import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
@@ -32,6 +44,7 @@ import { Portrait } from "../../components/portrait.tsx"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./chat-view.module.css"
+import { useSpeechGrowth } from "./hooks/use-speech-growth.ts"
 
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
@@ -107,8 +120,14 @@ export function ChatView(): ReactElement {
   const [viewed, setViewed] = useState<ViewedSpeech>({ kind: "latest" })
   const speechCount = countSpeeches(entries)
   const pinnedIndex = pinnedSpeechIndex(viewed, speechCount)
+  const latestSpeechIndex = lastSpeechIndex(entries)
   // 印を付ける行 = 立ち絵が従っている行（docs/design.md 13.7）。留めていなければ最新のセリフ。
-  const selectedIndex = pinnedIndex ?? lastSpeechIndex(entries)
+  const selectedIndex = pinnedIndex ?? latestSpeechIndex
+  // 育てる行（docs/design.md 13.7「末尾のセリフは育つ」）。**育つのは画面を開いたあとに届いた
+  // セリフだけ**で、開いた時点で並んでいた記録（前の雑談の続き）には掛からない——遡って読む
+  // ためのログが、開くたびに端から書き直されることになる。
+  const [initialSpeechCount] = useState(speechCount)
+  const growingIndex = speechCount > initialSpeechCount ? latestSpeechIndex : undefined
   // 表情は「留めた行 → 最新」の順に決まる（docs/design.md 13.7）。
   // **留めていないときに読むのは `speechExpression`** で、最新の行の表情ではない —
   // 次のターンが始まると `speak` が来るまで既定へ戻る（キャラビューと同じ扱い。表情の源は
@@ -140,6 +159,7 @@ export function ChatView(): ReactElement {
       <ChatLog
         entries={entries}
         selectedIndex={selectedIndex}
+        growingIndex={growingIndex}
         onToggle={(index) => {
           // **留めた行をもう一度押したら「最新」へ戻す**（新しいセリフを待たずに追従へ戻す道）。
           // 見るのは `selectedIndex` ではなく `pinnedIndex` — 既定で印が付いている最新の行を
@@ -277,12 +297,11 @@ function ChatLog(props: {
   readonly entries: readonly ChatLogEntry[]
   /** 印を付ける行（= 立ち絵が従っている行）。セリフが1件も無ければどこにも付かない。 */
   readonly selectedIndex: number | undefined
+  /** 育てる行（docs/design.md 13.7）。届いたばかりのセリフが無ければどこも育たない。 */
+  readonly growingIndex: number | undefined
   readonly onToggle: (index: number) => void
 }): ReactElement {
   const logRef = useRef<HTMLDivElement>(null)
-  // 押し始めた場所。**セリフの行は文字をドラッグで選べる**ので、選び終えて手を離したときの
-  // click と、押した click を、動いた距離で見分ける（{@link isSelectionDrag}）。
-  const pressOriginRef = useRef<PressOrigin | undefined>(undefined)
   // 利用者が下端付近を読んでいるかどうか。新着が来た「あと」に測ったのでは元の位置が
   // わからないので、スクロール操作のたびに更新しておく（初期値は true — まだ何も
   // 積まれていない・積まれたばかりの状態は下端に等しい）。
@@ -307,15 +326,45 @@ function ChatLog(props: {
     }
   }, [])
 
-  // React の外にある DOM（スクロール位置）との同期。件数が増えたときに、下端付近を
-  // 読んでいた場合だけ最新へ寄せる（読み返している最中に下へ攫わない。docs/design.md 13.7）。
-  useEffect(() => {
+  // React の外にある DOM（スクロール位置）への書き込み。**下端付近を読んでいたときだけ**
+  // 最新へ寄せる（読み返している最中に下へ攫わない。docs/design.md 13.7）。
+  //
+  // 呼ぶのは2か所で、**どちらも同じこの規則に従う**: 件数が増えたとき（下の effect）と、
+  // 末尾のセリフが育って高さが伸びたとき（その下の effect）。**育っている最中に上へ転がせば
+  // そこで追従が外れる**（寄せた直後の `scroll` は下端に居るままなので、自分で自分を外さない）。
+  const stickToBottom = useCallback(() => {
     const log = logRef.current
-    if (log === null || count === 0 || !nearBottomRef.current) {
+    if (log === null || !nearBottomRef.current) {
       return
     }
     log.scrollTop = log.scrollHeight
-  }, [count])
+  }, [])
+
+  useEffect(() => {
+    if (count === 0) {
+      return
+    }
+    stickToBottom()
+  }, [count, stickToBottom])
+
+  // 外部システム（DOM の文字の変化）の購読。**末尾のセリフは1文字ずつ増えて育つ**
+  // （{@link ChatSpeech}）ので、件数が変わらないまま高さが伸びる。伸びたぶんを同じ規則で
+  // 追いかける口がここ。
+  //
+  // **行の側から知らせ返さない**（育っている行がログのスクロールを知らずに済む）。見るのは
+  // 文字の変化だけなので、押して印が移ったとき（class と `aria-pressed` が変わるだけ）には
+  // 動かない。
+  useEffect(() => {
+    const log = logRef.current
+    if (log === null) {
+      return
+    }
+    const observer = new MutationObserver(stickToBottom)
+    observer.observe(log, { subtree: true, characterData: true, childList: true })
+    return () => {
+      observer.disconnect()
+    }
+  }, [stickToBottom])
 
   return (
     <div className={styles["chat-log"]} ref={logRef}>
@@ -329,43 +378,16 @@ function ChatLog(props: {
           entry.speaker === "boundary" ? (
             <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
           ) : entry.speaker === "character" ? (
-            // **`<button>` ではなく `role="button"` の `<div>`**。ブラウザは
-            // `<button>` の中の文字をドラッグで掴ませず（`user-select` を何にしても選べないことを
-            // 実機の Chrome で確認した）、**セリフをコピーできなかった**。押せることは role と
-            // `aria-pressed` で表し、キーの受けだけ自前で足す（{@link isActivationKey}）。
-            <div
+            <ChatSpeech
               // 並びは末尾に積むだけで、途中に差し込まれることも並べ替えもない。
               key={index}
-              className={`${styles["chat-entry"]} ${styles["chat-entry-character"]}${
-                index === props.selectedIndex ? ` ${styles["is-selected"]}` : ""
-              }`}
-              data-speaker="character"
-              role="button"
-              tabIndex={0}
-              aria-pressed={index === props.selectedIndex}
-              onMouseDown={(event) => {
-                pressOriginRef.current = { x: event.clientX, y: event.clientY }
-              }}
-              onClick={(event) => {
-                const origin = pressOriginRef.current
-                pressOriginRef.current = undefined
-                // **文字を選んだだけのときは遡らない**（選び終えて手を離すと click も飛ぶ）。
-                if (isSelectionDrag(origin, event)) {
-                  return
-                }
+              text={entry.text}
+              selected={index === props.selectedIndex}
+              grow={index === props.growingIndex}
+              onToggle={() => {
                 props.onToggle(index)
               }}
-              onKeyDown={(event) => {
-                if (!isActivationKey(event.key)) {
-                  return
-                }
-                // Space はログを1画面送る既定の動作を持つので、押したことにする側で止める。
-                event.preventDefault()
-                props.onToggle(index)
-              }}
-            >
-              {entry.text}
-            </div>
+            />
           ) : (
             // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
             // **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。
@@ -380,6 +402,76 @@ function ChatLog(props: {
           ),
         )
       )}
+    </div>
+  )
+}
+
+/**
+ * キャラクターのセリフ1件（docs/design.md 13.7）。**押すとその時の表情へ立ち絵が遡り**、
+ * **届いたばかりの1件はここで育つ**（{@link useSpeechGrowth}）。
+ *
+ * **`<button>` ではなく `role="button"` の `<div>`**。ブラウザは `<button>` の中の文字を
+ * ドラッグで掴ませず（`user-select` を何にしても選べないことを実機の Chrome で確認した）、
+ * **セリフをコピーできなかった**。押せることは role と `aria-pressed` で表し、キーの受けだけ
+ * 自前で足す（{@link isActivationKey}）。
+ *
+ * **育っている最中の押しは打ち切りに使い、遡りはその回には起きない**（docs/design.md 13.7）。
+ * 揃うより先に留めても、何を留めたのかが読めないため。
+ */
+function ChatSpeech(props: {
+  readonly text: string
+  readonly selected: boolean
+  readonly grow: boolean
+  readonly onToggle: () => void
+}): ReactElement {
+  const growth = useSpeechGrowth(props.text, props.grow)
+  // 押し始めた場所。**セリフの行は文字をドラッグで選べる**ので、選び終えて手を離したときの
+  // click と、押した click を、動いた距離で見分ける（{@link isSelectionDrag}）。
+  const pressOriginRef = useRef<PressOrigin | undefined>(undefined)
+
+  return (
+    <div
+      className={`${styles["chat-entry"]} ${styles["chat-entry-character"]}${
+        props.selected ? ` ${styles["is-selected"]}` : ""
+      }`}
+      data-speaker="character"
+      // 育っている間だけ立てる印（筆先を出す CSS の掛かり先と、目視・テストの手がかり）。
+      data-growing={growth.growing ? "yes" : undefined}
+      role="button"
+      tabIndex={0}
+      aria-pressed={props.selected}
+      onMouseDown={(event) => {
+        pressOriginRef.current = { x: event.clientX, y: event.clientY }
+      }}
+      onClick={(event) => {
+        const origin = pressOriginRef.current
+        pressOriginRef.current = undefined
+        // **育っている最中は、押しても遡らずその場で全文を出す**（文字を選ぼうとしたときも
+        // 同じ — 選べる字が揃う）。
+        if (growth.growing) {
+          growth.finish()
+          return
+        }
+        // **文字を選んだだけのときは遡らない**（選び終えて手を離すと click も飛ぶ）。
+        if (isSelectionDrag(origin, event)) {
+          return
+        }
+        props.onToggle()
+      }}
+      onKeyDown={(event) => {
+        if (!isActivationKey(event.key)) {
+          return
+        }
+        // Space はログを1画面送る既定の動作を持つので、押したことにする側で止める。
+        event.preventDefault()
+        if (growth.growing) {
+          growth.finish()
+          return
+        }
+        props.onToggle()
+      }}
+    >
+      {growth.shown}
     </div>
   )
 }
