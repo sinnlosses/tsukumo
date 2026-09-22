@@ -20910,3 +20910,384 @@ bun run check: 1119 pass / 0 fail / 92 files（typecheck・oxlint・format:check
   「会話内容の扱い」）。実験に使う依頼は当たり障りのない一言にする
 - 実験で作ったセッションは `~/.claude/projects/` に残る。**既存のセッションのファイルを
   消さない**
+
+## T-327
+
+**タスク**: キャラクターのテスト用の値を組み立て関数1つに寄せる
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+test/fixture/character.ts に characterInfo / characterDefinition / portraits / outfitAccents を置き、14ファイル18ブロックを差分渡しに書き換えた（import は14ファイル）。表情キーの行 222→59、accent: の行 29→17。寄せずに残したのは JSON リテラル（character-definition.test.ts 9行、character.test.ts と character-pack.test.ts の DEFINITION_JSON）と、立ち絵の枚数そのものが期待値の character-edit / character-create の埋めた枠。bun run check 1148 pass / 0 fail / 92 files（着手前と同数）。
+
+## 背景
+
+`test/` 配下の**15ファイル**が、キャラクターの値を**手で全キー書き下している**。表情キーを
+1行ずつ並べた行は **222行**、`accent:` の行は **29行**ある（実測。内訳は
+`grep -rcE "^\s+(default|thinking|proud|flustered|serious|curious|sad|excited|bored):" test/`）。
+
+```
+test/shared/character.test.ts                                  28
+test/shared/session-state.test.ts                              27
+test/shared/expression-choice.test.ts                          27
+test/browser/features/character-view/character-view.test.tsx   28
+test/server/adapter/character-pack.test.ts                     15
+（ほか10ファイル 9〜11行ずつ）
+```
+
+`Readonly<Record<Expression, string | undefined>>` は `?:` を使わない規約
+（`CLAUDE.md`「`| undefined` は5つの場所でだけ」）のため**全キーが必須**で、`EXPRESSIONS`
+（`src/shared/expression.ts:32`）に1つ足すたび、振る舞いを何も変えないまま各ファイルに1行ずつ
+増える（実測: 表情 `bored` を足したタスクの diff 22行のうち **20行が `bored: undefined` の1行**）。
+
+`test/fixture/` には `fake-session.json` しか無い。
+`docs/coding-standards.md`「### 消すかどうか」の表は既に「同じモックの準備が複数ファイルに
+重複している → 準備を共通のフィクスチャに寄せる」と言っているので、**規約の変更は要らない**
+（守れていないだけ）。
+
+## 解くべき論点
+
+- **組み立て関数のシグネチャ。** 差分だけ渡す形で、`portraits` のような入れ子を部分的に
+  上書きできるようにするか、浅い上書きに留めるか
+- **既定値の中身。** 立ち絵の URL を全表情に入れるか `default` だけにするか。「立ち絵の無い枠」
+  の数を期待値にしているテスト（`character-edit.test.tsx` / `character-create.test.tsx`）が
+  あるので、既定を変えるとそちらの期待値が動く
+- **寄せる範囲。** `CharacterInfo` を素で作っているテストと、`CharacterDefinition`
+  （`src/shared/character-definition.ts`。「この表情だけ無い」が意味を持つ側）を作っている
+  テストは形が違う。片方だけ寄せるか、2つの組み立て関数を置くか
+
+## やること
+
+1. `test/fixture/character.ts` に既定値と組み立て関数を置く。**オプション引数の中身は `?:` を
+   使ってよい5つ目の場所**に当たる（`CLAUDE.md`「`| undefined` は5つの場所でだけ」）
+2. 上の15ファイルを、**差分だけ渡す**形に書き換える
+3. 寄せると読みにくくなるテスト（立ち絵の有無そのものが主題のもの）は**寄せずに残し**、
+   どれをなぜ残したかを `evidence` に書く
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く。**件数が減っていない**こと）
+- 表情キーの行数が 222 から減っている（上の `grep` の合計値を前後で `evidence` に書く）
+- `test/fixture/character.ts` があり、**2ファイル以上**のテストから import されている
+- テストの期待値を弱めていない（`toBe` を `toBeDefined` に緩めるような変更をしていない）
+
+## 注意
+
+- **立ち絵・差し色の対応表を入口で全域に畳むタスクより先に行う**（あちらの `dependencies` に
+  入れてある）。あちらは `CharacterInfo.portraits` を `Record<Expression, string>` に変えるので、
+  先に寄せておかないと同じ15ファイルを二度触ることになる
+- テストが**何を確かめているか**は変えない。寄せるのは値の組み立てだけ
+- `test/` は `src/` と同じディレクトリ構成で置く規約（`docs/coding-standards.md`
+  「### 置き場所とモック」）だが、`test/fixture/` は既にその例外
+- **会話の内容をフィクスチャに写さない**（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-328
+
+**タスク**: TaskBoard と TaskList を features/ 直下へ出し、分け方の型を決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+`bun run check` 緑: 1181 pass / 0 fail / 2359 expect（95ファイル。着手前は 1178 / 94）。`task-board`/`task-list` を1機能 `features/task-board/` にまとめ、`hooks/use-modal-dialog.ts` を切り出し（表は分けず、理由は design.md）。完了条件の grep 3本とも 0 件（sidebar から task-board|task-list、sidebar.module.css の `.task-`、design.md の採らなかった要素の `hooks/`）。 機能を region / placed の2種類に割り「領域 → 置かれる機能」の1方向だけ許す検査にし、どちらにも無い `features/` 直下は throw に（漏れていた `chat-view`・`token-usage` を region として追加）。 目視: 生きたタブの DOM を playwright で測り、1440x900 は表 990px / 器 990px ではみ出し 0・6列、390x844 は 358px でカードへ組み替わり `::before` ラベルが出るのを確認（モーダルを開いた状態まで）。
+
+## 背景
+
+`src/browser/features/sidebar/task-board.tsx`（185行）と `task-list.tsx`（114行）は
+`features/sidebar/` の中にあるが、サイドバーの所有物ではない。`TaskBoard` は `<dialog>` の
+`showModal()` で top layer に出る**画面いっぱいのモーダル**で、サイドバーの領域には収まって
+いない（`docs/requirements.md` 4.2 / 4.7）。
+
+- 両者は `features/sidebar/sidebar.module.css`（421行）を共有し、`.task-` で始まるセレクタが
+  **31個**ある（狭い画面で表を1タスク＝1枚のカードへ組み替える `@media` を含む）。移すなら
+  CSS も分ける
+- `sidebar.tsx` は `TaskBoard` / `TaskList` / `taskListTitle` の3つを import し、モーダルの
+  開閉 state（`boardOpen`）を持っている。移すと `features/sidebar/` → 移した先の import に
+  なり、`test/architecture.test.ts`「browser/ の機能どうしの import」に当たる
+- いまの `BROWSER_REGIONS`（`test/architecture.test.ts:160`）は `layout` / `main-view` /
+  `character-view` / `character-screen` / `sidebar` / `dispatch` の6つだけで、
+  **`chat-view` と `token-usage` は載っていない**（載っていないディレクトリは「共有部分」
+  として検査されない）。移した先を登録するかどうかもここで決める
+- `task-board.tsx` は `useRef` + `useEffect`（`<dialog>` の開閉を props に追随させる）を持つ。
+  **`task-list.tsx` はフックを1つも使っておらず、すでに見た目だけ**（`taskListTitle` と
+  `taskStatusCounts` は純関数）
+- `task-board.tsx` は `taskStatusClass` を `task-list.tsx` から import している
+- テストは `test/browser/features/sidebar/task-board.test.tsx`（197行）と
+  `task-list.test.tsx`（114行）。`test/` は `src/` の構成を写しているので一緒に動かす
+
+## 決まっていること（蒸し返さない）
+
+- **フックの置き場は `features/<機能>/hooks/use-*.ts` にする**（2026-09-22 ユーザーの選択）。
+  `docs/design.md` 2章の「採らなかった bullet-proof-react の要素」から `hooks/` を外し、
+  `CLAUDE.md` 原則5 の「置き場所を名前にしたディレクトリ」の並びにも `hooks/` を足す
+- 移す先は `features/` の直下（`features/sidebar/` から出す）
+- **`task-list.tsx` はフック0件なので、ロジックとUIの分離の対象は `task-board` だけ**。
+  `task-list` は移動だけ
+- ここで決めた型を、後続の4タスク（T-336 / T-337 / T-338 / T-339）が読んで同じ形を作る
+
+## 解くべき論点
+
+- `features/task-board/` と `features/task-list/` に分けるか、1つの機能にまとめるか。分けると
+  `taskStatusClass` の import が機能どうしの import になる
+- モーダルの開閉 state（いまは `sidebar.tsx`）を誰が持つか。`main.tsx` の `<Root>` へ上げると
+  「開く口はタスク一覧の区画の見出し」という形（`SidebarSection` の `action`）が壊れる
+- `BROWSER_REGIONS` に新しい機能を登録するか。登録すると `sidebar.tsx` からの import が
+  落ちるので、組み立てを `main.tsx` へ上げるか `components/` として扱うかの選択になる。
+  載せない選択（いまの `chat-view` と同じ扱い）を採るなら、なぜ検査の対象外でよいかを書く
+- `hooks/use-task-board.ts` に何を出すか。`<dialog>` の開閉の同期だけなら十数行で、
+  `features/main-view/report-reveal.ts` の `useReportReveal` と同じ形にもできる。切り出す境目
+- UI 側のファイル名。`presentational-task-board.tsx` は「置き場所を名前にした」側に寄る
+  （原則5）。`task-table.tsx` のように中身の概念で名乗れるか
+
+## やること
+
+1. 上の論点を決め、**`docs/design.md` 2章に決めた形を書く**（`hooks/` を採る理由、`features/`
+   直下に出す基準、UI とロジックの分け方と命名、後続タスクが従う型）。`CLAUDE.md` 原則5 の
+   並びにも `hooks/` を足す
+2. 決めた形で `task-board` / `task-list` を移し、`sidebar.module.css` の `.task-`（31セレクタ
+   ＋ `@media`）を移した先の `*.module.css` へ分ける
+3. テスト2本も `src/` の構成に合わせて移す
+4. `test/architecture.test.ts` の `BROWSER_REGIONS` を決めたとおりに直す。**`chat-view` と
+   `token-usage` が載っていない事実は、直すか直さないかを決めて evidence に書く**（載せると
+   別の機能の import が落ちる場合は、落ちる件を別タスクとして切り出す旨を書いて閉じる）
+5. 調べて「ロジックとUIを分けないほうが読みやすい」と結論が出たら、**移動だけ行って分離は
+   行わない**。その理由を evidence に書く（ただし `hooks/` を採る正典の書き換えは行う）
+
+## 完了条件
+
+- `bun run check` が通る
+- `grep -rn 'task-board\|task-list' src/browser/features/sidebar/` が空
+- `sidebar.module.css` に `.task-` で始まるセレクタが無い
+- `docs/design.md` 2章の「採らなかった bullet-proof-react の要素」に `hooks/` が入っていない
+- 後続の4タスクが読んで同じ形を作れる粒度で、分け方と命名が `docs/design.md` に書かれている
+- 目視: サイドバーの「タスク一覧」の区画と、見出しの「一覧を見る」から開く表が移動前と同じに
+  見える（**既定の幅と 760px 以下の両方**。`docs/requirements.md` 4.7 のカードへの組み替えを
+  含む）。何が見えたかを evidence に書く
+
+## 注意
+
+- プロジェクトの `CLAUDE.md` を書き換える（原則5 の並び）。ユーザーのグローバル設定ではない
+- `sidebar.module.css` は他の2区画も使っている。`.task-` 以外のセレクタを動かさない
+
+## T-344
+
+**タスク**: src と scripts の Date を Temporal に置き換える
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1181 pass / 0 fail / 95ファイル、typecheck・lint・format:check も緑）。grep -rn 'new Date|Date.now|: Date\b' src scripts が空で例外ゼロ。 決めた線: now はエポックミリ秒の数のまま（作る場所は src/session-start.ts と新設 src/browser/lib/clock.ts）、local-time.ts は残して引数を Date→数に変え Temporal で書き直し、token-usage.ts の日付の足し算は PlainDate.add に。 書式の不変は chat-archive/token-usage-log/token-usage のテスト71件と、旧実装との TZ 3種×時刻6点の突き合わせで確認。
+
+## 背景
+
+日時の扱いが `Date` のまま散っている。`src` と `scripts` で18箇所、`test` で14箇所ある。
+性格の違うものが混ざっている:
+
+- **ローカル時刻の書き方**: `src/server/adapter/local-time.ts` の `localDateKey` /
+  `isoWithOffset`（`getTimezoneOffset` / `getHours` で OS のタイムゾーンを読み、JSONL の
+  日付キーと行の時刻を作る）。使うのは `src/server/adapter/chat-archive.ts:142,168,259` と
+  `src/server/adapter/token-usage-log.ts:103,121`
+- **日付の足し算**: `src/server/core/token-usage.ts:264-265` が `YYYY-MM-DD` を
+  いったん UTC の正午に倒して `MILLISECONDS_PER_DAY` を足し、`toISOString().slice(0, 10)` で
+  戻している（夏時間を避けるための回り道）
+- **エポックミリ秒の数**: `src/session-start.ts:86` が `Date.now` を
+  `src/server/core/session-manager.ts:50` の時計として渡し、
+  `src/browser/features/character-view/character-view.tsx:63,71,77` /
+  `src/browser/features/dispatch/turn-status.tsx:37,45` が経過時間の比較に使う。
+  `src/shared/portrait-motion.ts` と `src/shared/session-state.ts` は `now` を
+  **数（epoch ms）**として受け取る契約になっている
+- **見張りの mtime**: `statSync(path).mtimeMs`（`src/server/adapter/task-summary.ts:62` /
+  `character-pack.ts:287` / `bundle.ts:219`）。これは `Date` の値ではなく数
+
+`src/browser/lib/refresh.ts:25` の `Date.now()` は URL のキャッシュ避けの捨て値。
+
+## 決まっていること（蒸し返さない）
+
+- Temporal は使える。**Bun 1.4.2 で `Temporal.Now.zonedDateTimeISO()` が動く**（実測）
+- **ビューを描くタブでも動く**（Orca のタブは Chrome 150 相当。`orca eval` で
+  `typeof Temporal === "object"` と `Temporal.Now.zonedDateTimeISO()` を実測）
+- **型も入っている**。TypeScript 7.0.2 の標準ライブラリに `Temporal.Instant` などがあり、
+  `target: ESNext` のこのリポジトリの設定でそのまま通る（実測）
+- 禁止のルールは oxlint の `no-restricted-globals` で書ける。`new Date()` と `Date.now()` の
+  両方を拾うことを実測済み（ルールを入れるのは次のタスク）
+
+## 解くべき論点
+
+- **エポックミリ秒の数（`now: number`）を `Temporal.Instant` に変えるか、数のまま残すか。**
+  `src/shared/portrait-motion.ts` と `src/shared/session-state.ts` は畳み込みの純粋関数で、
+  比較と引き算にしか使っていない。変えると `shared` の契約とテストの偽の時計が全部動く。
+  **変えないなら、その数をどこで作るか**（`Date.now` を禁じるので
+  `Temporal.Now.instant().epochMilliseconds` に置き換わる）を決める
+- **`local-time.ts` が残るか。** `Temporal.Now.zonedDateTimeISO()` なら日付キーは
+  `toPlainDate().toString()`、オフセット付きの ISO は `toString({ timeZoneName: "never" })` で
+  出る。関数が素通しになるなら、ファイルごと畳んで呼び出し側から `Temporal` を呼ぶか、
+  「OS のタイムゾーンを読む場所を1つに保つ」ために残すかを決める（残す理由は
+  `local-time.ts` 冒頭のコメントにある）
+- **`token-usage.ts` の日付の足し算**を `Temporal.PlainDate.from(date).add({ days })` に
+  変えると、正午に倒す回り道と `MILLISECONDS_PER_DAY` が要らなくなる。定数が他で使われて
+  いないかを確かめてから消す
+
+## やること
+
+1. 上の論点を決め、決めた線を該当ファイルのコメントに1〜2行で残す（なぜその線かは
+   コードから読めないため）
+2. `src/` と `scripts/` から `new Date` / `Date.now` / `: Date` を無くす。
+   `statSync(...).mtimeMs` はもともと数なのでそのまま
+3. 契約を変えた場合は `src/shared/` の受け取り側と、それに合わせて落ちるテストも直す
+   （`test/` に残る `Date` の一掃は次のタスク）
+4. 調べて Temporal で書けないものが出たら、**やらずに理由を `evidence` に書く**
+   （その1箇所は次のタスクのルールで `// oxlint-disable-next-line` を許す判断材料になる）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `grep -rn 'new Date\|Date\.now\|: Date\b' src scripts` が空（例外を残したなら、その
+  ファイルと理由を `evidence` に書く）
+- 雑談のアーカイブと消費ログの**日付キーと行の時刻の書式が前と変わらない**こと
+  （`test/server/adapter/chat-archive.test.ts` と `token-usage-log.test.ts` が通ることで示す）
+
+## 注意
+
+- `~/.tsukumo/` に既に積まれた JSONL と**同じ書式**を保つ（日の境目が変わると過去の行と
+  突き合わせられなくなる。`docs/design.md` 7章）
+- `src/server/core/` から `adapter` を参照しない（`test/architecture.test.ts` が落とす）
+
+## T-347
+
+**タスク**: セッションの印に起動順の目印を足し、選び方を決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-346 / **passes**: True
+
+**evidence**:
+
+印を tsukumo:<パック>@<目印> にし、目印はビューのポートから決めた（既定 7327 が A、+1 ごとに次の文字。目印の無い昔の印は A に畳み、Z の次と既定外のポートも A）。組み立てと読み取りは config.ts の sessionTag / readSessionMark だけ。実測（/tmp/tsukumo-slot-check）: 7330 と 7331 で起こすと listSessions は @D と @E の2件に分かれ、7330 を落として起こし直すと @D に戻って落ちた側の sessionId から再開した（生きている @E は拾わない）。bun run check: 1148 pass / 0 fail（92ファイル）。docs/requirements.md 4.8 の節数は前後とも 27。
+
+## 背景
+
+同じディレクトリで複数の tsukumo を立ち上げると、どれも同じ印
+（`tsukumo:<パック>` / `tsukumo:<パック>:chat`。`src/server/core/config.ts` の `sessionTag`）を
+使うため、`selectSessionToResume`（`src/server/core/session-restore.ts:33`）が
+`lastModified` の最新1つを選び、落ちた側を起こし直すと生きている側を拾う。
+
+印は `src/server/adapter/sdk-driver.ts:390` の `tagSession` でターンの終わりに付き、
+`sdk-driver.ts:295` の `listSessions({ dir: cwd })` で引く。セッションを探すのは
+`src/server/core/session-launch.ts` の `findResumeSession`（起動時・`switch-character`・
+`set-chat-mode` の3つともここを通る）。
+
+指示で決まっている形:
+
+- **目印は起動順の自動採番（A / B / C …）。** 人が名前を付ける手数は入れない
+- **保存先は印そのもの**（別ファイルを作らない）。`listSessions` が返す印の一覧が
+  そのままセッションの一覧になる
+- 要件 4.8「起動のたびに選ばせる画面は作らない」は変えない（起動時は今までどおり自動で
+  続きから始まる）
+
+## 解くべき論点
+
+- **区切り。** いまの印は `:` で `tsukumo:<パック>:chat` まで分かれている。採番を足しても
+  `chat` と読み違えない区切りが要る（`@A` のように別の記号にするか、位置を固定するか）。
+  `sessionTag` の解釈は組み立てと逆向きの**読み取り**も要る（一覧の表示に印から目印を取り出す）
+- **既存の印との互換。** 採番を足すと、いま続いている仕事のセッション（`tsukumo:<パック>`）が
+  次の起動で見つからなくなる。後置きの無い印を「A」とみなすか、拾って付け直すか、
+  見つからなくてよいと割り切るかを決める（`config.ts` の `sessionTag` のコメントは
+  「仕事の側の文字列は変えない」と書いてある。変えるならコメントも直す）
+- **採番の規則。** 起動時に空いている一番若い文字を取るのか、`lastModified` が最新の印を
+  そのまま引き継ぐのか。**起動時は続きから始まる**（要件 4.8）ので、「新しい文字を取る」と
+  「続きから始める」は両立しない。前のタスク（生きているセッションへの `resume` の実測）の
+  結果を踏まえて、どちらに倒すかを決める
+- 文字を使い切ったとき（Z の次）の振る舞い
+
+## やること
+
+1. 上の論点を決める。決めた規則を `src/server/core/config.ts` の `sessionTag` の
+   コメントと `docs/requirements.md` 4.8「鍵」に書く
+2. `sessionTag` を目印つきの印を組み立てる形にし、**印から目印を取り出す関数**を同じ
+   ファイルに足す
+3. `selectSessionToResume` を、目印まで一致するものから選ぶ形にする
+4. **印の一覧をセッションの一覧として返す**口を core 側に足す（`listSessions` の結果を
+   受け取り、目印・`lastModified`・`sessionId` の並びにする純粋関数）。画面へ流すのは
+   次のタスク
+5. 調べて成り立たない前提が出たら、やらずに理由を `evidence` に書いて閉じる
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 同じディレクトリで tsukumo を2つ起こし、**それぞれが別の印を持つ**ことを
+  `listSessions`（または `~/.claude/projects/` の該当ファイル）で確かめて `evidence` に書く
+- 片方を落として起こし直したとき、**生きている側ではなく落ちた側の続きから始まる**ことを
+  確かめて `evidence` に書く
+- `docs/requirements.md` 4.8 の節の数が変わっていない
+  （`grep -c '^#\{2,3\} ' docs/requirements.md` を前後で比べる）
+
+## 注意
+
+- 印は claude の transcript に書かれる値。**組み立ては `config.ts` だけ**で、文字列を他所で
+  作らない（`sessionTag` のコメント）
+- `src/server/core/session-launch.ts` と `session-driver.ts` は
+  「セッションの起こし方（resume）を合併型にする」タスクと**同じファイルを触る**。
+  片方が `doing` の間は着手しない
+- **tsukumo を起こす確認が要るので、他の目視確認タスクと並行させない**
+  （`~/.tsukumo/state.json` が共有される。`CLAUDE.md`「タスク運用」）
+
+## T-348
+
+**タスク**: 画面からセッションの一覧を見て切り替えられるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-347 / **passes**: True
+
+**evidence**:
+
+`bun run check` 緑: 1176 pass / 0 fail / 2350 expect（94ファイル）。実機2プロセス（7329=C / 7330=D）で確認: D の一覧に `C・9/22 16:35` ほか目印＋最終更新時刻が並び、選ぶと C のやり取りがメインビューに組み直され `<select>` が「（表示中）」付きに変わった。起動時は選択画面なしで自動起動。 実測で一覧が120件になったため `MAX_SESSION_CHOICES = 10` を追加（新しい順に切る）。ドロップダウンを開いた状態の画像とターン進行中の拒否は実機未確認（項目の並びは DOM、拒否はテストで確認）。
+
+## 背景
+
+セッションの印に起動順の目印が付いた（前のタスク）ので、**画面から選んで切り替えられる**
+ようにする。いま起こし直しの経路は `src/server/core/session-launch.ts` の
+`createSessionLaunch` 1本で、`switch-character` と `set-chat-mode` の2つが通る
+（`src/server/core/session-manager.ts:454,465`）。コマンドの形は `src/shared/command.ts`
+（`switch-character` は 195行、`set-chat-mode` は 183行）で、画面側の口は
+`src/browser/features/sidebar/session-info.tsx`（`<select>` から `dispatch`）。
+
+指示で決まっている形:
+
+- **切り替えは画面から。** `switch-character` / `set-chat-mode` と並ぶ**3本目**として
+  `createSessionLaunch` に足す。落ちていなくても行き来できる
+- 一覧には**目印と一緒に最終更新時刻**を出し、どれがどの作業かを時刻で見分けられるようにする
+- 起動時は今までどおり自動で続きから始まる（要件 4.8 は変えない）。選ぶのは切り替えたいときだけ
+
+## 解くべき論点
+
+- **一覧をどう画面へ届けるか。** `listSessions` は外の世界（`adapter`）で、いまは
+  起こすときにしか呼んでいない。切り替えの画面を開くたびに引くのか、イベントで押すのかを決める
+- **一覧の置き場所。** サイドバーの `session-info.tsx` に `<select>` をもう1つ足すのか、
+  別の場所に出すのか（`docs/design.md` の部品の章と、画面のナビゲーションの置き場を決める
+  タスクの結論に反しない形にする）
+- **いま出ているセッション**をどう示すか（一覧の中で印を付ける／選べなくする）
+
+## やること
+
+1. `src/shared/command.ts` に切り替えのコマンドを足す（`switch-character` と同じく
+   `zod` で検証し、ターン進行中は弾く条件も揃える）
+2. `session-manager` の起こし直しの分岐に3本目を足し、`createSessionLaunch` へ渡す
+   （`SessionLaunchRequest` は「これから起こすセッションID」を運ぶ形になる）
+3. 一覧を画面へ流すイベントを `src/shared/session-event.ts` に足し、目印と最終更新時刻を出す
+4. 画面側に一覧と切り替えの口を作る
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- **目視確認**: 同じディレクトリで tsukumo を2つ起こし、片方の画面から他方のセッションへ
+  切り替えて、**そのセッションのやり取りが画面に組み直される**ことを確かめる。
+  何をどう確かめたか（どの画面で、何が見えたか）を `evidence` に書く
+- 一覧に目印と最終更新時刻の両方が出ている（スクリーンショットで確かめる）
+- 起動時は選ばせる画面が出ず、今までどおり自動で続きから始まる
+
+## 注意
+
+- **tsukumo を起こす目視確認が要るので、他の目視確認タスクと並行させない**
+- `switch-character` と同じく、**ターン進行中の切り替えは弾く**（`session-manager.ts:466`
+  の条件に揃える）
+- 画面に出す最終更新時刻は**ローカル時刻**で、書式は日時の扱いを Temporal に寄せたあとの
+  やり方に合わせる
