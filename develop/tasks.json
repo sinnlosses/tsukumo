@@ -1,36 +1,14 @@
 [
   {
-    "id": "T-298",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "やり取りのタブのラベルを、位置ではなく中身から作る",
-    "task": "## 背景\n\nエージェントのドラフト（2026-09-21 の雑談から。ユーザー承認あり）。\n\n`src/browser/features/main-view/turn-tabs.tsx` の `turnTabLabel(index)` は、`index === 0` なら「今回」、\nそれ以外は「{n}つ前」を返す。ラベルが**並びの位置から作られている**ので、やり取りが1つ進むと\n全部のラベルが1つずつずれる。さっき見ていた「3つ前」が次には「4つ前」になり、戻りたい場所を\n覚えられない。\n\n素材はある。`src/shared/main-view.ts` の `MainViewTurn` は `request`（`MainViewRequest.text`）と\n`steps` を持ち、各 `MainViewStep` は `firstLine`（レポートの先頭行）を持つ。`firstLine` は畳んだ\n中間レポートの `<summary>` に既に使っている（`src/browser/features/main-view/turn.tsx` の\n`interimSummary`）。\n\nタブは `src/browser/features/main-view/main-view.tsx` から `turnIds`（番号の配列）だけを受け取っている。\n\n## 解くべき論点\n\n- ラベルの出どころ。そのやり取りの最初の見出し（レポートの先頭行）と、依頼の冒頭のどちらを優先するか。\n  **レポートがまだ1つも無いやり取り**（走っている最中）はどうするか\n- ラベルを作るのは `shared`（`MainViewTurn` に畳む）か `browser`（描くときに切る）か。\n  `firstLine` が既に `shared` 側で作られていることをどう踏まえるか\n- 相対の位置（「今回」「3つ前」）をどこに添えるか。**「今回」は今も意味があるので落とさない**\n- 切る長さ。`interimSummary` と揃えるか、別に決めるか\n- タブは件数が増えるほど横に伸びる。1つあたりが長くなったときに古いものを畳む形（一覧に落とす等）が\n  要るか。**要らないと判断したなら、そのときの横の伸び方を実測して `evidence` に書く**\n\n## やること\n\n1. 上の論点を決め、決めた理由を `evidence` に1行ずつ書く\n2. ラベルを作る処理（切る・空のときの既定値）を純粋関数として切り出し、テストを足す\n3. `TurnTabs` の props をラベルが渡る形に変え、`main-view.tsx` の呼び出しを直す\n4. 短く切ったときに元の文字が読める口（`title` 属性など）を用意する。`role=\"tablist\"` の中の\n   `<button>` であることは変えない\n5. 古いタブを畳む形が要ると判断したら、**このタスクの中ではやらず**\n   `develop/direction.md` の `## エージェントのドラフト` に書き戻す（1コミットの大きさを超えるため）\n\n## 完了条件\n\n- `bun run check` が通る（足したテストを含む）\n- やり取りが1つ進んでも、前に見ていたやり取りのタブのラベルが変わらないことをテストで示す\n- 目視: やり取りが3件以上あるとき、各タブのラベルからどのやり取りか見分けが付き、タブの並びが\n  本文や入力欄を押し出していない（どの端末・解像度で見たかを `evidence` に書く）\n\n## 注意\n\n- **ラベルにするのは利用者と Claude の生の会話の一部**なので、ログに全文を出さない・テストの\n  フィクスチャに実物を使わない（CLAUDE.md「会話内容の扱い」）\n- `src/shared/main-view.ts` は `browser` と `server` の両方が読む契約。型を変えるときは\n  `test/architecture.test.ts` が許した辺を壊さない\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "出どころ: 依頼の1行目を優先（やり取りの始まりと同時に届くので走っている最中にも名前が付き、レポートが届いても入れ替わらない）。依頼が無い・画像だけなら最初のレポートの firstLine、それも無ければ「（依頼なし）」。層: browser の features/main-view/domain/turn-tab-label.ts（切る長さはタブの見た目の都合で、shared の契約を広げない）。位置: 「n つ前」は title に添え、「今回」は先頭のタブの名前の前に小さく残した。長さ: 14字（interimSummary の40字は1行を独り占めする見出し用で、タブは最大5個が横に並ぶ）。切る前の1行は title で読める。古いタブを畳む形: 要らない（5個で 1400x900 は4+1の2段・帯 75px、720x900 は3+2の2段・帯 74px、入力欄の位置は4個のときと同じ、横はみ出し0）。bun run check: 1279 pass / 0 fail。進んでも名前が変わらないことは main-view.test.tsx（A〜C で B を選び D を足しても B の名前と本文が残る）で示した。目視: 架空の依頼4件の疑似場面 turn-tabs（fake-session.json に追加、capture-catalog にも追加）をポート 7394・一時 HOME で起こし、1400x900（1段）と 720x900（2段）でタブの名前からやり取りを見分けられ、5件目を送ると前の「今回」が同じ名前のまま2番目へ移った"
-  },
-  {
     "id": "T-299",
     "difficulty": "opus",
     "loopable": "Y",
     "dependencies": [],
     "summary": "見ているやり取りを location.hash に乗せる",
     "task": "## 背景\n\nエージェントのドラフト（2026-09-21 の雑談から。ユーザー承認あり）。\n\n画面（会話 / キャラクター / 作る）は `src/browser/stores/screen.tsx` が `location.hash` を正典にしていて、\n`useSyncExternalStore` で読む。だからリロードしても同じ画面に戻り、ブラウザの「戻る」が効く\n（`SCREEN_HASH` が `#` / `#character` / `#character/new` の3つを持つ）。\n\n一方、**どのやり取りを開いているか**は `src/browser/stores/turn-selection.tsx` が React の state として\n持っているだけなので、リロードすると今回に戻る。読み手は `src/browser/features/main-view/main-view.tsx`\nと `src/browser/features/character-view/character-view.tsx` の2つ。\n\n## 解くべき論点\n\n- hash の書き方。`screen.tsx` の `SCREEN_HASH` と**同じ1本の hash** を2つの store が読むことになるので、\n  どちらが hash のどの部分を持つかを決める（会話の画面が `\"#\"` である制約と両立させる）\n- `activeTurnId` には「最新に追随する」状態と「固定して見ている」状態がある。hash に乗せるのは\n  後者だけか、両方か\n- hash が指すやり取りがもう無い（窓から落ちた）ときの落とし先\n\n## やること\n\n1. 上の論点を決め、決めた理由を `evidence` に1行ずつ書く\n2. `turn-selection.tsx` を `useSyncExternalStore` で hash から読む形にする（`screen.tsx` の作りをなぞる）\n3. hash の読み書きが2つの store に散らないよう、書き方を決める場所を1つにまとめる\n4. テストを足す（hash → 選択、選択 → hash、指すやり取りが無いとき）\n\n## 完了条件\n\n- `bun run check` が通る（足したテストを含む）\n- 目視: 前のやり取りのタブを押してリロードすると同じやり取りが開いたまま戻り、ブラウザの「戻る」で\n  1つ前に見ていたやり取りへ移る（どの端末・解像度で見たかを `evidence` に書く）\n- 会話 / キャラクター / 作るの画面の切り替えと、`bun run dev` の再読み込みでキャラクター画面に\n  留まる動きが今までどおり効いている\n\n## 注意\n\n- ルーターのライブラリを入れない（`screen.tsx` 冒頭の決定）\n- `useEffect` は「React の外と同期する」4類型だけ（CLAUDE.md）。ここは `useSyncExternalStore` を使う\n- セリフ側（`character-view.tsx`）も同じ選択を読んでいるので、やり取りを遡るとセリフも遡る動きを壊さない\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-313",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-307"],
-    "summary": "タスク一覧の「不明」を2つの意味に割る",
-    "status": "done",
-    "passes": true,
-    "evidence": "tasks を TaskSummaryResult（unknown | known{items}）にし、session-event・adapter の watchTaskSummary・画面側4箇所を読み替えた（readTaskSummaries の境界の | undefined は adapter で畳む）。「まだ届いていない」と「読めない」は分けない: watchTaskSummary はファイルが最初から無いと初回の通知を送らず口1つでは区別できず、画面の表示も対処も同じため。bun run check: 1256 pass / 0 fail。目視: capture-catalog --only task-board（1400x900・720x900）でモーダルの表が従来どおり、tasks.json の無い一時ディレクトリを cwd に疑似セッション（ポート 7391、HOME は一時）で起こし、サイドバーに「不明」、モーダルに「develop/tasks.json が読めない」が出て崩れなし",
-    "task": "## 背景\n\nタスク一覧の「不明」に、**意味の違う2つの `undefined` が合流している**\n（調査は `docs/research/undefined-reduction.md` 2.3 の例外）。\n\n- `src/shared/task-summary.ts:41` の `readTaskSummaries` が返す `undefined` は\n  「**ファイルの形が信用できない**」\n- `src/shared/session-state.ts:175` の `tasks: ... | undefined` は「**まだ届いていない**」\n\n画面上（`src/browser/features/sidebar/task-list.tsx:14,25` /\n`task-board.tsx:45,104`）では**どちらも同じ「不明」として表示される**。これは\n`docs/coding-standards.md` が「避ける」と書いている3パターンの2つめ\n（1つの `undefined` に複数の意味が乗っている）に当たる。\n\nなお `parse*` 全体を結果型にする案は**採らない**（同調査 2.3。zod の `safeParse` を\n境界で意図的に畳んでいるので、戻すのは畳んだものを開き直す作業になる）。ここだけが例外。\n\n## やること\n\n1. `tasks` を **`{ kind: \"unknown\" } | { kind: \"known\"; items }`** に割る。\n   「まだ届いていない」と「読めない」を型で区別できる形にするか、\n   **区別しないと決めるならその理由を `evidence` に書く**\n2. `src/shared/session-event.ts:169` と画面側4箇所を読み替える\n3. 空配列に畳む案は採らない（「タスク0件」と「読めない」が混ざるため。同調査 2.4）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts:175` の `tasks: ... | undefined` が合併型になっている\n- **目視確認**: tsukumo を起こし、(1) タスク一覧が従来どおり出る、(2) `develop/tasks.json`\n  が無いプロジェクト（または一時的に読めない形）で「不明」の表示が崩れない——の2つを\n  確かめて `evidence` に書く。**フィクスチャを一時的に書き換えたら必ず元に戻す**\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
   },
   {
     "id": "T-314",
@@ -53,17 +31,6 @@
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n雑談のログには**時間の手がかりが1つも無い**。`src/shared/chat-log.ts` の `ChatLogEntry` は\n`speaker` / `text` / `expression` / `images` だけを持ち、**`src/shared/session-state.ts` の\n`SessionRecord`（`request` / `speech` / `detail` / `question` / `tool` / `compact-boundary`）にも\n時刻のフィールドが無い**（実測）。雑談は日をまたいで戻ってくる場所なのに、昨日の一言と\n三十秒前の一言が見分けられない。\n\n- **アーカイブ側は時刻を持っている**。`src/server/adapter/chat-archive.ts` が書く1行は\n  `at`（`^\\d{4}-\\d{2}-\\d{2}T` のISO＋オフセット。`isoWithOffset`）を持ち、置き場も\n  `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl` と日ごとに分かれている\n- **復元では時刻が落ちている**。`src/server/core/session-restore.ts` の `toRestoredEvents` は\n  `{ kind: \"request\", text, images: [] }` を組み直すだけで `at` を運ばない\n- 辛口レビューの指摘（2026-09-22、ユーザーが「刺さる」として採った）\n\n## 決まっていること（蒸し返さない）\n\n- **日の区切り＋行ごとの時刻の両方を出す**（2026-09-22 ユーザーの選択）。LINE / Discord と\n  同じ形。日の区切りだけの案・ホバーしたときだけ出す案は採らなかった\n- 圧縮の区切りの見分け（T-331）とは別のタスク。こちらは時刻の側だけ\n\n## 解くべき論点\n\n- 時刻をどこに持たせるか。`SessionRecord` の各種に足すか、`request` と `speech` の2つだけか\n  （雑談のログが拾うのはこの2つと `compact-boundary`）。**`| undefined` を増やさない**\n  （`CLAUDE.md`「`| undefined` は5つの場所でだけ」）ので、既存の記録に後から足す形か、\n  判別可能な合併型にするかを決める\n- 誰が時刻を打つか。サーバ（イベントを受けた時点）か、`applySessionEvent` の中か。\n  **`shared` は `node:` に触れない**ので `Date.now()` の呼び場所を決める\n- 復元した記録の時刻。アーカイブの `at` を `toRestoredEvents` から運ぶか、運ばないときに\n  日の区切りをどう出すか（起こし直した直後のログは全部「今日」に見えてしまう）\n- 行ごとの時刻の置き場（吹き出しの中か外か・話者によって左右が変わるか）と、読む面の原則\n  （13.1 原則1。時刻は `ink-quiet` 側か）\n- 秒を出すか、`HH:MM` までか\n\n## やること\n\n1. 上の論点を決め、`docs/design.md` 13.7 と、プロトコル・記録の形を書いている節（`shared` の\n   `SessionRecord` を説明している箇所）に書く\n2. `src/shared/session-state.ts` / `src/shared/chat-log.ts` / サーバ側のイベントの流し口 /\n   `src/server/core/session-restore.ts` / `src/browser/features/chat-view/` を直す\n3. 復元で時刻が運べない場合は、**運べないことを画面でどう扱うかまで決めて書く**\n   （「全部今日に見える」を放置しない）\n4. `test/shared/` と `test/browser/features/chat-view/chat-view.test.tsx`（381行）に、日の\n   区切りが入る／入らない境目のテストを足す\n\n## 完了条件\n\n- `bun run check` が通る\n- 日をまたいだ記録を与えたとき、区切りが1本だけ入るテストがある（日が変わらなければ入らない）\n- 目視: 雑談モードで2件以上のやり取りをして、行ごとの時刻が出る。起こし直して（雑談⇄仕事を\n  往復して）復元後のログでも決めたとおりに見える。何が見えたかを evidence に書く\n\n## 注意\n\n- **会話内容の扱い**（`docs/coding-standards.md`）。テストのフィクスチャに実物の会話を使わない\n- `MAX_SESSION_STATE_TURNS`（雑談は100ターン）の数え方（`request` の数）を変えない\n- 雑談モードの目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）\n"
-  },
-  {
-    "id": "T-331",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "圧縮の区切りを、線の見た目だけで見分けられるようにする",
-    "status": "done",
-    "passes": true,
-    "evidence": "圧縮の区切り（.chat-boundary）を実線・全幅から、破線・幅50%（最大14rem）・中央・上下1remにした。色は rule のまま（13.2 の差し色の仕切り線は3本に絞ってあり、4本目にしない）。決めた見え方は docs/design.md 13.7 に1項目足した（見出し数は前後とも53）。requirements.md 4.9 の文言は未変更。bun run check: 1256 pass / 0 fail。目視: 疑似セッション chat-compact-boundary（ポート 7391、HOME は一時）を capture-view.ts で 1400x900・720x900 撮影。区切りは中央の224px幅の破線で吹き出しの実線の箱と見分けが付き、横はみ出し0。HEAD の CSS で撮り比べると全幅758.8pxの実線で縁と見分けにくかった",
-    "task": "## 背景\n\n雑談のログに出る**圧縮の区切り**が「何も無い」と区別できない。\n`src/browser/features/chat-view/chat-view.module.css` の `.chat-boundary` は\n`height: 0` / `border-top: 1px solid var(--rule)` で、**`--rule` は吹き出しの縁\n（`.chat-entry` の `border`）と同じ色**。上下の余白も `0.2rem` しかない。\n\n文言を添えないのは決定（`docs/requirements.md` 4.9「記憶の圧縮と忘却」/ `docs/design.md`\n13.7 /`src/shared/chat-log.ts` の `boundary` は中身を持たない）。押せない・畳めないことも\n決まっている。\n\n辛口レビューの指摘（2026-09-22、ユーザーが「刺さる」として採った）: 「圧縮の区切りが文言なしの\n1px 線で、吹き出しの縁と同じ色なので『何も無い』と区別がつかない」。\n\n## 決まっていること（蒸し返さない）\n\n- **線の見た目だけで見分ける**（2026-09-22 ユーザーの選択）。文言を入れる案は採らなかったので、\n  **`docs/requirements.md` 4.9 と `docs/design.md` 13.7 の「文言を添えない」は直さない**\n- `src/shared/chat-log.ts` の `ChatLogEntry` の `boundary` は中身を持たないまま\n  （型を変えない）\n- 押せない・畳めないまま（操作子を増やさない。13.1 原則2）\n\n## やること\n\n1. `.chat-boundary` の見た目だけを直す。使える手は、色を `--rule` から離す・破線にする・\n   上下の余白を広げる・幅を縮めて中央に置く、などの組み合わせ\n2. **読む面の原則（`docs/design.md` 13.1 原則1）を守る**。差し色（`--accent`）が使えるのは\n   話者の縁や印で、区切りに使ってよいかは 13.1 を読んで決める\n3. 変えた理由（何と何を見分けるための見え方か）を `.chat-boundary` のコメントに1行足し、\n   決めた見え方を `docs/design.md` 13.7 の該当の箇条に足す\n4. `docs/requirements.md` 4.9 は触らない\n\n## 完了条件\n\n- `bun run check` が通る\n- `docs/requirements.md` 4.9 の「文言を添えない」の記述が変わっていない\n  （`grep -n '文言' docs/requirements.md` の該当行が編集前と同じ）\n- 目視: 雑談モードのログに圧縮の区切りを含む状態を作り、**吹き出しの縁と見分けられること**を\n  確かめる。`docs/architecture.md`「手で確かめること」のカタログに圧縮の区切りの場面があれば\n  それで撮る（`scripts/capture-catalog.ts`。一覧は `--help`）。何が見えたかを evidence に書く\n\n## 注意\n\n- 雑談モードの目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）\n- `.chat-entry` / `.chat-entry-character` / `.chat-entry-user` の見た目を動かさない\n"
   },
   {
     "id": "T-332",
@@ -110,17 +77,6 @@
     "task": "## 背景\n\n`src/browser/features/character-screen/` の2つのフォームが、ロジックと見た目を同居させて\nいる。\n\n| ファイル | 行数 | フック | 中に混ざっているもの |\n| --- | ---: | ---: | --- |\n| `character-edit.tsx` | 264 | 4 | 編集中の値の状態・保存の呼び出し・検証 |\n| `character-create.tsx` | 193 | 5 | 作成中の値の状態・作成の呼び出し・検証 |\n\n同じディレクトリの `appearance-color.ts`（238行）は**すでに関数だけのファイル**として\n分かれていて（`localStorage` への読み書きと色の計算）、`character-screen.tsx`（130行）が\n画面を組む。**残っているのがこの2つのフォーム**。\n\nユーザーの指示（2026-09-22）: 「他のコンポーネントでも同様に整理できるか洗い出して\nタスク化してほしい」。\n\n## 決まっていること（蒸し返さない）\n\n- **分け方の型は T-328 が `docs/design.md` 2章に書いている**（フックは\n  `features/<機能>/hooks/use-*.ts`）\n- このタスクは**振る舞いを変えない**\n\n## やること\n\n1. `docs/design.md` 2章の型を読む\n2. `character-edit.tsx` と `character-create.tsx` を型に沿って分ける。**2つは似た形の\n   フォームなので、共通のフックに寄せられるかも見る**（寄せるなら、寄せた先が\n   `features/character-screen/hooks/` の中に置ける1つの概念かどうかで判断する）\n3. `test/browser/features/character-screen/` のテストが**そのまま通ること**を確かめる。\n   切り出したフックと純関数に、部品を起こさずに測れるテストを足す\n\n5. **調べて T-328 の型に当てはまらない（分けると読みにくくなる）と分かったファイルは、\n   やらずに理由を `evidence` に書いて閉じる。** 対象の全部を分ける必要は無い\n\n## 完了条件\n\n- `bun run check` が通る\n- 2ファイルの行数が分ける前より減っている（前後の行数を evidence に書く）\n- 切り出したフック・純関数に、部品を起こさずに測るテストがある\n- 目視: キャラクター画面でキャラクターを新しく作れる・既存のキャラクターを編集して保存できる。\n  何を確かめたかを evidence に書く\n\n## 注意\n\n- **T-328 が `docs/design.md` 2章に書いた型に従う。** 型を読まずに自分で決め直さない\n- 分けたぶん**開くファイルの数が増える**。`CLAUDE.md`「案が2つ以上あるときは、書いたあとの\n  コードを読む人が把握しやすいほうを選ぶ」の物差し（開くファイルの数・呼ぶ側が自分の外の\n  事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）で判断する\n- **素材のパスや表情の対応はキャラクターパックの定義ファイル側**（原則4）。分けるときに\n  コード側へ持ってこない\n- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）\n"
   },
   {
-    "id": "T-339",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-328"],
-    "summary": "layout と token-usage-screen に残るロジックを見極めて分ける",
-    "status": "done",
-    "passes": true,
-    "evidence": "layout.tsx: 分けた（useState×2・useRef×3と仕切りの保存・雑談での覚え先の切替が見た目と別に測れる）。hooks/use-layout.ts と presentational-layout.tsx に割り、fractionStyle 等は唯一の呼び手のフック内に置いた。token-usage-screen.tsx: 分けた（期間の選択・取得・空/エラーの畳みが測れ、テストが1件も無かった）。hooks/use-token-usage.ts と presentational-token-usage-screen.tsx に割り、表や図の小部品は再利用が無いので presentational 内に残した。renderHook だけのテスト（use-layout 9件・use-token-usage 5件）を足した。bun run check: 1270 pass / 0 fail。目視: 疑似セッション（ポート 7391、HOME は一時）1400x900 で Playwright で仕切りをドラッグし main 幅 1006.8 から 799.5 へ、リロード後も保持。#token-usage は空表示と、一時ホームに架空の記録1行を足した状態で合計・日ごとグラフ・モデル別/ツール別表が出て、30日への切替も動いた。720x900 でタブ切替も確認",
-    "task": "## 背景\n\n洗い出しに挙がった残りの2ファイル。\n\n| ファイル | 行数 | フック | 中に混ざっているもの |\n| --- | ---: | ---: | --- |\n| `features/layout/layout.tsx` | 239 | 6 | 4領域の組み立てと、掴んで動かす仕切りの状態 |\n| `features/token-usage/token-usage-screen.tsx` | 242 | 4 | 画面の組み立てと、消費の取得・集計 |\n\n**どちらも部分的にはすでに分かれている**: `layout/` には `layout-resizer.tsx` と\n`split.ts`（87行）があり、`token-usage/` には `daily-usage-chart.tsx`（121行）と\n`usage-format.ts` がある。**上の2ファイルに何が残っているかを先に見極める**必要がある。\n\nユーザーの指示（2026-09-22）: 「他のコンポーネントでも同様に整理できるか洗い出して\nタスク化してほしい」。この2件は**洗い出した中でいちばん分ける余地が小さい候補**で、\n「分けない」で閉じる可能性がいちばん高い。\n\n## 決まっていること（蒸し返さない）\n\n- **分け方の型は T-328 が `docs/design.md` 2章に書いている**（フックは\n  `features/<機能>/hooks/use-*.ts`）\n- このタスクは**振る舞いを変えない**\n- **分ける余地が小さいと分かったら分けない。** 型に当てはまらない理由を `evidence` に書いて\n  閉じるのは、このタスクでは失敗ではない\n\n## やること\n\n1. `docs/design.md` 2章の型を読む\n2. `layout.tsx` と `token-usage-screen.tsx` に残っているロジックを数える（フックが何を\n   同期しているか・純関数がいくつあるか）\n3. 型に当てはまるものだけ分ける。**当てはまらないものは分けず、理由を `evidence` に書く**\n   （ファイルごとに1行）\n4. `test/browser/features/layout/` と token-usage のテストが**そのまま通ること**を確かめる\n\n## 完了条件\n\n- `bun run check` が通る\n- 2ファイルについて「分けた／分けなかった」とその理由が `evidence` にファイルごとに書かれて\n  いる\n- 分けた場合は、切り出したフック・純関数に部品を起こさずに測るテストがある\n- 目視: 仕切りを掴んで4領域の比率を変えられる・トークン消費の画面が開いてグラフが出る。\n  何を確かめたかを evidence に書く\n\n## 注意\n\n- **T-328 が `docs/design.md` 2章に書いた型に従う。** 型を読まずに自分で決め直さない\n- 分けたぶん**開くファイルの数が増える**。`CLAUDE.md`「案が2つ以上あるときは、書いたあとの\n  コードを読む人が把握しやすいほうを選ぶ」の物差し（開くファイルの数・呼ぶ側が自分の外の\n  事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）で判断する\n- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）\n"
-  },
-  {
     "id": "T-359",
     "difficulty": "opus",
     "loopable": "N",
@@ -130,16 +86,5 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-364",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-363"],
-    "summary": "帯を 48px から 36.4px に下げ、部屋の名前を font-secondary にする",
-    "task": "## 背景\n\n帯（`src/browser/features/screen-nav/`）は高さ 40px（`--screen-nav-height`）と gap 0.5rem\n（`--screen-nav-gap`）で、合わせて 48px を全画面から奪う。\n`src/browser/features/layout/layout.module.css:19` がこの2つを引いて grid の高さを決めて\nいるので、下げた分はそのまま4領域へ戻る。\n\n高さ 40px の根拠は「狭い画面のタブと同じ押せる高さ（39.1px）に揃える」だった\n（`docs/design.md` 13.9）。**広い画面の口はマウスで押す**ので、床を「押せる口の最小\n（24px）」に置き直せる。狭い画面の「≡」は指で押すので、そちらは縮めない。\n\n部屋の名前（`.screen-nav-room`）は `--font-label`（0.6875rem）で、ユーザーから「小さいので\n少し大きく」という指摘がある（2026-09-22）。\n\n## 決まっていること（蒸し返さない）\n\n- `--screen-nav-height` 40px → **30px**、`--screen-nav-gap` 0.5rem → **0.4rem**\n- `.screen-nav-gate` の padding `0.35rem 0.8rem` → **`0.2rem 0.7rem`**、帯の中だけ\n  `line-height: 1.4`（theme の 1.75 を上書き）\n- `.screen-nav-room` の `font-size` は `--font-label` → **`--font-secondary`**（タイプスケールの\n  次の段。新しいサイズは足さない）。**色は `--ink-quiet` のまま**（枠のある口のほうが先に\n  目に入る関係を保つ）\n- **狭い画面の「≡」は縮めない**（いまの 39.1px ＝ タブ帯と同じ高さのまま）\n\n## 解くべき論点\n\n- 口の高さが 24px を下回らないか。計算では 13px × 1.4 + padding 3.2×2 + border 2 = 26.6px だが、\n  **実測して確かめる**\n- `@media` が `.screen-nav` を `height: auto` に倒しているので狭い画面は動かないはずだが、\n  `[data-screen=\"conversation\"]` の `position: fixed` 側と合わせて崩れないか\n\n## やること\n\n1. 上の値に直す\n2. `scripts/capture-view.ts` で 1400 幅と 390 幅の領域を測り直す（`docs/architecture.md`\n   「手で確かめること」）\n3. `docs/design.md` 13.9「帯が奪う面積（実測）」の表を、取り直した値で差し替える。高さの\n   根拠の文（「狭い画面のタブと同じ押せる高さに揃える」）も、床を 24px に置き直した形に直す\n\n## 完了条件\n\n- `bun run check` が通る\n- `docs/design.md` 13.9 の面積の表が、取り直した実測値になっている\n- 目視: 広い画面で帯が低くなり、口の字が切れていない。部屋の名前が口と同じ大きさで読める。\n  狭い画面の「≡」がタブ帯と同じ高さのまま。何が見えたかを evidence に書く\n\n## 注意\n\n- 口の高さが 24px を下回るなら、**値を決め直して理由を evidence に書く**（無理に 30px に\n  収めない）\n- `--screen-nav-height` は `layout.module.css` も読む。片方だけ直さない",
-    "status": "done",
-    "passes": true,
-    "evidence": "--screen-nav-height を 40px から 30px、gap を 0.5rem から 0.4rem にし（帯と gap で 48px から 36.4px）、口に line-height 1.4 と padding 0.2rem 0.7rem、部屋の名前を font-secondary にした。口の高さは実測 26.56px で床の 24px を上回るので値は決め直していない。layout.module.css は変数を calc で読むだけで編集不要。docs/design.md 13.9 の面積の表を前後のビルドの直接の実測に差し替えた（1400 幅でメインビュー 476.6 から 483.6・キャラビュー 317.8 から 322.4、390 幅は帯がオーバーレイで差0）。bun run check: 1270 pass / 0 fail。目視: 疑似セッション（ポート 7391、HOME は一時）1400x900 で帯 30px・口の字は欠けず、部屋の名前が口と同じ大きさで読める。390x900 で「≡」とタブがどちらも 39.13px で同じ高さ"
   }
 ]
