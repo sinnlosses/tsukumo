@@ -15,10 +15,6 @@
 //
 // **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / 13.6）。`<Layout>` は
 // 他の機能を知らないので、画面の入れ替えを機能の側に持たせると機能どうしの import になる。
-//
-// **領域に「置かれる機能」を差し込むのもここ**（docs/design.md 2章）。サイドバーは区画の枠
-// （`SidebarTaskFrame`）だけを持ち、タスク一覧の中身は `<TaskSection>` が描く。購読と state は
-// `<TaskSection>` の中にあるので、タスクが変わっても描き直しはその区画で止まる。
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
@@ -35,9 +31,7 @@ import { ChatView } from "./features/chat-view/chat-view.tsx"
 import { Dispatch } from "./features/dispatch/dispatch.tsx"
 import { Layout } from "./features/layout/layout.tsx"
 import { MainView } from "./features/main-view/main-view.tsx"
-import { SidebarTaskFrame } from "./features/sidebar/section.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
-import { TaskSection } from "./features/task-board/task-section.tsx"
 import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
 import { QuestionFocusProvider } from "./stores/question-focus.tsx"
 import { useScreen } from "./stores/screen.tsx"
@@ -68,7 +62,7 @@ function Root(): ReactElement {
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
         <Layout
           main={chatMode ? <ChatView /> : <MainView />}
-          sidebar={<Sidebar taskSection={<TaskSection frame={SidebarTaskFrame} />} />}
+          sidebar={<Sidebar />}
           character={<CharacterView />}
           dispatch={<Dispatch />}
           collapseCharacter={chatMode}

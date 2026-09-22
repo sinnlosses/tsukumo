@@ -204,19 +204,24 @@ describe("browser/ の機能どうしの import", () => {
 // `main.tsx` / `features/` / `components/` / `lib/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
+// `browser/hooks/` は**機能の語彙を持たない React のフック**の箱で、`components/` と同じ扱い
+// （誰から引いてもよく、自分は `lib/` までしか引かない）。機能に固有のフックは機能の中の
+// `features/<機能>/hooks/` に置くので、こちらの箱には入らない。
+//
 // `browser/` 直下の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
 // `browser/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
 // import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下に増えたときに
 // テストの直し忘れで素通りしないよう、`main.tsx` でも `*.d.ts`/`styles` でもない未知の区画は
 // `layerOf` と同じく `throw` する。
-const BROWSER_BOXES = ["main", "features", "components", "lib", "stores"] as const
+const BROWSER_BOXES = ["main", "features", "components", "hooks", "lib", "stores"] as const
 type BrowserBox = (typeof BROWSER_BOXES)[number]
 
 // 各箱が import してよい先（docs/design.md 2章の表そのもの。`main` は「すべて」なので全箱を許す）。
 const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
-  main: new Set(["main", "features", "components", "lib", "stores"]),
-  features: new Set(["features", "components", "lib", "stores"]),
-  components: new Set(["components", "lib"]),
+  main: new Set(["main", "features", "components", "hooks", "lib", "stores"]),
+  features: new Set(["features", "components", "hooks", "lib", "stores"]),
+  components: new Set(["components", "hooks", "lib"]),
+  hooks: new Set(["hooks", "lib"]),
   lib: new Set(["lib"]),
   stores: new Set(["stores", "lib"]),
 }
@@ -272,7 +277,13 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
     return undefined
   }
   const [, second] = relPath.split("/")
-  if (second === "features" || second === "components" || second === "lib" || second === "stores") {
+  if (
+    second === "features" ||
+    second === "components" ||
+    second === "hooks" ||
+    second === "lib" ||
+    second === "stores"
+  ) {
     return second
   }
   if (second === "styles") {

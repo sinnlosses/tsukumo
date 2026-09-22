@@ -112,9 +112,10 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 - **原則5**: まとめるか分けるかは、行数でも関数の数でもなく「**ファイル名が概念になっているか**」で
   決める。`helpers.ts` / `utils.ts` / `common.ts` のような**置き場所を名前にしたファイルは作らない**。
   **ファイルは単数形**にし、複数は「複数返す」関数名の側で表す。**ディレクトリも単数形。ただし
-  置き場所を名前にしたディレクトリ（`src/browser/` の `features/` `components/` `stores/` `styles/`、
-  機能の中の `hooks/`、どの層にも作ってよい `lib/` `utils/`）だけ bullet-proof-react の名前を
-  そのまま使う**。
+  置き場所を名前にしたディレクトリ（`src/browser/` の `features/` `components/` `hooks/` `stores/`
+  `styles/`、機能の中の `hooks/`、どの層にも作ってよい `lib/` `utils/`）だけ
+  bullet-proof-react の名前をそのまま使う**。**`presentational-<機能>.tsx` は container と対に
+  なっているときだけ例外として許す**（`docs/design.md` 2章「機能の中を分ける」）。
   **`lib/` と `utils/` のどちらに置くかの基準は `docs/design.md` 2章
   「`lib/` と `utils/` に置く基準」が正典**（`helpers/` と `common/` は作らない）
 

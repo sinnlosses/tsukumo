@@ -196,17 +196,19 @@ src/
       layout/                 Layout・領域の枠・リサイザ・比率の保存
       main-view/              TurnTabs・Turn・Report・QuestionRecord と markdown/（unified 一式）
       character-view/         Portrait・BalloonTrack・Balloon・動きの hooks
-      sidebar/                Activity・SessionInfo と、3区画の枠（SidebarSection）
+      sidebar/                Activity・SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
+                              3区画の枠（SidebarSection）
       dispatch/               Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
       chat-view/              雑談モードでメインの領域に差し替わるビュー（13.7）
       token-usage/            トークン消費の画面（グラフと集計）
       character-screen/       キャラクター画面と作る画面（13.6）。立ち絵・差し色の差し替え、使う人が変える色
-      task-board/             タスク一覧。TaskSection（枠を受け取って組む口）・TaskList（区画の中身）・
-                              TaskBoard（表のモーダル）。**領域を持たず、サイドバーに置いてもらう機能**
-                              （下の「領域の機能と、置かれる機能」）
-        hooks/                その機能だけが読むフック（`use-modal-dialog.ts`）
+      task-board/             タスク一覧。TaskList（区画の中身）・TaskBoard（表のモーダルの入口）・
+                              PresentationalTaskBoard（見た目）。**領域を持たず、サイドバーに
+                              置いてもらう機能**（下の「領域の機能と、置かれる機能」）
+        hooks/                その機能だけが読むフック（`use-task-board.ts`）
                               （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
     components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
+    hooks/                    機能の語彙を持たない React のフック（`use-modal-dialog.ts`）
     lib/                      名指しできる技術を知っている道具（WebSocket・`FileReader`・React の hook）
     stores/                   画面全体で共有する状態（セッション・選んでいるターン・出している画面）
     styles/                   グローバルな CSS はこの1枚だけ（theme.css。トークン・body・リンク）
@@ -216,24 +218,24 @@ characters/<name>/            character.json・persona.md・素材
 
 **ファイル名は概念**（原則5）。`helpers/` と `common/` は作らない（`lib/` と `utils/` を
 置く基準は下の「`lib/` と `utils/` に置く基準」）。**単数形の規約は
-`src/browser/` の置き場所のディレクトリ（`features/` `components/` `lib/` `stores/` `styles/` と、
-機能の中の `hooks/`）だけ
-外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
+`src/browser/` の置き場所のディレクトリ（`features/` `components/` `hooks/` `lib/` `stores/`
+`styles/` と、機能の中の `hooks/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
 `adapter` と、
 機能の中のファイル名は単数形のまま。`main-view/` のように機能の名前は用語集の語に合わせる）。
 
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
 「その機能しか読まないなら機能の中」が既定）:
 
-| 箱            | 置くもの                                                            | import してよい先                                    |
-| ------------- | ------------------------------------------------------------------- | ---------------------------------------------------- |
-| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）   | すべて                                               |
-| `features/`   | 1つの機能に閉じた部品・状態・保存                                   | `components` / `lib` / `utils` / `stores` / `shared` |
-| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）   | `lib` / `utils` / `shared`                           |
-| `lib/`        | **名指しできる技術**を知っている道具（React の部品ではないもの）    | `utils` / `shared`                                   |
-| `utils/`      | **どの技術も知らない**小物（下の「`lib/` と `utils/` に置く基準」） | —（何も import しない）                              |
-| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook     | `lib` / `utils` / `shared`                           |
-| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）    | —                                                    |
+| 箱            | 置くもの                                                            | import してよい先                                              |
+| ------------- | ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）   | すべて                                                         |
+| `features/`   | 1つの機能に閉じた部品・状態・保存                                   | `components` / `hooks` / `lib` / `utils` / `stores` / `shared` |
+| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）   | `hooks` / `lib` / `utils` / `shared`                           |
+| `hooks/`      | **機能の語彙を持たない** React のフック（`use-modal-dialog.ts`）    | `lib` / `utils` / `shared`                                     |
+| `lib/`        | **名指しできる技術**を知っている道具（React の部品ではないもの）    | `utils` / `shared`                                             |
+| `utils/`      | **どの技術も知らない**小物（下の「`lib/` と `utils/` に置く基準」） | —（何も import しない）                                        |
+| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook     | `lib` / `utils` / `shared`                                     |
+| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）    | —                                                              |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
   （zustand を入れない決定は 6.2 のまま）。実体は4つあり、
@@ -264,8 +266,9 @@ characters/<name>/            character.json・persona.md・素材
 `assets/` `testing/`・barrel file・`@/` の絶対 import・ESLint の
 `import/no-restricted-paths`）は、**実体が無い箱を先に作らない**ため。要るようになったら足す
 （1つずつの理由は `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（採らなかった
-bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`（＝機能の中の下位
-ディレクトリ）は 2026-09-22 に採ることにした**（下の2つの節）。
+bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/` は 2026-09-22 に
+採ることにした**（`browser/hooks/` の箱と、機能の中の `features/<機能>/hooks/` の両方。
+下の2つの節）。
 
 ### 領域の機能と、置かれる機能
 
@@ -281,15 +284,16 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
   サイドバーの区画に置く一覧（`task-list.tsx`）と、サイドバーの領域には収まらない画面いっぱいの
   `<dialog>`（`task-board.tsx`）の対で、どちらもサイドバーの語彙ではなく**タスクの語彙**で
   書かれている。CSS も同じ語彙を共有する1枚（`task-board.module.css`）にまとまる
-- **枠は領域が持ち、props で渡す。** 領域が「どこに置くか」（区画の枠・区画どうしの高さの
-  割り当て）を持ち、置かれる機能が「何を描くか」（見出しの文言・中身・押せる口）を持つ。
-  `features/sidebar/section.tsx` の `SidebarTaskFrame` が枠で、置かれる機能はそれを `frame`
-  として受け取る（**import で取りに行くと葉から領域への辺になる**ので、渡すのは `main.tsx`）:
-  `<Sidebar taskSection={<TaskSection frame={SidebarTaskFrame} />} />`。`<Layout>` が領域の中身を
-  props で受け取るのと同じ形で、**組み合わせるのは入口だけ**
-- **購読と state は置かれる機能が持つ**（`task-section.tsx` の `tasks` と `boardOpen`）。
-  `main.tsx` の `<Root>` に置くと購読が木の頂点に移り、タスクが変わるたびに全領域が描き直される。
-  `<TaskSection>` の中に置けば、描き直しはその区画で止まる
+- **区画ひとまとまりは領域の側に置く。** 「そこに何を置くか」は領域が知るべきことなので、
+  枠・見出しの文言・押せる口・購読・state を1ファイルにまとめて領域の中に置き
+  （`features/sidebar/task-section.tsx`）、**置かれる機能からは「何を描くか」だけを import する**
+  （`TaskList` と `TaskBoard`）。辺の向きが「領域 → 置かれる機能」なので、`main.tsx` で
+  組み合わせる必要はない（`<Sidebar />` のまま）
+- **購読と state は、置いた側の区画が持つ**（`task-section.tsx` の `tasks` と `boardOpen`）。
+  `main.tsx` の `<Root>` へ上げると購読が木の頂点に移り、タスクが変わるたびに全領域が描き直される。
+  区画の中に置けば、描き直しはその区画で止まる
+- **置かれる機能の側は、置き場所を知らないまま書く。** `task-board/` は「サイドバー」も
+  「区画」も名乗らず、タスクの語彙だけで書く（別の領域から同じものを置けるのはこのため）
 - **`components/` とは別物。** `components/` は**機能の語彙を持たない**部品（値と呼び先を全部
   受け取る）で、「置かれる機能」は機能の語彙を名乗ったまま置き場所だけを借りる
 - 検査は `test/architecture.test.ts` の `BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES`。
@@ -297,35 +301,43 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
   `token-usage` は 2026-09-22 まで `BROWSER_REGIONS` に無く、機能どうしの import が
   黙って検査されていなかった。両方を領域として載せ、載せ忘れは `throw` にした）
 
-### 機能の中を分ける（`hooks/` と UI）
+### 機能の中を分ける（container / presenter と `hooks/`）
 
-機能が大きくなったら、**フックを `features/<機能>/hooks/use-*.ts` へ出す**（2026-09-22 決定。
-それまでは `hooks/` を「採らない」と書いていた）。
+部品が「ロジック」と「見た目」の両方を抱えたら、**3つに割る**（2026-09-22 決定。それまでは
+`hooks/` を「採らない」と書いていた）。後続の分割（`chat-view` / `composer` / キャラクター画面の
+フォームなど）もこの形に揃える。
 
-**`hooks/` に出すもの**（3つとも満たすもの）:
+| ファイル                    | 持つもの                                                              | 持たないもの               |
+| --------------------------- | --------------------------------------------------------------------- | -------------------------- |
+| `<機能>.tsx`（container）   | フックを呼び、受け取った値と呼び先を presenter へ渡すだけ             | JSX の中身・算出・条件分岐 |
+| `hooks/use-<機能>.ts`       | state・副作用・イベントの読み替え。**画面に出す形の値と呼び先を返す** | JSX                        |
+| `presentational-<機能>.tsx` | 見た目。受け取ったものをそのまま描く                                  | **フックを1つも持たない**  |
 
-1. フックである（`useState` / `useEffect` / `useRef` などを持つ）
-2. **同期している相手か、扱っている技術を名前で言える**（`<dialog>` の開閉・スクロール位置・
-   ポインタの押し引き）
-3. 出したあと、呼ぶ側が「値を受け取って描くだけ」に近づく
+`task-board` がその1件目:
 
-**出さないもの**: 呼ぶ側と1対1で、名前を付けると「この部品のフック」としか言えないもの。
-`use-<機能名>.ts` しか名前が思いつかないなら分ける単位が間違っていて、**開くファイルが1つ
-増えるだけ**になる（`CLAUDE.md`「案が2つ以上あるとき」の物差し）。
+```
+features/task-board/
+  task-board.tsx                  container。useTaskBoard を呼んで PresentationalTaskBoard へ渡す
+  hooks/use-task-board.ts         <dialog> の ref と、backdrop のクリックを閉じる操作に読み替える呼び先
+  presentational-task-board.tsx   <dialog> の器・表・行・セル（フック無し）
+```
 
-**名前は `use-<同期している対象>.ts`**（`use-modal-dialog.ts`）で、**機能名では名乗らない**
-— `use-task-board.ts` にすると「タスクの何か」を期待して開いた人が `<dialog>` の開閉を読む
-ことになる。1ファイル1フック。**読み手が2つになったら `browser/lib/` へ上げる**
-（「`lib/` と `utils/` に置く基準」の手順1。1つの機能しか読まないうちは機能の中）。
+- **`presentational-` の接頭辞は、この形のときだけ付けてよい**（`CLAUDE.md` 原則5 の
+  「置き場所を名前にしたファイルは作らない」の例外）。**container と1対1で対になっている**
+  ことがファイル名で分かるほうが、`task-table.tsx` のような概念の名前より追いやすいため。
+  逆に、対になっていない部品に `presentational-` を付けない
+- **フックの名前は機能名（`use-<機能>.ts`）でよい。** container が呼ぶ1本なので、対応する
+  container を探せることのほうが大事。**1ファイル1フック**
+- **機能の中の `hooks/` に置くのは、その機能だけが読むフック。** 読み手が2つになったら
+  **`browser/hooks/` へ上げる**（機能の語彙を持たないものだけが上がる。`use-modal-dialog.ts` は
+  `<dialog>` の開閉を DOM へ写すだけでタスクを知らないので、最初から `browser/hooks/`）
+- **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く
+  （`features/layout/split.ts`・`features/character-screen/appearance-color.ts` がその形）
+- **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
+  container はフックのぶん毎回描き直されるので、そこに `memo` を置いても効かない
 
-**フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く
-（`features/layout/split.ts`・`features/character-screen/appearance-color.ts` がその形）。
-
-**UI 側のファイル名は中身の概念で名乗る**（原則5）。`presentational-*.tsx` のような
-「ロジックと分けた側」という置き場所の名前は付けない。分けた結果に概念の名前が付かないなら、
-分けないほうが読みやすい（例: 表を切り出すなら `task-table.tsx`。1件目の `task-board` では
-`<dialog>` の器と表が上から下へ1回で読める並びだったので**切り出さず**、
-`hooks/use-modal-dialog.ts` だけを出した）。
+**割らないでよいのは、フックが0本のとき**（`task-list.tsx` は `taskListTitle` と
+`taskStatusCounts` の純関数だけなので、1ファイルのまま）。
 
 ### `lib/` と `utils/` に置く基準
 
