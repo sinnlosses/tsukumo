@@ -4,7 +4,7 @@
 //
 // **Context に配るのは store そのもの**（参照が変わらない）。姿を Context で配ると、読んでいる値が
 // 変わっていない部品まで毎フレーム描き直しになる — サーバは 100ms ごとにフレームを押すので、
-// ターンが流れている間は毎秒10回それが起きていた（2026-09-20 に `useSyncExternalStore` へ移した）。
+// ターンが流れている間は毎秒10回それが起きていた（`useSyncExternalStore` へ移した）。
 //
 // **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線は持たない
 // （docs/design.md 6.1「部品の木」冒頭）。
@@ -129,7 +129,7 @@ export function createSessionStore(): SessionStore {
       }
       // **答え待ち（許可要求・質問）が動いたフレームだけ緊急**にする。人が待っている箱なので
       // 遅らせない。レポートやツールの進行は毎秒10回届くので、入力欄の操作を優先できるよう
-      // トランジションに載せる（2026-09-20 決定）。**React は `useSyncExternalStore` の描き直しを
+      // トランジションに載せる。**React は `useSyncExternalStore` の描き直しを
       // 同期レーンで走らせる**（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは
       // 購読の絞り込み（セレクタ）のほう。緊急かどうかの境目はここ1箇所に置く。
       if (state.pending !== snapshot.state.pending) {

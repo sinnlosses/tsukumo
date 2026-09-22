@@ -28,7 +28,7 @@
   --portrait-flinch-rotate: 3deg;
   --portrait-flinch-duration: 0.35s;
 }
-/* 素材の縦横比を保つ（2026-09-20 実測）。`height: 100%` と `max-width` を同時に掛けると、
+/* 素材の縦横比を保つ（実測）。`height: 100%` と `max-width` を同時に掛けると、
    置換要素は「幅だけ縮む」（CSS 2.1 §10.4 の制約表。高さが auto でないまま max-width に
    当たったとき、対になる max-height 側の再計算が起きない）ので、雑談ビュー（max-width が
    キャラビューより厳しい 32%）で幅だけ潰れていた。**両方 auto ＋ max-width/max-height の
@@ -51,7 +51,7 @@
    transform なし（＝呼び出し側が置いた位置）に揃えてある**。
    **一括指定（`animation`）ではなく個別指定で書く**のは、`var()` を混ぜた一括指定だと
    CSS Modules の名前の付け替えが効かず（値がそのまま出るので）、ハッシュ化された
-   `@keyframes` を指せなくなるため（2026-09-20 の実測）。reduced-motion
+   `@keyframes` を指せなくなるため（実測）。reduced-motion
    （`src/browser/styles/theme.css`）は `animation-iteration-count: 1` を強制するため、無限ループの
    呼吸・歩行も1周目の終わり（＝ transform なしの姿勢）で止まり、足元が床から浮いたまま
    止まることはない。 */

@@ -13,7 +13,7 @@
 // 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
 // （`src/server/core/chat-nudge.ts`）。送った文面はログにも記録にも残らない。
 //
-// **これはプロトタイプ**（2026-09-20）。立ち絵の動きは「待っているか」だけで決めていて、
+// **これはプロトタイプ**。立ち絵の動きは「待っているか」だけで決めていて、
 // キャラビューが持つ4つの動き（`features/character-view/` の `usePortraitMotion`）は
 // 再現していない。手触りを見てから詰める。
 
@@ -83,7 +83,7 @@ export function ChatView(): ReactElement {
   const outfit = resolveOutfit(model)
 
   // 遡って見ているセリフ。選んでいなければ undefined で、立ち絵は最新の表情に従う。
-  // **新しいセリフが来たらその場で失効する**（2026-09-21 決定） — 立ち絵は常に「いまのセリフ」を
+  // **新しいセリフが来たらその場で失効する** — 立ち絵は常に「いまのセリフ」を
   // 表す側へ倒す。読み返しの最中でも下へ攫わないスクロールの規則
   // （{@link NEAR_BOTTOM_THRESHOLD_PX}）とは**揃えない**: 流れていった行の印は画面の外にあるので、
   // 表情だけが遡ったまま動かないと、なぜ古いのかが画面から分からなくなる。
@@ -230,7 +230,7 @@ function ChatLog(props: {
           entry.speaker === "boundary" ? (
             <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
           ) : entry.speaker === "character" ? (
-            // **`<button>` ではなく `role="button"` の `<div>`**（2026-09-21）。ブラウザは
+            // **`<button>` ではなく `role="button"` の `<div>`**。ブラウザは
             // `<button>` の中の文字をドラッグで掴ませず（`user-select` を何にしても選べないことを
             // 実機の Chrome で確認した）、**セリフをコピーできなかった**。押せることは role と
             // `aria-pressed` で表し、キーの受けだけ自前で足す（{@link isActivationKey}）。
@@ -295,7 +295,7 @@ function ChatLog(props: {
  * 見るのは**押し始めてから動いた距離**だけ（{@link DRAG_THRESHOLD_PX}）。
  * **いま選ばれている文字（`window.getSelection()`）は見ない** — 選んだ直後にその行を押すと、
  * 選択が消えるのは手を離したあと（ブラウザが「選択を掴んで運ぶ」動きを待つため）なので、
- * その回の click が丸ごと落ちて押せなくなる（2026-09-21、実機の Chrome で確認）。
+ * その回の click が丸ごと落ちて押せなくなる（実機の Chrome で確認）。
  *
  * `detail === 0` はマウスから来ていない click（支援技術が送るもの）で、押し始めの場所を
  * 持たないので、押したものとして扱う。

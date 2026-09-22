@@ -1,5 +1,5 @@
-// 答え待ちの箱（許可要求・質問）。`<Composer>` の `<textarea>` の上に出す（2026-09-11 決定。
-// docs/design.md 6.1）。答え待ちが無いときは何も描かない。
+// 答え待ちの箱（許可要求・質問）。`<Composer>` の `<textarea>` の上に出す
+// （docs/design.md 6.1）。答え待ちが無いときは何も描かない。
 //
 // **質問は1問ずつ出す**（入力欄の領域が縦に溢れないようにするため。溢れるぶんは箱の中だけで
 // スクロールさせる）。単一選択は選んだ瞬間に次の質問へ進み、最後の1問を答えた時点で
@@ -8,18 +8,18 @@
 // **`multiSelect` はチェックボックスで複数選べる**（docs/design.md 6.1「複数選択はチェックボックス」）。
 //
 // **選択肢に `preview` があるときは、比べる面をメインビューが出す**
-// （`features/main-view/pending-question.tsx`。2026-09-21）。ここは狭いので押す場所に徹し、
+// （`features/main-view/pending-question.tsx`）。ここは狭いので押す場所に徹し、
 // **何問目を見ているか・どの選択肢に目を置いているかは `stores/question-focus.tsx` が配る**
 // （両方の機能が同じ選択に従うため。`index` をここのローカル状態に戻さないこと）。
 //
 // **`answer.labels[i]` は `questions[i]` に対して選んだ答えの並び**（`shared/pending-ask.ts` の
 // 契約）。複数選択で2つ以上選んだときはそのまま複数の要素として送り、自由入力に書いた文字列は
-// 同じ並びの末尾に足す。**1つの文字列に畳むのはここではない**（2026-09-16 変更。SDK が求める
+// 同じ並びの末尾に足す。**1つの文字列に畳むのはここではない**（SDK が求める
 // 「質問1件に対して1つの文字列」へ畳むのは `src/server/core/pending-answer.ts` の役目。ここで畳むと、
 // メインビューに残す記録の側で選択肢と突き合わせられなくなる）。
 //
 // **選択肢はモデルが送ってきた順ではなくラベルの辞書順で出す**（`shared/question.ts` の
-// `sortQuestionOptions`。2026-09-21 決定。docs/requirements.md 4.2。並べ替えは表示だけの都合
+// `sortQuestionOptions`。docs/requirements.md 4.2。並べ替えは表示だけの都合
 // なので、答えは選んだ「ラベル」で持ち、並べ替えても `answer.labels[i]` の中身は崩れない）。
 
 import { useState, type ReactElement } from "react"
@@ -226,7 +226,7 @@ function QuestionCard(props: {
     (option) => option.label === FREE_TEXT_OPTION_LABEL,
   )
   const hasPreview = question.options.some((option) => option.preview !== undefined)
-  // **並びはラベルの辞書順**（2026-09-21 決定。docs/requirements.md 4.2。自由入力は
+  // **並びはラベルの辞書順**（docs/requirements.md 4.2。自由入力は
   // sortQuestionOptions が末尾に固定する）。
   const sortedOptions = sortQuestionOptions(question.options)
 

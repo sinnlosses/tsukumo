@@ -55,6 +55,11 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 src/browser/ のコメントから日付の記述を消した（T-305）
+
+`src/browser/` の29ファイル87箇所（うち CSS が9ファイル）から、コメントの日付と「誰が」の記述を落とした。
+理由・実測の数値・正典の参照は残し、CSS の宣言は1つも触っていない。`bun run check` 1103 pass / 0 fail。
+
 ### 2026-09-22 トークン消費を期間で切って畳む集計の口を core に置いた（T-320）
 
 `src/server/adapter/token-usage-log.ts` に `readRange`（`YYYY-MM-DD.jsonl` の名前で期間の外の

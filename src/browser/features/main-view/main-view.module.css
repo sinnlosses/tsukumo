@@ -66,7 +66,7 @@ h2.turn-request {
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
 }
-/* ステップは**縦に1本**で積む（ユーザーの指摘 2026-09-10。Z字に読ませない）。
+/* ステップは**縦に1本**で積む（Z字に読ませない）。
    カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-steps {
   display: flex;
@@ -93,8 +93,8 @@ h2.turn-request {
   border-style: dashed;
 }
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`src/shared/main-view.ts` の
-   `MainViewStep.final`）。地は中間レポートと同じ ground にする（ユーザー指摘 2026-09-21、
-   docs/design.md 13.2）。中間レポートとの差は枠（中間だけ破線）とラベルの2つだけで、
+   `MainViewStep.final`）。地は中間レポートと同じ ground にする
+   （docs/design.md 13.2）。中間レポートとの差は枠（中間だけ破線）とラベルの2つだけで、
    ラベルを出すかどうかは turn.tsx が決める（中間レポートのあるやり取りだけ）。 */
 .main-step.is-final {
   background: var(--ground);
@@ -178,7 +178,7 @@ h2.turn-request {
   color: var(--state-ng);
 }
 /* 結論の塊（`note`）。**いちばん読ませたい印がいちばん弱かった**（引用と同じ灰色の3px の縦罫で、
-   地の差も無かった。2026-09-21 の実測）ので、縦罫を ink まで上げ、地を「浮く」段にする。
+   地の差も無かった。実測）ので、縦罫を ink まで上げ、地を「浮く」段にする。
    引用（blockquote）は目立たせないための印なので今のまま。docs/design.md 13.2。 */
 .detail-block .report-note {
   margin: 0.5rem 0;
@@ -492,7 +492,7 @@ h2.turn-request {
 .detail-block samp,
 .detail-block :not(pre) > code {
   /* 機械の名前は本文の上に**浮かせる**（docs/design.md 13.2）。ground に落とすと本文との比が
-     1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（2026-09-21 の実測）。 */
+     1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（実測）。 */
   background: var(--surface-raised);
   font-family: var(--font-mono);
   padding: 0 0.25rem;

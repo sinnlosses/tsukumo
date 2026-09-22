@@ -3,7 +3,7 @@
 // 畳みは `groupIntoTurns` → `selectShownReports` → `markSupersededSteps` → `markFinalReport` →
 // `limitTurnEntries` の5パスで、記録は最大20ターン分ある。**同じ導出を読むのは `stores/turn-selection.tsx`（選んで
 // いるターンの追従）と `features/main-view/`（中身）の2箇所**で、以前はそれぞれが毎フレーム
-// 別々に計算していた（2026-09-20 に1本化）。
+// 別々に計算していた（1本化した）。
 //
 // `useSyncExternalStore` のセレクタは**同じ姿なら同じものを返す**必要があるので、姿そのものを
 // キーにして結果を覚える（`WeakMap` なので、古い姿と一緒に落ちる）。

@@ -1,7 +1,7 @@
 // 1つのやり取り（依頼 → ステップの並び）。`<RequestHeading>` + ステップの並び
 // （レポート・質問の記録）を縦に1本で積む（`docs/requirements.md` 4.2
 // 「ステップは縦に1本で積む」。番号は振らない）。**ツールの実行は描かない**
-// （`docs/requirements.md` 4.2「メインビュー」。2026-09-16 決定。進行はサイドバーが持つ）。
+// （`docs/requirements.md` 4.2「メインビュー」。進行はサイドバーが持つ）。
 
 import { Fragment, useState, type ReactElement } from "react"
 
@@ -47,7 +47,7 @@ export function Turn(props: TurnProps): ReactElement {
               振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
               ずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open`
               のような制御されていない DOM の状態が別のステップへ乗り移って見える
-              （2026-09-16 の指摘。`src/shared/main-view.ts` の `MainViewStep.id` を参照）。 */}
+              （`src/shared/main-view.ts` の `MainViewStep.id` を参照）。 */}
           {turn.steps.map((step) => (
             <Step
               step={step}
@@ -79,7 +79,7 @@ export function Turn(props: TurnProps): ReactElement {
  * `src/shared/main-view.ts` の `markFinalReport` が畳んである）。
  *
  * **後ろに別のレポートが現れた中間レポート（`step.superseded`）は畳む。** 何件も開いたまま
- * 積まれると見通しが悪いため（2026-09-16 の指摘）。畳んだ分は `<details>` にするだけで
+ * 積まれると見通しが悪いため。畳んだ分は `<details>` にするだけで
  * 中身は DOM に残す（記録からは消さない）。まだ追い越されていない最後の中間レポートは
  * 今までどおり開いた `<section>` のまま。
  */
@@ -167,8 +167,7 @@ function truncateRequestText(request: string): string {
 
 /**
  * 依頼の見出しと、添えた画像の控え（`docs/requirements.md` 4.10。**控えは見出しの下**に並び、
- * 添えていなければ何も出ない）。**全行を既定で見せる**（ユーザーの指摘 2026-09-12「複数行の依頼が1行しか
- * 出ない」）。
+ * 添えていなければ何も出ない）。**全行を既定で見せる**（複数行の依頼が1行しか出ないと困るため）。
  *
  * - **1行の依頼は `<h2>` のまま。** 畳む先が無いのに開閉の三角を出さない
  * - **複数行の依頼は `<details open>`。** 既定で開いているので全行が読め、読み終わったら

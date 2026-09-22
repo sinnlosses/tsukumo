@@ -34,7 +34,7 @@ const DANGEROUS_PERMISSION_MODE: PermissionMode = "bypassPermissions"
 const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
 
 // モデルのエイリアスと、日本語ラベル。値は `src/shared/command.ts` の MODEL_ALIASES と同じ4つ。
-// 並びは重い順（Fable は Opus の上の階層なので先頭。2026-09-17）。
+// 並びは重い順（Fable は Opus の上の階層なので先頭）。
 const MODEL_LABELS: ReadonlyArray<readonly [ModelAlias, string]> = [
   ["fable", "Fable"],
   ["opus", "Opus"],
@@ -100,8 +100,8 @@ function resolveCharacterPack(
 /**
  * `.session-info` は2列の grid（`sidebar.module.css`）で、ラベルと値（`<select>`）を
  * 直接の子として並べる。行ごとに別々の flex で並べると、ラベルの文字数の差がそのまま
- * `<select>` の左端のズレになるため、行の境目を div で区切らずグリッド1つに任せる
- * （2026-09-13）。`bypassPermissions` を選んでいるときは警告色を付ける
+ * `<select>` の左端のズレになるため、行の境目を div で区切らずグリッド1つに任せる。
+ * `bypassPermissions` を選んでいるときは警告色を付ける
  * （`.permission-mode-select-danger`）。
  */
 export function SessionInfo(): ReactElement {

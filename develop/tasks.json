@@ -60,9 +60,9 @@
     "loopable": "Y",
     "dependencies": ["T-303"],
     "summary": "src/browser/ のコメントから日付の記述を消す（CSS を含む）",
-    "status": "doing",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "src/browser/ の29ファイル87箇所からコメントの日付を落とした。grep -rnE '20[0-9]{2}-[0-9]{2}-[0-9]{2}' src/browser が0件。\nbun run check 1103 pass / 0 fail（typecheck・lint・format:check も通過）。\n.css 9ファイルの変更はコメント行のみで宣言は未変更（git diff の全行を確認）。受け入れ時に折り返しの崩れ3箇所（mini-portrait / character-view / composer）を直した。",
     "task": "## 背景\n\nT-303 と同じ指示（2026-09-22）の続きで、**`src/browser/` 配下だけ**を受け持つ。\n落とし方の規約は T-303 が `docs/coding-standards.md`「コメント」節に書いてあるので、\n**着手前にその節を読む**。\n\n実測（2026-09-22 時点）: `src/browser/` に 86 箇所で、**うち 45 箇所は CSS のコメント**\n（`main-view.module.css` / `theme.css` / `sidebar.module.css` など）。残りは `.tsx` / `.ts`。\nJSX のコメントにも1箇所ある（`features/main-view/turn.tsx`）。\n\n## 決まっていること（蒸し返さない）\n\n- 日付は種類を問わず全部消す（ユーザー承認 2026-09-22）。理由の本文は残す\n- 規約の追加は T-303 の担当。このタスクは規約を書き換えない\n\n## やること\n\n1. **消すのは日付と出どころの記述だけで、理由の本文は残す。** 落とし方:\n\n- `（2026-09-21 決定）` `（2026-09-21 決定。4.2）` → 丸ごと落とす。`4.2` のような正典の参照が\n  同じ括弧に入っているときは**参照だけ残す**（`（docs/requirements.md 4.2）`）\n- `2026-09-21 の実測で、演出が相手にしたのは開始した時点の 74 文字だけ` → 日付だけ落として\n  `実測で、…74 文字だけ` にする（**数字と分かったことは残す**）\n- `2026-09-16 の指摘` `2026-09-21 のユーザーの判断` → 日付と「誰が」を落とし、\n  何が決まったか・なぜ今こうなのかだけ残す\n- 日付と出どころしか書いていない段落（理由が1文も無いもの）は、**正典\n  （`docs/architecture.md` / `docs/requirements.md`）に同じことが書かれているか確かめてから**\n  段落ごと消す。書かれていなければ正典に1行足してから消す\n  （`docs/coding-standards.md`「コメント」節の既存の手順）\n\n**日付が「データ」として出てくる箇所は触らない。** `test/server/adapter/chat-archive.test.ts` の\n`2026-09-21.jsonl` のようなファイル名・`expect(...).toBe(\"2026-09-21\")` の期待値・\n`test/fixture/` の中身は、雑談のアーカイブが日付でファイルを分ける仕様そのもの。\n**コメント（`//` と `/* */`、JSX の `{/* */}`）の中だけを対象にする。**\n2. 対象は `src/browser/` 配下だけ（`.ts` / `.tsx` / `.css` の全部）。`src/shared/`・\n   `src/server/`・`test/`・`docs/` は触らない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/browser/` に日付の形（`20xx-xx-xx`）が 0 件\n- `src/shared/`・`src/server/`・`test/`・`docs/` の件数が変わっていない\n- CSS の宣言を1つも変えていない（`git diff` で、`.css` の変更がコメント行だけであることを\n  確かめて `evidence` に書く）\n\n## 注意\n\n- **CSS は宣言を触らない。** コメントだけを直す。見た目が変わる変更が混ざったら目視確認が\n  必要になり、このタスクの範囲を超える\n- T-297 が `main-view.module.css` のコメントを書き換えていて、そこにも日付\n  （「ユーザー指摘 2026-09-21」）が入っている。対象に含む\n"
   },
   {

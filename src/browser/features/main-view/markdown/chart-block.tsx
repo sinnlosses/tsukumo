@@ -40,7 +40,7 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
         // chart.js 4.5.0 の colors プラグインは「`defaults.borderColor` か
         // `defaults.backgroundColor` が既定から動いていたら色を配らない」判定を足したので、
         // `borderColor` へ書くと系列の色が付かないまま（`undefined`）になり、棒も線も透明で
-        // 描かれる（2026-09-22 に 4.4.1 と 4.5.1 を並べて実測）。
+        // 描かれる（4.4.1 と 4.5.1 を並べて実測）。
         const rule = resolveColor(canvas, "--rule")
         Chart.defaults.color = resolveColor(canvas, "--ink-quiet")
         Chart.defaults.scale.grid.color = rule

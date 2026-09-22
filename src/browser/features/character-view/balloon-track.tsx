@@ -7,7 +7,7 @@
 // 見送った経緯は docs/history/tasks-archive.md）。
 //
 // **吹き出しに出るのは `speak` で来たセリフだけ。** ツールの実行中に「作業中」の一言を重ねる
-// 経路は、表情の自動の上書きごと 2026-09-17 に撤去した（docs/requirements.md 4.2）。
+// 経路は、表情の自動の上書きごと撤去した（docs/requirements.md 4.2）。
 
 import { type ReactElement } from "react"
 
