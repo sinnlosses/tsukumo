@@ -71,9 +71,9 @@
     "loopable": "Y",
     "dependencies": [],
     "summary": "語彙の長さに依存する期待値の扱いを規約に足す",
-    "status": "doing",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "docs/coding-standards.md「### 置き場所とモック」に「語彙の長さに依存する期待値は定数（EXPRESSIONS.length 等）から導く」の1項目を足し、索引の ## テスト 行に「語彙に依存する期待値」を足した（workflow.md 側ではなくテストの書き方の規約と判断）。見出し数は前後とも33。bun run check: 1254 pass / 0 fail（101 files）",
     "task": "## 背景\n\n`EXPRESSIONS`（`src/shared/expression.ts:32`）に `bored` を足したとき、`bun run typecheck` が\n挙げた漏れ（`src/shared/character-definition.ts` / `src/shared/character.ts` / テストの\nフィクスチャ）を全部埋めてもテストが1件落ちた。\n`test/browser/features/character-screen/character-edit.test.tsx` が「立ち絵の無い枠」の数を\n`5` と直書きしていて、語彙が1つ伸びた結果 `6` になったため。**型検査には挙がらず\n`bun test` で初めて出る**ので、「typecheck が通った」を作業の完了の合図にすると踏む。\n\n`docs/coding-standards.md` の「## テスト」節（450行目。小節は「置き場所とモック」\n「カバレッジに閾値を設けない」「消すかどうか」「足すかどうか」「描画は自動テストで守らない」）\nには、この形の漏れに触れた記述が無い。\n\n## 解くべき論点\n\n- 出し先が2つありうる。**テストの書き方の規約**（期待値を `EXPRESSIONS.length` のような定数から\n  導く）なら `docs/coding-standards.md`「## テスト」節、**作業の進め方**（typecheck の\n  あとに必ず test も見る）なら `docs/workflow.md`。どちらか一方に書く（両方に書くと正典が\n  二重になる）\n\n## やること\n\n1. 論点を決め、**語彙（全域を列挙する定数）の長さに依存する期待値をテストに直書きするときの\n   扱い**を1箇所に書く\n2. `docs/coding-standards.md` に書く場合は、冒頭の「### 節の索引」表（25行目）の `## テスト`\n   行の「中身」欄を、足した内容が索引から引ける語に直す。`###` の小節を新設したなら索引に\n   行を足す\n3. 既に同じことを言っている記述が見つかったら足さず、在り処を `evidence` に書いて閉じる\n\n## 完了条件\n\n- `bun run check` が通る\n- 足した記述が、語彙を増やす側の読み手から引ける（索引の表か節見出しに、語彙・表情・期待値の\n  いずれかの語がある）\n- `grep -c '^#\\{2,3\\} ' docs/coding-standards.md` の値が、小節を足していないなら編集の前後で\n  変わらない（足したなら +1 で、索引にも1行増えている）\n\n## 注意\n\n- **ドキュメントにタスク番号（`T-` + 3桁）を書かない**\n- 編集は**行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）。\n  索引表に本文を流し込む事故が過去にある\n- テストのフィクスチャを1つに寄せるタスクとは**出し先が違う**（あちらはコード、こちらは規約）。\n  片方をやればもう片方が要らなくなるわけではない\n"
   },
   {
