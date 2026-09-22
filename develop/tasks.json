@@ -38,9 +38,9 @@
     "loopable": "Y",
     "dependencies": ["T-307", "T-310"],
     "summary": "init がまだ届いていない状態を合併型にする",
-    "status": "doing",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 1226 pass / 0 fail（99ファイル）。sessionId / permissionMode を SessionInfo（starting / identified / running）に畳んだが、**model は外に残した** —— init と model-changed の2つの口で決まり sessionId より先に分かるため（running に入れた形を実機で試したら 2026-09-17 と同じ「切り替えても古い値に戻る」不具合が再発。回帰テストあり）。そのため完了条件の「| undefined が3行とも消えている」は2行まで。目視（ポート7411・TSUKUMO_HOME を分けて起動）: (1) 起動直後にセッション情報の5行が崩れず描画、(2) 依頼1件のあと モデル Sonnet / 許可モード 自動判定 / セッション 7411・9/23 02:05 が出て / 補完も埋まった（init 適用の証拠）、(3) 依頼前に sonnet・init 後に haiku へ切り替えて6秒後も保持。",
     "task": "## 背景\n\n`src/shared/session-state.ts:143,144,145` の `sessionId` / `model` / `permissionMode` は\n3つとも `| undefined` で、**「`init` がまだ届いていない」という1つの状態**を表している。\n偽の駆動側（`src/server/adapter/fake-driver.ts:206,207`）にも `model` / `permissionMode` の\n同じ写しがある。\n\n`docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所\n（調査は `docs/research/undefined-reduction.md` 2.1 の #4 #8）。\n\n## やること\n\n1. 3つを **`session: { kind: \"starting\" } | { kind: \"running\"; sessionId; model;\n   permissionMode }`** の判別可能な合併型にする\n2. `src/server/adapter/fake-driver.ts:206,207` の写しを同じ形に合わせる\n3. 読む側（サイドバーのセッション情報・モデル切り替え）を `session.kind` の分岐に直す\n4. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts` から `sessionId` / `model` / `permissionMode` の\n  `| undefined` が3行とも消えている\n- **目視確認**: tsukumo を起こし、(1) 起動直後にサイドバーがセッション情報の欄で崩れない、\n  (2) `init` 到着後にセッションID・モデル・許可モードが出る、(3) サイドバーからモデルを\n  切り替えると即座に反映される——の3つを確かめて `evidence` に書く\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **`SessionState` を触る3つのタスクは並行させない。** `dependencies` で直列にしてある\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
   },
   {

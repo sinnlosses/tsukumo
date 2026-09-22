@@ -55,6 +55,16 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 `init` がまだ届いていない状態を合併型にした（T-311）
+
+`SessionState` の `sessionId` / `permissionMode` を `session: { kind: "starting" } |
+{ kind: "identified"; sessionId } | { kind: "running"; sessionId; permissionMode }` に畳んだ。
+**`model` は合併型に入れず外に残した** —— `init` だけでなく `model-changed`（サイドバーの
+`set-model` の確定）でも決まり、`sessionId` より先に分かることがあるため。いったん `running` の
+中に入れた形を実機で試したら、依頼を送る前にモデルを切り替えても数秒で古い値に戻る
+（駆動は切り替わっているのに表示だけ嘘をつく）という 2026-09-17 と同じ不具合が再発したので、
+その場で外に戻して回帰テストを足した。
+
 ### 2026-09-23 タスクIDを押して実行を頼めるようにした（T-362）
 
 サイドバーの一覧と「一覧を見る」の表の両方で、タスクIDを `<button>` にした。押すと

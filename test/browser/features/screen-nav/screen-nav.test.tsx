@@ -5,7 +5,11 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { ScreenNav } from "../../../../src/browser/features/screen-nav/screen-nav.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
-import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionInfo,
+  type SessionState,
+} from "../../../../src/shared/session-state.ts"
 import { setPageUrl } from "../../../dom-environment.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
@@ -33,6 +37,17 @@ afterEach(() => {
   setPageUrl(DEFAULT_PAGE_URL)
   window.location.hash = ""
 })
+
+/**
+ * `init` が届いたあと（`running`）の架空の土台。`permissionMode` だけ変えて使う。**`model` は
+ * ここに無い**（`SessionState.model` は `session` と独立なので、`renderScreenNav` の第一引数に
+ * 直接渡す）。既定値は見た目上の既定（`PERMISSION_MODE_FALLBACK`）に合わせてある。
+ */
+const RUNNING_SESSION: Extract<SessionInfo, { kind: "running" }> = {
+  kind: "running",
+  sessionId: "s-fixture",
+  permissionMode: "auto",
+}
 
 function renderScreenNav(state: Partial<SessionState> = {}): void {
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state })
@@ -167,7 +182,10 @@ describe("ScreenNav", () => {
 
   // 帯に出すのは**画面を見ても分からず、ターンの結果を変えるもの**の2つ（13.9）。
   it("モデルと許可モードを帯の読みとして出す", () => {
-    renderScreenNav({ model: "claude-sonnet-5", permissionMode: "plan" })
+    renderScreenNav({
+      model: "claude-sonnet-5",
+      session: { ...RUNNING_SESSION, permissionMode: "plan" },
+    })
 
     expect(readingTexts()).toEqual(["Sonnet", "プラン"])
   })
@@ -181,11 +199,11 @@ describe("ScreenNav", () => {
 
   // 「全部許す」だけ字に意味の色を載せる（ラベルの文字が必ず付くので色だけに頼らない。13.1 原則5）。
   it("許可モードが「全部許す」のときだけ字に is-danger が付く", () => {
-    renderScreenNav({ permissionMode: "bypassPermissions" })
+    renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "bypassPermissions" } })
     expect(document.querySelector(".screen-nav-permission-mode")?.className).toContain("is-danger")
 
     cleanup()
-    renderScreenNav({ permissionMode: "acceptEdits" })
+    renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "acceptEdits" } })
     expect(document.querySelector(".screen-nav-permission-mode")?.className).not.toContain(
       "is-danger",
     )

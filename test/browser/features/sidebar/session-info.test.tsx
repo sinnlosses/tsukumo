@@ -5,13 +5,28 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { SessionInfo } from "../../../../src/browser/features/sidebar/session-info.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { MODEL_ALIASES } from "../../../../src/shared/command.ts"
-import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionInfo as SessionInfoState,
+  type SessionState,
+} from "../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
 })
+
+/**
+ * `init` が届いたあと（`running`）の架空の土台。テストはここから `permissionMode` /
+ * `sessionId` だけを変えて使う。**`model` はここに無い**（`SessionState.model` は
+ * `session` と独立なので、`renderSessionInfo` の第一引数に直接渡す）。
+ */
+const RUNNING_SESSION: Extract<SessionInfoState, { kind: "running" }> = {
+  kind: "running",
+  sessionId: "s-fixture",
+  permissionMode: "default",
+}
 
 /**
  * 本物の WebSocket 接続（`<App>`）を経由せず、`SessionContext` へ直接値を差し込んで描く
@@ -40,7 +55,10 @@ function selectValue(element: HTMLElement): string {
 
 describe("SessionInfo", () => {
   it("状態の model / permissionMode の値を <select> に選択する", () => {
-    renderSessionInfo({ model: "claude-sonnet-5", permissionMode: "plan" })
+    renderSessionInfo({
+      model: "claude-sonnet-5",
+      session: { ...RUNNING_SESSION, permissionMode: "plan" },
+    })
 
     expect(selectValue(screen.getByLabelText("モデル"))).toBe("sonnet")
     expect(selectValue(screen.getByLabelText("許可モード"))).toBe("plan")
@@ -206,7 +224,7 @@ describe("SessionInfo", () => {
 
   it("許可モードを変更すると set-permission-mode が dispatch される", () => {
     const calls: unknown[] = []
-    renderSessionInfo({ permissionMode: "auto" }, (command) => {
+    renderSessionInfo({ session: { ...RUNNING_SESSION, permissionMode: "auto" } }, (command) => {
       calls.push(command)
     })
 
@@ -216,13 +234,13 @@ describe("SessionInfo", () => {
   })
 
   it("bypassPermissions を選ぶと警告の見た目のクラスが付く", () => {
-    renderSessionInfo({ permissionMode: "bypassPermissions" })
+    renderSessionInfo({ session: { ...RUNNING_SESSION, permissionMode: "bypassPermissions" } })
 
     expect(screen.getByLabelText("許可モード").className).toContain("permission-mode-select-danger")
   })
 
   it("bypassPermissions 以外では警告のクラスが付かない", () => {
-    renderSessionInfo({ permissionMode: "auto" })
+    renderSessionInfo({ session: { ...RUNNING_SESSION, permissionMode: "auto" } })
 
     expect(screen.getByLabelText("許可モード").className).not.toContain(
       "permission-mode-select-danger",
@@ -237,7 +255,7 @@ describe("SessionInfo の並び", () => {
       characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
       sessions: [{ sessionId: "s1", viewPort: 7327, lastModified: 0 }],
-      sessionId: "s1",
+      session: { ...RUNNING_SESSION, sessionId: "s1" },
     })
 
     const labels = screen
