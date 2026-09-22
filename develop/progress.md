@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 character-view のフックを hooks/ へ出した（T-358）
+
+`useNowForPortraitMotion` と `usePortraitMotion` を1本の `hooks/use-character-view.ts` に畳み
+（呼び出し元が1箇所だけだった）、`character-view.tsx` は17行の container、見た目は
+`presentational-character-view.tsx` へ。**振る舞いを変えない移動**であることを、移す前後の
+ビルドで同じ場面（偽の駆動・`report`）を撮って確かめた（動きの並びが ±0.02s で一致）。
+
 ### 2026-09-23 復元した依頼から、仕掛けが差し込んだ塊を落とした（ユーザー報告）
 
 「セッションを復元すると大量の文字列が出る」の調査と修正。生きているセッションでは `request` は

@@ -204,9 +204,9 @@
     "dependencies": [],
     "summary": "character-view の2つのフックを hooks/ へ出す",
     "task": "## 背景\n\n`src/browser/features/character-view/character-view.tsx` は、`useNowForPortraitMotion`（60行）と\n`usePortraitMotion`（95行）を部品 `CharacterView`（116行）と同じファイルに抱えている。\nT-328 で決めた形（`docs/design.md`「機能の中を分ける（container / presenter と `hooks/`）」）\nでは、state・副作用・イベントの読み替えは `hooks/use-<機能>.ts` に置く。1件目の `task-board` が\n`hooks/use-task-board.ts` を出したのと同じ形。\n\n**この機能は T-336〜T-339 のどれの対象でもない**（T-336 は chat-view、T-337 は dispatch、\nT-338 は character-screen、T-339 は layout と token-usage）。\n\nエージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。\n\n## やること\n\n1. `features/character-view/hooks/` を作り、2つのフックを移す。**1ファイル1フック**が決まり\n   なので、container が呼ぶ1本にまとめられるかをまず見る（まとめられないなら理由を\n   `evidence` に書いて2本のままでよい）\n2. container / presenter に割るかは、割ったあとのほうが読みやすいときだけ\n   （「フックが0本の部品は割らない」が `docs/design.md` の線）\n3. 立ち絵の動きが変わっていないことを目視で確かめる\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `character-view.tsx` にフックの定義が残っていない\n- **目視**: 立ち絵の表情の切り替わりと動きが前と変わらない。撮ったもの（幅・場面）を\n  `evidence` に書く\n\n## 注意\n\n- **振る舞いを変えない移動**。立ち絵の往復のパラメータ（`src/shared/portrait-motion.ts` 側の\n  値）には触らない\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 1244 pass / 0 fail（100ファイル）。2つのフックは1本（hooks/use-character-view.ts）にまとめた —— useNowForPortraitMotion の呼び出し元は usePortraitMotion の1箇所だけだったため。container（17行）/ presentational-character-view.tsx（46行）に割り、算出はすべてフックへ寄せた。目視（偽の駆動・場面 report・ポート7412・幅1400、ページ内で16ms ごとに data-motion / data-expression を記録）: 移す前 0.02s reading:proud → 0.19s waiting:default → 4.94s success:default → 5.60s reading:default、移したあとも同じ並びで ±0.02s（同一と判断）。**失敗のびくっ（failure）はどちらの版でも出なかった**ので移動による劣化ではない（別件）。"
   },
   {
     "id": "T-359",

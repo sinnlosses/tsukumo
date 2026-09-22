@@ -4,7 +4,7 @@
 //
 // 今のターンは `SessionState.speeches` / `speechExpression` が持つので、ここは使わない
 // （`request` の時点で「前のターンの最後の1件だけ残す」規則が乗っており、記録から素直には
-// 導けない）。**過去のターンだけをここから引く**（`src/browser/features/character-view/character-view.tsx`）。
+// 導けない）。**過去のターンだけをここから引く**（`src/browser/features/character-view/hooks/use-character-view.ts`）。
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 

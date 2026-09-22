@@ -22,7 +22,7 @@ export type BalloonTrackProps = {
   /**
    * セリフが1件も無いときに出す文言。undefined なら今のターン向けの既定文
    * （「まだ」＝これから来る、の言い方）。**過去のターンには合わない**ので、呼び出し側が
-   * そのターン向けの文言を渡す（`src/browser/features/character-view/character-view.tsx`）。
+   * そのターン向けの文言を渡す（`src/browser/features/character-view/hooks/use-character-view.ts`）。
    */
   readonly emptyMessage: string | undefined
 }
