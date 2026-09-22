@@ -206,6 +206,10 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
   指示メモを `docs/history/direction.md` へ移す。**分解は方針決めを含むので委譲せず、
   `/loop` にも載せない**
 - `list-tasks`: 登録済みタスクを一覧の表で見るだけ（読み取り専用）
+- `retrospect`: `develop/retrospective.md` に記録したコミットから先の**まだ振り返っていない
+  タスク**を振り返り、見つけたことを `develop/direction.md` の `## エージェントのドラフト` に
+  積む。**ドキュメントもタスクも直接は書き換えない**（承認ゲートを通す）。**手で呼ぶ。
+  `/loop` には載せない**（無人だと根拠の薄い気づきが溜まるため）
 
 **共通のスキルはこのリポジトリの事情を知らない。** spec の出典（`docs/requirements.md` と
 `develop/tasks.json` の各タスク本文）、standards の出典（この `CLAUDE.md` ＋
