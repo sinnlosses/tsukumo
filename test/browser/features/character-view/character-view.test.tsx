@@ -125,8 +125,7 @@ describe("CharacterView", () => {
   it("ターンが進行中でなく、直近の完了・失敗も無ければ data-motion は reading（呼吸だけ）", () => {
     renderCharacterView({
       character: FIXTURE_CHARACTER,
-      turnInProgress: false,
-      turnFinishedAt: undefined,
+      turn: { kind: "idle" },
       lastToolFailureAt: undefined,
     })
 
@@ -136,8 +135,7 @@ describe("CharacterView", () => {
   it("ターンが進行中なら data-motion は waiting（領域の中を歩く）", () => {
     renderCharacterView({
       character: FIXTURE_CHARACTER,
-      turnInProgress: true,
-      turnFinishedAt: undefined,
+      turn: { kind: "running", startedAt: 0 },
       lastToolFailureAt: undefined,
     })
 
@@ -152,8 +150,7 @@ describe("CharacterView", () => {
     try {
       renderCharacterView({
         character: FIXTURE_CHARACTER,
-        turnInProgress: false,
-        turnFinishedAt: now - 100,
+        turn: { kind: "finished", startedAt: now - 200, finishedAt: now - 100 },
         lastToolFailureAt: undefined,
       })
 
@@ -171,8 +168,7 @@ describe("CharacterView", () => {
     try {
       renderCharacterView({
         character: FIXTURE_CHARACTER,
-        turnInProgress: true,
-        turnFinishedAt: undefined,
+        turn: { kind: "running", startedAt: now - 200 },
         lastToolFailureAt: now - 100,
       })
 

@@ -19,10 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は質問の記録で上げた（`SessionRecord` の `question` と、`answer` コマンドの
- * `labels` を質問ごとの並びに変えた。古いタブが繋がったままだと、送った答えが弾かれる）。
+ * 直近はターンの進み具合で上げた（`turnInProgress` / `turnStartedAt` / `turnFinishedAt` の3つを
+ * `turn` の合併型にまとめた。古いタブが繋がったままだと、送信/中断の切り替えも経過時間も
+ * 動かなくなる）。
  */
-export const PROTOCOL_VERSION = 2
+export const PROTOCOL_VERSION = 3
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の

@@ -358,7 +358,7 @@ describe("ChatView のセリフを遡る", () => {
         character: FIXTURE_CHARACTER,
         // 送った時点でターンが始まり、最新の表情は既定へ戻っている（`beginTurn`）。
         speechExpression: INITIAL_SESSION_STATE.speechExpression,
-        turnInProgress: true,
+        turn: { kind: "running", startedAt: 0 },
       })
     })
 
@@ -453,7 +453,7 @@ describe("ChatView の立ち絵をつつく", () => {
   it("ターン進行中は押せない（返事を待つ）", () => {
     const sent: unknown[] = []
     renderChatView(
-      { records: RECORDS, character: FIXTURE_CHARACTER, turnInProgress: true },
+      { records: RECORDS, character: FIXTURE_CHARACTER, turn: { kind: "running", startedAt: 0 } },
       (command) => sent.push(command),
     )
 

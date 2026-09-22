@@ -166,8 +166,9 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
  *
  * `turnUnsettled` は**いちばん新しいやり取りの締めの本文がまだ伸びうるか**で、確定していない
- * 本文を出さないために要る（{@link selectShownReports}）。**`SessionState.turnInProgress`
- * そのものではない**——背景の仕事を待って黙ると `turn-finished` が来てそのフィールドは落ちるが、
+ * 本文を出さないために要る（{@link selectShownReports}）。**`SessionState.turn` が
+ * `running` かどうかそのものではない**——背景の仕事を待って黙ると `turn-finished` が来て
+ * `finished` に落ちるが、
  * 通知で再開したぶんの本文はそこから伸びる（作るのは `browser/stores/main-view-turn.ts`）。
  */
 export function mainViewTurns(

@@ -120,7 +120,11 @@ describe("SessionSwitch", () => {
   })
 
   it("ターン進行中は塞ぎ、理由をサーバと同じ定型文で見せる", () => {
-    renderSessionSwitch({ sessions: SESSIONS, sessionId: "s-current", turnInProgress: true })
+    renderSessionSwitch({
+      sessions: SESSIONS,
+      sessionId: "s-current",
+      turn: { kind: "running", startedAt: 0 },
+    })
 
     const select = screen.getByLabelText("セッション")
     expect((select as HTMLSelectElement).disabled).toBe(true)

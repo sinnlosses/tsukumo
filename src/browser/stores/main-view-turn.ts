@@ -33,8 +33,8 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
 /**
  * いちばん新しいやり取りの締めの本文が**まだ伸びうるか**（`mainViewTurns` の2つめの引数）。
  *
- * **`turnInProgress` だけでは足りない。** 背景の仕事（サブエージェント・背景のコマンド）を
- * 待って黙ると SDK が `result` を出すので `turn-finished` が届き、そのフィールドは落ちる。
+ * **ターンが `running` かどうかだけでは足りない。** 背景の仕事（サブエージェント・背景の
+ * コマンド）を待って黙ると SDK が `result` を出すので `turn-finished` が届き、`finished` に落ちる。
  * 通知で再開したぶんは**新しい依頼ではない**ので二度と立たず、そこから伸びる本文が「確定済み」
  * として1文字目から出てしまう。**書き上げる演出はマウントした時点の DOM しか相手にしない**
  * （`features/main-view/report-reveal.ts`）ので、筆は数十文字ぶんで終わり、残りは隠されない
@@ -43,5 +43,5 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  * 書きかけがあるあいだ（`partialUtterance` が空でない）は伸びる途中とみなす。
  */
 function isTurnUnsettled(state: SessionState): boolean {
-  return state.turnInProgress || state.partialUtterance !== ""
+  return state.turn.kind === "running" || state.partialUtterance !== ""
 }

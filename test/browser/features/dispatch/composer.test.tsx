@@ -114,9 +114,9 @@ describe("Composer", () => {
     expect(calls).toEqual([])
   })
 
-  it("turnInProgress の間に Command+Enter を押しても送らない（進行中は中断ボタンに切り替わる）", () => {
+  it("ターンが進行中の間に Command+Enter を押しても送らない（進行中は中断ボタンに切り替わる）", () => {
     const calls: unknown[] = []
-    renderComposer({ turnInProgress: true }, (command) => calls.push(command))
+    renderComposer({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
 
     fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })

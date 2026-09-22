@@ -83,7 +83,7 @@ export function toSessionEvents(
       // サブエージェント（Task ツール）の中の `result` が `parent_tool_use_id` 付きで届くなら
       // （`assistant` の `tool_use` と同じ形のはずだが、SDK が実際にこの形で流すかは未確認）、
       // それをターンの終わりとして扱うと、本体のターンが終わっていないのに `turn-finished` が
-      // 挟まり `turnInProgress` が落ちてしまうので無視する（案4-c）。
+      // 挟まり、ターンが `finished` に落ちてしまうので無視する（案4-c）。
       return optionalString(message.parent_tool_use_id) === undefined
         ? [
             ...tokenUsageEvents(message.modelUsage),

@@ -45,7 +45,7 @@ export function CharacterCreate(): ReactElement {
   const dispatch = useSessionDispatch()
   const character = useSessionSelector((session) => session.state.character)
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
-  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
   const [name, setName] = useState("")
   const [portraits, setPortraits] = useState<HeldPortraits>(NO_PORTRAITS)
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
