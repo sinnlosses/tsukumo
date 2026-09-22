@@ -1,5 +1,23 @@
 # 進捗のアーカイブ
 
+### 2026-09-22 TaskBoard と TaskList を features/ 直下へ出した（T-328）
+
+`task-board`/`task-list` を1つの機能 `src/browser/features/task-board/` にまとめ、`.task-` の
+31セレクタと `@media` を `task-board.module.css` へ分けた。機能を「領域」と「置かれる機能」の
+2種類に割り、辺は「領域 → 置かれる機能」の1方向だけを許す検査にした。
+
+**同日、ユーザーの指摘を2回受けて形を直した**（コミットは別）。区画ひとまとまり
+（`task-section.tsx`）はサイドバー側へ、`<dialog>` の開閉フックは機能の語彙を持たないので
+新しい箱 `src/browser/hooks/` へ移した。`task-board` は container / `hooks/use-task-board.ts`（行への畳み方も同居）/
+`presentational-task-board.tsx` / `components/`（6部品）/ `domain/`（`task-status.ts`・
+`task-list-title.ts`）に分け、**部品は関数宣言で書く**規約を `docs/coding-standards.md` に足した。
+
+### 2026-09-22 画面からセッションを選んで切り替えられるようにした（T-348）
+
+サイドバーの「セッション」の `<select>`（`session-switch.tsx`）に、同じパック・同じモードの
+目印違いを新しい順に10件まで並べ、選ぶと `switch-session` → `session-launch` の起こし直しで
+その transcript の続きから始まる。一覧は `sessions-changed` で起こすたびに1回だけ押す。
+
 ### 2026-09-22 キャラクターのテスト用の値を組み立て関数に寄せた（T-327）
 
 `test/fixture/character.ts` に `characterInfo` / `characterDefinition` / `portraits` /

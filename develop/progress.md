@@ -87,25 +87,12 @@ tsukumo 自身を直したときの反映・衝突時の止め方・置き場と
 `src/browser/lib/clock.ts` の2箇所に絞った。`src/server/adapter/local-time.ts` は OS の
 タイムゾーンを読む唯一の場所として残し、引数を `Date` から数に変えて `Temporal` で書き直した。
 
-### 2026-09-22 TaskBoard と TaskList を features/ 直下へ出した（T-328）
-
-`task-board`/`task-list` を1つの機能 `src/browser/features/task-board/` にまとめ、`.task-` の
-31セレクタと `@media` を `task-board.module.css` へ分けた。機能を「領域」と「置かれる機能」の
-2種類に割り、辺は「領域 → 置かれる機能」の1方向だけを許す検査にした。
-
-**同日、ユーザーの指摘を2回受けて形を直した**（コミットは別）。区画ひとまとまり
-（`task-section.tsx`）はサイドバー側へ、`<dialog>` の開閉フックは機能の語彙を持たないので
-新しい箱 `src/browser/hooks/` へ移した。`task-board` は container / `hooks/use-task-board.ts`（行への畳み方も同居）/
-`presentational-task-board.tsx` / `components/`（6部品）/ `domain/`（`task-status.ts`・
-`task-list-title.ts`）に分け、**部品は関数宣言で書く**規約を `docs/coding-standards.md` に足した。
-
-### 2026-09-22 画面からセッションを選んで切り替えられるようにした（T-348）
-
-サイドバーの「セッション」の `<select>`（`session-switch.tsx`）に、同じパック・同じモードの
-目印違いを新しい順に10件まで並べ、選ぶと `switch-session` → `session-launch` の起こし直しで
-その transcript の続きから始まる。一覧は `sessions-changed` で起こすたびに1回だけ押す。
-
 ## 未解決
+
+- **部屋の表示名（セッションに出す名前）の語彙が未決**（2026-09-22 の `/plan-tasks`。
+  ユーザーが「表示名は改めて考えよう」と保留した）。決まっているのは「固定の語彙をポートの
+  並び順に割り当てる」ことと「印には焼かない」ことだけで、**語彙そのものは T-357 の中で候補を
+  出してユーザーに選んでもらう**（T-357 の `loopable` が `"N"` なのはこのため）
 
 - **worktree 運用（T-349〜T-353）への移行は、本体の作業ツリーが片付くまで始められない**
   （2026-09-22。この時点で他のセッターの未コミット変更が19件あり、`bun run check` は
@@ -432,3 +419,8 @@ tsukumo は**そこを正典として読み直すだけ**でよく、自前の�
 流し込める**ことも確認したので、T-078 の本文に足りない2点（利用者の依頼をテキストブロックから
 起こす・`result` が残らないのでターンの境目を依頼で区切る）まで書き下し、`difficulty` を
 sonnet → opus に上げた。`bun run check` は 415 pass / 0 fail（コードは未変更）。
+
+- **`docs/design.md` 13.9「画面のナビゲーション」は決定であって実装ではない**（2026-09-22 の
+  `/plan-tasks` で気づいた）。T-322 は決めるだけのタスクで、**ヘッダーの帯はまだコードに無い**
+  （`src/browser/main.tsx` に帯の部品が無く、画面への口はサイドバー・キャラクター画面・
+  トークン消費の3箇所に散ったまま）。実装は T-356。13.9 を読んで「もうある」と思わないこと
