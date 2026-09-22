@@ -187,7 +187,7 @@ function startDriver(
   const rules = [...sessionRules(seed.chat), ...chatMemoryParts]
 
   return startSdkSession({
-    // **`cwd` は worktree、`projectConfigRoot` は切り出し元**（T-349 の決定）。切ったブランチが
+    // **`cwd` は worktree、`projectConfigRoot` は切り出し元**（同節の決定）。切ったブランチが
     // 持っている `.claude/` ではなく、元の作業ツリーのものを効かせる。
     cwd: workspaceCwd(workspace),
     projectConfigRoot: workspaceProjectConfigRoot(workspace),

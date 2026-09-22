@@ -8,7 +8,7 @@
 // 1つにまとめない。
 //
 // 置き場は `git rev-parse --git-common-dir` の下の `tsukumo/worktree/<名前>`、使用中の印は
-// 同じ親の下（T-349 の決定4）。**git に1回聞けば worktree も印も見つかる**ので、置き場を
+// 同じ親の下（同節の決定4）。**git に1回聞けば worktree も印も見つかる**ので、置き場を
 // もう1つ決めて回らない。**印そのものの読み書きは `mark.ts`**（タスクの着手の印と同じ仕組みで、
 // 二度書きしない）。
 //
@@ -59,9 +59,9 @@ const WORKTREE_DIR_NAME = "worktree"
 
 /**
  * 切った直後に張る symlink（**元にあって、切った先に無いときだけ**）。git 管理下に無いもので、
- * 無いと切った先で作業できない2つ（T-349 の決定「symlink 2本」）。
+ * 無いと切った先で作業できない2つ（同節の決定「symlink 2本」）。
  *
- * **「自分のリポジトリかどうか」では判断しない**（T-349 の決定2）。元に無ければ何もしないので、
+ * **「自分のリポジトリかどうか」では判断しない**（同節の決定2）。元に無ければ何もしないので、
  * `characters/` を持たないプロジェクトでもこのまま通る。
  */
 const LINKED_PATHS: readonly (readonly string[])[] = [["node_modules"], ["characters", "local"]]
@@ -78,7 +78,7 @@ export type WorkspacePreparation =
 
 /**
  * このセッションの作業場所を用意する。**git リポジトリなら必ず新しく切り**、切れなかったら
- * 失敗を返す（黙って元の作業ツリーで動かさない。T-349 の決定1）。
+ * 失敗を返す（黙って元の作業ツリーで動かさない。同節の決定1）。
  *
  * 順序は**掃除 → 切る → symlink → 組み立て**。掃除を先にするのは、前の起動が残したものを
  * 溜めないため（畳めないものは消さずに知らせる）。
@@ -366,7 +366,7 @@ async function cutWorktree(
 
 /**
  * 名前を1つ取る。**ディレクトリの作成が排他の役目**（同じ秒に2つ起きたら、作れたほうが勝つ。
- * T-349 の決定4）。取れたら使用中の印（pid）も書く。
+ * 同節の決定4）。取れたら使用中の印（pid）も書く。
  */
 async function claimWorktreeName(
   repository: WorkspaceRepository,
@@ -437,7 +437,7 @@ async function linkFromOrigin(
  * （「自分のリポジトリかどうか」ではなく、`package.json` にその口があるかで決める）。
  *
  * 失敗しても知らせるだけ。組み立ての成果物は `.gitignore` なので切った先には無いが、
- * **tsukumo のプロセスが配るのは常に元の作業ツリーの成果物**（T-349 の決定2）なので、
+ * **tsukumo のプロセスが配るのは常に元の作業ツリーの成果物**（同節の決定2）なので、
  * ここで作れなくても画面は出る。
  */
 async function buildInWorktree(path: string): Promise<string | undefined> {

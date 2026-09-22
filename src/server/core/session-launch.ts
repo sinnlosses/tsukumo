@@ -146,7 +146,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     }
     onEvent(ports.characterEvent(pack))
     // **どこで動いているかも流し直す。** claude の作業先（worktree）と tsukumo のコードの
-    // 出所（元の作業ツリー）は常に食い違うので、読み取れない状態にしない（T-349 の決定2）。
+    // 出所（元の作業ツリー）は常に食い違うので、読み取れない状態にしない（`docs/architecture.md`「worktree でセッションを分ける」の決定2）。
     onEvent({
       kind: "workspace",
       workspace: ports.workspace,

@@ -9,12 +9,12 @@ import { type Workdir, type Workspace } from "../../shared/workspace.ts"
 
 /**
  * 同じ秒に起きたときに試す名前の数。**ディレクトリの作成が成功したほうが勝つ**ので、負けた側が
- * `-2`, `-3` と足して試す（T-349 の決定4）。ここまで全部負けたら諦めて起動を止める
+ * `-2`, `-3` と足して試す（同節の決定4）。ここまで全部負けたら諦めて起動を止める
  * （同じ秒に10個の tsukumo が起きる状況は、切る前に別の何かが壊れている）。
  */
 const MAX_WORKTREE_NAME_CANDIDATES = 10
 
-/** 切った worktree のブランチの前置き。`tsukumo/<名前>` の形になる（T-349 の決定4）。 */
+/** 切った worktree のブランチの前置き。`tsukumo/<名前>` の形になる（同節の決定4）。 */
 const WORKTREE_BRANCH_PREFIX = "tsukumo"
 
 /**
@@ -65,7 +65,7 @@ export type WorkspacePlanOptions = {
 /**
  * 切るかどうかと、切るならどの名前で切るかを決める。
  *
- * **1つ目のセッションも切る**（本体で作業するセッションを作らない。T-349 の決定1）ので、
+ * **1つ目のセッションも切る**（本体で作業するセッションを作らない。同節の決定1）ので、
  * 「自分が何番目か」を観測しない——分岐は git リポジトリかどうかと環境変数の2つだけ。
  */
 export function planWorkspace(options: WorkspacePlanOptions): WorkspacePlan {
@@ -122,7 +122,7 @@ export type WorktreeFold =
   | { readonly kind: "in-use" }
   /** 畳む（`git worktree remove` ＋ `git branch -d`）。 */
   | { readonly kind: "fold" }
-  /** 成果が残っているので消さない。**1行だけ知らせる**（T-349 の決定4）。 */
+  /** 成果が残っているので消さない。**1行だけ知らせる**（同節の決定4）。 */
   | { readonly kind: "left"; readonly reason: "changed" | "unmerged" }
 
 /**
@@ -232,7 +232,7 @@ export function cutWorkspace(options: {
  * （同じ秒に2つ起きたとき、ディレクトリの作成に負けた側が次を試す）。
  *
  * **タスクid もブランチの用途も名前に入れない**——切るのは起動時でタスクを取る前だから、
- * そして**タスク運用の無いリポジトリでも同じ形で動く**ようにするため（T-349 の決定4）。
+ * そして**タスク運用の無いリポジトリでも同じ形で動く**ようにするため（同節の決定4）。
  */
 function worktreeNameCandidates(startedAt: Temporal.PlainDateTime): readonly string[] {
   const base = worktreeName(startedAt)
