@@ -23677,3 +23677,313 @@ layout.tsx: 分けた（useState×2・useRef×3と仕切りの保存・雑談で
 - 口の高さが 24px を下回るなら、**値を決め直して理由を evidence に書く**（無理に 30px に
   収めない）
 - `--screen-nav-height` は `layout.module.css` も読む。片方だけ直さない
+
+## T-299
+
+**タスク**: 見ているやり取りを location.hash に乗せる
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+形: #<画面>?turn=<番号>（例 #?turn=3・#character?turn=3）。画面は ? の前、ターンは turn が持ち、会話の画面・今回に追従は # のままなので既存の #character・#token-usage とも両立。書き方の置き場は stores/location-hash.ts の1つにし、screen.tsx と turn-selection.tsx は自分の部分だけ差し替える。画面を移してもターンを運ぶ（会話の画面は hidden で保つ設計のため。リンクは useScreenHref で turn を付ける）。hash に乗せるのは留めたターンだけ（何も選ばない人の URL とリロードは今までどおり、今回のタブで turn を外して追従に戻る）。窓に無い番号は今回を出し hash は書き換えない（描くたびに外へ書く useEffect を避ける）。bun run check: 1294 pass / 0 fail。目視: 疑似場面 turn-tabs（ポート 7391、一時 HOME）を Playwright で 1400x900・720x900 操作。1つ前を押すと #?turn=2、リロードで同じタブと本文のまま戻り、戻る/進むで #?turn=1 → #?turn=2 → 今回 → #?turn=2 と移った。帯のキャラクターで #character?turn=2、そこでリロードしても留まり、会話へ戻ると同じタブ。#?turn=99 は今回を出した
+
+## 背景
+
+エージェントのドラフト（2026-09-21 の雑談から。ユーザー承認あり）。
+
+画面（会話 / キャラクター / 作る）は `src/browser/stores/screen.tsx` が `location.hash` を正典にしていて、
+`useSyncExternalStore` で読む。だからリロードしても同じ画面に戻り、ブラウザの「戻る」が効く
+（`SCREEN_HASH` が `#` / `#character` / `#character/new` の3つを持つ）。
+
+一方、**どのやり取りを開いているか**は `src/browser/stores/turn-selection.tsx` が React の state として
+持っているだけなので、リロードすると今回に戻る。読み手は `src/browser/features/main-view/main-view.tsx`
+と `src/browser/features/character-view/character-view.tsx` の2つ。
+
+## 解くべき論点
+
+- hash の書き方。`screen.tsx` の `SCREEN_HASH` と**同じ1本の hash** を2つの store が読むことになるので、
+  どちらが hash のどの部分を持つかを決める（会話の画面が `"#"` である制約と両立させる）
+- `activeTurnId` には「最新に追随する」状態と「固定して見ている」状態がある。hash に乗せるのは
+  後者だけか、両方か
+- hash が指すやり取りがもう無い（窓から落ちた）ときの落とし先
+
+## やること
+
+1. 上の論点を決め、決めた理由を `evidence` に1行ずつ書く
+2. `turn-selection.tsx` を `useSyncExternalStore` で hash から読む形にする（`screen.tsx` の作りをなぞる）
+3. hash の読み書きが2つの store に散らないよう、書き方を決める場所を1つにまとめる
+4. テストを足す（hash → 選択、選択 → hash、指すやり取りが無いとき）
+
+## 完了条件
+
+- `bun run check` が通る（足したテストを含む）
+- 目視: 前のやり取りのタブを押してリロードすると同じやり取りが開いたまま戻り、ブラウザの「戻る」で
+  1つ前に見ていたやり取りへ移る（どの端末・解像度で見たかを `evidence` に書く）
+- 会話 / キャラクター / 作るの画面の切り替えと、`bun run dev` の再読み込みでキャラクター画面に
+  留まる動きが今までどおり効いている
+
+## 注意
+
+- ルーターのライブラリを入れない（`screen.tsx` 冒頭の決定）
+- `useEffect` は「React の外と同期する」4類型だけ（CLAUDE.md）。ここは `useSyncExternalStore` を使う
+- セリフ側（`character-view.tsx`）も同じ選択を読んでいるので、やり取りを遡るとセリフも遡る動きを壊さない
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-314
+
+**タスク**: 立ち絵・差し色の対応表を入口で全域に畳む
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-307, T-327 / **passes**: True
+
+**evidence**:
+
+CharacterInfo.portraits を default に畳んだ全域の表（default すら無いパックは表ごと undefined）にし、EMPTY_PORTRAITS / EMPTY_OUTFIT_ACCENTS と resolvePortraitUrl / resolveOutfitAccent を消した（表を引くだけになり、名前を残しても添字1つのため）。本文から外れた判断2つ: (a) 編集画面の空き枠と「消す」を見分けるため CharacterInfo.expressionsWithPortrait を足した（畳むと全部の枠が埋まって見え、URL の一致で判定すると同じファイルを指す定義で黙って壊れるため）。(b) outfitAccents は衣装ごとに default へ畳むだけにし、表ごと undefined にしない（outfitAccents を書いていない tsukumo パックで画面から heavy だけに入れた色が捨てられるため）。CharacterDefinition.portraits と HeldPortraits は畳まず、ReadonlyMap 案も採らない。grep -c '| undefined' src/shared/character.ts: 25 → 20（5行減）。speak の選択肢は定義ファイルを読むので減らない（テストを追加）。bun run check: 1296 pass / 0 fail。目視（疑似セッション、1400x900、一時 HOME で同梱パック）: spirit と tsukumo の両方で依頼後に default→proud へ立ち絵が切り替わり、ミニ立ち絵がレポート枠の左上に出た。#character で spirit は絵のある4枚と点線の空き枠5枚、差し色は character.json どおり、tsukumo は9枚と --accent の色で従来どおり。spirit を question-preview（excited、絵なし）で起こすと default.svg だけを取りに行き通常顔が出た。docs/design.md の character-changed と SessionState の表に expressionsWithPortrait を足し、tasks-changed の型を TaskSummaryResult に直した
+
+## 背景
+
+`Readonly<Record<Expression, string | undefined>>` が**2つの用途に兼用されている**
+（調査は `docs/research/undefined-reduction.md` 2.2）。
+
+| 用途 | 持ち主 | 「この表情だけ無い」が意味を持つか |
+| --- | --- | --- |
+| 定義ファイルの写し | `CharacterDefinition.portraits`（`src/shared/character-definition.ts:34`） | **持つ**（`src/shared/expression-choice.ts:37` が `speak` の選択肢を作るのに使う） |
+| 画面へ渡す姿 | `CharacterInfo.portraits`（`src/shared/character.ts:30`） | **持たない**（読む側が `resolvePortraitUrl` で必ず `?? portraits.default` に落としている。`character.ts:183`） |
+| 編集画面の手持ち | `HeldPortraits`（`character-create.tsx:40`） | **持つ**（「まだ入れていない枠」を数える。`character-create.tsx:57`） |
+
+**真ん中だけが畳める。** `CharacterInfo.portraits` を作る時点で `default` への
+フォールバックを済ませ、**`Readonly<Record<Expression, string>>` の全域なレコード**にする。
+`outfitAccents` も同じ。
+
+これは `docs/coding-standards.md`「### 「無い」を層をまたいで運ばない」そのもので、
+規約の変更は要らない。**7件のうち一番大きく、13〜17行が消える。**
+
+## 解くべき論点
+
+- `default` の立ち絵すら無いパックをどう扱うか。調査の提案は「**表ごと持たない**」
+  （`portraits: Readonly<Record<Expression, string>> | undefined` が1つ残る）
+- `resolvePortraitUrl` / `resolveOutfitAccent` は**関数ごと不要になる**（表を引くだけになる）。
+  呼ぶ側の `??` も落ちる。消して良いか、名前を残す価値があるか
+
+## やること
+
+1. `CharacterInfo.portraits` と `CharacterInfo.outfitAccents` を、入口で `default` に
+   畳んだ**全域なレコード**にする
+2. `src/shared/character.ts` の 30 / 38 / 130 / 132 / 149 / 150 / 151 / 155（`EMPTY_PORTRAITS`）/
+   166（`EMPTY_OUTFIT_ACCENTS`）/ 180 / 182 / 188 / 190 を直す
+3. 呼ぶ側の `??` を落とす（`character-view.tsx:135,137` / `chat-view.tsx:99,101` /
+   `mini-portrait.tsx:50` / `character-edit.tsx:96,199`）
+4. **`CharacterDefinition.portraits` と `HeldPortraits` は畳まない**（「この表情だけ無い」が
+   意味を持つため）
+5. **`ReadonlyMap<Expression, string>` にする案は採らない**（`Map.get` の戻り値が
+   `string | undefined` なので、型注釈から消えるだけで使う側の `undefined` は減らない）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `src/shared/character.ts` から `EMPTY_PORTRAITS` / `EMPTY_OUTFIT_ACCENTS` が消えている
+- `| undefined` の減った行数を `evidence` に書く（`grep -c '| undefined' src/shared/character.ts`
+  の前後の値）
+- **目視確認**: tsukumo を起こし、(1) 立ち絵が表情ごとに切り替わる、(2) ミニ立ち絵が出る、
+  (3) キャラクター編集画面で立ち絵と差し色が従来どおり出る、(4) 一部の表情の絵が無いパックで
+  `default` に落ちる——の4つを確かめて `evidence` に書く
+- **`speak` の表情の選択肢が減っていない**（`expression-choice.ts` は定義ファイル側を見ており、
+  畳んだ表とは別であることを確かめる）
+
+## 注意
+
+- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）
+- **ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。** 目視で確かめるときは
+  どちらが出ているかを意識する
+- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない
+- 表情に `bored` を足すタスクと**同じファイル（`character.ts` / `character-definition.ts`）を
+  触る**。片方が `doing` の間は着手しない
+
+## T-330
+
+**タスク**: 雑談のログに日の区切りと行ごとの時刻を出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+置き場: request と speech の記録だけに time: RecordTime（stamped{at} | restored）を持たせた（雑談のログが拾う発言はこの2つで、無い理由は復元の1つだけなので | undefined にせず合併型）。打つのはサーバ: 既存の StampedEvent.at を畳み込みが写すだけで shared は時計を読まない。復元: getSessionMessages が timestamp を落とすので時刻は運ばない（アーカイブの at と文面で照合すると同じ挨拶などで黙って別の時刻を付けるため）。末尾に history-restored を1つ流し、それまでの行を restored にして時刻を出さず、今の発言へ移るところに日の区切りを入れる（「時刻の無い行 ＝ 前のセッションから引き継いだ行」と読め、全部が今日には見えない）。時刻は吹き出しの外の下端（キャラは右脇・利用者は左脇）、ink-quiet・等幅、HH:MM まで。区切りは「9月23日（水）」の字だけで線を引かない（破線の圧縮の区切りと見分ける）、年と「今日/昨日」は出さず、ログの先頭には入れない。docs/design.md 4.2 と 13.7 に書いた（見出し数は53のまま）。bun run check: 1309 pass / 0 fail（日をまたぐと1本・同じ日なら0本のテストを chat-log と chat-view に追加）。目視: 疑似場面 chat-restored-history（ポート 7394、一時 HOME）1400x900・720x900 で組み直した3行は時刻なし、その下に区切り1本、いまの発言4件に 05:24 が吹き出しの脇に出て横はみ出し0。入力欄から送った行にも時刻が付き、雑談→仕事→雑談の往復後も同じ形で出た（fake driver は復元をしないので、本物の復元経路は自動テストと疑似場面で確認）
+
+## 背景
+
+雑談のログには**時間の手がかりが1つも無い**。`src/shared/chat-log.ts` の `ChatLogEntry` は
+`speaker` / `text` / `expression` / `images` だけを持ち、**`src/shared/session-state.ts` の
+`SessionRecord`（`request` / `speech` / `detail` / `question` / `tool` / `compact-boundary`）にも
+時刻のフィールドが無い**（実測）。雑談は日をまたいで戻ってくる場所なのに、昨日の一言と
+三十秒前の一言が見分けられない。
+
+- **アーカイブ側は時刻を持っている**。`src/server/adapter/chat-archive.ts` が書く1行は
+  `at`（`^\d{4}-\d{2}-\d{2}T` のISO＋オフセット。`isoWithOffset`）を持ち、置き場も
+  `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl` と日ごとに分かれている
+- **復元では時刻が落ちている**。`src/server/core/session-restore.ts` の `toRestoredEvents` は
+  `{ kind: "request", text, images: [] }` を組み直すだけで `at` を運ばない
+- 辛口レビューの指摘（2026-09-22、ユーザーが「刺さる」として採った）
+
+## 決まっていること（蒸し返さない）
+
+- **日の区切り＋行ごとの時刻の両方を出す**（2026-09-22 ユーザーの選択）。LINE / Discord と
+  同じ形。日の区切りだけの案・ホバーしたときだけ出す案は採らなかった
+- 圧縮の区切りの見分け（T-331）とは別のタスク。こちらは時刻の側だけ
+
+## 解くべき論点
+
+- 時刻をどこに持たせるか。`SessionRecord` の各種に足すか、`request` と `speech` の2つだけか
+  （雑談のログが拾うのはこの2つと `compact-boundary`）。**`| undefined` を増やさない**
+  （`CLAUDE.md`「`| undefined` は5つの場所でだけ」）ので、既存の記録に後から足す形か、
+  判別可能な合併型にするかを決める
+- 誰が時刻を打つか。サーバ（イベントを受けた時点）か、`applySessionEvent` の中か。
+  **`shared` は `node:` に触れない**ので `Date.now()` の呼び場所を決める
+- 復元した記録の時刻。アーカイブの `at` を `toRestoredEvents` から運ぶか、運ばないときに
+  日の区切りをどう出すか（起こし直した直後のログは全部「今日」に見えてしまう）
+- 行ごとの時刻の置き場（吹き出しの中か外か・話者によって左右が変わるか）と、読む面の原則
+  （13.1 原則1。時刻は `ink-quiet` 側か）
+- 秒を出すか、`HH:MM` までか
+
+## やること
+
+1. 上の論点を決め、`docs/design.md` 13.7 と、プロトコル・記録の形を書いている節（`shared` の
+   `SessionRecord` を説明している箇所）に書く
+2. `src/shared/session-state.ts` / `src/shared/chat-log.ts` / サーバ側のイベントの流し口 /
+   `src/server/core/session-restore.ts` / `src/browser/features/chat-view/` を直す
+3. 復元で時刻が運べない場合は、**運べないことを画面でどう扱うかまで決めて書く**
+   （「全部今日に見える」を放置しない）
+4. `test/shared/` と `test/browser/features/chat-view/chat-view.test.tsx`（381行）に、日の
+   区切りが入る／入らない境目のテストを足す
+
+## 完了条件
+
+- `bun run check` が通る
+- 日をまたいだ記録を与えたとき、区切りが1本だけ入るテストがある（日が変わらなければ入らない）
+- 目視: 雑談モードで2件以上のやり取りをして、行ごとの時刻が出る。起こし直して（雑談⇄仕事を
+  往復して）復元後のログでも決めたとおりに見える。何が見えたかを evidence に書く
+
+## 注意
+
+- **会話内容の扱い**（`docs/coding-standards.md`）。テストのフィクスチャに実物の会話を使わない
+- `MAX_SESSION_STATE_TURNS`（雑談は100ターン）の数え方（`request` の数）を変えない
+- 雑談モードの目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）
+
+## T-336
+
+**タスク**: chat-view.tsx を、決めた型でロジックとUIに分ける
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-328, T-329, T-330, T-331, T-333, T-334, T-335 / **passes**: True
+
+**evidence**:
+
+chat-view.tsx を 626 行から 34 行の container にし、presentational-chat-view.tsx・hooks/use-chat-view.ts（表情・行の畳み込み・日付と時刻の文言・onNudge の進行中ガード）・hooks/use-stick-to-bottom.ts（末尾への追従）・hooks/use-chat-speech.ts（押した位置・ドラッグ判定・キー・育ちの打ち切り）・components/ の6部品に割った（design.md 2章の型どおり。純関数はフックの唯一の読み手なので domain/ を作らずフック内に置いた。ChatSpeech が行ごとの育ちの状態でフックを持つのは task-run-button.tsx と同じ先例。CSS は割らない）。フックを部品を起こさずに測るテスト3本を足した。bun run check: 1330 pass / 0 fail。目視: 疑似場面 chat-restored-history（一時 HOME）を 1400x900 で、変更後（ポート 7395）と HEAD の組み立て（ポート 7396）を Playwright で同じ操作にかけ、DOM の測りは分の値以外一致、画像も差なし。組み直した行は時刻なし・日の区切り1本・吹き出しの脇に HH:MM、立ち絵のホバーで案内、セリフを押すと印が移り、つつくと「...」から育つセリフへ印と追従が移った
+
+## 背景
+
+`src/browser/features/chat-view/chat-view.tsx` は**1ファイルにロジックと見た目が同居して
+いて、雑談モードの中でいちばん混ざっている**（343行。`useState` / `useEffect` / `useRef` が
+計8箇所、関数8個）。中身は次のように分かれる。
+
+- 立ち絵に出す表情を決める計算（`countSpeeches` / `viewedIndex` /
+  `selectedSpeechExpression` / `ViewedSpeech` 型）
+- 押すとドラッグを見分ける判定（`isSelectionDrag` / `isActivationKey` / `PressOrigin` 型 /
+  `DRAG_THRESHOLD_PX`）
+- スクロール位置の同期（`<ChatLog>` の中の2つの `useEffect` と `nearBottomRef` /
+  `NEAR_BOTTOM_THRESHOLD_PX`）
+- 描く側（`<ChatView>` / `<ChatLog>` / `<NudgeButton>` の JSX）
+
+ユーザーの指示（2026-09-22）: 「他のコンポーネントでも同様に整理できるか洗い出して
+タスク化してほしい」。洗い出しで**ロジックの密度がいちばん高かったのがこのファイル**。
+
+## 決まっていること（蒸し返さない）
+
+- **分け方の型は T-328 が `docs/design.md` 2章に書いている。** フックは
+  `features/<機能>/hooks/use-*.ts`（2026-09-22 ユーザーの選択で `hooks/` を採った）
+- このタスクは**振る舞いを変えない**。T-329 / T-330 / T-331 / T-333 / T-334 / T-335 が
+  先に振る舞いを決め終えている（`dependencies`）
+
+## やること
+
+1. `docs/design.md` 2章の型を読む
+2. `chat-view.tsx` を型に沿って分ける。上の4つの塊が分ける単位の候補
+3. `chat-view.module.css` は分けない（1つの機能の見た目なので）
+4. `test/browser/features/chat-view/chat-view.test.tsx`（381行＋依存タスクで増えたぶん）が
+   **そのまま通ること**を確かめる。通らない変更は振る舞いを変えているので戻す。切り出した
+   フックと純関数に、部品を起こさずに測れるテストを足す
+
+5. **調べて T-328 の型に当てはまらない（分けると読みにくくなる）と分かったファイルは、
+   やらずに理由を `evidence` に書いて閉じる。** 対象の全部を分ける必要は無い
+
+## 完了条件
+
+- `bun run check` が通る
+- `chat-view.tsx` の行数が分ける前より減っている（前後の行数を evidence に書く）
+- 切り出したフック・純関数に、部品を起こさずに測るテストがある
+- 目視: 雑談モードで、依存タスクが作った振る舞い（育つ吹き出し・時刻・印とホバー・
+  立ち絵をつつく・「...」）が**分ける前と同じに見える**。何を確かめたかを evidence に書く
+
+## 注意
+
+- **T-328 が `docs/design.md` 2章に書いた型に従う。** 型を読まずに自分で決め直さない
+- 分けたぶん**開くファイルの数が増える**。`CLAUDE.md`「案が2つ以上あるときは、書いたあとの
+  コードを読む人が把握しやすいほうを選ぶ」の物差し（開くファイルの数・呼ぶ側が自分の外の
+  事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）で判断する
+- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）
+
+## T-337
+
+**タスク**: composer と pending-answer を、決めた型で分ける
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-328 / **passes**: True
+
+**evidence**:
+
+composer.tsx: 分けた（339→19行）。hooks/use-composer.ts が下書き・/ と @ の候補（合併型）・選択・画像・キャレットを戻す useEffect（React の外への書き込み）・キーと送信の読み替えを持ち、presentational-composer.tsx は器だけ。純関数はフックの唯一の読み手なのでフック内、JSX が textarea と候補一覧だけなので components/ は作らず、絞り込み（command-suggestions / file-suggestions）は別の概念として動かしていない。pending-answer.tsx: 分けた（333→21行）。hooks/use-pending-answer.ts が pending[0] を none / permission / question に畳み、質問の箱は question-ask.tsx + presentational-question-ask.tsx + hooks/use-question-ask.ts + components/ の2部品と別の container にした（選択の状態の寿命を「質問の箱が出ている間」のまま保つため）。renderHook のテストを3本（23件）足し、既存の dispatch のテスト6本は中身を変えずに通過。bun run check: 1353 pass / 0 fail。目視（疑似セッション、1400x900、一時 HOME）: capture-catalog --only command-suggestions / file-suggestions / question-multi / permission が従来どおり。Playwright で /c の候補を ↓・Ctrl+P/N・Tab で確定、@src/cli の補完、PNG の貼り付けで札が出て ⌘⏎ で送れた。question-pair で2問を進んで自由入力と合わせて1回で届いた
+
+## 背景
+
+`src/browser/features/dispatch/` の2つのファイルが、ロジックと見た目を同居させている。
+
+| ファイル | 行数 | フック | 中に混ざっているもの |
+| --- | ---: | ---: | --- |
+| `composer.tsx` | 339 | 9 | 入力欄の下書き・`@` と `/` の補完の状態・キーの受け・添えた画像の取り込み |
+| `pending-answer.tsx` | 333 | 3 | 答え待ちの列（許可プロンプトと質問）の選択の状態・キーの受け |
+
+ユーザーの指示（2026-09-22）: 「他のコンポーネントでも同様に整理できるか洗い出して
+タスク化してほしい」。洗い出しで `composer.tsx` は**フックの数が全 tsx の中で最多**だった。
+
+## 決まっていること（蒸し返さない）
+
+- **分け方の型は T-328 が `docs/design.md` 2章に書いている**（フックは
+  `features/<機能>/hooks/use-*.ts`）
+- このタスクは**振る舞いを変えない**
+
+## やること
+
+1. `docs/design.md` 2章の型を読む
+2. `composer.tsx` と `pending-answer.tsx` を型に沿って分ける。`dispatch/` には
+   `command-suggestions.tsx` / `file-suggestions.tsx` / `turn-status.tsx` / `pending-answer.tsx`
+   がすでに別ファイルになっているので、**どこまでが `composer` のロジックかを先に見極める**
+3. `src/browser/stores/question-focus.tsx`（答え待ちの質問の「何問目・どの選択肢」を配る）は
+   触らない。あれは2つの読み手を持つ共有の状態で、機能の中のフックではない
+4. `test/browser/features/dispatch/` のテストが**そのまま通ること**を確かめる。切り出した
+   フックと純関数に、部品を起こさずに測れるテストを足す
+
+5. **調べて T-328 の型に当てはまらない（分けると読みにくくなる）と分かったファイルは、
+   やらずに理由を `evidence` に書いて閉じる。** 対象の全部を分ける必要は無い
+
+## 完了条件
+
+- `bun run check` が通る
+- 2ファイルの行数が分ける前より減っている（前後の行数を evidence に書く）
+- 切り出したフック・純関数に、部品を起こさずに測るテストがある
+- 目視: 入力欄で `@` と `/` の補完が出る・⌘⏎ で送れる・画像を添えられる・答え待ちの質問に
+  キーボードで答えられる。何を確かめたかを evidence に書く
+
+## 注意
+
+- **T-328 が `docs/design.md` 2章に書いた型に従う。** 型を読まずに自分で決め直さない
+- 分けたぶん**開くファイルの数が増える**。`CLAUDE.md`「案が2つ以上あるときは、書いたあとの
+  コードを読む人が把握しやすいほうを選ぶ」の物差し（開くファイルの数・呼ぶ側が自分の外の
+  事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）で判断する
+- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）

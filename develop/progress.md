@@ -75,46 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 留めたやり取りを `#<画面>?turn=<番号>` の形で hash に乗せ、リロードと戻る・進むで同じやり取りへ戻れるようにした。hash の読み書きは `stores/location-hash.ts` の1つに集めた。
 
-### 2026-09-23 やり取りのタブの名前を、位置ではなく中身から作った（T-298）
-
-タブの名前を依頼の1行目（無ければ最初のレポートの先頭行）から作り、14字で切って全文と「n つ前」は `title` に添えた。やり取りが進んでも前からあるタブの名前は変わらない。
-
-### 2026-09-23 画面のナビの帯を低くし、部屋の名前を口と同じ大きさにした（T-364）
-
-帯を 40px から 30px（gap 込みで 48px から 36.4px）に下げ、部屋の名前を `font-secondary` にした。`docs/design.md` 13.9 の面積の表を実測で取り直した。
-
-### 2026-09-23 layout と token-usage-screen のロジックを分けた（T-339）
-
-2つとも container / `hooks/use-<機能>.ts` / `presentational-<機能>.tsx` の型に割り、フックを部品を起こさずに測るテストを足した。
-
-### 2026-09-23 圧縮の区切りを、線の見た目だけで見分けられるようにした（T-331）
-
-雑談のログの圧縮の区切りを、全幅の実線から中央の短い破線にし、上下の余白を広げて吹き出しの縁と見分けられるようにした。色と「文言を添えない」決定はそのまま。
-
-### 2026-09-23 タスク一覧の「不明」を合併型にした（T-313）
-
-`SessionState.tasks` と `tasks-changed` を `TaskSummaryResult`（`unknown` / `known`）にし、`| undefined` を消した。「まだ届いていない」と「読めない」は、口1つでは区別できず表示も同じなので分けていない。
-
-### 2026-09-23 ツールの結果と本文の「まだ来ていない」を合併型にした（T-312）
-
-`SessionRecord` と `MainViewEntry` のツールを `ToolRunStatus`、`MainViewStep` の本文を `MainViewStepBody` にして、`shared` の `| undefined` を4行消した。疑似セッションで撮り比べて、見た目が変わっていないことを確かめた。
-
-### 2026-09-23 clock.ts を utils/ へ移し、lib と utils の線を言い換えた（T-360）
-
-`src/browser/utils/clock.ts` を最初の `utils/` にし、`lib/` と `utils/` の線を「言語の標準か、その外か」と `docs/design.md` 2章で言い直した。`utils/` の辺は `test/architecture.test.ts` が見る。
-
-### 2026-09-23 雑談の要約の口を、呼ぶ側の分岐1回に寄せた（T-361）
-
-`takeChatMemoryPromptParts` の `chatSummary` から `| undefined` を外し、仕事のときに呼ばない判断を `src/session-start.ts` の分岐1回に移した。
-
-### 2026-09-23 capture-catalog の一覧の出し方を、正典で --help に直した（T-341）
-
-`docs/architecture.md` の「オプション無しで一覧が出る」を「`--help` で出る。オプション無しは全件撮影」に直し、スクリプト冒頭の使い方にも `--help` の行を足した。
-
-### 2026-09-23 コメント内の日付を check で弾くようにした（T-340）
-
-`test/architecture.test.ts` にコメント行の日付を弾く検査を足し、`src` `test` `scripts` に残っていた日付つきコメント20件を、理由を残して直した。
-
 ## 未解決
 
 - **`develop/progress.md` の完了ブロックを分けるかは未決**（2026-09-23 にユーザーが判断。
