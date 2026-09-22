@@ -10,11 +10,15 @@ import { type MainViewStep, type MainViewTurn } from "../../../../src/shared/mai
 //
 // `mock.module` はプロセス全体に効くので、テストは `bun test --isolate` で回す
 // （理由は `test/browser/features/main-view/report.test.tsx` の冒頭）。
-let revealed: { readonly markdown: string; readonly reveal: boolean }[] = []
+let revealed: {
+  readonly markdown: string
+  readonly reveal: boolean
+  readonly turnId: number
+}[] = []
 
 mock.module("../../../../src/browser/features/main-view/report.tsx", () => ({
-  Report: (props: { readonly markdown: string; readonly reveal: boolean }) => {
-    revealed.push({ markdown: props.markdown, reveal: props.reveal })
+  Report: (props: { readonly markdown: string; readonly reveal: boolean; turnId: number }) => {
+    revealed.push({ markdown: props.markdown, reveal: props.reveal, turnId: props.turnId })
     return <div data-report-stub="yes">{props.markdown}</div>
   },
 }))
@@ -42,9 +46,12 @@ function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainV
   }
 }
 
+/** やり取りの番号。**筆先に添えて配られる**ので、`<Report>` まで届いていることを見る。 */
+const TURN_ID = 5
+
 function turn(steps: readonly MainViewStep[]): MainViewTurn {
   return {
-    id: 0,
+    id: TURN_ID,
     request: { text: "架空の依頼", images: [] },
     steps,
     hasInterimReport: false,
@@ -62,6 +69,12 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
     render(<Turn turn={turn([step({ id: 0, report: "確定した本文", final: true })])} newest />)
 
     expect(revealTargets()).toEqual([])
+  })
+
+  it("本文にはやり取りの番号を渡す（残った筆先が別のやり取りの上へ出ないため）", () => {
+    render(<Turn turn={turn([step({ id: 0, report: "確定した本文", final: true })])} newest />)
+
+    expect(revealed.map((call) => call.turnId)).toEqual([TURN_ID])
   })
 
   it("あとから現れた確定レポートにだけ掛ける", () => {

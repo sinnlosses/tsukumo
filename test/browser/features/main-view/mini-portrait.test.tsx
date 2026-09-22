@@ -23,7 +23,17 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
   mini: "/character/mini.png",
 })
 
-const TIP: BrushTip = { phase: "writing", x: 320, top: 180, bottom: 206, stroke: "sweep" }
+/** 出ているやり取り（`shownTurnId`）。筆先が別のやり取りのものなら立ち絵は出ない。 */
+const SHOWN_TURN_ID = 7
+
+const TIP: BrushTip = {
+  turnId: SHOWN_TURN_ID,
+  phase: "writing",
+  x: 320,
+  top: 180,
+  bottom: 206,
+  stroke: "sweep",
+}
 
 afterEach(() => {
   cleanup()
@@ -37,7 +47,7 @@ function renderMiniPortrait(character: SessionState["character"]): void {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <SessionStoreContext.Provider value={store}>
-        <MiniPortrait />
+        <MiniPortrait shownTurnId={SHOWN_TURN_ID} />
       </SessionStoreContext.Provider>
     </QueryClientProvider>,
   )
@@ -81,7 +91,7 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
       publishBrushTip(TIP)
     })
     act(() => {
-      publishBrushTip({ phase: "writing", x: 96, top: 206, bottom: 232, stroke: "sweep" })
+      publishBrushTip({ ...TIP, x: 96, top: 206, bottom: 232 })
     })
 
     expect(placement().style.transform).toBe("translate3d(96px, 232px, 0) translateY(-100%)")
@@ -102,7 +112,7 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     expect(placement().className).toContain("mini-portrait-returning")
   })
 
-  it("書き終わっても消えず、書き終わりの位置に残る", () => {
+  it("書き終わっても消えず、書き終わりの行の下へ降りる（行の上に居座らない）", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {
       publishBrushTip(TIP)
@@ -113,10 +123,11 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     })
 
     expect(miniImage()).not.toBeNull()
-    expect(placement().style.transform).toBe("translate3d(320px, 206px, 0) translateY(-100%)")
+    // `translateY(-100%)` が外れる＝上端が行の下端に来る（上の行の文字を隠さない）。
+    expect(placement().style.transform).toBe("translate3d(320px, 206px, 0)")
   })
 
-  it("残っているあいだは、追従の間合いを差し替える印を持たない", () => {
+  it("残っているあいだは、降りる動きの間合いに差し替わる", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {
       publishBrushTip({ ...TIP, stroke: "return" })
@@ -127,9 +138,10 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     })
 
     expect(placement().className).not.toContain("mini-portrait-returning")
+    expect(placement().className).toContain("mini-portrait-resting")
   })
 
-  it("次のターンで書き始めると、新しい筆先へ移る", () => {
+  it("別のやり取りが出ているあいだは、残った筆先に付いて出ない", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {
       publishBrushTip(TIP)
@@ -139,7 +151,23 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     })
 
     act(() => {
-      publishBrushTip({ phase: "writing", x: 12, top: 40, bottom: 66, stroke: "sweep" })
+      publishBrushTip({ ...TIP, phase: "resting", turnId: SHOWN_TURN_ID + 1 })
+    })
+
+    expect(miniImage()).toBeNull()
+  })
+
+  it("同じやり取りで次の本文を書き始めると、新しい筆先へ移る", () => {
+    renderMiniPortrait(FIXTURE_CHARACTER)
+    act(() => {
+      publishBrushTip(TIP)
+    })
+    act(() => {
+      restBrushTip()
+    })
+
+    act(() => {
+      publishBrushTip({ ...TIP, x: 12, top: 40, bottom: 66 })
     })
 
     expect(placement().style.transform).toBe("translate3d(12px, 66px, 0) translateY(-100%)")

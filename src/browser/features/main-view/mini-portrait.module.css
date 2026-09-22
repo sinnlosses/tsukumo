@@ -6,11 +6,17 @@
    ビューポート基準（position: fixed）のままだと、本文を転がしたときに関係ない場所へ浮いたまま
    居座る。
    **基準を作っているのは `main-view.module.css` の `.main-turns { position: relative }`**——
-   ミニ立ち絵はその直の子で、あいだに position を持つ入れ物を挟むと、置く先だけがそちらへ
-   ずれる（座標を測る側は `data-brush-origin` の印で `.main-turns` を探し続ける）。
+   あいだに position を持つ入れ物を挟むと、置く先だけがそちらへずれる（座標を測る側は
+   `data-brush-origin` の印で `.main-turns` を探し続ける）。**あいだに挟まる `.mini-portrait-floor`
+   に position を付けてはいけない**のはこのため。
    **縁取りは入れ物ではなく中身（`.mini-portrait-body`）に掛ける**ので、この入れ物の祖先に
    transform / filter は増えない（増えると position の基準を横取りされる）。 */
-.mini-portrait {
+/* 降りた立ち絵が立つ床（`mini-portrait.tsx` が本文の末尾に敷き、立ち絵をこの中に置く）。
+   **高さは立ち絵と同じ**で、これが無いと足元が器の下端をはみ出す——立ち絵は position: absolute
+   なので、場所を空けられるのは流れの中にいるこちらだけ。地も枠も持たない（見えるのは空いた
+   場所だけ）。**調整する値をここに置く**のは、床と立ち絵の両方が同じ高さを要るから（custom
+   property は中の立ち絵へ継がれる）。 */
+.mini-portrait-floor {
   /* 大きさ・不透明度・追従の間合い。**ここと下の縁取りの2組が
      唯一の調整箇所**。
      --mini-portrait-height: 窓に追随する高さ（下限 60px / 目安 8vmin / 上限 96px）。
@@ -46,7 +52,12 @@
   --mini-portrait-gap: 0.4rem;
   --mini-portrait-follow-duration: 0.05s;
   --mini-portrait-return-duration: 0s;
+  --mini-portrait-rest-duration: 0.3s;
 
+  flex: none;
+  height: var(--mini-portrait-height);
+}
+.mini-portrait {
   position: absolute;
   top: 0;
   left: var(--mini-portrait-gap);
@@ -61,6 +72,13 @@
    `stroke` で付け外しする）。**長さは上の1組だけで決まる**ので、ここには数値を置かない。 */
 .mini-portrait-returning {
   transition-duration: var(--mini-portrait-return-duration);
+}
+/* 書き終わって本文の下へ降りるときの間合い（`mini-portrait.tsx` の `followStyle` が、
+   残っているあいだは `translateY(-100%)` を外す）。**降りるのは立ち絵の高さぶんの縦移動**
+   なので、横画の 0.05s のままだと落ちたように見える。ease-out は着地で緩めるため。 */
+.mini-portrait-resting {
+  transition-duration: var(--mini-portrait-rest-duration);
+  transition-timing-function: ease-out;
 }
 /* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。
 

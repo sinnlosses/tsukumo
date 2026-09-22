@@ -77,12 +77,13 @@ const SKIP_LISTENER_OPTIONS = { capture: true, passive: true } as const
 
 /**
  * レポートの根に付ける ref を返す。`reveal` が立っていたら、**マウントした直後から**見せる範囲を
- * 進める。
+ * 進める。`turnId` は**この本文が載っているやり取り**で、配る筆先に添えて持たせる
+ * （`stores/brush-tip.ts`。別のやり取りが出ているあいだ、残った筆先は使われない）。
  *
  * **見るのはマウントした時点の `reveal` だけ。** あとから対象でなくなっても（後ろに別の
  * レポートが現れても）始めた演出は最後まで進める——途中で止めると書きかけの本文が残る。
  */
-export function useReportReveal(reveal: boolean): RefObject<HTMLDivElement | null> {
+export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTMLDivElement | null> {
   const rootRef = useRef<HTMLDivElement>(null)
   const [revealOnMount] = useState(reveal)
   // **同じ本文を二度書かない。** `<Activity mode="hidden">`（キャラクター画面を開いている間）は
@@ -92,15 +93,16 @@ export function useReportReveal(reveal: boolean): RefObject<HTMLDivElement | nul
   // React の外（DOM の style とフレームのタイマー）を動かす（docs/coding-standards.md「React」の
   // 4類型のうち「タイマー」と「React の外にある状態への書き込み」）。**`useLayoutEffect` で
   // なければならない** — `useEffect` は描画のあとに走るので、隠す前の本文が1フレームだけ
-  // 全部見えてしまう。依存は1つだけで、マウント時に決まったきり変わらない。
+  // 全部見えてしまう。依存はどちらもマウント時に決まったきり変わらない（`<Turn>` はやり取りの
+  // 番号を `key` に持つので、`turnId` が変わるときは部品ごと作り直される）。
   useLayoutEffect(() => {
     const root = rootRef.current
     if (!revealOnMount || revealedOnce.current || root === null || prefersReducedMotion()) {
       return undefined
     }
     revealedOnce.current = true
-    return startReveal(root)
-  }, [revealOnMount])
+    return startReveal(root, turnId)
+  }, [revealOnMount, turnId])
 
   return rootRef
 }
@@ -109,7 +111,7 @@ export function useReportReveal(reveal: boolean): RefObject<HTMLDivElement | nul
  * 根の下の塊を隠してから、フレームごとに見せる範囲を進める。戻り値を呼ぶと**その場で全部出す**
  * （スキップと、部品が外れたときの後始末を兼ねる）。
  */
-function startReveal(root: HTMLElement): () => void {
+function startReveal(root: HTMLElement, turnId: number): () => void {
   const blocks = planReveal(root)
   if (blocks.length === 0) {
     return () => undefined
@@ -149,7 +151,7 @@ function startReveal(root: HTMLElement): () => void {
     // 末尾が測れなかったときは、最後に配った位置のまま残す。
     if (origin !== null && end !== undefined) {
       const place = { x: end.right, top: end.top, bottom: end.bottom }
-      publishBrushTip({ ...placeIn(origin, place), phase: "resting" })
+      publishBrushTip({ ...placeIn(origin, place), turnId, phase: "resting" })
     } else {
       restBrushTip()
     }
@@ -185,6 +187,7 @@ function startReveal(root: HTMLElement): () => void {
           ? undefined
           : {
               ...placeIn(origin, { x: step.tipX, top: step.tipTop, bottom: step.tipBottom }),
+              turnId,
               phase: "writing",
               stroke: step.stroke,
             },

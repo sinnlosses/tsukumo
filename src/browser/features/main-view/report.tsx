@@ -23,12 +23,14 @@ export type ReportProps = {
    * `report-reveal.ts`）。見るのは**マウントした時点の値だけ**で、対象を選ぶのは `turn.tsx`。
    */
   readonly reveal: boolean
+  /** この本文が載っているやり取り（`MainViewTurn.id`）。配る筆先に添える（`report-reveal.ts`）。 */
+  readonly turnId: number
 }
 
 export const Report = memo(function Report(props: ReportProps): ReactElement {
   const blocks = splitReportBlocks(props.markdown)
   // **完成した DOM をそのまま渡す**（演出は見せる範囲を進めるだけで、塊の中身には触らない）。
-  const rootRef = useReportReveal(props.reveal)
+  const rootRef = useReportReveal(props.reveal, props.turnId)
 
   return (
     <div className={styles["detail-block"]} ref={rootRef}>

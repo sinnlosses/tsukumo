@@ -73,8 +73,9 @@ export function MainView(): ReactElement {
         <Turn turn={activeTurn} newest={activeTurn.id === newestTurnId} key={activeTurn.id} />
       )}
       {/* 筆先に添うミニ立ち絵。**この入れ物の原点を基準に置く**（`position: absolute`）ので、
-          書き上げたあと残っているあいだも本文と一緒に転がる。 */}
-      <MiniPortrait />
+          書き上げたあと残っているあいだも本文と一緒に転がる。**出ているやり取りを渡す**のは、
+          残った筆先が別のやり取りのものなら引っ込ませるため（`mini-portrait.tsx`）。 */}
+      {activeTurn !== undefined && <MiniPortrait shownTurnId={activeTurn.id} />}
     </div>
   )
 }

@@ -10,6 +10,11 @@
 // 書き始めたときだけ**そちらへ移る（2026-09-21 の決定）。undefined に戻るのは、まだ一度も
 // 書いていないときと、測れないフレームだけ。
 //
+// **ただし筆先はやり取り1つに属する**（`turnId`）。座標は本文の入れ物の原点基準なので、次の
+// 依頼で本文が入れ替わると、同じ座標の先には違う本文がある——**残った筆先が新しい本文の上へ
+// 浮く**（2026-09-22 に画面で出た）。捨てずに持たせておくのは、過去のタブを見て戻ったときに
+// 元の場所へそのまま戻れるようにするため。
+//
 // React の外に1つだけ持つ（演出は同時に1つしか走らない。`report-reveal.ts`）。
 
 import { useSyncExternalStore } from "react"
@@ -58,9 +63,14 @@ export type BrushPlace = {
  *   行。帯の右端はその帯でいちばん長い行の右なので、短い行で終わる本文では右へ外れる。
  *   `report-reveal.ts`）。**次に書き始めるまで消えない**ので、なぞる画も持たない
  */
-export type BrushTip =
-  | (BrushPlace & { readonly phase: "writing"; readonly stroke: BrushStroke })
-  | (BrushPlace & { readonly phase: "resting" })
+export type BrushTip = BrushPlace & {
+  /**
+   * この筆先を出したやり取り（`src/shared/main-view.ts` の `MainViewTurn.id`）。**筆先は
+   * そのやり取りの本文の上にしか意味を持たない**——別のやり取りが出ているあいだ、座標の先には
+   * 違う本文があるので、追従する側はここを見て引っ込む（`features/main-view/mini-portrait.tsx`）。
+   */
+  readonly turnId: number
+} & ({ readonly phase: "writing"; readonly stroke: BrushStroke } | { readonly phase: "resting" })
 
 /** 筆先を配る。 */
 export function publishBrushTip(next: BrushTip | undefined): void {
@@ -80,7 +90,13 @@ export function restBrushTip(): void {
   if (tip === undefined || tip.phase === "resting") {
     return
   }
-  publishBrushTip({ phase: "resting", x: tip.x, top: tip.top, bottom: tip.bottom })
+  publishBrushTip({
+    phase: "resting",
+    turnId: tip.turnId,
+    x: tip.x,
+    top: tip.top,
+    bottom: tip.bottom,
+  })
 }
 
 /** いまの筆先（まだ一度も書かれていなければ undefined）。 */

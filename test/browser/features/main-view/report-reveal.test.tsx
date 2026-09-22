@@ -14,8 +14,11 @@ import {
 // ここでは確かめない（`docs/architecture.md`「手で確かめること」。目視で確認する）。
 // ここで守るのは**隠す・出し切る・止める**の配線だけ。
 
+/** 演出を掛ける相手のやり取り（配る筆先に添う番号。`stores/brush-tip.ts`）。 */
+const TURN_ID = 4
+
 function Probe(props: { readonly reveal: boolean }): ReactElement {
-  const rootRef = useReportReveal(props.reveal)
+  const rootRef = useReportReveal(props.reveal, TURN_ID)
 
   return (
     <div data-testid="root" ref={rootRef}>
@@ -62,7 +65,7 @@ function BrushTipReadout(): string {
     return "筆先なし"
   }
   return tip.phase === "resting"
-    ? `残っている:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
+    ? `残っている:${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
     : "書いている"
 }
 
@@ -105,7 +108,7 @@ function measureBoxes(): () => void {
 
 /** 行に見立てた図を並べた本文（`measureBoxes` が矩形を名乗る）。 */
 function LinesProbe(): ReactElement {
-  const rootRef = useReportReveal(true)
+  const rootRef = useReportReveal(true, TURN_ID)
 
   return (
     <div ref={rootRef}>
@@ -174,7 +177,7 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
       // 最後の行は 220〜260 の右 150。原点が 50 から始まるので、入れ物基準で 150,170,210。
       // 打ち切った時点では筆は1フレームも進んでいないので、止まった場所に残すなら何も出ない。
       // 帯の右端に残すなら、**最後の行より長い行に引かれて** x が 400 になる。
-      expect(screen.getByText("残っている:150,170,210")).toBeDefined()
+      expect(screen.getByText("残っている:4:150,170,210")).toBeDefined()
     } finally {
       restore()
     }

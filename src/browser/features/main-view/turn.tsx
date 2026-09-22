@@ -51,6 +51,7 @@ export function Turn(props: TurnProps): ReactElement {
           {turn.steps.map((step) => (
             <Step
               step={step}
+              turnId={turn.id}
               reveal={step.id === revealStepId}
               finalLabel={step.final && turn.hasInterimReport}
               key={step.id}
@@ -85,6 +86,8 @@ export function Turn(props: TurnProps): ReactElement {
  */
 function Step(props: {
   readonly step: MainViewStep
+  /** このステップが載っているやり取り（`<Report>` から筆先へ渡る。`report-reveal.ts`）。 */
+  readonly turnId: number
   readonly reveal: boolean
   /** 「最終レポート」のラベルを載せるか（`MainViewTurn.hasInterimReport` と `step.final` の組）。 */
   readonly finalLabel: boolean
@@ -98,7 +101,9 @@ function Step(props: {
 
   const body = (
     <>
-      {step.report !== undefined && <Report markdown={step.report} reveal={props.reveal} />}
+      {step.report !== undefined && (
+        <Report markdown={step.report} reveal={props.reveal} turnId={props.turnId} />
+      )}
       {questions.map((question, index) => (
         <QuestionRecord entry={question} key={index} />
       ))}
