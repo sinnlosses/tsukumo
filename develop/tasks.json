@@ -27,7 +27,7 @@
     "loopable": "Y",
     "dependencies": ["T-307", "T-311"],
     "summary": "ツールの結果と本文の「まだ来ていない」を合併型にする",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n2つの組が「まだ来ていない」を `| undefined` で表している\n（調査は `docs/research/undefined-reduction.md` 2.1 の #6 #7）。\n\n- `src/shared/session-state.ts:97` / `src/shared/main-view.ts:58` の `result: {...} | undefined`\n  ——**ツールがまだ終わっていない**\n- `src/shared/main-view.ts:98,102` の `report` / `firstLine` ——**本文がまだ来ていない**\n  （2つは同時に入るか同時に無いかの2択）\n\nどちらも `docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所。\n\n## やること\n\n1. ツールの結果を **`{ kind: \"running\" } | { kind: \"finished\"; result }`** にする\n2. 本文を **`body: { kind: \"none\" } | { kind: \"text\"; report; firstLine }`** にする\n3. 読む側（メインビューのレポート描画・ツールの行）を `kind` の分岐に直す\n4. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts:97` と `src/shared/main-view.ts:58,98,102` の\n  `| undefined` が4行とも消えている\n- **目視確認**: tsukumo を起こし、(1) ツール実行中の表示と完了後の表示が従来どおり切り替わる、\n  (2) 中間レポートと最終レポートが従来どおり出る、(3) 本文が空のターンで崩れない——の3つを\n  確かめて `evidence` に書く\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **`SessionState` を触る3つのタスクは並行させない。** `dependencies` で直列にしてある\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
