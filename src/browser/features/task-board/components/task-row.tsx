@@ -7,9 +7,9 @@
 
 import { type ReactElement } from "react"
 
-import { type BoardRow } from "../board-row.ts"
+import { taskStatusClass } from "../domain/task-status.ts"
+import { type BoardRow } from "../hooks/use-task-board.ts"
 import styles from "../task-board.module.css"
-import { taskStatusClass } from "../task-status.ts"
 import { ReadinessCell } from "./readiness-cell.tsx"
 
 export function TaskRow(props: { readonly row: BoardRow }): ReactElement {

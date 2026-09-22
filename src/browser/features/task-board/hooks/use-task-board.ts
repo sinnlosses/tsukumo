@@ -4,12 +4,20 @@
 //
 // `<dialog>` の開閉そのものは機能の語彙を持たないので `browser/hooks/use-modal-dialog.ts`。
 // ここはそれを呼んで、**この機能に固有のもの**だけを足す。
+//
+// **行への畳み方（`boardRows`）もこのファイルに同居させる**（2026-09-22 ユーザーの選択）。
+// 呼ぶのはこのフック1つで、`components/` は畳んだ `BoardRow` を受け取るだけ。
+// **CSS の class 名はここでは決めない**（`domain/task-status.ts` と各部品の持ち物）。
 
 import { useCallback, useMemo, type MouseEvent, type RefObject } from "react"
 
-import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import {
+  taskReadiness,
+  unfinishedTaskIds,
+  type TaskReadiness,
+  type TaskSummaryItem,
+} from "../../../../shared/task-summary.ts"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
-import { boardRows, type BoardRow } from "../board-row.ts"
 
 export type TaskBoardView = {
   readonly dialogRef: RefObject<HTMLDialogElement | null>
@@ -45,4 +53,64 @@ export function useTaskBoard(
   const rows = useMemo(() => boardRows(tasks), [tasks])
 
   return { dialogRef, onDialogClick, rows }
+}
+
+/** 値が無い列に出す文字。**空欄にはしない**（列がずれて見えるため）。 */
+const MISSING = "—"
+
+export type BoardRow = {
+  readonly id: string
+  /** 色分けに使う生の status。`develop/tasks.json` に無ければ `undefined`。 */
+  readonly status: string | undefined
+  readonly statusText: string
+  readonly difficultyText: string
+  /** `N` は空欄（下の `loopableMark`）。 */
+  readonly loopableText: string
+  /** `todo` のときだけ着手できるかを判定する。それ以外は `undefined`。 */
+  readonly readiness: TaskReadiness | undefined
+  readonly dependencies: readonly string[]
+  readonly summary: string
+  /** 済んだ行は薄く出す。 */
+  readonly done: boolean
+}
+
+/**
+ * 一覧を表の行へ畳む。読めていないときは `undefined` のまま返す（「読めない」と「0件」は
+ * 出す文言が違うので、ここでは畳まない）。
+ *
+ * 「まだ done でないタスクのID」は**一覧全体から1回だけ**作り、行ごとの `taskReadiness` へ
+ * 使い回す（`src/shared/task-summary.ts` 参照。以前は行ごとに作り直していた）。
+ */
+export function boardRows(
+  tasks: readonly TaskSummaryItem[] | undefined,
+): readonly BoardRow[] | undefined {
+  if (tasks === undefined) {
+    return undefined
+  }
+
+  const unfinished = unfinishedTaskIds(tasks)
+  return tasks.map((task) => ({
+    id: task.id,
+    status: task.status,
+    statusText: task.status ?? MISSING,
+    difficultyText: task.difficulty ?? MISSING,
+    loopableText: loopableMark(task.loopable),
+    readiness: taskReadiness(task, unfinished),
+    dependencies: task.dependencies,
+    summary: task.summary,
+    done: task.status === "done",
+  }))
+}
+
+/**
+ * `loopable`。**`N` は空欄にし、`Y` だけ文字を出す。**
+ * 全行に文字が並ぶと、自動進行に載る `Y` が埋もれるため。**消すのは `N` だけ**で、値が無いときは
+ * 他の列と同じ「—」、想定外の値はそのまま出す（読み手が気づけるようにする）。
+ */
+function loopableMark(loopable: string | undefined): string {
+  if (loopable === undefined) {
+    return MISSING
+  }
+
+  return loopable === "N" ? "" : loopable
 }

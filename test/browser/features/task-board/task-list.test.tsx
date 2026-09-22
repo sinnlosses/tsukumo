@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render, screen } from "@testing-library/react"
 
-import { TaskList, taskListTitle } from "../../../../src/browser/features/task-board/task-list.tsx"
+import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { type TaskSummaryItem } from "../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（develop/tasks.json の内容は会話ではないが、
@@ -47,22 +47,7 @@ const TASKS: readonly TaskSummaryItem[] = [
   },
 ]
 
-describe("taskListTitle", () => {
-  it("tasks が undefined のときは件数を添えない", () => {
-    expect(taskListTitle(undefined)).toBe("タスク一覧")
-  })
-
-  it("todo は常に添え、doing / done は 0 件でないときだけ添える", () => {
-    expect(taskListTitle(TASKS)).toBe("タスク一覧 todo 1 / doing 1 / done 1")
-  })
-
-  it("doing が 0 件のときは doing を足さない", () => {
-    const noDoing = TASKS.filter((task) => task.status !== "doing")
-    expect(taskListTitle(noDoing)).toBe("タスク一覧 todo 1 / done 1")
-  })
-})
-
-describe("TaskList", () => {
+describe("taskList", () => {
   it("tasks が undefined のときは一覧の代わりに「不明」を出す", () => {
     render(<TaskList tasks={undefined} />)
 

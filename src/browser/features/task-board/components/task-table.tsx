@@ -8,7 +8,7 @@
 
 import { memo, type ReactElement } from "react"
 
-import { type BoardRow } from "../board-row.ts"
+import { type BoardRow } from "../hooks/use-task-board.ts"
 import styles from "../task-board.module.css"
 import { TaskRow } from "./task-row.tsx"
 

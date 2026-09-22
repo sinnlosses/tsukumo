@@ -8,8 +8,9 @@
 import { useState, type ReactElement } from "react"
 
 import { useSessionSelector } from "../../stores/session.tsx"
+import { taskListTitle } from "../task-board/domain/task-list-title.ts"
 import { TaskBoard } from "../task-board/task-board.tsx"
-import { TaskList, taskListTitle } from "../task-board/task-list.tsx"
+import { TaskList } from "../task-board/task-list.tsx"
 import { SidebarSection } from "./section.tsx"
 import styles from "./sidebar.module.css"
 

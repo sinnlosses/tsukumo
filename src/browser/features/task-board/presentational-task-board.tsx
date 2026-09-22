@@ -10,8 +10,8 @@
 
 import { type MouseEvent, type ReactElement, type RefObject } from "react"
 
-import { type BoardRow } from "./board-row.ts"
 import { TaskTable } from "./components/task-table.tsx"
+import { type BoardRow } from "./hooks/use-task-board.ts"
 import styles from "./task-board.module.css"
 
 export type PresentationalTaskBoardProps = {
