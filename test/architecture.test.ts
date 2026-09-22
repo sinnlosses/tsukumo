@@ -100,16 +100,13 @@ describe("Agent SDK を import する箇所", () => {
 })
 
 // `node:child_process` を起こすのはホスト（orca）・ビルド（bun build）・git 管理下のファイルの
-// 列挙（git ls-files）・セッション用の worktree（git worktree）の4つの境界に閉じ込める
-// （docs/architecture.md 原則3）。**境界の単位はコマンドではなく概念**なので、git を起こす
-// ファイルが2つあってよい（列挙と worktree は別の概念）。
+// 列挙（git ls-files）の3つの境界に閉じ込める（docs/architecture.md 原則3）。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは src/server/adapter/ の orca-host.ts・bundle.ts・repository-file.ts・worktree.ts だけ", () => {
+  it("`node:child_process` を import するのは src/server/adapter/ の orca-host.ts・bundle.ts・repository-file.ts だけ", () => {
     const allowed = new Set([
       "server/adapter/orca-host.ts",
       "server/adapter/bundle.ts",
       "server/adapter/repository-file.ts",
-      "server/adapter/worktree.ts",
     ])
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))

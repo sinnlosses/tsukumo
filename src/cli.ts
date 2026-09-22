@@ -36,10 +36,6 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_WATCH_UI    1 を渡すと src/browser/ を見張り、保存のたびに組み立て直して開いているタブへ
                       取り直しを押す（tsukumo 自身を直しながら動かすとき用。既定は見張らない。
                       src/server/core/ と src/shared/ を直したときは上げ直しが要る）
-  TSUKUMO_WORKTREE    セッション用の git worktree を切るか（既定は切る。0 を渡すと切らずに
-                      起動したディレクトリでそのまま claude を起こす）。切ったときは claude の
-                      作業先だけが worktree になり、プロジェクト設定（hooks・permissions・
-                      .claude）は起動したリポジトリのものを使う
   TSUKUMO_HOME        tsukumo が自分の持ち物を置くホーム（既定 ~/.tsukumo。覚えたキャラクター・
                       雑談の要約とアーカイブ・トークンの記録・画面から作ったパックがこの下に並ぶ）。
                       **2つを並行して動かすときだけ**、TSUKUMO_VIEW_PORT と一緒に分けて渡す。

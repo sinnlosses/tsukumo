@@ -18,7 +18,6 @@ describe("readConfig", () => {
       fakeScene: undefined,
       newSession: false,
       watchUi: false,
-      worktree: true,
     })
   })
 
@@ -32,7 +31,6 @@ describe("readConfig", () => {
         TSUKUMO_FAKE_SCENE: " question-multi ",
         TSUKUMO_NEW_SESSION: "1",
         TSUKUMO_WATCH_UI: "1",
-        TSUKUMO_WORKTREE: "0",
       }),
     ).toEqual({
       rawViewPort: "7398",
@@ -42,7 +40,6 @@ describe("readConfig", () => {
       fakeScene: "question-multi",
       newSession: true,
       watchUi: true,
-      worktree: false,
     })
   })
 

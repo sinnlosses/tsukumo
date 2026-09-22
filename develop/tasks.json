@@ -306,27 +306,5 @@
     "status": "done",
     "passes": true,
     "evidence": "bun run check 通過（1286 pass / 0 fail / 103ファイル）。fake driver を別ポート(7431)・別ホームで起こし capture-view.ts で 1400x900 を実測: 「セッション情報」はモード・モデル・許可モード・キャラクターの4行だけで 区画 179.44px（作業先・ブランチ・コードの出所は出ない）、.session-info-value の左端は全行 x=1147.02 で揃い 横のはみ出し 0px、許可モード→キャラクターの間だけ余白が広く区切り線は無い。知らせが先頭に来ることと3行が消えたことは test/browser/features/sidebar/session-info.test.tsx の2件で担保。"
-  },
-  {
-    "id": "T-366",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "本体へマージする直前に worktree を main へ追従させる",
-    "task": "## 背景\n\n`mergeWorkspace`（`src/server/adapter/worktree.ts`）は `git -C <本体> merge <枝>` だけを走らせて\nいて、**本体 → 枝の向きが一度も流れない**。枝は切った瞬間から遅れる一方で、2026-09-22 の実測では\n生きている3本のうち2本が `main` から 3件・4件遅れていた。遅れたまま本体へマージするので、\n`develop/progress.md` のように全セッションが同じ行を触るファイルで衝突し、`abortMerge`（同ファイル）\nが本体を戻してそのセッションは次のタスクへ進めなくなる。\n\n**追従は本体へのマージの「直前」に置く。** 先に `git -C <worktree> merge main` を通しておけば、\nそのあとの本体へのマージは枝が `main` の子孫になっているので**必ず fast-forward**になり、本体側では\n衝突しない。衝突は worktree の中（claude が解ける場所）だけで起きるようになる。\n\n当初の計画（`docs/history/direction.md` 2026-09-22 の「次は main の先端から切り直す」）と同じ状態に\nなる。畳まないのは `cwd` が消えると claude の立つ場所が無くなるため\n（`docs/architecture.md`「worktree でセッションを分ける」決定3）。\n\n## 決まっていること（蒸し返さない）\n\n- 追従は **`mergeWorkspace` の中、本体へのマージの直前**に置く（直後ではない）\n- 衝突したら **worktree に衝突を残して claude に解かせる**。`merge --abort` しない。戻り値で\n  「解いてから続ける」ことを伝える（2026-09-22 ユーザー決定）\n- **枝の名前は変えない。** セッション名の枝のまま、中身だけ先端に揃える（同決定）\n- 畳むのは従来どおり次の起動の掃除。ここでは畳まない\n- 知らせに会話の内容を混ぜない（`docs/coding-standards.md`「会話内容の扱い」）\n\n## 解くべき論点\n\n- **追従で止まったことをどう返すか。** いまの `WorkspaceMerge` は merged / stopped / skipped の3つ。\n  既存の stopped に寄せるか種類を足すかで、`src/server/core/workspace.ts` の `decideWorktreeMerge` と\n  文面を組む `workspaceMergeNotice` に波及する\n- **worktree に未コミットの変更が残っているとき。** ff でもファイルを上書きできずに止まるので、\n  追従を飛ばして知らせるか、止めるかを決める\n- **取り込む相手の指定。** 本体の HEAD のブランチ名を読むか `main` と決め打ちするか\n  （本体は常に `main` を出している、が `docs/architecture.md` 決定1の前提）\n\n## やること\n\n1. `mergeWorkspace` に追従を足す（本体へのマージの直前）\n2. 追従の結果を `WorkspaceMerge` に載せ、止まったときの文面を組む\n3. テストを足す: 追従で先端に揃うこと / 衝突したら worktree に残って止まること /\n   追従のあとの本体へのマージが ff になること\n4. `docs/architecture.md`「worktree でセッションを分ける」に順序を1行で書く\n\n調べて「追従を先に置いても本体へのマージが ff にならない場合がある」と分かったら、**やらずに理由を\n`evidence` に書いて閉じる**。\n\n## 完了条件\n\n- `bun run check` が通る\n- **`/tmp` に clone した使い捨てのリポジトリで、2つの枝が同じ行を触る状況を作り、追従を入れた側では\n  本体へのマージが ff で通ることを確かめた**（`git log --oneline` を `evidence` に書く）\n- **追従が衝突する状況を作り、worktree に衝突が残ったまま止まることを確かめた**（本体の HEAD が\n  動かないことも合わせて確認する）\n\n## 注意\n\n- **検証は `/tmp` に clone した使い捨てのリポジトリで行い、このリポジトリの `main` を動かさない**\n  （他のセッションが並行して動いている）\n- push はしない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
-  },
-  {
-    "id": "T-367",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": ".gitignore の末尾スラッシュを外し git add -A を使えるようにする",
-    "task": "## 背景\n\n`.gitignore` の `node_modules/` と `characters/local/` は**末尾が `/` なのでディレクトリにしか\n当たらない**。worktree にはこの2つを本体へ向けた symlink が張ってあるため\n（`LINKED_PATHS`、`src/server/adapter/worktree.ts`）、`git status` に `?? node_modules` と\n`?? characters/local` が出続け、`git add -A` が使えない。`CLAUDE.md`「## Git運用」も\n「コミットは `git add -A` を使わず、触ったファイルを個別に足す」をこの事情から書いている。\n\n末尾の `/` を外せば symlink にも当たって `git status` が黙る。副作用は同名の**ファイル**も\n無視されるようになることだけで、実害は無い。\n\n`foldIdleWorktree` の `countChanges`（同ファイル）は**この2行を数から除く特別扱い**を持っていて、\n`.gitignore` が直れば要らなくなるが、**畳む判定に関わるので外すかどうかは別に決める**\n（2026-09-22 ユーザー指示）。\n\n## 決まっていること（蒸し返さない）\n\n- `.gitignore` の `node_modules/` と `characters/local/` から**末尾の `/` を外す**\n- `dist/` や `.idea/` など、symlink を張っていない行は触らない\n\n## 解くべき論点\n\n- **`countChanges` の特別扱いを外すか。** 外すならテストも直る。残しても害は無いが、\n  `.gitignore` で当たるようになった以上は死んだコードになる\n\n## やること\n\n1. `.gitignore` の2行から末尾の `/` を外す\n2. worktree で `git status --porcelain` が何も出さないことを確かめる\n3. `CLAUDE.md`「## Git運用」の `git add -A` を禁じている記述を、成り立たなくなったぶんだけ直す\n4. `countChanges` の特別扱いをどうするか決める。外すならテストも直し、外さないなら理由を\n   `evidence` に書く\n\n## 完了条件\n\n- `bun run check` が通る\n- **worktree で `git status --porcelain` が1行も出さない**\n- `grep -c '^#\\{2,3\\} ' CLAUDE.md` が編集の前後で変わらない\n  （`CLAUDE.md`「ドキュメントを編集するときの罠」）\n\n## 注意\n\n- `.gitignore` は履歴に入るファイルなので、**このリポジトリの事情**（worktree に symlink を張る）で\n  決める。他のプロジェクトの慣行に合わせない\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
   }
 ]

@@ -4,10 +4,8 @@
 // `session-info` で `<select>` の選択が上書きされる**（サーバ側の値が正になる）。キャラクターの
 // `<select>` は**選択肢が1つでも出す**（docs/design.md 7章）。
 //
-// **並びは寿命順ではなく触る頻度順**（T-365）: 知らせ（あるときだけ） → モード → モデル →
-// 許可モード → キャラクター → セッション。区画は内側スクロールなので、寿命順だと下の行が
-// 押し出されるため。作業先・ブランチ・コードの出所の行は外した（`workspace-notice.tsx` の
-// 冒頭コメント）。
+// **並びは寿命順ではなく触る頻度順**: モード → モデル → 許可モード → キャラクター →
+// セッション。区画は内側スクロールなので、寿命順だと下の行が押し出されるため。
 
 import { type ReactElement } from "react"
 
@@ -24,7 +22,6 @@ import {
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
-import { WorkspaceNotice } from "./workspace-notice.tsx"
 
 // ラベルと畳み方（`resolveModelAlias` / `resolvePermissionMode`）は **帯の読みと同じものを読む**
 // （`src/browser/lib/model-label.ts` / `permission-mode-label.ts`）。サイドバーは触らせる側、
@@ -99,9 +96,6 @@ export function SessionInfo(): ReactElement {
 
   return (
     <div className={styles["session-info"]}>
-      {/* 知らせ（`workspace-notice.tsx`）。あるときだけ区画の先頭に出る。**2列の grid の
-          直の子**として並ぶよう、入れ物を挟まずラベルと値の対だけを返す部品にしてある。 */}
-      <WorkspaceNotice />
       <label htmlFor={CHAT_MODE_SELECT_ID} className={groupStartLabelClass}>
         モード
       </label>

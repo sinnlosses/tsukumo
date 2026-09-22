@@ -876,39 +876,3 @@ describe("applySessionEvent（質問の記録）", () => {
     ])
   })
 })
-
-describe("workspace", () => {
-  it("いま動いている場所を持ち、届くまでは undefined", () => {
-    expect(INITIAL_SESSION_STATE.workspace).toBeUndefined()
-
-    const view = apply({
-      kind: "workspace",
-      workspace: {
-        source: "/repo",
-        workdir: {
-          kind: "worktree",
-          path: "/repo/.git/tsukumo/worktree/20260922-153012",
-          branch: "tsukumo/20260922-153012",
-          origin: "/repo",
-        },
-      },
-      notices: [],
-    })
-
-    expect(view.workspace?.source).toBe("/repo")
-    expect(view.workspace?.workdir.path).toBe("/repo/.git/tsukumo/worktree/20260922-153012")
-  })
-
-  it("作業場所の知らせを持ち、会話の記録には混ぜない", () => {
-    expect(INITIAL_SESSION_STATE.workspaceNotices).toEqual([])
-
-    const view = apply({
-      kind: "workspace",
-      workspace: { source: "/repo", workdir: { kind: "direct", path: "/repo" } },
-      notices: ["マージが衝突したので止めた（本体は元に戻した）"],
-    })
-
-    expect(view.workspaceNotices).toEqual(["マージが衝突したので止めた（本体は元に戻した）"])
-    expect(view.records).toEqual([])
-  })
-})

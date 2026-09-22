@@ -504,13 +504,12 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 いまの `src/domain/session-event.ts` の union をそのまま持ち越し、次を足す。
 
-| イベント            | 出どころ                                                                                               | 中身                                                                   | 用途                                                                               |
-| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryItem[] \| undefined`                                | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                         |
-| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents`      | キャラビューが立ち絵を取りに行く先。切り替え（7章）                                |
-| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                     | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ   |
-| `workspace`         | core（`session-launch`。値の出どころは adapter の `worktree`）                                         | `workspace: Workspace`（コードの出所と claude の作業先）               | サイドバーの「作業先」。起こし直すたびに流し直す（`character-changed` と同じ契機） |
-| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値） | `state.model` の出どころを3つにする（下記）                                        |
+| イベント            | 出どころ                                                                                               | 中身                                                                   | 用途                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryItem[] \| undefined`                                | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
+| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents`      | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
+| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                     | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
+| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値） | `state.model` の出どころを3つにする（下記）                                      |
 
 **`state.model` の出どころは `session-info`（`init`）だけではない**（2026-09-17）。`init` は
 ターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古いモデルを返し、
@@ -549,7 +548,6 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 | `turn`（`idle` / `running` / `finished`）                          | `request` / `turn-finished` の `at`        | `at` がイベントに乗るので、畳み込みの中で持てる。**時刻は状態の側**（起きない組み合わせを型から消す） |
 | `tasks`                                                            | `tasks-changed`                            | サイドバー                                                                                            |
 | `character`（`name`・`portraits`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）                                                |
-| `workspace`（`source`・`workdir`）                                 | `workspace`                                | サイドバーの「作業先」「ブランチ」「コードの出所」                                                    |
 | `connection`                                                       | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い）                                   |
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
@@ -694,47 +692,6 @@ type SessionHost = {
 **`/repository-file` は会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの
 中身（パスだけ。ファイルは開かない）で、誰にでも配ってよい静的な物ではない。
 
-### workspace.ts（core）と worktree.ts（adapter）
-
-セッションをどこで動かすかの**判断**が `core/workspace.ts`、実際に `git` を起こして切る・畳むのが
-`adapter/worktree.ts`（決定の経緯と採らなかった置き場は `docs/architecture.md`
-「worktree でセッションを分ける」）。
-
-- `core` が持つのは**切るかどうか**（`planWorkspace`。git リポジトリかどうかと `TSUKUMO_WORKTREE`
-  の2つだけで決まる）、**どの名前で切るか**（`YYYYMMDD-HHMMSS` と、同じ秒に負けたときの
-  `-2`, `-3`）、**使い終えたものを畳むかどうか**（`decideWorktreeFold`）、**本体へ入れてよいか**
-  （`decideWorktreeMerge`）と**止まったときに画面へ出す文面**（`worktreeMergeStopNotice`）。
-  時計は読まず、「いま何時か」は引数で受け取る
-- `adapter` が持つのは `git rev-parse` / `git worktree add` / `git worktree remove` /
-  `git branch -d` / `git merge` / `git merge --abort`、symlink 2本（`node_modules` と
-  `characters/local`）、切った先での `bun run build`
-- **マージ（`mergeWorkspace`）も同じファイル**（`adapter/worktree.ts`）。1タスクごとに
-  **本体のディレクトリを指して `git -C <本体> merge`** を走らせ、入ったら畳む。境界は
-  コマンドではなく概念（「セッションの作業場所」）なので、切る・畳む・入れるを分けない
-- 置き場は `git rev-parse --git-common-dir` の下の `tsukumo/worktree/<名前>`、印は同じ親の下の
-  `tsukumo/mark/<名前>`。ブランチは `tsukumo/<名前>`
-- **`.git` の下の印そのものは `adapter/mark.ts`**（worktree の「使用中」の印と、タスクの
-  「着手」の印の2つ。置き場・pid の生死・落ちたセッションの掃除が同じなので1つにまとめてある）。
-  **`git` は起こさない** — `.git` の絶対パスは `worktree.ts` が引いて渡す
-- **着手の印の判断は `core/task-claim.ts`**（印に何を書くか・読めた印をどうするか）。取れた／
-  取れなかったは**ファイルを `wx` で作れたかどうか**で決まり、印には**タスクid・pid・取った
-  時刻・作業先**だけを書く。置き場は `tsukumo/claim/<タスクid>`
-- **取りに行く口・終える口は `SessionMode` の `work` に渡る**（`TaskWorkflow`。`claim` / `finish`
-  の2つの MCP ツールになる）。組み立てるのは配線層（`src/session-start.ts` の
-  `createTaskWorkflow`）で、**`.git` の絶対パスは `prepareWorkspace` の戻り値から来る**
-  （git リポジトリでないときだけ undefined で、そこで畳む）。**印の pid は tsukumo の
-  プロセス自身**——短命なコマンドから取ると、取った直後に取り残しとして掃除される
-- **モデルへ返す文面を組むのは `core`**（`taskClaimNotice` / `workspaceMergeNotice`）。
-  `adapter` と配線層は印と git を触るだけで、文言を持たない
-- **`cwd` は worktree、`projectConfigRoot` は切り出し元**（`SessionDriverOptions`）。
-  claude の作業先だけが切り替わり、hooks・permissions・`.claude` の各ツリーは元のものが効く
-- **用意できなかったら起動時の前提不足として止める**（`src/main.ts`）。畳めなかった worktree と
-  切った先の組み立ての失敗は**知らせるだけ**で起動を続ける
-- **知らせは `workspace` の事件に載せて画面へ運ぶ**（`SessionState.workspaceNotices` →
-  サイドバーの「セッション情報」）。畳めなかった worktree・組み立ての失敗・マージが止まった
-  理由の3つが同じ場所に出る。**会話の記録（`records`）には混ぜない** — claude の発言ではなく
-  tsukumo が出した知らせなので、ターンの流れに並べない
-
 ### config.ts（core）
 
 | 環境変数              | 意味                                                 | 既定             |
@@ -746,7 +703,6 @@ type SessionHost = {
 | `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前            | 流さない         |
 | `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）            | 復元する         |
 | `TSUKUMO_WATCH_UI`    | `1` で `src/browser/` を見張って組み立て直す（11章） | 見張らない       |
-| `TSUKUMO_WORKTREE`    | `0` でセッション用の worktree を切らない             | 切る             |
 | `TSUKUMO_HOME`        | tsukumo の持ち物を置くホーム（相対は cwd 相対）      | `~/.tsukumo`     |
 
 `TSUKUMO_CHARACTER` は**パスとしてだけ解く**（`src/server/adapter/bundled-path.ts` の
@@ -1893,9 +1849,9 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 | 新しいパックを作る                               | **ずっと**（同上）                                           | 作る画面（キャラクター画面から入る） |
 
 **変える口の置き場所と、読みの置き場所は別**（2026-09-22 に足した）。上の表は**触らせる場所**で、
-モデル・許可モード・ブランチは**読みだけが帯にも出る**（13.9「いまの動き方の読み」）。
+モデルと許可モードは**読みだけが帯にも出る**（13.9「いまの動き方の読み」）。
 サイドバーは会話の画面にしか無く、キャラクター画面とトークン消費の画面では
-「どのモデルで・どの許可モードで・どの worktree を書いているか」が読めなかったため。
+「どのモデルで・どの許可モードで動いているか」が読めなかったため。
 **帯に `<select>` やボタンは置かない**ので、この表の割り方（どこで変えるか）は変わらない。
 
 **キャラクターの切り替えは「セッション限り」から「ずっと」へ移したわけではない。** 選ぶ操作自体は
@@ -2359,19 +2315,22 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   戻る口に付けていたもの（13.6）で、戻る口が帯へ移るので印も一緒に移る
 - **帯の左端に部屋の名前**（下の「部屋の名前」。2026-09-22 に足した）。押せない字で、
   「いまどの tsukumo を見ているか」だけを名乗る
-- **帯に出すのは、画面の口・答え待ちの印・部屋の名前と、いまの動き方の読み3つ**
-  （モデル・許可モード・ブランチ。下の「いまの動き方の読み」。2026-09-22 に広げた）。
+- **帯に出すのは、画面の口・答え待ちの印・部屋の名前と、いまの動き方の読み2つ**
+  （モデル・許可モード。下の「いまの動き方の読み」。2026-09-22 に広げた）。
   **設定の操作子は置かない**（13.6 の割り方を変えない。名前も読みも操作子ではなく、
   この窓がいま何かを名乗る字）
 
 #### いまの動き方の読み
 
-**モデル・許可モード・ブランチ（worktree のときだけ）を帯に出す**（2026-09-22 決定。
-`frontend-design` で案を3つ出し、ユーザーが「**帯は名乗り、サイドバーは触らせる**」を選んだ）。
-それまでこの節は「帯に出すのは画面の口・答え待ちの印・部屋の名前だけ」と書いていたが、
-**答え待ちの印がすでに画面の話ではなくセッションの状態だった**（どの画面に居ても同じ1つが
-出ている）。帯は「いまどの画面か」だけの器ではなく**この窓がいま何かを名乗る場所**なので、
-同じ資格を満たすものを3つ足した。
+**モデルと許可モードを帯に出す**（2026-09-22 決定。`frontend-design` で案を3つ出し、
+ユーザーが「**帯は名乗り、サイドバーは触らせる**」を選んだ）。それまでこの節は「帯に出すのは
+画面の口・答え待ちの印・部屋の名前だけ」と書いていたが、**答え待ちの印がすでに画面の話では
+なくセッションの状態だった**（どの画面に居ても同じ1つが出ている）。帯は「いまどの画面か」
+だけの器ではなく**この窓がいま何かを名乗る場所**なので、同じ資格を満たすものを足した。
+
+**ブランチも同じ資格で 2026-09-22 に足したが、2026-09-23 に外した**（tsukumo が worktree を
+切るのをやめ、出どころの `workspace` ごと消えたため。`docs/architecture.md`「worktree を
+用意するのは orca で、tsukumo はやらない」）。
 
 **資格の規則は「画面を見ても分からず、かつターンの結果を変えるもの」**:
 
@@ -2379,7 +2338,6 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 | ---------- | -------------------------------------------- |
 | モデル     | 画面のどこにも現れず、返ってくるものが変わる |
 | 許可モード | 同上。**勝手に走るかどうか**が変わる         |
-| ブランチ   | どの worktree を書いているかは画面に出ない   |
 
 | 出さない     | 理由                                  |
 | ------------ | ------------------------------------- |
@@ -2391,7 +2349,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   サイドバーは**会話の画面にしか無い**（`main.tsx` の `<Activity mode="hidden">`）ので、
   キャラクター画面とトークン消費の画面では読めなかった。**帯は値の読みだけを持ち、ラベル付きの
   正典と `<select>` はサイドバーに残す**（13.6 の割り方は変えない）
-- **区切りに記号は置かない。** 等幅（機械が付けた名前＝モデル・ブランチ）と本文書体（人の言葉＝
+- **区切りに記号は置かない。** 等幅（機械が付けた名前＝モデル）と本文書体（人の言葉＝
   許可モード）の交替がそのまま区切りになる（13.1 原則3）
 - **`bypassPermissions` のときだけ字に `--state-ng` を載せる**（新しい色は足さない）。
   「全部許す」の文字が必ず付いているので、色だけで意味を伝えることにならない（13.1 原則5）
@@ -2399,12 +2357,6 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   サイドバーの `<select>` と同じ畳み方で、字は1箇所に置く
   — `src/browser/lib/model-label.ts` / `permission-mode-label.ts`。**機能どうしの import を
   増やさない**ため、2つの読み手（帯とサイドバー）が共有する道具として `browser/lib/` に置く）
-- **worktree を切っていないとき（`direct`）と `workspace` がまだ届いていないときは、
-  ブランチの読みごと出さない。**「切っていない」を字で言うより、並びが2つになるほうが静か
-- **長いブランチ名は帯の側だけ末尾を省き、`title` に全文を置く。** 中幅（760〜1000px 前後）で
-  詰まったときに縮むのもここだけ——口は押す先なので縮めず、モデルと許可モードは短い
-- **作業先とコードの出所のパス2つは、部屋の名前の `title` に2行で持たせる**（字としては出さない。
-  長いパスは口と読みを押し出すため）
 - **狭い画面（760px 以下）では、部屋の名前・答え待ちと同じ畳み方で「≡」の中へ入る**
 
 #### 部屋の名前

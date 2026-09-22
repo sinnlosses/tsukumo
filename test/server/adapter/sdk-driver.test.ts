@@ -22,18 +22,10 @@ import { MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
 // うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
-/** 仕事のときだけ渡るタスク運用の口。**ここでは呼ばれない**（載る／載らないだけを見る）。 */
-const WORK_MODE: SessionMode = {
-  kind: "work",
-  taskWorkflow: {
-    claim: () => Promise.resolve(""),
-    finish: () => Promise.resolve(""),
-  },
-}
+const WORK_MODE: SessionMode = { kind: "work" }
 
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",
-  projectConfigRoot: "/tmp/tsukumo-test-origin",
   expressions: [{ name: "default", label: "通常" }],
   permissionMode: DEFAULT_PERMISSION_MODE,
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",

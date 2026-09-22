@@ -1,6 +1,6 @@
 # 現在の状態
 
-最終更新: 2026-09-22（`/plan-tasks` で `develop/direction.md` の指示2件を T-303〜T-306 の4件に起こした。コメントの日付の掃除を層ごとに3件（T-303 が規約と shared / T-304 が server / T-305 が browser）、`undefined` を減らす件は方針を決める1件（T-306、`loopable: "N"`）へ。対応表は `docs/history/direction.md` の 2026-09-22「コメントの日付と undefined」。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示1件を T-302 に起こした（表情 `bored`）。出し方は「`speak` で自分で選ぶだけ」、ホームのパックへの反映も含める、の2点をその場で確認して本文に焼き込んだ。対応表は `docs/history/direction.md` の 2026-09-22。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示2件と、承認を得たドラフト2件を T-296〜T-299 の4件に起こした。対応表は `docs/history/direction.md` の 2026-09-21「タスク一覧の色・レポートの地・やり取りのタブ」。以下は前回まで）（**T-116 / T-120 / T-158 を着手しない判断で閉じた**（環境変数の撤去・過去のターンの立ち絵の動き・サブエージェントの吹き出しの3件。ユーザーが「課題感がまだない」「今のままで充分」と判断）。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示3件と、承認を得たドラフト2件を T-267〜T-275 の9件に起こし、**T-266 を `done` / `passes: false` で閉じた**（T-247 で実装済みだった）。対応表は `docs/history/direction.md` の 2026-09-21「覚えたことの削除・話しかけボタン・正典の全面整理」。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示4件と、承認を得たドラフト3件を T-256〜T-266 の11件に起こした。対応表は `docs/history/direction.md` の 2026-09-21「ミニ立ち絵の濃さ・本文のちらつき・レポートの差し色・雑談の記憶」。同日 done 5件を `docs/history/` へアーカイブした。以下は前回まで）（T-239 の圧縮方針がユーザーから届き、本文の `## 決まっていること` へ焼き込んで `loopable` を `"Y"` にした（要約は `~/.tsukumo/` に置いてよい）。同日 `/plan-tasks` で `develop/direction.md` の指示4件を T-242〜T-247 に起こした。ミニ立ち絵の演出を T-242、レポートの記法（図・表の見出し）を T-243、中間レポートの囲いの出方を T-244、吹き出しの押し上げを T-245、persona.md の自動更新を T-246（決める）／T-247（実装）へ。対応表は `docs/history/direction.md` の 2026-09-21。2026-09-20 は `/plan-tasks` で `develop/direction.md` の指示6件を T-229〜T-233 に起こした。エントリポイントの整理2件は同じ関心なので T-229 に1本化し、雑談モードのレビュー4件は T-230〜T-233 へ。対応表は `docs/history/direction.md` の 2026-09-20。同日 `/plan-tasks` で起動時のコマンド表示とハイライトの切れを T-208 / T-209 に起こし、承認を得たドラフト3件を T-210〜T-218 に落とした（`src/` の改名の段3・React の見直し6件・レポートの記法の短縮）。`.claude/settings.json` の hooks の案はユーザーが全件見送り。T-195 は決定を焼き込んで `loopable: "Y"` にし、T-196 の依存を T-210 に付け替えた。同日 `/plan-tasks` で `develop/direction.md` の指示（`src/` の構成の組み替え・`scratchpad` と `vendor` の整理・hooks の提案・レポートのチラつき）をT-194〜T-204 に起こし、ドラフト3件は承認を得て T-203 / T-204 と T-188 の本文更新に落とした。指示とタスクの対応表は `docs/history/direction.md` の 2026-09-20。2026-09-18 は `docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
+最終更新: 2026-09-23（ユーザーの直接指示で、tsukumo 側の worktree 運用（T-349〜T-353）を丸ごと撤去した。作業ツリーを分けるのは orca の仕事になったため。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示2件を T-303〜T-306 の4件に起こした。コメントの日付の掃除を層ごとに3件（T-303 が規約と shared / T-304 が server / T-305 が browser）、`undefined` を減らす件は方針を決める1件（T-306、`loopable: "N"`）へ。対応表は `docs/history/direction.md` の 2026-09-22「コメントの日付と undefined」。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示1件を T-302 に起こした（表情 `bored`）。出し方は「`speak` で自分で選ぶだけ」、ホームのパックへの反映も含める、の2点をその場で確認して本文に焼き込んだ。対応表は `docs/history/direction.md` の 2026-09-22。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示2件と、承認を得たドラフト2件を T-296〜T-299 の4件に起こした。対応表は `docs/history/direction.md` の 2026-09-21「タスク一覧の色・レポートの地・やり取りのタブ」。以下は前回まで）（**T-116 / T-120 / T-158 を着手しない判断で閉じた**（環境変数の撤去・過去のターンの立ち絵の動き・サブエージェントの吹き出しの3件。ユーザーが「課題感がまだない」「今のままで充分」と判断）。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示3件と、承認を得たドラフト2件を T-267〜T-275 の9件に起こし、**T-266 を `done` / `passes: false` で閉じた**（T-247 で実装済みだった）。対応表は `docs/history/direction.md` の 2026-09-21「覚えたことの削除・話しかけボタン・正典の全面整理」。以下は前回まで）（`/plan-tasks` で `develop/direction.md` の指示4件と、承認を得たドラフト3件を T-256〜T-266 の11件に起こした。対応表は `docs/history/direction.md` の 2026-09-21「ミニ立ち絵の濃さ・本文のちらつき・レポートの差し色・雑談の記憶」。同日 done 5件を `docs/history/` へアーカイブした。以下は前回まで）（T-239 の圧縮方針がユーザーから届き、本文の `## 決まっていること` へ焼き込んで `loopable` を `"Y"` にした（要約は `~/.tsukumo/` に置いてよい）。同日 `/plan-tasks` で `develop/direction.md` の指示4件を T-242〜T-247 に起こした。ミニ立ち絵の演出を T-242、レポートの記法（図・表の見出し）を T-243、中間レポートの囲いの出方を T-244、吹き出しの押し上げを T-245、persona.md の自動更新を T-246（決める）／T-247（実装）へ。対応表は `docs/history/direction.md` の 2026-09-21。2026-09-20 は `/plan-tasks` で `develop/direction.md` の指示6件を T-229〜T-233 に起こした。エントリポイントの整理2件は同じ関心なので T-229 に1本化し、雑談モードのレビュー4件は T-230〜T-233 へ。対応表は `docs/history/direction.md` の 2026-09-20。同日 `/plan-tasks` で起動時のコマンド表示とハイライトの切れを T-208 / T-209 に起こし、承認を得たドラフト3件を T-210〜T-218 に落とした（`src/` の改名の段3・React の見直し6件・レポートの記法の短縮）。`.claude/settings.json` の hooks の案はユーザーが全件見送り。T-195 は決定を焼き込んで `loopable: "Y"` にし、T-196 の依存を T-210 に付け替えた。同日 `/plan-tasks` で `develop/direction.md` の指示（`src/` の構成の組み替え・`scratchpad` と `vendor` の整理・hooks の提案・レポートのチラつき）をT-194〜T-204 に起こし、ドラフト3件は承認を得て T-203 / T-204 と T-188 の本文更新に落とした。指示とタスクの対応表は `docs/history/direction.md` の 2026-09-20。2026-09-18 は `docs/coding-standards.md` を TypeScript / React の観点で整備し（`satisfies` / 複数の `| undefined` は合併型に / 「無い」を層をまたいで運ばない / `null` を自前の型に出さない / `useEffect` は4類型だけ）、同日 `/plan-tasks` で oxlint の react プラグインを T-189、レポートの変換層を T-190、CSS Modules 移行を T-191 に起こした。2026-09-17 にユーザー報告「サイドバーからモデルを切り替えられなくなってる」を直接調査して直した。
 原因は `src/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` を呼ぶだけで確認イベントを
 出しておらず、選んだ直後に次のバッチで `state.model` が古い値へ戻って見えていたこと（偽の駆動
 `fake-driver.ts` は最初から `session-info` の再送でこれをやっていたため、目視確認では気づけなかった）。
@@ -54,6 +54,20 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 2026-09-14 の指示は T-109〜T-112 に起こして `docs/history/direction.md` へ移した）。
 
 ## 完了したこと（このセッション）
+
+### 2026-09-23 tsukumo 側の worktree 運用を撤去した（ユーザーの直接指示）
+
+**作業ツリーを分けるのは orca の仕事**になったので、2026-09-22 に入れた T-349〜T-353 の実装を
+丸ごと外した。tsukumo は起こしたディレクトリでそのまま claude を動かす。消えたのは
+`src/server/adapter/worktree.ts` / `mark.ts`、`src/server/core/workspace.ts` / `task-claim.ts`、
+`src/shared/workspace.ts`、`src/browser/features/sidebar/workspace-notice.tsx` の6ファイルと、
+`claim` / `finish` の MCP ツール・`workspace` の事件・`TSUKUMO_WORKTREE`・帯のブランチの読み・
+部屋の名前の `title` のパス。**残したのは続きのセッションの探し方だけ**（`includeWorktrees: true`。
+orca が worktree を切るならディレクトリが変わるのは同じ）。未着手だった T-366（本体への追従）と
+T-367（`.gitignore` の末尾スラッシュ）は前提ごと消えたので `tasks.json` から外した。
+正典は `CLAUDE.md`「Git運用」「タスク運用」・`docs/architecture.md`「worktree を用意するのは
+orca で、tsukumo はやらない」・`docs/design.md` 13.9・`docs/glossary.md`・`docs/workflow.md`。
+`bun run check` 1223 pass / 0 fail。
 
 ### 2026-09-23 ターンの進み具合を1つの合併型にした（T-310）
 
@@ -120,19 +134,14 @@ symlink は `src/server/adapter/worktree.ts`）。起こし直しで続きが見
 
 ## 未解決
 
-- **`develop/progress.md` の完了ブロックを分けるかは、追従（T-366）を入れてから決める**
-  （2026-09-23 にユーザーが判断）。**衝突は1行に集中している**——直近80コミットで触られた回数は
+- **`develop/progress.md` の完了ブロックを分けるかは未決**（2026-09-23 にユーザーが判断。
+  worktree 側で `main` へ追従してから本体へ入れる案は、worktree 運用ごと撤去したので消えた）。**衝突は1行に集中している**——直近80コミットで触られた回数は
   `progress.md` 53回・`develop/tasks.json` 47回で3位以降は20回まで落ち、`progress.md` の直近10件の
   うち**7件が 57〜58 行目から始まる**（「## 完了したこと（このセッション）」の直下に差し込む動きを
   全セッションがやっている）。分けるには共通の正典（`task-workflow` の `WORKFLOW.md`）が定めた
   「3セクション」「1タスク = 1小節」と、小節を数えるアーカイブ判定のスクリプトに触ることになる。
   **`.gitattributes` の `merge=union` は採らない**（union は削除を打ち消すので、「未解決」から
   42行消したような変更が相手の行と一緒に復活する）
-
-- **worktree 運用（T-349〜T-353）への移行は、本体の作業ツリーが片付くまで始められない**
-  （2026-09-22。この時点で他のセッターの未コミット変更が19件あり、`bun run check` は
-  15 fail ＋ typecheck エラーになる。同じコミットから切った worktree では 1158 pass / 0 fail
-  で完走した）。**止めどきはユーザーが決める**ので、T-350 に着手する前に本体がきれいかを見る
 
 - **塊から次の塊へ飛ぶ1フレームで、ミニ立ち絵が 238〜454px 置き去りになる**（2026-09-21 に T-282 の計測で判明）。Z字の画ではなく `report-reveal.ts` が次の塊へ移るときの不連続で、`brushStep` の外側にある。**いまは横画の 0.05s が約100msのグライドになって「次の塊へ飛んでいく」ように見えている**ので壊さず残した。直すなら「その1フレームだけ姿を消す」か「グライドを意図として残す」かを決める話で、時定数をいじる話ではない
 - **`bun install` のあとは `bun run build` が1回要る**（2026-09-21 の T-279 から）。忘れると `bun run start` が「ブラウザ側の成果物を読めない」で終了コード1になる。`dist/` を `.gitignore` に置いたことの代償で、`CLAUDE.md` のセットアップにも書いた。`scripts/capture-catalog.ts` のように tsukumo を spawn する道具も同じ

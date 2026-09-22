@@ -24,10 +24,8 @@ export type PresentationalScreenNavProps = {
   readonly current: Screen
   /** この tsukumo の部屋の名前（13.9）。 */
   readonly room: string
-  /** 部屋の名前の `title` に出す2行（作業先とコードの出所）。 */
-  readonly roomPlaces: string
   readonly gates: readonly Gate[]
-  /** いまの動き方の読み（モデル・許可モード・ブランチ）。 */
+  /** いまの動き方の読み（モデル・許可モード）。 */
   readonly readings: readonly ScreenNavReading[]
   readonly pendingActive: boolean
   readonly menuOpen: boolean
@@ -44,7 +42,6 @@ export type PresentationalScreenNavProps = {
 export function PresentationalScreenNav({
   current,
   room,
-  roomPlaces,
   gates,
   readings,
   pendingActive,
@@ -55,7 +52,7 @@ export function PresentationalScreenNav({
 }: PresentationalScreenNavProps): ReactElement {
   return (
     <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
-      <ScreenNavRoom name={room} places={roomPlaces} />
+      <ScreenNavRoom name={room} />
       <div className={styles["screen-nav-gates"]}>
         {gates.map((gate) => (
           <ScreenNavGate key={gate.screen} gate={gate} onSelect={onSelect} />
@@ -65,7 +62,6 @@ export function PresentationalScreenNav({
       {pendingActive ? <ScreenNavPending /> : null}
       <ScreenNavMenu
         room={room}
-        roomPlaces={roomPlaces}
         gates={gates}
         readings={readings}
         open={menuOpen}

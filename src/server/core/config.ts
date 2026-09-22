@@ -25,12 +25,6 @@ export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 /** `1` で `src/browser/` を見張り、変更のたびに組み立て直す（開発中だけ。docs/design.md 11章）。 */
 export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
 /**
- * `0` のときだけ worktree を切らず、起動したディレクトリでそのまま claude を起こす
- * （`docs/architecture.md`「worktree でセッションを分ける」の例外2つのうちの1つ。
- * もう1つは git リポジトリでないディレクトリで起こしたとき）。
- */
-export const WORKTREE_ENV_NAME = "TSUKUMO_WORKTREE"
-/**
  * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま）。**名前はここに
  * 置くが、読むのは {@link readConfig} ではなく src/server/adapter/tsukumo-home.ts**（理由は
  * そのファイルの冒頭。配線層から配る道が無い）。
@@ -84,11 +78,6 @@ export type Config = {
    * ページが読み込み直されうる（docs/design.md 11章）。
    */
   readonly watchUi: boolean
-  /**
-   * セッション用の worktree を切るか。**既定は切る**（1つ目のセッションも切り、元の作業ツリーで
-   * 作業するセッションを作らない。`docs/architecture.md`「worktree でセッションを分ける」）。
-   */
-  readonly worktree: boolean
 }
 
 /**
@@ -104,7 +93,6 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     watchUi: env[WATCH_UI_ENV_NAME]?.trim() === "1",
-    worktree: env[WORKTREE_ENV_NAME]?.trim() !== "0",
   }
 }
 

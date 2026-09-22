@@ -53,7 +53,6 @@ import {
   type SessionDriver,
   type SessionDriverOptions,
   type SessionMode,
-  type TaskWorkflow,
 } from "../core/session-driver.ts"
 import {
   listMarkedSessions,
@@ -141,30 +140,6 @@ const RECALL_TOOL_DESCRIPTION =
   "日ごとの見出しの索引を言葉で引き、当たった日の雑談をそのままの文面で思い出す。" +
   "当たらなければ何も返らない。引けるのは1ターンに1回だけ。呼ぶ条件は雑談モードの規約に従う。"
 
-/** タスクの着手の印を取るツールの名前（`docs/glossary.md`「claim ツール」）。 */
-const CLAIM_TOOL_NAME = "claim"
-
-/**
- * モデルに見せる `claim` ツールの説明。**いつ呼ぶかの条は `docs/workflow.md` と
- * `CLAUDE.md`「## タスク運用」が持つ**ので、ここには何が起きるかと、取れなかったときに
- * どうするかだけを書く（二重に書かない）。
- */
-const CLAIM_TOOL_DESCRIPTION =
-  "develop/tasks.json のタスク1件に着手の印を取る。同じタスクを2つのセッションが取ることはできない。" +
-  "取れなかったときは、先に取っているセッションが返るので着手しない。着手の前に1回だけ呼ぶ。"
-
-/** 取った印を返し、成果を本体へ入れるツールの名前（`docs/glossary.md`「finish ツール」）。 */
-const FINISH_TOOL_NAME = "finish"
-
-/**
- * モデルに見せる `finish` ツールの説明。**いつ呼ぶかの条は `docs/workflow.md` と
- * `CLAUDE.md`「## タスク運用」が持つ**ので、ここには何が起きるかと、止まったときに
- * どうするかだけを書く（二重に書かない）。
- */
-const FINISH_TOOL_DESCRIPTION =
-  "取った着手の印を返し、このセッションのコミットを切り出し元のブランチへ入れる。" +
-  "タスクを done にしてコミットしたあとに呼ぶ。止まったときは理由と次の手が返るので、次のタスクへ進まない。"
-
 /**
  * セッションを起こす。**この関数は待たない**（`query()` の反復はバックグラウンドで回り続け、
  * 結果は `onEvent` に流れる）。
@@ -239,8 +214,6 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
 export type QuerySeedOptions = {
   readonly cwd: string
-  /** 切った worktree で起こしても、プロジェクト設定は元の作業ツリーから読ませる。 */
-  readonly projectConfigRoot: string
   readonly includePartialMessages: true
   readonly systemPrompt: {
     readonly type: "preset"
@@ -268,7 +241,6 @@ export type QuerySeedOptions = {
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
   return {
     cwd: options.cwd,
-    projectConfigRoot: options.projectConfigRoot,
     includePartialMessages: true,
     systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },
     permissionMode: options.permissionMode,
@@ -319,10 +291,10 @@ export function chatSummaryHooks(
  * docs/requirements.md 4.8）。**同じ作業ディレクトリで、渡された印を持つもの**のうち最新の1つを
  * 返し、無ければ undefined（新規に起こす）。
  *
- * **`includeWorktrees` を入れてある**のは、**セッションごとに worktree を切るようになった**
- * ため（`docs/architecture.md`「worktree でセッションを分ける」）。切った先は起こすたびに違う
- * ディレクトリなので、作業ディレクトリだけで絞ると**前の続きが一度も見つからなくなる**。
- * 同じリポジトリの worktree を全部見たうえで、印（`tsukumo:<パック>@<ポート>`）で絞る。
+ * **`includeWorktrees` を入れてある**のは、**セッションごとに別の worktree で起こされうる**ため
+ * （作業ツリーを用意するのは orca の側）。起こすたびに違うディレクトリなら、作業ディレクトリ
+ * だけで絞ると**前の続きが一度も見つからなくなる**。同じリポジトリの worktree を全部見たうえで、
+ * 印（`tsukumo:<パック>@<ポート>`）で絞る。
  *
  * **一覧が読めなくても落とさない**（前提不足ではなく動作中の一時的な失敗として扱い、新規に
  * 起こす。docs/coding-standards.md「エラーハンドリング」）。
@@ -367,7 +339,7 @@ export async function listSwitchableSessions(
  * 他の `system` メッセージが混ざっても、`toSessionEvents` 側が知らない種別を空へ倒すので落ちない。
  *
  * **`dir` は渡さない**（SDK 側はすべてのプロジェクトから探す）。続きから始めるセッションは
- * **前に切った worktree で起きたもの**なので、いまの作業ディレクトリで絞ると見つからない
+ * **別の worktree で起きたもの**でありうるので、いまの作業ディレクトリで絞ると見つからない
  * （`findSessionToResume` が `includeWorktrees` を入れてあるのと同じ理由）。指しているのは
  * 一意なセッションIDなので、絞らなくても別のものには当たらない。
  *
@@ -518,14 +490,12 @@ function askForAnswer(
 /**
  * プロセス内の MCP サーバ。**戻り値は既定が "ok" だけ**で、tsukumo の内部の状態や画面の事情が
  * モデルへ戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
- * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` と `claim` / `finish` の3つ**で、
- * 返すのは**そのセッションが自分で読める外の事実**（自分の過去の雑談・`.git` の下の印・git の
- * 返事）だけ。
+ * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` の1つ**で、返すのは**そのセッションが
+ * 自分で読める外の事実**（自分の過去の雑談）だけ。
  *
- * 常に載るのは `speak` の1つで、残りは**モードで分かれる**。仕事のときは `claim` / `finish`
- * （タスク運用の口。`docs/workflow.md`）、雑談のときは `remember` / `forget` / `keep` /
- * `index` / `recall`。雑談の5つを仕事のときに出すと、作業の文脈が人格に入り込む経路（7.1）や、
- * 仕事の会話をアーカイブに残す経路になる。
+ * 常に載るのは `speak` の1つで、**`remember` / `forget` / `keep` / `index` / `recall` は
+ * 雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
+ * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -554,7 +524,7 @@ function tsukumoServer(expressions: readonly ExpressionChoice[], mode: SessionMo
             indexTool(mode.chatRecall),
             recallTool(mode.chatRecall),
           ]
-        : [claimTool(mode.taskWorkflow), finishTool(mode.taskWorkflow)]),
+        : []),
     ],
   })
 }
@@ -638,40 +608,6 @@ function recallTool(chatRecall: ChatRecall) {
     { keyword: z.string().describe("引く言葉。語を空白で区切ると、どれかに当たった日が返る") },
     async ({ keyword }) => ({
       content: [{ type: "text" as const, text: chatRecallText(chatRecall.recall(keyword)) }],
-    }),
-  )
-}
-
-/**
- * タスクの着手の印を取るツール。**戻り値が "ok" でないもう1組**で、返すのは**印のファイルと
- * その pid**——呼んだ側が `.git` の下を自分で読めば分かることだけで、tsukumo の状態も画面の
- * 事情も載せない（`docs/design.md` 7.1）。取れた／取れないを決めるのも文面を組むのも
- * `src/server/core/`。
- */
-function claimTool(taskWorkflow: TaskWorkflow) {
-  return tool(
-    CLAIM_TOOL_NAME,
-    CLAIM_TOOL_DESCRIPTION,
-    { taskId: z.string().describe("develop/tasks.json のタスク1件の `id`") },
-    async ({ taskId }) => ({
-      content: [{ type: "text" as const, text: await taskWorkflow.claim(taskId) }],
-    }),
-  )
-}
-
-/**
- * 取った印を返し、成果を本体へ入れるツール。返すのは**git の返事とパス**だけ（`claim` と同じ
- * 理由で "ok" ではない）。**止まったのと同じ文面が画面にも出る**ので、人と claude が別々の
- * ことを知っている状態にならない（`docs/architecture.md`「worktree でセッションを分ける」の
- * 決定3）。
- */
-function finishTool(taskWorkflow: TaskWorkflow) {
-  return tool(
-    FINISH_TOOL_NAME,
-    FINISH_TOOL_DESCRIPTION,
-    { taskId: z.string().describe("終えたタスクのid（`claim` に渡したものと同じ）") },
-    async ({ taskId }) => ({
-      content: [{ type: "text" as const, text: await taskWorkflow.finish(taskId) }],
     }),
   )
 }

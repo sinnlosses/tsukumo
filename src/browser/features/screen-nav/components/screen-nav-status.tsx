@@ -1,15 +1,12 @@
-// 帯に出す「いまの動き方」の読み（モデル・許可モード・ブランチ。docs/design.md 13.9）。
+// 帯に出す「いまの動き方」の読み（モデル・許可モード。docs/design.md 13.9）。
 // **押せない字**で、値を名乗るだけ（`<select>` とボタンはサイドバーに残す。13.6）。
 //
-// **1つの部品に畳んである**のは、3つが1つのまとまりとして動くため——狭い画面では丸ごと
-// 「≡」の中へ入り、詰まったときに縮むのもこの中（ブランチ）だけ。部屋の名前・答え待ちと
-// 同じく、広い画面の帯と「≡」の落ちてくる面の両方に同じ部品が出る。
+// **1つの部品に畳んである**のは、2つが1つのまとまりとして動くため——狭い画面では丸ごと
+// 「≡」の中へ入る。部屋の名前・答え待ちと同じく、広い画面の帯と「≡」の落ちてくる面の
+// 両方に同じ部品が出る。
 //
-// **区切りの記号は置かない**。等幅（機械が付けた名前＝モデル・ブランチ）と本文書体
+// **区切りの記号は置かない**。等幅（機械が付けた名前＝モデル）と本文書体
 // （人の言葉＝許可モード）の交替がそのまま区切りになる（13.1 原則3）。
-//
-// `title` に全文を置くのは**ブランチだけ**。末尾を省くのがそれだけで、他の2つに付けても
-// 見えている字と同じものが浮くだけになる。
 
 import { type ReactElement } from "react"
 
@@ -24,18 +21,13 @@ export type ScreenNavStatusProps = {
 const READING_CLASS = {
   model: "screen-nav-model",
   "permission-mode": "screen-nav-permission-mode",
-  branch: "screen-nav-branch",
 } satisfies Record<ScreenNavReading["kind"], string>
 
 export function ScreenNavStatus(props: ScreenNavStatusProps): ReactElement {
   return (
     <span className={styles["screen-nav-status"]}>
       {props.readings.map((reading) => (
-        <span
-          key={reading.kind}
-          className={readingClassName(reading)}
-          title={reading.kind === "branch" ? reading.text : undefined}
-        >
+        <span key={reading.kind} className={readingClassName(reading)}>
           {reading.text}
         </span>
       ))}

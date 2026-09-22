@@ -15,10 +15,8 @@ import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
 import { summarizeRecentTokenUsage, type TokenUsageLog } from "./server/core/token-usage.ts"
-import { workspaceCwd } from "./server/core/workspace.ts"
 import { type RunningSession } from "./session-start.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
-import { type Workspace } from "./shared/workspace.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `src/server/core/port-resolution.ts`）。 */
@@ -40,11 +38,6 @@ export type ViewDeliveryOptions = {
    * （`TSUKUMO_WATCH_UI`）。
    */
   readonly watchSource: boolean
-  /**
-   * claude の作業先（`@` 補完に出すファイルの一覧の出どころ）。**`process.cwd()` ではない** —
-   * worktree を切ったあとは、利用者が `@` で指したいのも claude が開くのも切った先。
-   */
-  readonly workspace: Workspace
 }
 
 /** 配り始めた結果。失敗は起動時の前提不足なので、理由だけを返して呼び出し側が即時終了する。 */
@@ -85,7 +78,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     startViewServer(port, {
       assets: { uiScript: () => assets.uiScript, styleSheet: () => assets.styleSheet },
       serveCharacterAsset: (fileName) => options.character.serveAsset(fileName),
-      listRepositoryFiles: () => listRepositoryFiles(workspaceCwd(options.workspace)),
+      listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
       // **「今日」を決めるのは配線層**（core は今日が何日かを知らない。OS のタイムゾーンに
       // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
       readTokenUsageSummary: (days) =>

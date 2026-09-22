@@ -4,7 +4,7 @@
 // `session-start.ts`）が持つ。
 //
 // **即時終了する前提不足はこの1つの関数に集めてある**（ポート・ブラウザ側の成果物・
-// 疑似セッション・作業用の worktree の4つ。docs/coding-standards.md「常駐プロセスは描画1回の失敗で落ちない」— 動作中の一時的な失敗は
+// 疑似セッションの3つ。docs/coding-standards.md「常駐プロセスは描画1回の失敗で落ちない」— 動作中の一時的な失敗は
 // その回を諦めて次へ進む）。
 //
 // ここは配線層（`src/` 直下。`shared` / `core` / `adapter` / `browser` のすべてを import して
@@ -18,7 +18,6 @@ import { readUiBundle } from "./server/adapter/bundle.ts"
 import { readFakeSession } from "./server/adapter/fake-driver.ts"
 import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createTokenUsageLog } from "./server/adapter/token-usage-log.ts"
-import { prepareWorkspace } from "./server/adapter/worktree.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { type Host } from "./server/core/host.ts"
 import { resolveViewPort } from "./server/core/port-resolution.ts"
@@ -64,22 +63,6 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // **claude をどこで動かすかを決めるのはここ**（`docs/architecture.md`「worktree でセッションを
-  // 分ける」）。git リポジトリなら必ず新しく切り、**切れなかったら起動時の前提不足として止める**
-  // ——黙って元の作業ツリーで動かすと、分離されているつもりで元を書くことになる。
-  const workspace = await prepareWorkspace({ cwd: process.cwd(), enabled: config.worktree })
-  if (!workspace.ok) {
-    process.stderr.write(`tsukumo: 作業用の worktree を用意できない\n${workspace.reason}\n`)
-    return 1
-  }
-
-  // 畳めなかった worktree と、切った先を整えきれなかったこと。**知らせるだけで起動は続ける**
-  // （成果を黙って消さないことと、取り残しに気づけることの折り合い）。**画面にも出す**
-  // （下の `workspaceNotices`）が、タブが開く前に読めるよう端末にも1行ずつ書く。
-  for (const notice of workspace.notices) {
-    process.stderr.write(`tsukumo: ${notice}\n`)
-  }
-
   const character = createCurrentCharacter(config)
 
   // トークン消費の記録の口は**1つをここで作って両側へ渡す**（書くのはセッション、読むのは
@@ -90,7 +73,6 @@ export async function run(config: Config): Promise<number> {
     portResolution,
     bundle: built.bundle,
     character,
-    workspace: workspace.workspace,
     tokenUsageLog,
     watchSource: config.watchUi,
   })
@@ -108,11 +90,6 @@ export async function run(config: Config): Promise<number> {
     fakeSession,
     tokenUsageLog,
     viewPort: view.port,
-    workspace: workspace.workspace,
-    workspaceNotices: workspace.notices,
-    // 着手の印の置き場（`.git` の下）。**git リポジトリでないときだけ undefined** で、
-    // そのときは印を使わない（`src/session-start.ts` の `createTaskWorkflow`）。
-    gitDir: workspace.gitDir,
   })
   view.connect(session)
 

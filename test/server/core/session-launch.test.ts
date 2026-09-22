@@ -7,23 +7,11 @@ import {
   type SessionLaunchPorts,
 } from "../../../src/server/core/session-launch.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { type Workspace } from "../../../src/shared/workspace.ts"
 import { characterInfo, portraits } from "../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。
 type Pack = { readonly name: string }
-
-// 起こすたびに流し直す、いま動いている場所（切った worktree と、tsukumo のコードの出所）。
-const WORKSPACE: Workspace = {
-  source: "/repo",
-  workdir: {
-    kind: "worktree",
-    path: "/repo/.git/tsukumo/worktree/20260922-120000",
-    branch: "tsukumo/20260922-120000",
-    origin: "/repo",
-  },
-}
 
 const INITIAL: Pack = { name: "tsukumo-spirit" }
 const SWITCHED: Pack = { name: "kagami" }
@@ -87,8 +75,6 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
   const stub = createStubDriver()
 
   const ports: SessionLaunchPorts<Pack> = {
-    workspace: WORKSPACE,
-    workspaceNotices: [],
     choosePack: (selection) => {
       calls.push(`choosePack:${labelOf(selection)}`)
       return selection.by === "name" ? SWITCHED : INITIAL
@@ -170,7 +156,6 @@ describe("createSessionLaunch", () => {
     ])
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
-      "workspace",
       "chat-mode-changed",
       "sessions-changed",
       "utterance",
@@ -192,7 +177,6 @@ describe("createSessionLaunch", () => {
     expect(harness.calls.some((call) => call.startsWith("restoreEvents:"))).toBe(false)
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
-      "workspace",
       "chat-mode-changed",
       "sessions-changed",
     ])
@@ -217,7 +201,6 @@ describe("createSessionLaunch", () => {
 
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
-      "workspace",
       "chat-mode-changed",
       "sessions-changed",
     ])
@@ -382,11 +365,9 @@ describe("createSessionLaunch", () => {
     })
     await settle()
 
-    // 起動そのものが流す `character-changed` / `workspace` / `chat-mode-changed` は
-    // onEvent 側だけに乗る。
+    // 起動そのものが流す `character-changed` / `chat-mode-changed` は onEvent 側だけに乗る。
     expect(harness.driverEvents.map((event) => event.kind)).toEqual([
       "character-changed",
-      "workspace",
       "chat-mode-changed",
       "sessions-changed",
     ])
@@ -395,7 +376,6 @@ describe("createSessionLaunch", () => {
     // 両方を混ぜた時系列は今までどおり（画面の見え方・順序は変わらない）。
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
-      "workspace",
       "chat-mode-changed",
       "sessions-changed",
       "utterance",

@@ -20,8 +20,6 @@ import { ScreenNavStatus } from "./screen-nav-status.tsx"
 export type ScreenNavMenuProps = {
   /** 部屋の名前。**落ちてくる面の先頭**に出す（狭い画面では帯の左端が無いため。13.9）。 */
   readonly room: string
-  /** 部屋の名前の `title` に出す2行（作業先とコードの出所）。 */
-  readonly roomPlaces: string
   readonly gates: readonly Gate[]
   /** いまの動き方の読み。**狭い画面では帯に置く幅が無い**ので、口と同じくここへ入る（13.9）。 */
   readonly readings: readonly ScreenNavReading[]
@@ -55,7 +53,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
       </button>
       {props.open ? (
         <div className={styles["screen-nav-panel"]}>
-          <ScreenNavRoom name={props.room} places={props.roomPlaces} />
+          <ScreenNavRoom name={props.room} />
           {props.gates.map((gate) => (
             <ScreenNavGate key={gate.screen} gate={gate} onSelect={props.onSelect} />
           ))}

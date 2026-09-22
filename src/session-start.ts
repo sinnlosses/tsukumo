@@ -6,13 +6,13 @@
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
 
 import { randomUUID } from "node:crypto"
+import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
 import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
 import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
-import { claimTask, releaseTask } from "./server/adapter/mark.ts"
 import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
 import {
   findSessionToResume,
@@ -21,7 +21,6 @@ import {
   startSession as startSdkSession,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
-import { mergeWorkspace } from "./server/adapter/worktree.ts"
 import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag, sessionTagFamily } from "./server/core/config.ts"
 import {
@@ -31,7 +30,6 @@ import {
   type SessionDriver,
   type SessionMode,
   type SessionStart,
-  type TaskWorkflow,
 } from "./server/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import {
@@ -40,14 +38,7 @@ import {
   EVENT_BATCH_INTERVAL_MS,
 } from "./server/core/session-manager.ts"
 import { sessionRules } from "./server/core/session-rule.ts"
-import { taskClaimNotice, UNMARKED_TASK_NOTICE } from "./server/core/task-claim.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
-import {
-  workspaceCwd,
-  type WorkspaceMerge,
-  workspaceMergeNotice,
-  workspaceProjectConfigRoot,
-} from "./server/core/workspace.ts"
 import {
   CHAT_COMPACT_THRESHOLD_BYTES,
   CHAT_KEPT_READBACK_BYTES,
@@ -59,7 +50,6 @@ import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
-import { type Workspace } from "./shared/workspace.ts"
 
 /**
  * 起こしたセッション。**`sessionId` は外へ出さない** — 繋ぐ側（`src/view-delivery.ts`）が
@@ -92,28 +82,13 @@ export type SessionStartOptions = {
    * ポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
    */
   readonly viewPort: number
-  /**
-   * claude を起こす場所（`docs/architecture.md`「worktree でセッションを分ける」）。**作業先を
-   * 指すものはすべてここから取る**——`process.cwd()` は tsukumo を打ったディレクトリで、
-   * worktree を切ったあとは claude の作業先ではない。
-   */
-  readonly workspace: Workspace
-  /**
-   * 作業場所についての知らせ（畳めなかった worktree・切った先の組み立ての失敗）。**起動時に
-   * 1回決まる**ので、`workspace` と同じ経路で画面へ流す。
-   */
-  readonly workspaceNotices: readonly string[]
-  /**
-   * `.git` の絶対パス（**git リポジトリでないときだけ undefined**）。着手の印の置き場で、
-   * **ここで畳んでから駆動へ渡す**（`createTaskWorkflow`）。
-   */
-  readonly gitDir: string | undefined
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export function startSession(options: SessionStartOptions): RunningSession {
-  const { config, character, fakeSession, tokenUsageLog, viewPort, workspace } = options
-  const cwd = workspaceCwd(workspace)
+  const { config, character, fakeSession, tokenUsageLog, viewPort } = options
+  // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
+  const cwd = process.cwd()
   const sessionId = randomUUID()
   // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
@@ -136,8 +111,6 @@ export function startSession(options: SessionStartOptions): RunningSession {
   manager.create({
     sessionId,
     startDriver: createSessionLaunch<CharacterPack>({
-      workspace,
-      workspaceNotices: options.workspaceNotices,
       choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
       characterEvent: () => character.event(),
@@ -155,13 +128,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
           fakeSession,
           scene: config.fakeScene,
           viewPort,
-          workspace,
-          taskWorkflow: createTaskWorkflow({
-            workspace,
-            gitDir: options.gitDir,
-            notices: options.workspaceNotices,
-            onEvent,
-          }),
+          cwd,
           onEvent,
         }),
       restoreEvents: (resumed, pack) =>
@@ -189,18 +156,18 @@ function startDriver(options: {
   readonly fakeSession: FakeSession | undefined
   readonly scene: string | undefined
   readonly viewPort: number
-  readonly workspace: Workspace
-  readonly taskWorkflow: TaskWorkflow
+  /** claude の作業先（tsukumo を起こしたディレクトリ）。 */
+  readonly cwd: string
   readonly onEvent: (event: SessionEvent) => void
 }): SessionDriver {
-  const { seed, chatArchive, fakeSession, workspace, onEvent } = options
+  const { seed, chatArchive, fakeSession, cwd, onEvent } = options
   if (fakeSession !== undefined) {
     return startFakeSession({ session: fakeSession, scene: options.scene, onEvent })
   }
 
   // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
-  const mode = sessionMode(seed, chatArchive, workspace, options.taskWorkflow)
+  const mode = sessionMode(seed, chatArchive, cwd)
   // **載せるかどうかの判断は core（takeChatMemoryPromptParts）が閉じている**——ここは決まった
   // 文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**ので、
   // 載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
@@ -217,10 +184,7 @@ function startDriver(options: {
   const rules = [...sessionRules(seed.chat), ...chatMemoryParts]
 
   return startSdkSession({
-    // **`cwd` は worktree、`projectConfigRoot` は切り出し元**（同節の決定）。切ったブランチが
-    // 持っている `.claude/` ではなく、元の作業ツリーのものを効かせる。
-    cwd: workspaceCwd(workspace),
-    projectConfigRoot: workspaceProjectConfigRoot(workspace),
+    cwd,
     expressions: expressionChoices(seed.pack.definition),
     permissionMode: DEFAULT_PERMISSION_MODE,
     systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
@@ -232,70 +196,9 @@ function startDriver(options: {
 }
 
 /**
- * タスク運用の口を作る（`TaskWorkflow`。`docs/workflow.md`・`CLAUDE.md`「## タスク運用」）。
- * **取るのは `/next-task` の手順4、返して本体へ入れるのは手順7のコミットのあと**で、どちらも
- * claude が `claim` / `finish` のツールとして呼ぶ。
- *
- * **印の pid は tsukumo のプロセス自身**（`claimTask` が `process.pid` を書く）。だから
- * 「取っている」はこのプロセスが生きている間だけ続き、落ちたセッションの印は次に取りに来た
- * セッションが掃除する。**短命なコマンドから取らない**のはこのためで、取った瞬間に pid が
- * 死ぬと印が効かない。
- *
- * **`.git` が無い（git リポジトリでない）ときは印を使わず、そのまま着手させる**——ここが
- * 「無いかもしれない」を畳む入口で、これより内側は `gitDir` を必ず持つ。
- *
- * マージが止まった（畳めなかった）ときの知らせは、**戻り値としてモデルへ返すのと同じ文面を
- * 画面へも流す**（`workspace` の事件 → `SessionState.workspaceNotices`）。会話の記録には
- * 混ぜない（`docs/architecture.md`「worktree でセッションを分ける」の決定3）。
- */
-function createTaskWorkflow(options: {
-  readonly workspace: Workspace
-  readonly gitDir: string | undefined
-  readonly notices: readonly string[]
-  readonly onEvent: (event: SessionEvent) => void
-}): TaskWorkflow {
-  const { workspace, gitDir } = options
-  return {
-    claim: async (taskId) =>
-      gitDir === undefined
-        ? UNMARKED_TASK_NOTICE
-        : taskClaimNotice(await claimTask({ gitDir, taskId, workdir: workspace.workdir })),
-    finish: async (taskId) => {
-      if (gitDir !== undefined) {
-        await releaseTask({ gitDir, taskId })
-      }
-      const merge = await mergeWorkspace(workspace)
-      const notices = mergeNotices(merge)
-      if (notices.length > 0) {
-        // **起動時の知らせと並べて出し直す**（`workspace` の事件は一覧を丸ごと入れ替える）。
-        options.onEvent({
-          kind: "workspace",
-          workspace,
-          notices: [...options.notices, ...notices],
-        })
-      }
-      return workspaceMergeNotice(merge)
-    },
-  }
-}
-
-/** 入れた結果のうち、**画面にも出す行**（入って畳めたときは何も出さない。正常な姿）。 */
-function mergeNotices(merge: WorkspaceMerge): readonly string[] {
-  switch (merge.kind) {
-    case "merged":
-      return merge.notices
-    case "skipped":
-      return []
-    case "stopped":
-      return [merge.notice]
-  }
-}
-
-/**
  * そのモードのときだけ渡る口を1回の分岐でまとめる（`docs/design.md` 7章・7.1）。**雑談の4つは
  * 仕事のときに1つも渡らない**ので、`remember` / `forget` / `keep` / `index` / `recall` のツールも
- * `PostCompact` フックも載らず、作業の文脈が人格にもアーカイブにも入らない。**仕事のときだけ
- * 渡るのがタスク運用の口**で、`claim` / `finish` のツールになる。
+ * `PostCompact` フックも載らず、作業の文脈が人格にもアーカイブにも入らない。
  *
  * 渡すのは書き口と同じ1つのアーカイブだが、**駆動から見えるのは旗を立てる動きと索引の2つだけ**
  * （`ChatKeep` / `ChatRecall`）。**パックの名前と読む量をここで縛ってから渡す**。
@@ -303,16 +206,15 @@ function mergeNotices(merge: WorkspaceMerge): readonly string[] {
 function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   chatArchive: ChatArchive,
-  workspace: Workspace,
-  taskWorkflow: TaskWorkflow,
+  cwd: string,
 ): SessionMode {
   if (!seed.chat) {
-    return { kind: "work", taskWorkflow }
+    return { kind: "work" }
   }
 
   return {
     kind: "chat",
-    personaMemory: createPersonaMemory(seed.pack, workspaceCwd(workspace)),
+    personaMemory: createPersonaMemory(seed.pack, cwd),
     chatSummary: createChatSummary(seed.pack.name),
     chatKeep: chatArchive,
     chatRecall: chatRecallFor(chatArchive, seed.pack.name),

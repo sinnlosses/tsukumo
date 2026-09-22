@@ -6,7 +6,6 @@ import { ScreenNav } from "../../../../src/browser/features/screen-nav/screen-na
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { type Workspace } from "../../../../src/shared/workspace.ts"
 import { setPageUrl } from "../../../dom-environment.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
@@ -16,23 +15,6 @@ const FIXTURE_PENDING: PendingAsk = {
   id: "ask-1",
   toolName: "Read",
   input: {},
-}
-
-// 手で書いた架空の作業先（worktree を切っているときの形。`src/shared/workspace.ts`）。
-const FIXTURE_WORKTREE: Workspace = {
-  source: "/tmp/tsukumo-source",
-  workdir: {
-    kind: "worktree",
-    path: "/tmp/tsukumo-worktree/20260922",
-    branch: "tsukumo/20260922-214703",
-    origin: "/tmp/tsukumo-source",
-  },
-}
-
-// 切っていないとき（git リポジトリでない・`TSUKUMO_WORKTREE=0`）。
-const FIXTURE_DIRECT: Workspace = {
-  source: "/tmp/tsukumo-source",
-  workdir: { kind: "direct", path: "/tmp/tsukumo-source" },
 }
 
 /** 帯に並んでいる読み（狭い画面の「≡」の中は数えない）。 */
@@ -183,31 +165,17 @@ describe("ScreenNav", () => {
     )
   })
 
-  // 帯に出すのは**画面を見ても分からず、ターンの結果を変えるもの**の3つ（13.9）。
-  it("モデル・許可モード・ブランチを帯の読みとして出す", () => {
-    renderScreenNav({
-      model: "claude-sonnet-5",
-      permissionMode: "plan",
-      workspace: FIXTURE_WORKTREE,
-    })
+  // 帯に出すのは**画面を見ても分からず、ターンの結果を変えるもの**の2つ（13.9）。
+  it("モデルと許可モードを帯の読みとして出す", () => {
+    renderScreenNav({ model: "claude-sonnet-5", permissionMode: "plan" })
 
-    expect(readingTexts()).toEqual(["Sonnet", "プラン", "tsukumo/20260922-214703"])
+    expect(readingTexts()).toEqual(["Sonnet", "プラン"])
   })
 
   // 届く前でも見た目上の既定に倒す（サイドバーの `<select>` と同じ値）。
   it("model / permissionMode が届く前は既定の読みを出す", () => {
-    renderScreenNav({ workspace: FIXTURE_WORKTREE })
-
-    expect(readingTexts()).toEqual(["Opus", "自動判定", "tsukumo/20260922-214703"])
-  })
-
-  // worktree を切っていない・まだ届いていないときは、ブランチの読みごと出さない（13.9）。
-  it("worktree を切っていなければブランチは出さない", () => {
-    renderScreenNav({ workspace: FIXTURE_DIRECT })
-    expect(readingTexts()).toEqual(["Opus", "自動判定"])
-
-    cleanup()
     renderScreenNav()
+
     expect(readingTexts()).toEqual(["Opus", "自動判定"])
   })
 
@@ -223,35 +191,9 @@ describe("ScreenNav", () => {
     )
   })
 
-  // 長いブランチ名は帯の側だけ末尾を省くので、全文は `title` に置く（13.9）。
-  it("ブランチの読みの title に全文を置く", () => {
-    renderScreenNav({ workspace: FIXTURE_WORKTREE })
-
-    expect(document.querySelector(".screen-nav-branch")?.getAttribute("title")).toBe(
-      "tsukumo/20260922-214703",
-    )
-  })
-
-  // 作業先とコードの出所は**常に食い違う**ので、どちらも触れば読めるようにする（13.9）。
-  it("部屋の名前の title に作業先とコードの出所を2行で置く", () => {
-    renderScreenNav({ workspace: FIXTURE_WORKTREE })
-
-    expect(document.querySelector(".screen-nav > .screen-nav-room")?.getAttribute("title")).toBe(
-      "作業先: /tmp/tsukumo-worktree/20260922\nコードの出所: /tmp/tsukumo-source",
-    )
-  })
-
-  it("workspace が届く前は部屋の名前に title を付けない", () => {
-    renderScreenNav()
-
-    expect(
-      document.querySelector(".screen-nav > .screen-nav-room")?.getAttribute("title"),
-    ).toBeNull()
-  })
-
   // 狭い画面では帯に読みを置く幅が無いので、口と同じく「≡」の中へ入る（13.9）。
   it("「≡」を開くと、落ちてきた面にも読みが出る", () => {
-    renderScreenNav({ model: "claude-haiku-5", workspace: FIXTURE_WORKTREE })
+    renderScreenNav({ model: "claude-haiku-5" })
 
     fireEvent.click(screen.getByRole("button", { name: "画面を選ぶ" }))
 
@@ -259,7 +201,7 @@ describe("ScreenNav", () => {
       [...document.querySelectorAll(".screen-nav-panel .screen-nav-status > *")].map(
         (node) => node.textContent,
       ),
-    ).toEqual(["Haiku", "自動判定", "tsukumo/20260922-214703"])
+    ).toEqual(["Haiku", "自動判定"])
   })
 
   // 狭い画面では「答え待ち」の字を置く幅が無いので、閉じている間は「≡」に印を添える（13.9）。

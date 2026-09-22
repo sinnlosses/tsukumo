@@ -25,8 +25,7 @@
   font-size: var(--font-label);
   white-space: nowrap;
 }
-/* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。中幅で詰まったときに
-   縮むのは読みのほう（`.screen-nav-branch` が末尾を省く）。 */
+/* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。 */
 .screen-nav-gates {
   display: flex;
   flex: none;
@@ -53,7 +52,7 @@
   background: var(--surface-accent);
   color: var(--ink);
 }
-/* いまの動き方の読み（モデル・許可モード・ブランチ。13.9）。**押せない字**で、右端へ寄せる
+/* いまの動き方の読み（モデル・許可モード。13.9）。**押せない字**で、右端へ寄せる
    （残りの幅はここが吸うので、口は左に詰まったまま）。**区切りの記号は置かず**、等幅と本文書体の
    交替で区切る（13.1 原則3）。 */
 .screen-nav-status {
@@ -67,21 +66,13 @@
   font-size: var(--font-label);
 }
 /* 機械が付けた名前は等幅（13.1 原則3）。 */
-.screen-nav-model,
-.screen-nav-branch {
+.screen-nav-model {
   font-family: var(--font-mono);
   white-space: nowrap;
 }
 /* 人の言葉なので本文書体のまま（`.screen-nav-model` との交替が区切りになる）。 */
 .screen-nav-permission-mode {
   white-space: nowrap;
-}
-/* 長いブランチ名は帯の側だけ末尾を省く（全文は `title` にある。13.9）。 */
-.screen-nav-branch {
-  overflow: hidden;
-  min-width: 3rem;
-  max-width: 12rem;
-  text-overflow: ellipsis;
 }
 /* 「全部許す」のときだけ字に意味の色を載せる。**ラベルの文字が必ず付く**ので、色だけで
    意味を伝えることにならない（13.1 原則5。色は既にある `--state-ng`）。 */
@@ -179,13 +170,10 @@
     margin-left: 0;
     text-align: center;
   }
-  /* 落ちてくる面では読みを縦に積む（横に並べる幅が無い）。ブランチは面の幅いっぱいまで出す。 */
+  /* 落ちてくる面では読みを縦に積む（横に並べる幅が無い）。 */
   .screen-nav-panel .screen-nav-status {
     flex-direction: column;
     align-items: center;
     margin-left: 0;
-  }
-  .screen-nav-panel .screen-nav-branch {
-    max-width: 100%;
   }
 }
