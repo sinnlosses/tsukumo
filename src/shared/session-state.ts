@@ -387,6 +387,7 @@ export function applySessionEvent(
         characterPacks: event.packs,
       }
     case "token-usage":
+    case "step-usage":
       // **画面に出すものが何も無い**（数の記録は `~/.tsukumo/token-usage/` へ書くだけで、
       // 書くかどうかを決めるのは `src/server/core/session-manager.ts`）。ここで畳むと
       // ブラウザ側にも同じ数を持たせることになるので、姿は変えない。

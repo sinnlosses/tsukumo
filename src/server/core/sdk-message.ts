@@ -34,6 +34,8 @@ export const SPEAK_TOOL_NAME = "speak"
  * - **`tool-started` の `parentToolUseId`** は、メッセージ本体（`message.message` の外）にある
  *   `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。2026-09-11 実測）。
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
+ * - **`assistant` の `message.usage` は `step-usage` にする**（ターンの中を持ち場ごとに割るため。
+ *   同じ `message.id` の最後を取るのは受け取る側の仕事）
  * - **`result` も `parent_tool_use_id` が非 null なら `turn-finished` にしない。**
  *   サブエージェント（Task ツール）の中の `result` を本体のターンの終わりと取り違えない
  *   ための保険（未確認。SDK が実際にこの形で流すかは 2026-09-21 時点で再現していない）
@@ -72,14 +74,7 @@ export function toSessionEvents(
     case "stream_event":
       return partialUtteranceEvents(message.event)
     case "assistant":
-      return [
-        ...assistantEvents(
-          message.message,
-          expressions,
-          optionalString(message.parent_tool_use_id),
-        ),
-        ...modelChangeEvents(message.local_command_run),
-      ]
+      return assistantMessageEvents(message, expressions)
     case "user":
       return toolResultEvents(message.message)
     case "result":
@@ -153,6 +148,22 @@ function partialUtteranceEvents(event: unknown): readonly SessionEvent[] {
   }
 
   return [{ kind: "partial-utterance", text: delta.text }]
+}
+
+/**
+ * `assistant` メッセージ1つを変換する。**`parent_tool_use_id` を読むのはここだけ**——本文・
+ * ツールの呼び出し・ステップの使用量が、同じ「どの持ち場で起きたか」の印を共有する。
+ */
+function assistantMessageEvents(
+  message: Readonly<Record<string, unknown>>,
+  expressions: readonly Expression[],
+): readonly SessionEvent[] {
+  const parentToolUseId = optionalString(message.parent_tool_use_id)
+  return [
+    ...assistantEvents(message.message, expressions, parentToolUseId),
+    ...stepUsageEvents(message.message, parentToolUseId),
+    ...modelChangeEvents(message.local_command_run),
+  ]
 }
 
 /**
@@ -290,6 +301,43 @@ function toolResultContentItemText(item: unknown): string {
   }
 
   return typeof item.type === "string" ? `(${item.type})` : ""
+}
+
+/**
+ * `assistant` の `message.usage`（そのステップぶんの使用量）を1つのイベントにする。
+ * **`message.id` を一緒に運ぶ**——返答が流れている間は同じ id の `assistant` が何度も届き、
+ * 途中の `usage` は確定値ではない（`sdk.d.ts`。最初の1つは `output_tokens` が 1〜3 になる）ので、
+ * **同じ id の最後を取る**のは受け取った側（`src/server/core/token-usage.ts`）の仕事。
+ *
+ * 持ち場は `parent_tool_use_id` で決まる（非 null ならサブエージェントの中。`sdk.d.ts`）。
+ * **鍵は API の形（snake_case）**で、`result` の `modelUsage`（camelCase）とは違う。数でない値・
+ * 欠けている鍵・`null` は 0 に倒し、`id` が無い・`usage` が無いメッセージはイベントを出さない。
+ */
+function stepUsageEvents(
+  message: unknown,
+  parentToolUseId: string | undefined,
+): readonly SessionEvent[] {
+  if (!isRecord(message) || typeof message.id !== "string" || message.id === "") {
+    return []
+  }
+  if (!isRecord(message.usage)) {
+    return []
+  }
+
+  const usage = message.usage
+  return [
+    {
+      kind: "step-usage",
+      messageId: message.id,
+      scope: parentToolUseId === undefined ? "main" : "subagent",
+      usage: {
+        inputTokens: finiteNumber(usage.input_tokens),
+        outputTokens: finiteNumber(usage.output_tokens),
+        cacheReadInputTokens: finiteNumber(usage.cache_read_input_tokens),
+        cacheCreationInputTokens: finiteNumber(usage.cache_creation_input_tokens),
+      },
+    },
+  ]
 }
 
 /**

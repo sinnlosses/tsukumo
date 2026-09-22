@@ -22,7 +22,11 @@ import {
 } from "../../../src/shared/frame.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
-import { type ModelTokenUsage } from "../../../src/shared/token-usage.ts"
+import {
+  type ModelTokenUsage,
+  type ScopeUsage,
+  type TurnUsageBreakdown,
+} from "../../../src/shared/token-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
@@ -1139,6 +1143,29 @@ describe("createSessionManager", () => {
       terminalSlashCommands: [],
     }
 
+    /** 架空のステップ1つぶんの使用量。 */
+    const STEP_USAGE = {
+      inputTokens: 43_145,
+      outputTokens: 13_371,
+      cacheReadInputTokens: 0,
+      cacheCreationInputTokens: 0,
+    }
+
+    /** ツールもステップも無かった持ち場（数はすべて 0）。 */
+    const EMPTY_SCOPE: ScopeUsage = {
+      steps: 0,
+      tokens: {
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheReadInputTokens: 0,
+        cacheCreationInputTokens: 0,
+      },
+      tools: [],
+    }
+
+    /** 何も積まずに終わったターンの内訳。 */
+    const EMPTY_BREAKDOWN: TurnUsageBreakdown = { main: EMPTY_SCOPE, subagent: EMPTY_SCOPE }
+
     /** 架空の累計（実物の使用量は使わない）。 */
     function cumulative(input: number, output: number, cost: number): readonly ModelTokenUsage[] {
       return [
@@ -1198,12 +1225,14 @@ describe("createSessionManager", () => {
           sessionId: "claude-session-1",
           mode: "work",
           models: cumulative(100, 20, 0.5),
+          breakdown: EMPTY_BREAKDOWN,
         },
         {
           at: 1_000,
           sessionId: "claude-session-1",
           mode: "work",
           models: cumulative(160, 15, 0.75),
+          breakdown: EMPTY_BREAKDOWN,
         },
       ])
     })
@@ -1258,6 +1287,105 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       expect(entries).toEqual([])
+    })
+
+    it("そのターンに使ったツールを、名前ごとに畳んで同じ行に入れる", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({
+        kind: "tool-started",
+        toolUseId: "t-1",
+        name: "Bash",
+        input: { command: "架空のコマンド" },
+        parentToolUseId: undefined,
+      })
+      stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "12345", isError: false })
+      stub.emit({
+        kind: "tool-started",
+        toolUseId: "t-2",
+        name: "Bash",
+        input: { command: "架空のコマンド" },
+        parentToolUseId: undefined,
+      })
+      stub.emit({ kind: "tool-finished", toolUseId: "t-2", content: "123", isError: false })
+      stub.emit({ kind: "step-usage", messageId: "msg-1", scope: "main", usage: STEP_USAGE })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries.map((written) => written.breakdown.main)).toEqual([
+        { steps: 1, tokens: STEP_USAGE, tools: [{ name: "Bash", calls: 2, resultBytes: 8 }] },
+      ])
+      expect(entries.map((written) => written.breakdown.subagent)).toEqual([EMPTY_SCOPE])
+    })
+
+    it("サブエージェントの中のツールとステップは、同じ行の別立てに入る", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({
+        kind: "tool-started",
+        toolUseId: "t-1",
+        name: "Agent",
+        input: { prompt: "架空の依頼" },
+        parentToolUseId: undefined,
+      })
+      stub.emit({
+        kind: "tool-started",
+        toolUseId: "t-2",
+        name: "Grep",
+        input: { pattern: "架空の語" },
+        parentToolUseId: "t-1",
+      })
+      stub.emit({ kind: "tool-finished", toolUseId: "t-2", content: "1234", isError: false })
+      stub.emit({ kind: "step-usage", messageId: "msg-1", scope: "subagent", usage: STEP_USAGE })
+      stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "123456", isError: false })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries.map((written) => written.breakdown)).toEqual([
+        {
+          main: {
+            steps: 0,
+            tokens: EMPTY_SCOPE.tokens,
+            tools: [{ name: "Agent", calls: 1, resultBytes: 6 }],
+          },
+          subagent: {
+            steps: 1,
+            tokens: STEP_USAGE,
+            tools: [{ name: "Grep", calls: 1, resultBytes: 4 }],
+          },
+        },
+      ])
+    })
+
+    it("内訳はターンごとに0から積む（前のターンのツールを持ち越さない）", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({
+        kind: "tool-started",
+        toolUseId: "t-1",
+        name: "Bash",
+        input: {},
+        parentToolUseId: undefined,
+      })
+      stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "12345", isError: false })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(200, 40, 1) })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries.map((written) => written.breakdown.main.tools)).toEqual([
+        [{ name: "Bash", calls: 1, resultBytes: 5 }],
+        [],
+      ])
     })
 
     // **この検査がいちばん重要**（`docs/coding-standards.md`「会話内容の扱い」）。依頼の文面・

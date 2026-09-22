@@ -8,9 +8,9 @@
 // `src/server/core/session-manager.ts` と `src/server/core/token-usage.ts` が持ち、ここが持つのは
 // 「どこに・どんな形で書くか」だけ（`chat-archive.ts` と同じ切り分け）。
 //
-// **1行に文字列で入るのは時刻・セッションID・モード・モデルの名前だけ。** 依頼の文面・セリフ・
-// ツールの引数と結果は通らない（渡される {@link TokenUsageEntry} にそもそも口が無い。
-// `docs/coding-standards.md`「会話内容の扱い」）。
+// **1行に文字列で入るのは時刻・セッションID・モード・モデルの名前・ツールの名前だけ。** 依頼の
+// 文面・セリフ・ツールの引数と結果は通らない（渡される {@link TokenUsageEntry} にそもそも口が
+// 無く、ツールの結果は長さ（数）に畳まれてから届く。`docs/coding-standards.md`「会話内容の扱い」）。
 //
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
@@ -65,5 +65,6 @@ function toRecord(date: Date, entry: TokenUsageEntry): TokenUsageRecord {
     sessionId: entry.sessionId,
     mode: entry.mode,
     models: entry.models,
+    breakdown: entry.breakdown,
   }
 }

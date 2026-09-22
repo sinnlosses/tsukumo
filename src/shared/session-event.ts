@@ -18,7 +18,7 @@ import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
-import { type ModelTokenUsage } from "./token-usage.ts"
+import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
 
 /** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
 export type TurnStatus = "success" | "error"
@@ -144,6 +144,27 @@ export type SessionEvent =
    * 「会話内容の扱い」）。
    */
   | { readonly kind: "token-usage"; readonly cumulative: readonly ModelTokenUsage[] }
+  /**
+   * assistant 1ステップぶんの使用量（`assistant` メッセージの `message.usage`）。
+   * **ターンの中を「メインループぶん」と「サブエージェントぶん」に割れるのはこの経路だけ**
+   * （`result` の `modelUsage` は両方を混ぜた累計なので、モデルが同じだと割れない）。
+   *
+   * **`messageId` を運ぶのは、同じ `message.id` のステップが何度も届くから。** 返答が流れて
+   * いる間は完成したブロックごとに `assistant` が出て、`message.usage` は**まだ確定値ではない**
+   * （`sdk.d.ts`: 「several consecutive assistant messages can share message.id ...
+   * message.usage is not final」）。**同じ `message.id` の最後を取る**のは受け取った側
+   * （`src/server/core/token-usage.ts`）。
+   *
+   * **画面には出ない**（畳み込みは何もしない）。行き先は `~/.tsukumo/token-usage/` の記録だけ。
+   * **数だけ**で、本文も思考も入らない（`docs/coding-standards.md`「会話内容の扱い」）。
+   */
+  | {
+      readonly kind: "step-usage"
+      /** そのステップを載せたメッセージの id（`message.id`）。 */
+      readonly messageId: string
+      readonly scope: TurnUsageScope
+      readonly usage: StepTokenUsage
+    }
   /**
    * `/clear` で会話が消された（SDK の `conversation_reset`。2026-09-15 実測）。**tsukumo は
    * `/clear` という文字列を見ていない。** `/` コマンドは依頼の文面としてそのまま本体へ渡り、

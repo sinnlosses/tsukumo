@@ -5,7 +5,7 @@ import { join } from "node:path"
 
 import { createTokenUsageLog } from "../../../src/server/adapter/token-usage-log.ts"
 import { type TokenUsageEntry } from "../../../src/server/core/token-usage.ts"
-import { type ModelTokenUsage } from "../../../src/shared/token-usage.ts"
+import { type ModelTokenUsage, type TurnUsageBreakdown } from "../../../src/shared/token-usage.ts"
 
 // 数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -20,6 +20,33 @@ const MODELS: readonly ModelTokenUsage[] = [
     costUsd: 0.125,
   },
 ]
+
+// ツールの名前と長さだけの内訳（**結果の本文は入らない**）。
+const BREAKDOWN: TurnUsageBreakdown = {
+  main: {
+    steps: 3,
+    tokens: {
+      inputTokens: 1_100,
+      outputTokens: 300,
+      cacheReadInputTokens: 8_000,
+      cacheCreationInputTokens: 700,
+    },
+    tools: [
+      { name: "Bash", calls: 2, resultBytes: 4_096 },
+      { name: "Read", calls: 1, resultBytes: 512 },
+    ],
+  },
+  subagent: {
+    steps: 2,
+    tokens: {
+      inputTokens: 100,
+      outputTokens: 40,
+      cacheReadInputTokens: 1_000,
+      cacheCreationInputTokens: 100,
+    },
+    tools: [{ name: "Grep", calls: 1, resultBytes: 64 }],
+  },
+}
 
 let dir: string
 
@@ -42,7 +69,7 @@ function at(hour: number, minute: number, day = 22): number {
 }
 
 function entry(when: number, models: readonly ModelTokenUsage[] = MODELS): TokenUsageEntry {
-  return { at: when, sessionId: "claude-session-1", mode: "work", models }
+  return { at: when, sessionId: "claude-session-1", mode: "work", models, breakdown: BREAKDOWN }
 }
 
 function readLines(fileName: string): unknown[] {
@@ -71,18 +98,19 @@ describe("createTokenUsageLog", () => {
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・モード・モデルごとの数で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・モード・モデルごとの数・内訳で、日時は ISO 8601（オフセット付き）", () => {
     const log = createTokenUsageLog(root())
 
     log.append(entry(at(10, 30)))
 
     const [record] = readLines("2026-09-22.jsonl")
-    expect(keysOf(record)).toEqual(["v", "at", "sessionId", "mode", "models"])
+    expect(keysOf(record)).toEqual(["v", "at", "sessionId", "mode", "models", "breakdown"])
     expect(record).toMatchObject({
-      v: 1,
+      v: 2,
       sessionId: "claude-session-1",
       mode: "work",
       models: MODELS,
+      breakdown: BREAKDOWN,
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toContain('"at":"2026-09-22T10:30:00')
@@ -92,7 +120,7 @@ describe("createTokenUsageLog", () => {
   // **文字列で入るのは時刻・セッションID・モード・鍵の名前・モデルの名前だけ**
   // （docs/coding-standards.md「会話内容の扱い」）。会話の文面が混ざる余地が無いことを、
   // 行に出てくる文字列を数え上げて固定する。
-  it("行に出てくる文字列は、鍵の名前とモデルの名前・セッションID・モード・時刻だけ", () => {
+  it("行に出てくる文字列は、鍵の名前とモデル・ツールの名前・セッションID・モード・時刻だけ", () => {
     const log = createTokenUsageLog(root())
 
     log.append(entry(at(10, 30)))
@@ -100,21 +128,36 @@ describe("createTokenUsageLog", () => {
     const [line] = readFileSync(join(root(), "2026-09-22.jsonl"), "utf8").trimEnd().split("\n")
     const strings = [...(line ?? "").matchAll(/"([^"]*)"/g)].flatMap(([, value]) => value ?? [])
     expect(strings.filter((value) => value.startsWith("2026-09-22T")).length).toBe(1)
-    expect(strings.filter((value) => !value.startsWith("2026-09-22T")).toSorted()).toEqual(
+    // **同じ鍵の名前が内訳の持ち場ごとに繰り返す**（`inputTokens` は合計と2つの持ち場に出る）ので、
+    // 種類を数え上げる。見たいのは「知らない文字列が1つも無い」こと。
+    const kinds = [...new Set(strings.filter((value) => !value.startsWith("2026-09-22T")))]
+    expect(kinds.toSorted()).toEqual(
       [
+        "Bash",
+        "Grep",
+        "Read",
         "at",
+        "breakdown",
         "cacheCreationInputTokens",
         "cacheReadInputTokens",
+        "calls",
         "claude-opus-fictional",
         "claude-session-1",
         "costUsd",
         "inputTokens",
+        "main",
         "mode",
         "model",
         "models",
+        "name",
         "outputTokens",
+        "resultBytes",
         "sessionId",
+        "steps",
+        "subagent",
         "thinkingTokens",
+        "tokens",
+        "tools",
         "v",
         "work",
       ].toSorted(),

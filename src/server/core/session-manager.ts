@@ -31,7 +31,14 @@ import { CHAT_COMPACT_COMMAND } from "./chat-compact.ts"
 import { CHAT_NUDGE_PROMPT } from "./chat-nudge.ts"
 import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
-import { type TokenUsageLog, tokenUsageDelta } from "./token-usage.ts"
+import {
+  EMPTY_TURN_USAGE_TALLY,
+  tallyTurnUsage,
+  type TokenUsageLog,
+  tokenUsageDelta,
+  turnUsageBreakdown,
+  type TurnUsageTally,
+} from "./token-usage.ts"
 
 /**
  * イベントをまとめて配る間隔。**旧の `PUBLISH_INTERVAL_MS` と同じ 100ms**（2026-09-13 決定）。
@@ -193,6 +200,9 @@ function createSessionHost(
   // 差がそのターンの消費**になる（`src/server/core/token-usage.ts`）。起こし直すと `query()` が
   // 変わって累計も振り出しに戻るので、`restart` で空に戻す。
   let cumulativeTokenUsage: readonly ModelTokenUsage[] = []
+  // いま進んでいるターンの内訳（ツールの呼び出し回数と結果の長さ、ステップの使用量）。
+  // **1ターンぶんだけ**持ち、終わりに記録へ畳んで捨てる（`src/server/core/token-usage.ts`）。
+  let turnUsage: TurnUsageTally = EMPTY_TURN_USAGE_TALLY
 
   const cancelFlush = (): void => {
     if (flushTimer !== undefined) {
@@ -256,6 +266,10 @@ function createSessionHost(
    * 届く `cumulative` は `query()` の中の累計なので、**前回との差**を書く。増分が無いターン
    * （`/clear` の直後など、何も呼んでいない `result`）は行を書かない。
    *
+   * 内訳（メインループとサブエージェントに割った、ツール別の呼び出しとステップの使用量）は
+   * **そのターンのあいだ積んできた {@link turnUsage} を畳んだもの**。合計の `models` と同じ
+   * 1行に入る（割り方の理由は `src/shared/token-usage.ts`）。
+   *
    * **claude 側のセッションIDが分からないうちは書かない**（`system/init` より前に `result` は
    * 来ないので実際には起きない）。行だけで「どのセッションのターンか」が決まらない記録を
    * 積まないため。
@@ -272,6 +286,7 @@ function createSessionHost(
       sessionId,
       mode: state.chatMode ? "chat" : "work",
       models,
+      breakdown: turnUsageBreakdown(turnUsage),
     })
   }
 
@@ -305,6 +320,11 @@ function createSessionHost(
     if (origin === "driver" && state.chatMode) {
       appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
     }
+    // ターンの中の内訳（ツール別・持ち場別）を積む。**駆動由来（`"driver"`）だけ** —
+    // 復元の再生は前のセッションで使ったぶんなので、いまのターンに数えない。
+    if (origin === "driver") {
+      turnUsage = tallyTurnUsage(turnUsage, event)
+    }
     // そのターンのトークン消費を1行書く。**駆動由来（`"driver"`）だけ**（復元の再生には
     // 使用量が乗らないし、乗せても同じターンを二度数えることになる）。
     if (origin === "driver" && event.kind === "token-usage") {
@@ -314,8 +334,12 @@ function createSessionHost(
     // （旗を立てるのはターンの途中、書くのは終わり。docs/requirements.md 4.9
     // 「残すと決めた1往復は窓から落とさない」）。立っていなければ覚えていた行を忘れるだけ
     // なので、雑談かどうかで呼び分けない。
+    // 内訳を捨てるのも同じ合図で行う（1ターンぶんだけ持つ）。**`token-usage` は
+    // `turn-finished` より先に届く**（`sdk-message.ts` が `result` 1つをこの順に変換する）ので、
+    // 書き終えたあとに捨てることになる。
     if (origin === "driver" && event.kind === "turn-finished") {
       options.chatArchive.finishTurn()
+      turnUsage = EMPTY_TURN_USAGE_TALLY
     }
     // **ターンの終わりに1回だけ見る**（docs/requirements.md 4.9）。仕事のときは何もしない
     // （`requestChatCompactIfNeeded` が `state.chatMode` を見て弾く）。
@@ -388,6 +412,8 @@ function createSessionHost(
       chatLogBytesSinceCompact = 0
       // 新しい `query()` の累計は 0 から始まる（前の累計を引くと増分が足りなくなる）。
       cumulativeTokenUsage = []
+      // 起こし直しの前に積んでいた内訳は、次のターンのものではない。
+      turnUsage = EMPTY_TURN_USAGE_TALLY
       driver = start(request)
       await driver
       cancelFlush()
