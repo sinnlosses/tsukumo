@@ -1,5 +1,70 @@
 # 進捗のアーカイブ
 
+### 2026-09-23 `init` がまだ届いていない状態を合併型にした（T-311）
+
+`SessionState` の `sessionId` / `permissionMode` を `session: { kind: "starting" } |
+{ kind: "identified"; sessionId } | { kind: "running"; sessionId; permissionMode }` に畳んだ。
+**`model` は合併型に入れず外に残した** —— `init` だけでなく `model-changed`（サイドバーの
+`set-model` の確定）でも決まり、`sessionId` より先に分かることがあるため。いったん `running` の
+中に入れた形を実機で試したら、依頼を送る前にモデルを切り替えても数秒で古い値に戻る
+（駆動は切り替わっているのに表示だけ嘘をつく）という 2026-09-17 と同じ不具合が再発したので、
+その場で外に戻して回帰テストを足した。
+
+### 2026-09-23 タスクIDを押して実行を頼めるようにした（T-362）
+
+サイドバーの一覧と「一覧を見る」の表の両方で、タスクIDを `<button>` にした。押すと
+「`<ID>` を実行しますか」の確認が表の上に重なり、OK で `/next-task <ID>` をそのまま dispatch
+する（入力欄の下書きには触らない）。ターンが動いている間は押せなくせず、確認の中で断る。
+
+### 2026-09-23 タスクの1サイクルを `main` 基準にした（ユーザーとの相談）
+
+**作業ツリーを分けるのが orca になったことで、取り合いを防ぐ仕組みが無くなっていた**のを塞いだ。
+作業ツリーの中だけに置く `doing`（共通の `WORKFLOW.md` の形）はコミットされないので、別の
+作業ツリーからは一度も見えない。**`doing` を `main` に入れてから着手し、`main` へマージして
+`done` にするまでを1サイクル**にし、正典を `main` の `develop/tasks.json` にした。
+手順は `CLAUDE.md`「## タスク運用」の「1サイクルの形」、覆す理由は `docs/workflow.md`
+「`doing` をコミットする」。枝の寿命は作業ツリーと同じで、1本がいくつでもタスクを持つ。
+新しい作業ツリーの `bun install` / `bun run build` は人がやる（自動化しない）。
+使い捨てのリポジトリで一周測って確かめたこと: linked worktree から `git show main:...` が読め、
+`git -C <本体> merge --ff-only <枝>` が通り、`main` の中身が `doing` に変わる。
+撤去済みの `.git/tsukumo/`（`mark/` 3ファイル・`worktree/`・`claim/`）も削除した。
+
+### 2026-09-23 tsukumo 側の worktree 運用を撤去した（ユーザーの直接指示）
+
+**作業ツリーを分けるのは orca の仕事**になったので、2026-09-22 に入れた T-349〜T-353 の実装を
+丸ごと外した。tsukumo は起こしたディレクトリでそのまま claude を動かす。消えたのは
+`src/server/adapter/worktree.ts` / `mark.ts`、`src/server/core/workspace.ts` / `task-claim.ts`、
+`src/shared/workspace.ts`、`src/browser/features/sidebar/workspace-notice.tsx` の6ファイルと、
+`claim` / `finish` の MCP ツール・`workspace` の事件・`TSUKUMO_WORKTREE`・帯のブランチの読み・
+部屋の名前の `title` のパス。**残したのは続きのセッションの探し方だけ**（`includeWorktrees: true`。
+orca が worktree を切るならディレクトリが変わるのは同じ）。未着手だった T-366（本体への追従）と
+T-367（`.gitignore` の末尾スラッシュ）は前提ごと消えたので `tasks.json` から外した。
+正典は `CLAUDE.md`「Git運用」「タスク運用」・`docs/architecture.md`「worktree を用意するのは
+orca で、tsukumo はやらない」・`docs/design.md` 13.9・`docs/glossary.md`・`docs/workflow.md`。
+`bun run check` 1223 pass / 0 fail。
+
+### 2026-09-23 ターンの進み具合を1つの合併型にした（T-310）
+
+`turnInProgress` / `turnStartedAt` / `turnFinishedAt` の3つを `turn: TurnProgress`
+（`idle` / `running` / `finished`）にまとめ、読んでいた12ファイルを `turn.kind` に読み替えた。
+状態の形が変わったので `PROTOCOL_VERSION` を 2→3 に上げた。副産物として「依頼より先に
+`session-ended` が届くと、始まっていないターンが終わったことになる」組み合わせが型から消えた。
+
+### 2026-09-23 セッション情報から作業先・ブランチ・コードの出所を外し、触る順に並べた（T-365）
+
+サイドバーの「セッション情報」から長い絶対パスの3行を外し、残りを寿命順ではなく触る頻度順
+（知らせ → モード → モデル → 許可モード → キャラクター → セッション）に並べ替えた。ブランチは
+T-363 の帯へ、パス2つは部屋の名前の `title` へ既に移っている。知らせだけを返すようになった
+`workspace-location.tsx` は `workspace-notice.tsx` へ改名し、段の切れ目は区切り線ではなく
+境目の行の margin（`.session-info-group-start` / `-group-end`）で示す。
+
+### 2026-09-22 帯にモデル・許可モード・ブランチの読みを出した（T-363）
+
+全画面の最上部の帯に「いまの動き方」の読み3つ（モデル・許可モード・worktree のときだけ
+ブランチ）を足し、サイドバーの会話の画面でしか読めなかった状態を解いた。ラベルと畳み方は
+`src/browser/lib/model-label.ts` / `permission-mode-label.ts` へ出して帯とサイドバーで共有する
+（機能どうしの import は増やしていない）。帯は名乗るだけで、`<select>` はサイドバーに残る。
+
 ### 2026-09-22 雑談の案内を「話しかけてもらう」に戻し、ホバーの先見せを撤去した（ユーザーの直接指示）
 
 立ち絵に載せたときの案内を「つつくと話しかけてくれる」から **「話しかけてもらう」**（T-334 より前のボタンと同じ字）に戻し、**ターン進行中は案内ごと出さない**ようにした（押せない理由の定型文への差し替えをやめ、`aria-describedby` も外す。`FRAME_ERROR_REASON.nudgeDuringTurn` はサーバ側が断るときだけの文面になった）。あわせて T-333 の**ホバーで表情を先に見せる仕掛け（`useHoverPreview`）を撤去**し、遡るのは押したときだけに戻した。`bun run check` 1273 pass / 0 fail。目視（fake driver・場面 `chat-compact-boundary`・Chrome 1400x900）: 進行中は立ち絵に載せても字が出ず（`aria-describedby` 無し・案内の要素ごと無し）、中断して待機に戻すと「話しかけてもらう」が不透明度1で出る。セリフの行に 0.6 秒載せても立ち絵は `proud` のまま動かず、押すと `default` へ遡って `aria-pressed="true"` が付く。疑似セッションの場面 `chat-compact-boundary` は `turn-finished` を持たず開くと答え待ちのまま固まっていたので、末尾に1つ足した（ユーザーの承認。これで立ち絵をつつける状態まで疑似セッションだけで出せる）。
