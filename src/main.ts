@@ -74,7 +74,8 @@ export async function run(config: Config): Promise<number> {
   }
 
   // 畳めなかった worktree と、切った先を整えきれなかったこと。**知らせるだけで起動は続ける**
-  // （成果を黙って消さないことと、取り残しに気づけることの折り合い）。
+  // （成果を黙って消さないことと、取り残しに気づけることの折り合い）。**画面にも出す**
+  // （下の `workspaceNotices`）が、タブが開く前に読めるよう端末にも1行ずつ書く。
   for (const notice of workspace.notices) {
     process.stderr.write(`tsukumo: ${notice}\n`)
   }
@@ -108,6 +109,7 @@ export async function run(config: Config): Promise<number> {
     tokenUsageLog,
     viewPort: view.port,
     workspace: workspace.workspace,
+    workspaceNotices: workspace.notices,
   })
   view.connect(session)
 

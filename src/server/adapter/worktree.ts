@@ -17,9 +17,9 @@
 // 当たらない。2026-09-22 実測）。畳んでよいかを見るときは、この2つを除いてから数える。
 
 import { execFile } from "node:child_process"
-import { lstat, mkdir, readFile, rm, rmdir, symlink } from "node:fs/promises"
+import { lstat, mkdir, readdir, readFile, rm, rmdir, symlink } from "node:fs/promises"
 // `resolve` は下の `new Promise((resolve) => …)` と名前がぶつかるので、別名で取る。
-import { dirname, join, resolve as resolvePath } from "node:path"
+import { basename, dirname, join, resolve as resolvePath } from "node:path"
 
 import { isPlainObject } from "remeda"
 
@@ -27,9 +27,13 @@ import { type Workspace } from "../../shared/workspace.ts"
 import {
   cutWorkspace,
   decideWorktreeFold,
+  decideWorktreeMerge,
   planWorkspace,
   type WorkspaceRepository,
   worktreeBranch,
+  worktreeMergeStopNotice,
+  type WorktreeMergeState,
+  type WorktreeMergeStop,
   type WorktreeState,
 } from "../core/workspace.ts"
 import { bundledFilePath } from "./bundled-path.ts"
@@ -117,6 +121,66 @@ export async function prepareWorkspace(options: {
 }
 
 /**
+ * 1タスクぶんの成果を本体へ入れた結果。**止まったときは理由を必ず持つ**ので、呼び出し側は
+ * 知らせ漏れなく画面へ出せる（`docs/architecture.md`「worktree でセッションを分ける」の決定3）。
+ */
+export type WorkspaceMerge =
+  /** 本体へ入った。`notices` は**畳めなかったときだけ**の1行（畳めたときは空）。 */
+  | { readonly kind: "merged"; readonly notices: readonly string[] }
+  /** 入れるものが無かった（切っていない・コミットが増えていない）。**何も知らせない。** */
+  | { readonly kind: "skipped" }
+  /** 止まった。**そのセッションは次のタスクへ進まない**（判断は呼び出し側）。 */
+  | { readonly kind: "stopped"; readonly notice: string }
+
+/**
+ * このセッションの成果を切り出し元へ入れ、入ったら worktree を畳む。**1タスクごとに呼ぶ**
+ * （ブランチが1タスクより長生きしないことで、衝突の窓が小さくなる）。
+ *
+ * 本体が `main` をチェックアウトしているので `git push . HEAD:main` は断られる。**本体の
+ * ディレクトリを指して `git -C <本体> merge` を走らせる**のが唯一の道で、だから本体が汚れて
+ * いないことを先に確かめる（{@link decideWorktreeMerge}）。
+ *
+ * **fast-forward できるならそれで済ませ、できないときだけ merge commit を作る**（`--no-ff` も
+ * `--ff-only` も付けない）。`--no-ff` を常に付けると中身の無いコミットが1タスクごとに積まれ、
+ * `--ff-only` だと**他のセッターが先にマージしただけで止まる**（衝突していなくても人を呼ぶ形に
+ * なる）。
+ *
+ * **衝突したら自動で解こうとしない**（`-X ours` / `-X theirs` も使わない）。本体を
+ * `merge --abort` で必ず戻し、**worktree とブランチは畳まずに**理由を返す——解くのに要る材料が
+ * そこにしか無い。
+ */
+export async function mergeWorkspace(workspace: Workspace): Promise<WorkspaceMerge> {
+  const { workdir } = workspace
+  if (workdir.kind !== "worktree") {
+    return { kind: "skipped" }
+  }
+
+  const repository = await readWorkspaceRepository(workdir.origin)
+  if (repository === undefined) {
+    return stopped({ kind: "failed", reason: `git に聞けなかった: ${workdir.origin}` }, workdir)
+  }
+
+  const plan = decideWorktreeMerge(await readWorktreeMergeState(repository, workdir.branch))
+  if (plan.kind === "skip") {
+    return { kind: "skipped" }
+  }
+  if (plan.kind === "blocked") {
+    return stopped({ kind: "origin-changed", origin: repository.root }, workdir)
+  }
+
+  const merged = await runGit(repository.root, ["merge", "--no-edit", workdir.branch])
+  if (!merged.ok) {
+    return stopped(await abortMerge(repository.root, merged.reason), workdir)
+  }
+
+  // 入ったので畳む。**使っているセッションが生きている間は畳まない**（`cwd` が消えると claude が
+  // 立っている場所が無くなる）ので、**自分の worktree はここでは残り、次の起動の掃除が畳む**
+  // （{@link foldIdleWorktrees} と同じ口）。
+  const notice = await foldIdleWorktree(repository, basename(workdir.path))
+  return { kind: "merged", notices: notice === undefined ? [] : [notice] }
+}
+
+/**
  * tsukumo のプロセスが動かしているコードの置き場。**`resolve` に通す**のは
  * `bundledFilePath()` が引数なしだと末尾の区切りを残すため（画面にそのまま出る）。
  */
@@ -157,7 +221,7 @@ function firstWorktreePath(stdout: string): string | undefined {
  * **ここで失敗しても起動は続ける**（掃除は今回のセッションの前提ではない。次の起動がもう一度見る）。
  */
 async function foldIdleWorktrees(repository: WorkspaceRepository): Promise<readonly string[]> {
-  const names = await listWorktreeMarkNames(repository.gitDir)
+  const names = await idleWorktreeNames(repository)
   if (names.length === 0) {
     return []
   }
@@ -174,6 +238,19 @@ async function foldIdleWorktrees(repository: WorkspaceRepository): Promise<reado
     }
   }
   return notices
+}
+
+/**
+ * 片付けの対象になる worktree の名前。**印と実体の両方から集める**（どちらか一方しか無くても
+ * 見つかる形にしておく）。印を人が消した・書く前に落ちたといったときに、**実体だけが残って
+ * 二度と見つからない worktree** を作らないため。
+ */
+async function idleWorktreeNames(repository: WorkspaceRepository): Promise<readonly string[]> {
+  const marked = await listWorktreeMarkNames(repository.gitDir)
+  const cut = await readdir(join(tsukumoGitDir(repository.gitDir), WORKTREE_DIR_NAME)).catch(
+    () => [],
+  )
+  return [...new Set([...marked, ...cut])]
 }
 
 /** 使い終えた worktree 1つを畳む。**残したときだけ**知らせる1行を返す。 */
@@ -197,6 +274,13 @@ async function foldIdleWorktree(
     await removeLink(join(path, ...segments))
   }
   await runGit(repository.root, ["worktree", "remove", path])
+  // **畳めたかどうかは実体が消えたかで見る**（`git worktree remove` の成否では見ない）——
+  // 管理情報だけが残っていた取り残しでは remove が失敗するが、ディレクトリが無ければ畳めている。
+  // **畳めなかったときは印を残す**ので、次の起動がもう一度見つけて片付けられる。
+  if (await exists(path)) {
+    return `畳めなかったので次の起動でもう一度片付ける: ${path}（${branch}）`
+  }
+
   await runGit(repository.root, ["branch", "-d", branch])
   await removeWorktreeMark(repository.gitDir, name)
   return undefined
@@ -406,6 +490,48 @@ async function exists(path: string): Promise<boolean> {
     () => true,
     () => false,
   )
+}
+
+/** 止まった結果を1つに組む（文面を組むのは `core`。ここは git の返事を写すだけ）。 */
+function stopped(
+  stop: WorktreeMergeStop,
+  workdir: { readonly branch: string; readonly path: string },
+): WorkspaceMerge {
+  return { kind: "stopped", notice: worktreeMergeStopNotice(stop, workdir) }
+}
+
+/**
+ * 半端なマージ状態の本体を必ず元へ戻し、**戻す前に**衝突したファイルを読む（`--abort` のあとでは
+ * 一覧が消える）。衝突以外で通らなかったときは git が書いた行をそのまま持つ。
+ */
+async function abortMerge(root: string, reason: string): Promise<WorktreeMergeStop> {
+  const listed = await runGit(root, ["diff", "--name-only", "--diff-filter=U"])
+  const files = listed.ok ? nonEmptyLines(listed.stdout) : []
+  await runGit(root, ["merge", "--abort"])
+  return files.length === 0 ? { kind: "failed", reason } : { kind: "conflict", files }
+}
+
+/** マージの前に分かっていること（判断そのものは `core` の `decideWorktreeMerge`）。 */
+async function readWorktreeMergeState(
+  repository: WorkspaceRepository,
+  branch: string,
+): Promise<WorktreeMergeState> {
+  const status = await runGit(repository.root, ["status", "--porcelain"])
+  const unmerged = await runGit(repository.root, ["rev-list", "--count", `HEAD..${branch}`])
+  return {
+    // **読めなかったときは「汚れている」側へ倒す**（畳むかどうかの判断と安全側が逆。消すのでは
+    // なく止めるほうなので、分からないなら人へ返す）。
+    originChanged: !status.ok || countChanges(status.stdout) > 0,
+    unmerged: unmerged.ok && unmerged.stdout.trim() !== "0",
+  }
+}
+
+/** 空行を落とした行の並び（`git` の一覧の出力を読むのはこの形だけ）。 */
+function nonEmptyLines(stdout: string): readonly string[] {
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
 }
 
 function worktreePath(repository: WorkspaceRepository, name: string): string {

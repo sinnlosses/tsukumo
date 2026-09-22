@@ -89,6 +89,11 @@ export type SessionStartOptions = {
    * worktree を切ったあとは claude の作業先ではない。
    */
   readonly workspace: Workspace
+  /**
+   * 作業場所についての知らせ（畳めなかった worktree・切った先の組み立ての失敗）。**起動時に
+   * 1回決まる**ので、`workspace` と同じ経路で画面へ流す。
+   */
+  readonly workspaceNotices: readonly string[]
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
@@ -118,6 +123,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
     sessionId,
     startDriver: createSessionLaunch<CharacterPack>({
       workspace,
+      workspaceNotices: options.workspaceNotices,
       choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
       characterEvent: () => character.event(),

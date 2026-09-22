@@ -240,6 +240,13 @@ export type SessionState = {
    */
   readonly workspace: Workspace | undefined
   /**
+   * 作業場所についての知らせ（畳めなかった worktree・切った先の組み立ての失敗・マージが
+   * 止まった理由）。**tsukumo が出した知らせであって claude の発言ではない**ので、会話の記録
+   * （`records`）には並べずここに持つ（`docs/architecture.md`「worktree でセッションを
+   * 分ける」の決定3）。何も無ければ空。
+   */
+  readonly workspaceNotices: readonly string[]
+  /**
    * 雑談モードに入っているか（`docs/requirements.md` 4.9）。入っている間はレポートを出さず、
    * メインビューが立ち絵と会話のログになる（`docs/design.md` 13.7）。
    *
@@ -274,6 +281,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
   workspace: undefined,
+  workspaceNotices: [],
   chatMode: false,
 }
 
@@ -299,7 +307,7 @@ export function applySessionEvent(
         slashCommands: commandCandidates(event.slashCommands, event.terminalSlashCommands),
       }
     case "workspace":
-      return { ...state, workspace: event.workspace }
+      return { ...state, workspace: event.workspace, workspaceNotices: event.notices }
     case "command-descriptions":
       return { ...state, commandDescriptions: event.descriptions }
     case "model-changed":

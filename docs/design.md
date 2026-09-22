@@ -701,11 +701,15 @@ type SessionHost = {
 
 - `core` が持つのは**切るかどうか**（`planWorkspace`。git リポジトリかどうかと `TSUKUMO_WORKTREE`
   の2つだけで決まる）、**どの名前で切るか**（`YYYYMMDD-HHMMSS` と、同じ秒に負けたときの
-  `-2`, `-3`）、**使い終えたものを畳むかどうか**（`decideWorktreeFold`）の3つ。時計は読まず、
-  「いま何時か」は引数で受け取る
+  `-2`, `-3`）、**使い終えたものを畳むかどうか**（`decideWorktreeFold`）、**本体へ入れてよいか**
+  （`decideWorktreeMerge`）と**止まったときに画面へ出す文面**（`worktreeMergeStopNotice`）。
+  時計は読まず、「いま何時か」は引数で受け取る
 - `adapter` が持つのは `git rev-parse` / `git worktree add` / `git worktree remove` /
-  `git branch -d`、symlink 2本（`node_modules` と `characters/local`）、切った先での
-  `bun run build`
+  `git branch -d` / `git merge` / `git merge --abort`、symlink 2本（`node_modules` と
+  `characters/local`）、切った先での `bun run build`
+- **マージ（`mergeWorkspace`）も同じファイル**（`adapter/worktree.ts`）。1タスクごとに
+  **本体のディレクトリを指して `git -C <本体> merge`** を走らせ、入ったら畳む。境界は
+  コマンドではなく概念（「セッションの作業場所」）なので、切る・畳む・入れるを分けない
 - 置き場は `git rev-parse --git-common-dir` の下の `tsukumo/worktree/<名前>`、印は同じ親の下の
   `tsukumo/mark/<名前>`。ブランチは `tsukumo/<名前>`
 - **`.git` の下の印そのものは `adapter/mark.ts`**（worktree の「使用中」の印と、タスクの
@@ -718,6 +722,10 @@ type SessionHost = {
   claude の作業先だけが切り替わり、hooks・permissions・`.claude` の各ツリーは元のものが効く
 - **用意できなかったら起動時の前提不足として止める**（`src/main.ts`）。畳めなかった worktree と
   切った先の組み立ての失敗は**知らせるだけ**で起動を続ける
+- **知らせは `workspace` の事件に載せて画面へ運ぶ**（`SessionState.workspaceNotices` →
+  サイドバーの「セッション情報」）。畳めなかった worktree・組み立ての失敗・マージが止まった
+  理由の3つが同じ場所に出る。**会話の記録（`records`）には混ぜない** — claude の発言ではなく
+  tsukumo が出した知らせなので、ターンの流れに並べない
 
 ### config.ts（core）
 

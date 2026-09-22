@@ -88,6 +88,7 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
 
   const ports: SessionLaunchPorts<Pack> = {
     workspace: WORKSPACE,
+    workspaceNotices: [],
     choosePack: (selection) => {
       calls.push(`choosePack:${labelOf(selection)}`)
       return selection.by === "name" ? SWITCHED : INITIAL

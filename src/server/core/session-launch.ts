@@ -73,6 +73,11 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    */
   readonly workspace: Workspace
   /**
+   * 作業場所についての知らせ（畳めなかった worktree・切った先の組み立ての失敗）。**起動時に
+   * 決まる**ので `workspace` と同じく値で受け取り、起こし直すたびに流し直す。
+   */
+  readonly workspaceNotices: readonly string[]
+  /**
    * これから起こすパックを決める。**決め方の3つ（起動時の初期パック・画面から選ばれた名前・
    * いま出しているパックのまま）を持ち主が区別する**ので、ここは選び方をそのまま渡すだけ。
    * 知らない名前が既定へ落ちるのも呼ばれた側（`selectCharacterPack`）の仕事。
@@ -142,7 +147,11 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     onEvent(ports.characterEvent(pack))
     // **どこで動いているかも流し直す。** claude の作業先（worktree）と tsukumo のコードの
     // 出所（元の作業ツリー）は常に食い違うので、読み取れない状態にしない（T-349 の決定2）。
-    onEvent({ kind: "workspace", workspace: ports.workspace })
+    onEvent({
+      kind: "workspace",
+      workspace: ports.workspace,
+      notices: ports.workspaceNotices,
+    })
     // **起こし直すと状態が初期値へ戻る**ので、雑談かどうかもここで流し直す（画面は
     // `chat-mode-changed` でしか知れない。`docs/requirements.md` 4.9）。
     onEvent({ kind: "chat-mode-changed", chat })

@@ -3,11 +3,13 @@ import { describe, expect, it } from "bun:test"
 import {
   cutWorkspace,
   decideWorktreeFold,
+  decideWorktreeMerge,
   planWorkspace,
   type WorkspacePlanOptions,
   workspaceCwd,
   workspaceProjectConfigRoot,
   worktreeBranch,
+  worktreeMergeStopNotice,
 } from "../../../src/server/core/workspace.ts"
 import { type Workspace } from "../../../src/shared/workspace.ts"
 
@@ -128,5 +130,61 @@ describe("decideWorktreeFold", () => {
       kind: "left",
       reason: "unmerged",
     })
+  })
+})
+
+describe("decideWorktreeMerge", () => {
+  it("入れるものが無ければ何もしない（本体が汚れていても知らせない）", () => {
+    expect(decideWorktreeMerge({ originChanged: true, unmerged: false })).toEqual({ kind: "skip" })
+  })
+
+  it("本体が汚れていなければ入れる", () => {
+    expect(decideWorktreeMerge({ originChanged: false, unmerged: true })).toEqual({ kind: "merge" })
+  })
+
+  it("本体に未コミットの変更があれば入れずに止める", () => {
+    expect(decideWorktreeMerge({ originChanged: true, unmerged: true })).toEqual({
+      kind: "blocked",
+      reason: "origin-changed",
+    })
+  })
+})
+
+describe("worktreeMergeStopNotice", () => {
+  const WORKDIR = {
+    branch: "tsukumo/20260922-153012",
+    path: "/repo/.git/tsukumo/worktree/20260922-153012",
+  }
+
+  it("衝突は、ブランチ・worktree・衝突したファイル・次の手を並べる", () => {
+    const notice = worktreeMergeStopNotice(
+      { kind: "conflict", files: ["src/a.ts", "src/b.ts"] },
+      WORKDIR,
+    )
+
+    expect(notice.split("\n")).toEqual([
+      "マージが衝突したので止めた（本体は元に戻した）",
+      "ブランチ: tsukumo/20260922-153012",
+      "worktree: /repo/.git/tsukumo/worktree/20260922-153012",
+      "衝突したファイル: src/a.ts src/b.ts",
+      "次の手: worktree で git merge main して解き、もう一度マージを頼む",
+    ])
+  })
+
+  it("本体が汚れているときは、本体の場所と本体を片付ける次の手を出す", () => {
+    const notice = worktreeMergeStopNotice({ kind: "origin-changed", origin: "/repo" }, WORKDIR)
+
+    expect(notice).toContain("本体: /repo")
+    expect(notice).toContain("次の手: 本体の変更をコミットするか退避してから、もう一度マージを頼む")
+  })
+
+  it("衝突以外の失敗は、git が書いた行をそのまま並べる", () => {
+    const notice = worktreeMergeStopNotice(
+      { kind: "failed", reason: "git merge --no-edit tsukumo/x\nfatal: 架空の理由" },
+      WORKDIR,
+    )
+
+    expect(notice).toContain("git: git merge --no-edit tsukumo/x")
+    expect(notice).toContain("git: fatal: 架空の理由")
   })
 })

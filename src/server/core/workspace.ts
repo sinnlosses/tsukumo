@@ -144,6 +144,73 @@ export function decideWorktreeFold(state: WorktreeState): WorktreeFold {
   return { kind: "fold" }
 }
 
+/** 本体へマージする前に分かっていること（調べるのは adapter）。 */
+export type WorktreeMergeState = {
+  /** 切り出し元の作業ツリーに未コミットの変更があるか。 */
+  readonly originChanged: boolean
+  /** 切り出し元へ入っていないコミットがあるか。 */
+  readonly unmerged: boolean
+}
+
+/** 本体へマージしてよいか。**入れられないときは理由を必ず持つ**（`WorktreeFold` と同じ形）。 */
+export type WorktreeMergePlan =
+  /** 入れる。 */
+  | { readonly kind: "merge" }
+  /** 入れるものが無い（コミットが1つも増えていない）。**何も知らせない**（正常な姿）。 */
+  | { readonly kind: "skip" }
+  /** 入れられない。**止めて知らせる。** */
+  | { readonly kind: "blocked"; readonly reason: "origin-changed" }
+
+/**
+ * 1タスクぶんの成果を本体へ入れてよいかを決める。
+ *
+ * **入れるものが無いかを先に見る**——本体が汚れていても、入れるものが無いなら知らせることは
+ * 何も無い（起こすたびに同じ知らせが出るのを防ぐ）。
+ *
+ * **本体が汚れていたら入れない**。重ならないファイルなら `git merge` は
+ * 通るが、通ったあとで衝突して `merge --abort` したときに、**マージ前からあった未コミットの
+ * 変更を git が復元しきれないことがある**（`git merge --abort` の但し書き）。本体は誰も
+ * 書かない場所という前提が崩れているので、**黙って進めずに人へ返す**。
+ */
+export function decideWorktreeMerge(state: WorktreeMergeState): WorktreeMergePlan {
+  if (!state.unmerged) {
+    return { kind: "skip" }
+  }
+  return state.originChanged ? { kind: "blocked", reason: "origin-changed" } : { kind: "merge" }
+}
+
+/**
+ * マージが止まった理由。**adapter は git の返事を写すだけ**で、画面に出す文面を組むのはここ
+ * （`docs/architecture.md`「worktree でセッションを分ける」の決定3）。
+ */
+export type WorktreeMergeStop =
+  /** 本体に未コミットの変更がある（マージを始めてもいない）。 */
+  | { readonly kind: "origin-changed"; readonly origin: string }
+  /** 衝突した。**本体は `merge --abort` で戻してある。** */
+  | { readonly kind: "conflict"; readonly files: readonly string[] }
+  /** 衝突以外で通らなかった（git が書いた行をそのまま持つ）。 */
+  | { readonly kind: "failed"; readonly reason: string }
+
+/**
+ * 止まったときに画面へ出す文面。**ブランチ名・worktree の絶対パス・止まった事情・次の手**を
+ * 必ず並べる（`docs/architecture.md`「worktree でセッションを分ける」の決定3）。これだけで人が続きを引き取れる形にする。
+ *
+ * **会話の内容は混ざらない**——載るのは git の返事とパスだけ（`docs/coding-standards.md`
+ * 「会話内容の扱い」）。
+ */
+export function worktreeMergeStopNotice(
+  stop: WorktreeMergeStop,
+  workdir: { readonly branch: string; readonly path: string },
+): string {
+  return [
+    mergeStopHeadline(stop),
+    `ブランチ: ${workdir.branch}`,
+    `worktree: ${workdir.path}`,
+    ...mergeStopDetail(stop),
+    `次の手: ${mergeStopNextStep(stop)}`,
+  ].join("\n")
+}
+
 /** 切った worktree から画面に出す姿を組み立てる（**組み立てるのはここだけ**）。 */
 export function cutWorkspace(options: {
   readonly source: string
@@ -187,4 +254,38 @@ function worktreeName(startedAt: Temporal.PlainDateTime): string {
 /** `Temporal` の値は桁を揃えて返さないので、名前に使う前に2桁へ揃える。 */
 function twoDigits(value: number): string {
   return String(value).padStart(2, "0")
+}
+
+/** 止まった事情を1行で言い切る見出し。**本体を戻したかどうかまでここで言う。** */
+function mergeStopHeadline(stop: WorktreeMergeStop): string {
+  switch (stop.kind) {
+    case "origin-changed":
+      return "本体に未コミットの変更があるのでマージしなかった"
+    case "conflict":
+      return "マージが衝突したので止めた（本体は元に戻した）"
+    case "failed":
+      return "マージが通らなかったので止めた（本体は元に戻した）"
+  }
+}
+
+/** 見出しと次の手の間に挟む、事情ごとの中身（無い事情もある）。 */
+function mergeStopDetail(stop: WorktreeMergeStop): readonly string[] {
+  switch (stop.kind) {
+    case "origin-changed":
+      return [`本体: ${stop.origin}`]
+    case "conflict":
+      return [`衝突したファイル: ${stop.files.join(" ")}`]
+    case "failed":
+      return stop.reason.split("\n").map((line) => `git: ${line}`)
+  }
+}
+
+/**
+ * 次の手。**衝突は worktree の側で解く**（本体を解決の場にしない。解くのに要る材料は
+ * worktree にしか無い）。
+ */
+function mergeStopNextStep(stop: WorktreeMergeStop): string {
+  return stop.kind === "origin-changed"
+    ? "本体の変更をコミットするか退避してから、もう一度マージを頼む"
+    : "worktree で git merge main して解き、もう一度マージを頼む"
 }

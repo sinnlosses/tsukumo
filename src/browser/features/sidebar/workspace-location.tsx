@@ -7,6 +7,10 @@
 // デバッグのたびに迷うので、区画を増やさず行だけを足す。
 //
 // 切っていないとき（git リポジトリでない・`TSUKUMO_WORKTREE=0`）はブランチの行が消える。
+//
+// **作業場所についての知らせ（畳めなかった worktree・マージが止まった理由）も同じ場所に出す。**
+// tsukumo が出した知らせであって claude の発言ではないので、メインビューのターンの流れには
+// 並べない（同じ節の決定3）。
 
 import { type ReactElement } from "react"
 
@@ -22,6 +26,7 @@ import styles from "./sidebar.module.css"
  */
 export function WorkspaceLocation(): ReactElement | null {
   const workspace = useSessionSelector((session) => session.state.workspace)
+  const notices = useSessionSelector((session) => session.state.workspaceNotices)
   if (workspace === undefined) {
     return null
   }
@@ -34,6 +39,27 @@ export function WorkspaceLocation(): ReactElement | null {
         <WorkspaceRow label="ブランチ" value={workdir.branch} />
       ) : null}
       <WorkspaceRow label="コードの出所" value={workspace.source} />
+      {notices.map((notice) => (
+        <WorkspaceNotice key={notice} notice={notice} />
+      ))}
+    </>
+  )
+}
+
+/**
+ * 作業場所についての知らせ1件（畳めなかった worktree・マージが止まった理由）。**tsukumo が
+ * 出した知らせで claude の発言ではない**ので、メインビューのターンの流れには並べずここに出す。
+ *
+ * **文面はサーバが組んだまま出す**（`src/server/core/workspace.ts`）。改行も含めてそのまま
+ * 読めないと、どのブランチのどの worktree を人が引き取るのかが分からない。
+ */
+function WorkspaceNotice(props: { readonly notice: string }): ReactElement {
+  return (
+    <>
+      <span className={styles["session-info-label"]}>知らせ</span>
+      <span className={styles["session-info-value"]}>
+        <span className={styles["workspace-notice"]}>{props.notice}</span>
+      </span>
     </>
   )
 }

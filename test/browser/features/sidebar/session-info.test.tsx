@@ -268,4 +268,24 @@ describe("SessionInfo の作業先", () => {
     expect(screen.queryByText("作業先")).toBeNull()
     expect(screen.queryByText("コードの出所")).toBeNull()
   })
+
+  it("作業場所の知らせを、改行を保ったまま出す", () => {
+    const notice = [
+      "マージが衝突したので止めた（本体は元に戻した）",
+      "ブランチ: tsukumo/20260922-153012",
+      "次の手: worktree で git merge main して解き、もう一度マージを頼む",
+    ].join("\n")
+
+    renderSessionInfo({ workspace: FIXTURE_WORKSPACE, workspaceNotices: [notice] })
+
+    expect(screen.getByText("知らせ")).toBeDefined()
+    // 既定の照合は空白を畳むので、改行ごと残っていることは中身そのもので確かめる。
+    expect(screen.getByText(/マージが衝突したので止めた/).textContent).toBe(notice)
+  })
+
+  it("知らせが無ければ知らせの行を出さない", () => {
+    renderSessionInfo({ workspace: FIXTURE_WORKSPACE })
+
+    expect(screen.queryByText("知らせ")).toBeNull()
+  })
 })
