@@ -51,6 +51,41 @@ export type TaskClaim =
   | { readonly kind: "failed"; readonly reason: string }
 
 /**
+ * 着手の印を使わない作業ツリー（git リポジトリでないディレクトリで起こしたとき）で、
+ * 取りに来たモデルへ返す文面。**取れない側ではなく、そのまま進む側へ倒す**——置き場が無いのは
+ * 誰かが先に取っているからではないので、ここで止めるとタスク運用のあるリポジトリ以外で
+ * 何も着手できなくなる。
+ */
+export const UNMARKED_TASK_NOTICE =
+  "着手の印を使わない作業ツリー（git リポジトリではない）。そのまま着手してよい"
+
+/**
+ * 取りに行った結果を、**取りに来たモデルへ返す文面**にする（`claim` ツールの戻り値。
+ * `src/server/core/session-driver.ts` の `TaskWorkflow`）。
+ *
+ * **取れなかった回に「着手しない」と言い切る**のがこの文面の仕事で、先に取っているセッションの
+ * pid・時刻・作業先まで並べる（人が見にいけるように）。**印を置けなかった回も着手しない側へ
+ * 倒す**——置けたかどうかが分からない状態で進むと、防ごうとしている二重着手がそのまま起きる。
+ *
+ * **会話の内容は混ざらない**（載るのは印に書いた4つとタスクidだけ）。
+ */
+export function taskClaimNotice(claim: TaskClaim): string {
+  switch (claim.kind) {
+    case "claimed":
+      return `${claim.mark.taskId} の着手の印を取った（着手してよい）`
+    case "held":
+      return [
+        `${claim.by.taskId} は別のセッションが取っている（着手しない）`,
+        `取ったセッション: pid ${String(claim.by.pid)}`,
+        `取った時刻: ${claim.by.claimedAt}`,
+        `作業先: ${claim.by.workdir.path}`,
+      ].join("\n")
+    case "failed":
+      return `着手の印を置けなかった（着手しない）\n${claim.reason}`
+  }
+}
+
+/**
  * 置き場にあった印1つをどうするかを決める（`decideWorktreeFold` と同じ形）。
  *
  * **読めない印は掃除する側へ倒す**——読めないものを残すと、そのタスクが誰にも取れないまま

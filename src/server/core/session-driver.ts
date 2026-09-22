@@ -232,14 +232,39 @@ export type ChatArchiveEntry =
     }
 
 /**
+ * 仕事のときだけ渡る、タスク運用の口（`docs/workflow.md`・`CLAUDE.md`「## タスク運用」）。
+ * **タスクを取るのと、終えて返すのが対**で、`claim` と `finish` の2つのツールになる。
+ *
+ * **返すのはモデルへ見せる文面そのもの**——取れたか・入ったかの判断も文面の組み立ても
+ * `core`（`taskClaimNotice` / `workspaceMergeNotice`）が済ませてあり、口の実装
+ * （配線層）は印と git を触るだけ。**印の持ち主は tsukumo のプロセス**なので、取った状態は
+ * そのセッションが生きている間だけ続く。
+ */
+export type TaskWorkflow = {
+  /**
+   * タスクを1つ取りに行く（`/next-task` の手順4、`doing` に書き換えるのと同じ時点）。
+   * **取れなかったときは着手しない**（文面がそう言い切る）。
+   */
+  readonly claim: (taskId: string) => Promise<string>
+  /**
+   * 取った印を返し、このセッションの成果を切り出し元へ入れる（同手順7、`done` にして
+   * コミットしたあと）。**止まったときは次のタスクへ進まない**（文面が次の手まで持つ）。
+   */
+  readonly finish: (taskId: string) => Promise<string>
+}
+
+/**
  * このセッションが仕事か雑談か（`docs/design.md` 7章）。**雑談のときだけ渡る4つの口を
  * `chat` の側にまとめてある**のは、4つが同時に渡るか同時に渡らないかの2択で、
  * 「片方だけ無い」状態が実在しないから（`docs/coding-standards.md`
  * 「複数の「無い」が1つの状態」）。読む側の分岐も `mode.kind` の1つで済む。
  */
 export type SessionMode =
-  /** 仕事。**雑談の口は1つも渡らない**（作業の文脈が人格にもアーカイブにも入らない）。 */
-  | { readonly kind: "work" }
+  /**
+   * 仕事。**雑談の口は1つも渡らない**（作業の文脈が人格にもアーカイブにも入らない）。
+   * 代わりにタスク運用の口が渡り、`claim` と `finish` のツールが載る。
+   */
+  | { readonly kind: "work"; readonly taskWorkflow: TaskWorkflow }
   | {
       readonly kind: "chat"
       /**

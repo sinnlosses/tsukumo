@@ -110,6 +110,9 @@ export async function run(config: Config): Promise<number> {
     viewPort: view.port,
     workspace: workspace.workspace,
     workspaceNotices: workspace.notices,
+    // 着手の印の置き場（`.git` の下）。**git リポジトリでないときだけ undefined** で、
+    // そのときは印を使わない（`src/session-start.ts` の `createTaskWorkflow`）。
+    gitDir: workspace.gitDir,
   })
   view.connect(session)
 

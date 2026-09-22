@@ -60,7 +60,7 @@ function git(cwd: string, args: readonly string[]): string {
 }
 
 describe("prepareWorkspace", () => {
-  it("git リポジトリでなければ切らず、起動したディレクトリでそのまま動く", async () => {
+  it("git リポジトリでなければ切らず、起動したディレクトリでそのまま動く（印の置き場も無い）", async () => {
     const prepared = await prepareWorkspace({ cwd: dir, enabled: true })
 
     expect(prepared.ok).toBe(true)
@@ -68,15 +68,17 @@ describe("prepareWorkspace", () => {
       kind: "direct",
       path: dir,
     })
+    expect(prepared.ok ? prepared.gitDir : "").toBeUndefined()
   })
 
-  it("切らないと渡されたら、git リポジトリでも切らない", async () => {
+  it("切らないと渡されたら、git リポジトリでも切らない（着手の印の置き場は返る）", async () => {
     const root = createRepository()
 
     const prepared = await prepareWorkspace({ cwd: root, enabled: false })
 
     expect(prepared.ok ? prepared.workspace.workdir.kind : undefined).toBe("direct")
     expect(existsSync(join(root, ".git", "tsukumo"))).toBe(false)
+    expect(prepared.ok ? prepared.gitDir : undefined).toBe(join(root, ".git"))
   })
 
   it("git リポジトリなら .git の下に切り、印と node_modules の symlink を置く", async () => {
@@ -92,6 +94,8 @@ describe("prepareWorkspace", () => {
     // 切った先は元の内容を持ち、プロジェクト設定の出どころだけが元を指す。
     expect(existsSync(join(path, "README.md"))).toBe(true)
     expect(workdir?.kind === "worktree" ? workdir.origin : undefined).toBe(root)
+    // 着手の印の置き場（切り出し元の `.git`）も返る。
+    expect(prepared.ok ? prepared.gitDir : undefined).toBe(join(root, ".git"))
     // `node_modules` は symlink（実体を複製しない）。
     expect(lstatSync(join(path, "node_modules")).isSymbolicLink()).toBe(true)
     expect(existsSync(join(path, "node_modules", "pkg", "index.js"))).toBe(true)

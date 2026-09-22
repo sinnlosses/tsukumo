@@ -211,6 +211,39 @@ export function worktreeMergeStopNotice(
   ].join("\n")
 }
 
+/**
+ * 1タスクぶんの成果を本体へ入れた結果（git を起こすのは `src/server/adapter/worktree.ts` の
+ * `mergeWorkspace`）。**止まったときは理由を必ず持つ**ので、受け取った側は知らせ漏れなく
+ * 画面へ出せる（`docs/architecture.md`「worktree でセッションを分ける」の決定3）。
+ */
+export type WorkspaceMerge =
+  /** 本体へ入った。`notices` は**畳めなかったときだけ**の1行（畳めたときは空）。 */
+  | { readonly kind: "merged"; readonly notices: readonly string[] }
+  /** 入れるものが無かった（切っていない・コミットが増えていない）。 */
+  | { readonly kind: "skipped" }
+  /** 止まった。**そのセッションは次のタスクへ進まない**（判断は呼び出し側）。 */
+  | { readonly kind: "stopped"; readonly notice: string }
+
+/**
+ * 入れた結果を、**タスクを終えたモデルへ返す文面**にする（`finish` ツールの戻り値。
+ * `src/server/core/session-driver.ts` の `TaskWorkflow`）。
+ *
+ * 止まった回にそのまま {@link worktreeMergeStopNotice} の文面を返すのは、**次の手まで書いてある
+ * のがそれ1つ**だから——画面（`workspaceNotices`）と同じ文面を読ませることで、人と claude が
+ * 別々のことを知っている状態を作らない。**会話の内容は混ざらない**（載るのは git の返事とパス
+ * だけ）。
+ */
+export function workspaceMergeNotice(merge: WorkspaceMerge): string {
+  switch (merge.kind) {
+    case "merged":
+      return ["成果を本体へ入れた", ...merge.notices].join("\n")
+    case "skipped":
+      return "本体へ入れるものは無かった（このセッションのコミットが増えていない）"
+    case "stopped":
+      return merge.notice
+  }
+}
+
 /** 切った worktree から画面に出す姿を組み立てる（**組み立てるのはここだけ**）。 */
 export function cutWorkspace(options: {
   readonly source: string

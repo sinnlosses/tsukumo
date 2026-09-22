@@ -718,6 +718,13 @@ type SessionHost = {
 - **着手の印の判断は `core/task-claim.ts`**（印に何を書くか・読めた印をどうするか）。取れた／
   取れなかったは**ファイルを `wx` で作れたかどうか**で決まり、印には**タスクid・pid・取った
   時刻・作業先**だけを書く。置き場は `tsukumo/claim/<タスクid>`
+- **取りに行く口・終える口は `SessionMode` の `work` に渡る**（`TaskWorkflow`。`claim` / `finish`
+  の2つの MCP ツールになる）。組み立てるのは配線層（`src/session-start.ts` の
+  `createTaskWorkflow`）で、**`.git` の絶対パスは `prepareWorkspace` の戻り値から来る**
+  （git リポジトリでないときだけ undefined で、そこで畳む）。**印の pid は tsukumo の
+  プロセス自身**——短命なコマンドから取ると、取った直後に取り残しとして掃除される
+- **モデルへ返す文面を組むのは `core`**（`taskClaimNotice` / `workspaceMergeNotice`）。
+  `adapter` と配線層は印と git を触るだけで、文言を持たない
 - **`cwd` は worktree、`projectConfigRoot` は切り出し元**（`SessionDriverOptions`）。
   claude の作業先だけが切り替わり、hooks・permissions・`.claude` の各ツリーは元のものが効く
 - **用意できなかったら起動時の前提不足として止める**（`src/main.ts`）。畳めなかった worktree と

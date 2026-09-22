@@ -4,6 +4,7 @@ import {
   decideTaskMark,
   readTaskMark,
   type TaskMark,
+  taskClaimNotice,
   writeTaskMark,
 } from "../../../src/server/core/task-claim.ts"
 
@@ -63,5 +64,29 @@ describe("writeTaskMark / readTaskMark", () => {
     expect(
       readTaskMark(JSON.stringify({ ...MARK, workdir: { kind: "worktree", path: "/repo" } })),
     ).toBeUndefined()
+  })
+})
+
+describe("taskClaimNotice", () => {
+  it("取れた回は、着手してよいとタスクidつきで言い切る", () => {
+    expect(taskClaimNotice({ kind: "claimed", mark: MARK })).toBe(
+      "T-351 の着手の印を取った（着手してよい）",
+    )
+  })
+
+  it("取れなかった回は着手しないと言い切り、先に取っているセッションを並べる", () => {
+    const notice = taskClaimNotice({ kind: "held", by: MARK })
+
+    expect(notice).toContain("T-351 は別のセッションが取っている（着手しない）")
+    expect(notice).toContain("pid 1234")
+    expect(notice).toContain("2026-09-22T15:30:12+09:00")
+    expect(notice).toContain("/repo/.git/tsukumo/worktree/20260922-153012")
+  })
+
+  it("印を置けなかった回も着手しない側へ倒し、理由を添える", () => {
+    const notice = taskClaimNotice({ kind: "failed", reason: "着手の印を置けなかった: /repo/.git" })
+
+    expect(notice).toContain("着手しない")
+    expect(notice).toContain("/repo/.git")
   })
 })

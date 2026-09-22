@@ -9,6 +9,7 @@ import {
   workspaceCwd,
   workspaceProjectConfigRoot,
   worktreeBranch,
+  workspaceMergeNotice,
   worktreeMergeStopNotice,
 } from "../../../src/server/core/workspace.ts"
 import { type Workspace } from "../../../src/shared/workspace.ts"
@@ -186,5 +187,29 @@ describe("worktreeMergeStopNotice", () => {
 
     expect(notice).toContain("git: git merge --no-edit tsukumo/x")
     expect(notice).toContain("git: fatal: 架空の理由")
+  })
+})
+
+describe("workspaceMergeNotice", () => {
+  it("入った回は入ったとだけ返し、畳めなかった行があればその下に並べる", () => {
+    expect(workspaceMergeNotice({ kind: "merged", notices: [] })).toBe("成果を本体へ入れた")
+    expect(workspaceMergeNotice({ kind: "merged", notices: ["worktree を畳めなかった"] })).toBe(
+      "成果を本体へ入れた\nworktree を畳めなかった",
+    )
+  })
+
+  it("入れるものが無かった回は、止まったのではないと分かる文面を返す", () => {
+    expect(workspaceMergeNotice({ kind: "skipped" })).toBe(
+      "本体へ入れるものは無かった（このセッションのコミットが増えていない）",
+    )
+  })
+
+  it("止まった回は、画面に出すのと同じ文面（次の手つき）をそのまま返す", () => {
+    const notice = worktreeMergeStopNotice(
+      { kind: "origin-changed", origin: "/repo" },
+      { branch: "tsukumo/20260922-153012", path: "/repo/.git/tsukumo/worktree/20260922-153012" },
+    )
+
+    expect(workspaceMergeNotice({ kind: "stopped", notice })).toBe(notice)
   })
 })

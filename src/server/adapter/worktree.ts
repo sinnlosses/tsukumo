@@ -29,6 +29,7 @@ import {
   decideWorktreeFold,
   decideWorktreeMerge,
   planWorkspace,
+  type WorkspaceMerge,
   type WorkspaceRepository,
   worktreeBranch,
   worktreeMergeStopNotice,
@@ -71,6 +72,12 @@ export type WorkspacePreparation =
   | {
       readonly ok: true
       readonly workspace: Workspace
+      /**
+       * `.git` の絶対パス（**git リポジトリでないときだけ undefined**）。着手の印はこの下に
+       * 並ぶので、**取りに行く口を作るのに要る**（`src/session-start.ts`）。**外の世界
+       * （`git` の返事）を写した直後の値**なので、受け取った側が入口で畳む。
+       */
+      readonly gitDir: string | undefined
       /** 知らせるだけで起動は続けること（畳めなかった worktree・組み立ての失敗）。 */
       readonly notices: readonly string[]
     }
@@ -88,49 +95,40 @@ export async function prepareWorkspace(options: {
   readonly enabled: boolean
 }): Promise<WorkspacePreparation> {
   const source = sourceDir()
+  // **切るかどうかに関わらず `.git` の場所は返す**（`TSUKUMO_WORKTREE=0` でも着手の印は効く）。
+  const repository = await readWorkspaceRepository(options.cwd)
   const plan = planWorkspace({
     enabled: options.enabled,
-    repository: await readWorkspaceRepository(options.cwd),
+    repository,
     cwd: options.cwd,
     source,
     // 時計と OS のタイムゾーンを読むのはここ（`core` は「いま何時か」を知らない）。
     startedAt: Temporal.Now.plainDateTimeISO(),
   })
+  const gitDir = repository?.gitDir
   if (plan.kind === "direct") {
-    return { ok: true, workspace: plan.workspace, notices: [] }
+    return { ok: true, workspace: plan.workspace, gitDir, notices: [] }
   }
 
-  const { repository } = plan
-  const notices = [...(await foldIdleWorktrees(repository))]
-  const cut = await cutWorktree(repository, plan.names)
+  const notices = [...(await foldIdleWorktrees(plan.repository))]
+  const cut = await cutWorktree(plan.repository, plan.names)
   if (!cut.ok) {
     return cut
   }
 
-  notices.push(...(await furnishWorktree(repository, cut.path)))
+  notices.push(...(await furnishWorktree(plan.repository, cut.path)))
   return {
     ok: true,
     workspace: cutWorkspace({
       source,
       path: cut.path,
       name: cut.name,
-      origin: repository.root,
+      origin: plan.repository.root,
     }),
+    gitDir,
     notices,
   }
 }
-
-/**
- * 1タスクぶんの成果を本体へ入れた結果。**止まったときは理由を必ず持つ**ので、呼び出し側は
- * 知らせ漏れなく画面へ出せる（`docs/architecture.md`「worktree でセッションを分ける」の決定3）。
- */
-export type WorkspaceMerge =
-  /** 本体へ入った。`notices` は**畳めなかったときだけ**の1行（畳めたときは空）。 */
-  | { readonly kind: "merged"; readonly notices: readonly string[] }
-  /** 入れるものが無かった（切っていない・コミットが増えていない）。**何も知らせない。** */
-  | { readonly kind: "skipped" }
-  /** 止まった。**そのセッションは次のタスクへ進まない**（判断は呼び出し側）。 */
-  | { readonly kind: "stopped"; readonly notice: string }
 
 /**
  * このセッションの成果を切り出し元へ入れ、入ったら worktree を畳む。**1タスクごとに呼ぶ**
