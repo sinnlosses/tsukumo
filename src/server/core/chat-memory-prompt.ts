@@ -27,6 +27,7 @@ import {
   type ChatReadbackLimits,
   type ChatRecallResult,
   type ChatSummary,
+  type SessionStart,
 } from "./session-driver.ts"
 
 /**
@@ -91,8 +92,8 @@ const SPEAKER_LABEL = {
 
 /** {@link takeChatMemoryPromptParts} に渡す口と条件。 */
 export type ChatMemorySources = {
-  /** 続きから始めるセッションのID（`SessionLaunchSeed.resume`。新規なら undefined）。 */
-  readonly resume: string | undefined
+  /** 新規に起こすか、続きから始めるか（`SessionLaunchSeed.start`）。 */
+  readonly start: SessionStart
   /** 雑談の要約の写しの口。**undefined は仕事のとき**で、そのときは何も載らない。 */
   readonly chatSummary: ChatSummary | undefined
   /** 雑談の会話のアーカイブの口（読むのはここから起こすパックのぶんだけ）。 */
@@ -112,15 +113,15 @@ export type ChatMemorySources = {
  *
  * **載せる条件は2つで、どちらかに当たれば載せる**（`docs/design.md` 7章。**要約と逐語に共通**）:
  *
- * 1. **続きから始めない**（`resume` が undefined）
+ * 1. **新規に起こす**（`start.kind` が `"new"`）
  * 2. 続きから始めるが、**写しの印が「未渡し」**
  *
- * どちらでもなければ載せない——`resume` した文脈には同じ会話も同じ要約も既にある。
+ * どちらでもなければ載せない——続きから始めた文脈には同じ会話も同じ要約も既にある。
  * **印が無い・読めないときは「未渡し」として扱う**（倒れる方向を「同じものが2度載る」側にし、
  * 黙って記憶が消えるほうへ倒さない）。**載せたら印を「渡し済み」に戻す**（起こし直しのたびに
  * 重ねないため）。
  *
- * **写しがまだ無くても逐語は載る。** 条件を決めるのは `resume` と印だけで、要約があるかどうか
+ * **写しがまだ無くても逐語は載る。** 条件を決めるのは `start` と印だけで、要約があるかどうか
  * ではない（`docs/requirements.md` 4.9）。
  *
  * **名前が `take` で始まるのは、返すだけでなく写しの印を書き換えるから**（2度目の呼び出しは
@@ -134,7 +135,7 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
 
   const record = chatSummary.read()
   const delivered = record?.delivered ?? false
-  if (sources.resume !== undefined && delivered) {
+  if (sources.start.kind === "resume" && delivered) {
     return []
   }
 

@@ -27,9 +27,9 @@
     "loopable": "Y",
     "dependencies": ["T-307"],
     "summary": "セッションの起こし方（resume）を合併型にする",
-    "status": "todo",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "`resume: string | undefined` を `start: SessionStart`（`{kind:\"new\"} | {kind:\"resume\"; sessionId}`）へ。`session-driver.ts` / `session-launch.ts` / `chat-memory-prompt.ts` の3つから消え、`findResumeSession` の戻り値も `Promise<SessionStart>` に。外の世界（`findSessionToResume` の `string | undefined`）は `src/session-start.ts` の `findPackSessionToResume` で畳み、画面へ渡す `sessions-changed.current` は `session-launch.ts` で `string | undefined` に畳み直している。**`sdk-driver.ts` の `QuerySeedOptions.resume` だけは `| undefined` のまま残した**——`query()` 自身の語彙（`resume?: string`）をそのまま写す adapter 側の1行で、規約「「無いかもしれない」値」の例外1に当たる（値の出所だけ `options.start` からの導出に変更）。`bun run check` 緑: 1203 pass / 0 fail（98ファイル・2400 expect）。目視は `TSUKUMO_VIEW_PORT=7411 TSUKUMO_HOME=/tmp/tsukumo-t309` で2回起こし、1回目のやり取りが2回目の画面に復元され、サイドバーのセッション欄が `7411 ・9/22 20:03（表示中）` になることを確認。",
     "task": "## 背景\n\n`resume: string | undefined` が「新規に起こす」と「続きから起こす」の2つの状態を表していて、\n4箇所に散っている——`src/server/core/session-driver.ts:250` /\n`src/server/core/session-launch.ts:23` / `src/server/adapter/sdk-driver.ts:227` /\n`src/server/core/chat-memory-prompt.ts:95`。\n\n`undefined` が「セッションIDが無い」ではなく「**新規である**」という意味を運んでいるので、\n`docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所に当たる\n（調査は `docs/research/undefined-reduction.md` 2.1 の #5）。\n\n## やること\n\n1. `resume` を **`start: { kind: \"new\" } | { kind: \"resume\"; sessionId: string }`** の\n   判別可能な合併型にする\n2. 上の4箇所と、`findResumeSession` の戻り値の扱い（`session-launch.ts:67,116`）を直す\n3. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 上の4ファイルから `resume: string | undefined` が消えている\n- 新規の起動と、続きからの起動（`findResumeSession` が当たる場合）の両方が従来どおり働く\n  （**tsukumo を2回起こして続きから繋がることを確かめ、`evidence` に書く**）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- 雑談まわりのトークン消費を減らすタスク群と**同じファイルを触る**。片方が `doing` の間は着手しない\n"
   },
   {

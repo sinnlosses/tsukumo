@@ -223,7 +223,13 @@ export type QuerySeedOptions = {
   readonly permissionMode: PermissionMode
   readonly model: string
   readonly effort: EffortLevel
-  /** 続きから始めるセッションのID。新規に起こすときは undefined（SDK 側は省略と同じ扱い）。 */
+  /**
+   * 続きから始めるセッションのID。新規に起こすときは undefined（SDK 側は省略と同じ扱い）。
+   * **ここだけは `SessionDriverOptions.start`（判別可能な合併型）を `query()` 自身の語彙
+   * （`resume?: string`）へ畳んだ値**——`query()` へそのまま渡す形を検査できるように
+   * `buildQuerySeedOptions` を切り出してあるのと同じ理由で、この1箇所だけ外の世界（SDK）の
+   * 形をそのまま写す（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
+   */
   readonly resume: string | undefined
 }
 
@@ -240,7 +246,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     permissionMode: options.permissionMode,
     model: DEFAULT_MODEL,
     effort: DEFAULT_EFFORT,
-    resume: options.resume,
+    resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
   }
 }
 

@@ -261,6 +261,19 @@ export type SessionMode =
       readonly chatRecall: ChatRecall
     }
 
+/**
+ * このセッションを新規に起こすか、続きから始めるか（`docs/requirements.md` 4.8「セッションの
+ * 復元」）。**`resume: string | undefined` が「セッションIDが無い」ではなく「新規である」という
+ * 意味を運んでいたのを判別可能な合併型にした**（`docs/coding-standards.md`「複数の「無い」が
+ * 1つの状態」）。続きから始めるIDを選ぶのは `src/server/adapter/sdk-driver.ts` の
+ * `findSessionToResume`。
+ */
+export type SessionStart =
+  /** 新規に起こす。 */
+  | { readonly kind: "new" }
+  /** 続きから始める（`sessionId` が続きのセッションのID）。 */
+  | { readonly kind: "resume"; readonly sessionId: string }
+
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */
   readonly cwd: string
@@ -273,11 +286,8 @@ export type SessionDriverOptions = {
    * 決めない**（docs/design.md 5章）。
    */
   readonly systemPromptAppend: string
-  /**
-   * 続きから始めるセッションのID（undefined なら新規に起こす。docs/requirements.md 4.8）。
-   * 選ぶのは `src/server/adapter/sdk-driver.ts` の `findSessionToResume`。
-   */
-  readonly resume: string | undefined
+  /** 新規に起こすか、続きから始めるか（`docs/requirements.md` 4.8）。 */
+  readonly start: SessionStart
   /**
    * このセッションに付ける印（組み立ては `src/server/core/config.ts` の `sessionTag`。キャラクター
    * パックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの

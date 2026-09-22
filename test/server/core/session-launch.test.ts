@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { type CharacterSelection } from "../../../src/server/core/character-selection.ts"
-import { type SessionDriver } from "../../../src/server/core/session-driver.ts"
+import { type SessionDriver, type SessionStart } from "../../../src/server/core/session-driver.ts"
 import {
   createSessionLaunch,
   type SessionLaunchPorts,
@@ -84,14 +84,16 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     watchTasks: () => ({ close: () => calls.push("watchTasks:close") }),
     findResumeSession: (pack, chat) => {
       calls.push(`findResumeSession:${pack.name}:${modeOf(chat)}`)
-      return Promise.resolve(`prev-${modeOf(chat)}-session`)
+      const sessionId = `prev-${modeOf(chat)}-session`
+      return Promise.resolve({ kind: "resume", sessionId })
     },
     listSessions: (pack, chat) => {
       calls.push(`listSessions:${pack.name}:${modeOf(chat)}`)
       return Promise.resolve(CHOICES)
     },
     startDriver: (seed) => {
-      calls.push(`startDriver:${seed.pack.name}:${modeOf(seed.chat)}:${seed.resume ?? ""}`)
+      const resumeId = seed.start.kind === "resume" ? seed.start.sessionId : ""
+      calls.push(`startDriver:${seed.pack.name}:${modeOf(seed.chat)}:${resumeId}`)
       return stub.driver
     },
     restoreEvents: (sessionId) => {
@@ -162,7 +164,7 @@ describe("createSessionLaunch", () => {
 
   it("続きから始めるセッションが無ければ、履歴を流さない", async () => {
     const harness = createHarness({
-      findResumeSession: () => Promise.resolve(undefined),
+      findResumeSession: (): Promise<SessionStart> => Promise.resolve({ kind: "new" }),
     })
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {

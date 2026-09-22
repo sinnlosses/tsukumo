@@ -67,14 +67,18 @@ function fakeChatArchive(
   }
 }
 
-/** 既定の呼び出し（写しも逐語もある状態）。 */
+/**
+ * 既定の呼び出し（写しも逐語もある状態）。**`resume` は呼び出し側の書きやすさのための
+ * 短縮形**（`undefined` なら新規、文字列なら続きのセッションID）で、ここで
+ * `SessionStart` へ畳んでから渡す。
+ */
 function take(
   resume: string | undefined,
   chatSummary: ChatSummary | undefined,
   chatArchive: ChatArchive,
 ): readonly string[] {
   return takeChatMemoryPromptParts({
-    resume,
+    start: resume === undefined ? { kind: "new" } : { kind: "resume", sessionId: resume },
     chatSummary,
     chatArchive,
     packName: PACK_NAME,

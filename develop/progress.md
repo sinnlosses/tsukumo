@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 セッションの起こし方を合併型にした（T-309）
+
+`resume: string | undefined` を `start: SessionStart`（`new` か `resume`）に畳み、core の3ファイル
+から `| undefined` を消した。外の世界の「見つからない」は `src/session-start.ts` の入口で、画面へ
+渡す `current` は `session-launch.ts` で、それぞれ1箇所に畳んである。
+
 ### 2026-09-22 画面のナビの帯を作り、古い口を外した（T-356）
 
 `docs/design.md` 13.9 のとおり全画面の最上部に帯を置き（`src/browser/features/screen-nav/`）、

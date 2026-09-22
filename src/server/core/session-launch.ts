@@ -12,7 +12,7 @@
 import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { type CharacterSelection, type NamedCharacterPack } from "./character-selection.ts"
-import { type SessionDriver } from "./session-driver.ts"
+import { type SessionDriver, type SessionStart } from "./session-driver.ts"
 
 /** 駆動と同じ間だけ動く見張り（いまは `develop/tasks.json`）。駆動を閉じると一緒に閉じる。 */
 export type SessionWatcher = { readonly close: () => void }
@@ -20,8 +20,8 @@ export type SessionWatcher = { readonly close: () => void }
 /** これから起こす駆動の種。**`core` はパックの中身を知らない**ので、決まった3つだけを渡す。 */
 export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
   readonly pack: Pack
-  /** 続きから始めるセッションのID（新規に起こすときは undefined）。 */
-  readonly resume: string | undefined
+  /** 新規に起こすか、続きから始めるか（`SessionStart`）。 */
+  readonly start: SessionStart
   /**
    * 雑談モードで起こすか（`docs/requirements.md` 4.9）。**`systemPrompt` はセッションを
    * 起こすときに固定される**ので、レポートの記法を外すにはここで決まっている必要がある。
@@ -78,11 +78,11 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /** 駆動と同じ間だけ動く見張りを起こす。流すイベントは駆動のものと同じ受け口へ。 */
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
   /**
-   * そのパックの、そのモードの続きから始めるセッションを探す（無ければ undefined ＝ 新規に
-   * 起こす）。**雑談と仕事は別のセッション**なので、引く印も分かれる
+   * そのパックの、そのモードの続きから始めるセッションを探す（見つからなければ
+   * `{ kind: "new" }`）。**雑談と仕事は別のセッション**なので、引く印も分かれる
    * （`docs/requirements.md` 4.9）。
    */
-  readonly findResumeSession: (pack: Pack, chat: boolean) => Promise<string | undefined>
+  readonly findResumeSession: (pack: Pack, chat: boolean) => Promise<SessionStart>
   /** 駆動を1つ起こす（本物か偽物かはここが選ぶ）。 */
   readonly startDriver: (
     seed: SessionLaunchSeed<Pack>,
@@ -141,22 +141,24 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // **キャラクターごと・モードごとに別のセッションを持つ**（docs/design.md 7章、
     // docs/requirements.md 4.9）。起動時も切り替え時も、これから起こす側の続きを探す。
     // **画面から選ばれたときだけは探さない**（選ばれたIDがそのまま続きになる）。
-    const resume =
+    const start: SessionStart =
       request.resume.by === "id"
-        ? request.resume.sessionId
+        ? { kind: "resume", sessionId: request.resume.sessionId }
         : await ports.findResumeSession(pack, chat)
     // **切り替え先の一覧も、起こすたびに引き直す**（画面はこのイベントでしか一覧を知れない。
     // 起こし直すと状態が初期値へ戻るので、`character-changed` と同じ扱い）。**どれを出して
-    // いるかも一緒に流す**ので、最初の依頼を送る前でも画面は居場所を指せる。
+    // いるかも一緒に流す**ので、最初の依頼を送る前でも画面は居場所を指せる。**画面へ渡す形
+    // （`current: string | undefined`）はここで畳む**——`SessionStart` は core と adapter の
+    // 間の語彙で、画面へ運ぶ語彙ではない。
     onEvent({
       kind: "sessions-changed",
       sessions: await ports.listSessions(pack, chat),
-      current: resume,
+      current: start.kind === "resume" ? start.sessionId : undefined,
     })
-    const driver = ports.startDriver({ pack, resume, chat }, onEvent)
+    const driver = ports.startDriver({ pack, start, chat }, onEvent)
 
-    if (resume !== undefined) {
-      void replayRestoredSession(ports, resume, pack, onRestoredEvent)
+    if (start.kind === "resume") {
+      void replayRestoredSession(ports, start.sessionId, pack, onRestoredEvent)
     }
 
     return {

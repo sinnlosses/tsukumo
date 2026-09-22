@@ -29,6 +29,7 @@ import {
   DEFAULT_PERMISSION_MODE,
   type SessionDriver,
   type SessionMode,
+  type SessionStart,
 } from "./server/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import {
@@ -158,7 +159,7 @@ function startDriver(
   // 文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**ので、
   // 載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
   const chatMemoryParts = takeChatMemoryPromptParts({
-    resume: seed.resume,
+    start: seed.start,
     chatSummary: mode.kind === "chat" ? mode.chatSummary : undefined,
     chatArchive,
     packName: seed.pack.name,
@@ -174,7 +175,7 @@ function startDriver(
     expressions: expressionChoices(seed.pack.definition),
     permissionMode: DEFAULT_PERMISSION_MODE,
     systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
-    resume: seed.resume,
+    start: seed.start,
     tag: sessionTag(seed.pack.name, seed.chat, viewPort),
     mode,
     onEvent,
@@ -238,7 +239,7 @@ async function listPackSessions(
 
 /**
  * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す
- * （docs/requirements.md 4.8）。無ければ undefined（新規に起こす）。
+ * （docs/requirements.md 4.8）。見つからなければ `{ kind: "new" }`（新規に起こす）。
  *
  * **雑談と仕事で引く印が違う**（docs/requirements.md 4.9）。雑談へ入っても仕事の会話が続きに
  * ならないのはここで、代わりに**そのパックで一度も雑談のターンを終えていなければ新規から
@@ -250,6 +251,11 @@ async function listPackSessions(
  * **印はターンが終わって3秒後に付く**ので、ターンを1つも終えずに離れたセッションは
  * 次に来たときに見つからず、新規から始まる（`SESSION_TAG_DELAY_MS`。4.8「復元できなかったとき
  * どうするか」の範囲）。fake driver は claude を起こさないので、そもそも探さない。
+ *
+ * **`findSessionToResume` の「見つからない」（`string | undefined`）をここで `SessionStart` へ
+ * 畳む**——見つかったかどうかという外の世界の事実と、それが運ぶ「新規か続きか」という
+ * 意味とを、この入口で1つの合併型に変える（`docs/coding-standards.md`「「無い」を層をまたいで
+ * 運ばない」）。
  */
 async function findPackSessionToResume(
   config: Config,
@@ -257,8 +263,11 @@ async function findPackSessionToResume(
   characterName: string,
   chat: boolean,
   viewPort: number,
-): Promise<string | undefined> {
-  return config.newSession || config.driver === "fake"
-    ? undefined
-    : findSessionToResume(cwd, sessionTag(characterName, chat, viewPort))
+): Promise<SessionStart> {
+  if (config.newSession || config.driver === "fake") {
+    return { kind: "new" }
+  }
+
+  const sessionId = await findSessionToResume(cwd, sessionTag(characterName, chat, viewPort))
+  return sessionId === undefined ? { kind: "new" } : { kind: "resume", sessionId }
 }
