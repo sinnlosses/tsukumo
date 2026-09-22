@@ -665,7 +665,7 @@ describe("ChatView の立ち絵をつつく", () => {
     )
 
     // **`disabled` にはしない**（キーボードで辿り着ける道ごと消える）。押せないことは
-    // `aria-disabled` で伝え、**案内は出さない**（2026-09-22 ユーザーの指示）。
+    // `aria-disabled` で伝え、**案内は出さない**（`docs/design.md` 13.7）。
     const button = blockedPortraitButton()
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(screen.queryByText(NUDGE_HINT)).toBe(null)

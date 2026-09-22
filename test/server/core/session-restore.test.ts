@@ -169,7 +169,7 @@ describe("selectSessionToResume", () => {
     expect(selectSessionToResume(sessions, SECOND_TAG)).toBeUndefined()
   })
 
-  // 2026-09-22 まで目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。
+  // かつて目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。
   // いま動いている tsukumo が拾えなくならないよう、元のポートへ戻して選ぶ。
   it("1文字だった昔の目印は、元のポートの続きとして選ぶ（互換）", () => {
     const sessions = [

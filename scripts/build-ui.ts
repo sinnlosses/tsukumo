@@ -1,5 +1,5 @@
 // ブラウザ側（`src/browser/`）を組み立てて `dist/browser/` に置く。**起動時ではなくここで作る**
-// （2026-09-21 決定。`src/server/adapter/bundle.ts` 冒頭）。
+// （`src/server/adapter/bundle.ts` 冒頭）。
 //
 // 打つのは `bun install` のあとに1回と、`src/browser/` を直したあと。`bun run dev` の見張りは
 // 同じ場所へ出し直すので、開発中は打ち直さなくてよい。成果物は `.gitignore` してあるので、

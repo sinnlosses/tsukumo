@@ -5,8 +5,8 @@
 // `<dialog>` の開閉そのものは機能の語彙を持たないので `browser/hooks/use-modal-dialog.ts`。
 // ここはそれを呼んで、**この機能に固有のもの**だけを足す。
 //
-// **行への畳み方（`boardRows`）もこのファイルに同居させる**（2026-09-22 ユーザーの選択）。
-// 呼ぶのはこのフック1つで、`components/` は畳んだ `BoardRow` を受け取るだけ。
+// **行への畳み方（`boardRows`）もこのファイルに同居させる。** 呼ぶのはこのフック1つで、
+// `components/` は畳んだ `BoardRow` を受け取るだけ。
 // **CSS の class 名はここでは決めない**（`domain/task-status.ts` と各部品の持ち物）。
 
 import { useCallback, useMemo, type MouseEvent, type RefObject } from "react"

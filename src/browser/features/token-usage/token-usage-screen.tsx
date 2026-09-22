@@ -11,8 +11,7 @@
 // **画面に会話の文面は出ない**（集計にそもそも文面が入っていない。
 // `src/shared/token-usage-summary.ts`）。
 //
-// **入る口も会話へ戻る口も、全画面の最上部の帯**（`features/screen-nav/`。13.9）にある
-// （2026-09-22 まではこの画面の左上に戻る口があり、入る口は hash の直打ちだけだった）。
+// **入る口も会話へ戻る口も、全画面の最上部の帯**（`features/screen-nav/`。13.9）にある。
 // **期間の既定は7日**で、30日にも切り替えられる（`src/shared/token-usage-summary.ts`）。
 
 import { useQuery } from "@tanstack/react-query"

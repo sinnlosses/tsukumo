@@ -154,6 +154,36 @@ describe("経路名のリテラル", () => {
   })
 })
 
+// コメントに特定の日付を書かない（`docs/coding-standards.md`「コメント」の表。「いつ決まったか・
+// 誰が言ったか（特定の日付・「〜の指摘」「ユーザーの決定」）」は禁止で、理由（Why / Why not）は
+// 残す。日付つきの記録は `docs/architecture.md` と `docs/history/` が持つ）。`oxlint` と同じ
+// `src` `test` `scripts` の3つを見る（`package.json` の `lint`。`docs/` `develop/` は対象外——
+// ドキュメントは日付つきの記録を持つのが正しい）。
+//
+// **行頭が `//` `*` `/*` のコメント行だけ**を対象にする。行の途中にある `//` は文字列リテラルの
+// 中の `//` と区別できないので拾わない——`test/` のフィクスチャに出てくる `date` フィールドの
+// ようなテストデータの日付は、行頭がコメントでないのでこれで自然に除外される。
+const COMMENT_LINE_START = /^\s*(\/\/|\*|\/\*)/
+const SPECIFIC_DATE = /\d{4}-\d{2}-\d{2}/
+
+describe("コメント中の日付", () => {
+  it("src / test / scripts の *.ts / *.tsx で、コメント行が特定の日付（YYYY-MM-DD）を含まない", () => {
+    const offenders = ["src", "test", "scripts"].flatMap((dirName) => {
+      const root = fileURLToPath(new URL(`../${dirName}`, import.meta.url)).replace(/\/$/, "")
+      return listSourceFiles(root).flatMap((relPath) => {
+        const lines = readFileSync(`${root}/${relPath}`, "utf8").split("\n")
+        return lines.flatMap((line, index) =>
+          COMMENT_LINE_START.test(line) && SPECIFIC_DATE.test(line)
+            ? [`${dirName}/${relPath}:${index + 1}`]
+            : [],
+        )
+      })
+    })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
 // `browser/features/` の中の横断 import を制限する（`docs/design.md` 2章「領域の機能と、置かれる機能」）。
 // 機能は2種類あり、**辺は「領域 → 置かれる機能」の1方向だけ**を許す。
 //
