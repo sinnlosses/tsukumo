@@ -12,6 +12,7 @@ import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../shared/task-summary.ts"
 import styles from "./task-board.module.css"
+import { taskStatusClass } from "./task-status.ts"
 
 export type TaskListProps = {
   readonly tasks: readonly TaskSummaryItem[] | undefined
@@ -100,18 +101,4 @@ function TaskStatusBadge(props: { readonly status: string }): ReactElement {
       {props.status}
     </span>
   )
-}
-
-/** todo / doing / done は色で区別し、それ以外（想定外の値）は注意色にする。文字は status のまま出す。 */
-export function taskStatusClass(status: string): string {
-  if (status === "todo") {
-    return styles["task-status-todo"] ?? ""
-  }
-  if (status === "doing") {
-    return styles["task-status-doing"] ?? ""
-  }
-  if (status === "done") {
-    return styles["task-status-done"] ?? ""
-  }
-  return styles["task-status-other"] ?? ""
 }

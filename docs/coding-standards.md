@@ -40,7 +40,7 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 | ### null は自前の型に出さない                   | `null` を書いてよい3つの場所と、境界で畳む理由                                                               |
 | ## 会話内容の扱い                               | **会話（SDK のイベント・transcript）を外へ出さない**。最優先の規約。書き出す例外は2つ、読み戻す例外は1つだけ |
 | ## 層と依存の向き                               | 4つの単位と、許した import の辺。命名（単数形と `browser/` の例外）                                          |
-| ## React                                        | `useEffect` を書いてよい4類型と、代わりに使うもの                                                            |
+| ## React                                        | `useEffect` を書いてよい4類型と、代わりに使うもの。**部品は `function` で書く**                              |
 | ## テスト                                       | 置き場所・モック・カバレッジ・消す/足す・描画の扱い                                                          |
 | ## Bun固有APIに寄せない                         | `Bun.*` ではなく `node:` の標準APIを使う理由と、唯一の例外                                                   |
 | ## 整形の対象外                                 | `.claude/` を oxfmt にかけない理由                                                                           |
@@ -453,6 +453,22 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 `ref.current` に触ってよいのはイベントハンドラと effect の中だけ。レンダー中に書くと、React が
 レンダーをやり直したり捨てたりしたときに値がずれる。「最新の値をクロージャから読みたい」だけなら
 `useEffectEvent`。
+
+### 部品は `function` で書く
+
+`ReactElement` を返す関数は**関数宣言**（`function Name(props: Props): ReactElement`）で書く。
+`const Name = (props) => ...` の形にしない。定義の形が2つあると、**並び順の規約
+（「外から使うもの → その内部で使うもの」）が守れなくなる**ことがある——巻き上げがあるから
+「使う側より下に置く」が書けるのであって、`const` は宣言より前で使えない。
+
+**例外は `memo` で包むときだけ。** `const <部品名> = memo(<部品名>View)` と書き、中身は
+`function <部品名>View(...)` の関数宣言のまま下に置く（`features/main-view/report.tsx` の
+`Report` と `features/task-board/components/task-table.tsx` の `TaskTable`）。
+**`memo(function X() { ... })` の形にしない** — 定義が `const` の右辺に入ると、その部品だけ
+本体が上に来て並び順が逆になる。
+
+この規約は**部品（`ReactElement` を返す関数）とフック**にかかる。JSX を値として持つだけの定数
+（`task-table.tsx` の `TASK_TABLE_HEAD` のような静的な見出し行）は関数ではないので `const` のまま。
 
 ## テスト
 

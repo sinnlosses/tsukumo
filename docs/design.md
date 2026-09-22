@@ -203,9 +203,11 @@ src/
       token-usage/            トークン消費の画面（グラフと集計）
       character-screen/       キャラクター画面と作る画面（13.6）。立ち絵・差し色の差し替え、使う人が変える色
       task-board/             タスク一覧。TaskList（区画の中身）・TaskBoard（表のモーダルの入口）・
-                              PresentationalTaskBoard（見た目）。**領域を持たず、サイドバーに
-                              置いてもらう機能**（下の「領域の機能と、置かれる機能」）
+                              PresentationalTaskBoard（器）と、畳み方（board-row.ts・
+                              task-status.ts）。**領域を持たず、サイドバーに置いてもらう機能**
+                              （下の「領域の機能と、置かれる機能」）
         hooks/                その機能だけが読むフック（`use-task-board.ts`）
+        components/           その機能だけが使う部品（TaskTable・TaskRow・ReadinessCell・TaskIdList）
                               （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
     components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
     hooks/                    機能の語彙を持たない React のフック（`use-modal-dialog.ts`）
@@ -219,7 +221,7 @@ characters/<name>/            character.json・persona.md・素材
 **ファイル名は概念**（原則5）。`helpers/` と `common/` は作らない（`lib/` と `utils/` を
 置く基準は下の「`lib/` と `utils/` に置く基準」）。**単数形の規約は
 `src/browser/` の置き場所のディレクトリ（`features/` `components/` `hooks/` `lib/` `stores/`
-`styles/` と、機能の中の `hooks/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
+`styles/` と、機能の中の `hooks/` `components/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
 `adapter` と、
 機能の中のファイル名は単数形のまま。`main-view/` のように機能の名前は用語集の語に合わせる）。
 
@@ -307,20 +309,34 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 `hooks/` を「採らない」と書いていた）。後続の分割（`chat-view` / `composer` / キャラクター画面の
 フォームなど）もこの形に揃える。
 
-| ファイル                    | 持つもの                                                              | 持たないもの               |
-| --------------------------- | --------------------------------------------------------------------- | -------------------------- |
-| `<機能>.tsx`（container）   | フックを呼び、受け取った値と呼び先を presenter へ渡すだけ             | JSX の中身・算出・条件分岐 |
-| `hooks/use-<機能>.ts`       | state・副作用・イベントの読み替え。**画面に出す形の値と呼び先を返す** | JSX                        |
-| `presentational-<機能>.tsx` | 見た目。受け取ったものをそのまま描く                                  | **フックを1つも持たない**  |
+| ファイル                    | 持つもの                                                              | 持たないもの                       |
+| --------------------------- | --------------------------------------------------------------------- | ---------------------------------- |
+| `<機能>.tsx`（container）   | フックを呼び、受け取った値と呼び先を presenter へ渡すだけ             | JSX の中身・算出・条件分岐         |
+| `hooks/use-<機能>.ts`       | state・副作用・イベントの読み替え。**画面に出す形の値と呼び先を返す** | JSX                                |
+| `presentational-<機能>.tsx` | 器だけ。受け取ったものを `components/` に渡す                         | **フックを1つも持たない**・算出    |
+| `components/*.tsx`          | 部品ひとつずつ。class を付けて値を置く                                | 算出・判定（**畳んだ値で受ける**） |
+| 機能直下の `*.ts`           | 畳み方・対応表（`board-row.ts`・`task-status.ts`）                    | JSX・フック                        |
 
 `task-board` がその1件目:
 
 ```
 features/task-board/
   task-board.tsx                  container。useTaskBoard を呼んで PresentationalTaskBoard へ渡す
-  hooks/use-task-board.ts         <dialog> の ref と、backdrop のクリックを閉じる操作に読み替える呼び先
-  presentational-task-board.tsx   <dialog> の器・表・行・セル（フック無し）
+  hooks/use-task-board.ts         <dialog> の ref・backdrop のクリック・行の useMemo
+  board-row.ts                    一覧を「表の行」へ畳む純関数（値が無い列の「—」・loopable の空欄）
+  task-status.ts                  status → 色の class（区画の一覧と表の行の両方が読む）
+  presentational-task-board.tsx   <dialog> の器（フック無し）
+  components/task-table.tsx       表（memo）
+  components/task-row.tsx         1行
+  components/readiness-cell.tsx   着手の列
+  components/task-id-list.tsx     IDの並び
 ```
+
+- **部品に算出を残さない。** 「値が無いときどうするか」「どれを出すか」は `board-row.ts` で
+  畳んでから渡す。部品に残ってよいのは **class を選ぶ分岐だけ**（`task-status.ts` の
+  呼び出しのように、CSS の名前が絡むもの）
+- **`components/` は機能の中の部品**で、`browser/components/`（機能の語彙を持たない部品）とは
+  別物。**読み手が2つの機能にまたがったら `browser/components/` へ上げる**
 
 - **`presentational-` の接頭辞は、この形のときだけ付けてよい**（`CLAUDE.md` 原則5 の
   「置き場所を名前にしたファイルは作らない」の例外）。**container と1対1で対になっている**

@@ -20,11 +20,11 @@ export type TaskBoardProps = {
 export function TaskBoard(props: TaskBoardProps): ReactElement {
   // 分解して受けるのは、ref を持つ入れ物のまま描画中に読むと `react(refs)` が落ちるため
   // （`presentational-task-board.tsx` も同じ理由で props を分解している）。
-  const { dialogRef, onDialogClick } = useTaskBoard(props.open, props.onClose)
+  const { dialogRef, onDialogClick, rows } = useTaskBoard(props.tasks, props.open, props.onClose)
 
   return (
     <PresentationalTaskBoard
-      tasks={props.tasks}
+      rows={rows}
       ref={dialogRef}
       onClose={props.onClose}
       onDialogClick={onDialogClick}

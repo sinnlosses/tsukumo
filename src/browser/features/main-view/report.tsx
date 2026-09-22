@@ -27,7 +27,9 @@ export type ReportProps = {
   readonly turnId: number
 }
 
-export const Report = memo(function Report(props: ReportProps): ReactElement {
+export const Report = memo(ReportView)
+
+function ReportView(props: ReportProps): ReactElement {
   const blocks = splitReportBlocks(props.markdown)
   // **完成した DOM をそのまま渡す**（演出は見せる範囲を進めるだけで、塊の中身には触らない）。
   const rootRef = useReportReveal(props.reveal, props.turnId)
@@ -39,13 +41,15 @@ export const Report = memo(function Report(props: ReportProps): ReactElement {
       ))}
     </div>
   )
-})
+}
 
 /**
  * 塊1つぶんの Markdown。**鍵（`key`）も props もその塊の文字列そのもの**なので、塊の内容が
  * 変わらない限り React はこの部品を再描画しない（`React.memo` の既定の浅い比較で足りる。
  * 文字列どうしは値が同じなら === になる）。
  */
-const ReportBlock = memo(function ReportBlock(props: { readonly text: string }): ReactElement {
+const ReportBlock = memo(ReportBlockView)
+
+function ReportBlockView(props: { readonly text: string }): ReactElement {
   return <Markdown text={props.text} />
-})
+}

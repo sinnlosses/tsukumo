@@ -68,10 +68,11 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 31セレクタと `@media` を `task-board.module.css` へ分けた。機能を「領域」と「置かれる機能」の
 2種類に割り、辺は「領域 → 置かれる機能」の1方向だけを許す検査にした。
 
-**同日、ユーザーの指摘で3点を直した**（コミットは別）。区画ひとまとまり（`task-section.tsx`）は
-サイドバー側へ、`<dialog>` の開閉フックは機能の語彙を持たないので新しい箱
-`src/browser/hooks/` へ移し、`task-board` は container / `hooks/use-task-board.ts` /
-`presentational-task-board.tsx` の3つに割った（`docs/design.md` 2章の2節を書き換え）。
+**同日、ユーザーの指摘を2回受けて形を直した**（コミットは別）。区画ひとまとまり
+（`task-section.tsx`）はサイドバー側へ、`<dialog>` の開閉フックは機能の語彙を持たないので
+新しい箱 `src/browser/hooks/` へ移した。`task-board` は container / `hooks/use-task-board.ts` /
+`presentational-task-board.tsx` / `components/`（4部品）/ 畳み方の純関数（`board-row.ts`・
+`task-status.ts`）に分け、**部品は関数宣言で書く**規約を `docs/coding-standards.md` に足した。
 
 ### 2026-09-22 画面からセッションを選んで切り替えられるようにした（T-348）
 

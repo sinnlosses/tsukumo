@@ -113,7 +113,7 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
   決める。`helpers.ts` / `utils.ts` / `common.ts` のような**置き場所を名前にしたファイルは作らない**。
   **ファイルは単数形**にし、複数は「複数返す」関数名の側で表す。**ディレクトリも単数形。ただし
   置き場所を名前にしたディレクトリ（`src/browser/` の `features/` `components/` `hooks/` `stores/`
-  `styles/`、機能の中の `hooks/`、どの層にも作ってよい `lib/` `utils/`）だけ
+  `styles/`、機能の中の `hooks/` `components/`、どの層にも作ってよい `lib/` `utils/`）だけ
   bullet-proof-react の名前をそのまま使う**。**`presentational-<機能>.tsx` は container と対に
   なっているときだけ例外として許す**（`docs/design.md` 2章「機能の中を分ける」）。
   **`lib/` と `utils/` のどちらに置くかの基準は `docs/design.md` 2章
@@ -171,6 +171,9 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 - **`null` を自前の型・関数の戻り値・`shared` に出さない。** 書いてよいのは React の作法
   （`useRef` の初期値・「何も描かない」）・外来APIの戻り値・`!== null` の型ガードだけで、
   外来の `null` は受け取った境界で `undefined` に畳む
+- **`ReactElement` を返す関数は関数宣言（`function`）で書く。** `const` に入れてよいのは
+  `memo` で包むときだけで、中身は `function <部品名>View(...)` のまま下に置く
+  （`docs/coding-standards.md`「部品は `function` で書く」）
 - **`useEffect` は「React の外と同期する」4類型だけ**（外部システムの購読・React の外にある
   状態への書き込み・タイマー・外部からの読み込み）。外れるものは書かず、まず
   `docs/coding-standards.md`「React」節の代替の表を見る。**依存配列を手で間引かない**
