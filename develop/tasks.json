@@ -181,9 +181,9 @@
     "loopable": "Y",
     "dependencies": ["T-309"],
     "summary": "雑談の要約の口を、呼ぶ側の分岐1回に寄せる",
-    "status": "doing",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "ChatMemorySources.chatSummary を ChatSummary にし、「仕事のときは載せない」を session-start.ts の mode.kind === \"chat\" の分岐1回に寄せた（? mode.chatSummary : undefined は0件）。「仕事のとき（undefined）は載らない」のテストは落とした: 判断が呼ぶ側の非公開関数 startDriver に移り、core のテストでは検査できないため。要約・旗・逐語の既存ケースは全 pass。bun run check: 1254 pass / 0 fail（1件減はこの削除）",
     "task": "## 背景\n\nT-308 で `SessionDriverOptions` の雑談の4つの口を `mode: SessionMode`\n（`{ kind: \"work\" } | { kind: \"chat\"; ... }`）に畳んだ。**畳んだ直後にほどき直している箇所が\n1つ残っている**——`src/session-start.ts` の\n\n```ts\nchatSummary: mode.kind === \"chat\" ? mode.chatSummary : undefined,\n```\n\nで、受け手の `ChatMemorySources.chatSummary`（`src/server/core/chat-memory-prompt.ts:97`）が\n`ChatSummary | undefined` のままだから。`takeChatMemoryPromptParts` の先頭にある\n`if (chatSummary === undefined) return []` は「仕事のときは何も載せない」という**呼ぶ側が\n既に知っている条件**を、もう一度内側で判定している。\n\n`docs/coding-standards.md`「「無い」は入口で畳み、内側の関数は「必ず値がある」型で受ける\n（層をまたいで運ばない）」の未適用箇所。調査の一覧（`docs/research/undefined-reduction.md`\n2.1）には `resume`（#5）として別の行だけが載っていて、この `chatSummary` の行は入っていない。\n\n## やること\n\n1. `ChatMemorySources.chatSummary` を `ChatSummary`（`| undefined` なし）にする\n2. `takeChatMemoryPromptParts` の先頭の `undefined` 判定を落とす。**「仕事のときは載せない」の\n   判断は呼ぶ側（`src/session-start.ts`）の `mode.kind === \"chat\"` の分岐1回に寄せる**\n   （雑談でないときは `takeChatMemoryPromptParts` を呼ばず空の配列にする）\n3. 関数の JSDoc と 21行目あたりのコメントから「`chatSummary` が undefined のとき」の説明を、\n   実際の形（呼ばれるのは雑談のときだけ）に直す\n4. `test/server/core/chat-memory-prompt.test.ts` の「仕事のとき（undefined）は何も載らない」を\n   検査しているケースを、呼ぶ側の分岐を写した形に置き換えるか落とす（**落とすなら\n   `evidence` に理由を1行書く**）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/server/core/chat-memory-prompt.ts` から `chatSummary: ChatSummary | undefined` が消え、\n  `src/session-start.ts` に `? mode.chatSummary : undefined` の形が残っていない\n- 雑談モードで起こしたときに要約・旗・逐語の3つが従来どおり `systemPrompt` に載る\n  （**単体テストで足りる**。tsukumo を起こす目視までは要らない）\n\n## 注意\n\n- **`resume: string | undefined` には触らない**（T-309 の主題。同じ型を2つのタスクで\n  書き換えないよう、こちらは `chatSummary` の1行だけに絞る）\n- `session-driver.ts` / `sdk-driver.ts` は触らない（T-308 で片付いている）\n"
   },
   {

@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 雑談の要約の口を、呼ぶ側の分岐1回に寄せた（T-361）
+
+`takeChatMemoryPromptParts` の `chatSummary` から `| undefined` を外し、仕事のときに呼ばない判断を `src/session-start.ts` の分岐1回に移した。
+
 ### 2026-09-23 capture-catalog の一覧の出し方を、正典で --help に直した（T-341）
 
 `docs/architecture.md` の「オプション無しで一覧が出る」を「`--help` で出る。オプション無しは全件撮影」に直し、スクリプト冒頭の使い方にも `--help` の行を足した。

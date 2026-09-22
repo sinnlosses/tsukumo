@@ -74,7 +74,7 @@ function fakeChatArchive(
  */
 function take(
   resume: string | undefined,
-  chatSummary: ChatSummary | undefined,
+  chatSummary: ChatSummary,
   chatArchive: ChatArchive,
 ): readonly string[] {
   return takeChatMemoryPromptParts({
@@ -180,14 +180,6 @@ describe("takeChatMemoryPromptParts", () => {
 
     expect(parts).toEqual([])
     expect(chatSummary.markDeliveredCalls()).toBe(1)
-  })
-
-  it("仕事のとき（chatSummary が undefined）は resume の値によらず載らない。読みも書きも起きない", () => {
-    const chatArchive = fakeChatArchive(RECENT)
-
-    expect(take(undefined, undefined, chatArchive)).toEqual([])
-    expect(take("session-1", undefined, chatArchive)).toEqual([])
-    expect(chatArchive.readRecentArgs()).toEqual([])
   })
 
   it("写しも逐語も無いときは何も載らず、印も書き換えない", () => {

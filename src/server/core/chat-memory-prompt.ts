@@ -18,8 +18,8 @@
 //
 // 口（`ChatSummary` / `ChatArchive`）の型は `src/server/core/session-driver.ts`、ファイルに触る
 // 実装は `src/server/adapter/chat-summary.ts` と `src/server/adapter/chat-archive.ts`。
-// 呼び出すのは配線層（`src/session-start.ts`）で、仕事のとき（`chatSummary` が undefined）は
-// この関数自体が空を返すだけで、読みも書きも起きない。
+// 呼び出すのは配線層（`src/session-start.ts`）で、**雑談のときしかこの関数を呼ばない**
+// （仕事のときは呼ばずに空の配列を使う）ので、この関数自体は雑談であることを前提にしてよい。
 
 import {
   type ChatArchive,
@@ -94,8 +94,11 @@ const SPEAKER_LABEL = {
 export type ChatMemorySources = {
   /** 新規に起こすか、続きから始めるか（`SessionLaunchSeed.start`）。 */
   readonly start: SessionStart
-  /** 雑談の要約の写しの口。**undefined は仕事のとき**で、そのときは何も載らない。 */
-  readonly chatSummary: ChatSummary | undefined
+  /**
+   * 雑談の要約の写しの口。**呼ぶ側が雑談のときだけこの関数を呼ぶ**ので、ここには常に値がある
+   * （仕事のときの「載せない」判断は呼ぶ側の1回の分岐に寄せてある）。
+   */
+  readonly chatSummary: ChatSummary
   /** 雑談の会話のアーカイブの口（読むのはここから起こすパックのぶんだけ）。 */
   readonly chatArchive: ChatArchive
   /** これから起こすキャラクターパックの名前。 */
@@ -129,10 +132,6 @@ export type ChatMemorySources = {
  */
 export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly string[] {
   const { chatSummary } = sources
-  if (chatSummary === undefined) {
-    return []
-  }
-
   const record = chatSummary.read()
   const delivered = record?.delivered ?? false
   if (sources.start.kind === "resume" && delivered) {

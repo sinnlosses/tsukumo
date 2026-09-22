@@ -168,19 +168,24 @@ function startDriver(options: {
   // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
   const mode = sessionMode(seed, chatArchive, cwd)
-  // **載せるかどうかの判断は core（takeChatMemoryPromptParts）が閉じている**——ここは決まった
-  // 文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**ので、
-  // 載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
-  const chatMemoryParts = takeChatMemoryPromptParts({
-    start: seed.start,
-    chatSummary: mode.kind === "chat" ? mode.chatSummary : undefined,
-    chatArchive,
-    packName: seed.pack.name,
-    readbackLimits: {
-      recentBytes: CHAT_RECENT_READBACK_BYTES,
-      keptBytes: CHAT_KEPT_READBACK_BYTES,
-    },
-  })
+  // **「仕事のときは載せない」の判断はここの1回の分岐**（`mode.kind === "chat"`）。
+  // 雑談のときだけ `takeChatMemoryPromptParts` を呼び、それ以外の載せるかどうかの判断
+  // （write の有無・写しの印）は core（`takeChatMemoryPromptParts`）が閉じている——ここは
+  // 決まった文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**
+  // ので、載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
+  const chatMemoryParts =
+    mode.kind === "chat"
+      ? takeChatMemoryPromptParts({
+          start: seed.start,
+          chatSummary: mode.chatSummary,
+          chatArchive,
+          packName: seed.pack.name,
+          readbackLimits: {
+            recentBytes: CHAT_RECENT_READBACK_BYTES,
+            keptBytes: CHAT_KEPT_READBACK_BYTES,
+          },
+        })
+      : []
   const rules = [...sessionRules(seed.chat), ...chatMemoryParts]
 
   return startSdkSession({
