@@ -36,6 +36,16 @@
   color: var(--ink);
   border-color: var(--accent);
 }
+/* 名前の中では折り返さない（長さは domain/turn-tab-label.ts が文字数で切ってある）。 */
+.turn-tab-label {
+  white-space: nowrap;
+}
+/* 先頭のタブにだけ添える「今回」。名前と取り違えないよう、キャラクターの色にして間を空ける。 */
+.turn-tab-current {
+  margin-right: 0.4em;
+  color: var(--accent);
+  white-space: nowrap;
+}
 /* 既定では summary（依頼の1行目）だけの高さで収まり、開くと全行が読める
    （requestHeadingHtml 参照）。 */
 /* 依頼の見出し。1行なら h2、複数行なら details[open]（requestHeadingHtml）。**どちらも

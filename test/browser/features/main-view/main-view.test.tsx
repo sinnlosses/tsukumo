@@ -88,9 +88,9 @@ describe("MainView（タブの規則）", () => {
     ])
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "今回",
-      "1つ前",
-      "2つ前",
+      "今回3つ目",
+      "2つ目",
+      "1つ目",
     ])
     expect(screen.getByText("3つ目のレポート")).toBeDefined()
 
@@ -120,8 +120,8 @@ describe("MainView（タブの規則）", () => {
       detail("3つ目のレポート"),
     ])
 
-    // 「1つ前」（2つ目）のタブを選ぶ。
-    fireEvent.click(screen.getByText("1つ前"))
+    // 1つ前（2つ目）のタブを選ぶ。
+    fireEvent.click(screen.getByRole("button", { name: "2つ目" }))
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
 
     // 新しいターンが始まっても、選んだタブのままでいる。
@@ -139,6 +139,35 @@ describe("MainView（タブの規則）", () => {
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
     expect(screen.queryByText("4つ目のレポート")).toBeNull()
   })
+
+  it("やり取りが1つ進んでも、前からあるタブの名前は変わらない（位置は title だけが追う）", () => {
+    const three = [
+      request("架空の依頼A", 0),
+      detail("Aのレポート"),
+      request("架空の依頼B", 1),
+      detail("Bのレポート"),
+      request("架空の依頼C", 2),
+      detail("Cのレポート"),
+    ]
+    renderMainView(three)
+
+    // 見ていたタブ（B）を選んでおく。
+    fireEvent.click(screen.getByRole("button", { name: "架空の依頼B" }))
+    expect(screen.getByRole("button", { name: "架空の依頼B" }).title).toBe("1つ前: 架空の依頼B")
+
+    // 次のやり取りが始まる（レポートはまだ無い）。
+    rerenderMainView([...three, request("架空の依頼D", 3)])
+
+    const labels = screen
+      .getAllByRole("button")
+      .map((button) => button.querySelector('[class*="turn-tab-label"]')?.textContent)
+    expect(labels).toEqual(["架空の依頼D", "架空の依頼C", "架空の依頼B", "架空の依頼A"])
+    // 見ていたタブは同じ名前のまま残り、位置の呼び名だけが1つずれる。
+    expect(screen.getByRole("button", { name: "架空の依頼B" }).title).toBe("2つ前: 架空の依頼B")
+    expect(screen.getByText("Bのレポート")).toBeDefined()
+    // 「今回」は先頭（新しいやり取り）へ移る。
+    expect(screen.getAllByRole("button")[0]?.textContent).toBe("今回架空の依頼D")
+  })
 })
 
 describe("MainView（タブ切り替えでレポートの先頭へ戻す）", () => {
@@ -152,7 +181,7 @@ describe("MainView（タブ切り替えでレポートの先頭へ戻す）", ()
 
     const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
 
-    fireEvent.click(screen.getByText("1つ前"))
+    fireEvent.click(screen.getByRole("button", { name: "1つ目" }))
 
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
     expect(scrollIntoView.mock.calls[0]?.[0]).toEqual({ block: "start" })
@@ -183,14 +212,14 @@ describe("MainView（セリフはレポートに出さない）", () => {
     ])
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "今回",
-      "1つ前",
+      "今回2つ目",
+      "1つ目",
     ])
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
     expect(screen.queryByText("2つ目のセリフ")).toBeNull()
 
-    // 「1つ前」も、セリフ抜きのレポートだけが出る（ターンの区切りはずれない）。
-    fireEvent.click(screen.getByText("1つ前"))
+    // 1つ前も、セリフ抜きのレポートだけが出る（ターンの区切りはずれない）。
+    fireEvent.click(screen.getByRole("button", { name: "1つ目" }))
     expect(screen.getByText("1つ目のレポート")).toBeDefined()
     expect(screen.queryByText("1つ目のセリフ")).toBeNull()
   })

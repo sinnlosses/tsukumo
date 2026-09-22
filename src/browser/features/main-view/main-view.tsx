@@ -14,6 +14,7 @@ import { useEffect, useRef, type ReactElement } from "react"
 
 import { useMainViewTurns } from "../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
+import { turnTab } from "./domain/turn-tab-label.ts"
 import styles from "./main-view.module.css"
 import { MiniPortrait } from "./mini-portrait.tsx"
 import { PendingQuestion } from "./pending-question.tsx"
@@ -28,7 +29,7 @@ export function MainView(): ReactElement {
   // `stores/turn-selection.tsx` と同じものを読む）。タブは新しい順に並べるので反転する。
   const turns = useMainViewTurns()
   const turnsNewestFirst = [...turns].reverse()
-  const turnIds = turnsNewestFirst.map((turn) => turn.id)
+  const tabs = turnsNewestFirst.map(turnTab)
   const scrollerRef = useRef<HTMLDivElement>(null)
 
   // 見ているターンが変わったら（自分でタブを選んだ・新しいターンに連れていかれた・選んでいた
@@ -65,7 +66,7 @@ export function MainView(): ReactElement {
       {/* 答え待ちの質問の比較。**タブより上**に出す（聞かれている間はそれが最優先で読むもの
           だから）。`preview` が1つも無い質問では何も描かない。 */}
       <PendingQuestion />
-      <TurnTabs turnIds={turnIds} activeTurnId={activeTurnId} onSelect={selectTurn} />
+      <TurnTabs tabs={tabs} activeTurnId={activeTurnId} onSelect={selectTurn} />
       {/* **`key` にやり取りの番号を渡す。** タブを切り替えても同じ位置の `<Turn>` を使い回すと、
           「このやり取りを出し始めた時点で既にあった本文」（演出の対象を決める材料。`turn.tsx`）が
           最初のやり取りのものに留まってしまう。 */}

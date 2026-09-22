@@ -1081,6 +1081,99 @@
           }
         }
       ]
+    },
+    {
+      "name": "turn-tabs",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "起動の手順を見直したい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "utterance",
+            "text": "## 起動の手順（架空）\n\nこれは架空のレポートで、実物の会話ではない。"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "request",
+            "text": "設定ファイルの読み込みで落ちる件を直して。再現手順は下に書いた（架空の依頼）\n1. 起こす\n2. 落ちる",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "utterance",
+            "text": "## 設定の読み込みを直した（架空）\n\n架空の修正の報告。"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "request",
+            "text": "テストが遅い（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": {
+            "kind": "utterance",
+            "text": "## テストの時間（架空）\n\n架空の計測結果。"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "request",
+            "text": "タブの名前がやり取りの中身から付くかを、長めの依頼の1行目で確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "utterance",
+            "text": "## タブの名前（架空）\n\n架空の本文。タブには依頼の1行目が短く切られて出る。"
+          }
+        },
+        {
+          "afterMs": 1400,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
     }
   ]
 }
