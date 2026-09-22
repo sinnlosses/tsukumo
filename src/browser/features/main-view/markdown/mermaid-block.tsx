@@ -10,8 +10,8 @@
 // **構文エラーのときはコードとエラー文を出す（mermaid のエラー図は出さない）**。
 // `initialize({ suppressErrorRendering: true })` を立てると、mermaid は失敗時に
 // 自分で `<pre class="mermaid">` の中へエラーの絵を描くかわりに `run()` の Promise を reject
-// する（mermaid 11.15.0 の `dist/mermaid.min.js` を確認済み: このフラグが立っていると、内部の
-// 描画関数はキャッチした例外をそのまま再送出する）。`mermaid.parse()` による事前判定は使わない
+// する（mermaid 11.15.0 と 12.0.0 の `dist/mermaid.min.js` で確認済み: このフラグが立っていると、
+// 内部の描画関数はキャッチした例外をそのまま再送出する）。`mermaid.parse()` による事前判定は使わない
 // — 読み込み自体の失敗（スクリプトが読めない）も含めて**1つの catch で受け止められる**ため
 // （読み込み失敗は `vendor-script.ts` が `Error(src)` を投げるので、エラー文はその URL になる。
 // まれにしか起きない経路なので、それ以上の作り込みはしない）。

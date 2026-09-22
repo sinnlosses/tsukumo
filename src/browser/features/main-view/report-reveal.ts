@@ -134,7 +134,7 @@ function startReveal(root: HTMLElement): () => void {
     }
     const elapsed = performance.now() - startedAt
     // 通り過ぎた塊は出し切る。**塊は時間の順に並んでいる**ので、先頭から数えるだけでよい。
-    for (let block = blocks.at(shown); block !== undefined && block.endMs <= elapsed; ) {
+    for (let block = blocks.at(shown); block !== undefined && block.endMs <= elapsed;) {
       showBlock(block)
       shown += 1
       block = blocks.at(shown)

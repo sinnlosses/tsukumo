@@ -388,10 +388,11 @@ package.json に定義したり」で、cdnjs から落としたものを `vendo
 adapter 側）。**mermaid と chart.js は `package.json` で版を固定する**（`^` を付けない）。素の
 JavaScript をそのままブラウザへ配っていて描けるかどうかは目で見るまで分からず、mermaid の版は
 `src/server/core/report-notation.ts` が挙げる図の10種の根拠でもあるため。highlight.js のテーマだけは
-`^` で、`rehype-highlight`（`lowlight`）が使う highlight.js に重ねてある（色を当てる class を
-出すのはそちら）。
+`^` で上げてよい（色を当てる class を出すのは `rehype-highlight`（`lowlight`）が抱えるほうなので、
+**テーマの中身が食い違っていないか**だけを見る。2026-09-22 時点では配る 11.12.0 と `lowlight` の
+11.11.2 でバイト一致）。
 
-**大きいものは使うときだけ読む。** mermaid は 3.3MB あるので、レポートが実際に mermaid の
+**大きいものは使うときだけ読む。** mermaid は 5.3MB あるので、レポートが実際に mermaid の
 コードブロックを書いたときにだけ `<script>` を足す（Chart.js も同じ）。**だから `bun build` の
 束ねには入れない**——入れると図が1つも無いレポートでも最初の読み込みで運ぶことになる。
 highlight.js は `rehype-highlight` として束ねに入り、ブラウザへ配るのはテーマの CSS だけ。

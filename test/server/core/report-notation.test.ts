@@ -17,8 +17,8 @@ afterEach(() => {
 // 進んで「勧めた記法が描かれない」が起きないよう、名乗った要素と class を両側に突き合わせる。
 
 /**
- * tsukumo が配る mermaid（package.json で 11.15.0 に固定）で**実際に描けることを目視で確かめた種類**
- * （2026-09-17。docs/requirements.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
+ * tsukumo が配る mermaid（package.json で 12.0.0 に固定）で**実際に描けることを目視で確かめた種類**
+ * （2026-09-17 に 11.15.0 で、2026-09-22 に 12.0.0 で。docs/requirements.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
  * 先にメインビューへ出して描けることを確かめる**。
  */
 const DRAWN_MERMAID_KINDS = [
@@ -123,6 +123,13 @@ describe("REPORT_NOTATION_PROMPT", () => {
     // （docs/requirements.md 4.2）。絞りを落とすと、見出しが表の言い直しになる。
     expect(REPORT_NOTATION_PROMPT).toContain("表には直前の1行で見出しを付ける")
     expect(REPORT_NOTATION_PROMPT).toContain("セルに無いこと")
+  })
+
+  it("表のセルの中にフェンスを書かせない", () => {
+    // セルでは開始フェンスにならず、閉じの無い inline code として素の文字が残る（2026-09-22 に
+    // 実際に崩した）。禁じるだけでなく、言い換え先（inline code）まで書かせる。
+    expect(REPORT_NOTATION_PROMPT).toContain("表のセルの中にフェンスを書かない")
+    expect(REPORT_NOTATION_PROMPT).toContain("inline code にする")
   })
 
   it("図にするかの判定は、下書きの上で数えられる形で書く", () => {

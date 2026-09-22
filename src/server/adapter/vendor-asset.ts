@@ -2,7 +2,7 @@
 // どのファイルを指すかを知っているのはここだけ**で、`src/shared/vendor-asset.ts` は配る名前と
 // Content-Type しか持たない（原則2・原則3。パス解決は外の世界に触る仕事）。
 //
-// **束ね（`src/server/adapter/bundle.ts`）には入れない。** mermaid だけで 3.3MB あり、入れると
+// **束ね（`src/server/adapter/bundle.ts`）には入れない。** mermaid だけで 5.3MB あり、入れると
 // レポートに図が1つも無いときでも最初の読み込みで運ぶことになる。ここから配れば、その記法が
 // 実際に出てきたときだけブラウザが `<script src>` で取りに来る（`docs/requirements.md` 4.2）。
 // CDN から読まないのも同じ節の決まり（表示時の外部通信はゼロ）。
@@ -27,8 +27,10 @@ const NODE_MODULES = "node_modules"
  * **mermaid と chart.js は package.json で版を固定している**（`^` を付けない）。素の JavaScript を
  * そのままブラウザへ配っていて、描けるかどうかは目で見るまで分からないため——mermaid の版は
  * `src/server/core/report-notation.ts` が挙げる図の10種の根拠でもある。highlight.js のテーマだけは
- * `^` で、`rehype-highlight`（`lowlight`）が使う highlight.js と同じものに重なるようにしてある
- * （色を当てる class を出すのはそちらなので、版がずれると当たらない class が出る）。
+ * `^` で上げてよい——**色を当てる class を出すのは `rehype-highlight`（`lowlight`）が抱える
+ * highlight.js のほう**なので、版がずれると当たらない class が出る。いまは `lowlight` が
+ * `~11.11.0` で別の複製を持つが、**配っている 11.12.0 のテーマとバイト一致**なので当たる
+ * （2026-09-22 に `cmp` で確認。テーマを配る版を上げるときはここを見る）。
  */
 const VENDOR_ASSET_FILES: Readonly<Record<string, readonly string[]>> = {
   "highlight-theme.min.css": ["highlight.js", "styles", "github-dark.min.css"],

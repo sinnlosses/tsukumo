@@ -35,8 +35,16 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
         // **データ系列の色は Chart.js 内蔵の colors プラグインが割り当てる**ので、ここで寄せるのは
         // 文字と線だけ。**色は書かずにトークンの実効値を読んで渡す**（16進を持ってよいのは
         // `src/browser/styles/theme.css` だけ。docs/design.md 13.2）。
+        //
+        // **線は `defaults.borderColor` ではなく目盛りの側（`defaults.scale`）へ書く。**
+        // chart.js 4.5.0 の colors プラグインは「`defaults.borderColor` か
+        // `defaults.backgroundColor` が既定から動いていたら色を配らない」判定を足したので、
+        // `borderColor` へ書くと系列の色が付かないまま（`undefined`）になり、棒も線も透明で
+        // 描かれる（2026-09-22 に 4.4.1 と 4.5.1 を並べて実測）。
+        const rule = resolveColor(canvas, "--rule")
         Chart.defaults.color = resolveColor(canvas, "--ink-quiet")
-        Chart.defaults.borderColor = resolveColor(canvas, "--rule")
+        Chart.defaults.scale.grid.color = rule
+        Chart.defaults.scale.border.color = rule
 
         // JSON.parse の失敗もまとめて拾いたいので、あえて戻り値は使わない。
         void new Chart(canvas, JSON.parse(props.spec))

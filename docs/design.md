@@ -717,7 +717,7 @@ react-markdown
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `bun build` が npm から束ねる                                                                                               | `node_modules`      |
 | highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS だけ `/vendor/` で配る                                  | 束ねる / `/vendor/` |
-| mermaid（3.3MB）・Chart.js                                         | **束ねず `/vendor/` で配り、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く | `/vendor/`          |
+| mermaid（5.3MB）・Chart.js                                         | **束ねず `/vendor/` で配り、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く | `/vendor/`          |
 | Idiomorph                                                          | **消える**                                                                                                                  | —                   |
 
 `/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/adapter/vendor-asset.ts`）で、

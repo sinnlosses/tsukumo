@@ -33,10 +33,18 @@ declare global {
   /**
    * Chart.js（`/vendor/chart.umd.min.js` から読む）。mermaid と同じく、必要になったときだけ読み込む。
    * `defaults` は**明るい背景向けの既定値**（文字も目盛り線も黒寄り）を暗い配色へ寄せるためだけに
-   * 触る（`src/browser/features/main-view/markdown/chart-block.tsx`）。
+   * 触る（`src/browser/features/main-view/markdown/chart-block.tsx`）。**`borderColor` は
+   * 書かない** — 4.5.0 から、そこが既定から動いていると内蔵の colors プラグインが系列に色を
+   * 配らなくなるので、線の色は `scale` の側へ書く（同ファイルのコメント）。
    */
   const Chart: (new (target: Element, config: unknown) => unknown) & {
-    readonly defaults: { color: string; borderColor: string }
+    readonly defaults: {
+      color: string
+      readonly scale: {
+        readonly grid: { color: string }
+        readonly border: { color: string }
+      }
+    }
   }
 }
 
