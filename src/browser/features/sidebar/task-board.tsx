@@ -7,12 +7,16 @@
 // 見出しの行が隠れるぶん意味が読み取れなくなるセルにだけ `data-label` を持たせ、CSS が
 // `::before` でラベルを出す（ID・status・要約は値そのもので分かるので持たせない）。
 //
+// **依存と着手は1つの列にまとめてある。** 分けていたときは同じIDが2列に並んで表を横へ押し広げ、
+// いちばん読みたい要約の列が器の外へ出ていた（実測: 依存7件の行で2列あわせて約100字ぶん）。
+// `todo` は着手できるかだけを出し、それ以外の status は依存をそのまま記録として並べる。
+//
 // **`<dialog>` の `showModal()` を使う**。
 // Esc で閉じるのと、閉じたときにフォーカスを開く口へ戻すのはブラウザのモーダル挙動に任せ、
 // 外側（backdrop）のクリックだけを自前で拾う。**`<dialog>` は top layer に出る**ので、
 // サイドバー領域の `overflow` には切り取られない。
 
-import { memo, useEffect, useRef, type MouseEvent, type ReactElement } from "react"
+import { Fragment, memo, useEffect, useRef, type MouseEvent, type ReactElement } from "react"
 
 import {
   taskReadiness,
@@ -24,7 +28,7 @@ import styles from "./sidebar.module.css"
 import { taskStatusClass } from "./task-list.tsx"
 
 /**
- * 表の見出し行。7列とも中身が完全に静的なので、モジュール定数として1回だけ作る
+ * 表の見出し行。6列とも中身が完全に静的なので、モジュール定数として1回だけ作る
  * （`<TaskTable>` を描き直すたびに作り直さない）。
  */
 const TASK_TABLE_HEAD = (
@@ -34,7 +38,6 @@ const TASK_TABLE_HEAD = (
       <th scope="col">status</th>
       <th scope="col">難易度</th>
       <th scope="col">loopable</th>
-      <th scope="col">依存</th>
       <th scope="col">着手</th>
       <th scope="col">要約</th>
     </tr>
@@ -144,11 +147,11 @@ function TaskRow(props: {
       <td className={status === undefined ? "" : taskStatusClass(status)}>{status ?? "—"}</td>
       <td>{props.task.difficulty ?? "—"}</td>
       <td data-label="loopable">{loopableMark(props.task.loopable)}</td>
-      <td data-label="依存">
-        {props.task.dependencies.length === 0 ? "—" : props.task.dependencies.join(", ")}
-      </td>
       <td data-label="着手">
-        <ReadinessCell readiness={taskReadiness(props.task, props.unfinishedTaskIds)} />
+        <ReadinessCell
+          readiness={taskReadiness(props.task, props.unfinishedTaskIds)}
+          dependencies={props.task.dependencies}
+        />
       </td>
       <td>{props.task.summary}</td>
     </tr>
@@ -168,18 +171,44 @@ function loopableMark(loopable: string | undefined): string {
   return loopable === "N" ? "" : loopable
 }
 
-/** 着手可否。**色だけで伝えない**ので、READY / 止めている依存のIDを文字でも出す。 */
-function ReadinessCell(props: { readonly readiness: TaskReadiness | undefined }): ReactElement {
+/**
+ * 着手と依存の列。**`todo` は着手できるかを出し**（READY / 止めている依存のID。済んだ依存は
+ * 着手の判断に要らないので出さない）、**判定しない status は依存をそのまま並べる**。
+ * **色だけで伝えない**ので READY / 待ち の文字も出す。
+ */
+function ReadinessCell(props: {
+  readonly readiness: TaskReadiness | undefined
+  readonly dependencies: readonly string[]
+}): ReactElement {
   if (props.readiness === undefined) {
-    return <>—</>
+    return props.dependencies.length === 0 ? <>—</> : <TaskIdList ids={props.dependencies} />
   }
   if (props.readiness.kind === "ready") {
     return <span className={styles["task-ready"]}>READY</span>
   }
 
   return (
-    <span
-      className={styles["task-blocked"]}
-    >{`待ち: ${props.readiness.blockedBy.join(", ")}`}</span>
+    <span className={styles["task-blocked"]}>
+      {"待ち: "}
+      <TaskIdList ids={props.readiness.blockedBy} />
+    </span>
+  )
+}
+
+/**
+ * IDの並び。**区切りの `, ` だけを折り返せる場所にする**ため、IDを1つずつ包んで出す
+ * （`T-328` の `-` で改行されると読めなくなる。折らない指定は sidebar.module.css の
+ * `.task-dep-id`）。
+ */
+function TaskIdList(props: { readonly ids: readonly string[] }): ReactElement {
+  return (
+    <>
+      {props.ids.map((id, index) => (
+        <Fragment key={id}>
+          {index === 0 ? "" : ", "}
+          <span className={styles["task-dep-id"]}>{id}</span>
+        </Fragment>
+      ))}
+    </>
   )
 }

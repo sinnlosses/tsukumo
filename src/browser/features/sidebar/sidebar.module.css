@@ -314,14 +314,24 @@
   font-weight: normal;
   vertical-align: top;
 }
-/* ID・status・難易度・loopable・依存・着手は機械が付けた名前なので、折り返さず1行に置く
-   （docs/design.md 13.1 原則3）。要約だけが残りの幅を使って折り返す。 */
+/* ID・status・難易度・loopable は機械が付けた名前なので、折り返さず1行に置く
+   （docs/design.md 13.1 原則3）。 */
 .task-board-table tbody th,
 .task-board-table td:nth-child(2),
 .task-board-table td:nth-child(3),
-.task-board-table td:nth-child(4),
-.task-board-table td:nth-child(5),
-.task-board-table td:nth-child(6) {
+.task-board-table td:nth-child(4) {
+  white-space: nowrap;
+}
+/* 着手（依存のID が並ぶ列）。**ここだけは折り返させる**——1行に置くと依存が多い行で表が器を
+   超え、最後にある要約の列が可視領域の外へ押し出される（実測: 依存7件で約26em）。上限は
+   「器（64rem）から他の5列と要約の min-width: 24em を引いた残り」から採った。 */
+.task-board-table td:nth-child(5) {
+  max-width: 16em;
+  white-space: normal;
+}
+/* IDそのものは折らない（`T-328` が `-` で改行されると読めなくなる）。折り返せるのは
+   task-board.tsx が区切りに置く `, ` だけになる。 */
+.task-dep-id {
   white-space: nowrap;
 }
 .task-board-row.task-done {
@@ -394,17 +404,11 @@
     min-width: 0;
     white-space: normal;
   }
-  /* 依存と着手は、複数のIDが並ぶと器を超えるので折り返しを許す
-     （1行に置く指定は広い画面向け）。 */
+  /* 着手。カードでは行いっぱいを使えるので、広い画面向けの上限（max-width: 16em）は外す。 */
   .task-board-table td:nth-child(5) {
     grid-row: 3;
-    grid-column: 1 / 3;
-    white-space: normal;
-  }
-  .task-board-table td:nth-child(6) {
-    grid-row: 3;
-    grid-column: 3 / -1;
-    white-space: normal;
+    grid-column: 1 / -1;
+    max-width: none;
   }
   /* 見出しの行が消えたぶんのラベル。**値と同じ行に、値より弱い濃さで置く**
      （行の上にラベルだけの段を作らない）。 */
