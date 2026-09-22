@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 画面のナビの帯を低くし、部屋の名前を口と同じ大きさにした（T-364）
+
+帯を 40px から 30px（gap 込みで 48px から 36.4px）に下げ、部屋の名前を `font-secondary` にした。`docs/design.md` 13.9 の面積の表を実測で取り直した。
+
 ### 2026-09-23 layout と token-usage-screen のロジックを分けた（T-339）
 
 2つとも container / `hooks/use-<機能>.ts` / `presentational-<機能>.tsx` の型に割り、フックを部品を起こさずに測るテストを足した。

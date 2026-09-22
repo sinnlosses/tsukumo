@@ -1,7 +1,7 @@
 /* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
    **全画面の最上部に1本**。左端に部屋の名前、その右に3つの口（会話 / キャラクター /
    トークン消費）、その右にいまの動き方の読み（モデル・許可モード・ブランチ）、右端に答え待ちの印。
-   高さは `--screen-nav-height`（40px）で、**同じ値を `<Layout>` も読む**（帯と gap のぶんだけ
+   高さは `--screen-nav-height`（30px）で、**同じ値を `<Layout>` も読む**（帯と gap のぶんだけ
    grid を縮めるため。layout.module.css）。
 
    **口の見た目は狭い画面のタブ（`.layout-tab`）に合わせる**（押せる高さ・丸い枠）。
@@ -22,7 +22,7 @@
 .screen-nav-room {
   margin-right: 0.3rem;
   color: var(--ink-quiet);
-  font-size: var(--font-label);
+  font-size: var(--font-secondary);
   white-space: nowrap;
 }
 /* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。 */
@@ -35,12 +35,15 @@
 /* 口は字だけのリンクではなくタブと同じ丸い枠にする（並んだ3つが1つの帯に見えるため）。
    下線は外すので、**選ばれている口は地と字の濃さで**区別する（下の .is-active）。 */
 .screen-nav-gate {
-  padding: 0.35rem 0.8rem;
+  padding: 0.2rem 0.7rem;
   border: 1px solid var(--rule);
   border-radius: 999px;
   background: var(--surface);
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
+  /* theme の本文用 line-height（1.75）のままだと帯の高さ（30px）に口が収まらない。
+     帯の中だけ詰める。 */
+  line-height: 1.4;
   text-decoration: none;
   white-space: nowrap;
 }
