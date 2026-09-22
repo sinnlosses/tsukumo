@@ -55,6 +55,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 質問の記録で、選んだ印を差し色にし、問と答えの区切りを作った（T-343）
+
+`●`/`○` を `QuestionMark`（`<span>`）で包み、選んだ側だけに `accent` を当てた（文字は DOM に
+残す。選ばなかった `○` は親の色を継ぐ）。塊の区切りは `.question-record + .question-record` に
+余白と `rule` の罫線で作り、`accent` と地の段差は採らなかった（理由は `main-view.module.css`
+のコメント）。カタログの `question-*` は答え待ちの箱までしか撮らないので、答えさせた記録を
+別途撮って確かめた。
+
 ### 2026-09-23 `init` がまだ届いていない状態を合併型にした（T-311）
 
 `SessionState` の `sessionId` / `permissionMode` を `session: { kind: "starting" } |
