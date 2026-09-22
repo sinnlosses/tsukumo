@@ -1,4 +1,4 @@
-// サイドバーの「セッション情報」。キャラクター・モデル・許可モードの `<select>`（共有部品。
+// サイドバーの「セッション情報」。キャラクター・セッション・モデル・許可モードの `<select>`（共有部品。
 // `src/browser/components/select.tsx`）を並べ、変更で `switch-character` / `set-model` /
 // `set-permission-mode` を `dispatch` する。**次に届く `session-info` で `<select>` の選択が
 // 上書きされる**（サーバ側の値が正になる）。キャラクターの `<select>` は**選択肢が1つでも出す**
@@ -17,6 +17,7 @@ import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { Select } from "../../components/select.tsx"
 import { screenHash } from "../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
+import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
 
 // 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
@@ -149,6 +150,10 @@ export function SessionInfo(): ReactElement {
           </span>
         </>
       ) : null}
+      {/* セッションの行（`session-switch.tsx`）。**2列の grid の直の子**として並ぶよう、
+          入れ物を挟まずラベルと値の対だけを返す部品にしてある。切り替え先が無ければ
+          何も出さない。 */}
+      <SessionSwitch />
       <label htmlFor={CHAT_MODE_SELECT_ID} className={styles["session-info-label"]}>
         モード
       </label>

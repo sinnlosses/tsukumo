@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { sessionTag } from "../../../src/server/core/config.ts"
+import { sessionTag, sessionTagFamily } from "../../../src/server/core/config.ts"
 import { DEFAULT_VIEW_PORT } from "../../../src/server/core/port-resolution.ts"
 import { TSUKUMO_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../../src/server/core/sdk-message.ts"
 import {
@@ -9,6 +9,7 @@ import {
   toRestoredEvents,
 } from "../../../src/server/core/session-restore.ts"
 import { type Expression } from "../../../src/shared/expression.ts"
+import { MAX_SESSION_CHOICES } from "../../../src/shared/session-choice.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
@@ -22,6 +23,9 @@ const CHAT_TAG = sessionTag("架空のパック", true, DEFAULT_VIEW_PORT)
 const OTHER_PACK_TAG = sessionTag("別の架空のパック", false, DEFAULT_VIEW_PORT)
 // 2つめの tsukumo（ポートが1つずれたぶん、目印が B になる）。
 const SECOND_TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)
+// 一覧を絞る鍵（目印を外した印）。同じパック・同じモードのものだけが残る。
+const FAMILY = sessionTagFamily("架空のパック", false)
+const CHAT_FAMILY = sessionTagFamily("架空のパック", true)
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
@@ -167,17 +171,34 @@ describe("selectSessionToResume", () => {
 })
 
 describe("listMarkedSessions", () => {
-  it("印の付いたセッションを、目印つきで新しい順に並べる", () => {
+  it("同じ一族のセッションを、目印つきで新しい順に並べる", () => {
     const sessions = [
       sessionInfo({ sessionId: "s-first", lastModified: 100, tag: TAG }),
       sessionInfo({ sessionId: "s-second", lastModified: 300, tag: SECOND_TAG }),
-      sessionInfo({ sessionId: "s-first-chat", lastModified: 200, tag: CHAT_TAG }),
+      sessionInfo({ sessionId: "s-third", lastModified: 200, tag: TAG }),
     ]
 
-    expect(listMarkedSessions(sessions)).toEqual([
+    expect(listMarkedSessions(sessions, FAMILY)).toEqual([
       { slot: "B", sessionId: "s-second", lastModified: 300 },
-      { slot: "A", sessionId: "s-first-chat", lastModified: 200 },
+      { slot: "A", sessionId: "s-third", lastModified: 200 },
       { slot: "A", sessionId: "s-first", lastModified: 100 },
+    ])
+  })
+
+  // 一覧から選んでも、キャラクターも雑談かどうかも変わらない（`switch-session`）。
+  // 別のパック・別のモードのセッションが混ざると、選んだ瞬間に相手だけが入れ替わる。
+  it("別のパック・別のモードのセッションは落とす", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-work", lastModified: 100, tag: TAG }),
+      sessionInfo({ sessionId: "s-chat", lastModified: 300, tag: CHAT_TAG }),
+      sessionInfo({ sessionId: "s-other-pack", lastModified: 400, tag: OTHER_PACK_TAG }),
+    ]
+
+    expect(listMarkedSessions(sessions, FAMILY)).toEqual([
+      { slot: "A", sessionId: "s-work", lastModified: 100 },
+    ])
+    expect(listMarkedSessions(sessions, CHAT_FAMILY)).toEqual([
+      { slot: "A", sessionId: "s-chat", lastModified: 300 },
     ])
   })
 
@@ -190,15 +211,26 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-legacy", lastModified: 500, tag: "tsukumo:架空のパック" }),
     ]
 
-    expect(listMarkedSessions(sessions)).toEqual([
+    expect(listMarkedSessions(sessions, FAMILY)).toEqual([
       { slot: "A", sessionId: "s-legacy", lastModified: 500 },
     ])
   })
 
+  // 印は使うほど増え続ける（実測: このリポジトリで120件）。`<select>` に全部は並べない。
+  it("新しいほうから上限の件数までしか返さない", () => {
+    const many = Array.from({ length: MAX_SESSION_CHOICES + 5 }, (_unused, index) =>
+      sessionInfo({ sessionId: `s-${String(index)}`, lastModified: index, tag: TAG }),
+    )
+
+    const listed = listMarkedSessions(many, FAMILY)
+    expect(listed).toHaveLength(MAX_SESSION_CHOICES)
+    expect(listed[0]?.sessionId).toBe(`s-${String(MAX_SESSION_CHOICES + 4)}`)
+  })
+
   it("一覧が空・形が壊れているときは空（落ちない）", () => {
-    expect(listMarkedSessions([])).toEqual([])
-    expect(listMarkedSessions(undefined)).toEqual([])
-    expect(listMarkedSessions({ sessions: [] })).toEqual([])
+    expect(listMarkedSessions([], FAMILY)).toEqual([])
+    expect(listMarkedSessions(undefined, FAMILY)).toEqual([])
+    expect(listMarkedSessions({ sessions: [] }, FAMILY)).toEqual([])
   })
 })
 

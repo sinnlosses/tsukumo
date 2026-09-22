@@ -16,6 +16,12 @@ type Pack = { readonly name: string }
 const INITIAL: Pack = { name: "tsukumo-spirit" }
 const SWITCHED: Pack = { name: "kagami" }
 
+// 切り替え先の一覧（目印と最終更新時刻だけ。会話の内容は入らない）。
+const CHOICES = [
+  { slot: "B", sessionId: "other-session", lastModified: 2_000 },
+  { slot: "A", sessionId: "prev-work-session", lastModified: 1_000 },
+] as const
+
 /** 起こされたことと閉じられたことだけを覚える fake driver 相当のスタブ。 */
 function createStubDriver(): { readonly driver: SessionDriver; readonly calls: string[] } {
   const calls: string[] = []
@@ -80,6 +86,10 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
       calls.push(`findResumeSession:${pack.name}:${modeOf(chat)}`)
       return Promise.resolve(`prev-${modeOf(chat)}-session`)
     },
+    listSessions: (pack, chat) => {
+      calls.push(`listSessions:${pack.name}:${modeOf(chat)}`)
+      return Promise.resolve(CHOICES)
+    },
     startDriver: (seed) => {
       calls.push(`startDriver:${seed.pack.name}:${modeOf(seed.chat)}:${seed.resume ?? ""}`)
       return stub.driver
@@ -131,18 +141,21 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
+      resume: { by: "latest" },
     })
     await settle()
 
     expect(harness.calls).toEqual([
       "choosePack:initial",
       "findResumeSession:tsukumo-spirit:work",
+      "listSessions:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:prev-work-session",
       "restoreEvents:prev-work-session",
     ])
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
       "chat-mode-changed",
+      "sessions-changed",
       "utterance",
     ])
   })
@@ -155,6 +168,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
+      resume: { by: "latest" },
     })
     await settle()
 
@@ -162,6 +176,7 @@ describe("createSessionLaunch", () => {
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
       "chat-mode-changed",
+      "sessions-changed",
     ])
   })
 
@@ -176,6 +191,7 @@ describe("createSessionLaunch", () => {
       {
         selection: { by: "initial" },
         chat: undefined,
+        resume: { by: "latest" },
       },
     )
     await settle()
@@ -184,6 +200,7 @@ describe("createSessionLaunch", () => {
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
       "chat-mode-changed",
+      "sessions-changed",
     ])
     expect(harness.stub.calls).toEqual(["prompt:架空の依頼"])
   })
@@ -194,6 +211,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "name", name: "kagami" },
       chat: undefined,
+      resume: { by: "latest" },
     })
     await settle()
 
@@ -207,12 +225,14 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: true,
+      resume: { by: "latest" },
     })
     await settle()
 
     expect(harness.calls).toEqual([
       "choosePack:initial",
       "findResumeSession:tsukumo-spirit:chat",
+      "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
       "restoreEvents:prev-chat-session",
     ])
@@ -224,6 +244,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
+      resume: { by: "latest" },
     })
     await settle()
 
@@ -239,16 +260,61 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
       chat: true,
+      resume: { by: "latest" },
     })
     await settle()
 
     expect(harness.calls).toEqual([
       "choosePack:current",
       "findResumeSession:tsukumo-spirit:chat",
+      "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
       "restoreEvents:prev-chat-session",
     ])
     expect(harness.calls.some((call) => call.startsWith("rememberPack:"))).toBe(false)
+  })
+
+  it("画面から選んだセッションは探さずに、そのIDの続きから起こす", async () => {
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "current" },
+      chat: undefined,
+      resume: { by: "id", sessionId: "other-session" },
+    })
+    await settle()
+
+    // **`findResumeSession` は呼ばない**（印から探すのではなく、選ばれたIDがそのまま続き）。
+    expect(harness.calls).toEqual([
+      "choosePack:current",
+      "listSessions:tsukumo-spirit:work",
+      "startDriver:tsukumo-spirit:work:other-session",
+      "restoreEvents:other-session",
+    ])
+    expect(harness.driverEvents).toContainEqual({
+      kind: "sessions-changed",
+      sessions: CHOICES,
+      current: "other-session",
+    })
+  })
+
+  it("切り替え先の一覧を、起こすたびに画面へ流す", async () => {
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "latest" },
+    })
+    await settle()
+
+    // いま起こしたセッション（`current`）も一緒に流れるので、画面は最初の依頼を待たずに
+    // 居場所を指せる。
+    expect(harness.driverEvents).toContainEqual({
+      kind: "sessions-changed",
+      sessions: CHOICES,
+      current: "prev-work-session",
+    })
   })
 
   it("駆動を閉じると、駆動と同じ間だけ動く見張りも閉じる", async () => {
@@ -260,6 +326,7 @@ describe("createSessionLaunch", () => {
       {
         selection: { by: "initial" },
         chat: undefined,
+        resume: { by: "latest" },
       },
     )
     driver.close()
@@ -279,6 +346,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
+      resume: { by: "latest" },
     })
     await settle()
 
@@ -291,6 +359,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
+      resume: { by: "latest" },
     })
     await settle()
 
@@ -298,6 +367,7 @@ describe("createSessionLaunch", () => {
     expect(harness.driverEvents.map((event) => event.kind)).toEqual([
       "character-changed",
       "chat-mode-changed",
+      "sessions-changed",
     ])
     // restoreEvents が組み直した履歴は onRestoredEvent 側だけに乗る。
     expect(harness.restoredEvents.map((event) => event.kind)).toEqual(["utterance"])
@@ -305,6 +375,7 @@ describe("createSessionLaunch", () => {
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
       "chat-mode-changed",
+      "sessions-changed",
       "utterance",
     ])
   })

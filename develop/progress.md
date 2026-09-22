@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 画面からセッションを選んで切り替えられるようにした（T-348）
+
+サイドバーの「セッション」の `<select>`（`session-switch.tsx`）に、同じパック・同じモードの
+目印違いを新しい順に10件まで並べ、選ぶと `switch-session` → `session-launch` の起こし直しで
+その transcript の続きから始まる。一覧は `sessions-changed` で起こすたびに1回だけ押す。
+
 ### 2026-09-22 キャラクターのテスト用の値を組み立て関数に寄せた（T-327）
 
 `test/fixture/character.ts` に `characterInfo` / `characterDefinition` / `portraits` /

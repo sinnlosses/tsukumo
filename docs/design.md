@@ -1359,6 +1359,10 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
   `state` に畳む」だけ。接続したブラウザは `hello` の snapshot でそのまま同じ姿になる
   （**ブラウザ側に復元の特別な経路は要らない**）
 - 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と `new-session` コマンド（画面から。まだ足していない）
+- **どのセッションの続きから始めるかは画面から選べる**（2026-09-22。サイドバーの「セッション」の
+  `<select>` → `switch-session` → `session-launch` の起こし直し）。並ぶのは**同じパック・同じモードの、
+  目印（`@A` / `@B`）違い**で、新しいほうから `MAX_SESSION_CHOICES` 件まで。**起動時は今までどおり
+  自動で続きから始まる**（選ばせる画面は出さない）
 
 **複数化は当面やらない**（2026-09-21 決定。`docs/requirements.md` 2.2。それ以前は未決事項
 だった）。`SessionManager` は `sessionId` を鍵に持つが、**これは「将来のため」ではなく、

@@ -35,6 +35,7 @@ import {
 } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
+import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
@@ -53,7 +54,11 @@ import {
   type SessionDriver,
   type SessionDriverOptions,
 } from "../core/session-driver.ts"
-import { selectSessionToResume, toRestoredEvents } from "../core/session-restore.ts"
+import {
+  listMarkedSessions,
+  selectSessionToResume,
+  toRestoredEvents,
+} from "../core/session-restore.ts"
 
 /**
  * 既定の reasoning effort。high に固定した
@@ -295,6 +300,28 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
     return selectSessionToResume(await listSessions({ dir: cwd, includeWorktrees: false }), tag)
   } catch {
     return undefined
+  }
+}
+
+/**
+ * 切り替え先として選べるセッションを一覧にする（画面のセッションの `<select>`。
+ * `docs/requirements.md` 4.8）。**同じ作業ディレクトリの、同じ一族の印**（同じパック・同じ
+ * モード）を持つものだけが残り、**新しい順**に並ぶ。
+ *
+ * 絞り込みの鍵も `includeWorktrees` を切る理由も {@link findSessionToResume} と同じで、違うのは
+ * 「最新の1つ」ではなく「目印の違うものを全部」返すところだけ。
+ *
+ * **一覧が読めなくても落とさない**（切り替えの選択肢が出ないだけ。
+ * docs/coding-standards.md「エラーハンドリング」）。
+ */
+export async function listSwitchableSessions(
+  cwd: string,
+  family: string,
+): Promise<readonly SessionChoice[]> {
+  try {
+    return listMarkedSessions(await listSessions({ dir: cwd, includeWorktrees: false }), family)
+  } catch {
+    return []
   }
 }
 

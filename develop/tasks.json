@@ -357,9 +357,9 @@
     "loopable": "Y",
     "dependencies": ["T-347"],
     "summary": "画面からセッションの一覧を見て切り替えられるようにする",
-    "status": "todo",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "`bun run check` 緑: 1176 pass / 0 fail / 2350 expect（94ファイル）。実機2プロセス（7329=C / 7330=D）で確認: D の一覧に `C・9/22 16:35` ほか目印＋最終更新時刻が並び、選ぶと C のやり取りがメインビューに組み直され `<select>` が「（表示中）」付きに変わった。起動時は選択画面なしで自動起動。 実測で一覧が120件になったため `MAX_SESSION_CHOICES = 10` を追加（新しい順に切る）。ドロップダウンを開いた状態の画像とターン進行中の拒否は実機未確認（項目の並びは DOM、拒否はテストで確認）。",
     "task": "## 背景\n\nセッションの印に起動順の目印が付いた（前のタスク）ので、**画面から選んで切り替えられる**\nようにする。いま起こし直しの経路は `src/server/core/session-launch.ts` の\n`createSessionLaunch` 1本で、`switch-character` と `set-chat-mode` の2つが通る\n（`src/server/core/session-manager.ts:454,465`）。コマンドの形は `src/shared/command.ts`\n（`switch-character` は 195行、`set-chat-mode` は 183行）で、画面側の口は\n`src/browser/features/sidebar/session-info.tsx`（`<select>` から `dispatch`）。\n\n指示で決まっている形:\n\n- **切り替えは画面から。** `switch-character` / `set-chat-mode` と並ぶ**3本目**として\n  `createSessionLaunch` に足す。落ちていなくても行き来できる\n- 一覧には**目印と一緒に最終更新時刻**を出し、どれがどの作業かを時刻で見分けられるようにする\n- 起動時は今までどおり自動で続きから始まる（要件 4.8 は変えない）。選ぶのは切り替えたいときだけ\n\n## 解くべき論点\n\n- **一覧をどう画面へ届けるか。** `listSessions` は外の世界（`adapter`）で、いまは\n  起こすときにしか呼んでいない。切り替えの画面を開くたびに引くのか、イベントで押すのかを決める\n- **一覧の置き場所。** サイドバーの `session-info.tsx` に `<select>` をもう1つ足すのか、\n  別の場所に出すのか（`docs/design.md` の部品の章と、画面のナビゲーションの置き場を決める\n  タスクの結論に反しない形にする）\n- **いま出ているセッション**をどう示すか（一覧の中で印を付ける／選べなくする）\n\n## やること\n\n1. `src/shared/command.ts` に切り替えのコマンドを足す（`switch-character` と同じく\n   `zod` で検証し、ターン進行中は弾く条件も揃える）\n2. `session-manager` の起こし直しの分岐に3本目を足し、`createSessionLaunch` へ渡す\n   （`SessionLaunchRequest` は「これから起こすセッションID」を運ぶ形になる）\n3. 一覧を画面へ流すイベントを `src/shared/session-event.ts` に足し、目印と最終更新時刻を出す\n4. 画面側に一覧と切り替えの口を作る\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- **目視確認**: 同じディレクトリで tsukumo を2つ起こし、片方の画面から他方のセッションへ\n  切り替えて、**そのセッションのやり取りが画面に組み直される**ことを確かめる。\n  何をどう確かめたか（どの画面で、何が見えたか）を `evidence` に書く\n- 一覧に目印と最終更新時刻の両方が出ている（スクリーンショットで確かめる）\n- 起動時は選ばせる画面が出ず、今までどおり自動で続きから始まる\n\n## 注意\n\n- **tsukumo を起こす目視確認が要るので、他の目視確認タスクと並行させない**\n- `switch-character` と同じく、**ターン進行中の切り替えは弾く**（`session-manager.ts:466`\n  の条件に揃える）\n- 画面に出す最終更新時刻は**ローカル時刻**で、書式は日時の扱いを Temporal に寄せたあとの\n  やり方に合わせる\n"
   }
 ]

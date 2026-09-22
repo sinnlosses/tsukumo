@@ -35,6 +35,12 @@ import {
 export const MAX_PROMPT_TEXT_LENGTH = 20_000
 
 /**
+ * 画面から選び直せるセッションのIDの上限。**UUID を通せる素朴な上限**であって、形の検査では
+ * ない（知らないIDは起こす側が新規に倒すので、ここで形まで縛らない）。
+ */
+const MAX_SESSION_ID_LENGTH = 200
+
+/**
  * 許可モードの値の全体。**この一覧は shared に1つだけ置く**（docs/design.md 4.3）。
  * SDK の `PermissionMode` と同じ値であることは core 側のテスト
  * （test/server/adapter/sdk-driver.test.ts）が型で守る。画面に出す日本語ラベルは描く側が持つ。
@@ -191,6 +197,18 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
    * `prompt` とは別のコマンドにしてある。
    */
   z.object({ type: z.literal("nudge"), commandId: commandIdSchema }),
+  /**
+   * 続きから始めるセッションを画面から選び直す（`docs/requirements.md` 4.8）。
+   * **`switch-character` と同じく駆動の起こし直し**で、変わるのは「どの transcript の続きから
+   * 始めるか」だけ（キャラクターも雑談かどうかも、いま出しているまま）。**選べるのは
+   * `sessions-changed` で届いた一覧の中身**（同じパック・同じモードの、目印違い）なので、
+   * ここで見るのは長さだけにして、知らないIDは起こす側（`session-launch`）が新規に倒す。
+   */
+  z.object({
+    type: z.literal("switch-session"),
+    commandId: commandIdSchema,
+    sessionId: z.string().min(1).max(MAX_SESSION_ID_LENGTH),
+  }),
   z.object({
     type: z.literal("switch-character"),
     commandId: commandIdSchema,
@@ -270,6 +288,7 @@ export type DriverCommand = Exclude<
   | CharacterEditCommand
   | CharacterCreateCommand
   | { readonly type: "switch-character" }
+  | { readonly type: "switch-session" }
   | { readonly type: "set-chat-mode" }
   | { readonly type: "nudge" }
 >

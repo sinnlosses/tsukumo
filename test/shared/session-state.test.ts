@@ -633,6 +633,38 @@ describe("applySessionEvent", () => {
     expect(cleared.tasks).toBeUndefined()
   })
 
+  it("sessions-changed で切り替え先の一覧を持ち、届くまでは空", () => {
+    expect(INITIAL_SESSION_STATE.sessions).toEqual([])
+
+    // 目印と最終更新時刻だけ（会話の内容は入らない）。
+    const sessions = [
+      { slot: "B", sessionId: "s-架空-2", lastModified: 2_000 },
+      { slot: "A", sessionId: "s-架空-1", lastModified: 1_000 },
+    ]
+    const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
+    expect(listed.sessions).toEqual(sessions)
+    // **`init` を待たずに居場所が決まる**（続きから始めたときだけ）。
+    expect(listed.sessionId).toBe("s-架空-1")
+  })
+
+  it("sessions-changed が新規（current なし）なら、いまのセッションのIDは変えない", () => {
+    const withId = apply({
+      kind: "session-info",
+      sessionId: "s-架空-init",
+      model: undefined,
+      permissionMode: undefined,
+      slashCommands: [],
+      terminalSlashCommands: [],
+    })
+
+    const listed = applySessionEvent(
+      withId,
+      { kind: "sessions-changed", sessions: [], current: undefined },
+      0,
+    )
+    expect(listed.sessionId).toBe("s-架空-init")
+  })
+
   it("character-changed でキャラクターパックの姿を持ち、届くまでは undefined", () => {
     expect(INITIAL_SESSION_STATE.character).toBeUndefined()
 

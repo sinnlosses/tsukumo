@@ -108,9 +108,21 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
  * 触れない。
  */
 export function sessionTag(characterName: string, chat: boolean, viewPort: number): string {
+  return `${sessionTagFamily(characterName, chat)}${SESSION_SLOT_SEPARATOR}${sessionSlot(viewPort)}`
+}
+
+/**
+ * 目印を外した印（`tsukumo:<パック>` / `tsukumo:<パック>:chat`）。**同じパックの、同じモードの
+ * セッションの一族**を指す。
+ *
+ * 使うのは**画面に出す切り替え先の一覧を絞るとき**（`src/server/core/session-restore.ts` の
+ * `listMarkedSessions`）。一覧を一族で絞るのは、切り替えてもキャラクターとモードは
+ * いま出しているままだから（`docs/requirements.md` 4.8）——別のパックのセッションを混ぜると、
+ * 選んだ瞬間に会話の相手だけが入れ替わる。
+ */
+export function sessionTagFamily(characterName: string, chat: boolean): string {
   const packTag = `${SESSION_TAG_PREFIX}:${characterName}`
-  const modeTag = chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
-  return `${modeTag}${SESSION_SLOT_SEPARATOR}${sessionSlot(viewPort)}`
+  return chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
 }
 
 /** 印を読み解いた姿（{@link readSessionMark}）。 */
@@ -122,6 +134,11 @@ export type SessionMark = {
    * `tsukumo:<パック>@A` は同じセッションを指す）。
    */
   readonly tag: string
+  /**
+   * 目印を外した印（{@link sessionTagFamily} が組み立てるのと同じ形）。**一覧を一族で絞るときに
+   * これ同士を比べる**ので、印の文字列を切り分けるのはここだけで済む。
+   */
+  readonly family: string
 }
 
 /**
@@ -137,10 +154,15 @@ export function readSessionMark(tag: string): SessionMark | undefined {
     return undefined
   }
 
-  const slot = tag.slice(tag.lastIndexOf(SESSION_SLOT_SEPARATOR) + 1)
+  const separator = tag.lastIndexOf(SESSION_SLOT_SEPARATOR)
+  const slot = tag.slice(separator + 1)
   return slot.length === 1 && SESSION_SLOT_LETTERS.includes(slot)
-    ? { slot, tag }
-    : { slot: DEFAULT_SESSION_SLOT, tag: `${tag}${SESSION_SLOT_SEPARATOR}${DEFAULT_SESSION_SLOT}` }
+    ? { slot, tag, family: tag.slice(0, separator) }
+    : {
+        slot: DEFAULT_SESSION_SLOT,
+        tag: `${tag}${SESSION_SLOT_SEPARATOR}${DEFAULT_SESSION_SLOT}`,
+        family: tag,
+      }
 }
 
 /**

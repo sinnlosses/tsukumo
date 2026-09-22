@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { readConfig, readSessionMark, sessionTag } from "../../../src/server/core/config.ts"
+import {
+  readConfig,
+  readSessionMark,
+  sessionTag,
+  sessionTagFamily,
+} from "../../../src/server/core/config.ts"
 import { DEFAULT_VIEW_PORT } from "../../../src/server/core/port-resolution.ts"
 
 describe("readConfig", () => {
@@ -79,15 +84,28 @@ describe("sessionTag", () => {
   })
 })
 
+describe("sessionTagFamily", () => {
+  // 一覧を絞る鍵。**目印（`@A`）だけが違うセッションが同じ一族になる**。
+  it("目印を外した印を返す（印はこれに目印を足した形）", () => {
+    expect(sessionTagFamily("架空のパック", false)).toBe("tsukumo:架空のパック")
+    expect(sessionTagFamily("架空のパック", true)).toBe("tsukumo:架空のパック:chat")
+    expect(sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)).toBe(
+      `${sessionTagFamily("架空のパック", false)}@B`,
+    )
+  })
+})
+
 describe("readSessionMark", () => {
   it("組み立てた印を読み戻すと、目印と印がそのまま取れる", () => {
     expect(readSessionMark(sessionTag("架空のパック", false, DEFAULT_VIEW_PORT))).toEqual({
       slot: "A",
       tag: "tsukumo:架空のパック@A",
+      family: "tsukumo:架空のパック",
     })
     expect(readSessionMark(sessionTag("架空のパック", true, DEFAULT_VIEW_PORT + 1))).toEqual({
       slot: "B",
       tag: "tsukumo:架空のパック:chat@B",
+      family: "tsukumo:架空のパック:chat",
     })
   })
 
@@ -95,10 +113,12 @@ describe("readSessionMark", () => {
     expect(readSessionMark("tsukumo:架空のパック")).toEqual({
       slot: "A",
       tag: sessionTag("架空のパック", false, DEFAULT_VIEW_PORT),
+      family: sessionTagFamily("架空のパック", false),
     })
     expect(readSessionMark("tsukumo:架空のパック:chat")).toEqual({
       slot: "A",
       tag: sessionTag("架空のパック", true, DEFAULT_VIEW_PORT),
+      family: sessionTagFamily("架空のパック", true),
     })
   })
 
@@ -110,7 +130,8 @@ describe("readSessionMark", () => {
 
   it("名前に @ を含むパックも、組み立てた印と同じ形に揃う", () => {
     const tag = sessionTag("架空@パック", false, DEFAULT_VIEW_PORT)
-    expect(readSessionMark("tsukumo:架空@パック")).toEqual({ slot: "A", tag })
-    expect(readSessionMark(tag)).toEqual({ slot: "A", tag })
+    const family = sessionTagFamily("架空@パック", false)
+    expect(readSessionMark("tsukumo:架空@パック")).toEqual({ slot: "A", tag, family })
+    expect(readSessionMark(tag)).toEqual({ slot: "A", tag, family })
   })
 })

@@ -90,6 +90,8 @@ export type SessionCreateOptions = {
    * まま」の3つ（docs/design.md 7章・13.6）。知らない名前のときに何を起こすかも、名前を
    * 覚えるかどうかも呼び出し側が決める。
    * `request.chat` は雑談モードで起こすか（`docs/requirements.md` 4.9）。
+   * `request.resume` は**これから起こすセッションの決め方**で、印から探すか、画面から選ばれた
+   * IDをそのまま続きにするかの2つ（`docs/requirements.md` 4.8）。
    *
    * **待てる形（Promise）で返す**のは、そのパックの続きから始めるセッションを探すのに
    * 外の世界（claude 自身の transcript の一覧）を読むから（docs/requirements.md 4.8）。
@@ -384,14 +386,15 @@ function createSessionHost(
 
   // **起動時は覚えない** — その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の
   // 初期値として残らないように（docs/design.md 13.6）。
-  let driver = start({ selection: { by: "initial" }, chat: undefined })
+  let driver = start({ selection: { by: "initial" }, chat: undefined, resume: { by: "latest" } })
 
   /**
    * 駆動を起こし直す（docs/design.md 7章。**そのパックのセッションの
    * 続きから始まる** — 会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる）。
-   * **契機は2つ**: 別のキャラクターパックに切り替えたとき（`switch-character`）と、
+   * **契機は3つ**: 別のキャラクターパックに切り替えたとき（`switch-character`）、
    * 雑談モードを切り替えたとき（`set-chat-mode`。`systemPrompt` を差し替えるため。
-   * `docs/requirements.md` 4.9）。
+   * `docs/requirements.md` 4.9）、画面から別のセッションを選んだとき（`switch-session`。
+   * `docs/requirements.md` 4.8）。
    * **画面は初期状態に戻す** — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
    * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）は
    * その `hello` の状態に入っているので、二重に配らない。
@@ -460,7 +463,11 @@ function createSessionHost(
         // **雑談かどうかは切り替えをまたいで保つ**（パックを変えただけで仕事へ戻らない）。
         // 画面から名前が届いた唯一の口なので、**ここで選んだパックだけが次の起動の初期値に
         // なる**（docs/design.md 13.6）。
-        return restart({ selection: { by: "name", name: command.name }, chat: state.chatMode })
+        return restart({
+          selection: { by: "name", name: command.name },
+          chat: state.chatMode,
+          resume: { by: "latest" },
+        })
       }
       if (command.type === "set-chat-mode") {
         // 起こし直しなので `switch-character` と同じ条件で弾く。
@@ -470,7 +477,26 @@ function createSessionHost(
         // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
         // とは決めていない）。**名前では渡さない** — 渡すと「画面から選ばれた名前」と
         // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（docs/design.md 13.6）。
-        return restart({ selection: { by: "current" }, chat: command.chat })
+        return restart({
+          selection: { by: "current" },
+          chat: command.chat,
+          resume: { by: "latest" },
+        })
+      }
+      if (command.type === "switch-session") {
+        // 起こし直しなので `switch-character` と同じ条件で弾く（理由の文面だけは、何が
+        // 切り替わらなかったかで分ける）。
+        if (state.turnInProgress) {
+          return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
+        }
+        // **キャラクターもモードもいま出しているまま**（変わるのは、どの transcript の続きから
+        // 始めるかだけ）。一覧は同じパック・同じモードのものしか出していないので、選んだ先で
+        // 相手が入れ替わることもない。
+        return restart({
+          selection: { by: "current" },
+          chat: state.chatMode,
+          resume: { by: "id", sessionId: command.sessionId },
+        })
       }
       if (command.type === "nudge") {
         // 画面のボタンも同じ2つの条件で塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が

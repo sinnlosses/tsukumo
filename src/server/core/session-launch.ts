@@ -1,7 +1,7 @@
 // セッションを起こす一続き。**パックを決めて
 // 続きのセッションを探し、駆動を起こし、復元した履歴と `character-changed` を流すまでの順序**を
 // 持つのがここで、起動時（`session-manager.create`）と起こし直し（`session-manager.restart`。
-// `switch-character` と `set-chat-mode`）の3つともこの1つを通る。
+// `switch-character` / `set-chat-mode` / `switch-session`）の4つともこの1つを通る。
 //
 // **画面を初期状態に戻すかどうかは持たない** — それは起こし直しだけの判断で、
 // `src/server/core/session-manager.ts` の `restart` にある。ここは「どちらから来ても同じ順序」だけ。
@@ -9,6 +9,7 @@
 // 外の世界（パックの読み込み・覚えた値・claude の transcript・見張り）には触らず、すべて
 // 渡された関数（{@link SessionLaunchPorts}）越しに頼む。結ぶのは配線層（`src/session-start.ts`）。
 
+import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { type CharacterSelection, type NamedCharacterPack } from "./character-selection.ts"
 import { type SessionDriver } from "./session-driver.ts"
@@ -29,21 +30,38 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
 }
 
 /**
- * 起こす（起こし直す）ときの指定。**起こし方は3つ**で、パックの決め方（{@link CharacterSelection}）が
+ * 起こす（起こし直す）ときの指定。**起こし方は4つ**で、パックの決め方（{@link CharacterSelection}）が
  * そのまま「覚えるかどうか」も分ける:
  *
- * | 起こし方           | `selection`     | 覚えるか |
- * | ------------------ | --------------- | -------- |
- * | 起動               | `initial`       | 覚えない |
- * | `switch-character` | `name`          | **覚える** |
- * | `set-chat-mode`    | `current`       | 覚えない |
+ * | 起こし方           | `selection`     | `resume` | 覚えるか |
+ * | ------------------ | --------------- | -------- | -------- |
+ * | 起動               | `initial`       | `latest` | 覚えない |
+ * | `switch-character` | `name`          | `latest` | **覚える** |
+ * | `set-chat-mode`    | `current`       | `latest` | 覚えない |
+ * | `switch-session`   | `current`       | `id`     | 覚えない |
  */
 export type SessionLaunchRequest = {
   /** これから起こすパックの決め方。 */
   readonly selection: CharacterSelection
   /** 雑談モードで起こすか。undefined なら仕事（既定）。 */
   readonly chat: boolean | undefined
+  /** これから起こすセッションの決め方。 */
+  readonly resume: SessionResume
 }
+
+/**
+ * これから起こすセッションの決め方。**「印から探す」と「画面から選ばれたID」を1つの欄で
+ * 兼ねない**ための判別可能な合併型（{@link CharacterSelection} と同じ形。`undefined` を
+ * 「探す」の意味に使うと、探した結果の「見つからなかった」と区別できない）。
+ */
+export type SessionResume =
+  /** 印から最新の1つを探す（起動・`switch-character`・`set-chat-mode`）。 */
+  | { readonly by: "latest" }
+  /**
+   * 画面から選ばれたセッション（`switch-session`）。**探さない** — 一覧に出したIDをそのまま
+   * 続きにする。claude 側が知らないIDだったときは新規のセッションとして起き上がる。
+   */
+  | { readonly by: "id"; readonly sessionId: string }
 
 /** 一続きの中で外の世界に頼むこと。実装はすべて配線層（`src/session-start.ts`）が `adapter` から渡す。 */
 export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
@@ -70,6 +88,15 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
     seed: SessionLaunchSeed<Pack>,
     onEvent: (event: SessionEvent) => void,
   ) => SessionDriver
+  /**
+   * いま切り替え先として選べるセッションを一覧にする（**同じパックの、同じモードのもの
+   * だけ**。`docs/requirements.md` 4.8）。読めなかったときは空。
+   *
+   * **{@link SessionLaunchPorts.findResumeSession} とは別の口**にしてあるのは、問いが違うから
+   * （「続きはどれか」と「他にどれへ行けるか」）。どちらも同じ transcript の一覧を読むが、
+   * 起こすのは起動と起こし直しのときだけなので、読む回数を惜しまない。
+   */
+  readonly listSessions: (pack: Pack, chat: boolean) => Promise<readonly SessionChoice[]>
   /** 前のセッションの記録を、画面に出す形のイベントに組み直す。 */
   readonly restoreEvents: (sessionId: string, pack: Pack) => Promise<readonly SessionEvent[]>
 }
@@ -79,8 +106,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  *
  * 順序は**起動時も起こし直しも同じ**:
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed` と `chat-mode-changed` を
- * 流す → 見張りを起こす → 続きのセッションを探す → 駆動を起こす → 続きから始まったなら履歴を
- * 組み直す。
+ * 流す → 見張りを起こす → 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
+ * 続きから始まったなら履歴を組み直す。
  *
  * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
  * 前のセッションの記録を組み直した再生だけを流す（`docs/design.md` 7章「雑談の会話のアーカイブは
@@ -113,7 +140,19 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const watcher = ports.watchTasks(onEvent)
     // **キャラクターごと・モードごとに別のセッションを持つ**（docs/design.md 7章、
     // docs/requirements.md 4.9）。起動時も切り替え時も、これから起こす側の続きを探す。
-    const resume = await ports.findResumeSession(pack, chat)
+    // **画面から選ばれたときだけは探さない**（選ばれたIDがそのまま続きになる）。
+    const resume =
+      request.resume.by === "id"
+        ? request.resume.sessionId
+        : await ports.findResumeSession(pack, chat)
+    // **切り替え先の一覧も、起こすたびに引き直す**（画面はこのイベントでしか一覧を知れない。
+    // 起こし直すと状態が初期値へ戻るので、`character-changed` と同じ扱い）。**どれを出して
+    // いるかも一緒に流す**ので、最初の依頼を送る前でも画面は居場所を指せる。
+    onEvent({
+      kind: "sessions-changed",
+      sessions: await ports.listSessions(pack, chat),
+      current: resume,
+    })
     const driver = ports.startDriver({ pack, resume, chat }, onEvent)
 
     if (resume !== undefined) {

@@ -197,6 +197,16 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     })
   })
 
+  it("switch-session を受け付ける（空のIDは弾く）", () => {
+    expect(
+      parseClientCommand({ type: "switch-session", commandId: "c-1", sessionId: "s-架空" }),
+    ).toEqual({ type: "switch-session", commandId: "c-1", sessionId: "s-架空" })
+    expect(
+      parseClientCommand({ type: "switch-session", commandId: "c-2", sessionId: "" }),
+    ).toBeUndefined()
+    expect(parseClientCommand({ type: "switch-session", commandId: "c-3" })).toBeUndefined()
+  })
+
   it("isCharacterEditCommand が見た目の3つだけを true にする", () => {
     const edits = [
       { type: "set-portrait", commandId: "c-1", expression: "proud", image: TINY_PNG_DATA_URL },
@@ -206,6 +216,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     const others = [
       { type: "interrupt", commandId: "c-4" },
       { type: "switch-character", commandId: "c-5", name: "tsukumo" },
+      { type: "switch-session", commandId: "c-6", sessionId: "s-架空" },
     ]
 
     for (const value of edits) {

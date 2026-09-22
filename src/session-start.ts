@@ -16,12 +16,13 @@ import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver
 import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
 import {
   findSessionToResume,
+  listSwitchableSessions,
   readRestoredEvents,
   startSession as startSdkSession,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
-import { type Config, sessionTag } from "./server/core/config.ts"
+import { type Config, sessionTag, sessionTagFamily } from "./server/core/config.ts"
 import {
   type ChatArchive,
   type ChatRecall,
@@ -45,6 +46,7 @@ import {
 import { type ClientCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
+import { type SessionChoice } from "./shared/session-choice.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
 
 /**
@@ -112,6 +114,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
         watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
         findPackSessionToResume(config, process.cwd(), pack.name, chat, viewPort),
+      listSessions: (pack, chat) => listPackSessions(config, process.cwd(), pack.name, chat),
       startDriver: (seed, onEvent) =>
         startDriver(seed, chatArchive, fakeSession, config.fakeScene, viewPort, onEvent),
       restoreEvents: (resumed, pack) =>
@@ -196,6 +199,24 @@ function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
     index: (line) => chatArchive.writeIndex(packName, line),
     recall: (keyword) => chatArchive.recall(packName, keyword, CHAT_RECALL_READBACK_BYTES),
   }
+}
+
+/**
+ * 画面の `<select>` に出す、切り替え先のセッションの一覧（`docs/requirements.md` 4.8）。
+ * **同じパック・同じモードの、目印の違うもの**（`sessionTagFamily`）だけが並ぶ。
+ *
+ * **続きを探さない起こし方のときは一覧も出さない**（`TSUKUMO_NEW_SESSION=1` と fake driver。
+ * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない）。
+ */
+async function listPackSessions(
+  config: Config,
+  cwd: string,
+  characterName: string,
+  chat: boolean,
+): Promise<readonly SessionChoice[]> {
+  return config.newSession || config.driver === "fake"
+    ? []
+    : listSwitchableSessions(cwd, sessionTagFamily(characterName, chat))
 }
 
 /**

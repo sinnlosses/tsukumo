@@ -12,6 +12,7 @@
 import { isPlainObject } from "remeda"
 
 import { type Expression } from "../../shared/expression.ts"
+import { MAX_SESSION_CHOICES, type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { readSessionMark } from "./config.ts"
 import { toSessionEvents } from "./sdk-message.ts"
@@ -41,26 +42,25 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
   )?.sessionId
 }
 
-/** 印の付いたセッション1件（画面に並べるのに要る3つだけ）。 */
-export type MarkedSession = {
-  /** 目印（`A` / `B` / …。`src/server/core/config.ts` の {@link readSessionMark}）。 */
-  readonly slot: string
-  readonly sessionId: string
-  readonly lastModified: number
-}
-
 /**
- * 印の付いたセッションを一覧にする（**印そのものがセッションの一覧**。別の保存先は作らない。
- * docs/requirements.md 4.8「鍵」）。**新しい順**に並べ、tsukumo の印を持たないものは落とす。
+ * 切り替え先として選べるセッションを一覧にする（**印そのものがセッションの一覧**。別の保存先は
+ * 作らない。docs/requirements.md 4.8「鍵」）。**新しい順**に並べ、tsukumo の印を持たないものと、
+ * 一族（`family`）の違うものは落とす。
  *
- * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。パックとモードで
- * 分かれた印は目印だけに畳むので、**同じ目印の行が複数返ることがある**（まとめ方と見せ方は
- * 画面側の判断）。
+ * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。**一族で絞るのは
+ * 呼び出し側ではなくここ**で、渡すのは `src/server/core/config.ts` の `sessionTagFamily` が
+ * 組み立てた印（同じパックの、同じモード）。目印（`@A` / `@B`）だけが違うものが残るので、
+ * **同じ目印の行が複数返ることがある**（落ちた tsukumo の印と動いている tsukumo の印は
+ * 見分けられない）。見分け方は最終更新時刻の側。
+ *
+ * **返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで**（印は使うほど増え続ける）。
  */
-export function listMarkedSessions(sessions: unknown): readonly MarkedSession[] {
+export function listMarkedSessions(sessions: unknown, family: string): readonly SessionChoice[] {
   return markedSessions(sessions)
+    .filter((session) => session.family === family)
     .map(({ slot, sessionId, lastModified }) => ({ slot, sessionId, lastModified }))
     .sort((left, right) => right.lastModified - left.lastModified)
+    .slice(0, MAX_SESSION_CHOICES)
 }
 
 /**
@@ -89,10 +89,12 @@ export function toRestoredEvents(
   return restored.turnOpen ? [...restored.events, RESTORED_TURN_FINISHED] : restored.events
 }
 
-/** 印の付いたセッション1件（目印まで揃えた印つき）。 */
-type TaggedSession = MarkedSession & {
+/** 印の付いたセッション1件（目印まで揃えた印と、目印を外した一族つき）。 */
+type TaggedSession = SessionChoice & {
   /** 目印まで揃えた印。**選ぶときはこれ同士を比べる**（`readSessionMark`）。 */
   readonly tag: string
+  /** 目印を外した印。**一覧を絞るときはこれ同士を比べる**（`sessionTagFamily`）。 */
+  readonly family: string
 }
 
 /**
@@ -120,7 +122,7 @@ function taggedSession(value: unknown): readonly TaggedSession[] {
     sessionId !== "" &&
     typeof lastModified === "number" &&
     Number.isFinite(lastModified)
-    ? [{ slot: mark.slot, tag: mark.tag, sessionId, lastModified }]
+    ? [{ slot: mark.slot, tag: mark.tag, family: mark.family, sessionId, lastModified }]
     : []
 }
 

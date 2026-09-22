@@ -18,6 +18,7 @@ import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
+import { type SessionChoice } from "./session-choice.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
 import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
 
@@ -216,6 +217,28 @@ export type SessionEvent =
   | ({ readonly kind: "character-changed" } & CharacterInfo & {
         readonly packs: readonly CharacterPackChoice[]
       })
+  /**
+   * 切り替え先として選べるセッションの一覧が分かった（`docs/requirements.md` 4.8）。
+   * **駆動を起こしたときと、起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機。
+   * 一覧の出どころが「セッションを探すために読む transcript の一覧」そのものなので、
+   * 別の契機を作らない）。
+   *
+   * **ターンのたびには流れない。** 印が付くのはターンが終わって3秒後で、押し直すたびに
+   * transcript の一覧を読み直すことになる。画面に出る最終更新時刻は**起こした時点の姿**。
+   *
+   * 中身は印から読めるものだけ（`src/shared/session-choice.ts`）。**会話の内容は入らない。**
+   */
+  | {
+      readonly kind: "sessions-changed"
+      readonly sessions: readonly SessionChoice[]
+      /**
+       * いま起こしたセッションのID（続きから始めなかったときは undefined ＝ 新規）。
+       * **`session-info` を待たずに「どれを出しているか」を言えるのはこの経路だけ** —
+       * `init` は最初の依頼を送るまで届かないので、切り替えた直後の画面は
+       * どのセッションに居るのかを他から知れない。
+       */
+      readonly current: string | undefined
+    }
   /**
    * 雑談モードに入っている／出ている（`docs/requirements.md` 4.9）。**駆動を起こしたときと、
    * `set-chat-mode` で起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機）。

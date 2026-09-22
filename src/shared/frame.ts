@@ -62,6 +62,7 @@ export const FRAME_ERROR_REASON = {
   characterEditFailed: "キャラクターの見た目を変えられなかった",
   characterCreateFailed: "キャラクターを作れなかった",
   switchDuringTurn: "ターン進行中はキャラクターを切り替えられない（中断すると切り替えられる）",
+  sessionSwitchDuringTurn: "ターン進行中はセッションを切り替えられない（中断すると切り替えられる）",
   nudgeDuringTurn: "ターン進行中は話しかけてもらえない（返事を待つ）",
   nudgeOutsideChat: "話しかけてもらえるのは雑談モードのときだけ",
 } as const

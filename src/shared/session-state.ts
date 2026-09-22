@@ -17,6 +17,7 @@ import { isModelAlias } from "./command.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
+import { type SessionChoice } from "./session-choice.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
 
@@ -204,6 +205,13 @@ export type SessionState = {
    */
   readonly characterPacks: readonly CharacterPackChoice[]
   /**
+   * 切り替え先として選べるセッションの一覧（サイドバーの `<select>`。
+   * `docs/requirements.md` 4.8）。`sessions-changed` と一緒に届き、**起こしたときの姿のまま
+   * 変わらない**（ターンのたびには引き直さない）。まだ届いていない・印の付いたセッションが
+   * 1つも無いときは空で、そのときは選択肢を出せないので `<select>` ごと出さない。
+   */
+  readonly sessions: readonly SessionChoice[]
+  /**
    * 今のターンが始まった時刻（`request` の `at`）。表す意味は「依頼を送ってから、そのターンが
    * 終わるまでの時間」の起点で、次の `request` まではそのまま持ち続ける（入力欄の経過時間表示
    * `src/browser/features/dispatch/turn-status.tsx` が使う。docs/design.md 4.2）。まだ一度も依頼が無ければ
@@ -254,6 +262,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   tasks: undefined,
   character: undefined,
   characterPacks: [],
+  sessions: [],
   turnStartedAt: undefined,
   turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
@@ -397,6 +406,15 @@ export function applySessionEvent(
       }
     case "tasks-changed":
       return { ...state, tasks: event.tasks }
+    case "sessions-changed":
+      // **`sessionId` もここで決まる**（`session-info` は最初の依頼まで届かないので、それまで
+      // 「いまどのセッションに居るか」を言えるのはこの経路だけ）。新規に起こしたときは
+      // undefined のままで、`init` が届いたら本物のIDで上書きされる。
+      return {
+        ...state,
+        sessions: event.sessions,
+        sessionId: event.current ?? state.sessionId,
+      }
     case "character-changed":
       return {
         ...state,

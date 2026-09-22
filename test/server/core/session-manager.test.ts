@@ -357,6 +357,74 @@ describe("createSessionManager", () => {
     expect(stub.calls).toContain("close")
   })
 
+  it("switch-session で、選ばれたIDの続きから起こし直す（パックもモードも変えない）", async () => {
+    const started: SessionLaunchRequest[] = []
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+    })
+    manager.create({
+      sessionId: SESSION_ID,
+      startDriver: (onEvent, _onRestoredEvent, request) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        started.push(request)
+        return Promise.resolve(stub.driver)
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+    })
+    manager.subscribe(SESSION_ID, () => {})
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-session",
+        commandId: "c-1",
+        sessionId: "架空の別セッション",
+      }),
+    ).toEqual({ ok: true })
+
+    expect(started).toHaveLength(2)
+    // 変わるのは「どの transcript の続きから始めるか」だけ。
+    expect(started[1]?.resume).toEqual({ by: "id", sessionId: "架空の別セッション" })
+    // **パックは「いま出しているまま」**（名前で渡すと覚えた値が書き換わる。docs/design.md 13.6）。
+    expect(started[1]?.selection).toEqual({ by: "current" })
+    expect(started[1]?.chat).toBe(false)
+    // 起動の1回目は今までどおり印から探す。
+    expect(started[0]?.resume).toEqual({ by: "latest" })
+  })
+
+  it("ターン進行中の switch-session は定型文の理由で受け付けず、駆動を閉じない", async () => {
+    const { manager, stub } = startManagerWithStub()
+
+    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+    await waitForBatch()
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-session",
+        commandId: "c-1",
+        sessionId: "架空の別セッション",
+      }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
+    expect(stub.calls).not.toContain("close")
+
+    stub.emit({ kind: "turn-finished", status: "success" })
+    await waitForBatch()
+
+    expect(
+      await manager.dispatch(SESSION_ID, {
+        type: "switch-session",
+        commandId: "c-2",
+        sessionId: "架空の別セッション",
+      }),
+    ).toEqual({ ok: true })
+    expect(stub.calls).toContain("close")
+  })
+
   it("set-chat-mode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
     // 雑談の切り替えは `systemPrompt` の差し替えなので、`switch-character` と同じ起こし直しに
     // なる（docs/requirements.md 4.9）。**パックは変えない**ことをここで見る。

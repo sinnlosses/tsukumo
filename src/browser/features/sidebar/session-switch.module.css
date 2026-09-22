@@ -1,0 +1,17 @@
+/* セッションの `<select>` の見た目（`src/browser/features/sidebar/session-switch.tsx`）。
+   並ぶ場所（2列の grid）とラベルの見た目は `sidebar.module.css` の `.session-info` 側が持つ。
+
+   **共有の `<select>`（`src/browser/components/select.tsx`）は見た目を持たない**ので、
+   置く側がそれぞれ持つ。サイドバーの他の `<select>`（モデル・許可モード・キャラクター・
+   モード）と同じ枠・同じ余白に見えるよう、値もそちらと同じにしてある。 */
+.session-select {
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  /* セッションの行だけは中身（目印と日時）が長く、狭いサイドバーで横へはみ出す。
+     列（`minmax(0, 1fr)`）に収めて、はみ出るぶんは `<select>` 自身に省略させる。 */
+  max-width: 100%;
+}
