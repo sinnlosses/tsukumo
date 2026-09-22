@@ -1,5 +1,13 @@
 # 進捗のアーカイブ
 
+### 2026-09-22 表情に `bored`（たいくつ）を足した（T-302）
+
+`src/shared/expression.ts` の `Expression` / `EXPRESSIONS` の末尾に `bored` を積み、型検査が挙げた `character-definition.ts` / `character.ts` の4か所とテストのフィクスチャ16ファイルを埋めた。ラベルは同梱3パックに、立ち絵（`bored.png`）は `characters/tsukumo` とホームのパックに入れた。**自動では切り替えず**、`speak` の引数でキャラクター自身が選ぶだけ。
+
+### 2026-09-22 ターンごとのトークン消費を日付ごとの JSONL に記録するようにした（T-318）
+
+SDK の `result` が運ぶ `modelUsage`（`query()` の中の累計）から前回との差を取り、1ターン1行で `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl` に積むようにした（型は `src/shared/token-usage.ts`、差の計算は `src/server/core/token-usage.ts`、書くのは `src/server/adapter/token-usage-log.ts`、前回の累計を覚えるのは `session-manager`）。**行に入るのは数・モデル名・時刻・セッションID・モードだけ**で、型に文字列の口を作っていない。
+
 ### 2026-09-22 `undefined` の規約を「書いてよい5つの場所」の列挙に書き直した（T-307）
 
 `docs/coding-standards.md`「無いかもしれない」値を「こう書く」形から「ここでだけ書いてよい」形に組み替え、`docs/research/undefined-reduction.md` 3節の5条件を件数の列を落として表にし、例外1に当てはまらないときに確かめる3条件（重複する分は既存の2条への参照で済ませた）を足した。「「無い」を型から消すことを目的にしない」は「消す手は合併型か入口で全域に畳むかの2つだけで、それで消えないものは本物の「無い」」の形に書き換え、`CLAUDE.md` の要約1行と節の索引の中身列も追随させた（コードは1行も触っていない。適用は後続7タスク）。

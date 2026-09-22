@@ -79,14 +79,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 JSONL の行を版2に上げ、`breakdown.main` / `breakdown.subagent` に「ツール名ごとの呼び出し回数と結果の長さ（UTF-8 のバイト数）」と「assistant のステップの使用量」を入れた。持ち場は `parent_tool_use_id` で割り、ステップの usage は同じ `message.id` の最後だけを残す（流れている間の値は確定値ではない）。**結果の本文も引数も記録しない。**
 
-### 2026-09-22 表情に `bored`（たいくつ）を足した（T-302）
-
-`src/shared/expression.ts` の `Expression` / `EXPRESSIONS` の末尾に `bored` を積み、型検査が挙げた `character-definition.ts` / `character.ts` の4か所とテストのフィクスチャ16ファイルを埋めた。ラベルは同梱3パックに、立ち絵（`bored.png`）は `characters/tsukumo` とホームのパックに入れた。**自動では切り替えず**、`speak` の引数でキャラクター自身が選ぶだけ。
-
-### 2026-09-22 ターンごとのトークン消費を日付ごとの JSONL に記録するようにした（T-318）
-
-SDK の `result` が運ぶ `modelUsage`（`query()` の中の累計）から前回との差を取り、1ターン1行で `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl` に積むようにした（型は `src/shared/token-usage.ts`、差の計算は `src/server/core/token-usage.ts`、書くのは `src/server/adapter/token-usage-log.ts`、前回の累計を覚えるのは `session-manager`）。**行に入るのは数・モデル名・時刻・セッションID・モードだけ**で、型に文字列の口を作っていない。
-
 ## 未解決
 
 - **作業ツリーを別のセッションと共有していると `bun run check` 全体が相手の作業中の変更で落ちる**（2026-09-21 に T-286 で実際に起きた。相手の未追跡ファイルの lint エラーで止まる）。**自分のぶんだけを確かめる手が要る**——HEAD から一時 worktree を切って自分が触ったファイルだけを載せて回すのが確実で、軽く済ませるなら触ったファイルの lint と整形 ＋ 関係するテストファイルだけを名指しで回す
