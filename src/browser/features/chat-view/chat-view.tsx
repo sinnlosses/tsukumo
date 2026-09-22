@@ -14,7 +14,7 @@
 // 気づけなかった）。**行に載せると 0.2 秒ほどで立ち絵が先に応える**（{@link useHoverPreview}）
 // のも同じ狙いで、どちらも**枠も操作子も増やさない**（13.1 原則2）。
 //
-// **キャラクターから話しかけてもらうボタン**はログの末尾にある（docs/design.md 13.7）。
+// **立ち絵をつつくと話しかけてくれる**（docs/design.md 13.7。{@link NudgePortrait}）。
 // 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
 // （`src/server/core/chat-nudge.ts`）。送った文面はログにも記録にも残らない。
 //
@@ -22,12 +22,12 @@
 // キャラビューが持つ4つの動き（`features/character-view/` の `usePortraitMotion`）は
 // 再現していない。手触りを見てから詰める。
 
-import { useEffect, useRef, useState, type MouseEvent, type ReactElement } from "react"
+import { useEffect, useId, useRef, useState, type MouseEvent, type ReactElement } from "react"
 
 import { resolveOutfitAccent, resolvePortraitUrl } from "../../../shared/character.ts"
 import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
 import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
-import { resolveOutfit, type Expression } from "../../../shared/expression.ts"
+import { resolveOutfit, type Expression, type Outfit } from "../../../shared/expression.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { Portrait } from "../../components/portrait.tsx"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
@@ -37,17 +37,26 @@ import styles from "./chat-view.module.css"
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
-/** まだ一度も話していないときの案内（吹き出しの「（まだ発話がありません）」と同じ立場）。 */
-const EMPTY_LOG_MESSAGE = "（まだ何も話していません）"
+/**
+ * まだ一度も話していないときの案内（吹き出しの「（まだ発話がありません）」と同じ立場）。
+ * **最初の一言を促すのはこの文面**（docs/design.md 13.7）— 促す操作子が立ち絵へ移ったので、
+ * ログが空のときに「どこを押せばよいか」を指すものがここ以外に無い。
+ */
+const EMPTY_LOG_MESSAGE = "（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"
 
-/** キャラクターから話しかけてもらうボタンの字（docs/design.md 13.7）。 */
-const NUDGE_LABEL = "話しかけてもらう"
+/**
+ * 立ち絵に載せたときに出る案内（docs/design.md 13.7）。**ホバーの間だけ見えるので常設の枠は
+ * 増えない**（13.1 原則2）が、**支援技術には常に届く**（立ち絵を包むボタンの
+ * `aria-describedby` が指す）。
+ */
+const NUDGE_HINT = "つつくと話しかけてくれる"
 
 /**
  * ターン進行中に押せない理由。**サーバが断るときと同じ1つの定型文**（`shared` の
  * `FRAME_ERROR_REASON`）を使う（サイドバーのキャラクターの `<select>` と同じ形）。
+ * 押せない間は {@link NUDGE_HINT} の代わりにこちらが案内に出る。
  */
-const NUDGE_BLOCKED_TITLE = FRAME_ERROR_REASON.nudgeDuringTurn
+const NUDGE_BLOCKED_HINT = FRAME_ERROR_REASON.nudgeDuringTurn
 
 /**
  * 「下端付近」とみなす、下端からの残り距離（px）。0 にすると、フォントの読み込みや
@@ -138,14 +147,13 @@ export function ChatView(): ReactElement {
   return (
     <div className={styles["chat-region"]}>
       {portraitUrl !== undefined && (
-        <Portrait
+        <NudgePortrait
           url={portraitUrl}
           accent={accent}
           altText={altText}
           expression={expression}
           outfit={outfit}
-          motion={turnInProgress ? "waiting" : "reading"}
-          className={styles["chat-portrait"]}
+          turnInProgress={turnInProgress}
         />
       )}
       <ChatLog
@@ -271,6 +279,67 @@ function speechExpressionAt(
 }
 
 /**
+ * つつくと話しかけてくれる立ち絵（docs/design.md 13.7）。**押した事実だけを送る** —
+ * 文面は `src/server/core/chat-nudge.ts` が持ち、ブラウザは話題も一言も持たない（原則4）。
+ *
+ * **押せることを持たせるのはここで、`components/portrait.tsx` ではない**。立ち絵は
+ * キャラビューとキャラクター画面も使う共有部品で、そちら（仕事のとき・整える面）の立ち絵は
+ * 押せないままにする。**包むのは `<button>`** — セリフの行と違って立ち絵には選ぶ文字が無いので、
+ * `role="button"` ＋ 自前のキーの受け（{@link isActivationKey}）が要らず、キーボードで押せる
+ * 道はブラウザが最初から持っている。
+ *
+ * **ターンが動いている間は押せない**（モードの `<select>` と同じ立場。サーバ側も同じ条件で
+ * 断る）。ただし `disabled` にはしない — ブラウザが `disabled` の要素にホバーもフォーカスも
+ * 通さないので、**なぜ押せないのかを出す場所が無くなる**。`aria-disabled` で伝えたうえで、
+ * 案内を理由の定型文（{@link NUDGE_BLOCKED_HINT}）に差し替え、送らないのはここで止める。
+ * **立ち絵そのものは薄めない**（要素の `opacity` は地ごと透かす。docs/design.md 13.8）。
+ */
+function NudgePortrait(props: {
+  readonly url: string
+  readonly accent: string | undefined
+  readonly altText: string
+  readonly expression: Expression
+  readonly outfit: Outfit
+  readonly turnInProgress: boolean
+}): ReactElement {
+  const dispatch = useSessionDispatch()
+  const hintId = useId()
+  // 案内はホバーの間だけ見えるが、**支援技術には常に届く**（`aria-describedby` は見た目では
+  // なく木の中に在るかで決まるので、`display: none` ではなく透明にして隠す）。
+  const hint = props.turnInProgress ? NUDGE_BLOCKED_HINT : NUDGE_HINT
+
+  return (
+    <button
+      type="button"
+      className={styles["chat-poke"]}
+      // 名前は立ち絵の alt のまま（中身から計算される）。**何が起きるかは説明のほう**に置く
+      // ので、`aria-label` で alt を覆わない。
+      aria-describedby={hintId}
+      aria-disabled={props.turnInProgress}
+      onClick={() => {
+        if (props.turnInProgress) {
+          return
+        }
+        dispatch({ type: "nudge" })
+      }}
+    >
+      <Portrait
+        url={props.url}
+        accent={props.accent}
+        altText={props.altText}
+        expression={props.expression}
+        outfit={props.outfit}
+        motion={props.turnInProgress ? "waiting" : "reading"}
+        className={styles["chat-portrait"]}
+      />
+      <span className={styles["chat-poke-hint"]} id={hintId}>
+        {hint}
+      </span>
+    </button>
+  )
+}
+
+/**
  * 会話のログ。**古い→新しいの順にそのまま積み**、下端付近を読んでいたときだけ新しい1件で
  * 最新へ寄せる（読み返している最中は動かさない。docs/design.md 13.7）。`column-reverse` を
  * 使わないのは、この並びが「最新だけを読む」吹き出しではなく**遡って読み返せるログ**だから。
@@ -393,9 +462,6 @@ function ChatLog(props: {
           ),
         )
       )}
-      {/* **ログの末尾に置く**（docs/design.md 13.7）。区画も帯も作らないので、増えるのは
-          操作子1つだけ（13.1 原則2）。ログが空のときは案内のすぐ下に出る。 */}
-      <NudgeButton />
     </div>
   )
 }
@@ -426,30 +492,4 @@ function isSelectionDrag(origin: PressOrigin | undefined, event: MouseEvent<HTML
  */
 function isActivationKey(key: string): boolean {
   return key === "Enter" || key === " "
-}
-
-/**
- * キャラクターから話しかけてもらう（docs/design.md 13.7）。**押した事実だけを送る** —
- * 文面は `src/server/core/chat-nudge.ts` が持ち、ブラウザは話題も一言も持たない（原則4）。
- *
- * **ターンが動いている間は押せない**（キャラクターの `<select>` と同じ立場。サーバ側も
- * 同じ条件で断る）。
- */
-function NudgeButton(): ReactElement {
-  const dispatch = useSessionDispatch()
-  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
-
-  return (
-    <button
-      type="button"
-      className={styles["chat-nudge"]}
-      disabled={turnInProgress}
-      title={turnInProgress ? NUDGE_BLOCKED_TITLE : undefined}
-      onClick={() => {
-        dispatch({ type: "nudge" })
-      }}
-    >
-      {NUDGE_LABEL}
-    </button>
-  )
 }

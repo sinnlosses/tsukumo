@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ChatView } from "../../../../src/browser/features/chat-view/chat-view.tsx"
 import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
+import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -120,7 +121,10 @@ describe("ChatView", () => {
     renderChatView({ records: [] })
 
     expect(document.querySelectorAll("[data-speaker]")).toHaveLength(0)
-    expect(screen.getByText("（まだ何も話していません）")).toBeTruthy()
+    // **最初の一言を促すのはこの文面**（促す操作子は立ち絵へ移った。docs/design.md 13.7）。
+    expect(
+      screen.getByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
+    ).toBeTruthy()
   })
 
   it("圧縮の区切りは文言を添えない細い線1本（`<hr>`）で出し、押せない", () => {
@@ -436,44 +440,85 @@ describe("ChatView のホバーで先に応える", () => {
   })
 })
 
-describe("ChatView の話しかけてもらうボタン", () => {
-  /** ボタンの字は `chat-view.tsx` が持つ（docs/design.md 13.7）。 */
-  const NUDGE_LABEL = "話しかけてもらう"
+describe("ChatView の立ち絵をつつく", () => {
+  /** 載せたときに出る案内の字（`chat-view.tsx` が持つ。docs/design.md 13.7）。 */
+  const NUDGE_HINT = "つつくと話しかけてくれる"
 
-  it("押すと nudge を1つ送る（文面は持たない）", () => {
+  /**
+   * つつける立ち絵。**探すのは案内の側**（`aria-describedby`）— ログのセリフの行も
+   * `role="button"` なので、名前（＝立ち絵の alt）ではなく説明で見分ける。
+   */
+  function portraitButton(): HTMLElement {
+    return screen.getByRole("button", { description: NUDGE_HINT })
+  }
+
+  it("立ち絵を押すと nudge を1つ送る（文面は持たない）", () => {
     const sent: unknown[] = []
-    renderChatView({ records: RECORDS }, (command) => sent.push(command))
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER }, (command) =>
+      sent.push(command),
+    )
 
-    fireEvent.click(screen.getByRole("button", { name: NUDGE_LABEL }))
+    fireEvent.click(portraitButton())
 
     // **送るのは押した事実だけ**（文面は `src/server/core/chat-nudge.ts` が持つ）。
     expect(sent).toEqual([{ type: "nudge" }])
   })
 
   it("押してもログには何も積まない（送った文面が並ばない）", () => {
-    renderChatView({ records: RECORDS })
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER })
     const before = logEntries().length
 
-    fireEvent.click(screen.getByRole("button", { name: NUDGE_LABEL }))
+    fireEvent.click(portraitButton())
 
     // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/design.md 13.7）。
     expect(logEntries()).toHaveLength(before)
   })
 
+  it("立ち絵を包むのは `<button>`（キーボードで押せる道をブラウザが持つ）", () => {
+    const sent: unknown[] = []
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER }, (command) =>
+      sent.push(command),
+    )
+
+    const button = portraitButton()
+    // セリフの行（`role="button"` の `<div>`）と違い、こちらは本物の `<button>` なので
+    // Enter / Space の受けを自前で足さなくてよい（ブラウザが click に変える）。
+    expect(button.tagName).toBe("BUTTON")
+    expect(button.getAttribute("type")).toBe("button")
+    // 立ち絵はボタンの中にあり、**名前は立ち絵の alt のまま**（案内は説明の側）。
+    expect(button.querySelector("[data-expression]")).toBeTruthy()
+    expect(button.getAttribute("aria-label")).toBe(null)
+
+    // キーボードの Enter がブラウザから届いたところ（＝ click）で nudge が飛ぶ。
+    fireEvent.click(button, { detail: 0 })
+    expect(sent).toEqual([{ type: "nudge" }])
+  })
+
   it("ターン進行中は押せない（返事を待つ）", () => {
     const sent: unknown[] = []
-    renderChatView({ records: RECORDS, turnInProgress: true }, (command) => sent.push(command))
+    renderChatView(
+      { records: RECORDS, character: FIXTURE_CHARACTER, turnInProgress: true },
+      (command) => sent.push(command),
+    )
 
-    const button = screen.getByRole("button", { name: NUDGE_LABEL })
-    expect(button.hasAttribute("disabled")).toBe(true)
+    // **`disabled` にはしない**（ホバーもフォーカスも通らなくなり、理由を出す場所が無くなる）。
+    // 押せないことは `aria-disabled` で伝え、案内を理由の定型文に差し替える。
+    const button = screen.getByRole("button", {
+      description: FRAME_ERROR_REASON.nudgeDuringTurn,
+    })
+    expect(button.getAttribute("aria-disabled")).toBe("true")
+    expect(screen.queryByText(NUDGE_HINT)).toBe(null)
 
     fireEvent.click(button)
     expect(sent).toEqual([])
   })
 
-  it("まだ何も話していないときも出る（案内のすぐ下）", () => {
-    renderChatView({ records: [] })
+  it("まだ何も話していないときもつつける（最初の一言を促せる）", () => {
+    const sent: unknown[] = []
+    renderChatView({ records: [], character: FIXTURE_CHARACTER }, (command) => sent.push(command))
 
-    expect(screen.getByRole("button", { name: NUDGE_LABEL })).toBeTruthy()
+    fireEvent.click(portraitButton())
+
+    expect(sent).toEqual([{ type: "nudge" }])
   })
 })

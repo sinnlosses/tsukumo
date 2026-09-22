@@ -13,15 +13,107 @@
      割合はキャラビュー（78%）より控えめにして、ログの側の幅を確保する。 */
   --chat-portrait-height: 80%;
   --chat-portrait-drop: 1.5rem;
+  /* つついたときのひと揺らし（`.chat-poke`）。**この2つが唯一の調整箇所**。立ち絵自身の動き
+     （`components/portrait.module.css`）と同じく、控えめの初期値にしてある。 */
+  --chat-poke-sway-rotate: 1.6deg;
+  --chat-poke-sway-duration: 0.5s;
 }
-/* 立ち絵は左。キャラビューと同じく下端で揃え、少し沈めて床に置く。 */
-.chat-portrait {
+/* つつける立ち絵（`chat-view.tsx` の `<NudgePortrait>`。docs/design.md 13.7）。**立ち絵を包む
+   `<button>` がそのまま立ち絵の置き場所**なので、置き方（下端で揃える・幅の上限・床へ沈める量）
+   はここが持ち、`.chat-portrait` は中でいっぱいに広がるだけにする。
+
+   **ボタンの地・枠・余白は全部落とす**（枠を持たないのはキャラクターだけ。13.1 原則2）。
+   見えるのは立ち絵と、載せている間だけ出る案内の2つ。 */
+.chat-poke {
   margin: 0 0 calc(-1 * var(--chat-portrait-drop));
   flex: 0 1 auto;
+  /* 案内（`.chat-poke-hint`）を立ち絵に重ねる基準。 */
+  position: relative;
   height: var(--chat-portrait-height);
   /* 立ち絵が縦長だと高さ側だけでは幅が読めないので、ログの場所を守る上限をここで引く
      （キャラビューの 45% より狭い — メインビューは背が高く、同じ割合だと幅を食いすぎる）。 */
   max-width: 32%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  /* **指の形にする**のはホバーの合図の1つ（docs/design.md 13.7）。揺れ・案内と合わせて3つ。 */
+  cursor: pointer;
+  /* 揺れは床を軸に振る（立ち絵は床に立っているので、中心で振ると足が浮いて見える）。 */
+  transform-origin: bottom center;
+}
+/* **載せるとひと揺らしする**（docs/design.md 13.7。ログの行と同じ「載せると立ち絵が応える」の
+   語彙）。**揺らすのは包んだボタンのほうで、立ち絵そのものではない** — 立ち絵は `data-motion`
+   の呼吸や歩行を自分で持っているので、同じ要素に当てると上書きして息が止まる。入れ子にすれば
+   transform が掛け合わさり、呼吸したまま揺れる。**一度きり**（`animation-iteration-count: 1`）
+   なので、載せ続けても揺れ続けない。 */
+.chat-poke:not([aria-disabled="true"]):hover {
+  animation-name: chat-poke-sway;
+  animation-duration: var(--chat-poke-sway-duration);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: 1;
+}
+/* **フォーカスの輪は内側に引く**（`outline-offset: -2px`）。立ち絵の左端は領域の左端と同じで、
+   床へ沈めるぶん（`--chat-portrait-drop`）は領域の下端より下に出ているので、外側に引くと
+   `.chat-region` の `overflow: hidden` が左と下を切ってしまう（実測: 領域も立ち絵も左端 28px）。
+   内側なら左・上・右が丸ごと残り、切れるのは下端の1本だけになる。 */
+.chat-poke:focus-visible {
+  outline-offset: -2px;
+}
+/* ターン進行中（返事を待っている間）は押せない。**立ち絵は薄めない**（要素の `opacity` は
+   地ごと透かす。docs/design.md 13.8 の「過去の吹き出しは要素の opacity で薄めない」と同じ
+   理由）ので、見せ方は**応えないこと**のほうで作る: 指の形にならず、揺れず、案内が理由の
+   定型文に替わる（`chat-view.tsx` の `NUDGE_BLOCKED_HINT`）。 */
+.chat-poke[aria-disabled="true"] {
+  cursor: default;
+}
+@keyframes chat-poke-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(var(--chat-poke-sway-rotate));
+  }
+  70% {
+    transform: rotate(calc(-1 * var(--chat-poke-sway-rotate)));
+  }
+}
+/* 載せている間だけ出る案内（docs/design.md 13.7）。**常設の枠は増えない** — ホバーと
+   フォーカスの間だけ見え、離せば消える（13.1 原則2）。
+
+   **隠すのは透明にするだけ**（`display: none` / `visibility: hidden` は支援技術の木からも
+   消え、ボタンの `aria-describedby` が指す先が無くなる）。**地は `ground` 一色を1枚**敷く
+   （立ち絵に重なるうえ、背景のあるパックでは絵の上に字が乗るため。13.8「文字が乗る要素の地は
+   不透明を保つ」）。出し入れの間だけ地も一緒に薄まるが、**留まる状態は 0 か 1 のどちらか**
+   なので、読める状態の地は常に不透明のまま。 */
+.chat-poke-hint {
+  position: absolute;
+  bottom: calc(var(--chat-portrait-drop) + 0.6rem);
+  left: 50%;
+  width: max-content;
+  max-width: 11rem;
+  padding: 0.25rem 0.7rem;
+  transform: translateX(-50%);
+  border-radius: 1rem;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+  text-align: center;
+  opacity: 0;
+  /* 案内そのものは押す対象にしない（当たり判定は立ち絵の矩形のまま）。 */
+  pointer-events: none;
+  transition: opacity 0.12s ease-out;
+}
+.chat-poke:hover .chat-poke-hint,
+.chat-poke:focus-visible .chat-poke-hint {
+  opacity: 1;
+}
+/* 立ち絵は包んだボタンいっぱいに広がる（置き方は `.chat-poke` が持つ）。 */
+.chat-portrait {
+  height: 100%;
+  max-width: 100%;
 }
 /* 会話のログ。**古い→新しいが縦に積む**ので、DOM の順そのままに並べ、下端へスクロールする
    （`chat-view.tsx` が最新へ寄せる）。 */
@@ -111,45 +203,10 @@
   border: none;
   border-top: 1px solid var(--rule);
 }
-/* キャラクターから話しかけてもらうボタン（`chat-view.tsx` の `<NudgeButton>`。13.7）。
-   **ログの末尾に1つ置くだけ**で、区画も帯も新しい枠も作らない（13.1 原則2。増えるのは
-   操作子1つだけ、というのがユーザーの決定の範囲）。キャラクターのセリフと同じ左側に置き、
-   **地を持たない字だけの操作子**にして発言の行と見分けられるようにする。
-
-   **地は `ground` 一色を1枚だけ敷く**（雑談のメインビューに背景を敷く決定に伴う。
-   docs/design.md 13.8）。吹き出しと違ってこの操作子と下の案内は地を持たないので、背景のある
-   パックでは**字の背後に絵が回り込む**（13.8 の「吹き出しの地は不透明を保つ」が成り立たない）。
-   `surface` ではなく `ground` を敷くのは、**背景の無いパックでは領域の地と同じ色**になり、
-   「地を持たない字だけ」の見え方がそのまま残るため（不透明なので絵は透けない）。 */
-.chat-nudge {
-  align-self: flex-start;
-  margin: 0.1rem 0 0.2rem;
-  padding: 0.25rem 0.7rem;
-  border: 1px dashed var(--rule);
-  border-radius: 1rem;
-  background: var(--ground);
-  color: var(--ink-quiet);
-  font: inherit;
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-/* 押せることは、機械が指し示す縁の色（13.1 原則1）と文字の濃さだけで示す。 */
-.chat-nudge:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--ink);
-}
-/* ターン進行中（返事を待っている間）は押せない。**要素の `opacity` では薄めない**
-   （地ごと透けて、敷いた1枚の意味が無くなる。docs/design.md 13.8 の「過去の吹き出しは
-   要素の opacity で薄めない」と同じ理由）ので、字と縁の色だけを地へ混ぜる。 */
-.chat-nudge:disabled {
-  border-color: color-mix(in srgb, var(--rule), var(--ground) 45%);
-  color: color-mix(in srgb, var(--ink-quiet), var(--ground) 45%);
-  cursor: default;
-}
-
-/* まだ一度も話していないときの案内。**地は `.chat-nudge` と同じ理由で `ground` 一色を1枚**
-   （背景の絵を字の背後に回り込ませない。13.8）。余白と角丸はその1枚のためのもので、背景の
-   無いパックでは地と同じ色なので見えない。 */
+/* まだ一度も話していないときの案内。**最初の一言を促すのもこの1件**（促す操作子はログの
+   末尾から立ち絵へ移った。docs/design.md 13.7）。**地は `.chat-poke-hint` と同じ理由で
+   `ground` 一色を1枚**（背景の絵を字の背後に回り込ませない。13.8）。余白と角丸はその1枚の
+   ためのもので、背景の無いパックでは地と同じ色なので見えない。 */
 .chat-empty {
   align-self: center;
   margin: auto 0;
@@ -167,7 +224,7 @@
     --chat-portrait-height: 76%;
     --chat-portrait-drop: 0.4rem;
   }
-  .chat-portrait {
+  .chat-poke {
     max-width: 28%;
   }
   .chat-log {
