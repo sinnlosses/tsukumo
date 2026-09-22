@@ -21671,3 +21671,324 @@ process.env の2箇所めは src/server/adapter/tsukumo-home.ts:32。3つめは 
 - **`~/.tsukumo/` の実物のセッション記録を書き換えない**（印は transcript 側に付く。拾って
   付け直す手当てをするかどうかも上の論点）
 - 表示名を決めない・出さない（別タスク）
+
+## T-309
+
+**タスク**: セッションの起こし方（resume）を合併型にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-307 / **passes**: True
+
+**evidence**:
+
+`resume: string | undefined` を `start: SessionStart`（`{kind:"new"} | {kind:"resume"; sessionId}`）へ。`session-driver.ts` / `session-launch.ts` / `chat-memory-prompt.ts` の3つから消え、`findResumeSession` の戻り値も `Promise<SessionStart>` に。外の世界（`findSessionToResume` の `string | undefined`）は `src/session-start.ts` の `findPackSessionToResume` で畳み、画面へ渡す `sessions-changed.current` は `session-launch.ts` で `string | undefined` に畳み直している。**`sdk-driver.ts` の `QuerySeedOptions.resume` だけは `| undefined` のまま残した**——`query()` 自身の語彙（`resume?: string`）をそのまま写す adapter 側の1行で、規約「「無いかもしれない」値」の例外1に当たる（値の出所だけ `options.start` からの導出に変更）。`bun run check` 緑: 1203 pass / 0 fail（98ファイル・2400 expect）。目視は `TSUKUMO_VIEW_PORT=7411 TSUKUMO_HOME=/tmp/tsukumo-t309` で2回起こし、1回目のやり取りが2回目の画面に復元され、サイドバーのセッション欄が `7411 ・9/22 20:03（表示中）` になることを確認。
+
+## 背景
+
+`resume: string | undefined` が「新規に起こす」と「続きから起こす」の2つの状態を表していて、
+4箇所に散っている——`src/server/core/session-driver.ts:250` /
+`src/server/core/session-launch.ts:23` / `src/server/adapter/sdk-driver.ts:227` /
+`src/server/core/chat-memory-prompt.ts:95`。
+
+`undefined` が「セッションIDが無い」ではなく「**新規である**」という意味を運んでいるので、
+`docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所に当たる
+（調査は `docs/research/undefined-reduction.md` 2.1 の #5）。
+
+## やること
+
+1. `resume` を **`start: { kind: "new" } | { kind: "resume"; sessionId: string }`** の
+   判別可能な合併型にする
+2. 上の4箇所と、`findResumeSession` の戻り値の扱い（`session-launch.ts:67,116`）を直す
+3. `!` や `as` で潰さない
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 上の4ファイルから `resume: string | undefined` が消えている
+- 新規の起動と、続きからの起動（`findResumeSession` が当たる場合）の両方が従来どおり働く
+  （**tsukumo を2回起こして続きから繋がることを確かめ、`evidence` に書く**）
+
+## 注意
+
+- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）
+- 雑談まわりのトークン消費を減らすタスク群と**同じファイルを触る**。片方が `doing` の間は着手しない
+
+## T-342
+
+**タスク**: progress.md のアーカイブが毎サイクル点くのを止める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+task-workflow の LIMITS を点火10小節/16384文字・残す5小節/8192文字に離した（実体は claude-skills リポジトリ、未コミット）。archive.py 直後の status.py が2回連続 progress NO (5小節/10件, 1171/16384文字)、archive.py 再実行も SKIP。selftest.py 全件通過、tsukumo の bun run check は 1203 pass / 0 fail。
+
+## 背景
+
+`develop/progress.md` のアーカイブが**切ったあとすぐ再点火する**。
+
+- 判定は「『完了したこと』配下の小節が **5件を超える**」（`~/.claude/skills/task-workflow/`
+  の `WORKFLOW.md`「いつ移すか（トリガー）」と `scripts/taskfiles.py` の
+  `LIMITS["progressCount"] = 5`）
+- 移すのは「新しい順に5小節、かつ8192文字以内に収まるぶんだけを残し、溢れたぶん」
+  （`WORKFLOW.md`「何を移すか」/ `scripts/taskfiles.py` の keep の計算）。つまり**移すと
+  ちょうど5件に戻る**
+- 1サイクルで小節は1件増えるので、**以後毎サイクル境界を跨いで1件ずつ移す**振動になる
+
+実測（`af1a0f5..8f585d6` の23コミット）: **6件がアーカイブ専用のコミット**で、うち3件
+（`d5e174e` / `9c2ef5e` / `b007ca9`）は「小節1件を移した」だけの `+4/-4`。
+`retrospect` の `scan.py` が出す `unmapped` 12件の半分がこれ。
+
+**`develop/tasks.json` 側は同じ形ではない**（振り返りのドラフトは「同じ形」と書いていたが、
+確かめたら違った）: `done` は**全件**移す（`WORKFLOW.md`「何を移すか」）ので0件に戻り、
+次に点くのは `done` が5件溜まってからになる。**振動しているのは `progress.md` だけ。**
+
+## 決まっていること（蒸し返さない）
+
+- **`progress.md` のトリガーを、切ったあとすぐ再点火しない形に直す**（2026-09-22 ユーザーの
+  承認）
+- 出し先は `~/.claude/skills/task-workflow/` の `WORKFLOW.md` と `scripts/taskfiles.py`
+  （**複数のプロジェクトで共通の正典**なので、この変更は他のプロジェクトの運用にも効く。
+  承認の範囲はここまで）
+- 振り返りのドラフトが挙げた案は「切る閾値と戻す量を離す（例: 10件を超えたら5件残るまで
+  移す）」
+
+## 解くべき論点
+
+- 切る閾値と残す量をいくつにするか。**離せば振動は止まるが、離すほど `progress.md` が
+  大きい状態で読まれる時間が長くなる**（減らしたいのはコンテキスト消費なので、これは
+  トレードオフ）。8192文字の側の判定も同じ形（超えたぶんだけ移す）なので、揃えるか別にするか
+- 文字数の判定と件数の判定が**別のタイミングで点く**と、結局どちらかが毎サイクル鳴る。
+  2つの物差しをどう組み合わせるか
+- `tasks.json` 側（`done` 5件以上 → 全件移す）は振動しない。**触るか触らないか**を決める
+  （触らないなら、なぜ形が違ってよいかを `WORKFLOW.md` に1行書く）
+- 判定と転記は同じ計算を共有している（`scripts/taskfiles.py`）。**`status.py` が `YES` と
+  言ったものは `archive.py` が必ず移す**という性質を壊さない
+
+## やること
+
+1. 上の論点を決め、`~/.claude/skills/task-workflow/WORKFLOW.md`「いつ移すか（トリガー）」と
+   「何を移すか」を書き換える。**`tasks.json` 側と形が違う理由を1行書く**
+2. `~/.claude/skills/task-workflow/scripts/taskfiles.py` の `LIMITS` と keep の計算を直す
+3. **`status.py` の末尾の表示**（`progress  YES  (6小節/5件, 1418/8192文字, 移す1小節)`）を、
+   新しい判定が読める形に直す。`WORKFLOW.md` と `/list-tasks` に載っている出力例も直す
+4. 直したあと、このリポジトリの `develop/progress.md` で `status.py` を走らせ、**同じ状態で
+   2回続けて点かないこと**を確かめる
+5. `~/.claude/skills/task-workflow/` にテストがあれば足す。無ければ、4 の確認を evidence に
+   書く
+
+## 完了条件
+
+- `python3 ~/.claude/skills/task-workflow/scripts/status.py develop/tasks.json` が動く
+- 直した判定で、**アーカイブした直後に `status.py` を走らせて `progress` が `NO` になる**
+  （走らせた結果を evidence に書く）
+- `WORKFLOW.md` の「いつ移すか（トリガー）」に、新しい閾値と**振動しない理由**が書かれている
+- このリポジトリの `bun run check` が通る（スキルの変更はリポジトリのコードに触らないので、
+  落ちるなら別の原因）
+
+## 注意
+
+- **`~/.claude/skills/` はユーザーのグローバルな置き場で、複数のプロジェクトが読む**
+  （`CLAUDE.md`「導入済みスキル」）。書き換えの承認は 2026-09-22 に得ている（上の
+  「決まっていること」）が、**`task-workflow` 以外のスキルには触らない**
+- **この変更は `/loop` が従っている運用そのものを変える。** 同じセッションの続きのサイクルから
+  新しい閾値が効く
+- `develop/progress.md` の「未解決」「注意」の2節は移さない（未完了タスクの完了条件が
+  参照していることがある）
+
+## T-350
+
+**タスク**: 起動時に worktree を用意しそこで claude を起こす
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-349 / **passes**: True
+
+**evidence**:
+
+`bun run check` 緑（1234 pass / 0 fail）。ポート7401/7402 で2つ起こし、claude の子プロセスの cwd を lsof で実測して別々の worktree（20260922-204850 / -204904）を確認。片方に置いたファイルは他方にも本体にも出ない。
+切った worktree 単体で check が 1203 pass / 0 fail（本体の未コミット変更に影響されない）。サイドバーの「作業先／ブランチ／コードの出所」の3行を生きたタブの DOM で確認（横のはみ出し 0px）。
+検証後 `git worktree list` は元に戻り、残るのは稼働中の別セッションの1つだけ（実測）。
+
+## 背景
+
+T-349 で決めた形に沿って、**tsukumo が起動時に自分用の worktree を用意し、claude をそこで
+起こす**。いま `cwd` は `src/server/core/session-driver.ts` の `SessionDriverOptions` が持ち、
+`src/server/adapter/sdk-driver.ts` の `buildQuerySeedOptions` が `query()` の `options.cwd` に
+そのまま渡している。SDK には `projectConfigRoot` があり、**プロジェクト設定（hooks・
+permissions・`.claude` の各ツリー・`CLAUDE_PROJECT_DIR`）を `cwd` ではなくそちらから読む**
+（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`）。
+
+## 決まっていること（蒸し返さない）
+
+- `cwd` は worktree、`projectConfigRoot` は本体（**worktree 側に `.claude/` を複製しない**）
+- 切った直後に要るのは `node_modules` と `characters/local` の symlink 2本と `bun run build`
+  の3つだけ（実測。合計1秒未満、ディスクはほぼ増えない）
+- ユーザーは worktree を意識しない（`tsukumo` と打つだけ）
+- **1つ目のセッションも切る**（本体で作業するセッションを作らない。T-349 で決定。以下同じ）。
+  例外は「git リポジトリでないディレクトリで起こしたとき」と「`TSUKUMO_WORKTREE=0` を
+  渡したとき」の2つだけ
+- **git リポジトリなのに worktree を用意できなかったら止める**（起動時の前提不足）。
+  **黙って本体で動かさない**（分離されているつもりで本体を書くのが最悪の形）
+- **置き場は `git rev-parse --git-common-dir` の下の `tsukumo/worktree/<名前>`**、ブランチは
+  `tsukumo/<名前>`、`<名前>` は切った時刻（`YYYYMMDD-HHMMSS`）。同じ秒に2つ起きたら
+  **ディレクトリの作成が成功したほうが勝ち**、負けたほうが `-2`, `-3` と足す。
+  **`--git-common-dir` は本体では相対パス（`.git`）を返す**ので絶対パスに直す（実測）
+- **起こし直したときは常に新しく切る**（名前が時刻なので使い回しが起きない）。前のものは
+  **起動時の掃除**が見る: worktree ごとに「使用中」の印（pid つき）を印と同じ親の下に置き、
+  pid が生きていないものは**未マージのコミットも未コミットの変更も無ければ畳む**
+  （`git worktree remove` ＋ `git branch -d`）。残っていれば**消さずに1行知らせる**
+- 決めた理由と採らなかった案（`/tmp`・リポジトリの隣・リポジトリの中・orca の workspaces・
+  `~/.tsukumo/`）は `docs/architecture.md`「worktree でセッションを分ける」
+
+## 解くべき論点
+
+- **git と外部コマンドに触るので `src/server/adapter/` の1ファイルに閉じる**（原則3）。
+  判断（切るかどうか・どの名前で）は `src/server/core/` に置く。この境界の切り方
+- **用意に失敗したときと、起こし直したときの扱いは T-349 で決めた**（上の「決まっていること」）。
+  ここで決め直さない。残っているのは、`TSUKUMO_NEW_SESSION` とクラッシュ後が**同じ道を通る**
+  ことの確認だけ
+
+## やること
+
+1. worktree の用意（切る・symlink 2本・`bun run build`）を `src/server/adapter/` の1ファイルに
+   閉じ込める
+2. 切るかどうかの判断を `src/server/core/` に置き、`cwd` と `projectConfigRoot` を
+   `SessionDriverOptions` まで運ぶ
+3. `buildQuerySeedOptions` が `projectConfigRoot` を渡すようにする
+4. サイドバーに、いまどの worktree で動いているかが分かる表示を足す（ユーザーが意識する必要は
+   ないが、**どこで作業しているか読み取れない状態にはしない**）。**claude の作業先（worktree）
+   だけでなく、プロセスのコードの出所（本体）も出す** — tsukumo のプロセスは常に本体のコードで
+   動くので、この2つは常に食い違う（T-349）
+
+## 完了条件
+
+- `bun run check` が通る
+- **2つの tsukumo を実際に起こし、それぞれ別の worktree で動いていることを確かめた**
+  （`TSUKUMO_VIEW_PORT` をずらして起こし、両方で `pwd` 相当が別のパスを返すことを evidence に
+  書く）
+- 片方で作ったファイルが、もう片方の `git status` に出ないことを確かめた
+- 切った worktree で `bun run check` が通る（本体の未コミット変更に影響されない）
+
+## 注意
+
+- **本体の `main` を動かさない**（マージは T-352）
+- 検証で起こしたインスタンスは `bun run scripts/stop.ts --port <ポート>` で止める
+  （`pkill` は hook が拒否する）
+- 用意した worktree を検証のあと畳み、`git worktree list` が検証前と同じに戻ることを確かめる
+
+## T-356
+
+**タスク**: ヘッダーの帯を作り、古い画面の口を外す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+帯を `src/browser/features/screen-nav/`（container/hooks/presenter/components、領域の機能として `test/architecture.test.ts` に登録）に新設し、`main.tsx` の `<Root>` 先頭へ。高さは `theme.css` の `--screen-nav-height: 40px` を帯と `<Layout>` の両方が読む。13.9「何を外すか」の4件（サイドバーの「整える」・キャラクター画面と トークン消費の「← 会話へ戻る」・答え待ちの印）を撤去し、grep で UI 要素の残存なし（残るのは説明のコメントのみ）。`bun run check` 緑: 1203 pass / 0 fail（98ファイル・2400 expect）。目視（fake driver・TSUKUMO_VIEW_PORT=7400 / TSUKUMO_HOME=/tmp/tsukumo-t356）: 1400x900 で帯が出てメインビュー476.64 / キャラビュー317.77（13.9 の実測表と一致）、選択中の口は地・字・枠の3点が変わり `aria-current=page` 付き。390x844 でタブ帯右端に 44x39.13 の「≡」が同じ高さで並び（段は増えずメインビュー426.88 のまま）、開くと3つの口が重なって落ちる。答え待ちは広い画面で帯の右端、狭い画面は「≡」に `●`＋開くと字。
+
+## 背景
+
+T-322 が「全画面の最上部の帯で3枚を行き来する」形を決め、`docs/design.md` 13.9
+「画面のナビゲーション」に書いた（2026-09-22）。**決めただけで実装のタスクが登録されていな
+かった**ので、ここで起こす。
+
+いまの実装には帯が無い。`src/browser/main.tsx:61-76` は `Activity` と `screen === ...` の分岐
+だけで、画面への口は3箇所に散っている:
+
+- `src/browser/features/sidebar/session-info.tsx:147`（「整える」→ キャラクター画面）
+- `src/browser/features/character-screen/character-screen.tsx:86`（「← 会話へ戻る」）
+- `src/browser/features/token-usage/token-usage-screen.tsx:66`（「← 会話へ戻る」）
+
+トークン消費の画面には UI からの入口が無く、`location.hash` を手で打つしかない。
+
+## 決まっていること（蒸し返さない）
+
+`docs/design.md` 13.9 に書いてあるものがそのまま決定。要点だけ:
+
+- 帯に出すのは会話 `#` / キャラクター `#character` / トークン消費 `#token-usage` の3つ。
+  **作る画面（`#character/new`）は出さない**（左上の「← キャラクターへ戻る」は残す）
+- 口は `<a href={screenHash(...)}>`。画面の正典は `location.hash` のまま変えない
+- いま出している画面の示し方は狭い画面のタブ（`.layout-tab.is-active`）と同じ。**色だけで
+  伝えない**（地の濃さと字の濃さも変える）
+- 答え待ちの印は帯の右端へ移す
+- 帯の高さは 40px。**狭い画面（760px 以下）は段を増やさず、タブ帯の右端 44px の「≡」に畳む**
+- 13.9 の「何を外すか」の表の4件を外す
+
+## やること
+
+1. 帯の部品を作る（置き場は `features/layout/` に収まるか、別の機能にするかを見る。
+   T-328 で決めた形＝`docs/design.md`「機能の中を分ける」に沿わせる）
+2. 13.9 の表のとおり、古い口と答え待ちの印を外す
+3. 狭い画面の「≡」を作る（**開いている間だけの要素**で、閉じていれば段を増やさない）
+4. `scripts/capture-view.ts` で 1400幅と 390幅を撮って見る
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 帯の3つの口から3画面へ行け、作る画面の口は帯に出ない
+- 13.9「何を外すか」の4件が実際に消えている
+- **目視**: 1400幅で帯が、390幅で「≡」とその中の3つの口が見える。いま出している画面が字の
+  濃さでも分かる。撮った幅と見えたものを `evidence` に書く
+
+## 注意
+
+- **面積は T-322 が実測済み**（1400幅で上下 -5.7%、390幅でメインビュー -11.2%）。測り直さない
+- **13.9 の決定を変えない。** 実装してみて決定のほうがまずいと分かったら、押し切らず止めて
+  ユーザーに聞く
+
+## T-357
+
+**タスク**: 部屋の表示名の語彙を決め、セッションの行とヘッダーに出す
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-355, T-356 / **passes**: True
+
+**evidence**:
+
+`bun run check` 1234 pass / 0 fail（101ファイル）。足したテストは `test/shared/room.test.ts` 5件・帯3件・サイドバー1件。目視（fake driver・1400x900）: 7330＋`TSUKUMO_HOME=/tmp/tsukumo-room-a` が帯の左端に「茜の間」、7333＋別ホームが「朱の間」、7398 は語彙の外で「7398」。本物の駆動で 7330 を起こし直し、帯「茜の間」とサイドバーの行「茜の間・9/22 20:52（表示中）」が一致（もう1行は語彙の外で「7411・9/22 20:04」）。
+
+## 背景
+
+ユーザーの言葉: 「セッション名をABCから別の名前にしたいのと、T-322の決定を受けてヘッダーに
+部屋の名前を表示できると良い」。
+
+T-355 でセッションの ID がポート番号になり、T-356 でヘッダーの帯ができる。残るのは**人が読む
+名前**で、ユーザーは 2026-09-22 に「表示名は改めて考えよう」と保留した。出しどころは
+サイドバーのセッションの行（`src/browser/features/sidebar/session-switch.tsx:106`）と、
+T-356 で作る帯の2箇所。
+
+## 決まっていること（蒸し返さない）
+
+- **表示名は固定の語彙を、ポートの並び順（既定 7327 が1つめ）に割り当てる**（2026-09-22
+  ユーザー選択）。環境変数で指定できるようにはしない
+- **印（ID）には焼かない。** 印はポート番号のまま（T-355）で、表示名は画面のためだけのもの
+- **語彙そのものはユーザーが選ぶ。** このタスクの中で候補を出して聞く
+
+## 解くべき論点
+
+- **語彙の置き場。** コードの定数か、キャラクターパックの定義ファイル側か
+  （`CLAUDE.md` 原則4「キャラクターの中身をコードに書かない」との兼ね合い。部屋の名前が
+  キャラクターの持ち物かどうか）
+- 語彙が尽きたとき（並びの外のポート）どう名乗るか
+- **帯のどこに出すか。** `docs/design.md` 13.9 は「帯に出すのは画面の口と答え待ちの印だけ。
+  設定の操作子は置かない」と書いている。名前を足すなら 13.9 を書き換える
+- サイドバーの行の見え方（いまは `目印・M/D HH:MM`）。名前が入っても同じ名前の行を時刻で
+  見分けられるか
+
+## やること
+
+1. 語彙の案を2〜3出してユーザーに選んでもらう（どういう並びか・何個あるかを添える）
+2. 選ばれた語彙を置き、サイドバーの行と帯に出す
+3. `docs/design.md` 13.9 と、「部屋」を語彙に足すなら `docs/glossary.md` を直す
+4. 目視で確かめる
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- ポート順に名前が割り当たることと、語彙の外のポートの振る舞いを検査するテストがある
+- **目視**: 帯とサイドバーに同じ部屋の名前が出ている。`TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を
+  分けて2つ起こし、違う名前になることを確かめて `evidence` に書く
+- `docs/design.md` 13.9 と実装が食い違っていない
+
+## 注意
+
+- **2つ起こして確かめるときは `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を両方分ける**
+  （`CLAUDE.md`「## タスク運用」。ホームを共有すると雑談の要約を相手ごと上書きする）
+- 語彙をユーザーに選ばせるまで実装を進めない
