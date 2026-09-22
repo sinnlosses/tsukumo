@@ -9,6 +9,7 @@
 
 import { useEffect, useState, type ReactElement } from "react"
 
+import { nowEpochMilliseconds } from "../../lib/clock.ts"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./dispatch.module.css"
 
@@ -34,7 +35,7 @@ export function TurnStatus(): ReactElement {
   const turnStartedAt = useSessionSelector((session) => session.state.turnStartedAt)
   const turnFinishedAt = useSessionSelector((session) => session.state.turnFinishedAt)
   const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   // 進行中（開始していて、まだ終わっていない）間だけ1秒ごとに刻む。終わったら止める
   // （turnFinishedAt の値で経過時間が固定されるので、タイマーは要らない）。
@@ -42,7 +43,7 @@ export function TurnStatus(): ReactElement {
     if (turnStartedAt === undefined || turnFinishedAt !== undefined) {
       return undefined
     }
-    const timer = setInterval(() => setNow(Date.now()), TICK_INTERVAL_MS)
+    const timer = setInterval(() => setNow(nowEpochMilliseconds()), TICK_INTERVAL_MS)
     return () => clearInterval(timer)
   }, [turnStartedAt, turnFinishedAt])
 

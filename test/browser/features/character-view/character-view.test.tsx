@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it, spyOn } from "bun:test"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render } from "@testing-library/react"
@@ -146,8 +146,9 @@ describe("CharacterView", () => {
 
   it("ターンが終わった直後は data-motion が success（完了の反応。偽の時計）", () => {
     const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
+    const clock = spyOn(Temporal.Now, "instant").mockReturnValue(
+      Temporal.Instant.fromEpochMilliseconds(now),
+    )
     try {
       renderCharacterView({
         character: FIXTURE_CHARACTER,
@@ -158,14 +159,15 @@ describe("CharacterView", () => {
 
       expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("success")
     } finally {
-      Date.now = originalNow
+      clock.mockRestore()
     }
   })
 
   it("ツールが失敗した直後は data-motion が failure（失敗でびくっ。偽の時計）", () => {
     const now = 1_700_000_000_000
-    const originalNow = Date.now
-    Date.now = () => now
+    const clock = spyOn(Temporal.Now, "instant").mockReturnValue(
+      Temporal.Instant.fromEpochMilliseconds(now),
+    )
     try {
       renderCharacterView({
         character: FIXTURE_CHARACTER,
@@ -176,7 +178,7 @@ describe("CharacterView", () => {
 
       expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("failure")
     } finally {
-      Date.now = originalNow
+      clock.mockRestore()
     }
   })
 

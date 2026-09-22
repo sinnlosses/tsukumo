@@ -127,8 +127,6 @@ const EMPTY_TOTALS = {
   costUsd: 0,
 } satisfies TokenUsageTotals
 
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
-
 const textEncoder = new TextEncoder()
 
 /** ターンの始まりの状態（何も積んでいない）。 */
@@ -256,13 +254,11 @@ export function summarizeRecentTokenUsage(
 }
 
 /**
- * ローカル日付（`YYYY-MM-DD`）を日数ぶんずらす。**UTC の正午を経由して数える** — 日付だけの
- * 文字列には時差が無く、ここで OS のタイムゾーンを持ち込むと同じ入力でも境目が動いてしまう
- * （夏時間のある地域で 00:00 が存在しない日を跨いでも、正午からなら日付は変わらない）。
+ * ローカル日付（`YYYY-MM-DD`）を日数ぶんずらす。**時刻もタイムゾーンも持ち込まずに日付だけで
+ * 数える**（`Temporal.PlainDate`）ので、夏時間のある地域でも同じ入力なら同じ境目になる。
  */
 function shiftDate(date: string, days: number): string {
-  const noon = new Date(`${date}T12:00:00Z`).getTime()
-  return new Date(noon + days * MILLISECONDS_PER_DAY).toISOString().slice(0, 10)
+  return Temporal.PlainDate.from(date).add({ days }).toString()
 }
 
 /** 1つでも数が減っていれば、そのモデルの走行合計は振り出しに戻っている。 */

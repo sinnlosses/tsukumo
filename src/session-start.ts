@@ -91,7 +91,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
   // 境界は増やさない（原則3）。
   const chatArchive = createChatArchive()
   const manager = createSessionManager({
-    now: Date.now,
+    // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す
+    // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
+    now: () => Temporal.Now.instant().epochMilliseconds,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を

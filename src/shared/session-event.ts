@@ -259,7 +259,7 @@ export type SessionEvent =
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で
- * `Date.now()` を畳み込みに渡さない。docs/design.md 4.1）。
+ * 読んだ時計を畳み込みに渡さない。docs/design.md 4.1）。
  */
 export type StampedEvent = {
   readonly at: number

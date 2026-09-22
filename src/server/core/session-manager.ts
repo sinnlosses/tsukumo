@@ -47,7 +47,7 @@ import {
 export const EVENT_BATCH_INTERVAL_MS = 100
 
 export type SessionManagerOptions = {
-  /** 現在時刻を返す関数（呼び出し側が `Date.now` を渡す。テストは偽の時計を渡す）。 */
+  /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */
   readonly now: () => number
   /** イベントをまとめる間隔（ミリ秒）。既定は {@link EVENT_BATCH_INTERVAL_MS}。 */
   readonly batchIntervalMs: number

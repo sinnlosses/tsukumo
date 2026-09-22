@@ -8,7 +8,7 @@ import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
 import { type UiBundle } from "./server/adapter/bundle.ts"
-import { localDateKey } from "./server/adapter/local-time.ts"
+import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
@@ -82,7 +82,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       // **「今日」を決めるのは配線層**（core は今日が何日かを知らない。OS のタイムゾーンに
       // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
       readTokenUsageSummary: (days) =>
-        summarizeRecentTokenUsage(options.tokenUsageLog, localDateKey(new Date()), days),
+        summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
       token,
     }),
   )

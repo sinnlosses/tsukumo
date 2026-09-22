@@ -44,7 +44,7 @@ import {
   type ChatReadbackLimits,
   type ChatRecallResult,
 } from "../core/session-driver.ts"
-import { isoWithOffset, localDateKey } from "./local-time.ts"
+import { isoWithOffset, localDateKey, todayLocalDateKey } from "./local-time.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
@@ -139,9 +139,8 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
       if (!isCharacterPackName(packName)) {
         return
       }
-      const date = new Date(entry.at)
-      const record = toArchiveRecord(packName, date, entry)
-      appendLine(join(root, packName, `${localDateKey(date)}.jsonl`), record)
+      const record = toArchiveRecord(packName, entry)
+      appendLine(join(root, packName, `${localDateKey(entry.at)}.jsonl`), record)
       turnMarks = [...turnMarks, { pack: packName, at: record.at }]
     },
     keep: () => {
@@ -165,7 +164,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
       indexed = true
       appendLine(join(root, packName, DAY_INDEX_FILE_NAME), {
         v: ARCHIVE_FORMAT_VERSION,
-        date: localDateKey(new Date()),
+        date: todayLocalDateKey(),
         pack: packName,
         line: trimmed,
       })
@@ -256,10 +255,10 @@ type KeptMark = {
  * `expression` はキャラクターの行だけが持つ（`JSON.stringify` は値が `undefined` のキーを
  * 落とすので、「持たないときは書かない」がそのまま実現できる）。
  */
-function toArchiveRecord(packName: string, date: Date, entry: ChatArchiveEntry): ArchiveRecord {
+function toArchiveRecord(packName: string, entry: ChatArchiveEntry): ArchiveRecord {
   const base = {
     v: ARCHIVE_FORMAT_VERSION,
-    at: isoWithOffset(date),
+    at: isoWithOffset(entry.at),
     pack: packName,
     speaker: entry.speaker,
     text: entry.text,

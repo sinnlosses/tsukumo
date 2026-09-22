@@ -7,6 +7,7 @@
 // 持っていて、繋ぎ直すと `hello` で戻ってくる）。
 
 import { type RefreshTarget } from "../../shared/frame.ts"
+import { nowEpochMilliseconds } from "./clock.ts"
 
 /** `<link>` の href に足して取り直させるクエリ。値は時刻で、サーバ側では読まない。 */
 const STYLE_REVISION_QUERY_NAME = "r"
@@ -22,7 +23,7 @@ export function applyRefresh(target: RefreshTarget): void {
   // （経路名で選り分けると、その名前を browser 側に書くことになる）。
   for (const link of document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')) {
     const url = new URL(link.href)
-    url.searchParams.set(STYLE_REVISION_QUERY_NAME, String(Date.now()))
+    url.searchParams.set(STYLE_REVISION_QUERY_NAME, String(nowEpochMilliseconds()))
     link.href = url.href
   }
 }

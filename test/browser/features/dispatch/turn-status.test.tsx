@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it, spyOn } from "bun:test"
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
@@ -51,8 +51,9 @@ describe("TurnStatus", () => {
 
   it("(5) 経過時間は turnStartedAt から数え、ラベルは「経過」（進行中）", () => {
     const now = 1_700_000_010_000
-    const originalNow = Date.now
-    Date.now = () => now
+    const clock = spyOn(Temporal.Now, "instant").mockReturnValue(
+      Temporal.Instant.fromEpochMilliseconds(now),
+    )
     try {
       renderTurnStatus({
         turnInProgress: true,
@@ -63,7 +64,7 @@ describe("TurnStatus", () => {
       expect(screen.getByText("経過")).toBeDefined()
       expect(screen.getByText("5秒")).toBeDefined()
     } finally {
-      Date.now = originalNow
+      clock.mockRestore()
     }
   })
 

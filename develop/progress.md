@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 src と scripts の Date を Temporal に置き換えた（T-344）
+
+`new Date` / `Date.now` / `: Date` を `src` と `scripts` から全廃した（例外ゼロ）。時刻の数は
+エポックミリ秒のまま残し、それを作る場所をサーバは `src/session-start.ts`、ブラウザは新設の
+`src/browser/lib/clock.ts` の2箇所に絞った。`src/server/adapter/local-time.ts` は OS の
+タイムゾーンを読む唯一の場所として残し、引数を `Date` から数に変えて `Temporal` で書き直した。
+
 ### 2026-09-22 TaskBoard と TaskList を features/ 直下へ出した（T-328）
 
 `task-board`/`task-list` を1つの機能 `src/browser/features/task-board/` にまとめ、`.task-` の

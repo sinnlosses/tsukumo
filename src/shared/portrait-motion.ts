@@ -34,7 +34,7 @@ export const SUCCESS_MOTION_WINDOW_MS = 700
  * 直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内、かつターンが進行中でない）。どちらでもなければ、
  * ターンが進行中なら「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」。
  *
- * `now` は呼び出し側が渡す現在時刻（`Date.now()` はここでは呼ばない。`resolveExpression` と
+ * `now` は呼び出し側が渡す現在時刻（エポックミリ秒。時計はここでは読まない。`resolveExpression` と
  * 同じ理由でサーバとブラウザの結果を揃える）。
  */
 export function resolvePortraitMotion(input: PortraitMotionInput, now: number): PortraitMotion {

@@ -28,6 +28,7 @@ import {
 import { type SessionRecord } from "../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../shared/turn-speech.ts"
 import { Portrait } from "../../components/portrait.tsx"
+import { nowEpochMilliseconds } from "../../lib/clock.ts"
 import { useSessionSelector } from "../../stores/session.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
@@ -60,7 +61,7 @@ function useNowForPortraitMotion(input: PortraitMotionInput): number {
   // 材料の3つは分解して受ける（入れ物ごと依存にすると、中身が同じでもレンダーのたびに
   // 別物になり、タイマーを張り直してしまう）。
   const { turnInProgress, turnFinishedAt, lastToolFailureAt } = input
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -68,13 +69,13 @@ function useNowForPortraitMotion(input: PortraitMotionInput): number {
     const scheduleNext = (): void => {
       const delay = nextPortraitMotionTransitionDelayMs(
         { turnInProgress, turnFinishedAt, lastToolFailureAt },
-        Date.now(),
+        nowEpochMilliseconds(),
       )
       if (delay === undefined) {
         return
       }
       timer = setTimeout(() => {
-        setNow(Date.now())
+        setNow(nowEpochMilliseconds())
         scheduleNext()
       }, delay)
     }

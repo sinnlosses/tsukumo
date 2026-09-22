@@ -100,8 +100,7 @@ export function tokenUsageDir(): string {
 export function createTokenUsageLog(root: string = tokenUsageDir()): TokenUsageLog {
   return {
     append: (entry) => {
-      const date = new Date(entry.at)
-      appendLine(join(root, `${localDateKey(date)}.jsonl`), toRecord(date, entry))
+      appendLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
     },
     readRange: (period) => readRecordsInRange(root, period),
   }
@@ -118,10 +117,10 @@ function appendLine(path: string, record: TokenUsageRecord): void {
 }
 
 /** 1ターンぶんの記録を、書き出す行（`src/shared/token-usage.ts`）へ変換する。 */
-function toRecord(date: Date, entry: TokenUsageEntry): TokenUsageRecord {
+function toRecord(entry: TokenUsageEntry): TokenUsageRecord {
   return {
     v: TOKEN_USAGE_FORMAT_VERSION,
-    at: isoWithOffset(date),
+    at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
     mode: entry.mode,
     models: entry.models,
