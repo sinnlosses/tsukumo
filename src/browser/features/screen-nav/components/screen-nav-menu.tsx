@@ -10,16 +10,21 @@
 
 import { type ReactElement } from "react"
 
-import { type ScreenNavGate as Gate } from "../hooks/use-screen-nav.ts"
+import { type ScreenNavGate as Gate, type ScreenNavReading } from "../hooks/use-screen-nav.ts"
 import styles from "../screen-nav.module.css"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import { PENDING_NOTE, ScreenNavPending } from "./screen-nav-pending.tsx"
 import { ScreenNavRoom } from "./screen-nav-room.tsx"
+import { ScreenNavStatus } from "./screen-nav-status.tsx"
 
 export type ScreenNavMenuProps = {
   /** 部屋の名前。**落ちてくる面の先頭**に出す（狭い画面では帯の左端が無いため。13.9）。 */
   readonly room: string
+  /** 部屋の名前の `title` に出す2行（作業先とコードの出所）。 */
+  readonly roomPlaces: string
   readonly gates: readonly Gate[]
+  /** いまの動き方の読み。**狭い画面では帯に置く幅が無い**ので、口と同じくここへ入る（13.9）。 */
+  readonly readings: readonly ScreenNavReading[]
   readonly open: boolean
   readonly pendingActive: boolean
   readonly onToggle: () => void
@@ -50,10 +55,11 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
       </button>
       {props.open ? (
         <div className={styles["screen-nav-panel"]}>
-          <ScreenNavRoom name={props.room} />
+          <ScreenNavRoom name={props.room} places={props.roomPlaces} />
           {props.gates.map((gate) => (
             <ScreenNavGate key={gate.screen} gate={gate} onSelect={props.onSelect} />
           ))}
+          <ScreenNavStatus readings={props.readings} />
           {props.pendingActive ? <ScreenNavPending /> : null}
         </div>
       ) : null}
