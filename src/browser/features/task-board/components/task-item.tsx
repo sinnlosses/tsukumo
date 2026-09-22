@@ -5,6 +5,7 @@ import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
 import styles from "../task-board.module.css"
+import { TaskRunButton } from "./task-run-button.tsx"
 import { TaskStatusBadge } from "./task-status-badge.tsx"
 
 export function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElement {
@@ -16,7 +17,7 @@ export function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElemen
         {props.task.status === undefined ? null : <TaskStatusBadge status={props.task.status} />}
       </span>
       <span>
-        <span className={styles["task-id"]}>{props.task.id}</span> {props.task.summary}
+        <TaskRunButton taskId={props.task.id} /> {props.task.summary}
       </span>
     </li>
   )

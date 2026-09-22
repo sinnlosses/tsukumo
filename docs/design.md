@@ -332,6 +332,8 @@ features/task-board/
   components/readiness-cell.tsx   着手の列
   components/task-id-list.tsx     IDの並び
   components/task-item.tsx        区画の一覧1件
+  components/task-run-button.tsx  押せるタスクID（一覧と表の両方が置く）
+  components/task-run-confirm.tsx 「<ID> を実行しますか」の確認（押した瞬間だけ組み立てる）
   components/task-status-badge.tsx  status のバッジ
   domain/task-status.ts           status → 色の class（表の行とバッジの両方が読む）
   domain/task-list-title.ts       区画の見出しの文言（サイドバーが読む）
