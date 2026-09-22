@@ -11,7 +11,8 @@
     "serious": "きりっ",
     "curious": "きょとん",
     "sad": "しょんぼり",
-    "excited": "わくわく"
+    "excited": "わくわく",
+    "bored": "たいくつ"
   },
   "mini": "mini.png",
   "portraits": {
@@ -22,7 +23,8 @@
     "serious": "serious.png",
     "curious": "curious.png",
     "sad": "sad.png",
-    "excited": "excited.png"
+    "excited": "excited.png",
+    "bored": "bored.png"
   },
   "background": {
     "image": "background.png"

@@ -30,6 +30,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     curious: undefined,
     sad: undefined,
     excited: undefined,
+    bored: undefined,
   },
   mini: undefined,
   outfitAccents: {
@@ -123,8 +124,8 @@ describe("CharacterEdit", () => {
     const pick = screen.getByLabelText("flusteredを選ぶ")
     expect(pick.closest("label")?.textContent).toContain("選ぶ")
     // 立ち絵そのものは無いので、点線の枠の空きが代わりに出る
-    // （flustered / serious / curious / sad / excited の5枠）。
-    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(5)
+    // （flustered / serious / curious / sad / excited / bored の6枠）。
+    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(6)
   })
 
   it("消す口を押すと clear-portrait を dispatch する", () => {

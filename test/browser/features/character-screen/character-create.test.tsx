@@ -28,6 +28,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     curious: undefined,
     sad: undefined,
     excited: undefined,
+    bored: undefined,
   },
   mini: undefined,
   outfitAccents: {

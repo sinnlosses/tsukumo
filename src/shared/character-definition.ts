@@ -142,6 +142,7 @@ function toExpressionLabels(source: unknown): Readonly<Record<Expression, string
     curious: stringField(record, "curious"),
     sad: stringField(record, "sad"),
     excited: stringField(record, "excited"),
+    bored: stringField(record, "bored"),
   }
 }
 
@@ -156,6 +157,7 @@ function toPortraits(source: unknown): Readonly<Record<Expression, string | unde
     curious: stringField(record, "curious"),
     sad: stringField(record, "sad"),
     excited: stringField(record, "excited"),
+    bored: stringField(record, "bored"),
   }
 }
 

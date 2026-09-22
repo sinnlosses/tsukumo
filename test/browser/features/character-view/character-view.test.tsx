@@ -32,6 +32,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
     curious: undefined,
     sad: undefined,
     excited: undefined,
+    bored: undefined,
   },
   mini: undefined,
   outfitAccents: {
@@ -130,6 +131,7 @@ describe("CharacterView", () => {
           curious: undefined,
           sad: undefined,
           excited: undefined,
+          bored: undefined,
         },
       },
     })
@@ -267,6 +269,7 @@ describe("CharacterView", () => {
             curious: undefined,
             sad: undefined,
             excited: undefined,
+            bored: undefined,
           },
         },
       },

@@ -72,6 +72,7 @@ describe("expressionChoices", () => {
         curious: undefined,
         sad: undefined,
         excited: undefined,
+        bored: undefined,
       },
       portraits: {
         default: undefined,
@@ -82,6 +83,7 @@ describe("expressionChoices", () => {
         curious: undefined,
         sad: undefined,
         excited: undefined,
+        bored: undefined,
       },
       mini: undefined,
       outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },

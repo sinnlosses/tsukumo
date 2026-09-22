@@ -142,6 +142,7 @@ function portraitUrls(
     curious: portraitUrl(definition.portraits.curious, cacheKey),
     sad: portraitUrl(definition.portraits.sad, cacheKey),
     excited: portraitUrl(definition.portraits.excited, cacheKey),
+    bored: portraitUrl(definition.portraits.bored, cacheKey),
   }
 }
 
@@ -161,6 +162,7 @@ const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
   curious: undefined,
   sad: undefined,
   excited: undefined,
+  bored: undefined,
 }
 
 const EMPTY_OUTFIT_ACCENTS: Readonly<Record<Outfit, string | undefined>> = {

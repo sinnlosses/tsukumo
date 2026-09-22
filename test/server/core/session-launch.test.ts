@@ -50,6 +50,7 @@ function characterEventOf(pack: Pack): SessionEvent {
       curious: undefined,
       sad: undefined,
       excited: undefined,
+      bored: undefined,
     },
     mini: undefined,
     outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },

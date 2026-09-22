@@ -11,7 +11,8 @@
     "serious": "真顔",
     "curious": "きょとん",
     "sad": "しょげ",
-    "excited": "そわそわ"
+    "excited": "そわそわ",
+    "bored": "たいくつ"
   },
   "portraits": {
     "default": "default.svg",

@@ -114,6 +114,7 @@ const CHARACTER_EVENT: SessionEvent = {
     curious: undefined,
     sad: undefined,
     excited: undefined,
+    bored: undefined,
   },
   mini: undefined,
   outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },

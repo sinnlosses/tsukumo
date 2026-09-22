@@ -91,6 +91,7 @@ describe("characterChangedEvent", () => {
         curious: undefined,
         sad: undefined,
         excited: undefined,
+        bored: undefined,
       },
       // 定義に mini が無いパックなので、ミニ立ち絵は portraits.default に落ちる。
       mini: `/character/default.svg?v=${cacheKey}`,

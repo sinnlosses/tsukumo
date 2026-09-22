@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 表情に `bored`（たいくつ）を足した（T-302）
+
+`src/shared/expression.ts` の `Expression` / `EXPRESSIONS` の末尾に `bored` を積み、型検査が挙げた `character-definition.ts` / `character.ts` の4か所とテストのフィクスチャ16ファイルを埋めた。ラベルは同梱3パックに、立ち絵（`bored.png`）は `characters/tsukumo` とホームのパックに入れた。**自動では切り替えず**、`speak` の引数でキャラクター自身が選ぶだけ。
+
 ### 2026-09-22 ターンごとのトークン消費を日付ごとの JSONL に記録するようにした（T-318）
 
 SDK の `result` が運ぶ `modelUsage`（`query()` の中の累計）から前回との差を取り、1ターン1行で `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl` に積むようにした（型は `src/shared/token-usage.ts`、差の計算は `src/server/core/token-usage.ts`、書くのは `src/server/adapter/token-usage-log.ts`、前回の累計を覚えるのは `session-manager`）。**行に入るのは数・モデル名・時刻・セッションID・モードだけ**で、型に文字列の口を作っていない。

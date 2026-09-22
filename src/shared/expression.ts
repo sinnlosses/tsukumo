@@ -21,6 +21,7 @@ export type Expression =
   | "curious"
   | "sad"
   | "excited"
+  | "bored"
 export type Outfit = "default" | "light" | "normal" | "heavy"
 
 /**
@@ -37,6 +38,7 @@ export const EXPRESSIONS: readonly Expression[] = [
   "curious",
   "sad",
   "excited",
+  "bored",
 ]
 
 /**
