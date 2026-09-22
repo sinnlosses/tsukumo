@@ -237,7 +237,7 @@ describe("browser/ の機能どうしの import", () => {
 
 // `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
 // 上の `BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
-// `main.tsx` / `features/` / `components/` / `lib/` / `stores/` という箱をまたぐ辺を見る
+// `main.tsx` / `features/` / `components/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
 // `browser/hooks/` は**機能の語彙を持たない React のフック**の箱で、`components/` と同じ扱い
@@ -249,17 +249,20 @@ describe("browser/ の機能どうしの import", () => {
 // import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下に増えたときに
 // テストの直し忘れで素通りしないよう、`main.tsx` でも `*.d.ts`/`styles` でもない未知の区画は
 // `layerOf` と同じく `throw` する。
-const BROWSER_BOXES = ["main", "features", "components", "hooks", "lib", "stores"] as const
+const BROWSER_BOXES = ["main", "features", "components", "hooks", "lib", "utils", "stores"] as const
 type BrowserBox = (typeof BROWSER_BOXES)[number]
 
 // 各箱が import してよい先（docs/design.md 2章の表そのもの。`main` は「すべて」なので全箱を許す）。
+// `utils/` は誰からも引けて、自分は `utils/` の中しか引かない（外部パッケージ・`shared` も
+// 引かないことは、この表では見えないので下の「browser/utils/ の import」が見る）。
 const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
-  main: new Set(["main", "features", "components", "hooks", "lib", "stores"]),
-  features: new Set(["features", "components", "hooks", "lib", "stores"]),
-  components: new Set(["components", "hooks", "lib"]),
-  hooks: new Set(["hooks", "lib"]),
-  lib: new Set(["lib"]),
-  stores: new Set(["stores", "lib"]),
+  main: new Set(["main", "features", "components", "hooks", "lib", "utils", "stores"]),
+  features: new Set(["features", "components", "hooks", "lib", "utils", "stores"]),
+  components: new Set(["components", "hooks", "lib", "utils"]),
+  hooks: new Set(["hooks", "lib", "utils"]),
+  lib: new Set(["lib", "utils"]),
+  utils: new Set(["utils"]),
+  stores: new Set(["stores", "lib", "utils"]),
 }
 
 type BrowserBoxViolation = {
@@ -277,6 +280,23 @@ describe("browser/ の箱をまたぐ import", () => {
     const violations = files.flatMap((relPath) => findBrowserBoxViolations(relPath))
 
     expect(browserBoxViolationsMessage(violations)).toBe("")
+  })
+})
+
+// `utils/` の歯止め1（docs/design.md 2章「`lib/` と `utils/` に置く基準」）。箱の辺の検査は相対 import
+// の `browser/` の中しか見ないので、外部パッケージ（`remeda`・`react`）・`node:`・`shared/` への
+// import はここで別に落とす。**`utils/` から出る import は、`utils/` の中への相対 import だけ**。
+describe("browser/utils/ の import", () => {
+  it("browser/utils/ のファイルは browser/utils/ の中しか import しない", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath.startsWith("browser/utils/"))
+      .flatMap((relPath) =>
+        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
+          .filter((specifier) => !isInsideBrowserUtils(relPath, specifier))
+          .map((specifier) => `src/${relPath} → ${specifier}`),
+      )
+
+    expect(offenders.join("\n")).toBe("")
   })
 })
 
@@ -318,6 +338,7 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
     second === "components" ||
     second === "hooks" ||
     second === "lib" ||
+    second === "utils" ||
     second === "stores"
   ) {
     return second
@@ -426,6 +447,20 @@ function findViolations(relPath: string): readonly Violation[] {
 function relativeImportSpecifiers(content: string): readonly string[] {
   const matches = content.matchAll(/from\s+["'](\.[^"']+)["']/g)
   return [...matches].flatMap(([, specifier]) => specifier ?? [])
+}
+
+/** `from "..."` と副作用だけの `import "..."` の specifier を、相対かどうかを問わずすべて拾う。 */
+function importSpecifiers(content: string): readonly string[] {
+  const matches = content.matchAll(/(?:from|import)\s+["']([^"']+)["']/g)
+  return [...matches].flatMap(([, specifier]) => specifier ?? [])
+}
+
+/** specifier が相対で、解いた先が `browser/utils/` の中か。 */
+function isInsideBrowserUtils(fromRelPath: string, specifier: string): boolean {
+  return (
+    specifier.startsWith(".") &&
+    resolveRelativeImport(fromRelPath, specifier).startsWith("browser/utils/")
+  )
 }
 
 /** import 元の相対パスと specifier から、import 先の `src/` 相対パスを解く。 */

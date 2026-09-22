@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 clock.ts を utils/ へ移し、lib と utils の線を言い換えた（T-360）
+
+`src/browser/utils/clock.ts` を最初の `utils/` にし、`lib/` と `utils/` の線を「言語の標準か、その外か」と `docs/design.md` 2章で言い直した。`utils/` の辺は `test/architecture.test.ts` が見る。
+
 ### 2026-09-23 雑談の要約の口を、呼ぶ側の分岐1回に寄せた（T-361）
 
 `takeChatMemoryPromptParts` の `chatSummary` から `| undefined` を外し、仕事のときに呼ばない判断を `src/session-start.ts` の分岐1回に移した。

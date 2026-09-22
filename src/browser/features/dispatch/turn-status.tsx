@@ -10,8 +10,8 @@
 import { useEffect, useState, type ReactElement } from "react"
 
 import { type TurnProgress } from "../../../shared/session-state.ts"
-import { nowEpochMilliseconds } from "../../lib/clock.ts"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
+import { nowEpochMilliseconds } from "../../utils/clock.ts"
 import styles from "./dispatch.module.css"
 
 const SEND_LABEL = "送信"

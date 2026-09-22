@@ -25,9 +25,9 @@ import {
 } from "../../../../shared/portrait-motion.ts"
 import { type SessionRecord } from "../../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../shared/turn-speech.ts"
-import { nowEpochMilliseconds } from "../../../lib/clock.ts"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import { useTurnSelection } from "../../../stores/turn-selection.tsx"
+import { nowEpochMilliseconds } from "../../../utils/clock.ts"
 
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
 const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"

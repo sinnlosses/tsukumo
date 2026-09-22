@@ -213,7 +213,8 @@ src/
                               （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
     components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
     hooks/                    機能の語彙を持たない React のフック（`use-modal-dialog.ts`）
-    lib/                      名指しできる技術を知っている道具（WebSocket・`FileReader`・React の hook）
+    lib/                      ライブラリを包む道具（WebSocket・`FileReader`・React の hook）
+    utils/                    ライブラリに依存しない汎用の道具（`clock.ts`）
     stores/                   画面全体で共有する状態（セッション・選んでいるターン・出している画面）
     styles/                   グローバルな CSS はこの1枚だけ（theme.css。トークン・body・リンク）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts（いまのまま）
@@ -222,24 +223,24 @@ characters/<name>/            character.json・persona.md・素材
 
 **ファイル名は概念**（原則5）。`helpers/` と `common/` は作らない（`lib/` と `utils/` を
 置く基準は下の「`lib/` と `utils/` に置く基準」）。**単数形の規約は
-`src/browser/` の置き場所のディレクトリ（`features/` `components/` `hooks/` `lib/` `stores/`
-`styles/` と、機能の中の `hooks/` `components/` `domain/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
+`src/browser/` の置き場所のディレクトリ（`features/` `components/` `hooks/` `lib/` `utils/`
+`stores/` `styles/` と、機能の中の `hooks/` `components/` `domain/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
 `adapter` と、
 機能の中のファイル名は単数形のまま。`main-view/` のように機能の名前は用語集の語に合わせる）。
 
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
 「その機能しか読まないなら機能の中」が既定）:
 
-| 箱            | 置くもの                                                            | import してよい先                                              |
-| ------------- | ------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）   | すべて                                                         |
-| `features/`   | 1つの機能に閉じた部品・状態・保存                                   | `components` / `hooks` / `lib` / `utils` / `stores` / `shared` |
-| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）   | `hooks` / `lib` / `utils` / `shared`                           |
-| `hooks/`      | **機能の語彙を持たない** React のフック（`use-modal-dialog.ts`）    | `lib` / `utils` / `shared`                                     |
-| `lib/`        | **名指しできる技術**を知っている道具（React の部品ではないもの）    | `utils` / `shared`                                             |
-| `utils/`      | **どの技術も知らない**小物（下の「`lib/` と `utils/` に置く基準」） | —（何も import しない）                                        |
-| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook     | `lib` / `utils` / `shared`                                     |
-| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）    | —                                                              |
+| 箱            | 置くもの                                                                      | import してよい先                                              |
+| ------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）             | すべて                                                         |
+| `features/`   | 1つの機能に閉じた部品・状態・保存                                             | `components` / `hooks` / `lib` / `utils` / `stores` / `shared` |
+| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）             | `hooks` / `lib` / `utils` / `shared`                           |
+| `hooks/`      | **機能の語彙を持たない** React のフック（`use-modal-dialog.ts`）              | `lib` / `utils` / `shared`                                     |
+| `lib/`        | **ライブラリを包む**道具（React の部品ではないもの）                          | `utils` / `shared`                                             |
+| `utils/`      | **ライブラリに依存しない**汎用の道具（下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                          |
+| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook               | `lib` / `utils` / `shared`                                     |
+| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）              | —                                                              |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
   （zustand を入れない決定は 6.2 のまま）。実体は4つあり、
@@ -393,10 +394,18 @@ features/task-board/
 
 **手順2 — `lib/` か `utils/` か**
 
-| ファイル名が指しているもの                                                                                                             | 箱       | 例                                                                              |
-| -------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------- |
-| **名指しできる技術・外部システム・ファイル形式**（React・DOM・WebSocket・`node:fs`・`git`・Agent SDK・Claude Code のツール・data URL） | `lib/`   | `browser/lib/socket.ts`（WebSocket）・`browser/lib/data-url.ts`（`FileReader`） |
-| **どの技術にも属さない一般的な手法・演算**（説明に固有名詞が1つも要らないもの）                                                        | `utils/` | `retry.ts` / `partition.ts` / `clamp.ts`                                        |
+| ファイル名が指しているもの                                                             | 箱       | 例                                                                               |
+| -------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| **ライブラリを包む道具**（外部パッケージ・実行環境の API・外部システムとファイル形式） | `lib/`   | `browser/lib/socket.ts`（WebSocket）・`browser/lib/data-url.ts`（`FileReader`）  |
+| **ライブラリに依存しない汎用の道具**（言語の標準だけで書けるもの）                     | `utils/` | `browser/utils/clock.ts`（`Temporal`）・`retry.ts` / `partition.ts` / `clamp.ts` |
+
+**線は「言語の標準か、その外か」に引く。** ここでの「ライブラリ」は**言語の外から来るもの**
+すべて — 外部パッケージ（React・remeda・Chart.js・Agent SDK）、実行環境の API（DOM・WebSocket・
+`FileReader`・`canvas`・`matchMedia`・`node:fs`）、外部システムとファイル形式（`git`・Claude Code の
+ツール・data URL）。言語の標準は ECMAScript の組み込み（`Math`・`Array`・`Temporal` など）。
+実行環境の API（ブラウザの WebSocket・`FileReader`、Node の `node:fs`）はパッケージではないが、
+**その実行環境でしか動かない**点でライブラリと同じ側に置く（`utils/` の歯止め3「別のプロジェクトへそのままコピーして意味が通る」を満たさない）。
+`Temporal` は言語の標準の組み込みなので、使っていても `utils/` に置ける。
 
 **「複数箇所から呼ばれる」は `lib/` にも `utils/` にも置く理由にならない**（helm-yadokari の原則2と
 同じ）。読み手が2つになったら箱へ**上げる**が、上げた先がどちらかは上の表だけで決める。
@@ -426,23 +435,28 @@ features/task-board/
 - `server/core/` は外の世界に触れないので、`core/lib/` に入れてよいのは **`node:` を要求しない
   技術**（zod の扱いなど）だけ。`core` の小物はたいてい `core/utils/` 側になる
 - `shared/` の `lib/` は**両方の実行環境で動く技術**だけ（`node:` も `document` も触らない）
-- **`src/browser/utils/` を実際に作るときは、`test/architecture.test.ts` の `BROWSER_BOXES` と
-  `ALLOWED_BROWSER_BOX_IMPORTS` に上の表と同じ辺を足す**（足さないと `browserBoxOf` が throw する）
+- **`src/browser/utils/` の辺は `test/architecture.test.ts` が見る**（`BROWSER_BOXES` と
+  `ALLOWED_BROWSER_BOX_IMPORTS` が箱をまたぐ辺を、「browser/utils/ の import」が歯止め1
+  ——外部パッケージ・`shared/` を含めて `utils/` の外を引いたら落ちる——を検査する）。
+  他の層に `utils/` を作るときも、同じ検査を足す
 
 **いまのファイルの行き先**（2026-09-21 時点の分類。移動そのものは別タスク）:
 
-- `browser/lib/` の6つは**すべて `lib/` のまま**。`socket.ts`=WebSocket、`refresh.ts`=`<link>` と
+- `browser/lib/` は**すべて `lib/` のまま**。`socket.ts`=WebSocket、`refresh.ts`=`<link>` と
   `location`、`data-url.ts`=`FileReader`、`debounce.ts`=React、`prompt-image.ts`=`canvas`、
-  `tool-summary.ts`=Claude Code のツール名。いずれも技術を名乗っている
+  `reduced-motion.ts`=`matchMedia`、`vendor-script.ts`=`<script>`、`chart.ts`=Chart.js、
+  `tool-summary.ts` / `model-label.ts` / `permission-mode-label.ts`=Claude Code のツール名・
+  モデル・許可モード。いずれも言語の外のもの（手順2の表の上の行）を包んでいる
 - `shared/image-data-url.ts` は **`shared/lib/` へ**。名前が指すのは data URL という**形式**で、
   tsukumo の語彙を名乗らず、import も持たない（読み手は `portrait-image.ts` /
   `character-background.ts` / `prompt-image.ts` の3つ）
-- **どの技術も知らない小物は、`utils/` を作る前に remeda（11章）にあるかを見る**（2026-09-22 決定）。
+- **ライブラリに依存しない小物は、`utils/` を作る前に remeda（11章）にあるかを見る**（2026-09-22 決定）。
   8ファイルに書き写していた `isRecord` は、`core/utils/` を作らずに remeda の `isPlainObject` へ
   寄せた。**remeda に無いものだけが `utils/` の1件目になる**
-- **`utils/` に入るものは、いまは1つも無い。** `shared/` `server/core/` `server/adapter/` の平置きは
+- **`utils/` にあるのは `browser/utils/clock.ts` の1件だけ**（`Temporal` で現在のエポックミリ秒を
+  読む。import は無く、歯止めの3つを満たす）。`shared/` `server/core/` `server/adapter/` の平置きは
   すべて tsukumo の語彙を名乗っている（手順1）ので動かさない。**実体が無い箱は先に作らない**ので、
-  `utils/` は最初の1件が出たときに作る
+  ほかの層の `utils/` は最初の1件が出たときに作る
 
 ## 3. 動きの流れ
 

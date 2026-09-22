@@ -171,9 +171,9 @@
     "dependencies": [],
     "summary": "clock.ts を utils/ へ移し、lib と utils の線を言い換える",
     "task": "## 背景\n\n`src/browser/lib/clock.ts` は `Temporal.Now.instant().epochMilliseconds` を返す1関数だけの\nファイルで、読み手は `features/character-view/character-view.tsx:31` と\n`features/dispatch/turn-status.tsx:12` の2つ。\n\n`docs/design.md`「`lib/` と `utils/` に置く基準」の手順2の表は、いま `lib/` を「**名指しできる\n技術**を知っている道具（React・DOM・WebSocket・`node:fs`）」と書いている。この読み方だと\n`Temporal` を使う `clock.ts` は `lib/` に落ちる（実際そこに置かれた。T-344 / T-345 で作られた\nばかり）。**2026-09-22 にユーザーが別の線を示した**ので、そちらに合わせる。\n\n`src/browser/utils/` は箱として存在しない。`test/architecture.test.ts:221` の `BROWSER_BOXES` に\n`utils` が無く、`browserBoxOf` は未知のディレクトリで `throw` する（同 298行）ので、**作ると\n即座に落ちる**。一方 `docs/design.md` 2章の箱の表には `utils/` の行が既にあり、\n**ドキュメントとテストが食い違っている**。\n\nエージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。\n\n## 決まっていること（蒸し返さない）\n\n- **`lib/` はライブラリのラッパー、`utils/` はライブラリに依存しない汎用の道具**\n  （2026-09-22 ユーザーの線）。`clock.ts` は `utils/` 側\n\n## 解くべき論点\n\n- **言い換えの影響が `clock.ts` の外に及ばないか。** いま `lib/` にあるもののうち\n  `socket.ts`（WebSocket）・`data-url.ts`（`FileReader`）はライブラリではなくブラウザの API\n  なので、新しい線で読むと行き先が変わりうる。及ぶなら、表現を選び直すか、及ぶファイルも\n  一緒に動かすかを決める（**動かすなら理由を `evidence` に書く**）\n- `ALLOWED_BROWSER_BOX_IMPORTS` の辺（`docs/design.md` 2章の箱の表では `features` /\n  `components` / `hooks` / `lib` / `stores` が `utils` を引けて、`utils` は何も引かない）\n- `clock.ts` が `docs/design.md` の「`utils/` の歯止め3つ」を満たすか\n\n## やること\n\n1. 上を決める\n2. `test/architecture.test.ts` の `BROWSER_BOXES` と `ALLOWED_BROWSER_BOX_IMPORTS` に `utils` を\n   足す\n3. `clock.ts` を `src/browser/utils/` へ移し、読み手2つの import を直す\n4. `docs/design.md` 手順2の表を、決めたとおりに直す\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/browser/lib/clock.ts` が無く、`src/browser/utils/` に移っている\n- 新しい箱の辺を `test/architecture.test.ts` が検査している（`utils` が何かを引いたら落ちる\n  ことも含む）\n- `docs/design.md` の手順2の表と、実際の `lib/` の中身が食い違っていない\n\n## 注意\n\n- 描画に関わらないので目視確認は要らない\n- **`lib/` の他のファイルを動かすなら、動かした理由を `evidence` に1行書く**（この\n  タスクの主題は `clock.ts` 1件）\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "clock.ts を browser/utils/ へ git mv（読み手は3つ: use-character-view.ts・turn-status.tsx・lib/refresh.ts）。線は「言語の標準（ECMAScript の組み込み）か、その外（外部パッケージ・実行環境の API・外部システム）か」に引き、lib/ の他の11件は言語の外を包むので動かしていない。architecture.test.ts に utils の箱と「browser/utils/ の import」を足し、clock.ts に ../lib/reduced-motion.ts・remeda・../../shared/command.ts を足すとそれぞれ落ちることを確かめて戻した。bun run check: 1255 pass / 0 fail"
   },
   {
     "id": "T-361",
