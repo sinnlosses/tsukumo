@@ -6,9 +6,9 @@
     "dependencies": [],
     "summary": "見ているやり取りを location.hash に乗せる",
     "task": "## 背景\n\nエージェントのドラフト（2026-09-21 の雑談から。ユーザー承認あり）。\n\n画面（会話 / キャラクター / 作る）は `src/browser/stores/screen.tsx` が `location.hash` を正典にしていて、\n`useSyncExternalStore` で読む。だからリロードしても同じ画面に戻り、ブラウザの「戻る」が効く\n（`SCREEN_HASH` が `#` / `#character` / `#character/new` の3つを持つ）。\n\n一方、**どのやり取りを開いているか**は `src/browser/stores/turn-selection.tsx` が React の state として\n持っているだけなので、リロードすると今回に戻る。読み手は `src/browser/features/main-view/main-view.tsx`\nと `src/browser/features/character-view/character-view.tsx` の2つ。\n\n## 解くべき論点\n\n- hash の書き方。`screen.tsx` の `SCREEN_HASH` と**同じ1本の hash** を2つの store が読むことになるので、\n  どちらが hash のどの部分を持つかを決める（会話の画面が `\"#\"` である制約と両立させる）\n- `activeTurnId` には「最新に追随する」状態と「固定して見ている」状態がある。hash に乗せるのは\n  後者だけか、両方か\n- hash が指すやり取りがもう無い（窓から落ちた）ときの落とし先\n\n## やること\n\n1. 上の論点を決め、決めた理由を `evidence` に1行ずつ書く\n2. `turn-selection.tsx` を `useSyncExternalStore` で hash から読む形にする（`screen.tsx` の作りをなぞる）\n3. hash の読み書きが2つの store に散らないよう、書き方を決める場所を1つにまとめる\n4. テストを足す（hash → 選択、選択 → hash、指すやり取りが無いとき）\n\n## 完了条件\n\n- `bun run check` が通る（足したテストを含む）\n- 目視: 前のやり取りのタブを押してリロードすると同じやり取りが開いたまま戻り、ブラウザの「戻る」で\n  1つ前に見ていたやり取りへ移る（どの端末・解像度で見たかを `evidence` に書く）\n- 会話 / キャラクター / 作るの画面の切り替えと、`bun run dev` の再読み込みでキャラクター画面に\n  留まる動きが今までどおり効いている\n\n## 注意\n\n- ルーターのライブラリを入れない（`screen.tsx` 冒頭の決定）\n- `useEffect` は「React の外と同期する」4類型だけ（CLAUDE.md）。ここは `useSyncExternalStore` を使う\n- セリフ側（`character-view.tsx`）も同じ選択を読んでいるので、やり取りを遡るとセリフも遡る動きを壊さない\n- 目視確認で tsukumo を起こすので、他のセッションと並行させない\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "形: #<画面>?turn=<番号>（例 #?turn=3・#character?turn=3）。画面は ? の前、ターンは turn が持ち、会話の画面・今回に追従は # のままなので既存の #character・#token-usage とも両立。書き方の置き場は stores/location-hash.ts の1つにし、screen.tsx と turn-selection.tsx は自分の部分だけ差し替える。画面を移してもターンを運ぶ（会話の画面は hidden で保つ設計のため。リンクは useScreenHref で turn を付ける）。hash に乗せるのは留めたターンだけ（何も選ばない人の URL とリロードは今までどおり、今回のタブで turn を外して追従に戻る）。窓に無い番号は今回を出し hash は書き換えない（描くたびに外へ書く useEffect を避ける）。bun run check: 1294 pass / 0 fail。目視: 疑似場面 turn-tabs（ポート 7391、一時 HOME）を Playwright で 1400x900・720x900 操作。1つ前を押すと #?turn=2、リロードで同じタブと本文のまま戻り、戻る/進むで #?turn=1 → #?turn=2 → 今回 → #?turn=2 と移った。帯のキャラクターで #character?turn=2、そこでリロードしても留まり、会話へ戻ると同じタブ。#?turn=99 は今回を出した"
   },
   {
     "id": "T-314",

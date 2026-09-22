@@ -20,7 +20,7 @@ import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { REQUIRED_EXPRESSIONS, type RequiredExpression } from "../../../shared/expression.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { readDataUrl } from "../../lib/data-url.ts"
-import { navigateTo, screenHash } from "../../stores/screen.tsx"
+import { navigateTo, useScreenHref } from "../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { readAccentColor } from "./appearance-color.ts"
 import styles from "./character-screen.module.css"
@@ -42,6 +42,7 @@ type HeldPortraits = Readonly<Record<RequiredExpression, string | undefined>>
 const NO_PORTRAITS: HeldPortraits = { default: undefined }
 
 export function CharacterCreate(): ReactElement {
+  const screenHref = useScreenHref()
   const dispatch = useSessionDispatch()
   const character = useSessionSelector((session) => session.state.character)
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
@@ -114,7 +115,7 @@ export function CharacterCreate(): ReactElement {
   return (
     <div className={styles["character-screen"]}>
       <div className={styles["character-screen-bar"]}>
-        <a className={styles["character-screen-back"]} href={screenHash("character")}>
+        <a className={styles["character-screen-back"]} href={screenHref("character")}>
           ← キャラクターへ戻る
         </a>
       </div>

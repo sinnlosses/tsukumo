@@ -246,10 +246,10 @@ characters/<name>/            character.json・persona.md・素材
   （zustand を入れない決定は 6.2 のまま）。実体は4つあり、
   `stores/session.tsx` は `SessionState` を畳んで全機能に配り（`useSyncExternalStore` + セレクタ。
   Context で配るのは store そのもの）、`stores/main-view-turn.ts` はそこから**ターンの畳み**を
-  姿ごとに1回だけ導き、`stores/turn-selection.tsx` は
+  姿ごとに1回だけ導き、`stores/turn-selection.tsx` は `location.hash` の `turn` から
   メインビューとキャラビューに同じターンの選択を配り、`stores/screen.tsx` は `location.hash` から
   **出している画面**を読む（書く口 `navigateTo` も同じ
-  ファイル。13.6）。**どれも複数の機能が読む**ので機能の中に置けず、`main.tsx` に残すと機能が
+  ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**。**どれも複数の機能が読む**ので機能の中に置けず、`main.tsx` に残すと機能が
   入口を import することになる（だから箱が要る）
 - **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。
   入口の `main.tsx` は直下のまま（`app/` を作らない理由は下の表）
@@ -810,12 +810,12 @@ type SessionHost = {
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `SessionState`                                                   | `<SessionProvider>` が持つ**React の外の store**（`applySessionEvent` で `events` を畳み、`hello` で置き換える）。部品は `useSessionSelector` で**自分が読む値だけ**を購読する |
 | 接続中 / 切断中、プロトコルの版違い                              | 同じ store の snapshot に相乗りさせる（`browser/stores/session.tsx`。`SessionState` には入れない）                                                                             |
-| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `browser/stores/turn-selection.tsx` の Context（メインビューとキャラビューの両方が読む。規則は同じ）                                                                           |
+| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `location.hash` の `turn`（`#?turn=3`。追従中は書かない）を `browser/stores/turn-selection.tsx` の Context が読んで配る（メインビューとキャラビューの両方が読む）              |
 | 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                    |
 | 質問の選択（送る前）                                             | `<PendingAnswer>` のローカル状態                                                                                                                                               |
 | 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                 |
 | 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                              |
-| 出している画面（会話 / キャラクター / 作る）                     | `location.hash`（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）                                                                 |
+| 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）。hash の書き方は `stores/location-hash.ts` だけ   |
 
 zustand などの状態ライブラリは**入れない**。`useSyncExternalStore` + セレクタで足りる
 （畳み込みは `shared` の `applySessionEvent` のまま。**姿そのものを Context で配らない** —

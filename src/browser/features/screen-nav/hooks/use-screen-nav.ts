@@ -18,7 +18,8 @@ import {
   permissionModeLabel,
   resolvePermissionMode,
 } from "../../../lib/permission-mode-label.ts"
-import { screenHash, useScreen, type Screen } from "../../../stores/screen.tsx"
+import { type Screen } from "../../../stores/location-hash.ts"
+import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 
 /**
@@ -69,6 +70,7 @@ const NAV_SCREENS = [
 
 export function useScreenNav(): ScreenNavView {
   const current = useScreen()
+  const screenHref = useScreenHref()
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
   const model = useSessionSelector((session) => session.state.model)
   const permissionMode = useSessionSelector((session) =>
@@ -118,7 +120,7 @@ export function useScreenNav(): ScreenNavView {
     gates: NAV_SCREENS.map((entry) => ({
       screen: entry.screen,
       label: entry.label,
-      href: screenHash(entry.screen),
+      href: screenHref(entry.screen),
       active: entry.screen === current,
     })),
     pendingActive,

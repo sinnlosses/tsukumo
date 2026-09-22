@@ -21,7 +21,7 @@
 import { useState, type ReactElement } from "react"
 
 import { useDebouncedCallback } from "../../lib/debounce.ts"
-import { screenHash } from "../../stores/screen.tsx"
+import { useScreenHref } from "../../stores/screen.tsx"
 import { useSessionSelector } from "../../stores/session.tsx"
 import {
   applyAppearanceColorOverride,
@@ -45,6 +45,7 @@ const COLOR_FIELDS = [
 const APPEARANCE_COLOR_DEBOUNCE_MS = 200
 
 export function CharacterScreen(): ReactElement {
+  const screenHref = useScreenHref()
   const character = useSessionSelector((session) => session.state.character)
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
@@ -87,7 +88,7 @@ export function CharacterScreen(): ReactElement {
             <span className={styles["character-screen-pack"]}>{character.pack}</span>
           </>
         )}
-        <a className={styles["character-screen-new"]} href={screenHash("character-create")}>
+        <a className={styles["character-screen-new"]} href={screenHref("character-create")}>
           新しく作る
         </a>
       </div>

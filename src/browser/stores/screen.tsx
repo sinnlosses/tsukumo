@@ -7,59 +7,35 @@
 // `bun run dev` の再読み込み（`lib/refresh.ts`）でもキャラクター画面に留まれる。
 // サーバの経路は増えない（`?token` はそのまま）。
 //
+// **hash の書き方はここに無い**（`stores/location-hash.ts`）。同じ hash の `turn` は見ている
+// ターン（`stores/turn-selection.tsx`）のもので、画面を移しても消さずに運ぶ。
+//
 // 画面を選ぶのは入口の `<Root>`（`src/browser/main.tsx`）で、**機能の側はこの hook を読まない**
 // （出る口・入る口はただのリンクで書ける。`navigateTo` が要るのは、コマンドを送った直後に
 // 画面も移す作る画面だけ）。
 
-import { useSyncExternalStore } from "react"
-
-/** 出している画面。hash が対応しない値のときは会話の画面に落ちる。 */
-export type Screen = "conversation" | "character" | "character-create" | "token-usage"
-
-/**
- * 画面と `location.hash` の対応。**会話の画面は `"#"`**（`location.hash` としては空文字に
- * 正規化されるが、リンクの `href` には `""` を書けない — 空の `href` はページの再読み込みに
- * なってしまう）。
- */
-const SCREEN_HASH = {
-  conversation: "#",
-  character: "#character",
-  "character-create": "#character/new",
-  "token-usage": "#token-usage",
-} as const satisfies Readonly<Record<Screen, string>>
+import {
+  readHashRoute,
+  useHashRoute,
+  writeHashRoute,
+  formatHash,
+  type Screen,
+} from "./location-hash.ts"
 
 export function useScreen(): Screen {
-  // サーバ側で描くことは無いので、スナップショットは3つとも同じ読み取りでよい。
-  return useSyncExternalStore(subscribeToHash, readScreen, readScreen)
+  return useHashRoute((route) => route.screen)
 }
 
-/** 画面を移す。`hashchange` が起きて {@link useScreen} が読み直す。 */
+/** 画面を移す。見ているターンは hash に残したまま運ぶ。 */
 export function navigateTo(screen: Screen): void {
-  window.location.hash = SCREEN_HASH[screen]
+  writeHashRoute({ ...readHashRoute(), screen })
 }
 
-/** その画面へ入る `<a href>`。hash の書き方をこのファイルの外に散らさないための1箇所。 */
-export function screenHash(screen: Screen): string {
-  return SCREEN_HASH[screen]
-}
-
-function subscribeToHash(onStoreChange: () => void): () => void {
-  window.addEventListener("hashchange", onStoreChange)
-  return () => {
-    window.removeEventListener("hashchange", onStoreChange)
-  }
-}
-
-function readScreen(): Screen {
-  const hash = window.location.hash
-  if (hash === SCREEN_HASH.character) {
-    return "character"
-  }
-  if (hash === SCREEN_HASH["character-create"]) {
-    return "character-create"
-  }
-  if (hash === SCREEN_HASH["token-usage"]) {
-    return "token-usage"
-  }
-  return "conversation"
+/**
+ * 画面へ入る `<a href>` を作る関数。**見ているターンを hash に残す**ので、ターンが変わると
+ * 描き直す（hook にしてあるのはそのため）。
+ */
+export function useScreenHref(): (screen: Screen) => string {
+  const turn = useHashRoute((route) => route.turn)
+  return (screen) => formatHash({ screen, turn })
 }

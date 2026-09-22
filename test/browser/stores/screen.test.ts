@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { act, cleanup, renderHook } from "@testing-library/react"
 
-import { navigateTo, screenHash, useScreen } from "../../../src/browser/stores/screen.tsx"
+import { navigateTo, useScreen, useScreenHref } from "../../../src/browser/stores/screen.tsx"
 
 /**
  * hash を書き換えて `hashchange` を流す。happy-dom が `location.hash` の代入でイベントを
@@ -43,6 +43,14 @@ describe("useScreen", () => {
     expect(renderHook(() => useScreen()).result.current).toBe("conversation")
   })
 
+  it("見ているターンが乗っていても画面は読める", () => {
+    window.location.hash = "#character?turn=3"
+    expect(renderHook(() => useScreen()).result.current).toBe("character")
+
+    window.location.hash = "#?turn=3"
+    expect(renderHook(() => useScreen()).result.current).toBe("conversation")
+  })
+
   it("hashchange で読み直す", () => {
     window.location.hash = ""
     const { result } = renderHook(() => useScreen())
@@ -59,6 +67,16 @@ describe("useScreen", () => {
 })
 
 describe("navigateTo", () => {
+  it("見ているターンは消さずに運ぶ", () => {
+    window.location.hash = "#?turn=3"
+
+    navigateTo("character")
+    expect(window.location.hash).toBe("#character?turn=3")
+
+    navigateTo("conversation")
+    expect(window.location.hash).toBe("#?turn=3")
+  })
+
   it("hash を書き換える（会話の画面は hash 無しに戻る）", () => {
     navigateTo("character")
     expect(window.location.hash).toBe("#character")
@@ -71,11 +89,23 @@ describe("navigateTo", () => {
   })
 })
 
-describe("screenHash", () => {
+describe("useScreenHref", () => {
   // リンクの `href` に空文字を書くとページの再読み込みになるので、会話の画面は "#"。
   it("リンクに書ける href を返す", () => {
-    expect(screenHash("conversation")).toBe("#")
-    expect(screenHash("character")).toBe("#character")
-    expect(screenHash("character-create")).toBe("#character/new")
+    const { result } = renderHook(() => useScreenHref())
+
+    expect(result.current("conversation")).toBe("#")
+    expect(result.current("character")).toBe("#character")
+    expect(result.current("character-create")).toBe("#character/new")
+  })
+
+  it("見ているターンを hash に残したまま画面を移す href になる", () => {
+    window.location.hash = "#?turn=3"
+    const { result } = renderHook(() => useScreenHref())
+
+    expect(result.current("character")).toBe("#character?turn=3")
+
+    goToHash("#character?turn=5")
+    expect(result.current("conversation")).toBe("#?turn=5")
   })
 })

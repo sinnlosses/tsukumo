@@ -14,6 +14,8 @@ import { putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  // 過去のタブを選ぶと hash に乗る（`stores/turn-selection.tsx`）ので、次のテストへ持ち越さない。
+  window.location.hash = ""
 })
 
 function request(text: string, turnId = 0): SessionRecord {
@@ -57,6 +59,17 @@ function renderMainView(records: readonly SessionRecord[]): RenderResult {
       </TurnSelectionProvider>
     </SessionStoreContext.Provider>,
   )
+}
+
+/**
+ * タブを押す。選択は hash に乗り、**happy-dom は `hashchange` を次のタスクで出す**ので
+ * （本物のブラウザも同期では出さない）、ここで流して読み直させる。
+ */
+function selectTab(name: string): void {
+  act(() => {
+    fireEvent.click(screen.getByRole("button", { name }))
+    window.dispatchEvent(new Event("hashchange"))
+  })
 }
 
 function rerenderMainView(records: readonly SessionRecord[]): void {
@@ -121,7 +134,7 @@ describe("MainView（タブの規則）", () => {
     ])
 
     // 1つ前（2つ目）のタブを選ぶ。
-    fireEvent.click(screen.getByRole("button", { name: "2つ目" }))
+    selectTab("2つ目")
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
 
     // 新しいターンが始まっても、選んだタブのままでいる。
@@ -152,7 +165,7 @@ describe("MainView（タブの規則）", () => {
     renderMainView(three)
 
     // 見ていたタブ（B）を選んでおく。
-    fireEvent.click(screen.getByRole("button", { name: "架空の依頼B" }))
+    selectTab("架空の依頼B")
     expect(screen.getByRole("button", { name: "架空の依頼B" }).title).toBe("1つ前: 架空の依頼B")
 
     // 次のやり取りが始まる（レポートはまだ無い）。
@@ -181,7 +194,7 @@ describe("MainView（タブ切り替えでレポートの先頭へ戻す）", ()
 
     const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
 
-    fireEvent.click(screen.getByRole("button", { name: "1つ目" }))
+    selectTab("1つ目")
 
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
     expect(scrollIntoView.mock.calls[0]?.[0]).toEqual({ block: "start" })
@@ -219,7 +232,7 @@ describe("MainView（セリフはレポートに出さない）", () => {
     expect(screen.queryByText("2つ目のセリフ")).toBeNull()
 
     // 1つ前も、セリフ抜きのレポートだけが出る（ターンの区切りはずれない）。
-    fireEvent.click(screen.getByRole("button", { name: "1つ目" }))
+    selectTab("1つ目")
     expect(screen.getByText("1つ目のレポート")).toBeDefined()
     expect(screen.queryByText("1つ目のセリフ")).toBeNull()
   })

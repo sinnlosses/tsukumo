@@ -11,7 +11,7 @@
 
 import { type ReactElement, type RefObject } from "react"
 
-import { type Screen } from "../../stores/screen.tsx"
+import { type Screen } from "../../stores/location-hash.ts"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavPending } from "./components/screen-nav-pending.tsx"
