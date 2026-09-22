@@ -20570,3 +20570,343 @@ adapter が持ち、何を載せるかは呼ぶ側が決める）。
 
 - 読んだ記録を**ログにも画面のエラーにも出さない**（数だけを扱う口にする）
 - T-318 が決めた行の形に依存するので、先に T-318 を終わらせる（`dependencies` にしてある）
+
+## T-290
+
+**タスク**: 書き終わったミニ立ち絵を、次に書き始めるまで本文の末尾に残す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1136 pass / 0 fail / 92 files）。目視（fake driver + Chrome 1400x900）: 書き終わりに式神が残り、メイン領域を-150pxずつ転がしても原点からの距離1319px・本文末尾からの距離76pxが不変。演出をクリックで飛ばしても残り、次の依頼で新しい筆先へ移った。reduced-motion と過去のタブでは出ない。座標は案(b)（最初から本文の入れ物基準で持つ）を採用。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「ミニキャラは書き終わったあとにも消えずに残るようにしよう。」
+
+いまミニ立ち絵が出る条件は**筆先があることだけ**（`src/browser/features/main-view/mini-portrait.tsx`
+40行の `tip === undefined` で null を返す）。筆先を消しているのは
+`src/browser/features/main-view/report-reveal.ts` 124行の `publishBrushTip(undefined)` で、
+これは `finish()`（書き上げ切ったときと、`SKIP_EVENT_NAMES`＝wheel / touchmove / pointerdown /
+keydown で飛ばされたとき。同ファイル 58行）の中にある。**書き終わると必ず消える。**
+
+置き方は `src/browser/features/main-view/mini-portrait.module.css` 29行の `position: fixed` で、
+筆先の座標が**ビューポート基準**（`src/browser/stores/brush-tip.ts` の `BrushTip`）だから
+そうなっている。**残すだけだと、本文をスクロールしたときに関係ない場所へ浮いたまま居座る。**
+
+`<MiniPortrait />` が置かれているのは `src/browser/features/main-view/main-view.tsx` 65行で、
+スクロールする入れ物は同ファイル 55行の `.main-turns`（`scrollerRef`）。
+
+## 決まっていること（蒸し返さない）
+
+- 残る場所は**書き終わりの位置**（最後の筆先の位置）で、**スクロールすると本文と一緒に動く**
+  （2026-09-21 にユーザーへ確認）。画面に固定したままにする案と、隅の定位置へ寄せる案は採らない
+- 消えるのは**次に書き始めたとき**だけ（2026-09-21 にユーザーへ確認）。過去のタブへ切り替えた
+  ときに消す案と、依頼を送った時点で消す案は採らない
+- 演出が走らない場面（`prefers-reduced-motion: reduce`・過去のタブ）で**新たに出す必要は無い**
+  （いままで出ていなかったものを増やさない。出すかどうかを広げるのはこのタスクの外）
+
+## 解くべき論点
+
+- **座標の持ち方**。書いている最中はビューポート基準のままでよいが、書き終わったあとは
+  本文に貼り付く必要がある。(a) 終わった時点で入れ物基準の座標へ焼き直して
+  `position: absolute` に切り替える、(b) 最初から入れ物基準で持つ、のどちらか。
+  **`BrushTip` は `SessionState` に入れない**（`brush-tip.ts` 冒頭の方針）。
+  **2つの `| undefined` で1つの状態を表さない**（`CLAUDE.md` の規約。「書いている最中」と
+  「書き終わって残っている」は判別可能な合併型にする）
+- **`.mini-portrait` の `transition`**。書き終わった瞬間に座標系を変えると、遷移が掛かって
+  立ち絵が一度飛ぶ可能性がある。飛ぶなら切り替えのその1回だけ遷移を外す
+- **次のターンで書き始めるときの受け渡し**。残っていた立ち絵から新しい筆先へ、滑って移るのか
+  一度消えて出直すのか。**滑って移る場合、前のターンの本文は画面から消えている**（タブが
+  切り替わる）ので、座標が繋がらない可能性がある
+- **入れ物が伸び縮みしたとき**（窓の幅を変える・タブを切り替える）に、焼いた座標がずれないか
+
+## やること
+
+1. `brush-tip.ts` の値に「書いている最中か、書き終わって残っているか」を持たせる
+   （判別可能な合併型。`| undefined` を増やさない）
+2. `report-reveal.ts` の `finish()` が `undefined` ではなく「書き終わった」状態を配るようにする。
+   **飛ばされたとき（`SKIP_EVENT_NAMES`）も同じ扱い**にする
+3. `mini-portrait.tsx` / `mini-portrait.module.css` を、残っているあいだは本文に貼り付く置き方に
+   変える（上の論点で決めた側）
+4. 次のターンで演出が始まったら、残っていた立ち絵がそちらへ移ることを確かめる
+5. 両ファイルの冒頭コメント（「出し切れば筆先が undefined に戻って消える」
+   `mini-portrait.tsx` 12〜13行、「演出が終われば undefined に戻る」`brush-tip.ts` 6行、
+   「position: fixed でそのまま置ける」`mini-portrait.module.css` 4〜6行）を新しい動きに直す
+6. **調べて本文に貼り付ける座標が取れないと分かったら、やらずに理由を `evidence` に書いて閉じる**
+
+## 完了条件
+
+- `bun run check` が通る
+- 書き終わったあともミニ立ち絵が画面に残る（目視。何が見えたかを書く）
+- **本文をスクロールしても、立ち絵が書き終わりの位置に貼り付いたまま動く**（目視。
+  スクロール前後で立ち絵と本文の末尾の位置関係が変わらないことを書く）
+- 次の依頼を送って新しいレポートが書かれ始めたら、立ち絵がそちらへ移る（目視）
+- 演出を途中で飛ばしたとき（スクロールなどで `finish()` が早く呼ばれたとき）も残る（目視）
+- `prefers-reduced-motion: reduce` と過去のタブでは、いままでどおり出ない
+
+## 注意
+
+- **tsukumo を起こす目視確認が要る**ので、T-273 / T-279 / T-281 / T-282 と並行させない
+  （`~/.tsukumo/state.json` を共有するため。`CLAUDE.md`「タスク運用」）
+- **T-281 / T-282 と同じ2ファイル**（`mini-portrait.tsx` / `mini-portrait.module.css`）を触る。
+  依存は付けていないので、**先に着手したほうが `doing` で排他になる**。T-282 は
+  `--mini-portrait-follow-duration` を画ごとに分ける話で、こちらは座標の持ち方の話
+- `--mini-portrait-height` などの**調整箇所を CSS の custom property の1箇所に保つ**宣言
+  （`mini-portrait.module.css` 10〜11行）を崩さない
+
+## T-321
+
+**タスク**: トークン消費を見る画面を独立した screen として出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-319, T-320 / **passes**: True
+
+**evidence**:
+
+`bun run check` 1110 pass / 0 fail（92ファイル）。`/token-usage` の経路テストを4件追加。束ね main.js 2587294B→2585796B・main.css 45729B→48420B（chart.js は 208518B。増えていない＝入っていない）。目視は 127.0.0.1:7399 を Chromium 1280/960/720 幅で: 日ごとの棒＋費用の線・モデル別1行・ツール別6行が出る、記録が空（経路を差し替えて空の集計を返した）でも「この期間の記録はまだ無い」だけでコンソールエラー無し、3幅とも横スクロール無し（documentElement の scrollWidth=clientWidth、溢れた要素0）。1日ぶんしか記録が無いと棒が描画域いっぱいに広がったので maxBarThickness=72 を足した。
+
+## 背景
+
+記録（T-318・T-319）と集計の口（T-320）が揃っても、**見る場所が無い**。
+
+画面の切り替えは**既にある**: `src/browser/stores/screen.tsx` が `Screen` の union と
+`SCREEN_HASH` を持ち、`navigateTo` が `window.location.hash` を書き換える。`src/browser/main.tsx:71`
+が `screen === "character"` で `<CharacterScreen />` を出している。**新しい HTTP の経路を足さなくても、
+`screen` に1つ足せば別画面として出せる。**
+
+グラフの道具も揃っている: **chart.js は既に vendor として配られている**
+（`src/server/adapter/vendor-asset.ts`。mermaid と同じで、要るときだけブラウザが取りに来る。
+束ねには入れない）。**新しい依存は要らない。**
+
+## 決まっていること（蒸し返さない）
+
+- **常駐の画面（立ち絵・メインビュー・サイドバー）の中に混ぜない**（ユーザーの選択）。
+  独立した画面として出す
+- **画面への入口をどこに置くか（ヘッダーを作るかどうか）は別タスクで決める。** このタスクは
+  hash で直接開ければよく、恒久的な入口はそちらに従う
+- 新しい依存を足さない（chart.js を使う）
+
+## 解くべき論点
+
+- **何を見せると「減らす判断」ができるか。** 候補は日ごとの推移・モデル別・モード別
+  （仕事/雑談）・ツール別の上位・1ターンあたりの中央値。**判断が変わらないものは出さない**
+- 既定で見せる期間（直近7日か30日か）と、切り替えを付けるか
+- 数そのものを読ませたいところは**表**、大小や傾きを見せたいところは**グラフ**という割り振り
+- 新しい `screen` を足すか、新しい経路（`/usage`）にするか。**既存の `screen` に足すほうが安い**が、
+  常駐のページを重くしないかを見る（chart.js は要求時に取りに行く形を崩さない）
+
+## やること
+
+1. `src/browser/stores/screen.tsx` の `Screen` に1つ足し、`main.tsx` に分岐を足す
+2. `src/browser/features/` に画面を1つ作り、T-320 の集計をサーバから受け取って描く
+3. chart.js は**その画面を開いたときだけ**取りに行く（束ねに入れない）
+4. 記録が1件も無いときの見た目を決める（空の画面でエラーにしない）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- **目視確認**: tsukumo を起こして画面を開き、(1) 日ごとの推移が出る、(2) モデル別・ツール別の
+  内訳が出る、(3) 記録が無い期間でも壊れない、(4) **横スクロールが出ない**——の4つを
+  確かめて `evidence` に書く（どの幅で見たかも書く）
+- 束ね（`dist/browser/`）の大きさが chart.js のぶん増えていないことを確かめて `evidence` に書く
+
+## 注意
+
+- **絵は自動テストで守らない。** 配信（経路・push）まではテストし、見えているかは目視
+  （`docs/architecture.md`「手で確かめること」）
+- 目視確認で tsukumo を起こすので、同じく起こすタスクと並行させない
+- 記録には会話の中身が入っていない前提の画面にする。**画面に文面を出す欄を作らない**
+
+## T-323
+
+**タスク**: 差分のブロックの左上にファイル名のラベルを出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-304, T-305 / **passes**: True
+
+**evidence**:
+
+案(a)（フェンスの info 文字列 ```diff src/foo.ts）を採用。meta は rehype-raw が木を書き出して読み直す時点で落ちるので、その前に dataFilename 属性へ移す code-file-name.ts を足し、サニタイザは code にだけ1属性を許した（(b) は highlight 済みの span を数える実装になり、(c) は記法が1つ増えるので不採用）。コミット e820fad。
+bun test --isolate 1106 pass / 0 fail（markdown.test.tsx は追加3件込みで41件）。typecheck の2件は別セッションの T-321（ViewServerOptions.readTokenUsageSummary）由来で、T-323 が触った6ファイルからは出ていない。
+目視確認: Orca 内のタブのメインビューに出したレポートの差分ブロックで、左上に src/server/core/report-notation.ts のラベルが出ているのを利用者が確認。あわせて mermaid のラベルに2連以上のバッククォートを書けない条を記法へ足した（ab26606）。
+
+## 背景
+
+`src/server/core/report-notation.ts` の「内容ごとの印」の表は、変更の前後を ```diff で出すことだけを
+言っていて（「コード・コマンド・エラー文」の行）、**ファイル名の渡し方を決めていない**。同じファイルの
+上のほうに「`rehype-highlight` の `language-diff` が既に色付けできたので、記法は増やさず表の1行に
+書いた」とある通り、いまあるのは `+` / `-` の色分けだけ。
+
+描く側は `src/browser/features/main-view/markdown/markdown.tsx` の `Pre` で、`code` 要素の
+`className`（`language-mermaid` / `language-chart`）を見て部品に振り、それ以外は素の `<pre>` を描く。
+
+実測: レポートで `develop/tasks.json` の差分を出したとき、**ファイル名はブロックの外の地の文にしか
+無く**、差分だけを見てどのファイルか分からなかった（利用者の指摘）。
+
+## 決まっていること（蒸し返さない）
+
+- 差分を出すときは**ファイル名をブロックの左上にラベルとして出す**（利用者の指示）
+
+## 解くべき論点
+
+- **ファイル名をどこに書かせるか。** 案は3つ:
+  - (a) フェンスの info 文字列（```diff src/foo.ts）。mdast の `code` は `lang` と `meta` を持つが、
+    **`meta` は既定では hast に残らない**ので、properties へ運ぶ仕掛けが要る（**要調査**）
+  - (b) 差分の頭に `--- a/...` / `+++ b/...`（本物の diff の見出し）を書かせ、描く側が拾う。
+    記法を増やさずに済むが、行が2行増える
+  - (c) 既存の印（`<div class="...">`）で包む。記法は増えるが確実
+- ファイル名が無い差分をどう出すか（ラベルを出さずに素のまま／`diff` と出す）
+- 1つのブロックに複数ファイルが入るときの扱い（禁じる／先頭だけ出す／全部並べる）
+- ラベルの見え方（ブロックの上に1行置くか、枠の中の左上に重ねるか）
+
+## やること
+
+1. 上の3案を**実際に確かめて**1つ選び、`report-notation.ts` の表の該当行に記法を書く
+   （**記法は毎ターン system prompt に効く**ので、増やす文字数は最小限にする）
+2. 描く側（`markdown.tsx` の `Pre`。必要なら `sanitize-schema.ts` と remark/rehype の設定）で
+   ラベルを描く
+3. CSS を `main-view.module.css` に足す（色は既存のトークンから。タイプスケールは
+   `docs/design.md` 13.3 の4段だけ）
+4. (a) が通らないと分かったら (b) か (c) に倒し、**通らなかった理由を `evidence` に書く**
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- テストを2件以上足している（ファイル名付きの差分でラベルが出る・ファイル名の無い差分で落ちない）
+- **目視確認**: 画面に差分のブロックを出し、**左上にファイル名が出ている**ことを確かめて
+  `evidence` に書く（どの端末で何が見えたか）
+
+## 注意
+
+- **目視確認が要るので、他の目視確認が要るタスクと並行させない**（`CLAUDE.md`「## タスク運用」）
+- `report-notation.ts` を書き換えるときは、レポートの記法そのものの条（10か条）を崩さない
+
+## T-324
+
+**タスク**: note の種別を6つに割り、左上に種別のラベルを出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-323 / **passes**: True
+
+**evidence**:
+
+class 名は既存4つ（note=情報 / note-warn / note-ng / note-favor）に note-ask（疑問）・note-memo（メモ）の2つだけ足し、notation.tsx の FAVOR_LABEL の特別扱いを NOTE_LABELS の表（class 名→ラベル、上から先着）に一般化。色は縦罫=実色・地=1割染めの既存の手口を保ち、新トークンは --state-ask: #8ab4e8 の1つだけ（情報=ink＋浮く地 / メモ=ink-quiet＋地なし）。記法の表は行を増やさず2行のまま、上限は種別ごとではなく全体で持つ（5種あわせて1〜2個＋お願いは別勘定）。design.md 13.1 原則5 は「状態の3色は増やさない」→「意味を固定した色は文字と対でだけ増やす」に置き換え（節数は編集前後とも 50 で不変）。
+bun run check: 1119 pass / 0 fail / 92 files（typecheck・oxlint・format:check も通過）。テストは差し引き9件増（notation.test.tsx で6種の it.each・種別が素の note に勝つ・cols/card/未知の class は素通し、report-notation.test.ts で規約→部品→CSS の鎖6種と上限の文面）。
+目視確認: macOS / Chrome headless、fake driver（TSUKUMO_DRIVER=fake TSUKUMO_FAKE_SCENE=notation）を 127.0.0.1:39241 で起こし、1200x2600 と 1000x3600 で撮って見た。表の下に 情報（灰白の縦罫＋浮く地）→異常（赤）→注意（黄土）→疑問（青）→メモ（灰の縦罫・地なし）が縦に並び、5種とも左上のラベルが読める。レポート末尾のお願いは枠つきで縦罫が accent（tsukumo パックでは青緑）、左上に「お願い」。[class*="report-note_"] が 6件、[class*="report-note-label"] も 6件、横のはみ出し 0px。画像は /tmp のみ。
+
+## 背景
+
+`note` の系統はいま4つで（`src/browser/features/main-view/markdown/notation.tsx` の
+`NOTATION_CLASS_NAMES`: `note` / `note-warn` / `note-ng` / `note-favor`）、**種別のラベルが文字で
+出るのは `note-favor` だけ**（`FAVOR_LABEL = "お願い"` を `NotationBlock` が `span` として描く）。
+残る3つは縦罫の色と地の染まり方しか違わない。
+
+実測: 画面のスクリーンショットで、無印の `note` は縦罫と地があるだけで**何の塊なのか読み取れない**
+（利用者の指摘「左側に縦線＋背景色を変える文章はすごく見やすい。ただ種別を左上に表示したい」）。
+
+関わるファイル:
+
+- 色: `src/browser/features/main-view/main-view.module.css` の `.report-note*` の節
+  （注意・問題は状態の色で地を1割染め、縦罫は実色。お願いは `rule` の枠＋`accent` の縦罫＋`ground` の地）
+- 状態の3色: `src/browser/styles/theme.css` の `--state-ok` / `--state-warn` / `--state-ng`
+- 記法: `src/server/core/report-notation.ts` の「内容ごとの印」の表（`note` の行と、お願いの行）
+
+## 決まっていること（蒸し返さない）
+
+- 種別は**挙がった6つで行く**（統合しない）: お願い・情報・注意・異常（危険）・メモ・疑問。
+  **4つは既存の印の写像**で、新しく増えるのは「メモ」と「疑問」の2つだけ
+  （お願い＝`note-favor` / 情報＝`note`（無印。結論を言う役）/ 注意＝`note-warn` / 異常＝`note-ng`）
+- **ラベルは tsukumo 側（`notation.tsx`）が文字として描く**（`note-favor` と同じ手口。CSS の
+  `::before` にしない。モデルが書き忘れても種別が消えないため）
+- **`docs/design.md` 13.1 原則5（状態の3色は増やさない）を崩してよい。** 利用者の判断
+  「原則5は崩してもいいよ。見やすくなるためであれば」。原則5 の本文と、それを根拠に引いている
+  コメント（`main-view.module.css` のお願いの節・`theme.css` の状態の3色の節・
+  `sidebar.module.css` の着手可否の節）も合わせて直す
+
+## 解くべき論点
+
+- **6つの色をどう決めるか。** 新しいトークンを `theme.css` に足すか、`accent` / `ink-quiet` /
+  `rule` から導くか。既存の手口（**地は1割染め・縦罫は実色**）を守るか
+- 「情報」と「メモ」、「注意」と「異常（危険）」が**色で見分けられるか**（文字は必ず出るので
+  色だけで伝えることにはならないが、近すぎると種別の意味が薄れる）
+- class 名（`note-info` / `note-memo` / `note-ask` など）。**モデルが手で書く名前**なので、
+  短く・間違えにくく・既存の4つと衝突しないもの
+- 記法の表をどう書き換えるか。**6行に割ると表が膨らむ**（`report-notation.ts` は毎ターン
+  system prompt に効く）。既存の上限「1つのレポートに1〜2個まで」を種別ごとに持つか全体で持つか
+- 原則5 の本文を何に置き換えるか（「増やさない」をやめたあと、色の足し方に代わる歯止めを置くか）
+
+## やること
+
+1. 色・class 名・ラベルの文字を決める
+2. `notation.tsx` を**種別ごとのテーブル（class 名 → ラベル）に一般化**する
+   （`note-favor` の特別扱いと `FAVOR_LABEL` をやめ、6つが同じ道を通る形にする）
+3. CSS に6種を足す（`main-view.module.css`。必要なら `theme.css` にトークンを足す）
+4. `report-notation.ts` の `note` の行を種別ごとに書き換える
+5. `docs/design.md` 13.1 原則5 と、それを引いている CSS のコメントを直す
+6. テストを足す
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- テストを3件以上足している（6種すべてでラベルが出る・知らない class 名は素通しのまま・
+  お願いの既存の振る舞いが変わらない）
+- **目視確認**: 6種すべてを含むレポートを画面に出し、**ラベルが読め、種別が色でも見分けられる**
+  ことを確かめて `evidence` に書く（どの端末で何が見えたか）
+
+## 注意
+
+- **色だけで意味を伝えない**（文字のラベルを必ず添える。`docs/design.md` 13.1）
+- **目視確認が要るので、他の目視確認が要るタスクと並行させない**（`CLAUDE.md`「## タスク運用」）
+- `docs/design.md` を直すときは**行頭を含めて位置を特定し**、節の数が変わっていないことを
+  確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-346
+
+**タスク**: 生きているセッションに別プロセスが resume したときの transcript を実測する
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+使い捨てスクリプト /tmp/tsukumo-resume-fork-experiment.ts で、生きた query に重ねて同じ sessionId を resume（リポジトリにはコミットせず）。1) fork しない: transcript は最後まで1ファイル（69行）のまま、listSessions の sessionId も終始1つ。2) tagSession はその唯一のセッションに付く（jsonl 内の tag エントリ1件）。3) 元プロセスの query はエラーにならず、重ねた側の応答後に送った往復も正常に result まで到達。 docs/requirements.md 4.8 に実測段落を追記（節数 27 で前後不変）。bun run check: 1136 pass / 0 fail（92ファイル）。
+
+## 背景
+
+複数の tsukumo を同じディレクトリで立ち上げたとき、落ちた側を起こし直すと生きている側の
+セッションを拾う。`src/server/core/session-restore.ts` の `selectSessionToResume` が
+印（`tsukumo:<パック>[:chat]`）の一致するもののうち `lastModified` が最新の1つを選ぶためで、
+**印が起動ごとに分かれていない**。
+
+印を分ける設計（次のタスク）の前に、**生きているセッションに別のプロセスが `resume` した
+ときに transcript がどうなるか**を確かめておく必要がある。同じ `sessionId` に両方が追記
+するなら、戻れないことに加えて**動いている側の会話も汚れている**ことになり、切り替えの
+設計で「使用中の印は避ける」が必須になる。fork されて別IDになるなら、印の付け直し
+（`src/server/adapter/sdk-driver.ts:390` の `tagSession`）がどちらに付くかが問題になる。
+
+## やること
+
+1. SDK（`@anthropic-ai/claude-agent-sdk`）を直に叩く使い捨てのスクリプトを
+   `/tmp` に置き、同じ `sessionId` を `resume` する 2つの `query` を**重ねて**動かす
+   （短い依頼を1つずつで足りる。tsukumo 本体は起こさなくてよい）
+2. `~/.claude/projects/` の該当 transcript を見て、次の3つを記録する
+   - 追記が同じファイルに混ざるか、別の `sessionId` のファイルが生まれるか（fork か）
+   - 後から `tagSession` を呼んだとき、印がどちらのセッションに付くか
+   - 元のプロセス側の `query` がエラーになるか、黙って続くか
+3. 分かったことを `docs/requirements.md` 4.8 の「鍵」の節に**実測の1段落**として足す
+   （日付つき。今の本文にある他の実測と同じ書き方）
+4. スクリプトは `/tmp` に置いたまま、リポジトリにコミットしない
+
+## 完了条件
+
+- 上の3点の答えが `evidence` に1行ずつ書かれている（**会話の中身は書かない**。件数・
+  ファイル名・IDの異同だけ）
+- `docs/requirements.md` 4.8 に実測の段落が足されていて、節の数が変わっていない
+  （`grep -c '^#\{2,3\} ' docs/requirements.md` を前後で比べる）
+- `bun run check` が通る（ソースを触っていなければテスト件数だけを書く）
+
+## 注意
+
+- **transcript には利用者と claude の生の会話が入っている。** 中身をコピーしない、ログに
+  出さない、`evidence` にもタスク本文にも引かない（`docs/coding-standards.md`
+  「会話内容の扱い」）。実験に使う依頼は当たり障りのない一言にする
+- 実験で作ったセッションは `~/.claude/projects/` に残る。**既存のセッションのファイルを
+  消さない**
