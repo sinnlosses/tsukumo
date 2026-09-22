@@ -22760,3 +22760,333 @@ bun run check 通過（1286 pass / 0 fail / 103ファイル）。fake driver を
 - **T-332（雑談中のサイドバーを差し替える）も `features/sidebar/` を触る。** 同時に `doing` に
   しない（CLAUDE.md「## タスク運用」の並行の項）
 - 知らせの文面はサーバが組んだまま出す（`src/server/core/workspace.ts`）。畳まない
+
+## T-325
+
+**タスク**: 起こし直しと資源の戻し方を docs/workflow.md に足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/workflow.md の「起こすときの作法」に TSUKUMO_NEW_SESSION=1 の1文、「## タスクを書くとき・受け入れるとき」に「確認後に元の値へ戻す」の1項目を足した。見出し数は前後とも5。重複は CLAUDE.md・architecture.md・WORKFLOW.md に無し。bun run check: 1254 pass / 0 fail（101 files）
+
+## 背景
+
+`docs/workflow.md` には「**起こすときの作法**」（`docs/workflow.md:57`、`## \`loopable\` の判定`
+節の末尾）と「## タスクを書くとき・受け入れるとき」（同 12行目）がある。どちらにも、実際に
+踏んだ次の2つが書かれていない。
+
+**1. 起動時に作られるものは、動いているセッション自身では確かめられない。** 表情 `bored` を
+足したタスクの完了条件「`speak` の enum に `bored` が入っている」を、そのセッションから
+確かめようとして空振りした。enum は**セッション起動時**に `expressionChoices(pack.definition)`
+（`src/shared/expression-choice.ts:34`）から組まれるので、定義ファイルを直しても走っている
+プロセスの候補は変わらない（実測: でたらめな表情名を投げても候補は8件のまま）。さらに別の
+インスタンスを既定のまま起こすと**同じ作業ツリーの直近セッションを resume する**ため、
+確かめ直すには `TSUKUMO_NEW_SESSION=1` が要る（`docs/design.md:590`）。
+
+**2. 「触らない」と書いた資源を、完了条件の確認手順が触ることがある。** 同じタスクの
+`## 注意` は「`~/.tsukumo/state.json` には触らない」だったが、完了条件「`characters/local` に
+切り替えても壊れない」を確かめると画面のパック切り替えが state.json を書き換える
+（実測: `{"character":"tsukumo"}` → `local`。確認後に画面から戻して復旧した）。禁止と手順が
+矛盾していた。
+
+## やること
+
+1. 「起こすときの作法」に、`TSUKUMO_VIEW_PORT` と並べて `TSUKUMO_NEW_SESSION=1` を足し、
+   「**起動時に作られるもの（`speak` の enum・キャラクターパックの読み込み）は起こし直さないと
+   変わらない**」を1行で書く
+2. 「## タスクを書くとき・受け入れるとき」の箇条書きに、**確認手順が触る資源は「触らない」では
+   なく「確認後に元の値へ戻す」と書く**を1項目足す
+3. どちらかが既に別の節（`CLAUDE.md` / `docs/architecture.md` / `task-workflow` の
+   `WORKFLOW.md`）に書かれていたら、そこへは足さずに在り処を `evidence` に書いて閉じる
+
+## 完了条件
+
+- `bun run check` が通る
+- `docs/workflow.md` に `TSUKUMO_NEW_SESSION` の文字列がある
+- 「## タスクを書くとき・受け入れるとき」節の箇条書きが1項目増え、そこに「元の値へ戻す」旨が
+  書かれている
+- `grep -c '^#\{2,3\} ' docs/workflow.md` の値が編集の前後で変わらない（現在 5）
+
+## 注意
+
+- **ドキュメントにタスク番号（`T-` + 3桁）を書かない**（`docs/coding-standards.md`
+  「タスク番号を書かない」）。背景で触れた実例は、番号ではなく内容で書く
+- `docs/workflow.md` は「**共通版が知らないこのリポジトリの事情だけ**」を置く文書。
+  `~/.claude/skills/task-workflow/WORKFLOW.md` に既にあることを写さない
+- 編集は**行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-326
+
+**タスク**: 語彙の長さに依存する期待値の扱いを規約に足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/coding-standards.md「### 置き場所とモック」に「語彙の長さに依存する期待値は定数（EXPRESSIONS.length 等）から導く」の1項目を足し、索引の ## テスト 行に「語彙に依存する期待値」を足した（workflow.md 側ではなくテストの書き方の規約と判断）。見出し数は前後とも33。bun run check: 1254 pass / 0 fail（101 files）
+
+## 背景
+
+`EXPRESSIONS`（`src/shared/expression.ts:32`）に `bored` を足したとき、`bun run typecheck` が
+挙げた漏れ（`src/shared/character-definition.ts` / `src/shared/character.ts` / テストの
+フィクスチャ）を全部埋めてもテストが1件落ちた。
+`test/browser/features/character-screen/character-edit.test.tsx` が「立ち絵の無い枠」の数を
+`5` と直書きしていて、語彙が1つ伸びた結果 `6` になったため。**型検査には挙がらず
+`bun test` で初めて出る**ので、「typecheck が通った」を作業の完了の合図にすると踏む。
+
+`docs/coding-standards.md` の「## テスト」節（450行目。小節は「置き場所とモック」
+「カバレッジに閾値を設けない」「消すかどうか」「足すかどうか」「描画は自動テストで守らない」）
+には、この形の漏れに触れた記述が無い。
+
+## 解くべき論点
+
+- 出し先が2つありうる。**テストの書き方の規約**（期待値を `EXPRESSIONS.length` のような定数から
+  導く）なら `docs/coding-standards.md`「## テスト」節、**作業の進め方**（typecheck の
+  あとに必ず test も見る）なら `docs/workflow.md`。どちらか一方に書く（両方に書くと正典が
+  二重になる）
+
+## やること
+
+1. 論点を決め、**語彙（全域を列挙する定数）の長さに依存する期待値をテストに直書きするときの
+   扱い**を1箇所に書く
+2. `docs/coding-standards.md` に書く場合は、冒頭の「### 節の索引」表（25行目）の `## テスト`
+   行の「中身」欄を、足した内容が索引から引ける語に直す。`###` の小節を新設したなら索引に
+   行を足す
+3. 既に同じことを言っている記述が見つかったら足さず、在り処を `evidence` に書いて閉じる
+
+## 完了条件
+
+- `bun run check` が通る
+- 足した記述が、語彙を増やす側の読み手から引ける（索引の表か節見出しに、語彙・表情・期待値の
+  いずれかの語がある）
+- `grep -c '^#\{2,3\} ' docs/coding-standards.md` の値が、小節を足していないなら編集の前後で
+  変わらない（足したなら +1 で、索引にも1行増えている）
+
+## 注意
+
+- **ドキュメントにタスク番号（`T-` + 3桁）を書かない**
+- 編集は**行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）。
+  索引表に本文を流し込む事故が過去にある
+- テストのフィクスチャを1つに寄せるタスクとは**出し先が違う**（あちらはコード、こちらは規約）。
+  片方をやればもう片方が要らなくなるわけではない
+
+## T-335
+
+**タスク**: 返事を待つ間、ログの末尾で「...」を animation させる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-329 / **passes**: True
+
+**evidence**:
+
+bun run check 1249 pass / 0 fail（100ファイル）。目視は fake driver（TSUKUMO_DRIVER=fake・ポート7398・ホームは/tmp）を headless Chrome 1400x900 で開き、雑談モードで依頼2件を送って実測: 送信の約110ms後にログ末尾へキャラクター側の「...」（ドット3つ）が出て、animationName=chat-typing-bounce/1.1s でドットのyが503.66→500.51と動き、speech の到着（836ms / 4551ms）で消えて育つセリフの行に入れ替わった。
+
+## 背景
+
+雑談モードで**返事を待っている間、画面に何も起きない**。
+`src/browser/features/chat-view/chat-view.tsx` が `turnInProgress` を見ているのは立ち絵の
+`motion={turnInProgress ? "waiting" : "reading"}` だけで、**ログの側には何も出ない**。
+経過時間は入力欄の `<TurnStatus>`（`features/dispatch/turn-status.tsx`）が出しているが、
+これはログの反対側にある。
+
+ユーザーの指示（2026-09-22）: 「返事を書いている間はログの末尾で『...』を animation させたい
+（Discord と同じ）。まだ喋ってくれると分かるのが狙い。キャラクター側の吹き出しとして出し、
+ターンが終わったらセリフと入れ替わる」。
+
+## 決まっていること（蒸し返さない）
+
+- **出す場所はログの末尾、キャラクター側の吹き出しとして**（2026-09-22 ユーザーの指示）
+- **ターンが終わったらセリフと入れ替わる**
+- T-329 が「ログの末尾の行を育つ吹き出しにする」形を `docs/design.md` 13.7 に書いている。
+  **その形に乗せる**（`docs/design.md` 13.7 を先に読む）
+
+## やること
+
+1. `docs/design.md` 13.7 の T-329 が書いた節を読み、育つ吹き出しと「...」の関係を決める
+   （「...」が育つ吹き出しの初期状態なのか、別の行なのか）
+2. `turnInProgress` が真でその ターンのセリフがまだ無い間、ログの末尾にキャラクター側の
+   吹き出しとして「...」を出す。`SessionState` の `speechCalledInTurn` が「今のターンで
+   `speak` が呼ばれたか」を持っているので、**サーバの契約を増やさずに済むかを先に確かめる**
+3. animation は CSS で作る（`chat-view.module.css`）。**`prefers-reduced-motion` を尊重する**
+   （既存の CSS に同じ扱いがあれば揃える。`grep -rn 'prefers-reduced-motion' src/browser/`）
+4. **押せる行にしない**（遡る先の表情を持たない。利用者の発言の行と同じ立場）
+5. 下端付近に居るときだけ寄せる自動スクロール（`NEAR_BOTTOM_THRESHOLD_PX`）が、「...」の
+   出入りで余計に走らないことを確かめる
+6. `test/browser/features/chat-view/chat-view.test.tsx` に、ターン進行中に「...」が出て
+   セリフが来ると消えるテストを足す
+
+## 完了条件
+
+- `bun run check` が通る
+- ターン進行中に「...」の行が出て、セリフが届くと消えるテストがある
+- `docs/design.md` 13.7 に「...」の置き場所と、育つ吹き出しとの関係が1〜2行で書かれている
+- 目視: 雑談モードで依頼を送り、返事が来るまでログの末尾で「...」が動き、セリフが来ると
+  入れ替わる。何が見えたかを evidence に書く
+
+## 注意
+
+- **`SessionState` に秒数や進捗を持たせない**（`<TurnStatus>` の1秒の刻みが部品のローカルな
+  タイマーなのと同じ理由。`docs/design.md` 4.2 / 6.2）
+- 仕事のメインビューには出さない（`<ChatView>` 自体が雑談の間しか出ない）
+- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）
+
+## T-343
+
+**タスク**: 質問の記録で、選んだ印を差し色にし、問と答えの区切りを作る
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1242 pass / 0 fail（101ファイル）。塊の中は 0.3rem（実測 4.8px）のまま、2つ目以降の .question-record に margin-top 16px + padding-top 12px + border-top 1px var(--rule) を足した（以前は0）。 実ブラウザ（fake driver / question-pair に答えた記録）で計測: 選んだ ● は rgb(111,227,205)=accent、選ばなかった ○ は ink-quiet のまま継ぐ。2問の塊の間に罫線と余白が見え、切れ目が分かることを画像で確認した。 カタログの question-* は答え待ちの箱までしか撮れない（疑似セッションが自動で答えない）ので、使い捨ての playwright で答えさせて撮った。
+
+## 背景
+
+メインビューに残る**質問の記録**（`src/browser/features/main-view/question-record.tsx`）に
+2つの不具合がある。ユーザーのフィードバック（2026-09-22）。
+
+**1. 選んだ印（`●`）が差し色になっていない。**
+
+`<QuestionAnswers>` は `{chosen ? "●" : "○"} {option.label}` と**地の文のまま**出していて、
+印だけを包む要素が無い。`main-view.module.css:391` の `.question-option` は
+`color: var(--ink-quiet)`、`.question-option.is-chosen` が `color: var(--ink)` なので、
+**印はラベルと同じ色を継ぐ**。
+
+**これは正典との食い違いで、新しい決定ではない。** `docs/design.md` 13.1 原則1 は、色が現れる
+場所として「機械が指し示す場所（フォーカスの輪・`:hover` の縁・選ばれたタブ・**選んだ選択肢**・
+送信・依頼の見出しの縦罫）」を名指ししている。**答え待ちの箱の側はすでに従っている** —
+`dispatch.module.css:295-307` の `.question-choice-mark:checked::before` は
+`background-color: var(--accent)`、単一選択は `radial-gradient(… var(--accent) …)`。
+**記録の側だけが取り残されている。**
+
+`●` と `○` で**形が既に違う**ので、色を足しても「色だけで意味を伝える」ことにはならない
+（13.1 原則5 の「重ねがけ」に当たる。答え待ちの箱のコメントも「**色を変えるだけにしない** —
+形が入ったかどうかで選択が分かる」と書いている）。
+
+**2. 問と答えの区切りが分からない。近接が逆転している。**
+
+- 問（`<h4>`）と答え（`.question-options`）の間: `.tool-block-question .question-record h4` の
+  `margin: 0 0 0.3rem`
+- **問と答えの塊どうしの間: 0**（`.question-record` 自体のルールが `main-view.module.css` に
+  無い。`<div class="question-record">` が兄弟として並ぶだけ）
+- しかも `<h4>` と選択肢は**どちらも `font-size: var(--font-body)`**（0.9375rem）
+
+つまり**1つの塊の中の間隔（0.3rem）が、塊と塊の間（0）より広い**。3問聞いたときに問と答えが
+どこで切れているかが読み取れないのはこれ。
+
+**間隔の段（spacing scale）はどこにも無い**（`src/browser/styles/theme.css` に `--space-*` の
+トークンが無く、各 CSS が `rem` を直書きしている）。13.3 Type は寸法の段を4つに決めているが、
+間隔については何も決めていない。
+
+## 決まっていること（蒸し返さない）
+
+- **選んだ印を差し色にする**（2026-09-22 ユーザーの指示「回答した●はアクセントカラーだと
+  見やすそう」）。**13.1 原則1 が既に許している場所**なので、原則の側は直さない
+- **問と答えの区切りを、色か空白か両方で分かるようにする**（2026-09-22 ユーザーの指示
+  「区切りがわかりやすいように色とか空白とかで工夫するルールにできるかな?」）
+- **この見え方はモデルの出力に依存しない。** 質問と答えは構造化されたイベント
+  （`session-event.ts` の `question-answered`。`sdk-driver.ts:153` が
+  `createPendingAnswerQueue` の `onAnswered` から流す）として届き、`question-record.tsx` と
+  `main-view.module.css` だけが見え方を決める。`report-notation.ts`（`systemPrompt` に載る
+  記法）は質問にも回答にも一言も触れていない（実測）。**だから直せば必ずそう出る** —
+  「ルール」と書いてあるのは CSS を触る側が読む正典の話で、モデルへの約束ではない
+  （2026-09-22 ユーザーの確認「システム化できるならそうしてほしい」に対する答え）
+- **`docs/design.md` には書かない**（2026-09-22 ユーザーの選択「機械的にできるならそれで、
+  design.md は一旦置いておこう」）。見え方が決まるのは CSS とコンポーネントなので、**理由は
+  CSS のコメントに残す**（`docs/coding-standards.md`「コメント」。今の挙動の制約・前提は残す）。
+  間隔の段（`--space-*`）を画面全体に足す話もこのタスクでは扱わない
+
+## 解くべき論点
+
+- 印を包む要素をどう足すか。`<span>` で包むと `●`/`○` とラベルの間の半角空白の扱いが変わる。
+  `::before` に寄せる案（文字を CSS 側へ移す）は、**文字が DOM から消えるので支援技術と
+  コピーで拾えなくなる**。どちらを採るか
+- `.is-chosen` でない `○` の色。差し色を当てるのは選んだ側だけか、`○` も `ink-quiet` のまま
+  置くか（13.1 原則1 が許すのは「選んだ選択肢」なので、素の `accent` を `○` には当てない）
+- 自由入力の行（`.is-free-text`）の `●` も同じ扱いにするか
+- **折りたたみの中の札**（`.question-preview-label` の `{preview.chosen ? "●" : "○"}`）も同じ
+  印を使っている。揃えるか、別扱いにするか
+- **区切りをどう作るか。** 使える手は、塊の間に余白を入れる・問の側だけ地の段を変える
+  （`ground` と `surface` の段差。13.2「色付けが薄いのは色相ではなく地の段差」）・問に縦罫を
+  当てる（**素の `accent` は依頼の見出しとお願いの縦罫が使っている**ので、同じ強さの罫を
+  ここに増やしてよいかを 13.1 原則1 と照らして決める）・問の書体を一段変える（ただし 13.3 は
+  「段はこの4つだけ」と決めている）
+- 同じ形の入れ子が他にもある（`.tool-block` の中のツール名と結果・サイドバーの区画と中身）。
+  **このタスクで触るのは質問の記録だけ**にし、他へ広げるかどうかは扱わない（広げる価値が
+  あると分かったら `evidence` に1行書くだけにする）
+
+## やること
+
+1. 上の論点を決める。**決めた理由（何と何を見分けるための見え方か・採らなかった手）は
+   `main-view.module.css` の該当セレクタのコメントに残す。`docs/design.md` は触らない**
+2. `question-record.tsx` と `main-view.module.css` を直す
+3. 答え待ちの箱（`dispatch.module.css`）の見た目は**変えない**（すでに原則に従っている側）。
+   記録の側を箱に揃える
+4. **`test/browser/features/main-view/question-record.test.tsx` は存在しない**（実測。
+   `test/` にあるのは `test/shared/question.test.ts` だけ）。新しく作り、印が差し色の側の
+   class を持つことと、2問以上のときに区切りの class / 要素が入ることを測る（**色そのものは
+   テストしない**。class までがテストの範囲。`CLAUDE.md`「ブラウザに出た絵は自動テストで
+   守らない」）
+
+## 完了条件
+
+- `bun run check` が通る
+- `main-view.module.css` に `.question-record` の区切りを作るルールがあり、**塊の中の間隔より
+  塊どうしの間隔が広い**（前後の値を evidence に書く）
+- 目視: **2問以上を聞いた記録**で、(1) 選んだ `●` が差し色で出ている、(2) 問と答えの塊が
+  どこで切れているか分かる、を確かめる。`scripts/capture-catalog.ts --only <質問の記録の件>`
+  で撮る（**一覧は `--help`**。オプション無しは32枚の全件撮影になる）。何が見えたかを
+  evidence に書く
+
+## 注意
+
+- **`●`/`○` の文字そのものを DOM から消さない**（支援技術とコピーで拾えなくなる）。色は
+  形の上への重ねがけで、`13.1` 原則5 が許すのはその形
+- **答え待ちの箱と記録で印の意味が食い違わないようにする**（同じ `accent` が「選んだ」を指す）
+- 目視確認は tsukumo を起こす必要がある（`~/.tsukumo/state.json` を共有するので、他の
+  セッションと並行させない）
+
+## T-358
+
+**タスク**: character-view の2つのフックを hooks/ へ出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1244 pass / 0 fail（100ファイル）。2つのフックは1本（hooks/use-character-view.ts）にまとめた —— useNowForPortraitMotion の呼び出し元は usePortraitMotion の1箇所だけだったため。container（17行）/ presentational-character-view.tsx（46行）に割り、算出はすべてフックへ寄せた。目視（偽の駆動・場面 report・ポート7412・幅1400、ページ内で16ms ごとに data-motion / data-expression を記録）: 移す前 0.02s reading:proud → 0.19s waiting:default → 4.94s success:default → 5.60s reading:default、移したあとも同じ並びで ±0.02s（同一と判断）。**失敗のびくっ（failure）はどちらの版でも出なかった**ので移動による劣化ではない（別件）。
+
+## 背景
+
+`src/browser/features/character-view/character-view.tsx` は、`useNowForPortraitMotion`（60行）と
+`usePortraitMotion`（95行）を部品 `CharacterView`（116行）と同じファイルに抱えている。
+T-328 で決めた形（`docs/design.md`「機能の中を分ける（container / presenter と `hooks/`）」）
+では、state・副作用・イベントの読み替えは `hooks/use-<機能>.ts` に置く。1件目の `task-board` が
+`hooks/use-task-board.ts` を出したのと同じ形。
+
+**この機能は T-336〜T-339 のどれの対象でもない**（T-336 は chat-view、T-337 は dispatch、
+T-338 は character-screen、T-339 は layout と token-usage）。
+
+エージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。
+
+## やること
+
+1. `features/character-view/hooks/` を作り、2つのフックを移す。**1ファイル1フック**が決まり
+   なので、container が呼ぶ1本にまとめられるかをまず見る（まとめられないなら理由を
+   `evidence` に書いて2本のままでよい）
+2. container / presenter に割るかは、割ったあとのほうが読みやすいときだけ
+   （「フックが0本の部品は割らない」が `docs/design.md` の線）
+3. 立ち絵の動きが変わっていないことを目視で確かめる
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `character-view.tsx` にフックの定義が残っていない
+- **目視**: 立ち絵の表情の切り替わりと動きが前と変わらない。撮ったもの（幅・場面）を
+  `evidence` に書く
+
+## 注意
+
+- **振る舞いを変えない移動**。立ち絵の往復のパラメータ（`src/shared/portrait-motion.ts` 側の
+  値）には触らない
