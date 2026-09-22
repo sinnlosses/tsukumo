@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 起こし直しと資源の戻し方を docs/workflow.md に足した（T-325）
+
+起動時に作られるものは起こし直しが要り、確かめ直すには `TSUKUMO_NEW_SESSION=1` を足すこと、確認手順が触る資源は「確認後に元の値へ戻す」と書くことを足した。
+
 ### 2026-09-23 character-view のフックを hooks/ へ出した（T-358）
 
 `useNowForPortraitMotion` と `usePortraitMotion` を1本の `hooks/use-character-view.ts` に畳み

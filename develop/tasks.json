@@ -60,9 +60,9 @@
     "loopable": "Y",
     "dependencies": [],
     "summary": "起こし直しと資源の戻し方を docs/workflow.md に足す",
-    "status": "doing",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "docs/workflow.md の「起こすときの作法」に TSUKUMO_NEW_SESSION=1 の1文、「## タスクを書くとき・受け入れるとき」に「確認後に元の値へ戻す」の1項目を足した。見出し数は前後とも5。重複は CLAUDE.md・architecture.md・WORKFLOW.md に無し。bun run check: 1254 pass / 0 fail（101 files）",
     "task": "## 背景\n\n`docs/workflow.md` には「**起こすときの作法**」（`docs/workflow.md:57`、`## \\`loopable\\` の判定`\n節の末尾）と「## タスクを書くとき・受け入れるとき」（同 12行目）がある。どちらにも、実際に\n踏んだ次の2つが書かれていない。\n\n**1. 起動時に作られるものは、動いているセッション自身では確かめられない。** 表情 `bored` を\n足したタスクの完了条件「`speak` の enum に `bored` が入っている」を、そのセッションから\n確かめようとして空振りした。enum は**セッション起動時**に `expressionChoices(pack.definition)`\n（`src/shared/expression-choice.ts:34`）から組まれるので、定義ファイルを直しても走っている\nプロセスの候補は変わらない（実測: でたらめな表情名を投げても候補は8件のまま）。さらに別の\nインスタンスを既定のまま起こすと**同じ作業ツリーの直近セッションを resume する**ため、\n確かめ直すには `TSUKUMO_NEW_SESSION=1` が要る（`docs/design.md:590`）。\n\n**2. 「触らない」と書いた資源を、完了条件の確認手順が触ることがある。** 同じタスクの\n`## 注意` は「`~/.tsukumo/state.json` には触らない」だったが、完了条件「`characters/local` に\n切り替えても壊れない」を確かめると画面のパック切り替えが state.json を書き換える\n（実測: `{\"character\":\"tsukumo\"}` → `local`。確認後に画面から戻して復旧した）。禁止と手順が\n矛盾していた。\n\n## やること\n\n1. 「起こすときの作法」に、`TSUKUMO_VIEW_PORT` と並べて `TSUKUMO_NEW_SESSION=1` を足し、\n   「**起動時に作られるもの（`speak` の enum・キャラクターパックの読み込み）は起こし直さないと\n   変わらない**」を1行で書く\n2. 「## タスクを書くとき・受け入れるとき」の箇条書きに、**確認手順が触る資源は「触らない」では\n   なく「確認後に元の値へ戻す」と書く**を1項目足す\n3. どちらかが既に別の節（`CLAUDE.md` / `docs/architecture.md` / `task-workflow` の\n   `WORKFLOW.md`）に書かれていたら、そこへは足さずに在り処を `evidence` に書いて閉じる\n\n## 完了条件\n\n- `bun run check` が通る\n- `docs/workflow.md` に `TSUKUMO_NEW_SESSION` の文字列がある\n- 「## タスクを書くとき・受け入れるとき」節の箇条書きが1項目増え、そこに「元の値へ戻す」旨が\n  書かれている\n- `grep -c '^#\\{2,3\\} ' docs/workflow.md` の値が編集の前後で変わらない（現在 5）\n\n## 注意\n\n- **ドキュメントにタスク番号（`T-` + 3桁）を書かない**（`docs/coding-standards.md`\n  「タスク番号を書かない」）。背景で触れた実例は、番号ではなく内容で書く\n- `docs/workflow.md` は「**共通版が知らないこのリポジトリの事情だけ**」を置く文書。\n  `~/.claude/skills/task-workflow/WORKFLOW.md` に既にあることを写さない\n- 編集は**行頭を含めて位置を特定する**（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n"
   },
   {
