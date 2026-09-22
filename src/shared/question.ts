@@ -43,7 +43,7 @@ export type QuestionAnswer = readonly string[]
 
 /**
  * `AskUserQuestion` の自由入力の選択肢のラベル。このラベルの選択肢だけ、画面ではテキスト欄で
- * 受け取る（`src/browser/features/dispatch/pending-answer.tsx`）。{@link sortQuestionOptions} が
+ * 受け取る（`src/browser/features/dispatch/hooks/use-question-ask.ts`）。{@link sortQuestionOptions} が
  * 並べ替えで末尾に固定する対象でもあるので、両側から同じ定数を読めるようここに置く。
  */
 export const FREE_TEXT_OPTION_LABEL = "その他"
@@ -59,8 +59,8 @@ export const FREE_TEXT_OPTION_LABEL = "その他"
  *   ロケールに解決され、ブラウザ（`ja`）と Bun のテスト（`en-US`）で漢字の並びが食い違う
  *   （目視確認で判明。テストが通る並びと画面に出る並びが別物になる）
  * - **自由入力（{@link FREE_TEXT_OPTION_LABEL}）だけは並べ替えに混ぜず、末尾に固定する**
- *   （モデルが選択肢に含めてこなかったときは末尾に足される — `pending-answer.tsx` の
- *   `hasFreeTextOption` — ので、含めてきたときも同じ位置に揃える）
+ *   （モデルが選択肢に含めてこなかったときは末尾に足される — `hooks/use-question-ask.ts` の
+ *   `optionRows` — ので、含めてきたときも同じ位置に揃える）
  */
 export function sortQuestionOptions(options: readonly QuestionOption[]): readonly QuestionOption[] {
   const freeText = options.filter((option) => option.label === FREE_TEXT_OPTION_LABEL)

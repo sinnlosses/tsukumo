@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 composer と pending-answer を、決めた型で分けた（T-337）
+
+`composer.tsx` と `pending-answer.tsx` を container / presentational / `hooks/` に割り、質問の箱は別の container にした。フックを部品を起こさずに測るテストを足した。
+
 ### 2026-09-23 chat-view.tsx を、決めた型でロジックと UI に分けた（T-336）
 
 626行あった `chat-view.tsx` を container / presentational / `hooks/` の3つのフック / `components/` の6部品に割り、フックを部品を起こさずに測るテストを足した。見た目は変更前と撮り比べて同じ。

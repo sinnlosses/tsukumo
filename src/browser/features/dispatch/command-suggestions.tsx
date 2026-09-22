@@ -5,7 +5,7 @@
 //
 // **前方一致を先に、続けて部分一致を出す。各グループの中はアルファベット順で、合計最大
 // {@link MAX_COMMAND_SUGGESTIONS} 件**（Claude Code の TUI の絞り方に合わせた）。
-// キー操作（上下・Tab・Enter・Esc）と確定・送信の判断は呼び出し側（`composer.tsx`）が持つ
+// キー操作（上下・Tab・Enter・Esc）と確定・送信の判断は呼び出し側（`hooks/use-composer.ts`）が持つ
 // （送信の Enter と同じ `keydown` を共有するため）。ここは絞り込みの純粋関数と、一覧を描く
 // だけの部品。
 

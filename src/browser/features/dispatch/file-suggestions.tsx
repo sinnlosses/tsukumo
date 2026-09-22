@@ -5,13 +5,13 @@
 //
 // **一覧は1回取ってブラウザ側で絞る**（打鍵のたびにサーバへ問い合わせない。`git ls-files` を
 // 打鍵ごとに起こすと子プロセスがその回数だけ立つ）。取得は TanStack Query に任せるので、
-// 呼び出し側（`composer.tsx`）に取得の配線は無い。
+// 呼び出し側（`hooks/use-composer.ts`）に取得の配線は無い。
 //
 // **絞り方は `/` 補完と同じ**（前方一致を先に、続けて部分一致。各グループの中は辞書順で、合計
 // 最大 {@link MAX_FILE_SUGGESTIONS} 件）。違うのは**大文字小文字を区別しない**ことだけで、
 // 打った綴りのまま `README.md` のようなパスに当てられるようにしてある。
 //
-// キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側（`composer.tsx`）が持つ（`/` 補完と同じ）。
+// キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側（`hooks/use-composer.ts`）が持つ（`/` 補完と同じ）。
 
 import { useQuery } from "@tanstack/react-query"
 import { type ReactElement } from "react"
