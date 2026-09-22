@@ -485,6 +485,95 @@ describe("ChatView の末尾のセリフが育つ", () => {
   })
 })
 
+describe("ChatView の「...」（返事を待つ間）", () => {
+  /** 「...」の行（`chat-view.tsx` の `<ChatTyping>`。docs/design.md 13.7）。 */
+  function typingEntry(): Element | null {
+    return document.querySelector('[data-speaker="typing"]')
+  }
+
+  it("ターン進行中でまだセリフが無ければ、ログの末尾に「...」が出る", () => {
+    renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: false,
+    })
+
+    const entries = logEntries()
+    // 末尾に付き、押せる行にはしない（利用者の発言の行と同じ立場）。
+    expect(entries.at(-1)?.getAttribute("data-speaker")).toBe("typing")
+    expect(typingEntry()?.getAttribute("role")).toBe(null)
+    expect(typingEntry()?.getAttribute("tabindex")).toBe(null)
+  })
+
+  it("セリフが届くと「...」は消え、セリフの行に入れ替わる", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: false,
+    })
+
+    expect(typingEntry()).toBeTruthy()
+
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [...RECORDS, { kind: "speech", text: "3つめのセリフ", expression: "curious" }],
+        character: FIXTURE_CHARACTER,
+        speechExpression: "curious",
+        turn: { kind: "running", startedAt: 0 },
+        speechCalledInTurn: true,
+      })
+    })
+
+    // 入れ替わりに届いたセリフの行が育ち始める（文字はこれから出る。他の育つテストと同じ
+    // 立場——1文字ずつ出るところ自体はフレームの進みに乗るので目視で確かめる）。
+    expect(typingEntry()).toBe(null)
+    expect(document.querySelector('[data-growing="yes"]')).toBeTruthy()
+  })
+
+  it("ターンが終わっていれば「...」は出ない", () => {
+    renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "idle" },
+      speechCalledInTurn: false,
+    })
+
+    expect(typingEntry()).toBe(null)
+  })
+
+  it("その ターンで既にセリフが来ていれば「...」は出ない（次の speak を待つだけ）", () => {
+    renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: true,
+    })
+
+    expect(typingEntry()).toBe(null)
+  })
+
+  it("ログが空でも、ターン進行中なら「...」だけを出す（案内は出さない）", () => {
+    renderChatView({
+      records: [],
+      character: FIXTURE_CHARACTER,
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: false,
+    })
+
+    expect(typingEntry()).toBeTruthy()
+    expect(
+      screen.queryByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
+    ).toBe(null)
+  })
+})
+
 describe("ChatView のホバー", () => {
   it("行に載せても立ち絵は動かない（遡るのは押したときだけ）", () => {
     renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })

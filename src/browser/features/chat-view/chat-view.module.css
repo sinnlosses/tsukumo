@@ -198,6 +198,47 @@
   transform: translateY(0.15em);
   background: var(--accent);
 }
+/* 返事を待っている間だけ末尾に出す「...」（`chat-view.tsx` の `<ChatTyping>`。docs/design.md
+   13.7「返事を待つ間の「...」」）。**キャラクター側の吹き出しとして出す**が、押せない・
+   選べる文字を持たないので `.chat-entry-character` の cursor と hover は乗せない。 */
+.chat-entry-typing {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  align-self: flex-start;
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  border-bottom-left-radius: 0.3rem;
+}
+/* ドット3つが順にひと呼吸ぶん弾む（Discord などと同じ typing indicator）。**色は accent**
+   （13.1 原則1「色を持ってよいのはキャラクターが居る場所」——育つ吹き出しの筆先の縦棒と同じ
+   立場）。`prefers-reduced-motion` は `styles/theme.css` の全体規則が
+   `animation-duration` を潰すので、ここでは重ねて書かない（他の `@keyframes` と同じ扱い）。 */
+.chat-typing-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: chat-typing-bounce 1.1s ease-in-out infinite;
+}
+.chat-typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.chat-typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes chat-typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-0.2rem);
+    opacity: 1;
+  }
+}
 /* 利用者の発言は右。**差し色は使わない**（色が現れるのはキャラクターが居る場所だけ。
    13.1 原則1）ので、地の濃さだけで区別する。 */
 .chat-entry-user {
