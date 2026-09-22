@@ -46,6 +46,11 @@ export type ViewDeliveryResult =
       readonly ok: true
       /** 利用者が開く URL（起動トークン付き）。タブを開き直すときもこれをそのまま使う。 */
       readonly url: string
+      /**
+       * 実際に待ち受けているポート。**セッションの印の目印がここから決まる**ので返す
+       * （`src/server/core/config.ts` の `sessionTag`。docs/requirements.md 4.8「鍵」）。
+       */
+      readonly port: number
       /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足す）。 */
       readonly connect: (session: RunningSession) => void
     }
@@ -109,6 +114,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   return {
     ok: true,
     url: `${server.layoutUrl}?t=${token}`,
+    port: started.port,
     connect: (session) => {
       attachSessionSocket({
         httpServer: server.httpServer,

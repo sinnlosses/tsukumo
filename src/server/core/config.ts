@@ -3,6 +3,12 @@
 // 触らず、{@link readConfig} を呼んだときだけ読む）。
 //
 // 値の意味と既定は docs/design.md 5章「config.ts」の表が正典。
+//
+// セッションの印（{@link sessionTag} / {@link readSessionMark}）もここに置く。環境変数では
+// ないが、**外の世界（claude の transcript）に書かれる値**なので、組み立てと読み取りを
+// 1箇所に集める。
+
+import { DEFAULT_VIEW_PORT } from "./port-resolution.ts"
 
 /** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
@@ -23,6 +29,15 @@ export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
 const SESSION_TAG_PREFIX = "tsukumo"
 /** 雑談のセッションの印に足す後置き。**仕事のときは足さない**（{@link sessionTag}）。 */
 const SESSION_TAG_CHAT_SUFFIX = "chat"
+/**
+ * 目印の区切り。**`:` を使わない**のは、後置きの `chat` と読み違えないため
+ * （`tsukumo:<パック>:chat@B` の最後の1文字が目印だと、区切りだけで分かる）。
+ */
+const SESSION_SLOT_SEPARATOR = "@"
+/** 目印に使う文字。**起動の並び順に1つずつ**取る（{@link sessionSlot}）。 */
+const SESSION_SLOT_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+/** 目印の既定。**目印の無い昔の印はこれとみなす**（{@link readSessionMark}）。 */
+const DEFAULT_SESSION_SLOT = "A"
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、疑似セッションどおりにイベントを
@@ -80,17 +95,72 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
  * （docs/design.md 7章）。印の無いセッション（同じディレクトリで使った素の `claude`）も、
  * 別のパックのセッションも、これで外れる。
  *
- * **雑談のときだけ後ろに足す**のは、雑談と仕事で claude 側の文脈ごと分けるため
- * （docs/requirements.md 4.9）。**仕事の側の文字列は変えない** — 変えると、いま続いている
- * 仕事のセッションが次の起動で見つからなくなる。
+ * **雑談のときだけ `:chat` を足す**のは、雑談と仕事で claude 側の文脈ごと分けるため
+ * （docs/requirements.md 4.9）。
+ *
+ * **末尾の目印（`@A` / `@B` …）は、同じディレクトリで tsukumo を何個も起こしたときに
+ * 別々のセッションを持たせるためのもの**（docs/requirements.md 4.8「鍵」）。目印を決めるのは
+ * {@link sessionSlot}（ビューのポートの並び順）。**目印の無い昔の印は `@A` とみなす**ので
+ * （{@link readSessionMark}）、いま続いている仕事のセッションは1つめの tsukumo から今までどおり
+ * 見つかる。
  *
  * **印は会話の内容ではない**ので、claude 自身の transcript に付けても「会話内容の扱い」には
- * 触れない。環境変数ではないが、**外の世界（transcript）に書かれる値**なので、組み立てを
- * 集約するこのモジュールに置く（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
+ * 触れない。
  */
-export function sessionTag(characterName: string, chat: boolean): string {
+export function sessionTag(characterName: string, chat: boolean, viewPort: number): string {
   const packTag = `${SESSION_TAG_PREFIX}:${characterName}`
-  return chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
+  const modeTag = chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
+  return `${modeTag}${SESSION_SLOT_SEPARATOR}${sessionSlot(viewPort)}`
+}
+
+/** 印を読み解いた姿（{@link readSessionMark}）。 */
+export type SessionMark = {
+  /** 目印（`A` / `B` / …）。**目印の無い昔の印は `A`**。 */
+  readonly slot: string
+  /**
+   * 目印まで揃えた印。**選ぶときはこれ同士を比べる**（`tsukumo:<パック>` と
+   * `tsukumo:<パック>@A` は同じセッションを指す）。
+   */
+  readonly tag: string
+}
+
+/**
+ * transcript に付いていた印を読み解く。**tsukumo の印でなければ undefined**（同じディレクトリで
+ * 使った素の `claude` のセッションはここで落ちる）。
+ *
+ * **末尾が `@` + 目印の1文字でないものは、目印の無い昔の印として `A` に畳む**
+ * （`tsukumo:<パック>` は `tsukumo:<パック>@A` と同じ。名前に `@` を含むパックも、
+ * {@link sessionTag} が付ける形と同じに揃う）。
+ */
+export function readSessionMark(tag: string): SessionMark | undefined {
+  if (!tag.startsWith(`${SESSION_TAG_PREFIX}:`)) {
+    return undefined
+  }
+
+  const slot = tag.slice(tag.lastIndexOf(SESSION_SLOT_SEPARATOR) + 1)
+  return slot.length === 1 && SESSION_SLOT_LETTERS.includes(slot)
+    ? { slot, tag }
+    : { slot: DEFAULT_SESSION_SLOT, tag: `${tag}${SESSION_SLOT_SEPARATOR}${DEFAULT_SESSION_SLOT}` }
+}
+
+/**
+ * このプロセスの目印を決める。**ビューのポートの並び順**（既定の `DEFAULT_VIEW_PORT` が `A`、
+ * +1 ごとに次の文字）で、範囲の外へ出た番号は `A` に畳む。
+ *
+ * ポートを使うのは、**「その目印が使用中か」を知っているものが他に無い**ため。印は
+ * transcript に残るだけなので、落ちた tsukumo の印と動いている tsukumo の印は見分けられない
+ * （2026-09-22 実測。docs/requirements.md 4.8「鍵」）。ポートは OS が握っていて、**既定の
+ * ときは塞がっていれば +1 へずれ**（`port-resolution.ts`）、**プロセスが落ちれば空く**ので、
+ * 「いま生きている tsukumo の起動順」がそのまま出る。
+ *
+ * 明示指定（`TSUKUMO_VIEW_PORT`）でも同じ式で決まるので、ポートをずらして2つ起こせば目印も
+ * 分かれる。既定から遠い番号・`0`（OS まかせ）は `A` になる。
+ */
+function sessionSlot(viewPort: number): string {
+  const index = viewPort - DEFAULT_VIEW_PORT
+  return Number.isInteger(index) && index >= 0 && index < SESSION_SLOT_LETTERS.length
+    ? SESSION_SLOT_LETTERS.charAt(index)
+    : DEFAULT_SESSION_SLOT
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

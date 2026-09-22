@@ -13,6 +13,7 @@ import { isPlainObject } from "remeda"
 
 import { type Expression } from "../../shared/expression.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
+import { readSessionMark } from "./config.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 
 /**
@@ -27,19 +28,39 @@ const RESTORED_TURN_FINISHED: SessionEvent = { kind: "turn-finished", status: "s
  * `lastModified` が最新の1つ**（docs/requirements.md 4.8「鍵」）。
  *
  * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提で、ここは印だけを見る。
- * 一覧が空・印が1つも無い・要素の形が壊れているときは undefined（＝新規に起こす）を返す。
+ * **目印まで揃えてから比べる**ので（`config.ts` の `readSessionMark`）、目印の無い昔の印は
+ * `@A` の印と一致する。一覧が空・印が1つも無い・要素の形が壊れているときは undefined
+ * （＝新規に起こす）を返す。
  */
 export function selectSessionToResume(sessions: unknown, tag: string): string | undefined {
-  if (!Array.isArray(sessions)) {
-    return undefined
-  }
-
-  const tagged = sessions.flatMap((session) => taggedSession(session, tag))
-  return tagged.reduce<TaggedSession | undefined>(
+  const matched = markedSessions(sessions).filter((session) => session.tag === tag)
+  return matched.reduce<TaggedSession | undefined>(
     (latest, session) =>
       latest === undefined || session.lastModified > latest.lastModified ? session : latest,
     undefined,
   )?.sessionId
+}
+
+/** 印の付いたセッション1件（画面に並べるのに要る3つだけ）。 */
+export type MarkedSession = {
+  /** 目印（`A` / `B` / …。`src/server/core/config.ts` の {@link readSessionMark}）。 */
+  readonly slot: string
+  readonly sessionId: string
+  readonly lastModified: number
+}
+
+/**
+ * 印の付いたセッションを一覧にする（**印そのものがセッションの一覧**。別の保存先は作らない。
+ * docs/requirements.md 4.8「鍵」）。**新しい順**に並べ、tsukumo の印を持たないものは落とす。
+ *
+ * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。パックとモードで
+ * 分かれた印は目印だけに畳むので、**同じ目印の行が複数返ることがある**（まとめ方と見せ方は
+ * 画面側の判断）。
+ */
+export function listMarkedSessions(sessions: unknown): readonly MarkedSession[] {
+  return markedSessions(sessions)
+    .map(({ slot, sessionId, lastModified }) => ({ slot, sessionId, lastModified }))
+    .sort((left, right) => right.lastModified - left.lastModified)
 }
 
 /**
@@ -68,28 +89,38 @@ export function toRestoredEvents(
   return restored.turnOpen ? [...restored.events, RESTORED_TURN_FINISHED] : restored.events
 }
 
-/** 印の付いたセッション1件（選ぶのに要る2つだけ）。 */
-type TaggedSession = {
-  readonly sessionId: string
-  readonly lastModified: number
+/** 印の付いたセッション1件（目印まで揃えた印つき）。 */
+type TaggedSession = MarkedSession & {
+  /** 目印まで揃えた印。**選ぶときはこれ同士を比べる**（`readSessionMark`）。 */
+  readonly tag: string
 }
 
 /**
- * 一覧の要素1つを、印の付いたセッションとして受け取る。**印が違う・形が壊れているものは
- * 空の並び**にして落とす（同じ cwd の素の `claude` のセッションはここで消える）。
+ * 一覧を、印の付いたセッションの並びにする。**tsukumo の印を持たないもの・形が壊れているものは
+ * 落とす**（同じ cwd の素の `claude` のセッションはここで消える）。一覧そのものが配列で
+ * なければ空。
  */
-function taggedSession(value: unknown, tag: string): readonly TaggedSession[] {
-  if (!isPlainObject(value) || value.tag !== tag) {
+function markedSessions(sessions: unknown): readonly TaggedSession[] {
+  return Array.isArray(sessions) ? sessions.flatMap((session) => taggedSession(session)) : []
+}
+
+/**
+ * 一覧の要素1つを、印の付いたセッションとして受け取る。読めないものは**空の並び**にして落とす。
+ */
+function taggedSession(value: unknown): readonly TaggedSession[] {
+  if (!isPlainObject(value) || typeof value.tag !== "string") {
     return []
   }
 
+  const mark = readSessionMark(value.tag)
   const sessionId = value.sessionId
   const lastModified = value.lastModified
-  return typeof sessionId === "string" &&
+  return mark !== undefined &&
+    typeof sessionId === "string" &&
     sessionId !== "" &&
     typeof lastModified === "number" &&
     Number.isFinite(lastModified)
-    ? [{ sessionId, lastModified }]
+    ? [{ slot: mark.slot, tag: mark.tag, sessionId, lastModified }]
     : []
 }
 

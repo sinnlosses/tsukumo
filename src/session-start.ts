@@ -72,11 +72,17 @@ export type SessionStartOptions = {
    * 同じ口から読むので、置き場を知っているファイルを1つに保つ。
    */
   readonly tokenUsageLog: TokenUsageLog
+  /**
+   * ビューが実際に待ち受けているポート。**セッションの印の目印がここから決まる**
+   * （`sessionTag`。docs/requirements.md 4.8「鍵」）。同じディレクトリで2つめを起こすと
+   * ポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
+   */
+  readonly viewPort: number
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export function startSession(options: SessionStartOptions): RunningSession {
-  const { config, character, fakeSession, tokenUsageLog } = options
+  const { config, character, fakeSession, tokenUsageLog, viewPort } = options
   const sessionId = randomUUID()
   // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
@@ -105,9 +111,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
       watchTasks: (onEvent) =>
         watchTaskSummary(process.cwd(), (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
-        findPackSessionToResume(config, process.cwd(), pack.name, chat),
+        findPackSessionToResume(config, process.cwd(), pack.name, chat, viewPort),
       startDriver: (seed, onEvent) =>
-        startDriver(seed, chatArchive, fakeSession, config.fakeScene, onEvent),
+        startDriver(seed, chatArchive, fakeSession, config.fakeScene, viewPort, onEvent),
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, process.cwd(), expressionChoices(pack.definition)),
     }),
@@ -132,6 +138,7 @@ function startDriver(
   chatArchive: ChatArchive,
   fakeSession: FakeSession | undefined,
   scene: string | undefined,
+  viewPort: number,
   onEvent: (event: SessionEvent) => void,
 ): SessionDriver {
   if (fakeSession !== undefined) {
@@ -163,7 +170,7 @@ function startDriver(
     permissionMode: DEFAULT_PERMISSION_MODE,
     systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
     resume: seed.resume,
-    tag: sessionTag(seed.pack.name, seed.chat),
+    tag: sessionTag(seed.pack.name, seed.chat, viewPort),
     // **覚えたことを書き足す・忘れる口は雑談のときだけ渡す**（渡ったときだけ `remember` と
     // `forget` のツールが載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
     personaMemory: seed.chat ? createPersonaMemory(seed.pack, process.cwd()) : undefined,
@@ -199,6 +206,9 @@ function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
  * ならないのはここで、代わりに**そのパックで一度も雑談のターンを終えていなければ新規から
  * 始まる**。
  *
+ * **同じディレクトリで2つめの tsukumo を起こしたときは目印が違う**ので（ポートから決まる。
+ * `sessionTag`）、先に起きている側のセッションは引かない。
+ *
  * **印はターンが終わって3秒後に付く**ので、ターンを1つも終えずに離れたセッションは
  * 次に来たときに見つからず、新規から始まる（`SESSION_TAG_DELAY_MS`。4.8「復元できなかったとき
  * どうするか」の範囲）。fake driver は claude を起こさないので、そもそも探さない。
@@ -208,8 +218,9 @@ async function findPackSessionToResume(
   cwd: string,
   characterName: string,
   chat: boolean,
+  viewPort: number,
 ): Promise<string | undefined> {
   return config.newSession || config.driver === "fake"
     ? undefined
-    : findSessionToResume(cwd, sessionTag(characterName, chat))
+    : findSessionToResume(cwd, sessionTag(characterName, chat, viewPort))
 }

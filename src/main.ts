@@ -81,7 +81,16 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  const session = startSession({ config, character, fakeSession, tokenUsageLog })
+  // **セッションの印の目印は、実際に待ち受けているポートから決まる**（`config.ts` の
+  // `sessionTag`）。同じディレクトリで2つめを起こすとポートが +1 へずれるので、目印も分かれる
+  // （docs/requirements.md 4.8「鍵」）。
+  const session = startSession({
+    config,
+    character,
+    fakeSession,
+    tokenUsageLog,
+    viewPort: view.port,
+  })
   view.connect(session)
 
   stopSessionOnExit(session.close)

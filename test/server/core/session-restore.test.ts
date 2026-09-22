@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
 import { sessionTag } from "../../../src/server/core/config.ts"
+import { DEFAULT_VIEW_PORT } from "../../../src/server/core/port-resolution.ts"
 import { TSUKUMO_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../../src/server/core/sdk-message.ts"
 import {
+  listMarkedSessions,
   selectSessionToResume,
   toRestoredEvents,
 } from "../../../src/server/core/session-restore.ts"
@@ -13,11 +15,13 @@ import { type Expression } from "../../../src/shared/expression.ts"
 // （`listSessions` / `getSessionMessages` を呼ぶのは src/server/adapter/sdk-driver.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
-// 印はキャラクターパックごと・雑談かどうかで違う（`tsukumo:<パック名>` と
-// `tsukumo:<パック名>:chat`）。
-const TAG = sessionTag("架空のパック", false)
-const CHAT_TAG = sessionTag("架空のパック", true)
-const OTHER_PACK_TAG = sessionTag("別の架空のパック", false)
+// 印はキャラクターパックごと・雑談かどうか・起動の並び順で違う（`tsukumo:<パック名>@A` と
+// `tsukumo:<パック名>:chat@A`。目印はビューのポートから決まる）。
+const TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT)
+const CHAT_TAG = sessionTag("架空のパック", true, DEFAULT_VIEW_PORT)
+const OTHER_PACK_TAG = sessionTag("別の架空のパック", false, DEFAULT_VIEW_PORT)
+// 2つめの tsukumo（ポートが1つずれたぶん、目印が B になる）。
+const SECOND_TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
@@ -91,7 +95,10 @@ describe("selectSessionToResume", () => {
     ]
 
     expect(
-      selectSessionToResume(sessions, sessionTag("まだ起こしていないパック", false)),
+      selectSessionToResume(
+        sessions,
+        sessionTag("まだ起こしていないパック", false, DEFAULT_VIEW_PORT),
+      ),
     ).toBeUndefined()
   })
 
@@ -131,6 +138,67 @@ describe("selectSessionToResume", () => {
     ]
 
     expect(selectSessionToResume(sessions, TAG)).toBe("s-ok")
+  })
+
+  it("目印の違うセッションは選ばない（同じディレクトリの2つめの tsukumo）", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-first", lastModified: 900, tag: TAG }),
+      sessionInfo({ sessionId: "s-second", lastModified: 100, tag: SECOND_TAG }),
+    ]
+
+    expect(selectSessionToResume(sessions, TAG)).toBe("s-first")
+    expect(selectSessionToResume(sessions, SECOND_TAG)).toBe("s-second")
+  })
+
+  it("目印の無い昔の印は、1つめ（A）の続きとして選ぶ（互換）", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-legacy", lastModified: 900, tag: "tsukumo:架空のパック" }),
+      sessionInfo({
+        sessionId: "s-legacy-chat",
+        lastModified: 800,
+        tag: "tsukumo:架空のパック:chat",
+      }),
+    ]
+
+    expect(selectSessionToResume(sessions, TAG)).toBe("s-legacy")
+    expect(selectSessionToResume(sessions, CHAT_TAG)).toBe("s-legacy-chat")
+    expect(selectSessionToResume(sessions, SECOND_TAG)).toBeUndefined()
+  })
+})
+
+describe("listMarkedSessions", () => {
+  it("印の付いたセッションを、目印つきで新しい順に並べる", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-first", lastModified: 100, tag: TAG }),
+      sessionInfo({ sessionId: "s-second", lastModified: 300, tag: SECOND_TAG }),
+      sessionInfo({ sessionId: "s-first-chat", lastModified: 200, tag: CHAT_TAG }),
+    ]
+
+    expect(listMarkedSessions(sessions)).toEqual([
+      { slot: "B", sessionId: "s-second", lastModified: 300 },
+      { slot: "A", sessionId: "s-first-chat", lastModified: 200 },
+      { slot: "A", sessionId: "s-first", lastModified: 100 },
+    ])
+  })
+
+  it("印の無いセッションと壊れた要素は落とす（昔の印は A として残す）", () => {
+    const sessions = [
+      null,
+      sessionInfo({ sessionId: "s-bare", lastModified: 900 }),
+      sessionInfo({ sessionId: "s-other-tool", lastModified: 800, tag: "別の道具" }),
+      sessionInfo({ sessionId: "s-broken", lastModified: "きのう", tag: TAG }),
+      sessionInfo({ sessionId: "s-legacy", lastModified: 500, tag: "tsukumo:架空のパック" }),
+    ]
+
+    expect(listMarkedSessions(sessions)).toEqual([
+      { slot: "A", sessionId: "s-legacy", lastModified: 500 },
+    ])
+  })
+
+  it("一覧が空・形が壊れているときは空（落ちない）", () => {
+    expect(listMarkedSessions([])).toEqual([])
+    expect(listMarkedSessions(undefined)).toEqual([])
+    expect(listMarkedSessions({ sessions: [] })).toEqual([])
   })
 })
 
