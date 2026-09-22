@@ -246,17 +246,20 @@
   background: color-mix(in srgb, var(--surface), var(--ink) 8%);
   border-bottom-right-radius: 0.3rem;
 }
-/* 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない細い線1本だけ**
+/* 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない線1本だけ**
    （docs/requirements.md 4.9「記憶の圧縮と忘却」）。他の発言と違って左右に寄せず、
-   ログの幅いっぱいに伸ばす。押せない・畳めないので、hover やクリックの見た目は付けない。 */
+   中央へ幅を縮めて置く。押せない・畳めないので、hover やクリックの見た目は付けない。
+   **色は `rule` のまま**（13.2「入れるのはこの3本だけ」——差し色を薄めた仕切り線は
+   レポートの見出しと表の3本に絞ってあり、ここを4本目にすると仕切りの合図が薄まる）。
+   **破線・幅・余白の3つで吹き出しの縁（実線・全幅の箱）と見分ける**。 */
 .chat-boundary {
-  align-self: stretch;
-  width: 100%;
-  max-width: 100%;
+  align-self: center;
+  width: 50%;
+  max-width: 14rem;
   height: 0;
-  margin: 0.2rem 0;
+  margin: 1rem 0;
   border: none;
-  border-top: 1px solid var(--rule);
+  border-top: 1px dashed var(--rule);
 }
 /* まだ一度も話していないときの案内。**最初の一言を促すのもこの1件**（促す操作子はログの
    末尾から立ち絵へ移った。docs/design.md 13.7）。**地は `.chat-poke-hint` と同じ理由で
