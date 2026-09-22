@@ -63,6 +63,28 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 のコメント）。カタログの `question-*` は答え待ちの箱までしか撮らないので、答えさせた記録を
 別途撮って確かめた。
 
+
+### 2026-09-23 返事を待つ間、ログの末尾で「...」を animation させた（T-335）
+
+雑談のログの末尾に、キャラクター側の吹き出しとしてドット3つの typing indicator を出した（`<ChatTyping>`）。サーバの契約は増やさず、`turnInProgress && !speechCalledInTurn` で判定し、そのターンの `speech` が届くと育つセリフの行に入れ替わる。
+
+### 2026-09-23 復元した依頼から、仕掛けが差し込んだ塊を落とした（ユーザー報告）
+
+「セッションを復元すると大量の文字列が出る」の調査と修正。生きているセッションでは `request` は
+入力欄からの送信でだけ起きるが、transcript から組み直すときは `user` の役のメッセージが丸ごと
+依頼になるので、**利用者が打っていない塊まで依頼として並んでいた**（実測した tsukumo の記録で
+`<task-notification>` の 873 / 874 文字が2セッション分)。`session-restore.ts` に
+`withoutInjectedBlocks` を足し、`<system-reminder>` / `<task-notification>` /
+`<local-command-caveat>` / `<local-command-stdout>` / `<agent-message>` /
+`<cross-session-message>` の閉じタグまで揃った塊を落としてから畳むようにした。塊だけの
+メッセージは依頼にならず、文面に混じっている場合は前後が残る。
+
+### 2026-09-23 雑談のログの末尾のセリフが育つようにした（T-329）
+
+届いたセリフをログの末尾の行で1文字ずつ出し、吹き出しが中身のぶんだけ膨らむようにした
+（30ms/文字。サーバの契約は変えず、ブラウザ側の見せ方だけ）。育つ間は最後の文字の後ろに筆先が
+立ち、押すとその回は遡らず打ち切る。決めた形と採らなかった2案は `docs/design.md` 13.7。
+
 ### 2026-09-23 `init` がまだ届いていない状態を合併型にした（T-311）
 
 `SessionState` の `sessionId` / `permissionMode` を `session: { kind: "starting" } |

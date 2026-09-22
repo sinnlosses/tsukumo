@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ChatView } from "../../../../src/browser/features/chat-view/chat-view.tsx"
 import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
+import { type Expression } from "../../../../src/shared/expression.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -364,6 +365,212 @@ describe("ChatView のセリフを遡る", () => {
 
     expect(portraitExpression()).toBe("proud")
     expect(screen.getByText("2つめのセリフ").getAttribute("aria-pressed")).toBe("true")
+  })
+})
+
+describe("ChatView の末尾のセリフが育つ", () => {
+  /** 育っている行（`chat-view.tsx` が出す印。docs/design.md 13.7「末尾のセリフは育つ」）。 */
+  function growingEntry(): HTMLElement {
+    const entry = document.querySelector("[data-growing]")
+    if (!(entry instanceof HTMLElement)) {
+      throw new Error("育っている行が見つからない")
+    }
+    return entry
+  }
+
+  /** 3件目のセリフが届いたところ（2件目までは開いた時点で並んでいる）。 */
+  function arrive(store: SessionStore, text: string, expression: Expression): void {
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [...RECORDS, { kind: "speech", text, expression }],
+        character: FIXTURE_CHARACTER,
+        speechExpression: expression,
+      })
+    })
+  }
+
+  // **1文字ずつ出るところ（速さ）はここでは見ない**——フレームの進みに乗るので、
+  // 見えるかどうかは目視で確かめる（docs/architecture.md「手で確かめること」）。
+  // ここで守るのは**育て始める行・打ち切る口・出し切る合図**の配線だけ。
+
+  it("届いたばかりのセリフは、文字が出そろう前から行に出る", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+
+    arrive(store, "3つめのセリフ", "curious")
+
+    // 行は先に立ち、中身はこれから育つ（吹き出しが膨らむのはこの間）。
+    expect(logEntries()).toHaveLength(5)
+    expect(growingEntry().textContent).toBe("")
+  })
+
+  it("開いた時点で並んでいたセリフは育たない（前の雑談の続きを書き直さない）", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    expect(document.querySelector("[data-growing]")).toBe(null)
+    expect(screen.getByText("2つめのセリフ")).toBeTruthy()
+  })
+
+  it("育っている最中に押すと、遡らずにその場で全文が出る", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+    arrive(store, "3つめのセリフ", "curious")
+
+    // 古い行を留めておく（押しが遡りに使われたなら、ここから表情が動く）。
+    fireEvent.click(screen.getByText("1つめのセリフ"))
+    expect(portraitExpression()).toBe("default")
+
+    const growing = growingEntry()
+    fireEvent.click(growing)
+
+    expect(growing.textContent).toBe("3つめのセリフ")
+    expect(growing.hasAttribute("data-growing")).toBe(false)
+    // **その回の押しは打ち切りに使う**（揃うより先に留めても、何を留めたのか読めない）。
+    expect(portraitExpression()).toBe("default")
+
+    // 出し切ったあとの押しは、いつもどおり遡る。
+    fireEvent.click(growing)
+    expect(portraitExpression()).toBe("curious")
+  })
+
+  it("キーボード（Enter / Space）でも打ち切れる", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+    arrive(store, "3つめのセリフ", "curious")
+
+    const growing = growingEntry()
+    fireEvent.keyDown(growing, { key: "Enter" })
+
+    expect(growing.textContent).toBe("3つめのセリフ")
+    expect(growing.hasAttribute("data-growing")).toBe(false)
+  })
+
+  it("次のセリフが来たら、育っていた行は出し切る（育つのは末尾の1件だけ）", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+    arrive(store, "3つめのセリフ", "curious")
+    const previous = growingEntry()
+
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [
+          ...RECORDS,
+          { kind: "speech", text: "3つめのセリフ", expression: "curious" },
+          { kind: "speech", text: "4つめのセリフ", expression: "default" },
+        ],
+        character: FIXTURE_CHARACTER,
+        speechExpression: "default",
+      })
+    })
+
+    expect(previous.textContent).toBe("3つめのセリフ")
+    expect(previous.hasAttribute("data-growing")).toBe(false)
+    // 育っているのは末尾の1件だけ。
+    expect(document.querySelectorAll("[data-growing]")).toHaveLength(1)
+    expect(growingEntry()).not.toBe(previous)
+  })
+})
+
+describe("ChatView の「...」（返事を待つ間）", () => {
+  /** 「...」の行（`chat-view.tsx` の `<ChatTyping>`。docs/design.md 13.7）。 */
+  function typingEntry(): Element | null {
+    return document.querySelector('[data-speaker="typing"]')
+  }
+
+  it("ターン進行中でまだセリフが無ければ、ログの末尾に「...」が出る", () => {
+    renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: false,
+    })
+
+    const entries = logEntries()
+    // 末尾に付き、押せる行にはしない（利用者の発言の行と同じ立場）。
+    expect(entries.at(-1)?.getAttribute("data-speaker")).toBe("typing")
+    expect(typingEntry()?.getAttribute("role")).toBe(null)
+    expect(typingEntry()?.getAttribute("tabindex")).toBe(null)
+  })
+
+  it("セリフが届くと「...」は消え、セリフの行に入れ替わる", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: false,
+    })
+
+    expect(typingEntry()).toBeTruthy()
+
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [...RECORDS, { kind: "speech", text: "3つめのセリフ", expression: "curious" }],
+        character: FIXTURE_CHARACTER,
+        speechExpression: "curious",
+        turn: { kind: "running", startedAt: 0 },
+        speechCalledInTurn: true,
+      })
+    })
+
+    // 入れ替わりに届いたセリフの行が育ち始める（文字はこれから出る。他の育つテストと同じ
+    // 立場——1文字ずつ出るところ自体はフレームの進みに乗るので目視で確かめる）。
+    expect(typingEntry()).toBe(null)
+    expect(document.querySelector('[data-growing="yes"]')).toBeTruthy()
+  })
+
+  it("ターンが終わっていれば「...」は出ない", () => {
+    renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "idle" },
+      speechCalledInTurn: false,
+    })
+
+    expect(typingEntry()).toBe(null)
+  })
+
+  it("その ターンで既にセリフが来ていれば「...」は出ない（次の speak を待つだけ）", () => {
+    renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: true,
+    })
+
+    expect(typingEntry()).toBe(null)
+  })
+
+  it("ログが空でも、ターン進行中なら「...」だけを出す（案内は出さない）", () => {
+    renderChatView({
+      records: [],
+      character: FIXTURE_CHARACTER,
+      turn: { kind: "running", startedAt: 0 },
+      speechCalledInTurn: false,
+    })
+
+    expect(typingEntry()).toBeTruthy()
+    expect(
+      screen.queryByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
+    ).toBe(null)
   })
 })
 
