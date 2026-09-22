@@ -858,6 +858,13 @@
             "text": "区切りより後のセリフだよ。",
             "expression": "proud"
           }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
         }
       ]
     },
