@@ -1,5 +1,6 @@
 // トークン消費の画面に出す数の書き方と、期間の合計。**表の桁を揃えて横幅を食わせない**ための
-// 畳み方だけを持つ（描くのは `token-usage-screen.tsx`）。
+// 畳み方だけを持つ（合計は `hooks/use-token-usage.ts` が呼び、書き方は
+// `presentational-token-usage-screen.tsx` が呼ぶ）。
 //
 // **数のほかは扱わない** — ここに来るのはトークン数・バイト数・費用・モデルの名前だけで、
 // 会話の文面は集計にそもそも入っていない（`src/shared/token-usage-summary.ts`）。
