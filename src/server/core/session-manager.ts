@@ -26,10 +26,12 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../shared/session-state.ts"
+import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 import { CHAT_COMPACT_COMMAND } from "./chat-compact.ts"
 import { CHAT_NUDGE_PROMPT } from "./chat-nudge.ts"
 import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
+import { type TokenUsageLog, tokenUsageDelta } from "./token-usage.ts"
 
 /**
  * イベントをまとめて配る間隔。**旧の `PUBLISH_INTERVAL_MS` と同じ 100ms**（2026-09-13 決定）。
@@ -54,6 +56,14 @@ export type SessionManagerOptions = {
    * 呼ばれた引数だけを覚えるスタブを渡す。
    */
   readonly chatArchive: ChatArchive
+  /**
+   * トークン消費の書き込み口（`src/server/core/token-usage.ts` の契約。本番は
+   * `createTokenUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
+   *
+   * **前の `result` からの増分を出すのはここ**（`receive` が前回の累計を覚えている）で、
+   * 渡した先は「どこに・どんな形で書くか」しか持たない。
+   */
+  readonly tokenUsageLog: TokenUsageLog
 }
 
 export type SessionCreateOptions = {
@@ -179,6 +189,10 @@ function createSessionHost(
   // （雑談は100ターンの窓）。`/compact` を送れたら 0 に戻し（＝そこが新しい圧縮点）、
   // 起こし直す（restart）でも同じ理由で 0 に戻す。
   let chatLogBytesSinceCompact = 0
+  // 前の `result` が運んできたトークンの累計（`query()` の中の走行合計）。**次の `result` との
+  // 差がそのターンの消費**になる（`src/server/core/token-usage.ts`）。起こし直すと `query()` が
+  // 変わって累計も振り出しに戻るので、`restart` で空に戻す。
+  let cumulativeTokenUsage: readonly ModelTokenUsage[] = []
 
   const cancelFlush = (): void => {
     if (flushTimer !== undefined) {
@@ -234,6 +248,34 @@ function createSessionHost(
   }
 
   /**
+   * そのターンのトークン消費を記録に1行足す。**1行 = 1ターン**で、
+   * モデルが複数出たターン（サブエージェントが別のモデルで動いたとき）は同じ行の `models` に
+   * 並ぶ——ターンが読む人にとっての単位なので、モデルごとに行を割ると「このターンでいくら
+   * 使ったか」を出すのに行を組み直すことになる。
+   *
+   * 届く `cumulative` は `query()` の中の累計なので、**前回との差**を書く。増分が無いターン
+   * （`/clear` の直後など、何も呼んでいない `result`）は行を書かない。
+   *
+   * **claude 側のセッションIDが分からないうちは書かない**（`system/init` より前に `result` は
+   * 来ないので実際には起きない）。行だけで「どのセッションのターンか」が決まらない記録を
+   * 積まないため。
+   */
+  const appendTokenUsage = (cumulative: readonly ModelTokenUsage[], at: number): void => {
+    const models = tokenUsageDelta(cumulativeTokenUsage, cumulative)
+    cumulativeTokenUsage = cumulative
+    const sessionId = state.sessionId
+    if (models.length === 0 || sessionId === undefined) {
+      return
+    }
+    options.tokenUsageLog.append({
+      at,
+      sessionId,
+      mode: state.chatMode ? "chat" : "work",
+      models,
+    })
+  }
+
+  /**
    * イベント1件を畳んで次のバッチに積む。**駆動から届いたものと、見た目の編集で起こした
    * `character-changed` の両方がここを通る**（サーバ側の状態とブラウザへ配る内容を1本にする）。
    *
@@ -262,6 +304,11 @@ function createSessionHost(
     // 分かっているときだけ**（docs/requirements.md 4.9「誰がいつ書くか」）。
     if (origin === "driver" && state.chatMode) {
       appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
+    }
+    // そのターンのトークン消費を1行書く。**駆動由来（`"driver"`）だけ**（復元の再生には
+    // 使用量が乗らないし、乗せても同じターンを二度数えることになる）。
+    if (origin === "driver" && event.kind === "token-usage") {
+      appendTokenUsage(event.cumulative, at)
     }
     // 「残す」旗が立っていれば、**このターンで書いた行を指す印**をここで書く
     // （旗を立てるのはターンの途中、書くのは終わり。docs/requirements.md 4.9
@@ -339,6 +386,8 @@ function createSessionHost(
       // 起こし直した直後の記録は、復元されたログがそのまま圧縮点から先になる
       // （docs/requirements.md 4.9）。走行合計も一緒に戻す。
       chatLogBytesSinceCompact = 0
+      // 新しい `query()` の累計は 0 から始まる（前の累計を引くと増分が足りなくなる）。
+      cumulativeTokenUsage = []
       driver = start(request)
       await driver
       cancelFlush()

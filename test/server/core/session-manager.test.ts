@@ -9,6 +9,7 @@ import {
 } from "../../../src/server/core/session-driver.ts"
 import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
 import { createSessionManager } from "../../../src/server/core/session-manager.ts"
+import { type TokenUsageEntry, type TokenUsageLog } from "../../../src/server/core/token-usage.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"
 import {
   type CharacterCreateCommand,
@@ -21,6 +22,7 @@ import {
 } from "../../../src/shared/frame.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
+import { type ModelTokenUsage } from "../../../src/shared/token-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
@@ -35,6 +37,9 @@ const NOOP_CHAT_ARCHIVE: ChatArchive = {
   recall: () => ({ kind: "not-found" }),
   readRecent: () => ({ kept: [], recent: [] }),
 }
+
+/** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
+const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {} }
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
@@ -127,6 +132,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
     batchIntervalMs: BATCH_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     chatArchive: NOOP_CHAT_ARCHIVE,
+    tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
   })
   manager.create({
     sessionId: SESSION_ID,
@@ -270,6 +276,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -368,6 +375,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -403,6 +411,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -451,6 +460,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -565,6 +575,7 @@ describe("createSessionManager", () => {
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
         chatArchive: archive,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       })
       manager.create({
         sessionId: SESSION_ID,
@@ -823,6 +834,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -858,6 +870,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     const stub = createStubDriver()
     manager.create({
@@ -885,6 +898,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
       sessionId: SESSION_ID,
@@ -958,6 +972,7 @@ describe("createSessionManager", () => {
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       })
       manager.create({
         sessionId: SESSION_ID,
@@ -1108,6 +1123,182 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       expect(archiveCalls).toEqual([])
+    })
+  })
+
+  // トークン消費の記録。**数と時刻とモデルの名前だけ**が
+  // 記録へ渡ることを、ここで固定する。
+  describe("トークン消費の記録", () => {
+    const SESSION_INFO: SessionEvent = {
+      kind: "session-info",
+      sessionId: "claude-session-1",
+      model: "opus",
+      permissionMode: "auto",
+      slashCommands: [],
+      terminalSlashCommands: [],
+    }
+
+    /** 架空の累計（実物の使用量は使わない）。 */
+    function cumulative(input: number, output: number, cost: number): readonly ModelTokenUsage[] {
+      return [
+        {
+          model: "claude-opus-fictional",
+          inputTokens: input,
+          outputTokens: output,
+          thinkingTokens: 0,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          costUsd: cost,
+        },
+      ]
+    }
+
+    function startTokenUsageManagerWithStub() {
+      const stub = createStubDriver()
+      const entries: TokenUsageEntry[] = []
+      const manager = createSessionManager({
+        now: () => 1_000,
+        batchIntervalMs: BATCH_MS,
+        chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        tokenUsageLog: {
+          append: (entry) => {
+            entries.push(entry)
+          },
+        },
+      })
+      manager.create({
+        sessionId: SESSION_ID,
+        startDriver: (onEvent, onRestoredEvent) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvent)
+          return Promise.resolve(stub.driver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+      })
+      return { manager, stub, entries }
+    }
+
+    it("ターンごとに、前の累計との差を1行ぶん渡す", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(260, 35, 1.25) })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries).toEqual([
+        {
+          at: 1_000,
+          sessionId: "claude-session-1",
+          mode: "work",
+          models: cumulative(100, 20, 0.5),
+        },
+        {
+          at: 1_000,
+          sessionId: "claude-session-1",
+          mode: "work",
+          models: cumulative(160, 15, 0.75),
+        },
+      ])
+    })
+
+    it("累計が振り出しに戻ったターンでも負を渡さない", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({ kind: "token-usage", cumulative: cumulative(900, 300, 4) })
+      // `/clear` で走行合計がリセットされたあとのターン。
+      stub.emit({ kind: "conversation-cleared" })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(120, 40, 0.6) })
+      await waitForBatch()
+
+      expect(entries.map((entry) => entry.models)).toEqual([
+        cumulative(900, 300, 4),
+        cumulative(120, 40, 0.6),
+      ])
+    })
+
+    it("増えていないターンは行を渡さない", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      await waitForBatch()
+
+      expect(entries.length).toBe(1)
+    })
+
+    it("雑談モードのターンは mode: chat になる", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(10, 2, 0.01) })
+      await waitForBatch()
+
+      expect(entries.map((entry) => entry.mode)).toEqual(["chat"])
+    })
+
+    it("復元で流し直されたぶんは記録しない", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emitRestored({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+    })
+
+    // **この検査がいちばん重要**（`docs/coding-standards.md`「会話内容の扱い」）。依頼の文面・
+    // セリフ・ツールの引数・ツールの結果を同じターンに流しても、記録へ渡る1行にはそのどれも
+    // 現れない。
+    it("依頼の文面・セリフ・ツールの引数と結果が1文字も入らない", async () => {
+      const { stub, entries } = startTokenUsageManagerWithStub()
+      await waitForBatch()
+
+      const secrets = [
+        "架空の依頼の文面",
+        "架空のセリフ",
+        "架空のツールの引数",
+        "架空のツールの結果",
+        "架空の本文",
+      ]
+      stub.emit(SESSION_INFO)
+      stub.emit({ kind: "request", text: secrets[0] ?? "", images: [] })
+      stub.emit({
+        kind: "tool-started",
+        toolUseId: "t-1",
+        name: "Bash",
+        input: { command: secrets[2] },
+        parentToolUseId: undefined,
+      })
+      stub.emit({
+        kind: "tool-finished",
+        toolUseId: "t-1",
+        content: secrets[3] ?? "",
+        isError: false,
+      })
+      stub.emit({ kind: "speech", text: secrets[1] ?? "", expression: "default" })
+      stub.emit({ kind: "utterance", text: secrets[4] ?? "" })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries.length).toBe(1)
+      const written = JSON.stringify(entries)
+      for (const secret of secrets) {
+        expect(written).not.toContain(secret)
+      }
     })
   })
 })

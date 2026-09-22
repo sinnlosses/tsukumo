@@ -387,6 +387,92 @@ describe("toSessionEvents", () => {
     ])
   })
 
+  // トークン消費の記録（`docs/requirements.md` 4.1）。**運ぶのは累計そのまま**で、増分に直すのは
+  // `src/server/core/token-usage.ts`。
+  it("result の modelUsage は累計のイベントにして、ターンの終わりの前に並べる", () => {
+    const message = {
+      type: "result",
+      subtype: "success",
+      // メインループぶんだけの `usage` は集計に使わないので、混ざらないことも一緒に見る。
+      usage: { input_tokens: 1, output_tokens: 2 },
+      total_cost_usd: 0.5,
+      modelUsage: {
+        "claude-opus-fictional": {
+          inputTokens: 1_200,
+          outputTokens: 340,
+          thinkingTokens: 50,
+          cacheReadInputTokens: 9_000,
+          cacheCreationInputTokens: 800,
+          costUSD: 0.125,
+          contextWindow: 200_000,
+        },
+      },
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "token-usage",
+        cumulative: [
+          {
+            model: "claude-opus-fictional",
+            inputTokens: 1_200,
+            outputTokens: 340,
+            thinkingTokens: 50,
+            cacheReadInputTokens: 9_000,
+            cacheCreationInputTokens: 800,
+            costUsd: 0.125,
+          },
+        ],
+      },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
+  it("modelUsage の欠けた鍵・数でない値は0に倒す", () => {
+    const message = {
+      type: "result",
+      subtype: "success",
+      modelUsage: { "claude-opus-fictional": { inputTokens: "たくさん", outputTokens: 7 } },
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "token-usage",
+        cumulative: [
+          {
+            model: "claude-opus-fictional",
+            inputTokens: 0,
+            outputTokens: 7,
+            thinkingTokens: 0,
+            cacheReadInputTokens: 0,
+            cacheCreationInputTokens: 0,
+            costUsd: 0,
+          },
+        ],
+      },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
+  it("modelUsage が無い・空・壊れている result は使用量のイベントを出さない", () => {
+    for (const modelUsage of [undefined, {}, "こわれた", { "claude-opus-fictional": null }]) {
+      expect(
+        toSessionEvents({ type: "result", subtype: "success", modelUsage }, EXPRESSIONS),
+      ).toEqual([{ kind: "turn-finished", status: "success" }])
+    }
+  })
+
+  it("parent_tool_use_id のある result は使用量も出さない（サブエージェントぶんは本体の累計に含まれる）", () => {
+    const message = {
+      type: "result",
+      subtype: "success",
+      parent_tool_use_id: "toolu_sub_1",
+      modelUsage: { "claude-sonnet-fictional": { inputTokens: 10, outputTokens: 2 } },
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
   it("parent_tool_use_id のある result はターンの終わりにしない（案4-c）", () => {
     const message = {
       type: "result",

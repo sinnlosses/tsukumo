@@ -18,6 +18,7 @@ import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type TaskSummaryItem } from "./task-summary.ts"
+import { type ModelTokenUsage } from "./token-usage.ts"
 
 /** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
 export type TurnStatus = "success" | "error"
@@ -129,6 +130,20 @@ export type SessionEvent =
       readonly answers: readonly QuestionAnswer[]
     }
   | { readonly kind: "turn-finished"; readonly status: TurnStatus }
+  /**
+   * そのターンの終わりに SDK が渡してきたトークンの使用量（`result` の `modelUsage`）。
+   * **運ぶのは `query()` の中の累計そのまま**で、ターンごとの増分に直すのは受け取った側
+   * （`src/server/core/session-manager.ts` が前回の累計を覚えて差を取る）。
+   *
+   * **画面には出ない。** 畳み込み（session-state.ts）は何もせず、行き先は
+   * `~/.tsukumo/token-usage/` の記録だけ（`src/server/adapter/token-usage-log.ts`）。`turn-finished` に
+   * 相乗りさせずに別のイベントにしてあるのは、**使用量を持たない終わり方があるから**
+   * （復元の再生・fake driver・`modelUsage` の無い `result`）——「無い」を型に持ち込まずに済む。
+   *
+   * **数とモデルの名前だけ**で、会話の内容は入らない（`docs/coding-standards.md`
+   * 「会話内容の扱い」）。
+   */
+  | { readonly kind: "token-usage"; readonly cumulative: readonly ModelTokenUsage[] }
   /**
    * `/clear` で会話が消された（SDK の `conversation_reset`。2026-09-15 実測）。**tsukumo は
    * `/clear` という文字列を見ていない。** `/` コマンドは依頼の文面としてそのまま本体へ渡り、

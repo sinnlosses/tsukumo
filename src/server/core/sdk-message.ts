@@ -15,6 +15,7 @@ import {
   type SessionEvent,
   type TurnStatus,
 } from "../../shared/session-event.ts"
+import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
@@ -87,7 +88,10 @@ export function toSessionEvents(
       // それをターンの終わりとして扱うと、本体のターンが終わっていないのに `turn-finished` が
       // 挟まり `turnInProgress` が落ちてしまうので無視する（案4-c）。
       return optionalString(message.parent_tool_use_id) === undefined
-        ? [{ kind: "turn-finished", status: turnStatus(message.subtype) }]
+        ? [
+            ...tokenUsageEvents(message.modelUsage),
+            { kind: "turn-finished", status: turnStatus(message.subtype) },
+          ]
         : []
     case "conversation_reset":
       // `/clear` で本体が会話を捨てたとき（2026-09-15 実測）。**`/compact` では届かない。**
@@ -286,6 +290,48 @@ function toolResultContentItemText(item: unknown): string {
   }
 
   return typeof item.type === "string" ? `(${item.type})` : ""
+}
+
+/**
+ * `result` の `modelUsage`（モデル名をキーにした使用量の表）を1つのイベントにする。
+ *
+ * **運ぶのは累計そのまま。** `modelUsage` は `query()` の中の走行合計で、サブエージェントと
+ * 内部の呼び出しも含む（同じ `result` の `usage` はメインループぶんだけなので集計に使わない。
+ * 2026-09-22 に `sdk.d.ts` の型定義で確認）。ターンごとの増分に直すのは
+ * `src/server/core/token-usage.ts` で、前回の累計を覚えるのは `session-manager.ts`。
+ *
+ * 数でない値・欠けている鍵は 0 に倒す（外部由来の値なので形を信用しない）。表が無い・空・
+ * 中身が全部壊れているときはイベントを出さない。
+ */
+function tokenUsageEvents(modelUsage: unknown): readonly SessionEvent[] {
+  if (!isRecord(modelUsage)) {
+    return []
+  }
+
+  const cumulative = Object.entries(modelUsage).flatMap(([model, value]) =>
+    model === "" || !isRecord(value) ? [] : [toModelTokenUsage(model, value)],
+  )
+  return cumulative.length === 0 ? [] : [{ kind: "token-usage", cumulative }]
+}
+
+/** `modelUsage` の1件を内部の型に写す。**キーがモデルの名前**（`canonicalModel` は見ない）。 */
+function toModelTokenUsage(
+  model: string,
+  value: Readonly<Record<string, unknown>>,
+): ModelTokenUsage {
+  return {
+    model,
+    inputTokens: finiteNumber(value.inputTokens),
+    outputTokens: finiteNumber(value.outputTokens),
+    thinkingTokens: finiteNumber(value.thinkingTokens),
+    cacheReadInputTokens: finiteNumber(value.cacheReadInputTokens),
+    cacheCreationInputTokens: finiteNumber(value.cacheCreationInputTokens),
+    costUsd: finiteNumber(value.costUSD),
+  }
+}
+
+function finiteNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0
 }
 
 /**

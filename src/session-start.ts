@@ -20,6 +20,7 @@ import {
   startSession as startSdkSession,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
+import { createTokenUsageLog } from "./server/adapter/token-usage-log.ts"
 import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
 import {
@@ -76,6 +77,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
   // 境界は増やさない（原則3）。
   const chatArchive = createChatArchive()
+  // トークン消費の記録の口。書くかどうか・何を書くかを決めるのは
+  // `session-manager` なので、ここも口を渡すだけ。
+  const tokenUsageLog = createTokenUsageLog()
   const manager = createSessionManager({
     now: Date.now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
@@ -83,6 +87,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
     // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を
     // 渡すだけ。
     chatArchive,
+    tokenUsageLog,
   })
 
   manager.create({

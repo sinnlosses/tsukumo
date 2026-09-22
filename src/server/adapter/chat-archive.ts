@@ -44,6 +44,7 @@ import {
   type ChatReadbackLimits,
   type ChatRecallResult,
 } from "../core/session-driver.ts"
+import { isoWithOffset, localDateKey } from "./local-time.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
@@ -535,25 +536,6 @@ function parseJson(line: string): unknown {
   } catch {
     return undefined
   }
-}
-
-/** ローカル時刻での `YYYY-MM-DD`（日の境目はそのマシンのローカル時刻。`docs/design.md` 7章）。 */
-function localDateKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-/** ISO 8601（オフセット付き）。行だけで時刻が決まる（`docs/design.md` 7章）。 */
-function isoWithOffset(date: Date): string {
-  const offsetMinutes = -date.getTimezoneOffset()
-  const sign = offsetMinutes >= 0 ? "+" : "-"
-  const offset = `${sign}${pad(Math.trunc(Math.abs(offsetMinutes) / 60))}:${pad(Math.abs(offsetMinutes) % 60)}`
-  const datePart = localDateKey(date)
-  const timePart = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
-  return `${datePart}T${timePart}${offset}`
-}
-
-function pad(value: number): string {
-  return String(value).padStart(2, "0")
 }
 
 /** 文面の UTF-8 バイト数（読み戻す量を数える物差し。`docs/requirements.md` 4.9）。 */
