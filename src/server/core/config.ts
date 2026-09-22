@@ -1,6 +1,6 @@
-// 環境変数の読み取り。**`process.env` を読むのはここ1箇所**（docs/coding-standards.md
-// 「外の世界に依存する値は読み取りを1モジュールに集約する」。モジュールのトップレベルでは
-// 触らず、{@link readConfig} を呼んだときだけ読む）。
+// 環境変数の解釈と、**環境変数の名前の一覧**（docs/coding-standards.md「外の世界に依存する値は
+// 読み取りを1モジュールに集約する」。モジュールのトップレベルでは触らず、{@link readConfig} を
+// 呼んだときだけ読む）。値を読むのは呼び出し側の src/cli.ts。
 //
 // 値の意味と既定は docs/design.md 5章「config.ts」の表が正典。
 //
@@ -24,6 +24,12 @@ export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 /** `1` で `src/browser/` を見張り、変更のたびに組み立て直す（開発中だけ。docs/design.md 11章）。 */
 export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
+/**
+ * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま）。**名前はここに
+ * 置くが、読むのは {@link readConfig} ではなく src/server/adapter/tsukumo-home.ts**（理由は
+ * そのファイルの冒頭。配線層から配る道が無い）。
+ */
+export const HOME_ENV_NAME = "TSUKUMO_HOME"
 
 /** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */
 const SESSION_TAG_PREFIX = "tsukumo"

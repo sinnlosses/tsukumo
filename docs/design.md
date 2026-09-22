@@ -700,6 +700,7 @@ type SessionHost = {
 | `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前            | 流さない         |
 | `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）            | 復元する         |
 | `TSUKUMO_WATCH_UI`    | `1` で `src/browser/` を見張って組み立て直す（11章） | 見張らない       |
+| `TSUKUMO_HOME`        | tsukumo の持ち物を置くホーム（相対は cwd 相対）      | `~/.tsukumo`     |
 
 `TSUKUMO_CHARACTER` は**パスとしてだけ解く**（`src/server/adapter/bundled-path.ts` の
 `resolveBundledDir`。相対は cwd 相対、絶対はそのまま）。**パックの名前では指せない** —
@@ -707,6 +708,15 @@ type SessionHost = {
 `characters/` ・ `~/.tsukumo/characters/` ・起動先の `characters/local` を常に返すので、
 **この口が要るのはその3つの外にパックを置いたときだけ**。`TSUKUMO_CHARACTER_DIR` は
 `TSUKUMO_CHARACTER` に統合済みで、いまは無い。
+
+`TSUKUMO_HOME` は**ホームの丸ごとの差し替え口**（`state.json`・雑談の要約とアーカイブ・
+トークンの記録・画面から作ったパックがすべて移る。7章の表の置き場）。**渡すのは、tsukumo を
+2つ並行して動かす人が明示的に渡すときだけ**で、セッション単位で自動には分けない —
+キャラクターの好みはプロジェクトごとではない（13.6）という決定はそのまま、**並行させたい
+ときの逃げ道だけ**を開けてある。`TSUKUMO_VIEW_PORT` と2つ揃えて分けないと、ポートだけ分けても
+ホームは共有されたまま。パスとしてだけ解き（相対は cwd 相対、絶対はそのまま）、`~` は展開しない
+（展開するのはシェルの仕事）。読むのは `src/server/adapter/tsukumo-home.ts`
+（`readConfig` ではない。理由はそのファイルの冒頭）。
 
 ## 6. browser
 

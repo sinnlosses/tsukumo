@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 ホームを TSUKUMO_HOME で差し替えられるようにした（T-354）
+
+`~/.tsukumo/` は `homedir()` だけで決まるので worktree では分かれず、tsukumo を2つ並べると
+`state.json` と雑談の要約を取り合っていた。差し替え口を1つ開け、`CLAUDE.md`「## タスク運用」の
+「目視確認は並行させない」を「`TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける」に直した。
+
 ### 2026-09-22 画面のナビゲーションをヘッダーの帯に決めた（T-322）
 
 案を3つ（ヘッダーの帯 / 区画の見出しの右 / 右下の常設ボタン）出し、`scripts/capture-view.ts` で

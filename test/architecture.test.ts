@@ -121,10 +121,15 @@ describe("子プロセスを起こす箇所", () => {
 // 環境変数の読み取りは配線層の1ファイルに集める（docs/coding-standards.md「外の世界に依存する値
 // は読み取りを1モジュールに集約する」）。コメント中の `` `process.env` `` のような説明文は
 // 拾わない（実コードの行だけを見る）。
+//
+// **例外は `TSUKUMO_HOME` を読む `tsukumo-home.ts` の1つだけ** — ホームを使うのは adapter の
+// 既定引数の中で、配線層から渡す道が無い（そのファイルの冒頭）。ここを2つに限ることで、
+// 3つめが黙って増えない。
 describe("process.env を読む箇所", () => {
-  it("`process.env` を読むのは src/cli.ts だけ", () => {
+  it("`process.env` を読むのは src/cli.ts と src/server/adapter/tsukumo-home.ts だけ", () => {
+    const allowed = new Set(["cli.ts", "server/adapter/tsukumo-home.ts"])
     const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath !== "cli.ts")
+      .filter((relPath) => !allowed.has(relPath))
       .filter((relPath) =>
         /\bprocess\.env\b/.test(nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
       )
