@@ -360,6 +360,33 @@ describe("toRestoredEvents", () => {
     ])
   })
 
+  it("仕掛けが差し込んだ塊だけの user メッセージは依頼として起こさない", () => {
+    const messages = [
+      userMessage("<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"),
+      userMessage("<local-command-caveat>架空の断り書き</local-command-caveat>"),
+      userMessage('<agent-message from="架空のエージェント">架空の伝言</agent-message>'),
+      userMessage([{ type: "text", text: "架空の依頼" }]),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
+  it("利用者の文面に混じった塊は、その塊だけ落として前後を残す", () => {
+    const messages = [
+      userMessage(
+        "架空の依頼の前半\n<system-reminder>架空の差し込み</system-reminder>\n架空の依頼の後半",
+      ),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "架空の依頼の前半\n\n架空の依頼の後半", images: [] },
+      { kind: "turn-finished", status: "success" },
+    ])
+  })
+
   it("`<local-command-stdout>` だけの user メッセージは依頼として起こさない", () => {
     const messages = [
       userMessage("<local-command-stdout>架空の出力</local-command-stdout>"),

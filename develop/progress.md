@@ -55,6 +55,17 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 復元した依頼から、仕掛けが差し込んだ塊を落とした（ユーザー報告）
+
+「セッションを復元すると大量の文字列が出る」の調査と修正。生きているセッションでは `request` は
+入力欄からの送信でだけ起きるが、transcript から組み直すときは `user` の役のメッセージが丸ごと
+依頼になるので、**利用者が打っていない塊まで依頼として並んでいた**（実測した tsukumo の記録で
+`<task-notification>` の 873 / 874 文字が2セッション分)。`session-restore.ts` に
+`withoutInjectedBlocks` を足し、`<system-reminder>` / `<task-notification>` /
+`<local-command-caveat>` / `<local-command-stdout>` / `<agent-message>` /
+`<cross-session-message>` の閉じタグまで揃った塊を落としてから畳むようにした。塊だけの
+メッセージは依頼にならず、文面に混じっている場合は前後が残る。
+
 ### 2026-09-23 `init` がまだ届いていない状態を合併型にした（T-311）
 
 `SessionState` の `sessionId` / `permissionMode` を `session: { kind: "starting" } |

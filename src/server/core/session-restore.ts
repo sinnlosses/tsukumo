@@ -189,18 +189,20 @@ function textBlock(block: unknown): string {
 }
 
 /**
- * `user` の生のテキストから依頼の文面を組み立てる。**`<local-command-stdout>` だけの
- * メッセージ**（`/model` などローカルコマンドの出力）は依頼ではないので undefined にし、
- * それ以外は {@link foldSlashCommand} で入力欄からの見え方に畳んでから返す。
+ * `user` の生のテキストから依頼の文面を組み立てる。**仕掛けが `user` の役で差し込んだ塊は
+ * 先に落とす**（{@link withoutInjectedBlocks}）。残りを {@link foldSlashCommand} で入力欄から
+ * 打ったときの見え方に畳み、**何も残らなければ依頼ではない**ので undefined にする。
  */
 function requestTextFromRawText(text: string): string | undefined {
-  return isLocalCommandStdoutOnly(text) ? undefined : nonEmpty(foldSlashCommand(text))
+  return nonEmpty(foldSlashCommand(withoutInjectedBlocks(text)))
 }
 
 const COMMAND_TAG = /<(command-name|command-message|command-args)>[\s\S]*?<\/\1>/g
 const COMMAND_NAME_TAG = /<command-name>([\s\S]*?)<\/command-name>/
 const COMMAND_ARGS_TAG = /<command-args>([\s\S]*?)<\/command-args>/
-const LOCAL_COMMAND_STDOUT_TAG = /<local-command-stdout>[\s\S]*?<\/local-command-stdout>/g
+/** {@link withoutInjectedBlocks} が落とす塊。開きと閉じが揃っているものだけに当てる。 */
+const INJECTED_BLOCK =
+  /<(system-reminder|task-notification|local-command-caveat|local-command-stdout|agent-message|cross-session-message)(\s[^>]*)?>[\s\S]*?<\/\1>/g
 
 /**
  * SDK が展開したスラッシュコマンド（`<command-name>` / `<command-message>` /
@@ -223,14 +225,21 @@ function foldSlashCommand(text: string): string {
 }
 
 /**
- * メッセージ全体が `<local-command-stdout>` だけで出来ているかどうか（ローカルコマンドの
- * 出力で、利用者の依頼ではない）。
+ * 仕掛け（Claude Code と tsukumo の外側）が `user` の役で差し込む塊を落とす。
+ * **利用者が入力欄に打った文面ではない**ので、組み直した依頼には出さない
+ * （docs/requirements.md 4.8）。
+ *
+ * 生きているセッションでは `request` は入力欄からの送信でだけ起き（`session-manager.ts`）、
+ * これらは一度も画面に出ない。**transcript から組み直すときだけ `user` の役として同じ場所に
+ * 並んでしまう**ので、ここで揃える。実測で出たのは背景のタスクの知らせ
+ * （`<task-notification>`）・ローカルコマンドの断り書き（`<local-command-caveat>`）・
+ * 別のエージェントからの伝言（`<agent-message>`）の3つだが、同じ性質のものを合わせて落とす。
+ *
+ * **塊の丸ごとだけを落とす**（開きと閉じが揃っているもの）ので、利用者の文面に混じっていても
+ * その前後は残る。
  */
-function isLocalCommandStdoutOnly(text: string): boolean {
-  return (
-    text.includes("<local-command-stdout>") &&
-    text.replace(LOCAL_COMMAND_STDOUT_TAG, "").trim() === ""
-  )
+function withoutInjectedBlocks(text: string): string {
+  return text.replace(INJECTED_BLOCK, "").trim()
 }
 
 function nonEmpty(text: string): string | undefined {
