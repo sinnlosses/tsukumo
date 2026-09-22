@@ -3,12 +3,13 @@
 // Composer の `onSubmit` がそのまま依頼を送る。進行中は `type="button"` にして、ここが直接
 // `interrupt` を dispatch する（送信と中断が同時に押せる状態を作らないためのもの）。
 //
-// 経過時間は `state.turnStartedAt` から数え、`state.turnFinishedAt` があればそこで止まる
+// 経過時間は `state.turn` が持つ始まった時刻から数え、終わっていればその時刻で止まる
 // （**1秒の刻みはここのローカルなタイマー**。`SessionState` に秒数は持たない。docs/design.md
 // 4.2 / 6.2）。
 
 import { useEffect, useState, type ReactElement } from "react"
 
+import { type TurnProgress } from "../../../shared/session-state.ts"
 import { nowEpochMilliseconds } from "../../lib/clock.ts"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import styles from "./dispatch.module.css"
@@ -19,6 +20,18 @@ const ELAPSED_LABEL = "経過"
 const FINISHED_LABEL = "所要"
 const SEND_SHORTCUT_HINT = "⌘⏎"
 const TICK_INTERVAL_MS = 1000
+
+/**
+ * 経過（進行中）・所要（終わったあと）として出す文字列。まだ一度も依頼が無ければ `-`。
+ * `now` を使うのは進行中のときだけで、終わったターンは終わった時刻で固定される。
+ */
+function elapsedText(turn: TurnProgress, now: number): string {
+  if (turn.kind === "idle") {
+    return "-"
+  }
+  const until = turn.kind === "finished" ? turn.finishedAt : now
+  return formatElapsed(Math.max(0, Math.floor((until - turn.startedAt) / 1000)))
+}
 
 /** 秒数を表示用の文字列にする（60秒未満は `N秒`、以降は `M分SS秒`）。 */
 function formatElapsed(totalSeconds: number): string {
@@ -32,30 +45,26 @@ function formatElapsed(totalSeconds: number): string {
 
 export function TurnStatus(): ReactElement {
   const dispatch = useSessionDispatch()
-  const turnStartedAt = useSessionSelector((session) => session.state.turnStartedAt)
-  const turnFinishedAt = useSessionSelector((session) => session.state.turnFinishedAt)
-  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  // 姿の `turn` は**進み具合が変わったときだけ入れ替わる**ので、そのまま依存にしてよい
+  // （畳み込みは変わらないフィールドの参照を持ち回る。`stores/session.tsx`）。
+  const turn = useSessionSelector((session) => session.state.turn)
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
-  // 進行中（開始していて、まだ終わっていない）間だけ1秒ごとに刻む。終わったら止める
-  // （turnFinishedAt の値で経過時間が固定されるので、タイマーは要らない）。
+  // 進行中の間だけ1秒ごとに刻む。終わったら止める（終わった時刻で経過時間が固定されるので、
+  // タイマーは要らない）。
   useEffect(() => {
-    if (turnStartedAt === undefined || turnFinishedAt !== undefined) {
+    if (turn.kind !== "running") {
       return undefined
     }
     const timer = setInterval(() => setNow(nowEpochMilliseconds()), TICK_INTERVAL_MS)
     return () => clearInterval(timer)
-  }, [turnStartedAt, turnFinishedAt])
+  }, [turn])
 
-  const elapsedText =
-    turnStartedAt === undefined
-      ? "-"
-      : formatElapsed(Math.max(0, Math.floor(((turnFinishedAt ?? now) - turnStartedAt) / 1000)))
-  const elapsedLabel = turnFinishedAt === undefined ? ELAPSED_LABEL : FINISHED_LABEL
+  const elapsedLabel = turn.kind === "finished" ? FINISHED_LABEL : ELAPSED_LABEL
 
   return (
     <div className={styles["dispatch-row"]}>
-      {turnInProgress ? (
+      {turn.kind === "running" ? (
         <button
           type="button"
           className={styles["dispatch-send"]}
@@ -74,7 +83,7 @@ export function TurnStatus(): ReactElement {
       )}
       <span className={styles["dispatch-elapsed-row"]}>
         <span>{elapsedLabel}</span>:{" "}
-        <span className={styles["dispatch-elapsed"]}>{elapsedText}</span>
+        <span className={styles["dispatch-elapsed"]}>{elapsedText(turn, now)}</span>
       </span>
     </div>
   )

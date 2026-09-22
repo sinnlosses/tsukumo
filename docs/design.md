@@ -544,18 +544,19 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 `SessionState`（`src/shared/session-state.ts`）が持つのは次のもの。
 
-| 追加                                                               | 出どころ                                   | 理由                                                                |
-| ------------------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------- |
-| `turnStartedAt` / `turnFinishedAt`                                 | `request` / `turn-finished` の `at`        | `at` がイベントに乗るので、畳み込みの中で持てる                     |
-| `tasks`                                                            | `tasks-changed`                            | サイドバー                                                          |
-| `character`（`name`・`portraits`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）              |
-| `workspace`（`source`・`workdir`）                                 | `workspace`                                | サイドバーの「作業先」「ブランチ」「コードの出所」                  |
-| `connection`                                                       | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い） |
+| 追加                                                               | 出どころ                                   | 理由                                                                                                  |
+| ------------------------------------------------------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `turn`（`idle` / `running` / `finished`）                          | `request` / `turn-finished` の `at`        | `at` がイベントに乗るので、畳み込みの中で持てる。**時刻は状態の側**（起きない組み合わせを型から消す） |
+| `tasks`                                                            | `tasks-changed`                            | サイドバー                                                                                            |
+| `character`（`name`・`portraits`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）                                                |
+| `workspace`（`source`・`workdir`）                                 | `workspace`                                | サイドバーの「作業先」「ブランチ」「コードの出所」                                                    |
+| `connection`                                                       | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い）                                   |
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
 `MAX_SESSION_VIEW_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。
 
-**経過時間の表示**は `turnStartedAt` / `turnFinishedAt` から browser が計算する（1秒ごとの刻みは browser の
+**経過時間の表示**は `turn` が持つ時刻（`running` の `startedAt`、`finished` の `startedAt` /
+`finishedAt`）から browser が計算する（1秒ごとの刻みは browser の
 ローカルな時計。`SessionState` に秒数は入れない）。
 
 ### 4.3 ClientCommand
@@ -840,7 +841,7 @@ type SessionHost = {
 | 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `browser/stores/turn-selection.tsx` の Context（メインビューとキャラビューの両方が読む。規則は同じ）                                                                           |
 | 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                    |
 | 質問の選択（送る前）                                             | `<PendingAnswer>` のローカル状態                                                                                                                                               |
-| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turnStartedAt` から計算）                                                                                                                       |
+| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                 |
 | 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                              |
 | 出している画面（会話 / キャラクター / 作る）                     | `location.hash`（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）                                                                 |
 
@@ -907,7 +908,7 @@ react-markdown
 - **まばたき・表情のクロスフェード・部分の動きは作らない**（素材の構造に依存するため）。
   Lottie / Live2D も同じ理由で採らない
 - **動くのは利用者の注意が空いているときだけ。** `<Portrait>` は `SessionState` の
-  `turnInProgress` / `runningTools` / `turnFinishedAt` から「いま読んでいるか、待っているか」を
+  `turn` / `runningTools` から「いま読んでいるか、待っているか」を
   決め、**読んでいる間は呼吸だけに落とす**
 - 作るのは4つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に
   領域の中をゆっくり歩く）/ **完了の反応**（小さく跳ねる）/ **失敗でびくっ**（一瞬のけぞる）

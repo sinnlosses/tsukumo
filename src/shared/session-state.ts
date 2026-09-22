@@ -114,6 +114,25 @@ export type SessionRecord =
   | { readonly kind: "compact-boundary" }
 
 /**
+ * ターンの進み具合。`request` で `running` になり、`turn-finished` / `session-ended` で
+ * `finished` になる（入力欄が送信と中断を切り替える判断材料。docs/requirements.md 4.7）。
+ *
+ * - `idle`: まだ一度も依頼が無い
+ * - `running`: 依頼を送って、まだ終わっていない
+ * - `finished`: 終わった。**`startedAt` は次の `request` まで持ち続ける**
+ *   （入力欄の経過時間表示 `src/browser/features/dispatch/turn-status.tsx` が「所要」として
+ *   出し続ける。docs/design.md 4.2）
+ *
+ * 「進行中か」「始まった時刻」「終わった時刻」の3つを並べて持つと、**型としては書けるのに
+ * 起きない組み合わせ**（終わっているのに始まっていない、進行中なのに終わった時刻がある）が
+ * 残るので1つの合併型にしてある（docs/coding-standards.md「複数の「無い」が1つの状態」）。
+ */
+export type TurnProgress =
+  | { readonly kind: "idle" }
+  | { readonly kind: "running"; readonly startedAt: number }
+  | { readonly kind: "finished"; readonly startedAt: number; readonly finishedAt: number }
+
+/**
  * セッションの今の姿。**イベントを1件ずつ畳んで作る**ので、ここに無い情報は画面にも出ない。
  *
  * `partialUtterance` は書きかけの本文で、完成した本文（`utterance`）が来たら空に戻る。
@@ -173,11 +192,8 @@ export type SessionState = {
   readonly commandDescriptions: readonly CommandDescription[]
   /** セッションが終わった理由。動いている間は undefined。 */
   readonly endedReason: string | undefined
-  /**
-   * ターンが進行中か。`request` で始まり、`turn-finished` / `session-ended` で終わる
-   * （入力欄が送信と中断を切り替える判断材料。docs/requirements.md 4.7）。
-   */
-  readonly turnInProgress: boolean
+  /** ターンの進み具合（{@link TurnProgress}）。始まった時刻・終わった時刻もここが持つ。 */
+  readonly turn: TurnProgress
   /**
    * 次に始まるターンに振る通し番号。**ターンが始まるたびに1つ増え、記録が窓から落ちても
    * 戻らない**ので、**同じターンはセッションが続くかぎり同じ番号**になる。
@@ -213,24 +229,12 @@ export type SessionState = {
    */
   readonly sessions: readonly SessionChoice[]
   /**
-   * 今のターンが始まった時刻（`request` の `at`）。表す意味は「依頼を送ってから、そのターンが
-   * 終わるまでの時間」の起点で、次の `request` まではそのまま持ち続ける（入力欄の経過時間表示
-   * `src/browser/features/dispatch/turn-status.tsx` が使う。docs/design.md 4.2）。まだ一度も依頼が無ければ
-   * undefined。
-   */
-  readonly turnStartedAt: number | undefined
-  /**
-   * 今のターンが終わった時刻（`turn-finished` / `session-ended` の `at`）。**`request` で
-   * undefined に戻る**（次のターンが始まったら経過時間を0から数え直す）。終わっていない間は
-   * undefined。
-   */
-  readonly turnFinishedAt: number | undefined
-  /**
    * 直近でツールが失敗した時刻（`tool-finished` の `isError` が true のときの `at`）。
    * **立ち絵の「失敗でびくっ」の判定にだけ使う**（`shared/portrait-motion.ts` の
    * `resolvePortraitMotion`）。次のターンが始まっても戻さない（時間の窓が過ぎれば
-   * `resolvePortraitMotion` 側で自然に「今は失敗直後ではない」に戻るため、`turnFinishedAt`
-   * と違って `request` での巻き戻しは要らない）。まだ一度も失敗していなければ undefined。
+   * `resolvePortraitMotion` 側で自然に「今は失敗直後ではない」に戻るため、`turn` が持つ
+   * 終わった時刻と違って `request` での巻き戻しは要らない）。まだ一度も失敗していなければ
+   * undefined。
    */
   readonly lastToolFailureAt: number | undefined
   /**
@@ -271,14 +275,12 @@ export const INITIAL_SESSION_STATE: SessionState = {
   slashCommands: [],
   commandDescriptions: [],
   endedReason: undefined,
-  turnInProgress: false,
+  turn: { kind: "idle" },
   nextTurnId: 0,
   tasks: undefined,
   character: undefined,
   characterPacks: [],
   sessions: [],
-  turnStartedAt: undefined,
-  turnFinishedAt: undefined,
   lastToolFailureAt: undefined,
   workspace: undefined,
   workspaceNotices: [],
@@ -398,14 +400,13 @@ export function applySessionEvent(
       }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished":
-      return { ...settleUtterance(state), turnInProgress: false, turnFinishedAt: at }
+      return { ...settleUtterance(state), turn: finishTurn(state.turn, at) }
     case "session-ended":
       return {
         ...settleUtterance(state),
         endedReason: event.reason,
         runningTools: [],
-        turnInProgress: false,
-        turnFinishedAt: at,
+        turn: finishTurn(state.turn, at),
       }
     case "conversation-cleared":
       // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**。
@@ -478,12 +479,23 @@ function beginTurn(state: SessionState, at: number): SessionState {
     // （表情の源は `speak` の1つだけ。docs/requirements.md 4.3）。
     speechExpression: INITIAL_SESSION_STATE.speechExpression,
     partialUtterance: "",
-    turnInProgress: true,
+    turn: { kind: "running", startedAt: at },
     nextTurnId: state.nextTurnId + 1,
     speechCalledInTurn: false,
-    turnStartedAt: at,
-    turnFinishedAt: undefined,
   }
+}
+
+/**
+ * ターンの終わりを畳む（`turn-finished` と `session-ended` で共通）。**始まっていないターンは
+ * 終われない**ので、まだ一度も依頼が無ければ `idle` のまま返す（依頼より先に `session-ended`
+ * が届く経路がある。そこでは立ち絵の「完了の反応」も出さない）。終わったあとにもう一度
+ * 届いたときは、起点を動かさずに終わった時刻だけ進める。
+ */
+function finishTurn(turn: TurnProgress, at: number): TurnProgress {
+  if (turn.kind === "idle") {
+    return turn
+  }
+  return { kind: "finished", startedAt: turn.startedAt, finishedAt: at }
 }
 
 /**

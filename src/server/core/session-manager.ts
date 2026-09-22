@@ -457,7 +457,7 @@ function createSessionHost(
       if (command.type === "switch-character") {
         // 画面の `<select>` は進行中に無効化するが、ここでも同じ条件で弾く
         // （画面を経ない依頼・無効化の描画が間に合わなかったときの取りこぼし対策）。
-        if (state.turnInProgress) {
+        if (state.turn.kind === "running") {
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
         }
         // **雑談かどうかは切り替えをまたいで保つ**（パックを変えただけで仕事へ戻らない）。
@@ -471,7 +471,7 @@ function createSessionHost(
       }
       if (command.type === "set-chat-mode") {
         // 起こし直しなので `switch-character` と同じ条件で弾く。
-        if (state.turnInProgress) {
+        if (state.turn.kind === "running") {
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
         }
         // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
@@ -486,7 +486,7 @@ function createSessionHost(
       if (command.type === "switch-session") {
         // 起こし直しなので `switch-character` と同じ条件で弾く（理由の文面だけは、何が
         // 切り替わらなかったかで分ける）。
-        if (state.turnInProgress) {
+        if (state.turn.kind === "running") {
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
         }
         // **キャラクターもモードもいま出しているまま**（変わるのは、どの transcript の続きから
@@ -506,7 +506,7 @@ function createSessionHost(
         if (!state.chatMode) {
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.nudgeOutsideChat })
         }
-        if (state.turnInProgress) {
+        if (state.turn.kind === "running") {
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.nudgeDuringTurn })
         }
         return nudge(driver)

@@ -90,7 +90,7 @@ describe("SessionInfo", () => {
 
   it("ターン進行中はキャラクターの <select> が無効になり、理由が title に出る", () => {
     renderSessionInfo({
-      turnInProgress: true,
+      turn: { kind: "running", startedAt: 0 },
       characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
     })
@@ -102,7 +102,7 @@ describe("SessionInfo", () => {
 
   it("ターンが終わるとキャラクターの <select> は有効に戻る", () => {
     renderSessionInfo({
-      turnInProgress: false,
+      turn: { kind: "idle" },
       characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
     })
@@ -113,7 +113,7 @@ describe("SessionInfo", () => {
   })
 
   it("ターン進行中でもモデル・許可モードの <select> は無効にしない（会話は消えないため）", () => {
-    renderSessionInfo({ turnInProgress: true })
+    renderSessionInfo({ turn: { kind: "running", startedAt: 0 } })
 
     expect((screen.getByLabelText("モデル") as HTMLSelectElement).disabled).toBe(false)
     expect((screen.getByLabelText("許可モード") as HTMLSelectElement).disabled).toBe(false)
@@ -142,7 +142,7 @@ describe("SessionInfo", () => {
   it("ターン進行中はモードの <select> が無効になり、理由が title に出る", () => {
     // 切り替えは駆動の起こし直しで画面が初期化されるので、キャラクターの <select> と
     // 同じ条件で塞ぐ（docs/requirements.md 4.9）。
-    renderSessionInfo({ turnInProgress: true })
+    renderSessionInfo({ turn: { kind: "running", startedAt: 0 } })
 
     const select = screen.getByLabelText("モード") as HTMLSelectElement
     expect(select.disabled).toBe(true)
@@ -150,7 +150,7 @@ describe("SessionInfo", () => {
   })
 
   it("ターンが終わるとモードの <select> は有効に戻る", () => {
-    renderSessionInfo({ turnInProgress: false })
+    renderSessionInfo({ turn: { kind: "idle" } })
 
     const select = screen.getByLabelText("モード") as HTMLSelectElement
     expect(select.disabled).toBe(false)

@@ -53,14 +53,15 @@ const DEFAULT_PAST_TURN_EXPRESSION = "default"
  * 1回だけ先のタイマーを立てる形だと、`nextPortraitMotionTransitionDelayMs` が返すのは
  * **いちばん早く終わる窓**だけなので、そのタイマーが1回発火して `now` を進めたあとに
  * **もう一方の窓がまだ残っていても、次のタイマーが立たないまま止まってしまう**
- * （`lastToolFailureAt` / `turnFinishedAt` 自体はその後変わらないので、依存配列だけを見ている
+ * （`lastToolFailureAt` / `turn` 自体はその後変わらないので、依存配列だけを見ている
  * 素朴な1回きりのタイマーでは再計算のきっかけが無い）。そこで、**タイマーが発火するたびに
  * 自分で次の窓までの遅延を計算し直して、無くなるまで立て直す**。
  */
 function useNowForPortraitMotion(input: PortraitMotionInput): number {
-  // 材料の3つは分解して受ける（入れ物ごと依存にすると、中身が同じでもレンダーのたびに
-  // 別物になり、タイマーを張り直してしまう）。
-  const { turnInProgress, turnFinishedAt, lastToolFailureAt } = input
+  // 材料は分解して受ける（`input` の入れ物ごと依存にすると、中身が同じでもレンダーのたびに
+  // 別物になり、タイマーを張り直してしまう）。**`turn` は入れ物だが姿が持っているものそのもの**
+  // で、進み具合が変わったときだけ入れ替わるので依存にしてよい。
+  const { turn, lastToolFailureAt } = input
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   useEffect(() => {
@@ -68,7 +69,7 @@ function useNowForPortraitMotion(input: PortraitMotionInput): number {
 
     const scheduleNext = (): void => {
       const delay = nextPortraitMotionTransitionDelayMs(
-        { turnInProgress, turnFinishedAt, lastToolFailureAt },
+        { turn, lastToolFailureAt },
         nowEpochMilliseconds(),
       )
       if (delay === undefined) {
@@ -86,7 +87,7 @@ function useNowForPortraitMotion(input: PortraitMotionInput): number {
         clearTimeout(timer)
       }
     }
-  }, [turnInProgress, turnFinishedAt, lastToolFailureAt])
+  }, [turn, lastToolFailureAt])
 
   return now
 }
@@ -120,8 +121,7 @@ export function CharacterView(): ReactElement {
   const speechExpression = useSessionSelector((session) => session.state.speechExpression)
   const model = useSessionSelector((session) => session.state.model)
   const character = useSessionSelector((session) => session.state.character)
-  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
-  const turnFinishedAt = useSessionSelector((session) => session.state.turnFinishedAt)
+  const turn = useSessionSelector((session) => session.state.turn)
   const lastToolFailureAt = useSessionSelector((session) => session.state.lastToolFailureAt)
   const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
@@ -130,7 +130,7 @@ export function CharacterView(): ReactElement {
       ? speechExpression
       : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
   const outfit = resolveOutfit(model)
-  const motion = usePortraitMotion({ turnInProgress, turnFinishedAt, lastToolFailureAt })
+  const motion = usePortraitMotion({ turn, lastToolFailureAt })
 
   const portraitUrl =
     character === undefined ? undefined : resolvePortraitUrl(character.portraits, expression)

@@ -27,9 +27,9 @@
     "loopable": "Y",
     "dependencies": ["T-307"],
     "summary": "ターンの進み具合を1つの合併型にする",
-    "status": "todo",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（1287 pass / 0 fail / 103ファイル。「始まっていないターンは session-ended でも idle のまま」を1件追加）。src/shared/session-state.ts は turn: TurnProgress の1つになり turnInProgress/turnStartedAt/turnFinishedAt は消えた（PROTOCOL_VERSION 2→3）。目視: macOS の Chrome(1400x900) で fake driver を空きポートで起こし、data-motion と入力欄を時系列で実測 — 初期 reading・「経過: -」／進行中 waiting・0→2→3→4秒と増える／ツール失敗の直後 0.4秒だけ failure／終了直後 success で0.7秒後に reading、ラベルは「所要: 4秒」になり次の依頼まで残る。",
     "task": "## 背景\n\n`src/shared/session-state.ts:194,200` の `turnStartedAt` / `turnFinishedAt` と\n`turnInProgress: boolean` の3つが、**1つの状態（ターンの進み具合）**を表している。\n`src/shared/portrait-motion.ts:20` にも同じ写しがある。\n\nこれは `docs/coding-standards.md`「### 複数の「無い」が1つの状態」の**「避ける」例が\nそのままの形で生き残っている**箇所で、いまの型は「`turnFinishedAt` があるのに\n`turnInProgress` が true」のような**書けるのに起きない組み合わせ**を許している\n（調査は `docs/research/undefined-reduction.md` 2.1 の #2 #3）。\n\n**減る行数は2行だが、書き換わる行数は十数行**。得は行数ではなく、ありえない組み合わせが\n型から消えること。`turnInProgress` を `boolean` として読んでいるのは\n`src/server/core/session-manager.ts:382,392,408` / `src/shared/main-view.ts:161` /\n`src/browser/features/sidebar/session-info.tsx:111` など6箇所以上ある。\n\n## 解くべき論点\n\n- `finished` の状態が `startedAt` を持ち続けるか。いまは `turnStartedAt` が\n  「次の `request` まではそのまま持ち続ける」契約で、入力欄の経過時間表示が使っている\n  （`src/browser/features/dispatch/turn-status.tsx`）\n- `idle`（まだ一度も依頼が無い）と `finished`（終わった）を分けるか。\n  いまは `turnStartedAt === undefined` で区別している\n- 立ち絵の動き（`portrait-motion.ts`）が4つの動きをどう選んでいるか。合併型にしたとき\n  同じ分岐が保てるか\n\n## やること\n\n1. 3つのフィールドを **`turn: { kind: \"idle\" } | { kind: \"running\"; startedAt } |\n   { kind: \"finished\"; startedAt; finishedAt }`** の判別可能な合併型にする\n2. `turnInProgress` を読んでいる6箇所以上を `state.turn.kind === \"running\"` に読み替える\n3. `src/shared/portrait-motion.ts` が同じ形を受け取るようにする\n4. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts` から `turnStartedAt` / `turnFinishedAt` の `| undefined` が\n  消え、`turnInProgress: boolean` が無くなっている\n- **目視確認**: tsukumo を起こし、(1) 立ち絵の4つの動きが従来どおり切り替わる、\n  (2) 入力欄の経過時間がターン中に増えてターン後も残る、(3) ターン開始前の初期状態で\n  経過時間が出ない——の3つを確かめて `evidence` に書く（どの端末で何が見えたか）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **`SessionState` を触る3つのタスク（これと `init` の3点・ツールの結果と本文）は\n  並行させない。** `dependencies` で直列にしてある\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n  （`~/.tsukumo/state.json` が共有される）\n"
   },
   {

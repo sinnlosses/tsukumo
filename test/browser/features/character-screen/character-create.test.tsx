@@ -36,10 +36,10 @@ function characterCreate(
   character: SessionState["character"],
   dispatch: CommandSpy = () => {},
   packs: readonly CharacterPackChoice[] = FIXTURE_PACKS,
-  turnInProgress = false,
+  turn: SessionState["turn"] = { kind: "idle" },
 ): ReactElement {
   const store = sessionStoreWith(
-    { ...INITIAL_SESSION_STATE, character, characterPacks: packs, turnInProgress },
+    { ...INITIAL_SESSION_STATE, character, characterPacks: packs, turn },
     dispatch,
   )
   return (
@@ -201,7 +201,12 @@ describe("CharacterCreate", () => {
     const view = renderCharacterCreate(FIXTURE_CHARACTER)
     await fillForm("fictional-2")
     fireEvent.click(submitButton())
-    view.rerender(characterCreate(FIXTURE_CHARACTER, () => {}, packsWith("fictional-2"), true))
+    view.rerender(
+      characterCreate(FIXTURE_CHARACTER, () => {}, packsWith("fictional-2"), {
+        kind: "running",
+        startedAt: 0,
+      }),
+    )
 
     const button = screen.getByRole("button", {
       name: "このキャラクターに切り替える",

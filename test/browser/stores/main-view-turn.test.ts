@@ -21,14 +21,14 @@ describe("mainViewTurnsOf", () => {
     expect(mainViewTurnsOf(FIXTURE_STATE)).toBe(mainViewTurnsOf(FIXTURE_STATE))
   })
 
-  // 背景の仕事を待って黙ると `turn-finished` が届いて `turnInProgress` が落ちる。通知で
+  // 背景の仕事を待って黙ると `turn-finished` が届いてターンが `finished` に落ちる。通知で
   // 再開したぶんは新しい依頼ではないので二度と立たず、そこから伸びる本文が「確定済み」として
   // 1文字目から出ていた（書き上げる演出が数十文字ぶんで終わり、ミニ立ち絵が本文の途中に残った）。
   it("ターンが終わった印でも、書きかけがあるあいだは締めの本文を出さない", () => {
     const writing: SessionState = {
       ...FIXTURE_STATE,
       records: [{ kind: "request", turnId: 0, text: "架空の依頼", images: [] }],
-      turnInProgress: false,
+      turn: { kind: "finished", startedAt: 0, finishedAt: 100 },
       partialUtterance: "架空の書きかけ",
     }
 

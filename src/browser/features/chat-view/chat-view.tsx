@@ -92,7 +92,7 @@ export function ChatView(): ReactElement {
   const speechExpression = useSessionSelector((session) => session.state.speechExpression)
   const model = useSessionSelector((session) => session.state.model)
   const character = useSessionSelector((session) => session.state.character)
-  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
   const entries = chatLogEntries(records)
   const outfit = resolveOutfit(model)
 

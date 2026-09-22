@@ -426,13 +426,13 @@ describe("applySessionEvent", () => {
   })
 
   it("request でターンが進行中になり、turn-finished で止まる（入力欄の送信/中断の切り替えに使う）", () => {
-    expect(INITIAL_SESSION_STATE.turnInProgress).toBe(false)
+    expect(INITIAL_SESSION_STATE.turn.kind).toBe("idle")
 
     const started = apply({ kind: "request", text: "ダミーの依頼", images: [] })
-    expect(started.turnInProgress).toBe(true)
+    expect(started.turn.kind).toBe("running")
 
     const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" }, 0)
-    expect(finished.turnInProgress).toBe(false)
+    expect(finished.turn.kind).toBe("finished")
   })
 
   it("turn-started はターンを始めるが、記録を1件も積まない（話しかけてもらった一言を残さない）", () => {
@@ -447,8 +447,7 @@ describe("applySessionEvent", () => {
     // メインビューにも出ようが無い。docs/design.md 13.7）。
     expect(started.records).toEqual(spoken.records)
     // ターンの始まりとしての効き目は `request` と同じ。
-    expect(started.turnInProgress).toBe(true)
-    expect(started.turnStartedAt).toBe(700)
+    expect(started.turn).toEqual({ kind: "running", startedAt: 700 })
     expect(started.speeches).toEqual([])
     expect(started.speechExpression).toBe("default")
     expect(started.speechCalledInTurn).toBe(false)
@@ -463,36 +462,42 @@ describe("applySessionEvent", () => {
       0,
     )
 
-    expect(ended.turnInProgress).toBe(false)
+    expect(ended.turn.kind).toBe("finished")
   })
 
-  it("request で turnStartedAt を打ち、turn-finished で turnFinishedAt が止まる（入力欄の経過時間表示に使う）", () => {
-    expect(INITIAL_SESSION_STATE.turnStartedAt).toBeUndefined()
-    expect(INITIAL_SESSION_STATE.turnFinishedAt).toBeUndefined()
+  it("request で起点を打ち、turn-finished で終わった時刻が止まる（入力欄の経過時間表示に使う）", () => {
+    expect(INITIAL_SESSION_STATE.turn).toEqual({ kind: "idle" })
 
     const started = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "request", text: "ダミーの依頼", images: [] },
       100,
     )
-    expect(started.turnStartedAt).toBe(100)
-    expect(started.turnFinishedAt).toBeUndefined()
+    expect(started.turn).toEqual({ kind: "running", startedAt: 100 })
 
     const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" }, 300)
-    expect(finished.turnStartedAt).toBe(100)
-    expect(finished.turnFinishedAt).toBe(300)
+    expect(finished.turn).toEqual({ kind: "finished", startedAt: 100, finishedAt: 300 })
 
-    // 次の依頼で0から数え直す（turnFinishedAt が undefined に戻る）。
+    // 次の依頼で0から数え直す（`running` に戻るので、終わった時刻はもう持たない）。
     const restarted = applySessionEvent(
       finished,
       { kind: "request", text: "次の依頼", images: [] },
       400,
     )
-    expect(restarted.turnStartedAt).toBe(400)
-    expect(restarted.turnFinishedAt).toBeUndefined()
+    expect(restarted.turn).toEqual({ kind: "running", startedAt: 400 })
   })
 
-  it("session-ended でも turnFinishedAt を打つ（中断・異常終了でも経過時間表示が止まる）", () => {
+  it("始まっていないターンは session-ended でも終わらない（idle のまま）", () => {
+    const ended = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "session-ended", reason: "セッションが終了した" },
+      250,
+    )
+
+    expect(ended.turn).toEqual({ kind: "idle" })
+  })
+
+  it("session-ended でも終わった時刻を打つ（中断・異常終了でも経過時間表示が止まる）", () => {
     const started = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "request", text: "ダミーの依頼", images: [] },
@@ -505,8 +510,7 @@ describe("applySessionEvent", () => {
       250,
     )
 
-    expect(ended.turnStartedAt).toBe(100)
-    expect(ended.turnFinishedAt).toBe(250)
+    expect(ended.turn).toEqual({ kind: "finished", startedAt: 100, finishedAt: 250 })
   })
 
   it("tool-finished が isError:true のとき lastToolFailureAt にその時刻を打つ（立ち絵の「失敗でびくっ」の材料）", () => {

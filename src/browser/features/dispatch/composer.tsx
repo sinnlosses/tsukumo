@@ -137,7 +137,7 @@ export function Composer(): ReactElement {
   const dispatch = useSessionDispatch()
   const characterName = useSessionSelector((session) => session.state.character?.name)
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
-  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
   const slashCommands = useSessionSelector((session) => session.state.slashCommands)
   const commandDescriptions = useSessionSelector((session) => session.state.commandDescriptions)
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)

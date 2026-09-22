@@ -46,7 +46,7 @@ export function SessionSwitch(): ReactElement | null {
   const dispatch = useSessionDispatch()
   const sessions = useSessionSelector((session) => session.state.sessions)
   const currentSessionId = useSessionSelector((session) => session.state.sessionId)
-  const turnInProgress = useSessionSelector((session) => session.state.turnInProgress)
+  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
 
   if (sessions.length === 0) {
     return null

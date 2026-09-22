@@ -6,18 +6,19 @@
 // 移動」にする。ターンが終わった直後・ツールが失敗した直後は、それぞれ一時的に「完了の反応」
 // 「失敗でびくっ」を優先して返す（優先順位は {@link resolvePortraitMotion} 参照）。
 
+import { type TurnProgress } from "./session-state.ts"
+
 /** 立ち絵がいまとる動き。CSS 側は `data-motion` としてこの値をそのまま受け取る。 */
 export type PortraitMotion = "reading" | "waiting" | "success" | "failure"
 
 /**
- * {@link resolvePortraitMotion} が要る材料。`SessionState` のうち、判定に要る3つだけを
- * 抜き出した形（`shared/session-state.ts` にある `turnInProgress` / `turnFinishedAt` に加え、
- * ツールの失敗を拾うための `lastToolFailureAt`）。
+ * {@link resolvePortraitMotion} が要る材料。`SessionState` のうち、判定に要る2つだけを
+ * 抜き出した形（`shared/session-state.ts` の `turn` に加え、ツールの失敗を拾うための
+ * `lastToolFailureAt`）。
  */
 export type PortraitMotionInput = {
-  readonly turnInProgress: boolean
-  /** ターンが終わった時刻。終わっていない・まだ一度もターンが無ければ undefined。 */
-  readonly turnFinishedAt: number | undefined
+  /** ターンの進み具合。「待っている間の移動」と「完了の反応」の両方をここから決める。 */
+  readonly turn: TurnProgress
   /** 直近でツールが失敗した時刻。まだ一度も失敗していなければ undefined。 */
   readonly lastToolFailureAt: number | undefined
 }
@@ -44,14 +45,10 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
   ) {
     return "failure"
   }
-  if (
-    !input.turnInProgress &&
-    input.turnFinishedAt !== undefined &&
-    now - input.turnFinishedAt < SUCCESS_MOTION_WINDOW_MS
-  ) {
+  if (input.turn.kind === "finished" && now - input.turn.finishedAt < SUCCESS_MOTION_WINDOW_MS) {
     return "success"
   }
-  return input.turnInProgress ? "waiting" : "reading"
+  return input.turn.kind === "running" ? "waiting" : "reading"
 }
 
 /**
@@ -73,9 +70,9 @@ export function nextPortraitMotionTransitionDelayMs(
     input.lastToolFailureAt === undefined
       ? undefined
       : input.lastToolFailureAt + FAILURE_MOTION_WINDOW_MS - now,
-    input.turnFinishedAt === undefined
-      ? undefined
-      : input.turnFinishedAt + SUCCESS_MOTION_WINDOW_MS - now,
+    input.turn.kind === "finished"
+      ? input.turn.finishedAt + SUCCESS_MOTION_WINDOW_MS - now
+      : undefined,
   ].filter((ms): ms is number => ms !== undefined && ms > 0)
   return remaining.length === 0 ? undefined : Math.min(...remaining)
 }
