@@ -22435,3 +22435,328 @@ bun run check: 1284 pass / 0 fail / 2565 expect / 103 files（受け入れ側で
 - 帯に `<select>` やボタンを置かない（13.6）
 - 新しい色・新しい文字サイズを足さない（13.2 の4つ / 13.3 の4段のまま）
 - **帯の寸法はこのタスクでは触らない**（T-364 が変える。同じ CSS を2件で触らないため）
+
+## T-310
+
+**タスク**: ターンの進み具合を1つの合併型にする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-307 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1287 pass / 0 fail / 103ファイル。「始まっていないターンは session-ended でも idle のまま」を1件追加）。src/shared/session-state.ts は turn: TurnProgress の1つになり turnInProgress/turnStartedAt/turnFinishedAt は消えた（PROTOCOL_VERSION 2→3）。目視: macOS の Chrome(1400x900) で fake driver を空きポートで起こし、data-motion と入力欄を時系列で実測 — 初期 reading・「経過: -」／進行中 waiting・0→2→3→4秒と増える／ツール失敗の直後 0.4秒だけ failure／終了直後 success で0.7秒後に reading、ラベルは「所要: 4秒」になり次の依頼まで残る。
+
+## 背景
+
+`src/shared/session-state.ts:194,200` の `turnStartedAt` / `turnFinishedAt` と
+`turnInProgress: boolean` の3つが、**1つの状態（ターンの進み具合）**を表している。
+`src/shared/portrait-motion.ts:20` にも同じ写しがある。
+
+これは `docs/coding-standards.md`「### 複数の「無い」が1つの状態」の**「避ける」例が
+そのままの形で生き残っている**箇所で、いまの型は「`turnFinishedAt` があるのに
+`turnInProgress` が true」のような**書けるのに起きない組み合わせ**を許している
+（調査は `docs/research/undefined-reduction.md` 2.1 の #2 #3）。
+
+**減る行数は2行だが、書き換わる行数は十数行**。得は行数ではなく、ありえない組み合わせが
+型から消えること。`turnInProgress` を `boolean` として読んでいるのは
+`src/server/core/session-manager.ts:382,392,408` / `src/shared/main-view.ts:161` /
+`src/browser/features/sidebar/session-info.tsx:111` など6箇所以上ある。
+
+## 解くべき論点
+
+- `finished` の状態が `startedAt` を持ち続けるか。いまは `turnStartedAt` が
+  「次の `request` まではそのまま持ち続ける」契約で、入力欄の経過時間表示が使っている
+  （`src/browser/features/dispatch/turn-status.tsx`）
+- `idle`（まだ一度も依頼が無い）と `finished`（終わった）を分けるか。
+  いまは `turnStartedAt === undefined` で区別している
+- 立ち絵の動き（`portrait-motion.ts`）が4つの動きをどう選んでいるか。合併型にしたとき
+  同じ分岐が保てるか
+
+## やること
+
+1. 3つのフィールドを **`turn: { kind: "idle" } | { kind: "running"; startedAt } |
+   { kind: "finished"; startedAt; finishedAt }`** の判別可能な合併型にする
+2. `turnInProgress` を読んでいる6箇所以上を `state.turn.kind === "running"` に読み替える
+3. `src/shared/portrait-motion.ts` が同じ形を受け取るようにする
+4. `!` や `as` で潰さない
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `src/shared/session-state.ts` から `turnStartedAt` / `turnFinishedAt` の `| undefined` が
+  消え、`turnInProgress: boolean` が無くなっている
+- **目視確認**: tsukumo を起こし、(1) 立ち絵の4つの動きが従来どおり切り替わる、
+  (2) 入力欄の経過時間がターン中に増えてターン後も残る、(3) ターン開始前の初期状態で
+  経過時間が出ない——の3つを確かめて `evidence` に書く（どの端末で何が見えたか）
+
+## 注意
+
+- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）
+- **`SessionState` を触る3つのタスク（これと `init` の3点・ツールの結果と本文）は
+  並行させない。** `dependencies` で直列にしてある
+- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない
+  （`~/.tsukumo/state.json` が共有される）
+
+## T-311
+
+**タスク**: init がまだ届いていない状態を合併型にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-307, T-310 / **passes**: True
+
+**evidence**:
+
+bun run check 1226 pass / 0 fail（99ファイル）。sessionId / permissionMode を SessionInfo（starting / identified / running）に畳んだが、**model は外に残した** —— init と model-changed の2つの口で決まり sessionId より先に分かるため（running に入れた形を実機で試したら 2026-09-17 と同じ「切り替えても古い値に戻る」不具合が再発。回帰テストあり）。そのため完了条件の「| undefined が3行とも消えている」は2行まで。目視（ポート7411・TSUKUMO_HOME を分けて起動）: (1) 起動直後にセッション情報の5行が崩れず描画、(2) 依頼1件のあと モデル Sonnet / 許可モード 自動判定 / セッション 7411・9/23 02:05 が出て / 補完も埋まった（init 適用の証拠）、(3) 依頼前に sonnet・init 後に haiku へ切り替えて6秒後も保持。
+
+## 背景
+
+`src/shared/session-state.ts:143,144,145` の `sessionId` / `model` / `permissionMode` は
+3つとも `| undefined` で、**「`init` がまだ届いていない」という1つの状態**を表している。
+偽の駆動側（`src/server/adapter/fake-driver.ts:206,207`）にも `model` / `permissionMode` の
+同じ写しがある。
+
+`docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所
+（調査は `docs/research/undefined-reduction.md` 2.1 の #4 #8）。
+
+## やること
+
+1. 3つを **`session: { kind: "starting" } | { kind: "running"; sessionId; model;
+   permissionMode }`** の判別可能な合併型にする
+2. `src/server/adapter/fake-driver.ts:206,207` の写しを同じ形に合わせる
+3. 読む側（サイドバーのセッション情報・モデル切り替え）を `session.kind` の分岐に直す
+4. `!` や `as` で潰さない
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `src/shared/session-state.ts` から `sessionId` / `model` / `permissionMode` の
+  `| undefined` が3行とも消えている
+- **目視確認**: tsukumo を起こし、(1) 起動直後にサイドバーがセッション情報の欄で崩れない、
+  (2) `init` 到着後にセッションID・モデル・許可モードが出る、(3) サイドバーからモデルを
+  切り替えると即座に反映される——の3つを確かめて `evidence` に書く
+
+## 注意
+
+- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）
+- **`SessionState` を触る3つのタスクは並行させない。** `dependencies` で直列にしてある
+- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない
+
+## T-329
+
+**タスク**: 雑談のログの末尾の行を、育つ吹き出しにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1237 pass / 0 fail（100ファイル）。目視は TSUKUMO_VIEW_PORT=7341 + TSUKUMO_HOME=/tmp/tsukumo-t329 で起こし、1400x900 は末尾の吹き出しが約31ms/文字で育ち、育つ間だけ筆先（accent 2px）が立って出し切ると data-growing が消えた。760x900 は行の高さが 47px→73.7px へ伸び、開いた時点の2件は育たず新着1件だけが育った。育つ最中に押すとその場で全文になり遡らない（表情は動かない）。SessionEvent / SessionState は無改変。
+
+## 背景
+
+`src/browser/features/chat-view/chat-view.tsx`（343行）は立ち絵（`<Portrait>`）とログ
+（`<ChatLog>`）の2つだけを並べる。仕事のときのキャラビュー（`features/character-view/` の
+`<BalloonTrack>` / `<Balloon>`）は雑談では出ない（`docs/design.md` 13.7「吹き出しもメインの
+ログが引き受ける」）。
+
+**ログの行自体は吹き出しの見た目になっている** — `chat-view.module.css` の `.chat-entry` は
+角丸 1.1rem で、`.chat-entry-character` が `border-bottom-left-radius: 0.3rem` で尻尾を作る。
+**無いのは「その場で膨らむ吹き出し」のほう**で、仕事のときは新しいセリフがキャラビューの
+吹き出しに現れて立ち絵の隣で育つのに、雑談ではログの末尾に1行増えるだけになる。
+
+辛口レビューの指摘（2026-09-22、ユーザーが「刺さる」として採った）: 「立ち絵の横にログが並ぶ
+だけになり、絵が貼ってあるだけのメッセンジャーに見える。キャラクターと一緒に居る感じが
+いちばん要る場面で売りが引っ込んでいる」。
+
+書きかけの本文は `SessionState` の `partialUtterance` が持つ（`src/shared/session-state.ts`）が、
+**雑談ではレポートを出さないと決めている**（`docs/requirements.md` 4.9）ので、育てる材料は
+`speak` のセリフの側になる。セリフは `speech` イベントで1件まるごと届く
+（`shared/chat-log.ts` の `chatLogEntries`）。
+
+## 決まっていること（蒸し返さない）
+
+- **ログの末尾の行を育てる形を採る**（2026-09-22 ユーザーの選択）。最新のセリフを立ち絵の隣に
+  別の吹き出しとして出す案（ログと二重になる）と、立ち絵の動きの側だけで出す案は採らなかった
+- 枠は増やさない（13.1 原則2）。増えるのは末尾の行の振る舞いだけ
+
+## 解くべき論点
+
+- **セリフは1件まるごと届く**（`speak` の戻りが `"ok"` になる時点で全文がある）。「育つ」を
+  何で作るか — 文字を順に出す（`speech-cadence.ts` の間合いとは別の、ブラウザ側の見せ方）・
+  現れるときに大きさを変える・複数のセリフが続くときの積み方。**サーバの契約を変えるか、
+  ブラウザ側の見せ方だけで済むかを決める**
+- 「育つ」最中に利用者がその行を押したらどうするか（T-333 の印と表情の遡り）
+- 下端付近に居るときだけ寄せる自動スクロール（`NEAR_BOTTOM_THRESHOLD_PX`）と、育つ途中で
+  高さが伸びることの折り合い
+- キャラビューの `<Balloon>` を再利用すると `features/chat-view/` → `features/character-view/`
+  の import になり `test/architecture.test.ts` が落ちる。`components/` へ上げるか雑談側に別に
+  書くか
+
+## やること
+
+1. 上の論点を決め、**`docs/design.md` 13.7 に決めた形と採らなかった案の理由を書く**
+2. 決めた形を実装する
+3. `docs/requirements.md` 4.9 の表（「キャラビュー ＝ 畳む（立ち絵がメインへ移る）」）と
+   食い違うなら、その行も直す
+4. サーバの契約（`SessionEvent` / `SessionState`）を変えずに済むなら変えない。変えるなら
+   `docs/design.md` のプロトコルの節も直す
+
+## 完了条件
+
+- `bun run check` が通る
+- `docs/design.md` 13.7 に決めた形と、採らなかった2案の理由が書かれている
+- 目視: 雑談モードで依頼を送り、返ってきたセリフが決めた形で現れる。**1400x900 と 760px 以下の
+  両方**で確かめ、何が見えたかを evidence に書く
+
+## 注意
+
+- 返事待ちの「...」を出すタスク（T-335）がここで決めた場所を使う。決めた形を
+  `docs/design.md` 13.7 に書かないと後続が読めない
+- 雑談モードの目視確認は tsukumo を起こす必要がある（`~/.tsukumo/state.json` を共有するので、
+  他のセッションと並行させない。`CLAUDE.md`「## タスク運用」）
+
+## T-362
+
+**タスク**: タスクIDを押して、確認のあと実行の依頼を送る
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1232 pass / 0 fail / 100 files（新規 test/browser/features/task-board/task-run.test.tsx 9件）。新規 components/task-run-button.tsx・task-run-confirm.tsx、task-item.tsx と task-row.tsx が置く。目視（fake driver・TSUKUMO_HOME を分離）: 1400x900 の表と 720x900 のサイドバーで T-298 を押し、「T-298 を実行しますか」が表の上に重なり表は開いたまま・IDは点線の下線付き。OK は押していない。
+
+## 背景
+
+サイドバーのタスク一覧（`src/browser/features/task-board/components/task-item.tsx`）と、
+見出しの「一覧を見る」で開く表の行（`src/browser/features/task-board/components/task-row.tsx`）は、
+タスクIDを `<span className={styles["task-id"]}>` で出しているだけで押せない。いま一覧から
+タスクを実行するには、利用者が入力欄に `/next-task` を打ち直す必要がある。
+
+依頼を送る口は `useSessionDispatch()` の `dispatch({ type: "prompt", text, images })`
+（`src/browser/features/dispatch/composer.tsx` の `submit`）。**ブラウザはローカルで echo せず**、
+サーバから `request` イベントが返ってメインビューに依頼として並ぶ
+（`src/server/core/session-manager.ts` の `dispatchToDriver`、`src/shared/session-event.ts` の
+`kind: "request"`）ので、入力欄を経由しなくても打ったのと同じ見え方になる。
+
+モーダルの先例は `src/browser/hooks/use-modal-dialog.ts`（`<dialog>` を `open` に追随させる
+だけのフック）と、それを使う表（`features/task-board/hooks/use-task-board.ts` /
+`presentational-task-board.tsx`）。**表そのものがモーダルなので**、表から開く確認は
+`<dialog>` の重なりになる。
+
+## 決まっていること（蒸し返さない）
+
+- OK を押したら**そのまま送信まで行く**（入力欄に文面を入れて止めない）。`dispatch` を直接
+  呼ぶので `<Composer>` のローカル状態（下書き）には触らず、docs/design.md 6.2 の
+  「入力欄の下書きは `<Composer>` のローカル状態」も変えない
+- 送る文面は `/next-task T-XXX`
+- **`~/.claude/skills/next-task/SKILL.md` は触らない**（ユーザー承認:「UI 側だけ作る」）。
+  スキルが ID 引数をどう扱うかはこのタスクの範囲外
+- 押せるようにするのは**サイドバーの一覧と表の両方**
+
+## 解くべき論点
+
+- 確認のダイアログの置き場所。どの機能の語彙も持たない確認として `src/browser/components/` に
+  置くか、「このタスクを実行しますか」専用として `features/task-board/components/` に置くか
+  （原則5「ファイル名が概念になっているか」で決める）
+- 表（モーダル）の上に確認のモーダルを重ねたときの `<dialog>` の振る舞い（top layer の積み方・
+  Esc がどちらを閉じるか）。**重ねずに表を閉じてから確認を出す形も選択肢**
+- 押せる場所の形。ID だけを `<button>` にするか、行ごと押せるようにするか（表の ID セルは
+  `<th scope="row">` なので中身だけをボタンにするのが素直）
+- ターンが動いている間（`session.state.turnInProgress`）に押されたときの扱い。`<Composer>` の
+  `submit` は `turnInProgress` なら送らないので、押せなくする／確認で断るのどちらかに揃える
+- `done` / `doing` のタスクのIDも押せるままにするか
+
+## やること
+
+1. タスクIDを押せる部品にする（一覧の `task-item.tsx` と表の `task-row.tsx` の両方）
+2. 「`T-XXX` を実行しますか」の確認ダイアログを出し、OK で
+   `dispatch({ type: "prompt", text: "/next-task T-XXX", images: [] })` を送る。
+   キャンセル・Esc では**何も送らない**
+3. 押せることが分かる見た目（カーソル・ホバー・フォーカスの輪郭）を `task-board.module.css` に
+   足す。**色だけで示さない**
+4. 部品のテストを足す（押すと確認が出る／OK で `/next-task T-XXX` が dispatch される／
+   キャンセルで dispatch されない）
+5. 目視確認: `bun run build` のあと tsukumo を起こし、サイドバーの一覧と「一覧を見る」の表の
+   両方でIDを押して確認が出ること、狭い画面（表がカードに組み替わる幅）でも押せることを見る
+
+## 完了条件
+
+- `bun run check` が通る
+- サイドバーの一覧・表の両方で、タスクIDを押すと確認のダイアログが出る
+- OK で `{ type: "prompt", text: "/next-task T-XXX", images: [] }` が dispatch され、
+  キャンセル・Esc では dispatch が呼ばれない（テストで示す）
+- 目視確認の結果（どの画面で何が見えたか・どの幅で見たか）を evidence に書く
+
+## 注意
+
+- **目視確認で OK を押すと、本当に `/next-task` のターンが始まる。** 確かめるなら
+  `TSUKUMO_HOME` と `TSUKUMO_VIEW_PORT` を分けて起こすか、始まったターンをその場で中断する
+  （CLAUDE.md「## タスク運用」の並行の項）。**送信そのものはテストで示すのが基本**で、
+  目視は「確認が出るところまで」で足りる
+- `develop/tasks.json` は読み取りのみ。画面から書き換える口は作らない
+- docs/requirements.md 4.2 の「一覧を見渡すのは区画ではなく表」の決定は変えない
+  （触るなら 4.2 に1行足す程度に留める）
+
+## T-365
+
+**タスク**: セッション情報から作業先・ブランチ・コードの出所を外し、触る順に並べる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-363 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1286 pass / 0 fail / 103ファイル）。fake driver を別ポート(7431)・別ホームで起こし capture-view.ts で 1400x900 を実測: 「セッション情報」はモード・モデル・許可モード・キャラクターの4行だけで 区画 179.44px（作業先・ブランチ・コードの出所は出ない）、.session-info-value の左端は全行 x=1147.02 で揃い 横のはみ出し 0px、許可モード→キャラクターの間だけ余白が広く区切り線は無い。知らせが先頭に来ることと3行が消えたことは test/browser/features/sidebar/session-info.test.tsx の2件で担保。
+
+## 背景
+
+サイドバーの「セッション情報」（`src/browser/features/sidebar/session-info.tsx`）は2列の grid に
+9行を並べている。うち3行（作業先・ブランチ・コードの出所。`workspace-location.tsx`）は長い
+絶対パスで、`.workspace-path` が `overflow-wrap: anywhere` で折り返すため、worktree で
+動かしているときは合計7行・180px 前後を食う。ユーザーの指摘（2026-09-22）は「サイドバーの
+領域を圧迫している」。
+
+区画は `flex: 0 1 auto`（`sidebar.module.css` の `.sidebar-block-session`）なので、空いた
+高さは `flex: 1 1 0` の「いま何をしているか」と「タスク一覧」に回る。
+
+外しても読めなくならない。ブランチは T-363 で帯へ移る。作業先のパスは**ブランチから辿れる**
+——`src/server/core/workspace.ts` の `worktreeBranch` が `tsukumo/<名前>` を、worktree の
+置き場が `<git-common-dir>/tsukumo/worktree/<名前>` を、**同じ `<名前>` から作っている**。
+コードの出所は起動時に決まってセッション中ずっと動かない。パス2つは T-363 で部屋の名前の
+`title` に入る。
+
+## 決まっていること（蒸し返さない）
+
+- **作業先・ブランチ・コードの出所の3行を外す**（行き先は上の背景のとおり）
+- **知らせ（畳めなかった worktree・マージが止まった理由）はサイドバーに残す。** 区画の先頭に出す
+- 残る並びは 知らせ（あるときだけ） → モード → モデル → 許可モード → キャラクター →
+  セッション。**寿命順ではなく触る頻度順**（区画は内側スクロールなので、寿命順だと下の行が
+  押し出される）
+- 段の切れ目は `row-gap` を 0.4rem → 0.9rem にするだけで示す。**区切り線は引かない**（区画の
+  下罫線と同じ太さの線を中に引くと、3区画が6区画に見える）
+- 区画は3つのまま（`docs/requirements.md` 4.2）
+
+## 解くべき論点
+
+- `workspace-location.tsx` が知らせだけを出すファイルになる。**ファイル名が概念になっているか**
+  （CLAUDE.md 原則5）で、名前を変えるか `session-info.tsx` に畳むかを決める
+- 段の切れ目を `row-gap` で示すには、2列の grid の中で段の境目を指せる必要がある。grid を
+  崩さずにどう書くか（`:nth-child` か、境目の行にだけ class を持たせるか）
+
+## やること
+
+1. 3行を外し、知らせを区画の先頭へ移す
+2. 並びを上の順に直し、段の切れ目を `row-gap` で示す
+3. `docs/design.md` 13.6 の表に、外した行に対応する記述があれば直す。
+   `docs/architecture.md`「worktree でセッションを分ける」の決定3（知らせをサイドバーに出す）は
+   **変えない**が、パスの行が消えたことを1行で書き足す
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視: worktree で起こしたとき「セッション情報」が5〜6行に収まり、「いま何をしているか」と
+  「タスク一覧」に出る件数が増える。知らせが出る場面（畳めなかった worktree がある起動）では
+  区画の先頭に出る。何が見えたかを evidence に書く
+
+## 注意
+
+- **T-332（雑談中のサイドバーを差し替える）も `features/sidebar/` を触る。** 同時に `doing` に
+  しない（CLAUDE.md「## タスク運用」の並行の項）
+- 知らせの文面はサーバが組んだまま出す（`src/server/core/workspace.ts`）。畳まない
