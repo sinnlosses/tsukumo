@@ -18,7 +18,7 @@
   --chat-poke-sway-rotate: 1.6deg;
   --chat-poke-sway-duration: 0.5s;
 }
-/* つつける立ち絵（`chat-view.tsx` の `<NudgePortrait>`。docs/design.md 13.7）。**立ち絵を包む
+/* つつける立ち絵（`components/nudge-portrait.tsx`。docs/design.md 13.7）。**立ち絵を包む
    `<button>` がそのまま立ち絵の置き場所**なので、置き方（下端で揃える・幅の上限・床へ沈める量）
    はここが持ち、`.chat-portrait` は中でいっぱいに広がるだけにする。
 
@@ -63,7 +63,7 @@
 /* ターン進行中（返事を待っている間）は押せない。**立ち絵は薄めない**（要素の `opacity` は
    地ごと透かす。docs/design.md 13.8 の「過去の吹き出しは要素の opacity で薄めない」と同じ
    理由）ので、見せ方は**応えないこと**のほうで作る: 指の形にならず、揺れず、案内も出ない
-   （`chat-view.tsx` が `.chat-poke-hint` ごと描かない）。 */
+   （`components/nudge-portrait.tsx` が `.chat-poke-hint` ごと描かない）。 */
 .chat-poke[aria-disabled="true"] {
   cursor: default;
 }
@@ -116,7 +116,7 @@
   max-width: 100%;
 }
 /* 会話のログ。**古い→新しいが縦に積む**ので、DOM の順そのままに並べ、下端へスクロールする
-   （`chat-view.tsx` が最新へ寄せる）。 */
+   （`hooks/use-stick-to-bottom.ts` が最新へ寄せる）。 */
 .chat-log {
   display: flex;
   flex: 1 1 18rem;
@@ -189,7 +189,7 @@
 
 /* 1件の発言。**左右に寄せるのは外側の行（`.chat-row`）**（LINE / Discord と同じ読み方）。
    **どちらの話者も `<div>`**（押せるキャラクターの側も `role="button"` の `<div>`。理由は
-   `chat-view.tsx`）なので、地の見た目は話者で変わらない。 */
+   `components/chat-speech.tsx`）なので、地の見た目は話者で変わらない。 */
 .chat-entry {
   max-width: 80%;
   padding: 0.6rem 1rem;
@@ -242,7 +242,7 @@
   transform: translateY(0.15em);
   background: var(--accent);
 }
-/* 返事を待っている間だけ末尾に出す「...」（`chat-view.tsx` の `<ChatTyping>`。docs/design.md
+/* 返事を待っている間だけ末尾に出す「...」（`components/chat-typing.tsx`。docs/design.md
    13.7「返事を待つ間の「...」」）。**キャラクター側の吹き出しとして出す**が、押せない・
    選べる文字を持たないので `.chat-entry-character` の cursor と hover は乗せない。 */
 .chat-entry-typing {

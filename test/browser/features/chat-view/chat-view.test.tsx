@@ -57,7 +57,7 @@ function portraitExpression(): string | null | undefined {
 
 /**
  * マウスで押す1回ぶん（押し始めから手を離すまで）。`moveX` だけ横に動かすと、
- * **文字をドラッグで選んだ**ことになる（`chat-view.tsx` の `isSelectionDrag`）。
+ * **文字をドラッグで選んだ**ことになる（`hooks/use-chat-speech.ts` の `isSelectionDrag`）。
  *
  * 文字がほんとうに選べるかはテストでは見られない（DOM の実装では選択が起きない）ので、
  * そちらは目視で確かめる（`docs/architecture.md`「手で確かめること」）。
@@ -520,7 +520,7 @@ describe("ChatView のセリフを遡る", () => {
 })
 
 describe("ChatView の末尾のセリフが育つ", () => {
-  /** 育っている行（`chat-view.tsx` が出す印。docs/design.md 13.7「末尾のセリフは育つ」）。 */
+  /** 育っている行（`components/chat-speech.tsx` が出す印。docs/design.md 13.7「末尾のセリフは育つ」）。 */
   function growingEntry(): HTMLElement {
     const entry = document.querySelector("[data-growing]")
     if (!(entry instanceof HTMLElement)) {
@@ -637,7 +637,7 @@ describe("ChatView の末尾のセリフが育つ", () => {
 })
 
 describe("ChatView の「...」（返事を待つ間）", () => {
-  /** 「...」の行（`chat-view.tsx` の `<ChatTyping>`。docs/design.md 13.7）。 */
+  /** 「...」の行（`components/chat-typing.tsx`。docs/design.md 13.7）。 */
   function typingEntry(): Element | null {
     return document.querySelector('[data-speaker="typing"]')
   }
@@ -744,7 +744,7 @@ describe("ChatView のホバー", () => {
 })
 
 describe("ChatView の立ち絵をつつく", () => {
-  /** 載せたときに出る案内の字（`chat-view.tsx` が持つ。docs/design.md 13.7）。 */
+  /** 載せたときに出る案内の字（`components/nudge-portrait.tsx` が持つ。docs/design.md 13.7）。 */
   const NUDGE_HINT = "話しかけてもらう"
 
   /**

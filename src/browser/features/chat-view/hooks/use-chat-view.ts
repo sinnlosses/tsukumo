@@ -1,0 +1,295 @@
+// `<ChatView>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
+// 立ち絵に出す表情（押して留めた行か、最新か）、ログに並べる行（日の区切り・時刻・印・育つ行を
+// 畳んだもの）、「...」を出すか、立ち絵をつついたときの送り先を組み立てて返す。
+//
+// **行を押して遡る・印・育つ行・「...」の決め方**は docs/design.md 13.7。ここはそれを
+// 「部品がそのまま置ける値」へ畳むだけで、部品（`components/`）は判定を持たない。
+
+import { useState, type RefObject } from "react"
+
+import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../../shared/chat-log.ts"
+import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
+import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/expression.ts"
+import { type RecordTime } from "../../../../shared/session-state.ts"
+import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { localTimeZoneId } from "../../../utils/clock.ts"
+import { useStickToBottom } from "./use-stick-to-bottom.ts"
+
+/** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
+const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
+
+/** 日の区切りに出す曜日（`Temporal.PlainDate.dayOfWeek` は月曜が 1、日曜が 7）。 */
+const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
+
+/**
+ * 発言の脇に添える時刻。**前のセッションを組み直した発言は `unknown`** で、何も出さない
+ * （docs/design.md 13.7。流し直した時刻を代わりに出すと昨日の一言が「いま」に見える）。
+ */
+export type ChatTimeStamp =
+  | { readonly kind: "unknown" }
+  | { readonly kind: "known"; readonly dateTime: string; readonly text: string }
+
+/**
+ * ログの1行を、部品がそのまま置ける形に畳んだもの。並びは末尾に積むだけで、途中に差し込まれる
+ * ことも並べ替えもないので、`key` は行の番号（日の区切りは日付）でよい。
+ */
+export type ChatRow =
+  | {
+      /** 日の区切り（docs/design.md 13.7「時刻と日の区切り」）。日が変わった発言の手前にだけ入る。 */
+      readonly kind: "day"
+      readonly key: string
+      readonly dateTime: string
+      readonly label: string
+    }
+  | {
+      /** 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。文言を持たない。 */
+      readonly kind: "boundary"
+      readonly key: string
+    }
+  | {
+      readonly kind: "speech"
+      readonly key: string
+      readonly text: string
+      /** 印を付ける行（= 立ち絵が従っている行）か。 */
+      readonly selected: boolean
+      /** 育てる行（docs/design.md 13.7「末尾のセリフは育つ」）か。 */
+      readonly grow: boolean
+      readonly time: ChatTimeStamp
+      readonly onToggle: () => void
+    }
+  | {
+      readonly kind: "user"
+      readonly key: string
+      readonly text: string
+      readonly images: readonly string[]
+      readonly time: ChatTimeStamp
+    }
+
+/** `<ChatView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
+export type ChatViewModel = {
+  /** 立ち絵の素材 URL。character が届いていなければ `undefined`（立ち絵を出さない）。 */
+  readonly portraitUrl: string | undefined
+  readonly accent: string | undefined
+  /** **出ている絵をそのまま説明する**（行を押して遡れば、その行の表情の名前になる）。 */
+  readonly altText: string
+  readonly expression: Expression
+  readonly outfit: Outfit
+  readonly turnInProgress: boolean
+  /** 立ち絵をつついたとき。**ターン進行中は何も送らない**（サーバ側も同じ条件で断る）。 */
+  readonly onNudge: () => void
+  /** ログの入れ物。下端付近を読んでいたときだけ最新へ寄せる（`use-stick-to-bottom.ts`）。 */
+  readonly logRef: RefObject<HTMLDivElement | null>
+  readonly rows: readonly ChatRow[]
+  /** 返事を待っている間、末尾に「...」を出すか（docs/design.md 13.7「返事を待つ間の「...」」）。 */
+  readonly showTyping: boolean
+  /** まだ何も話しておらず「...」も出ていないとき、最初の一言を促す案内を出すか。 */
+  readonly showEmptyMessage: boolean
+}
+
+/**
+ * 立ち絵がいま従っているセリフ。**既定は「最新」**（何も押していない状態。docs/design.md 13.7）で、
+ * 行を押すと「留めた」へ移る。
+ *
+ * 留めた側は**行の番号だけでなく、押した時点のセリフの件数も持つ** — 件数が変われば留めた
+ * 選択は失効し、「最新」と同じ見え方へ戻る（{@link pinnedSpeechIndex}）。
+ * **「最新」と「留めた」を `undefined` で書き分けない**のは、既定が「印がどこにも無い」では
+ * なく「最新の行に印が付いている」になったため（`docs/coding-standards.md`
+ * 「複数の「無い」が1つの状態」）。
+ */
+type ViewedSpeech =
+  | { readonly kind: "latest" }
+  | { readonly kind: "pinned"; readonly index: number; readonly speechCount: number }
+
+export function useChatView(): ChatViewModel {
+  const records = useSessionSelector((session) => session.state.records)
+  const speechExpression = useSessionSelector((session) => session.state.speechExpression)
+  const model = useSessionSelector((session) => session.state.model)
+  const character = useSessionSelector((session) => session.state.character)
+  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const speechCalledInTurn = useSessionSelector((session) => session.state.speechCalledInTurn)
+  const dispatch = useSessionDispatch()
+  const entries = chatLogEntries(records)
+  const outfit = resolveOutfit(model)
+  const logRef = useStickToBottom(entries.length)
+
+  // 立ち絵がいま従っているセリフ。押していなければ「最新」で、印は最新のセリフの行に付く。
+  // **新しいセリフが来たら留めた選択はその場で失効する** — 立ち絵は常に「いまのセリフ」を
+  // 表す側へ倒す。読み返しの最中でも下へ攫わないスクロールの規則（`use-stick-to-bottom.ts`）
+  // とは**揃えない**: 流れていった行の印は画面の外にあるので、表情だけが遡ったまま動かないと、
+  // なぜ古いのかが画面から分からなくなる。
+  //
+  // 失効は effect で追いかけず、**レンダー中に件数を突き合わせて決める**（state から計算できる値。
+  // docs/coding-standards.md「useEffect の代わりに使うもの」）。
+  const [viewed, setViewed] = useState<ViewedSpeech>({ kind: "latest" })
+  const speechCount = countSpeeches(entries)
+  const pinnedIndex = pinnedSpeechIndex(viewed, speechCount)
+  const latestSpeechIndex = lastSpeechIndex(entries)
+  // 印を付ける行 = 立ち絵が従っている行（docs/design.md 13.7）。留めていなければ最新のセリフ。
+  const selectedIndex = pinnedIndex ?? latestSpeechIndex
+  // 育てる行（docs/design.md 13.7「末尾のセリフは育つ」）。**育つのは画面を開いたあとに届いた
+  // セリフだけ**で、開いた時点で並んでいた記録（前の雑談の続き）には掛からない——遡って読む
+  // ためのログが、開くたびに端から書き直されることになる。
+  const [initialSpeechCount] = useState(speechCount)
+  const growingIndex = speechCount > initialSpeechCount ? latestSpeechIndex : undefined
+  // **`SessionState` に新しい旗は増やさない** — 今のターンでまだ `speak` が呼ばれていないかは
+  // `speechCalledInTurn` が既に持っている。
+  const showTyping = turnInProgress && !speechCalledInTurn
+  // 表情は「留めた行 → 最新」の順に決まる（docs/design.md 13.7）。
+  // **留めていないときに読むのは `speechExpression`** で、最新の行の表情ではない —
+  // 次のターンが始まると `speak` が来るまで既定へ戻る（キャラビューと同じ扱い。表情の源は
+  // `speak` の1つだけ。docs/requirements.md 4.3）。印はその間も最新のセリフの行に残る。
+  const expression = speechExpressionAt(entries, pinnedIndex) ?? speechExpression
+
+  function toggle(index: number): void {
+    // **留めた行をもう一度押したら「最新」へ戻す**（新しいセリフを待たずに追従へ戻す道）。
+    // 見るのは `selectedIndex` ではなく `pinnedIndex` — 既定で印が付いている最新の行を
+    // 押したときは、解くものが無いので**留める**側に倒す（印の位置は変わらないが、
+    // 次のターンが始まっても表情がその行に留まる）。
+    setViewed(pinnedIndex === index ? { kind: "latest" } : { kind: "pinned", index, speechCount })
+  }
+
+  return {
+    portraitUrl: character?.portraits?.[expression],
+    accent: character?.outfitAccents[outfit],
+    altText: `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(
+      character?.expressions ?? [],
+      expression,
+    )}）`,
+    expression,
+    outfit,
+    turnInProgress,
+    onNudge: () => {
+      if (turnInProgress) {
+        return
+      }
+      dispatch({ type: "nudge" })
+    },
+    logRef,
+    // 日の境目と行ごとの時刻は、画面を見ている人のタイムゾーンで決める。
+    rows: chatRows(entries, localTimeZoneId(), selectedIndex, growingIndex, toggle),
+    showTyping,
+    showEmptyMessage: entries.length === 0 && !showTyping,
+  }
+}
+
+/**
+ * ログの並び（`shared/chat-log.ts` の `chatLogRows`）を、部品がそのまま置ける行へ畳む。
+ * 日付と時刻の文字もここで組む（部品は `<time>` に置くだけ）。
+ */
+function chatRows(
+  entries: readonly ChatLogEntry[],
+  timeZone: string,
+  selectedIndex: number | undefined,
+  growingIndex: number | undefined,
+  onToggle: (index: number) => void,
+): readonly ChatRow[] {
+  return chatLogRows(entries, timeZone).map((row): ChatRow => {
+    if (row.kind === "day") {
+      return {
+        kind: "day",
+        key: `day-${row.date.toString()}`,
+        dateTime: row.date.toString(),
+        label: dayLabel(row.date),
+      }
+    }
+    const { entry, index } = row
+    const key = String(index)
+    switch (entry.speaker) {
+      case "boundary":
+        return { kind: "boundary", key }
+      case "character":
+        return {
+          kind: "speech",
+          key,
+          text: entry.text,
+          selected: index === selectedIndex,
+          grow: index === growingIndex,
+          time: timeStamp(entry.time, timeZone),
+          onToggle: () => {
+            onToggle(index)
+          },
+        }
+      case "user":
+        return {
+          kind: "user",
+          key,
+          text: entry.text,
+          images: entry.images,
+          time: timeStamp(entry.time, timeZone),
+        }
+    }
+  })
+}
+
+/**
+ * 日の区切りの文字（`9月23日（水）`）。年は出さない（ログが持つのは雑談の 100 ターンぶんで、
+ * 年をまたいでも並びの順で読める）。「今日」「昨日」とも書かない —— 時計を読むと、日付が
+ * 変わったあとに描き直すまで古い呼び名が残る。
+ */
+function dayLabel(date: Temporal.PlainDate): string {
+  const weekday = WEEKDAY_LABELS[date.dayOfWeek - 1] ?? ""
+  return `${String(date.month)}月${String(date.day)}日（${weekday}）`
+}
+
+/** 発言の脇の時刻（`HH:MM`。秒は出さない）。組み直した発言は時刻が分からない。 */
+function timeStamp(time: RecordTime, timeZone: string): ChatTimeStamp {
+  if (time.kind === "restored") {
+    return { kind: "unknown" }
+  }
+  const at = Temporal.Instant.fromEpochMilliseconds(time.at).toZonedDateTimeISO(timeZone)
+  return {
+    kind: "known",
+    dateTime: at.toString({ timeZoneName: "never", smallestUnit: "minute" }),
+    text: at.toPlainTime().toString({ smallestUnit: "minute" }),
+  }
+}
+
+/**
+ * ログに並んでいるキャラクターのセリフの件数。**留めた選択がまだ生きているか**を測る物差しで、
+ * これが変われば {@link pinnedSpeechIndex} が選択を失効させる。
+ */
+function countSpeeches(entries: readonly ChatLogEntry[]): number {
+  return entries.reduce((count, entry) => (entry.speaker === "character" ? count + 1 : count), 0)
+}
+
+/**
+ * 押して留めている行。**押した時点から件数が変わっていれば undefined**（新しいセリフが来た、
+ * または窓から古い記録が落ちた）で、印も立ち絵も「最新」の側へ戻る。
+ *
+ * 件数1つで両方を捌けるのは、**セリフは末尾に積むだけ**で、窓
+ * （`MAX_SESSION_STATE_TURNS`）を当てるのは利用者の発言が来たときだけだから
+ * （`shared/session-state.ts` の `speech` と `request`）。つまり件数が同じなら並びは前へ
+ * 詰まっておらず、押した番号は押した行を指したままになる。
+ */
+function pinnedSpeechIndex(viewed: ViewedSpeech, speechCount: number): number | undefined {
+  if (viewed.kind === "latest" || viewed.speechCount !== speechCount) {
+    return undefined
+  }
+  return viewed.index
+}
+
+/**
+ * いちばん新しいキャラクターのセリフの行。**何も押していないときに印が付く行**
+ * （docs/design.md 13.7）。まだ1件も話していなければ undefined で、印はどこにも付かない。
+ */
+function lastSpeechIndex(entries: readonly ChatLogEntry[]): number | undefined {
+  const index = entries.findLastIndex((entry) => entry.speaker === "character")
+  return index === -1 ? undefined : index
+}
+
+/**
+ * その行のセリフに添えられた表情。行を指していなければ undefined（呼び出し側が次の手へ倒す）。
+ *
+ * **番号が指せるのはキャラクターのセリフだけ**だが、番号で持っている以上は型の上で外れうるので、
+ * 外れたら undefined を返す（印も同じ番号で決まるので、立ち絵と印が食い違うことはない）。
+ */
+function speechExpressionAt(
+  entries: readonly ChatLogEntry[],
+  index: number | undefined,
+): Expression | undefined {
+  if (index === undefined) {
+    return undefined
+  }
+  const entry = entries[index]
+  return entry === undefined || entry.speaker !== "character" ? undefined : entry.expression
+}

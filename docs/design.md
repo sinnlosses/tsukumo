@@ -2217,8 +2217,8 @@ LINE / Discord と同じ形で、日の区切りだけの案・ホバーした�
 **返事を待っている間、ログの末尾にキャラクター側の吹き出しとして「...」を animation させる**
 （2026-09-23 決定。T-335。Discord と同じ、「まだ喋ってくれる」合図）。**育つ吹き出しの初期状態
 ではなく、別の行**——セリフの文字がまだ無いので育てようが無い。そのターンの `speech` が届くと
-「...」の行は消え、入れ替わりに届いたセリフの行が育ち始める（`chat-view.tsx` の
-`<ChatTyping>` と `<ChatSpeech>`）。
+「...」の行は消え、入れ替わりに届いたセリフの行が育ち始める（`features/chat-view/` の
+`components/chat-typing.tsx` と `components/chat-speech.tsx`）。
 
 - **サーバの契約は増やさない。** 今のターンでまだ `speak` が呼ばれていないかは
   `SessionState.speechCalledInTurn` に既にあるので、`turnInProgress && !speechCalledInTurn` の
