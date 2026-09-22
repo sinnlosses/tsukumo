@@ -13,6 +13,10 @@ export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 // 使えるように（docs/architecture.md「HTML はローカルの HTTP サーバから配る」）。
 export const DEFAULT_VIEW_PORT = 7327
 
+// ポート番号として読める上限（下限は `0` ＝ OS が空きを選ぶ）。セッションの印の目印も
+// ポート番号なので、読み取りの範囲は src/server/core/config.ts と共通にする。
+export const MAX_PORT_NUMBER = 65535
+
 // 既定ポートから数えて何個先まで試すか（7327〜7346 の20個）。複数の tsukumo を手元で並べて
 // 動かす程度を想定した目安で、無限には伸ばさない
 // （どのポートで待っているか分からない状態を作らないため、上限を持って諦める）。
@@ -42,7 +46,7 @@ export function resolveViewPort(rawPort: string | undefined): ViewPortResolution
   }
 
   const parsed = Number(trimmed)
-  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) {
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > MAX_PORT_NUMBER) {
     return { kind: "invalid" }
   }
 

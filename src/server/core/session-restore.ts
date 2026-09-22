@@ -29,9 +29,9 @@ const RESTORED_TURN_FINISHED: SessionEvent = { kind: "turn-finished", status: "s
  * `lastModified` が最新の1つ**（docs/requirements.md 4.8「鍵」）。
  *
  * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提で、ここは印だけを見る。
- * **目印まで揃えてから比べる**ので（`config.ts` の `readSessionMark`）、目印の無い昔の印は
- * `@A` の印と一致する。一覧が空・印が1つも無い・要素の形が壊れているときは undefined
- * （＝新規に起こす）を返す。
+ * **目印まで揃えてから比べる**ので（`config.ts` の `readSessionMark`）、昔の印（目印の無いもの・
+ * 1文字の `@A`）は同じポートの印と一致する。一覧が空・印が1つも無い・要素の形が壊れているときは
+ * undefined（＝新規に起こす）を返す。
  */
 export function selectSessionToResume(sessions: unknown, tag: string): string | undefined {
   const matched = markedSessions(sessions).filter((session) => session.tag === tag)
@@ -49,7 +49,7 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
  *
  * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。**一族で絞るのは
  * 呼び出し側ではなくここ**で、渡すのは `src/server/core/config.ts` の `sessionTagFamily` が
- * 組み立てた印（同じパックの、同じモード）。目印（`@A` / `@B`）だけが違うものが残るので、
+ * 組み立てた印（同じパックの、同じモード）。目印（`@7327` / `@7328`）だけが違うものが残るので、
  * **同じ目印の行が複数返ることがある**（落ちた tsukumo の印と動いている tsukumo の印は
  * 見分けられない）。見分け方は最終更新時刻の側。
  *
@@ -58,7 +58,7 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
 export function listMarkedSessions(sessions: unknown, family: string): readonly SessionChoice[] {
   return markedSessions(sessions)
     .filter((session) => session.family === family)
-    .map(({ slot, sessionId, lastModified }) => ({ slot, sessionId, lastModified }))
+    .map(({ viewPort, sessionId, lastModified }) => ({ viewPort, sessionId, lastModified }))
     .sort((left, right) => right.lastModified - left.lastModified)
     .slice(0, MAX_SESSION_CHOICES)
 }
@@ -122,7 +122,7 @@ function taggedSession(value: unknown): readonly TaggedSession[] {
     sessionId !== "" &&
     typeof lastModified === "number" &&
     Number.isFinite(lastModified)
-    ? [{ slot: mark.slot, tag: mark.tag, family: mark.family, sessionId, lastModified }]
+    ? [{ viewPort: mark.viewPort, tag: mark.tag, family: mark.family, sessionId, lastModified }]
     : []
 }
 

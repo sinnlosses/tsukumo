@@ -638,8 +638,8 @@ describe("applySessionEvent", () => {
 
     // 目印と最終更新時刻だけ（会話の内容は入らない）。
     const sessions = [
-      { slot: "B", sessionId: "s-架空-2", lastModified: 2_000 },
-      { slot: "A", sessionId: "s-架空-1", lastModified: 1_000 },
+      { viewPort: 7328, sessionId: "s-架空-2", lastModified: 2_000 },
+      { viewPort: 7327, sessionId: "s-架空-1", lastModified: 1_000 },
     ]
     const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
     expect(listed.sessions).toEqual(sessions)

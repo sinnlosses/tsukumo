@@ -8,7 +8,7 @@
 // ないが、**外の世界（claude の transcript）に書かれる値**なので、組み立てと読み取りを
 // 1箇所に集める。
 
-import { DEFAULT_VIEW_PORT } from "./port-resolution.ts"
+import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "./port-resolution.ts"
 
 /** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
@@ -37,13 +37,17 @@ const SESSION_TAG_PREFIX = "tsukumo"
 const SESSION_TAG_CHAT_SUFFIX = "chat"
 /**
  * 目印の区切り。**`:` を使わない**のは、後置きの `chat` と読み違えないため
- * （`tsukumo:<パック>:chat@B` の最後の1文字が目印だと、区切りだけで分かる）。
+ * （`tsukumo:<パック>:chat@7328` の最後の `@` から後ろが目印だと、区切りだけで分かる）。
  */
-const SESSION_SLOT_SEPARATOR = "@"
-/** 目印に使う文字。**起動の並び順に1つずつ**取る（{@link sessionSlot}）。 */
-const SESSION_SLOT_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-/** 目印の既定。**目印の無い昔の印はこれとみなす**（{@link readSessionMark}）。 */
-const DEFAULT_SESSION_SLOT = "A"
+const SESSION_MARK_SEPARATOR = "@"
+/**
+ * 目印に使っていた文字（`A` / `B` / …）。**読むときだけ使う**（2026-09-22 まではビューのポートの
+ * 並び順を1文字に畳んでいた）。`A` が {@link DEFAULT_VIEW_PORT}、+1 ごとに次の文字だったので、
+ * 同じ式で元のポートへ戻せる（{@link readSessionMark}）。**組み立てはもう文字を使わない。**
+ */
+const LEGACY_SESSION_MARK_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+/** ポート番号として読める目印の形（`@0`〜`@65535`）。 */
+const SESSION_MARK_PORT = /^[0-9]{1,5}$/
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、疑似セッションどおりにイベントを
@@ -104,17 +108,25 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
  * **雑談のときだけ `:chat` を足す**のは、雑談と仕事で claude 側の文脈ごと分けるため
  * （docs/requirements.md 4.9）。
  *
- * **末尾の目印（`@A` / `@B` …）は、同じディレクトリで tsukumo を何個も起こしたときに
- * 別々のセッションを持たせるためのもの**（docs/requirements.md 4.8「鍵」）。目印を決めるのは
- * {@link sessionSlot}（ビューのポートの並び順）。**目印の無い昔の印は `@A` とみなす**ので
- * （{@link readSessionMark}）、いま続いている仕事のセッションは1つめの tsukumo から今までどおり
- * 見つかる。
+ * **末尾の目印（`@7327` / `@7328` …）は、同じディレクトリで tsukumo を何個も起こしたときに
+ * 別々のセッションを持たせるためのもの**（docs/requirements.md 4.8「鍵」）。**目印はビューが
+ * 実際に待ち受けているポートの番号そのもの**で、畳まない——セッションを指す ID が
+ * 「キャラクターパック × ポート番号」だから（2026-09-22 決定）。
+ *
+ * ポートを使うのは、**「その目印がいま使われているか」を知っているものが他に無い**ため。印は
+ * transcript に残るだけなので、落ちた tsukumo の印と動いている tsukumo の印は見分けられない
+ * （2026-09-22 実測。docs/requirements.md 4.8「鍵」）。ポートは OS が握っていて、**既定の
+ * ときは塞がっていれば +1 へずれ**（`port-resolution.ts`）、**プロセスが落ちれば空く**ので、
+ * 起こし直せば同じ番号＝同じセッションへ戻る。
+ *
+ * **昔の印（目印の無いもの・1文字の `@A`）も同じセッションを指す**（{@link readSessionMark} が
+ * ポートへ戻す）ので、いま続いている仕事のセッションは今までどおり見つかる。
  *
  * **印は会話の内容ではない**ので、claude 自身の transcript に付けても「会話内容の扱い」には
  * 触れない。
  */
 export function sessionTag(characterName: string, chat: boolean, viewPort: number): string {
-  return `${sessionTagFamily(characterName, chat)}${SESSION_SLOT_SEPARATOR}${sessionSlot(viewPort)}`
+  return `${sessionTagFamily(characterName, chat)}${SESSION_MARK_SEPARATOR}${String(viewPort)}`
 }
 
 /**
@@ -133,11 +145,14 @@ export function sessionTagFamily(characterName: string, chat: boolean): string {
 
 /** 印を読み解いた姿（{@link readSessionMark}）。 */
 export type SessionMark = {
-  /** 目印（`A` / `B` / …）。**目印の無い昔の印は `A`**。 */
-  readonly slot: string
+  /**
+   * 目印（印を付けた tsukumo のビューのポート番号）。**昔の印は既定のポートへ戻してある**
+   * （目印が無いもの＝`DEFAULT_VIEW_PORT`、1文字の `A` / `B` / …＝そこから並び順に +1）。
+   */
+  readonly viewPort: number
   /**
    * 目印まで揃えた印。**選ぶときはこれ同士を比べる**（`tsukumo:<パック>` と
-   * `tsukumo:<パック>@A` は同じセッションを指す）。
+   * `tsukumo:<パック>@A` と `tsukumo:<パック>@7327` は同じセッションを指す）。
    */
   readonly tag: string
   /**
@@ -151,44 +166,39 @@ export type SessionMark = {
  * transcript に付いていた印を読み解く。**tsukumo の印でなければ undefined**（同じディレクトリで
  * 使った素の `claude` のセッションはここで落ちる）。
  *
- * **末尾が `@` + 目印の1文字でないものは、目印の無い昔の印として `A` に畳む**
- * （`tsukumo:<パック>` は `tsukumo:<パック>@A` と同じ。名前に `@` を含むパックも、
- * {@link sessionTag} が付ける形と同じに揃う）。
+ * **読めた目印は必ずポート番号に戻し、印も `@<ポート>` の形へ揃えてから返す**ので、昔の印と
+ * 今の印が同じセッションを指す:
+ *
+ * - `@7328` のような数字 → そのポート
+ * - `@A` / `@B` … の1文字 → 並び順から戻したポート（`A` が `DEFAULT_VIEW_PORT`）
+ * - それ以外（目印が無い・名前に `@` を含むパックの尻尾）→ `DEFAULT_VIEW_PORT`
+ *
+ * 最後の行のおかげで、`tsukumo:<パック>` は `tsukumo:<パック>@7327` と同じセッションを指す。
  */
 export function readSessionMark(tag: string): SessionMark | undefined {
   if (!tag.startsWith(`${SESSION_TAG_PREFIX}:`)) {
     return undefined
   }
 
-  const separator = tag.lastIndexOf(SESSION_SLOT_SEPARATOR)
-  const slot = tag.slice(separator + 1)
-  return slot.length === 1 && SESSION_SLOT_LETTERS.includes(slot)
-    ? { slot, tag, family: tag.slice(0, separator) }
-    : {
-        slot: DEFAULT_SESSION_SLOT,
-        tag: `${tag}${SESSION_SLOT_SEPARATOR}${DEFAULT_SESSION_SLOT}`,
-        family: tag,
-      }
+  const separator = tag.lastIndexOf(SESSION_MARK_SEPARATOR)
+  const marked = separator === -1 ? undefined : markedViewPort(tag.slice(separator + 1))
+  const family = marked === undefined ? tag : tag.slice(0, separator)
+  const viewPort = marked ?? DEFAULT_VIEW_PORT
+  return { viewPort, tag: `${family}${SESSION_MARK_SEPARATOR}${String(viewPort)}`, family }
 }
 
 /**
- * このプロセスの目印を決める。**ビューのポートの並び順**（既定の `DEFAULT_VIEW_PORT` が `A`、
- * +1 ごとに次の文字）で、範囲の外へ出た番号は `A` に畳む。
- *
- * ポートを使うのは、**「その目印が使用中か」を知っているものが他に無い**ため。印は
- * transcript に残るだけなので、落ちた tsukumo の印と動いている tsukumo の印は見分けられない
- * （2026-09-22 実測。docs/requirements.md 4.8「鍵」）。ポートは OS が握っていて、**既定の
- * ときは塞がっていれば +1 へずれ**（`port-resolution.ts`）、**プロセスが落ちれば空く**ので、
- * 「いま生きている tsukumo の起動順」がそのまま出る。
- *
- * 明示指定（`TSUKUMO_VIEW_PORT`）でも同じ式で決まるので、ポートをずらして2つ起こせば目印も
- * 分かれる。既定から遠い番号・`0`（OS まかせ）は `A` になる。
+ * 印の末尾を目印として読む。**目印として読めなければ undefined**（パック名に `@` が入っている
+ * ときの尻尾がここで落ちる）。
  */
-function sessionSlot(viewPort: number): string {
-  const index = viewPort - DEFAULT_VIEW_PORT
-  return Number.isInteger(index) && index >= 0 && index < SESSION_SLOT_LETTERS.length
-    ? SESSION_SLOT_LETTERS.charAt(index)
-    : DEFAULT_SESSION_SLOT
+function markedViewPort(mark: string): number | undefined {
+  if (SESSION_MARK_PORT.test(mark)) {
+    const port = Number(mark)
+    return port <= MAX_PORT_NUMBER ? port : undefined
+  }
+
+  const legacyIndex = mark.length === 1 ? LEGACY_SESSION_MARK_LETTERS.indexOf(mark) : -1
+  return legacyIndex === -1 ? undefined : DEFAULT_VIEW_PORT + legacyIndex
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

@@ -18,8 +18,8 @@ const EARLIER = Temporal.ZonedDateTime.from("2026-09-20T09:05:00+09:00[Asia/Toky
 const LATER = Temporal.ZonedDateTime.from("2026-09-22T15:36:00+09:00[Asia/Tokyo]")
 
 const SESSIONS: readonly SessionChoice[] = [
-  { slot: "B", sessionId: "s-other", lastModified: LATER.epochMilliseconds },
-  { slot: "A", sessionId: "s-current", lastModified: EARLIER.epochMilliseconds },
+  { viewPort: 7328, sessionId: "s-other", lastModified: LATER.epochMilliseconds },
+  { viewPort: 7327, sessionId: "s-current", lastModified: EARLIER.epochMilliseconds },
 ]
 
 function renderSessionSwitch(
@@ -61,8 +61,8 @@ describe("SessionSwitch", () => {
     const select = screen.getByLabelText("セッション")
     expect((select as HTMLSelectElement).value).toBe("s-current")
     expect(options(select)).toEqual([
-      `B・${localLabel(LATER)}`,
-      `A・${localLabel(EARLIER)}（表示中）`,
+      `7328・${localLabel(LATER)}`,
+      `7327・${localLabel(EARLIER)}（表示中）`,
     ])
   })
 

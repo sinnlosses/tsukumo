@@ -18,8 +18,8 @@ const SWITCHED: Pack = { name: "kagami" }
 
 // 切り替え先の一覧（目印と最終更新時刻だけ。会話の内容は入らない）。
 const CHOICES = [
-  { slot: "B", sessionId: "other-session", lastModified: 2_000 },
-  { slot: "A", sessionId: "prev-work-session", lastModified: 1_000 },
+  { viewPort: 7328, sessionId: "other-session", lastModified: 2_000 },
+  { viewPort: 7327, sessionId: "prev-work-session", lastModified: 1_000 },
 ] as const
 
 /** 起こされたことと閉じられたことだけを覚える fake driver 相当のスタブ。 */

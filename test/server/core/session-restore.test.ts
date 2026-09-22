@@ -16,12 +16,12 @@ import { MAX_SESSION_CHOICES } from "../../../src/shared/session-choice.ts"
 // （`listSessions` / `getSessionMessages` を呼ぶのは src/server/adapter/sdk-driver.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
-// 印はキャラクターパックごと・雑談かどうか・起動の並び順で違う（`tsukumo:<パック名>@A` と
-// `tsukumo:<パック名>:chat@A`。目印はビューのポートから決まる）。
+// 印はキャラクターパックごと・雑談かどうか・ビューのポートごとに違う
+// （`tsukumo:<パック名>@7327` と `tsukumo:<パック名>:chat@7327`。目印はポート番号そのもの）。
 const TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT)
 const CHAT_TAG = sessionTag("架空のパック", true, DEFAULT_VIEW_PORT)
 const OTHER_PACK_TAG = sessionTag("別の架空のパック", false, DEFAULT_VIEW_PORT)
-// 2つめの tsukumo（ポートが1つずれたぶん、目印が B になる）。
+// 2つめの tsukumo（ポートが1つずれたぶん、目印も 7328 になる）。
 const SECOND_TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)
 // 一覧を絞る鍵（目印を外した印）。同じパック・同じモードのものだけが残る。
 const FAMILY = sessionTagFamily("架空のパック", false)
@@ -154,7 +154,7 @@ describe("selectSessionToResume", () => {
     expect(selectSessionToResume(sessions, SECOND_TAG)).toBe("s-second")
   })
 
-  it("目印の無い昔の印は、1つめ（A）の続きとして選ぶ（互換）", () => {
+  it("目印の無い昔の印は、既定のポートの続きとして選ぶ（互換）", () => {
     const sessions = [
       sessionInfo({ sessionId: "s-legacy", lastModified: 900, tag: "tsukumo:架空のパック" }),
       sessionInfo({
@@ -168,6 +168,24 @@ describe("selectSessionToResume", () => {
     expect(selectSessionToResume(sessions, CHAT_TAG)).toBe("s-legacy-chat")
     expect(selectSessionToResume(sessions, SECOND_TAG)).toBeUndefined()
   })
+
+  // 2026-09-22 まで目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。
+  // いま動いている tsukumo が拾えなくならないよう、元のポートへ戻して選ぶ。
+  it("1文字だった昔の目印は、元のポートの続きとして選ぶ（互換）", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-legacy-a", lastModified: 900, tag: "tsukumo:架空のパック@A" }),
+      sessionInfo({ sessionId: "s-legacy-b", lastModified: 800, tag: "tsukumo:架空のパック@B" }),
+      sessionInfo({
+        sessionId: "s-legacy-chat-a",
+        lastModified: 700,
+        tag: "tsukumo:架空のパック:chat@A",
+      }),
+    ]
+
+    expect(selectSessionToResume(sessions, TAG)).toBe("s-legacy-a")
+    expect(selectSessionToResume(sessions, SECOND_TAG)).toBe("s-legacy-b")
+    expect(selectSessionToResume(sessions, CHAT_TAG)).toBe("s-legacy-chat-a")
+  })
 })
 
 describe("listMarkedSessions", () => {
@@ -179,9 +197,9 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, FAMILY)).toEqual([
-      { slot: "B", sessionId: "s-second", lastModified: 300 },
-      { slot: "A", sessionId: "s-third", lastModified: 200 },
-      { slot: "A", sessionId: "s-first", lastModified: 100 },
+      { viewPort: DEFAULT_VIEW_PORT + 1, sessionId: "s-second", lastModified: 300 },
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-third", lastModified: 200 },
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-first", lastModified: 100 },
     ])
   })
 
@@ -195,14 +213,14 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, FAMILY)).toEqual([
-      { slot: "A", sessionId: "s-work", lastModified: 100 },
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-work", lastModified: 100 },
     ])
     expect(listMarkedSessions(sessions, CHAT_FAMILY)).toEqual([
-      { slot: "A", sessionId: "s-chat", lastModified: 300 },
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-chat", lastModified: 300 },
     ])
   })
 
-  it("印の無いセッションと壊れた要素は落とす（昔の印は A として残す）", () => {
+  it("印の無いセッションと壊れた要素は落とす（昔の印は既定のポートとして残す）", () => {
     const sessions = [
       null,
       sessionInfo({ sessionId: "s-bare", lastModified: 900 }),
@@ -212,7 +230,7 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, FAMILY)).toEqual([
-      { slot: "A", sessionId: "s-legacy", lastModified: 500 },
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-legacy", lastModified: 500 },
     ])
   })
 

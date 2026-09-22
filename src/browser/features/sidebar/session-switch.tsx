@@ -103,7 +103,7 @@ function sessionOptions(
  * 行が複数並ぶことがあるので、どれがどの作業かは時刻で見分ける。
  */
 function sessionLabel(session: SessionChoice, isCurrent: boolean): string {
-  const label = `${session.slot}・${localTimestamp(session.lastModified)}`
+  const label = `${String(session.viewPort)}・${localTimestamp(session.lastModified)}`
   return isCurrent ? `${label}${CURRENT_SUFFIX}` : label
 }
 

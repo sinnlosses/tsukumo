@@ -21,13 +21,14 @@ export const MAX_SESSION_CHOICES = 10
  */
 export type SessionChoice = {
   /**
-   * 目印（`A` / `B` / …）。**同じディレクトリで tsukumo を何個起こしたかの順**で、
-   * 印の無い昔のセッションは `A` に畳まれている（`src/server/core/config.ts` の
+   * 目印（印を付けた tsukumo のビューのポート番号）。**同じディレクトリで2つめを起こすと
+   * ポートがずれる**ので、これがセッションの別々の部屋にあたる。昔の印（目印の無いもの・
+   * 1文字の `A` / `B` …）はポートへ戻してある（`src/server/core/config.ts` の
    * `readSessionMark`）。**同じ目印の行が複数並ぶことがある**（落ちた tsukumo の印と、
    * いま動いている tsukumo の印は見分けられない）ので、見分けるのは
    * {@link SessionChoice.lastModified} の側。
    */
-  readonly slot: string
+  readonly viewPort: number
   /** claude 側のセッションのID（続きから始めるときに `resume` へ渡す値）。 */
   readonly sessionId: string
   /** transcript の最終更新時刻（エポックミリ秒）。**新しい順**に並んで届く。 */

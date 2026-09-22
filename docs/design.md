@@ -924,8 +924,8 @@ characters/<name>/
   メインビューの3つ
 - **キャラクターごとに別のセッションを持つ**（2026-09-14 決定。「キャラクターごとに別の部屋が
   ある」）。セッションの印を **`tsukumo:<パック名>@<目印>`**（雑談は
-  **`tsukumo:<パック名>:chat@<目印>`**。13.7。**末尾の目印は起動の並び順**で、ビューのポートから
-  決まる。`docs/requirements.md` 4.8「鍵」）にし、**起動時も切り替え時も、これから起こす側の印を
+  **`tsukumo:<パック名>:chat@<目印>`**。13.7。**末尾の目印はビューのポート番号そのもの**
+  （`@7327` / `@7328` …）。`docs/requirements.md` 4.8「鍵」）にし、**起動時も切り替え時も、これから起こす側の印を
   持つ最新のセッションを探して `resume` する**（無ければ新規）。印の組み立ても読み取りも
   `core/config.ts` の `sessionTag` / `readSessionMark` 1箇所で、
   `session-start.ts` はそれを `findSessionToResume` と `startSession` の `tag` の両方に渡す。
@@ -1481,7 +1481,7 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
 - 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と `new-session` コマンド（画面から。まだ足していない）
 - **どのセッションの続きから始めるかは画面から選べる**（2026-09-22。サイドバーの「セッション」の
   `<select>` → `switch-session` → `session-launch` の起こし直し）。並ぶのは**同じパック・同じモードの、
-  目印（`@A` / `@B`）違い**で、新しいほうから `MAX_SESSION_CHOICES` 件まで。**起動時は今までどおり
+  目印（`@7327` / `@7328`）違い**で、新しいほうから `MAX_SESSION_CHOICES` 件まで。**起動時は今までどおり
   自動で続きから始まる**（選ばせる画面は出さない）
 
 **複数化は当面やらない**（2026-09-21 決定。`docs/requirements.md` 2.2。それ以前は未決事項
