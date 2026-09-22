@@ -19,7 +19,7 @@ const DENY_MESSAGE = "利用者が実行を許可しなかった"
 
 /**
  * SDK へ返す `answers` は質問1件に対して1つの文字列なので、複数選んだ答えはこれでつなぐ
- * （2026-09-16 に画面側から移した。画面は質問ごとの並びのまま送る。
+ * （画面側から移した。画面は質問ごとの並びのまま送る。
  * `src/shared/pending-ask.ts` の `Answer`）。
  */
 const ANSWER_SEPARATOR = "、"
@@ -147,7 +147,7 @@ function toPendingAsk(request: AskRequest): PendingAsk {
  * 答えを `canUseTool` の戻り値の形にする。答えの種類が答え待ちの種類に合わないときは
  * undefined を返し、答え待ちをそのまま残す。
  *
- * 質問の答えは `updatedInput.answers`（質問文 → 選ばれたラベル）に組む（2026-09-11 実測）。
+ * 質問の答えは `updatedInput.answers`（質問文 → 選ばれたラベル）に組む。
  * **`questions` は受け取ったものをそのまま返す**（こちらで組み直さない）。
  */
 function toAnswerResult(entry: Entry, answer: Answer): AnswerResult | undefined {

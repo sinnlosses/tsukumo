@@ -4,7 +4,7 @@
 //
 // **fs に触らない関数（`buildSystemPromptAppend` / `toCharacterPackChoices` /
 // `characterChangedEvent`）もここに置く。** 層は「外の世界に触るか」で決め、ファイルの中身の
-// 純度では割らない（2026-09-16 決定。理由は docs/architecture.md「新しいコードを置く場所」）。
+// 純度では割らない（理由は docs/architecture.md「新しいコードを置く場所」）。
 //
 // **素材の中身（SVG・画像のバイト列）は SessionState にも character-changed イベントにも乗せない。**
 // ブラウザは `/character/<file>` から取りに行く（docs/design.md 4.1・5章）。

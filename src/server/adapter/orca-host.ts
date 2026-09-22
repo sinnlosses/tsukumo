@@ -5,7 +5,7 @@
 // 実際に Orca が動いていないと showView などの挙動そのものは確かめられないので、
 // ここは（境界のテストを除き）自動テストの対象にしない。
 //
-// Orca CLI の対応関係（2026-09-13 に v1.4.x で実測。**`orca tab goto` は無い**）:
+// Orca CLI の対応関係（v1.4.x で実測。**`orca tab goto` は無い**）:
 //   showView → orca tab list --json で**オリジンとパスが同じ**タブを探し、
 //              あれば orca goto --url <新しい URL> --page <pageId> --json、
 //              無ければ orca tab create --url <url> --json
@@ -13,7 +13,7 @@
 // **URL のクエリを見比べないのは、起動ごとにトークンが変わるため**（`?t=<起動トークン>`。
 // docs/design.md 9章）。同じ場所を指すタブは貼り直して1つに保つ。
 // **`goto` が `ok: false` を返しても `tab create` に倒さない**（読み込みに失敗しても遷移自体は
-// 起きており、倒すとタブが増える。2026-09-13 実測）。開き直すのは一覧にそのタブが無かったときだけ。
+// 起きており、倒すとタブが増える）。開き直すのは一覧にそのタブが無かったときだけ。
 
 import { execFile } from "node:child_process"
 
@@ -145,7 +145,7 @@ const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: 
   },
   { marker: "Missing terminal send payload", reason: "送る中身が空" },
   {
-    // 2026-09-11 実測。claude が質問や確認を表示している間は、この経路では文字を入れられない。
+    // 実測。claude が質問や確認を表示している間は、この経路では文字を入れられない。
     marker: "agent_prompt_blocked",
     reason: "claude が入力待ちの表示を出している間は送れない（ターミナル側で答える）",
   },

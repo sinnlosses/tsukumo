@@ -41,7 +41,7 @@ import {
 } from "./token-usage.ts"
 
 /**
- * イベントをまとめて配る間隔。**旧の `PUBLISH_INTERVAL_MS` と同じ 100ms**（2026-09-13 決定）。
+ * イベントをまとめて配る間隔。**旧の `PUBLISH_INTERVAL_MS` と同じ 100ms**。
  * 書きかけの本文はトークン単位で届くので、1件ずつ押すと転送量が跳ねる。
  */
 export const EVENT_BATCH_INTERVAL_MS = 100

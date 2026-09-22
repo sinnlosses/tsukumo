@@ -56,7 +56,7 @@ import {
 import { selectSessionToResume, toRestoredEvents } from "../core/session-restore.ts"
 
 /**
- * 既定の reasoning effort。ユーザーの指示（2026-09-12）で high に固定した
+ * 既定の reasoning effort。high に固定した
  * （docs/requirements.md 4.1）。画面には出さない（設定するだけ）。
  */
 export const DEFAULT_EFFORT: EffortLevel = "high"
@@ -64,7 +64,7 @@ export const DEFAULT_EFFORT: EffortLevel = "high"
 /**
  * ターンが終わってから印（`tagSession`）を付け直すまでの待ち。**本体もターンの終わりに
  * セッションの要約を自分で書き、そこに印が含まれない**ので、書き込みと重なると印が消える
- * （2026-09-13 実測: `init` の直後・`result` の直後に付けた印はどちらも消え、ターンの3秒後に
+ * （実測: `init` の直後・`result` の直後に付けた印はどちらも消え、ターンの3秒後に
  * 付けた印は入力を閉じたあとまで残った）。**ターンが終わるたびに付け直す**ので、途中の1回が
  * 消えても次のターンで戻る。
  */
@@ -198,7 +198,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
       await session.setModel(model)
       // サイドバーの `<select>` は `state.model` をそのまま出すので、ここで確認の合図を
       // 出さないと次のターンの `init` まで古い値に居座る（`/model` チャットコマンドのために
-      // 足した `model-changed` を、駆動が確定させた切り替えにもそのまま使う。2026-09-17 実測:
+      // 足した `model-changed` を、駆動が確定させた切り替えにもそのまま使う。実測:
       // fake driver（fake-driver.ts）は最初からこれをやっていたが、本物の駆動は抜けていた）。
       if (model !== undefined) {
         options.onEvent({ kind: "model-changed", model })
@@ -302,7 +302,7 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
  * 前のセッションの transcript を読み直して、画面の履歴を組み直すためのイベントにする
  * （docs/requirements.md 4.8）。**読めなければ空**（会話（`resume`）だけ生きていれば続行する）。
  *
- * **`includeSystemMessages: true` を渡す**（2026-09-21 実測）。既定では `system` のメッセージ
+ * **`includeSystemMessages: true` を渡す**。既定では `system` のメッセージ
  * （`compact_boundary` を含む）が返らず、`getSessionMessages` は親子の鎖をたどるので、圧縮が
  * 起きたセッションでは**そこより前が既定では返らない**（docs/glossary.md「圧縮の区切り」）。
  * 他の `system` メッセージが混ざっても、`toSessionEvents` 側が知らない種別を空へ倒すので落ちない。
@@ -396,7 +396,7 @@ async function markSession(sessionId: string, options: SessionDriverOptions): Pr
 /**
  * グローバルの出力スタイル（`~/.claude/settings.json` の `outputStyle`）をこのセッションの中だけ
  * 中立に戻す。**そうしないと人格が二重に効く**（パックの `persona.md` と、全プロジェクトに効く
- * 出力スタイルが重なる。2026-09-14 実測: 応答が両方の人格を名乗った。docs/requirements.md 4.4）。
+ * 出力スタイルが重なる。実測: 応答が両方の人格を名乗った。docs/requirements.md 4.4）。
  *
  * 触るのは**セッション限りのフラグ層だけ**で、設定ファイルは書き換えない（`updateSettings` の
  * ほうはファイルを書くので使わない）。**失敗しても続行する** — 人格が二重になるだけで、
@@ -414,7 +414,7 @@ async function applyNeutralOutputStyle(session: {
 
 /**
  * コマンドの説明を1回だけ取りに行く。`init` の `slash_commands` は名前だけなので、説明は
- * この制御リクエストから受け取る（組み込みコマンドの分も返る。2026-09-12 調査）。
+ * この制御リクエストから受け取る（組み込みコマンドの分も返る）。
  * 以降セッション中に増減したときは `commands_changed` が押してくる（src/server/core/sdk-message.ts）。
  *
  * **取れなくてもセッションは続ける**（説明が無いまま名前だけの補完に戻るだけ。

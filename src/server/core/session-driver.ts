@@ -19,7 +19,7 @@ import { type SessionEvent } from "../../shared/session-event.ts"
 
 /**
  * 既定の許可モード。`auto` は Claude Code 側が読み取り専用の操作を自動で通し、書き込みなどは
- * `canUseTool` に回す（2026-09-11 実測。docs/requirements.md 4.1）。
+ * `canUseTool` に回す（docs/requirements.md 4.1）。
  *
  * **許可モードとモデルの値の一覧そのものは shared にある**（`src/shared/command.ts` の
  * `PERMISSION_MODES` / `MODEL_ALIASES`。docs/design.md 4.3）。SDK の型と同じ値であることは
@@ -28,7 +28,7 @@ import { type SessionEvent } from "../../shared/session-event.ts"
 export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto"
 
 /**
- * 既定のモデル。ユーザーの指示（2026-09-12）で Opus に固定した
+ * 既定のモデル。Opus に固定した
  * （docs/requirements.md 4.1）。画面の `<select>` 側の見た目上の既定値
  * （`src/browser/features/sidebar/session-info.tsx` の `MODEL_FALLBACK`）も同じ値に揃える。
  */
@@ -87,7 +87,7 @@ export type ChatSummaryRecord = {
  * 置くか」）。**実装は `adapter` 側**（`src/server/adapter/chat-archive.ts`）で、ここにあるのは
  * 契約だけ。
  *
- * **読む口は {@link readRecent} の1つだけ**（2026-09-21 に足した。直近の雑談を逐語のまま
+ * **読む口は {@link readRecent} の1つだけ**（直近の雑談を逐語のまま
  * `systemPrompt` へ戻す唯一の出どころ。`docs/requirements.md` 4.9「直近の会話は逐語のまま
  * 読み戻す」）。**それ以外の読み戻しは作らない** — 旗の付いたやり取りも同じ1つの口が一緒に
  * 返す（窓と重なった件をここで落とせるのは、両方を1度に見ているときだけ）。

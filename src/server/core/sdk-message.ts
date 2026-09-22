@@ -32,19 +32,19 @@ export const SPEAK_TOOL_NAME = "speak"
  * - `expression` は `expressions`（キャラクター定義にある表情名）に無ければ `default` に落とす
  *   （docs/architecture.md 原則4 — 表情名をコードに書かない）
  * - **`tool-started` の `parentToolUseId`** は、メッセージ本体（`message.message` の外）にある
- *   `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。2026-09-11 実測）。
+ *   `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。実測）。
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
  * - **`assistant` の `message.usage` は `step-usage` にする**（ターンの中を持ち場ごとに割るため。
  *   同じ `message.id` の最後を取るのは受け取る側の仕事）
  * - **`result` も `parent_tool_use_id` が非 null なら `turn-finished` にしない。**
  *   サブエージェント（Task ツール）の中の `result` を本体のターンの終わりと取り違えない
- *   ための保険（未確認。SDK が実際にこの形で流すかは 2026-09-21 時点で再現していない）
- * - **`conversation_reset` は `/clear` の合図**（2026-09-15 実測）。tsukumo は `/clear` という
+ *   ための保険（未確認。SDK が実際にこの形で流すかは再現していない）
+ * - **`conversation_reset` は `/clear` の合図。** tsukumo は `/clear` という
  *   文字列を見ず、本体が会話を捨てたことをこのメッセージで知る
  * - **`system` / `compact_boundary` は `compact-boundary` にする**（docs/glossary.md
  *   「圧縮の区切り」）。`compact_metadata` の数値は運ばない
  * - **`assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ
- *   `model-changed` を出す**（2026-09-17 実測）。`command` が `model` 以外の局所コマンド
+ *   `model-changed` を出す。** `command` が `model` 以外の局所コマンド
  *   （`/clear` など）や、形が崩れている・`args` が無いときは出さない。エイリアスとして
  *   知っているかどうかの検証はここでしない（docs/design.md 4.1、session-state.ts の仕事）
  * - 知らない `type`・壊れた形は空の並びを返す（落ちない）
@@ -89,7 +89,7 @@ export function toSessionEvents(
           ]
         : []
     case "conversation_reset":
-      // `/clear` で本体が会話を捨てたとき（2026-09-15 実測）。**`/compact` では届かない。**
+      // `/clear` で本体が会話を捨てたとき。**`/compact` では届かない。**
       return [{ kind: "conversation-cleared" }]
     default:
       return []
@@ -170,7 +170,7 @@ function assistantMessageEvents(
  * `assistant` に乗る `local_command_run` から `/model` の合図を取り出す。**`command` が
  * `model` 以外の局所コマンド（`/clear` など）では何も出さない。** `args` が文字列でない・
  * 無い・空（引数なしの `/model` はモデルの選択を出すだけで切り替えない）ときも同様
- * （2026-09-17 実測。docs/design.md 4.1）。
+ * （docs/design.md 4.1）。
  */
 function modelChangeEvents(localCommandRun: unknown): readonly SessionEvent[] {
   if (!isRecord(localCommandRun) || localCommandRun.command !== "model") {
@@ -241,7 +241,7 @@ function speechEvents(input: unknown, expressions: readonly Expression[]): reado
   ]
 }
 
-/** モデルから見えるツールのフルネーム。MCP サーバ名とツール名から決まる（2026-09-11 実測）。 */
+/** モデルから見えるツールのフルネーム。MCP サーバ名とツール名から決まる。 */
 function speakToolFullName(): string {
   return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 }
@@ -345,7 +345,7 @@ function stepUsageEvents(
  *
  * **運ぶのは累計そのまま。** `modelUsage` は `query()` の中の走行合計で、サブエージェントと
  * 内部の呼び出しも含む（同じ `result` の `usage` はメインループぶんだけなので集計に使わない。
- * 2026-09-22 に `sdk.d.ts` の型定義で確認）。ターンごとの増分に直すのは
+ * `sdk.d.ts` の型定義で確認）。ターンごとの増分に直すのは
  * `src/server/core/token-usage.ts` で、前回の累計を覚えるのは `session-manager.ts`。
  *
  * 数でない値・欠けている鍵は 0 に倒す（外部由来の値なので形を信用しない）。表が無い・空・
@@ -384,7 +384,7 @@ function finiteNumber(value: unknown): number {
 
 /**
  * `result` の subtype を終わり方に倒す。中断されたターンは `error_during_execution` で終わる
- * （2026-09-11 実測）ので、成功以外はまとめて `error` にする。
+ * ので、成功以外はまとめて `error` にする。
  */
 function turnStatus(subtype: unknown): TurnStatus {
   return subtype === "success" ? "success" : "error"

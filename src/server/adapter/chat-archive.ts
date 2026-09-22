@@ -11,8 +11,8 @@
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 //
-// **読む口は `readRecent` の1つだけ**（2026-09-21 に足した。同じ日に決めた「読む口は持たない」を
-// 覆している。理由と量の正典は `docs/requirements.md` 4.9「直近の会話は逐語のまま読み戻す」）。
+// **読む口は `readRecent` の1つだけ**（かつて決めた「読む口は持たない」を覆している。理由と
+// 量の正典は `docs/requirements.md` 4.9「直近の会話は逐語のまま読み戻す」）。
 // 読んだものの行き先は**雑談のセッションの `systemPrompt`** だけで、画面にも `error` フレームにも
 // stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
@@ -431,7 +431,7 @@ function readRecalled(dir: string, keyword: string, limitBytes: number): ChatRec
  *
  * **照合は小文字にしての部分一致**で、空白で分けた語は**どれか1つでも当たれば**その日を拾う
  * （言葉のずれを吸収するのが索引の役。足りないより多いほうへ倒す）。**日付そのものも照合の
- * 対象**なので、`2026-09-21` のような鍵でも引ける。
+ * 対象**なので、日付の文字列をそのまま鍵にしても引ける。
  */
 function matchedIndexDates(dir: string, keyword: string): readonly string[] {
   const terms = keyword

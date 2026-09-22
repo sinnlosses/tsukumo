@@ -30,7 +30,7 @@ const NODE_MODULES = "node_modules"
  * `^` で上げてよい——**色を当てる class を出すのは `rehype-highlight`（`lowlight`）が抱える
  * highlight.js のほう**なので、版がずれると当たらない class が出る。いまは `lowlight` が
  * `~11.11.0` で別の複製を持つが、**配っている 11.12.0 のテーマとバイト一致**なので当たる
- * （2026-09-22 に `cmp` で確認。テーマを配る版を上げるときはここを見る）。
+ * （`cmp` で確認。テーマを配る版を上げるときはここを見る）。
  */
 const VENDOR_ASSET_FILES: Readonly<Record<string, readonly string[]>> = {
   "highlight-theme.min.css": ["highlight.js", "styles", "github-dark.min.css"],

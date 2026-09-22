@@ -49,9 +49,9 @@
     "loopable": "Y",
     "dependencies": ["T-303"],
     "summary": "src/server/ のコメントから日付の記述を消す",
-    "status": "doing",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "src/server/ の18ファイルのコメントから日付を落とし、grep '20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]' src/server/ が 0 件。src/shared/ 0・src/browser/ 87・test/ 84・docs/ 1617 は HEAD と同数で不変。bun run check: 1092 pass / 0 fail（92ファイル）。",
     "task": "## 背景\n\nT-303 と同じ指示（2026-09-22）の続きで、**`src/server/` 配下だけ**を受け持つ。\n落とし方の規約は T-303 が `docs/coding-standards.md`「コメント」節に書いてあるので、\n**着手前にその節を読む**。\n\n実測（2026-09-22 時点）: `src/server/` に 47 箇所。多いのは\n`src/server/core/report-notation.ts`（レポートの記法の条ごとに「（2026-09-2x 決定。4.2）」が\n付いている）と `src/server/core/speech-cadence.ts` / `src/server/core/chat-manner.ts`。\n\n**`report-notation.ts` の括弧は `（2026-09-20 決定。4.2）` の形が多い。** `4.2` は\n`docs/requirements.md` の節番号なので、**日付だけ落として参照は残す**。\n\n## 決まっていること（蒸し返さない）\n\n- 日付は種類を問わず全部消す（ユーザー承認 2026-09-22）。理由の本文は残す\n- 規約の追加は T-303 の担当。このタスクは規約を書き換えない\n\n## やること\n\n1. **消すのは日付と出どころの記述だけで、理由の本文は残す。** 落とし方:\n\n- `（2026-09-21 決定）` `（2026-09-21 決定。4.2）` → 丸ごと落とす。`4.2` のような正典の参照が\n  同じ括弧に入っているときは**参照だけ残す**（`（docs/requirements.md 4.2）`）\n- `2026-09-21 の実測で、演出が相手にしたのは開始した時点の 74 文字だけ` → 日付だけ落として\n  `実測で、…74 文字だけ` にする（**数字と分かったことは残す**）\n- `2026-09-16 の指摘` `2026-09-21 のユーザーの判断` → 日付と「誰が」を落とし、\n  何が決まったか・なぜ今こうなのかだけ残す\n- 日付と出どころしか書いていない段落（理由が1文も無いもの）は、**正典\n  （`docs/architecture.md` / `docs/requirements.md`）に同じことが書かれているか確かめてから**\n  段落ごと消す。書かれていなければ正典に1行足してから消す\n  （`docs/coding-standards.md`「コメント」節の既存の手順）\n\n**日付が「データ」として出てくる箇所は触らない。** `test/server/adapter/chat-archive.test.ts` の\n`2026-09-21.jsonl` のようなファイル名・`expect(...).toBe(\"2026-09-21\")` の期待値・\n`test/fixture/` の中身は、雑談のアーカイブが日付でファイルを分ける仕様そのもの。\n**コメント（`//` と `/* */`、JSX の `{/* */}`）の中だけを対象にする。**\n2. 対象は `src/server/` 配下だけ。`src/shared/`・`src/browser/`・`test/`・`docs/` は触らない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/server/` に日付の形（`20xx-xx-xx`）が 0 件\n- `src/shared/`・`src/browser/`・`test/`・`docs/` の件数が変わっていない\n\n## 注意\n\n- **`report-notation.ts` / `speech-cadence.ts` / `chat-manner.ts` の日付はコメントの中だけで、\n  モデルに渡す文面（文字列リテラル）には入っていない。** 文面を書き換えないこと（書き換えると\n  レポートの記法の指示そのものが変わる）\n- 条の番号（`4.2` など）と正典への参照は残す\n"
   },
   {

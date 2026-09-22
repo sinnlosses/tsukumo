@@ -6,8 +6,7 @@
 // **cwd 相対**で読む。中身の解釈は src/shared/task-summary.ts の `readTaskSummaries` の仕事で、
 // ここは読み直すかどうかの判断とファイルの読み取りだけを持つ。
 //
-// **`fs.watch` は使わない**（macOS でも取りこぼすことがある。2026-09-13 決定）。ポーリングで
-// mtime を見る。
+// **`fs.watch` は使わない**（macOS でも取りこぼすことがある）。ポーリングで mtime を見る。
 
 import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
