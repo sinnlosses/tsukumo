@@ -18,9 +18,16 @@
 // 起動に失敗する。
 //
 // 使い方:
-//   bun run scripts/capture-catalog.ts                      # カタログ全部
-//   bun run scripts/capture-catalog.ts --only question-multi # 1つだけ
+//   bun run scripts/capture-catalog.ts --help                # --only に使える名前の一覧（撮らない）
+//   bun run scripts/capture-catalog.ts --only question-multi  # 1つだけ
 //   bun run scripts/capture-catalog.ts --out /tmp/別の置き場
+//
+// **オプション無しで実行するとカタログ全部（広い窓・狭い窓の2枚ずつ）を撮る。** 60秒では
+// 終わらないので、一覧が欲しいだけなら `--help` を使う。
+//
+// `--help` は専用のフラグとして実装していない。`parseOptions` が「値を取らない・値を持たない
+// フラグ」を一律で使い方の表示に落とすので、他のどの未知の引数を渡しても同じ表示になる
+// （`--only` の名前一覧はそこに含めている）。
 //
 // **撮った画像はリポジトリに置かない**（既定の出力先は /tmp。`capture-view.ts` 冒頭の決定を
 // 引き継ぐ）。疑似セッションは架空の会話なので画像そのものは共有してよい。
