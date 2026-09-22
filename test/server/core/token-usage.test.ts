@@ -2,13 +2,20 @@ import { describe, expect, it } from "bun:test"
 
 import {
   EMPTY_TURN_USAGE_TALLY,
+  summarizeTokenUsage,
   tallyTurnUsage,
   tokenUsageDelta,
   turnUsageBreakdown,
   type TurnUsageTally,
 } from "../../../src/server/core/token-usage.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { type ModelTokenUsage, type TurnUsageScope } from "../../../src/shared/token-usage.ts"
+import {
+  TOKEN_USAGE_FORMAT_VERSION,
+  type ModelTokenUsage,
+  type TokenUsageRecord,
+  type ToolUsageCount,
+  type TurnUsageScope,
+} from "../../../src/shared/token-usage.ts"
 
 // ここで使う数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -21,6 +28,39 @@ function usage(model: string, input: number, output: number, cost: number): Mode
     cacheReadInputTokens: 0,
     cacheCreationInputTokens: 0,
     costUsd: cost,
+  }
+}
+
+// ここから下は summarizeTokenUsage 用のフィクスチャ。**壊れた行・版違いの行を落とすのは
+// adapter（token-usage-log.test.ts）の役目**なので、ここには渡さない — summarizeTokenUsage は
+// 既に検証済みの行だけを受け取る前提の純関数。
+const EMPTY_STEP = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadInputTokens: 0,
+  cacheCreationInputTokens: 0,
+}
+
+function toolUsage(name: string, calls: number, resultBytes: number): ToolUsageCount {
+  return { name, calls, resultBytes }
+}
+
+function record(
+  at: string,
+  models: readonly ModelTokenUsage[],
+  mainTools: readonly ToolUsageCount[] = [],
+  subagentTools: readonly ToolUsageCount[] = [],
+): TokenUsageRecord {
+  return {
+    v: TOKEN_USAGE_FORMAT_VERSION,
+    at,
+    sessionId: "claude-session-1",
+    mode: "work",
+    models,
+    breakdown: {
+      main: { steps: 0, tokens: EMPTY_STEP, tools: mainTools },
+      subagent: { steps: 0, tokens: EMPTY_STEP, tools: subagentTools },
+    },
   }
 }
 
@@ -299,6 +339,129 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
     // 長さだけは残る（54 バイト = 架空の文面2つ・18文字ぶんの UTF-8 バイト数）。
     expect(turnUsageBreakdown(tally).main.tools).toEqual([
       { name: "Bash", calls: 1, resultBytes: 54 },
+    ])
+  })
+})
+
+describe("summarizeTokenUsage", () => {
+  it("日またぎの境界: 期間の外の日の行は byDay に含めない", () => {
+    const records = [
+      record("2026-09-21T23:59:00+09:00", [usage("opus", 100, 20, 0.5)]),
+      record("2026-09-22T00:00:00+09:00", [usage("opus", 50, 10, 0.2)]),
+      record("2026-09-23T00:00:00+09:00", [usage("opus", 5, 1, 0.01)]),
+    ]
+
+    const summary = summarizeTokenUsage(records, {
+      startDate: "2026-09-22",
+      endDate: "2026-09-22",
+    })
+
+    expect(summary.byDay).toEqual([
+      {
+        date: "2026-09-22",
+        totals: {
+          inputTokens: 50,
+          outputTokens: 10,
+          thinkingTokens: 0,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          costUsd: 0.2,
+        },
+      },
+    ])
+  })
+
+  it("複数日にまたがる期間は、日ごとに分けて古い→新しい順に並べる", () => {
+    const records = [
+      record("2026-09-23T09:00:00+09:00", [usage("opus", 5, 1, 0.01)]),
+      record("2026-09-21T09:00:00+09:00", [usage("opus", 100, 20, 0.5)]),
+      record("2026-09-22T09:00:00+09:00", [usage("opus", 50, 10, 0.2)]),
+    ]
+
+    const summary = summarizeTokenUsage(records, {
+      startDate: "2026-09-21",
+      endDate: "2026-09-23",
+    })
+
+    expect(summary.byDay.map((day) => day.date)).toEqual(["2026-09-21", "2026-09-22", "2026-09-23"])
+  })
+
+  it("記録が無い期間は3つの軸とも空の並びを返す（記録が無い日を0埋めしない）", () => {
+    expect(summarizeTokenUsage([], { startDate: "2026-09-01", endDate: "2026-09-30" })).toEqual({
+      byDay: [],
+      byModel: [],
+      byTool: [],
+    })
+  })
+
+  it("同じ日・同じ期間の行が1件も無いときも空の並びを返す(記録はあるが期間の外)", () => {
+    const records = [record("2026-08-01T09:00:00+09:00", [usage("opus", 100, 20, 0.5)])]
+
+    expect(
+      summarizeTokenUsage(records, { startDate: "2026-09-01", endDate: "2026-09-30" }),
+    ).toEqual({ byDay: [], byModel: [], byTool: [] })
+  })
+
+  it("モデルごとに数を足し合わせ、モデル名の昇順で並べる", () => {
+    const records = [
+      record("2026-09-22T09:00:00+09:00", [
+        usage("opus", 100, 20, 0.5),
+        usage("haiku", 10, 2, 0.01),
+      ]),
+      record("2026-09-22T10:00:00+09:00", [usage("opus", 50, 10, 0.2)]),
+    ]
+
+    const summary = summarizeTokenUsage(records, {
+      startDate: "2026-09-22",
+      endDate: "2026-09-22",
+    })
+
+    expect(summary.byModel).toEqual([
+      {
+        model: "haiku",
+        totals: {
+          inputTokens: 10,
+          outputTokens: 2,
+          thinkingTokens: 0,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          costUsd: 0.01,
+        },
+      },
+      {
+        model: "opus",
+        totals: {
+          inputTokens: 150,
+          outputTokens: 30,
+          thinkingTokens: 0,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          costUsd: 0.7,
+        },
+      },
+    ])
+  })
+
+  it("ツールごとに、メインとサブエージェントの内訳を足し合わせる（長さの降順、同じなら名前順）", () => {
+    const records = [
+      record(
+        "2026-09-22T09:00:00+09:00",
+        [usage("opus", 100, 20, 0.5)],
+        [toolUsage("Bash", 2, 100), toolUsage("Read", 1, 10)],
+        [toolUsage("Grep", 1, 40)],
+      ),
+      record("2026-09-22T10:00:00+09:00", [usage("opus", 50, 10, 0.2)], [toolUsage("Bash", 1, 60)]),
+    ]
+
+    const summary = summarizeTokenUsage(records, {
+      startDate: "2026-09-22",
+      endDate: "2026-09-22",
+    })
+
+    expect(summary.byTool).toEqual([
+      { name: "Bash", calls: 3, resultBytes: 160 },
+      { name: "Grep", calls: 1, resultBytes: 40 },
+      { name: "Read", calls: 1, resultBytes: 10 },
     ])
   })
 })

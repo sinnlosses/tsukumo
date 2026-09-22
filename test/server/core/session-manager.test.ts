@@ -43,7 +43,7 @@ const NOOP_CHAT_ARCHIVE: ChatArchive = {
 }
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {} }
+const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () => [] }
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
@@ -1193,6 +1193,7 @@ describe("createSessionManager", () => {
           append: (entry) => {
             entries.push(entry)
           },
+          readRange: () => [],
         },
       })
       manager.create({

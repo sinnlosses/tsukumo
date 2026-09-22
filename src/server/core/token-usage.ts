@@ -1,6 +1,11 @@
 // トークン消費を記録するときの判断（何を1行にするか）と、書き口の契約。**実際に書くのは
 // `src/server/adapter/token-usage-log.ts`** で、ここは「累計から増分を作る」「ターンの中の内訳を
-// 積んで畳む」ところまでを持つ。
+// 積んで畳む」「期間で切って軸ごとに畳む（集計）」ところまでを持つ。
+//
+// **集計は純関数**（{@link summarizeTokenUsage}）で、ファイルに触らない。期間で切ったあとの
+// 行を渡されて畳むだけなので、どの行を読むか（日付の範囲からファイルを選ぶ）は
+// `src/server/adapter/token-usage-log.ts` の仕事のまま（`core → adapter` は禁止。
+// `test/architecture.test.ts`）。
 //
 // SDK の `result` に乗る `modelUsage` は **`query()` の中の累計**（サブエージェントと内部の
 // 呼び出しも含む。`usage` のほうはメインループだけなので集計に使わない）。ターンごとの消費を
@@ -19,12 +24,13 @@ import {
   type TokenUsageMode,
   type StepTokenUsage,
   type ToolUsageCount,
+  type TokenUsageRecord,
   type TurnUsageBreakdown,
   type TurnUsageScope,
 } from "../../shared/token-usage.ts"
 
 /**
- * トークン消費の書き込み口（`chat-archive` と同じ形の契約）。**実装は `adapter` 側**
+ * トークン消費の読み書き口（`chat-archive` と同じ形の契約）。**実装は `adapter` 側**
  * （`src/server/adapter/token-usage-log.ts`）で、ここにあるのは契約だけ。
  *
  * 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
@@ -32,6 +38,22 @@ import {
  */
 export type TokenUsageLog = {
   readonly append: (entry: TokenUsageEntry) => void
+  /**
+   * 期間に入る行を、日付の範囲からファイルを選んで古い→新しい順に返す。**壊れた行・版が
+   * 記録の形の版と違う行は読まずに落とす**（黙って飛ばして続ける。まだ開発中で、旧い版の行を
+   * 残す価値が無いとユーザーが判断した）。
+   */
+  readonly readRange: (period: TokenUsagePeriod) => readonly TokenUsageRecord[]
+}
+
+/**
+ * 集計の対象にする期間。**両端を含み、ローカル日付（`YYYY-MM-DD`）で表す** — 記録の `at` は
+ * 書いた時点のローカル日付をそのまま持つ（`isoWithOffset`）ので、UTC へ変換し直さずに
+ * 文字列のまま比較できる。**「今日」「今週」をここが決めるのではなく、呼ぶ側が渡す。**
+ */
+export type TokenUsagePeriod = {
+  readonly startDate: string
+  readonly endDate: string
 }
 
 /**
@@ -46,6 +68,35 @@ export type TokenUsageEntry = {
   readonly models: readonly ModelTokenUsage[]
   /** ターンの中の内訳（{@link turnUsageBreakdown} の戻り値）。 */
   readonly breakdown: TurnUsageBreakdown
+}
+
+/**
+ * {@link summarizeTokenUsage} の戻り値。**分析画面が要る3つの軸だけ**（日ごと・モデル別・
+ * ツール別）を持つ。
+ */
+export type TokenUsageSummary = {
+  /** 日ごとの合計（期間に入る日だけを古い→新しい順に並べる。記録が無い日は含まない）。 */
+  readonly byDay: readonly DailyTokenUsage[]
+  /** モデルごとの合計（モデル名の昇順）。 */
+  readonly byModel: readonly ModelUsageTotal[]
+  /** ツールごとの合計（メインループとサブエージェントの内訳を足し合わせる。結果の長さの
+   * 降順、同じなら名前順 — {@link foldToolCalls} と同じ並べ方）。 */
+  readonly byTool: readonly ToolUsageCount[]
+}
+
+/** モデル別の数から `model` を除いた形（日ごと・モデル別のどちらでも同じ数の並びを使う）。 */
+export type TokenUsageTotals = Omit<ModelTokenUsage, "model">
+
+/** ある1日（ローカル日付）の合計。 */
+export type DailyTokenUsage = {
+  readonly date: string
+  readonly totals: TokenUsageTotals
+}
+
+/** あるモデル1つの合計。 */
+export type ModelUsageTotal = {
+  readonly model: string
+  readonly totals: TokenUsageTotals
 }
 
 /**
@@ -82,6 +133,16 @@ const EMPTY_STEP_USAGE = {
   cacheReadInputTokens: 0,
   cacheCreationInputTokens: 0,
 } satisfies StepTokenUsage
+
+/** 畳む対象が無い（期間に入る記録が無い）ときの初期値。 */
+const EMPTY_TOTALS = {
+  inputTokens: 0,
+  outputTokens: 0,
+  thinkingTokens: 0,
+  cacheReadInputTokens: 0,
+  cacheCreationInputTokens: 0,
+  costUsd: 0,
+} satisfies TokenUsageTotals
 
 const textEncoder = new TextEncoder()
 
@@ -173,6 +234,26 @@ export function turnUsageBreakdown(tally: TurnUsageTally): TurnUsageBreakdown {
   return { main: scopeUsage(tally, "main"), subagent: scopeUsage(tally, "subagent") }
 }
 
+/**
+ * 期間に入る行を、**日ごと・モデル別・ツール別**の3つの軸で畳む（分析画面が要る軸だけ。
+ * 使わない軸＝モード別・1ターンあたりの中央値は作らない）。
+ *
+ * **期間の判定は行の `at` の頭10文字（ローカル日付）で行う** — 記録は書いた時点のローカル日付を
+ * 持つので（`isoWithOffset`）、ここで改めてタイムゾーンを変換し直さない。`readRange` が渡す
+ * 行が既に期間の外を含んでいても、ここで確定的に切り直す。
+ */
+export function summarizeTokenUsage(
+  records: readonly TokenUsageRecord[],
+  period: TokenUsagePeriod,
+): TokenUsageSummary {
+  const withinPeriod = records.filter((record) => isWithinPeriod(record, period))
+  return {
+    byDay: summarizeByDay(withinPeriod),
+    byModel: summarizeByModel(withinPeriod),
+    byTool: summarizeByTool(withinPeriod),
+  }
+}
+
 /** 1つでも数が減っていれば、そのモデルの走行合計は振り出しに戻っている。 */
 function hasDecreased(before: ModelTokenUsage, now: ModelTokenUsage): boolean {
   return (
@@ -255,4 +336,74 @@ function compareName(left: ToolUsageCount, right: ToolUsageCount): number {
 /** ツールの結果の長さ（UTF-8 のバイト数）。物差しは雑談のログ（`src/shared/chat-log.ts`）と同じ。 */
 function byteLength(text: string): number {
   return textEncoder.encode(text).length
+}
+
+/** 行のローカル日付が期間（両端含む）に入っているか。 */
+function isWithinPeriod(record: TokenUsageRecord, period: TokenUsagePeriod): boolean {
+  const date = localDateOf(record)
+  return date >= period.startDate && date <= period.endDate
+}
+
+/** 行の `at` の頭10文字（ローカル日付）。ファイル名には頼らず、行だけで日付が決まる。 */
+function localDateOf(record: TokenUsageRecord): string {
+  return record.at.slice(0, 10)
+}
+
+/** 日ごとに畳む。記録の無い日は並ばない（**穴を0で埋めない** — 埋めるかどうかは描く側が決める）。 */
+function summarizeByDay(records: readonly TokenUsageRecord[]): readonly DailyTokenUsage[] {
+  const dates = [...new Set(records.map(localDateOf))].toSorted()
+  return dates.map((date) => ({
+    date,
+    totals: sumTotals(
+      records.filter((record) => localDateOf(record) === date).flatMap((r) => r.models),
+    ),
+  }))
+}
+
+/** モデルごとに畳む（モデル名の昇順）。 */
+function summarizeByModel(records: readonly TokenUsageRecord[]): readonly ModelUsageTotal[] {
+  const allUsages = records.flatMap((record) => record.models)
+  const models = [...new Set(allUsages.map((usage) => usage.model))].toSorted()
+  return models.map((model) => ({
+    model,
+    totals: sumTotals(allUsages.filter((usage) => usage.model === model)),
+  }))
+}
+
+/**
+ * ツールごとに畳む。**メインループとサブエージェントの内訳を足し合わせる**（どちらが重いかは
+ * 1行の中の `breakdown` を見れば分かるので、この軸では「何にいちばん使ったか」だけを見る）。
+ * 並びは {@link foldToolCalls} と同じ「結果の長さの降順、同じなら名前順」。
+ */
+function summarizeByTool(records: readonly TokenUsageRecord[]): readonly ToolUsageCount[] {
+  const calls = records.flatMap((record) => [
+    ...record.breakdown.main.tools,
+    ...record.breakdown.subagent.tools,
+  ])
+  const names = [...new Set(calls.map((call) => call.name))]
+  return names
+    .map((name) => {
+      const sameName = calls.filter((call) => call.name === name)
+      return {
+        name,
+        calls: sameName.reduce((total, call) => total + call.calls, 0),
+        resultBytes: sameName.reduce((total, call) => total + call.resultBytes, 0),
+      }
+    })
+    .sort((left, right) => right.resultBytes - left.resultBytes || compareName(left, right))
+}
+
+/** モデル別の数の並びを足し合わせる（費用は浮動小数の誤差が出るので {@link roundCost} で丸める）。 */
+function sumTotals(usages: readonly ModelTokenUsage[]): TokenUsageTotals {
+  return usages.reduce(
+    (total, usage) => ({
+      inputTokens: total.inputTokens + usage.inputTokens,
+      outputTokens: total.outputTokens + usage.outputTokens,
+      thinkingTokens: total.thinkingTokens + usage.thinkingTokens,
+      cacheReadInputTokens: total.cacheReadInputTokens + usage.cacheReadInputTokens,
+      cacheCreationInputTokens: total.cacheCreationInputTokens + usage.cacheCreationInputTokens,
+      costUsd: roundCost(total.costUsd + usage.costUsd),
+    }),
+    EMPTY_TOTALS,
+  )
 }

@@ -1,11 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import {
+  appendFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { createTokenUsageLog } from "../../../src/server/adapter/token-usage-log.ts"
 import { type TokenUsageEntry } from "../../../src/server/core/token-usage.ts"
-import { type ModelTokenUsage, type TurnUsageBreakdown } from "../../../src/shared/token-usage.ts"
+import {
+  TOKEN_USAGE_FORMAT_VERSION,
+  type ModelTokenUsage,
+  type TurnUsageBreakdown,
+} from "../../../src/shared/token-usage.ts"
 
 // 数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -170,5 +182,84 @@ describe("createTokenUsageLog", () => {
     const log = createTokenUsageLog(root())
 
     expect(() => log.append(entry(at(10, 30)))).not.toThrow()
+  })
+})
+
+describe("readRange", () => {
+  it("日またぎの境界: 期間に入る日のファイルだけを読む", () => {
+    const log = createTokenUsageLog(root())
+    log.append(entry(at(23, 59, 21)))
+    log.append(entry(at(0, 0, 22)))
+    log.append(entry(at(0, 0, 23)))
+
+    const records = log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })
+
+    expect(records.length).toBe(1)
+    expect(records[0]?.at.slice(0, 10)).toBe("2026-09-22")
+  })
+
+  it("複数日にまたがる期間は、古い→新しい順に日をまたいで返す", () => {
+    const log = createTokenUsageLog(root())
+    log.append(entry(at(9, 0, 23)))
+    log.append(entry(at(9, 0, 21)))
+    log.append(entry(at(9, 0, 22)))
+
+    const records = log.readRange({ startDate: "2026-09-21", endDate: "2026-09-23" })
+
+    expect(records.map((record) => record.at.slice(0, 10))).toEqual([
+      "2026-09-21",
+      "2026-09-22",
+      "2026-09-23",
+    ])
+  })
+
+  it("記録が無い期間・置き場がまだ無いときは空の並びを返す（例外にならない）", () => {
+    const log = createTokenUsageLog(root())
+
+    expect(log.readRange({ startDate: "2026-09-01", endDate: "2026-09-30" })).toEqual([])
+  })
+
+  it("記録した期間の外を指定すると空の並びを返す", () => {
+    const log = createTokenUsageLog(root())
+    log.append(entry(at(9, 0, 22)))
+
+    expect(log.readRange({ startDate: "2026-10-01", endDate: "2026-10-31" })).toEqual([])
+  })
+
+  // **`v` が2以外の行・壊れた行は読まずに落とす**（版1を残す価値が無いという判断。
+  // まだ開発中で「内訳を空として読む」ことはしない）。1行ずつ検証するので、他の正しい行は
+  // 生き残る。
+  it("壊れた行や v が2以外の行が混じっても、落として続ける", () => {
+    const validLine = JSON.stringify({
+      v: TOKEN_USAGE_FORMAT_VERSION,
+      at: "2026-09-22T09:00:00+09:00",
+      sessionId: "claude-session-1",
+      mode: "work",
+      models: MODELS,
+      breakdown: BREAKDOWN,
+    })
+    const oldVersionLine = JSON.stringify({
+      v: 1,
+      at: "2026-09-22T09:01:00+09:00",
+      sessionId: "claude-session-1",
+      mode: "work",
+      models: MODELS,
+      breakdown: BREAKDOWN,
+    })
+    const missingKeyLine = JSON.stringify({
+      v: TOKEN_USAGE_FORMAT_VERSION,
+      at: "2026-09-22T09:02:00+09:00",
+    })
+    mkdirSync(root(), { recursive: true })
+    appendFileSync(
+      join(root(), "2026-09-22.jsonl"),
+      `${validLine}\n${oldVersionLine}\nこれはJSONではない\n${missingKeyLine}\n\n`,
+    )
+    const log = createTokenUsageLog(root())
+
+    const records = log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })
+
+    expect(records.length).toBe(1)
+    expect(records[0]?.at).toBe("2026-09-22T09:00:00+09:00")
   })
 })

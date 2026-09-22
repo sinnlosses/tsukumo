@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 トークン消費を期間で切って畳む集計の口を core に置いた（T-320）
+
+`src/server/adapter/token-usage-log.ts` に `readRange`（`YYYY-MM-DD.jsonl` の名前で期間の外の
+ファイルを開かず、zod で1行ずつ検証して壊れた行・`v` が2以外の行を落とす）、
+`src/server/core/token-usage.ts` に `summarizeTokenUsage`（ローカル日付で期間を切り直し、
+日ごと・モデル別・ツール別の3軸に畳む純関数）を足した。分析画面（T-321）が要る軸だけにしてある。
+
 ### 2026-09-22 src/server/ のコメントから日付の記述を消した（T-304）
 
 `src/server/` の18ファイル（`core/` 8・`adapter/` 10）のコメントから日付を全て落とし、理由・実測値・正典の参照（`4.2` などの節番号）は残した。`bundle.ts` の成果物の置き場の経緯と `ui-rebuild.ts` からのその参照は、日付なしで読める形に書き直した。`src/browser/` は T-305。
