@@ -55,6 +55,11 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 生きたセッションへの重ね resume を実測した（T-346）
+
+同じ `sessionId` を2つの `query` から重ねて `resume` しても fork せず、1つの transcript に
+混線することを使い捨てスクリプトで確かめ、`docs/requirements.md` 4.8 に実測の段落を足した。
+
 ### 2026-09-22 書き終わったミニ立ち絵を本文に残した（T-290）
 
 筆先を `writing` / `resting` の合併型にし、座標をビューポートから本文の入れ物（`.main-turns`）の

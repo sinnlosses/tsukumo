@@ -390,9 +390,9 @@
     "loopable": "Y",
     "dependencies": [],
     "summary": "生きているセッションに別プロセスが resume したときの transcript を実測する",
-    "status": "todo",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "使い捨てスクリプト /tmp/tsukumo-resume-fork-experiment.ts で、生きた query に重ねて同じ sessionId を resume（リポジトリにはコミットせず）。1) fork しない: transcript は最後まで1ファイル（69行）のまま、listSessions の sessionId も終始1つ。2) tagSession はその唯一のセッションに付く（jsonl 内の tag エントリ1件）。3) 元プロセスの query はエラーにならず、重ねた側の応答後に送った往復も正常に result まで到達。 docs/requirements.md 4.8 に実測段落を追記（節数 27 で前後不変）。bun run check: 1136 pass / 0 fail（92ファイル）。",
     "task": "## 背景\n\n複数の tsukumo を同じディレクトリで立ち上げたとき、落ちた側を起こし直すと生きている側の\nセッションを拾う。`src/server/core/session-restore.ts` の `selectSessionToResume` が\n印（`tsukumo:<パック>[:chat]`）の一致するもののうち `lastModified` が最新の1つを選ぶためで、\n**印が起動ごとに分かれていない**。\n\n印を分ける設計（次のタスク）の前に、**生きているセッションに別のプロセスが `resume` した\nときに transcript がどうなるか**を確かめておく必要がある。同じ `sessionId` に両方が追記\nするなら、戻れないことに加えて**動いている側の会話も汚れている**ことになり、切り替えの\n設計で「使用中の印は避ける」が必須になる。fork されて別IDになるなら、印の付け直し\n（`src/server/adapter/sdk-driver.ts:390` の `tagSession`）がどちらに付くかが問題になる。\n\n## やること\n\n1. SDK（`@anthropic-ai/claude-agent-sdk`）を直に叩く使い捨てのスクリプトを\n   `/tmp` に置き、同じ `sessionId` を `resume` する 2つの `query` を**重ねて**動かす\n   （短い依頼を1つずつで足りる。tsukumo 本体は起こさなくてよい）\n2. `~/.claude/projects/` の該当 transcript を見て、次の3つを記録する\n   - 追記が同じファイルに混ざるか、別の `sessionId` のファイルが生まれるか（fork か）\n   - 後から `tagSession` を呼んだとき、印がどちらのセッションに付くか\n   - 元のプロセス側の `query` がエラーになるか、黙って続くか\n3. 分かったことを `docs/requirements.md` 4.8 の「鍵」の節に**実測の1段落**として足す\n   （日付つき。今の本文にある他の実測と同じ書き方）\n4. スクリプトは `/tmp` に置いたまま、リポジトリにコミットしない\n\n## 完了条件\n\n- 上の3点の答えが `evidence` に1行ずつ書かれている（**会話の中身は書かない**。件数・\n  ファイル名・IDの異同だけ）\n- `docs/requirements.md` 4.8 に実測の段落が足されていて、節の数が変わっていない\n  （`grep -c '^#\\{2,3\\} ' docs/requirements.md` を前後で比べる）\n- `bun run check` が通る（ソースを触っていなければテスト件数だけを書く）\n\n## 注意\n\n- **transcript には利用者と claude の生の会話が入っている。** 中身をコピーしない、ログに\n  出さない、`evidence` にもタスク本文にも引かない（`docs/coding-standards.md`\n  「会話内容の扱い」）。実験に使う依頼は当たり障りのない一言にする\n- 実験で作ったセッションは `~/.claude/projects/` に残る。**既存のセッションのファイルを\n  消さない**\n"
   },
   {
