@@ -9,9 +9,9 @@ import { type SessionRecord } from "../../src/shared/session-state.ts"
 // 文面は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 
 const RECORDS: readonly SessionRecord[] = [
-  { kind: "request", text: "1つめの依頼", images: [] },
+  { kind: "request", turnId: 0, text: "1つめの依頼", images: [] },
   { kind: "speech", text: "1つめのセリフ", expression: "default" },
-  { kind: "request", text: "2つめの依頼", images: [] },
+  { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
   { kind: "speech", text: "2つめのセリフ", expression: "proud" },
 ]
 
@@ -27,7 +27,7 @@ describe("chatLogEntries", () => {
 
   it("本文・ツール・質問は落とす（雑談中はレポートを出さない）", () => {
     const entries = chatLogEntries([
-      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "request", turnId: 2, text: "架空の依頼", images: [] },
       { kind: "detail", markdown: "## 架空のレポート" },
       {
         kind: "tool",
@@ -57,7 +57,7 @@ describe("chatLogEntries", () => {
 
   it("圧縮の区切り（compact-boundary）は1件のイベントから1件のログの区切りになる", () => {
     const entries = chatLogEntries([
-      { kind: "request", text: "1つめの依頼", images: [] },
+      { kind: "request", turnId: 3, text: "1つめの依頼", images: [] },
       { kind: "compact-boundary" },
       { kind: "speech", text: "2つめのセリフ", expression: "default" },
     ])
@@ -77,7 +77,7 @@ describe("chatLogByteSize", () => {
 
   it("利用者だけの文面を UTF-8 バイト数で数える", () => {
     // "あ" は UTF-8 で3バイト。
-    const entries = chatLogEntries([{ kind: "request", text: "あああ", images: [] }])
+    const entries = chatLogEntries([{ kind: "request", turnId: 4, text: "あああ", images: [] }])
 
     expect(chatLogByteSize(entries)).toBe(9)
   })
@@ -94,28 +94,33 @@ describe("chatLogByteSize", () => {
     const withImages = chatLogEntries([
       {
         kind: "request",
+        turnId: 0,
         text: "あああ",
         images: ["data:image/png;base64,architecture-tallying-decoy"],
       },
     ])
-    const withoutImages = chatLogEntries([{ kind: "request", text: "あああ", images: [] }])
+    const withoutImages = chatLogEntries([
+      { kind: "request", turnId: 5, text: "あああ", images: [] },
+    ])
 
     expect(chatLogByteSize(withImages)).toBe(chatLogByteSize(withoutImages))
   })
 
   it("圧縮の区切りは文面を持たないので数えない", () => {
     const withBoundary = chatLogEntries([
-      { kind: "request", text: "あああ", images: [] },
+      { kind: "request", turnId: 6, text: "あああ", images: [] },
       { kind: "compact-boundary" },
     ])
-    const withoutBoundary = chatLogEntries([{ kind: "request", text: "あああ", images: [] }])
+    const withoutBoundary = chatLogEntries([
+      { kind: "request", turnId: 7, text: "あああ", images: [] },
+    ])
 
     expect(chatLogByteSize(withBoundary)).toBe(chatLogByteSize(withoutBoundary))
   })
 
   it("複数件は合算する", () => {
     const entries = chatLogEntries([
-      { kind: "request", text: "1つめの依頼", images: [] },
+      { kind: "request", turnId: 8, text: "1つめの依頼", images: [] },
       { kind: "speech", text: "1つめのセリフ", expression: "default" },
     ])
 

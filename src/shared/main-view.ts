@@ -18,6 +18,12 @@ import { type SessionRecord, type SessionState } from "./session-state.ts"
 export const MAX_MAIN_VIEW_TURNS = 5
 
 /**
+ * 依頼で始まっていないまとまりに振る番号。**実在のターンの番号（0以上）とぶつからない値**に
+ * する。窓の外へ依頼が落ちたあとの記録・依頼より前に届いた記録が、ここへ入る。
+ */
+export const PRE_REQUEST_TURN_ID = -1
+
+/**
  * 1つのやり取りの中で**画面に出す**記録の上限。超えた分は**古いほうから**落とし、件数だけを残す
  * （やり取りの境界を優先する）。
  *
@@ -40,7 +46,13 @@ const MAX_MAIN_VIEW_ENTRIES = 40
  * （{@link mainViewEntries}）。
  */
 export type MainViewEntry =
-  | { readonly kind: "request"; readonly text: string; readonly images: readonly string[] }
+  | {
+      readonly kind: "request"
+      /** そのターンの通し番号（`SessionState.nextTurnId` が振ったもの）。 */
+      readonly turnId: number
+      readonly text: string
+      readonly images: readonly string[]
+    }
   /**
    * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
    * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
@@ -175,8 +187,8 @@ export function mainViewTurns(
  * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
  *
  * **`speech` は落とす**（セリフは吹き出しだけに出し、レポートに混ぜない。
- * docs/requirements.md 4.2）。落としても `request` の数と順番は変わらないので、
- * {@link groupIntoTurns} が振るターンの通し番号はずれない。
+ * docs/requirements.md 4.2）。ターンの通し番号は `request` の記録が持っているので、
+ * 何を落としても番号はずれない。
  *
  * **`compact-boundary` も落とす**（`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
  * 圧縮の区切りは雑談のログ（`shared/chat-log.ts`）だけに出し、**仕事のメインビューには出さない**。
@@ -230,7 +242,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
     if (entry.kind === "request") {
       flush()
       current = {
-        id: turns.length,
+        id: entry.turnId,
         request: { text: entry.text, images: entry.images },
         steps: [],
         nextStepId: 0,
@@ -238,7 +250,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
       continue
     }
 
-    current ??= { id: 0, request: undefined, steps: [], nextStepId: 0 }
+    current ??= { id: PRE_REQUEST_TURN_ID, request: undefined, steps: [], nextStepId: 0 }
     if (entry.kind === "detail") {
       current.steps.push({
         id: current.nextStepId++,
@@ -326,6 +338,15 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
       // **繰り上げが起きたときは実況として落とす**（{@link promotedReportId}）。
       if (index === turn.steps.length - 1 && !hasToolRun(step)) {
         return settled && promotedId === undefined ? step : { ...step, report: undefined }
+      }
+      // **ツールが続いていない資料は、まだ締めかどうかが決まっていない。** 次の本文が流れ始めた
+      // だけで「最後のステップ」から外れるが、その本文が実況で終われば {@link promotedReportId}
+      // がこの資料を締めへ繰り上げる。**進行中に中間レポートとして出してしまうと**、繰り上がった
+      // 瞬間に「もう画面にある本文」が最終レポートになり、**マウントした時点でしか始まらない
+      // 書き上げる演出**（`src/browser/features/main-view/report-reveal.ts`）が二度と掛からない
+      // （実測: 資料が中間レポートとして出た 2.2 秒後に締めへ変わり、筆は一度も走らなかった）。
+      if (!settled && !hasToolRun(step)) {
+        return { ...step, report: undefined }
       }
       return isInterimReport(step.report)
         ? { ...step, interim: step.id !== promotedId }

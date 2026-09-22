@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
-import { planReveal } from "../../../../src/browser/features/main-view/reveal-plan.ts"
+import {
+  blockProgress,
+  planReveal,
+  type RevealBlock,
+} from "../../../../src/browser/features/main-view/reveal-plan.ts"
 
 /** 文字1つぶんの持ち時間（`reveal-plan.ts` の `MS_PER_CHARACTER`）。 */
 const MS_PER_CHARACTER = 40
@@ -21,6 +25,15 @@ function kindsOf(root: HTMLElement): readonly (readonly string[])[] {
 
 function tagsOf(root: HTMLElement): readonly (readonly string[])[] {
   return planReveal(root).map((block) => block.members.map((member) => member.element.tagName))
+}
+
+/** 時間帯だけを見る塊（`blockProgress` は位置を見ない）。 */
+function blockBetween(startMs: number, endMs: number): RevealBlock {
+  return {
+    members: [{ element: document.createElement("p"), kind: "text" }],
+    startMs,
+    endMs,
+  }
 }
 
 describe("planReveal（トピックへのまとめ方と時間の割り当て）", () => {
@@ -118,5 +131,37 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
 
     expect(kindsOf(root)).toEqual([["text", "text", "figure", "text"]])
     expect(tagsOf(root)).toEqual([["H3", "P", "PRE", "P"]])
+  })
+})
+
+describe("blockProgress（塊の中の進み方）", () => {
+  /** 位置は見ないので、塊は時間帯だけで区別する。 */
+  const block = blockBetween(0, 1000)
+
+  it("始まりと終わりは端に付ける", () => {
+    expect(blockProgress(block, 0)).toBe(0)
+    expect(blockProgress(block, 1000)).toBe(1)
+  })
+
+  it("時間帯の外へ出ても端で止まる", () => {
+    expect(blockProgress(block, -500)).toBe(0)
+    expect(blockProgress(block, 5000)).toBe(1)
+  })
+
+  it("真ん中では半分まで進む（緩急は前後で対称）", () => {
+    expect(blockProgress(block, 500)).toBeCloseTo(0.5, 10)
+    expect(blockProgress(block, 250) + blockProgress(block, 750)).toBeCloseTo(1, 10)
+  })
+
+  it("書き始めと書き終わりは等速より遅く、途中は速い", () => {
+    // 最初の 1/4 の時間で進むのは 1/4 未満、真ん中の 1/2 の時間で半分以上を進む。
+    expect(blockProgress(block, 250)).toBeLessThan(0.25)
+    expect(blockProgress(block, 750) - blockProgress(block, 250)).toBeGreaterThan(0.5)
+  })
+
+  it("時間帯の幅が無い塊は、出し切ったものとして扱う", () => {
+    const instant = blockBetween(400, 400)
+
+    expect(blockProgress(instant, 400)).toBe(1)
   })
 })

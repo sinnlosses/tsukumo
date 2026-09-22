@@ -15,8 +15,8 @@ afterEach(() => {
   cleanup()
 })
 
-function request(text: string): SessionRecord {
-  return { kind: "request", text, images: [] }
+function request(text: string, turnId = 0): SessionRecord {
+  return { kind: "request", turnId, text, images: [] }
 }
 
 function detail(markdown: string): SessionRecord {
@@ -67,11 +67,11 @@ function rerenderMainView(records: readonly SessionRecord[]): void {
 describe("MainView（タブの規則）", () => {
   it("3ターンまでタブが出て、新しいターンで先頭（今回）へ戻る", () => {
     renderMainView([
-      request("1つ目"),
+      request("1つ目", 0),
       detail("1つ目のレポート"),
-      request("2つ目"),
+      request("2つ目", 1),
       detail("2つ目のレポート"),
-      request("3つ目"),
+      request("3つ目", 2),
       detail("3つ目のレポート"),
     ])
 
@@ -84,13 +84,13 @@ describe("MainView（タブの規則）", () => {
 
     // 4つ目が始まると、先頭（今回）は自動でそちらに変わる。
     rerenderMainView([
-      request("1つ目"),
+      request("1つ目", 0),
       detail("1つ目のレポート"),
-      request("2つ目"),
+      request("2つ目", 1),
       detail("2つ目のレポート"),
-      request("3つ目"),
+      request("3つ目", 2),
       detail("3つ目のレポート"),
-      request("4つ目"),
+      request("4つ目", 3),
       detail("4つ目のレポート"),
     ])
 
@@ -100,11 +100,11 @@ describe("MainView（タブの規則）", () => {
 
   it("過去のタブを見ている間は、新しいターンが来ても動かない", () => {
     renderMainView([
-      request("1つ目"),
+      request("1つ目", 0),
       detail("1つ目のレポート"),
-      request("2つ目"),
+      request("2つ目", 1),
       detail("2つ目のレポート"),
-      request("3つ目"),
+      request("3つ目", 2),
       detail("3つ目のレポート"),
     ])
 
@@ -114,13 +114,13 @@ describe("MainView（タブの規則）", () => {
 
     // 新しいターンが始まっても、選んだタブのままでいる。
     rerenderMainView([
-      request("1つ目"),
+      request("1つ目", 0),
       detail("1つ目のレポート"),
-      request("2つ目"),
+      request("2つ目", 1),
       detail("2つ目のレポート"),
-      request("3つ目"),
+      request("3つ目", 2),
       detail("3つ目のレポート"),
-      request("4つ目"),
+      request("4つ目", 3),
       detail("4つ目のレポート"),
     ])
 
@@ -132,9 +132,9 @@ describe("MainView（タブの規則）", () => {
 describe("MainView（タブ切り替えでレポートの先頭へ戻す）", () => {
   it("タブを切り替えると、先頭へ戻す scrollIntoView が1回呼ばれる", () => {
     renderMainView([
-      request("1つ目"),
+      request("1つ目", 0),
       detail("1つ目のレポート"),
-      request("2つ目"),
+      request("2つ目", 1),
       detail("2つ目のレポート"),
     ])
 
@@ -162,10 +162,10 @@ describe("MainView（タブ切り替えでレポートの先頭へ戻す）", ()
 describe("MainView（セリフはレポートに出さない）", () => {
   it("セリフの記録が混ざっても、レポートには出ずタブの並びも変わらない", () => {
     renderMainView([
-      request("1つ目"),
+      request("1つ目", 0),
       speech("1つ目のセリフ"),
       detail("1つ目のレポート"),
-      request("2つ目"),
+      request("2つ目", 1),
       speech("2つ目のセリフ"),
       detail("2つ目のレポート"),
     ])
@@ -187,7 +187,7 @@ describe("MainView（セリフはレポートに出さない）", () => {
 describe("MainView（ツールの行はレポートに出ない）", () => {
   it("ファイルを変えた操作もサブエージェントの起動も行にならない（枠ごと消える）", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       tool({ toolUseId: "t1", name: "Edit", input: { file_path: "src/a.ts" } }),
       tool({ toolUseId: "t2", name: "Agent", input: { description: "調査タスク" } }),
     ])
@@ -201,7 +201,7 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 
   it("失敗したツールも引数も出力も行にならない（過程はサイドバーに寄せた）", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       tool({
         toolUseId: "t1",
         name: "Bash",
@@ -218,7 +218,7 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 
   it("本文の後ろにツールが続くと本文は落ち、チップも残らない（枠ごと消える）", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       detail("まず直すね"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
     ])
@@ -229,7 +229,7 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 
   it("ツールを何十件呼んだやり取りでも「省略した」の行は出ない（上限に数えない）", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       detail("## 調べた結果\n\n- 1つめ\n- 2つめ"),
       ...Array.from({ length: 60 }, (_, index) =>
         tool({ toolUseId: `t${String(index)}`, name: "Read", input: { file_path: "src/a.ts" } }),
@@ -246,7 +246,7 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 describe("MainView（中間レポート）", () => {
   it("まとまった本文の後ろにツールが続くと、中間レポートの印が付いた枠で残る", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
     ])
@@ -258,7 +258,7 @@ describe("MainView（中間レポート）", () => {
 
   it("最後に書いた本文は中間レポートにしない（印は付かない）", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
       detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
@@ -271,7 +271,7 @@ describe("MainView（中間レポート）", () => {
 
   it("後ろに別のレポートが現れた中間レポートは <details> で畳んで出す（T-161）", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
       detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
@@ -286,7 +286,7 @@ describe("MainView（中間レポート）", () => {
 
   it("まだ追い越されていない最後の中間レポートは畳まず開いたまま（<section> のまま）", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
     ])
@@ -299,7 +299,7 @@ describe("MainView（中間レポート）", () => {
 
   it("複数の中間レポートが追い越されると全部畳まれ、それぞれの <summary> に先頭行が出る", () => {
     const { container } = renderMainView([
-      request("依頼"),
+      request("依頼", 0),
       detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/a.ts" } }),
       detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
@@ -329,7 +329,7 @@ describe("MainView（中間レポート）", () => {
     ]
 
     const buildRecords = (pairCount: number): SessionRecord[] => [
-      request("依頼"),
+      request("依頼", 0),
       ...Array.from({ length: pairCount }, (_, index) => pair(index)).flat(),
       detail("できたよ"),
     ]

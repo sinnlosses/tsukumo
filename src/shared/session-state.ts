@@ -73,8 +73,16 @@ export type SessionRecord =
   /**
    * 利用者の依頼。`images` は添えた画像の**控え**だけ（`docs/requirements.md` 4.10）。
    * **原寸は記録に入らない**ので、ここから拡大して見る道は無い。
+   *
+   * `turnId` は**そのターンの通し番号**（{@link SessionState.nextTurnId}）。窓から古い記録が
+   * 落ちても番号は振り直されないので、**同じターンはセッションが続くかぎり同じ番号**になる。
    */
-  | { readonly kind: "request"; readonly text: string; readonly images: readonly string[] }
+  | {
+      readonly kind: "request"
+      readonly turnId: number
+      readonly text: string
+      readonly images: readonly string[]
+    }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
    * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
@@ -169,6 +177,16 @@ export type SessionState = {
    */
   readonly turnInProgress: boolean
   /**
+   * 次に始まるターンに振る通し番号。**ターンが始まるたびに1つ増え、記録が窓から落ちても
+   * 戻らない**ので、**同じターンはセッションが続くかぎり同じ番号**になる。
+   *
+   * 番号を位置（何番目のターンか）で決めると、窓（{@link MAX_SESSION_STATE_TURNS}）が
+   * いっぱいになったあと**いちばん新しいターンの番号が止まる**。描く側はその番号を
+   * React の `key` に使っているので、止まると別のターンが同じ部品として使い回され、
+   * **書き上げる演出がマウント時にしか走らないために二度と起動しなくなる**（実測）。
+   */
+  readonly nextTurnId: number
+  /**
    * develop/tasks.json の一覧（サイドバーのタスク一覧）。`tasks-changed` が届くまでは undefined
    * （読めない・まだ読んでいないのどちらも同じ「不明」表示になる。docs/design.md 4.1）。
    */
@@ -232,6 +250,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   commandDescriptions: [],
   endedReason: undefined,
   turnInProgress: false,
+  nextTurnId: 0,
   tasks: undefined,
   character: undefined,
   characterPacks: [],
@@ -273,7 +292,15 @@ export function applySessionEvent(
       return {
         ...beginTurn(state, at),
         records: trimToRecentTurns(
-          [...state.records, { kind: "request", text: event.text, images: event.images }],
+          [
+            ...state.records,
+            {
+              kind: "request",
+              turnId: state.nextTurnId,
+              text: event.text,
+              images: event.images,
+            },
+          ],
           state.chatMode,
         ),
       }
@@ -416,6 +443,7 @@ function beginTurn(state: SessionState, at: number): SessionState {
     speechExpression: INITIAL_SESSION_STATE.speechExpression,
     partialUtterance: "",
     turnInProgress: true,
+    nextTurnId: state.nextTurnId + 1,
     speechCalledInTurn: false,
     turnStartedAt: at,
     turnFinishedAt: undefined,

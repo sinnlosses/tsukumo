@@ -89,6 +89,26 @@ export function planReveal(root: Element): readonly RevealBlock[] {
   ).blocks
 }
 
+/**
+ * 塊1つの中の進み具合（0〜1）。**書き始めと書き終わりをゆっくり、途中を速く**する
+ * （3次のイーズインアウト。真ん中の速さは等速の3倍）。
+ *
+ * ミニ立ち絵が「そこで書いている」ように見えるのは筆が遅いところだけなので、**出だしと締めで
+ * 見せて、読み手が待つだけの真ん中を速く抜ける**。**塊の持ち時間は変えない**
+ * （{@link MIN_BLOCK_MS}〜{@link MAX_BLOCK_MS}）ので、レポート全体の長さは前と同じ。
+ *
+ * 進み具合を**どこの位置に直すか**は `reveal-band.ts`（空間の話）。ここは時間の話だけを持つ。
+ */
+export function blockProgress(block: RevealBlock, elapsedMs: number): number {
+  const span = block.endMs - block.startMs
+  if (span <= 0) {
+    return 1
+  }
+
+  const linear = Math.min(Math.max((elapsedMs - block.startMs) / span, 0), 1)
+  return linear < 0.5 ? 4 * linear ** 3 : 1 - (2 - 2 * linear) ** 3 / 2
+}
+
 /** 見出し・水平線の手前で切って、続く要素をひとまとめにする。 */
 function toTopics(
   elements: readonly RevealElement[],

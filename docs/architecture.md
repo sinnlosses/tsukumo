@@ -245,6 +245,26 @@ tsukumo の画面だけになる。
 採らなかった案（Python・Rust・Next.js・HTMX・Svelte）と、判断の基準は
 `docs/research/architecture-rethink.md` に経緯として残してある。
 
+#### ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）
+
+**`SessionState` が `nextTurnId` を持ち、`request` の記録にそのときの番号を焼く。**
+`mainViewTurns` も `turnSpeeches` も、その番号をそのまま読む。
+
+**位置（何番目のターンか）で番号を決めていたときの壊れ方**: `SessionState` は直近20ターン
+（`MAX_SESSION_STATE_TURNS.work`）しか持たないので、21ターン目からは**いちばん新しいターンの
+番号が 19 で止まる**。描く側はその番号を React の `key` に渡している（`main-view.tsx`）ため、
+**別のターンが同じ部品として使い回され、マウント時にしか走らない書き上げる演出
+（`report-reveal.ts`）が二度と起動しない**。ミニ立ち絵も出ない。実測で、20ターンを超えた
+プロセスでは演出が1回も走らなかった。
+
+同じ根から出ていた症状は3つ: 演出が起動しない / `<details>` の開閉が別のターンへ乗り移りうる /
+新しいターンが来てもタブが追従しない（`turn-selection.tsx` が「番号が変わったか」で見ているため）。
+
+**番号を両側で数え直す作りもやめた。** `turn-speech.ts` は「`mainViewEntries` が `speech` を
+落とすぶん、依頼より前のまとまりができる条件を向こうと揃える」という写しを持っていたが、
+番号が記録にあるなら要らない（`hasPreRequestTurn` は消えた）。依頼で始まっていないまとまりは
+`PRE_REQUEST_TURN_ID`（-1）で、実在のターンの番号とぶつからない。
+
 #### CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）
 
 **2026-09-21 に置き場を `dist/browser/` へ変えた**（起動のたびの `bun build` をやめるため。

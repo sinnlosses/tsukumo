@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { mainViewEntries } from "../../src/shared/main-view.ts"
+import { mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
 import { type SessionEvent } from "../../src/shared/session-event.ts"
 import {
   applySessionEvent,
@@ -50,7 +50,7 @@ describe("applySessionEvent", () => {
 
     expect(streaming.partialUtterance).toBe("ダミーの本文")
     expect(mainViewEntries(streaming)).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーの本文" },
     ])
 
@@ -62,7 +62,7 @@ describe("applySessionEvent", () => {
 
     expect(settled.partialUtterance).toBe("")
     expect(mainViewEntries(settled)).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーの本文です。" },
     ])
   })
@@ -108,13 +108,13 @@ describe("applySessionEvent", () => {
 
     // 記録には残す（過去のターンの吹き出しを引き直すため。shared/turn-speech.ts）。
     expect(view.records).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "speech", text: "いくよ！", expression: "proud" },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
     // メインビューにはセリフを出さない（吹き出しだけ。docs/requirements.md 4.2）。
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
     // `MainViewEntry` には `speech` の種類そのものが無い（型の側でも混ざらない）。
@@ -130,15 +130,15 @@ describe("applySessionEvent", () => {
 
     // 記録には積む（雑談のログ側 shared/chat-log.ts が読む）。
     expect(view.records).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "speech", text: "いくよ！", expression: "proud" },
       { kind: "compact-boundary" },
-      { kind: "request", text: "2つめの依頼", images: [] },
+      { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
     ])
     // 仕事のメインビューには出さない（docs/requirements.md 4.9）。
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "request", text: "2つめの依頼", images: [] },
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
+      { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
     ])
   })
 
@@ -348,7 +348,7 @@ describe("applySessionEvent", () => {
     )
 
     expect(mainViewEntries(view)).toEqual([
-      { kind: "request", text: "依頼", images: [] },
+      { kind: "request", turnId: 0, text: "依頼", images: [] },
       {
         kind: "tool",
         name: "Read",
@@ -747,6 +747,24 @@ describe("applySessionEvent", () => {
     expect(requestTexts).toHaveLength(100)
     expect(requestTexts[0]).toBe("依頼5")
     expect(requestTexts.at(-1)).toBe("依頼104")
+  })
+
+  it("窓がいっぱいになっても、ターンの通し番号は止まらずに増え続ける", () => {
+    // 番号を位置で決めていたころは、窓（20ターン）を超えると**いちばん新しいターンの番号が
+    // 19 で止まり**、描く側が `key` に使っているせいで部品が作り直されず、書き上げる演出が
+    // 二度と起動しなかった（`src/browser/features/main-view/report-reveal.ts`）。
+    const events: SessionEvent[] = []
+    for (let turn = 0; turn < 25; turn += 1) {
+      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
+      events.push({ kind: "utterance", text: `本文${String(turn)}` })
+      events.push({ kind: "turn-finished", status: "success" })
+    }
+
+    const view = apply(...events)
+    const turns = mainViewTurns(mainViewEntries(view), false)
+
+    expect(turns.at(-1)?.id).toBe(24)
+    expect(turns.map((turn) => turn.id)).toEqual([20, 21, 22, 23, 24])
   })
 
   it("圧縮の区切り（compact-boundary）を挟んでも、窓の数え方（request の数）は変わらない", () => {

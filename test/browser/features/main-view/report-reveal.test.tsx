@@ -90,13 +90,14 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     expect(paragraph().style.clipPath).toBe("")
   })
 
-  it("スクロール（ホイール）で即座に全部出す", () => {
+  it("スクロール（ホイール・指）では打ち切らない", () => {
     renderProbe(true)
 
     fireEvent(window, new Event("wheel"))
+    fireEvent(window, new Event("touchmove"))
 
-    expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(paragraph().style.clipPath).toBe("")
+    expect(root().getAttribute("data-revealing")).toBe("yes")
+    expect(paragraph().style.clipPath).toBe("inset(0 0 100% 0)")
   })
 
   it("部品が外れたら、隠したままにしない", () => {

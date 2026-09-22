@@ -23,9 +23,11 @@
 //
 // **筆先が画面から出たら器を送る**（`brush-scroll.ts`）。
 //
-// **止める口は3つ**（スクロール・クリック・キー入力）。ただし `scroll` は聞かない——
-// スクロールアンカリングや `scrollIntoView` でも飛んでくるので、**利用者の操作そのもの**
-// （ホイール・指・ポインタ・キー）だけを合図にする。
+// **打ち切る口は2つ**（クリック・キー入力）。**ホイールと指では打ち切らない**——先を読もうと
+// して転がすのは「もう要らない」ではなく「見ていたい」の側なので、打ち切ると筆を追うたびに
+// 筆が消える。代わりに、手で転がしたら**筆先を追う自動送りだけを降ろす**
+// （`brush-scroll.ts`）。`scroll` そのものを聞かないのは前のまま——スクロールアンカリングや
+// `scrollIntoView` でも飛んでくるので、**利用者の操作そのもの**だけを合図にする。
 //
 // **`prefers-reduced-motion: reduce` では演出ごと無効**（`theme.css` の規則は CSS の
 // アニメーションにしか効かないので、ここでも見る）。
@@ -42,6 +44,7 @@ import {
   type RevealFrame,
 } from "./reveal-band.ts"
 import {
+  blockProgress,
   planReveal,
   type RevealBlock,
   type RevealElement,
@@ -54,8 +57,11 @@ const REVEALING_ATTRIBUTE = "data-revealing"
 /** 何も見せていない状態の `clip-path`（高さ 0 に畳む。場所は取ったまま）。 */
 const HIDDEN_CLIP = "inset(0 0 100% 0)"
 
-/** 演出を飛ばす合図。**利用者の操作だけ**を並べる（`scroll` を入れない理由は冒頭）。 */
-const SKIP_EVENT_NAMES = ["wheel", "touchmove", "pointerdown", "keydown"] as const
+/**
+ * 演出を飛ばす合図。**本文に触りに来た操作だけ**を並べる（ホイールと指を入れない理由は冒頭。
+ * `scroll` を入れない理由も同じところ）。
+ */
+const SKIP_EVENT_NAMES = ["pointerdown", "keydown"] as const
 
 /** 合図は捕まえるだけで邪魔しない（`capture` は内側で止められても届かせるため）。 */
 const SKIP_LISTENER_OPTIONS = { capture: true, passive: true } as const
@@ -105,7 +111,7 @@ function startReveal(root: HTMLElement): () => void {
   }
   root.setAttribute(REVEALING_ATTRIBUTE, "yes")
 
-  const followTip = brushScroller(root)
+  const scroller = brushScroller(root)
   const startedAt = performance.now()
   let frame = 0
   let shown = 0
@@ -122,6 +128,7 @@ function startReveal(root: HTMLElement): () => void {
     }
     root.removeAttribute(REVEALING_ATTRIBUTE)
     publishBrushTip(undefined)
+    scroller.stop()
     for (const name of SKIP_EVENT_NAMES) {
       window.removeEventListener(name, finish, SKIP_LISTENER_OPTIONS)
     }
@@ -145,9 +152,9 @@ function startReveal(root: HTMLElement): () => void {
       finish()
       return
     }
-    const tip = advanceBlock(current, progressOf(current, elapsed))
+    const tip = advanceBlock(current, blockProgress(current, elapsed))
     publishBrushTip(tip)
-    followTip(tip)
+    scroller.follow(tip)
     frame = requestAnimationFrame(step)
   }
 
@@ -161,11 +168,6 @@ function startReveal(root: HTMLElement): () => void {
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
-}
-
-function progressOf(block: RevealBlock, elapsed: number): number {
-  const span = block.endMs - block.startMs
-  return span <= 0 ? 1 : clamp((elapsed - block.startMs) / span, 0, 1)
 }
 
 function hideBlock(block: RevealBlock): void {

@@ -1,12 +1,22 @@
 import { describe, expect, it } from "bun:test"
 
-import { MAX_MAIN_VIEW_TURNS, mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
+import {
+  MAX_MAIN_VIEW_TURNS,
+  mainViewEntries,
+  mainViewTurns,
+  PRE_REQUEST_TURN_ID,
+} from "../../src/shared/main-view.ts"
 import { INITIAL_SESSION_STATE, type SessionRecord } from "../../src/shared/session-state.ts"
 import { turnSpeeches } from "../../src/shared/turn-speech.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
-const request = (text: string): SessionRecord => ({ kind: "request", text, images: [] })
+const request = (text: string, turnId = 0): SessionRecord => ({
+  kind: "request",
+  turnId,
+  text,
+  images: [],
+})
 const detail = (markdown: string): SessionRecord => ({ kind: "detail", markdown })
 const speech = (text: string, expression: "default" | "proud" = "default"): SessionRecord => ({
   kind: "speech",
@@ -18,11 +28,11 @@ const compactBoundary = (): SessionRecord => ({ kind: "compact-boundary" })
 describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
   it("依頼ごとに分かれ、各ターンのセリフだけを古い→新しいの順で返す", () => {
     const turns = turnSpeeches([
-      request("1つ目の依頼"),
+      request("1つ目の依頼", 0),
       speech("1つ目のセリフA"),
       detail("1つ目のレポート"),
       speech("1つ目のセリフB"),
-      request("2つ目の依頼"),
+      request("2つ目の依頼", 1),
       speech("2つ目のセリフ"),
     ])
 
@@ -34,11 +44,11 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
 
   it("セリフの無いターンは空になる（ターン自体は消えない）", () => {
     const turns = turnSpeeches([
-      request("1つ目の依頼"),
+      request("1つ目の依頼", 0),
       speech("1つ目のセリフ"),
-      request("2つ目の依頼"),
+      request("2つ目の依頼", 1),
       detail("2つ目のレポート"),
-      request("3つ目の依頼"),
+      request("3つ目の依頼", 2),
       speech("3つ目のセリフ"),
     ])
 
@@ -48,10 +58,10 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
 
   it("表情はそのターンの最後のセリフのもの", () => {
     const turns = turnSpeeches([
-      request("1つ目の依頼"),
+      request("1つ目の依頼", 0),
       speech("1つ目のセリフA", "proud"),
       speech("1つ目のセリフB", "default"),
-      request("2つ目の依頼"),
+      request("2つ目の依頼", 1),
       speech("2つ目のセリフ", "proud"),
     ])
 
@@ -66,12 +76,12 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
 describe("turnSpeeches（通し番号）", () => {
   it("ターンの通し番号が mainViewTurns と揃う", () => {
     const records: readonly SessionRecord[] = [
-      request("1つ目の依頼"),
+      request("1つ目の依頼", 0),
       speech("1つ目のセリフ"),
       detail("1つ目のレポート"),
-      request("2つ目の依頼"),
+      request("2つ目の依頼", 1),
       detail("2つ目のレポート"),
-      request("3つ目の依頼"),
+      request("3つ目の依頼", 2),
       speech("3つ目のセリフ"),
       detail("3つ目のレポート"),
     ]
@@ -85,9 +95,9 @@ describe("turnSpeeches（通し番号）", () => {
     const records: readonly SessionRecord[] = [
       detail("依頼より前のレポート"),
       speech("依頼より前のセリフ"),
-      request("1つ目の依頼"),
+      request("1つ目の依頼", 0),
       speech("1つ目のセリフ"),
-      request("2つ目の依頼"),
+      request("2つ目の依頼", 1),
       speech("2つ目のセリフ"),
     ]
 
@@ -95,9 +105,9 @@ describe("turnSpeeches（通し番号）", () => {
     const speechTurns = turnSpeeches(records)
 
     expect(speechTurns.map((turn) => turn.id)).toEqual(viewTurns.map((turn) => turn.id))
-    // 依頼より前のまとまり（通し番号 0）にも、そのぶんのセリフが入る。
+    // 依頼より前のまとまり（`PRE_REQUEST_TURN_ID`）にも、そのぶんのセリフが入る。
     expect(speechTurns[0]).toEqual({
-      id: 0,
+      id: PRE_REQUEST_TURN_ID,
       speeches: ["依頼より前のセリフ"],
       expression: "default",
     })
@@ -106,7 +116,7 @@ describe("turnSpeeches（通し番号）", () => {
   it("先頭が圧縮の区切りだけのときは、通し番号が mainViewTurns と揃う（前のまとまりを作らない）", () => {
     const records: readonly SessionRecord[] = [
       compactBoundary(),
-      request("1つ目の依頼"),
+      request("1つ目の依頼", 0),
       speech("1つ目のセリフ"),
     ]
 
@@ -120,7 +130,7 @@ describe("turnSpeeches（通し番号）", () => {
   it(`直近${String(MAX_MAIN_VIEW_TURNS)}ターンに絞られたあとも、窓の中の番号でそのターンのセリフが引ける`, () => {
     const turnCount = MAX_MAIN_VIEW_TURNS + 2
     const records: readonly SessionRecord[] = Array.from({ length: turnCount }, (_, index) => [
-      request(`依頼${String(index)}`),
+      request(`依頼${String(index)}`, index),
       speech(`セリフ${String(index)}`),
       detail(`レポート${String(index)}`),
     ]).flat()

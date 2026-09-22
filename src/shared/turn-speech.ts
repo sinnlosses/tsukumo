@@ -9,6 +9,7 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { type Expression } from "./expression.ts"
+import { PRE_REQUEST_TURN_ID } from "./main-view.ts"
 import { type SessionRecord } from "./session-state.ts"
 
 /**
@@ -28,31 +29,22 @@ export type TurnSpeech = {
  * **昇順（古い→新しい）で返し、セリフが1件も無いターンも空のまま並べる**（タブの番号から
  * 引けるようにするため）。
  *
- * **通し番号は `mainViewTurns` と揃える。** `mainViewEntries` が `speech` を落とすので、
- * 「最初の依頼より前のまとまり」が向こう側にできるのは**セリフ以外の記録が先にあるときだけ**。
- * そのぶん依頼で始まるまとまりの番号が1つ後ろへずれるので、ここでも同じ条件で数え始める
- * （{@link hasPreRequestTurn}）。
+ * **通し番号は記録が持っているものをそのまま使う**（`request` の `turnId`）。`mainViewTurns`
+ * も同じ値を読むので、タブの選択がそのまま引ける——数え方を両側に書き写さない。
  */
 export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSpeech[] {
   const turns: TurnSpeech[] = []
-  // 最初の依頼より前のまとまりが向こう側に無いときは、そこに来たセリフを引く先が無いので
-  // 捨てる（記録が依頼の途中から始まる場面でだけ起こる）。
-  const preTurn = hasPreRequestTurn(records)
-  let current: TurnSpeech | undefined = preTurn
-    ? { id: 0, speeches: [], expression: undefined }
-    : undefined
-  let nextId = preTurn ? 1 : 0
+  // 依頼より前に届いたセリフの置き場（`mainViewTurns` 側の同じ番号のまとまりに対応する）。
+  // **1件も無ければ最後に落とす**ので、引く先の無い空のまとまりは残らない。
+  let current: TurnSpeech = { id: PRE_REQUEST_TURN_ID, speeches: [], expression: undefined }
 
   for (const record of records) {
     if (record.kind === "request") {
-      if (current !== undefined) {
-        turns.push(current)
-      }
-      current = { id: nextId, speeches: [], expression: undefined }
-      nextId += 1
+      turns.push(current)
+      current = { id: record.turnId, speeches: [], expression: undefined }
       continue
     }
-    if (record.kind === "speech" && current !== undefined) {
+    if (record.kind === "speech") {
       current = {
         ...current,
         speeches: [...current.speeches, record.text],
@@ -60,24 +52,7 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
       }
     }
   }
-  if (current !== undefined) {
-    turns.push(current)
-  }
+  turns.push(current)
 
-  return turns
-}
-
-/**
- * 最初の依頼より前に、メインビューに出る記録（セリフ以外）があるか。あるときは
- * `mainViewTurns` 側に通し番号 0 のまとまりができる（`groupIntoTurns` が最初の非 `request` の
- * 記録でまとまりを起こすため）。
- *
- * **`compact-boundary` も `speech` と同じく除く**（`mainViewEntries` がどちらも落とすので、
- * どちらだけが先頭にあってもまとまりは起きない。`shared/main-view.ts`）。
- */
-function hasPreRequestTurn(records: readonly SessionRecord[]): boolean {
-  const first = records.find(
-    (record) => record.kind !== "speech" && record.kind !== "compact-boundary",
-  )
-  return first !== undefined && first.kind !== "request"
+  return turns.filter((turn) => turn.id !== PRE_REQUEST_TURN_ID || turn.speeches.length > 0)
 }

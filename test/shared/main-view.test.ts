@@ -6,7 +6,12 @@ import {
   mainViewTurns,
 } from "../../src/shared/main-view.ts"
 
-const request = (text: string): MainViewEntry => ({ kind: "request", text, images: [] })
+const request = (text: string, turnId = 0): MainViewEntry => ({
+  kind: "request",
+  turnId,
+  text,
+  images: [],
+})
 const detail = (markdown: string): MainViewEntry => ({ kind: "detail", markdown })
 const edit = (path: string): MainViewEntry => ({
   kind: "tool",
@@ -451,12 +456,26 @@ describe("mainViewTurns（最終レポートの印）", () => {
     expect(steps.at(-1)?.final).toBe(true)
   })
 
-  it("進行中は繰り上げない（資料の interim が反転して details が開き直るため）", () => {
+  it("進行中は繰り上げず、ツールの続いていない資料も出さない（締めか中間かが決まっていない）", () => {
     const turns = mainViewTurns([request("依頼"), detail(interim), detail("では、ま")], true)
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.interim)).toEqual([true, false])
+    expect(steps.map((step) => step.report)).toEqual([undefined, undefined])
+    expect(steps.map((step) => step.interim)).toEqual([false, false])
     expect(steps.map((step) => step.final)).toEqual([false, false])
+  })
+
+  it("実況のあとに終わると、伏せていた資料がそのまま最終レポートとして初めて出る", () => {
+    // **演出（`report-reveal.ts`）が掛かる条件**。中間レポートとして先に出してしまうと、
+    // 本文の箱が「演出の対象ではない」状態で組み立てられ、繰り上げても筆が入らない。
+    const entries = [request("依頼"), detail(interim), detail("片付いたよ。また呼んでくれ。")]
+
+    const writing = mainViewTurns(entries, true)[0]?.steps ?? []
+    const settled = mainViewTurns(entries, false)[0]?.steps ?? []
+
+    expect(writing.map((step) => step.report)).toEqual([undefined, undefined])
+    expect(settled.map((step) => step.report)).toEqual([interim, undefined])
+    expect(settled.map((step) => step.final)).toEqual([true, false])
   })
 
   it("中間レポートには立たない（本文がそれしか無くても）", () => {
@@ -549,12 +568,20 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
     expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([undefined, undefined])
   })
 
-  it("進行中でも、ツールの続かない資料は次の本文が始まれば中間レポートになる", () => {
+  it("進行中は、次の本文が始まっただけでは資料を出さない（ツールが付くまで待つ）", () => {
     const turns = mainViewTurns([request("依頼"), detail(material), detail("つづいて ")], true)
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.report)).toEqual([material, undefined])
-    expect(steps.map((step) => step.interim)).toEqual([true, false])
+    expect(steps.map((step) => step.report)).toEqual([undefined, undefined])
+    expect(steps.map((step) => step.interim)).toEqual([false, false])
+  })
+
+  it("進行中でも、ツールが付いた資料は中間レポートとして出る", () => {
+    const turns = mainViewTurns([request("依頼"), detail(material), edit("src/a.ts")], true)
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.report)).toEqual([material])
+    expect(steps.map((step) => step.interim)).toEqual([true])
   })
 
   it("進行中に隠すのはいちばん新しいターンだけで、前のターンの最終レポートは残る", () => {

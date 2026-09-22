@@ -21,9 +21,9 @@ afterEach(() => {
 // 見かけを反転していない）。文面は手で書いた架空のもの。
 
 const RECORDS: readonly SessionRecord[] = [
-  { kind: "request", text: "1つめの依頼", images: [] },
+  { kind: "request", turnId: 0, text: "1つめの依頼", images: [] },
   { kind: "speech", text: "1つめのセリフ", expression: "default" },
-  { kind: "request", text: "2つめの依頼", images: [] },
+  { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
   { kind: "speech", text: "2つめのセリフ", expression: "proud" },
 ]
 
@@ -116,7 +116,7 @@ describe("ChatView", () => {
   it("本文（レポート）は積まない（雑談中はレポートを出さない）", () => {
     renderChatView({
       records: [
-        { kind: "request", text: "架空の依頼", images: [] },
+        { kind: "request", turnId: 2, text: "架空の依頼", images: [] },
         { kind: "detail", markdown: "## 架空のレポート" },
       ],
     })
@@ -135,7 +135,7 @@ describe("ChatView", () => {
   it("圧縮の区切りは文言を添えない細い線1本（`<hr>`）で出し、押せない", () => {
     renderChatView({
       records: [
-        { kind: "request", text: "1つめの依頼", images: [] },
+        { kind: "request", turnId: 3, text: "1つめの依頼", images: [] },
         { kind: "compact-boundary" },
         { kind: "speech", text: "2つめのセリフ", expression: "default" },
       ],
@@ -325,7 +325,7 @@ describe("ChatView のセリフを遡る", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [...RECORDS, { kind: "request", text: "3つめの依頼", images: [] }],
+        records: [...RECORDS, { kind: "request", turnId: 4, text: "3つめの依頼", images: [] }],
         character: FIXTURE_CHARACTER,
         // 送った時点でターンが始まり、最新の表情は既定へ戻っている（`beginTurn`）。
         speechExpression: INITIAL_SESSION_STATE.speechExpression,
