@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ChatView } from "../../../../src/browser/features/chat-view/chat-view.tsx"
 import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
+import { type Expression } from "../../../../src/shared/expression.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -364,6 +365,123 @@ describe("ChatView のセリフを遡る", () => {
 
     expect(portraitExpression()).toBe("proud")
     expect(screen.getByText("2つめのセリフ").getAttribute("aria-pressed")).toBe("true")
+  })
+})
+
+describe("ChatView の末尾のセリフが育つ", () => {
+  /** 育っている行（`chat-view.tsx` が出す印。docs/design.md 13.7「末尾のセリフは育つ」）。 */
+  function growingEntry(): HTMLElement {
+    const entry = document.querySelector("[data-growing]")
+    if (!(entry instanceof HTMLElement)) {
+      throw new Error("育っている行が見つからない")
+    }
+    return entry
+  }
+
+  /** 3件目のセリフが届いたところ（2件目までは開いた時点で並んでいる）。 */
+  function arrive(store: SessionStore, text: string, expression: Expression): void {
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [...RECORDS, { kind: "speech", text, expression }],
+        character: FIXTURE_CHARACTER,
+        speechExpression: expression,
+      })
+    })
+  }
+
+  // **1文字ずつ出るところ（速さ）はここでは見ない**——フレームの進みに乗るので、
+  // 見えるかどうかは目視で確かめる（docs/architecture.md「手で確かめること」）。
+  // ここで守るのは**育て始める行・打ち切る口・出し切る合図**の配線だけ。
+
+  it("届いたばかりのセリフは、文字が出そろう前から行に出る", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+
+    arrive(store, "3つめのセリフ", "curious")
+
+    // 行は先に立ち、中身はこれから育つ（吹き出しが膨らむのはこの間）。
+    expect(logEntries()).toHaveLength(5)
+    expect(growingEntry().textContent).toBe("")
+  })
+
+  it("開いた時点で並んでいたセリフは育たない（前の雑談の続きを書き直さない）", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
+
+    expect(document.querySelector("[data-growing]")).toBe(null)
+    expect(screen.getByText("2つめのセリフ")).toBeTruthy()
+  })
+
+  it("育っている最中に押すと、遡らずにその場で全文が出る", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+    arrive(store, "3つめのセリフ", "curious")
+
+    // 古い行を留めておく（押しが遡りに使われたなら、ここから表情が動く）。
+    fireEvent.click(screen.getByText("1つめのセリフ"))
+    expect(portraitExpression()).toBe("default")
+
+    const growing = growingEntry()
+    fireEvent.click(growing)
+
+    expect(growing.textContent).toBe("3つめのセリフ")
+    expect(growing.hasAttribute("data-growing")).toBe(false)
+    // **その回の押しは打ち切りに使う**（揃うより先に留めても、何を留めたのか読めない）。
+    expect(portraitExpression()).toBe("default")
+
+    // 出し切ったあとの押しは、いつもどおり遡る。
+    fireEvent.click(growing)
+    expect(portraitExpression()).toBe("curious")
+  })
+
+  it("キーボード（Enter / Space）でも打ち切れる", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+    arrive(store, "3つめのセリフ", "curious")
+
+    const growing = growingEntry()
+    fireEvent.keyDown(growing, { key: "Enter" })
+
+    expect(growing.textContent).toBe("3つめのセリフ")
+    expect(growing.hasAttribute("data-growing")).toBe(false)
+  })
+
+  it("次のセリフが来たら、育っていた行は出し切る（育つのは末尾の1件だけ）", () => {
+    const store = renderChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+    arrive(store, "3つめのセリフ", "curious")
+    const previous = growingEntry()
+
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        records: [
+          ...RECORDS,
+          { kind: "speech", text: "3つめのセリフ", expression: "curious" },
+          { kind: "speech", text: "4つめのセリフ", expression: "default" },
+        ],
+        character: FIXTURE_CHARACTER,
+        speechExpression: "default",
+      })
+    })
+
+    expect(previous.textContent).toBe("3つめのセリフ")
+    expect(previous.hasAttribute("data-growing")).toBe(false)
+    // 育っているのは末尾の1件だけ。
+    expect(document.querySelectorAll("[data-growing]")).toHaveLength(1)
+    expect(growingEntry()).not.toBe(previous)
   })
 })
 

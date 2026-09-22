@@ -37,6 +37,7 @@
 
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
+import { prefersReducedMotion } from "../../lib/reduced-motion.ts"
 import {
   BRUSH_ORIGIN_ATTRIBUTE,
   publishBrushTip,
@@ -202,10 +203,6 @@ function startReveal(root: HTMLElement, turnId: number): () => void {
   }
 
   return finish
-}
-
-function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
 }
 
 function hideBlock(block: RevealBlock): void {

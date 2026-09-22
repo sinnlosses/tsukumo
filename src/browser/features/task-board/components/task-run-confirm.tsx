@@ -3,6 +3,10 @@
 // 下書きには触らない。docs/design.md 6.2）。送ったあとは、サーバから返る `request` イベントが
 // メインビューに依頼として並ぶので、打ったのと同じ見え方になる。
 //
+// **送ったあとは、包んでいる表（`task-board.tsx`）も閉じる**（`board-close.tsx`）。閉じないと、
+// メインビューに並んだ依頼が画面いっぱいの表に隠れて「押したのに何も起きない」に見える。
+// 区画の一覧から開いたときは閉じる器が無いので、確認だけが閉じる。
+//
 // **ターンが動いている間は断る**（押せなくするのではなく、押したら理由を出す）。送信の口
 // （`<Composer>` の `submit`）は進行中なら黙って送らないので、ここで黙って消えると
 // 「押したのに何も起きない」になる。開いたあとに始まったターンもここに出る。
@@ -14,6 +18,7 @@ import { type MouseEvent, type ReactElement } from "react"
 
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useBoardClose } from "../board-close.tsx"
 import styles from "../task-board.module.css"
 
 export type TaskRunConfirmProps = {
@@ -31,11 +36,14 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSessionDispatch()
   const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
   const dialogRef = useModalDialog(true)
+  const closeBoard = useBoardClose()
   const prompt = `/next-task ${props.taskId}`
 
+  // **送ったときだけ表も閉じる。** 断ったときに閉じると一覧へ戻れない。
   const run = (): void => {
     dispatch({ type: "prompt", text: prompt, images: [] })
     props.onClose()
+    closeBoard()
   }
 
   // backdrop のクリックは `<dialog>` 自身が受け取る（`hooks/use-task-board.ts` と同じ読み替え）。

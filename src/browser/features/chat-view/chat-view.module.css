@@ -183,6 +183,21 @@
   background: color-mix(in srgb, var(--surface), var(--accent) 26%);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
+/* **育っている行の筆先**（docs/design.md 13.7「末尾のセリフは育つ」）。文字が出そろうまでの
+   あいだだけ、最後の文字の後ろに細い縦棒を1本置く（出し切ると `data-growing` ごと消える）。
+   **要素は増えない**（疑似要素なので DOM にも支援技術の木にも出ない。13.1 原則2）。
+   **点滅させない** — 動いているものはこの行に1つ（文字が増えること）だけにする。
+   色を持ってよいのは**キャラクターが居る場所**（13.1 原則1）で、吹き出しはそこに当たる。 */
+.chat-entry-character[data-growing="yes"]::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 0.12em;
+  /* 文字の上端ではなく、字面の高さに合わせて少し下げる。 */
+  transform: translateY(0.15em);
+  background: var(--accent);
+}
 /* 利用者の発言は右。**差し色は使わない**（色が現れるのはキャラクターが居る場所だけ。
    13.1 原則1）ので、地の濃さだけで区別する。 */
 .chat-entry-user {

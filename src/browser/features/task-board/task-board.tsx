@@ -8,6 +8,7 @@
 import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../shared/task-summary.ts"
+import { BoardCloseContext } from "./board-close.tsx"
 import { useTaskBoard } from "./hooks/use-task-board.ts"
 import { PresentationalTaskBoard } from "./presentational-task-board.tsx"
 
@@ -22,12 +23,15 @@ export function TaskBoard(props: TaskBoardProps): ReactElement {
   // （`presentational-task-board.tsx` も同じ理由で props を分解している）。
   const { dialogRef, onDialogClick, rows } = useTaskBoard(props.tasks, props.open, props.onClose)
 
+  // 表の中で開く確認が、送ったあとにこの表も閉じられるようにする（`board-close.tsx`）。
   return (
-    <PresentationalTaskBoard
-      rows={rows}
-      ref={dialogRef}
-      onClose={props.onClose}
-      onDialogClick={onDialogClick}
-    />
+    <BoardCloseContext.Provider value={props.onClose}>
+      <PresentationalTaskBoard
+        rows={rows}
+        ref={dialogRef}
+        onClose={props.onClose}
+        onDialogClick={onDialogClick}
+      />
+    </BoardCloseContext.Provider>
   )
 }
