@@ -19,6 +19,8 @@
 // あちらは推移的な依存なので直接 import しない。足してよい依存は docs/design.md 11章の一覧だけ）。
 import { type Options as Schema } from "rehype-sanitize"
 
+import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"
+
 /**
  * 通してよい要素（59個）。ここに無い要素は、**中身のテキストだけを残して**タグが落ちる
  * （`img` もここに無いので、`src`/`alt` を持たない裸のテキストにすら残らず消える）。
@@ -245,6 +247,12 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     // （hast-util-sanitize の仕組み。tag 固有の定義に無ければ `*` を見る）。
     th: ["align"],
     td: ["align"],
+    // フェンスの info 文字列に書いたファイル名（```diff src/foo.ts）を `code-file-name.ts` が
+    // 移してくる属性。**`code` だけに許す**（`*` に足すと、どの要素にも書ける属性が1つ増える。
+    // 上の42個の数もこの属性を含まない）。読むのは `markdown.tsx` の `Pre` で、hast の段階で
+    // ラベルに変える（属性そのものは `data-filename` として DOM にも残るが、CSS も JS も
+    // 引いていない）。
+    code: [CODE_FILE_NAME_PROPERTY],
     "*": [
       ...GLOBAL_ATTRIBUTES,
       ["style", ALLOWED_STYLE_PATTERN],

@@ -426,6 +426,29 @@ h2.turn-request {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* フェンスに書いたファイル名（```diff src/foo.ts）を、ブロックの左上に出すラベルと、その器。
+   差分だけを見てどのファイルか分からない、を防ぐ（docs/design.md 13.2）。**別の枠を足さず、
+   コードの地（--ground）を上へ伸ばして1つの塊に見せる**（箱が2つ並ぶと、差分そのものより
+   境目のほうが目立つ）。文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段（13.3）。
+   器は Markdown のレンダラ側（markdown/markdown.tsx の `pre` の上書き）が作るので、
+   レポートの記法・許可リストは増えていない。 */
+.detail-block .code-file {
+  margin: 0.4rem 0 0;
+}
+.detail-block .code-file-name {
+  padding: 0.4rem 0.5rem 0;
+  background: var(--ground);
+  border-radius: 0.4rem 0.4rem 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+  overflow-wrap: anywhere;
+}
+/* ラベルが上に乗るぶん、コード側の上マージンと上の角を落とす（.detail-block pre の既定を消す）。 */
+.detail-block .code-file > pre {
+  margin-top: 0;
+  border-radius: 0 0 0.4rem 0.4rem;
+}
 .detail-block {
   margin: 0 0 1rem;
 }

@@ -362,6 +362,36 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(code).not.toBeNull()
     expect(code?.className).toContain("language-ts")
   })
+
+  it("フェンスに書いたファイル名がブロックの左上のラベルになる", () => {
+    // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、**rehype-raw が
+    // 木を書き出して読み直す時点で落ちる**。属性へ移す `code-file-name.ts` とサニタイザの
+    // 許可（`code`）が両方効いていないと、ここでラベルが出ない。
+    const { container } = render(<Markdown text={"```diff develop/tasks.json\n-  1\n+  2\n```"} />)
+
+    const block = container.querySelector("div.code-file")
+    expect(block).not.toBeNull()
+    // ラベルは <pre> より前（左上）に置く。
+    expect(block?.firstElementChild?.className).toBe("code-file-name")
+    expect(block?.firstElementChild?.textContent).toBe("develop/tasks.json")
+    expect(block?.querySelector("pre code.language-diff")?.textContent).toContain("+  2")
+  })
+
+  it("ファイル名の無いフェンスはラベルの器を作らず素の <pre> のまま", () => {
+    const { container } = render(<Markdown text={"```diff\n-const a = 1\n+const a = 2\n```"} />)
+
+    expect(container.querySelector("div.code-file")).toBeNull()
+    expect(container.querySelector(".code-file-name")).toBeNull()
+    expect(container.querySelector("pre code.language-diff")).not.toBeNull()
+  })
+
+  it("ファイル名は文字として出る（HTML として解釈しない）", () => {
+    const { container } = render(<Markdown text={"```diff <b>src/foo.ts</b>\n-a\n+b\n```"} />)
+
+    const label = container.querySelector(".code-file-name")
+    expect(label?.textContent).toBe("<b>src/foo.ts</b>")
+    expect(label?.querySelector("b")).toBeNull()
+  })
 })
 
 describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る事故の回帰）", () => {

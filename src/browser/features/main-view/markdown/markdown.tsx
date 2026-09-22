@@ -10,6 +10,8 @@
 //   `**「呼んだか」**` のように中身を約物で始める・終える強調が記法のまま出てしまう
 //   （旧レンダラは素朴な正規表現 `/\*\*([^*]+)\*\*/g` だったので、この規則に関係なく通っていた）。
 //   このリポジトリのレポートは `**「…」**` を多用するため、このプラグインで直す
+// - {@link rehypeCodeFileName} で、フェンスの info 文字列に書いたファイル名を `code` の属性に移す
+//   （**`rehype-raw` より前**。理由は `code-file-name.ts`）
 // - `rehype-raw` で、Markdown の中に直接書いた HTML ブロック・インライン HTML を解釈する
 // - {@link rehypeTaskCheck} で、チェックリストの `<input type="checkbox">` を静的な印に畳む
 //   （**サニタイズより前**。理由は `task-check.ts`）
@@ -41,6 +43,7 @@ import remarkGfm from "remark-gfm"
 
 import styles from "../main-view.module.css"
 import { ChartBlock } from "./chart-block.tsx"
+import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationBlock, NotationInline } from "./notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
@@ -92,6 +95,9 @@ export function Markdown(props: MarkdownProps): ReactElement {
       // （src/server/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
       remarkPlugins={[remarkGfm, remarkCjkFriendly]}
       rehypePlugins={[
+        // rehype-raw より前（フェンスのファイル名は `data.meta` に入っていて、raw が木を
+        // HTML へ書き出して読み直すと落ちるため。`code-file-name.ts`）。
+        rehypeCodeFileName,
         rehypeRaw,
         rehypeTaskCheck,
         [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
@@ -112,6 +118,11 @@ type PreProps = JSX.IntrinsicElements["pre"] & ExtraProps
  * 中の `code` 要素の `className` を見て、`language-mermaid` / `language-chart` なら
  * {@link MermaidBlock} / {@link ChartBlock} に振り、それ以外は素の `<pre>` のまま描く
  * （色付けは `rehype-highlight` がすでにこの木に当ててある）。
+ *
+ * **フェンスにファイル名が書いてあれば、ブロックの左上にラベルとして出す**
+ * （```diff src/foo.ts。{@link rehypeCodeFileName} が属性に移してある）。差分だけを見て
+ * どのファイルか分からない、を防ぐため。**書いていないフェンスは素の `<pre>` のまま**で、
+ * ラベルの行は出ない。
  */
 function Pre(props: PreProps): ReactElement {
   const codeNode = findCodeChild(props.node)
@@ -128,13 +139,32 @@ function Pre(props: PreProps): ReactElement {
 
   // eslint 等の警告を避けるため node は展開して渡さない。
   const { node: _node, ...rest } = props
-  return <pre {...rest} />
+  const fileName = codeNode === undefined ? undefined : codeFileName(codeNode)
+
+  if (fileName === undefined) {
+    return <pre {...rest} />
+  }
+  return (
+    <div className={styles["code-file"]}>
+      <div className={styles["code-file-name"]}>{fileName}</div>
+      <pre {...rest} />
+    </div>
+  )
 }
 
 function findCodeChild(node: Element | undefined): Element | undefined {
   return node?.children.find(
     (child): child is Element => child.type === "element" && child.tagName === "code",
   )
+}
+
+/**
+ * フェンスに書かれたファイル名。`code-file-name.ts` が属性に移し、サニタイザが通したものだけが
+ * ここに来る（モデルが書いた文字列なので、型の上では何が入っていてもよい形で受ける）。
+ */
+function codeFileName(codeNode: Element): string | undefined {
+  const value = codeNode.properties[CODE_FILE_NAME_PROPERTY]
+  return typeof value === "string" ? value : undefined
 }
 
 function codeLanguage(codeNode: Element): string | undefined {
