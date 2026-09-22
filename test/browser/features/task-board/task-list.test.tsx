@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
-import { type TaskSummaryItem } from "../../../../src/shared/task-summary.ts"
+import {
+  type TaskSummaryItem,
+  type TaskSummaryResult,
+} from "../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（develop/tasks.json の内容は会話ではないが、
 // テストのフィクスチャとしても実物は使わない）。
@@ -11,6 +14,10 @@ import { type TaskSummaryItem } from "../../../../src/shared/task-summary.ts"
 afterEach(() => {
   cleanup()
 })
+
+function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
+  return { kind: "known", items }
+}
 
 const TASKS: readonly TaskSummaryItem[] = [
   {
@@ -48,20 +55,20 @@ const TASKS: readonly TaskSummaryItem[] = [
 ]
 
 describe("taskList", () => {
-  it("tasks が undefined のときは一覧の代わりに「不明」を出す", () => {
-    render(<TaskList tasks={undefined} />)
+  it("tasks が不明のときは一覧の代わりに「不明」を出す", () => {
+    render(<TaskList tasks={{ kind: "unknown" }} />)
 
     expect(screen.getByText("不明")).toBeDefined()
   })
 
   it("空配列のときは「タスクが無い」を出す", () => {
-    render(<TaskList tasks={[]} />)
+    render(<TaskList tasks={known([])} />)
 
     expect(screen.getByText("タスクが無い")).toBeDefined()
   })
 
   it("status のバッジ付きで、全件がファイルの順に出る", () => {
-    render(<TaskList tasks={TASKS} />)
+    render(<TaskList tasks={known(TASKS)} />)
 
     const items = screen.getAllByRole("listitem")
     expect(items).toHaveLength(4)
@@ -74,7 +81,7 @@ describe("taskList", () => {
   })
 
   it("doing は差し色のクラスを持つ", () => {
-    render(<TaskList tasks={TASKS} />)
+    render(<TaskList tasks={known(TASKS)} />)
 
     const items = screen.getAllByRole("listitem")
     const badge = items[3]?.querySelector(".task-status")
@@ -83,7 +90,7 @@ describe("taskList", () => {
   })
 
   it("done は薄く出すクラスを持つ", () => {
-    render(<TaskList tasks={TASKS} />)
+    render(<TaskList tasks={known(TASKS)} />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[1]?.className).toContain("task-done")
@@ -91,7 +98,7 @@ describe("taskList", () => {
   })
 
   it("status が無い要素はバッジを出さない", () => {
-    render(<TaskList tasks={TASKS} />)
+    render(<TaskList tasks={known(TASKS)} />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[2]?.querySelector(".task-status")).toBeNull()

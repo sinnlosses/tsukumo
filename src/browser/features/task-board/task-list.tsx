@@ -10,25 +10,25 @@
 
 import { type ReactElement } from "react"
 
-import { type TaskSummaryItem } from "../../../shared/task-summary.ts"
+import { type TaskSummaryResult } from "../../../shared/task-summary.ts"
 import { TaskItem } from "./components/task-item.tsx"
 import styles from "./task-board.module.css"
 
 export type TaskListProps = {
-  readonly tasks: readonly TaskSummaryItem[] | undefined
+  readonly tasks: TaskSummaryResult
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
-  if (props.tasks === undefined) {
+  if (props.tasks.kind === "unknown") {
     return <p className={styles["task-empty"]}>不明</p>
   }
-  if (props.tasks.length === 0) {
+  if (props.tasks.items.length === 0) {
     return <p className={styles["task-empty"]}>タスクが無い</p>
   }
 
   return (
     <ul className={styles["task-list"]}>
-      {props.tasks.map((task) => (
+      {props.tasks.items.map((task) => (
         <TaskItem key={task.id} task={task} />
       ))}
     </ul>

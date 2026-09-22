@@ -15,7 +15,7 @@ import {
   taskReadiness,
   unfinishedTaskIds,
   type TaskReadiness,
-  type TaskSummaryItem,
+  type TaskSummaryResult,
 } from "../../../../shared/task-summary.ts"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 
@@ -34,7 +34,7 @@ export type TaskBoardView = {
  * この参照が安定していることが前提（`components/task-table.tsx`）。
  */
 export function useTaskBoard(
-  tasks: readonly TaskSummaryItem[] | undefined,
+  tasks: TaskSummaryResult,
   open: boolean,
   onClose: () => void,
 ): TaskBoardView {
@@ -81,15 +81,14 @@ export type BoardRow = {
  * 「まだ done でないタスクのID」は**一覧全体から1回だけ**作り、行ごとの `taskReadiness` へ
  * 使い回す（`src/shared/task-summary.ts` 参照。以前は行ごとに作り直していた）。
  */
-export function boardRows(
-  tasks: readonly TaskSummaryItem[] | undefined,
-): readonly BoardRow[] | undefined {
-  if (tasks === undefined) {
+export function boardRows(tasks: TaskSummaryResult): readonly BoardRow[] | undefined {
+  if (tasks.kind === "unknown") {
     return undefined
   }
 
-  const unfinished = unfinishedTaskIds(tasks)
-  return tasks.map((task) => ({
+  const items = tasks.items
+  const unfinished = unfinishedTaskIds(items)
+  return items.map((task) => ({
     id: task.id,
     status: task.status,
     statusText: task.status ?? MISSING,

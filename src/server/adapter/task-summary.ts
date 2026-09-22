@@ -11,7 +11,7 @@
 import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-import { readTaskSummaries, type TaskSummaryItem } from "../../shared/task-summary.ts"
+import { readTaskSummaries, type TaskSummaryResult } from "../../shared/task-summary.ts"
 
 const TASKS_FILE_RELATIVE_PATH: readonly string[] = ["develop", "tasks.json"]
 
@@ -28,14 +28,14 @@ export type TaskSummaryWatcher = {
  * develop/tasks.json を見張り始める。**呼んだ時点で1回読み、以後はポーリングで mtime を見る。**
  * ファイルが元々無い（`undefined` のまま）ときは最初の呼び出しでは `onChange` を呼ばない
  * （mtime が「無い→無い」で変わっていないため。`INITIAL_SESSION_STATE.tasks` の既定値
- * `undefined` と一致するので、呼ばなくても見た目は変わらない）。
+ * `{ kind: "unknown" }` と一致するので、呼ばなくても見た目は変わらない）。
  *
  * `pollIntervalMs` は既定 {@link TASK_SUMMARY_POLL_INTERVAL_MS}。テストが実際の間隔を待たずに
  * 済むよう、`src/server/core/session-manager.ts` の `batchIntervalMs` と同じ形で差し替えられるようにしてある。
  */
 export function watchTaskSummary(
   cwd: string,
-  onChange: (tasks: readonly TaskSummaryItem[] | undefined) => void,
+  onChange: (result: TaskSummaryResult) => void,
   pollIntervalMs = TASK_SUMMARY_POLL_INTERVAL_MS,
 ): TaskSummaryWatcher {
   const path = join(cwd, ...TASKS_FILE_RELATIVE_PATH)
@@ -47,7 +47,7 @@ export function watchTaskSummary(
       return
     }
     cachedMtimeMs = mtimeMs
-    onChange(mtimeMs === undefined ? undefined : readOptionalTaskSummaries(path))
+    onChange(mtimeMs === undefined ? { kind: "unknown" } : taskSummaryResultOf(path))
   }
 
   poll()
@@ -65,9 +65,15 @@ function readOptionalMtimeMs(path: string): number | undefined {
   }
 }
 
-function readOptionalTaskSummaries(path: string): readonly TaskSummaryItem[] | undefined {
+/** ファイルは有る（mtime が取れた）が、読めるか・中身が信用できるかはまだ分からない状態から作る。 */
+function taskSummaryResultOf(path: string): TaskSummaryResult {
   const content = readOptionalFile(path)
-  return content === undefined ? undefined : readTaskSummaries(content)
+  if (content === undefined) {
+    return { kind: "unknown" }
+  }
+
+  const items = readTaskSummaries(content)
+  return items === undefined ? { kind: "unknown" } : { kind: "known", items }
 }
 
 function readOptionalFile(path: string): string | undefined {

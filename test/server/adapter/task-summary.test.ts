@@ -50,12 +50,19 @@ function notified(id: string, summary: string, status: string): Record<string, u
   return { id, summary, status, difficulty: undefined, dependencies: [] }
 }
 
+/** `TaskSummaryResult` の `known` 側を、`notified` と組み合わせて作る。 */
+function known(...items: readonly Record<string, unknown>[]): Record<string, unknown> {
+  return { kind: "known", items }
+}
+
+const UNKNOWN: Record<string, unknown> = { kind: "unknown" }
+
 function pollOnce(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, TEST_POLL_INTERVAL_MS * 3))
 }
 
 describe("watchTaskSummary", () => {
-  it("develop/tasks.json が無いときは呼ばれない（既定の undefined のまま）", () => {
+  it("develop/tasks.json が無いときは呼ばれない（既定の「不明」のまま）", () => {
     const changes: unknown[] = []
     watch((tasks) => changes.push(tasks))
 
@@ -67,7 +74,7 @@ describe("watchTaskSummary", () => {
     const changes: unknown[] = []
     watch((tasks) => changes.push(tasks))
 
-    expect(changes).toEqual([[notified("T-1", "ダミーのタスク", "todo")]])
+    expect(changes).toEqual([known(notified("T-1", "ダミーのタスク", "todo"))])
   })
 
   it("mtime が変わらない間は読み直さず、通知もしない", async () => {
@@ -93,12 +100,12 @@ describe("watchTaskSummary", () => {
     await pollOnce()
 
     expect(changes).toEqual([
-      [notified("T-1", "1つめ", "todo")],
-      [notified("T-2", "2つめ", "in_progress")],
+      known(notified("T-1", "1つめ", "todo")),
+      known(notified("T-2", "2つめ", "in_progress")),
     ])
   })
 
-  it("ファイルが消えたら undefined を通知し、また現れたら追従する", async () => {
+  it("ファイルが消えたら「不明」を通知し、また現れたら追従する", async () => {
     writeTasks(JSON.stringify([{ id: "T-1", summary: "1つめ", status: "todo" }]), 0)
     const changes: unknown[] = []
     watch((tasks) => changes.push(tasks))
@@ -110,9 +117,9 @@ describe("watchTaskSummary", () => {
     await pollOnce()
 
     expect(changes).toEqual([
-      [notified("T-1", "1つめ", "todo")],
-      undefined,
-      [notified("T-1", "1つめ", "todo")],
+      known(notified("T-1", "1つめ", "todo")),
+      UNKNOWN,
+      known(notified("T-1", "1つめ", "todo")),
     ])
   })
 

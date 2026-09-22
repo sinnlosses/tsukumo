@@ -24,6 +24,19 @@ export type TaskSummaryItem = {
 }
 
 /**
+ * develop/tasks.json の一覧が読めているかどうか。**「まだ届いていない」（session-state.ts の
+ * 初期値）と「読めない」（ファイルが無い・JSONとして壊れている・トップレベルが配列でない）を
+ * ここでは区別しない**——`watchTaskSummary`（`src/server/adapter/task-summary.ts`）は
+ * ファイルが最初から無いときは初回の通知そのものを送らないので、その口だけでは
+ * 「まだ確認していない」と「確認して無かった」を型で分けられない。画面側もどちらも同じ
+ * 「不明」表示にしていて対処が変わらないため、分けても情報が増えない
+ * （`docs/coding-standards.md`「「無いかもしれない」値」）。
+ */
+export type TaskSummaryResult =
+  | { readonly kind: "unknown" }
+  | { readonly kind: "known"; readonly items: readonly TaskSummaryItem[] }
+
+/**
  * 着手可否。`todo` のタスクだけが対象で、それ以外は判定しない（`taskReadiness` が undefined）。
  * `blockedBy` には**まだ完了していない依存のID**が、タスクに書かれた順で入る。
  */

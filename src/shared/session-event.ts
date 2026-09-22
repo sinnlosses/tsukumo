@@ -19,7 +19,7 @@ import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
-import { type TaskSummaryItem } from "./task-summary.ts"
+import { type TaskSummaryResult } from "./task-summary.ts"
 import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
 
 /** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
@@ -202,9 +202,10 @@ export type SessionEvent =
   | { readonly kind: "model-changed"; readonly model: string }
   /**
    * develop/tasks.json が変わった（core の `task-summary.ts` が mtime を見て起こす）。
-   * ファイルが読めない・消えたときは `tasks: undefined`（サイドバーの「不明」表示に対応する）。
+   * ファイルが読めない・消えたときは `tasks: { kind: "unknown" }`（サイドバーの「不明」表示に
+   * 対応する。`src/shared/task-summary.ts` の {@link TaskSummaryResult}）。
    */
-  | { readonly kind: "tasks-changed"; readonly tasks: readonly TaskSummaryItem[] | undefined }
+  | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryResult }
   /**
    * キャラクターパックが決まった（core の `character-pack.ts`。**起こしたときと、
    * `switch-character` で起こし直したときの1回ずつ**）。キャラビューが立ち絵を取りに行く先

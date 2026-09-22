@@ -1,7 +1,7 @@
 // サイドバーの区画の見出しに出す文言。区画の枠はサイドバーが持つので、**文言だけ**をここから
 // 渡す（`features/sidebar/task-section.tsx`）。
 
-import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import { type TaskSummaryItem, type TaskSummaryResult } from "../../../../shared/task-summary.ts"
 
 /**
  * サイドバーの「タスク一覧」の見出し。tasks が読めているときだけ件数を添える
@@ -11,12 +11,12 @@ import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
  * 同じ理由。区画は 300px ほどしかなく、doing はほぼ常に 0〜1、done はアーカイブ直後は
  * ほぼ常に 0 になるので、0 を並べても情報が無い。詳しい理由は docs/requirements.md 4.2）。
  */
-export function taskListTitle(tasks: readonly TaskSummaryItem[] | undefined): string {
-  if (tasks === undefined) {
+export function taskListTitle(tasks: TaskSummaryResult): string {
+  if (tasks.kind === "unknown") {
     return "タスク一覧"
   }
 
-  const { todo, doing, done } = taskStatusCounts(tasks)
+  const { todo, doing, done } = taskStatusCounts(tasks.items)
 
   const doingPart = doing > 0 ? ` / doing ${String(doing)}` : ""
   const donePart = done > 0 ? ` / done ${String(done)}` : ""

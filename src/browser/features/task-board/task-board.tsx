@@ -7,13 +7,13 @@
 
 import { type ReactElement } from "react"
 
-import { type TaskSummaryItem } from "../../../shared/task-summary.ts"
+import { type TaskSummaryResult } from "../../../shared/task-summary.ts"
 import { BoardCloseContext } from "./board-close.tsx"
 import { useTaskBoard } from "./hooks/use-task-board.ts"
 import { PresentationalTaskBoard } from "./presentational-task-board.tsx"
 
 export type TaskBoardProps = {
-  readonly tasks: readonly TaskSummaryItem[] | undefined
+  readonly tasks: TaskSummaryResult
   readonly open: boolean
   readonly onClose: () => void
 }

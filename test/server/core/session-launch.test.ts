@@ -340,7 +340,7 @@ describe("createSessionLaunch", () => {
   it("見張りが流すイベントは、駆動のイベントと同じ受け口へ流れる", async () => {
     const harness = createHarness({
       watchTasks: (onEvent) => {
-        onEvent({ kind: "tasks-changed", tasks: [] })
+        onEvent({ kind: "tasks-changed", tasks: { kind: "known", items: [] } })
         return { close: () => {} }
       },
     })

@@ -7,7 +7,10 @@ import { TaskBoard } from "../../../../src/browser/features/task-board/task-boar
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { type TaskSummaryItem } from "../../../../src/shared/task-summary.ts"
+import {
+  type TaskSummaryItem,
+  type TaskSummaryResult,
+} from "../../../../src/shared/task-summary.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
@@ -15,6 +18,10 @@ import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 afterEach(() => {
   cleanup()
 })
+
+function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
+  return { kind: "known", items }
+}
 
 const TASKS: readonly TaskSummaryItem[] = [
   {
@@ -39,14 +46,14 @@ const RUNNING_TURN: Partial<SessionState> = { turn: { kind: "running", startedAt
 
 /** サイドバーの区画の一覧。確認は姿と送り口が要るので store で包む。 */
 function renderList(spy: CommandSpy = () => {}, overrides: Partial<SessionState> = {}): void {
-  renderWithStore(<TaskList tasks={TASKS} />, spy, overrides)
+  renderWithStore(<TaskList tasks={known(TASKS)} />, spy, overrides)
 }
 
 /** 見出しの「一覧を見る」で開く表（開いた状態で描く）。閉じる要求は `closed` に溜まる。 */
 function renderBoard(spy: CommandSpy = () => {}, closed: string[] = []): void {
   renderWithStore(
     <TaskBoard
-      tasks={TASKS}
+      tasks={known(TASKS)}
       open={true}
       onClose={() => {
         closed.push("表")
@@ -196,7 +203,7 @@ describe("タスクIDから実行を頼む", () => {
     render(
       <SessionStoreContext.Provider value={store}>
         <TaskBoard
-          tasks={TASKS}
+          tasks={known(TASKS)}
           open={true}
           onClose={() => {
             closed.push("表")

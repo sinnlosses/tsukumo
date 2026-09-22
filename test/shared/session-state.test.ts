@@ -672,10 +672,10 @@ describe("applySessionEvent", () => {
     expect(before.records.length).toBeGreaterThan(0)
   })
 
-  it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは undefined", () => {
-    expect(INITIAL_SESSION_STATE.tasks).toBeUndefined()
+  it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは不明", () => {
+    expect(INITIAL_SESSION_STATE.tasks).toEqual({ kind: "unknown" })
 
-    const tasks = [
+    const items = [
       {
         id: "X-001",
         summary: "架空のタスク",
@@ -685,11 +685,15 @@ describe("applySessionEvent", () => {
         dependencies: [],
       },
     ]
-    const withTasks = apply({ kind: "tasks-changed", tasks })
-    expect(withTasks.tasks).toEqual(tasks)
+    const withTasks = apply({ kind: "tasks-changed", tasks: { kind: "known", items } })
+    expect(withTasks.tasks).toEqual({ kind: "known", items })
 
-    const cleared = applySessionEvent(withTasks, { kind: "tasks-changed", tasks: undefined }, 0)
-    expect(cleared.tasks).toBeUndefined()
+    const cleared = applySessionEvent(
+      withTasks,
+      { kind: "tasks-changed", tasks: { kind: "unknown" } },
+      0,
+    )
+    expect(cleared.tasks).toEqual({ kind: "unknown" })
   })
 
   it("sessions-changed で切り替え先の一覧を持ち、届くまでは空", () => {

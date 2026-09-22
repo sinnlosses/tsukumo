@@ -3,13 +3,20 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
-import { type TaskSummaryItem } from "../../../../src/shared/task-summary.ts"
+import {
+  type TaskSummaryItem,
+  type TaskSummaryResult,
+} from "../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
 
 afterEach(() => {
   cleanup()
 })
+
+function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
+  return { kind: "known", items }
+}
 
 const TASKS: readonly TaskSummaryItem[] = [
   {
@@ -45,14 +52,14 @@ function dialogIsOpen(): boolean {
 
 describe("TaskBoard", () => {
   it("open が false のときは開かない", () => {
-    render(<TaskBoard tasks={TASKS} open={false} onClose={() => {}} />)
+    render(<TaskBoard tasks={known(TASKS)} open={false} onClose={() => {}} />)
 
     expect(dialogIsOpen()).toBe(false)
   })
 
   it("open が true になると開く", () => {
-    const { rerender } = render(<TaskBoard tasks={TASKS} open={false} onClose={() => {}} />)
-    rerender(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+    const { rerender } = render(<TaskBoard tasks={known(TASKS)} open={false} onClose={() => {}} />)
+    rerender(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     expect(dialogIsOpen()).toBe(true)
   })
@@ -66,7 +73,7 @@ describe("TaskBoard", () => {
       loopable: "Y",
       dependencies: [],
     }
-    render(<TaskBoard tasks={[...TASKS, doing]} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
 
     const cell = screen.getByText("doing")
     expect(cell.className).toContain("task-status-doing")
@@ -75,7 +82,7 @@ describe("TaskBoard", () => {
   })
 
   it("列は ID・status・難易度・loopable・着手・要約（依存は着手の列に入る）", () => {
-    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
       "ID",
@@ -91,7 +98,7 @@ describe("TaskBoard", () => {
   // 値だけでは意味が取れないセルのラベルは `data-label` から出すので、ここが消えると
   // カードの「loopable」「着手」が名無しの値になる。
   it("見出しが隠れても読めるよう、意味が取れないセルは data-label を持つ", () => {
-    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     const cells = document.querySelectorAll(".task-board-row")[1]?.querySelectorAll("td")
     expect(Array.from(cells ?? []).map((cell) => cell.getAttribute("data-label"))).toEqual([
@@ -104,7 +111,7 @@ describe("TaskBoard", () => {
   })
 
   it("全件をファイルの順で出し、done も薄く出すクラス付きで残す", () => {
-    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     const rows = document.querySelectorAll(".task-board-row")
     expect(rows).toHaveLength(3)
@@ -114,7 +121,7 @@ describe("TaskBoard", () => {
   })
 
   it("着手可否を文字で出す（done は判定しない、依存待ちは止めている ID を並べる）", () => {
-    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     const rows = document.querySelectorAll(".task-board-row")
     expect(rows[0]?.querySelector(".task-ready")).toBeNull()
@@ -133,7 +140,7 @@ describe("TaskBoard", () => {
       loopable: "Y",
       dependencies: ["X-001", "X-002"],
     }
-    render(<TaskBoard tasks={[...TASKS, doing]} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
 
     const rows = document.querySelectorAll(".task-board-row")
     expect(rows[0]?.querySelectorAll("td")[3]?.textContent).toBe("—")
@@ -143,7 +150,7 @@ describe("TaskBoard", () => {
   })
 
   it("難易度・loopable が無いときは「—」で埋める", () => {
-    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     const cells = document.querySelectorAll(".task-board-row")[1]?.querySelectorAll("td")
     expect(cells?.[1]?.textContent).toBe("opus")
@@ -151,7 +158,7 @@ describe("TaskBoard", () => {
   })
 
   it("loopable は Y だけ出し、N は空欄にする", () => {
-    render(<TaskBoard tasks={TASKS} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     const rows = document.querySelectorAll(".task-board-row")
     expect(rows[0]?.querySelectorAll("td")[2]?.textContent).toBe("Y")
@@ -162,7 +169,7 @@ describe("TaskBoard", () => {
     const closed: string[] = []
     render(
       <TaskBoard
-        tasks={TASKS}
+        tasks={known(TASKS)}
         open={true}
         onClose={() => {
           closed.push("閉じる")
@@ -179,7 +186,7 @@ describe("TaskBoard", () => {
     const closed: string[] = []
     render(
       <TaskBoard
-        tasks={TASKS}
+        tasks={known(TASKS)}
         open={true}
         onClose={() => {
           closed.push("外側")
@@ -201,13 +208,13 @@ describe("TaskBoard", () => {
   })
 
   it("tasks が読めないときは表の代わりにその旨を出す", () => {
-    render(<TaskBoard tasks={undefined} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={{ kind: "unknown" }} open={true} onClose={() => {}} />)
 
     expect(screen.getByText("develop/tasks.json が読めない")).toBeDefined()
   })
 
   it("タスクが0件のときは「タスクが無い」を出す", () => {
-    render(<TaskBoard tasks={[]} open={true} onClose={() => {}} />)
+    render(<TaskBoard tasks={known([])} open={true} onClose={() => {}} />)
 
     expect(screen.getByText("タスクが無い")).toBeDefined()
   })

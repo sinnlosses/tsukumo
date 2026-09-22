@@ -19,7 +19,7 @@ import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
-import { type TaskSummaryItem } from "./task-summary.ts"
+import { type TaskSummaryResult } from "./task-summary.ts"
 
 /**
  * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
@@ -256,10 +256,12 @@ export type SessionState = {
    */
   readonly nextTurnId: number
   /**
-   * develop/tasks.json の一覧（サイドバーのタスク一覧）。`tasks-changed` が届くまでは undefined
-   * （読めない・まだ読んでいないのどちらも同じ「不明」表示になる。docs/design.md 4.1）。
+   * develop/tasks.json の一覧（サイドバーのタスク一覧）。`tasks-changed` が届くまでは
+   * `{ kind: "unknown" }`（読めない・まだ読んでいないのどちらも同じ「不明」表示になる。
+   * docs/design.md 4.1。この2つを型でも分けない理由は
+   * {@link TaskSummaryResult}（`src/shared/task-summary.ts`）のコメントを参照）。
    */
-  readonly tasks: readonly TaskSummaryItem[] | undefined
+  readonly tasks: TaskSummaryResult
   /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
    * **素材そのものは持たない**（`portraits` の値は `/character/<file>` の URL。docs/design.md
@@ -314,7 +316,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   endedReason: undefined,
   turn: { kind: "idle" },
   nextTurnId: 0,
-  tasks: undefined,
+  tasks: { kind: "unknown" },
   character: undefined,
   characterPacks: [],
   sessions: [],

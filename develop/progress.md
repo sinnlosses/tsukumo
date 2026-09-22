@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 タスク一覧の「不明」を合併型にした（T-313）
+
+`SessionState.tasks` と `tasks-changed` を `TaskSummaryResult`（`unknown` / `known`）にし、`| undefined` を消した。「まだ届いていない」と「読めない」は、口1つでは区別できず表示も同じなので分けていない。
+
 ### 2026-09-23 ツールの結果と本文の「まだ来ていない」を合併型にした（T-312）
 
 `SessionRecord` と `MainViewEntry` のツールを `ToolRunStatus`、`MainViewStep` の本文を `MainViewStepBody` にして、`shared` の `| undefined` を4行消した。疑似セッションで撮り比べて、見た目が変わっていないことを確かめた。
