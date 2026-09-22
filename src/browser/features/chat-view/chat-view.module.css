@@ -62,8 +62,8 @@
 }
 /* ターン進行中（返事を待っている間）は押せない。**立ち絵は薄めない**（要素の `opacity` は
    地ごと透かす。docs/design.md 13.8 の「過去の吹き出しは要素の opacity で薄めない」と同じ
-   理由）ので、見せ方は**応えないこと**のほうで作る: 指の形にならず、揺れず、案内が理由の
-   定型文に替わる（`chat-view.tsx` の `NUDGE_BLOCKED_HINT`）。 */
+   理由）ので、見せ方は**応えないこと**のほうで作る: 指の形にならず、揺れず、案内も出ない
+   （`chat-view.tsx` が `.chat-poke-hint` ごと描かない）。 */
 .chat-poke[aria-disabled="true"] {
   cursor: default;
 }
@@ -172,8 +172,7 @@
 }
 /* 押せることは、いまある地を差し色の側へ寄せるだけで示す。**印の付いている行には掛けない**
    （既定では最新のセリフに印が付いているので、そこは印の地のほうが濃い）。
-   **地の変化はホバーの合図の一部でしかない** — 0.2 秒 載せ続けると立ち絵がその行の表情へ
-   応える（`chat-view.tsx` の `useHoverPreview`。docs/design.md 13.7）。 */
+   **載せても立ち絵は動かない** — 遡るのは押したときだけ（2026-09-22 ユーザーの指示）。 */
 .chat-entry-character:hover:not(.is-selected) {
   background: color-mix(in srgb, var(--surface), var(--accent) 18%);
 }

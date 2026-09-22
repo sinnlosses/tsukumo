@@ -11,8 +11,8 @@
 //
 // **印は「立ち絵がいま従っている行」に付き、既定では最新のセリフに付いている**
 // （docs/design.md 13.7。何も押していないと印がどこにも無く、行が押せること自体に
-// 気づけなかった）。**行に載せると 0.2 秒ほどで立ち絵が先に応える**（{@link useHoverPreview}）
-// のも同じ狙いで、どちらも**枠も操作子も増やさない**（13.1 原則2）。
+// 気づけなかった）。**枠も操作子も増やさない**（13.1 原則2）。**遡るのは押したときだけ**で、
+// 行に載せただけでは立ち絵は動かない（2026-09-22 ユーザーの指示で、先に応える仕掛けを戻した）。
 //
 // **立ち絵をつつくと話しかけてくれる**（docs/design.md 13.7。{@link NudgePortrait}）。
 // 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
@@ -28,7 +28,6 @@ import { resolveOutfitAccent, resolvePortraitUrl } from "../../../shared/charact
 import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
 import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../shared/expression.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { Portrait } from "../../components/portrait.tsx"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
@@ -48,15 +47,11 @@ const EMPTY_LOG_MESSAGE = "（まだ何も話していません。立ち絵を�
  * 立ち絵に載せたときに出る案内（docs/design.md 13.7）。**ホバーの間だけ見えるので常設の枠は
  * 増えない**（13.1 原則2）が、**支援技術には常に届く**（立ち絵を包むボタンの
  * `aria-describedby` が指す）。
+ *
+ * **ターン進行中はこの案内ごと出さない**（2026-09-22 ユーザーの指示。それまでは押せない理由の
+ * 定型文に差し替えていた）。返事を待っている間は字を増やさない。
  */
-const NUDGE_HINT = "つつくと話しかけてくれる"
-
-/**
- * ターン進行中に押せない理由。**サーバが断るときと同じ1つの定型文**（`shared` の
- * `FRAME_ERROR_REASON`）を使う（サイドバーのキャラクターの `<select>` と同じ形）。
- * 押せない間は {@link NUDGE_HINT} の代わりにこちらが案内に出る。
- */
-const NUDGE_BLOCKED_HINT = FRAME_ERROR_REASON.nudgeDuringTurn
+const NUDGE_HINT = "話しかけてもらう"
 
 /**
  * 「下端付近」とみなす、下端からの残り距離（px）。0 にすると、フォントの読み込みや
@@ -71,13 +66,6 @@ const NEAR_BOTTOM_THRESHOLD_PX = 120
  * 選ぶだけでも1文字ぶん（本文の大きさなら十数px）は動くので、手のぶれ（数px）と混ざらない。
  */
 const DRAG_THRESHOLD_PX = 4
-
-/**
- * 行に載せてから立ち絵が応えるまでの間（ミリ秒。docs/design.md 13.7）。ログの上をただ
- * 通り過ぎただけで表情が点滅しないように少し待つ。**CSS の `transition-delay` では作れない**
- * （表情は画像そのものの差し替えなので、遅らせる対象になる遷移が無い）。
- */
-const HOVER_PREVIEW_DELAY_MS = 200
 
 /** 押し始めた場所（ドラッグと押すの見分けに使う。{@link isSelectionDrag}）。 */
 type PressOrigin = {
@@ -121,24 +109,17 @@ export function ChatView(): ReactElement {
   const pinnedIndex = pinnedSpeechIndex(viewed, speechCount)
   // 印を付ける行 = 立ち絵が従っている行（docs/design.md 13.7）。留めていなければ最新のセリフ。
   const selectedIndex = pinnedIndex ?? lastSpeechIndex(entries)
-  const hover = useHoverPreview()
-  // 表情は「載せている行 → 留めた行 → 最新」の順に決まる（docs/design.md 13.7）。
+  // 表情は「留めた行 → 最新」の順に決まる（docs/design.md 13.7）。
   // **留めていないときに読むのは `speechExpression`** で、最新の行の表情ではない —
   // 次のターンが始まると `speak` が来るまで既定へ戻る（キャラビューと同じ扱い。表情の源は
   // `speak` の1つだけ。docs/requirements.md 4.3）。印はその間も最新のセリフの行に残る。
-  const expression =
-    speechExpressionAt(entries, hover.previewIndex) ??
-    speechExpressionAt(entries, pinnedIndex) ??
-    speechExpression
+  const expression = speechExpressionAt(entries, pinnedIndex) ?? speechExpression
 
   const portraitUrl =
     character === undefined ? undefined : resolvePortraitUrl(character.portraits, expression)
   const accent =
     character === undefined ? undefined : resolveOutfitAccent(character.outfitAccents, outfit)
-  // **alt はホバーの先見せでも書き換わる**（出ている絵をそのまま説明する）。支援技術への
-  // 手当ては足していない: 立ち絵は `aria-live` の中に居ないので alt が変わっても読み上げに
-  // 割り込まず、そもそもホバーはポインタだけの道で、キーボードでは起きない
-  // （docs/design.md 13.7）。
+  // **alt は出ている絵をそのまま説明する**（行を押して遡れば、その行の表情の名前になる）。
   const altText = `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(
     character?.expressions ?? [],
     expression,
@@ -168,64 +149,9 @@ export function ChatView(): ReactElement {
             pinnedIndex === index ? { kind: "latest" } : { kind: "pinned", index, speechCount },
           )
         }}
-        onHoverEntry={hover.onHoverEntry}
-        onLeaveEntry={hover.onLeaveEntry}
       />
     </div>
   )
-}
-
-/**
- * ホバーで先に見せている行（docs/design.md 13.7）。**載せてから
- * {@link HOVER_PREVIEW_DELAY_MS} 経ったときだけ入り、離すとすぐ抜ける**。
- *
- * 遅らせるのは**利用者の操作で起きること**なので、state を effect で追いかけず
- * ハンドラの中でタイマーを引く（docs/coding-standards.md「useEffect の代わりに使うもの」）。
- * effect が要るのは**畳まれたときに走りかけのタイマーを止める**ぶんだけ。
- */
-function useHoverPreview(): {
-  readonly previewIndex: number | undefined
-  readonly onHoverEntry: (index: number) => void
-  readonly onLeaveEntry: () => void
-} {
-  const [previewIndex, setPreviewIndex] = useState<number | undefined>(undefined)
-  // React の外の資源（走っているタイマー）を持つ入れ物。
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-
-  // タイマー（docs/coding-standards.md「useEffect は4類型だけ」）。**取り外しのときに
-  // 止めるためだけ**に張るので、依存は空でよい（張り直す材料を持たない）。
-  useEffect(() => {
-    return () => {
-      const timer = timerRef.current
-      if (timer !== undefined) {
-        clearTimeout(timer)
-      }
-    }
-  }, [])
-
-  const stopTimer = (): void => {
-    const timer = timerRef.current
-    if (timer !== undefined) {
-      clearTimeout(timer)
-      timerRef.current = undefined
-    }
-  }
-
-  return {
-    previewIndex,
-    onHoverEntry: (index) => {
-      // 隣の行へ滑らせたときは、前の行の待ちを捨てて数え直す。
-      stopTimer()
-      timerRef.current = setTimeout(() => {
-        timerRef.current = undefined
-        setPreviewIndex(index)
-      }, HOVER_PREVIEW_DELAY_MS)
-    },
-    onLeaveEntry: () => {
-      stopTimer()
-      setPreviewIndex(undefined)
-    },
-  }
 }
 
 /**
@@ -290,9 +216,10 @@ function speechExpressionAt(
  *
  * **ターンが動いている間は押せない**（モードの `<select>` と同じ立場。サーバ側も同じ条件で
  * 断る）。ただし `disabled` にはしない — ブラウザが `disabled` の要素にホバーもフォーカスも
- * 通さないので、**なぜ押せないのかを出す場所が無くなる**。`aria-disabled` で伝えたうえで、
- * 案内を理由の定型文（{@link NUDGE_BLOCKED_HINT}）に差し替え、送らないのはここで止める。
- * **立ち絵そのものは薄めない**（要素の `opacity` は地ごと透かす。docs/design.md 13.8）。
+ * 通さないので、キーボードで辿り着ける道ごと消える。`aria-disabled` で伝え、送らないのは
+ * ここで止める。**案内（{@link NUDGE_HINT}）はその間だけ出さない**ので、`aria-describedby` も
+ * 指す先を持たない。**立ち絵そのものは薄めない**（要素の `opacity` は地ごと透かす。
+ * docs/design.md 13.8）。
  */
 function NudgePortrait(props: {
   readonly url: string
@@ -304,9 +231,6 @@ function NudgePortrait(props: {
 }): ReactElement {
   const dispatch = useSessionDispatch()
   const hintId = useId()
-  // 案内はホバーの間だけ見えるが、**支援技術には常に届く**（`aria-describedby` は見た目では
-  // なく木の中に在るかで決まるので、`display: none` ではなく透明にして隠す）。
-  const hint = props.turnInProgress ? NUDGE_BLOCKED_HINT : NUDGE_HINT
 
   return (
     <button
@@ -314,7 +238,7 @@ function NudgePortrait(props: {
       className={styles["chat-poke"]}
       // 名前は立ち絵の alt のまま（中身から計算される）。**何が起きるかは説明のほう**に置く
       // ので、`aria-label` で alt を覆わない。
-      aria-describedby={hintId}
+      aria-describedby={props.turnInProgress ? undefined : hintId}
       aria-disabled={props.turnInProgress}
       onClick={() => {
         if (props.turnInProgress) {
@@ -332,9 +256,14 @@ function NudgePortrait(props: {
         motion={props.turnInProgress ? "waiting" : "reading"}
         className={styles["chat-portrait"]}
       />
-      <span className={styles["chat-poke-hint"]} id={hintId}>
-        {hint}
-      </span>
+      {/* 案内はホバーの間だけ見えるが、**支援技術には常に届く**（`aria-describedby` は
+          見た目ではなく木の中に在るかで決まるので、`display: none` ではなく透明にして隠す）。
+          **ターン進行中は木からも消す** — 押せないうえに、代わりに出す字を持たない。 */}
+      {!props.turnInProgress && (
+        <span className={styles["chat-poke-hint"]} id={hintId}>
+          {NUDGE_HINT}
+        </span>
+      )}
     </button>
   )
 }
@@ -349,8 +278,6 @@ function ChatLog(props: {
   /** 印を付ける行（= 立ち絵が従っている行）。セリフが1件も無ければどこにも付かない。 */
   readonly selectedIndex: number | undefined
   readonly onToggle: (index: number) => void
-  readonly onHoverEntry: (index: number) => void
-  readonly onLeaveEntry: () => void
 }): ReactElement {
   const logRef = useRef<HTMLDivElement>(null)
   // 押し始めた場所。**セリフの行は文字をドラッグで選べる**ので、選び終えて手を離したときの
@@ -418,15 +345,6 @@ function ChatLog(props: {
               aria-pressed={index === props.selectedIndex}
               onMouseDown={(event) => {
                 pressOriginRef.current = { x: event.clientX, y: event.clientY }
-              }}
-              // **ホバーで立ち絵が先に応える**（docs/design.md 13.7）。載せた・離したを数える
-              // のは `mouseenter` / `mouseleave`（行の中で動くたびに飛ぶ `mouseover` では
-              // 間の数え直しが止まらない）。
-              onMouseEnter={() => {
-                props.onHoverEntry(index)
-              }}
-              onMouseLeave={() => {
-                props.onLeaveEntry()
               }}
               onClick={(event) => {
                 const origin = pressOriginRef.current

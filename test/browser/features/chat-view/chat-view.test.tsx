@@ -5,7 +5,6 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ChatView } from "../../../../src/browser/features/chat-view/chat-view.tsx"
 import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
-import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -66,19 +65,6 @@ function pressWithMouse(entry: Element, moveX: number): void {
 /** ログの行。押せる行（キャラクターのセリフ）は `role="button"` の `<div>` で出る。 */
 function logEntries(): readonly Element[] {
   return [...document.querySelectorAll("[data-speaker]")]
-}
-
-/**
- * ホバーで立ち絵が応えるまでの間（`chat-view.tsx` の `HOVER_PREVIEW_DELAY_MS`）を実際に待つ。
- * **時計を差し替えない** — 遅れを作っているのは素の `setTimeout` 1つで、待つ長さも
- * 0.2 秒ほどなので、そのまま待ったほうが仕掛けが少ない。
- */
-async function waitForHoverPreview(): Promise<void> {
-  await act(async () => {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 300)
-    })
-  })
 }
 
 // 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
@@ -381,68 +367,24 @@ describe("ChatView のセリフを遡る", () => {
   })
 })
 
-describe("ChatView のホバーで先に応える", () => {
-  it("行に載せて少し待つと立ち絵がその行の表情になり、離すと戻る", async () => {
+describe("ChatView のホバー", () => {
+  it("行に載せても立ち絵は動かない（遡るのは押したときだけ）", () => {
     renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
 
-    const firstSpeech = screen.getByText("1つめのセリフ")
     // `mouseenter` / `mouseleave` は React が `mouseover` / `mouseout` から組み立てる。
-    fireEvent.mouseEnter(firstSpeech)
-    // 載せた直後はまだ動かない（ログの上を通り過ぎただけで点滅させない）。
-    expect(portraitExpression()).toBe("proud")
-
-    await waitForHoverPreview()
-    expect(portraitExpression()).toBe("default")
-
-    // 離すのは待たずにすぐ。
-    fireEvent.mouseLeave(firstSpeech)
-    expect(portraitExpression()).toBe("proud")
-  })
-
-  it("載せたまま離れた行へ滑らせても、いま載っている行の表情になる", async () => {
-    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "curious" })
-
     const firstSpeech = screen.getByText("1つめのセリフ")
     fireEvent.mouseEnter(firstSpeech)
-    fireEvent.mouseLeave(firstSpeech)
-    fireEvent.mouseEnter(screen.getByText("2つめのセリフ"))
-
-    await waitForHoverPreview()
-    // 前の行の待ちは捨てられている（`default` にならない）。
-    expect(portraitExpression()).toBe("proud")
-  })
-
-  it("ホバーでは印は動かない（動くのは立ち絵だけ）", async () => {
-    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
-
-    fireEvent.mouseEnter(screen.getByText("1つめのセリフ"))
-    await waitForHoverPreview()
-
-    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([
-      null,
-      "false",
-      null,
-      "true",
-    ])
-  })
-
-  it("留めた行より、いま載せている行が優先される", async () => {
-    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "curious" })
-
-    fireEvent.click(screen.getByText("1つめのセリフ"))
-    fireEvent.mouseEnter(screen.getByText("2つめのセリフ"))
-    await waitForHoverPreview()
     expect(portraitExpression()).toBe("proud")
 
-    // 離すと、留めた行へ戻る（最新ではない）。
-    fireEvent.mouseLeave(screen.getByText("2つめのセリフ"))
+    // 押せば遡る（ホバーだけを外したので、押す道はそのまま残っている）。
+    fireEvent.click(firstSpeech)
     expect(portraitExpression()).toBe("default")
   })
 })
 
 describe("ChatView の立ち絵をつつく", () => {
   /** 載せたときに出る案内の字（`chat-view.tsx` が持つ。docs/design.md 13.7）。 */
-  const NUDGE_HINT = "つつくと話しかけてくれる"
+  const NUDGE_HINT = "話しかけてもらう"
 
   /**
    * つつける立ち絵。**探すのは案内の側**（`aria-describedby`）— ログのセリフの行も
@@ -450,6 +392,20 @@ describe("ChatView の立ち絵をつつく", () => {
    */
   function portraitButton(): HTMLElement {
     return screen.getByRole("button", { description: NUDGE_HINT })
+  }
+
+  /**
+   * ターン進行中の立ち絵。**案内ごと消える**ので説明では見分けられず、中の立ち絵
+   * （`data-expression`）を持つほうのボタンを取る。
+   */
+  function blockedPortraitButton(): HTMLElement {
+    const button = [...document.querySelectorAll("button")].find(
+      (candidate) => candidate.querySelector("[data-expression]") !== null,
+    )
+    if (button === undefined) {
+      throw new Error("つつける立ち絵が見つからない")
+    }
+    return button
   }
 
   it("立ち絵を押すと nudge を1つ送る（文面は持たない）", () => {
@@ -501,13 +457,12 @@ describe("ChatView の立ち絵をつつく", () => {
       (command) => sent.push(command),
     )
 
-    // **`disabled` にはしない**（ホバーもフォーカスも通らなくなり、理由を出す場所が無くなる）。
-    // 押せないことは `aria-disabled` で伝え、案内を理由の定型文に差し替える。
-    const button = screen.getByRole("button", {
-      description: FRAME_ERROR_REASON.nudgeDuringTurn,
-    })
+    // **`disabled` にはしない**（キーボードで辿り着ける道ごと消える）。押せないことは
+    // `aria-disabled` で伝え、**案内は出さない**（2026-09-22 ユーザーの指示）。
+    const button = blockedPortraitButton()
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(screen.queryByText(NUDGE_HINT)).toBe(null)
+    expect(button.getAttribute("aria-describedby")).toBe(null)
 
     fireEvent.click(button)
     expect(sent).toEqual([])
