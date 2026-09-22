@@ -85,8 +85,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
         pushRefresh(viewers, "page")
       },
       // 組み立て直せなくても前の版が配られたままなので、知らせるだけで続ける。
-      // 理由（`bun build` の出力）はターミナルにだけ出す — ブラウザの画面には出さない
-      // （2026-09-17 決定）。
+      // 理由（`bun build` の出力）はターミナルにだけ出す — ブラウザの画面には出さない。
       onFailure: (failure) => {
         process.stderr.write(`tsukumo: ${failure.reason}\n`)
         if (failure.detail !== undefined && failure.detail !== "") {

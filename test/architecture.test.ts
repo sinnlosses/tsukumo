@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url"
 // （`server/adapter/`）の2段**。配線は `src/` 直下のファイル（`cli.ts` / `main.ts` と、
 // そこから呼ばれる起動の段取り）。
 // `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**
-// （docs/research/architecture-proposal.md 3章「許す依存の辺」。2026-09-16 の段2で切った）。
+// （docs/research/architecture-proposal.md 3章「許す依存の辺」。段2で切った）。
 
 type Layer = "shared" | "core" | "adapter" | "browser" | "cli"
 

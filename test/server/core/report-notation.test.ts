@@ -18,7 +18,7 @@ afterEach(() => {
 
 /**
  * tsukumo が配る mermaid（package.json で 12.0.0 に固定）で**実際に描けることを目視で確かめた種類**
- * （2026-09-17 に 11.15.0 で、2026-09-22 に 12.0.0 で。docs/requirements.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
+ * （11.15.0 と 12.0.0 の両方で確かめた。docs/requirements.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
  * 先にメインビューへ出して描けることを確かめる**。
  */
 const DRAWN_MERMAID_KINDS = [
@@ -126,8 +126,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("表のセルの中にフェンスを書かせない", () => {
-    // セルでは開始フェンスにならず、閉じの無い inline code として素の文字が残る（2026-09-22 に
-    // 実際に崩した）。禁じるだけでなく、言い換え先（inline code）まで書かせる。
+    // セルでは開始フェンスにならず、閉じの無い inline code として素の文字が残る
+    // （実際に崩した）。禁じるだけでなく、言い換え先（inline code）まで書かせる。
     expect(REPORT_NOTATION_PROMPT).toContain("表のセルの中にフェンスを書かない")
     expect(REPORT_NOTATION_PROMPT).toContain("inline code にする")
   })
@@ -140,7 +140,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("印を勧めることが、書く量を増やす言い訳にならない", () => {
-    // 2026-09-15 の「まず量を絞り、残ったものに構造を付ける」と噛み合わせるための条項。
+    // 「まず量を絞り、残ったものに構造を付ける」と噛み合わせるための条項。
     expect(REPORT_NOTATION_PROMPT).toContain(
       "構造を付けられることは、書く量を増やしてよい理由に\nならない",
     )

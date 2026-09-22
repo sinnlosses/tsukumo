@@ -250,8 +250,8 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
       />,
     )
 
-    // 表が <details> の外に出ると、畳まれずに常に見えてしまう（2026-09-15 のユーザーの報告
-    // 「展開を押しても意味なく、最初から展開済みの文章が出てしまっている」）。
+    // 表が <details> の外に出ると、畳まれずに常に見えてしまう
+    // （「展開を押しても意味なく、最初から展開済みの文章が出てしまっている」という報告）。
     expect(container.querySelector("details table")).not.toBeNull()
     expect(container.querySelector("details > summary")?.textContent).toBe("長い根拠")
   })

@@ -1,5 +1,5 @@
-// サーバからブラウザへ押すフレーム。**封筒（`type` と `protocolVersion`）だけを zod で見る**
-// （2026-09-13 決定）。中身（`state` / `events`）は TS の型のままで、スキーマを二重に持たない
+// サーバからブラウザへ押すフレーム。**封筒（`type` と `protocolVersion`）だけを zod で見る**。
+// 中身（`state` / `events`）は TS の型のままで、スキーマを二重に持たない
 // ——状態にフィールドを1つ足すたびにスキーマも直す手間が、移行の各段で効いてくるため。
 //
 // 押す側（src/server/core/session-manager.ts）は型の付いた値を組み立てるだけなので、検証が要るのは
@@ -18,7 +18,7 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 2 へ上げたのは 2026-09-16（質問の記録。`SessionRecord` の `question` と、`answer` コマンドの
+ * 直近は質問の記録で上げた（`SessionRecord` の `question` と、`answer` コマンドの
  * `labels` を質問ごとの並びに変えた。古いタブが繋がったままだと、送った答えが弾かれる）。
  */
 export const PROTOCOL_VERSION = 2

@@ -9,7 +9,7 @@ import { cleanup, render } from "@testing-library/react"
 //
 // **`mock.module` はプロセス全体に効き、`mock.restore()` でも他のファイルへの漏れは止まらない**
 // （素の `bun test` だと `test/browser/features/main-view/markdown/markdown.test.tsx` が代役の `Markdown` を見て10件落ちる。
-// 2026-09-13 実測）。**そのため `package.json` の `test` / `check` は `bun test --isolate` にして
+// 実測）。**そのため `package.json` の `test` / `check` は `bun test --isolate` にして
 // ある**（テストファイルごとにプロセスを分ける。実測で 1.1 秒 → 2.4 秒）。ここを素の `bun test`
 // に戻すなら、先にこのファイルの差し替えをやめる必要がある。
 let calls: string[] = []

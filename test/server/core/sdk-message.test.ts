@@ -378,7 +378,7 @@ describe("toSessionEvents", () => {
     ])
   })
 
-  // 中断されたターンはこの subtype で終わる（2026-09-11 実測）。
+  // 中断されたターンはこの subtype で終わる（実測）。
   it("result の error_during_execution はターンの失敗にする", () => {
     const message = { type: "result", subtype: "error_during_execution" }
 

@@ -22,7 +22,7 @@ import { type CommandDescription } from "./session-event.ts"
  *
  * **`slashCommands` がまだ空（`init` が届く前）は `commandDescriptions` をそのまま名前の出どころに
  * する。** `supportedCommands()` は `init` を待たずに届くため、これで最初の依頼を送る前でも
- * 候補が出せる（2026-09-12 実測。docs/requirements.md 4.2）。ただしこの間は端末専用
+ * 候補が出せる（実測。docs/requirements.md 4.2）。ただしこの間は端末専用
  * （`doctor` など）の除外がまだ効かない。**`init` が届き `slashCommands` が埋まった時点で、
  * 除外込みの一覧に戻る**ので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
  */

@@ -167,7 +167,7 @@ describe("applySessionEvent", () => {
       0,
     )
     // 送信した時点で前のターンの一言は残さず空にする（次のターンに移ったことが画面から
-    // 分かるように。2026-09-16 決定）。
+    // 分かるように）。
     expect(secondTurnStarted.speeches).toEqual([])
 
     const secondTurnSpoken = applySessionEvent(

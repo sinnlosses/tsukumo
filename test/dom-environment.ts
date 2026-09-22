@@ -15,7 +15,7 @@ import { Window } from "happy-dom"
 
 /**
  * 借りる DOM のグローバル。React・react-dom・@testing-library/react が `instanceof` や
- * `document.createElement` の戻り値の型として触れるものだけ（2026-09-13、実際にレンダリングと
+ * `document.createElement` の戻り値の型として触れるものだけ（実際にレンダリングと
  * `fireEvent` を通して確かめた最小集合）。
  */
 const BORROWED_DOM_GLOBAL_NAMES = [

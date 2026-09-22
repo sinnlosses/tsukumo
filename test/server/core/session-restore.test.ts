@@ -258,7 +258,7 @@ describe("toRestoredEvents", () => {
 
   // 圧縮（`/compact`）が起きると transcript の鎖が切れ、`includeSystemMessages: true` で読んだ
   // 並びは区切りの行から始まる（`src/server/adapter/sdk-driver.ts` の `readRestoredEvents`。
-  // 2026-09-21 実測）。**起こし直したあとに区切りがログのいちばん上に来る**ことをここで示す。
+  // 実測）。**起こし直したあとに区切りがログのいちばん上に来る**ことをここで示す。
   it("圧縮の区切り（system の compact_boundary）が並びの先頭に来る", () => {
     const messages = [
       { type: "system", subtype: "compact_boundary", compact_metadata: { trigger: "auto" } },

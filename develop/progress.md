@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 コメントに日付を書かない規約を足し、shared とテストから日付を消した（T-303）
+
+`docs/coding-standards.md`「コメント」節の表に「いつ決まったか・誰が言ったかは書かない（禁止）。理由は残す」の1行を足し、`src/main.ts` / `src/view-delivery.ts` / `src/shared/` と `test/` のコメント行から日付の記述を全て落とした（理由・実測値・正典の参照は残した）。`src/server/` は T-304、`src/browser/` は T-305。
+
 ### 2026-09-22 トークン消費の記録にツール別・持ち場別の内訳を足した（T-319）
 
 JSONL の行を版2に上げ、`breakdown.main` / `breakdown.subagent` に「ツール名ごとの呼び出し回数と結果の長さ（UTF-8 のバイト数）」と「assistant のステップの使用量」を入れた。持ち場は `parent_tool_use_id` で割り、ステップの usage は同じ `message.id` の最後だけを残す（流れている間の値は確定値ではない）。**結果の本文も引数も記録しない。**

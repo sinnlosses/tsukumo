@@ -1,5 +1,5 @@
 // ブラウザからサーバへ送るコマンド。**書き込みの経路なので zod のスキーマが正典**で、
-// 型は `z.infer` で得る（2026-09-13 決定。docs/design.md 4.3）。
+// 型は `z.infer` で得る（docs/design.md 4.3）。
 //
 // 検証するのは境界（WebSocket の受け口。src/server/adapter/session-socket.ts）で1回だけ。中では検証済みの型を使う。
 //
@@ -51,7 +51,7 @@ export type PermissionMode = (typeof PERMISSION_MODES)[number]
 
 /**
  * `setModel` に渡すモデルのエイリアス。Claude Code 本体はこの4語を受け付ける
- * （2026-09-11 実測で3語、2026-09-17 に `fable` を実測で追加）。フルネーム
+ * （実測で3語、その後 `fable` を実測で追加）。フルネーム
  * （`claude-opus-4-1` のような値）は渡さない。
  */
 export const MODEL_ALIASES = ["opus", "sonnet", "haiku", "fable"] as const
@@ -187,7 +187,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   /**
    * キャラクターから話しかけてもらう（`docs/design.md` 13.7）。**文面はここを通らない** —
    * 送る一言は `src/server/core/chat-nudge.ts` が持ち、押した事実だけが届く（原則4。話題は
-   * tsukumo が列挙しない）。**送った文面はログにも記録にも残さない**（2026-09-21 決定）ので、
+   * tsukumo が列挙しない）。**送った文面はログにも記録にも残さない**ので、
    * `prompt` とは別のコマンドにしてある。
    */
   z.object({ type: z.literal("nudge"), commandId: commandIdSchema }),

@@ -4,7 +4,7 @@
 // **ここは型だけ**で、SDK のメッセージからの変換は core（src/server/core/sdk-message.ts）にある
 // （変換は SDK の形に結び付いた「外部由来の値の検証」なので、両側が共有する契約には入れない）。
 //
-// **`SessionEvent` の union は zod にしない**（2026-09-13 決定）。状態にフィールドを足すたびに
+// **`SessionEvent` の union は zod にしない。** 状態にフィールドを足すたびに
 // スキーマを二重に直す手間が移行の各段で効いてくるため、型は TS のまま持ち、境界では
 // {@link sessionEventSchema} の封筒（`kind` があること）だけを確かめる。
 //
@@ -26,7 +26,7 @@ export type TurnStatus = "success" | "error"
 /**
  * `/` 補完に出すコマンド1件。**説明は SDK 側が持っている**（`init` の `slash_commands` は
  * 名前だけだが、駆動側の `supportedCommands()` と `system` の `commands_changed` が名前と説明の
- * 組を返す。2026-09-12 調査）。組み込みコマンドも含めて説明が付くので、tsukumo 側に説明の表を
+ * 組を返す）。組み込みコマンドも含めて説明が付くので、tsukumo 側に説明の表を
  * 持たない。説明が空文字のコマンドは `undefined` に倒す（名前だけ出す）。
  */
 export type CommandDescription = {
@@ -45,7 +45,7 @@ export type CommandDescription = {
 export type SessionEvent =
   /**
    * `system` の `init`。**プロンプトを送るたびに届く**ので「新しいセッション」の合図にしない
-   * （2026-09-11 実測。docs/requirements.md 4.1）。`slashCommands` / `terminalSlashCommands` は
+   * （実測。docs/requirements.md 4.1）。`slashCommands` / `terminalSlashCommands` は
    * 毎回上書きでよい。
    */
   | {
@@ -83,7 +83,7 @@ export type SessionEvent =
   /**
    * **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。`docs/design.md` 13.7）。
    * `request` と同じくターンの境目になるが、**文面を持たない** — 送った一言はログにも記録にも
-   * 残さないと決めたので（2026-09-21 ユーザーの選択）、イベントにも載せない。
+   * 残さないと決めたので、イベントにも載せない。
    *
    * **落とすのは組み立ての側ではなく、ここ。** 記録に積まないので、雑談のログ
    * （`src/shared/chat-log.ts`）にも仕事のメインビュー（`src/shared/main-view.ts`）にも
@@ -117,7 +117,7 @@ export type SessionEvent =
   | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
   /**
    * 質問（`AskUserQuestion`）に利用者が答えた。**答えが確定した時点で1回だけ流す**
-   * （2026-09-16 決定。docs/requirements.md 4.2「許可と質問」）。`pending-changed` は列が
+   * （docs/requirements.md 4.2「許可と質問」）。`pending-changed` は列が
    * 空になったことしか伝えないので、**「何を聞いて、どう答えたか」を残せるのはこの経路だけ**
    * （メインビューの質問の記録。`src/browser/features/main-view/question-record.tsx`）。
    *
@@ -166,7 +166,7 @@ export type SessionEvent =
       readonly usage: StepTokenUsage
     }
   /**
-   * `/clear` で会話が消された（SDK の `conversation_reset`。2026-09-15 実測）。**tsukumo は
+   * `/clear` で会話が消された（SDK の `conversation_reset`。実測）。**tsukumo は
    * `/clear` という文字列を見ていない。** `/` コマンドは依頼の文面としてそのまま本体へ渡り、
    * 本体が会話を捨てたときにこのメッセージを流してくる（`new_conversation_id` 付き。直後に
    * 新しい `session_id` の `system/init` が届く）。
@@ -181,13 +181,13 @@ export type SessionEvent =
    * モデルが変わったことを、`session-info`（`init`）を待たずに先回りで伝える。出どころは2つ:
    *
    * 1. `/model` のローカルコマンドが実行された合図（`assistant` に乗る
-   *    `local_command_run: { command: "model", args }`。2026-09-17 実測。`src/server/core/sdk-message.ts`）。
+   *    `local_command_run: { command: "model", args }`。実測。`src/server/core/sdk-message.ts`）。
    *    `init` はターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古い
    *    モデルを返す（正しい値が載るのは次の依頼の `init` から。docs/design.md 4.1）
    * 2. サイドバーの `<select>` からの `set-model` を駆動が確定させたとき
    *    （`src/server/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
    *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
-   *    駆動を経ずにこのイベントを合成することはない。2026-09-17 実測: 本物の駆動は元々これを
+   *    駆動を経ずにこのイベントを合成することはない。実測: 本物の駆動は元々これを
    *    出しておらず、選んだ直後に次のイベントで古いモデルへ巻き戻って見えていた。fake
    *    driver（fake-driver.ts）は最初から出していたので気づけなかった）
    *
@@ -195,7 +195,7 @@ export type SessionEvent =
    * **エイリアスとして知っているかどうかの検証はしていない**。2 のときは `MODEL_ALIASES`
    * （src/shared/command.ts）の値そのもの。`MODEL_ALIASES` と完全一致するときだけ状態を
    * 更新する判断は畳み込み側（session-state.ts）が持つ（知らない値では状態を変えず、次の
-   * `init` を待つだけにする。2026-09-17 決定）。
+   * `init` を待つだけにする）。
    */
   | { readonly kind: "model-changed"; readonly model: string }
   /**
@@ -229,7 +229,7 @@ export type SessionEvent =
    * `post_tokens` / `duration_ms`）は運ばない** — 画面に出さないものを契約に入れない
    * （`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
    *
-   * 画面に出すのは雑談のログの細い線1本だけで、**文言は添えない**（2026-09-21 決定）。
+   * 画面に出すのは雑談のログの細い線1本だけで、**文言は添えない**。
    */
   | { readonly kind: "compact-boundary" }
 
@@ -244,7 +244,7 @@ export type StampedEvent = {
 
 /**
  * 外から届いた値を {@link SessionEvent} として受け取るための**封筒だけ**のスキーマ
- * （`kind` を持つオブジェクトであること）。**中身は検証しない**（2026-09-13 決定。union を
+ * （`kind` を持つオブジェクトであること）。**中身は検証しない**（union を
  * zod で二重に持たない）。使うのは境界の2箇所だけ — フレームの読み取り（src/shared/frame.ts）と
  * fake driver の疑似セッション（src/server/adapter/fake-driver.ts）。
  */

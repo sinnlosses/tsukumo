@@ -2,9 +2,9 @@
 // 触らない。
 //
 // **表情は `speak(text, expression)` の引数だけから決まる**（キャラ自身が選ぶ。
-// docs/requirements.md「4.3 状態連動」2026-09-11 決定）。**表情の源が1つしか無いので、
+// docs/requirements.md「4.3 状態連動」）。**表情の源が1つしか無いので、
 // ここには「いま出す表情」を決める関数が無い**（`SessionState.speechExpression` がそのまま
-// 答えになる）。ツールの実行中に自動で「作業中」へ上書きする経路は 2026-09-17 に撤去した
+// 答えになる）。ツールの実行中に自動で「作業中」へ上書きする経路は撤去した
 // （吹き出しと表情が食い違う唯一の経路だった。理由は docs/requirements.md 4.3）。
 //
 // **表情の日本語ラベルはここに持たない。** キャラクターごとの言葉なので定義ファイル側
@@ -77,7 +77,7 @@ export function isOutfit(value: string): value is Outfit {
 /**
  * モデル名から衣装を決める。`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` / `fable` = 戦闘配置
  * （docs/requirements.md「4.3 状態連動」、`~/.claude/output-styles/asuna.md` のモデル分岐と対応）。
- * `fable` は `opus` と同じ戦闘配置に割り当てる（2026-09-17 決定。衣装は「装備の重さ」の3段の
+ * `fable` は `opus` と同じ戦闘配置に割り当てる（衣装は「装備の重さ」の3段の
  * ままとし、`OUTFITS` を増やさない）。
  *
  * 渡ってくる `model` が短い別名（"opus" など）か解決済みの完全なモデルIDかは場合による

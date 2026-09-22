@@ -4,7 +4,7 @@ import { parseServerFrame, PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
 
 // フレームの中身（state / events）は封筒どまりの検証で、union は TS の型のまま
-// （2026-09-13 決定。docs/design.md 4章）。ここで確かめるのはその封筒。
+// （docs/design.md 4章）。ここで確かめるのはその封筒。
 describe("parseServerFrame（受け付ける形）", () => {
   it("hello を受け付け、版と状態がそのまま読める", () => {
     const frame = parseServerFrame({

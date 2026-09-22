@@ -35,8 +35,8 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // ブラウザ側スクリプトと CSS は**事前に組み立てて置いてあるものを読むだけ**（2026-09-21 決定。
-  // `src/server/adapter/bundle.ts` 冒頭）。**起動の経路から `bun build` は消えていて**、作るのは
+  // ブラウザ側スクリプトと CSS は**事前に組み立てて置いてあるものを読むだけ**
+  // （`src/server/adapter/bundle.ts` 冒頭）。**起動の経路から `bun build` は消えていて**、作るのは
   // `bun run build` と `bun run dev` の見張りだけ。無ければページが動かないので、**ここは
   // 起動時の前提不足として即時終了する**（理由に `bun run build` を添える。理由が無いと、
   // 起動できない側は何を打てばよいか分からない）。
@@ -46,8 +46,8 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // **古いものを黙って配らない**（2026-09-12 の決定が挙げていた「古い成果物を配る事故」への
-  // 答え）。古くても画面は動くので止めはせず、1行だけ知らせて先へ進む。
+  // **古いものを黙って配らない**（「古い成果物を配る事故」への答え）。古くても画面は動くので
+  // 止めはせず、1行だけ知らせて先へ進む。
   if (built.outdated) {
     process.stderr.write(
       "tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい（bun run build まで古い画面が出る）\n",

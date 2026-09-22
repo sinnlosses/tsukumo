@@ -31,7 +31,7 @@ const MAX_RECENT_FINISHED_TOOLS = 50
  * `buildMainBody` 側のタブ（`MAX_MAIN_VIEW_TURNS`）でさらに絞られる**が、常駐プロセスが
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
  *
- * **モードごとに値が違う**（2026-09-20 決定。`docs/requirements.md` 4.9）。雑談の1ターンは
+ * **モードごとに値が違う**（`docs/requirements.md` 4.9）。雑談の1ターンは
  * セリフ1〜2件で軽く、仕事と同じ20往復では会話として短すぎるため、雑談だけ100まで持つ。
  */
 const MAX_SESSION_STATE_TURNS = {
@@ -78,7 +78,7 @@ export type SessionRecord =
   | { readonly kind: "detail"; readonly markdown: string }
   /**
    * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
-   * 書き換えない（2026-09-16 決定。docs/requirements.md 4.2「許可と質問」）。形は
+   * 書き換えない（docs/requirements.md 4.2「許可と質問」）。形は
    * `MainViewEntry` の `question` と同じなので、`mainViewEntries` はそのまま通す
    * （`shared/main-view.ts`）。
    */
@@ -115,7 +115,7 @@ export type SessionState = {
   /**
    * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。**件数の上限は無い**、
    * ターンの境目だけで区切る）。**`request` の時点で空にする**（プレースホルダーに切り替わり、
-   * 次のターンに移ったことが画面から分かる。docs/requirements.md 4.2、2026-09-16 決定。
+   * 次のターンに移ったことが画面から分かる。docs/requirements.md 4.2。
    * {@link applySessionEvent} の `request` を参照）。まだ一度も `speak` が呼ばれていない・
    * そのターンでまだ呼ばれていなければ空配列。
    */
@@ -147,15 +147,15 @@ export type SessionState = {
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
    * （`terminal_slash_commands`）は除いてある**（`commandCandidates`。
    * docs/requirements.md 4.2「入力欄」）。**`init`（`session-info`）は最初の依頼を送るまで
-   * 届かない**（2026-09-12 実測。SDK の `system`/`init` はターンのたびに届く仕組みで、
+   * 届かない**（実測。SDK の `system`/`init` はターンのたびに届く仕組みで、
    * セッション開始直後には来ない）ので、それまでは空配列のまま。その間の名前の出どころは
    * `commandSuggestions`（`shared/command-suggestion.ts`）が `commandDescriptions` 側に振る。
    */
   readonly slashCommands: readonly string[]
   /**
    * SDK から届いたコマンドの説明（名前と説明の組）。**端末専用のものも混ざったままの生の一覧**。
-   * `supportedCommands()`（駆動側が起動直後に呼ぶ）はセッション開始後すぐに届く（2026-09-12
-   * 実測。`init` を待たない）ので、`slashCommands` が空の間は `commandSuggestions` が
+   * `supportedCommands()`（駆動側が起動直後に呼ぶ）はセッション開始後すぐに届く
+   * （実測。`init` を待たない）ので、`slashCommands` が空の間は `commandSuggestions` が
    * ここを名前の出どころとして使う（端末専用の除外はまだ効かせられない。`init` が届き
    * `slashCommands` が埋まった時点で、除外込みの一覧に戻る）。説明がまだ届いていなければ
    * 空配列。
@@ -267,7 +267,7 @@ export function applySessionEvent(
     case "model-changed":
       // **`MODEL_ALIASES` に完全一致するときだけ先回りで更新する**（`/model best` のような
       // tsukumo が知らない値では状態を変えない。次の依頼の `init` が正しい値で上書きするので、
-      // ここで間違った値に倒す必要は無い。2026-09-17 決定）。
+      // ここで間違った値に倒す必要は無い）。
       return isModelAlias(event.model) ? { ...state, model: event.model } : state
     case "request":
       return {
@@ -354,7 +354,7 @@ export function applySessionEvent(
         turnFinishedAt: at,
       }
     case "conversation-cleared":
-      // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**（2026-09-15 決定）。
+      // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**。
       // 消すのは吹き出しとメインビューが読む値だけで、キャラクター・セッション情報・
       // 答え待ちの列は残す（`pending` の正典は core の待ち行列なので、状態側で空にすると
       // 実際の待ちと食い違う）。**普通の `request` と違うのは `records` も空にする点**
@@ -408,7 +408,7 @@ function beginTurn(state: SessionState, at: number): SessionState {
     ...state,
     // 送信した時点で吹き出しを空にする（プレースホルダー「（まだ発話がありません）」に
     // 切り替わる。前のターンの一言が残ったままだと、次のターンに移ったことが画面から
-    // 分からない。2026-09-16 決定。以前は前のターンの並びの最後の1件を残していたが、
+    // 分からない。以前は前のターンの並びの最後の1件を残していたが、
     // それが「切り替わったのか分からない」の原因だった）。
     speeches: [],
     // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない

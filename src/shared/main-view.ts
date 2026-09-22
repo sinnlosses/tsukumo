@@ -12,20 +12,20 @@ import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionRecord, type SessionState } from "./session-state.ts"
 
 /**
- * 出すやり取りの数。もとは5だったが、2026-09-10 にユーザーの指定
- * （「2つ前までで良さそう」）で3へ下げた。2026-09-14 の指示で5へ戻した。
+ * 出すやり取りの数。もとは5だったが、ユーザーの指定
+ * （「2つ前までで良さそう」）で3へ下げ、その後5へ戻した。
  */
 export const MAX_MAIN_VIEW_TURNS = 5
 
 /**
  * 1つのやり取りの中で**画面に出す**記録の上限。超えた分は**古いほうから**落とし、件数だけを残す
- * （やり取りの境界を優先する。ユーザーの決定 2026-09-10）。
+ * （やり取りの境界を優先する）。
  *
  * **数えるのは実際に画面へ出るもの（レポートと質問の記録）だけ**（{@link shownEntryCount}）。
- * 2026-09-16 にツールの実行をメインビューから外したあとも、この上限だけはツールの記録を
+ * ツールの実行をメインビューから外したあとも、この上限だけはツールの記録を
  * 数え続けていた: 過去のやり取り720件で測ると22件（3.1%）が上限に当たり、うち16件は
  * **画面から何も消えていないのに**「これ以前の n 件は省略した」（最大62件）を出し、残り6件は
- * レポート1件を出してから消していた（2026-09-17 実測）。画面に出るものだけを数えると1つの
+ * レポート1件を出してから消していた（実測）。画面に出るものだけを数えると1つの
  * やり取りの最大は6件（中位数1・p99で4件。実況を落とす {@link selectShownReports} が
  * 効くため）で、この値には当たらない——**落とすための値ではなく、1つのやり取りが際限なく
  * 伸びたときの止め**（`src/browser/features/main-view/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
@@ -66,14 +66,14 @@ export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question
 export type MainViewAction = MainViewToolRun | MainViewQuestion
 
 /**
- * 1ステップ＝レポート1件と、それに続く出来事（ユーザーの決定 2026-09-10）。
+ * 1ステップ＝レポート1件と、それに続く出来事。
  *
  * `interim` は、その本文が**中間レポート**（やり取りの締めではないが、まとまった資料なので
  * 残した本文。`selectShownReports`）かどうか。`report` が undefined のときは常に false。
  * 見分けを付けて描くのは `src/browser/features/main-view/turn.tsx` の仕事で、判定はここに置く。
  *
  * `superseded` は、**自分より後ろに `report` を持つステップがあるか**（`markSupersededSteps`）。
- * 中間レポートが何件も積むと見通しが悪い問題（2026-09-16 の指摘）に対する材料で、
+ * 中間レポートが何件も積むと見通しが悪い問題に対する材料で、
  * `interim && superseded` のときだけ `turn.tsx` が畳んで描く。`report` を持たないステップでも
  * 立つが、畳むかどうかの判定に使うのは中間レポートだけ。
  *
@@ -91,7 +91,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  * 前に振る）。`src/browser/features/main-view/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
  * すると**、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に、React が別のステップの
  * DOM を使い回して描き直してしまう（`<details>` の `open` のような制御されていない DOM の状態が
- * 別のステップへ乗り移って見える。2026-09-16 の指摘）。
+ * 別のステップへ乗り移って見える）。
  */
 export type MainViewStep = {
   readonly id: number
@@ -137,7 +137,7 @@ export type MainViewTurn = {
  *
  * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
  * `[<Report> | <QuestionRecord>]*`」）が、`src/browser/features/main-view/turn.tsx` はそこから描かない
- * （2026-09-16 決定。`docs/requirements.md` 4.2）。**{@link groupIntoTurns} /
+ * （`docs/requirements.md` 4.2）。**{@link groupIntoTurns} /
  * {@link selectShownReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
  * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /
  * `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
@@ -289,21 +289,21 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
  *   では抑えきれなかった**ので、tsukumo の側で落とす（4.2「分離を文章の規約で表す案は
  *   採らない」と同じ立場）
  *
- * **実況かどうかに「あとにツールが続いたか」を使わない**（2026-09-21 決定。それまでは
+ * **実況かどうかに「あとにツールが続いたか」を使わない**（それまでは
  * ツールが続いた本文だけを落としていた）。`speak` は `speech` になって `tool` の記録にならないので、
  * **本文 → `speak` → 本文 → ツール**という規約どおりの並びでは1つめの実況にツールが1つも付かず、
  * 2つめの本文が始まって「最後のステップ」でなくなった瞬間に**露出したまま最後まで残っていた**
- * （2026-09-21 の実測。場面 `narration-stuck`）。判定を構造の印1つへ寄せると、この並びでも
+ * （実測。場面 `narration-stuck`）。判定を構造の印1つへ寄せると、この並びでも
  * 実況は一度も出ない。
  *
  * `settled` は**そのやり取りがもう動いていないか**（進行中なのはいちばん新しいやり取りだけ。
- * {@link mainViewTurns}）。**進行中のあいだ、締めの本文は出さない**（2026-09-21 決定。2026-09-20 に
- * 置いた「まとまった資料なら流れている最中でも出す」例外も外してある）: 書きかけ
+ * {@link mainViewTurns}）。**進行中のあいだ、締めの本文は出さない**（「まとまった資料なら
+ * 流れている最中でも出す」という例外も外してある）: 書きかけ
  * （`partialUtterance`）は常に最後のステップへ積まれるので、締めの本文はまだ伸びる途中かも
  * しれない。出してしまうと **(1)** 前の中間レポートの `superseded`（{@link markSupersededSteps}）が
  * true→false へ反転して `<details>` が畳まれてから開き直し、**(2)** 書きかけのまま `final` が
  * 立つので、書き上げる演出（`src/browser/features/main-view/report-reveal.ts`）が**始めた時点の
- * DOM しか相手にしない**（2026-09-21 の実測で、演出が相手にしたのは開始した時点の 74 文字だけ。
+ * DOM しか相手にしない**（実測で、演出が相手にしたのは開始した時点の 74 文字だけ。
  * 最終的な本文 1303 文字の 94% には筆が一度も通っていなかった）。確定してから出せば、一度出した
  * 本文は二度と消えず、囲いも演出の相手も最初から決まる。
  *
@@ -340,7 +340,7 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
  *
  * **締めの本文を「中身を問わず残す」のは、資料が1つも無いやり取りで本文が空になるのを
  * 防ぐため**（{@link selectShownReports}）。資料がほかにあるなら、その理由は消える。
- * 2026-09-21 の指摘：**資料 → `speak` → 「また呼んでください」** という並びで、挨拶のほうが
+ * **資料 → `speak` → 「また呼んでください」** という並びで、挨拶のほうが
  * 位置だけで最終レポートの席を取り、中身のある資料が `<details>` に畳まれていた。規約
  * （`src/server/core/report-notation.ts` の「締めを書かない」）で抑えきれない点は、ほかの
  * 実況と同じ（`docs/requirements.md` 4.2「分離を文章の規約で表す案は採らない」）。
@@ -403,7 +403,7 @@ function isInterimReport(markdown: string): boolean {
 /**
  * 各ステップに「自分より後ろに `report` を持つステップがあるか」（`superseded`）と、
  * `report` の先頭行（`firstLine`）を立てる。**`interim` の判定そのもの（`selectShownReports`）
- * は変えない**——このタスク（2026-09-16）で足すのは「畳むかどうか」の材料だけ。
+ * は変えない**——ここで足すのは「畳むかどうか」の材料だけ。
  * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
  * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
  * `src/browser/features/main-view/turn.tsx`）。
@@ -479,7 +479,7 @@ function markFinalReport(turn: MainViewTurn): MainViewTurn {
 /**
  * 1つのやり取りが**画面に出す**記録を上限まで切り詰める。落とすのは**古いほう**
  * （今回の続きを残す）。数えるのは画面に出るものだけなので、**ツールを何十件呼んでも
- * 落ちない**（2026-09-17。{@link MAX_MAIN_VIEW_ENTRIES}）。
+ * 落ちない**（{@link MAX_MAIN_VIEW_ENTRIES}）。
  */
 function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
   const counts = turn.steps.map(shownEntryCount)
@@ -505,7 +505,7 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 /**
  * そのステップが画面に出す記録の件数。**`src/browser/features/main-view/turn.tsx` が描くもの**
  * （レポートと質問の記録）だけを数え、**ツールの実行は数えない**
- * （メインビューに出ないため。2026-09-16 決定。`docs/requirements.md` 4.2）。
+ * （メインビューに出ないため。`docs/requirements.md` 4.2）。
  */
 function shownEntryCount(step: MainViewStep): number {
   return (
