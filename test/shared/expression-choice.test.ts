@@ -1,14 +1,12 @@
 import { describe, expect, it } from "bun:test"
 
-import {
-  type CharacterDefinition,
-  parseCharacterDefinition,
-} from "../../src/shared/character-definition.ts"
+import { parseCharacterDefinition } from "../../src/shared/character-definition.ts"
 import {
   expressionChoices,
   expressionNames,
   resolveExpressionLabel,
 } from "../../src/shared/expression-choice.ts"
+import { characterDefinition, portraits } from "../fixture/character.ts"
 
 // characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const FULL_DEFINITION_JSON = JSON.stringify({
@@ -60,35 +58,8 @@ describe("expressionChoices", () => {
   })
 
   it("立ち絵が一部しか無い定義では、その表情と default だけを返す", () => {
-    const definition: CharacterDefinition = {
-      name: undefined,
-      accent: undefined,
-      expressions: {
-        default: undefined,
-        thinking: undefined,
-        proud: undefined,
-        flustered: undefined,
-        serious: undefined,
-        curious: undefined,
-        sad: undefined,
-        excited: undefined,
-        bored: undefined,
-      },
-      portraits: {
-        default: undefined,
-        thinking: "thinking.svg",
-        proud: undefined,
-        flustered: undefined,
-        serious: undefined,
-        curious: undefined,
-        sad: undefined,
-        excited: undefined,
-        bored: undefined,
-      },
-      mini: undefined,
-      outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-      background: undefined,
-    }
+    // ラベルは1つも無く、立ち絵は thinking だけ（default の立ち絵も無い）。
+    const definition = characterDefinition({ portraits: portraits({ thinking: "thinking.svg" }) })
 
     expect(expressionNames(expressionChoices(definition))).toEqual(["default", "thinking"])
   })

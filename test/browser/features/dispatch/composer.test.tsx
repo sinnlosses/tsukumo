@@ -7,30 +7,16 @@ import { Composer } from "../../../../src/browser/features/dispatch/composer.tsx
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type CharacterInfo } from "../../../../src/shared/character.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { characterInfo } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
-const FIXTURE_CHARACTER: CharacterInfo = {
+const FIXTURE_CHARACTER: CharacterInfo = characterInfo({
   pack: "架空パック",
   name: "架空の名前",
-  accent: undefined,
   expressions: [],
-  portraits: {
-    default: undefined,
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-  background: undefined,
   editable: false,
-}
+})
 
 // 架空のファイル一覧（`@` 補完が引く `GET /repository-file` の代役）。
 const FIXTURE_FILE_PATHS = [

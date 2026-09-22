@@ -6,42 +6,27 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { CharacterEdit } from "../../../../src/browser/features/character-screen/character-edit.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { characterInfo, outfitAccents, portraits } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
-  pack: "fictional",
-  name: "架空の精霊",
-  accent: undefined,
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   expressions: [
     { name: "default", label: "通常" },
     { name: "thinking", label: "作業中" },
     { name: "proud", label: "どや顔" },
   ],
+  // **立ち絵があるのは3つだけ**（残りの表情は空の枠として並ぶ。数を見るテストがある）。
   // **ラスタにしてある**（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
   // テストの関心ではない非同期がまぎれる）。SVG の読み込みは
   // `test/browser/components/portrait.test.tsx` が見る。
-  portraits: {
+  portraits: portraits({
     default: "/character/default.png?v=fictional@1",
     thinking: "/character/thinking.png?v=fictional@1",
     proud: "/character/proud.png?v=fictional@1",
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: {
-    default: "#b8c7ff",
-    light: undefined,
-    normal: undefined,
-    heavy: "#ffb3a7",
-  },
-  background: undefined,
-  editable: true,
-}
+  }),
+  outfitAccents: outfitAccents({ default: "#b8c7ff", heavy: "#ffb3a7" }),
+})
 
 let themeStyleElement: HTMLStyleElement | undefined
 

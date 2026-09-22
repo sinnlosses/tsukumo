@@ -6,6 +6,7 @@ import { CharacterScreen } from "../../../../src/browser/features/character-scre
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { characterInfo } from "../../../fixture/character.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
@@ -13,27 +14,7 @@ const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 // **立ち絵は持たせない** — この画面の並びそのものは `character-edit.test.tsx` が見るので、
 // ここでは戻る口・見出し・画面の色だけを見る。
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
-  pack: "fictional",
-  name: "架空の精霊",
-  accent: undefined,
-  expressions: [{ name: "default", label: "通常" }],
-  portraits: {
-    default: undefined,
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-  background: undefined,
-  editable: true,
-}
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo()
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件）。
 const FIXTURE_PENDING: PendingAsk = {

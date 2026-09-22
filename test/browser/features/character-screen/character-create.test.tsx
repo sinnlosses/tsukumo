@@ -8,38 +8,22 @@ import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type CharacterPackChoice } from "../../../../src/shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { characterInfo, outfitAccents, portraits } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
-  pack: "fictional",
-  name: "架空の精霊",
-  accent: undefined,
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   expressions: [
     { name: "default", label: "通常" },
     { name: "thinking", label: "作業中" },
   ],
-  portraits: {
+  // **立ち絵があるのは2つだけ**（残りの表情は空の枠として並ぶ。数を見るテストがある）。
+  portraits: portraits({
     default: "/character/default.svg?v=fictional@1",
     thinking: "/character/thinking.svg?v=fictional@1",
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: {
-    default: "#b8c7ff",
-    light: undefined,
-    normal: undefined,
-    heavy: undefined,
-  },
-  background: undefined,
-  editable: true,
-}
+  }),
+  outfitAccents: outfitAccents({ default: "#b8c7ff" }),
+})
 
 const FIXTURE_PACKS: readonly CharacterPackChoice[] = [{ name: "fictional", label: "架空の精霊" }]
 

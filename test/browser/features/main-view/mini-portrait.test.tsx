@@ -11,38 +11,17 @@ import {
 } from "../../../../src/browser/stores/brush-tip.ts"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { characterInfo, portraits } from "../../../fixture/character.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 // **どこに見えているか（重なり・大きさ）は目視で確かめる**（`docs/architecture.md`
 // 「手で確かめること」）。ここで守るのは、筆先に連れて出入りすることと、置く座標を筆先から
 // 取っていることだけ。フィクスチャは手で書いた架空のキャラクター定義。
 
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
-  pack: "fictional",
-  name: "架空の精霊",
-  accent: undefined,
-  expressions: [{ name: "default", label: "通常" }],
-  portraits: {
-    default: "/character/default.png",
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
+  portraits: portraits({ default: "/character/default.png" }),
   mini: "/character/mini.png",
-  outfitAccents: {
-    default: undefined,
-    light: undefined,
-    normal: undefined,
-    heavy: undefined,
-  },
-  background: undefined,
-  editable: true,
-}
+})
 
 const TIP: BrushTip = { phase: "writing", x: 320, top: 180, bottom: 206, stroke: "sweep" }
 

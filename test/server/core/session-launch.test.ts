@@ -7,6 +7,7 @@ import {
   type SessionLaunchPorts,
 } from "../../../src/server/core/session-launch.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
+import { characterInfo, portraits } from "../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。
@@ -36,25 +37,12 @@ function createStubDriver(): { readonly driver: SessionDriver; readonly calls: s
 function characterEventOf(pack: Pack): SessionEvent {
   return {
     kind: "character-changed",
-    pack: pack.name,
-    name: pack.name,
-    accent: undefined,
-    editable: false,
-    expressions: [{ name: "default", label: "通常" }],
-    portraits: {
-      default: `/character/${pack.name}.png`,
-      thinking: undefined,
-      proud: undefined,
-      flustered: undefined,
-      serious: undefined,
-      curious: undefined,
-      sad: undefined,
-      excited: undefined,
-      bored: undefined,
-    },
-    mini: undefined,
-    outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-    background: undefined,
+    ...characterInfo({
+      pack: pack.name,
+      name: pack.name,
+      editable: false,
+      portraits: portraits({ default: `/character/${pack.name}.png` }),
+    }),
     packs: [{ name: pack.name, label: pack.name }],
   }
 }

@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 キャラクターのテスト用の値を組み立て関数に寄せた（T-327）
+
+`test/fixture/character.ts` に `characterInfo` / `characterDefinition` / `portraits` /
+`outfitAccents` の4つを置き、14ファイルが手で全キーを書き下していた18ブロックを差分渡しに
+書き換えた。表情キーの行は 222 → 59 で、`EXPRESSIONS` に1つ足したとき増えるのは fixture の1行だけ。
+
 ### 2026-09-22 セッションの印に起動順の目印を足した（T-347）
 
 ビューのポートから決まる目印（`@A` / `@B` …）を印の末尾に足し、`selectSessionToResume` を

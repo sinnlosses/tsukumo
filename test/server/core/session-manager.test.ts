@@ -27,6 +27,7 @@ import {
   type ScopeUsage,
   type TurnUsageBreakdown,
 } from "../../../src/shared/token-usage.ts"
+import { characterInfo, outfitAccents, portraits } from "../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
@@ -104,25 +105,10 @@ function createStubDriver(): StubDriver {
  */
 const CHARACTER_EVENT: SessionEvent = {
   kind: "character-changed",
-  pack: "fictional",
-  name: "架空の精霊",
-  accent: undefined,
-  editable: true,
-  expressions: [{ name: "default", label: "通常" }],
-  portraits: {
-    default: "/character/default.png?v=fictional@2",
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
-  background: undefined,
+  ...characterInfo({
+    portraits: portraits({ default: "/character/default.png?v=fictional@2" }),
+    outfitAccents: outfitAccents({ default: "#b8c7ff" }),
+  }),
   packs: [{ name: "fictional", label: "架空の精霊" }],
 }
 

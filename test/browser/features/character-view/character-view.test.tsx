@@ -14,36 +14,14 @@ import {
   type SessionRecord,
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
+import { characterInfo, portraits } from "../../../fixture/character.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
-  pack: "fictional",
-  name: "架空の精霊",
-  accent: undefined,
-  expressions: [{ name: "default", label: "通常" }],
-  portraits: {
-    default: "/character/default.png",
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: {
-    default: undefined,
-    light: undefined,
-    normal: undefined,
-    heavy: undefined,
-  },
-  background: undefined,
-  editable: true,
-}
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
+  portraits: portraits({ default: "/character/default.png" }),
+})
 
 afterEach(() => {
   cleanup()
@@ -127,17 +105,11 @@ describe("CharacterView", () => {
           { name: "thinking", label: "作業中" },
           { name: "proud", label: "どや顔" },
         ],
-        portraits: {
+        portraits: portraits({
           default: "/character/default.png",
           thinking: "/character/thinking.png",
           proud: "/character/proud.png",
-          flustered: undefined,
-          serious: undefined,
-          curious: undefined,
-          sad: undefined,
-          excited: undefined,
-          bored: undefined,
-        },
+        }),
       },
     })
 
@@ -265,17 +237,10 @@ describe("CharacterView", () => {
             { name: "default", label: "通常" },
             { name: "flustered", label: "あわてた" },
           ],
-          portraits: {
+          portraits: portraits({
             default: "/character/default.png",
-            thinking: undefined,
-            proud: undefined,
             flustered: "/character/flustered.png",
-            serious: undefined,
-            curious: undefined,
-            sad: undefined,
-            excited: undefined,
-            bored: undefined,
-          },
+          }),
         },
       },
       { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },

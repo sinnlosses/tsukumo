@@ -7,6 +7,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../src/shared/session-state.ts"
+import { characterInfo, outfitAccents, portraits } from "../fixture/character.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
@@ -18,25 +19,7 @@ function apply(...events: readonly SessionEvent[]): SessionState {
 /** 架空のキャラクターパックが決まったところ。 */
 const CHARACTER_FIXTURE: SessionEvent = {
   kind: "character-changed",
-  pack: "fictional",
-  name: "架空の精霊",
-  accent: undefined,
-  expressions: [{ name: "default", label: "通常" }],
-  portraits: {
-    default: undefined,
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-  background: undefined,
-  editable: true,
+  ...characterInfo(),
   packs: [{ name: "fictional", label: "架空の精霊" }],
 }
 
@@ -653,57 +636,27 @@ describe("applySessionEvent", () => {
   it("character-changed でキャラクターパックの姿を持ち、届くまでは undefined", () => {
     expect(INITIAL_SESSION_STATE.character).toBeUndefined()
 
-    const view = apply({
-      kind: "character-changed",
-      pack: "fictional",
-      name: "架空の精霊",
+    // 姿はそのまま持ち、イベントだけが持つ `kind` / `packs` は混ざらない。
+    const character = characterInfo({
       accent: "#f2b0a0",
       expressions: [
         { name: "default", label: "通常" },
         { name: "thinking", label: "作業中" },
       ],
-      packs: [{ name: "fictional", label: "架空の精霊" }],
-      portraits: {
+      portraits: portraits({
         default: "/character/default.svg",
         thinking: "/character/thinking.svg",
-        proud: undefined,
-        flustered: undefined,
-        serious: undefined,
-        curious: undefined,
-        sad: undefined,
-        excited: undefined,
-        bored: undefined,
-      },
-      mini: undefined,
-      outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
-      background: undefined,
-      editable: true,
+      }),
+      outfitAccents: outfitAccents({ default: "#b8c7ff" }),
     })
 
-    expect(view.character).toEqual({
-      pack: "fictional",
-      name: "架空の精霊",
-      accent: "#f2b0a0",
-      expressions: [
-        { name: "default", label: "通常" },
-        { name: "thinking", label: "作業中" },
-      ],
-      portraits: {
-        default: "/character/default.svg",
-        thinking: "/character/thinking.svg",
-        proud: undefined,
-        flustered: undefined,
-        serious: undefined,
-        curious: undefined,
-        sad: undefined,
-        excited: undefined,
-        bored: undefined,
-      },
-      mini: undefined,
-      outfitAccents: { default: "#b8c7ff", light: undefined, normal: undefined, heavy: undefined },
-      background: undefined,
-      editable: true,
+    const view = apply({
+      kind: "character-changed",
+      ...character,
+      packs: [{ name: "fictional", label: "架空の精霊" }],
     })
+
+    expect(view.character).toEqual(character)
   })
 
   it("答え待ちの列をそのまま持つ", () => {

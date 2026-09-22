@@ -6,6 +6,7 @@ import {
   resolvePortraitUrl,
   toCharacterInfo,
 } from "../../src/shared/character.ts"
+import { outfitAccents, portraits } from "../fixture/character.ts"
 
 // characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const FULL_DEFINITION_JSON = JSON.stringify({
@@ -33,17 +34,7 @@ const FULL_DEFINITION_JSON = JSON.stringify({
 })
 
 describe("resolvePortraitUrl", () => {
-  const portraitsWithoutThinking = {
-    default: "default.svg",
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  }
+  const portraitsWithoutThinking = portraits({ default: "default.svg" })
 
   it("該当する表情があればそれを使う", () => {
     expect(resolvePortraitUrl(portraitsWithoutThinking, "default")).toBe("default.svg")
@@ -59,19 +50,7 @@ describe("resolvePortraitUrl", () => {
   })
 
   it("default も無ければ undefined（立ち絵なしにフォールバック）", () => {
-    const empty = {
-      default: undefined,
-      thinking: undefined,
-      proud: undefined,
-      flustered: undefined,
-      serious: undefined,
-      curious: undefined,
-      sad: undefined,
-      excited: undefined,
-      bored: undefined,
-    }
-
-    expect(resolvePortraitUrl(empty, "thinking")).toBeUndefined()
+    expect(resolvePortraitUrl(portraits(), "thinking")).toBeUndefined()
   })
 })
 
@@ -84,14 +63,7 @@ describe("resolveOutfitAccent", () => {
   })
 
   it("見つからない衣装は default に落ちる", () => {
-    const outfitAccents = {
-      default: "#b8c7ff",
-      light: undefined,
-      normal: undefined,
-      heavy: undefined,
-    }
-
-    expect(resolveOutfitAccent(outfitAccents, "light")).toBe("#b8c7ff")
+    expect(resolveOutfitAccent(outfitAccents({ default: "#b8c7ff" }), "light")).toBe("#b8c7ff")
   })
 })
 

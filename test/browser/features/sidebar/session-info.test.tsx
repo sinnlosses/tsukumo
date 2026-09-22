@@ -6,6 +6,7 @@ import { SessionInfo } from "../../../../src/browser/features/sidebar/session-in
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { MODEL_ALIASES } from "../../../../src/shared/command.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { characterInfo } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -29,27 +30,9 @@ function renderSessionInfo(
 }
 
 // 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = {
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   pack: undefined,
-  name: "架空の精霊",
-  accent: undefined,
-  expressions: [{ name: "default", label: "通常" }],
-  portraits: {
-    default: undefined,
-    thinking: undefined,
-    proud: undefined,
-    flustered: undefined,
-    serious: undefined,
-    curious: undefined,
-    sad: undefined,
-    excited: undefined,
-    bored: undefined,
-  },
-  mini: undefined,
-  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-  background: undefined,
-  editable: true,
-}
+})
 
 function selectValue(element: HTMLElement): string {
   return (element as HTMLSelectElement).value

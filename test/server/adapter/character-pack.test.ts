@@ -12,6 +12,7 @@ import {
   readCharacterPackFile,
   toCharacterPackChoices,
 } from "../../../src/server/adapter/character-pack.ts"
+import { characterInfo, outfitAccents, portraits } from "../../fixture/character.ts"
 
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const DEFINITION_JSON = JSON.stringify({
@@ -73,35 +74,21 @@ describe("characterChangedEvent", () => {
 
     expect(event).toEqual({
       kind: "character-changed",
-      pack: basename(dir),
-      name: "架空の精霊",
-      accent: undefined,
-      editable: true,
-      expressions: [
-        { name: "default", label: "通常" },
-        { name: "thinking", label: "作業中" },
-      ],
+      ...characterInfo({
+        pack: basename(dir),
+        expressions: [
+          { name: "default", label: "通常" },
+          { name: "thinking", label: "作業中" },
+        ],
+        portraits: portraits({
+          default: `/character/default.svg?v=${cacheKey}`,
+          thinking: `/character/thinking.svg?v=${cacheKey}`,
+        }),
+        // 定義に mini が無いパックなので、ミニ立ち絵は portraits.default に落ちる。
+        mini: `/character/default.svg?v=${cacheKey}`,
+        outfitAccents: outfitAccents({ default: "#b8c7ff", normal: "#b8c7ff" }),
+      }),
       packs: [{ name: basename(dir), label: "架空の精霊" }],
-      portraits: {
-        default: `/character/default.svg?v=${cacheKey}`,
-        thinking: `/character/thinking.svg?v=${cacheKey}`,
-        proud: undefined,
-        flustered: undefined,
-        serious: undefined,
-        curious: undefined,
-        sad: undefined,
-        excited: undefined,
-        bored: undefined,
-      },
-      // 定義に mini が無いパックなので、ミニ立ち絵は portraits.default に落ちる。
-      mini: `/character/default.svg?v=${cacheKey}`,
-      outfitAccents: {
-        default: "#b8c7ff",
-        light: undefined,
-        normal: "#b8c7ff",
-        heavy: undefined,
-      },
-      background: undefined,
     })
   })
 

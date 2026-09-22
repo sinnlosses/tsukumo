@@ -1,0 +1,89 @@
+// テストが使う、手で書いた架空のキャラクター1体分の組み立て（docs/coding-standards.md
+// 「消すかどうか」の「同じモックの準備が複数ファイルに重複している → 準備を共通の
+// フィクスチャに寄せる」）。**表情・衣装は全キーが必須の対応表**（`?:` を使わない規約のため）
+// なので、テストが手で書き下すと `EXPRESSIONS` に1つ足すたび各ファイルに1行ずつ増える。
+// ここに既定を1つ置き、テストは**違うところだけ**を渡す。
+//
+// **既定は「立ち絵も差し色も1枚も無い」**（`toCharacterInfo` が定義の無いパックに返す形と同じ）。
+// 立ち絵の有無はテストの主題になりうる（どの枠が埋まっているか・何枚出るか）ので、
+// **「ある」ほうを呼ぶ側に書かせる**。
+//
+// **入れ子は深い合成をしない。** `portraits` / `outfitAccents` を同じ形の組み立て関数として
+// 別に出し、呼ぶ側が `portraits: portraits({ default: "…" })` と重ねる。どのキーを埋めたのかが
+// 呼ぶ側の1行に出るのと、素の対応表だけが要る場面（`resolvePortraitUrl` のテスト）でも
+// そのまま使えるのが理由。
+//
+// `character-changed` イベントは `{ kind } & CharacterInfo & { packs }`（src/shared/session-event.ts）
+// なので、組み立て関数は置かず `{ kind: "character-changed", ...characterInfo(), packs: [] }` と
+// 広げて使う。
+
+import { type CharacterDefinition } from "../../src/shared/character-definition.ts"
+import { type CharacterInfo } from "../../src/shared/character.ts"
+import { type Expression, type Outfit } from "../../src/shared/expression.ts"
+
+/** 画面に渡る姿（`SessionState.character` と `character-changed` の中身）。 */
+export function characterInfo(overrides: Partial<CharacterInfo> = {}): CharacterInfo {
+  return {
+    pack: "fictional",
+    name: "架空の精霊",
+    accent: undefined,
+    expressions: [{ name: "default", label: "通常" }],
+    portraits: portraits(),
+    mini: undefined,
+    outfitAccents: outfitAccents(),
+    background: undefined,
+    editable: true,
+    ...overrides,
+  }
+}
+
+/** 定義ファイル（character.json）を読んだ形。値はファイル名で、URL ではない。 */
+export function characterDefinition(
+  overrides: Partial<CharacterDefinition> = {},
+): CharacterDefinition {
+  return {
+    name: "架空の精霊",
+    accent: undefined,
+    // 表情のラベル（定義ファイル側の言葉）。立ち絵と同じ形の対応表なので同じ既定を使う。
+    expressions: NO_EXPRESSION_VALUES,
+    portraits: portraits(),
+    mini: undefined,
+    outfitAccents: outfitAccents(),
+    background: undefined,
+    ...overrides,
+  }
+}
+
+/** 表情 → 立ち絵（`CharacterInfo` では URL、`CharacterDefinition` ではファイル名）。 */
+export function portraits(
+  overrides: Partial<Record<Expression, string>> = {},
+): Readonly<Record<Expression, string | undefined>> {
+  return { ...NO_EXPRESSION_VALUES, ...overrides }
+}
+
+/** 衣装 → 差し色。 */
+export function outfitAccents(
+  overrides: Partial<Record<Outfit, string>> = {},
+): Readonly<Record<Outfit, string | undefined>> {
+  return { ...NO_OUTFIT_ACCENTS, ...overrides }
+}
+
+/** 表情ごとの対応表の「1つも無い」。立ち絵（URL・ファイル名）とラベルの両方に使う。 */
+const NO_EXPRESSION_VALUES = {
+  default: undefined,
+  thinking: undefined,
+  proud: undefined,
+  flustered: undefined,
+  serious: undefined,
+  curious: undefined,
+  sad: undefined,
+  excited: undefined,
+  bored: undefined,
+} satisfies Readonly<Record<Expression, string | undefined>>
+
+const NO_OUTFIT_ACCENTS = {
+  default: undefined,
+  light: undefined,
+  normal: undefined,
+  heavy: undefined,
+} satisfies Readonly<Record<Outfit, string | undefined>>
