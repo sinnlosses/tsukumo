@@ -5,6 +5,8 @@
 //
 // ここはファイルI/Oを持たない。ファイルを読み、mtime を見て読み直すのは src/server/adapter/task-summary.ts。
 
+import { isPlainObject } from "remeda"
+
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
  *
@@ -79,7 +81,7 @@ export function unfinishedTaskIds(tasks: readonly TaskSummaryItem[]): ReadonlySe
 }
 
 function taskSummaryItem(task: unknown): readonly TaskSummaryItem[] {
-  if (!isRecord(task) || typeof task.id !== "string") {
+  if (!isPlainObject(task) || typeof task.id !== "string") {
     return []
   }
 
@@ -120,8 +122,4 @@ function firstLineOf(value: unknown): string | undefined {
   }
 
   return value.split("\n")[0]
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
 }

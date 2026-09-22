@@ -9,6 +9,8 @@
 // **会話の内容がここを通る。** 持ち出す先は呼び出し側のイベントの流れだけで、ログにもファイルにも
 // 書かない（docs/coding-standards.md「会話内容の扱い」）。
 
+import { isPlainObject } from "remeda"
+
 import { type Expression } from "../../shared/expression.ts"
 import {
   type CommandDescription,
@@ -53,7 +55,7 @@ export function toSessionEvents(
   message: unknown,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {
-  if (!isRecord(message) || typeof message.type !== "string") {
+  if (!isPlainObject(message) || typeof message.type !== "string") {
     return []
   }
 
@@ -108,7 +110,7 @@ export function toCommandDescriptions(value: unknown): readonly CommandDescripti
   }
 
   return value.flatMap((item) => {
-    if (!isRecord(item) || typeof item.name !== "string" || item.name === "") {
+    if (!isPlainObject(item) || typeof item.name !== "string" || item.name === "") {
       return []
     }
     const description = optionalString(item.description)
@@ -138,7 +140,11 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
  * 本文以外のイベント（`content_block_start` / `message_delta` など）は無視する。
  */
 function partialUtteranceEvents(event: unknown): readonly SessionEvent[] {
-  if (!isRecord(event) || event.type !== "content_block_delta" || !isRecord(event.delta)) {
+  if (
+    !isPlainObject(event) ||
+    event.type !== "content_block_delta" ||
+    !isPlainObject(event.delta)
+  ) {
     return []
   }
 
@@ -173,7 +179,7 @@ function assistantMessageEvents(
  * （docs/design.md 4.1）。
  */
 function modelChangeEvents(localCommandRun: unknown): readonly SessionEvent[] {
-  if (!isRecord(localCommandRun) || localCommandRun.command !== "model") {
+  if (!isPlainObject(localCommandRun) || localCommandRun.command !== "model") {
     return []
   }
 
@@ -186,7 +192,7 @@ function assistantEvents(
   expressions: readonly Expression[],
   parentToolUseId: string | undefined,
 ): readonly SessionEvent[] {
-  if (!isRecord(message) || !Array.isArray(message.content)) {
+  if (!isPlainObject(message) || !Array.isArray(message.content)) {
     return []
   }
 
@@ -200,7 +206,7 @@ function assistantBlockEvents(
   expressions: readonly Expression[],
   parentToolUseId: string | undefined,
 ): readonly SessionEvent[] {
-  if (!isRecord(block)) {
+  if (!isPlainObject(block)) {
     return []
   }
 
@@ -232,7 +238,7 @@ function assistantBlockEvents(
 }
 
 function speechEvents(input: unknown, expressions: readonly Expression[]): readonly SessionEvent[] {
-  if (!isRecord(input) || typeof input.text !== "string") {
+  if (!isPlainObject(input) || typeof input.text !== "string") {
     return []
   }
 
@@ -255,7 +261,7 @@ function toExpression(value: unknown, expressions: readonly Expression[]): Expre
 }
 
 function toolResultEvents(message: unknown): readonly SessionEvent[] {
-  if (!isRecord(message) || !Array.isArray(message.content)) {
+  if (!isPlainObject(message) || !Array.isArray(message.content)) {
     return []
   }
 
@@ -263,7 +269,11 @@ function toolResultEvents(message: unknown): readonly SessionEvent[] {
 }
 
 function toolResultBlockEvents(block: unknown): readonly SessionEvent[] {
-  if (!isRecord(block) || block.type !== "tool_result" || typeof block.tool_use_id !== "string") {
+  if (
+    !isPlainObject(block) ||
+    block.type !== "tool_result" ||
+    typeof block.tool_use_id !== "string"
+  ) {
     return []
   }
 
@@ -293,7 +303,7 @@ function toolResultContentText(content: unknown): string {
 }
 
 function toolResultContentItemText(item: unknown): string {
-  if (!isRecord(item)) {
+  if (!isPlainObject(item)) {
     return ""
   }
   if (item.type === "text" && typeof item.text === "string") {
@@ -317,10 +327,10 @@ function stepUsageEvents(
   message: unknown,
   parentToolUseId: string | undefined,
 ): readonly SessionEvent[] {
-  if (!isRecord(message) || typeof message.id !== "string" || message.id === "") {
+  if (!isPlainObject(message) || typeof message.id !== "string" || message.id === "") {
     return []
   }
-  if (!isRecord(message.usage)) {
+  if (!isPlainObject(message.usage)) {
     return []
   }
 
@@ -352,12 +362,12 @@ function stepUsageEvents(
  * 中身が全部壊れているときはイベントを出さない。
  */
 function tokenUsageEvents(modelUsage: unknown): readonly SessionEvent[] {
-  if (!isRecord(modelUsage)) {
+  if (!isPlainObject(modelUsage)) {
     return []
   }
 
   const cumulative = Object.entries(modelUsage).flatMap(([model, value]) =>
-    model === "" || !isRecord(value) ? [] : [toModelTokenUsage(model, value)],
+    model === "" || !isPlainObject(value) ? [] : [toModelTokenUsage(model, value)],
   )
   return cumulative.length === 0 ? [] : [{ kind: "token-usage", cumulative }]
 }
@@ -396,8 +406,4 @@ function optionalString(value: unknown): string | undefined {
 
 function stringArray(value: unknown): readonly string[] {
   return Array.isArray(value) ? value.filter((item) => typeof item === "string") : []
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

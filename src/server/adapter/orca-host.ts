@@ -17,6 +17,8 @@
 
 import { execFile } from "node:child_process"
 
+import { isObjectType, isPlainObject } from "remeda"
+
 import { type Host, type HostResult } from "../core/host.ts"
 
 const ORCA_COMMAND = "orca"
@@ -65,7 +67,7 @@ async function findViewPageId(url: string): Promise<string | undefined> {
 // `orca tab list --json` は { result: { tabs: [{ url, browserPageId }] } } を返す。
 // 外部コマンドの出力なので構造を信用せず、必要な2つのフィールドが揃った要素だけを採る。
 function findPageIdInTabList(value: unknown, url: string): string | undefined {
-  if (!isRecord(value) || !isRecord(value.result) || !Array.isArray(value.result.tabs)) {
+  if (!isPlainObject(value) || !isPlainObject(value.result) || !Array.isArray(value.result.tabs)) {
     return undefined
   }
 
@@ -73,7 +75,7 @@ function findPageIdInTabList(value: unknown, url: string): string | undefined {
   const tabs: readonly unknown[] = value.result.tabs
   for (const tab of tabs) {
     if (
-      isRecord(tab) &&
+      isPlainObject(tab) &&
       typeof tab.url === "string" &&
       viewLocation(tab.url) === wanted &&
       typeof tab.browserPageId === "string"
@@ -166,7 +168,9 @@ const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: 
  * 「終了コード 1」とだけ伝えても手の打ちようがないため。
  */
 function describeFailure(label: string, error: unknown, output: string): string {
-  if (isRecord(error) && error.code === "ENOENT") {
+  // 捕まえた例外は Error の実体（`node:child_process` が投げる）なので、`isPlainObject` では
+  // 弾かれる。prototype を問わない `isObjectType` で見て、`code` があるときだけ読む。
+  if (isObjectType(error) && "code" in error && error.code === "ENOENT") {
     return `${ORCA_COMMAND} コマンドが見つからない`
   }
 
@@ -180,12 +184,11 @@ function describeFailure(label: string, error: unknown, output: string): string 
     return `${ORCA_COMMAND} ${label} が失敗した（${code}）`
   }
 
-  const exitCode = isRecord(error) && typeof error.code === "number" ? error.code : undefined
+  const exitCode =
+    isObjectType(error) && "code" in error && typeof error.code === "number"
+      ? error.code
+      : undefined
   return exitCode === undefined
     ? `${ORCA_COMMAND} ${label} が失敗した`
     : `${ORCA_COMMAND} ${label} が失敗した（終了コード ${String(exitCode)}）`
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
 }

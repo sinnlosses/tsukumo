@@ -9,6 +9,8 @@
 // キャストを使わない」の境界の考え方）。`localStorage` から読み戻す値・`<input type="color">`
 // が渡す値のどちらも、ここでしか型を確定させない。
 
+import { isPlainObject } from "remeda"
+
 import { MAX_BACKGROUND_VEIL, MIN_BACKGROUND_VEIL } from "../../../shared/character-background.ts"
 
 export type AppearanceColorKey = "ground" | "surface" | "ink"
@@ -58,12 +60,11 @@ export function loadAppearanceColorOverride(): AppearanceColorOverride {
 
   try {
     const parsed: unknown = JSON.parse(raw)
-    if (parsed !== null && typeof parsed === "object") {
-      const record = parsed as Record<string, unknown>
+    if (isPlainObject(parsed)) {
       return {
-        ground: optionalHexColor(record["ground"]),
-        surface: optionalHexColor(record["surface"]),
-        ink: optionalHexColor(record["ink"]),
+        ground: optionalHexColor(parsed["ground"]),
+        surface: optionalHexColor(parsed["surface"]),
+        ink: optionalHexColor(parsed["ink"]),
       }
     }
   } catch {

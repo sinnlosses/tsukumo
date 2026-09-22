@@ -9,6 +9,8 @@
 // スナップショットも作らない。ここを通るのは会話の内容そのものなので、ログにもファイルにも
 // 出さない（docs/coding-standards.md「会話内容の扱い」）。
 
+import { isPlainObject } from "remeda"
+
 import { type Expression } from "../../shared/expression.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { toSessionEvents } from "./sdk-message.ts"
@@ -77,7 +79,7 @@ type TaggedSession = {
  * 空の並び**にして落とす（同じ cwd の素の `claude` のセッションはここで消える）。
  */
 function taggedSession(value: unknown, tag: string): readonly TaggedSession[] {
-  if (!isRecord(value) || value.tag !== tag) {
+  if (!isPlainObject(value) || value.tag !== tag) {
     return []
   }
 
@@ -128,7 +130,7 @@ function restoredMessageEvents(
  * 依頼ではない**ので undefined を返し、呼び出し側が {@link toSessionEvents} 側の変換に回す。
  */
 function requestText(message: unknown): string | undefined {
-  if (!isRecord(message) || message.type !== "user" || !isRecord(message.message)) {
+  if (!isPlainObject(message) || message.type !== "user" || !isPlainObject(message.message)) {
     return undefined
   }
 
@@ -144,11 +146,11 @@ function requestText(message: unknown): string | undefined {
 }
 
 function isToolResultBlock(block: unknown): boolean {
-  return isRecord(block) && block.type === "tool_result"
+  return isPlainObject(block) && block.type === "tool_result"
 }
 
 function textBlock(block: unknown): string {
-  return isRecord(block) && block.type === "text" && typeof block.text === "string"
+  return isPlainObject(block) && block.type === "text" && typeof block.text === "string"
     ? block.text
     : ""
 }
@@ -200,8 +202,4 @@ function isLocalCommandStdoutOnly(text: string): boolean {
 
 function nonEmpty(text: string): string | undefined {
   return text.trim() === "" ? undefined : text
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

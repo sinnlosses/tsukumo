@@ -17,6 +17,7 @@
 // まれにしか起きない経路なので、それ以上の作り込みはしない）。
 
 import { useEffect, useRef, useState, type ReactElement } from "react"
+import { isObjectType } from "remeda"
 
 import { vendorAssetPath } from "../../../../shared/vendor-asset.ts"
 import { loadVendorScript } from "../../../lib/vendor-script.ts"
@@ -104,7 +105,7 @@ function drawInTurn(draw: () => Promise<void>): Promise<unknown> {
  * どちらでもなければ `Error#message` を使い、それも無ければ文字列化する。
  */
 function mermaidErrorText(reason: unknown): string {
-  if (typeof reason === "object" && reason !== null && "str" in reason) {
+  if (isObjectType(reason) && "str" in reason) {
     const { str } = reason
     if (typeof str === "string") {
       return str

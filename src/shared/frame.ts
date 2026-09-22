@@ -8,6 +8,7 @@
 // **会話の内容がフレームに乗る**（`state` と `events`）。`error` の `reason` は定型文だけで、
 // 依頼の文面を含めない（docs/coding-standards.md「会話内容の扱い」）。
 
+import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { stampedEventSchema, type StampedEvent } from "./session-event.ts"
@@ -74,7 +75,7 @@ export const serverFrameSchema = z.discriminatedUnion("type", [
     type: z.literal("hello"),
     protocolVersion: z.number().int(),
     sessionId: z.string(),
-    state: z.custom<SessionState>((value) => typeof value === "object" && value !== null),
+    state: z.custom<SessionState>((value) => isPlainObject(value)),
   }),
   z.object({ type: z.literal("events"), events: z.array(stampedEventSchema) }),
   z.object({

@@ -9,6 +9,8 @@
 // src/server/adapter/character-pack.ts と src/server/adapter/character-edit.ts に集約する。
 // ここが扱うのは文字列までで、実際に読み書きするのは呼び出し側。
 
+import { isPlainObject } from "remeda"
+
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
 import { type Expression, type Outfit, type RemovableExpression } from "./expression.ts"
 
@@ -116,7 +118,7 @@ export function definitionWithoutBackground(content: string | undefined): string
 }
 
 function toCharacterDefinition(value: unknown): CharacterDefinition | undefined {
-  if (!isRecord(value)) {
+  if (!isPlainObject(value)) {
     return undefined
   }
 
@@ -132,7 +134,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
 }
 
 function toExpressionLabels(source: unknown): Readonly<Record<Expression, string | undefined>> {
-  const record = isRecord(source) ? source : {}
+  const record = isPlainObject(source) ? source : {}
   return {
     default: stringField(record, "default"),
     thinking: stringField(record, "thinking"),
@@ -147,7 +149,7 @@ function toExpressionLabels(source: unknown): Readonly<Record<Expression, string
 }
 
 function toPortraits(source: unknown): Readonly<Record<Expression, string | undefined>> {
-  const record = isRecord(source) ? source : {}
+  const record = isPlainObject(source) ? source : {}
   return {
     default: stringField(record, "default"),
     thinking: stringField(record, "thinking"),
@@ -162,7 +164,7 @@ function toPortraits(source: unknown): Readonly<Record<Expression, string | unde
 }
 
 function toOutfitAccents(source: unknown): Readonly<Record<Outfit, string | undefined>> {
-  const record = isRecord(source) ? source : {}
+  const record = isPlainObject(source) ? source : {}
   return {
     default: stringField(record, "default"),
     light: stringField(record, "light"),
@@ -201,9 +203,5 @@ function parseJson(content: string): unknown {
 }
 
 function asRecord(value: unknown): Readonly<Record<string, unknown>> {
-  return isRecord(value) ? value : {}
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+  return isPlainObject(value) ? value : {}
 }

@@ -2,6 +2,8 @@
 // （会話は保存しない。`docs/design.md` 6.2）。読み書きに失敗しても既定へ落ちるだけで、
 // 例外は投げない。
 
+import { isPlainObject } from "remeda"
+
 export type Split = {
   readonly rowTop: number
   readonly topLeft: number
@@ -55,11 +57,11 @@ export function loadSplit(): Split {
 
   try {
     const parsed: unknown = JSON.parse(raw)
-    if (parsed !== null && typeof parsed === "object") {
-      const rowTop = (parsed as Record<string, unknown>)["rowTop"]
-      const topLeft = (parsed as Record<string, unknown>)["topLeft"]
-      const bottomLeft = (parsed as Record<string, unknown>)["bottomLeft"]
-      const collapsedRowTop = (parsed as Record<string, unknown>)["collapsedRowTop"]
+    if (isPlainObject(parsed)) {
+      const rowTop = parsed["rowTop"]
+      const topLeft = parsed["topLeft"]
+      const bottomLeft = parsed["bottomLeft"]
+      const collapsedRowTop = parsed["collapsedRowTop"]
       if (isValidPercent(rowTop) && isValidPercent(topLeft) && isValidPercent(bottomLeft)) {
         // **雑談用の上下比だけは、無くても壊れていても `undefined` に畳むだけ**にする
         // （他の3項と違い DEFAULT_SPLIT 全体へは落とさない）。この項が無い保存値＝

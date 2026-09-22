@@ -11,6 +11,7 @@
 // **会話の内容がイベントに入る。** 外に出さない・複製しない・ログに出さない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
+import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
@@ -249,7 +250,7 @@ export type StampedEvent = {
  * fake driver の疑似セッション（src/server/adapter/fake-driver.ts）。
  */
 export const sessionEventSchema = z.custom<SessionEvent>(
-  (value) => isRecord(value) && typeof value.kind === "string",
+  (value) => isPlainObject(value) && typeof value.kind === "string",
 )
 
 /** 時刻付きイベントのスキーマ。`at` だけを確かめ、イベントの中身は封筒どまり。 */
@@ -257,7 +258,3 @@ export const stampedEventSchema = z.object({
   at: z.number(),
   event: sessionEventSchema,
 })
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}

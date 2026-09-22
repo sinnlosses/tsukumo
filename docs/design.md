@@ -325,6 +325,9 @@ bullet-proof-react の要素）」）。**`utils/` だけは 2026-09-21 に採�
 - `shared/image-data-url.ts` は **`shared/lib/` へ**。名前が指すのは data URL という**形式**で、
   tsukumo の語彙を名乗らず、import も持たない（読み手は `portrait-image.ts` /
   `character-background.ts` / `prompt-image.ts` の3つ）
+- **どの技術も知らない小物は、`utils/` を作る前に remeda（11章）にあるかを見る**（2026-09-22 決定）。
+  8ファイルに書き写していた `isRecord` は、`core/utils/` を作らずに remeda の `isPlainObject` へ
+  寄せた。**remeda に無いものだけが `utils/` の1件目になる**
 - **`utils/` に入るものは、いまは1つも無い。** `shared/` `server/core/` `server/adapter/` の平置きは
   すべて tsukumo の語彙を名乗っている（手順1）ので動かさない。**実体が無い箱は先に作らない**ので、
   `utils/` は最初の1件が出たときに作る
@@ -1465,15 +1468,16 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 **足す依存**（`CLAUDE.md`「外部依存を増やすときは承認を得る」。**2026-09-13 に「移行しようか」の
 決定で一括して承認済み**。ここに無いものを足すときは改めて承認を得る）:
 
-| 種別    | パッケージ                                                                         | 用途                                                                                  |
-| ------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| runtime | `react` `react-dom`                                                                | browser                                                                               |
-| runtime | `ws`                                                                               | core の WebSocket サーバ                                                              |
-| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                                              |
-| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）。2026-09-13 にユーザーの承認を得て追加                      |
-| runtime | `mermaid` `chart.js` `highlight.js`                                                | ブラウザへそのまま配る外部ライブラリ（6.4）。2026-09-20 に `vendor/` の同梱から移した |
-| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                                            |
-| dev     | `playwright-core`                                                                  | 画面全体の確認（10章）                                                                |
+| 種別    | パッケージ                                                                         | 用途                                                                                                |
+| ------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| runtime | `react` `react-dom`                                                                | browser                                                                                             |
+| runtime | `ws`                                                                               | core の WebSocket サーバ                                                                            |
+| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                                                            |
+| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）。2026-09-13 にユーザーの承認を得て追加                                    |
+| runtime | `remeda`                                                                           | 型ガードなど一般的な小物（`isPlainObject` / `isObjectType`）。2026-09-22 にユーザーの承認を得て追加 |
+| runtime | `mermaid` `chart.js` `highlight.js`                                                | ブラウザへそのまま配る外部ライブラリ（6.4）。2026-09-20 に `vendor/` の同梱から移した               |
+| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                                                          |
+| dev     | `playwright-core`                                                                  | 画面全体の確認（10章）                                                                              |
 
 `zod` はある。`@anthropic-ai/claude-agent-sdk` はある。**`Bun.*` の固有 API に寄せない**規約は続く
 （`ws` を選ぶのはそのため）。

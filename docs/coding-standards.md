@@ -87,6 +87,13 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 ので、境界で検証してから内側の型に変換する。検証を通っていない値が内側に入らないよう、
 変換は1箇所の関数に封じ込める。
 
+**「素のオブジェクトか」の判定は remeda の `isPlainObject` を使う**（2026-09-22。それまでは
+8ファイルがそれぞれ `isRecord` を書き写していた）。**`isPlainObject` は prototype が
+`Object.prototype` か `null` のものだけを通す**ので、`JSON.parse` の結果・SDK のメッセージ・
+transcript の1行のような**外から来た素のデータ**に使う。捕まえた例外（`Error` の実体）のように
+prototype を持つものを見るときだけ `isObjectType` で、`code` のようなフィールドは `in` で
+確かめてから読む。
+
 ## 型注釈より `satisfies`
 
 定数・テーブル・設定オブジェクトの定義は、型注釈（`const x: T = …`）ではなく `satisfies` で

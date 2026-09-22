@@ -18,6 +18,8 @@ import { randomBytes } from "node:crypto"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import process from "node:process"
 
+import { isPlainObject } from "remeda"
+
 import { CHARACTER_ASSET_PATH_PREFIX } from "../../shared/character-asset.ts"
 import { REPOSITORY_FILE_PATH } from "../../shared/repository-file.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
@@ -368,10 +370,5 @@ function writeHtml(response: ServerResponse, html: string): void {
 
 // listen 後のアドレスは、ポート 0 を渡したときに実際に割り当てられた番号を持つ。
 function boundPort(address: unknown, fallback: number): number {
-  const record = typeof address === "object" && address !== null ? address : undefined
-  if (record === undefined || !("port" in record) || typeof record.port !== "number") {
-    return fallback
-  }
-
-  return record.port
+  return isPlainObject(address) && typeof address.port === "number" ? address.port : fallback
 }

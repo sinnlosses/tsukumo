@@ -12,6 +12,8 @@
 //
 // **入力の全文は返さない**（docs/coding-standards.md「会話内容の扱い」）。純粋関数。
 
+import { isPlainObject } from "remeda"
+
 /** ツール入力の要約に出す1行の長さの上限（目安）。 */
 const MAX_TOOL_SUMMARY_LENGTH = 120
 
@@ -30,7 +32,7 @@ const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
  * ツール名＋入力を、画面に出してよい1行の要約にする。入力がオブジェクトの形でないときは空文字。
  */
 export function summarizeToolInput(toolName: string, input: unknown): string {
-  if (!isRecord(input)) {
+  if (!isPlainObject(input)) {
     return ""
   }
 
@@ -57,8 +59,4 @@ function truncateToolSummary(text: string): string {
   return text.length <= MAX_TOOL_SUMMARY_LENGTH
     ? text
     : `${text.slice(0, MAX_TOOL_SUMMARY_LENGTH)}…`
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
 }

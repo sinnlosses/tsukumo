@@ -7,6 +7,8 @@
 // 質問文と選択肢は会話の内容そのものなので、**ログや状態ファイルには書かない**
 // （`docs/coding-standards.md`「会話内容の扱い」）。画面に出す経路だけで扱う。
 
+import { isPlainObject } from "remeda"
+
 /**
  * 1つの選択肢。`preview` は**その選択肢を選ぶと何が起きるかを比べるための本文**（Markdown。
  * 表・mermaid・レポートの記法がそのまま書ける）で、メインビューが
@@ -77,7 +79,7 @@ export function sortQuestionOptions(options: readonly QuestionOption[]): readonl
  * - `preview` は文字列のときだけ採る（空文字は「無い」と同じ扱いにして undefined に畳む）
  */
 export function parseQuestions(input: unknown): readonly Question[] | undefined {
-  if (!isRecord(input) || !Array.isArray(input.questions)) {
+  if (!isPlainObject(input) || !Array.isArray(input.questions)) {
     return undefined
   }
 
@@ -86,7 +88,11 @@ export function parseQuestions(input: unknown): readonly Question[] | undefined 
 }
 
 function toQuestion(value: unknown): readonly Question[] {
-  if (!isRecord(value) || typeof value.question !== "string" || typeof value.header !== "string") {
+  if (
+    !isPlainObject(value) ||
+    typeof value.question !== "string" ||
+    typeof value.header !== "string"
+  ) {
     return []
   }
 
@@ -103,7 +109,7 @@ function toQuestion(value: unknown): readonly Question[] {
 }
 
 function toOption(value: unknown): readonly QuestionOption[] {
-  if (!isRecord(value) || typeof value.label !== "string") {
+  if (!isPlainObject(value) || typeof value.label !== "string") {
     return []
   }
 
@@ -117,8 +123,4 @@ function toOption(value: unknown): readonly QuestionOption[] {
       preview,
     },
   ]
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
 }
