@@ -148,7 +148,7 @@
     "loopable": "Y",
     "dependencies": [],
     "summary": "capture-catalog の一覧の出し方を、正典で --help に直す",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n`docs/architecture.md:785` 付近の「手で確かめること」に、こう書いてある:\n\n> `--only` に使える名前の一覧はオプション無しで実行すると出る\n\n**実物と違う。** `scripts/capture-catalog.ts` をオプション無しで実行すると\n**カタログ16件×2枚＝32枚の全件撮影**が走り、一覧は出ない。1件のタスクの受け入れ中に実際に\nこれを踏み、60秒で終わらず背景に回して `pkill` した。\n\n一覧が出るのは次の2つ（実測）:\n\n- `--help`（`parseOptions` が値を取らないフラグを弾くので `USAGE` が stderr に出る。\n  `USAGE` の中に `${CATALOG.map((entry) => entry.name).join(\" / \")}` が入っている）\n- `--only` にカタログに無い名前を渡したとき（`カタログに無い名前: …` ＋ `USAGE`）\n\n## 決まっていること（蒸し返さない）\n\n- **`docs/architecture.md` の該当の1文を直す**（2026-09-22 ユーザーの承認）\n\n## 解くべき論点\n\n- **`--help` は明示的に扱われていない。** `parseOptions`（`scripts/capture-catalog.ts:473`）が\n  「値を取らないフラグ」を一律で弾いた結果として `USAGE` が出ているだけで、フラグとして\n  書かれていない（`USAGE` の中にも `--help` の行が無い）。ドキュメントを `--help` と書くなら、\n  **スクリプト側に `--help` を明示的に足すか**、いまの挙動のまま書くかを決める\n\n## やること\n\n1. `docs/architecture.md` の該当の1文を、実物に合う形に直す（オプション無しは全件撮影に\n   なることも書く。踏むと60秒では終わらないので）\n2. 上の論点を決める。`--help` を明示的に足すなら `USAGE` にもその行を足す\n3. **`scripts/capture-catalog.ts` のコメントに日付を書かない**（`docs/coding-standards.md:153`）\n\n## 完了条件\n\n- `bun run check` が通る\n- `grep -n 'オプション無し' docs/architecture.md` で、一覧が出るという記述が残っていない\n- `bun run scripts/capture-catalog.ts --help` が一覧を出すことを実際に確かめた\n  （出力の先頭数行を evidence に書く）\n\n## 注意\n\n- **オプション無しで実行しない**（32枚の全件撮影が走り、60秒では終わらない）\n"
