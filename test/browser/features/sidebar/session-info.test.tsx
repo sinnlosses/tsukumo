@@ -57,14 +57,15 @@ describe("SessionInfo", () => {
     expect((select as HTMLSelectElement).options).toHaveLength(1)
   })
 
-  // キャラクター画面への入る口は**キャラクターの行**に置く（docs/design.md 13.6）。
-  it("キャラクターの行に、キャラクター画面への「整える」を出す", () => {
+  // キャラクター画面への入る口は**帯**（`features/screen-nav/`）へ移った（docs/design.md 13.9）。
+  // ここには同じ口を2つ置かない。
+  it("キャラクターの行にキャラクター画面への口は置かない", () => {
     renderSessionInfo({
       characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
     })
 
-    expect(screen.getByRole("link", { name: "整える" }).getAttribute("href")).toBe("#character")
+    expect(document.querySelector('a[href="#character"]')).toBeNull()
   })
 
   it("キャラクターを変更すると switch-character が dispatch される", () => {

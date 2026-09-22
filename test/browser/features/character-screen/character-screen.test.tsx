@@ -66,10 +66,9 @@ function waitForDebounce(): Promise<void> {
 }
 
 describe("CharacterScreen", () => {
-  it("会話へ戻る口と、パックのラベル・名前・「新しく作る」を出す", () => {
+  it("パックのラベル・名前・「新しく作る」を出す", () => {
     renderCharacterScreen()
 
-    expect(screen.getByRole("link", { name: "← 会話へ戻る" }).getAttribute("href")).toBe("#")
     expect(screen.getByRole("link", { name: "新しく作る" }).getAttribute("href")).toBe(
       "#character/new",
     )
@@ -77,16 +76,13 @@ describe("CharacterScreen", () => {
     expect(document.querySelector(".character-screen-pack")?.textContent).toBe("fictional")
   })
 
-  // 隠れている間も会話は進み続けるので、答え待ちが来たことは戻る口のそばで分かる必要がある
-  // （docs/design.md 13.6）。**色だけにしない**ので字も見る。
-  it("答え待ちがあるときだけ、戻る口の横に印を出す", () => {
-    renderCharacterScreen()
-    expect(document.querySelector(".character-screen-pending")).toBeNull()
-
-    cleanup()
+  // 戻る口と答え待ちの印は帯（`features/screen-nav/`）へ移った（docs/design.md 13.9）。
+  // 同じ口を2つ置かないので、この画面には残っていない。
+  it("会話へ戻る口と答え待ちの印は持たない", () => {
     renderCharacterScreen({ pending: [FIXTURE_PENDING] })
 
-    expect(document.querySelector(".character-screen-pending")?.textContent).toBe("答え待ち")
+    expect(document.querySelector('a[href="#"]')).toBeNull()
+    expect(document.querySelector(".character-screen-pending")).toBeNull()
   })
 
   it("画面の色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
@@ -167,11 +163,11 @@ describe("CharacterScreen", () => {
     })
   })
 
-  // キャラクターが届く前でも行き止まりにしない（戻る口と作る口だけは出す）。
-  it("キャラクターが届く前でも戻る口を出す", () => {
+  // キャラクターが届く前でも行き止まりにしない（作る口だけは出す。会話へ戻る口は帯にある）。
+  it("キャラクターが届く前でも作る口を出す", () => {
     renderCharacterScreen({ character: undefined })
 
-    expect(screen.getByRole("link", { name: "← 会話へ戻る" })).toBeDefined()
+    expect(screen.getByRole("link", { name: "新しく作る" })).toBeDefined()
     expect(document.querySelector(".character-screen-label")).toBeNull()
   })
 })

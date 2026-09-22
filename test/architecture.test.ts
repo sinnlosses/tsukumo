@@ -171,6 +171,7 @@ describe("経路名のリテラル", () => {
 // 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
 const BROWSER_REGIONS = [
   "layout",
+  "screen-nav",
   "main-view",
   "character-view",
   "character-screen",

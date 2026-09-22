@@ -52,6 +52,12 @@
   /* 書体は system-ui と等幅の2本のまま（13.3）。 */
   --font-sans: system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  /* 画面のナビの帯（13.9）が最上部で奪う高さ。**帯（screen-nav.module.css）と、そのぶん
+     縮む会話の画面の grid（layout.module.css）の両方が読む**ので、値はここに1つだけ置く
+     （狭い画面では帯がタブ帯へ畳まれるので、grid は縮まない）。 */
+  --screen-nav-height: 40px;
+  --screen-nav-gap: 0.5rem;
 }
 
 body {

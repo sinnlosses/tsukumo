@@ -2,8 +2,8 @@
 // （重ねない。出す画面を選ぶのは入口の `<Root>`）。腰を据えて整えるものだけをここに置く:
 // パックの持ち物（立ち絵・差し色。`<CharacterEdit>`）が上、利用者の設定（画面の色3つ）が下。
 //
-// **戻る口は左上**「← 会話へ戻る」。隠れている間も会話は進み続けるので、**答え待ちが来たら
-// その右に印を出す**（色だけにしない。`--state-warn` と「答え待ち」の字）。
+// **会話へ戻る口と答え待ちの印は、全画面の最上部の帯**（`features/screen-nav/`。13.9）に
+// あるので、この画面は持たない（2026-09-22 に移した）。
 //
 // 画面の色は `localStorage`（`appearance-color.ts`）。**保存済みの上書きを反映する1回は
 // 入口（`src/browser/main.tsx`）が済ませている** — この画面は開かれるまでマウントされないので、
@@ -41,15 +41,11 @@ const COLOR_FIELDS = [
   { key: "ink", label: "字の色" },
 ] as const satisfies ReadonlyArray<{ readonly key: AppearanceColorKey; readonly label: string }>
 
-/** 答え待ちの印（`state.pending` が空でないとき）。**色だけにしない**ので字も出す。 */
-const PENDING_NOTE = "答え待ち"
-
 /** 画面の色の書き込みをまとめる間隔。 */
 const APPEARANCE_COLOR_DEBOUNCE_MS = 200
 
 export function CharacterScreen(): ReactElement {
   const character = useSessionSelector((session) => session.state.character)
-  const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
   const [override, setOverride] = useState<AppearanceColorOverride>(loadAppearanceColorOverride)
@@ -82,14 +78,6 @@ export function CharacterScreen(): ReactElement {
 
   return (
     <div className={styles["character-screen"]}>
-      <div className={styles["character-screen-bar"]}>
-        <a className={styles["character-screen-back"]} href={screenHash("conversation")}>
-          ← 会話へ戻る
-        </a>
-        {pendingActive ? (
-          <span className={styles["character-screen-pending"]}>{PENDING_NOTE}</span>
-        ) : null}
-      </div>
       <div className={styles["character-screen-headline"]}>
         {character === undefined ? null : (
           <>

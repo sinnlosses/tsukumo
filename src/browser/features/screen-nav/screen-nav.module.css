@@ -1,0 +1,128 @@
+/* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
+   **全画面の最上部に1本**。左に3つの口（会話 / キャラクター / トークン消費）、右端に
+   答え待ちの印。高さは `--screen-nav-height`（40px）で、**同じ値を `<Layout>` も読む**
+   （帯と gap のぶんだけ grid を縮めるため。layout.module.css）。
+
+   **口の見た目は狭い画面のタブ（`.layout-tab`）に合わせる**（押せる高さ・丸い枠）。
+   いま出している画面の口は枠の色だけでなく**地の濃さと字の濃さも変える**（色だけで伝えない。
+   13.1 原則1）。
+
+   狭い画面（760px 以下）は段を増やさず「≡」に畳む。その規則はこのファイルの末尾の @media。 */
+.screen-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: var(--screen-nav-height);
+  margin-bottom: var(--screen-nav-gap);
+}
+.screen-nav-gates {
+  display: flex;
+  gap: 0.4rem;
+  min-width: 0;
+}
+/* 口は字だけのリンクではなくタブと同じ丸い枠にする（並んだ3つが1つの帯に見えるため）。
+   下線は外すので、**選ばれている口は地と字の濃さで**区別する（下の .is-active）。 */
+.screen-nav-gate {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.screen-nav-gate:hover {
+  border-color: var(--accent);
+}
+.screen-nav-gate.is-active {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+/* 答え待ちの印は帯の右端（13.9。もとはキャラクター画面とトークン消費の画面の戻る口の横に
+   あった）。**色だけにしない**ので字も出す。 */
+.screen-nav-pending {
+  margin-left: auto;
+  color: var(--state-warn);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+/* 「≡」は狭い画面だけの口。広い画面では3つの口がそのまま並ぶので出さない。 */
+.screen-nav-menu {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  /* **段を増やさない**（13.9）。会話の画面はいまあるタブ帯（.layout-tabs）の右端 44px に
+     重ね、そのぶんの余白はタブ帯の側が空けている（layout.module.css の @media）。
+     位置は body の padding（1rem）に合わせる＝タブ帯の上端と同じ高さに載る。 */
+  .screen-nav[data-screen="conversation"] {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 20;
+  }
+  /* 会話以外の画面（キャラクター・作る・トークン消費）は縦に流れる1枚のページなので、
+     重ねずにそのまま最上部の行として置く（右端に寄せる）。 */
+  .screen-nav {
+    justify-content: flex-end;
+    height: auto;
+    margin-bottom: 0.5rem;
+  }
+  /* 並んだ3つの口と帯の右端の印は「≡」の中へ移る。 */
+  .screen-nav-gates,
+  .screen-nav > .screen-nav-pending {
+    display: none;
+  }
+  .screen-nav-menu {
+    display: block;
+  }
+  /* 指で押す口。**上下の余白と字の大きさをタブ（.layout-tab）に合わせる**ので、同じ高さに
+     揃う（13.9 の 44px は横幅）。 */
+  .screen-nav-toggle {
+    width: 2.75rem;
+    padding: 0.45rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    /* `font: inherit` は line-height も引き継ぐ。**タブと同じ 1.75 のまま**にしておくと
+       上下の余白と合わせてタブ帯とぴったり同じ高さ（39.1px）に揃う（実測。13.9）。 */
+    font: inherit;
+    font-size: var(--font-secondary);
+    cursor: pointer;
+  }
+  .screen-nav-toggle:hover {
+    border-color: var(--accent);
+  }
+  /* 閉じている間の答え待ちの印（印が出ているかどうかで分かるので、色だけに頼らない）。 */
+  .screen-nav-toggle-mark {
+    margin-left: 0.15rem;
+    color: var(--state-warn);
+    font-size: var(--font-label);
+  }
+  /* 押している間だけ落ちてくる3つの口。**重ねて出す**ので段は増えない。 */
+  .screen-nav-panel {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    right: 0;
+    z-index: 21;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 11rem;
+    padding: 0.5rem;
+    border: 1px solid var(--rule);
+    border-radius: 0.6rem;
+    background: var(--surface);
+  }
+  .screen-nav-panel .screen-nav-gate {
+    text-align: center;
+  }
+  .screen-nav-panel .screen-nav-pending {
+    margin-left: 0;
+    text-align: center;
+  }
+}

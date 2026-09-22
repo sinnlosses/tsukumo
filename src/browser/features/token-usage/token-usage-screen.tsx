@@ -11,8 +11,9 @@
 // **画面に会話の文面は出ない**（集計にそもそも文面が入っていない。
 // `src/shared/token-usage-summary.ts`）。
 //
-// 入口はいま hash 直打ちだけ（恒久的な入口をどこに置くかは別のタスク）。**期間の既定は7日**で、
-// 30日にも切り替えられる（`src/shared/token-usage-summary.ts`）。
+// **入る口も会話へ戻る口も、全画面の最上部の帯**（`features/screen-nav/`。13.9）にある
+// （2026-09-22 まではこの画面の左上に戻る口があり、入る口は hash の直打ちだけだった）。
+// **期間の既定は7日**で、30日にも切り替えられる（`src/shared/token-usage-summary.ts`）。
 
 import { useQuery } from "@tanstack/react-query"
 import { useState, type ReactElement } from "react"
@@ -30,7 +31,6 @@ import {
   type TokenUsageSummary,
 } from "../../../shared/token-usage-summary.ts"
 import { type ToolUsageCount } from "../../../shared/token-usage.ts"
-import { screenHash } from "../../stores/screen.tsx"
 import { DailyUsageChart } from "./daily-usage-chart.tsx"
 import styles from "./token-usage.module.css"
 import { formatBytes, formatCost, formatCount, totalUsage } from "./usage-format.ts"
@@ -63,9 +63,6 @@ export function TokenUsageScreen(): ReactElement {
   return (
     <div className={styles["token-usage"]}>
       <div className={styles["token-usage-bar"]}>
-        <a className={styles["token-usage-back"]} href={screenHash("conversation")}>
-          ← 会話へ戻る
-        </a>
         <h1 className={styles["token-usage-title"]}>トークン消費</h1>
         <div className={styles["token-usage-period"]}>
           {TOKEN_USAGE_DAYS_CHOICES.map((choice) => (

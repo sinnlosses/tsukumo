@@ -16,15 +16,6 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 }
-/* 戻る口は**字だけ**（13.1 原則1）。色は `ink` のままで、下線だけでリンクだと分かる。 */
-.token-usage-back {
-  color: var(--ink);
-  font-size: var(--font-label);
-  text-decoration: underline;
-}
-.token-usage-back:hover {
-  color: var(--accent);
-}
 .token-usage-title {
   margin: 0;
   font-size: var(--font-heading);

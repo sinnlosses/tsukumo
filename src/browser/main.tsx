@@ -31,6 +31,7 @@ import { ChatView } from "./features/chat-view/chat-view.tsx"
 import { Dispatch } from "./features/dispatch/dispatch.tsx"
 import { Layout } from "./features/layout/layout.tsx"
 import { MainView } from "./features/main-view/main-view.tsx"
+import { ScreenNav } from "./features/screen-nav/screen-nav.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
 import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
 import { QuestionFocusProvider } from "./stores/question-focus.tsx"
@@ -59,6 +60,9 @@ function Root(): ReactElement {
   const chatMode = useSessionSelector((session) => session.state.chatMode)
   return (
     <>
+      {/* 画面のナビの帯（13.9）。**どの画面でも最上部に出る**ので、画面を選ぶ分岐の外に置く。
+          会話の画面の `<Layout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
+      <ScreenNav />
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
         <Layout
           main={chatMode ? <ChatView /> : <MainView />}

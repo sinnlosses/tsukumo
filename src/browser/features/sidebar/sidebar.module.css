@@ -25,16 +25,6 @@
   color: var(--ink);
   font: inherit;
 }
-/* キャラクター画面への入る口（docs/design.md 13.6）。**字だけ**にして、色は `ink` のまま
-   下線でリンクだと分かるようにする（13.1 原則1）。 */
-.session-info-tune {
-  color: var(--ink);
-  font-size: var(--font-label);
-  text-decoration: underline;
-}
-.session-info-tune:hover {
-  color: var(--accent);
-}
 .permission-mode-select-danger {
   border-color: var(--state-ng);
   color: var(--state-ng);

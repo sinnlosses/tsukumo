@@ -15,7 +15,6 @@ import {
 } from "../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { Select } from "../../components/select.tsx"
-import { screenHash } from "../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
@@ -59,10 +58,6 @@ const CHAT_MODE_LABELS: ReadonlyArray<readonly [string, string]> = [
   [CHAT_MODE_WORK, "仕事"],
   [CHAT_MODE_CHAT, "雑談"],
 ]
-
-// キャラクター画面へ入る口の字（docs/design.md 13.6）。立ち絵・差し色・画面の色を整えるのは
-// 別の画面で、ここはその入口を1つ置くだけ。
-const TUNE_LINK_LABEL = "整える"
 
 // 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。モデル・許可モードは
 // 駆動へのコマンドで会話は消えないので、進行中でも塞がない。理由の文面は**サーバが断るときと
@@ -141,12 +136,6 @@ export function SessionInfo(): ReactElement {
                 dispatch({ type: "switch-character", name: value })
               }}
             />
-            {/* キャラクター画面への入る口。**キャラクターのことはキャラクターの行に集まる**
-                （docs/design.md 13.6。ページ最上部のナビは置かない）。字だけのリンクで、
-                常設の要素は増えない。 */}
-            <a className={styles["session-info-tune"]} href={screenHash("character")}>
-              {TUNE_LINK_LABEL}
-            </a>
           </span>
         </>
       ) : null}

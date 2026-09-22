@@ -10,6 +10,8 @@
   margin: 0 auto;
   padding: 0 0.25rem 2rem;
 }
+/* 戻る口の行。**いま使うのは作る画面だけ**（キャラクター画面の「← 会話へ戻る」と答え待ちの
+   印は、全画面の最上部の帯へ移った。docs/design.md 13.9）。 */
 .character-screen-bar {
   display: flex;
   align-items: baseline;
@@ -26,12 +28,6 @@
 .character-screen-back:hover,
 .character-screen-new:hover {
   color: var(--accent);
-}
-/* 隠れている間に来た答え待ちの印。**色だけにしない**ので字も出す（13.6）。 */
-.character-screen-pending {
-  margin-left: auto;
-  color: var(--state-warn);
-  font-size: var(--font-label);
 }
 .character-screen-headline {
   display: flex;

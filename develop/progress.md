@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 画面のナビの帯を作り、古い口を外した（T-356）
+
+`docs/design.md` 13.9 のとおり全画面の最上部に帯を置き（`src/browser/features/screen-nav/`）、
+会話・キャラクター・トークン消費の3枚を1本の帯から行き来できるようにした。散っていた口4件は
+撤去し、狭い画面はタブ帯の右端の「≡」に畳む（段は増えない）。
+
 ### 2026-09-22 雑談モードの4つの口を1つの合併型にまとめた（T-308）
 
 `SessionDriverOptions` の `personaMemory` / `chatSummary` / `chatKeep` / `chatRecall` を

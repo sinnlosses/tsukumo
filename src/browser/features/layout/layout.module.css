@@ -13,8 +13,10 @@
   grid-template-columns: 1fr;
   grid-template-rows: var(--layout-row-top, 60fr) auto var(--layout-row-bottom, 40fr);
   gap: 0.5rem;
-  /* body の padding（上下 1rem ずつ）ぶんを差し引いて、grid 自体は画面の高さぴったりにする。 */
-  height: calc(100vh - 2rem);
+  /* body の padding（上下 1rem ずつ）と、最上部の帯（画面のナビ。docs/design.md 13.9）の
+     高さ＋その下の隙間を差し引いて、grid 自体は残りの高さぴったりにする。**帯は別の機能
+     （features/screen-nav/）が描く**ので、ここは奪われる高さ（theme.css の2つの変数）だけを読む。 */
+  height: calc(100vh - 2rem - var(--screen-nav-height) - var(--screen-nav-gap));
 }
 .layout-row {
   display: grid;
@@ -199,8 +201,13 @@
     grid-template-rows: auto minmax(0, 1fr) auto;
     height: calc(100dvh - 2rem);
   }
+  /* **狭い画面では帯が段を増やさない**（画面のナビは右端の「≡」に畳まれてこのタブ帯に
+     重なる。docs/design.md 13.9）ので、grid の高さは画面のぶんそのまま。 */
   .layout-tabs {
     display: flex;
+    /* 右端の 44px（+ タブどうしの隙間）は「≡」の席として空ける。重なっているのは
+       features/screen-nav/ が position: fixed で置いた帯で、DOM 上はここの子ではない。 */
+    padding-right: 3rem;
   }
   .layout-row-top,
   .layout-row-bottom {
