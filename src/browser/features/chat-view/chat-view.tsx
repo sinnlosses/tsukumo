@@ -41,7 +41,6 @@ import {
   type ReactElement,
 } from "react"
 
-import { resolveOutfitAccent, resolvePortraitUrl } from "../../../shared/character.ts"
 import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
 import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../shared/expression.ts"
@@ -144,10 +143,8 @@ export function ChatView(): ReactElement {
   // `speak` の1つだけ。docs/requirements.md 4.3）。印はその間も最新のセリフの行に残る。
   const expression = speechExpressionAt(entries, pinnedIndex) ?? speechExpression
 
-  const portraitUrl =
-    character === undefined ? undefined : resolvePortraitUrl(character.portraits, expression)
-  const accent =
-    character === undefined ? undefined : resolveOutfitAccent(character.outfitAccents, outfit)
+  const portraitUrl = character?.portraits?.[expression]
+  const accent = character?.outfitAccents[outfit]
   // **alt は出ている絵をそのまま説明する**（行を押して遡れば、その行の表情の名前になる）。
   const altText = `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(
     character?.expressions ?? [],

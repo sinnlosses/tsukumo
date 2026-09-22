@@ -520,12 +520,12 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 いまの `src/domain/session-event.ts` の union をそのまま持ち越し、次を足す。
 
-| イベント            | 出どころ                                                                                               | 中身                                                                   | 用途                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryItem[] \| undefined`                                | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
-| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL）・`outfitAccents`      | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
-| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                     | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
-| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値） | `state.model` の出どころを3つにする（下記）                                      |
+| イベント            | 出どころ                                                                                               | 中身                                                                                                                                           | 用途                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryResult`（`unknown` / `known`）                                                                                              | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
+| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL。`default` に畳んだ全域の表）・`expressionsWithPortrait`（自分の絵がある表情）・`outfitAccents` | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
+| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                                                                                             | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
+| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値）                                                                         | `state.model` の出どころを3つにする（下記）                                      |
 
 **`state.model` の出どころは `session-info`（`init`）だけではない**（2026-09-17）。`init` は
 ターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古いモデルを返し、
@@ -559,12 +559,12 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 `SessionState`（`src/shared/session-state.ts`）が持つのは次のもの。
 
-| 追加                                                               | 出どころ                                   | 理由                                                                                                  |
-| ------------------------------------------------------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `turn`（`idle` / `running` / `finished`）                          | `request` / `turn-finished` の `at`        | `at` がイベントに乗るので、畳み込みの中で持てる。**時刻は状態の側**（起きない組み合わせを型から消す） |
-| `tasks`                                                            | `tasks-changed`                            | サイドバー                                                                                            |
-| `character`（`name`・`portraits`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）                                                |
-| `connection`                                                       | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い）                                   |
+| 追加                                                                                          | 出どころ                                   | 理由                                                                                                  |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `turn`（`idle` / `running` / `finished`）                                                     | `request` / `turn-finished` の `at`        | `at` がイベントに乗るので、畳み込みの中で持てる。**時刻は状態の側**（起きない組み合わせを型から消す） |
+| `tasks`                                                                                       | `tasks-changed`                            | サイドバー                                                                                            |
+| `character`（`name`・`portraits`・`expressionsWithPortrait`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）                                                |
+| `connection`                                                                                  | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い）                                   |
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
 `MAX_SESSION_VIEW_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。

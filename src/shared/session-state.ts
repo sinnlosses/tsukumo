@@ -492,6 +492,7 @@ export function applySessionEvent(
           accent: event.accent,
           expressions: event.expressions,
           portraits: event.portraits,
+          expressionsWithPortrait: event.expressionsWithPortrait,
           mini: event.mini,
           outfitAccents: event.outfitAccents,
           background: event.background,

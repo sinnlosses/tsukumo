@@ -47,7 +47,7 @@ export const EXPRESSIONS: readonly Expression[] = [
  * これを消せないのも同じ理由（消せる表情は {@link RemovableExpression} のほうだけ）。
  *
  * **必須はこの1つだけ。** 他の表情は立ち絵が無くてよく、`default` に落ちる
- * （`src/shared/character.ts` の `resolvePortraitUrl`）。
+ * （畳むのは `src/shared/character.ts` の `toCharacterInfo`）。
  */
 export const REQUIRED_EXPRESSIONS = ["default"] as const
 

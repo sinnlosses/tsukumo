@@ -7,7 +7,7 @@ import {
   type SessionLaunchPorts,
 } from "../../../src/server/core/session-launch.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { characterInfo, portraits } from "../../fixture/character.ts"
+import { characterInfo, shownPortraits } from "../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。
@@ -47,7 +47,7 @@ function characterEventOf(pack: Pack): SessionEvent {
       pack: pack.name,
       name: pack.name,
       editable: false,
-      portraits: portraits({ default: `/character/${pack.name}.png` }),
+      ...shownPortraits({ default: `/character/${pack.name}.png` }),
     }),
     packs: [{ name: pack.name, label: pack.name }],
   }

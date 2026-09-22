@@ -1,12 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
 import { parseCharacterDefinition } from "../../src/shared/character-definition.ts"
-import {
-  resolveOutfitAccent,
-  resolvePortraitUrl,
-  toCharacterInfo,
-} from "../../src/shared/character.ts"
-import { outfitAccents, portraits } from "../fixture/character.ts"
+import { type CharacterInfo, toCharacterInfo } from "../../src/shared/character.ts"
+import { expressionChoices } from "../../src/shared/expression-choice.ts"
+import { EXPRESSIONS } from "../../src/shared/expression.ts"
 
 // characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const FULL_DEFINITION_JSON = JSON.stringify({
@@ -33,37 +30,71 @@ const FULL_DEFINITION_JSON = JSON.stringify({
   },
 })
 
-describe("resolvePortraitUrl", () => {
-  const portraitsWithoutThinking = portraits({ default: "default.svg" })
+/** 定義ファイルの JSON から、画面に渡る姿を作る（版の印は付けない）。 */
+function infoOf(json: string): CharacterInfo | undefined {
+  const definition = parseCharacterDefinition(json)
+  return definition === undefined
+    ? undefined
+    : toCharacterInfo({ definition, pack: undefined, revision: undefined, editable: true })
+}
 
-  it("該当する表情があればそれを使う", () => {
-    expect(resolvePortraitUrl(portraitsWithoutThinking, "default")).toBe("default.svg")
+describe("toCharacterInfo の畳み方", () => {
+  const withoutThinking = JSON.stringify({ portraits: { default: "default.svg" } })
+
+  it("該当する表情の立ち絵があればそれを使う", () => {
+    expect(infoOf(FULL_DEFINITION_JSON)?.portraits?.thinking).toBe("/character/thinking.svg")
   })
 
-  it("見つからない表情は default に落ちる", () => {
-    expect(resolvePortraitUrl(portraitsWithoutThinking, "thinking")).toBe("default.svg")
+  it("立ち絵の無い表情は、どれも default の絵に畳む", () => {
+    const shown = infoOf(withoutThinking)?.portraits
+    for (const expression of EXPRESSIONS) {
+      expect(shown?.[expression]).toBe("/character/default.svg")
+    }
   })
 
-  it("新しく足した表情（serious / curious）も、立ち絵が無ければ default に落ちる", () => {
-    expect(resolvePortraitUrl(portraitsWithoutThinking, "serious")).toBe("default.svg")
-    expect(resolvePortraitUrl(portraitsWithoutThinking, "curious")).toBe("default.svg")
-  })
-
-  it("default も無ければ undefined（立ち絵なしにフォールバック）", () => {
-    expect(resolvePortraitUrl(portraits(), "thinking")).toBeUndefined()
-  })
-})
-
-describe("resolveOutfitAccent", () => {
-  it("該当する衣装があればそれを使う", () => {
-    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
+  it("default も無いパックでは立ち絵の表ごと持たない（立ち絵なしにフォールバック）", () => {
     expect(
-      definition === undefined ? undefined : resolveOutfitAccent(definition.outfitAccents, "heavy"),
-    ).toBe("#ffb3a7")
+      infoOf(JSON.stringify({ portraits: { thinking: "thinking.svg" } }))?.portraits,
+    ).toBeUndefined()
   })
 
-  it("見つからない衣装は default に落ちる", () => {
-    expect(resolveOutfitAccent(outfitAccents({ default: "#b8c7ff" }), "light")).toBe("#b8c7ff")
+  it("自分の立ち絵を持つ表情だけを、EXPRESSIONS の順で別に持つ", () => {
+    expect(infoOf(FULL_DEFINITION_JSON)?.expressionsWithPortrait).toEqual(
+      EXPRESSIONS.filter((expression) =>
+        ["default", "thinking", "proud", "flustered"].includes(expression),
+      ),
+    )
+    expect(infoOf(withoutThinking)?.expressionsWithPortrait).toEqual(["default"])
+  })
+
+  it("畳んでも speak の選択肢（定義ファイル側）は減らない", () => {
+    const json = JSON.stringify({
+      portraits: { default: "default.svg", proud: "proud.svg" },
+      expressions: { thinking: "作業中" },
+    })
+    const definition = parseCharacterDefinition(json)
+    expect(infoOf(json)?.expressions).toEqual(expressionChoices(definition))
+    expect(infoOf(json)?.expressions.map((choice) => choice.name)).toEqual([
+      "default",
+      "thinking",
+      "proud",
+    ])
+  })
+
+  it("該当する衣装の差し色があればそれを使う", () => {
+    expect(infoOf(FULL_DEFINITION_JSON)?.outfitAccents.heavy).toBe("#ffb3a7")
+  })
+
+  it("差し色の無い衣装は default に畳む", () => {
+    expect(
+      infoOf(JSON.stringify({ outfitAccents: { default: "#b8c7ff" } }))?.outfitAccents.light,
+    ).toBe("#b8c7ff")
+  })
+
+  it("default の差し色が無くても、指定のある衣装の差し色は残す", () => {
+    const accents = infoOf(JSON.stringify({ outfitAccents: { heavy: "#ffb3a7" } }))?.outfitAccents
+    expect(accents?.heavy).toBe("#ffb3a7")
+    expect(accents?.light).toBeUndefined()
   })
 })
 
@@ -92,7 +123,7 @@ describe("toCharacterInfo", () => {
       "proud",
       "flustered",
     ])
-    expect(info?.portraits.thinking).toBe("/character/thinking.svg?v=fictional")
+    expect(info?.portraits?.thinking).toBe("/character/thinking.svg?v=fictional")
     expect(info?.outfitAccents.heavy).toBe("#ffb3a7")
   })
 
@@ -116,9 +147,9 @@ describe("toCharacterInfo", () => {
       editable: true,
     })
 
-    expect(infoA.portraits.default).not.toBe(infoB.portraits.default)
-    expect(infoA.portraits.default).toBe("/character/default.svg?v=pack-a")
-    expect(infoB.portraits.default).toBe("/character/default.svg?v=pack-b")
+    expect(infoA.portraits?.default).not.toBe(infoB.portraits?.default)
+    expect(infoA.portraits?.default).toBe("/character/default.svg?v=pack-a")
+    expect(infoB.portraits?.default).toBe("/character/default.svg?v=pack-b")
   })
 
   it("素材の版が違えば、同じパック・同じファイル名でも URL が変わる（差し替えたら取り直す）", () => {
@@ -131,7 +162,7 @@ describe("toCharacterInfo", () => {
     const before = toCharacterInfo({ definition, pack: "same", revision: "1", editable: true })
     const after = toCharacterInfo({ definition, pack: "same", revision: "2", editable: true })
 
-    expect(before.portraits.default).not.toBe(after.portraits.default)
+    expect(before.portraits?.default).not.toBe(after.portraits?.default)
   })
 
   it("pack が undefined のときは問い合わせ文字列を付けない（既定の場所を直に指したときなど）", () => {
@@ -143,7 +174,7 @@ describe("toCharacterInfo", () => {
         ? undefined
         : toCharacterInfo({ definition, pack: undefined, revision: undefined, editable: true })
 
-    expect(info?.portraits.default).toBe("/character/default.svg")
+    expect(info?.portraits?.default).toBe("/character/default.svg")
   })
 
   it("mini があればその URL、無ければ portraits.default に落ちる（縮小して使う）", () => {
@@ -212,7 +243,8 @@ describe("toCharacterInfo", () => {
     expect(info.name).toBeUndefined()
     expect(info.accent).toBeUndefined()
     expect(info.expressions).toEqual([{ name: "default", label: "default" }])
-    expect(info.portraits.default).toBeUndefined()
+    expect(info.portraits).toBeUndefined()
+    expect(info.expressionsWithPortrait).toEqual([])
     expect(info.mini).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()
     expect(info.background).toBeUndefined()

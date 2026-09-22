@@ -9,7 +9,7 @@ import { characterAssetCacheKey, characterAssetPath } from "./character-asset.ts
 import { type CharacterBackground } from "./character-background.ts"
 import { type CharacterDefinition } from "./character-definition.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
-import { type Expression, type Outfit } from "./expression.ts"
+import { type Expression, EXPRESSIONS, type Outfit } from "./expression.ts"
 
 /**
  * キャラビューに渡す、キャラクター定義の姿（`character-changed` イベント・`SessionState.character`
@@ -27,7 +27,18 @@ export type CharacterInfo = {
   /** {@link CharacterDefinition.accent} をそのまま持つ。ブラウザ側は `--accent` に流す。 */
   readonly accent: string | undefined
   readonly expressions: readonly ExpressionChoice[]
-  readonly portraits: Readonly<Record<Expression, string | undefined>>
+  /**
+   * 表情 → 立ち絵の URL。**`default` に畳み済みの全域な表**で、読む側は表を引くだけでよい
+   * （立ち絵の無い表情には `default` の絵が入っている）。`default` すら無いパックでは undefined
+   * （立ち絵そのものが出ない）。
+   */
+  readonly portraits: Readonly<Record<Expression, string>> | undefined
+  /**
+   * 立ち絵を**定義に自分で持っている**表情（`EXPRESSIONS` の順）。`portraits` は畳んだあとの表で
+   * 「この表情だけ無い」が読めないので、それが要るキャラクター画面（まだ入れていない枠・消す口）の
+   * ためにここで持つ。`speak` の選択肢（`expressions`）とは別物。
+   */
+  readonly expressionsWithPortrait: readonly Expression[]
   /**
    * ミニ立ち絵の URL（`/character/<file>`。レポートの筆先に添う1体。
    * docs/requirements.md 4.3）。**定義に `mini` が無ければ `portraits.default` に落として
@@ -35,6 +46,10 @@ export type CharacterInfo = {
    * `default` も無いパックでは undefined（ミニ立ち絵そのものが出ない）。
    */
   readonly mini: string | undefined
+  /**
+   * 衣装 → 差し色。**衣装ごとに `default` へ畳み済み**（読む側は表を引くだけでよい）。
+   * `default` も無ければその衣装は undefined。
+   */
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景（`docs/design.md` 13.8）。**`image` は `/character/<file>` の URL**
@@ -97,7 +112,8 @@ export type CharacterInfoSource = {
 /**
  * キャラクター定義を {@link CharacterInfo}（キャラビューに渡す形）にする。ファイル名を
  * {@link characterAssetPath} で URL に変える。定義が無い・壊れているときも、欠けた形
- * （立ち絵なし・`default` だけの表情）で返す。
+ * （立ち絵なし・`default` だけの表情）で返す。**「この表情・衣装だけ無い」はここで `default` に
+ * 畳む**（読む側へ運ばない。docs/coding-standards.md「「無い」を層をまたいで運ばない」）。
  */
 export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
   const definition = source.definition
@@ -109,8 +125,14 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     accent: definition?.accent,
     expressions: expressionChoices(definition),
     portraits,
-    mini: portraitUrl(definition?.mini, cacheKey) ?? portraits.default,
-    outfitAccents: definition?.outfitAccents ?? EMPTY_OUTFIT_ACCENTS,
+    expressionsWithPortrait: EXPRESSIONS.filter(
+      (expression) => definition?.portraits[expression] !== undefined,
+    ),
+    mini:
+      definition?.mini === undefined
+        ? portraits?.default
+        : characterAssetPath(definition.mini, cacheKey),
+    outfitAccents: foldedOutfitAccents(definition),
     background: backgroundWithUrl(definition?.background, cacheKey),
     editable: source.editable,
   }
@@ -126,69 +148,50 @@ function backgroundWithUrl(
     : { image: characterAssetPath(background.image, cacheKey), veil: background.veil }
 }
 
+/**
+ * 立ち絵の表を `default` に畳んだ全域な形にする（docs/requirements.md 4.4「あるものだけでよい」）。
+ * **`default` すら無いパックでは表ごと持たない**（落とし先が無いので、他の表情の絵があっても
+ * 立ち絵なし＝吹き出しだけにフォールバックする）。
+ */
 function portraitUrls(
   definition: CharacterDefinition | undefined,
   cacheKey: string | undefined,
-): Readonly<Record<Expression, string | undefined>> {
-  if (definition === undefined) {
-    return EMPTY_PORTRAITS
+): Readonly<Record<Expression, string>> | undefined {
+  const files = definition?.portraits
+  if (files === undefined || files.default === undefined) {
+    return undefined
   }
+  const fallback = files.default
+  const url = (fileName: string | undefined): string =>
+    characterAssetPath(fileName ?? fallback, cacheKey)
   return {
-    default: portraitUrl(definition.portraits.default, cacheKey),
-    thinking: portraitUrl(definition.portraits.thinking, cacheKey),
-    proud: portraitUrl(definition.portraits.proud, cacheKey),
-    flustered: portraitUrl(definition.portraits.flustered, cacheKey),
-    serious: portraitUrl(definition.portraits.serious, cacheKey),
-    curious: portraitUrl(definition.portraits.curious, cacheKey),
-    sad: portraitUrl(definition.portraits.sad, cacheKey),
-    excited: portraitUrl(definition.portraits.excited, cacheKey),
-    bored: portraitUrl(definition.portraits.bored, cacheKey),
-  }
-}
-
-function portraitUrl(
-  fileName: string | undefined,
-  cacheKey: string | undefined,
-): string | undefined {
-  return fileName === undefined ? undefined : characterAssetPath(fileName, cacheKey)
-}
-
-const EMPTY_PORTRAITS: Readonly<Record<Expression, string | undefined>> = {
-  default: undefined,
-  thinking: undefined,
-  proud: undefined,
-  flustered: undefined,
-  serious: undefined,
-  curious: undefined,
-  sad: undefined,
-  excited: undefined,
-  bored: undefined,
-}
-
-const EMPTY_OUTFIT_ACCENTS: Readonly<Record<Outfit, string | undefined>> = {
-  default: undefined,
-  light: undefined,
-  normal: undefined,
-  heavy: undefined,
+    default: url(files.default),
+    thinking: url(files.thinking),
+    proud: url(files.proud),
+    flustered: url(files.flustered),
+    serious: url(files.serious),
+    curious: url(files.curious),
+    sad: url(files.sad),
+    excited: url(files.excited),
+    bored: url(files.bored),
+  } satisfies Readonly<Record<Expression, string>>
 }
 
 /**
- * 表情に対応する立ち絵の URL を決める。該当する表情の指定が無ければ `default` に落ちる
- * （docs/requirements.md 4.4「あるものだけでよい」）。`default` も無ければ undefined を返し、
- * 呼び出し側（`src/browser/components/portrait.tsx`）は立ち絵なし（吹き出しだけ）に
- * フォールバックする。
+ * 差し色の表を、衣装ごとに `default` へ畳んだ形にする。**立ち絵と違って全域にはならない** —
+ * `default` の差し色を持たないパック（`outfitAccents` を書いていないパックなど）にも、
+ * 画面から1つの衣装にだけ差し色を入れられるので、その衣装の値は残す。値の無い衣装は、
+ * 読む側が素材の既定の色（`--outfit-accent` を渡さない）か `--accent` に落とす。
  */
-export function resolvePortraitUrl(
-  portraits: Readonly<Record<Expression, string | undefined>>,
-  expression: Expression,
-): string | undefined {
-  return portraits[expression] ?? portraits.default
-}
-
-/** 衣装に対応する差し色を決める。該当する衣装の指定が無ければ `default` に落ちる。 */
-export function resolveOutfitAccent(
-  outfitAccents: Readonly<Record<Outfit, string | undefined>>,
-  outfit: Outfit,
-): string | undefined {
-  return outfitAccents[outfit] ?? outfitAccents.default
+function foldedOutfitAccents(
+  definition: CharacterDefinition | undefined,
+): Readonly<Record<Outfit, string | undefined>> {
+  const accents = definition?.outfitAccents
+  const fallback = accents?.default
+  return {
+    default: fallback,
+    light: accents?.light ?? fallback,
+    normal: accents?.normal ?? fallback,
+    heavy: accents?.heavy ?? fallback,
+  } satisfies Readonly<Record<Outfit, string | undefined>>
 }

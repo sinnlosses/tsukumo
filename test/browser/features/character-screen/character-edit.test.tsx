@@ -6,7 +6,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { CharacterEdit } from "../../../../src/browser/features/character-screen/character-edit.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo, outfitAccents, portraits } from "../../../fixture/character.ts"
+import { characterInfo, shownOutfitAccents, shownPortraits } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
@@ -20,12 +20,12 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
   // **ラスタにしてある**（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
   // テストの関心ではない非同期がまぎれる）。SVG の読み込みは
   // `test/browser/components/portrait.test.tsx` が見る。
-  portraits: portraits({
+  ...shownPortraits({
     default: "/character/default.png?v=fictional@1",
     thinking: "/character/thinking.png?v=fictional@1",
     proud: "/character/proud.png?v=fictional@1",
   }),
-  outfitAccents: outfitAccents({ default: "#b8c7ff", heavy: "#ffb3a7" }),
+  outfitAccents: shownOutfitAccents({ default: "#b8c7ff", heavy: "#ffb3a7" }),
 })
 
 let themeStyleElement: HTMLStyleElement | undefined

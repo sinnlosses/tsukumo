@@ -14,7 +14,6 @@
 
 import { useEffect, useState } from "react"
 
-import { resolveOutfitAccent, resolvePortraitUrl } from "../../../../shared/character.ts"
 import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/expression.ts"
 import {
@@ -75,10 +74,8 @@ export function useCharacterView(): CharacterViewModel {
   const outfit = resolveOutfit(model)
   const motion = usePortraitMotion({ turn, lastToolFailureAt })
 
-  const portraitUrl =
-    character === undefined ? undefined : resolvePortraitUrl(character.portraits, expression)
-  const accent =
-    character === undefined ? undefined : resolveOutfitAccent(character.outfitAccents, outfit)
+  const portraitUrl = character?.portraits?.[expression]
+  const accent = character?.outfitAccents[outfit]
   // 表情のラベルはキャラクターパックの定義から来る（docs/design.md 7章）。定義が届く前・
   // ラベルが無い表情では、表情名そのものがラベルになる。
   const altText = `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(

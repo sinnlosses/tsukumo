@@ -31,7 +31,6 @@
 
 import { type CSSProperties, type ReactElement } from "react"
 
-import { resolveOutfitAccent } from "../../../shared/character.ts"
 import { resolveOutfit } from "../../../shared/expression.ts"
 import { Portrait } from "../../components/portrait.tsx"
 import { useBrushTip, type BrushTip } from "../../stores/brush-tip.ts"
@@ -80,7 +79,7 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
       <div className={followClassName(tip)} style={followStyle(tip)}>
         <Portrait
           url={url}
-          accent={resolveOutfitAccent(character.outfitAccents, outfit)}
+          accent={character.outfitAccents[outfit]}
           altText={miniAltText(character.name)}
           expression={MINI_EXPRESSION}
           outfit={outfit}

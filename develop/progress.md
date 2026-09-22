@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 立ち絵の対応表を入口で全域に畳んだ（T-314）
+
+`CharacterInfo.portraits` を `default` に畳んだ全域の表にし、差し色は衣装ごとに `default` へ畳んだ。空の既定値と引き直しの関数が消え、呼ぶ側は表を引くだけになった。編集画面の空き枠のために `expressionsWithPortrait` を足した。
+
 ### 2026-09-23 見ているやり取りを location.hash に乗せた（T-299）
 
 留めたやり取りを `#<画面>?turn=<番号>` の形で hash に乗せ、リロードと戻る・進むで同じやり取りへ戻れるようにした。hash の読み書きは `stores/location-hash.ts` の1つに集めた。

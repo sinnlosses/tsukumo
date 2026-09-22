@@ -22,7 +22,6 @@
 
 import { useState, type ReactElement } from "react"
 
-import { resolveOutfitAccent } from "../../../shared/character.ts"
 import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import {
   type Expression,
@@ -92,9 +91,7 @@ export function CharacterEdit(): ReactElement | null {
   }
   const disabled = !character.editable
   const accent =
-    pendingAccents[GALLERY_OUTFIT] ??
-    resolveOutfitAccent(character.outfitAccents, GALLERY_OUTFIT) ??
-    accentFallback
+    pendingAccents[GALLERY_OUTFIT] ?? character.outfitAccents[GALLERY_OUTFIT] ?? accentFallback
 
   /**
    * 選ばれた画像を data URL にして送る。**同じファイルをもう一度選べるように `value` を戻す**
@@ -133,7 +130,10 @@ export function CharacterEdit(): ReactElement | null {
       <div className={styles["character-gallery"]}>
         {EXPRESSIONS.map((expression) => {
           const label = resolveExpressionLabel(character.expressions, expression)
-          const url = character.portraits[expression]
+          // 畳んだ表では `default` の絵が入っているので、自分の絵を持つ表情だけを引く。
+          const url = character.expressionsWithPortrait.includes(expression)
+            ? character.portraits?.[expression]
+            : undefined
           return (
             <div className={styles["character-gallery-card"]} key={expression}>
               {url === undefined ? (
@@ -195,9 +195,7 @@ export function CharacterEdit(): ReactElement | null {
                   type="color"
                   disabled={disabled}
                   value={
-                    pendingAccents[outfit] ??
-                    resolveOutfitAccent(character.outfitAccents, outfit) ??
-                    accentFallback
+                    pendingAccents[outfit] ?? character.outfitAccents[outfit] ?? accentFallback
                   }
                   onChange={(event) => {
                     const color = event.target.value

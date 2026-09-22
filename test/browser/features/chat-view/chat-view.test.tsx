@@ -11,7 +11,7 @@ import {
   type SessionRecord,
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
-import { characterInfo, portraits } from "../../../fixture/character.ts"
+import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
 import { type CommandSpy, putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -70,7 +70,7 @@ function logEntries(): readonly Element[] {
 
 // 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-  portraits: portraits({ default: "/character/default.png" }),
+  ...shownPortraits({ default: "/character/default.png" }),
 })
 
 describe("ChatView", () => {

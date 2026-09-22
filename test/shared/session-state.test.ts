@@ -7,7 +7,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../src/shared/session-state.ts"
-import { characterInfo, outfitAccents, portraits } from "../fixture/character.ts"
+import { characterInfo, shownOutfitAccents, shownPortraits } from "../fixture/character.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
@@ -787,11 +787,11 @@ describe("applySessionEvent", () => {
         { name: "default", label: "通常" },
         { name: "thinking", label: "作業中" },
       ],
-      portraits: portraits({
+      ...shownPortraits({
         default: "/character/default.svg",
         thinking: "/character/thinking.svg",
       }),
-      outfitAccents: outfitAccents({ default: "#b8c7ff" }),
+      outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
     })
 
     const view = apply({

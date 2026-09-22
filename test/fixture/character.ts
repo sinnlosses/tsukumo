@@ -10,8 +10,12 @@
 //
 // **入れ子は深い合成をしない。** `portraits` / `outfitAccents` を同じ形の組み立て関数として
 // 別に出し、呼ぶ側が `portraits: portraits({ default: "…" })` と重ねる。どのキーを埋めたのかが
-// 呼ぶ側の1行に出るのと、素の対応表だけが要る場面（`resolvePortraitUrl` のテスト）でも
+// 呼ぶ側の1行に出るのと、定義ファイルの形だけが要る場面（`expressionChoices` のテスト）でも
 // そのまま使えるのが理由。
+//
+// **画面に渡る姿（`CharacterInfo`）の表は `default` に畳み済み**なので、定義ファイル側の
+// `portraits` / `outfitAccents` とは別に {@link shownPortraits} / {@link shownOutfitAccents} を置く
+// （`toCharacterInfo` と同じ畳み方で、呼ぶ側は「ある」ものだけを書く）。
 //
 // `character-changed` イベントは `{ kind } & CharacterInfo & { packs }`（src/shared/session-event.ts）
 // なので、組み立て関数は置かず `{ kind: "character-changed", ...characterInfo(), packs: [] }` と
@@ -19,7 +23,7 @@
 
 import { type CharacterDefinition } from "../../src/shared/character-definition.ts"
 import { type CharacterInfo } from "../../src/shared/character.ts"
-import { type Expression, type Outfit } from "../../src/shared/expression.ts"
+import { type Expression, EXPRESSIONS, type Outfit } from "../../src/shared/expression.ts"
 
 /** 画面に渡る姿（`SessionState.character` と `character-changed` の中身）。 */
 export function characterInfo(overrides: Partial<CharacterInfo> = {}): CharacterInfo {
@@ -28,9 +32,10 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     name: "架空の精霊",
     accent: undefined,
     expressions: [{ name: "default", label: "通常" }],
-    portraits: portraits(),
+    portraits: undefined,
+    expressionsWithPortrait: [],
     mini: undefined,
-    outfitAccents: outfitAccents(),
+    outfitAccents: shownOutfitAccents(),
     background: undefined,
     editable: true,
     ...overrides,
@@ -66,6 +71,43 @@ export function outfitAccents(
   overrides: Partial<Record<Outfit, string>> = {},
 ): Readonly<Record<Outfit, string | undefined>> {
   return { ...NO_OUTFIT_ACCENTS, ...overrides }
+}
+
+/**
+ * 画面に渡る立ち絵（URL）。**渡した表情だけが自分の絵を持ち、残りは `default` の絵に畳む**
+ * （`toCharacterInfo` と同じ）。`characterInfo({ ...shownPortraits({ default: "…" }) })` と広げて使う。
+ */
+export function shownPortraits(
+  urls: { readonly default: string } & Partial<Record<Expression, string>>,
+): Pick<CharacterInfo, "portraits" | "expressionsWithPortrait"> {
+  const own = portraits(urls)
+  return {
+    portraits: {
+      default: urls.default,
+      thinking: own.thinking ?? urls.default,
+      proud: own.proud ?? urls.default,
+      flustered: own.flustered ?? urls.default,
+      serious: own.serious ?? urls.default,
+      curious: own.curious ?? urls.default,
+      sad: own.sad ?? urls.default,
+      excited: own.excited ?? urls.default,
+      bored: own.bored ?? urls.default,
+    },
+    expressionsWithPortrait: EXPRESSIONS.filter((expression) => own[expression] !== undefined),
+  }
+}
+
+/** 画面に渡る差し色。**渡さなかった衣装は `default` に畳む**（`toCharacterInfo` と同じ）。 */
+export function shownOutfitAccents(
+  overrides: Partial<Record<Outfit, string>> = {},
+): Readonly<Record<Outfit, string | undefined>> {
+  const fallback = overrides.default
+  return {
+    default: fallback,
+    light: overrides.light ?? fallback,
+    normal: overrides.normal ?? fallback,
+    heavy: overrides.heavy ?? fallback,
+  }
 }
 
 /** 表情ごとの対応表の「1つも無い」。立ち絵（URL・ファイル名）とラベルの両方に使う。 */

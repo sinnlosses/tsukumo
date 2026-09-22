@@ -14,13 +14,13 @@ import {
   type SessionRecord,
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
-import { characterInfo, portraits } from "../../../fixture/character.ts"
+import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-  portraits: portraits({ default: "/character/default.png" }),
+  ...shownPortraits({ default: "/character/default.png" }),
 })
 
 afterEach(() => {
@@ -105,7 +105,7 @@ describe("CharacterView", () => {
           { name: "thinking", label: "作業中" },
           { name: "proud", label: "どや顔" },
         ],
-        portraits: portraits({
+        ...shownPortraits({
           default: "/character/default.png",
           thinking: "/character/thinking.png",
           proud: "/character/proud.png",
@@ -235,7 +235,7 @@ describe("CharacterView", () => {
             { name: "default", label: "通常" },
             { name: "flustered", label: "あわてた" },
           ],
-          portraits: portraits({
+          ...shownPortraits({
             default: "/character/default.png",
             flustered: "/character/flustered.png",
           }),
