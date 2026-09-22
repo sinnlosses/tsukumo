@@ -1,5 +1,49 @@
 # 進捗のアーカイブ
 
+### 2026-09-23 語彙の長さに依存する期待値の扱いを規約に足した（T-326）
+
+表情・衣装などの語彙の個数に依存するテストの期待値は、直書きせず定数の長さから導く、という1項目を `docs/coding-standards.md` のテスト節に足した。
+
+### 2026-09-23 起こし直しと資源の戻し方を docs/workflow.md に足した（T-325）
+
+起動時に作られるものは起こし直しが要り、確かめ直すには `TSUKUMO_NEW_SESSION=1` を足すこと、確認手順が触る資源は「確認後に元の値へ戻す」と書くことを足した。
+
+### 2026-09-23 character-view のフックを hooks/ へ出した（T-358）
+
+`useNowForPortraitMotion` と `usePortraitMotion` を1本の `hooks/use-character-view.ts` に畳み
+（呼び出し元が1箇所だけだった）、`character-view.tsx` は17行の container、見た目は
+`presentational-character-view.tsx` へ。**振る舞いを変えない移動**であることを、移す前後の
+ビルドで同じ場面（偽の駆動・`report`）を撮って確かめた（動きの並びが ±0.02s で一致）。
+
+### 2026-09-23 質問の記録で、選んだ印を差し色にし、問と答えの区切りを作った（T-343）
+
+`●`/`○` を `QuestionMark`（`<span>`）で包み、選んだ側だけに `accent` を当てた（文字は DOM に
+残す。選ばなかった `○` は親の色を継ぐ）。塊の区切りは `.question-record + .question-record` に
+余白と `rule` の罫線で作り、`accent` と地の段差は採らなかった（理由は `main-view.module.css`
+のコメント）。カタログの `question-*` は答え待ちの箱までしか撮らないので、答えさせた記録を
+別途撮って確かめた。
+
+### 2026-09-23 返事を待つ間、ログの末尾で「...」を animation させた（T-335）
+
+雑談のログの末尾に、キャラクター側の吹き出しとしてドット3つの typing indicator を出した（`<ChatTyping>`）。サーバの契約は増やさず、`turnInProgress && !speechCalledInTurn` で判定し、そのターンの `speech` が届くと育つセリフの行に入れ替わる。
+
+### 2026-09-23 復元した依頼から、仕掛けが差し込んだ塊を落とした（ユーザー報告）
+
+「セッションを復元すると大量の文字列が出る」の調査と修正。生きているセッションでは `request` は
+入力欄からの送信でだけ起きるが、transcript から組み直すときは `user` の役のメッセージが丸ごと
+依頼になるので、**利用者が打っていない塊まで依頼として並んでいた**（実測した tsukumo の記録で
+`<task-notification>` の 873 / 874 文字が2セッション分)。`session-restore.ts` に
+`withoutInjectedBlocks` を足し、`<system-reminder>` / `<task-notification>` /
+`<local-command-caveat>` / `<local-command-stdout>` / `<agent-message>` /
+`<cross-session-message>` の閉じタグまで揃った塊を落としてから畳むようにした。塊だけの
+メッセージは依頼にならず、文面に混じっている場合は前後が残る。
+
+### 2026-09-23 雑談のログの末尾のセリフが育つようにした（T-329）
+
+届いたセリフをログの末尾の行で1文字ずつ出し、吹き出しが中身のぶんだけ膨らむようにした
+（30ms/文字。サーバの契約は変えず、ブラウザ側の見せ方だけ）。育つ間は最後の文字の後ろに筆先が
+立ち、押すとその回は遡らず打ち切る。決めた形と採らなかった2案は `docs/design.md` 13.7。
+
 ### 2026-09-23 `init` がまだ届いていない状態を合併型にした（T-311）
 
 `SessionState` の `sessionId` / `permissionMode` を `session: { kind: "starting" } |

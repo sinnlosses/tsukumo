@@ -22,23 +22,12 @@
     "evidence": ""
   },
   {
-    "id": "T-312",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-307", "T-311"],
-    "summary": "ツールの結果と本文の「まだ来ていない」を合併型にする",
-    "status": "done",
-    "passes": true,
-    "evidence": "ツールは status: ToolRunStatus（running | finished{result}）、ステップの本文は body: MainViewStepBody（none | text{report, firstLine}）にし、4行の | undefined を消した（firstLine は本文を作るときに一緒に決める）。SessionRecord はディスクに保存されないので互換の扱いは不要。bun run check: 1256 pass / 0 fail / 目視: 疑似セッション（TSUKUMO_DRIVER=fake、ポート 7391〜7396、HOME は一時ディレクトリ）を capture-view.ts 1400x900 で撮り、HEAD の組み立てと同じ場面・同じ秒で比べた。long-tool・narration-stuck でツール実行中→本文へ切り替わり、interim-flicker で中間レポート→最終レポート、本文の無いステップは高さ0・横はみ出し0で、測った値は HEAD と一致",
-    "task": "## 背景\n\n2つの組が「まだ来ていない」を `| undefined` で表している\n（調査は `docs/research/undefined-reduction.md` 2.1 の #6 #7）。\n\n- `src/shared/session-state.ts:97` / `src/shared/main-view.ts:58` の `result: {...} | undefined`\n  ——**ツールがまだ終わっていない**\n- `src/shared/main-view.ts:98,102` の `report` / `firstLine` ——**本文がまだ来ていない**\n  （2つは同時に入るか同時に無いかの2択）\n\nどちらも `docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所。\n\n## やること\n\n1. ツールの結果を **`{ kind: \"running\" } | { kind: \"finished\"; result }`** にする\n2. 本文を **`body: { kind: \"none\" } | { kind: \"text\"; report; firstLine }`** にする\n3. 読む側（メインビューのレポート描画・ツールの行）を `kind` の分岐に直す\n4. `!` や `as` で潰さない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts:97` と `src/shared/main-view.ts:58,98,102` の\n  `| undefined` が4行とも消えている\n- **目視確認**: tsukumo を起こし、(1) ツール実行中の表示と完了後の表示が従来どおり切り替わる、\n  (2) 中間レポートと最終レポートが従来どおり出る、(3) 本文が空のターンで崩れない——の3つを\n  確かめて `evidence` に書く\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **`SessionState` を触る3つのタスクは並行させない。** `dependencies` で直列にしてある\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
-  },
-  {
     "id": "T-313",
     "difficulty": "sonnet",
     "loopable": "Y",
     "dependencies": ["T-307"],
     "summary": "タスク一覧の「不明」を2つの意味に割る",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\nタスク一覧の「不明」に、**意味の違う2つの `undefined` が合流している**\n（調査は `docs/research/undefined-reduction.md` 2.3 の例外）。\n\n- `src/shared/task-summary.ts:41` の `readTaskSummaries` が返す `undefined` は\n  「**ファイルの形が信用できない**」\n- `src/shared/session-state.ts:175` の `tasks: ... | undefined` は「**まだ届いていない**」\n\n画面上（`src/browser/features/sidebar/task-list.tsx:14,25` /\n`task-board.tsx:45,104`）では**どちらも同じ「不明」として表示される**。これは\n`docs/coding-standards.md` が「避ける」と書いている3パターンの2つめ\n（1つの `undefined` に複数の意味が乗っている）に当たる。\n\nなお `parse*` 全体を結果型にする案は**採らない**（同調査 2.3。zod の `safeParse` を\n境界で意図的に畳んでいるので、戻すのは畳んだものを開き直す作業になる）。ここだけが例外。\n\n## やること\n\n1. `tasks` を **`{ kind: \"unknown\" } | { kind: \"known\"; items }`** に割る。\n   「まだ届いていない」と「読めない」を型で区別できる形にするか、\n   **区別しないと決めるならその理由を `evidence` に書く**\n2. `src/shared/session-event.ts:169` と画面側4箇所を読み替える\n3. 空配列に畳む案は採らない（「タスク0件」と「読めない」が混ざるため。同調査 2.4）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/session-state.ts:175` の `tasks: ... | undefined` が合併型になっている\n- **目視確認**: tsukumo を起こし、(1) タスク一覧が従来どおり出る、(2) `develop/tasks.json`\n  が無いプロジェクト（または一時的に読めない形）で「不明」の表示が崩れない——の2つを\n  確かめて `evidence` に書く。**フィクスチャを一時的に書き換えたら必ず元に戻す**\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n"
@@ -132,28 +121,6 @@
     "task": "## 背景\n\n洗い出しに挙がった残りの2ファイル。\n\n| ファイル | 行数 | フック | 中に混ざっているもの |\n| --- | ---: | ---: | --- |\n| `features/layout/layout.tsx` | 239 | 6 | 4領域の組み立てと、掴んで動かす仕切りの状態 |\n| `features/token-usage/token-usage-screen.tsx` | 242 | 4 | 画面の組み立てと、消費の取得・集計 |\n\n**どちらも部分的にはすでに分かれている**: `layout/` には `layout-resizer.tsx` と\n`split.ts`（87行）があり、`token-usage/` には `daily-usage-chart.tsx`（121行）と\n`usage-format.ts` がある。**上の2ファイルに何が残っているかを先に見極める**必要がある。\n\nユーザーの指示（2026-09-22）: 「他のコンポーネントでも同様に整理できるか洗い出して\nタスク化してほしい」。この2件は**洗い出した中でいちばん分ける余地が小さい候補**で、\n「分けない」で閉じる可能性がいちばん高い。\n\n## 決まっていること（蒸し返さない）\n\n- **分け方の型は T-328 が `docs/design.md` 2章に書いている**（フックは\n  `features/<機能>/hooks/use-*.ts`）\n- このタスクは**振る舞いを変えない**\n- **分ける余地が小さいと分かったら分けない。** 型に当てはまらない理由を `evidence` に書いて\n  閉じるのは、このタスクでは失敗ではない\n\n## やること\n\n1. `docs/design.md` 2章の型を読む\n2. `layout.tsx` と `token-usage-screen.tsx` に残っているロジックを数える（フックが何を\n   同期しているか・純関数がいくつあるか）\n3. 型に当てはまるものだけ分ける。**当てはまらないものは分けず、理由を `evidence` に書く**\n   （ファイルごとに1行）\n4. `test/browser/features/layout/` と token-usage のテストが**そのまま通ること**を確かめる\n\n## 完了条件\n\n- `bun run check` が通る\n- 2ファイルについて「分けた／分けなかった」とその理由が `evidence` にファイルごとに書かれて\n  いる\n- 分けた場合は、切り出したフック・純関数に部品を起こさずに測るテストがある\n- 目視: 仕切りを掴んで4領域の比率を変えられる・トークン消費の画面が開いてグラフが出る。\n  何を確かめたかを evidence に書く\n\n## 注意\n\n- **T-328 が `docs/design.md` 2章に書いた型に従う。** 型を読まずに自分で決め直さない\n- 分けたぶん**開くファイルの数が増える**。`CLAUDE.md`「案が2つ以上あるときは、書いたあとの\n  コードを読む人が把握しやすいほうを選ぶ」の物差し（開くファイルの数・呼ぶ側が自分の外の\n  事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）で判断する\n- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）\n"
   },
   {
-    "id": "T-340",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "コメント内の日付を check で弾き、scripts/ に残る4件を消す",
-    "status": "done",
-    "passes": true,
-    "evidence": "検査は test/architecture.test.ts「コメント中の日付」（行頭 // * /* の行で YYYY-MM-DD を弾く。既存の規約検査と同じ置き場で bun run check から走る）。src/test/scripts の日付つきコメント20件を Why を残して消し、grep は0件。config.ts:44 に「2026-09-23 までは」を一時的に戻すと 1254 pass / 1 fail（src/server/core/config.ts:44）で落ち、戻して 1255 pass / 0 fail。docs/workflow.md に「どの層にも属さないディレクトリを名指しする」の1行を足した",
-    "task": "## 背景\n\n`docs/coding-standards.md:153` の表は、コメントに**いつ決まったか・特定の日付**を書くことを\n禁止している（理由は残す。日付つきの記録は `docs/architecture.md` と `docs/history/` が持つ）。\nこの規約は3タスク（`shared` / `server` / `browser` を層ごとに分担）で **78ファイル・日付を\n含む削除行208行**を手で消して適用した。\n\n**どの層にも属さない `scripts/` が誰の担当にもならず、いまも残っている**（実測）:\n\n```\nscripts/build-ui.ts:2           // （2026-09-21 決定。…）\nscripts/open-views.ts:13        // …ページは 2026-09-12 に消した。\nscripts/capture-catalog.ts:17   // 自分では組み立てない（2026-09-21 決定。…）\nscripts/capture-catalog.ts:42   //  * 根拠。`hover` は 2026-09-21 に足した — …\n```\n\n**`src/` は0件、`test/` に出る日付は全部テストデータ**（`{ speaker: \"user\", text: \"ただいま\",\ndate: \"2026-09-20\" }` のような値）なので、コメント行に絞れば検査が空振りしない。次の1行で\n**上の4件だけが出る**ことを確認済み:\n\n```bash\ngrep -rnE '^[[:space:]]*(//|\\*|/\\*)' --include='*.ts' --include='*.tsx' src test scripts \\\n  | grep -E '20[0-9]{2}-[0-9]{2}-[0-9]{2}'\n```\n\n`oxlint` は `src test scripts` の3つを見ている（`package.json` の `lint`）のに、この規約だけ\n機械の検査が無い。\n\n## 決まっていること（蒸し返さない）\n\n- **`bun run check` にコメント内の日付を弾く検査を足す**（2026-09-22 ユーザーの承認）\n- 残る4件を消す\n- 検査の対象は `src test scripts` の3つ（`oxlint` と同じ範囲）\n\n## 解くべき論点\n\n- 検査をどこに置くか。`package.json` の `check` に並べる1つのスクリプトにするか、\n  `test/` のテスト（`test/architecture.test.ts` が規約をテストで守っている前例がある）にするか。\n  **テストにすると `bun test --isolate` の中で回り、落ちたときにどのファイルの何行目かが\n  出せる**\n- コメント行の見分け方。上の grep は行頭が `//` `*` `/*` のものだけを見る。**行の途中に\n  ある `//` のコメントは拾えない**（拾おうとすると文字列リテラルの中の `//` を誤検出する）。\n  どこまで見るかを決めて、決めた範囲を検査の側にコメントで書く\n- 日付の形。`2026-09-21` 以外の書き方（`2026年9月21日` など）を弾くか\n\n## やること\n\n1. 上の論点を決め、検査を足す（`bun run check` から必ず走る形にする）\n2. 残る4件のコメントを直す。**日付を消すだけにせず、理由（Why / Why not）は残す**\n   （`docs/coding-standards.md:153`）。経緯が要るものは `docs/architecture.md` か\n   `docs/history/` を指す\n3. `docs/workflow.md`「タスクを書くとき」に **「層で割った一括置換のタスクを書くときは、\n   どの層にも属さないディレクトリ（`scripts/` など）を本文に名指しする」**を1行足す\n4. `docs/coding-standards.md` の該当の表の行に、機械で検査していることを1行添える\n\n## 完了条件\n\n- `bun run check` が通る\n- 上の grep が**0件**になる\n- コメントに日付を1つ足すと `bun run check` が落ちることを確かめた（何を足して何が出たかを\n  evidence に書く）\n- `docs/workflow.md` に「どの層にも属さないディレクトリを名指しする」の1行がある\n\n## 注意\n\n- **`docs/` と `develop/` は検査の対象にしない。** ドキュメントは日付つきの記録を持つのが\n  正しい（`docs/history/` がそれ自体）\n- `test/` のテストデータの日付を消さない\n"
-  },
-  {
-    "id": "T-341",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "capture-catalog の一覧の出し方を、正典で --help に直す",
-    "status": "done",
-    "passes": true,
-    "evidence": "docs/architecture.md「手で確かめること」を「一覧は --help で出る。オプション無しは全件撮影で60秒では終わらない」に直した（grep オプション無し は833行の1件だけ）。--help は専用フラグを足さず（capture-view.ts・stop.ts と同じ「値の無いフラグは USAGE」の形に揃える）、その仕組みをスクリプト冒頭のコメントに書いた。--help の出力の先頭は「使い方: bun run scripts/capture-catalog.ts [オプション]」で、--only の行に16件の名前が並ぶ。bun run check: 1255 pass / 0 fail",
-    "task": "## 背景\n\n`docs/architecture.md:785` 付近の「手で確かめること」に、こう書いてある:\n\n> `--only` に使える名前の一覧はオプション無しで実行すると出る\n\n**実物と違う。** `scripts/capture-catalog.ts` をオプション無しで実行すると\n**カタログ16件×2枚＝32枚の全件撮影**が走り、一覧は出ない。1件のタスクの受け入れ中に実際に\nこれを踏み、60秒で終わらず背景に回して `pkill` した。\n\n一覧が出るのは次の2つ（実測）:\n\n- `--help`（`parseOptions` が値を取らないフラグを弾くので `USAGE` が stderr に出る。\n  `USAGE` の中に `${CATALOG.map((entry) => entry.name).join(\" / \")}` が入っている）\n- `--only` にカタログに無い名前を渡したとき（`カタログに無い名前: …` ＋ `USAGE`）\n\n## 決まっていること（蒸し返さない）\n\n- **`docs/architecture.md` の該当の1文を直す**（2026-09-22 ユーザーの承認）\n\n## 解くべき論点\n\n- **`--help` は明示的に扱われていない。** `parseOptions`（`scripts/capture-catalog.ts:473`）が\n  「値を取らないフラグ」を一律で弾いた結果として `USAGE` が出ているだけで、フラグとして\n  書かれていない（`USAGE` の中にも `--help` の行が無い）。ドキュメントを `--help` と書くなら、\n  **スクリプト側に `--help` を明示的に足すか**、いまの挙動のまま書くかを決める\n\n## やること\n\n1. `docs/architecture.md` の該当の1文を、実物に合う形に直す（オプション無しは全件撮影に\n   なることも書く。踏むと60秒では終わらないので）\n2. 上の論点を決める。`--help` を明示的に足すなら `USAGE` にもその行を足す\n3. **`scripts/capture-catalog.ts` のコメントに日付を書かない**（`docs/coding-standards.md:153`）\n\n## 完了条件\n\n- `bun run check` が通る\n- `grep -n 'オプション無し' docs/architecture.md` で、一覧が出るという記述が残っていない\n- `bun run scripts/capture-catalog.ts --help` が一覧を出すことを実際に確かめた\n  （出力の先頭数行を evidence に書く）\n\n## 注意\n\n- **オプション無しで実行しない**（32枚の全件撮影が走り、60秒では終わらない）\n"
-  },
-  {
     "id": "T-359",
     "difficulty": "opus",
     "loopable": "N",
@@ -163,28 +130,6 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-360",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "clock.ts を utils/ へ移し、lib と utils の線を言い換える",
-    "task": "## 背景\n\n`src/browser/lib/clock.ts` は `Temporal.Now.instant().epochMilliseconds` を返す1関数だけの\nファイルで、読み手は `features/character-view/character-view.tsx:31` と\n`features/dispatch/turn-status.tsx:12` の2つ。\n\n`docs/design.md`「`lib/` と `utils/` に置く基準」の手順2の表は、いま `lib/` を「**名指しできる\n技術**を知っている道具（React・DOM・WebSocket・`node:fs`）」と書いている。この読み方だと\n`Temporal` を使う `clock.ts` は `lib/` に落ちる（実際そこに置かれた。T-344 / T-345 で作られた\nばかり）。**2026-09-22 にユーザーが別の線を示した**ので、そちらに合わせる。\n\n`src/browser/utils/` は箱として存在しない。`test/architecture.test.ts:221` の `BROWSER_BOXES` に\n`utils` が無く、`browserBoxOf` は未知のディレクトリで `throw` する（同 298行）ので、**作ると\n即座に落ちる**。一方 `docs/design.md` 2章の箱の表には `utils/` の行が既にあり、\n**ドキュメントとテストが食い違っている**。\n\nエージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。\n\n## 決まっていること（蒸し返さない）\n\n- **`lib/` はライブラリのラッパー、`utils/` はライブラリに依存しない汎用の道具**\n  （2026-09-22 ユーザーの線）。`clock.ts` は `utils/` 側\n\n## 解くべき論点\n\n- **言い換えの影響が `clock.ts` の外に及ばないか。** いま `lib/` にあるもののうち\n  `socket.ts`（WebSocket）・`data-url.ts`（`FileReader`）はライブラリではなくブラウザの API\n  なので、新しい線で読むと行き先が変わりうる。及ぶなら、表現を選び直すか、及ぶファイルも\n  一緒に動かすかを決める（**動かすなら理由を `evidence` に書く**）\n- `ALLOWED_BROWSER_BOX_IMPORTS` の辺（`docs/design.md` 2章の箱の表では `features` /\n  `components` / `hooks` / `lib` / `stores` が `utils` を引けて、`utils` は何も引かない）\n- `clock.ts` が `docs/design.md` の「`utils/` の歯止め3つ」を満たすか\n\n## やること\n\n1. 上を決める\n2. `test/architecture.test.ts` の `BROWSER_BOXES` と `ALLOWED_BROWSER_BOX_IMPORTS` に `utils` を\n   足す\n3. `clock.ts` を `src/browser/utils/` へ移し、読み手2つの import を直す\n4. `docs/design.md` 手順2の表を、決めたとおりに直す\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/browser/lib/clock.ts` が無く、`src/browser/utils/` に移っている\n- 新しい箱の辺を `test/architecture.test.ts` が検査している（`utils` が何かを引いたら落ちる\n  ことも含む）\n- `docs/design.md` の手順2の表と、実際の `lib/` の中身が食い違っていない\n\n## 注意\n\n- 描画に関わらないので目視確認は要らない\n- **`lib/` の他のファイルを動かすなら、動かした理由を `evidence` に1行書く**（この\n  タスクの主題は `clock.ts` 1件）\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "clock.ts を browser/utils/ へ git mv（読み手は3つ: use-character-view.ts・turn-status.tsx・lib/refresh.ts）。線は「言語の標準（ECMAScript の組み込み）か、その外（外部パッケージ・実行環境の API・外部システム）か」に引き、lib/ の他の11件は言語の外を包むので動かしていない。architecture.test.ts に utils の箱と「browser/utils/ の import」を足し、clock.ts に ../lib/reduced-motion.ts・remeda・../../shared/command.ts を足すとそれぞれ落ちることを確かめて戻した。bun run check: 1255 pass / 0 fail"
-  },
-  {
-    "id": "T-361",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-309"],
-    "summary": "雑談の要約の口を、呼ぶ側の分岐1回に寄せる",
-    "status": "done",
-    "passes": true,
-    "evidence": "ChatMemorySources.chatSummary を ChatSummary にし、「仕事のときは載せない」を session-start.ts の mode.kind === \"chat\" の分岐1回に寄せた（? mode.chatSummary : undefined は0件）。「仕事のとき（undefined）は載らない」のテストは落とした: 判断が呼ぶ側の非公開関数 startDriver に移り、core のテストでは検査できないため。要約・旗・逐語の既存ケースは全 pass。bun run check: 1254 pass / 0 fail（1件減はこの削除）",
-    "task": "## 背景\n\nT-308 で `SessionDriverOptions` の雑談の4つの口を `mode: SessionMode`\n（`{ kind: \"work\" } | { kind: \"chat\"; ... }`）に畳んだ。**畳んだ直後にほどき直している箇所が\n1つ残っている**——`src/session-start.ts` の\n\n```ts\nchatSummary: mode.kind === \"chat\" ? mode.chatSummary : undefined,\n```\n\nで、受け手の `ChatMemorySources.chatSummary`（`src/server/core/chat-memory-prompt.ts:97`）が\n`ChatSummary | undefined` のままだから。`takeChatMemoryPromptParts` の先頭にある\n`if (chatSummary === undefined) return []` は「仕事のときは何も載せない」という**呼ぶ側が\n既に知っている条件**を、もう一度内側で判定している。\n\n`docs/coding-standards.md`「「無い」は入口で畳み、内側の関数は「必ず値がある」型で受ける\n（層をまたいで運ばない）」の未適用箇所。調査の一覧（`docs/research/undefined-reduction.md`\n2.1）には `resume`（#5）として別の行だけが載っていて、この `chatSummary` の行は入っていない。\n\n## やること\n\n1. `ChatMemorySources.chatSummary` を `ChatSummary`（`| undefined` なし）にする\n2. `takeChatMemoryPromptParts` の先頭の `undefined` 判定を落とす。**「仕事のときは載せない」の\n   判断は呼ぶ側（`src/session-start.ts`）の `mode.kind === \"chat\"` の分岐1回に寄せる**\n   （雑談でないときは `takeChatMemoryPromptParts` を呼ばず空の配列にする）\n3. 関数の JSDoc と 21行目あたりのコメントから「`chatSummary` が undefined のとき」の説明を、\n   実際の形（呼ばれるのは雑談のときだけ）に直す\n4. `test/server/core/chat-memory-prompt.test.ts` の「仕事のとき（undefined）は何も載らない」を\n   検査しているケースを、呼ぶ側の分岐を写した形に置き換えるか落とす（**落とすなら\n   `evidence` に理由を1行書く**）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/server/core/chat-memory-prompt.ts` から `chatSummary: ChatSummary | undefined` が消え、\n  `src/session-start.ts` に `? mode.chatSummary : undefined` の形が残っていない\n- 雑談モードで起こしたときに要約・旗・逐語の3つが従来どおり `systemPrompt` に載る\n  （**単体テストで足りる**。tsukumo を起こす目視までは要らない）\n\n## 注意\n\n- **`resume: string | undefined` には触らない**（T-309 の主題。同じ型を2つのタスクで\n  書き換えないよう、こちらは `chatSummary` の1行だけに絞る）\n- `session-driver.ts` / `sdk-driver.ts` は触らない（T-308 で片付いている）\n"
   },
   {
     "id": "T-364",

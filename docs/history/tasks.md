@@ -23090,3 +23090,301 @@ T-338 は character-screen、T-339 は layout と token-usage）。
 
 - **振る舞いを変えない移動**。立ち絵の往復のパラメータ（`src/shared/portrait-motion.ts` 側の
   値）には触らない
+
+## T-312
+
+**タスク**: ツールの結果と本文の「まだ来ていない」を合併型にする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-307, T-311 / **passes**: True
+
+**evidence**:
+
+ツールは status: ToolRunStatus（running | finished{result}）、ステップの本文は body: MainViewStepBody（none | text{report, firstLine}）にし、4行の | undefined を消した（firstLine は本文を作るときに一緒に決める）。SessionRecord はディスクに保存されないので互換の扱いは不要。bun run check: 1256 pass / 0 fail / 目視: 疑似セッション（TSUKUMO_DRIVER=fake、ポート 7391〜7396、HOME は一時ディレクトリ）を capture-view.ts 1400x900 で撮り、HEAD の組み立てと同じ場面・同じ秒で比べた。long-tool・narration-stuck でツール実行中→本文へ切り替わり、interim-flicker で中間レポート→最終レポート、本文の無いステップは高さ0・横はみ出し0で、測った値は HEAD と一致
+
+## 背景
+
+2つの組が「まだ来ていない」を `| undefined` で表している
+（調査は `docs/research/undefined-reduction.md` 2.1 の #6 #7）。
+
+- `src/shared/session-state.ts:97` / `src/shared/main-view.ts:58` の `result: {...} | undefined`
+  ——**ツールがまだ終わっていない**
+- `src/shared/main-view.ts:98,102` の `report` / `firstLine` ——**本文がまだ来ていない**
+  （2つは同時に入るか同時に無いかの2択）
+
+どちらも `docs/coding-standards.md`「### 複数の「無い」が1つの状態」の未適用箇所。
+
+## やること
+
+1. ツールの結果を **`{ kind: "running" } | { kind: "finished"; result }`** にする
+2. 本文を **`body: { kind: "none" } | { kind: "text"; report; firstLine }`** にする
+3. 読む側（メインビューのレポート描画・ツールの行）を `kind` の分岐に直す
+4. `!` や `as` で潰さない
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `src/shared/session-state.ts:97` と `src/shared/main-view.ts:58,98,102` の
+  `| undefined` が4行とも消えている
+- **目視確認**: tsukumo を起こし、(1) ツール実行中の表示と完了後の表示が従来どおり切り替わる、
+  (2) 中間レポートと最終レポートが従来どおり出る、(3) 本文が空のターンで崩れない——の3つを
+  確かめて `evidence` に書く
+
+## 注意
+
+- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）
+- **`SessionState` を触る3つのタスクは並行させない。** `dependencies` で直列にしてある
+- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない
+
+## T-340
+
+**タスク**: コメント内の日付を check で弾き、scripts/ に残る4件を消す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+検査は test/architecture.test.ts「コメント中の日付」（行頭 // * /* の行で YYYY-MM-DD を弾く。既存の規約検査と同じ置き場で bun run check から走る）。src/test/scripts の日付つきコメント20件を Why を残して消し、grep は0件。config.ts:44 に「2026-09-23 までは」を一時的に戻すと 1254 pass / 1 fail（src/server/core/config.ts:44）で落ち、戻して 1255 pass / 0 fail。docs/workflow.md に「どの層にも属さないディレクトリを名指しする」の1行を足した
+
+## 背景
+
+`docs/coding-standards.md:153` の表は、コメントに**いつ決まったか・特定の日付**を書くことを
+禁止している（理由は残す。日付つきの記録は `docs/architecture.md` と `docs/history/` が持つ）。
+この規約は3タスク（`shared` / `server` / `browser` を層ごとに分担）で **78ファイル・日付を
+含む削除行208行**を手で消して適用した。
+
+**どの層にも属さない `scripts/` が誰の担当にもならず、いまも残っている**（実測）:
+
+```
+scripts/build-ui.ts:2           // （2026-09-21 決定。…）
+scripts/open-views.ts:13        // …ページは 2026-09-12 に消した。
+scripts/capture-catalog.ts:17   // 自分では組み立てない（2026-09-21 決定。…）
+scripts/capture-catalog.ts:42   //  * 根拠。`hover` は 2026-09-21 に足した — …
+```
+
+**`src/` は0件、`test/` に出る日付は全部テストデータ**（`{ speaker: "user", text: "ただいま",
+date: "2026-09-20" }` のような値）なので、コメント行に絞れば検査が空振りしない。次の1行で
+**上の4件だけが出る**ことを確認済み:
+
+```bash
+grep -rnE '^[[:space:]]*(//|\*|/\*)' --include='*.ts' --include='*.tsx' src test scripts \
+  | grep -E '20[0-9]{2}-[0-9]{2}-[0-9]{2}'
+```
+
+`oxlint` は `src test scripts` の3つを見ている（`package.json` の `lint`）のに、この規約だけ
+機械の検査が無い。
+
+## 決まっていること（蒸し返さない）
+
+- **`bun run check` にコメント内の日付を弾く検査を足す**（2026-09-22 ユーザーの承認）
+- 残る4件を消す
+- 検査の対象は `src test scripts` の3つ（`oxlint` と同じ範囲）
+
+## 解くべき論点
+
+- 検査をどこに置くか。`package.json` の `check` に並べる1つのスクリプトにするか、
+  `test/` のテスト（`test/architecture.test.ts` が規約をテストで守っている前例がある）にするか。
+  **テストにすると `bun test --isolate` の中で回り、落ちたときにどのファイルの何行目かが
+  出せる**
+- コメント行の見分け方。上の grep は行頭が `//` `*` `/*` のものだけを見る。**行の途中に
+  ある `//` のコメントは拾えない**（拾おうとすると文字列リテラルの中の `//` を誤検出する）。
+  どこまで見るかを決めて、決めた範囲を検査の側にコメントで書く
+- 日付の形。`2026-09-21` 以外の書き方（`2026年9月21日` など）を弾くか
+
+## やること
+
+1. 上の論点を決め、検査を足す（`bun run check` から必ず走る形にする）
+2. 残る4件のコメントを直す。**日付を消すだけにせず、理由（Why / Why not）は残す**
+   （`docs/coding-standards.md:153`）。経緯が要るものは `docs/architecture.md` か
+   `docs/history/` を指す
+3. `docs/workflow.md`「タスクを書くとき」に **「層で割った一括置換のタスクを書くときは、
+   どの層にも属さないディレクトリ（`scripts/` など）を本文に名指しする」**を1行足す
+4. `docs/coding-standards.md` の該当の表の行に、機械で検査していることを1行添える
+
+## 完了条件
+
+- `bun run check` が通る
+- 上の grep が**0件**になる
+- コメントに日付を1つ足すと `bun run check` が落ちることを確かめた（何を足して何が出たかを
+  evidence に書く）
+- `docs/workflow.md` に「どの層にも属さないディレクトリを名指しする」の1行がある
+
+## 注意
+
+- **`docs/` と `develop/` は検査の対象にしない。** ドキュメントは日付つきの記録を持つのが
+  正しい（`docs/history/` がそれ自体）
+- `test/` のテストデータの日付を消さない
+
+## T-341
+
+**タスク**: capture-catalog の一覧の出し方を、正典で --help に直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/architecture.md「手で確かめること」を「一覧は --help で出る。オプション無しは全件撮影で60秒では終わらない」に直した（grep オプション無し は833行の1件だけ）。--help は専用フラグを足さず（capture-view.ts・stop.ts と同じ「値の無いフラグは USAGE」の形に揃える）、その仕組みをスクリプト冒頭のコメントに書いた。--help の出力の先頭は「使い方: bun run scripts/capture-catalog.ts [オプション]」で、--only の行に16件の名前が並ぶ。bun run check: 1255 pass / 0 fail
+
+## 背景
+
+`docs/architecture.md:785` 付近の「手で確かめること」に、こう書いてある:
+
+> `--only` に使える名前の一覧はオプション無しで実行すると出る
+
+**実物と違う。** `scripts/capture-catalog.ts` をオプション無しで実行すると
+**カタログ16件×2枚＝32枚の全件撮影**が走り、一覧は出ない。1件のタスクの受け入れ中に実際に
+これを踏み、60秒で終わらず背景に回して `pkill` した。
+
+一覧が出るのは次の2つ（実測）:
+
+- `--help`（`parseOptions` が値を取らないフラグを弾くので `USAGE` が stderr に出る。
+  `USAGE` の中に `${CATALOG.map((entry) => entry.name).join(" / ")}` が入っている）
+- `--only` にカタログに無い名前を渡したとき（`カタログに無い名前: …` ＋ `USAGE`）
+
+## 決まっていること（蒸し返さない）
+
+- **`docs/architecture.md` の該当の1文を直す**（2026-09-22 ユーザーの承認）
+
+## 解くべき論点
+
+- **`--help` は明示的に扱われていない。** `parseOptions`（`scripts/capture-catalog.ts:473`）が
+  「値を取らないフラグ」を一律で弾いた結果として `USAGE` が出ているだけで、フラグとして
+  書かれていない（`USAGE` の中にも `--help` の行が無い）。ドキュメントを `--help` と書くなら、
+  **スクリプト側に `--help` を明示的に足すか**、いまの挙動のまま書くかを決める
+
+## やること
+
+1. `docs/architecture.md` の該当の1文を、実物に合う形に直す（オプション無しは全件撮影に
+   なることも書く。踏むと60秒では終わらないので）
+2. 上の論点を決める。`--help` を明示的に足すなら `USAGE` にもその行を足す
+3. **`scripts/capture-catalog.ts` のコメントに日付を書かない**（`docs/coding-standards.md:153`）
+
+## 完了条件
+
+- `bun run check` が通る
+- `grep -n 'オプション無し' docs/architecture.md` で、一覧が出るという記述が残っていない
+- `bun run scripts/capture-catalog.ts --help` が一覧を出すことを実際に確かめた
+  （出力の先頭数行を evidence に書く）
+
+## 注意
+
+- **オプション無しで実行しない**（32枚の全件撮影が走り、60秒では終わらない）
+
+## T-360
+
+**タスク**: clock.ts を utils/ へ移し、lib と utils の線を言い換える
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+clock.ts を browser/utils/ へ git mv（読み手は3つ: use-character-view.ts・turn-status.tsx・lib/refresh.ts）。線は「言語の標準（ECMAScript の組み込み）か、その外（外部パッケージ・実行環境の API・外部システム）か」に引き、lib/ の他の11件は言語の外を包むので動かしていない。architecture.test.ts に utils の箱と「browser/utils/ の import」を足し、clock.ts に ../lib/reduced-motion.ts・remeda・../../shared/command.ts を足すとそれぞれ落ちることを確かめて戻した。bun run check: 1255 pass / 0 fail
+
+## 背景
+
+`src/browser/lib/clock.ts` は `Temporal.Now.instant().epochMilliseconds` を返す1関数だけの
+ファイルで、読み手は `features/character-view/character-view.tsx:31` と
+`features/dispatch/turn-status.tsx:12` の2つ。
+
+`docs/design.md`「`lib/` と `utils/` に置く基準」の手順2の表は、いま `lib/` を「**名指しできる
+技術**を知っている道具（React・DOM・WebSocket・`node:fs`）」と書いている。この読み方だと
+`Temporal` を使う `clock.ts` は `lib/` に落ちる（実際そこに置かれた。T-344 / T-345 で作られた
+ばかり）。**2026-09-22 にユーザーが別の線を示した**ので、そちらに合わせる。
+
+`src/browser/utils/` は箱として存在しない。`test/architecture.test.ts:221` の `BROWSER_BOXES` に
+`utils` が無く、`browserBoxOf` は未知のディレクトリで `throw` する（同 298行）ので、**作ると
+即座に落ちる**。一方 `docs/design.md` 2章の箱の表には `utils/` の行が既にあり、
+**ドキュメントとテストが食い違っている**。
+
+エージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。
+
+## 決まっていること（蒸し返さない）
+
+- **`lib/` はライブラリのラッパー、`utils/` はライブラリに依存しない汎用の道具**
+  （2026-09-22 ユーザーの線）。`clock.ts` は `utils/` 側
+
+## 解くべき論点
+
+- **言い換えの影響が `clock.ts` の外に及ばないか。** いま `lib/` にあるもののうち
+  `socket.ts`（WebSocket）・`data-url.ts`（`FileReader`）はライブラリではなくブラウザの API
+  なので、新しい線で読むと行き先が変わりうる。及ぶなら、表現を選び直すか、及ぶファイルも
+  一緒に動かすかを決める（**動かすなら理由を `evidence` に書く**）
+- `ALLOWED_BROWSER_BOX_IMPORTS` の辺（`docs/design.md` 2章の箱の表では `features` /
+  `components` / `hooks` / `lib` / `stores` が `utils` を引けて、`utils` は何も引かない）
+- `clock.ts` が `docs/design.md` の「`utils/` の歯止め3つ」を満たすか
+
+## やること
+
+1. 上を決める
+2. `test/architecture.test.ts` の `BROWSER_BOXES` と `ALLOWED_BROWSER_BOX_IMPORTS` に `utils` を
+   足す
+3. `clock.ts` を `src/browser/utils/` へ移し、読み手2つの import を直す
+4. `docs/design.md` 手順2の表を、決めたとおりに直す
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `src/browser/lib/clock.ts` が無く、`src/browser/utils/` に移っている
+- 新しい箱の辺を `test/architecture.test.ts` が検査している（`utils` が何かを引いたら落ちる
+  ことも含む）
+- `docs/design.md` の手順2の表と、実際の `lib/` の中身が食い違っていない
+
+## 注意
+
+- 描画に関わらないので目視確認は要らない
+- **`lib/` の他のファイルを動かすなら、動かした理由を `evidence` に1行書く**（この
+  タスクの主題は `clock.ts` 1件）
+
+## T-361
+
+**タスク**: 雑談の要約の口を、呼ぶ側の分岐1回に寄せる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-309 / **passes**: True
+
+**evidence**:
+
+ChatMemorySources.chatSummary を ChatSummary にし、「仕事のときは載せない」を session-start.ts の mode.kind === "chat" の分岐1回に寄せた（? mode.chatSummary : undefined は0件）。「仕事のとき（undefined）は載らない」のテストは落とした: 判断が呼ぶ側の非公開関数 startDriver に移り、core のテストでは検査できないため。要約・旗・逐語の既存ケースは全 pass。bun run check: 1254 pass / 0 fail（1件減はこの削除）
+
+## 背景
+
+T-308 で `SessionDriverOptions` の雑談の4つの口を `mode: SessionMode`
+（`{ kind: "work" } | { kind: "chat"; ... }`）に畳んだ。**畳んだ直後にほどき直している箇所が
+1つ残っている**——`src/session-start.ts` の
+
+```ts
+chatSummary: mode.kind === "chat" ? mode.chatSummary : undefined,
+```
+
+で、受け手の `ChatMemorySources.chatSummary`（`src/server/core/chat-memory-prompt.ts:97`）が
+`ChatSummary | undefined` のままだから。`takeChatMemoryPromptParts` の先頭にある
+`if (chatSummary === undefined) return []` は「仕事のときは何も載せない」という**呼ぶ側が
+既に知っている条件**を、もう一度内側で判定している。
+
+`docs/coding-standards.md`「「無い」は入口で畳み、内側の関数は「必ず値がある」型で受ける
+（層をまたいで運ばない）」の未適用箇所。調査の一覧（`docs/research/undefined-reduction.md`
+2.1）には `resume`（#5）として別の行だけが載っていて、この `chatSummary` の行は入っていない。
+
+## やること
+
+1. `ChatMemorySources.chatSummary` を `ChatSummary`（`| undefined` なし）にする
+2. `takeChatMemoryPromptParts` の先頭の `undefined` 判定を落とす。**「仕事のときは載せない」の
+   判断は呼ぶ側（`src/session-start.ts`）の `mode.kind === "chat"` の分岐1回に寄せる**
+   （雑談でないときは `takeChatMemoryPromptParts` を呼ばず空の配列にする）
+3. 関数の JSDoc と 21行目あたりのコメントから「`chatSummary` が undefined のとき」の説明を、
+   実際の形（呼ばれるのは雑談のときだけ）に直す
+4. `test/server/core/chat-memory-prompt.test.ts` の「仕事のとき（undefined）は何も載らない」を
+   検査しているケースを、呼ぶ側の分岐を写した形に置き換えるか落とす（**落とすなら
+   `evidence` に理由を1行書く**）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `src/server/core/chat-memory-prompt.ts` から `chatSummary: ChatSummary | undefined` が消え、
+  `src/session-start.ts` に `? mode.chatSummary : undefined` の形が残っていない
+- 雑談モードで起こしたときに要約・旗・逐語の3つが従来どおり `systemPrompt` に載る
+  （**単体テストで足りる**。tsukumo を起こす目視までは要らない）
+
+## 注意
+
+- **`resume: string | undefined` には触らない**（T-309 の主題。同じ型を2つのタスクで
+  書き換えないよう、こちらは `chatSummary` の1行だけに絞る）
+- `session-driver.ts` / `sdk-driver.ts` は触らない（T-308 で片付いている）
