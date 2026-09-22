@@ -185,5 +185,60 @@
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n`Readonly<Record<Expression, string | undefined>>` が**2つの用途に兼用されている**\n（調査は `docs/research/undefined-reduction.md` 2.2）。\n\n| 用途 | 持ち主 | 「この表情だけ無い」が意味を持つか |\n| --- | --- | --- |\n| 定義ファイルの写し | `CharacterDefinition.portraits`（`src/shared/character-definition.ts:34`） | **持つ**（`src/shared/expression-choice.ts:37` が `speak` の選択肢を作るのに使う） |\n| 画面へ渡す姿 | `CharacterInfo.portraits`（`src/shared/character.ts:30`） | **持たない**（読む側が `resolvePortraitUrl` で必ず `?? portraits.default` に落としている。`character.ts:183`） |\n| 編集画面の手持ち | `HeldPortraits`（`character-create.tsx:40`） | **持つ**（「まだ入れていない枠」を数える。`character-create.tsx:57`） |\n\n**真ん中だけが畳める。** `CharacterInfo.portraits` を作る時点で `default` への\nフォールバックを済ませ、**`Readonly<Record<Expression, string>>` の全域なレコード**にする。\n`outfitAccents` も同じ。\n\nこれは `docs/coding-standards.md`「### 「無い」を層をまたいで運ばない」そのもので、\n規約の変更は要らない。**7件のうち一番大きく、13〜17行が消える。**\n\n## 解くべき論点\n\n- `default` の立ち絵すら無いパックをどう扱うか。調査の提案は「**表ごと持たない**」\n  （`portraits: Readonly<Record<Expression, string>> | undefined` が1つ残る）\n- `resolvePortraitUrl` / `resolveOutfitAccent` は**関数ごと不要になる**（表を引くだけになる）。\n  呼ぶ側の `??` も落ちる。消して良いか、名前を残す価値があるか\n\n## やること\n\n1. `CharacterInfo.portraits` と `CharacterInfo.outfitAccents` を、入口で `default` に\n   畳んだ**全域なレコード**にする\n2. `src/shared/character.ts` の 30 / 38 / 130 / 132 / 149 / 150 / 151 / 155（`EMPTY_PORTRAITS`）/\n   166（`EMPTY_OUTFIT_ACCENTS`）/ 180 / 182 / 188 / 190 を直す\n3. 呼ぶ側の `??` を落とす（`character-view.tsx:135,137` / `chat-view.tsx:99,101` /\n   `mini-portrait.tsx:50` / `character-edit.tsx:96,199`）\n4. **`CharacterDefinition.portraits` と `HeldPortraits` は畳まない**（「この表情だけ無い」が\n   意味を持つため）\n5. **`ReadonlyMap<Expression, string>` にする案は採らない**（`Map.get` の戻り値が\n   `string | undefined` なので、型注釈から消えるだけで使う側の `undefined` は減らない）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/shared/character.ts` から `EMPTY_PORTRAITS` / `EMPTY_OUTFIT_ACCENTS` が消えている\n- `| undefined` の減った行数を `evidence` に書く（`grep -c '| undefined' src/shared/character.ts`\n  の前後の値）\n- **目視確認**: tsukumo を起こし、(1) 立ち絵が表情ごとに切り替わる、(2) ミニ立ち絵が出る、\n  (3) キャラクター編集画面で立ち絵と差し色が従来どおり出る、(4) 一部の表情の絵が無いパックで\n  `default` に落ちる——の4つを確かめて `evidence` に書く\n- **`speak` の表情の選択肢が減っていない**（`expression-choice.ts` は定義ファイル側を見ており、\n  畳んだ表とは別であることを確かめる）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- **ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。** 目視で確かめるときは\n  どちらが出ているかを意識する\n- 目視確認が要るので、tsukumo を起こす他のタスクと同時に走らせない\n- 表情に `bored` を足すタスクと**同じファイル（`character.ts` / `character-definition.ts`）を\n  触る**。片方が `doing` の間は着手しない\n"
+  },
+  {
+    "id": "T-318",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "ターンごとのトークン消費を日付ごとの JSONL に記録する",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n**トークン消費を減らしたいが、いま何にどれだけ使っているかの記録がどこにも残っていない。**\n`grep -rn usage src` は0件で、SDK が渡してくる使用量は届いた時点で捨てている。\n\n受け口は既にある: `src/server/core/sdk-message.ts:84` の `case \"result\"`。SDK の `result`\nメッセージには次の2つが乗る（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts:1354` と\n同 5417 付近の型定義で確認済み）:\n\n| 口 | 中身 | 注意 |\n| --- | --- | --- |\n| `modelUsage` | `Record<string, ModelUsage>`。モデル別で**サブエージェント・内部呼び出しも含む** | **query() 内の累計**。ターンごとに出すには前回との差分を取る |\n| `usage` | メインループのみの使用量 | **サブエージェントを含まない**ので集計には使わない（型定義のコメントがそう言っている） |\n\n`ModelUsage` のフィールドは `inputTokens` / `outputTokens` / `thinkingTokens` /\n`cacheReadInputTokens` / `cacheCreationInputTokens` / `costUSD` / `contextWindow` /\n`maxOutputTokens` / `canonicalModel` / `provider`。`result` には `total_cost_usd` もある。\n\n置き場の前例は `src/server/adapter/chat-archive.ts`（`~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`）。\n**adapter は「どこに・どんな形で」だけを持ち、「何をいつ書くか」は core が決める**という\n切り分けがそこに書いてある。\n\n## 決まっていること（蒸し返さない）\n\n- **タスク（`T-xxx`）には紐づけない。** 行に持たせるのは ISO 8601 の日時・セッションID・\n  モード（仕事/雑談）まで。`T-xxx` との突き合わせは、必要になったらコミット時刻と\n  時間帯で後追いする（ユーザーの選択）。**`develop/tasks.json` を読みに行かない**\n- 置き場は `~/.tsukumo/` の下の**日付ごとのファイル**（`chat-archive` と同じ考え方）\n- **記録してよいのは数・名前・時刻だけ。** 会話の中身・依頼の文面・ツールの引数・ツールの\n  結果の本文は1文字も書かない（`docs/coding-standards.md`「会話内容の扱い」。この規約が最優先）\n- 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない）\n\n## 解くべき論点\n\n- **1行を何の単位にするか。** ターン1つか、`result` 1つか（`result` は累計を運ぶので、\n  差分を取った時点で「前の `result` からの増分」になる）\n- **差分の状態をどこが持つか。** `src/server/core/session-manager.ts` か\n  `src/server/core/sdk-message.ts` か。`sdk-message.ts` は変換だけで状態を持たない作りなので、\n  そこに前回値を置くと性格が変わる\n- **累計が振り出しに戻る場合の扱い。** 型定義は「resumed sessions start fresh」「mid-session の\n  `/clear` で running total がリセットされる」と言っている。**負の差分を書かない**ようにする\n- **モデルが複数出たとき**（サブエージェントが別モデル）1行に畳むか、モデルごとに1行か\n- パックごとに分けるか（`chat-archive` はパックごと）。使用量はパックに依らないので日付だけで\n  足りるか\n\n## やること\n\n1. 記録1行の形を `src/shared/` に型として置く（ISO 8601 の日時を必ず持たせる）\n2. `src/server/adapter/` に書き口を足す（日付ごとの JSONL への追記。1ファイル = 1つの境界）\n3. core で `result` の `modelUsage` から差分を作り、1行に変換する\n4. 差分の取り方をテストで固定する（累計 → 増分、振り出しに戻ったときに負を書かない）\n5. **会話の中身が1文字も入らないことをテストで固定する**（依頼の文面・ツールの引数・\n   ツールの結果を渡しても、書かれる行に現れない）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- テストを3件以上足している（差分・振り出しに戻る場合・会話の中身が入らないこと）\n- **目視確認**: tsukumo を起こして1ターン回し、日付ごとの JSONL に行が増えることを確かめて\n  `evidence` に書く。**書くのは行数と数値の桁だけで、会話に触れる値は写さない**\n- 行に ISO 8601 の日時が入っている（`evidence` に1行ぶんのキーの並びを書く。値は書かない）\n\n## 注意\n\n- **会話内容の扱いが最優先。** 迷ったら書かない側に倒す\n- 目視確認で tsukumo を起こすので、同じく起こすタスクと並行させない\n- `src/server/core/sdk-message.ts` は「SDK の型を import しない」規約がある\n  （依存は `src/server/adapter/sdk-driver.ts` に閉じる）。`unknown` で受けて検証する形を崩さない\n"
+  },
+  {
+    "id": "T-319",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-318"],
+    "summary": "記録にツール別・サブエージェント別の内訳を足す",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\nターンごとの合計（T-318）だけでは**どこを削ればよいかが分からない**。実測では、1つのタスクで\nメインが新規入力 43,145・委譲先が 55,431 で、**まっさらな文脈で起動するサブエージェントのほうが\n重い**と分かった。この種の判断をするには、ターンの中を「何が文脈を膨らませたか」で割る必要がある。\n\n割るのに使える材料は既に `src/server/core/sdk-message.ts` を通っている:\n\n- ツールの名前（`tool-started` に変換している）と、その結果\n- **サブエージェントのフレームは `parent_tool_use_id` が非 null**（SDK の型定義\n  `sdk.d.ts:3389`。「non-null when the message was produced inside a subagent」）\n\n**ストリーミング中の `assistant` メッセージの `usage` は確定値ではない**（同型定義 3381:\n「several consecutive assistant messages can share message.id ... message.usage is not final」）。\n実際、transcript を後追いで集計したとき最初の行を取ったせいで出力が 791 トークンに見えた\n（本当は 13,371）。**ステップごとの usage を根拠にするなら、同じ `message.id` の最後を取る。**\n\n## 決まっていること（蒸し返さない）\n\n- **ツールの結果は「長さ」だけを数える。** 本文も引数も記録しない\n  （`docs/coding-standards.md`「会話内容の扱い」）\n- 記録の行は T-318 が決めた形の上に足す（別のファイルを作らない）\n\n## 解くべき論点\n\n- **「長さ」を何で測るか**（文字数・バイト数・トークン換算）。トークン換算するなら、その係数の\n  根拠を `evidence` に書く。**根拠を出せないなら換算しない**\n- ツール名ごとに畳むか、呼び出し1件ずつ残すか（1ターンで数十件になるので、畳むほうが行が軽い）\n- サブエージェントぶんを**同じ行の内訳**にするか、別の行にするか。`parent_tool_use_id` で\n  区別はできるが、モデル別の差分（T-318）とどう突き合わせるかを決める\n- ステップごとの usage を記録に含めるか。含めるなら「同じ `message.id` の最後を取る」ことを\n  テストで固定する\n\n## やること\n\n1. T-318 の行に内訳の欄を足す（ツール名ごとの呼び出し回数と結果の長さの合計）\n2. `parent_tool_use_id` を見て、サブエージェントぶんを別立てで数える\n3. 内訳の合計がターンの合計と矛盾しないことをテストで固定する\n4. **ステップごとの usage を含めるなら**、同じ `message.id` の最後を取ることをテストで固定する\n   （最初の行は `output_tokens` が 1〜3 になる）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- テストを3件以上足している（ツール別の集計・サブエージェントの別立て・会話の中身が入らないこと）\n- **目視確認**: tsukumo を起こしてツールを数回使うターンを回し、記録にツール別の内訳が\n  出ることを確かめて `evidence` に書く（数だけ。ツール名以外の文面は写さない）\n\n## 注意\n\n- **会話内容の扱いが最優先**\n- T-318 と同じファイルを触るので、片方が `doing` の間は着手しない（`dependencies` で直列にしてある）\n"
+  },
+  {
+    "id": "T-320",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-318"],
+    "summary": "記録を期間で切って畳む集計の口を core に置く",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n記録（T-318・T-319）は日付ごとの JSONL なので、**期間で切って足す口が無いと分析ページが作れない**。\n読む（ファイルを選んで開く）のは adapter、足す（期間で切る・モデル別やツール別に畳む）のは core\nという切り分けにする（原則2・原則3。`core → adapter` は禁止で、`test/architecture.test.ts` が落とす）。\n\n前例は `src/server/adapter/chat-archive.ts` の `readRecent`（遡って集めることと並べ替えだけを\nadapter が持ち、何を載せるかは呼ぶ側が決める）。\n\n## 決まっていること（蒸し返さない）\n\n- 集計は**純関数**として core に置く（ファイルに触らない。テストで固定できる形）\n- 期間の指定は呼ぶ側から渡す（この口が「今日」「今週」を自分で決めない）\n\n## 解くべき論点\n\n- **日付の境界をどのタイムゾーンで切るか。** 記録は ISO 8601（UTC）で、利用者が見たいのは\n  ローカルの日付。どちらで畳むかを決めてテストで固定する\n- 畳む軸をどこまで用意するか（日ごと・モデル別・モード別・ツール別）。**分析ページ（T-321）が\n  要る軸だけ**にして、使わない軸を先に作らない\n- 記録が無い日・壊れた行が混じっている日の扱い（**壊れた行は落として続ける**。常駐プロセスは\n  1回の失敗で落ちない）\n\n## やること\n\n1. adapter に読み口を足す（日付の範囲からファイルを選んで、行の並びを返す）\n2. core に集計の純関数を置く（期間で切り、決めた軸で畳む）\n3. テストを足す: 日またぎの境界・記録が無い日・壊れた行が混じる場合\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- テストを3件以上足している（日またぎ・空の期間・壊れた行）\n- `test/architecture.test.ts` が通る（`core → adapter` の辺を作っていない）\n\n## 注意\n\n- 読んだ記録を**ログにも画面のエラーにも出さない**（数だけを扱う口にする）\n- T-318 が決めた行の形に依存するので、先に T-318 を終わらせる（`dependencies` にしてある）\n"
+  },
+  {
+    "id": "T-321",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-319", "T-320"],
+    "summary": "トークン消費を見る画面を独立した screen として出す",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n記録（T-318・T-319）と集計の口（T-320）が揃っても、**見る場所が無い**。\n\n画面の切り替えは**既にある**: `src/browser/stores/screen.tsx` が `Screen` の union と\n`SCREEN_HASH` を持ち、`navigateTo` が `window.location.hash` を書き換える。`src/browser/main.tsx:71`\nが `screen === \"character\"` で `<CharacterScreen />` を出している。**新しい HTTP の経路を足さなくても、\n`screen` に1つ足せば別画面として出せる。**\n\nグラフの道具も揃っている: **chart.js は既に vendor として配られている**\n（`src/server/adapter/vendor-asset.ts`。mermaid と同じで、要るときだけブラウザが取りに来る。\n束ねには入れない）。**新しい依存は要らない。**\n\n## 決まっていること（蒸し返さない）\n\n- **常駐の画面（立ち絵・メインビュー・サイドバー）の中に混ぜない**（ユーザーの選択）。\n  独立した画面として出す\n- **画面への入口をどこに置くか（ヘッダーを作るかどうか）は別タスクで決める。** このタスクは\n  hash で直接開ければよく、恒久的な入口はそちらに従う\n- 新しい依存を足さない（chart.js を使う）\n\n## 解くべき論点\n\n- **何を見せると「減らす判断」ができるか。** 候補は日ごとの推移・モデル別・モード別\n  （仕事/雑談）・ツール別の上位・1ターンあたりの中央値。**判断が変わらないものは出さない**\n- 既定で見せる期間（直近7日か30日か）と、切り替えを付けるか\n- 数そのものを読ませたいところは**表**、大小や傾きを見せたいところは**グラフ**という割り振り\n- 新しい `screen` を足すか、新しい経路（`/usage`）にするか。**既存の `screen` に足すほうが安い**が、\n  常駐のページを重くしないかを見る（chart.js は要求時に取りに行く形を崩さない）\n\n## やること\n\n1. `src/browser/stores/screen.tsx` の `Screen` に1つ足し、`main.tsx` に分岐を足す\n2. `src/browser/features/` に画面を1つ作り、T-320 の集計をサーバから受け取って描く\n3. chart.js は**その画面を開いたときだけ**取りに行く（束ねに入れない）\n4. 記録が1件も無いときの見た目を決める（空の画面でエラーにしない）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- **目視確認**: tsukumo を起こして画面を開き、(1) 日ごとの推移が出る、(2) モデル別・ツール別の\n  内訳が出る、(3) 記録が無い期間でも壊れない、(4) **横スクロールが出ない**——の4つを\n  確かめて `evidence` に書く（どの幅で見たかも書く）\n- 束ね（`dist/browser/`）の大きさが chart.js のぶん増えていないことを確かめて `evidence` に書く\n\n## 注意\n\n- **絵は自動テストで守らない。** 配信（経路・push）まではテストし、見えているかは目視\n  （`docs/architecture.md`「手で確かめること」）\n- 目視確認で tsukumo を起こすので、同じく起こすタスクと並行させない\n- 記録には会話の中身が入っていない前提の画面にする。**画面に文面を出す欄を作らない**\n"
+  },
+  {
+    "id": "T-322",
+    "difficulty": "opus",
+    "loopable": "N",
+    "dependencies": [],
+    "summary": "画面のナビゲーションの置き場（ヘッダー等）を決める",
+    "status": "todo",
+    "passes": false,
+    "evidence": "",
+    "task": "## 背景\n\n画面が増えてきたのに、**画面から画面へ行く道が hash しか無い**。いまの `Screen` は\n`src/browser/stores/screen.tsx` の union で、`navigateTo` が `window.location.hash` を\n書き換える形。`src/browser/main.tsx:71` が `conversation` / `character` / `character-create` を\n分岐している。トークン消費の分析ページ（別タスク）が入ると4つ目になる。\n\nユーザーの言葉: 「そろそろサイドバー以外の選択肢（ヘッダー等）も視野に入れて快適な\nナビゲーションにすることも検討」。\n\n## 解くべき論点\n\n- **入口をどこに置くか。** ヘッダーを作る / サイドバーに置く / キャラビューの近くに置く /\n  コマンド（`Dispatch`）から開く。それぞれ、常駐の画面の面積をどれだけ食うか\n- **立ち絵と吹き出しの面積を削らないか。** tsukumo の目的は「キャラクターと一緒に仕事をする」\n  ことなので、ナビの帯がキャラビューを押しつぶすなら本末転倒\n  （`docs/requirements.md`「1. 概要・目的」）\n- いま開いている画面をどう示すか。hash との関係（`location.hash` を正典にし続けるか）\n- 画面が増えたときに破綻しないか（4つ目・5つ目）\n\n## やること\n\n1. いまの画面の出入り（`screen.tsx` / `main.tsx` / `Dispatch` のコマンド）を洗い出す\n2. 案を2〜3個出し、**それぞれが常駐の画面から奪う面積**と**画面が増えたときの伸び方**を\n   添えて提案する\n3. ユーザーの判断を仰ぎ、決まったものを `docs/design.md` に書く\n4. **実装はしない**（実装は決定後に別タスクとして起こす）\n\n## 完了条件\n\n- 案が2つ以上、面積と伸び方の比較つきで書かれている\n- ユーザーが1つを選び、その決定が `docs/design.md` に書かれている\n- `bun run check` が通る（ドキュメントだけの変更でもテスト件数を `evidence` に書く）\n\n## 注意\n\n- **決めるタスク。実装を含めない**\n- 面積の話をするので、**実際の画面を見ないで決めない**（幅ごとの見え方を確かめる）\n"
   }
 ]
