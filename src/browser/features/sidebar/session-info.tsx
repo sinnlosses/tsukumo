@@ -7,44 +7,24 @@
 import { type ReactElement } from "react"
 
 import { type CharacterPackChoice } from "../../../shared/character.ts"
-import {
-  isModelAlias,
-  isPermissionMode,
-  type ModelAlias,
-  type PermissionMode,
-} from "../../../shared/command.ts"
+import { isModelAlias, isPermissionMode } from "../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { Select } from "../../components/select.tsx"
+import { MODEL_LABELS, resolveModelAlias } from "../../lib/model-label.ts"
+import {
+  isDangerousPermissionMode,
+  PERMISSION_MODE_LABELS,
+  resolvePermissionMode,
+} from "../../lib/permission-mode-label.ts"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
 import { WorkspaceLocation } from "./workspace-location.tsx"
 
-// 許可モードの選択肢と、日本語ラベル。順序は <select> に出す並び。
-const PERMISSION_MODE_LABELS: ReadonlyArray<readonly [PermissionMode, string]> = [
-  ["default", "毎回聞く"],
-  ["acceptEdits", "編集は自動"],
-  ["auto", "自動判定"],
-  ["plan", "プラン"],
-  ["bypassPermissions", "全部許す"],
-]
-// `permissionMode` がまだ届いていないとき（session-info 前）の見た目上の既定値。
-// `src/server/core/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
-const PERMISSION_MODE_FALLBACK: PermissionMode = "auto"
-const DANGEROUS_PERMISSION_MODE: PermissionMode = "bypassPermissions"
+// ラベルと畳み方（`resolveModelAlias` / `resolvePermissionMode`）は **帯の読みと同じものを読む**
+// （`src/browser/lib/model-label.ts` / `permission-mode-label.ts`）。サイドバーは触らせる側、
+// 帯は名乗る側で、**字は1箇所**にしておく（docs/design.md 13.9）。
 const PERMISSION_MODE_SELECT_ID = "tsukumo-permission-mode"
-
-// モデルのエイリアスと、日本語ラベル。値は `src/shared/command.ts` の MODEL_ALIASES と同じ4つ。
-// 並びは重い順（Fable は Opus の上の階層なので先頭）。
-const MODEL_LABELS: ReadonlyArray<readonly [ModelAlias, string]> = [
-  ["fable", "Fable"],
-  ["opus", "Opus"],
-  ["sonnet", "Sonnet"],
-  ["haiku", "Haiku"],
-]
-// `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。値は
-// `src/server/core/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）。
-const MODEL_FALLBACK: ModelAlias = "opus"
 const MODEL_SELECT_ID = "tsukumo-model"
 
 const CHARACTER_SELECT_ID = "tsukumo-character"
@@ -64,23 +44,6 @@ const CHAT_MODE_LABELS: ReadonlyArray<readonly [string, string]> = [
 // 駆動へのコマンドで会話は消えないので、進行中でも塞がない。理由の文面は**サーバが断るときと
 // 同じ1つ**（`shared` の定型文）を使う。
 const CHARACTER_SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
-
-/**
- * `session-info` の `model`（フルネームや実装依存の識別子）から、`<select>` に選択済みで
- * 出すエイリアスを決める。**部分一致**にしてあるのは、フルネームの形（`claude-opus-4-1` の
- * ような値）が実装側の都合で変わりうるため。
- */
-function resolveModelAlias(model: string | undefined): ModelAlias {
-  if (model === undefined) {
-    return MODEL_FALLBACK
-  }
-
-  return MODEL_LABELS.find(([alias]) => model.includes(alias))?.[0] ?? MODEL_FALLBACK
-}
-
-function resolvePermissionMode(mode: string | undefined): PermissionMode {
-  return mode !== undefined && isPermissionMode(mode) ? mode : PERMISSION_MODE_FALLBACK
-}
 
 /**
  * `<select>` に選択済みで出すキャラクターパックの名前。**素材が1体ぶんしか無くても
@@ -112,10 +75,9 @@ export function SessionInfo(): ReactElement {
   const currentPack = resolveCharacterPack(characterPacks, currentPackName)
   const model = resolveModelAlias(modelName)
   const permissionMode = resolvePermissionMode(permissionModeName)
-  const dangerClass =
-    permissionMode === DANGEROUS_PERMISSION_MODE
-      ? ` ${styles["permission-mode-select-danger"]}`
-      : ""
+  const dangerClass = isDangerousPermissionMode(permissionMode)
+    ? ` ${styles["permission-mode-select-danger"]}`
+    : ""
 
   return (
     <div className={styles["session-info"]}>

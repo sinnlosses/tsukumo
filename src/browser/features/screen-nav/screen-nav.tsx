@@ -14,14 +14,26 @@ import { PresentationalScreenNav } from "./presentational-screen-nav.tsx"
 export function ScreenNav(): ReactElement {
   // 分解して受けるのは、ref を持つ入れ物のまま描画中に読むと `react(refs)` が落ちるため
   // （`task-board.tsx` も同じ理由で分解している）。
-  const { current, room, gates, pendingActive, menuOpen, toggleMenu, closeMenu, ref } =
-    useScreenNav()
+  const {
+    current,
+    room,
+    roomPlaces,
+    gates,
+    readings,
+    pendingActive,
+    menuOpen,
+    toggleMenu,
+    closeMenu,
+    ref,
+  } = useScreenNav()
 
   return (
     <PresentationalScreenNav
       current={current}
       room={room}
+      roomPlaces={roomPlaces}
       gates={gates}
+      readings={readings}
       pendingActive={pendingActive}
       menuOpen={menuOpen}
       ref={ref}
