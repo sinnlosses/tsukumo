@@ -4,63 +4,50 @@
 
 ## エージェントのドラフト
 
-### T-328 で決めた形の横展開（2026-09-22 洗い出し）
+### T-328 で決めた形の横展開（2026-09-22 洗い出し。同日ユーザーの指摘で2件に絞った）
 
-T-328 とその指摘対応で、機能の中を **`hooks/`（React に縛られたロジック）/ `components/`（部品）/
-`domain/`（React を知らない純関数）/ container・presenter** に分ける形が決まった
-（正典は `docs/design.md` 2章「機能の中を分ける」）。同じ形が当てはまる場所を、実物を見て洗い出した。
+T-328 とその指摘対応で、機能の中を **container / presenter / `hooks/` / `components/` /
+`domain/`** に分ける形が決まった（正典は `docs/design.md` 2章「機能の中を分ける」）。同じ形が
+当てはまる場所を実物で洗い出し、ユーザーの判断で残ったのが次の2件。
 
-**1. 部品ファイルに同居しているフックを `hooks/` へ出す（3件）**
+**1. 部品ファイルに同居しているフックを `hooks/` へ出す（2機能）**
 
 - `src/browser/features/character-view/character-view.tsx:60,95` — `useNowForPortraitMotion` /
   `usePortraitMotion` が部品と同じファイルにある
-- `src/browser/features/dispatch/file-suggestions.tsx:92` — `useRepositoryFilePaths` が同上
 - `src/browser/features/main-view/report-reveal.ts:86` — `useReportReveal` は専用ファイルだが
-  `hooks/` の外にある（361行で、このファイルにはフック以外も入っている）
+  `hooks/` の外にある（361行で、フック以外も入っている）
 
-`task-board` で `use-task-board.ts` を出したのと同じ形。**T-336〜T-339 の対象外のファイル**なので、
-それらとは別に扱う。
+`task-board` で `hooks/use-task-board.ts` を出したのと同じ形。**どちらも T-336〜T-339 の対象外の
+機能**（T-336 は chat-view、T-337 は dispatch、T-338 は character-screen、T-339 は layout と
+token-usage）。
 
-**2. 部品ファイルに同居している純関数を `domain/` へ出す（2ファイル・4関数）**
+**2. `src/browser/lib/clock.ts` を `src/browser/utils/` へ移す**
 
-- `src/browser/features/dispatch/command-suggestions.tsx:23,35` —
-  `shouldShowCommandSuggestions` / `matchingCommands`
-- `src/browser/features/dispatch/file-suggestions.tsx:55,75` — `filePathQuery` / `matchingFilePaths`
+`lib/` は**ライブラリのラッパー**を置く箱で、`utils/` は**ライブラリに依存しない汎用の道具**
+（2026-09-22 ユーザーの線）。`clock.ts` は `Temporal`（言語の組み込み）を1行呼ぶだけなので
+`utils/` 側。
 
-`task-list.tsx` の中にあった `taskListTitle` を `domain/task-list-title.ts` へ出したのと同じパターン
-（テストも `test/.../domain/` へ割った）。**この2ファイルは T-337 の対象（composer と
-pending-answer）とは別ファイル**なので、重なるかどうかを着手前に見る。
+移すときに要ること:
 
-**3. 1秒刻みの `now` が2箇所にある → `browser/hooks/` へ上げるか決める**
+- **`browser/utils/` は箱として存在しない。** `test/architecture.test.ts` の `BROWSER_BOXES` に
+  `utils` が無く、`browserBoxOf` は未知のディレクトリで `throw` するので、**作ると即座に落ちる**。
+  `ALLOWED_BROWSER_BOX_IMPORTS` の辺（誰が `utils` を引いてよいか。`utils` 自身は何も引かない）も
+  同時に決める
+- **`docs/design.md` 2章の表現がユーザーの線とずれている。** いまの表は `lib/` を
+  「**名指しできる技術**を知っている道具（React・DOM・WebSocket・`node:fs`）」と書いていて、
+  この読み方だと `Temporal` を使う `clock.ts` は `lib/` に落ちる（実際そこに置かれた）。
+  「`lib/` はライブラリのラッパー / `utils/` はライブラリに依存しない汎用」に言い換えるかを決める
+- `clock.ts` は T-344 / T-345（`Date` → Temporal）で作られたばかりのファイル。**読み手が
+  どれだけ居るか**を先に見る
 
-- `src/browser/features/character-view/character-view.tsx:60` — 次の窓までの遅延を毎回計算して
-  タイマーを立て直す（可変）
-- `src/browser/features/dispatch/turn-status.tsx:46` — `setInterval` で固定1秒
+### 対応不要と決めたもの（2026-09-22）
 
-**同じものではない**ので、まず「共通化できるか」を確かめる。できるなら `browser/hooks/use-now.ts`、
-できないなら**なぜ別なのか**を両方のコメントに残す（`browser/hooks/` は 2026-09-22 に作った箱で、
-いま入っているのは `use-modal-dialog.ts` 1本だけ）。
-
-**4. 機能の中の置き場を `test/architecture.test.ts` で守るか決める**
-
-いまの検査は「機能どうしの import」と「箱をまたぐ import」だけで、**機能の中に
-`hooks/` `components/` `domain/` 以外のディレクトリを作っても落ちない**。T-336〜T-339 で4機能に
-同じ形を広げるなら、その前に検査を足すかを決めておく（`BROWSER_REGIONS` の載せ忘れを `throw` に
-したのと同じ考え方）。
-
-**5. 「部品は `function` で書く」を機械で守れるようにするか**
-
-規約は `docs/coding-standards.md`「部品は `function` で書く」に書き、既存の3件
-（`Report` / `ReportBlock` / `TaskTable`）も揃えた。ただし**いまは人が見るしかない**。
-oxlint のルールで書けるか、小さな検査テストにするかを決める。
-
-**6. props を分解する例外を規約に落とすか**
-
-`presentational-task-board.tsx` と `task-board.tsx` の2つだけ props を分解している
-（ref を `props.ref` の形で描画中に読むと `react(refs)` が落ちるため）。他の部品が同じ状況に
-なったときに迷わないよう、`docs/coding-standards.md`「レンダー中に ref を読み書きしない」に
-1行足すかを決める。
-
-**確認済み・対応不要**: T-336〜T-339 の本文は「分け方の型は `docs/design.md` 2章」と**正典を指して
-いる**ので、今回の書き換え（`components/` と `domain/` の追加、container/presenter）が自動で効く。
-4タスクの本文を書き換える必要は無い。
+- **`dispatch/` の純関数を `domain/` へ出す件**: `shouldShowCommandSuggestions` /
+  `matchingCommands` / `filePathQuery` / `matchingFilePaths` と `useRepositoryFilePaths` は
+  **全部 `composer.tsx` が読んでいる**ので、composer のフックに同居させればよい。**T-337 の中で
+  扱う**（別タスクにしない）。「純関数だから `domain/`」ではなく、**まずフックに入らないかを
+  見る**——この基準は `docs/design.md` 2章に反映済み
+- **1秒刻みの `now` を `browser/hooks/` へ上げる件**: 上げない。共通なのは時刻を読む
+  `clock.ts` のほうで、タイマーの立て方（可変遅延と固定1秒）は機能ごとに違ってよい
+- **機能の中の置き場を `architecture.test.ts` で守る / 「部品は `function` で書く」を機械で守る /
+  props の分解の例外を規約に書く**: いずれも一旦不要
