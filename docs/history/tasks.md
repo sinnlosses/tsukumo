@@ -21291,3 +21291,383 @@ bun run check 通過（1181 pass / 0 fail / 95ファイル、typecheck・lint・
   の条件に揃える）
 - 画面に出す最終更新時刻は**ローカル時刻**で、書式は日時の扱いを Temporal に寄せたあとの
   やり方に合わせる
+
+## T-308
+
+**タスク**: 雑談モードの4つの口を1つの合併型にまとめる
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-307 / **passes**: True
+
+**evidence**:
+
+`session-driver.ts` の4つの `| undefined` を `mode: SessionMode`（`{kind:"work"} | {kind:"chat"; personaMemory; chatSummary; chatKeep; chatRecall}`）へ統合。`session-start.ts` は `sessionMode()` で `seed.chat` の分岐1回に、`sdk-driver.ts` は `mode.kind === "chat"` の分岐に（MCP ツール5本の載せ分けも1本化）。`!`・`as` は不使用。`bun run check`: 委譲時点で 1194 pass / 0 fail、受け入れ時は 1193 pass / 1 fail で、落ちた1件は別セッションの未追跡 `src/browser/features/screen-nav/`（T-356）を architecture.test.ts が判定できないもので本タスクとは無関係。目視は `TSUKUMO_VIEW_PORT=7411 TSUKUMO_HOME=/tmp/tsukumo-t308` で雑談モードを起こし、keep→`chat-archive/.../kept.jsonl`、remember→`persona.md`「## 覚えたこと」、index→`index.jsonl`、`/compact`→`chat-summary/tsukumo-spirit.md` の4経路が書かれることを確認（仕事モードでは同ホームに1つも作られない）。
+
+## 背景
+
+`src/server/core/session-driver.ts:263,269,275,281` の `personaMemory` / `chatSummary` /
+`chatKeep` / `chatRecall` は、それぞれ `| undefined` を持つ別々のフィールドになっている。
+しかし `src/session-start.ts:160,164,168` を見ると **3つとも `seed.chat ? ... : undefined`**
+で作られ、`chatSummary` も同じ分岐で決まる。**4つが同時に入るか同時に無いかの2択**で、
+「片方だけ `undefined`」という状態は実在しない。
+
+これは `docs/coding-standards.md`「### 複数の「無い」が1つの状態」が命じている形の
+**未適用箇所**で、規約を変えなくても直せる（調査は `docs/research/undefined-reduction.md`
+2.1 の #1）。
+
+## やること
+
+1. 4つのフィールドを **`mode: { kind: "work" } | { kind: "chat"; personaMemory; chatSummary;
+   chatKeep; chatRecall }`** の判別可能な合併型にまとめる
+2. `src/session-start.ts` の組み立てを、`seed.chat` の分岐1回で `mode` を作る形にする
+3. 読む側（`src/server/adapter/sdk-driver.ts` ほか）を `mode.kind === "chat"` の分岐に直す
+4. 型が通らない箇所は `!` や `as` で潰さない（`docs/coding-standards.md`
+   「型を迂回するキャストを使わない」）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `src/server/core/session-driver.ts` から `personaMemory` / `chatSummary` / `chatKeep` /
+  `chatRecall` の `| undefined` が4行とも消えている
+- 雑談モードで起こしたセッションで、人格の記憶・雑談の要約・思い出しが従来どおり働く
+  （**雑談モードで tsukumo を起こし、何を確かめたかを `evidence` に書く**）
+
+## 注意
+
+- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）
+- 雑談まわりのトークン消費を減らすタスク群と**同じファイル（`session-driver.ts` /
+  `sdk-driver.ts`）を触る**。片方が `doing` の間は着手しない
+
+## T-322
+
+**タスク**: 画面のナビゲーションの置き場（ヘッダー等）を決める
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+2026-09-22 ユーザー決定: 全画面のヘッダーの帯 + 狭い画面はタブ帯右端の「≡」に畳む。docs/design.md に 13.9「画面のナビゲーション」を新設し、13.6 の「ページ最上部のナビは置かない」「入る口はサイドバーのキャラクターの行」「戻る口は画面の左上」と 6.1 の部品の木を書き換えた。面積は scripts/capture-view.ts の実測（1400幅で上下とも -5.7%、390幅でメインビュー -11.2%）。bun run check 1183 pass / 0 fail。実装は別タスク。
+
+## 背景
+
+画面が増えてきたのに、**画面から画面へ行く道が hash しか無い**。いまの `Screen` は
+`src/browser/stores/screen.tsx` の union で、`navigateTo` が `window.location.hash` を
+書き換える形。`src/browser/main.tsx:71` が `conversation` / `character` / `character-create` を
+分岐している。トークン消費の分析ページ（別タスク）が入ると4つ目になる。
+
+ユーザーの言葉: 「そろそろサイドバー以外の選択肢（ヘッダー等）も視野に入れて快適な
+ナビゲーションにすることも検討」。
+
+## 解くべき論点
+
+- **入口をどこに置くか。** ヘッダーを作る / サイドバーに置く / キャラビューの近くに置く /
+  コマンド（`Dispatch`）から開く。それぞれ、常駐の画面の面積をどれだけ食うか
+- **立ち絵と吹き出しの面積を削らないか。** tsukumo の目的は「キャラクターと一緒に仕事をする」
+  ことなので、ナビの帯がキャラビューを押しつぶすなら本末転倒
+  （`docs/requirements.md`「1. 概要・目的」）
+- いま開いている画面をどう示すか。hash との関係（`location.hash` を正典にし続けるか）
+- 画面が増えたときに破綻しないか（4つ目・5つ目）
+
+## やること
+
+1. いまの画面の出入り（`screen.tsx` / `main.tsx` / `Dispatch` のコマンド）を洗い出す
+2. 案を2〜3個出し、**それぞれが常駐の画面から奪う面積**と**画面が増えたときの伸び方**を
+   添えて提案する
+3. ユーザーの判断を仰ぎ、決まったものを `docs/design.md` に書く
+4. **実装はしない**（実装は決定後に別タスクとして起こす）
+
+## 完了条件
+
+- 案が2つ以上、面積と伸び方の比較つきで書かれている
+- ユーザーが1つを選び、その決定が `docs/design.md` に書かれている
+- `bun run check` が通る（ドキュメントだけの変更でもテスト件数を `evidence` に書く）
+
+## 注意
+
+- **決めるタスク。実装を含めない**
+- 面積の話をするので、**実際の画面を見ないで決めない**（幅ごとの見え方を確かめる）
+
+## T-345
+
+**タスク**: test の Date を無くし、lint で Date を禁じて規約に書く
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-344 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1183 pass / 0 fail / 96ファイル、typecheck・lint・format:check も緑）。grep -rn 'new Date|Date.now' src test scripts が空で例外ゼロ。 src/date-probe-temp.ts に new Date() を1行書いて bun run lint が no-restricted-globals で落ちることを確かめ、消した（作業ツリーは元通り）。 docs/coding-standards.md の節は 32→33（「Date を使わない」を1つ足し、索引の表にも行を追加）。
+
+## 背景
+
+`Date` を禁じるルールを入れるには、`src` だけでなく `test` からも消えている必要がある
+（`package.json` の `lint` は `oxlint src test scripts`）。`test` に残っているのは14箇所:
+
+- 固定の時刻を作る道具: `test/server/adapter/token-usage-log.test.ts:80`、
+  `test/server/adapter/chat-archive.test.ts:43,426,596`、
+  `test/server/adapter/task-summary.test.ts:37`
+- 偽の時計として `Date.now` を差し替えるもの:
+  `test/browser/features/character-view/character-view.test.tsx:177-207`、
+  `test/browser/features/dispatch/turn-status.test.tsx:54-66`
+
+ルール本体は oxlint の `no-restricted-globals` で書ける（`.oxlintrc.json` の `rules` に足す）。
+`new Date()` と `Date.now()` の両方を拾うことを実測済み。
+
+## やること
+
+1. `test/` から `new Date` / `Date.now` を無くす。固定の時刻は
+   `Temporal.ZonedDateTime` などから作り、偽の時計は前のタスクが決めた契約
+   （数のままか `Temporal.Instant` か）に合わせる
+2. `.oxlintrc.json` の `rules` に `no-restricted-globals` を足し、`Date` を `error` で
+   禁じる。`message` に代わりに使うもの（`Temporal`）を書く
+3. `docs/coding-standards.md` に節を1つ足して**理由と例外**を書き、`CLAUDE.md` の
+   「コーディング規約・レビュー方針」の箇条書きに1行足す（ルール本体は CLAUDE.md 側が正典）
+4. 前のタスクで例外を残していたら、そこに `oxlint-disable` を1行だけ付け、理由を添える
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `grep -rn 'new Date\|Date\.now' src test scripts` が空（例外を残したなら、その1箇所と
+  理由を `evidence` に書く）
+- わざと `const d = new Date()` を書いた状態で `bun run lint` が落ちることを確かめ、
+  戻してから `evidence` に書く
+- `docs/coding-standards.md` の節の数が1つだけ増えている
+  （`grep -c '^#\{2,3\} ' docs/coding-standards.md` を前後で比べる）
+
+## 注意
+
+- **`docs/coding-standards.md` は冒頭に「節の索引」の表を持つ。** 見出し名で位置を探すと
+  索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）。索引の表にも
+  行を足す
+
+## T-349
+
+**タスク**: セッションごとに worktree を切る形を決める
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/architecture.md「設計判断」に #### worktree でセッションを分ける（2026-09-22）を1節87行追加（design.md には書かず一方だけ）。4論点の結論=全部切る/プロセスは常に本体のコードで動く/衝突は merge --abort で本体を戻し worktree は畳まない/置き場は --git-common-dir 配下の tsukumo/worktree/<時刻>。/tmp の使い捨てリポジトリで切る→マージ→畳むを一周実測（本体の git status は clean、bun test は .git 配下を拾わない、--git-common-dir は本体では相対パス）。T-350/T-351/T-352 の本文に決定を反映。bun run check 緑（1190 pass / 0 fail / 97ファイル）。
+
+## 背景
+
+複数の tsukumo を同じ作業ツリーで並列に動かすと、**他のセッションの未コミット変更を避けながら
+コミットする**ことと、**重なるタスクで待ち状態になる**ことが起きる。`CLAUDE.md`「Git運用」は
+これを文章の約束（`git add -A` を使わない・`git checkout <file>` で戻さない）で避けているが、
+守りきれていない。`develop/progress.md`「未解決」にも「作業ツリーを別のセッションと共有して
+いると `bun run check` 全体が相手の作業中の変更で落ちる」が残っている。
+
+**セッションごとに git worktree で分離する形にすることは決まっている**（下記）。このタスクは
+**実装の前に、形が割れる3つの論点を決めて1つの節に書く**。
+
+## 決まっていること（蒸し返さない）
+
+- **1セッション = 1 worktree を既定にし、tsukumo が起動時に自分で用意して完了後に畳む**
+  （ユーザーは `tsukumo` と打つだけで、worktree の存在を意識しない）
+- **SDK の `cwd` を worktree に、`projectConfigRoot` を本体に向ける。** 作業だけが分離し、
+  `.claude/settings.json` の hook・skills・`CLAUDE.md` は本体のものが効く
+  （`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` の `projectConfigRoot` の説明）
+- **排他の印は `.git` 配下**（`git rev-parse --git-common-dir` が全 worktree で同じパスを返す）。
+  **orca のメタデータ（`worktree ps` / `worktree set --comment`）は表示にだけ使い、判断の
+  根拠にしない**（orca に聞かないと判断できない形にしないため）
+- **マージは1タスクごと**（ブランチが1タスクより長生きしない形にする）
+- `tasks.json` の `doing` は進捗の記録に戻し、**コミットしてよい**。排他の判断には使わない
+
+## 解くべき論点
+
+1. **1つ目のセッションも worktree にするか。** 本体（`main`）のままにすると「1つ目だけ違う」
+   分岐が常に残る。全部切るほうが単純だが、本体で普通に git を使いたい場面と噛み合うかを見る
+2. **tsukumo 自身を直したときの反映。** worktree で直したコードは、本体で動いている tsukumo の
+   プロセスには効かない（`bun run dev` の見張りは `src/browser/` だけ）。**自分自身を開発する
+   リポジトリである**ことから来る固有の問題なので、どう扱うかを決める
+3. **マージが衝突したときの止め方。** 自動で解こうとしない前提で、どこで止めて何を画面に出すか
+4. **worktree の置き場と名前**（リポジトリの隣か `/tmp` か orca の workspaces 配下か。
+   ブランチ名の付け方）。**使い終わった worktree の後片付けが漏れない形**にする
+
+## やること
+
+1. 上の4つを決める
+2. 決めた内容を `docs/design.md` に1節として書く（`docs/architecture.md` のほうが収まりが
+   よいと判断したらそちらでよい。**両方には書かない**）
+3. T-350 / T-351 / T-352 の本文に、決めた結果のうち各タスクの形を変えるものを書き足す
+
+## 完了条件
+
+- `bun run check` が通る
+- 上の4つの論点それぞれに結論が1つ書かれている（「場合による」で終わらせない）
+- 決めた節が `docs/design.md` か `docs/architecture.md` のどちらか一方にだけある
+
+## 注意
+
+- **実装はしない**（実装は T-350 以降）
+- 実測済みなので測り直さなくてよい: `git worktree add` 0.14秒 / `bun run build` 0.05秒 /
+  切ってから `bun run check` 完走まで10.2秒 / `node_modules` と `characters/local` は本体への
+  symlink で足りる（bun もテストも通る）/ このリポジトリは既に orca 管理の worktree として
+  登録済み（`orca worktree current` が `isMainWorktree: true` を返す）
+
+## T-354
+
+**タスク**: ホームの置き場を TSUKUMO_HOME で差し替えられるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1190 pass / 0 fail（97ファイル）。新規 test/server/adapter/tsukumo-home.test.ts 7件で、渡すと4つの置き場が揃って移ること・未設定なら ~/.tsukumo のままを検査。
+process.env の2箇所めは src/server/adapter/tsukumo-home.ts:32。3つめは test/architecture.test.ts:130 の allowlist が弾く。
+反映先: src/cli.ts:39 / docs/design.md:703,712 / CLAUDE.md:267。描画に関わらないので目視確認は無し。
+
+## 背景
+
+複数の tsukumo を並行して動かすと `~/.tsukumo/` を取り合う。`CLAUDE.md`「## タスク運用」は
+「tsukumo を起こす目視確認が要るタスクは並行させない」と書いて運用で避けているが、
+**差し替え口が無いので避ける以外にできることが無い**。
+
+ホームの場所を組み立てるのは `src/server/adapter/tsukumo-home.ts` の `tsukumoHomeDir()` の1つで、
+`homedir()` に `.tsukumo` を繋ぐだけ。**cwd に依存させないのは意図した設計**（`docs/design.md`
+13.6「キャラクターの好みはプロジェクトごとではない」。雑談の要約とアーカイブも 9章・13.6 で
+同じ理由を書いている）なので、**プロジェクト単位に割るのは既存の決定と衝突する**。
+**T-349〜T-353（worktree）でも解けない** — worktree が分けるのは cwd で、ホームは `homedir()`
+だけから決まる。
+
+`tsukumoHomeDir()` を呼ぶのは adapter の5ファイル・5箇所（どれも既定引数を組み立てる関数の中）:
+
+- `remembered-character.ts:65` → `state.json`
+- `chat-summary.ts:45` → `chat-summary/<pack>.md`（**`writeFileSync` で全上書き**）
+- `chat-archive.ts:111` → `chat-archive/<pack>/<date>.jsonl`（`appendFileSync`）
+- `token-usage-log.ts:90` → `token-usage/<date>.jsonl`（`appendFileSync`）
+- `character-pack.ts:104` → `characters/<name>/`
+
+**取り合いの重さは一様ではない**（2026-09-22 に実物と呼び出し元を突き合わせて確かめた）:
+
+- `chat-summary` と `chat-archive` が書かれるのは**雑談モードのときだけ**
+  （`src/session-start.ts:156` の `seed.chat`、`src/server/core/session-manager.ts:322` の
+  `state.chatMode`）。同じパックで雑談を2つ並べたときだけぶつかり、要約は全上書きなので
+  **後に書いたほうが相手の要約を丸ごと消す**
+- 仕事のセッションを並べているときに実際にぶつかるのは `state.json`（23B・後勝ち・実害は
+  次の起動の初期キャラだけ）と `token-usage`（追記なので混ざるだけで実害なし）
+
+## 決まっていること（蒸し返さない）
+
+2026-09-22 ユーザーの決定:
+
+- **`TSUKUMO_HOME` の差し替え口を1つ開けるところまで**にする。`src/server/core/port-resolution.ts`
+  の `TSUKUMO_VIEW_PORT` と同じ形で、**並行させたいときだけ人が渡す**
+- 置き場の形（鍵・階層）は変えない。**ホームをセッション単位で自動で分けない**し、
+  書き込みの直列化（ロックファイル）もしない
+- 覚えたキャラクターは渡した側のホームに残る（本体のホームへ戻す仕掛けは作らない）
+
+## 解くべき論点
+
+- **`process.env` をどこで読むか。** 規約は「読むのは `src/server/core/config.ts` の1箇所」
+  （`docs/coding-standards.md`「外の世界に依存する値」、実際の読み取りは `src/cli.ts:52` の
+  `readConfig(process.env)`）。いっぽう `tsukumoHomeDir()` は adapter の既定引数の中から
+  呼ばれていて、**配線層から設定を渡す道が無い**。(a) `config.ts` に足して5箇所へ配線層
+  （`src/main.ts` / `src/session-start.ts`）から配る、(b) `tsukumoHomeDir()` を引数で
+  受けられるようにして配線層で注入する、(c) 例外として `tsukumo-home.ts` に読み取りを置く、
+  のどれかを決める。**決めた理由を `tsukumo-home.ts` のコメントに1行残す**
+- **相対パスと `~` の扱い。** `TSUKUMO_CHARACTER` は「相対は cwd 相対、絶対はそのまま」
+  （`config.ts` のコメント）。同じ規則に揃えるか、`~` の展開までするかを決める
+- **未設定・空文字の扱い。** `resolveViewPort` は「未設定・空文字は既定を使う」としている。
+  同じに揃えるか
+
+## やること
+
+1. 上の論点を決めて実装する
+2. `src/cli.ts` の `--help` の環境変数一覧に `TSUKUMO_HOME` を足す
+3. `docs/design.md` 5章「config.ts」の表（値の意味と既定の正典）に足す。
+   `tsukumo-home.ts` の「cwd には依存させない」というコメントは**消さずに残し**、
+   差し替え口があることを1行足す
+4. `CLAUDE.md`「## タスク運用」の「**tsukumo を起こす目視確認が要るタスクは並行させない**」を、
+   **`TSUKUMO_HOME` を分ければ並行させてよい**形に書き換える。`TSUKUMO_VIEW_PORT` と
+   2つ渡す必要があることを書く
+5. テストを足す。既存の `test/server/adapter/remembered-character.test.ts` /
+   `chat-summary.test.ts` / `chat-archive.test.ts` / `token-usage-log.test.ts` は置き場を
+   引数で差し替えているので影響を受けない。**新しく要るのは「渡すとホームが移る」
+   「渡さないと今までと同じ」の2点**
+
+## 完了条件
+
+- `bun run check` が通る
+- `TSUKUMO_HOME` を渡したときにホームがそこへ移ることを確かめるテストがある
+- `TSUKUMO_HOME` を渡さないときの置き場が今までと同じであることを確かめるテストがある
+- `src/cli.ts` の `--help`・`docs/design.md` 5章・`CLAUDE.md`「## タスク運用」の3つに
+  反映されている
+- `process.env` を読む場所が増えたなら、その理由がコメントに1行ある
+
+## 注意
+
+- **`~/.tsukumo/` の実物に触らない**（既存のホームの中身を移動しない・消さない）
+- 描画に関わらないので目視確認は要らない。実際に2つ並べて動かして確かめるなら
+  `TSUKUMO_VIEW_PORT` も分けること
+
+## T-355
+
+**タスク**: セッションの目印を1文字からポート番号にする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-349 / **passes**: True
+
+**evidence**:
+
+目印を1文字からビューのポート番号へ（`tsukumo:<パック>@7327`）。畳まない（`@0`/`@9000` もそのまま）。昔の印は読むときだけ戻す（目印なし→7327、`@A`〜`@Z`→並び順から元のポート）。`SessionChoice.slot` → `viewPort: number`。手順5は「実装する」と判断（worktree の例外2つ＋T-350〜T-352 が未実装で、同じ cwd に並ぶ道が残る）。config.ts / port-resolution.ts / session-restore.ts / shared/session-choice.ts / session-switch.tsx とテスト5本・docs 4箇所を変更。`bun run check` 緑: 1194 pass / 0 fail（97ファイル・2382 expect）。節数は requirements 27 / design 53 / glossary 60 で前後変化なし。画面は未目視（本物の claude を起こすと実物の印が書き換わるため避けた。ラベルは session-switch.test.tsx が検査）。
+
+## 背景
+
+`src/server/core/config.ts:44` の `SESSION_SLOT_LETTERS`（`"ABCDEFGHIJKLMNOPQRSTUVWXYZ"`）と
+`sessionSlot(viewPort)`（同 185行あたり）が、ビューのポートの並び順（既定 7327 が `A`、+1 ごとに
+次の文字）で**1文字の目印**を決め、`sessionTag` がそれを印の末尾に焼く
+（`tsukumo:<パック>@A`）。`readSessionMark`（同 158行）は末尾が1文字でなければ「目印の無い昔の
+印」として `A` に畳む。
+
+画面に出しているのは `src/browser/features/sidebar/session-switch.tsx:106` の
+`${session.slot}・${時刻}`。運び手は `SessionChoice.slot`（`src/shared/session-choice.ts:30`）で、
+サーバ側は `src/server/core/session-restore.ts:61,125`。
+
+ユーザーの言葉: 「セッション名をABCから別の名前にしたい」。
+
+正典は `docs/requirements.md` 4.8「鍵（どれを「前のセッション」とみなすか）」の目印の段と
+`docs/design.md` 7章。
+
+## 決まっていること（蒸し返さない）
+
+- **印の中身も変える**（表示だけの対応表で済ませない）。2026-09-22 ユーザー決定
+- **セッションを指す ID は「キャラクターパック × ポート番号」。** 目印の位置にポート番号を置く
+- **人が読む表示名（部屋の名前）はこのタスクでは決めない**（別タスク。ユーザーが「表示名は
+  改めて考えよう」と保留した）
+
+## 解くべき論点
+
+- **昔の印をどう扱うか。** いま続いている仕事のセッションは `@A` で残っているので、拾えなく
+  なると「起動のたびに続きから始まる」が切れる。既定ポート 7327 ⇔ `A` の読み替えを置くのか、
+  畳まずに別物として扱うのか
+- `readSessionMark` の「末尾が1文字なら目印」という判定の書き換え方（パック名に `@` を含む
+  ときのために `lastIndexOf` で切っている形は変えない）
+- **並びの外のポートをどうするか。** いまは `0`（OSまかせ）や既定から遠い番号を `A` に畳んで
+  いるが、ポート番号ならそのまま名乗れる。畳むのをやめてよいか
+- `SessionChoice` のフィールド名（`slot` のままか、ポートを指す名前にするか）。変えるなら
+  `docs/glossary.md` を先に直す
+
+## やること
+
+1. 上の論点を決める
+2. `config.ts` / `session-restore.ts` / `shared/session-choice.ts` / `session-switch.tsx` を
+   書き換える
+3. `docs/requirements.md` 4.8 と `docs/design.md` 7章の、目印を1文字の前提で書いている箇所を直す
+4. 昔の印を読んだときの振る舞いをテストで固定する
+5. **T-349 の結論（`docs/architecture.md`「worktree でセッションを分ける」）を先に読む。**
+   全セッションを `<git-common-dir>/tsukumo/worktree/<時刻>` の worktree で切ると決まったので、
+   **鍵のディレクトリがセッションごとに変わる**。目印が要る理由が残っているかを確かめ、
+   残っていなければ**実装せず理由を `evidence` に書いて閉じる**
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 新しい印の形を、組み立て（`sessionTag`）と読み取り（`readSessionMark`）の両方で検査する
+  テストがある
+- 昔の印（`tsukumo:<パック>` と `tsukumo:<パック>@A`）を読んだときの振る舞いがテストにある
+- 目印の説明が `docs/requirements.md` 4.8・`docs/design.md` 7章と実装で食い違っていない
+
+## 注意
+
+- **`~/.tsukumo/` の実物のセッション記録を書き換えない**（印は transcript 側に付く。拾って
+  付け直す手当てをするかどうかも上の論点）
+- 表示名を決めない・出さない（別タスク）

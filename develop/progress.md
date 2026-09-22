@@ -85,20 +85,6 @@ tsukumo 自身を直したときの反映・衝突時の止め方・置き場と
 帯が奪う面積を実測してユーザーが帯を選んだ。決定は `docs/design.md` に 13.9「画面のナビゲーション」
 として書き、13.6 の「ページ最上部のナビは置かない」を書き換えた。**実装は別タスク**。
 
-### 2026-09-22 test の Date を無くし、lint で Date を禁じた（T-345）
-
-`test/server/adapter/` の3ファイルの固定時刻を `Temporal.ZonedDateTime` などに置き換え、
-`.oxlintrc.json` の `no-restricted-globals` で `Date` を `error` にした（`src` / `test` /
-`scripts` すべてが対象で例外は無い）。理由と作法は `docs/coding-standards.md` の新しい節
-「`Date` を使わない」に書き、`CLAUDE.md` の規約の箇条書きにも1行足した。
-
-### 2026-09-22 src と scripts の Date を Temporal に置き換えた（T-344）
-
-`new Date` / `Date.now` / `: Date` を `src` と `scripts` から全廃した（例外ゼロ）。時刻の数は
-エポックミリ秒のまま残し、それを作る場所をサーバは `src/session-start.ts`、ブラウザは新設の
-`src/browser/lib/clock.ts` の2箇所に絞った。`src/server/adapter/local-time.ts` は OS の
-タイムゾーンを読む唯一の場所として残し、引数を `Date` から数に変えて `Temporal` で書き直した。
-
 ## 未解決
 
 - **部屋の表示名（セッションに出す名前）の語彙が未決**（2026-09-22 の `/plan-tasks`。

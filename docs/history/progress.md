@@ -1,5 +1,19 @@
 # 進捗のアーカイブ
 
+### 2026-09-22 test の Date を無くし、lint で Date を禁じた（T-345）
+
+`test/server/adapter/` の3ファイルの固定時刻を `Temporal.ZonedDateTime` などに置き換え、
+`.oxlintrc.json` の `no-restricted-globals` で `Date` を `error` にした（`src` / `test` /
+`scripts` すべてが対象で例外は無い）。理由と作法は `docs/coding-standards.md` の新しい節
+「`Date` を使わない」に書き、`CLAUDE.md` の規約の箇条書きにも1行足した。
+
+### 2026-09-22 src と scripts の Date を Temporal に置き換えた（T-344）
+
+`new Date` / `Date.now` / `: Date` を `src` と `scripts` から全廃した（例外ゼロ）。時刻の数は
+エポックミリ秒のまま残し、それを作る場所をサーバは `src/session-start.ts`、ブラウザは新設の
+`src/browser/lib/clock.ts` の2箇所に絞った。`src/server/adapter/local-time.ts` は OS の
+タイムゾーンを読む唯一の場所として残し、引数を `Date` から数に変えて `Temporal` で書き直した。
+
 ### 2026-09-22 TaskBoard と TaskList を features/ 直下へ出した（T-328）
 
 `task-board`/`task-list` を1つの機能 `src/browser/features/task-board/` にまとめ、`.task-` の
