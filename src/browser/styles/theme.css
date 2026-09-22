@@ -33,10 +33,14 @@
      surface の上に置いたときの色は不透明に混ぜたときと同じ（13.2 の実測値はそのまま）。 */
   --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
 
-  /* 状態の3色。誰が来ても変わらない（13.1 原則5）。 */
+  /* 意味を固定した4色。誰が来ても変わらない（13.1 原則5）。**文字のラベルと対で使うものだけ**が
+     ここに入る（色だけで意味を伝えない）。state-ask はレポートの「疑問」の印
+     （`main-view.module.css` の .report-note-ask）のために足した4つ目で、明るさは他の3つに
+     揃えてある（surface の上で 8.2:1）。 */
   --state-ok: #7ee081;
   --state-warn: #e3c766;
   --state-ng: #e88b8b;
+  --state-ask: #8ab4e8;
 
   /* タイプスケール。段はこの4つだけ（13.3）。 */
   --font-label: 0.6875rem;

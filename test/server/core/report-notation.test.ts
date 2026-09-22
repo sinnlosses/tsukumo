@@ -84,6 +84,40 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
+  it("note の6種を名乗り、どれも部品がラベルを出し、その先に見た目が付いている", () => {
+    // 規約（モデルが書く名前）→ 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。**種別の文字を
+    // 出すのは tsukumo 側**（docs/design.md 13.1 原則5）なので、印だけ足してラベルを足し忘れる
+    // と、素の note と同じ「何の塊か読み取れない」状態に戻る。
+    const kinds = [
+      ["note", "情報"],
+      ["note-warn", "注意"],
+      ["note-ng", "異常"],
+      ["note-ask", "疑問"],
+      ["note-memo", "メモ"],
+      ["note-favor", "お願い"],
+    ] as const
+
+    for (const [name, label] of kinds) {
+      expect(REPORT_NOTATION_PROMPT).toContain(name)
+
+      const { container } = render(
+        createElement(NotationBlock, { className: `note ${name}` }, "架空の本文。"),
+      )
+      const element = container.firstElementChild
+
+      expect(element?.textContent).toBe(`${label}架空の本文。`)
+      for (const resolved of element?.className.split(" ") ?? []) {
+        expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
+      }
+    }
+  })
+
+  it("note の上限は種別ごとではなく全体で持つ（6種を1つずつ置けてしまわない）", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain("5種あわせて1つのレポートに1〜2個まで")
+    // 種別の語は tsukumo がラベルとして描くので、本文に書かせない。
+    expect(REPORT_NOTATION_PROMPT).toContain("ラベルの文字は tsukumo が付ける")
+  })
+
   it("出力スタイルとキャラクターの人格の両方を上書きすると明示する", () => {
     expect(REPORT_NOTATION_PROMPT).toContain(
       "出力スタイルやキャラクターの人格に書かれた指示よりこの節を優先する",

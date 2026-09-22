@@ -132,7 +132,7 @@ h2.turn-request {
    狭く取り、3〜4枚が1行に収まるようにする。
    **タイプスケールの段は増やさない**（docs/design.md 13.3）ので、「大きい数」は段の上端
    （--font-heading）と下端（--font-label）の落差・太さ・縦積みで出す。
-   **状態の3色は使わない**（13.1 原則5）。数そのものは良し悪しを持たず、良し悪しを言いたいときは
+   **意味を固定した色（state-*）は使わない**（13.1 原則5）。数そのものは良し悪しを持たず、良し悪しを言いたいときは
    同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
 .detail-block .report-stats {
   display: grid;
@@ -177,8 +177,9 @@ h2.turn-request {
 .detail-block .report-badge-ng {
   color: var(--state-ng);
 }
-/* 結論の塊（`note`）。**いちばん読ませたい印がいちばん弱かった**（引用と同じ灰色の3px の縦罫で、
-   地の差も無かった。実測）ので、縦罫を ink まで上げ、地を「浮く」段にする。
+/* 情報の塊（素の `note`。結論を言う役）。**いちばん読ませたい印がいちばん弱かった**（引用と同じ
+   灰色の3px の縦罫で、地の差も無かった。実測）ので、縦罫を ink まで上げ、地を「浮く」段にする。
+   6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白と縦罫もここが持つ。
    引用（blockquote）は目立たせないための印なので今のまま。docs/design.md 13.2。 */
 .detail-block .report-note {
   margin: 0.5rem 0;
@@ -186,8 +187,8 @@ h2.turn-request {
   border-left: 3px solid var(--ink);
   background: var(--surface-raised);
 }
-/* 注意・問題の塊は、**既にある状態の色で地を1割だけ染める**（新しい色相は足さない。
-   docs/design.md 13.2）。1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。 */
+/* 注意・異常の塊は、**意味を固定した色で地を1割だけ染める**（縦罫は実色。docs/design.md 13.2）。
+   1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。 */
 .detail-block .report-note-warn {
   border-left-color: var(--state-warn);
   background: color-mix(in srgb, var(--surface), var(--state-warn) 10%);
@@ -196,21 +197,39 @@ h2.turn-request {
   border-left-color: var(--state-ng);
   background: color-mix(in srgb, var(--surface), var(--state-ng) 10%);
 }
+/* 疑問（まだ確かめていないこと・決めきれていないこと）。**色を1つ足した**（--state-ask。
+   13.1 原則5 は色を増やすことではなく「文字のラベルを添えずに増やすこと」を禁じており、
+   6種すべてにラベルが出る形にしたうえで足した）。青は state-ok / state-warn / state-ng と
+   accent のどれとも色相が離れていて、注意（黄）・異常（赤）と並べても取り違えない。
+   染め方は注意・異常と同じ（縦罫は実色・地は1割）。 */
+.detail-block .report-note-ask {
+  border-left-color: var(--state-ask);
+  background: color-mix(in srgb, var(--surface), var(--state-ask) 10%);
+}
+/* メモ（本筋から外れる覚え書き）。6種の中で**いちばん弱い**印なので、色を足さず
+   **縦罫を ink-quiet に落とし、浮く地をやめる**（情報＝素の note は ink の縦罫＋浮く地で、
+   同じ灰でも段の差で見分けられる）。引用（blockquote）と近い見た目になるが、引用は縦罫が
+   rule でラベルの文字も出ない。 */
+.detail-block .report-note-memo {
+  border-left-color: var(--ink-quiet);
+  background: transparent;
+}
 /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと。
-   `docs/glossary.md`「お願い」）。**状態の3色は増やさない**（13.1 原則5）ので、report-note-warn /
-   report-note-ng の系列には入れず、**縦罫の色・地・ラベルの文字**の3つで地の文と見分ける。
+   `docs/glossary.md`「お願い」）。**縦罫の色・地・枠**で他の5種と見分ける。
    縦罫が accent なのは「依頼の見出しの縦罫」（.turn-request）と対になる場所だから
    — 依頼が利用者からキャラクターへ、お願いがキャラクターから利用者へ向く（13.1 原則1 が
    accent を許すのは文字ではなく罫線の側）。地を ground に落として枠で囲むのは
-   .main-step.is-interim と同じ手口で、親の地が surface でも ground でも塊として立つ。
-   ラベル（`.report-note-favor-label`）を tsukumo 側で足すのは、**モデルが見出しの語を書き忘れても
-   色だけで伝えないため**（文字そのものは `notation.tsx` が描く）。 */
+   .main-step.is-interim と同じ手口で、親の地が surface でも ground でも塊として立つ。 */
 .detail-block .report-note-favor {
   border: 1px solid var(--rule);
   border-left: 3px solid var(--accent);
   background: var(--ground);
 }
-.detail-block .report-note-favor-label {
+/* 種別のラベル（「情報」「注意」「異常」「疑問」「メモ」「お願い」）。**6種すべてに tsukumo 側で
+   足す**のは、モデルが見出しの語を書き忘れても色だけで伝えないため（文字そのものは
+   `notation.tsx` が描く。13.1 原則5）。**ラベルは種別の色を持たない**（文字は ink 系・色を
+   運ぶのは隣の縦罫の側。13.1 原則1）。 */
+.detail-block .report-note-label {
   display: block;
   margin-bottom: 0.2rem;
   font-size: var(--font-label);

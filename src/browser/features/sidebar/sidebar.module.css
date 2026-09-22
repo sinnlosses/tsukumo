@@ -188,7 +188,8 @@
   font-family: var(--font-mono);
 }
 /* 枠の色は文字色に追随させる（currentColor）。todo は既定の文字色のまま、doing だけ差し色
-   （--accent）を使う。--state-* はここでは使わない（docs/design.md 13.1 原則5）。 */
+   （--accent）を使う。--state-* はここでは使わない（意味が固定されている色なので、todo / doing に
+   宛てると ok / warn / ng / ask の意味が動く。docs/design.md 13.1 原則5）。 */
 .task-status {
   padding: 0 0.3rem;
   border: 1px solid currentColor;
@@ -326,7 +327,7 @@
 .task-board-row.task-done {
   color: var(--ink-quiet);
 }
-/* 着手可否。**状態の3色**（docs/design.md 13.1 原則5）を使うが、色だけで伝えないよう
+/* 着手可否。**意味を固定した色**（docs/design.md 13.1 原則5）を使うが、色だけで伝えないよう
    文字（READY / 待ち: …）も出す。 */
 .task-ready {
   color: var(--state-ok);

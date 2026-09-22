@@ -55,15 +55,46 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     )
 
     const favor = container.querySelector("div.report-note.report-note-favor")
-    expect(favor?.querySelector(".report-note-favor-label")?.textContent).toBe("お願い")
+    expect(favor?.querySelector(".report-note-label")?.textContent).toBe("お願い")
     // ラベルは器の一部で、本文の前に出る。
     expect(favor?.textContent).toBe("お願い架空のお願いの文。")
   })
 
-  it("お願い以外の塊にはラベルを足さない", () => {
-    const { container } = render(<NotationBlock className="note">ただの注意。</NotationBlock>)
+  // 種別が色でしか出ていないと何の塊か読み取れない（利用者の指摘）ので、**6種すべて**に
+  // tsukumo 側が文字を足す（docs/design.md 13.1 原則5）。
+  it.each([
+    ["note", "情報"],
+    ["note note-warn", "注意"],
+    ["note note-ng", "異常"],
+    ["note note-ask", "疑問"],
+    ["note note-memo", "メモ"],
+    ["note note-favor", "お願い"],
+  ])("%s の塊には「%s」のラベルが出る", (className, label) => {
+    const { container } = render(<NotationBlock className={className}>架空の本文。</NotationBlock>)
 
-    expect(container.querySelector(".report-note-favor-label")).toBeNull()
+    expect(container.querySelector(".report-note-label")?.textContent).toBe(label)
+    expect(container.querySelector("div")?.textContent).toBe(`${label}架空の本文。`)
+  })
+
+  it("種別の印を書いた塊では、素の note の「情報」ではなく種別のラベルが出る", () => {
+    // モデルは `class="note note-warn"` のように素の note と並べて書く。並びの順に関わらず
+    // 種別を言っている側が勝つ。
+    const { container } = render(<NotationBlock className="note-warn note">架空。</NotationBlock>)
+
+    expect(container.querySelector(".report-note-label")?.textContent).toBe("注意")
+  })
+
+  it("note ではない塊（cols / card）と、知らない class 名にはラベルを足さない", () => {
+    const { container } = render(
+      <>
+        <NotationBlock className="cols">見比べる塊</NotationBlock>
+        <NotationBlock className="card">カード</NotationBlock>
+        <NotationBlock className="zzz">即興</NotationBlock>
+        <NotationBlock>class の無い塊</NotationBlock>
+      </>,
+    )
+
+    expect(container.querySelector(".report-note-label")).toBeNull()
   })
 })
 

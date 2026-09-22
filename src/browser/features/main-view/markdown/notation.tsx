@@ -21,6 +21,8 @@ const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map([
   ["note", styles["report-note"]],
   ["note-warn", styles["report-note-warn"]],
   ["note-ng", styles["report-note-ng"]],
+  ["note-ask", styles["report-note-ask"]],
+  ["note-memo", styles["report-note-memo"]],
   ["note-favor", styles["report-note-favor"]],
   ["badge", styles["report-badge"]],
   ["badge-ok", styles["report-badge-ok"]],
@@ -32,35 +34,38 @@ const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map([
   ["stat", styles["report-stat"]],
 ])
 
-/** お願い（`docs/glossary.md`「お願い」）の class 名と、tsukumo が付けるラベル。 */
-const FAVOR_CLASS_NAME = "note-favor"
-const FAVOR_LABEL = "お願い"
+/**
+ * `note` の種別（モデルが書く class 名）→ tsukumo が文字として描くラベル。**上から順に見て
+ * 最初に当たったものを使う**（モデルは `class="note note-warn"` のように素の `note` と並べて
+ * 書くので、種別を言っている側を先に置く。素の `note` は「情報」の受け皿なので最後）。
+ */
+const NOTE_LABELS = [
+  ["note-warn", "注意"],
+  ["note-ng", "異常"],
+  ["note-ask", "疑問"],
+  ["note-memo", "メモ"],
+  ["note-favor", "お願い"],
+  ["note", "情報"],
+] as const satisfies readonly (readonly [string, string])[]
 
 type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 
 /**
  * レポートの `div`。5系統のうち塊の側（`note` / `cols` / `card` / `stats` / `stat`）を受け持つ。
  *
- * **お願いのラベルは部品が文字として描く**（CSS の `::before` ではない）。モデルは見出しの語を
- * 書かない規約（`report-notation.ts`）なので、「お願い」だと分かる文字を保証できるのは
- * tsukumo 側だけで、生成した内容ではなく**器の一部**として DOM に出したほうが、選択・コピー・
- * 読み上げのどれでも本文と同じに扱える。
+ * **`note` の種別のラベルは部品が文字として描く**（CSS の `::before` ではない）。モデルは
+ * 見出しの語を書かない規約（`report-notation.ts`）なので、何の塊なのかが分かる文字を
+ * 保証できるのは tsukumo 側だけで、生成した内容ではなく**器の一部**として DOM に出したほうが、
+ * 選択・コピー・読み上げのどれでも本文と同じに扱える。**色だけで種別を伝えない**ための
+ * 文字でもある（`docs/design.md` 13.1 原則5）。
  */
 export function NotationBlock(props: NotationBlockProps): ReactElement {
   const { node: _node, className, children, ...rest } = props
-  const resolved = resolveNotationClassName(className)
-
-  if (isFavor(className)) {
-    return (
-      <div {...rest} className={resolved}>
-        <span className={styles["report-note-favor-label"]}>{FAVOR_LABEL}</span>
-        {children as ReactNode}
-      </div>
-    )
-  }
+  const label = noteLabel(className)
 
   return (
-    <div {...rest} className={resolved}>
+    <div {...rest} className={resolveNotationClassName(className)}>
+      {label !== undefined && <span className={styles["report-note-label"]}>{label}</span>}
       {children as ReactNode}
     </div>
   )
@@ -90,8 +95,15 @@ function resolveNotationClassName(className: string | undefined): string | undef
     .join(" ")
 }
 
-function isFavor(className: string | undefined): boolean {
-  return className !== undefined && classNameTokens(className).includes(FAVOR_CLASS_NAME)
+/** `note` の塊なら種別のラベルを、そうでなければ何も返さない（`cols` などにはラベルを足さない）。 */
+function noteLabel(className: string | undefined): string | undefined {
+  if (className === undefined) {
+    return undefined
+  }
+
+  const tokens = classNameTokens(className)
+
+  return NOTE_LABELS.find(([name]) => tokens.includes(name))?.[1]
 }
 
 function classNameTokens(className: string): readonly string[] {

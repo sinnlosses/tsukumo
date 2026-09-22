@@ -77,6 +77,14 @@ const MAIN_REGION_SELECTOR = '[data-region="main"]'
 /** 本文が入る領域の中で、**領域の外まではみ出して1枚に入らない**もの（疑似セッションの `notation`）。 */
 const MERMAID_SELECTOR = `${MAIN_REGION_SELECTOR} svg`
 const CHART_SELECTOR = `${MAIN_REGION_SELECTOR} canvas`
+/**
+ * `note` の種別の並びのうち**いちばん上に出るもの**（情報）。ここまで送ると、続く注意・異常・
+ * 疑問・メモが1枚に収まる（お願いだけは規約でレポートの末尾に置くので別の1枚になる）。
+ * **class 名は組み立てのたびにハッシュ化される**（`report-note_nkMPPQ`）ので、種別の印
+ * （`report-note-warn` など）を巻き込まないよう**区切りの `_` まで含めて**前方一致で指す
+ * （`docs/architecture.md`「手で確かめること」）。
+ */
+const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
 
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 const COMPOSER_SELECTOR = "textarea"
@@ -119,6 +127,12 @@ const CATALOG: readonly CatalogEntry[] = [
   { name: "notation", scene: "notation", label: "レポートの記法（引用・表・注意）", prepare: [] },
   // **記法の見本は領域に1枚ぶんが入らない**（1400x900 で 1358px のうち 855px が領域の外）。
   // 領域を伸ばして1枚にすると他の領域が重なって本番と別の姿になるので、**送って複数枚に分ける**。
+  {
+    name: "notation-note",
+    scene: "notation",
+    label: "レポートの記法（note の種別。領域を送った先）",
+    prepare: [{ kind: "scroll", selector: NOTE_KINDS_SELECTOR }],
+  },
   {
     name: "notation-figure",
     scene: "notation",
