@@ -19856,3 +19856,395 @@ Messages API 側の天井は base64 で **1枚 10 MB**（Bedrock / Vertex は 5 
 - **控えの上限を上げない。** 記録（`SessionState`）の大きさが有界であることは 4.10
   「会話内容の扱い」が形そのものとして置いた約束で、原寸の話とは独立している。
 - 他のセッションの未コミット変更を巻き込まない（`git add -A` を使わず、触ったファイルを個別に足す）。
+
+## T-297
+
+**タスク**: 最終レポートの地を、中間レポートと同じ ground に揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+main-view.module.css の .main-step.is-final を var(--ground) にし、コメント（同ファイル / turn.tsx / src/shared/main-view.ts）と docs/design.md 13.2 を実態に合わせた。bun run check 1053 pass / 0 fail / 2101 assertions。docs/design.md の節数は編集前後とも 62。目視（macOS / Chrome / 1400x900、fake driver の一時的な場面を撮って revert）: 中間と最終の地の実効値がどちらも rgb(25,23,32)=#191720（--ground）で一致、中間だけ破線、最終に「最終レポート」ラベル。
+
+## 背景
+
+ユーザーの指示（2026-09-21）「中間レポートと最終レポートで背景色は変えなくてよく、
+中間レポートと同じ背景色に統一したい」。
+
+`src/browser/features/main-view/main-view.module.css` で、ステップの地は3段になっている:
+中間（`.main-step.is-interim` → `var(--ground)`）・本文（`.main-step` → `var(--surface)`）・
+最終（`.main-step.is-final` → `var(--surface-raised)`）。これを中間と最終で同じ `var(--ground)` にする。
+
+`--surface-raised` は同じファイルの他の5か所（インラインコード・表の見出し行・カード・note ほか）でも
+使っているので、**トークンそのものと他の用途は触らない**。
+
+## 決まっていること（蒸し返さない）
+
+- 揃えるのは背景色だけ。中間レポートの破線の枠と、最終レポートの「最終レポート」ラベル
+  （中間レポートのあるやり取りだけに出る）は今のまま残す（ユーザー承認 2026-09-21）
+
+## やること
+
+1. `.main-step.is-final` の `background` を `var(--ground)` にする
+2. 同ファイルの `.is-interim` / `.is-final` のコメント（「中間（沈む）・本文（基準）・最終（浮く）の
+   3段」）を実態に合わせて書き直す
+3. `docs/design.md` 13.2 の該当記述（「地を `surface-raised` に上げる」と、`surface-raised` を使う
+   場所の一覧に最終レポートが入っているところ）を直す。
+   `grep -c '^#\{2,4\} ' docs/design.md` を編集の前後で取り、節の数が変わっていないことを確かめる
+4. `src/shared/main-view.ts` の `final` / 最終レポートの印を付ける処理は残す（ラベルの判定に要る）
+
+## 完了条件
+
+- `bun run check` が通る
+- `.main-step.is-final` の背景が `var(--ground)` になっている
+- 目視: 中間レポートと最終レポートが並ぶやり取りで、2つの地の色が同じに見え、中間だけが破線の枠で、
+  最終に「最終レポート」のラベルが載っている（どの端末・解像度で見たかを `evidence` に書く）
+- `docs/design.md` の節の数が編集の前後で変わっていない
+
+## 注意
+
+- `--surface-raised` のトークン定義（`src/browser/styles/theme.css`）と、他の5か所の用途は触らない
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-302
+
+**タスク**: 表情に bored（たいくつ）を足し、立ち絵とラベルを3つのパックに通す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1075 pass / 0 fail / 2138 expect、92ファイル）。docs/requirements.md の節数は編集前後とも 50。起こし直した別インスタンス（127.0.0.1:39271、Chromium 1600x1000、TSUKUMO_NEW_SESSION=1）で speak に zzz-not-a-face を投げ、エラーの候補が9件で末尾が bored であることを確認。同インスタンスで expression=bored の speak がキャラビューに /character/bored.png を出し、キャラクター画面に「たいくつ」が9番目（alt=たいくつ）で並ぶことを目視。characters/local へ切り替えても JS エラー無しで「たいくつ」の枠が出て bored を選べ、立ち絵は default.png へ落ちた。
+
+## 背景
+
+ユーザーの指示（2026-09-22）「表情に『たいくつ』を足す（英語識別子は `bored` を想定）。
+長いテストやビルドを待っているあいだの待ち顔で、**眠っている顔にはしない**（つくもは眠らない
+ため）。狐火が細くなり、窓枠に頬杖をついて鈴が鳴らない絵。ユーザーに話しかけられているあいだは
+出さない」。**立ち絵の素材はユーザーが用意済み**（`characters/tsukumo/bored.png` が置かれている。
+ホームのパック側にはまだ無い）。
+
+いまの表情は8つで、`src/shared/expression.ts` の `Expression` の合併型と `EXPRESSIONS` の配列が
+語彙の出どころ。そこから先は型検査が漏れを教えてくれる形になっている:
+
+- `src/shared/character-definition.ts` が `expressions` / `portraits` を表情名ごとに
+  `stringField` で1行ずつ読む（2か所）
+- `src/shared/character.ts` の `portraitUrl` の対応表と、その下の「全部 undefined」の既定値
+- `src/shared/expression-choice.ts` の `expressionChoices` が「立ち絵かラベルのどちらかが
+  定義にある表情」だけを選択肢にし、`src/server/adapter/sdk-driver.ts` の
+  `speakExpressionEnum` / `expressionGuide` が `speak` ツールの enum と説明文をそこから組む
+  （**enum も説明文も定義ファイル由来なので、コード側に表情名の一覧を書き足す場所は無い**）
+- テストのフィクスチャが表情名を全部並べている（`excited: undefined` の形で18ファイル前後。
+  `?:` を使わない規約のため全キーが必須になり、`bun run typecheck` が漏れを全部挙げる）
+
+ラベルと立ち絵のパスは定義ファイル側（原則4）。同梱パックは3つあり、過去に表情を足したときは
+**語の系統が違う2つ（`characters/local` / `characters/tsukumo-spirit`）にもラベルだけ足している**
+（`docs/requirements.md` 4.3 の「語の系統が違う同梱パック…のラベルは**真顔** / **きょとん**」）。
+
+## 決まっていること（蒸し返さない）
+
+- **自動では切り替えない。** `bored` はほかの8つと同じく `speak` の引数でキャラクター自身が
+  選ぶだけ。「長い待ちの顔」「話しかけられているあいだは出さない」は persona.md と
+  `docs/requirements.md` 4.3 の「出す場面」に書くだけで、**コードに判定を持たせない**
+  （ツール実行中の自動上書きは 2026-09-17 に撤去済み。ユーザー承認 2026-09-22）
+- **ホームのパック（`~/.tsukumo/characters/tsukumo/`）への反映もこのタスクに含める**
+  （`bored.png` のコピーと `character.json` の `expressions` / `portraits` への追加）。
+  ここが同梱パックを覆うので、直さないと画面に立ち絵が出ない（ユーザー承認 2026-09-22）
+- 日本語ラベルは `characters/tsukumo` で **「たいくつ」**（指示の言い回しをそのまま使う）
+- `characters/local` / `characters/tsukumo-spirit` にも**ラベルだけ**足す（立ち絵は用意しない。
+  過去の追加と同じ扱い）
+- **立ち絵を必須にしない。** `REQUIRED_EXPRESSIONS` は `default` だけのまま
+
+## やること
+
+1. `src/shared/expression.ts` の `Expression` と `EXPRESSIONS` の**末尾**に `bored` を足す
+   （既存の並びを動かさない規則がファイル冒頭のコメントにある）
+2. `bun run typecheck` を回し、挙がった漏れを1つずつ埋める
+   （`character-definition.ts` の2か所・`character.ts` の2か所・テストのフィクスチャ）。
+   **型検査が挙げなかったファイルを当て推量で触らない**
+3. `characters/tsukumo/character.json` に `expressions.bored`（「たいくつ」）と
+   `portraits.bored`（`bored.png`）を足す。`characters/local` と
+   `characters/tsukumo-spirit` には `expressions.bored` だけ足す（語の系統を2パックの既存の
+   ラベルに合わせる。立ち絵は足さない）
+4. `~/.tsukumo/characters/tsukumo/` に `bored.png` をコピーし、同ディレクトリの
+   `character.json` にも `expressions.bored` と `portraits.bored` を足す。
+   **同ディレクトリの他のファイルと他のキーは触らない**
+5. `characters/tsukumo/persona.md` の「`speak` の呼び方」の箇条書きに、`たいくつ` を出す場面を
+   1行足す（長いテストやビルドの待ち・**眠っている顔ではない**・話しかけられているあいだは
+   出さない）。`~/.tsukumo/characters/tsukumo/persona.md` にも同じ1行を足す
+6. `docs/requirements.md` 4.3 を直す: 「**表情は8つ**（2026-09-21 決定…）」の件数と経緯を9つに
+   更新し、表の**末尾**に `bored` / たいくつ / 出す場面の行を足す。
+   `grep -c '^#\{2,4\} ' docs/requirements.md` を編集の前後で取り、節の数が変わっていないことを
+   確かめる（索引テーブルに本文を流し込む事故が過去にある。CLAUDE.md「ドキュメントを編集する
+   ときの罠」）
+7. `characters/README.md` の「表情ごとの立ち絵8枚」の枚数を9枚に直す
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `docs/requirements.md` の節の数が編集の前後で変わっていない
+- `speak` ツールが `bored` を受け付ける。**説明文だけを根拠にしない** —
+  でたらめな表情名を1つ投げて、エラーに出る候補の一覧に `bored` が入っていることで確かめる
+  （enum は説明文より先に更新されることがある）
+- 目視: `bun run build` のあと tsukumo を起こし、`bored` で `speak` したときに
+  `characters/tsukumo/bored.png` の立ち絵が出る（`default.png` に落ちていない）。
+  キャラクター画面の表情の一覧にも「たいくつ」が並ぶ。どの端末・解像度で見たかを
+  `evidence` に書く
+- 立ち絵の無いパック（`characters/local`）に切り替えても壊れず、`bored` を選べてラベルが
+  「たいくつ」の系統の言葉で出る
+
+## 注意
+
+- **`REQUIRED_EXPRESSIONS` を増やさない。** 立ち絵が無いパックが壊れる
+- `EXPRESSIONS` の既存の並びを動かさない（パック作者から見える順が変わる）
+- `~/.tsukumo/` 配下で触ってよいのは `characters/tsukumo/` の `bored.png` /
+  `character.json` / `persona.md` の3つだけ。`~/.tsukumo/state.json` には触らない
+- 目視確認で tsukumo を起こすので、他のセッションと並行させない
+
+## T-306
+
+**タスク**: undefined を使わない表現への方針を決めて規約に書き直す
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/research/undefined-reduction.md を新規作成（317行 / 7節）。src/ の `| undefined` 297行を9種類に分類し（層×種類の表）、置き換え先・残してよい例外5条件・書き換えになる既存の条（coding-standards 8条 / CLAUDE.md 159・161・163-165行）・規約どうしの衝突5件・適用案（1つの状態ごとに7タスク、計約50行）を書いた。結論は「禁止にせず、書いてよい5つの場所の列挙に変える」で、採否はユーザーに預ける。src/・docs/coding-standards.md・CLAUDE.md は未変更（git status で確認）。bun run check 1053 pass / 0 fail / 2101 assertions / 90ファイル。
+
+## 背景
+
+ユーザーの指示（2026-09-22）「`undefined` はできるだけ使いたくない。すべて `undefined` を
+使わず表現できると仮定して、基本は使わず表現して。それでも難しいと判断したものは残していいよ」。
+
+**これは既存の規約と正面からぶつかる。** `docs/coding-standards.md` には今こう書いてある
+（CLAUDE.md の「コーディング規約」節にも要約がある）:
+
+- 「無いかもしれない」プロパティは `readonly x: T | undefined` で書き、`?:` は使わない
+- 2つ以上の `| undefined` が1つの状態を表しているなら判別可能な合併型にする。「無い」は
+  入口で畳み、内側の関数は「必ず値がある」型で受ける
+- `null` を自前の型・関数の戻り値・`shared` に出さない（外来の `null` は境界で `undefined` に畳む）
+
+つまり**「無い」の表し方として `undefined` を正式に採用している**ので、方針を変えるなら
+規約の側を書き直すのが先になる。
+
+実測（2026-09-22 時点）: `| undefined` が型の位置に出るのは `src/` で 297 箇所、`test/` で 28 箇所。
+多いのは `src/shared/character.ts`（25）・`src/shared/character-definition.ts`（20）・
+`src/shared/session-state.ts`（11）・`src/server/adapter/character-pack.ts`（11）で、
+**表情名ごとに `readonly <表情>: T | undefined` を並べる形**（立ち絵とラベルの対応表）が
+かたまりになっている。React の作法（`useRef` の初期値）や外来APIの戻り値も混ざっている。
+
+ユーザーの選択（2026-09-22）により、**まず方針を決めるこのタスクを置き、適用は方針が決まった
+あとに層ごとの別タスクへ起こす**。
+
+## 解くべき論点
+
+- **297 箇所はどういう種類に割れるか。** 少なくとも「あるかないかの2値」「表情名など鍵ごとに
+  埋まるとは限らない対応表」「外来APIの戻り値」「React の作法」「オプション引数」が混ざって
+  いる。種類ごとに置き換え先が違う
+- **何で置き換えるか。** 判別可能な合併型 / 全域なレコード（全ての鍵に値が入る形）/
+  入口での既定値の畳み込み / 空配列・空文字列のような「無いを表さない値」。
+  どれをどの種類に当てるか
+- **`readonly x: T | undefined` を禁止すると、代わりに何が増えるか。** 例えば表情ごとの
+  立ち絵の対応表を「あるものだけの `Map`」にすると、`?:` を使わない規約と
+  「`null` を出さない」規約との整合を取り直す必要がある。**規約を1つ直すと別の条が効かなく
+  なる箇所を洗う**
+- **残してよい例外の条件。** ユーザーは「難しいと判断したものは残していい」と言っているので、
+  「難しい」を読み手によって結論が変わらない言葉で書く必要がある
+  （例: 外来APIの戻り値／React が型で要求するもの／丸ごと省略できるオプション引数の中身）
+- **適用をどう割るか**（層ごと / 種類ごと / ファイルのかたまりごと）
+
+## やること
+
+1. `src/` と `test/` の `| undefined` を数えて**種類ごとに分類し、件数を出す**。
+   分類の軸は上の「解くべき論点」の1つめ
+2. 種類ごとに置き換え先の案を書き、**置き換えない例外の条件**を検証可能な言葉で書く
+3. 既存の規約のどの条が書き換えになるか、どの条と衝突するかを列挙する
+   （`docs/coding-standards.md` の該当節と、CLAUDE.md の要約行の両方）
+4. 1〜3 を `docs/research/undefined-reduction.md` に書く（`docs/research/` の既存のファイルの
+   書き方に合わせる。`docs/research/report-notation-shortening.md` が先例）
+5. **適用の割り方の案（タスクの分け方と件数の見積もり）まで書いて、そこで止める。**
+   規約本文（`docs/coding-standards.md`）とコードは、**ユーザーが方針を選んだあとに直す**
+6. 調べた結果「種類のほとんどが例外に当たり、置き換えられるのはごく一部」と分かった場合は、
+   **その根拠（種類と件数）を書いて、方針を変えないことを提案してよい**
+
+## 完了条件
+
+- `bun run check` が通る（コードを変えないので件数は変わらないはず。件数を `evidence` に書く）
+- `docs/research/undefined-reduction.md` が次の4つを持つ: 種類ごとの分類と件数 /
+  種類ごとの置き換え先の案 / 残してよい例外の条件 / 書き換えになる既存の条の一覧
+- 置き換えの適用案が、層または種類で割った**タスクの分け方と件数の見積もり**として書かれている
+- `docs/coding-standards.md`・CLAUDE.md・`src/` を**変更していない**（方針を決めるだけのタスク）
+
+## 注意
+
+- **コードを直さない。** 規約が決まる前に置き換えると、方針が変わったときに全部やり直しになる
+- `docs/research/` に置くのは調査と提案で、正典ではない。正典（`docs/coding-standards.md`）は
+  ユーザーが方針を選んだあとに直す
+- `loopable` が `"N"` なのは、**このタスクが「ユーザーが方針を選ぶ」ところで終わる**ため
+  （提案の採否は事前に聞いても決められない。調査結果を見ないと選択肢が出ない）
+
+## T-307
+
+**タスク**: undefined の規約を「書いてよい5つの場所」の列挙に書き直す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/coding-standards.md「無いかもしれない」値を「書いてよい5つの場所」の表＋「例外1に当てはまらないとき確かめる3条件」に組み替え、「目的にしない」段落を「消す手は2つだけ」の形に書き換えた。CLAUDE.md の要約1行と節の索引の中身列も追随。
+見出しの数は編集の前後とも31、索引の行は20で不変。src/ と test/ は未変更（git status は CLAUDE.md・docs/coding-standards.md・develop/tasks.json・develop/progress.md のみ）。
+bun run check: 1053 pass / 0 fail（2101 expect、90 files）。コードを変えていないので件数は T-306 時点から不変。
+
+## 背景
+
+`docs/research/undefined-reduction.md`（2026-09-22）の調査で、`src/` の `| undefined` 297行の
+うち置き換えられるのは約50行（17%）だけで、残りは例外に当たると分かった。ユーザーは同文書
+7節の選択肢から **(b)「禁止にはせず、`| undefined` を書いてよい5つの場所を列挙する形に
+規約を変える」** を選んだ。
+
+いま `docs/coding-standards.md` の「## 「無いかもしれない」値」は「`readonly x: T | undefined`
+で書き、`?:` は使わない」という **「こう書く」形**で、書いてよい場所を絞っていない。
+`CLAUDE.md`「コーディング規約・レビュー方針」159行目にその要約がある。
+
+**このタスクは規約本文だけを直す。コードは1行も触らない**（適用は後続の7タスク）。
+
+## 決まっていること（蒸し返さない）
+
+- 方針は (b)。**`| undefined` を禁止にしない。**「書いてよい5つの場所」の列挙に変える
+  （5条件は `docs/research/undefined-reduction.md` 3節の表がそのまま使える）
+- **`?:` を解禁しない。** React の props の約15行は「例外3（React が型で要求するもの）」に
+  当たるものだけ `| undefined` のまま残す。**当たらないものは合併型か既定値に畳む**
+  （ユーザーの言葉: 「局所的にここだけは undefined を使ってもいいという場所に該当するなら
+  推奨案でいいよ」）
+- **`null` の条（`docs/coding-standards.md`「### null は自前の型に出さない」）は変更しない。**
+  禁止にしないので「外来の `null` を `undefined` に畳む」の畳み先は消えない
+- **「「無い」を型から消すことを目的にしない」の段落は書き換える。** 削らず、
+  「消す手は2つ（判別可能な合併型 / 入口で全域に畳む）だけで、それで消えないものは
+  本物の「無い」」という形にする
+
+## 解くべき論点
+
+- 5条件の表を `docs/coding-standards.md` にどう収めるか。`docs/research/undefined-reduction.md`
+  3節の表は件数の列を持つが、**件数は時間が経つと合わなくなる**ので正典には持ち込まない
+- 「### 複数の「無い」が1つの状態」と「### 「無い」を層をまたいで運ばない」の2条は
+  **文面を変えない**（未適用なだけ）。ただし新しい5条件の表との重複をどう避けるか
+- `CLAUDE.md` 159行目の1行をどう書き換えるか。**CLAUDE.md は要約で、正典は
+  `docs/coding-standards.md`** なので、5条件を全部は書かない
+- 「型を迂回するキャストを書かない」条との優先順位を明記する必要があるか
+  （禁止にしないので `!` への圧力は生まれないはずだが、確かめる）
+
+## やること
+
+1. `docs/coding-standards.md`「## 「無いかもしれない」値」を、
+   **「こう書く」から「ここでだけ書いてよい」へ形を変える**。5条件は
+   `docs/research/undefined-reduction.md` 3節の「判定（コードを見れば決まる）」列を使い、
+   **件数の列は持ち込まない**
+2. 同節に「1に当てはまらないのに `| undefined` を書くときの3条件」
+   （同文書3節の後半）を足す。ただし**既存の2条と重複する部分は既存の条へのリンクで済ませる**
+3. 「「無い」を型から消すことを目的にしない」の段落を上の「決まっていること」の形に書き換える
+4. `CLAUDE.md` 159行目を、5条件に触れる1行に書き換える（正典は
+   `docs/coding-standards.md` である旨を残す）
+5. **`docs/coding-standards.md` の「節の索引」の表を追随させる。** 見出し名を変えたなら
+   索引の行も同時に直す（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+6. 節の数が編集の前後で合うことを確かめる:
+   `grep -c '^#\{2,3\} ' docs/coding-standards.md`
+
+## 完了条件
+
+- `bun run check` が通る（コードを変えないのでテスト件数は変わらないはず。件数を `evidence` に書く）
+- `docs/coding-standards.md`「## 「無いかもしれない」値」が **「書いてよい5つの場所」の列挙**に
+  なっている（「こう書く」形の断定文が残っていない）
+- 「「無い」を型から消すことを目的にしない」の段落が、「消す手は2つだけ」の形に書き換わっている
+- `docs/coding-standards.md` の節の索引の行数が、見出しの数と一致している
+  （`grep -c '^#\{2,3\} '` の値を `evidence` に書く）
+- `CLAUDE.md` 159行目相当の1行が書き換わっている
+- **`src/` と `test/` を変更していない**（`git status` で確認して `evidence` に書く）
+
+## 注意
+
+- **コードを直さない。** 適用は後続の7タスク
+- `docs/research/undefined-reduction.md` は**正典ではない**ので書き換えない（調査の記録として残す）
+- `docs/coding-standards.md` は「コメントに日付を書かない規約を足す」タスクと**同じファイルを触る**。
+  片方が `doing` の間は着手しない
+
+## T-318
+
+**タスク**: ターンごとのトークン消費を日付ごとの JSONL に記録する
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+1行=1ターン（`result` 1つ、モデルの内訳は同じ行の `models`）、差分の状態は `session-manager`、置き場は `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl`（パック別に分けない）。新規5ファイル（shared/token-usage.ts・core/token-usage.ts・adapter/token-usage-log.ts・adapter/local-time.ts＝chat-archive から日付/ISO を移設・テスト2本）、変更7ファイル（sdk-message が `result` の `modelUsage` を `token-usage` イベントにし、session-manager が前回の累計を覚えて差を取る）。
+bun run check: 1074 pass / 0 fail（2136 expect、92 files）。着手前 1053 件から21件追加（core 7・adapter 4・session-manager 6・sdk-message 4。累計→増分・振り出しに戻ったとき負を書かない・会話の中身が行に現れない、を固定）。
+目視確認: macOS で空のディレクトリを cwd にして本物の claude を起こし（resume を掴ませないため）、WebSocket 経由で2ターン回した。`~/.tsukumo/token-usage/2026-09-22.jsonl` が 0→1→2 行に増え、1行のキーは `v` / `at` / `sessionId` / `mode` / `models`、`models[]` は `model` / `inputTokens` / `outputTokens` / `thinkingTokens` / `cacheReadInputTokens` / `cacheCreationInputTokens` / `costUsd`。`at` はオフセット付き ISO 8601（25文字）。2行目は `models` 1件・`cacheReadInputTokens` 5桁で、1行目（2件・1桁）の累計の写しではなく増分であることを確かめた。64文字を超える文字列は全行に無い。
+
+## 背景
+
+**トークン消費を減らしたいが、いま何にどれだけ使っているかの記録がどこにも残っていない。**
+`grep -rn usage src` は0件で、SDK が渡してくる使用量は届いた時点で捨てている。
+
+受け口は既にある: `src/server/core/sdk-message.ts:84` の `case "result"`。SDK の `result`
+メッセージには次の2つが乗る（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts:1354` と
+同 5417 付近の型定義で確認済み）:
+
+| 口 | 中身 | 注意 |
+| --- | --- | --- |
+| `modelUsage` | `Record<string, ModelUsage>`。モデル別で**サブエージェント・内部呼び出しも含む** | **query() 内の累計**。ターンごとに出すには前回との差分を取る |
+| `usage` | メインループのみの使用量 | **サブエージェントを含まない**ので集計には使わない（型定義のコメントがそう言っている） |
+
+`ModelUsage` のフィールドは `inputTokens` / `outputTokens` / `thinkingTokens` /
+`cacheReadInputTokens` / `cacheCreationInputTokens` / `costUSD` / `contextWindow` /
+`maxOutputTokens` / `canonicalModel` / `provider`。`result` には `total_cost_usd` もある。
+
+置き場の前例は `src/server/adapter/chat-archive.ts`（`~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`）。
+**adapter は「どこに・どんな形で」だけを持ち、「何をいつ書くか」は core が決める**という
+切り分けがそこに書いてある。
+
+## 決まっていること（蒸し返さない）
+
+- **タスク（`T-xxx`）には紐づけない。** 行に持たせるのは ISO 8601 の日時・セッションID・
+  モード（仕事/雑談）まで。`T-xxx` との突き合わせは、必要になったらコミット時刻と
+  時間帯で後追いする（ユーザーの選択）。**`develop/tasks.json` を読みに行かない**
+- 置き場は `~/.tsukumo/` の下の**日付ごとのファイル**（`chat-archive` と同じ考え方）
+- **記録してよいのは数・名前・時刻だけ。** 会話の中身・依頼の文面・ツールの引数・ツールの
+  結果の本文は1文字も書かない（`docs/coding-standards.md`「会話内容の扱い」。この規約が最優先）
+- 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない）
+
+## 解くべき論点
+
+- **1行を何の単位にするか。** ターン1つか、`result` 1つか（`result` は累計を運ぶので、
+  差分を取った時点で「前の `result` からの増分」になる）
+- **差分の状態をどこが持つか。** `src/server/core/session-manager.ts` か
+  `src/server/core/sdk-message.ts` か。`sdk-message.ts` は変換だけで状態を持たない作りなので、
+  そこに前回値を置くと性格が変わる
+- **累計が振り出しに戻る場合の扱い。** 型定義は「resumed sessions start fresh」「mid-session の
+  `/clear` で running total がリセットされる」と言っている。**負の差分を書かない**ようにする
+- **モデルが複数出たとき**（サブエージェントが別モデル）1行に畳むか、モデルごとに1行か
+- パックごとに分けるか（`chat-archive` はパックごと）。使用量はパックに依らないので日付だけで
+  足りるか
+
+## やること
+
+1. 記録1行の形を `src/shared/` に型として置く（ISO 8601 の日時を必ず持たせる）
+2. `src/server/adapter/` に書き口を足す（日付ごとの JSONL への追記。1ファイル = 1つの境界）
+3. core で `result` の `modelUsage` から差分を作り、1行に変換する
+4. 差分の取り方をテストで固定する（累計 → 増分、振り出しに戻ったときに負を書かない）
+5. **会話の中身が1文字も入らないことをテストで固定する**（依頼の文面・ツールの引数・
+   ツールの結果を渡しても、書かれる行に現れない）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- テストを3件以上足している（差分・振り出しに戻る場合・会話の中身が入らないこと）
+- **目視確認**: tsukumo を起こして1ターン回し、日付ごとの JSONL に行が増えることを確かめて
+  `evidence` に書く。**書くのは行数と数値の桁だけで、会話に触れる値は写さない**
+- 行に ISO 8601 の日時が入っている（`evidence` に1行ぶんのキーの並びを書く。値は書かない）
+
+## 注意
+
+- **会話内容の扱いが最優先。** 迷ったら書かない側に倒す
+- 目視確認で tsukumo を起こすので、同じく起こすタスクと並行させない
+- `src/server/core/sdk-message.ts` は「SDK の型を import しない」規約がある
+  （依存は `src/server/adapter/sdk-driver.ts` に閉じる）。`unknown` で受けて検証する形を崩さない
