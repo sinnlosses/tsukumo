@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render, screen } from "@testing-library/react"
 
-import { TaskList, taskListTitle } from "../../../../src/browser/features/sidebar/task-list.tsx"
+import { TaskList, taskListTitle } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { type TaskSummaryItem } from "../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（develop/tasks.json の内容は会話ではないが、

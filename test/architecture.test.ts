@@ -149,11 +149,18 @@ describe("経路名のリテラル", () => {
   })
 })
 
-// `browser/features/` の中の横断 import を禁じる（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」）。
-// 機能は `layout` / `main-view` / `character-view` / `character-screen` / `sidebar` / `dispatch`。
-// `browser/components/` `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx`（`browser/features/` の
-// 直下に無いもの。`BROWSER_REGIONS` に無ければ自動的にここに入る）は誰から引いてもよい共有部分
-// なので、ここでは見ない。
+// `browser/features/` の中の横断 import を制限する（`docs/design.md` 2章「領域の機能と、置かれる機能」）。
+// 機能は2種類あり、**辺は「領域 → 置かれる機能」の1方向だけ**を許す。
+//
+// - **領域の機能**（`BROWSER_REGIONS`）: 画面の領域か、領域に差し替わる画面を持つ。
+//   `main.tsx` が置き場所を決める。**互いに import しない**
+// - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、領域の中に
+//   置いてもらう。**どの機能も import しない（葉）**ので、領域から引いても輪にならない
+//
+// `browser/components/` `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx`
+// （`browser/features/` の直下に無いもの）は誰から引いてもよい共有部分なので、ここでは見ない。
+// **`browser/features/` の直下にどちらの一覧にも無いディレクトリがあれば `throw` する**
+// （足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と同じ作り）。
 //
 // **`markdown/` は `main-view` の中**（`browser/features/main-view/markdown/`）なので、機能の
 // 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
@@ -162,31 +169,38 @@ const BROWSER_REGIONS = [
   "main-view",
   "character-view",
   "character-screen",
+  "chat-view",
+  "token-usage",
   "sidebar",
   "dispatch",
 ] as const
-type BrowserRegion = (typeof BROWSER_REGIONS)[number]
+const BROWSER_PLACED_FEATURES = ["task-board"] as const
 
-type BrowserRegionViolation = {
+type BrowserFeature = {
+  readonly name: string
+  readonly kind: "region" | "placed"
+}
+
+type BrowserFeatureViolation = {
   readonly fromPath: string
-  readonly fromRegion: BrowserRegion
+  readonly fromFeature: BrowserFeature
   readonly toPath: string
-  readonly toRegion: BrowserRegion
+  readonly toFeature: BrowserFeature
 }
 
 describe("browser/ の機能どうしの import", () => {
-  it("browser/features/<機能>/ から別の browser/features/<機能>/ への import が無い", () => {
+  it("browser/features/<機能>/ どうしの import は「領域 → 置かれる機能」だけ", () => {
     const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
     expect(files.length).toBeGreaterThan(0)
 
-    const violations = files.flatMap((relPath) => findBrowserRegionViolations(relPath))
+    const violations = files.flatMap((relPath) => findBrowserFeatureViolations(relPath))
 
-    expect(browserRegionViolationsMessage(violations)).toBe("")
+    expect(browserFeatureViolationsMessage(violations)).toBe("")
   })
 })
 
 // `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
-// 上の `BROWSER_REGIONS` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
+// 上の `BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
 // `main.tsx` / `features/` / `components/` / `lib/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
@@ -275,39 +289,52 @@ function browserBoxViolationsMessage(violations: readonly BrowserBoxViolation[])
     .join("\n")
 }
 
-/** ファイル1件の相対 import から、別の browser 領域を指すものだけを違反として返す。 */
-function findBrowserRegionViolations(relPath: string): readonly BrowserRegionViolation[] {
-  const fromRegion = browserRegionOf(relPath)
-  if (fromRegion === undefined) {
+/** ファイル1件の相対 import から、許した辺（領域 → 置かれる機能）に無いものを違反として返す。 */
+function findBrowserFeatureViolations(relPath: string): readonly BrowserFeatureViolation[] {
+  const fromFeature = browserFeatureOf(relPath)
+  if (fromFeature === undefined) {
     return []
   }
 
   const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
   return relativeImportSpecifiers(content).flatMap((specifier) => {
     const toPath = resolveRelativeImport(relPath, specifier)
-    const toRegion = browserRegionOf(toPath)
-    return toRegion === undefined || toRegion === fromRegion
-      ? []
-      : [{ fromPath: relPath, fromRegion, toPath, toRegion }]
+    const toFeature = browserFeatureOf(toPath)
+    if (toFeature === undefined || toFeature.name === fromFeature.name) {
+      return []
+    }
+    // 許すのは「領域 → 置かれる機能」だけ。領域どうしも、置かれる機能から出る辺も落とす。
+    const allowed = fromFeature.kind === "region" && toFeature.kind === "placed"
+    return allowed ? [] : [{ fromPath: relPath, fromFeature, toPath, toFeature }]
   })
 }
 
-/** `browser/features/<機能>/...` の形なら機能名を返す。共有部分（`browser/lib/` など）は undefined。 */
-function browserRegionOf(relPath: string): BrowserRegion | undefined {
+/**
+ * `browser/features/<機能>/...` の形なら機能を返す。共有部分（`browser/lib/` など）は undefined。
+ * どちらの一覧にも無いディレクトリは `throw`（新しい機能を足したら、どちらの種類かを決める）。
+ */
+function browserFeatureOf(relPath: string): BrowserFeature | undefined {
   const [top, second, third] = relPath.split("/")
   if (top !== "browser" || second !== "features" || third === undefined) {
     return undefined
   }
-  return isBrowserRegion(third) ? third : undefined
+  if (BROWSER_REGIONS.some((region) => region === third)) {
+    return { name: third, kind: "region" }
+  }
+  if (BROWSER_PLACED_FEATURES.some((feature) => feature === third)) {
+    return { name: third, kind: "placed" }
+  }
+  throw new Error(
+    `src/${relPath} の機能の種類を判定できない（BROWSER_REGIONS か BROWSER_PLACED_FEATURES に足す）`,
+  )
 }
 
-function isBrowserRegion(value: string): value is BrowserRegion {
-  return BROWSER_REGIONS.some((region) => region === value)
-}
-
-function browserRegionViolationsMessage(violations: readonly BrowserRegionViolation[]): string {
+function browserFeatureViolationsMessage(violations: readonly BrowserFeatureViolation[]): string {
   return violations
-    .map((v) => `src/${v.fromPath}（${v.fromRegion}） → src/${v.toPath}（${v.toRegion}）`)
+    .map(
+      (v) =>
+        `src/${v.fromPath}（${v.fromFeature.name}／${v.fromFeature.kind}） → src/${v.toPath}（${v.toFeature.name}／${v.toFeature.kind}）`,
+    )
     .join("\n")
 }
 

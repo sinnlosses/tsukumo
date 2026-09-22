@@ -3,27 +3,29 @@
 // （docs/design.md 6.1「部品の木」）。
 //
 // **3つの区画は互いに独立している。** どれか1つの中身が空・不明でも、残りは表示を続ける
-// （`Activity` / `TaskList` / `SessionInfo` がそれぞれ自分の分だけ見る）。
+// （`Activity` / まん中の区画 / `SessionInfo` がそれぞれ自分の分だけ見る）。
 //
-// **タスク一覧の表（`TaskBoard`）を開いているかどうかだけはここが持つ。** 開く口は
-// タスク一覧の区画の見出しにあり、開いた先は画面いっぱいのモーダルなので、区画の中ではなく
-// サイドバーの直下に置く。
+// **まん中の区画（タスク一覧）の中身は props で受け取る。** 中身を描くのは置かれる機能の側で、
+// サイドバーは並び順と区画の枠（`SidebarTaskFrame`）だけを持つ
+// （docs/design.md 2章「領域の機能と、置かれる機能」）。`<Layout>` が領域の中身を props で
+// 受け取るのと同じ形で、**組み合わせるのは `main.tsx`**。
 
-import { type ReactElement, useState } from "react"
+import { type ReactElement, type ReactNode } from "react"
 
 import { useSessionSelector } from "../../stores/session.tsx"
 import { Activity } from "./activity.tsx"
 import { SidebarSection } from "./section.tsx"
 import { SessionInfo } from "./session-info.tsx"
 import styles from "./sidebar.module.css"
-import { TaskBoard } from "./task-board.tsx"
-import { TaskList, taskListTitle } from "./task-list.tsx"
 
-export function Sidebar(): ReactElement {
+export type SidebarProps = {
+  /** まん中の区画（タスク一覧）。枠は `SidebarTaskFrame` を渡して組む（`main.tsx`）。 */
+  readonly taskSection: ReactNode
+}
+
+export function Sidebar(props: SidebarProps): ReactElement {
   const runningTools = useSessionSelector((session) => session.state.runningTools)
   const finishedTools = useSessionSelector((session) => session.state.finishedTools)
-  const tasks = useSessionSelector((session) => session.state.tasks)
-  const [boardOpen, setBoardOpen] = useState(false)
 
   return (
     <>
@@ -34,18 +36,7 @@ export function Sidebar(): ReactElement {
       >
         <Activity running={runningTools} finished={finishedTools} />
       </SidebarSection>
-      <SidebarSection
-        title={taskListTitle(tasks)}
-        extraClass={styles["sidebar-block-tasks"] ?? ""}
-        action={{
-          label: "一覧を見る",
-          onAction: () => {
-            setBoardOpen(true)
-          },
-        }}
-      >
-        <TaskList tasks={tasks} />
-      </SidebarSection>
+      {props.taskSection}
       <SidebarSection
         title="セッション情報"
         extraClass={styles["sidebar-block-session"] ?? ""}
@@ -53,13 +44,6 @@ export function Sidebar(): ReactElement {
       >
         <SessionInfo />
       </SidebarSection>
-      <TaskBoard
-        tasks={tasks}
-        open={boardOpen}
-        onClose={() => {
-          setBoardOpen(false)
-        }}
-      />
     </>
   )
 }

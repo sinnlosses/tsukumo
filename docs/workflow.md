@@ -65,7 +65,7 @@ SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止め�
 ## `summary` の長さ
 
 共通版は「1行に収める」とだけ言う。**このリポジトリでは全角40文字以内**を目安にする
-（サイドバーのタスク一覧が2列の行で出すため。`src/browser/features/sidebar/task-list.tsx` の `TaskItem`）。
+（サイドバーのタスク一覧が2列の行で出すため。`src/browser/features/task-board/task-list.tsx` の `TaskItem`）。
 
 ## 関連
 

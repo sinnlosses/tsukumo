@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
-import { TaskBoard } from "../../../../src/browser/features/sidebar/task-board.tsx"
+import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { type TaskSummaryItem } from "../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
@@ -87,7 +87,7 @@ describe("TaskBoard", () => {
     ])
   })
 
-  // 狭い画面では見出しの行が隠れてカードになる（sidebar.module.css の @media）。そのとき
+  // 狭い画面では見出しの行が隠れてカードになる（task-board.module.css の @media）。そのとき
   // 値だけでは意味が取れないセルのラベルは `data-label` から出すので、ここが消えると
   // カードの「loopable」「着手」が名無しの値になる。
   it("見出しが隠れても読めるよう、意味が取れないセルは data-label を持つ", () => {
@@ -138,7 +138,7 @@ describe("TaskBoard", () => {
     const rows = document.querySelectorAll(".task-board-row")
     expect(rows[0]?.querySelectorAll("td")[3]?.textContent).toBe("—")
     expect(rows[3]?.querySelectorAll("td")[3]?.textContent).toBe("X-001, X-002")
-    // IDは1つずつ包んで出す（折り返せるのは区切りの `, ` だけ。sidebar.module.css の .task-dep-id）。
+    // IDは1つずつ包んで出す（折り返せるのは区切りの `, ` だけ。task-board.module.css の .task-dep-id）。
     expect(rows[3]?.querySelectorAll(".task-dep-id")).toHaveLength(2)
   })
 

@@ -4,11 +4,14 @@
 // **区画には全件を並べ、入りきらない分は区画の内側でスクロールする。** 一覧を見渡すのは
 // 見出しの「一覧を見る」から開く表（`task-board.tsx`）の仕事で、ここは直近の並びを
 // 視界の端に置いておくだけ（docs/requirements.md 4.2）。
+//
+// **置き場所（サイドバーの区画）はサイドバーの持ち物で、ここは中身だけを描く。** 区画の枠と
+// 見出しは `features/sidebar/section.tsx` にある（docs/design.md 2章）。
 
 import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../shared/task-summary.ts"
-import styles from "./sidebar.module.css"
+import styles from "./task-board.module.css"
 
 export type TaskListProps = {
   readonly tasks: readonly TaskSummaryItem[] | undefined
@@ -57,14 +60,14 @@ function taskStatusCounts(tasks: readonly TaskSummaryItem[]): {
 
 export function TaskList(props: TaskListProps): ReactElement {
   if (props.tasks === undefined) {
-    return <p className={styles["sidebar-empty"]}>不明</p>
+    return <p className={styles["task-empty"]}>不明</p>
   }
   if (props.tasks.length === 0) {
-    return <p className={styles["sidebar-empty"]}>タスクが無い</p>
+    return <p className={styles["task-empty"]}>タスクが無い</p>
   }
 
   return (
-    <ul className={`${styles["sidebar-list"]} ${styles["task-list"]}`}>
+    <ul className={styles["task-list"]}>
       {props.tasks.map((task) => (
         <TaskItem key={task.id} task={task} />
       ))}
@@ -74,7 +77,7 @@ export function TaskList(props: TaskListProps): ReactElement {
 
 /**
  * タスク一覧1件分。バッジ（status）を先頭列、ID＋summary を2列目に置く2列の grid 行
- * （`.task-item` の `grid-template-columns: auto 1fr`。`sidebar.module.css`）。
+ * （`.task-item` の `grid-template-columns: auto 1fr`。`task-board.module.css`）。
  */
 function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElement {
   const doneClass = props.task.status === "done" ? ` ${styles["task-done"]}` : ""

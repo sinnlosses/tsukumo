@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 TaskBoard と TaskList を features/ 直下へ出した（T-328）
+
+`task-board`/`task-list` を1つの機能 `src/browser/features/task-board/` にまとめ、`.task-` の
+31セレクタと `@media` を `task-board.module.css` へ分けた。サイドバーは区画の枠
+（`SidebarTaskFrame`）だけを持ち、購読と開閉の state は `<TaskSection>` が持つ。機能を
+「領域」と「置かれる機能」の2種類に割り、辺は `main.tsx` が組む1方向だけを許す検査にした。
+
 ### 2026-09-22 画面からセッションを選んで切り替えられるようにした（T-348）
 
 サイドバーの「セッション」の `<select>`（`session-switch.tsx`）に、同じパック・同じモードの

@@ -3,7 +3,7 @@
 // （docs/requirements.md 4.2）。列は `/list-tasks` が出す表に揃える。
 //
 // **狭い画面では、この表が1タスク＝1枚のカードに組み替わる**（docs/requirements.md 4.7）。
-// 組み替えるのは CSS（sidebar.module.css の @media）だけで、**ここは幅を測らず表のまま書く**。
+// 組み替えるのは CSS（task-board.module.css の @media）だけで、**ここは幅を測らず表のまま書く**。
 // 見出しの行が隠れるぶん意味が読み取れなくなるセルにだけ `data-label` を持たせ、CSS が
 // `::before` でラベルを出す（ID・status・要約は値そのもので分かるので持たせない）。
 //
@@ -14,9 +14,10 @@
 // **`<dialog>` の `showModal()` を使う**。
 // Esc で閉じるのと、閉じたときにフォーカスを開く口へ戻すのはブラウザのモーダル挙動に任せ、
 // 外側（backdrop）のクリックだけを自前で拾う。**`<dialog>` は top layer に出る**ので、
-// サイドバー領域の `overflow` には切り取られない。
+// サイドバー領域の `overflow` には切り取られない。**開閉を DOM へ写す同期は
+// `hooks/use-modal-dialog.ts`**（docs/design.md 2章）。
 
-import { Fragment, memo, useEffect, useRef, type MouseEvent, type ReactElement } from "react"
+import { Fragment, memo, type MouseEvent, type ReactElement } from "react"
 
 import {
   taskReadiness,
@@ -24,7 +25,8 @@ import {
   type TaskReadiness,
   type TaskSummaryItem,
 } from "../../../shared/task-summary.ts"
-import styles from "./sidebar.module.css"
+import { useModalDialog } from "./hooks/use-modal-dialog.ts"
+import styles from "./task-board.module.css"
 import { taskStatusClass } from "./task-list.tsx"
 
 /**
@@ -51,22 +53,8 @@ export type TaskBoardProps = {
 }
 
 export function TaskBoard(props: TaskBoardProps): ReactElement {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-
-  // 開いているかどうかは呼び出し側の state が持ち、`<dialog>` の開閉はそれに追随させる
-  // （DOM の側に第2の状態を作らない）。Esc で閉じたときは `close` イベントで state へ戻す。
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (dialog === null) {
-      return
-    }
-    if (props.open && !dialog.open) {
-      dialog.showModal()
-    }
-    if (!props.open && dialog.open) {
-      dialog.close()
-    }
-  }, [props.open])
+  // Esc で閉じたときは `close` イベント（下の `onClose`）で呼び出し側の state へ戻す。
+  const dialogRef = useModalDialog(props.open)
 
   /** backdrop のクリックは `<dialog>` 自身が受け取る（中身は子要素が受け取る）。 */
   function handleClick(event: MouseEvent<HTMLDialogElement>): void {
@@ -108,10 +96,10 @@ const TaskTable = memo(function TaskTable(props: {
 }): ReactElement {
   const tasks = props.tasks
   if (tasks === undefined) {
-    return <p className={styles["sidebar-empty"]}>develop/tasks.json が読めない</p>
+    return <p className={styles["task-empty"]}>develop/tasks.json が読めない</p>
   }
   if (tasks.length === 0) {
-    return <p className={styles["sidebar-empty"]}>タスクが無い</p>
+    return <p className={styles["task-empty"]}>タスクが無い</p>
   }
 
   // 「まだ done でないタスクのID」は一覧全体から1回だけ作り、行ごとの `taskReadiness` へ
@@ -197,7 +185,7 @@ function ReadinessCell(props: {
 
 /**
  * IDの並び。**区切りの `, ` だけを折り返せる場所にする**ため、IDを1つずつ包んで出す
- * （`T-328` の `-` で改行されると読めなくなる。折らない指定は sidebar.module.css の
+ * （`T-328` の `-` で改行されると読めなくなる。折らない指定は task-board.module.css の
  * `.task-dep-id`）。
  */
 function TaskIdList(props: { readonly ids: readonly string[] }): ReactElement {

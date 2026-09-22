@@ -1,7 +1,8 @@
 /* サイドバー（`src/browser/features/sidebar/`）。3つの区画（いま何をしているか・タスク一覧・
-   セッション情報）と、そこから開くタスク一覧の表（`<dialog>`）まで**この1枚**に持つ
-   — 一覧と表は「終わったタスクは薄い（.task-done）」「中身が無いときの一言（.sidebar-empty）」
-   という語彙を共有していて、分けると同じ名前が2つになるため。 */
+   セッション情報）の**枠**と、サイドバー自身が描く中身（いま何をしているか・セッション情報）を
+   持つ。**まん中の区画の中身（タスク一覧）と、そこから開く表の見た目はここには無い** — 置かれる
+   機能の側に1枚でまとまっている（docs/design.md 2章「領域の機能と、置かれる機能」）。
+   サイドバーは置き場所を貸しているだけ。 */
 
 .session-info-label {
   white-space: nowrap;
@@ -91,7 +92,7 @@
 /* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。
    「セッション情報」は3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの
    高さで止める（等分すると中身が短いぶんだけ下に空白が間延びするため）。
-   **一覧を見渡すのは区画ではなく表（.task-board）**なので、ここは一覧の全長に合わせて
+   **一覧を見渡すのは区画ではなく画面いっぱいの表（モーダル）**なので、ここは一覧の全長に合わせて
    高さを取りに行かない。入りきらない分は .sidebar-block-scroll が内側でスクロールする。 */
 .sidebar-block-activity,
 .sidebar-block-tasks {
@@ -168,48 +169,6 @@
 .activity-failure-input {
   border: none;
 }
-.task-list {
-  list-style: none;
-  padding-left: 0;
-}
-.task-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 0.4rem;
-  align-items: baseline;
-}
-.task-item.task-done {
-  color: var(--ink-quiet);
-}
-/* タスクのIDは機械が付けた名前なので等幅（docs/design.md 13.1 原則3）。書体そのものの定義は
-   `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。 */
-.task-item .task-id {
-  opacity: 0.8;
-  font-family: var(--font-mono);
-}
-/* 枠の色は文字色に追随させる（currentColor）。todo は既定の文字色のまま、doing だけ差し色
-   （--accent）を使う。--state-* はここでは使わない（意味が固定されている色なので、todo / doing に
-   宛てると ok / warn / ng / ask の意味が動く。docs/design.md 13.1 原則5）。 */
-.task-status {
-  padding: 0 0.3rem;
-  border: 1px solid currentColor;
-  border-radius: 0.3rem;
-  background: var(--surface);
-  font-size: var(--font-label);
-}
-/* todo は既定の文字色のまま。**class は状態の印**として付ける（下の doing / done / other と対）。 */
-.task-status-todo {
-  color: inherit;
-}
-.task-status-doing {
-  color: var(--accent);
-}
-.task-status-done {
-  color: var(--ink-quiet);
-}
-.task-status-other {
-  color: var(--state-warn);
-}
 /* ラベル列（`.session-info-label`）と値列（`.session-info-value`）を2列の grid で揃える。
    行ごとに別々の flex で並べると、ラベルの文字数の差（「モデル」3字 /「許可モード」5字）が
    そのまま select の左端のズレになる。 */
@@ -223,203 +182,4 @@
      子（ラベル／値）の片方だけに置くと、もう片方が .sidebar-block の var(--font-secondary) に戻る。 */
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
-}
-
-/* タスク一覧の表（`src/browser/features/sidebar/task-board.tsx`。`<dialog>` を `showModal()` で開く）。
-   一時的に重なるものなので常設の枠を増やさない（docs/design.md 13.1 原則2）。
-   `showModal()` で開いている間はブラウザが top layer に載せるので、サイドバー領域の
-   overflow には切り取られない。 */
-.task-board {
-  box-sizing: border-box;
-  width: min(64rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 4rem);
-  margin: auto;
-  padding: 1rem;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: 0.75rem;
-  font: inherit;
-  font-size: var(--font-secondary);
-  overflow: hidden;
-}
-.task-board::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
-/* 見出しと閉じる口は動かさず、表だけが内側でスクロールする（件数が増えても閉じる口を探しに
-   スクロールしなくて済む）。 */
-.task-board-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  max-height: calc(100vh - 6rem);
-}
-.task-board-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-.task-board-heading {
-  margin: 0;
-  font-size: var(--font-heading);
-  font-weight: 600;
-}
-.task-board-close {
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.task-board-close:hover {
-  border-color: var(--accent);
-}
-.task-board-scroll {
-  min-height: 0;
-  overflow: auto;
-}
-.task-board-table {
-  /* 狭い画面では器のほうが足りなくなるので、**表は器より広がってよい**（.task-board-scroll が
-     その表だけ横スクロールさせる。docs/design.md 13.3）。width: 100% にすると要約の列が
-     1〜2字ずつの折り返しにつぶれ、表が器に収まってしまって横スクロールも働かない。 */
-  min-width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-/* 要約の列の下限。ここを割ると上のつぶれ方になる。 */
-.task-board-table td:last-child {
-  min-width: 24em;
-}
-/* 見出しの行は、縦にスクロールしても列の意味が分かるよう上に貼り付ける。 */
-.task-board-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 0.3rem 0.5rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--rule);
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  font-weight: 600;
-  white-space: nowrap;
-}
-.task-board-table td,
-.task-board-table tbody th {
-  padding: 0.3rem 0.5rem;
-  border-bottom: 1px solid var(--rule);
-  font-weight: normal;
-  vertical-align: top;
-}
-/* ID・status・難易度・loopable は機械が付けた名前なので、折り返さず1行に置く
-   （docs/design.md 13.1 原則3）。 */
-.task-board-table tbody th,
-.task-board-table td:nth-child(2),
-.task-board-table td:nth-child(3),
-.task-board-table td:nth-child(4) {
-  white-space: nowrap;
-}
-/* 着手（依存のID が並ぶ列）。**ここだけは折り返させる**——1行に置くと依存が多い行で表が器を
-   超え、最後にある要約の列が可視領域の外へ押し出される（実測: 依存7件で約26em）。上限は
-   「器（64rem）から他の5列と要約の min-width: 24em を引いた残り」から採った。 */
-.task-board-table td:nth-child(5) {
-  max-width: 16em;
-  white-space: normal;
-}
-/* IDそのものは折らない（`T-328` が `-` で改行されると読めなくなる）。折り返せるのは
-   task-board.tsx が区切りに置く `, ` だけになる。 */
-.task-dep-id {
-  white-space: nowrap;
-}
-.task-board-row.task-done {
-  color: var(--ink-quiet);
-}
-/* 着手可否。**意味を固定した色**（docs/design.md 13.1 原則5）を使うが、色だけで伝えないよう
-   文字（READY / 待ち: …）も出す。 */
-.task-ready {
-  color: var(--state-ok);
-}
-.task-blocked {
-  color: var(--state-warn);
-}
-
-/* 狭い画面では、タスク一覧の表を**1タスク＝1枚のカード**に組み替える
-   （docs/requirements.md 4.7）。390px の器に7列の表を入れると 691px に広がり、いちばん
-   知りたい要約の列が丸ごと画面の外へ出てしまう（実測）。組み替えるのは
-   ここだけで、`task-board.tsx` は幅を測らず表のまま書く。
-   **レポートの中の表（.table-scroll。docs/design.md 13.3「表は器より広がってよい」）は
-   この対象ではない。** あちらは中身が何列になるか分からない一般の表で、こちらは列と
-   意味が分かっている一覧なので、狭いときの形をこちらで決められる。 */
-@media (max-width: 760px) {
-  .task-board-table,
-  .task-board-table tbody {
-    display: block;
-    min-width: 0;
-  }
-  /* 見出しの行はカードでは置き場所が無いので隠す。読み取れなくなるセルには下で
-     ラベルを出す（ID・status・難易度・要約は値そのもので分かる）。 */
-  .task-board-table thead {
-    display: none;
-  }
-  /* 1行目に ID・status・難易度・loopable、2行目に要約、3行目に依存・着手。
-     **DOM の並び（要約が最後）とは違う順に置く**——要約が読み手の主で、metadata を
-     読んでから意味にたどり着く形にしたくないため。中に押せる口は無いので、
-     読み上げの順（DOM のまま）と見た目の順が食い違っても操作の妨げにならない。 */
-  .task-board-row {
-    display: grid;
-    grid-template-columns: auto auto auto 1fr;
-    gap: 0.15rem 0.5rem;
-    padding: 0.55rem 0;
-    border-bottom: 1px solid var(--rule);
-  }
-  .task-board-table tbody th,
-  .task-board-table td {
-    padding: 0;
-    border-bottom: none;
-  }
-  .task-board-table tbody th {
-    grid-row: 1;
-    grid-column: 1;
-  }
-  .task-board-table td:nth-child(2) {
-    grid-row: 1;
-    grid-column: 2;
-  }
-  .task-board-table td:nth-child(3) {
-    grid-row: 1;
-    grid-column: 3;
-  }
-  .task-board-table td:nth-child(4) {
-    grid-row: 1;
-    grid-column: 4;
-  }
-  /* 要約。カードの主なので、行いっぱいを使って折り返す（min-width: 24em は器より広い
-     指定なのでここでは効かせない）。 */
-  .task-board-table td:last-child {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    min-width: 0;
-    white-space: normal;
-  }
-  /* 着手。カードでは行いっぱいを使えるので、広い画面向けの上限（max-width: 16em）は外す。 */
-  .task-board-table td:nth-child(5) {
-    grid-row: 3;
-    grid-column: 1 / -1;
-    max-width: none;
-  }
-  /* 見出しの行が消えたぶんのラベル。**値と同じ行に、値より弱い濃さで置く**
-     （行の上にラベルだけの段を作らない）。 */
-  .task-board-table td[data-label]::before {
-    content: attr(data-label) " ";
-    color: var(--ink-quiet);
-    font-size: var(--font-label);
-  }
-  /* loopable は N のとき空になる（task-board.tsx）。空のセルにラベルだけが残らないよう
-     セルごと畳む。 */
-  .task-board-table td:empty {
-    display: none;
-  }
 }
