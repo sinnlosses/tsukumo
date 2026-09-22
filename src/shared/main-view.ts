@@ -165,18 +165,20 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * 時系列の記録を、やり取り（ターン）ごとにまとめ、直近 {@link MAX_MAIN_VIEW_TURNS} 件へ絞る。
  * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
  *
- * `turnInProgress` はそのときの `SessionState` の同名のフィールドで、**確定していない本文を
- * 出さない**ために要る（{@link selectShownReports}）。
+ * `turnUnsettled` は**いちばん新しいやり取りの締めの本文がまだ伸びうるか**で、確定していない
+ * 本文を出さないために要る（{@link selectShownReports}）。**`SessionState.turnInProgress`
+ * そのものではない**——背景の仕事を待って黙ると `turn-finished` が来てそのフィールドは落ちるが、
+ * 通知で再開したぶんの本文はそこから伸びる（作るのは `browser/stores/main-view-turn.ts`）。
  */
 export function mainViewTurns(
   entries: readonly MainViewEntry[],
-  turnInProgress: boolean,
+  turnUnsettled: boolean,
 ): readonly MainViewTurn[] {
   const turns = groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)
   return (
     turns
       // 動いているのはいちばん新しいやり取りだけで、それ以外の本文はもう確定している。
-      .map((turn, index) => selectShownReports(turn, !turnInProgress || index !== turns.length - 1))
+      .map((turn, index) => selectShownReports(turn, !turnUnsettled || index !== turns.length - 1))
       .map((turn) => markSupersededSteps(turn))
       .map((turn) => markFinalReport(turn))
       .map((turn) => limitTurnEntries(turn))
