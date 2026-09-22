@@ -19,7 +19,7 @@ afterEach(() => {
 })
 
 function request(text: string, turnId = 0): SessionRecord {
-  return { kind: "request", turnId, text, images: [] }
+  return { kind: "request", turnId, text, images: [], time: { kind: "stamped", at: 0 } }
 }
 
 function detail(markdown: string): SessionRecord {
@@ -27,7 +27,7 @@ function detail(markdown: string): SessionRecord {
 }
 
 function speech(text: string): SessionRecord {
-  return { kind: "speech", text, expression: "default" }
+  return { kind: "speech", text, expression: "default", time: { kind: "stamped", at: 0 } }
 }
 
 function tool(

@@ -9,3 +9,12 @@
 export function nowEpochMilliseconds(): number {
   return Temporal.Now.instant().epochMilliseconds
 }
+
+/**
+ * OS のタイムゾーン（IANA の名前）。雑談のログが日の境目と行ごとの時刻を決めるのに使う
+ * （docs/design.md 13.7「時刻と日の区切り」）。時計ではないが、読む先が同じ「外の世界の設定」
+ * なので、ブラウザ側で読む場所をここに揃える。
+ */
+export function localTimeZoneId(): string {
+  return Temporal.Now.timeZoneId()
+}

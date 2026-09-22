@@ -315,7 +315,7 @@ function createSessionHost(
     // 雑談のログに乗る文面（依頼とセリフ）だけ、届いたその場で走行合計に足す
     // （`state.records` の切り詰めに影響されない。docs/requirements.md 4.9）。
     if (state.chatMode) {
-      chatLogBytesSinceCompact += chatLogEventByteSize(event)
+      chatLogBytesSinceCompact += chatLogEventByteSize(event, at)
     }
     // 雑談の会話のアーカイブへ1行足す。**駆動由来（`"driver"`）・雑談モード・パックが
     // 分かっているときだけ**（docs/requirements.md 4.9「誰がいつ書くか」）。
@@ -631,13 +631,15 @@ function appendChatArchiveEntry(
  * `chatLogEntries`（`src/shared/chat-log.ts`）と同じ2種類（依頼とセリフ）だけで、
  * それ以外は0（画像とツールの入出力は数えない。docs/requirements.md 4.9）。
  */
-function chatLogEventByteSize(event: SessionEvent): number {
+function chatLogEventByteSize(event: SessionEvent, at: number): number {
+  // 時刻は数えないが、ログの1件の形に揃えるために添える。
+  const time = { kind: "stamped", at } as const
   if (event.kind === "request") {
-    return chatLogByteSize([{ speaker: "user", text: event.text, images: event.images }])
+    return chatLogByteSize([{ speaker: "user", text: event.text, images: event.images, time }])
   }
   if (event.kind === "speech") {
     return chatLogByteSize([
-      { speaker: "character", text: event.text, expression: event.expression },
+      { speaker: "character", text: event.text, expression: event.expression, time },
     ])
   }
   return 0

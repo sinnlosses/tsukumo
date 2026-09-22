@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
-import { type SessionEvent } from "../../src/shared/session-event.ts"
+import { type SessionEvent, type StampedEvent } from "../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
@@ -112,8 +112,14 @@ describe("applySessionEvent", () => {
 
     // 記録には残す（過去のターンの吹き出しを引き直すため。shared/turn-speech.ts）。
     expect(view.records).toEqual([
-      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
-      { kind: "speech", text: "いくよ！", expression: "proud" },
+      {
+        kind: "request",
+        turnId: 0,
+        text: "ダミーの依頼",
+        images: [],
+        time: { kind: "stamped", at: 0 },
+      },
+      { kind: "speech", text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 0 } },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
     // メインビューにはセリフを出さない（吹き出しだけ。docs/requirements.md 4.2）。
@@ -134,15 +140,78 @@ describe("applySessionEvent", () => {
 
     // 記録には積む（雑談のログ側 shared/chat-log.ts が読む）。
     expect(view.records).toEqual([
-      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
-      { kind: "speech", text: "いくよ！", expression: "proud" },
+      {
+        kind: "request",
+        turnId: 0,
+        text: "ダミーの依頼",
+        images: [],
+        time: { kind: "stamped", at: 0 },
+      },
+      { kind: "speech", text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 0 } },
       { kind: "compact-boundary" },
-      { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
+      {
+        kind: "request",
+        turnId: 1,
+        text: "2つめの依頼",
+        images: [],
+        time: { kind: "stamped", at: 0 },
+      },
     ])
     // 仕事のメインビューには出さない（docs/requirements.md 4.9）。
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
+    ])
+  })
+
+  it("依頼とセリフの記録は、そのイベントに打たれた時刻を持つ", () => {
+    const events: readonly StampedEvent[] = [
+      { at: 1_000, event: { kind: "request", text: "架空の依頼", images: [] } },
+      { at: 2_000, event: { kind: "speech", text: "架空のセリフ", expression: "default" } },
+    ]
+    const view = events.reduce(
+      (state, stamped) => applySessionEvent(state, stamped.event, stamped.at),
+      INITIAL_SESSION_STATE,
+    )
+
+    expect(view.records.map((record) => ("time" in record ? record.time : undefined))).toEqual([
+      { kind: "stamped", at: 1_000 },
+      { kind: "stamped", at: 2_000 },
+    ])
+  })
+
+  it("再生の終わり（history-restored）で、それまでの依頼とセリフは時刻の分からない記録になる", () => {
+    const view = apply(
+      { kind: "request", text: "組み直した依頼", images: [] },
+      { kind: "speech", text: "組み直したセリフ", expression: "default" },
+      { kind: "compact-boundary" },
+      { kind: "turn-finished", status: "success" },
+      { kind: "history-restored" },
+      { kind: "request", text: "いまの依頼", images: [] },
+    )
+
+    expect(view.records).toEqual([
+      {
+        kind: "request",
+        turnId: 0,
+        text: "組み直した依頼",
+        images: [],
+        time: { kind: "restored" },
+      },
+      {
+        kind: "speech",
+        text: "組み直したセリフ",
+        expression: "default",
+        time: { kind: "restored" },
+      },
+      { kind: "compact-boundary" },
+      {
+        kind: "request",
+        turnId: 1,
+        text: "いまの依頼",
+        images: [],
+        time: { kind: "stamped", at: 0 },
+      },
     ])
   })
 

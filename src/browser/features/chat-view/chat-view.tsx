@@ -23,6 +23,10 @@
 // 入れ替わる。**サーバの契約は増やしていない** — 今のターンでまだ `speak` が呼ばれていないかは
 // `SessionState.speechCalledInTurn` にすでにある。
 //
+// **発言の脇に時刻（`HH:MM`）を添え、日が変わるところに日付の区切りを1本入れる**
+// （docs/design.md 13.7「時刻と日の区切り」）。前のセッションを組み直した発言は時刻が
+// 分からないので、時刻を出さない。
+//
 // **立ち絵をつつくと話しかけてくれる**（docs/design.md 13.7。{@link NudgePortrait}）。
 // 押すと `nudge` コマンドが1つ飛ぶだけで、**送る文面はブラウザが持たない**
 // （`src/server/core/chat-nudge.ts`）。送った文面はログにも記録にも残らない。
@@ -41,12 +45,14 @@ import {
   type ReactElement,
 } from "react"
 
-import { chatLogEntries, type ChatLogEntry } from "../../../shared/chat-log.ts"
+import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../shared/chat-log.ts"
 import { resolveExpressionLabel } from "../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../shared/expression.ts"
+import { type RecordTime } from "../../../shared/session-state.ts"
 import { Portrait } from "../../components/portrait.tsx"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
+import { localTimeZoneId } from "../../utils/clock.ts"
 import styles from "./chat-view.module.css"
 import { useSpeechGrowth } from "./hooks/use-speech-growth.ts"
 
@@ -83,6 +89,9 @@ const NEAR_BOTTOM_THRESHOLD_PX = 120
  * 選ぶだけでも1文字ぶん（本文の大きさなら十数px）は動くので、手のぶれ（数px）と混ざらない。
  */
 const DRAG_THRESHOLD_PX = 4
+
+/** 日の区切りに出す曜日（`Temporal.PlainDate.dayOfWeek` は月曜が 1、日曜が 7）。 */
+const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
 
 /** 押し始めた場所（ドラッグと押すの見分けに使う。{@link isSelectionDrag}）。 */
 type PressOrigin = {
@@ -314,6 +323,8 @@ function ChatLog(props: {
   readonly onToggle: (index: number) => void
 }): ReactElement {
   const logRef = useRef<HTMLDivElement>(null)
+  // 日の境目と行ごとの時刻は、画面を見ている人のタイムゾーンで決める。
+  const timeZone = localTimeZoneId()
   // 利用者が下端付近を読んでいるかどうか。新着が来た「あと」に測ったのでは元の位置が
   // わからないので、スクロール操作のたびに更新しておく（初期値は true — まだ何も
   // 積まれていない・積まれたばかりの状態は下端に等しい）。
@@ -384,36 +395,53 @@ function ChatLog(props: {
         <p className={styles["chat-empty"]}>{EMPTY_LOG_MESSAGE}</p>
       ) : (
         <>
-          {props.entries.map((entry, index) =>
+          {chatLogRows(props.entries, timeZone).map((row) => {
+            // 日の区切り（docs/design.md 13.7「時刻と日の区切り」）。**日が変わった発言の手前に
+            // だけ**入る。並びは末尾に積むだけなので、日付がそのまま key になる。
+            if (row.kind === "day") {
+              return <ChatDay key={`day-${row.date.toString()}`} date={row.date} />
+            }
+            const { entry, index } = row
             // 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない細い線1本**で、
             // 押せない・畳めない（利用者の操作の対象にしない。docs/requirements.md 4.9）。`<hr>`
             // は元々「文言を持たない区切り」を表す要素なので、ここに説明文を足す必要が無い。
-            entry.speaker === "boundary" ? (
-              <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
-            ) : entry.speaker === "character" ? (
-              <ChatSpeech
-                // 並びは末尾に積むだけで、途中に差し込まれることも並べ替えもない。
-                key={index}
-                text={entry.text}
-                selected={index === props.selectedIndex}
-                grow={index === props.growingIndex}
-                onToggle={() => {
-                  props.onToggle(index)
-                }}
-              />
-            ) : (
-              // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
-              // **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。
+            if (entry.speaker === "boundary") {
+              return <hr key={index} className={styles["chat-boundary"]} data-speaker="boundary" />
+            }
+            return (
+              // 並びは末尾に積むだけで、途中に差し込まれることも並べ替えもない。
               <div
                 key={index}
-                className={`${styles["chat-entry"]} ${styles["chat-entry-user"]}`}
-                data-speaker="user"
+                className={`${styles["chat-row"]} ${
+                  entry.speaker === "character"
+                    ? styles["chat-row-character"]
+                    : styles["chat-row-user"]
+                }`}
               >
-                {entry.text}
-                <PromptImageThumbnails images={entry.images} />
+                {entry.speaker === "character" ? (
+                  <ChatSpeech
+                    text={entry.text}
+                    selected={index === props.selectedIndex}
+                    grow={index === props.growingIndex}
+                    onToggle={() => {
+                      props.onToggle(index)
+                    }}
+                  />
+                ) : (
+                  // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
+                  // **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。
+                  <div
+                    className={`${styles["chat-entry"]} ${styles["chat-entry-user"]}`}
+                    data-speaker="user"
+                  >
+                    {entry.text}
+                    <PromptImageThumbnails images={entry.images} />
+                  </div>
+                )}
+                <ChatTime time={entry.time} timeZone={timeZone} />
               </div>
-            ),
-          )}
+            )
+          })}
           {/* 返事を待っている間だけ末尾に出す「...」（docs/design.md 13.7「返事を待つ間の
               「...」」）。育つ吹き出しとは別の行で、そのターンの `speech` が届くとこの行は
               消え、届いたセリフの行が育ち始める。 */}
@@ -421,6 +449,54 @@ function ChatLog(props: {
         </>
       )}
     </div>
+  )
+}
+
+/**
+ * 日の区切り（docs/design.md 13.7「時刻と日の区切り」）。**その下に続く発言の日**を
+ * `9月23日（水）` の形で出す。年は出さない（ログが持つのは雑談の 100 ターンぶんで、年を
+ * またいでも並びの順で読める）。「今日」「昨日」とも書かない —— 時計を読むと、日付が変わった
+ * あとに描き直すまで古い呼び名が残る。
+ *
+ * 押せない・畳めない。文字は `ink-quiet`（読む面の原則。13.1 原則1）で、区切りは色を持たない。
+ */
+function ChatDay(props: { readonly date: Temporal.PlainDate }): ReactElement {
+  const { date } = props
+  const weekday = WEEKDAY_LABELS[date.dayOfWeek - 1] ?? ""
+  return (
+    <div className={styles["chat-day"]} data-day={date.toString()}>
+      <time dateTime={date.toString()}>
+        {`${String(date.month)}月${String(date.day)}日（${weekday}）`}
+      </time>
+    </div>
+  )
+}
+
+/**
+ * 発言の脇に添える時刻（`HH:MM`。秒は出さない）。**吹き出しの外、下端の内側**に置く
+ * （キャラクターの行は右脇、利用者の行は左脇。LINE と同じ読み方）。機械が付けた値なので
+ * 等幅（13.1 原則3）で、文字は `ink-quiet`。
+ *
+ * **前のセッションを組み直した発言（`restored`）には何も出さない**（docs/design.md 13.7）。
+ * 時刻が分からないので、流し直した時刻を代わりに出すと昨日の一言が「いま」に見える。
+ */
+function ChatTime(props: {
+  readonly time: RecordTime
+  readonly timeZone: string
+}): ReactElement | null {
+  if (props.time.kind === "restored") {
+    return null
+  }
+  const at = Temporal.Instant.fromEpochMilliseconds(props.time.at).toZonedDateTimeISO(
+    props.timeZone,
+  )
+  return (
+    <time
+      className={styles["chat-time"]}
+      dateTime={at.toString({ timeZoneName: "never", smallestUnit: "minute" })}
+    >
+      {at.toPlainTime().toString({ smallestUnit: "minute" })}
+    </time>
   )
 }
 

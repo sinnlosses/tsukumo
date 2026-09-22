@@ -10,6 +10,7 @@ import {
 } from "../../../src/server/core/session-restore.ts"
 import { type Expression } from "../../../src/shared/expression.ts"
 import { MAX_SESSION_CHOICES } from "../../../src/shared/session-choice.ts"
+import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
@@ -252,7 +253,21 @@ describe("listMarkedSessions", () => {
   })
 })
 
+/** 再生の終わりの印（`toRestoredEvents` が、組み直せたものがあるときだけ末尾に1つ足す）。 */
+const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
+
 describe("toRestoredEvents", () => {
+  it("組み直せたものがあれば、再生の終わりの印を末尾に1つだけ足す（空なら足さない）", () => {
+    const events = toRestoredEvents(
+      [userMessage("架空の依頼その1"), userMessage("架空の依頼その2")],
+      EXPRESSIONS,
+    )
+
+    expect(events.filter((event) => event.kind === "history-restored")).toHaveLength(1)
+    expect(events.at(-1)).toEqual(HISTORY_RESTORED)
+    expect(toRestoredEvents([null, { type: "user" }], EXPRESSIONS)).toEqual([])
+  })
+
   it("依頼・本文・セリフ・ツールの行が起き、ターンの境目が依頼ごとに分かれる", () => {
     const messages = [
       userMessage([{ type: "text", text: "架空の依頼その1" }]),
@@ -289,6 +304,7 @@ describe("toRestoredEvents", () => {
       { kind: "request", text: "架空の依頼その2", images: [] },
       { kind: "utterance", text: "架空の本文その2" },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -298,7 +314,7 @@ describe("toRestoredEvents", () => {
       EXPRESSIONS,
     )
 
-    expect(events).toEqual([{ kind: "utterance", text: "架空の本文" }])
+    expect(events).toEqual([{ kind: "utterance", text: "架空の本文" }, HISTORY_RESTORED])
   })
 
   it("空の列・壊れた要素が混じった列でも落ちず、読めたものだけを返す", () => {
@@ -318,6 +334,7 @@ describe("toRestoredEvents", () => {
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -335,6 +352,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "/架空コマンド", images: [] },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -348,6 +366,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "/架空コマンド 架空の引数", images: [] },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -357,6 +376,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の普通の依頼", images: [] },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -371,6 +391,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -384,6 +405,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の依頼の前半\n\n架空の依頼の後半", images: [] },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -398,6 +420,7 @@ describe("toRestoredEvents", () => {
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -416,6 +439,7 @@ describe("toRestoredEvents", () => {
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 
@@ -430,6 +454,7 @@ describe("toRestoredEvents", () => {
       { kind: "compact-boundary" },
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "turn-finished", status: "success" },
+      HISTORY_RESTORED,
     ])
   })
 })

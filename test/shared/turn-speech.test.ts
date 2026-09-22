@@ -16,12 +16,14 @@ const request = (text: string, turnId = 0): SessionRecord => ({
   turnId,
   text,
   images: [],
+  time: { kind: "stamped", at: 0 },
 })
 const detail = (markdown: string): SessionRecord => ({ kind: "detail", markdown })
 const speech = (text: string, expression: "default" | "proud" = "default"): SessionRecord => ({
   kind: "speech",
   text,
   expression,
+  time: { kind: "stamped", at: 0 },
 })
 const compactBoundary = (): SessionRecord => ({ kind: "compact-boundary" })
 

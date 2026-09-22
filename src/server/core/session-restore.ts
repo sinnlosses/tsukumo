@@ -24,6 +24,9 @@ import { toSessionEvents } from "./sdk-message.ts"
  */
 const RESTORED_TURN_FINISHED: SessionEvent = { kind: "turn-finished", status: "success" }
 
+/** 組み直した再生の終わりの印（{@link toRestoredEvents}）。 */
+const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
+
 /**
  * 続きから始めるセッションを選ぶ。**印（`tagSession` で付けたもの）のあるもののうち、
  * `lastModified` が最新の1つ**（docs/requirements.md 4.8「鍵」）。
@@ -71,6 +74,8 @@ export function listMarkedSessions(sessions: unknown, family: string): readonly 
  * - **利用者の依頼（`request`）**: `user` のテキストブロックから起こす（ツールの結果は除く）
  * - **ターンの境目（`turn-finished`）**: `result` が残らないので、**次の依頼の手前**と
  *   **並びの末尾**で区切る
+ * - **再生の終わり（`history-restored`）**: 末尾に1つ。transcript に残る時刻は読む口
+ *   （`getSessionMessages`）が落とすので、ここまでの記録は時刻が分からないと畳み込みに伝える
  *
  * 壊れた要素は {@link toSessionEvents} が空の並びに倒すので、読めたものだけが残る。
  */
@@ -86,7 +91,11 @@ export function toRestoredEvents(
     .flatMap((message) => restoredMessageEvents(message, expressions))
     .reduce<RestoredTurns>(appendWithTurnBoundary, { events: [], turnOpen: false })
 
-  return restored.turnOpen ? [...restored.events, RESTORED_TURN_FINISHED] : restored.events
+  const events = restored.turnOpen ? [...restored.events, RESTORED_TURN_FINISHED] : restored.events
+  // **再生の終わりに印を1つ足す**（`history-restored`）。transcript を読む口が時刻を落とすので、
+  // ここまでの記録は起きた時刻が分からない（`docs/design.md` 4.2「記録の時刻」）。組み直せた
+  // ものが無ければ、書き換える記録も無いので足さない。
+  return events.length === 0 ? events : [...events, HISTORY_RESTORED]
 }
 
 /** 印の付いたセッション1件（目印まで揃えた印と、目印を外した一族つき）。 */

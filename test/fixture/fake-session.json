@@ -869,6 +869,93 @@
       ]
     },
     {
+      "name": "chat-restored-history",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "chat-mode-changed",
+            "chat": true
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "request",
+            "text": "前のセッションの架空の雑談（組み直したもの）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 150,
+          "event": {
+            "kind": "speech",
+            "text": "前のセッションの架空のセリフだよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "history-restored"
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "request",
+            "text": "いまの架空の雑談その1",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "speech",
+            "text": "いまの架空のセリフその1だよ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "request",
+            "text": "いまの架空の雑談その2",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "speech",
+            "text": "いまの架空のセリフその2だよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
+    },
+    {
       "name": "narration-stuck",
       "steps": [
         {

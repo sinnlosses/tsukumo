@@ -57,11 +57,12 @@ const request = (text: string, turnId = 0): SessionRecord => ({
   turnId,
   text,
   images: [],
+  time: { kind: "stamped", at: 0 },
 })
 const speech = (
   text: string,
   expression: "default" | "proud" | "flustered" = "default",
-): SessionRecord => ({ kind: "speech", text, expression })
+): SessionRecord => ({ kind: "speech", text, expression, time: { kind: "stamped", at: 0 } })
 
 /** 通し番号 0 / 1 の2ターン分の記録（0 が過去、1 が今回）。 */
 const TWO_TURN_RECORDS: readonly SessionRecord[] = [

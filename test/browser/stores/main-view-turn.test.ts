@@ -11,7 +11,13 @@ import { INITIAL_SESSION_STATE, type SessionState } from "../../../src/shared/se
 const FIXTURE_STATE: SessionState = {
   ...INITIAL_SESSION_STATE,
   records: [
-    { kind: "request", turnId: 0, text: "架空の依頼", images: [] },
+    {
+      kind: "request",
+      turnId: 0,
+      text: "架空の依頼",
+      images: [],
+      time: { kind: "stamped", at: 0 },
+    },
     { kind: "detail", markdown: "架空のレポート" },
   ],
 }
@@ -27,7 +33,15 @@ describe("mainViewTurnsOf", () => {
   it("ターンが終わった印でも、書きかけがあるあいだは締めの本文を出さない", () => {
     const writing: SessionState = {
       ...FIXTURE_STATE,
-      records: [{ kind: "request", turnId: 0, text: "架空の依頼", images: [] }],
+      records: [
+        {
+          kind: "request",
+          turnId: 0,
+          text: "架空の依頼",
+          images: [],
+          time: { kind: "stamped", at: 0 },
+        },
+      ],
       turn: { kind: "finished", startedAt: 0, finishedAt: 100 },
       partialUtterance: "架空の書きかけ",
     }

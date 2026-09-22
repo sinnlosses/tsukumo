@@ -20,7 +20,13 @@ afterEach(() => {
 /** 架空の依頼とレポートを `count` ターンぶん（通し番号は 0 から）。 */
 function turns(count: number): readonly SessionRecord[] {
   return Array.from({ length: count }, (_, turnId): SessionRecord[] => [
-    { kind: "request", turnId, text: `架空の依頼${String(turnId)}`, images: [] },
+    {
+      kind: "request",
+      turnId,
+      text: `架空の依頼${String(turnId)}`,
+      images: [],
+      time: { kind: "stamped", at: 0 },
+    },
     { kind: "detail", markdown: `架空のレポート${String(turnId)}` },
   ]).flat()
 }

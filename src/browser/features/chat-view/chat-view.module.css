@@ -142,7 +142,52 @@
 .chat-log > * {
   flex-shrink: 0;
 }
-/* 1件の発言。**話者で左右に寄せる**（LINE / Discord と同じ読み方）。
+/* 発言1件ぶんの行（吹き出しと、その脇の時刻）。**話者で左右に寄せるのはこの行**で、
+   吹き出しと時刻は下端で揃える（LINE と同じ読み方。docs/design.md 13.7「時刻と日の区切り」）。
+   行はログの幅いっぱいに取り、吹き出しの `max-width` はログの幅から測る。 */
+.chat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+/* キャラクターの行は立ち絵の側（左）に寄せ、時刻は吹き出しの右脇。 */
+.chat-row-character {
+  justify-content: flex-start;
+}
+/* 利用者の行は右に寄せ、時刻は吹き出しの左脇（DOM の順は吹き出し → 時刻のまま、並べる向き
+   だけを返す。読み上げの順は話者によらず「発言 → 時刻」）。 */
+.chat-row-user {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+/* 行ごとの時刻（`HH:MM`）。**機械が付けた値なので等幅**（13.1 原則3）、文字は `ink-quiet`
+   （読む面の原則。13.1 原則1）。**地は `ground` 一色を1枚**（`.chat-empty` と同じ理由。背景の
+   絵の上に字が直に乗らないように。13.8）。吹き出しに押されて縮まない。 */
+.chat-time {
+  flex-shrink: 0;
+  padding: 0 0.35rem;
+  border-radius: 0.6rem;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+}
+/* 日の区切り（docs/design.md 13.7「時刻と日の区切り」）。**日付の字を中央に置くだけ**で、
+   線は引かない —— 圧縮の区切り（破線1本・文言なし）と、字の有無で見分ける。
+   地・色は時刻と同じ（`ground` の地に `ink-quiet`）。 */
+.chat-day {
+  align-self: center;
+  margin: 0.6rem 0 0.2rem;
+  padding: 0.1rem 0.8rem;
+  border-radius: 0.8rem;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+}
+
+/* 1件の発言。**左右に寄せるのは外側の行（`.chat-row`）**（LINE / Discord と同じ読み方）。
    **どちらの話者も `<div>`**（押せるキャラクターの側も `role="button"` の `<div>`。理由は
    `chat-view.tsx`）なので、地の見た目は話者で変わらない。 */
 .chat-entry {
@@ -158,13 +203,12 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* キャラクターの発言は立ち絵の側（左）に寄せ、差し色の縁で話者を示す。
+/* キャラクターの発言は差し色の縁で話者を示す（立ち絵の側＝左へ寄せるのは `.chat-row-character`）。
    **行そのものが押せる**（押すとその時の表情へ立ち絵が遡る。docs/design.md 13.7）。
    **操作子も枠も増やさない**（13.1 原則2）ので、行の外に印や矢印は足さない。
    **文字はドラッグで選べる**（セリフをコピーできること）ので、
    押せることを示すのは指の形だけにし、選ぶのを妨げる `user-select` は当てない。 */
 .chat-entry-character {
-  align-self: flex-start;
   border-color: var(--accent);
   background: var(--surface-accent);
   border-bottom-left-radius: 0.3rem;
@@ -239,10 +283,9 @@
     opacity: 1;
   }
 }
-/* 利用者の発言は右。**差し色は使わない**（色が現れるのはキャラクターが居る場所だけ。
+/* 利用者の発言（右へ寄せるのは `.chat-row-user`）。**差し色は使わない**（色が現れるのはキャラクターが居る場所だけ。
    13.1 原則1）ので、地の濃さだけで区別する。 */
 .chat-entry-user {
-  align-self: flex-end;
   background: color-mix(in srgb, var(--surface), var(--ink) 8%);
   border-bottom-right-radius: 0.3rem;
 }

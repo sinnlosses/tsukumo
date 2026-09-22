@@ -72,6 +72,19 @@ export type ToolRunStatus =
     }
 
 /**
+ * 依頼とセリフの記録が起きた時刻（`docs/design.md` 4.2「記録の時刻」）。雑談のログが行ごとの
+ * 時刻と日の区切りに使う。
+ *
+ * - `stamped`: 起きた時刻が分かっている。`at` はそのイベントに打たれた時刻（`StampedEvent.at`。
+ *   エポックミリ秒）
+ * - `restored`: 前のセッションの記録を組み直したもので、**起きた時刻が分からない**
+ *   （`history-restored`）。流し直した時刻を代わりに入れると、昨日の一言が「いま」に見える
+ */
+export type RecordTime =
+  | { readonly kind: "stamped"; readonly at: number }
+  | { readonly kind: "restored" }
+
+/**
  * セッションの中で起きたことを起きた順に並べたもの。メインビューに出す形（`MainViewEntry`。
  * `shared/main-view.ts`）とほぼ同じだが、
  * **ツールは `toolUseId` を持つ**（あとから届く結果を突き合わせるため。表示には使わない）。
@@ -94,6 +107,7 @@ export type SessionRecord =
       readonly turnId: number
       readonly text: string
       readonly images: readonly string[]
+      readonly time: RecordTime
     }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
@@ -107,7 +121,12 @@ export type SessionRecord =
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
     }
-  | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
+  | {
+      readonly kind: "speech"
+      readonly text: string
+      readonly expression: Expression
+      readonly time: RecordTime
+    }
   | {
       readonly kind: "tool"
       readonly toolUseId: string
@@ -369,6 +388,7 @@ export function applySessionEvent(
               turnId: state.nextTurnId,
               text: event.text,
               images: event.images,
+              time: { kind: "stamped", at },
             },
           ],
           state.chatMode,
@@ -389,7 +409,12 @@ export function applySessionEvent(
         // 吹き出しと表情をここから引き直す（`shared/turn-speech.ts`）。
         records: [
           ...state.records,
-          { kind: "speech", text: event.text, expression: event.expression },
+          {
+            kind: "speech",
+            text: event.text,
+            expression: event.expression,
+            time: { kind: "stamped", at },
+          },
         ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
         // （docs/requirements.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
@@ -510,7 +535,19 @@ export function applySessionEvent(
       return { ...state, chatMode: event.chat }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
+    case "history-restored":
+      // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
+      // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと
+      // 記録は空から始まる**ので、ここまでの記録はすべて再生のぶんになる。
+      return { ...state, records: state.records.map(withRestoredTime) }
   }
+}
+
+/** 依頼とセリフの記録を「時刻が分からない」にする（他の種類は時刻を持たないのでそのまま）。 */
+function withRestoredTime(record: SessionRecord): SessionRecord {
+  return record.kind === "request" || record.kind === "speech"
+    ? { ...record, time: { kind: "restored" } }
+    : record
 }
 
 /**

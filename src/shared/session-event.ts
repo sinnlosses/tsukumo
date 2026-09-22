@@ -257,6 +257,16 @@ export type SessionEvent =
    * 画面に出すのは雑談のログの細い線1本だけで、**文言は添えない**。
    */
   | { readonly kind: "compact-boundary" }
+  /**
+   * 前のセッションの記録を組み直した再生が、ここで終わった（`src/server/core/session-restore.ts`
+   * の `toRestoredEvents` が末尾に1つ足す）。**ここまでに積んだ依頼とセリフの記録は、起きた
+   * 時刻が分からない**（`docs/design.md` 4.2「記録の時刻」）。
+   *
+   * 再生のイベントに打たれる `at` は**流し直した時刻**で、話した時刻ではない。transcript を
+   * 読む口（SDK の `getSessionMessages`）が時刻を落とすので、組み直した側に本当の時刻が無い。
+   * 印を畳み込みに渡さないと、起こし直した直後のログが全部「いま」の時刻に見える。
+   */
+  | { readonly kind: "history-restored" }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

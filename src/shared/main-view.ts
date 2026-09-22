@@ -213,7 +213,11 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
   if (record.kind === "speech" || record.kind === "compact-boundary") {
     return []
   }
-  // `request` / `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。
+  // `request` は時刻（雑談のログだけが読む）を落として通す。仕事のメインビューには時刻を出さない。
+  if (record.kind === "request") {
+    return [{ kind: "request", turnId: record.turnId, text: record.text, images: record.images }]
+  }
+  // `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。
   if (record.kind !== "tool") {
     return [record]
   }
