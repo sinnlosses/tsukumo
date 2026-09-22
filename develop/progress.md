@@ -93,12 +93,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 目印違いを新しい順に10件まで並べ、選ぶと `switch-session` → `session-launch` の起こし直しで
 その transcript の続きから始まる。一覧は `sessions-changed` で起こすたびに1回だけ押す。
 
-### 2026-09-22 キャラクターのテスト用の値を組み立て関数に寄せた（T-327）
-
-`test/fixture/character.ts` に `characterInfo` / `characterDefinition` / `portraits` /
-`outfitAccents` の4つを置き、14ファイルが手で全キーを書き下していた18ブロックを差分渡しに
-書き換えた。表情キーの行は 222 → 59 で、`EXPRESSIONS` に1つ足したとき増えるのは fixture の1行だけ。
-
 ## 未解決
 
 - **worktree 運用（T-349〜T-353）への移行は、本体の作業ツリーが片付くまで始められない**
