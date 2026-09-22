@@ -54,8 +54,9 @@ export type BrushPlace = {
  *
  * - `writing`: なぞっている最中。`stroke` は**どの画か**の印で、位置と同じ1つの値の中に持つ
  *   （画ごとに別の口で配ると、位置と種別がずれたフレームができる）
- * - `resting`: 書き終わってその場に残っている。**次に書き始めるまで消えない**ので、
- *   なぞる画も持たない
+ * - `resting`: 書き終わってその場に残っている。位置は**最後の行が終わったところ**（帯ではなく
+ *   行。帯の右端はその帯でいちばん長い行の右なので、短い行で終わる本文では右へ外れる。
+ *   `report-reveal.ts`）。**次に書き始めるまで消えない**ので、なぞる画も持たない
  */
 export type BrushTip =
   | (BrushPlace & { readonly phase: "writing"; readonly stroke: BrushStroke })

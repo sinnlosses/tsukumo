@@ -62,23 +62,38 @@ function BrushTipReadout(): string {
     return "筆先なし"
   }
   return tip.phase === "resting"
-    ? `残っている:${String(tip.top)},${String(tip.bottom)}`
+    ? `残っている:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
     : "書いている"
 }
 
 /**
- * jsdom はどの矩形も 0 で返すので、**筆先の居場所を見る回だけ**測れる値に差し替える。
- * 図の塊（`.chart-block`）は行ではなく box をそのまま1行として測られる
- * （`report-reveal.ts` の `lineBoxesOf`）ので、文字の行を作らなくても帯が1本できる。
+ * 行に見立てた矩形（`left, top, width, height`）。**最後だけ短い**——書き終わりの筆先を
+ * 「帯の右端（いちばん長い行の右）」に置くと、ここで 400 に飛ぶ。
+ */
+const LINE_BOXES = [
+  [0, 100, 400, 40],
+  [0, 140, 400, 40],
+  [0, 180, 400, 40],
+  [0, 220, 150, 40],
+] as const
+
+/** 本文の入れ物の矩形。筆先の座標はここの左上が原点になる。 */
+const ORIGIN_BOX = [0, 50, 400, 600] as const
+
+/**
+ * happy-dom はレイアウトを持たない（どの矩形も 0）ので、**筆先の居場所を見る回だけ**測れる値に
+ * 差し替える。図の塊（`.chart-block`）は行ではなく box をそのまま1行として測られる
+ * （`report-reveal.ts` の `lineBoxesOf`）ので、**文字の行を作らずに行を並べられる**。
  */
 function measureBoxes(): () => void {
   const original = Element.prototype.getBoundingClientRect
   Element.prototype.getBoundingClientRect = function boxOf(this: Element): DOMRect {
-    if (this.classList.contains("chart-block")) {
-      return new DOMRect(0, 100, 400, 200)
+    const line = LINE_BOXES[Number(this.getAttribute("data-line") ?? "-1")]
+    if (line !== undefined) {
+      return new DOMRect(...line)
     }
     if (this.hasAttribute(BRUSH_ORIGIN_ATTRIBUTE)) {
-      return new DOMRect(0, 50, 400, 600)
+      return new DOMRect(...ORIGIN_BOX)
     }
     return original.call(this)
   }
@@ -86,6 +101,21 @@ function measureBoxes(): () => void {
   return () => {
     Element.prototype.getBoundingClientRect = original
   }
+}
+
+/** 行に見立てた図を並べた本文（`measureBoxes` が矩形を名乗る）。 */
+function LinesProbe(): ReactElement {
+  const rootRef = useReportReveal(true)
+
+  return (
+    <div ref={rootRef}>
+      {LINE_BOXES.map((_line, index) => (
+        <div className="chart-block" data-line={index} key={index}>
+          <canvas />
+        </div>
+      ))}
+    </div>
+  )
 }
 
 afterEach(() => {
@@ -129,21 +159,22 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     expect(paragraph().style.clipPath).toBe("")
   })
 
-  it("打ち切っても、筆先は止まった場所ではなく本文の末尾に残る", () => {
+  it("打ち切っても、筆先は止まった場所ではなく最後の行の終わりに残る", () => {
     const restore = measureBoxes()
     try {
       render(
         <div data-brush-origin="">
-          <Probe reveal />
+          <LinesProbe />
           <BrushTipReadout />
         </div>,
       )
 
       fireEvent.keyDown(window)
 
-      // 図の塊は 100〜300、原点は 50 から始まるので、末尾は入れ物の原点から 50〜250。
-      // 打ち切った時点では筆は1フレームも進んでいない（止まった場所に残すなら何も出ない）。
-      expect(screen.getByText("残っている:50,250")).toBeDefined()
+      // 最後の行は 220〜260 の右 150。原点が 50 から始まるので、入れ物基準で 150,170,210。
+      // 打ち切った時点では筆は1フレームも進んでいないので、止まった場所に残すなら何も出ない。
+      // 帯の右端に残すなら、**最後の行より長い行に引かれて** x が 400 になる。
+      expect(screen.getByText("残っている:150,170,210")).toBeDefined()
     } finally {
       restore()
     }

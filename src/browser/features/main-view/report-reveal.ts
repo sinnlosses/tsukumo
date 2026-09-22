@@ -46,6 +46,7 @@ import {
 import { brushScroller } from "./brush-scroll.ts"
 import {
   brushStep,
+  lastLineOf,
   toBands,
   type BrushStep,
   type LineBox,
@@ -136,11 +137,10 @@ function startReveal(root: HTMLElement): () => void {
     }
     finished = true
     cancelAnimationFrame(frame)
-    // **残すのは「本文の末尾」**——最後の塊を終いまで進めた位置で、打ち切られたときに筆が
-    // 止まっていた場所ではない。`finish()` は残りを全部出すので、途中で止まった場所に残すと
-    // 「まだ書いている途中」に見える。**測るのは出し切る前**（`showBlock` は見せ方の指定を
-    // 外すだけで、行の位置は変わらない）。
-    const end = lastBlock === undefined ? undefined : advanceBlock(lastBlock, 1)
+    // **残すのは「本文の末尾」**——最後の塊の**最後の行が終わったところ**で、打ち切られた
+    // ときに筆が止まっていた場所ではない。`finish()` は残りを全部出すので、途中で止まった
+    // 場所に残すと「まだ書いている途中」に見える。
+    const end = lastBlock === undefined ? undefined : endLineOf(lastBlock)
     for (const block of blocks) {
       showBlock(block)
     }
@@ -148,7 +148,8 @@ function startReveal(root: HTMLElement): () => void {
     // **書き終わっても筆先は消さない**（飛ばされたときも同じ）。次に書き始めたときだけ移る。
     // 末尾が測れなかったときは、最後に配った位置のまま残す。
     if (origin !== null && end !== undefined) {
-      publishBrushTip({ ...brushPlaceAt(end, origin), phase: "resting" })
+      const place = { x: end.right, top: end.top, bottom: end.bottom }
+      publishBrushTip({ ...placeIn(origin, place), phase: "resting" })
     } else {
       restBrushTip()
     }
@@ -182,7 +183,11 @@ function startReveal(root: HTMLElement): () => void {
       publishBrushTip(
         step === undefined
           ? undefined
-          : { ...brushPlaceAt(step, origin), phase: "writing", stroke: step.stroke },
+          : {
+              ...placeIn(origin, { x: step.tipX, top: step.tipTop, bottom: step.tipBottom }),
+              phase: "writing",
+              stroke: step.stroke,
+            },
       )
     }
     frame = requestAnimationFrame(tick)
@@ -246,16 +251,28 @@ function advanceBlock(block: RevealBlock, progress: number): BrushStep | undefin
 }
 
 /**
- * 測った筆の居場所（ビューポート座標）を、**本文の入れ物を原点にした座標**へ写す
+ * 書き終わりの行（ビューポート座標）。**行が1つも取れない塊では無い**——そのときは筆先を
+ * 置き直さず、最後に配ったところへ落とす（`finish()`）。
+ */
+function endLineOf(block: RevealBlock): LineBox | undefined {
+  const shapes = block.members.map((member) => ({
+    member,
+    box: member.element.getBoundingClientRect(),
+  }))
+  return lastLineOf(shapes.flatMap(lineBoxesOf))
+}
+
+/**
+ * 測った居場所（ビューポート座標）を、**本文の入れ物を原点にした座標**へ写す
  * （`stores/brush-tip.ts`）。入れ物の矩形は**毎フレーム測り直す**——書いているあいだは器が
  * 送られ、窓の幅も変わりうるので、始めに測った1回では合わなくなる。
  */
-function brushPlaceAt(step: BrushStep, origin: Element): BrushPlace {
+function placeIn(origin: Element, viewport: BrushPlace): BrushPlace {
   const box = origin.getBoundingClientRect()
   return {
-    x: step.tipX - box.left,
-    top: step.tipTop - box.top,
-    bottom: step.tipBottom - box.top,
+    x: viewport.x - box.left,
+    top: viewport.top - box.top,
+    bottom: viewport.bottom - box.top,
   }
 }
 

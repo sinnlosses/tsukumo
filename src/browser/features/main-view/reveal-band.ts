@@ -105,6 +105,15 @@ export function toBands(boxes: readonly LineBox[], frame: RevealFrame): RevealBa
 }
 
 /**
+ * 書き終わりの行（**行であって帯ではない**）。書き上げたあとに筆先を残す位置に使う
+ * （`report-reveal.ts`）——帯の右端は**その帯でいちばん長い行の右**なので、短い行で終わる
+ * 本文に使うと、書き終わっていない場所まで筆先が飛ぶ。
+ */
+export function lastLineOf(boxes: readonly LineBox[]): LineBox | undefined {
+  return mergeLines(boxes).at(-1)
+}
+
+/**
  * Z字の上で、`progress` の時点の筆の居場所を求める。横画 → 斜めの戻り → 横画の順に時間を
  * 配り、**戻りのあいだは何も出さない**（直前の帯を出し切った状態のまま筆だけが動く）ので、
  * 見せる範囲が戻ることはない。
