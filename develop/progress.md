@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 雑談モードの4つの口を1つの合併型にまとめた（T-308）
+
+`SessionDriverOptions` の `personaMemory` / `chatSummary` / `chatKeep` / `chatRecall` を
+`mode: SessionMode`（`work` か `chat` の合併型）1つに畳み、`session-start.ts` の分岐を1回に、
+`sdk-driver.ts` の読み手を `mode.kind === "chat"` に揃えた。雑談モードで起こして4経路を目視した。
+
 ### 2026-09-22 セッションの目印をポート番号にした（T-355）
 
 セッションの印の目印を1文字（`@A`）からビューのポート番号（`@7327`）に変え、畳むのをやめた。

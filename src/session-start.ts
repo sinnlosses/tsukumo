@@ -28,6 +28,7 @@ import {
   type ChatRecall,
   DEFAULT_PERMISSION_MODE,
   type SessionDriver,
+  type SessionMode,
 } from "./server/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import {
@@ -150,16 +151,15 @@ function startDriver(
     return startFakeSession({ session: fakeSession, scene, onEvent })
   }
 
-  // **雑談の要約の写しの口も、覚えたことの口と同じ単位で切り替わる**（雑談のときだけ渡る。
-  // docs/design.md 7章）。読み書きはこの口を通してだけ起きるので、仕事のときは undefined の
-  // まま渡し、`PostCompact` フックの登録も `/clear` の巻き戻しも sdk-driver.ts 側で起きない。
-  const chatSummary = seed.chat ? createChatSummary(seed.pack.name) : undefined
+  // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
+  // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
+  const mode = sessionMode(seed, chatArchive)
   // **載せるかどうかの判断は core（takeChatMemoryPromptParts）が閉じている**——ここは決まった
   // 文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**ので、
   // 載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
   const chatMemoryParts = takeChatMemoryPromptParts({
     resume: seed.resume,
-    chatSummary,
+    chatSummary: mode.kind === "chat" ? mode.chatSummary : undefined,
     chatArchive,
     packName: seed.pack.name,
     readbackLimits: {
@@ -176,19 +176,34 @@ function startDriver(
     systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
     resume: seed.resume,
     tag: sessionTag(seed.pack.name, seed.chat, viewPort),
-    // **覚えたことを書き足す・忘れる口は雑談のときだけ渡す**（渡ったときだけ `remember` と
-    // `forget` のツールが載る。docs/design.md 7.1）。規約の文面を選ぶのと同じ単位で切り替わる。
-    personaMemory: seed.chat ? createPersonaMemory(seed.pack, process.cwd()) : undefined,
-    chatSummary,
-    // **旗を立てる口も雑談のときだけ渡す**（渡ったときだけ `keep` ツールが載る）。渡すのは
-    // 書き口と同じ1つのアーカイブで、駆動から見えるのは旗を立てる動き1つだけ（`ChatKeep`）。
-    chatKeep: seed.chat ? chatArchive : undefined,
-    // **索引を書く口・引く口も雑談のときだけ渡す**（渡ったときだけ `index` と `recall` の
-    // ツールが載る）。**パックの名前と読む量をここで縛ってから渡す**ので、駆動から見えるのは
-    // 「1行残す」「引く」の2つだけ（`ChatRecall`。`docs/design.md` 7章）。
-    chatRecall: seed.chat ? chatRecallFor(chatArchive, seed.pack.name) : undefined,
+    mode,
     onEvent,
   })
+}
+
+/**
+ * 雑談のときだけ渡る4つの口を1回の分岐でまとめる（`docs/design.md` 7章・7.1）。**仕事のときは
+ * 1つも渡らない**ので、`remember` / `forget` / `keep` / `index` / `recall` のツールも
+ * `PostCompact` フックも載らず、作業の文脈が人格にもアーカイブにも入らない。
+ *
+ * 渡すのは書き口と同じ1つのアーカイブだが、**駆動から見えるのは旗を立てる動きと索引の2つだけ**
+ * （`ChatKeep` / `ChatRecall`）。**パックの名前と読む量をここで縛ってから渡す**。
+ */
+function sessionMode(
+  seed: SessionLaunchSeed<CharacterPack>,
+  chatArchive: ChatArchive,
+): SessionMode {
+  if (!seed.chat) {
+    return { kind: "work" }
+  }
+
+  return {
+    kind: "chat",
+    personaMemory: createPersonaMemory(seed.pack, process.cwd()),
+    chatSummary: createChatSummary(seed.pack.name),
+    chatKeep: chatArchive,
+    chatRecall: chatRecallFor(chatArchive, seed.pack.name),
+  }
 }
 
 /**

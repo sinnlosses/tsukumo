@@ -15,6 +15,7 @@ import {
   DEFAULT_MODEL,
   DEFAULT_PERMISSION_MODE,
   type SessionDriverOptions,
+  type SessionMode,
 } from "../../../src/server/core/session-driver.ts"
 import { MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
 
@@ -28,10 +29,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
   resume: undefined,
   tag: "tsukumo-test",
-  personaMemory: undefined,
-  chatSummary: undefined,
-  chatRecall: undefined,
-  chatKeep: undefined,
+  mode: { kind: "work" },
   onEvent: () => {},
 }
 
@@ -62,6 +60,20 @@ describe("buildQuerySeedOptions", () => {
   })
 })
 
+/**
+ * 雑談モードの `SessionMode`（テスト用）。**検査するのは要約の写しの口だけ**なので、残りの3つは
+ * 何もしない口を置く。
+ */
+function chatMode(chatSummary: ChatSummary): SessionMode {
+  return {
+    kind: "chat",
+    personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
+    chatSummary,
+    chatKeep: { keep: () => {} },
+    chatRecall: { index: () => {}, recall: () => ({ kind: "not-found" }) },
+  }
+}
+
 /** メモリ上の `ChatSummary`（テスト用）。`write` に渡った引数を控える。 */
 function fakeChatSummary(): ChatSummary & { readonly writtenSummaries: () => readonly string[] } {
   const written: string[] = []
@@ -88,13 +100,13 @@ const POST_COMPACT_INPUT: PostCompactHookInput = {
 }
 
 describe("chatSummaryHooks", () => {
-  it("chatSummary が undefined（仕事のとき）は hooks を登録しない", () => {
-    expect(chatSummaryHooks(undefined)).toBeUndefined()
+  it("仕事のとき（mode が work）は hooks を登録しない", () => {
+    expect(chatSummaryHooks({ kind: "work" })).toBeUndefined()
   })
 
-  it("chatSummary が渡ったとき（雑談のとき）だけ PostCompact を登録し、compact_summary をそのまま write へ渡す", async () => {
+  it("雑談のとき（mode が chat）だけ PostCompact を登録し、compact_summary をそのまま write へ渡す", async () => {
     const chatSummary = fakeChatSummary()
-    const hooks = chatSummaryHooks(chatSummary)
+    const hooks = chatSummaryHooks(chatMode(chatSummary))
 
     const callback = hooks?.PostCompact?.[0]?.hooks[0]
     expect(callback).toBeDefined()

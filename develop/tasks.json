@@ -27,9 +27,9 @@
     "loopable": "Y",
     "dependencies": ["T-307"],
     "summary": "雑談モードの4つの口を1つの合併型にまとめる",
-    "status": "todo",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "`session-driver.ts` の4つの `| undefined` を `mode: SessionMode`（`{kind:\"work\"} | {kind:\"chat\"; personaMemory; chatSummary; chatKeep; chatRecall}`）へ統合。`session-start.ts` は `sessionMode()` で `seed.chat` の分岐1回に、`sdk-driver.ts` は `mode.kind === \"chat\"` の分岐に（MCP ツール5本の載せ分けも1本化）。`!`・`as` は不使用。`bun run check`: 委譲時点で 1194 pass / 0 fail、受け入れ時は 1193 pass / 1 fail で、落ちた1件は別セッションの未追跡 `src/browser/features/screen-nav/`（T-356）を architecture.test.ts が判定できないもので本タスクとは無関係。目視は `TSUKUMO_VIEW_PORT=7411 TSUKUMO_HOME=/tmp/tsukumo-t308` で雑談モードを起こし、keep→`chat-archive/.../kept.jsonl`、remember→`persona.md`「## 覚えたこと」、index→`index.jsonl`、`/compact`→`chat-summary/tsukumo-spirit.md` の4経路が書かれることを確認（仕事モードでは同ホームに1つも作られない）。",
     "task": "## 背景\n\n`src/server/core/session-driver.ts:263,269,275,281` の `personaMemory` / `chatSummary` /\n`chatKeep` / `chatRecall` は、それぞれ `| undefined` を持つ別々のフィールドになっている。\nしかし `src/session-start.ts:160,164,168` を見ると **3つとも `seed.chat ? ... : undefined`**\nで作られ、`chatSummary` も同じ分岐で決まる。**4つが同時に入るか同時に無いかの2択**で、\n「片方だけ `undefined`」という状態は実在しない。\n\nこれは `docs/coding-standards.md`「### 複数の「無い」が1つの状態」が命じている形の\n**未適用箇所**で、規約を変えなくても直せる（調査は `docs/research/undefined-reduction.md`\n2.1 の #1）。\n\n## やること\n\n1. 4つのフィールドを **`mode: { kind: \"work\" } | { kind: \"chat\"; personaMemory; chatSummary;\n   chatKeep; chatRecall }`** の判別可能な合併型にまとめる\n2. `src/session-start.ts` の組み立てを、`seed.chat` の分岐1回で `mode` を作る形にする\n3. 読む側（`src/server/adapter/sdk-driver.ts` ほか）を `mode.kind === \"chat\"` の分岐に直す\n4. 型が通らない箇所は `!` や `as` で潰さない（`docs/coding-standards.md`\n   「型を迂回するキャストを使わない」）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `src/server/core/session-driver.ts` から `personaMemory` / `chatSummary` / `chatKeep` /\n  `chatRecall` の `| undefined` が4行とも消えている\n- 雑談モードで起こしたセッションで、人格の記憶・雑談の要約・思い出しが従来どおり働く\n  （**雑談モードで tsukumo を起こし、何を確かめたかを `evidence` に書く**）\n\n## 注意\n\n- **規約本文を書き換えるタスクの完了後に着手する**（`dependencies` で表してある）\n- 雑談まわりのトークン消費を減らすタスク群と**同じファイル（`session-driver.ts` /\n  `sdk-driver.ts`）を触る**。片方が `doing` の間は着手しない\n"
   },
   {
@@ -391,7 +391,7 @@
     "dependencies": [],
     "summary": "ヘッダーの帯を作り、古い画面の口を外す",
     "task": "## 背景\n\nT-322 が「全画面の最上部の帯で3枚を行き来する」形を決め、`docs/design.md` 13.9\n「画面のナビゲーション」に書いた（2026-09-22）。**決めただけで実装のタスクが登録されていな\nかった**ので、ここで起こす。\n\nいまの実装には帯が無い。`src/browser/main.tsx:61-76` は `Activity` と `screen === ...` の分岐\nだけで、画面への口は3箇所に散っている:\n\n- `src/browser/features/sidebar/session-info.tsx:147`（「整える」→ キャラクター画面）\n- `src/browser/features/character-screen/character-screen.tsx:86`（「← 会話へ戻る」）\n- `src/browser/features/token-usage/token-usage-screen.tsx:66`（「← 会話へ戻る」）\n\nトークン消費の画面には UI からの入口が無く、`location.hash` を手で打つしかない。\n\n## 決まっていること（蒸し返さない）\n\n`docs/design.md` 13.9 に書いてあるものがそのまま決定。要点だけ:\n\n- 帯に出すのは会話 `#` / キャラクター `#character` / トークン消費 `#token-usage` の3つ。\n  **作る画面（`#character/new`）は出さない**（左上の「← キャラクターへ戻る」は残す）\n- 口は `<a href={screenHash(...)}>`。画面の正典は `location.hash` のまま変えない\n- いま出している画面の示し方は狭い画面のタブ（`.layout-tab.is-active`）と同じ。**色だけで\n  伝えない**（地の濃さと字の濃さも変える）\n- 答え待ちの印は帯の右端へ移す\n- 帯の高さは 40px。**狭い画面（760px 以下）は段を増やさず、タブ帯の右端 44px の「≡」に畳む**\n- 13.9 の「何を外すか」の表の4件を外す\n\n## やること\n\n1. 帯の部品を作る（置き場は `features/layout/` に収まるか、別の機能にするかを見る。\n   T-328 で決めた形＝`docs/design.md`「機能の中を分ける」に沿わせる）\n2. 13.9 の表のとおり、古い口と答え待ちの印を外す\n3. 狭い画面の「≡」を作る（**開いている間だけの要素**で、閉じていれば段を増やさない）\n4. `scripts/capture-view.ts` で 1400幅と 390幅を撮って見る\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- 帯の3つの口から3画面へ行け、作る画面の口は帯に出ない\n- 13.9「何を外すか」の4件が実際に消えている\n- **目視**: 1400幅で帯が、390幅で「≡」とその中の3つの口が見える。いま出している画面が字の\n  濃さでも分かる。撮った幅と見えたものを `evidence` に書く\n\n## 注意\n\n- **面積は T-322 が実測済み**（1400幅で上下 -5.7%、390幅でメインビュー -11.2%）。測り直さない\n- **13.9 の決定を変えない。** 実装してみて決定のほうがまずいと分かったら、押し切らず止めて\n  ユーザーに聞く\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },

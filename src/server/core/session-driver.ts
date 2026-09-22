@@ -231,6 +231,36 @@ export type ChatArchiveEntry =
       readonly expression: Expression
     }
 
+/**
+ * このセッションが仕事か雑談か（`docs/design.md` 7章）。**雑談のときだけ渡る4つの口を
+ * `chat` の側にまとめてある**のは、4つが同時に渡るか同時に渡らないかの2択で、
+ * 「片方だけ無い」状態が実在しないから（`docs/coding-standards.md`
+ * 「複数の「無い」が1つの状態」）。読む側の分岐も `mode.kind` の1つで済む。
+ */
+export type SessionMode =
+  /** 仕事。**雑談の口は1つも渡らない**（作業の文脈が人格にもアーカイブにも入らない）。 */
+  | { readonly kind: "work" }
+  | {
+      readonly kind: "chat"
+      /**
+       * 覚えたことの書き足し・忘れる口（`docs/design.md` 7.1）。渡るのは雑談のときだけで、
+       * 渡ったときだけ `remember` と `forget` のツールが `mcpServers` に載る。
+       */
+      readonly personaMemory: PersonaMemory
+      /**
+       * 雑談の要約の写しの読み書き口（`docs/design.md` 7章）。雑談のときだけ `PostCompact`
+       * フックが登録され、`/clear` を見て印を戻す（`sdk-driver.ts`）。
+       */
+      readonly chatSummary: ChatSummary
+      /** 「残す」旗を立てる口（`docs/design.md` 7章）。`keep` ツールが載る。 */
+      readonly chatKeep: ChatKeep
+      /**
+       * 古い雑談を索引から思い出す口（`docs/design.md` 7章）。`index` と `recall` のツールが
+       * 載る（仕事の会話はそもそもアーカイブに残さないので、引く先が無い）。
+       */
+      readonly chatRecall: ChatRecall
+    }
+
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */
   readonly cwd: string
@@ -255,30 +285,8 @@ export type SessionDriverOptions = {
    * `SESSION_TAG_DELAY_MS`）。
    */
   readonly tag: string
-  /**
-   * 覚えたことの書き足し・忘れる口。**雑談モードのときだけ渡り**（`docs/design.md` 7.1）、渡った
-   * ときだけ `remember` と `forget` のツールが `mcpServers` に載る。仕事のときは undefined
-   * （作業の文脈が人格に入り込む経路を作らない）。
-   */
-  readonly personaMemory: PersonaMemory | undefined
-  /**
-   * 雑談の要約の写しの読み書き口。**雑談モードのときだけ渡り**（`docs/design.md` 7章）、渡った
-   * ときだけ `PostCompact` フックが登録され、`/clear` を見て印を戻す（`sdk-driver.ts`）。
-   * 仕事のときは undefined（会話の内容を読みも書きもしない）。
-   */
-  readonly chatSummary: ChatSummary | undefined
-  /**
-   * 「残す」旗を立てる口。**雑談モードのときだけ渡り**（`docs/design.md` 7章）、渡ったときだけ
-   * `keep` ツールが `mcpServers` に載る。仕事のときは undefined（仕事の会話はそもそも
-   * アーカイブに残さない）。
-   */
-  readonly chatKeep: ChatKeep | undefined
-  /**
-   * 古い雑談を索引から思い出す口。**雑談モードのときだけ渡り**（`docs/design.md` 7章）、渡った
-   * ときだけ `index` と `recall` のツールが `mcpServers` に載る。仕事のときは undefined
-   * （仕事の会話はそもそもアーカイブに残さないので、引く先が無い）。
-   */
-  readonly chatRecall: ChatRecall | undefined
+  /** 仕事か雑談か。雑談のときだけ渡る4つの口も、この中にまとまっている。 */
+  readonly mode: SessionMode
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }

@@ -48,11 +48,11 @@ import {
 import {
   type ChatKeep,
   type ChatRecall,
-  type ChatSummary,
   DEFAULT_MODEL,
   type PersonaMemory,
   type SessionDriver,
   type SessionDriverOptions,
+  type SessionMode,
 } from "../core/session-driver.ts"
 import {
   listMarkedSessions,
@@ -163,14 +163,9 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      hooks: chatSummaryHooks(options.chatSummary),
+      hooks: chatSummaryHooks(options.mode),
       mcpServers: {
-        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
-          options.expressions,
-          options.personaMemory,
-          options.chatKeep,
-          options.chatRecall,
-        ),
+        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),
@@ -250,8 +245,8 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 }
 
 /**
- * 雑談の要約の写しへ書き込む `PostCompact` フック（`docs/design.md` 7章）。**口
- * （`options.chatSummary`）が渡ったとき（＝雑談のとき）だけ登録する**——仕事のときは `hooks`
+ * 雑談の要約の写しへ書き込む `PostCompact` フック（`docs/design.md` 7章）。**雑談のとき
+ * （`options.mode` が `chat`）だけ登録する**——仕事のときは `hooks`
  * そのものを渡さない（undefined。`query()` 側は省略と同じ扱い）。
  *
  * `compact_summary` は**ログに出さず**、中身を読まずに {@link ChatSummary.write} へそのまま
@@ -262,12 +257,13 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * ようにするため（{@link buildQuerySeedOptions} と同じ理由）。
  */
 export function chatSummaryHooks(
-  chatSummary: ChatSummary | undefined,
+  mode: SessionMode,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined {
-  if (chatSummary === undefined) {
+  if (mode.kind !== "chat") {
     return undefined
   }
 
+  const { chatSummary } = mode
   return {
     PostCompact: [
       {
@@ -372,7 +368,9 @@ async function relayMessages(
         if (event.kind === "turn-finished") {
           // **1ターンに書けるのは1行**（docs/design.md 7.1）。ターンの区切りを知っているのは
           // ここだけなので、終わるたびに次の1行を受け付けさせる。
-          options.personaMemory?.finishTurn()
+          if (options.mode.kind === "chat") {
+            options.mode.personaMemory.finishTurn()
+          }
           if (sessionId !== undefined) {
             scheduleMarkSession(sessionId, options)
           }
@@ -382,7 +380,9 @@ async function relayMessages(
           // そのときのセッションIDへ付け直されるので、`/clear` のあと1ターン回すと空のほうが
           // 印を持つ（`docs/requirements.md` 4.9「印はターンが終わるたびに…」）。ここで戻さないと
           // 次に起こしたとき記憶が二度と戻らない。
-          options.chatSummary?.markUndelivered()
+          if (options.mode.kind === "chat") {
+            options.mode.chatSummary.markUndelivered()
+          }
         }
         options.onEvent(event)
       }
@@ -480,19 +480,14 @@ function askForAnswer(
  * 情報が戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
  * 呼び出しで受け取る」・docs/design.md 7.1）。
  *
- * 常に載るのは `speak` の1つで、**`remember` / `forget` / `keep` は雑談モードのときだけ**
- * （`memory` / `chatKeep` が渡ったときだけ）載る。仕事のときに出すと、作業の文脈が人格に
- * 入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
+ * 常に載るのは `speak` の1つで、**`remember` / `forget` / `keep` / `index` / `recall` は
+ * 雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
+ * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
  */
-function tsukumoServer(
-  expressions: readonly ExpressionChoice[],
-  memory: PersonaMemory | undefined,
-  chatKeep: ChatKeep | undefined,
-  chatRecall: ChatRecall | undefined,
-) {
+function tsukumoServer(expressions: readonly ExpressionChoice[], mode: SessionMode) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
     version: "0.0.0",
@@ -508,9 +503,15 @@ function tsukumoServer(
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
-      ...(memory === undefined ? [] : [rememberTool(memory), forgetTool(memory)]),
-      ...(chatKeep === undefined ? [] : [keepTool(chatKeep)]),
-      ...(chatRecall === undefined ? [] : [indexTool(chatRecall), recallTool(chatRecall)]),
+      ...(mode.kind === "chat"
+        ? [
+            rememberTool(mode.personaMemory),
+            forgetTool(mode.personaMemory),
+            keepTool(mode.chatKeep),
+            indexTool(mode.chatRecall),
+            recallTool(mode.chatRecall),
+          ]
+        : []),
     ],
   })
 }
