@@ -41,7 +41,7 @@ import {
   BRUSH_ORIGIN_ATTRIBUTE,
   publishBrushTip,
   restBrushTip,
-  type BrushTip,
+  type BrushPlace,
 } from "../../stores/brush-tip.ts"
 import { brushScroller } from "./brush-scroll.ts"
 import {
@@ -123,6 +123,8 @@ function startReveal(root: HTMLElement): () => void {
   // 筆先の座標の原点（`stores/brush-tip.ts`）。**印が見つからなければ筆先を配らない**
   // ——ミニ立ち絵は出ないが、本文を書き上げる演出そのものは進む。
   const origin = root.closest(`[${BRUSH_ORIGIN_ATTRIBUTE}]`)
+  // 書き終わりに筆先を残す先（`finish()`）。塊は時間の順に並んでいるので、末尾が最後に書く塊。
+  const lastBlock = blocks.at(-1)
   const startedAt = performance.now()
   let frame = 0
   let shown = 0
@@ -134,13 +136,22 @@ function startReveal(root: HTMLElement): () => void {
     }
     finished = true
     cancelAnimationFrame(frame)
+    // **残すのは「本文の末尾」**——最後の塊を終いまで進めた位置で、打ち切られたときに筆が
+    // 止まっていた場所ではない。`finish()` は残りを全部出すので、途中で止まった場所に残すと
+    // 「まだ書いている途中」に見える。**測るのは出し切る前**（`showBlock` は見せ方の指定を
+    // 外すだけで、行の位置は変わらない）。
+    const end = lastBlock === undefined ? undefined : advanceBlock(lastBlock, 1)
     for (const block of blocks) {
       showBlock(block)
     }
     root.removeAttribute(REVEALING_ATTRIBUTE)
-    // **書き終わっても筆先は消さない**（飛ばされたときも同じ）。書いたところに残して、
-    // 次に書き始めたときにそちらへ移る。
-    restBrushTip()
+    // **書き終わっても筆先は消さない**（飛ばされたときも同じ）。次に書き始めたときだけ移る。
+    // 末尾が測れなかったときは、最後に配った位置のまま残す。
+    if (origin !== null && end !== undefined) {
+      publishBrushTip({ ...brushPlaceAt(end, origin), phase: "resting" })
+    } else {
+      restBrushTip()
+    }
     scroller.stop()
     for (const name of SKIP_EVENT_NAMES) {
       window.removeEventListener(name, finish, SKIP_LISTENER_OPTIONS)
@@ -168,7 +179,11 @@ function startReveal(root: HTMLElement): () => void {
     const step = advanceBlock(current, blockProgress(current, elapsed))
     scroller.follow(step)
     if (origin !== null) {
-      publishBrushTip(step === undefined ? undefined : brushTipAt(step, origin))
+      publishBrushTip(
+        step === undefined
+          ? undefined
+          : { ...brushPlaceAt(step, origin), phase: "writing", stroke: step.stroke },
+      )
     }
     frame = requestAnimationFrame(tick)
   }
@@ -231,18 +246,16 @@ function advanceBlock(block: RevealBlock, progress: number): BrushStep | undefin
 }
 
 /**
- * 測った筆の居場所（ビューポート座標）を、**本文の入れ物を原点にした筆先**へ写す
+ * 測った筆の居場所（ビューポート座標）を、**本文の入れ物を原点にした座標**へ写す
  * （`stores/brush-tip.ts`）。入れ物の矩形は**毎フレーム測り直す**——書いているあいだは器が
  * 送られ、窓の幅も変わりうるので、始めに測った1回では合わなくなる。
  */
-function brushTipAt(step: BrushStep, origin: Element): BrushTip {
+function brushPlaceAt(step: BrushStep, origin: Element): BrushPlace {
   const box = origin.getBoundingClientRect()
   return {
-    phase: "writing",
     x: step.tipX - box.left,
     top: step.tipTop - box.top,
     bottom: step.tipBottom - box.top,
-    stroke: step.stroke,
   }
 }
 
