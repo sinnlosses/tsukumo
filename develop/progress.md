@@ -63,7 +63,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 のコメント）。カタログの `question-*` は答え待ちの箱までしか撮らないので、答えさせた記録を
 別途撮って確かめた。
 
-
 ### 2026-09-23 返事を待つ間、ログの末尾で「...」を animation させた（T-335）
 
 雑談のログの末尾に、キャラクター側の吹き出しとしてドット3つの typing indicator を出した（`<ChatTyping>`）。サーバの契約は増やさず、`turnInProgress && !speechCalledInTurn` で判定し、そのターンの `speech` が届くと育つセリフの行に入れ替わる。
