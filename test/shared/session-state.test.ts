@@ -301,6 +301,27 @@ describe("applySessionEvent", () => {
     expect(view.finishedTools).toHaveLength(6)
   })
 
+  it("結果が届くまでのツールの記録は running", () => {
+    const view = apply({
+      kind: "tool-started",
+      toolUseId: "toolu_1",
+      name: "Read",
+      input: {},
+      parentToolUseId: undefined,
+    })
+
+    expect(view.records).toEqual([
+      {
+        kind: "tool",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        nested: false,
+        status: { kind: "running" },
+      },
+    ])
+  })
+
   it("ツールの結果を、対応する tool_use の記録に合わせる（mainViewEntries は toolUseId 等を落として渡す）", () => {
     const view = apply(
       {
@@ -322,7 +343,7 @@ describe("applySessionEvent", () => {
         name: "Read",
         input: { path: "/tmp/a" },
         nested: false,
-        result: { content: "ダミーの結果", isError: true },
+        status: { kind: "finished", result: { content: "ダミーの結果", isError: true } },
       },
     ])
     // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
@@ -332,7 +353,7 @@ describe("applySessionEvent", () => {
         kind: "tool",
         name: "Read",
         input: { path: "/tmp/a" },
-        result: { content: "ダミーの結果", isError: true },
+        status: { kind: "finished", result: { content: "ダミーの結果", isError: true } },
       },
     ])
   })
@@ -357,7 +378,7 @@ describe("applySessionEvent", () => {
         kind: "tool",
         name: "Read",
         input: {},
-        result: { content: "結果", isError: false },
+        status: { kind: "finished", result: { content: "結果", isError: false } },
       },
       { kind: "detail", markdown: "レポート本文" },
     ])

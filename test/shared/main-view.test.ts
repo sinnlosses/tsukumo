@@ -3,8 +3,15 @@ import { describe, expect, it } from "bun:test"
 import {
   MAX_MAIN_VIEW_TURNS,
   type MainViewEntry,
+  type MainViewStep,
   mainViewTurns,
 } from "../../src/shared/main-view.ts"
+
+/** 本文を持つステップならその本文。持たなければ（ステップが無ければ）undefined。 */
+const reportOf = (step: MainViewStep | undefined) =>
+  step?.body.kind === "text" ? step.body.report : undefined
+const firstLineOf = (step: MainViewStep | undefined) =>
+  step?.body.kind === "text" ? step.body.firstLine : undefined
 
 const request = (text: string, turnId = 0): MainViewEntry => ({
   kind: "request",
@@ -17,7 +24,7 @@ const edit = (path: string): MainViewEntry => ({
   kind: "tool",
   name: "Edit",
   input: { file_path: path },
-  result: { content: "ok", isError: false },
+  status: { kind: "finished", result: { content: "ok", isError: false } },
 })
 /**
  * まとまった資料（構造の印を持ち、短くない本文）。**実況として落ちない本文**が要るところで使う
@@ -44,8 +51,8 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     )
 
     expect(turns.map((turn) => turn.request?.text)).toEqual(["前の依頼", "今回の依頼"])
-    expect(turns[0]?.steps[0]?.report).toBe("前のレポート")
-    expect(turns[1]?.steps[0]?.report).toBe("今回のレポート")
+    expect(reportOf(turns[0]?.steps[0])).toBe("前のレポート")
+    expect(reportOf(turns[1]?.steps[0])).toBe("今回のレポート")
   })
 
   it(`直近${String(MAX_MAIN_VIEW_TURNS)}件だけを昇順で残す（6件以上流しても絞られる）`, () => {
@@ -92,8 +99,8 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
     const steps = turns[0]?.steps ?? []
     expect(steps).toHaveLength(2)
-    expect(steps[0]?.report).toBeUndefined()
-    expect(steps[1]?.report).toBe("あとから説明")
+    expect(reportOf(steps[0])).toBeUndefined()
+    expect(reportOf(steps[1])).toBe("あとから説明")
   })
 
   it("画面に出す記録が上限を超えたら、古いほうから落として件数を残す", () => {
@@ -107,8 +114,8 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(entries, false)
 
     expect(turns[0]?.droppedCount).toBeGreaterThan(0)
-    expect(turns[0]?.steps.at(-1)?.report).toBe(materialReport("レポート44"))
-    expect(turns[0]?.steps[0]?.report).not.toBe(materialReport("レポート0"))
+    expect(reportOf(turns[0]?.steps.at(-1))).toBe(materialReport("レポート44"))
+    expect(reportOf(turns[0]?.steps[0])).not.toBe(materialReport("レポート0"))
   })
 
   it("ツールの実行は上限に数えない（何十件呼んでも落ちない）", () => {
@@ -122,8 +129,8 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(entries, false)
 
     expect(turns[0]?.droppedCount).toBe(0)
-    expect(turns[0]?.steps[0]?.report).toBe("## 調べた結果\n\n- 1つめ\n- 2つめ\n")
-    expect(turns[0]?.steps.at(-1)?.report).toBe(materialReport("直した"))
+    expect(reportOf(turns[0]?.steps[0])).toBe("## 調べた結果\n\n- 1つめ\n- 2つめ\n")
+    expect(reportOf(turns[0]?.steps.at(-1))).toBe(materialReport("直した"))
   })
 
   it("上限を超えて古いステップが落ちても、残ったステップの id は変わらない（T-165）", () => {
@@ -141,13 +148,13 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const after = mainViewTurns([...entries, detail(materialReport("レポート45"))], false)
     const idsAfter = (after[0]?.steps ?? []).map((step) => step.id)
 
-    // 両方に残っているステップ（id の交わり）は、report の中身も id も変わらない。
+    // 両方に残っているステップ（id の交わり）は、本文の中身も id も変わらない。
     const commonIds = idsAfter.filter((id) => idsBefore.includes(id))
     expect(commonIds.length).toBeGreaterThan(0)
     for (const id of commonIds) {
       const stepBefore = before[0]?.steps.find((step) => step.id === id)
       const stepAfter = after[0]?.steps.find((step) => step.id === id)
-      expect(stepAfter?.report).toBe(stepBefore?.report)
+      expect(stepAfter?.body).toEqual(stepBefore?.body)
     }
     // id は作られた順の通し番号なので、添字（0始まりで詰め直したもの）とは違い連番のまま維持される。
     expect(idsAfter[0]).toBeGreaterThan(idsBefore[0] ?? -1)
@@ -159,7 +166,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       false,
     )
 
-    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+    expect(reportOf(turns[0]?.steps[0])).toBeUndefined()
   })
 
   it("構造の印を持つまとまった本文は、ツールが続いても中間レポートとして残る", () => {
@@ -173,7 +180,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     )
 
     const step = turns[0]?.steps[0]
-    expect(step?.report).toBe(
+    expect(reportOf(step)).toBe(
       "## 調べた結果\n\n| 場所 | 状態 |\n| --- | --- |\n| src/a.ts | 直す |",
     )
     expect(step?.interim).toBe(true)
@@ -182,7 +189,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("構造の印があっても短ければ実況として落とす（迷ったら落とす側）", () => {
     const turns = mainViewTurns([request("依頼"), detail("- まず読むね"), edit("src/a.ts")], false)
 
-    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+    expect(reportOf(turns[0]?.steps[0])).toBeUndefined()
   })
 
   it("構造の印が無ければ、長くても落とす", () => {
@@ -191,7 +198,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       false,
     )
 
-    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+    expect(reportOf(turns[0]?.steps[0])).toBeUndefined()
   })
 
   it("見出し1行と長い段落だけの本文も、文字数の下限で中間レポートになる", () => {
@@ -199,7 +206,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns([request("依頼"), detail(markdown), edit("src/a.ts")], false)
 
     const step = turns[0]?.steps[0]
-    expect(step?.report).toBe(markdown)
+    expect(reportOf(step)).toBe(markdown)
     expect(step?.interim).toBe(true)
   })
 
@@ -219,7 +226,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       false,
     )
 
-    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([first, second, third])
+    expect((turns[0]?.steps ?? []).map((step) => reportOf(step))).toEqual([first, second, third])
     expect((turns[0]?.steps ?? []).map((step) => step.interim)).toEqual([true, true, false])
   })
 
@@ -236,7 +243,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       false,
     )
 
-    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([
+    expect((turns[0]?.steps ?? []).map((step) => reportOf(step))).toEqual([
       undefined,
       undefined,
       "直した結果はこう",
@@ -246,7 +253,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   it("短い返事だけのターン（ツールを1度も呼ばない）でも、締めの本文は残る", () => {
     const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")], false)
 
-    expect(turns[0]?.steps[0]?.report).toBe("文章だけで答える")
+    expect(reportOf(turns[0]?.steps[0])).toBe("文章だけで答える")
     expect(turns[0]?.steps[0]?.final).toBe(true)
   })
 
@@ -264,7 +271,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       false,
     )
 
-    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([
+    expect((turns[0]?.steps ?? []).map((step) => reportOf(step))).toEqual([
       undefined,
       undefined,
       materialReport("直した結果"),
@@ -278,7 +285,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.report)).toEqual([
+    expect(steps.map((step) => reportOf(step))).toEqual([
       materialReport("調べた結果"),
       materialReport("片付いた"),
     ])
@@ -292,7 +299,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps[0]?.report).toBe("比べた結果はこう")
+    expect(reportOf(steps[0])).toBe("比べた結果はこう")
     expect(steps[0]?.actions).toHaveLength(1)
     // 質問の直前の本文は「レポート本体」であって、中間レポートにはしない。
     expect(steps[0]?.interim).toBe(false)
@@ -303,7 +310,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
     const steps = turns[0]?.steps ?? []
     expect(steps).toHaveLength(1)
-    expect(steps[0]?.report).toBeUndefined()
+    expect(reportOf(steps[0])).toBeUndefined()
     expect(steps[0]?.actions).toHaveLength(1)
   })
 
@@ -315,7 +322,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
     expect(turns).toHaveLength(2)
     expect(turns[0]?.request).toBeUndefined()
-    expect(turns[0]?.steps[0]?.report).toBe("依頼より前のレポート")
+    expect(reportOf(turns[0]?.steps[0])).toBe("依頼より前のレポート")
   })
 })
 
@@ -353,7 +360,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印。T-1
       false,
     )
 
-    expect(turns[0]?.steps[0]?.firstLine).toBe("調べた結果")
+    expect(firstLineOf(turns[0]?.steps[0])).toBe("調べた結果")
   })
 
   it("見出しでない先頭行は記号を落とさずそのまま使う", () => {
@@ -367,7 +374,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印。T-1
       false,
     )
 
-    expect(turns[0]?.steps[0]?.firstLine).toBe("| 場所 | 状態 |")
+    expect(firstLineOf(turns[0]?.steps[0])).toBe("| 場所 | 状態 |")
   })
 
   it("先頭行が長いときは省略記号で切る", () => {
@@ -382,19 +389,18 @@ describe("mainViewTurns（追い越された中間レポートを畳む印。T-1
       false,
     )
 
-    const firstLine = turns[0]?.steps[0]?.firstLine ?? ""
+    const firstLine = firstLineOf(turns[0]?.steps[0]) ?? ""
     expect(firstLine.endsWith("…")).toBe(true)
     expect(firstLine.length).toBeLessThan(longHeading.length)
   })
 
-  it("report を持たないステップの firstLine は undefined", () => {
+  it("本文を持たないステップの body は none（先頭行も持たない）", () => {
     const turns = mainViewTurns(
       [request("依頼"), edit("src/first.ts"), detail("あとから説明")],
       false,
     )
 
-    expect(turns[0]?.steps[0]?.report).toBeUndefined()
-    expect(turns[0]?.steps[0]?.firstLine).toBeUndefined()
+    expect(turns[0]?.steps[0]?.body).toEqual({ kind: "none" })
   })
 })
 
@@ -420,7 +426,7 @@ describe("mainViewTurns（最終レポートの印）", () => {
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.report)).toEqual([interim, undefined])
+    expect(steps.map((step) => reportOf(step))).toEqual([interim, undefined])
     expect(steps.map((step) => step.interim)).toEqual([false, false])
     expect(steps.map((step) => step.final)).toEqual([true, false])
     // 繰り上げた1件しか残らないので、「最終レポート」のラベルは出さない。
@@ -452,7 +458,7 @@ describe("mainViewTurns（最終レポートの印）", () => {
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.at(-1)?.report).toBe("直しておいたよ")
+    expect(reportOf(steps.at(-1))).toBe("直しておいたよ")
     expect(steps.at(-1)?.final).toBe(true)
   })
 
@@ -460,7 +466,7 @@ describe("mainViewTurns（最終レポートの印）", () => {
     const turns = mainViewTurns([request("依頼"), detail(interim), detail("では、ま")], true)
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.report)).toEqual([undefined, undefined])
+    expect(steps.map((step) => reportOf(step))).toEqual([undefined, undefined])
     expect(steps.map((step) => step.interim)).toEqual([false, false])
     expect(steps.map((step) => step.final)).toEqual([false, false])
   })
@@ -473,8 +479,8 @@ describe("mainViewTurns（最終レポートの印）", () => {
     const writing = mainViewTurns(entries, true)[0]?.steps ?? []
     const settled = mainViewTurns(entries, false)[0]?.steps ?? []
 
-    expect(writing.map((step) => step.report)).toEqual([undefined, undefined])
-    expect(settled.map((step) => step.report)).toEqual([interim, undefined])
+    expect(writing.map((step) => reportOf(step))).toEqual([undefined, undefined])
+    expect(settled.map((step) => reportOf(step))).toEqual([interim, undefined])
     expect(settled.map((step) => step.final)).toEqual([true, false])
   })
 
@@ -519,13 +525,13 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
   it("進行中は、いちばん新しいターンの最後のステップの実況を出さない", () => {
     const turns = mainViewTurns([request("依頼"), detail("まず `src/a.ts` を読むね")], true)
 
-    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+    expect(reportOf(turns[0]?.steps[0])).toBeUndefined()
   })
 
   it("進行中は、資料と判定できる本文でも、ツールが付くまで出さない", () => {
     const turns = mainViewTurns([request("依頼"), detail(material)], true)
 
-    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+    expect(reportOf(turns[0]?.steps[0])).toBeUndefined()
   })
 
   it("書きかけのあいだは final が立たない（書き上げる演出が途中の本文を相手にしない）", () => {
@@ -540,8 +546,8 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
     const beforeTool = mainViewTurns([request("依頼"), detail(material)], true)
     const afterTool = mainViewTurns([request("依頼"), detail(material), edit("src/a.ts")], true)
 
-    expect(beforeTool[0]?.steps[0]?.report).toBeUndefined()
-    expect(afterTool[0]?.steps[0]?.report).toBe(material)
+    expect(reportOf(beforeTool[0]?.steps[0])).toBeUndefined()
+    expect(reportOf(afterTool[0]?.steps[0])).toBe(material)
     expect(afterTool[0]?.steps[0]?.interim).toBe(true)
     expect(afterTool[0]?.steps[0]?.final).toBe(false)
   })
@@ -549,13 +555,13 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
   it("質問はツールに数えないので、その手前の本文は進行中のあいだ出ない", () => {
     const turns = mainViewTurns([request("依頼"), detail(material), question("どっち？")], true)
 
-    expect(turns[0]?.steps[0]?.report).toBeUndefined()
+    expect(reportOf(turns[0]?.steps[0])).toBeUndefined()
   })
 
   it("ターンが終われば、短い最終レポートも出る", () => {
     const turns = mainViewTurns([request("依頼"), detail("直したよ")], false)
 
-    expect(turns[0]?.steps[0]?.report).toBe("直したよ")
+    expect(reportOf(turns[0]?.steps[0])).toBe("直したよ")
   })
 
   it("進行中に次の本文が始まっても、ツールの続かない実況は露出しない", () => {
@@ -565,14 +571,14 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
       true,
     )
 
-    expect((turns[0]?.steps ?? []).map((step) => step.report)).toEqual([undefined, undefined])
+    expect((turns[0]?.steps ?? []).map((step) => reportOf(step))).toEqual([undefined, undefined])
   })
 
   it("進行中は、次の本文が始まっただけでは資料を出さない（ツールが付くまで待つ）", () => {
     const turns = mainViewTurns([request("依頼"), detail(material), detail("つづいて ")], true)
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.report)).toEqual([undefined, undefined])
+    expect(steps.map((step) => reportOf(step))).toEqual([undefined, undefined])
     expect(steps.map((step) => step.interim)).toEqual([false, false])
   })
 
@@ -580,7 +586,7 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
     const turns = mainViewTurns([request("依頼"), detail(material), edit("src/a.ts")], true)
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.report)).toEqual([material])
+    expect(steps.map((step) => reportOf(step))).toEqual([material])
     expect(steps.map((step) => step.interim)).toEqual([true])
   })
 
@@ -590,7 +596,7 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
       true,
     )
 
-    expect(turns[0]?.steps[0]?.report).toBe("直したよ")
-    expect(turns[1]?.steps[0]?.report).toBeUndefined()
+    expect(reportOf(turns[0]?.steps[0])).toBe("直したよ")
+    expect(reportOf(turns[1]?.steps[0])).toBeUndefined()
   })
 })

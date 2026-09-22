@@ -35,7 +35,7 @@ describe("chatLogEntries", () => {
         name: "Read",
         input: {},
         nested: false,
-        result: undefined,
+        status: { kind: "running" },
       },
       { kind: "question", questions: [], answers: [] },
       { kind: "speech", text: "架空のセリフ", expression: "default" },

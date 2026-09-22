@@ -37,7 +37,7 @@ function tool(
     name: "Read",
     input: {},
     nested: false,
-    result: { content: "ok", isError: false },
+    status: { kind: "finished", result: { content: "ok", isError: false } },
     ...overrides,
   }
 }
@@ -218,7 +218,7 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
         toolUseId: "t1",
         name: "Bash",
         input: { command: "架空のコマンド" },
-        result: { content: "架空のエラー出力", isError: true },
+        status: { kind: "finished", result: { content: "架空のエラー出力", isError: true } },
       }),
     ])
 

@@ -9,6 +9,7 @@ import {
   type MainViewAction,
   type MainViewRequest,
   type MainViewStep,
+  type MainViewStepBody,
   type MainViewTurn,
 } from "../../../shared/main-view.ts"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
@@ -95,14 +96,14 @@ function Step(props: {
   const { step } = props
   const questions = props.step.actions.filter(isQuestion)
 
-  if (step.report === undefined && questions.length === 0) {
+  if (step.body.kind === "none" && questions.length === 0) {
     return null
   }
 
-  const body = (
+  const content = (
     <>
-      {step.report !== undefined && (
-        <Report markdown={step.report} reveal={props.reveal} turnId={props.turnId} />
+      {step.body.kind === "text" && (
+        <Report markdown={step.body.report} reveal={props.reveal} turnId={props.turnId} />
       )}
       {questions.map((question, index) => (
         <QuestionRecord entry={question} key={index} />
@@ -113,8 +114,8 @@ function Step(props: {
   if (step.interim && step.superseded) {
     return (
       <details className={`${styles["main-step"]} ${styles["is-interim"]}`}>
-        <summary className={styles["step-heading"]}>{interimSummary(step.firstLine)}</summary>
-        {body}
+        <summary className={styles["step-heading"]}>{interimSummary(step.body)}</summary>
+        {content}
       </details>
     )
   }
@@ -123,7 +124,7 @@ function Step(props: {
     <section className={stepClassName(step)}>
       {step.interim && <p className={styles["step-heading"]}>中間レポート</p>}
       {props.finalLabel && <p className={styles["step-heading"]}>最終レポート</p>}
-      {body}
+      {content}
     </section>
   )
 }
@@ -151,8 +152,10 @@ function finalReportStepId(turn: MainViewTurn): number | undefined {
 }
 
 /** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */
-function interimSummary(firstLine: string | undefined): string {
-  return firstLine === undefined || firstLine === "" ? "中間レポート" : `中間レポート: ${firstLine}`
+function interimSummary(body: MainViewStepBody): string {
+  return body.kind === "none" || body.firstLine === ""
+    ? "中間レポート"
+    : `中間レポート: ${body.firstLine}`
 }
 
 function isQuestion(

@@ -9,7 +9,7 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { type Question, type QuestionAnswer } from "./question.ts"
-import { type SessionRecord, type SessionState } from "./session-state.ts"
+import { type SessionRecord, type SessionState, type ToolRunStatus } from "./session-state.ts"
 
 /**
  * 出すやり取りの数。もとは5だったが、ユーザーの指定
@@ -66,8 +66,7 @@ export type MainViewEntry =
       readonly kind: "tool"
       readonly name: string
       readonly input: unknown
-      /** まだ結果が届いていない（作業中の）ツールは undefined になる。 */
-      readonly result: { readonly content: string; readonly isError: boolean } | undefined
+      readonly status: ToolRunStatus
     }
   | { readonly kind: "detail"; readonly markdown: string }
 
@@ -80,22 +79,21 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
 /**
  * 1ステップ＝レポート1件と、それに続く出来事。
  *
+ * `body` は画面に出す本文（{@link MainViewStepBody}）。
+ *
  * `interim` は、その本文が**中間レポート**（やり取りの締めではないが、まとまった資料なので
- * 残した本文。`selectShownReports`）かどうか。`report` が undefined のときは常に false。
+ * 残した本文。`selectShownReports`）かどうか。`body` が `none` のときは常に false。
  * 見分けを付けて描くのは `src/browser/features/main-view/turn.tsx` の仕事で、判定はここに置く。
  *
- * `superseded` は、**自分より後ろに `report` を持つステップがあるか**（`markSupersededSteps`）。
+ * `superseded` は、**自分より後ろに本文を持つステップがあるか**（`markSupersededSteps`）。
  * 中間レポートが何件も積むと見通しが悪い問題に対する材料で、
- * `interim && superseded` のときだけ `turn.tsx` が畳んで描く。`report` を持たないステップでも
+ * `interim && superseded` のときだけ `turn.tsx` が畳んで描く。本文を持たないステップでも
  * 立つが、畳むかどうかの判定に使うのは中間レポートだけ。
  *
  * `final` は、その本文が**最終レポート**（そのやり取りで最後の、中間でない本文）かどうか
  * （`markFinalReport`）。ラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける
  * 相手を選ぶのにも使う（`src/browser/features/main-view/turn.tsx`）。**ラベルを出すかどうかは
  * これだけでは決まらない**（`MainViewTurn.hasInterimReport` と組み合わせる）。
- *
- * `firstLine` は `report` の先頭行（`report` が undefined なら undefined）。畳んだときの
- * `<summary>` に出す（`extractFirstLine`）。
  *
  * `id` は**追加されても番号がずれない**ように、そのやり取りの中で作られた順に先頭から数えた
  * 通し番号（`MainViewTurn.id` と同じ考え方）。`limitTurnEntries` が上限を超えた分を古いほうから
@@ -107,13 +105,23 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  */
 export type MainViewStep = {
   readonly id: number
-  readonly report: string | undefined
+  readonly body: MainViewStepBody
   readonly interim: boolean
   readonly superseded: boolean
   readonly final: boolean
-  readonly firstLine: string | undefined
   readonly actions: readonly MainViewAction[]
 }
+
+/**
+ * ステップの本文。本文が無い（レポートより前に起きたことをまとめたステップか、出さないと決めた
+ * 本文）なら `none`。`firstLine` は `report` の先頭行で、畳んだときの `<summary>` に出す
+ * （`extractFirstLine`）。
+ */
+export type MainViewStepBody =
+  | { readonly kind: "none" }
+  | { readonly kind: "text"; readonly report: string; readonly firstLine: string }
+
+const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
 
 /**
  * やり取りの頭に出す依頼。**文面と、添えた画像の控えで1つ**（`docs/requirements.md` 4.10。
@@ -209,7 +217,7 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
   if (record.kind !== "tool") {
     return [record]
   }
-  return [{ kind: "tool", name: record.name, input: record.input, result: record.result }]
+  return [{ kind: "tool", name: record.name, input: record.input, status: record.status }]
 }
 
 /**
@@ -257,11 +265,10 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
     if (entry.kind === "detail") {
       current.steps.push({
         id: current.nextStepId++,
-        report: entry.markdown,
+        body: { kind: "text", report: entry.markdown, firstLine: extractFirstLine(entry.markdown) },
         interim: false,
         superseded: false,
         final: false,
-        firstLine: undefined,
         actions: [],
       })
       continue
@@ -274,11 +281,10 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
         ? [
             {
               id: current.nextStepId++,
-              report: undefined,
+              body: NO_BODY,
               interim: false,
               superseded: false,
               final: false,
-              firstLine: undefined,
               actions: [entry],
             },
           ]
@@ -334,13 +340,13 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
   return {
     ...turn,
     steps: turn.steps.map((step, index) => {
-      if (step.report === undefined) {
+      if (step.body.kind === "none") {
         return step
       }
       // そのやり取りの締めの本文。終わっていれば最終レポート、動いている最中ならまだ伸びる。
       // **繰り上げが起きたときは実況として落とす**（{@link promotedReportId}）。
       if (index === turn.steps.length - 1 && !hasToolRun(step)) {
-        return settled && promotedId === undefined ? step : { ...step, report: undefined }
+        return settled && promotedId === undefined ? step : { ...step, body: NO_BODY }
       }
       // **ツールが続いていない資料は、まだ締めかどうかが決まっていない。** 次の本文が流れ始めた
       // だけで「最後のステップ」から外れるが、その本文が実況で終われば {@link promotedReportId}
@@ -349,11 +355,11 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
       // 書き上げる演出**（`src/browser/features/main-view/report-reveal.ts`）が二度と掛からない
       // （実測: 資料が中間レポートとして出た 2.2 秒後に締めへ変わり、筆は一度も走らなかった）。
       if (!settled && !hasToolRun(step)) {
-        return { ...step, report: undefined }
+        return { ...step, body: NO_BODY }
       }
-      return isInterimReport(step.report)
+      return isInterimReport(step.body.report)
         ? { ...step, interim: step.id !== promotedId }
-        : { ...step, report: undefined }
+        : { ...step, body: NO_BODY }
     }),
   }
 }
@@ -375,12 +381,17 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
  */
 function promotedReportId(turn: MainViewTurn): number | undefined {
   const closing = turn.steps.at(-1)
-  if (closing?.report === undefined || hasToolRun(closing) || isInterimReport(closing.report)) {
+  if (
+    closing === undefined ||
+    closing.body.kind === "none" ||
+    hasToolRun(closing) ||
+    isInterimReport(closing.body.report)
+  ) {
     return undefined
   }
   return turn.steps
     .slice(0, -1)
-    .findLast((step) => step.report !== undefined && isInterimReport(step.report))?.id
+    .findLast((step) => step.body.kind === "text" && isInterimReport(step.body.report))?.id
 }
 
 /**
@@ -425,8 +436,7 @@ function isInterimReport(markdown: string): boolean {
 }
 
 /**
- * 各ステップに「自分より後ろに `report` を持つステップがあるか」（`superseded`）と、
- * `report` の先頭行（`firstLine`）を立てる。**`interim` の判定そのもの（`selectShownReports`）
+ * 各ステップに「自分より後ろに本文を持つステップがあるか」（`superseded`）を立てる。**`interim` の判定そのもの（`selectShownReports`）
  * は変えない**——ここで足すのは「畳むかどうか」の材料だけ。
  * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
  * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
@@ -438,15 +448,8 @@ function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
     followedByReport: boolean
   }>(
     (acc, step) => ({
-      steps: [
-        {
-          ...step,
-          superseded: acc.followedByReport,
-          firstLine: step.report === undefined ? undefined : extractFirstLine(step.report),
-        },
-        ...acc.steps,
-      ],
-      followedByReport: acc.followedByReport || step.report !== undefined,
+      steps: [{ ...step, superseded: acc.followedByReport }, ...acc.steps],
+      followedByReport: acc.followedByReport || step.body.kind === "text",
     }),
     { steps: [], followedByReport: false },
   )
@@ -492,7 +495,7 @@ function extractFirstLine(markdown: string): string {
  * 変えない。
  */
 function markFinalReport(turn: MainViewTurn): MainViewTurn {
-  const finalId = turn.steps.findLast((step) => step.report !== undefined && !step.interim)?.id
+  const finalId = turn.steps.findLast((step) => step.body.kind === "text" && !step.interim)?.id
   return {
     ...turn,
     steps: turn.steps.map((step) => ({ ...step, final: step.id === finalId })),
@@ -533,7 +536,7 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
  */
 function shownEntryCount(step: MainViewStep): number {
   return (
-    (step.report === undefined ? 0 : 1) +
+    (step.body.kind === "none" ? 0 : 1) +
     step.actions.filter((action) => action.kind === "question").length
   )
 }

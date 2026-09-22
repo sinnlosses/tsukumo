@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 ツールの結果と本文の「まだ来ていない」を合併型にした（T-312）
+
+`SessionRecord` と `MainViewEntry` のツールを `ToolRunStatus`、`MainViewStep` の本文を `MainViewStepBody` にして、`shared` の `| undefined` を4行消した。疑似セッションで撮り比べて、見た目が変わっていないことを確かめた。
+
 ### 2026-09-23 clock.ts を utils/ へ移し、lib と utils の線を言い換えた（T-360）
 
 `src/browser/utils/clock.ts` を最初の `utils/` にし、`lib/` と `utils/` の線を「言語の標準か、その外か」と `docs/design.md` 2章で言い直した。`utils/` の辺は `test/architecture.test.ts` が見る。

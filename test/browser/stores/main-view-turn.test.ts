@@ -32,11 +32,15 @@ describe("mainViewTurnsOf", () => {
       partialUtterance: "架空の書きかけ",
     }
 
-    expect(mainViewTurnsOf(writing)[0]?.steps.at(-1)?.report).toBeUndefined()
+    expect(mainViewTurnsOf(writing)[0]?.steps.at(-1)?.body).toEqual({ kind: "none" })
   })
 
   it("書きかけが片付けば締めの本文を出す", () => {
-    expect(mainViewTurnsOf(FIXTURE_STATE)[0]?.steps.at(-1)?.report).toBe("架空のレポート")
+    expect(mainViewTurnsOf(FIXTURE_STATE)[0]?.steps.at(-1)?.body).toEqual({
+      kind: "text",
+      report: "架空のレポート",
+      firstLine: "架空のレポート",
+    })
   })
 
   it("姿が変われば畳み直す", () => {

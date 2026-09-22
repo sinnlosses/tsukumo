@@ -61,6 +61,17 @@ export type ToolActivity = {
 }
 
 /**
+ * ツールの実行がどこまで進んだか。結果が届くまでは `running` で、届いたら `finished` に
+ * 結果を持つ（結果の無い `finished` も、結果のある `running` も起きない）。
+ */
+export type ToolRunStatus =
+  | { readonly kind: "running" }
+  | {
+      readonly kind: "finished"
+      readonly result: { readonly content: string; readonly isError: boolean }
+    }
+
+/**
  * セッションの中で起きたことを起きた順に並べたもの。メインビューに出す形（`MainViewEntry`。
  * `shared/main-view.ts`）とほぼ同じだが、
  * **ツールは `toolUseId` を持つ**（あとから届く結果を突き合わせるため。表示には使わない）。
@@ -103,7 +114,7 @@ export type SessionRecord =
       readonly name: string
       readonly input: unknown
       readonly nested: boolean
-      readonly result: { readonly content: string; readonly isError: boolean } | undefined
+      readonly status: ToolRunStatus
     }
   /**
    * 圧縮の区切り（`compact-boundary`。docs/glossary.md）。**中身を持たない**（画面に出すのは
@@ -396,7 +407,7 @@ export function applySessionEvent(
             name: event.name,
             input: event.input,
             nested,
-            result: undefined,
+            status: { kind: "running" },
           },
         ],
         runningTools: [
@@ -585,7 +596,7 @@ function finishTool(
     ...state,
     records: [
       ...state.records.slice(0, index),
-      { ...record, result: { content, isError } },
+      { ...record, status: { kind: "finished", result: { content, isError } } },
       ...state.records.slice(index + 1),
     ],
     runningTools: state.runningTools.filter((running) => running.toolUseId !== toolUseId),

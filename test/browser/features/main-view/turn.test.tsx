@@ -2,7 +2,11 @@ import { afterAll, afterEach, describe, expect, it, mock } from "bun:test"
 
 import { cleanup, render } from "@testing-library/react"
 
-import { type MainViewStep, type MainViewTurn } from "../../../../src/shared/main-view.ts"
+import {
+  type MainViewStep,
+  type MainViewStepBody,
+  type MainViewTurn,
+} from "../../../../src/shared/main-view.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、**どの本文に演出を掛けると
 // 言われたか**だけを記録する代役に差し替える。演出そのもの（`report-reveal.ts`）はレイアウトを
@@ -34,13 +38,17 @@ afterAll(() => {
   mock.restore()
 })
 
+/** 本文を持つステップの `body`。先頭行は本文そのもの（1行の本文しか使わないため）。 */
+function text(report: string): MainViewStepBody {
+  return { kind: "text", report, firstLine: report }
+}
+
 function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainViewStep {
   return {
-    report: undefined,
+    body: { kind: "none" },
     interim: false,
     superseded: false,
     final: false,
-    firstLine: undefined,
     actions: [],
     ...overrides,
   }
@@ -66,13 +74,13 @@ function revealTargets(): readonly string[] {
 
 describe("Turn（書き上げる演出を掛ける相手）", () => {
   it("出し始めた時点で既にあった本文には掛けない（過去のタブ・読み込み直し）", () => {
-    render(<Turn turn={turn([step({ id: 0, report: "確定した本文", final: true })])} newest />)
+    render(<Turn turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])} newest />)
 
     expect(revealTargets()).toEqual([])
   })
 
   it("本文にはやり取りの番号を渡す（残った筆先が別のやり取りの上へ出ないため）", () => {
-    render(<Turn turn={turn([step({ id: 0, report: "確定した本文", final: true })])} newest />)
+    render(<Turn turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])} newest />)
 
     expect(revealed.map((call) => call.turnId)).toEqual([TURN_ID])
   })
@@ -83,7 +91,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
     rerender(
       <Turn
-        turn={turn([step({ id: 0 }), step({ id: 1, report: "確定した本文", final: true })])}
+        turn={turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])}
         newest
       />,
     )
@@ -93,15 +101,15 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
   it("確定レポートが並んだら、最後の1件だけに掛ける", () => {
     const { rerender } = render(
-      <Turn turn={turn([step({ id: 0, report: "1件目", final: true })])} newest />,
+      <Turn turn={turn([step({ id: 0, body: text("1件目"), final: true })])} newest />,
     )
     revealed = []
 
     rerender(
       <Turn
         turn={turn([
-          step({ id: 0, report: "1件目" }),
-          step({ id: 1, report: "2件目", final: true }),
+          step({ id: 0, body: text("1件目") }),
+          step({ id: 1, body: text("2件目"), final: true }),
         ])}
         newest
       />,
@@ -116,7 +124,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
     rerender(
       <Turn
-        turn={turn([step({ id: 0 }), step({ id: 1, report: "途中の資料", interim: true })])}
+        turn={turn([step({ id: 0 }), step({ id: 1, body: text("途中の資料"), interim: true })])}
         newest
       />,
     )
@@ -130,7 +138,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
     rerender(
       <Turn
-        turn={turn([step({ id: 0 }), step({ id: 1, report: "確定した本文", final: true })])}
+        turn={turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])}
         newest={false}
       />,
     )
@@ -140,7 +148,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
   it("同じ本文が描き直されても、掛ける相手は変わらない（一度きりの判定ではない）", () => {
     const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest />)
-    const grown = turn([step({ id: 0 }), step({ id: 1, report: "確定した本文", final: true })])
+    const grown = turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])
     rerender(<Turn turn={grown} newest />)
     revealed = []
 
@@ -158,8 +166,8 @@ describe("Turn（最終レポートのラベル）", () => {
       <Turn
         turn={{
           ...turn([
-            step({ id: 0, report: "途中の資料", interim: true, superseded: true }),
-            step({ id: 1, report: "締めの本文", final: true }),
+            step({ id: 0, body: text("途中の資料"), interim: true, superseded: true }),
+            step({ id: 1, body: text("締めの本文"), final: true }),
           ]),
           hasInterimReport: true,
         }}
@@ -172,7 +180,7 @@ describe("Turn（最終レポートのラベル）", () => {
 
   it("本文が1つだけのやり取りでは載せない（「最終」が何も区別しないため）", () => {
     const { container } = render(
-      <Turn turn={turn([step({ id: 0, report: "締めの本文", final: true })])} newest={false} />,
+      <Turn turn={turn([step({ id: 0, body: text("締めの本文"), final: true })])} newest={false} />,
     )
 
     expect(container.textContent).not.toContain("最終レポート")
