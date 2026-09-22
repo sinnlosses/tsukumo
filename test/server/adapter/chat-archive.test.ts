@@ -40,7 +40,15 @@ function root(): string {
 
 /** ある日のローカル正午のエポックミリ秒（日をまたぐ心配をしない値）。 */
 function noonOn(year: number, month: number, day: number): number {
-  return new Date(year, month - 1, day, 12, 0, 0).getTime()
+  return Temporal.ZonedDateTime.from({
+    year,
+    month,
+    day,
+    hour: 12,
+    minute: 0,
+    second: 0,
+    timeZone: Temporal.Now.timeZoneId(),
+  }).epochMilliseconds
 }
 
 function readLines(path: string): unknown[] {
@@ -423,7 +431,15 @@ describe("createChatArchive の「残す」旗", () => {
 
   /** その日の正午から `seconds` 秒後（ターンごとに時刻をずらすため）。 */
   function afterNoon(day: number, seconds: number): number {
-    return new Date(2026, 8, day, 12, 0, seconds).getTime()
+    return Temporal.ZonedDateTime.from({
+      year: 2026,
+      month: 9,
+      day,
+      hour: 12,
+      minute: 0,
+      second: seconds,
+      timeZone: Temporal.Now.timeZoneId(),
+    }).epochMilliseconds
   }
 
   /** 依頼を1件だけ書いてターンを終える（旗を立てるかどうかを渡す）。 */
@@ -593,9 +609,7 @@ describe("createChatArchive の日ごとの索引", () => {
 
   /** ローカル時刻での今日（見出しが付く日）。 */
   function today(): string {
-    const now = new Date()
-    const pad = (value: number): string => String(value).padStart(2, "0")
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+    return Temporal.Now.plainDateISO().toString()
   }
 
   /** 架空の見出しを索引に直接置く（日付を選ぶため、ツールの口は通さない）。 */

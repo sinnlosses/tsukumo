@@ -302,9 +302,9 @@
     "loopable": "Y",
     "dependencies": ["T-344"],
     "summary": "test の Date を無くし、lint で Date を禁じて規約に書く",
-    "status": "todo",
-    "passes": false,
-    "evidence": "",
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（1183 pass / 0 fail / 96ファイル、typecheck・lint・format:check も緑）。grep -rn 'new Date|Date.now' src test scripts が空で例外ゼロ。 src/date-probe-temp.ts に new Date() を1行書いて bun run lint が no-restricted-globals で落ちることを確かめ、消した（作業ツリーは元通り）。 docs/coding-standards.md の節は 32→33（「Date を使わない」を1つ足し、索引の表にも行を追加）。",
     "task": "## 背景\n\n`Date` を禁じるルールを入れるには、`src` だけでなく `test` からも消えている必要がある\n（`package.json` の `lint` は `oxlint src test scripts`）。`test` に残っているのは14箇所:\n\n- 固定の時刻を作る道具: `test/server/adapter/token-usage-log.test.ts:80`、\n  `test/server/adapter/chat-archive.test.ts:43,426,596`、\n  `test/server/adapter/task-summary.test.ts:37`\n- 偽の時計として `Date.now` を差し替えるもの:\n  `test/browser/features/character-view/character-view.test.tsx:177-207`、\n  `test/browser/features/dispatch/turn-status.test.tsx:54-66`\n\nルール本体は oxlint の `no-restricted-globals` で書ける（`.oxlintrc.json` の `rules` に足す）。\n`new Date()` と `Date.now()` の両方を拾うことを実測済み。\n\n## やること\n\n1. `test/` から `new Date` / `Date.now` を無くす。固定の時刻は\n   `Temporal.ZonedDateTime` などから作り、偽の時計は前のタスクが決めた契約\n   （数のままか `Temporal.Instant` か）に合わせる\n2. `.oxlintrc.json` の `rules` に `no-restricted-globals` を足し、`Date` を `error` で\n   禁じる。`message` に代わりに使うもの（`Temporal`）を書く\n3. `docs/coding-standards.md` に節を1つ足して**理由と例外**を書き、`CLAUDE.md` の\n   「コーディング規約・レビュー方針」の箇条書きに1行足す（ルール本体は CLAUDE.md 側が正典）\n4. 前のタスクで例外を残していたら、そこに `oxlint-disable` を1行だけ付け、理由を添える\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `grep -rn 'new Date\\|Date\\.now' src test scripts` が空（例外を残したなら、その1箇所と\n  理由を `evidence` に書く）\n- わざと `const d = new Date()` を書いた状態で `bun run lint` が落ちることを確かめ、\n  戻してから `evidence` に書く\n- `docs/coding-standards.md` の節の数が1つだけ増えている\n  （`grep -c '^#\\{2,3\\} ' docs/coding-standards.md` を前後で比べる）\n\n## 注意\n\n- **`docs/coding-standards.md` は冒頭に「節の索引」の表を持つ。** 見出し名で位置を探すと\n  索引の行に先に当たる（`CLAUDE.md`「ドキュメントを編集するときの罠」）。索引の表にも\n  行を足す\n"
   },
   {

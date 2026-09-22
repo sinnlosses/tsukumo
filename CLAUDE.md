@@ -179,6 +179,9 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
   `docs/coding-standards.md`「React」節の代替の表を見る。**依存配列を手で間引かない**
 - **`Bun.*` の固有APIに寄せない。** ファイル・パス・プロセスは `node:` プレフィックスの標準APIを
   使う（唯一の例外は `bun:test`）。理由は `docs/coding-standards.md`「Bun固有APIに寄せない」
+- **`Date` を使わない。** 時刻は `Temporal`（`Temporal.Now` / `Temporal.Instant` /
+  `Temporal.ZonedDateTime` など）で扱う。`.oxlintrc.json` の `no-restricted-globals` で検査する
+  （例外は無い）。理由は `docs/coding-standards.md`「`Date` を使わない」
 - コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない（唯一の例外は
   `docs/requirements.md`「7. 未決事項」の対応タスク列）
 - **案が2つ以上あるときは、書いたあとのコードを読む人が把握しやすいほうを選ぶ。**

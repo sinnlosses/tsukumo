@@ -30,12 +30,12 @@ function tasksPath(): string {
   return join(dir, "develop", "tasks.json")
 }
 
-// 秒より細かい精度（ファイルシステム・`Date` 双方の丸め）に振り回されないよう、
-// mtime は常に明示的に秒単位で指定する（自然な書き込み時刻には頼らない）。
+// 秒より細かい精度（ファイルシステムの丸め）に振り回されないよう、mtime は常に明示的に
+// 秒単位で指定する（自然な書き込み時刻には頼らない）。`utimesSync` は Unix エポック秒の
+// 数をそのまま受け取れるので `Date` を経由しない。
 function writeTasks(content: string, mtimeSecondsFromEpoch: number): void {
   writeFileSync(tasksPath(), content)
-  const time = new Date(mtimeSecondsFromEpoch * 1000)
-  utimesSync(tasksPath(), time, time)
+  utimesSync(tasksPath(), mtimeSecondsFromEpoch, mtimeSecondsFromEpoch)
 }
 
 function watch(onChange: (tasks: unknown) => void): TaskSummaryWatcher {

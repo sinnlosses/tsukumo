@@ -9,6 +9,13 @@
   },
   "rules": {
     "no-console": "off",
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "Date",
+        "message": "Date を使わず Temporal を使う（docs/coding-standards.md「Date を使わない」）"
+      }
+    ],
     "react/react-in-jsx-scope": "off",
     "typescript/consistent-type-imports": [
       "error",

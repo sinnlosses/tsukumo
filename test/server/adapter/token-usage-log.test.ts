@@ -77,7 +77,15 @@ function root(): string {
 
 /** ある日のローカル時刻のエポックミリ秒（日をまたぐ心配をしない値）。 */
 function at(hour: number, minute: number, day = 22): number {
-  return new Date(2026, 8, day, hour, minute, 0).getTime()
+  return Temporal.ZonedDateTime.from({
+    year: 2026,
+    month: 9,
+    day,
+    hour,
+    minute,
+    second: 0,
+    timeZone: Temporal.Now.timeZoneId(),
+  }).epochMilliseconds
 }
 
 function entry(when: number, models: readonly ModelTokenUsage[] = MODELS): TokenUsageEntry {

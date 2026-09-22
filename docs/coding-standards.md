@@ -43,6 +43,7 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 | ## React                                        | `useEffect` を書いてよい4類型と、代わりに使うもの。**部品は `function` で書く**                              |
 | ## テスト                                       | 置き場所・モック・カバレッジ・消す/足す・描画の扱い                                                          |
 | ## Bun固有APIに寄せない                         | `Bun.*` ではなく `node:` の標準APIを使う理由と、唯一の例外                                                   |
+| ## `Date` を使わない                            | 時刻は `Temporal` で扱う理由と、`no-restricted-globals` での検査                                             |
 | ## 整形の対象外                                 | `.claude/` を oxfmt にかけない理由                                                                           |
 | ## タスク番号を書かない                         | コードとドキュメントに `T-XXX` を書かない理由                                                                |
 | ## 案を選ぶときの指標（コードの把握のしやすさ） | 複数案から1つを選ぶときの3つの物差しと、同点のときの決め方                                                   |
@@ -568,6 +569,28 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 
 **唯一の例外は `bun:test`**（テストランナーそのものなので、移すときは差し替えるしかない）。
 性能上どうしても `Bun.*` が必要になったら、その理由をコメントに残したうえで使う。
+
+## `Date` を使わない
+
+時刻は `Date` ではなく `Temporal`（`Temporal.Now` / `Temporal.Instant` /
+`Temporal.ZonedDateTime` / `Temporal.PlainDate` など）で扱う。`.oxlintrc.json` の
+`no-restricted-globals` で `Date` を `error` にして検査する（`src` / `test` / `scripts` すべてが
+対象）。
+
+理由は `Date` のメソッドの多くがミュータブル（`setFullYear` などが自分自身を書き換える）で、
+月が0始まりだったり、うるう年・タイムゾーンの計算を呼び出し側に押し付けたりする点。`Temporal`
+はイミュータブルで、日付の計算・タイムゾーン付きの時刻・ISO 8601 の文字列化を1つの体系で
+扱える。**時刻の数（`shared` を通る値）はこれまでどおりエポックミリ秒の数のまま持つ**
+（`Temporal.Instant` そのものを `shared` に出さない）。数を作る場所はサーバが
+`src/session-start.ts` の `now`、ブラウザが `src/browser/lib/clock.ts` の
+`nowEpochMilliseconds()`。数を読み書き可能な日時に戻すときは
+`Temporal.Instant.fromEpochMilliseconds(...)` を使う（`src/server/adapter/local-time.ts`）。
+
+**例外は無い。** テストで固定の時刻を作るときも `Temporal.ZonedDateTime.from({ ..., timeZone })`
+や `Temporal.PlainDate` を使い、偽の時計は `spyOn(Temporal.Now, "instant")` で差し替える
+（`test/browser/features/character-view/character-view.test.tsx` /
+`test/browser/features/dispatch/turn-status.test.tsx`）。ファイルの mtime のように「エポック秒の
+数をそのまま受け取れる」API（`node:fs` の `utimesSync` など）は `Date` を経由せず数を直接渡す。
 
 ## 整形の対象外
 

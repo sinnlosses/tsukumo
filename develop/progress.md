@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-22 test の Date を無くし、lint で Date を禁じた（T-345）
+
+`test/server/adapter/` の3ファイルの固定時刻を `Temporal.ZonedDateTime` などに置き換え、
+`.oxlintrc.json` の `no-restricted-globals` で `Date` を `error` にした（`src` / `test` /
+`scripts` すべてが対象で例外は無い）。理由と作法は `docs/coding-standards.md` の新しい節
+「`Date` を使わない」に書き、`CLAUDE.md` の規約の箇条書きにも1行足した。
+
 ### 2026-09-22 src と scripts の Date を Temporal に置き換えた（T-344）
 
 `new Date` / `Date.now` / `: Date` を `src` と `scripts` から全廃した（例外ゼロ）。時刻の数は
