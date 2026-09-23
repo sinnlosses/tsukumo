@@ -9,7 +9,11 @@ import {
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { characterChangedEvent, shownPortraits } from "../../fixture/character.ts"
+import {
+  characterChangedEvent,
+  characterPackEntry,
+  shownPortraits,
+} from "../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。
@@ -94,7 +98,7 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
           editable: false,
           ...shownPortraits({ default: `/character/${pack.name}.png` }),
         },
-        [{ name: pack.name, label: pack.name }],
+        [characterPackEntry(pack.name, pack.name, { inUse: true })],
       ),
     readChatTopics: (pack) => {
       calls.push(`readChatTopics:${pack.name}`)

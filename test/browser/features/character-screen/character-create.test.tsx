@@ -5,10 +5,15 @@ import { type ReactElement } from "react"
 
 import { CharacterCreate } from "../../../../src/browser/features/character-screen/character-create.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
-import { type CharacterPackChoice } from "../../../../src/shared/character.ts"
+import { type CharacterPackEntry } from "../../../../src/shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo, shownOutfitAccents, shownPortraits } from "../../../fixture/character.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  shownOutfitAccents,
+  shownPortraits,
+} from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
@@ -25,7 +30,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
   outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
 })
 
-const FIXTURE_PACKS: readonly CharacterPackChoice[] = [{ name: "fictional", label: "架空の精霊" }]
+const FIXTURE_PACKS: readonly CharacterPackEntry[] = [characterPackEntry("fictional", "架空の精霊")]
 
 afterEach(() => {
   cleanup()
@@ -35,7 +40,7 @@ afterEach(() => {
 function characterCreate(
   character: SessionState["character"],
   dispatch: CommandSpy = () => {},
-  packs: readonly CharacterPackChoice[] = FIXTURE_PACKS,
+  packs: readonly CharacterPackEntry[] = FIXTURE_PACKS,
   turn: SessionState["turn"] = { kind: "idle" },
 ): ReactElement {
   const store = sessionStoreWith(
@@ -52,14 +57,14 @@ function characterCreate(
 function renderCharacterCreate(
   character: SessionState["character"],
   dispatch: CommandSpy = () => {},
-  packs: readonly CharacterPackChoice[] = FIXTURE_PACKS,
+  packs: readonly CharacterPackEntry[] = FIXTURE_PACKS,
 ): RenderResult {
   return render(characterCreate(character, dispatch, packs))
 }
 
 /** 作ったあとの一覧（送った名前が増えた状態）。 */
-function packsWith(name: string): readonly CharacterPackChoice[] {
-  return [...FIXTURE_PACKS, { name, label: name }]
+function packsWith(name: string): readonly CharacterPackEntry[] {
+  return [...FIXTURE_PACKS, characterPackEntry(name, name)]
 }
 
 /**

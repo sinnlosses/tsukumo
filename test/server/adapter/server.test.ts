@@ -1,10 +1,21 @@
 import { afterEach, describe, expect, it, spyOn } from "bun:test"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { get } from "node:http"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 import {
+  characterChangedEvent,
+  listCharacterPacks,
+  readCharacterAsset,
+} from "../../../src/server/adapter/character-pack.ts"
+import {
   createStartupToken,
+  type ServeCharacterAsset,
   startViewServer,
   type ViewServer,
 } from "../../../src/server/adapter/server.ts"
+import { type CharacterAssetLocation } from "../../../src/shared/character-asset.ts"
 import {
   CONTEXT_USAGE_PATH,
   type ContextUsageReport,
@@ -32,8 +43,8 @@ const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
 /**
- * `/character/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
- * 上書きする（`src/server/adapter/character-pack.ts` の `readCharacterPackFile` の代役）。
+ * `/character/<pack>/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
+ * 上書きする（`src/server/adapter/character-pack.ts` の `readCharacterAsset` の代役）。
  */
 function noCharacterAsset(): undefined {
   return undefined
@@ -60,9 +71,7 @@ function noPromptImage(): undefined {
 }
 
 async function startView(
-  serveCharacterAsset: (
-    fileName: string,
-  ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
+  serveCharacterAsset: ServeCharacterAsset = noCharacterAsset,
   listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
   readTokenUsageSummary: (days: TokenUsageDays) => TokenUsageSummary = noTokenUsage,
   readContextUsage: () => Promise<ContextUsageReport> = noContextUsage,
@@ -205,27 +214,43 @@ describe("startViewServer", () => {
     expect(response.status).toBe(404)
   })
 
-  it("/character/<file> は serveCharacterAsset が返した中身をそのまま配る", async () => {
-    const server = await startView((fileName) =>
-      fileName === "default.svg"
+  it("/character/<pack>/<file> は、デコードしたパック名とファイル名で引いた中身をそのまま配る", async () => {
+    const asked: CharacterAssetLocation[] = []
+    const server = await startView((location) => {
+      asked.push(location)
+      return location.fileName === "default.svg"
         ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
-        : undefined,
-    )
+        : undefined
+    })
     const origin = viewOrigin(server)
 
-    const response = await fetch(`${origin}/character/default.svg`)
+    const response = await fetch(`${origin}/character/my%20pack/default.svg?v=1`)
 
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("image/svg+xml")
     expect(await response.text()).toBe("<svg></svg>")
+    expect(asked).toEqual([{ pack: "my pack", fileName: "default.svg" }])
   })
 
-  it("/character/<file> は、定義に無いファイル名（serveCharacterAsset が undefined を返す）なら404", async () => {
+  it("/character/<pack>/<file> は、定義に無いファイル名（serveCharacterAsset が undefined を返す）なら404", async () => {
     const server = await startView()
 
-    const response = await fetch(`${viewOrigin(server)}/character/not-defined.svg`)
+    const response = await fetch(`${viewOrigin(server)}/character/fictional/not-defined.svg`)
 
     expect(response.status).toBe(404)
+  })
+
+  it("/character/<file>（パック名の無い形）は引きに行かずに404", async () => {
+    const asked: CharacterAssetLocation[] = []
+    const server = await startView((location) => {
+      asked.push(location)
+      return undefined
+    })
+
+    const response = await fetch(`${viewOrigin(server)}/character/default.svg`)
+
+    expect(response.status).toBe(404)
+    expect(asked).toEqual([])
   })
 
   it("/repository-file は、正しいトークンなら候補のパスを JSON の並びで返す", async () => {
@@ -426,9 +451,9 @@ describe("startViewServer", () => {
     })
   })
 
-  it("/character/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {
-    const server = await startView((fileName) =>
-      fileName === "default.svg"
+  it("/character/<pack>/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {
+    const server = await startView((location) =>
+      location.pack === "fictional" && location.fileName === "default.svg"
         ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
         : undefined,
     )
@@ -436,6 +461,7 @@ describe("startViewServer", () => {
 
     expect((await fetch(`${origin}/character/%2e%2e/package.json`)).status).toBe(404)
     expect((await fetch(`${origin}/character/..%2Fdefault.svg`)).status).toBe(404)
+    expect((await fetch(`${origin}/character/fictional/..%2Fdefault.svg`)).status).toBe(404)
   })
 
   it("listen 後に error が起きても閉じない。stderr に1行書いて配信を続ける", async () => {
@@ -453,3 +479,130 @@ describe("startViewServer", () => {
     }
   })
 })
+
+// 一覧に載せた URL をそのまま引いて、配信の全体（経路の読み分け → 一覧との突き合わせ →
+// パックごとの allowlist）を確かめる（docs/design.md 7.2）。**素材は手で書いた
+// 架空の SVG / PNG の中身**で、置き場は一時ディレクトリ（本物の `~/.tsukumo` を読まない）。
+describe("キャラクターの素材（使用中以外のパックも配る）", () => {
+  const SVG = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'
+  const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47])
+
+  let root: string | undefined
+
+  afterEach(() => {
+    if (root !== undefined) {
+      rmSync(root, { recursive: true, force: true })
+      root = undefined
+    }
+  })
+
+  /**
+   * 同梱に使用中の `spirit`、ホームに使用中以外の `other`（立ち絵・背景つき）を置き、
+   * `current-character.ts` と同じ組み方でサーバを起こす。一覧（`packs`）も返す。
+   */
+  async function startWithPacks(): Promise<{
+    readonly server: ViewServer
+    readonly other: { readonly portrait: string; readonly background: string }
+  }> {
+    const base = mkdtempSync(join(tmpdir(), "tsukumo-server-character-"))
+    root = base
+    const bundled = join(base, "bundled")
+    const home = join(base, "home")
+    const cwd = join(base, "cwd")
+    mkdirSync(join(bundled, "spirit"), { recursive: true })
+    writeFileSync(
+      join(bundled, "spirit", "character.json"),
+      JSON.stringify({ portraits: { default: "default.svg" } }),
+    )
+    writeFileSync(join(bundled, "spirit", "default.svg"), SVG)
+    mkdirSync(join(home, "other"), { recursive: true })
+    writeFileSync(
+      join(home, "other", "character.json"),
+      JSON.stringify({
+        portraits: { default: "portrait.svg" },
+        background: { image: "background.png", veil: 0.5 },
+      }),
+    )
+    writeFileSync(join(home, "other", "portrait.svg"), SVG)
+    writeFileSync(join(home, "other", "background.png"), PNG_BYTES)
+    // 定義に載っていないファイル（配ってはいけない）。
+    writeFileSync(join(home, "other", "secret.svg"), SVG)
+
+    const packs = listCharacterPacks(cwd, { bundled, home })
+    const current = packs.find((pack) => pack.name === "spirit")
+    if (current === undefined) {
+      throw new Error("テストの前提: spirit が一覧に無い")
+    }
+    const event = characterChangedEvent(current, packs, cwd)
+    const otherEntry =
+      event.kind === "character-changed"
+        ? event.packs.find((entry) => entry.name === "other")
+        : undefined
+    const portrait = otherEntry?.character.portraits?.default
+    const background = otherEntry?.character.background?.image
+    if (portrait === undefined || background === undefined) {
+      throw new Error("テストの前提: other の立ち絵と背景が一覧に無い")
+    }
+
+    const server = await startView((location) => readCharacterAsset(current, packs, location))
+    return { server, other: { portrait, background } }
+  }
+
+  it("使用中以外のパックの立ち絵を、一覧に載った URL のまま GET すると200で配る", async () => {
+    const { server, other } = await startWithPacks()
+
+    const response = await fetch(`${viewOrigin(server)}${other.portrait}`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("image/svg+xml")
+    expect(await response.text()).toBe(SVG)
+  })
+
+  it("使用中以外のパックの背景も200で配る", async () => {
+    const { server, other } = await startWithPacks()
+
+    const response = await fetch(`${viewOrigin(server)}${other.background}`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toBe("image/png")
+    expect(Buffer.from(await response.arrayBuffer())).toEqual(PNG_BYTES)
+  })
+
+  it("そのパックの定義に無いファイル名は、ディスクにあっても404", async () => {
+    const { server } = await startWithPacks()
+
+    const response = await fetch(`${viewOrigin(server)}/character/other/secret.svg`)
+
+    expect(response.status).toBe(404)
+  })
+
+  it("`..` を含む名前は404（エンコードしたものも、生のままのものも）", async () => {
+    const { server } = await startWithPacks()
+    const origin = viewOrigin(server)
+
+    // fetch は生の `..` を送る前に畳んでしまうので、エンコードした形と node:http の生の経路で送る。
+    expect((await fetch(`${origin}/character/other/..%2Fother%2Fsecret.svg`)).status).toBe(404)
+    expect((await fetch(`${origin}/character/..%2Fhome%2Fother/portrait.svg`)).status).toBe(404)
+    expect(await rawStatus(origin, "/character/../other/portrait.svg")).toBe(404)
+    expect(await rawStatus(origin, "/character/other/../spirit/default.svg")).toBe(404)
+  })
+
+  it("一覧に無いパック名は404", async () => {
+    const { server } = await startWithPacks()
+
+    const response = await fetch(`${viewOrigin(server)}/character/missing/portrait.svg`)
+
+    expect(response.status).toBe(404)
+  })
+})
+
+/** 経路を畳まずにそのまま送り、応答の状態コードだけを返す（`fetch` は `..` を送る前に畳むため）。 */
+function rawStatus(origin: string, path: string): Promise<number | undefined> {
+  return new Promise((resolve, reject) => {
+    const request = get(`${origin}/`, { path }, (response) => {
+      response.resume()
+      resolve(response.statusCode)
+    })
+    request.on("error", reject)
+  })
+}

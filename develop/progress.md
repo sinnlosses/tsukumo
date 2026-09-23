@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 全パックの見た目の情報を画面に配り、素材をパック名つきの URL で配るようにした（T-490）
+
+`character-changed` の `packs` を `CharacterPackEntry`（姿・使用中か・消せるか）に広げ、`event()` のたびに一覧を読み直す。素材の URL は使用中も含めて `/character/<pack>/<file>?v=<revision>` に揃え、パック名は一覧と突き合わせるだけでパスには使わない（`docs/design.md` 7.2。`deletable` は T-492 まで全部 false）。
+
 ### 2026-09-23 report の引数を規約で検査し、違反を戻り値で返して書き直させるようにした（T-487）
 
 機械で判定できる7条を `src/server/core/report-violation.ts` で検査し、`report` の handler が違反を `isError` で返す（1ターン1回まで。前置き・締めの定型の行は誤検知が多いので採らなかった）。`report` イベントは同じ呼び出しの `tool-finished` まで `report-review.ts` が預かり、差し戻したものは描かない（セッションの復元でも同じ）。

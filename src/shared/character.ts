@@ -1,13 +1,13 @@
-// いま出しているキャラクターの姿（`CharacterInfo`）と、切り替えの選択肢・パックの名前。
-// **画面（キャラビュー・サイドバーの `<select>`・キャラクター画面）が読む形**で、定義ファイルの
-// 生の形（`character-definition.ts`）から `toCharacterInfo` が1回だけ変換する。
+// いま出しているキャラクターの姿（`CharacterInfo`）と、パックの一覧の1件（`CharacterPackEntry`）・
+// パックの名前。**画面（キャラビュー・サイドバーの `<select>`・キャラクター画面）が読む形**で、
+// 定義ファイルの生の形（`character-definition.ts`）から `toCharacterInfo` が1回だけ変換する。
 //
-// **立ち絵の中身は持たない**（`portraits` の値は `/character/<file>` の URL。組み立ては
+// **立ち絵の中身は持たない**（`portraits` の値は `/character/<pack>/<file>` の URL。組み立ては
 // `character-asset.ts`）。ファイルI/Oは src/server/adapter/character-pack.ts に集約する。
 
 import { fromKeys } from "remeda"
 
-import { characterAssetCacheKey, characterAssetPath } from "./character-asset.ts"
+import { characterAssetPath } from "./character-asset.ts"
 import { type CharacterBackground } from "./character-background.ts"
 import { type CharacterDefinition } from "./character-definition.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
@@ -15,16 +15,16 @@ import { type Expression, EXPRESSIONS, type Outfit, OUTFITS } from "./expression
 
 /**
  * キャラビューに渡す、キャラクター定義の姿（`character-changed` イベント・`SessionState.character`
- * の中身。docs/design.md 4.1 / 4.2）。**`portraits` の値は `/character/<file>` の URL**
+ * の中身。docs/design.md 4.1 / 4.2）。**`portraits` の値は `/character/<pack>/<file>` の URL**
  * （ファイル名ではない。素材の中身はここにもイベントにも乗せない）。
  */
 export type CharacterInfo = {
   /**
    * いま出しているキャラクターパックの名前（`characters/<pack>` のディレクトリ名）。
-   * **`switch-character` の鍵**で、サイドバーの `<select>` の選択値でもある。パックの
-   * ディレクトリが分からないとき（既定の場所を直に指したときなど）は undefined。
+   * **`switch-character` の鍵**で、サイドバーの `<select>` の選択値でもある。素材の URL の
+   * `<pack>` の区間もこれ。
    */
-  readonly pack: string | undefined
+  readonly pack: string
   readonly name: string | undefined
   /** {@link CharacterDefinition.accent} をそのまま持つ。ブラウザ側は `--accent` に流す。 */
   readonly accent: string | undefined
@@ -47,14 +47,14 @@ export type CharacterInfo = {
    */
   readonly expressionsWithPortrait: readonly Expression[]
   /**
-   * ミニ立ち絵の URL（`/character/<file>`。レポートの筆先に添う1体。
+   * ミニ立ち絵の URL（`/character/<pack>/<file>`。レポートの筆先に添う1体。
    * docs/requirements.md 4.3）。**定義に `mini` が無ければ `portraits.default` に落として
    * 持つ**ので、読む側は「あるかどうか」だけを見れば足りる（縮小するのは画面側）。
    * `default` も無いパックでは undefined（ミニ立ち絵そのものが出ない）。
    */
   readonly mini: string | undefined
   /**
-   * 帯の左端に出す顔の URL（`/character/<file>`。`docs/screen-design.md` 13.9「顔」）。**定義に `face`
+   * 帯の左端に出す顔の URL（`/character/<pack>/<file>`。`docs/screen-design.md` 13.9「顔」）。**定義に `face`
    * が無いパックでは undefined**——`mini` と違い、`portraits.default` へのフォールバックはしない
    * （無いパックでは帯に何も出さない）。表情では変わらない1枚。
    */
@@ -70,7 +70,7 @@ export type CharacterInfo = {
    */
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
-   * キャラビューに敷く背景（`docs/screen-design.md` 13.8）。**`image` は `/character/<file>` の URL**
+   * キャラビューに敷く背景（`docs/screen-design.md` 13.8）。**`image` は `/character/<pack>/<file>` の URL**
    * （立ち絵と同じ経路・同じ取り直しの印）。無ければ背景は出ない（`ground` の上に立ち絵が
    * 直接立つ、いままでの見え方）。**効くのはキャラビューだけ。**
    */
@@ -87,10 +87,33 @@ export type CharacterInfo = {
 /**
  * 切り替えの選択肢1つ分（サイドバーの `<select>`）。`name` は `characters/<name>` の
  * ディレクトリ名で、`label` は画面に出す名前（`character.json` の `name`。無ければ `name`）。
+ * **一覧の1件（{@link CharacterPackEntry}）はこの形を含む**ので、選択肢だけを読む部品には
+ * 一覧をそのまま渡せる。
  */
 export type CharacterPackChoice = {
   readonly name: string
   readonly label: string
+}
+
+/**
+ * パックの一覧の1件（`character-changed` の `packs` と `SessionState.characterPacks` の中身）。
+ * キャラクター画面の一覧（顔・名前・表情の枚数・使用中か）と、選んだパックの詳しい設定
+ * （立ち絵・差し色・背景・ひとこと）が読む。**使用中以外のパックも同じ形で全部持つ**
+ * （`docs/design.md` 7.2）。
+ *
+ * 姿は {@link CharacterInfo} をそのまま入れ子で持つ（使用中のパックの姿を読む部品に、使用中以外の
+ * パックの姿も同じ型で渡せる）。**「変えられるか」は `character.editable`** にあり、ここには
+ * 重ねて持たない。
+ */
+export type CharacterPackEntry = CharacterPackChoice & {
+  readonly character: CharacterInfo
+  /** いま出しているパックか（一覧の中でちょうど1件だけ true。サーバが決める）。 */
+  readonly inUse: boolean
+  /**
+   * 画面から消してよいか（サーバが決める）。**消す口がまだ無いあいだはどのパックも false**
+   * （使用中のパックは口ができても false のまま。`docs/design.md` 7.2）。
+   */
+  readonly deletable: boolean
 }
 
 /**
@@ -120,9 +143,9 @@ const CHARACTER_PACK_NAME_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/
 /** {@link toCharacterInfo} に渡すもの。パックそのもの（`adapter` の型）はここでは知らない。 */
 export type CharacterInfoSource = {
   readonly definition: CharacterDefinition | undefined
-  /** `characters/<name>` のディレクトリ名（既定の場所を直に指したときは undefined）。 */
-  readonly pack: string | undefined
-  /** 素材の版（`/character/<file>` に付ける取り直しの印。無ければ名前だけで組む）。 */
+  /** `characters/<name>` のディレクトリ名。素材の URL の `<pack>` の区間にもなる。 */
+  readonly pack: string
+  /** 素材の版（素材の URL に付ける取り直しの印 `?v=`。無ければ付けない）。 */
   readonly revision: string | undefined
   readonly editable: boolean
 }
@@ -135,8 +158,9 @@ export type CharacterInfoSource = {
  */
 export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
   const definition = source.definition
-  const cacheKey = characterAssetCacheKey(source.pack, source.revision)
-  const portraits = portraitUrls(definition, cacheKey)
+  const assetUrl = (fileName: string): string =>
+    characterAssetPath(source.pack, fileName, source.revision)
+  const portraits = portraitUrls(definition, assetUrl)
   return {
     pack: source.pack,
     name: definition?.name,
@@ -147,15 +171,11 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     expressionsWithPortrait: EXPRESSIONS.filter(
       (expression) => definition?.portraits[expression] !== undefined,
     ),
-    mini:
-      definition?.mini === undefined
-        ? portraits?.default
-        : characterAssetPath(definition.mini, cacheKey),
-    face:
-      definition?.face === undefined ? undefined : characterAssetPath(definition.face, cacheKey),
+    mini: definition?.mini === undefined ? portraits?.default : assetUrl(definition.mini),
+    face: definition?.face === undefined ? undefined : assetUrl(definition.face),
     tagline: definition?.tagline,
     outfitAccents: foldedOutfitAccents(definition),
-    background: backgroundWithUrl(definition?.background, cacheKey),
+    background: backgroundWithUrl(definition?.background, assetUrl),
     editable: source.editable,
   }
 }
@@ -176,14 +196,14 @@ export function effectiveAccent(
   return chatMode ? (character.chatAccent ?? character.accent) : character.accent
 }
 
-/** 背景の素材のファイル名を `/character/<file>` の URL に変える（覆いの濃さはそのまま）。 */
+/** 背景の素材のファイル名を素材の URL に変える（覆いの濃さはそのまま）。 */
 function backgroundWithUrl(
   background: CharacterBackground | undefined,
-  cacheKey: string | undefined,
+  assetUrl: (fileName: string) => string,
 ): CharacterBackground | undefined {
   return background === undefined
     ? undefined
-    : { image: characterAssetPath(background.image, cacheKey), veil: background.veil }
+    : { image: assetUrl(background.image), veil: background.veil }
 }
 
 /**
@@ -193,16 +213,14 @@ function backgroundWithUrl(
  */
 function portraitUrls(
   definition: CharacterDefinition | undefined,
-  cacheKey: string | undefined,
+  assetUrl: (fileName: string) => string,
 ): Readonly<Record<Expression, string>> | undefined {
   const files = definition?.portraits
   if (files === undefined || files.default === undefined) {
     return undefined
   }
   const fallback = files.default
-  return fromKeys(EXPRESSIONS, (expression) =>
-    characterAssetPath(files[expression] ?? fallback, cacheKey),
-  )
+  return fromKeys(EXPRESSIONS, (expression) => assetUrl(files[expression] ?? fallback))
 }
 
 /**

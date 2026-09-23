@@ -1,38 +1,63 @@
-// `/character/<file>` で配るキャラクターの素材（立ち絵）。**URL の作り方・取り直しの印・
-// 拡張子による仕分け**を持つ。
+// `/character/<pack>/<file>` で配るキャラクターの素材（立ち絵・顔・背景）。**URL の作り方と
+// 読み方・拡張子による仕分け**を持つ。
 //
 // 素材そのものは持たない。読むのは `src/server/adapter/character-pack.ts`、配るのは
 // `src/server/adapter/server.ts`、`<img>` に載せるのは `src/browser/components/portrait.tsx` で、
 // ここはその3者が同じ経路名と同じ仕分けを見るための契約（`node:` にも `document` にも触らない）。
 
-/**
- * `/character/<file>` の URL の作り方。**`character.json` に書かれたファイル名だけ**を渡す前提
- * （`src/server/adapter/character-pack.ts` の allowlist と同じ考え方。パスから組み立てない）。
- *
- * `cacheKey` は**ブラウザに再取得させるためだけ**の問い合わせ文字列（{@link characterAssetCacheKey}
- * が組み立てる）。2つのパックが同じファイル名（`default.png` など）を使うと URL が一致し、
- * `<img src>` が書き換わらないので再取得が起きない。**画面から立ち絵を差し替えたときも
- * ファイル名が同じまま中身だけが変わる**ので、パックの名前だけでは足りず素材の版も混ぜる。
- * **配る側（`src/server/adapter/server.ts`）はこの値を見ない**（`?` 以降を落としてから配信ファイルを
- * 決める）。中身を決めるのは呼び出し側が渡す `CharacterPack` のほう。
- */
 export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
 
-export function characterAssetPath(fileName: string, cacheKey: string | undefined): string {
-  const path = `${CHARACTER_ASSET_PATH_PREFIX}${fileName}`
-  return cacheKey === undefined ? path : `${path}?v=${encodeURIComponent(cacheKey)}`
+/**
+ * `/character/<pack>/<file>` の URL の作り方。**使用中のパックもそれ以外も同じ形**
+ * （`docs/design.md` 7.2）。`fileName` は **`character.json` に書かれたファイル名だけ**
+ * を渡す前提（`src/server/adapter/character-pack.ts` の allowlist と同じ考え方。パスから
+ * 組み立てない）。パック名もファイル名も1つの区間としてエンコードするので、`/` や空白を含んでも
+ * 区切りがずれない（読むのは {@link readCharacterAssetPath}）。
+ *
+ * `revision` は**ブラウザに再取得させるためだけ**の問い合わせ文字列 `?v=<版>`。画面から立ち絵を
+ * 差し替えるとファイル名が同じまま中身だけが変わるので、素材の版（更新時刻）を混ぜる。
+ * パックの名前は経路に入っているので、別のパックの同じファイル名とは版が無くても URL が分かれる。
+ * **配る側はこの値を見ない**（`?` 以降を落としてから配信ファイルを決める）。無ければ付けない。
+ */
+export function characterAssetPath(
+  pack: string,
+  fileName: string,
+  revision: string | undefined,
+): string {
+  const path = `${CHARACTER_ASSET_PATH_PREFIX}${encodeURIComponent(pack)}/${encodeURIComponent(fileName)}`
+  return revision === undefined ? path : `${path}?v=${encodeURIComponent(revision)}`
+}
+
+/** {@link readCharacterAssetPath} が読み出したもの。どちらもデコード済み。 */
+export type CharacterAssetLocation = {
+  readonly pack: string
+  readonly fileName: string
 }
 
 /**
- * 取り直しの印を組み立てる。パックの名前と素材の版（`revision`）を混ぜたもので、**どちらも
- * 無いときだけ undefined**（問い合わせ文字列そのものが付かない）。
+ * {@link CHARACTER_ASSET_PATH_PREFIX} より後ろ（問い合わせ文字列を落としたもの）を、パック名と
+ * ファイル名に読み分ける。**区切りの `/` がちょうど1つでないもの・どちらかが空のもの・
+ * デコードできないものは undefined**（配る側が 404 にする）。デコードした名前が `..` などでも
+ * ここでは弾かない — 配ってよいかは一覧と定義との突き合わせが決める（パスを組み立てないので、
+ * 載っていない名前は自然に「無い」に落ちる）。
  */
-export function characterAssetCacheKey(
-  pack: string | undefined,
-  revision: string | undefined,
-): string | undefined {
-  const parts = [pack, revision].filter((part): part is string => part !== undefined)
-  return parts.length === 0 ? undefined : parts.join("@")
+export function readCharacterAssetPath(rest: string): CharacterAssetLocation | undefined {
+  const segments = rest.split("/")
+  if (segments.length !== 2) {
+    return undefined
+  }
+  const [packSegment, fileSegment] = segments
+  if (
+    packSegment === undefined ||
+    fileSegment === undefined ||
+    packSegment === "" ||
+    fileSegment === ""
+  ) {
+    return undefined
+  }
+  const pack = decodeSegment(packSegment)
+  const fileName = decodeSegment(fileSegment)
+  return pack === undefined || fileName === undefined ? undefined : { pack, fileName }
 }
 
 /**
@@ -74,4 +99,13 @@ function fileExtension(fileName: string): string {
   const path = fileName.split("?")[0] ?? fileName
   const dotIndex = path.lastIndexOf(".")
   return dotIndex === -1 ? "" : path.slice(dotIndex).toLowerCase()
+}
+
+/** URL の1区間をデコードする。壊れた `%` の並びは undefined（外来の例外は受け取ったここで畳む）。 */
+function decodeSegment(segment: string): string | undefined {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return undefined
+  }
 }

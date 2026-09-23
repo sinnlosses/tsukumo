@@ -1,35 +1,57 @@
 import { describe, expect, it } from "bun:test"
 
 import {
-  characterAssetCacheKey,
   characterAssetPath,
   classifyPortraitFile,
   rasterMimeType,
+  readCharacterAssetPath,
 } from "../../src/shared/character-asset.ts"
 
 describe("characterAssetPath", () => {
-  it("/character/<file> の形にする", () => {
-    expect(characterAssetPath("default.svg", undefined)).toBe("/character/default.svg")
+  it("/character/<pack>/<file> の形にする", () => {
+    expect(characterAssetPath("tsukumo", "default.svg", undefined)).toBe(
+      "/character/tsukumo/default.svg",
+    )
   })
 
-  it("取り直しの印があれば問い合わせ文字列 ?v=<印> を付ける", () => {
-    expect(characterAssetPath("default.svg", "tsukumo")).toBe("/character/default.svg?v=tsukumo")
+  it("素材の版があれば問い合わせ文字列 ?v=<版> を付ける", () => {
+    expect(characterAssetPath("tsukumo", "default.svg", "1700000000000")).toBe(
+      "/character/tsukumo/default.svg?v=1700000000000",
+    )
   })
 
-  it("印の値はエンコードする（ディレクトリ名に URL の特殊文字が入りうる）", () => {
-    expect(characterAssetPath("default.svg", "my pack")).toBe("/character/default.svg?v=my%20pack")
+  it("パック名とファイル名はそれぞれ1つの区間としてエンコードする（区切りがずれない）", () => {
+    expect(characterAssetPath("my pack", "sub/立ち絵.png", undefined)).toBe(
+      "/character/my%20pack/sub%2F%E7%AB%8B%E3%81%A1%E7%B5%B5.png",
+    )
+  })
+
+  it("パックが違えば、同じファイル名でも URL が変わる（版が無くても取り直す）", () => {
+    expect(characterAssetPath("pack-a", "default.svg", undefined)).not.toBe(
+      characterAssetPath("pack-b", "default.svg", undefined),
+    )
   })
 })
 
-describe("characterAssetCacheKey", () => {
-  it("パックの名前と素材の版を混ぜる", () => {
-    expect(characterAssetCacheKey("tsukumo", "1700000000000")).toBe("tsukumo@1700000000000")
+describe("readCharacterAssetPath", () => {
+  it("characterAssetPath が組んだ経路を、パック名とファイル名に読み戻す", () => {
+    const path = characterAssetPath("my pack", "sub/立ち絵.png", undefined)
+
+    expect(readCharacterAssetPath(path.slice("/character/".length))).toEqual({
+      pack: "my pack",
+      fileName: "sub/立ち絵.png",
+    })
   })
 
-  it("片方だけのときはその値、どちらも無いときは undefined", () => {
-    expect(characterAssetCacheKey("tsukumo", undefined)).toBe("tsukumo")
-    expect(characterAssetCacheKey(undefined, "42")).toBe("42")
-    expect(characterAssetCacheKey(undefined, undefined)).toBeUndefined()
+  it("区切りが1つでない・どちらかが空のものは読まない", () => {
+    expect(readCharacterAssetPath("default.svg")).toBeUndefined()
+    expect(readCharacterAssetPath("tsukumo/sub/default.svg")).toBeUndefined()
+    expect(readCharacterAssetPath("/default.svg")).toBeUndefined()
+    expect(readCharacterAssetPath("tsukumo/")).toBeUndefined()
+  })
+
+  it("デコードできない % の並びは読まない", () => {
+    expect(readCharacterAssetPath("tsukumo/%E0%A4%A.svg")).toBeUndefined()
   })
 })
 
@@ -48,8 +70,10 @@ describe("classifyPortraitFile", () => {
   })
 
   it("characterAssetPath が返した URL（?v= 付き）でも拡張子を見失わない", () => {
-    expect(classifyPortraitFile(characterAssetPath("default.svg", "tsukumo-spirit"))).toBe("svg")
-    expect(classifyPortraitFile(characterAssetPath("default.png", "local"))).toBe("raster")
+    expect(classifyPortraitFile(characterAssetPath("tsukumo-spirit", "default.svg", "1"))).toBe(
+      "svg",
+    )
+    expect(classifyPortraitFile(characterAssetPath("local", "default.png", "1"))).toBe("raster")
   })
 
   it("知らない拡張子・拡張子が無いときは undefined（立ち絵なしにフォールバック）", () => {
