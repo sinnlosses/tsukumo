@@ -59,6 +59,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `useContextUsage` に `pending` を足して「取れなかった」と分け、届いた札と同じ外形の骨組み（値だけ灰色の塊）を出すようにした。`/context-usage` を遅らせて測った札の高さと「期間の消費」の位置の差は 0px。
 
+### 2026-09-23 browser の置き場の基準を決め直し、新しい箱 domain/ を作った（T-435）
+
+「tsukumo の語彙を名乗り、2つ以上の機能が読むもの」の置き場が無く `lib/` が受け皿になっていたので、`src/browser/domain/` を作って差し色と演出の速さを移した。読み手が1機能だけだった5つは機能の中へ下ろし、`test/architecture.test.ts` に「機能をまたぐ箱に1機能しか読まないファイルは無い」という検査を足した。`stores/brush-tip.ts` は T-441 に任せた。
+
 ### 2026-09-23 トークン消費の画面の地・罫・文字の段を見本（案1）の値に揃えた（T-457）
 
 `theme.css` に画面専用の `--usage-*`（札・箱・選択の地、罫2段、文字6段、基線）を足し、`token-usage.module.css` を塗り直した。`--context-other` は無彩の灰 `#a6a2b0` に替え、`docs/screen-design.md` 13.2 に値の表を記した（内訳の6色と棒の青は `b674e13` で入っていた）。
@@ -78,10 +82,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ### 2026-09-23 container/presenter の割る基準を「振る舞いの種類の数」に決め直した（T-442）
 
 「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。
-
-### 2026-09-23 browser の置き場の基準を決め直し、新しい箱 domain/ を作った（T-435）
-
-「tsukumo の語彙を名乗り、2つ以上の機能が読むもの」の置き場が無く `lib/` が受け皿になっていたので、`src/browser/domain/` を作って差し色と演出の速さを移した。読み手が1機能だけだった5つは機能の中へ下ろし、`test/architecture.test.ts` に「機能をまたぐ箱に1機能しか読まないファイルは無い」という検査を足した。`stores/brush-tip.ts` は T-441 に任せた。
 
 ### 2026-09-23 レポートの演出の7ファイルを main-view の中にまとめた（T-441）
 
