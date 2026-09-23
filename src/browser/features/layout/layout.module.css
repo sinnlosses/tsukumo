@@ -63,7 +63,7 @@
    不透明度にしたもの。画像が見えるのは最大でも 30%（下限は
    `src/shared/character-background.ts` の MIN_BACKGROUND_VEIL が定義の側で保証し、いまの地と
    字の色で足りないぶんは `--character-background-veil-floor`
-   （src/browser/features/character-screen/appearance-color.ts）が押し上げる。**両方の大きいほう**を採る）。
+   （src/browser/lib/appearance-color.ts）が押し上げる。**両方の大きいほう**を採る）。
    下端で合わせる（background-position）のは、立ち絵が床に立つ見え方（--portrait-drop）と
    地面の位置をそろえるため。**雑談のメインビューでも同じ値でよい**（そちらでも立ち絵は下端に
    立つ。横長になるぶん cover が左右を削るだけで、地面の高さは合ったまま）。

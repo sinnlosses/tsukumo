@@ -2,9 +2,9 @@
 // 持たず、受け取った値と呼び先をそのまま置く。
 //
 // **全画面の最上部に出る1本の帯**で、部屋の名前が左端、その右に仕事/雑談のトグル、その右に
-// 3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、右端にモデル・
-// 許可モードのドロップダウン。**狭い画面では `<ScreenNavMenu>` の「≡」に畳む**（どちらを出すかは
-// `screen-nav.module.css` の `@media` が決める）。
+// 3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・
+// 許可モードのドロップダウン、**いちばん右端に設定の歯車**。**狭い画面では `<ScreenNavMenu>` の
+// 「≡」に畳む**（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
 //
 // **`data-screen` でいま出している画面を名乗る**のは、狭い画面で帯の置き方が変わるため
 // （会話の画面だけは、いまあるタブ帯の右端に重ねる。13.9）。
@@ -17,6 +17,7 @@ import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
 import { ScreenNavRoom } from "./components/screen-nav-room.tsx"
+import { ScreenNavSettingsGear } from "./components/screen-nav-settings.tsx"
 import { type ScreenNavView } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"
 
@@ -36,6 +37,9 @@ export function PresentationalScreenNav({
   work,
   workToggleRefWide,
   workToggleRefNarrow,
+  settings,
+  settingsToggleRefWide,
+  settingsToggleRefNarrow,
   menuOpen,
   ref,
   onToggleMenu,
@@ -52,6 +56,7 @@ export function PresentationalScreenNav({
       </div>
       <ScreenNavCurrentWorkPill work={work} toggleRef={workToggleRefWide} />
       <ScreenNavModelPermissionSelect modelPermission={modelPermission} />
+      <ScreenNavSettingsGear settings={settings} toggleRef={settingsToggleRefWide} />
       <ScreenNavMenu
         room={room}
         gates={gates}
@@ -59,6 +64,8 @@ export function PresentationalScreenNav({
         modelPermission={modelPermission}
         work={work}
         workToggleRefNarrow={workToggleRefNarrow}
+        settings={settings}
+        settingsToggleRefNarrow={settingsToggleRefNarrow}
         open={menuOpen}
         pendingActive={pendingActive}
         onToggle={onToggleMenu}
