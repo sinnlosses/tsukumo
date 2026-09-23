@@ -9,13 +9,13 @@
 // ここが持ち、中身は置かれる機能（`features/task-board/`）から借りる
 // （docs/design.md 2章「領域の機能と、置かれる機能」）。
 //
-// **「セッション情報」の区画は見出しを名乗らない**（`docs/design.md` 13.9「顔」・
-// `docs/requirements.md` 4.2）。タスクの区画と同じ枠（`SidebarSection`）を借り、`title` に `undefined` を渡して
-// 中身（`<SessionInfo>`）だけを置く——タスクの区画の border-bottom がそのまま2区画の仕切り線になる。
+// **セッション情報は区画ではなく「下端の帯」**（`docs/design.md` 13.9「顔」・
+// `docs/requirements.md` 4.2）。見出しを名乗らず、`SidebarSection` の枠も借りない——サイドバーの
+// 左右いっぱいに広がり、上端の罫線と一段沈んだ地で、伸び縮みするタスクの区画と切り分ける
+// （寸法の出どころは `sidebar.module.css` 冒頭の見本）。
 
 import { type ReactElement } from "react"
 
-import { SidebarSection } from "./section.tsx"
 import { SessionInfo } from "./session-info.tsx"
 import styles from "./sidebar.module.css"
 import { TaskSection } from "./task-section.tsx"
@@ -24,13 +24,9 @@ export function Sidebar(): ReactElement {
   return (
     <>
       <TaskSection />
-      <SidebarSection
-        title={undefined}
-        extraClass={styles["sidebar-block-session"] ?? ""}
-        action={undefined}
-      >
+      <div className={styles["sidebar-footer"]}>
         <SessionInfo />
-      </SidebarSection>
+      </div>
     </>
   )
 }

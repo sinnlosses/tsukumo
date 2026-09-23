@@ -42,16 +42,4 @@ describe("SidebarSection", () => {
     button.click()
     expect(pressed).toEqual(["一覧を見る"])
   })
-
-  // 「セッション情報」の区画は見出しを名乗らない（docs/design.md 13.9「顔」）。
-  it("title が undefined の区画は見出しごと出さず、中身だけを出す", () => {
-    render(
-      <SidebarSection title={undefined} extraClass="sidebar-block-fake" action={undefined}>
-        <p>中身だけ</p>
-      </SidebarSection>,
-    )
-
-    expect(screen.queryByRole("heading", { level: 2 })).toBeNull()
-    expect(screen.getByText("中身だけ")).toBeDefined()
-  })
 })
