@@ -40,6 +40,36 @@
   border-radius: 0.4rem;
   background: var(--surface);
 }
+/* 札の絵を押すボタン（押すと原寸を拡大の面で開く）。既定のボタンの見た目は消し、
+   絵と同じ矩形にする。`position: relative` は虫眼鏡を重ねる基準で、`×` はこのボタンの
+   兄弟なので `.prompt-image-chip` のほうを基準に重なる。 */
+.prompt-image-zoom {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+}
+/* 虫眼鏡。**既定では見えず、ホバー・フォーカスでだけ出す飾り**——押せば開くのは
+   見えていなくても同じ（タッチ端末はホバーを持たない）。 */
+.prompt-image-zoom-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--ground) 55%, transparent);
+  color: var(--ink);
+  opacity: 0;
+}
+.prompt-image-zoom:hover .prompt-image-zoom-icon,
+.prompt-image-zoom:focus-visible .prompt-image-zoom-icon {
+  opacity: 1;
+}
 /* 外す `×`。**札にだけ付く**（控えは押せない）。絵の右上の角に重ね、絵の外へはみ出さない
    （はみ出すと入力欄の領域がスクロールする）。 */
 .prompt-image-remove {
