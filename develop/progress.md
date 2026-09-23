@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 日付ごとの jsonl の読み書きを1つにまとめた（T-431）
+
+`token-usage-log.ts`・`chat-archive.ts`・`context-usage-log.ts` が書き写していた追記・日付のファイル名の列挙・行の JSON 読み出しを `src/server/adapter/lib/jsonl.ts` に寄せた。スキーマの検証と索引・読み戻しの形は各ファイルに残した。
+
 ### 2026-09-23 覚えていることをチップで出し、画面から1行ずつ消せるようにした（T-391）
 
 `SessionState.rememberedLines` と `remembered-lines-changed` で `## 覚えたこと` を雑談のサイドバーへ届け、チップ（先頭20文字、押すと全文）と「編集」→ × →確認で `forget-remembered-line` を送る。消し方は `forget` と同じ突き合わせで、画面からのときだけ1ターン1行の上限を掛けない（`docs/design.md` 7.1）。

@@ -15,14 +15,14 @@
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 
-import { appendFileSync, mkdirSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { join } from "node:path"
 
 import {
   CONTEXT_USAGE_FORMAT_VERSION,
   type ContextUsageRecord,
 } from "../../shared/context-usage-record.ts"
 import { type ContextUsageEntry, type ContextUsageLog } from "../core/context-usage.ts"
+import { appendJsonLine } from "./lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "./local-time.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
@@ -43,18 +43,8 @@ export function contextUsageDir(): string {
 export function createContextUsageLog(root: string = contextUsageDir()): ContextUsageLog {
   return {
     append: (entry) => {
-      appendLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
+      appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
     },
-  }
-}
-
-/** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
-function appendLine(path: string, record: ContextUsageRecord): void {
-  try {
-    mkdirSync(dirname(path), { recursive: true })
-    appendFileSync(path, `${JSON.stringify(record)}\n`)
-  } catch {
-    // 書けなかった回は諦めて次へ進む。
   }
 }
 
