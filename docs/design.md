@@ -518,14 +518,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### 4.1 SessionEvent
 
-いまの `src/domain/session-event.ts` の union をそのまま持ち越し、次を足す。
-
-| イベント            | 出どころ                                                                                               | 中身                                                                                                                                           | 用途                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `tasks-changed`     | adapter（`task-summary`）                                                                              | `tasks: TaskSummaryResult`（`unknown` / `known`）                                                                                              | サイドバーのタスク一覧。読み直しは adapter が mtime で行う                       |
-| `character-changed` | adapter（`character-pack`）                                                                            | `name`・`expressions`・`portraits`（表情 → URL。`default` に畳んだ全域の表）・`expressionsWithPortrait`（自分の絵がある表情）・`outfitAccents` | キャラビューが立ち絵を取りに行く先。切り替え（7章）                              |
-| `session-started`   | core（`session-manager`）                                                                              | `sessionId`・`cwd`                                                                                                                             | 新規に起きた合図。`session-info`（`init`）は最初の依頼まで届かないので、別に持つ |
-| `model-changed`     | core（`sdk-message`。`assistant` の `local_command_run`） / adapter（`sdk-driver`。`setModel` の確定） | `model: string`（1: `/model` の引数そのまま。2: `MODEL_ALIASES` の値）                                                                         | `state.model` の出どころを3つにする（下記）                                      |
+`SessionEvent` の一覧とフィールド、各イベントの出どころは `src/shared/session-event.ts` の型定義
+（`kind` ごとの doc コメント）を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
 **`state.model` の出どころは `session-info`（`init`）だけではない**（2026-09-17）。`init` は
 ターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古いモデルを返し、
@@ -550,24 +544,23 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 終わりで、記録（`SessionState`）に残るのは縮めた控えだけになる。控えを作るのはブラウザ側で、
 **サーバは画像を加工しない**。
 
-イベントは**時刻を持って**送る: `StampedEvent = { at: number; event: SessionEvent }`。`at` は
+イベントは `StampedEvent`（`src/shared/session-event.ts`）として**時刻を持って**送る。`at` は
 サーバの `Date.now()`。reducer は `applySessionEvent(state, event, at)`（いまの第3引数 `now` と同じ）。
 **ブラウザ側で `Date.now()` を reducer に渡さない**（両側の状態が同じになるように、時刻はイベントの
 発生側が決める）。
 
 ### 4.2 SessionState
 
-`SessionState`（`src/shared/session-state.ts`）が持つのは次のもの。
+`SessionState`（`src/shared/session-state.ts`）の各フィールドと理由は、その型（および
+`TurnProgress` / `CharacterInfo` など内訳の型）の doc コメントを正典とする。ここに残すのは、
+`SessionState` の外側にある決定だけ。
 
-| 追加                                                                                          | 出どころ                                   | 理由                                                                                                  |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `turn`（`idle` / `running` / `finished`）                                                     | `request` / `turn-finished` の `at`        | `at` がイベントに乗るので、畳み込みの中で持てる。**時刻は状態の側**（起きない組み合わせを型から消す） |
-| `tasks`                                                                                       | `tasks-changed`                            | サイドバー                                                                                            |
-| `character`（`name`・`portraits`・`expressionsWithPortrait`・`outfitAccents`・`expressions`） | `character-changed`                        | 立ち絵の取り先。**素材そのものは入れない**（URL だけ）                                                |
-| `connection`                                                                                  | **ブラウザだけ**が持つ（`browser` の状態） | 接続中／切断中。`SessionState` には入れない（サーバ側に意味が無い）                                   |
+**`connection`（接続中／切断中）は `SessionState` に入れない**（サーバ側に意味が無いため）。
+ブラウザだけが持つ状態で、`src/browser/stores/session.tsx` の `SessionSnapshot`
+（`connection: ConnectionStatus`）が `SessionState` と同じ購読に相乗りさせて配る。
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
-`MAX_SESSION_VIEW_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。
+`MAX_SESSION_STATE_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。
 
 **経過時間の表示**は `turn` が持つ時刻（`running` の `startedAt`、`finished` の `startedAt` /
 `finishedAt`）から browser が計算する（1秒ごとの刻みは browser の
@@ -577,8 +570,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 （`speech`）の2種類だけ**が `time: RecordTime` を持つ。読むのは雑談のログ（13.7「時刻と日の
 区切り」）だけで、仕事のメインビューへ渡す形（`MainViewEntry`）には載せない。
 
-- **形は判別可能な合併型**: `{ kind: "stamped"; at }`（起きた時刻が分かる）と
-  `{ kind: "restored" }`（前のセッションを組み直したもので、時刻が分からない）。
+- **形は判別可能な合併型**（`RecordTime`。`src/shared/session-state.ts`）: `stamped` は起きた
+  時刻が分かり、`restored` は前のセッションを組み直したもので時刻が分からない。
   `at: number | undefined` にしない（「無い」理由が1つに決まっているので、名前を付けて持つ）
 - **時刻を打つのはサーバ**（イベントの `StampedEvent.at` をそのまま写す）。畳み込み
   （`applySessionEvent`）の中で時計は読まない（4.1。両側の状態が同じになる）
@@ -596,43 +589,25 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### 4.3 ClientCommand
 
-```ts
-type ClientCommand =
-  | { type: "prompt"; commandId: string; text: string; images: PromptImage[] }
-  | { type: "interrupt"; commandId: string }
-  | { type: "answer"; commandId: string; id: string; answer: Answer }
-  | { type: "set-model"; commandId: string; model: ModelAlias }
-  | { type: "set-permission-mode"; commandId: string; mode: PermissionMode }
-  | { type: "switch-character"; commandId: string; name: string } // 7章
-  | { type: "new-session"; commandId: string } // 8章。まだ足していない
-```
+`ClientCommand` の一覧とフィールドは `src/shared/command.ts` の `clientCommandSchema`（zod。
+4章冒頭の決定どおりここが正典）を見る。各コマンドの意図はコマンドごとの doc コメントを参照。
 
-- `commandId` はブラウザが作る（`crypto.randomUUID()`）。`error` フレームの突き合わせにだけ使う
-- `text` の上限はいまの `MAX_DISPATCH_TEXT_LENGTH`（20,000 文字）を zod の `max` に移す
-- `images` は**原寸と控えの対**（`PromptImage = { full: string; thumbnail: string }`。どちらも
-  data URL）。上限・形式・枚数は `shared/prompt-image.ts` が持ち、値そのものは
-  `docs/requirements.md` 4.10 が正典。**1枚も無いのが普通**なので、field ごと省いた形も受け取って
-  空に畳む。`maxPayload`（session-socket.ts）は原寸が上限まで全部通る大きさにしてある（値は同じく 4.10）
-- `PermissionMode` と `ModelAlias` の値の一覧は **`shared` に1つだけ置く**（いまは
-  `session-driver.ts` と `view.ts` に写しがある。SDK の型との一致は `core` 側のテストで守る）
+- `text` の上限は `MAX_PROMPT_TEXT_LENGTH`（`src/shared/command.ts`）
+- `images` は**原寸と控えの対**（`PromptImage`。`src/shared/prompt-image.ts` が正典）。上限・
+  形式・枚数はそちらが持ち、値そのものは `docs/requirements.md` 4.10 が正典。**1枚も無いのが
+  普通**なので、field ごと省いた形も受け取って空に畳む。`maxPayload`（session-socket.ts）は
+  原寸が上限まで全部通る大きさにしてある（値は同じく 4.10）
+- `PermissionMode` と `ModelAlias` の値の一覧は **`shared`（`src/shared/command.ts`）に1つだけ
+  置く**。SDK の型との一致は `core` 側のテストで守る
 
 ### 4.4 ServerFrame
 
-```ts
-type ServerFrame =
-  | { type: "hello"; protocolVersion: number; sessionId: string; state: SessionState }
-  | { type: "events"; events: StampedEvent[] }
-  | { type: "error"; commandId: string | undefined; reason: string }
-  | { type: "refresh"; target: "page" | "style" }
-```
+`ServerFrame` の一覧とフィールドは `src/shared/frame.ts` の型定義（`type` ごとの doc コメント）を
+正典とする。
 
-- `hello` は接続ごとに1回。**snapshot はサーバ側の reducer が持っている `SessionState`**
-  （`session-manager` が同じ `applySessionEvent` で畳み続けている）
-- `protocolVersion` が browser の `PROTOCOL_VERSION` と違えば、browser は「ページを読み込み直してください」を
-  出して以降のフレームを無視する（起こし直したプロセスと古いタブの組み合わせで起きる）
-- `error` の `reason` は定型文（`"依頼の形式が正しくない"` など）。会話の内容を含めない
-- `refresh` は**セッションとは無関係**で、`src/browser/` を見張っている開発中だけ届く（11章）。
-  `style` は CSS だけ取り直す、`page` はページごと読み込み直す。会話の内容は乗らない
+- `protocolVersion` が browser の `PROTOCOL_VERSION` と違えば、browser は「ページを読み込み
+  直してください」を出して以降のフレームを無視する（起こし直したプロセスと古いタブの組み合わせで
+  起きる）
 
 ### 4.5 版と互換
 
@@ -1521,7 +1496,8 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
 - 画面の履歴の組み直しは「`getSessionMessages` → `SessionEvent[]`（時刻付き）→ `session-manager` の
   `state` に畳む」だけ。接続したブラウザは `hello` の snapshot でそのまま同じ姿になる
   （**ブラウザ側に復元の特別な経路は要らない**）
-- 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と `new-session` コマンド（画面から。まだ足していない）
+- 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と、画面から新規に起こすコマンド（`ClientCommand` に
+  はまだ足していない）
 - **どのセッションの続きから始めるかは画面から選べる**（2026-09-22。サイドバーの「セッション」の
   `<select>` → `switch-session` → `session-launch` の起こし直し）。並ぶのは**同じパック・同じモードの、
   目印（`@7327` / `@7328`）違い**で、新しいほうから `MAX_SESSION_CHOICES` 件まで。**起動時は今までどおり
