@@ -1,0 +1,36 @@
+/* 領域をまたいで使う `<select>`（`select.tsx`）の、**どこに置いても同じになる分だけ**の見た目。
+   ブラウザ既定の矢印を消し、代わりに同じ形の矢印を枠の `::after` に描く。寸法・枠・地・字の段は
+   置く側が持つ（`select.tsx` 冒頭）。
+
+   **矢印を `<select>` の背景ではなく枠に重ねる**のは、背景に敷くと色が焼き付くため
+   （`background-image` は `currentColor` を読めない）。帯の許可モードは「全部許す」のときに字ごと
+   `--state-ng` へ振るので、矢印も一緒に変わる必要がある。
+
+   **置く側が持つ property を共有しない。** ここに `font` や `height` を書くと、CSS Modules が
+   同じ強さの class を並べたときに勝ち負けが読み込み順で決まり、置く側の指定が黙って効かなく
+   なりうる。 */
+.select-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+/* 矢印の置き場所と大きさは、**既定値を `var()` の第2引数で持つ**（`.select-frame` 側に
+   宣言として書かない）。置く側の class と同じ強さになり、どちらが勝つかが CSS の読み込み順で
+   決まって上書きが黙って効かなくなるため。狭い口（設定パネル）だけがこの2つを差す。 */
+.select-frame::after {
+  position: absolute;
+  right: var(--select-chevron-inset, 0.625rem);
+  width: var(--select-chevron-size, 12px);
+  height: var(--select-chevron-size, 12px);
+  background: currentColor;
+  content: "";
+  mask: var(--icon-chevron-down) center / contain no-repeat;
+  pointer-events: none;
+}
+/* `<select>` 自身は**既定の矢印を消すところまで**。字が矢印の下へ潜らないよう、右の余白を
+   矢印ぶん空けるのは置く側（幅も字の段もそちらが決めるため）。 */
+.select-field {
+  appearance: none;
+  cursor: pointer;
+}

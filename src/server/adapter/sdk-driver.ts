@@ -42,6 +42,7 @@ import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pendi
 import {
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
+  toPlan,
   toSessionEvents,
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
@@ -174,6 +175,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
   void applyNeutralOutputStyle(session)
   void relayMessages(session, options)
   void relayCommandDescriptions(session, options)
+  void relayPlan(session, options)
 
   return {
     prompt: (text, images) => {
@@ -473,6 +475,29 @@ async function relayCommandDescriptions(
     }
   } catch {
     // 説明が付かないだけなので、何も流さずに諦める。
+  }
+}
+
+/**
+ * プラン（`docs/glossary.md`「プラン」）を1回だけ取りに行く。`accountInfo()` は `email` /
+ * `organization` も返すが、**駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ**
+ * （`toPlan` の戻り値しか触らないので、他のフィールドに触れる経路が無い）。
+ *
+ * **取れなくてもセッションは続ける**（API キーや Bedrock のときは元々この値が無い。
+ * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」。
+ * {@link relayCommandDescriptions} と同じ形）。
+ */
+async function relayPlan(
+  session: { readonly accountInfo: () => Promise<unknown> },
+  options: SessionDriverOptions,
+): Promise<void> {
+  try {
+    const plan = toPlan(await session.accountInfo())
+    if (plan !== undefined) {
+      options.onEvent({ kind: "plan", plan })
+    }
+  } catch {
+    // プランが取れないだけなので、何も流さずに諦める。
   }
 }
 

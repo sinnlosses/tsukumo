@@ -477,6 +477,14 @@ describe("applySessionEvent", () => {
     expect(view.model).toBe("sonnet")
   })
 
+  it("plan が届くまでは undefined、届いたらそのまま持つ（docs/glossary.md「プラン」）", () => {
+    expect(INITIAL_SESSION_STATE.plan).toBeUndefined()
+
+    const view = apply({ kind: "plan", plan: "max" })
+
+    expect(view.plan).toBe("max")
+  })
+
   it("セッションが終わると理由を持つ（実行中のツールを一覧から落とすのは currentTurnSteps の仕事。test/shared/turn-step.test.ts）", () => {
     const view = apply(
       {

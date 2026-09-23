@@ -168,8 +168,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* textarea の下の道具の行。左に補完と画像の口、真ん中に操作の案内（入らなければ省く）、右端に
-   経過時間と送信⇄中断（<TurnStatus> の .dispatch-row）。 */
+/* textarea の下の道具の行。左に補完と画像の口、右端に経過時間と送信⇄中断
+   （<TurnStatus> の .dispatch-row）。 */
 .dispatch-toolbar {
   display: flex;
   flex: 0 0 auto;
@@ -205,21 +205,14 @@
   background: var(--surface-raised);
   color: var(--ink);
 }
-.dispatch-hint {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin-left: 0.5rem;
-  overflow: hidden;
-  font-size: var(--font-label);
-  color: var(--ink-quiet);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
+/* 経過時間と送信⇄中断（<TurnStatus>）。道具の口との間に伸び縮みする要素が無いので、
+   ここで右端へ寄せる。 */
 .dispatch-row {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 0.75rem;
+  margin-left: auto;
 }
 /* 「送信」は行の主目的なので、**accent で塗りつぶす**（入力欄で塗ってよいのはこれ1つだけ。
    13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。字は地の色で抜く。 */

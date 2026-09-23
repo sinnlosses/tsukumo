@@ -52,7 +52,7 @@ const FIXTURE_SUMMARY: TokenUsageSummary = {
   byTool: [],
 }
 
-function renderScreen(): ReturnType<typeof render> {
+function renderScreen(plan?: string): ReturnType<typeof render> {
   return render(
     <PresentationalTokenUsageScreen
       days={7}
@@ -60,6 +60,7 @@ function renderScreen(): ReturnType<typeof render> {
       summary={FIXTURE_SUMMARY}
       total={FIXTURE_TOTALS}
       isError={false}
+      plan={plan}
     />,
   )
 }
@@ -97,5 +98,19 @@ describe("PresentationalTokenUsageScreen", () => {
     for (const chart of canvases) {
       expect(chart.querySelectorAll("canvas")).toHaveLength(1)
     }
+  })
+
+  it("plan が届いていれば題の右に札で出す", async () => {
+    const { queryByText } = renderScreen("max")
+    await flushEffects()
+
+    expect(queryByText("max")).not.toBeNull()
+  })
+
+  it("plan が届いていなければ札を出さない", async () => {
+    const { container } = renderScreen()
+    await flushEffects()
+
+    expect(container.querySelector(".token-usage-plan")).toBeNull()
   })
 })

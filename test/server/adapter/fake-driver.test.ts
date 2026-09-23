@@ -36,7 +36,7 @@ function tick(): Promise<void> {
 }
 
 describe("startFakeSession", () => {
-  it("起こした直後に opening の場面を流す", async () => {
+  it("起こした直後にプラン（docs/glossary.md「プラン」）を流し、続けて opening の場面を流す", async () => {
     const sink = collect()
     const driver = startFakeSession({
       session: FAKE_SESSION,
@@ -47,7 +47,10 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    expect(sink.events).toEqual([{ kind: "speech", text: "架空の挨拶", expression: "default" }])
+    expect(sink.events).toEqual([
+      { kind: "plan", plan: "Claude Max" },
+      { kind: "speech", text: "架空の挨拶", expression: "default" },
+    ])
   })
 
   it("prompt で request を流してから、次の場面を流す", async () => {
@@ -63,7 +66,8 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    expect(sink.events.slice(1)).toEqual([
+    // 先頭2件は起こした直後の分（プランと opening の場面）。
+    expect(sink.events.slice(2)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", status: "success" },
@@ -83,8 +87,9 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 送った文面はどのイベントにも乗らない（docs/design.md 13.7）。
-    expect(sink.events.slice(1)).toEqual([
+    // 送った文面はどのイベントにも乗らない（docs/design.md 13.7）。先頭2件は起こした直後の分
+    // （プランと opening の場面）。
+    expect(sink.events.slice(2)).toEqual([
       { kind: "turn-started" },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", status: "success" },
@@ -102,7 +107,8 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    expect(sink.events.slice(1)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
+    // 先頭2件は起こした直後の分（プランと opening の場面）。
+    expect(sink.events.slice(2)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
   })
 
   it("scene で名指しした次の依頼は、その次の場面から続く（名指しした場面を繰り返さない）", async () => {
@@ -132,7 +138,10 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    expect(sink.events).toEqual([{ kind: "speech", text: "架空の挨拶", expression: "default" }])
+    expect(sink.events).toEqual([
+      { kind: "plan", plan: "Claude Max" },
+      { kind: "speech", text: "架空の挨拶", expression: "default" },
+    ])
   })
 
   it("疑似セッションから積まれた答え待ちに答えると、列から消える", async () => {
@@ -177,7 +186,9 @@ describe("startFakeSession", () => {
     driver.close()
     await new Promise((resolve) => setTimeout(resolve, 80))
 
-    expect(sink.events).toEqual([])
+    // プランは opening のタイマーより先、`close` より前に同期で流れる（起こしたことそのものの
+    // 合図なので、`close` で止められるのは疑似セッションの続きだけ）。
+    expect(sink.events).toEqual([{ kind: "plan", plan: "Claude Max" }])
   })
 })
 
