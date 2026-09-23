@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 docs/display.md を削り、発言の引用・経緯・実測を decision.md へ移した（T-467）
+
+486→445 行・23,430→20,947 字（約11%減）。決定といまも効く理由が大半を占めていたため減りは小さい。太字の文253件は本文240・`decision.md` 13で全件引ける。
+
 ### 2026-09-23 requirements.md 4.2「表示」を docs/display.md へ逐字で移した（T-466）
 
 節の番号 `4.2` のまま移し、`requirements.md` は 1330→881 行。`requirements.md 4.2` への参照101件を一括置換し、`docs/history/` の234件と `decision.md` の見出し名を引く2件は据え置いた。削るのは T-467。
