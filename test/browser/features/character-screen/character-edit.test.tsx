@@ -5,9 +5,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { CharacterEdit } from "../../../../src/browser/features/character-screen/character-edit.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
+import { EXPRESSIONS } from "../../../../src/shared/expression.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { characterInfo, shownOutfitAccents, shownPortraits } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
+
+// **立ち絵があるのはこの3つだけ**（残りの表情は空の枠として並ぶ。数を見るテストがある）。
+const EXPRESSIONS_WITH_PORTRAIT = ["default", "thinking", "proud"] as const
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
@@ -16,7 +20,6 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
     { name: "thinking", label: "作業中" },
     { name: "proud", label: "どや顔" },
   ],
-  // **立ち絵があるのは3つだけ**（残りの表情は空の枠として並ぶ。数を見るテストがある）。
   // **ラスタにしてある**（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
   // テストの関心ではない非同期がまぎれる）。SVG の読み込みは
   // `test/browser/components/portrait.test.tsx` が見る。
@@ -109,8 +112,10 @@ describe("CharacterEdit", () => {
     const pick = screen.getByLabelText("flusteredを選ぶ")
     expect(pick.closest("label")?.textContent).toContain("選ぶ")
     // 立ち絵そのものは無いので、点線の枠の空きが代わりに出る
-    // （flustered / serious / curious / sad / excited / bored の6枠）。
-    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(6)
+    // （立ち絵がある3つ以外の残り全部。EXPRESSIONS が伸びてもここは自動で追随する）。
+    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(
+      EXPRESSIONS.length - EXPRESSIONS_WITH_PORTRAIT.length,
+    )
   })
 
   it("消す口を押すと clear-portrait を dispatch する", () => {

@@ -5,11 +5,13 @@
 // **立ち絵の中身は持たない**（`portraits` の値は `/character/<file>` の URL。組み立ては
 // `character-asset.ts`）。ファイルI/Oは src/server/adapter/character-pack.ts に集約する。
 
+import { fromKeys } from "remeda"
+
 import { characterAssetCacheKey, characterAssetPath } from "./character-asset.ts"
 import { type CharacterBackground } from "./character-background.ts"
 import { type CharacterDefinition } from "./character-definition.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
-import { type Expression, EXPRESSIONS, type Outfit } from "./expression.ts"
+import { type Expression, EXPRESSIONS, type Outfit, OUTFITS } from "./expression.ts"
 
 /**
  * キャラビューに渡す、キャラクター定義の姿（`character-changed` イベント・`SessionState.character`
@@ -170,19 +172,9 @@ function portraitUrls(
     return undefined
   }
   const fallback = files.default
-  const url = (fileName: string | undefined): string =>
-    characterAssetPath(fileName ?? fallback, cacheKey)
-  return {
-    default: url(files.default),
-    thinking: url(files.thinking),
-    proud: url(files.proud),
-    flustered: url(files.flustered),
-    serious: url(files.serious),
-    curious: url(files.curious),
-    sad: url(files.sad),
-    excited: url(files.excited),
-    bored: url(files.bored),
-  } satisfies Readonly<Record<Expression, string>>
+  return fromKeys(EXPRESSIONS, (expression) =>
+    characterAssetPath(files[expression] ?? fallback, cacheKey),
+  )
 }
 
 /**
@@ -196,10 +188,5 @@ function foldedOutfitAccents(
 ): Readonly<Record<Outfit, string | undefined>> {
   const accents = definition?.outfitAccents
   const fallback = accents?.default
-  return {
-    default: fallback,
-    light: accents?.light ?? fallback,
-    normal: accents?.normal ?? fallback,
-    heavy: accents?.heavy ?? fallback,
-  } satisfies Readonly<Record<Outfit, string | undefined>>
+  return fromKeys(OUTFITS, (outfit) => accents?.[outfit] ?? fallback)
 }

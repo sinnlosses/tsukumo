@@ -28,9 +28,9 @@
     "dependencies": [],
     "summary": "表情と衣装の名前を1つの並びから導き、足すときに触る場所を1か所にする",
     "task": "## 背景\n\n表情を1つ足すと、`src/shared/` の3ファイルに同じ名前を書き並べ直すことになっている。表情 `bored` を\n足したコミット（`af1a0f5`）は src で次の5か所に1行ずつ足した（テストの13ファイルの書き足しは、\nその後キャラクターの値を `test/fixture/character.ts` に寄せたので、いまは要らない）:\n\n- `src/shared/expression.ts` の型 `Expression` と並び `EXPRESSIONS`（同じ名前を2回書いている）\n- `src/shared/character-definition.ts` の `toExpressionLabels` と `toPortraits`（名前ごとに\n  `stringField(record, \"<名前>\")` を1行ずつ並べている）\n- `src/shared/character.ts` の `portraitUrls`（名前ごとに `url(files.<名前>)` を1行ずつ並べている）\n\n衣装（型 `Outfit` と並び `OUTFITS`、`toOutfitAccents` など）も同じ形をしている。\n\n## やること\n\n1. `EXPRESSIONS` を `as const` の並びにし、型 `Expression` をそこから導く\n   （`(typeof EXPRESSIONS)[number]`）。`OUTFITS` と `Outfit` も同じにする\n2. 名前を1つずつ書き並べて表（`Record<Expression, …>` / `Record<Outfit, …>`）を作っている箇所を、\n   並びから作る形にする。**依存に入っている remeda の `fromKeys` を第一候補**にし、型を迂回する\n   キャストが要る書き方は採らない。対象は着手時に取り直す:\n   `grep -rn 'excited' src` と `grep -rn 'heavy' src`\n3. **振る舞いを変えない**（並びの順も変えない。パック作者から見える順になっている）\n4. 表情の数に依存するテストの期待値（`character-edit.test.tsx` の空き枠の数など）は、\n   `docs/coding-standards.md`「テスト」節の語彙に依存する期待値の扱いに従う\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `grep -rn 'excited' src` がコメントを除いて `src/shared/expression.ts` の並びの1行だけになる\n  （衣装は、モデルとの対応 `OUTFIT_BY_MODEL_SUBSTRING` や画面の文言のような**名前ごとに意味が違う表**は残してよく、\n  `toOutfitAccents` と `foldedOutfitAccents` が名前を書き並べていなければよい）\n- 「表情を1つ足すときに書き換える src のファイル」を前後で `evidence` に書く（前: 3ファイル5か所）\n\n## 注意\n\n- 定数は型注釈ではなく `satisfies` で検査する（`CLAUDE.md`）\n- `speak` の `expression` の enum は `expressionChoices` から作られている。表情の並びを変えて\n  いないことを、fake driver で起こして確かめる必要はない（テストが見る）\n- 人に委ねる判断は残らないので `\"Y\"`\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check: 1408 pass / 0 fail（118ファイル）。EXPRESSIONS / OUTFITS を as const にして型を導き、toExpressionLabels・toPortraits・toOutfitAccents・portraitUrls・foldedOutfitAccents を remeda の fromKeys で並びから作る形にした。\ngrep -rn 'excited' src は src/shared/expression.ts:30 の1行だけ。表情を1つ足すときに書き換える src: 前 3ファイル5か所 → 後 1ファイル1か所（EXPRESSIONS）。"
   },
   {
     "id": "T-369",
