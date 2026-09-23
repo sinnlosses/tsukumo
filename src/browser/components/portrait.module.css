@@ -10,18 +10,22 @@
   text-align: center;
   animation: portrait-fade-in 0.25s ease-out;
 
-  /* 立ち絵の動きの速さ・大きさ（docs/requirements.md 4.3・docs/design.md 6.5）。**この4組が
+  /* 立ち絵の動きの速さ・大きさ（docs/requirements.md 4.3・docs/design.md 6.5）。**この5組が
      唯一の調整箇所**（変えたい人はここだけ触ればよい）。動かすのは transform（位置・傾き）と
      opacity だけで、素材の中身には触らない（「1枚の矩形」の割り切り）。控えめの初期値にして
      ある（ユーザーと詰めて調整する前提）。
      --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
      --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
+     --portrait-write-*: 書いている（締めのセリフのあと本文が伸びている間、筆を運ぶように
+       小さく速く横へ揺れる。待っている間の移動より小さく速い）。
      --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
      --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。 */
   --portrait-breathe-amount: 0.2rem;
   --portrait-breathe-duration: 3.2s;
   --portrait-walk-amount: 0.5rem;
   --portrait-walk-duration: 4.5s;
+  --portrait-write-amount: 0.18rem;
+  --portrait-write-duration: 0.6s;
   --portrait-bounce-amount: 0.55rem;
   --portrait-bounce-duration: 0.5s;
   --portrait-flinch-amount: 0.3rem;
@@ -67,6 +71,12 @@
   animation-timing-function: ease-out, ease-in-out;
   animation-iteration-count: 1, infinite;
 }
+.portrait[data-motion="writing"] {
+  animation-name: portrait-fade-in, portrait-write;
+  animation-duration: 0.25s, var(--portrait-write-duration);
+  animation-timing-function: ease-out, ease-in-out;
+  animation-iteration-count: 1, infinite;
+}
 .portrait[data-motion="success"] {
   animation-name: portrait-fade-in, portrait-bounce;
   animation-duration: 0.25s, var(--portrait-bounce-duration);
@@ -102,6 +112,22 @@
   }
   75% {
     transform: translateX(calc(-1 * var(--portrait-walk-amount)));
+  }
+}
+/* 書いている。筆を運ぶように小さく速く横へ揺れる（`portrait-walk` より小さく速い）。締めの
+   セリフのあと本文が伸びている間、ずっと当たり続ける動きなので `portrait-walk` と同じ
+   無限ループにする。 */
+@keyframes portrait-write {
+  0%,
+  50%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(var(--portrait-write-amount));
+  }
+  75% {
+    transform: translateX(calc(-1 * var(--portrait-write-amount)));
   }
 }
 /* 完了の反応。小さく跳ねて着地する（完了の合図も兼ねる）。ターンが終わった直後の窓
