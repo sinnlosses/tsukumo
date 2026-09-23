@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 
 import { CharacterScreen } from "../../../../src/browser/features/character-screen/character-screen.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
@@ -9,11 +9,9 @@ import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared
 import { characterInfo } from "../../../fixture/character.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
-const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
-
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 // **立ち絵は持たせない** — この画面の並びそのものは `character-edit.test.tsx` が見るので、
-// ここでは戻る口・見出し・画面の色だけを見る。
+// ここでは戻る口・見出しと、**この画面に何が残っているか**だけを見る。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo()
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件）。
@@ -26,11 +24,9 @@ const FIXTURE_PENDING: PendingAsk = {
 
 let themeStyleElement: HTMLStyleElement | undefined
 
+// 差し色の `<input type="color">` は定義に無い衣装の初期値を `--accent` から読む
+// （`browser/lib/appearance-color.ts` の `readAccentColor`）ので、`:root` を疑似的に用意する。
 beforeEach(() => {
-  localStorage.removeItem(COLOR_STORAGE_KEY)
-  document.documentElement.style.removeProperty("--ground")
-  document.documentElement.style.removeProperty("--surface")
-  document.documentElement.style.removeProperty("--ink")
   themeStyleElement = document.createElement("style")
   themeStyleElement.textContent =
     ":root { --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; --accent: #f2b0a0; }"
@@ -39,10 +35,6 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
-  localStorage.removeItem(COLOR_STORAGE_KEY)
-  document.documentElement.style.removeProperty("--ground")
-  document.documentElement.style.removeProperty("--surface")
-  document.documentElement.style.removeProperty("--ink")
   themeStyleElement?.remove()
   themeStyleElement = undefined
 })
@@ -58,11 +50,6 @@ function renderCharacterScreen(state: Partial<SessionState> = {}): void {
       <CharacterScreen />
     </SessionStoreContext.Provider>,
   )
-}
-
-// 画面の色の書き込みは200ms（`APPEARANCE_COLOR_DEBOUNCE_MS`）まとめるので、それより長く待つ。
-function waitForDebounce(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 250))
 }
 
 describe("CharacterScreen", () => {
@@ -85,82 +72,19 @@ describe("CharacterScreen", () => {
     expect(document.querySelector(".character-screen-pending")).toBeNull()
   })
 
-  it("画面の色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
+  // 地・領域・字の色は帯の歯車へ移り（13.6 の表）、**パックの持ち物である差し色だけが残る**。
+  it("地・領域・字の色の操作子は持たず、差し色は残る", () => {
     renderCharacterScreen()
 
-    fireEvent.change(screen.getByLabelText("画面の地"), { target: { value: "#101010" } })
+    expect(screen.queryByLabelText("画面の地")).toBeNull()
+    expect(screen.queryByLabelText("領域の地")).toBeNull()
+    expect(screen.queryByLabelText("字の色")).toBeNull()
 
-    // 見た目（documentElement）は onChange のたびそのまま反映する（書き込みだけをまとめる）。
-    expect(getComputedStyle(document.documentElement).getPropertyValue("--ground").trim()).toBe(
-      "#101010",
+    const legends = [...document.querySelectorAll("fieldset > legend")].map(
+      (node) => node.textContent,
     )
-    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
-
-    await waitForDebounce()
-
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: "#101010",
-      surface: undefined,
-      ink: undefined,
-    })
-  })
-
-  it("開いただけでは localStorage に書き込まない", async () => {
-    renderCharacterScreen()
-
-    await waitForDebounce()
-
-    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
-  })
-
-  it("連続して色を変えても、書き込みは最後の値の1回にまとまる", async () => {
-    renderCharacterScreen()
-    const input = screen.getByLabelText("画面の地")
-
-    fireEvent.change(input, { target: { value: "#111111" } })
-    fireEvent.change(input, { target: { value: "#222222" } })
-    fireEvent.change(input, { target: { value: "#333333" } })
-    await waitForDebounce()
-
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: "#333333",
-      surface: undefined,
-      ink: undefined,
-    })
-  })
-
-  // 引きずったまま画面を閉じても、まだ書いていない最後の値を落とさない
-  // （`src/browser/lib/debounce.ts` のアンマウント時のフラッシュ）。
-  it("書き込み前に画面を閉じても、待っていた最後の値をそのまま書く", () => {
-    renderCharacterScreen()
-
-    fireEvent.change(screen.getByLabelText("画面の地"), { target: { value: "#101010" } })
-    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
-    cleanup()
-
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: "#101010",
-      surface: undefined,
-      ink: undefined,
-    })
-  })
-
-  it("ground を ink と同じ色にしようとすると受け取らず、既定へ落ちる", async () => {
-    renderCharacterScreen()
-
-    // 疑似 :root の --ink は #e8e3ea。同じ値にしようとする。
-    fireEvent.change(screen.getByLabelText("画面の地"), { target: { value: "#e8e3ea" } })
-
-    expect(getComputedStyle(document.documentElement).getPropertyValue("--ground").trim()).toBe(
-      "#191720",
-    )
-    await waitForDebounce()
-
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: undefined,
-      surface: undefined,
-      ink: undefined,
-    })
+    expect(legends).toContain("差し色")
+    expect(legends).not.toContain("画面の色")
   })
 
   // キャラクターが届く前でも行き止まりにしない（作る口だけは出す。会話へ戻る口は帯にある）。

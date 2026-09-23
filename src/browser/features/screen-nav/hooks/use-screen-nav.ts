@@ -11,15 +11,16 @@
 // `<select>` が送っていたものと同じ**（`set-chat-mode` / `set-model` / `set-permission-mode`）。
 // 表示はサーバから届いた値だけに従い、押した側へ先に倒さない（13.9「動き方の操作子」）。
 //
-// 「≡」を閉じる合図（外側を押した・Esc）は **React の外（document）の購読**なので `useEffect`
-// で取る（docs/coding-standards.md「React」の4類型のうち「外部システムの購読」）。**開いている
-// 間だけ購読する**ので、閉じている間はハンドラが1つも載らない。
+// 「≡」を閉じる合図（外側を押した・Esc）は `browser/hooks/use-dismiss-signal.ts` が取る
+// （**開いている間だけ `document` を購読する**）。「いまの作業」の札と歯車も同じフックを使う
+// ので、3つの面の閉じ方が1箇所で決まる。
 
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
+import { useCallback, useRef, useState, type RefObject } from "react"
 
 import { isModelAlias, isPermissionMode } from "../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { roomName } from "../../../../shared/room.ts"
+import { useDismissSignal } from "../../../hooks/use-dismiss-signal.ts"
 import { resolveModelAlias } from "../../../lib/model-label.ts"
 import {
   isDangerousPermissionMode,
@@ -29,6 +30,7 @@ import { type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
+import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 
 /** 帯に並ぶ口1つ。**「いま出している画面か」は畳んで渡す**（部品は判定を持たない）。 */
 export type ScreenNavGate = {
@@ -87,6 +89,12 @@ export type ScreenNavView = {
   readonly workToggleRefWide: RefObject<HTMLButtonElement | null>
   /** 狭い画面の「≡」の面の中にある札の DOM（同上）。 */
   readonly workToggleRefNarrow: RefObject<HTMLButtonElement | null>
+  /** 帯の右端の歯車で開く設定（`hooks/use-settings.ts`）。 */
+  readonly settings: ScreenNavSettings
+  /** 広い画面の帯にある歯車の DOM（Esc でフォーカスを戻す先）。 */
+  readonly settingsToggleRefWide: RefObject<HTMLButtonElement | null>
+  /** 狭い画面の「≡」の面の中にある歯車の DOM（同上）。 */
+  readonly settingsToggleRefNarrow: RefObject<HTMLButtonElement | null>
   readonly menuOpen: boolean
   readonly onToggleMenu: () => void
   readonly onSelect: () => void
@@ -121,6 +129,11 @@ export function useScreenNav(): ScreenNavView {
     toggleRefWide: workToggleRefWide,
     toggleRefNarrow: workToggleRefNarrow,
   } = useCurrentWork(ref)
+  const {
+    view: settings,
+    toggleRefWide: settingsToggleRefWide,
+    toggleRefNarrow: settingsToggleRefNarrow,
+  } = useSettings(ref)
 
   const onSelect = useCallback((): void => {
     setMenuOpen(false)
@@ -130,31 +143,11 @@ export function useScreenNav(): ScreenNavView {
     setMenuOpen((open) => !open)
   }, [])
 
-  useEffect(() => {
-    if (!menuOpen) {
-      return
-    }
+  const onDismissMenu = useCallback((): void => {
+    setMenuOpen(false)
+  }, [])
 
-    function closeOnOutside(event: PointerEvent): void {
-      const root = ref.current
-      if (root !== null && event.target instanceof Node && !root.contains(event.target)) {
-        setMenuOpen(false)
-      }
-    }
-
-    function closeOnEscape(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        setMenuOpen(false)
-      }
-    }
-
-    document.addEventListener("pointerdown", closeOnOutside)
-    document.addEventListener("keydown", closeOnEscape)
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutside)
-      document.removeEventListener("keydown", closeOnEscape)
-    }
-  }, [menuOpen])
+  useDismissSignal({ open: menuOpen, rootRef: ref, onDismiss: onDismissMenu })
 
   return {
     current,
@@ -196,6 +189,9 @@ export function useScreenNav(): ScreenNavView {
     work,
     workToggleRefWide,
     workToggleRefNarrow,
+    settings,
+    settingsToggleRefWide,
+    settingsToggleRefNarrow,
     menuOpen,
     onToggleMenu,
     onSelect,
