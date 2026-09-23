@@ -59,6 +59,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `theme.css` に画面専用の `--usage-*`（札・箱・選択の地、罫2段、文字6段、基線）を足し、`token-usage.module.css` を塗り直した。`--context-other` は無彩の灰 `#a6a2b0` に替え、`docs/screen-design.md` 13.2 に値の表を記した（内訳の6色と棒の青は `b674e13` で入っていた）。
 
+### 2026-09-23 requirements.md 4.9「雑談モード」を docs/chat-mode.md へ逐字で移した（T-464）
+
+節の番号 `4.9` のまま移し、`requirements.md` は 1979→1330 行。`requirements.md 4.9` への参照114件を一括置換し、`docs/history/` の78件は据え置いた。削るのは T-465。
+
 ### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
 
 `newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
@@ -82,10 +86,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ### 2026-09-23 design.md 13章「画面のデザイン」を docs/screen-design.md へ出した（T-445）
 
 13章を節番号 `13.x` のまま逐字で移し、`design.md` は 3378→1862 行（章は 1〜11 で連続になり、「未解決」の章番号の穴も畳んだ）。`design.md 13.x` への参照は一括置換し、番号だけの `13.x` は両ファイル冒頭の1行の読み替えで引ける。`requirements.md` 4章の分け方は `develop/direction.md` のドラフトに積んだ。
-
-### 2026-09-23 requirements.md 4.9「雑談モード」を docs/chat-mode.md へ逐字で移した（T-464）
-
-節の番号 `4.9` のまま移し、`requirements.md` は 1979→1330 行。`requirements.md 4.9` への参照114件を一括置換し、`docs/history/` の78件は据え置いた。削るのは T-465。
 
 ### 2026-09-23 英語のレポートが出た理由を確かめた。判定ではなくターンまるごと英語だった（T-462）
 
