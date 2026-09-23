@@ -27,6 +27,7 @@ import {
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
+import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import {
   type ChatArchive,
@@ -36,11 +37,7 @@ import {
   type SessionStart,
 } from "./server/core/session-driver.ts"
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
-import {
-  createSessionManager,
-  EVENT_BATCH_INTERVAL_MS,
-  type SessionManager,
-} from "./server/core/session-manager.ts"
+import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
 import { canResume, sessionTag } from "./server/core/session-restore.ts"
 import { takeSystemPromptAppend, toSystemPromptMode } from "./server/core/system-prompt.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"

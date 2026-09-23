@@ -5,11 +5,14 @@
 // **依頼の文面と読み出しを同じファイルに置く**のは、見出しを挟む印（`<topics>`）の形を両側で
 // 1つに保つため。文面だけ変えて読み出しが黙って空になる、を起こさない。
 //
-// 閾値を超えたかどうかの判断と、実際に送る操作は `src/server/core/session-manager.ts` が持つ。
+// 閾値を超えたかどうかの判断（{@link ChatCompactWatch}）もここが持つ。**いつ見るか**
+// （ターンの終わりに1回）を決めるのは `src/server/core/session-manager.ts` で、
 // 写しのファイルに触るのは `src/server/adapter/chat-summary.ts`。ここは「決める」内容だけで、
 // 外の世界には触らない（原則2）。
 
-import { type ChatSummary } from "./session-driver.ts"
+import { chatLogByteSize } from "../../shared/chat-log.ts"
+import { type SessionEvent } from "../../shared/session-event.ts"
+import { type ChatSummary, type SessionDriver } from "./session-driver.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/screen-design.md` 13.7）。 */
 export const CHAT_TOPIC_LIMIT = 3
@@ -43,6 +46,55 @@ const CHAT_COMPACT_INSTRUCTION =
  * 残らない）。
  */
 export const CHAT_COMPACT_COMMAND = `/compact ${CHAT_COMPACT_INSTRUCTION}`
+
+/**
+ * 雑談のログの走行合計を持ち、閾値を超えたターンの終わりに `/compact` を1回送る見張り
+ * （`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。**駆動1代ぶんの持ち物**で、起こし直すと
+ * 作り直す（復元されたログがそのまま新しい圧縮点から先になる）。
+ *
+ * 数えるのは**前の圧縮点から先だけ**の走行合計で、**`state.records` からは数えない** —
+ * `trimToRecentTurns`（`src/shared/session-state.ts`）で直近何ターンかに切り詰められるので、
+ * そこから数えると古いターンが落ちるたびに減り、閾値へ一生届かないことがある
+ * （雑談は100ターンの窓）。
+ */
+export type ChatCompactWatch = {
+  /** 届いたイベント1件ぶんの文面を走行合計に足す（**雑談モードのときだけ**呼ぶ）。 */
+  readonly add: (event: SessionEvent, at: number) => void
+  /**
+   * 閾値を超えていたら `/compact` を1回送り、走行合計を 0 に戻す（＝そこが新しい圧縮点）。
+   *
+   * **記録に残さない口（`promptWithoutRecord`）で渡す。** 流れるのは `request` ではなく
+   * `turn-started` だけなので、利用者が打っていない `/compact` の文面が雑談のログにも
+   * 会話のアーカイブにも並ばない。圧縮が起きたこと自体は、SDK から届く `compact-boundary`
+   * （`sdk-message.ts`）が別に画面の区切りへ変換するので、ここで文面を残さなくても失われない。
+   *
+   * 送信が失敗したときは**その回を諦めて次のターンでまた試す**（走行合計を戻さない。
+   * `docs/coding-standards.md`「エラーハンドリング」）。
+   */
+  readonly requestIfNeeded: (driver: SessionDriver) => void
+}
+
+/** {@link ChatCompactWatch} を1代ぶん起こす（`thresholdBytes` は呼び出し側が明示的に渡す）。 */
+export function createChatCompactWatch(thresholdBytes: number): ChatCompactWatch {
+  let bytesSinceCompact = 0
+
+  return {
+    add: (event, at) => {
+      bytesSinceCompact += chatLogEventByteSize(event, at)
+    },
+    requestIfNeeded: (driver) => {
+      if (bytesSinceCompact < thresholdBytes) {
+        return
+      }
+      try {
+        driver.promptWithoutRecord(CHAT_COMPACT_COMMAND)
+        bytesSinceCompact = 0
+      } catch {
+        // 次のターンでまた閾値を超えていれば試す。
+      }
+    },
+  }
+}
 
 /**
  * 写しの本文から最近の話題の見出しを取り出す（書かれた順＝新しい順のまま、
@@ -83,4 +135,23 @@ export function chatTopics(summary: string): readonly string[] {
  */
 export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
   return chatTopics(chatSummary.read()?.summary ?? "")
+}
+
+/**
+ * イベント1件ぶんの、雑談のログに乗る文面の UTF-8 バイト数。拾うのは
+ * `chatLogEntries`（`src/shared/chat-log.ts`）と同じ2種類（依頼とセリフ）だけで、
+ * それ以外は0（画像とツールの入出力は数えない。docs/chat-mode.md 4.9）。
+ */
+function chatLogEventByteSize(event: SessionEvent, at: number): number {
+  // 時刻は数えないが、ログの1件の形に揃えるために添える。
+  const time = { kind: "stamped", at } as const
+  if (event.kind === "request") {
+    return chatLogByteSize([{ speaker: "user", text: event.text, images: event.images, time }])
+  }
+  if (event.kind === "speech") {
+    return chatLogByteSize([
+      { speaker: "character", text: event.text, expression: event.expression, time },
+    ])
+  }
+  return 0
 }

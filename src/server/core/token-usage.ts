@@ -15,7 +15,7 @@
 // SDK の `result` に乗る `modelUsage` は **`query()` の中の累計**（サブエージェントと内部の
 // 呼び出しも含む。`usage` のほうはメインループだけなので集計に使わない）。ターンごとの消費を
 // 出すには前の `result` との差を取る必要があり、**前回の累計を覚えているのは
-// `src/server/core/session-manager.ts`**（セッション1つぶんの可変の状態を持つのはあそこだけで、
+// {@link TokenUsageRecorder}**（駆動1代ぶんの持ち物として `session-manager.ts` が持つ。
 // 変換だけの `sdk-message.ts` に前回値を置くとあのファイルの性格が変わる）。
 //
 // **数以外は通らない。** ツールの結果はここで**長さ（UTF-8 のバイト数）に畳んでから**積み、
@@ -24,6 +24,7 @@
 
 import { byteLength } from "../../shared/lib/byte-length.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
+import { type SessionState } from "../../shared/session-state.ts"
 import {
   type ModelUsageTotal,
   type TokenUsageDays,
@@ -86,7 +87,7 @@ export type TokenUsageEntry = {
 
 /**
  * ターンの途中で積み上げる内訳の入れ物。**ターンの終わりに {@link turnUsageBreakdown} で畳んで
- * 書き出し、{@link EMPTY_TURN_USAGE_TALLY} に戻す**（持ち主は `session-manager.ts`）。
+ * 書き出し、{@link EMPTY_TURN_USAGE_TALLY} に戻す**（持ち主は {@link TokenUsageRecorder}）。
  *
  * **ここに文面は入らない** — ツールの結果は受け取った時点で長さに畳む。
  */
@@ -131,6 +132,70 @@ const EMPTY_TOTALS = {
 
 /** ターンの始まりの状態（何も積んでいない）。 */
 export const EMPTY_TURN_USAGE_TALLY = { calls: [], steps: [] } satisfies TurnUsageTally
+
+/**
+ * 1代ぶんのトークン消費の勘定（**駆動1代ぶんの持ち物**で、起こし直すと作り直す）。前の
+ * `result` が運んできた累計と、いま進んでいるターンの内訳を持ち、ターンごとに記録へ1行渡す。
+ *
+ * **起こし直すと `query()` が変わって累計も振り出しに戻る**ので、作り直すことがそのまま
+ * 「前の累計を忘れる」になる（前の累計を引くと増分が足りなくなる）。
+ */
+export type TokenUsageRecorder = {
+  /** ターンの中の内訳（ツール別・持ち場別）を1件積む。**駆動由来のイベントだけ**を渡す。 */
+  readonly tally: (event: SessionEvent) => void
+  /**
+   * そのターンのトークン消費を記録に1行足す。**1行 = 1ターン**で、モデルが複数出たターン
+   * （サブエージェントが別のモデルで動いたとき）は同じ行の `models` に並ぶ——ターンが読む人に
+   * とっての単位なので、モデルごとに行を割ると「このターンでいくら使ったか」を出すのに行を
+   * 組み直すことになる。
+   *
+   * 届く `cumulative` は `query()` の中の累計なので、**前回との差**を書く。増分が無いターン
+   * （`/clear` の直後など、何も呼んでいない `result`）は行を書かないが、**累計は行を書かなくても
+   * 必ず覚え直す**（次のターンの差が合わなくなるため）。
+   *
+   * 内訳は**そのターンのあいだ積んできたもの**を畳んで、合計の `models` と同じ1行に入れる
+   * （割り方の理由は `src/shared/token-usage.ts`）。
+   *
+   * **claude 側のセッションIDが分からないうちは書かない**（`system/init` より前に `result` は
+   * 来ないので実際には起きない）。行だけで「どのセッションのターンか」が決まらない記録を
+   * 積まないため。
+   */
+  readonly append: (cumulative: readonly ModelTokenUsage[], at: number, state: SessionState) => void
+  /** ターンの終わりに内訳を捨てる（**1ターンぶんだけ**持つ）。 */
+  readonly finishTurn: () => void
+}
+
+/** {@link TokenUsageRecorder} を1代ぶん起こす（書き口はそのまま渡す）。 */
+export function createTokenUsageRecorder(log: TokenUsageLog): TokenUsageRecorder {
+  // 前の `result` が運んできたトークンの累計（`query()` の中の走行合計）。
+  let cumulativeTokenUsage: readonly ModelTokenUsage[] = []
+  // いま進んでいるターンの内訳（ツールの呼び出し回数と結果の長さ、ステップの使用量）。
+  let turnUsage: TurnUsageTally = EMPTY_TURN_USAGE_TALLY
+
+  return {
+    tally: (event) => {
+      turnUsage = tallyTurnUsage(turnUsage, event)
+    },
+    append: (cumulative, at, state) => {
+      const models = tokenUsageDelta(cumulativeTokenUsage, cumulative)
+      cumulativeTokenUsage = cumulative
+      const sessionId = state.session.kind === "starting" ? undefined : state.session.sessionId
+      if (models.length === 0 || sessionId === undefined) {
+        return
+      }
+      log.append({
+        at,
+        sessionId,
+        mode: state.chatMode ? "chat" : "work",
+        models,
+        breakdown: turnUsageBreakdown(turnUsage),
+      })
+    },
+    finishTurn: () => {
+      turnUsage = EMPTY_TURN_USAGE_TALLY
+    },
+  }
+}
 
 /**
  * 前の `result` の累計と今の累計から、そのターンの増分を作る。

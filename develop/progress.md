@@ -83,6 +83,18 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 6部品に基準を当て、3種そろう `turn-header` と `question-record` を3分割、2種の `main-view` と `question-ask` は外に触るフックだけ `hooks/` へ出し、1種の `mini-portrait` と `turn` は割らなかった。画面の振る舞いは変えていない。
 
+### 2026-09-23 SessionHost の閉包から世代の持ち物・副作用・コマンドの振り分けを分けた（T-427）
+
+世代ごとの持ち物を `SessionGeneration` に畳み、`restart` は `generation = startGeneration(request)` の1行で丸ごと作り直す形にした。`receive` の副作用は `chat-compact` / `token-usage` / `context-usage` と新規の `event-batch.ts` / `chat-archive-entry.ts` へ寄せ、`session-manager.ts` は 801行 → 556行に。テストは期待値を1文字も変えずに通っている（`session-manager.test.ts` は差分ゼロ）。
+
+### 2026-09-23 SDK の設定に language: japanese を渡し、催促への返事が英語に滑らないようにした（T-460）
+
+締めの並びを反転したあとも空の応答で終えたときの保険として、`buildQuerySeedOptions` に固定の `language: "japanese"` を足した。`--settings` の有無で user の hooks の実行回数が変わらないことを本体の `--debug` で確かめた。
+
+### 2026-09-23 use-composer.ts から補完と画像の添付を別のフックに分けた（T-444）
+
+420行の `useComposer` を223行にし、補完を `use-suggestion.ts`、画像の添付を `use-prompt-image.ts` へ出した。入力欄の振る舞いは変えていない。
+
 ## 未解決
 
 - **雑談モードでは `speak` で終える並びが残り、英語の催促の入口も残っている**（2026-09-23 の T-459 で判明）。雑談は本文を書かない決まりなので、仕事の側の反転がそのまま当てはまらない。塞ぐなら雑談の終え方を別に決める話
