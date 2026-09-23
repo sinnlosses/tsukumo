@@ -113,13 +113,6 @@
 .chat-portrait {
   height: 100%;
   max-width: 100%;
-  /* キャラビューの立ち絵と同じ名前（features/character-view/character-view.module.css の
-     `.portrait`）。切り替えのときに位置と大きさが移る（docs/screen-design.md 13.7）。 */
-  view-transition-name: var(--portrait-transition-name);
-}
-/* 移り変わりの間だけ、床へ沈めたぶんを立ち絵自身で切る（キャラビューの `.portrait` と同じ理由）。 */
-:root:active-view-transition .chat-portrait {
-  clip-path: inset(0 0 var(--chat-portrait-drop) 0);
 }
 /* 会話のログ。**古い→新しいが縦に積む**ので、DOM の順そのままに並べ、下端へスクロールする
    （`hooks/use-stick-to-bottom.ts` が最新へ寄せる）。 */

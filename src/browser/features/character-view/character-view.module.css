@@ -70,14 +70,6 @@
   max-width: 45%;
   -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent);
   mask-image: linear-gradient(90deg, #000 78%, transparent);
-  /* 仕事 / 雑談を切り替えるとき、雑談ビューの立ち絵（`.chat-portrait`）と同じ名前で結び、
-     位置と大きさを移す（docs/screen-design.md 13.7。見せ方は styles/theme.css）。 */
-  view-transition-name: var(--portrait-transition-name);
-}
-/* 移り変わりの間だけ、床へ沈めたぶんを立ち絵自身で切る。移っている絵は領域の `overflow` の
-   外で描かれるので、切らないと足元が床の下まで見え、終わった瞬間に消える（実測）。 */
-:root:active-view-transition .portrait {
-  clip-path: inset(0 0 var(--portrait-drop) 0);
 }
 /* 吹き出しの並び。**DOM は新しい順**（`src/browser/features/character-view/balloon-track.tsx`）なので、
    column-reverse で並べると最新が一番下に来て、過去のセリフほど上へ積み上がる。吹き出しは

@@ -151,29 +151,6 @@ textarea {
   outline-offset: 2px;
 }
 
-/* 仕事 / 雑談を切り替えるときの移り変わり（docs/screen-design.md 13.7「切り替えのときの
-   立ち絵」。載せるのは `stores/session.tsx` → `lib/view-transition.ts`）。キャラビューの立ち絵と
-   雑談ビューの立ち絵が**同じ名前**を持ち、ブラウザがその間の位置と大きさを移す。残り（差し色・
-   背景・領域の組み替え）はページごと重ねて溶かす。
-   **名前はここで1つだけ定義して、両方の module.css が `var()` で読む**（module.css の中に
-   直接書くと CSS Modules がファイルごとに別の名前へ焼き、結ばれない。実測）。
-   長さは立ち絵自身の入り（`components/portrait.module.css` の portrait-fade-in）と揃える。
-   「動きを減らす」では移り変わりそのものを起こさない（`lib/view-transition.ts`）。 */
-:root {
-  --portrait-transition-name: portrait;
-}
-::view-transition-group(*),
-::view-transition-old(*),
-::view-transition-new(*) {
-  animation-duration: 0.25s;
-}
-/* 移った先の立ち絵は新しくマウントされ、自分の入り（portrait-fade-in）で 0 から現れる。
-   既定の溶け込みまで重ねると二重に薄まり、移っている間だけ立ち絵が透ける（実測）ので、
-   入りは立ち絵自身に任せる。 */
-::view-transition-new(portrait) {
-  animation-name: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

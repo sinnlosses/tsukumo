@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 切り替えの立ち絵を「移して見せる」から「最初から切り替えた先の姿」に改めた（ユーザー報告）
+
+チカッとした正体は、起こし直しの間に新しい代の `chat-mode-changed` などが `events` で先に配られ、前のセッションの姿のままモードだけ切り替わっていたこと。起こし直しの代は新しい `hello` を配るまで束を配らないようにし（`session-manager.ts`）、T-478 で足した View Transition は外した（先読みと履歴の await は残す）。
+
 ### 2026-09-23 立ち絵の見た目の導き方を browser/domain に1つ置いた（T-436）
 
 `portraitAppearance()`（URL・差し色・代替テキスト）と既定の呼び名を `src/browser/domain/portrait-appearance.ts` にまとめ、`character-view` / `chat-view` / `screen-nav` の3フックがそれを読む形にした。既存テストの期待値は変えていない。

@@ -3,7 +3,7 @@
 //
 // フィクスチャはすべて手で書いた架空の依頼・許可要求（docs/coding-standards.md「会話内容の扱い」）。
 
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it } from "bun:test"
 
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { Profiler, type ReactElement } from "react"
@@ -17,8 +17,7 @@ import {
 import { PROTOCOL_VERSION } from "../../../src/shared/frame.ts"
 import { type PendingAsk } from "../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
-import { characterInfo } from "../../fixture/character.ts"
-import { putState, sessionStoreWith } from "../session-store.ts"
+import { sessionStoreWith } from "../session-store.ts"
 
 const FIXTURE_PERMISSION: PendingAsk = {
   kind: "permission",
@@ -160,66 +159,5 @@ describe("サーバと版が合わないとき（docs/design.md 4.4）", () => {
 
     expect(store.getSnapshot().protocol).toBe("compatible")
     expect(store.getSnapshot().state.records).toHaveLength(1)
-  })
-})
-
-describe("仕事 / 雑談を入れ替える `hello`", () => {
-  // `document.startViewTransition` の代役。渡された書き換えはテストが呼ぶまで走らない。
-  const transitions: (() => void)[] = []
-
-  beforeEach(() => {
-    Object.defineProperty(document, "startViewTransition", {
-      configurable: true,
-      value: (update: () => void) => {
-        transitions.push(update)
-      },
-    })
-  })
-
-  afterEach(() => {
-    Reflect.deleteProperty(document, "startViewTransition")
-    transitions.length = 0
-  })
-
-  /** 描き直しの合図を数える購読を付ける。 */
-  function countNotifications(store: SessionStore): () => number {
-    let notified = 0
-    store.subscribe(() => {
-      notified += 1
-    })
-    return () => notified
-  }
-
-  const WORK_WITH_CHARACTER = { ...INITIAL_SESSION_STATE, character: characterInfo() }
-
-  it("描いていた画面のモードが変わるときだけ、描き直しを移り変わりの中へ送る", () => {
-    const store = sessionStoreWith(WORK_WITH_CHARACTER)
-    const notified = countNotifications(store)
-
-    putState(store, { ...WORK_WITH_CHARACTER, chatMode: true })
-
-    // 姿はその場で差し替わる（合図を待つ間に届いたフレームも新しい姿の上に畳むため）。
-    expect(store.getSnapshot().state.chatMode).toBe(true)
-    expect(notified()).toBe(0)
-    expect(transitions).toHaveLength(1)
-    transitions[0]?.()
-    expect(notified()).toBe(1)
-  })
-
-  it("まだ何も描いていなかった最初の `hello` は載せない", () => {
-    const store = sessionStoreWith(INITIAL_SESSION_STATE)
-
-    putState(store, { ...WORK_WITH_CHARACTER, chatMode: true })
-
-    expect(transitions).toHaveLength(0)
-    expect(store.getSnapshot().state.chatMode).toBe(true)
-  })
-
-  it("モードが変わらない `hello` は載せない", () => {
-    const store = sessionStoreWith(WORK_WITH_CHARACTER)
-
-    putState(store, { ...WORK_WITH_CHARACTER, records: [] })
-
-    expect(transitions).toHaveLength(0)
   })
 })
