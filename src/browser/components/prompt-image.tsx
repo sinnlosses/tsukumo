@@ -21,7 +21,7 @@ import {
   promptImagePath,
   type RecordedPromptImage,
 } from "../../shared/prompt-image.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
+import { sessionTokenUrl } from "../lib/session-token-url.ts"
 import { ImageZoom, type ImageZoomFallback } from "./image-zoom.tsx"
 import styles from "./prompt-image.module.css"
 
@@ -146,11 +146,10 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
 
 /**
  * 棚の原寸を取りに行く URL。起動トークンは**このページの URL から**引き継ぐ
- * （`/repository-file` を引く入力欄の `@` 補完と同じ形）。
+ * （`/repository-file` を引く入力欄の `@` 補完と同じ形。`lib/session-token-url.ts` に寄せた）。
  */
 function shelvedImageUrl(id: string): string {
-  const token = new URL(window.location.href).searchParams.get(SESSION_TOKEN_QUERY_NAME) ?? ""
-  return `${promptImagePath(id)}?${SESSION_TOKEN_QUERY_NAME}=${encodeURIComponent(token)}`
+  return sessionTokenUrl(promptImagePath(id))
 }
 
 /** 虫眼鏡（札の絵にホバー・フォーカスで重ねる飾り）。キャラクターの外の道具の絵なのでコードに
