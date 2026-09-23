@@ -94,7 +94,7 @@
     "dependencies": ["T-398", "T-399"],
     "summary": "メインビューで遡れるやり取りの件数（MAX_MAIN_VIEW_TURNS）を5件から広げる",
     "task": "## 背景\n\nメインビューで遡れるやり取りは `src/shared/main-view.ts` の `MAX_MAIN_VIEW_TURNS`（5）で絞られている（`mainViewTurns` が `groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)`）。5件なのは横並びのタブの幅に収めるためだったが、T-398 / T-399 で札の頭（前後ボタン・一覧）に置き換えたので、その制約が無くなった。2026-09-23 にユーザーが「上限を広げる」を選んだ（モックの札も「7 / 7」）。\n\nブラウザが持つ記録そのものの窓は `src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS`（仕事 20・雑談 100）で、**仕事のメインビューはこれを超えて遡れない**。\n\n## 決まっていること（蒸し返さない）\n\n- 5件から広げる。上限は `MAX_SESSION_STATE_TURNS.work`（20）を超えない\n\n## やること\n\n1. 件数を決める。20 にそろえるなら、2つの定数の関係（メインビューの窓 ≤ 記録の窓）をどこで表すかも決める（片方からもう片方を導く、または型・テストで守る）。**`MAX_SESSION_STATE_TURNS` 側の中身を合わせて増やすことはしない**（常駐プロセスの記録の上限なので、別の判断）\n2. `MAX_MAIN_VIEW_TURNS` を直す。これに触れているコメント（`src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS` の説明、`src/browser/stores/turn-selection.tsx`、`src/browser/features/main-view/` の冒頭コメント）を直す\n3. `test/shared/main-view.test.ts` と `test/shared/turn-speech.test.ts` は定数から件数を作っているので、定数を変えても通るかを見る（通らなければ直す）\n4. `docs/requirements.md`（`grep -n 'MAX_MAIN_VIEW_TURNS\\|直近5件' docs/requirements.md docs/design.md docs/research/configuration-and-state.md`）の件数の記述を直す\n\n## 完了条件\n\n- `grep -rn '直近5件' src docs --exclude-dir=history` が0件\n- `bun run check` が通る\n- 目視（1400x900）: 疑似セッションでやり取りを6件以上流し、札の「n / N」の N が6以上になり、一覧からいちばん古いものへ飛べる。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
