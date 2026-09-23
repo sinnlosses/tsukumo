@@ -1,4 +1,4 @@
-// 画面のナビの帯の**入口**（docs/design.md 13.9）。会話 `#` / キャラクター `#character` /
+// 画面のナビの帯の**入口**（docs/screen-design.md 13.9）。会話 `#` / キャラクター `#character` /
 // トークン消費 `#token-usage` の3枚を、全画面の最上部の1本の帯から行き来する。
 // ロジックは `hooks/use-screen-nav.ts`、見た目は `presentational-screen-nav.tsx`
 // （2章「機能の中を分ける」の container / presenter）。

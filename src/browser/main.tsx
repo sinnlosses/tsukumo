@@ -13,7 +13,7 @@
 // `browser/features/` をまたいで import してよい**この入口の役目**
 // （機能どうしは互いを import しない。`test/architecture.test.ts`「browser/ の機能どうしの import」）。
 //
-// **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / 13.6）。`<Layout>` は
+// **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / docs/screen-design.md 13.6）。`<Layout>` は
 // 他の機能を知らないので、画面の入れ替えを機能の側に持たせると機能どうしの import になる。
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -45,7 +45,7 @@ import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
 import "./styles/theme.css"
 
 /**
- * 出している画面を選ぶ（`location.hash`。docs/design.md 13.6）。**会話の画面は外さず
+ * 出している画面を選ぶ（`location.hash`。docs/screen-design.md 13.6）。**会話の画面は外さず
  * `<Activity mode="hidden">` で隠す** — 入力欄の下書き・選んでいるターン・スクロール位置は
  * どれも部品のローカル状態なので、外すと戻ったときに失われる（`<SessionProvider>` はこの上に
  * 居るので会話そのものは隠れている間も進み続ける）。`hidden` 属性と違い描画も止まるので、
@@ -54,7 +54,7 @@ import "./styles/theme.css"
 function Root(): ReactElement {
   const screen = useScreen()
   // **雑談モードではメインビューを雑談ビューに差し替え、キャラビューを畳む**
-  // （立ち絵が上段へ移るため。docs/requirements.md 4.9 / docs/design.md 13.7）。
+  // （立ち絵が上段へ移るため。docs/requirements.md 4.9 / docs/screen-design.md 13.7）。
   // 差し替えを入口が持つのは、`<Layout>` が他の機能を知らないのと同じ理由。
   // **同時にメインの領域を地そのものにする**（枠と角丸が外れ、背景がそこへ移る。13.8）。
   // 「いま雑談か」を知っているのはここだけなので、`<Layout>` には2つの旗を別々に渡す

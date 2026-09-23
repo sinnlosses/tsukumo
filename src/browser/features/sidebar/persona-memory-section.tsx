@@ -1,4 +1,4 @@
-// 雑談中のサイドバーの3段目「覚えていること」（docs/design.md 13.7「雑談のときのサイドバー」）。
+// 雑談中のサイドバーの3段目「覚えていること」（docs/screen-design.md 13.7「雑談のときのサイドバー」）。
 // 中身は `persona.md` の `## 覚えたこと`（`docs/glossary.md`「覚えたこと」・`SessionState.rememberedLines`）。
 //
 // **1行＝チップ1つ**（docs/design.md 7.1「1行だけ忘れる」）。チップは先頭を短く切って出し、

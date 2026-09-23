@@ -1,4 +1,4 @@
-// どのキャラクターパックを出すかの判断だけ（docs/design.md 7章・13.6）。**パックの中身を
+// どのキャラクターパックを出すかの判断だけ（docs/design.md 7章・docs/screen-design.md 13.6）。**パックの中身を
 // 読むのも一覧を作るのも外の世界に触る仕事**なので、それは `src/server/adapter/character-pack.ts` に
 // あり、ここは渡された一覧を名前で引くだけの純粋関数を持つ。
 //
@@ -13,7 +13,7 @@ export type NamedCharacterPack = { readonly name: string }
 /**
  * これから起こすパックの決め方。**「画面から選ばれた名前」と「起こし直しに使ういま出している
  * パック」を1つの欄で兼ねない**ための判別可能な合併型（兼ねていたせいで、モードを切り替えた
- * だけの起こし直しでも覚えた値が書き換わっていた。docs/design.md 13.6）。
+ * だけの起こし直しでも覚えた値が書き換わっていた。docs/screen-design.md 13.6）。
  */
 export type CharacterSelection =
   /** 起動時の初期パック（順位は {@link selectInitialCharacterPack}）。 */
@@ -40,12 +40,12 @@ export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> = {
 
 /**
  * 起動時の初期パック。優先順位は **その回の指定（`TSUKUMO_CHARACTER`）> 覚えた値 > 同梱の既定**
- * （docs/design.md 13.6「第3の扱い」）。
+ * （docs/screen-design.md 13.6「第3の扱い」）。
  *
  * 指定があるときは覚えた値を**読みに行かない**（環境変数は「その回の上書き」なので、前回の値に
  * 勝つ）。**覚えた値への書き込みはここの持ち分ではない** — 書くのは画面から選んだときだけで、
  * `TSUKUMO_CHARACTER` を指定していても画面から選べばそのとき覚える
- * （`src/server/core/session-launch.ts`。docs/design.md 13.6）。
+ * （`src/server/core/session-launch.ts`。docs/screen-design.md 13.6）。
  */
 export function selectInitialCharacterPack<Pack extends NamedCharacterPack>(
   options: InitialCharacterPackOptions<Pack>,

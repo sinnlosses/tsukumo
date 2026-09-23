@@ -16,7 +16,7 @@
   align-items: center;
   column-gap: 0.75rem;
   row-gap: 0.4rem;
-  /* 頭は字を詰めて潰れない範囲で低く保つ（`docs/design.md` 13.3）。余白は
+  /* 頭は字を詰めて潰れない範囲で低く保つ（`docs/screen-design.md` 13.3）。余白は
      `.detail-block .report-stat` と同じ値。 */
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--rule);
@@ -28,7 +28,7 @@
   display: flex;
   gap: 0.4rem;
 }
-/* 押せる大きさの床（`docs/design.md` 13.9 の「帯の高さの床」と同じ 24px）。頭の中でいちばん
+/* 押せる大きさの床（`docs/screen-design.md` 13.9 の「帯の高さの床」と同じ 24px）。頭の中でいちばん
    高いのがここなので、これより大きくすると頭全体が高くなる。字はタイトルの文字と同じ段。 */
 .turn-nav-button {
   display: inline-grid;
@@ -97,7 +97,7 @@
   border-color: var(--rule);
 }
 /* 1行に収まらないぶんは省略し、全文はボタンの `title` で読ませる（`domain/turn-title.ts` は
-   切らない）。字の段は「区画の見出し・強調した要約」（`docs/design.md` 13.3。理由はそちらに
+   切らない）。字の段は「区画の見出し・強調した要約」（`docs/screen-design.md` 13.3。理由はそちらに
    書く）で、太字で本文と区別する。 */
 .turn-title-text {
   overflow: hidden;

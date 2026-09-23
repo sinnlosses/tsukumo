@@ -1,4 +1,4 @@
-// 画面のナビの帯のロジック（docs/design.md 13.9 / 2章「機能の中を分ける」）。**いま出している
+// 画面のナビの帯のロジック（docs/screen-design.md 13.9 / 2章「機能の中を分ける」）。**いま出している
 // 画面・3つの口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の「≡」の開閉**を、
 // 見た目が受け取れる形まで畳んで返す。「いまの作業」の札は `hooks/use-current-work.ts` に
 // 分けてある（別の概念なのでファイルを分ける。CLAUDE.md 原則5）。
@@ -135,7 +135,7 @@ export function useScreenNav(): ScreenNavView {
   )
   const character = useSessionSelector((session) => session.state.character)
   // **`init`（`session-info`）が届くまでの畳み先は、このセッションを起こした既定**
-  // （`docs/design.md` 13.6）。同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の
+  // （`docs/screen-design.md` 13.6）。同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の
   // 帯だけが Opus を名乗る。
   const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
   const [menuOpen, setMenuOpen] = useState(false)

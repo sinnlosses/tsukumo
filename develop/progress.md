@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 design.md 13章「画面のデザイン」を docs/screen-design.md へ出した（T-445）
+
+13章を節番号 `13.x` のまま逐字で移し、`design.md` は 3378→1862 行（章は 1〜11 で連続になり、「未解決」の章番号の穴も畳んだ）。`design.md 13.x` への参照は一括置換し、番号だけの `13.x` は両ファイル冒頭の1行の読み替えで引ける。`requirements.md` 4章の分け方は `develop/direction.md` のドラフトに積んだ。
+
 ### 2026-09-23 CSS を部品ごとに分けてよいと 6.6 に書き、main-view.module.css を割った（T-439）
 
 928行の `main-view.module.css` を、ターンの見出し・質問2つ・レポートの記法の4枚へ分けて113行にした。ファイルをまたぐ `.detail-block` の打ち消しは、両方の class を同じ要素に重ねて解いている。
@@ -71,30 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `token-usage-log.ts`・`chat-archive.ts`・`context-usage-log.ts` が書き写していた追記・日付のファイル名の列挙・行の JSON 読み出しを `src/server/adapter/lib/jsonl.ts` に寄せた。スキーマの検証と索引・読み戻しの形は各ファイルに残した。
 
-### 2026-09-23 覚えていることをチップで出し、画面から1行ずつ消せるようにした（T-391）
-
-`SessionState.rememberedLines` と `remembered-lines-changed` で `## 覚えたこと` を雑談のサイドバーへ届け、チップ（先頭20文字、押すと全文）と「編集」→ × →確認で `forget-remembered-line` を送る。消し方は `forget` と同じ突き合わせで、画面からのときだけ1ターン1行の上限を掛けない（`docs/design.md` 7.1）。
-
-### 2026-09-23 版の合わない hello の知らせに、部品のテストを足した（T-410）
-
-`hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。
-
-### 2026-09-23 ローカル時刻の HH:MM を作る手を clock.ts に寄せた（T-433）
-
-ブラウザ側の3か所がタイムゾーンを直に読んで `HH:MM` を組んでいたのを、`src/browser/utils/clock.ts` の `zonedDateTime` / `clockTime` / `clockDateTime` と `localTimeZoneId()` に揃えた。表示の書式は変えていない。
-
-### 2026-09-23 動いている部屋のビューを iframe の格子に並べて Orca に開くスクリプトを足した（T-424）
-
-`bun run scripts/open-room-grid.ts` で、待ち受けていてタブもある部屋だけを 16:9 のマスに PC の並びのまま縮めて並べ、拡大・戻るは JS を使わずラジオの label で切り替える。起動トークンを含む HTML は読み込みを確かめたら消すので、見直すときは打ち直す。
-
-### 2026-09-23 systemPrompt に足す文面の組み立てを core の1ファイルへ寄せた（T-429）
-
-配線層（`src/session-start.ts`）・`core/session-rule.ts`・`adapter/character-pack.ts` に割れていた `append` の組み立てを `src/server/core/system-prompt.ts` の `takeSystemPromptAppend` に寄せ、`session-rule.ts` は畳んで消した。人格は文字列で渡すので core は fs もパックの型も知らない。文面は1文字も変えておらず、寄せる前後で3通りの `append` が sha256 で一致することを確かめた。
-
-### 2026-09-23 貼った画像の棚を、枚数ではなく合計128 MiBで切るようにした（T-456）
-
-`prompt-image-shelf.ts` の上限を `MAX_SHELVED_PROMPT_IMAGES`（8枚）から `MAX_SHELVED_PROMPT_IMAGE_BYTES`（原寸の data URL の長さの合計 128 MiB）に置き換え、いま置いた画像を除いて古いほうから捨てる。`docs/requirements.md` 4.10 も合わせた。
-
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の
@@ -105,7 +85,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 - **`bun install` のあとは `bun run build` が1回要る**（2026-09-21 の T-279 から）。忘れると `bun run start` が「ブラウザ側の成果物を読めない」で終了コード1になる。`dist/` を `.gitignore` に置いたことの代償で、`CLAUDE.md` のセットアップにも書いた。`scripts/capture-catalog.ts` のように tsukumo を spawn する道具も同じ
 - **`develop/direction.md` は作業ツリーだけでなく `HEAD` の側も整形が崩れている**（2026-09-21 に確認。`git show HEAD:develop/direction.md` を `oxfmt --check` に掛けても落ちる）。**このため `bun run check` は誰が通しても `format:check` で失敗する。** 別セッションが編集中のファイルなのでこちらからは直していない。`bunx oxfmt develop/direction.md` を1回当てれば直る
 - **用語集の「疑似セッション」の『避ける言い方』に旧称「台本」が載っていない**（2026-09-21。T-276 の完了条件が「リポジトリ全体で旧称の grep が0件」を求めていて、**用語集に旧称を書くとその条件と衝突する**ため、「シナリオ、スクリプト」に言い換えてある）。改名を記録する場所としては旧称を載せるほうが役に立つので、**載せるかどうかはユーザーの判断**。`fake driver` の項も同じ理由で旧称「偽の駆動」を載せていない
-- **`docs/design.md` の章番号に穴がある**（2026-09-21。T-272 で12章を history へ移したが、**詰めていない**ので 11章の次が13章）。詰めなかったのは、13.x を指す参照が `src`/`test`/`docs` に約100箇所あり、うち12件が `docs/requirements.md`（T-272 では触れない制約）だったため。`docs/requirements.md` 4.5 と同じ扱い。詰めるなら**参照の一括置換を1タスクとして切る**
 - **`docs/architecture.md` にタスク番号が4件残っている**（規約はコード・ドキュメントに `T-` + 3桁を書かないと定めている。T-272 の着手前からあるもので、今回入れたものではない）
 - **`CLAUDE.md` の2箇所が「環境の実測値」を `docs/requirements.md`「5. 実行環境・非機能要件」から読むよう案内しているが、実測値は `docs/history/environment-2026-09-09.md` へ移っている**（2026-09-21 に T-270 が移送、T-271 の作業中に気づいた）。節自体は残っているので参照は壊れていないが、案内文が古い。57行目と 288行目
 - **正典の大掃除のとき、サブエージェントは「先に移送先へ書いてから消す」順で進めさせる**（2026-09-21。T-271 の1回目が利用上限で落ちたとき、`docs/requirements.md` から151行が消えたのに`docs/history/decision.md` が作られていない状態で止まっていた）。途中で落ちても「移り終わったところまで」が残る

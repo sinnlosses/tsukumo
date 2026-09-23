@@ -1,4 +1,4 @@
-// 雑談中のサイドバーの3段目「覚えていること」（docs/design.md 7.1・13.7）。フィクスチャは
+// 雑談中のサイドバーの3段目「覚えていること」（docs/design.md 7.1・docs/screen-design.md 13.7）。フィクスチャは
 // 手で書いた架空の1行だけ（実物の persona.md・会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
 

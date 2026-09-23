@@ -53,7 +53,7 @@ function selectValue(element: HTMLElement): string {
 
 describe("SessionInfo", () => {
   // 仕事/雑談のトグル・モデル・許可モードのドロップダウンは帯（`features/screen-nav/`）へ
-  // 移った（docs/design.md 13.9「何を外すか」）。ここに同じ <select> を2つ置かない。
+  // 移った（docs/screen-design.md 13.9「何を外すか」）。ここに同じ <select> を2つ置かない。
   it("モード・モデル・許可モードの <select> は無い（帯へ移った）", () => {
     renderSessionInfo({
       model: "claude-sonnet-5",
@@ -77,7 +77,7 @@ describe("SessionInfo", () => {
     expect((select as HTMLSelectElement).options).toHaveLength(1)
   })
 
-  // キャラクター画面への入る口は**帯**（`features/screen-nav/`）へ移った（docs/design.md 13.9）。
+  // キャラクター画面への入る口は**帯**（`features/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
   // ここには同じ口を2つ置かない。
   it("キャラクターの行にキャラクター画面への口は置かない", () => {
     renderSessionInfo({
@@ -140,7 +140,7 @@ describe("SessionInfo", () => {
 })
 
 // 顔はキャラクターの <select> の左に添える（帯と共有する components/character-face.tsx。
-// docs/design.md 13.9「顔」）。
+// docs/screen-design.md 13.9「顔」）。
 describe("SessionInfo の顔", () => {
   it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {
     renderSessionInfo({

@@ -117,7 +117,7 @@
 }
 /* 見出しの右端に並ぶ押せる口（タスク一覧の「一覧を見る」）。**枠なしのリンク風**にする
    （docs/history/mockup/sidebar-tasks-2026-09-23.html）。押せることを色だけで示さない
-   （docs/design.md 13.1 原則1）ので、ボタンの `cursor: pointer` と、ホバー時の下線・
+   （docs/screen-design.md 13.1 原則1）ので、ボタンの `cursor: pointer` と、ホバー時の下線・
    キーボードで来たときの `:focus-visible`（theme.css の既定）を色の変化に添える。 */
 .sidebar-block-title {
   flex: 1 1 auto;
@@ -178,7 +178,7 @@
   display: none;
 }
 
-/* ── 雑談中の4段（docs/design.md 13.7「雑談のときのサイドバー」） ──────────────────────
+/* ── 雑談中の4段（docs/screen-design.md 13.7「雑談のときのサイドバー」） ──────────────────────
    **寸法の出どころは「雑談モードのサイドバー案（T-332）」の見本**（見本の inline style の px を
    `theme.css` のトークンと rem に写した値。色は16進を書かず、パックの `--accent` からの導出で
    表す——見本の橙は雑談中の `--accent`〔パックの `chatAccent`〕にあたる）。 */
@@ -372,7 +372,7 @@
 
 /* 消す前の確認（`PersonaMemoryForgetConfirm`）。**サイドバーの上に重ねて開く**——`showModal()` は
    top layer に積むので必ず上に出る。`task-run-confirm.tsx` と同じ形（枠は常設しない。
-   docs/design.md 13.1 原則2）。 */
+   docs/screen-design.md 13.1 原則2）。 */
 .sidebar-persona-memory-confirm {
   box-sizing: border-box;
   width: min(24rem, calc(100vw - 2rem));
