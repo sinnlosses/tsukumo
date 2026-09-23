@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it, spyOn } from "bun:test"
 
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
@@ -180,10 +180,10 @@ describe("useChatView のセリフを遡る", () => {
   })
 })
 
-describe("useChatView の育つ行", () => {
-  it("開いた時点で並んでいたセリフは育てず、あとから届いた末尾の1件だけを育てる", () => {
+describe("useChatView の弾む行", () => {
+  it("開いた時点で並んでいた記録は弾まず、あとから届いた記録だけが弾む", () => {
     const { store, result } = renderUseChatView({ records: RECORDS })
-    expect(speechRows(result.current.rows).map((row) => row.grow)).toEqual([false, false])
+    expect(speechRows(result.current.rows).map((row) => row.pop)).toEqual([false, false])
 
     act(() => {
       putState(store, {
@@ -192,7 +192,190 @@ describe("useChatView の育つ行", () => {
       })
     })
 
-    expect(speechRows(result.current.rows).map((row) => row.grow)).toEqual([false, false, true])
+    expect(speechRows(result.current.rows).map((row) => row.pop)).toEqual([false, false, true])
+  })
+})
+
+describe("useChatView の出すタイミング（docs/screen-design.md 13.7）", () => {
+  /** `Temporal.Now.instant` を差し込み、`use-speech-reveal.ts` が読む「いま」を固定する。 */
+  function mockNow(ms: number): ReturnType<typeof spyOn> {
+    const clock = spyOn(Temporal.Now, "instant")
+    clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(ms))
+    return clock
+  }
+
+  /**
+   * 偽の時計を進めたあと、それに `use-speech-reveal.ts` のポーリング（実装の詳細）が
+   * 気づくまで実時間を少しだけ待つ。**2秒は待たない** —— 待つのは時計ではなくポーリングの
+   * 周期ぶんだけ。
+   */
+  async function waitForReveal(): Promise<void> {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 80))
+    })
+  }
+
+  it("開いた時点で並んでいたセリフは、待たずに全部出る", () => {
+    const clock = mockNow(0)
+    try {
+      const { result } = renderUseChatView({ records: RECORDS })
+
+      expect(speechRows(result.current.rows)).toHaveLength(2)
+      expect(result.current.showTyping).toBe(false)
+    } finally {
+      clock.mockRestore()
+    }
+  })
+
+  it("2件のセリフが続けて届いたとき、2件目は2秒経つまでログに出ず、そのあいだ「...」が出る", async () => {
+    const clock = mockNow(0)
+    try {
+      const { store, result } = renderUseChatView({ records: [] })
+
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [speechRecord({ text: "1件目の架空のセリフ", expression: "proud" })],
+          speechExpression: "proud",
+          speechCalledInTurn: true,
+        })
+      })
+      expect(speechRows(result.current.rows)).toHaveLength(1)
+
+      // 時計は動かさないまま、続けて2件目が届く。
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [
+            speechRecord({ text: "1件目の架空のセリフ", expression: "proud" }),
+            speechRecord({ text: "2件目の架空のセリフ", expression: "curious" }),
+          ],
+          speechExpression: "curious",
+          speechCalledInTurn: true,
+        })
+      })
+
+      expect(speechRows(result.current.rows)).toHaveLength(1)
+      expect(result.current.showTyping).toBe(true)
+
+      // 偽の時計を2秒より先へ進める。
+      clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(2001))
+      await waitForReveal()
+
+      expect(speechRows(result.current.rows)).toHaveLength(2)
+      expect(result.current.showTyping).toBe(false)
+    } finally {
+      clock.mockRestore()
+    }
+  })
+
+  it("前の吹き出しから2秒以上空いて届いたセリフは、すぐ出る", () => {
+    const clock = mockNow(0)
+    try {
+      const { store, result } = renderUseChatView({ records: [] })
+
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [speechRecord({ text: "1件目の架空のセリフ" })],
+          speechCalledInTurn: true,
+        })
+      })
+      expect(speechRows(result.current.rows)).toHaveLength(1)
+
+      // 2件目が届く前に、時計を2秒より先へ進めておく。
+      clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(3000))
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [
+            speechRecord({ text: "1件目の架空のセリフ" }),
+            speechRecord({ text: "2件目の架空のセリフ" }),
+          ],
+          speechCalledInTurn: true,
+        })
+      })
+
+      // ポーリングを待たずに、すぐ2件とも出る。
+      expect(speechRows(result.current.rows)).toHaveLength(2)
+    } finally {
+      clock.mockRestore()
+    }
+  })
+
+  it("待たせているあいだ、立ち絵の表情は出した吹き出しのもの", async () => {
+    const clock = mockNow(0)
+    try {
+      const { store, result } = renderUseChatView({ records: [], character: FIXTURE_CHARACTER })
+
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [speechRecord({ text: "1件目の架空のセリフ", expression: "proud" })],
+          character: FIXTURE_CHARACTER,
+          speechExpression: "proud",
+          speechCalledInTurn: true,
+        })
+      })
+      expect(result.current.expression).toBe("proud")
+
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [
+            speechRecord({ text: "1件目の架空のセリフ", expression: "proud" }),
+            speechRecord({ text: "2件目の架空のセリフ", expression: "curious" }),
+          ],
+          character: FIXTURE_CHARACTER,
+          // サーバ側はすでに届いた最新（curious）を持っているが、まだ出していない。
+          speechExpression: "curious",
+          speechCalledInTurn: true,
+        })
+      })
+
+      expect(result.current.expression).toBe("proud")
+
+      clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(2001))
+      await waitForReveal()
+
+      expect(result.current.expression).toBe("curious")
+    } finally {
+      clock.mockRestore()
+    }
+  })
+
+  it("ターンが終わったあとも、待たせているセリフが残っていれば「...」が出続ける", () => {
+    const clock = mockNow(0)
+    try {
+      const { store, result } = renderUseChatView({ records: [] })
+
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [speechRecord({ text: "1件目の架空のセリフ" })],
+          speechCalledInTurn: true,
+          turn: { kind: "running", startedAt: 0 },
+        })
+      })
+
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          records: [
+            speechRecord({ text: "1件目の架空のセリフ" }),
+            speechRecord({ text: "2件目の架空のセリフ" }),
+          ],
+          speechCalledInTurn: true,
+          // ターンはもう終わっている。
+          turn: { kind: "finished", startedAt: 0, finishedAt: 100 },
+        })
+      })
+
+      expect(speechRows(result.current.rows)).toHaveLength(1)
+      expect(result.current.showTyping).toBe(true)
+    } finally {
+      clock.mockRestore()
+    }
   })
 })
 

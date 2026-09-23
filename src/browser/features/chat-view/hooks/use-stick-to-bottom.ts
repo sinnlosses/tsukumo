@@ -46,8 +46,7 @@ export function useStickToBottom(count: number): RefObject<HTMLDivElement | null
   // 最新へ寄せる（読み返している最中に下へ攫わない。docs/screen-design.md 13.7）。
   //
   // 呼ぶのは2か所で、**どちらも同じこの規則に従う**: 件数が増えたとき（下の effect）と、
-  // 末尾のセリフが育って高さが伸びたとき（その下の effect）。**育っている最中に上へ転がせば
-  // そこで追従が外れる**（寄せた直後の `scroll` は下端に居るままなので、自分で自分を外さない）。
+  // 件数が変わらないまま中身だけ動いたとき（その下の effect）。
   const stickToBottom = useCallback(() => {
     const log = logRef.current
     if (log === null || !nearBottomRef.current) {
@@ -63,12 +62,11 @@ export function useStickToBottom(count: number): RefObject<HTMLDivElement | null
     stickToBottom()
   }, [count, stickToBottom])
 
-  // 外部システム（DOM の文字の変化）の購読。**末尾のセリフは1文字ずつ増えて育つ**
-  // （`use-speech-growth.ts`）ので、件数が変わらないまま高さが伸びる。伸びたぶんを同じ規則で
-  // 追いかける口がここ。
+  // 外部システム（DOM の並びの変化）の購読。**「...」（`components/chat-typing.tsx`）は
+  // `count` に数えない行**なので、現れて消えるたびに末尾の高さが動くのを、この購読で拾う。
   //
-  // **行の側から知らせ返さない**（育っている行がログのスクロールを知らずに済む）。見るのは
-  // 文字の変化だけなので、押して印が移ったとき（class と `aria-pressed` が変わるだけ）には
+  // **行の側から知らせ返さない**（ログの中身の部品がスクロールを知らずに済む）。見るのは
+  // 子要素の増減だけなので、押して印が移ったとき（class と `aria-pressed` が変わるだけ）には
   // 動かない。
   useEffect(() => {
     const log = logRef.current
@@ -76,7 +74,7 @@ export function useStickToBottom(count: number): RefObject<HTMLDivElement | null
       return
     }
     const observer = new MutationObserver(stickToBottom)
-    observer.observe(log, { subtree: true, characterData: true, childList: true })
+    observer.observe(log, { subtree: true, childList: true })
     return () => {
       observer.disconnect()
     }

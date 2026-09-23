@@ -31,13 +31,13 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
 import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../../domain/reveal-speed.ts"
-import { prefersReducedMotion } from "../../../lib/reduced-motion.ts"
 import { brushStep, toBands, type BrushStep } from "./band.ts"
 import { brushScroller } from "./brush-scroll.ts"
 import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "./brush-tip.ts"
 import { endLineOf, frameOf, lineBoxesOf, placeIn, shapesOf } from "./measure.ts"
 import { applyStep, hideBlock, showBlock } from "./paint.ts"
 import { blockProgress, planReveal, type RevealBlock } from "./plan.ts"
+import { prefersReducedMotion } from "./reduced-motion.ts"
 
 /** 見せる範囲を進めているあいだだけ根に立てる印（目視確認と、外から終わりを知るための口）。 */
 const REVEALING_ATTRIBUTE = "data-revealing"
