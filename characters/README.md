@@ -79,6 +79,7 @@ characters/
   "name": "表示名",
   "license": "その素材をここに置いてよい根拠",
   "accent": "#f2b0a0",
+  "chatAccent": "#f2984a",
   "expressions": {
     "default": "通常",
     "thinking": "思案",
@@ -114,6 +115,9 @@ characters/
   `speak` で選べる**（絵は `default` に落ちる）
 - **`accent` はキャラクターの色**（吹き出し・選ばれたタブなど画面全体に効く。衣装ごとの
   差し色 `outfitAccents` とは別物）
+- **`chatAccent` は雑談中だけの `accent`**（`docs/design.md` 13.2「雑談中は」/ 13.7）。
+  **書かなくてよい**——無ければ雑談中も `accent` のまま（仕事と同じ差し色）。仕事中は効かない。
+  新しいつまみではなく、`accent` の枠がモードに応じて別の値を取るだけ
 - **`portraits` は「あるものだけ」でよい。** 見つからない表情は `default` に落ちる。
   1枚から始めて、増やすほど細かくなる
 - **`default` だけは必ず用意する。** 「speak がまだ無い・表情の指定が無い」ときの既定で、

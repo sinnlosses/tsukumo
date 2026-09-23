@@ -469,6 +469,7 @@ export function applySessionEvent(
           pack: event.pack,
           name: event.name,
           accent: event.accent,
+          chatAccent: event.chatAccent,
           expressions: event.expressions,
           portraits: event.portraits,
           expressionsWithPortrait: event.expressionsWithPortrait,

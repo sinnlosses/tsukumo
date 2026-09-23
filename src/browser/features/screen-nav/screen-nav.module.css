@@ -169,6 +169,16 @@
 .screen-nav-work[data-work-state="idle"] .screen-nav-work-word {
   color: var(--ink-quiet);
 }
+/* **雑談中の依頼待ちだけ**差し色にする（13.9「いまの作業」/ 13.7。字が「<名前> とおしゃべり中」に
+   変わるのと対にする——色だけで伝えない。13.1 原則5）。答え待ち・作業中・止まっているは
+   雑談中でも変えない（すでに意味を持つ色のため）。 */
+.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-toggle {
+  border-color: var(--accent);
+}
+.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-word {
+  color: var(--accent);
+}
 /* 依頼の手順の一覧。**札の真下に重ねる**（下の領域を押し下げない。13.9）。
    幅の上限 36rem・高さの上限は画面の 70% で、超えたら内側でスクロールする。 */
 .screen-nav-work-list {

@@ -785,6 +785,13 @@ describe("applySessionEvent", () => {
     expect(view.character).toEqual(character)
   })
 
+  it("character-changed の chatAccent（雑談中だけの accent）もそのまま持つ", () => {
+    const view = apply(characterChangedEvent({ accent: "#6fe3cd", chatAccent: "#f2984a" }))
+
+    expect(view.character?.accent).toBe("#6fe3cd")
+    expect(view.character?.chatAccent).toBe("#f2984a")
+  })
+
   it("答え待ちの列をそのまま持つ", () => {
     const view = apply({
       kind: "pending-changed",

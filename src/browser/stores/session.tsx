@@ -20,6 +20,7 @@ import {
   type ReactNode,
 } from "react"
 
+import { effectiveAccent } from "../../shared/character.ts"
 import { type ClientCommand } from "../../shared/command.ts"
 import { type ServerFrame } from "../../shared/frame.ts"
 import {
@@ -184,10 +185,13 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
   // （`document.title` を差し替える `src/browser/features/dispatch/dispatch.tsx` と同じ、ホスト側の値を
   // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
   // 手口で `src/browser/features/character-screen/appearance-color.ts` が持つ）。届いていない・パックに `accent`
-  // が無いときは既定値（theme.css の `:root`）に戻す。
+  // が無いときは既定値（theme.css の `:root`）に戻す。**雑談中はパックが `chatAccent` を持てば
+  // そちらに切り替わる**（`effectiveAccent`。docs/design.md 13.2「雑談中は」/ 13.7）。
   //
   // **Context の外なので store を直に読む**（自分が配っている Context は自分では読めない）。
-  const accent = useStoreSelector(store, (session) => session.state.character?.accent)
+  const accent = useStoreSelector(store, (session) =>
+    effectiveAccent(session.state.character, session.state.chatMode),
+  )
   useEffect(() => {
     if (accent === undefined) {
       document.documentElement.style.removeProperty("--accent")

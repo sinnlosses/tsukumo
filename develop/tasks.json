@@ -171,9 +171,9 @@
     "dependencies": ["T-382"],
     "summary": "パックに雑談の差し色を持たせ、雑談中は帯と画面の差し色をそれに切り替える",
     "task": "## 背景\n\n雑談中のモック `docs/history/mockup/chat-sidebar-2026-09-23.png` では、差し色（帯の上端の線・仕事/雑談のトグル・いまの画面の口の下線・作業中のピル・顔の縁・立ち絵の縁）が橙に変わり、ピルの字が「tsukumo とおしゃべり中」になっている。差し色はパックの持ち物で、`characters/<name>/character.json` の `accent`（検証は `src/shared/character-definition.ts`）から `--accent` に入る。雑談用の色は無い。\n\n## 決まっていること（蒸し返さない）\n\n- **パックの定義ファイルに雑談の差し色の欄を足す**（キャラクターの色をコードに書かない。`CLAUDE.md` 原則4）。無いパックは仕事と同じ差し色\n- 雑談中だけ `--accent` をその色に切り替える（仕事へ戻れば元の色）\n\n## 解くべき論点\n\n- `--accent` から派生している色（`--surface-accent` など。`src/browser/styles/theme.css`）も一緒に切り替わるか\n- ピルの雑談中の字: `docs/design.md` 13.9（T-380 の決定）が雑談中のピルをどう決めたかを確かめ、モックの「<名前> とおしゃべり中」と違えば 13.9 を直してここで揃える\n- キャラクター画面で雑談の差し色を編集できるようにするか（仕事の差し色と同じ場所）\n\n## やること\n\n1. `character.json` の欄・`character-definition.ts` の検証・`characters/README.md`・同梱パックの定義を足す（`tsukumo` は橙）\n2. 雑談中に `--accent` を切り替える\n3. ピルの雑談中の字を揃える（上の論点）\n4. `docs/design.md` 13.2 / 13.7 に書く\n5. テスト: 雑談の差し色があるパックとないパックで、雑談中の差し色が決めたとおりになる\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900）: 雑談に入ると帯・トグル・顔の縁が橙になり、仕事へ戻すと元に戻る。何が見えたかを `evidence` に書く\n\n## 注意\n\n- ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。目視は一時の `TSUKUMO_HOME` で行う\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check: 1417 pass / 0 fail（118ファイル）。effectiveAccent の4ケース・chatAccent のパースと畳み込み・雑談中の依頼待ちの札を test/shared/character*.test.ts・session-state.test.ts・current-work.test.tsx で検査。\n目視（1400x900、一時 TSUKUMO_HOME・ポート 47391、Playwright）: 仕事は --accent #6fe3cd、雑談に切り替えると #f2984a になり、トグルの雑談側の背景・いまの画面の口の枠・顔の丸の地・札（「tsukumo とおしゃべり中」●、枠と字）が橙 rgb(242,152,74)。仕事へ戻すと teal・「依頼待ち」○ に戻った。\n論点: 派生色は color-mix が --accent を参照するので追随する / 札の名前は雑談中の依頼待ちだけの例外として 13.9 に書いた / chatAccent の編集UIは作らない（立ち絵の縁も 13.1 原則2 で足さない）"
   },
   {
     "id": "T-396",
