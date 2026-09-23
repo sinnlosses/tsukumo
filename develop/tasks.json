@@ -1,16 +1,5 @@
 [
   {
-    "id": "T-376",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-375"],
-    "summary": "セッションごとに1回、最初のターンの終わりに /context 内訳を記録する",
-    "task": "## 背景\n\nT-375 で、いまのセッションの `/context` 内訳（`getContextUsage()`）を画面に出せるようになる。\n内訳のうち Messages 以外（システムプロンプト・ツール定義・メモリファイル・スキル・MCP）は\nセッションの中ではほぼ変わらず、変わるのはセッションをまたいだとき（`CLAUDE.md` が伸びた、スキルが\n増えた）。後ろの T-377 のスキルが「何が文脈を占めているか」を過去にさかのぼって分析できるよう、\nセッションごとに1回だけ残す。\n\nトークン消費の記録は `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl`（書くのは\n`src/server/adapter/token-usage-log.ts`、何をいつ書くかは `src/server/core/session-manager.ts`）。\n記録の形（`src/shared/token-usage.ts`）の冒頭コメントは「書いてよいのは数・モデルの名前・ツールの\n名前・時刻・セッションID・モードだけ」と定めている。\n\n## 決まっていること（蒸し返さない）\n\n- 記録するのは**セッションごとに1回**、**最初のターンが終わったとき**、`detail: 'full'` で取った値（2026-09-23 ユーザー）\n- 「セッション」は claude 側のセッションID（`system/init` の `session_id`）の単位。起こし直してIDが変われば別のセッションとして1回書く\n\n## 解くべき論点\n\n- 置き場。(a) いまの JSONL に種類の違う行として混ぜる、(b) `~/.tsukumo/context-usage/` のように別に置く。(a) は `TokenUsageLog.readRange` と集計が行の種類を見分ける必要がある。読む側（T-377 のスキル）が開くファイルの数も物差しにする\n- 記録の形に入る文字列が増える（メモリファイルのパス・スキル名・MCP ツール名）。`src/shared/token-usage.ts` の冒頭の「書いてよいもの」の線をどう引き直すか。**会話の文面・ツールの引数と結果が入らないことは変えない**\n- 最初のターンが終わったときにまだ `getContextUsage()` が取れなかったら、次のターンで取り直すか諦めるか\n\n## やること\n\n1. 論点を決め、決めたことを記録の形のコメント（とあれば `docs/design.md` の該当箇所）に書く\n2. `session-manager.ts` に「このセッションIDではもう書いたか」を持たせ、最初の `turn-finished` で1回だけ書く\n3. 取れなかったとき・書けなかったときはセッションを止めない（`docs/coding-standards.md`「エラーハンドリング」）\n4. テストを足す（1セッションで1行・IDが変わればもう1行・取れなかったときに落ちない）\n5. 本物で起こして2ターン回し、記録が1行だけ増えたことを確かめる\n\n## 完了条件\n\n- `bun run check` が通る\n- 本物のセッションで2ターン回したあと、内訳の記録がそのセッションIDで1行だけあることを `evidence` に書く（中身は数と分類名の件数だけ書き、パスは貼らない）\n\n## 注意\n\n- 形を変えるなら版（`TOKEN_USAGE_FORMAT_VERSION` か新しい版の定数）を上げる。古い版の行は読まずに落とす方針（`TokenUsageLog.readRange` のコメント）はそのまま\n- 雑談モードのセッションも同じように1回書く（`mode` を持たせる）\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
-  },
-  {
     "id": "T-377",
     "difficulty": "opus",
     "loopable": "Y",
@@ -20,17 +9,6 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-390",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-332"],
-    "summary": "雑談の要約に話題の見出しを書かせ、サイドバーの「最近の話題」に直近を出す",
-    "task": "## 背景\n\n雑談中のサイドバー（モック `docs/history/mockup/chat-sidebar-2026-09-23.png`、器は T-332）の「最近の話題」。**話題の一覧というデータはまだ無い。** 雑談の記憶は、ログが閾値を超えると tsukumo が `/compact` を送り（`src/server/core/session-manager.ts`、文面は `src/server/core/chat-compact.ts`）、claude 自身が作った要約を `~/.tsukumo/chat-summary/<パック名>.md` に写す（`src/server/adapter/chat-summary.ts`。1行目が渡し済みの印、2行目から本文）。次のセッションへは `src/server/core/chat-memory-prompt.ts` が載せる。\n\n## 決まっていること（蒸し返さない）\n\n- **要約に話題の見出しも書かせ、その直近の数件を出す**（2026-09-23 のユーザーの選択）。「残す」旗の会話から出す案と、話題を記録するツールを足す案は採らなかった\n- 更新されるのは圧縮のときだけ（それまでは前回の話題のまま）\n- 会話はプロセスの外へ出さない（要約は同じ claude が作る。`docs/requirements.md` 2.2）\n\n## 解くべき論点\n\n- 要約の中で話題の見出しをどう区切るか（`/compact` の依頼の文面に見出しの節を指定し、写しから機械的に取り出せる形にする）と、取り出せなかったときの扱い（出さない）\n- 何件出すか（モックは3件）、新しい順か\n- 見出しをブラウザへどう届けるか（`SessionState` に載せるか。`src/shared/` の契約が増える）\n- 圧縮がまだ一度も起きていないパックの空のときの案内\n\n## やること\n\n1. `chat-compact.ts` の依頼の文面に話題の見出しの節を足す\n2. 写しから見出しを取り出す純関数を `src/server/core/` か `src/shared/` に置き、テストする\n3. 契約を足して「最近の話題」に出す\n4. `docs/requirements.md` 4.9 と `docs/design.md` 7章（要約の置き場）・13.7 を直す\n5. 調べて「`/compact` の要約の形を指定しても見出しが安定して取り出せない」と分かったら、実装せずに理由と見た要約の形（中身ではなく構造だけ）を `evidence` に書いて閉じる\n\n## 完了条件\n\n- 取り出しの純関数のテストがある（フィクスチャは作った文面）\n- `bun run check` が通る\n- 目視（一時の `TSUKUMO_HOME` に作った要約を置く）: 雑談のサイドバーに見出しが並ぶ。要約が無いときは案内が出る。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 雑談の要約・覚えたこと・会話は利用者の会話から来たもの。テストのフィクスチャに実物を使わない、ログに全文を出さない（`docs/coding-standards.md`「会話内容の扱い」）\n- 利用者の `~/.tsukumo/chat-summary/` を目視のために書き換えない\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 1599 pass / 0 fail（test/server/core/chat-compact.test.ts 新規12件は作った文面。session-state・session-launch・sdk-driver・sidebar のテストに追加）。docs の節数 requirements 27→27・design 53→53・glossary 68→69（最近の話題の1節）\n目視: fake driver + Playwright(Chrome)、一時 TSUKUMO_HOME に手で書いた要約（見出し4件）。1440x900 で雑談のサイドバーに3件が書いた順に並び、4件目は出ず、長い見出しは折り返した。390x844 のサイドバーのタブでも同じ3件で scrollWidth=clientWidth=390\n写しの無いパックでは「まだ話題が無い（話が積もると、ここに並ぶ）」。本物の /compact でモデルが <topics> を書くかは未確認（fake では圧縮が起きない）"
   },
   {
     "id": "T-391",
@@ -50,9 +28,9 @@
     "dependencies": [],
     "summary": "トークン消費の期間を今日・7日・30日にし、合計を小さな棒グラフつきの4枚の札にする",
     "task": "## 背景\n\nトークン消費の画面（`src/browser/features/token-usage/presentational-token-usage-screen.tsx`）は、上の帯に題と期間の切り替え（`TOKEN_USAGE_DAYS_CHOICES` = `[7, 30]`。`src/shared/token-usage-summary.ts`）、その下に期間の合計4つ（`Figure`。入力・出力・キャッシュ読み・キャッシュ作成）、その下に「日ごと」のグラフ（`daily-usage-chart.tsx` の `DailyUsageChart`。Chart.js で2枚: 入力・出力・キャッシュ作成の積み上げと、桁の違うキャッシュ読み）を出している。`Section` は枠を持たない。\n\n集計は `src/server/core/token-usage.ts` の `summarizeTokenUsage`（純関数。期間は行の `at` の頭10文字で切る）と `summarizeRecentTokenUsage`（「今日を含む直近 `days` 日」）が作り、`GET /token-usage?days=<日数>` で配る。`TokenUsageSummary.byDay` は**記録がある日だけ**を並べる。`TokenUsageRecord.at` はオフセット付きの ISO 8601 で、ローカルの時刻を持つ。\n\n2026-09-23 にユーザーがモック `docs/history/mockup/token-usage-2026-09-23.png` を示した。その「期間の消費」の部分:\n\n- 見出し「期間の消費」の右端に期間の切り替え「今日 / 7日 / 30日」（いまの帯から移す。ページの題「トークン消費」は単独で上に大きく出す）\n- その下に**枠のある札を4枚横に並べる**（入力・出力・キャッシュ読み・キャッシュ作成）。札ごとに、見出し（小さく）・期間の合計（大きく、等幅）・**その数だけの小さな棒グラフ**。棒は期間の日ごと（記録の無い日も高さ0の印として並ぶ）、いちばん高い棒の上に「最大 18.5k」、下に期間の最初と最後の日付（`09-17` / `09-23`）\n- 札ごとに縦軸が独立するので、キャッシュ読みの桁が大きくてもほかが潰れない（いまの2枚に分けた理由が消える）\n\n## 決まっていること（蒸し返さない）\n\n- 期間は「今日 / 7日 / 30日」の3つ。既定は7日のまま\n- **「今日」のときの棒は時間ごと（0〜23時の24本）**（2026-09-23 ユーザー）\n- 棒は記録の無い日（時間）も並べる。いまの「日ごと」の2枚のグラフ（`DailyUsageChart`）はこの4枚に置き換えて無くす\n- モックの中の「日ごとの値は元のグラフの目盛りからの概算」「[サンプル値]」はモックを作ったときの注記で、作るものではない\n- この画面の上には T-375 が「いまのコンテキスト」の札を置き、題の横には T-374 がプラン名を置く。このタスクはそれらの場所を空けておくだけでよい\n\n## 解くべき論点\n\n1. 時間ごとの切り方を集計の形（`TokenUsageSummary`）にどう載せるか。候補: (a) `byHour` を足して期間が1日のときだけ埋める (b) `byDay` を「区間」（`buckets` と単位）に一般化する。`src/shared/token-usage-summary.ts` の zod の形と、`readTokenUsageDays` の読み方も合わせて直す\n2. 記録の無い日（時間）を埋めるのをサーバでやるかブラウザでやるか（`byDay` の「記録が無い日は含まない」という約束を変えるか）\n3. 小さな棒を Chart.js で描くか、CSS / SVG で描くか。4枚を同時に出すので、Chart.js を開いたときに読む作り（`src/browser/lib/chart.ts`）の重さと、読み込みに失敗したときの見せ方で決める。軸も凡例も無い棒なので、Chart.js を使わない案が第一候補\n4. 30本・24本のときの下のラベル（最初と最後だけでよいか。「今日」なら `0時` / `23時` など）\n5. `TOKEN_USAGE_DAYS_CHOICES` の冒頭コメント（「1日・90日は減らす判断が変わらない」）の書き直し\n\n## やること\n\n1. 論点1・2を決め、`src/shared/token-usage-summary.ts` と `src/server/core/token-usage.ts` を直す（時間の頭は `at` の11〜13文字目でローカルの時刻として読める。タイムゾーンを変換し直さない）\n2. 画面を直す: 題を単独にし、「期間の消費」の見出しと期間の切り替え、4枚の札を置く。`DailyUsageChart` を消す。`Section` の「枠は持たない」はモックに合わせて枠のある札に変える（`docs/design.md` 13.1 原則2 は「枠を持たないのはキャラクターだけ」なので食い違わない）\n3. 狭い画面（≤760px）では札を2列または1列に折る\n4. テストを足す・直す: 集計（`test/server/core/` の該当ファイル。時間ごと・日の埋め方・1日の期間）、`readTokenUsageDays`（`1` を読める）、画面（期間を押すと取り直す・札が4枚・最大のラベル・記録が無い期間の一言）\n5. `docs/design.md` にトークン消費の画面の記述があれば直す（`grep -n 'token-usage\\|トークン消費' docs/design.md docs/requirements.md`）\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900 と 760px 以下）: 本物か疑似の記録で「今日 / 7日 / 30日」を切り替え、札が4枚並んで棒と最大のラベルが出る・今日は24本になる・記録の無い期間は一言だけになる。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける（記録は `~/.tsukumo/token-usage/` にある）\n- T-374 / T-375 / T-402 と同じ `presentational-token-usage-screen.tsx` を触る。並行させたときは合流でぶつかりうる\n- 記録の形（`TokenUsageRecord`）は変えない。変えるのは集計の形だけ\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "論点の結論: 集計は byDay を廃して trend={unit:\"day\"|\"hour\", points:[{key,totals}]} に一般化（byDay/byHour だと常に片方が空配列で1つの状態を2つの入れ物が表す）。穴埋めはサーバ（ブラウザはサーバの「今日」を知らないので棒の本数と両端を決められない）。棒は CSS（軸も凡例も無く、canvas 4枚と読み込み失敗の見せ方を抱える価値がない）。下のラベルは両端だけで、最大は棒の上に高いほうへ寄せて出す。期間は 1/7/30 の3段。 / bun run check は 1673 pass / 0 fail（137ファイル）。 / 目視（TSUKUMO_VIEW_PORT=39401・専用ホーム、架空の記録98行）: 1400x900 で札4枚が1行（幅231px・横スクロール0）、760px で2×2、400px で1列。7日=棒7本/09-17・09-23、今日=24本/0時・23時、30日=30本/08-25・09-23。切り替えで合計も棒も追従し押した札だけ aria-pressed。記録を置かない別ホームでは「この期間の記録はまだ無い」の一言だけで札も表も出ない。"
   },
   {
     "id": "T-402",
@@ -66,48 +44,15 @@
     "evidence": ""
   },
   {
-    "id": "T-410",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "ブラウザが hello の protocolVersion を照合し、違えば読み込み直しを促す",
-    "task": "## 背景\n\n`docs/design.md` 4.4 と `src/shared/frame.ts` はどちらも「`protocolVersion` がブラウザの `PROTOCOL_VERSION` と違えば、ブラウザは『ページを読み込み直してください』を出して以降のフレームを無視する」と書いている。しかし `src/browser/` は `PROTOCOL_VERSION` を一度も読んでいない（`grep -rn PROTOCOL_VERSION src/browser` が0件）。`src/shared/frame.ts` の zod は `protocolVersion` を数として読むだけで、照合はどこにも無い。サーバは `src/server/core/session-manager.ts` で `hello` に `protocolVersion: PROTOCOL_VERSION` を載せている。\n\n`docs/design.md` 6.2 の状態の表は「接続中 / 切断中、プロトコルの版違い」を `browser/stores/session.tsx` の snapshot に相乗りさせると書いているので、置き場所は決まっている。起こし直したプロセスと古いタブの組み合わせで起きる（`bun run dev` の作り直しは `refresh` フレームで押すので、主に `bun run start` の上げ直し）。\n\n## やること\n\n1. `browser/stores/session.tsx` で `hello` の `protocolVersion` を照合し、違えば版違いの状態にして以降のフレームを畳まない\n2. 版違いのとき、画面に「ページを読み込み直してください」を出す（出す場所は接続切れの印と同じ場所が第一候補。`docs/design.md` 6.1 の `<Layout>` の行）。読み込み直す口を添えるかを決める\n3. テストを足す（`test/browser/stores/` と、印を出す部品のテスト）: 同じ版なら何も出ない / 違う版なら文言が出て以降のフレームで姿が変わらない\n4. `docs/design.md` 4.4 の記述が実装と合っているか確かめ、ずれていれば直す\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n\n## 注意\n\n- `PROTOCOL_VERSION` の値そのものは変えない\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "やること1・2・4（session.tsx での hello の版の照合・components/protocol-mismatch.tsx を main.tsx が会話の画面の代わりに描く・docs/design.md 4.4 の追随）は、別のセッションのコミット 2b1cfa6 で既に入っていた（`grep -rn PROTOCOL_VERSION src/browser` は session.tsx の3か所）。今回足したのは欠けていた部品のテスト test/browser/components/protocol-mismatch.test.tsx（role=alert が出る／3行の文言が出る、の2件）だけ。bun run check 1632 pass / 0 fail / 134ファイル。"
-  },
-  {
     "id": "T-413",
     "difficulty": "opus",
     "loopable": "Y",
     "dependencies": [],
     "summary": "帯の部品を広い画面と「≡」の面へ届ける配線を、項目ごとの書き写しから1本にする",
     "task": "## 背景\n\n帯の部品（`src/browser/features/screen-nav/`）は `docs/design.md` 13.9「狭い画面（760px 以下）」の決定どおり、広い画面の帯と狭い画面の「≡」の面の**両方に同じ部品を置き**、どちらを出すかは `screen-nav.module.css` の `@media` が決める。この置き方は変えない。問題は、2つの面へ値を届ける配線が項目ごとの手書きになっていること:\n\n- `hooks/use-screen-nav.ts` の `ScreenNavView` を `presentational-screen-nav.tsx` の `PresentationalScreenNav` が1項目ずつ分解し、`components/screen-nav-menu.tsx` の `ScreenNavMenuProps`（14項目）へ1項目ずつ渡し直している。`ScreenNavMenuProps` の14項目のうち11項目は `ScreenNavView` と同じ名前・同じ型の写し\n- Esc で閉じたときにフォーカスを押した口へ戻すため、開閉する部品は ref を広い画面用と狭い画面用の2本持つ（`hooks/use-current-work.ts` と `hooks/use-settings.ts` の `toggleRefWide` / `toggleRefNarrow`）。2本とも `ScreenNavView` に上がって（`workToggleRefWide` / `workToggleRefNarrow` / `settingsToggleRefWide` / `settingsToggleRefNarrow`）、上の経路を通って2つの面へ配られる。戻すときは両方へ `.focus()` を呼ぶ（見えていないほうは `display: none` で効かない）\n\nこのため帯の部品を1つ足すたびに、同じ値を型・分解・受け渡し・部品の型・JSX の各所へ書き足すことになる。T-383（顔）は `presentational-screen-nav.tsx` を5回、`use-screen-nav.ts` と `screen-nav-menu.tsx` を3回ずつ直した。T-382（いまの作業の札）と T-385（設定の歯車）は ref の組を1組ずつ足した。この先も T-403・T-408 が帯に手を入れる。\n\n## 解くべき論点\n\n- 2つの面へ値を届ける形をどれにするか。候補: (a) `<ScreenNavMenu>` が `ScreenNavView`（または `Pick` した型）をそのまま受ける / (b) 帯の部品を `PresentationalScreenNav` で一度だけ組み立て、広い画面と「≡」の面の両方に置く / (c) それ以外。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ（開くファイルの数・呼ぶ側が外の事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）\n- 広い画面用と狭い画面用の ref の組をどう畳むか（1つの口につき1つの値で済ませられるか）。`docs/coding-standards.md`「レンダー中に ref を読み書きしない」と `presentational-screen-nav.tsx` 冒頭の「props はここだけ分解して受ける」の理由（`react(refs)` の lint）に反しない形にする\n- 「≡」の面の並び（顔と部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード → 設定の歯車）と広い画面の並びは違う。並びの違いをどこで表すか\n\n## やること\n\n1. `docs/design.md` 13.9「狭い画面（760px 以下）」と `src/browser/features/screen-nav/` の全ファイルを読み、上の論点に答えを出す\n2. 選んだ形に寄せる。**画面の見え方と振る舞い（並び・開閉・Esc でフォーカスを押した口へ戻すこと・答え待ちの ● ）は変えない**\n3. `test/browser/features/screen-nav/` の既存のテストがそのまま通ることを確かめる。Esc で閉じたときのフォーカスの戻り先を広い画面・狭い画面の両方で見ているテストが無ければ足す\n4. 選ばなかった案とその理由を `evidence` に1行ずつ書く。`docs/design.md` 13.9 に配線の記述があれば合わせる\n\n## 完了条件\n\n- `ScreenNavMenuProps`（またはその後継）に、`ScreenNavView` の項目を同じ名前で書き写した項目が残っていない。残すものがあれば、残す理由を `evidence` に書く\n- `toggleRefWide` / `toggleRefNarrow` のような、1つの口に対する ref の組が `ScreenNavView` に上がっていない。畳めなかった場合はその理由を `evidence` に書く\n- `bun run check` が通る\n- 目視（1400x900 と 390 幅）: 帯の各部品（顔・部屋の名前・トグル・3つの口・いまの作業・モデル・許可モード・歯車）が変更前と同じ並びで出て、いまの作業と歯車が開き、Esc で閉じるとフォーカスが押した口へ戻る。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 見え方を変えるタスクではない。変更前と撮り比べる手順は `docs/architecture.md`「手で確かめること」（`scripts/serve-revision.ts`）\n- T-403・T-408 も `src/browser/features/screen-nav/` を触る。どちらかが先に `main` に入っていたら取り込んでから始める\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
-  },
-  {
-    "id": "T-414",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "同じ前提はコメント1か所に書く規約を足し、セッションの印の説明の重なりを畳む",
-    "task": "## 背景\n\n仕様の理由が、呼び出しの経路にあるすべての関数のコメントに書き写されている。T-393 はセッションの切り替え先の一覧を絞り込む鍵を `family` から `tag` へ替えただけだったが、`src/` の変更85行のうち62行がコメントで、5つのファイルで同じ理由を書き直した:\n\n- `src/server/adapter/sdk-driver.ts` の `listSwitchableSessions`\n- `src/server/core/config.ts` の `sessionTag` と `SessionMark.tag`\n- `src/server/core/session-restore.ts` の `listMarkedSessions` と `TaggedSession.tag`\n- `src/session-start.ts` の `listPackSessions`\n- `src/shared/session-choice.ts` の `SessionChoice.viewPort`\n\nいまも「落ちた tsukumo の印と動いている tsukumo の印は見分けられない」は `config.ts`・`session-restore.ts`・`session-choice.ts` の3か所に、「部屋はビューのポート1つにつき1つ」は `session-restore.ts`・`session-start.ts` の2か所に書かれている（`grep -rn '見分けられない' src` / `grep -rn 'ポート1つにつき' src` で数える）。\n\n`docs/coding-standards.md`「コメント」節の表は「今の挙動の制約・前提はコードに残す。必要なだけ長くてよい」とだけ言っていて、**同じ前提を何か所に書くか**を決めていない。\n\n## 決まっていること（蒸し返さない）\n\n- 規約に足すのは「同じ制約・前提は、それを決めている関数（絞り込むなら絞り込む関数）に1回だけ書き、経路上の他の関数は `{@link}` で指す」という趣旨。2026-09-23 の振り返りで出し、ユーザーが承認した\n\n## やること\n\n1. `docs/coding-standards.md`「コメント」節に上の趣旨を足す。節の索引の表に行を足す必要があるかも見る\n2. 上の5ファイルのコメントを、その趣旨に沿って畳む。どの関数が決めているかは次を目安にする: 印の組み立てと読み戻しは `config.ts`、一覧の絞り込みと並びは `session-restore.ts` の `listMarkedSessions`。他のファイルは `{@link}` か1行の参照にする。**コードは変えない**\n3. 畳んだ結果、`docs/requirements.md` 4.8「鍵」や `docs/glossary.md`「部屋」にしか無い理由がコードに残っていたら、それは正典への参照で足りるかを見る（正典に無い理由は消さない）\n\n## 完了条件\n\n- `docs/coding-standards.md`「コメント」節に、同じ前提を1か所に書くことが書かれている\n- `grep -rn '見分けられない' src` で、セッションの印についての説明が1か所だけになっている（`session-switch.tsx` の時刻の話は別の件なので残ってよい）\n- `grep -rn 'ポート1つにつき' src` が1件以下\n- `git diff` の `src/` の変更がコメントの行だけ\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/coding-standards.md` の数が変わらないことを確かめる\n- 経緯（昔はこうだった）の段落を見つけても、このタスクでは正典へ移さない。同じ前提の重なりを畳むことだけをする\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
-  },
-  {
-    "id": "T-418",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-417"],
-    "summary": "requirements.md 4.10 の原寸を手放す約束を、棚の寿命に書き換える",
-    "task": "## 背景\n\n`docs/requirements.md` 4.10「会話内容の扱い」の2つめの箇条は「**原寸は送った時点で手放す。** 記録に残るのは控えだけで、tsukumo のどちらの側も原寸を持ち続けない」と書いている。「画面での見え方」の「控えは押せない」はその帰結として書かれている（札のぶんは T-416 で書き換え済み）。\n\nT-417 で、サーバの `src/server/core/` に原寸を直近ぶんだけメモリで持つ「棚」と、`/prompt-image/<id>` の配信ができた。これで 4.10 の2つめの約束は実態と合わなくなっている。\n\n## 決まっていること（蒸し返さない）\n\n- 覆すのは 4.10「会話内容の扱い」の**2つめの約束だけ**。棚の寿命（直近N枚・記録の窓から出たら捨てる・ディスクには書かない）の約束に書き換える（2026-09-23 ユーザーが案Cを選んだ）\n- 1つめの約束（ディスクに書かない・一時ファイルに落とさない）はそのまま残す\n- 「控えだけを記録に残すので、記録の大きさが上限を持つ」の箇条もそのまま残す（`SessionState` と `hello` には今も控えしか載らない）\n\n## やること\n\n1. `docs/requirements.md` 4.10「会話内容の扱い」の2つめの箇条を、棚の寿命の約束に書き換える。枚数・窓・ディスクに書かないことを、T-417 で実装した値のとおりに書く\n2. 同じ 4.10「画面での見え方」の、控えが押せないという記述を、控えも押せる（棚に原寸が残っている間は原寸、無ければ論点で決めた形）という記述に直す\n3. `docs/design.md`（13.7 など）・`docs/coding-standards.md`「会話内容の扱い」・`docs/glossary.md` に、「原寸をどこにも残さない」という前提の記述が残っていないか `grep` で探し、あれば同じように直す\n\n## 完了条件\n\n- `docs/requirements.md` 4.10 に「原寸は送った時点で手放す」「控えは押せない」の趣旨の記述が残っていない\n- 4.10 に書いた棚の枚数・捨てる契機が、T-417 のコードの値と一致している（どの定数かを `evidence` に書く）\n- 各ファイルの節の数が編集の前後で変わらない（`grep -c '^#\\{2,3\\} ' <ファイル>`）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは、節の索引の表に当たらないよう行頭から位置を特定する（CLAUDE.md「ドキュメントを編集するときの罠」）\n- コードは変えない。ドキュメントだけのタスク\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "ScreenNavView を current / parts / menu / ref の4項目にし、帯の部品の値は束 ScreenNavParts で2つの面へ配る形にした。ScreenNavMenuProps は parts と menu の2項目だけで、ScreenNavView からの同名の写しは残っていない。採らなかった案: (a) ScreenNavView をそのまま渡す——current / ref は面に要らず menuOpen / pendingActive / onToggleMenu は帯に要らないので「渡したが使わない」項目が両側に残る。(b) 部品を1度だけ組んで両方に置く——2つの面は DOM の入れ子（identity / gates の包み）と並びが違い、screen-nav.module.css の @media がその違いに載っているので見え方が変わる。広い/狭いの ref の組は RefCallback 1本（付いている札を Set に集め、Esc のとき全部へ focus）に畳んで ScreenNavView から消した（grep 'ToggleRefWide|ToggleRefNarrow' が0件）。目視は 1400x900 と 390x844 で変更前（scripts/serve-revision.ts HEAD）と比べ、帯の並び・可視/不可視・いまの作業と歯車の開閉・Esc の戻り先（広い画面は押した口へ、狭い画面は面ごと閉じて body）が一致。bun run check 1653 pass / 0 fail / 135ファイル（screen-nav は 76 pass。Esc の戻り先のテストを3件足した）。"
   },
   {
     "id": "T-424",
@@ -116,6 +61,237 @@
     "dependencies": [],
     "summary": "動いている部屋のビューを iframe の格子に並べた1枚を、スクリプトで Orca に開く",
     "task": "## 背景\n\n手元では作業ツリーごとに tsukumo を並べて動かしている（2026-09-23 の実測で 7327〜7332 の6つ）。それぞれのビューは Orca の別々のタブに出ていて、全部の様子を一度に見る手段が無い。**動いている部屋のビューを iframe で格子に並べた1枚の HTML** を、手で打つスクリプトで作って Orca に開く。方針はユーザーと会話で決めた（下の「決まっていること」）。\n\nいまの関連箇所:\n\n- ビューの URL は `http://127.0.0.1:<port>/?t=<起動トークン>`。トークンは起動ごとの乱数で**ディスクに書かない**（`docs/design.md` 9章）。持っているのはそのプロセスのメモリと、Orca のタブの URL だけ\n- `scripts/stop.ts` が既定ポート（`DEFAULT_VIEW_PORT` = 7327）から `VIEW_PORT_FALLBACK_ATTEMPTS`（20）個を `lsof -ti tcp:<port> -sTCP:LISTEN` で引いて待ち受けを数え上げている（`candidatePorts` / `findListener`。どちらもファイル内の非公開関数）\n- `orca` コマンドを起こすのは `src/server/adapter/orca-host.ts` だけで、`test/architecture.test.ts`「orca コマンドを起こす箇所」が見張る。いまあるのは `createOrcaHost()` が返す `Host`（`src/server/core/host.ts`）の `showView` だけ。`scripts/open-views.ts` はそれを import して使っている\n- 部屋の名前は `roomName(port)`（`src/shared/room.ts`）\n- 2026-09-23 に手元で確かめた前提:\n  - `orca tab list --worktree all --json` の `result.tabs[]` は `browserPageId` / `url`（トークン込み）/ `title` / `worktreeId` などを持つ。`--worktree all` を付けないと今の作業ツリーのタブしか返らない\n  - `orca tab create --url data:text/html,…` は**中身が捨てられて** `data:text/html,` になる（base64・パーセントエンコードの両方）。`file://` の HTML は開けて、その中の iframe（`http://127.0.0.1:7327/`）で `load` が発火した\n  - ビューのページ（`/`）は `X-Frame-Options` も CSP も返さない\n  - `src/server/adapter/session-socket.ts` は接続ごとに `subscribe` するので、同じ部屋をタブと iframe の2か所から開いてよい。iframe の中のオリジンは部屋自身なので `Origin` の照合も通る\n  - 開いただけでブラウザ側が送るコマンドは無い（`nudge` も `use-chat-view.ts` のボタンからだけ）\n  - `orca tab close --page <id>` でタブを名指しで閉じられる\n  - 実際に「プロセスは動いているがタブが無い部屋」（7328・7331）と「プロセスが止まったのにタブだけ残った部屋」（7390）が両方あった\n\n## 決まっていること（蒸し返さない）\n\n- 形は**各ビューを iframe で1枚に並べた格子**（リンクの一覧ではない）。ユーザー: 「各ビューを1枚に並べたものだね」\n- 並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。**タブの無い部屋と、止まったプロセスのタブは表示しない**。ユーザー: 「(2)は表示不要だよ」。したがってトークンを取り戻す仕組み（シグナルでタブを開き直させる等）は作らない\n- tsukumo のサーバ側は変えない。手で打つスクリプトが1回ぶんのスナップショットを作る。常駐のダッシュボードにはしない（`docs/requirements.md` 2.2「複数セッション・常駐」）。各部屋が隣を問い合わせる案・起動時に登録ファイルを書く案はトークンを配る／書くことになるので採らない\n- HTML は `$TMPDIR` に 0600 で書いて `file://` で開き、**読み込めたら消す**（トークンをディスクに残さない）。見直すときはスクリプトを打ち直す\n- 前回の格子のタブは `<title>` で見分けて閉じてから開く（タブを溜めない）\n- 各マスの見出しは部屋の名前・作業ツリー名・ブランチ・ポート。**セッションの見出し（SDK の `summary`）は会話由来なので出さない**\n- 見出しを押すと `:target` の CSS でそのマスが全面に広がる。格子の HTML に JS は置かない（読み込み完了の判定は下の「解くべき論点」）\n- `orca tab list` / `orca tab close` は `orca-host.ts` に足す。`Host` ポート（`showView`）には入れない（サーバ側は使わない）\n\n## 解くべき論点\n\n- スクリプトの名前。仮名は `scripts/open-room-grid.ts`（原則5: ファイルは単数形。既存の `open-views.ts` にならって動詞から始める）\n- `orca-host.ts` に足す関数の形（`Host` の外に `listViewTabs()` / `closeTab(pageId)` のような別の輸出にするか。スクリプトから使うだけなので `Host` の型は広げない）\n- 「読み込めたら消す」をどう判定するか（例: `orca tab list` でそのページの `title` が格子の題になるまで短い間隔で見て、上限時間を過ぎたら消して警告だけ出す）。JS を置かずに済む方法を選ぶ\n- 走査範囲: 既定の20個に、タブの URL に出てきた `127.0.0.1` のポートを足す（`TSUKUMO_VIEW_PORT` で範囲外を指した部屋を拾うため）。待ち受けているのが tsukumo かどうかは、タブの URL のパスが `LAYOUT_PATH` であることと合わせて判断する\n- 部屋ごとの cwd は `lsof -a -p <pid> -d cwd -Fn`、ブランチは `git -C <cwd> branch --show-current`。取れないときはその欄を空にしてマスは出す\n- 格子の列の決め方（`grid-template-columns: repeat(auto-fit, minmax(…, 1fr))` の最小幅）。マスが狭いと各ビューは狭い画面のレイアウト（`docs/requirements.md` 4.7）で描かれるが、それは受け入れる\n\n## やること\n\n1. `scripts/stop.ts` の待ち受けの探し方（`candidatePorts` / `findListener` と、その下の `run` / `firstNumber`）を `scripts/lib/` の概念名のファイルへ切り出し、`stop.ts` はそれを使うように直す（振る舞いは変えない）\n2. `orca-host.ts` にタブの一覧（`--worktree all`）と、ページIDを指定して閉じる操作を足す。出力の形は境界で検証する（`isPlainObject` などで。キャストしない）\n3. 突き合わせ（待ち受け × タブ → 並べる部屋の一覧）と HTML の組み立てを、外の世界に触らない純粋な関数として書き、`test/scripts/` にテストを足す（タブだけの部屋・待ち受けだけの部屋が落ちること、範囲外のポートを拾うこと、HTML の属性値がエスケープされること、見出しに部屋の名前が出ること）。**テストのフィクスチャのトークンは架空の値にする**\n4. スクリプト本体: 集める → 並べる部屋が0件ならその旨を1行出して終わる → `$TMPDIR` に 0600 で書く → 前回の格子のタブを閉じる → `file://` で開く → 読み込めたらファイルを消す\n5. `docs/requirements.md` 2.2「複数セッション・常駐」の箇条に、格子のページは tsukumo の外で作る1枚で各マスは1画面＝1セッションのままなので当たらない、と1行足す。CLAUDE.md の「よく使うコマンド」に1行足す\n6. 目視: 疑似セッション（`TSUKUMO_DRIVER=fake`）を `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分けて2つ起こし（タブは自動で開く）、スクリプトで格子を開く。**トークン付きの iframe の中で WebSocket がつながって画面が描けるか**と、**iframe の中の入力欄にキーが入るか**を確かめる。本物の部屋は開いて見るだけにし、依頼は送らない\n7. **6で iframe の中の WebSocket がつながらない・入力できないと分かったら**、回避を押し切らずに、原因と観察を `evidence` に書いて `passes: false` で閉じる（サーバ側を変える必要が出たら、それは方針の変更になるため）\n\n## 完了条件\n\n- `bun run scripts/open-room-grid.ts`（名前は論点で決めたもの）を打つと、待ち受けていてタブもある部屋だけが格子に並んだタブが Orca に1つ開き、打ち直すと前のタブが閉じて1つのまま\n- 格子を開いたあと `$TMPDIR` に書いた HTML が残っていない\n- `scripts/stop.ts` の一覧と停止の振る舞いが変わらない（切り出しの前後で `bun run scripts/stop.ts` の出力が同じ）\n- 追加した純粋な関数のテストが `test/scripts/` にある\n- 疑似セッション2つで、iframe の中に画面が描かれ、入力欄にキーが入ることを目視で確かめ、その結果（どの端末で何が見えたか）を `evidence` に書いている\n- `bun run check` が通る\n\n## 注意\n\n- 起動トークンを stdout・ログ・`evidence`・コミットに出さない（URL を出すときは `t=` の値を伏せる）\n- 格子の HTML・スクリーンショットに本物の部屋の会話が写る。撮った画像はリポジトリに置かない（`docs/coding-standards.md`「会話内容の扱い」）\n- 目視のために開いたタブは自分で作ったものだけを `--page <id>` で閉じる。他の部屋のタブや `orca tab close` の引数なしの呼び出しは使わない\n- `orca` 以外の外部コマンド（`lsof` / `ps` / `git`）は `stop.ts` で既に使っているもので足りる。増やすならユーザーの承認が要る",
+    "status": "doing",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-425",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "design.md 1〜3章と architecture.md の置き場の記述を実物に合わせる",
+    "task": "## 背景\n\n`docs/design.md` の構造の章が実物から離れている（2026-09-23 に `git ls-files src` と突き合わせた）:\n\n- **2章「ディレクトリ」の木**に無いファイルが多い。`src/shared/` では `blank-text.ts` `chat-log.ts` `context-usage.ts` `context-usage-record.ts` `image-data-url.ts` `portrait-image.ts` `portrait-motion.ts` `prompt-image.ts` `session-choice.ts` `session-default.ts` `session-socket.ts` `token-usage.ts` `token-usage-summary.ts` `turn-speech.ts` `turn-step.ts` `vendor-asset.ts`、`src/server/core/` では `chat-compact.ts` `chat-manner.ts` `chat-memory-prompt.ts` `chat-nudge.ts` `context-usage.ts` `prompt-image-shelf.ts` `session-rule.ts` `token-usage.ts`、`src/server/adapter/` では `context-usage-log.ts` `local-time.ts` `source-fingerprint.ts` `token-usage-log.ts` `vendor-asset.ts`、`src/browser/` 直下の `css-global.d.ts` `vendor-global.d.ts`\n- 2章の `stores/` の説明は「**実体は4つあり**」と書くが、いまは8つ（`brush-tip.ts` `location-hash.ts` `main-view-turn.ts` `question-answer.tsx` `question-scroll.tsx` `screen.tsx` `session.tsx` `turn-selection.tsx`）\n- 1章の「残すもの」の表の「起動時に `bun build` で束ねてメモリから配る（ディスクに成果物を置かない）」と、3章「起動」の手順2「`bundle.ts` が `browser/main.tsx` を `bun build` で束ねられるか（スクリプトと CSS の1組をメモリに持つ）」は、2026-09-21 に起動時の組み立てをやめて `dist/browser/` を読むだけにした現状（`src/main.ts` の `readUiBundle`、`CLAUDE.md`「セットアップ」）と違う\n- `docs/architecture.md`「新しいコードを置く場所」の原則5は `src/browser/` の箱を `features/` `components/` `stores/` `styles/` と `lib/` `utils/` としか書かず、`hooks/` と機能の中の `hooks/` `components/` `domain/`、`presentational-<機能>.tsx` の例外（`CLAUDE.md` 原則5と design.md 2章にはある）が抜けている。同じ節の表の `src/browser/` の行も `hooks/` `utils/` を欠く\n- `docs/architecture.md` の同じ節は「`shared` に置くのは両側の契約と、`SessionState` から純粋に導けるものだけ」と書くが、design.md 2章「層と依存の向き」の表の `shared` の行は後者（ブラウザしか読まない導出。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`）に触れていない\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- このタスクは**記述を実物に合わせるだけ**。構造を変える判断は同じ棚卸しで切った別タスク（SessionManager の鍵・browser の箱の基準・CSS の置き方など）が持つ\n\n## やること\n\n1. `sed -n '/^## 1\\. 何を変え/,/^## 4\\./p' docs/design.md` と `docs/architecture.md`「新しいコードを置く場所」を読み、上の食い違いを1件ずつ確かめる（着手時点で他のタスクが直していれば飛ばす）\n2. 2章の木に欠けたファイルを1行ずつ足す（説明はファイル冒頭のコメントから1行で。既存の行の書き方に揃える）。`stores/` の実体の数と並びを直す\n3. 1章の表と3章「起動」を、成果物を読むだけ・無ければ前提不足で終了・ソースが新しければ1行知らせる、の現状に直す\n4. `docs/architecture.md` の原則5と表を `CLAUDE.md` 原則5・design.md 2章と同じ箱の集合にする。**二重に書かず、design.md 2章への参照で足りるところは参照にする**\n5. design.md 2章の `shared` の行に「`SessionState` から純粋に導けるもの（ブラウザしか読まないものを含む）」を足す\n\n## 完了条件\n\n- `git ls-files src/shared src/server | sed 's#.*/##'` の各ファイル名が `docs/design.md` 2章の木に現れる（`grep -c` で確かめ、欠けが0）\n- `grep -n '実体は4つ' docs/design.md` が0件\n- `grep -n 'メモリに持つ\\|メモリから配る' docs/design.md` が0件（残すなら現状の説明として正しい文になっている）\n- `docs/architecture.md` の原則5に `hooks/` が現れる\n- `src/` の差分が無い\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-426",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "SessionManager の sessionId の鍵を外し、正典の理由を書き直す",
+    "task": "## 背景\n\n`src/server/core/session-manager.ts` の `createSessionManager` は `Map<string, SessionHost>` を持ち、`create` / `dispatch(sessionId, …)` / `readContextUsage(sessionId)` / `subscribe(sessionId, …)` の全部が鍵を引いてから `SessionHost` に渡す。しかし:\n\n- 鍵に入るのは `src/session-start.ts` の `startSession` が `randomUUID()` で作った1つだけで、`RunningSession`（`subscribe` / `dispatch` / `readContextUsage` / `close`）はその鍵を閉じ込めて包み直している\n- キャラクターの切り替え・雑談モードの切り替え・セッションの切り替えは、`SessionHost` の中の `restart`（`generation` を1つ進め、古い駆動のイベントを捨てる）で起こし直していて、**鍵は変わらない**\n- それでも `docs/design.md` 8章は「`SessionManager` は `sessionId` を鍵に持つが、これは『将来のため』ではなく、セッションを起こし直すときに古い側と新しい側が同時に存在する一瞬を表す形である」と書き、`docs/requirements.md` 2.2 も「`SessionManager` が `sessionId` を鍵に持つのは起こし直しの一瞬のためで、複数化の布石ではない」と書く。**正典の理由がいまのコードと合っていない**\n- 複数セッションは 2026-09-21 に要件から落とした（`docs/requirements.md` 2.2）\n\n読む人は「鍵がある → 複数ある」と読み、`noSession` の失敗（`FRAME_ERROR_REASON.noSession`）や `hello` の `sessionId` がどこで効くのかを追いに行くことになる。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 複数セッションへ広げないこと自体は蒸し返さない（`docs/requirements.md` 2.2）\n\n## 解くべき論点\n\n- 鍵を外した形: (a) `createSessionManager` をやめて `createSessionHost` 相当を公開し、`session-start.ts` の包み直しも消す / (b) `SessionManager` の名前と口は残し、中の `Map` と引数の `sessionId` だけを外す / (c) それ以外。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ\n- `hello` フレームの `sessionId`（`src/shared/frame.ts`）と `FRAME_ERROR_REASON.noSession` を残すか。ブラウザ側（`src/browser/stores/session.tsx`）が `sessionId` を何に使っているかを見て決める。**プロトコルを変えるなら `PROTOCOL_VERSION` を上げる**\n- `docs/design.md` 8章の「広げたくなったら (1)(2)」の段落を残すか（残すなら理由を今のコードに合う文で）\n\n## やること\n\n1. `session-manager.ts` の `createSessionManager` と `SessionHost`、`session-start.ts` の `startSession`、`src/view-delivery.ts` の `connect`、`src/server/adapter/session-socket.ts` を読み、鍵がどこで効いているかを一覧にする\n2. 上の論点に答えを出し、コードとテスト（`test/server/core/session-manager.test.ts` のうち鍵の有無を確かめているもの）をその形に寄せる\n3. `docs/design.md` 8章・2章の木と5章のモジュールの説明、`docs/requirements.md` 2.2 の該当行、`docs/glossary.md` に `SessionManager` の行があればそれを、新しい形の理由で書き直す\n\n## 完了条件\n\n- `grep -n 'new Map' src/server/core/session-manager.ts` が0件（または残る Map が sessionId を鍵にしていないことを `evidence` に書く）\n- `docs/design.md` 8章と `docs/requirements.md` 2.2 に「起こし直しの一瞬」を理由にした文が無い\n- キャラクターの切り替え・雑談モードの切り替え・セッションの切り替えの既存テストが、期待値を変えずに通る\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `src/session-start.ts` は T-414（コメントの畳み込み）と T-430 も触る。着手前に `git merge main` で取り込み、衝突したら手を止める\n- 同じファイルの持ち物の整理は T-427 が後ろで行う。**ここでは鍵を外すことだけ**をし、`createSessionHost` の中身は動かさない",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-427",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-426"],
+    "summary": "SessionHost の閉包から世代の持ち物・副作用・コマンドの振り分けを分ける",
+    "task": "## 背景\n\n`src/server/core/session-manager.ts`（818行）の `createSessionHost` は1つの閉包で次を全部持つ:\n\n- 配信のまとめ（`buffered` / `flushTimer` / `flush` / `joinPartialUtterances`）\n- 駆動の世代（`generation` / `live` / `driver` / `start` / `restart`）\n- 雑談のログの走行合計と `/compact`（`chatLogBytesSinceCompact` / `requestChatCompactIfNeeded`）\n- トークン消費の累計と1ターンの内訳（`cumulativeTokenUsage` / `turnUsage` / `appendTokenUsage`）\n- `/context` 内訳の記録（2026-09-23 の T-376 で足された）\n- 依頼の原寸の棚の寿命（`replaceState` の `releasedPromptImageIds`）\n- コマンドの振り分け（`dispatch` の if の列と、外の `dispatchToDriver`）\n\nこのため次のことが起きている:\n\n- `restart` は駆動の世代に属する変数を**1つずつ手で空に戻している**（`buffered` / `chatLogBytesSinceCompact` / `cumulativeTokenUsage` / `turnUsage` …）。世代ごとの持ち物を1つ足すたびに、宣言・`receive`・`restart` の3か所を書き足すことになり、`restart` へ足し忘れても型は落とさない\n- `receive` は `origin === \"driver\"` と `state.chatMode` の条件を並べた if の列で、雑談のアーカイブ・トークンの内訳・トークンの記録・ターンの終わり・`/compact` の副作用の順序がそこにしか書かれていない\n- `dispatch` は「ターン中なら断る → `restart`」を `switch-character` / `set-chat-mode` / `switch-session` の3つで書き写している。キャラクター編集のコマンドは `src/shared/command.ts` の `CHARACTER_EDIT_COMMAND_TYPES` にスキーマとは別に列挙されている\n- テスト `test/server/core/session-manager.test.ts` は 1751 行ある\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 振る舞い（イベントの順序・配信のまとめ方・失敗の理由）は変えない\n\n## 解くべき論点\n\n- 世代ごとの持ち物を1つの値（型）にまとめ、`restart` で丸ごと作り直す形にするか。まとめる範囲（配信のまとめも入れるか）\n- `receive` の副作用を「イベントを受けて何かを記録するもの」の並びとして分けるか。分けるなら `core` のどこに置くか（`token-usage.ts` のように概念のファイルへ寄せるか）。**ファイル名が概念になっているか**（`CLAUDE.md` 原則5）で決める\n- コマンドの振り分けを表にするか、`switch` の網羅（`satisfies never`）にするか。`CHARACTER_EDIT_COMMAND_TYPES` の二重の列挙をどう畳むか\n- テストの分け方（分けた単位ごとに `test/server/core/<名前>.test.ts` を持つか）\n\n## やること\n\n1. `createSessionHost` を読み、上の7つの持ち物ごとに「宣言・読む場所・書く場所・`restart` で戻す場所」を表にする（`evidence` に要約を残す）\n2. 論点に答え、振る舞いを変えずに分ける。先にテストが全部通ることを確かめ、分けたあとも同じテストが通ることを確かめる\n3. `docs/design.md` 5章の `session-manager` の説明と2章の木を新しい形に合わせる\n\n## 完了条件\n\n- `restart` の中で世代ごとの変数へ個別に代入する行が無い（まとめた値を作り直す1行になっている）、または残した理由を `evidence` に書く\n- 「ターン中なら断る」の判定が `dispatch` の中に1か所だけある（`grep -c 'state.turn.kind === \"running\"' src/server/core/session-manager.ts` の数を前後で `evidence` に書く）\n- `wc -l src/server/core/session-manager.ts` が 500 行以下、または超えた理由を `evidence` に書く\n- 既存のテストが期待値を変えずに通る\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- 会話の中身をログやテストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-428",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "879行の sdk-driver.ts を、SDK を import してよいファイルの規則ごと見直して分ける",
+    "task": "## 背景\n\n`src/server/adapter/sdk-driver.ts` は 879 行で、次を1ファイルに持つ:\n\n- 駆動の本体（`startSession` / `relayMessages` / `createPromptStream` / `promptContent`）\n- tsukumo の MCP サーバと6つのツール（`speak` / `remember` / `forget` / `keep` / `index` / `recall`。`tsukumoServer` / `rememberTool` … と、それぞれの `*_TOOL_NAME` / `*_TOOL_DESCRIPTION`）\n- セッションの一覧と続き（`findSessionToResume` / `listSwitchableSessions` / `readRestoredEvents` / `scheduleMarkSession` / `markSession`）\n- `/context` 内訳（`readContextUsage` / `toContextUsage` / `sdkContextUsageSchema`）\n- 雑談の要約の hooks（`chatSummaryHooks`）、出力スタイルの中立化、コマンドの説明、プラン\n\n分けられないのは、`test/architecture.test.ts`「Agent SDK を import する箇所」が **`@anthropic-ai/claude-agent-sdk` を import するのは `src/server/adapter/sdk-driver.ts` だけ**と決めていて（`docs/architecture.md` 原則3、`docs/design.md` 2章「SDK を import する唯一の場所」）、MCP ツールの定義（SDK の `tool()` / `createSdkMcpServer`）もセッションの一覧（`listSessions` / `getSessionMessages`）も SDK を import するため。git の履歴では `sdk-driver.ts` は `src/session-start.ts`・`src/server/core/session-driver.ts` と一緒に直されることが多い（直近400コミットでそれぞれ11回・10回）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 「SDK を import する場所を限る」こと自体は残す（原則3）。変えてよいのは限り方（1ファイルか、名前で決まる数ファイルか）\n\n## 解くべき論点\n\n- 規則の形: (a) `sdk-` で始まる adapter のファイル（例: `sdk-driver.ts` / `sdk-tool.ts` / `sdk-session.ts`）だけに許す / (b) `adapter/sdk/` のようなディレクトリ（原則5の単数形・概念名の規約に合うか） / (c) 1ファイルのまま、SDK に触らない部分だけを外へ出す / (d) それ以外。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ\n- どこで切るか（ツールの定義・セッションの一覧と続き・`/context`・駆動の本体）。1ファイル = 1つの境界（原則3）に照らして、境界として名乗れるか\n- `DEFAULT_EFFORT` や `SPEAK_TOOL_NAME`（`core/sdk-message.ts`）のように他のファイルと共有する定数の置き場\n\n## やること\n\n1. `sdk-driver.ts` を読み、関数ごとに「SDK を import するか・誰が呼ぶか」を表にする\n2. 論点に答え、`test/architecture.test.ts` の規則・`docs/architecture.md` 原則3・`docs/design.md` 2章と5章・`CLAUDE.md` の該当箇所を新しい規則に書き換える\n3. その規則でファイルを分ける。テストも `src` の相対パスに合わせて分ける（`test/server/adapter/…`）\n\n## 完了条件\n\n- `wc -l` で、分けたどのファイルも 500 行以下\n- `test/architecture.test.ts` に新しい規則の検査があり、規則の外のファイルで SDK を import すると落ちる（1度わざと破って落ちることを確かめ、`evidence` に書く）\n- 正典（`docs/architecture.md` / `docs/design.md` / `CLAUDE.md`）に「`sdk-driver.ts` だけ」と書いた文が残っていない（新しい規則の文になっている）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- 本物の claude を起こす目視確認は要らない（振る舞いを変えない）。疑似セッション（`TSUKUMO_DRIVER=fake`）で起動して1ターン流れることは確かめる",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-429",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "systemPrompt に足す文面の組み立てを1か所にまとめる",
+    "task": "## 背景\n\nclaude に渡す `systemPrompt.append` がどう組み上がるかを知るには、いま6つのファイルを渡り歩く必要がある:\n\n- `src/session-start.ts` の `startDriver` が `sessionRules(seed.chat)` と `takeChatMemoryPromptParts(…)` を並べて `buildSystemPromptAppend(seed.pack, rules)` に渡す\n- `src/server/core/session-rule.ts` の `sessionRules` が `REPORT_NOTATION_PROMPT`（`report-notation.ts`）・`SPEECH_CADENCE_PROMPT`（`speech-cadence.ts`）・`CHAT_MANNER_PROMPT`（`chat-manner.ts`）のどれを入れるかを決める\n- `src/server/core/chat-memory-prompt.ts` が雑談の要約・直近・残したものの読み戻しを文面にする\n- `src/server/adapter/character-pack.ts` の `buildSystemPromptAppend` が `persona.md` と規約を連結する\n- `src/server/adapter/sdk-driver.ts` の `buildQuerySeedOptions` が `{ type: \"preset\", preset: \"claude_code\", append }` にする\n\n`docs/architecture.md`「新しいコードを置く場所」は `character-pack.ts` の `buildSystemPromptAppend` を「fs を読まないが core へは出さない（呼び出し側が配線層だけ）」と決めているが、その後 `session-rule.ts` と `chat-memory-prompt.ts` が core に増え、組み立ての順序が配線（`session-start.ts`）と adapter と core に割れた。**「人格・記法・間合い・雑談の作法・記憶の読み戻しが、どの順で、どのモードのときに入るか」を1ファイルで読めない。**\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## 解くべき論点\n\n- 組み立ての持ち主をどこにするか: core に概念の名前で1つ置く（例: `core/system-prompt.ts`）か、`character-pack.ts` に寄せるか。`docs/architecture.md` の「`core` からパックの判断が要るようになったら、層を写した `core/character-pack.ts` ではなく概念で切る」に照らす\n- `persona.md` の文面（adapter が fs から読む）を core の組み立てにどう渡すか（文字列で渡せば core は fs に触らない）\n- 順序と「どのモードで何が入るか」をテストでどう固定するか（文面そのものの一致ではなく、節の見出しの並びで見るなど）\n\n## やること\n\n1. 上の6ファイルを読み、仕事モード・雑談モード・続きから始めるときの3通りで、`append` に入る節の並びを表にする（`evidence` に残す）\n2. 論点に答え、組み立てを1か所に寄せる。**文面は1文字も変えない**（寄せる前後で3通りの `append` が同じ文字列になることをテストで確かめる）\n3. `docs/architecture.md` の該当段落と `docs/design.md` 7章（人格の注入）を新しい持ち主に合わせる\n\n## 完了条件\n\n- 3通りの `append` が寄せる前後で同じ文字列になることを確かめたテストがある（寄せたあとも残す必要が無ければ、確かめた方法を `evidence` に書いて消してよい）\n- `src/session-start.ts` から `sessionRules` と `takeChatMemoryPromptParts` の import が消えている、または残した理由を `evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `src/server/core/report-notation.ts` の文面は T-437（記法の語彙を1か所に）も触る。文面は変えないこと",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-430",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-414", "T-426", "T-429"],
+    "summary": "session-start.ts の判断を core へ寄せ、startSession 等の同名を解く",
+    "task": "## 背景\n\n`docs/design.md` 2章は `src/` 直下を「配線（composition root）」と決めているが、`src/session-start.ts`（347行）には判断が残っている:\n\n- `listPackSessions` / `findPackSessionToResume` の「`config.newSession || config.driver === \"fake\"` なら一覧は空・新規で起こす」\n- `sessionMode` の「雑談なら4つの記憶の口を作る」、`chatRecallFor`\n- 部屋の目印 `sessionTag(characterName, chat, viewPort)` は `src/server/core/config.ts`（環境変数の解釈の置き場）にある\n\nまた、起動の流れを追うと同じ名前が何度も出てくる:\n\n- `startSession` が2つ（`src/session-start.ts` と `src/server/adapter/sdk-driver.ts`。後者は `startSdkSession` として import される）\n- `startDriver` が4つ（`SessionCreateOptions.startDriver`、`SessionLaunchPorts.startDriver`、`session-start.ts` の非公開関数 `startDriver`、`SessionHost` の中の `created.startDriver` の呼び出し）\n\n`main.ts` → `session-start.ts` → `createSessionManager` → `SessionHost.start` → `createSessionLaunch`（`core/session-launch.ts`、12個の口を受け取る）→ `session-start.ts` の `startDriver` → `sdk-driver.ts` の `startSession` と、配線と core の間を2往復する。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 起動の順序（`core/session-launch.ts` が持つ）と振る舞いは変えない\n\n## やること\n\n1. T-426（鍵を外す）と T-429（systemPrompt の組み立て）を取り込んだあとの `session-start.ts` を読み、残った判断を列挙する\n2. 判断を core の概念の名前のファイルへ移す（`session-launch.ts` / `session-restore.ts` など既存の持ち主があればそこへ）。`sessionTag` を `config.ts` から、目印を扱う持ち主（`session-restore.ts` など）へ移すかを見て、移すなら移す\n3. 同名の重なりを、役割が分かる名前に変える（例: 駆動を起こすもの・セッションを起こすもの）。`docs/glossary.md` の「英語識別子」に合わせ、無ければ先に用語集を直す\n4. `docs/design.md` 3章「起動」に、起こし直し（キャラクター・モード・セッションの切り替え）を含めた流れを図（mermaid の flowchart か sequenceDiagram）で1つ足す\n\n## 完了条件\n\n- `grep -rn 'export function startSession' src` が1件以下\n- `grep -rn 'newSession' src/session-start.ts` が0件（判断が core に移っている）、または残した理由を `evidence` に書く\n- `docs/design.md` 3章に起動と起こし直しの図がある\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- T-414 がセッションの印のコメントを `config.ts` / `session-restore.ts` に寄せている。`sessionTag` を動かすときはそのコメントも一緒に動かし、二重にしない",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-431",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "日付ごとの jsonl の読み書きを3つの adapter から1つにまとめる",
+    "task": "## 背景\n\n`~/.tsukumo/<置き場>/<YYYY-MM-DD>.jsonl` に1行ずつ追記して、あとで日付の範囲で読み戻す記録が3つあり、同じ手を書き写している:\n\n- `src/server/adapter/token-usage-log.ts`: `appendLine`（`mkdirSync` + `appendFileSync`、失敗は握る）・`fileNamesInRange`・`readLines`・`parseJson`\n- `src/server/adapter/chat-archive.ts`: `appendLine`・`readArchiveLines`・`newestFirstFileNames`・`parseJson`\n- `src/server/adapter/context-usage-log.ts`: `appendLine`（2026-09-23 の T-376 で、上の2つと同じ形を3度目に書いた）\n\n版の付け方（`v`）・ファイル名の正規表現・読み飛ばし（zod の `safeParse` に落ちた行を捨てる）も同じ形で並んでいる。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. 3ファイルの読み書きの手を並べ、共通の部分（追記・日付のファイル名・範囲の列挙・行の読み出しと JSON の解釈）と、それぞれ固有の部分（スキーマ・索引ファイル・後ろから読む読み戻し）を分ける\n2. 共通の部分を1つにする。置き場は `docs/design.md` 2章「`lib/` と `utils/` に置く基準」で決める（`node:fs` を引くので `server/adapter/lib/` が候補。ファイル名は形式か手法の名前）\n3. 3ファイルをそれに寄せる。失敗を握る範囲（1行の追記の失敗で常駐プロセスを落とさない）は変えない\n\n## 完了条件\n\n- `grep -rn 'function appendLine\\|function parseJson\\|function readLines' src/server/adapter` が0件（共通の1か所を除く）\n- 共通にしたものに `test/server/adapter/lib/…` のテストがある\n- 3つの記録の既存テストが期待値を変えずに通る\n- `bun run check` が通る\n\n## 注意\n\n- 読み書きするファイルには会話の中身が入る（雑談のアーカイブ）。テストのフィクスチャに実物を使わない（`docs/coding-standards.md`「会話内容の扱い」）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-432",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-431"],
+    "summary": "文字列の UTF-8 バイト長を数える関数が4か所にあるのを1つにする",
+    "task": "## 背景\n\n`new TextEncoder()` を持ってバイト長を数える関数が4か所で書かれている:\n\n- `src/server/core/token-usage.ts` の `byteLength`\n- `src/server/adapter/chat-archive.ts` の `byteLength`\n- `src/server/adapter/chat-summary.ts` の `byteLength`\n- `src/shared/chat-log.ts`（`textEncoder` を持って数えている）\n\nどれも「読み戻す量の上限」「雑談のログの走行合計」「ツールの結果の長さ」の物差しで、同じ定義（UTF-8 のバイト数）であることが前提になっている。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. 4か所が同じ定義で数えていることを確かめる\n2. 1つに寄せる。置き場は `docs/design.md` 2章「`lib/` と `utils/` に置く基準」で決める（`TextEncoder` は ECMAScript の組み込みではなくサーバとブラウザの両方にある実行環境の API。`shared` と `core` の両方から読むので `shared` の中に置くことになる。基準の表のどちらに当たるかを決めて、判断を `evidence` に1行書く）\n3. 4か所をそれに寄せる\n\n## 完了条件\n\n- `grep -rn 'new TextEncoder' src` が1件\n- 寄せた関数にテストがある\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-433",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "ローカル時刻の HH:MM を作る手を browser/utils/clock.ts に寄せる",
+    "task": "## 背景\n\n`src/browser/utils/clock.ts` は「ブラウザ側で OS のタイムゾーンを読む場所をここに揃える」として `localTimeZoneId()` を持つが、機能の中で同じことを直に書いている:\n\n- `src/browser/features/sidebar/session-switch.tsx` の `localTimestamp`（`Temporal.Now.timeZoneId()` を直に読み、`M/D HH:MM`）\n- `src/browser/features/token-usage/context-usage-card.tsx` の `clockLabel`（`Temporal.Now.timeZoneId()` を直に読み、`HH:MM`）\n- `src/browser/features/chat-view/hooks/use-chat-view.ts` の `timeStamp`（`HH:MM` と `dateTime`）\n\n`toPlainTime().toString({ smallestUnit: \"minute\" })` の書き方が3か所にある。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. 3か所の書式（`HH:MM` / `M/D HH:MM` / `dateTime` 属性）を並べる\n2. タイムゾーンの読み取りを `localTimeZoneId()` に揃え、`HH:MM` を作る手を `browser/utils/clock.ts` に1つ置く（`utils/` の歯止め3つを満たすか確かめる。満たさなければ `lib/`）。`M/D` を足した形を共通にするかは読み手の数で決める\n3. 3か所をそれに寄せる\n\n## 完了条件\n\n- `grep -rn 'Temporal.Now' src/browser | grep -v utils/clock.ts` が0件\n- `grep -rn 'smallestUnit: \"minute\"' src/browser` が `utils/clock.ts` の中だけ\n- `bun run check` が通る\n\n## 注意\n\n- `context-usage-card.tsx` は T-401・T-402（トークン消費の画面）も触る。並行して進めているときは `git merge main` で取り込んでから着手する",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-434",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "起動トークン付きの URL を5か所で手組みしているのを browser/lib の1つの関数にする",
+    "task": "## 背景\n\nブラウザ側で「いまのページの URL から起動トークン（`SESSION_TOKEN_QUERY_NAME`）を取り出し、経路に `?t=…` を付ける」手が5か所に書かれている:\n\n- `src/browser/lib/socket.ts`（`/ws`）\n- `src/browser/features/dispatch/file-suggestions.tsx` の `repositoryFileUrl`\n- `src/browser/features/token-usage/hooks/use-token-usage.ts` の `tokenUsageSummaryUrl`\n- `src/browser/features/token-usage/hooks/use-context-usage.ts` の `contextUsageUrl`\n- `src/browser/components/prompt-image.tsx`\n\nトークンが無いときの扱い（`?? \"\"` で空を送るか、`URLSearchParams` に `null` を渡すか）と、エンコードの仕方（`encodeURIComponent` か `URLSearchParams` か）が場所ごとに違う。トークン付きの JSON の口を1つ足すたびに、同じ手をもう1回書くことになる。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- サーバ側（`src/server/adapter/server.ts` の `hasStartupToken`）と経路名の定数（`src/shared/`）は変えない\n\n## やること\n\n1. 5か所の手を並べ、トークンが無いときの扱いとエンコードの違いが意図か偶然かを確かめる（`docs/design.md` 9章）\n2. 「経路（と追加のクエリ）を受けてトークン付きの URL を返す」関数を `src/browser/lib/` に1つ置く（`window.location` を読むので `lib/`）。`/ws` のように `ws:` / `wss:` を付けるものは同じ関数の引数で表すか別にするかを決める\n3. 5か所をそれに寄せる\n\n## 完了条件\n\n- `grep -rn 'SESSION_TOKEN_QUERY_NAME' src/browser` が新しい1ファイルだけ\n- 新しい関数にテストがある（トークンが無いとき・追加のクエリがあるとき）\n- `bun run check` が通る\n\n## 注意\n\n- `use-token-usage.ts` / `use-context-usage.ts` は T-401・T-402 も触る。並行して進めているときは `git merge main` で取り込んでから着手する",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-435",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-413"],
+    "summary": "browser の lib/・stores/ の置き場の基準を決め直し、外れたものを動かす",
+    "task": "## 背景\n\n`docs/design.md` 2章は `src/browser/` の箱について次を決めている:\n\n- 「その機能しか読まないなら機能の中に残す」（上げる引き金は2つ目の読み手）\n- `lib/` と `utils/` の手順1: ファイル名が **tsukumo の語彙**なら `lib/` にも `utils/` にも置かず、層の直下に平置きする\n- `stores/` は「**画面全体で共有する状態**」で、「どれも複数の機能が読む」\n\n実物は次のとおり外れている（2026-09-23 に import を数えた）:\n\n| ファイル | 読んでいる機能 | 外れ方 |\n| --- | --- | --- |\n| `lib/model-label.ts` | `screen-nav` だけ | 読み手1つ・tsukumo の語彙（モデル） |\n| `lib/permission-mode-label.ts` | `screen-nav` だけ | 読み手1つ・語彙（許可モード） |\n| `lib/prompt-image.ts` | `dispatch` だけ | 読み手1つ・語彙（依頼の画像） |\n| `lib/data-url.ts` | `character-screen` だけ | 読み手1つ |\n| `lib/reveal-speed.ts` | `main-view`・`screen-nav` | 語彙（演出の速さ）なのに `lib/` |\n| `lib/appearance-color.ts` | 複数 | 語彙（差し色）なのに `lib/`（2章は「引き金が引かれた例」として `lib/` を正としている） |\n| `lib/tool-summary.ts` | `dispatch`・`screen-nav` | Claude Code のツール（外部システム）なので `lib/` で正しいか要確認 |\n| `stores/brush-tip.ts` | `main-view` だけ | 読み手1つの状態が `stores/` |\n\n**`src/browser/` には「tsukumo の語彙で、2つ以上の機能が読む、状態でも部品でもないもの」を置く箱が無い**（層の直下に平置きすると `main.tsx` と並ぶ）。そのため `lib/` が受け皿になり、2章の例（`appearance-color.ts`）自体が手順1と食い違っている。同じ事情で、立ち絵の見せ方（T-436）も置き場が決まらない。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 「機能どうしは import しない」「`utils/` の歯止め3つ」「`helpers/` と `common/` は作らない」は変えない\n\n## 解くべき論点\n\n- tsukumo の語彙で2つ以上の機能が読むものの置き場: (a) `src/browser/` 直下に平置きを認める / (b) `shared/` へ出す（ブラウザの API に触らないものに限る） / (c) 新しい箱（名前は bullet-proof-react の語か概念名。原則5） / (d) `lib/` の定義を広げて正典の側を直す。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ\n- 表の各行をどこへ動かすか（読み手1つのものは機能の中へ）。`brush-tip.ts` は `main-view` の中のどこへ置くか（T-441 が `main-view` の演出のファイル群をまとめるので、そちらへ任せてよい）\n- `test/architecture.test.ts` の `BROWSER_BOXES` で新しい基準を検査できるか\n\n## やること\n\n1. `src/browser/lib/*` と `src/browser/stores/*` の読み手を数え直し、上の表を着手時点の値で作り直す\n2. 論点に答え、`docs/design.md` 2章（箱の表・`lib/` と `utils/` に置く基準・`stores/` の説明）と `CLAUDE.md` 原則5を書き換える\n3. 表の各行を新しい基準の置き場へ動かす（`brush-tip.ts` を T-441 に任せるならここでは動かさず、その旨を `evidence` に書く）\n4. 検査できる規則は `test/architecture.test.ts` に足す\n\n## 完了条件\n\n- 表の各行について、新しい置き場と理由が `evidence` にある\n- `src/browser/lib/` に、読み手が1つの機能だけのファイルが無い（`grep` で数えた結果を `evidence` に書く）\n- `docs/design.md` 2章の例と実物が食い違っていない\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `model-label.ts` / `permission-mode-label.ts` の読み手は T-413 が作り替えている `screen-nav` なので、T-413 の完了後に着手する",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-436",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-435"],
+    "summary": "立ち絵の URL・差し色・代替テキストの導き方をキャラビューと雑談ビューで1つにする",
+    "task": "## 背景\n\n立ち絵に「いまの表情と衣装で、どの絵を・どの差し色で・どの代替テキストで出すか」を導く手が2つの機能に書き写されている:\n\n- `src/browser/features/character-view/hooks/use-character-view.ts`: `character?.portraits?.[expression]`・`character?.outfitAccents[outfit]`・`` `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(…)}）` ``・`resolveOutfit(model)`\n- `src/browser/features/chat-view/hooks/use-chat-view.ts`: 同じ4つを同じ式で書き、`DEFAULT_CHARACTER_ALT_NAME = \"キャラクター\"` も別に持つ\n\n`src/browser/features/screen-nav/hooks/use-current-work.ts` も `DEFAULT_CHARACTER_NAME = \"キャラクター\"` を持つ。機能どうしは import できないので、共通にするには機能の外に置く必要があり、その置き場は T-435 が決める。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. T-435 で決まった置き場の基準を読む\n2. 「キャラクター・表情・衣装（またはモデル）→ 立ち絵の URL・差し色・代替テキスト」を1つの関数（またはフック）にし、その置き場へ置く\n3. 2つの機能をそれに寄せる。既定の名前「キャラクター」を1か所にする（`use-current-work.ts` の既定名が同じ意味なら一緒に）\n\n## 完了条件\n\n- `grep -rn '\"キャラクター\"' src/browser --include='*.ts'` で既定の名前の定数が1か所\n- `grep -rn 'portraits?.\\[' src/browser/features` が `character-screen`（編集画面）以外に無い\n- 2つのビューの既存テストが期待値を変えずに通る\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-437",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "レポートの記法の語彙を shared に1つ置き、プロンプトと画面が引く",
+    "task": "## 背景\n\nレポートの記法（`<div class=\"note note-warn\">` などの印）の語彙が、サーバとブラウザに別々に書かれている:\n\n- `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（claude に教える文面。`note` / `note-warn` / `note-ng` / `note-memo` / `note-ask` / `note-favor` / `badge-ok` / `badge-warn` / `badge-ng` / `cols` / `card` / `stats` / `stat`）\n- `src/browser/features/main-view/markdown/notation.tsx` の class の対応表と、ラベルの対応表（`note-warn` → 「注意」など）\n- `src/browser/features/main-view/main-view.module.css` の `.report-note-*` / `.report-badge-*` / `.report-cols` / `.report-stats`\n\n印を1つ足す・名前を変えると、この3か所を揃えて直す必要があり、どれかを忘れても型もテストも落ちない（プロンプトに書いた印が画面で素の `div` になる）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 文面（`REPORT_NOTATION_PROMPT`）の中身は変えない。変えてよいのは、印の名前を語彙から差し込むことだけ\n\n## やること\n\n1. 3か所の印の集合を突き合わせ、差があれば `evidence` に書く（差は直さずユーザーに預けてよい）\n2. 印の名前と種別のラベルを `src/shared/` の1ファイルに置く（ファイル名は概念。`docs/glossary.md` に「レポートの記法」の語があればそれに合わせる）\n3. `notation.tsx` の対応表をその語彙から引く形にする。`report-notation.ts` の文面は、語彙の各印が文面に現れることをテストで確かめる形にする（文面をテンプレートで組み立て直すかは、読みやすさで決める）\n\n## 完了条件\n\n- 語彙の各印が `REPORT_NOTATION_PROMPT` に現れ、`notation.tsx` の対応表に載っていることを確かめるテストがある\n- 語彙から1つ消すとそのテストが落ちることを確かめ、`evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `report-notation.ts` の文面は毎ターン claude に入る。文字の差分が出ていないことを `git diff` で確かめる",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-438",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "記録（SessionRecord）をターンに割る処理が shared の4か所にあるのを1つにする",
+    "task": "## 背景\n\n`SessionState.records` を「依頼（`kind: \"request\"`）の区切りでターンに割る」処理が、`src/shared/` の4か所でそれぞれ書かれている:\n\n- `src/shared/main-view.ts` の `groupIntoTurns`（`MainViewEntry` に変えてから割る。`PRE_REQUEST_TURN_ID` で依頼より前を扱う）\n- `src/shared/turn-speech.ts` の `turnSpeeches`（依頼ごとにセリフと表情を集める）\n- `src/shared/turn-step.ts` の `currentTurnSteps`（`findLastIndex` で最後の依頼から先を取る）\n- `src/shared/session-state.ts` の `trimToRecentTurns`（依頼の位置を数えて古いターンを落とす）\n- あわせて `src/shared/chat-log.ts` も依頼を見て行を作る\n\n依頼より前の記録・復元した記録（`withRestoredTime`）・`turnId` の扱いが場所ごとに書かれていて、1か所の直し（例: 依頼より前のセリフの扱い）が他へ伝わらない。git の履歴では `session-state.ts` と `main-view.ts` が一緒に直されることが多い（直近400コミットで7回）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 画面の見え方（メインビュー・キャラビュー・帯の「いまの作業」・雑談のログ）は変えない\n\n## 解くべき論点\n\n- 共通にする単位: 「記録 → ターンの並び（依頼と、その後ろの記録）」の1関数にし、各所はその上で自分の形に変える、でよいか。依頼より前の記録をどう表すか\n- `main-view.ts` は `MainViewEntry` に変えてから割っている。先に割ってから変える順に直してよいか（上限 `MAX_MAIN_VIEW_ENTRIES` の効き方が変わらないか）\n- 置き場（`shared/` に概念の名前で1つ。例: `turn.ts`）\n\n## やること\n\n1. 5か所の割り方を並べ、依頼より前・復元・`turnId` の扱いの差を表にする。差が意図か偶然かを `docs/design.md` 4章・13章で確かめる（偶然の差で、揃えると見え方が変わるものはユーザーに預ける）\n2. 論点に答え、割る関数を1つ置いて各所を寄せる\n3. `docs/design.md` 4章に割る関数の持ち主を1行足す\n\n## 完了条件\n\n- `grep -rn 'kind === \"request\"' src/shared` が共通の1か所と、依頼そのものを作る `session-state.ts` の畳み込みだけ（残りがあれば理由を `evidence` に書く）\n- 既存のテスト（`test/shared/main-view.test.ts` / `session-state.test.ts` / `turn-step` / `turn-speech` / `chat-log`）が期待値を変えずに通る\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-439",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "CSS を部品ごとに分けてよいと 6.6 に書き、main-view.module.css を割る",
+    "task": "## 背景\n\n`docs/design.md` 6.6 は CSS の置き場を「**機能ごとに1枚**（`features/<機能>/<機能>.module.css`）と、自分の見た目を持つ共有部品の隣」と決めている。しかし:\n\n- 実物にはすでに例外がある: `features/main-view/mini-portrait.module.css`、`features/sidebar/session-switch.module.css`\n- `features/main-view/main-view.module.css` は 924 行で、質問（`.question-ask*` / `.question-*`。44箇所）・ターンの見出し（`.turn-header` / `.turn-history*` / `.turn-nav*`）・レポートの記法（`.detail-block .report-*`）・ツールの塊が1枚に入っている\n- `features/screen-nav/screen-nav.module.css`（695行）、`task-board.module.css`（501行）、`character-view.module.css`（389行）も大きい\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. `docs/design.md` 6.6 に「部品の見た目が独立しているときは、その部品の隣に `<部品>.module.css` を置いてよい」旨と、分ける目安（例: その部品しか使わない class の塊）を書く。既存の2つの例外をその例として挙げる\n2. `main-view.module.css` を、質問（`question-ask.tsx` / `question-record.tsx`）・ターンの見出し（`turn-header.tsx`）・レポートの記法（`markdown/`）ごとに分ける。**class 名は変えない**\n3. `screen-nav.module.css` は T-440 で割るので、ここでは触らない\n\n## 完了条件\n\n- `wc -l src/browser/features/main-view/main-view.module.css` が 400 行以下\n- `test/browser/features/main-view/` のテストが期待値を変えずに通る（`test/css-module-loader.ts` があるので、分けた先を import し忘れると class 名が `undefined` になって落ちる）\n- 疑似セッション（`TSUKUMO_DRIVER=fake`）でメインビューのターン・質問・レポートの記法の見え方が分ける前と同じことを目視で確かめ、どの端末で何を見たかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- CSS の詳細度で勝たせている打ち消し（`.detail-block pre` の既定を消す、など）が、分けたあとの読み込み順で変わらないことを見る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-440",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-413", "T-439"],
+    "summary": "695行の screen-nav.module.css を帯の部品ごとに割る",
+    "task": "## 背景\n\n`src/browser/features/screen-nav/screen-nav.module.css` は 695 行で、帯の部品（部屋の名前・仕事/雑談のトグル・3画面の口・いまの作業の札・モデル/許可モードの操作子・設定の歯車・「≡」の面）の見た目を1枚に持つ。部品は `components/screen-nav-*.tsx` に分かれているが CSS は分かれていない。\n\nT-439 が `docs/design.md` 6.6 に「部品ごとに分けてよい」基準を書き、`main-view.module.css` を割る。T-413 が帯の配線（広い画面と「≡」の面への届け方）を作り替えている。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. T-439 で 6.6 に書かれた基準と、T-413 のあとの `screen-nav/components/` を読む\n2. その基準で `screen-nav.module.css` を部品ごとに割る。**class 名は変えない**。広い画面と「≡」の面の出し分けの `@media` がどこに残るかを決めて、`evidence` に1行書く\n\n## 完了条件\n\n- `wc -l src/browser/features/screen-nav/screen-nav.module.css` が 300 行以下\n- `test/browser/features/screen-nav/` のテストが期待値を変えずに通る\n- 広い画面と 760px 以下（「≡」の面）の両方で、帯の見え方が割る前と同じことを目視で確かめ、`evidence` に書く（モーダルの中まで見る）\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-441",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "レポートの演出の8ファイルを main-view の中にまとめ、brush-tip も戻す",
+    "task": "## 背景\n\nレポートを筆で書き出す演出は、3つの箱にまたがる8ファイルでできている:\n\n- `features/main-view/` 直下に平置き: `reveal-band.ts`（231行）・`reveal-measure.ts`・`reveal-paint.ts`・`reveal-plan.ts`・`brush-scroll.ts`\n- `features/main-view/hooks/use-report-reveal.ts`（222行）\n- `stores/brush-tip.ts`（読み手は `main-view` だけ。`docs/design.md` 2章は `stores/` を「複数の機能が読む状態」と決めている）\n- `lib/reveal-speed.ts`（`main-view` と `screen-nav` の設定が読む）\n\n`main-view/` 直下には、この演出の5ファイルと、部品（`turn.tsx` / `turn-header.tsx` / `report.tsx` / `question-ask.tsx` / `question-record.tsx` / `mini-portrait.tsx`）が同じ階層に並び、どれが演出の部品かがファイル名の接頭辞でしか分からない。`docs/design.md` 2章「機能の中を分ける」が機能の中に認めているのは `hooks/` `components/` `domain/`（と実物にある `markdown/`）だけ。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 演出の振る舞い（速さ・筆の軌跡・ミニ立ち絵の追従）は変えない\n\n## 解くべき論点\n\n- 演出のファイル群を `features/main-view/` の中の1つのディレクトリ（例: `reveal/`）にまとめるか。まとめるなら `docs/design.md` 2章に「機能の中に、概念の名前のサブディレクトリを置いてよい条件」を足す（`markdown/` がすでにその形）\n- `stores/brush-tip.ts` の行き先（`main-view` の中）。T-435 が同じ判断を持つので、先に終わっていればそちらの結論に従う\n- `lib/reveal-speed.ts` は読み手が2つの機能なので残るか、T-435 の基準で動くか\n\n## やること\n\n1. 8ファイルの import の向きを図にする（`evidence` に mermaid で残してよい）\n2. 論点に答え、`docs/design.md` 2章（と演出の節。6章か13章）を書き換えてから動かす\n3. テストの配置も `src` の相対パスに合わせる\n\n## 完了条件\n\n- `src/browser/stores/brush-tip.ts` が無い\n- `ls src/browser/features/main-view/*.ts` に `reveal-` で始まるファイルと `brush-scroll.ts` が無い（まとめた先にある）\n- 疑似セッションで新しい依頼を1つ流し、筆の演出が動くことを目視で確かめ、`evidence` に書く（開いた時点の本文には演出が掛からないので、新しい依頼で見る）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-442",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-391"],
+    "summary": "container/presenter の割る基準を決め直し、外れた部品に当てる",
+    "task": "## 背景\n\n`docs/design.md` 2章「機能の中を分ける」は、部品が「ロジック」と「見た目」の両方を抱えたら container（`<機能>.tsx`）・`hooks/use-<機能>.ts`・`presentational-<機能>.tsx`・`components/`・`domain/` に割ると決め、「後続の分割もこの形に揃える」「割らないでよいのは、フックが0本のとき」と書く。`task-board` / `chat-view` / `layout` / `screen-nav` / `character-screen` はこの形になったが、次はフックと JSX が同じファイルにある（2026-09-23 に数えた。括弧は使っているフック）:\n\n| ファイル | 行数 | フック |\n| --- | ---: | --- |\n| `sidebar/session-switch.tsx` | 147 | `useSessionDispatch` `useSessionSelector` `useTurnRunning` |\n| `sidebar/character-switch.tsx` | 66 | 同上 |\n| `sidebar/task-section.tsx` | 62 | `useSessionSelector` `useState` |\n| `sidebar/session-info.tsx` / `profile-card.tsx` / `recent-topic-section.tsx` / `sidebar.tsx` | 37〜70 | `useSessionSelector` だけ |\n| `dispatch/turn-status.tsx` | 97 | `useEffect` `useQuestionAnswer` `useSessionDispatch` `useSessionSelector` `useState` |\n| `dispatch/file-suggestions.tsx` | 156 | `useQuery` `useRepositoryFilePaths`（ファイルの中で定義） |\n| `character-view/speech-log.tsx` | 128 | `useModalDialog` `useSessionSelector` `useState` |\n| `task-board/components/task-run-confirm.tsx` | 86 | `components/` なのに `useSessionDispatch` `useTurnRunning` `useModalDialog` |\n\n「セレクタを1本読むだけ」の部品まで3つに割るとファイルが増えるだけになるので、**基準そのものが今の運用に合っていない**可能性がある（`main-view` は T-443 で扱う）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 画面の見え方と振る舞いは変えない\n\n## 解くべき論点\n\n- 割る基準: 「フックが0本」ではなく、何を境にするか（例: state・副作用・イベントの読み替えを持つか / ストアのセレクタだけなら割らない）。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ\n- 1つの機能に container が複数あるとき（`sidebar` の区画ごと、`dispatch` の `composer` / `pending-answer` / `turn-status`）の `hooks/` のファイル名と `presentational-` の付け方\n- `components/` の中の部品がストアを読んでよいか（`task-run-confirm.tsx`）\n\n## やること\n\n1. 上の表を着手時点の値で数え直す\n2. 論点に答え、`docs/design.md` 2章「機能の中を分ける」を書き換える\n3. 新しい基準で割るべきとなった部品だけを割る（`sidebar` / `dispatch` / `character-view` / `task-board`）。割らないと決めた部品は理由を `evidence` に1行ずつ\n\n## 完了条件\n\n- `docs/design.md` 2章に新しい基準があり、上の表の各行が「割った / 割らない（理由）」のどちらかで `evidence` に載っている\n- 割った部品の既存テストが期待値を変えずに通る\n- サイドバー・入力欄・キャラビューの見え方が変わっていないことを疑似セッションで目視し、`evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `sidebar/persona-memory-section.tsx` まわりは T-391（覚えていることのチップ）が作り替えているので、T-391 の完了後に着手する",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-443",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-439", "T-441", "T-442"],
+    "summary": "main-view の部品を T-442 の基準で container/presenter に割る",
+    "task": "## 背景\n\n`src/browser/features/main-view/` には `hooks/` が演出の1本（`use-report-reveal.ts`）しか無く、container/presenter の形になっていない。フックと JSX が同じファイルにあるのは:\n\n- `main-view.tsx`（`useEffect` `useMainViewTurns` `useTurnSelection`）\n- `turn-header.tsx`（226行。`useCallback` `useDismissSignal` `useId` `useState`）\n- `question-ask.tsx`（170行。`useEffect` `useQuestionAnswer` `useQuestionScroll` `useTurnSelection`）\n- `mini-portrait.tsx`（`useBrushTip` `useSessionSelector`）\n- `turn.tsx`（209行）・`question-record.tsx` は `useState` だけ\n\nT-442 が割る基準を決め直し、T-441 が演出のファイル群をまとめ、T-439 が CSS を部品ごとに割る。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 画面の見え方と振る舞い（ターンの切り替え・質問への答え・演出）は変えない\n\n## やること\n\n1. T-442 で決まった基準を読み、上の部品を1つずつ「割る / 割らない」に分ける\n2. 割ると決めたものを `hooks/` / `components/` / `presentational-` に分ける\n\n## 完了条件\n\n- 上の各部品が「割った / 割らない（理由）」のどちらかで `evidence` に載っている\n- `test/browser/features/main-view/` のテストが期待値を変えずに通る\n- 疑似セッションで、ターンの見出しの切り替え・質問に答える・新しい依頼の演出を目視で確かめ、`evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- 画面の見え方と振る舞いは変えない（構造だけを動かす）。テストの期待値を書き換えて通すことはしない",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-444",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-442"],
+    "summary": "423行の use-composer.ts から / と @ の補完の状態を別のフックに分ける",
+    "task": "## 背景\n\n`src/browser/features/dispatch/hooks/use-composer.ts`（423行）の `useComposer` は、下書き（`Draft`）・送信・画像の添付・質問の帯・補完（`/` のコマンドと `@` のファイル。`ActiveSuggestions` / `confirmSelected` / `insertTrigger` / `insertedTrigger` / `confirmedDraft` / `suggestionCount`）を1本で持つ。補完は `command-suggestions.tsx` と `file-suggestions.tsx`（`useRepositoryFilePaths` をファイルの中で定義）にまたがり、キーの扱い（`ComposerKey` / `isComposingEvent`）と絡んでいる。\n\n`docs/design.md` 2章は「1ファイル1フック」「フックの名前は機能名でよい（container が呼ぶ1本）」と書くが、`chat-view/hooks/` には4本ある。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 入力欄の振る舞い（補完の出方・確定・IME の変換中の扱い・送信）は変えない\n\n## やること\n\n1. T-442 で決まった基準（1つの container が複数のフックを呼んでよいか）を読む\n2. 補完の状態と確定の手を `hooks/` の別のフック（概念の名前）に分け、`useComposer` から呼ぶ。`useRepositoryFilePaths` を `file-suggestions.tsx` から `hooks/` へ移すかも同じ基準で決める\n\n## 完了条件\n\n- `wc -l src/browser/features/dispatch/hooks/use-composer.ts` が 250 行以下\n- `test/browser/features/dispatch/composer.test.tsx` が期待値を変えずに通る\n- 疑似セッションで `/` と `@` の補完・IME の変換中の Enter・送信を目視で確かめ、`evidence` に書く\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-445",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-425"],
+    "summary": "1510行の design.md 13章「画面のデザイン」を別の正典ファイルに出す",
+    "task": "## 背景\n\n`docs/design.md` は 3225 行で、そのうち **13章「画面のデザイン」が 1510 行**、7章「キャラクターパック」が 588 行、2章「全体構成」が 392 行（`awk` で章ごとに数えた）。`docs/requirements.md` も 1953 行で、4章「機能要件」が 1668 行。\n\nどれも「通読しない・節の索引で1節だけ読む」運用になっているが、2章の「層と依存の向き」を読みに来た人と、13.9「狭い画面」を読みに来た人が同じファイルを開き、索引の表を読み、`sed` の範囲を組み立てることになる。`develop/progress.md`「未解決」には、12章を history へ移したあと章番号を詰めていない件（13.x を指す参照が約100箇所）が残っている。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## 解くべき論点\n\n- 13章を `docs/` の別ファイル（ファイル名は概念。`docs/README.md` と `CLAUDE.md`「関連リンク」の置き場の約束に合わせる）に出すか、`design.md` に残して中を削るか\n- 出すなら、`src` / `test` / `docs` にある「design.md 13.x」への参照（約100箇所）をどう直すか（一括置換か、design.md に1行の案内を残すか）。章番号を詰める件も同時に畳むか\n- `docs/requirements.md` 4章も同じ扱いにするか（このタスクで決めるのは方針だけでよい。やるなら別タスクを `develop/direction.md` の `## エージェントのドラフト` に積む）\n\n## やること\n\n1. `maintenance-docs` スキルが決めている docs の置き場・索引の約束を読む\n2. 論点に答え、13章を動かす（先に移送先へ書いてから消す順で進める。`develop/progress.md`「未解決」の大掃除の注意）\n3. 参照を直し、`docs/README.md`・`CLAUDE.md`「関連リンク」・`docs/design.md` の節の索引を合わせる\n\n## 完了条件\n\n- `wc -l docs/design.md` が 2000 行以下\n- `grep -rn 'design.md.\\?13\\.' src test docs CLAUDE.md` の各参照が、移した先で同じ節を指している（残った参照の数と、直した方法を `evidence` に書く）\n- 移した先のファイルの冒頭に節の索引がある\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- 節を移すときは中身を書き換えない（文面の見直しは別の話）",
     "status": "todo",
     "passes": false,
     "evidence": ""

@@ -53,32 +53,16 @@
   color: var(--ink);
 }
 
-/* 期間の合計。**1行に並べ、入りきらなければ折り返す**（狭い画面でも横に溢れない）。 */
-.token-usage-total {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.75rem;
-  margin: 0;
-}
-.token-usage-figure {
-  display: flex;
-  flex-direction: column;
-}
-.token-usage-figure-label {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
-/* 数が主（13.3 のタイプスケールの中で最大の段）。桁が動いても揃うよう等幅の数字にする。 */
-.token-usage-figure-value {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--font-heading);
-  font-variant-numeric: tabular-nums;
-}
-
 .token-usage-section {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+/* 区画の見出しの行。**右端に添え物（期間の切り替え）を押しやる**（狭い画面では下へ折り返す）。 */
+.token-usage-section-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 .token-usage-section-label {
@@ -88,21 +72,85 @@
   font-weight: normal;
 }
 
-/* 日ごとの推移の2枚（上: 入力・出力・キャッシュ作成、下: キャッシュ読み）を縦に並べる入れ物。 */
-.token-usage-chart-group {
-  display: flex;
-  flex-direction: column;
+/* 期間の合計の札4枚。**広い画面では4列**、狭い画面では2列・1列に折る（このファイルの末尾の
+   @media。境目は他の領域と同じ 760px）。 */
+.usage-card-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
 }
 
-/* グラフの入れ物。**高さをここで決める**（`maintainAspectRatio: false` なので、この箱の
-   大きさがそのままグラフの大きさになる。`position: relative` は Chart.js が縮むために要る —
-   静的な位置のままだと、親が縮んでも canvas が縮まず横に溢れる）。2枚を縦に積むので、
-   1枚ずつは低めにしてある。 */
-.token-usage-canvas {
-  position: relative;
-  width: 100%;
-  height: 11rem;
+/* 札1枚（`period-usage-card.tsx`）。**枠を持つ**（13.1 原則2。枠を持たないのはキャラクターだけ）。 */
+.usage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface-raised);
+  /* 中の棒は grid の列幅に合わせて縮む。`min-width: 0` が無いと、棒の本数ぶんの最小幅が
+     そのまま列の下限になり、狭い画面で横に溢れる。 */
+  min-width: 0;
+}
+.usage-card-label {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+/* 数が主（13.3 のタイプスケールの中で最大の段）。桁が動いても揃うよう等幅の数字にする。 */
+.usage-card-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+/* いちばん高い棒の値（この札の中の縦軸の代わり）。**目盛りも軸も描かない**ので、これが唯一の
+   高さの手がかりになる。寄せる側は棒の位置で決まる（`period-usage-card.tsx`）。 */
+.usage-card-peak {
+  margin: 0.4rem 0 0.15rem;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.usage-card-peak-left {
+  align-self: flex-start;
+}
+.usage-card-peak-right {
+  align-self: flex-end;
+}
+
+/* 棒の並び。**高さはここで決める**（棒1本ずつは親に対する割合で伸びる）。本数は期間の刻みの
+   数そのもの（7 / 24 / 30）で、`1fr` ずつに割って幅を取り合う。 */
+.usage-card-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: end;
+  gap: 1px;
+  height: 3.5rem;
+}
+/* 棒1本。**塗りはキャラクターの色を使わない**（13.1 原則1。読む面は誰が来ても同じ濃さ）。
+   記録の無い刻みも 0% の棒として並ぶので、`min-height` が「その日はあったが空だった」印になる。 */
+.usage-card-bar {
+  align-self: end;
+  height: var(--usage-bar-height);
+  min-height: 2px;
+  border-radius: 1px 1px 0 0;
+  background: var(--ink-quiet);
+}
+/* 期間の両端の刻み（最初と最後だけ）。 */
+.usage-card-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
 }
 
 /* 表は**必ず幅いっぱいに収める**（`table-layout: fixed`。列の中身で幅が決まる auto だと、
@@ -150,8 +198,8 @@
   font-size: var(--font-label);
 }
 
-/* いまのコンテキストの内訳の札（`context-usage-card.tsx`）。**この画面で唯一枠を持つ塊**で、
-   下の集計（期間で切ったもの）と出どころが違うことを枠で示す。 */
+/* いまのコンテキストの内訳の札（`context-usage-card.tsx`）。期間の消費の札（`.usage-card`）と
+   同じ枠・同じ地で、出どころが違うことは見出しの言葉のほうが持つ。 */
 .context-card {
   display: flex;
   flex-direction: column;
@@ -311,4 +359,17 @@
 }
 .context-tone-buffer {
   background: repeating-linear-gradient(-45deg, var(--ink-quiet) 0 1px, transparent 1px 5px);
+}
+
+/* 狭い画面（760px 以下）。**札は2列に折り、さらに狭ければ1列**（4列のままだと1枚が5rem ほどに
+   なり、数も棒も読めない）。境目は他の領域と同じ（docs/requirements.md 4.7）。 */
+@media (max-width: 760px) {
+  .usage-card-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 420px) {
+  .usage-card-row {
+    grid-template-columns: 1fr;
+  }
 }

@@ -12,6 +12,7 @@ import { type CurrentCharacter } from "./current-character.ts"
 import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
 import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
+import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
@@ -111,6 +112,10 @@ export function startSession(options: SessionStartOptions): RunningSession {
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
   // 境界は増やさない（原則3）。
   const chatArchive = createChatArchive()
+  // コンテキストの内訳の記録の口も1つ（`~/.tsukumo/context-usage/`）。**書くのは
+  // `session-manager` から、セッション1つにつき1行だけ**で、読むのは tsukumo の外なので、
+  // ここで作ってそのまま渡す。
+  const contextUsageLog = createContextUsageLog()
   const manager = createSessionManager({
     // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す
     // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
@@ -123,6 +128,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
     // トークン消費の記録の口。書くかどうか・何を書くかを決めるのは `session-manager` なので、
     // ここも受け取った口を渡すだけ。
     tokenUsageLog,
+    // いつ1行書くか（そのセッションでまだ書いていない最初のターンの終わり）を決めるのも
+    // `session-manager` なので、ここも口を渡すだけ。
+    contextUsageLog,
     // 置く契機（`prompt`）と捨てる契機（記録の窓）を決めるのも `session-manager`。
     promptImageShelf,
   })
@@ -294,8 +302,8 @@ function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
 
 /**
  * 画面の `<select>` に出す、切り替え先のセッションの一覧（`docs/requirements.md` 4.8）。
- * **いまの部屋（このビューのポート）の印を持つもの**だけが並ぶ——部屋はビューのポート1つに
- * つき1つなので（`docs/glossary.md`「部屋」）、別の部屋のセッションへは画面から行けない。
+ * **いまの部屋の印を持つもの**だけが並ぶ（絞り込みの理由は
+ * `src/server/core/session-restore.ts` の `listMarkedSessions`）。
  *
  * **続きを探さない起こし方のときは一覧も出さない**（`TSUKUMO_NEW_SESSION=1` と fake driver。
  * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない）。

@@ -123,6 +123,34 @@ describe("設定の歯車（帯の右端）", () => {
     expect(panel()).toBeNull()
   })
 
+  // Esc のときだけ、押した歯車へフォーカスを戻す（「いまの作業」の札と同じ）。
+  it("Esc で閉じるとフォーカスが歯車へ戻る", () => {
+    renderScreenNav()
+
+    fireEvent.click(gear())
+    fireEvent.keyDown(document, { key: "Escape" })
+
+    expect(document.activeElement).toBe(gear())
+  })
+
+  // 狭い画面では歯車そのものが「≡」の面の中にあり、Esc は面ごと閉じるので戻り先が消える。
+  // **帯の側の歯車（狭い画面では `display: none`）へフォーカスを飛ばさない**ことを守る。
+  it("「≡」の面の中の歯車でも Esc で閉じ、隠れている帯の側の歯車へは戻さない", () => {
+    renderScreenNav()
+    fireEvent.click(document.querySelector(".screen-nav-toggle") as HTMLElement)
+
+    fireEvent.click(
+      document.querySelector(".screen-nav-panel .screen-nav-settings-toggle") as HTMLElement,
+    )
+    expect(panel()).not.toBeNull()
+
+    fireEvent.keyDown(document, { key: "Escape" })
+
+    expect(document.querySelector(".screen-nav-panel")).toBeNull()
+    expect(document.activeElement).not.toBe(gear())
+    expect(document.activeElement).toBe(document.body)
+  })
+
   it("地・領域・字の色の3つ、新しいセッションの既定の2つ、演出の速さの1つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())

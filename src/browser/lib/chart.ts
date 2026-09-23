@@ -1,10 +1,9 @@
 // Chart.js（同梱のライブラリ）を読む口。**tsukumo 自身のサーバから配り、グラフが実際に要る
 // ときだけ `<script>` で読み込む**（`docs/requirements.md` 4.2。束ねには入れない）。
 //
-// 読み手は2つある（レポートの ```chart フェンス＝`features/main-view/markdown/chart-block.tsx` と、
-// トークン消費の画面＝`features/token-usage/`）ので、**読み込みと暗い配色への寄せ方はここに
-// 置く**（機能どうしは import しないので、2つ目の読み手が出た時点で `lib/` へ上げる。
-// `docs/design.md` 2章）。**描く config は読み手が持つ。**
+// **読み込みと暗い配色への寄せ方はここに置く**（機能どうしは import しないので、読み手が
+// 増えても置き場を動かさずに済む。`docs/design.md` 2章）。いまの読み手はレポートの ```chart
+// フェンス（`features/main-view/markdown/chart-block.tsx`）だけで、**描く config は読み手が持つ。**
 
 import { vendorAssetPath } from "../../shared/vendor-asset.ts"
 import { loadVendorScript } from "./vendor-script.ts"

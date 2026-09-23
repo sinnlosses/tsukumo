@@ -5,12 +5,13 @@
 // **同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く**（`ScreenNavRoom` などと同じ
 // 畳み方。どちらを出すかは CSS の `@media` が決める）。開閉の状態は1つの hook が持つので、
 // どちらから押しても同じ一覧が開く——**id は `useId()` でこの器ごとに振る**（2箇所に描くため、
-// `aria-controls` が指す一覧の id が重ならないようにする）。
+// `aria-controls` が指す一覧の id が重ならないようにする）。**Esc の戻り先として札の DOM を
+// 預ける口（`work.toggleRef`）も、2箇所ぶんを集めるコールバック ref**（`use-current-work.ts`）。
 //
 // **失敗した手順の `<details>` は、もとサイドバーにあった `activity.tsx` の `FailureDetail` を
 // そのまま移した**（引数と出力を読める場所はここだけ。docs/design.md 13.9）。
 
-import { useId, type ReactElement, type RefObject } from "react"
+import { useId, type ReactElement } from "react"
 
 import {
   type ScreenNavCurrentWork,
@@ -20,8 +21,6 @@ import styles from "../screen-nav.module.css"
 
 export type ScreenNavCurrentWorkProps = {
   readonly work: ScreenNavCurrentWork
-  /** この器の札の DOM（Esc で閉じたときにフォーカスを戻す先。`use-current-work.ts` が持つ）。 */
-  readonly toggleRef: RefObject<HTMLButtonElement | null>
 }
 
 // 入力・出力を読める形の文字列にしてから切り詰める上限。表示を壊さないためであって秘匿の
@@ -33,7 +32,11 @@ const MAX_TOOL_TEXT_LENGTH = 8000
 const GO_TO_QUESTION_LABEL = "質問へ"
 
 export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): ReactElement {
-  const { work, toggleRef } = props
+  const { work } = props
+  // **預け先はここで分解して受ける**（`work.toggleRef` の形のまま `ref` に渡すと、
+  // `react(refs)`（規約「レンダー中に ref を読み書きしない」）が `work` への参照ごと
+  // レンダー中の ref の読み書きとみなして落ちる。`presentational-screen-nav.tsx` と同じ事情）。
+  const { toggleRef } = work
   const listId = useId()
 
   return (

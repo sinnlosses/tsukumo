@@ -24,11 +24,12 @@ export const TOKEN_USAGE_SUMMARY_PATH = "/token-usage"
 export const TOKEN_USAGE_DAYS_QUERY_NAME = "days"
 
 /**
- * 選べる期間（今日を含む直近何日か）。**2つだけ**にしてあるのは、「先週はどうだったか」と
- * 「均すとどうか」で見たいものが変わるのがこの2段しかないため（1日・90日は、どちらも
- * 減らす判断が変わらない）。
+ * 選べる期間（今日を含む直近何日か）。**3つだけ**にしてあるのは、この3段で見たいものが
+ * 変わるため — 1日は「いま何に食われているか」（棒が時間ごとに割れる）、7日は「先週は
+ * どうだったか」、30日は「均すとどうか」。**90日は足さない**（均した姿は30日と変わらず、
+ * 減らす判断が動かない）。
  */
-export const TOKEN_USAGE_DAYS_CHOICES = [7, 30] as const
+export const TOKEN_USAGE_DAYS_CHOICES = [1, 7, 30] as const
 
 /** {@link TOKEN_USAGE_DAYS_CHOICES} のどれか。 */
 export type TokenUsageDays = (typeof TOKEN_USAGE_DAYS_CHOICES)[number]
@@ -39,10 +40,27 @@ export const DEFAULT_TOKEN_USAGE_DAYS = 7 satisfies TokenUsageDays
 /** モデル別の数から `model` を除いた形（日ごと・モデル別のどちらでも同じ数の並びを使う）。 */
 export type TokenUsageTotals = Omit<ModelTokenUsage, "model">
 
-/** ある1日（ローカル日付）の合計。 */
-export type DailyTokenUsage = {
-  readonly date: string
+/** 推移の棒1本ぶんの刻み（{@link TokenUsageTrend} の `unit`）。 */
+export type TokenUsageTrendUnit = "day" | "hour"
+
+/**
+ * 推移の1点（棒1本）。`key` は刻みに応じた**機械の側の鍵**で、`unit` が `"day"` なら
+ * ローカル日付（`YYYY-MM-DD`）、`"hour"` ならローカル時刻の時（`00`〜`23`）。
+ * **人に見せる書き方を決めるのは描く側**（ここは鍵だけを運ぶ）。
+ */
+export type TokenUsageTrendPoint = {
+  readonly key: string
   readonly totals: TokenUsageTotals
+}
+
+/**
+ * 期間の推移。**`points` は期間のすべての刻みを古い→新しい順に並べる**（記録が無い刻みも
+ * 0 の点として入る） — 刻みの数と両端は期間から決まるので、**畳む側が埋める**。
+ * ブラウザは「今日が何日か」を知らないので、穴を埋められるのはサーバだけ。
+ */
+export type TokenUsageTrend = {
+  readonly unit: TokenUsageTrendUnit
+  readonly points: readonly TokenUsageTrendPoint[]
 }
 
 /** あるモデル1つの合計。 */
@@ -56,17 +74,20 @@ export type ModelUsageTotal = {
  * だけ**（日ごと・モデル別・ツール別）を持つ。
  */
 export type TokenUsageSummary = {
-  /** 日ごとの合計（期間に入る日だけを古い→新しい順に並べる。記録が無い日は含まない）。 */
-  readonly byDay: readonly DailyTokenUsage[]
+  /** 期間の推移（刻みは期間の長さで決まる。穴は0で埋まっている）。 */
+  readonly trend: TokenUsageTrend
   /** モデルごとの合計（モデル名の昇順）。 */
   readonly byModel: readonly ModelUsageTotal[]
   /** ツールごとの合計（結果の長さの降順、同じなら名前順）。 */
   readonly byTool: readonly ToolUsageCount[]
 }
 
-/** 記録が1件も無い期間の集計（3つの軸がどれも空）。 */
+/**
+ * 記録が1件も無い期間の集計（3つの軸がどれも空）。**取れなかったときの置き換えにも使う**ので、
+ * 推移の刻みは期間を知らないまま既定の `"day"` になる（点が無いので刻みは画面に出ない）。
+ */
 export const EMPTY_TOKEN_USAGE_SUMMARY = {
-  byDay: [],
+  trend: { unit: "day", points: [] },
   byModel: [],
   byTool: [],
 } satisfies TokenUsageSummary
@@ -83,7 +104,10 @@ const tokenUsageTotalsSchema = z.object({
 
 /** 配る形そのもの（{@link TokenUsageSummary} と同じ鍵）。 */
 const tokenUsageSummarySchema = z.object({
-  byDay: z.array(z.object({ date: z.string(), totals: tokenUsageTotalsSchema })),
+  trend: z.object({
+    unit: z.enum(["day", "hour"]),
+    points: z.array(z.object({ key: z.string(), totals: tokenUsageTotalsSchema })),
+  }),
   byModel: z.array(z.object({ model: z.string(), totals: tokenUsageTotalsSchema })),
   byTool: z.array(z.object({ name: z.string(), calls: z.number(), resultBytes: z.number() })),
 })

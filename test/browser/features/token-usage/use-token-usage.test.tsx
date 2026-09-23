@@ -70,7 +70,7 @@ const FIXTURE_TOTALS = {
 }
 
 const FIXTURE_SUMMARY = {
-  byDay: [{ date: "2001-02-03", totals: FIXTURE_TOTALS }],
+  trend: { unit: "day", points: [{ key: "2001-02-03", totals: FIXTURE_TOTALS }] },
   byModel: [{ model: "架空モデル", totals: FIXTURE_TOTALS }],
   byTool: [],
 }
@@ -95,7 +95,7 @@ describe("useTokenUsage", () => {
     // 取得は非同期に終わる。**確定するまで待ってからテストを終える**（待たずに終えると、
     // 次のテストの実行中に応答が届いて act の外で state が更新される）。
     await waitFor(() => {
-      expect(result.current.summary.byDay.length).toBeGreaterThan(0)
+      expect(result.current.summary.trend.points.length).toBeGreaterThan(0)
     })
   })
 
@@ -136,7 +136,7 @@ describe("useTokenUsage", () => {
     })
 
     await waitFor(() => {
-      expect(result.current.summary.byDay).toHaveLength(1)
+      expect(result.current.summary.trend.points).toHaveLength(1)
     })
     expect(result.current.isError).toBe(false)
     expect(result.current.total).toEqual(FIXTURE_TOTALS)
@@ -152,7 +152,7 @@ describe("useTokenUsage", () => {
     await waitFor(() => {
       expect(result.current.isError).toBe(true)
     })
-    expect(result.current.summary.byDay).toEqual([])
+    expect(result.current.summary.trend.points).toEqual([])
     expect(result.current.total.costUsd).toBe(0)
   })
 
@@ -174,7 +174,7 @@ describe("useTokenUsage", () => {
       )
     })
     expect(result.current.isError).toBe(false)
-    expect(result.current.summary.byDay).toEqual([])
+    expect(result.current.summary.trend.points).toEqual([])
   })
 
   it("plan は state.plan をそのまま返す", async () => {
