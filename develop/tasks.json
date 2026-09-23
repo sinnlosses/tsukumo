@@ -50,7 +50,7 @@
     "dependencies": [],
     "summary": "起動トークン付きの URL を5か所で手組みしているのを browser/lib の1つの関数にする",
     "task": "## 背景\n\nブラウザ側で「いまのページの URL から起動トークン（`SESSION_TOKEN_QUERY_NAME`）を取り出し、経路に `?t=…` を付ける」手が5か所に書かれている:\n\n- `src/browser/lib/socket.ts`（`/ws`）\n- `src/browser/features/dispatch/file-suggestions.tsx` の `repositoryFileUrl`\n- `src/browser/features/token-usage/hooks/use-token-usage.ts` の `tokenUsageSummaryUrl`\n- `src/browser/features/token-usage/hooks/use-context-usage.ts` の `contextUsageUrl`\n- `src/browser/components/prompt-image.tsx`\n\nトークンが無いときの扱い（`?? \"\"` で空を送るか、`URLSearchParams` に `null` を渡すか）と、エンコードの仕方（`encodeURIComponent` か `URLSearchParams` か）が場所ごとに違う。トークン付きの JSON の口を1つ足すたびに、同じ手をもう1回書くことになる。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- サーバ側（`src/server/adapter/server.ts` の `hasStartupToken`）と経路名の定数（`src/shared/`）は変えない\n\n## やること\n\n1. 5か所の手を並べ、トークンが無いときの扱いとエンコードの違いが意図か偶然かを確かめる（`docs/design.md` 9章）\n2. 「経路（と追加のクエリ）を受けてトークン付きの URL を返す」関数を `src/browser/lib/` に1つ置く（`window.location` を読むので `lib/`）。`/ws` のように `ws:` / `wss:` を付けるものは同じ関数の引数で表すか別にするかを決める\n3. 5か所をそれに寄せる\n\n## 完了条件\n\n- `grep -rn 'SESSION_TOKEN_QUERY_NAME' src/browser` が新しい1ファイルだけ\n- 新しい関数にテストがある（トークンが無いとき・追加のクエリがあるとき）\n- `bun run check` が通る\n\n## 注意\n\n- `use-token-usage.ts` / `use-context-usage.ts` は T-401・T-402 も触る。並行して進めているときは `git merge main` で取り込んでから着手する",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
