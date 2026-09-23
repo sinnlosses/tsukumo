@@ -4,10 +4,10 @@
    ドロップダウン、いちばん右端に設定の歯車。
 
    **帯は body の padding の外へはみ出して画面の端から端まで出る**（負の margin で `--page-padding`
-   を打ち消す）。外寸は上端の差し色の線（`border-top`）＋帯の地（`--screen-nav-height`、52px）＋
-   下の罫線（`border-bottom`）で、**同じ変数を `<Layout>` も読む**（帯のぶんだけ grid を縮めるため。
-   layout.module.css）。地は画面の地（`--ground`）と領域の地（`--surface`）の中間で、どちらも
-   歯車から変えられるので混ぜて導出する。
+   を打ち消す）。外寸は帯の地（`--screen-nav-height`、52px）＋下の罫線（`border-bottom`）で、
+   **同じ変数を `<Layout>` も読む**（帯のぶんだけ grid を縮めるため。layout.module.css）。地は
+   画面の地（`--ground`）と領域の地（`--surface`）の中間で、どちらも歯車から変えられるので
+   混ぜて導出する。
 
    **口は枠も地も無い文字のタブ**で、帯の高さいっぱいに伸びる。いま出している画面の口は
    字の濃さと太さ、下端の差し色の下線で示す（色だけで伝えない。13.1 原則1）。
@@ -28,7 +28,7 @@
    （`components/portrait.module.css` の `.portrait` と同じ手口。docs/design.md 6.6）。
 
    狭い画面（760px 以下）は段を増やさず「≡」に畳む。その規則はこのファイルの末尾の @media で、
-   帯の地・線・はみ出しもそこで外す。 */
+   帯の地・罫線・はみ出しもそこで外す。 */
 .screen-nav {
   position: relative;
   display: flex;
@@ -37,7 +37,6 @@
   height: var(--screen-nav-height);
   margin: calc(-1 * var(--page-padding)) calc(-1 * var(--page-padding)) var(--screen-nav-gap);
   padding: 0 24px;
-  border-top: var(--screen-nav-accent-line) solid var(--accent);
   border-bottom: var(--screen-nav-rule) solid var(--rule);
   background: color-mix(in srgb, var(--ground), var(--surface) 50%);
 }
@@ -51,14 +50,15 @@
 /* いまのパックのキャラクターの顔（13.9「顔」）。**丸く切り抜き**、透過の縁が帯に溶けないように
    丸の地を --surface-accent で塗り、外側に差し色の輪を掛ける。大きさは帯の高さ（52px）に
    合わせて決めた固定値（式にすると「≡」の面の顔まで帯の高さに引きずられる）。`face` が無い
-   パックでは `<CharacterFace>` が何も描かないので、この class 自体が出ない。 */
+   パックでは `<CharacterFace>` が何も描かないので、この class 自体が出ない。**輪は 2026-09-23 に
+   2px から 1px へ細くした**（ユーザーの指示）。 */
 .screen-nav-face {
   flex: none;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background: var(--surface-accent);
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
   object-fit: cover;
 }
 /* トグルと口の間の縦の仕切り（飾りなので読み上げない）。 */
@@ -89,7 +89,7 @@
     z-index: 20;
   }
   /* 会話以外の画面（キャラクター・作る・トークン消費）は縦に流れる1枚のページなので、
-     重ねずにそのまま最上部の行として置く（右端に寄せる）。**帯の地・上端の線・下の罫線・
+     重ねずにそのまま最上部の行として置く（右端に寄せる）。**帯の地・下の罫線・
      画面の端へのはみ出しは外す**（残るのは「≡」だけなので、帯の形を出す理由が無い）。 */
   .screen-nav {
     justify-content: flex-end;

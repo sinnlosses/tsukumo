@@ -289,6 +289,12 @@ export type QuerySeedOptions = {
    * 形をそのまま写す（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
    */
   readonly resume: string | undefined
+  /**
+   * ターンの最後の応答が空だと本体が差し込む催促（`[Your previous response had no visible
+   * output. ...]`）への返事が、指定なしだと日本語の依頼でも英語に滑るための保険。値は固定で、
+   * キャラクターパックや利用者から変える口は作らない。
+   */
+  readonly settings: { readonly language: "japanese" }
 }
 
 /**
@@ -309,6 +315,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     model: options.model,
     effort: DEFAULT_EFFORT,
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
+    settings: { language: "japanese" },
   }
 }
 

@@ -8,7 +8,7 @@ import {
   attachSessionSocket,
   type SessionSocket,
 } from "../../../src/server/adapter/session-socket.ts"
-import { type DispatchResult } from "../../../src/server/core/session-manager.ts"
+import { type DispatchResult } from "../../../src/server/core/driver-command.ts"
 import { type ClientCommand } from "../../../src/shared/command.ts"
 import {
   FRAME_ERROR_REASON,
