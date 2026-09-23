@@ -91,6 +91,11 @@ export function useSessionSelector<T>(select: (session: SessionSnapshot) => T): 
   return useStoreSelector(useSessionStore(), select)
 }
 
+/** ターンが進行中かどうか。 */
+export function useTurnRunning(): boolean {
+  return useSessionSelector((session) => session.state.turn.kind === "running")
+}
+
 /** コマンドを送る口だけを受け取る（姿を購読しない）。 */
 export function useSessionDispatch(): SessionDispatch {
   return useSessionStore().dispatch

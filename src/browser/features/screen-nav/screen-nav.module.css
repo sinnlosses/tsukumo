@@ -114,11 +114,16 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+/* **幅は帯の空きをつねに埋める**（`width: 100%`。`max-width` だけだと中身の幅になり、要約
+   （コマンドなど）が変わるたびに札そのものが伸び縮みしてチカチカする。要約が無い状態
+   （依頼待ちなど）でも幅は保つ。`box-sizing: border-box` は padding・border のぶんが `.screen-nav-work`
+   からはみ出さないため（既定の content-box のままだと `width: 100%` で約24px あふれる）。 */
 .screen-nav-work-toggle {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  max-width: 100%;
+  box-sizing: border-box;
+  width: 100%;
   padding: 0.2rem 0.7rem;
   border: 1px solid var(--rule);
   border-radius: 999px;
@@ -132,8 +137,12 @@
 .screen-nav-work-mark {
   flex: none;
 }
+/* **いちばん長い状態語「止まっている」（6字）に幅を合わせる**——状態が変わるたびに区切り
+   （|）と要約の始まりの位置がずれるのを抑える。雑談中の呼びかけ（「<名前> とおしゃべり中」）は
+   名前の長さが決まらないのでここでは揃えない。 */
 .screen-nav-work-word {
   flex: none;
+  min-width: 6em;
   white-space: nowrap;
 }
 .screen-nav-work-sep {

@@ -492,8 +492,9 @@
   border-radius: 0.5625rem;
   /* font: inherit を先に置く（消すと font-family が button の UA 既定に落ちて、書体だけ
      ページから外れる）。そのうえで大きさと太さを上書きする。
-     モックの 14px はタイプスケール（13.3）の4段に無い。ボタンの字は機械のラベルではなく操作の
-     名前そのものなので「補助・サイドバーの本文」寄りに見て --font-secondary（13px）に寄せた。 */
+     モックの 14px（--font-subheading）は区画の見出しの段で、ボタンには使わない。ボタンの字は
+     機械のラベルではなく操作の名前そのものなので「補助・サイドバーの本文」寄りに見て
+     --font-secondary（13px）に寄せた。 */
   font: inherit;
   font-size: var(--font-secondary);
   font-weight: 700;

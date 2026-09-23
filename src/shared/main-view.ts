@@ -156,7 +156,7 @@ export type MainViewTurn = {
  * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`browser/main-view/` の部品はそのまま
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
- * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestHeading>` +
+ * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestRest>` +
  * `[<Report> | <QuestionRecord>]*`」）が、`src/browser/features/main-view/turn.tsx` はそこから描かない
  * （`docs/requirements.md` 4.2）。**{@link groupIntoTurns} /
  * {@link selectShownReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、

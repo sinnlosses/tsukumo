@@ -73,7 +73,7 @@ function revealTargets(): readonly string[] {
 }
 
 describe("Turn（書き上げる演出を掛ける相手）", () => {
-  it("出し始めた時点で既にあった本文には掛けない（過去のタブ・読み込み直し）", () => {
+  it("出し始めた時点で既にあった本文には掛けない（過去のターン・読み込み直し）", () => {
     render(<Turn turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])} newest />)
 
     expect(revealTargets()).toEqual([])

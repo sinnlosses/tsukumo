@@ -15,7 +15,7 @@ import { putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
-  // 過去のタブを選ぶと hash に乗る（`stores/turn-selection.tsx`）ので、次のテストへ持ち越さない。
+  // 過去のターンを選ぶと hash に乗る（`stores/turn-selection.tsx`）ので、次のテストへ持ち越さない。
   window.location.hash = ""
 })
 
@@ -51,10 +51,10 @@ function renderMainView(records: readonly SessionRecord[]): RenderResult {
 }
 
 /**
- * タブを押す。選択は hash に乗り、**happy-dom は `hashchange` を次のタスクで出す**ので
+ * 札の頭のボタンを押す。選択は hash に乗り、**happy-dom は `hashchange` を次のタスクで出す**ので
  * （本物のブラウザも同期では出さない）、ここで流して読み直させる。
  */
-function selectTab(name: string): void {
+function press(name: string): void {
   act(() => {
     fireEvent.click(screen.getByRole("button", { name }))
     window.dispatchEvent(new Event("hashchange"))
@@ -81,102 +81,165 @@ describe("MainView（ミニ立ち絵を置く原点）", () => {
   })
 })
 
-describe("MainView（タブの規則）", () => {
-  it("3ターンまでタブが出て、新しいターンで先頭（今回）へ戻る", () => {
-    renderMainView([
-      requestRecord({ text: "1つ目", turnId: 0 }),
-      detailRecord("1つ目のレポート"),
-      requestRecord({ text: "2つ目", turnId: 1 }),
-      detailRecord("2つ目のレポート"),
-      requestRecord({ text: "3つ目", turnId: 2 }),
-      detailRecord("3つ目のレポート"),
-    ])
+const OLDER = "1つ古いターンへ"
+const NEWER = "1つ新しいターンへ"
+const TO_NEWEST = "最新へ"
 
-    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "今回3つ目",
-      "2つ目",
-      "1つ目",
-    ])
+function threeTurns(): readonly SessionRecord[] {
+  return [
+    requestRecord({ text: "1つ目", turnId: 0 }),
+    detailRecord("1つ目のレポート"),
+    requestRecord({ text: "2つ目", turnId: 1 }),
+    detailRecord("2つ目のレポート"),
+    requestRecord({ text: "3つ目", turnId: 2 }),
+    detailRecord("3つ目のレポート"),
+  ]
+}
+
+function title(): string | null {
+  return screen.getByRole("heading", { level: 2 }).textContent
+}
+
+function position(): string | null | undefined {
+  return document.querySelector('[class*="turn-position"]')?.textContent
+}
+
+function button(name: string): HTMLButtonElement {
+  const found = screen.getByRole("button", { name })
+  if (!(found instanceof HTMLButtonElement)) {
+    throw new Error(`${name} が button ではない`)
+  }
+  return found
+}
+
+describe("MainView（札の頭）", () => {
+  it("最新のターンを出し、タイトル・n / N・「最新」の印が付く", () => {
+    renderMainView(threeTurns())
+
+    expect(title()).toBe("3つ目")
+    expect(position()).toBe("3 / 3")
+    expect(screen.getByText("最新")).toBeDefined()
+    expect(screen.queryByRole("button", { name: TO_NEWEST })).toBeNull()
     expect(screen.getByText("3つ目のレポート")).toBeDefined()
-
-    // 4つ目が始まると、先頭（今回）は自動でそちらに変わる。
-    rerenderMainView([
-      requestRecord({ text: "1つ目", turnId: 0 }),
-      detailRecord("1つ目のレポート"),
-      requestRecord({ text: "2つ目", turnId: 1 }),
-      detailRecord("2つ目のレポート"),
-      requestRecord({ text: "3つ目", turnId: 2 }),
-      detailRecord("3つ目のレポート"),
-      requestRecord({ text: "4つ目", turnId: 3 }),
-      detailRecord("4つ目のレポート"),
-    ])
-
-    expect(screen.getByText("4つ目のレポート")).toBeDefined()
-    expect(screen.queryByText("3つ目のレポート")).toBeNull()
   })
 
-  it("過去のタブを見ている間は、新しいターンが来ても動かない", () => {
-    renderMainView([
-      requestRecord({ text: "1つ目", turnId: 0 }),
-      detailRecord("1つ目のレポート"),
-      requestRecord({ text: "2つ目", turnId: 1 }),
-      detailRecord("2つ目のレポート"),
-      requestRecord({ text: "3つ目", turnId: 2 }),
-      detailRecord("3つ目のレポート"),
-    ])
+  it("‹ で1つ古いターンへ、› で1つ新しいターンへ移り、タイトルと n / N が追う", () => {
+    renderMainView(threeTurns())
 
-    // 1つ前（2つ目）のタブを選ぶ。
-    selectTab("2つ目")
+    press(OLDER)
+    expect(title()).toBe("2つ目")
+    expect(position()).toBe("2 / 3")
+    expect(screen.getByText("2つ目のレポート")).toBeDefined()
+    expect(screen.queryByText("3つ目のレポート")).toBeNull()
+
+    press(OLDER)
+    expect(title()).toBe("1つ目")
+    expect(position()).toBe("1 / 3")
+
+    press(NEWER)
+    expect(title()).toBe("2つ目")
+    expect(position()).toBe("2 / 3")
+  })
+
+  it("端ではその側を押せない（最新では ›、いちばん古いターンでは ‹）", () => {
+    renderMainView(threeTurns())
+
+    expect(button(NEWER).disabled).toBe(true)
+    expect(button(OLDER).disabled).toBe(false)
+
+    press(OLDER)
+    press(OLDER)
+    expect(button(OLDER).disabled).toBe(true)
+    expect(button(NEWER).disabled).toBe(false)
+  })
+
+  it("過去を見ている間は「最新」の印の代わりに「最新へ」が出て、押すと追従に戻る", () => {
+    renderMainView(threeTurns())
+
+    press(OLDER)
+    press(OLDER)
+    expect(screen.queryByText("最新")).toBeNull()
+
+    press(TO_NEWEST)
+    expect(title()).toBe("3つ目")
+    expect(screen.getByText("最新")).toBeDefined()
+    expect(window.location.hash).not.toContain("turn=")
+
+    // 追従に戻ったので、次のターンが始まればそちらへ移る。
+    rerenderMainView([
+      ...threeTurns(),
+      requestRecord({ text: "4つ目", turnId: 3 }),
+      detailRecord("4つ目のレポート"),
+    ])
+    expect(title()).toBe("4つ目")
+    expect(position()).toBe("4 / 4")
+  })
+
+  it("過去のターンを見ている間は、新しいターンが来ても動かない（n / N の N だけが増える）", () => {
+    renderMainView(threeTurns())
+
+    press(OLDER)
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
 
-    // 新しいターンが始まっても、選んだタブのままでいる。
     rerenderMainView([
-      requestRecord({ text: "1つ目", turnId: 0 }),
-      detailRecord("1つ目のレポート"),
-      requestRecord({ text: "2つ目", turnId: 1 }),
-      detailRecord("2つ目のレポート"),
-      requestRecord({ text: "3つ目", turnId: 2 }),
-      detailRecord("3つ目のレポート"),
+      ...threeTurns(),
       requestRecord({ text: "4つ目", turnId: 3 }),
       detailRecord("4つ目のレポート"),
     ])
 
+    expect(title()).toBe("2つ目")
+    expect(position()).toBe("2 / 4")
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
     expect(screen.queryByText("4つ目のレポート")).toBeNull()
   })
 
-  it("やり取りが1つ進んでも、前からあるタブの名前は変わらない（位置は title だけが追う）", () => {
-    const three = [
-      requestRecord({ text: "架空の依頼A", turnId: 0 }),
-      detailRecord("Aのレポート"),
-      requestRecord({ text: "架空の依頼B", turnId: 1 }),
-      detailRecord("Bのレポート"),
-      requestRecord({ text: "架空の依頼C", turnId: 2 }),
-      detailRecord("Cのレポート"),
-    ]
-    renderMainView(three)
+  it("ターンが1件だけでも札の頭を出す（前後はどちらも押せない）", () => {
+    renderMainView([requestRecord({ text: "ただ1つの依頼", turnId: 0 }), detailRecord("本文")])
 
-    // 見ていたタブ（B）を選んでおく。
-    selectTab("架空の依頼B")
-    expect(screen.getByRole("button", { name: "架空の依頼B" }).title).toBe("1つ前: 架空の依頼B")
+    expect(title()).toBe("ただ1つの依頼")
+    expect(position()).toBe("1 / 1")
+    expect(button(OLDER).disabled).toBe(true)
+    expect(button(NEWER).disabled).toBe(true)
+    expect(screen.getByText("最新")).toBeDefined()
+  })
 
-    // 次のやり取りが始まる（レポートはまだ無い）。
-    rerenderMainView([...three, requestRecord({ text: "架空の依頼D", turnId: 3 })])
+  it("タイトルは見ているターンの依頼の1行目で、全文は title でも読める", () => {
+    renderMainView([
+      requestRecord({ text: "架空の依頼の1行目\n2行目", turnId: 0 }),
+      detailRecord("本文"),
+    ])
 
-    const labels = screen
-      .getAllByRole("button")
-      .map((button) => button.querySelector('[class*="turn-tab-label"]')?.textContent)
-    expect(labels).toEqual(["架空の依頼D", "架空の依頼C", "架空の依頼B", "架空の依頼A"])
-    // 見ていたタブは同じ名前のまま残り、位置の呼び名だけが1つずれる。
-    expect(screen.getByRole("button", { name: "架空の依頼B" }).title).toBe("2つ前: 架空の依頼B")
-    expect(screen.getByText("Bのレポート")).toBeDefined()
-    // 「今回」は先頭（新しいやり取り）へ移る。
-    expect(screen.getAllByRole("button")[0]?.textContent).toBe("今回架空の依頼D")
+    const heading = screen.getByRole("heading", { level: 2 })
+    expect(heading.textContent).toBe("架空の依頼の1行目")
+    expect(heading.title).toBe("架空の依頼の1行目")
   })
 })
 
-describe("MainView（タブ切り替えでレポートの先頭へ戻す）", () => {
-  it("タブを切り替えると、先頭へ戻す scrollIntoView が1回呼ばれる", () => {
+describe("MainView（依頼の続き）", () => {
+  it("1行の依頼はタイトルにだけ出て、本文側に二度は出ない", () => {
+    renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 }), detailRecord("本文")])
+
+    expect(screen.getAllByText("架空の依頼")).toHaveLength(1)
+    expect(document.querySelector("details[open]")).toBeNull()
+  })
+
+  it("複数行の依頼は、2行目以降が開いた <details> で全部読める（1行目は二度出さない）", () => {
+    renderMainView([
+      requestRecord({ text: "架空の依頼の1行目\n1. 起こす\n2. 落ちる", turnId: 0 }),
+      detailRecord("本文"),
+    ])
+
+    const details = document.querySelector("details")
+    expect(details?.open).toBe(true)
+    expect(details?.textContent).toContain("1. 起こす")
+    expect(details?.textContent).toContain("2. 落ちる")
+    expect(details?.textContent).not.toContain("架空の依頼の1行目")
+    expect(screen.getAllByText("架空の依頼の1行目")).toHaveLength(1)
+  })
+})
+
+describe("MainView（ターン切り替えでレポートの先頭へ戻す）", () => {
+  it("前後へ移ると、先頭へ戻す scrollIntoView が1回呼ばれる", () => {
     renderMainView([
       requestRecord({ text: "1つ目", turnId: 0 }),
       detailRecord("1つ目のレポート"),
@@ -186,7 +249,7 @@ describe("MainView（タブ切り替えでレポートの先頭へ戻す）", ()
 
     const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
 
-    selectTab("1つ目")
+    press(OLDER)
 
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
     expect(scrollIntoView.mock.calls[0]?.[0]).toEqual({ block: "start" })
@@ -206,7 +269,7 @@ describe("MainView（タブ切り替えでレポートの先頭へ戻す）", ()
 })
 
 describe("MainView（セリフはレポートに出さない）", () => {
-  it("セリフの記録が混ざっても、レポートには出ずタブの並びも変わらない", () => {
+  it("セリフの記録が混ざっても、レポートには出ずターンの区切りも変わらない", () => {
     renderMainView([
       requestRecord({ text: "1つ目", turnId: 0 }),
       speechRecord({ text: "1つ目のセリフ" }),
@@ -216,15 +279,13 @@ describe("MainView（セリフはレポートに出さない）", () => {
       detailRecord("2つ目のレポート"),
     ])
 
-    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "今回2つ目",
-      "1つ目",
-    ])
+    expect(position()).toBe("2 / 2")
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
     expect(screen.queryByText("2つ目のセリフ")).toBeNull()
 
     // 1つ前も、セリフ抜きのレポートだけが出る（ターンの区切りはずれない）。
-    selectTab("1つ目")
+    press(OLDER)
+    expect(title()).toBe("1つ目")
     expect(screen.getByText("1つ目のレポート")).toBeDefined()
     expect(screen.queryByText("1つ目のセリフ")).toBeNull()
   })

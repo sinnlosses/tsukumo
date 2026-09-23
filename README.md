@@ -85,13 +85,16 @@ git clone https://github.com/sinnlosses/tsukumo.git
 cd tsukumo
 bun install
 
-# 2. tsukumo コマンドをグローバルに入れる（~/.bun/bin/tsukumo がこのリポジトリを指す）
+# 2. ブラウザ側を組み立てる（成果物は dist/browser/。起動時には組み立てないので、無いと起動が止まる）
+bun run build
+
+# 3. tsukumo コマンドをグローバルに入れる（~/.bun/bin/tsukumo がこのリポジトリを指す）
 bun link
 
-# 3. コマンドが通っているか確かめる
+# 4. コマンドが通っているか確かめる
 which tsukumo   # ~/.bun/bin/tsukumo が出れば通っている
 
-# 4. 好きなプロジェクトのディレクトリで起動する（characters/ も develop/ も無いディレクトリでよい）
+# 5. 好きなプロジェクトのディレクトリで起動する（characters/ も develop/ も無いディレクトリでよい）
 cd ~/path/to/your-project
 tsukumo
 ```

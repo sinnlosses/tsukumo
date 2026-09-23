@@ -11,7 +11,7 @@ import { type ReactElement } from "react"
 import { type CharacterPackChoice } from "../../../shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { Select } from "../../components/select.tsx"
-import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../stores/session.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
 
@@ -42,7 +42,7 @@ export function SessionInfo(): ReactElement {
   const dispatch = useSessionDispatch()
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
   const currentPackName = useSessionSelector((session) => session.state.character?.pack)
-  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const turnInProgress = useTurnRunning()
   const currentPack = resolveCharacterPack(characterPacks, currentPackName)
 
   return (

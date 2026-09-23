@@ -1,4 +1,4 @@
-/* メインビュー（`src/browser/features/main-view/`）。ターンのタブ・依頼の見出し・ステップの
+/* メインビュー（`src/browser/features/main-view/`）。ターンの札と頭・依頼の続き・ステップの
    カード・レポートの本文（Markdown と記法）・質問の記録まで**この1枚**に持つ。 */
 
 .placeholder {
@@ -11,61 +11,130 @@
      ほしいので、ビューポートではなくここを原点にする。座標を測る側は `data-brush-origin` の
      印でこの要素を探す（`stores/brush-tip.ts`）。 */
   position: relative;
+  /* ターンを替えたときの `scrollIntoView`（`main-view.tsx`）で、領域の余白まで転がし切らない。
+     0 だと札の上端が領域の枠に貼り付き、枠が2本重なって見える。 */
+  scroll-margin-top: var(--region-padding, 0px);
 }
-.turn-tabs {
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  padding: 0 0 0.5rem;
-  background: var(--surface);
-  z-index: 1;
-}
-.turn-tab {
-  padding: 0.2rem 0.7rem;
+/* ターン1件ぶんの札（`main-view.tsx`）。頭（`.turn-header`）と区切り線の下にレポートを置く。
+   **`overflow` を付けない**（付けると頭の `position: sticky` が札の中で効かなくなる）。 */
+.turn-card {
   border: 1px solid var(--rule);
-  border-radius: 999px;
+  border-radius: 0.6rem;
   background: var(--surface);
-  color: var(--ink-quiet);
+}
+/* 札の頭（`turn-header.tsx`）。**長いレポートを読みながら前後へ移れるよう、転がっても上に残す**。
+   広い画面は1行（前後の口・タイトル・n / N と最新の印）。
+   **貼り付く位置は領域の余白ぶん上**（`--region-padding`。`layout.module.css`）。sticky は転がる
+   器の余白の内側を基準にするので、0 のままだと頭の上の余白の帯を本文が流れて見える（実測）。 */
+.turn-header {
+  position: sticky;
+  top: calc(-1 * var(--region-padding, 0px));
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "nav title meta";
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0.6rem 0.6rem 0 0;
+  background: var(--surface);
+}
+.turn-nav {
+  grid-area: nav;
+  display: flex;
+  gap: 0.4rem;
+}
+.turn-nav-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--ink);
   font: inherit;
-  font-size: var(--font-secondary);
+  font-size: var(--font-heading);
+  line-height: 1;
   cursor: pointer;
 }
-.turn-tab.is-active {
-  color: var(--ink);
+/* 端（移る先が無い側）は押せない見た目に落とす。枠を地に溶かし、字を quiet にする。 */
+.turn-nav-button:disabled {
+  border-color: color-mix(in srgb, var(--rule) 40%, transparent);
+  color: color-mix(in srgb, var(--ink-quiet) 50%, transparent);
+  cursor: default;
+}
+.turn-nav-button:not(:disabled):hover,
+.turn-to-newest:hover {
   border-color: var(--accent);
 }
-/* 名前の中では折り返さない（長さは domain/turn-tab-label.ts が文字数で切ってある）。 */
-.turn-tab-label {
+/* 見ているターンの依頼の1行目。ページで唯一の本物の h2（レポートの `##` は h4 に落とす）。
+   1行に収まらないぶんは省略し、全文は `title` で読ませる（`domain/turn-title.ts` は切らない）。 */
+.turn-title {
+  grid-area: title;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink);
+  font-size: var(--font-heading);
+  font-weight: 700;
+}
+.turn-meta {
+  grid-area: meta;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+/* 「n / N」は機械が振った番号なので等幅（13.1 原則3）。 */
+.turn-position {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
   white-space: nowrap;
 }
-/* 先頭のタブにだけ添える「今回」。名前と取り違えないよう、キャラクターの色にして間を空ける。 */
-.turn-tab-current {
-  margin-right: 0.4em;
-  color: var(--accent);
+/* 「最新」の印と「最新へ」の口は同じ形にして、同じ場所で入れ替わる。印は選ばれたものと同じ
+   示し方（accent の枠と surface-accent の地。13.1 原則1）、口は枠だけの静かなボタン。 */
+.turn-newest-badge,
+.turn-to-newest {
+  padding: 0.15rem 0.65rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font: inherit;
+  font-size: var(--font-secondary);
   white-space: nowrap;
 }
-/* 既定では summary（依頼の1行目）だけの高さで収まり、開くと全行が読める
-   （requestHeadingHtml 参照）。 */
-/* 依頼の見出し。1行なら h2、複数行なら details[open]（requestHeadingHtml）。**どちらも
-   既定で全行が見えて**、長いときだけ max-height でスクロールに切り替わる。 */
+.turn-newest-badge {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  color: var(--ink);
+  font-weight: 700;
+}
+.turn-to-newest {
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.turn-body {
+  padding: 0.9rem 0.75rem 0.75rem;
+}
+/* 依頼のうちタイトルに出なかった2行目以降（`turn.tsx` の `RequestRest`）。既定で開いていて
+   全行が読め、長いときだけ max-height でスクロールに切り替わる。 */
 .turn-request {
   margin: 0 0 0.75rem;
-  /* 依頼の見出しの縦罫は、キャラクターの色を出してよい場所の1つ（13.1 原則1）。
-     見出し自体の文字色は「読む面」なので ink のまま（下の h2.turn-request / summary）。 */
+  /* 依頼の縦罫は、キャラクターの色を出してよい場所の1つ（13.1 原則1）。
+     本文の文字色は「読む面」なので ink のまま（下の .turn-request-full）。 */
   border-left: 3px solid var(--accent);
   padding-left: 0.6rem;
 }
-h2.turn-request {
-  font-size: var(--font-heading);
-  color: var(--ink);
-  max-height: 40vh;
-  overflow-y: auto;
-}
 .turn-request > summary {
-  font-size: var(--font-heading);
-  color: var(--ink);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
   cursor: pointer;
 }
 .turn-request-full {
@@ -230,7 +299,7 @@ h2.turn-request {
 }
 /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと。
    `docs/glossary.md`「お願い」）。**縦罫の色・地・枠**で他の5種と見分ける。
-   縦罫が accent なのは「依頼の見出しの縦罫」（.turn-request）と対になる場所だから
+   縦罫が accent なのは「依頼の縦罫」（.turn-request）と対になる場所だから
    — 依頼が利用者からキャラクターへ、お願いがキャラクターから利用者へ向く（13.1 原則1 が
    accent を許すのは文字ではなく罫線の側）。地を ground に落として枠で囲むのは
    .main-step.is-interim と同じ手口で、親の地が surface でも ground でも塊として立つ。 */
@@ -251,14 +320,14 @@ h2.turn-request {
   color: var(--ink-quiet);
 }
 /* レポートの見出し（`##` / `###`）。`src/browser/features/main-view/markdown/markdown.tsx` が `h4` / `h5` として描く
-   （タグは `h2.turn-request` と段が被らないよう一段落としてある）。**タイプスケールはこの4段だけ**
+   （タグは札の頭のタイトル `h2.turn-title` と段が被らないよう一段落としてある）。**タイプスケールはこの4段だけ**
    （docs/design.md 13.3）なので新しい段は作らず、太さ・余白・罫線の3つで `##` と `###` を
    見分けられるようにする。
    **罫線の側にだけキャラクターの色を混ぜる**（docs/design.md 13.2「レポートの見出しと表に」。
    文字は `ink` のまま — 13.1 原則1 が accent を許すのは文字ではなく罫線の側）。`##` は領域の幅
    いっぱいの1本、`###` は文字の幅だけの1本（`width: fit-content`）で、**段の深さを運ぶのは罫線の
    長さ**のほう（色は段の違いを運ばない）。
-   混ぜる割合は `rule` に6割で、**依頼の見出し・お願いの縦罫（素の accent）より一段弱い** —
+   混ぜる割合は `rule` に6割で、**依頼・お願いの縦罫（素の accent）より一段弱い** —
    レポートの中で何度も出る線なので、素のまま出すと差し色が地の色になって何も指さなくなる。 */
 .detail-block h4 {
   margin: 1rem 0 0.5rem;
@@ -589,6 +658,13 @@ h2.turn-request {
 
 /* 狭い画面（1列に畳む幅。docs/requirements.md 4.7）。 */
 @media (max-width: 760px) {
+  /* 札の頭は1行に収まらないので、前後の口と n / N を1行目に残し、タイトルを2行目に落とす。 */
+  .turn-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "nav meta"
+      "title title";
+  }
   /* レポートの「用語 → 説明」の対は、狭い画面では2列をやめて1列で積む
      （用語の列に幅を取られると説明が1文字ずつ折り返すため）。 */
   .detail-block dl {
