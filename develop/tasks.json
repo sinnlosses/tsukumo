@@ -94,9 +94,9 @@
     "dependencies": ["T-439", "T-441", "T-442"],
     "summary": "main-view の部品を T-442 の基準で container/presenter に割る",
     "task": "## 背景\n\n`src/browser/features/main-view/` には `hooks/` が演出の1本（`use-report-reveal.ts`）しか無く、container/presenter の形になっていない。フックと JSX が同じファイルにあるのは:\n\n- `main-view.tsx`（`useEffect` `useMainViewTurns` `useTurnSelection`）\n- `turn-header.tsx`（226行。`useCallback` `useDismissSignal` `useId` `useState`）\n- `question-ask.tsx`（170行。`useEffect` `useQuestionAnswer` `useQuestionScroll` `useTurnSelection`）\n- `mini-portrait.tsx`（`useBrushTip` `useSessionSelector`）\n- `turn.tsx`（209行）・`question-record.tsx` は `useState` だけ\n\nT-442 が割る基準を決め直し、T-441 が演出のファイル群をまとめ、T-439 が CSS を部品ごとに割る。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 画面の見え方と振る舞い（ターンの切り替え・質問への答え・演出）は変えない\n\n## やること\n\n1. T-442 で決まった基準を読み、上の部品を1つずつ「割る / 割らない」に分ける\n2. 割ると決めたものを `hooks/` / `components/` / `presentational-` に分ける\n\n## 完了条件\n\n- 上の各部品が「割った / 割らない（理由）」のどちらかで `evidence` に載っている\n- `test/browser/features/main-view/` のテストが期待値を変えずに通る\n- 疑似セッションで、ターンの見出しの切り替え・質問に答える・新しい依頼の演出を目視で確かめ、`evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- 画面の見え方と振る舞いは変えない（構造だけを動かす）。テストの期待値を書き換えて通すことはしない",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "T-442 の基準（保つ／外と同期／畳む を数え、2種以上で割る。ストア読みは数えない）を6部品に当てた。turn-header.tsx（3種）と question-record.tsx（3種）は hooks/ + presentational- + container の3分割（container は各19・20行）。main-view.tsx と question-ask.tsx は2種なので外に触るフックだけ hooks/use-active-turn-scroll.ts・use-question-ask-scroll.ts へ。mini-portrait.tsx と turn.tsx は「畳む」1種だけなので割らない（turn.tsx の useState は初期値を1回捕まえるだけでイベントで遷移しない）。\nbun run check: 1767 pass / 0 fail（145ファイル）で T-441 のときと同数、main-view のテストは無修正。bun run build 成功。\n目視（fake・port 4765/4766・一時 TSUKUMO_HOME・headless Chromium 1400x1000）: question-multi で選択肢を選んで答えると記録に ● が2つ。question-preview では「比べた内容」が閉→0件／開→3件／閉じても3件のまま／開き直して3件で、一度開いたら中身を外さない元の振る舞いどおり。pageerror 0件"
   },
   {
     "id": "T-444",

@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 main-view の部品を T-442 の基準で container/presenter に割った（T-443）
+
+6部品に基準を当て、3種そろう `turn-header` と `question-record` を3分割、2種の `main-view` と `question-ask` は外に触るフックだけ `hooks/` へ出し、1種の `mini-portrait` と `turn` は割らなかった。画面の振る舞いは変えていない。
+
 ### 2026-09-23 レポートの演出の7ファイルを main-view の中にまとめた（T-441）
 
 3つの箱に散っていた筆の演出を `features/main-view/reveal/` へ集め、`stores/brush-tip.ts` も読み手が1機能だけなのでそこへ下ろした。`docs/design.md` 2章に「機能の中に概念の名前のディレクトリを置いてよい条件」を書いた。
