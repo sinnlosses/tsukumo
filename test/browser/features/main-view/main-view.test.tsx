@@ -10,8 +10,17 @@ import { QuestionScrollProvider } from "../../../../src/browser/stores/question-
 import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
 import { type MainViewQuestion } from "../../../../src/shared/main-view.ts"
-import { INITIAL_SESSION_STATE, type SessionRecord } from "../../../../src/shared/session-state.ts"
-import { detailRecord, requestRecord, speechRecord } from "../../../fixture/session-record.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionRecord,
+  type SessionState,
+} from "../../../../src/shared/session-state.ts"
+import {
+  detailRecord,
+  reportRecord,
+  requestRecord,
+  speechRecord,
+} from "../../../fixture/session-record.ts"
 import { putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -38,8 +47,12 @@ function tool(
 // サーバと同じ経路で行う）。
 let store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE)
 
-function renderMainView(records: readonly SessionRecord[]): RenderResult {
-  store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records })
+/** `turn` を渡すと、そのターンの進み具合で描く（既定は動いていない）。 */
+function renderMainView(
+  records: readonly SessionRecord[],
+  turn: SessionState["turn"] = INITIAL_SESSION_STATE.turn,
+): RenderResult {
+  store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records, turn })
   return render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionProvider>
@@ -435,25 +448,26 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
     expect(container.querySelectorAll(".main-step")).toHaveLength(0)
   })
 
-  it("本文の後ろにツールが続くと本文は落ち、チップも残らない（枠ごと消える）", () => {
+  it("最後でない本文は落ち、ツールのチップも残らない（枠ごと消える）", () => {
     const { container } = renderMainView([
       requestRecord({ text: "依頼", turnId: 0 }),
       detailRecord("まず直すね"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
+      detailRecord("直したよ"),
     ])
 
     expect(screen.queryByText("まず直すね")).toBeNull()
-    expect(container.querySelectorAll(".main-step")).toHaveLength(0)
+    expect(container.querySelectorAll(".main-step")).toHaveLength(1)
   })
 
   it("ツールを何十件呼んだやり取りでも「省略した」の行は出ない（上限に数えない）", () => {
     const { container } = renderMainView([
       requestRecord({ text: "依頼", turnId: 0 }),
-      detailRecord("## 調べた結果\n\n- 1つめ\n- 2つめ"),
+      reportRecord("## 調べた結果\n\n- 1つめ\n- 2つめ"),
       ...Array.from({ length: 60 }, (_, index) =>
         tool({ toolUseId: `t${String(index)}`, name: "Read", input: { file_path: "src/a.ts" } }),
       ),
-      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      reportRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     expect(container.querySelector(".turn-dropped")).toBeNull()
@@ -463,24 +477,28 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 })
 
 describe("MainView（中間レポート）", () => {
-  it("まとまった本文の後ろにツールが続くと、中間レポートの印が付いた枠で残る", () => {
-    const { container } = renderMainView([
-      requestRecord({ text: "依頼", turnId: 0 }),
-      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
-      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-    ])
+  it("最後でない report は、中間レポートの印が付いた枠で出る", () => {
+    const { container } = renderMainView(
+      [
+        requestRecord({ text: "依頼", turnId: 0 }),
+        reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+        tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
+        reportRecord("書きかけの結論"),
+      ],
+      { kind: "running", startedAt: 0 },
+    )
 
     expect(screen.getByText("中間レポート")).toBeDefined()
     expect(screen.getByText("1つ目の発見")).toBeDefined()
     expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
   })
 
-  it("最後に書いた本文は中間レポートにしない（印は付かない）", () => {
+  it("最後の report は中間レポートにしない（印は付かない）", () => {
     const { container } = renderMainView([
       requestRecord({ text: "依頼", turnId: 0 }),
-      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      reportRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     expect(screen.getByText("直した箇所")).toBeDefined()
@@ -491,9 +509,9 @@ describe("MainView（中間レポート）", () => {
   it("後ろに別のレポートが現れた中間レポートは <details> で畳んで出す（T-161）", () => {
     const { container } = renderMainView([
       requestRecord({ text: "依頼", turnId: 0 }),
-      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      reportRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     const interimSteps = container.querySelectorAll(".main-step.is-interim")
@@ -504,11 +522,16 @@ describe("MainView（中間レポート）", () => {
   })
 
   it("まだ追い越されていない最後の中間レポートは畳まず開いたまま（<section> のまま）", () => {
-    const { container } = renderMainView([
-      requestRecord({ text: "依頼", turnId: 0 }),
-      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
-      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-    ])
+    // 動いているあいだ、いちばん新しい report は出ないので、手前の中間レポートを追い越すものが無い。
+    const { container } = renderMainView(
+      [
+        requestRecord({ text: "依頼", turnId: 0 }),
+        reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+        tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
+        reportRecord("書きかけの結論"),
+      ],
+      { kind: "running", startedAt: 0 },
+    )
 
     const interimSteps = container.querySelectorAll(".main-step.is-interim")
     expect(interimSteps).toHaveLength(1)
@@ -519,11 +542,11 @@ describe("MainView（中間レポート）", () => {
   it("複数の中間レポートが追い越されると全部畳まれ、それぞれの <summary> に先頭行が出る", () => {
     const { container } = renderMainView([
       requestRecord({ text: "依頼", turnId: 0 }),
-      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/a.ts" } }),
-      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      reportRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
       tool({ toolUseId: "t2", name: "Write", input: { file_path: "src/b.ts" } }),
-      detailRecord("## 片付いた\n\n- 1件目\n- 2件目"),
+      reportRecord("## 片付いた\n\n- 1件目\n- 2件目"),
     ])
 
     const interimSteps = [...container.querySelectorAll(".main-step.is-interim")]
@@ -537,20 +560,20 @@ describe("MainView（中間レポート）", () => {
   })
 
   it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない（T-165）", () => {
-    // 十分な数の中間レポート（それぞれ detail + tool の対）を積み、1つのやり取りが画面に出す
+    // 十分な数の中間レポート（それぞれ report + tool の対）を積み、1つのやり取りが画面に出す
     // 記録の上限（40。**ツールの実行は数えない**ので、数えるのはレポートの件数）を超えさせる。
     // 全部のあとに非中間の締めの report を置くので、手前は全部 superseded = true になり
     // <details> で畳まれる（既存の「複数の中間レポートが追い越されると全部畳まれ」ケースと
     // 同じ形）。
     const pair = (index: number): SessionRecord[] => [
-      detailRecord(`## 見出し${String(index)}\n\n- 発見A\n- 発見B`),
+      reportRecord(`## 見出し${String(index)}\n\n- 発見A\n- 発見B`),
       tool({ toolUseId: `t${String(index)}`, name: "Write", input: { file_path: "src/a.ts" } }),
     ]
 
     const buildRecords = (pairCount: number): SessionRecord[] => [
       requestRecord({ text: "依頼", turnId: 0 }),
       ...Array.from({ length: pairCount }, (_, index) => pair(index)).flat(),
-      detailRecord("できたよ"),
+      reportRecord("できたよ"),
     ]
 
     // 45件（i=0..44）: レポート45件＋締めの1件が上限（40）を超えるので、前のほうは落ちる。

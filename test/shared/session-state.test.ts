@@ -372,7 +372,7 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("mainViewEntries はツール系の entry も含む（`groupIntoTurns` / `selectShownReports` の材料になる）", () => {
+  it("mainViewEntries はツール系の entry も含む（ステップの actions に入る）", () => {
     const view = apply(
       { kind: "request", text: "依頼", images: [] },
       {

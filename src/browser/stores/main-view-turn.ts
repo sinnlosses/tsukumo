@@ -1,6 +1,6 @@
 // メインビューに出すターン（`shared/main-view.ts` の導出）を、**姿1つにつき1回だけ**畳む場所。
 //
-// 畳みは `groupIntoTurns` → `selectShownReports` → `markSupersededSteps` → `markFinalReport` →
+// 畳みは `groupIntoTurns` → `selectLastText` / `selectToolReports` → `markSupersededSteps` → `markFinalReport` →
 // `limitTurnEntries` の5パスで、記録は最大20ターン分ある。**同じ導出を読むのは `stores/turn-selection.tsx`（選んで
 // いるターンの追従）と `features/main-view/`（中身）の2箇所**で、以前はそれぞれが毎フレーム
 // 別々に計算していた（1本化した）。

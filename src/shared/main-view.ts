@@ -9,7 +9,6 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { isBlankText } from "./blank-text.ts"
-import { isJapaneseProse } from "./japanese-prose.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { tidyReportBody } from "./report-tidy.ts"
@@ -39,8 +38,7 @@ export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
  * 数え続けていた: 過去のやり取り720件で測ると22件（3.1%）が上限に当たり、うち16件は
  * **画面から何も消えていないのに**「これ以前の n 件は省略した」（最大62件）を出し、残り6件は
  * レポート1件を出してから消していた（実測）。画面に出るものだけを数えると1つの
- * やり取りの最大は6件（中位数1・p99で4件。実況を落とす {@link selectShownReports} が
- * 効くため）で、この値には当たらない——**落とすための値ではなく、1つのやり取りが際限なく
+ * やり取りの最大は6件（中位数1・p99で4件）で、この値には当たらない——**落とすための値ではなく、1つのやり取りが際限なく
  * 伸びたときの止め**（`src/browser/features/main-view/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
  * と同じ立場。常駐プロセスの持ち物の上限は `MAX_SESSION_STATE_TURNS` /
  * {@link MAX_MAIN_VIEW_TURNS} が別に持つ）。
@@ -94,8 +92,8 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  *
  * `body` は画面に出す本文（{@link MainViewStepBody}）。
  *
- * `interim` は、その本文が**中間レポート**（やり取りの締めではないが、まとまった資料なので
- * 残した本文。`selectShownReports`）かどうか。`body` が `none` のときは常に false。
+ * `interim` は、その本文が**中間レポート**（`report` ツールの最後でない呼び出し。
+ * `selectToolReports`）かどうか。`body` が `none` のときは常に false。
  * 見分けを付けて描くのは `src/browser/features/main-view/turn.tsx` の仕事で、判定はここに置く。
  *
  * `superseded` は、**自分より後ろに本文を持つステップがあるか**（`markSupersededSteps`）。
@@ -168,10 +166,8 @@ export type MainViewTurn = {
  * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`browser/main-view/` の部品はそのまま
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
- * **`tool` の記録も渡す**が、`src/browser/features/main-view/turn.tsx` はそこから描かない
- * （`docs/display.md` 4.2）。**{@link groupIntoTurns} /
- * {@link selectShownReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
- * `tool` の記録自体は残す。帯の「いまの作業」は別に `src/shared/turn-step.ts` の
+ * **`tool` の記録も渡す**（ステップの `actions` に入る）が、`src/browser/features/main-view/turn.tsx` は
+ * そこから描かない（`docs/display.md` 4.2）。帯の「いまの作業」は別に `src/shared/turn-step.ts` の
  * `currentTurnSteps` が同じ記録から直接導くので、ここで両方に配っても重複にはならない。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
@@ -186,7 +182,7 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
  *
  * `turnUnsettled` は**いちばん新しいやり取りの締めの本文がまだ伸びうるか**で、確定していない
- * 本文を出さないために要る（{@link selectShownReports}）。**`SessionState.turn` が
+ * 本文を出さないために要る（{@link selectLastText} / {@link selectToolReports}）。**`SessionState.turn` が
  * `running` かどうかそのものではない**——背景の仕事を待って黙ると `turn-finished` が来て
  * `finished` に落ちるが、
  * 通知で再開したぶんの本文はそこから伸びる（作るのは `browser/stores/main-view-turn.ts`）。
@@ -200,9 +196,8 @@ export function mainViewTurns(
     .map(({ turn, toolReportIds }, index) => {
       // 動いているのはいちばん新しいやり取りだけで、それ以外の本文はもう確定している。
       const settled = !turnUnsettled || index !== turns.length - 1
-      // **`report` が1回も呼ばれなかったやり取りは、今までどおり本文から推測する。**
       return toolReportIds.length === 0
-        ? selectShownReports(turn, settled)
+        ? selectLastText(turn, settled)
         : selectToolReports(turn, toolReportIds, settled)
     })
     .map((turn) => markSupersededSteps(turn))
@@ -347,87 +342,37 @@ function newStep(
 }
 
 /**
- * **出す本文を選ぶ**（`docs/display.md` 4.2）。本文は3つに分かれ、残すのは前の2つ:
+ * **`report` ツールが1回も呼ばれなかったやり取りの本文を選ぶ**（`docs/display.md` 4.2）。出すのは
+ * 最後の本文（空白だけのものは除く）1つだけで、それが最終レポートになる。それより前の本文は、
+ * 資料らしい形をしていても出さない（中間レポートは `report` ツールからしか生まれない）。
  *
- * - **最終レポート**: そのやり取りの**締めの本文**（最後のステップの本文で、あとにツールが
- *   続いていないもの）。**資料がほかに1つも無いときは中身を問わず残す**——短い返事だけの
- *   ターン（「直しておいたよ」）で本文が空になってしまうため。**資料があるときは実況と同じに
- *   落とし、最後の資料が最終レポートへ繰り上がる**（{@link promotedReportId}）
- * - **中間レポート**: それ以外の本文のうち、まとまった資料（{@link isInterimReport}）。
- *   `interim` を立てて残す
- * - **実況**: それ以外（構造の印が無いか、印があっても短い本文）。落とす。「まず読むね」
- *   「次はテスト」のような実況はツールを呼ぶ合図としてしか書かれておらず、レポートとして読む
- *   ものではない。**規約の条項（`src/server/core/report-notation.ts` の「前置きと締めを書かない」）
- *   では抑えきれなかった**ので、tsukumo の側で落とす（4.2「分離を文章の規約で表す案は
- *   採らない」と同じ立場）
- *
- * **実況かどうかに「あとにツールが続いたか」を使わない**（それまでは
- * ツールが続いた本文だけを落としていた）。`speak` は `speech` になって `tool` の記録にならないので、
- * **本文 → `speak` → 本文 → ツール**という規約どおりの並びでは1つめの実況にツールが1つも付かず、
- * 2つめの本文が始まって「最後のステップ」でなくなった瞬間に**露出したまま最後まで残っていた**
- * （実測。場面 `narration-stuck`）。判定を構造の印1つへ寄せると、この並びでも
- * 実況は一度も出ない。
- *
- * `settled` は**そのやり取りがもう動いていないか**（進行中なのはいちばん新しいやり取りだけ。
- * {@link mainViewTurns}）。**進行中のあいだ、締めの本文は出さない**（「まとまった資料なら
- * 流れている最中でも出す」という例外も外してある）: 書きかけ
- * （`partialUtterance`）は常に最後のステップへ積まれるので、締めの本文はまだ伸びる途中かも
- * しれない。出してしまうと **(1)** 前の中間レポートの `superseded`（{@link markSupersededSteps}）が
- * true→false へ反転して `<details>` が畳まれてから開き直し、**(2)** 書きかけのまま `final` が
- * 立つので、書き上げる演出（`src/browser/features/main-view/reveal/use-report-reveal.ts`）が
- * **始めた時点の DOM しか相手にしない**（実測で、演出が相手にしたのは開始した時点の 74 文字だけ。
- * 最終的な本文 1303 文字の 94% には筆が一度も通っていなかった）。確定してから出せば、一度出した
- * 本文は二度と消えず、囲いも演出の相手も最初から決まる。
- *
- * **締めかどうかは最後のステップだけを見れば決まる。** `tool` の記録は {@link groupIntoSteps} が
- * `steps.at(-1)` にしか足さないので、最後でないステップにはもうツールが続かない。
- *
- * 代わりに、**進行中の本文はどれも流れて見えない**（資料はツールが始まった時点で中間レポートと
- * して出て、締めの本文はターンが終わった時点で出る）。中間レポートは出た瞬間に `interim` が
- * 立つので、**囲いは最初から破線**で、あとから反転しない。
+ * `settled` でないあいだは何も出さない。書きかけは最後のステップへ積まれるので、最後の本文は
+ * まだ伸びる途中か、次の本文に席を譲るかもしれない——出してから変わると、書き上げる演出
+ * （マウントした時点でしか始まらない。`src/browser/features/main-view/reveal/use-report-reveal.ts`）が
+ * 確定した本文に掛からない。
  */
-function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn {
-  const promotedId = settled ? promotedReportId(turn) : undefined
+function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
+  const lastId = settled
+    ? turn.steps.findLast((step) => step.body.kind === "text" && !isBlankText(step.body.report))?.id
+    : undefined
   return {
     ...turn,
-    steps: turn.steps.map((step, index) => {
-      if (step.body.kind === "none") {
-        return step
-      }
-      // そのやり取りの締めの本文。終わっていれば最終レポート、動いている最中ならまだ伸びる。
-      // **繰り上げが起きたときは実況として落とす**（{@link promotedReportId}）。
-      if (index === turn.steps.length - 1 && !hasToolRun(step)) {
-        return settled && promotedId === undefined ? step : { ...step, body: NO_BODY }
-      }
-      // **ツールが続いていない資料は、まだ締めかどうかが決まっていない。** 次の本文が流れ始めた
-      // だけで「最後のステップ」から外れるが、その本文が実況で終われば {@link promotedReportId}
-      // がこの資料を締めへ繰り上げる。**進行中に中間レポートとして出してしまうと**、繰り上がった
-      // 瞬間に「もう画面にある本文」が最終レポートになり、**マウントした時点でしか始まらない
-      // 書き上げる演出**（`src/browser/features/main-view/reveal/use-report-reveal.ts`）が二度と
-      // 掛からない（実測: 資料が中間レポートとして出た 2.2 秒後に締めへ変わり、筆は一度も走らなかった）。
-      if (!settled && !hasToolRun(step)) {
-        return { ...step, body: NO_BODY }
-      }
-      if (step.id === promotedId) {
-        return step
-      }
-      return isInterimReport(step.body.report)
-        ? { ...step, interim: true }
-        : { ...step, body: NO_BODY }
-    }),
+    steps: turn.steps.map((step) =>
+      step.id === lastId || step.body.kind === "none" ? step : { ...step, body: NO_BODY },
+    ),
   }
 }
 
 /**
  * **`report` ツールが呼ばれたやり取りの本文を選ぶ**（`docs/glossary.md`「report ツール」）。出すのは `report`
  * から来たステップだけで、**ツールの外に書いた本文は1つも出さない**（推測の
- * {@link selectShownReports} は通さない）。**最後の呼び出しが最終レポート、それより前は中間
+ * {@link selectLastText} は通さない）。**最後の呼び出しが最終レポート、それより前は中間
  * レポート**で、あとに作業が続いたかどうかは見ない。
  *
  * `settled` でないあいだ、**いちばん新しい `report` は出さない**。次の `report` が来れば中間
  * レポートに、来なければ最終レポートになるので、まだ決まっていない——先に出すと、あとから
  * 中間へ変わったときに囲いが反転し、最終へ残ったときも書き上げる演出（マウントした時点でしか
- * 始まらない）が掛からない。{@link selectShownReports} が締めの本文を確定まで出さないのと同じ理由。
+ * 始まらない）が掛からない。{@link selectLastText} が確定まで何も出さないのと同じ理由。
  */
 function selectToolReports(
   turn: MainViewTurn,
@@ -450,100 +395,7 @@ function selectToolReports(
 }
 
 /**
- * 締めの本文が実況でしかないときに、代わりに最終レポートへ繰り上げる資料の id
- * （繰り上げないなら undefined）。
- *
- * **締めの本文を「中身を問わず残す」のは、資料が1つも無いやり取りで本文が空になるのを
- * 防ぐため**（{@link selectShownReports}）。資料がほかにあるなら、その理由は消える。
- * **資料 → `speak` → 「また呼んでください」** という並びで、挨拶のほうが
- * 位置だけで最終レポートの席を取り、中身のある資料が `<details>` に畳まれていた。規約
- * （`src/server/core/report-notation.ts` の「締めを書かない」）で抑えきれない点は、ほかの
- * 実況と同じ（`docs/display.md` 4.2「分離を文章の規約で表す案は採らない」）。
- *
- * **繰り上げるのは確定したやり取りだけ**（呼ぶ側が `settled` で絞る）。書きかけの本文は
- * 実況から資料へ育つ途中かもしれず、繰り上げが途中で外れると前の資料の `interim` が
- * true→false へ反転して `<details>` が開き直る。
- *
- * **締めの本文が日本語でないときは、そのあとの作業が無い日本語の本文へ席を戻す**
- * （{@link isJapaneseProse}）。**日本語のレポート → `speak` → 同じ内容の英訳** という並びで、
- * 英訳が位置だけで最終レポートの席を取り、日本語のほうが中間レポートに回っていた（規約
- * 「レポートは必ず日本語で書く」を読んだうえで3回起きた）。戻す先は資料に限らない——短い答えの
- * あとに英訳が付いても同じなので。代わりに**戻す先より後ろにツールが続いていないこと**を求め、
- * 作業の手前に書いた実況（「まず読むね」）へ席が渡らないようにする。
- */
-function promotedReportId(turn: MainViewTurn): number | undefined {
-  const closing = turn.steps.at(-1)
-  if (closing === undefined || closing.body.kind === "none" || hasToolRun(closing)) {
-    return undefined
-  }
-  const japaneseReport = isJapaneseProse(closing.body.report)
-    ? undefined
-    : lastJapaneseReportAfterWork(turn.steps.slice(0, -1))
-  if (japaneseReport !== undefined) {
-    return japaneseReport.id
-  }
-  if (isInterimReport(closing.body.report)) {
-    return undefined
-  }
-  return turn.steps
-    .slice(0, -1)
-    .findLast((step) => step.body.kind === "text" && isInterimReport(step.body.report))?.id
-}
-
-/**
- * 最後のツールの実行より後ろに書かれた本文のうち、いちばん新しい日本語の本文
- * （{@link promotedReportId}）。
- */
-function lastJapaneseReportAfterWork(steps: readonly MainViewStep[]): MainViewStep | undefined {
-  const afterWork = steps.slice(steps.findLastIndex(hasToolRun) + 1)
-  return afterWork.findLast(
-    (step) => step.body.kind === "text" && isJapaneseProse(step.body.report),
-  )
-}
-
-/**
- * そのステップのあとにツールの実行が続いたか。**その本文がやり取りの締めかどうか**の判定に使う
- * （{@link selectShownReports}）——ツールが続いていれば、キャラクターはそのあとも作業をしている。
- *
- * **質問（`question`）はツールに数えない。** 質問は利用者が答える手前で止まる場所なので、
- * その直前に書いた本文は締めの本文として扱う（中間レポートにもしない）。
- */
-function hasToolRun(step: MainViewStep): boolean {
-  return step.actions.some((action) => action.kind === "tool")
-}
-
-/**
- * まとまった資料の印。**行頭に現れるブロックの記法だけ**を見る（見出し・表の行・箇条書き・
- * 番号付き・コードフェンス・引用・行頭の HTML タグ）。インラインの記法（`` `code` `` や
- * `**強調**`）を印にしないのは、実況もふつうにファイル名を `` ` `` で囲んで書くため。
- */
-const STRUCTURE_MARK = /^\s*(?:#{1,6}\s|\||[-*+]\s|\d+[.)]\s|```|~~~|>|<[a-zA-Z/])/
-
-/**
- * 中間レポートと認める下限。印が1つ付いただけの1〜2行（「- まず読むね」）は資料ではないので、
- * **行数か文字数のどちらか**を満たすことも求める。文字数のほうは、見出し1行＋長い段落のように
- * 行数が伸びない資料を拾うためにある。
- */
-const MIN_INTERIM_REPORT_LINES = 3
-const MIN_INTERIM_REPORT_LENGTH = 200
-
-/**
- * 「まとまった資料」か（＝中間レポートとして残すか）。**構造の印を持ち、かつ短くない**ものだけを
- * 資料と見なす。**迷ったら落とす側に倒してある**（印が無ければ長くても落とし、印があっても
- * 短ければ落とす）——実況が残るとチラつきの指摘がそのまま戻るのに対し、落としすぎても
- * **締めの本文は必ず残る**（{@link selectShownReports}）ので、やり取りの結論は画面から消えない。
- */
-function isInterimReport(markdown: string): boolean {
-  const lines = markdown.split("\n").filter((line) => line.trim() !== "")
-  return (
-    lines.some((line) => STRUCTURE_MARK.test(line)) &&
-    (lines.length >= MIN_INTERIM_REPORT_LINES ||
-      markdown.trim().length >= MIN_INTERIM_REPORT_LENGTH)
-  )
-}
-
-/**
- * 各ステップに「自分より後ろに本文を持つステップがあるか」（`superseded`）を立てる。**`interim` の判定そのもの（`selectShownReports`）
+ * 各ステップに「自分より後ろに本文を持つステップがあるか」（`superseded`）を立てる。**`interim` の判定そのもの（`selectToolReports`）
  * は変えない**——ここで足すのは「畳むかどうか」の材料だけ。
  * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
  * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
@@ -598,7 +450,7 @@ function extractFirstLine(markdown: string): string {
  * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りだけに
  * 出す——本文が1つしか無いやり取りでは「最終」が何も区別せず、内容を持たない行になる。
  *
- * `interim` の判定（{@link selectShownReports}）も `superseded`（{@link markSupersededSteps}）も
+ * `interim` の判定（{@link selectToolReports}）も `superseded`（{@link markSupersededSteps}）も
  * 変えない。
  */
 function markFinalReport(turn: MainViewTurn): MainViewTurn {

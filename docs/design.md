@@ -180,7 +180,6 @@ src/
     room.ts                   部屋の名前（ビューのポート1つ＝部屋1つ。語彙と、語彙の外の名乗り方。13.9）
     blank-text.ts             本文が読める文字を1字も持たないかを判定する純関数（ゼロ幅スペース等も空扱い）
     background-task.ts        背景のタスク（ターンのあとも claude が動かし続けているもの）の語彙（型だけ）
-    japanese-prose.ts         本文の地の文が日本語かを判定する純関数（英訳の締めに最終レポートの席を渡さない）
   server/                     サーバ（Bun）側。判断（core/）と境界（adapter/）の2段
     core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
       session-driver.ts       駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ

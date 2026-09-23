@@ -79,8 +79,8 @@
 .main-step > .detail-block:last-child {
   margin-bottom: 0;
 }
-/* 中間レポート（やり取りの締めではない、まとまった本文。`src/shared/main-view.ts` の
-   `selectShownReports` が印を付ける）。**新しい色は作らない**（theme.css のトークンだけ）。
+/* 中間レポート（`report` ツールの最後でない呼び出し。`src/shared/main-view.ts` の
+   `selectToolReports` が印を付ける）。**新しい色は作らない**（theme.css のトークンだけ）。
    本文は読む面なので `ink` のまま置き、**地を ground に落とす・枠を破線にする・小さなラベルを
    載せる**の3つで本体のレポートと見分ける（色だけに頼らない。docs/screen-design.md 13.1 原則1）。 */
 .main-step.is-interim {

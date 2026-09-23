@@ -528,10 +528,10 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 中間レポート
 
 - **英語識別子（予定）**: `interim`（`MainViewStep.interim`）
-- **定義**: **ターンの途中で出た、まとまった資料としての本文**。やり取りの締めではない本文の
-  うち、構造の印を持ち短くないもの（`src/shared/main-view.ts` の `selectShownReports`）。
-  メインビューには印を付けた枠で残る
-- **注記**: 同じ位置に出る**実況**（「まず読むね」「次はテスト」）は落とす。落とす／残すの規則は
+- **定義**: **ターンの途中で出たレポート**。1つのターンで `report` ツールが何度か呼ばれたときの、
+  最後でない呼び出し（`src/shared/main-view.ts` の `selectToolReports`）。メインビューには印を
+  付けた枠で残る
+- **注記**: `report` が呼ばれなかったターンには中間レポートは無い（最後の本文だけを出す）。規則は
   `docs/display.md` 4.2 が正典
 - **注記**: あとに別のレポートが出た中間レポートは `<details>` で畳む（`MainViewStep.superseded` /
   `firstLine`）。まだ追い越されていない最後の1件だけは開いたまま。規則は `docs/display.md`

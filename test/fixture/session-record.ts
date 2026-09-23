@@ -40,6 +40,14 @@ export function detailRecord(markdown = "架空のレポート"): SessionRecord 
   return { kind: "detail", markdown }
 }
 
+/**
+ * `report` ツールで受け取ったレポート1件。本文は `conclusion` にだけ置く（`body` は描くときに
+ * 整形が掛かるので、渡した文字列がそのまま出るほうを既定にする）。
+ */
+export function reportRecord(conclusion = "架空の結論"): SessionRecord {
+  return { kind: "report", conclusion, body: "", favor: "" }
+}
+
 /** 圧縮の区切り。中身を持たない。 */
 export function compactBoundaryRecord(): SessionRecord {
   return { kind: "compact-boundary" }

@@ -70,8 +70,7 @@ export function Turn(props: TurnProps): ReactElement {
  * 1ステップ分。レポートも質問の記録も無いステップは何も描かない（`null`）。
  *
  * **ツールの実行（`action.kind === "tool"`）は描かない。** `actions` にはツールの記録も
- * 残っているが（`selectShownReports` が「そのステップにツール呼び出しが続いたか」の
- * 材料に使う。`MainViewStep.actions` はそのために残す）、メインビューに出すのは質問の記録だけ。
+ * 残っているが、メインビューに出すのは質問の記録だけ。
  *
  * **中間レポート（`step.interim`）は見分けが付く形で描く。** 話が途中の本文なので、
  * 小さなラベルを載せて地と枠を変える（`.main-step.is-interim`。判定そのものは
