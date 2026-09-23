@@ -726,16 +726,25 @@ type SessionHost = {
 
 ### config.ts（core）
 
-| 環境変数              | 意味                                                 | 既定             |
-| --------------------- | ---------------------------------------------------- | ---------------- |
-| `TSUKUMO_VIEW_PORT`   | いまのまま（既定 7327、塞がっていれば +1 で20個）    | 7327             |
-| `TSUKUMO_CHARACTER`   | パック定義ディレクトリのパス（相対は cwd 相対）      | `tsukumo-spirit` |
-| `TSUKUMO_OPEN_VIEW`   | いまのまま                                           | 開く             |
-| `TSUKUMO_DRIVER`      | `sdk` / `fake`                                       | `sdk`            |
-| `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前            | 流さない         |
-| `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）            | 復元する         |
-| `TSUKUMO_WATCH_UI`    | `1` で `src/browser/` を見張って組み立て直す（11章） | 見張らない       |
-| `TSUKUMO_HOME`        | tsukumo の持ち物を置くホーム（相対は cwd 相対）      | `~/.tsukumo`     |
+| 環境変数                          | 意味                                                         | 既定             |
+| --------------------------------- | ------------------------------------------------------------ | ---------------- |
+| `TSUKUMO_VIEW_PORT`               | いまのまま（既定 7327、塞がっていれば +1 で20個）            | 7327             |
+| `TSUKUMO_VIEW_PORT_FALLBACK_BASE` | `TSUKUMO_VIEW_PORT` が未設定のときの起点を差し替える（下記） | 7327             |
+| `TSUKUMO_CHARACTER`               | パック定義ディレクトリのパス（相対は cwd 相対）              | `tsukumo-spirit` |
+| `TSUKUMO_OPEN_VIEW`               | いまのまま                                                   | 開く             |
+| `TSUKUMO_DRIVER`                  | `sdk` / `fake`                                               | `sdk`            |
+| `TSUKUMO_FAKE_SCENE`              | `fake` のとき起こした直後に流す場面の名前                    | 流さない         |
+| `TSUKUMO_NEW_SESSION`             | `1` で復元せず新規に起こす（8章の逃げ道）                    | 復元する         |
+| `TSUKUMO_WATCH_UI`                | `1` で `src/browser/` を見張って組み立て直す（11章）         | 見張らない       |
+| `TSUKUMO_HOME`                    | tsukumo の持ち物を置くホーム（相対は cwd 相対）              | `~/.tsukumo`     |
+
+`TSUKUMO_VIEW_PORT_FALLBACK_BASE` は**既定の帯（`DEFAULT_VIEW_PORT`〜+19）そのものを差し替える
+口**で、`TSUKUMO_VIEW_PORT` を明示したときは効かない（明示指定はそもそもずらさないため）。
+読めない値は `TSUKUMO_VIEW_PORT` と違って**起動を止めず**、黙って既定の 7327 に倒す
+（`resolveViewPortFallbackBase`）。**この口が要る場面は1つだけ**——`test/cli.test.ts`
+「既定ポートから上限まで全部塞がっている」テストが、実際の 7327〜7346 帯（他の tsukumo が
+日常的に使っている）を塞がずに、その帯が全滅したときの失敗経路（試した範囲を伝えて終了コード1）
+を確かめるための私的な帯を選ぶために使う。
 
 `TSUKUMO_CHARACTER` は**パスとしてだけ解く**（`src/server/adapter/bundled-path.ts` の
 `resolveBundledDir`。相対は cwd 相対、絶対はそのまま）。**パックの名前では指せない** —

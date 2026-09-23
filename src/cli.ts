@@ -22,6 +22,11 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_VIEW_PORT   ビューを配るポート（既定 ${String(DEFAULT_VIEW_PORT)}。既定のまま塞がっていたら
                       ${String(VIEW_PORT_FALLBACK_ATTEMPTS)}個先まで順にずらす。明示的に指定した
                       ときはずらさずそのまま失敗する。0 を渡すと空きポートを使う）
+  TSUKUMO_VIEW_PORT_FALLBACK_BASE
+                      TSUKUMO_VIEW_PORT が未設定のときの既定の帯の起点を差し替える（既定
+                      ${String(DEFAULT_VIEW_PORT)}。読めない値は無視して既定のまま）。日常の起動では使わない
+                      ——実際の既定の帯を塞がずに「全部塞がっている」経路を確かめる
+                      test/cli.test.ts のための口
   TSUKUMO_CHARACTER   キャラクター定義ディレクトリ（既定は tsukumo 自身の同梱の
                       characters/tsukumo-spirit。自分の素材を使うときは起動先の
                       characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
