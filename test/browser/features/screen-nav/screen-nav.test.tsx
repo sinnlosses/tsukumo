@@ -271,7 +271,7 @@ describe("ScreenNav", () => {
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ
-    // （`set-chat-mode`。docs/design.md 13.9）。
+    // （`set-chat-mode`。docs/screen-design.md 13.9）。
     it("反対側を押すと set-chat-mode を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ chatMode: false }, (command) => {

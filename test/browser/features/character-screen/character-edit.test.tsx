@@ -104,7 +104,7 @@ describe("CharacterEdit", () => {
     expect(screen.getByRole("button", { name: "作業中を消す" })).toBeDefined()
   })
 
-  // **立ち絵が無い表情は点線の枠の空きにラベルと「選ぶ」だけ**（docs/design.md 13.6）。
+  // **立ち絵が無い表情は点線の枠の空きにラベルと「選ぶ」だけ**（docs/screen-design.md 13.6）。
   it("立ち絵が無い表情には消す口を出さず、「選ぶ」を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
@@ -278,7 +278,7 @@ describe("CharacterEdit", () => {
     )
   })
 
-  // 背景（`docs/design.md` 13.8）。**口は「差し替える」と「消す」の2つだけ**で、覆いの濃さの
+  // 背景（`docs/screen-design.md` 13.8）。**口は「差し替える」と「消す」の2つだけ**で、覆いの濃さの
   // つまみは出さない。
   it("背景が無いパックでは、点線の枠と「背景なし」を出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)

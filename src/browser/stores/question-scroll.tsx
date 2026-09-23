@@ -1,6 +1,6 @@
 // 帯の「いまの作業」の一覧にある「質問へ」から、メインビューの質問の札
 // （`features/main-view/question-ask.tsx`）へスクロールしてほしいという**一回限りの合図**を配る
-// Context（`docs/design.md` 13.9「いまの作業」）。`browser/` の機能どうしは import できないので、
+// Context（`docs/screen-design.md` 13.9「いまの作業」）。`browser/` の機能どうしは import できないので、
 // `stores/turn-selection.tsx` / `stores/question-answer.tsx` と同じ形（Provider が持つ値を
 // 両方の機能が読み書きする）で伝える。
 //

@@ -30,26 +30,31 @@
   font-size: var(--font-label);
   line-height: 1.4;
 }
+/* 期間の切り替え。**3つで1つの入れ物**（枠は群の外側だけで、中のボタンは枠を持たない）。 */
 .token-usage-period {
   display: flex;
   margin-left: auto;
-  gap: 0.4rem;
+  gap: 2px;
+  padding: 3px;
+  background: var(--ground);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.625rem;
 }
-/* 期間の切り替え。**選ばれている側は地を1段上げる**（`aria-pressed`。色だけに頼らない）。 */
+/* **選ばれている側は地を1段上げる**（`aria-pressed`。色だけに頼らない）。 */
 .token-usage-choice {
-  padding: 0.15rem 0.6rem;
+  padding: 0.25rem 0.7rem;
   background: none;
   color: var(--ink-quiet);
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
+  border: none;
+  border-radius: 0.4375rem;
   font-size: var(--font-label);
   cursor: pointer;
 }
 .token-usage-choice:hover {
-  border-color: var(--accent);
+  color: var(--ink);
 }
 .token-usage-choice[aria-pressed="true"] {
-  background: var(--surface-accent);
+  background: var(--surface-raised);
   color: var(--ink);
 }
 
@@ -67,8 +72,7 @@
 }
 .token-usage-section-label {
   margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
+  font-size: var(--font-subheading);
   font-weight: normal;
 }
 
@@ -76,8 +80,8 @@
    @media。境目は他の領域と同じ 760px）。 */
 .usage-card-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 /* 札1枚（`period-usage-card.tsx`）。**枠を持つ**（13.1 原則2。枠を持たないのはキャラクターだけ）。 */
@@ -85,9 +89,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.875rem;
   background: var(--surface-raised);
   /* 中の棒は grid の列幅に合わせて縮む。`min-width: 0` が無いと、棒の本数ぶんの最小幅が
      そのまま列の下限になり、狭い画面で横に溢れる。 */
@@ -133,14 +137,19 @@
   gap: 1px;
   height: 3.5rem;
 }
-/* 棒1本。**塗りはキャラクターの色を使わない**（13.1 原則1。読む面は誰が来ても同じ濃さ）。
-   記録の無い刻みも 0% の棒として並ぶので、`min-height` が「その日はあったが空だった」印になる。 */
+/* 棒1本。**塗りはキャラクターの色を使わない**（13.1 原則1。読む面は誰が来ても同じ濃さ）。 */
 .usage-card-bar {
   align-self: end;
   height: var(--usage-bar-height);
   min-height: 2px;
-  border-radius: 1px 1px 0 0;
-  background: var(--ink-quiet);
+  border-radius: 2px 2px 0 0;
+  background: var(--usage-bar);
+}
+/* 記録の無い刻み。**高さ 0 のままでは消えてしまう**ので、`min-height` の印だけが残る。
+   塗りを落とすのは、空だったことと「少しだけ使った」ことを取り違えさせないため。 */
+.usage-card-bar-zero {
+  background: var(--usage-bar-zero);
+  border-radius: 1px;
 }
 /* 期間の両端の刻み（最初と最後だけ）。 */
 .usage-card-scale {
@@ -163,12 +172,13 @@
 }
 .token-usage-table th,
 .token-usage-table td {
-  padding: 0.2rem 0.4rem;
+  padding: 0.5rem 0.4rem;
   text-align: right;
 }
-/* 見出しの行は本文の地の上に**浮かせる**（13.2 の3段目）。 */
+/* 見出しの行は**下の罫線だけ**で区切る（地を上げない。行の罫線より1段はっきりさせて、
+   ここが表の頭だと分かるようにする）。 */
 .token-usage-table thead th {
-  background: var(--surface-raised);
+  border-bottom: 1px solid var(--rule);
   color: var(--ink-quiet);
   font-size: var(--font-label);
   font-weight: normal;
@@ -176,16 +186,18 @@
 .token-usage-table thead th:first-child {
   text-align: left;
 }
-.token-usage-table tbody tr + tr {
-  border-top: 1px solid var(--rule);
+.token-usage-table tbody td {
+  border-bottom: 1px solid var(--rule-quiet);
 }
 /* 数は等幅・桁揃え（大小を縦に読むため）。 */
 .token-usage-table td {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
-/* 機械の名前（モデル・ツール）は等幅（13.1 原則3）。 */
-.token-usage-name {
+/* 機械の名前（モデル・ツール）は等幅（13.1 原則3）。**左に寄せる** — 右寄せだと長い名前が
+   折り返したときに行の頭が揃わず、縦に読めない。`.token-usage-table th, td` の右寄せに
+   詳細度で負けるので、表の中であることまで綴る。 */
+.token-usage-table .token-usage-name {
   font-family: var(--font-mono);
   font-weight: normal;
   text-align: left;
@@ -195,8 +207,8 @@
    （760px以下）では縦に積む（このファイル末尾の @media）。 */
 .usage-table-row {
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 1rem;
   align-items: start;
   min-width: 0;
 }
@@ -262,33 +274,32 @@
   flex: 1 1 auto;
   overflow: hidden;
   min-width: 1.5rem;
-  height: 0.4rem;
-  border-radius: 1px;
-  background: var(--surface);
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--usage-bar-track);
 }
-/* 塗りは期間の合計の棒（`.usage-card-bar`）と同じ `--ink-quiet`（13.1 原則5。意味を固定した
-   新しい色を増やさず、既にある「静かな棒」の色を再利用する）。 */
+/* 塗りは期間の合計の棒（`.usage-card-bar`）と同じ `--usage-bar`（どちらも「その列の最大に
+   対する長さ」を言う棒で、分類の色ではない）。 */
 .usage-table-bar-fill {
   display: block;
   width: var(--usage-bar-share);
   height: 100%;
-  border-radius: 1px;
-  background: var(--ink-quiet);
+  border-radius: 0.25rem;
+  background: var(--usage-bar);
 }
 
 /* 「ほか n 件を見る」の開閉。文字だけのボタン（枠を増やさない）。 */
 .usage-table-more {
-  margin: 0.4rem 0 0;
+  margin: 0.75rem 0 0;
   padding: 0;
   background: none;
   border: none;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  text-decoration: underline;
+  color: var(--accent);
+  font-size: var(--font-action);
   cursor: pointer;
 }
 .usage-table-more:hover {
-  color: var(--ink);
+  text-decoration: underline;
 }
 
 /* 記録が無い・取れなかった・描けなかった・続きがある、の一言。 */
@@ -303,10 +314,10 @@
 .context-card {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  gap: 1.125rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.875rem;
   background: var(--surface-raised);
 }
 /* 見出しの行。**右の2つは `margin-left: auto` で押しやる**（狭い画面では下へ折り返す）。 */
@@ -368,31 +379,42 @@
 
 /* 横棒1本。**区間の幅は行ごとの `--context-share`**（割合をそのまま幅にする）。窓を超えた回は
    合計が100%を超えるので、はみ出しはここで切る。 */
+/* **区間どうしは隙間で切る**（見本。塗りが隣り合うと、色の違いが境目の見分けを1つだけで
+   担うことになる）。両端だけ丸める。 */
 .context-bar {
   display: flex;
   overflow: hidden;
+  gap: 2px;
   width: 100%;
-  height: 0.75rem;
-  border-radius: 0.25rem;
-  background: var(--surface);
+  height: 1.75rem;
 }
 .context-span {
   width: var(--context-share);
+}
+.context-span:first-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+.context-span:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
 }
 
 /* 凡例。**3列の格子**（狭い画面では列が減る。1列の下限は、いちばん長い分類名と数が1行に
    収まる幅）。 */
 .context-legend {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-  gap: 0.15rem 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 2rem;
   margin: 0;
 }
+/* 1行が1分類。**上の罫線で区切る**（3列のどの列でも行の高さが揃うので、横にも読める）。 */
 .context-legend-row {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
-  font-size: var(--font-label);
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: var(--font-secondary);
+  white-space: nowrap;
 }
 .context-legend-name {
   display: flex;
@@ -408,17 +430,18 @@
 /* 凡例の四角。**横棒と同じ塗り**（同じ `.context-tone-*` を重ねる）。 */
 .context-swatch {
   display: inline-block;
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 0.15rem;
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.1875rem;
+}
+/* 空き・自動圧縮バッファの四角だけは縁を足す（地に近い塗りなので、縁が無いと四角が消える）。 */
+.context-swatch.context-tone-free,
+.context-swatch.context-tone-buffer {
+  border: 1px solid var(--context-outline);
 }
 
-/* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。**名前の列は左に寄せる**（長いパスが右寄せだと
-   折り返した行の頭が揃わず読めない）。`.token-usage-name` だけでは `.token-usage-table th` の
-   右寄せに詳細度で負けるので、この札の中だけ上書きする。 */
-.context-detail .token-usage-name {
-  text-align: left;
-}
+/* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。 */
 .context-detail {
   font-size: var(--font-label);
 }
@@ -455,10 +478,15 @@
 /* 空きは**地より一段明るい無地**、自動圧縮バッファは**斜線**（色ではなく柄で分ける。
    どちらも凡例の四角に同じものが出る）。 */
 .context-tone-free {
-  background: var(--surface-raised);
+  background: var(--context-free);
 }
 .context-tone-buffer {
-  background: repeating-linear-gradient(-45deg, var(--ink-quiet) 0 1px, transparent 1px 5px);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--context-buffer-stripe) 0 3px,
+    transparent 3px 7px
+  );
+  background-color: var(--context-buffer);
 }
 
 /* 狭い画面（760px 以下）。**札は2列に折り、さらに狭ければ1列**（4列のままだと1枚が5rem ほどに
@@ -466,14 +494,20 @@
    **モデル別・ツール別の2枚は縦に積む**（横のままだと表の列がさらに窮屈になる）。 */
 @media (max-width: 760px) {
   .usage-card-row {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .usage-table-row {
     grid-template-columns: 1fr;
   }
+  .context-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 420px) {
   .usage-card-row {
+    grid-template-columns: 1fr;
+  }
+  .context-legend {
     grid-template-columns: 1fr;
   }
 }

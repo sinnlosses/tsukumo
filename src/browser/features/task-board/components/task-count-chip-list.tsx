@@ -3,7 +3,7 @@
 // `domain/task-sidebar-filter.ts` の純関数で、ここは選ばれているかどうかを `aria-pressed` に
 // 映すだけ）。
 //
-// **選んでいることを色だけで示さない**（docs/design.md 13.1 原則1）: 進行中のチップは元から
+// **選んでいることを色だけで示さない**（docs/screen-design.md 13.1 原則1）: 進行中のチップは元から
 // 差し色の地なので、色の変化だけでは選択と区別できない。枠線と太字を添える
 // （`task-board.module.css` の `.task-count-chip-button[aria-pressed="true"]`）。
 

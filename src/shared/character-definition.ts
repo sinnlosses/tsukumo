@@ -34,13 +34,13 @@ export type CharacterDefinition = {
    */
   readonly expressions: Readonly<Record<Expression, string | undefined>>
   /**
-   * キャラクターの色（`docs/design.md` 13.2 の `accent`）。**衣装ごとの差し色
+   * キャラクターの色（`docs/screen-design.md` 13.2 の `accent`）。**衣装ごとの差し色
    * （`outfitAccents`）とは別物**で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・
    * フォーカスの輪など、13.1 原則1が許す場所）に効く。無ければ画面側の既定値に落ちる。
    */
   readonly accent: string | undefined
   /**
-   * 雑談中だけ効くキャラクターの色（`docs/design.md` 13.2「雑談中は」/ 13.7）。**`accent` と
+   * 雑談中だけ効くキャラクターの色（`docs/screen-design.md` 13.2「雑談中は」/ 13.7）。**`accent` と
    * 同じ枠を、モードに応じて差し替えるだけ**（つまみは増えない）。**任意**で、無いパックは
    * 雑談中も `accent` のまま（仕事と同じ差し色）。
    */
@@ -53,13 +53,13 @@ export type CharacterDefinition = {
    */
   readonly mini: string | undefined
   /**
-   * 帯の左端に出す顔の素材のファイル名（`docs/design.md` 13.9「顔」）。**任意**で、無ければ
+   * 帯の左端に出す顔の素材のファイル名（`docs/screen-design.md` 13.9「顔」）。**任意**で、無ければ
    * 帯には何も出さない（`mini` や `portraits` からのフォールバックはしない）。表情では変わらない
    * 1枚（`mini` と同じ）で、正方形を勧める。
    */
   readonly face: string | undefined
   /**
-   * ひとことプロフィール（`docs/design.md` 13.7「雑談のときのサイドバー」）。雑談中のサイドバーの
+   * ひとことプロフィール（`docs/screen-design.md` 13.7「雑談のときのサイドバー」）。雑談中のサイドバーの
    * プロフィールの札で、名前の下に1行添える。**任意**で、無いパックは名前だけになる。
    * **キャラクターの言葉なのでコードに持たない**（`CLAUDE.md` 原則4）。空白だけの値は無いのと
    * 同じに畳む（札に空の行が出ないように）。
@@ -67,7 +67,7 @@ export type CharacterDefinition = {
   readonly tagline: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
-   * キャラビューに敷く背景（`docs/design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
+   * キャラビューに敷く背景（`docs/screen-design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
    * 組で、**無ければ背景そのものが出ない**（既定の絵には落ちない）。読めない値は
    * `src/shared/character-background.ts` が undefined か帯の中の値に畳む。
    */
@@ -128,7 +128,7 @@ export function definitionWithOutfitAccent(
 
 /**
  * 画面の差し色（`accent` / `chatAccent`）のうちどちらを差すか。`work` は仕事中（`accent`）、
- * `chat` は雑談中だけ（`chatAccent`）に対応する（`docs/design.md` 13.2「雑談中は」/ 13.6）。
+ * `chat` は雑談中だけ（`chatAccent`）に対応する（`docs/screen-design.md` 13.2「雑談中は」/ 13.6）。
  */
 export const ACCENT_TARGETS = ["work", "chat"] as const
 
@@ -155,7 +155,7 @@ export function definitionWithAccent(
 /**
  * `chatAccent` を消した JSON を返す（画面の「仕事と同じにする」）。**`accent` を消す口は無い**
  * ——`accent` が無いと吹き出しなど画面全体の色が既定値へ落ちてしまい、`outfitAccents` の
- * 「無ければ既定へ」に相当する戻り先が無いため（`docs/design.md` 13.6）。
+ * 「無ければ既定へ」に相当する戻り先が無いため（`docs/screen-design.md` 13.6）。
  */
 export function definitionWithoutChatAccent(content: string | undefined): string {
   return editedTopLevelDefinitionJson(content, "chatAccent", undefined)
@@ -163,7 +163,7 @@ export function definitionWithoutChatAccent(content: string | undefined): string
 
 /**
  * 背景の素材を差し替えた JSON を返す。**覆いの不透明度（`veil`）はそのまま残す** — 画面から
- * 変えられるのは素材だけで、濃さは定義ファイルを手で直す（`docs/design.md` 13.6 / 13.8）。
+ * 変えられるのは素材だけで、濃さは定義ファイルを手で直す（`docs/screen-design.md` 13.6 / 13.8）。
  */
 export function definitionWithBackground(content: string | undefined, fileName: string): string {
   return editedDefinitionJson(content, "background", "image", fileName)

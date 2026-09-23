@@ -56,7 +56,7 @@ export type ViewDeliveryResult =
       readonly url: string
       /**
        * 実際に待ち受けているポート。**セッションの印の目印がここから決まる**ので返す
-       * （`src/server/core/config.ts` の `sessionTag`。docs/requirements.md 4.8「鍵」）。
+       * （`src/server/core/session-restore.ts` の `sessionTag`。docs/requirements.md 4.8「鍵」）。
        */
       readonly port: number
       /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足す）。 */

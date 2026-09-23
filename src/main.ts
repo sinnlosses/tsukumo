@@ -89,7 +89,7 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // **セッションの印の目印は、実際に待ち受けているポートから決まる**（`config.ts` の
+  // **セッションの印の目印は、実際に待ち受けているポートから決まる**（`session-restore.ts` の
   // `sessionTag`）。同じディレクトリで2つめを起こすとポートが +1 へずれるので、目印も分かれる
   // （docs/requirements.md 4.8「鍵」）。
   const session = startSession({

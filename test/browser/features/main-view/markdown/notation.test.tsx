@@ -61,7 +61,7 @@ describe("NotationBlock（レポートの塊の記法）", () => {
   })
 
   // 種別が色でしか出ていないと何の塊か読み取れない（利用者の指摘）ので、**6種すべて**に
-  // tsukumo 側が文字を足す（docs/design.md 13.1 原則5）。
+  // tsukumo 側が文字を足す（docs/screen-design.md 13.1 原則5）。
   it.each([
     ["note", "情報"],
     ["note note-warn", "注意"],

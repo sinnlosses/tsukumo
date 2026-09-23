@@ -1,4 +1,4 @@
-// 帯の右端の歯車と、押すと開く**設定**のポップオーバー（docs/design.md 13.6 / 13.9「設定の
+// 帯の右端の歯車と、押すと開く**設定**のポップオーバー（docs/screen-design.md 13.6 / 13.9「設定の
 // 歯車」）。ロジックは `hooks/use-settings.ts`、ここは受け取った値をそのまま置く器
 // （2章「機能の中を分ける」）。
 //
@@ -153,7 +153,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
 }
 
 /**
- * 歯車の絵（見本の `<header>` の線画。docs/design.md 13.9「設定の歯車」）。
+ * 歯車の絵（見本の `<header>` の線画。docs/screen-design.md 13.9「設定の歯車」）。
  * 字の「⚙」はフォントによって大きさも太さも揃わないので、仕事 / 雑談のトグルと同じく
  * `aria-hidden` のインライン SVG + `currentColor` で描く。
  */

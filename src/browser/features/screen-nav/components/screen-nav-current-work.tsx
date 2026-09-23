@@ -1,4 +1,4 @@
-// 帯のまん中の札「いまの作業」と、押すと開く**依頼の手順**の一覧（docs/design.md 13.9
+// 帯のまん中の札「いまの作業」と、押すと開く**依頼の手順**の一覧（docs/screen-design.md 13.9
 // 「いまの作業」）。ロジックは `hooks/use-current-work.ts`、ここは受け取った値をそのまま置く器
 // （2章「機能の中を分ける」）。
 //
@@ -9,7 +9,7 @@
 // 預ける口（`work.toggleRef`）も、2箇所ぶんを集めるコールバック ref**（`use-current-work.ts`）。
 //
 // **失敗した手順の `<details>` は、もとサイドバーにあった `activity.tsx` の `FailureDetail` を
-// そのまま移した**（引数と出力を読める場所はここだけ。docs/design.md 13.9）。
+// そのまま移した**（引数と出力を読める場所はここだけ。docs/screen-design.md 13.9）。
 
 import { useId, type ReactElement } from "react"
 
@@ -29,7 +29,7 @@ export type ScreenNavCurrentWorkProps = {
 // 秘匿のためではない」）。
 const MAX_TOOL_TEXT_LENGTH = 8000
 
-/** 答え待ちが質問のときに一覧へ出す口（docs/design.md 13.9「いまの作業」）。 */
+/** 答え待ちが質問のときに一覧へ出す口（docs/screen-design.md 13.9「いまの作業」）。 */
 const GO_TO_QUESTION_LABEL = "質問へ"
 
 export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): ReactElement {
@@ -170,7 +170,7 @@ function CurrentWorkStepRow(props: { readonly step: ScreenNavCurrentWorkStep }):
 
 /**
  * 失敗した手順の中身（引数と出力）。**「失敗」の文字を印にする**（色だけで意味を伝えない。
- * docs/design.md 13.1 原則5）。開くと出力、引数の順に出る（`sidebar/activity.tsx` から移した）。
+ * docs/screen-design.md 13.1 原則5）。開くと出力、引数の順に出る（`sidebar/activity.tsx` から移した）。
  */
 function FailureDetail(props: {
   readonly label: string

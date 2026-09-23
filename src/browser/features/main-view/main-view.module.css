@@ -82,14 +82,14 @@
 /* 中間レポート（やり取りの締めではない、まとまった本文。`src/shared/main-view.ts` の
    `selectShownReports` が印を付ける）。**新しい色は作らない**（theme.css のトークンだけ）。
    本文は読む面なので `ink` のまま置き、**地を ground に落とす・枠を破線にする・小さなラベルを
-   載せる**の3つで本体のレポートと見分ける（色だけに頼らない。docs/design.md 13.1 原則1）。 */
+   載せる**の3つで本体のレポートと見分ける（色だけに頼らない。docs/screen-design.md 13.1 原則1）。 */
 .main-step.is-interim {
   background: var(--ground);
   border-style: dashed;
 }
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`src/shared/main-view.ts` の
    `MainViewStep.final`）。地は中間レポートと同じ ground にする
-   （docs/design.md 13.2）。中間レポートとの差は枠（中間だけ破線）とラベルの2つだけで、
+   （docs/screen-design.md 13.2）。中間レポートとの差は枠（中間だけ破線）とラベルの2つだけで、
    ラベルを出すかどうかは turn.tsx が決める（中間レポートのあるやり取りだけ）。 */
 .main-step.is-final {
   background: var(--ground);

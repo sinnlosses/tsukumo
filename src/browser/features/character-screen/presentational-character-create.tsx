@@ -1,4 +1,4 @@
-// **新しいキャラクターパックを作る画面**（`#character/new`。`docs/design.md` 7.1 / 13.6）の
+// **新しいキャラクターパックを作る画面**（`#character/new`。`docs/design.md` 7.1 / `docs/screen-design.md` 13.6）の
 // **器だけ**（<PresentationalCharacterCreate>）。左上の「← キャラクターへ戻る」と、名前・必須の
 // 立ち絵・差し色の口、名前の欄の下の一言（作れたら「このキャラクターに切り替える」を添える）を
 // 置く。フックも算出も持たず、`hooks/use-character-create.ts` が畳んだ値をそのまま置く

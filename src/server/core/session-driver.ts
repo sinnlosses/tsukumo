@@ -12,7 +12,7 @@
 //
 // **既定のモデルと許可モードはここに無い**（`src/shared/session-default.ts` の
 // `BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
-// **ブラウザも同じ畳み先を読む**ようになったため（`docs/design.md` 13.6）。
+// **ブラウザも同じ畳み先を読む**ようになったため（`docs/screen-design.md` 13.6）。
 
 import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
 import { type ContextUsageReport } from "../../shared/context-usage.ts"
@@ -283,8 +283,8 @@ export type SessionDriverOptions = {
   /** 新規に起こすか、続きから始めるか（`docs/requirements.md` 4.8）。 */
   readonly start: SessionStart
   /**
-   * このセッションに付ける印（組み立ては `src/server/core/config.ts` の `sessionTag`。キャラクター
-   * パックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
+   * このセッションに付ける印（組み立ては `src/server/core/session-restore.ts` の `sessionTag`。
+   * キャラクターパックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
    * セッションだけを見分ける。付け直す理由は `src/server/adapter/sdk-driver.ts` の
    * `SESSION_TAG_DELAY_MS`）。
    */
@@ -306,7 +306,7 @@ export type SessionDriver = {
    */
   readonly prompt: (text: string, images: readonly ShelvedPromptImage[]) => void
   /**
-   * 依頼を1つ送るが、**記録に残さない**（`docs/design.md` 13.7「キャラクターから話しかけて
+   * 依頼を1つ送るが、**記録に残さない**（`docs/screen-design.md` 13.7「キャラクターから話しかけて
    * もらう」）。流れるのは `request` ではなく `turn-started` なので、**送った文面は画面のログにも
    * 記録にも雑談の会話のアーカイブにも残らない**（落とすのは組み立ての側ではなく、この時点）。
    *

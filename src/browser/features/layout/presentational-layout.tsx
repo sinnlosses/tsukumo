@@ -6,7 +6,7 @@
 // 開発者ツールで測るとき——はこちらを使う。
 //
 // **枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を
-// 共有する**（覆いの式を1箇所にしか書かないため。docs/design.md 13.8）。
+// 共有する**（覆いの式を1箇所にしか書かないため。docs/screen-design.md 13.8）。
 //
 // **狭い画面では上段の2領域をタブで切り替える**（docs/requirements.md 4.7）。どちらを隠すかは
 // CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、**ここは幅を測らない**
@@ -25,13 +25,13 @@ export type PresentationalLayoutProps = UseLayoutResult & {
   readonly dispatch: ReactNode
   /**
    * キャラビューの領域を畳み、下段を入力欄だけにするか。**立ち絵が上段へ移ったときに使う**
-   * （雑談モード。docs/design.md 13.7）。**ここは「なぜ畳むか」を知らない** — 領域の数が
+   * （雑談モード。docs/screen-design.md 13.7）。**ここは「なぜ畳むか」を知らない** — 領域の数が
    * 変わることだけを受け取る。
    */
   readonly collapseCharacter: boolean
   /**
    * メインの領域を、枠を持つウィジェットではなく**地そのもの**として描くか（枠と角丸を外し、
-   * 背景があればそこへ敷く。docs/design.md 13.8）。**ここも「なぜそうするか」を知らない** —
+   * 背景があればそこへ敷く。docs/screen-design.md 13.8）。**ここも「なぜそうするか」を知らない** —
    * キャラビューと同じ立場になることだけを受け取る（立てるのは雑談モードの入口。13.7）。
    */
   readonly mainAsGround: boolean

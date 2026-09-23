@@ -1,4 +1,4 @@
-// 帯の右端の歯車で開く**設定**のロジック（docs/design.md 13.6「設定の置き場所」/ 13.9「設定の
+// 帯の右端の歯車で開く**設定**のロジック（docs/screen-design.md 13.6「設定の置き場所」/ 13.9「設定の
 // 歯車」）。いまここにあるのは**地・領域・字の色**・**新しいセッションの既定**・**書き上げる
 // 演出の速さ**の3群。
 //
@@ -63,7 +63,7 @@ export type ScreenNavSettingsColor = {
 }
 
 /**
- * 新しいセッションの既定の操作子（`docs/design.md` 13.6）。**表示はサーバから届いた値だけに
+ * 新しいセッションの既定の操作子（`docs/screen-design.md` 13.6）。**表示はサーバから届いた値だけに
  * 従う**（押した側へ先に倒さない。帯の操作子と同じ作法）。
  */
 export type ScreenNavSettingsSessionDefault = {
@@ -74,7 +74,7 @@ export type ScreenNavSettingsSessionDefault = {
 }
 
 /**
- * 書き上げる演出の速さの操作子（`docs/design.md` 13.6。`lib/reveal-speed.ts`）。色と同じ
+ * 書き上げる演出の速さの操作子（`docs/screen-design.md` 13.6。`lib/reveal-speed.ts`）。色と同じ
  * 利用者の設定なので、書いた値をそのまま表示値にする（読み直さない）。
  */
 export type ScreenNavSettingsRevealSpeed = {

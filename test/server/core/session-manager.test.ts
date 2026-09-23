@@ -168,7 +168,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
       remembered.push(sessionDefault)
       return { kind: "session-default-changed", sessionDefault }
     },
-    startDriver: (onEvent) => {
+    launchSession: (onEvent) => {
       stub.attach(onEvent)
       return Promise.resolve(stub.driver)
     },
@@ -307,7 +307,7 @@ describe("createSessionManager", () => {
   })
 
   it("switch-character で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
-    // 起こされた駆動を順に覚える（`startDriver` に渡るパックの決め方もここで見る）。
+    // 起こされた駆動を順に覚える（`launchSession` に渡るパックの決め方もここで見る）。
     const started: { readonly selection: CharacterSelection; readonly stub: StubDriver }[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -321,7 +321,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push({ selection: request.selection, stub })
@@ -346,7 +346,7 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: true })
 
     // 前の駆動は閉じ、新しい駆動が**画面から選ばれた名前**で起きている（＝覚える側。
-    // docs/design.md 13.6）。
+    // docs/screen-design.md 13.6）。
     expect(started[0]?.stub.calls).toContain("close")
     expect(started).toHaveLength(2)
     expect(started[1]?.selection).toEqual({ by: "name", name: "fictional" })
@@ -422,7 +422,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -445,7 +445,7 @@ describe("createSessionManager", () => {
     expect(started).toHaveLength(2)
     // 変わるのは「どの transcript の続きから始めるか」だけ。
     expect(started[1]?.resume).toEqual({ by: "id", sessionId: "架空の別セッション" })
-    // **パックは「いま出しているまま」**（名前で渡すと覚えた値が書き換わる。docs/design.md 13.6）。
+    // **パックは「いま出しているまま」**（名前で渡すと覚えた値が書き換わる。docs/screen-design.md 13.6）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     expect(started[1]?.chat).toBe(false)
     // 起動の1回目は今までどおり印から探す。
@@ -496,7 +496,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -516,7 +516,7 @@ describe("createSessionManager", () => {
     expect(started[1]?.chat).toBe(true)
     // **パックは「いま出しているまま」として渡す**（名前では渡さない）。名前で渡すと画面から
     // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
-    // （docs/design.md 13.6）。
+    // （docs/screen-design.md 13.6）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     // 起動の1回目は初期パック（こちらも覚えない側）。
     expect(started[0]?.selection).toEqual({ by: "initial" })
@@ -536,7 +536,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -575,7 +575,7 @@ describe("createSessionManager", () => {
   })
 
   it("駆動が起き上がるのを待ってから、新しい hello を配る（続きから始めるセッションを探す間）", async () => {
-    // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`startDriver` は待てる形で返る。
+    // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`launchSession` は待てる形で返る。
     const started: StubDriver[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -589,7 +589,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: async (onEvent) => {
+      launchSession: async (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         await waitForBatch()
@@ -640,7 +640,7 @@ describe("createSessionManager", () => {
       })
 
       // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
-      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/design.md 13.7）。
+      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/screen-design.md 13.7）。
       expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
     })
 
@@ -708,7 +708,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent) => {
+        launchSession: (onEvent) => {
           stub.attach(onEvent)
           return Promise.resolve(stub.driver)
         },
@@ -1025,7 +1025,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         if (request.selection.by === "initial") {
           const stub = createStubDriver()
           stub.attach(onEvent)
@@ -1066,7 +1066,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent) => {
+      launchSession: (onEvent) => {
         stub.attach(onEvent)
         return Promise.resolve(stub.driver)
       },
@@ -1097,7 +1097,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: () =>
+      launchSession: () =>
         Promise.resolve({
           prompt: () => {},
           promptWithoutRecord: () => {},
@@ -1176,7 +1176,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
           return Promise.resolve(stub.driver)
@@ -1400,7 +1400,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
           return Promise.resolve(stub.driver)
@@ -1682,7 +1682,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
           return Promise.resolve(driver)
@@ -1784,7 +1784,7 @@ describe("createSessionManager", () => {
   })
 })
 
-// 新しいセッションの既定（docs/design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
+// 新しいセッションの既定（docs/screen-design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
 // ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
 describe("createSessionManager（新しいセッションの既定）", () => {
   it("set-session-default を覚えさせ、姿に載せて配る", async () => {
@@ -1816,7 +1816,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
     })
   })
 
-  // 帯のドロップダウンはセッション限り（`docs/design.md` 13.6）。**既定は書き換わらない。**
+  // 帯のドロップダウンはセッション限り（`docs/screen-design.md` 13.6）。**既定は書き換わらない。**
   it("帯の set-model / set-permission-mode では既定を覚えない", async () => {
     const { manager, stub, remembered } = startManagerWithStub()
 
@@ -1861,7 +1861,7 @@ describe("依頼に添えた画像の棚", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent) => {
+      launchSession: (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         return Promise.resolve({
