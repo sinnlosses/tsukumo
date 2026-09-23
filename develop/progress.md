@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 SDK の設定に language: japanese を渡し、催促への返事が英語に滑らないようにした（T-460）
+
+締めの並びを反転したあとも空の応答で終えたときの保険として、`buildQuerySeedOptions` に固定の `language: "japanese"` を足した。`--settings` の有無で user の hooks の実行回数が変わらないことを本体の `--debug` で確かめた。
+
 ### 2026-09-23 いまのコンテキストの札に読み込み中の骨組みを出した（T-458）
 
 `useContextUsage` に `pending` を足して「取れなかった」と分け、届いた札と同じ外形の骨組み（値だけ灰色の塊）を出すようにした。`/context-usage` を遅らせて測った札の高さと「期間の消費」の位置の差は 0px。
