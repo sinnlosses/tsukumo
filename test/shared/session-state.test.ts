@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { type BackgroundTask } from "../../src/shared/background-task.ts"
 import { MAX_MAIN_VIEW_TURNS, mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
 import { type SessionEvent, type StampedEvent } from "../../src/shared/session-event.ts"
 import {
@@ -929,6 +930,60 @@ describe("applySessionEvent（最近の話題）", () => {
     )
 
     expect(view.chatTopics).toEqual(["架空の新しい話題", "架空の二番目の話題"])
+  })
+})
+
+describe("applySessionEvent（背景のタスク）", () => {
+  const SHELL_TASK = {
+    taskId: "bash-1",
+    kind: "shell",
+    description: "架空の待ち",
+  } satisfies BackgroundTask
+
+  it("届くまでは空", () => {
+    expect(INITIAL_SESSION_STATE.backgroundTasks).toEqual([])
+  })
+
+  it("background-tasks-changed で丸ごと置き換わり、ターンが終わっても残る", () => {
+    const view = apply(
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "background-tasks-changed", tasks: [SHELL_TASK] },
+      { kind: "turn-finished", status: "success" },
+    )
+
+    expect(view.turn.kind).toBe("finished")
+    expect(view.backgroundTasks).toEqual([SHELL_TASK])
+  })
+
+  it("空の知らせが届くと消える", () => {
+    const view = apply(
+      { kind: "background-tasks-changed", tasks: [SHELL_TASK] },
+      { kind: "background-tasks-changed", tasks: [] },
+    )
+
+    expect(view.backgroundTasks).toEqual([])
+  })
+
+  it("session-ended で空にする（claude のプロセスと一緒に終わる）", () => {
+    const view = apply(
+      { kind: "background-tasks-changed", tasks: [SHELL_TASK] },
+      { kind: "session-ended", reason: "セッションが終了した" },
+    )
+
+    expect(view.backgroundTasks).toEqual([])
+  })
+
+  it("知らせのあとの続きのターン（turn-started）はターンを進行中に戻し、吹き出しを空にする", () => {
+    const view = apply(
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "speech", text: "架空の一言", expression: "default" },
+      { kind: "turn-finished", status: "success" },
+      { kind: "background-tasks-changed", tasks: [] },
+      { kind: "turn-started" },
+    )
+
+    expect(view.turn.kind).toBe("running")
+    expect(view.speeches).toEqual([])
   })
 })
 

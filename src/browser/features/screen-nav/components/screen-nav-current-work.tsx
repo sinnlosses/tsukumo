@@ -15,6 +15,7 @@ import { useId, type ReactElement } from "react"
 
 import {
   type ScreenNavCurrentWork,
+  type ScreenNavCurrentWorkBackgroundTask,
   type ScreenNavCurrentWorkStep,
 } from "../hooks/use-current-work.ts"
 import shellStyles from "../screen-nav.module.css"
@@ -110,6 +111,18 @@ function CurrentWorkList(props: {
           </pre>
         </div>
       )}
+      {work.backgroundList.kind === "tasks" ? (
+        <>
+          <p className={styles["screen-nav-work-background-heading"]}>
+            {work.backgroundList.headingLabel}
+          </p>
+          <ul className={styles["screen-nav-work-background"]}>
+            {work.backgroundList.tasks.map((task) => (
+              <CurrentWorkBackgroundRow key={task.key} task={task} />
+            ))}
+          </ul>
+        </>
+      ) : null}
       {work.stepList.kind === "steps" ? (
         <>
           <p className={styles["screen-nav-work-steps-heading"]}>{work.stepList.headingLabel}</p>
@@ -136,6 +149,25 @@ function CurrentWorkList(props: {
         </p>
       )}
     </div>
+  )
+}
+
+/**
+ * 背景のタスク1件（docs/screen-design.md 13.9「背景のタスク」）。**印は実行中の手順と同じ回る
+ * 「…」**（動いているものの印を2種類にしない）。種類の語は手順のツール名と同じ等幅の列に置く。
+ */
+function CurrentWorkBackgroundRow(props: {
+  readonly task: ScreenNavCurrentWorkBackgroundTask
+}): ReactElement {
+  const { task } = props
+  return (
+    <li className={styles["screen-nav-work-background-task"]}>
+      <span className={styles["screen-nav-work-step-mark"]} aria-hidden="true">
+        …
+      </span>{" "}
+      <span className={styles["screen-nav-work-background-kind"]}>{task.kindLabel}</span>
+      {task.description === "" ? null : ` ${task.description}`}
+    </li>
   )
 }
 

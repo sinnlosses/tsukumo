@@ -99,6 +99,11 @@
 .screen-nav-work[data-work-state="running"] .screen-nav-work-mark {
   color: var(--accent);
 }
+/* 背景で作業中は、ターンが終わっていても動いていると分かるように印だけ差し色にする。枠は
+   作業中（ターンが走っている）だけのものにして、2つを見分けられるように残す（13.9「背景のタスク」）。 */
+.screen-nav-work[data-work-state="background"] .screen-nav-work-mark {
+  color: var(--accent);
+}
 /* 依頼待ちは印を中抜き（○）にした上で、字も控えめにする。 */
 .screen-nav-work[data-work-state="idle"] .screen-nav-work-mark,
 .screen-nav-work[data-work-state="idle"] .screen-nav-work-word {
@@ -165,6 +170,26 @@
   font-family: var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+/* 背景で動いているもの（13.9「背景のタスク」）。見出しと行の形は依頼の手順に揃える。 */
+.screen-nav-work-background-heading {
+  margin: 0.4rem 0 0.2rem;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-background {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.screen-nav-work-background-kind {
+  font-family: var(--font-mono);
+}
+/* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+.screen-nav-work-background-task .screen-nav-work-step-mark {
+  animation: screen-nav-work-spin 1s linear infinite;
 }
 .screen-nav-work-steps-heading {
   margin: 0.4rem 0 0.2rem;

@@ -351,7 +351,124 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([{ kind: "compact-boundary" }])
   })
 
-  it("init・commands_changed・compact_boundary 以外の system は無視する", () => {
+  describe("背景のタスク（実測で届いた順: background_tasks_changed → task_started → … → background_tasks_changed → task_updated → task_notification）", () => {
+    it("background_tasks_changed を background-tasks-changed にする（種類を3つに畳む）", () => {
+      const message = {
+        type: "system",
+        subtype: "background_tasks_changed",
+        tasks: [
+          { task_id: "bash-1", task_type: "local_bash", description: "架空の待ち" },
+          { task_id: "agent-1", task_type: "local_agent", description: "架空の調べ物" },
+          { task_id: "other-1", task_type: "架空の未知の種類", description: "架空の何か" },
+        ],
+        uuid: "u-1",
+        session_id: "s-1",
+      }
+
+      expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+        {
+          kind: "background-tasks-changed",
+          tasks: [
+            { taskId: "bash-1", kind: "shell", description: "架空の待ち" },
+            { taskId: "agent-1", kind: "agent", description: "架空の調べ物" },
+            { taskId: "other-1", kind: "other", description: "架空の何か" },
+          ],
+        },
+      ])
+    })
+
+    it("終わって顔ぶれが空になった知らせも空の並びとして運ぶ（受け取る側が置き換える）", () => {
+      const message = { type: "system", subtype: "background_tasks_changed", tasks: [] }
+
+      expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+        { kind: "background-tasks-changed", tasks: [] },
+      ])
+    })
+
+    it("ambient（活動でないもの）と task_id の無い要素は落とし、説明が無ければ空に畳む", () => {
+      const message = {
+        type: "system",
+        subtype: "background_tasks_changed",
+        tasks: [
+          {
+            task_id: "watch-1",
+            task_type: "local_bash",
+            description: "架空の見張り",
+            ambient: true,
+          },
+          { task_type: "local_bash", description: "id の無い架空の要素" },
+          "壊れた要素",
+          { task_id: "bash-2", task_type: "local_bash" },
+        ],
+      }
+
+      expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+        {
+          kind: "background-tasks-changed",
+          tasks: [{ taskId: "bash-2", kind: "shell", description: "" }],
+        },
+      ])
+    })
+
+    it("tasks が配列でない壊れた知らせはイベントにしない（動いているものを空に倒さない）", () => {
+      expect(
+        toSessionEvents({ type: "system", subtype: "background_tasks_changed" }, EXPRESSIONS),
+      ).toEqual([])
+    })
+
+    it("task_started / task_progress / task_updated / task_notification はイベントにしない（顔ぶれは background_tasks_changed だけで分かる）", () => {
+      const edges = [
+        {
+          type: "system",
+          subtype: "task_started",
+          task_id: "bash-1",
+          tool_use_id: "toolu_1",
+          description: "架空の待ち",
+          task_type: "local_bash",
+          is_backgrounded: true,
+        },
+        {
+          type: "system",
+          subtype: "task_progress",
+          task_id: "agent-1",
+          description: "架空の調べ物",
+          usage: { total_tokens: 1, tool_uses: 0, duration_ms: 1 },
+        },
+        {
+          type: "system",
+          subtype: "task_updated",
+          task_id: "bash-1",
+          patch: { status: "completed", end_time: 1 },
+        },
+        {
+          type: "system",
+          subtype: "task_notification",
+          task_id: "bash-1",
+          tool_use_id: "toolu_1",
+          status: "completed",
+          output_file: "/tmp/dummy/output",
+          summary: "架空の要約",
+        },
+      ]
+
+      expect(edges.flatMap((message) => toSessionEvents(message, EXPRESSIONS))).toEqual([])
+    })
+
+    it("知らせのあとの続きのターンの result（origin が task-notification）も turn-finished にする", () => {
+      const message = {
+        type: "result",
+        subtype: "success",
+        parent_tool_use_id: null,
+        origin: { kind: "task-notification" },
+      }
+
+      expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+        { kind: "turn-finished", status: "success" },
+      ])
+    })
+  })
+
+  it("init・commands_changed・compact_boundary・background_tasks_changed 以外の system は無視する", () => {
     expect(toSessionEvents({ type: "system", subtype: "架空の未知の種別" }, EXPRESSIONS)).toEqual(
       [],
     )

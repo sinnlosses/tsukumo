@@ -20,6 +20,7 @@
 
 import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
+import { type BackgroundTask, type BackgroundTaskKind } from "../../../../shared/background-task.ts"
 import { type PendingAsk } from "../../../../shared/pending-ask.ts"
 import {
   currentTurnSteps,
@@ -38,15 +39,26 @@ import { useTurnSelection } from "../../../stores/turn-selection.tsx"
 /** 閉じている間に出す手順の件数（依頼の手順が6件以上あると「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
 
-/** 4つの状態の語（上ほど強い。表の並びは docs/screen-design.md 13.9「いまの作業」）。 */
-export type ScreenNavCurrentWorkState = "stopped" | "pending" | "running" | "idle"
+/**
+ * 5つの状態の語（上ほど強い。表の並びは docs/screen-design.md 13.9「いまの作業」）。
+ * `background` は**ターンは終わっているが背景のタスクが動いている**とき（同「背景のタスク」）。
+ */
+export type ScreenNavCurrentWorkState = "stopped" | "pending" | "running" | "background" | "idle"
 
-const WORK_WORD_LABEL: Record<ScreenNavCurrentWorkState, string> = {
+const WORK_WORD_LABEL = {
   stopped: "止まっている",
   pending: "答え待ち",
   running: "作業中",
+  background: "背景で作業中",
   idle: "依頼待ち",
-}
+} satisfies Record<ScreenNavCurrentWorkState, string>
+
+/** 背景のタスクの種類の語（docs/screen-design.md 13.9「背景のタスク」）。 */
+const BACKGROUND_TASK_KIND_LABEL = {
+  shell: "シェル",
+  agent: "サブエージェント",
+  other: "その他",
+} satisfies Record<BackgroundTaskKind, string>
 
 /** 一覧に出す手順1件（見た目が読める形まで畳んだもの）。 */
 export type ScreenNavCurrentWorkStep = {
@@ -64,7 +76,7 @@ export type ScreenNavCurrentWorkStep = {
  *
  * - `none`: 実行中の手順が無い
  * - `silent`: 実行中の手順はあるが、いまの状態の語では札に要約を出さない
- *   （`idle` / `stopped`。一覧を開けば「実行中の手順の全文」には出る）
+ *   （`idle` / `background` / `stopped`。一覧を開けば「実行中の手順の全文」には出る）
  * - `shown`: 実行中の手順があり、札にも要約を出す（`pending` / `running`）
  */
 export type ScreenNavCurrentWorkRunningStep =
@@ -86,6 +98,28 @@ export type ScreenNavCurrentWorkRunningStep =
 export type ScreenNavCurrentWorkSummary =
   | { readonly kind: "none" }
   | { readonly kind: "text"; readonly label: string }
+
+/** 一覧に出す背景のタスク1件（見た目が読める形まで畳んだもの）。 */
+export type ScreenNavCurrentWorkBackgroundTask = {
+  readonly key: string
+  /** 種類の語（「シェル」「サブエージェント」「その他」）。 */
+  readonly kindLabel: string
+  /** claude が添えた説明。無ければ空（行には種類の語だけが出る）。 */
+  readonly description: string
+}
+
+/**
+ * 一覧の「背景で動いているもの」の区画（docs/screen-design.md 13.9「背景のタスク」）。
+ * **状態の語に関わらず、動いているものがあれば出す**（作業中・答え待ちでも、ターンの外に
+ * 残るものがあると分かるように）。
+ */
+export type ScreenNavCurrentWorkBackgroundList =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "tasks"
+      readonly headingLabel: string
+      readonly tasks: readonly ScreenNavCurrentWorkBackgroundTask[]
+    }
 
 /** 「手順をすべて見る」の口。6件以下なら出さない（`fixed`）。 */
 export type ScreenNavCurrentWorkToggleAll =
@@ -144,6 +178,7 @@ export type ScreenNavCurrentWork = {
   /** 札の要約（{@link ScreenNavCurrentWorkSummary}）。答え待ちの質問はこれで実行中の手順を覆う。 */
   readonly summary: ScreenNavCurrentWorkSummary
   readonly runningStep: ScreenNavCurrentWorkRunningStep
+  readonly backgroundList: ScreenNavCurrentWorkBackgroundList
   readonly stepList: ScreenNavCurrentWorkStepList
   readonly open: boolean
   readonly onToggle: () => void
@@ -163,6 +198,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const pending = useSessionSelector((session) => session.state.pending)
   const turnInProgress = useTurnRunning()
   const records = useSessionSelector((session) => session.state.records)
+  const backgroundTasks = useSessionSelector((session) => session.state.backgroundTasks)
   const chatMode = useSessionSelector((session) => session.state.chatMode)
   const characterName = useSessionSelector((session) => session.state.character?.name)
   const screen = useScreen()
@@ -236,7 +272,9 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
       ? "pending"
       : turnInProgress
         ? "running"
-        : "idle"
+        : backgroundTasks.length > 0
+          ? "background"
+          : "idle"
 
   // **雑談中の依頼待ちだけ**「<名前> とおしゃべり中」に変える（`docs/screen-design.md` 13.9「いまの作業」。
   // 答え待ち・作業中・止まっているは、雑談中でもそのまま意味を持つ語なので変えない）。
@@ -252,8 +290,9 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     mark: state === "idle" && !chatIdle ? "○" : "●",
     chatIdle,
     pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
-    summary: toSummaryView(state, firstPending, runningStep),
+    summary: toSummaryView(state, firstPending, runningStep, backgroundTasks),
     runningStep,
+    backgroundList: toBackgroundListView(backgroundTasks),
     stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
     open,
     onToggle,
@@ -289,13 +328,19 @@ function isRunningStep(step: TurnStep): boolean {
 /**
  * {@link ScreenNavCurrentWorkSummary} を組み立てる。**答え待ちの先頭が質問なら、実行中の手順の
  * 要約より質問の要約を優先する**（docs/screen-design.md 13.9「いまの作業」）。許可要求の答え待ちは
- * 今までどおり実行中の手順の要約に従う。
+ * 今までどおり実行中の手順の要約に従う。**背景で作業中なら、背景のタスクの要約を出す**
+ * （同「背景のタスク」）。
  */
 function toSummaryView(
   state: ScreenNavCurrentWorkState,
   firstPending: PendingAsk | undefined,
   runningStep: ScreenNavCurrentWorkRunningStep,
+  backgroundTasks: readonly BackgroundTask[],
 ): ScreenNavCurrentWorkSummary {
+  if (state === "background") {
+    const label = backgroundSummaryLabel(backgroundTasks)
+    return label === undefined ? { kind: "none" } : { kind: "text", label }
+  }
   if (state === "pending" && firstPending?.kind === "question") {
     const label = questionSummaryLabel(firstPending)
     if (label !== undefined) {
@@ -321,6 +366,41 @@ function questionSummaryLabel(
     return undefined
   }
   return rest.length > 0 ? `${first.header} ほか${String(rest.length)}問` : first.header
+}
+
+/**
+ * 背景のタスクの要約。**いちばん新しく始まったもの（並びの末尾）の説明**を出し、2件以上あれば
+ * 「ほか n件」を添える（質問の要約の「ほか n問」と同じ形）。説明が無ければ種類の語で代える。
+ */
+function backgroundSummaryLabel(tasks: readonly BackgroundTask[]): string | undefined {
+  const newest = tasks.at(-1)
+  if (newest === undefined) {
+    return undefined
+  }
+  const label = backgroundTaskLabel(newest)
+  return tasks.length > 1 ? `${label} ほか${String(tasks.length - 1)}件` : label
+}
+
+function backgroundTaskLabel(task: BackgroundTask): string {
+  return task.description === "" ? BACKGROUND_TASK_KIND_LABEL[task.kind] : task.description
+}
+
+/** {@link ScreenNavCurrentWorkBackgroundList} を組み立てる。動いているものが無ければ `none`。 */
+function toBackgroundListView(
+  tasks: readonly BackgroundTask[],
+): ScreenNavCurrentWorkBackgroundList {
+  if (tasks.length === 0) {
+    return { kind: "none" }
+  }
+  return {
+    kind: "tasks",
+    headingLabel: `背景で動いているもの（${String(tasks.length)} 件）`,
+    tasks: tasks.map((task) => ({
+      key: task.taskId,
+      kindLabel: BACKGROUND_TASK_KIND_LABEL[task.kind],
+      description: task.description,
+    })),
+  }
 }
 
 /**

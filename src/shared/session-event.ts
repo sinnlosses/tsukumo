@@ -14,6 +14,7 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { type BackgroundTask } from "./background-task.ts"
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
@@ -112,6 +113,10 @@ export type SessionEvent =
    * **落とすのは組み立ての側ではなく、ここ。** 記録に積まないので、雑談のログ
    * （`src/shared/chat-log.ts`）にも仕事のメインビュー（`src/shared/main-view.ts`）にも
    * 雑談の会話のアーカイブにも、初めから流れようが無い。
+   *
+   * **claude が自分で始めたターンもこれで始まる**（背景のタスクが終わった知らせを受けて、依頼
+   * なしで続きを報告するターン。実測: `task_notification` のあと、依頼を送らなくても `init` →
+   * `assistant` → `result` が届く）。起こすのは SDK の口（`src/server/core/self-started-turn.ts`）。
    */
   | { readonly kind: "turn-started" }
   /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/display.md 4.2）。 */
@@ -330,6 +335,17 @@ export type SessionEvent =
    * 印を畳み込みに渡さないと、起こし直した直後のログが全部「いま」の時刻に見える。
    */
   | { readonly kind: "history-restored" }
+  /**
+   * 背景のタスク（docs/glossary.md「背景のタスク」）の顔ぶれが変わった（SDK の `system` /
+   * `background_tasks_changed`。実測: 背景の Bash・サブエージェントが始まったときと終わったときに
+   * 1回ずつ届く）。**運ぶのは変わったあとの全員**で、受け取る側は丸ごと置き換える（SDK の
+   * 型定義が「REPLACE semantics」と言う水準の知らせ。始まり・終わりの対を数えないので、片方を
+   * 取りこぼしても「動いている」が居残らない）。
+   *
+   * **活動でないもの（SDK の `ambient`。見張り役など）は変換で落としてある**
+   * （`src/server/core/sdk-message.ts`）。
+   */
+  | { readonly kind: "background-tasks-changed"; readonly tasks: readonly BackgroundTask[] }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

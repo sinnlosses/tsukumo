@@ -11,6 +11,7 @@
 // 入力欄の `/` 補完の候補は `command-suggestion.ts`）。ここが持つのは「状態そのもの」と
 // 「イベント1件でどう変わるか」だけ。
 
+import { type BackgroundTask } from "./background-task.ts"
 import { isBlankText } from "./blank-text.ts"
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { commandCandidates } from "./command-suggestion.ts"
@@ -336,6 +337,16 @@ export type SessionState = {
    * 型でも分けない。
    */
   readonly plan: string | undefined
+  /**
+   * いま背景で動いているタスク（docs/glossary.md「背景のタスク」。帯の「いまの作業」が読む。
+   * docs/screen-design.md 13.9「背景のタスク」）。**ターンの進み具合（{@link turn}）とは独立**
+   * で、ターンが終わっても動いている間はここに残る。
+   *
+   * **源は `background-tasks-changed` だけ**で、届くたびに丸ごと置き換える。**`session-ended` で
+   * 空にする**（claude のプロセスが終われば背景のタスクも一緒に終わる。SDK は起動時に何も
+   * 流さないので、起こし直しで初期値の空へ戻るのもそのまま正しい）。
+   */
+  readonly backgroundTasks: readonly BackgroundTask[]
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -362,6 +373,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   rememberedLines: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
   plan: undefined,
+  backgroundTasks: [],
 }
 
 /**
@@ -499,6 +511,7 @@ export function applySessionEvent(
         ...settleUtterance(state),
         endedReason: event.reason,
         turn: finishTurn(state.turn, at),
+        backgroundTasks: [],
       }
     case "conversation-cleared":
       // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**。
@@ -570,6 +583,8 @@ export function applySessionEvent(
       return { ...state, sessionDefault: event.sessionDefault }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
+    case "background-tasks-changed":
+      return { ...state, backgroundTasks: event.tasks }
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
       // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと

@@ -40,6 +40,7 @@ import {
   toSessionEvents,
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
+import { withSelfStartedTurns } from "../core/self-started-turn.ts"
 import {
   type SessionDriver,
   type SessionDriverOptions,
@@ -73,9 +74,13 @@ export const DEFAULT_EFFORT: EffortLevel = "high"
  * だけを決める（`options` に混ぜていないのは、採否が決まったら引数ごと消すため）。
  */
 export function startSdkDriver(
-  options: SessionDriverOptions,
+  given: SessionDriverOptions,
   reportChannel: ReportChannel,
 ): SessionDriver {
+  // **駆動が送り出すイベントは全部ここを通す**（依頼も SDK 由来も）。claude が依頼なしで
+  // 始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある
+  // （`src/server/core/self-started-turn.ts`）。
+  const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(given.onEvent) }
   const input = createPromptStream()
   const queue = createPendingAnswerQueue({
     onChange: (pending) => {

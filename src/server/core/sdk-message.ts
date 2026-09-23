@@ -11,6 +11,7 @@
 
 import { isPlainObject } from "remeda"
 
+import { type BackgroundTask, type BackgroundTaskKind } from "../../shared/background-task.ts"
 import { isBlankText } from "../../shared/blank-text.ts"
 import { type Expression } from "../../shared/expression.ts"
 import {
@@ -55,6 +56,13 @@ export const REPORT_TOOL_NAME = "report"
  *   文字列を見ず、本体が会話を捨てたことをこのメッセージで知る
  * - **`system` / `compact_boundary` は `compact-boundary` にする**（docs/glossary.md
  *   「圧縮の区切り」）。`compact_metadata` の数値は運ばない
+ * - **`system` / `background_tasks_changed` は `background-tasks-changed` にする**
+ *   （docs/glossary.md「背景のタスク」）。`ambient` が true のもの（活動でないもの）は落とす
+ * - **`task_started` / `task_progress` / `task_updated` / `task_notification` は変換しない。**
+ *   背景のタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）
+ *   だけで分かり、始まり・終わりの対を数えると取りこぼしで「動いている」が居残る（SDK の型定義が
+ *   そう勧めている）。**知らせのあとに claude が依頼なしで始める続きのターン**は、ここではなく
+ *   `src/server/core/self-started-turn.ts` が `init` の届き方から起こす
  * - **`assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ
  *   `model-changed` を出す。** `command` が `model` 以外の局所コマンド
  *   （`/clear` など）や、形が崩れている・`args` が無いときは出さない。エイリアスとして
@@ -78,6 +86,9 @@ export function toSessionEvents(
         return [
           { kind: "command-descriptions", descriptions: toCommandDescriptions(message.commands) },
         ]
+      }
+      if (message.subtype === "background_tasks_changed") {
+        return backgroundTaskEvents(message.tasks)
       }
       // `compact_boundary` は claude 自身の圧縮が起きた合図（`compact_metadata` に
       // `trigger` / `pre_tokens` / `post_tokens` / `duration_ms` が乗るが、画面には
@@ -156,6 +167,50 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
       terminalSlashCommands: stringArray(message.terminal_slash_commands),
     },
   ]
+}
+
+/**
+ * `background_tasks_changed` の `tasks`（変わったあとの全員）を内部の型に写す。**`tasks` が
+ * 配列でなければイベントを出さない**（壊れた知らせで、動いているものを空に倒さない）。要素のうち
+ * `task_id` が文字列でないものと、`ambient` が true のもの（SDK が「活動の印から外せ」と言う
+ * 見張り役など）は捨てる。`description` が無ければ空の文字列に畳む（描く側は種類だけ出す）。
+ */
+function backgroundTaskEvents(tasks: unknown): readonly SessionEvent[] {
+  if (!Array.isArray(tasks)) {
+    return []
+  }
+
+  return [
+    {
+      kind: "background-tasks-changed",
+      tasks: tasks.flatMap((task): readonly BackgroundTask[] =>
+        !isPlainObject(task) || typeof task.task_id !== "string" || task.ambient === true
+          ? []
+          : [
+              {
+                taskId: task.task_id,
+                kind: backgroundTaskKind(task.task_type),
+                description: optionalString(task.description) ?? "",
+              },
+            ],
+      ),
+    },
+  ]
+}
+
+/**
+ * SDK の `task_type` を3つに畳む（{@link BackgroundTaskKind}）。実測で見たのは `local_bash`
+ * （`run_in_background` の Bash）と `local_agent`（背景のサブエージェント）の2つ。
+ */
+function backgroundTaskKind(taskType: unknown): BackgroundTaskKind {
+  switch (taskType) {
+    case "local_bash":
+      return "shell"
+    case "local_agent":
+      return "agent"
+    default:
+      return "other"
+  }
 }
 
 /**

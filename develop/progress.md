@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにした（T-448）
+
+SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
+
 ### 2026-09-23 質問に答えている間、入力欄の送信ボタンを答え待ちの黄色で塗る（T-481）
 
 答え待ちの `<form>`（`.is-answering`）の内側にある `.dispatch-send` の塗り・枠・hover を `--state-warn` 基準にし、札の「これで答える」と揃えた。答え待ちでないときは `--accent` のまま。`docs/display.md` 4.2 に送るボタンの塗りを書き足した。

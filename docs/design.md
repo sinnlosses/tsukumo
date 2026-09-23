@@ -178,6 +178,7 @@ src/
     repository-file.ts        ファイル一覧の経路名と読み取り（入力欄の @ 補完。両側が見る）
     room.ts                   部屋の名前（ビューのポート1つ＝部屋1つ。語彙と、語彙の外の名乗り方。13.9）
     blank-text.ts             本文が読める文字を1字も持たないかを判定する純関数（ゼロ幅スペース等も空扱い）
+    background-task.ts        背景のタスク（ターンのあとも claude が動かし続けているもの）の語彙（型だけ）
     japanese-prose.ts         本文の地の文が日本語かを判定する純関数（英訳の締めに最終レポートの席を渡さない）
   server/                     サーバ（Bun）側。判断（core/）と境界（adapter/）の2段
     core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
@@ -190,6 +191,7 @@ src/
       character-selection.ts  どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
       pending-answer.ts       答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
       sdk-message.ts          SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
+      self-started-turn.ts    claude が依頼なしで始めた続きのターンに turn-started を補う（ターンの外で届いた init が合図）
       session-restore.ts      続きから始めるセッションを選ぶ・transcript を履歴イベントにする
       port-resolution.ts      どのポートで試すかの決定（listen そのものは adapter/server.ts）
       config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）

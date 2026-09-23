@@ -1376,6 +1376,111 @@
           }
         }
       ]
+    },
+    {
+      "name": "background-task",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "背景で待つあいだの帯を見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "背景で走らせておくね。終わったら知らせる。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-background-1",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 20",
+              "run_in_background": true,
+              "description": "架空の待ち（20秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-background-1",
+            "content": "架空の背景実行の受付（ID: fake-bg-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-bg-1",
+                "kind": "shell",
+                "description": "架空の待ち（20秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景で1件走らせた\n\nこれは架空の本文で、実物の会話ではない。**ターンはここで終わるが、背景のタスクは動き続ける**。\n帯の「いまの作業」が「背景で作業中」になり、終わると「依頼待ち」に戻る。"
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        },
+        {
+          "afterMs": 16000,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": []
+          }
+        },
+        {
+          "afterMs": 16100,
+          "event": {
+            "kind": "turn-started"
+          }
+        },
+        {
+          "afterMs": 16500,
+          "event": {
+            "kind": "speech",
+            "text": "背景の待ちが終わったよ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 17000,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景の待ちが終わった\n\nこれは架空の本文で、実物の会話ではない。\n\n- 背景のタスクが終わった知らせを受けて、**依頼なしで始めた続きのターン**の報告\n- 同じやり取りの札に積まれ、このやり取りの最終レポートになる（前の本文は中間レポートに回る）"
+          }
+        },
+        {
+          "afterMs": 17300,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
     }
   ]
 }

@@ -13,6 +13,7 @@ import {
   TurnSelectionContext,
   type TurnSelectionValue,
 } from "../../../../src/browser/stores/turn-selection.tsx"
+import { type BackgroundTask } from "../../../../src/shared/background-task.ts"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { type Question } from "../../../../src/shared/question.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
@@ -127,6 +128,98 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
     expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("Bash: echo dummy")
+  })
+
+  describe("背景のタスク（docs/screen-design.md 13.9「背景のタスク」）", () => {
+    const FINISHED_TURN = {
+      kind: "finished",
+      startedAt: 0,
+      finishedAt: 1,
+    } satisfies SessionState["turn"]
+    const SHELL_TASK = {
+      taskId: "bash-1",
+      kind: "shell",
+      description: "架空の待ち",
+    } satisfies BackgroundTask
+    const AGENT_TASK = {
+      taskId: "agent-1",
+      kind: "agent",
+      description: "",
+    } satisfies BackgroundTask
+
+    it("ターンが終わっても背景のタスクが動いていれば「背景で作業中」で、要約はその説明", () => {
+      renderScreenNav({
+        turn: FINISHED_TURN,
+        records: [requestRecord()],
+        backgroundTasks: [SHELL_TASK],
+      })
+
+      expect(document.querySelector(".screen-nav-work")?.getAttribute("data-work-state")).toBe(
+        "background",
+      )
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("背景で作業中")
+      expect(document.querySelector(".screen-nav-work-mark")?.textContent).toBe("●")
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("架空の待ち")
+    })
+
+    it("2件以上なら新しいほうの説明に「ほか n件」を添え、説明が無ければ種類の語で代える", () => {
+      renderScreenNav({ turn: FINISHED_TURN, backgroundTasks: [SHELL_TASK, AGENT_TASK] })
+
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+        "サブエージェント ほか1件",
+      )
+    })
+
+    it("開くと「背景で動いているもの」に種類と説明が並ぶ", () => {
+      renderScreenNav({ turn: FINISHED_TURN, backgroundTasks: [SHELL_TASK, AGENT_TASK] })
+
+      fireEvent.click(workToggle())
+
+      expect(document.querySelector(".screen-nav-work-background-heading")?.textContent).toBe(
+        "背景で動いているもの（2 件）",
+      )
+      const rows = [...document.querySelectorAll(".screen-nav-work-background-task")]
+      expect(rows.map((row) => row.textContent)).toEqual([
+        "… シェル 架空の待ち",
+        "… サブエージェント",
+      ])
+    })
+
+    it("ターンが走っている間は「作業中」のままで、一覧には背景のタスクも出る", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [requestRecord()],
+        backgroundTasks: [SHELL_TASK],
+      })
+
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
+
+      fireEvent.click(workToggle())
+
+      expect(document.querySelector(".screen-nav-work-background-heading")).not.toBeNull()
+    })
+
+    it("背景のタスクが終わると「依頼待ち」に戻り、一覧からも消える", () => {
+      const store = renderScreenNav({
+        turn: FINISHED_TURN,
+        records: [requestRecord()],
+        backgroundTasks: [SHELL_TASK],
+      })
+      fireEvent.click(workToggle())
+
+      act(() => {
+        putState(store, {
+          ...INITIAL_SESSION_STATE,
+          turn: FINISHED_TURN,
+          records: [requestRecord()],
+          backgroundTasks: [],
+        })
+      })
+
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("依頼待ち")
+      expect(document.querySelector(".screen-nav-work-summary")).toBeNull()
+      expect(document.querySelector(".screen-nav-work-background-heading")).toBeNull()
+    })
   })
 
   it("答え待ちで札の語が「答え待ち」に変わり、要約も出る", () => {
