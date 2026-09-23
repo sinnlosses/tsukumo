@@ -456,7 +456,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 選択肢の比較
 
-- **英語識別子（予定）**: `questionPreview`（`QuestionOption.preview` / `<PendingQuestion>`）
+- **英語識別子（予定）**: `questionPreview`（`QuestionOption.preview`。札は `<QuestionAsk>`）
 - **定義**: 質問（`AskUserQuestion`）の**選択肢ごとに付く Markdown の本文**と、それをメインビューに
   並べた面。表・図・メリットとデメリットで案を見比べるためのもので、答え待ちの間だけ出る
 - **注記**: **選択肢そのものは入力欄の箱に出たまま**（押す場所と読む場所を分ける。2026-09-21 決定。

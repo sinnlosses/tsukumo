@@ -21,11 +21,9 @@
 }
 
 /* 答え待ちの箱（入力欄の上。docs/requirements.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。
+   **中身は許可要求だけ**（質問の札はメインビューへ移った）。
    **領域（.layout-dispatch）そのものを縦スクロールさせない**ため、箱は `.dispatch` の中で
-   伸び縮みさせ、溢れるぶんは中の .question-card だけでスクロールさせる。進捗と操作の行は
-   縮めず（flex: 0 0 auto）常に見える位置に残す。高さの上限は枠・内側の余白も込みで数えたいので、
-   ここだけ border-box にする。
-   **上限は許可要求と質問で違う**（下の2つ）。 */
+   伸び縮みさせる。高さの上限は枠・内側の余白も込みで数えたいので、ここだけ border-box にする。 */
 .pending-answer {
   box-sizing: border-box;
   display: flex;
@@ -39,35 +37,10 @@
 }
 /* 許可要求は「ツール名＋2つのボタン」だけで狭く、下のテキスト入力欄を出したままで困らないので
    上限を据え置く（1400x900・既定の比率で箱 108px・テキスト入力欄 134px。答える前に依頼を
-   書き足せる）。**質問と違って自由入力欄を持たない**ので、ここを畳むと打つ場所が無くなる。
-   割合そのものは、長いツール名や引数で箱が伸びてもテキスト入力欄が潰れないための歯止め。 */
+   書き足せる）。割合そのものは、長いツール名や引数で箱が伸びてもテキスト入力欄が潰れない
+   ための歯止め。 */
 .pending-permission {
   max-height: 64%;
-}
-/* 質問は**入力欄の領域を丸ごと受け取る**。以前は許可要求と同じ 64% を上限に
-   していたが、1400x900・既定の比率（領域 335px）で選択肢3件＋自由入力の質問を測ると
-   .question-card の中身 236px が 126px の窓に入らず、**行の途中で横に割れたまま「答える」の
-   行と接して重なって見えた**（目視）。上限を上げるとテキスト入力欄が潰れる、
-   という当時の据え置きの理由は、**答え待ちの間もテキスト入力欄が要る**という前提に乗っていた。
-   質問の箱は自由入力欄（FreeTextOption）を自分で持つので前提が成り立たず、代わりに
-   テキスト入力欄と「送る」行を畳んで（下の .dispatch-form）領域を全部渡す。
-   同じ条件で .question-card は 126px から 241px に広がり、中身 236px がそのまま収まる。
-   それでも溢れる質問（説明の長い2問の疑似セッションで中身 281px）は中だけでスクロールする。 */
-.pending-question {
-  flex: 1 1 auto;
-  /* 領域を全部渡しても、疑似セッションの質問（選択肢3件＋自由入力＝中身 236px）はぎりぎりなので、
-     縦の内側の余白だけ 0.75rem から詰めて選択肢に回す（横は許可要求と揃える）。 */
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0;
-}
-/* 質問が出ている間、テキスト入力欄と「送る」行（＝進行中は「中断」）を畳む。**描かないのではなく
-   display: none で隠す**（`<Composer>` を外すと下書きが React のローカル状態ごと消え、答えて
-   戻ってきたときに打ちかけの文字が無くなる。docs/design.md 6.2）。畳んでいる間は中断も押せない
-   のが代償で、質問に答えれば元に戻る。:has は Chromium で動く（.question-choice-checkbox と
-   同じ前提）。 */
-.dispatch:has(.pending-question) .dispatch-form {
-  display: none;
 }
 .pending-summary {
   margin: 0 0 0.5rem;
@@ -78,21 +51,10 @@
   font-family: var(--font-mono);
   font-weight: bold;
 }
-.pending-actions,
-.pending-answer-actions {
+.pending-actions {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
-}
-/* 「答える / 次へ」の行。中身が溢れているとき .question-card のスクロールの下端は行を横に
-   割って切るので、**境目の線と余白でここを区切る**（割れた行がボタンに接して重なって見えた
-   目視への対処。行を割らずに切る方法は選択肢の高さがまちまちで取れない）。
-   線と余白のぶんだけ選択肢の見える高さが減るので、線は 1px・余白は 0.4rem に留める。 */
-.pending-answer-actions {
-  flex: 0 0 auto;
-  margin-top: 0.35rem;
-  padding-top: 0.4rem;
-  border-top: 1px solid var(--rule);
 }
 .pending-action {
   padding: 0.35rem 0.9rem;
@@ -118,247 +80,28 @@
   border-color: var(--state-ng);
   color: var(--state-ng);
 }
-/* いま何問目かの見出し（質問が2件以上のときだけ出る）。「戻る」もこの行に同居させる
-   （独立した行にすると、その高さのぶんだけ選択肢が見えなくなる）。 */
-.question-progress {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex: 0 0 auto;
-  margin: 0 0 0.4rem;
-  font-size: var(--font-label);
-  letter-spacing: 0.08em;
-  color: var(--ink-quiet);
-}
-.pending-answer-back {
-  padding: 0.1rem 0.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  background: var(--surface);
-  color: var(--ink-quiet);
-  font: inherit;
-  cursor: pointer;
-}
-.pending-answer-back:hover {
-  border-color: var(--accent);
-  color: var(--ink);
-}
-/* 質問1問ぶん。箱が max-height に達したら、ここだけが縦にスクロールする。 */
-.question-card {
-  flex: 1 1 auto;
-  min-height: 0;
-  min-width: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  margin: 0;
-}
-.question-header {
-  margin: 0 0 0.2rem;
-  font-size: var(--font-label);
-  letter-spacing: 0.08em;
-  color: var(--ink-quiet);
-}
-.question-text {
-  margin: 0 0 0.5rem;
-  font-weight: bold;
-}
-/* 選択肢に `preview` があるときだけ出る案内（`components/question-card.tsx`）。比べる面はメインビューに
-   あるので、**この箱だけ見ている人を上へ向ける**ための1行。 */
-.question-preview-hint {
-  margin: 0 0 0.5rem;
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
-}
-.question-choices {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  /* **ラベル列と説明列はここで1度だけ決める。** 各選択肢（と間に挟まる <li>）は subgrid で
-     この2列に乗るので、ラベル列の幅が全選択肢で揃い、説明の左端が縦に一直線に並ぶ。
-     1列目の fit-content(40%) は「ラベルが短ければその幅のまま、長ければ 40% で頭打ちにして
-     折り返す」。**頭打ちがあるぶん説明の列は必ず残りを確保できる**ので、狭い窓でラベルが
-     選択肢の幅を超えて説明の幅が 0 になる（＝説明が1文字ずつ縦に並ぶ）ことが起きない。
-     2列目の minmax(0, 1fr) は、長い語で列が最小幅まで押し広げられて横に溢れるのを止める。 */
-  grid-template-columns: fit-content(40%) minmax(0, 1fr);
-  /* 行の間は 0.35rem、ラベルと説明の間は 0.5rem（subgrid 側は既定でこの値を受け継ぐ）。 */
-  gap: 0.35rem 0.5rem;
-}
-/* <li> は選択肢の箱と上の2列の間に挟まる包みなので、自身も subgrid にして列をそのまま通す。
-   **自由入力の <li> だけは除く**（2列に割ると入力欄がラベル列の幅しか使えない）。 */
-.question-choices > li:not(.question-choice-other) {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
-}
-/* 選択肢1件（単一選択の <button>、複数選択の <label> のどちらにも使う）。
-   **ラベルと説明は1行に並べる**（/ 補完の候補一覧 .dispatch-suggestion-item と同じ形）。
-   縦に積むと選択肢3件で入力欄の領域の高さを使い切ってしまい、1件しか見えなくなる。 */
-.question-choice {
-  /* **幅の配分は flex ではなく grid の2列で解く**。flex だと「ラベルを縮めない
-     （＝重ならない）」と「ラベルを折り返す（＝説明の幅を残す）」が flex-shrink の綱引きになり、
-     どちらかを立てるともう一方が崩れた（T-205 の重なりと、その直しで起きたラベルの非折り返し）。
-     列の幅を .question-choices 側で先に決めてしまえば、ラベルは自分の列の中で折り返すだけに
-     なり、隣の説明へはみ出す経路そのものが無くなる。 */
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
-  align-items: baseline;
-  /* <button> は既定で border-box だが <label> は content-box。揃えないと複数選択の側だけ
-     padding と枠のぶん横に広がり、説明の末尾が箱の外へ出る。 */
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.question-choice:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-.question-choice:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.question-choice.is-selected {
-  border-color: var(--accent);
-  background: var(--surface-accent);
-}
-/* 複数選択のカードは `<label>` なので `.is-selected` が付かない（選んだかどうかは中の
-   チェックボックスが持つ）。単一選択の `.is-selected` と同じ地と枠をここで当て、2つの
-   選択肢が同じ見え方になるようにする（:has は Chromium で動く）。 */
-.question-choice-checkbox:has(:checked) {
-  border-color: var(--accent);
-  background: var(--surface-accent);
-}
-/* チェックボックス版（`<label class="question-choice question-choice-checkbox">`）は
-   フォーカスが乗るのは中の `<input type="checkbox">` 自身。カード全体にも輪を出す
-   （:has は Chromium で動く。webapp-testing の Chrome もこれで確かめる）。 */
-.question-choice-checkbox:has(:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-/* 輪はカードの側だけに出す。印自身にも出ると1件の選択肢に輪が二重に重なり、キーボードの
-   居場所がどちらなのか読めなくなる（カードの輪のほうが大きく、隠れることはない）。 */
-.question-choice-mark:focus-visible {
-  outline: none;
-}
-.question-choice-label {
-  font-weight: bold;
-}
-/* 選んだ印。**複数選択と単一選択で同じ骨格を共有する**。大きさ・左端・
-   baseline が揃うので2つの選択肢の並びが同じ形になり、四角か丸かだけが「いくつ選べるか」を
-   表す。単一選択は `<button>` で入れ物を足せないため、印はラベルの `::before` で作る。
-   どちらも中身を持たない箱なので baseline は下端になり、ラベルの1行目の文字に揃う。
-   地は surface より暗い ground にして、押せる窪みだとカードの面と区別する。 */
-.question-choice-mark,
-.question-choice-single .question-choice-label::before {
-  box-sizing: border-box;
-  width: 1.05em;
-  height: 1.05em;
-  border: 1px solid var(--rule);
-  background-color: var(--ground);
-}
-.question-choice-mark {
-  appearance: none;
-  flex: 0 0 auto;
-  /* 選んだ印（::before）を中に収めるための基準。 */
-  position: relative;
-  margin: 0;
-  /* em をラベルの文字に合わせる（`<input>` は font を継承しない）。 */
-  font: inherit;
-  border-radius: 0.3em;
-  cursor: pointer;
-}
-.question-choice-single .question-choice-label::before {
-  content: "";
-  display: inline-block;
-  /* .question-choice-checkbox-row の gap と同じ。印とラベルの間を2つで揃える。 */
-  margin-right: 0.5rem;
-  border-radius: 50%;
-}
-/* 印のぶんだけ1行目を左へ吊るす（padding と同じ幅の負の text-indent）。ラベルが折り返した
-   とき、2行目以降がチェックボックス版と同じ位置（印の右）に揃う。 */
-.question-choice-single .question-choice-label {
-  padding-left: calc(1.05em + 0.5rem);
-  text-indent: calc(-1.05em - 0.5rem);
-}
-/* 選ばれている印には中身が入る（四角はチェック、丸は中心の点）。**色を変えるだけにしない** —
-   形が入ったかどうかで選択が分かる。 */
-.question-choice-mark:checked::before {
-  content: "";
-  position: absolute;
-  inset: 0.16em;
-  background-color: var(--accent);
-  clip-path: polygon(13% 45%, 0 60%, 42% 100%, 100% 20%, 85% 5%, 40% 68%);
-}
-.question-choice-single.is-selected .question-choice-label::before {
-  background-image: radial-gradient(circle at center, var(--accent) 0 30%, transparent 32%);
-}
-.question-choice-mark:checked,
-.question-choice-single.is-selected .question-choice-label::before {
-  border-color: var(--accent);
-}
-/* hover は**印の輪郭を太くする**（1px → 2px）。カードの枠の色が変わるだけだと色だけが頼りに
-   なるので、線の太さでも分かるようにする。box-sizing が border-box で大きさは変わらないので、
-   指す先が動かない。 */
-.question-choice:hover .question-choice-mark,
-.question-choice-single:hover .question-choice-label::before {
-  border-width: 2px;
-}
-/* 説明はラベルの右の余りに収め、幅が足りなければ折り返して全文を出す（省略しない。
-   以前は省略記号で切っていたが、途中で切れて読めないとの指摘で全文表示に
-   変えた）。折り返しても選択肢そのものは縦にも横にも広げず、はみ出るぶんは
-   .question-card の中でスクロールする。 */
-.question-choice-description {
-  overflow-wrap: anywhere;
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
-}
-/* 複数選択（multiSelect）はチェックボックス（docs/design.md 6.1）。チェックボックスとラベルで
-   ラベル列の1マスを埋める（単一選択でラベルが直接 .question-choice の子になるのと同じ位置）。
-   **縮める／縮めないの指定は持たない**。列の幅は .question-choices が決めていて、この行は
-   その幅に収まるだけなので、はみ出して右隣の説明と重なる余地が無い（重なりは
-   flex で幅を取り合っていたことが原因で、grid の2列へ移して消した）。
-   ラベルが折り返すので、チェックボックスは行の中央ではなく**1行目の文字に揃える**（baseline）。 */
-.question-choice-checkbox-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  min-width: 0;
-}
-/* 自由入力の行だけは選択肢ではないので、2列にまたがって幅を全部使う。 */
-.question-choice-other {
-  display: flex;
-  grid-column: 1 / -1;
-  min-width: 0;
-  gap: 0.4rem;
-}
-/* 自由入力は Enter で進む（送るボタンは持たない。進む操作は箱の下の1つに統一してある）。 */
-.question-other-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-}
-
 /* 右下の入力ペイン（docs/requirements.md 4.7）。キャラクターへの依頼を送るフォームを持つ。 */
 .dispatch-form {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+}
+/* 答え待ちの質問があるあいだは、**答えを書く場所**になる（選択肢の札はメインビュー）。
+   枠は答え待ちの色（var(--state-warn)。.dispatch-pending-glow と同じ意味の色）で、
+   内側の余白は帯とテキスト入力欄の両方に効かせる。 */
+.dispatch-form.is-answering {
+  padding: 0.5rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 0.75rem;
+}
+/* 「↑ <キャラクター名> が質問しています…」の帯。上の札を指す矢印から始まるので、
+   テキスト入力欄の**上**に置く。字は答え待ちの色で、地は持たない（枠の色と二重にしない）。 */
+.dispatch-band {
+  flex: 0 0 auto;
+  margin: 0 0 0.5rem;
+  font-size: var(--font-secondary);
+  color: var(--state-warn);
 }
 /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
 .dispatch-text-wrap {

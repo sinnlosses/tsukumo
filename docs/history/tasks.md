@@ -25500,3 +25500,311 @@ bun run check 通過（1427 pass / 0 fail。1回目は1件落ち、打ち直し�
 - 色は hex をそのまま書かない（歯車から地・字の色を変えたときに追従しなくなる）
 - `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
 - 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-384
+
+**タスク**: 帯を 60px にし、上端の線・地と罫線・口の下線・顔と部屋の名前を見本に揃える
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-381, T-382, T-383, T-385 / **passes**: True
+
+**evidence**:
+
+bun run check 1524 pass / 0 fail、design.md の見出し数 53 のまま。目視（fake driver・ヘッドレス Chrome の computed style）: 1400x900 で帯 0,0,1400x64（上端の線 3px accent＋地 60px＋罫線 1px、端から端まで）・顔 36px と 2px の accent の輪・部屋の名前 18px・口 14px で枠なし、会話の口だけ 2px の accent の下線・scrollHeight 900=innerHeight で縦スクロールなし。390x844 で scrollWidth 390（はみ出し 0）、「≡」の面は顔・トグル・丸い枠の口・札・ドロップダウン・歯車が変更前と同じ形で開いた。design.md 13.9 の表はメインビュー 483.6→467.0 / キャラビュー 322.4→311.4（1400 幅）、390 幅は 482.9 / 152.0 で変わらず
+
+## 背景
+
+ユーザーが帯（ヘッダー）を見本に合わせたいと言った（2026-09-23 に再提示）。見本は `docs/history/mockup/sidebar-tasks-2026-09-23.html` の `<header>` の部分（`~/Downloads/サイドバー案1 — タスク中心（おすすめ）-html/SB-1-Tasks.dc.html` と中身が同一。絵は `docs/history/mockup/header-2026-09-23.png`）。デザインツールの書き出しで、**値を写す参照でありコードとして持ち込まない**。このタスクは帯の骨格（高さ・地・線・口・左端の名乗り）を受け持ち、中の部品（仕事/雑談のトグル・いまの作業の札・モデル/許可モード・歯車）は T-419 が受け持つ。
+
+いまの作り:
+
+- 帯は `src/browser/features/screen-nav/presentational-screen-nav.tsx` の `<nav>`、CSS は `screen-nav.module.css`。高さは `src/browser/styles/theme.css` の `--screen-nav-height`（30px）と `--screen-nav-gap`（0.4rem）で、`src/browser/features/layout/layout.module.css` の `.layout-grid` がこの2つと body の padding（上下 1rem）を引いて grid の高さを決める
+- 帯は body の padding の内側にあり、帯の地も下の罫線も無い。見本は画面の端から端までの帯で、上端に 3px の差し色の線、帯の地は画面の地より一段明るく、下に 1px の罫線
+- 口（`.screen-nav-gate`、`components/screen-nav-gate.tsx`）はいま丸い枠のピル（13px）。いまの画面の口は枠の色・地の濃さ（`--surface-accent`）・字の濃さで示している
+- 顔（`.screen-nav-face`）は帯の高さ −4px、部屋の名前（`.screen-nav-room`）は `--font-secondary`（13px）
+
+**見本の値**（`<header>` の inline style から。px は写し、色は hex を書かずトークンに宛てる）:
+
+| 部位 | 値 |
+| --- | --- |
+| 帯 | 高さ 60px・左右 padding 24px・要素の間 20px・地は画面の地より一段明るい・下に 1px の罫線 |
+| 上端の線 | 帯の上に高さ 3px の差し色（`--accent`）の線。画面の端から端まで |
+| 顔 | 36px の丸・差し色の 2px の輪（`box-shadow: 0 0 0 2px`）。顔と部屋の名前の間 10px |
+| 部屋の名前 | 18px・太字・字間 0.08em・明るい字 |
+| トグルと口の間 | 高さ 24px・幅 1px の縦の仕切り |
+| 口 | 枠も地も無い文字のタブ。帯の高さいっぱいに伸ばし（`align-items: stretch`）、左右 12px・14px・口どうしの間 2px。いまの口は明るい字＋weight 500＋下に 2px の差し色の線（帯の下の罫線に `margin-bottom: -1px` で重ねる）、ほかは薄い字＋透明の下線 |
+
+## 決まっていること（蒸し返さない）
+
+- 高さは見本どおり 60px（2026-09-23 のユーザーの選択。以前の「案を2〜3個並べて実測し、ユーザーが選ぶ」段取りはやめた）
+- 書体は `system-ui` と等幅の2本のまま（`docs/design.md` 13.3）。見本の Shippori Mincho / Zen Kaku Gothic New / IBM Plex Mono は写さない
+- 字の大きさは 13.3 の段に宛てる（部屋の名前 18px・口 14px はどちらも既存の段）。段を足さない
+- 狭い画面（760px 以下）は帯がオーバーレイで領域を削らない、いまの形を保つ（「≡」の面の中身も変えない）
+- いまの画面の口は色だけで示さない（下線＋字の濃さ＋太さ。13.1 原則1）
+
+## 解くべき論点
+
+- 帯を画面の端から端まで出す方法（body の padding の外へ出すか、帯だけ負の margin にするか）と、`.layout-grid` の高さの計算（上端の線 3px を `--screen-nav-height` に含めるか別の変数にするか）。広い画面で縦スクロールが出ないこと
+- 帯の地・上端の線・下の罫線・仕切りの色をどのトークンに宛てるか（見本は画面の地 `#17161e` に対して帯 `#1a1921`、罫線 `#2e2d38`。いまの `--ground` / `--surface` / `--rule` / `--surface-raised` との関係）。歯車から地・字の色を変えたときに追従すること
+- 顔の大きさを帯の高さからの式にするか固定値にするか（`docs/design.md` 13.9「顔」は「大きさは帯の高さに合わせて決める」）
+
+## やること
+
+1. `docs/design.md` 13.1・13.3・13.9（「帯に何を置くか」「顔」「帯が奪う面積（実測）」「狭い画面（760px 以下）」）を読む
+2. 高さ・上端の線・帯の地と罫線・端から端までの置き方・顔・部屋の名前・仕切り・口を上の表の値に揃える
+3. `scripts/capture-view.ts`（fake driver。`docs/architecture.md`「手で確かめること」）で 1400 幅と 390 幅のメインビュー・キャラビューの高さを測り、`docs/design.md` 13.9「帯が奪う面積（実測）」の表を 30px と 60px の比較に書き直す。同じ節の「帯の高さの床」の段落と、13.9 冒頭の「帯の高さはこの形が載ったあとに案を並べて実測し、ユーザーが選ぶ」の文を決まった値に直す
+4. `screen-nav.module.css` 冒頭の「高さは 30px」「口の見た目は狭い画面のタブに合わせる（丸い枠）」のコメントを今の形に直す
+
+## 完了条件
+
+- `--screen-nav-height` が 60px（上端の線を別にするならその 3px を加えた値）で、`docs/design.md` 13.9 の表が 60px での実測値になっている
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅。DevTools の computed style で測る）: 帯の高さ 60px・上端の 3px の線と下の罫線が画面の端から端まで出る・顔が 36px で差し色の輪がある・部屋の名前 18px・口は枠の無い 14px の文字で、いまの口にだけ 2px の下線が出る・広い画面で縦スクロールが出ない・390 幅で横のはみ出し 0px かつ「≡」の面がいまと同じに開く。何が見えたかを `evidence` に書く
+
+## 注意
+
+- トグル・いまの作業の札・モデル/許可モード・歯車の見た目は T-419 の担当。ここでは帯が高くなっても崩れない（縦に中央揃え）ところまで
+- 色は hex をそのまま書かない（歯車から地・字の色を変えたときに追従しなくなる）
+- T-413 も `src/browser/features/screen-nav/` を触る（配線の整理で見え方は変えない）。先に `main` に入っていたら取り込んでから始める
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-389
+
+**タスク**: サイドバーの下端を、顔つきのキャラクターとセッションの選択を並べた形にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-381, T-382, T-383, T-394 / **passes**: True
+
+**evidence**:
+
+bun run check 1529 pass / 0 fail（126ファイル）。見本 docs/history/mockup/sidebar-tasks-2026-09-23.html に合わせて作り直した: 顔 17.6px→28px、ラベル --font-label、<select> 高さ34px・角8px、区画をやめて .sidebar-footer（左右いっぱい・上端の罫線・--ground の地）にした。目視（fake driver, TSUKUMO_VIEW_PORT=7389 / TSUKUMO_HOME 分離, Playwright で領域を切り出し）: 1400x900 で帯は 1049..1383（領域 1048..1384 の枠内いっぱい）・高さ84px、2つの対は幅143pxずつの等分。390幅は対が154pxずつで横並びのまま収まる（見本の176pxと同等）ため 760px の縦積みは外した。キャラクターを tsukumo-spirit→tsukumo に切り替えると顔が face.svg→face.png、28x28 のまま追従。
+
+## 背景
+
+サイドバーのモック `docs/history/mockup/sidebar-2026-09-23.png` の下半分。T-381 / T-382 のあと、サイドバーはタスク一覧と「セッション情報」の2区画になり、セッション情報に残るのはキャラクターの切り替え（`src/browser/features/sidebar/session-info.tsx`）とセッションの切り替え（`session-switch.tsx`）の2つだけ。区画の枠と見出しは `section.tsx`。
+
+モックの形: 「セッション情報」の見出しは無く、タスクの区画と同じ枠の下端に仕切り線を引き、その下に小さなラベル付きで「キャラクター」（顔のアイコン + `<select>`）と「セッション」（`<select>`）を横に並べる。顔は T-383 が帯に出すもの（パックの `face`。`docs/design.md` 13.9「顔」）。
+
+## 決まっていること（蒸し返さない）
+
+- 「セッション情報」の見出しを外し、2つの選択を横に並べる。キャラクターの左に顔を出す
+- 選択の挙動（キャラクターを選ぶと起こし直す・ターン中は断る）は変えない。セッションの行の中身（並ぶのはいまの部屋のものだけ・見出しは SDK の summary と時刻）は T-393 / T-394 が決めたものをそのまま使う
+- タスクの区画の中身は T-388 の担当で、ここでは触らない
+
+## 解くべき論点
+
+- 狭い画面（760px 以下）で横に並べて収まるか。収まらなければ縦に積む
+- 顔を帯と同じ部品にするか（機能どうしの import を増やさない。共有するなら `components/` か `browser/lib/`。`docs/design.md` 2章）
+- 雑談中のサイドバー（T-332）とぶつからないか
+
+## やること
+
+1. `docs/design.md` 13.9 の「顔」と 6.1「部品の木」を読む
+2. セッション情報の見出しを外し、2つの選択を小さなラベル付きで横に並べ、キャラクターの左に顔を出す
+3. 区画の枠をモックの形（タスクの区画と同じ枠の下端に仕切り線）にする
+4. `docs/requirements.md` 4.2 のサイドバーの記述と、`docs/design.md` 13.6 / 6.1 の該当箇所を直す
+5. テスト: 見出しが無い / 顔が出る / 2つの選択が今までどおりコマンドを送る
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅）: モックの形で並び、キャラクターを切り替えると顔も変わる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-399
+
+**タスク**: 札のタイトル横の ⌄ で、やり取りの一覧を開いて飛べるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-398 / **passes**: True
+
+**evidence**:
+
+bun run check 1478 pass / 0 fail（120 files）。main-view.test.tsx に一覧の7件（開く・もう一度押すと閉じる・外側で閉じる・行で移って閉じる・最新の行で追従に戻る・Escape で閉じてフォーカスが戻る・見ている行にだけ ●・タイトルを押しても開く）。目視: TSUKUMO_DRIVER=fake の turn-history（4ターン）を 1400x900 と 375x900 で、タイトルと ⌄ のどちらでも開き「1 / 4」を押すとそのターンへ移って閉じる・一覧は札の内側に収まり帯やレポートに隠れない・開いた状態でも横スクロールなし（/tmp/t399/2-*.png）
+
+## 背景
+
+T-398 でメインビューの横並びのタブを「前後ボタン＋依頼のタイトル」の札の頭に置き換えた。タブが持っていた「**窓の中の任意の1件へ一度で飛ぶ**」役が `‹` `›` だけでは失われるので、モック `docs/history/mockup/turn-history-2026-09-23.png` のタイトル横の `⌄` にそれを持たせる（2026-09-23 にユーザーが「やり取りの一覧」を選んだ）。
+
+選択は `src/browser/stores/turn-selection.tsx` の `selectTurn(turnId)` で行う（最新を選ぶと追従に戻る規則もそこにある）。一覧の名前には `src/browser/features/main-view/domain/turn-tab-label.ts` の `turnTab` が作る依頼の1行目を使える（T-398 で名前が変わっていればそちら）。
+
+開閉する部品は帯に前例がある: 外側の押下と `Escape` で閉じる購読は `src/browser/hooks/use-dismiss-signal.ts` の `useDismissSignal` を使う（帯の「≡」・作業中の札・設定の歯車が使っている。同じ購読を機能の中に書き直さない）。`aria-expanded` は `src/browser/features/screen-nav/components/screen-nav-current-work.tsx` が前例。
+
+## 決まっていること（蒸し返さない）
+
+- `⌄`（とタイトル）を押すと、窓の中のやり取りの一覧が開く。依頼の1行目で縦に並べ、押すとそのやり取りへ移って閉じる
+- 見ているやり取りには印を付ける（色だけにしない）
+
+## やること
+
+1. 札の頭に一覧の口と一覧を足す。並びは新しいものを上にするか古いものを上にするかを決め（札の「n / N」が古いほうを1にしているのと矛盾しない書き方にする）、各行に「n / N」の番号か「最新」を添える
+2. 閉じ方: もう一度押す・外側を押す・`Escape`・行を選ぶ。`useEffect` は「React の外と同期する」類型だけ（`docs/coding-standards.md`「React」節）
+3. テストを足す（`test/browser/features/main-view/`）: 開く / 行を押すとそのやり取りへ移り閉じる / 最新の行を押すと追従に戻る / `Escape` で閉じる / 見ている行に印がある
+4. `docs/design.md` 6.1 の `<MainView>` の行に一覧を足す
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 760px 以下）: やり取り3件以上で一覧を開き、別のやり取りへ飛べる・一覧がレポートや帯に隠れず読める。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+- 一覧はモーダルの一種なので、目視は開いた状態でも横スクロールが出ないかまで測る
+
+## T-405
+
+**タスク**: CLAUDE.md のタスク運用節を、並行の作業ツリーと merge commit を前提に直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-404 / **passes**: True
+
+**evidence**:
+
+CLAUDE.md:「1サイクルの形」の fast-forward の段落を、ff になるのは手順3・5の送り方のほうで手順1は merge commit を作りうると書き直し、手順1に衝突時の扱い（progress.md はドライバが畳む/それ以外は預ける）を追記。セットアップに git config merge.progress.driver "bun run scripts/merge-progress.ts %O %A %B" をクローンに1回打つ手順を追加。並行の箇条書きにポートは分かれない例外を追記。docs/workflow.md の同趣旨の記述も合わせ、develop/progress.md の未解決から完了ブロックの項目を畳んだ。完了条件: grep 'merge commit は出ない' 0件 / 'merge.progress.driver' 1件 / bun run check 通過（1504 pass, 0 fail）。節の数は CLAUDE.md 17・docs/workflow.md 5 で編集前後とも同じ。
+
+## 背景
+
+`CLAUDE.md`「## タスク運用」の「1サイクルの形」は、手順1（`git merge main`）のあと「どちらのマージも fast-forward になり merge commit は出ない」と書いている。これは作業ツリーが1本のときしか成り立たず、並行して動かすと相手が先に `main` を進めるので、手順1の取り込みが merge commit になり、それが手順3・5の `--ff-only` でそのまま `main` に乗る（振り返りの範囲の40コミットのうち11件が `Merge branch 'main' into tsukumo-N`）。
+
+同じ節の並行の箇条書きは「検証コマンドは並行して打ってよい（自分の作業ツリーで走るので、相手の作業中の変更を拾わない）」と書いているが、**ポートは作業ツリーで分かれない**。T-372 を合流したあとの `bun run check` で `test/cli.test.ts` の「既定ポートから上限まで全部塞がっていると…終了コード1で終わる」が時間切れになった（テスト側は T-406 が直す）。
+
+T-404 で `develop/progress.md` の3wayマージドライバ（`scripts/merge-progress.ts` と `.gitattributes`）ができる。登録（`git config merge.progress.driver ...`）はクローンに1回で全部の作業ツリーに効き、登録し忘れても既定の3wayに落ちるだけで壊れない。
+
+## 決まっていること（蒸し返さない）
+
+- **手順1は `git merge main` のまま**にし、merge commit が出て `main` に乗ることを前提に書き直す（rebase には変えない。2026-09-23 ユーザー）
+- 取り込みで衝突したとき: `develop/progress.md` はドライバが畳むので手が要らない。それ以外が衝突したら止めて預ける
+
+## やること
+
+1. 「1サイクルの形」の「fast-forward になり merge commit は出ない」の段落を、並行のときは手順1が merge commit を作り、それが `main` に入ると書き直す（fast-forward になるのは手順3・5の `--ff-only` の送り方のほう）
+2. 手順1に、取り込みで衝突したときの扱いを1行足す
+3. 並行の箇条書きの「検証コマンドは並行して打ってよい」に、ポートは分かれない例外を足す（T-406 が済んでいればその直し方に合わせる）
+4. 「## セットアップ / 環境構築」に、クローンに1回 `git config merge.progress.driver` を打つことを足す（**「新しい作業ツリーごと」ではなく「クローンごとに1回」**。`- 新しい作業ツリーの立ち上げは人がやる` の箇条書きと揃える）。打つコマンドはそのまま書く
+5. `develop/progress.md`「未解決」の **`develop/progress.md` の完了ブロックを分けるかは未決** の項目を畳む
+6. `docs/workflow.md` に同じ内容の記述があれば合わせる（`grep -n 'fast-forward\|merge commit' docs/workflow.md CLAUDE.md`）
+
+## 完了条件
+
+- `grep -n 'merge commit は出ない' CLAUDE.md docs/workflow.md` が0件
+- `grep -n 'merge.progress.driver' CLAUDE.md` が1件以上
+- `bun run check` が通る
+
+## 注意
+
+- **このリポジトリの `.git/config` への登録はしない**（登録は人がやる。完了報告でユーザーに打つコマンドを伝える）
+- `~/.claude/skills/task-workflow/WORKFLOW.md`（共通の正典）は触らない
+
+## T-412
+
+**タスク**: 件数のチップを押すと、その状態のタスクだけ区画に出るようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-411 / **passes**: True
+
+**evidence**:
+
+bun run check 1517 pass / 0 fail（純関数5件・task-section の押す/戻す/切り替え/aria-pressed 4件ほか）。目視: TSUKUMO_DRIVER=fake で doing2/todo18/done6/想定外1 の tasks.json を読ませ、ヘッドレス Chrome の 1400x900 と 390x844 で各チップを押すと進行中はカード2枚だけ・未着手18行・完了6行に絞れ、もう一度押すと全件（想定外の行含む）に戻った。選んだチップは aria-pressed=true・枠線・太字700が付き、フォーカスの輪も欠けず、横スクロールなし
+
+## 背景
+
+サイドバーのタスク区画の件数のチップ（「進行中 n」「未着手 n」「完了 n」。`src/browser/features/task-board/components/task-count-chip-list.tsx`、件数は `domain/task-list-count.ts` の `taskListCounts`）は、T-388 で**押せない**と決めた（「絞り込みは『一覧を見る』の表の仕事」）。`docs/requirements.md` 4.2 にも「区画の側で件数を絞らない」（2026-09-16 決定）とある。
+
+ユーザーがこれを覆した（2026-09-23）: 「進行中、未着手、完了はやっぱり絞り込みできるように」。
+
+いまの作り:
+
+- 区画は `src/browser/features/sidebar/task-section.tsx` がタスクを購読し（`useSessionSelector`）、チップと `TaskList`（`task-board/task-list.tsx`）を並べる。表を開いているかどうかの state もここが持つ
+- `TaskList` は `domain/task-sidebar-order.ts` の `orderTasksForSidebar` で `running`（doing。カード）と `rest`（それ以外。ファイルの順の行）に分けて描く
+- 想定外の status は `rest` に「!」の印で並ぶ（`TaskMark`）
+
+## 決まっていること（蒸し返さない）
+
+- **チップを押すとその状態のタスクだけが区画に出る。1つだけ選べ、選んでいるチップをもう一度押すと全件に戻る。** 何も選んでいないときは今の並び（全件）（2026-09-23 のユーザーの選択）
+- 並びは変えない（進行中はカード、未着手・完了はファイルの順の行）。絞るのは出すかどうかだけ
+- 選んでいることを色だけで示さない（`aria-pressed` と、形か字の違いも付ける。13.1 原則1）
+- 「一覧を見る」の表（`task-board.tsx`）は変えない
+
+## 解くべき論点
+
+- 選んだ状態をどこに持つか（`task-section.tsx` の state か、`TaskList` の中か）。リロードやセッションの起こし直しで戻ってよいか（覚えるなら置き場所が要る。覚えないなら理由を書く）
+- 0件のチップを押せるようにするか、押したときに何を出すか（空のときの一言）
+- 選んだ状態の見た目。T-411 で「進行中のチップは差し色の地」にしたので、**選んだ印と進行中の色が紛れない**ようにする
+- 想定外の status（todo / doing / done 以外）の行は、どのチップを選んだときに出すか
+- 絞っている最中にタスクが変わって、選んだ状態が0件になったとき
+
+## やること
+
+1. `docs/requirements.md` 4.2 のタスク一覧の記述と、`docs/design.md` のサイドバー・タスク一覧の節を読む
+2. 絞り込みを純関数にする（`domain/` に。選んだ状態とタスクの並びから、出すものを返す）
+3. チップを押せるボタンにし（`aria-pressed`）、区画の一覧を絞る
+4. `docs/requirements.md` 4.2 の「押せない」「区画の側で件数を絞らない」を今回の決定に書き換え（日付と経緯を1行）、`docs/design.md` の該当箇所と、`task-count-chip-list.tsx`・`task-board.module.css` の「押せない」のコメントを直す
+5. テスト: 押すとその状態だけ出る / 同じチップをもう一度押すと全件 / 別のチップを押すと切り替わる / `aria-pressed` が付く / 絞り込みの純関数
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅。進行中・未着手・完了が混ざった `develop/tasks.json` を読ませる）: 各チップで絞れ、もう一度押すと全件に戻る。選んだチップが色以外でも分かる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-420
+
+**タスク**: メインビューの札の頭を、字を詰めて潰れない範囲で低くする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-399 / **passes**: True
+
+**evidence**:
+
+bun run check 1524 pass / 0 fail（125 files）。目視（fake の turn-history、変更前は serve-revision で e2a24c5 を並べ getBoundingClientRect で実測）: 札の頭の高さ 1400x900 で 53.69px→41.0px、390 幅（2段）で 92.08px→67.58px。前後の口 32→24px、タイトルは上下で切れず長いものは「…」、⌄ の一覧が開く、横のはみ出し 0px。notation で 400px 転がしても頭は上端に残る（/tmp/t420/*.png）
+
+## 背景
+
+メインビューの札の頭（依頼のタイトルが出る行。`src/browser/features/main-view/turn-header.tsx` の `TurnHeader`、CSS は `main-view.module.css` の `.turn-header` 以下）が思ったより高い、とユーザーが言った（2026-09-23）。**字は小さくしてよいので、潰れない範囲で低くしたい。**
+
+いまの寸法（CSS からの計算値。実測はしていない）:
+
+- `.turn-header` は padding 0.6rem（9.6px）×2・下の罫線 1px
+- 前後の口 `.turn-nav-button` は 2rem（32px）四方・字は `--font-heading`（18px）
+- タイトル `.turn-title` は `--font-heading`（18px）・太字・行の高さは本文の 1.75 を継いで 31.5px
+- 右端の「n / N」は 13px の等幅、「最新」の印・「最新へ」の口は 13px・padding 0.15rem 0.65rem
+
+いちばん高いのは前後の口の 32px で、頭全体はおよそ 52px。狭い画面（760px 以下）は `@media` で2段（前後の口と n / N が1段目、タイトルが2段目）になる。
+
+## 決まっていること（蒸し返さない）
+
+- 字は小さくしてよい（2026-09-23 のユーザーの指定）。ただし潰れない範囲に収める: タイトルの字が上下で切れない、前後の口が押せる大きさ（`docs/design.md` 13.9「帯の高さの床」と同じ 24px）を下回らない
+- 字の大きさは `docs/design.md` 13.3 の段に宛てる。段を足さない
+- 頭の並び（前後の口・タイトル・n / N と最新の印）と、転がっても上に残る `position: sticky` は変えない
+
+## 解くべき論点
+
+- タイトルの字を 13.3 のどの段に落とすか（15px の本文か 14px の区画の見出しか）。**18px の「依頼の見出し」の段を使う場所がほかに残るか**（`--font-heading` はタスク一覧・トークン消費・キャラクター画面などでも使っている）。残らなくなるなら 13.3 の表の「依頼の見出し」の行をどう直すか
+- 前後の口の大きさ（24px〜28px のどこか）と、`‹` `›` の字の大きさ
+- タイトルの行の高さ（本文の 1.75 を継ぐのをやめ、この1行だけ詰めるか）と padding の値
+- 狭い画面の2段の形でも同じ値でよいか
+
+## やること
+
+1. `docs/design.md` 13.1・13.3 と、`docs/requirements.md` 4.2 の札の頭の記述を読む
+2. `.turn-header`・`.turn-nav-button`・`.turn-title`・`.turn-meta` まわりの padding・大きさ・字を詰める。T-399 が足した一覧の口（`⌄`）と一覧も同じ高さに収める
+3. 変えたことのうち値の羅列でない決定（どの段に落としたか、行の高さを詰めたこと）を `docs/design.md` の該当箇所に書く。13.3 の表を直すなら表も直す
+4. 既存のテスト（`test/browser/features/main-view/`）が通ることを確かめる。見た目の値そのものはテストしない（`CLAUDE.md`「ブラウザに出た絵は自動テストで守らない」）
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅。DevTools で測る）: 札の頭の高さが変更前より低く（前後の高さを `evidence` に書く）、タイトルの字が上下で切れていない、前後の口が 24px 以上、長いタイトルは今までどおり「…」で切れる、転がしても頭が上に残る、`⌄` の一覧が開ける。390 幅では2段の形のまま横のはみ出しが 0px。何が見えたかを `evidence` に書く
+
+## 注意
+
+- T-399（`⌄` で一覧を開く）が同じ `turn-header.tsx` と `.turn-header` まわりを触っている。依存に入れてあるので、`main` に入ったのを取り込んでから始める
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける

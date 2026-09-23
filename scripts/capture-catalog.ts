@@ -120,14 +120,8 @@ const CATALOG: readonly CatalogEntry[] = [
   {
     name: "question-preview",
     scene: "question-preview",
-    label: "質問（選択肢ごとの preview をメインビューに出す）",
+    label: "質問（選択肢ごとの preview を札の中、説明の下に出す）",
     prepare: [],
-  },
-  {
-    name: "question-preview-focus",
-    scene: "question-preview",
-    label: "質問（箱で触れた選択肢の札が光る）",
-    prepare: [{ kind: "hover", selector: 'button:has-text("図の案")' }],
   },
   { name: "permission", scene: "permission", label: "許可プロンプト", prepare: [] },
   { name: "report", scene: "report", label: "レポートとツールの進行", prepare: [] },

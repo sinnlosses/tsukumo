@@ -29,6 +29,8 @@ export function PresentationalComposer({
   textAreaRef,
   imageInputRef,
   placeholder,
+  band,
+  answering,
   text,
   images,
   suggestions,
@@ -46,7 +48,12 @@ export function PresentationalComposer({
   onInsertTrigger,
 }: PresentationalComposerProps): ReactElement {
   return (
-    <form className={styles["dispatch-form"]} onSubmit={onSubmit}>
+    <form
+      className={`${styles["dispatch-form"]}${answering ? ` ${styles["is-answering"]}` : ""}`}
+      onSubmit={onSubmit}
+    >
+      {/* 質問に答えている間だけ出る帯（誰が聞いているか。`hooks/use-composer.ts`）。 */}
+      {band.kind === "question" && <p className={styles["dispatch-band"]}>{band.text}</p>}
       <div className={styles["dispatch-text-wrap"]}>
         <PromptImageChips images={images} onRemove={onRemoveImage} />
         <textarea

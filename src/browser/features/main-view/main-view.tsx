@@ -17,7 +17,7 @@ import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { turnTitle } from "./domain/turn-title.ts"
 import styles from "./main-view.module.css"
 import { MiniPortrait } from "./mini-portrait.tsx"
-import { PendingQuestion } from "./pending-question.tsx"
+import { QuestionAsk } from "./question-ask.tsx"
 import { TurnHeader } from "./turn-header.tsx"
 import { Turn } from "./turn.tsx"
 
@@ -48,8 +48,8 @@ export function MainView(): ReactElement {
   if (turns.length === 0) {
     return (
       <>
-        <PendingQuestion />
         <p className={styles["placeholder"]}>{EMPTY_MESSAGE}</p>
+        <QuestionAsk />
       </>
     )
   }
@@ -61,9 +61,6 @@ export function MainView(): ReactElement {
     // `BRUSH_ORIGIN_ATTRIBUTE`。JSX の属性名に定数を書けないので直に置き、ずれていないことは
     // テストが見る）。
     <div className={styles["main-turns"]} ref={scrollerRef} data-brush-origin="">
-      {/* 答え待ちの質問の比較。**札より上**に出す（聞かれている間はそれが最優先で読むもの
-          だから）。`preview` が1つも無い質問では何も描かない。 */}
-      <PendingQuestion />
       {/* **`key` にターンの番号を渡す。** 前後へ移っても同じ位置の `<Turn>` を使い回すと、
           「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料。`turn.tsx`）が
           最初のターンのものに留まってしまう。 */}
@@ -83,6 +80,10 @@ export function MainView(): ReactElement {
           書き上げたあと残っているあいだも本文と一緒に転がる。**出ているやり取りを渡す**のは、
           残った筆先が別のやり取りのものなら引っ込ませるため（`mini-portrait.tsx`）。 */}
       {activeTurn !== undefined && <MiniPortrait shownTurnId={activeTurn.id} />}
+      {/* 答え待ちの質問の札。**いまのやり取りのレポートの下**に出す（札の頭は T-398 で
+          レポートの上に来たので、読み終わった先に質問が来る並びになる）。答え待ちが
+          無ければ何も描かない。 */}
+      <QuestionAsk />
     </div>
   )
 }

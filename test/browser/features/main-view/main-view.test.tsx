@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@tes
 import { MainView } from "../../../../src/browser/features/main-view/main-view.tsx"
 import { QuestionRecord } from "../../../../src/browser/features/main-view/question-record.tsx"
 import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../src/browser/stores/brush-tip.ts"
-import { QuestionFocusProvider } from "../../../../src/browser/stores/question-focus.tsx"
+import { QuestionAnswerProvider } from "../../../../src/browser/stores/question-answer.tsx"
 import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
 import { type MainViewQuestion } from "../../../../src/shared/main-view.ts"
@@ -42,9 +42,9 @@ function renderMainView(records: readonly SessionRecord[]): RenderResult {
   return render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionProvider>
-        <QuestionFocusProvider>
+        <QuestionAnswerProvider>
           <MainView />
-        </QuestionFocusProvider>
+        </QuestionAnswerProvider>
       </TurnSelectionProvider>
     </SessionStoreContext.Provider>,
   )
