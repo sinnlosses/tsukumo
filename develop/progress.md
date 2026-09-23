@@ -59,10 +59,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 並びの反転で締めのセリフからターン確定まで画面が止まって見えるようになったので、その間だけ立ち絵を小さく速い横揺れにする。優先順位は失敗 ＞ 完了 ＞ 書いている ＞ 待ち／読んでいる で、実機では約21秒出て完了の反応へ替わった。
 
-### 2026-09-23 SDK の設定に language: japanese を渡し、催促への返事が英語に滑らないようにした（T-460）
-
-締めの並びを反転したあとも空の応答で終えたときの保険として、`buildQuerySeedOptions` に固定の `language: "japanese"` を足した。`--settings` の有無で user の hooks の実行回数が変わらないことを本体の `--debug` で確かめた。
-
 ### 2026-09-23 トークン消費の画面の地・罫・文字の段を見本（案1）の値に揃えた（T-457）
 
 `theme.css` に画面専用の `--usage-*`（札・箱・選択の地、罫2段、文字6段、基線）を足し、`token-usage.module.css` を塗り直した。`--context-other` は無彩の灰 `#a6a2b0` に替え、`docs/screen-design.md` 13.2 に値の表を記した（内訳の6色と棒の青は `b674e13` で入っていた）。
@@ -71,21 +67,17 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 節の番号 `4.9` のまま移し、`requirements.md` は 1979→1330 行。`requirements.md 4.9` への参照114件を一括置換し、`docs/history/` の78件は据え置いた。削るのは T-465。
 
-### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
-
-`newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
-
-### 2026-09-23 レポートの演出の7ファイルを main-view の中にまとめた（T-441）
-
-3つの箱に散っていた筆の演出を `features/main-view/reveal/` へ集め、`stores/brush-tip.ts` も読み手が1機能だけなのでそこへ下ろした。`docs/design.md` 2章に「機能の中に概念の名前のディレクトリを置いてよい条件」を書いた。
-
 ### 2026-09-23 requirements.md 4.2「表示」を docs/display.md へ逐字で移した（T-466）
 
 節の番号 `4.2` のまま移し、`requirements.md` は 1330→881 行。`requirements.md 4.2` への参照101件を一括置換し、`docs/history/` の234件と `decision.md` の見出し名を引く2件は据え置いた。削るのは T-467。
 
-### 2026-09-23 main-view の部品を T-442 の基準で container/presenter に割った（T-443）
+### 2026-09-23 画面のナビの帯の上端の差し色の線をなくし、顔の輪を 1px にした（T-469）
 
-6部品に基準を当て、3種そろう `turn-header` と `question-record` を3分割、2種の `main-view` と `question-ask` は外に触るフックだけ `hooks/` へ出し、1種の `mini-portrait` と `turn` は割らなかった。画面の振る舞いは変えていない。
+`border-top` とトークン `--screen-nav-accent-line` を消し、会話の画面の grid の高さの計算からも同じ項を外した（帯の外寸は 56→53px）。`docs/screen-design.md` 13.9 の図・表・寸法を合わせ、「帯が奪う面積（実測）」は測り直さず線があったときの記録だと注記した。
+
+### 2026-09-23 docs/display.md を削り、発言の引用・経緯・実測を decision.md へ移した（T-467）
+
+486→445 行・23,430→20,947 字（約11%減）。決定といまも効く理由が大半を占めていたため減りは小さい。太字の文253件は本文240・`decision.md` 13で全件引ける。
 
 ## 未解決
 
