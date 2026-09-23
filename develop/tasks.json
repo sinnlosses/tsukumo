@@ -163,5 +163,16 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-378",
+    "difficulty": "haiku",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "部屋の名前の語彙を読みやすい色名（空色・若葉・菜の花…）に入れ替える",
+    "task": "## 背景\n\n部屋の名前（`src/shared/room.ts` の `roomName`）は `ROOM_COLORS` の和の色名12個をポートの並び順\n（7327 から）に割り当て、「〜の間」と表示している。いまの語彙は 浅葱 / 萌黄 / 山吹 / 茜 / 藍 / 紫苑 /\n朱 / 鈍色 / 若草 / 群青 / 香色 / 墨 で、浅葱・萌黄・紫苑・鈍色・香色は読みにくい。名前は画面\n（帯とサイドバーのセッションの行）のためだけのもので、セッションの印はポート番号のまま\n（`docs/design.md` 13.9「部屋の名前」）なので、語彙を入れ替えても過去のセッションの移行は要らない。\n\n## 決まっていること（蒸し返さない）\n\n- 新しい語彙は、ポート 7327 から順に 空色 / 若葉 / 菜の花 / 夕焼け / 藍 / 藤 / 朱 / 灰 / 若草 / 海 / 桜 / 墨（2026-09-23 ユーザー決定）\n- 結びの「の間」・12個という数・語彙の外はポート番号を名乗る挙動・「和の色名」という位置づけは変えない\n\n## やること\n\n1. `src/shared/room.ts` の `ROOM_COLORS` を上の12個に置き換える（コメントの例「浅葱」も「空色」に直す）\n2. `test/shared/room.test.ts` の期待値の並びと、`test/browser/features/sidebar/session-switch.test.tsx` の\n   「浅葱の間」「萌黄の間」を新しい名前（空色の間・若葉の間）に直す\n3. `docs/design.md` 13.9 の「部屋の名前」小節の語彙の列挙と、同じ章の帯の図にある「浅葱の間」を直す\n4. `docs/glossary.md`「部屋」の注記の「7327 が「浅葱の間」」を「空色の間」に直す\n5. `git grep -n 浅葱 -- src test docs ':!docs/history'` が0件になることを確かめる（`docs/history/` は当時の記録なので直さない）\n\n## 完了条件\n\n- `roomName(7327)` が「空色の間」、`roomName(7338)` が「墨の間」を返し、そのことを `test/shared/room.test.ts` が確かめている\n- `git grep -n 浅葱 -- src test docs ':!docs/history'` が0件\n- `bun run check` が通る\n\n## 注意\n\n- `docs/history/` 配下は書き換えない\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/design.md` の数が変わらないことを確かめる\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
