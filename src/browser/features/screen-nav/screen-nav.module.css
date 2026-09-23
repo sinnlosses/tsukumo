@@ -1,4 +1,4 @@
-/* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
+/* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/screen-design.md 13.9）。
    **全画面の最上部に1本**。左端に顔と部屋の名前（名乗り）、その右に仕事/雑談のトグル、縦の仕切り、
    3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・許可モードの
    ドロップダウン、いちばん右端に設定の歯車。

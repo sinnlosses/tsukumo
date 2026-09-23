@@ -1,4 +1,4 @@
-// パックのキャラクターの顔（`docs/design.md` 13.9「顔」）を丸く切り抜いて出す部品。**帯
+// パックのキャラクターの顔（`docs/screen-design.md` 13.9「顔」）を丸く切り抜いて出す部品。**帯
 // （`features/screen-nav/`）とサイドバーの「セッション情報」（`features/sidebar/`）の両方が
 // 読む**ので、機能どうしの import を増やさず `browser/components/`（機能の語彙を持たない部品）に
 // 置く（`docs/design.md` 2章「機能の中を分ける」——`<Portrait>` を `components/portrait.tsx` へ

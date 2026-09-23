@@ -2,7 +2,7 @@
 // 立ち絵に出す表情（押して留めた行か、最新か）、ログに並べる行（日の区切り・時刻・印・育つ行を
 // 畳んだもの）、「...」を出すか、立ち絵をつついたときの送り先を組み立てて返す。
 //
-// **行を押して遡る・印・育つ行・「...」の決め方**は docs/design.md 13.7。ここはそれを
+// **行を押して遡る・印・育つ行・「...」の決め方**は docs/screen-design.md 13.7。ここはそれを
 // 「部品がそのまま置ける値」へ畳むだけで、部品（`components/`）は判定を持たない。
 
 import { useState, type RefObject } from "react"
@@ -24,7 +24,7 @@ const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] satisfi
 
 /**
  * 発言の脇に添える時刻。**前のセッションを組み直した発言は `unknown`** で、何も出さない
- * （docs/design.md 13.7。流し直した時刻を代わりに出すと昨日の一言が「いま」に見える）。
+ * （docs/screen-design.md 13.7。流し直した時刻を代わりに出すと昨日の一言が「いま」に見える）。
  */
 export type ChatTimeStamp =
   | { readonly kind: "unknown" }
@@ -36,7 +36,7 @@ export type ChatTimeStamp =
  */
 export type ChatRow =
   | {
-      /** 日の区切り（docs/design.md 13.7「時刻と日の区切り」）。日が変わった発言の手前にだけ入る。 */
+      /** 日の区切り（docs/screen-design.md 13.7「時刻と日の区切り」）。日が変わった発言の手前にだけ入る。 */
       readonly kind: "day"
       readonly key: string
       readonly dateTime: string
@@ -53,7 +53,7 @@ export type ChatRow =
       readonly text: string
       /** 印を付ける行（= 立ち絵が従っている行）か。 */
       readonly selected: boolean
-      /** 育てる行（docs/design.md 13.7「末尾のセリフは育つ」）か。 */
+      /** 育てる行（docs/screen-design.md 13.7「末尾のセリフは育つ」）か。 */
       readonly grow: boolean
       readonly time: ChatTimeStamp
       readonly onToggle: () => void
@@ -81,14 +81,14 @@ export type ChatViewModel = {
   /** ログの入れ物。下端付近を読んでいたときだけ最新へ寄せる（`use-stick-to-bottom.ts`）。 */
   readonly logRef: RefObject<HTMLDivElement | null>
   readonly rows: readonly ChatRow[]
-  /** 返事を待っている間、末尾に「...」を出すか（docs/design.md 13.7「返事を待つ間の「...」」）。 */
+  /** 返事を待っている間、末尾に「...」を出すか（docs/screen-design.md 13.7「返事を待つ間の「...」」）。 */
   readonly showTyping: boolean
   /** まだ何も話しておらず「...」も出ていないとき、最初の一言を促す案内を出すか。 */
   readonly showEmptyMessage: boolean
 }
 
 /**
- * 立ち絵がいま従っているセリフ。**既定は「最新」**（何も押していない状態。docs/design.md 13.7）で、
+ * 立ち絵がいま従っているセリフ。**既定は「最新」**（何も押していない状態。docs/screen-design.md 13.7）で、
  * 行を押すと「留めた」へ移る。
  *
  * 留めた側は**行の番号だけでなく、押した時点のセリフの件数も持つ** — 件数が変われば留めた
@@ -125,9 +125,9 @@ export function useChatView(): ChatViewModel {
   const speechCount = countSpeeches(entries)
   const pinnedIndex = pinnedSpeechIndex(viewed, speechCount)
   const latestSpeechIndex = lastSpeechIndex(entries)
-  // 印を付ける行 = 立ち絵が従っている行（docs/design.md 13.7）。留めていなければ最新のセリフ。
+  // 印を付ける行 = 立ち絵が従っている行（docs/screen-design.md 13.7）。留めていなければ最新のセリフ。
   const selectedIndex = pinnedIndex ?? latestSpeechIndex
-  // 育てる行（docs/design.md 13.7「末尾のセリフは育つ」）。**育つのは画面を開いたあとに届いた
+  // 育てる行（docs/screen-design.md 13.7「末尾のセリフは育つ」）。**育つのは画面を開いたあとに届いた
   // セリフだけ**で、開いた時点で並んでいた記録（前の雑談の続き）には掛からない——遡って読む
   // ためのログが、開くたびに端から書き直されることになる。
   const [initialSpeechCount] = useState(speechCount)
@@ -135,7 +135,7 @@ export function useChatView(): ChatViewModel {
   // **`SessionState` に新しい旗は増やさない** — 今のターンでまだ `speak` が呼ばれていないかは
   // `speechCalledInTurn` が既に持っている。
   const showTyping = turnInProgress && !speechCalledInTurn
-  // 表情は「留めた行 → 最新」の順に決まる（docs/design.md 13.7）。
+  // 表情は「留めた行 → 最新」の順に決まる（docs/screen-design.md 13.7）。
   // **留めていないときに読むのは `speechExpression`** で、最新の行の表情ではない —
   // 次のターンが始まると `speak` が来るまで既定へ戻る（キャラビューと同じ扱い。表情の源は
   // `speak` の1つだけ。docs/requirements.md 4.3）。印はその間も最新のセリフの行に残る。
@@ -271,7 +271,7 @@ function pinnedSpeechIndex(viewed: ViewedSpeech, speechCount: number): number | 
 
 /**
  * いちばん新しいキャラクターのセリフの行。**何も押していないときに印が付く行**
- * （docs/design.md 13.7）。まだ1件も話していなければ undefined で、印はどこにも付かない。
+ * （docs/screen-design.md 13.7）。まだ1件も話していなければ undefined で、印はどこにも付かない。
  */
 function lastSpeechIndex(entries: readonly ChatLogEntry[]): number | undefined {
   const index = entries.findLastIndex((entry) => entry.speaker === "character")

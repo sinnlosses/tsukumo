@@ -139,7 +139,7 @@ function QuestionPreviews(props: {
  * 選んだ印（`●`/`○`）を包む要素。**文字そのものは常に DOM に残す**（`::before` に移すと
  * 支援技術とコピーで拾えなくなるため）。色は文字の上への重ねがけで付け、選んだ側
  * （`chosen`）だけに `accent` を当てる。選ばなかった `○` は親の `.question-option` の色を
- * そのまま継ぎ、素の `accent` を当てない（`docs/design.md` 13.1 原則1が許すのは
+ * そのまま継ぎ、素の `accent` を当てない（`docs/screen-design.md` 13.1 原則1が許すのは
  * 「選んだ選択肢」で、選ばなかった側ではない）。答え待ちの札
  * （`question-ask.module.css` の `.question-ask-option.is-selected`）と同じ、
  * 「選んだ＝accent」という意味を記録の側にも揃える。折りたたみの中の preview の札

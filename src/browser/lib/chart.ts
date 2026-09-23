@@ -21,7 +21,7 @@ export function loadChart(element: HTMLElement): Promise<void> {
     // Chart.js の既定は明るい背景向けで、目盛りの文字も目盛り線もこの配色では読めない。
     // **データ系列の色は Chart.js 内蔵の colors プラグインが割り当てる**ので、ここで寄せるのは
     // 文字と線だけ。**色は書かずにトークンの実効値を読んで渡す**（16進を持ってよいのは
-    // `src/browser/styles/theme.css` だけ。docs/design.md 13.2）。
+    // `src/browser/styles/theme.css` だけ。docs/screen-design.md 13.2）。
     //
     // **線は `defaults.borderColor` ではなく目盛りの側（`defaults.scale`）へ書く。**
     // chart.js 4.5.0 の colors プラグインは「`defaults.borderColor` か

@@ -519,7 +519,7 @@ describe("applySessionEvent", () => {
     const started = applySessionEvent(spoken, { kind: "turn-started" }, 700)
 
     // 記録は前のターンのまま（送った文面はどこにも入らないので、雑談のログにも
-    // メインビューにも出ようが無い。docs/design.md 13.7）。
+    // メインビューにも出ようが無い。docs/screen-design.md 13.7）。
     expect(started.records).toEqual(spoken.records)
     // ターンの始まりとしての効き目は `request` と同じ。
     expect(started.turn).toEqual({ kind: "running", startedAt: 700 })

@@ -1,4 +1,4 @@
-// キャラクターから話しかけてもらうときに送る一言（`docs/design.md` 13.7）。`chat-manner.ts` /
+// キャラクターから話しかけてもらうときに送る一言（`docs/screen-design.md` 13.7）。`chat-manner.ts` /
 // `chat-compact.ts` の隣に置く（モデルに見せる文面は core 側）。
 //
 // **話題そのものは tsukumo が持たない**（原則4「キャラクターの中身をコードに書かない」）。

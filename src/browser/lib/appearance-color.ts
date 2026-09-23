@@ -1,4 +1,4 @@
-// 使う人が変えられる3色（`ground` / `surface` / `ink`。docs/design.md 13.2 / 13.5 / 13.6）を
+// 使う人が変えられる3色（`ground` / `surface` / `ink`。docs/screen-design.md 13.2 / 13.5 / 13.6）を
 // `localStorage` に持つ。**既定値は `src/browser/styles/theme.css` の `:root` にしかない**
 // （コーディング規約「`theme.css` 以外に16進の色を書かない」）ので、ここでは「上書きしない」を
 // `undefined` で表す。上書きが無いときの実際の色は `readCurrentColor` が
@@ -32,7 +32,7 @@ export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
   ink: undefined,
 }
 
-// `ground` と `ink` の組が本文を読める下限（docs/design.md 13.2「コントラストの下限を守る」）。
+// `ground` と `ink` の組が本文を読める下限（docs/screen-design.md 13.2「コントラストの下限を守る」）。
 // WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
 export const MIN_CONTRAST = 4.5
 
@@ -45,7 +45,7 @@ const TOKEN_NAME: Readonly<Record<AppearanceColorKey, string>> = {
 }
 const ACCENT_TOKEN_NAME = "--accent"
 /**
- * 背景の覆いの不透明度の下限を渡す先（`docs/design.md` 13.8）。**敷くのは枠を持たない領域
+ * 背景の覆いの不透明度の下限を渡す先（`docs/screen-design.md` 13.8）。**敷くのは枠を持たない領域
  * （キャラビューと雑談中のメインビュー）だけ**で、読むのは
  * `src/browser/features/layout/layout.module.css` の `.layout-ground` 1箇所
  * （2つの領域が同じ class を共有する）。パックが書いた `veil` とこの下限の**大きいほう**が効く。
@@ -91,7 +91,7 @@ export function saveAppearanceColorOverride(value: AppearanceColorOverride): voi
  *
  * **背景の覆いの下限（{@link backgroundVeilFloor}）も一緒に差し直す。** 下限はいまの
  * `ground` と `ink` から決まるので、色を変えるたびに計算し直さないと、字を変えたあとに
- * 背景の上の本文が読めなくなる（docs/design.md 13.8）。
+ * 背景の上の本文が読めなくなる（docs/screen-design.md 13.8）。
  */
 export function applyAppearanceColorOverride(value: AppearanceColorOverride): void {
   setOrRemoveToken("ground", value.ground)
@@ -119,7 +119,7 @@ export function readAccentColor(): string {
 
 /**
  * 使う人が1色を変えようとしたときの境界。**`ground` / `ink` は組で検証し、下回ったら
- * その1色を受け取らない**（docs/design.md 13.2 / 13.6）。`surface` はコントラストの対象外
+ * その1色を受け取らない**（docs/screen-design.md 13.2 / 13.6）。`surface` はコントラストの対象外
  * （13.2 は `ground` と `ink` の組しか挙げていない）。
  *
  * **受け取らないだけで、それまでの上書きは消さない。** 消すと「地を決めたあとに字で
@@ -147,7 +147,7 @@ export function changeAppearanceColor(
 }
 
 /**
- * 背景（docs/design.md 13.8）の覆いの不透明度の下限。**画像の中身を1ピクセルも読まずに
+ * 背景（docs/screen-design.md 13.8）の覆いの不透明度の下限。**画像の中身を1ピクセルも読まずに
  * 決める**: 覆いの下の色は必ず `ground` と画像の色を結ぶ線分の上に来るので、線分の端
  * （真っ白・真っ黒）で {@link MIN_CONTRAST} を満たせば、どんな画像でも満たす。
  *

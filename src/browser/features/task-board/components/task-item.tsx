@@ -2,7 +2,7 @@
 // status の印（丸・チェック）、2列目に押せるID＋summary を置く2列の grid 行
 // （`.task-item` の `grid-template-columns: auto 1fr`。`task-board.module.css`）。
 //
-// **色だけで状態を伝えない**（docs/design.md 13.1 原則1）: todo は空の丸、done はチェックの印
+// **色だけで状態を伝えない**（docs/screen-design.md 13.1 原則1）: todo は空の丸、done はチェックの印
 // （字も打ち消し線にする）、想定外の値は注意色の「!」にする。summary は1行に収め、
 // 入りきらない分は末尾を「…」にする（全文を読みたいときは「一覧を見る」の表を開く）。
 

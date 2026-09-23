@@ -87,7 +87,7 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 送った文面はどのイベントにも乗らない（docs/design.md 13.7）。先頭2件は起こした直後の分
+    // 送った文面はどのイベントにも乗らない（docs/screen-design.md 13.7）。先頭2件は起こした直後の分
     // （プランと opening の場面）。
     expect(sink.events.slice(2)).toEqual([
       { kind: "turn-started" },

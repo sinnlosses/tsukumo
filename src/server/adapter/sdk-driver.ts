@@ -234,7 +234,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     promptWithoutRecord: (text) => {
-      // **`request` を流さない**（送った文面をログにも記録にも残さない。docs/design.md 13.7）。
+      // **`request` を流さない**（送った文面をログにも記録にも残さない。docs/screen-design.md 13.7）。
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
       options.onEvent({ kind: "turn-started" })
       input.push({ text, images: [] })
@@ -290,7 +290,7 @@ export type QuerySeedOptions = {
  * 検査できるように、`startSession` から切り出してある。**
  *
  * **モデルと許可モードは呼び出し側から来る**（`src/session-start.ts` が
- * `readRememberedSessionDefault` で読んだ値。`docs/design.md` 13.6）。ここで定数に倒すと、
+ * `readRememberedSessionDefault` で読んだ値。`docs/screen-design.md` 13.6）。ここで定数に倒すと、
  * 歯車で変えた既定が起こし直しても効かない。
  */
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
@@ -315,7 +315,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * `"auto"` でも同じ扱いにする（`docs/design.md` 7章）。
  *
  * 写したあとは、**書いた写しから取り出した最近の話題の見出しだけ**を `chat-topics-changed` で
- * 流す（`docs/design.md` 13.7）。取り出し方は core（`readChatTopics`）が持ち、ここは中身を
+ * 流す（`docs/screen-design.md` 13.7）。取り出し方は core（`readChatTopics`）が持ち、ここは中身を
  * 見ない。
  *
  * `startSession` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる

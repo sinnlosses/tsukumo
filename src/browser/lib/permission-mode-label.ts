@@ -30,7 +30,7 @@ export function permissionModeLabel(mode: PermissionMode): string {
 
 /**
  * 「全部許す」（`bypassPermissions`）かどうか。**この1つだけは字に意味の色を載せる**
- * （`docs/design.md` 13.1 原則5。ラベルの文字が必ず付くので、色だけで伝えることにならない）。
+ * （`docs/screen-design.md` 13.1 原則5。ラベルの文字が必ず付くので、色だけで伝えることにならない）。
  */
 export function isDangerousPermissionMode(mode: PermissionMode): boolean {
   return mode === DANGEROUS_PERMISSION_MODE

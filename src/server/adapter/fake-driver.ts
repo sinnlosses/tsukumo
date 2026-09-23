@@ -104,7 +104,7 @@ export type FakeDriverOptions = {
    */
   readonly scene: string | undefined
   /**
-   * このセッションを起こした既定（モデル・許可モード。`docs/design.md` 13.6）。**疑似
+   * このセッションを起こした既定（モデル・許可モード。`docs/screen-design.md` 13.6）。**疑似
    * セッションが流す `session-info` にもこの値を載せる** — 固定値のままだと、歯車で既定を
    * 変えて起こし直しても帯が疑似セッションに書いた値を出してしまう（本物は SDK の `init` が
    * 実際に起こした値を返す）。
@@ -222,7 +222,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       playNextTurn()
     },
     promptWithoutRecord: () => {
-      // 記録に残さない依頼（`docs/design.md` 13.7）。本物と同じく `request` の代わりに
+      // 記録に残さない依頼（`docs/screen-design.md` 13.7）。本物と同じく `request` の代わりに
       // ターンの始まりだけを流し、**文面はどこにも残さない**（疑似セッションは次の場面へ進む）。
       emit({ kind: "turn-started" })
       playNextTurn()

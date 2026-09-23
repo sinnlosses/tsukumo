@@ -3,7 +3,7 @@
 // `switch-session` を `dispatch` する（駆動の起こし直し。会話はそのセッションの続きから
 // 始まり、画面もその記録で組み直される）。
 //
-// **置き場所がここなのは、セッションが「今回のこと」だから**（`docs/design.md` 13.6
+// **置き場所がここなのは、セッションが「今回のこと」だから**（`docs/screen-design.md` 13.6
 // 「今回のことはサイドバーに、それ以外はキャラクター画面に」）。キャラクターの対と同じ grid
 // （`sidebar.module.css` の `.session-info`。`grid-auto-flow: column` で対ごとに列が等分され、
 // キャラクターと横に並ぶ）に、ラベルと値の対として並ぶ。
@@ -11,7 +11,7 @@
 // **一覧はいまの部屋（このビューのポート）のものだけ**（`src/server/core/session-restore.ts`）
 // なので、行の部屋の名前はすべて同じで見分けの役に立たない。**見分けるのは SDK の見出し
 // （`SessionChoice.heading`）と最終更新時刻**（部屋の名前を出す場所は帯だけになった。
-// `docs/design.md` 13.9「部屋の名前」）。
+// `docs/screen-design.md` 13.9「部屋の名前」）。
 
 import { type ReactElement } from "react"
 
@@ -109,7 +109,7 @@ function sessionOptions(
 const NO_HEADING_LABEL = "（題なし）"
 
 /**
- * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**（`docs/design.md` 13.9）ので、
+ * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**（`docs/screen-design.md` 13.9）ので、
  * 文字数で切って `…` を足す。**見出しだけを切り、時刻は切らない**——同じ部屋の行を見分けるのは
  * 時刻なので（下の {@link sessionLabel}）、見出しがどれだけ長くても時刻は必ず残る。
  */

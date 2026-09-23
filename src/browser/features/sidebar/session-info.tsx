@@ -1,15 +1,15 @@
 // サイドバーの「セッション情報」。**残るのはキャラクターとセッションの切り替えだけ**
-// （docs/design.md 13.9「何を外すか」）。仕事/雑談のトグル・モデル・許可モードの
+// （docs/screen-design.md 13.9「何を外すか」）。仕事/雑談のトグル・モデル・許可モードの
 // ドロップダウンは帯（`features/screen-nav/`）へ移った。**置かれるのは区画ではなくサイドバーの
 // 下端の帯**（`.sidebar-footer`。`sidebar.tsx`）なので、見出しは名乗らない。
 //
 // キャラクターの `<select>`（`character-switch.tsx`）は変更で `switch-character` を `dispatch`
 // する。**雑談中はここに置かない** — キャラクターの切り替えはプロフィールの札の「変える」へ
-// 移り（`profile-card.tsx`。docs/design.md 13.7「雑談のときのサイドバー」）、帯に残るのは
+// 移り（`profile-card.tsx`。docs/screen-design.md 13.7「雑談のときのサイドバー」）、帯に残るのは
 // セッションの行だけになる。
 //
 // **キャラクターの左には顔を添える**（`CharacterInfo.face`。帯と共有する
-// `components/character-face.tsx`。`docs/design.md` 13.9「顔」）。
+// `components/character-face.tsx`。`docs/screen-design.md` 13.9「顔」）。
 // `face` が無いパックでは `<CharacterFace>` が何も描かない。
 
 import { type ReactElement } from "react"

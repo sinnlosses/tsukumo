@@ -33,17 +33,6 @@
     "evidence": ""
   },
   {
-    "id": "T-429",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "systemPrompt に足す文面の組み立てを1か所にまとめる",
-    "task": "## 背景\n\nclaude に渡す `systemPrompt.append` がどう組み上がるかを知るには、いま6つのファイルを渡り歩く必要がある:\n\n- `src/session-start.ts` の `startDriver` が `sessionRules(seed.chat)` と `takeChatMemoryPromptParts(…)` を並べて `buildSystemPromptAppend(seed.pack, rules)` に渡す\n- `src/server/core/session-rule.ts` の `sessionRules` が `REPORT_NOTATION_PROMPT`（`report-notation.ts`）・`SPEECH_CADENCE_PROMPT`（`speech-cadence.ts`）・`CHAT_MANNER_PROMPT`（`chat-manner.ts`）のどれを入れるかを決める\n- `src/server/core/chat-memory-prompt.ts` が雑談の要約・直近・残したものの読み戻しを文面にする\n- `src/server/adapter/character-pack.ts` の `buildSystemPromptAppend` が `persona.md` と規約を連結する\n- `src/server/adapter/sdk-driver.ts` の `buildQuerySeedOptions` が `{ type: \"preset\", preset: \"claude_code\", append }` にする\n\n`docs/architecture.md`「新しいコードを置く場所」は `character-pack.ts` の `buildSystemPromptAppend` を「fs を読まないが core へは出さない（呼び出し側が配線層だけ）」と決めているが、その後 `session-rule.ts` と `chat-memory-prompt.ts` が core に増え、組み立ての順序が配線（`session-start.ts`）と adapter と core に割れた。**「人格・記法・間合い・雑談の作法・記憶の読み戻しが、どの順で、どのモードのときに入るか」を1ファイルで読めない。**\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## 解くべき論点\n\n- 組み立ての持ち主をどこにするか: core に概念の名前で1つ置く（例: `core/system-prompt.ts`）か、`character-pack.ts` に寄せるか。`docs/architecture.md` の「`core` からパックの判断が要るようになったら、層を写した `core/character-pack.ts` ではなく概念で切る」に照らす\n- `persona.md` の文面（adapter が fs から読む）を core の組み立てにどう渡すか（文字列で渡せば core は fs に触らない）\n- 順序と「どのモードで何が入るか」をテストでどう固定するか（文面そのものの一致ではなく、節の見出しの並びで見るなど）\n\n## やること\n\n1. 上の6ファイルを読み、仕事モード・雑談モード・続きから始めるときの3通りで、`append` に入る節の並びを表にする（`evidence` に残す）\n2. 論点に答え、組み立てを1か所に寄せる。**文面は1文字も変えない**（寄せる前後で3通りの `append` が同じ文字列になることをテストで確かめる）\n3. `docs/architecture.md` の該当段落と `docs/design.md` 7章（人格の注入）を新しい持ち主に合わせる\n\n## 完了条件\n\n- 3通りの `append` が寄せる前後で同じ文字列になることを確かめたテストがある（寄せたあとも残す必要が無ければ、確かめた方法を `evidence` に書いて消してよい）\n- `src/session-start.ts` から `sessionRules` と `takeChatMemoryPromptParts` の import が消えている、または残した理由を `evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `src/server/core/report-notation.ts` の文面は T-437（記法の語彙を1か所に）も触る。文面は変えないこと",
-    "status": "done",
-    "passes": true,
-    "evidence": "append に入る節の並び（3通り）: 仕事=人格→セリフの間合い→レポートの記法（start が new でも resume でも同じ。記憶は雑談のときしか呼ばれない）／雑談で記憶が載るとき=人格→雑談の作法の5節（雑談モード・覚えたこと・残す・思い出す・覚えたことを忘れる）→前回までの雑談の要約→残すと決めた雑談→直近の雑談／雑談で続きから始め写しが渡し済み=人格→雑談の作法の5節のみ（雑談でも印が未渡しなら新規と同じ並び）。\n組み立ては src/server/core/system-prompt.ts の takeSystemPromptAppend に寄せ、core/session-rule.ts は畳んで削除（sessionRules は非公開の modeParts へ）。docs/architecture.md「新しいコードを置く場所」の「core からパックの判断が要るようになったら層を写した core/character-pack.ts ではなく概念で切る」に当たる分岐として判断。core→adapter は満たす（import は chat-manner/chat-memory-prompt/report-notation/speech-cadence の4つだけ。test/architecture.test.ts 11 pass）。persona.md は文字列で渡す（fs を読むのは adapter の readCharacterPack のまま。配線層が seed.pack.persona ?? \"\" に畳んで渡すので core は fs もパックの型も知らない）。モードは { kind: \"work\" } | { kind: \"chat\", memory } の判別可能な合併型。副作用（写しの印を渡し済みに戻す）があるので名前は build でなく take。src/session-start.ts から sessionRules と takeChatMemoryPromptParts と buildSystemPromptAppend の import は3つとも消え、takeSystemPromptAppend と SystemPromptMode の1本だけになった。\n文面が変わっていないことの確認: リポジトリ外（/tmp）の使い捨てスクリプトで、同じ架空の入力（手で書いた架空の人格・要約・2往復）から旧経路と新経路の append を作り sha256 を比較。5通りとも一致（仕事 新規/続きから dc8cbd8665fe064e 5778文字、雑談 新規/続きから未渡し 7f51892f31201435 2507文字、雑談 続きから渡し済み 606039f6bfb7f749 2005文字）。スクリプトは確認後に削除。恒久のテストは test/server/core/system-prompt.test.ts（9件）で、3通りの append 全体の文字列と節の見出しの並びを固定。test/server/core/session-rule.test.ts（5件）は削除、speech-cadence.test.ts から重複2件を外し理由をファイル冒頭に記載。bun run check 1750 pass / 0 fail / 3538 expect() / 143 files（typecheck・oxlint・oxfmt --check も緑）。docs/architecture.md と docs/design.md 2章・5章・7章・7.1 を追随し、grep -c '^#\\{2,3\\} ' は architecture.md 10 / design.md 53 で前後不変。画面の描画に関わらないので目視確認はしていない。"
-  },
-  {
     "id": "T-430",
     "difficulty": "sonnet",
     "loopable": "Y",
@@ -110,17 +99,6 @@
     "evidence": ""
   },
   {
-    "id": "T-439",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "CSS を部品ごとに分けてよいと 6.6 に書き、main-view.module.css を割る",
-    "task": "## 背景\n\n`docs/design.md` 6.6 は CSS の置き場を「**機能ごとに1枚**（`features/<機能>/<機能>.module.css`）と、自分の見た目を持つ共有部品の隣」と決めている。しかし:\n\n- 実物にはすでに例外がある: `features/main-view/mini-portrait.module.css`、`features/sidebar/session-switch.module.css`\n- `features/main-view/main-view.module.css` は 924 行で、質問（`.question-ask*` / `.question-*`。44箇所）・ターンの見出し（`.turn-header` / `.turn-history*` / `.turn-nav*`）・レポートの記法（`.detail-block .report-*`）・ツールの塊が1枚に入っている\n- `features/screen-nav/screen-nav.module.css`（695行）、`task-board.module.css`（501行）、`character-view.module.css`（389行）も大きい\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. `docs/design.md` 6.6 に「部品の見た目が独立しているときは、その部品の隣に `<部品>.module.css` を置いてよい」旨と、分ける目安（例: その部品しか使わない class の塊）を書く。既存の2つの例外をその例として挙げる\n2. `main-view.module.css` を、質問（`question-ask.tsx` / `question-record.tsx`）・ターンの見出し（`turn-header.tsx`）・レポートの記法（`markdown/`）ごとに分ける。**class 名は変えない**\n3. `screen-nav.module.css` は T-440 で割るので、ここでは触らない\n\n## 完了条件\n\n- `wc -l src/browser/features/main-view/main-view.module.css` が 400 行以下\n- `test/browser/features/main-view/` のテストが期待値を変えずに通る（`test/css-module-loader.ts` があるので、分けた先を import し忘れると class 名が `undefined` になって落ちる）\n- 疑似セッション（`TSUKUMO_DRIVER=fake`）でメインビューのターン・質問・レポートの記法の見え方が分ける前と同じことを目視で確かめ、どの端末で何を見たかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- CSS の詳細度で勝たせている打ち消し（`.detail-block pre` の既定を消す、など）が、分けたあとの読み込み順で変わらないことを見る",
-    "status": "done",
-    "passes": true,
-    "evidence": "main-view.module.css 928行→113行。turn-header(244)・question-ask(165)・question-record(77)・markdown/report-notation(376) へ分け、class 名は変えていない。design.md 6.6 に部品の隣へ置いてよい旨を追記（見出し数 53→53）。\nCSS Modules は class 名をファイルごとにハッシュ化するので、ファイルをまたぐ打ち消し2件（.main-step > .detail-block:last-child / .question-ask-option .detail-block）は portrait と同じく両方の class を同じ要素に重ねて解いた。\nbun run check: 1749 pass / 0 fail（143ファイル）、bun run build 成功。目視（TSUKUMO_DRIVER=fake・port 4741・一時 TSUKUMO_HOME・headless Chromium 1400x1000、notation の場面）: 引用・ネスト・チェックリスト・表・note が分ける前と同じに出て、レポートの div は両方の detail-block を持ち margin-bottom が 0px（本体の class だけの複製は 16px）"
-  },
-  {
     "id": "T-440",
     "difficulty": "sonnet",
     "loopable": "Y",
@@ -143,17 +121,6 @@
     "evidence": ""
   },
   {
-    "id": "T-442",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-391"],
-    "summary": "container/presenter の割る基準を決め直し、外れた部品に当てる",
-    "task": "## 背景\n\n`docs/design.md` 2章「機能の中を分ける」は、部品が「ロジック」と「見た目」の両方を抱えたら container（`<機能>.tsx`）・`hooks/use-<機能>.ts`・`presentational-<機能>.tsx`・`components/`・`domain/` に割ると決め、「後続の分割もこの形に揃える」「割らないでよいのは、フックが0本のとき」と書く。`task-board` / `chat-view` / `layout` / `screen-nav` / `character-screen` はこの形になったが、次はフックと JSX が同じファイルにある（2026-09-23 に数えた。括弧は使っているフック）:\n\n| ファイル | 行数 | フック |\n| --- | ---: | --- |\n| `sidebar/session-switch.tsx` | 147 | `useSessionDispatch` `useSessionSelector` `useTurnRunning` |\n| `sidebar/character-switch.tsx` | 66 | 同上 |\n| `sidebar/task-section.tsx` | 62 | `useSessionSelector` `useState` |\n| `sidebar/session-info.tsx` / `profile-card.tsx` / `recent-topic-section.tsx` / `sidebar.tsx` | 37〜70 | `useSessionSelector` だけ |\n| `dispatch/turn-status.tsx` | 97 | `useEffect` `useQuestionAnswer` `useSessionDispatch` `useSessionSelector` `useState` |\n| `dispatch/file-suggestions.tsx` | 156 | `useQuery` `useRepositoryFilePaths`（ファイルの中で定義） |\n| `character-view/speech-log.tsx` | 128 | `useModalDialog` `useSessionSelector` `useState` |\n| `task-board/components/task-run-confirm.tsx` | 86 | `components/` なのに `useSessionDispatch` `useTurnRunning` `useModalDialog` |\n\n「セレクタを1本読むだけ」の部品まで3つに割るとファイルが増えるだけになるので、**基準そのものが今の運用に合っていない**可能性がある（`main-view` は T-443 で扱う）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 画面の見え方と振る舞いは変えない\n\n## 解くべき論点\n\n- 割る基準: 「フックが0本」ではなく、何を境にするか（例: state・副作用・イベントの読み替えを持つか / ストアのセレクタだけなら割らない）。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ\n- 1つの機能に container が複数あるとき（`sidebar` の区画ごと、`dispatch` の `composer` / `pending-answer` / `turn-status`）の `hooks/` のファイル名と `presentational-` の付け方\n- `components/` の中の部品がストアを読んでよいか（`task-run-confirm.tsx`）\n\n## やること\n\n1. 上の表を着手時点の値で数え直す\n2. 論点に答え、`docs/design.md` 2章「機能の中を分ける」を書き換える\n3. 新しい基準で割るべきとなった部品だけを割る（`sidebar` / `dispatch` / `character-view` / `task-board`）。割らないと決めた部品は理由を `evidence` に1行ずつ\n\n## 完了条件\n\n- `docs/design.md` 2章に新しい基準があり、上の表の各行が「割った / 割らない（理由）」のどちらかで `evidence` に載っている\n- 割った部品の既存テストが期待値を変えずに通る\n- サイドバー・入力欄・キャラビューの見え方が変わっていないことを疑似セッションで目視し、`evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `sidebar/persona-memory-section.tsx` まわりは T-391（覚えていることのチップ）が作り替えているので、T-391 の完了後に着手する",
-    "status": "done",
-    "passes": true,
-    "evidence": "docs/design.md 2章を「フック0本なら割らない」から「保つ(state)・外と同期(副作用)・畳む(算出)の3種類を数え、ストアの読み(useSessionSelector/useSessionDispatch/useTurnRunning/useQuestionAnswer)は数えず、2種類以上そろったら割る」に書き換え。割り方3通り（3つに割る/外に触るフックだけ hooks/ へ/純関数だけ domain/ へ）、フックと presenter の名前は機能名でなく container 名に合わせる、機能の中の components/ がストアを読んでよい条件2つ、も同じ節に追記。grep -c '^#\\{2,3\\} ' docs/design.md は編集前後とも 53。coding-standards.md の useEffect 4類型「タイマー」の例を新しいパスへ追随（1行）。\n割った3件: dispatch/turn-status.tsx（3種=now の state・1秒タイマー・経過秒の整形 → container/hooks/use-turn-status.ts/presentational-turn-status.tsx）、character-view/speech-log.tsx（3種=open の state・dialog と backdrop の読み替え・並びの反転と依頼1行目の取り出し → 同じく3つ）、dispatch/file-suggestions.tsx（2種 → 取得だけ hooks/use-repository-file-paths.ts へ出し、絞り方と一覧は command-suggestions.tsx と同じ形で1ファイルに残す）。割らない5行: sidebar/session-switch.tsx（畳む1種=選択肢のラベルの作り方だけ）、sidebar/character-switch.tsx（畳む1種=resolveCharacterPack の5行だけ）、sidebar/task-section.tsx（保つ1種=boardOpen と selectedStatus。畳み込みは task-board/domain/ へ既出）、sidebar の session-info/profile-card/recent-topic-section/sidebar.tsx（3種とも0。ストアを読んで置くだけ）、task-board/components/task-run-confirm.tsx（外と同期1種。ストアを読むのは新条件2つを両方満たす=道に memo の TaskTable と実行の口を知らない TaskRow/TaskItem が挟まる／useTurnRunning で分けるのは文面とボタンだけ）。行数は着手時点で数え直し本文の表と一致。テストの import 先は container に据え置いたのでテストファイルの変更はゼロ。\nbun run check 1721 pass / 0 fail / 3498 expect() / 140 files（typecheck・oxlint・oxfmt --check も緑）。目視: 変更前 f4b7765 を scripts/serve-revision.ts --port 7341、いまの木を TSUKUMO_VIEW_PORT=7351 TSUKUMO_HOME=/tmp/tsukumo-home-t442-after で起こし headless Chrome 1400x900 で撮り比べ。report の場面はポート番号以外すべて同一で、--measure の実測も dispatch-row top 831/left 1240.31/幅 130.69、dispatch-send 幅 83.27、speech-log-open top 612.75/幅 68.02、sidebar-footer top 497.91/幅 333.61、横のはみ出し 0px が一致。セリフのログのモーダルは両方 x380 y350.109375 w640 h199.765625 で開き、見出し「（依頼の前）」と title 無しの挙動も同じ、Esc で閉じるのも両方 true。ターンは 経過 -/送信/submit → 経過 1秒/中断/button → 所要 4秒/送信/submit と前後で文字・type・class が一致。@src/brow の候補10件も出た。利用者の 7329〜7332 には触れず、両方 scripts/stop.ts --port で停止。"
-  },
-  {
     "id": "T-443",
     "difficulty": "sonnet",
     "loopable": "Y",
@@ -172,17 +139,6 @@
     "summary": "423行の use-composer.ts から / と @ の補完の状態を別のフックに分ける",
     "task": "## 背景\n\n`src/browser/features/dispatch/hooks/use-composer.ts`（423行）の `useComposer` は、下書き（`Draft`）・送信・画像の添付・質問の帯・補完（`/` のコマンドと `@` のファイル。`ActiveSuggestions` / `confirmSelected` / `insertTrigger` / `insertedTrigger` / `confirmedDraft` / `suggestionCount`）を1本で持つ。補完は `command-suggestions.tsx` と `file-suggestions.tsx`（`useRepositoryFilePaths` をファイルの中で定義）にまたがり、キーの扱い（`ComposerKey` / `isComposingEvent`）と絡んでいる。\n\n`docs/design.md` 2章は「1ファイル1フック」「フックの名前は機能名でよい（container が呼ぶ1本）」と書くが、`chat-view/hooks/` には4本ある。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 入力欄の振る舞い（補完の出方・確定・IME の変換中の扱い・送信）は変えない\n\n## やること\n\n1. T-442 で決まった基準（1つの container が複数のフックを呼んでよいか）を読む\n2. 補完の状態と確定の手を `hooks/` の別のフック（概念の名前）に分け、`useComposer` から呼ぶ。`useRepositoryFilePaths` を `file-suggestions.tsx` から `hooks/` へ移すかも同じ基準で決める\n\n## 完了条件\n\n- `wc -l src/browser/features/dispatch/hooks/use-composer.ts` が 250 行以下\n- `test/browser/features/dispatch/composer.test.tsx` が期待値を変えずに通る\n- 疑似セッションで `/` と `@` の補完・IME の変換中の Enter・送信を目視で確かめ、`evidence` に書く\n- `bun run check` が通る",
     "status": "todo",
-    "passes": false,
-    "evidence": ""
-  },
-  {
-    "id": "T-445",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-425"],
-    "summary": "1510行の design.md 13章「画面のデザイン」を別の正典ファイルに出す",
-    "task": "## 背景\n\n`docs/design.md` は 3225 行で、そのうち **13章「画面のデザイン」が 1510 行**、7章「キャラクターパック」が 588 行、2章「全体構成」が 392 行（`awk` で章ごとに数えた）。`docs/requirements.md` も 1953 行で、4章「機能要件」が 1668 行。\n\nどれも「通読しない・節の索引で1節だけ読む」運用になっているが、2章の「層と依存の向き」を読みに来た人と、13.9「狭い画面」を読みに来た人が同じファイルを開き、索引の表を読み、`sed` の範囲を組み立てることになる。`develop/progress.md`「未解決」には、12章を history へ移したあと章番号を詰めていない件（13.x を指す参照が約100箇所）が残っている。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## 解くべき論点\n\n- 13章を `docs/` の別ファイル（ファイル名は概念。`docs/README.md` と `CLAUDE.md`「関連リンク」の置き場の約束に合わせる）に出すか、`design.md` に残して中を削るか\n- 出すなら、`src` / `test` / `docs` にある「design.md 13.x」への参照（約100箇所）をどう直すか（一括置換か、design.md に1行の案内を残すか）。章番号を詰める件も同時に畳むか\n- `docs/requirements.md` 4章も同じ扱いにするか（このタスクで決めるのは方針だけでよい。やるなら別タスクを `develop/direction.md` の `## エージェントのドラフト` に積む）\n\n## やること\n\n1. `maintenance-docs` スキルが決めている docs の置き場・索引の約束を読む\n2. 論点に答え、13章を動かす（先に移送先へ書いてから消す順で進める。`develop/progress.md`「未解決」の大掃除の注意）\n3. 参照を直し、`docs/README.md`・`CLAUDE.md`「関連リンク」・`docs/design.md` の節の索引を合わせる\n\n## 完了条件\n\n- `wc -l docs/design.md` が 2000 行以下\n- `grep -rn 'design.md.\\?13\\.' src test docs CLAUDE.md` の各参照が、移した先で同じ節を指している（残った参照の数と、直した方法を `evidence` に書く）\n- 移した先のファイルの冒頭に節の索引がある\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- 節を移すときは中身を書き換えない（文面の見直しは別の話）",
-    "status": "doing",
     "passes": false,
     "evidence": ""
   },
@@ -284,17 +240,6 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-456",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "貼った画像の棚を、8枚ではなく合計128 MiBで切る",
-    "task": "## 背景\n\n入力欄に貼った画像の原寸は `src/server/core/prompt-image-shelf.ts` の棚（`createPromptImageShelf`）がプロセスのメモリに持ち、`/prompt-image/<id>` で配る。棚は2つの契機で原寸を捨てる: 記録の窓から依頼が落ちたとき（`releasedPromptImageIds`。仕事20・雑談100ターン）と、枚数が `MAX_SHELVED_PROMPT_IMAGES`（8枚）を超えたとき（`shelve` の中で古いほうから）。\n\n8枚は「1枚が上限の 5 MiB（`MAX_PROMPT_IMAGE_BYTES`）だった場合でも 40 MiB に収める」ための最悪値の見積もりで、実際のスクリーンショット（1枚 0.5 MiB 前後）では天井のごく一部しか使わないまま、4件の依頼ぶん（1件2枚まで）で原寸が落ちる。落ちた画像は拡大しても控え（長辺 320px）しか出ない。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの判断（「貼った画像も直近8枚は少ないよね」→ 提案「枚数ではなく合計の大きさで切る（たとえば 128 MiB）」に「いいよ」）\n- 棚の上限は**枚数ではなく、持っている原寸の合計の大きさ**で決める。天井は 128 MiB\n- 大きさは棚が実際に持っている値（原寸の data URL の文字列）の長さで測る\n- 窓から落ちたら捨てる契機（`releasedPromptImageIds`）はそのまま残す。**棚はディスクに書かない**（`docs/requirements.md` 4.10「会話内容の扱い」）は変えない\n\n## やること\n\n1. `prompt-image-shelf.ts` の `MAX_SHELVED_PROMPT_IMAGES` を合計の大きさの上限（128 MiB）に置き換え、`shelve` で合計が上限を超えるあいだ古いほうから捨てる。いま置いた画像は捨てない（1件2枚 × 5 MiB は天井より十分小さい）。冒頭のコメントと「なぜ」の説明を新しい上限に合わせる\n2. `test/server/core/prompt-image-shelf.test.ts` の枚数の上限を確かめているテストを、合計の大きさで確かめる形に置き換える（小さい画像なら9枚以上残る・合計が上限を超えると古いほうから落ちる）\n3. `docs/requirements.md` 4.10「会話内容の扱い」の `MAX_SHELVED_PROMPT_IMAGES`（8枚）の記述を新しい上限に書き換える。`docs/design.md` に同じ値の記述があれば合わせる\n\n## 完了条件\n\n- `grep -rn 'MAX_SHELVED_PROMPT_IMAGES' src test docs` が0件\n- 0.5 MiB 相当の画像を20枚置いても全部 `find` で引けることと、合計が 128 MiB を超えると古いものから `undefined` になることをテストで確かめている\n- `bun run check` が通る\n\n## 注意\n\n- テストの画像は架空のデータ（同じ文字を並べた data URL など）で作る。実物のスクリーンショットをフィクスチャにしない（`docs/coding-standards.md`「会話内容の扱い」）\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check: 1750 pass / 0 fail（143ファイル）。test/server/core/prompt-image-shelf.test.ts に「0.5 MiB の画像なら20枚置いても全部残る」「合計の大きさが上限を超えるあいだ、古いほうから捨てる」の2本。grep -rn MAX_SHELVED_PROMPT_IMAGES src test docs は docs/history/tasks.md の過去の記録1件のみ（アーカイブなので直さない）"
   },
   {
     "id": "T-457",

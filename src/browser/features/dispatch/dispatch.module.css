@@ -45,7 +45,7 @@
 .pending-summary {
   margin: 0 0 0.5rem;
 }
-/* ツール名は機械が付けた名前なので等幅（docs/design.md 13.1 原則3）。書体そのものの定義は
+/* ツール名は機械が付けた名前なので等幅（docs/screen-design.md 13.1 原則3）。書体そのものの定義は
    `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。 */
 .pending-tool {
   font-family: var(--font-mono);

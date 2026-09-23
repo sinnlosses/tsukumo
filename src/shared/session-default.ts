@@ -1,5 +1,5 @@
 // **新しいセッションの既定**（モデル・許可モード。`docs/requirements.md` 4.1 /
-// `docs/design.md` 13.6）。セッションを起こすたびに効く値で、**帯で変えたその場の値とは別物**
+// `docs/screen-design.md` 13.6）。セッションを起こすたびに効く値で、**帯で変えたその場の値とは別物**
 // （帯はセッション限り、ここは次に起こすときの初期値）。
 //
 // 覚えるのはホームの `state.json`（`src/server/adapter/remembered-default.ts`）だが、

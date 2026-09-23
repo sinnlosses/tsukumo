@@ -57,7 +57,7 @@ type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
  * 見出しの語を書かない規約（`report-notation.ts`）なので、何の塊なのかが分かる文字を
  * 保証できるのは tsukumo 側だけで、生成した内容ではなく**器の一部**として DOM に出したほうが、
  * 選択・コピー・読み上げのどれでも本文と同じに扱える。**色だけで種別を伝えない**ための
- * 文字でもある（`docs/design.md` 13.1 原則5）。
+ * 文字でもある（`docs/screen-design.md` 13.1 原則5）。
  */
 export function NotationBlock(props: NotationBlockProps): ReactElement {
   const { node: _node, className, children, ...rest } = props

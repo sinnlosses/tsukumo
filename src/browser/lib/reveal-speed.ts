@@ -1,5 +1,5 @@
 // レポートを「書き上げていくように見せる」演出の速さ（`docs/requirements.md` 4.3 /
-// `docs/design.md` 13.6）を `localStorage` に持つ。**利用者の設定**なので `appearance-color.ts` と
+// `docs/screen-design.md` 13.6）を `localStorage` に持つ。**利用者の設定**なので `appearance-color.ts` と
 // 同じ並び（`docs/design.md` 2章「`lib/` と `utils/` に置く基準」）。読めない・欠けている値は
 // 既定（`standard`）へ畳む。
 //

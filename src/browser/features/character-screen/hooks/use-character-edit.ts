@@ -20,7 +20,7 @@
 // 200ms まとめる**（`src/server/adapter/character-edit.ts` が送信のたびに `character.json` を
 // 書き直すため）。**衣装の差し色（`outfitAccents`）と画面の差し色（`accent` / `chatAccent`）は
 // 同じ「ドラッグ中の色」という操作**なので、同じ定数（`ACCENT_DEBOUNCE_MS`）を使う
-// （`docs/design.md` 13.6）。
+// （`docs/screen-design.md` 13.6）。
 
 import { useState } from "react"
 

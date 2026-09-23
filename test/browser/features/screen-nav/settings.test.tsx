@@ -9,7 +9,7 @@ import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selec
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { sessionStoreWith, type CommandSpy } from "../../session-store.ts"
 
-// 帯の右端の歯車で開く設定（docs/design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
+// 帯の右端の歯車で開く設定（docs/screen-design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
 // **保存の仕方は `browser/lib/appearance-color.ts` のまま**なので、鍵も検証も
 // `appearance-color.test.ts` と同じものを見ている。演出の速さの保存は
@@ -273,7 +273,7 @@ describe("設定の歯車（帯の右端）", () => {
   })
 })
 
-// 新しいセッションの既定（docs/design.md 13.6）。**覚えるのはサーバ**なので、ここが見るのは
+// 新しいセッションの既定（docs/screen-design.md 13.6）。**覚えるのはサーバ**なので、ここが見るのは
 // 「届いた値をそのまま出す」「選ぶと `set-session-default` を送る」「全部許すは並べない」の3つ。
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
@@ -322,7 +322,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     ])
   })
 
-  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/design.md` 13.6）。
+  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/screen-design.md` 13.6）。
   it("帯でモデルを変えても set-session-default は送らない", () => {
     const sent: unknown[] = []
     renderScreenNav({ sessionDefault: { model: "opus", permissionMode: "auto" } }, (command) =>
@@ -348,7 +348,7 @@ function defaultSelect(label: string): HTMLSelectElement {
   return document.getElementById(labelNode.htmlFor) as HTMLSelectElement
 }
 
-// 書き上げる演出の速さ（docs/design.md 13.6。`browser/lib/reveal-speed.ts`）。**利用者の設定**
+// 書き上げる演出の速さ（docs/screen-design.md 13.6。`browser/lib/reveal-speed.ts`）。**利用者の設定**
 // なので色と同じ `localStorage`（保存先は違う鍵）。
 describe("設定の歯車（書き上げる演出の速さ）", () => {
   it("既定は「標準」", () => {

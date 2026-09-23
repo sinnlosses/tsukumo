@@ -1,5 +1,5 @@
-// キャラクター画面の主役、**立ち絵の並びと差し色と背景**（<CharacterEdit>。`docs/design.md`
-// 13.6 / 7.1）の**入口**。いまの姿をカード・差し色・背景の行へ畳み、選んだ画像を送るのは
+// キャラクター画面の主役、**立ち絵の並びと差し色と背景**（<CharacterEdit>。`docs/screen-design.md`
+// 13.6 / `docs/design.md` 7.1）の**入口**。いまの姿をカード・差し色・背景の行へ畳み、選んだ画像を送るのは
 // `hooks/use-character-edit.ts`、見た目は `presentational-character-edit.tsx` が持つ
 // （docs/design.md 2章「機能の中を分ける」の container / presenter）。
 //
