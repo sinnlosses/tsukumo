@@ -191,6 +191,106 @@
   text-align: left;
 }
 
+/* モデル別・ツール別の札を横に並べる行。**左（モデル別）を広く**（列が2つ多い）。狭い画面
+   （760px以下）では縦に積む（このファイル末尾の @media）。 */
+.usage-table-row {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 0.75rem;
+  align-items: start;
+  min-width: 0;
+}
+
+/* 表を持つ札の見出し行。**期間の合計の札（`.usage-card-label` 以下）よりひとまわり大きく**
+   — こちらは「いまのコンテキスト」と同格の区画の見出しなので、`.context-title` /
+   `.context-note` と同じ大きさ・色の組にする。 */
+.usage-table-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.usage-table-title {
+  margin: 0;
+  font-size: var(--font-subheading);
+  font-weight: normal;
+}
+.usage-table-order {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+
+/* モデル別・ツール別で列の幅を変える（`table-layout: fixed` は列幅を自分で決めないと
+   均等割りになる）。**横棒を添える列だけ広く取る。** */
+.model-usage-table th:nth-child(1),
+.model-usage-table td:nth-child(1) {
+  width: 32%;
+}
+.model-usage-table th:nth-child(2),
+.model-usage-table td:nth-child(2),
+.model-usage-table th:nth-child(4),
+.model-usage-table td:nth-child(4),
+.model-usage-table th:nth-child(5),
+.model-usage-table td:nth-child(5) {
+  width: 14%;
+}
+.model-usage-table th:nth-child(3),
+.model-usage-table td:nth-child(3) {
+  width: 26%;
+}
+.tool-usage-table th:nth-child(1),
+.tool-usage-table td:nth-child(1) {
+  width: 34%;
+}
+.tool-usage-table th:nth-child(2),
+.tool-usage-table td:nth-child(2) {
+  width: 22%;
+}
+.tool-usage-table th:nth-child(3),
+.tool-usage-table td:nth-child(3) {
+  width: 44%;
+}
+
+/* 数の右に添える横棒（並べ順を決めている列だけ。`usage-table-bar-cell` が1つのセルの中身）。 */
+.usage-table-bar-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.usage-table-bar {
+  flex: 1 1 auto;
+  overflow: hidden;
+  min-width: 1.5rem;
+  height: 0.4rem;
+  border-radius: 1px;
+  background: var(--surface);
+}
+/* 塗りは期間の合計の棒（`.usage-card-bar`）と同じ `--ink-quiet`（13.1 原則5。意味を固定した
+   新しい色を増やさず、既にある「静かな棒」の色を再利用する）。 */
+.usage-table-bar-fill {
+  display: block;
+  width: var(--usage-bar-share);
+  height: 100%;
+  border-radius: 1px;
+  background: var(--ink-quiet);
+}
+
+/* 「ほか n 件を見る」の開閉。文字だけのボタン（枠を増やさない）。 */
+.usage-table-more {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.usage-table-more:hover {
+  color: var(--ink);
+}
+
 /* 記録が無い・取れなかった・描けなかった・続きがある、の一言。 */
 .token-usage-note {
   margin: 0;
@@ -362,10 +462,14 @@
 }
 
 /* 狭い画面（760px 以下）。**札は2列に折り、さらに狭ければ1列**（4列のままだと1枚が5rem ほどに
-   なり、数も棒も読めない）。境目は他の領域と同じ（docs/requirements.md 4.7）。 */
+   なり、数も棒も読めない）。境目は他の領域と同じ（docs/requirements.md 4.7）。
+   **モデル別・ツール別の2枚は縦に積む**（横のままだと表の列がさらに窮屈になる）。 */
 @media (max-width: 760px) {
   .usage-card-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .usage-table-row {
+    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 420px) {
