@@ -55,9 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
-### 2026-09-23 コンテキストの内訳をセッションごとに1行だけ記録するようにした（T-376）
+### 2026-09-23 同じ前提はコメント1か所に書く規約を足し、セッションの印の説明の重なりを畳んだ（T-414）
 
-最初のターンの終わりに `getContextUsage()` を1回取り、`~/.tsukumo/context-usage/<日付>.jsonl` へ1行だけ積む（取れなければ次のターンで取り直す）。ターンごとの記録とは置き場も版も分けてあり、「書いてよいもの」の線は `src/shared/context-usage-record.ts` の冒頭が正典。
+`docs/coding-standards.md`「コメント」節に規約を足した。印の読み戻しは `config.ts` の `sessionTag`、絞り込みと並びは `session-restore.ts` の `listMarkedSessions` を正典にし、ほかの4か所は参照に畳んだ（コードは不変）。
+
+### 2026-09-23 版の合わない hello の知らせに、部品のテストを足した（T-410）
+
+`hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。
 
 ### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
 
@@ -75,10 +79,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
 
-### 2026-09-23 版の合わない hello の知らせに、部品のテストを足した（T-410）
-
-`hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。
-
 ### 2026-09-23 docs/design.md 5章の SessionHost と経路の表を、型定義・実装への参照に置き換えた（T-409）
 
 経路の表からは `/token-usage` のほかに `/context-usage` と `/prompt-image/<id>` も抜けていた。環境変数の表は design.md を正典のままにし、その理由を節に書いた。
@@ -86,6 +86,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ### 2026-09-23 雑談の要約に話題の見出しを書かせ、サイドバーの「最近の話題」に直近3件を出すようにした（T-390）
 
 `/compact` の依頼で要約の最後に `<topics>` の組を書かせ、`chat-compact.ts` の `chatTopics` が取り出す。起動時と PostCompact のあとに `chat-topics-changed` で流す（`PROTOCOL_VERSION` 6）。本物の圧縮でモデルが組を書くかは未確認。
+
+### 2026-09-23 requirements.md 4.10 の原寸を手放す約束を、棚の寿命に書き換えた（T-418）
+
+原寸は直近8枚だけサーバのメモリの棚に残り、記録の窓から落ちたときか枚数を超えたときに捨てる、と書き直した。控えも押せる旨を 4.10 と `docs/design.md` 4.1・13章・13.7 に揃えた（ドキュメントのみ）。
+
+### 2026-09-23 コンテキストの内訳をセッションごとに1行だけ記録するようにした（T-376）
+
+最初のターンの終わりに `getContextUsage()` を1回取り、`~/.tsukumo/context-usage/<日付>.jsonl` へ1行だけ積む（取れなければ次のターンで取り直す）。ターンごとの記録とは置き場も版も分けてあり、「書いてよいもの」の線は `src/shared/context-usage-record.ts` の冒頭が正典。
 
 ## 未解決
 
