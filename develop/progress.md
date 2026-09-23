@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 token-usage-diet スキルを、見直しの段と結果を tsukumo のツールで渡す形に直した（T-503）
+
+tsukumo の中では5段ごとに `usage_review_stage`、最後に `usage_review_result` を呼び、受理のあと `report` を短く1回呼んで Stop の関所を抜ける。tsukumo の外では従来の本文レポートで返す。実機で1回流し、5件が受理された。
+
 ### 2026-09-24 token-usage-diet の集計に提案ごとの効きの見積もりを足した（T-504）
 
 `~/.claude/skills/token-usage-diet/` の `summarize_usage.py --json` に `estimates` 節を足し、提案の種類と対象を `usageProposalKey` と同じ形で出す。分母は期間の費用で、単価は記録から逆算する。「約X%」は重なりを除かない上限として扱う決まりを SKILL.md に書いた（T-503 が使う）。
