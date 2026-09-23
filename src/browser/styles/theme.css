@@ -87,6 +87,17 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* フォーム部品（button/input/select/textarea）はブラウザの既定では親の書体を継がないので、
+   ここで1回だけ継がせる。**大きさ・行の高さ・太さも一緒に継ぐ**（`font-family` だけにすると、
+   大きさを上書きしていない部品で行の高さが本文の 1.75 から UA 既定に戻る）。機能の CSS には
+   書かず、ここから変える値（`font-size` など）だけを書く（docs/design.md 13.3）。 */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 /* フォーカスの輪は、キャラクターの色（accent）を出してよい場所の1つ（13.1 原則1）。 */
 :focus-visible {
   outline: 2px solid var(--accent);

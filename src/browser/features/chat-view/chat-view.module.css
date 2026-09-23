@@ -36,7 +36,6 @@
   padding: 0;
   border: none;
   background: none;
-  font: inherit;
   /* **指の形にする**のはホバーの合図の1つ（docs/design.md 13.7）。揺れ・案内と合わせて3つ。 */
   cursor: pointer;
   /* 揺れは床を軸に振る（立ち絵は床に立っているので、中心で振ると足が浮いて見える）。 */

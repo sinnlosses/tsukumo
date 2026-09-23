@@ -20,6 +20,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
+import { ProtocolMismatch } from "./components/protocol-mismatch.tsx"
 import { CharacterCreate } from "./features/character-screen/character-create.tsx"
 import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
 import { CharacterView } from "./features/character-view/character-view.tsx"
@@ -59,6 +60,11 @@ function Root(): ReactElement {
   // 「いま雑談か」を知っているのはここだけなので、`<Layout>` には2つの旗を別々に渡す
   // （畳むことと枠を外すことは別の話で、片方だけが要る形もありうる）。
   const chatMode = useSessionSelector((session) => session.state.chatMode)
+  // サーバと版が合わない間は、どの画面も描かず知らせだけを出す（docs/design.md 4.4）。
+  const protocol = useSessionSelector((session) => session.protocol)
+  if (protocol === "mismatched") {
+    return <ProtocolMismatch />
+  }
   return (
     <>
       {/* 画面のナビの帯（13.9）。**どの画面でも最上部に出る**ので、画面を選ぶ分岐の外に置く。
