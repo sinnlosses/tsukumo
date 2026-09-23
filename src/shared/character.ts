@@ -60,6 +60,11 @@ export type CharacterInfo = {
    */
   readonly face: string | undefined
   /**
+   * {@link CharacterDefinition.tagline}（ひとことプロフィール）をそのまま持つ。雑談中の
+   * サイドバーのプロフィールの札が名前の下に出す。無いパックでは undefined（名前だけ）。
+   */
+  readonly tagline: string | undefined
+  /**
    * 衣装 → 差し色。**衣装ごとに `default` へ畳み済み**（読む側は表を引くだけでよい）。
    * `default` も無ければその衣装は undefined。
    */
@@ -148,6 +153,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
         : characterAssetPath(definition.mini, cacheKey),
     face:
       definition?.face === undefined ? undefined : characterAssetPath(definition.face, cacheKey),
+    tagline: definition?.tagline,
     outfitAccents: foldedOutfitAccents(definition),
     background: backgroundWithUrl(definition?.background, cacheKey),
     editable: source.editable,

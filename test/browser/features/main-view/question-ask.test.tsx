@@ -4,6 +4,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { QuestionAsk } from "../../../../src/browser/features/main-view/question-ask.tsx"
 import { QuestionAnswerProvider } from "../../../../src/browser/stores/question-answer.tsx"
+import {
+  QuestionScrollContext,
+  type QuestionScrollValue,
+} from "../../../../src/browser/stores/question-scroll.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import {
   TurnSelectionContext,
@@ -39,6 +43,7 @@ function renderQuestionAsk(
   options: {
     readonly dispatch?: CommandSpy
     readonly selection?: Partial<TurnSelectionValue>
+    readonly scroll?: Partial<QuestionScrollValue>
   } = {},
 ): HTMLElement {
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending }, options.dispatch)
@@ -48,12 +53,15 @@ function renderQuestionAsk(
     selectTurn: () => {},
     ...options.selection,
   }
+  const scroll: QuestionScrollValue = { signal: 0, requestScroll: () => {}, ...options.scroll }
   const { container } = render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionContext.Provider value={selection}>
-        <QuestionAnswerProvider>
-          <QuestionAsk />
-        </QuestionAnswerProvider>
+        <QuestionScrollContext.Provider value={scroll}>
+          <QuestionAnswerProvider>
+            <QuestionAsk />
+          </QuestionAnswerProvider>
+        </QuestionScrollContext.Provider>
       </TurnSelectionContext.Provider>
     </SessionStoreContext.Provider>,
   )

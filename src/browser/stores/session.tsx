@@ -22,7 +22,7 @@ import {
 
 import { effectiveAccent } from "../../shared/character.ts"
 import { type ClientCommand } from "../../shared/command.ts"
-import { type ServerFrame } from "../../shared/frame.ts"
+import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
@@ -50,12 +50,22 @@ export type CommandSocket = {
 }
 
 /**
- * 部品が読む姿。**接続の状態（`connection`）はブラウザだけが持つ**ので `SessionState` には
- * 入れず、同じ購読に相乗りさせる（docs/design.md 4.2 / 6.2）。まだ画面には出していない。
+ * サーバの `hello` が名乗った版が、このページの {@link PROTOCOL_VERSION} と合っているか
+ * （docs/design.md 4.4）。`mismatched` の間は `events` を畳まない——形の違う記録を読むと、
+ * 部品が無いはずのフィールドを読んで壊れる（起こし直さずに画面だけ組み直したときに起きる）。
+ * 次の `hello` で合えば `compatible` に戻る。
+ */
+export type ProtocolAgreement = "compatible" | "mismatched"
+
+/**
+ * 部品が読む姿。**接続の状態（`connection`）と版の一致（`protocol`）はブラウザだけが持つ**ので
+ * `SessionState` には入れず、同じ購読に相乗りさせる（docs/design.md 4.2 / 4.4 / 6.2）。
+ * `connection` はまだ画面には出していない。
  */
 export type SessionSnapshot = {
   readonly state: SessionState
   readonly connection: ConnectionStatus
+  readonly protocol: ProtocolAgreement
 }
 
 /**
@@ -107,7 +117,11 @@ export function useSessionDispatch(): SessionDispatch {
  */
 export function createSessionStore(): SessionStore {
   const listeners = new Set<() => void>()
-  let snapshot: SessionSnapshot = { state: INITIAL_SESSION_STATE, connection: "connecting" }
+  let snapshot: SessionSnapshot = {
+    state: INITIAL_SESSION_STATE,
+    connection: "connecting",
+    protocol: "compatible",
+  }
   let socket: CommandSocket | undefined = undefined
 
   const publish = (next: SessionSnapshot): void => {
@@ -129,6 +143,17 @@ export function createSessionStore(): SessionStore {
       socket?.send({ ...command, commandId: crypto.randomUUID() })
     },
     receive: (frame) => {
+      if (frame.type === "hello" && frame.protocolVersion !== PROTOCOL_VERSION) {
+        publish({ ...snapshot, state: INITIAL_SESSION_STATE, protocol: "mismatched" })
+        return
+      }
+      if (frame.type === "hello" && snapshot.protocol === "mismatched") {
+        publish({ ...snapshot, state: frame.state, protocol: "compatible" })
+        return
+      }
+      if (snapshot.protocol === "mismatched") {
+        return
+      }
       const state = applyFrame(snapshot.state, frame)
       if (state === snapshot.state) {
         return
@@ -139,16 +164,16 @@ export function createSessionStore(): SessionStore {
       // 同期レーンで走らせる**（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは
       // 購読の絞り込み（セレクタ）のほう。緊急かどうかの境目はここ1箇所に置く。
       if (state.pending !== snapshot.state.pending) {
-        publish({ state, connection: snapshot.connection })
+        publish({ ...snapshot, state })
         return
       }
       startTransition(() => {
-        publish({ state, connection: snapshot.connection })
+        publish({ ...snapshot, state })
       })
     },
     setConnection: (status) => {
       if (status !== snapshot.connection) {
-        publish({ state: snapshot.state, connection: status })
+        publish({ ...snapshot, connection: status })
       }
     },
     attachSocket: (next) => {

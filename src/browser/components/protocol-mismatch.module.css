@@ -1,0 +1,23 @@
+/* 版が合わないときの知らせ（src/browser/components/protocol-mismatch.tsx）。会話の画面の代わりに
+   ページの真ん中へ1つだけ置く。 */
+.protocol-mismatch {
+  box-sizing: border-box;
+  max-width: calc(100vw - 2 * var(--page-padding));
+  margin: 20vh auto 0;
+  padding: 1rem 1.25rem;
+  width: 28rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--state-warn);
+  border-radius: 0.75rem;
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}
+.protocol-mismatch p {
+  margin: 0;
+}
+.protocol-mismatch-title {
+  font-size: var(--font-subheading);
+  font-weight: bold;
+}

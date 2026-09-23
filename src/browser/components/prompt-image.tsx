@@ -104,25 +104,26 @@ export type PromptImageThumbnailsProps = {
  * 棚に残っていなければ控えを代わりに出す。
  */
 export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactElement | null {
-  // 開いている控えの id（棚が振った UUID なので、同じ依頼の中でも重ならない）。
-  const [zoomedId, setZoomedId] = useState<string | undefined>(undefined)
+  // 開いている控えが何枚目か（札と同じ持ち方）。**id では持たない**——「開いていない」の
+  // undefined が、形の崩れた記録の id（undefined）と一致して、閉じられない面が開くため。
+  const [zoomedIndex, setZoomedIndex] = useState<number | undefined>(undefined)
 
   if (props.images.length === 0) {
     return null
   }
 
-  const zoomedImage = props.images.find((image) => image.id === zoomedId)
+  const zoomedImage = zoomedIndex === undefined ? undefined : props.images[zoomedIndex]
 
   return (
     <>
       <ul className={styles["prompt-images"]}>
-        {props.images.map((image) => (
+        {props.images.map((image, index) => (
           <li className={styles["prompt-image-thumbnail"]} key={image.id}>
             <button
               type="button"
               className={styles["prompt-image-zoom"]}
               aria-label={ZOOM_LABEL}
-              onClick={() => setZoomedId(image.id)}
+              onClick={() => setZoomedIndex(index)}
             >
               <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
               <ZoomIcon />
@@ -136,7 +137,7 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
           src={shelvedImageUrl(zoomedImage.id)}
           alt={IMAGE_ALT}
           fallback={{ kind: "substitute", src: zoomedImage.thumbnail, note: RELEASED_NOTE }}
-          onClose={() => setZoomedId(undefined)}
+          onClose={() => setZoomedIndex(undefined)}
         />
       )}
     </>

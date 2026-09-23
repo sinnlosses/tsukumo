@@ -271,6 +271,19 @@
   margin: 0 0 0.4rem;
   font-weight: 600;
 }
+/* 答え待ちが質問のときだけ出す「質問へ」（13.9「いまの作業」）。`.screen-nav-work-toggle-all` と
+   同じ見た目（枠の無い、差し色の文字だけの押せる字）。 */
+.screen-nav-work-go-to-question {
+  display: block;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
 .screen-nav-work-full {
   margin: 0 0 0.5rem;
 }

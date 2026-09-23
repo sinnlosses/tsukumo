@@ -262,6 +262,17 @@ describe("toCharacterInfo", () => {
     ).toBeUndefined()
   })
 
+  it("tagline（ひとことプロフィール）があればそのまま持つ", () => {
+    const definition = parseCharacterDefinition(JSON.stringify({ tagline: "架空のひとこと" }))
+
+    expect(
+      definition === undefined
+        ? undefined
+        : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
+            .tagline,
+    ).toBe("架空のひとこと")
+  })
+
   it("chatAccent があればそのまま持つ", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ accent: "#6fe3cd", chatAccent: "#f2984a" }),
@@ -291,6 +302,7 @@ describe("toCharacterInfo", () => {
     expect(info.expressionsWithPortrait).toEqual([])
     expect(info.mini).toBeUndefined()
     expect(info.face).toBeUndefined()
+    expect(info.tagline).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()
     expect(info.background).toBeUndefined()
     expect(info.editable).toBe(false)
