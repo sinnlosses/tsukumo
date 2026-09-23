@@ -800,6 +800,7 @@ describe("toSessionEvents（report ツール）", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
       {
         kind: "report",
+        toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
         body: "## 架空の見出し",
         favor: "架空のお願い",
@@ -818,7 +819,7 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      { kind: "report", conclusion: "架空の結論。", body: "", favor: "" },
+      { kind: "report", toolUseId: "toolu_r1", conclusion: "架空の結論。", body: "", favor: "" },
     ])
   })
 

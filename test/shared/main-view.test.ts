@@ -775,6 +775,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   const text = (markdown: string): SessionEvent => ({ kind: "utterance", text: markdown })
   const report = (conclusion: string, body = "", favor = ""): SessionEvent => ({
     kind: "report",
+    toolUseId: "toolu_r1",
     conclusion,
     body,
     favor,

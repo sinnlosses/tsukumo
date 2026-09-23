@@ -1312,9 +1312,19 @@
           "afterMs": 3000,
           "event": {
             "kind": "report",
+            "toolUseId": "fake-report-call-1",
             "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
             "body": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
             "favor": ""
+          }
+        },
+        {
+          "afterMs": 3050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-1",
+            "content": "ok",
+            "isError": false
           }
         },
         {
@@ -1348,9 +1358,19 @@
           "afterMs": 7000,
           "event": {
             "kind": "report",
+            "toolUseId": "fake-report-call-2",
             "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
             "body": "**直したファイルと結果（架空の数）**\n\n| ファイル | 変えたこと | 状態 |\n| --- | --- | :---: |\n| `a.ts` | 目盛りを 12 から 24 へ | <span class=\"badge badge-ok\">OK</span> |\n| `b.ts` | 読むだけなので変えない | <span class=\"badge badge-warn\">要注意</span> |\n\n```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
             "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+          }
+        },
+        {
+          "afterMs": 7050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-2",
+            "content": "ok",
+            "isError": false
           }
         },
         {
@@ -1370,6 +1390,95 @@
         },
         {
           "afterMs": 8400,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-rejected",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "差し戻しの見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "まとめてみるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-rejected-1",
+            "conclusion": "架空の結論その1（差し戻されるはず）。架空の結論その2。架空の結論その3。",
+            "body": "# 架空の大見出し（出ないはず）\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-rejected-1",
+            "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `body` へ移す\n- `#` の見出しがある。`##` / `###` にする\n- 見出しの無い表が1個ある。表の直前の行に太字1行で見出しを付ける",
+            "isError": true
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "speech",
+            "text": "差し戻されたから直すね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 2500,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-rejected-2",
+            "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
+            "body": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 2550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-rejected-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "speech",
+            "text": "書けたよ！",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 3400,
+          "event": {
+            "kind": "utterance",
+            "text": "完了"
+          }
+        },
+        {
+          "afterMs": 3800,
           "event": {
             "kind": "turn-finished",
             "status": "success"

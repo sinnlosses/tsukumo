@@ -20,7 +20,8 @@
 //
 // **規約のほかに `Stop` フックの関所を置く**（{@link createReportGate}。登録は
 // `src/server/adapter/sdk-driver.ts`）。SDK のターンの最後の `report` のあと（無ければターンの頭から）
-// に1行を超える本文を書いて止まろうとしたら差し戻し、`report` で渡し直させる。
+// に1行を超える本文を書いて止まろうとしたら差し戻し、`report` で渡し直させる。`report` の
+// 呼び出しそのものの検査と差し戻しは `report-review.ts`（こちらは描く前の検査の段）。
 
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { REPORT_NOTATION_PROMPT } from "./report-notation.ts"

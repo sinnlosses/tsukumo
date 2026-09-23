@@ -20,6 +20,7 @@ import { MAX_SESSION_CHOICES, type SessionChoice } from "../../shared/session-ch
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { type Config } from "./config.ts"
 import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "./port-resolution.ts"
+import { createReportReview } from "./report-review.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 
 /** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */
@@ -217,6 +218,9 @@ export function listMarkedSessions(sessions: unknown, tag: string): readonly Ses
  * - **再生の終わり（`history-restored`）**: 末尾に1つ。transcript に残る時刻は読む口
  *   （`getSessionMessages`）が落とすので、ここまでの記録は時刻が分からないと畳み込みに伝える
  *
+ * 差し戻された `report` の呼び出しも transcript には残るので、動いているときと同じく
+ * `report` の差し戻し（`report-review.ts` の `pass`）に通して落とす。
+ *
  * 壊れた要素は {@link toSessionEvents} が空の並びに倒すので、読めたものだけが残る。
  */
 export function toRestoredEvents(
@@ -231,7 +235,9 @@ export function toRestoredEvents(
     .flatMap((message) => restoredMessageEvents(message, expressions))
     .reduce<RestoredTurns>(appendWithTurnBoundary, { events: [], turnOpen: false })
 
-  const events = restored.turnOpen ? [...restored.events, RESTORED_TURN_FINISHED] : restored.events
+  const closed = restored.turnOpen ? [...restored.events, RESTORED_TURN_FINISHED] : restored.events
+  const review = createReportReview()
+  const events = closed.flatMap((event) => review.pass(event))
   // **再生の終わりに印を1つ足す**（`history-restored`）。transcript を読む口が時刻を落とすので、
   // ここまでの記録は起きた時刻が分からない（`docs/design.md` 4.2「記録の時刻」）。組み直せた
   // ものが無ければ、書き換える記録も無いので足さない。

@@ -2,7 +2,11 @@ import { describe, expect, it } from "bun:test"
 
 import { type Config } from "../../../src/server/core/config.ts"
 import { DEFAULT_VIEW_PORT } from "../../../src/server/core/port-resolution.ts"
-import { TSUKUMO_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../../src/server/core/sdk-message.ts"
+import {
+  REPORT_TOOL_NAME,
+  SPEAK_TOOL_NAME,
+  TSUKUMO_MCP_SERVER_NAME,
+} from "../../../src/server/core/sdk-message.ts"
 import {
   canResume,
   listMarkedSessions,
@@ -29,6 +33,7 @@ const OTHER_PACK_TAG = sessionTag("別の架空のパック", false, DEFAULT_VIE
 const SECOND_TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
+const REPORT_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${REPORT_TOOL_NAME}`
 
 function sessionInfo(overrides: Readonly<Record<string, unknown>>): unknown {
   return { sessionId: "s-0", summary: "架空のセッション", lastModified: 1_000, ...overrides }
@@ -539,6 +544,40 @@ describe("toRestoredEvents", () => {
       { kind: "utterance", text: "架空の本文その2" },
       { kind: "turn-finished", status: "success" },
       HISTORY_RESTORED,
+    ])
+  })
+
+  it("差し戻された report の呼び出しは落とし、通った呼び出しだけを残す", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      assistantMessage([
+        {
+          type: "tool_use",
+          id: "r-1",
+          name: REPORT_TOOL_FULL_NAME,
+          input: { conclusion: "架空の一" },
+        },
+      ]),
+      userMessage([
+        { type: "tool_result", tool_use_id: "r-1", content: "架空の差し戻し", is_error: true },
+      ]),
+      assistantMessage([
+        {
+          type: "tool_use",
+          id: "r-2",
+          name: REPORT_TOOL_FULL_NAME,
+          input: { conclusion: "架空の二" },
+        },
+      ]),
+      userMessage([{ type: "tool_result", tool_use_id: "r-2", content: "ok" }]),
+    ]
+
+    const reports = toRestoredEvents(messages, EXPRESSIONS).filter(
+      (event) => event.kind === "report",
+    )
+
+    expect(reports).toEqual([
+      { kind: "report", toolUseId: "r-2", conclusion: "架空の二", body: "", favor: "" },
     ])
   })
 

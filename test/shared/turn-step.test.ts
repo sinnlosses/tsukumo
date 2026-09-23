@@ -139,7 +139,7 @@ describe("currentTurnSteps（report ツール）", () => {
   it("report の呼び出しは依頼の手順に出ない（speak と同じく tool-started にならない）", () => {
     const events: readonly SessionEvent[] = [
       { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "report", conclusion: "架空の結論。", body: "", favor: "" },
+      { kind: "report", toolUseId: "toolu_r1", conclusion: "架空の結論。", body: "", favor: "" },
     ]
     const state = events.reduce(
       (current, event) => applySessionEvent(current, event, 0),
