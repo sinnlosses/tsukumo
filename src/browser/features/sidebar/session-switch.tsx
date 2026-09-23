@@ -17,7 +17,7 @@ import { type ReactElement } from "react"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { type SessionChoice } from "../../../shared/session-choice.ts"
 import { Select } from "../../components/select.tsx"
-import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../stores/session.tsx"
 import switchStyles from "./session-switch.module.css"
 import styles from "./sidebar.module.css"
 
@@ -49,7 +49,7 @@ export function SessionSwitch(): ReactElement | null {
   const currentSessionId = useSessionSelector((session) =>
     session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
   )
-  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const turnInProgress = useTurnRunning()
 
   if (sessions.length === 0) {
     return null

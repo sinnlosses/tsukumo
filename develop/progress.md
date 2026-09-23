@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 「ターンが走っているか」の読み取りを useTurnRunning() に寄せた（T-369）
+
+`stores/session.tsx` に `useTurnRunning()` を足し、同じセレクタを書いていた browser の8ファイルを置き換えた（本文の一覧にない screen-nav の2件も含む）。振る舞いは変えていない。
+
 ### 2026-09-23 タスク区画の行を罫線で分け、字の大きさに段を付けてモックの値に揃えた（T-411）
 
 タイプスケールに `--font-subheading`（14px）と `--font-action`（12px）を足して6段にし（`docs/design.md` 13.3）、「一覧を見る」は枠なしの差し色のリンク風にした。進行中のチップは `TaskListCountItem.status` で選ぶ（並び順に頼らない）。

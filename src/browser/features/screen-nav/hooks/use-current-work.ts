@@ -27,7 +27,7 @@ import {
 } from "../../../../shared/turn-step.ts"
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { summarizeToolInput, toolInputText } from "../../../lib/tool-summary.ts"
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 
 /** 閉じている間に出す手順の件数（依頼の手順が6件以上あると「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
@@ -131,7 +131,7 @@ export type UseCurrentWorkResult = {
 export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurrentWorkResult {
   const endedReason = useSessionSelector((session) => session.state.endedReason)
   const pendingCount = useSessionSelector((session) => session.state.pending.length)
-  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const turnInProgress = useTurnRunning()
   const records = useSessionSelector((session) => session.state.records)
   const chatMode = useSessionSelector((session) => session.state.chatMode)
   const characterName = useSessionSelector((session) => session.state.character?.name)

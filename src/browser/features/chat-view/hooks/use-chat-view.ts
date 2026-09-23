@@ -11,7 +11,7 @@ import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../../shar
 import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/expression.ts"
 import { type RecordTime } from "../../../../shared/session-state.ts"
-import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { localTimeZoneId } from "../../../utils/clock.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"
 
@@ -105,7 +105,7 @@ export function useChatView(): ChatViewModel {
   const speechExpression = useSessionSelector((session) => session.state.speechExpression)
   const model = useSessionSelector((session) => session.state.model)
   const character = useSessionSelector((session) => session.state.character)
-  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const turnInProgress = useTurnRunning()
   const speechCalledInTurn = useSessionSelector((session) => session.state.speechCalledInTurn)
   const dispatch = useSessionDispatch()
   const entries = chatLogEntries(records)
