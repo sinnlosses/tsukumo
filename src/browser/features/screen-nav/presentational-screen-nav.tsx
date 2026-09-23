@@ -9,38 +9,18 @@
 // **`data-screen` でいま出している画面を名乗る**のは、狭い画面で帯の置き方が変わるため
 // （会話の画面だけは、いまあるタブ帯の右端に重ねる。13.9）。
 
-import { type ReactElement, type RefObject } from "react"
+import { type ReactElement } from "react"
 
-import { type Screen } from "../../stores/location-hash.ts"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
 import { ScreenNavPending } from "./components/screen-nav-pending.tsx"
 import { ScreenNavRoom } from "./components/screen-nav-room.tsx"
-import {
-  type ScreenNavChatMode,
-  type ScreenNavGate as Gate,
-  type ScreenNavModelPermission,
-} from "./hooks/use-screen-nav.ts"
+import { type ScreenNavView } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"
 
-export type PresentationalScreenNavProps = {
-  readonly current: Screen
-  /** この tsukumo の部屋の名前（13.9）。 */
-  readonly room: string
-  readonly gates: readonly Gate[]
-  /** 仕事 / 雑談のトグル（13.9「動き方の操作子」）。 */
-  readonly chatMode: ScreenNavChatMode
-  /** モデル・許可モードのドロップダウン。 */
-  readonly modelPermission: ScreenNavModelPermission
-  readonly pendingActive: boolean
-  readonly menuOpen: boolean
-  /** 帯そのものに付ける ref（外側を押したときに「≡」を閉じるための基準）。 */
-  readonly ref: RefObject<HTMLElement | null>
-  readonly onToggleMenu: () => void
-  readonly onSelect: () => void
-}
+export type PresentationalScreenNavProps = ScreenNavView
 
 /**
  * **props はここだけ分解して受ける**（`ref` を `props.ref` の形で描画中に読むと

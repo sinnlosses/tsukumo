@@ -71,8 +71,8 @@ export type ScreenNavView = {
   readonly modelPermission: ScreenNavModelPermission
   readonly pendingActive: boolean
   readonly menuOpen: boolean
-  readonly toggleMenu: () => void
-  readonly closeMenu: () => void
+  readonly onToggleMenu: () => void
+  readonly onSelect: () => void
   /** 帯の外側を押したかを見るための入れ物（「≡」を閉じる判定に使う）。 */
   readonly ref: RefObject<HTMLElement | null>
 }
@@ -99,11 +99,11 @@ export function useScreenNav(): ScreenNavView {
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
 
-  const closeMenu = useCallback((): void => {
+  const onSelect = useCallback((): void => {
     setMenuOpen(false)
   }, [])
 
-  const toggleMenu = useCallback((): void => {
+  const onToggleMenu = useCallback((): void => {
     setMenuOpen((open) => !open)
   }, [])
 
@@ -170,8 +170,8 @@ export function useScreenNav(): ScreenNavView {
     },
     pendingActive,
     menuOpen,
-    toggleMenu,
-    closeMenu,
+    onToggleMenu,
+    onSelect,
     ref,
   }
 }
