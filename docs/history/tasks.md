@@ -28601,3 +28601,303 @@ grep -rn screen-nav-accent-line src docs は0件。.screen-nav に border-top �
 - `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
 - 目視で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける（`CLAUDE.md`「## タスク運用」）
 - 帯の外寸が 3px 縮むので、`layout.module.css` の grid の高さの計算を直し忘れると会話の画面の下に 3px の隙間ができる
+
+## T-450
+
+**タスク**: ターンで編集したファイルを一覧にし、押すと Orca で差分を開く
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: False
+
+**evidence**:
+
+2026-09-23 ユーザーの判断で実施しないと決めたため、着手せずに done にした（実装・検証はしていない）。
+
+## 背景
+
+レポートを読んで「どのファイルが変わったか」「中身を見たい」と思ったとき、いまは Orca の別のタブへ移ってファイルを探すしかない。tsukumo は記録に `Edit` / `Write` / `NotebookEdit` のツールの呼び出し（`input.file_path`）を持っているが、ターンごとにまとめて見せる場所が無い（`grep -rn 'changedFile\|file_path' src/shared src/browser` で確かめる）。
+
+`orca` には **`orca file open <path>`**（Orca のエディタで開く）と **`orca file diff <path>`**（差分を開く）がある（2026-09-23 に `orca file open --help` で確かめた。行番号の指定は無い。`--worktree` を省くと cwd から作業ツリーを推す）。`docs/history/decision.md` の orca のコマンドの表にも `orca file open` が載っている。**同じ Orca のウィンドウの中で開くので、「外部ブラウザへ飛ばない」の境界（`docs/requirements.md` 1章）の内側**。
+
+ただし、ホストのポートはいま `showView` 1つだけ（`src/server/core/host.ts`、`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」、`docs/requirements.md` 2.2）。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+
+## 解くべき論点
+
+- ホストのポートに `openFile` / `openDiff` を足すか。足すなら `docs/architecture.md` と `docs/requirements.md` の「`showView` 1つ」を書き換える。Orca 以外の箱ではどう振る舞うか（何もしない・URL を出す）
+- ブラウザから開く依頼をどう送るか（`ClientCommand` を1つ足す）。**パスは cwd の中に限る**（`..` や絶対パスで外へ出ないことをサーバ側で検査する）
+- 一覧をどこに出すか（ターンの末尾・ターンの見出し・帯の手順の一覧）。レポートの本文の中のパス（`code-file-name.ts` がフェンスから拾うファイル名）も押せるようにするか
+- 差分を開くのか、ファイルを開くのか（新しく作ったファイルは差分が無い）
+
+## やること
+
+1. `orca file open` / `orca file diff` を手で打ち、cwd の推し方と失敗したときの出力を確かめる
+2. 論点に答え、`src/server/adapter/orca-host.ts`・`core/host.ts`・`shared/command.ts`・ブラウザの部品に足す。`test/architecture.test.ts`「orca コマンドを起こす箇所」はそのまま通ること
+3. 「そのターンで編集したファイル」を記録から導く純粋関数を `src/shared/` に置く（重複を除き、編集した順）
+4. `docs/requirements.md`（4.2 と 2.2 のホストの行）・`docs/architecture.md`・`docs/design.md` の該当箇所を書き換える
+
+## 完了条件
+
+- 導く関数のテストと、cwd の外を指すパスをサーバが断るテストがある
+- 疑似セッションで編集のあるターンを流し、一覧から1件押して Orca のエディタに差分が開くことを目視で確かめ、`evidence` に書く
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `orca` 以外の外部コマンドは増やさない（増やすならユーザーの承認が要る）
+- 目視で開いたエディタのタブは自分で閉じる
+
+## T-452
+
+**タスク**: 許可の答えに「このセッションでは以後許す」を足し、SDK の提案する許可の更新を返す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: False
+
+**evidence**:
+
+2026-09-23 ユーザーの判断で実施しないと決めたため、着手せずに done にした（実装・検証はしていない）。
+
+## 背景
+
+許可を求められたとき、tsukumo の答えは「許す / 断る」だけで、同じ種類の操作をこのあとも毎回聞かれる。SDK の `canUseTool` は3つ目の引数の **`suggestions?: PermissionUpdate[]`**（「以後これを許す」ための許可の更新の提案）を渡し、答えの `updatedPermissions` にそれを返すと、そのセッション（またはプロジェクト）では同じ操作を聞かなくなる（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（0.3.280） の `CanUseTool` 周辺。TUI の「Yes, and don't ask again」に当たる）。`grep -rn 'suggestions\|updatedPermissions' src/server src/shared` は0件で、tsukumo は提案を捨てている。
+
+既定の許可モードは `auto` なので聞かれる回数はもともと少ないが、`default` にしたときや `auto` でも通らない操作が続くとき、毎回ボタンを押すことになる。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+
+## 解くべき論点
+
+- 提案のうちどれを出すか（`destination` が `session` のものだけか、`localSettings` / `projectSettings` へ書くものも出すか）。**設定ファイルへ書くものは利用者の設定の書き換え**なので、出すなら文言で何が起きるかを明示する（`CLAUDE.md`「`~/.claude/settings.json` などユーザーのグローバル設定の書き換え」は承認が要る。`userSettings` は出さないのが既定の案）
+- 答えの選択肢の見せ方（`src/browser/features/dispatch/` の答え待ちの札）と、`ClientCommand` の `answer` の形
+- `pending-answer.ts` の列で、提案をどう持ち回るか
+
+## やること
+
+1. 型定義で `suggestions` と `PermissionUpdate` の形を確かめ、`default` の許可モードで本物の claude に Bash の書き込みを1回させて、どんな提案が来るかを確かめる（コマンドの中身は `evidence` に書かない）
+2. 論点に答え、`sdk-driver.ts`（`canUseTool`）・`core/pending-answer.ts`・`shared/pending-ask.ts` / `command.ts`・答え待ちの部品に足す。`PROTOCOL_VERSION` を上げる
+3. `docs/requirements.md` 4.2「許可と質問」に書く
+
+## 完了条件
+
+- 提案を持ち回って `updatedPermissions` に返すテストがある
+- 「以後許す」を選んだあと、同じ操作で答え待ちが出ないことを本物の claude で1回確かめ、`evidence` に書く
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 目視の確認で許可の更新が `.claude/settings.local.json` などに書かれたら、確認のあとで元に戻す。`~/.claude/settings.json` を書き換える経路は作らない
+
+## T-453
+
+**タスク**: SDK の次の依頼の候補（prompt_suggestion）を、入力欄に押せる候補として出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: False
+
+**evidence**:
+
+2026-09-23 ユーザーの判断で実施しないと決めたため、着手せずに done にした（実装・検証はしていない）。
+
+## 背景
+
+SDK には `promptSuggestions` のオプションがあり、有効にするとターンの終わり（`result` のあと）に **`prompt_suggestion`**（`suggestion: string`。次に利用者が打ちそうな依頼）が1つ届く（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（0.3.280） の `SDKPromptSuggestionMessage`。最初のターン・API の失敗のあと・プランモードでは出ない）。tsukumo はこのオプションを渡しておらず（`buildQuerySeedOptions`、`src/server/adapter/sdk-driver.ts`）、受け取る経路も無い。
+
+「つぎはテストを足して」「コミットして」のような続きの依頼を1押しで送れれば、仕事の往復が速くなる。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+
+## やること
+
+1. 本物の claude で `promptSuggestions: true` を渡して2ターン流し、`prompt_suggestion` が届くこと、`result` のあとに届くことで tsukumo の `relayMessages` がそれを取りこぼさないかを確かめる。**トークンの消費が目に見えて増えるなら（`~/.tsukumo/token-usage/` で比べる）、その量を `evidence` に書き、実装に進まずユーザーに預けて閉じる**
+2. 進めるなら `SessionEvent` を1つ足し、入力欄が空のときだけ候補を薄く出す（押すと下書きに入れるだけで送らない。次の依頼が始まったら消す）。雑談モードでは出さない。`docs/requirements.md` 4.2 の入力欄の項に書く。`PROTOCOL_VERSION` を上げる
+
+## 完了条件
+
+- `prompt_suggestion` を `SessionEvent` にするテストと、候補を押すと下書きに入る部品のテストがある（手順1で閉じた場合は不要）
+- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 会話の中身（依頼・出力・ファイルの中身）をログ・ディスク・テストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-454
+
+**タスク**: タブのタイトルに、答え待ちの ● に加えてターンが終わった印を付ける
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: False
+
+**evidence**:
+
+2026-09-23 ユーザーの判断で実施しないと決めたため、着手せずに done にした（実装・検証はしていない）。
+
+## 背景
+
+Orca の別のタブで作業しているとき、tsukumo のタブを見なくても状態が分かる手段はタイトルだけ。いまは答え待ちのときだけ `● ` を前に付けている（`src/browser/features/dispatch/dispatch.tsx` の `useEffect`）。**ターンが終わったこと**はタイトルに出ないので、長い依頼の終わりに気づくにはタブを覗きに行くしかない。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+- 知らせ方はタイトルの印だけにする。効果音・OS の通知（Notification API）は使わない（2026-09-23 ユーザー: 鈴の効果音は「入れない。orca の通知機能で十分」、知らせ方は「タイトルの印だけ」）
+
+## やること
+
+1. ターンが終わってから、利用者がそのタブを見る（`document.visibilityState` が `visible` になる・入力欄に触る）までの間だけ、タイトルに終わった印を付ける規則を決め、`docs/requirements.md` 4.2 に書く。答え待ちの `● ` と同時になったときはどちらを優先するか、失敗で終わったとき（T-446 が理由を出す）に印を変えるかも書く
+2. タイトルを書き換える場所を1つにする（いまの `dispatch.tsx` の `useEffect` を、答え待ちと終わりの両方を扱う形にする。置き場は `docs/design.md` 2章の基準で決める）
+
+## 完了条件
+
+- 答え待ち・終わった・見たあとのタイトルを確かめる部品のテストがある
+- Orca で別のタブを見ている間にターンが終わると、タブのタイトルに印が付き、tsukumo のタブに戻ると消えることを目視で確かめ、`evidence` に書く
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-470
+
+**タスク**: T-467 で見つけた古い参照3件（出力スタイルの規約・進行の置き場・迷子の句）を直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1788 pass / 0 fail、145ファイル）。grep の3件（レポートの組み立て方 / サイドバーが持つ / そのターンのものだけになる）はすべて0件
+3件目は指している句が正典に実在した: docs/display.md 4.2「吹き出し」の「今のターンの分を縦に積んで」へ session-state.ts のコメントの参照を向け直した
+副産物: docs/design.md の「speeches.slice(-1)（request で前のターンの最後の1件だけ残す）」は実装（次の speak で speechCalledInTurn を見て捨てる）と食い違うが範囲外で未修正
+
+## 背景
+
+T-467 で `docs/display.md` を削ったときに、実物と食い違う参照が見つかった（T-467 の範囲外だったので直していない）。
+
+1. `docs/display.md`「#### 出力の分離（セリフと詳細）」の箇条「**レポートの構造は出力スタイル側の規約で決める**（2026-09-12。正典は同ファイル「レポートの組み立て方」）」。同じファイルの「#### レポートの記法は、TUI と tsukumo で出し分ける」には、グローバルの `asuna.md` は TUI 向けに保って HTML の記法と mermaid / chart のフェンスを外したこと、tsukumo のレポートの記法と文体は `src/server/core/report-notation.ts` が決めることが書いてあり、上の箇条はその前の状態のまま残っている
+2. `src/browser/features/main-view/turn.tsx` 冒頭コメントの「進行はサイドバーが持つ」。進行（いま何をしているか）の区画は 2026-09-23 に帯の「いまの作業」へ移った（`docs/screen-design.md` 13.9 と 13.6 付近の「「いま何をしているか」の区画は 2026-09-23 に帯の「いまの作業」へ移した」）
+3. `src/shared/session-state.ts` 431行目付近のコメントが `docs/display.md` 4.2「次の speak が来た時点でそのターンのものだけになる」を引いているが、この句は `docs/` のどこにも無い（`git log -S` でも見つからず、最初から無かった可能性が高い）。指しているのは、吹き出しに出すセリフがターンごとに入れ替わる決まり（`speeches` を次のターンの最初の `speak` で捨てる）
+
+なお、ドラフトの時点で同じく迷子と見ていた 4.2「記録の時刻」は迷子ではない。`src` 側は `docs/design.md` 4.2「記録の時刻」を明示して引いており、`docs/screen-design.md` の素の「4.2」はそのファイルの読み替え（ファイル名なしの番号は `design.md` の節）で `design.md` を指す。直さない。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの承認: `develop/direction.md` のドラフト（T-467 で見つけた古い参照3件）に「いいよ」
+- 直すのは参照・コメントの指し先だけで、決定の中身は変えない
+
+## やること
+
+1. `docs/display.md` の1の箇条を、いまの置き場（tsukumo のレポートの記法は `src/server/core/report-notation.ts`、`asuna.md` は TUI 向け）に合わせて書き直す。同じ節の「レポートの記法は、TUI と tsukumo で出し分ける」と二重になる部分は、そちらへの参照に畳んでよい。**「図とグラフは同梱した mermaid / Chart.js で描く」「tsukumo 側で構造を推測・整形しない」「引用 `> ` は Markdown のまま描ける」など、同じ箇条にある他の決定は残す**
+2. `turn.tsx` のコメントを「進行は帯の「いまの作業」が持つ」の形に直す（`docs/screen-design.md` 13.9 を添える）
+3. 3の決まりが `docs/display.md`（吹き出しの項）か `docs/design.md` のどこに書いてあるかを探し、`session-state.ts` のコメントの参照をその見出し・句に向け直す。**どこにも書いていなければ**、コメントの参照を外して決まりそのものをコメントに1文で書き、`docs/display.md` の吹き出しの項に1行足すかどうかは足さずに evidence に「決まりの記述が正典に無い」と書いて閉じる
+
+## 完了条件
+
+- `grep -n 'レポートの組み立て方' docs/display.md` が0件
+- `grep -n 'サイドバーが持つ' src/browser/features/main-view/turn.tsx` が0件
+- `grep -rn 'そのターンのものだけになる' src` が0件か、指している句が `docs/` に実在する（どちらだったかを evidence に書く）
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' docs/display.md` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `~/.claude/output-styles/asuna.md` はリポジトリの外のグローバル設定なので触らない
+
+## T-472
+
+**タスク**: レポートの記法に「地の文の段落は3文まで」の条を足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+REPORT_NOTATION_PROMPT の「文のままでよいのは次のときだけ」の直後に「地の文の段落は3文まで。4文目は表・箇条書き・<details> へ」を足し（10か条は10のまま）、「送る前に消すもの」に検算の1行、JSDoc に量の上限と矛盾しない理由を書いた。
+docs/display.md 4.2「読む時間を減らすために足すのは、規約の側」に 2026-09-23 の段落の決定を1か所追記（見出し数 4 のまま）。
+test/server/core/report-notation.test.ts に2件追加。bun run check: 1790 pass / 0 fail（145ファイル）
+
+## 背景
+
+利用者の不満（2026-09-23）: レポートを読む時間が長い。症状は「根拠・補足が多すぎる」と「地の文が続いて構造が足りない」の2つ。
+
+`src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` は、量の上限を数で書かない（`docs/display.md` 4.2「読む時間を減らすために足すのは、規約の側」。長い調査の報告まで同じ長さに押し込めないため、2026-09-13 のユーザーの選択）。「文のままでよいのは次のときだけ」の3条件（一息（2〜3文）で言い切れる、など）はあるが、段落が続くことを止める条は無い。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの決定（`/grill-with-docs` の Q9）: **段落の単位にだけ数を入れる**。「地の文の段落は3文まで。4文目が要るなら表・箇条書き・`<details>` に移す」
+- 全体の量の上限は引き続き数で書かない（段落の上限は長い報告を押し込めるものではなく、地の文を構造へ移させるもの）
+
+## やること
+
+1. `REPORT_NOTATION_PROMPT` に上の条を足す。10か条のどれかに畳むか、表の前の「文のままでよいのは次のときだけ」の近くに置くかは、文面が重複しないほうを選ぶ（条の数を11に増やさずに済むなら増やさない）。「送る前に消すもの」に検算の1行を足す
+2. JSDoc に、段落の上限が「量の上限を数で書かない」決定とぶつからない理由を1〜2文で書く
+3. `docs/display.md` 4.2「#### 読む時間を減らすために足すのは、規約の側」の「**量の上限は数で書かない**」の近くに、段落の単位だけは数で書く（2026-09-23 決定）ことを1〜2文で足す
+4. `test/server/core/report-notation.test.ts` に、条が文面に入っていることの検査を足す
+
+## 完了条件
+
+- `REPORT_NOTATION_PROMPT` に「段落は3文まで」に当たる条と、`<details>` を逃がし先に挙げた文がある（テストで検査）
+- `docs/display.md` に 2026-09-23 の段落の決定が1か所ある
+- `bun run check` が通る
+
+## 注意
+
+- T-437（レポートの記法の語彙を shared に1つ置く）も同じファイルを触る。条の文面だけの変更なので語彙の表には触らない
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' docs/display.md` の数を確かめる
+- 規約の変更は次にプロセスを起こしたときから効く
+
+## T-479
+
+**タスク**: サイドバーのタスク一覧を main の develop/tasks.json から読む
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（145ファイル・1790件 pass / 0 fail）。test/server/adapter/task-summary.test.ts の6件が一時 git リポジトリ＋worktree で「main だけのコミットが merge していない worktree に届く」「worktree のファイル変更では通知しない」「main から消すと unknown・main ブランチ無し/非 git では通知しない」を確かめる。境界は task-summary.ts 自身（test/architecture.test.ts の許可に追加）
+
+## 背景
+
+サイドバーのタスク一覧は `src/server/adapter/task-summary.ts` の `watchTaskSummary` が作る。いまは起こした作業ツリー（`cwd`）の `develop/tasks.json` の mtime を1.5秒ごとに見て、変わったら読み直して `tasks-changed` にしている（呼び出しは `src/session-start.ts`）。
+
+一方、タスクの正典は `main` の `develop/tasks.json`（`CLAUDE.md`「## タスク運用」の「1サイクルの形」。`/next-task` の手順2も `git show main:develop/tasks.json` を読む）。このため、ある作業ツリーでタスクを足して `main` へ送っても、別の作業ツリーのサイドバーにはその作業ツリーが `git merge main` するまで出ない。一覧だけが正典を見ていない。
+
+JIRA などとの同期ボタンは作らない（2026-09-23 に会話で決定。同期も手作業のまま・正典が2つになる・外部への送信になる）。代わりに一覧が `main` を直接読むようにする。
+
+`git` は `src/server/adapter/repository-file.ts` が既に `execFile` で呼んでいるので、外部コマンドの依存は増えない。ただし `node:child_process` を import してよいファイルは `test/architecture.test.ts`「子プロセスを起こす箇所」が orca-host.ts・bundle.ts・repository-file.ts の3つに絞っている。
+
+## 決まっていること（蒸し返さない）
+
+- 一覧の読み元は `git show main:develop/tasks.json`。読み直す契機は `main` の先端（`git rev-parse main`）が変わったとき
+- 中身の解釈は `src/shared/task-summary.ts` の `readTaskSummaries` をそのまま使う
+- チケット管理システムとの連携は作らない
+
+## 解くべき論点
+
+- `git` を呼ぶ境界をどこに置くか: `task-summary.ts` 自身を `child_process` の許可に足すか、`main` の上のファイルを読む adapter を別に切るか（原則3「1ファイル = 1つの境界」と `test/architecture.test.ts` の許可の一覧）
+- `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`main` に `develop/tasks.json` が無い・`git` がタイムアウトした）の扱い。tsukumo は他のプロジェクトでも起こせるので、作業ツリーのファイルを読む今の挙動へ落とすか、`{ kind: "unknown" }` にするかを決め、理由をコメントに残す
+- ポーリングで毎回子プロセスを起こしてよいか（1.5秒ごとの `git rev-parse`）。重いなら間隔か契機を見直す
+
+## やること
+
+1. 上の論点を決める
+2. `watchTaskSummary` の読み元と読み直しの契機を `main` に変える（非同期の `execFile` を使い、ポーリングの中で `try`/`catch` を散らさない。失敗したその回は諦めて次へ進む）
+3. `test/server/adapter/task-summary.test.ts` を、一時ディレクトリに作った git リポジトリ（`main` ブランチあり）で確かめる形に直す。少なくとも「`main` にコミットすると一覧が変わる」「作業ツリーのファイルを書き換えただけでは変わらない」「`main` が読めないときに決めた扱いになる」の3つ
+4. 境界を足したなら `test/architecture.test.ts` の許可の一覧とコメントを直す
+5. `docs/design.md` の `### task-summary.ts（adapter）` 節と、ディレクトリ図の `task-summary.ts` の行（「develop/tasks.json の読み直し」）を実物に合わせる。ファイル冒頭のコメントも直す
+
+## 完了条件
+
+- `main` だけに入ったタスクの変更が、`git merge main` をしていない作業ツリーの `watchTaskSummary` から `tasks-changed` として届くことをテストが確かめている
+- `main` が読めない場合の扱いをテストが確かめている
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を直すときは「節の索引」の行に先に当たる。行頭から位置を特定し、`grep -c '^#\{2,3\} ' docs/design.md` が前後で合うことを確かめる
+- テストのフィクスチャに実物の `develop/tasks.json` を使わない（架空のタスクで作る）
+- 描画は変わらないので目視確認は要らない

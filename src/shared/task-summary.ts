@@ -3,7 +3,8 @@
 // develop/tasks.json は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは
 // 別物（`docs/workflow.md`「tasks.json のフィールド」）。ここは会話の内容を一切扱わない。
 //
-// ここはファイルI/Oを持たない。ファイルを読み、mtime を見て読み直すのは src/server/adapter/task-summary.ts。
+// ここはファイルI/Oを持たない。`main` の上のファイルを読み、`main` の先端が変わったら読み直すのは
+// src/server/adapter/task-summary.ts。
 
 import { isPlainObject } from "remeda"
 
@@ -27,7 +28,7 @@ export type TaskSummaryItem = {
  * develop/tasks.json の一覧が読めているかどうか。**「まだ届いていない」（session-state.ts の
  * 初期値）と「読めない」（ファイルが無い・JSONとして壊れている・トップレベルが配列でない）を
  * ここでは区別しない**——`watchTaskSummary`（`src/server/adapter/task-summary.ts`）は
- * ファイルが最初から無いときは初回の通知そのものを送らないので、その口だけでは
+ * `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは
  * 「まだ確認していない」と「確認して無かった」を型で分けられない。画面側もどちらも同じ
  * 「不明」表示にしていて対処が変わらないため、分けても情報が増えない
  * （`docs/coding-standards.md`「「無いかもしれない」値」）。

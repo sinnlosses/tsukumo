@@ -223,7 +223,7 @@ export type SessionEvent =
    */
   | { readonly kind: "model-changed"; readonly model: string }
   /**
-   * develop/tasks.json が変わった（core の `task-summary.ts` が mtime を見て起こす）。
+   * `main` の develop/tasks.json が変わった（adapter の `task-summary.ts` が `main` の先端を見て起こす）。
    * ファイルが読めない・消えたときは `tasks: { kind: "unknown" }`（サイドバーの「不明」表示に
    * 対応する。`src/shared/task-summary.ts` の {@link TaskSummaryResult}）。
    */
