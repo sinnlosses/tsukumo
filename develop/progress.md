@@ -59,6 +59,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `character-changed` の `packs` を `CharacterPackEntry`（姿・使用中か・消せるか）に広げ、`event()` のたびに一覧を読み直す。素材の URL は使用中も含めて `/character/<pack>/<file>?v=<revision>` に揃え、パック名は一覧と突き合わせるだけでパスには使わない（`docs/design.md` 7.2。`deletable` は T-492 まで全部 false）。
 
+### 2026-09-23 report の本文から、意味を変えずに落とせる行を落として描くようにした（T-488）
+
+`src/shared/report-tidy.ts` を `main-view.ts` の `reportMarkdown` で `body` に掛け、冒頭の `conclusion` の繰り返し・定型だけの行（閉じた一覧との丸ごとの一致）・中身の無い見出しを落とす。検査（T-487）との分担は「直すのに書き直しが要るか」で、記録は引数のまま持つので復元したやり取りにも効く。
+
+### 2026-09-23 雑談のセリフを全文でポンと出し、吹き出しどうしを2秒空けた（T-485）
+
+1文字ずつ育てる `use-speech-growth.ts` を消し、`use-speech-reveal.ts` が「出してよい前置き」を毎レンダー計算する形にした（キャラクターの吹き出しだけ前の1つから2秒のゲートを見る）。現れる瞬間に 0.2 秒だけ弾む CSS を足し、遡り・自動スクロール・立ち絵の表情はすべて「出した吹き出し」で数える。
+
 ### 2026-09-23 report の引数を規約で検査し、違反を戻り値で返して書き直させるようにした（T-487）
 
 機械で判定できる7条を `src/server/core/report-violation.ts` で検査し、`report` の handler が違反を `isError` で返す（1ターン1回まで。前置き・締めの定型の行は誤検知が多いので採らなかった）。`report` イベントは同じ呼び出しの `tool-finished` まで `report-review.ts` が預かり、差し戻したものは描かない（セッションの復元でも同じ）。

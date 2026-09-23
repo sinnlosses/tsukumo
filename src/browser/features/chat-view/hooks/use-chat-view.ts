@@ -1,9 +1,9 @@
 // `<ChatView>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 立ち絵に出す表情（押して留めた行か、最新か）、ログに並べる行（日の区切り・時刻・印・育つ行を
-// 畳んだもの）、「...」を出すか、立ち絵をつついたときの送り先を組み立てて返す。
+// 立ち絵に出す表情（押して留めた行か、出した吹き出しか）、ログに並べる行（日の区切り・時刻・印・
+// 弾む行を畳んだもの）、「...」を出すか、立ち絵をつついたときの送り先を組み立てて返す。
 //
-// **行を押して遡る・印・育つ行・「...」の決め方**は docs/screen-design.md 13.7。ここはそれを
-// 「部品がそのまま置ける値」へ畳むだけで、部品（`components/`）は判定を持たない。
+// **行を押して遡る・印・出すタイミング・「...」の決め方**は docs/screen-design.md 13.7。ここは
+// それを「部品がそのまま置ける値」へ畳むだけで、部品（`components/`）は判定を持たない。
 
 import { useState, type RefObject } from "react"
 
@@ -14,6 +14,7 @@ import { type RecordTime } from "../../../../shared/session-state.ts"
 import { portraitAppearance } from "../../../domain/portrait-appearance.ts"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { clockDateTime, clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
+import { useRevealedChatLog } from "./use-speech-reveal.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"
 
 /** 日の区切りに出す曜日（`Temporal.PlainDate.dayOfWeek` は月曜が 1、日曜が 7）。 */
@@ -50,8 +51,8 @@ export type ChatRow =
       readonly text: string
       /** 印を付ける行（= 立ち絵が従っている行）か。 */
       readonly selected: boolean
-      /** 育てる行（docs/screen-design.md 13.7「末尾のセリフは育つ」）か。 */
-      readonly grow: boolean
+      /** 現れるとき短く弾む行（docs/screen-design.md 13.7「セリフは全文で現れ、吹き出しは2秒空ける」）か。 */
+      readonly pop: boolean
       readonly time: ChatTimeStamp
       readonly onToggle: () => void
     }
@@ -108,35 +109,48 @@ export function useChatView(): ChatViewModel {
   const dispatch = useSessionDispatch()
   const entries = chatLogEntries(records)
   const outfit = resolveOutfit(model)
-  const logRef = useStickToBottom(entries.length)
+  // **ログに並べるのは、出してよいと決まった前置きだけ**（docs/screen-design.md 13.7「セリフは
+  // 全文で現れ、吹き出しは2秒空ける」）。以下の遡り・自動スクロール・表情はすべてこの
+  // `shown` を見る——出していない行を先に選べたり、自動スクロールが先取りしたりしないように。
+  const { entries: shown, pending } = useRevealedChatLog(entries)
+  const logRef = useStickToBottom(shown.length)
 
-  // 立ち絵がいま従っているセリフ。押していなければ「最新」で、印は最新のセリフの行に付く。
-  // **新しいセリフが来たら留めた選択はその場で失効する** — 立ち絵は常に「いまのセリフ」を
-  // 表す側へ倒す。読み返しの最中でも下へ攫わないスクロールの規則（`use-stick-to-bottom.ts`）
-  // とは**揃えない**: 流れていった行の印は画面の外にあるので、表情だけが遡ったまま動かないと、
-  // なぜ古いのかが画面から分からなくなる。
+  // 現れるとき短く弾む行（docs/screen-design.md 13.7）。**弾むのは画面を開いたあとに届いた
+  // 記録だけ**で、開いた時点で並んでいた記録（前の雑談の続き）には掛からない——遡って読む
+  // ためのログが、開くたびに弾みながら組み上がることにならないように。
+  const [initialCount] = useState(entries.length)
+
+  // 立ち絵がいま従っているセリフ。押していなければ「最新（出した吹き出し）」で、印は
+  // 最新のセリフの行に付く。**新しいセリフが来たら留めた選択はその場で失効する** — 立ち絵は
+  // 常に「いまのセリフ」を表す側へ倒す。読み返しの最中でも下へ攫わないスクロールの規則
+  // （`use-stick-to-bottom.ts`）とは**揃えない**: 流れていった行の印は画面の外にあるので、
+  // 表情だけが遡ったまま動かないと、なぜ古いのかが画面から分からなくなる。
   //
   // 失効は effect で追いかけず、**レンダー中に件数を突き合わせて決める**（state から計算できる値。
-  // docs/coding-standards.md「useEffect の代わりに使うもの」）。
+  // docs/coding-standards.md「useEffect の代わりに使うもの」）。**件数は `shown` で数える**
+  // （待たせている間は、まだ画面に出ていないセリフぶんで先に失効させない）。
   const [viewed, setViewed] = useState<ViewedSpeech>({ kind: "latest" })
-  const speechCount = countSpeeches(entries)
+  const speechCount = countSpeeches(shown)
   const pinnedIndex = pinnedSpeechIndex(viewed, speechCount)
-  const latestSpeechIndex = lastSpeechIndex(entries)
+  const shownSpeechIndex = lastSpeechIndex(shown)
   // 印を付ける行 = 立ち絵が従っている行（docs/screen-design.md 13.7）。留めていなければ最新のセリフ。
-  const selectedIndex = pinnedIndex ?? latestSpeechIndex
-  // 育てる行（docs/screen-design.md 13.7「末尾のセリフは育つ」）。**育つのは画面を開いたあとに届いた
-  // セリフだけ**で、開いた時点で並んでいた記録（前の雑談の続き）には掛からない——遡って読む
-  // ためのログが、開くたびに端から書き直されることになる。
-  const [initialSpeechCount] = useState(speechCount)
-  const growingIndex = speechCount > initialSpeechCount ? latestSpeechIndex : undefined
+  const selectedIndex = pinnedIndex ?? shownSpeechIndex
   // **`SessionState` に新しい旗は増やさない** — 今のターンでまだ `speak` が呼ばれていないかは
-  // `speechCalledInTurn` が既に持っている。
-  const showTyping = turnInProgress && !speechCalledInTurn
-  // 表情は「留めた行 → 最新」の順に決まる（docs/screen-design.md 13.7）。
-  // **留めていないときに読むのは `speechExpression`** で、最新の行の表情ではない —
-  // 次のターンが始まると `speak` が来るまで既定へ戻る（キャラビューと同じ扱い。表情の源は
-  // `speak` の1つだけ。docs/requirements.md 4.3）。印はその間も最新のセリフの行に残る。
-  const expression = speechExpressionAt(entries, pinnedIndex) ?? speechExpression
+  // `speechCalledInTurn` が既に持っている。**待たせているセリフが残っているあいだも出す**
+  // （ターンが終わっていても、まだ出していない吹き出しがあれば「まだ喋ってくれる」の合図を
+  // 続ける）。
+  const showTyping = (turnInProgress && !speechCalledInTurn) || pending
+  // 表情は「留めた行 → 出した吹き出し」の順に決まる（docs/screen-design.md 13.7）。
+  // **留めていないときも `speechExpression`（届いた最新）をそのまま読まない** — 待たせている
+  // 間は、届いたセリフではなく**すでに出した吹き出し**の表情のままにする。ただし**新しいターンの
+  // 始まり（まだ何も話していない）は、待っている吹き出しがあっても構わず既定へ戻す**
+  // （キャラビューと同じ扱い。`speechExpression` は `beginTurn` でここだけ即座に既定へ戻るので、
+  // そのまま使ってよい）。
+  const shownExpression =
+    turnInProgress && !speechCalledInTurn
+      ? speechExpression
+      : (speechExpressionAt(shown, shownSpeechIndex) ?? speechExpression)
+  const expression = speechExpressionAt(shown, pinnedIndex) ?? shownExpression
 
   function toggle(index: number): void {
     // **留めた行をもう一度押したら「最新」へ戻す**（新しいセリフを待たずに追従へ戻す道）。
@@ -159,9 +173,9 @@ export function useChatView(): ChatViewModel {
     },
     logRef,
     // 日の境目と行ごとの時刻は、画面を見ている人のタイムゾーンで決める。
-    rows: chatRows(entries, localTimeZoneId(), selectedIndex, growingIndex, toggle),
+    rows: chatRows(shown, localTimeZoneId(), selectedIndex, initialCount, toggle),
     showTyping,
-    showEmptyMessage: entries.length === 0 && !showTyping,
+    showEmptyMessage: shown.length === 0 && !showTyping,
   }
 }
 
@@ -173,7 +187,7 @@ function chatRows(
   entries: readonly ChatLogEntry[],
   timeZone: string,
   selectedIndex: number | undefined,
-  growingIndex: number | undefined,
+  initialCount: number,
   onToggle: (index: number) => void,
 ): readonly ChatRow[] {
   return chatLogRows(entries, timeZone).map((row): ChatRow => {
@@ -196,7 +210,7 @@ function chatRows(
           key,
           text: entry.text,
           selected: index === selectedIndex,
-          grow: index === growingIndex,
+          pop: index >= initialCount,
           time: timeStamp(entry.time, timeZone),
           onToggle: () => {
             onToggle(index)
