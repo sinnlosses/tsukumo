@@ -9,12 +9,10 @@ import {
   NEW_SESSION_ENV_NAME,
   OPEN_VIEW_ENV_NAME,
   VIEW_PORT_ENV_NAME,
+  VIEW_PORT_FALLBACK_BASE_ENV_NAME,
   WATCH_UI_ENV_NAME,
 } from "../src/server/core/config.ts"
-import {
-  DEFAULT_VIEW_PORT,
-  VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "../src/server/core/port-resolution.ts"
+import { MAX_PORT_NUMBER, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/server/core/port-resolution.ts"
 
 // **このファイルは CLI を起動しきらないものだけを扱う。**
 // 起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
@@ -42,6 +40,7 @@ const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname
  */
 const CLI_ENV_NAMES: ReadonlySet<string> = new Set([
   VIEW_PORT_ENV_NAME,
+  VIEW_PORT_FALLBACK_BASE_ENV_NAME,
   CHARACTER_ENV_NAME,
   OPEN_VIEW_ENV_NAME,
   DRIVER_ENV_NAME,
@@ -91,6 +90,38 @@ function closeNetServer(server: NetServer): Promise<void> {
   return new Promise((resolve) => server.close(() => resolve()))
 }
 
+/** {@link holdFallbackBand} が帯を選び直す回数の上限。 */
+const MAX_BAND_PICKS = 10
+
+/**
+ * `VIEW_PORT_FALLBACK_ATTEMPTS` 個の連続したポートを**すべて自分で握った**私的な帯を返す。
+ * 起点は OS に選ばせたエフェメラルポートで、実際の `DEFAULT_VIEW_PORT`（7327〜）は使わない。
+ * よそが1つでも握っていた帯は手放して選び直す——よその握りはテストの途中で離されうるので、
+ * 「塞がっている」の前提にならない。
+ */
+async function holdFallbackBand(): Promise<{
+  readonly anchor: number
+  readonly blockers: readonly NetServer[]
+}> {
+  for (let pick = 0; pick < MAX_BAND_PICKS; pick++) {
+    const probe = await listenOnEphemeralPort()
+    const anchor = portOf(probe)
+    await closeNetServer(probe)
+    if (anchor + VIEW_PORT_FALLBACK_ATTEMPTS - 1 > MAX_PORT_NUMBER) {
+      continue
+    }
+    const held = await Promise.all(
+      Array.from({ length: VIEW_PORT_FALLBACK_ATTEMPTS }, (_, i) => listenOnPortIfFree(anchor + i)),
+    )
+    const blockers = held.filter((server): server is NetServer => server !== undefined)
+    if (blockers.length === VIEW_PORT_FALLBACK_ATTEMPTS) {
+      return { anchor, blockers }
+    }
+    await Promise.all(blockers.map(closeNetServer))
+  }
+  throw new Error(`連続した ${String(VIEW_PORT_FALLBACK_ATTEMPTS)} 個の空きポートを握れない`)
+}
+
 describe("tsukumo CLI", () => {
   it("ポート番号として読めない設定のとき、理由を伝えて終了コード1で終わる", () => {
     const result = runCliToExit([], { TSUKUMO_VIEW_PORT: "ぜんぶ" })
@@ -127,20 +158,15 @@ describe("tsukumo CLI", () => {
   })
 
   it("既定ポートから上限まで全部塞がっていると、試した範囲を伝えて終了コード1で終わる", async () => {
-    const blockers: NetServer[] = []
+    // 実際の既定の帯はほかの作業ツリーの tsukumo やテストと共有なので塞がない（ポートは
+    // 作業ツリーで分かれない）。TSUKUMO_VIEW_PORT_FALLBACK_BASE で起点を私的な帯へずらす。
+    const { anchor, blockers } = await holdFallbackBand()
     try {
-      for (let i = 0; i < VIEW_PORT_FALLBACK_ATTEMPTS; i++) {
-        const server = await listenOnPortIfFree(DEFAULT_VIEW_PORT + i)
-        if (server !== undefined) {
-          blockers.push(server)
-        }
-      }
-
-      const result = runCliToExit([], {})
+      const result = runCliToExit([], { TSUKUMO_VIEW_PORT_FALLBACK_BASE: String(anchor) })
 
       expect(result.status).toBe(1)
-      expect(result.stderr).toContain(String(DEFAULT_VIEW_PORT))
-      expect(result.stderr).toContain(String(DEFAULT_VIEW_PORT + VIEW_PORT_FALLBACK_ATTEMPTS - 1))
+      expect(result.stderr).toContain(String(anchor))
+      expect(result.stderr).toContain(String(anchor + VIEW_PORT_FALLBACK_ATTEMPTS - 1))
     } finally {
       for (const server of blockers) {
         await closeNetServer(server)

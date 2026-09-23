@@ -12,6 +12,17 @@ import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "./port-resolution.ts"
 
 /** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
+/**
+ * `TSUKUMO_VIEW_PORT` が未設定のときに使う既定ポートの起点を差し替える（既定は
+ * {@link DEFAULT_VIEW_PORT}。読めない値は無視してそのまま {@link DEFAULT_VIEW_PORT} を使う
+ * ——`TSUKUMO_VIEW_PORT` と違い、ここでは起動を止めない。{@link resolveViewPortFallbackBase}）。
+ * `TSUKUMO_VIEW_PORT` を明示したときは効かない（既定を使うときだけの上書きのため）。
+ *
+ * 実際の既定ポート帯（`DEFAULT_VIEW_PORT`〜+19）はほかの tsukumo が普段使っているので、
+ * そこを丸ごと塞いで「全部塞がっている」経路を確かめるテスト（test/cli.test.ts）はそこを
+ * 使えない。この口で起点をテストごとの私的な帯へ逃がす。
+ */
+export const VIEW_PORT_FALLBACK_BASE_ENV_NAME = "TSUKUMO_VIEW_PORT_FALLBACK_BASE"
 /** キャラクターパック定義ディレクトリのパス（相対は cwd 相対、絶対はそのまま）。 */
 export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 /** 起動時にタブを自動で開くか（`0` のときだけ開かない）。 */
@@ -61,6 +72,11 @@ export type Config = {
    * ずらす判断は src/server/core/port-resolution.ts が持つ）。
    */
   readonly rawViewPort: string | undefined
+  /**
+   * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値。**ここでは数として解釈しない**
+   * （{@link resolveViewPortFallbackBase} が読み解く）。
+   */
+  readonly rawViewPortFallbackBase: string | undefined
   /** キャラクターの指定（未設定なら undefined ＝ 同梱の既定を使う）。 */
   readonly character: string | undefined
   readonly openView: boolean
@@ -87,6 +103,7 @@ export type Config = {
 export function readConfig(env: Readonly<Record<string, string | undefined>>): Config {
   return {
     rawViewPort: env[VIEW_PORT_ENV_NAME],
+    rawViewPortFallbackBase: env[VIEW_PORT_FALLBACK_BASE_ENV_NAME],
     character: nonEmpty(env[CHARACTER_ENV_NAME]),
     openView: env[OPEN_VIEW_ENV_NAME]?.trim() !== "0",
     driver: env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk",

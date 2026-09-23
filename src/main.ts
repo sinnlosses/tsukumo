@@ -20,7 +20,7 @@ import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createTokenUsageLog } from "./server/adapter/token-usage-log.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { type Host } from "./server/core/host.ts"
-import { resolveViewPort } from "./server/core/port-resolution.ts"
+import { resolveViewPort, resolveViewPortFallbackBase } from "./server/core/port-resolution.ts"
 import { createPromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import { startSession } from "./session-start.ts"
 import { startViewDelivery } from "./view-delivery.ts"
@@ -31,7 +31,10 @@ import { startViewDelivery } from "./view-delivery.ts"
  */
 export async function run(config: Config): Promise<number> {
   // 起動時に前提（ポート番号として読める）が満たされていないときだけ即時終了する。
-  const portResolution = resolveViewPort(config.rawViewPort)
+  const portResolution = resolveViewPort(
+    config.rawViewPort,
+    resolveViewPortFallbackBase(config.rawViewPortFallbackBase),
+  )
   if (portResolution.kind === "invalid") {
     process.stderr.write(`tsukumo: ${VIEW_PORT_ENV_NAME} がポート番号として読めない\n`)
     return 1
