@@ -15,7 +15,7 @@ import {
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
-import { requestRecord, speechRecord } from "../../../fixture/session-record.ts"
+import { requestRecord, speechRecord, toolRecord } from "../../../fixture/session-record.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
@@ -79,15 +79,7 @@ describe("CharacterView", () => {
     renderCharacterView({
       speeches: ["さっき言ったセリフ"],
       speechExpression: "proud",
-      runningTools: [
-        {
-          toolUseId: "toolu_1",
-          name: "Read",
-          input: {},
-          nested: false,
-          failureOutput: undefined,
-        },
-      ],
+      records: [requestRecord(), toolRecord({ toolUseId: "toolu_1", name: "Read", input: {} })],
       character: {
         ...FIXTURE_CHARACTER,
         expressions: [

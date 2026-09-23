@@ -1,8 +1,8 @@
 /* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
    **全画面の最上部に1本**。左端に部屋の名前、その右に仕事/雑談のトグル、その右に3つの口
-   （会話 / キャラクター / トークン消費）、右端にモデル・許可モードのドロップダウンと答え待ちの印。
-   高さは `--screen-nav-height`（30px）で、**同じ値を `<Layout>` も読む**（帯と gap のぶんだけ
-   grid を縮めるため。layout.module.css）。
+   （会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、右端にモデル・許可モードの
+   ドロップダウン。高さは `--screen-nav-height`（30px）で、**同じ値を `<Layout>` も読む**
+   （帯と gap のぶんだけ grid を縮めるため。layout.module.css）。
 
    **口の見た目は狭い画面のタブ（`.layout-tab`）に合わせる**（押せる高さ・丸い枠）。
    いま出している画面の口は枠の色だけでなく**地の濃さと字の濃さも変える**（色だけで伝えない。
@@ -93,15 +93,189 @@
   background: var(--surface-accent);
   color: var(--ink);
 }
-/* モデル・許可モードのドロップダウン（13.9「動き方の操作子」）。右端へ寄せる
-   （残りの幅はここが吸うので、口は左に詰まったまま）。**区切りの記号は置かず**、等幅と本文書体の
-   交替で区切る（13.1 原則3）。 */
+/* いまの作業の札（13.9「いまの作業」）。**5（3つの口）の右に置き、幅が足りないときに
+   最初に縮む**——モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない
+   （下の .screen-nav-model-permission）。`position: relative` は一覧（.screen-nav-work-list）を
+   この札の真下に重ねるための基準。 */
+.screen-nav-work {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.screen-nav-work-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 100%;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-secondary);
+  line-height: 1.4;
+  cursor: pointer;
+}
+.screen-nav-work-mark {
+  flex: none;
+}
+.screen-nav-work-word {
+  flex: none;
+  white-space: nowrap;
+}
+.screen-nav-work-sep {
+  flex: none;
+  color: var(--rule);
+}
+/* 実行中の手順の要約だけを縮める（**要約の末尾が「…」になる**。13.9「帯の要素」）。 */
+.screen-nav-work-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+/* 状態の語ごとの色（13.9「いまの作業」の表。**色だけで伝えない**——語そのものが状態を言う）。 */
+.screen-nav-work[data-work-state="stopped"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="stopped"] .screen-nav-work-word {
+  color: var(--state-ng);
+}
+.screen-nav-work[data-work-state="pending"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="pending"] .screen-nav-work-word {
+  color: var(--state-warn);
+}
+.screen-nav-work[data-work-state="running"] .screen-nav-work-toggle {
+  border-color: var(--accent);
+}
+.screen-nav-work[data-work-state="running"] .screen-nav-work-mark {
+  color: var(--accent);
+}
+/* 依頼待ちは印を中抜き（○）にした上で、字も控えめにする。 */
+.screen-nav-work[data-work-state="idle"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="idle"] .screen-nav-work-word {
+  color: var(--ink-quiet);
+}
+/* 依頼の手順の一覧。**札の真下に重ねる**（下の領域を押し下げない。13.9）。
+   幅の上限 36rem・高さの上限は画面の 70% で、超えたら内側でスクロールする。 */
+.screen-nav-work-list {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  z-index: 21;
+  width: max-content;
+  max-width: 36rem;
+  max-height: 70dvh;
+  overflow-y: auto;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  font-size: var(--font-secondary);
+}
+.screen-nav-work-heading {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+}
+.screen-nav-work-full {
+  margin: 0 0 0.5rem;
+}
+.screen-nav-work-full-heading {
+  margin: 0 0 0.2rem;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-full-text,
+.screen-nav-work-failure pre {
+  margin: 0;
+  padding: 0.4rem;
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: 0.4rem;
+  background: var(--ground);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.screen-nav-work-steps-heading {
+  margin: 0.4rem 0 0.2rem;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+}
+/* サブエージェントの中は1段下げる（もと `sidebar/activity.tsx` の `.activity-nested`）。 */
+.screen-nav-work-step-nested {
+  margin-left: 1rem;
+}
+/* 済みは薄く、実行中は普通の濃さ（いまのサイドバーと同じ。13.9「依頼の手順の一覧」）。 */
+.screen-nav-work-step-done {
+  color: var(--ink-quiet);
+}
+.screen-nav-work-step-failed {
+  color: var(--ink);
+}
+.screen-nav-work-step-mark {
+  display: inline-block;
+}
+/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では止める。13.9）。 */
+.screen-nav-work-step-running .screen-nav-work-step-mark {
+  animation: screen-nav-work-spin 1s linear infinite;
+}
+@keyframes screen-nav-work-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.screen-nav-work-empty {
+  margin: 0;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-toggle-all {
+  margin-top: 0.4rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+/* 失敗した手順の中身（もと `sidebar/activity.tsx` の `.activity-failure*`）。印は文字
+   （「失敗」）で、色はその補助（13.1 原則5）。 */
+.screen-nav-work-failure > summary {
+  cursor: pointer;
+}
+.screen-nav-work-failure-mark {
+  color: var(--state-ng);
+  font-weight: 600;
+}
+.screen-nav-work-failure-output {
+  border: 1px solid var(--state-ng);
+}
+.screen-nav-work-failure-input {
+  border: none;
+}
+/* モデル・許可モードのドロップダウン（13.9「動き方の操作子」）。**右端へ寄せるだけで
+   縮めない**（幅が足りないときに最初に縮むのは、左にある「いまの作業」の札。上）。
+   **区切りの記号は置かず**、等幅と本文書体の交替で区切る（13.1 原則3）。 */
 .screen-nav-model-permission {
   display: flex;
-  flex: 1;
+  flex: none;
   align-items: center;
   justify-content: flex-end;
   gap: 0.3rem;
+  margin-left: auto;
   min-width: 0;
 }
 /* 部品は `components/select.tsx` の素の `<select>` のまま。見た目だけ帯に合わせる
@@ -131,14 +305,6 @@
   border-color: var(--state-ng);
   color: var(--state-ng);
 }
-/* 答え待ちの印は帯の右端（13.9。もとはキャラクター画面とトークン消費の画面の戻る口の横に
-   あった）。**色だけにしない**ので字も出す。 */
-.screen-nav-pending {
-  margin-left: 0.5rem;
-  color: var(--state-warn);
-  font-size: var(--font-label);
-  white-space: nowrap;
-}
 /* 「≡」は狭い画面だけの口。広い画面では3つの口がそのまま並ぶので出さない。 */
 .screen-nav-menu {
   display: none;
@@ -161,12 +327,12 @@
     height: auto;
     margin-bottom: 0.5rem;
   }
-  /* 並んだ3つの口・トグル・ドロップダウン・帯の右端の印・左端の部屋の名前は「≡」の中へ移る。 */
+  /* 並んだ3つの口・トグル・いまの作業の札・ドロップダウン・左端の部屋の名前は「≡」の中へ移る。 */
   .screen-nav-gates,
   .screen-nav > .screen-nav-room,
   .screen-nav > .screen-nav-chat-mode,
-  .screen-nav > .screen-nav-model-permission,
-  .screen-nav > .screen-nav-pending {
+  .screen-nav > .screen-nav-work,
+  .screen-nav > .screen-nav-model-permission {
     display: none;
   }
   .screen-nav-menu {
@@ -220,13 +386,27 @@
     margin-right: 0;
     text-align: center;
   }
-  .screen-nav-panel .screen-nav-pending {
-    margin-left: 0;
-    text-align: center;
-  }
   /* 落ちてくる面ではドロップダウンを縦に積む（横に並べる幅が無い）。 */
   .screen-nav-panel .screen-nav-model-permission {
     flex-direction: column;
     margin-left: 0;
+  }
+  /* いまの作業の札は面いっぱいの幅にし、押すと**重ねずにその場で下に広がる**
+     （13.9「狭い画面」。段を増やさない）。**`.screen-nav-work` は既定で横並びの flex**
+     （広い画面では一覧が `position: absolute` で外れるので影響しないが、狭い画面は
+     `position: static` にする分、`flex-direction: column` にしないと札の右に並んでしまう）。 */
+  .screen-nav-panel .screen-nav-work {
+    width: 100%;
+    flex-direction: column;
+  }
+  .screen-nav-panel .screen-nav-work-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+  .screen-nav-panel .screen-nav-work-list {
+    position: static;
+    width: 100%;
+    max-width: none;
+    margin-top: 0.3rem;
   }
 }

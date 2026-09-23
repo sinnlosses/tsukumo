@@ -275,15 +275,6 @@ describe("applySessionEvent", () => {
     )
 
     expect(running.speechExpression).toBe("proud")
-    expect(running.runningTools).toEqual([
-      {
-        toolUseId: "toolu_1",
-        name: "Read",
-        input: {},
-        nested: false,
-        failureOutput: undefined,
-      },
-    ])
 
     const finished = applySessionEvent(
       running,
@@ -293,82 +284,6 @@ describe("applySessionEvent", () => {
 
     // どれだけ時間が経っても（ツールが長く走っても、終わったあとも）表情は変わらない。
     expect(finished.speechExpression).toBe("proud")
-    expect(finished.runningTools).toEqual([])
-    expect(finished.finishedTools).toEqual([
-      {
-        toolUseId: "toolu_1",
-        name: "Read",
-        input: {},
-        nested: false,
-        failureOutput: undefined,
-      },
-    ])
-  })
-
-  it("失敗して終わったツールは出力を failureOutput に残す（サイドバーで開いて読むため）", () => {
-    const running = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      {
-        kind: "tool-started",
-        toolUseId: "toolu_1",
-        name: "Bash",
-        input: { command: "架空" },
-        parentToolUseId: undefined,
-      },
-      0,
-    )
-    const failed = applySessionEvent(
-      running,
-      {
-        kind: "tool-finished",
-        toolUseId: "toolu_1",
-        content: "架空のエラー出力",
-        isError: true,
-      },
-      1000,
-    )
-
-    expect(failed.finishedTools[0]?.failureOutput).toBe("架空のエラー出力")
-  })
-
-  it("サブエージェントの中のツール（parentToolUseId あり）は nested として持つ", () => {
-    const running = apply({
-      kind: "tool-started",
-      toolUseId: "toolu_1",
-      name: "Bash",
-      input: {},
-      parentToolUseId: "toolu_agent",
-    })
-
-    expect(running.runningTools).toEqual([
-      {
-        toolUseId: "toolu_1",
-        name: "Bash",
-        input: {},
-        nested: true,
-        failureOutput: undefined,
-      },
-    ])
-  })
-
-  it("finishedTools は6件来たら6件とも残す（5件に絞らない。並びは自前でスクロールする）", () => {
-    const events = Array.from({ length: 6 }, (_unused, index): SessionEvent[] => {
-      const toolUseId = `toolu_${String(index)}`
-      return [
-        {
-          kind: "tool-started",
-          toolUseId,
-          name: "Read",
-          input: {},
-          parentToolUseId: undefined,
-        },
-        { kind: "tool-finished", toolUseId, content: "ダミーの結果", isError: false },
-      ]
-    }).flat()
-
-    const view = apply(...events)
-
-    expect(view.finishedTools).toHaveLength(6)
   })
 
   it("結果が届くまでのツールの記録は running", () => {
@@ -534,7 +449,7 @@ describe("applySessionEvent", () => {
     expect(view.model).toBe("sonnet")
   })
 
-  it("セッションが終わると理由を持ち、実行中のツールを空にする", () => {
+  it("セッションが終わると理由を持つ（実行中のツールを一覧から落とすのは currentTurnSteps の仕事。test/shared/turn-step.test.ts）", () => {
     const view = apply(
       {
         kind: "tool-started",
@@ -547,7 +462,6 @@ describe("applySessionEvent", () => {
     )
 
     expect(view.endedReason).toBe("セッションが終了した")
-    expect(view.runningTools).toEqual([])
   })
 
   it("request でターンが進行中になり、turn-finished で止まる（入力欄の送信/中断の切り替えに使う）", () => {
