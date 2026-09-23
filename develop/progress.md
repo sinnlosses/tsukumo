@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 メインビューで遡れるやり取りを20件へ広げた（T-400）
+
+`MAX_MAIN_VIEW_TURNS` を 5 の直書きから `MAX_SESSION_STATE_TURNS.work`（20）の導出に変え、「メインビューの窓 ≤ 記録の窓」という関係を2つの定数の間ではなく1本の式で保つようにした。`docs/requirements.md` 4.7 と `docs/design.md` の「直近5件」も20件に直した。
+
 ### 2026-09-23 答え待ちの質問をメインビューの札へ移し、自由入力を入力欄に寄せた（T-407）
 
 質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
