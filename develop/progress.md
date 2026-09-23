@@ -75,30 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 節の番号 `4.9` のまま移し、`requirements.md` は 1979→1330 行。`requirements.md 4.9` への参照114件を一括置換し、`docs/history/` の78件は据え置いた。削るのは T-465。
 
-### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
-
-`newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
-
-### 2026-09-23 レポートの演出の7ファイルを main-view の中にまとめた（T-441）
-
-3つの箱に散っていた筆の演出を `features/main-view/reveal/` へ集め、`stores/brush-tip.ts` も読み手が1機能だけなのでそこへ下ろした。`docs/design.md` 2章に「機能の中に概念の名前のディレクトリを置いてよい条件」を書いた。
-
-### 2026-09-23 main-view の部品を T-442 の基準で container/presenter に割った（T-443）
-
-6部品に基準を当て、3種そろう `turn-header` と `question-record` を3分割、2種の `main-view` と `question-ask` は外に触るフックだけ `hooks/` へ出し、1種の `mini-portrait` と `turn` は割らなかった。画面の振る舞いは変えていない。
-
-### 2026-09-23 SessionHost の閉包から世代の持ち物・副作用・コマンドの振り分けを分けた（T-427）
-
-世代ごとの持ち物を `SessionGeneration` に畳み、`restart` は `generation = startGeneration(request)` の1行で丸ごと作り直す形にした。`receive` の副作用は `chat-compact` / `token-usage` / `context-usage` と新規の `event-batch.ts` / `chat-archive-entry.ts` へ寄せ、`session-manager.ts` は 801行 → 556行に。テストは期待値を1文字も変えずに通っている（`session-manager.test.ts` は差分ゼロ）。
-
-### 2026-09-23 SDK の設定に language: japanese を渡し、催促への返事が英語に滑らないようにした（T-460）
-
-締めの並びを反転したあとも空の応答で終えたときの保険として、`buildQuerySeedOptions` に固定の `language: "japanese"` を足した。`--settings` の有無で user の hooks の実行回数が変わらないことを本体の `--debug` で確かめた。
-
-### 2026-09-23 use-composer.ts から補完と画像の添付を別のフックに分けた（T-444）
-
-420行の `useComposer` を223行にし、補完を `use-suggestion.ts`、画像の添付を `use-prompt-image.ts` へ出した。入力欄の振る舞いは変えていない。
-
 ## 未解決
 
 - **雑談モードでは `speak` で終える並びが残り、英語の催促の入口も残っている**（2026-09-23 の T-459 で判明）。雑談は本文を書かない決まりなので、仕事の側の反転がそのまま当てはまらない。塞ぐなら雑談の終え方を別に決める話
