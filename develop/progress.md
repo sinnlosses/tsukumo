@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 ターンの締め方の条を report-notation.ts に寄せ、persona.md は言い回しだけにした（T-471）
+
+2つの `persona.md` の節を「締めのセリフの言い方」にして言い回しの例と正典への参照だけを残し、`docs/display.md` のセリフの規約の正典を `speech-cadence.ts`・`report-notation.ts`・`persona.md` の3分割に書き直した（`asuna.md` は TUI 向け）。ホームの `~/.tsukumo/characters/tsukumo/persona.md` は旧文面のままで、揃えるのは利用者に預けた。
+
 ### 2026-09-23 レポートの記法に「地の文の段落は3文まで」の条を足した（T-472）
 
 4文目が要るなら表・箇条書き・`<details>` へ移す条を `REPORT_NOTATION_PROMPT` と「送る前に消すもの」に足し、`docs/display.md` 4.2 に段落の単位だけは数で縛る決定を書いた。効くのは次にプロセスを起こしたときから。
