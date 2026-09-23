@@ -16,8 +16,8 @@ import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
+import { type SessionManager } from "./server/core/session-manager.ts"
 import { summarizeRecentTokenUsage, type TokenUsageLog } from "./server/core/token-usage.ts"
-import { type RunningSession } from "./session-start.ts"
 import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
 
@@ -60,7 +60,7 @@ export type ViewDeliveryResult =
        */
       readonly port: number
       /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足す）。 */
-      readonly connect: (session: RunningSession) => void
+      readonly connect: (session: SessionManager) => void
     }
   | { readonly ok: false; readonly reason: string }
 

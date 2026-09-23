@@ -91,6 +91,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 縦に積んでいた表2つを枠のある札にして横に並べ、並べ順を決めている列だけに CSS の横棒を添えた。モデル別の並びはモデル名順から出力の多い順に変わり、ツール別は6件＋「ほか n 件を見る」で開閉する。
 
+### 2026-09-23 SessionManager の sessionId の鍵を外した（T-426）
+
+`createSessionManager(options)` がセッション1つの持ち物をそのまま返す形にし、`Map`・`create`・`RunningSession`・`hello.sessionId`・`noSession` を撤去して `PROTOCOL_VERSION` を 8 に上げた。`docs/design.md` 8章と `docs/requirements.md` 2.2 の「起こし直しの一瞬」という理由は、「1つだけ持ち、切り替えは中で起こし直す」に書き直した。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の

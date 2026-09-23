@@ -49,15 +49,15 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 ブラウザ側の React の部品が状態から描く**形にする。言語は TypeScript のまま、ランタイムは当面 Bun
 （Node で動く形を保つ）。
 
-| 残すもの                                                                                                                       | 変えるもの                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| Agent SDK で Claude Code を動かす。SDK を import する場所を1ファイルに閉じる                                                   | サーバ側の HTML 組み立て（`presentation/view.ts`）→ ブラウザ側の部品 |
-| `speak(text, expression)` の MCP ツール。戻り値は `"ok"` だけ                                                                  | SSE 5本 + POST 6本 → WebSocket 1本（フレームとコマンド）             |
-| `SessionEvent` の union と `applySessionEvent` の純粋な畳み込み                                                                | 自前の Markdown レンダラとサニタイザ → unified（remark / rehype）    |
-| 答え待ちの列（`canUseTool` の Promise を保留する）                                                                             | 4層（domain / usecase / presentation / infrastructure）→ 3層         |
-| 会話をプロセスの外へ出さない。`127.0.0.1` だけ。ディスクに書かない                                                             | キャラクター定義 → 人格を含む**パック**                              |
-| 起動時は組み立て済みの成果物（`dist/browser/`）を読むだけ（束ねるのは `bun run build`。2026-09-21 に起動時の組み立てをやめた） | 1プロセス = 1セッション固定 → 鍵付きの `SessionManager`（いまは1つ） |
-| ホストのポート（`showView` 1つ）と Orca のアダプタ                                                                             | HTML の文字列一致のテスト → 部品のテストと fake driver               |
+| 残すもの                                                                                                                       | 変えるもの                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Agent SDK で Claude Code を動かす。SDK を import する場所を1ファイルに閉じる                                                   | サーバ側の HTML 組み立て（`presentation/view.ts`）→ ブラウザ側の部品           |
+| `speak(text, expression)` の MCP ツール。戻り値は `"ok"` だけ                                                                  | SSE 5本 + POST 6本 → WebSocket 1本（フレームとコマンド）                       |
+| `SessionEvent` の union と `applySessionEvent` の純粋な畳み込み                                                                | 自前の Markdown レンダラとサニタイザ → unified（remark / rehype）              |
+| 答え待ちの列（`canUseTool` の Promise を保留する）                                                                             | 4層（domain / usecase / presentation / infrastructure）→ 3層                   |
+| 会話をプロセスの外へ出さない。`127.0.0.1` だけ。ディスクに書かない                                                             | キャラクター定義 → 人格を含む**パック**                                        |
+| 起動時は組み立て済みの成果物（`dist/browser/`）を読むだけ（束ねるのは `bun run build`。2026-09-21 に起動時の組み立てをやめた） | 1プロセス = 1セッション固定 → 起こし直せる `SessionManager`（セッションは1つ） |
+| ホストのポート（`showView` 1つ）と Orca のアダプタ                                                                             | HTML の文字列一致のテスト → 部品のテストと fake driver                         |
 
 **決めたこと**（迷ったら蒸し返さない。理由は `docs/research/architecture-rethink.md`）:
 
@@ -181,7 +181,7 @@ src/
   server/                     サーバ（Bun）側。判断（core/）と境界（adapter/）の2段
     core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
       session-driver.ts       駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
-      session-manager.ts      sessionId → { driver, state, subscribers }。reducer をサーバ側でも回す
+      session-manager.ts      セッション1つの { driver, state, subscribers }。reducer をサーバ側でも回す
       session-launch.ts       起こす一続きの順序（外に触る部分は session-start.ts が渡す。起動も切り替えも同じ）
       character-selection.ts  どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
       pending-answer.ts       答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
@@ -528,7 +528,7 @@ features/task-board/
 ### 接続
 
 1. ページが `/assets/ui.js` を読み、`<App>` が `/ws?t=<token>` へ接続する
-2. サーバは Origin とトークンを確かめ、**`hello` フレーム**（`PROTOCOL_VERSION`・`sessionId`・
+2. サーバは Origin とトークンを確かめ、**`hello` フレーム**（`PROTOCOL_VERSION`・
    `SessionState` の snapshot・キャラクターの見せ方）を1つ返す
 3. 以降、セッションで起きたイベントを **50〜100ms ごとにまとめた `events` フレーム**で押す。
    ブラウザは同じ `applySessionEvent` で畳む。**サーバとブラウザの `SessionState` は構造的に同じ**
@@ -536,11 +536,11 @@ features/task-board/
 ### 依頼
 
 1. Composer が `{ type: "prompt", commandId, text }` を送る
-2. サーバは zod で検証し、`SessionManager.dispatch(sessionId, command)` → 駆動の `prompt(text)`。
+2. サーバは zod で検証し、`SessionManager.dispatch(command)` → 駆動の `prompt(text)`。
    駆動が `request` イベントを起こし、それが `events` で戻ってくる（**ブラウザはローカルで
    echo しない**。ターンの開始はサーバのイベントで知る）
 3. 断片（`partial-utterance`）は1バッチ内で連結して1件にする（転送量の抑制。畳み込みの結果は同じ）
-4. 受け付けられないとき（検証に落ちた・セッションがまだ無い・駆動が失敗を返した）は
+4. 受け付けられないとき（検証に落ちた・駆動が失敗を返した）は
    `{ type: "error", commandId, reason }` を返す。理由は定型文で、**依頼の文面を含めない**
 
 ### 答え待ち
@@ -700,14 +700,14 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### session-manager.ts（core）
 
-`SessionManager` の契約と、セッション1つぶんの持ち物（`SessionHost`）の型定義は
+`SessionManager`（セッション1つぶんの持ち物）の契約と型定義は
 `src/server/core/session-manager.ts` を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
-- `create(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
+- `createSessionManager(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
   (3) バッチに積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms）ごとに `events` フレームを購読者へ配る
-- `dispatch(sessionId, command)`: `switch (command.type)` で駆動へ渡す。**ここが唯一の分岐**
-- `subscribe(sessionId, send)`: 接続ごとに `hello` を送ってから購読に加える
-- **いまは要素1つ。** 鍵（`sessionId`）を持たせておくのは 8章のため
+- `dispatch(command)`: `switch (command.type)` で駆動へ渡す。**ここが唯一の分岐**
+- `subscribe(send)`: 接続ごとに `hello` を送ってから購読に加える
+- **セッションは1つで、鍵を持たない**（8章）
 
 ### character-pack.ts（adapter）
 
@@ -1650,11 +1650,12 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
   自動で続きから始まる**（選ばせる画面は出さない）
 
 **複数化は当面やらない**（2026-09-21 決定。`docs/requirements.md` 2.2。それ以前は未決事項
-だった）。`SessionManager` は `sessionId` を鍵に持つが、**これは「将来のため」ではなく、
-セッションを起こし直すときに古い側と新しい側が同時に存在する一瞬を表す形**である。広げたく
-なったら (1) 複数プロジェクトを1つの画面で切り替える、(2) `tsukumo` コマンドを常駐へ接続する
-クライアントにする（client–daemon）へ進める余地はあり、そのときの `hello` は
-`sessions: SessionSummary[]` を持ち、`ClientCommand` に `select-session` が加わる。
+だった）。**`SessionManager` はセッションを1つだけ持ち、鍵（`sessionId`）を持たない**
+（2026-09-23 に外した）。キャラクター・雑談モード・セッションの切り替えは、同じ `SessionManager` の
+中で駆動を起こし直す（何代目かの印で古い駆動のイベントを捨てる）ので、古い側と新しい側を
+並べて持つ場面が無い。`hello` も `sessionId` を名乗らない（画面に出るセッションのIDは
+`SessionState` の側にある claude 自身のID）。広げるときの形はここに描かない
+（要件から落としたので、描いておくと布石として読まれる）。
 
 ## 9. 会話内容と安全
 

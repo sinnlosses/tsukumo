@@ -54,7 +54,6 @@ import {
 import { contextUsage, readyContextUsage } from "../../fixture/context-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
-const SESSION_ID = "s-test"
 const BATCH_MS = 5
 
 /** 雑談の会話のアーカイブを気にしないテストに渡す、何もしない書き込み口。 */
@@ -165,13 +164,10 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
-  })
-  manager.create({
     rememberSessionDefault: (sessionDefault) => {
       remembered.push(sessionDefault)
       return { kind: "session-default-changed", sessionDefault }
     },
-    sessionId: SESSION_ID,
     startDriver: (onEvent) => {
       stub.attach(onEvent)
       return Promise.resolve(stub.driver)
@@ -201,7 +197,7 @@ describe("createSessionManager", () => {
     const { manager, stub } = startManagerWithStub()
     const frames: ServerFrame[] = []
 
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
     stub.emit({ kind: "speech", text: "架空のセリフ", expression: "default" })
     await waitForBatch()
 
@@ -209,7 +205,6 @@ describe("createSessionManager", () => {
     expect(hello).toEqual({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
-      sessionId: SESSION_ID,
       state: expect.objectContaining({ speeches: [] }),
     })
     expect(events).toEqual({
@@ -223,14 +218,8 @@ describe("createSessionManager", () => {
   it("コンテキストの内訳は駆動へ問い合わせてそのまま返す", async () => {
     const { manager, stub } = startManagerWithStub()
 
-    expect(await manager.readContextUsage(SESSION_ID)).toEqual(readyContextUsage())
+    expect(await manager.readContextUsage()).toEqual(readyContextUsage())
     expect(stub.calls).toContain("readContextUsage")
-  })
-
-  it("知らないセッションの内訳は「取れない」（駆動を探しに行かない）", async () => {
-    const { manager } = startManagerWithStub()
-
-    expect(await manager.readContextUsage("知らないセッション")).toEqual(UNAVAILABLE_CONTEXT_USAGE)
   })
 
   it("hello の snapshot は、それまでのイベントをサーバ側でも畳んだ姿", async () => {
@@ -239,7 +228,7 @@ describe("createSessionManager", () => {
     await waitForBatch()
 
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
     const [hello] = frames
     expect(hello?.type).toBe("hello")
@@ -252,7 +241,7 @@ describe("createSessionManager", () => {
   it("書きかけの本文は1バッチの中で1件に連結される", async () => {
     const { manager, stub } = startManagerWithStub()
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
     stub.emit({ kind: "partial-utterance", text: "架空の" })
     stub.emit({ kind: "partial-utterance", text: "本文" })
@@ -274,21 +263,21 @@ describe("createSessionManager", () => {
     const { manager, stub } = startManagerWithStub()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "prompt",
         commandId: "c-1",
         text: "架空の依頼",
         images: [],
       }),
     ).toEqual({ ok: true })
-    expect(await manager.dispatch(SESSION_ID, { type: "interrupt", commandId: "c-2" })).toEqual({
+    expect(await manager.dispatch({ type: "interrupt", commandId: "c-2" })).toEqual({
       ok: true,
     })
     expect(
-      await manager.dispatch(SESSION_ID, { type: "set-model", commandId: "c-3", model: "sonnet" }),
+      await manager.dispatch({ type: "set-model", commandId: "c-3", model: "sonnet" }),
     ).toEqual({ ok: true })
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "set-permission-mode",
         commandId: "c-4",
         mode: "plan",
@@ -303,16 +292,12 @@ describe("createSessionManager", () => {
     ])
   })
 
-  it("知らないセッション・解決済みの答え待ちは、定型文の理由で受け付けない", async () => {
+  it("解決済みの答え待ちは、定型文の理由で受け付けない", async () => {
     const { manager, stub } = startManagerWithStub()
     stub.answerable = false
 
-    expect(await manager.dispatch("s-unknown", { type: "interrupt", commandId: "c-1" })).toEqual({
-      ok: false,
-      reason: FRAME_ERROR_REASON.noSession,
-    })
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "answer",
         commandId: "c-2",
         id: "toolu_gone",
@@ -332,13 +317,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -351,12 +333,12 @@ describe("createSessionManager", () => {
     })
 
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
     started[0]?.stub.emit({ kind: "speech", text: "切り替える前のセリフ", expression: "default" })
     await waitForBatch()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-character",
         commandId: "c-1",
         name: "fictional",
@@ -394,7 +376,7 @@ describe("createSessionManager", () => {
     const { manager, stub } = startManagerWithStub()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "prompt",
         commandId: "c-1",
         text: "架空の依頼",
@@ -405,7 +387,7 @@ describe("createSessionManager", () => {
     await waitForBatch()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-character",
         commandId: "c-2",
         name: "fictional",
@@ -417,7 +399,7 @@ describe("createSessionManager", () => {
     await waitForBatch()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-character",
         commandId: "c-3",
         name: "fictional",
@@ -436,13 +418,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -453,10 +432,10 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
-    manager.subscribe(SESSION_ID, () => {})
+    manager.subscribe(() => {})
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-session",
         commandId: "c-1",
         sessionId: "架空の別セッション",
@@ -480,7 +459,7 @@ describe("createSessionManager", () => {
     await waitForBatch()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-session",
         commandId: "c-1",
         sessionId: "架空の別セッション",
@@ -492,7 +471,7 @@ describe("createSessionManager", () => {
     await waitForBatch()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-session",
         commandId: "c-2",
         sessionId: "架空の別セッション",
@@ -513,13 +492,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -530,11 +506,11 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
-    manager.subscribe(SESSION_ID, () => {})
+    manager.subscribe(() => {})
 
-    expect(
-      await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-1", chat: true }),
-    ).toEqual({ ok: true })
+    expect(await manager.dispatch({ type: "set-chat-mode", commandId: "c-1", chat: true })).toEqual(
+      { ok: true },
+    )
 
     expect(started).toHaveLength(2)
     expect(started[1]?.chat).toBe(true)
@@ -556,13 +532,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -573,10 +546,10 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
-    manager.subscribe(SESSION_ID, () => {})
+    manager.subscribe(() => {})
 
-    await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-1", chat: true })
-    await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-2", chat: false })
+    await manager.dispatch({ type: "set-chat-mode", commandId: "c-1", chat: true })
+    await manager.dispatch({ type: "set-chat-mode", commandId: "c-2", chat: false })
 
     expect(started.map((request) => request.chat)).toEqual([undefined, true, false])
   })
@@ -585,7 +558,7 @@ describe("createSessionManager", () => {
     const { manager, stub } = startManagerWithStub()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "prompt",
         commandId: "c-1",
         text: "架空の依頼",
@@ -595,9 +568,9 @@ describe("createSessionManager", () => {
     stub.emit({ kind: "request", text: "架空の依頼", images: [] })
     await waitForBatch()
 
-    expect(
-      await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-2", chat: true }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn })
+    expect(await manager.dispatch({ type: "set-chat-mode", commandId: "c-2", chat: true })).toEqual(
+      { ok: false, reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn },
+    )
     expect(stub.calls).not.toContain("close")
   })
 
@@ -612,13 +585,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: async (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -632,11 +602,11 @@ describe("createSessionManager", () => {
     })
 
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
     // 起き上がる前に届いた依頼も、待ってから渡る（取りこぼさない）。
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "prompt",
         commandId: "c-1",
         text: "架空の依頼",
@@ -646,7 +616,7 @@ describe("createSessionManager", () => {
     expect(started[0]?.calls).toEqual(["prompt:架空の依頼"])
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-character",
         commandId: "c-2",
         name: "fictional",
@@ -665,7 +635,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
       stub.emit({ kind: "chat-mode-changed", chat: true })
 
-      expect(await manager.dispatch(SESSION_ID, { type: "nudge", commandId: "c-1" })).toEqual({
+      expect(await manager.dispatch({ type: "nudge", commandId: "c-1" })).toEqual({
         ok: true,
       })
 
@@ -678,7 +648,7 @@ describe("createSessionManager", () => {
       const { manager, stub } = startManagerWithStub()
       await waitForBatch()
 
-      expect(await manager.dispatch(SESSION_ID, { type: "nudge", commandId: "c-1" })).toEqual({
+      expect(await manager.dispatch({ type: "nudge", commandId: "c-1" })).toEqual({
         ok: false,
         reason: FRAME_ERROR_REASON.nudgeOutsideChat,
       })
@@ -691,7 +661,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
       stub.emit({ kind: "request", text: "架空の依頼", images: [] })
 
-      expect(await manager.dispatch(SESSION_ID, { type: "nudge", commandId: "c-1" })).toEqual({
+      expect(await manager.dispatch({ type: "nudge", commandId: "c-1" })).toEqual({
         ok: false,
         reason: FRAME_ERROR_REASON.nudgeDuringTurn,
       })
@@ -734,13 +704,10 @@ describe("createSessionManager", () => {
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
-      })
-      manager.create({
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
         }),
-        sessionId: SESSION_ID,
         startDriver: (onEvent) => {
           stub.attach(onEvent)
           return Promise.resolve(stub.driver)
@@ -808,7 +775,7 @@ describe("createSessionManager", () => {
     it("圧縮を送っても、T-250 の圧縮の区切り（compact-boundary）はいままでどおり events に乗る", async () => {
       const { manager, stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
       const frames: ServerFrame[] = []
-      manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+      manager.subscribe((frame) => frames.push(frame))
       await waitForBatch()
 
       stub.emit({ kind: "chat-mode-changed", chat: true })
@@ -891,10 +858,10 @@ describe("createSessionManager", () => {
   it("立ち絵を変えるコマンドは駆動へ渡さず、書けたら character-changed を畳んで配る", async () => {
     const { manager, stub, edits } = startManagerWithStub()
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "set-portrait",
         commandId: "c-1",
         expression: "proud",
@@ -918,7 +885,7 @@ describe("createSessionManager", () => {
     const { manager, edits } = startManagerWithStub()
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "set-outfit-accent",
         commandId: "c-1",
         outfit: "heavy",
@@ -932,10 +899,10 @@ describe("createSessionManager", () => {
   it("新しいパックを作るコマンドも駆動へ渡さず、選択肢の増えた character-changed を配る", async () => {
     const { manager, stub, edits, creates } = startManagerWithStub()
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "create-character",
         commandId: "c-1",
         name: "fictional-2",
@@ -962,7 +929,7 @@ describe("createSessionManager", () => {
     const { manager } = startManagerWithStub("rejected")
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "create-character",
         commandId: "c-1",
         name: "fictional",
@@ -980,10 +947,10 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
       await waitForBatch()
       const frames: ServerFrame[] = []
-      manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+      manager.subscribe((frame) => frames.push(frame))
 
       expect(
-        await manager.dispatch(SESSION_ID, {
+        await manager.dispatch({
           type: "forget-remembered-line",
           commandId: "c-1",
           line: "架空の消したい1行",
@@ -1005,7 +972,7 @@ describe("createSessionManager", () => {
       const { manager, forgottenLines } = startManagerWithStub()
 
       expect(
-        await manager.dispatch(SESSION_ID, {
+        await manager.dispatch({
           type: "forget-remembered-line",
           commandId: "c-1",
           line: "架空の消したい1行",
@@ -1019,7 +986,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
 
       expect(
-        await manager.dispatch(SESSION_ID, {
+        await manager.dispatch({
           type: "forget-remembered-line",
           commandId: "c-1",
           line: "架空の消したい1行",
@@ -1031,10 +998,10 @@ describe("createSessionManager", () => {
   it("書き込みが受け付けられなかったら定型文の理由を返し、状態は動かさない", async () => {
     const { manager } = startManagerWithStub("rejected")
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "clear-portrait",
         commandId: "c-1",
         expression: "proud",
@@ -1054,13 +1021,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         if (request.selection.by === "initial") {
           const stub = createStubDriver()
@@ -1075,7 +1039,7 @@ describe("createSessionManager", () => {
     })
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "switch-character",
         commandId: "c-1",
         name: "fictional",
@@ -1084,11 +1048,12 @@ describe("createSessionManager", () => {
 
     // 常駐プロセスは落ちない。subscribe はそのまま動く。
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
     expect(frames).toHaveLength(1)
   })
 
   it("キャラクターへの書き込みが例外を投げても定型文の理由を返す", async () => {
+    const stub = createStubDriver()
     const manager = createSessionManager({
       now: () => 1_000,
       batchIntervalMs: BATCH_MS,
@@ -1097,14 +1062,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    const stub = createStubDriver()
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: (onEvent) => {
         stub.attach(onEvent)
         return Promise.resolve(stub.driver)
@@ -1115,7 +1076,7 @@ describe("createSessionManager", () => {
     })
 
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "clear-portrait",
         commandId: "c-1",
         expression: "proud",
@@ -1132,13 +1093,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: () =>
         Promise.resolve({
           prompt: () => {},
@@ -1156,14 +1114,14 @@ describe("createSessionManager", () => {
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
-    expect(await manager.dispatch(SESSION_ID, { type: "interrupt", commandId: "c-1" })).toEqual({
+    expect(await manager.dispatch({ type: "interrupt", commandId: "c-1" })).toEqual({
       ok: false,
       reason: FRAME_ERROR_REASON.driverFailed,
     })
 
     // 落ちていないので、次のコマンドも受け付ける。
     expect(
-      await manager.dispatch(SESSION_ID, {
+      await manager.dispatch({
         type: "prompt",
         commandId: "c-2",
         text: "架空の依頼",
@@ -1175,7 +1133,7 @@ describe("createSessionManager", () => {
   it("close で駆動を閉じ、購読も外れる", async () => {
     const { manager, stub } = startManagerWithStub()
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
     manager.close()
     stub.emit({ kind: "speech", text: "閉じたあとのセリフ", expression: "default" })
@@ -1214,13 +1172,10 @@ describe("createSessionManager", () => {
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
-      })
-      manager.create({
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
         }),
-        sessionId: SESSION_ID,
         startDriver: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
@@ -1441,13 +1396,10 @@ describe("createSessionManager", () => {
         },
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
-      })
-      manager.create({
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
         }),
-        sessionId: SESSION_ID,
         startDriver: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
@@ -1726,13 +1678,10 @@ describe("createSessionManager", () => {
           },
         },
         promptImageShelf: createPromptImageShelf(),
-      })
-      manager.create({
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
         }),
-        sessionId: SESSION_ID,
         startDriver: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
@@ -1841,9 +1790,9 @@ describe("createSessionManager（新しいセッションの既定）", () => {
   it("set-session-default を覚えさせ、姿に載せて配る", async () => {
     const { manager, remembered } = startManagerWithStub()
     const frames: ServerFrame[] = []
-    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+    manager.subscribe((frame) => frames.push(frame))
 
-    const result = await manager.dispatch(SESSION_ID, {
+    const result = await manager.dispatch({
       type: "set-session-default",
       commandId: "c-1",
       model: "sonnet",
@@ -1871,8 +1820,8 @@ describe("createSessionManager（新しいセッションの既定）", () => {
   it("帯の set-model / set-permission-mode では既定を覚えない", async () => {
     const { manager, stub, remembered } = startManagerWithStub()
 
-    await manager.dispatch(SESSION_ID, { type: "set-model", commandId: "c-1", model: "haiku" })
-    await manager.dispatch(SESSION_ID, {
+    await manager.dispatch({ type: "set-model", commandId: "c-1", model: "haiku" })
+    await manager.dispatch({
       type: "set-permission-mode",
       commandId: "c-2",
       mode: "bypassPermissions",
@@ -1908,13 +1857,10 @@ describe("依頼に添えた画像の棚", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: shelf,
-    })
-    manager.create({
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
       }),
-      sessionId: SESSION_ID,
       startDriver: (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -1932,7 +1878,7 @@ describe("依頼に添えた画像の棚", () => {
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
     const prompt = (images: readonly PromptImage[]) =>
-      manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c", text: "架空の依頼", images })
+      manager.dispatch({ type: "prompt", commandId: "c", text: "架空の依頼", images })
     return { manager, shelf, prompted, prompt }
   }
 
@@ -1959,9 +1905,9 @@ describe("依頼に添えた画像の棚", () => {
     await two.prompt([fullImage("C"), fullImage("D")])
 
     const oneFrames: ServerFrame[] = []
-    one.manager.subscribe(SESSION_ID, (frame) => oneFrames.push(frame))
+    one.manager.subscribe((frame) => oneFrames.push(frame))
     const twoFrames: ServerFrame[] = []
-    two.manager.subscribe(SESSION_ID, (frame) => twoFrames.push(frame))
+    two.manager.subscribe((frame) => twoFrames.push(frame))
 
     const oneHello = helloOf(oneFrames)
     const twoHello = helloOf(twoFrames)
@@ -1994,7 +1940,7 @@ describe("依頼に添えた画像の棚", () => {
     const id = prompted[0]?.[0]?.id ?? ""
     expect(shelf.find(id)).toBeDefined()
 
-    await manager.dispatch(SESSION_ID, {
+    await manager.dispatch({
       type: "switch-character",
       commandId: "c-switch",
       name: "fictional",

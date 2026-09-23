@@ -134,7 +134,6 @@ describe("サーバと版が合わないとき（docs/design.md 4.4）", () => {
     store.receive({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION - 1,
-      sessionId: "fictional-session",
       state: INITIAL_SESSION_STATE,
     })
     store.receive(REQUEST_EVENTS)
@@ -148,14 +147,12 @@ describe("サーバと版が合わないとき（docs/design.md 4.4）", () => {
     store.receive({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION - 1,
-      sessionId: "fictional-session",
       state: INITIAL_SESSION_STATE,
     })
 
     store.receive({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
-      sessionId: "fictional-session",
       state: INITIAL_SESSION_STATE,
     })
     store.receive(REQUEST_EVENTS)

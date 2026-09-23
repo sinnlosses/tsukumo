@@ -6,7 +6,9 @@
 //   （`switch-character` は駆動へ渡すのではなく起こし直しとして、キャラクターへの書き込み
 //   （`set-portrait` / `clear-portrait` / `set-outfit-accent` / `create-character`）は
 //   **書き込みと `character-changed` の流し直し**として、どちらも手前で捌く）
-// - **いまはセッションが1つだけ**。鍵（`sessionId`）を持たせてあるのは複数化（docs/design.md 8章）のため
+// - **持つセッションは1つだけで、鍵を持たない**（docs/design.md 8章）。キャラクター・雑談モード・
+//   セッションの切り替えはこの持ち物の中で駆動を起こし直す（`restart`）ので、古い側と新しい側を
+//   並べて持つことが無い
 //
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
@@ -89,10 +91,6 @@ export type SessionManagerOptions = {
    * **置くのと捨てるのはここ**で、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
    */
   readonly promptImageShelf: PromptImageShelf
-}
-
-export type SessionCreateOptions = {
-  readonly sessionId: string
   /**
    * 駆動を起こす。**渡された `onEvent` / `onRestoredEvent` を駆動に配線する**のは呼び出し側の
    * 仕事で、ここは種類（SDK か fake driver か）を知らない。
@@ -162,53 +160,23 @@ export type SessionCreateOptions = {
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
 export type DispatchResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }
 
+/**
+ * セッション1つぶんの持ち物（docs/design.md 5章）。**起こした時点で駆動も起こし始める**
+ * （`create` の段は無い。1プロセスが持つセッションは1つで、切り替えは中で起こし直す）。
+ */
 export type SessionManager = {
-  /** セッションを1つ起こす。同じ `sessionId` で二度呼ばない（呼んでも前のものを閉じない）。 */
-  readonly create: (options: SessionCreateOptions) => void
   /** コマンドを駆動へ渡す。**分岐はここだけ**。 */
-  readonly dispatch: (sessionId: string, command: ClientCommand) => Promise<DispatchResult>
+  readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
   /**
    * いまのコンテキストの内訳を駆動から取る（トークン消費の画面が引く。
    * `docs/glossary.md`「コンテキストの内訳」）。**押すのではなく引く**ので、状態にも
-   * フレームにも乗らない。知らないセッション・取れなかったときは「取れない」。
+   * フレームにも乗らない。取れなかったときは「取れない」。
    */
-  readonly readContextUsage: (sessionId: string) => Promise<ContextUsageReport>
+  readonly readContextUsage: () => Promise<ContextUsageReport>
   /** 接続を購読に加える。**まず `hello` を1つ送ってから**加え、外すための関数を返す。 */
-  readonly subscribe: (sessionId: string, send: (frame: ServerFrame) => void) => () => void
-  /** 全セッションを閉じる（プロセスを終えるとき）。 */
+  readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
+  /** 駆動を閉じる（プロセスを終えるとき。claude の子プロセスを残さないため必ず呼ぶ）。 */
   readonly close: () => void
-}
-
-export function createSessionManager(options: SessionManagerOptions): SessionManager {
-  const sessions = new Map<string, SessionHost>()
-
-  return {
-    create: (created) => {
-      sessions.set(created.sessionId, createSessionHost(created, options))
-    },
-    dispatch: (sessionId, command) => {
-      const host = sessions.get(sessionId)
-      return host === undefined
-        ? Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.noSession })
-        : host.dispatch(command)
-    },
-    readContextUsage: (sessionId) => {
-      const host = sessions.get(sessionId)
-      return host === undefined
-        ? Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
-        : host.readContextUsage()
-    },
-    subscribe: (sessionId, send) => {
-      const host = sessions.get(sessionId)
-      return host === undefined ? () => {} : host.subscribe(send)
-    },
-    close: () => {
-      for (const host of sessions.values()) {
-        host.close()
-      }
-      sessions.clear()
-    },
-  }
 }
 
 /**
@@ -217,18 +185,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
  */
 type EventOrigin = "driver" | "restored"
 
-/** セッション1つぶんの持ち物（docs/design.md 5章の `SessionHost`）。 */
-type SessionHost = {
-  readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
-  readonly readContextUsage: () => Promise<ContextUsageReport>
-  readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
-  readonly close: () => void
-}
-
-function createSessionHost(
-  created: SessionCreateOptions,
-  options: SessionManagerOptions,
-): SessionHost {
+export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()
   let state: SessionState = INITIAL_SESSION_STATE
   let buffered: readonly StampedEvent[] = []
@@ -280,7 +237,6 @@ function createSessionHost(
   const helloFrame = (): ServerFrame => ({
     type: "hello",
     protocolVersion: PROTOCOL_VERSION,
-    sessionId: created.sessionId,
     state,
   })
 
@@ -453,7 +409,7 @@ function createSessionHost(
 
   const start = (request: SessionLaunchRequest): Promise<SessionDriver> => {
     const born = generation
-    const starting = created.startDriver(
+    const starting = options.startDriver(
       (event) => {
         if (born !== generation) {
           return
@@ -618,7 +574,7 @@ function createSessionHost(
       }
       if (command.type === "create-character") {
         return write(
-          () => created.createCharacter(command),
+          () => options.createCharacter(command),
           FRAME_ERROR_REASON.characterCreateFailed,
         )
       }
@@ -632,7 +588,7 @@ function createSessionHost(
           })
         }
         return write(
-          () => created.forgetRememberedLine(command.line),
+          () => options.forgetRememberedLine(command.line),
           FRAME_ERROR_REASON.forgetRememberedLineFailed,
         )
       }
@@ -642,7 +598,7 @@ function createSessionHost(
         return write(
           () =>
             Promise.resolve(
-              created.rememberSessionDefault({
+              options.rememberSessionDefault({
                 model: command.model,
                 permissionMode: command.permissionMode,
               }),
@@ -651,7 +607,7 @@ function createSessionHost(
         )
       }
       if (isCharacterEditCommand(command)) {
-        return write(() => created.editCharacter(command), FRAME_ERROR_REASON.characterEditFailed)
+        return write(() => options.editCharacter(command), FRAME_ERROR_REASON.characterEditFailed)
       }
       return dispatchToDriver(driver, command, options.promptImageShelf)
     },
@@ -692,7 +648,7 @@ function createSessionHost(
  * 起き上がっている駆動に、いまのコンテキストの内訳を問い合わせる。**投げてきた回は「取れない」に
  * 畳む**（常駐プロセスは落とさない）。
  *
- * `SessionHost.readContextUsage` のほうは**駆動が起き上がるのを待つところ**から面倒を見るので、
+ * `SessionManager.readContextUsage` のほうは**駆動が起き上がるのを待つところ**から面倒を見るので、
  * こちらとは畳む範囲が違う（記録を残す側は、起き上がっている駆動しか相手にしない）。
  */
 async function readDriverContextUsage(driver: SessionDriver): Promise<ContextUsageReport> {
