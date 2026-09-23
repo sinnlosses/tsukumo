@@ -101,7 +101,8 @@ describe("useCharacterEdit", () => {
       accent: "#b8c7ff",
       outfit: "default",
     })
-    expect(defaultCard.pickText).toBe("差し替える")
+    expect(defaultCard.pickAriaLabel).toBe("通常を差し替える")
+    expect(defaultCard.badge).toEqual({ kind: "shown", text: "いつもの顔" })
     expect(defaultCard.clear.kind).toBe("hidden")
 
     expect(cardOf(result.current, "proud").clear).toMatchObject({
@@ -112,7 +113,7 @@ describe("useCharacterEdit", () => {
     // 畳んだ表では default の絵が入っているが、自分の絵は無いので空きの枠になる。
     const blank = cardOf(result.current, "thinking")
     expect(blank.image).toEqual({ kind: "blank" })
-    expect(blank.pickText).toBe("選ぶ")
+    expect(blank.badge).toEqual({ kind: "none" })
     expect(blank.pickAriaLabel).toBe("thinkingを選ぶ")
     expect(blank.clear.kind).toBe("hidden")
   })
@@ -173,7 +174,9 @@ describe("useCharacterEdit", () => {
       }
       return field
     }
-    expect(heavy().label).toBe("戦闘配置（opus）")
+    expect(heavy().label).toBe("戦闘配置")
+    expect(heavy().sublabel).toEqual({ kind: "shown", text: "opus" })
+    expect(heavy().ariaLabel).toBe("戦闘配置（opus）")
     // 定義は default に畳んである（heavy は default の色）。
     expect(heavy().value).toBe("#b8c7ff")
 

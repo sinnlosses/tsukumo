@@ -1,10 +1,13 @@
 // `<CharacterEdit>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// いまのキャラクターの姿を、立ち絵のカード・衣装ごとの差し色・背景の行へ畳み、選んだ画像を
-// data URL にして送る呼び先と一緒に返す。
+// **一覧で選んでいるパック**（`hooks/use-selected-pack.ts`。使用中とは限らない）の姿を、名乗り・
+// 表情のカード・差し色・背景へ畳み、選んだ画像を data URL にして送る呼び先と一緒に返す。
 //
 // 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` /
 // `clear-chat-accent` / `set-background` / `clear-background` で、**どれも書き込む先のパックの
-// 名前（`pack`）を持つ**（いまは使用中のパックの名前を入れる）。**書き込み先と反映はサーバ側**
+// 名前（`pack`）を持つ**（選んでいるパックの名前を入れる。使用中以外を直しても使用中の姿は
+// 変わらない。`docs/design.md` 7.1）。使用中以外のパックには「このキャラクターに切り替える」を
+// 出し、押すと `switch-character` を送る（ターン進行中は押せない。サイドバーの `<select>` と
+// 同じ理由・同じ文言）。**書き込み先と反映はサーバ側**
 // （`src/server/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
 // にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
@@ -26,35 +29,53 @@
 import { useState } from "react"
 
 import { type AccentTarget } from "../../../../shared/character-definition.ts"
+import { type CharacterInfo } from "../../../../shared/character.ts"
 import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import {
   type Expression,
   EXPRESSIONS,
   isRemovableExpression,
   type Outfit,
+  type RemovableExpression,
   OUTFITS,
 } from "../../../../shared/expression.ts"
+import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { readAccentColor } from "../../../domain/appearance-color.ts"
 import { readDataUrl } from "../../../lib/data-url.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
-import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useSessionDispatch, useTurnRunning } from "../../../stores/session.tsx"
+import { useSelectedPack } from "./use-selected-pack.ts"
 
 /** 背景の行の、いまの状態を表す字（**印だけにしない**。13.1 原則1）。 */
 const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } as const
 
 /**
  * 衣装のラベル。**モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じ**なので画面側が
- * 持つ（`docs/requirements.md` 4.3。表情のラベルはキャラクター定義から取る）。
+ * 持つ（`docs/requirements.md` 4.3。表情のラベルはキャラクター定義から取る）。見える字は
+ * 装備の名前とモデルの2段に分け、読み上げには1つにつないで渡す。
  */
-const OUTFIT_LABELS: Readonly<Record<Outfit, string>> = {
-  default: "既定",
-  light: "軽装（haiku）",
-  normal: "通常装備（sonnet）",
-  heavy: "戦闘配置（opus）",
-}
+const OUTFIT_LABELS = {
+  default: { label: "既定", sublabel: { kind: "none" } },
+  light: { label: "軽装", sublabel: { kind: "shown", text: "haiku" } },
+  normal: { label: "通常装備", sublabel: { kind: "shown", text: "sonnet" } },
+  heavy: { label: "戦闘配置", sublabel: { kind: "shown", text: "opus" } },
+} as const satisfies Readonly<Record<Outfit, Pick<AccentSwatchModel, "label" | "sublabel">>>
 
 /** カードの立ち絵に当てる衣装。並びでは衣装の違いを出さない（差し色の行がその役目）。 */
 const GALLERY_OUTFIT: Outfit = "default"
+
+/** 必須の1つ（`default`）のカードに添える札。どの表情が「いつもの顔」かを字で出す。 */
+const DEFAULT_EXPRESSION_BADGE = "いつもの顔"
+
+/** 表情の見出しの添え書きの後半（口は乗せたとき・フォーカスしたときだけ出る）。 */
+const EXPRESSION_HOVER_HINT = "乗せると差し替え・消すが出ます"
+
+/** 画面から変えられないパックのときに出す一言（理由は探索の順。`docs/design.md` 7.1）。 */
+const NOT_EDITABLE_NOTE = "起動先の characters/local のパックは、画面からは変えられない"
+
+// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面は**サーバが
+// 断るときと同じ1つ**（`shared` の定型文）を使う（サイドバーの `<select>` と同じ）。
+const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 
 /**
  * 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。**衣装の差し色と
@@ -64,17 +85,51 @@ const ACCENT_DEBOUNCE_MS = 200
 
 /**
  * まとめて送る差し色1つ。**書き込む先のパックは引きずった時点のものを値と一緒に持つ**（まとめて
- * いる間に画面の姿が入れ替わっても、別のパックへ書かない）。
+ * いる間に一覧で別のパックを選んでも、別のパックへ書かない）。
  */
-type PendingAccent = {
+type PendingAccent<Target> = {
   readonly pack: string
+  readonly target: Target
   readonly color: string
 }
 
-/** 立ち絵のカード1枚。**自分の絵を持たない表情は `blank`**（点線の枠の空きを出す）。 */
+/**
+ * 引きずっている間だけ見た目を先に進める上書き。**パックごとに分けて持つ**（一覧で別のパックへ
+ * 移ったとき、前のパックで引きずった色を持ち込まない）。
+ */
+type HeldColors<Target extends string> = Readonly<Record<string, Partial<Record<Target, string>>>>
+
+/** 名乗り（大きな顔・名前・id・使用中の札・ひとこと）と、その右の口。 */
+export type CharacterProfileModel = {
+  readonly name: string
+  /** パックの名前（ディレクトリ名）。`id: <名前>` として等幅で出す。 */
+  readonly id: string
+  readonly face: { readonly kind: "absent" } | { readonly kind: "shown"; readonly url: string }
+  readonly inUse: boolean
+  readonly tagline: { readonly kind: "absent" } | { readonly kind: "shown"; readonly text: string }
+  /** 変えられないパックのときの理由の一言。 */
+  readonly note: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
+  /** 使用中以外のパックにだけ出す「このキャラクターに切り替える」。 */
+  readonly switchTo:
+    | { readonly kind: "hidden" }
+    | {
+        readonly kind: "shown"
+        readonly disabled: boolean
+        /** 押せない理由（`title`。React の `title` がそのまま undefined を受けるので畳まない）。 */
+        readonly title: string | undefined
+        readonly onSwitch: () => void
+      }
+}
+
+/**
+ * 表情のカード1枚。**自分の絵を持たない表情は `blank`**（その表情の名前を書いた点線の枠。
+ * 9つそろえば出ない）。
+ */
 export type PortraitCardModel = {
   readonly expression: Expression
   readonly label: string
+  /** `default` にだけ添える札（「いつもの顔」）。 */
+  readonly badge: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
   readonly image:
     | { readonly kind: "blank" }
     | {
@@ -83,37 +138,35 @@ export type PortraitCardModel = {
         readonly accent: string
         readonly outfit: Outfit
       }
-  /** 選ぶ口の見える字（「選ぶ」か「差し替える」）。 */
-  readonly pickText: string
-  /** 選ぶ口の読み上げ（どの表情のことか。カードが狭いので見える字には入れない）。 */
+  /** 選ぶ口の読み上げ（どの表情のことか。口はアイコンか空欄の枠なので見える字には入れない）。 */
   readonly pickAriaLabel: string
   readonly onPick: (input: HTMLInputElement) => void
+  /** カードに画像を落としたとき。 */
+  readonly onDropFile: (file: File) => void
   /** 消す口（`default` と、自分の絵が無い表情には出さない）。 */
   readonly clear:
     | { readonly kind: "hidden" }
     | { readonly kind: "shown"; readonly ariaLabel: string; readonly onClear: () => void }
 }
 
-/** 差し色の欄1つ（衣装ごと）。 */
-export type OutfitAccentFieldModel = {
-  readonly outfit: Outfit
+/** 色見本1つ（画面の差し色・衣装ごとの差し色の両方）。`value` は16進のまま字にも出す。 */
+export type AccentSwatchModel = {
   readonly inputId: string
   readonly label: string
+  /** ラベルの下に小さく添える字（衣装のモデル名）。 */
+  readonly sublabel: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
+  /** 読み上げの名前（ラベルと添え字をつないだもの）。 */
+  readonly ariaLabel: string
   readonly value: string
   readonly onChange: (color: string) => void
 }
 
-/** 画面の差し色の欄1つ（仕事 / 雑談）。`outfitAccents` とは別の最上位の欄（`accent` / `chatAccent`）。 */
-export type ScreenAccentFieldModel = {
-  readonly inputId: string
-  readonly label: string
-  readonly value: string
-  readonly onChange: (color: string) => void
-}
+/** 衣装ごとの差し色の欄1つ。 */
+export type OutfitAccentFieldModel = AccentSwatchModel & { readonly outfit: Outfit }
 
 /**
  * 雑談の差し色を「仕事と同じ」へ戻す口。`chatAccent` を持たないパック（雑談も仕事と同じ差し色の
- * まま）では出さない——戻すものが無いため。代わりにその場所へ「仕事と同じ」の字を出す
+ * まま）では出さない——戻すものが無いため。代わりにその場所へ「雑談も仕事と同じ」の字を出す
  * （`presentational-character-edit.tsx`）。
  */
 export type ChatAccentResetModel =
@@ -136,13 +189,16 @@ export type CharacterEditModel =
     }
   | {
       readonly kind: "ready"
-      /** 画面から変えられないパック。口をすべて塞ぎ、理由の一言を出す。 */
+      readonly profile: CharacterProfileModel
+      /** 画面から変えられないパック。口をすべて塞ぐ（理由は `profile.note`）。 */
       readonly disabled: boolean
+      /** 表情の見出しの添え書き（枚数と、口の出し方）。 */
+      readonly expressionNote: string
       readonly cards: readonly PortraitCardModel[]
       /** 画面の差し色（仕事）。`accent` を差す。 */
-      readonly workAccent: ScreenAccentFieldModel
+      readonly workAccent: AccentSwatchModel
       /** 画面の差し色（雑談）。`chatAccent` を持たなければ、仕事の差し色をそのまま見本に出す。 */
-      readonly chatAccent: ScreenAccentFieldModel
+      readonly chatAccent: AccentSwatchModel
       readonly resetChatAccent: ChatAccentResetModel
       readonly outfitAccents: readonly OutfitAccentFieldModel[]
       readonly background: BackgroundFieldModel
@@ -150,115 +206,120 @@ export type CharacterEditModel =
 
 export function useCharacterEdit(): CharacterEditModel {
   const dispatch = useSessionDispatch()
-  const character = useSessionSelector((session) => session.state.character)
-  // 引きずっている間だけ見た目を先に進める上書き（衣装ごと）。**サーバへ送るのは
+  const selected = useSelectedPack()
+  const turnInProgress = useTurnRunning()
+  // 引きずっている間だけ見た目を先に進める上書き（パック → 衣装）。**サーバへ送るのは
   // `sendOutfitAccent` 側でまとめる**ので、ここは表示専用（`docs/coding-standards.md`
   // 「useEffect の代わりに使うもの」の「利用者の操作で起きること」＝イベントハンドラで足す）。
-  const [pendingAccents, setPendingAccents] = useState<Partial<Record<Outfit, string>>>({})
+  const [heldOutfitAccents, setHeldOutfitAccents] = useState<HeldColors<Outfit>>({})
   // 画面の差し色（仕事 / 雑談）も同じ考え方で先に進める（衣装とは別の最上位の欄なので別の状態）。
-  const [pendingScreenAccents, setPendingScreenAccents] = useState<
-    Partial<Record<AccentTarget, string>>
-  >({})
+  const [heldScreenAccents, setHeldScreenAccents] = useState<HeldColors<AccentTarget>>({})
   // 差し色が定義に無い衣装・パックの初期値（`--accent`）。読みは描画の外（マウント時の1回）に置く。
   const [accentFallback] = useState(readAccentColor)
-  const sendOutfitAccent = useDebouncedCallback<Outfit, PendingAccent>(
-    (outfit, { pack, color }) => {
-      dispatch({ type: "set-outfit-accent", pack, outfit, color })
+  // 鍵は「パックと欄」の組（別のパックの同じ欄を続けて動かしても、前の値を落とさない）。
+  const sendOutfitAccent = useDebouncedCallback<string, PendingAccent<Outfit>>(
+    (_key, { pack, target, color }) => {
+      dispatch({ type: "set-outfit-accent", pack, outfit: target, color })
     },
     ACCENT_DEBOUNCE_MS,
   )
-  const sendAccent = useDebouncedCallback<AccentTarget, PendingAccent>(
-    (target, { pack, color }) => {
+  const sendAccent = useDebouncedCallback<string, PendingAccent<AccentTarget>>(
+    (_key, { pack, target, color }) => {
       dispatch({ type: "set-accent", pack, target, color })
     },
     ACCENT_DEBOUNCE_MS,
   )
 
-  if (character === undefined) {
+  if (selected.kind === "waiting") {
     return { kind: "waiting" }
   }
 
+  const character = selected.character
   const pack = character.pack
+  const heldOutfit = heldOutfitAccents[pack] ?? {}
+  const heldScreen = heldScreenAccents[pack] ?? {}
   const accentOf = (outfit: Outfit): string =>
-    pendingAccents[outfit] ?? character.outfitAccents[outfit] ?? accentFallback
+    heldOutfit[outfit] ?? character.outfitAccents[outfit] ?? accentFallback
 
-  const galleryAccent = accentOf(GALLERY_OUTFIT)
-  const cards = EXPRESSIONS.map((expression): PortraitCardModel => {
-    const label = resolveExpressionLabel(character.expressions, expression)
-    // 畳んだ表では `default` の絵が入っているので、自分の絵を持つ表情だけを引く。
-    const url = character.expressionsWithPortrait.includes(expression)
-      ? character.portraits?.[expression]
-      : undefined
-    const pickText = url === undefined ? "選ぶ" : "差し替える"
+  function holdOutfitAccent(outfit: Outfit, color: string): void {
+    setHeldOutfitAccents((current) => ({
+      ...current,
+      [pack]: { ...current[pack], [outfit]: color },
+    }))
+    sendOutfitAccent(`${pack}/${outfit}`, { pack, target: outfit, color })
+  }
+
+  function holdScreenAccent(target: AccentTarget, color: string | undefined): void {
+    setHeldScreenAccents((current) => ({
+      ...current,
+      [pack]: { ...current[pack], [target]: color },
+    }))
+    if (color !== undefined) {
+      sendAccent(`${pack}/${target}`, { pack, target, color })
+    }
+  }
+
+  const disabled = !character.editable
+  const cards = portraitCards(character, accentOf(GALLERY_OUTFIT), {
+    pick: (expression, image) => {
+      dispatch({ type: "set-portrait", pack, expression, image })
+    },
+    clear: (expression) => {
+      dispatch({ type: "clear-portrait", pack, expression })
+    },
+  })
+  const withPortrait = character.expressionsWithPortrait.length
+  const count =
+    withPortrait === EXPRESSIONS.length
+      ? `${String(withPortrait)} 枚`
+      : `${String(withPortrait)} / ${String(EXPRESSIONS.length)} 枚`
+
+  const outfitAccents = OUTFITS.map((outfit): OutfitAccentFieldModel => {
+    const { label, sublabel } = OUTFIT_LABELS[outfit]
     return {
-      expression,
+      outfit,
+      inputId: `character-outfit-accent-${outfit}`,
       label,
-      image:
-        url === undefined
-          ? { kind: "blank" }
-          : { kind: "shown", url, accent: galleryAccent, outfit: GALLERY_OUTFIT },
-      pickText,
-      pickAriaLabel: `${label}を${pickText}`,
-      onPick: (input) => {
-        void readPicked(input, (image) => {
-          dispatch({ type: "set-portrait", pack, expression, image })
-        })
+      sublabel,
+      ariaLabel: sublabel.kind === "shown" ? `${label}（${sublabel.text}）` : label,
+      value: accentOf(outfit),
+      onChange: (color) => {
+        holdOutfitAccent(outfit, color)
       },
-      clear:
-        isRemovableExpression(expression) && url !== undefined
-          ? {
-              kind: "shown",
-              ariaLabel: `${label}を消す`,
-              onClear: () => {
-                dispatch({ type: "clear-portrait", pack, expression })
-              },
-            }
-          : { kind: "hidden" },
     }
   })
 
-  const outfitAccents = OUTFITS.map((outfit): OutfitAccentFieldModel => ({
-    outfit,
-    inputId: `character-outfit-accent-${outfit}`,
-    label: OUTFIT_LABELS[outfit],
-    value: accentOf(outfit),
-    onChange: (color) => {
-      setPendingAccents((current) => ({ ...current, [outfit]: color }))
-      sendOutfitAccent(outfit, { pack, color })
-    },
-  }))
-
   // 仕事の差し色（`accent`）。無ければ `--accent`（既定値）に落ちる。衣装の差し色と同じ解き方。
-  const workAccentValue = pendingScreenAccents.work ?? character.accent ?? accentFallback
-  const workAccent: ScreenAccentFieldModel = {
+  const workAccentValue = heldScreen.work ?? character.accent ?? accentFallback
+  const workAccent: AccentSwatchModel = {
     inputId: "character-screen-accent-work",
     label: "仕事",
+    sublabel: { kind: "none" },
+    ariaLabel: "仕事",
     value: workAccentValue,
     onChange: (color) => {
-      setPendingScreenAccents((current) => ({ ...current, work: color }))
-      sendAccent("work", { pack, color })
+      holdScreenAccent("work", color)
     },
   }
 
   // 雑談の差し色（`chatAccent`）。**持たないパックでは仕事の差し色をそのまま見本に出す**
   // （「仕事と同じ」であることが色そのもので伝わる。ドラッグ中の仕事の値も追いかける）。
-  const hasChatAccent =
-    pendingScreenAccents.chat !== undefined || character.chatAccent !== undefined
-  const chatAccentValue = pendingScreenAccents.chat ?? character.chatAccent ?? workAccentValue
-  const chatAccent: ScreenAccentFieldModel = {
+  const hasChatAccent = heldScreen.chat !== undefined || character.chatAccent !== undefined
+  const chatAccent: AccentSwatchModel = {
     inputId: "character-screen-accent-chat",
     label: "雑談",
-    value: chatAccentValue,
+    sublabel: { kind: "none" },
+    ariaLabel: "雑談",
+    value: heldScreen.chat ?? character.chatAccent ?? workAccentValue,
     onChange: (color) => {
-      setPendingScreenAccents((current) => ({ ...current, chat: color }))
-      sendAccent("chat", { pack, color })
+      holdScreenAccent("chat", color)
     },
   }
   const resetChatAccent: ChatAccentResetModel = hasChatAccent
     ? {
         kind: "shown",
         onClick: () => {
-          setPendingScreenAccents((current) => ({ ...current, chat: undefined }))
+          holdScreenAccent("chat", undefined)
           dispatch({ type: "clear-chat-accent", pack })
         },
       }
@@ -281,15 +342,94 @@ export function useCharacterEdit(): CharacterEditModel {
     },
   }
 
+  const profile: CharacterProfileModel = {
+    name: character.name ?? pack,
+    id: pack,
+    face:
+      character.face === undefined ? { kind: "absent" } : { kind: "shown", url: character.face },
+    inUse: selected.inUse,
+    tagline:
+      character.tagline === undefined || character.tagline === ""
+        ? { kind: "absent" }
+        : { kind: "shown", text: character.tagline },
+    note: disabled ? { kind: "shown", text: NOT_EDITABLE_NOTE } : { kind: "none" },
+    switchTo: selected.inUse
+      ? { kind: "hidden" }
+      : {
+          kind: "shown",
+          disabled: turnInProgress,
+          title: turnInProgress ? SWITCH_BLOCKED_TITLE : undefined,
+          onSwitch: () => {
+            dispatch({ type: "switch-character", name: pack })
+          },
+        },
+  }
+
   return {
     kind: "ready",
-    disabled: !character.editable,
+    profile,
+    disabled,
+    expressionNote: disabled ? count : `${count} · ${EXPRESSION_HOVER_HINT}`,
     cards,
     workAccent,
     chatAccent,
     resetChatAccent,
     outfitAccents,
     background,
+  }
+}
+
+/** カードから送る2つ（どちらも選んでいるパックへ書く）。 */
+type PortraitSenders = {
+  readonly pick: (expression: Expression, image: string) => void
+  readonly clear: (expression: RemovableExpression) => void
+}
+
+/** 表情のカードを `EXPRESSIONS` の順に畳む。 */
+function portraitCards(
+  character: CharacterInfo,
+  galleryAccent: string,
+  send: PortraitSenders,
+): readonly PortraitCardModel[] {
+  return EXPRESSIONS.map((expression): PortraitCardModel => {
+    const label = resolveExpressionLabel(character.expressions, expression)
+    // 畳んだ表では `default` の絵が入っているので、自分の絵を持つ表情だけを引く。
+    const url = character.expressionsWithPortrait.includes(expression)
+      ? character.portraits?.[expression]
+      : undefined
+    const sendImage = (image: string): void => {
+      send.pick(expression, image)
+    }
+    return {
+      expression,
+      label,
+      badge:
+        expression === "default"
+          ? { kind: "shown", text: DEFAULT_EXPRESSION_BADGE }
+          : { kind: "none" },
+      image:
+        url === undefined
+          ? { kind: "blank" }
+          : { kind: "shown", url, accent: galleryAccent, outfit: GALLERY_OUTFIT },
+      pickAriaLabel: `${label}を${url === undefined ? "選ぶ" : "差し替える"}`,
+      onPick: (input) => {
+        void readPicked(input, sendImage)
+      },
+      onDropFile: (file) => {
+        void readFile(file, sendImage)
+      },
+      clear:
+        isRemovableExpression(expression) && url !== undefined
+          ? { kind: "shown", ariaLabel: `${label}を消す`, onClear: clearOf(expression, send) }
+          : { kind: "hidden" },
+    }
+  })
+}
+
+/** 消す口の呼び先（消せる表情に絞ったあとで作る。閉包の中では絞り込みが効かないため）。 */
+function clearOf(expression: RemovableExpression, send: PortraitSenders): () => void {
+  return () => {
+    send.clear(expression)
   }
 }
 
@@ -304,6 +444,11 @@ async function readPicked(input: HTMLInputElement, send: (image: string) => void
     return
   }
 
+  await readFile(file, send)
+}
+
+/** 1つのファイルを data URL にして `send` へ渡す（中身の検証はサーバ側）。 */
+async function readFile(file: File, send: (image: string) => void): Promise<void> {
   const image = await readDataUrl(file)
   if (image !== undefined) {
     send(image)

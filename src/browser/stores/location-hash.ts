@@ -2,11 +2,17 @@
 // （出している画面は `stores/screen.tsx`、見ているターンは `stores/turn-selection.tsx`）ので、
 // 片方が書くときにもう片方の部分を消さないよう、読み書きはここの {@link HashRoute} を通す。
 //
-// 形は `#<画面>?turn=<番号>`。**画面は `?` の前、ターンは `turn` の値**:
+// 形は `#<画面>?pack=<名前>&turn=<番号>`。**画面は `?` の前、ターンは `turn` の値、キャラクター画面で
+// 選んでいるパックは `pack` の値**:
 //
-// - `#`                   会話の画面・今回に追従（リンクの `href` に空文字を書けないので `#`）
-// - `#?turn=3`            会話の画面・通し番号 3 のターンに留める
-// - `#character?turn=3`   キャラクター画面。ターンは会話の画面へ戻ったときのために運ぶ
+// - `#`                           会話の画面・今回に追従（リンクの `href` に空文字を書けないので `#`）
+// - `#?turn=3`                    会話の画面・通し番号 3 のターンに留める
+// - `#character?turn=3`           キャラクター画面（使用中のパック）。ターンは会話の画面へ戻ったときのために運ぶ
+// - `#character?pack=tsukumo`     キャラクター画面で `tsukumo` のパックを選んでいる
+//
+// **パックを `?` の前（`#character/<名前>`）に置かない**のは、作る画面の `#character/new` と
+// 区別できなくなるため（`new` はパックの名前として使える。`isCharacterPackName`）。`pack` を
+// 読むのはキャラクター画面のときだけで、ほかの画面へ移ると落ちる（戻ると使用中のパックから）。
 //
 // **今回に追従しているときは `turn` を書かない。** 留めたターンだけが URL に乗るので、何も
 // 選んでいない人のリロードは今までどおり今回を出す。
@@ -27,9 +33,18 @@ export type Screen = (typeof SCREENS)[number]
  */
 export type ViewedTurn = "newest" | number
 
+/**
+ * キャラクター画面で選んでいるパック（`docs/screen-design.md` 13.6）。`in-use` は使用中のパックを
+ * 出す（`pack` が無いとき）。名前が一覧に無いときにどうするかは読む側（`character-screen`）が決める。
+ */
+export type PackSelection =
+  | { readonly kind: "in-use" }
+  | { readonly kind: "named"; readonly name: string }
+
 export type HashRoute = {
   readonly screen: Screen
   readonly turn: ViewedTurn
+  readonly pack: PackSelection
 }
 
 /** hash の値の型。スナップショットが同じ値なら描き直さないよう、プリミティブに限る。 */
@@ -44,6 +59,8 @@ const SCREEN_PATH = {
 } as const satisfies Readonly<Record<Screen, string>>
 
 const TURN_PARAM = "turn"
+const PACK_PARAM = "pack"
+const IN_USE: PackSelection = { kind: "in-use" }
 const TURN_ID_PATTERN = /^-?\d+$/
 
 /**
@@ -70,15 +87,26 @@ export function parseHash(hash: string): HashRoute {
   const body = hash.startsWith("#") ? hash.slice(1) : hash
   const queryStart = body.indexOf("?")
   const path = queryStart === -1 ? body : body.slice(0, queryStart)
-  const query = queryStart === -1 ? "" : body.slice(queryStart + 1)
-  return { screen: screenOf(path), turn: turnOf(new URLSearchParams(query).get(TURN_PARAM)) }
+  const params = new URLSearchParams(queryStart === -1 ? "" : body.slice(queryStart + 1))
+  const screen = screenOf(path)
+  return {
+    screen,
+    turn: turnOf(params.get(TURN_PARAM)),
+    pack: screen === "character" ? packOf(params.get(PACK_PARAM)) : IN_USE,
+  }
 }
 
 /** `<a href>` にそのまま書ける hash（会話の画面・今回に追従なら `#`）。 */
 export function formatHash(route: HashRoute): string {
-  const path = SCREEN_PATH[route.screen]
-  const query = route.turn === "newest" ? "" : `?${TURN_PARAM}=${String(route.turn)}`
-  return `#${path}${query}`
+  const params = new URLSearchParams()
+  if (route.screen === "character" && route.pack.kind === "named") {
+    params.set(PACK_PARAM, route.pack.name)
+  }
+  if (route.turn !== "newest") {
+    params.set(TURN_PARAM, String(route.turn))
+  }
+  const query = params.toString()
+  return `#${SCREEN_PATH[route.screen]}${query === "" ? "" : `?${query}`}`
 }
 
 function subscribeToHash(onStoreChange: () => void): () => void {
@@ -98,4 +126,9 @@ function turnOf(value: string | null): ViewedTurn {
     return "newest"
   }
   return Number(value)
+}
+
+/** 空の `pack` は「選んでいない」に畳む（パックの名前は空にならない）。 */
+function packOf(value: string | null): PackSelection {
+  return value === null || value === "" ? IN_USE : { kind: "named", name: value }
 }

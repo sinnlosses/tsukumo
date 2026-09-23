@@ -104,18 +104,87 @@ describe("CharacterEdit", () => {
     expect(screen.getByRole("button", { name: "作業中を消す" })).toBeDefined()
   })
 
-  // **立ち絵が無い表情は点線の枠の空きにラベルと「選ぶ」だけ**（docs/screen-design.md 13.6）。
-  it("立ち絵が無い表情には消す口を出さず、「選ぶ」を出す", () => {
+  // **立ち絵が無い表情は、その表情の名前を書いた点線の空欄**（docs/screen-design.md 13.6）。
+  it("立ち絵が無い表情は名前つきの空欄で出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     expect(screen.queryByRole("button", { name: "flusteredを消す" })).toBeNull()
+    // 空欄の枠そのものが選ぶ口で、どの表情かは枠の字に出る。
     const pick = screen.getByLabelText("flusteredを選ぶ")
-    expect(pick.closest("label")?.textContent).toContain("選ぶ")
-    // 立ち絵そのものは無いので、点線の枠の空きが代わりに出る
-    // （立ち絵がある3つ以外の残り全部。EXPRESSIONS が伸びてもここは自動で追随する）。
-    expect(document.querySelectorAll(".character-gallery-blank")).toHaveLength(
-      EXPRESSIONS.length - EXPRESSIONS_WITH_PORTRAIT.length,
+    expect(pick.closest("label")?.textContent).toContain("flustered")
+    // 立ち絵がある3つ以外の残り全部（EXPRESSIONS が伸びてもここは自動で追随する）。
+    const blanks = [...document.querySelectorAll(".character-card-blank")]
+    expect(blanks).toHaveLength(EXPRESSIONS.length - EXPRESSIONS_WITH_PORTRAIT.length)
+    expect(blanks.map((blank) => blank.getAttribute("data-expression"))).toEqual(
+      EXPRESSIONS.filter(
+        (expression) => !(EXPRESSIONS_WITH_PORTRAIT as readonly string[]).includes(expression),
+      ),
     )
+  })
+
+  it("9つそろうと空欄は出ない", () => {
+    renderCharacterEdit({
+      ...FIXTURE_CHARACTER,
+      ...shownPortraits({
+        default: "/character/default.png?v=fictional@1",
+        thinking: "/character/thinking.png?v=fictional@1",
+        proud: "/character/proud.png?v=fictional@1",
+        flustered: "/character/flustered.png?v=fictional@1",
+        serious: "/character/serious.png?v=fictional@1",
+        curious: "/character/curious.png?v=fictional@1",
+        sad: "/character/sad.png?v=fictional@1",
+        excited: "/character/excited.png?v=fictional@1",
+        bored: "/character/bored.png?v=fictional@1",
+      }),
+    })
+
+    expect(document.querySelectorAll(".character-card-blank")).toHaveLength(0)
+    expect(document.querySelectorAll(".character-card")).toHaveLength(EXPRESSIONS.length)
+    expect(
+      screen.getByText(`${String(EXPRESSIONS.length)} 枚 · 乗せると差し替え・消すが出ます`),
+    ).toBeDefined()
+  })
+
+  it("default のカードにだけ「いつもの顔」の札を添える", () => {
+    renderCharacterEdit(FIXTURE_CHARACTER)
+
+    const badges = [...document.querySelectorAll(".character-card-badge")]
+    expect(badges.map((badge) => badge.textContent)).toEqual(["いつもの顔"])
+    expect(badges[0]?.closest("figure")?.getAttribute("data-expression")).toBe("default")
+  })
+
+  // 乗せたときだけ出る口は、キーボードからも届く（消さずに透明にしてあり、Tab で入れる）。
+  it("差し替える・消すの口は、フォーカスできる要素としてカードの中にある", () => {
+    renderCharacterEdit(FIXTURE_CHARACTER)
+
+    const card = screen.getByLabelText("どや顔を差し替える").closest("figure")
+    const clear = screen.getByRole("button", { name: "どや顔を消す" })
+    expect(card?.contains(clear)).toBe(true)
+    clear.focus()
+    expect(document.activeElement).toBe(clear)
+  })
+
+  it("カードに画像を落とすと、その表情の set-portrait を dispatch する", async () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+    const blank = screen.getByLabelText("sadを選ぶ").closest("label")
+    if (blank === null) {
+      throw new Error("空欄のカードが無い")
+    }
+
+    fireEvent.drop(blank, {
+      dataTransfer: { files: [new File(["png"], "dropped.png", { type: "image/png" })] },
+    })
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(calls).toEqual([
+      {
+        type: "set-portrait",
+        pack: "fictional",
+        expression: "sad",
+        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+      },
+    ])
   })
 
   it("消す口を押すと clear-portrait を dispatch する", () => {
@@ -211,17 +280,19 @@ describe("CharacterEdit", () => {
 
     expect((screen.getByLabelText("仕事") as HTMLInputElement).value).toBe("#f2b0a0")
     expect((screen.getByLabelText("雑談") as HTMLInputElement).value).toBe("#f2984a")
-    expect(screen.getByRole("button", { name: "仕事と同じにする" })).toBeDefined()
-    expect(screen.queryByText("仕事と同じ")).toBeNull()
+    expect(screen.getByRole("button", { name: "雑談も仕事と同じにする" })).toBeDefined()
+    expect(screen.queryByText("雑談も仕事と同じ")).toBeNull()
+    // 色だけにせず、今の値を16進の字でも添える。
+    expect(screen.getByText("#f2984a")).toBeDefined()
   })
 
-  it("chatAccent が無いパックでは、雑談の見本に仕事の差し色と「仕事と同じ」の字を出し、戻す口は出さない", () => {
+  it("chatAccent が無いパックでは、雑談の見本に仕事の差し色と「雑談も仕事と同じ」の字を出し、戻す口は出さない", () => {
     renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: undefined })
 
     expect((screen.getByLabelText("雑談") as HTMLInputElement).value).toBe("#f2b0a0")
-    expect(screen.queryByRole("button", { name: "仕事と同じにする" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "雑談も仕事と同じにする" })).toBeNull()
     // 色見本が仕事と同じ色なのを、色だけでなく字でも伝える（13.1 原則1）。
-    expect(screen.getByText("仕事と同じ")).toBeDefined()
+    expect(screen.getByText("雑談も仕事と同じ")).toBeDefined()
   })
 
   it("仕事の差し色を変えると、少し待ってから set-accent（target: work）を dispatch する", async () => {
@@ -237,13 +308,13 @@ describe("CharacterEdit", () => {
     ])
   })
 
-  it("「仕事と同じにする」を押すと clear-chat-accent を dispatch する", () => {
+  it("「雑談も仕事と同じにする」を押すと clear-chat-accent を dispatch する", () => {
     const calls: unknown[] = []
     renderCharacterEdit({ ...FIXTURE_CHARACTER, chatAccent: "#f2984a" }, (command) =>
       calls.push(command),
     )
 
-    fireEvent.click(screen.getByRole("button", { name: "仕事と同じにする" }))
+    fireEvent.click(screen.getByRole("button", { name: "雑談も仕事と同じにする" }))
 
     expect(calls).toEqual([{ type: "clear-chat-accent", pack: "fictional" }])
   })
@@ -253,7 +324,7 @@ describe("CharacterEdit", () => {
 
     expect((screen.getByLabelText("仕事") as HTMLInputElement).disabled).toBe(true)
     expect((screen.getByLabelText("雑談") as HTMLInputElement).disabled).toBe(true)
-    expect(screen.getByRole("button", { name: "仕事と同じにする" })).toHaveProperty(
+    expect(screen.getByRole("button", { name: "雑談も仕事と同じにする" })).toHaveProperty(
       "disabled",
       true,
     )
@@ -348,7 +419,7 @@ describe("CharacterEdit", () => {
   it("キャラクターが届く前は何も出さない", () => {
     renderCharacterEdit(undefined)
 
-    expect(document.querySelectorAll("fieldset")).toHaveLength(0)
+    expect(document.querySelectorAll("section")).toHaveLength(0)
     expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
   })
 })

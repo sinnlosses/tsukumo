@@ -10,17 +10,24 @@
 // **hash の書き方はここに無い**（`stores/location-hash.ts`）。同じ hash の `turn` は見ている
 // ターン（`stores/turn-selection.tsx`）のもので、画面を移しても消さずに運ぶ。
 //
-// 画面を選ぶのは入口の `<Root>`（`src/browser/main.tsx`）で、**機能の側はこの hook を読まない**
+// 画面を選ぶのは入口の `<Root>`（`src/browser/main.tsx`）で、**機能の側は `useScreen` を読まない**
 // （出る口・入る口はただのリンクで書ける。`navigateTo` が要るのは、コマンドを送った直後に
 // 画面も移す作る画面だけ）。
+//
+// **キャラクター画面で選んでいるパックも hash に持つ**（`#character?pack=<名前>`。
+// `docs/screen-design.md` 13.6）。再読み込みしても同じパックが開いたままで、「戻る」で前に選んで
+// いたパックへ戻れる。読むのは `usePackSelection`、選ぶ口のリンクは `usePackHref` が作る。
 
 import {
   readHashRoute,
   useHashRoute,
   writeHashRoute,
   formatHash,
+  type PackSelection,
   type Screen,
 } from "./location-hash.ts"
+
+const IN_USE: PackSelection = { kind: "in-use" }
 
 export function useScreen(): Screen {
   return useHashRoute((route) => route.screen)
@@ -37,5 +44,19 @@ export function navigateTo(screen: Screen): void {
  */
 export function useScreenHref(): (screen: Screen) => string {
   const turn = useHashRoute((route) => route.turn)
-  return (screen) => formatHash({ screen, turn })
+  return (screen) => formatHash({ screen, turn, pack: IN_USE })
+}
+
+/** キャラクター画面で選んでいるパック（hash の `pack`）。 */
+export function usePackSelection(): PackSelection {
+  // スナップショットはプリミティブに限るので名前だけを読む。**空文字は「選んでいない」**
+  // （パックの名前は空にならない。`parseHash` も空の `pack` を「選んでいない」に畳む）。
+  const name = useHashRoute((route) => (route.pack.kind === "named" ? route.pack.name : ""))
+  return name === "" ? IN_USE : { kind: "named", name }
+}
+
+/** キャラクター画面でそのパックを選ぶ `<a href>` を作る関数。見ているターンは運ぶ。 */
+export function usePackHref(): (pack: string) => string {
+  const turn = useHashRoute((route) => route.turn)
+  return (pack) => formatHash({ screen: "character", turn, pack: { kind: "named", name: pack } })
 }

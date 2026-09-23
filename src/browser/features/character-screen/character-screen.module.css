@@ -1,110 +1,383 @@
 /* キャラクター画面と作る画面（`src/browser/features/character-screen/`。docs/screen-design.md 13.6）。
-   **会話の画面と入れ替わる**（重ねない）ので、ここは1枚のページとして縦に流す — 4領域の
-   grid も仕切りも持たない。**立ち絵の並びが主役**で、残りは静かな行に保つ。
-   狭い画面（760px 以下）用の規則は書かない（並びが折り返すだけ）。 */
-.character-screen {
+   **会話の画面と入れ替わる**（重ねない）ので、ここは1枚のページとして流す — 4領域の grid も
+   仕切りも持たない。キャラクター画面は**左に一覧（260px）、右に選んでいるパックの詳しい設定**の
+   2段組で、760px 以下では一覧を上に積む（このファイル末尾の @media）。
+   **16進の色は書かない**（見本の色は theme.css のトークンに当てた。13.6「キャラクター画面の中身」）。
+   書体も2本のまま（13.3。見本の明朝は使わない）。 */
+
+/* ---- 2段組 ---- */
+.character-screen-columns {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0.5rem 1.5rem 2rem;
+}
+
+/* ---- 左: 一覧 ---- */
+.character-list {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 0 0.25rem 2rem;
+  gap: 0.6rem;
+  min-width: 0;
 }
-/* 戻る口の行。**いま使うのは作る画面だけ**（キャラクター画面の「← 会話へ戻る」と答え待ちの
-   印は、全画面の最上部の帯へ移った。docs/screen-design.md 13.9）。 */
-.character-screen-bar {
+.character-list-heading {
   display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.25rem 0.25rem;
 }
-/* 戻る口と「新しく作る」は**字だけ**（13.1 原則1）。色は `ink` のままで、下線だけで
-   リンクだと分かるようにする。 */
-.character-screen-back,
-.character-screen-new {
+.character-list-count {
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+}
+.character-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
   color: var(--ink);
-  font-size: var(--font-label);
-  text-decoration: underline;
+  text-decoration: none;
 }
-.character-screen-back:hover,
-.character-screen-new:hover {
-  color: var(--accent);
+.character-list-row:hover {
+  background: var(--surface);
 }
-.character-screen-headline {
+/* 選んでいる行は地を差し色で薄く染め、縁も差し色寄りにする（`aria-current`。字の重さでも示す）。 */
+.character-list-row[aria-current="page"] {
+  background: var(--surface-accent);
+  border-color: color-mix(in srgb, var(--surface), var(--accent) 35%);
+}
+.character-list-row[aria-current="page"] .character-list-name {
+  font-weight: bold;
+}
+.character-list-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.character-list-face,
+.character-list-face-blank {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.character-list-face {
+  object-fit: cover;
+}
+.character-list-row[aria-current="page"] .character-list-face {
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+/* 顔を持たないパックは点線の丸（立ち絵や `mini` から切り抜いて代わりにしない。13.9「顔」）。 */
+.character-list-face-blank {
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px dashed var(--rule);
+}
+.character-list-text {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-direction: column;
+  min-width: 0;
 }
-.character-screen-label {
+.character-list-name {
+  overflow: hidden;
+  font-size: var(--font-subheading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.character-list-meta {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.character-list-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  margin-top: 0.4rem;
+  border: 1px dashed var(--rule);
+  border-radius: 0.625rem;
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  text-decoration: none;
+}
+.character-list-new:hover {
+  border-color: var(--accent);
+}
+
+/* ---- 右: 詳しい設定 ---- */
+/* 札1枚。中の表情のカード・色見本は札より沈めた `ground` の地に置く。
+   **container にしてあるのは、詳しい設定の幅で格子の列数を決めるため**（一覧の幅を除いた残り）。 */
+.character-detail {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  min-width: 0;
+  padding: 1.5rem 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.875rem;
+}
+
+/* 名乗り */
+.character-profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1rem;
+}
+.character-profile-face,
+.character-profile-face-blank {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+.character-profile-face {
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.character-profile-face-blank {
+  box-sizing: border-box;
+  background: var(--ground);
+  border: 1px dashed var(--rule);
+}
+.character-profile-text {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.character-profile-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+}
+.character-profile-name {
   margin: 0;
   font-size: var(--font-heading);
-  font-weight: normal;
+  font-weight: bold;
+  letter-spacing: 0.06em;
 }
 /* パックの名前はディレクトリ名なので等幅（13.1 原則3）。 */
-.character-screen-pack {
+.character-profile-id {
   color: var(--ink-quiet);
   font-family: var(--font-mono);
+  font-size: var(--font-action);
+}
+.character-in-use {
+  padding: 0.1rem 0.55rem;
+  background: var(--accent);
+  color: var(--ground);
+  border-radius: 999px;
+  font-size: var(--font-label);
+  font-weight: bold;
+}
+.character-profile-tagline {
+  color: var(--ink-quiet);
   font-size: var(--font-secondary);
 }
-.character-screen-new {
+.character-profile-action {
   margin-left: auto;
 }
 
-/* 立ち絵の並び。`EXPRESSIONS` の順に横へ並べ、入りきらなければ折り返す（13.6）。 */
-.character-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: 1rem;
-}
-.character-gallery-card {
+/* 節（表情・差し色・背景） */
+.character-section {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.character-section-bar {
+  display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
-/* **立ち絵は枠も地も持たない**（13.1 原則2。`ground` の上に直接置く）。大きさはここで決める
-   （`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は
-   `.character-region` が持つ変数なので、この画面では解決されない）。 */
-.character-gallery .character-gallery-portrait {
+.character-section-bar > :last-child {
+  margin-left: auto;
+}
+.character-section-heading {
   margin: 0;
-  height: 8rem;
-  max-width: 100%;
+  font-size: var(--font-body);
+  font-weight: bold;
 }
-/* 立ち絵が無い表情は**点線の枠の空き**（そこに置けることだけを示す）。 */
-.character-gallery-blank {
-  width: 100%;
-  height: 8rem;
-  border: 1px dashed var(--rule);
+.character-section-note {
+  margin-left: 0.6rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+  font-weight: normal;
+}
+.character-section-bar > .character-section-note {
+  margin-left: auto;
+}
+
+/* 表情の格子。**広いときは5列**（見本）、詳しい設定が狭いときは入るだけの列で折り返す。 */
+.character-gallery {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@container (max-width: 52rem) {
+  .character-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  }
+}
+.character-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  background: var(--ground);
+  border: 1px solid var(--rule-quiet);
   border-radius: 0.75rem;
 }
-.character-gallery-label {
-  font-size: var(--font-secondary);
+.character-card:hover,
+.character-card:focus-within {
+  border-color: var(--accent);
 }
-/* 「差し替える」「選ぶ」の口は `<label>`（中の `<input type="file">` は隠す — ブラウザごとに
-   見た目が違い、カードの幅に収まらない）。読み上げ用の名前は `<input>` の aria-label にある。 */
-.character-gallery-pick,
-.character-gallery-clear {
-  padding: 0.15rem 0.5rem;
-  background: var(--surface);
-  color: inherit;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
+.character-card-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 10.5rem;
+  padding-top: 0.5rem;
+}
+/* **立ち絵は枠も地も持たない**（13.1 原則2。カードの地の上に直接置く）。大きさはここで決める
+   （`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は `.character-region` が持つ
+   変数なので、この画面では解決されない）。 */
+.character-card-stage .character-card-portrait {
+  height: 10rem;
+  max-width: 100%;
+  margin: 0;
+}
+.character-card-label {
+  padding: 0.5rem 0.6rem 0.6rem;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: var(--font-secondary);
+  text-align: center;
+}
+.character-card-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  background: var(--accent);
+  color: var(--ground);
+  border-radius: 0.5rem;
   font-size: var(--font-label);
+  font-weight: bold;
+}
+/* 乗せたとき・カードの中にフォーカスがあるときだけ出る2つの口（13.6）。**消さずに透明にする**
+   （`display: none` だと Tab で口に入れず、キーボードから出せなくなる）。 */
+.character-card-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+}
+.character-card:hover .character-card-actions,
+.character-card:focus-within .character-card-actions {
+  opacity: 1;
+}
+/* 乗せるという操作が無い端末（タッチ）では最初から出しておく。 */
+@media (hover: none) {
+  .character-card-actions {
+    opacity: 1;
+  }
+}
+.character-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: color-mix(in srgb, var(--ground) 90%, transparent);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
   cursor: pointer;
 }
-.character-gallery-pick:hover,
-.character-gallery-clear:hover {
+.character-card-action:hover {
   border-color: var(--accent);
+}
+.character-card-action-danger {
+  color: var(--state-ng);
+  border-color: color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+}
+.character-card-action-danger:hover {
+  border-color: var(--state-ng);
+}
+.character-card-action:has(.character-card-file:focus-visible),
+.character-card-action:focus-visible,
+.character-button:has(.character-card-file:focus-visible),
+.character-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 /* 変えられないパック（`editable: false`）。`<label>` 自体は disabled にできないので、
    中の `<input>` の状態を見て見た目を合わせる。 */
-.character-gallery-pick:has(.character-gallery-file:disabled) {
+.character-card-action:has(.character-card-file:disabled),
+.character-card-action:disabled,
+.character-button:has(.character-card-file:disabled),
+.character-button:disabled {
   color: var(--ink-quiet);
+  border-color: var(--rule-quiet);
   cursor: default;
 }
-/* 見えないが読み上げとクリックの対象には残す（`display: none` にすると `<label>` から
+/* 立ち絵がまだ無い表情。**その表情の名前を書いた点線の空欄**で、枠そのものが選ぶ口。 */
+.character-card-blank {
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 13.25rem;
+  padding: 0.75rem;
+  background: transparent;
+  border: 1.5px dashed var(--rule);
+  color: var(--ink-quiet);
+  text-align: center;
+  cursor: pointer;
+}
+.character-card-blank:has(.character-card-file:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.character-card-blank:has(.character-card-file:disabled) {
+  border-color: var(--rule-quiet);
+  cursor: default;
+}
+.character-card-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--surface-raised);
+  color: var(--accent);
+  border-radius: 50%;
+}
+.character-card-blank-label {
+  color: var(--ink);
+  font-size: var(--font-secondary);
+}
+.character-card-blank-hint {
+  font-size: var(--font-label);
+}
+/* 見えないが読み上げとクリック・フォーカスの対象には残す（`display: none` にすると `<label>` から
    たどれなくなる）。 */
-.character-gallery-file {
+.character-card-file {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -116,8 +389,207 @@
   white-space: nowrap;
 }
 
-/* 組（差し色・背景・新しいキャラクター）。枠は持たず、`<legend>` を小さな見出しとして
-   使う（13.1 原則2）。 */
+/* 差し色。**画面の差し色（2つ）と立ち絵の差し色（4つ）を横に並べる**（見本の 2 : 4）。 */
+.character-accents {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 4fr);
+  gap: 1rem;
+}
+.character-swatches-screen,
+.character-swatches-outfit {
+  display: grid;
+  gap: 0.5rem;
+}
+.character-swatches-screen {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.character-swatches-outfit {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@container (max-width: 52rem) {
+  .character-accents {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* ごく狭いときは1列（2列だと装備の名前と16進が折れる）。 */
+@container (max-width: 30rem) {
+  .character-swatches-outfit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.character-swatch {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  background: var(--ground);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.625rem;
+  cursor: pointer;
+}
+.character-swatch:hover,
+.character-swatch:focus-within {
+  border-color: var(--rule);
+}
+.character-swatch:has(.character-swatch-color:disabled) {
+  cursor: default;
+}
+/* 色見本は `<input type="color">` そのもの。ブラウザの枠を外して角丸の四角にする。 */
+.character-swatch-color {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  cursor: inherit;
+}
+.character-swatch-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.character-swatch-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.character-swatch-color::-moz-color-swatch {
+  border: none;
+  border-radius: 7px;
+}
+.character-swatch-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--font-secondary);
+}
+.character-swatch-sublabel {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.character-swatch-hex {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+/* 「雑談も仕事と同じにする」。字だけの口（差し色の字。13.1 原則1 の「差し色は指さす1箇所」）。 */
+.character-link-button {
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  border: none;
+  font-size: var(--font-action);
+  cursor: pointer;
+}
+.character-link-button:hover {
+  text-decoration: underline;
+}
+.character-link-button:disabled {
+  color: var(--ink-quiet);
+  text-decoration: none;
+  cursor: default;
+}
+
+/* 背景（13.8）。**敷いたときと同じ切り取り方**（cover・下端合わせ）の縮図と、字と2つの口。 */
+.character-background {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+.character-background-preview,
+.character-background-blank {
+  box-sizing: border-box;
+  width: 220px;
+  max-width: 100%;
+  height: 124px;
+  border-radius: 0.625rem;
+}
+.character-background-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: cover;
+  object-position: center bottom;
+}
+/* 背景が無いときは、表情の空欄と同じ点線の枠（そこに置けることだけを示す）。 */
+.character-background-blank {
+  border: 1.5px dashed var(--rule);
+}
+.character-background-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: var(--font-secondary);
+}
+.character-background-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* 字つきの口（背景の差し替える・消す、このキャラクターに切り替える）。 */
+.character-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 34px;
+  padding: 0 0.75rem;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.character-button:hover {
+  border-color: var(--accent);
+}
+.character-button-danger {
+  color: var(--state-ng);
+  border-color: color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+}
+.character-button-danger:hover {
+  border-color: var(--state-ng);
+}
+
+/* 変えられないパックのとき・名前が使えないときの一言。 */
+.character-screen-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+
+/* ---- 作る画面（`character-create.tsx`）。行は縦に積む（名前・立ち絵・差し色の3行） ---- */
+.character-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 0.25rem 2rem;
+}
+/* 戻る口の行（作る画面は帯に出さないので、左上に「← キャラクターへ戻る」を残す。13.9）。 */
+.character-screen-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+/* 戻る口は**字だけ**（13.1 原則1）。色は `ink` のままで、下線だけでリンクだと分かるようにする。 */
+.character-screen-back {
+  color: var(--ink);
+  font-size: var(--font-label);
+  text-decoration: underline;
+}
+.character-screen-back:hover {
+  color: var(--accent);
+}
+/* 組（新しいキャラクター）。枠は持たず、`<legend>` を小さな見出しとして使う（13.1 原則2）。 */
 .character-screen-fieldset {
   display: flex;
   flex-direction: column;
@@ -131,70 +603,12 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
-/* 差し色（画面の差し色2つ・衣装4つ）は**1行に**並べ、入りきらなければ折り返す。 */
-.character-screen-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-}
 .character-screen-field {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: var(--font-secondary);
 }
-/* 雑談の差し色を持たないときに、戻す口の場所へ出す一言。見本が仕事と同じ色なのを**色だけで
-   伝えない**（13.1 原則1）。 */
-.character-screen-accent-same {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
-/* 雑談の差し色を「仕事と同じ」へ戻す口。ほかの小さな口（消す・作る）と同じ見た目。 */
-.character-screen-accent-reset {
-  padding: 0.15rem 0.5rem;
-  background: var(--surface);
-  color: inherit;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  font: inherit;
-  font-size: var(--font-label);
-  cursor: pointer;
-}
-.character-screen-accent-reset:hover {
-  border-color: var(--accent);
-}
-.character-screen-accent-reset:disabled {
-  color: var(--ink-quiet);
-  cursor: default;
-}
-/* 背景の行（13.8）。行の左に**いまの背景を小さく**出す。立ち絵の並びと違って主役ではないので、
-   高さは1行ぶんに収める。**敷いたときと同じ切り取り方**（cover・下端合わせ）にして、
-   キャラビューで見えるところが見本になるようにする。 */
-.character-background-preview {
-  width: 4rem;
-  height: 2.25rem;
-  border-radius: 0.25rem;
-  object-fit: cover;
-  object-position: center bottom;
-}
-/* 背景が無いときは、立ち絵の空きと同じ点線の枠（そこに置けることだけを示す）。 */
-.character-background-blank {
-  width: 4rem;
-  height: 2.25rem;
-  border: 1px dashed var(--rule);
-  border-radius: 0.25rem;
-}
-
-/* 変えられないパックのとき・名前が使えないときの一言。 */
-.character-screen-note {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
-/* 作る画面（`character-create.tsx`）。行は縦に積む（名前・立ち絵・差し色の3行）。 */
 .character-screen-create-name {
   max-width: 12rem;
   min-width: 0;
@@ -229,4 +643,17 @@
 .character-screen-switch:disabled {
   color: var(--ink-quiet);
   cursor: default;
+}
+
+/* 狭い画面（760px 以下）: 一覧を上に積み、詳しい設定の余白を詰める（格子と差し色の列数は
+   詳しい設定の幅を見る @container が決める）。 */
+@media (max-width: 760px) {
+  .character-screen-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0 0 1.5rem;
+  }
+  .character-detail {
+    padding: 1rem;
+  }
 }

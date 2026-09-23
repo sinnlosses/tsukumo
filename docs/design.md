@@ -247,7 +247,7 @@ src/
       dispatch/               Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
       chat-view/              雑談モードでメインの領域に差し替わるビュー（13.7）
       token-usage/            トークン消費の画面（期間の消費の札・小さな棒・集計の表）
-      character-screen/       キャラクター画面と作る画面（13.6）。立ち絵・差し色の差し替え、使う人が変える色
+      character-screen/       キャラクター画面と作る画面（13.6）。パックの一覧と、選んだパックの立ち絵・差し色・背景の差し替え
       task-board/             タスク一覧。TaskList（区画の中身）・TaskBoard（表のモーダルの入口）・
                               PresentationalTaskBoard（器）。**領域を持たず、サイドバーに
                               置いてもらう機能**（下の「領域の機能と、置かれる機能」）

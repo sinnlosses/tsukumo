@@ -2,7 +2,13 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { act, cleanup, renderHook } from "@testing-library/react"
 
-import { navigateTo, useScreen, useScreenHref } from "../../../src/browser/stores/screen.tsx"
+import {
+  navigateTo,
+  usePackHref,
+  usePackSelection,
+  useScreen,
+  useScreenHref,
+} from "../../../src/browser/stores/screen.tsx"
 
 /**
  * hash を書き換えて `hashchange` を流す。happy-dom が `location.hash` の代入でイベントを
@@ -107,5 +113,33 @@ describe("useScreenHref", () => {
 
     goToHash("#character?turn=5")
     expect(result.current("conversation")).toBe("#?turn=5")
+  })
+})
+
+describe("usePackSelection", () => {
+  it("pack が無ければ使用中、あればその名前を選んでいる", () => {
+    window.location.hash = "#character"
+    const { result } = renderHook(() => usePackSelection())
+    expect(result.current).toEqual({ kind: "in-use" })
+
+    goToHash("#character?pack=other")
+    expect(result.current).toEqual({ kind: "named", name: "other" })
+  })
+})
+
+describe("usePackHref", () => {
+  it("そのパックを選ぶキャラクター画面の href を、見ているターンを残して作る", () => {
+    window.location.hash = "#character?turn=3"
+    const { result } = renderHook(() => usePackHref())
+
+    expect(result.current("other")).toBe("#character?pack=other&turn=3")
+  })
+
+  // 帯の「キャラクター」から入り直したときは使用中のパックから（選んだパックは運ばない）。
+  it("画面の href は選んでいるパックを落とす", () => {
+    window.location.hash = "#character?pack=other"
+    const { result } = renderHook(() => useScreenHref())
+
+    expect(result.current("character")).toBe("#character")
   })
 })

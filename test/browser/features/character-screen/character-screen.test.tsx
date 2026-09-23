@@ -1,18 +1,40 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
-import { cleanup, render, screen } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { CharacterScreen } from "../../../../src/browser/features/character-screen/character-screen.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo } from "../../../fixture/character.ts"
-import { sessionStoreWith } from "../../session-store.ts"
+import { characterInfo, characterPackEntry, shownPortraits } from "../../../fixture/character.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
-// 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
-// **立ち絵は持たせない** — この画面の並びそのものは `character-edit.test.tsx` が見るので、
-// ここでは戻る口・見出しと、**この画面に何が残っているか**だけを見る。
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo()
+// 手で書いた架空のキャラクターパック2つ（docs/coding-standards.md「会話内容の扱い」）。
+// 使用中の `fictional` と、使用中ではない `other`。立ち絵は**ラスタ**にしてある（`<Portrait>` は
+// SVG のときだけ中身を `fetch` しに行くので、このテストの関心ではない非同期がまぎれる）。
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
+  tagline: "架空のひとこと",
+  ...shownPortraits({ default: "/character/fictional/default.png?v=1" }),
+})
+
+const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
+  pack: "other",
+  name: "別の精霊",
+  expressions: [
+    { name: "default", label: "ふつう" },
+    { name: "proud", label: "得意" },
+  ],
+  ...shownPortraits({
+    default: "/character/other/default.png?v=1",
+    proud: "/character/other/proud.png?v=1",
+  }),
+})
+
+const FIXTURE_PACKS = [
+  characterPackEntry("fictional", "架空の精霊", { character: FIXTURE_CHARACTER, inUse: true }),
+  characterPackEntry("other", "別の精霊", { character: OTHER_CHARACTER }),
+]
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件）。
 const FIXTURE_PENDING: PendingAsk = {
@@ -31,36 +53,139 @@ beforeEach(() => {
   themeStyleElement.textContent =
     ":root { --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; --accent: #f2b0a0; }"
   document.head.appendChild(themeStyleElement)
+  window.location.hash = "#character"
 })
 
 afterEach(() => {
   cleanup()
   themeStyleElement?.remove()
   themeStyleElement = undefined
+  window.location.hash = ""
 })
 
-function renderCharacterScreen(state: Partial<SessionState> = {}): void {
-  const store = sessionStoreWith({
-    ...INITIAL_SESSION_STATE,
-    character: FIXTURE_CHARACTER,
-    ...state,
-  })
+function renderCharacterScreen(
+  state: Partial<SessionState> = {},
+  spy: CommandSpy = () => {},
+): void {
+  const store = sessionStoreWith(
+    {
+      ...INITIAL_SESSION_STATE,
+      character: FIXTURE_CHARACTER,
+      characterPacks: FIXTURE_PACKS,
+      ...state,
+    },
+    spy,
+  )
   render(
-    <SessionStoreContext.Provider value={store}>
-      <CharacterScreen />
-    </SessionStoreContext.Provider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <SessionStoreContext.Provider value={store}>
+        <CharacterScreen />
+      </SessionStoreContext.Provider>
+    </QueryClientProvider>,
   )
 }
 
+/**
+ * 一覧の行を押す。行は `<a href>` で、happy-dom が押したリンクの hash を書くか・`hashchange` を
+ * 出すかは実装依存なので、**href の hash をこのテストが書いて流す**（本物のブラウザは必ず出す）。
+ */
+function clickListRow(name: string): void {
+  const row = screen.getByRole("link", { name: new RegExp(name) })
+  act(() => {
+    window.location.hash = row.getAttribute("href") ?? ""
+    window.dispatchEvent(new Event("hashchange"))
+  })
+}
+
+function profileName(): string | null | undefined {
+  return document.querySelector(".character-profile-name")?.textContent
+}
+
 describe("CharacterScreen", () => {
-  it("パックのラベル・名前・「新しく作る」を出す", () => {
+  it("左に一覧（件数・行・新しく作る）、右に使用中のパックの詳しい設定を出す", () => {
     renderCharacterScreen()
 
+    const list = screen.getByRole("navigation", { name: "キャラクター一覧" })
+    expect(list.querySelector(".character-list-count")?.textContent).toBe("2")
     expect(screen.getByRole("link", { name: "新しく作る" }).getAttribute("href")).toBe(
       "#character/new",
     )
-    expect(document.querySelector(".character-screen-label")?.textContent).toBe("架空の精霊")
-    expect(document.querySelector(".character-screen-pack")?.textContent).toBe("fictional")
+    // 使用中の行は表情の枚数と「使用中」を添え、選ばれている（aria-current）。
+    const inUseRow = screen.getByRole("link", { name: /架空の精霊/ })
+    expect(inUseRow.textContent).toContain("使用中")
+    expect(inUseRow.getAttribute("aria-current")).toBe("page")
+    expect(inUseRow.getAttribute("href")).toBe("#character?pack=fictional")
+
+    expect(profileName()).toBe("架空の精霊")
+    expect(document.querySelector(".character-profile-id")?.textContent).toBe("id: fictional")
+    expect(document.querySelector(".character-in-use")?.textContent).toBe("使用中")
+    expect(screen.getByText("架空のひとこと")).toBeDefined()
+    // 使用中のパックには切り替える口を出さない。
+    expect(screen.queryByRole("button", { name: /このキャラクターに切り替える/ })).toBeNull()
+  })
+
+  // 完了条件: 一覧で別のパックを選ぶと右側がそのパックの中身に替わり、そこで差し替えた立ち絵が
+  // そのパックに書かれる。
+  it("一覧で別のパックを選ぶと右側がそのパックに替わり、差し替えた立ち絵はそのパックへ書く", async () => {
+    const calls: unknown[] = []
+    renderCharacterScreen({}, (command) => calls.push(command))
+
+    clickListRow("別の精霊")
+
+    expect(profileName()).toBe("別の精霊")
+    expect(document.querySelector(".character-profile-id")?.textContent).toBe("id: other")
+    expect(document.querySelector(".character-in-use")).toBeNull()
+    expect(screen.getByRole("link", { name: /別の精霊/ }).getAttribute("aria-current")).toBe("page")
+    // 表情のラベルも選んだパックの言葉になる。
+    const input = screen.getByLabelText("得意を差し替える") as HTMLInputElement
+    fireEvent.change(input, {
+      target: { files: [new File(["png"], "picked.png", { type: "image/png" })] },
+    })
+    // FileReader は非同期なので、dispatch まで1拍待つ。
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(calls).toEqual([
+      {
+        type: "set-portrait",
+        pack: "other",
+        expression: "proud",
+        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+      },
+    ])
+  })
+
+  it("選んでいるパックは hash に残るので、開き直しても同じパックが出る", () => {
+    window.location.hash = "#character?pack=other"
+    renderCharacterScreen()
+
+    expect(profileName()).toBe("別の精霊")
+  })
+
+  it("一覧に無い名前が hash に残っていたら、使用中のパックに落ちる", () => {
+    window.location.hash = "#character?pack=gone"
+    renderCharacterScreen()
+
+    expect(profileName()).toBe("架空の精霊")
+  })
+
+  it("使用中以外のパックでは「このキャラクターに切り替える」が switch-character を送る", () => {
+    const calls: unknown[] = []
+    window.location.hash = "#character?pack=other"
+    renderCharacterScreen({}, (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: /このキャラクターに切り替える/ }))
+
+    expect(calls).toEqual([{ type: "switch-character", name: "other" }])
+  })
+
+  // 切り替えは起こし直しなので、ターン進行中は押せない（サイドバーの `<select>` と同じ規則）。
+  it("ターン進行中は「このキャラクターに切り替える」を押せない", () => {
+    window.location.hash = "#character?pack=other"
+    renderCharacterScreen({ turn: { kind: "running", startedAt: 1 } })
+
+    const button = screen.getByRole("button", { name: /このキャラクターに切り替える/ })
+    expect(button).toHaveProperty("disabled", true)
+    expect(button.getAttribute("title")).toContain("ターン進行中")
   })
 
   // 戻る口と答え待ちの印は帯（`features/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
@@ -80,19 +205,17 @@ describe("CharacterScreen", () => {
     expect(screen.queryByLabelText("領域の地")).toBeNull()
     expect(screen.queryByLabelText("字の色")).toBeNull()
 
-    const legends = [...document.querySelectorAll("fieldset > legend")].map(
-      (node) => node.textContent,
-    )
-    expect(legends).toContain("画面の差し色")
-    expect(legends).toContain("立ち絵の差し色")
-    expect(legends).not.toContain("画面の色")
+    const headings = [...document.querySelectorAll("h2")].map((node) => node.textContent)
+    expect(headings).toContain("画面の差し色")
+    expect(headings.some((text) => text?.startsWith("立ち絵の差し色"))).toBe(true)
+    expect(headings).not.toContain("画面の色")
   })
 
   // キャラクターが届く前でも行き止まりにしない（作る口だけは出す。会話へ戻る口は帯にある）。
   it("キャラクターが届く前でも作る口を出す", () => {
-    renderCharacterScreen({ character: undefined })
+    renderCharacterScreen({ character: undefined, characterPacks: [] })
 
     expect(screen.getByRole("link", { name: "新しく作る" })).toBeDefined()
-    expect(document.querySelector(".character-screen-label")).toBeNull()
+    expect(document.querySelector(".character-profile-name")).toBeNull()
   })
 })
