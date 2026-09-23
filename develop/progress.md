@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 report の引数を規約で検査し、違反を戻り値で返して書き直させるようにした（T-487）
+
+機械で判定できる7条を `src/server/core/report-violation.ts` で検査し、`report` の handler が違反を `isError` で返す（1ターン1回まで。前置き・締めの定型の行は誤検知が多いので採らなかった）。`report` イベントは同じ呼び出しの `tool-finished` まで `report-review.ts` が預かり、差し戻したものは描かない（セッションの復元でも同じ）。
+
 ### 2026-09-23 report のあとの長い本文を Stop フックで差し戻すようにした（T-486）
 
 `TSUKUMO_REPORT_TOOL=1` の仕事モードだけ `Stop` フックを登録し、SDK のターンで最後の `report` のあと（無ければターンの頭から）の本文が1行（改行なし・100字以下）を超えれば `block` する。判定は `src/server/core/report-tool.ts` の `createReportGate` がメインのイベントだけを見て行い、`SubagentStop` は対象にしない。実機での確かめは T-489。
