@@ -1,7 +1,7 @@
 // 画面のナビの帯の**器だけ**（docs/design.md 2章「機能の中を分ける」/ 13.9）。フックも算出も
 // 持たず、受け取った値と呼び先をそのまま置く。
 //
-// **全画面の最上部に出る1本の帯**で、部屋の名前が左端、その右に仕事/雑談のトグル、その右に
+// **全画面の最上部に出る1本の帯**で、顔と部屋の名前が左端、その右に仕事/雑談のトグル、その右に
 // 3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・
 // 許可モードのドロップダウン、**いちばん右端に設定の歯車**。**狭い画面では `<ScreenNavMenu>` の
 // 「≡」に畳む**（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
@@ -13,6 +13,7 @@ import { type ReactElement } from "react"
 
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./components/screen-nav-current-work.tsx"
+import { ScreenNavFace } from "./components/screen-nav-face.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
@@ -30,6 +31,7 @@ export type PresentationalScreenNavProps = ScreenNavView
 export function PresentationalScreenNav({
   current,
   room,
+  face,
   gates,
   chatMode,
   modelPermission,
@@ -47,6 +49,7 @@ export function PresentationalScreenNav({
 }: PresentationalScreenNavProps): ReactElement {
   return (
     <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
+      <ScreenNavFace url={face.url} alt={face.alt} />
       <ScreenNavRoom name={room} />
       <ScreenNavChatModeToggle chatMode={chatMode} />
       <div className={styles["screen-nav-gates"]}>
@@ -59,6 +62,7 @@ export function PresentationalScreenNav({
       <ScreenNavSettingsGear settings={settings} toggleRef={settingsToggleRefWide} />
       <ScreenNavMenu
         room={room}
+        face={face}
         gates={gates}
         chatMode={chatMode}
         modelPermission={modelPermission}

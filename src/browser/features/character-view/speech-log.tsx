@@ -99,7 +99,7 @@ function firstLine(text: string | undefined): string | undefined {
 /** 時計を巻き戻す絵（ログ）。キャラビューの道具の絵なのでコードに置く（原則4 の対象外）。 */
 function LogIcon(): ReactElement {
   return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
       <path
         d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"
         fill="none"

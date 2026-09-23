@@ -4,9 +4,8 @@
 // **落ちてくる面は開いている間だけの要素**（閉じているときは描かない）。奪う面積を
 // タブ帯の右端の 44px だけに保つための形で、開いている間は上に重ねて出す（段を増やさない）。
 //
-// **落ちてくる面の並びは 部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード →
-// 設定の歯車**
-// （13.9「狭い画面」。顔は別のタスクが足す）。振る舞い（ターン進行中の扱い・送るコマンド）は
+// **落ちてくる面の並びは 顔と部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード →
+// 設定の歯車**（13.9「狭い画面」）。振る舞い（ターン進行中の扱い・送るコマンド）は
 // 広い画面と同じ部品をそのまま使う。**「いまの作業」を押すと、一覧はこの面の中でその場で
 // 下に開く**（重ねない。面ごと縦に伸び、面の内側でスクロールする。13.9「狭い画面」）。
 //
@@ -20,6 +19,7 @@ import { type ReactElement, type RefObject } from "react"
 import { type ScreenNavCurrentWork } from "../hooks/use-current-work.ts"
 import {
   type ScreenNavChatMode,
+  type ScreenNavFace as Face,
   type ScreenNavGate as Gate,
   type ScreenNavModelPermission,
 } from "../hooks/use-screen-nav.ts"
@@ -27,6 +27,7 @@ import { type ScreenNavSettings } from "../hooks/use-settings.ts"
 import styles from "../screen-nav.module.css"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"
+import { ScreenNavFace } from "./screen-nav-face.tsx"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import { ScreenNavModelPermissionSelect } from "./screen-nav-model-permission.tsx"
 import { ScreenNavRoom } from "./screen-nav-room.tsx"
@@ -35,6 +36,8 @@ import { ScreenNavSettingsGear } from "./screen-nav-settings.tsx"
 export type ScreenNavMenuProps = {
   /** 部屋の名前。**落ちてくる面の先頭**に出す（狭い画面では帯の左端が無いため。13.9）。 */
   readonly room: string
+  /** 顔。部屋の名前と並んで**落ちてくる面の先頭**に出す（13.9「顔」）。 */
+  readonly face: Face
   readonly gates: readonly Gate[]
   /** 仕事 / 雑談のトグル。**狭い画面では帯に置く幅が無い**ので、口と同じくここへ入る（13.9）。 */
   readonly chatMode: ScreenNavChatMode
@@ -78,6 +81,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
       </button>
       {props.open ? (
         <div className={styles["screen-nav-panel"]}>
+          <ScreenNavFace url={props.face.url} alt={props.face.alt} />
           <ScreenNavRoom name={props.room} />
           <ScreenNavChatModeToggle chatMode={props.chatMode} />
           {props.gates.map((gate) => (

@@ -11,23 +11,30 @@
   flex-direction: column;
   gap: 0.5rem;
   height: 100%;
-  /* 立ち絵の大きさ（領域の高さに対する割合）と、尻尾の大きさ。立ち絵は領域いっぱいには
-     出さず、少し小さくして床に置く。--portrait-drop は立ち絵を
-     領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる
-     （0.75rem から下げた。立ち絵と吹き出しは同じだけ下がらないと尻尾の指す先がずれるので、
-     --balloon-bottom-gap と同じ量だけ動かす）。
-     68% から引き上げた。
+  /* 立ち絵の大きさ（領域の高さに対する割合）と、吹き出しの列の寸法。値はモック
+     （docs/history/mockup/bottom-2026-09-23.html の section[aria-label="キャラクター"]）に
+     合わせた固定量。立ち絵は領域いっぱいには出さず、少し小さくして床に置く。--portrait-drop は
+     立ち絵を領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる。
      `.portrait` の max-width（45%）と `.balloon-track` の flex-basis（11rem）が先に当たるので、
-     ここを上げすぎても吹き出しの幅は 11rem 未満には潰れない（下の `.balloon-track` 参照）。
-     --balloon-bottom-gap は最新の吹き出しの下端を領域の下端から浮かせる固定量（下の
-     `.balloon-track` 参照）。**rem の絶対値で持つ**（margin/max-height のパーセントは
-     containing block の幅に対して解決されるため、高さの意図で書くと壊れる）。 */
+     ここを上げすぎても吹き出しの幅は 11rem 未満には潰れない（下の `.balloon-track` 参照）。 */
   --portrait-height: 78%;
   --portrait-drop: 2.25rem;
   --balloon-tail: 8px;
-  --balloon-bottom-gap: 7rem;
-  /* 右上の「ログ」の口が占める高さ。吹き出しの並びはここまで伸びない（下の .balloon-track）。 */
-  --speech-log-open-space: 2.25rem;
+  /* 尻尾を最新の吹き出しの下端から浮かせる量（モック値）。縦中央ではなく下寄りに付く。 */
+  --balloon-tail-bottom: 26px;
+  /* 吹き出しの列を立ち絵に重ねる量（モックの `margin-left: -30px`）。列は立ち絵の右に
+     隙間を空けて並べず、この分だけ立ち絵の上へ被せる（下の `.portrait + .balloon-track`）。 */
+  --balloon-overlap: 30px;
+  /* 最新の吹き出しの下端を領域の下端から浮かせる固定量と、列の右端を領域の右端から離す量
+     （モックの `padding: 20px 20px 28px 0`）。**px の絶対値で持つ**（margin/max-height の
+     パーセントは containing block の幅に対して解決されるため、高さの意図で書くと壊れる）。
+     2026-09-23 に、旧 center 版に合わせた実測値（7rem）からモック値（28px）へ詰めた。立ち絵に
+     重なっても顔にはかからないことを目視で確認済み（T-395 の evidence）。 */
+  --balloon-bottom-gap: 28px;
+  --balloon-right-gap: 20px;
+  /* 右上の「ログ」の口（top/right とも 10px、高さ 30px）が占める高さぶんの余白。吹き出しの並びが
+     スクロールしてもここまでは伸びない（下の .balloon-track）。 */
+  --speech-log-open-space: 44px;
 }
 
 /* 立ち絵も吹き出しの並びも**下端で揃える**（床に立つ見え方にする
@@ -35,14 +42,14 @@
    column-reverse）。最新の吹き出しの下端の位置そのものは .balloon-track の
    margin-bottom（--balloon-bottom-gap）で固定する（下のコメント参照。align-items:
    flex-end はここでは水平位置に効かない縦積みの並びなので、実質 .balloon-track の
-   自己配置＝下端揃えの起点をそろえる役目）。
+   自己配置＝下端揃えの起点をそろえる役目）。**列と立ち絵の間に隙間を空けない**（重なりは
+   .balloon-track 側の負の margin-left で作る。下の `.portrait + .balloon-track` 参照）。
    overflow: hidden は --portrait-drop で下へはみ出した立ち絵の足元をここで切るためのもの。
    領域そのもの（.layout-region の overflow-y: auto）にスクロールバーを出さない。 */
 .character-layout {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.75rem;
   height: 100%;
   overflow: hidden;
 }
@@ -51,12 +58,17 @@
    40% の高さ）のときに小さくなりすぎる。いっぱいには広げず --portrait-height ぶんに留め、
    下端で揃えたうえで --portrait-drop ぶん下へずらして床に置く。
    max-width は、領域が細いときに吹き出しの場所（.balloon-track の flex-basis）を食い潰さない
-   ための上限。 */
+   ための上限。
+   **右端を透明へ抜く**（`mask-image`。モックの `linear-gradient(90deg, #000 78%, transparent)`）
+   — 吹き出しの列を重ねたときに、立ち絵の輪郭が列の下に唐突に切れて見えないようにするため。
+   マスクは不透明度だけを読むので、途中の色（#000）自体に意味は無い。 */
 .portrait {
   margin: 0 0 calc(-1 * var(--portrait-drop));
   flex: 0 1 auto;
   height: var(--portrait-height);
   max-width: 45%;
+  -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent);
+  mask-image: linear-gradient(90deg, #000 78%, transparent);
 }
 /* 吹き出しの並び。**DOM は新しい順**（`src/browser/features/character-view/balloon-track.tsx`）なので、
    column-reverse で並べると最新が一番下に来て、過去のセリフほど上へ積み上がる。吹き出しは
@@ -80,9 +92,10 @@
   align-items: flex-start;
   flex: 1 1 11rem;
   flex-direction: column-reverse;
-  gap: 0.5rem;
+  gap: 10px;
   min-width: 0;
   min-height: 0;
+  margin-right: var(--balloon-right-gap);
   margin-bottom: var(--balloon-bottom-gap);
   /* max() の下限は、領域を仕切りで低くしたときに calc の側が 0 以下になって**吹き出しが
      丸ごと消える**のを防ぐためのもの。下限が勝つのは領域が --balloon-bottom-gap + 6rem
@@ -91,47 +104,60 @@
   overflow-y: auto;
 }
 /* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。
-   **角は小さく（0.5rem）、影も付けない** — 丸い風船ではなく、線で切った札に近い見え方にする。 */
+   ここは**過去の吹き出し**の見た目（モック値）。**地は不透明な `surface` のまま**にする
+   （下の `.balloon:not(:first-child)` のコメント、docs/design.md 13.8「文字が乗る要素の地は
+   不透明を保つ」— モックは半透明だが、背景画像が入ると文字の裏へ透けるので採らない）。
+   薄く見せるのは枠と、下の `.balloon:not(:first-child)` の文字色だけ。 */
 .balloon {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
   width: fit-content;
-  max-width: 100%;
-  padding: 0.6rem 0.95rem;
+  max-width: 88%;
+  padding: 10px 14px;
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
-  border-radius: 0.5rem;
+  border-radius: 12px;
   background: var(--surface);
 }
 .balloon-text {
   white-space: pre-wrap;
 }
 /* 話し手の名前（最新の1件にだけ付く。`balloon.tsx`）。吹き出しの主が誰かを示す札なので、
-   accent を出してよい場所に数える（docs/design.md 13.1 原則1）。 */
+   accent を出してよい場所に数える（docs/design.md 13.1 原則1）。本文とは gap ではなく
+   margin-bottom で離す（吹き出し内の唯一の要素間隔なので、`.balloon` 側に汎用の gap を
+   持たせない）。 */
 .balloon-speaker {
+  margin-bottom: 4px;
   font-size: var(--font-label);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--accent);
 }
 /* **DOM の先頭が最新**（column-reverse で視覚上は下端に出る）。いま読んでほしい1件だけを
    濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。過去の分は小さく薄くして、
-   残ってはいるが読み返す対象だと分かる見た目にする。枠は accent の 1px だけで、にじむ輪は
-   付けない（線をくっきりさせる）。 */
+   残ってはいるが読み返す対象だと分かる見た目にする。枠は accent の 1.5px だけで、にじむ輪は
+   付けない（線をくっきりさせる）。影（box-shadow）は地から浮いていることを示すためのもので、
+   色は黒系の生値ではなく `--ground` から作る（16進の色を書くのは theme.css だけ、の方針）。 */
 .balloon:first-child {
   animation: balloon-appear 0.3s ease-out;
-  padding: 0.8rem 1.1rem;
+  max-width: 96%;
+  padding: 14px 18px 16px;
   font-size: var(--font-body);
+  line-height: 1.7;
   background: var(--surface-accent);
+  border-width: 1.5px;
   border-color: var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--ground) 65%, transparent);
 }
-/* 尻尾ぶんの場所を左に確保する。`.balloon-track` は overflow-y: auto を持ち、CSS の規則で
-   overflow-x も自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を
-   吹き出しの外（左）へ絶対配置するだけだと padding の外＝クリップ境界の外に出て消える。
-   ここで確保した padding-left ぶんが、下の尻尾の幅（--balloon-tail）と一致することで、
-   尻尾がちょうど padding の中に収まりクリップされない（目視で確認）。 */
+/* 立ち絵の上に列を重ねる本体（--balloon-overlap ぶん左へ寄せる）。加えて尻尾ぶんの場所を
+   左に確保する。`.balloon-track` は overflow-y: auto を持ち、CSS の規則で overflow-x も
+   自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を吹き出しの外（左）へ
+   絶対配置するだけだと padding の外＝クリップ境界の外に出て消える。ここで確保した
+   padding-left ぶんが、下の尻尾の幅（--balloon-tail）と一致することで、尻尾がちょうど
+   padding の中に収まりクリップされない（目視で確認）。 */
 .portrait + .balloon-track {
+  margin-left: calc(-1 * var(--balloon-overlap));
   padding-left: var(--balloon-tail);
 }
 /* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
@@ -142,27 +168,27 @@
    （以前は下辺から左下へ向けて
    出していたが、下に伸びる分の場所を空ける必要があり最新位置を固定する直しと相性が悪かった）。
    border-right を色付きに、border-top と border-bottom を透明にした二等辺三角形で、
-   right: 100% で吹き出しの左外側に置き、top: 50% + translateY(-50%) で吹き出しの縦中央に
-   合わせる（`::before` の border-box の高さが `--balloon-tail` の2倍になるので、
-   translateY(-50%) は幅を書き換えても自動で中央に追随する）。
-   ::after は吹き出し側へ 1px 寄せたうえで上下の border 幅を一回り小さくする。ずらすだけだと
-   斜辺に沿って滑るだけで枠の色が出ないので、斜辺に 1px 残すには大きさも変える必要がある
-   （縦中央合わせは translateY(-50%) がそのつど計算し直すので、幅を変えても位置合わせは
-   崩れない）。 */
+   right: 100% で吹き出しの左外側に置く。**縦の位置は下端から --balloon-tail-bottom**（以前は
+   top: 50% + translateY(-50%) で縦中央に合わせていたが、モックでは吹き出しの下寄りを指す）。 */
 .portrait + .balloon-track > .balloon:first-child::before,
 .portrait + .balloon-track > .balloon:first-child::after {
   content: "";
   position: absolute;
-  top: 50%;
+  bottom: var(--balloon-tail-bottom);
   right: 100%;
-  transform: translateY(-50%);
   width: 0;
   height: 0;
   border-top: var(--balloon-tail) solid transparent;
   border-bottom: var(--balloon-tail) solid transparent;
   border-right: var(--balloon-tail) solid var(--accent);
 }
+/* ::after は吹き出し側へ 1px 寄せたうえで上下の border 幅を一回り小さくする。ずらすだけだと
+   斜辺に沿って滑るだけで枠の色が出ないので、斜辺に 1px 残すには大きさも変える必要がある。
+   **小さくしたぶん bottom も 2px 上げる** — 2つの三角の頂点の高さを揃えるため。縦中央合わせ
+   （translateY(-50%)）はこれを自動でやっていたが、下端合わせにしたので手で足す。揃えないと
+   枠線が上の斜辺だけに寄り、下の斜辺から消える。 */
 .portrait + .balloon-track > .balloon:first-child::after {
+  bottom: calc(var(--balloon-tail-bottom) + 2px);
   right: calc(100% - 1px);
   border-top-width: calc(var(--balloon-tail) - 2px);
   border-bottom-width: calc(var(--balloon-tail) - 2px);
@@ -175,6 +201,7 @@
    `opacity: 0.5` は 4.20 で下限を割っていた。 */
 .balloon:not(:first-child) {
   font-size: var(--font-secondary);
+  line-height: 1.6;
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
   animation: balloon-push-up 0.3s ease-out;
 }
@@ -209,20 +236,25 @@
   }
 }
 
-/* 「ログ」の口（`speech-log.tsx`）。領域の右上に重ねる — 行を1段足すと、立ち絵の高さ
-   （--portrait-height は .character-layout の高さの割合）がそのぶん縮むため。キャラビューは枠を
-   持たない領域なので、口は地（ground）の色で塗って背景の絵の上でも読めるようにする。 */
+/* 「ログ」の口（`speech-log.tsx`）。領域の右上、絵の上に**重ねて**置く（モックは top/right とも
+   10px 内側）。行を1段足すと、立ち絵の高さ（--portrait-height は .character-layout の高さの
+   割合）がそのぶん縮むため、行を増やさず重ねにしてある。キャラビューは枠を持たない領域なので、
+   口は地（ground）の色で塗って背景の絵の上でも読めるようにする（**モックは半透明だが、
+   docs/design.md 13.8「文字が乗る要素の地は不透明を保つ」に合わせて不透明のまま**にする）。
+   字は 12px ではなく `--font-secondary`（13px。docs/design.md 13.3「段はこの4つだけ」— 新しい
+   寸法は足さない）。 */
 .speech-log-open {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 10px;
+  right: 10px;
   z-index: 1;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.65rem;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
-  border-radius: 0.4rem;
+  border-radius: 8px;
   background: var(--ground);
   color: var(--ink-quiet);
   font: inherit;
@@ -331,7 +363,7 @@
 /* 狭い画面（docs/requirements.md 4.7）。**領域は下段に 9.5rem で固定される**
    （features/layout/layout.module.css の @media）ので、高さの基準そのものは残る。変えるのは
    割合と固定量のほうで、広い領域向けの既定（立ち絵 78% ＋ 2.25rem 沈める、吹き出しの下に
-   7rem の余白）をそのまま当てると、低い領域では立ち絵の顔が切れ、吹き出しが余白に押し出されて
+   28px の余白）をそのまま当てると、低い領域では立ち絵の顔が切れ、吹き出しが余白に押し出されて
    領域の外へ出る。立ち絵は領域いっぱいまで使い、下の余白は接地ぶんだけに詰める。 */
 @media (max-width: 760px) {
   .character-region {
@@ -345,9 +377,12 @@
     max-width: 33%;
   }
   /* 吹き出しは低い領域の中で収まるだけ出し、溢れたぶんは自分の中でスクロールする
-     （最新は column-reverse で常に下端に居る）。 */
+     （最新は column-reverse で常に下端に居る）。**広い画面の式と同じく下の余白も引く** —
+     列は下端から --balloon-bottom-gap 浮いているので、口のぶんだけ引いても足りずに列の上端が
+     口の下へ潜り込む（引かないと 390 幅で 2.4px 重なった）。max() の下限は要らない
+     （領域の高さは 9.5rem に固定されていて、引く量の合計が上回ることはない）。 */
   .balloon-track {
     flex-basis: 8rem;
-    max-height: calc(100% - var(--speech-log-open-space));
+    max-height: calc(100% - var(--balloon-bottom-gap) - var(--speech-log-open-space));
   }
 }

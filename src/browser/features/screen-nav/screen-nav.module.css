@@ -1,5 +1,5 @@
 /* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
-   **全画面の最上部に1本**。左端に部屋の名前、その右に仕事/雑談のトグル、その右に3つの口
+   **全画面の最上部に1本**。左端に顔、その右に部屋の名前、その右に仕事/雑談のトグル、その右に3つの口
    （会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・許可モードの
    ドロップダウン、いちばん右端に設定の歯車。高さは `--screen-nav-height`（30px）で、**同じ値を `<Layout>` も読む**
    （帯と gap のぶんだけ grid を縮めるため。layout.module.css）。
@@ -16,6 +16,17 @@
   gap: 0.4rem;
   height: var(--screen-nav-height);
   margin-bottom: var(--screen-nav-gap);
+}
+/* いまのパックのキャラクターの顔（13.9「顔」）。**丸く切り抜き**、透過の縁が帯に溶けないように
+   丸の地を --surface-accent で塗る。大きさは帯の高さに合わせる。`face` が無いパックでは
+   `<ScreenNavFace>` が何も描かないので、この class 自体が出ない。 */
+.screen-nav-face {
+  flex: none;
+  width: calc(var(--screen-nav-height) - 4px);
+  height: calc(var(--screen-nav-height) - 4px);
+  border-radius: 50%;
+  background: var(--surface-accent);
+  object-fit: cover;
 }
 /* 部屋の名前は押せない字（13.9）。**口より控えめに**して、並んだ口のほうが先に目に入るように
    する（部屋の名前は「どれを見ているか」を確かめるときだけ要る）。 */
@@ -412,8 +423,9 @@
     height: auto;
     margin-bottom: 0.5rem;
   }
-  /* 並んだ3つの口・トグル・いまの作業の札・ドロップダウン・左端の部屋の名前は「≡」の中へ移る。 */
+  /* 並んだ3つの口・トグル・いまの作業の札・ドロップダウン・左端の顔と部屋の名前は「≡」の中へ移る。 */
   .screen-nav-gates,
+  .screen-nav > .screen-nav-face,
   .screen-nav > .screen-nav-room,
   .screen-nav > .screen-nav-chat-mode,
   .screen-nav > .screen-nav-work,

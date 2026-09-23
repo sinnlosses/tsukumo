@@ -24593,3 +24593,317 @@ bun run check: 1375 pass / 0 fail（typecheck・lint・format:check 含む）。
 
 - `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
 - 印の組み立てと読み取りは `src/server/core/config.ts`（`sessionTag` / `readSessionMark`）だけで行う。印の文字列を他所で組まない
+
+## T-366
+
+**タスク**: タスク本文の場所と件数は、行番号ではなくシンボル名と grep で書く規約を足す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/workflow.md「## タスクを書くとき・受け入れるとき」の箇条書きに1項目追加（`grep -n シンボル名 docs/workflow.md` が1件当たる）。`grep -c '^#\{2,3\} ' docs/workflow.md` は編集の前後で 5 のまま。`bun run check` 1375 pass / 0 fail。同趣旨が WORKFLOW.md・CLAUDE.md・docs/architecture.md・docs/coding-standards.md に無いことを grep で確かめたので、参照ではなく新規の項目にした。
+
+## 背景
+
+`docs/workflow.md`「## タスクを書くとき・受け入れるとき」に、次のことが書かれていない。直近の振り返り
+（`develop/retrospective.md` の `8f585d6`..`c37d714`）で、同じ形の取りこぼしが続けて出たもの。
+
+**タスク本文の行番号・件数は、着手時にはずれている。** 本文が指した場所と実物がずれていた例:
+T-313 は `src/browser/features/sidebar/task-list.tsx:14,25` を指したが、実物は
+`src/browser/features/task-board/` の下の4ファイルに移っていた。T-360 は `clock.ts` の読み手を
+2つとしたが実物は3つで、`character-view.tsx:31` は実はフック
+（`hooks/use-character-view.ts`）だった。T-340 は日付つきコメントを4件としたが、着手時点で
+20件あった。作業ツリーを分けて並行に進めているので、書いた時点の行番号と件数は、着手までに
+他の作業ツリーの分割・移動で古くなる
+
+## やること
+
+1. `docs/workflow.md`「## タスクを書くとき・受け入れるとき」の箇条書きの末尾に1項目足す
+   - **対象の場所は行番号ではなくシンボル名（関数名・型名・ファイル名）で書き、件数を挙げる
+     ときは着手時に一覧を取り直す grep のコマンドを添える。** 行番号と件数は、並行する作業ツリーの
+     分割・移動で着手までにずれる
+2. 同じ趣旨がすでに `CLAUDE.md`・`docs/architecture.md`・`task-workflow` の `WORKFLOW.md` に
+   あれば、足さずにそちらへの参照だけを書く（正典を二重にしない）
+
+## 完了条件
+
+- `bun run check` が通る
+- `docs/workflow.md`「## タスクを書くとき・受け入れるとき」の箇条書きが1項目増え、行番号と
+  シンボル名の語がある
+- `grep -c '^#\{2,3\} ' docs/workflow.md` の値が編集の前後で変わらない
+
+## 注意
+
+- `shared` の型を変えたときに `docs/design.md` の表を追随させる規約は足さない。表の写しそのものを
+  外すタスク（T-372）で要らなくなるため（ユーザーの判断）
+- `docs/workflow.md` の冒頭の索引表には節の見出し名が入っている。見出し名で位置を探すと索引の行に
+  先に当たるので、行頭から位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- コメントやドキュメントにタスク番号（`T-` + 3桁）を書かない（例に挙げるときも番号を使わない）
+
+## T-367
+
+**タスク**: 変更前と撮り比べる手順を1つに決め、手で確かめることに書く
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+変更前は /tmp/tsukumo-revision/<sha>/ へ一時 index（GIT_INDEX_FILE）で取り出す（作業ツリーも index も dist/browser/ も読むだけ。tar が要る git archive は捨てた）、node_modules は symlink で借りる（package.json をまたぐときだけ手で bun install）、手順は散文だと4通りに割れたので scripts/serve-revision.ts に畳む、止め口は stop.ts --port の1つで既定 7340 は stop.ts の一覧範囲（7327+20）内。実測: HEAD(bc97a37) を 7341、HEAD~1(29f4cf6) を 7340 で同時に起こし 1400x900 で撮り比べ、サイドバーに差が出た（進行中3/未着手18 対 2/19）。両方 stop.ts --port で停止、利用者の 7327〜7330 は同じ pid のまま無傷、画像は /tmp 止まり。bun run check: 1397 pass / 0 fail / 118ファイル。手順の前後で git status --short は不変、docs/architecture.md の節数は 10 で不変（dist/browser/ が更新されるのは check の bundle.test.ts の副作用で、serve-revision.ts は触らない）。
+
+## 背景
+
+描画に関わるタスクの目視確認で、**変更前と撮り比べる手順が決まっていない**。
+`docs/architecture.md`「手で確かめること」は「答え待ちの箱・レポートの記法を直したら前後で
+撮り比べる」とだけ書き、変更前の画面をどう出すかは書いていない。そのため、直近で撮り比べた
+サブエージェント4件が、4通りの戻し方を自前で組んだ（`develop/retrospective.md` の
+`8f585d6`..`c37d714`）:
+
+- 共有の `git stash` で CSS だけ HEAD に戻す（stash の stack は他の作業ツリーと共有なので、
+  別のセッションの退避を取り違えうる）
+- `git checkout` で一時的に HEAD に戻して組み立て直す
+- HEAD のファイルを一時的に書き戻して組み立て直す
+- HEAD をスクラッチへ展開して、別に組み立てて別ポートで起こす
+
+前の3つは作業ツリーの中身と `dist/browser/` を一時的に変更前へ巻き戻すので、戻し忘れると
+作業中の変更を失うか、`dist/browser/` が変更前のまま残る（受け入れ側で `bun run build` を
+打ち直すことが2回あった）。4つ目だけが作業ツリーを動かさない。
+
+`dist/browser/` は `.gitignore` で、`bun run start` は成果物を読むだけ（起動時に組み立てない）。
+tsukumo は `TSUKUMO_VIEW_PORT`・`TSUKUMO_HOME`・`TSUKUMO_DRIVER=fake` で、別ポート・一時ホーム・
+疑似セッションで起こせる（`docs/workflow.md`「起こすときの作法」）。
+
+## 解くべき論点
+
+- 変更前をどこに作るか。スクラッチへ HEAD（または任意のコミット）を取り出して組み立てるなら、
+  `node_modules` をどう用意するか（シンボリックリンクで足りるか、`bun install` が要るか）。
+  **`git worktree` は orca の仕事**（`CLAUDE.md`「Git運用」）なので、tsukumo 側の手順では使わない
+- 手順を文章で決めるだけにするか、スクリプト（例: 変更前を組み立てて空きポートで起こし、
+  URL を返す）にするか。スクリプトにするなら、既存の `scripts/capture-view.ts` /
+  `scripts/capture-catalog.ts` とどう並べるか
+- 止め方。起こしたものは `scripts/stop.ts --port` で止める約束を、手順のどこで保証するか
+
+## やること
+
+1. 上の論点を決め、決めた理由を `evidence` に1行ずつ書く
+2. `docs/architecture.md`「手で確かめること」に、変更前と撮り比べる定型を1段落足す。
+   **作業ツリーと `dist/browser/` を動かさない**こと、**`git stash` を使わない**ことを書く
+3. スクリプトにすると決めたら `scripts/` に置き、使い方をファイル冒頭のコメントと上の段落に書く。
+   スクリプトにしないと決めたなら、その理由を `evidence` に書いて、手順の段落だけで閉じる
+4. 決めた手順で、いまの HEAD と1つ前のコミットを実際に撮り比べ、手順が通ることを確かめる
+
+## 完了条件
+
+- `bun run check` が通る
+- `docs/architecture.md`「手で確かめること」に撮り比べの段落があり、`git stash` を使わないこと
+  が書かれている
+- 手順を実際に1回通し、変更前と変更後を並べて起こせたこと（使ったポート・窓の大きさ・止めたこと）
+  を `evidence` に書く。作業ツリーの `git status --short` が手順の前後で変わっていない
+- `grep -c '^#\{2,3\} ' docs/architecture.md` の値が、小節を足していないなら前後で変わらない
+
+## 注意
+
+- ポート 7328〜7330 などで利用者の tsukumo が動いていることがある。止めない・触らない。起こすときは
+  空いたポートと一時ホームを使い、`bun run scripts/stop.ts --port <ポート>` で止める（`pkill` /
+  `killall` は hook が拒否する）
+- **`orca` 以外の外部コマンド依存を増やすときはユーザーの承認が要る**（`CLAUDE.md`）。`git`・`bun`
+  以外が要る案になったら、その案は採らない
+- `docs/architecture.md` の冒頭の索引表には節の見出し名が入っている。行頭から位置を特定する
+
+## T-382
+
+**タスク**: 作業中のピルとポップオーバーを帯に出し、サイドバーの「いま何をしているか」を外す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-380 / **passes**: True
+
+**evidence**:
+
+帯に「いまの作業」の札と依頼の手順の一覧（screen-nav-current-work.tsx / use-current-work.ts）を置き、screen-nav-pending.tsx・sidebar/activity.tsx を外した。src/shared/turn-step.ts の currentTurnSteps（TurnStepList の合併型）が records から依頼単位で導き、SessionState の runningTools/finishedTools/ToolActivity を消して PROTOCOL_VERSION 3→4。テストは turn-step.test.ts 8件・current-work.test.tsx 11件・tool-summary.test.ts +3件（activity.test.tsx 7件の振る舞いを引き継ぐ）。
+bun run check: 1381 pass / 0 fail（116 files。8回中1回だけ名前の分からない1件が落ち、再現せず）。main を取り込んだあとは test 1387 pass / typecheck・lint 通過、format:check は main 由来の develop/direction.md だけが落ちる。
+目視（fake driver、ポート 47392・一時ホーム、Playwright）: 1400x900 で依頼後に「● 作業中 | Read: …」、押すと実行中の全文と手順の一覧、終了後は済み・失敗が古い→新しいで並び失敗行は出力→引数の順で開けた。サイドバーは2区画。390 幅は「≡」の面の中で札の下に一覧がその場で開いた
+
+## 背景
+
+ヘッダーをモック `docs/history/mockup/header-2026-09-23.png` の形に作り直すうちの、作業中の表示。いまはサイドバーの「いま何をしているか」の区画（`src/browser/features/sidebar/sidebar.tsx` / `activity.tsx`。`runningTools` / `finishedTools` を出す。**失敗したツールの引数と出力を読める唯一の場所**）が担っている。モックでは帯に「● tsukumo 作業中 | Bash: git add …」のピルがあり、押すとポップオーバーに「実行中のコマンド」（全文）・「この依頼での手順」（済みはチェック、実行中は回転の印。ツール名 + 対象）・「会話ログで全部見る」が出る。形は T-380 で `docs/design.md` 13.9 に書いてある。
+
+## 決まっていること（蒸し返さない）
+
+- ピルとポップオーバーはサイドバーの「いま何をしているか」の区画と置き換える（サイドバーはタスク一覧・セッション情報の2区画になる）
+- 「会話ログで全部見る」は新しい画面を作らず、同じポップオーバーの中で全件に広げる
+- 狭い画面（760px 以下）では「≡」の中に畳む
+- 形は `docs/design.md` 13.9「いまの作業」（T-380 で決めた）。要点: 札の状態の語は 止まっている / 答え待ち / 作業中 / 依頼待ち の4つ（上ほど強い）。**帯の右端の答え待ちの印は札にまとめて外す**（「≡」の ● は残す）。札の頭にキャラクターの名前は置かない。一覧は古い→新しい、閉じている間は新しい5件まで、広げる口の字は「手順をすべて見る（全 n 件）」（5件の外に失敗があれば「（全 n 件・失敗 m）」）で、モックの「会話ログで全部見る」の字は使わない
+- 範囲は依頼1つ。**reducer もイベントも変えない**。`src/shared/turn-step.ts` の `currentTurnSteps` が `records` の最後の `request` より後の `tool` の記録から導く。`runningTools` / `finishedTools` / `ToolActivity` は読み手が居なくなるので消し、`PROTOCOL_VERSION` を上げる
+
+## やること
+
+1. `docs/design.md` 13.9 を読む
+2. 先に `src/shared/turn-step.ts`（`currentTurnSteps`）とテストを足す: 最後の依頼より後のツールだけを拾う / 済み・失敗・実行中を `status` で分ける / 結果の届いていない手順はターンが終わっても実行中 / `session-ended` のあとは実行中にしない / 依頼が無ければ「無い」。続けて `SessionState` から `runningTools` / `finishedTools` / `ToolActivity` / `MAX_RECENT_FINISHED_TOOLS` を消して `PROTOCOL_VERSION` を上げ、それを書いている docs（`docs/design.md` 6.5 と `docs/requirements.md` 4.3 の「`turn` / `runningTools`」、`shared/main-view.ts` のコメント）を直す
+3. 帯に札を出す。要約は `summarizeToolInput` を使う。一覧の「実行中の <ツール名>」の全文のために、同じ欄を切り詰めずに返す関数を `src/browser/lib/tool-summary.ts` に足し、`summarizeToolInput` はそれを切り詰めるだけにする（どの欄を読むかを2箇所で別に決めない）
+4. 札を押すと一覧を札の真下に重ねて出す。札をもう一度押す・外側を押す・Esc で閉じ、Esc のときはフォーカスを札へ戻す（`hooks/use-screen-nav.ts` の「≡」と同じ購読の仕方）。「≡」と同時に開かない
+5. 失敗した行は `<details>` で出力・引数の順に読めるようにする（`activity.tsx` の `FailureDetail` と切り詰めを移す）
+6. 帯の右端の答え待ちの印（`screen-nav-pending.tsx`）を外す。狭い画面は「≡」の面の中に札を置き、押すと一覧がその場で下に開く（重ねない）
+7. サイドバーの区画を外し、使われなくなった `activity.tsx`・`sidebar.module.css` の class を消す。`docs/design.md` 2章のディレクトリの図・6.1 の部品の木・13.4 以外の `<Activity>` の記述を直す
+8. テスト: 実行中のツールが札に出る / 答え待ちで札の語が変わる / 一覧に実行中と済みが古い→新しいで並ぶ / 6件以上で広げる口が出て全件に広げられる / 隠れた失敗の数が口に出る / 失敗の中身が読める
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（fake driver、1400x900 と 390 幅）: ツールを走らせている間ピルに出て、押すとポップオーバーが開き、全件に広げられる。サイドバーが2区画になっている。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 開いた時点の状態では実行中のツールが無いので、目視は新しい依頼を出してツールを走らせてから見る
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-383
+
+**タスク**: 帯の左端、部屋の名前の前にいまのキャラクターの顔を出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-380 / **passes**: True
+
+**evidence**:
+
+bun run check: 1408 pass / 0 fail（118ファイル）。face の検証・URL化・配信・帯の表示/非表示/切り替え/狭い画面を test/shared/character*.test.ts・test/server/adapter/character-pack.test.ts・test/browser/features/screen-nav/screen-nav.test.tsx に足した。
+目視（一時 TSUKUMO_HOME・ポート47383、Playwright 1280幅）: 帯の左端・部屋の名前の左に丸い顔。サイドバーでつくもの精霊→tsukumo に切り替えると幽霊の顔が狐の顔に変わった。幅480で「≡」を開くと面の先頭に顔が出た。
+
+## 背景
+
+ヘッダーをモック `docs/history/mockup/header-2026-09-23.png` の形に作り直すうちの、左端のアイコン。いまの帯の左端は部屋の名前だけ（`src/browser/features/screen-nav/components/screen-nav-room.tsx`）。キャラクターの素材はパックの定義ファイル（`characters/<name>/character.json`、検証は `src/shared/character-definition.ts`）にあり、`mini` の欄がすでにある。顔の素材をどこから取るか・無いパックの落とし方は T-380 で `docs/design.md` 13.9 に書いてある。
+
+## 決まっていること（蒸し返さない）
+
+- いまのパックのキャラクターの顔を出し、キャラクターを替えると変わる
+- 素材はパックの定義ファイル側に置く（`CLAUDE.md` 原則4）
+- 狭い画面では部屋の名前と同じく「≡」の先頭に出す
+- 形は `docs/design.md` 13.9「顔」（T-380 で決めた）。要点: **`character.json` に新しい欄 `face`**（ファイル名1つ。立ち絵と同じ種類を受け付ける）を足し、`CharacterInfo` に `/character/<file>` の URL で載せる（`mini` と同じ経路）。表情では変わらない。丸く切り抜き、丸の地は `--surface-accent`。`alt` はパックの `name`。**`face` が無いパックでは何も出さない**（`mini` や立ち絵から切り抜かない・頭文字の丸も出さない）。キャラクター画面から差し替える口は作らない
+
+## やること
+
+1. `docs/design.md` 13.9 を読む
+2. `character-definition.ts` の検証と `CharacterInfo` に `face` を足し、`characters/README.md` の欄の説明に書く
+3. 同梱パックに顔を足す: `characters/tsukumo` は `default.png` から顔を正方形に切り出した1枚、`characters/tsukumo-spirit` は `default.svg` の `viewBox` を顔に寄せた1枚。切り出しは手元で1回だけ行い、リポジトリの依存や起動時の処理は足さない
+4. 帯の左端（部屋の名前の左）に顔を出す。無いパックでは何も出さない
+5. テスト: 定義の `face` が検証を通る・壊れた値は落ちる / 素材があるパックで `alt` 付きの画像が出る / 無いパックで何も出ない
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視: 同梱の tsukumo パックで顔が出て、サイドバーでキャラクターを切り替えると顔も変わる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。素材を足したら、目視は一時の `TSUKUMO_HOME` で行う（利用者のホームを書き換えない）
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-394
+
+**タスク**: セッションの行を SDK の summary と時刻にし、部屋の名前を外す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-393 / **passes**: True
+
+**evidence**:
+
+bun run check: 1377 pass / 0 fail（116ファイル）。SessionChoice に heading を足し、listMarkedSessions が SDK の summary を境界で検証して運ぶ。session-switch.tsx の sessionLabel を「見出し・時刻」にし roomName の import を外した。見出しが無いときは「（題なし）」、24文字超は末尾を … で切り時刻は切らない。requirements.md 4.8 / design.md 13.9（「セッションの行の見出し」を新設）/ glossary.md「部屋」を新しい行の形に合わせた（3ファイルとも節の数は main と同じ 27/53/64）。目視（ポートとホームを分けて起動、1400x900 と 390 幅）: /clear をはさんだ同じ部屋の2セッションが見出しと 9/23 HH:MM の時刻で並び、部屋の名前・ポート番号は出ず、長い見出しは … で切れて時刻は残り、横のはみ出しは両幅とも 0px（見出しの実文は会話内容なので記さない）。
+
+## 背景
+
+セッションの切り替え（`src/browser/features/sidebar/session-switch.tsx`）の行は `sessionLabel` が組む「部屋の名前・M/D HH:MM」で、**どんな作業のセッションかが分からない**。とくに `/clear` するとセッションIDが変わり（`src/server/core/sdk-message.ts` の `conversation-cleared`、印はターンが終わるたびに新しいIDへ付く）、行が増えていくので、どこで何をしていたかを辿れない（ユーザーの指摘、2026-09-23）。
+
+T-393 のあと一覧はいまの部屋のものだけになるので、**行の部屋の名前は全行で同じ**になり見分けの役に立たない（部屋の名前は帯の左端にも出ている。`docs/design.md` 13.9）。
+
+一覧の元は SDK の `listSessions`（`src/server/adapter/sdk-driver.ts` の `listSwitchableSessions`）で、返る `SDKSessionInfo` には `summary`（`/rename` で付けた題 → Claude Code の自動要約 → 最初の依頼、の順で決まる表示用の題）・`customTitle`・`firstPrompt`・`lastModified` がある。いまは `src/server/core/session-restore.ts` の `listMarkedSessions` が目印・`sessionId`・`lastModified` だけを取り出し、`src/shared/session-choice.ts` の `SessionChoice` のコメントが「中身は印から読めるものだけ。会話の内容は一切入らない」と定めている。
+
+## 決まっていること（蒸し返さない）
+
+- 行の見出しは **SDK の `summary` を主にし、時刻を添える**（2026-09-23 ユーザー決定）。題を作るための追加のモデル呼び出し（`renameSession` で tsukumo が題を付ける案）はしない
+- `/clear` で分かれたセッションは**別の行のまま**でよい（それぞれに中身の分かる見出しが付けば足りる。2026-09-23 ユーザー決定）。前後をつなぐ仕組みは作らない
+- 行から部屋の名前を外す（一覧が1つの部屋のものだけになるため）
+- `summary` は 127.0.0.1 のページに出すだけで、ログ・ファイル・外部へは出さない（`docs/coding-standards.md`「会話内容の扱い」。メインビューが会話を出すのと同じ扱いで、複製にはあたらない）
+
+## 解くべき論点
+
+- `summary` が空・無いときの見え方（時刻だけにするか、「（題なし）」のような字を添えるか）
+- 長い見出しの切り方（`<select>` の選択肢は折り返せない。文字数で切るか CSS に任せるか。全文をどこかで読めるようにするか）
+- 時刻の置き場所（見出しの前か後か）と形（今の `M/D HH:MM` のままでよいか）
+- 「いまのセッション」「（記録前）」「（表示中）」の行の扱い（一覧に載っていない現在のセッションには `summary` が無い）
+
+## やること
+
+1. `docs/requirements.md` 4.8 / 4.7 のサイドバーの記述、`docs/design.md` 13.9「部屋の名前」の「サイドバーの行は「名前・M/D HH:MM」」の箇条、`docs/glossary.md`「部屋」の注記（「帯とサイドバーのセッションの行」）を読む
+2. `SessionChoice` に見出し（`summary`）を足し、`listMarkedSessions` で `SDKSessionInfo` から取り出す（外来の値なので境界で検証し、文字列でなければ無いものとして畳む）。`session-choice.ts` の「会話の内容は一切入らない」のコメントを、上の決定に合わせて直す
+3. `session-switch.tsx` の `sessionLabel` を「見出し＋時刻」にし、部屋の名前を外す（`roomName` の import が要らなくなれば消す）
+4. `docs/requirements.md` 4.8、`docs/design.md` 13.9、`docs/glossary.md`「部屋」の注記（部屋の名前を出す場所が帯だけになる）を直す
+5. テスト: 見出しが SDK の一覧から `SessionChoice` まで運ばれる（`test/server/core/session-restore.test.ts`）/ 行に見出しと時刻が出て部屋の名前が出ない / 見出しが無いときの見え方（ブラウザ側の部品のテスト）
+
+## 完了条件
+
+- 上のテストがある
+- `docs/requirements.md` 4.8・`docs/design.md` 13.9・`docs/glossary.md`「部屋」が新しい行の形と合っている
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅）: 同じ部屋で `/clear` をはさんで2つ以上のセッションを作り、サイドバーの `<select>` を開くと、それぞれ中身の分かる見出しと時刻で並び、部屋の名前が出ていない。何が見えたかを `evidence` に書く
+
+## 注意
+
+- **`summary` をログ・テストのフィクスチャに実物のまま使わない**（`CLAUDE.md`「会話内容の扱い」）。テストの見出しは作り物の文字列にする
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-395
+
+**タスク**: キャラビューの吹き出しを立ち絵に重ねて下詰めにし、ログの口を右上の内側に置く
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1397 pass / 0 fail（118ファイル）。character-view.module.css に --balloon-overlap(30px) / --balloon-right-gap(20px) / --balloon-tail-bottom(26px) を新設し、--balloon-bottom-gap を 7rem→28px、--speech-log-open-space を 2.25rem→44px にした。重なりは .character-layout の gap を捨てて .portrait + .balloon-track の負 margin-left で作り、.portrait の右端は mask-image で抜いた。LogIcon は 14→16px。モックの半透明の地と 12px の字は採らず design.md 13.8（文字が乗る地は不透明）と 13.3（段は4つ）に寄せ、影は --ground からの color-mix にした。論点1（顔に被るか）: 1400x900 の実測で立ち絵の右端 207.03 / 列の左端 177.03（重なり 30px）、列の下端は領域の下端から 28px。重なる帯は胴体から足元で顔には掛からないので 28px のままにした。論点2（口と重なるか）: 避け方は残した。広い画面は口の下端と列の上端の差 4px。狭い画面の max-height は --balloon-bottom-gap を引いておらず 390 幅で 2.4px 潜り込んでいたので、広い画面と同じ式に揃えて 4.01px 空けた。尻尾を下端から 26px へ移したとき、::after の bottom を +2px して2つの三角の頂点を揃えないと枠線が下の斜辺から消えるので揃えた（拡大して確認）。目視（TSUKUMO_DRIVER=fake / question-multi、ポートとホームを分けて起動）: 1400x900 で最新の吹き出しが立ち絵に重なって下詰めに出て尻尾が下寄りに付き、過去2件が上に薄く並び、ログの口は右上 10px 内側（押すとモーダルが開く）。横のはみ出しは 1400 幅・390 幅とも 0px。docs/design.md にキャラビューの配置値を書いた記述は無く、直す箇所は無かった。
+
+## 前提（着手前に確かめる）
+
+2026-09-23 にこのタスクを書いた時点で、本体（`main` を出している作業ツリー）に**未コミットの変更**があった（`speech-log.tsx` の新設、吹き出しの話し手の名前、比率を戻す口を絵だけのボタンにしたもの、入力欄の道具の行など）。本文の「いまの形」はその変更を土台に書いている。**`git show main:src/browser/features/character-view/speech-log.tsx` が通らなければ、その変更がまだ `main` に入っていないので、着手せずに止めて預ける。**
+
+## 背景
+
+下段のモックに合わせて、キャラビューの吹き出しの位置とログの口の位置を直す。モックは `docs/history/mockup/bottom-2026-09-23.png`（1440x900 で撮った絵）と `docs/history/mockup/bottom-2026-09-23.html`（値の出典。インラインの `style` に寸法と色がそのまま入っている。素材と実行時のスクリプトは同梱していないので、開いても絵は出ない）。
+
+いまの形（`src/browser/features/character-view/character-view.module.css`）:
+
+- `.balloon-track` は `margin-bottom: var(--balloon-bottom-gap)`（7rem）で、最新の吹き出しが領域の下端から浮いている。立ち絵（`.portrait`）とは `gap: 0.75rem` で離れて並び、重ならない
+- 尻尾（`.balloon:first-child` の `::before` / `::after`）は吹き出しの左辺の**縦中央**に付く
+- ログの口（`.speech-log-open`。`speech-log.tsx`）は領域の右上 `top: 0; right: 0` に地の色で置かれ、吹き出しの列が `--speech-log-open-space`（2.25rem）ぶん上を空けて避けている
+
+## 決まっていること（蒸し返さない）
+
+モックの値に合わせる（色はコードに直書きせず、既存のトークン `--accent` / `--surface-accent` / `--rule` / `--ink-quiet` などの近いものに寄せる）:
+
+- **吹き出しの列**: 立ち絵の右に置き、**立ち絵に 30px 重ねる**。立ち絵の右端は透明へ抜く（モックは `mask-image: linear-gradient(90deg, #000 78%, transparent)`）。列は**下詰め**で、最新の吹き出しの下端は領域の下端から 28px、列の右の余白は 20px
+- **最新の吹き出し**: `max-width: 96%`、内側の余白 14px 18px 16px、角丸 14px、枠は差し色の 1.5px、字 15px・行間 1.7、影 `0 10px 30px rgba(0,0,0,.35)`。話し手の名前は 11px の太字・差し色・字間 .08em で本文の上 4px
+- **過去の吹き出し**: 左揃えで `max-width: 88%`、余白 10px 14px、角丸 12px、地は半透明、枠は `--rule` 系の 1px、字 13px・行間 1.6 の控えめな色。吹き出しどうしの間は 10px
+- **尻尾**: 最新の吹き出しの左辺で、**下端から 26px** の高さに付ける（縦中央ではない）
+- **ログの口**: 領域の右上から **10px 内側**に、絵の上に重ねて置く。高さ 30px・左右の余白 10px・角丸 8px・枠 `--rule` 系・地は半透明（モックは `rgba(26,25,33,.85)`）・字 12px の控えめな色。中身は 16px の絵（いまの `LogIcon`）＋「ログ」
+- **変えないもの**: 読み上げの名前と見出し（「ログ」「セリフのログ」。モックの「発話ログ」は採らない。`docs/glossary.md` の語はセリフ）、モーダルの中身、吹き出しの並び（最新が下）、立ち絵が無いときに吹き出しだけで成立させること（尻尾も重ねも無し）
+- **今回の対象外**: キャラビューの領域そのものの枠（モックは角丸 12px・枠付きのカードだが、いまの「枠を持たない地」のまま）
+
+## 解くべき論点
+
+- `--balloon-bottom-gap` は「セリフ1件のときに旧版と同じ高さに来る」ように決めた量（CSS のコメント）。28px に詰めたとき、吹き出しが立ち絵のどこに来るか（顔に被らないか）を目視で見て、被るなら重ねる量より下の余白を優先して調整し、値と理由を `evidence` に書く
+- ログの口を重ねにしたあとも、吹き出しが溢れてスクロールしたときに口と重ならないか。重なるなら `--speech-log-open-space` の避け方を残す
+
+## やること
+
+1. モックの絵と HTML の `section[aria-label="キャラクター"]` の中を読む
+2. `character-view.module.css` の `.character-layout` / `.portrait` / `.balloon-track` / `.balloon` / 尻尾 / `.speech-log-open` を上の値に直す。狭い画面（`@media (max-width: 760px)`）の規則は、読めなくならない範囲でいまの形を残す
+3. 古くなった CSS のコメント（`--balloon-bottom-gap` の由来、尻尾を縦中央に置く説明、ログの口の置き場所）を今の形に書き直す
+4. `docs/design.md` にキャラビューの吹き出しとログの口の置き場所を書いた記述があれば直す（`grep -n 'ログ\|吹き出し' docs/design.md` で当たりを付ける）
+
+## 完了条件
+
+- `bun run check` が通る（既存の `balloon-track.test.tsx` / `character-view.test.tsx` / `speech-log.test.tsx` が通ったまま）
+- 目視（fake driver、1400x900 と 390 幅）: セリフが3件以上あるターンで、最新の吹き出しが立ち絵に重なって下詰めに出る・尻尾が下寄りに付く・過去の吹き出しが上に控えめに並ぶ・ログの口が右上の 10px 内側にあって押すとモーダルが開く。390 幅で横スクロールが無い。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 絵は自動テストで守らない（`CLAUDE.md`「テスト方針」）。構造を変えないかぎりテストは足さなくてよい
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける

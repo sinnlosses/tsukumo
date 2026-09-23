@@ -59,6 +59,12 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ mini: 3 }))?.mini).toBeUndefined()
   })
 
+  it("任意の face（帯に出す顔の素材）を読む。無い・壊れた値は undefined", () => {
+    expect(parseCharacterDefinition(JSON.stringify({ face: "face.png" }))?.face).toBe("face.png")
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.face).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ face: 3 }))?.face).toBeUndefined()
+  })
+
   it("expressions（表情名 → ラベル）を読む", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
 

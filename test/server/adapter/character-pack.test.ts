@@ -102,6 +102,27 @@ describe("characterChangedEvent", () => {
       packs: [],
     })
   })
+
+  it("face があれば /character/<file> の URL にする（mini と違い default へは畳まない）", () => {
+    writeFileSync(
+      join(dir, "character.json"),
+      JSON.stringify({ portraits: { default: "default.svg" }, face: "face.svg" }),
+    )
+
+    const pack = readCharacterPack(dir)
+    const event = characterChangedEvent(pack, [], true)
+    const cacheKey = encodeURIComponent(`${basename(dir)}@${String(pack.revision)}`)
+
+    expect(event).toMatchObject({ face: `/character/face.svg?v=${cacheKey}` })
+  })
+
+  it("face が無いパックでは undefined のまま（mini や portraits から補わない）", () => {
+    writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
+
+    const event = characterChangedEvent(readCharacterPack(dir), [], true)
+
+    expect(event).toMatchObject({ face: undefined })
+  })
 })
 
 // **人格は手で書いた架空の一文だけ**（実物の人格ファイルも会話も使わない。
@@ -263,6 +284,18 @@ describe("readCharacterPackFile", () => {
     writeFileSync(join(dir, "mini.svg"), PLAUSIBLE_SVG)
 
     const file = readCharacterPackFile(readCharacterPack(dir), "mini.svg")
+
+    expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
+  })
+
+  it("character.json の face（顔）も同じ経路で配れる", () => {
+    writeFileSync(
+      join(dir, "character.json"),
+      JSON.stringify({ portraits: { default: "default.svg" }, face: "face.svg" }),
+    )
+    writeFileSync(join(dir, "face.svg"), PLAUSIBLE_SVG)
+
+    const file = readCharacterPackFile(readCharacterPack(dir), "face.svg")
 
     expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
   })

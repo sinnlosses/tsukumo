@@ -9,10 +9,16 @@
 // src/server/adapter/character-pack.ts と src/server/adapter/character-edit.ts に集約する。
 // ここが扱うのは文字列までで、実際に読み書きするのは呼び出し側。
 
-import { isPlainObject } from "remeda"
+import { fromKeys, isPlainObject } from "remeda"
 
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
-import { type Expression, type Outfit, type RemovableExpression } from "./expression.ts"
+import {
+  EXPRESSIONS,
+  type Expression,
+  OUTFITS,
+  type Outfit,
+  type RemovableExpression,
+} from "./expression.ts"
 
 /**
  * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」
@@ -40,6 +46,12 @@ export type CharacterDefinition = {
    * 例外を作らない）。表情では変わらないので `portraits` とは別の1件で持つ。
    */
   readonly mini: string | undefined
+  /**
+   * 帯の左端に出す顔の素材のファイル名（`docs/design.md` 13.9「顔」）。**任意**で、無ければ
+   * 帯には何も出さない（`mini` や `portraits` からのフォールバックはしない）。表情では変わらない
+   * 1枚（`mini` と同じ）で、正方形を勧める。
+   */
+  readonly face: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景（`docs/design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
@@ -128,6 +140,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     expressions: toExpressionLabels(value.expressions),
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
+    face: typeof value.face === "string" ? value.face : undefined,
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
   }
@@ -135,42 +148,17 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
 
 function toExpressionLabels(source: unknown): Readonly<Record<Expression, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    thinking: stringField(record, "thinking"),
-    proud: stringField(record, "proud"),
-    flustered: stringField(record, "flustered"),
-    serious: stringField(record, "serious"),
-    curious: stringField(record, "curious"),
-    sad: stringField(record, "sad"),
-    excited: stringField(record, "excited"),
-    bored: stringField(record, "bored"),
-  }
+  return fromKeys(EXPRESSIONS, (expression) => stringField(record, expression))
 }
 
 function toPortraits(source: unknown): Readonly<Record<Expression, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    thinking: stringField(record, "thinking"),
-    proud: stringField(record, "proud"),
-    flustered: stringField(record, "flustered"),
-    serious: stringField(record, "serious"),
-    curious: stringField(record, "curious"),
-    sad: stringField(record, "sad"),
-    excited: stringField(record, "excited"),
-    bored: stringField(record, "bored"),
-  }
+  return fromKeys(EXPRESSIONS, (expression) => stringField(record, expression))
 }
 
 function toOutfitAccents(source: unknown): Readonly<Record<Outfit, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    light: stringField(record, "light"),
-    normal: stringField(record, "normal"),
-    heavy: stringField(record, "heavy"),
-  }
+  return fromKeys(OUTFITS, (outfit) => stringField(record, outfit))
 }
 
 function stringField(record: Readonly<Record<string, unknown>>, key: string): string | undefined {
