@@ -17,7 +17,8 @@ import {
   type ScreenNavCurrentWork,
   type ScreenNavCurrentWorkStep,
 } from "../hooks/use-current-work.ts"
-import styles from "../screen-nav.module.css"
+import shellStyles from "../screen-nav.module.css"
+import styles from "./screen-nav-current-work.module.css"
 
 export type ScreenNavCurrentWorkProps = {
   readonly work: ScreenNavCurrentWork
@@ -39,16 +40,21 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
   const { toggleRef } = work
   const listId = useId()
 
+  // **`shellStyles` は見た目を持たない**（広い画面から隠す規則
+  // `.screen-nav > .screen-nav-work` と「≡」の面の中で縦に積む規則
+  // `.screen-nav-panel .screen-nav-work*` のためだけの参照）。CSS Modules は class 名を
+  // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル
+  // 自身の class も要る（docs/design.md 6.6）。
   return (
     <div
-      className={styles["screen-nav-work"]}
+      className={`${styles["screen-nav-work"]} ${shellStyles["screen-nav-work"]}`}
       data-work-state={work.state}
       data-chat-idle={work.chatIdle}
     >
       <button
         type="button"
         ref={toggleRef}
-        className={styles["screen-nav-work-toggle"]}
+        className={`${styles["screen-nav-work-toggle"]} ${shellStyles["screen-nav-work-toggle"]}`}
         aria-expanded={work.open}
         aria-controls={listId}
         onClick={work.onToggle}
@@ -76,7 +82,11 @@ function CurrentWorkList(props: {
   const { work } = props
 
   return (
-    <div id={props.id} className={styles["screen-nav-work-list"]} role="region">
+    <div
+      id={props.id}
+      className={`${styles["screen-nav-work-list"]} ${shellStyles["screen-nav-work-list"]}`}
+      role="region"
+    >
       <p className={styles["screen-nav-work-heading"]}>
         {work.wordLabel}
         {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}

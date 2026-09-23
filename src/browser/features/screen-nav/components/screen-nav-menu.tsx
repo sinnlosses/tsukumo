@@ -18,10 +18,11 @@ import { type ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/character-face.tsx"
 import { type ScreenNavMenu as Menu, type ScreenNavParts } from "../hooks/use-screen-nav.ts"
-import styles from "../screen-nav.module.css"
+import shellStyles from "../screen-nav.module.css"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
+import styles from "./screen-nav-menu.module.css"
 import { ScreenNavModelPermissionSelect } from "./screen-nav-model-permission.tsx"
 import { ScreenNavRoom } from "./screen-nav-room.tsx"
 import { ScreenNavSettingsGear } from "./screen-nav-settings.tsx"
@@ -64,11 +65,15 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
         ) : null}
       </button>
       {menu.open ? (
-        <div className={styles["screen-nav-panel"]}>
+        // **`shellStyles["screen-nav-panel"]` は見た目を持たない**（面の中で他の部品を並べ直す
+        // 規則 `.screen-nav-panel .screen-nav-room` などのためだけの参照。実物の見た目
+        // （位置・枠・地）は `styles["screen-nav-panel"]`＝このファイル自身が持つ。CSS Modules は
+        // class 名をファイルごとにハッシュ化するので両方要る。docs/design.md 6.6）。
+        <div className={`${styles["screen-nav-panel"]} ${shellStyles["screen-nav-panel"]}`}>
           <CharacterFace
             url={parts.face.url}
             alt={parts.face.alt}
-            className={styles["screen-nav-face"] ?? ""}
+            className={shellStyles["screen-nav-face"] ?? ""}
           />
           <ScreenNavRoom name={parts.room} />
           <ScreenNavChatModeToggle chatMode={parts.chatMode} />

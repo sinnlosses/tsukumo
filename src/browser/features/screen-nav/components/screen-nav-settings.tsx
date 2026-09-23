@@ -19,7 +19,8 @@ import { MODEL_LABELS } from "../../../lib/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../../../lib/permission-mode-label.ts"
 import { REVEAL_SPEED_LABELS } from "../../../lib/reveal-speed.ts"
 import { type ScreenNavSettings } from "../hooks/use-settings.ts"
-import styles from "../screen-nav.module.css"
+import shellStyles from "../screen-nav.module.css"
+import styles from "./screen-nav-settings.module.css"
 
 export type ScreenNavSettingsProps = {
   readonly settings: ScreenNavSettings
@@ -51,12 +52,17 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
   const panelId = useId()
   const fieldId = useId()
 
+  // **`shellStyles` は見た目を持たない**（広い画面から隠す規則
+  // `.screen-nav > .screen-nav-settings` と「≡」の面の中で縦に積む規則
+  // `.screen-nav-panel .screen-nav-settings*` のためだけの参照）。CSS Modules は class 名を
+  // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル
+  // 自身の class も要る（docs/design.md 6.6）。
   return (
-    <div className={styles["screen-nav-settings"]}>
+    <div className={`${styles["screen-nav-settings"]} ${shellStyles["screen-nav-settings"]}`}>
       <button
         type="button"
         ref={toggleRef}
-        className={styles["screen-nav-settings-toggle"]}
+        className={`${styles["screen-nav-settings-toggle"]} ${shellStyles["screen-nav-settings-toggle"]}`}
         aria-expanded={settings.open}
         aria-controls={panelId}
         aria-label={SETTINGS_LABEL}
@@ -68,7 +74,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
       {settings.open ? (
         <div
           id={panelId}
-          className={styles["screen-nav-settings-panel"]}
+          className={`${styles["screen-nav-settings-panel"]} ${shellStyles["screen-nav-settings-panel"]}`}
           role="region"
           aria-label={SETTINGS_LABEL}
         >

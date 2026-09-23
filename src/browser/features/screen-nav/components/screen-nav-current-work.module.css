@@ -1,0 +1,235 @@
+/* 帯のまん中の札「いまの作業」と、押すと開く依頼の手順の一覧（`screen-nav-current-work.tsx`）。
+   もとは screen-nav.module.css の一部だったが、この部品しか使わない class の塊なので隣へ分けた
+   （docs/design.md 6.6）。**広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則**
+   （`.screen-nav > .screen-nav-work` / `.screen-nav-panel .screen-nav-work*`）は
+   `screen-nav.module.css` の @media が持つ（`screen-nav-current-work.tsx` がそちらの
+   ハッシュを自分の要素に重ねて渡す。docs/design.md 6.6）。 */
+
+/* いまの作業の札（13.9「いまの作業」）。**5（3つの口）の右に置き、幅が足りないときに
+   最初に縮む**——モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない。
+   `position: relative` は一覧（.screen-nav-work-list）をこの札の真下に重ねるための基準。 */
+.screen-nav-work {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: center;
+  min-width: 0;
+}
+/* **幅は帯の空きをつねに埋めつつ、最大 600px で頭打ちにする**（見本の値）。`width: 100%` は
+   残り幅より広い帯でも中身の幅にならず、要約（コマンドなど）が変わるたびに札そのものが
+   伸び縮みしてチカチカしないため。600px を超える空きは `.screen-nav-work` の
+   `justify-content: center` が中央へ寄せる。要約が無い状態（依頼待ちなど）でも幅は保つ。
+   `box-sizing: border-box` は padding・border のぶんが `.screen-nav-work` からはみ出さないため
+   （既定の content-box のままだと `width: 100%` で約24px あふれる）。 */
+.screen-nav-work-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 600px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 35%);
+  border-radius: 17px;
+  background: var(--surface-accent);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  /* `<button>` の既定の中央揃えを外す。残すと、幅を揃えた状態の語と残り幅いっぱいに伸びた
+     要約の字がそれぞれの箱の中央に寄り、仕切りから離れて浮く。 */
+  text-align: left;
+  cursor: pointer;
+}
+/* 丸は 7px。周りの薄い輪は `currentColor` を20%だけ透かして重ねるだけなので、マークの色が
+   状態ごとに変わればそのまま輪の色も追従する（下の `data-work-state` の色分け）。答え待ち・
+   止まった・依頼待ちも含めて同じ作りで出す——輪は色分けの上に足す飾りであって新しい意味を
+   運ばないので、状態によって出したり消したりする理由が無い（13.1 原則5）。 */
+.screen-nav-work-mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  line-height: 1;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
+}
+/* **いちばん長い状態語「止まっている」（6字）に幅を合わせる**——状態が変わるたびに区切り
+   （|）と要約の始まりの位置がずれるのを抑える。雑談中の呼びかけ（「<名前> とおしゃべり中」）は
+   名前の長さが決まらないのでここでは揃えない。 */
+.screen-nav-work-word {
+  flex: none;
+  min-width: 6em;
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* 縦の仕切り（見本の値: 高さ14px・幅1px）。字の「|」では幅が1pxに揃わないので、中身の無い
+   要素の地で描く（飾りなので読み上げない。`aria-hidden`）。 */
+.screen-nav-work-sep {
+  flex: none;
+  width: 1px;
+  height: 14px;
+  background: color-mix(in srgb, var(--rule), var(--accent) 25%);
+}
+/* 実行中の手順の要約だけを縮める（**要約の末尾が「…」になる**。13.9「帯の要素」）。
+   見本は12pxの等幅だが、13.3 の段は13pxの等幅（ID・ツール名・キー）までしか無い——段を
+   増やさない決定（13.3）に沿って新しい段は足さず、既存の13px（`.screen-nav-work-toggle` の
+   `font-size` を継ぐ）にそのまま宛てる。14pxの見本を13pxへ寄せた `dispatch-send` と同じ判断。 */
+.screen-nav-work-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+/* 状態の語ごとの色（13.9「いまの作業」の表。**色だけで伝えない**——語そのものが状態を言う）。 */
+.screen-nav-work[data-work-state="stopped"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="stopped"] .screen-nav-work-word {
+  color: var(--state-ng);
+}
+.screen-nav-work[data-work-state="pending"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="pending"] .screen-nav-work-word {
+  color: var(--state-warn);
+}
+.screen-nav-work[data-work-state="running"] .screen-nav-work-toggle {
+  border-color: var(--accent);
+}
+.screen-nav-work[data-work-state="running"] .screen-nav-work-mark {
+  color: var(--accent);
+}
+/* 依頼待ちは印を中抜き（○）にした上で、字も控えめにする。 */
+.screen-nav-work[data-work-state="idle"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="idle"] .screen-nav-work-word {
+  color: var(--ink-quiet);
+}
+/* **雑談中の依頼待ちだけ**差し色にする（13.9「いまの作業」/ 13.7。字が「<名前> とおしゃべり中」に
+   変わるのと対にする——色だけで伝えない。13.1 原則5）。答え待ち・作業中・止まっているは
+   雑談中でも変えない（すでに意味を持つ色のため）。 */
+.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-toggle {
+  border-color: var(--accent);
+}
+.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-word {
+  color: var(--accent);
+}
+/* 依頼の手順の一覧。**札の真下に重ねる**（下の領域を押し下げない。13.9）。
+   幅の上限 36rem・高さの上限は画面の 70% で、超えたら内側でスクロールする。 */
+.screen-nav-work-list {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  z-index: 21;
+  width: max-content;
+  max-width: 36rem;
+  max-height: 70dvh;
+  overflow-y: auto;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  font-size: var(--font-secondary);
+}
+.screen-nav-work-heading {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+}
+/* 答え待ちが質問のときだけ出す「質問へ」（13.9「いまの作業」）。`.screen-nav-work-toggle-all` と
+   同じ見た目（枠の無い、差し色の文字だけの押せる字）。 */
+.screen-nav-work-go-to-question {
+  display: block;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.screen-nav-work-full {
+  margin: 0 0 0.5rem;
+}
+.screen-nav-work-full-heading {
+  margin: 0 0 0.2rem;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-full-text,
+.screen-nav-work-failure pre {
+  margin: 0;
+  padding: 0.4rem;
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: 0.4rem;
+  background: var(--ground);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.screen-nav-work-steps-heading {
+  margin: 0.4rem 0 0.2rem;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+}
+/* サブエージェントの中は1段下げる（もと `sidebar/activity.tsx` の `.activity-nested`）。 */
+.screen-nav-work-step-nested {
+  margin-left: 1rem;
+}
+/* 済みは薄く、実行中は普通の濃さ（いまのサイドバーと同じ。13.9「依頼の手順の一覧」）。 */
+.screen-nav-work-step-done {
+  color: var(--ink-quiet);
+}
+.screen-nav-work-step-failed {
+  color: var(--ink);
+}
+.screen-nav-work-step-mark {
+  display: inline-block;
+}
+/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では止める。13.9）。 */
+.screen-nav-work-step-running .screen-nav-work-step-mark {
+  animation: screen-nav-work-spin 1s linear infinite;
+}
+@keyframes screen-nav-work-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.screen-nav-work-empty {
+  margin: 0;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-toggle-all {
+  margin-top: 0.4rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+/* 失敗した手順の中身（もと `sidebar/activity.tsx` の `.activity-failure*`）。印は文字
+   （「失敗」）で、色はその補助（13.1 原則5）。 */
+.screen-nav-work-failure > summary {
+  cursor: pointer;
+}
+.screen-nav-work-failure-mark {
+  color: var(--state-ng);
+  font-weight: 600;
+}
+.screen-nav-work-failure-output {
+  border: 1px solid var(--state-ng);
+}
+.screen-nav-work-failure-input {
+  border: none;
+}
