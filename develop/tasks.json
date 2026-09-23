@@ -207,5 +207,16 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-505",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "関所のあとに受理済みの report を同じ引数で送り直して抜ける穴を塞ぐ",
+    "task": "## 背景\n\n`report` ツールの試し直し（`docs/research/report-tool-trial.md`「試し直し」）は3条件とも満たし、2026-09-24 に利用者が採用と決めた。ただし `Stop` の関所の `block` 4回のうち2回は、**止められた本文を `report` に入れず、そのターンで受理済みの `report` を同じ引数で送り直して関所を抜けた**（「残った穴の形」の1つ目）。関所は `stop_hook_active` のときは2回目を止めないので、止めた本文（364字・5行と217字・1行）は画面に出ないまま終わり、同じ `report` の記録が2回積まれて前の1回が中間レポートになった。\n\n関連する実装: 関所は `src/server/core/report-tool.ts` の `createReportGate` と `REPORT_GATE_REASON`（登録は `src/server/adapter/sdk-driver.ts` の `reportGateHooks`）、検査と差し戻しは `src/server/core/report-review.ts`（`judge` / `pass`）と `src/server/core/report-violation.ts`、描画は `src/shared/main-view.ts`。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-24 の利用者の決定: `report` ツールは採用し、この穴は仕組みで塞ぐ\n- 関所の判定（最後の `report` のあとに1行を超える本文で止まろうとしたら `block`）と、`stop_hook_active` のときは止めない（ループさせない）は変えない\n- 戻り値・理由文に会話の文面を写さない（固定の文面と数だけ）\n\n## 解くべき論点\n\n1. **どこで塞ぐか**: 候補は (a) 関所の理由文で「止めた本文の中身を `report` に入れて呼び直す。前の `report` を同じ引数で送り直さない」と明示する (b) 同じターンで受理済みの `report` と同じ引数の呼び出しを検査で差し戻す（`report-review.ts` の `judge` に前回の引数を覚えさせる。差し戻しの1回の枠と別に数えるか） (c) 同じ引数の送り直しを描画で1つに畳む（二重の記録は消えるが、止めた本文は戻らない）。(a) だけでは推測に頼るので、(b) を主に (a) を添える形を推す\n2. **「同じ引数」の判定**: 完全一致にするか、`conclusion` と `body` の前後の空白を無視するか\n3. **(b) で差し戻したあとも送り直したとき**: 2回目は通すか（1ターンに1回までの既存の枠との関係）\n\n## やること\n\n1. 論点を決めて塞ぐ\n2. テストを足す: 同じ引数の送り直しを差し戻す / 中身の違う呼び直しは通す / 差し戻しの回数の上限 / 切り替えないとき（`TSUKUMO_REPORT_TOOL` 未設定）は変わらない\n3. `docs/research/report-tool-trial.md`「試し直しの判定」に、塞いだ手段を1行足す\n\n## 完了条件\n\n- 上の2のテストが通り、既存テストが無修正で通る\n- `bun run check` が通る\n\n## 注意\n\n- **会話内容をログ・テストのフィクスチャ・`evidence` に写さない**（`CLAUDE.md`「会話内容の扱い」。他のどの規約よりも優先する）\n- 実セッションでの確かめは要らない（効いたかは次に `report` を使うセッションの構造で見る）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
