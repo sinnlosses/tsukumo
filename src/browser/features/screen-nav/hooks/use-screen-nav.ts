@@ -65,7 +65,7 @@ export type ScreenNavModelPermission = {
   readonly onSetPermissionMode: (value: string) => void
 }
 
-/** 帯の左端に出す顔（13.9「顔」）。`url` が無ければ `<ScreenNavFace>` は何も描かない。 */
+/** 帯の左端に出す顔（13.9「顔」）。`url` が無ければ `<CharacterFace>` は何も描かない。 */
 export type ScreenNavFace = {
   readonly url: string | undefined
   readonly alt: string
