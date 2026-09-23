@@ -63,11 +63,19 @@ export type ScreenNavModelPermission = {
   readonly onSetPermissionMode: (value: string) => void
 }
 
+/** 帯の左端に出す顔（13.9「顔」）。`url` が無ければ `<ScreenNavFace>` は何も描かない。 */
+export type ScreenNavFace = {
+  readonly url: string | undefined
+  readonly alt: string
+}
+
 export type ScreenNavView = {
   /** いま出している画面。**狭い画面での帯の置き方**（タブ帯へ畳むか）を CSS が決めるのに使う。 */
   readonly current: Screen
   /** この tsukumo の部屋の名前（`src/shared/room.ts`。13.9）。 */
   readonly room: string
+  /** いまのパックのキャラクターの顔（`CharacterInfo.face`。13.9「顔」）。 */
+  readonly face: ScreenNavFace
   readonly gates: readonly ScreenNavGate[]
   readonly chatMode: ScreenNavChatMode
   readonly modelPermission: ScreenNavModelPermission
@@ -105,6 +113,7 @@ export function useScreenNav(): ScreenNavView {
   const permissionMode = useSessionSelector((session) =>
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
   )
+  const character = useSessionSelector((session) => session.state.character)
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
   const {
@@ -150,6 +159,7 @@ export function useScreenNav(): ScreenNavView {
   return {
     current,
     room: currentRoomName(),
+    face: { url: character?.face, alt: character?.name ?? "" },
     gates: NAV_SCREENS.map((entry) => ({
       screen: entry.screen,
       label: entry.label,

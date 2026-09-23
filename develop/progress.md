@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 帯の左端、部屋の名前の前にいまのキャラクターの顔を出した（T-383）
+
+`character.json` に任意の欄 `face` を足し、`CharacterInfo.face` に `/character/<file>` の URL で
+載せて帯（狭い画面では「≡」の面の先頭）に丸く出す。`face` が無いパックでは何も出さない。
+同梱の `tsukumo` は `default.png` から切り出した `face.png`、`tsukumo-spirit` は `viewBox` を
+顔に寄せた `face.svg` を持つ。
+
 ### 2026-09-23 セッションの行を SDK の summary と時刻にし、部屋の名前を外した（T-394）
 
 一覧がいまの部屋のものだけになって部屋の名前が見分けの役に立たなくなったので、行の見出しを

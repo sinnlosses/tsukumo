@@ -15,6 +15,7 @@
     "bored": "たいくつ"
   },
   "mini": "mini.png",
+  "face": "face.png",
   "portraits": {
     "default": "default.png",
     "proud": "proud.png",

@@ -40,6 +40,12 @@ export type CharacterDefinition = {
    * 例外を作らない）。表情では変わらないので `portraits` とは別の1件で持つ。
    */
   readonly mini: string | undefined
+  /**
+   * 帯の左端に出す顔の素材のファイル名（`docs/design.md` 13.9「顔」）。**任意**で、無ければ
+   * 帯には何も出さない（`mini` や `portraits` からのフォールバックはしない）。表情では変わらない
+   * 1枚（`mini` と同じ）で、正方形を勧める。
+   */
+  readonly face: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景（`docs/design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
@@ -128,6 +134,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     expressions: toExpressionLabels(value.expressions),
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
+    face: typeof value.face === "string" ? value.face : undefined,
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
   }

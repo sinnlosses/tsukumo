@@ -47,6 +47,12 @@ export type CharacterInfo = {
    */
   readonly mini: string | undefined
   /**
+   * 帯の左端に出す顔の URL（`/character/<file>`。`docs/design.md` 13.9「顔」）。**定義に `face`
+   * が無いパックでは undefined**——`mini` と違い、`portraits.default` へのフォールバックはしない
+   * （無いパックでは帯に何も出さない）。表情では変わらない1枚。
+   */
+  readonly face: string | undefined
+  /**
    * 衣装 → 差し色。**衣装ごとに `default` へ畳み済み**（読む側は表を引くだけでよい）。
    * `default` も無ければその衣装は undefined。
    */
@@ -132,6 +138,8 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
       definition?.mini === undefined
         ? portraits?.default
         : characterAssetPath(definition.mini, cacheKey),
+    face:
+      definition?.face === undefined ? undefined : characterAssetPath(definition.face, cacheKey),
     outfitAccents: foldedOutfitAccents(definition),
     background: backgroundWithUrl(definition?.background, cacheKey),
     editable: source.editable,
