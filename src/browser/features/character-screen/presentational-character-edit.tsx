@@ -10,6 +10,7 @@ import { type ReactElement } from "react"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
 import { BackgroundField } from "./components/background-field.tsx"
+import { CharacterDelete } from "./components/character-delete.tsx"
 import { CharacterProfile } from "./components/character-profile.tsx"
 import { PortraitCard } from "./components/portrait-card.tsx"
 import { type CharacterEditModel } from "./hooks/use-character-edit.ts"
@@ -79,6 +80,7 @@ export function PresentationalCharacterEdit(
         </h2>
         <BackgroundField background={props.background} disabled={props.disabled} />
       </section>
+      <CharacterDelete band={props.deleteBand} />
     </div>
   )
 }

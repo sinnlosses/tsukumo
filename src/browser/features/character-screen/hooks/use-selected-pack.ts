@@ -9,7 +9,7 @@
 // - 一覧にある使用中以外の名前 → 一覧の1件の姿（`CharacterPackEntry.character`）
 // - 一覧に無い名前（消した・古い URL） → 使用中の姿に落ちる（行き止まりにしない）
 
-import { type CharacterInfo } from "../../../../shared/character.ts"
+import { type CharacterInfo, type CharacterPackRemoval } from "../../../../shared/character.ts"
 import { usePackSelection } from "../../../stores/screen.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 
@@ -23,6 +23,8 @@ export type SelectedPack =
       readonly character: CharacterInfo
       /** 使用中のパックか。使用中以外なら「このキャラクターに切り替える」を出す。 */
       readonly inUse: boolean
+      /** 画面から消すと何が起きるか（一覧の同じ名前の1件から引く。7.1「消すときの細部」）。 */
+      readonly removal: CharacterPackRemoval
     }
 
 export function useSelectedPack(): SelectedPack {
@@ -38,7 +40,9 @@ export function useSelectedPack(): SelectedPack {
     selection.kind === "named" && selection.name !== character.pack
       ? packs.find((entry) => entry.name === selection.name && !entry.inUse)
       : undefined
-  return chosen === undefined
-    ? { kind: "ready", character, inUse: true }
-    : { kind: "ready", character: chosen.character, inUse: false }
+  if (chosen !== undefined) {
+    return { kind: "ready", character: chosen.character, inUse: false, removal: chosen.removal }
+  }
+  const inUseEntry = packs.find((entry) => entry.name === character.pack)
+  return { kind: "ready", character, inUse: true, removal: inUseEntry?.removal ?? "none" }
 }

@@ -8,8 +8,14 @@ import {
   useCharacterEdit,
 } from "../../../../src/browser/features/character-screen/hooks/use-character-edit.ts"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
+import { type CharacterPackEntry } from "../../../../src/shared/character.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo, shownOutfitAccents, shownPortraits } from "../../../fixture/character.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  shownOutfitAccents,
+  shownPortraits,
+} from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 /**
@@ -43,6 +49,7 @@ afterEach(() => {
   cleanup()
   themeStyleElement?.remove()
   themeStyleElement = undefined
+  window.location.hash = ""
 })
 
 function wrapperFor(
@@ -50,6 +57,24 @@ function wrapperFor(
   spy: CommandSpy,
 ): (props: { readonly children: ReactNode }) => ReactElement {
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, character }, spy)
+  return function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
+    return <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
+  }
+}
+
+/**
+ * `removal` を読ませたいテストのための wrapper。**`useSelectedPack` は使用中の姿の `removal` を
+ * 一覧（`characterPacks`）の同じ名前の1件から引く**ので、`wrapperFor` と違い一覧も渡す。
+ */
+function wrapperWithPacks(
+  character: SessionState["character"],
+  packs: readonly CharacterPackEntry[],
+  spy: CommandSpy,
+): (props: { readonly children: ReactNode }) => ReactElement {
+  const store = sessionStoreWith(
+    { ...INITIAL_SESSION_STATE, character, characterPacks: packs },
+    spy,
+  )
   return function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
     return <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
   }
@@ -295,5 +320,96 @@ describe("useCharacterEdit", () => {
     })
     background.onClear()
     expect(calls).toEqual([{ type: "clear-background", pack: "fictional" }])
+  })
+
+  // このキャラクターを消す／同梱に戻す帯（docs/screen-design.md 13.6「このキャラクターを消す」）。
+  it("removal が none のパックには帯を出さない", () => {
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperWithPacks(
+        FIXTURE_CHARACTER,
+        [characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" })],
+        () => {},
+      ),
+    })
+
+    expect(ready(result.current).deleteBand).toEqual({ kind: "hidden" })
+  })
+
+  it("使用中のパックは帯のボタンが押せない（理由つき）", () => {
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperWithPacks(
+        FIXTURE_CHARACTER,
+        [characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "delete" })],
+        () => {},
+      ),
+    })
+
+    const band = ready(result.current).deleteBand
+    if (band.kind !== "shown") {
+      throw new Error("帯が出ていない")
+    }
+    expect(band.disabled).toBe(true)
+    expect(band.title).toBeDefined()
+  })
+
+  // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
+  // 選ぶ（`character-screen.test.tsx` と同じ形。`docs/screen-design.md` 13.6
+  // 「選んでいるパックは hash に持つ」）。
+  it("使用中以外のパックは帯のボタンが押せ、delete-character を1回送る", () => {
+    window.location.hash = "#character?pack=other"
+    const calls: unknown[] = []
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperWithPacks(
+        FIXTURE_CHARACTER,
+        [
+          characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
+          characterPackEntry("other", "別の精霊", {
+            character: characterInfo({ pack: "other", name: "別の精霊" }),
+            inUse: false,
+            removal: "delete",
+          }),
+        ],
+        (command) => calls.push(command),
+      ),
+    })
+
+    const band = ready(result.current).deleteBand
+    if (band.kind !== "shown") {
+      throw new Error("帯が出ていない")
+    }
+    expect(band.pack).toBe("other")
+    expect(band.disabled).toBe(false)
+    expect(band.heading).toBe("このキャラクターを消す")
+    expect(band.buttonLabel).toBe("別の精霊 を消す")
+
+    band.onSubmit()
+
+    expect(calls).toEqual([{ type: "delete-character", pack: "other" }])
+  })
+
+  it("同梱を直したパックは「同梱に戻す」の文言になる", () => {
+    window.location.hash = "#character?pack=other"
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperWithPacks(
+        FIXTURE_CHARACTER,
+        [
+          characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
+          characterPackEntry("other", "別の精霊", {
+            character: characterInfo({ pack: "other", name: "別の精霊" }),
+            inUse: false,
+            removal: "revert-to-bundled",
+          }),
+        ],
+        () => {},
+      ),
+    })
+
+    const band = ready(result.current).deleteBand
+    if (band.kind !== "shown") {
+      throw new Error("帯が出ていない")
+    }
+    expect(band.heading).toBe("同梱に戻す")
+    expect(band.okLabel).toBe("同梱に戻す")
+    expect(band.dialogHeading).toContain("同梱に戻しますか？")
   })
 })

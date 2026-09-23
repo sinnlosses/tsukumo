@@ -29,7 +29,7 @@
 import { useState } from "react"
 
 import { type AccentTarget } from "../../../../shared/character-definition.ts"
-import { type CharacterInfo } from "../../../../shared/character.ts"
+import { type CharacterInfo, type CharacterPackRemoval } from "../../../../shared/character.ts"
 import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import {
   type Expression,
@@ -43,7 +43,11 @@ import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { readAccentColor } from "../../../domain/appearance-color.ts"
 import { readDataUrl } from "../../../lib/data-url.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
-import { useSessionDispatch, useTurnRunning } from "../../../stores/session.tsx"
+import {
+  type SessionDispatch,
+  useSessionDispatch,
+  useTurnRunning,
+} from "../../../stores/session.tsx"
 import { useSelectedPack } from "./use-selected-pack.ts"
 
 /** 背景の行の、いまの状態を表す字（**印だけにしない**。13.1 原則1）。 */
@@ -76,6 +80,44 @@ const NOT_EDITABLE_NOTE = "起動先の characters/local のパックは、画�
 // 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面は**サーバが
 // 断るときと同じ1つ**（`shared` の定型文）を使う（サイドバーの `<select>` と同じ）。
 const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
+
+/**
+ * 帯とダイアログの文言を `removal` の2値（`"none"` は帯を出さないので含まない）で出し分ける
+ * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。**同梱を直したパックは「消す」ではなく
+ * 「同梱に戻す」と見せる**（`docs/design.md` 7.1「消すときの細部」の理由）。**活用は動的に作らず
+ * 全部書き下す**（`verb`〔辞書形。帯とダイアログの実行ボタン〕・`dialogQuestion`〔丁寧形の問い〕・
+ * `blockedTitle`〔可能形。使用中で押せないときの理由〕は同じ動詞でも形が違うため）。
+ */
+const DELETE_COPY = {
+  delete: {
+    heading: "このキャラクターを消す",
+    note: "表情・差し色・背景もいっしょに消えます。使用中のキャラクターは、先に別のキャラクターに切り替えてから消せます。",
+    verb: "消す",
+    dialogQuestion: "消しますか？",
+    dialogNote: (portraitCount: number): string =>
+      `表情 ${String(portraitCount)} 枚・差し色・背景もいっしょに消えます。\n消したあとは元に戻せません。`,
+    blockedTitle: "使用中のキャラクターは、先に別のキャラクターに切り替えてから消せます",
+  },
+  "revert-to-bundled": {
+    heading: "同梱に戻す",
+    note: "画面で直した見た目と、覚えたことが消え、同梱の元の姿に戻ります。使用中のキャラクターは、先に別のキャラクターに切り替えてから戻せます。",
+    verb: "同梱に戻す",
+    dialogQuestion: "同梱に戻しますか？",
+    dialogNote: (): string =>
+      "画面で直した見た目と、覚えたことが消えます。\n雑談の記録は残ります。",
+    blockedTitle: "使用中のキャラクターは、先に別のキャラクターに切り替えてから戻せます",
+  },
+} as const satisfies Record<
+  Exclude<CharacterPackRemoval, "none">,
+  {
+    readonly heading: string
+    readonly note: string
+    readonly verb: string
+    readonly dialogQuestion: string
+    readonly dialogNote: (portraitCount: number) => string
+    readonly blockedTitle: string
+  }
+>
 
 /**
  * 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。**衣装の差し色と
@@ -187,6 +229,34 @@ export type BackgroundFieldModel = {
   readonly onClear: () => void
 }
 
+/**
+ * 詳しい設定の最下部、キャラクターを消す／同梱に戻す帯とその確かめ
+ * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。**消せないパック
+ * （`removal: "none"`）では出さない**。文言・押せるかはここで畳み済みで、
+ * `components/character-delete.tsx` は判定を持たない。
+ */
+export type CharacterDeleteBandModel =
+  | { readonly kind: "hidden" }
+  | {
+      readonly kind: "shown"
+      /** 確かめの入力と突き合わせる id（＝パックの名前）。 */
+      readonly pack: string
+      readonly heading: string
+      readonly note: string
+      /** 帯のボタンの字（「<名前> を消す」／「<名前> を同梱に戻す」）。 */
+      readonly buttonLabel: string
+      /** ダイアログの見出し（「<名前> を消しますか？」など）。 */
+      readonly dialogHeading: string
+      readonly dialogNote: string
+      /** ダイアログの実行ボタンの字（帯の動詞と同じ）。 */
+      readonly okLabel: string
+      readonly face: { readonly kind: "absent" } | { readonly kind: "shown"; readonly url: string }
+      /** 使用中は押せない（切り替えてから。`docs/design.md` 7.1「消すときの細部」）。 */
+      readonly disabled: boolean
+      readonly title: string | undefined
+      readonly onSubmit: () => void
+    }
+
 /** `<CharacterEdit>` が画面に出す形。presenter は `kind` で出し分けて置くだけ。 */
 export type CharacterEditModel =
   | {
@@ -208,6 +278,7 @@ export type CharacterEditModel =
       readonly resetChatAccent: ChatAccentResetModel
       readonly outfitAccents: readonly OutfitAccentFieldModel[]
       readonly background: BackgroundFieldModel
+      readonly deleteBand: CharacterDeleteBandModel
     }
 
 export function useCharacterEdit(): CharacterEditModel {
@@ -348,6 +419,11 @@ export function useCharacterEdit(): CharacterEditModel {
     },
   }
 
+  const deleteBand: CharacterDeleteBandModel =
+    selected.removal === "none"
+      ? { kind: "hidden" }
+      : deleteBandOf(selected.removal, character, selected.inUse, dispatch)
+
   const profile: CharacterProfileModel = {
     name: character.name ?? pack,
     id: pack,
@@ -382,6 +458,7 @@ export function useCharacterEdit(): CharacterEditModel {
     resetChatAccent,
     outfitAccents,
     background,
+    deleteBand,
   }
 }
 
@@ -465,5 +542,37 @@ async function readFile(file: File, send: (image: string) => void): Promise<void
   const image = await readDataUrl(file)
   if (image !== undefined) {
     send(image)
+  }
+}
+
+/**
+ * 帯とダイアログの文言・押せるか・送り先を畳む（`removal` が `"none"` でないときだけ呼ぶ）。
+ * **打った id が一致するかどうかの判定は `components/character-delete-confirm.tsx` 側が持つ**
+ * （ここは送り先の `pack`〔＝id〕を渡すだけ）。
+ */
+function deleteBandOf(
+  removal: Exclude<CharacterPackRemoval, "none">,
+  character: CharacterInfo,
+  inUse: boolean,
+  dispatch: SessionDispatch,
+): CharacterDeleteBandModel {
+  const copy = DELETE_COPY[removal]
+  const name = character.name ?? character.pack
+  return {
+    kind: "shown",
+    pack: character.pack,
+    heading: copy.heading,
+    note: copy.note,
+    buttonLabel: `${name} を${copy.verb}`,
+    dialogHeading: `${name} を${copy.dialogQuestion}`,
+    dialogNote: copy.dialogNote(character.expressionsWithPortrait.length),
+    okLabel: copy.verb,
+    face:
+      character.face === undefined ? { kind: "absent" } : { kind: "shown", url: character.face },
+    disabled: inUse,
+    title: inUse ? copy.blockedTitle : undefined,
+    onSubmit: () => {
+      dispatch({ type: "delete-character", pack: character.pack })
+    },
   }
 }

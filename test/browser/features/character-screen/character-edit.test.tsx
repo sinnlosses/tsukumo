@@ -5,9 +5,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { CharacterEdit } from "../../../../src/browser/features/character-screen/character-edit.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
+import { type CharacterPackEntry } from "../../../../src/shared/character.ts"
 import { EXPRESSIONS } from "../../../../src/shared/expression.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo, shownOutfitAccents, shownPortraits } from "../../../fixture/character.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  shownOutfitAccents,
+  shownPortraits,
+} from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // **立ち絵があるのはこの3つだけ**（残りの表情は空の枠として並ぶ。数を見るテストがある）。
@@ -44,6 +50,7 @@ afterEach(() => {
   cleanup()
   themeStyleElement?.remove()
   themeStyleElement = undefined
+  window.location.hash = ""
 })
 
 // `<CharacterEdit>` は立ち絵に `<Portrait>`（`useQuery`）を使うので `QueryClientProvider` が要る
@@ -51,8 +58,9 @@ afterEach(() => {
 function renderCharacterEdit(
   character: SessionState["character"],
   dispatch: CommandSpy = () => {},
+  characterPacks: readonly CharacterPackEntry[] = [],
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, character }, dispatch)
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, character, characterPacks }, dispatch)
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
@@ -71,6 +79,11 @@ function waitForDebounce(): Promise<void> {
 /** 表情を消す前の確かめ（`portrait-clear-confirm.tsx`）。開いていなければ `null`。 */
 function clearConfirmDialog(): Element | null {
   return document.querySelector(".character-clear-confirm")
+}
+
+/** キャラクターを消す前の確かめ（`character-delete-confirm.tsx`）。開いていなければ `null`。 */
+function deleteConfirmDialog(): Element | null {
+  return document.querySelector(".character-delete-dialog")
 }
 
 describe("CharacterEdit", () => {
@@ -487,5 +500,95 @@ describe("CharacterEdit", () => {
 
     expect(document.querySelectorAll("section")).toHaveLength(0)
     expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
+  })
+
+  // このキャラクターを消す帯とその確かめ（docs/screen-design.md 13.6「このキャラクターを消す」）。
+  describe("このキャラクターを消す", () => {
+    it("removal が none なら帯を出さない", () => {
+      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, [
+        characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
+      ])
+
+      expect(document.querySelector(".character-delete-band")).toBeNull()
+    })
+
+    it("使用中のパックは帯のボタンが押せない", () => {
+      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, [
+        characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "delete" }),
+      ])
+
+      expect(screen.getByRole("button", { name: /架空の精霊 を消す/ })).toHaveProperty(
+        "disabled",
+        true,
+      )
+    })
+
+    // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
+    // 選ぶ（`character-screen.test.tsx` と同じ形。`docs/screen-design.md` 13.6
+    // 「選んでいるパックは hash に持つ」）。
+    const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
+      pack: "other",
+      name: "別の精霊",
+    })
+    const OTHER_PACKS: readonly CharacterPackEntry[] = [
+      characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
+      characterPackEntry("other", "別の精霊", {
+        character: OTHER_CHARACTER,
+        inUse: false,
+        removal: "delete",
+      }),
+    ]
+
+    function selectOther(): void {
+      window.location.hash = "#character?pack=other"
+    }
+
+    it("押すと確かめのダイアログを開き、id が違うと「消す」が押せない", () => {
+      selectOther()
+      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, OTHER_PACKS)
+
+      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
+
+      const dialog = deleteConfirmDialog()
+      expect(dialog?.hasAttribute("open")).toBe(true)
+      expect(screen.getByText("別の精霊 を消しますか？")).toBeDefined()
+      const okButton = screen.getByRole("button", { name: "消す" })
+      expect(okButton).toHaveProperty("disabled", true)
+
+      fireEvent.change(screen.getByLabelText("確かめのため、id を入力してください"), {
+        target: { value: "othe" },
+      })
+      expect(okButton).toHaveProperty("disabled", true)
+    })
+
+    it("id が完全に一致すると「消す」が押せ、delete-character を1回だけ送って閉じる", () => {
+      selectOther()
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), OTHER_PACKS)
+
+      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
+      fireEvent.change(screen.getByLabelText("確かめのため、id を入力してください"), {
+        target: { value: "other" },
+      })
+      const okButton = screen.getByRole("button", { name: "消す" })
+      expect(okButton).toHaveProperty("disabled", false)
+
+      fireEvent.click(okButton)
+
+      expect(calls).toEqual([{ type: "delete-character", pack: "other" }])
+      expect(deleteConfirmDialog()).toBeNull()
+    })
+
+    it("「やめる」で閉じ、何も送らない", () => {
+      selectOther()
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), OTHER_PACKS)
+
+      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
+      fireEvent.click(screen.getByRole("button", { name: "やめる" }))
+
+      expect(calls).toEqual([])
+      expect(deleteConfirmDialog()).toBeNull()
+    })
   })
 })
