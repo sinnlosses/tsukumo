@@ -2,10 +2,10 @@
 // いまのキャラクターの姿を、立ち絵のカード・衣装ごとの差し色・背景の行へ畳み、選んだ画像を
 // data URL にして送る呼び先と一緒に返す。
 //
-// 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-background` /
-// `clear-background` で、**書き込み先と反映はサーバ側**（`src/server/adapter/character-edit.ts` →
-// `character-changed`）。ここは選んだ画像を data URL にして渡すだけで、素材をブラウザ側に持ち
-// 続けない。
+// 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` /
+// `clear-chat-accent` / `set-background` / `clear-background` で、**書き込み先と反映はサーバ側**
+// （`src/server/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
+// にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
 // **`default` には消す口を出さない**（立ち絵が必ず要る1つ。`src/shared/expression.ts` の
 // `REQUIRED_EXPRESSIONS`。送られてきても `src/shared/command.ts` のスキーマが弾く）。
@@ -16,11 +16,15 @@
 // `accentFallback` に持つ**（描画のたびに `getComputedStyle` を呼ばない）。
 //
 // 差し色を引きずっている間は、**見た目（この立ち絵の `accent` と `<input>` の表示）だけ
-// その場で更新し、`set-outfit-accent` の送信は `useDebouncedCallback` で 200ms まとめる**
-// （`src/server/adapter/character-edit.ts` が送信のたびに `character.json` を書き直すため）。
+// その場で更新し、`set-outfit-accent` / `set-accent` の送信は `useDebouncedCallback` で
+// 200ms まとめる**（`src/server/adapter/character-edit.ts` が送信のたびに `character.json` を
+// 書き直すため）。**衣装の差し色（`outfitAccents`）と画面の差し色（`accent` / `chatAccent`）は
+// 同じ「ドラッグ中の色」という操作**なので、同じ定数（`ACCENT_DEBOUNCE_MS`）を使う
+// （`docs/design.md` 13.6）。
 
 import { useState } from "react"
 
+import { type AccentTarget } from "../../../../shared/character-definition.ts"
 import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import {
   type Expression,
@@ -51,8 +55,11 @@ const OUTFIT_LABELS: Readonly<Record<Outfit, string>> = {
 /** カードの立ち絵に当てる衣装。並びでは衣装の違いを出さない（差し色の行がその役目）。 */
 const GALLERY_OUTFIT: Outfit = "default"
 
-/** 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。 */
-const OUTFIT_ACCENT_DEBOUNCE_MS = 200
+/**
+ * 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。**衣装の差し色と
+ * 画面の差し色（仕事 / 雑談）の両方が使う**。
+ */
+const ACCENT_DEBOUNCE_MS = 200
 
 /** 立ち絵のカード1枚。**自分の絵を持たない表情は `blank`**（点線の枠の空きを出す）。 */
 export type PortraitCardModel = {
@@ -86,6 +93,23 @@ export type OutfitAccentFieldModel = {
   readonly onChange: (color: string) => void
 }
 
+/** 画面の差し色の欄1つ（仕事 / 雑談）。`outfitAccents` とは別の最上位の欄（`accent` / `chatAccent`）。 */
+export type ScreenAccentFieldModel = {
+  readonly inputId: string
+  readonly label: string
+  readonly value: string
+  readonly onChange: (color: string) => void
+}
+
+/**
+ * 雑談の差し色を「仕事と同じ」へ戻す口。`chatAccent` を持たないパック（雑談も仕事と同じ差し色の
+ * まま）では出さない——戻すものが無いため。代わりにその場所へ「仕事と同じ」の字を出す
+ * （`presentational-character-edit.tsx`）。
+ */
+export type ChatAccentResetModel =
+  | { readonly kind: "hidden" }
+  | { readonly kind: "shown"; readonly onClick: () => void }
+
 /** 背景の行。**字（`label`）は有無どちらでも出す**。 */
 export type BackgroundFieldModel = {
   readonly image: { readonly kind: "absent" } | { readonly kind: "present"; readonly url: string }
@@ -105,6 +129,11 @@ export type CharacterEditModel =
       /** 画面から変えられないパック。口をすべて塞ぎ、理由の一言を出す。 */
       readonly disabled: boolean
       readonly cards: readonly PortraitCardModel[]
+      /** 画面の差し色（仕事）。`accent` を差す。 */
+      readonly workAccent: ScreenAccentFieldModel
+      /** 画面の差し色（雑談）。`chatAccent` を持たなければ、仕事の差し色をそのまま見本に出す。 */
+      readonly chatAccent: ScreenAccentFieldModel
+      readonly resetChatAccent: ChatAccentResetModel
       readonly outfitAccents: readonly OutfitAccentFieldModel[]
       readonly background: BackgroundFieldModel
     }
@@ -116,11 +145,18 @@ export function useCharacterEdit(): CharacterEditModel {
   // `sendOutfitAccent` 側でまとめる**ので、ここは表示専用（`docs/coding-standards.md`
   // 「useEffect の代わりに使うもの」の「利用者の操作で起きること」＝イベントハンドラで足す）。
   const [pendingAccents, setPendingAccents] = useState<Partial<Record<Outfit, string>>>({})
-  // 差し色が定義に無い衣装の初期値（`--accent`）。読みは描画の外（マウント時の1回）に置く。
+  // 画面の差し色（仕事 / 雑談）も同じ考え方で先に進める（衣装とは別の最上位の欄なので別の状態）。
+  const [pendingScreenAccents, setPendingScreenAccents] = useState<
+    Partial<Record<AccentTarget, string>>
+  >({})
+  // 差し色が定義に無い衣装・パックの初期値（`--accent`）。読みは描画の外（マウント時の1回）に置く。
   const [accentFallback] = useState(readAccentColor)
   const sendOutfitAccent = useDebouncedCallback<Outfit, string>((outfit, color) => {
     dispatch({ type: "set-outfit-accent", outfit, color })
-  }, OUTFIT_ACCENT_DEBOUNCE_MS)
+  }, ACCENT_DEBOUNCE_MS)
+  const sendAccent = useDebouncedCallback<AccentTarget, string>((target, color) => {
+    dispatch({ type: "set-accent", target, color })
+  }, ACCENT_DEBOUNCE_MS)
 
   if (character === undefined) {
     return { kind: "waiting" }
@@ -175,6 +211,42 @@ export function useCharacterEdit(): CharacterEditModel {
     },
   }))
 
+  // 仕事の差し色（`accent`）。無ければ `--accent`（既定値）に落ちる。衣装の差し色と同じ解き方。
+  const workAccentValue = pendingScreenAccents.work ?? character.accent ?? accentFallback
+  const workAccent: ScreenAccentFieldModel = {
+    inputId: "character-screen-accent-work",
+    label: "仕事",
+    value: workAccentValue,
+    onChange: (color) => {
+      setPendingScreenAccents((current) => ({ ...current, work: color }))
+      sendAccent("work", color)
+    },
+  }
+
+  // 雑談の差し色（`chatAccent`）。**持たないパックでは仕事の差し色をそのまま見本に出す**
+  // （「仕事と同じ」であることが色そのもので伝わる。ドラッグ中の仕事の値も追いかける）。
+  const hasChatAccent =
+    pendingScreenAccents.chat !== undefined || character.chatAccent !== undefined
+  const chatAccentValue = pendingScreenAccents.chat ?? character.chatAccent ?? workAccentValue
+  const chatAccent: ScreenAccentFieldModel = {
+    inputId: "character-screen-accent-chat",
+    label: "雑談",
+    value: chatAccentValue,
+    onChange: (color) => {
+      setPendingScreenAccents((current) => ({ ...current, chat: color }))
+      sendAccent("chat", color)
+    },
+  }
+  const resetChatAccent: ChatAccentResetModel = hasChatAccent
+    ? {
+        kind: "shown",
+        onClick: () => {
+          setPendingScreenAccents((current) => ({ ...current, chat: undefined }))
+          dispatch({ type: "clear-chat-accent" })
+        },
+      }
+    : { kind: "hidden" }
+
   const background: BackgroundFieldModel = {
     image:
       character.background === undefined
@@ -192,7 +264,16 @@ export function useCharacterEdit(): CharacterEditModel {
     },
   }
 
-  return { kind: "ready", disabled: !character.editable, cards, outfitAccents, background }
+  return {
+    kind: "ready",
+    disabled: !character.editable,
+    cards,
+    workAccent,
+    chatAccent,
+    resetChatAccent,
+    outfitAccents,
+    background,
+  }
 }
 
 /**

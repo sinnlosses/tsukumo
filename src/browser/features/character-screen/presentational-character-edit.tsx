@@ -34,7 +34,48 @@ export function PresentationalCharacterEdit(
         ))}
       </div>
       <fieldset className={styles["character-screen-fieldset"]}>
-        <legend>差し色</legend>
+        <legend>画面の差し色</legend>
+        <div className={styles["character-screen-row"]}>
+          <div className={styles["character-screen-field"]}>
+            <label htmlFor={props.workAccent.inputId}>{props.workAccent.label}</label>
+            <input
+              id={props.workAccent.inputId}
+              type="color"
+              disabled={props.disabled}
+              value={props.workAccent.value}
+              onChange={(event) => {
+                props.workAccent.onChange(event.target.value)
+              }}
+            />
+          </div>
+          <div className={styles["character-screen-field"]}>
+            <label htmlFor={props.chatAccent.inputId}>{props.chatAccent.label}</label>
+            <input
+              id={props.chatAccent.inputId}
+              type="color"
+              disabled={props.disabled}
+              value={props.chatAccent.value}
+              onChange={(event) => {
+                props.chatAccent.onChange(event.target.value)
+              }}
+            />
+            {props.resetChatAccent.kind === "shown" ? (
+              <button
+                type="button"
+                className={styles["character-screen-accent-reset"]}
+                disabled={props.disabled}
+                onClick={props.resetChatAccent.onClick}
+              >
+                仕事と同じにする
+              </button>
+            ) : (
+              <span className={styles["character-screen-accent-same"]}>仕事と同じ</span>
+            )}
+          </div>
+        </div>
+      </fieldset>
+      <fieldset className={styles["character-screen-fieldset"]}>
+        <legend>立ち絵の差し色</legend>
         <div className={styles["character-screen-row"]}>
           {props.outfitAccents.map((field) => (
             <div className={styles["character-screen-field"]} key={field.outfit}>

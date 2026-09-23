@@ -83,7 +83,8 @@ describe("CharacterScreen", () => {
     const legends = [...document.querySelectorAll("fieldset > legend")].map(
       (node) => node.textContent,
     )
-    expect(legends).toContain("差し色")
+    expect(legends).toContain("画面の差し色")
+    expect(legends).toContain("立ち絵の差し色")
     expect(legends).not.toContain("画面の色")
   })
 
