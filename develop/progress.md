@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 帯の部品を2つの面へ配る配線を、束1本にした（T-413）
+
+`ScreenNavView` を `current` / `parts` / `menu` / `ref` の4項目にし、帯に並ぶ部品の値は束 `ScreenNavParts` のまま広い画面の帯と「≡」の面の両方へ渡す形にした（`ScreenNavMenuProps` は14項目から2項目へ）。広い画面用・狭い画面用で2本持っていた ref の組は、付いている口を集めるコールバック ref 1本に畳んで `ScreenNavView` から消えた。
+
 ### 2026-09-23 版の合わない hello の知らせに、部品のテストを足した（T-410）
 
 `hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。

@@ -14,17 +14,10 @@
 // 色だけに頼らない。13.1 原則1）。開くと「いまの作業」の札の語が「答え待ち」に変わるので、
 // 帯の右端にあった専用の印（`screen-nav-pending.tsx`）はもう無い（13.9「何を外すか」）。
 
-import { type ReactElement, type RefObject } from "react"
+import { type ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/character-face.tsx"
-import { type ScreenNavCurrentWork } from "../hooks/use-current-work.ts"
-import {
-  type ScreenNavChatMode,
-  type ScreenNavFace as Face,
-  type ScreenNavGate as Gate,
-  type ScreenNavModelPermission,
-} from "../hooks/use-screen-nav.ts"
-import { type ScreenNavSettings } from "../hooks/use-settings.ts"
+import { type ScreenNavMenu as Menu, type ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import styles from "../screen-nav.module.css"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"
@@ -34,25 +27,14 @@ import { ScreenNavRoom } from "./screen-nav-room.tsx"
 import { ScreenNavSettingsGear } from "./screen-nav-settings.tsx"
 
 export type ScreenNavMenuProps = {
-  /** 部屋の名前。**落ちてくる面の先頭**に出す（狭い画面では帯の左端が無いため。13.9）。 */
-  readonly room: string
-  /** 顔。部屋の名前と並んで**落ちてくる面の先頭**に出す（13.9「顔」）。 */
-  readonly face: Face
-  readonly gates: readonly Gate[]
-  /** 仕事 / 雑談のトグル。**狭い画面では帯に置く幅が無い**ので、口と同じくここへ入る（13.9）。 */
-  readonly chatMode: ScreenNavChatMode
-  /** モデル・許可モードのドロップダウン。 */
-  readonly modelPermission: ScreenNavModelPermission
-  /** いまの作業の札（帯と同じ部品。13.9「狭い画面」）。 */
-  readonly work: ScreenNavCurrentWork
-  readonly workToggleRefNarrow: RefObject<HTMLButtonElement | null>
-  /** 設定の歯車（帯と同じ部品。13.9「狭い画面」）。押すと面の中でその場で下に開く。 */
-  readonly settings: ScreenNavSettings
-  readonly settingsToggleRefNarrow: RefObject<HTMLButtonElement | null>
-  readonly open: boolean
-  readonly pendingActive: boolean
-  readonly onToggle: () => void
-  readonly onSelect: () => void
+  /**
+   * 帯に並ぶ部品の値ひとそろい（`hooks/use-screen-nav.ts` の `ScreenNavParts`）。**広い画面の
+   * 帯が受け取るものと同じ束**で、ここが決めるのは**並べ直す順と入れ子だけ**
+   * （顔と部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード → 設定の歯車。13.9）。
+   */
+  readonly parts: ScreenNavParts
+  /** 「≡」そのもの（開閉と、閉じている間の答え待ちの印）。 */
+  readonly menu: Menu
 }
 
 /** 「≡」の字と、読み上げに渡す名前。**「画面を選ぶ」から「メニュー」に直した**
@@ -65,38 +47,37 @@ const PENDING_NOTE = "答え待ち"
 const PENDING_MARK = "●"
 
 export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
+  const { parts, menu } = props
+
   return (
     <div className={styles["screen-nav-menu"]}>
       <button
         type="button"
         className={styles["screen-nav-toggle"]}
-        aria-expanded={props.open}
-        aria-label={props.pendingActive ? `${MENU_LABEL}（${PENDING_NOTE}）` : MENU_LABEL}
-        onClick={props.onToggle}
+        aria-expanded={menu.open}
+        aria-label={menu.pendingActive ? `${MENU_LABEL}（${PENDING_NOTE}）` : MENU_LABEL}
+        onClick={menu.onToggle}
       >
         {MENU_MARK}
-        {props.pendingActive ? (
+        {menu.pendingActive ? (
           <span className={styles["screen-nav-toggle-mark"]}>{PENDING_MARK}</span>
         ) : null}
       </button>
-      {props.open ? (
+      {menu.open ? (
         <div className={styles["screen-nav-panel"]}>
           <CharacterFace
-            url={props.face.url}
-            alt={props.face.alt}
+            url={parts.face.url}
+            alt={parts.face.alt}
             className={styles["screen-nav-face"] ?? ""}
           />
-          <ScreenNavRoom name={props.room} />
-          <ScreenNavChatModeToggle chatMode={props.chatMode} />
-          {props.gates.map((gate) => (
-            <ScreenNavGate key={gate.screen} gate={gate} onSelect={props.onSelect} />
+          <ScreenNavRoom name={parts.room} />
+          <ScreenNavChatModeToggle chatMode={parts.chatMode} />
+          {parts.gates.map((gate) => (
+            <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
           ))}
-          <ScreenNavCurrentWorkPill work={props.work} toggleRef={props.workToggleRefNarrow} />
-          <ScreenNavModelPermissionSelect modelPermission={props.modelPermission} />
-          <ScreenNavSettingsGear
-            settings={props.settings}
-            toggleRef={props.settingsToggleRefNarrow}
-          />
+          <ScreenNavCurrentWorkPill work={parts.work} />
+          <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
+          <ScreenNavSettingsGear settings={parts.settings} />
         </div>
       ) : null}
     </div>
