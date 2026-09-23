@@ -2,7 +2,7 @@
 // （「外に触るのはここだけ」の側。定義の解釈は src/shared/character-definition.ts の仕事。
 // docs/design.md 5章「character-pack.ts」）。
 //
-// **fs に触らない関数（`toCharacterPackChoices` / `characterChangedEvent`）もここに置く。**
+// **fs にほとんど触らない関数（`characterChangedEvent`）もここに置く。**
 // 層は「外の世界に触るか」で決め、ファイルの中身の純度では割らない（理由は
 // docs/architecture.md「新しいコードを置く場所」）。**`systemPrompt` の append の組み立ては
 // `src/server/core/system-prompt.ts` へ移してある**——`core` 側の規約と雑談の記憶を並べる判断が
@@ -10,17 +10,21 @@
 // 読むところまで。
 //
 // **素材の中身（SVG・画像のバイト列）は SessionState にも character-changed イベントにも乗せない。**
-// ブラウザは `/character/<file>` から取りに行く（docs/design.md 4.1・5章）。
+// ブラウザは `/character/<pack>/<file>` から取りに行く（docs/design.md 4.1・5章・7章）。
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { classifyPortraitFile, rasterMimeType } from "../../shared/character-asset.ts"
+import {
+  type CharacterAssetLocation,
+  classifyPortraitFile,
+  rasterMimeType,
+} from "../../shared/character-asset.ts"
 import {
   type CharacterDefinition,
   parseCharacterDefinition,
 } from "../../shared/character-definition.ts"
-import { type CharacterPackChoice, toCharacterInfo } from "../../shared/character.ts"
+import { type CharacterPackEntry, toCharacterInfo } from "../../shared/character.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { bundledFilePath } from "./bundled-path.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
@@ -64,8 +68,8 @@ export type CharacterPack = {
   readonly persona: string | undefined
   /**
    * 素材の版（定義と素材のファイルの更新時刻のうち、いちばん新しいもの）。
-   * **`/character/<file>` の URL に混ぜて、差し替えた素材をブラウザに取り直させるためだけ**に
-   * ある（`src/shared/character-asset.ts` の `characterAssetCacheKey`）。読めなければ undefined。
+   * **素材の URL の `?v=` に混ぜて、差し替えた素材をブラウザに取り直させるためだけ**に
+   * ある（`src/shared/character-asset.ts` の `characterAssetPath`）。読めなければ undefined。
    */
   readonly revision: string | undefined
 }
@@ -146,29 +150,29 @@ export function listCharacterPacks(
   return [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
 }
 
-/** 一覧を画面に出す形（`<select>` の選択肢）にする。並びは {@link listCharacterPacks} のまま。 */
-export function toCharacterPackChoices(
-  packs: readonly CharacterPack[],
-): readonly CharacterPackChoice[] {
-  return packs.map((pack) => ({ name: pack.name, label: pack.definition?.name ?? pack.name }))
-}
-
 /**
- * 起こしたとき・`switch-character` で起こし直したときに1回流す `character-changed` イベント
- * （docs/design.md 4.1・7章）。中身は URL と選択肢だけで、素材そのものは含まない。
+ * 起こしたとき・起こし直したとき・画面からパックを変えたり作ったりしたときに流す
+ * `character-changed` イベント（docs/design.md 4.1・7章）。**いま出しているパックの姿と、
+ * 全パックぶんの一覧（{@link CharacterPackEntry}）を一緒に組む**。中身は URL と選択肢だけで、
+ * 素材そのものは含まない。
+ *
+ * `packs` は {@link listCharacterPacks} の並び。**同じ名前のものは `current` に置き換えて並べる**
+ * （{@link withCurrentPack}。配る側の {@link readCharacterAsset} と同じ規則なので、一覧に載せた
+ * URL は必ず配れる）。
  */
 export function characterChangedEvent(
-  pack: CharacterPack,
-  packs: readonly CharacterPackChoice[],
-  editable: boolean,
+  current: CharacterPack,
+  packs: readonly CharacterPack[],
+  cwd: string,
 ): SessionEvent {
-  const info = toCharacterInfo({
-    definition: pack.definition,
-    pack: pack.name,
-    revision: pack.revision,
-    editable,
-  })
-  return { kind: "character-changed", ...info, packs }
+  const entries = withCurrentPack(current, packs).map((pack) =>
+    toCharacterPackEntry(pack, pack === current, cwd),
+  )
+  return {
+    kind: "character-changed",
+    ...toCharacterPackEntry(current, true, cwd).character,
+    packs: entries,
+  }
 }
 
 export type CharacterAssetFile = {
@@ -177,7 +181,21 @@ export type CharacterAssetFile = {
 }
 
 /**
- * `/character/<file>` が配ってよい1件を読む。**character.json の `portraits` `mini` `face`
+ * `/character/<pack>/<file>` が配ってよい1件を読む。**パック名は一覧（`current` で置き換えたもの。
+ * {@link withCurrentPack}）と突き合わせるだけ**で、パスには使わない（無い名前・`..` は
+ * 見つからずに undefined）。ファイル名の判断は {@link readCharacterPackFile} に任せる。
+ */
+export function readCharacterAsset(
+  current: CharacterPack,
+  packs: readonly CharacterPack[],
+  location: CharacterAssetLocation,
+): CharacterAssetFile | undefined {
+  const pack = withCurrentPack(current, packs).find((listed) => listed.name === location.pack)
+  return pack === undefined ? undefined : readCharacterPackFile(pack, location.fileName)
+}
+
+/**
+ * パック1つの中で、配ってよい1件を読む。**character.json の `portraits` `mini` `face`
  * `background` に載っているファイル名だけ**を許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
  * `..` を含む要求や定義に無い名前は自然に undefined になる）。呼び出し側
  * （src/server/adapter/server.ts）はこの結果をそのまま配るか、undefined なら404にする。
@@ -201,7 +219,7 @@ export function readCharacterPackFile(
 
 /**
  * character.json の `portraits` `mini` `face` `background` に載っているファイル名の一覧
- * （重複なし）。**顔もミニ立ち絵も背景も同じ経路（`/character/<file>`）で配る**ので、
+ * （重複なし）。**顔もミニ立ち絵も背景も同じ経路（`/character/<pack>/<file>`）で配る**ので、
  * ここに入れないと 404 になる。
  */
 function characterPackFileNames(pack: CharacterPack): readonly string[] {
@@ -216,6 +234,43 @@ function characterPackFileNames(pack: CharacterPack): readonly string[] {
     pack.definition.background?.image,
   ].filter(isDefined)
   return [...new Set(fileNames)]
+}
+
+/**
+ * 一覧の並びのうち、`current` と同じ名前のものを `current` に置き換える（一覧に無ければ末尾に
+ * 足す）。一覧を読んだあとに持ち替えたパック（画面から変えた直後・`TSUKUMO_CHARACTER` で
+ * 別の場所を指したとき）でも、**画面に出すもの・配るものが「いま出しているもの」とずれない**。
+ */
+function withCurrentPack(
+  current: CharacterPack,
+  packs: readonly CharacterPack[],
+): readonly CharacterPack[] {
+  return packs.some((pack) => pack.name === current.name)
+    ? packs.map((pack) => (pack.name === current.name ? current : pack))
+    : [...packs, current]
+}
+
+/**
+ * 一覧の1件を組む。「変えられるか」は {@link isEditableCharacterPack}、「消せるか」は
+ * **消す口がまだ無いのでどれも false**（使用中のパックは口ができても消せない）。
+ */
+function toCharacterPackEntry(
+  pack: CharacterPack,
+  inUse: boolean,
+  cwd: string,
+): CharacterPackEntry {
+  return {
+    name: pack.name,
+    label: pack.definition?.name ?? pack.name,
+    character: toCharacterInfo({
+      definition: pack.definition,
+      pack: pack.name,
+      revision: pack.revision,
+      editable: isEditableCharacterPack(pack, cwd),
+    }),
+    inUse,
+    deletable: false,
+  }
 }
 
 function characterAssetContentType(fileName: string): string | undefined {

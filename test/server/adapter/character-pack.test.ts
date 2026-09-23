@@ -7,11 +7,16 @@ import {
   characterChangedEvent,
   isEditableCharacterPack,
   listCharacterPacks,
+  readCharacterAsset,
   readCharacterPack,
   readCharacterPackFile,
-  toCharacterPackChoices,
 } from "../../../src/server/adapter/character-pack.ts"
-import { characterInfo, shownOutfitAccents, shownPortraits } from "../../fixture/character.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  shownOutfitAccents,
+  shownPortraits,
+} from "../../fixture/character.ts"
 
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const DEFINITION_JSON = JSON.stringify({
@@ -63,64 +68,220 @@ describe("readCharacterPack", () => {
 })
 
 describe("characterChangedEvent", () => {
-  it("portraits の値をファイル名でなく /character/<file> の URL にする", () => {
+  it("portraits の値をファイル名でなく /character/<pack>/<file> の URL にする", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
 
     const pack = readCharacterPack(dir)
-    const event = characterChangedEvent(pack, [{ name: basename(dir), label: "架空の精霊" }], true)
-    // 取り直しの印はパックの名前と素材の版（更新時刻）を混ぜたもの。
-    const cacheKey = encodeURIComponent(`${basename(dir)}@${String(pack.revision)}`)
+    const event = characterChangedEvent(pack, [pack], dir)
+    // パックの名前は経路に入り、取り直しの印は素材の版（更新時刻）だけ。
+    const base = `/character/${encodeURIComponent(basename(dir))}`
+    const version = `?v=${String(pack.revision)}`
+    const character = characterInfo({
+      pack: basename(dir),
+      expressions: [
+        { name: "default", label: "通常" },
+        { name: "thinking", label: "作業中" },
+      ],
+      ...shownPortraits({
+        default: `${base}/default.svg${version}`,
+        thinking: `${base}/thinking.svg${version}`,
+      }),
+      // 定義に mini が無いパックなので、ミニ立ち絵は portraits.default に落ちる。
+      mini: `${base}/default.svg${version}`,
+      outfitAccents: shownOutfitAccents({ default: "#b8c7ff", normal: "#b8c7ff" }),
+    })
 
     expect(event).toEqual({
       kind: "character-changed",
-      ...characterInfo({
-        pack: basename(dir),
-        expressions: [
-          { name: "default", label: "通常" },
-          { name: "thinking", label: "作業中" },
-        ],
-        ...shownPortraits({
-          default: `/character/default.svg?v=${cacheKey}`,
-          thinking: `/character/thinking.svg?v=${cacheKey}`,
-        }),
-        // 定義に mini が無いパックなので、ミニ立ち絵は portraits.default に落ちる。
-        mini: `/character/default.svg?v=${cacheKey}`,
-        outfitAccents: shownOutfitAccents({ default: "#b8c7ff", normal: "#b8c7ff" }),
-      }),
-      packs: [{ name: basename(dir), label: "架空の精霊" }],
+      ...character,
+      packs: [characterPackEntry(basename(dir), "架空の精霊", { character, inUse: true })],
     })
   })
 
   it("定義が無くても、立ち絵なしの形で流せる", () => {
-    const event = characterChangedEvent(readCharacterPack(dir), [], true)
+    const pack = readCharacterPack(dir)
+    const event = characterChangedEvent(pack, [], dir)
 
     expect(event).toMatchObject({
       kind: "character-changed",
       name: undefined,
       expressions: [{ name: "default", label: "default" }],
-      packs: [],
     })
   })
 
-  it("face があれば /character/<file> の URL にする（mini と違い default へは畳まない）", () => {
+  it("face があれば素材の URL にする（mini と違い default へは畳まない）", () => {
     writeFileSync(
       join(dir, "character.json"),
       JSON.stringify({ portraits: { default: "default.svg" }, face: "face.svg" }),
     )
 
     const pack = readCharacterPack(dir)
-    const event = characterChangedEvent(pack, [], true)
-    const cacheKey = encodeURIComponent(`${basename(dir)}@${String(pack.revision)}`)
+    const event = characterChangedEvent(pack, [], dir)
 
-    expect(event).toMatchObject({ face: `/character/face.svg?v=${cacheKey}` })
+    expect(event).toMatchObject({
+      face: `/character/${encodeURIComponent(basename(dir))}/face.svg?v=${String(pack.revision)}`,
+    })
   })
 
   it("face が無いパックでは undefined のまま（mini や portraits から補わない）", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
 
-    const event = characterChangedEvent(readCharacterPack(dir), [], true)
+    const event = characterChangedEvent(readCharacterPack(dir), [], dir)
 
     expect(event).toMatchObject({ face: undefined })
+  })
+})
+
+// 一覧の1件（`CharacterPackEntry`）。**使用中以外のパックも姿ごと載る**（docs/design.md 7.2）。
+// 3つの置き場に1つずつ、立ち絵の枚数が違う架空のパックを置く。
+describe("characterChangedEvent の一覧（packs）", () => {
+  const cwd = (): string => join(dir, "cwd")
+  const roots = (): { readonly bundled: string; readonly home: string } => ({
+    bundled: join(dir, "bundled"),
+    home: join(dir, "home"),
+  })
+
+  function writePack(root: string, name: string, definition: object): string {
+    const packDir = join(root, name)
+    mkdirSync(packDir, { recursive: true })
+    writeFileSync(join(packDir, "character.json"), JSON.stringify(definition))
+    return packDir
+  }
+
+  function writeThreePacks(): void {
+    writePack(roots().bundled, "spirit", {
+      name: "架空の精霊",
+      portraits: { default: "default.svg", thinking: "thinking.svg" },
+    })
+    writePack(roots().home, "from-screen", {
+      tagline: "架空のひとこと",
+      portraits: { default: "default.png" },
+      background: { image: "background.png", veil: 0.5 },
+    })
+    writePack(join(cwd(), "characters"), "local", {
+      name: "架空の同居人",
+      portraits: { default: "a.svg", proud: "b.svg", sad: "c.svg" },
+    })
+  }
+
+  function currentByName(name: string): ReturnType<typeof readCharacterPack> {
+    const found = listCharacterPacks(cwd(), roots()).find((pack) => pack.name === name)
+    if (found === undefined) {
+      throw new Error(`テストの前提: ${name} が一覧に無い`)
+    }
+    return found
+  }
+
+  it("全パックについて、表情の枚数・使用中か・変えられるか・消せるかを持つ", () => {
+    writeThreePacks()
+    const packs = listCharacterPacks(cwd(), roots())
+
+    const event = characterChangedEvent(currentByName("spirit"), packs, cwd())
+
+    expect(
+      event.kind === "character-changed"
+        ? event.packs.map((entry) => ({
+            name: entry.name,
+            label: entry.label,
+            expressionsWithPortrait: entry.character.expressionsWithPortrait.length,
+            inUse: entry.inUse,
+            editable: entry.character.editable,
+            deletable: entry.deletable,
+          }))
+        : undefined,
+    ).toEqual([
+      {
+        name: "spirit",
+        label: "架空の精霊",
+        expressionsWithPortrait: 2,
+        inUse: true,
+        editable: true,
+        deletable: false,
+      },
+      {
+        name: "from-screen",
+        label: "from-screen",
+        expressionsWithPortrait: 1,
+        inUse: false,
+        editable: true,
+        deletable: false,
+      },
+      // 起動先の characters/local は画面から変えられない（ホームに書いても次の起動で負ける）。
+      {
+        name: "local",
+        label: "架空の同居人",
+        expressionsWithPortrait: 3,
+        inUse: false,
+        editable: false,
+        deletable: false,
+      },
+    ])
+  })
+
+  it("使用中以外のパックの立ち絵・背景・ひとことも、そのパックの名前つきの URL で持つ", () => {
+    writeThreePacks()
+    const packs = listCharacterPacks(cwd(), roots())
+
+    const event = characterChangedEvent(currentByName("spirit"), packs, cwd())
+    const other =
+      event.kind === "character-changed"
+        ? event.packs.find((entry) => entry.name === "from-screen")
+        : undefined
+
+    expect(other?.character.portraits?.default).toStartWith("/character/from-screen/default.png")
+    expect(other?.character.background?.image).toStartWith("/character/from-screen/background.png")
+    expect(other?.character.tagline).toBe("架空のひとこと")
+  })
+
+  it("持ち替えると使用中の印も動き、いまの姿はその1件と同じ", () => {
+    writeThreePacks()
+    const packs = listCharacterPacks(cwd(), roots())
+
+    const event = characterChangedEvent(currentByName("from-screen"), packs, cwd())
+
+    expect(
+      event.kind === "character-changed"
+        ? event.packs.filter((entry) => entry.inUse).map((entry) => entry.name)
+        : undefined,
+    ).toEqual(["from-screen"])
+    const inUse =
+      event.kind === "character-changed" ? event.packs.find((entry) => entry.inUse) : undefined
+    expect(event).toMatchObject({ ...inUse?.character })
+  })
+
+  it("一覧を読んだあとに持ち替えたパックは、同じ名前の行を置き換える（無ければ末尾に足す）", () => {
+    writeThreePacks()
+    const packs = listCharacterPacks(cwd(), roots())
+    // 一覧に無い場所を直に指したパック（`TSUKUMO_CHARACTER` のとき）。
+    const elsewhere = readCharacterPack(
+      writePack(join(dir, "elsewhere"), "wanderer", { portraits: { default: "w.svg" } }),
+    )
+
+    const event = characterChangedEvent(elsewhere, packs, cwd())
+
+    expect(
+      event.kind === "character-changed" ? event.packs.map((entry) => entry.name) : undefined,
+    ).toEqual(["spirit", "from-screen", "local", "wanderer"])
+  })
+
+  it("一覧のラベルは character.json の name。無ければディレクトリ名", () => {
+    writeThreePacks()
+
+    const event = characterChangedEvent(
+      currentByName("spirit"),
+      listCharacterPacks(cwd(), roots()),
+      cwd(),
+    )
+
+    expect(
+      event.kind === "character-changed"
+        ? event.packs.map(({ name, label }) => ({ name, label }))
+        : undefined,
+    ).toEqual([
+      { name: "spirit", label: "架空の精霊" },
+      { name: "from-screen", label: "from-screen" },
+      { name: "local", label: "架空の同居人" },
+    ])
   })
 })
 
@@ -215,16 +376,6 @@ describe("listCharacterPacks", () => {
       }),
     ).toEqual([])
   })
-
-  it("選択肢のラベルは character.json の name。無ければディレクトリ名", () => {
-    writePack(roots().bundled, "named", DEFINITION_JSON)
-    writePack(roots().bundled, "unnamed", JSON.stringify({ portraits: {} }))
-
-    expect(toCharacterPackChoices(listCharacterPacks(join(dir, "cwd"), roots()))).toEqual([
-      { name: "named", label: "架空の精霊" },
-      { name: "unnamed", label: "unnamed" },
-    ])
-  })
 })
 
 describe("isEditableCharacterPack", () => {
@@ -315,5 +466,56 @@ describe("readCharacterPackFile", () => {
 
   it("定義が無ければ何も配らない", () => {
     expect(readCharacterPackFile(readCharacterPack(dir), "default.svg")).toBeUndefined()
+  })
+})
+
+describe("readCharacterAsset", () => {
+  /** 使用中（current）と、使用中以外（other）の2つのパックを置く。 */
+  function writeTwoPacks(): {
+    readonly current: ReturnType<typeof readCharacterPack>
+    readonly other: ReturnType<typeof readCharacterPack>
+  } {
+    const currentDir = join(dir, "current")
+    const otherDir = join(dir, "other")
+    mkdirSync(currentDir)
+    mkdirSync(otherDir)
+    writeFileSync(join(currentDir, "character.json"), DEFINITION_JSON)
+    writeFileSync(join(currentDir, "default.svg"), PLAUSIBLE_SVG)
+    writeFileSync(
+      join(otherDir, "character.json"),
+      JSON.stringify({ portraits: { default: "other.svg" } }),
+    )
+    writeFileSync(join(otherDir, "other.svg"), PLAUSIBLE_SVG)
+    return { current: readCharacterPack(currentDir), other: readCharacterPack(otherDir) }
+  }
+
+  it("使用中以外のパックの素材も、一覧にある名前なら読める", () => {
+    const { current, other } = writeTwoPacks()
+
+    const file = readCharacterAsset(current, [current, other], {
+      pack: "other",
+      fileName: "other.svg",
+    })
+
+    expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
+  })
+
+  it("別のパックの定義にしか無いファイル名は undefined（allowlist はパックごと）", () => {
+    const { current, other } = writeTwoPacks()
+
+    expect(
+      readCharacterAsset(current, [current, other], { pack: "other", fileName: "default.svg" }),
+    ).toBeUndefined()
+  })
+
+  it("一覧に無いパック名・`..` は undefined（名前をパスに使わない）", () => {
+    const { current, other } = writeTwoPacks()
+
+    expect(
+      readCharacterAsset(current, [current, other], { pack: "missing", fileName: "other.svg" }),
+    ).toBeUndefined()
+    expect(
+      readCharacterAsset(current, [current, other], { pack: "..", fileName: "other.svg" }),
+    ).toBeUndefined()
   })
 })

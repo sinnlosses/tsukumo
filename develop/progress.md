@@ -55,6 +55,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 全パックの見た目の情報を画面に配り、素材をパック名つきの URL で配るようにした（T-490）
+
+`character-changed` の `packs` を `CharacterPackEntry`（姿・使用中か・消せるか）に広げ、`event()` のたびに一覧を読み直す。素材の URL は使用中も含めて `/character/<pack>/<file>?v=<revision>` に揃え、パック名は一覧と突き合わせるだけでパスには使わない（`docs/design.md` 7.2。`deletable` は T-492 まで全部 false）。
+
+### 2026-09-23 report の本文から、意味を変えずに落とせる行を落として描くようにした（T-488）
+
+`src/shared/report-tidy.ts` を `main-view.ts` の `reportMarkdown` で `body` に掛け、冒頭の `conclusion` の繰り返し・定型だけの行（閉じた一覧との丸ごとの一致）・中身の無い見出しを落とす。検査（T-487）との分担は「直すのに書き直しが要るか」で、記録は引数のまま持つので復元したやり取りにも効く。
+
 ### 2026-09-23 雑談のセリフを全文でポンと出し、吹き出しどうしを2秒空けた（T-485）
 
 1文字ずつ育てる `use-speech-growth.ts` を消し、`use-speech-reveal.ts` が「出してよい前置き」を毎レンダー計算する形にした（キャラクターの吹き出しだけ前の1つから2秒のゲートを見る）。現れる瞬間に 0.2 秒だけ弾む CSS を足し、遡り・自動スクロール・立ち絵の表情はすべて「出した吹き出し」で数える。
@@ -62,10 +70,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ### 2026-09-23 report の引数を規約で検査し、違反を戻り値で返して書き直させるようにした（T-487）
 
 機械で判定できる7条を `src/server/core/report-violation.ts` で検査し、`report` の handler が違反を `isError` で返す（1ターン1回まで。前置き・締めの定型の行は誤検知が多いので採らなかった）。`report` イベントは同じ呼び出しの `tool-finished` まで `report-review.ts` が預かり、差し戻したものは描かない（セッションの復元でも同じ）。
-
-### 2026-09-23 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにした（T-448）
-
-SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
 
 ### 2026-09-23 report のあとの長い本文を Stop フックで差し戻すようにした（T-486）
 
@@ -82,6 +86,10 @@ SDK の `background_tasks_changed` を `background-tasks-changed` に変換し�
 ### 2026-09-23 progress.md のマージドライバで main 側の同じ日付の小節を下へ落とさなくした（T-483）
 
 `mergeDoneSections` は同じ日付のあいだで base に無い小節を base にある小節より上に置き、両側が新しく足した小節どうしは ours（枝）を上にする。規則は `scripts/progress-done-section.ts` の `orderByDateDescending` のコメントにまとめ、日付の無い小節は末尾のままにした。
+
+### 2026-09-23 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにした（T-448）
+
+SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
 
 ## 未解決
 

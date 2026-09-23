@@ -12,6 +12,7 @@ import { isBlankText } from "./blank-text.ts"
 import { isJapaneseProse } from "./japanese-prose.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
+import { tidyReportBody } from "./report-tidy.ts"
 import {
   MAX_SESSION_STATE_TURNS,
   type SessionRecord,
@@ -249,11 +250,13 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
  * お願いと同じ見た目になり、**サニタイズも記法の解釈もテキストの本文と同じ経路**を通る。
  * HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける（記法の規約と同じ）。
  * 空の `body` / `favor` は塊ごと置かない。
+ *
+ * **`body` はここで整形する**（{@link tidyReportBody}。記録は引数のまま持ち、描くたびに導く）。
  */
 function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report" }>): string {
   return [
     report.conclusion,
-    report.body,
+    tidyReportBody(report),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))

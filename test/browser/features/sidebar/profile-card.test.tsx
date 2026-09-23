@@ -9,7 +9,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { ProfileCard } from "../../../../src/browser/features/sidebar/profile-card.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo } from "../../../fixture/character.ts"
+import { characterInfo, characterPackEntry } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -17,8 +17,8 @@ afterEach(() => {
 })
 
 const TWO_PACKS: SessionState["characterPacks"] = [
-  { name: "fictional", label: "架空の精霊" },
-  { name: "local", label: "架空の同居人" },
+  characterPackEntry("fictional", "架空の精霊"),
+  characterPackEntry("local", "架空の同居人"),
 ]
 
 function renderProfileCard(
