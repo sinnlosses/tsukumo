@@ -105,9 +105,9 @@
     "dependencies": [],
     "summary": "progress.md のマージドライバで、main 側の同じ日付の小節を下へ落とさない",
     "task": "## 背景\n\n並行の作業ツリーで `git merge main` すると、`develop/progress.md` の「## 完了したこと」の小節の並びが崩れる。2026-09-23 の振り返り（`1ba8d05..f1adaf96`）の範囲では、並べ直すだけのコミットが6件あった（`5a61b2d1` `8b9dfab6` `823e3509` `123c2798` `9cf12e51` `97d9bf6a`）。\n\n原因は `scripts/progress-done-section.ts` の `mergeDoneSections`。マージドライバ `scripts/merge-progress.ts` から呼ばれる:\n\n- 見出しを `new Set([...oursByHeading.keys(), ...theirsByHeading.keys()])` の順に集める。ours の小節が先で、theirs にだけある小節はそのあとに来る\n- 最後に `orderByDateDescending` で並べる。見るのは日付だけで、同じ日付どうしは `toSorted` の安定性で集めた順のまま残る\n- `git merge main` では ours が枝、theirs が `main`。そのため、同じ日付のあいだでは `main` が先に足した小節（新しい順では上にあるべきもの）が、枝の既存の小節の下に落ちる\n- 日付が同じなので、`task-workflow` の `status.py` は ERROR を出さない。アーカイブは「新しい順」を前提にしている\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの承認: 振り返りのドラフト「マージドライバが同じ日付の小節を下へ落とさないようにする」に「いいよ。タスク化して」\n- 並べ方の原則: 同じ日付のあいだでは、**base に無い小節（どちらかの側が新しく足したもの）を、base にある小節より上に置く**。base にある小節どうしの順は、いまの順（ours での順）を保つ\n\n## 解くべき論点\n\n- 両側がそれぞれ新しく足した小節どうしの順。どちらも「新しい順の先頭へ足す」運用なので、並行して足されたものの前後は決めようがない。theirs（`main`）を先にするか ours を先にするかを決め、理由をコード中のコメントに1行書く。`main` へ送るのは枝のほうがあとなので、ours を上にするのが「新しい順」に近い、という見方がある\n- 日付の無い小節（`date` が `undefined`）をどこに置くか。いまは `\"\"` 扱いで末尾に行く。変えるかどうか\n\n## やること\n\n1. `test/scripts/progress-done-section.test.ts` の `describe(\"mergeDoneSections\")` に、次の2つのテストを先に足し、いまのコードで落ちることを確かめる。\n   - 同じ日付のとき、theirs にだけ新しく足された小節が、base にある ours の小節より上に来る\n   - 両側が同じ日付で別々に新しく足したときの並び（論点で決めた順）\n2. `mergeDoneSections` の並べ方を直す。`orderByDateDescending` に「base にあったか」を渡すか、集める順を変えるかはどちらでもよい。ただし、書いたあとに読む人が並びの規則を1か所で読める形にする\n3. `scripts/merge-progress.ts` の冒頭コメントなど、並び方を説明している箇所があれば合わせる\n\n## 完了条件\n\n- 手順1のテストが通り、変更前のコードでは落ちることを確かめてある（evidence に書く）\n- 既存の `mergeDoneSections` のテスト（両側が足した小節は日付の降順に並ぶ、など）が通ったまま\n- `bun run check` が通る\n\n## 注意\n\n- マージドライバの登録（`git config merge.progress.driver`）は人がやるもので、このタスクでは触らない（CLAUDE.md「セットアップ / 環境構築」）\n- 実物の `develop/progress.md` をテストのフィクスチャに写さない。`test/fixture/progress-doc.ts` の作り方に合わせる",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "mergeDoneSections が同じ日付では base に無い小節を上に、両側の新規どうしは ours を上に並べる（規則は scripts/progress-done-section.ts の orderByDateDescending のコメント1か所）。変更前のコードで test/scripts/progress-done-section.test.ts の「theirs にだけ新しく足された小節が…上に来る」が落ちた（11 pass / 1 fail）。両側新規のテストは見出しを集める順で元から通っていた。日付の無い小節は末尾のまま。bun run check: 1864 pass / 0 fail（149 files）"
   },
   {
     "id": "T-484",

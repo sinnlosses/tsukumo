@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 progress.md のマージドライバで main 側の同じ日付の小節を下へ落とさなくした（T-483）
+
+`mergeDoneSections` は同じ日付のあいだで base に無い小節を base にある小節より上に置き、両側が新しく足した小節どうしは ours（枝）を上にする。規則は `scripts/progress-done-section.ts` の `orderByDateDescending` のコメントにまとめ、日付の無い小節は末尾のままにした。
+
 ### 2026-09-23 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにした（T-448）
 
 SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
