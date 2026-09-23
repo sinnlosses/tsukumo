@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 コンテキストの内訳をセッションごとに1行だけ記録するようにした（T-376）
+
+最初のターンの終わりに `getContextUsage()` を1回取り、`~/.tsukumo/context-usage/<日付>.jsonl` へ1行だけ積む（取れなければ次のターンで取り直す）。ターンごとの記録とは置き場も版も分けてあり、「書いてよいもの」の線は `src/shared/context-usage-record.ts` の冒頭が正典。
+
 ### 2026-09-23 書き上げる演出を、回す・測る・書くの3つに割った（T-359）
 
 382行の `report-reveal.ts` を `hooks/use-report-reveal.ts`（フレームを回す）・`reveal-measure.ts`（DOM を測る）・`reveal-paint.ts`（`clip-path` と `opacity` を書く）に分け、旧ファイルを消した。振る舞いは変えていない（関数13個のうち11個は本体が同一で、残り2つの差は重複していた測定式を `shapesOf()` に括り出した分だけ）。演出が最後まで走ることは、新しい依頼を投げて人が見て確かめた。
