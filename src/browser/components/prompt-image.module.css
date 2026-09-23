@@ -10,21 +10,26 @@
   padding: 0;
   list-style: none;
 }
-/* 札（送る前）。`×` を右上の角に重ねるので、ここが基準になる。 */
+/* 札（送る前）。`×` を右上の角に重ねるので、ここが基準になる。`max-width: 100%` が無いと
+   幅が中身まかせの auto になり、`.prompt-image` の `max-width: 100%` の基準が絵自身へ循環して
+   効かない（器より横長の絵が `×` ごと器の外へ出て、`.layout-region` に切り取られる）。 */
 .prompt-image-chip {
   position: relative;
   flex: 0 0 auto;
   min-width: 0;
+  max-width: 100%;
   line-height: 0;
 }
-/* 控え（送ったあと）。外す口を持たないので、重ねるものが無い。 */
+/* 控え（送ったあと）。外す口を持たないので、重ねるものが無い。`max-width: 100%` の理由は
+   `.prompt-image-chip` と同じ。 */
 .prompt-image-thumbnail {
   flex: 0 0 auto;
   min-width: 0;
+  max-width: 100%;
   line-height: 0;
 }
 /* 縮めた絵そのもの。**高さで揃え、横は絵の比率のまま**（並べたときに底が揃う）。
-   器より広い絵は幅で頭打ちにして、領域を横へ押し広げない。 */
+   器より広い絵は幅で頭打ちにして、領域を横へ押し広げない（`<li>` 側の `max-width` が前提）。 */
 .prompt-image {
   display: block;
   max-width: 100%;
