@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 タスク区画の行を罫線で分け、字の大きさに段を付けてモックの値に揃えた（T-411）
+
+タイプスケールに `--font-subheading`（14px）と `--font-action`（12px）を足して6段にし（`docs/design.md` 13.3）、「一覧を見る」は枠なしの差し色のリンク風にした。進行中のチップは `TaskListCountItem.status` で選ぶ（並び順に頼らない）。
+
 ### 2026-09-23 パックに雑談の差し色 chatAccent を持たせ、雑談中は --accent を切り替えた（T-392）
 
 `character.json` の任意欄 `chatAccent`（`tsukumo` は橙 `#f2984a`）を `effectiveAccent` で雑談中だけ `--accent` に流し、雑談中の依頼待ちの札を「<名前> とおしゃべり中」にした。編集UIは作らず、13.2 / 13.7 / 13.9 に決定を書いた。

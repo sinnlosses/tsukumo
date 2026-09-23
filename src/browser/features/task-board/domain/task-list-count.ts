@@ -6,6 +6,7 @@
 import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
 
 export type TaskListCountItem = {
+  readonly status: "doing" | "todo" | "done"
   readonly label: string
   readonly count: number
 }
@@ -21,9 +22,9 @@ export type TaskListCountItem = {
 export function taskListCounts(items: readonly TaskSummaryItem[]): readonly TaskListCountItem[] {
   const { todo, doing, done } = taskStatusCounts(items)
   return [
-    { label: "進行中", count: doing },
-    { label: "未着手", count: todo },
-    { label: "完了", count: done },
+    { status: "doing", label: "進行中", count: doing },
+    { status: "todo", label: "未着手", count: todo },
+    { status: "done", label: "完了", count: done },
   ]
 }
 

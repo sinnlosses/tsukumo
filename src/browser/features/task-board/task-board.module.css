@@ -13,26 +13,38 @@
 }
 /* 件数のチップ（サイドバーの見出し「タスク」の下に1行。`components/task-count-chip-list.tsx`）。
    **押せない**——絞り込みは見出しの「一覧を見る」から開く表の仕事（docs/requirements.md 4.2）。
-   進行中 → 未着手 → 完了の順で、0件でも出す（並びが動かないよう常に3枚）。 */
+   進行中 → 未着手 → 完了の順で、0件でも出す（並びが動かないよう常に3枚。見出しの下との間・
+   進行中カードとの間はどちらも 12px = 区画の中の要素どうしの間隔。
+   docs/history/mockup/sidebar-tasks-2026-09-23.html）。 */
 .task-count-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin: 0 0 0.5rem;
+  gap: 0.375rem;
+  margin: 0 0 0.75rem;
   padding: 0;
   list-style: none;
 }
 .task-count-chip {
-  padding: 0.05rem 0.45rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 0.5rem;
+  border-radius: 11px;
+  background: var(--surface-raised);
   color: var(--ink-quiet);
   font-size: var(--font-label);
+  white-space: nowrap;
+}
+/* 進行中のチップだけ差し色（`.task-running-card` と同じ `--surface-accent`）の地に明るい
+   差し色の字にする。 */
+.task-count-chip-doing {
+  background: var(--surface-accent);
+  color: color-mix(in srgb, var(--accent) 85%, var(--ink));
 }
 /* 進行中（doing）のタスクのカード（一覧の先頭。`components/task-running-card.tsx`）。
    2件以上あれば（並行した作業ツリーなど）、この枚数ぶんカードが並ぶ。 */
 .task-running-list {
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.75rem;
   padding: 0;
   list-style: none;
 }
@@ -40,40 +52,72 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.25rem;
+  gap: 0.375rem;
   margin: 0 0 0.3rem;
-  padding: 0.45rem 0.55rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.625rem;
   background: var(--surface-accent);
+  /* 差し色寄りの枠。`main-view.module.css` の見出しの罫線と同じ配合（docs/design.md 13.2
+     「素の accent ではなく rule に6割混ぜる」）。 */
+  border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
 }
 .task-running-card:last-child {
   margin-bottom: 0;
 }
-/* 「進行中」の札。色だけでなく字でも状態を伝える（docs/design.md 13.1 原則1）。 */
+/* 1行目（札＋ID）。 */
+.task-running-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* 「進行中」の札。色だけでなく字でも状態を伝える（docs/design.md 13.1 原則1）。高さ・角丸は
+   件数のチップと揃える（角丸 11px = 高さ 22px の半分でカプセル型になる）。 */
 .task-running-badge {
-  padding: 0 0.4rem;
-  border-radius: 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 0.5rem;
+  border-radius: 11px;
   background: var(--accent);
   color: var(--ground);
   font-size: var(--font-label);
   font-weight: 600;
 }
-/* 進行中は他の行と違い summary を折り返して全文出す（1行に切り詰めない）。 */
+/* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ 11px にしつつ、字は
+   差し色寄りに薄くする（一覧の行の「薄く」は opacity、こちらは色を ink-quiet から
+   accent へ寄せる——地が差し色なので、同じ opacity のままだと沈んで読めない）。押せる見た目
+   （点線の下線・ホバーで実線）は `.task-id-button` のまま変えない。 */
+.task-running-head .task-id-button {
+  font-size: var(--font-label);
+  color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
+}
+/* 2行目（summary）。進行中は他の行と違い折り返して全文出す（1行に切り詰めない）。 */
 .task-running-body {
   white-space: normal;
+  font-size: var(--font-subheading);
+  line-height: 1.5;
 }
 .task-list {
   /* 区画の一覧。ul の既定の余白と行頭の印を落とす（サイドバーの他の一覧は
-     .sidebar-list が持つが、こちらは印を出さないのでここで完結させる）。 */
-  margin: 0.2rem 0 0;
+     .sidebar-list が持つが、こちらは印を出さないのでここで完結させる）。上のマージンは
+     0——直前の要素（`.task-count-chips` か `.task-running-list`）の margin-bottom
+     （0.75rem = 12px）が隣接マージンの畳み込みでそのまま間隔になる。各行の頭の罫線
+     （`.task-item` の border-top）は別枠なので、ここでは重ねない。 */
+  margin: 0;
   list-style: none;
   padding-left: 0;
 }
+/* **各行の上に罫線を引く**（`:not(:first-child)` にしない）——最初の行も、直前の要素
+   （件数のチップ・進行中のカード）との間に線が出るのがモックの形（docs/requirements.md 4.2）。
+   色は `--rule` より
+   薄め（他の「淡い枠」と同じ配合。`character-view.module.css` / `dispatch.module.css`）。 */
 .task-item {
   display: grid;
   grid-template-columns: auto 1fr;
-  column-gap: 0.4rem;
+  column-gap: 0.625rem;
   align-items: baseline;
+  padding: 0.5rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
 }
 /* done は色を薄くし、打ち消し線を引く。テキスト装飾は子（IDのボタン・summary）にも
    見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。 */
@@ -87,19 +131,23 @@
 .task-item-body {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
+  gap: 0.625rem;
   min-width: 0;
 }
 /* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は
-   「一覧を見る」の表で読む。docs/requirements.md 4.2）。 */
+   「一覧を見る」の表で読む。docs/requirements.md 4.2）。**font-size を明示する**——親
+   （`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` がサイドバー以外の文脈に
+   置かれたときに黙って崩れる。 */
 .task-item-summary {
   overflow: hidden;
   min-width: 0;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: var(--font-secondary);
 }
 /* タスクのIDは機械が付けた名前なので等幅（docs/design.md 13.1 原則3）。書体そのものの定義は
-   `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。
+   `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。summary（13px）より
+   一段小さい 11px にして、印・チップ・札と同じ段に揃える。
    **`flex: none` と `white-space: nowrap` が要る**——body の `overflow-wrap: anywhere`
    （`styles/theme.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだと
    「T-」「332」の2行に割れるため。 */
@@ -107,6 +155,7 @@
   flex: none;
   opacity: 0.8;
   font-family: var(--font-mono);
+  font-size: var(--font-label);
   white-space: nowrap;
 }
 /* status の印（区画の一覧の先頭列。`components/task-item.tsx` の `TaskMark`）。
@@ -114,8 +163,9 @@
    対）、想定外の値は注意色の「!」にする。 */
 .task-mark-todo {
   display: inline-block;
-  width: 0.6em;
-  height: 0.6em;
+  /* 固定 px にする（em だと行の summary の font-size を変えるたびに印の大きさも動く）。 */
+  width: 10px;
+  height: 10px;
   border: 1.5px solid var(--ink-quiet);
   border-radius: 50%;
 }
