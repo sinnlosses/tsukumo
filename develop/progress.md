@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 英語のレポートが出た理由を確かめた。判定ではなくターンまるごと英語だった（T-462）
+
+英訳を落とす判定は効いていて、「英語だね」と言われたターンは日本語の本文が1本も無く戻す先が無かった（本文を書かずに `speak` で終え、催促のあとに英語で書いた）。コードは直さず、表と `note` を持つ並びのテストを1件足した。
+
 ### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
 
 `newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
@@ -80,6 +84,8 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 13章を節番号 `13.x` のまま逐字で移し、`design.md` は 3378→1862 行（章は 1〜11 で連続になり、「未解決」の章番号の穴も畳んだ）。`design.md 13.x` への参照は一括置換し、番号だけの `13.x` は両ファイル冒頭の1行の読み替えで引ける。`requirements.md` 4章の分け方は `develop/direction.md` のドラフトに積んだ。
 
 ## 未解決
+
+- **英訳を落とす判定（`promotedReportId` の `lastJapaneseReportAfterWork`）を残すか外すか**は、T-459（締めの `speak` → レポートで終える並び）が done になってから決める（2026-09-23 の T-462 で保留）。判定は 18:44 のターンで実際に英訳を画面から落としていた。一方、ターンまるごと英語へ滑った回は救えないので、そちらは書く側（T-459 と英語へ滑る件の対策）の受け持ち
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の
   T-393 で確認）。`listSessions` に `includeWorktrees: true` を渡しているため。続きから始める側も
