@@ -11,7 +11,8 @@ import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 /**
  * 答え待ちの箱（`<PendingAnswer>`）を描かずに、答え待ちの先頭の畳み方と許可要求の送り先だけを
- * 測る（docs/design.md 2章「機能の中を分ける」）。質問の箱の中身は `use-question-ask.test.tsx`。
+ * 測る（docs/design.md 2章「機能の中を分ける」）。質問は箱に出ない（札はメインビュー。
+ * `test/browser/stores/question-answer.test.tsx`）。
  * フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
  */
 
@@ -43,15 +44,14 @@ const QUESTION: PendingAsk = {
 }
 
 describe("usePendingAnswer", () => {
-  it("答え待ちが無ければ none、質問ならそのまま渡す", () => {
+  it("答え待ちが無ければ none。質問も none（箱には出ない）", () => {
     const none = renderHook(() => usePendingAnswer(), { wrapper: wrapperFor([], () => {}) })
     expect(none.result.current.kind).toBe("none")
 
-    const pending = QUESTION
     const asked = renderHook(() => usePendingAnswer(), {
-      wrapper: wrapperFor([pending], () => {}),
+      wrapper: wrapperFor([QUESTION], () => {}),
     })
-    expect(asked.result.current).toEqual({ kind: "question", pending })
+    expect(asked.result.current).toEqual({ kind: "none" })
   })
 
   it("許可要求は要約を「: 」付きで畳み、許可・拒否をそれぞれ answer として送る", () => {

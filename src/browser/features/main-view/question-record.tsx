@@ -6,8 +6,8 @@
 // （`docs/requirements.md` 4.2「許可と質問」）。複数選択の答えは
 // 質問ごとの並び（`QuestionAnswer`）でそのまま届くので、印が付く行が複数になる。
 //
-// **比べた `preview` は折りたたんで残す**。答え待ちの面
-// （`pending-question.tsx`）は答えた瞬間に消えるので、残さないと「何を比べて決めたか」が
+// **比べた `preview` は折りたたんで残す**。答え待ちの札
+// （`question-ask.tsx`）は答えた瞬間に消えるので、残さないと「何を比べて決めたか」が
 // ログから消える。開いたままにしないのは、preview が1問あたり数十行になるため。
 
 import { useState, type ReactElement } from "react"
@@ -43,7 +43,7 @@ export function QuestionRecord(props: QuestionRecordProps): ReactElement {
 
 /**
  * 1問ぶんの選択肢と答え。選択肢に無い答え（自由入力）は並びの末尾に足す。**選択肢そのものは
- * 箱と同じ並び**（ラベルの辞書順。`sortQuestionOptions`）で出す。答えとの突き合わせは
+ * 札と同じ並び**（ラベルの辞書順。`sortQuestionOptions`）で出す。答えとの突き合わせは
  * ラベル文字列で行うので、並べ替えても選ばれた印は崩れない。
  */
 function QuestionAnswers(props: {
@@ -81,7 +81,7 @@ function QuestionAnswers(props: {
 
 /**
  * 比べた `preview` の折りたたみ。`preview` を持つ選択肢が1つも無い質問では何も描かない
- * （答え待ちの面と同じ判断。常設の枠にしない）。
+ * （答え待ちの札と同じ判断。常設の枠にしない）。
  *
  * **開くまで中身を描かない。** ```chart の `<canvas>` は `display: none` の中だと大きさが 0 の
  * まま描かれ、開いても測り直さないので、閉じたまま組み立てると潰れたグラフが残る。一度開いた
@@ -138,8 +138,8 @@ function QuestionPreviews(props: {
  * 支援技術とコピーで拾えなくなるため）。色は文字の上への重ねがけで付け、選んだ側
  * （`chosen`）だけに `accent` を当てる。選ばなかった `○` は親の `.question-option` の色を
  * そのまま継ぎ、素の `accent` を当てない（`docs/design.md` 13.1 原則1が許すのは
- * 「選んだ選択肢」で、選ばなかった側ではない）。答え待ちの箱
- * （`dispatch.module.css` の `.question-choice-mark:checked::before`）と同じ、
+ * 「選んだ選択肢」で、選ばなかった側ではない）。答え待ちの札
+ * （`main-view.module.css` の `.question-ask-option.is-selected`）と同じ、
  * 「選んだ＝accent」という意味を記録の側にも揃える。折りたたみの中の preview の札
  * （`question-preview-label`）も同じ印を使うので、ここで共有する。
  */

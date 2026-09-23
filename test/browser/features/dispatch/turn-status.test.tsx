@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, spyOn } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { TurnStatus } from "../../../../src/browser/features/dispatch/turn-status.tsx"
+import { QuestionAnswerProvider } from "../../../../src/browser/stores/question-answer.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
@@ -18,7 +19,9 @@ function renderTurnStatus(
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
     <SessionStoreContext.Provider value={store}>
-      <TurnStatus />
+      <QuestionAnswerProvider>
+        <TurnStatus />
+      </QuestionAnswerProvider>
     </SessionStoreContext.Provider>,
   )
 }
@@ -81,5 +84,37 @@ describe("TurnStatus", () => {
     renderTurnStatus({ turn: { kind: "idle" } })
 
     expect(screen.getByText("-")).toBeDefined()
+  })
+
+  it("質問に答えている間は、ターンが進行中でもボタンが「答える」（type=submit）", () => {
+    const calls: unknown[] = []
+    renderTurnStatus(
+      {
+        turn: { kind: "running", startedAt: 0 },
+        pending: [
+          {
+            kind: "question",
+            id: "ask-question",
+            questions: [
+              {
+                header: "架空の選択",
+                text: "架空の質問",
+                multiSelect: false,
+                options: [{ label: "A案", description: "架空の説明A", preview: undefined }],
+              },
+            ],
+          },
+        ],
+      },
+      (command) => calls.push(command),
+    )
+
+    const button = screen.getByRole("button") as HTMLButtonElement
+    expect(button.textContent).toBe("答える")
+    expect(button.type).toBe("submit")
+
+    fireEvent.click(button)
+
+    expect(calls).toEqual([])
   })
 })

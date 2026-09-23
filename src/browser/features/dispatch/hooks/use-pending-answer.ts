@@ -1,11 +1,10 @@
 // `<PendingAnswer>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 答え待ちの先頭（`state.pending[0]`）を読み、**許可要求は置くだけの値と送り先に畳み**、質問は
-// そのまま `<QuestionAsk>` へ渡す形にして返す。
+// 答え待ちの先頭（`state.pending[0]`）を読み、**許可要求を置くだけの値と送り先に畳む**。
 //
-// **質問の選択の状態はここに持たない。** 持つのは `hooks/use-question-ask.ts` で、`<QuestionAsk>` が
-// 出ている間だけ生きる（許可要求から質問へ切り替わったとき、前の選択を引きずらないため）。
+// **質問はここに出ない**。質問の札はメインビュー
+// （`features/main-view/question-ask.tsx`）へ移り、自由入力は `<Composer>` が担う。
+// 組み立て中の答えを持つのは `stores/question-answer.tsx`。
 
-import { type PendingAsk } from "../../../../shared/pending-ask.ts"
 import { summarizeToolInput } from "../../../lib/tool-summary.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 
@@ -20,20 +19,13 @@ export type PendingAnswerModel =
       readonly onAllow: () => void
       readonly onDeny: () => void
     }
-  | {
-      readonly kind: "question"
-      readonly pending: Extract<PendingAsk, { readonly kind: "question" }>
-    }
 
 export function usePendingAnswer(): PendingAnswerModel {
   const pending = useSessionSelector((session) => session.state.pending[0])
   const dispatch = useSessionDispatch()
 
-  if (pending === undefined) {
+  if (pending === undefined || pending.kind !== "permission") {
     return { kind: "none" }
-  }
-  if (pending.kind === "question") {
-    return { kind: "question", pending }
   }
 
   const summary = summarizeToolInput(pending.toolName, pending.input)

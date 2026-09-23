@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { Dispatch } from "../../../../src/browser/features/dispatch/dispatch.tsx"
+import { QuestionAnswerProvider } from "../../../../src/browser/stores/question-answer.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { sessionStoreWith } from "../../session-store.ts"
@@ -21,7 +22,9 @@ function renderDispatch(stateOverrides: Partial<SessionState>): void {
   render(
     <QueryClientProvider client={client}>
       <SessionStoreContext.Provider value={store}>
-        <Dispatch />
+        <QuestionAnswerProvider>
+          <Dispatch />
+        </QuestionAnswerProvider>
       </SessionStoreContext.Provider>
     </QueryClientProvider>,
   )

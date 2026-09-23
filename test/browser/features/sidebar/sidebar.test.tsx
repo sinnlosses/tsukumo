@@ -1,5 +1,6 @@
-// サイドバー全体の組み立て（docs/design.md 13.9「顔」）。**「セッション情報」の区画は見出しを
-// 名乗らない**——タスクの区画（見出し「タスク」）と同じ枠を借りるだけで、区画自体は消えない。
+// サイドバー全体の組み立て（docs/design.md 13.9「顔」）。**セッション情報は区画ではなく下端の
+// 帯**（`.sidebar-footer`）なので、見出しを名乗らず、区画の枠（`SidebarSection`）も通らない。
+// 見出しはタスクの1つだけになる。
 
 import { afterEach, describe, expect, it } from "bun:test"
 
@@ -39,12 +40,16 @@ describe("Sidebar", () => {
     expect(screen.queryByText("セッション情報")).toBeNull()
   })
 
-  it("見出しの無い区画にもキャラクターの <select> は出る", () => {
+  it("キャラクターの <select> と顔は、区画ではなく下端の帯の中に出る", () => {
     renderSidebar({
       characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
-      character: characterInfo({ pack: "tsukumo-spirit" }),
+      character: characterInfo({ pack: "tsukumo-spirit", face: "/character/face.png" }),
     })
 
-    expect(screen.getByLabelText("キャラクター")).toBeDefined()
+    // 帯は区画の枠（`SidebarSection`）を通らないので、`.sidebar-block` の中には入らない。
+    const footer = document.querySelector(".sidebar-footer")
+    expect(footer?.closest(".sidebar-block")).toBeNull()
+    expect(footer?.contains(screen.getByLabelText("キャラクター"))).toBe(true)
+    expect(footer?.querySelector("img")?.getAttribute("src")).toBe("/character/face.png")
   })
 })

@@ -1,13 +1,12 @@
-// 答え待ちの箱の**器だけ**（<PresentationalPendingAnswer>。docs/design.md 6.1）。答え待ちが無い
-// ときは何も描かず、許可要求は「許可」「拒否」を置き、質問は `<QuestionAsk>` に任せる。フックも
-// 算出も持たず、`hooks/use-pending-answer.ts` が畳んだ値をそのまま置く（docs/design.md 2章
+// 答え待ちの箱の**器だけ**（<PresentationalPendingAnswer>。docs/design.md 6.1）。答え待ちが
+// 無いときと質問のときは何も描かず、**許可要求だけ**「許可」「拒否」を置く。フックも算出も
+// 持たず、`hooks/use-pending-answer.ts` が畳んだ値をそのまま置く（docs/design.md 2章
 // 「機能の中を分ける」）。
 
 import { type ReactElement } from "react"
 
 import styles from "./dispatch.module.css"
 import { type PendingAnswerModel } from "./hooks/use-pending-answer.ts"
-import { QuestionAsk } from "./question-ask.tsx"
 
 export type PresentationalPendingAnswerProps = PendingAnswerModel
 
@@ -17,8 +16,6 @@ export function PresentationalPendingAnswer(
   switch (props.kind) {
     case "none":
       return null
-    case "question":
-      return <QuestionAsk pending={props.pending} />
     case "permission":
       return (
         <div className={`${styles["pending-answer"]} ${styles["pending-permission"]}`}>

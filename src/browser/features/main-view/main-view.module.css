@@ -549,46 +549,165 @@
   height: auto;
 }
 
-/* 答え待ちの質問の「比べる面」（`pending-question.tsx`）。**タブより上に出る一時的な塊**なので、
-   ターンのカード（`.tool-block`）とは違う地（--surface-raised）で浮かせて、いま読むものだと
-   分かるようにする。答えると消える。 */
-.pending-question-previews {
-  margin: 0 0 1rem;
-  padding: 0.75rem;
+/* 答え待ちの質問の札（`question-ask.tsx`）。**いまのやり取りのレポートの下に出る一時的な塊**
+   なので、地も枠も答え待ちの色（--state-warn）の系統にして、いま答えるものだと分かるように
+   する（モックは `docs/history/mockup/`）。答えると消える。 */
+.question-ask {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 0.75rem;
+  /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる（13.2「染めてよいのは…」の形）。 */
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
+}
+/* 頭の行：「質問」のチップ・header・（過去のターンを見ているときの戻る口と）「戻る」・「n / N」。
+   狭い画面では折り返す（横スクロールを出さない）。 */
+.question-ask-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.question-ask-chip {
+  flex: 0 0 auto;
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.3rem;
+  background: var(--state-warn);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+.question-ask-header {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+/* 「n / N」は行の右端へ寄せる（チップと header のあとに残った幅の端）。 */
+.question-ask-progress {
+  flex: 0 0 auto;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.question-ask-back,
+.question-ask-to-newest {
+  flex: 0 0 auto;
+  padding: 0.2rem 0.6rem;
   border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: var(--surface-raised);
+  border-radius: 0.4rem;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
 }
-.pending-question-heading {
-  margin: 0 0 0.6rem;
-  font-size: var(--font-body);
+.question-ask-back:hover,
+.question-ask-to-newest:hover {
+  border-color: var(--state-warn);
 }
-/* 札は横に並べ、入り切らなければ折り返す（`.report-cols` と同じ考え方だが、preview は表や図が
-   入るぶん1枚を広く取る）。 */
-.pending-question-cards {
+.question-ask-text {
+  margin: 0 0 0.75rem;
+  font-weight: 700;
+}
+/* 選択肢は横に並べ、**入り切らなければ折り返す**（狭い画面・選択肢が4つのときは1〜2列に
+   落ちる。列の幅を先に決めるので、ラベルは自分の列の中で折り返すだけになり横へ溢れない）。 */
+.question-ask-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.pending-question-card {
+.question-ask-option {
+  min-width: 0;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--surface);
 }
-/* 入力欄の箱で目を置いている札。**枠の太さと地**で示す（色だけに頼らない。13.1 原則5）。 */
-.pending-question-card.is-focused {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent) inset;
+/* 選んだカード。**枠の色と太さ**で示す（色だけに頼らない。13.1 原則5）。 */
+.question-ask-option.is-selected {
+  border-color: var(--state-warn);
+  box-shadow: 0 0 0 1px var(--state-warn) inset;
 }
-.pending-question-card-label {
-  margin: 0 0 0.2rem;
-  font-weight: bold;
+/* 押す口（印とラベルとバッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に
+   揃える（baseline）。 */
+.question-ask-option-choose {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  cursor: pointer;
 }
-.pending-question-card-description {
-  margin: 0 0 0.5rem;
+.question-ask-option-mark {
+  flex: 0 0 auto;
+  accent-color: var(--state-warn);
+}
+.question-ask-option-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-weight: 700;
+}
+/* ラベル末尾の `(Recommended)` を字から外して載せるバッジ（`stores/question-answer.tsx`）。 */
+.question-ask-option-badge {
+  flex: 0 0 auto;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 0.3rem;
+  color: var(--state-warn);
+  font-size: var(--font-label);
+}
+.question-ask-option-description {
+  margin: 0.35rem 0 0 1.4rem;
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
+}
+/* 選択肢ごとの preview（Markdown）は説明の下。レポートと同じ語彙（`.detail-block`）に乗せる。 */
+.question-ask-option .detail-block {
+  margin-top: 0.5rem;
+}
+/* 入力欄に書いて記録した答え（まだ送っていない問のぶん）。 */
+.question-ask-written {
+  margin: 0.6rem 0 0;
+  font-size: var(--font-secondary);
+  color: var(--state-warn);
+}
+/* 下端の行：左に案内、右に「これで答える」。狭い画面では折り返す。 */
+.question-ask-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.question-ask-hint {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+/* 札の主目的の口なので、答え待ちの色で塗りつぶす（入力欄の「答える」と対になる）。 */
+.question-ask-answer {
+  flex: 0 0 auto;
+  padding: 0.5rem 1.125rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 0.5625rem;
+  background: var(--state-warn);
+  color: var(--ground);
+  font: inherit;
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.question-ask-answer:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.question-ask-answer:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
 }
 
 /* メインビューに残す質問の記録。 */

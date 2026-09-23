@@ -25576,7 +25576,7 @@ bun run check 1524 pass / 0 fail、design.md の見出し数 53 のまま。目�
 
 **evidence**:
 
-bun run check 1510 pass / 0 fail（125ファイル）。顔を browser/components/character-face.tsx へ上げて帯と共有し、SidebarSection の title を省略可にした。目視（fake driver, TSUKUMO_VIEW_PORT=7389 / TSUKUMO_HOME を分離, Playwright）: 1400x900 で見出しの無い区画に顔+キャラクター select が出て、tsukumo→tsukumo-spirit で顔の src が face.png→face.svg へ変わった。390幅は「サイドバー」タブで見出しが「タスク」1つだけ、仕切り線の下に1行で収まる。横並び（grid-auto-flow: column）と760px以下の縦積みは配信CSSを使った別ページで確認。
+bun run check 1529 pass / 0 fail（126ファイル）。見本 docs/history/mockup/sidebar-tasks-2026-09-23.html に合わせて作り直した: 顔 17.6px→28px、ラベル --font-label、<select> 高さ34px・角8px、区画をやめて .sidebar-footer（左右いっぱい・上端の罫線・--ground の地）にした。目視（fake driver, TSUKUMO_VIEW_PORT=7389 / TSUKUMO_HOME 分離, Playwright で領域を切り出し）: 1400x900 で帯は 1049..1383（領域 1048..1384 の枠内いっぱい）・高さ84px、2つの対は幅143pxずつの等分。390幅は対が154pxずつで横並びのまま収まる（見本の176pxと同等）ため 760px の縦積みは外した。キャラクターを tsukumo-spirit→tsukumo に切り替えると顔が face.svg→face.png、28x28 のまま追従。
 
 ## 背景
 

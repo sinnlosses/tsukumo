@@ -4,8 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 
 import { Composer } from "../../../../src/browser/features/dispatch/composer.tsx"
+import { QuestionAnswerProvider } from "../../../../src/browser/stores/question-answer.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type CharacterInfo } from "../../../../src/shared/character.ts"
+import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
@@ -17,6 +19,20 @@ const FIXTURE_CHARACTER: CharacterInfo = characterInfo({
   expressions: [],
   editable: false,
 })
+
+// 架空の質問（答え待ち。入力欄は「答えを書く場所」に変わる）。
+const QUESTION_PENDING = {
+  kind: "question",
+  id: "ask-question",
+  questions: [
+    {
+      header: "架空の選択",
+      text: "架空の質問",
+      multiSelect: false,
+      options: [{ label: "A案", description: "架空の説明A", preview: undefined }],
+    },
+  ],
+} satisfies PendingAsk
 
 // 架空のファイル一覧（`@` 補完が引く `GET /repository-file` の代役）。
 const FIXTURE_FILE_PATHS = [
@@ -58,7 +74,9 @@ function renderComposer(
   render(
     <QueryClientProvider client={client}>
       <SessionStoreContext.Provider value={store}>
-        <Composer />
+        <QuestionAnswerProvider>
+          <Composer />
+        </QuestionAnswerProvider>
       </SessionStoreContext.Provider>
     </QueryClientProvider>,
   )
@@ -347,5 +365,35 @@ describe("Composer", () => {
 
     expect(screen.queryAllByRole("listitem")).toHaveLength(0)
     expect(fetchCalls).toEqual([])
+  })
+
+  it("質問が出ている間は、帯とプレースホルダが「答えを書く場所」に変わる", () => {
+    renderComposer({ character: FIXTURE_CHARACTER, pending: [QUESTION_PENDING] })
+
+    expect(screen.getByText(/架空の名前 が質問しています/)).toBeDefined()
+    expect(screen.getByPlaceholderText("選択肢以外の答えを書く…")).toBeDefined()
+    expect(screen.queryByPlaceholderText(/依頼を書く/)).toBeNull()
+  })
+
+  it("質問に答えている間の Command+Enter は、依頼ではなく自由入力の答えとして届く", () => {
+    const calls: unknown[] = []
+    renderComposer(
+      // 質問を待っている間もターンは進行中（SDK が答えを待って止まっている）。
+      { pending: [QUESTION_PENDING], turn: { kind: "running", startedAt: 0 } },
+      (command) => calls.push(command),
+    )
+
+    const answerArea = screen.getByPlaceholderText("選択肢以外の答えを書く…")
+    fireEvent.change(answerArea, { target: { value: "架空の自由な答え" } })
+    fireEvent.keyDown(answerArea, { key: "Enter", metaKey: true })
+
+    expect(calls).toEqual([
+      {
+        type: "answer",
+        id: "ask-question",
+        answer: { kind: "answers", labels: [["架空の自由な答え"]] },
+      },
+    ])
+    expect((answerArea as HTMLTextAreaElement).value).toBe("")
   })
 })
