@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 雑談のセリフを全文でポンと出し、吹き出しどうしを2秒空けた（T-485）
+
+1文字ずつ育てる `use-speech-growth.ts` を消し、`use-speech-reveal.ts` が「出してよい前置き」を毎レンダー計算する形にした（キャラクターの吹き出しだけ前の1つから2秒のゲートを見る）。現れる瞬間に 0.2 秒だけ弾む CSS を足し、遡り・自動スクロール・立ち絵の表情はすべて「出した吹き出し」で数える。
+
 ### 2026-09-23 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにした（T-448）
 
 SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
