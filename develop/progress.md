@@ -59,18 +59,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。
 
-### 2026-09-23 書き上げる演出を、回す・測る・書くの3つに割った（T-359）
-
-382行の `report-reveal.ts` を `hooks/use-report-reveal.ts`（フレームを回す）・`reveal-measure.ts`（DOM を測る）・`reveal-paint.ts`（`clip-path` と `opacity` を書く）に分け、旧ファイルを消した。振る舞いは変えていない（関数13個のうち11個は本体が同一で、残り2つの差は重複していた測定式を `shapesOf()` に括り出した分だけ）。演出が最後まで走ることは、新しい依頼を投げて人が見て確かめた。
-
-### 2026-09-23 cli.test.ts のポートを塞ぐテストを、並行の tsukumo に左右されなくした（T-406）
-
-既定の帯の起点を差し替える `TSUKUMO_VIEW_PORT_FALLBACK_BASE` を足し、テストは OS に選ばせた起点から20個をすべて自分で握れた帯（握れなければ選び直す）で「全部塞がっている」経路を確かめる。
-
-### 2026-09-23 答え待ちの質問を帯の札に要約で出し、一覧の「質問へ」で質問の札へ移れるようにした（T-408）
-
-札の要約は1問目の `header`（2問以上なら「ほか n問」）で、許可要求の答え待ちは今までどおり実行中の手順。「質問へ」は一覧を閉じ、会話の画面・最新のやり取りへ戻してから、新設の `stores/question-scroll.tsx` の合図で質問の札へスクロールする。
-
 ### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
 
 `command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
@@ -83,25 +71,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
 
-### 2026-09-23 develop/progress.md の完了した小節を両側とも残すマージドライバを作った（T-404）
-
-`scripts/progress-done-section.ts`（「## 完了したこと」を `###` 小節に割る・3wayで畳む純粋関数）と
-`scripts/merge-progress.ts`（`%O %A %B` を読んで `%A` に書く入口）、`.gitattributes` の1行。
-両側が足した小節は両方残し、片方が消した小節（アーカイブ）は消えたまま、同じ小節を両側が
-書き換えたら非0で返す。**`.git/config` への登録は人が1回打つ**（未登録のあいだは git が
-既定の3wayに落ちるだけ。手順は T-405 が CLAUDE.md に書く）。
-
-### 2026-09-23 キャラクター画面から仕事と雑談の差し色を変え、雑談を仕事と同じに戻せるようにした（T-423）
-
-`set-accent`（`target: work/chat`）と `clear-chat-accent` を足し、`character.json` の最上位の `accent` / `chatAccent` を書く・消す。衣装ごとの行は「立ち絵の差し色」に改め、`chatAccent` が無いときは雑談の見本に仕事の色と「仕事と同じ」の字を出す（`docs/design.md` 13.6）。
-
-### 2026-09-23 フォーム部品の書体を theme.css に寄せ、機能の CSS の font: inherit をやめた（T-421）
-
-`button` / `input` / `select` / `textarea` はブラウザの既定では親の書体を継がないので、`theme.css` の `body` 直後の1か所で継がせる形にし、機能の CSS 13ファイルの42か所を消した。大きさ・行の高さ・太さも継ぐ `font: inherit` を選んだのは、大きさを上書きしていない部品が行の高さ（本文の 1.75）まで親から継いでいたため。`docs/design.md` 13.3 に「機能の CSS には書かない」を足した。
-
 ### 2026-09-23 いまのセッションの /context 内訳をトークン消費の画面に出した（T-375）
 
 `getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
+
+### 2026-09-23 docs/design.md 5章の SessionHost と経路の表を、型定義・実装への参照に置き換えた（T-409）
+
+経路の表からは `/token-usage` のほかに `/context-usage` と `/prompt-image/<id>` も抜けていた。環境変数の表は design.md を正典のままにし、その理由を節に書いた。
 
 ## 未解決
 

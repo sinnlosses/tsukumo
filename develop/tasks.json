@@ -1,27 +1,5 @@
 [
   {
-    "id": "T-359",
-    "difficulty": "opus",
-    "loopable": "N",
-    "dependencies": [],
-    "summary": "report-reveal.ts をフックとそれ以外に割る",
-    "task": "## 背景\n\n`src/browser/features/main-view/report-reveal.ts` は 361行で、export しているのは\n`useReportReveal`（86行）1本だけなのに、DOM を測って `clip-path` を進める関数が16個同居して\nいる。**専用ファイルだが `hooks/` の外にある。** 読み手は `report.tsx:17` の1つ。\n\n同じ機能には `reveal-band.ts`（帯の位置）・`reveal-plan.ts`（いつ出すか）・`brush-scroll.ts` が\n既に概念の名前で並んでいる。T-328 で決めた形は `docs/design.md`「機能の中を分ける\n（container / presenter と `hooks/`）」。\n\nエージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。\n\n## 解くべき論点\n\n- **フックの外に出す16個を、どの名前の概念でまとめるか。** `reveal-band.ts` /\n  `reveal-plan.ts` と役割が重ならない名前にする\n- **`domain/` には置かない**（`docs/design.md` の線では `domain/` は「フックを呼ばない相手が\n  読む」もの限定で、ここは読み手がフック1つ）。フックの下に関数として置くか、機能の直下に\n  概念の名前でファイルを作るか\n- `startReveal` 以下は DOM を書き換える。どこまでをフックの責任にするか\n\n## やること\n\n1. 上を決める\n2. `useReportReveal` を `features/main-view/hooks/` へ出し、残りを決めたとおりに置く\n3. **振る舞いを変えない**（式も順番も動かさない）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `hooks/` の下に `useReportReveal` がある\n- **目視**: 新しい依頼を投げて、書き上げる演出が前と同じように最後まで走ることを人が見て\n  確かめた結果が `evidence` にある\n\n## 注意\n\n- **演出はマウントした時点の DOM にだけ掛かる。** 開いた時点の本文には掛からないので、\n  確かめるには新しい依頼を投げて着地を見る必要があり、`scripts/capture-view.ts` の待ちでは\n  撮れない（`loopable` が `\"N\"` なのはこのため）\n- 背景のタスクなどで `turn-finished` が先に届く経路があるので、そこを変えない\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "382行の report-reveal.ts を hooks/use-report-reveal.ts（フレームを回す。useReportReveal / startReveal / advanceBlock）・reveal-measure.ts（DOM を測る）・reveal-paint.ts（clip-path と opacity を書く）の3つに割り、旧ファイルを消した。旧の関数13個を新3ファイルと突き合わせ、11個は本体が同一、advanceBlock と endLineOf の差は両方に重複していた測定式を shapesOf() に括り出した分だけ（式・評価順・呼ばれる回数は同じ）。参照を src 13 / test 6ファイルと docs/design.md・docs/architecture.md で追随。bun run check 1604 pass / 0 fail。目視: 2026-09-23 に利用者がタブを読み込み直して新しい依頼を1つ投げ、書き上げる演出が最後まで走ることを確認した。"
-  },
-  {
-    "id": "T-375",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "いまのセッションの /context 内訳をトークン消費の画面にグラフで出す",
-    "task": "## 背景\n\nClaude Code の `/context` は文脈の使い方を分類ごと（System prompt / System tools / MCP tools /\nMemory files / Skills / Messages / Free space / Autocompact buffer など）に出す。Agent SDK\n（0.3.280）の `Query.getContextUsage(opts?: { detail?: 'summary' | 'full' })` が同じ中身を\n`SDKControlGetContextUsageResponse` で返す（`sdk.d.ts` の `SDKContextUsage` / `SDKContextUsageCategory`）。\n\n- `categories[]` は `name` / `tokens` / `kind`（`'used' | 'free' | 'buffer' | 'deferred'`）。**分類には `kind` を使い、`name`（英語の表示名）で判定しない**と SDK の型の説明にある\n- ほかに `mcp_tools[]`（name / server_name / tokens）、`memory_files[]`（path / type / tokens）、`agents[]`、`skills[]`（省略されうる）、`total_tokens` / `raw_max_tokens` / `percentage` / `model`\n- `detail: 'full'` は分類ごとに token-count API を呼ぶ。`'summary'` は直前の応答の usage と手元の見積もりで答える（既定は `'full'`）\n\ntsukumo はいまこれを呼んでいない。トークン消費の画面（`src/browser/features/token-usage/`）は記録の\n集計（`GET /token-usage`、`src/server/adapter/server.ts`）だけを出している。SDK へ問い合わせる口は\n`SessionDriver`（`src/server/core/session-driver.ts`）にあり、実装は `src/server/adapter/sdk-driver.ts`\nと `src/server/adapter/fake-driver.ts` の2つ。\n\n## 決まっていること（蒸し返さない）\n\n- 画面に出すのは**いまのセッションの内訳**。過去の推移は出さない（2026-09-23 ユーザー）\n- 記録（セッションごとに1回）は後ろのタスク T-376 がやる。このタスクでは記録に書かない\n\n## モックの形（2026-09-23 にユーザーが示した。`docs/history/mockup/token-usage-2026-09-23.png` の「いまのコンテキスト」）\n\n- 画面のいちばん上に、枠のある札を1枚置く。見出し「いまのコンテキスト」の横に小さく「このセッション · /context と同じ内容」\n- 大きな数で「121.5k」、続けて小さく「/ 200k」と「61%」（使っている量 / 窓の大きさ / 割合）\n- 右上に「自動圧縮まで あと 33.5k」の小さな札、その下に等幅で「Opus · 更新 [14:32]」（内訳のモデルと、取った時刻）\n- 横棒1本: `used` の分類を色分けして積み、続けて空き（地より一段明るい無地）、最後に自動圧縮バッファ（斜線）\n- 凡例は3列の格子で、各行に色の四角・分類名（日本語: システムプロンプト / システムツール / MCP ツール / メモリファイル / スキル / メッセージ / 空き / 自動圧縮バッファ）・トークン数・割合。空きと自動圧縮バッファの四角は横棒と同じ無地と斜線\n- 札の下端に畳んだ「▶ MCP ツール・メモリファイル・スキルの内訳を見る」（`details`。開くと表）\n- モックの「[サンプル値]」は見本の注記で、作るものではない\n- 分類名は SDK の `name`（英語の表示名）を日本語に置き換えて出すが、**判定には `kind` を使う**。知らない `name` は英語のまま出す\n- 色は分類ごとに違う色を使う。凡例に分類名が必ず並ぶので、`docs/design.md` 13.1 原則5（色は文字と対でだけ増やす）に当たる\n\n上の形は「解くべき論点」のグラフの形の問いへの答えを兼ねる（`deferred` を横棒に入れないのは変わらない）。\n\n## 解くべき論点\n\n- 画面へ運ぶ経路。(a) `/token-usage` と同じ HTTP の経路を1本足し、開いたときに取りに行く、(b) WebSocket のコマンドとフレームで頼んで受け取る。どちらも起動トークンが要る\n- `detail` を `'full'` にするか `'summary'` にするか。画面を開くたびに呼ぶなら呼び出しの回数と待ち時間で決める。**実際に両方で呼んで、かかった時間と値の差を `evidence` に書く**\n- ターンの実行中に呼んで答えが返るか、待たされるか。実測して、待たされるなら実行中は前回の値を出す・出さないを決める\n- セッションがまだ起きていない（`init` 前）ときの見せ方\n- グラフの形。`kind` が `used` の分類を積み上げ、`free` と `buffer` を並べた横棒1本が第一候補（`/context` の見た目に近い）。`deferred` は窓の外なので別に出す。`memory_files` / `skills` / `mcp_tools` は表にする\n\n## やること\n\n1. `src/shared/` に内訳の形を置く（SDK の型をそのまま運ばず、画面が要る数と名前だけに写す。検証は境界で zod）\n2. `SessionDriver` に内訳を取る口を足し、sdk / fake の両方で実装する。取れなかったら例外を投げず「無い」を返す\n3. 選んだ経路で画面まで運び、トークン消費の画面にグラフと表を足す\n4. テストを足す（境界の写し・経路・画面の部品）\n5. `bun run build` のあと本物で起こし、`/context` を別に打った値と画面の値が近いことを目視で確かめる\n\n## 完了条件\n\n- `bun run check` が通る\n- 本物のセッションで、画面の内訳と `/context` の出力を並べて比べた結果（分類ごとの値）を `evidence` に書く\n- 上の論点それぞれに何を選んだかを `evidence` に1行ずつ書く\n\n## 注意\n\n- 内訳に入る文字列はメモリファイルのパス・スキル名・MCP ツール名・エージェント名で、会話の文面は入らない。**Messages の中身は数だけで、文面を取りに行かない**（`docs/coding-standards.md`「会話内容の扱い」）\n- T-373 / T-374 と同じ画面のファイルを触る。並行して進めたときは合流で `presentational-token-usage-screen.tsx` がぶつかりうる\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "論点の結論: 経路=HTTP を1本（GET /context-usage?t=）——WS の dispatch は片方向で値を返せず、画面は既に /token-usage を同じ形で引いている。detail=full 固定——実測で full は初回571ms・以降8〜16ms、summary は6〜9msだが分類ごとが最大2.1倍ずれる（Memory files 12244 vs 5730）。ターン実行中でも待たされない（依頼の4秒後に full 13ms で返る）ので前回の値を出す仕組みは作らない。init 前は「取れない」1状態に畳む（ContextUsageReport = ready | unavailable の合併型）。グラフはモックどおり横棒1本＋3列の凡例＋details の表で、deferred は横棒に積まず別表。 / bun run check は 1560 pass / 0 fail（130ファイル）。 / 目視（本物のセッション、TSUKUMO_VIEW_PORT=39375・専用ホーム、Chrome 1400x900 と 720x900）: 同じセッションに打った /context と分類ごとに一致（System prompt 10.6k / System tools 4.4k / MCP tools 689 / Memory files 12.3k / Skills 4.7k / Free 93.1% / buffer 3.3k。Messages だけ /context 自身のレポート1件ぶん後で 3.3k→4.98k）。details の中の4つの表（MCP 9件・メモリ2件・スキル38件・窓の外2件）も一致し、1400px・720px とも横のはみ出し 0px。"
-  },
-  {
     "id": "T-376",
     "difficulty": "opus",
     "loopable": "Y",
@@ -88,28 +66,6 @@
     "evidence": ""
   },
   {
-    "id": "T-406",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "cli.test.ts のポートを塞ぐテストを、並行の tsukumo に左右されなくする",
-    "task": "## 背景\n\n`test/cli.test.ts` の「既定ポートから上限まで全部塞がっていると、試した範囲を伝えて終了コード1で終わる」は、`DEFAULT_VIEW_PORT` から `VIEW_PORT_FALLBACK_ATTEMPTS` 個のポートを `listenOnPortIfFree` で塞いでから CLI を起こし、終了コード1を期待する。**ポートは作業ツリーで分かれない**ので、別の作業ツリーで tsukumo やテストが同じ帯を使っていると結果が揺れる。T-372 を合流したあとの `bun run check` でこのテストが20秒で時間切れになり（`result.status` が 1 でなく 0 = CLI がポートを掴めてしまった）、単体で走らせると通った（作業ツリーは3本動いていた）。\n\n## 解くべき論点\n\n- 帯をずらす方法。候補: (a) CLI が `TSUKUMO_VIEW_PORT` を起点に探すなら、テストが空いている帯を見つけてそこを起点に渡す (b) 起点を CLI の引数で渡せるようにする。**テストのためだけに公開しない**規約（`docs/coding-standards.md`）に当たらない方を選ぶ\n- 「塞いだつもりが一部塞げていなかった」ときにテストが黙って通らないよう、全部塞げたことを前提として確かめる\n\n## やること\n\n1. CLI がポートを探す起点をどこから読むかを確かめる（`src/server/adapter/config.ts` と `src/cli.ts`）\n2. テストが使う帯を、ほかの tsukumo と重ならない場所に動かす\n3. 同じテストファイルの中で既定ポートを前提にしている他のテストがあれば、同じ直し方にする\n\n## 完了条件\n\n- 別に `bun run start`（`TSUKUMO_OPEN_VIEW=0`）で既定ポートの tsukumo を動かしたまま `bun test --isolate test/cli.test.ts` が通ることを `evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- 動かした tsukumo は `bun run scripts/stop.ts --port <n>` で止める（`pkill` は hook が拒否する）\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 1585 pass / 0 fail。7327〜7332 を他の tsukumo が使っている状態で、既定の帯に fake driver の tsukumo を1つ起こし（7333 に着地）、動かしたまま bun test --isolate test/cli.test.ts を3回続けて 4 pass / 0 fail。確認後 stop.ts --port 7333 で止めた"
-  },
-  {
-    "id": "T-409",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "docs/design.md 5章に残る型と経路の写しを、型定義への参照に置き換える",
-    "task": "## 背景\n\nT-372 で `docs/design.md` 4章の型の写しを型定義への参照に置き換えたとき、腐っていた写しが4つ出た（実物に無い `new-session` と `session-started`、旧名の `MAX_SESSION_VIEW_TURNS` と `MAX_DISPATCH_TEXT_LENGTH`）。5章（`## 5. core と adapter`）に同じ形の写しが3つ残っている:\n\n- 「session-manager.ts（core）」の `SessionHost` のコードブロック\n- 「server.ts と session-socket.ts（adapter）」の経路の表。**すでにずれている**（`GET /token-usage?t=<起動トークン>&days=<日数>` が `src/server/adapter/server.ts` にあるのに表に無い）\n- `config.ts` の環境変数の表。こちらは `src/server/adapter/config.ts` 側が design.md を正典と明記しているので、写しの向きが逆\n\n## 解くべき論点\n\n- `config.ts` の環境変数の表の正典をどちらに置くか。design.md を正典のままにするなら表は残し、実物とのずれを直す（`README.md` の環境変数の表と `--help` とも突き合わせる）。コードを正典にするなら `config.ts` のコメントを直して表を参照に置き換える\n\n## やること\n\n1. `SessionHost` のコードブロックと経路の表を、型定義・実装のファイルとシンボル名への参照に置き換える（4章でやった形に揃える）。経路の表を残す理由があるなら、残して `/token-usage` を足す\n2. 論点を決め、`config.ts` の表を直す\n3. 置き換えで消える記述のうち、コードから読めない決定（なぜその形か）があれば残す\n\n## 完了条件\n\n- `awk '/^## 5\\. /{f=1} /^## 6\\. /{f=0} f' docs/design.md | grep -c 'interface SessionHost\\|type SessionHost'` が 0\n- 5章に `/token-usage` の経路が抜けていない（参照に置き換えたなら参照先に載っている）\n- `grep -c '^#\\{2,3\\} ' docs/design.md` が編集の前後で変わらない\n- `bun run check` が通る\n\n## 注意\n\n- `docs/design.md` は冒頭の「節の索引」に見出し名がそのまま入っている。位置は行頭を含めて特定する（CLAUDE.md「ドキュメントを編集するときの罠」）\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
-  },
-  {
     "id": "T-410",
     "difficulty": "sonnet",
     "loopable": "Y",
@@ -152,16 +108,5 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-423",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "キャラクター画面から仕事と雑談の差し色を変え、雑談を仕事と同じに戻せるようにする",
-    "task": "## 背景\n\n画面全体の差し色はパックの持ち物で、`characters/<name>/character.json` の `accent`（仕事）と `chatAccent`（雑談中だけ。無ければ `accent` のまま）から来る（検証は `src/shared/character-definition.ts`、雑談中の切り替えは `src/shared/character.ts` の `effectiveAccent`、`:root` への流し込みは `src/browser/stores/session.tsx` の `--accent`。`docs/design.md` 13.2「雑談中は」/ 13.7）。**どちらも画面から変える口が無い。** キャラクター画面（`src/browser/features/character-screen/`）の「差し色」の行が変えるのは立ち絵の中だけに効く衣装ごとの色（`outfitAccents`。コマンド `set-outfit-accent`、書き込みは `src/server/adapter/character-edit.ts` の `applyEdit` → `definitionWithOutfitAccent`）で、`accent` / `chatAccent` とは別物。作る画面の差し色1色も `outfitAccents.default` に入る（`character-edit.ts` の作成の経路）。\n\nT-392 で `chatAccent` を足したときは編集UIを作らなかった。ユーザーが画面から設定したいと言った（2026-09-23）。\n\n## 決まっていること（蒸し返さない）\n\n- **仕事の差し色（`accent`）と雑談の差し色（`chatAccent`）の両方を**キャラクター画面から変えられるようにする（ユーザーの選択。2026-09-23）\n- **雑談の差し色を「仕事と同じ」（`chatAccent` の欄なし）に戻す口を付ける**（ユーザーの選択。一度色を選ぶと画面から欄なしに戻れない、を避ける）\n- 置き場所はキャラクター画面（パックの持ち物。`docs/design.md` 13.6 の表「キャラクターの立ち絵・差し色」の行）。帯の歯車（利用者の設定）には置かない\n- 書き込み先は既存の編集と同じく `~/.tsukumo/characters/<name>/character.json`（同梱パックを直さない。書く前にホームへ写す既存の手順に乗せる）\n\n## 解くべき論点\n\n- 衣装ごとの「差し色」の行との並べ方と呼び名（例: 「画面の差し色 ■ 仕事 ■ 雑談 [仕事と同じにする]」の行を立ち絵の差し色の行の上に置く。立ち絵の色と画面の色が同じ「差し色」の名で並んで区別が付かないなら、既存の行のラベルも「立ち絵の差し色」などに直す）。`docs/design.md` 13.6 の画面の図と箇条を合わせて直す\n- コマンドの形: `set-outfit-accent` に倣って `set-accent`（仕事/雑談を引数で分けるか、型を2つにするか）と、戻す口のコマンド。色の検証は既存の `accentColorSchema` を使う\n- `editedDefinitionJson` は入れ子の欄（`portraits` / `outfitAccents` / `background`）しか書かない。最上位の欄 `accent` / `chatAccent` を書く・消す関数をどう足すか（ほかのキーを残す・2スペース整形はそのまま）\n- 変えた色がいま開いている画面の `--accent` にすぐ効くか（衣装の差し色を変えたときにパックが配り直される経路に乗るかを確かめる）。引きずっている間の送信は衣装の差し色と同じく debounce でまとめる（`use-character-edit.ts` の `OUTFIT_ACCENT_DEBOUNCE_MS`）\n- `chatAccent` が無いときの雑談の色見本に何を出すか（`accent` の値を出し、「仕事と同じ」と分かるようにする）\n\n## やること\n\n1. 上の論点を決める\n2. `src/shared/command.ts` にコマンドを足し、`src/shared/character-definition.ts` に最上位の欄を書く・消す関数を足す\n3. `src/server/adapter/character-edit.ts` の `applyEdit` に分岐を足す\n4. `src/browser/features/character-screen/` の hook と presentational に行を足す（`editable: false` のパックでは無効）\n5. `docs/design.md` 13.6（画面の図・箇条）と 13.2 / 13.5 の「画面から変えない」旨の記述があれば直す。`characters/README.md` に編集できる旨があれば揃える\n6. テスト: 定義の書き換え（`accent` を差す・`chatAccent` を差す・`chatAccent` を消すと欄が無くなりほかのキーは残る）、`applyEdit` の3分岐、hook が送るコマンド（仕事・雑談・戻す）と `chatAccent` なしのときの色見本\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900、一時の `TSUKUMO_HOME`）: キャラクター画面で仕事の差し色を変えると帯・トグルの色が変わる。雑談の差し色を変えて雑談に切り替えるとその色になり、「仕事と同じにする」を押すと雑談中も仕事の色になる。`~/.tsukumo/characters/<name>/character.json`（一時ホームの側）の `accent` / `chatAccent` が期待どおりになっている。何が見えたかを `evidence` に書く\n\n## 注意\n\n- ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。目視は一時の `TSUKUMO_HOME` で行い、本物のホームのパックを書き換えない\n- 同梱パック（`characters/`）の `character.json` は書き換えない（既定値はそのまま）\n- 13.1 原則1・原則5（色を足さない）は変えない。足すのは既にある `accent` の値を変える口だけで、新しい色のトークンは作らない\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 1598 pass / 0 fail。set-accent（target: work/chat）と clear-chat-accent を足し、キャラクター画面に「画面の差し色 仕事/雑談」の行（chatAccent なしは仕事の色と「仕事と同じ」の字、ありは「仕事と同じにする」）を置き、衣装の行を「立ち絵の差し色」に改名。\n目視（fake・1400x900・一時 TSUKUMO_HOME）: 仕事を #112233 にすると帯のトグルと上端の線が変わり、雑談に #ff8800 を差すと雑談中のトグル・線・札がその色、「仕事と同じにする」で雑談中も #112233 に戻り口が「仕事と同じ」の字に替わった。\n一時ホームの character.json は accent だけ更新・chatAccent は欄ごと消え、他のキーは無傷（同梱パックと本物のホームは未変更）。"
   }
 ]
