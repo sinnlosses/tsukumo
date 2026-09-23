@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from "react"
 
+import { isBlankText } from "../../../../shared/blank-text.ts"
 import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/expression.ts"
 import {
@@ -66,6 +67,8 @@ export function useCharacterView(): CharacterViewModel {
   const character = useSessionSelector((session) => session.state.character)
   const turn = useSessionSelector((session) => session.state.turn)
   const lastToolFailureAt = useSessionSelector((session) => session.state.lastToolFailureAt)
+  const speechCalledInTurn = useSessionSelector((session) => session.state.speechCalledInTurn)
+  const partialUtterance = useSessionSelector((session) => session.state.partialUtterance)
 
   const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
@@ -74,7 +77,9 @@ export function useCharacterView(): CharacterViewModel {
       ? speechExpression
       : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
   const outfit = resolveOutfit(model)
-  const motion = usePortraitMotion({ turn, lastToolFailureAt })
+  // 導き方の理由は `PortraitMotionInput.hasPartialUtteranceAfterSpeech` の説明にある。
+  const hasPartialUtteranceAfterSpeech = speechCalledInTurn && !isBlankText(partialUtterance)
+  const motion = usePortraitMotion({ turn, lastToolFailureAt, hasPartialUtteranceAfterSpeech })
 
   const portraitUrl = character?.portraits?.[expression]
   const accent = character?.outfitAccents[outfit]

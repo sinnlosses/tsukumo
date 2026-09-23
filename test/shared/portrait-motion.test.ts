@@ -13,6 +13,7 @@ describe("resolvePortraitMotion", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "idle" },
       lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(resolvePortraitMotion(input, 0)).toBe("reading")
   })
@@ -21,6 +22,7 @@ describe("resolvePortraitMotion", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "running", startedAt: 0 },
       lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(resolvePortraitMotion(input, 0)).toBe("waiting")
   })
@@ -29,6 +31,7 @@ describe("resolvePortraitMotion", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
       lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
   })
@@ -37,6 +40,7 @@ describe("resolvePortraitMotion", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
       lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS)).toBe("reading")
   })
@@ -45,6 +49,7 @@ describe("resolvePortraitMotion", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "running", startedAt: 0 },
       lastToolFailureAt: 2000,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
   })
@@ -53,6 +58,7 @@ describe("resolvePortraitMotion", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "running", startedAt: 0 },
       lastToolFailureAt: 2000,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS)).toBe("waiting")
   })
@@ -61,8 +67,45 @@ describe("resolvePortraitMotion", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
       lastToolFailureAt: 1000,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(resolvePortraitMotion(input, 1000 + 1)).toBe("failure")
+  })
+
+  it("ターンが進行中で最後のセリフより後ろに書きかけの本文があれば「書いている」", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "running", startedAt: 0 },
+      lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: true,
+    }
+    expect(resolvePortraitMotion(input, 0)).toBe("writing")
+  })
+
+  it("ターンが進行中でなければ、書きかけの本文があっても「書いている」にならない（読んでいるに戻る）", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "idle" },
+      lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: true,
+    }
+    expect(resolvePortraitMotion(input, 0)).toBe("reading")
+  })
+
+  it("完了の反応は「書いている」より優先する", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
+      lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: true,
+    }
+    expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
+  })
+
+  it("失敗でびくっは「書いている」より優先する", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "running", startedAt: 0 },
+      lastToolFailureAt: 2000,
+      hasPartialUtteranceAfterSpeech: true,
+    }
+    expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
   })
 })
 
@@ -71,6 +114,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "idle" },
       lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(nextPortraitMotionTransitionDelayMs(input, 0)).toBeUndefined()
   })
@@ -79,6 +123,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 0 },
       lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(nextPortraitMotionTransitionDelayMs(input, SUCCESS_MOTION_WINDOW_MS)).toBeUndefined()
   })
@@ -87,6 +132,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
       lastToolFailureAt: undefined,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(nextPortraitMotionTransitionDelayMs(input, 1200)).toBe(SUCCESS_MOTION_WINDOW_MS - 200)
   })
@@ -95,6 +141,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
       lastToolFailureAt: 1000,
+      hasPartialUtteranceAfterSpeech: false,
     }
     expect(nextPortraitMotionTransitionDelayMs(input, 1000)).toBe(FAILURE_MOTION_WINDOW_MS)
   })
