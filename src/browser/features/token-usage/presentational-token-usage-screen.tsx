@@ -12,12 +12,10 @@ import { type ReactElement } from "react"
 import {
   TOKEN_USAGE_DAYS_CHOICES,
   type ModelUsageTotal,
-  type TokenUsageDays,
-  type TokenUsageSummary,
-  type TokenUsageTotals,
 } from "../../../shared/token-usage-summary.ts"
 import { type ToolUsageCount } from "../../../shared/token-usage.ts"
 import { DailyUsageChart } from "./daily-usage-chart.tsx"
+import { type UseTokenUsageResult } from "./hooks/use-token-usage.ts"
 import styles from "./token-usage.module.css"
 import { formatBytes, formatCount } from "./usage-format.ts"
 
@@ -33,13 +31,7 @@ const FAILED_NOTE = "集計を取れなかった"
  */
 const TOOL_ROWS = 10
 
-export type PresentationalTokenUsageScreenProps = {
-  readonly days: TokenUsageDays
-  readonly onDaysChange: (days: TokenUsageDays) => void
-  readonly summary: TokenUsageSummary
-  readonly total: TokenUsageTotals
-  readonly isError: boolean
-}
+export type PresentationalTokenUsageScreenProps = UseTokenUsageResult
 
 export function PresentationalTokenUsageScreen(
   props: PresentationalTokenUsageScreenProps,

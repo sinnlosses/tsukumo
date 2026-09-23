@@ -20,7 +20,7 @@ import {
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 
 export type TaskBoardView = {
-  readonly dialogRef: RefObject<HTMLDialogElement | null>
+  readonly ref: RefObject<HTMLDialogElement | null>
   readonly onDialogClick: (event: MouseEvent<HTMLDialogElement>) => void
   readonly rows: readonly BoardRow[] | undefined
 }
@@ -52,7 +52,7 @@ export function useTaskBoard(
 
   const rows = useMemo(() => boardRows(tasks), [tasks])
 
-  return { dialogRef, onDialogClick, rows }
+  return { ref: dialogRef, onDialogClick, rows }
 }
 
 /** 値が無い列に出す文字。**空欄にはしない**（列がずれて見えるため）。 */

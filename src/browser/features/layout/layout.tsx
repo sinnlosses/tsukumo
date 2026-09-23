@@ -28,17 +28,5 @@ export type LayoutProps = {
 }
 
 export function Layout(props: LayoutProps): ReactElement {
-  const view = useLayout(props.collapseCharacter)
-
-  return (
-    <PresentationalLayout
-      main={props.main}
-      sidebar={props.sidebar}
-      character={props.character}
-      dispatch={props.dispatch}
-      collapseCharacter={props.collapseCharacter}
-      mainAsGround={props.mainAsGround}
-      {...view}
-    />
-  )
+  return <PresentationalLayout {...props} {...useLayout(props.collapseCharacter)} />
 }

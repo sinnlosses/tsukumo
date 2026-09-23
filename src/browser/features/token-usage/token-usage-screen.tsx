@@ -15,7 +15,5 @@ import { useTokenUsage } from "./hooks/use-token-usage.ts"
 import { PresentationalTokenUsageScreen } from "./presentational-token-usage-screen.tsx"
 
 export function TokenUsageScreen(): ReactElement {
-  const view = useTokenUsage()
-
-  return <PresentationalTokenUsageScreen {...view} />
+  return <PresentationalTokenUsageScreen {...useTokenUsage()} />
 }
