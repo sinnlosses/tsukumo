@@ -37,8 +37,8 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  * コマンド）を待って黙ると SDK が `result` を出すので `turn-finished` が届き、`finished` に落ちる。
  * 通知で再開したぶんは**新しい依頼ではない**ので二度と立たず、そこから伸びる本文が「確定済み」
  * として1文字目から出てしまう。**書き上げる演出はマウントした時点の DOM しか相手にしない**
- * （`features/main-view/report-reveal.ts`）ので、筆は数十文字ぶんで終わり、残りは隠されない
- * まま流れ込み、筆先に添うミニ立ち絵が本文の途中に立ったまま残る（画面で出た）。
+ * （`features/main-view/hooks/use-report-reveal.ts`）ので、筆は数十文字ぶんで終わり、残りは
+ * 隠されないまま流れ込み、筆先に添うミニ立ち絵が本文の途中に立ったまま残る（画面で出た）。
  *
  * 書きかけがあるあいだ（`partialUtterance` が空でない）は伸びる途中とみなす。
  */

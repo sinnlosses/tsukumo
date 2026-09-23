@@ -1976,7 +1976,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 
 **書き上げる演出の速さは `localStorage` に持つ**（色と同じ並び。保存と読み取りは
 `src/browser/lib/reveal-speed.ts` に集める——歯車（`features/screen-nav/`）とレポートの演出
-（`features/main-view/report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
+（`features/main-view/hooks/use-report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
 `browser/lib/` へ置く。2章）。選択肢は3つ（既定は**標準**）:
 
 | 選択肢 | 文字1つあたり  | 塊の下限 | 塊の上限 |
@@ -1988,7 +1988,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 - **速いは3つとも標準の半分**。下限・上限を一緒に半分にしないと、短い塊が下限に張り付いた
   まま「速い」を選んでも速さが変わって見えない（`reveal-plan.ts` の `topicDurationMs` が
   塊の大きさをこの3値で時間に直す）
-- **切ると演出そのものを走らせない**。`report-reveal.ts` の `useReportReveal` が
+- **切ると演出そのものを走らせない**。`hooks/use-report-reveal.ts` の `useReportReveal` が
   `revealSpeed === "off"` を見て `startReveal` を呼ばずに済ませるので、本文はマウントした時点で
   すぐ全部出て、筆先に付くミニ立ち絵（13.6 冒頭の表・`docs/requirements.md` 4.3）も出ない
 - **選び直しても、書いている最中の演出には効かない。** `useReportReveal` は速さも `reveal`

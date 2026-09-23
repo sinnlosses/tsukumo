@@ -6,24 +6,28 @@
 // ターン）では、`splitReportBlocks` による塊への分割そのものを省く（props は文字列と真偽値
 // だけなので、既定の浅い比較で足りる）。
 //
-// **書き上げていくように見せる演出（`report-reveal.ts`）はここに掛ける。** 完成した DOM の
-// 根を渡すだけで、塊の中身（`memo` の効く `ReportBlock`）には触らない。
+// **書き上げていくように見せる演出（`hooks/use-report-reveal.ts`）はここに掛ける。**
+// 完成した DOM の根を渡すだけで、塊の中身（`memo` の効く `ReportBlock`）には触らない。
 
 import { memo, type ReactElement } from "react"
 
+import { useReportReveal } from "./hooks/use-report-reveal.ts"
 import styles from "./main-view.module.css"
 import { Markdown } from "./markdown/markdown.tsx"
 import { splitReportBlocks } from "./markdown/split-blocks.ts"
-import { useReportReveal } from "./report-reveal.ts"
 
 export type ReportProps = {
   readonly markdown: string
   /**
    * **書き上げていくように見せるか**（`docs/requirements.md` 4.3。演出そのものは
-   * `report-reveal.ts`）。見るのは**マウントした時点の値だけ**で、対象を選ぶのは `turn.tsx`。
+   * `hooks/use-report-reveal.ts`）。見るのは**マウントした時点の値だけ**で、対象を選ぶのは
+   * `turn.tsx`。
    */
   readonly reveal: boolean
-  /** この本文が載っているやり取り（`MainViewTurn.id`）。配る筆先に添える（`report-reveal.ts`）。 */
+  /**
+   * この本文が載っているやり取り（`MainViewTurn.id`）。配る筆先に添える
+   * （`hooks/use-report-reveal.ts`）。
+   */
   readonly turnId: number
 }
 

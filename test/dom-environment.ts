@@ -48,7 +48,7 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "InputEvent",
   "FocusEvent",
   "MutationObserver",
-  // `src/browser/features/main-view/report-reveal.ts`（筆先の居場所を行から測る）のテストが
+  // `src/browser/features/main-view/reveal-measure.ts`（筆先の居場所を行から測る）のテストが
   // **2つセットで**要る。`DOMRect` は**happy-dom がレイアウトを持たない**ので測った値を
   // 名乗らせるのに、`NodeFilter` は文字の節点をたどる `createTreeWalker` に渡すのに使う
   // （借りないと、測る側が例外で落ちたことに気づけないまま「筆先が出ない」だけに見える）。
