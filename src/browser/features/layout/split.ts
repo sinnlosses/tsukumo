@@ -80,6 +80,20 @@ export function loadSplit(): Split {
   return DEFAULT_SPLIT
 }
 
+/**
+ * 3本の比率と雑談の上下比が、すべて既定と同じか（「比率を既定に戻す」ピルを出すかの判定に使う。
+ * `hooks/use-layout.ts`）。**`collapsedRowTop` の `undefined` は既定として扱う**（まだ一度も
+ * 動かしていない状態なので、既定と違うとは言わない）。
+ */
+export function isDefaultSplit(split: Split): boolean {
+  return (
+    split.rowTop === DEFAULT_SPLIT.rowTop &&
+    split.topLeft === DEFAULT_SPLIT.topLeft &&
+    split.bottomLeft === DEFAULT_SPLIT.bottomLeft &&
+    split.collapsedRowTop === DEFAULT_SPLIT.collapsedRowTop
+  )
+}
+
 export function saveSplit(value: Split): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value))

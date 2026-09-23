@@ -9,7 +9,7 @@
 
 import { useRef, useState, type CSSProperties, type RefObject } from "react"
 
-import { DEFAULT_SPLIT, loadSplit, saveSplit, type Split } from "../split.ts"
+import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from "../split.ts"
 
 /** 狭い画面のとき、上段に出している領域。 */
 export type NarrowPane = "main" | "sidebar"
@@ -33,6 +33,8 @@ export type UseLayoutResult = {
   readonly onBottomLeftChange: (percent: number) => void
   readonly onBottomLeftCommit: (percent: number) => void
   readonly onReset: () => void
+  /** 3本の比率と雑談の上下比が既定と1つでも違うか。「比率を既定に戻す」ピルを出すかの判定に使う。 */
+  readonly isSplitChanged: boolean
 }
 
 /**
@@ -94,6 +96,7 @@ export function useLayout(collapseCharacter: boolean): UseLayoutResult {
     onReset: () => {
       commitSplit(() => DEFAULT_SPLIT)
     },
+    isSplitChanged: !isDefaultSplit(split),
   }
 }
 
