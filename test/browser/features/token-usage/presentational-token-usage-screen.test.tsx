@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, fireEvent, render } from "@testing-library/react"
 
+import { type UseUsageReviewResult } from "../../../../src/browser/features/token-usage/hooks/use-usage-review.ts"
 import { PresentationalTokenUsageScreen } from "../../../../src/browser/features/token-usage/presentational-token-usage-screen.tsx"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
@@ -83,6 +84,16 @@ const DEFAULT_OPTIONS: RenderOptions = {
   onDaysChange: () => {},
 }
 
+/** 「減らし方を見てもらう」区画は別のテスト（`usage-review-card.test.tsx`）で測るので、
+ * ここでは「ふだん」の最小の形で描く。 */
+const FIXTURE_USAGE_REVIEW: UseUsageReviewResult = {
+  kind: "idle",
+  face: { url: undefined, alt: "" },
+  start: { kind: "available" },
+  onStart: () => {},
+  previousReview: { kind: "none" },
+}
+
 /** 内訳は別のテスト（`context-usage-card.test.tsx`）で測るので、ここでは取れない側で描く。 */
 function renderScreen(options: Partial<RenderOptions> = {}): ReturnType<typeof render> {
   const merged = { ...DEFAULT_OPTIONS, ...options }
@@ -95,6 +106,7 @@ function renderScreen(options: Partial<RenderOptions> = {}): ReturnType<typeof r
       isError={false}
       plan={merged.plan}
       contextUsage={{ kind: "unavailable" }}
+      usageReview={FIXTURE_USAGE_REVIEW}
     />,
   )
 }

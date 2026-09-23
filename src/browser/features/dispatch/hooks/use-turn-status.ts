@@ -13,6 +13,7 @@
 import { useEffect, useState } from "react"
 
 import { type TurnProgress } from "../../../../shared/session-state.ts"
+import { formatElapsed } from "../../../domain/elapsed-time.ts"
 import { useQuestionAnswer } from "../../../stores/question-answer.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 import { nowEpochMilliseconds } from "../../../utils/clock.ts"
@@ -101,14 +102,4 @@ function elapsedText(turn: TurnProgress, now: number): string {
   }
   const until = turn.kind === "finished" ? turn.finishedAt : now
   return formatElapsed(Math.max(0, Math.floor((until - turn.startedAt) / 1000)))
-}
-
-/** 秒数を表示用の文字列にする（60秒未満は `N秒`、以降は `M分SS秒`）。 */
-function formatElapsed(totalSeconds: number): string {
-  if (totalSeconds < 60) {
-    return `${String(totalSeconds)}秒`
-  }
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${String(minutes)}分${String(seconds).padStart(2, "0")}秒`
 }

@@ -31,6 +31,23 @@
   font-size: var(--font-label);
   line-height: 1.4;
 }
+/* 題の帯の残りを埋め、見直し中の札を右端へ押しやる（`.token-usage-bar` の `flex-wrap` と
+   合わせ、狭い画面では下へ折り返す）。 */
+.token-usage-bar-spacer {
+  flex: 1 1 auto;
+}
+/* 「見直し中」（題の帯の右）。**押せない**——見直し中かどうかは区画（`usage-review-card.tsx`）
+   の枠の色と中身がすでに言っているので、ここは題の帯からも分かるようにするだけの印
+   （`role="status"` で読み上げにも状態として伝える）。 */
+.token-usage-review-badge {
+  padding: 0.35rem 0.9rem;
+  border-radius: 0.625rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-action);
+  font-weight: 700;
+  opacity: 0.6;
+}
 /* 期間の切り替え。**3つで1つの入れ物**（枠は群の外側だけで、中のボタンは枠を持たない）。
    地は札より沈める（「自動圧縮まで」の箱と同じ `--usage-well`）。 */
 .token-usage-period {
@@ -320,6 +337,208 @@
   font-size: var(--font-label);
 }
 
+/* 「減らし方を見てもらう」区画（`usage-review-card.tsx`）。**枠と地は他の区画と同じ**
+   （`.usage-card` / `.context-card` と同じ `--usage-rule` / `--usage-card`）に、`--accent` を
+   ごく薄く重ねて「押せる区画」だと分かるようにする（13.2「染める」— 塊に文字のラベル
+   （見出し・ボタン）が出るので色を足してよい場面）。 */
+.usage-review {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.125rem 1.375rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--usage-rule);
+  background: var(--usage-card);
+}
+.usage-review-invite {
+  background: color-mix(in srgb, var(--usage-card), var(--accent) 6%);
+  border-color: color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
+}
+/* 見直し中は縦に積む（頭の行・進みの棒・段の一覧・注記）。**枠は accent そのもの**——見直し中は
+   はっきり分かってよい状態で、染めるだけでは弱い。 */
+.usage-review-running {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 1rem;
+  background: color-mix(in srgb, var(--usage-card), var(--accent) 6%);
+  border-color: var(--accent);
+}
+.usage-review-face {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--accent);
+  flex-shrink: 0;
+}
+.usage-review-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.usage-review-heading {
+  color: var(--usage-ink);
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+.usage-review-note {
+  color: var(--usage-ink-label);
+  font-size: var(--font-label);
+}
+.usage-review-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.usage-review-start {
+  padding: 0.6rem 1.125rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-action);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.usage-review-start:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.usage-review-blocked {
+  margin: 0;
+  max-width: 16rem;
+  color: var(--usage-ink-note);
+  font-size: var(--font-label);
+  text-align: right;
+}
+.usage-review-previous {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.usage-review-previous:hover {
+  text-decoration: underline;
+}
+
+/* 見直し中の頭の行（顔・「見直し中…」＋直近のセリフ・経過・「止める」）。 */
+.usage-review-running-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.usage-review-speech {
+  color: var(--usage-ink-cell);
+  font-size: var(--font-label);
+}
+.usage-review-elapsed {
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  flex-shrink: 0;
+}
+.usage-review-stop {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--usage-ink-cell);
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.usage-review-stop:hover {
+  border-color: var(--accent);
+  color: var(--usage-ink);
+}
+
+/* 進みの棒。**塗りは量の棒と同じ `--usage-bar` ではなく `--accent`**——この棒は「量」ではなく
+   「見直し自身の進み」を言うので、キャラクターの色（原則1）に寄せる。 */
+.usage-review-progress {
+  height: 0.375rem;
+  border-radius: 0.1875rem;
+  background: var(--usage-bar-track);
+  overflow: hidden;
+}
+.usage-review-progress-fill {
+  width: var(--usage-review-progress);
+  height: 100%;
+  border-radius: 0.1875rem;
+  background: var(--accent);
+}
+
+/* 段の一覧。**広い画面では2列**、狭い画面（このファイル末尾の @media）では1列に折る
+   （「解くべき論点」の回答）。 */
+.usage-review-stages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.usage-review-stage {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--usage-rule-quiet);
+  color: var(--usage-ink-faint);
+  font-size: var(--font-label);
+}
+.usage-review-stage-done {
+  color: var(--usage-ink-label);
+}
+.usage-review-stage-running {
+  color: var(--usage-ink);
+}
+.usage-review-stage-mark {
+  display: inline-block;
+  width: 0.875rem;
+  text-align: center;
+  color: var(--accent);
+}
+.usage-review-stage:not(.usage-review-stage-done):not(.usage-review-stage-running)
+  .usage-review-stage-mark {
+  color: var(--usage-ink-faint);
+}
+/* 進行中の段の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体規則が止める。
+   「解くべき論点」の回答——`screen-nav-current-work.module.css` と同じ仕組みを使い回すので、
+   新しい分岐は要らない）。 */
+.usage-review-stage-running .usage-review-stage-mark {
+  animation: usage-review-stage-spin 1s linear infinite;
+}
+@keyframes usage-review-stage-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.usage-review-stage-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.usage-review-stage-count {
+  flex-shrink: 0;
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+.usage-review-continues {
+  color: var(--usage-ink-faint);
+  font-size: var(--font-label);
+}
+
 /* いまのコンテキストの内訳の札（`context-usage-card.tsx`）。期間の消費の札（`.usage-card`）と
    同じ枠・同じ地で、出どころが違うことは見出しの言葉のほうが持つ。 */
 .context-card {
@@ -585,6 +804,20 @@
   }
   .context-legend {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* 段の一覧は2列だと1件が狭すぎて右の数が詰まるので1列にする（「解くべき論点」の回答）。 */
+  .usage-review-stages {
+    grid-template-columns: 1fr;
+  }
+  .usage-review,
+  .usage-review-running-head {
+    flex-wrap: wrap;
+  }
+  .usage-review-actions {
+    align-items: flex-start;
+  }
+  .usage-review-blocked {
+    text-align: left;
   }
 }
 @media (max-width: 420px) {

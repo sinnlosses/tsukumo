@@ -24,6 +24,7 @@ import { useCallback, useRef, useState, type RefObject } from "react"
 import { isModelAlias, isPermissionMode } from "../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { roomName } from "../../../../shared/room.ts"
+import { characterFaceInfo, type CharacterFaceInfo } from "../../../domain/character-face.ts"
 import { useDismissSignal } from "../../../hooks/use-dismiss-signal.ts"
 import { type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
@@ -70,10 +71,7 @@ export type ScreenNavModelPermission = {
 }
 
 /** 帯の左端に出す顔（13.9「顔」）。`url` が無ければ `<CharacterFace>` は何も描かない。 */
-export type ScreenNavFace = {
-  readonly url: string | undefined
-  readonly alt: string
-}
+export type ScreenNavFace = CharacterFaceInfo
 
 /**
  * **帯に並ぶ部品の値ひとそろい**（13.9 の表の 2〜9）。広い画面の帯（`presentational-screen-nav.tsx`）
@@ -165,7 +163,7 @@ export function useScreenNav(): ScreenNavView {
     current,
     parts: {
       room: currentRoomName(),
-      face: { url: character?.face, alt: character?.name ?? "" },
+      face: characterFaceInfo(character),
       gates: NAV_SCREENS.map((entry) => ({
         screen: entry.screen,
         label: entry.label,

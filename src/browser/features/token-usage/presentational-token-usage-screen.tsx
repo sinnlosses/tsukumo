@@ -20,9 +20,11 @@ import { type ToolUsageCount } from "../../../shared/token-usage.ts"
 import { ContextUsageCard } from "./context-usage-card.tsx"
 import { type UseContextUsageResult } from "./hooks/use-context-usage.ts"
 import { type UseTokenUsageResult } from "./hooks/use-token-usage.ts"
+import { type UseUsageReviewResult } from "./hooks/use-usage-review.ts"
 import { PeriodUsageCard } from "./period-usage-card.tsx"
 import styles from "./token-usage.module.css"
 import { formatBytes, formatCount } from "./usage-format.ts"
+import { UsageReviewCard } from "./usage-review-card.tsx"
 
 /** 記録が1件も無い期間の一言（**空でも壊れない**。札も表も出さずこれだけ）。 */
 const EMPTY_NOTE = "この期間の記録はまだ無い"
@@ -40,6 +42,8 @@ const TOOL_ROWS = 6
 export type PresentationalTokenUsageScreenProps = UseTokenUsageResult & {
   /** いまのコンテキストの内訳（`hooks/use-context-usage.ts`）。 */
   readonly contextUsage: UseContextUsageResult
+  /** 「減らし方を見てもらう」区画（`hooks/use-usage-review.ts`）。 */
+  readonly usageReview: UseUsageReviewResult
 }
 
 export function PresentationalTokenUsageScreen(
@@ -57,7 +61,15 @@ export function PresentationalTokenUsageScreen(
         {props.plan === undefined ? null : (
           <span className={styles["token-usage-plan"]}>{props.plan}</span>
         )}
+        <div className={styles["token-usage-bar-spacer"]} />
+        {props.usageReview.kind === "running" ? (
+          <span className={styles["token-usage-review-badge"]} role="status">
+            見直し中
+          </span>
+        ) : null}
       </div>
+
+      <UsageReviewCard review={props.usageReview} />
 
       <ContextUsageCard card={props.contextUsage} />
 
