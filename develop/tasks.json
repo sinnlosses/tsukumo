@@ -204,9 +204,9 @@
     "dependencies": [],
     "summary": "SDK の設定に language: japanese を渡し、催促への返事が英語に滑らないようにする",
     "task": "## 背景\n\nClaude Code 本体は、ターンの最後の応答が空だと英語の固定文 `[Your previous response had no visible output. Please continue and produce a user-visible response.]` を差し込む（T-459 の背景）。2026-09-23 に同梱の本体（2.1.280、`haiku`）で試したところ、設定 `language` が無いと催促への返事は日本語の依頼でも2回とも英語になり、`--settings '{\"language\":\"japanese\"}'` を付けると日本語で返した（催促そのものは止まらず、文面も英語のまま）。T-459 で催促の入口を塞いだあとも、何かの拍子に空の応答で終えたときに英語へ滑らないための保険として入れる。\n\n`language` は SDK の `Settings` の項目（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts` の「Preferred language for Claude responses and voice dictation」）で、`query()` の `options.settings` に `Settings` のオブジェクトを渡せる（同 `settings?: string | Settings`）。tsukumo は `query()` の `options` を `src/server/adapter/sdk-driver.ts` の `buildQuerySeedOptions` で組み立てていて、いま `settings` は渡していない。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの判断: `language: \"japanese\"` を SDK の設定に足す（「いいよ、任せる!」）\n- 値は固定の `\"japanese\"`。キャラクターパックや利用者から変えられる口は作らない（レポートは必ず日本語、という `report-notation.ts` の規約と同じ線）\n\n## やること\n\n1. `buildQuerySeedOptions` の戻り値に `settings: { language: \"japanese\" }` を足す（`QuerySeedOptions` の型も合わせる）。値の理由（催促への返事が英語に滑る）を1行コメントで残す\n2. `test/server/adapter/` の `buildQuerySeedOptions` のテストに、`settings.language` が `\"japanese\"` で渡ることを足す\n3. `settings` を渡したことで、ユーザー・プロジェクトの `settings.json`（hooks など）の読み込みが変わらないことを確かめる。`settings` は `settingSources` とは別の口で、足し合わせになるはず。確かめられなければ、`bun run start` で起こして orca の hooks（`~/.claude/settings.json`）が今までどおり動くこと（Orca のタブの状態表示が変わること）を見る\n\n## 完了条件\n\n- `buildQuerySeedOptions` が `settings: { language: \"japanese\" }` を返すことをテストで確かめている\n- 起こしたセッションで1ターン回し、既存の hooks が動いたこと（または `settings` が既存の設定を置き換えないことの根拠）が `evidence` にある\n- `bun run check` が通る\n\n## 注意\n\n- `~/.claude/settings.json` には書かない（グローバル設定の書き換えは承認が要る。ここでは `query()` の引数で渡すだけ）\n- T-430（`session-start.ts` の判断を core へ寄せる）が `doing` のあいだは、`session-start.ts` を触らずに `sdk-driver.ts` の中だけで済ませる",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "buildQuerySeedOptions が settings: { language: \"japanese\" } を返すようにし、test/server/adapter/sdk-driver.test.ts で固定値を確認。 / 既存の設定を置き換えない根拠: 同梱の本体（2.1.280）を -p --debug-file で --settings の有無の2回起こすと、user の設定由来の SessionStart / UserPromptSubmit / Stop の hook 実行が両方とも各1回で一致した（件数とイベント名だけを数えた）。sdk.d.ts の「precedence is user < project < local < flag < policy」と provenance のキー単位の出どころも同じ向き。 / bun run check は 1779 pass / 0 fail（145ファイル）。"
   },
   {
     "id": "T-461",

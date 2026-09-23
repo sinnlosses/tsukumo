@@ -69,6 +69,10 @@ describe("buildQuerySeedOptions", () => {
         .resume,
     ).toBe("s-1")
   })
+
+  it("settings.language を japanese 固定で渡す", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).settings).toEqual({ language: "japanese" })
+  })
 })
 
 /**
