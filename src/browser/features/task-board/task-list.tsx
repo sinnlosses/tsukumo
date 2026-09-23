@@ -7,6 +7,11 @@
 // 見出しの「一覧を見る」から開く表（`task-board.tsx`）の仕事で、ここは直近の並びを
 // 視界の端に置いておくだけ（docs/requirements.md 4.2）。
 //
+// **件数のチップで絞れる**（`selectedStatus` は `features/sidebar/task-section.tsx` の
+// state。並びは変えず、`domain/task-sidebar-filter.ts` で出す・出さないだけを決めてから
+// `orderTasksForSidebar` に渡す。経緯は docs/requirements.md 4.2）。絞った結果が0件のときは
+// 「タスクが無い」ではなく、選んだ状態の名前を添えた一言にする（全件が0件のときと区別する）。
+//
 // **置き場所（サイドバーの区画）はサイドバーの持ち物で、ここは中身だけを描く。** 区画の枠と
 // 見出しは `features/sidebar/section.tsx` にある（docs/design.md 2章）。
 
@@ -15,11 +20,14 @@ import { type ReactElement } from "react"
 import { type TaskSummaryResult } from "../../../shared/task-summary.ts"
 import { TaskItem } from "./components/task-item.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
+import { taskListFilterLabel, type TaskListFilterStatus } from "./domain/task-list-count.ts"
+import { filterTasksForSidebar } from "./domain/task-sidebar-filter.ts"
 import { orderTasksForSidebar } from "./domain/task-sidebar-order.ts"
 import styles from "./task-board.module.css"
 
 export type TaskListProps = {
   readonly tasks: TaskSummaryResult
+  readonly selectedStatus: TaskListFilterStatus | undefined
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
@@ -30,7 +38,16 @@ export function TaskList(props: TaskListProps): ReactElement {
     return <p className={styles["task-empty"]}>タスクが無い</p>
   }
 
-  const { running, rest } = orderTasksForSidebar(props.tasks.items)
+  const filtered = filterTasksForSidebar(props.tasks.items, props.selectedStatus)
+  if (filtered.length === 0 && props.selectedStatus !== undefined) {
+    return (
+      <p className={styles["task-empty"]}>
+        {taskListFilterLabel(props.selectedStatus)}のタスクが無い
+      </p>
+    )
+  }
+
+  const { running, rest } = orderTasksForSidebar(filtered)
 
   return (
     <>

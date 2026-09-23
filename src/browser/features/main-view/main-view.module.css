@@ -71,18 +71,135 @@
 .turn-to-newest:hover {
   border-color: var(--accent);
 }
-/* 見ているターンの依頼の1行目。ページで唯一の本物の h2（レポートの `##` は h4 に落とす）。
-   1行に収まらないぶんは省略し、全文は `title` で読ませる（`domain/turn-title.ts` は切らない）。 */
-.turn-title {
+/* タイトル（`⌄` を含むボタン）と一覧そのものをまとめる枠。**`position` は付けない**
+   ——一覧（.turn-history）はこの枠のさらに外、`.turn-header`（position: sticky）を基準に
+   ヘッダーいっぱいの幅で重ねる（下の `.turn-history` 参照）。この枠自体は
+   `useDismissSignal` の「外側」の基準（`ref`）としてだけ使う——一覧を外側扱いさせないため、
+   DOM 上はここに入れたまま見た目だけヘッダー基準にする。 */
+.turn-title-group {
   grid-area: title;
+  min-width: 0;
+}
+/* 見ているターンの依頼の1行目。ページで唯一の本物の h2（レポートの `##` は h4 に落とす）。
+   **中身は1つの `<button>`**（`.turn-title-toggle`）で、見た目は h2 に付けていたときのまま。 */
+.turn-title {
   margin: 0;
+  min-width: 0;
+}
+/* タイトルの文字 + `⌄` を1つにまとめた開く口。**既定の枠・背景は消し**、押せる面だと
+   分かるのはホバーと `aria-expanded` のときの枠だけにする（フォーカスの輪は
+   `theme.css` の `:focus-visible` にまかせる——ここでは打ち消さない）。
+   幅いっぱいに広げて `.turn-title-text` 側で省略するので、タイトルの縮み方は前と変わらない。 */
+.turn-title-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.15rem 0.3rem;
+  margin: -0.15rem -0.3rem;
+  border: 1px solid transparent;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.turn-title-toggle:hover,
+.turn-title-toggle[aria-expanded="true"] {
+  border-color: var(--rule);
+}
+/* 1行に収まらないぶんは省略し、全文はボタンの `title` で読ませる（`domain/turn-title.ts` は
+   切らない）。 */
+.turn-title-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+  font-size: var(--font-heading);
+  font-weight: 700;
+}
+/* `⌄`。タイトルの縮みを邪魔しないよう固定幅にする。 */
+.turn-title-chevron {
+  flex: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-body);
+  line-height: 1;
+}
+/* 窓の中のやり取りの一覧。DOM は `.turn-title-group` の中だが、`position` を持たないその枠を
+   飛ばして**`.turn-header`（position: sticky）を基準にヘッダーいっぱいの幅で重ねる**
+   （`.screen-nav-work-list` と同じ「押し下げない」手口だが、`.turn-title-group` は狭い画面で
+   タイトルの下に折り返して幅が読めないので、一覧側は常にヘッダー全幅を使う）。`left: 0; right: 0`
+   は `.turn-header` の padding box 基準になるので、`.turn-card` の内側にきっちり収まり、
+   どの幅でも横スクロールを出さない。 */
+.turn-history {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  margin-top: 0.3rem;
+  max-height: 60dvh;
+  overflow-y: auto;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  font-size: var(--font-secondary);
+}
+.turn-history-heading {
+  margin: 0 0 0.4rem;
+  color: var(--ink-quiet);
+  font-weight: 600;
+}
+.turn-history-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.turn-history-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.turn-history-row:hover {
+  border-color: var(--rule);
+}
+/* 見ているやり取りには色以外の印も付ける（●。13.1 原則5）。枠も足して二重に示す。 */
+.turn-history-row[aria-current="true"] {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+}
+.turn-history-mark {
+  flex: none;
+  color: var(--accent);
+}
+.turn-history-position {
+  flex: none;
+  min-width: 3.2em;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+}
+.turn-history-title {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: var(--ink);
-  font-size: var(--font-heading);
-  font-weight: 700;
 }
 .turn-meta {
   grid-area: meta;

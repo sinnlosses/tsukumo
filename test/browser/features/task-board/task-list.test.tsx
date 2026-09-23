@@ -56,19 +56,19 @@ const TASKS: readonly TaskSummaryItem[] = [
 
 describe("taskList", () => {
   it("tasks が不明のときは一覧の代わりに「不明」を出す", () => {
-    render(<TaskList tasks={{ kind: "unknown" }} />)
+    render(<TaskList tasks={{ kind: "unknown" }} selectedStatus={undefined} />)
 
     expect(screen.getByText("不明")).toBeDefined()
   })
 
   it("空配列のときは「タスクが無い」を出す", () => {
-    render(<TaskList tasks={known([])} />)
+    render(<TaskList tasks={known([])} selectedStatus={undefined} />)
 
     expect(screen.getByText("タスクが無い")).toBeDefined()
   })
 
   it("進行中（doing）はカードで先頭に出て、残りはファイルの順のまま並ぶ", () => {
-    render(<TaskList tasks={known(TASKS)} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
 
     const cards = document.querySelectorAll<HTMLElement>(".task-running-card")
     expect(cards).toHaveLength(1)
@@ -86,14 +86,14 @@ describe("taskList", () => {
   })
 
   it("todo は空の丸の印を持つ", () => {
-    render(<TaskList tasks={known(TASKS)} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[1]?.querySelector(".task-mark-todo")).not.toBeNull()
   })
 
   it("done は薄く打ち消し線で出す", () => {
-    render(<TaskList tasks={known(TASKS)} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[2]?.className).toContain("task-done")
@@ -102,7 +102,7 @@ describe("taskList", () => {
   })
 
   it("status が無い要素は印を出さない", () => {
-    render(<TaskList tasks={known(TASKS)} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[3]?.querySelector(".task-mark-todo")).toBeNull()
@@ -121,14 +121,43 @@ describe("taskList", () => {
         dependencies: [],
       },
     ]
-    render(<TaskList tasks={known(items)} />)
+    render(<TaskList tasks={known(items)} selectedStatus={undefined} />)
 
     expect(screen.getByRole("listitem").querySelector(".task-mark-other")).not.toBeNull()
   })
 
   it("doing が無ければ進行中のカードを出さない", () => {
-    render(<TaskList tasks={known(TASKS.filter((task) => task.status !== "doing"))} />)
+    render(
+      <TaskList
+        tasks={known(TASKS.filter((task) => task.status !== "doing"))}
+        selectedStatus={undefined}
+      />,
+    )
 
     expect(document.querySelectorAll(".task-running-card")).toHaveLength(0)
+  })
+
+  it("selectedStatus を選ぶとその状態だけ出る（進行中カードも絞られる）", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus="todo" />)
+
+    const items = screen.getAllByRole("listitem")
+    expect(document.querySelectorAll(".task-running-card")).toHaveLength(0)
+    expect(items.map((item) => item.textContent)).toEqual([expect.stringContaining("X-001")])
+  })
+
+  it("進行中を選ぶとカードだけ残る", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus="doing" />)
+
+    const cards = document.querySelectorAll<HTMLElement>(".task-running-card")
+    expect(cards).toHaveLength(1)
+    expect(cards[0]?.textContent).toContain("X-004")
+    expect(screen.getAllByRole("listitem")).toHaveLength(1)
+  })
+
+  it("絞った結果が0件のときは選んだ状態の名前を添えた一言を出す", () => {
+    const doneOnly = TASKS.filter((task) => task.status === "done")
+    render(<TaskList tasks={known(doneOnly)} selectedStatus="todo" />)
+
+    expect(screen.getByText("未着手のタスクが無い")).toBeDefined()
   })
 })

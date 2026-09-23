@@ -344,6 +344,7 @@ features/task-board/
   domain/task-status.ts           status → 色の class（表の行が読む）
   domain/task-list-count.ts       見出し下の件数のチップの元（サイドバーが読む）
   domain/task-sidebar-order.ts    区画の一覧の並び（進行中を先頭にまとめる純関数）
+  domain/task-sidebar-filter.ts   件数のチップで選んだ状態だけに絞る純関数（2026-09-23 決定）
 ```
 
 - **部品に算出を残さない。** 「値が無いときどうするか」「どれを出すか」はフックが
@@ -355,8 +356,8 @@ features/task-board/
 - **`domain/` を切るのは、フックに入れないほうが良いもののうち、その機能固有の語彙で
   名乗れるものだけ。** 「純関数だから `domain/`」ではない。入れないほうが良いのは、**フックを
   呼ばない相手が読む**とき——`domain/task-status.ts` は表の行（フックを呼ばない部品）が読み、
-  `domain/task-list-count.ts` と `domain/task-sidebar-order.ts` はサイドバーの区画
-  （`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
+  `domain/task-list-count.ts`・`domain/task-sidebar-order.ts`・`domain/task-sidebar-filter.ts`
+  はサイドバーの区画（`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
   フックを使わない側が `use-*.ts` を import することになる
 - **`components/` は機能の中の部品**で、`browser/components/`（機能の語彙を持たない部品）とは
   別物。**読み手が2つの機能にまたがったら `browser/components/` へ上げる**
@@ -770,7 +771,10 @@ type SessionHost = {
       │  │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに
       │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
       │  ├ <MainView>        <PendingQuestion> + 札（<TurnHeader> + <Turn>）。札の頭は ‹ › ・依頼の1行目の
-      │  │                    タイトル・n / N・最新 / 最新へで、直近5件（`MAX_MAIN_VIEW_TURNS`）を1件ずつ遡る
+      │  │                    タイトル・n / N・最新 / 最新へで、直近5件（`MAX_MAIN_VIEW_TURNS`）を1件ずつ遡る。
+      │  │                    タイトル横の `⌄` を押すと窓の中のやり取りへ一度で飛べる一覧が開く
+      │  │                    （新しいものを上に並べ、番号は `‹` `›` の脇と同じ古いほうを1とする
+      │  │                    通し番号のまま。見ている行にだけ ● の印）
       │  │   └ <PendingQuestion> 答え待ちの質問の**比べる面**。選択肢の `preview`（Markdown）を札に並べる。
       │  │                    `preview` を持つ選択肢が1つも無ければ何も描かない（2026-09-21）
       │  │   └ <Turn>        <RequestRest>（依頼の2行目以降 + <PromptImageThumbnails>）
