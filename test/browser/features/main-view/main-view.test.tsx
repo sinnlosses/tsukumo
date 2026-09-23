@@ -6,6 +6,7 @@ import { MainView } from "../../../../src/browser/features/main-view/main-view.t
 import { QuestionRecord } from "../../../../src/browser/features/main-view/question-record.tsx"
 import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../src/browser/stores/brush-tip.ts"
 import { QuestionAnswerProvider } from "../../../../src/browser/stores/question-answer.tsx"
+import { QuestionScrollProvider } from "../../../../src/browser/stores/question-scroll.tsx"
 import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
 import { type MainViewQuestion } from "../../../../src/shared/main-view.ts"
@@ -43,7 +44,9 @@ function renderMainView(records: readonly SessionRecord[]): RenderResult {
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionProvider>
         <QuestionAnswerProvider>
-          <MainView />
+          <QuestionScrollProvider>
+            <MainView />
+          </QuestionScrollProvider>
         </QuestionAnswerProvider>
       </TurnSelectionProvider>
     </SessionStoreContext.Provider>,

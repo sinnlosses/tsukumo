@@ -1,19 +1,33 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ScreenNav } from "../../../../src/browser/features/screen-nav/screen-nav.tsx"
-import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
+import { parseHash } from "../../../../src/browser/stores/location-hash.ts"
+import {
+  QuestionScrollContext,
+  type QuestionScrollValue,
+} from "../../../../src/browser/stores/question-scroll.tsx"
+import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
+import {
+  TurnSelectionContext,
+  type TurnSelectionValue,
+} from "../../../../src/browser/stores/turn-selection.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
+import { type Question } from "../../../../src/shared/question.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../fixture/character.ts"
 import { requestRecord, toolRecord } from "../../../fixture/session-record.ts"
-import { sessionStoreWith } from "../../session-store.ts"
+import { putState, sessionStoreWith } from "../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空の依頼・ツール呼び出し（docs/coding-standards.md「会話内容の扱い」）。
+// フィクスチャはすべて手で書いた架空の依頼・ツール呼び出し・質問（docs/coding-standards.md
+// 「会話内容の扱い」）。
 
 afterEach(() => {
   cleanup()
+  // 「質問へ」は会話の画面（`#`）へ hash を書き換える（`stores/screen.tsx`）ので、次のテストへ
+  // 持ち越さない。
+  window.location.hash = ""
 })
 
 const FIXTURE_PENDING: PendingAsk = {
@@ -23,13 +37,39 @@ const FIXTURE_PENDING: PendingAsk = {
   input: {},
 }
 
-function renderScreenNav(state: Partial<SessionState> = {}): void {
+function fixtureQuestion(header: string): Question {
+  return { header, text: "架空の質問", multiSelect: false, options: [] }
+}
+
+function questionPending(headers: readonly string[]): PendingAsk {
+  return { kind: "question", id: "ask-1", questions: headers.map(fixtureQuestion) }
+}
+
+function renderScreenNav(
+  state: Partial<SessionState> = {},
+  options: {
+    readonly selection?: Partial<TurnSelectionValue>
+    readonly scroll?: Partial<QuestionScrollValue>
+  } = {},
+): SessionStore {
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state })
+  const selection: TurnSelectionValue = {
+    activeTurnId: 1,
+    newestTurnId: 1,
+    selectTurn: () => {},
+    ...options.selection,
+  }
+  const scroll: QuestionScrollValue = { signal: 0, requestScroll: () => {}, ...options.scroll }
   render(
     <SessionStoreContext.Provider value={store}>
-      <ScreenNav />
+      <TurnSelectionContext.Provider value={selection}>
+        <QuestionScrollContext.Provider value={scroll}>
+          <ScreenNav />
+        </QuestionScrollContext.Provider>
+      </TurnSelectionContext.Provider>
     </SessionStoreContext.Provider>,
   )
+  return store
 }
 
 /** 帯（広い画面）にある「いまの作業」の札。 */
@@ -96,6 +136,97 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
     expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("Bash: echo dummy")
+  })
+
+  it("答え待ちが質問だと、実行中のツールの要約より質問の要約を優先して札に出る", () => {
+    renderScreenNav({
+      turn: { kind: "running", startedAt: 0 },
+      pending: [questionPending(["最初の見出し"])],
+      records: [
+        requestRecord(),
+        toolRecord({ toolUseId: "toolu_1", name: "Bash", input: { command: "echo dummy" } }),
+      ],
+    })
+
+    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
+    expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("最初の見出し")
+  })
+
+  it("質問が2問以上あれば、要約に「ほか n問」を添える", () => {
+    renderScreenNav({
+      pending: [questionPending(["最初の見出し", "2問目", "3問目"])],
+    })
+
+    expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+      "最初の見出し ほか2問",
+    )
+  })
+
+  it("答え待ちが質問だと、一覧の見出しに「入力欄の上で答えられる」は添えず、「質問へ」を出す", () => {
+    renderScreenNav({ pending: [questionPending(["最初の見出し"])] })
+
+    fireEvent.click(workToggle())
+
+    expect(document.querySelector(".screen-nav-work-heading")?.textContent).toBe("答え待ち")
+    expect(screen.getByRole("button", { name: "質問へ" })).toBeDefined()
+  })
+
+  it("答え待ちが許可要求なら、今までどおり「入力欄の上で答えられる」を添え、「質問へ」は出さない", () => {
+    renderScreenNav({ pending: [FIXTURE_PENDING] })
+
+    fireEvent.click(workToggle())
+
+    expect(document.querySelector(".screen-nav-work-heading")?.textContent).toBe(
+      "答え待ち。入力欄の上で答えられる",
+    )
+    expect(screen.queryByRole("button", { name: "質問へ" })).toBeNull()
+  })
+
+  it("「質問へ」を押すと、一覧を閉じて会話の画面・最新のやり取りへ戻し、質問の札へのスクロールを合図する", () => {
+    window.location.hash = "#character"
+    const moved: number[] = []
+    let scrollCount = 0
+    renderScreenNav(
+      { pending: [questionPending(["最初の見出し"])] },
+      {
+        selection: { activeTurnId: 1, newestTurnId: 3, selectTurn: (id) => moved.push(id) },
+        scroll: { requestScroll: () => (scrollCount += 1) },
+      },
+    )
+
+    fireEvent.click(workToggle())
+    fireEvent.click(screen.getByRole("button", { name: "質問へ" }))
+
+    expect(document.querySelector(".screen-nav-work-list")).toBeNull()
+    expect(parseHash(window.location.hash).screen).toBe("conversation")
+    expect(moved).toEqual([3])
+    expect(scrollCount).toBe(1)
+  })
+
+  it("答え終わると、質問の要約と「質問へ」が消えて元に戻る", () => {
+    const store = renderScreenNav({
+      turn: { kind: "running", startedAt: 0 },
+      pending: [questionPending(["最初の見出し"])],
+      records: [requestRecord()],
+    })
+
+    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
+    expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("最初の見出し")
+
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        turn: { kind: "running", startedAt: 0 },
+        pending: [],
+        records: [requestRecord()],
+      })
+    })
+
+    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
+    expect(document.querySelector(".screen-nav-work-summary")).toBeNull()
+
+    fireEvent.click(workToggle())
+    expect(screen.queryByRole("button", { name: "質問へ" })).toBeNull()
   })
 
   it("押すと一覧が開き、実行中の手順の全文（切り詰めない）が出る", () => {

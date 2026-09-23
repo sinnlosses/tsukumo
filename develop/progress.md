@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 答え待ちの質問を帯の札に要約で出し、一覧の「質問へ」で質問の札へ移れるようにした（T-408）
+
+札の要約は1問目の `header`（2問以上なら「ほか n問」）で、許可要求の答え待ちは今までどおり実行中の手順。「質問へ」は一覧を閉じ、会話の画面・最新のやり取りへ戻してから、新設の `stores/question-scroll.tsx` の合図で質問の札へスクロールする。
+
 ### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
 
 `command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。

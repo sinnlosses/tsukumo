@@ -116,9 +116,9 @@
     "dependencies": ["T-403", "T-407"],
     "summary": "答え待ちのとき、帯の札に質問の要約を出し、一覧から質問の札へ飛べるようにする",
     "task": "## 背景\n\n帯の「いまの作業」の札（`src/browser/features/screen-nav/components/screen-nav-current-work.tsx`、ロジックは `hooks/use-current-work.ts`）は、答え待ち（`state.pending` が空でない）のとき語が「答え待ち」になり、押すと手順の一覧が開いて見出しに「。入力欄の上で答えられる」（`pendingHint`）が添わる（`docs/design.md` 13.9）。T-407 で質問はメインビューの札で答えるようになるので、この案内が古くなる。\n\nモック `docs/history/mockup/question-2026-09-23.png` では、帯の札が「答え待ち | <質問の要約> — クリックで質問へ」になっている。\n\n## 決まっていること（蒸し返さない）\n\n- **押したときは今までどおり手順の一覧を開く**（13.9 の設計を保つ。2026-09-23 ユーザー）。一覧の中に「質問へ」の口を置き、押すとメインビューの質問の札までスクロールして一覧を閉じる\n- 答え待ちのとき、札の要約の位置に質問の要約を出す（語は「答え待ち」のまま）\n- 札の外形は T-403 の固定長のまま動かさない\n\n## 解くべき論点\n\n- 要約に質問の `header` を使うか、`text` を切り詰めるか（`header` は短いが省略されうるか、SDK の型で確かめる）\n- 複数の質問があるときの要約（1問目だけか、「ほか n 問」を添えるか）\n- 札の要約（実行中の手順）と質問の要約のどちらを出すか。答え待ちの間は質問を優先する案が第一候補\n- メインビューの札へのスクロールの仕方（`browser/` の機能どうしは import できないので、`location.hash` か `browser/stores/` を経由する。過去のやり取りを見ているなら最新へ戻してから飛ぶ）\n\n## やること\n\n1. 論点を決め、`use-current-work.ts` と札・一覧を直す。`pendingHint` の「入力欄の上で答えられる」を直す\n2. テストを直す・足す（`test/browser/features/screen-nav/`）: 答え待ちで要約が質問のものになる / 一覧に「質問へ」があり、押すと質問の札へ移る / 答え終わると元に戻る\n3. `docs/design.md` 13.9「いまの作業」の表と記述を直す\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900）: 疑似セッションで質問を出し、帯の札に質問の要約が出ること、一覧の「質問へ」で質問の札まで移ること。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 1545 pass / 0 fail（test/browser/features/screen-nav/current-work.test.tsx に質問の要約・ほか n問・質問へ・答え終わりの6件）。目視 1400x900（fake driver・Playwright）: question-multi で札が「答え待ち | 架空の選択」、question-pair で「架空の選択1 ほか1問」、一覧の見出しは「答え待ち」のみで直下に「質問へ」。#character の画面から「質問へ」を押すと一覧が閉じ会話の画面に戻り質問の札が y=249 に出た（札が画面外にある場面は疑似セッションに無く、スクロールそのものは未確認）"
   },
   {
     "id": "T-409",

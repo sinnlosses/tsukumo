@@ -35,6 +35,7 @@ import {
   loadAppearanceColorOverride,
 } from "./lib/appearance-color.ts"
 import { QuestionAnswerProvider } from "./stores/question-answer.tsx"
+import { QuestionScrollProvider } from "./stores/question-scroll.tsx"
 import { useScreen } from "./stores/screen.tsx"
 import { SessionProvider, useSessionSelector } from "./stores/session.tsx"
 import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
@@ -99,7 +100,11 @@ if (appRoot !== null) {
           {/* 答え待ちの質問に組み立てている答えは、メインビューの札と入力欄の両方が
               読み書きする（`stores/question-answer.tsx`）。 */}
           <QuestionAnswerProvider>
-            <Root />
+            {/* 帯の「質問へ」からメインビューの質問の札へのスクロールの合図
+                （`stores/question-scroll.tsx`）。 */}
+            <QuestionScrollProvider>
+              <Root />
+            </QuestionScrollProvider>
           </QuestionAnswerProvider>
         </TurnSelectionProvider>
       </SessionProvider>
