@@ -29,10 +29,10 @@ import {
   type Outfit,
   OUTFITS,
 } from "../../../../shared/expression.ts"
+import { readAccentColor } from "../../../lib/appearance-color.ts"
 import { readDataUrl } from "../../../lib/data-url.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
-import { readAccentColor } from "../appearance-color.ts"
 
 /** 背景の行の、いまの状態を表す字（**印だけにしない**。13.1 原則1）。 */
 const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } as const

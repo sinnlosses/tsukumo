@@ -117,7 +117,7 @@
   white-space: nowrap;
 }
 
-/* 組（差し色・画面の色・新しいキャラクター）。枠は持たず、`<legend>` を小さな見出しとして
+/* 組（差し色・背景・新しいキャラクター）。枠は持たず、`<legend>` を小さな見出しとして
    使う（13.1 原則2）。 */
 .character-screen-fieldset {
   display: flex;
@@ -132,7 +132,7 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
-/* 差し色（衣装4つ）も画面の色（3つ）も**1行に**並べ、入りきらなければ折り返す。 */
+/* 差し色（衣装4つ）は**1行に**並べ、入りきらなければ折り返す。 */
 .character-screen-row {
   display: flex;
   flex-wrap: wrap;

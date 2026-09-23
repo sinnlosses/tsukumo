@@ -9,10 +9,16 @@
 // src/server/adapter/character-pack.ts と src/server/adapter/character-edit.ts に集約する。
 // ここが扱うのは文字列までで、実際に読み書きするのは呼び出し側。
 
-import { isPlainObject } from "remeda"
+import { fromKeys, isPlainObject } from "remeda"
 
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
-import { type Expression, type Outfit, type RemovableExpression } from "./expression.ts"
+import {
+  EXPRESSIONS,
+  type Expression,
+  OUTFITS,
+  type Outfit,
+  type RemovableExpression,
+} from "./expression.ts"
 
 /**
  * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」
@@ -149,42 +155,17 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
 
 function toExpressionLabels(source: unknown): Readonly<Record<Expression, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    thinking: stringField(record, "thinking"),
-    proud: stringField(record, "proud"),
-    flustered: stringField(record, "flustered"),
-    serious: stringField(record, "serious"),
-    curious: stringField(record, "curious"),
-    sad: stringField(record, "sad"),
-    excited: stringField(record, "excited"),
-    bored: stringField(record, "bored"),
-  }
+  return fromKeys(EXPRESSIONS, (expression) => stringField(record, expression))
 }
 
 function toPortraits(source: unknown): Readonly<Record<Expression, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    thinking: stringField(record, "thinking"),
-    proud: stringField(record, "proud"),
-    flustered: stringField(record, "flustered"),
-    serious: stringField(record, "serious"),
-    curious: stringField(record, "curious"),
-    sad: stringField(record, "sad"),
-    excited: stringField(record, "excited"),
-    bored: stringField(record, "bored"),
-  }
+  return fromKeys(EXPRESSIONS, (expression) => stringField(record, expression))
 }
 
 function toOutfitAccents(source: unknown): Readonly<Record<Outfit, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
-  return {
-    default: stringField(record, "default"),
-    light: stringField(record, "light"),
-    normal: stringField(record, "normal"),
-    heavy: stringField(record, "heavy"),
-  }
+  return fromKeys(OUTFITS, (outfit) => stringField(record, outfit))
 }
 
 function stringField(record: Readonly<Record<string, unknown>>, key: string): string | undefined {

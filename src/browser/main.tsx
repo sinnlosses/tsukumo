@@ -20,10 +20,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
-import {
-  applyAppearanceColorOverride,
-  loadAppearanceColorOverride,
-} from "./features/character-screen/appearance-color.ts"
 import { CharacterCreate } from "./features/character-screen/character-create.tsx"
 import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
 import { CharacterView } from "./features/character-view/character-view.tsx"
@@ -34,6 +30,10 @@ import { MainView } from "./features/main-view/main-view.tsx"
 import { ScreenNav } from "./features/screen-nav/screen-nav.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
 import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
+import {
+  applyAppearanceColorOverride,
+  loadAppearanceColorOverride,
+} from "./lib/appearance-color.ts"
 import { QuestionFocusProvider } from "./stores/question-focus.tsx"
 import { useScreen } from "./stores/screen.tsx"
 import { SessionProvider, useSessionSelector } from "./stores/session.tsx"
@@ -80,8 +80,9 @@ function Root(): ReactElement {
   )
 }
 
-// 保存済みの画面の色を `documentElement` へ反映する1回。**キャラクター画面は開かれるまで
-// マウントされない**ので、色を持つ部品の初期化に任せるとリロード後に色が戻らない。
+// 保存済みの画面の色を `documentElement` へ反映する1回。**最初の描画より前に差す**必要が
+// あるので、色を持つ部品（帯の歯車。13.9）の初期化には任せない——任せると、保存した色が
+// 一瞬だけ既定で描かれてから入れ替わる。
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
 // 立ち絵の SVG 取得（`components/portrait.tsx`）と入力欄の `@` 補完のファイル一覧

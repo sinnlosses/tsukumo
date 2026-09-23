@@ -184,7 +184,7 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
   // `document.documentElement` に差し替える。`<Layout>` の外まで届く唯一の場所がここ
   // （`document.title` を差し替える `src/browser/features/dispatch/dispatch.tsx` と同じ、ホスト側の値を
   // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
-  // 手口で `src/browser/features/character-screen/appearance-color.ts` が持つ）。届いていない・パックに `accent`
+  // 手口で `src/browser/lib/appearance-color.ts` が持つ）。届いていない・パックに `accent`
   // が無いときは既定値（theme.css の `:root`）に戻す。**雑談中はパックが `chatAccent` を持てば
   // そちらに切り替わる**（`effectiveAccent`。docs/design.md 13.2「雑談中は」/ 13.7）。
   //

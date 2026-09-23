@@ -12,24 +12,14 @@
 // （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」、docs/design.md 7章）。
 // モデル名と衣装の対応だけは、どのキャラクターでも同じ「装備の重さ」の規則なのでここに残す。
 
-export type Expression =
-  | "default"
-  | "thinking"
-  | "proud"
-  | "flustered"
-  | "serious"
-  | "curious"
-  | "sad"
-  | "excited"
-  | "bored"
-export type Outfit = "default" | "light" | "normal" | "heavy"
-
 /**
  * 表情名の全体。**`default` が先頭**で、キャラクター定義に立ち絵があるものだけを選ぶときの
  * 元になる（src/shared/expression-choice.ts の `expressionChoices`）。**足すものは末尾に積む**
  * （既存の並びを動かさず、パック作者から見える順を変えないため。docs/requirements.md 4.3）。
+ * 型 {@link Expression} も表（`fromKeys(EXPRESSIONS, …)`）もこの並びから導くので、表情を1つ
+ * 足すときはここに1行積むだけでよい。
  */
-export const EXPRESSIONS: readonly Expression[] = [
+export const EXPRESSIONS = [
   "default",
   "thinking",
   "proud",
@@ -39,7 +29,9 @@ export const EXPRESSIONS: readonly Expression[] = [
   "sad",
   "excited",
   "bored",
-]
+] as const
+
+export type Expression = (typeof EXPRESSIONS)[number]
 
 /**
  * **立ち絵が必ず要る表情**（`characters/README.md`）。`default` は表情の指定が無いときの
@@ -56,8 +48,10 @@ export type RequiredExpression = (typeof REQUIRED_EXPRESSIONS)[number]
 /** 画面から立ち絵を**消せる**表情（必須の `default` を除いた残り）。 */
 export type RemovableExpression = Exclude<Expression, RequiredExpression>
 
-/** 衣装の全体。並びは画面に出す順（軽いほうから重いほうへ）。 */
-export const OUTFITS: readonly Outfit[] = ["default", "light", "normal", "heavy"]
+/** 衣装の全体。並びは画面に出す順（軽いほうから重いほうへ）。型 {@link Outfit} もこの並びから導く。 */
+export const OUTFITS = ["default", "light", "normal", "heavy"] as const
+
+export type Outfit = (typeof OUTFITS)[number]
 
 /** 外から届いた文字列が表情の名前かどうかを検証する（境界で1回だけ使う）。 */
 export function isExpression(value: string): value is Expression {
