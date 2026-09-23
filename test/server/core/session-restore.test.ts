@@ -17,7 +17,7 @@ import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
-// （`listSessions` / `getSessionMessages` を呼ぶのは src/server/adapter/sdk-driver.ts の側）。
+// （`listSessions` / `getSessionMessages` を呼ぶのは src/server/adapter/sdk-session.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
 // 印はキャラクターパックごと・雑談かどうか・ビューのポートごとに違う
@@ -659,7 +659,7 @@ describe("toRestoredEvents", () => {
   })
 
   // 圧縮（`/compact`）が起きると transcript の鎖が切れ、`includeSystemMessages: true` で読んだ
-  // 並びは区切りの行から始まる（`src/server/adapter/sdk-driver.ts` の `readRestoredEvents`。
+  // 並びは区切りの行から始まる（`src/server/adapter/sdk-session.ts` の `readRestoredEvents`。
   // 実測）。**起こし直したあとに区切りがログのいちばん上に来る**ことをここで示す。
   it("圧縮の区切り（system の compact_boundary）が並びの先頭に来る", () => {
     const messages = [

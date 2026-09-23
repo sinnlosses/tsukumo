@@ -4,7 +4,7 @@
 //
 // **画面を開いたときに1回引く**（押されてくる値ではない。`/token-usage` と同じ経路の形で、
 // サーバが駆動へ問い合わせて返す）。**ターンの実行中に呼んでも待たされない**ので、進行中でも
-// 同じように取りに行く（実測は `src/server/adapter/sdk-driver.ts` の `CONTEXT_USAGE_DETAIL`）。
+// 同じように取りに行く（実測は `src/server/adapter/sdk-context-usage.ts` の `CONTEXT_USAGE_DETAIL`）。
 //
 // **「取れなかった」は理由を問わず1つに畳む**（応答が落ちた・読めない形は区別しない。
 // 画面ですることが同じなので `use-token-usage.ts` と同じ畳み方）。**「まだ届いていない」は

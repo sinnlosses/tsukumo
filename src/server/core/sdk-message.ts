@@ -1,7 +1,7 @@
 // SDK から届いたメッセージを、tsukumo 内部のイベント（src/shared/session-event.ts）に変換する。
 //
-// **SDK の型を import しない。** SDK への依存は src/server/adapter/sdk-driver.ts の1ファイルに閉じる
-// （docs/design.md 5章）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
+// **SDK の型を import しない。** SDK への依存は src/server/adapter/ 直下の `sdk-` で始まるファイルに
+// 閉じる（docs/design.md 5章）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
 // unknown で受けて検証する（docs/coding-standards.md「型を迂回するキャストを使わない」）。
 // 知らない種別・壊れた形は**空の並び**にして無視する。種別は本体の更新で増える
 // （docs/architecture.md「既知の制約・注意点」）。

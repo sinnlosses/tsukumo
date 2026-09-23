@@ -18,12 +18,12 @@ import {
   readRememberedSessionDefault,
   writeRememberedSessionDefault,
 } from "./server/adapter/remembered-default.ts"
+import { startSdkDriver } from "./server/adapter/sdk-driver.ts"
 import {
   findSessionToResume,
   listSwitchableSessions,
   readRestoredEvents,
-  startSdkDriver,
-} from "./server/adapter/sdk-driver.ts"
+} from "./server/adapter/sdk-session.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"

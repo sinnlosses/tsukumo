@@ -3,7 +3,7 @@
 //
 // **中身は印から読めるものと、SDK が付けた見出し（`heading`）だけ**（目印・セッションのID・
 // 最終更新時刻・見出し）。**`heading` は会話の内容そのものではなく、SDK 自身が作った表示用の
-// 題**（`customTitle` → 自動要約 → 最初の依頼、の順に決まる。`src/server/adapter/sdk-driver.ts`）
+// 題**（`customTitle` → 自動要約 → 最初の依頼、の順に決まる。`src/server/adapter/sdk-session.ts`）
 // で、`127.0.0.1` のページに出すだけ（ログ・ファイル・外部へは出さない。
 // `docs/coding-standards.md`「会話内容の扱い」。メインビューが会話を出すのと同じ扱いで、
 // 複製にはあたらない）。

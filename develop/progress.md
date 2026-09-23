@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 879行の sdk-driver.ts を、SDK を import してよい規則ごと4つに分けた（T-428）
+
+SDK の import を許す規則を「1ファイルだけ」から「adapter 直下の `sdk-` で始まるファイル」に変え、駆動の本体・MCP ツール・セッションの一覧と続き・`/context` の写しの4つに分けた（最大456行）。振る舞いは変えていない。
+
 ### 2026-09-23 サイドバーのタスク一覧を main の develop/tasks.json から読むようにした（T-479）
 
 `watchTaskSummary` が1.5秒ごとに `git rev-parse refs/heads/main` を見て、先端が変わったときだけそのコミットから `git show` で読み直す。`main` が読めないときは作業ツリーへ落とさず「不明」、`git` のタイムアウトだけはその回を諦める。

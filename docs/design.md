@@ -51,7 +51,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 | 残すもの                                                                                                                       | 変えるもの                                                                     |
 | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| Agent SDK で Claude Code を動かす。SDK を import する場所を1ファイルに閉じる                                                   | サーバ側の HTML 組み立て（`presentation/view.ts`）→ ブラウザ側の部品           |
+| Agent SDK で Claude Code を動かす。SDK を import する場所を `adapter/` 直下の `sdk-` で始まるファイルに閉じる                  | サーバ側の HTML 組み立て（`presentation/view.ts`）→ ブラウザ側の部品           |
 | `speak(text, expression)` の MCP ツール。戻り値は `"ok"` だけ                                                                  | SSE 5本 + POST 6本 → WebSocket 1本（フレームとコマンド）                       |
 | `SessionEvent` の union と `applySessionEvent` の純粋な畳み込み                                                                | 自前の Markdown レンダラとサニタイザ → unified（remark / rehype）              |
 | 答え待ちの列（`canUseTool` の Promise を保留する）                                                                             | 4層（domain / usecase / presentation / infrastructure）→ 3層                   |
@@ -94,7 +94,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
                │ 呼ばれる                   │ core を import する
 ┌──────────────┴───────────────────────────▼─────────────────┐
 │ server/adapter（外の世界に触る場所。1ファイル = 1つの境界）   │
-│   sdk-driver（SDK）／ fake-driver（疑似セッション）           │
+│   sdk-*（SDK）／ fake-driver（疑似セッション）                │
 │   server（http: ページ・束ねた JS/CSS・vendor・立ち絵 / ws）  │
 │   character-pack ／ task-summary ／ bundle ／ orca-host       │
 └──────────────▲───────────────────────────┬─────────────────┘
@@ -202,7 +202,10 @@ src/
       system-prompt.ts        systemPrompt の append の組み立て（人格 → 規約 → 雑談の記憶。モードで並びが入れ替わる）
       host.ts                 ホストのポート（showView）。実装は adapter/orca-host.ts
     adapter/                  外の世界に触る場所。1ファイル = 1つの境界
-      sdk-driver.ts           SDK を import する唯一の場所。SessionDriver の本物の実装
+      sdk-driver.ts           SessionDriver の本物の実装（query() を回す）。SDK を import してよいのは sdk- で始まるファイルだけ
+      sdk-tool.ts             tsukumo の MCP サーバと6つのツール（speak / remember / forget / keep / index / recall）
+      sdk-session.ts          セッションの一覧・transcript の読み直し・印（listSessions / getSessionMessages / tagSession）
+      sdk-context-usage.ts    コンテキストの内訳の問い合わせと、画面が要る形への写し
       fake-driver.ts          疑似セッションどおりに SessionEvent を流す SessionDriver（疑似セッションは fs から読む）
       server.ts               http（ページ・/assets・/vendor・/character・/repository-file）
       session-socket.ts       ws（フレームとコマンド）。listen 済みのサーバに upgrade を足す
@@ -571,7 +574,9 @@ features/task-board/
 
 **層ごとの読み方**:
 
-- `server/adapter/` の直下は**1ファイル = 1つの境界**（`orca-host.ts` / `sdk-driver.ts`）。
+- `server/adapter/` の直下は**1ファイル = 1つの境界**（`orca-host.ts` / `repository-file.ts`）。
+  **例外は Agent SDK の1つだけ**で、1つの境界を `sdk-` で始まる数ファイルに分けてある（理由は
+  `docs/architecture.md` 原則3）。
   `adapter/lib/` はその下の段で、**境界を名乗らず、技術の扱い方だけを知っている道具**
   （「JSONL を1行ずつ読む」「`~` を展開する」）が入る。`adapter` にあるから `lib/` になるのではなく、
   **ファイル名が tsukumo の境界を名乗るかどうか**で分かれる
@@ -817,18 +822,31 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### session-driver.ts（core）と sdk-driver.ts（adapter）
 
-**契約は `core/session-driver.ts`、SDK の実装は `adapter/sdk-driver.ts`**。境目の基準は
-「`shared` の語彙で書けるか / SDK の語彙を名乗るか」で、`SessionDriver` の契約
+**契約は `core/session-driver.ts`、SDK の実装は `adapter/` 直下の `sdk-` で始まるファイル**。
+境目の基準は「`shared` の語彙で書けるか / SDK の語彙を名乗るか」で、`SessionDriver` の契約
 （`prompt` / `interrupt` / `answer` / `pending` / `setModel` / `setPermissionMode` / `close`）と
 `onEvent`・`SessionDriverOptions`・`DEFAULT_PERMISSION_MODE` / `DEFAULT_MODEL` は `core` 側、
-`query()` を回す `startSdkDriver` と `buildQuerySeedOptions`・`findSessionToResume` /
-`readRestoredEvents`・SDK の型を持つ `DEFAULT_EFFORT` は `adapter` 側。**名前が `startSession`
+`query()` を回す `startSdkDriver` と `buildQuerySeedOptions`・SDK の型を持つ `DEFAULT_EFFORT` は
+`adapter/sdk-driver.ts`、`findSessionToResume` / `readRestoredEvents` は `adapter/sdk-session.ts`。**名前が `startSession`
 ではないのは、`src/session-start.ts` の `startSession`（セッションを1つ起こす配線）と役割が
 違うから**（駆動を1つ起こすだけで、覚えた既定を読む・履歴を復元するといった段取りは持たない）。
 
 - `systemPromptAppend: string` を受け取ってそのまま `systemPrompt.append` にする。**何が
   どの順で載るかは決めない**（組み立ては `core/system-prompt.ts` の `takeSystemPromptAppend`。7章）
 - `resume: string | undefined`（8章）
+
+**SDK 側は、SDK のどの口に触るかで4つに分かれる**（import してよい先の規則は
+`docs/architecture.md` 原則3）。`query()` を回す本体が `sdk-driver.ts`、`query()` の
+`mcpServers` へ渡す tsukumo のツールが `sdk-tool.ts`（`createSdkMcpServer` / `tool`）、
+セッションの一覧・transcript・印が `sdk-session.ts`（`listSessions` / `getSessionMessages` /
+`tagSession`）、`/context` の内訳が `sdk-context-usage.ts`（`getContextUsage()` の戻り値の検証と
+写し）。`sdk-driver.ts` 以外を呼ぶのは駆動と配線層（`src/session-start.ts`）だけ。
+
+**他のファイルと共有する定数は、読む側の層で置き場を決める。** `TSUKUMO_MCP_SERVER_NAME` /
+`SPEAK_TOOL_NAME` は、届いた `assistant` メッセージから `speak` の呼び出しを見分ける
+`core/sdk-message.ts` が持ち、ツールを組む `sdk-tool.ts` がそこから取る（`core → adapter` は
+禁止なので、逆向きには置けない）。`DEFAULT_EFFORT` は SDK の型（`EffortLevel`）を名乗り、読むのが
+駆動だけなので `sdk-driver.ts` に置く。
 
 ### fake-driver.ts（adapter）
 
@@ -1539,7 +1557,7 @@ characters/<name>/
   （`resume` した文脈に claude 側の要約が既にある）。**判断そのものは core の中で閉じる**
 - **`/clear` を「続きから始めない」では拾えない。** 印はターンが終わるたびにそのときの
   セッションIDへ付け直され、`/clear` の直後は新しい `session_id` になる（`sdk-driver.ts` の
-  `relayMessages` と `scheduleMarkSession`）。だから**`/clear` のあと1ターン回せば空のほうが印を
+  `relayMessages` と `sdk-session.ts` の `scheduleMarkSession`）。だから**`/clear` のあと1ターン回せば空のほうが印を
   持ち**、次の起動は `seed.resume !== undefined` で始まる。条件(2)が無いと、そのパックの記憶は
   `TSUKUMO_NEW_SESSION=1` を使うまで戻らない
 - **印が無い・読めないときは「未渡し」として扱う。** 倒れる方向を「同じ要約が2度載る」側にして、
@@ -1722,7 +1740,7 @@ characters/<name>/
 - **同じ秒に書かれた行は区別しない。** 索引が指すのは「その秒に書いた行」で、隣の1件が一緒に
   載ることはありうる（**足りないより多いほうへ倒す**。秒より細かい印を足すほどの害ではない）
 
-**誰がいつ書くか。** 旗を立てるのは `keep` ツール（`src/server/adapter/sdk-driver.ts`）、書くのは
+**誰がいつ書くか。** 旗を立てるのは `keep` ツール（`src/server/adapter/sdk-tool.ts`）、書くのは
 **ターンの終わり**。
 
 - **ツールは引数を取らない**（指せるのはそのターンだけ。`docs/chat-mode.md` 4.9）。戻り値は
@@ -1798,7 +1816,7 @@ readRecent(packName, { recentBytes, keptBytes }) → { kept, recent }
   最後の行を採る（追記だけなら途中で止まっても被害が1行で済む性質が崩れない）
 - **`v` を上げない。** 日付のファイルも `kept.jsonl` も1バイトも変わらない
 
-**誰がいつ書くか。** 書くのは `index` ツール（`src/server/adapter/sdk-driver.ts`）で、
+**誰がいつ書くか。** 書くのは `index` ツール（`src/server/adapter/sdk-tool.ts`）で、
 **受け取った1行をそのまま**その日の行として積む。
 
 - **口は `ChatRecall`**（`core/session-driver.ts`。`index` と `recall` の2つ）。`ChatArchive` を

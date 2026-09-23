@@ -1,7 +1,7 @@
 // 答え待ちの列。SDK の `canUseTool` に届いた許可要求とキャラクターからの質問を積み、
 // 画面から答えが来るまで Promise を保留する（docs/requirements.md 4.1 / 4.2）。
 //
-// **SDK の型を import しない**（依存は src/server/adapter/sdk-driver.ts の1ファイルに閉じる）。
+// **SDK の型を import しない**（依存は src/server/adapter/ 直下の `sdk-` で始まるファイルに閉じる）。
 // `AnswerResult` は SDK の `PermissionResult` と構造が一致するので、駆動側はそのまま返せる。
 // 答え待ちの語彙そのもの（`PendingAsk` / `Answer`）は shared にある。
 //

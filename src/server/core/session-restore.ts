@@ -1,6 +1,6 @@
 // 前のセッションの続きから始めるための計算（docs/requirements.md 4.8）。**SDK を呼ばない
-// 純粋な部分だけ**をここに置き、`listSessions` / `getSessionMessages` を実際に呼ぶのは駆動側
-// （src/server/adapter/sdk-driver.ts）。純粋なので、本物の claude を起こさずにテストできる。
+// 純粋な部分だけ**をここに置き、`listSessions` / `getSessionMessages` を実際に呼ぶのは
+// src/server/adapter/sdk-session.ts。純粋なので、本物の claude を起こさずにテストできる。
 //
 // 戻すのは (1) どのセッションの続きから始めるか（印と `lastModified` で選ぶ）と
 // (2) 画面の履歴（transcript のメッセージ列 → 内部イベント）の2つ。
