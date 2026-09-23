@@ -55,9 +55,9 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
-### 2026-09-23 ローカル時刻の HH:MM を作る手を clock.ts に寄せた（T-433）
+### 2026-09-23 container/presenter の割る基準を「振る舞いの種類の数」に決め直した（T-442）
 
-ブラウザ側の3か所がタイムゾーンを直に読んで `HH:MM` を組んでいたのを、`src/browser/utils/clock.ts` の `zonedDateTime` / `clockTime` / `clockDateTime` と `localTimeZoneId()` に揃えた。表示の書式は変えていない。
+「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。
 
 ### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
 
@@ -74,6 +74,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ### 2026-09-23 版の合わない hello の知らせに、部品のテストを足した（T-410）
 
 `hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。
+
+### 2026-09-23 ローカル時刻の HH:MM を作る手を clock.ts に寄せた（T-433）
+
+ブラウザ側の3か所がタイムゾーンを直に読んで `HH:MM` を組んでいたのを、`src/browser/utils/clock.ts` の `zonedDateTime` / `clockTime` / `clockDateTime` と `localTimeZoneId()` に揃えた。表示の書式は変えていない。
 
 ### 2026-09-23 動いている部屋のビューを iframe の格子に並べて Orca に開くスクリプトを足した（T-424）
 

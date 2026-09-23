@@ -425,7 +425,7 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 | -------------------------------- | --------------------------------------------------------------------------- |
 | 外部システムの購読               | WebSocket の接続（`browser/stores/session.tsx`）                            |
 | React の外にある状態への書き込み | `document.title`・CSS カスタムプロパティ・`dialog.showModal()`・`scrollTop` |
-| タイマー                         | 経過時間の1秒刻み（`browser/features/dispatch/turn-status.tsx`）            |
+| タイマー                         | 経過時間の1秒刻み（`browser/features/dispatch/hooks/use-turn-status.ts`）   |
 | 外部からの読み込み               | `fetch`・vendor script の読み込み                                           |
 
 4類型から外れるものをどうしても書くときは、**なぜ下の代替では書けないのか**をコメントに残す

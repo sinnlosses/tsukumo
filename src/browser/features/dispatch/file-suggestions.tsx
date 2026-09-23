@@ -1,11 +1,9 @@
-// 入力欄の `@` ファイル補完。**キャレットの直前の語が「行頭または空白の直後の `@`」で始まり、
-// まだ空白を含まないときだけ**候補を出す（docs/requirements.md 4.2「入力欄」）。候補は
-// git 管理下のファイルのパス（`GET /repository-file`。サーバ側は
-// `src/server/adapter/repository-file.ts` の `git ls-files`）で、**中身は読まない**。
+// 入力欄の `@` ファイル補完の**絞り方と一覧**（`/` 補完の `command-suggestions.tsx` と対）。
+// **キャレットの直前の語が「行頭または空白の直後の `@`」で始まり、まだ空白を含まないときだけ**
+// 候補を出す（docs/requirements.md 4.2「入力欄」）。
 //
-// **一覧は1回取ってブラウザ側で絞る**（打鍵のたびにサーバへ問い合わせない。`git ls-files` を
-// 打鍵ごとに起こすと子プロセスがその回数だけ立つ）。取得は TanStack Query に任せるので、
-// 呼び出し側（`hooks/use-composer.ts`）に取得の配線は無い。
+// **候補の元を取るのは `hooks/use-repository-file-paths.ts`**（git 管理下のパス。外の世界に
+// 触るのはあちらだけ）。ここは純粋な絞り込みと、一覧を描くだけの部品を持つ。
 //
 // **絞り方は `/` 補完と同じ**（前方一致を先に、続けて部分一致。各グループの中は辞書順で、合計
 // 最大 {@link MAX_FILE_SUGGESTIONS} 件）。違うのは**大文字小文字を区別しない**ことだけで、
@@ -13,24 +11,11 @@
 //
 // キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側（`hooks/use-composer.ts`）が持つ（`/` 補完と同じ）。
 
-import { useQuery } from "@tanstack/react-query"
 import { type ReactElement } from "react"
 
-import { readRepositoryFileList, REPOSITORY_FILE_PATH } from "../../../shared/repository-file.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
 import styles from "./dispatch.module.css"
 
 export const MAX_FILE_SUGGESTIONS = 10
-
-/**
- * 一覧を取り直す間隔。**0 でも `Infinity` でもない**のは、セッションの間にファイルが増える
- * （キャラクターが作る）一方で、打鍵のたびに `git ls-files` を起こしたくないため。`@` を打った
- * 最初の1回で取り、この時間が過ぎてから次に `@` を打つと取り直す。
- */
-const FILE_LIST_STALE_TIME_MS = 30_000
-
-/** 一覧をキャッシュに残す時間。`@` を使い終わってしばらくは取り直さずに済む。 */
-const FILE_LIST_GC_TIME_MS = 5 * 60_000
 
 /**
  * いま打っている `@<パス>`。**`start` から `end` までを確定後の文字列で置き換える**
@@ -80,37 +65,6 @@ export function matchingFilePaths(paths: readonly string[], term: string): reado
     (path) => !path.toLowerCase().startsWith(needle) && path.toLowerCase().includes(needle),
   )
   return [...prefixMatches, ...partialMatches].slice(0, MAX_FILE_SUGGESTIONS)
-}
-
-/**
- * git 管理下のファイルのパスを取る。**`enabled` が false の間は取りに行かない**（`@` を
- * 一度も打たない利用者のために、起動しただけでは一覧を作らせない）。
- *
- * **読めなかったときは空**（git リポジトリでないときもサーバが空を返す）。候補が出ないだけで、
- * 入力欄はそのまま使える。
- */
-export function useRepositoryFilePaths(enabled: boolean): readonly string[] {
-  const { data } = useQuery({
-    queryKey: [REPOSITORY_FILE_PATH] as const,
-    queryFn: async () => {
-      const response = await fetch(repositoryFileUrl())
-      return response.ok ? readRepositoryFileList(await response.json()) : []
-    },
-    enabled,
-    staleTime: FILE_LIST_STALE_TIME_MS,
-    gcTime: FILE_LIST_GC_TIME_MS,
-  })
-
-  return data ?? []
-}
-
-/**
- * 一覧の URL。**起動トークンを付ける**（`/ws` と同じ守り方で、値は今開いているページの URL から
- * 引く。`lib/socket.ts` の `socketUrl` と同じ）。
- */
-function repositoryFileUrl(): string {
-  const token = new URL(window.location.href).searchParams.get(SESSION_TOKEN_QUERY_NAME) ?? ""
-  return `${REPOSITORY_FILE_PATH}?${SESSION_TOKEN_QUERY_NAME}=${encodeURIComponent(token)}`
 }
 
 function byPath(left: string, right: string): number {

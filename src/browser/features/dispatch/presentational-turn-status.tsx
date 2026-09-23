@@ -1,0 +1,44 @@
+// 送信⇄中断のボタンと経過/所要の表示の**器だけ**（<PresentationalTurnStatus>。
+// docs/design.md 6.1）。フックも算出も持たず、`hooks/use-turn-status.ts` が畳んだ値と呼び先を
+// そのまま置く（docs/design.md 2章「機能の中を分ける」）。
+//
+// **`<Composer>` の `<form>` の中に置く**ことを前提にする — 送るほう（`action.kind === "send"`）は
+// `type="submit"` で、押すと Composer の `onSubmit` がそのまま依頼を送る。
+
+import { type ReactElement } from "react"
+
+import styles from "./dispatch.module.css"
+import { type TurnStatusModel } from "./hooks/use-turn-status.ts"
+
+/** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
+const SEND_SHORTCUT_HINT = "⌘⏎"
+
+export type PresentationalTurnStatusProps = TurnStatusModel
+
+export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): ReactElement {
+  return (
+    <div className={styles["dispatch-row"]}>
+      <span className={styles["dispatch-elapsed-row"]}>
+        <span>{props.elapsedLabel}</span>{" "}
+        <span className={styles["dispatch-elapsed"]}>{props.elapsedText}</span>
+      </span>
+      {props.action.kind === "interrupt" ? (
+        <button
+          type="button"
+          className={styles["dispatch-interrupt"]}
+          onClick={props.action.onInterrupt}
+        >
+          {props.action.label}
+        </button>
+      ) : (
+        <button
+          type="submit"
+          className={styles["dispatch-send"]}
+          data-shortcut={SEND_SHORTCUT_HINT}
+        >
+          {props.action.label}
+        </button>
+      )}
+    </div>
+  )
+}
