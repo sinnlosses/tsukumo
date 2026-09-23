@@ -81,7 +81,7 @@ SDK の import を許す規則を「1ファイルだけ」から「adapter 直�
 
 ### 2026-09-23 ターンの締め方の条を report-notation.ts に寄せ、persona.md は言い回しだけにした（T-471）
 
-2つの `persona.md` の節を「締めのセリフの言い方」にして言い回しの例と正典への参照だけを残し、`docs/display.md` のセリフの規約の正典を `speech-cadence.ts`・`report-notation.ts`・`persona.md` の3分割に書き直した（`asuna.md` は TUI 向け）。ホームの `~/.tsukumo/characters/tsukumo/persona.md` は旧文面のままで、揃えるのは利用者に預けた。
+2つの `persona.md` の節を「締めのセリフの言い方」にして言い回しの例と正典への参照だけを残し、`docs/display.md` のセリフの規約の正典を `speech-cadence.ts`・`report-notation.ts`・`persona.md` の3分割に書き直した（`asuna.md` は TUI 向け）。ホームの `~/.tsukumo/characters/tsukumo/persona.md` も、利用者の許可を得て同じ節に差し替えた。
 
 ### 2026-09-23 requirements.md 2.2 のセッション切り替えの禁止を実物に合わせた（T-455）
 
