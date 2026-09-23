@@ -18,6 +18,7 @@
 }
 .token-usage-title {
   margin: 0;
+  color: var(--usage-ink);
   font-size: var(--font-heading);
   font-weight: normal;
 }
@@ -30,32 +31,33 @@
   font-size: var(--font-label);
   line-height: 1.4;
 }
-/* 期間の切り替え。**3つで1つの入れ物**（枠は群の外側だけで、中のボタンは枠を持たない）。 */
+/* 期間の切り替え。**3つで1つの入れ物**（枠は群の外側だけで、中のボタンは枠を持たない）。
+   地は札より沈める（「自動圧縮まで」の箱と同じ `--usage-well`）。 */
 .token-usage-period {
   display: flex;
   margin-left: auto;
   gap: 2px;
   padding: 3px;
-  background: var(--ground);
-  border: 1px solid var(--rule-quiet);
+  background: var(--usage-well);
+  border: 1px solid var(--usage-rule);
   border-radius: 0.625rem;
 }
 /* **選ばれている側は地を1段上げる**（`aria-pressed`。色だけに頼らない）。 */
 .token-usage-choice {
   padding: 0.25rem 0.7rem;
   background: none;
-  color: var(--ink-quiet);
+  color: var(--usage-ink-label);
   border: none;
   border-radius: 0.4375rem;
   font-size: var(--font-label);
   cursor: pointer;
 }
 .token-usage-choice:hover {
-  color: var(--ink);
+  color: var(--usage-ink);
 }
 .token-usage-choice[aria-pressed="true"] {
-  background: var(--surface-raised);
-  color: var(--ink);
+  background: var(--usage-chosen);
+  color: var(--usage-ink);
 }
 
 .token-usage-section {
@@ -72,6 +74,7 @@
 }
 .token-usage-section-label {
   margin: 0;
+  color: var(--usage-ink);
   font-size: var(--font-subheading);
   font-weight: normal;
 }
@@ -90,22 +93,23 @@
   flex-direction: column;
   gap: 0.15rem;
   padding: 1rem 1.125rem;
-  border: 1px solid var(--rule-quiet);
+  border: 1px solid var(--usage-rule);
   border-radius: 0.875rem;
-  background: var(--surface-raised);
+  background: var(--usage-card);
   /* 中の棒は grid の列幅に合わせて縮む。`min-width: 0` が無いと、棒の本数ぶんの最小幅が
      そのまま列の下限になり、狭い画面で横に溢れる。 */
   min-width: 0;
 }
 .usage-card-label {
   margin: 0;
-  color: var(--ink-quiet);
+  color: var(--usage-ink-label);
   font-size: var(--font-label);
   font-weight: normal;
 }
 /* 数が主（13.3 のタイプスケールの中で最大の段）。桁が動いても揃うよう等幅の数字にする。 */
 .usage-card-value {
   margin: 0;
+  color: var(--usage-ink);
   font-family: var(--font-mono);
   font-size: var(--font-heading);
   font-variant-numeric: tabular-nums;
@@ -114,7 +118,7 @@
    高さの手がかりになる。寄せる側は棒の位置で決まる（`period-usage-card.tsx`）。 */
 .usage-card-peak {
   margin: 0.4rem 0 0.15rem;
-  color: var(--ink-quiet);
+  color: var(--usage-ink-note);
   font-family: var(--font-mono);
   font-size: var(--font-label);
   font-variant-numeric: tabular-nums;
@@ -136,6 +140,8 @@
   align-items: end;
   gap: 1px;
   height: 3.5rem;
+  /* 基線。**寸法を変えない**よう枠ではなく外側の影で引く（棒の足元のすぐ下に1本出る）。 */
+  box-shadow: 0 1px 0 var(--usage-bar-baseline);
 }
 /* 棒1本。**塗りはキャラクターの色を使わない**（13.1 原則1。読む面は誰が来ても同じ濃さ）。 */
 .usage-card-bar {
@@ -157,7 +163,7 @@
   justify-content: space-between;
   gap: 0.5rem;
   margin: 0.25rem 0 0;
-  color: var(--ink-quiet);
+  color: var(--usage-ink-faint);
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
@@ -178,16 +184,20 @@
 /* 見出しの行は**下の罫線だけ**で区切る（地を上げない。行の罫線より1段はっきりさせて、
    ここが表の頭だと分かるようにする）。 */
 .token-usage-table thead th {
-  border-bottom: 1px solid var(--rule);
-  color: var(--ink-quiet);
+  border-bottom: 1px solid var(--usage-rule);
+  color: var(--usage-ink-note);
   font-size: var(--font-label);
   font-weight: normal;
 }
 .token-usage-table thead th:first-child {
   text-align: left;
 }
+/* 行の区切りは**行の頭（`th scope="row"` の名前）にも引く**（数の列だけだと罫が名前の手前で
+   途切れる）。 */
+.token-usage-table tbody th,
 .token-usage-table tbody td {
-  border-bottom: 1px solid var(--rule-quiet);
+  border-bottom: 1px solid var(--usage-rule-quiet);
+  color: var(--usage-ink-cell);
 }
 /* 数は等幅・桁揃え（大小を縦に読むため）。 */
 .token-usage-table td {
@@ -224,11 +234,12 @@
 }
 .usage-table-title {
   margin: 0;
+  color: var(--usage-ink);
   font-size: var(--font-subheading);
   font-weight: normal;
 }
 .usage-table-order {
-  color: var(--ink-quiet);
+  color: var(--usage-ink-note);
   font-size: var(--font-label);
 }
 
@@ -316,9 +327,9 @@
   flex-direction: column;
   gap: 1.125rem;
   padding: 1.5rem 1.75rem;
-  border: 1px solid var(--rule-quiet);
+  border: 1px solid var(--usage-rule);
   border-radius: 0.875rem;
-  background: var(--surface-raised);
+  background: var(--usage-card);
 }
 /* 見出しの行。**右の2つは `margin-left: auto` で押しやる**（狭い画面では下へ折り返す）。 */
 .context-head {
@@ -329,11 +340,12 @@
 }
 .context-title {
   margin: 0;
+  color: var(--usage-ink);
   font-size: var(--font-subheading);
   font-weight: normal;
 }
 .context-note {
-  color: var(--ink-quiet);
+  color: var(--usage-ink-note);
   font-size: var(--font-label);
 }
 .context-aside {
@@ -343,18 +355,23 @@
   gap: 0.5rem;
   margin-left: auto;
 }
-/* 自動圧縮までの残り。**枠のある小さな札**（プランの札と同じ静かな扱い）。 */
+/* 自動圧縮までの残り。**札より沈んだ枠のある小さな箱**（期間の切り替えの外枠と同じ地）。
+   数のほうを明るく、「自動圧縮まで」を一段落とす。 */
 .context-until {
   padding: 0.1rem 0.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  color: var(--ink-quiet);
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.625rem;
+  background: var(--usage-well);
+  color: var(--usage-ink);
   font-size: var(--font-label);
   line-height: 1.4;
 }
+.context-until-label {
+  color: var(--usage-ink-label);
+}
 /* 内訳のモデルと取った時刻（機械の側の名前なので等幅。13.1 原則3）。 */
 .context-taken {
-  color: var(--ink-quiet);
+  color: var(--usage-ink-faint);
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
@@ -366,15 +383,21 @@
   margin: 0;
 }
 .context-total-value {
+  color: var(--usage-ink);
   font-family: var(--font-mono);
   font-size: var(--font-heading);
   font-variant-numeric: tabular-nums;
 }
-.context-total-max {
-  color: var(--ink-quiet);
+/* 窓の大きさ（`/ 200k`）より割合を1段明るく（割合のほうが読みたい数）。 */
+.context-total-max,
+.context-total-share {
+  color: var(--usage-ink-note);
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
   font-variant-numeric: tabular-nums;
+}
+.context-total-share {
+  color: var(--usage-ink-soft);
 }
 
 /* 横棒1本。**区間の幅は行ごとの `--context-share`**（割合をそのまま幅にする）。窓を超えた回は
@@ -412,20 +435,25 @@
   align-items: baseline;
   gap: 0.6rem;
   padding: 0.5rem 0;
-  border-top: 1px solid var(--rule-quiet);
+  border-top: 1px solid var(--usage-rule-quiet);
   font-size: var(--font-secondary);
   white-space: nowrap;
 }
 .context-legend-name {
   display: flex;
+  color: var(--usage-ink-soft);
   align-items: baseline;
   gap: 0.35rem;
 }
+/* 数（トークン数）を明るく、割合を静かに。 */
 .context-legend-value {
   margin-left: auto;
-  color: var(--ink-quiet);
+  color: var(--usage-ink-note);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+.context-legend-tokens {
+  color: var(--usage-ink);
 }
 /* 凡例の四角。**横棒と同じ塗り**（同じ `.context-tone-*` を重ねる）。 */
 .context-swatch {
@@ -441,12 +469,14 @@
   border: 1px solid var(--context-outline);
 }
 
-/* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。 */
+/* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。凡例の行と同じ罫で上を区切る。 */
 .context-detail {
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--usage-rule-quiet);
   font-size: var(--font-label);
 }
 .context-detail-summary {
-  color: var(--ink-quiet);
+  color: var(--usage-ink-label);
   cursor: pointer;
 }
 .context-detail[open] .context-detail-summary {

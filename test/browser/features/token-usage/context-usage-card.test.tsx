@@ -94,12 +94,13 @@ describe("ContextUsageCard", () => {
   })
 
   it("使っている量・窓の大きさ・割合と、自動圧縮までの残りを出す", () => {
-    const { queryByText } = render(<ContextUsageCard {...readyCard()} />)
+    const { container, queryByText } = render(<ContextUsageCard {...readyCard()} />)
 
     expect(queryByText("60.0k")).not.toBeNull()
     expect(queryByText("/ 200k")).not.toBeNull()
     expect(queryByText("30%")).not.toBeNull()
-    expect(queryByText("自動圧縮まで あと 95.0k")).not.toBeNull()
+    // 「自動圧縮まで」だけ字の色が違うので要素が割れている。読める文は札1つぶんで測る。
+    expect(container.querySelector(".context-until")?.textContent).toBe("自動圧縮まで あと 95.0k")
   })
 
   it("窓の外の分類は畳んだ内訳の中に出す", () => {

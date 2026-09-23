@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 トークン消費の画面の地・罫・文字の段を見本（案1）の値に揃えた（T-457）
+
+`theme.css` に画面専用の `--usage-*`（札・箱・選択の地、罫2段、文字6段、基線）を足し、`token-usage.module.css` を塗り直した。`--context-other` は無彩の灰 `#a6a2b0` に替え、`docs/screen-design.md` 13.2 に値の表を記した（内訳の6色と棒の青は `b674e13` で入っていた）。
+
 ### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
 
 `newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。

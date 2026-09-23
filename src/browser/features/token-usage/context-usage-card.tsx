@@ -46,7 +46,8 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         <span className={styles["context-note"]}>{CARD_NOTE}</span>
         <div className={styles["context-aside"]}>
           <span className={styles["context-until"]}>
-            {`自動圧縮まで あと ${formatCount(card.untilCompactTokens)}`}
+            <span className={styles["context-until-label"]}>自動圧縮まで</span>
+            {` あと ${formatCount(card.untilCompactTokens)}`}
           </span>
           <span className={styles["context-taken"]}>
             {`${card.model} · 更新 ${clockLabel(card.takenAt)}`}
@@ -57,7 +58,7 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
       <p className={styles["context-total"]}>
         <span className={styles["context-total-value"]}>{formatCount(card.totalTokens)}</span>
         <span className={styles["context-total-max"]}>{`/ ${formatCount(card.maxTokens)}`}</span>
-        <span className={styles["context-total-max"]}>{`${card.percentage}%`}</span>
+        <span className={styles["context-total-share"]}>{`${card.percentage}%`}</span>
       </p>
 
       <div className={styles["context-bar"]}>
@@ -78,7 +79,8 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
               {categoryLook(row.name).label}
             </dt>
             <dd className={styles["context-legend-value"]}>
-              {`${formatCount(row.tokens)} · ${formatShare(row.share)}`}
+              <span className={styles["context-legend-tokens"]}>{formatCount(row.tokens)}</span>
+              {` · ${formatShare(row.share)}`}
             </dd>
           </div>
         ))}
