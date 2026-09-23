@@ -4,7 +4,7 @@
 import process from "node:process"
 
 import { run } from "./main.ts"
-import { readConfig, readReportChannel } from "./server/core/config.ts"
+import { readConfig } from "./server/core/config.ts"
 import { DEFAULT_VIEW_PORT, VIEW_PORT_FALLBACK_ATTEMPTS } from "./server/core/port-resolution.ts"
 
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
@@ -45,8 +45,6 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       雑談の要約とアーカイブ・トークンの記録・画面から作ったパックがこの下に並ぶ）。
                       **2つを並行して動かすときだけ**、TSUKUMO_VIEW_PORT と一緒に分けて渡す。
                       相対パスは cwd 相対、絶対パスはそのまま
-  TSUKUMO_REPORT_TOOL 1 を渡すと、レポートを report ツールで受け取る（試行用。採否が決まったら
-                      消す。既定はターンのテキストから選ぶ今までの受け取り方。雑談には効かない）
 `
 
 /**
@@ -60,7 +58,7 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   // 環境変数を読むのはここだけ（解釈は src/server/core/config.ts）。
-  return run(readConfig(process.env), readReportChannel(process.env))
+  return run(readConfig(process.env))
 }
 
 const exitCode = await main(process.argv.slice(2))

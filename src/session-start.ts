@@ -29,7 +29,6 @@ import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
-import { type ReportChannel } from "./server/core/report-tool.ts"
 import {
   type ChatArchive,
   type ChatRecall,
@@ -71,21 +70,11 @@ export type SessionStartOptions = {
    * ポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
    */
   readonly viewPort: number
-  /** レポートの受け取り方（試行の口。`src/server/core/report-tool.ts`）。 */
-  readonly reportChannel: ReportChannel
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export function startSession(options: SessionStartOptions): SessionManager {
-  const {
-    config,
-    character,
-    fakeSession,
-    tokenUsageLog,
-    promptImageShelf,
-    viewPort,
-    reportChannel,
-  } = options
+  const { config, character, fakeSession, tokenUsageLog, promptImageShelf, viewPort } = options
   // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
   const cwd = process.cwd()
   // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
@@ -140,7 +129,6 @@ export function startSession(options: SessionStartOptions): SessionManager {
           scene: config.fakeScene,
           viewPort,
           cwd,
-          reportChannel,
           onEvent,
         }),
       restoreEvents: (resumed, pack) =>
@@ -168,7 +156,6 @@ function startDriver(options: {
   readonly viewPort: number
   /** claude の作業先（tsukumo を起こしたディレクトリ）。 */
   readonly cwd: string
-  readonly reportChannel: ReportChannel
   readonly onEvent: (event: SessionEvent) => void
 }): SessionDriver {
   const { seed, chatArchive, fakeSession, cwd, onEvent } = options
@@ -185,31 +172,25 @@ function startDriver(options: {
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
   const mode = sessionMode(seed, chatArchive, cwd, onEvent)
 
-  return startSdkDriver(
-    {
-      cwd,
-      expressions: expressionChoices(seed.pack.definition),
-      // **覚えた既定で起こす**（`docs/screen-design.md` 13.6）。起こしたあと帯から変えた値は
-      // そのセッション限りで、ここには戻らない。
-      permissionMode: seed.sessionDefault.permissionMode,
-      model: seed.sessionDefault.model,
-      // **何がどの順で載るかは core（`system-prompt.ts`）が持つ**ので、ここは人格の文面と口を
-      // 渡すだけ（`docs/design.md` 7章）。**人格の「無い」はここで畳む**（core へ
-      // `| undefined` を運ばない）。
-      systemPromptAppend: takeSystemPromptAppend(
-        {
-          persona: seed.pack.persona ?? "",
-          mode: toSystemPromptMode(mode, chatArchive, seed.start, seed.pack.name),
-        },
-        options.reportChannel,
-      ),
-      start: seed.start,
-      tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
-      mode,
-      onEvent,
-    },
-    options.reportChannel,
-  )
+  return startSdkDriver({
+    cwd,
+    expressions: expressionChoices(seed.pack.definition),
+    // **覚えた既定で起こす**（`docs/screen-design.md` 13.6）。起こしたあと帯から変えた値は
+    // そのセッション限りで、ここには戻らない。
+    permissionMode: seed.sessionDefault.permissionMode,
+    model: seed.sessionDefault.model,
+    // **何がどの順で載るかは core（`system-prompt.ts`）が持つ**ので、ここは人格の文面と口を
+    // 渡すだけ（`docs/design.md` 7章）。**人格の「無い」はここで畳む**（core へ
+    // `| undefined` を運ばない）。
+    systemPromptAppend: takeSystemPromptAppend({
+      persona: seed.pack.persona ?? "",
+      mode: toSystemPromptMode(mode, chatArchive, seed.start, seed.pack.name),
+    }),
+    start: seed.start,
+    tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
+    mode,
+    onEvent,
+  })
 }
 
 /**

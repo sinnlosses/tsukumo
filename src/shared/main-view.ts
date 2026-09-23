@@ -77,7 +77,7 @@ export type MainViewEntry =
     }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
-   * `report` ツールで受け取ったレポート（**試行中**）。引数はここで1つの本文に組んである
+   * `report` ツールで受け取ったレポート。引数はここで1つの本文に組んである
    * （{@link reportMarkdown}）。`detail` と分けてあるのは、このレポートがあるやり取りでは
    * 本文（`detail`）を出さないため（{@link selectToolReports}）。
    */

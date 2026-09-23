@@ -36,12 +36,7 @@ import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pendi
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { createReportReview, type ReportReview } from "../core/report-review.ts"
-import {
-  createReportGate,
-  REPORT_GATE_REASON,
-  type ReportChannel,
-  type ReportGate,
-} from "../core/report-tool.ts"
+import { createReportGate, REPORT_GATE_REASON, type ReportGate } from "../core/report-tool.ts"
 import {
   isSubagentMessage,
   toCommandDescriptions,
@@ -78,14 +73,8 @@ export const DEFAULT_EFFORT: EffortLevel = "high"
  * 反復が例外で終わったら `session-ended` を流すだけで、**プロセスは落とさない**
  * （docs/coding-standards.md「エラーハンドリング」）。`try`/`catch` は反復を包む1つだけに
  * まとめてある。
- *
- * `reportChannel` は試行の口（`src/server/core/report-tool.ts`）で、`report` ツールと `Stop` の
- * 関所を載せるかだけを決める（`options` に混ぜていないのは、採否が決まったら引数ごと消すため）。
  */
-export function startSdkDriver(
-  given: SessionDriverOptions,
-  reportChannel: ReportChannel,
-): SessionDriver {
+export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // **駆動が送り出すイベントは全部ここを通す**（依頼も SDK 由来も）。claude が依頼なしで
   // 始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある
   // （`src/server/core/self-started-turn.ts`）。
@@ -110,14 +99,9 @@ export function startSdkDriver(
       // 2つは雑談と仕事で分かれていて、同時に登録されることはない。
       hooks:
         chatSummaryHooks(options.mode, options.onEvent) ??
-        reportGateHooks(options.mode, reportChannel, reportGate),
+        reportGateHooks(options.mode, reportGate),
       mcpServers: {
-        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
-          options.expressions,
-          options.mode,
-          reportChannel,
-          reportReview,
-        ),
+        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode, reportReview),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),
@@ -260,8 +244,7 @@ export function chatSummaryHooks(
 
 /**
  * `report` の関所（`src/server/core/report-tool.ts` の {@link createReportGate}）を `Stop` フックに
- * 載せる。**仕事のときに、試行の口（`reportChannel`）が `tool` のときだけ登録する**——切り替えない
- * とき・雑談のときは `hooks` そのものを渡さない（undefined）。`SubagentStop` には載せない
+ * 載せる。**仕事のときだけ登録する**——雑談のときは `hooks` そのものを渡さない（undefined）。`SubagentStop` には載せない
  * （サブエージェントの `report` は捨てるので、渡し直させても画面に出ない）。
  *
  * **判定の前に1回だけ macrotask を待つ。** SDK はフックの呼び出し（制御リクエスト）を読んだ
@@ -274,10 +257,9 @@ export function chatSummaryHooks(
  */
 export function reportGateHooks(
   mode: SessionMode,
-  reportChannel: ReportChannel,
   gate: ReportGate,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined {
-  if (mode.kind !== "work" || reportChannel !== "tool") {
+  if (mode.kind !== "work") {
     return undefined
   }
 

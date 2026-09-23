@@ -126,7 +126,13 @@ export type SessionEvent =
   /** `speak` ツールの呼び出し。セリフと表情（docs/glossary.md「セリフ」「表情」）。 */
   | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
   /**
-   * `report` ツールの呼び出し（docs/glossary.md「report ツール」。**試行中**）。メインが呼んだ
+   * メインが `report` ツールの引数を書き始めた（`includePartialMessages` の断片で、呼び出しの
+   * 塊が開いた合図）。立ち絵の「書いている」の材料（`src/shared/portrait-motion.ts`）で、
+   * 同じ `toolUseId` の `report` か `tool-finished` が届くまで続く。中身（引数の断片）は運ばない。
+   */
+  | { readonly kind: "report-drafting"; readonly toolUseId: string }
+  /**
+   * `report` ツールの呼び出し（docs/glossary.md「report ツール」）。メインが呼んだ
    * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`body` と `favor` は無ければ空の
    * 文字列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/core/report-review.ts`）が同じ
    * 呼び出しの `tool-finished` と突き合わせるのに使う。

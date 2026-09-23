@@ -851,6 +851,46 @@ describe("toSessionEvents（report ツール）", () => {
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
+
+  /** `report` などの呼び出しの塊が開いた断片（`includePartialMessages`）。 */
+  function toolUseStarted(name: string, parentToolUseId: string | null) {
+    return {
+      type: "stream_event",
+      parent_tool_use_id: parentToolUseId,
+      event: {
+        type: "content_block_start",
+        index: 1,
+        content_block: { type: "tool_use", id: "toolu_r1", name, input: {} },
+      },
+    }
+  }
+
+  it("メインの report の呼び出しの塊が開いたら、書き始めた合図にする（立ち絵の「書いている」）", () => {
+    expect(toSessionEvents(toolUseStarted(REPORT_TOOL_FULL_NAME, null), EXPRESSIONS)).toEqual([
+      { kind: "report-drafting", toolUseId: "toolu_r1" },
+    ])
+  })
+
+  it("サブエージェントの report や、ほかのツールの塊が開いても合図にしない", () => {
+    expect(
+      toSessionEvents(toolUseStarted(REPORT_TOOL_FULL_NAME, "toolu_agent"), EXPRESSIONS),
+    ).toEqual([])
+    expect(toSessionEvents(toolUseStarted("Read", null), EXPRESSIONS)).toEqual([])
+  })
+
+  it("report の引数の断片（input_json_delta）は運ばない", () => {
+    const delta = {
+      type: "stream_event",
+      parent_tool_use_id: null,
+      event: {
+        type: "content_block_delta",
+        index: 1,
+        delta: { type: "input_json_delta", partial_json: '{"conclusion":"架空' },
+      },
+    }
+
+    expect(toSessionEvents(delta, EXPRESSIONS)).toEqual([])
+  })
 })
 
 describe("isSubagentMessage", () => {

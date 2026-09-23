@@ -918,6 +918,58 @@ describe("applySessionEvent", () => {
   })
 })
 
+describe("applySessionEvent（report を書いている間）", () => {
+  // 立ち絵の「書いている」の材料（`src/shared/portrait-motion.ts`）。
+  const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const DRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: "toolu_r1" }
+
+  it("report-drafting で書いている途中になり、同じ呼び出しの report で下りる", () => {
+    expect(apply(REQUEST, DRAFTING).reportDrafting).toEqual({
+      kind: "drafting",
+      toolUseId: "toolu_r1",
+    })
+    expect(
+      apply(REQUEST, DRAFTING, {
+        kind: "report",
+        toolUseId: "toolu_r1",
+        conclusion: "架空の結論。",
+        body: "",
+        favor: "",
+      }).reportDrafting,
+    ).toEqual({ kind: "idle" })
+  })
+
+  it("差し戻されて report が届かなくても、同じ呼び出しの tool-finished で下りる", () => {
+    const finished = apply(REQUEST, DRAFTING, {
+      kind: "tool-finished",
+      toolUseId: "toolu_r1",
+      content: "架空の差し戻し",
+      isError: true,
+    })
+
+    expect(finished.reportDrafting).toEqual({ kind: "idle" })
+    // report の結果はツールの記録ではないので、「失敗でびくっ」の材料にもならない。
+    expect(finished.lastToolFailureAt).toBeUndefined()
+  })
+
+  it("ほかの呼び出しの tool-finished では下りない", () => {
+    const other = apply(REQUEST, DRAFTING, {
+      kind: "tool-finished",
+      toolUseId: "toolu_other",
+      content: "架空の結果",
+      isError: false,
+    })
+
+    expect(other.reportDrafting.kind).toBe("drafting")
+  })
+
+  it("ターンが終わったら（中断で呼び出しが届かなくても）下りる", () => {
+    expect(
+      apply(REQUEST, DRAFTING, { kind: "turn-finished", status: "error" }).reportDrafting,
+    ).toEqual({ kind: "idle" })
+  })
+})
+
 describe("applySessionEvent（最近の話題）", () => {
   it("届くまでは空", () => {
     expect(INITIAL_SESSION_STATE.chatTopics).toEqual([])

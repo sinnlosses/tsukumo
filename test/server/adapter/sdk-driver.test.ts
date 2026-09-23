@@ -177,16 +177,12 @@ describe("reportGateHooks（report の関所）", () => {
   // 本文は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
   const LONG_BODY: SessionEvent = { kind: "utterance", text: "架空の本文の1行目\n架空の2行目" }
 
-  it("切り替えないとき（reportChannel が text）は hooks を登録しない", () => {
-    expect(reportGateHooks(WORK_MODE, "text", createReportGate())).toBeUndefined()
+  it("雑談のときは登録しない", () => {
+    expect(reportGateHooks(chatMode(fakeChatSummary()), createReportGate())).toBeUndefined()
   })
 
-  it("雑談のときは切り替えても登録しない", () => {
-    expect(reportGateHooks(chatMode(fakeChatSummary()), "tool", createReportGate())).toBeUndefined()
-  })
-
-  it("仕事で切り替えたときは Stop だけを登録し、SubagentStop には載せない", () => {
-    const hooks = reportGateHooks(WORK_MODE, "tool", createReportGate())
+  it("仕事のときは常に Stop だけを登録し、SubagentStop には載せない", () => {
+    const hooks = reportGateHooks(WORK_MODE, createReportGate())
     expect(Object.keys(hooks ?? {})).toEqual(["Stop"])
   })
 
@@ -194,7 +190,7 @@ describe("reportGateHooks（report の関所）", () => {
     const gate = createReportGate()
     gate.observe(LONG_BODY)
 
-    expect(await runStop(reportGateHooks(WORK_MODE, "tool", gate), false)).toEqual({
+    expect(await runStop(reportGateHooks(WORK_MODE, gate), false)).toEqual({
       decision: "block",
       reason: REPORT_GATE_REASON,
     })
@@ -204,14 +200,14 @@ describe("reportGateHooks（report の関所）", () => {
     const gate = createReportGate()
     gate.observe({ kind: "utterance", text: "完了" })
 
-    expect(await runStop(reportGateHooks(WORK_MODE, "tool", gate), false)).toEqual({})
+    expect(await runStop(reportGateHooks(WORK_MODE, gate), false)).toEqual({})
   })
 
   it("stop_hook_active のときは長い本文でも block しない", async () => {
     const gate = createReportGate()
     gate.observe(LONG_BODY)
 
-    expect(await runStop(reportGateHooks(WORK_MODE, "tool", gate), true)).toEqual({})
+    expect(await runStop(reportGateHooks(WORK_MODE, gate), true)).toEqual({})
   })
 })
 

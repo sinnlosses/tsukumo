@@ -1309,6 +1309,13 @@
           }
         },
         {
+          "afterMs": 2700,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-1"
+          }
+        },
+        {
           "afterMs": 3000,
           "event": {
             "kind": "report",
@@ -1352,6 +1359,13 @@
             "toolUseId": "fake-tool-report-2",
             "content": "ダミーの書き換え結果",
             "isError": false
+          }
+        },
+        {
+          "afterMs": 6300,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-2"
           }
         },
         {
