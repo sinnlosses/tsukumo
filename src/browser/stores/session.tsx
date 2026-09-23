@@ -30,6 +30,7 @@ import {
 } from "../../shared/session-state.ts"
 import { applyRefresh } from "../lib/refresh.ts"
 import { connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
+import { withViewTransition } from "../lib/view-transition.ts"
 
 /**
  * `dispatch` に渡すコマンド。`commandId` は `<SessionProvider>` が `crypto.randomUUID()` で
@@ -124,11 +125,14 @@ export function createSessionStore(): SessionStore {
   }
   let socket: CommandSocket | undefined = undefined
 
-  const publish = (next: SessionSnapshot): void => {
-    snapshot = next
+  const notify = (): void => {
     for (const listener of listeners) {
       listener()
     }
+  }
+  const publish = (next: SessionSnapshot): void => {
+    snapshot = next
+    notify()
   }
 
   return {
@@ -156,6 +160,16 @@ export function createSessionStore(): SessionStore {
       }
       const state = applyFrame(snapshot.state, frame)
       if (state === snapshot.state) {
+        return
+      }
+      // **仕事 / 雑談が入れ替わる `hello` だけ移り変わりに載せる**（立ち絵が別の領域へ移り、
+      // 差し色と背景も一緒に変わる。docs/screen-design.md 13.7「切り替えのときの立ち絵」）。
+      // 姿はその場で差し替え、描き直しの合図だけを移り変わりの中へ送る — 合図を待つ間に
+      // 届いた次のフレームも、新しい姿の上に畳まれる。**まだ何も描いていなかった最初の
+      // `hello`（キャラクターが届いていない）は載せない**（開いたときに溶けて見えるだけ）。
+      if (isModeSwitch(snapshot.state, frame, state)) {
+        snapshot = { ...snapshot, state }
+        withViewTransition(notify)
         return
       }
       // **答え待ち（許可要求・質問）が動いたフレームだけ緊急**にする。人が待っている箱なので
@@ -271,6 +285,15 @@ function useStoreSelector<T>(store: SessionStore, select: (session: SessionSnaps
     store.subscribe,
     () => select(store.getSnapshot()),
     () => select(store.getSnapshot()),
+  )
+}
+
+/** 描いていた画面の仕事 / 雑談を入れ替える `hello` か（起こし直しで配り直されたもの）。 */
+function isModeSwitch(previous: SessionState, frame: ServerFrame, next: SessionState): boolean {
+  return (
+    frame.type === "hello" &&
+    previous.character !== undefined &&
+    previous.chatMode !== next.chatMode
   )
 }
 
