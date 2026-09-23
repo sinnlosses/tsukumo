@@ -9,10 +9,11 @@
 // キャストを使わない」の境界の考え方）。`localStorage` から読み戻す値・`<input type="color">`
 // が渡す値のどちらも、ここでしか型を確定させない。
 //
-// **`features/character-screen/` から `lib/` へ上げてある**（3色の操作子が帯の歯車へ移り、
+// **`features/character-screen/` から `browser/domain/` へ上げてある**（3色の操作子が帯の歯車へ移り、
 // 読み手が2つの機能——歯車の `features/screen-nav/` と、差し色を読む
 // `features/character-screen/`——にまたがったため。2章「上げる引き金は2つ目の読み手が出たとき」）。
-// 包んでいるのは `localStorage` と `getComputedStyle` という実行環境の API なので `lib/` 側。
+// 包んでいるのは `localStorage` と `getComputedStyle` だが、**ファイル名が指すのは「画面の色」という
+// tsukumo の語彙**なので `lib/` ではなく `domain/`（2章「`lib/` と `utils/` に置く基準」の手順1）。
 
 import { isPlainObject } from "remeda"
 

@@ -1,5 +1,5 @@
 // レポートの ```chart フェンスの中身（Chart.js の設定を JSON で書いたもの）をグラフとして描く。
-// **Chart.js を読み込んで暗い配色へ寄せるのは `src/browser/lib/chart.ts`**（トークン消費の
+// **Chart.js を読み込んで暗い配色へ寄せるのは `src/browser/features/main-view/markdown/chart.ts`**（トークン消費の
 // 画面も同じ口を使う）で、ここが持つのは**フェンスの中身を config として渡すところ**だけ。
 //
 // もとは別ファイルの処理だったものを、部品の `useEffect` に持ち替えた（移行の段6。
@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState, type ReactElement } from "react"
 
-import { loadChart } from "../../../lib/chart.ts"
+import { loadChart } from "./chart.ts"
 
 export type ChartBlockProps = {
   /** ```chart フェンスの中身（Chart.js の設定を JSON で書いたもの）。 */

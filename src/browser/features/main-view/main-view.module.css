@@ -11,7 +11,7 @@
   flex-direction: column;
   /* **筆先に添うミニ立ち絵を置く基準**（`mini-portrait.module.css`）。本文と一緒に転がって
      ほしいので、ビューポートではなくここを原点にする。座標を測る側は `data-brush-origin` の
-     印でこの要素を探す（`stores/brush-tip.ts`）。 */
+     印でこの要素を探す（`reveal/brush-tip.ts`）。 */
   position: relative;
   /* ターンを替えたときの `scrollIntoView`（`main-view.tsx`）で、領域の余白まで転がし切らない。
      0 だと札の上端が領域の枠に貼り付き、枠が2本重なって見える。 */

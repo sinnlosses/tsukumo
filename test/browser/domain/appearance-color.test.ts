@@ -10,7 +10,7 @@ import {
   saveAppearanceColorOverride,
   type AppearanceColorOverride,
   MIN_CONTRAST,
-} from "../../../src/browser/lib/appearance-color.ts"
+} from "../../../src/browser/domain/appearance-color.ts"
 import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,

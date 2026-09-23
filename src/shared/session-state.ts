@@ -210,7 +210,7 @@ export type SessionState = {
    * ——`init`（`session-info`）だけでなく `model-changed`（`/model` コマンドやサイドバーの
    * `set-model` の確定）でも決まり、`sessionId` より先に分かることがあるため。まだどちらの
    * 口からも届いていなければ undefined（本物の「無い」——`init` 前に何を出すかは読む側が
-   * 見た目上の既定へ畳む。`src/browser/lib/model-label.ts` の `resolveModelAlias`）。
+   * 見た目上の既定へ畳む。`src/browser/features/screen-nav/domain/model-label.ts` の `resolveModelAlias`）。
    */
   readonly model: string | undefined
   /**

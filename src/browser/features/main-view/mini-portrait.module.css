@@ -1,7 +1,7 @@
 /* 筆先に添うミニ立ち絵の置き方（`src/browser/features/main-view/mini-portrait.tsx`）。
    立ち絵そのものの中身は `src/browser/components/portrait.module.css`。
 
-   **筆先の座標は本文の入れ物（`.main-turns`）の左上が原点**（`src/browser/stores/brush-tip.ts`）
+   **筆先の座標は本文の入れ物（`.main-turns`）の左上が原点**（`src/browser/features/main-view/reveal/brush-tip.ts`）
    なので、その入れ物の中に position: absolute で置く。**書き上げたあとも筆先はそこに残る**ので、
    ビューポート基準（position: fixed）のままだと、本文を転がしたときに関係ない場所へ浮いたまま
    居座る。

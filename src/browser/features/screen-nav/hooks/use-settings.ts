@@ -3,13 +3,13 @@
 // 演出の速さ**の3群。
 //
 // **3群は持ち先が違う。** 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
-// `browser/lib/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
+// `browser/domain/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
 // `set-session-default` で送り、`SessionState.sessionDefault` を読む）。**既定は次に起こすときから
 // 効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
-// セッション限りの別物）。演出の速さは `hooks/use-report-reveal.ts` がマウント時に読むだけなので、
+// セッション限りの別物）。演出の速さは `features/main-view/reveal/use-report-reveal.ts` がマウント時に読むだけなので、
 // 変えても書いている最中の演出には効かない（次に書き始めたときから）。
 //
-// **色の持ち方は `browser/lib/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
+// **色の持ち方は `browser/domain/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
 // いない。キャラクター画面から移したのは操作子だけ）。見た目（`documentElement`）
 // は `onChange` のたびそのまま反映し、`localStorage` への書き込みだけ `useDebouncedCallback` で
 // 200ms まとめる。**鍵は1つ**——保存は3色まとめて1つの入れ物を書くので、色ごとにタイマーを
@@ -34,7 +34,6 @@ import {
   isSessionDefaultPermissionMode,
   type SessionDefaultPermissionMode,
 } from "../../../../shared/session-default.ts"
-import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import {
   applyAppearanceColorOverride,
   changeAppearanceColor,
@@ -44,14 +43,15 @@ import {
   saveAppearanceColorOverride,
   type AppearanceColorKey,
   type AppearanceColorOverride,
-} from "../../../lib/appearance-color.ts"
-import { useDebouncedCallback } from "../../../lib/debounce.ts"
+} from "../../../domain/appearance-color.ts"
 import {
   isRevealSpeed,
   loadRevealSpeed,
   saveRevealSpeed,
   type RevealSpeed,
-} from "../../../lib/reveal-speed.ts"
+} from "../../../domain/reveal-speed.ts"
+import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
+import { useDebouncedCallback } from "../../../lib/debounce.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 
 /** 色の操作子1つ（見た目が受け取れる形まで畳んだもの）。 */
@@ -74,7 +74,7 @@ export type ScreenNavSettingsSessionDefault = {
 }
 
 /**
- * 書き上げる演出の速さの操作子（`docs/screen-design.md` 13.6。`lib/reveal-speed.ts`）。色と同じ
+ * 書き上げる演出の速さの操作子（`docs/screen-design.md` 13.6。`domain/reveal-speed.ts`）。色と同じ
  * 利用者の設定なので、書いた値をそのまま表示値にする（読み直さない）。
  */
 export type ScreenNavSettingsRevealSpeed = {

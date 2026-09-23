@@ -25,14 +25,14 @@ import { isModelAlias, isPermissionMode } from "../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { roomName } from "../../../../shared/room.ts"
 import { useDismissSignal } from "../../../hooks/use-dismiss-signal.ts"
-import { resolveModelAlias } from "../../../lib/model-label.ts"
-import {
-  isDangerousPermissionMode,
-  resolvePermissionMode,
-} from "../../../lib/permission-mode-label.ts"
 import { type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
+import { resolveModelAlias } from "../domain/model-label.ts"
+import {
+  isDangerousPermissionMode,
+  resolvePermissionMode,
+} from "../domain/permission-mode-label.ts"
 import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
 import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 

@@ -11,9 +11,9 @@ import { sessionStoreWith, type CommandSpy } from "../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/screen-design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
-// **保存の仕方は `browser/lib/appearance-color.ts` のまま**なので、鍵も検証も
+// **保存の仕方は `browser/domain/appearance-color.ts` のまま**なので、鍵も検証も
 // `appearance-color.test.ts` と同じものを見ている。演出の速さの保存は
-// `browser/lib/reveal-speed.ts`（`reveal-speed.test.ts` と同じ鍵）。
+// `browser/domain/reveal-speed.ts`（`reveal-speed.test.ts` と同じ鍵）。
 
 const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
 const COLOR_TOKENS = ["--ground", "--surface", "--ink"] as const
@@ -197,7 +197,7 @@ describe("設定の歯車（帯の右端）", () => {
     })
   })
 
-  // 色の検証は `browser/lib/appearance-color.ts` の1箇所のまま（歯車へ移しても変えていない）。
+  // 色の検証は `browser/domain/appearance-color.ts` の1箇所のまま（歯車へ移しても変えていない）。
   it("ground を ink と同じ色にしようとすると受け取らず、既定のまま", async () => {
     renderScreenNav()
     fireEvent.click(gear())
@@ -348,7 +348,7 @@ function defaultSelect(label: string): HTMLSelectElement {
   return document.getElementById(labelNode.htmlFor) as HTMLSelectElement
 }
 
-// 書き上げる演出の速さ（docs/screen-design.md 13.6。`browser/lib/reveal-speed.ts`）。**利用者の設定**
+// 書き上げる演出の速さ（docs/screen-design.md 13.6。`browser/domain/reveal-speed.ts`）。**利用者の設定**
 // なので色と同じ `localStorage`（保存先は違う鍵）。
 describe("設定の歯車（書き上げる演出の速さ）", () => {
   it("既定は「標準」", () => {

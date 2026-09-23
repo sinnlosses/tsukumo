@@ -25,7 +25,7 @@ const FIXTURE_PENDING: PendingAsk = {
 let themeStyleElement: HTMLStyleElement | undefined
 
 // 差し色の `<input type="color">` は定義に無い衣装の初期値を `--accent` から読む
-// （`browser/lib/appearance-color.ts` の `readAccentColor`）ので、`:root` を疑似的に用意する。
+// （`browser/domain/appearance-color.ts` の `readAccentColor`）ので、`:root` を疑似的に用意する。
 beforeEach(() => {
   themeStyleElement = document.createElement("style")
   themeStyleElement.textContent =
