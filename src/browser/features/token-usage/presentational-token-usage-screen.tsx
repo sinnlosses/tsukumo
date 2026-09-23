@@ -7,7 +7,7 @@
 // **画面に会話の文面は出ない**（集計にそもそも文面が入っていない。
 // `src/shared/token-usage-summary.ts`）。
 
-import { type ReactElement } from "react"
+import { type ReactElement, useState } from "react"
 
 import {
   TOKEN_USAGE_DAYS_CHOICES,
@@ -31,10 +31,11 @@ const EMPTY_NOTE = "この期間の記録はまだ無い"
 const FAILED_NOTE = "集計を取れなかった"
 
 /**
- * ツール別に並べる件数。**上から数件で「何が文脈を食ったか」は分かる**ので、全部は出さずに
- * 残りの件数だけを添える（数十種類が並ぶと表の意味が薄れる）。
+ * ツール別に並べる件数。**上から数件で「何が文脈を食ったか」は分かる**ので、初めは全部を
+ * 出さずに残りの件数だけを添える（数十種類が並ぶと表の意味が薄れる）。「ほか n 件を見る」を
+ * 押すと残りも出る（{@link ToolUsageCard}）。
  */
-const TOOL_ROWS = 10
+const TOOL_ROWS = 6
 
 export type PresentationalTokenUsageScreenProps = UseTokenUsageResult & {
   /** いまのコンテキストの内訳（`hooks/use-context-usage.ts`）。 */
@@ -75,14 +76,10 @@ export function PresentationalTokenUsageScreen(
       </section>
 
       {props.isError || isEmpty ? null : (
-        <>
-          <Section label="モデル別">
-            <ModelTable byModel={props.summary.byModel} />
-          </Section>
-          <Section label="ツール別">
-            <ToolTable byTool={props.summary.byTool} />
-          </Section>
-        </>
+        <div className={styles["usage-table-row"]}>
+          <ModelUsageCard byModel={props.summary.byModel} />
+          <ToolUsageCard byTool={props.summary.byTool} />
+        </div>
       )}
     </div>
   )
@@ -159,67 +156,75 @@ function PeriodUsageCards(props: PeriodUsageCardsProps): ReactElement {
   )
 }
 
-type SectionProps = {
-  readonly label: string
-  readonly children: ReactElement
+type ModelUsageCardProps = {
+  readonly byModel: readonly ModelUsageTotal[]
 }
 
-/** 小さな見出しと中身の組（区画そのものは枠を持たない。枠を持つのは中に並ぶ札のほう）。 */
-function Section(props: SectionProps): ReactElement {
+/**
+ * モデル別の札（期間の合計の札 `.usage-card` と同じ枠・同じ地）。**届く順がそのまま並び順**
+ * （出力の多い順。同じなら名前順——`src/server/core/token-usage.ts` の `summarizeByModel`）。
+ * **出力の列だけ**に、その列の最大に対する横棒を添える。
+ */
+function ModelUsageCard(props: ModelUsageCardProps): ReactElement {
+  const peak = Math.max(0, ...props.byModel.map((entry) => entry.totals.outputTokens))
+
   return (
-    <section className={styles["token-usage-section"]}>
-      <h2 className={styles["token-usage-section-label"]}>{props.label}</h2>
-      {props.children}
+    <section className={styles["usage-card"]}>
+      <TableCardHead title="モデル別" order="出力の多い順" />
+      <table className={`${styles["token-usage-table"]} ${styles["model-usage-table"]}`}>
+        <thead>
+          <tr>
+            <th scope="col">モデル</th>
+            <th scope="col">入力</th>
+            <th scope="col">出力</th>
+            <th scope="col">キャッシュ読み</th>
+            <th scope="col">キャッシュ作成</th>
+          </tr>
+        </thead>
+        <tbody>
+          {props.byModel.map((entry) => (
+            <tr key={entry.model}>
+              <th scope="row" className={styles["token-usage-name"]}>
+                {entry.model}
+              </th>
+              <td>{formatCount(entry.totals.inputTokens)}</td>
+              <td>
+                <BarredValue
+                  formatted={formatCount(entry.totals.outputTokens)}
+                  value={entry.totals.outputTokens}
+                  peak={peak}
+                />
+              </td>
+              <td>{formatCount(entry.totals.cacheReadInputTokens)}</td>
+              <td>{formatCount(entry.totals.cacheCreationInputTokens)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   )
 }
 
-type ModelTableProps = {
-  readonly byModel: readonly ModelUsageTotal[]
-}
-
-/** モデル別の表（モデル名の昇順で届く順のまま）。 */
-function ModelTable(props: ModelTableProps): ReactElement {
-  return (
-    <table className={styles["token-usage-table"]}>
-      <thead>
-        <tr>
-          <th scope="col">モデル</th>
-          <th scope="col">入力</th>
-          <th scope="col">出力</th>
-          <th scope="col">読み</th>
-          <th scope="col">作成</th>
-        </tr>
-      </thead>
-      <tbody>
-        {props.byModel.map((entry) => (
-          <tr key={entry.model}>
-            <th scope="row" className={styles["token-usage-name"]}>
-              {entry.model}
-            </th>
-            <td>{formatCount(entry.totals.inputTokens)}</td>
-            <td>{formatCount(entry.totals.outputTokens)}</td>
-            <td>{formatCount(entry.totals.cacheReadInputTokens)}</td>
-            <td>{formatCount(entry.totals.cacheCreationInputTokens)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
-
-type ToolTableProps = {
+type ToolUsageCardProps = {
   readonly byTool: readonly ToolUsageCount[]
 }
 
-/** ツール別の表（結果の長さの降順で届く順のまま。上位 {@link TOOL_ROWS} 件だけ）。 */
-function ToolTable(props: ToolTableProps): ReactElement {
-  const shown = props.byTool.slice(0, TOOL_ROWS)
-  const rest = props.byTool.length - shown.length
+/**
+ * ツール別の札。**上位 {@link TOOL_ROWS} 件だけ**を出し、残りがあれば「ほか n 件を見る」で
+ * 開く（押した状態は画面のこの表示だけの見た目の話なので `useState` で持つ。開いたら
+ * 「閉じる」に変えて戻せるようにする——並べ替えた6件より下を毎回スクロールで探させないため）。
+ * **結果の大きさの列だけ**に横棒を添える。
+ */
+function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
+  const [expanded, setExpanded] = useState(false)
+  const rest = props.byTool.length - TOOL_ROWS
+  const shown = expanded ? props.byTool : props.byTool.slice(0, TOOL_ROWS)
+  const peak = Math.max(0, ...props.byTool.map((tool) => tool.resultBytes))
 
   return (
-    <>
-      <table className={styles["token-usage-table"]}>
+    <section className={styles["usage-card"]}>
+      <TableCardHead title="ツール別" order="結果の大きい順" />
+      <table className={`${styles["token-usage-table"]} ${styles["tool-usage-table"]}`}>
         <thead>
           <tr>
             <th scope="col">ツール</th>
@@ -234,12 +239,77 @@ function ToolTable(props: ToolTableProps): ReactElement {
                 {tool.name}
               </th>
               <td>{tool.calls}</td>
-              <td>{formatBytes(tool.resultBytes)}</td>
+              <td>
+                <BarredValue
+                  formatted={formatBytes(tool.resultBytes)}
+                  value={tool.resultBytes}
+                  peak={peak}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {rest > 0 ? <p className={styles["token-usage-note"]}>{`ほか ${rest} 件`}</p> : null}
-    </>
+      {rest > 0 ? (
+        <button
+          type="button"
+          className={styles["usage-table-more"]}
+          onClick={() => {
+            setExpanded((current) => !current)
+          }}
+        >
+          {expanded ? "閉じる" : `ほか ${rest} 件を見る`}
+        </button>
+      ) : null}
+    </section>
   )
+}
+
+type TableCardHeadProps = {
+  readonly title: string
+  readonly order: string
+}
+
+/** 表を持つ札の見出し（見出しの横に並べ順を小さく添える）。 */
+function TableCardHead(props: TableCardHeadProps): ReactElement {
+  return (
+    <div className={styles["usage-table-head"]}>
+      <h3 className={styles["usage-table-title"]}>{props.title}</h3>
+      <span className={styles["usage-table-order"]}>{props.order}</span>
+    </div>
+  )
+}
+
+type BarredValueProps = {
+  /** 書き終えた数（表示する文字列そのもの）。 */
+  readonly formatted: string
+  /** 棒の長さを決める生の数。 */
+  readonly value: number
+  /** その列の最大（0 なら棒は描かない）。 */
+  readonly peak: number
+}
+
+/**
+ * 数の右に横棒を添える（並べ順を決めている列だけに使う。`period-usage-card.tsx` の縦棒と
+ * 同じ「その列の最大に対する割合」）。**塗りは `--ink-quiet`**——期間の合計の棒
+ * （`.usage-card-bar`）と同じ色で、意味を固定した新しい色を増やさない
+ * （`docs/design.md` 13.1 原則5）。
+ */
+function BarredValue(props: BarredValueProps): ReactElement {
+  return (
+    <span className={styles["usage-table-bar-cell"]}>
+      <span>{props.formatted}</span>
+      <span className={styles["usage-table-bar"]}>
+        <span
+          className={styles["usage-table-bar-fill"]}
+          style={{ "--usage-bar-share": barShare(props.value, props.peak) }}
+        />
+      </span>
+    </span>
+  )
+}
+
+/** 棒の幅（その列の最大に対する割合）。最大が0なら全部0%。 */
+function barShare(value: number, peak: number): string {
+  return peak === 0 ? "0%" : `${(value / peak) * 100}%`
 }

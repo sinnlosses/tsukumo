@@ -459,7 +459,7 @@ describe("summarizeTokenUsage", () => {
     expect(totalOfTrend(summary.trend)).toEqual({ inputTokens: 0, outputTokens: 0 })
   })
 
-  it("モデルごとに数を足し合わせ、モデル名の昇順で並べる", () => {
+  it("モデルごとに数を足し合わせ、出力の多い順で並べる", () => {
     const records = [
       record("2026-09-22T09:00:00+09:00", [
         usage("opus", 100, 20, 0.5),
@@ -473,18 +473,8 @@ describe("summarizeTokenUsage", () => {
       endDate: "2026-09-22",
     })
 
+    // opus は出力合計30、haiku は2。出力の多い opus が先に並ぶ。
     expect(summary.byModel).toEqual([
-      {
-        model: "haiku",
-        totals: {
-          inputTokens: 10,
-          outputTokens: 2,
-          thinkingTokens: 0,
-          cacheReadInputTokens: 0,
-          cacheCreationInputTokens: 0,
-          costUsd: 0.01,
-        },
-      },
       {
         model: "opus",
         totals: {
@@ -496,7 +486,31 @@ describe("summarizeTokenUsage", () => {
           costUsd: 0.7,
         },
       },
+      {
+        model: "haiku",
+        totals: {
+          inputTokens: 10,
+          outputTokens: 2,
+          thinkingTokens: 0,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          costUsd: 0.01,
+        },
+      },
     ])
+  })
+
+  it("出力が同じ数なら、モデル名の昇順で並べる", () => {
+    const records = [
+      record("2026-09-22T09:00:00+09:00", [usage("zeta", 10, 5, 0.1), usage("alpha", 20, 5, 0.1)]),
+    ]
+
+    const summary = summarizeTokenUsage(records, {
+      startDate: "2026-09-22",
+      endDate: "2026-09-22",
+    })
+
+    expect(summary.byModel.map((entry) => entry.model)).toEqual(["alpha", "zeta"])
   })
 
   it("ツールごとに、メインとサブエージェントの内訳を足し合わせる（長さの降順、同じなら名前順）", () => {

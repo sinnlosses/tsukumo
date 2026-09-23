@@ -76,7 +76,7 @@ export type ModelUsageTotal = {
 export type TokenUsageSummary = {
   /** 期間の推移（刻みは期間の長さで決まる。穴は0で埋まっている）。 */
   readonly trend: TokenUsageTrend
-  /** モデルごとの合計（モデル名の昇順）。 */
+  /** モデルごとの合計（出力の多い順、同じならモデル名順）。 */
   readonly byModel: readonly ModelUsageTotal[]
   /** ツールごとの合計（結果の長さの降順、同じなら名前順）。 */
   readonly byTool: readonly ToolUsageCount[]
