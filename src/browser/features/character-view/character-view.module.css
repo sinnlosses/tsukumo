@@ -299,10 +299,7 @@
 .speech-log {
   /* 枠の上端＝帯（画面のナビ）の外寸とその下の隙間のすぐ下。会話の画面の grid の上端と同じ
      （layout.module.css の .layout-grid と同じ変数を足す）。 */
-  --speech-log-top: calc(
-    var(--screen-nav-accent-line) + var(--screen-nav-height) + var(--screen-nav-rule) +
-      var(--screen-nav-gap)
-  );
+  --speech-log-top: calc(var(--screen-nav-height) + var(--screen-nav-rule) + var(--screen-nav-gap));
   position: fixed;
   position-anchor: --speech-log-floor;
   inset: auto;
