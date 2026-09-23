@@ -2,7 +2,9 @@
    **枠**と、サイドバー自身が描く中身（セッション情報）を持つ。**まん中の区画の中身
    （タスク一覧）と、そこから開く表の見た目はここには無い** — 置かれる機能の側に1枚で
    まとまっている（docs/design.md 2章「領域の機能と、置かれる機能」）。サイドバーは置き場所を
-   貸しているだけ。 */
+   貸しているだけ。**「セッション情報」は見出しを名乗らない**（`.sidebar-block` は同じ枠のまま、
+   `<SidebarSection>` の `title` が `undefined` なだけ）ので、タスクの区画の border-bottom がそのまま
+   2区画の仕切り線になる（`.sidebar-block:last-child` の下）。 */
 
 .session-info-label {
   white-space: nowrap;
@@ -21,6 +23,18 @@
   background: var(--surface);
   color: var(--ink);
   font: inherit;
+}
+/* キャラクターの <select> の左に添える顔（13.9「顔」）。帯（screen-nav.module.css の
+   .screen-nav-face）と同じ考え方で丸く切り抜くが、大きさは帯の高さではなくこの行の文字に
+   合わせる。`<CharacterFace>` が `face` の無いパックでは何も描かないので、この class 自体が
+   出ないこともある。 */
+.session-info-face {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--surface-accent);
+  object-fit: cover;
 }
 /* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて
    内側でスクロールする）の縦積みにする。区画自身は伸縮できないと内側の overflow-y: auto が
@@ -110,17 +124,31 @@
   color: color-mix(in srgb, var(--accent) 85%, var(--ink));
   text-decoration: underline;
 }
-/* ラベル列（`.session-info-label`）と値列（`.session-info-value`）を2列の grid で揃える。
-   行ごとに別々の flex で並べると、ラベルの文字数の差（「モデル」3字 /「許可モード」5字）が
-   そのまま select の左端のズレになる。 */
+/* キャラクター・セッションの2つの対（ラベル→値）を**横に並べ、値をラベルの真下に置く**
+   （docs/history/mockup/sidebar-2026-09-23.png。2026-09-23 決定）。DOM の並びは
+   ラベル1・値1・ラベル2・値2 のまま（`session-info.tsx` / `session-switch.tsx` は
+   入れ物を挟まず対だけを返す）で、`grid-auto-flow: column` が列ごとに2行（ラベル→値）を
+   詰めるので、対ごとに列が分かれて横並びに見える。**1列目（キャラクター）は auto**
+   （中身なりの幅）、**2列目（セッション）は `minmax(0, 1fr)`**（見出しが長いので、はみ出た
+   ぶんを `<select>` 自身の省略に任せる。`session-switch.module.css` の `max-width: 100%`）。 */
 .session-info {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 0.6rem;
-  row-gap: 0.4rem;
+  grid-template-rows: auto auto;
+  grid-auto-flow: column;
+  column-gap: 1rem;
+  row-gap: 0.3rem;
   align-items: center;
   /* ラベル・状態表示の文字と、`font: inherit` の `<select>` がここから受け取る。
      子（ラベル／値）の片方だけに置くと、もう片方が .sidebar-block の var(--font-secondary) に戻る。 */
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
+}
+/* 狭い画面は横に並べると詰まりすぎるので、対を縦に積む（行ごとにラベル→値の2列）に戻す
+   （2026-09-23 決定。「解くべき論点」760px 以下の扱い）。 */
+@media (max-width: 760px) {
+  .session-info {
+    grid-template-rows: none;
+    grid-auto-flow: row;
+  }
 }
