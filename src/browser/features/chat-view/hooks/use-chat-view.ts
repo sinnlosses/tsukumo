@@ -8,16 +8,13 @@
 import { useState, type RefObject } from "react"
 
 import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../../shared/chat-log.ts"
-import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/expression.ts"
 import { type RecordedPromptImage } from "../../../../shared/prompt-image.ts"
 import { type RecordTime } from "../../../../shared/session-state.ts"
+import { portraitAppearance } from "../../../domain/portrait-appearance.ts"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { clockDateTime, clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"
-
-/** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
-const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
 /** 日の区切りに出す曜日（`Temporal.PlainDate.dayOfWeek` は月曜が 1、日曜が 7）。 */
 const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
@@ -150,12 +147,7 @@ export function useChatView(): ChatViewModel {
   }
 
   return {
-    portraitUrl: character?.portraits?.[expression],
-    accent: character?.outfitAccents[outfit],
-    altText: `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(
-      character?.expressions ?? [],
-      expression,
-    )}）`,
+    ...portraitAppearance(character, expression, outfit),
     expression,
     outfit,
     turnInProgress,

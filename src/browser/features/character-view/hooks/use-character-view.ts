@@ -15,7 +15,6 @@
 import { useEffect, useState } from "react"
 
 import { isBlankText } from "../../../../shared/blank-text.ts"
-import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/expression.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
@@ -25,12 +24,10 @@ import {
 } from "../../../../shared/portrait-motion.ts"
 import { type SessionRecord } from "../../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../shared/turn-speech.ts"
+import { portraitAppearance } from "../../../domain/portrait-appearance.ts"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import { useTurnSelection } from "../../../stores/turn-selection.tsx"
 import { nowEpochMilliseconds } from "../../../utils/clock.ts"
-
-/** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
-const DEFAULT_CHARACTER_ALT_NAME = "キャラクター"
 
 /**
  * セリフが1件も無い**過去の**ターンを見ているときの文言。今のターンの「（まだ発話がありません）」
@@ -81,14 +78,7 @@ export function useCharacterView(): CharacterViewModel {
   const hasPartialUtteranceAfterSpeech = speechCalledInTurn && !isBlankText(partialUtterance)
   const motion = usePortraitMotion({ turn, lastToolFailureAt, hasPartialUtteranceAfterSpeech })
 
-  const portraitUrl = character?.portraits?.[expression]
-  const accent = character?.outfitAccents[outfit]
-  // 表情のラベルはキャラクターパックの定義から来る（docs/design.md 7章）。定義が届く前・
-  // ラベルが無い表情では、表情名そのものがラベルになる。
-  const altText = `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(
-    character?.expressions ?? [],
-    expression,
-  )}）`
+  const { portraitUrl, accent, altText } = portraitAppearance(character, expression, outfit)
 
   return {
     portraitUrl,

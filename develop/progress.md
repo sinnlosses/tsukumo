@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 立ち絵の見た目の導き方を browser/domain に1つ置いた（T-436）
+
+`portraitAppearance()`（URL・差し色・代替テキスト）と既定の呼び名を `src/browser/domain/portrait-appearance.ts` にまとめ、`character-view` / `chat-view` / `screen-nav` の3フックがそれを読む形にした。既存テストの期待値は変えていない。
+
 ### 2026-09-23 879行の sdk-driver.ts を、SDK を import してよい規則ごと4つに分けた（T-428）
 
 SDK の import を許す規則を「1ファイルだけ」から「adapter 直下の `sdk-` で始まるファイル」に変え、駆動の本体・MCP ツール・セッションの一覧と続き・`/context` の写しの4つに分けた（最大456行）。振る舞いは変えていない。
