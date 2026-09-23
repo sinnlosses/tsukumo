@@ -658,17 +658,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### session-manager.ts（core）
 
-```ts
-type SessionHost = {
-  readonly sessionId: string
-  readonly driver: SessionDriver
-  state: SessionState // サーバ側でも reducer を回す（hello の snapshot のため）
-  readonly subscribers: Set<(frame: ServerFrame) => void>
-}
-```
+`SessionManager` の契約と、セッション1つぶんの持ち物（`SessionHost`）の型定義は
+`src/server/core/session-manager.ts` を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
 - `create(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
-  (3) バッチに積む**。50〜100ms ごとに `events` フレームを購読者へ配る（`throttle` で間引く）
+  (3) バッチに積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms）ごとに `events` フレームを購読者へ配る
 - `dispatch(sessionId, command)`: `switch (command.type)` で駆動へ渡す。**ここが唯一の分岐**
 - `subscribe(sessionId, send)`: 接続ごとに `hello` を送ってから購読に加える
 - **いまは要素1つ。** 鍵（`sessionId`）を持たせておくのは 8章のため
@@ -705,38 +699,41 @@ type SessionHost = {
 
 ### server.ts と session-socket.ts（adapter）
 
-**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と
-`/repository-file` は `server.ts`（listen するのもここ）、`/ws` の upgrade とコマンドの受け口は
-`session-socket.ts`（listen 済みのサーバに受け口を足すだけ）。**起動トークンは1つ**で、
-`server.ts` の `createStartupToken` が作ったものを両方が見る。
+**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と、会話を含まない
+JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`）と会話の内容を運ぶ
+`/prompt-image/<id>` は `server.ts`（listen するのもここ。経路の一覧は `respond` 関数と、経路ごとの
+定数（`LAYOUT_PATH` / `uiScriptPath()` ・ `styleSheetPath()` / `VENDOR_PATH_PREFIX` /
+`CHARACTER_ASSET_PATH_PREFIX` / `REPOSITORY_FILE_PATH` / `TOKEN_USAGE_SUMMARY_PATH` /
+`CONTEXT_USAGE_PATH` / `PROMPT_IMAGE_PATH_PREFIX`）が正典）、`/ws` の upgrade とコマンドの受け口は
+`session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を足すだけ）。**起動トークンは
+1つ**で、`server.ts` の `createStartupToken` が作ったものを両方が見る。
 
-| 経路                              | 中身                                                                                                                  | トークン |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
-| `GET /`                           | ページ（`<div id="app">` と `<script src="/assets/ui.js">` と `<link href="/assets/style.css">`。**本文は入れない**） | 不要     |
-| `GET /assets/ui.js` / `style.css` | 束ねたもの（メモリ。11章の見張りで差し替わる）                                                                        | 不要     |
-| `GET /vendor/<name>`              | allowlist の対応表にある外部ライブラリだけ（実ファイルは `node_modules`。`vendor-asset.ts`）                          | 不要     |
-| `GET /character/<file>`           | いまのパックの素材。**`character.json` に書かれたファイル名だけ**を配る（パスから組み立てない）                       | 不要     |
-| `GET /repository-file?t=<token>`  | git 管理下のファイルのパス（入力欄の `@` 補完。実体は `repository-file.ts` の `git ls-files`）                        | **必要** |
-| `GET /ws?t=<token>`               | WebSocket。Origin とトークンを確かめてから upgrade                                                                    | **必要** |
-
-会話の内容が乗るのは `/ws` だけ（`session-socket.ts`）。ページ・同梱物・素材は静的な物なので
-トークン無しでよい。
-**`/repository-file` は会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの
-中身（パスだけ。ファイルは開かない）で、誰にでも配ってよい静的な物ではない。
+会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
+だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので
+トークン無しでよい。**`/repository-file`・`/token-usage`・`/context-usage` は会話を含まないが
+トークンが要る** — 配るのは利用者の作業ディレクトリの中身・使った量・いまのセッションが積んでいる
+ものの内訳で、誰にでも配ってよい静的な物ではない（各経路の判断の理由は `server.ts` の関数ごとの
+doc コメントを参照）。
 
 ### config.ts（core）
 
-| 環境変数                          | 意味                                                         | 既定             |
-| --------------------------------- | ------------------------------------------------------------ | ---------------- |
-| `TSUKUMO_VIEW_PORT`               | いまのまま（既定 7327、塞がっていれば +1 で20個）            | 7327             |
-| `TSUKUMO_VIEW_PORT_FALLBACK_BASE` | `TSUKUMO_VIEW_PORT` が未設定のときの起点を差し替える（下記） | 7327             |
-| `TSUKUMO_CHARACTER`               | パック定義ディレクトリのパス（相対は cwd 相対）              | `tsukumo-spirit` |
-| `TSUKUMO_OPEN_VIEW`               | いまのまま                                                   | 開く             |
-| `TSUKUMO_DRIVER`                  | `sdk` / `fake`                                               | `sdk`            |
-| `TSUKUMO_FAKE_SCENE`              | `fake` のとき起こした直後に流す場面の名前                    | 流さない         |
-| `TSUKUMO_NEW_SESSION`             | `1` で復元せず新規に起こす（8章の逃げ道）                    | 復元する         |
-| `TSUKUMO_WATCH_UI`                | `1` で `src/browser/` を見張って組み立て直す（11章）         | 見張らない       |
-| `TSUKUMO_HOME`                    | tsukumo の持ち物を置くホーム（相対は cwd 相対）              | `~/.tsukumo`     |
+**この表を正典のままにする**（2026-09-23 決定。`src/server/core/config.ts` 冒頭のコメントも
+同じ向きを明記している）。4章の `SessionEvent` / `SessionState` と違い、各環境変数名の doc コメントは
+読み取り方や関連ファイルだけを持ち、既定値と挙動の説明は `port-resolution.ts` ・
+`tsukumo-home.ts` など複数のファイルに分かれている。1つの型の doc コメントに寄せられないので、
+表だけがこの9個をまとめて見渡せる場所になる。
+
+| 環境変数                          | 意味                                                                                           | 既定             |
+| --------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------- |
+| `TSUKUMO_VIEW_PORT`               | ビューを配るポート（既定のまま塞がっていれば +1 で20個まで試す。明示指定したときはずらさない） | 7327             |
+| `TSUKUMO_VIEW_PORT_FALLBACK_BASE` | `TSUKUMO_VIEW_PORT` が未設定のときの起点を差し替える（下記）                                   | 7327             |
+| `TSUKUMO_CHARACTER`               | パック定義ディレクトリのパス（相対は cwd 相対）                                                | `tsukumo-spirit` |
+| `TSUKUMO_OPEN_VIEW`               | 起動時にタブを自動で開くか（`0` のときだけ開かない）                                           | 開く             |
+| `TSUKUMO_DRIVER`                  | `sdk` / `fake`                                                                                 | `sdk`            |
+| `TSUKUMO_FAKE_SCENE`              | `fake` のとき起こした直後に流す場面の名前                                                      | 流さない         |
+| `TSUKUMO_NEW_SESSION`             | `1` で復元せず新規に起こす（8章の逃げ道）                                                      | 復元する         |
+| `TSUKUMO_WATCH_UI`                | `1` で `src/browser/` を見張って組み立て直す（11章）                                           | 見張らない       |
+| `TSUKUMO_HOME`                    | tsukumo の持ち物を置くホーム（相対は cwd 相対）                                                | `~/.tsukumo`     |
 
 `TSUKUMO_VIEW_PORT_FALLBACK_BASE` は**既定の帯（`DEFAULT_VIEW_PORT`〜+19）そのものを差し替える
 口**で、`TSUKUMO_VIEW_PORT` を明示したときは効かない（明示指定はそもそもずらさないため）。

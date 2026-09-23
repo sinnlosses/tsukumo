@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 docs/design.md 5章の SessionHost と経路の表を、型定義・実装への参照に置き換えた（T-409）
+
+経路の表からは `/token-usage` のほかに `/context-usage` と `/prompt-image/<id>` も抜けていた。環境変数の表は design.md を正典のままにし、その理由を節に書いた。
+
 ### 2026-09-23 いまのセッションの /context 内訳をトークン消費の画面に出した（T-375）
 
 `getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
