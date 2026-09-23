@@ -420,3 +420,15 @@ sonnet → opus に上げた。`bun run check` は 415 pass / 0 fail（コード
   `/plan-tasks` で気づいた）。T-322 は決めるだけのタスクで、**ヘッダーの帯はまだコードに無い**
   （`src/browser/main.tsx` に帯の部品が無く、画面への口はサイドバー・キャラクター画面・
   トークン消費の3箇所に散ったまま）。実装は T-356。13.9 を読んで「もうある」と思わないこと
+
+**T-451 は着手しない判断で閉じた（`done` / `passes: false`）。** 入力欄の履歴（↑・↓ で送った依頼を
+呼び戻す）は、**`/clear` をまたげない**ことがはっきりした——`conversation-cleared` は `records` を
+空にする（`src/shared/session-state.ts`。「`/clear` は会話そのものを消す操作なので records も
+落とす」と明示してある）ので、`/clear` の直後の履歴はゼロで `/clear` 自身も呼び戻せない。
+残る恩恵は「長い自由文の依頼を少し変えて送り直す」「中断した依頼を呼び戻す」の2つだけで、
+`/next-task` の繰り返しは `/` の補完がすでに吸収している。**キー割り当ても TUI からそのままは
+持ってこられない**: この入力欄は Enter が改行・Command+Enter が送信で複数行の下書きが常態なので
+↑・↓ はキャレットの行移動として現役、Ctrl+P / Ctrl+N は補完の上下移動が使用済み
+（`src/browser/features/dispatch/hooks/use-composer.ts`）。作るなら道具の行に履歴のボタンを足すか
+記号（`!` など）を割り当てて `suggestions.kind` に1つ増やす形になる（`onInsertTrigger` と
+補完の器は既にある）。**必要になったら作り直す**（ユーザー: 「必要ならまた言うね」）。
