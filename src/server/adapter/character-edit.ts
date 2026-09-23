@@ -35,9 +35,11 @@ import { classifyPortraitFile } from "../../shared/character-asset.ts"
 import { backgroundFileName, parseBackgroundImage } from "../../shared/character-background.ts"
 import {
   type CharacterDefinition,
+  definitionWithAccent,
   definitionWithBackground,
   definitionWithOutfitAccent,
   definitionWithoutBackground,
+  definitionWithoutChatAccent,
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
@@ -167,6 +169,12 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
   switch (edit.type) {
     case "set-outfit-accent":
       writeFileSync(definitionPath, definitionWithOutfitAccent(content, edit.outfit, edit.color))
+      return true
+    case "set-accent":
+      writeFileSync(definitionPath, definitionWithAccent(content, edit.target, edit.color))
+      return true
+    case "clear-chat-accent":
+      writeFileSync(definitionPath, definitionWithoutChatAccent(content))
       return true
     case "clear-portrait": {
       const previous = portraitFileNameOf(content, edit.expression)

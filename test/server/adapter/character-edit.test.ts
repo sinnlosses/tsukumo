@@ -251,6 +251,58 @@ describe("editCharacterPack（差し色）", () => {
   })
 })
 
+describe("editCharacterPack（画面の差し色）", () => {
+  it("仕事の差し色（accent）を差し替える", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      { type: "set-accent", commandId: "c-1", target: "work", color: "#123456" },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.accent).toBe("#123456")
+  })
+
+  it("雑談の差し色（chatAccent）を差す", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      { type: "set-accent", commandId: "c-1", target: "chat", color: "#f2984a" },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.chatAccent).toBe("#f2984a")
+  })
+
+  it("雑談の差し色を消すと、仕事の差し色に戻る（chatAccent が undefined になる）", () => {
+    const bundled = writeBundledPack("tsukumo")
+    const cwd = join(dir, "cwd")
+
+    const withChatAccent = editCharacterPack(
+      readCharacterPack(bundled),
+      { type: "set-accent", commandId: "c-1", target: "chat", color: "#f2984a" },
+      cwd,
+      home(),
+    )
+    expect(withChatAccent).toBeDefined()
+    if (withChatAccent === undefined) {
+      return
+    }
+    const cleared = editCharacterPack(
+      withChatAccent,
+      { type: "clear-chat-accent", commandId: "c-2" },
+      cwd,
+      home(),
+    )
+
+    expect(cleared?.definition?.chatAccent).toBeUndefined()
+  })
+})
+
 describe("editCharacterPack（背景）", () => {
   it("背景を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
     const bundled = writeBundledPack("tsukumo")

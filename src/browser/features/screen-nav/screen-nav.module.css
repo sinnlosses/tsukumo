@@ -85,7 +85,6 @@
   border-radius: 8px;
   background: transparent;
   color: var(--ink-quiet);
-  font: inherit;
   font-size: var(--font-subheading);
   white-space: nowrap;
   cursor: pointer;
@@ -171,7 +170,6 @@
   border-radius: 17px;
   background: var(--surface-accent);
   color: var(--ink-quiet);
-  font: inherit;
   font-size: var(--font-secondary);
   /* `<button>` の既定の中央揃えを外す。残すと、幅を揃えた状態の語と残り幅いっぱいに伸びた
      要約の字がそれぞれの箱の中央に寄り、仕切りから離れて浮く。 */
@@ -282,7 +280,6 @@
   border: none;
   background: none;
   color: var(--accent);
-  font: inherit;
   font-size: var(--font-label);
   cursor: pointer;
 }
@@ -354,7 +351,6 @@
   border: none;
   background: none;
   color: var(--accent);
-  font: inherit;
   font-size: var(--font-label);
   cursor: pointer;
 }
@@ -404,7 +400,6 @@
   border-radius: 8px;
   background: transparent;
   color: inherit;
-  font: inherit;
   font-size: var(--font-secondary);
   line-height: 30px;
   cursor: pointer;
@@ -454,7 +449,6 @@
   border-radius: 8px;
   background: transparent;
   color: var(--ink-quiet);
-  font: inherit;
   cursor: pointer;
 }
 .screen-nav-settings-toggle:hover {
@@ -515,7 +509,6 @@
   border-radius: 0.4rem;
   background: var(--surface);
   color: inherit;
-  font: inherit;
   font-size: var(--font-label);
 }
 .screen-nav-settings-reset {
@@ -524,7 +517,6 @@
   border: none;
   background: none;
   color: var(--accent);
-  font: inherit;
   font-size: var(--font-label);
   cursor: pointer;
 }
@@ -582,9 +574,8 @@
     border-radius: 999px;
     background: var(--surface);
     color: var(--ink);
-    /* `font: inherit` は line-height も引き継ぐ。**タブと同じ 1.75 のまま**にしておくと
-       上下の余白と合わせてタブ帯とぴったり同じ高さ（39.1px）に揃う（実測。13.9）。 */
-    font: inherit;
+    /* `line-height` は `theme.css` の既定（本文の 1.75）を継いだままにしておくと、上下の余白と
+       合わせてタブ帯とぴったり同じ高さ（39.1px）に揃う（実測。13.9）。ここで上書きしない。 */
     font-size: var(--font-secondary);
     cursor: pointer;
   }

@@ -42,7 +42,6 @@
   color: var(--ink-quiet);
   border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  font: inherit;
   font-size: var(--font-label);
   cursor: pointer;
 }

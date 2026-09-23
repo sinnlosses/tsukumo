@@ -15,7 +15,6 @@
   border-radius: 0.5rem;
   background: var(--surface);
   color: var(--ink);
-  font: inherit;
   font-size: var(--font-secondary);
   /* セッションの行だけは中身（目印と日時）が長く、狭いサイドバーで横へはみ出す。
      列（`minmax(0, 1fr)`）に収めて、はみ出るぶんは `<select>` 自身に省略させる。 */
