@@ -1,6 +1,6 @@
 // `<Composer>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 下書き・補完の候補と選択位置・添えた画像を持ち、キーと貼り付け・ドロップを読み替えて、
-// presenter がそのまま置ける値と呼び先を返す。
+// 下書き・添えた画像・質問の帯を持ち、キーと貼り付け・ドロップを読み替えて、presenter がそのまま
+// 置ける値と呼び先を返す。
 //
 // 入力欄の規則（docs/requirements.md 4.2「入力欄」。**規則は変えない**）:
 // - Enter は改行、Command+Enter で送信。IME の変換確定の Command+Enter は送らない
@@ -12,61 +12,31 @@
 // - 入力欄の下の `/` と `@` のボタンは、**キャレットの位置にその1文字を打つのと同じ**
 //   （補完が開くかどうかは打ったときと同じ規則で決まる。`@` は前が空白でなければ空白を挟む）
 //
-// **`/` と `@` の候補は同時に出ない。** どちらを出しているかは1つの判別可能な合併型
-// （{@link ActiveSuggestions}）に畳んであり、選択位置と閉じたかどうかはその1つに対して持つ。
-//
-// **下書き・候補の開閉と選択位置は `<Composer>` のローカル状態**（docs/design.md 6.2）。候補は
-// 姿の `slashCommands` / `commandDescriptions`（`commandSuggestions`）・取得したファイルの一覧と、
-// 下書きの文字列から毎回計算するだけの導出値で、別に持たない。絞り方は
-// `command-suggestions.tsx` / `file-suggestions.tsx` が持ち、ファイルの一覧の取得は
-// `use-repository-file-paths.ts` が持ち、ここはキー操作と確定だけを持つ
-// （送信の Enter と同じ `keydown` を共有するため）。
+// **補完の状態（出している候補・選んでいる位置）と確定の手は `hooks/use-suggestion.ts` が、
+// 添えた画像の持ち方と取り込みは `hooks/use-prompt-image.ts` が持つ**（docs/design.md 2章
+// 「機能の中を分ける」。どちらも container と対になっていないフックで、下書きの実体はここに
+// 残したまま渡す）。ここは下書き・質問の帯を持ち、送信とキーの読み替え（補完へ回すか・送信
+// するか）を持つ（送信の Enter と補完のキーが同じ `keydown` を共有するため）。
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ClipboardEvent,
-  type DragEvent,
-  type KeyboardEvent,
-  type RefObject,
-} from "react"
+import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react"
 
-import { commandSuggestions } from "../../../../shared/command-suggestion.ts"
-import { MAX_PROMPT_IMAGES, type PromptImage } from "../../../../shared/prompt-image.ts"
-import { type CommandDescription } from "../../../../shared/session-event.ts"
 import { useQuestionAnswer } from "../../../stores/question-answer.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
-import { matchingCommands, shouldShowCommandSuggestions } from "../command-suggestions.tsx"
-import { type FilePathQuery, filePathQuery, matchingFilePaths } from "../file-suggestions.tsx"
+import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
 import {
-  carriesFiles,
-  chosenPromptImageFiles,
-  promptImageFiles,
-  readPromptImage,
-} from "../prompt-image.ts"
-import { useRepositoryFilePaths } from "./use-repository-file-paths.ts"
-
-/** 入力欄の下のボタンが打つ、補完の合図の文字。 */
-export type CompletionTrigger = "/" | "@"
+  insertedTrigger,
+  useSuggestion,
+  type ActiveSuggestions,
+  type CompletionTrigger,
+} from "./use-suggestion.ts"
 
 /** 打ちかけの文面と、その中のキャレットの位置。**2つで1つの状態**なので一緒に持つ。 */
-type Draft = {
+export type Draft = {
   readonly text: string
   readonly caret: number
 }
 
 const EMPTY_DRAFT: Draft = { text: "", caret: 0 }
-
-/** いま出している候補。**`/` と `@` が同時に出ないことを型で保証する。** */
-export type ActiveSuggestions =
-  | { readonly kind: "none" }
-  | { readonly kind: "command"; readonly matches: readonly CommandDescription[] }
-  | {
-      readonly kind: "file"
-      readonly matches: readonly string[]
-      readonly query: FilePathQuery
-    }
 
 /** キーの読み替えに使う値（`<textarea>` の `keydown` から、見るものだけ）。 */
 export type ComposerKey = Pick<
@@ -89,35 +59,27 @@ export type ComposerBand =
   | { readonly kind: "none" }
   | { readonly kind: "question"; readonly text: string }
 
-/** `<Composer>` が画面に出す形。presenter はこれをそのまま置くだけ。 */
-export type ComposerModel = {
+/**
+ * `<Composer>` が画面に出す形。presenter はこれをそのまま置くだけ。**画像まわり
+ * （`imageInputRef` から `onImagesChosen` まで）は `hooks/use-prompt-image.ts` の
+ * `PromptImageModel` と同じ形**（`reset` は container の中だけで使うので外へは出さない）。
+ */
+export type ComposerModel = Omit<PromptImageModel, "reset"> & {
   /** `<textarea>` の入れ物。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
   readonly textAreaRef: RefObject<HTMLTextAreaElement | null>
-  /** 画像を選ぶ `<input type="file">` の入れ物（画面には出さず、ボタンから開く）。 */
-  readonly imageInputRef: RefObject<HTMLInputElement | null>
   readonly placeholder: string
   /** `<textarea>` の上の帯（質問に答えている間だけ出る）。 */
   readonly band: ComposerBand
   /** 質問に答えている間か（枠を `--state-warn` にし、送るボタンの字を変える）。 */
   readonly answering: boolean
   readonly text: string
-  /** 添えた画像（送るまでの間だけ持つ）。 */
-  readonly images: readonly PromptImage[]
   readonly suggestions: ActiveSuggestions
   /** 候補の中で選んでいる位置（候補の件数に収めたもの）。 */
   readonly selectedIndex: number
-  readonly onRemoveImage: (index: number) => void
   readonly onSelectSuggestion: (index: number) => void
   readonly onChange: (event: ComposerChange) => void
   readonly onKeyDown: (event: ComposerKey) => void
-  readonly onPaste: (event: Pick<ClipboardEvent, "clipboardData" | "preventDefault">) => void
-  readonly onDragOver: (event: Pick<DragEvent, "dataTransfer" | "preventDefault">) => void
-  readonly onDrop: (event: Pick<DragEvent, "dataTransfer" | "preventDefault">) => void
   readonly onSubmit: (event: { readonly preventDefault: () => void }) => void
-  /** 画像のボタン。ファイルを選ぶ窓を開く。 */
-  readonly onPickImages: () => void
-  /** ファイルを選ぶ窓で選び終えたとき。 */
-  readonly onImagesChosen: (event: { readonly target: HTMLInputElement }) => void
   /** `/` / `@` のボタン。キャレットの位置にその文字を打ち、入力欄へフォーカスを戻す。 */
   readonly onInsertTrigger: (trigger: CompletionTrigger) => void
 }
@@ -133,36 +95,23 @@ export function useComposer(): ComposerModel {
   const slashCommands = useSessionSelector((session) => session.state.slashCommands)
   const commandDescriptions = useSessionSelector((session) => session.state.commandDescriptions)
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false)
-  // 添えた画像（送るまでの間だけ持つ）。**原寸もここにしか無く**、送った時点で捨てる
-  // （`docs/requirements.md` 4.10。`localStorage` にもディスクにも置かない）。
-  const [images, setImages] = useState<readonly PromptImage[]>([])
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
-  const imageInputRef = useRef<HTMLInputElement | null>(null)
 
-  const commandActive =
-    !suggestionsDismissed && shouldShowCommandSuggestions(draft.text, pendingActive)
-  // `/` の候補が出ている間は `@` を見ない（同時に出さない）。
-  const fileQuery =
-    suggestionsDismissed || pendingActive || commandActive
-      ? undefined
-      : filePathQuery(draft.text, draft.caret)
-  const filePaths = useRepositoryFilePaths(fileQuery !== undefined)
-
-  const suggestions: ActiveSuggestions = commandActive
-    ? {
-        kind: "command",
-        matches: matchingCommands(
-          commandSuggestions(slashCommands, commandDescriptions),
-          draft.text,
-        ),
-      }
-    : fileQuery === undefined
-      ? { kind: "none" }
-      : { kind: "file", matches: matchingFilePaths(filePaths, fileQuery.term), query: fileQuery }
-  const matchCount = suggestionCount(suggestions)
-  const clampedSelectedIndex = matchCount === 0 ? 0 : Math.min(selectedIndex, matchCount - 1)
+  const suggestion = useSuggestion({
+    draft,
+    pendingActive,
+    slashCommands,
+    commandDescriptions,
+    onConfirmed: (confirmed) => {
+      setDraft(confirmed)
+      textAreaRef.current?.focus()
+    },
+  })
+  const { reset: resetPromptImage, ...promptImage } = usePromptImage({
+    focusTextArea: () => {
+      textAreaRef.current?.focus()
+    },
+  })
 
   // React が `value` を書いたあと、キャレットは文面の末尾へ飛ぶ。文の途中で `@` を確定したときは
   // 差し込んだ直後へ戻す（React の外にある状態への書き込み。打っている間は位置が一致するので
@@ -174,16 +123,6 @@ export function useComposer(): ComposerModel {
     }
   }, [draft])
 
-  const confirmSelected = (index: number): void => {
-    const confirmed = confirmedDraft(suggestions, draft, index)
-    if (confirmed === undefined) {
-      return
-    }
-    setDraft(confirmed)
-    setSelectedIndex(0)
-    textAreaRef.current?.focus()
-  }
-
   const submit = (): void => {
     const trimmed = draft.text.trim()
     if (trimmed === "") {
@@ -193,29 +132,12 @@ export function useComposer(): ComposerModel {
       // 質問に答えている間は依頼として送らない（打った字はいま見ている1問の答えになる）。
       question.onAnswerWithText(trimmed)
     } else {
-      dispatch({ type: "prompt", text: trimmed, images })
+      dispatch({ type: "prompt", text: trimmed, images: promptImage.images })
     }
     setDraft(EMPTY_DRAFT)
-    // **送った時点で原寸を手放す**（札が消え、以降どこからも開けない）。
-    setImages([])
-    setSelectedIndex(0)
-    setSuggestionsDismissed(false)
+    resetPromptImage()
+    suggestion.reset()
     textAreaRef.current?.focus()
-  }
-
-  /**
-   * 貼られた・落ちてきたファイルを札に足す。**枚数の上限（{@link MAX_PROMPT_IMAGES}）で頭を
-   * 打ち**、読めなかった1枚は黙って落ちる（画面は1回の失敗で落ちない）。
-   */
-  const attachFiles = (files: readonly File[]): void => {
-    void (async () => {
-      const read = await Promise.all(files.slice(0, MAX_PROMPT_IMAGES).map(readPromptImage))
-      const added = read.flatMap((image) => (image === undefined ? [] : [image]))
-      if (added.length === 0) {
-        return
-      }
-      setImages((current) => [...current, ...added].slice(0, MAX_PROMPT_IMAGES))
-    })()
   }
 
   const insertTrigger = (trigger: CompletionTrigger): void => {
@@ -223,14 +145,13 @@ export function useComposer(): ComposerModel {
     // **打っていない間にキャレットを動かしただけでは下書きの `caret` は追いつかない**ので、
     // 入力欄から読めるならそちらを使う。
     setDraft(insertedTrigger(draft, textAreaRef.current?.selectionStart ?? draft.caret, trigger))
-    setSelectedIndex(0)
-    setSuggestionsDismissed(false)
+    suggestion.reset()
     textAreaRef.current?.focus()
   }
 
   return {
+    ...promptImage,
     textAreaRef,
-    imageInputRef,
     placeholder:
       question.kind === "asking" ? ANSWER_PLACEHOLDER : composerPlaceholder(characterName),
     band:
@@ -239,42 +160,18 @@ export function useComposer(): ComposerModel {
         : { kind: "none" },
     answering: question.kind === "asking",
     text: draft.text,
-    images,
-    suggestions,
-    selectedIndex: clampedSelectedIndex,
-    onRemoveImage: (index) => {
-      setImages((current) => current.filter((_, at) => at !== index))
-    },
-    onSelectSuggestion: confirmSelected,
+    suggestions: suggestion.suggestions,
+    selectedIndex: suggestion.selectedIndex,
+    onSelectSuggestion: suggestion.onSelect,
     onChange: (event) => {
       setDraft({ text: event.target.value, caret: event.target.selectionStart })
-      setSelectedIndex(0)
-      setSuggestionsDismissed(false)
+      suggestion.reset()
     },
     onKeyDown: (event) => {
       const composing = isComposingEvent(event)
 
-      if (!composing && matchCount > 0) {
-        if (event.key === "ArrowDown" || (event.ctrlKey && !event.metaKey && event.key === "n")) {
-          event.preventDefault()
-          setSelectedIndex((current) => (current + 1) % matchCount)
-          return
-        }
-        if (event.key === "ArrowUp" || (event.ctrlKey && !event.metaKey && event.key === "p")) {
-          event.preventDefault()
-          setSelectedIndex((current) => (current - 1 + matchCount) % matchCount)
-          return
-        }
-        if (event.key === "Tab" || event.key === "Enter") {
-          // Tab・Enter のどちらも確定だけ（送信しない。docs/requirements.md 4.2）。
-          event.preventDefault()
-          confirmSelected(clampedSelectedIndex)
-          return
-        }
-        if (event.key === "Escape") {
-          setSuggestionsDismissed(true)
-          return
-        }
+      if (!composing && suggestion.onKeyDown(event)) {
+        return
       }
 
       if (event.key !== "Enter" || composing || !event.metaKey) {
@@ -286,46 +183,12 @@ export function useComposer(): ComposerModel {
         submit()
       }
     },
-    onPaste: (event) => {
-      const files = promptImageFiles(event.clipboardData)
-      if (files.length === 0) {
-        return
-      }
-      // 画像を貼ったときだけ既定の貼り付けを止める（文字の貼り付けはそのまま通す）。
-      event.preventDefault()
-      attachFiles(files)
-    },
-    onDragOver: (event) => {
-      // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは `<textarea>` の
-      // 既定の振る舞いのまま）。
-      if (carriesFiles(event.dataTransfer)) {
-        event.preventDefault()
-      }
-    },
-    onDrop: (event) => {
-      const files = promptImageFiles(event.dataTransfer)
-      if (files.length === 0) {
-        return
-      }
-      event.preventDefault()
-      attachFiles(files)
-    },
     onSubmit: (event) => {
       event.preventDefault()
       if (turnInProgress && question.kind !== "asking") {
         return
       }
       submit()
-    },
-    onPickImages: () => {
-      imageInputRef.current?.click()
-    },
-    onImagesChosen: (event) => {
-      attachFiles(chosenPromptImageFiles(event.target.files))
-      // 同じファイルを続けて選び直しても `change` が届くように、選んだものを空に戻す
-      // （React の外にある入力の状態。札のほうは state が持っている）。
-      event.target.value = ""
-      textAreaRef.current?.focus()
     },
     onInsertTrigger: insertTrigger,
   }
@@ -354,67 +217,7 @@ function composerPlaceholder(characterName: string | undefined): string {
   return `${subject}依頼を書く`
 }
 
-/**
- * キャレットの位置に補完の合図の文字を差し込んだ下書き。**`@` は前が空白でなければ空白を
- * 1つ挟む**（`@` 補完は語の頭でしか開かない。`file-suggestions.tsx` の `filePathQuery`）。
- * `/` はそのまま差し込む（コマンドの補完が開くのは文面の頭だけで、それ以外の位置では
- * 1文字を打ったのと同じになる）。
- */
-function insertedTrigger(draft: Draft, caret: number, trigger: CompletionTrigger): Draft {
-  const before = draft.text.slice(0, caret)
-  const needsSpace = trigger === "@" && before !== "" && !/\s$/.test(before)
-  const inserted = `${needsSpace ? " " : ""}${trigger}`
-  return {
-    text: `${before}${inserted}${draft.text.slice(caret)}`,
-    caret: caret + inserted.length,
-  }
-}
-
 /** IME の変換確定中か。`isComposing` に加え、対応していない古いブラウザ向けに `keyCode` も見る。 */
 function isComposingEvent(event: ComposerKey): boolean {
   return event.nativeEvent.isComposing || event.keyCode === 229
-}
-
-/** 出している候補の件数（キー操作の分岐はこの数だけを見る）。 */
-function suggestionCount(suggestions: ActiveSuggestions): number {
-  return suggestions.kind === "none" ? 0 : suggestions.matches.length
-}
-
-/**
- * 候補を1つ確定したあとの下書き。確定できる候補が無ければ undefined。
- *
- * `/` は**文面を丸ごと**置き換え（先頭のコマンドだけの状態でしか出ない）、`@` は**キャレットの
- * 直前の `@<打ちかけ>` だけ**を置き換える（前後に書いた文は触らない）。どちらも末尾に空白を
- * 1つ足して、続けて引数やパスを打ち始められるようにする（`@` は**すぐ後ろがすでに空白なら
- * 足さない**。文の途中で確定したときに空白が2つ並ばないため）。
- */
-function confirmedDraft(
-  suggestions: ActiveSuggestions,
-  draft: Draft,
-  index: number,
-): Draft | undefined {
-  if (suggestions.kind === "command") {
-    const command = suggestions.matches[index]
-    if (command === undefined) {
-      return undefined
-    }
-    const text = `/${command.name} `
-    return { text, caret: text.length }
-  }
-
-  if (suggestions.kind === "file") {
-    const path = suggestions.matches[index]
-    if (path === undefined) {
-      return undefined
-    }
-    const { start, end } = suggestions.query
-    const following = draft.text[end]
-    const inserted = `@${path}${following !== undefined && /\s/.test(following) ? "" : " "}`
-    return {
-      text: `${draft.text.slice(0, start)}${inserted}${draft.text.slice(end)}`,
-      caret: start + inserted.length,
-    }
-  }
-
-  return undefined
 }

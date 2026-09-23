@@ -83,9 +83,9 @@
     "dependencies": ["T-442"],
     "summary": "423行の use-composer.ts から / と @ の補完の状態を別のフックに分ける",
     "task": "## 背景\n\n`src/browser/features/dispatch/hooks/use-composer.ts`（423行）の `useComposer` は、下書き（`Draft`）・送信・画像の添付・質問の帯・補完（`/` のコマンドと `@` のファイル。`ActiveSuggestions` / `confirmSelected` / `insertTrigger` / `insertedTrigger` / `confirmedDraft` / `suggestionCount`）を1本で持つ。補完は `command-suggestions.tsx` と `file-suggestions.tsx`（`useRepositoryFilePaths` をファイルの中で定義）にまたがり、キーの扱い（`ComposerKey` / `isComposingEvent`）と絡んでいる。\n\n`docs/design.md` 2章は「1ファイル1フック」「フックの名前は機能名でよい（container が呼ぶ1本）」と書くが、`chat-view/hooks/` には4本ある。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 入力欄の振る舞い（補完の出方・確定・IME の変換中の扱い・送信）は変えない\n\n## やること\n\n1. T-442 で決まった基準（1つの container が複数のフックを呼んでよいか）を読む\n2. 補完の状態と確定の手を `hooks/` の別のフック（概念の名前）に分け、`useComposer` から呼ぶ。`useRepositoryFilePaths` を `file-suggestions.tsx` から `hooks/` へ移すかも同じ基準で決める\n\n## 完了条件\n\n- `wc -l src/browser/features/dispatch/hooks/use-composer.ts` が 250 行以下\n- `test/browser/features/dispatch/composer.test.tsx` が期待値を変えずに通る\n- 疑似セッションで `/` と `@` の補完・IME の変換中の Enter・送信を目視で確かめ、`evidence` に書く\n- `bun run check` が通る",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "use-composer.ts 420行→223行。補完の状態と確定を hooks/use-suggestion.ts（194行。保つ＋畳む）へ、画像の添付を hooks/use-prompt-image.ts（103行。保つ＋外と同期）へ分けた。どちらも T-442 の「2種そろったら割る」に当たる。use-repository-file-paths.ts は動かさず、呼ぶ場所だけ use-suggestion.ts の中へ移した。\nbun run check: 1778 pass / 0 fail（145ファイル）、composer.test.tsx は無修正。bun run build 成功。\n目視（fake・port 4775・一時 TSUKUMO_HOME・headless Chromium 1400x900）: /cl で候補1件（/clear）、@src/cli で src/cli.ts、Tab で「見て @src/cli.ts 」に確定して候補が閉じる。compositionstart 中の Meta+Enter では本文『へんかんちゅう』が残り、compositionend のあとの Meta+Enter で空になった。pageerror 0件"
   },
   {
     "id": "T-446",

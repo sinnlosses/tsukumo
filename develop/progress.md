@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 use-composer.ts から補完と画像の添付を別のフックに分けた（T-444）
+
+420行の `useComposer` を223行にし、補完を `use-suggestion.ts`、画像の添付を `use-prompt-image.ts` へ出した。入力欄の振る舞いは変えていない。
+
 ### 2026-09-23 main-view の部品を T-442 の基準で container/presenter に割った（T-443）
 
 6部品に基準を当て、3種そろう `turn-header` と `question-record` を3分割、2種の `main-view` と `question-ask` は外に触るフックだけ `hooks/` へ出し、1種の `mini-portrait` と `turn` は割らなかった。画面の振る舞いは変えていない。
