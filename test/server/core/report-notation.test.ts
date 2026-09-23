@@ -197,4 +197,18 @@ describe("REPORT_NOTATION_PROMPT", () => {
     )
     expect(REPORT_NOTATION_PROMPT).toContain("印は文の代わりに置くもので、文への足し算ではない")
   })
+
+  it("地の文の段落は3文までとし、4文目の逃がし先に表・箇条書き・<details> を挙げる", () => {
+    // 全体の量は数で縛らないが、段落の単位にだけは数で縛る決定
+    // （docs/display.md 4.2「読む時間を減らすために足すのは、規約の側」）。
+    expect(REPORT_NOTATION_PROMPT).toContain("地の文の段落は3文まで")
+    expect(REPORT_NOTATION_PROMPT).toContain(
+      "4文目が要るなら、表・箇条書き・`<details>` のどれかへ移す",
+    )
+  })
+
+  it("送る前の検算に、4文以上続く段落を挙げている", () => {
+    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
+    expect(beforeSend).toContain("4文以上続く地の文の段落")
+  })
 })
