@@ -7,13 +7,14 @@
 // 「今回のことはサイドバーに、それ以外はキャラクター画面に」）。キャラクターの行と同じ2列の
 // grid（`sidebar.module.css` の `.session-info`）に、ラベルと値の対として並ぶ。
 //
-// **一覧に会話の内容は入らない**（`src/shared/session-choice.ts`）ので、見分けるのは
-// 目印と最終更新時刻だけ。**目印は部屋の名前として出す**（`src/shared/room.ts`。13.9）。
+// **一覧はいまの部屋（このビューのポート）のものだけ**（`src/server/core/session-restore.ts`）
+// なので、行の部屋の名前はすべて同じで見分けの役に立たない。**見分けるのは SDK の見出し
+// （`SessionChoice.heading`）と最終更新時刻**（部屋の名前を出す場所は帯だけになった。
+// `docs/design.md` 13.9「部屋の名前」）。
 
 import { type ReactElement } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { roomName } from "../../../shared/room.ts"
 import { type SessionChoice } from "../../../shared/session-choice.ts"
 import { Select } from "../../components/select.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
@@ -101,17 +102,32 @@ function sessionOptions(
     : [{ value: current, label }, ...listed]
 }
 
+/** 見出しが無い（SDK の `summary` が空・読めない）ときに、見出しの位置へ代わりに出す字。 */
+const NO_HEADING_LABEL = "（題なし）"
+
 /**
- * 1行の見え方。**部屋の名前と最終更新時刻の両方**を出す（`docs/requirements.md` 4.8）——同じ
- * 部屋の行が複数並ぶことがあるので、どれがどの作業かは時刻で見分ける。
+ * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**（`docs/design.md` 13.9）ので、
+ * 文字数で切って `…` を足す。**見出しだけを切り、時刻は切らない**——同じ部屋の行を見分けるのは
+ * 時刻なので（下の {@link sessionLabel}）、見出しがどれだけ長くても時刻は必ず残る。
+ */
+const MAX_HEADING_LENGTH = 24
+
+/**
+ * 1行の見え方。**見出し（SDK の `summary`）と最終更新時刻の両方**を出す（`docs/requirements.md`
+ * 4.8）——一覧はいまの部屋のものだけなので部屋の名前では見分けが付かず、`/clear` で分かれた行は
+ * それぞれの中身の分かる見出しで見分ける。
  *
- * **ポート番号は名前と並べて出さない**（名前はポート番号の言い換えなので、見分けの助けに
- * ならない。`docs/design.md` 13.9）。語彙の外のポートは `roomName` がポート番号を名乗るので、
- * 今までの見え方のまま残る。
+ * 見出しが無い行は {@link NO_HEADING_LABEL} を代わりに出す。
  */
 function sessionLabel(session: SessionChoice, isCurrent: boolean): string {
-  const label = `${roomName(session.viewPort)}・${localTimestamp(session.lastModified)}`
+  const heading =
+    session.heading === undefined ? NO_HEADING_LABEL : truncateHeading(session.heading)
+  const label = `${heading}・${localTimestamp(session.lastModified)}`
   return isCurrent ? `${label}${CURRENT_SUFFIX}` : label
+}
+
+function truncateHeading(heading: string): string {
+  return heading.length <= MAX_HEADING_LENGTH ? heading : `${heading.slice(0, MAX_HEADING_LENGTH)}…`
 }
 
 /**

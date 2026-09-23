@@ -64,7 +64,12 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
 export function listMarkedSessions(sessions: unknown, tag: string): readonly SessionChoice[] {
   return markedSessions(sessions)
     .filter((session) => session.tag === tag)
-    .map(({ viewPort, sessionId, lastModified }) => ({ viewPort, sessionId, lastModified }))
+    .map(({ viewPort, sessionId, lastModified, heading }) => ({
+      viewPort,
+      sessionId,
+      lastModified,
+      heading,
+    }))
     .sort((left, right) => right.lastModified - left.lastModified)
     .slice(0, MAX_SESSION_CHOICES)
 }
@@ -135,8 +140,24 @@ function taggedSession(value: unknown): readonly TaggedSession[] {
     sessionId !== "" &&
     typeof lastModified === "number" &&
     Number.isFinite(lastModified)
-    ? [{ viewPort: mark.viewPort, tag: mark.tag, sessionId, lastModified }]
+    ? [
+        {
+          viewPort: mark.viewPort,
+          tag: mark.tag,
+          sessionId,
+          lastModified,
+          heading: headingFrom(value.summary),
+        },
+      ]
     : []
+}
+
+/**
+ * SDK の `summary`（外来の値）を行の見出しへ畳む。**文字列でない・空・空白だけなら
+ * 無いものとして扱う**（`SessionChoice.heading` のコメント）。
+ */
+function headingFrom(summary: unknown): string | undefined {
+  return typeof summary === "string" && summary.trim() !== "" ? summary : undefined
 }
 
 /** 組み直しの途中の姿（今のターンが開いたままかどうかを持ち回る）。 */

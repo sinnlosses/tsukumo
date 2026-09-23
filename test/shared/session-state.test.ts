@@ -683,10 +683,10 @@ describe("applySessionEvent", () => {
   it("sessions-changed で切り替え先の一覧を持ち、届くまでは空", () => {
     expect(INITIAL_SESSION_STATE.sessions).toEqual([])
 
-    // 目印と最終更新時刻だけ（会話の内容は入らない）。
+    // 目印・最終更新時刻・見出し（見出しは作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
     const sessions = [
-      { viewPort: 7328, sessionId: "s-架空-2", lastModified: 2_000 },
-      { viewPort: 7327, sessionId: "s-架空-1", lastModified: 1_000 },
+      { viewPort: 7328, sessionId: "s-架空-2", lastModified: 2_000, heading: "架空の見出しその2" },
+      { viewPort: 7327, sessionId: "s-架空-1", lastModified: 1_000, heading: "架空の見出しその1" },
     ]
     const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
     expect(listed.sessions).toEqual(sessions)
@@ -710,7 +710,9 @@ describe("applySessionEvent", () => {
       withInit,
       {
         kind: "sessions-changed",
-        sessions: [{ viewPort: 7327, sessionId: "s-架空-新", lastModified: 0 }],
+        sessions: [
+          { viewPort: 7327, sessionId: "s-架空-新", lastModified: 0, heading: "架空の見出し" },
+        ],
         current: "s-架空-新",
       },
       0,
