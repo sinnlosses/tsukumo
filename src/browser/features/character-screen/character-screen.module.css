@@ -131,7 +131,7 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
-/* 差し色（衣装4つ）は**1行に**並べ、入りきらなければ折り返す。 */
+/* 差し色（画面の差し色2つ・衣装4つ）は**1行に**並べ、入りきらなければ折り返す。 */
 .character-screen-row {
   display: flex;
   flex-wrap: wrap;
@@ -142,6 +142,30 @@
   align-items: center;
   gap: 0.5rem;
   font-size: var(--font-secondary);
+}
+/* 雑談の差し色を持たないときに、戻す口の場所へ出す一言。見本が仕事と同じ色なのを**色だけで
+   伝えない**（13.1 原則1）。 */
+.character-screen-accent-same {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 雑談の差し色を「仕事と同じ」へ戻す口。ほかの小さな口（消す・作る）と同じ見た目。 */
+.character-screen-accent-reset {
+  padding: 0.15rem 0.5rem;
+  background: var(--surface);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.character-screen-accent-reset:hover {
+  border-color: var(--accent);
+}
+.character-screen-accent-reset:disabled {
+  color: var(--ink-quiet);
+  cursor: default;
 }
 /* 背景の行（13.8）。行の左に**いまの背景を小さく**出す。立ち絵の並びと違って主役ではないので、
    高さは1行ぶんに収める。**敷いたときと同じ切り取り方**（cover・下端合わせ）にして、

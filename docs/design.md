@@ -726,16 +726,25 @@ type SessionHost = {
 
 ### config.ts（core）
 
-| 環境変数              | 意味                                                 | 既定             |
-| --------------------- | ---------------------------------------------------- | ---------------- |
-| `TSUKUMO_VIEW_PORT`   | いまのまま（既定 7327、塞がっていれば +1 で20個）    | 7327             |
-| `TSUKUMO_CHARACTER`   | パック定義ディレクトリのパス（相対は cwd 相対）      | `tsukumo-spirit` |
-| `TSUKUMO_OPEN_VIEW`   | いまのまま                                           | 開く             |
-| `TSUKUMO_DRIVER`      | `sdk` / `fake`                                       | `sdk`            |
-| `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前            | 流さない         |
-| `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）            | 復元する         |
-| `TSUKUMO_WATCH_UI`    | `1` で `src/browser/` を見張って組み立て直す（11章） | 見張らない       |
-| `TSUKUMO_HOME`        | tsukumo の持ち物を置くホーム（相対は cwd 相対）      | `~/.tsukumo`     |
+| 環境変数                          | 意味                                                         | 既定             |
+| --------------------------------- | ------------------------------------------------------------ | ---------------- |
+| `TSUKUMO_VIEW_PORT`               | いまのまま（既定 7327、塞がっていれば +1 で20個）            | 7327             |
+| `TSUKUMO_VIEW_PORT_FALLBACK_BASE` | `TSUKUMO_VIEW_PORT` が未設定のときの起点を差し替える（下記） | 7327             |
+| `TSUKUMO_CHARACTER`               | パック定義ディレクトリのパス（相対は cwd 相対）              | `tsukumo-spirit` |
+| `TSUKUMO_OPEN_VIEW`               | いまのまま                                                   | 開く             |
+| `TSUKUMO_DRIVER`                  | `sdk` / `fake`                                               | `sdk`            |
+| `TSUKUMO_FAKE_SCENE`              | `fake` のとき起こした直後に流す場面の名前                    | 流さない         |
+| `TSUKUMO_NEW_SESSION`             | `1` で復元せず新規に起こす（8章の逃げ道）                    | 復元する         |
+| `TSUKUMO_WATCH_UI`                | `1` で `src/browser/` を見張って組み立て直す（11章）         | 見張らない       |
+| `TSUKUMO_HOME`                    | tsukumo の持ち物を置くホーム（相対は cwd 相対）              | `~/.tsukumo`     |
+
+`TSUKUMO_VIEW_PORT_FALLBACK_BASE` は**既定の帯（`DEFAULT_VIEW_PORT`〜+19）そのものを差し替える
+口**で、`TSUKUMO_VIEW_PORT` を明示したときは効かない（明示指定はそもそもずらさないため）。
+読めない値は `TSUKUMO_VIEW_PORT` と違って**起動を止めず**、黙って既定の 7327 に倒す
+（`resolveViewPortFallbackBase`）。**この口が要る場面は1つだけ**——`test/cli.test.ts`
+「既定ポートから上限まで全部塞がっている」テストが、実際の 7327〜7346 帯（他の tsukumo が
+日常的に使っている）を塞がずに、その帯が全滅したときの失敗経路（試した範囲を伝えて終了コード1）
+を確かめるための私的な帯を選ぶために使う。
 
 `TSUKUMO_CHARACTER` は**パスとしてだけ解く**（`src/server/adapter/bundled-path.ts` の
 `resolveBundledDir`。相対は cwd 相対、絶対はそのまま）。**パックの名前では指せない** —
@@ -2080,8 +2089,9 @@ import 先が解けないとき（＝書きかけを保存したとき）。
  [差し替える]   [差し替える]   [差し替える]  [選ぶ]
                 [消す]         [消す]
 
-差し色    ■ 既定  ■ 軽装（haiku）  ■ 通常装備（sonnet）  ■ 戦闘配置（opus）
-背景      ▭ いまの背景  [差し替える]  [消す]
+画面の差し色  ■ 仕事  ■ 雑談  [仕事と同じにする]
+立ち絵の差し色  ■ 既定  ■ 軽装（haiku）  ■ 通常装備（sonnet）  ■ 戦闘配置（opus）
+背景          ▭ いまの背景  [差し替える]  [消す]
 ```
 
 - **並びは上から** パックのラベルと名前（名前は等幅。13.1 原則3）と「新しく作る」 →
@@ -2099,9 +2109,36 @@ import 先が解けないとき（＝書きかけを保存したとき）。
   `character-screen.module.css` が決め、`<Portrait>` に `className` で渡す（キャラビュー側の
   割合指定は `.character-region` の変数が無いので効かない。6.6）
 - 変えられないパック（`editable: false`）は、並びの上に一言を出して口を無効にする（7.1）
-- 差し色は衣装4つを1行に（色見本＋ラベル）。`<input type="color">` のまま
+- **画面の差し色（`accent` / `chatAccent`）は立ち絵の並びのすぐ下、衣装ごとの差し色の行より
+  前に置く**（2026-09-23 決定）。仕事と雑談の2色を1行に並べ、`chatAccent` を持つときだけ
+  「仕事と同じにする」を雑談の色見本の横に出す（無ければ戻すものが無いので、同じ場所に
+  「仕事と同じ」の字を出す）。
+  **呼び名がかぶる**ので、衣装ごとの行は「差し色」から「立ち絵の差し色」に改めた
+- **立ち絵の差し色（衣装4つ）は1行に**（色見本＋ラベル）。`<input type="color">` のまま
 - **背景の行は「差し替える」と「消す」の2つだけ**（いまの背景を行の左に小さく出す）。
   **覆いの濃さは画面から変えない**（定義ファイルを手で直す。13.8）
+
+**画面の差し色を編集する口の形**（2026-09-23 決定）:
+
+- **コマンドは `set-accent`（`target: "work" | "chat"` で1つの色を差す）と、雑談の差し色を消す
+  `clear-chat-accent` の2つ**。`target` を引数で分けたのは、`set-outfit-accent` が衣装を
+  引数（型を4つに割らない）で受けているのに揃えたため（採らなかった案: `set-work-accent` /
+  `set-chat-accent` の2コマンドに分ける——`isCharacterEditCommand` の一覧が1つ増えるだけの違いで、
+  書き込み側の分岐は結局2つに割れ、コマンドの形だけ増える）
+- **`accent`（仕事）を消す口は無い。** `outfitAccents` は無ければ既定値（`--accent`）に
+  落ちるので消しても壊れないが、`accent` は画面全体の色の元なので、消すと戻り先が無い。
+  戻す口を持つのは「決まっていること」どおり `chatAccent` だけ
+- **`character-definition.ts` に最上位の欄を書く関数を足した**（`definitionWithAccent` /
+  `definitionWithoutChatAccent`）。既存の `editedDefinitionJson` は `portraits` /
+  `outfitAccents` / `background` という**入れ子**の1件を差し替える形なので、そのまま `group` を
+  省略可能にはせず、入れ子を重ねない `editedTopLevelDefinitionJson` を別に置いた（採らなかった案:
+  `editedDefinitionJson` の `group` を `undefined` も取れるように広げる——「無いかもしれない」
+  引数が1つ増えるだけで、呼び出し側からは動きの違いが読み取れなくなる）
+- **雑談の差し色が無いときの色見本は、いまの仕事の差し色（引きずり中の値も含む）をそのまま出す。**
+  仕事の色をドラッグしている最中も雑談側が一緒に動く。**「仕事と同じ」であることは色だけで
+  伝えず**、戻す口の場所に同じ字を添える（13.1 原則1）
+- **送信の debounce は衣装の差し色と同じ定数（`ACCENT_DEBOUNCE_MS`）を使う。** 衣装の差し色も画面の差し色も「ドラッグ中の色を
+  離れてから1回にまとめる」という同じ操作なので、間隔を2つに分ける理由が無い
 
 **作る画面は別**（`#character/new`。2026-09-17 決定。ユーザーの選択）。キャラクター画面の
 パック名の行の「新しく作る」から入る:

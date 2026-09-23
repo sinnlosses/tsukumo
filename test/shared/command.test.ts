@@ -112,6 +112,51 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     ).toEqual({ type: "set-outfit-accent", commandId: "c-7", outfit: "heavy", color: "#ffb3a7" })
   })
 
+  it("set-accent は target（work / chat）と16進の色を受け付ける", () => {
+    expect(
+      parseClientCommand({
+        type: "set-accent",
+        commandId: "c-7",
+        target: "work",
+        color: "#f2b0a0",
+      }),
+    ).toEqual({ type: "set-accent", commandId: "c-7", target: "work", color: "#f2b0a0" })
+    expect(
+      parseClientCommand({
+        type: "set-accent",
+        commandId: "c-7",
+        target: "chat",
+        color: "#f2984a",
+      }),
+    ).toEqual({ type: "set-accent", commandId: "c-7", target: "chat", color: "#f2984a" })
+  })
+
+  it("set-accent は知らない target・16進でない色を受け付けない", () => {
+    expect(
+      parseClientCommand({
+        type: "set-accent",
+        commandId: "c-7",
+        target: "battle",
+        color: "#f2b0a0",
+      }),
+    ).toBeUndefined()
+    expect(
+      parseClientCommand({
+        type: "set-accent",
+        commandId: "c-7",
+        target: "work",
+        color: "rebeccapurple",
+      }),
+    ).toBeUndefined()
+  })
+
+  it("clear-chat-accent を受け付ける（commandId だけでよい）", () => {
+    expect(parseClientCommand({ type: "clear-chat-accent", commandId: "c-7" })).toEqual({
+      type: "clear-chat-accent",
+      commandId: "c-7",
+    })
+  })
+
   it("clear-portrait は必須でない表情（thinking / proud / flustered）だけを受け付ける", () => {
     expect(
       parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "thinking" }),
@@ -207,11 +252,13 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     expect(parseClientCommand({ type: "switch-session", commandId: "c-3" })).toBeUndefined()
   })
 
-  it("isCharacterEditCommand が見た目の3つだけを true にする", () => {
+  it("isCharacterEditCommand が見た目の5つだけを true にする", () => {
     const edits = [
       { type: "set-portrait", commandId: "c-1", expression: "proud", image: TINY_PNG_DATA_URL },
       { type: "clear-portrait", commandId: "c-2", expression: "proud" },
       { type: "set-outfit-accent", commandId: "c-3", outfit: "light", color: "#a8e6c0" },
+      { type: "set-accent", commandId: "c-7", target: "work", color: "#f2b0a0" },
+      { type: "clear-chat-accent", commandId: "c-8" },
     ]
     const others = [
       { type: "interrupt", commandId: "c-4" },

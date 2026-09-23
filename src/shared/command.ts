@@ -9,6 +9,7 @@
 import { z } from "zod"
 
 import { MAX_BACKGROUND_DATA_URL_LENGTH, parseBackgroundImage } from "./character-background.ts"
+import { type AccentTarget, isAccentTarget } from "./character-definition.ts"
 import { isCharacterPackName, MAX_CHARACTER_PACK_NAME_LENGTH } from "./character.ts"
 import {
   type Expression,
@@ -149,6 +150,11 @@ const removableExpressionSchema = z.custom<RemovableExpression>(
 
 const outfitSchema = z.custom<Outfit>((value) => typeof value === "string" && isOutfit(value))
 
+/** 画面の差し色（`accent` / `chatAccent`）のうちどちらを差すか。`src/shared/character-definition.ts`。 */
+const accentTargetSchema = z.custom<AccentTarget>(
+  (value) => typeof value === "string" && isAccentTarget(value),
+)
+
 /**
  * ブラウザ → サーバのコマンド。`new-session`（docs/design.md 8章）はまだ足していない。
  */
@@ -233,6 +239,23 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     color: accentColorSchema,
   }),
   /**
+   * 画面の差し色（`accent` / `chatAccent`）を差す（`docs/design.md` 13.6）。**`target` で
+   * どちらを差すかを分ける**（`set-outfit-accent` が衣装を引数で分けているのに揃える。型を
+   * 2つに割らない）。
+   */
+  z.object({
+    type: z.literal("set-accent"),
+    commandId: commandIdSchema,
+    target: accentTargetSchema,
+    color: accentColorSchema,
+  }),
+  /**
+   * 雑談の差し色（`chatAccent`）を消し、雑談中も仕事の差し色（`accent`）と同じに戻す
+   * （`docs/design.md` 13.6「仕事と同じにする」）。**`accent` を消す口は無い**
+   * （`src/shared/character-definition.ts` の `definitionWithoutChatAccent`）。
+   */
+  z.object({ type: z.literal("clear-chat-accent"), commandId: commandIdSchema }),
+  /**
    * キャラビューに敷く背景を差し替える／消す（`docs/design.md` 13.8）。**覆いの濃さは
    * 画面から変えない**ので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
    */
@@ -282,6 +305,8 @@ export type CharacterEditCommand = Extract<
       | "set-portrait"
       | "clear-portrait"
       | "set-outfit-accent"
+      | "set-accent"
+      | "clear-chat-accent"
       | "set-background"
       | "clear-background"
   }
@@ -319,6 +344,8 @@ const CHARACTER_EDIT_COMMAND_TYPES = [
   "set-portrait",
   "clear-portrait",
   "set-outfit-accent",
+  "set-accent",
+  "clear-chat-accent",
   "set-background",
   "clear-background",
 ] as const

@@ -63,7 +63,7 @@ function renderCharacterEdit(
   )
 }
 
-// 差し色の送信は200ms（`OUTFIT_ACCENT_DEBOUNCE_MS`）まとめるので、それより長く実時間で待つ。
+// 差し色の送信は200ms（`ACCENT_DEBOUNCE_MS`）まとめるので、それより長く実時間で待つ。
 function waitForDebounce(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 250))
 }
@@ -197,6 +197,57 @@ describe("CharacterEdit", () => {
     cleanup()
 
     expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#123456" }])
+  })
+
+  it("画面の差し色（仕事 / 雑談）の口を出す", () => {
+    renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: "#f2984a" })
+
+    expect((screen.getByLabelText("仕事") as HTMLInputElement).value).toBe("#f2b0a0")
+    expect((screen.getByLabelText("雑談") as HTMLInputElement).value).toBe("#f2984a")
+    expect(screen.getByRole("button", { name: "仕事と同じにする" })).toBeDefined()
+    expect(screen.queryByText("仕事と同じ")).toBeNull()
+  })
+
+  it("chatAccent が無いパックでは、雑談の見本に仕事の差し色と「仕事と同じ」の字を出し、戻す口は出さない", () => {
+    renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: undefined })
+
+    expect((screen.getByLabelText("雑談") as HTMLInputElement).value).toBe("#f2b0a0")
+    expect(screen.queryByRole("button", { name: "仕事と同じにする" })).toBeNull()
+    // 色見本が仕事と同じ色なのを、色だけでなく字でも伝える（13.1 原則1）。
+    expect(screen.getByText("仕事と同じ")).toBeDefined()
+  })
+
+  it("仕事の差し色を変えると、少し待ってから set-accent（target: work）を dispatch する", async () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+    fireEvent.change(screen.getByLabelText("仕事"), { target: { value: "#123456" } })
+    expect(calls).toEqual([])
+    await waitForDebounce()
+
+    expect(calls).toEqual([{ type: "set-accent", target: "work", color: "#123456" }])
+  })
+
+  it("「仕事と同じにする」を押すと clear-chat-accent を dispatch する", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit({ ...FIXTURE_CHARACTER, chatAccent: "#f2984a" }, (command) =>
+      calls.push(command),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "仕事と同じにする" }))
+
+    expect(calls).toEqual([{ type: "clear-chat-accent" }])
+  })
+
+  it("画面から変えられないパックでは、画面の差し色と戻す口も操作できない", () => {
+    renderCharacterEdit({ ...FIXTURE_CHARACTER, chatAccent: "#f2984a", editable: false })
+
+    expect((screen.getByLabelText("仕事") as HTMLInputElement).disabled).toBe(true)
+    expect((screen.getByLabelText("雑談") as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getByRole("button", { name: "仕事と同じにする" })).toHaveProperty(
+      "disabled",
+      true,
+    )
   })
 
   it("差し色の初期値は、その衣装の値 → default → --accent の順で決まる", () => {
