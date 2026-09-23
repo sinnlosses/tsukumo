@@ -160,9 +160,9 @@
     "dependencies": ["T-398"],
     "summary": "札のタイトル横の ⌄ で、やり取りの一覧を開いて飛べるようにする",
     "task": "## 背景\n\nT-398 でメインビューの横並びのタブを「前後ボタン＋依頼のタイトル」の札の頭に置き換えた。タブが持っていた「**窓の中の任意の1件へ一度で飛ぶ**」役が `‹` `›` だけでは失われるので、モック `docs/history/mockup/turn-history-2026-09-23.png` のタイトル横の `⌄` にそれを持たせる（2026-09-23 にユーザーが「やり取りの一覧」を選んだ）。\n\n選択は `src/browser/stores/turn-selection.tsx` の `selectTurn(turnId)` で行う（最新を選ぶと追従に戻る規則もそこにある）。一覧の名前には `src/browser/features/main-view/domain/turn-tab-label.ts` の `turnTab` が作る依頼の1行目を使える（T-398 で名前が変わっていればそちら）。\n\n開閉する部品は帯に前例がある: 外側の押下と `Escape` で閉じる購読は `src/browser/hooks/use-dismiss-signal.ts` の `useDismissSignal` を使う（帯の「≡」・作業中の札・設定の歯車が使っている。同じ購読を機能の中に書き直さない）。`aria-expanded` は `src/browser/features/screen-nav/components/screen-nav-current-work.tsx` が前例。\n\n## 決まっていること（蒸し返さない）\n\n- `⌄`（とタイトル）を押すと、窓の中のやり取りの一覧が開く。依頼の1行目で縦に並べ、押すとそのやり取りへ移って閉じる\n- 見ているやり取りには印を付ける（色だけにしない）\n\n## やること\n\n1. 札の頭に一覧の口と一覧を足す。並びは新しいものを上にするか古いものを上にするかを決め（札の「n / N」が古いほうを1にしているのと矛盾しない書き方にする）、各行に「n / N」の番号か「最新」を添える\n2. 閉じ方: もう一度押す・外側を押す・`Escape`・行を選ぶ。`useEffect` は「React の外と同期する」類型だけ（`docs/coding-standards.md`「React」節）\n3. テストを足す（`test/browser/features/main-view/`）: 開く / 行を押すとそのやり取りへ移り閉じる / 最新の行を押すと追従に戻る / `Escape` で閉じる / 見ている行に印がある\n4. `docs/design.md` 6.1 の `<MainView>` の行に一覧を足す\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900 と 760px 以下）: やり取り3件以上で一覧を開き、別のやり取りへ飛べる・一覧がレポートや帯に隠れず読める。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n- 一覧はモーダルの一種なので、目視は開いた状態でも横スクロールが出ないかまで測る\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 1478 pass / 0 fail（120 files）。main-view.test.tsx に一覧の7件（開く・もう一度押すと閉じる・外側で閉じる・行で移って閉じる・最新の行で追従に戻る・Escape で閉じてフォーカスが戻る・見ている行にだけ ●・タイトルを押しても開く）。目視: TSUKUMO_DRIVER=fake の turn-history（4ターン）を 1400x900 と 375x900 で、タイトルと ⌄ のどちらでも開き「1 / 4」を押すとそのターンへ移って閉じる・一覧は札の内側に収まり帯やレポートに隠れない・開いた状態でも横スクロールなし（/tmp/t399/2-*.png）"
   },
   {
     "id": "T-400",
