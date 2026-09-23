@@ -8,6 +8,7 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
+import { isBlankText } from "./blank-text.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionRecord, type SessionState, type ToolRunStatus } from "./session-state.ts"
 
@@ -164,7 +165,7 @@ export type MainViewTurn = {
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
   const settled = state.records.flatMap(toMainViewEntries)
-  return state.partialUtterance === ""
+  return isBlankText(state.partialUtterance)
     ? settled
     : [...settled, { kind: "detail", markdown: state.partialUtterance }]
 }
