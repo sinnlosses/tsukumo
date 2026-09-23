@@ -28,7 +28,7 @@
     "dependencies": ["T-435"],
     "summary": "立ち絵の URL・差し色・代替テキストの導き方をキャラビューと雑談ビューで1つにする",
     "task": "## 背景\n\n立ち絵に「いまの表情と衣装で、どの絵を・どの差し色で・どの代替テキストで出すか」を導く手が2つの機能に書き写されている:\n\n- `src/browser/features/character-view/hooks/use-character-view.ts`: `character?.portraits?.[expression]`・`character?.outfitAccents[outfit]`・`` `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(…)}）` ``・`resolveOutfit(model)`\n- `src/browser/features/chat-view/hooks/use-chat-view.ts`: 同じ4つを同じ式で書き、`DEFAULT_CHARACTER_ALT_NAME = \"キャラクター\"` も別に持つ\n\n`src/browser/features/screen-nav/hooks/use-current-work.ts` も `DEFAULT_CHARACTER_NAME = \"キャラクター\"` を持つ。機能どうしは import できないので、共通にするには機能の外に置く必要があり、その置き場は T-435 が決める。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. T-435 で決まった置き場の基準を読む\n2. 「キャラクター・表情・衣装（またはモデル）→ 立ち絵の URL・差し色・代替テキスト」を1つの関数（またはフック）にし、その置き場へ置く\n3. 2つの機能をそれに寄せる。既定の名前「キャラクター」を1か所にする（`use-current-work.ts` の既定名が同じ意味なら一緒に）\n\n## 完了条件\n\n- `grep -rn '\"キャラクター\"' src/browser --include='*.ts'` で既定の名前の定数が1か所\n- `grep -rn 'portraits?.\\[' src/browser/features` が `character-screen`（編集画面）以外に無い\n- 2つのビューの既存テストが期待値を変えずに通る\n- `bun run check` が通る",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
