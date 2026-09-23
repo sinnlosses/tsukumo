@@ -2,6 +2,12 @@
 // （`docs/requirements.md` 4.3）。**送る相手を呼ぶ側に選ばせない**——根の要素を渡せば、
 // 転がる祖先を自分で見つける。
 //
+// **追う範囲は「いま書いている帯ぜんたい」ではなく「ミニ立ち絵の立つ位置」**（帯の下端から、
+// 立ち絵の高さぶん上まで。`mini-portrait.tsx` の `followStyle` と同じ場所）。行の多いトピックや
+// 表・図を含むトピックでは帯の背が器の見える高さに迫り、帯の上端・下端の両方を器の余白の内側に
+// 収めようとすると、はみ出した分を送ってはまた逆へ戻す往復が起きる（`report-reveal.ts` 冒頭）。
+// 立ち絵の立つ位置は帯の下端付近の狭い範囲なので、帯が背高でもこの往復は起きない。
+//
 // **どの祖先が転がっているかは画面幅で入れ替わる**（広い画面は `section[data-region="main"]`、
 // 狭い画面（≤760px）はページ自身）。`main-view.tsx` がタブの切り替えで `scrollTop` ではなく
 // `scrollIntoView` を使っているのと同じ事情で、ここも器を決め打ちにできない。
@@ -17,13 +23,20 @@
 const KEEP_MARGIN_PX = 96
 
 /**
- * 追いかける筆先の縦の範囲。**ビューポート座標**（`report-reveal.ts` が測った生の値で、
- * 配る筆先のように本文の入れ物へ写す前のもの。`reveal-band.ts` の `BrushStep` がそのまま
- * 渡せる）——器の見えている範囲と引き算するので、ここだけは原点を移さない。
+ * ミニ立ち絵が立つ位置の縦の範囲。**ビューポート座標**（`report-reveal.ts` が測った生の値で、
+ * 配る筆先のように本文の入れ物へ写す前のもの）——器の見えている範囲と引き算するので、
+ * ここだけは原点を移さない。
+ *
+ * `tipBottom` は帯の下端（ミニ立ち絵の足元。`mini-portrait.tsx` の `followStyle` と同じ）、
+ * `tipHeight` はそこから立ち絵の高さぶん上までの見積もり。**呼ぶ側が固定値で渡す**
+ * （`report-reveal.ts`）——実際の高さは窓幅で 60〜96px に変わるが（`mini-portrait.module.css`
+ * の `--mini-portrait-height`）、ここで DOM を測ると、立ち絵が出ない状況（素材が無い・印が
+ * 見つからない）の分岐まで持ち込むことになる。帯ぜんたい（行の多いトピックでは器の見える
+ * 高さに迫る）ではなくこの狭い範囲だけを追うので、フレームごとに送っては戻す往復が起きない。
  */
 export type BrushTipRange = {
-  readonly tipTop: number
   readonly tipBottom: number
+  readonly tipHeight: number
 }
 
 /** 筆先を追う器と、その見張り。 */
@@ -69,10 +82,22 @@ export function brushScroller(root: Element): BrushScroller {
 
     const view = viewportOf(scroller)
     const below = tip.tipBottom - (view.bottom - KEEP_MARGIN_PX)
-    const above = view.top + KEEP_MARGIN_PX - tip.tipTop
     if (below > 0) {
       scroller.scrollTop += below
-    } else if (above > 0) {
+      return
+    }
+
+    // 立ち絵の高さぶんの範囲と上下の余白の両方を器へ収めるには、器の見える高さが
+    // `tipHeight + KEEP_MARGIN_PX×2` 要る。それより器が低いときは**下端（いま書いている足元）を
+    // 優先し、上端の余白は諦める**——書いている場所が見えることのほうが、範囲の天井が余白に
+    // 触れているかより大事。ここで諦めずに上端も送ると、次のフレームで下端がまた縁の外へ出て
+    // 送り直しになり、往復が戻ってくる。
+    if (view.bottom - view.top < tip.tipHeight + KEEP_MARGIN_PX * 2) {
+      return
+    }
+
+    const above = view.top + KEEP_MARGIN_PX - (tip.tipBottom - tip.tipHeight)
+    if (above > 0) {
       scroller.scrollTop -= above
     }
   }

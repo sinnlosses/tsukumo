@@ -21,10 +21,12 @@
 // どちらもレイアウトを動かさない（`clip-path` も `opacity` も場所を取ったまま隠す）ので、
 // 本文の高さは最初から最後まで変わらない。
 //
-// **筆先が画面から出たら器を送る**（`brush-scroll.ts`）。**器を送るのはビューポート座標のまま**
-// だが、配る筆先は本文の入れ物（`data-brush-origin`）の座標へ写す——書き上げたあとも筆先は
-// その場に残るので、ビューポート基準のままだと転がすたびに関係ない場所へずれる
-// （`stores/brush-tip.ts`）。
+// **ミニ立ち絵の立つ位置が画面から出たら器を送る**（`brush-scroll.ts`）。追う範囲は
+// 帯ぜんたいではなく、帯の下端から立ち絵の高さの見積もりぶん上まで——行の多いトピックでは
+// 帯の背が器の見える高さに迫り、帯ぜんたいを収めようとすると送っては戻す往復が起きるため
+// （`brush-scroll.ts` 冒頭）。**器を送るのはビューポート座標のまま**だが、配る筆先は本文の
+// 入れ物（`data-brush-origin`）の座標へ写す——書き上げたあとも筆先はその場に残るので、
+// ビューポート基準のままだと転がすたびに関係ない場所へずれる（`stores/brush-tip.ts`）。
 //
 // **打ち切る口は2つ**（クリック・キー入力）。**ホイールと指では打ち切らない**——先を読もうと
 // して転がすのは「もう要らない」ではなく「見ていたい」の側なので、打ち切ると筆を追うたびに
@@ -66,6 +68,14 @@ const REVEALING_ATTRIBUTE = "data-revealing"
 
 /** 何も見せていない状態の `clip-path`（高さ 0 に畳む。場所は取ったまま）。 */
 const HIDDEN_CLIP = "inset(0 0 100% 0)"
+
+/**
+ * 自動送りが追う範囲（`brush-scroll.ts` の `BrushTipRange.tipHeight`）に渡す、ミニ立ち絵の
+ * 高さの見積もり。**実測ではなく固定値**——`mini-portrait.module.css` の
+ * `--mini-portrait-height`（`clamp(60px, 8vmin, 96px)`）の上限に合わせる。狭く見積もって
+ * 天井を割ると立ち絵の頭が余白から出るより、広めに見積もって余白が少し余るほうが安全。
+ */
+const MINI_PORTRAIT_HEIGHT_ESTIMATE_PX = 96
 
 /**
  * 演出を飛ばす合図。**本文に触りに来た操作だけ**を並べる（ホイールと指を入れない理由は冒頭。
@@ -181,7 +191,11 @@ function startReveal(root: HTMLElement, turnId: number): () => void {
       return
     }
     const step = advanceBlock(current, blockProgress(current, elapsed))
-    scroller.follow(step)
+    scroller.follow(
+      step === undefined
+        ? undefined
+        : { tipBottom: step.tipBottom, tipHeight: MINI_PORTRAIT_HEIGHT_ESTIMATE_PX },
+    )
     if (origin !== null) {
       publishBrushTip(
         step === undefined
