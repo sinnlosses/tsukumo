@@ -9,6 +9,7 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { isBlankText } from "./blank-text.ts"
+import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import {
   MAX_SESSION_STATE_TURNS,
@@ -60,7 +61,7 @@ export type MainViewEntry =
       /** そのターンの通し番号（`SessionState.nextTurnId` が振ったもの）。 */
       readonly turnId: number
       readonly text: string
-      readonly images: readonly string[]
+      readonly images: readonly RecordedPromptImage[]
     }
   /**
    * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
@@ -138,7 +139,7 @@ const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
  */
 export type MainViewRequest = {
   readonly text: string
-  readonly images: readonly string[]
+  readonly images: readonly RecordedPromptImage[]
 }
 
 /**

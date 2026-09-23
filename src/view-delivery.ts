@@ -14,6 +14,7 @@ import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
+import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import { summarizeRecentTokenUsage, type TokenUsageLog } from "./server/core/token-usage.ts"
 import { type RunningSession } from "./session-start.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
@@ -33,6 +34,11 @@ export type ViewDeliveryOptions = {
    * **ここで読むのは要求が来たときだけ**で、配信を始める時点ではファイルに触らない。
    */
   readonly tokenUsageLog: TokenUsageLog
+  /**
+   * 依頼に添えた画像の原寸の棚（`/prompt-image/<id>` に配る原寸の出どころ。持ち主は
+   * `src/main.ts`）。**ここは引くだけ**で、置くのと捨てるのはセッションの側。
+   */
+  readonly promptImageShelf: PromptImageShelf
   /**
    * `src/browser/` を見張り、保存のたびに組み立て直して開いているタブへ取り直しを押すか
    * （`TSUKUMO_WATCH_UI`）。
@@ -62,7 +68,7 @@ export type ViewDeliveryResult =
  */
 export async function startViewDelivery(options: ViewDeliveryOptions): Promise<ViewDeliveryResult> {
   // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
-  // ビューサーバ（`/repository-file` と `/token-usage`）と WebSocket の3つが同じ1つを見る。
+  // ビューサーバ（`/repository-file`・`/token-usage`・`/prompt-image`）と WebSocket が同じ1つを見る。
   const token = createStartupToken()
   // **`TSUKUMO_WATCH_UI` のときだけ組み立て直したものへ丸ごと差し替わる**ので、サーバには
   // 取り出し口だけを渡す。
@@ -83,6 +89,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
       readTokenUsageSummary: (days) =>
         summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
+      findPromptImage: (id) => options.promptImageShelf.find(id),
       token,
     }),
   )

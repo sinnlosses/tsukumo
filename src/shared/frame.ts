@@ -19,12 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は `SessionState` から `runningTools` / `finishedTools` を外したことで上げた
- * （帯の「いまの作業」が `src/shared/turn-step.ts` の `currentTurnSteps` で記録から直接導くように
- * なり、読み手が居なくなったため。docs/design.md 13.9）。古いタブが繋がったままだと、
- * 型の無いフィールドを読もうとして描画が壊れる。
+ * 直近は依頼の記録の `images` を、控えの data URL の並びから**控えと棚の原寸を指す id の組**
+ * （`src/shared/prompt-image.ts` の `RecordedPromptImage`）の並びに変えたことで上げた。
+ * 古いタブが繋がったままだと、文字列のつもりで組を `<img src>` に渡して控えが壊れる。
  */
-export const PROTOCOL_VERSION = 4
+export const PROTOCOL_VERSION = 5
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の

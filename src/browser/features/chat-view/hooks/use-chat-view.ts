@@ -10,6 +10,7 @@ import { useState, type RefObject } from "react"
 import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../../shared/chat-log.ts"
 import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
 import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/expression.ts"
+import { type RecordedPromptImage } from "../../../../shared/prompt-image.ts"
 import { type RecordTime } from "../../../../shared/session-state.ts"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { localTimeZoneId } from "../../../utils/clock.ts"
@@ -61,7 +62,7 @@ export type ChatRow =
       readonly kind: "user"
       readonly key: string
       readonly text: string
-      readonly images: readonly string[]
+      readonly images: readonly RecordedPromptImage[]
       readonly time: ChatTimeStamp
     }
 

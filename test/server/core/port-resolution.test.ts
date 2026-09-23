@@ -25,6 +25,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   serveCharacterAsset: () => undefined,
   listRepositoryFiles: () => Promise.resolve([]),
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
+  findPromptImage: () => undefined,
   token: "架空の起動トークン",
 }
 

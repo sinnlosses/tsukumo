@@ -71,7 +71,8 @@ export function ChatLog({
                 return (
                   <div key={row.key} className={`${styles["chat-row"]} ${styles["chat-row-user"]}`}>
                     {/* 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
-                     **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10）。 */}
+                     **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10。
+                     控えだけは押すと拡大する）。 */}
                     <div
                       className={`${styles["chat-entry"]} ${styles["chat-entry-user"]}`}
                       data-speaker="user"

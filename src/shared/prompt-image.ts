@@ -6,12 +6,17 @@
 // `Base64ImageSource.media_type` が取る4つ（png / jpeg / gif / webp）しか渡せない。
 //
 // **原寸と控えは別の寿命を持つ。** 原寸（{@link PromptImage.full}）はブラウザのメモリ →
-// WebSocket の1フレーム → サーバのメモリ → SDK の子プロセス、と流れるだけで**どこにも残らず**、
-// 記録（`SessionState`）に載るのは控え（{@link PromptImage.thumbnail}）だけ。上限が2つあるのは
-// そのためで、控えのほうが桁違いに小さい（`docs/requirements.md` 4.10「会話内容の扱い」）。
+// WebSocket の1フレーム → サーバのメモリ → SDK の子プロセス、と流れ、サーバのメモリでは
+// **直近の数枚だけ**が棚（`src/server/core/prompt-image-shelf.ts`）に残る（記録の窓から出た依頼の
+// ぶんと、枚数の上限を超えたぶんはそこで捨てる。ディスクには書かない）。記録（`SessionState`）に
+// 載るのは控え（{@link PromptImage.thumbnail}）と、棚の原寸を指す id だけ
+// （{@link RecordedPromptImage}）。上限が2つあるのはそのためで、控えのほうが桁違いに小さい
+// （`docs/requirements.md` 4.10「会話内容の扱い」）。
 //
 // ここは両側で共有する契約なので、**検証だけを持ちバイト列には触らない**（base64 を
 // 内容ブロックに載せるのは渡す側 = `src/server/adapter/sdk-driver.ts`）。
+
+import { z } from "zod"
 
 import { maxImageDataUrlLength, parseImageDataUrl } from "./image-data-url.ts"
 
@@ -60,13 +65,43 @@ export const MAX_PROMPT_IMAGES = 2
 
 /**
  * 依頼に添える画像1枚。**原寸と控えの対**で、対のまま `prompt` コマンドに乗る。
- * ここから先で2つは別々の道へ分かれる（原寸はモデルへ、控えは記録へ）。
+ * ここから先で2つは別々の道へ分かれる（原寸はモデルと棚へ、控えは記録へ）。
  */
 export type PromptImage = {
-  /** 原寸の data URL。**モデルへ渡すだけで、送った時点で手放す。** */
+  /** 原寸の data URL。**モデルへ渡し、あとは棚が直近ぶんだけメモリで持つ。** */
   readonly full: string
-  /** 控え（縮めた絵）の data URL。**記録（`SessionState`）に残るのはこちらだけ。** */
+  /** 控え（縮めた絵）の data URL。**記録（`SessionState`）に絵として残るのはこちらだけ。** */
   readonly thumbnail: string
+}
+
+/**
+ * 記録に載る1枚。**控えと、棚の原寸を指す id の組**で、原寸そのものは載らない
+ * （`hello` は接続のたびに状態を丸ごと送るので、原寸を載せると数 MiB × 枚数になる）。
+ * id が指す原寸は棚から消えていることがある（そのときは {@link PROMPT_IMAGE_PATH_PREFIX} が
+ * 404 を返す）。
+ */
+export type RecordedPromptImage = {
+  /** 棚の原寸を指す id（{@link promptImageIdSchema}）。 */
+  readonly id: string
+  /** 控えの data URL。 */
+  readonly thumbnail: string
+}
+
+/**
+ * 棚の原寸を配る経路の接頭辞（`GET /prompt-image/<id>?t=<起動トークン>`）。**起動トークンが
+ * 要る経路**で、WebSocket のフレームには原寸を載せない（押したときだけ取りに行く）。
+ */
+export const PROMPT_IMAGE_PATH_PREFIX = "/prompt-image/"
+
+/**
+ * 原寸を指す id の形。**推測できない値**（`crypto.randomUUID()`）にしてあり、経路で受けた値も
+ * これで確かめてから棚を引く。
+ */
+export const promptImageIdSchema = z.uuid()
+
+/** 原寸1枚の経路（起動トークンは付けない。付けるのは取りに行く側）。 */
+export function promptImagePath(id: string): string {
+  return `${PROMPT_IMAGE_PATH_PREFIX}${encodeURIComponent(id)}`
 }
 
 /** 読めた画像1枚。`base64` は data URL の `,` より後ろ（そのままの文字列）。 */
