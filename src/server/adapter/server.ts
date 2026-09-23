@@ -1,7 +1,8 @@
 // ビューサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信**を持つ
 // （docs/design.md 5章「server.ts」）。入力欄の `@` 補完が引くファイル一覧
 // （`GET /repository-file?t=<起動トークン>`）と、分析の画面が引くトークン消費の集計
-// （`GET /token-usage?t=<起動トークン>&days=<日数>`）もここから配る。**フレームとコマンドが通る
+// （`GET /token-usage?t=<起動トークン>&days=<日数>`）・いまのコンテキストの内訳
+// （`GET /context-usage?t=<起動トークン>`）もここから配る。**フレームとコマンドが通る
 // WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに受け口を足す）。
 //
 // **`Bun.serve` は使わない**（`node:http`。docs/coding-standards.md「Bun固有APIに寄せない」）。
@@ -9,9 +10,9 @@
 // 安全のための決まり（docs/design.md 9章）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
 //   - **起動トークン**（起動ごとの乱数。ディスクに書かない）は `/repository-file` と
-//     `/token-usage` を守る（ページ・同梱物・素材そのものは会話を含まないので、トークンは
-//     求めない。いまのまま）。配るのは利用者の作業ディレクトリの中身と使った量で、誰にでも
-//     配ってよい静的な物ではない。
+//     `/token-usage` と `/context-usage` を守る（ページ・同梱物・素材そのものは会話を含まない
+//     ので、トークンは求めない。いまのまま）。配るのは利用者の作業ディレクトリの中身・使った量・
+//     いまのセッションが積んでいるものの内訳で、誰にでも配ってよい静的な物ではない。
 //     **同じ1つを WebSocket の upgrade も見る**（`session-socket.ts`）
 
 import { randomBytes } from "node:crypto"
@@ -21,6 +22,11 @@ import process from "node:process"
 import { isPlainObject } from "remeda"
 
 import { CHARACTER_ASSET_PATH_PREFIX } from "../../shared/character-asset.ts"
+import {
+  CONTEXT_USAGE_PATH,
+  type ContextUsageReport,
+  UNAVAILABLE_CONTEXT_USAGE,
+} from "../../shared/context-usage.ts"
 import { REPOSITORY_FILE_PATH } from "../../shared/repository-file.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
 import {
@@ -97,6 +103,14 @@ export type ListRepositoryFiles = () => Promise<readonly string[]>
  */
 export type ReadTokenUsageSummary = (days: TokenUsageDays) => TokenUsageSummary
 
+/**
+ * トークン消費の画面に配るコンテキストの内訳（セッションの駆動へ問い合わせたもの。
+ * `docs/glossary.md`「コンテキストの内訳」）。**セッションがまだ繋がっていない・取れなかった
+ * ときは「取れない」を返す契約**で、サーバは理由を区別しない（{@link ListRepositoryFiles} と
+ * 同じ割り切り）。
+ */
+export type ReadContextUsage = () => Promise<ContextUsageReport>
+
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
 
@@ -117,6 +131,8 @@ export type ViewServerOptions = {
   readonly listRepositoryFiles: ListRepositoryFiles
   /** `/token-usage` に配るトークン消費の集計。 */
   readonly readTokenUsageSummary: ReadTokenUsageSummary
+  /** `/context-usage` に配るコンテキストの内訳。 */
+  readonly readContextUsage: ReadContextUsage
   /**
    * 起動トークン（{@link createStartupToken}）。**`/repository-file` はこれが合わないと配らない**
    * （`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
@@ -229,6 +245,11 @@ function respond(
     return
   }
 
+  if (path === CONTEXT_USAGE_PATH && request.method === "GET") {
+    writeContextUsage(request, response, options)
+    return
+  }
+
   response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
   response.end("not found\n")
 }
@@ -336,6 +357,29 @@ function writeTokenUsageSummary(
 
   const days = readTokenUsageDays(queryValue(request, TOKEN_USAGE_DAYS_QUERY_NAME))
   writeJson(response, options.readTokenUsageSummary(days))
+}
+
+/**
+ * いまのコンテキストの内訳を JSON で配る。**起動トークンが合わなければ 403**（`/token-usage` と
+ * 同じ）。**駆動へ問い合わせる経路なので応答を待つ**が、取れなかった回は「取れない」をそのまま
+ * 配る（画面は一言だけ出す）。**配る中身に会話の文面は入らない** — メッセージは分類1行の数
+ * としてだけ出る（`src/shared/context-usage.ts`）。
+ */
+function writeContextUsage(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: ViewServerOptions,
+): void {
+  if (!hasStartupToken(request, options.token)) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
+    response.end("forbidden\n")
+    return
+  }
+
+  options.readContextUsage().then(
+    (report) => writeJson(response, report),
+    () => writeJson(response, UNAVAILABLE_CONTEXT_USAGE),
+  )
 }
 
 /** 起動トークン（`?t=<token>`）が合うか。経路の照合は呼び出し側が済ませている。 */

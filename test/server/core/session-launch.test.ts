@@ -6,6 +6,7 @@ import {
   createSessionLaunch,
   type SessionLaunchPorts,
 } from "../../../src/server/core/session-launch.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 import { characterChangedEvent, shownPortraits } from "../../fixture/character.ts"
@@ -40,6 +41,7 @@ function createStubDriver(): { readonly driver: SessionDriver; readonly calls: s
       interrupt: () => Promise.resolve(),
       answer: () => true,
       pending: () => [],
+      readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
       setModel: () => Promise.resolve(),
       setPermissionMode: () => Promise.resolve(),
       close: () => calls.push("close"),

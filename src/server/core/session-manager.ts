@@ -19,6 +19,7 @@ import {
   type DriverCommand,
   isCharacterEditCommand,
 } from "../../shared/command.ts"
+import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "../../shared/context-usage.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent, type StampedEvent } from "../../shared/session-event.ts"
@@ -141,6 +142,12 @@ export type SessionManager = {
   readonly create: (options: SessionCreateOptions) => void
   /** コマンドを駆動へ渡す。**分岐はここだけ**。 */
   readonly dispatch: (sessionId: string, command: ClientCommand) => Promise<DispatchResult>
+  /**
+   * いまのコンテキストの内訳を駆動から取る（トークン消費の画面が引く。
+   * `docs/glossary.md`「コンテキストの内訳」）。**押すのではなく引く**ので、状態にも
+   * フレームにも乗らない。知らないセッション・取れなかったときは「取れない」。
+   */
+  readonly readContextUsage: (sessionId: string) => Promise<ContextUsageReport>
   /** 接続を購読に加える。**まず `hello` を1つ送ってから**加え、外すための関数を返す。 */
   readonly subscribe: (sessionId: string, send: (frame: ServerFrame) => void) => () => void
   /** 全セッションを閉じる（プロセスを終えるとき）。 */
@@ -159,6 +166,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       return host === undefined
         ? Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.noSession })
         : host.dispatch(command)
+    },
+    readContextUsage: (sessionId) => {
+      const host = sessions.get(sessionId)
+      return host === undefined
+        ? Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+        : host.readContextUsage()
     },
     subscribe: (sessionId, send) => {
       const host = sessions.get(sessionId)
@@ -182,6 +195,7 @@ type EventOrigin = "driver" | "restored"
 /** セッション1つぶんの持ち物（docs/design.md 5章の `SessionHost`）。 */
 type SessionHost = {
   readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
+  readonly readContextUsage: () => Promise<ContextUsageReport>
   readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
   readonly close: () => void
 }
@@ -550,6 +564,16 @@ function createSessionHost(
         return write(() => created.editCharacter(command), FRAME_ERROR_REASON.characterEditFailed)
       }
       return dispatchToDriver(driver, command)
+    },
+    readContextUsage: async () => {
+      // 起こし直しの最中・起こせなかったときは駆動そのものが無い。**画面の札が1枚出ない
+      // だけ**で、常駐プロセスは落とさない（`dispatchToDriver` と同じ扱い）。
+      try {
+        const started = await driver
+        return await started.readContextUsage()
+      } catch {
+        return UNAVAILABLE_CONTEXT_USAGE
+      }
     },
     subscribe: (send) => {
       send(helloFrame())

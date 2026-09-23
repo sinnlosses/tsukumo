@@ -15,6 +15,7 @@
 // **ブラウザも同じ畳み先を読む**ようになったため（`docs/design.md` 13.6）。
 
 import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
+import { type ContextUsageReport } from "../../shared/context-usage.ts"
 import { type ExpressionChoice } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
@@ -317,6 +318,12 @@ export type SessionDriver = {
   readonly answer: (id: string, answer: Answer) => boolean
   /** いまの答え待ち（画面を組み直すときに使う）。 */
   readonly pending: () => readonly PendingAsk[]
+  /**
+   * いまのコンテキストの内訳を取る（`docs/glossary.md`「コンテキストの内訳」）。
+   * **取れなかったときは「取れない」を返し、例外を投げない**（トークン消費の画面が札を1枚
+   * 出せないだけで、常駐プロセスは落ちない。`docs/coding-standards.md`「エラーハンドリング」）。
+   */
+  readonly readContextUsage: () => Promise<ContextUsageReport>
   /** モデルを切り替える（画面からの切り替えは後続タスクで配線する）。 */
   readonly setModel: (model: string | undefined) => Promise<void>
   /** 許可モードを切り替える（画面からの切り替えは後続タスクで配線する）。 */

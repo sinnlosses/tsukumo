@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 いまのセッションの /context 内訳をトークン消費の画面に出した（T-375）
+
+`getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
+
 ### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
 
 `command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。

@@ -1,6 +1,7 @@
 // ビューの配信。**組み立てたブラウザ側（スクリプトと CSS）と、開いているタブ**を持ち、
 // `127.0.0.1` のサーバ・`/ws`・`src/browser/` の見張りを1つに束ねる。可変なのは「いま配っている
-// 組み立て」と「開いているタブ」の2つで、どちらもこのファイルの外へ出ない。
+// 組み立て」「開いているタブ」「コンテキストの内訳の読み口」の3つで、どれもこのファイルの外へ
+// 出ない。
 //
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
 
@@ -16,6 +17,7 @@ import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
 import { summarizeRecentTokenUsage, type TokenUsageLog } from "./server/core/token-usage.ts"
 import { type RunningSession } from "./session-start.ts"
+import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
 
 export type ViewDeliveryOptions = {
@@ -62,7 +64,8 @@ export type ViewDeliveryResult =
  */
 export async function startViewDelivery(options: ViewDeliveryOptions): Promise<ViewDeliveryResult> {
   // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
-  // ビューサーバ（`/repository-file` と `/token-usage`）と WebSocket の3つが同じ1つを見る。
+  // ビューサーバ（`/repository-file` / `/token-usage` / `/context-usage`）と WebSocket が
+  // 同じ1つを見る。
   const token = createStartupToken()
   // **`TSUKUMO_WATCH_UI` のときだけ組み立て直したものへ丸ごと差し替わる**ので、サーバには
   // 取り出し口だけを渡す。
@@ -70,6 +73,10 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // 開いているタブ。**セッションのイベントとは別に押したいもの**（いまは `refresh` だけ）が
   // あるので、購読をセッションに渡すついでにここでも持つ。
   const viewers = new Set<(frame: ServerFrame) => void>()
+  // コンテキストの内訳の読み口。**セッションは配り始めたあとに繋がる**ので、繋がるまでは
+  // 「取れない」を返すものを置いておき、`connect` で本物に差し替える（`assets` と同じ持ち方）。
+  let readContextUsage: () => Promise<ContextUsageReport> = () =>
+    Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/server/core/port-resolution.ts）。明示的に渡されたときは一度だけ
@@ -83,6 +90,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
       readTokenUsageSummary: (days) =>
         summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
+      readContextUsage: () => readContextUsage(),
       token,
     }),
   )
@@ -116,6 +124,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     url: `${server.layoutUrl}?t=${token}`,
     port: started.port,
     connect: (session) => {
+      readContextUsage = session.readContextUsage
       attachSessionSocket({
         httpServer: server.httpServer,
         token,

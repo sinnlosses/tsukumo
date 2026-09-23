@@ -14,6 +14,7 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../../src/server/core/port-resolution.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../src/shared/token-usage-summary.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
@@ -25,6 +26,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   serveCharacterAsset: () => undefined,
   listRepositoryFiles: () => Promise.resolve([]),
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
+  readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
   token: "架空の起動トークン",
 }
 

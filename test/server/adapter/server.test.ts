@@ -5,6 +5,11 @@ import {
   startViewServer,
   type ViewServer,
 } from "../../../src/server/adapter/server.ts"
+import {
+  CONTEXT_USAGE_PATH,
+  type ContextUsageReport,
+  UNAVAILABLE_CONTEXT_USAGE,
+} from "../../../src/shared/context-usage.ts"
 import { REPOSITORY_FILE_PATH } from "../../../src/shared/repository-file.ts"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
@@ -12,6 +17,7 @@ import {
   type TokenUsageDays,
   type TokenUsageSummary,
 } from "../../../src/shared/token-usage-summary.ts"
+import { readyContextUsage } from "../../fixture/context-usage.ts"
 
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。
 const TOKEN = createStartupToken()
@@ -42,18 +48,25 @@ function noTokenUsage(): TokenUsageSummary {
   return EMPTY_TOKEN_USAGE_SUMMARY
 }
 
+/** 内訳の代役。既定では取れなかったとき（セッションがまだ繋がっていないときと同じ）。 */
+function noContextUsage(): Promise<ContextUsageReport> {
+  return Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+}
+
 async function startView(
   serveCharacterAsset: (
     fileName: string,
   ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
   listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
   readTokenUsageSummary: (days: TokenUsageDays) => TokenUsageSummary = noTokenUsage,
+  readContextUsage: () => Promise<ContextUsageReport> = noContextUsage,
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
     serveCharacterAsset,
     listRepositoryFiles,
     readTokenUsageSummary,
+    readContextUsage,
     token: TOKEN,
   })
   runningView = server
@@ -76,6 +89,15 @@ function tokenUsageUrl(server: ViewServer, token: string | undefined, days?: num
   }
   if (days !== undefined) {
     url.searchParams.set("days", String(days))
+  }
+  return url.toString()
+}
+
+/** 内訳の URL（起動トークン付き）。 */
+function contextUsageUrl(server: ViewServer, token: string | undefined): string {
+  const url = new URL(`${viewOrigin(server)}${CONTEXT_USAGE_PATH}`)
+  if (token !== undefined) {
+    url.searchParams.set("t", token)
   }
   return url.toString()
 }
@@ -289,6 +311,39 @@ describe("startViewServer", () => {
 
     expect((await fetch(tokenUsageUrl(server, undefined))).status).toBe(403)
     expect((await fetch(tokenUsageUrl(server, "ちがう"))).status).toBe(403)
+    expect(asked).toBe(0)
+  })
+
+  it("/context-usage は、正しいトークンなら内訳を JSON で返す", async () => {
+    const report = readyContextUsage()
+    const server = await startView(noCharacterAsset, noRepositoryFile, noTokenUsage, () =>
+      Promise.resolve(report),
+    )
+
+    const response = await fetch(contextUsageUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(report)
+  })
+
+  it("/context-usage は、セッションがまだ繋がっていない回も 200 で「取れない」を返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(contextUsageUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(UNAVAILABLE_CONTEXT_USAGE)
+  })
+
+  it("/context-usage は、トークンが無い・違うときは 403（駆動に問い合わせにも行かない）", async () => {
+    let asked = 0
+    const server = await startView(noCharacterAsset, noRepositoryFile, noTokenUsage, () => {
+      asked += 1
+      return Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+    })
+
+    expect((await fetch(contextUsageUrl(server, undefined))).status).toBe(403)
+    expect((await fetch(contextUsageUrl(server, "ちがう"))).status).toBe(403)
     expect(asked).toBe(0)
   })
 

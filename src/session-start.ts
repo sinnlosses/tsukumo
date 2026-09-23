@@ -49,6 +49,7 @@ import {
   CHAT_RECENT_READBACK_BYTES,
 } from "./shared/chat-log.ts"
 import { type ClientCommand } from "./shared/command.ts"
+import { type ContextUsageReport } from "./shared/context-usage.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
@@ -64,6 +65,11 @@ export type RunningSession = {
   readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
   /** 画面から届いたコマンドを渡す。 */
   readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
+  /**
+   * いまのコンテキストの内訳を取る（トークン消費の画面が `/context-usage` で引く。
+   * `docs/glossary.md`「コンテキストの内訳」）。取れなかったときは「取れない」。
+   */
+  readonly readContextUsage: () => Promise<ContextUsageReport>
   /** 駆動を閉じる（claude の子プロセスを残さないため、終了時に必ず呼ぶ）。 */
   readonly close: () => void
 }
@@ -149,6 +155,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
   return {
     subscribe: (send) => manager.subscribe(sessionId, send),
     dispatch: (command) => manager.dispatch(sessionId, command),
+    readContextUsage: () => manager.readContextUsage(sessionId),
     close: manager.close,
   }
 }
