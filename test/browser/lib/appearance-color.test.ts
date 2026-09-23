@@ -10,11 +10,11 @@ import {
   saveAppearanceColorOverride,
   type AppearanceColorOverride,
   MIN_CONTRAST,
-} from "../../../../src/browser/features/character-screen/appearance-color.ts"
+} from "../../../src/browser/lib/appearance-color.ts"
 import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,
-} from "../../../../src/shared/character-background.ts"
+} from "../../../src/shared/character-background.ts"
 
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
 
