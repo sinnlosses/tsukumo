@@ -29160,3 +29160,306 @@ Playwright の実ブラウザ（fake driver・PNG パック）で仕事↔雑談
 - 目視確認で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける（CLAUDE.md「## タスク運用」）
 - 素材の反映を確かめるときは `~/.tsukumo/characters/` 側のパックが同梱パックを覆う点に注意する
 - T-436（立ち絵の URL・差し色・代替テキストの導き方をキャラビューと雑談ビューで1つにする）と触るファイルが重なる。導き方の共通化はそちらの担当で、ここではやらない
+
+## T-449
+
+**タスク**: Claude Code の Todo を、帯の手順の一覧にチェックリストで出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-413 / **passes**: False
+
+**evidence**:
+
+着手しない判断（2026-09-23、ユーザー判断）。帯（画面最上部のナビ）に n / N を出すのは Claude Code の TUI の焼き直しで、効くのは長い依頼で席を立つときだけ。進み具合をセリフで 言うのに tsukumo 側で Todo の input を解析する必要はない——speak を呼ぶ claude 自身が Todo を持っているので src/server/core/speech-cadence.ts に書けば済む。帯の枠は T-448（背景で動くタスクを帯に出す）に使う。
+
+## 背景
+
+Claude Code は長い作業の見通しを `TodoWrite`（または `TaskCreate` / `TaskUpdate` / `TaskList`。入力の型は `node_modules/@anthropic-ai/claude-agent-sdk/sdk-tools.d.ts` の `TodoWriteInput` / `TaskCreateInput` / `TaskUpdateInput`）で持つ。TUI ではこれがチェックリストとして見えるが、tsukumo ではただのツール呼び出しとして帯の「依頼の手順」（`src/shared/turn-step.ts` → `src/browser/features/screen-nav/hooks/use-current-work.ts`）に1行ずつ並ぶだけで、**いまいくつ中いくつ済んだか**が見えない（`grep -rn 'TodoWrite\|TaskCreate' src` は0件）。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+
+## やること
+
+1. 本物の claude で長めの依頼を1つ送り、いまの版がどちらのツール（`TodoWrite` か `TaskCreate` / `TaskUpdate`）を使うかを確かめる（中身は `evidence` に書かない）
+2. 記録（`tool` の `input`）から「いまの Todo の並びと状態」を導く純粋関数を `src/shared/` に置く（`turn-step.ts` と同じ置き方。両方のツールに対応するかは手順1の結果で決める）
+3. 帯のいまの作業の札（と、押すと開く手順の一覧）に「n / N 済み」とチェックリストを出す。色だけで伝えない。`docs/requirements.md` 4.2 の帯の項と `docs/design.md` 13.9 に書く
+
+## 完了条件
+
+- 導く関数のテストがある（未着手・進行中・済みの混在、Todo が1度も無いターン）
+- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## 注意
+
+- 帯の配線は T-413 が作り替えている。T-413 の後の形に載せる
+- 会話の中身（依頼・出力・ファイルの中身）をログ・ディスク・テストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-468
+
+**タスク**: requirements.md に残った節を、4.9・4.2 と同じ基準で削る
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-465, T-467 / **passes**: True
+
+**evidence**:
+
+docs/requirements.md 887行/41,076字 → 821行/37,607字（-66行 -3,469字、-8.4%）。docs/history/decision.md へ 4.1/4.3/4.7/4.8/4.10 の採らなかった案・発言の引用・実測・撤回の経緯を新規5節142行で移し（1,281→1,423行）、他の正典と二重の箇所は参照1行に畳んだ。2.2 と 7章 は diff に1行も出ていない
+太字377件（重複除き）は本文361・decision.md 8・他の正典6（design.md 6.5 / screen-design.md 13.6）・character.json 2 で全件引ける。見出しは 25→25 で索引と1対1（括弧書きを省く既存の3行は着手前と同じ）。索引の古い「表情8つ」を「表情の一覧」に直した（本文は 2026-09-22 から9つ）
+bun run check 通過（1821 pass / 0 fail / 3734 expect、147ファイル）。コミット b1513475（docs の2ファイルのみ、+303/-227）
+
+## 背景
+
+T-464・T-466 で `docs/requirements.md` の 4.9「雑談モード」と 4.2「表示」を別ファイルへ出し、T-465・T-467 でそれぞれ削った。`requirements.md` に残った節（1章・2章・3章・4.1/4.3/4.4/4.7/4.8/4.10・5章以降。移した後で約880行の見込み）にも、4.3「状態連動」（約150行）・4.8「セッションの復元」（約130行）・4.10「画像の添付」（約110行）を中心に、採らなかった案・発言の引用・実測の数字が混ざっている。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの承認: `develop/direction.md` のドラフト（`requirements.md` 4章を 4.x の節の単位で別ファイルに出す）に「いいと思うけどできる限り文章量を削減するのとセットでお願い」。**移すことと削ることはセット**で、このタスク群（T-464〜T-468）で両方やる
+- 2026-09-23 のユーザーの判断（T-465 が約2割減で止まったのを受けて）: 「削れるなら削る、削れないなら削らない」。**行数の目標は置かない**。上の基準で削れるものは削り、決定といまも効く理由は削らない。行数を合わせるために空行を詰めたり段落を箇条へ詰めたりしない（T-465 で一度やって捨てた）
+- **決定（何をする・しない）と、いまも効いている理由（制約・前提）は1つも落とさない**
+- `docs/history/decision.md` へ移すもの（見出しは既存の流儀 `## requirements.md <節の番号> <小見出し>（採らなかった案）` などに合わせる）: 採らなかった案とその理由 / ユーザーの発言の引用と「誰がいつ言ったか」/ 実測の数字と測り方（本文には結論だけ残す）/ 撤回・変更の経緯
+- 落とすもの: 他の正典（`docs/design.md` / `docs/screen-design.md` / `docs/coding-standards.md` / `docs/glossary.md`）と二重に書いてあることは参照1行にする / コードを読めば分かる実装の細部（関数の中身の説明・ファイル内の手順）
+- 決定の日付は「（2026-09-20 決定）」のような括弧1つまでは残してよい
+- **2.2「対象外とすること」と 7章「未決事項」は削る対象にしない**（CLAUDE.md が機能を足す前に必ず見る節として指している／対応タスク列を持つ）。二重の書き直しを参照にするのだけはよい
+
+## 解くべき論点
+
+- 節ごとに、どこまで削れるか（T-465・T-467 の evidence にある「残した理由」の傾向を先に読む）
+
+## やること
+
+1. T-465・T-467 の evidence を読み、基準の運用（何を残し何を移したか）を揃える
+2. 残った節ごとに、T-465 の手順1〜3（太字の文の一覧 → 先に `decision.md` へ移す → 突き合わせ）を行う
+
+## 完了条件
+
+- 上の基準で削れるものが残っていない（残した段落の基準を evidence に書く）。`wc -l docs/requirements.md` と `wc -m` の前後も evidence に書く
+- 太字の文の一覧が、本文・`decision.md`・参照先のいずれかで全件引ける（件数の内訳を evidence に書く）
+- `requirements.md` の節の索引が、削った後の見出しと合っている
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{{2,3\}} ' <ファイル>` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 先に移送先へ書いてから元を消す（`develop/progress.md`「注意」の大掃除の注意。途中で落ちても移り終わったところまでが残る）
+- 並行する他のタスクが同じ節に書き足していることがある。`git merge main` で `docs/` が衝突したら手を止めて預ける
+- 決定の中身を変えない。見直したくなったら `develop/direction.md` の `## エージェントのドラフト` に積む
+- T-455（2.2 のセッション切り替えの禁止を実物に合わせる）が同じ 2.2 を書き換える。未完了なら先に `main` を取り込み、2.2 には触れない
+
+## T-473
+
+**タスク**: 試行用に、レポートを受け取る MCP ツール report を切り替えで足す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-471, T-472 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1815 pass / 0 fail、147ファイル）。既存テストの差分は config.test.ts の import 1行だけ。足したテストは report-tool / sdk-message / main-view / system-prompt / config / turn-step の計25件
+切り替えは TSUKUMO_REPORT_TOOL=1（config.ts の readReportChannel）。規約は src/server/core/report-tool.ts が元の文面に差分を当て、当たらない句があれば起動時の前提不足で止まる。persona.md には当てない
+目視: 7411・疑似場面 report-tool で、中間レポート（破線・確定後に畳む）と最終レポート（結論→表とバッジ→diff フェンス→注意の note→お願いの塊）が描かれ、ツール外の本文と最後の1行は出ず、書き上げる演出が掛かった
+
+## 背景
+
+いまはターンのテキストをすべてレポートの候補にし、位置と形から最終・中間・実況・英訳を推測している（`src/shared/main-view.ts` の `promotedReportId` / `selectShownReports`、`src/shared/japanese-prose.ts`）。規約（`src/server/core/report-notation.ts`）が破られるたびに、この推測へ条件を継ぎ足してきた（2026-09-16・09-21・09-22・09-23）。
+
+2026-09-23 の `/grill-with-docs` で、`speak` と同じくレポートも MCP ツール `report` で明示的に受け取る案を、**小さく試してから**採るかどうかを決めることになった。このタスクは試行の仕掛けを入れるところまで（測るのは T-474）。
+
+今の配線:
+
+- MCP サーバは `src/server/adapter/sdk-driver.ts` の `tsukumoServer`（`speak` は常に、`remember` ほかは雑談モードだけ載る）
+- `assistant` メッセージの変換は `src/server/core/sdk-message.ts` の `assistantBlockEvents`。`speak` は `speech` イベントになり、`tool-started` にはならない。**テキストと `speak` にはサブエージェントかどうか（`parent_tool_use_id`）が付いていない**（ツールにだけ `parentToolUseId` が付く）
+- 環境変数の読み取りは `src/cli.ts` / `src/server/core/port-resolution.ts` / `src/server/adapter/tsukumo-home.ts` に集まっている
+
+## 決まっていること（蒸し返さない）
+
+- 引数は `conclusion`（必須。冒頭の1〜2文）/ `body`（任意。記法は今と同じ）/ `favor`（任意。お願い）。tsukumo はこの順で描く（Q7）
+- **メインの呼び出し（`parent_tool_use_id` が無いもの）だけ**をレポートにし、サブエージェントの呼び出しは捨てる。最後の呼び出しが最終レポート、それより前は中間レポート（Q6）
+- 記法の規約は `systemPrompt` の append に残し、`report` の説明文からは1行で参照する。MCP ツールの説明文は既定で 2048 字まで（同梱の本体の定数）だが、上限を環境変数で上げる経路は採らない（Q8）
+- ターンの終わりは `report` → 締めの `speak`（完了の一言）→ 1行のテキスト（ツールで終えると本体の催促が入るので1行が要る。そのテキストは出さない）（Q10）
+- 試行のあいだも、メインがサブエージェントの `SendMessage` の合図を受けて `speak` で状況を伝える流れ（`src/server/core/speech-cadence.ts`）は変えない
+
+## 解くべき論点
+
+1. **試行の切り替え方**: 既定は今のまま（推測）にし、切り替えたときだけ `report` を載せて規約の文面も差し替える形を推す。切り替えの口は環境変数（例 `TSUKUMO_REPORT_TOOL=1`）を推すが、読み取りは既存の集約先に置き、`README.md` の環境変数の表と `--help` に「試行用・採否が決まったら消す」と書く。別の口のほうが読み手に分かりやすければそちら
+2. **`report` が呼ばれたターンの本文の扱い**: 本文テキストは出さない。**`report` が1回も呼ばれなかったターンは今の推測をそのまま使う**（受け皿の縮小は採用後の T-476）
+3. **`report` の記録の形**: `shared` の記録（`SessionRecord` / `MainViewStep`）に report を足すのか、既存の本文の記録に「どこから来たか」を足すのか。T-438（記録をターンに割る処理を1つにする）と衝突しない形を選ぶ
+4. **帯の「いまの作業」と依頼の手順の一覧に出さない**（`speak` と同じく `tool-started` にしない）
+5. 雑談モードでは載せない（雑談は本文を書かない決まり。`docs/chat-mode.md`）
+6. 描画: `conclusion` → `body` → `favor`（`note note-favor` の塊と同じ見た目）を、今のレポートと同じサニタイズ・記法の経路で描く。書き上げる演出（`use-report-reveal.ts`）が掛かるか
+
+## やること
+
+1. 論点1〜6を決め、`report` ツールと切り替えの口を実装する。切り替えたときの規約の文面（`report-notation.ts` の終わり方の条と「お願いは最後に1つ」の条、`persona.md` の締めの例）は、切り替えたときだけ差し替わるようにする
+2. `sdk-message.ts` の変換・`shared` の畳み込み・メインビューの描画にテストを足す（サブエージェントの `report` を捨てる、最後の呼び出しが最終・それより前が中間、呼ばれなかったターンは今と同じ、帯に出ない）
+3. 疑似セッション（`TSUKUMO_DRIVER` / `TSUKUMO_FAKE_SCENE`）に `report` を呼ぶ場面を1つ足し、ブラウザで描かれることを目視で確かめる（`docs/architecture.md`「手で確かめること」）
+
+## 完了条件
+
+- 切り替えないときの挙動が変わっていない（既存のテストが無修正で通る）
+- 上の2のテストが通る
+- 疑似セッションの場面で `conclusion` / `body`（表・フェンス・`note` を含む）/ `favor` が描かれたことを目視で確かめ、evidence に何が見えたかを書く
+- `bun run check` が通る
+
+## 注意
+
+- 会話内容をフィクスチャに使わない（`CLAUDE.md`「会話内容の扱い」）
+- `speak` の戻り値と同じく `report` の戻り値は `"ok"` だけにする（`docs/display.md` 4.2。ツールの結果に情報を載せない）
+- T-437 / T-438 と同じファイルを触りうる。着手時に `main` の状態を見て、先に入っていればそれに合わせる
+
+## T-480
+
+**タスク**: 雑談の索引で、同じ日に書いた見出しを最後の1行だけでなく全部照合する
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1796 pass / 0 fail（146ファイル）。test/server/adapter/chat-archive.test.ts に「同じ日の最初の行の語でも最後の行の語でも当たる」「複数行に当たってもその日のファイルは1回だけ読む」を足し、前者は修正前に not-found で落ちるのを確認。
+grep で「あとの行が勝つ」「1日1行」を docs・src・test（docs/history を除く）から探して0件。
+
+## 背景
+
+雑談で前の日の話を持ち出されたのに、`recall` が当たらなかった（2026-09-23 のユーザーの報告）。原因は、索引を読む側と書かせる側の食い違い:
+
+- 読む側: `src/server/adapter/chat-archive.ts` の `readDayIndexHeadings` は `index.jsonl` を `Map<日付, 見出し>` に積み、**同じ日に2行以上あれば最後の1行だけ**を残す。`matchedIndexDates` はその1行（と日付）だけを照合する。根拠は `docs/design.md` 7章「日ごとの索引はどこに置くか」の「1日1行は「あとの行が勝つ」で保つ」
+- 書かせる側: `src/server/core/chat-manner.ts` の「思い出す（tsukumo）」の段は `index` を「1ターンに1行」「その日の話がひと区切りついたとき」に呼ばせるので、1日に何度も書く。実際に 2026-09-22 は4行書かれ、最初の3行の語では引けなくなっていた
+
+あわせて、索引が導入される前の日（2026-09-21）は `index.jsonl` に行が無く、その日の雑談は `recall` から届かない。
+
+## 決まっていること（蒸し返さない）
+
+- 読む側に寄せる: **同じ日の行は全部照合の対象にする**（どれか1行に当たればその日を拾う）。`chat-manner.ts` の指示（区切りごとに書く）は変えない（2026-09-23 ユーザー承認）
+- 索引の無い日を届かせる手段は**用意しない**。届かないことを既知の制約として書くだけにする（本文照合の追加・`index` に日付の引数を足す案は採らない。2026-09-23 ユーザー承認）
+- 書く側の形（追記だけ・行の形・`v`・1ターンに1行・120文字まで）は変えない
+
+## やること
+
+1. `test/server/adapter/chat-archive.test.ts` に、同じ日に2行以上書いたとき**最初の行の語でも最後の行の語でもその日が当たる**テストを先に足し、落ちることを確かめる（同じ日が複数行に当たっても、その日のファイルは1回だけ読まれ、返る会話が重複しないことも確かめる）
+2. `readDayIndexHeadings` を、日付ごとに見出しを全部持つ形に変える（例: `ReadonlyMap<string, readonly string[]>`）。`matchedIndexDates` は、日付とその日の見出しのどれかに語が当たれば拾う。関数名・JSDoc も「あとの行が勝つ」を外して今の挙動に合わせる。ファイル冒頭のコメント（20〜23行目あたりの「1日1行」）も同様
+3. ドキュメントを今の挙動に合わせる:
+   - `docs/design.md` 7章「日ごとの索引はどこに置くか」: 「1日1行は「あとの行が勝つ」で保つ」の箇条と、表の「積み重ね方」「索引の上限」、「日ごとに割らない」「`grep` を起こさない」の「1日1行なので」の根拠。**1日に数行**になっても太り方は日数と区切りの数で読める、という形に直す
+   - `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」: 表の「何を書くか」を実態（1ターンに1行、1日に何行でも）に合わせ、**索引の無い日（索引の導入前の日）は `recall` から届かない**ことを1行足す
+   - `docs/glossary.md` の索引の定義（「1日1行だけ並べたファイル」）と `docs/coding-standards.md` の会話内容の表の「1日1行の JSONL」
+   - `docs/` を編集するときは CLAUDE.md「ドキュメントを編集するときの罠」に従い、編集の前後で `grep -c '^#\{2,3\} '` の数が合うことを確かめる
+4. `grep -rn "1日1行\|あとの行が勝つ" docs src test`（`docs/history/` を除く）で、今の挙動と食い違う記述が残っていないことを確かめる
+
+## 完了条件
+
+- 手順1のテストが通り、変更前のコードでは落ちることを確かめてある
+- `grep -rn "あとの行が勝つ" docs src test | grep -v docs/history` が0件
+- `docs/chat-mode.md` 4.9 に、索引の無い日は `recall` から届かないことが書いてある
+- `bun run check` が通る
+
+## 注意
+
+- `~/.tsukumo/chat-archive/` の実物（会話が入っている）をテストのフィクスチャに使わない・中身をログや evidence に写さない（CLAUDE.md「会話内容の扱い」）
+- `chat-manner.ts` の `index` の段と、`index` ツールの説明（`src/server/adapter/sdk-tool.ts`）の書かせ方は変えない
+
+## T-481
+
+**タスク**: 質問に答えている間、入力欄の送信ボタンを差し色ではなく答え待ちの黄色で塗る
+
+**difficulty**: haiku / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1795 pass / 0 fail。dispatch.module.css に .dispatch-form.is-answering .dispatch-send（塗り・枠・hover を --state-warn 基準）を足し、docs/display.md 4.2 に送るボタンの塗りを追記。 目視: 疑似セッション question-multi を Chrome headless 1400x900 で開き getComputedStyle を測った——答え待ちの送信ボタン「答える」は rgb(227,199,102)（--state-warn #e3c766）で札の「これで答える」と同じ塗り・枠、hover で color(srgb 0.893 0.797 0.478) に沈み、答えたあとの「送信」は rgb(111,227,205)（--accent #6fe3cd）に戻った。スクリーンショットでも黄色と青緑の入れ替わりを確認
+
+## 背景
+
+質問（`AskUserQuestion`）に答えている間、答え待ちの色（`--state-warn`、黄色）に揃っていないものが入力欄の送信ボタンだけ残っている（2026-09-23 のユーザーの報告）:
+
+- メインビューの札（`src/browser/features/main-view/question-ask.module.css`）は、枠も「これで答える」の塗り（`.question-ask-answer`）も `--state-warn`。コメントには「入力欄の「答える」と対になる」とある
+- 入力欄（`src/browser/features/dispatch/dispatch.module.css`）は、答え待ちのあいだ `.dispatch-form.is-answering` で枠が `--state-warn` になり、帯（`.dispatch-band`）の字も `--state-warn`。ところが送信ボタン（`.dispatch-send`）は常に `--accent`（パックの差し色）で塗られ、`:hover` も `--accent` 基準のまま。字は `docs/display.md` 4.2 のとおり「答える」に変わるが、色は変わらない
+- `is-answering` を付けているのは `src/browser/features/dispatch/presentational-composer.tsx` の `<form>`。送信ボタンは `presentational-turn-status.tsx` が描く
+
+`docs/display.md` 4.2「許可と質問」は、答え待ちの入力欄の字・プレースホルダ・枠の色までを決めていて、送るボタンの色は書いていない。
+
+## 決まっていること（蒸し返さない）
+
+- 答え待ちのあいだ、入力欄の送信ボタンの塗り・枠・hover を `--state-warn` 系にし、札の `.question-ask-answer` と同じ見た目にする（2026-09-23 ユーザーの指示）
+- 答え待ちでないときの送信ボタンは `--accent` のまま変えない
+
+## やること
+
+1. 答え待ちのときだけ、`.dispatch-send` の `background` / `border-color` / `:hover` を `--state-warn` 基準にする。`.question-ask-answer` の指定（塗り `var(--state-warn)`、hover `color-mix(in srgb, var(--state-warn) 85%, var(--ink))`、字 `var(--ground)`）に合わせる。送信ボタンが `.is-answering` の `<form>` の内側にあれば、子孫セレクタで足りる。外側にあるなら、答え待ちかどうかをボタンの側へ渡す（`use-composer.ts` の `answering` の出どころを見る）
+2. `dispatch.module.css` の「送信」のコメント（「accent で塗りつぶす（入力欄で塗ってよいのはこれ1つだけ…）」）に、答え待ちの間は答え待ちの色で塗ることを足す
+3. `docs/display.md` 4.2「許可と質問」の自由入力の箇条の「送るボタンの字は「答える」、枠は `--state-warn` になる」に、送るボタンの塗りも `--state-warn` になることを足す（CLAUDE.md「ドキュメントを編集するときの罠」に従い、編集の前後で `grep -c '^#\{2,3\} ' docs/display.md` の数が合うことを確かめる）
+4. 目視で確かめる。`bun run build` のあと tsukumo を起こし（並行して動かすなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける）、質問を出させて、次の3つを見る。手順は `docs/architecture.md`「手で確かめること」
+   - 答え待ちの間: 入力欄の送信ボタンが黄色で、札の「これで答える」と同じ色に見える
+   - 答え終わったあと: 送信ボタンが差し色に戻っている
+   - hover: 送信ボタンの色が少し沈む
+
+## 完了条件
+
+- 答え待ちの間は送信ボタンの塗りが `--state-warn`、そうでない間は `--accent` であることを目視で確かめ、`evidence` に何を見たかを書いてある
+- `docs/display.md` 4.2 に送るボタンの塗りが書いてある
+- `bun run check` が通る
+
+## 注意
+
+- 変えるのは送信ボタンだけ。テキスト入力欄のフォーカス時の枠（`.dispatch-text:focus-visible` の `--accent`）と中断ボタン（`.dispatch-interrupt`）は、この指示の範囲外なので変えない
+- 描画の変更なので、絵は自動テストで守らない（CLAUDE.md「テスト方針」）
+
+## T-482
+
+**タスク**: bun run grid を常駐させ、格子を再読み込みするたびに部屋を走査し直す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1836 pass / 0 fail（147ファイル）。test/scripts/room-grid.test.ts に19件足し（routeRoomGridRequest・observeGridTab・previousGridTabs・scanPorts の格子自身除外・再読み込みリンク）、実装前に読み込みで落ちるのを確認。
+実機（Orca）で格子を開き、location.reload() のたびに 5→6→5 マスへ変わる（7346 の部屋を起こして止めた）・鍵なし/違いは 403、別パスは 404・タブを閉じるとプロセスが終わるのを確認。
+打ち直しで前のタブを閉じる動きは、他セッションの格子タブを閉じてしまうため実機では見ておらず previousGridTabs のテストのみ。
+
+## 背景
+
+`bun run grid`（`scripts/open-room-grid.ts`）は、動いている部屋（待ち受けているポート × Orca のタブ）を iframe の格子に並べた1枚の HTML を、1回だけ作って開くスクリプト。流れは次のとおり:
+
+- `main()` がタブの一覧とポートを走査する（`listTabs` / `scanPorts` / `findListener` / `wakeViewTabUrls` / `pickRooms`）
+- `buildRoomGridHtml`（`scripts/room-grid.ts`）で HTML を作る。JS は置かず、マスを広げるのは `:target` の CSS
+- `$TMPDIR` に 0600 で書いて `file://` で開く（`openTab`）
+- `waitUntilLoaded` で `<title>` が `ROOM_GRID_TITLE` になったのを見届けてから、ファイルを消す。起動トークン（`?t=`）をディスクに残さないため。`data:` URL は Orca が中身を捨てるので使えない（2026-09-23 実測）
+
+このため、格子のタブをリロードするとファイルが無く、中身が消える。部屋が増えた・減ったことを反映するには、端末で `bun run grid` を打ち直すしかない。ユーザーは、リロードボタンまたはページの再読み込みで最新のタブ状況を反映させたい（2026-09-23）。
+
+## 決まっていること（蒸し返さない）
+
+- `bun run grid` を**常駐させる**。127.0.0.1 で格子を配る小さな HTTP サーバになり、**格子のページを読み込むたびに走査し直して組み立て直す**（ブラウザの再読み込みも、ページ内の再読み込みボタンも同じ経路）。格子の HTML も起動トークンもメモリだけに置き、ディスクに書かない（2026-09-23 ユーザー承認）
+- tsukumo 本体（`src/`）のサーバは変えない。格子は tsukumo の外のスクリプトのまま（`docs/requirements.md` 2.2「複数セッション」の「tsukumo 自身は常駐のダッシュボードを持たない」は変えない）
+- **止めるのは、格子のタブが Orca から消えたとき**。`orca tab list` を間隔を空けて見て、自分が開いたタブ（`pageId`）が無くなったら自分で終わる。Ctrl-C でも止まる。打ち直したときは、前回の格子のタブを閉じる（いまの `closePreviousGridTabs`）ので、前のプロセスもそれを見て終わる（2026-09-23 ユーザー承認）
+
+## 解くべき論点
+
+- **格子のページ自体を守る鍵。** ページには全部の部屋の起動トークンが入る。127.0.0.1 の他のページや他のプロセスから `GET` されて読まれないように、格子のサーバ用に乱数の鍵を作り、それが付いていない要求は断る。tsukumo の `?t=` と同じ形（`src/server/adapter/server.ts`）に揃えるか。応答に `Cache-Control: no-store` を付けるか
+- **待ち受けるポート。** tsukumo の探索範囲（`scripts/lib/port-listener.ts` の `candidatePorts`）に入ると、`scripts/stop.ts` や格子自身の走査に部屋として拾われうる。OS に空きを選ばせる（`listen(0)`）などで、範囲の外に置く
+- **再読み込みボタンを JS 無しで作れるか。** 同じ URL への `<a>` で足りるなら JS を置かない（いまの「JS 無し」を保つ）。`:target` でマスを広げている状態から押したときの戻り先も決める
+- **1回の走査の重さ。** `lsof`・`orca tab list`・`git` を読み込みのたびに呼ぶので、止まっていたタブを起こして聞き直す `wakeViewTabUrls` の待ち（最大およそ3秒）がページの表示を遅らせる。読み込みのたびにやるか、初回だけにするか
+- **タブが消えたかを見る間隔**と、`orca tab list` が一時的に失敗したときの扱い。1回失敗しただけで終わらない
+- 読み込みの確認（`waitUntilLoaded`）と一時ファイルを消す処理は要らなくなる。消すか、別の用途に残すか
+
+## やること
+
+1. 上の論点を決め、`scripts/open-room-grid.ts` を常駐の形に書き換える。外の世界に触らない部分（鍵の照合・要求の振り分け・再読み込みボタン入りの HTML）は `scripts/room-grid.ts` 側の純粋な関数に置き、`test/scripts/room-grid.test.ts` にテストを足す。サーバは `node:http` を使う（`Bun.serve` に寄せない）
+2. 格子の HTML に再読み込みボタンを足す（`buildRoomGridHtml`）
+3. 目視で確かめる。tsukumo を2つ以上起こして `bun run grid` を打ち、次を見る。手順は `docs/architecture.md`「手で確かめること」
+   - 格子が開く
+   - 部屋を1つ止める／増やしてから、ボタンとブラウザの再読み込みの両方で、格子のマスの数が変わる
+   - 格子のタブを閉じると、プロセスが終わる（`bun run scripts/stop.ts` や `ps` で見る）
+   - 打ち直すと、前の格子のタブとプロセスが入れ替わる
+   - 鍵の無い URL を開くと断られる
+4. 記述を今の形に合わせる。`CLAUDE.md`「よく使うコマンド」の `bun run grid` の説明（いまは「一度きりのスナップショット」）、`docs/requirements.md` 2.2「複数セッション」の格子の一文、スクリプト冒頭のコメント。`docs/` を編集するときは、CLAUDE.md「ドキュメントを編集するときの罠」に従い、編集の前後で `grep -c '^#\{2,3\} '` の数が合うことを確かめる
+
+## 完了条件
+
+- 格子のタブの再読み込み（ブラウザの再読み込みとページ内のボタンの両方）で、そのときの部屋の並びが出ることを目視で確かめ、`evidence` に何を見たかを書いてある
+- 格子のタブを閉じるとプロセスが終わることを確かめてある
+- 格子の HTML と起動トークンが `$TMPDIR` などのディスクに書かれないこと、鍵の無い要求が断られることを、テストまたは実測で確かめてある
+- `bun run check` が通る
+
+## 注意
+
+- 起動トークンの入った URL・格子の HTML を、ログ・`evidence`・テストのフィクスチャに写さない（CLAUDE.md「会話内容の扱い」に準じる）
+- 外部コマンドは、いま使っている `orca`・`lsof`・`ps`・`git` の範囲に留める。増やすならユーザーの承認が要る（CLAUDE.md「セットアップ / 環境構築」）
+- `src/` のサーバ（`src/server/adapter/server.ts`）には手を入れない。`orca-host.ts` の `listTabs` / `openTab` / `closeTab` はそのまま使ってよい

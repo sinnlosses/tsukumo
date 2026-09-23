@@ -1,15 +1,36 @@
 // 動いている部屋（待ち受けポート × Orca のタブ）を突き合わせ、格子の HTML を組み立てる。
-// **外の世界に触らない純粋な関数だけ**をここに置く（lsof / orca / git を実際に呼ぶのは
-// scripts/open-room-grid.ts）。テストは test/scripts/room-grid.test.ts。
+// 格子を配るサーバの要求の振り分け（鍵の照合）と、格子のタブを見張って終わりどきを決める判断も
+// ここに置く。**外の世界に触らない純粋な関数だけ**をここに置く（lsof / orca / git / HTTP を
+// 実際に扱うのは scripts/open-room-grid.ts）。テストは test/scripts/room-grid.test.ts。
 //
 // 並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。タブだけの部屋
 // （プロセスが止まった）・待ち受けだけの部屋（起動トークンが取り戻せない）は落とす。
 
+import type { OrcaTab } from "../src/server/adapter/orca-host.ts"
 import { LAYOUT_PATH } from "../src/server/adapter/server.ts"
+import { SESSION_TOKEN_QUERY_NAME } from "../src/shared/session-socket.ts"
 import type { Listener } from "./lib/port-listener.ts"
 
 /** 前回開いた格子のタブを見分けて閉じるための、固定の `<title>`。会話由来ではない定型文。 */
 export const ROOM_GRID_TITLE = "tsukumoの格子"
+
+/**
+ * 格子を配るパス。**部屋のレイアウトページ（`LAYOUT_PATH`）と違うパスにする** — 格子のタブの URL
+ * も `127.0.0.1` なので、同じパスだと {@link pickRooms} に格子自身が部屋として拾われる。
+ */
+export const ROOM_GRID_PATH = "/room-grid"
+
+/** 格子のサーバへの要求の行き先。 */
+export type RoomGridRoute = "grid" | "forbidden" | "not-found"
+
+/** 格子のタブを見張った1回ぶんの結果。`"failed"` は `orca tab list` そのものが失敗した回。 */
+export type GridTabObservation = "present" | "absent" | "failed"
+
+/** 格子のタブを見張る側が持ち回す、続けて起きた回数。 */
+export type GridTabWatch = {
+  readonly absent: number
+  readonly failed: number
+}
 
 /** 待ち受け × タブが噛み合った部屋1つ（cwd・ブランチはまだ乗っていない）。 */
 export type MatchedRoom = {
@@ -28,15 +49,16 @@ export type Room = {
 }
 
 /**
- * 既定の探索範囲に、タブの URL に出てきた `127.0.0.1` のポートを足す。`TSUKUMO_VIEW_PORT` で
- * 既定の帯の外を指した部屋も、タブさえ開いていれば拾えるようにする。
+ * 既定の探索範囲に、ビューのタブ（`127.0.0.1` のレイアウトページ）の URL に出てきたポートを足す。
+ * `TSUKUMO_VIEW_PORT` で既定の帯の外を指した部屋も、タブさえ開いていれば拾えるようにする。
+ * 格子のタブ自身のポートは、パスが違うので足さない。
  */
 export function scanPorts(
   defaultPorts: readonly number[],
   tabUrls: readonly string[],
 ): readonly number[] {
   const fromTabs = tabUrls.flatMap((url) => {
-    const port = loopbackPort(url)
+    const port = viewTabPort(url)
     return port === undefined ? [] : [port]
   })
   return [...new Set([...defaultPorts, ...fromTabs])].sort((a, b) => a - b)
@@ -70,6 +92,72 @@ export function pickRooms(
 }
 
 /**
+ * 打ち直したときに閉じる、前回の格子のタブ（`<title>` が {@link ROOM_GRID_TITLE} のもの）。
+ * タブが閉じれば、それを開いた前回のプロセスも見張りで気づいて終わる。
+ */
+export function previousGridTabs(tabs: readonly OrcaTab[]): readonly OrcaTab[] {
+  return tabs.filter((tab) => tab.title === ROOM_GRID_TITLE)
+}
+
+/**
+ * 格子のページの、オリジンを除いた URL（パス + 鍵）。タブを開く URL にも、ページ内の再読み込みの
+ * リンクにも使う。鍵のクエリ名は部屋の起動トークン（`?t=`）に揃える。
+ */
+export function roomGridPath(key: string): string {
+  return `${ROOM_GRID_PATH}?${SESSION_TOKEN_QUERY_NAME}=${encodeURIComponent(key)}`
+}
+
+/**
+ * 格子のサーバへの要求を振り分ける。**格子のページには全部の部屋の起動トークンが入る**ので、
+ * `127.0.0.1` の他のページやプロセスから読まれないよう、鍵（`?t=`）が合わない要求は断る。
+ */
+export function routeRoomGridRequest(
+  method: string,
+  requestUrl: string,
+  key: string,
+): RoomGridRoute {
+  let parsed: URL
+  try {
+    parsed = new URL(requestUrl, "http://127.0.0.1")
+  } catch {
+    return "not-found"
+  }
+  if (method !== "GET" || parsed.pathname !== ROOM_GRID_PATH) {
+    return "not-found"
+  }
+  return parsed.searchParams.get(SESSION_TOKEN_QUERY_NAME) === key ? "grid" : "forbidden"
+}
+
+/** 続けて何回タブが見えなければ、閉じられたとみなすか。1回きりの取りこぼしでは終わらない。 */
+const GRID_TAB_ABSENT_LIMIT = 2
+
+/** 続けて何回 `orca tab list` が失敗すれば、Orca が居なくなったとみなすか。 */
+const GRID_TAB_FAILED_LIMIT = 20
+
+/**
+ * 格子のタブを見張った1回ぶんを畳み込み、終わるかどうかを決める。**見えなかった回・失敗した回は
+ * 続けて起きた数だけを数える**（間に見えた回が挟まれば数え直す）。失敗は Orca の一時的な不調でも
+ * 起きるので、見えなかった回よりずっと多く待つ。
+ */
+export function observeGridTab(
+  watch: GridTabWatch,
+  observation: GridTabObservation,
+): { readonly watch: GridTabWatch; readonly stop: boolean } {
+  switch (observation) {
+    case "present":
+      return { watch: { absent: 0, failed: 0 }, stop: false }
+    case "absent": {
+      const absent = watch.absent + 1
+      return { watch: { absent, failed: 0 }, stop: absent >= GRID_TAB_ABSENT_LIMIT }
+    }
+    case "failed": {
+      const failed = watch.failed + 1
+      return { watch: { absent: watch.absent, failed }, stop: failed >= GRID_TAB_FAILED_LIMIT }
+    }
+  }
+}
+
+/**
  * 各マスの iframe を描く仮の大きさ（16:9）。ビューは幅 760px 以下で狭い画面の並びに切り替わる
  * （docs/requirements.md 4.7）ので、マスの実寸で描かせずにこの大きさで広い画面として描かせ、
  * マスの幅まで縮めて見せる。
@@ -83,10 +171,19 @@ const ROOM_FOCUS_NONE_ID = "room-focus-none"
 /**
  * 格子1枚ぶんの HTML。JS は置かない。「拡大」「格子に戻る」は同じ名前のラジオボタンの `<label>` で、
  * 選ばれたマスが `:has(:checked)` の CSS で全面に広がる。**リンク（`#` への移動）にしない** —
- * Orca はページ内の移動でもファイルを読み直しに行き、読み込み後に消したファイルが見つからずに止まる。
+ * Orca はページ内の移動でもページを読み直しに行く（`file://` で開いていたときに実測）ので、拡大の
+ * たびに走査し直すことになる。
+ *
+ * 「再読み込み」は同じ格子の URL（`reloadHref`。鍵込み）へのただのリンクで、読み込むたびにサーバが
+ * 走査し直すので、ブラウザの再読み込みと同じ経路になる。広げたマスの上には出さない（格子に戻って
+ * から押す）。ラジオボタンは `autocomplete="off"` にして、読み直したあとは必ず格子の並びに戻す
+ * （部屋の顔ぶれが変わったあとに、ブラウザが前の選択を別のマスに当て直さないように）。
  */
-export function buildRoomGridHtml(rooms: readonly Room[]): string {
-  const cells = rooms.map((room) => roomCellHtml(room)).join("\n")
+export function buildRoomGridHtml(rooms: readonly Room[], reloadHref: string): string {
+  const cells =
+    rooms.length === 0
+      ? `<p class="room-grid-empty">並べる部屋が無い（ポートで待ち受けていて、かつ Orca のタブもある部屋が見つからなかった）</p>`
+      : rooms.map((room) => roomCellHtml(room)).join("\n")
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -94,6 +191,9 @@ export function buildRoomGridHtml(rooms: readonly Room[]): string {
 <title>${escapeHtml(ROOM_GRID_TITLE)}</title>
 <style>
   body { margin: 0; padding: 12px; background: #1c1c1c; color: #eee; font-family: sans-serif; }
+  .room-grid-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .room-grid-reload { padding: 2px 12px; border: 1px solid #777; border-radius: 999px; font-size: 12px; color: inherit; text-decoration: none; }
+  .room-grid-reload:hover { background: #444; }
   .room-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 12px; }
   .room { display: flex; flex-direction: column; border: 1px solid #555; min-width: 0; }
   .room h2 { display: flex; gap: 8px; align-items: center; margin: 0; padding: 6px 8px; font-size: 14px; background: #333; }
@@ -112,7 +212,8 @@ export function buildRoomGridHtml(rooms: readonly Room[]): string {
 </style>
 </head>
 <body>
-<input class="room-focus" type="radio" name="room-focus" id="${ROOM_FOCUS_NONE_ID}" checked>
+<input class="room-focus" type="radio" name="room-focus" id="${ROOM_FOCUS_NONE_ID}" autocomplete="off" checked>
+<nav class="room-grid-bar"><a class="room-grid-reload" href="${escapeHtml(reloadHref)}">再読み込み</a></nav>
 <div class="room-grid">
 ${cells}
 </div>
@@ -128,7 +229,7 @@ function roomCellHtml(room: Room): string {
     .filter((part): part is string => part !== undefined)
     .join(" ・ ")
   return `<section class="room">
-<input class="room-focus" type="radio" name="room-focus" id="${focusId}">
+<input class="room-focus" type="radio" name="room-focus" id="${focusId}" autocomplete="off">
 <h2><label class="room-title" for="${focusId}">${escapeHtml(heading)}</label><label class="room-action room-expand" for="${focusId}">拡大</label><label class="room-action room-close" for="${ROOM_FOCUS_NONE_ID}">格子に戻る</label></h2>
 <div class="room-frame"><iframe src="${escapeHtml(room.url)}"></iframe></div>
 </section>`

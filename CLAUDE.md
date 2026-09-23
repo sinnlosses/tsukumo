@@ -92,8 +92,10 @@ bun run dev                   # 起動の前に bun run build で組み立てて
                               #   src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに、開き直す道具
 bun run grid                  # 待ち受けていて、かつ Orca のタブもある部屋を iframe の
-                              #   格子に並べた1枚の HTML を作り、Orca に開く（動いているプロセスは
-                              #   変えない一度きりのスナップショット。打ち直すと前のタブは閉じて1つ
+                              #   格子に並べた1枚の HTML にして Orca に開く。格子のタブがあるあいだ
+                              #   常駐し、再読み込み（ブラウザでもページ内のボタンでも）のたびに
+                              #   並べ直す。タブを閉じると終わる（Ctrl-C でも）。動いている部屋の
+                              #   プロセスは変えない。打ち直すと前のタブとプロセスは入れ替わって1つ
                               #   のまま）
 bun run scripts/stop.ts       # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。
                               #   `pkill` / `killall` は hook が拒否する。並べて動かすと
