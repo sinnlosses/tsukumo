@@ -27600,3 +27600,221 @@ bun run check: 1750 pass / 0 fail（143ファイル）。test/server/core/prompt
 
 - テストの画像は架空のデータ（同じ文字を並べた data URL など）で作る。実物のスクリーンショットをフィクスチャにしない（`docs/coding-standards.md`「会話内容の扱い」）
 - `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-430
+
+**タスク**: session-start.ts の判断を core へ寄せ、startSession 等の同名を解く
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-414, T-426, T-429 / **passes**: True
+
+**evidence**:
+
+session-start.ts に残っていた判断4つの行き先: (1) listPackSessions / findPackSessionToResume の newSession||fake のガード → core/session-restore.ts の純粋関数 canResume(config) に抽出（grep -c 'newSession' src/session-start.ts は 0 件）。(2) sessionMode の「雑談なら4つの記憶の口を作る」→ 移さず配線層に残す。createPersonaMemory / createChatSummary という adapter 実装を組み立てる必要があり core→adapter 禁止に当たるため（理由を doc コメントに明記）。(3) systemPromptMode → adapter を呼ばない純粋関数なので core/system-prompt.ts の toSystemPromptMode(mode, chatArchive, start, packName) へ移設。(4) chatRecallFor → 残す（session-driver.ts の型コメントが「パックの名前と読む量は配線層が縛ってから渡す」と決めている設計どおりで、意図的な配線の役目）。
+sessionTag は動かした: sessionTag / readSessionMark / SessionMark 型と関連定数を core/config.ts から core/session-restore.ts へ全部移した（session-restore.ts は既に listMarkedSessions / selectSessionToResume で目印を使った比較を持っており、組み立てと比較が別ファイルに分かれていたため。T-414 が config.ts と session-restore.ts に分散させたコメントもここで一本化し、config.ts は環境変数の解釈だけに戻った）。名前の対応: adapter/sdk-driver.ts の startSession → startSdkDriver（session-start.ts の startSession と同名衝突。駆動1つを起こすだけのものと、見張り・復元まで含む一続きを区別）、core/session-manager.ts の SessionManagerOptions.startDriver → launchSession（実体は createSessionLaunch の結果で、パック決定・続き探索・履歴復元まで含む一続き。名前と実態がずれていた）。低レベルの SessionLaunchPorts.startDriver は名前どおりなのでそのまま。docs/glossary.md は変えていない（内部識別子の整理で新しいドメイン概念ではないため）。
+完了条件の実測: grep -rn 'export function startSession' src は 1 件（src/session-start.ts:79 のみ）。grep -c 'newSession' src/session-start.ts は 0 件。docs/design.md 3章「起動」の末尾に sequenceDiagram を1つ足し、起動（main.ts）と起こし直し（switch-character / set-chat-mode / switch-session）を alt で分けたうえで、以降は session-manager → session-launch(launchSession) → session-start(SessionLaunchPorts) → sdk-driver/fake-driver の同じ一本を通ることを示した。docs/requirements.md は startSession → startSdkDriver の改名追随1行のみ。grep -c '^#\{2,3\} ' は design.md 53 / requirements.md 27 で前後不変。bun run check 1755 pass / 0 fail / 3545 expect() / 143 files（typecheck・oxlint・oxfmt --check も緑）。画面の描画に関わらないので目視確認はしていない。
+
+## 背景
+
+`docs/design.md` 2章は `src/` 直下を「配線（composition root）」と決めているが、`src/session-start.ts`（347行）には判断が残っている:
+
+- `listPackSessions` / `findPackSessionToResume` の「`config.newSession || config.driver === "fake"` なら一覧は空・新規で起こす」
+- `sessionMode` の「雑談なら4つの記憶の口を作る」、`chatRecallFor`
+- 部屋の目印 `sessionTag(characterName, chat, viewPort)` は `src/server/core/config.ts`（環境変数の解釈の置き場）にある
+
+また、起動の流れを追うと同じ名前が何度も出てくる:
+
+- `startSession` が2つ（`src/session-start.ts` と `src/server/adapter/sdk-driver.ts`。後者は `startSdkSession` として import される）
+- `startDriver` が4つ（`SessionCreateOptions.startDriver`、`SessionLaunchPorts.startDriver`、`session-start.ts` の非公開関数 `startDriver`、`SessionHost` の中の `created.startDriver` の呼び出し）
+
+`main.ts` → `session-start.ts` → `createSessionManager` → `SessionHost.start` → `createSessionLaunch`（`core/session-launch.ts`、12個の口を受け取る）→ `session-start.ts` の `startDriver` → `sdk-driver.ts` の `startSession` と、配線と core の間を2往復する。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- 起動の順序（`core/session-launch.ts` が持つ）と振る舞いは変えない
+
+## やること
+
+1. T-426（鍵を外す）と T-429（systemPrompt の組み立て）を取り込んだあとの `session-start.ts` を読み、残った判断を列挙する
+2. 判断を core の概念の名前のファイルへ移す（`session-launch.ts` / `session-restore.ts` など既存の持ち主があればそこへ）。`sessionTag` を `config.ts` から、目印を扱う持ち主（`session-restore.ts` など）へ移すかを見て、移すなら移す
+3. 同名の重なりを、役割が分かる名前に変える（例: 駆動を起こすもの・セッションを起こすもの）。`docs/glossary.md` の「英語識別子」に合わせ、無ければ先に用語集を直す
+4. `docs/design.md` 3章「起動」に、起こし直し（キャラクター・モード・セッションの切り替え）を含めた流れを図（mermaid の flowchart か sequenceDiagram）で1つ足す
+
+## 完了条件
+
+- `grep -rn 'export function startSession' src` が1件以下
+- `grep -rn 'newSession' src/session-start.ts` が0件（判断が core に移っている）、または残した理由を `evidence` に書く
+- `docs/design.md` 3章に起動と起こし直しの図がある
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- T-414 がセッションの印のコメントを `config.ts` / `session-restore.ts` に寄せている。`sessionTag` を動かすときはそのコメントも一緒に動かし、二重にしない
+
+## T-434
+
+**タスク**: 起動トークン付きの URL を5か所で手組みしているのを browser/lib の1つの関数にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+5か所の突き合わせ: 「トークンが無いときの扱い」は socket.ts / use-repository-file-paths.ts / use-token-usage.ts / use-context-usage.ts / prompt-image.tsx のすべてが ?? "" で一致していた（タスク本文が挙げた「URLSearchParams に null を渡す」形は実在せず、URLSearchParams を使う2か所も渡す前に畳んでいた）。エンコードは手組み+encodeURIComponent が3か所（socket.ts / use-repository-file-paths.ts / prompt-image.tsx）、URLSearchParams が2か所（use-token-usage.ts は token+days の2つなので必然、use-context-usage.ts は token 1つだけなのに URLSearchParams で他の単一パラメータ3か所と揃っていない）。後者を積極的に選んだ記述はコード・コメント・docs のどこにも無いので偶然と判定し、全部 URLSearchParams ベースの1関数に寄せた。符号化は往復する（サーバ側も server.ts の queryValue と session-socket.ts が URLSearchParams で読む）。
+新しい関数は src/browser/lib/session-token-url.ts の sessionTokenUrl(path, extraQuery?)。lib/ に置いたのは window.location という実行環境の API を包む道具だから（docs/design.md 2章「lib/ と utils/ に置く基準」の上段）。extraQuery は丸ごと省略できるオプション引数なので ?: で書いた（docs/coding-standards.md「無いかもしれない値」の例外5）。/ws は同じ関数を使い別関数は作らなかった——sessionTokenUrl は相対パス+クエリだけを返し、ws:/wss: とホストの組み立ては lib/socket.ts の socketUrl に残した（他の4か所はプロトコルもホストも知らずに済み、scheme の引数を足すと使わない4か所にも影響するため）。grep -rn 'SESSION_TOKEN_QUERY_NAME' src/browser は新しい1ファイル（session-token-url.ts の4行）だけ。
+テストは test/browser/lib/session-token-url.test.ts に4件（トークンがある経路へ付く／無いときは空文字を付けて握りつぶさない／追加のクエリがトークンのあとに続く／トークンと値が URL エンコードされる。ページ URL の差し替えは test/dom-environment.ts の setPageUrl）。既存の prompt-image.test.tsx・use-context-usage.test.tsx・use-token-usage.test.tsx は出力の形を変えていないので無修正で通った。bun run check 1766 pass / 0 fail / 3557 expect() / 145 files（typecheck・oxlint・oxfmt --check も緑）。サーバ側の hasStartupToken と src/shared/ の定数は触っていない。
+
+## 背景
+
+ブラウザ側で「いまのページの URL から起動トークン（`SESSION_TOKEN_QUERY_NAME`）を取り出し、経路に `?t=…` を付ける」手が5か所に書かれている:
+
+- `src/browser/lib/socket.ts`（`/ws`）
+- `src/browser/features/dispatch/file-suggestions.tsx` の `repositoryFileUrl`
+- `src/browser/features/token-usage/hooks/use-token-usage.ts` の `tokenUsageSummaryUrl`
+- `src/browser/features/token-usage/hooks/use-context-usage.ts` の `contextUsageUrl`
+- `src/browser/components/prompt-image.tsx`
+
+トークンが無いときの扱い（`?? ""` で空を送るか、`URLSearchParams` に `null` を渡すか）と、エンコードの仕方（`encodeURIComponent` か `URLSearchParams` か）が場所ごとに違う。トークン付きの JSON の口を1つ足すたびに、同じ手をもう1回書くことになる。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- サーバ側（`src/server/adapter/server.ts` の `hasStartupToken`）と経路名の定数（`src/shared/`）は変えない
+
+## やること
+
+1. 5か所の手を並べ、トークンが無いときの扱いとエンコードの違いが意図か偶然かを確かめる（`docs/design.md` 9章）
+2. 「経路（と追加のクエリ）を受けてトークン付きの URL を返す」関数を `src/browser/lib/` に1つ置く（`window.location` を読むので `lib/`）。`/ws` のように `ws:` / `wss:` を付けるものは同じ関数の引数で表すか別にするかを決める
+3. 5か所をそれに寄せる
+
+## 完了条件
+
+- `grep -rn 'SESSION_TOKEN_QUERY_NAME' src/browser` が新しい1ファイルだけ
+- 新しい関数にテストがある（トークンが無いとき・追加のクエリがあるとき）
+- `bun run check` が通る
+
+## 注意
+
+- `use-token-usage.ts` / `use-context-usage.ts` は T-401・T-402 も触る。並行して進めているときは `git merge main` で取り込んでから着手する
+
+## T-440
+
+**タスク**: 695行の screen-nav.module.css を帯の部品ごとに割る
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-413, T-439 / **passes**: True
+
+**evidence**:
+
+screen-nav.module.css 695行→199行。components/ へ room(15)・chat-mode(52)・gate(30)・current-work(235)・model-permission(65)・settings(105)・menu(57) の7枚を出し、class 名は変えていない。
+@media（760px 以下）は丸ごと器に残した——広い帯と「≡」の面で同じ部品を使い回す出し分けは帯全体の組み立てだから。「≡」専用の位置と枠だけ menu へ移した。ファイルをまたぐ選択子（.screen-nav-panel .screen-nav-room など12件以上）は各部品の tsx が器の class を重ねて解いた。
+bun run check: 1751 pass / 0 fail（143ファイル）、bun run build 成功。目視（fake・port 4747・一時 TSUKUMO_HOME・headless Chromium）: 1400x900 で帯の7部品が並び歯車の中が3群10項目、375x800 で帯は display:none・「≡」の面に face→部屋名→トグル→口3→依頼待ち→モデル→歯車の順で出て、面の中の歯車は position:static でその場に広がる。面の中の部屋名は器の打ち消しが効いて 13px
+
+## 背景
+
+`src/browser/features/screen-nav/screen-nav.module.css` は 695 行で、帯の部品（部屋の名前・仕事/雑談のトグル・3画面の口・いまの作業の札・モデル/許可モードの操作子・設定の歯車・「≡」の面）の見た目を1枚に持つ。部品は `components/screen-nav-*.tsx` に分かれているが CSS は分かれていない。
+
+T-439 が `docs/design.md` 6.6 に「部品ごとに分けてよい」基準を書き、`main-view.module.css` を割る。T-413 が帯の配線（広い画面と「≡」の面への届け方）を作り替えている。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+
+## やること
+
+1. T-439 で 6.6 に書かれた基準と、T-413 のあとの `screen-nav/components/` を読む
+2. その基準で `screen-nav.module.css` を部品ごとに割る。**class 名は変えない**。広い画面と「≡」の面の出し分けの `@media` がどこに残るかを決めて、`evidence` に1行書く
+
+## 完了条件
+
+- `wc -l src/browser/features/screen-nav/screen-nav.module.css` が 300 行以下
+- `test/browser/features/screen-nav/` のテストが期待値を変えずに通る
+- 広い画面と 760px 以下（「≡」の面）の両方で、帯の見え方が割る前と同じことを目視で確かめ、`evidence` に書く（モーダルの中まで見る）
+- `bun run check` が通る
+
+## T-462
+
+**タスク**: 英語の締めが promotedReportId をすり抜けて出た理由を確かめて直す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+効かなかった理由: 利用者が「英語」と言った直前のターン（18:51）は実況も含めて丸ごと英語で、本文を書かずに speak で終え、催促のあとの英語 1004字（日本語0字）が唯一のレポートだった。戻す先の日本語が無く判定の出番が無かった（判定の不具合でも古い画面でもない）。 / 根拠: 架空の「日本語（表・note）→ speak → 英語（表・note）」を mainViewTurns に通すと日本語が final（テストを1件追加）。当日の jsonl を数値だけで測ると 18:44 のターンは判定が効く並びで、port 7332 の生きたタブ（読むだけ）でも最終レポートは日本語、18:51 は英語1件だけ。配っていた bundle（18:41 組み立て）にも判定は入っていた。コードの直しは無し。 / bun run check は 1763 pass / 0 fail（144ファイル）。
+
+## 背景
+
+`src/shared/main-view.ts` の `promotedReportId` は、締めの本文が日本語でない（`src/shared/japanese-prose.ts` の `isJapaneseProse` が偽）とき、最後のツールより後ろにある日本語の本文へ最終レポートの席を戻す（`lastJapaneseReportAfterWork`。2026-09-23 18:07 のコミット `868ccd7`）。
+
+同日、この判定が入ったプロセス（18:41 に起こし、`dist/browser/` も同時刻に組み立て済み）で、「日本語のレポート → 締めの `speak` → 英語の催促（T-459 の背景）→ 英語で書き直したレポート」という並びのターンが2回あり、利用者から「またレポートが英語だね」と言われた。判定が効いていれば日本語のレポートが最終レポートに出るはずで、効かなかった理由は確かめていない。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの判断: 効かなかった理由を生きたタブで測って確かめる（「いいよ、任せる!」）
+
+## 解くべき論点
+
+- 効かなかったのは判定そのもの（`isJapaneseProse` の閾値・ステップの割れ方・`hasToolRun` の扱い）か、配られていた画面が古かったのか、それとも英語の本文が別の経路（中間レポート・`<details>` の外）で見えていただけなのか
+- T-459（締めの `speak` → レポートで終える並び）が入ったあと、英訳を落とすこの判定を残すか外すか。残すなら新しい並びでも誤って日本語の本文を落とさないか
+
+## やること
+
+1. `test/shared/` に、「日本語のレポート（表と `note` を含む資料）→ 締めの `speak` → 英語のレポート（表を含む資料）」のターンを記録から組んで `mainViewTurns` に通し、どの本文が `final` になるかを確かめるテストを書く。落ちれば原因を直す
+2. テストで再現しなければ、生きたタブで測る: `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分けて起こし、「日本語でレポートを書いて `speak` を呼んだあと、同じ内容を英語で書いて」と頼んで並びを作り、Playwright で最終レポートの要素と中間レポートの要素の先頭の数十字を拾って、どちらが最終レポートの席にあるかを見る（DOM は構造と先頭の数十字だけ拾う。記憶メモ `live-tab-dom-probe`）
+3. 原因を直す。原因が「古い画面」なら直すものは無いので、その根拠を `evidence` に書いて閉じてよい
+4. T-459 が `done` なら、この判定を残すか外すかを決め、外すならテストとコメントも一緒に消す。まだなら決めずに `progress.md` の「未解決」に1行残す
+
+## 完了条件
+
+- 上の並びで日本語のレポートが最終レポートになることをテストで確かめている（または、テストでは再現せず実機で原因を突き止めた記録が `evidence` にある）
+- 効かなかった理由が `evidence` に1〜2文で書かれている
+- `bun run check` が通る
+
+## 注意
+
+- テストの記録は架空の文面で作る。実物の会話やレポートをフィクスチャにしない（`docs/coding-standards.md`「会話内容の扱い」）
+- T-438（記録をターンに割る処理を1つにする）も `main-view.ts` のターンの割り方を触る。先に入っていたらその形で書く
+- 目視確認に起こしたプロセスは `bun run scripts/stop.ts --port <n>` で止める
+
+## T-464
+
+**タスク**: requirements.md 4.9「雑談モード」を別の正典ファイルへ逐字で移す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+移した先は docs/chat-mode.md（685行、冒頭に節の索引）。git show <着手時>:docs/requirements.md の ### 4.9 範囲と chat-mode.md の ### 4.9 以降の diff は末尾の区切りの空行1行のみ。grep -rEn 'requirements\.md.{0,3}4\.9' src test docs CLAUDE.md README.md | grep -v '^docs/history/' は0件（置換114件、history の78件は据え置き。decision.md の見出し名を引く参照は元から0件）。見出し数 27 → 26+4（増えた3は読み方・通読しない・索引の構成見出し）。bun run check: 1762 pass / 0 fail（144ファイル）
+
+## 背景
+
+`docs/requirements.md` は 1979 行で、4章「機能要件」が約1690行を占める。中でも `### 4.9 雑談モード` が約650行ある。どれも「通読しない・節の索引で1節だけ読む」運用だが、4.9 を読みに来た人も他の節を読みに来た人も同じファイルの索引と `sed` の範囲を組み立てている。`requirements.md 4.9` と明示した参照は `src` / `test` / `docs` に約191件（`grep -rEc 'requirements\.md.{0,3}4\.9'`）。
+
+`docs/design.md` の13章は T-445 で同じ形に出してある（`docs/screen-design.md`。節の番号 `13.x` のまま・冒頭に節の索引・`design.md` 冒頭に読み替えの1行）。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの承認: `develop/direction.md` のドラフト（`requirements.md` 4章を 4.x の節の単位で別ファイルに出す）に「いいと思うけどできる限り文章量を削減するのとセットでお願い」。**移すことと削ることはセット**で、このタスク群（T-464〜T-468）で両方やる
+- 節の番号（`4.9`）と、その下の `####` 見出しはそのまま残す。`requirements.md` の冒頭に「4.9 は `<移した先>` へ移した。ファイル名を添えずに `4.9` と書いた番号はそちらの節」の1行を置く（T-445 が `docs/design.md` 冒頭に置いた1行と同じ形）
+- **逐字で移す。中身は書き換えない**（削るのは T-465。移送と削減を分けるのは、移送が diff で機械的に確かめられるようにするため）
+- `requirements.md 4.9` と明示した参照はスクリプトで一括置換する。`docs/history/` は据え置く（アーカイブ）。`docs/history/decision.md` の見出し名を引いている参照（`「requirements.md 4.9 …」` の形）は見出し名そのものなので置き換えない（T-445 で9件誤って置換して戻した）
+- ファイル名は概念の名前にする（`docs/README.md` と `CLAUDE.md`「関連リンク」の置き場の約束。`~/.claude/skills/maintenance-docs/SKILL.md`）
+
+## やること
+
+1. `~/.claude/skills/maintenance-docs/SKILL.md` の docs の置き場・索引の約束と、`docs/screen-design.md` の冒頭（題・ステータス・「通読しない」・節の索引）を読む
+2. 移した先のファイルを作り、冒頭に節の索引を置いて `### 4.9` を末尾まで逐字で写す（スクリプトで。手で書き写さない）。写した範囲が元と一致することを diff で確かめてから `requirements.md` から消す
+3. 参照を一括置換し、`requirements.md` の節の索引・冒頭の読み替えの1行・`docs/README.md`・`CLAUDE.md`「関連リンク」を合わせる
+
+## 完了条件
+
+- 移した先の本文が、移す前の `### 4.9` の範囲と一致する（diff が空。evidence に確かめ方を書く）
+- 移した先のファイルの冒頭に節の索引がある
+- `grep -rEn 'requirements\.md.{0,3}4\.9' src test docs CLAUDE.md README.md | grep -v '^docs/history/'` の残りが、`decision.md` の見出し名を引いているものだけ（残った数を evidence に書く）
+- 見出しの数（`grep -c '^#\{2,3\} '`）が、移す前の `requirements.md` と、移した後の2ファイルの合計で合う
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{{2,3\}} ' <ファイル>` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 先に移送先へ書いてから元を消す（`develop/progress.md`「注意」の大掃除の注意。途中で落ちても移り終わったところまでが残る）
+- 並行する他のタスクが同じ節に書き足していることがある。`git merge main` で `docs/` が衝突したら手を止めて預ける
