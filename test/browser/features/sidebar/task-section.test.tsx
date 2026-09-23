@@ -58,8 +58,21 @@ describe("TaskSection", () => {
   it("見出しの文言と区画の中身を出す", () => {
     renderTaskSection(TASKS)
 
-    expect(inSection().getByText("タスク一覧 todo 1")).toBeDefined()
+    expect(inSection().getByText("タスク")).toBeDefined()
     expect(inSection().getByText("架空の1件目")).toBeDefined()
+  })
+
+  it("見出しの下に件数のチップを出す（進行中 → 未着手 → 完了。0件も出す）", () => {
+    renderTaskSection(TASKS)
+
+    const chips = inSection()
+      .getAllByRole("listitem")
+      .filter((item: HTMLElement) => item.className.includes("task-count-chip"))
+    expect(chips.map((chip: HTMLElement) => chip.textContent)).toEqual([
+      "進行中 0",
+      "未着手 1",
+      "完了 0",
+    ])
   })
 
   it("見出しの「一覧を見る」で表が開く", () => {
@@ -71,10 +84,15 @@ describe("TaskSection", () => {
     expect(boardIsOpen()).toBe(true)
   })
 
-  it("タスクが読めていないときも区画は消えない", () => {
+  it("タスクが読めていないときも区画は消えない（チップは出ない）", () => {
     renderTaskSection({ kind: "unknown" })
 
-    expect(inSection().getByText("タスク一覧")).toBeDefined()
+    expect(inSection().getByText("タスク")).toBeDefined()
     expect(inSection().getByText("不明")).toBeDefined()
+    expect(
+      inSection()
+        .queryAllByRole("listitem")
+        .filter((item: HTMLElement) => item.className.includes("task-count-chip")),
+    ).toHaveLength(0)
   })
 })

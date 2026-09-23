@@ -22,7 +22,7 @@ import {
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
-import { type Config, sessionTag, sessionTagFamily } from "./server/core/config.ts"
+import { type Config, sessionTag } from "./server/core/config.ts"
 import {
   type ChatArchive,
   type ChatRecall,
@@ -120,7 +120,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
         watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
         findPackSessionToResume(config, cwd, pack.name, chat, viewPort),
-      listSessions: (pack, chat) => listPackSessions(config, cwd, pack.name, chat),
+      listSessions: (pack, chat) => listPackSessions(config, cwd, pack.name, chat, viewPort),
       startDriver: (seed, onEvent) =>
         startDriver({
           seed,
@@ -240,7 +240,8 @@ function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
 
 /**
  * 画面の `<select>` に出す、切り替え先のセッションの一覧（`docs/requirements.md` 4.8）。
- * **同じパック・同じモードの、目印の違うもの**（`sessionTagFamily`）だけが並ぶ。
+ * **いまの部屋（このビューのポート）の印を持つもの**だけが並ぶ——部屋はビューのポート1つに
+ * つき1つなので（`docs/glossary.md`「部屋」）、別の部屋のセッションへは画面から行けない。
  *
  * **続きを探さない起こし方のときは一覧も出さない**（`TSUKUMO_NEW_SESSION=1` と fake driver。
  * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない）。
@@ -250,10 +251,11 @@ async function listPackSessions(
   cwd: string,
   characterName: string,
   chat: boolean,
+  viewPort: number,
 ): Promise<readonly SessionChoice[]> {
   return config.newSession || config.driver === "fake"
     ? []
-    : listSwitchableSessions(cwd, sessionTagFamily(characterName, chat))
+    : listSwitchableSessions(cwd, sessionTag(characterName, chat, viewPort))
 }
 
 /**
