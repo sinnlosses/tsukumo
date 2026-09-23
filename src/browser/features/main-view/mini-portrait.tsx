@@ -120,10 +120,12 @@ function motionClassName(tip: BrushTip): string | undefined {
  * Z字の斜めの戻りでは筆先が右から左へ動くので、立ち絵も
  * 一緒に戻ってくる。
  *
- * **書き終わって残っているあいだは、行の上ではなく下へ降りる**（`translateY` を外す＝上端が
- * 行の下端に来る）。書いている最中は筆を追って動いているので行に被っても読めるが、止まると
- * **上の行の文字を隠したまま居座る**（画面で出た。立ち絵の高さは行の2〜3本分ある）。
- * 降りる先は本文の末尾に敷いた床（{@link MiniPortrait}）。
+ * **書き終わって残っているあいだは、本文の右下の隅へ寄る**（`translateY` を外して行の下へ
+ * 降り、横は筆先を追うのをやめて右端に付く。右端に付けるのは `mini-portrait.module.css` の
+ * `.mini-portrait-resting`）。書いている最中は筆を追って動いているので行に被っても読めるが、
+ * 止まると**文字を隠したまま居座る**（画面で出た。立ち絵の高さは行の2〜3本分あり、最後の行が
+ * 短いと本文の途中の行に重なる）。降りる先は本文の末尾に敷いた床（{@link MiniPortrait}）で、
+ * **床と右端の組で、止まったあとはどの行にも重ならない**。
  *
  * 置き方は `left` ではなく `transform`: **CSS の遷移（`mini-portrait.module.css` の
  * `transition`）が毎フレーム引き直される**ので、横画では少し遅れてばねで寄り、戻りでは
@@ -132,8 +134,12 @@ function motionClassName(tip: BrushTip): string | undefined {
  * `.mini-portrait-resting` で長くしてある）。
  */
 function followStyle(tip: BrushTip): CSSProperties {
-  const place = `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0)`
-  return { transform: tip.phase === "resting" ? place : `${place} translateY(-100%)` }
+  // 止まっているあいだは横の座標を使わない（右端に付けるのは CSS の側）。縦だけを最後の行の
+  // 下端へ置き、そこに敷いた床の上に立たせる。
+  if (tip.phase === "resting") {
+    return { transform: `translate3d(0, ${px(tip.bottom)}, 0)` }
+  }
+  return { transform: `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)` }
 }
 
 /** 読み上げ上もキャラビューの立ち絵と見分けが付くようにする（同じ姿がもう1体居るため）。 */

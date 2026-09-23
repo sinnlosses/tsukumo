@@ -112,7 +112,7 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     expect(placement().className).toContain("mini-portrait-returning")
   })
 
-  it("書き終わっても消えず、書き終わりの行の下へ降りる（行の上に居座らない）", () => {
+  it("書き終わっても消えず、本文の右下へ寄る（どの行の上にも居座らない）", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {
       publishBrushTip(TIP)
@@ -123,8 +123,10 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     })
 
     expect(miniImage()).not.toBeNull()
-    // `translateY(-100%)` が外れる＝上端が行の下端に来る（上の行の文字を隠さない）。
-    expect(placement().style.transform).toBe("translate3d(320px, 206px, 0)")
+    // 縦は `translateY(-100%)` が外れる＝上端が行の下端に来て、敷いた床の上に立つ。横は筆先の
+    // 座標を渡さない（右端に付けるのは `.mini-portrait-resting` の `right`）。
+    expect(placement().style.transform).toBe("translate3d(0, 206px, 0)")
+    expect(placement().className).toContain("mini-portrait-resting")
   })
 
   it("残っているあいだは、降りる動きの間合いに差し替わる", () => {
