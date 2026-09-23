@@ -28,9 +28,10 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../shared/session-state.ts"
-import { type ModelTokenUsage } from "../../shared/token-usage.ts"
+import { type ModelTokenUsage, type TokenUsageMode } from "../../shared/token-usage.ts"
 import { CHAT_COMPACT_COMMAND } from "./chat-compact.ts"
 import { CHAT_NUDGE_PROMPT } from "./chat-nudge.ts"
+import { type ContextUsageLog } from "./context-usage.ts"
 import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
 import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
@@ -74,6 +75,14 @@ export type SessionManagerOptions = {
    * 渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly tokenUsageLog: TokenUsageLog
+  /**
+   * コンテキストの内訳の書き込み口（`src/server/core/context-usage.ts` の契約。本番は
+   * `createContextUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
+   *
+   * **セッション1つにつき1行**で、いつ書くか（＝そのセッションでまだ書いていない最初の
+   * ターンの終わり）を決めるのはここ。渡した先は「どこに・どんな形で書くか」しか持たない。
+   */
+  readonly contextUsageLog: ContextUsageLog
   /**
    * 依頼に添えた画像の原寸の棚（`src/server/core/prompt-image-shelf.ts`）。**持ち主は
    * `src/main.ts`** — `/prompt-image/<id>` で配る側（`view-delivery.ts`）も同じ棚を引く。
@@ -237,6 +246,10 @@ function createSessionHost(
   // いま進んでいるターンの内訳（ツールの呼び出し回数と結果の長さ、ステップの使用量）。
   // **1ターンぶんだけ**持ち、終わりに記録へ畳んで捨てる（`src/server/core/token-usage.ts`）。
   let turnUsage: TurnUsageTally = EMPTY_TURN_USAGE_TALLY
+  // コンテキストの内訳を記録に残した claude 側のセッションID。**このIDのあいだは二度と
+  // 書かない**（1行 = 1セッション）。**起こし直しで空に戻さない** — 続きから起こして同じIDに
+  // なったときは同じセッションなので、2行目を書かない。IDが変われば比較で弾かれる。
+  let contextUsageSessionId: string | undefined = undefined
 
   const cancelFlush = (): void => {
     if (flushTimer !== undefined) {
@@ -325,6 +338,38 @@ function createSessionHost(
   }
 
   /**
+   * そのセッションのコンテキストの内訳を記録に1行足す（**セッション1つにつき1回だけ**）。
+   * ターンごとに残さないのは、内訳のうちメッセージ以外がセッションの中でほぼ変わらないから
+   * （`src/shared/context-usage-record.ts`）。
+   *
+   * **ターンが終わるたびに呼ばれ、まだ書いていないセッションIDのときだけ問い合わせる。**
+   * 取れなかったら印を戻して**次のターンでまた試す**（諦めない——1回の取りこぼしでその
+   * セッションぶんが永久に欠けるのに対し、あとのターンで取ってもほぼ同じ値になる）。
+   * 問い合わせは待たされる口なので、**先に印を立てて二重に走らせない**（同じセッションで
+   * 次のターンが先に終わっても、問い合わせは1本だけ）。
+   *
+   * **駆動がまだ無い・claude 側のセッションIDが分からないうちは何もしない**（行だけで
+   * 「どのセッションか」が決まらない記録を積まないため。どちらも次のターンで揃う）。
+   */
+  const recordContextUsageOnce = async (at: number): Promise<void> => {
+    const sessionId = state.session.kind === "starting" ? undefined : state.session.sessionId
+    const driver = live
+    if (sessionId === undefined || sessionId === contextUsageSessionId || driver === undefined) {
+      return
+    }
+    const mode: TokenUsageMode = state.chatMode ? "chat" : "work"
+    contextUsageSessionId = sessionId
+    const report = await readDriverContextUsage(driver)
+    if (report.kind === "ready") {
+      options.contextUsageLog.append({ at, sessionId, mode, usage: report.usage })
+      return
+    }
+    if (contextUsageSessionId === sessionId) {
+      contextUsageSessionId = undefined
+    }
+  }
+
+  /**
    * 状態を差し替える。**記録から消えた依頼の原寸は、ここで棚から捨てる**（窓から落ちた・
    * 起こし直して空に戻った。`releasedPromptImageIds`）。状態を書き換えるのはここだけにして、
    * 棚の寿命が記録の窓から外れないようにする。
@@ -386,6 +431,9 @@ function createSessionHost(
     if (origin === "driver" && event.kind === "turn-finished") {
       options.chatArchive.finishTurn()
       turnUsage = EMPTY_TURN_USAGE_TALLY
+      // コンテキストの内訳は**セッションに1行**なので、ここでは「まだ書いていなければ」
+      // だけを見る。問い合わせを待たずに次へ進む（ターンの終わりを遅らせない）。
+      void recordContextUsageOnce(at)
     }
     // **ターンの終わりに1回だけ見る**（docs/requirements.md 4.9）。仕事のときは何もしない
     // （`requestChatCompactIfNeeded` が `state.chatMode` を見て弾く）。
@@ -617,6 +665,21 @@ function createSessionHost(
  * 駆動が例外を投げても常駐プロセスは落とさず、定型文の理由を返す
  * （docs/coding-standards.md「エラーハンドリング」）。
  */
+/**
+ * 起き上がっている駆動に、いまのコンテキストの内訳を問い合わせる。**投げてきた回は「取れない」に
+ * 畳む**（常駐プロセスは落とさない）。
+ *
+ * `SessionHost.readContextUsage` のほうは**駆動が起き上がるのを待つところ**から面倒を見るので、
+ * こちらとは畳む範囲が違う（記録を残す側は、起き上がっている駆動しか相手にしない）。
+ */
+async function readDriverContextUsage(driver: SessionDriver): Promise<ContextUsageReport> {
+  try {
+    return await driver.readContextUsage()
+  } catch {
+    return UNAVAILABLE_CONTEXT_USAGE
+  }
+}
+
 async function dispatchToDriver(
   driver: Promise<SessionDriver>,
   command: DriverCommand,

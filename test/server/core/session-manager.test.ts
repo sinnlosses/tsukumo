@@ -3,6 +3,10 @@ import { describe, expect, it } from "bun:test"
 import { type CharacterSelection } from "../../../src/server/core/character-selection.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../src/server/core/chat-nudge.ts"
 import {
+  type ContextUsageEntry,
+  type ContextUsageLog,
+} from "../../../src/server/core/context-usage.ts"
+import {
   createPromptImageShelf,
   type PromptImageShelf,
   recordedPromptImages,
@@ -21,7 +25,10 @@ import {
   type CharacterCreateCommand,
   type CharacterEditCommand,
 } from "../../../src/shared/command.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
+import {
+  type ContextUsageReport,
+  UNAVAILABLE_CONTEXT_USAGE,
+} from "../../../src/shared/context-usage.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
@@ -44,7 +51,7 @@ import {
   shownOutfitAccents,
   shownPortraits,
 } from "../../fixture/character.ts"
-import { readyContextUsage } from "../../fixture/context-usage.ts"
+import { contextUsage, readyContextUsage } from "../../fixture/context-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
@@ -62,6 +69,9 @@ const NOOP_CHAT_ARCHIVE: ChatArchive = {
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () => [] }
+
+/** コンテキストの内訳の記録を気にしないテストに渡す、何もしない書き込み口。 */
+const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
@@ -143,6 +153,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     chatArchive: NOOP_CHAT_ARCHIVE,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+    contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
   })
   manager.create({
@@ -305,6 +316,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
@@ -407,6 +419,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
@@ -482,6 +495,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
@@ -523,6 +537,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
@@ -577,6 +592,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
@@ -697,6 +713,7 @@ describe("createSessionManager", () => {
         chatCompactThresholdBytes: thresholdBytes,
         chatArchive: archive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
       })
       manager.create({
@@ -961,6 +978,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
@@ -1002,6 +1020,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     const stub = createStubDriver()
@@ -1035,6 +1054,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
@@ -1115,6 +1135,7 @@ describe("createSessionManager", () => {
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
       })
       manager.create({
@@ -1340,6 +1361,7 @@ describe("createSessionManager", () => {
           },
           readRange: () => [],
         },
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
       })
       manager.create({
@@ -1581,6 +1603,156 @@ describe("createSessionManager", () => {
       }
     })
   })
+
+  // コンテキストの内訳の記録（`src/shared/context-usage-record.ts`）。**1行 = 1セッション**で、
+  // 取れなかった回は次のターンで取り直すことを、ここで固定する。
+  describe("コンテキストの内訳の記録", () => {
+    function sessionInfo(sessionId: string): SessionEvent {
+      return {
+        kind: "session-info",
+        sessionId,
+        model: "opus",
+        permissionMode: "auto",
+        slashCommands: [],
+        terminalSlashCommands: [],
+      }
+    }
+
+    /**
+     * 内訳の問い合わせが返す答えを差し替えて起こす。`reports` は呼ばれた順に返し、尽きたら
+     * 最後のものを返し続ける（`stub.driver` の既定は常に「取れた」なので、取れない回を
+     * 作るにはここで差し替える）。
+     */
+    function startContextUsageManagerWithStub(reports: readonly ContextUsageReport[]) {
+      const stub = createStubDriver()
+      const entries: ContextUsageEntry[] = []
+      let asked = 0
+      const driver: SessionDriver = {
+        ...stub.driver,
+        readContextUsage: () => {
+          const report = reports[Math.min(asked, reports.length - 1)]
+          asked += 1
+          return Promise.resolve(report ?? UNAVAILABLE_CONTEXT_USAGE)
+        },
+      }
+      const manager = createSessionManager({
+        now: () => 1_000,
+        batchIntervalMs: BATCH_MS,
+        chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        contextUsageLog: {
+          append: (entry) => {
+            entries.push(entry)
+          },
+        },
+        promptImageShelf: createPromptImageShelf(),
+      })
+      manager.create({
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
+        sessionId: SESSION_ID,
+        startDriver: (onEvent, onRestoredEvent) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvent)
+          return Promise.resolve(driver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+      })
+      return { manager, stub, entries, asked: () => asked }
+    }
+
+    it("1つのセッションでは、ターンを何度終えても1行だけ書く", async () => {
+      const { stub, entries, asked } = startContextUsageManagerWithStub([readyContextUsage()])
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries).toEqual([
+        { at: 1_000, sessionId: "claude-session-1", mode: "work", usage: contextUsage() },
+      ])
+      // 書いたあとは問い合わせにも行かない。
+      expect(asked()).toBe(1)
+    })
+
+    it("claude 側のセッションIDが変われば、もう1行書く", async () => {
+      const { stub, entries } = startContextUsageManagerWithStub([readyContextUsage()])
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+      stub.emit(sessionInfo("claude-session-2"))
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries.map((entry) => entry.sessionId)).toEqual([
+        "claude-session-1",
+        "claude-session-2",
+      ])
+    })
+
+    it("内訳が取れなかったターンは書かず、次のターンで取り直す", async () => {
+      const { stub, entries } = startContextUsageManagerWithStub([
+        UNAVAILABLE_CONTEXT_USAGE,
+        readyContextUsage(),
+      ])
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries.map((entry) => entry.sessionId)).toEqual(["claude-session-1"])
+    })
+
+    it("claude 側のセッションIDが分からないうちは書かない", async () => {
+      const { stub, entries, asked } = startContextUsageManagerWithStub([readyContextUsage()])
+      await waitForBatch()
+
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+      expect(asked()).toBe(0)
+    })
+
+    it("雑談モードのセッションは mode: chat で書く", async () => {
+      const { stub, entries } = startContextUsageManagerWithStub([readyContextUsage()])
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries.map((entry) => entry.mode)).toEqual(["chat"])
+    })
+
+    it("復元で流し直されたターンでは書かない", async () => {
+      const { stub, entries } = startContextUsageManagerWithStub([readyContextUsage()])
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emitRestored({ kind: "turn-finished", status: "success" })
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+    })
+  })
 })
 
 // 新しいセッションの既定（docs/design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
@@ -1654,6 +1826,7 @@ describe("依頼に添えた画像の棚", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       promptImageShelf: shelf,
     })
     manager.create({
