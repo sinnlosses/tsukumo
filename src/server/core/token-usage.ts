@@ -407,14 +407,26 @@ function datesInPeriod(period: TokenUsagePeriod): readonly string[] {
   return Array.from({ length }, (_, offset) => start.add({ days: offset }).toString())
 }
 
-/** モデルごとに畳む（モデル名の昇順）。 */
+/**
+ * モデルごとに畳む。並びは**出力の多い順**（同じならモデル名順）——「どのモデルが出力を
+ * いちばん使ったか」が上から読める。
+ */
 function summarizeByModel(records: readonly TokenUsageRecord[]): readonly ModelUsageTotal[] {
   const allUsages = records.flatMap((record) => record.models)
-  const models = [...new Set(allUsages.map((usage) => usage.model))].toSorted()
-  return models.map((model) => ({
-    model,
-    totals: sumTotals(allUsages.filter((usage) => usage.model === model)),
-  }))
+  const models = [...new Set(allUsages.map((usage) => usage.model))]
+  return models
+    .map((model) => ({
+      model,
+      totals: sumTotals(allUsages.filter((usage) => usage.model === model)),
+    }))
+    .toSorted(
+      (left, right) =>
+        right.totals.outputTokens - left.totals.outputTokens || compareModelName(left, right),
+    )
+}
+
+function compareModelName(left: ModelUsageTotal, right: ModelUsageTotal): number {
+  return left.model < right.model ? -1 : left.model > right.model ? 1 : 0
 }
 
 /**

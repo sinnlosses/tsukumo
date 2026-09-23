@@ -79,6 +79,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
 
+### 2026-09-23 design.md 1〜3章と architecture.md の置き場の記述を実物に合わせた（T-425）
+
+`docs/design.md` 2章の木に欠けていた33ファイル（shared 18・core 8・adapter 5・browser 直下2）と `stores/` の8つを足し、1章の表と3章「起動」を `dist/browser/` を読むだけの現状に直した。`docs/architecture.md` の原則5と表に `hooks/` と `presentational-<機能>.tsx` の例外を足し、箱ごとの中身は design.md 2章への参照にした。
+
+### 2026-09-23 モデル別・ツール別を横に並べた2枚の札と比べ棒つきの表にした（T-402）
+
+縦に積んでいた表2つを枠のある札にして横に並べ、並べ順を決めている列だけに CSS の横棒を添えた。モデル別の並びはモデル名順から出力の多い順に変わり、ツール別は6件＋「ほか n 件を見る」で開閉する。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の
