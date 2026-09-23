@@ -11,9 +11,9 @@
 
 import { type ReactElement } from "react"
 
+import { CharacterFace } from "../../components/character-face.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./components/screen-nav-current-work.tsx"
-import { ScreenNavFace } from "./components/screen-nav-face.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
@@ -50,7 +50,7 @@ export function PresentationalScreenNav({
   return (
     <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
       <div className={styles["screen-nav-identity"]}>
-        <ScreenNavFace url={face.url} alt={face.alt} />
+        <CharacterFace url={face.url} alt={face.alt} className={styles["screen-nav-face"] ?? ""} />
         <ScreenNavRoom name={room} />
       </div>
       <ScreenNavChatModeToggle chatMode={chatMode} />

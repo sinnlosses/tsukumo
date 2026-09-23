@@ -8,6 +8,10 @@
 // **まん中の区画（タスク一覧）は `task-section.tsx` にひとまとめにしてある。** 区画の枠は
 // ここが持ち、中身は置かれる機能（`features/task-board/`）から借りる
 // （docs/design.md 2章「領域の機能と、置かれる機能」）。
+//
+// **「セッション情報」の区画は見出しを名乗らない**（`docs/design.md` 13.9「顔」・
+// `docs/requirements.md` 4.2）。タスクの区画と同じ枠（`SidebarSection`）を借り、`title` に `undefined` を渡して
+// 中身（`<SessionInfo>`）だけを置く——タスクの区画の border-bottom がそのまま2区画の仕切り線になる。
 
 import { type ReactElement } from "react"
 
@@ -21,7 +25,7 @@ export function Sidebar(): ReactElement {
     <>
       <TaskSection />
       <SidebarSection
-        title="セッション情報"
+        title={undefined}
         extraClass={styles["sidebar-block-session"] ?? ""}
         action={undefined}
       >

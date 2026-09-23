@@ -139,6 +139,66 @@ describe("SessionInfo", () => {
   })
 })
 
+// 顔はキャラクターの <select> の左に添える（帯と共有する components/character-face.tsx。
+// docs/design.md 13.9「顔」）。
+describe("SessionInfo の顔", () => {
+  it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {
+    renderSessionInfo({
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: {
+        ...FIXTURE_CHARACTER,
+        pack: "tsukumo-spirit",
+        name: "架空の精霊",
+        face: "/character/face.png",
+      },
+    })
+
+    const face = document.querySelector(".session-info-face")
+    expect(face?.tagName).toBe("IMG")
+    expect(face?.getAttribute("src")).toBe("/character/face.png")
+    expect(face?.getAttribute("alt")).toBe("架空の精霊")
+  })
+
+  it("face が無いパックでは何も出さない", () => {
+    renderSessionInfo({
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit", face: undefined },
+    })
+
+    expect(document.querySelector(".session-info-face")).toBeNull()
+  })
+
+  it("キャラクターを切り替えると顔も変わる（character-changed で state.character が入れ替わる想定）", () => {
+    renderSessionInfo({
+      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      character: {
+        ...FIXTURE_CHARACTER,
+        pack: "tsukumo-spirit",
+        name: "甲",
+        face: "/character/a-face.png",
+      },
+    })
+    expect(document.querySelector(".session-info-face")?.getAttribute("src")).toBe(
+      "/character/a-face.png",
+    )
+
+    cleanup()
+    renderSessionInfo({
+      characterPacks: [{ name: "local", label: "架空の同居人" }],
+      character: {
+        ...FIXTURE_CHARACTER,
+        pack: "local",
+        name: "乙",
+        face: "/character/b-face.png",
+      },
+    })
+    expect(document.querySelector(".session-info-face")?.getAttribute("src")).toBe(
+      "/character/b-face.png",
+    )
+    expect(document.querySelector(".session-info-face")?.getAttribute("alt")).toBe("乙")
+  })
+})
+
 // 並びは寿命順ではなく触る頻度順（`session-info.tsx` の冒頭コメント）。
 describe("SessionInfo の並び", () => {
   it("並びは キャラクター・セッション の順", () => {

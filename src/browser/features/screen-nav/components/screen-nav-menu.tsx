@@ -16,6 +16,7 @@
 
 import { type ReactElement, type RefObject } from "react"
 
+import { CharacterFace } from "../../../components/character-face.tsx"
 import { type ScreenNavCurrentWork } from "../hooks/use-current-work.ts"
 import {
   type ScreenNavChatMode,
@@ -27,7 +28,6 @@ import { type ScreenNavSettings } from "../hooks/use-settings.ts"
 import styles from "../screen-nav.module.css"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"
-import { ScreenNavFace } from "./screen-nav-face.tsx"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import { ScreenNavModelPermissionSelect } from "./screen-nav-model-permission.tsx"
 import { ScreenNavRoom } from "./screen-nav-room.tsx"
@@ -81,7 +81,11 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
       </button>
       {props.open ? (
         <div className={styles["screen-nav-panel"]}>
-          <ScreenNavFace url={props.face.url} alt={props.face.alt} />
+          <CharacterFace
+            url={props.face.url}
+            alt={props.face.alt}
+            className={styles["screen-nav-face"] ?? ""}
+          />
           <ScreenNavRoom name={props.room} />
           <ScreenNavChatModeToggle chatMode={props.chatMode} />
           {props.gates.map((gate) => (
