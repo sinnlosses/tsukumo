@@ -103,9 +103,11 @@ describe("PresentationalTokenUsageScreen", () => {
   it("期間の消費は札4枚（入力・出力・キャッシュ読み・キャッシュ作成）で、費用は出さない", () => {
     const { container, queryByText } = renderScreen()
 
-    expect(container.querySelectorAll(".usage-card")).toHaveLength(4)
+    // モデル別・ツール別も同じ `.usage-card` の枠を使うので、期間の合計の行だけに絞る。
+    const periodRow = container.querySelector(".usage-card-row")
+    expect(periodRow?.querySelectorAll(".usage-card")).toHaveLength(4)
     expect(
-      [...container.querySelectorAll(".usage-card-label")].map((node) => node.textContent),
+      [...(periodRow?.querySelectorAll(".usage-card-label") ?? [])].map((node) => node.textContent),
     ).toEqual(["入力", "出力", "キャッシュ読み", "キャッシュ作成"])
     expect(queryByText("費用")).toBeNull()
   })
@@ -122,7 +124,9 @@ describe("PresentationalTokenUsageScreen", () => {
   it("棒は期間の刻みの数だけ並び、記録の無い刻みも0の棒として入る", () => {
     const { container } = renderScreen()
 
-    const bars = container.querySelectorAll(".usage-card")[0]?.querySelectorAll(".usage-card-bar")
+    const bars = container
+      .querySelectorAll(".usage-card-row .usage-card")[0]
+      ?.querySelectorAll(".usage-card-bar")
     expect(bars).toHaveLength(3)
     expect([...(bars ?? [])].map((bar) => bar.getAttribute("style"))).toEqual([
       "--usage-bar-height: 0%;",
@@ -144,7 +148,9 @@ describe("PresentationalTokenUsageScreen", () => {
   it("今日を選んだときは棒が24本になり、両端は 0時 と 23時", () => {
     const { container } = renderScreen({ days: 1, summary: TODAY_SUMMARY })
 
-    const bars = container.querySelectorAll(".usage-card")[0]?.querySelectorAll(".usage-card-bar")
+    const bars = container
+      .querySelectorAll(".usage-card-row .usage-card")[0]
+      ?.querySelectorAll(".usage-card-bar")
     expect(bars).toHaveLength(24)
     const scale = container.querySelector(".usage-card-scale")
     expect([...(scale?.querySelectorAll("span") ?? [])].map((node) => node.textContent)).toEqual([
@@ -181,7 +187,7 @@ describe("PresentationalTokenUsageScreen", () => {
     expect(getByText("30日")).not.toBeNull()
   })
 
-  it("モデル別の表に費用の列を出さない", () => {
+  it("モデル別の表に費用の列を出さない。列名は略さない", () => {
     const { container } = renderScreen()
 
     // 表は「モデル別」が先、「ツール別」が後（`presentational-token-usage-screen.tsx` の並び）。
@@ -190,7 +196,95 @@ describe("PresentationalTokenUsageScreen", () => {
       (cell) => cell.textContent,
     )
     expect(headers).not.toContain("費用")
-    expect(headers).toEqual(["モデル", "入力", "出力", "読み", "作成"])
+    expect(headers).toEqual(["モデル", "入力", "出力", "キャッシュ読み", "キャッシュ作成"])
+  })
+
+  it("モデル別・ツール別の札を横に並べ、見出しの横に並べ順を添える", () => {
+    const { container } = renderScreen()
+
+    const heads = [...container.querySelectorAll(".usage-table-head")]
+    expect(heads.map((head) => head.textContent)).toEqual([
+      "モデル別出力の多い順",
+      "ツール別結果の大きい順",
+    ])
+  })
+
+  it("モデル別は出力の多い順に並び、同じ出力ならモデル名の昇順になる", () => {
+    const summary: TokenUsageSummary = {
+      ...FIXTURE_SUMMARY,
+      byModel: [
+        { model: "少ない出力", totals: { ...FIXTURE_TOTALS, outputTokens: 10 } },
+        { model: "多い出力", totals: { ...FIXTURE_TOTALS, outputTokens: 900 } },
+        { model: "zeta-同点", totals: { ...FIXTURE_TOTALS, outputTokens: 10 } },
+      ],
+    }
+    const { container } = renderScreen({ summary })
+
+    const modelTable = container.querySelectorAll(".token-usage-table")[0]
+    const names = [...(modelTable?.querySelectorAll("tbody th") ?? [])].map(
+      (cell) => cell.textContent,
+    )
+    // 並べ替えは表示側の責務ではなく届いた順のまま描くので、渡した順がそのまま表になる。
+    expect(names).toEqual(["少ない出力", "多い出力", "zeta-同点"])
+  })
+
+  it("モデル別は出力の列だけに横棒を添える", () => {
+    const { container } = renderScreen()
+
+    const modelTable = container.querySelectorAll(".token-usage-table")[0]
+    const row = modelTable?.querySelector("tbody tr")
+    const cells = [...(row?.querySelectorAll("td") ?? [])]
+    // 入力・出力・キャッシュ読み・キャッシュ作成の4つの数の列のうち、棒があるのは出力だけ。
+    expect(cells.map((cell) => cell.querySelector(".usage-table-bar") !== null)).toEqual([
+      false,
+      true,
+      false,
+      false,
+    ])
+  })
+
+  it("ツール別は上から6件だけ出し、残りは「ほか n 件を見る」で開く", () => {
+    const byTool = Array.from({ length: 9 }, (_, index) => ({
+      name: `ツール${index}`,
+      calls: 1,
+      resultBytes: 9 - index,
+    }))
+    const { container, getByText, queryByText } = renderScreen({
+      summary: { ...FIXTURE_SUMMARY, byTool },
+    })
+
+    const toolTable = container.querySelectorAll(".token-usage-table")[1]
+    expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(6)
+    expect(getByText("ほか 3 件を見る")).not.toBeNull()
+
+    fireEvent.click(getByText("ほか 3 件を見る"))
+
+    expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(9)
+    // 開いたあとは閉じる口も置く（毎回スクロールで6件目より下を探さずに戻せるように）。
+    expect(queryByText("ほか 3 件を見る")).toBeNull()
+    expect(getByText("閉じる")).not.toBeNull()
+
+    fireEvent.click(getByText("閉じる"))
+
+    expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(6)
+  })
+
+  it("ツール別は結果の大きさの列だけに横棒を添える", () => {
+    const { container } = renderScreen({
+      summary: {
+        ...FIXTURE_SUMMARY,
+        byTool: [{ name: "Bash", calls: 5, resultBytes: 1000 }],
+      },
+    })
+
+    const toolTable = container.querySelectorAll(".token-usage-table")[1]
+    const row = toolTable?.querySelector("tbody tr")
+    const cells = [...(row?.querySelectorAll("td") ?? [])]
+    // 回数・結果の大きさの2つの数の列のうち、棒があるのは結果の大きさだけ。
+    expect(cells.map((cell) => cell.querySelector(".usage-table-bar") !== null)).toEqual([
+      false,
+      true,
+    ])
   })
 
   it("plan が届いていれば題の右に札で出す", () => {

@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 日付ごとの jsonl の読み書きを1つにまとめた（T-431）
+
+`token-usage-log.ts`・`chat-archive.ts`・`context-usage-log.ts` が書き写していた追記・日付のファイル名の列挙・行の JSON 読み出しを `src/server/adapter/lib/jsonl.ts` に寄せた。スキーマの検証と索引・読み戻しの形は各ファイルに残した。
+
 ### 2026-09-23 覚えていることをチップで出し、画面から1行ずつ消せるようにした（T-391）
 
 `SessionState.rememberedLines` と `remembered-lines-changed` で `## 覚えたこと` を雑談のサイドバーへ届け、チップ（先頭20文字、押すと全文）と「編集」→ × →確認で `forget-remembered-line` を送る。消し方は `forget` と同じ突き合わせで、画面からのときだけ1ターン1行の上限を掛けない（`docs/design.md` 7.1）。
@@ -74,6 +78,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 ### 2026-09-23 答え待ちの質問をメインビューの札へ移し、自由入力を入力欄に寄せた（T-407）
 
 質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
+
+### 2026-09-23 design.md 1〜3章と architecture.md の置き場の記述を実物に合わせた（T-425）
+
+`docs/design.md` 2章の木に欠けていた33ファイル（shared 18・core 8・adapter 5・browser 直下2）と `stores/` の8つを足し、1章の表と3章「起動」を `dist/browser/` を読むだけの現状に直した。`docs/architecture.md` の原則5と表に `hooks/` と `presentational-<機能>.tsx` の例外を足し、箱ごとの中身は design.md 2章への参照にした。
+
+### 2026-09-23 モデル別・ツール別を横に並べた2枚の札と比べ棒つきの表にした（T-402）
+
+縦に積んでいた表2つを枠のある札にして横に並べ、並べ順を決めている列だけに CSS の横棒を添えた。モデル別の並びはモデル名順から出力の多い順に変わり、ツール別は6件＋「ほか n 件を見る」で開閉する。
 
 ## 未解決
 
@@ -404,3 +416,15 @@ sonnet → opus に上げた。`bun run check` は 415 pass / 0 fail（コード
   `/plan-tasks` で気づいた）。T-322 は決めるだけのタスクで、**ヘッダーの帯はまだコードに無い**
   （`src/browser/main.tsx` に帯の部品が無く、画面への口はサイドバー・キャラクター画面・
   トークン消費の3箇所に散ったまま）。実装は T-356。13.9 を読んで「もうある」と思わないこと
+
+**T-451 は着手しない判断で閉じた（`done` / `passes: false`）。** 入力欄の履歴（↑・↓ で送った依頼を
+呼び戻す）は、**`/clear` をまたげない**ことがはっきりした——`conversation-cleared` は `records` を
+空にする（`src/shared/session-state.ts`。「`/clear` は会話そのものを消す操作なので records も
+落とす」と明示してある）ので、`/clear` の直後の履歴はゼロで `/clear` 自身も呼び戻せない。
+残る恩恵は「長い自由文の依頼を少し変えて送り直す」「中断した依頼を呼び戻す」の2つだけで、
+`/next-task` の繰り返しは `/` の補完がすでに吸収している。**キー割り当ても TUI からそのままは
+持ってこられない**: この入力欄は Enter が改行・Command+Enter が送信で複数行の下書きが常態なので
+↑・↓ はキャレットの行移動として現役、Ctrl+P / Ctrl+N は補完の上下移動が使用済み
+（`src/browser/features/dispatch/hooks/use-composer.ts`）。作るなら道具の行に履歴のボタンを足すか
+記号（`!` など）を割り当てて `suggestions.kind` に1つ増やす形になる（`onInsertTrigger` と
+補完の器は既にある）。**必要になったら作り直す**（ユーザー: 「必要ならまた言うね」）。

@@ -18,8 +18,7 @@
 // `docs/coding-standards.md`「エラーハンドリング」）。**壊れた行・版が違う行は読まずに落とす**
 // （`chat-archive.ts` の `archiveLineSchema` と同じ手。1行ずつ検証するので被害が1行に収まる）。
 
-import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { join } from "node:path"
 
 import { z } from "zod"
 
@@ -29,14 +28,12 @@ import {
   type TokenUsageLog,
   type TokenUsagePeriod,
 } from "../core/token-usage.ts"
+import { appendJsonLine, dateFileNames, readJsonLines } from "./lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "./local-time.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/token-usage/`）。 */
 const TOKEN_USAGE_DIR_NAME = "token-usage"
-
-/** 読み書きするファイルの名前（`YYYY-MM-DD.jsonl`）。**これ以外のファイルは読まない。** */
-const TOKEN_USAGE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 
 /** モデル1件ぶんの数（{@link ModelTokenUsage} と同じ鍵）。 */
 const modelTokenUsageSchema = z.object({
@@ -100,19 +97,9 @@ export function tokenUsageDir(): string {
 export function createTokenUsageLog(root: string = tokenUsageDir()): TokenUsageLog {
   return {
     append: (entry) => {
-      appendLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
+      appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
     },
     readRange: (period) => readRecordsInRange(root, period),
-  }
-}
-
-/** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
-function appendLine(path: string, record: TokenUsageRecord): void {
-  try {
-    mkdirSync(dirname(path), { recursive: true })
-    appendFileSync(path, `${JSON.stringify(record)}\n`)
-  } catch {
-    // 書けなかった回は諦めて次へ進む。
   }
 }
 
@@ -142,17 +129,10 @@ function readRecordsInRange(root: string, period: TokenUsagePeriod): readonly To
 
 /** 期間に入る日付のファイル名を古い順に並べる（読めないディレクトリは空）。 */
 function fileNamesInRange(root: string, period: TokenUsagePeriod): readonly string[] {
-  try {
-    return readdirSync(root)
-      .filter((name) => TOKEN_USAGE_FILE_NAME.test(name))
-      .filter((name) => {
-        const date = name.slice(0, 10)
-        return date >= period.startDate && date <= period.endDate
-      })
-      .sort()
-  } catch {
-    return []
-  }
+  return dateFileNames(root).filter((name) => {
+    const date = name.slice(0, 10)
+    return date >= period.startDate && date <= period.endDate
+  })
 }
 
 /**
@@ -160,28 +140,8 @@ function fileNamesInRange(root: string, period: TokenUsagePeriod): readonly stri
  * 版が違う・鍵が足りない——は1行ずつ落とす。JSONL は壊れても被害が1行）。
  */
 function readValidRecords(path: string): readonly TokenUsageRecord[] {
-  return readLines(path).flatMap((line) => {
-    const record = tokenUsageRecordSchema.safeParse(parseJson(line))
+  return readJsonLines(path).flatMap((raw) => {
+    const record = tokenUsageRecordSchema.safeParse(raw)
     return record.success ? [record.data] : []
   })
-}
-
-/** 1ファイルの行（読めないファイルは空。空行は落とす。`chat-archive.ts` の走査と同じ手）。 */
-function readLines(path: string): readonly string[] {
-  try {
-    return readFileSync(path, "utf8")
-      .split("\n")
-      .filter((line) => line !== "")
-  } catch {
-    return []
-  }
-}
-
-/** JSON として読む（壊れていれば undefined。JSONL は壊れても被害が1行）。 */
-function parseJson(line: string): unknown {
-  try {
-    return JSON.parse(line)
-  } catch {
-    return undefined
-  }
 }
