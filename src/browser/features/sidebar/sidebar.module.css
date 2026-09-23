@@ -1,37 +1,50 @@
-/* サイドバー（`src/browser/features/sidebar/`）。2つの区画（タスク一覧・セッション情報）の
-   **枠**と、サイドバー自身が描く中身（セッション情報）を持つ。**まん中の区画の中身
-   （タスク一覧）と、そこから開く表の見た目はここには無い** — 置かれる機能の側に1枚で
-   まとまっている（docs/design.md 2章「領域の機能と、置かれる機能」）。サイドバーは置き場所を
-   貸しているだけ。**「セッション情報」は見出しを名乗らない**（`.sidebar-block` は同じ枠のまま、
-   `<SidebarSection>` の `title` が `undefined` なだけ）ので、タスクの区画の border-bottom がそのまま
-   2区画の仕切り線になる（`.sidebar-block:last-child` の下）。 */
+/* サイドバー（`src/browser/features/sidebar/`）。伸び縮みする区画（タスク一覧）の**枠**と、
+   下端に固定する帯（セッション情報）を持つ。**区画の中身（タスク一覧）と、そこから開く表の
+   見た目はここには無い** — 置かれる機能の側に1枚でまとまっている（docs/design.md 2章
+   「領域の機能と、置かれる機能」）。サイドバーは置き場所を貸しているだけ。
 
+   **寸法の出どころは `docs/history/mockup/sidebar-tasks-2026-09-23.html`**（見本の
+   inline style の px を、`theme.css` のトークンに写した値で持つ。px をそのまま書かない）。 */
+
+/* 値の上に小さく置く見出し（見本の 11px = --font-label）。**値より1段小さい**ので、
+   選択そのものより先に読ませない。 */
 .session-info-label {
   white-space: nowrap;
+  font-size: var(--font-label);
 }
+/* ラベルの真下の1行（顔 + <select>）。見本の gap は 8px。**折り返さない** — 顔が下へ
+   回ると行の高さが倍になり、帯が伸びてタスクの区画を押し上げる。 */
 .session-info-value {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
   min-width: 0;
 }
+/* 帯の <select>（キャラクター／セッションで同じ見た目。セッション側は
+   session-switch.module.css）。見本は高さ 34px・角 8px・内側 8px で、**サイドバーの他の
+   <select> より大きい** — 帯は下端に1段だけ残る操作なので、押す的を小さくしない。 */
 .character-select {
-  padding: 0.15rem 0.4rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 2.125rem;
+  padding: 0 0.5rem;
   border: 1px solid var(--rule);
-  border-radius: 0.4rem;
+  border-radius: 0.5rem;
   background: var(--surface);
   color: var(--ink);
   font: inherit;
+  font-size: var(--font-secondary);
 }
 /* キャラクターの <select> の左に添える顔（13.9「顔」）。帯（screen-nav.module.css の
-   .screen-nav-face）と同じ考え方で丸く切り抜くが、大きさは帯の高さではなくこの行の文字に
-   合わせる。`<CharacterFace>` が `face` の無いパックでは何も描かないので、この class 自体が
+   .screen-nav-face）と同じ考え方で丸く切り抜く。**大きさは文字ではなく <select> の高さに
+   合わせる**（見本 28px。行の文字に合わせると顔だと分からない大きさになる）。
+   `<CharacterFace>` が `face` の無いパックでは何も描かないので、この class 自体が
    出ないこともある。 */
 .session-info-face {
   flex: none;
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   background: var(--surface-accent);
   object-fit: cover;
@@ -49,12 +62,8 @@
      区画の内側 padding。ここに置くのは見出し（h2）と中身（.sidebar-block-scroll）の両方が
      同じ横位置で揃うようにするため——中身側だけに付けると見出しだけ左に飛び出す。 */
   margin: 0 0 0.5rem;
-  padding: 0 1.125rem 0.5rem;
-  border-bottom: 1px solid var(--rule);
+  padding: 0 1.125rem;
   font-size: var(--font-secondary);
-}
-.sidebar-block:last-child {
-  border-bottom: none;
 }
 /* 区画の見出し。太字＋ ink（13.1 原則1「見出しやツール名も文字の側」）で、本文（--font-body）と
    カードの summary（--font-subheading）の間に埋もれない強さにする。font-size を書かないと
@@ -91,15 +100,12 @@
   overflow-y: auto;
   padding: 4px 0;
 }
-/* 「タスク一覧」は中身の量が変わるので、残りの高さをここへ割り当てる。「セッション情報」は
-   3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの高さで止める。
-   **一覧を見渡すのは区画ではなく画面いっぱいの表（モーダル）**なので、ここは一覧の全長に合わせて
-   高さを取りに行かない。入りきらない分は .sidebar-block-scroll が内側でスクロールする。 */
+/* 「タスク一覧」は中身の量が変わるので、残りの高さをここへ割り当てる（下端の帯は
+   `.sidebar-footer` が伸縮しないので、余りはすべてここへ来る）。**一覧を見渡すのは区画ではなく
+   画面いっぱいの表（モーダル）**なので、ここは一覧の全長に合わせて高さを取りに行かない。
+   入りきらない分は .sidebar-block-scroll が内側でスクロールする。 */
 .sidebar-block-tasks {
   flex: 1 1 0;
-}
-.sidebar-block-session {
-  flex: 0 1 auto;
 }
 /* 見出しの右端に並ぶ押せる口（タスク一覧の「一覧を見る」）。**枠なしのリンク風**にする
    （docs/history/mockup/sidebar-tasks-2026-09-23.html）。押せることを色だけで示さない
@@ -124,31 +130,38 @@
   color: color-mix(in srgb, var(--accent) 85%, var(--ink));
   text-decoration: underline;
 }
-/* キャラクター・セッションの2つの対（ラベル→値）を**横に並べ、値をラベルの真下に置く**
-   （docs/history/mockup/sidebar-2026-09-23.png。2026-09-23 決定）。DOM の並びは
-   ラベル1・値1・ラベル2・値2 のまま（`session-info.tsx` / `session-switch.tsx` は
-   入れ物を挟まず対だけを返す）で、`grid-auto-flow: column` が列ごとに2行（ラベル→値）を
-   詰めるので、対ごとに列が分かれて横並びに見える。**1列目（キャラクター）は auto**
-   （中身なりの幅）、**2列目（セッション）は `minmax(0, 1fr)`**（見出しが長いので、はみ出た
-   ぶんを `<select>` 自身の省略に任せる。`session-switch.module.css` の `max-width: 100%`）。 */
+/* サイドバーの下端に敷く帯（セッション情報）。**区画ではない**ので `.sidebar-block` の枠も
+   内側スクロールも借りず、`sidebar.tsx` が直に置く。見本
+   （docs/history/mockup/sidebar-tasks-2026-09-23.html）の footer は
+   `border-top` + 一段沈んだ地 + `padding: 12px 18px 14px` で、**領域の左右いっぱい**に広がる。
+
+   左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を打ち消すため。
+   **消し切るちょうどの値**なので、帯の縁は領域の枠の内側にぴたりと着く（領域は
+   `overflow` を切ってあり、角の丸めもそちらが担う）。伸び縮みしない（`flex: 0 0 auto`）ので、
+   余った高さはすべてタスクの区画へ行く。 */
+.sidebar-footer {
+  flex: 0 0 auto;
+  margin: 0 calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding));
+  padding: 0.75rem 1.125rem 0.875rem;
+  border-top: 1px solid var(--rule);
+  background: var(--ground);
+}
+/* キャラクター・セッションの2つの対（ラベル→値）を**横に等分して並べ、値をラベルの真下に置く**
+   （見本の footer は `flex: 1 1 0` の2列）。DOM の並びはラベル1・値1・ラベル2・値2 のまま
+   （`session-info.tsx` / `session-switch.tsx` は入れ物を挟まず対だけを返す）で、
+   `grid-auto-flow: column` が列ごとに2行（ラベル→値）を詰めるので、対ごとに列が分かれて
+   横並びに見える。**列は `minmax(0, 1fr)` で等分**し、はみ出るぶんは `<select>` 自身の省略に
+   任せる（`session-switch.module.css` の `max-width: 100%`）。 */
 .session-info {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: auto auto;
   grid-auto-flow: column;
-  column-gap: 1rem;
-  row-gap: 0.3rem;
+  grid-auto-columns: minmax(0, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
   align-items: center;
-  /* ラベル・状態表示の文字と、`font: inherit` の `<select>` がここから受け取る。
-     子（ラベル／値）の片方だけに置くと、もう片方が .sidebar-block の var(--font-secondary) に戻る。 */
-  font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
-/* 狭い画面は横に並べると詰まりすぎるので、対を縦に積む（行ごとにラベル→値の2列）に戻す
-   （2026-09-23 決定。「解くべき論点」760px 以下の扱い）。 */
-@media (max-width: 760px) {
-  .session-info {
-    grid-template-rows: none;
-    grid-auto-flow: row;
-  }
-}
+/* 狭い画面でも**横並びのまま**にする（390px 幅でも1列あたり 160px 前後あり、見本の 176px と
+   ほぼ変わらない。実測は T-389 の evidence）。縦に積むと帯が倍の高さになり、狭い画面ほど
+   惜しいタスクの区画を削ってしまう。 */

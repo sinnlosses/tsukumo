@@ -4,8 +4,8 @@
 // 始まり、画面もその記録で組み直される）。
 //
 // **置き場所がここなのは、セッションが「今回のこと」だから**（`docs/design.md` 13.6
-// 「今回のことはサイドバーに、それ以外はキャラクター画面に」）。キャラクターの行と同じ grid
-// （`sidebar.module.css` の `.session-info`。`grid-auto-flow: column` で対ごとに列が分かれ、
+// 「今回のことはサイドバーに、それ以外はキャラクター画面に」）。キャラクターの対と同じ grid
+// （`sidebar.module.css` の `.session-info`。`grid-auto-flow: column` で対ごとに列が等分され、
 // キャラクターと横に並ぶ）に、ラベルと値の対として並ぶ。
 //
 // **一覧はいまの部屋（このビューのポート）のものだけ**（`src/server/core/session-restore.ts`）

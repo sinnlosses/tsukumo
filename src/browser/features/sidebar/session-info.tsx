@@ -1,6 +1,7 @@
 // サイドバーの「セッション情報」。**残るのはキャラクターとセッションの切り替えだけ**
 // （docs/design.md 13.9「何を外すか」）。仕事/雑談のトグル・モデル・許可モードの
-// ドロップダウンは帯（`features/screen-nav/`）へ移った。**見出しは名乗らない**（`sidebar.tsx`）。
+// ドロップダウンは帯（`features/screen-nav/`）へ移った。**置かれるのは区画ではなくサイドバーの
+// 下端の帯**（`.sidebar-footer`。`sidebar.tsx`）なので、見出しは名乗らない。
 //
 // キャラクターの `<select>`（共有部品。`src/browser/components/select.tsx`）は変更で
 // `switch-character` を `dispatch` する。**次に届く `session-info` で `<select>` の選択が
@@ -41,7 +42,7 @@ function resolveCharacterPack(
 /**
  * `.session-info` は grid-auto-flow: column（`sidebar.module.css`）で、ラベルと値
  * （`<select>` を含む `<span>`）を直接の子として並べる。DOM の並び（ラベル→値の対を
- * キャラクター→セッションの順で並べる）はそのまま、CSS 側が**対ごとに列を割って値をラベルの
+ * キャラクター→セッションの順で並べる）はそのまま、CSS 側が**対ごとに列を等分して値をラベルの
  * 真下に置く**ので、ここでは行ごとに別々の入れ物を作らない（キャラクターとセッションが
  * 横に並んで見える）。
  */
