@@ -20,6 +20,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
+import { usePortraitPreload } from "./components/portrait.tsx"
 import { ProtocolMismatch } from "./components/protocol-mismatch.tsx"
 import {
   applyAppearanceColorOverride,
@@ -60,6 +61,10 @@ function Root(): ReactElement {
   // 「いま雑談か」を知っているのはここだけなので、`<Layout>` には2つの旗を別々に渡す
   // （畳むことと枠を外すことは別の話で、片方だけが要る形もありうる）。
   const chatMode = useSessionSelector((session) => session.state.chatMode)
+  // 切り替えた先の領域で立ち絵が空かないよう、**どちらの画面を出していても**表情の数だけ
+  // 先に読んでおく（docs/screen-design.md 13.7「切り替えのときの立ち絵」）。読み手が
+  // キャラビューと雑談ビューの2つにまたがるので、入れ替えを持つ入口で1回だけ呼ぶ。
+  usePortraitPreload(useSessionSelector((session) => session.state.character?.portraits))
   // サーバと版が合わない間は、どの画面も描かず知らせだけを出す（docs/design.md 4.4）。
   const protocol = useSessionSelector((session) => session.protocol)
   if (protocol === "mismatched") {

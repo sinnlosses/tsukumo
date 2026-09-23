@@ -187,6 +187,28 @@ describe("createSessionLaunch", () => {
     ])
   })
 
+  it("駆動を返す前に、続きの履歴を流し終えている", async () => {
+    // 読み終わるのがタイマーの後になる再生。待たずに返すと、返った時点ではまだ流れていない。
+    const harness = createHarness({
+      restoreEvents: () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            resolve([{ kind: "utterance", text: "架空のターンの本文" }])
+          }, 0)
+        }),
+    })
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "current" },
+      chat: true,
+      resume: { by: "latest" },
+    })
+
+    // 起こし直しの `hello` はここで配られる（session-manager の restart）ので、履歴が
+    // 入っていないと画面は既定の表情で描いたあとに続きの表情へもう一度飛ぶ。
+    expect(harness.restoredEvents.map((event) => event.kind)).toEqual(["utterance"])
+  })
+
   it("続きから始めるセッションが無ければ、履歴を流さない", async () => {
     const harness = createHarness({
       findResumeSession: (): Promise<SessionStart> => Promise.resolve({ kind: "new" }),
