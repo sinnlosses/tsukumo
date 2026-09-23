@@ -40,6 +40,7 @@ import {
   promptImageFiles,
   readPromptImage,
 } from "../../../lib/prompt-image.ts"
+import { useQuestionAnswer } from "../../../stores/question-answer.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { matchingCommands, shouldShowCommandSuggestions } from "../command-suggestions.tsx"
 import {
@@ -83,6 +84,14 @@ export type ComposerChange = {
   readonly target: Pick<HTMLTextAreaElement, "value" | "selectionStart">
 }
 
+/**
+ * `<textarea>` の上の帯。**答え待ちの質問のときだけ出す**（答えは選択肢の札から選ぶか、
+ * ここに書いて送る。札は `features/main-view/question-ask.tsx`）。
+ */
+export type ComposerBand =
+  | { readonly kind: "none" }
+  | { readonly kind: "question"; readonly text: string }
+
 /** `<Composer>` が画面に出す形。presenter はこれをそのまま置くだけ。 */
 export type ComposerModel = {
   /** `<textarea>` の入れ物。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
@@ -90,6 +99,10 @@ export type ComposerModel = {
   /** 画像を選ぶ `<input type="file">` の入れ物（画面には出さず、ボタンから開く）。 */
   readonly imageInputRef: RefObject<HTMLInputElement | null>
   readonly placeholder: string
+  /** `<textarea>` の上の帯（質問に答えている間だけ出る）。 */
+  readonly band: ComposerBand
+  /** 質問に答えている間か（枠を `--state-warn` にし、送るボタンの字を変える）。 */
+  readonly answering: boolean
   readonly text: string
   /** 添えた画像（送るまでの間だけ持つ）。 */
   readonly images: readonly PromptImage[]
@@ -117,6 +130,9 @@ export function useComposer(): ComposerModel {
   const characterName = useSessionSelector((session) => session.state.character?.name)
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
   const turnInProgress = useTurnRunning()
+  // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく**選択肢以外の答えを書く
+  // 場所**になる（札はメインビューに出ている。`stores/question-answer.tsx`）。
+  const question = useQuestionAnswer()
   const slashCommands = useSessionSelector((session) => session.state.slashCommands)
   const commandDescriptions = useSessionSelector((session) => session.state.commandDescriptions)
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
@@ -176,7 +192,12 @@ export function useComposer(): ComposerModel {
     if (trimmed === "") {
       return
     }
-    dispatch({ type: "prompt", text: trimmed, images })
+    if (question.kind === "asking") {
+      // 質問に答えている間は依頼として送らない（打った字はいま見ている1問の答えになる）。
+      question.onAnswerWithText(trimmed)
+    } else {
+      dispatch({ type: "prompt", text: trimmed, images })
+    }
     setDraft(EMPTY_DRAFT)
     // **送った時点で原寸を手放す**（札が消え、以降どこからも開けない）。
     setImages([])
@@ -213,7 +234,13 @@ export function useComposer(): ComposerModel {
   return {
     textAreaRef,
     imageInputRef,
-    placeholder: composerPlaceholder(characterName),
+    placeholder:
+      question.kind === "asking" ? ANSWER_PLACEHOLDER : composerPlaceholder(characterName),
+    band:
+      question.kind === "asking"
+        ? { kind: "question", text: questionBandText(characterName) }
+        : { kind: "none" },
+    answering: question.kind === "asking",
     text: draft.text,
     images,
     suggestions,
@@ -257,7 +284,8 @@ export function useComposer(): ComposerModel {
         return
       }
       event.preventDefault()
-      if (!turnInProgress) {
+      // 質問に答えている間はターンが進行中でも送れる（答えを待っているのは SDK のほう）。
+      if (!turnInProgress || question.kind === "asking") {
         submit()
       }
     },
@@ -287,7 +315,7 @@ export function useComposer(): ComposerModel {
     },
     onSubmit: (event) => {
       event.preventDefault()
-      if (turnInProgress) {
+      if (turnInProgress && question.kind !== "asking") {
         return
       }
       submit()
@@ -304,6 +332,18 @@ export function useComposer(): ComposerModel {
     },
     onInsertTrigger: insertTrigger,
   }
+}
+
+/** 質問に答えている間のプレースホルダ（選択肢の札はメインビューに出ている）。 */
+const ANSWER_PLACEHOLDER = "選択肢以外の答えを書く…"
+
+/**
+ * `<textarea>` の上の帯の文言。**誰が聞いているか**を名前で言う（原則4「キャラクターの中身を
+ * コードに書かない」に従い、名前が無いパックでは名前を使わずに書く）。
+ */
+function questionBandText(characterName: string | undefined): string {
+  const subject = characterName === undefined ? "" : `${characterName} が`
+  return `↑ ${subject}質問しています。上の選択肢から選ぶか、ここに書いて答えてください`
 }
 
 /**

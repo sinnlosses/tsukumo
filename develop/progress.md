@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 答え待ちの質問をメインビューの札へ移し、自由入力を入力欄に寄せた（T-407）
+
+質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
+
 ### 2026-09-23 タスク運用の節を、並行の作業ツリーと merge commit を前提に直した（T-405）
 
 `CLAUDE.md`「1サイクルの形」の「merge commit は出ない」を、fast-forward になるのは手順3・5の

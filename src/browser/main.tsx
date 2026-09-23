@@ -34,7 +34,7 @@ import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
 } from "./lib/appearance-color.ts"
-import { QuestionFocusProvider } from "./stores/question-focus.tsx"
+import { QuestionAnswerProvider } from "./stores/question-answer.tsx"
 import { useScreen } from "./stores/screen.tsx"
 import { SessionProvider, useSessionSelector } from "./stores/session.tsx"
 import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
@@ -96,11 +96,11 @@ if (appRoot !== null) {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <TurnSelectionProvider>
-          {/* 答え待ちの質問の「何問目・どの選択肢に目を置いているか」は、入力欄の箱と
-              メインビューの比較の両方が読む（`stores/question-focus.tsx`）。 */}
-          <QuestionFocusProvider>
+          {/* 答え待ちの質問に組み立てている答えは、メインビューの札と入力欄の両方が
+              読み書きする（`stores/question-answer.tsx`）。 */}
+          <QuestionAnswerProvider>
             <Root />
-          </QuestionFocusProvider>
+          </QuestionAnswerProvider>
         </TurnSelectionProvider>
       </SessionProvider>
     </QueryClientProvider>,

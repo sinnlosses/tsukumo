@@ -8,6 +8,7 @@ import {
   useComposer,
   type ComposerKey,
 } from "../../../../src/browser/features/dispatch/hooks/use-composer.ts"
+import { QuestionAnswerProvider } from "../../../../src/browser/stores/question-answer.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../fixture/character.ts"
@@ -56,7 +57,9 @@ function renderUseComposer(
   function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
     return (
       <QueryClientProvider client={client}>
-        <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
+        <SessionStoreContext.Provider value={store}>
+          <QuestionAnswerProvider>{children}</QuestionAnswerProvider>
+        </SessionStoreContext.Provider>
       </QueryClientProvider>
     )
   }

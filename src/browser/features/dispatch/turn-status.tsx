@@ -10,11 +10,15 @@
 import { useEffect, useState, type ReactElement } from "react"
 
 import { type TurnProgress } from "../../../shared/session-state.ts"
+import { useQuestionAnswer } from "../../stores/question-answer.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../stores/session.tsx"
 import { nowEpochMilliseconds } from "../../utils/clock.ts"
 import styles from "./dispatch.module.css"
 
 const SEND_LABEL = "送信"
+/** 答え待ちの質問があるあいだの送るボタンの字（最後の1問なら「答える」、手前なら「次へ」）。 */
+const ANSWER_LABEL = "答える"
+const NEXT_LABEL = "次へ"
 const INTERRUPT_LABEL = "中断"
 const ELAPSED_LABEL = "経過"
 const FINISHED_LABEL = "所要"
@@ -45,6 +49,9 @@ function formatElapsed(totalSeconds: number): string {
 
 export function TurnStatus(): ReactElement {
   const dispatch = useSessionDispatch()
+  // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す
+  // （SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
+  const question = useQuestionAnswer()
   // 姿の `turn` は**進み具合が変わったときだけ入れ替わる**ので、そのまま依存にしてよい
   // （畳み込みは変わらないフィールドの参照を持ち回る。`stores/session.tsx`）。
   const turn = useSessionSelector((session) => session.state.turn)
@@ -68,7 +75,7 @@ export function TurnStatus(): ReactElement {
         <span>{elapsedLabel}</span>{" "}
         <span className={styles["dispatch-elapsed"]}>{elapsedText(turn, now)}</span>
       </span>
-      {turn.kind === "running" ? (
+      {turn.kind === "running" && question.kind !== "asking" ? (
         <button
           type="button"
           className={styles["dispatch-interrupt"]}
@@ -82,7 +89,7 @@ export function TurnStatus(): ReactElement {
           className={styles["dispatch-send"]}
           data-shortcut={SEND_SHORTCUT_HINT}
         >
-          {SEND_LABEL}
+          {question.kind === "asking" ? (question.last ? ANSWER_LABEL : NEXT_LABEL) : SEND_LABEL}
         </button>
       )}
     </div>

@@ -769,10 +769,12 @@ type SessionHost = {
       │  │                   比率を動かして既定と違う値になったときだけ、上下の仕切りの右端に
       │  │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに
       │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
-      │  ├ <MainView>        <PendingQuestion> + 札（<TurnHeader> + <Turn>）。札の頭は ‹ › ・依頼の1行目の
+      │  ├ <MainView>        札（<TurnHeader> + <Turn>）+ <QuestionAsk>。札の頭は ‹ › ・依頼の1行目の
       │  │                    タイトル・n / N・最新 / 最新へで、直近5件（`MAX_MAIN_VIEW_TURNS`）を1件ずつ遡る
-      │  │   └ <PendingQuestion> 答え待ちの質問の**比べる面**。選択肢の `preview`（Markdown）を札に並べる。
-      │  │                    `preview` を持つ選択肢が1つも無ければ何も描かない（2026-09-21）
+      │  │   └ <QuestionAsk> 答え待ちの質問の**札**（レポートの下）。「質問」のチップ + header + n / N、
+      │  │                    選択肢を横に並べたカード（**選択肢ごとの `preview` は説明の下**。
+      │  │                    ラベル末尾の (Recommended) は「おすすめ」のバッジ）、
+      │  │                    下端に「これで答える」。**自由入力は入力欄が担う**（2026-09-23）
       │  │   └ <Turn>        <RequestRest>（依頼の2行目以降 + <PromptImageThumbnails>）
       │  │                    + [<Report> | <QuestionRecord>]*
       │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
@@ -789,10 +791,10 @@ type SessionHost = {
       │  │   └ <SessionInfo> キャラクターとセッションの <select>（**仕事/雑談・モデル・
       │  │                   許可モードとキャラクター画面へ入る口は帯へ移った**。13.9）
       │  └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
-      │      ├ <PendingAnswer> 許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）。
-      │      │                何問目・どの選択肢に目を置いているかは `stores/question-focus.tsx`
-      │      │                （触れた選択肢が <PendingQuestion> の札で光る）
-      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。貼り付け / ドロップ / 画像のボタンで
+      │      ├ <PendingAnswer> 許可（許可 / 拒否）だけ。**質問はここに出ない**（札はメインビュー）
+      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。**質問が出ている間は答えを書く場所**
+      │      │                （上に帯「↑ <キャラクター名> が質問しています…」、プレースホルダ
+      │      │                「選択肢以外の答えを書く…」、枠は `--state-warn`、送るボタンは「答える」）。貼り付け / ドロップ / 画像のボタンで
       │      │                画像を添える（4.10）。<CommandSuggestions>（`/`）と
       │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包。
       │      │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
@@ -814,9 +816,10 @@ type SessionHost = {
 無ければ何も描かない**ので常設の枠にならず、**控えは押せない**（拡大の面を作らない）。
 原寸を持つのは `<Composer>` のローカル状態だけで、送った時点で手放す。
 
-**質問が出ている間、`<Composer>` と `<TurnStatus>` は CSS で畳む**（`.dispatch:has(.pending-question)`。
-入力欄の領域を質問の箱に全部渡すため。`docs/requirements.md` 4.7）。**部品を外すのではなく隠す**ので、
-入力欄の下書きは `<Composer>` のローカル状態に残ったままになる（6.2）。
+**質問が出ている間も `<Composer>` は出したまま**（2026-09-23。札がメインビューへ移り、入力欄の
+領域を質問に明け渡す必要がなくなった）。入力欄は**選択肢にない答えを書く場所**になり、送ると
+その字が**いま見ている1問の答え**になる（`stores/question-answer.tsx` の `onAnswerWithText`）。
+**進行中でも送れる**——SDK は答えを待って止まっているので、送るボタンは「中断」ではなく「答える」。
 
 **選んでいるターンは `<SessionProvider>` の内側の `<TurnSelectionProvider>`
 （`browser/stores/turn-selection.tsx`）が配る**（6.2）。`<MainView>` の札だけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
@@ -832,7 +835,7 @@ type SessionHost = {
 | 接続中 / 切断中、プロトコルの版違い                              | 同じ store の snapshot に相乗りさせる（`browser/stores/session.tsx`。`SessionState` には入れない）                                                                             |
 | 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `location.hash` の `turn`（`#?turn=3`。追従中は書かない）を `browser/stores/turn-selection.tsx` の Context が読んで配る（メインビューとキャラビューの両方が読む）              |
 | 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                    |
-| 質問の選択（送る前）                                             | `<PendingAnswer>` の中の `<QuestionAsk>` のローカル状態                                                                                                                        |
+| 質問の選択（送る前）・何問目を見ているか・入力欄に書いた答え     | `browser/stores/question-answer.tsx` の Context（**メインビューの札と入力欄の両方が読み書きする**ので機能のローカル状態にしない）                                              |
 | 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                 |
 | 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                              |
 | 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）。hash の書き方は `stores/location-hash.ts` だけ   |
