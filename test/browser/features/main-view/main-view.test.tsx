@@ -96,8 +96,12 @@ function threeTurns(): readonly SessionRecord[] {
   ]
 }
 
-function title(): string | null {
-  return screen.getByRole("heading", { level: 2 }).textContent
+/**
+ * 見ているターンのタイトル文字だけ（`⌄` は別要素なので textContent には含まれない。
+ * `turn-header.tsx` の `.turn-title-text`）。
+ */
+function title(): string | null | undefined {
+  return document.querySelector('[class*="turn-title-text"]')?.textContent
 }
 
 function position(): string | null | undefined {
@@ -110,6 +114,25 @@ function button(name: string): HTMLButtonElement {
     throw new Error(`${name} が button ではない`)
   }
   return found
+}
+
+/**
+ * タイトル + `⌄` の開く口（`turn-header.tsx` の `.turn-title-toggle`）。アクセシブルネームが
+ * 見ているタイトルそのもの（動く文字列）になったので、`button()` の名前検索ではなく
+ * class で直接探す。
+ */
+function historyToggle(): HTMLButtonElement {
+  const found = document.querySelector('[class*="turn-title-toggle"]')
+  if (!(found instanceof HTMLButtonElement)) {
+    throw new Error("タイトルの `⌄` ボタンが見つからない")
+  }
+  return found
+}
+
+function openHistory(): void {
+  act(() => {
+    fireEvent.click(historyToggle())
+  })
 }
 
 describe("MainView（札の頭）", () => {
@@ -209,9 +232,95 @@ describe("MainView（札の頭）", () => {
       detailRecord("本文"),
     ])
 
+    expect(title()).toBe("架空の依頼の1行目")
+    expect(historyToggle().title).toBe("架空の依頼の1行目")
+  })
+
+  it("タイトルと `⌄` は h2 の中の1つのボタンで、アクセシブルネームがタイトルの文字になる", () => {
+    renderMainView(threeTurns())
+
     const heading = screen.getByRole("heading", { level: 2 })
-    expect(heading.textContent).toBe("架空の依頼の1行目")
-    expect(heading.title).toBe("架空の依頼の1行目")
+    const toggle = screen.getByRole("button", { name: "3つ目" })
+
+    expect(heading.contains(toggle)).toBe(true)
+    expect(toggle).toBe(historyToggle())
+  })
+})
+
+describe("MainView（一覧: 窓の中のやり取りへ飛ぶ）", () => {
+  it("タイトル（`⌄` と同じボタン）を押すと一覧が開き、窓の中の件数ぶんの行が出る。もう一度押すと閉じる", () => {
+    renderMainView(threeTurns())
+
+    expect(document.querySelector(".turn-history")).toBeNull()
+
+    openHistory()
+    expect(document.querySelectorAll(".turn-history-row")).toHaveLength(3)
+    expect(historyToggle().getAttribute("aria-expanded")).toBe("true")
+
+    openHistory()
+    expect(document.querySelector(".turn-history")).toBeNull()
+  })
+
+  it("外側を押しても閉じる", () => {
+    renderMainView(threeTurns())
+
+    openHistory()
+    expect(document.querySelector(".turn-history")).not.toBeNull()
+
+    fireEvent.pointerDown(document.body)
+    expect(document.querySelector(".turn-history")).toBeNull()
+  })
+
+  it("行を押すとそのやり取りへ移り、一覧が閉じる", () => {
+    renderMainView(threeTurns())
+
+    openHistory()
+    press("1 / 3: 1つ目")
+
+    expect(title()).toBe("1つ目")
+    expect(document.querySelector(".turn-history")).toBeNull()
+  })
+
+  it("最新の行を押すと追従に戻る（hash の turn が外れる）", () => {
+    renderMainView(threeTurns())
+
+    press(OLDER)
+    press(OLDER)
+    expect(title()).toBe("1つ目")
+
+    openHistory()
+    press("最新: 3つ目")
+
+    expect(title()).toBe("3つ目")
+    expect(window.location.hash).not.toContain("turn=")
+  })
+
+  it("Escape で閉じ、フォーカスがタイトルの `⌄` ボタンへ戻る", () => {
+    renderMainView(threeTurns())
+    const toggle = historyToggle()
+
+    openHistory()
+    expect(document.querySelector(".turn-history")).not.toBeNull()
+
+    fireEvent.keyDown(document, { key: "Escape" })
+    expect(document.querySelector(".turn-history")).toBeNull()
+    expect(document.activeElement).toBe(toggle)
+  })
+
+  it("見ている行にだけ印（●）が付き、他は○のまま", () => {
+    renderMainView(threeTurns())
+
+    press(OLDER)
+    openHistory()
+
+    const rows = [...document.querySelectorAll(".turn-history-row")]
+    const marks = rows.map((row) => row.querySelector(".turn-history-mark")?.textContent)
+    const current = rows.filter((row) => row.getAttribute("aria-current") === "true")
+
+    expect(current).toHaveLength(1)
+    expect(current[0]?.getAttribute("aria-label")).toBe("2 / 3: 2つ目")
+    expect(marks.filter((mark) => mark === "●")).toHaveLength(1)
+    expect(marks.filter((mark) => mark === "○")).toHaveLength(2)
   })
 })
 
