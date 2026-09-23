@@ -29463,3 +29463,282 @@ bun run check: 1836 pass / 0 fail（147ファイル）。test/scripts/room-grid.
 - 起動トークンの入った URL・格子の HTML を、ログ・`evidence`・テストのフィクスチャに写さない（CLAUDE.md「会話内容の扱い」に準じる）
 - 外部コマンドは、いま使っている `orca`・`lsof`・`ps`・`git` の範囲に留める。増やすならユーザーの承認が要る（CLAUDE.md「セットアップ / 環境構築」）
 - `src/` のサーバ（`src/server/adapter/server.ts`）には手を入れない。`orca-host.ts` の `listTabs` / `openTab` / `closeTab` はそのまま使ってよい
+
+## T-438
+
+**タスク**: 記録（SessionRecord）をターンに割る処理が shared の4か所にあるのを1つにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/shared/turn.ts の splitIntoTurns に割り方を集め、main-view・turn-speech・turn-step・trimToRecentTurns を寄せた（test/shared/turn.test.ts 5件追加、既存テストの期待値は不変）。bun run check 1841 pass / 0 fail（148ファイル）。docs/design.md 4.2 と2章に1段落と1行を追加（見出し数 43→43）。
+grep 'kind === "request"' src/shared の残りは turn.ts・session-state.ts の withRestoredTime のほかに2件: chat-log.ts:52 はターンに割らず時系列のまま行へ変えるだけ、main-view.ts:233 は割る処理ではなく SessionRecord→MainViewEntry の種類ごとの変換。
+揃えずに残した差: mainViewTurns の上限は依頼より前のまとまりを1ターンと数え、trimToRecentTurns は数えない（見え方が変わるので現状維持）。
+
+## 背景
+
+`SessionState.records` を「依頼（`kind: "request"`）の区切りでターンに割る」処理が、`src/shared/` の4か所でそれぞれ書かれている:
+
+- `src/shared/main-view.ts` の `groupIntoTurns`（`MainViewEntry` に変えてから割る。`PRE_REQUEST_TURN_ID` で依頼より前を扱う）
+- `src/shared/turn-speech.ts` の `turnSpeeches`（依頼ごとにセリフと表情を集める）
+- `src/shared/turn-step.ts` の `currentTurnSteps`（`findLastIndex` で最後の依頼から先を取る）
+- `src/shared/session-state.ts` の `trimToRecentTurns`（依頼の位置を数えて古いターンを落とす）
+- あわせて `src/shared/chat-log.ts` も依頼を見て行を作る
+
+依頼より前の記録・復元した記録（`withRestoredTime`）・`turnId` の扱いが場所ごとに書かれていて、1か所の直し（例: 依頼より前のセリフの扱い）が他へ伝わらない。git の履歴では `session-state.ts` と `main-view.ts` が一緒に直されることが多い（直近400コミットで7回）。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- 画面の見え方（メインビュー・キャラビュー・帯の「いまの作業」・雑談のログ）は変えない
+
+## 解くべき論点
+
+- 共通にする単位: 「記録 → ターンの並び（依頼と、その後ろの記録）」の1関数にし、各所はその上で自分の形に変える、でよいか。依頼より前の記録をどう表すか
+- `main-view.ts` は `MainViewEntry` に変えてから割っている。先に割ってから変える順に直してよいか（上限 `MAX_MAIN_VIEW_ENTRIES` の効き方が変わらないか）
+- 置き場（`shared/` に概念の名前で1つ。例: `turn.ts`）
+
+## やること
+
+1. 5か所の割り方を並べ、依頼より前・復元・`turnId` の扱いの差を表にする。差が意図か偶然かを `docs/design.md` 4章・13章で確かめる（偶然の差で、揃えると見え方が変わるものはユーザーに預ける）
+2. 論点に答え、割る関数を1つ置いて各所を寄せる
+3. `docs/design.md` 4章に割る関数の持ち主を1行足す
+
+## 完了条件
+
+- `grep -rn 'kind === "request"' src/shared` が共通の1か所と、依頼そのものを作る `session-state.ts` の畳み込みだけ（残りがあれば理由を `evidence` に書く）
+- 既存のテスト（`test/shared/main-view.test.ts` / `session-state.test.ts` / `turn-step` / `turn-speech` / `chat-log`）が期待値を変えずに通る
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-447
+
+**タスク**: /usage などローカルのスラッシュコマンドの出力を、メインビューに出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: False
+
+**evidence**:
+
+着手しない判断（2026-09-23、ユーザー判断。課題感が生まれたらやる）。本文の前提「出力が画面に出ない」は実物と違い、/usage の出力はメインビューに出ている（sdk-message.ts は local_command_output を捨てているので、別の経路で本文として届いていると読んでいる。経路は未確認）。残る不便は改行が潰れてレポートと見分けがつかないことだけで、打つのはたまにで数字は読めるので見送った。
+
+## 背景
+
+入力欄の `/` 補完から Claude Code のローカルコマンド（`/usage` `/cost` `/status` `/context` など）を選んで送れるが、その出力は画面に出ない。SDK は出力を `system` の **`local_command_output`**（`content: string`。`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（0.3.280） の `SDKLocalCommandOutputMessage`、「Displayed as assistant-style text in the transcript」）で流すが、`src/server/core/sdk-message.ts` の `toSessionEvents` は `system` のうち `init` / `commands_changed` / `compact_boundary` しか見ず、これを捨てる。`/model` だけは `modelChangeEvents` が別の経路で拾っている。
+
+TUI を使わない tsukumo では、打ったコマンドの結果を見る場所が画面しかない。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+
+## やること
+
+1. 疑似でなく本物の claude（`bun run start`）で `/usage` か `/cost` を1回送り、`local_command_output` が届くか、届く順（`result` の前か後か）を確かめる。**届かなければ、届く経路（`user` メッセージの `<local-command-stdout>` など）を探し、どれも無ければ理由を `evidence` に書いて閉じる**
+2. 届くなら `SessionEvent` を1つ足し、メインビューのそのターンに、レポートと見分けられる形（等幅の塊など）で出す。`docs/requirements.md` 4.1 の表と 4.2 のメインビューの項に書く。`PROTOCOL_VERSION` を上げる
+3. 疑似セッションに場面を足す
+
+## 完了条件
+
+- `local_command_output`（または確かめた経路）を `SessionEvent` にするテストがある
+- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 会話の中身（依頼・出力・ファイルの中身）をログ・ディスク・テストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）
+- 本物の claude を起こすのは手順1の確認の1回だけ。確かめた結果（届いたか・順番）だけを `evidence` に書き、出力の中身は書かない
+
+## T-448
+
+**タスク**: 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-413 / **passes**: True
+
+**evidence**:
+
+実測(本物の claude・haiku、中身は記録せず): 背景 Bash は tool_use→background_tasks_changed[1]→task_started→tool_result→result、約18秒後に background_tasks_changed[0]→task_updated→task_notification→init→assistant→result(origin=task-notification)。背景サブエージェントも同順。変換は test/server/core/sdk-message.test.ts・session-state.test.ts・self-started-turn.test.ts で固定（background_tasks_changed のみ変換、task_* は捨てる、ターン外の init に turn-started を補う。PROTOCOL_VERSION 9）
+目視(サブエージェントが Playwright の Chromium 1440x900 / 700x900、TSUKUMO_DRIVER=fake TSUKUMO_FAKE_SCENE=background-task): ターン後に帯が「● 背景で作業中｜架空の待ち（20秒）」、一覧に「背景で動いているもの（1 件）」、続きのターンで「作業中」、終わると「○ 依頼待ち」に戻り区画も消えた。700px で横スクロールなし
+bun run check: 1842 pass / 0 fail（148 files）、typecheck・lint・format:check 通過
+
+## 背景
+
+Claude Code は `run_in_background` の Bash や背景のサブエージェントを、ターンが終わったあとも動かし続ける。SDK はその状態を `system` の **`background_tasks_changed`** と **`task_started` / `task_progress` / `task_updated` / `task_notification`**（`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（0.3.280））で流すが、`src/server/core/sdk-message.ts` はどれも捨てる。
+
+tsukumo の画面は `turn-finished` で「終わった」に倒れる（帯のいまの作業・入力欄の経過時間・立ち絵の動き）ので、背景で何かが走っていても利用者には止まって見える。キャラクター自身の人格（背景で委譲する運用）とも噛み合わない。`MEMORY.md` の「演出はマウント時の DOM しか見ない」も、背景のタスクで `turn-finished` が先に届く経路を注意として挙げている。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+
+## 解くべき論点
+
+- 何を「背景のタスク」として数えるか（背景の Bash・背景のサブエージェント・Monitor）。種類ごとに出し分けるか
+- 画面のどこに出すか（帯のいまの作業の札・入力欄の行）。ターンが終わっていても「背景で n 件動いている」と分かる形。帯の配線は T-413 が作り替えているので、その後の形に載せる
+- 背景のタスクが終わって claude が続きの報告を始めたとき（`task_notification` のあとの新しいターン）の見え方
+- 立ち絵の「たいくつ」（待っている顔）を背景のタスクの間にも出すか
+
+## やること
+
+1. 本物の claude で背景の Bash を1つ走らせ（`sleep 20` のような無害なもの）、どのメッセージがどの順で届くかを確かめて `evidence` に要約する（中身は書かない）
+2. 論点に答え、`SessionEvent` / `SessionState` / 部品に足す。`PROTOCOL_VERSION` を上げる。`docs/requirements.md` 4.1 の表・4.2 の帯の項、`docs/design.md` 13.9 に書く
+3. 疑似セッションに「ターンが終わったあとも背景で1件動き、しばらくして終わる」場面を足す
+
+## 完了条件
+
+- 手順1で確かめたメッセージの各々を `SessionEvent` にするテストがある
+- ターンが終わったあとも、背景のタスクが動いている間はそれが画面に出ていて、終わると消える
+- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 会話の中身（依頼・出力・ファイルの中身）をログ・ディスク・テストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-474
+
+**タスク**: report ツールの試行を実セッション10ターンで回し、3つの合格条件で採否を判定する
+
+**difficulty**: opus / **loopable**: N / **dependencies**: T-473 / **passes**: True
+
+**evidence**:
+
+docs/research/report-tool-trial.md: tsukumo-4 と tsukumo-2 の2セッション（依頼9・合図11ターン）を構造だけ数えた。条件1は満たさない（最後の report のあとに1行を超える本文で終えたターンが6件）、条件2は合図11件すべてに speak、条件3は崩れ無し（利用者の目視）
+採否は利用者が確かめた（2026-09-23）: 不採用にせず、6件と同じ形を Stop の関所で塞ぎ、パイプライン（検査・整形）を入れてから試し直す。T-486〜T-489 を起こし、T-475 の依存を T-489 へ付け替えた
+本文と依頼の文面は写していない
+
+## 背景
+
+T-473 で、レポートを MCP ツール `report` で受け取る仕掛けを切り替えて使えるようにした。2026-09-23 の `/grill-with-docs` で、採用は実セッションでの試行の結果で決めることになっている。
+
+## 決まっていること（蒸し返さない）
+
+- 実セッションを10ターン程度回す。**サブエージェントへ委譲するターンを必ず含める**
+- 合格条件は3つ（Q11）。3つとも満たせば採用（T-475 以降へ進む）、1つでも満たさなければ不採用:
+  1. `report` の呼び忘れが1件以下
+  2. 委譲中、メインがサブエージェントの `SendMessage` の合図を `speak` で言い直す流れが途切れない（`report` がその代わりに使われていない）
+  3. `body` の中のフェンス・表・HTML が今と同じに描ける（JSON 文字列の中に本文が入っても崩れない）
+- 懸念として、`report` のあとの1行のテキストの前に本体の催促が入って1往復増えていないかも見る（合否の条件ではないが記録する）
+
+## やること
+
+1. 利用者に試行の切り替えを入れた tsukumo を起こしてもらい（`TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分けると本体のセッションを汚さない）、普段の仕事を10ターン程度してもらう
+2. 各ターンについて、**構造だけ**を数える: `report` の呼び出し回数とどこから呼ばれたか、`speak` の回数と委譲中の合図への応答、最後のテキストの有無と長さ、催促が入ったか、描画の崩れの有無。**本文そのものは写さない**
+3. 結果を `docs/research/report-tool-trial.md` に書き（3条件それぞれの合否と数）、採否を利用者に確かめる
+4. 不採用なら、T-473 の切り替えの口と `report` ツールを外すタスクを `develop/direction.md` の `## エージェントのドラフト` に積み、T-475〜T-477 を理由を添えて閉じる
+
+## 完了条件
+
+- `docs/research/report-tool-trial.md` に、10ターン程度の構造の数と3条件の合否がある
+- 採否を利用者が確かめたことを evidence に書く
+- `bun run check` が通る
+
+## 注意
+
+- **SDK のイベントと transcript には利用者の生の会話が入っている。** 数えるのは構造だけで、本文・依頼の文面を research やログに写さない（`CLAUDE.md`「会話内容の扱い」。この規約は他のどの規約よりも優先する）
+- `loopable` が N なのは、利用者が実際に仕事をするターンが要るため（聞いて解ける種類ではない）
+
+## T-483
+
+**タスク**: progress.md のマージドライバで、main 側の同じ日付の小節を下へ落とさない
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+mergeDoneSections が同じ日付では base に無い小節を上に、両側の新規どうしは ours を上に並べる（規則は scripts/progress-done-section.ts の orderByDateDescending のコメント1か所）。変更前のコードで test/scripts/progress-done-section.test.ts の「theirs にだけ新しく足された小節が…上に来る」が落ちた（11 pass / 1 fail）。両側新規のテストは見出しを集める順で元から通っていた。日付の無い小節は末尾のまま。bun run check: 1864 pass / 0 fail（149 files）
+
+## 背景
+
+並行の作業ツリーで `git merge main` すると、`develop/progress.md` の「## 完了したこと」の小節の並びが崩れる。2026-09-23 の振り返り（`1ba8d05..f1adaf96`）の範囲では、並べ直すだけのコミットが6件あった（`5a61b2d1` `8b9dfab6` `823e3509` `123c2798` `9cf12e51` `97d9bf6a`）。
+
+原因は `scripts/progress-done-section.ts` の `mergeDoneSections`。マージドライバ `scripts/merge-progress.ts` から呼ばれる:
+
+- 見出しを `new Set([...oursByHeading.keys(), ...theirsByHeading.keys()])` の順に集める。ours の小節が先で、theirs にだけある小節はそのあとに来る
+- 最後に `orderByDateDescending` で並べる。見るのは日付だけで、同じ日付どうしは `toSorted` の安定性で集めた順のまま残る
+- `git merge main` では ours が枝、theirs が `main`。そのため、同じ日付のあいだでは `main` が先に足した小節（新しい順では上にあるべきもの）が、枝の既存の小節の下に落ちる
+- 日付が同じなので、`task-workflow` の `status.py` は ERROR を出さない。アーカイブは「新しい順」を前提にしている
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの承認: 振り返りのドラフト「マージドライバが同じ日付の小節を下へ落とさないようにする」に「いいよ。タスク化して」
+- 並べ方の原則: 同じ日付のあいだでは、**base に無い小節（どちらかの側が新しく足したもの）を、base にある小節より上に置く**。base にある小節どうしの順は、いまの順（ours での順）を保つ
+
+## 解くべき論点
+
+- 両側がそれぞれ新しく足した小節どうしの順。どちらも「新しい順の先頭へ足す」運用なので、並行して足されたものの前後は決めようがない。theirs（`main`）を先にするか ours を先にするかを決め、理由をコード中のコメントに1行書く。`main` へ送るのは枝のほうがあとなので、ours を上にするのが「新しい順」に近い、という見方がある
+- 日付の無い小節（`date` が `undefined`）をどこに置くか。いまは `""` 扱いで末尾に行く。変えるかどうか
+
+## やること
+
+1. `test/scripts/progress-done-section.test.ts` の `describe("mergeDoneSections")` に、次の2つのテストを先に足し、いまのコードで落ちることを確かめる。
+   - 同じ日付のとき、theirs にだけ新しく足された小節が、base にある ours の小節より上に来る
+   - 両側が同じ日付で別々に新しく足したときの並び（論点で決めた順）
+2. `mergeDoneSections` の並べ方を直す。`orderByDateDescending` に「base にあったか」を渡すか、集める順を変えるかはどちらでもよい。ただし、書いたあとに読む人が並びの規則を1か所で読める形にする
+3. `scripts/merge-progress.ts` の冒頭コメントなど、並び方を説明している箇所があれば合わせる
+
+## 完了条件
+
+- 手順1のテストが通り、変更前のコードでは落ちることを確かめてある（evidence に書く）
+- 既存の `mergeDoneSections` のテスト（両側が足した小節は日付の降順に並ぶ、など）が通ったまま
+- `bun run check` が通る
+
+## 注意
+
+- マージドライバの登録（`git config merge.progress.driver`）は人がやるもので、このタスクでは触らない（CLAUDE.md「セットアップ / 環境構築」）
+- 実物の `develop/progress.md` をテストのフィクスチャに写さない。`test/fixture/progress-doc.ts` の作り方に合わせる
+
+## T-486
+
+**タスク**: report のあとの長い本文を Stop フックで差し戻す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1882 pass / 0 fail（149ファイル）、typecheck・lint・format:check もエラーなし。関所のテストは test/server/core/report-tool.test.ts（11件）・test/server/adapter/sdk-driver.test.ts の reportGateHooks（6件）・sdk-message.test.ts の isSubagentMessage（1件）。既存テストは無修正。実機での確かめは T-489 に任せる（疑似セッションでは Stop フックが起きない）
+
+## 背景
+
+T-474 の試行（`docs/research/report-tool-trial.md`）で、合格条件1（`report` の呼び忘れ1件以下）を満たさなかった（6件）。6件はどれも「その SDK のターンで、**最後の `report` のあと（`report` が無ければターンの頭から）に1行を超える本文を書いて終えた**」という同じ形だった。`report` のあるターンではその本文は画面に出ない（`src/shared/main-view.ts` の `selectToolReports`）ので、中身が消える。うち5件はサブエージェントの合図（`SendMessage` の到着）で始まったターンと、その前後。
+
+SDK（`@anthropic-ai/claude-agent-sdk` 0.3.280）には `Stop` フックがある。`StopHookInput` は `stop_hook_active` と `last_assistant_message` を持ち、`decision: "block"` と `reason` を返すとモデルは止まらずに続ける。tsukumo はすでに `src/server/adapter/sdk-driver.ts` の `chatSummaryHooks`（雑談のときだけ `PostCompact`）で `query()` の `hooks` を渡している。ターンの中の並びは `src/server/core/sdk-message.ts` が `report` / `detail` / `speech` などのイベントに変える。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの決定: 推測ではなく仕組みで塞ぐ。関所は `Stop` フックに置く
+- 判定は「その SDK のターンで、最後の `report` のあと（無ければターンの頭から）に書いた本文が1行を超える」なら `block`。1行以内（背景の委譲を待つ一言、`report` → 締めの `speak` のあとの1行）は通す
+- 効くのは `TSUKUMO_REPORT_TOOL=1` の仕事モードだけ。切り替えないとき・雑談では登録しない（試行の口が消えるときに一緒に消える形にする。`src/server/core/report-tool.ts` 冒頭）
+- `block` の理由文は日本語で、「いま書いた内容を `report` で渡し直す。`report` のあとは締めの `speak` と1行だけ」の趣旨にする
+- ループさせない: `stop_hook_active` が true のときは `block` しない
+
+## 解くべき論点
+
+1. **判定の材料をどこから取るか**: tsukumo が受け取ったイベントの並びを core の純粋関数で数えるか、フックの入力の `last_assistant_message` を見るか。前者を推す（テストできる・判断を core に置ける）。その場合、SDK のターンの境目（合図で始まるターンを含む）をどう取るか
+2. **「1行」の定義**: 改行を含まないことに加えて字数の上限を置くか（試行で通ったものは64字以下、差し戻すべきものは131字・3行以上）
+3. **差し戻したときの画面**: `report` の無いターンでは差し戻された本文が推測の経路で一瞬出る。`turn-finished` の数え方・帯の「いまの作業」・書き上げる演出に影響しないか
+4. **サブエージェント（`SubagentStop`）を対象にするか**: 試行ではサブエージェントの中の `report` は0件で、委譲先の報告はメインにだけ届く
+
+## やること
+
+1. 論点を決め、`Stop` フックを登録する。判定は core の関数に置き、`chatSummaryHooks` と同じく `query()` を呼ばずに中身を検査できる形にする
+2. テストを足す: 1行を超える本文で `block` / 1行以内は通す / `report` のあとの長い本文で `block` / `stop_hook_active` なら通す / 切り替えないとき・雑談では登録しない
+3. 関所があることを `src/server/core/report-tool.ts` 冒頭のコメントと `docs/glossary.md`「report ツール」の項に1〜2行で足す
+4. 疑似セッション（`TSUKUMO_DRIVER=fake`）では `Stop` フックは起きないので、実機での確かめは試し直しのタスクに任せる
+
+## 完了条件
+
+- 上の2のテストが通る
+- 切り替えないときの既存テストが無修正で通る
+- `bun run check` が通る
+
+## 注意
+
+- **会話内容をログ・テストのフィクスチャ・`evidence` に写さない**（`CLAUDE.md`「会話内容の扱い」。他のどの規約よりも優先する）
+- `block` の理由文に `last_assistant_message` の中身を写さない（モデルの文脈に戻るのは固定の文面だけにする）
+- T-487 / T-488 と同じファイル（`report-tool.ts` / `sdk-driver.ts`）を触りうる。着手時に `main` の状態を見て、先に入っていればそれに合わせる

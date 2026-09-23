@@ -45,6 +45,19 @@ export type SectionMergeResult = {
   readonly conflicts: readonly SectionConflict[]
 }
 
+/**
+ * 畳んだ直後の小節1つに、並べ方の判断に要る由来を添えたもの（`orderByDateDescending` だけが
+ * 読む内部の形。`DoneSection` 自体には由来を持たせない——マージの外では意味を持たない情報のため）。
+ */
+type ResolvedSection = {
+  readonly section: DoneSection
+  /** base に無い（今回どちらかが新しく足した）小節かどうか。 */
+  readonly isNew: boolean
+  /** 新しく足したのがどちら側か。両側の配列に共に出てきた小節（`resolveBothSides` を通った
+   *  もの。同じ内容を両側が同時に足した場合を含む）では区別する意味が無いので `undefined`。 */
+  readonly addedBy: "ours" | "theirs" | undefined
+}
+
 const DONE_HEADING_PREFIX = "## 完了したこと"
 const TOP_HEADING_PREFIX = "## "
 const SECTION_HEADING_PREFIX = "### "
@@ -116,7 +129,9 @@ export function buildSectionConflictText(conflict: SectionConflict): string {
  * - base にあって、片方だけが書き換えた小節はその書き換えを残す
  * - 両側にあって内容が食い違い、どちらも base と一致しない（＝両側が別々に書き換えた）ときは
  *   `conflicts` に積む。**黙ってどちらかを捨てない**
- * - 残った小節は日付の降順（新しい順）へ並べ直す。同じ日付どうしの順は問わない
+ * - 残った小節は日付の降順（新しい順）へ並べ直す。**同じ日付のあいだでは、base に無い
+ *   （今回どちらかが新しく足した）小節を、base にある小節より上に置く**（並びの規則の全体は
+ *   `orderByDateDescending` のコメントを参照）
  */
 export function mergeDoneSections(
   base: readonly DoneSection[],
@@ -128,7 +143,7 @@ export function mergeDoneSections(
   const theirsByHeading = new Map(theirs.map((section) => [section.heading, section]))
   const headings = new Set([...oursByHeading.keys(), ...theirsByHeading.keys()])
 
-  const resolved: DoneSection[] = []
+  const resolved: ResolvedSection[] = []
   const conflicts: SectionConflict[] = []
 
   for (const heading of headings) {
@@ -139,7 +154,11 @@ export function mergeDoneSections(
     if (oursSection !== undefined && theirsSection !== undefined) {
       const resolution = resolveBothSides(baseSection, oursSection, theirsSection)
       if (resolution.kind === "resolved") {
-        resolved.push(resolution.section)
+        resolved.push({
+          section: resolution.section,
+          isNew: baseSection === undefined,
+          addedBy: undefined,
+        })
       } else {
         conflicts.push(resolution.conflict)
       }
@@ -148,9 +167,9 @@ export function mergeDoneSections(
     // base にあって片方の配列にだけ無いのは、その側が消した（アーカイブ）。消えたままにする。
     // base に無く片方の配列にだけあるのは、その側だけが足した。そのまま残す。
     if (oursSection !== undefined && baseSection === undefined) {
-      resolved.push(oursSection)
+      resolved.push({ section: oursSection, isNew: true, addedBy: "ours" })
     } else if (theirsSection !== undefined && baseSection === undefined) {
-      resolved.push(theirsSection)
+      resolved.push({ section: theirsSection, isNew: true, addedBy: "theirs" })
     }
   }
 
@@ -178,16 +197,35 @@ function resolveBothSides(
   }
 }
 
-/** 日付の降順（新しい順）へ並べ直す。日付が取れない小節は末尾へ送る。 */
-function orderByDateDescending(sections: readonly DoneSection[]): readonly DoneSection[] {
-  return sections.toSorted((a, b) => {
-    const aDate = a.date ?? ""
-    const bDate = b.date ?? ""
-    if (aDate === bDate) {
+/**
+ * 日付の降順（新しい順）へ並べ直す。日付が取れない小節は `""` 扱いで末尾へ送る
+ * （日付の無い小節どうしの前後は、下の「同じ日付のとき」の規則がそのまま当てはまる）。
+ *
+ * 同じ日付のときの規則（マージのたびに `main` から `develop/progress.md` を取り込むと
+ * 同じ日付の小節が並行して増えるため、日付だけでは順を決め切れない）:
+ * - **base に無い（今回どちらかが新しく足した）小節を、base にある小節より上に置く。**
+ *   base にある小節どうしの順は、集めた順（＝ ours での順。`mergeDoneSections` の
+ *   `headings` が ours を先に集めるため）をそのまま保つ
+ * - **両側がそれぞれ新しく足した小節どうしは、ours を theirs より上に置く。** `git merge main` の
+ *   ours は枝で、枝のほうがあとから `main` へ送られるので、ours を上にするほうが「新しい順」に近い
+ */
+function orderByDateDescending(resolved: readonly ResolvedSection[]): readonly DoneSection[] {
+  return resolved
+    .toSorted((a, b) => {
+      const aDate = a.section.date ?? ""
+      const bDate = b.section.date ?? ""
+      if (aDate !== bDate) {
+        return aDate > bDate ? -1 : 1
+      }
+      if (a.isNew !== b.isNew) {
+        return a.isNew ? -1 : 1
+      }
+      if (a.addedBy !== b.addedBy && a.addedBy !== undefined && b.addedBy !== undefined) {
+        return a.addedBy === "ours" ? -1 : 1
+      }
       return 0
-    }
-    return aDate > bDate ? -1 : 1
-  })
+    })
+    .map((item) => item.section)
 }
 
 function toDoneSection(bodyLines: readonly string[]): DoneSection {

@@ -16,6 +16,8 @@
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。stderr に出すのは SDK 自身のエラー文だけ。
 
+import { setImmediate } from "node:timers/promises"
+
 import {
   type EffortLevel,
   type HookCallbackMatcher,
@@ -33,8 +35,14 @@ import { readChatTopics } from "../core/chat-compact.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import { type ReportChannel } from "../core/report-tool.ts"
 import {
+  createReportGate,
+  REPORT_GATE_REASON,
+  type ReportChannel,
+  type ReportGate,
+} from "../core/report-tool.ts"
+import {
+  isSubagentMessage,
   toCommandDescriptions,
   toPlan,
   toSessionEvents,
@@ -70,8 +78,8 @@ export const DEFAULT_EFFORT: EffortLevel = "high"
  * （docs/coding-standards.md「エラーハンドリング」）。`try`/`catch` は反復を包む1つだけに
  * まとめてある。
  *
- * `reportChannel` は試行の口（`src/server/core/report-tool.ts`）で、`report` ツールを載せるか
- * だけを決める（`options` に混ぜていないのは、採否が決まったら引数ごと消すため）。
+ * `reportChannel` は試行の口（`src/server/core/report-tool.ts`）で、`report` ツールと `Stop` の
+ * 関所を載せるかだけを決める（`options` に混ぜていないのは、採否が決まったら引数ごと消すため）。
  */
 export function startSdkDriver(
   given: SessionDriverOptions,
@@ -91,11 +99,16 @@ export function startSdkDriver(
     },
   })
 
+  const reportGate = createReportGate()
+
   const session = query({
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      hooks: chatSummaryHooks(options.mode, options.onEvent),
+      // 2つは雑談と仕事で分かれていて、同時に登録されることはない。
+      hooks:
+        chatSummaryHooks(options.mode, options.onEvent) ??
+        reportGateHooks(options.mode, reportChannel, reportGate),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode, reportChannel),
       },
@@ -105,7 +118,7 @@ export function startSdkDriver(
   })
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options)
+  void relayMessages(session, options, reportGate)
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
 
@@ -239,19 +252,69 @@ export function chatSummaryHooks(
 }
 
 /**
+ * `report` の関所（`src/server/core/report-tool.ts` の {@link createReportGate}）を `Stop` フックに
+ * 載せる。**仕事のときに、試行の口（`reportChannel`）が `tool` のときだけ登録する**——切り替えない
+ * とき・雑談のときは `hooks` そのものを渡さない（undefined）。`SubagentStop` には載せない
+ * （サブエージェントの `report` は捨てるので、渡し直させても画面に出ない）。
+ *
+ * **判定の前に1回だけ macrotask を待つ。** SDK はフックの呼び出し（制御リクエスト）を読んだ
+ * その場で処理し、それより前に届いたメッセージは列に積んで {@link relayMessages} の反復へ渡すので、
+ * 待たないと止まる直前の本文が関所に届く前に判定しうる。列を空けるのは microtask だけなので、
+ * macrotask を1回待てば足りる。
+ *
+ * `startSdkDriver` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
+ * ようにするため（{@link chatSummaryHooks} と同じ理由）。
+ */
+export function reportGateHooks(
+  mode: SessionMode,
+  reportChannel: ReportChannel,
+  gate: ReportGate,
+): Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined {
+  if (mode.kind !== "work" || reportChannel !== "tool") {
+    return undefined
+  }
+
+  return {
+    Stop: [
+      {
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name !== "Stop") {
+              return {}
+            }
+            await setImmediate()
+            return gate.shouldBlock(input.stop_hook_active)
+              ? { decision: "block", reason: REPORT_GATE_REASON }
+              : {}
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/**
  * 届いたメッセージを内部イベントに変えて流し続ける。**反復を包む `try`/`catch` はここだけ**で、
  * 反復が終わる・落ちるのどちらもセッションの終わりとして扱う。
+ *
+ * `report` の関所（`reportGate`）には**メインのメッセージから出たイベントだけ**を見せる
+ * （サブエージェントの本文を数えない。関所を登録していないときも見せるが、判定されないだけ）。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
   options: SessionDriverOptions,
+  reportGate: ReportGate,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに
   // 印を付け直す（{@link scheduleMarkSession}）。
   let sessionId: string | undefined = undefined
   try {
     for await (const message of session) {
+      const fromMain = !isSubagentMessage(message)
       for (const event of toSessionEvents(message, toExpressionNames(options.expressions))) {
+        if (fromMain) {
+          reportGate.observe(event)
+        }
         if (event.kind === "session-info") {
           sessionId = event.sessionId
         }

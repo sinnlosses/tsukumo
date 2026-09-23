@@ -68,6 +68,45 @@ describe("mergeDoneSections", () => {
     ])
   })
 
+  test("同じ日付のとき、theirs にだけ新しく足された小節が、base にある ours の小節より上に来る", () => {
+    const base = sectionsOf(sampleProgressDoc())
+    const ours = sectionsOf(sampleProgressDoc())
+    const theirs = sectionsOf(
+      // 「古い1」と同じ日付に足す。base に無い小節なので、同じ日付の
+      // 「古い1」（base にある）より上に来るはず。
+      withPrependedSection(sampleProgressDoc(), "2026-09-20", "theirs新規（T-410）"),
+    )
+
+    const result = mergeDoneSections(base, ours, theirs)
+
+    expect(result.conflicts).toEqual([])
+    expect(result.sections.map((section) => section.heading)).toEqual([
+      "### 2026-09-20 theirs新規（T-410）",
+      "### 2026-09-20 古い1（T-100）",
+      "### 2026-09-19 古い2（T-099）",
+    ])
+  })
+
+  test("両側が同じ日付で別々に新しく足したときは、ours を theirs より上に置く", () => {
+    const base = sectionsOf(sampleProgressDoc())
+    const ours = sectionsOf(
+      withPrependedSection(sampleProgressDoc(), "2026-09-23", "ours追加（T-411）"),
+    )
+    const theirs = sectionsOf(
+      withPrependedSection(sampleProgressDoc(), "2026-09-23", "theirs追加（T-412）"),
+    )
+
+    const result = mergeDoneSections(base, ours, theirs)
+
+    expect(result.conflicts).toEqual([])
+    expect(result.sections.map((section) => section.heading)).toEqual([
+      "### 2026-09-23 ours追加（T-411）",
+      "### 2026-09-23 theirs追加（T-412）",
+      "### 2026-09-20 古い1（T-100）",
+      "### 2026-09-19 古い2（T-099）",
+    ])
+  })
+
   test("片方が消した小節（アーカイブ）は消えたままになる", () => {
     const base = sectionsOf(sampleProgressDoc())
     const ours = sectionsOf(withoutSection(sampleProgressDoc(), "### 2026-09-19 古い2（T-099）"))
