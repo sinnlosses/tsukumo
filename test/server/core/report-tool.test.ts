@@ -167,4 +167,8 @@ describe("REPORT_GATE_REASON", () => {
     expect(REPORT_GATE_REASON).toContain("渡し直す")
     expect(REPORT_GATE_REASON).toContain("締めの `speak` と1行")
   })
+
+  it("前の report を同じ引数で送り直さないことを言う", () => {
+    expect(REPORT_GATE_REASON).toContain("同じ引数で送り直さない")
+  })
 })

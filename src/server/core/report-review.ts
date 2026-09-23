@@ -2,6 +2,14 @@
 // ある `report` を画面に出さずに差し戻し、直した呼び直しを描く。**1ターンに差し戻すのは1回まで**
 // （2回目からは違反があっても通す。無限に往復させない）。
 //
+// **同じターンで画面に出した `report` と同じ引数の呼び出しも差し戻す**（送り直し）。`Stop` の
+// 関所（`report-tool.ts`）に止められたモデルが、止められた本文を入れずに前の `report` を送り直して
+// 関所を抜ける形を塞ぐ（関所は2回目の止まりを止めないので、送り直しを通すと止めた本文が画面に
+// 出ないまま終わる。docs/research/report-tool-trial.md「残った穴の形」）。枠は規約違反の1回とは
+// 別に**1ターンに1回まで**（規約違反で差し戻して直した `report` を送り直す形もあったため）。
+// 比べるのは `conclusion` / `body` / `favor` の前後の空白を除いたもの。覚えるのは {@link ReportReview.pass}
+// が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
+//
 // **判定の窓口は `report` の handler だけ**（{@link ReportReview.judge}。handler は
 // `src/server/adapter/sdk-tool.ts`）。`assistant` メッセージの変換（`sdk-message.ts`）は `report`
 // イベントを作るだけで判定せず、{@link ReportReview.pass} がそのイベントを**同じ呼び出しの
@@ -24,7 +32,10 @@ export type ReportVerdict =
   | { readonly kind: "rejected"; readonly text: string }
 
 export type ReportReview = {
-  /** `report` の handler から。規約違反があり、このターンでまだ差し戻していなければ差し戻す。 */
+  /**
+   * `report` の handler から。このターンで描いた `report` の送り直しか、規約違反があれば差し戻す
+   * （枠はそれぞれ1ターンに1回。使い切っていれば通す）。
+   */
   readonly judge: (report: ReportDraft) => ReportVerdict
   /**
    * 届いたイベントを流してよい並びに変える（メインのイベントだけを渡す）。`report` は同じ
@@ -43,10 +54,23 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
  */
 export function createReportReview(): ReportReview {
   let rejectedInTurn = false
+  let resendRejectedInTurn = false
   let held: readonly ReportEvent[] = []
+  // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
+  let drawn: readonly ReportDraft[] = []
+
+  const startTurn = (): void => {
+    rejectedInTurn = false
+    resendRejectedInTurn = false
+    drawn = []
+  }
 
   return {
     judge: (report) => {
+      if (!resendRejectedInTurn && drawn.some((previous) => isSameReport(previous, report))) {
+        resendRejectedInTurn = true
+        return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT }
+      }
       const violations = reportViolations(report)
       if (violations.length === 0 || rejectedInTurn) {
         return { kind: "accepted" }
@@ -65,15 +89,19 @@ export function createReportReview(): ReportReview {
             return [event]
           }
           held = held.filter((candidate) => candidate !== report)
-          return event.isError ? [event] : [report, event]
+          if (event.isError) {
+            return [event]
+          }
+          drawn = [...drawn, report]
+          return [report, event]
         }
         case "session-info":
-          rejectedInTurn = false
+          startTurn()
           return [event]
         case "turn-finished": {
           const unsettled = held
           held = []
-          rejectedInTurn = false
+          startTurn()
           return [...unsettled, event]
         }
         default:
@@ -81,4 +109,21 @@ export function createReportReview(): ReportReview {
       }
     },
   }
+}
+
+/**
+ * 送り直しを差し戻すときの `report` の戻り値。**固定の文面だけ**で、モデルが書いた本文は写さず、
+ * 画面の状態（描けたか・どこに出たか）も載せない（docs/display.md 4.2。規約違反の差し戻しと同じ線）。
+ */
+export const REPORT_RESEND_REJECTION_TEXT =
+  "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
+  "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。"
+
+/** 2つのレポートが同じ引数か。3つの欄をそれぞれ前後の空白を除いて比べる。 */
+function isSameReport(left: ReportDraft, right: ReportDraft): boolean {
+  return (
+    left.conclusion.trim() === right.conclusion.trim() &&
+    left.body.trim() === right.body.trim() &&
+    left.favor.trim() === right.favor.trim()
+  )
 }
