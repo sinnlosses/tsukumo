@@ -4,11 +4,14 @@ import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-
 import { type ReactElement } from "react"
 
 import { useReportReveal } from "../../../../src/browser/features/main-view/report-reveal.ts"
+import { saveRevealSpeed } from "../../../../src/browser/lib/reveal-speed.ts"
 import {
   BRUSH_ORIGIN_ATTRIBUTE,
   publishBrushTip,
   useBrushTip,
 } from "../../../../src/browser/stores/brush-tip.ts"
+
+const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 
 // 実際に見えている範囲（`clip-path` のポリゴン）はレイアウトの実測に乗るので、DOM だけの
 // ここでは確かめない（`docs/architecture.md`「手で確かめること」。目視で確認する）。
@@ -124,6 +127,7 @@ function LinesProbe(): ReactElement {
 afterEach(() => {
   cleanup()
   publishBrushTip(undefined)
+  localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
 })
 
 describe("useReportReveal（見せる範囲を進める配線）", () => {
@@ -200,5 +204,30 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     unmount()
 
     expect(hidden.style.clipPath).toBe("")
+  })
+})
+
+describe("useReportReveal（書き上げる演出の速さが「切る」のとき）", () => {
+  it("演出の相手でも、マウント時点で「切る」が保存されていれば何も隠さない", () => {
+    saveRevealSpeed("off")
+
+    renderProbe(true)
+
+    expect(root().hasAttribute("data-revealing")).toBe(false)
+    expect(paragraph().style.clipPath).toBe("")
+    expect(figure().style.opacity).toBe("")
+  })
+
+  it("「切る」のときは筆先も配らない", () => {
+    saveRevealSpeed("off")
+
+    render(
+      <div data-brush-origin="">
+        <Probe reveal={true} />
+        <BrushTipReadout />
+      </div>,
+    )
+
+    expect(screen.getByText("筆先なし")).toBeDefined()
   })
 })

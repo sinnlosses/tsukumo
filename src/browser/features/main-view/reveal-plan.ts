@@ -8,6 +8,10 @@
 // 境目までの要素をひとまとめにする。**段落や表の1つ1つではない**——細かく割ると筆が何度も
 // 折り返して落ち着かず、目で追えなくなる。1つのトピックを大きく1回のZ字で書く。
 //
+// **塊1つぶんの時間を決める物差し（{@link RevealTiming}）は呼び出し側から受け取る**
+// （`src/browser/lib/reveal-speed.ts`。利用者が歯車で選ぶ「書き上げる演出の速さ」）。ここは
+// 値を持たず、渡された物差しで計算するだけ（純粋な割り当てのまま）。
+//
 // トピックの中の要素は、見せ方が2種類ある:
 //
 // - **文字の要素（`text`）**: `report-reveal.ts` が `clip-path` で見せる範囲を進める
@@ -16,6 +20,8 @@
 //   Chart.js は**非同期に描いたあとで中身が入れ替わる**ので、中身ではなく入れ物の class
 //   （`mermaid` / `chart-block`。`markdown/mermaid-block.tsx` / `markdown/chart-block.tsx` が付ける）
 //   で見分ける——描き終わる前でも後でも同じ判定になる
+
+import { type RevealTiming } from "../../lib/reveal-speed.ts"
 
 /** 見せる範囲を進められる要素。`clip-path` と `opacity` を持つもの（レポートの塊は全部これ）。 */
 export type RevealElement = HTMLElement | SVGElement
@@ -47,39 +53,19 @@ const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, i
 const TOPIC_START_SELECTOR = "h1, h2, h3, h4, h5, h6, hr"
 
 /**
- * 文字1つぶんの持ち時間。トピックの大きさを時間に直す物差しで、**筆の速さはこの値で決まる**
- * （同じ道を倍の時間で通れば、半分の速さになる）。
- *
- * **20ms から倍にした**（もう半分ぐらいの速さが良さそうという判断）。
- */
-const MS_PER_CHARACTER = 40
-
-/**
- * トピック1つに使ってよい時間の**下限と上限**。**どちらも塊ごとに掛け、レポート全体には
- * 掛けない**——全体に予算を置いて按分すると、**長いレポートほど
- * 1文字が速くなり**、目で追える速さという狙いがレポートの長さで崩れる。**塊の数で全体が
- * 伸びるのは受け入れる**。
- *
- * **下限が大きいのは、1回のZ字をゆっくり書くため。** 短いトピックでも2画を
- * 書き切るので、文字数に素直に比例させると筆が飛んで見える。上下とも {@link MS_PER_CHARACTER}
- * と一緒に倍にしてある（筆の速さを一律に半分にするため）。
- */
-const MIN_BLOCK_MS = 2400
-const MAX_BLOCK_MS = 8000
-
-/**
  * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。**1つぶんの時間は
- * そのトピックの大きさで決まる**（レポート全体の長さに左右されない）。
+ * そのトピックの大きさで決まる**（レポート全体の長さに左右されない）。`timing` は利用者が
+ * 選んだ「書き上げる演出の速さ」の物差し（`src/browser/lib/reveal-speed.ts`）。
  *
  * 塊の間に隙間は空けない（前の塊が終わった時刻が次の塊の始まり）。
  */
-export function planReveal(root: Element): readonly RevealBlock[] {
+export function planReveal(root: Element, timing: RevealTiming): readonly RevealBlock[] {
   return toTopics([...root.children].filter(isRevealElement)).reduce<{
     blocks: readonly RevealBlock[]
     at: number
   }>(
     (acc, members) => {
-      const endMs = acc.at + topicDurationMs(members)
+      const endMs = acc.at + topicDurationMs(members, timing)
       return {
         blocks: [...acc.blocks, { members, startMs: acc.at, endMs }],
         at: endMs,
@@ -95,7 +81,7 @@ export function planReveal(root: Element): readonly RevealBlock[] {
  *
  * ミニ立ち絵が「そこで書いている」ように見えるのは筆が遅いところだけなので、**出だしと締めで
  * 見せて、読み手が待つだけの真ん中を速く抜ける**。**塊の持ち時間は変えない**
- * （{@link MIN_BLOCK_MS}〜{@link MAX_BLOCK_MS}）ので、レポート全体の長さは前と同じ。
+ * （`planReveal` が {@link RevealTiming} から決めたまま）ので、レポート全体の長さは前と同じ。
  *
  * 進み具合を**どこの位置に直すか**は `reveal-band.ts`（空間の話）。ここは時間の話だけを持つ。
  */
@@ -129,9 +115,9 @@ function startsTopic(element: RevealElement): boolean {
   return element.matches(TOPIC_START_SELECTOR)
 }
 
-function topicDurationMs(members: readonly RevealMember[]): number {
+function topicDurationMs(members: readonly RevealMember[], timing: RevealTiming): number {
   const weight = members.reduce((sum, member) => sum + memberWeight(member), 0)
-  return Math.min(Math.max(weight * MS_PER_CHARACTER, MIN_BLOCK_MS), MAX_BLOCK_MS)
+  return Math.min(Math.max(weight * timing.msPerCharacter, timing.minBlockMs), timing.maxBlockMs)
 }
 
 function memberWeight(member: RevealMember): number {
