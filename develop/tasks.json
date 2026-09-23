@@ -116,9 +116,9 @@
     "dependencies": [],
     "summary": "トークン消費の画面から費用を外し、日ごとのグラフをキャッシュ読みと分ける",
     "task": "## 背景\n\nトークン消費の画面（`src/browser/features/token-usage/`）は費用（USD）を3か所に出している。\n`presentational-token-usage-screen.tsx` の合計の数の並び（`<Figure label=\"費用\">`）、モデル別の表の\n2列目（`ModelTable` の `費用` 列）、`daily-usage-chart.tsx` の日ごとのグラフの線と右の軸（`yAxisID: \"cost\"`）。\n利用者はサブスクリプションで使っているので、費用は判断に使わない。\n\n`daily-usage-chart.tsx` は入力・出力・キャッシュ読み・キャッシュ作成を1本の縦軸に積み上げている。\nキャッシュ読みはほかより桁が大きく、ほかの3つは棒の根元に潰れて読めない。\n\n## 決まっていること（蒸し返さない）\n\n- 日ごとのグラフは**2枚に分ける**。上が「入力・出力・キャッシュ作成」の積み上げ棒、下が\n  「キャッシュ読み」の棒。どちらも自分の縦軸を持つ（2026-09-23 ユーザー）\n- 費用は画面に出さない（2026-09-23 ユーザー「費用は不要」）\n\n## 解くべき論点\n\n- 2枚のグラフの横軸（日付）を上下で揃える。片方の日だけ棒が無くても、同じ日が同じ横位置に来るようにする\n\n## やること\n\n1. 画面から費用を外す。合計の数の並び・モデル別の表の列・日ごとのグラフの線と右の軸の3か所で、\n   `usage-format.ts` の `formatCost` は使う場所が無くなれば消す\n2. **記録（`~/.tsukumo/token-usage/*.jsonl` の `costUsd`）と集計の形（`src/shared/token-usage-summary.ts`\n   の `TokenUsageTotals`）はそのまま残す。** 変えると記録の形の版を上げることになり、画面から\n   消すだけなら要らない\n3. `daily-usage-chart.tsx` を2枚のグラフに分ける。分けたあとに部品が1ファイルに収まらなくなったら、\n   ファイル名が概念になる単位で割る（`CLAUDE.md` 原則5）\n4. テスト（`test/browser/features/token-usage/`）を直す。費用の表示を見ているものは消し、2枚に\n   分かれたことを見るものを足す\n5. `bun run build` のあと、疑似セッションか本物で起こしてトークン消費の画面を開き、2枚のグラフの\n   両方で棒が読めることを目視で確かめる（手順は `docs/architecture.md`「手で確かめること」）\n\n## 完了条件\n\n- `bun run check` が通る\n- `grep -rn \"formatCost\\|費用\" src/browser/features/token-usage/` が0件\n- 日ごとのグラフが2枚あり、キャッシュ読みが下の1枚にだけ出ていることを目視で確かめ、端末と見えたものを `evidence` に書く\n\n## 注意\n\n- 記録の形（`src/shared/token-usage.ts`）と `TOKEN_USAGE_FORMAT_VERSION` は触らない\n- `docs/design.md` にトークン消費の画面の記述があれば、費用とグラフの枚数の記述を直す\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 1368 pass / 0 fail、grep -rn \"formatCost\\|費用\" src/browser/features/token-usage/ は0件。縦軸の幅を2枚とも84pxに固定して、同じ日が上下で同じ横位置に来るようにした（daily-usage-chart.tsx の Y_AXIS_WIDTH）。\n目視: TSUKUMO_DRIVER=fake と架空の記録を置いた TSUKUMO_HOME で起こし、capture-view.ts で #token-usage を1400x900と720x900で撮った。上は入力・出力・キャッシュ作成の積み上げ、下はキャッシュ読みだけの1枚で、記録の無い日（09-19）を抜いても2枚の日付は同じ横位置。9桁の目盛りも欠けず、横のはみ出しは0px。"
   },
   {
     "id": "T-374",

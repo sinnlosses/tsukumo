@@ -1,9 +1,11 @@
-// 日ごとの推移（トークン消費の画面の唯一のグラフ）。**数そのものを読ませたいところは表、
-// 大小と傾きを見せたいところはグラフ**という割り振りで、ここは「どの日が重かったか」と
-// 「何が膨らんだのか」を一目で見るためだけにある。
+// 日ごとの推移（トークン消費の画面のグラフ）。**数そのものを読ませたいところは表、大小と
+// 傾きを見せたいところはグラフ**という割り振りで、ここは「どの日が重かったか」と「何が
+// 膨らんだのか」を一目で見るためだけにある。
 //
-// **積み上げの棒がトークン（左の軸）、線が費用（右の軸）。** 費用だけでは「キャッシュ読みで
-// 膨らんだのか、出力が多かったのか」が分からず、トークンだけでは高い日が分からない。
+// **2枚に分けて描く。** 上は入力・出力・キャッシュ作成の積み上げ棒、下はキャッシュ読みの棒。
+// キャッシュ読みはほかより桁が大きく、1本の縦軸に積むとほかの3つが棒の根元に潰れて読めない。
+// **同じ日は上下で同じ横位置に来る** — 2枚とも同じ `byDay` の並びをラベルに使い、縦軸の幅を
+// {@link Y_AXIS_WIDTH} に固定している（目盛りの桁が違うので、成り行きだと描画域の左端がずれる）。
 //
 // **Chart.js は開いたときだけ取りに行く**（`src/browser/lib/chart.ts`。束ねには入れない）。
 // 読み込みに失敗した回はグラフを諦めて一言だけ出す（表は出たままなので画面は使える）。
@@ -22,7 +24,25 @@ export type DailyUsageChartProps = {
   readonly byDay: readonly DailyTokenUsage[]
 }
 
+/** 日ごとの推移を2枚に分けて描く（上: 入力・出力・キャッシュ作成、下: キャッシュ読み）。 */
 export function DailyUsageChart(props: DailyUsageChartProps): ReactElement {
+  return (
+    <div className={styles["token-usage-chart-group"]}>
+      <SingleDailyChart byDay={props.byDay} config={tokenChartConfig} />
+      <SingleDailyChart byDay={props.byDay} config={cacheReadChartConfig} />
+    </div>
+  )
+}
+
+type SingleDailyChartProps = {
+  readonly byDay: readonly DailyTokenUsage[]
+  /** グラフ1枚ぶんの Chart.js 設定（モジュールの直下に置いた関数を渡すので、参照は安定する）。 */
+  readonly config: (byDay: readonly DailyTokenUsage[]) => unknown
+}
+
+/** グラフ1枚ぶんの読み込み・描画・後始末（2枚のグラフで共通の骨組み）。 */
+function SingleDailyChart(props: SingleDailyChartProps): ReactElement {
+  const { byDay, config } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [failed, setFailed] = useState(false)
 
@@ -37,7 +57,7 @@ export function DailyUsageChart(props: DailyUsageChartProps): ReactElement {
       loadChart(canvas)
         .then(() => {
           if (!cancelled) {
-            drawn = new Chart(canvas, dailyUsageChartConfig(props.byDay))
+            drawn = new Chart(canvas, config(byDay))
           }
         })
         .catch(() => {
@@ -51,10 +71,10 @@ export function DailyUsageChart(props: DailyUsageChartProps): ReactElement {
       cancelled = true
       drawn?.destroy()
     }
-  }, [props.byDay])
+  }, [byDay, config])
 
   return (
-    <div className={styles["token-usage-chart"]}>
+    <div className={styles["token-usage-canvas"]}>
       <canvas ref={canvasRef} />
       {failed ? <p className={styles["token-usage-note"]}>{CHART_FAILED_NOTE}</p> : null}
     </div>
@@ -62,27 +82,19 @@ export function DailyUsageChart(props: DailyUsageChartProps): ReactElement {
 }
 
 /**
- * Chart.js に渡す設定。**系列の色は書かない**（内蔵の colors プラグインが配る。
- * `src/browser/lib/chart.ts` のコメント）。高さは入れ物が決めるので
- * `maintainAspectRatio` は寝かせる（起こしたままだと幅に比例して背が伸び、横に溢れる）。
+ * 上のグラフ（入力・出力・キャッシュ作成の積み上げ棒）の設定。**系列の色は書かない**
+ * （内蔵の colors プラグインが配る。`src/browser/lib/chart.ts` のコメント）。高さは入れ物が
+ * 決めるので `maintainAspectRatio` は寝かせる（起こしたままだと幅に比例して背が伸び、横に溢れる）。
  */
-function dailyUsageChartConfig(byDay: readonly DailyTokenUsage[]): unknown {
+function tokenChartConfig(byDay: readonly DailyTokenUsage[]): unknown {
   return {
     type: "bar",
     data: {
-      labels: byDay.map((day) => day.date.slice(5)),
+      labels: dailyLabels(byDay),
       datasets: [
         tokenDataset("入力", byDay, (day) => day.totals.inputTokens),
         tokenDataset("出力", byDay, (day) => day.totals.outputTokens),
-        tokenDataset("キャッシュ読み", byDay, (day) => day.totals.cacheReadInputTokens),
         tokenDataset("キャッシュ作成", byDay, (day) => day.totals.cacheCreationInputTokens),
-        {
-          type: "line",
-          label: "費用",
-          data: byDay.map((day) => day.totals.costUsd),
-          yAxisID: "cost",
-          tension: 0.2,
-        },
       ],
     },
     options: {
@@ -91,12 +103,49 @@ function dailyUsageChartConfig(byDay: readonly DailyTokenUsage[]): unknown {
       interaction: { mode: "index", intersect: false },
       scales: {
         x: { stacked: true },
-        tokens: { stacked: true, position: "left", beginAtZero: true },
-        // 右の軸は目盛り線を引かない（左と交差して読みにくくなる）。
-        cost: { position: "right", beginAtZero: true, grid: { drawOnChartArea: false } },
+        y: { stacked: true, beginAtZero: true, afterFit: fixAxisWidth },
       },
     },
   }
+}
+
+/** 下のグラフ（キャッシュ読みの棒）の設定。桁がほかの3つより大きいので、自分の軸で描く。 */
+function cacheReadChartConfig(byDay: readonly DailyTokenUsage[]): unknown {
+  return {
+    type: "bar",
+    data: {
+      labels: dailyLabels(byDay),
+      datasets: [tokenDataset("キャッシュ読み", byDay, (day) => day.totals.cacheReadInputTokens)],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: { stacked: true },
+        y: { beginAtZero: true, afterFit: fixAxisWidth },
+      },
+    },
+  }
+}
+
+/** 横軸のラベル（`YYYY-MM-DD` → `MM-DD`）。**2枚とも同じ並びを使う**。 */
+function dailyLabels(byDay: readonly DailyTokenUsage[]): readonly string[] {
+  return byDay.map((day) => day.date.slice(5))
+}
+
+/**
+ * 縦軸の幅（px）。**上下の2枚で同じ値にする**ことで描画域の左端が揃い、同じ日が同じ横位置に
+ * 来る。キャッシュ読みの目盛りが9桁（`100,000,000`）まで収まる幅にしてある。
+ */
+const Y_AXIS_WIDTH = 84
+
+/**
+ * Chart.js の `afterFit`（目盛りの幅を測り終えた直後に呼ばれる）で、縦軸の幅を上書きする。
+ * **引数を書き換えるのは Chart.js がこの口に求める作法**で、ほかに幅を決める手段が無い。
+ */
+function fixAxisWidth(axis: { width: number }): void {
+  axis.width = Y_AXIS_WIDTH
 }
 
 /**
@@ -105,7 +154,7 @@ function dailyUsageChartConfig(byDay: readonly DailyTokenUsage[]): unknown {
  */
 const MAX_BAR_WIDTH = 72
 
-/** 積み上げる棒1本ぶん（トークンの軸）。 */
+/** 積み上げる棒1本ぶん。 */
 function tokenDataset(
   label: string,
   byDay: readonly DailyTokenUsage[],
@@ -114,7 +163,6 @@ function tokenDataset(
   return {
     label,
     data: byDay.map(pick),
-    yAxisID: "tokens",
     stack: "tokens",
     maxBarThickness: MAX_BAR_WIDTH,
   }

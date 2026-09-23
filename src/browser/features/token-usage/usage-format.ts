@@ -2,8 +2,10 @@
 // 畳み方だけを持つ（合計は `hooks/use-token-usage.ts` が呼び、書き方は
 // `presentational-token-usage-screen.tsx` が呼ぶ）。
 //
-// **数のほかは扱わない** — ここに来るのはトークン数・バイト数・費用・モデルの名前だけで、
+// **数のほかは扱わない** — ここに来るのはトークン数・バイト数・モデルの名前だけで、
 // 会話の文面は集計にそもそも入っていない（`src/shared/token-usage-summary.ts`）。
+// **`costUsd`（USD建てのコスト）はここでは書き方を持たない**（画面に出さない。記録と集計の
+// 形自体は `src/shared/token-usage.ts` / `src/shared/token-usage-summary.ts` に残る）。
 
 import { type ModelUsageTotal, type TokenUsageTotals } from "../../../shared/token-usage-summary.ts"
 
@@ -59,14 +61,6 @@ export function formatBytes(value: number): string {
     return `${round(value / 1024)} KB`
   }
   return `${value} B`
-}
-
-/**
- * 費用（USD）。**セント未満も出す**（1ターンぶんが $0.004 のこともあり、2桁だと期間の合計以外が
- * すべて `$0.00` になる）。
- */
-export function formatCost(value: number): string {
-  return `$${value.toFixed(3)}`
 }
 
 /** 有効数字3桁のつもりで小数第2位まで（`1.23` / `12.3` / `123`）。 */
