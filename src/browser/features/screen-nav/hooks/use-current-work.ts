@@ -42,6 +42,9 @@ const WORK_WORD_LABEL: Record<ScreenNavCurrentWorkState, string> = {
   idle: "依頼待ち",
 }
 
+/** パックに `name` が無いときの呼び名（`features/chat-view` / `character-view` と同じ落ち先）。 */
+const DEFAULT_CHARACTER_NAME = "キャラクター"
+
 /** 一覧に出す手順1件（見た目が読める形まで畳んだもの）。 */
 export type ScreenNavCurrentWorkStep = {
   readonly key: string
@@ -100,6 +103,14 @@ export type ScreenNavCurrentWorkStepList =
 export type ScreenNavCurrentWork = {
   readonly state: ScreenNavCurrentWorkState
   readonly wordLabel: string
+  /** 印（○ / ●）。依頼待ちは中抜きだが、**雑談中の依頼待ちだけ埋める**（{@link chatIdle}）。 */
+  readonly mark: "○" | "●"
+  /**
+   * 雑談中の依頼待ちか（`docs/design.md` 13.9「いまの作業」/ 13.7）。true のときだけ
+   * `wordLabel` が「<名前> とおしゃべり中」になり、印と字の色が `--accent` に変わる
+   * （`screen-nav.module.css` の `[data-chat-idle="true"]`）。
+   */
+  readonly chatIdle: boolean
   /** 答え待ちのときだけ true（一覧の見出しに「入力欄の上で答えられる」を添える）。 */
   readonly pendingHint: boolean
   readonly runningStep: ScreenNavCurrentWorkRunningStep
@@ -122,6 +133,8 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
   const pendingCount = useSessionSelector((session) => session.state.pending.length)
   const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
   const records = useSessionSelector((session) => session.state.records)
+  const chatMode = useSessionSelector((session) => session.state.chatMode)
+  const characterName = useSessionSelector((session) => session.state.character?.name)
 
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -161,10 +174,18 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
         ? "running"
         : "idle"
 
+  // **雑談中の依頼待ちだけ**「<名前> とおしゃべり中」に変える（`docs/design.md` 13.9「いまの作業」。
+  // 答え待ち・作業中・止まっているは、雑談中でもそのまま意味を持つ語なので変えない）。
+  const chatIdle = state === "idle" && chatMode
+
   return {
     view: {
       state,
-      wordLabel: WORK_WORD_LABEL[state],
+      wordLabel: chatIdle
+        ? `${characterName ?? DEFAULT_CHARACTER_NAME} とおしゃべり中`
+        : WORK_WORD_LABEL[state],
+      mark: state === "idle" && !chatIdle ? "○" : "●",
+      chatIdle,
       pendingHint: state === "pending",
       runningStep: toRunningStepView(turnStepList, state),
       stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),

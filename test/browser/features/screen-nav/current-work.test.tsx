@@ -6,6 +6,7 @@ import { ScreenNav } from "../../../../src/browser/features/screen-nav/screen-na
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { characterInfo } from "../../../fixture/character.ts"
 import { requestRecord, toolRecord } from "../../../fixture/session-record.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
@@ -47,6 +48,27 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     fireEvent.click(workToggle())
 
     expect(document.querySelector(".screen-nav-work-empty")?.textContent).toBe("まだ依頼が無い")
+  })
+
+  it("雑談中の依頼待ちは「<名前> とおしゃべり中」になり、印が埋まる（docs/design.md 13.9）", () => {
+    renderScreenNav({ chatMode: true, character: characterInfo({ name: "架空の精霊" }) })
+
+    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe(
+      "架空の精霊 とおしゃべり中",
+    )
+    expect(document.querySelector(".screen-nav-work-mark")?.textContent).toBe("●")
+    expect(document.querySelector(".screen-nav-work")?.getAttribute("data-chat-idle")).toBe("true")
+  })
+
+  it("雑談中でも答え待ち・作業中・止まっているは語を変えない", () => {
+    renderScreenNav({
+      chatMode: true,
+      character: characterInfo({ name: "架空の精霊" }),
+      turn: { kind: "running", startedAt: 0 },
+      records: [requestRecord()],
+    })
+
+    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
   })
 
   it("実行中のツールが札に出る（作業中・要約つき）", () => {
