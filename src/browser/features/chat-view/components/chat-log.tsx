@@ -61,7 +61,7 @@ export function ChatLog({
                     <ChatSpeech
                       text={row.text}
                       selected={row.selected}
-                      grow={row.grow}
+                      pop={row.pop}
                       onToggle={row.onToggle}
                     />
                     <ChatTime time={row.time} />
@@ -85,9 +85,9 @@ export function ChatLog({
                 )
             }
           })}
-          {/* 返事を待っている間だけ末尾に出す「...」（docs/screen-design.md 13.7「返事を待つ間の
-              「...」」）。育つ吹き出しとは別の行で、そのターンの `speech` が届くとこの行は
-              消え、届いたセリフの行が育ち始める。 */}
+          {/* 返事を待っている間・出していない吹き出しが控えている間、末尾に出す「...」
+              （docs/screen-design.md 13.7「返事を待つ間の「...」」）。セリフの吹き出しとは
+              別の行で、控えていた吹き出しが出るとこの行は消え、入れ替わりにその行が現れる。 */}
           {showTyping && <ChatTyping />}
         </>
       )}

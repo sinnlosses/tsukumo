@@ -1,12 +1,10 @@
 // キャラクターのセリフ1件（`components/chat-speech.tsx`）の押し方の読み替え。**押すとその時の
-// 表情へ立ち絵が遡り**、**届いたばかりの1件は育つ**（`use-speech-growth.ts`）。
+// 表情へ立ち絵が遡る**（docs/screen-design.md 13.7「会話を遡る」）。
 //
-// **育っている最中の押しは打ち切りに使い、遡りはその回には起きない**（docs/screen-design.md 13.7）。
-// 揃うより先に留めても、何を留めたのかが読めないため。
+// **セリフをドラッグで選んでコピーできる**ので、押したのか文字を選び終えて手を離したのかを
+// 見分ける必要がある——それがこのフックの役目。
 
 import { useRef, type KeyboardEvent, type MouseEvent } from "react"
-
-import { useSpeechGrowth } from "./use-speech-growth.ts"
 
 /**
  * 「押した」ではなく「ドラッグで文字を選んだ」とみなす、押し始めからの距離（px）。文字を1つ
@@ -24,35 +22,23 @@ type PressOrigin = {
 type PointerAt = Pick<MouseEvent, "clientX" | "clientY" | "detail">
 
 export type ChatSpeechView = {
-  /** いま出す文面（育っている間は先頭からの一部）。 */
-  readonly shown: string
-  readonly growing: boolean
   readonly onMouseDown: (event: PointerAt) => void
   readonly onClick: (event: PointerAt) => void
   readonly onKeyDown: (event: Pick<KeyboardEvent, "key" | "preventDefault">) => void
 }
 
-export function useChatSpeech(text: string, grow: boolean, onToggle: () => void): ChatSpeechView {
-  const growth = useSpeechGrowth(text, grow)
+export function useChatSpeech(onToggle: () => void): ChatSpeechView {
   // 押し始めた場所。**セリフの行は文字をドラッグで選べる**ので、選び終えて手を離したときの
   // click と、押した click を、動いた距離で見分ける（{@link isSelectionDrag}）。
   const pressOriginRef = useRef<PressOrigin | undefined>(undefined)
 
   return {
-    shown: growth.shown,
-    growing: growth.growing,
     onMouseDown: (event) => {
       pressOriginRef.current = { x: event.clientX, y: event.clientY }
     },
     onClick: (event) => {
       const origin = pressOriginRef.current
       pressOriginRef.current = undefined
-      // **育っている最中は、押しても遡らずその場で全文を出す**（文字を選ぼうとしたときも
-      // 同じ — 選べる字が揃う）。
-      if (growth.growing) {
-        growth.finish()
-        return
-      }
       // **文字を選んだだけのときは遡らない**（選び終えて手を離すと click も飛ぶ）。
       if (isSelectionDrag(origin, event)) {
         return
@@ -65,10 +51,6 @@ export function useChatSpeech(text: string, grow: boolean, onToggle: () => void)
       }
       // Space はログを1画面送る既定の動作を持つので、押したことにする側で止める。
       event.preventDefault()
-      if (growth.growing) {
-        growth.finish()
-        return
-      }
       onToggle()
     },
   }
