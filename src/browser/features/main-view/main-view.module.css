@@ -36,7 +36,9 @@
   align-items: center;
   column-gap: 0.75rem;
   row-gap: 0.4rem;
-  padding: 0.6rem 0.75rem;
+  /* 頭は字を詰めて潰れない範囲で低く保つ（`docs/design.md` 13.3）。余白は
+     `.detail-block .report-stat` と同じ値。 */
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--rule);
   border-radius: 0.6rem 0.6rem 0 0;
   background: var(--surface);
@@ -46,18 +48,20 @@
   display: flex;
   gap: 0.4rem;
 }
+/* 押せる大きさの床（`docs/design.md` 13.9 の「帯の高さの床」と同じ 24px）。頭の中でいちばん
+   高いのがここなので、これより大きくすると頭全体が高くなる。字はタイトルの文字と同じ段。 */
 .turn-nav-button {
   display: inline-grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
   border: 1px solid var(--rule);
   border-radius: 0.4rem;
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: var(--font-heading);
+  font-size: var(--font-subheading);
   line-height: 1;
   cursor: pointer;
 }
@@ -89,7 +93,10 @@
 /* タイトルの文字 + `⌄` を1つにまとめた開く口。**既定の枠・背景は消し**、押せる面だと
    分かるのはホバーと `aria-expanded` のときの枠だけにする（フォーカスの輪は
    `theme.css` の `:focus-visible` にまかせる——ここでは打ち消さない）。
-   幅いっぱいに広げて `.turn-title-text` 側で省略するので、タイトルの縮み方は前と変わらない。 */
+   幅いっぱいに広げて `.turn-title-text` 側で省略するので、タイトルの縮み方は前と変わらない。
+   `line-height` は本文の 1.75（`theme.css` の既定）を継がず、ここだけ 1.3 に詰める
+   （`.detail-block .report-stat b` と同じ値。1.75 は長文を読むための余白で、1行の見出しでは
+   頭を押し上げる）。 */
 .turn-title-toggle {
   display: flex;
   align-items: center;
@@ -103,6 +110,7 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
+  line-height: 1.3;
   text-align: left;
   cursor: pointer;
 }
@@ -111,20 +119,22 @@
   border-color: var(--rule);
 }
 /* 1行に収まらないぶんは省略し、全文はボタンの `title` で読ませる（`domain/turn-title.ts` は
-   切らない）。 */
+   切らない）。字の段は「区画の見出し・強調した要約」（`docs/design.md` 13.3。理由はそちらに
+   書く）で、太字で本文と区別する。 */
 .turn-title-text {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   min-width: 0;
-  font-size: var(--font-heading);
+  font-size: var(--font-subheading);
   font-weight: 700;
 }
-/* `⌄`。タイトルの縮みを邪魔しないよう固定幅にする。 */
+/* `⌄`。タイトルの縮みを邪魔しないよう固定幅にする。字はタイトルより一段下の、「n / N」と
+   同じ段。 */
 .turn-title-chevron {
   flex: none;
   color: var(--ink-quiet);
-  font-size: var(--font-body);
+  font-size: var(--font-secondary);
   line-height: 1;
 }
 /* 窓の中のやり取りの一覧。DOM は `.turn-title-group` の中だが、`position` を持たないその枠を
@@ -208,15 +218,18 @@
   align-items: center;
   gap: 0.6rem;
 }
-/* 「n / N」は機械が振った番号なので等幅（13.1 原則3）。 */
+/* 「n / N」は機械が振った番号なので等幅（13.1 原則3）。本文の 1.75 を継ぐと前後の口（24px）
+   より高くなり、頭の高さを右端が押し上げるので 1 に詰める。 */
 .turn-position {
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
+  line-height: 1;
   white-space: nowrap;
 }
 /* 「最新」の印と「最新へ」の口は同じ形にして、同じ場所で入れ替わる。印は選ばれたものと同じ
-   示し方（accent の枠と surface-accent の地。13.1 原則1）、口は枠だけの静かなボタン。 */
+   示し方（accent の枠と surface-accent の地。13.1 原則1）、口は枠だけの静かなボタン。
+   `line-height` を 1 に詰めるのは `.turn-position` と同じ理由。 */
 .turn-newest-badge,
 .turn-to-newest {
   padding: 0.15rem 0.65rem;
@@ -224,6 +237,7 @@
   border-radius: 999px;
   font: inherit;
   font-size: var(--font-secondary);
+  line-height: 1;
   white-space: nowrap;
 }
 .turn-newest-badge {
