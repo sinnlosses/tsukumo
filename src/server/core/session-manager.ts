@@ -30,6 +30,7 @@ import {
 import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 import { CHAT_COMPACT_COMMAND } from "./chat-compact.ts"
 import { CHAT_NUDGE_PROMPT } from "./chat-nudge.ts"
+import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
 import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
 import {
@@ -72,6 +73,12 @@ export type SessionManagerOptions = {
    * 渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly tokenUsageLog: TokenUsageLog
+  /**
+   * 依頼に添えた画像の原寸の棚（`src/server/core/prompt-image-shelf.ts`）。**持ち主は
+   * `src/main.ts`** — `/prompt-image/<id>` で配る側（`view-delivery.ts`）も同じ棚を引く。
+   * **置くのと捨てるのはここ**で、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
+   */
+  readonly promptImageShelf: PromptImageShelf
 }
 
 export type SessionCreateOptions = {
@@ -304,6 +311,18 @@ function createSessionHost(
   }
 
   /**
+   * 状態を差し替える。**記録から消えた依頼の原寸は、ここで棚から捨てる**（窓から落ちた・
+   * 起こし直して空に戻った。`releasedPromptImageIds`）。状態を書き換えるのはここだけにして、
+   * 棚の寿命が記録の窓から外れないようにする。
+   */
+  const replaceState = (next: SessionState): void => {
+    if (next.records !== state.records) {
+      options.promptImageShelf.release(releasedPromptImageIds(state.records, next.records))
+    }
+    state = next
+  }
+
+  /**
    * イベント1件を畳んで次のバッチに積む。**駆動から届いたものと、見た目の編集で起こした
    * `character-changed` の両方がここを通る**（サーバ側の状態とブラウザへ配る内容を1本にする）。
    *
@@ -318,7 +337,7 @@ function createSessionHost(
       return
     }
     const at = options.now()
-    state = applySessionEvent(state, event, at)
+    replaceState(applySessionEvent(state, event, at))
     buffered = [...buffered, { at, event }]
     if (flushTimer === undefined) {
       flushTimer = setTimeout(flush, options.batchIntervalMs)
@@ -419,7 +438,7 @@ function createSessionHost(
       live = undefined
       generation += 1
       cancelFlush()
-      state = INITIAL_SESSION_STATE
+      replaceState(INITIAL_SESSION_STATE)
       buffered = []
       // 起こし直した直後の記録は、復元されたログがそのまま圧縮点から先になる
       // （docs/requirements.md 4.9）。走行合計も一緒に戻す。
@@ -549,7 +568,7 @@ function createSessionHost(
       if (isCharacterEditCommand(command)) {
         return write(() => created.editCharacter(command), FRAME_ERROR_REASON.characterEditFailed)
       }
-      return dispatchToDriver(driver, command)
+      return dispatchToDriver(driver, command, options.promptImageShelf)
     },
     subscribe: (send) => {
       send(helloFrame())
@@ -577,12 +596,16 @@ function createSessionHost(
 async function dispatchToDriver(
   driver: Promise<SessionDriver>,
   command: DriverCommand,
+  promptImageShelf: PromptImageShelf,
 ): Promise<DispatchResult> {
   try {
     const started = await driver
     switch (command.type) {
       case "prompt":
-        started.prompt(command.text, command.images)
+        // 原寸は**駆動へ渡す前に棚へ置く**（id は `request` のイベントに載って記録へ入る）。
+        // 駆動が投げて `request` が流れなかったときの原寸は記録に載らないまま残るが、
+        // 棚の枚数の上限で古いほうから押し出される。
+        started.prompt(command.text, promptImageShelf.shelve(command.images))
         return { ok: true }
       case "interrupt":
         await started.interrupt()

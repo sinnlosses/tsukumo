@@ -15,6 +15,7 @@ import { z } from "zod"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent, sessionEventSchema } from "../../shared/session-event.ts"
+import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { type SessionDriver } from "../core/session-driver.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
@@ -172,9 +173,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
 
   return {
     prompt: (text, images) => {
-      // 疑似セッションを流すだけの駆動でも、**控えだけを記録へ渡す**のは本物と同じ
-      // （原寸はここで手放す。`docs/requirements.md` 4.10）。
-      emit({ kind: "request", text, images: images.map((image) => image.thumbnail) })
+      // 疑似セッションを流すだけの駆動でも、**控えと id だけを記録へ渡す**のは本物と同じ
+      // （`docs/requirements.md` 4.10）。
+      emit({ kind: "request", text, images: recordedPromptImages(images) })
       playNextTurn()
     },
     promptWithoutRecord: () => {
