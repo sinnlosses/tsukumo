@@ -614,9 +614,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 `ServerFrame` の一覧とフィールドは `src/shared/frame.ts` の型定義（`type` ごとの doc コメント）を
 正典とする。
 
-- `protocolVersion` が browser の `PROTOCOL_VERSION` と違えば、browser は「ページを読み込み
-  直してください」を出して以降のフレームを無視する（起こし直したプロセスと古いタブの組み合わせで
-  起きる）
+- `protocolVersion` が browser の `PROTOCOL_VERSION` と違えば、browser は会話の画面の代わりに
+  「ページを読み込み直してください」を出し、以降の `events` を畳まない（起こし直したプロセスと
+  古いタブの組み合わせのほか、見張りつきの起動で**画面だけ**組み直されたときにも起きる。後者は
+  tsukumo を上げ直すまで直らないので、知らせにはそれも書く）。版の合う `hello` がまた届けば戻る
+  （`src/browser/stores/session.tsx` の `protocol`）
 
 ### 4.5 版と互換
 
