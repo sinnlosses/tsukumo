@@ -19,6 +19,11 @@ import { CHAT_KEPT_READBACK_BYTES, CHAT_RECENT_READBACK_BYTES } from "../../shar
 import { CHAT_MANNER_PROMPT } from "./chat-manner.ts"
 import { type ChatMemorySources, takeChatMemoryPromptParts } from "./chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "./report-notation.ts"
+import {
+  type ReportChannel,
+  REPORT_TOOL_NOTATION_PROMPT,
+  REPORT_TOOL_SPEECH_CADENCE_PROMPT,
+} from "./report-tool.ts"
 import { type ChatArchive, type SessionMode, type SessionStart } from "./session-driver.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 
@@ -103,9 +108,17 @@ export function toSystemPromptMode(
  * **名前が `take` で始まるのは、返すだけでなく写しの印を書き換えるから**
  * （{@link takeChatMemoryPromptParts}。雑談で記憶を載せたとき、印が「渡し済み」に戻る）。
  * 取得に見える名前にすると、呼ぶ側が副作用に気づけない。
+ *
+ * `reportChannel` は**試行の口**（`./report-tool.ts`）。`tool` のときは仕事の2つの節が、
+ * 終わり方とお願いの条を差し替えた文面に入れ替わる（並びは変わらない）。雑談には効かない。
  */
-export function takeSystemPromptAppend(seed: SystemPromptSeed): string {
-  return [seed.persona, ...modeParts(seed.mode)].filter((part) => part.trim() !== "").join("\n\n")
+export function takeSystemPromptAppend(
+  seed: SystemPromptSeed,
+  reportChannel: ReportChannel = "text",
+): string {
+  return [seed.persona, ...modeParts(seed.mode, reportChannel)]
+    .filter((part) => part.trim() !== "")
+    .join("\n\n")
 }
 
 /**
@@ -113,9 +126,11 @@ export function takeSystemPromptAppend(seed: SystemPromptSeed): string {
  * （新規か・写しの印が未渡しか）の判断は {@link takeChatMemoryPromptParts} が閉じている**ので、
  * ここはモードの分岐だけを持つ。
  */
-function modeParts(mode: SystemPromptMode): readonly string[] {
+function modeParts(mode: SystemPromptMode, reportChannel: ReportChannel): readonly string[] {
   if (mode.kind === "work") {
-    return [SPEECH_CADENCE_PROMPT, REPORT_NOTATION_PROMPT]
+    return reportChannel === "tool"
+      ? [REPORT_TOOL_SPEECH_CADENCE_PROMPT, REPORT_TOOL_NOTATION_PROMPT]
+      : [SPEECH_CADENCE_PROMPT, REPORT_NOTATION_PROMPT]
   }
   return [CHAT_MANNER_PROMPT, ...takeChatMemoryPromptParts(mode.memory)]
 }

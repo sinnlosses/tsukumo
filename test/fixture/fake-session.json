@@ -1261,6 +1261,121 @@
           }
         }
       ]
+    },
+    {
+      "name": "report-tool",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "report ツールの描き方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "見てくるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "utterance",
+            "text": "まず `a.ts` を読むね。"
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-report-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 2500,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-report-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "report",
+            "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
+            "body": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 3500,
+          "event": {
+            "kind": "utterance",
+            "text": "## テキストで書いた資料（出ないはず）\n\n- report を呼んだターンでは\n- ツールの外に書いた本文は\n- 画面に出ない"
+          }
+        },
+        {
+          "afterMs": 4000,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-report-2",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 6000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-report-2",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 7000,
+          "event": {
+            "kind": "report",
+            "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
+            "body": "**直したファイルと結果（架空の数）**\n\n| ファイル | 変えたこと | 状態 |\n| --- | --- | :---: |\n| `a.ts` | 目盛りを 12 から 24 へ | <span class=\"badge badge-ok\">OK</span> |\n| `b.ts` | 読むだけなので変えない | <span class=\"badge badge-warn\">要注意</span> |\n\n```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
+            "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+          }
+        },
+        {
+          "afterMs": 7600,
+          "event": {
+            "kind": "speech",
+            "text": "書けたよ！",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 8000,
+          "event": {
+            "kind": "utterance",
+            "text": "完了"
+          }
+        },
+        {
+          "afterMs": 8400,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
     }
   ]
 }

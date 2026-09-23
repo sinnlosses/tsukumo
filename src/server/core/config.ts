@@ -8,6 +8,8 @@
 // 持ち主 `src/server/core/session-restore.ts` に置く（続きから始めるセッションを選ぶ計算と
 // 同じ場所）。
 
+import { type ReportChannel } from "./report-tool.ts"
+
 /** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 /**
@@ -39,6 +41,11 @@ export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
  * そのファイルの冒頭。配線層から配る道が無い）。
  */
 export const HOME_ENV_NAME = "TSUKUMO_HOME"
+/**
+ * `1` でレポートを `report` ツールで受け取る（**試行用。採否が決まったら消す**。
+ * `src/server/core/report-tool.ts`）。{@link readConfig} とは別の {@link readReportChannel} が読む。
+ */
+export const REPORT_TOOL_ENV_NAME = "TSUKUMO_REPORT_TOOL"
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、疑似セッションどおりにイベントを
@@ -91,6 +98,17 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     watchUi: env[WATCH_UI_ENV_NAME]?.trim() === "1",
   }
+}
+
+/**
+ * レポートの受け取り方を読む（`TSUKUMO_REPORT_TOOL`）。**試行の口なので {@link Config} に
+ * 混ぜない**——採否が決まったら、この関数と呼び出し側の引数1つを消せば跡が残らない。
+ * `1` のときだけ `tool` で、それ以外（未設定を含む）は今までどおりの `text`。
+ */
+export function readReportChannel(
+  env: Readonly<Record<string, string | undefined>>,
+): ReportChannel {
+  return env[REPORT_TOOL_ENV_NAME]?.trim() === "1" ? "tool" : "text"
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

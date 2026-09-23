@@ -80,6 +80,12 @@ export type MainViewEntry =
       readonly status: ToolRunStatus
     }
   | { readonly kind: "detail"; readonly markdown: string }
+  /**
+   * `report` ツールで受け取ったレポート（**試行中**）。引数はここで1つの本文に組んである
+   * （{@link reportMarkdown}）。`detail` と分けてあるのは、このレポートがあるやり取りでは
+   * 本文（`detail`）を出さないため（{@link selectToolReports}）。
+   */
+  | { readonly kind: "report"; readonly markdown: string }
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
 export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question" }>
@@ -195,14 +201,18 @@ export function mainViewTurns(
   turnUnsettled: boolean,
 ): readonly MainViewTurn[] {
   const turns = groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)
-  return (
-    turns
+  return turns
+    .map(({ turn, toolReportIds }, index) => {
       // 動いているのはいちばん新しいやり取りだけで、それ以外の本文はもう確定している。
-      .map((turn, index) => selectShownReports(turn, !turnUnsettled || index !== turns.length - 1))
-      .map((turn) => markSupersededSteps(turn))
-      .map((turn) => markFinalReport(turn))
-      .map((turn) => limitTurnEntries(turn))
-  )
+      const settled = !turnUnsettled || index !== turns.length - 1
+      // **`report` が1回も呼ばれなかったやり取りは、今までどおり本文から推測する。**
+      return toolReportIds.length === 0
+        ? selectShownReports(turn, settled)
+        : selectToolReports(turn, toolReportIds, settled)
+    })
+    .map((turn) => markSupersededSteps(turn))
+    .map((turn) => markFinalReport(turn))
+    .map((turn) => limitTurnEntries(turn))
 }
 
 /**
@@ -228,11 +238,31 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
   if (record.kind === "request") {
     return [{ kind: "request", turnId: record.turnId, text: record.text, images: record.images }]
   }
+  if (record.kind === "report") {
+    return [{ kind: "report", markdown: reportMarkdown(record) }]
+  }
   // `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。
   if (record.kind !== "tool") {
     return [record]
   }
   return [{ kind: "tool", name: record.name, input: record.input, status: record.status }]
+}
+
+/**
+ * `report` の引数を、**`conclusion` → `body` → `favor` の順**に1つの本文へ組む
+ * （`docs/glossary.md`「report ツール」）。`favor` はレポートの記法の「お願い」の塊で包むので、本文に書いた
+ * お願いと同じ見た目になり、**サニタイズも記法の解釈もテキストの本文と同じ経路**を通る。
+ * HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける（記法の規約と同じ）。
+ * 空の `body` / `favor` は塊ごと置かない。
+ */
+function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report" }>): string {
+  return [
+    report.conclusion,
+    report.body,
+    isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
+  ]
+    .filter((part) => !isBlankText(part))
+    .join("\n\n")
 }
 
 /**
@@ -245,21 +275,34 @@ type PendingTurn = {
   readonly request: MainViewRequest | undefined
   steps: MainViewStep[]
   nextStepId: number
+  toolReportIds: number[]
+}
+
+/**
+ * まとめたやり取りと、その中で `report` ツールから来たステップの id（呼ばれた順）。**id の並びは
+ * 描く側へ渡さない**（どの本文を出すかを決めるまでの材料で、決めたあとは本文の有無と印に畳まれる）。
+ */
+type GroupedTurn = {
+  readonly turn: MainViewTurn
+  readonly toolReportIds: readonly number[]
 }
 
 /** 時系列に積まれた記録を、利用者の依頼を境目にしてやり取りごとへまとめる。 */
-function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTurn[] {
-  const turns: MainViewTurn[] = []
+function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn[] {
+  const turns: GroupedTurn[] = []
   let current: PendingTurn | undefined = undefined
 
   const flush = () => {
     if (current !== undefined) {
       turns.push({
-        id: current.id,
-        request: current.request,
-        steps: current.steps,
-        hasInterimReport: false,
-        droppedCount: 0,
+        turn: {
+          id: current.id,
+          request: current.request,
+          steps: current.steps,
+          hasInterimReport: false,
+          droppedCount: 0,
+        },
+        toolReportIds: current.toolReportIds,
       })
     }
   }
@@ -272,12 +315,22 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
         request: { text: entry.text, images: entry.images },
         steps: [],
         nextStepId: 0,
+        toolReportIds: [],
       }
       continue
     }
 
-    current ??= { id: PRE_REQUEST_TURN_ID, request: undefined, steps: [], nextStepId: 0 }
-    if (entry.kind === "detail") {
+    current ??= {
+      id: PRE_REQUEST_TURN_ID,
+      request: undefined,
+      steps: [],
+      nextStepId: 0,
+      toolReportIds: [],
+    }
+    if (entry.kind === "report") {
+      current.toolReportIds.push(current.nextStepId)
+    }
+    if (entry.kind === "detail" || entry.kind === "report") {
       current.steps.push({
         id: current.nextStepId++,
         body: { kind: "text", report: entry.markdown, firstLine: extractFirstLine(entry.markdown) },
@@ -378,6 +431,37 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
       return isInterimReport(step.body.report)
         ? { ...step, interim: true }
         : { ...step, body: NO_BODY }
+    }),
+  }
+}
+
+/**
+ * **`report` ツールが呼ばれたやり取りの本文を選ぶ**（`docs/glossary.md`「report ツール」）。出すのは `report`
+ * から来たステップだけで、**ツールの外に書いた本文は1つも出さない**（推測の
+ * {@link selectShownReports} は通さない）。**最後の呼び出しが最終レポート、それより前は中間
+ * レポート**で、あとに作業が続いたかどうかは見ない。
+ *
+ * `settled` でないあいだ、**いちばん新しい `report` は出さない**。次の `report` が来れば中間
+ * レポートに、来なければ最終レポートになるので、まだ決まっていない——先に出すと、あとから
+ * 中間へ変わったときに囲いが反転し、最終へ残ったときも書き上げる演出（マウントした時点でしか
+ * 始まらない）が掛からない。{@link selectShownReports} が締めの本文を確定まで出さないのと同じ理由。
+ */
+function selectToolReports(
+  turn: MainViewTurn,
+  toolReportIds: readonly number[],
+  settled: boolean,
+): MainViewTurn {
+  const lastId = toolReportIds.at(-1)
+  return {
+    ...turn,
+    steps: turn.steps.map((step) => {
+      if (!toolReportIds.includes(step.id)) {
+        return step.body.kind === "none" ? step : { ...step, body: NO_BODY }
+      }
+      if (step.id !== lastId) {
+        return { ...step, interim: true }
+      }
+      return settled ? step : { ...step, body: NO_BODY }
     }),
   }
 }
