@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 新しいセッションの既定を state.json に覚え、歯車から変えられるようにした（T-386）
+
+`remembered-character.ts` を `remembered-default.ts` に改名してキャラクターと既定を1つの境界で持ち、
+`set-session-default` コマンドと `SessionState.sessionDefault` を足した。既定に「全部許す」は
+境界で落とし、壊れた `state.json` では Opus・`auto` に畳んで起動を止めない。
+
 ### 2026-09-23 帯に歯車と設定のポップオーバーを置き、地・領域・字の色をそこへ移した（T-385）
 
 閉じる合図を `browser/hooks/use-dismiss-signal.ts` に抽出して「≡」・作業中の札と揃え、狭い画面では

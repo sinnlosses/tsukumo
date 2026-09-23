@@ -5,9 +5,10 @@ import { cleanup, fireEvent, render } from "@testing-library/react"
 import { ScreenNav } from "../../../../src/browser/features/screen-nav/screen-nav.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { sessionStoreWith } from "../../session-store.ts"
+import { sessionStoreWith, type CommandSpy } from "../../session-store.ts"
 
-// 帯の右端の歯車で開く設定（docs/design.md 13.6 / 13.9）。いまここにある群は「画面の色」の1つ。
+// 帯の右端の歯車で開く設定（docs/design.md 13.6 / 13.9）。いまここにある群は「画面の色」と
+// 「新しいセッションの既定」の2つ。
 // **保存の仕方は `browser/lib/appearance-color.ts` のまま**なので、鍵も検証も
 // `appearance-color.test.ts` と同じものを見ている。
 
@@ -38,8 +39,8 @@ afterEach(() => {
   themeStyleElement = undefined
 })
 
-function renderScreenNav(state: Partial<SessionState> = {}): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state })
+function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
+  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state }, spy)
   render(
     <SessionStoreContext.Provider value={store}>
       <ScreenNav />
@@ -109,7 +110,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(panel()).toBeNull()
   })
 
-  it("地・領域・字の色の3つを出す", () => {
+  it("地・領域・字の色の3つと、新しいセッションの既定の2つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
@@ -117,7 +118,7 @@ describe("設定の歯車（帯の右端）", () => {
       [...document.querySelectorAll(".screen-nav-settings-panel label")].map(
         (node) => node.textContent,
       ),
-    ).toEqual(["画面の地", "領域の地", "字の色"])
+    ).toEqual(["画面の地", "領域の地", "字の色", "モデル", "許可モード"])
   })
 
   it("色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
@@ -230,3 +231,78 @@ describe("設定の歯車（帯の右端）", () => {
     expect(document.querySelector(".screen-nav-panel .screen-nav-settings-toggle")).not.toBeNull()
   })
 })
+
+// 新しいセッションの既定（docs/design.md 13.6）。**覚えるのはサーバ**なので、ここが見るのは
+// 「届いた値をそのまま出す」「選ぶと `set-session-default` を送る」「全部許すは並べない」の3つ。
+describe("設定の歯車（新しいセッションの既定）", () => {
+  it("届いた既定をそのまま出す", () => {
+    renderScreenNav({ sessionDefault: { model: "sonnet", permissionMode: "plan" } })
+    fireEvent.click(gear())
+
+    expect(defaultSelect("モデル").value).toBe("sonnet")
+    expect(defaultSelect("許可モード").value).toBe("plan")
+  })
+
+  it("許可モードの選択肢に「全部許す」は並ばない", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    expect([...defaultSelect("許可モード").options].map((option) => option.value)).toEqual([
+      "default",
+      "acceptEdits",
+      "auto",
+      "plan",
+    ])
+  })
+
+  it("モデルを選ぶと、いまの許可モードと一緒に set-session-default を送る", () => {
+    const sent: unknown[] = []
+    renderScreenNav({ sessionDefault: { model: "opus", permissionMode: "plan" } }, (command) =>
+      sent.push(command),
+    )
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("モデル"), { target: { value: "sonnet" } })
+
+    expect(sent).toEqual([{ type: "set-session-default", model: "sonnet", permissionMode: "plan" }])
+  })
+
+  it("許可モードを選ぶと、いまのモデルと一緒に set-session-default を送る", () => {
+    const sent: unknown[] = []
+    renderScreenNav({ sessionDefault: { model: "haiku", permissionMode: "auto" } }, (command) =>
+      sent.push(command),
+    )
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("許可モード"), { target: { value: "acceptEdits" } })
+
+    expect(sent).toEqual([
+      { type: "set-session-default", model: "haiku", permissionMode: "acceptEdits" },
+    ])
+  })
+
+  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/design.md` 13.6）。
+  it("帯でモデルを変えても set-session-default は送らない", () => {
+    const sent: unknown[] = []
+    renderScreenNav({ sessionDefault: { model: "opus", permissionMode: "auto" } }, (command) =>
+      sent.push(command),
+    )
+
+    fireEvent.change(
+      document.querySelector(
+        ".screen-nav > .screen-nav-model-permission select",
+      ) as HTMLSelectElement,
+      { target: { value: "haiku" } },
+    )
+
+    expect(sent).toEqual([{ type: "set-model", model: "haiku" }])
+  })
+})
+
+/** ポップオーバーの中の既定の `<select>`（ラベルは `<label for>` で結んである）。 */
+function defaultSelect(label: string): HTMLSelectElement {
+  const labelNode = [...document.querySelectorAll(".screen-nav-settings-panel label")].find(
+    (node) => node.textContent === label,
+  ) as HTMLLabelElement
+  return document.getElementById(labelNode.htmlFor) as HTMLSelectElement
+}

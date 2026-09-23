@@ -183,7 +183,7 @@ src/
       persona-memory.ts       雑談で覚えた1行を ~/.tsukumo/characters/<pack>/persona.md の末尾の節へ書く
       chat-summary.ts         雑談の要約の写しと印（~/.tsukumo/chat-summary/<pack>.md）
       chat-archive.ts         雑談の会話のアーカイブ（~/.tsukumo/chat-archive/<pack>/<日付>.jsonl）
-      remembered-character.ts 覚えたキャラクター名（~/.tsukumo/state.json）
+      remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード）
       task-summary.ts         develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
       repository-file.ts      git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
       bundle.ts / ui-rebuild.ts bun build（browser の入口と CSS）と src/browser/ の見張り
@@ -675,11 +675,20 @@ type SessionHost = {
 7章。`listCharacterPacks(dirs)` と `readCharacterPack(dir)`。読めないものは `undefined`（立ち絵なしの
 フォールバック）。
 
-**`remembered-character.ts`** はその隣に置く別モジュールで、直前に出していたパックの名前だけを
-`~/.tsukumo/state.json` に読み書きする（`readRememberedCharacter` / `writeRememberedCharacter`。
-書き込みの失敗で例外を投げない）。外の世界（ホームのファイル）に触るのはここだけで、覚えた名前が
-`listCharacterPacks` の一覧に無いときに既定へ落とす判断は呼び出し側（`current-character.ts`）が持つ。選択そのものは
-セッション限りだが、次の起動の初期値としては覚える（13.6「第3の扱い」）。
+**`remembered-default.ts`** はその隣に置く別モジュールで、**次に起こすときの初期値**を
+`~/.tsukumo/state.json` に読み書きする（書き込みの失敗で例外を投げない）。覚えるのは2つ:
+
+| 欄                                           | 読む口                         | 書く口                          | 読めないとき                                            |
+| -------------------------------------------- | ------------------------------ | ------------------------------- | ------------------------------------------------------- |
+| キャラクター名                               | `readRememberedCharacter`      | `writeRememberedCharacter`      | `undefined`（呼び出し側が既定へ）                       |
+| 新しいセッションの既定（モデル・許可モード） | `readRememberedSessionDefault` | `writeRememberedSessionDefault` | 同梱の既定（Opus・`auto`。`shared/session-default.ts`） |
+
+**2つを1ファイルに置いてあるのは、書き込みがファイル丸ごとの置き換えだから**（別のモジュールから
+書くと後から書いたほうが相手の欄を消す。原則3「1ファイル = 1つの境界」）。**欄ごとに別のスキーマで
+読む**ので、片方が壊れていてももう片方は読める。外の世界（ホームのファイル）に触るのはここだけで、
+覚えた名前が `listCharacterPacks` の一覧に無いときに既定へ落とす判断は呼び出し側
+（`current-character.ts`）が持つ。どちらも**選択そのものはセッション限り**だが、次に起こすときの
+初期値としては覚える（13.6「第3の扱い」と「新しいセッションの既定」）。
 
 **`character-edit.ts`** は書き込む側（7.1）。画面から届いた立ち絵・差し色を
 `~/.tsukumo/characters/<name>/` に書き、書けたパックを読み直して返す（受け付けなければ `undefined`）。
@@ -974,7 +983,7 @@ characters/<name>/
 **書き込み先は `~/.tsukumo/characters/<name>/` の1箇所だけ。** `state.json` と同じ
 `~/.tsukumo/` の下に置く。
 
-- キャラクターの好みはプロジェクトごとではない（13.6 で `remembered-character` を cwd に
+- キャラクターの好みはプロジェクトごとではない（13.6 で `remembered-default` を cwd に
   依存させないと決めたのと同じ理由）
 - **リポジトリの作業ツリーが汚れない。** `bun link` でグローバルに入っているので、別プロジェクトから
   作ったパックが同梱側に現れると git の差分になる
@@ -1878,7 +1887,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 | キャラクターの切り替え                           | **選択はセッション限り（起こし直す）、次回の初期値は覚える** | サイドバー「セッション情報」         |
 | セッションの切り替え                             | セッション限り（起こし直す）                                 | サイドバー「セッション情報」         |
 | 地・領域・字の色（`ground` / `surface` / `ink`） | 利用者の設定（`localStorage`）                               | **帯の右端の歯車**（13.9）           |
-| 新しいセッションの既定（モデル・許可モード）     | 利用者の設定                                                 | **帯の右端の歯車**（13.9）           |
+| 新しいセッションの既定（モデル・許可モード）     | 利用者の設定（`~/.tsukumo/state.json`）                      | **帯の右端の歯車**（13.9）           |
 | 書き上げる演出の速さ                             | 利用者の設定                                                 | **帯の右端の歯車**（13.9）           |
 | 領域の比率を既定に戻す                           | 利用者の設定（`localStorage`）                               | 上下の仕切りの右端（常設のボタン）   |
 | キャラクターの立ち絵・差し色                     | **ずっと**（`~/.tsukumo/characters/<name>/`。7.1）           | キャラクター画面                     |
@@ -1899,6 +1908,24 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 歯車に入れない**——狭い画面では仕切りごと `display: none` になるので、ボタンだけが歯車に残ると
 行き先の無い操作になる。
 
+**新しいセッションの既定（モデル・許可モード）は `~/.tsukumo/state.json` に覚える**（覚えた
+キャラクターと同じファイル・同じ扱い。5章「`remembered-default.ts`」）。**`localStorage` には
+置けない** — セッションはブラウザが繋がる前にサーバ側で起こすので、起こすときに読める場所に無いと
+意味がない。効き方は5つ:
+
+- **起こすたびに効く**（起動も起こし直しも、復元でも新規でも同じ）。読むのは `session-launch` の
+  1回だけで、同じ値が `query()` のモデル・許可モードにも、画面へ流す `session-default-changed`
+  にも渡る（画面に出る既定と、実際に起こした既定がずれない）
+- **帯で変えた値は既定を書き換えない**（帯はセッション限り）。逆に、歯車で既定を変えても
+  **いま動いているセッションは変わらない**（効くのは次に起こすときから）
+- **既定に「全部許す」（`bypassPermissions`）は選べない。** `<select>` に出さないだけでなく、
+  コマンドの検証でも落とす（`SESSION_DEFAULT_PERMISSION_MODES`。`src/shared/session-default.ts`）。
+  全部許すのは起こしたあと帯からその都度選ぶもので、次に起こすたびに黙って全部許す状態から
+  始まる形にはしない
+- **読めない・欠けている・知らない値は同梱の既定**（Opus・`auto`）。壊れた `state.json` で
+  起動が止まらない（キャラクターの覚え方と同じ扱い）
+- **`TSUKUMO_HOME` を分ければ既定も分かれる**（ホームごと差し替わるため。5章）
+
 **動き方は、読む場所と変える場所が同じ1つ**（2026-09-23 に改めた）。2026-09-22 には「帯は
 名乗り、サイドバーは触らせる」として、モデルと許可モードの**読みだけ**を帯に置き、`<select>` は
 サイドバーに残していた。帯の操作子がその読みを兼ねるので、**読みだけの字とサイドバーの
@@ -1908,7 +1935,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 **キャラクターの切り替えは「セッション限り」から「ずっと」へ移したわけではない。** 選ぶ操作自体は
 今回どおりセッション限り（起こし直すと戻る）だが、**次に起こしたときの初期値としては覚える**
 （2026-09-14 決定。ユーザーの指摘「終了直前のキャラクターで起動時にもそうであってほしい」）。
-持ち先は `localStorage` ではなく `~/.tsukumo/state.json`（`adapter/remembered-character.ts`、5章）。
+持ち先は `localStorage` ではなく `~/.tsukumo/state.json`（`adapter/remembered-default.ts`、5章）。
 **cwd には依存させない**（キャラクターの好みはプロジェクトごとではないため）。置き場所（サイドバー
 「セッション情報」）は変えない。
 

@@ -27,6 +27,7 @@ import {
   parsePromptImage,
   parsePromptImageThumbnail,
 } from "./prompt-image.ts"
+import { SESSION_DEFAULT_PERMISSION_MODES } from "./session-default.ts"
 
 /**
  * 依頼として送れる文面の上限。送信のための素朴な上限であって、秘匿・検閲のためではない
@@ -241,6 +242,21 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     image: backgroundDataUrlSchema,
   }),
   z.object({ type: z.literal("clear-background"), commandId: commandIdSchema }),
+  /**
+   * 新しいセッションの既定（モデル・許可モード）を覚える（`docs/design.md` 13.6。帯の右端の
+   * 歯車）。**いま動いているセッションには効かない** — 効くのは次に起こすときからで、
+   * 帯の `set-model` / `set-permission-mode`（セッション限り）とは別の口にしてある。
+   *
+   * **2つを1つのコマンドで運ぶ**のは、覚え先（`~/.tsukumo/state.json`）が1組で書き換わる
+   * ものだから（片方だけ覚えている状態を作らない）。**「全部許す」は選択肢に無い**ので、
+   * 届いても検証で落ちる（`SESSION_DEFAULT_PERMISSION_MODES`。`src/shared/session-default.ts`）。
+   */
+  z.object({
+    type: z.literal("set-session-default"),
+    commandId: commandIdSchema,
+    model: z.enum(MODEL_ALIASES),
+    permissionMode: z.enum(SESSION_DEFAULT_PERMISSION_MODES),
+  }),
   z.object({
     type: z.literal("create-character"),
     commandId: commandIdSchema,
@@ -291,6 +307,7 @@ export type DriverCommand = Exclude<
   | { readonly type: "switch-session" }
   | { readonly type: "set-chat-mode" }
   | { readonly type: "nudge" }
+  | { readonly type: "set-session-default" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */

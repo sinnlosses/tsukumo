@@ -20,6 +20,7 @@ import {
   isCharacterEditCommand,
 } from "../../shared/command.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
+import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent, type StampedEvent } from "../../shared/session-event.ts"
 import {
   applySessionEvent,
@@ -120,6 +121,16 @@ export type SessionCreateOptions = {
    * 初期化されるので、作る操作の副作用にしない。`docs/design.md` 7.1）。
    */
   readonly createCharacter: (create: CharacterCreateCommand) => Promise<SessionEvent | undefined>
+  /**
+   * 新しいセッションの既定（モデル・許可モード）を覚え、**画面へ流す
+   * `session-default-changed` イベントを返す**（覚え先は `~/.tsukumo/state.json`。
+   * `docs/design.md` 13.6）。
+   *
+   * **いま動いているセッションには効かない**（効くのは次に起こすときから）。だから駆動には
+   * 渡らず、セッションを起こし直しもしない。**書けたかどうかに関わらず、返すイベントは常に1つ**
+   * — 書き込みは失敗しても例外を投げない口なので、失敗を区別して返す手立てがここには無い。
+   */
+  readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
 }
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
@@ -519,6 +530,20 @@ function createSessionHost(
         return write(
           () => created.createCharacter(command),
           FRAME_ERROR_REASON.characterCreateFailed,
+        )
+      }
+      if (command.type === "set-session-default") {
+        // **起こし直さない**（次に起こすときから効く値なので、いまの会話には触らない）。
+        // 書いて、覚えた値を画面へ流すだけ。
+        return write(
+          () =>
+            Promise.resolve(
+              created.rememberSessionDefault({
+                model: command.model,
+                permissionMode: command.permissionMode,
+              }),
+            ),
+          FRAME_ERROR_REASON.sessionDefaultFailed,
         )
       }
       if (isCharacterEditCommand(command)) {

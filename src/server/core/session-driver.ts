@@ -1,4 +1,4 @@
-// セッション駆動の契約（docs/glossary.md「セッション駆動」）。**ここにあるのは型と既定値だけ**で、
+// セッション駆動の契約（docs/glossary.md「セッション駆動」）。**ここにあるのは型だけ**で、
 // 実際に何かを起こすコードは持たない。実装は2つあり、どちらも `src/server/adapter/` にある
 // （Agent SDK の `sdk-driver.ts` と、疑似セッションを流す `fake-driver.ts`）。
 //
@@ -6,9 +6,13 @@
 // （どちらが動いているかを知らない。docs/design.md 5章）。
 //
 // **境目の基準は「shared の語彙で書けるか / SDK の語彙を名乗るか」**。shared の語彙だけで
-// 書けるもの（契約の型・`DEFAULT_PERMISSION_MODE` / `DEFAULT_MODEL`）はここに、SDK の語彙を
-// 名乗るもの（`DEFAULT_EFFORT` の `EffortLevel`、`query()` の options、`listSessions` /
-// `getSessionMessages` を使う関数）は `src/server/adapter/sdk-driver.ts` に置く。
+// 書けるもの（契約の型）はここに、SDK の語彙を名乗るもの（`DEFAULT_EFFORT` の `EffortLevel`、
+// `query()` の options、`listSessions` / `getSessionMessages` を使う関数）は
+// `src/server/adapter/sdk-driver.ts` に置く。
+//
+// **既定のモデルと許可モードはここに無い**（`src/shared/session-default.ts` の
+// `BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
+// **ブラウザも同じ畳み先を読む**ようになったため（`docs/design.md` 13.6）。
 
 import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
 import { type ExpressionChoice } from "../../shared/expression-choice.ts"
@@ -16,23 +20,6 @@ import { type Expression } from "../../shared/expression.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
-
-/**
- * 既定の許可モード。`auto` は Claude Code 側が読み取り専用の操作を自動で通し、書き込みなどは
- * `canUseTool` に回す（docs/requirements.md 4.1）。
- *
- * **許可モードとモデルの値の一覧そのものは shared にある**（`src/shared/command.ts` の
- * `PERMISSION_MODES` / `MODEL_ALIASES`。docs/design.md 4.3）。SDK の型と同じ値であることは
- * test/server/adapter/sdk-driver.test.ts が型で確かめる。
- */
-export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto"
-
-/**
- * 既定のモデル。Opus に固定した
- * （docs/requirements.md 4.1）。画面の `<select>` 側の見た目上の既定値
- * （`src/browser/features/sidebar/session-info.tsx` の `MODEL_FALLBACK`）も同じ値に揃える。
- */
-export const DEFAULT_MODEL: ModelAlias = "opus"
 
 /**
  * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口（`docs/design.md` 7.1）。
@@ -279,7 +266,13 @@ export type SessionDriverOptions = {
   readonly cwd: string
   /** `speak` の `expression` で受け付ける表情と、そのラベル（キャラクターパックから作る）。 */
   readonly expressions: readonly ExpressionChoice[]
+  /**
+   * このセッションを起こす許可モード（**覚えた既定**。`src/shared/session-default.ts`）。
+   * 起こしたあと帯から変えた値はここに戻らない（セッション限り）。
+   */
   readonly permissionMode: PermissionMode
+  /** このセッションを起こすモデル（**覚えた既定**。許可モードと同じ扱い）。 */
+  readonly model: ModelAlias
   /**
    * `systemPrompt` に足す文字列（人格とレポートの記法。組み立ては
    * `src/server/adapter/character-pack.ts` の `buildSystemPromptAppend`）。**中身をこのファイルが

@@ -385,6 +385,22 @@
   gap: 1rem;
   min-height: 1.9rem;
 }
+/* 既定の `<select>`（新しいセッションの既定）。**帯のドロップダウンと同じ見た目**にして、
+   同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。 */
+.screen-nav-settings-select {
+  appearance: none;
+  padding: 0.15rem 1.1rem 0.15rem 0.3rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E")
+    no-repeat right 0.3rem center;
+  background-size: 0.5rem;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
 .screen-nav-settings-reset {
   margin-left: auto;
   padding: 0;

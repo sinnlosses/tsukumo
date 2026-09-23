@@ -20,6 +20,7 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../src/shared/frame.ts"
+import { type SessionDefault } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
 import {
@@ -116,6 +117,8 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const stub = createStubDriver()
   const edits: CharacterEditCommand[] = []
   const creates: CharacterCreateCommand[] = []
+  /** 覚えた「新しいセッションの既定」（覚え先は配線層なので、ここでは積むだけ）。 */
+  const remembered: SessionDefault[] = []
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const manager = createSessionManager({
@@ -126,6 +129,10 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
   })
   manager.create({
+    rememberSessionDefault: (sessionDefault) => {
+      remembered.push(sessionDefault)
+      return { kind: "session-default-changed", sessionDefault }
+    },
     sessionId: SESSION_ID,
     startDriver: (onEvent) => {
       stub.attach(onEvent)
@@ -140,7 +147,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
       return Promise.resolve(written())
     },
   })
-  return { manager, stub, edits, creates }
+  return { manager, stub, edits, creates, remembered }
 }
 
 function waitForBatch(): Promise<void> {
@@ -270,6 +277,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
@@ -367,6 +378,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
@@ -437,6 +452,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
@@ -473,6 +492,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
@@ -522,6 +545,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: async (onEvent) => {
         const stub = createStubDriver()
@@ -637,6 +664,10 @@ describe("createSessionManager", () => {
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       })
       manager.create({
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
         sessionId: SESSION_ID,
         startDriver: (onEvent) => {
           stub.attach(onEvent)
@@ -896,6 +927,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: (onEvent, _onRestoredEvent, request) => {
         if (request.selection.by === "initial") {
@@ -933,6 +968,10 @@ describe("createSessionManager", () => {
     })
     const stub = createStubDriver()
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: (onEvent) => {
         stub.attach(onEvent)
@@ -960,6 +999,10 @@ describe("createSessionManager", () => {
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     })
     manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
       sessionId: SESSION_ID,
       startDriver: () =>
         Promise.resolve({
@@ -1034,6 +1077,10 @@ describe("createSessionManager", () => {
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       })
       manager.create({
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
         sessionId: SESSION_ID,
         startDriver: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
@@ -1251,6 +1298,10 @@ describe("createSessionManager", () => {
         },
       })
       manager.create({
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
         sessionId: SESSION_ID,
         startDriver: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
@@ -1484,5 +1535,53 @@ describe("createSessionManager", () => {
         expect(written).not.toContain(secret)
       }
     })
+  })
+})
+
+// 新しいセッションの既定（docs/design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
+// ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
+describe("createSessionManager（新しいセッションの既定）", () => {
+  it("set-session-default を覚えさせ、姿に載せて配る", async () => {
+    const { manager, remembered } = startManagerWithStub()
+    const frames: ServerFrame[] = []
+    manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+
+    const result = await manager.dispatch(SESSION_ID, {
+      type: "set-session-default",
+      commandId: "c-1",
+      model: "sonnet",
+      permissionMode: "plan",
+    })
+    await waitForBatch()
+
+    expect(result).toEqual({ ok: true })
+    expect(remembered).toEqual([{ model: "sonnet", permissionMode: "plan" }])
+    expect(frames.at(-1)).toEqual({
+      type: "events",
+      events: [
+        {
+          at: 1_000,
+          event: {
+            kind: "session-default-changed",
+            sessionDefault: { model: "sonnet", permissionMode: "plan" },
+          },
+        },
+      ],
+    })
+  })
+
+  // 帯のドロップダウンはセッション限り（`docs/design.md` 13.6）。**既定は書き換わらない。**
+  it("帯の set-model / set-permission-mode では既定を覚えない", async () => {
+    const { manager, stub, remembered } = startManagerWithStub()
+
+    await manager.dispatch(SESSION_ID, { type: "set-model", commandId: "c-1", model: "haiku" })
+    await manager.dispatch(SESSION_ID, {
+      type: "set-permission-mode",
+      commandId: "c-2",
+      mode: "bypassPermissions",
+    })
+
+    expect(remembered).toEqual([])
+    expect(stub.calls).toEqual(["setModel:haiku", "setPermissionMode:bypassPermissions"])
   })
 })

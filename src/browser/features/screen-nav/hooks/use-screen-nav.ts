@@ -122,6 +122,10 @@ export function useScreenNav(): ScreenNavView {
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
   )
   const character = useSessionSelector((session) => session.state.character)
+  // **`init`（`session-info`）が届くまでの畳み先は、このセッションを起こした既定**
+  // （`docs/design.md` 13.6）。同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の
+  // 帯だけが Opus を名乗る。
+  const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
   const {
@@ -149,6 +153,11 @@ export function useScreenNav(): ScreenNavView {
 
   useDismissSignal({ open: menuOpen, rootRef: ref, onDismiss: onDismissMenu })
 
+  const shownPermissionMode =
+    permissionMode === undefined
+      ? sessionDefault.permissionMode
+      : resolvePermissionMode(permissionMode)
+
   return {
     current,
     room: currentRoomName(),
@@ -171,14 +180,14 @@ export function useScreenNav(): ScreenNavView {
       },
     },
     modelPermission: {
-      model: resolveModelAlias(model),
+      model: model === undefined ? sessionDefault.model : resolveModelAlias(model),
       onSetModel: (value) => {
         if (isModelAlias(value)) {
           dispatch({ type: "set-model", model: value })
         }
       },
-      permissionMode: resolvePermissionMode(permissionMode),
-      permissionModeDangerous: isDangerousPermissionMode(resolvePermissionMode(permissionMode)),
+      permissionMode: shownPermissionMode,
+      permissionModeDangerous: isDangerousPermissionMode(shownPermissionMode),
       onSetPermissionMode: (value) => {
         if (isPermissionMode(value)) {
           dispatch({ type: "set-permission-mode", mode: value })

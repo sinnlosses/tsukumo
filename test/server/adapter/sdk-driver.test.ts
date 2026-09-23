@@ -12,12 +12,11 @@ import {
 } from "../../../src/server/adapter/sdk-driver.ts"
 import {
   type ChatSummary,
-  DEFAULT_MODEL,
-  DEFAULT_PERMISSION_MODE,
   type SessionDriverOptions,
   type SessionMode,
 } from "../../../src/server/core/session-driver.ts"
 import { MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
@@ -27,7 +26,8 @@ const WORK_MODE: SessionMode = { kind: "work" }
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",
   expressions: [{ name: "default", label: "通常" }],
-  permissionMode: DEFAULT_PERMISSION_MODE,
+  permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode,
+  model: BUILTIN_SESSION_DEFAULT.model,
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
   start: { kind: "new" },
   tag: "tsukumo-test",
@@ -36,24 +36,27 @@ const BASE_OPTIONS: SessionDriverOptions = {
 }
 
 describe("buildQuerySeedOptions", () => {
-  it("既定のモデル（opus）と既定の effort（high）を渡す", () => {
+  it("同梱の既定（opus）と既定の effort（high）を渡す", () => {
     const seed = buildQuerySeedOptions(BASE_OPTIONS)
 
-    expect(seed.model).toBe(DEFAULT_MODEL)
     expect(seed.model).toBe("opus")
     expect(seed.effort).toBe(DEFAULT_EFFORT)
     expect(seed.effort).toBe("high")
   })
 
-  it("cwd・permissionMode は渡された SessionDriverOptions の値をそのまま使う", () => {
+  // 覚えた既定（`~/.tsukumo/state.json`）は配線層が読んで `SessionDriverOptions` に載せる
+  // （`src/session-start.ts`）。ここで見るのは、その値がそのまま `query()` へ渡ること。
+  it("cwd・permissionMode・model は渡された SessionDriverOptions の値をそのまま使う", () => {
     const seed = buildQuerySeedOptions({
       ...BASE_OPTIONS,
       cwd: "/tmp/tsukumo-other",
       permissionMode: "plan",
+      model: "sonnet",
     })
 
     expect(seed.cwd).toBe("/tmp/tsukumo-other")
     expect(seed.permissionMode).toBe("plan")
+    expect(seed.model).toBe("sonnet")
   })
 
   it("続きから始めるセッションのIDを resume として渡す（新規のときは undefined）", () => {

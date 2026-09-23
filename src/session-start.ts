@@ -15,6 +15,10 @@ import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
 import {
+  readRememberedSessionDefault,
+  writeRememberedSessionDefault,
+} from "./server/adapter/remembered-default.ts"
+import {
   findSessionToResume,
   listSwitchableSessions,
   readRestoredEvents,
@@ -26,7 +30,6 @@ import { type Config, sessionTag } from "./server/core/config.ts"
 import {
   type ChatArchive,
   type ChatRecall,
-  DEFAULT_PERMISSION_MODE,
   type SessionDriver,
   type SessionMode,
   type SessionStart,
@@ -49,6 +52,7 @@ import { type ClientCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type ServerFrame } from "./shared/frame.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
+import { type SessionDefault } from "./shared/session-default.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
 
 /**
@@ -113,6 +117,8 @@ export function startSession(options: SessionStartOptions): RunningSession {
     startDriver: createSessionLaunch<CharacterPack>({
       choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
+      // 覚えた既定は**起こすたびに読む**（歯車で書き換えたあと、起こし直しで効く）。
+      readSessionDefault: () => readRememberedSessionDefault(),
       characterEvent: () => character.event(),
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
       // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
@@ -134,6 +140,8 @@ export function startSession(options: SessionStartOptions): RunningSession {
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, expressionChoices(pack.definition)),
     }),
+    // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
+    rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
     editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
     createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
   })
@@ -162,7 +170,12 @@ function startDriver(options: {
 }): SessionDriver {
   const { seed, chatArchive, fakeSession, cwd, onEvent } = options
   if (fakeSession !== undefined) {
-    return startFakeSession({ session: fakeSession, scene: options.scene, onEvent })
+    return startFakeSession({
+      session: fakeSession,
+      scene: options.scene,
+      sessionDefault: seed.sessionDefault,
+      onEvent,
+    })
   }
 
   // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
@@ -191,13 +204,26 @@ function startDriver(options: {
   return startSdkSession({
     cwd,
     expressions: expressionChoices(seed.pack.definition),
-    permissionMode: DEFAULT_PERMISSION_MODE,
+    // **覚えた既定で起こす**（`docs/design.md` 13.6）。起こしたあと帯から変えた値は
+    // そのセッション限りで、ここには戻らない。
+    permissionMode: seed.sessionDefault.permissionMode,
+    model: seed.sessionDefault.model,
     systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
     start: seed.start,
     tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
     mode,
     onEvent,
   })
+}
+
+/**
+ * 歯車から届いた「新しいセッションの既定」を覚え、画面へ流すイベントを返す
+ * （`docs/design.md` 13.6）。**書き込みは失敗しても例外を投げない**ので、返すイベントは
+ * 常に1つ（`writeRememberedSessionDefault`）。
+ */
+function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
+  writeRememberedSessionDefault(sessionDefault)
+  return { kind: "session-default-changed", sessionDefault }
 }
 
 /**
