@@ -87,6 +87,10 @@ SDK の `background_tasks_changed` を `background-tasks-changed` に変換し�
 
 チカッとした正体は、起こし直しの間に新しい代の `chat-mode-changed` などが `events` で先に配られ、前のセッションの姿のままモードだけ切り替わっていたこと。起こし直しの代は新しい `hello` を配るまで束を配らないようにし（`session-manager.ts`）、T-478 で足した View Transition は外した（先読みと履歴の await は残す）。
 
+### 2026-09-23 progress.md のマージドライバで main 側の同じ日付の小節を下へ落とさなくした（T-483）
+
+`mergeDoneSections` は同じ日付のあいだで base に無い小節を base にある小節より上に置き、両側が新しく足した小節どうしは ours（枝）を上にする。規則は `scripts/progress-done-section.ts` の `orderByDateDescending` のコメントにまとめ、日付の無い小節は末尾のままにした。
+
 ## 未解決
 
 - **雑談モードでは `speak` で終える並びが残り、英語の催促の入口も残っている**（2026-09-23 の T-459 で判明）。雑談は本文を書かない決まりなので、仕事の側の反転がそのまま当てはまらない。塞ぐなら雑談の終え方を別に決める話
