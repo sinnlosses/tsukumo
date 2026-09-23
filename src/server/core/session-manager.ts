@@ -470,9 +470,13 @@ function createSessionHost(
         })
       }
       if (command.type === "set-chat-mode") {
-        // 起こし直しなので `switch-character` と同じ条件で弾く。
+        // 起こし直しなので `switch-character` と同じ条件で弾く（理由の文面だけは、何が
+        // 切り替わらなかったかで分ける。docs/design.md 13.9「動き方の操作子」）。
         if (state.turn.kind === "running") {
-          return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
+          return Promise.resolve({
+            ok: false,
+            reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn,
+          })
         }
         // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
         // とは決めていない）。**名前では渡さない** — 渡すと「画面から選ばれた名前」と

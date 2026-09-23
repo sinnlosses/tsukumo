@@ -64,6 +64,8 @@ export const FRAME_ERROR_REASON = {
   characterCreateFailed: "キャラクターを作れなかった",
   switchDuringTurn: "ターン進行中はキャラクターを切り替えられない（中断すると切り替えられる）",
   sessionSwitchDuringTurn: "ターン進行中はセッションを切り替えられない（中断すると切り替えられる）",
+  chatModeSwitchDuringTurn:
+    "ターン進行中は仕事と雑談を切り替えられない（中断すると切り替えられる）",
   nudgeDuringTurn: "ターン進行中は話しかけてもらえない（返事を待つ）",
   nudgeOutsideChat: "話しかけてもらえるのは雑談モードのときだけ",
 } as const

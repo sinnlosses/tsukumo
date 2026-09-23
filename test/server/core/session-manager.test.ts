@@ -507,7 +507,7 @@ describe("createSessionManager", () => {
 
     expect(
       await manager.dispatch(SESSION_ID, { type: "set-chat-mode", commandId: "c-2", chat: true }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn })
     expect(stub.calls).not.toContain("close")
   })
 

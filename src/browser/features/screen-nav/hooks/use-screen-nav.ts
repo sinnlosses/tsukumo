@@ -1,9 +1,14 @@
 // 画面のナビの帯のロジック（docs/design.md 13.9 / 2章「機能の中を分ける」）。**いま出している
-// 画面・3つの口・答え待ちの印・狭い画面の「≡」の開閉**を、見た目が受け取れる形まで畳んで返す。
+// 画面・3つの口・仕事/雑談のトグル・モデル/許可モードの操作子・答え待ちの印・狭い画面の「≡」の
+// 開閉**を、見た目が受け取れる形まで畳んで返す。
 //
 // **帯に出すのは `Screen` の4つのうち3つ**（作る画面はキャラクター画面から入る一時的な画面なので
 // 出さない。13.9）。**口は `<a href>` で、画面の正典は `location.hash` のまま**（`navigateTo` は
 // 使わない）。
+//
+// **動き方の操作子（仕事/雑談・モデル・許可モード）が送るコマンドは、いままでサイドバーの
+// `<select>` が送っていたものと同じ**（`set-chat-mode` / `set-model` / `set-permission-mode`）。
+// 表示はサーバから届いた値だけに従い、押した側へ先に倒さない（13.9「動き方の操作子」）。
 //
 // 「≡」を閉じる合図（外側を押した・Esc）は **React の外（document）の購読**なので `useEffect`
 // で取る（docs/coding-standards.md「React」の4類型のうち「外部システムの購読」）。**開いている
@@ -11,30 +16,17 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
+import { isModelAlias, isPermissionMode } from "../../../../shared/command.ts"
+import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { roomName } from "../../../../shared/room.ts"
-import { modelLabel, resolveModelAlias } from "../../../lib/model-label.ts"
+import { resolveModelAlias } from "../../../lib/model-label.ts"
 import {
   isDangerousPermissionMode,
-  permissionModeLabel,
   resolvePermissionMode,
 } from "../../../lib/permission-mode-label.ts"
 import { type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
-import { useSessionSelector } from "../../../stores/session.tsx"
-
-/**
- * 帯に出す読み1つ（13.9「何を帯に出すか」）。**資格は「画面を見ても分からず、かつターンの
- * 結果を変えるもの」**で、いまは モデル / 許可モード の2つ。
- *
- * **「無い」はここへ来る前に畳んである**（どちらも届く前は見た目上の既定に倒れる）ので、
- * 描く側は分岐を持たない。
- */
-export type ScreenNavReading = {
-  readonly kind: "model" | "permission-mode"
-  readonly text: string
-  /** 「全部許す」のときだけ字に意味の色を載せる（13.1 原則5）。 */
-  readonly dangerous: boolean
-}
+import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 
 /** 帯に並ぶ口1つ。**「いま出している画面か」は畳んで渡す**（部品は判定を持たない）。 */
 export type ScreenNavGate = {
@@ -44,14 +36,39 @@ export type ScreenNavGate = {
   readonly active: boolean
 }
 
+/**
+ * 仕事 / 雑談のトグルが受け取れる形（13.9「動き方の操作子」）。**いまの側を押しても
+ * 何も送らない**・**ターン進行中は送らない**は `onChange` の中で決めていて、部品は
+ * 「送るかどうか」を持たない。
+ */
+export type ScreenNavChatMode = {
+  readonly chat: boolean
+  /** ターン進行中は押せない（起こし直しなので、キャラクターの切り替えと同じ条件）。 */
+  readonly disabled: boolean
+  /** `disabled` のときだけ理由を持つ（`aria-disabled` の要素はツールチップが出ないブラウザ既定に
+   * 頼れないので、`title` に定型文を出す）。 */
+  readonly title: string | undefined
+  readonly onChange: (chat: boolean) => void
+}
+
+/** モデル・許可モードの操作子が受け取れる形。**ターン進行中も変えられる**（起こし直さない）。 */
+export type ScreenNavModelPermission = {
+  readonly model: string
+  readonly onSetModel: (value: string) => void
+  readonly permissionMode: string
+  /** 「全部許す」のときだけ字に意味の色を載せる（13.1 原則5）。 */
+  readonly permissionModeDangerous: boolean
+  readonly onSetPermissionMode: (value: string) => void
+}
+
 export type ScreenNavView = {
   /** いま出している画面。**狭い画面での帯の置き方**（タブ帯へ畳むか）を CSS が決めるのに使う。 */
   readonly current: Screen
   /** この tsukumo の部屋の名前（`src/shared/room.ts`。13.9）。 */
   readonly room: string
-  /** いまの動き方の読み（モデル・許可モード）。 */
-  readonly readings: readonly ScreenNavReading[]
   readonly gates: readonly ScreenNavGate[]
+  readonly chatMode: ScreenNavChatMode
+  readonly modelPermission: ScreenNavModelPermission
   readonly pendingActive: boolean
   readonly menuOpen: boolean
   readonly toggleMenu: () => void
@@ -69,9 +86,12 @@ const NAV_SCREENS = [
 ] satisfies readonly { readonly screen: Screen; readonly label: string }[]
 
 export function useScreenNav(): ScreenNavView {
+  const dispatch = useSessionDispatch()
   const current = useScreen()
   const screenHref = useScreenHref()
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
+  const chatMode = useSessionSelector((session) => session.state.chatMode)
+  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
   const model = useSessionSelector((session) => session.state.model)
   const permissionMode = useSessionSelector((session) =>
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
@@ -116,41 +136,44 @@ export function useScreenNav(): ScreenNavView {
   return {
     current,
     room: currentRoomName(),
-    readings: sessionReadings(model, permissionMode),
     gates: NAV_SCREENS.map((entry) => ({
       screen: entry.screen,
       label: entry.label,
       href: screenHref(entry.screen),
       active: entry.screen === current,
     })),
+    chatMode: {
+      chat: chatMode,
+      disabled: turnInProgress,
+      title: turnInProgress ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
+      onChange: (chat) => {
+        if (turnInProgress || chat === chatMode) {
+          return
+        }
+        dispatch({ type: "set-chat-mode", chat })
+      },
+    },
+    modelPermission: {
+      model: resolveModelAlias(model),
+      onSetModel: (value) => {
+        if (isModelAlias(value)) {
+          dispatch({ type: "set-model", model: value })
+        }
+      },
+      permissionMode: resolvePermissionMode(permissionMode),
+      permissionModeDangerous: isDangerousPermissionMode(resolvePermissionMode(permissionMode)),
+      onSetPermissionMode: (value) => {
+        if (isPermissionMode(value)) {
+          dispatch({ type: "set-permission-mode", mode: value })
+        }
+      },
+    },
     pendingActive,
     menuOpen,
     toggleMenu,
     closeMenu,
     ref,
   }
-}
-
-/**
- * 帯に出す読みの一覧。**モデルと許可モードの2つを必ず出す**（どちらも届く前は見た目上の
- * 既定に倒れる。13.9）。
- *
- * 並びは モデル（等幅）→ 許可モード（本文書体）で、**区切りの記号は置かず書体の交替で
- * 区切る**（13.1 原則3）。
- */
-function sessionReadings(
-  model: string | undefined,
-  permissionMode: string | undefined,
-): readonly ScreenNavReading[] {
-  const mode = resolvePermissionMode(permissionMode)
-  return [
-    { kind: "model", text: modelLabel(resolveModelAlias(model)), dangerous: false },
-    {
-      kind: "permission-mode",
-      text: permissionModeLabel(mode),
-      dangerous: isDangerousPermissionMode(mode),
-    },
-  ]
 }
 
 /** `location.port` が空文字のときに補う、http の既定ポート（URL がポートを省いた形のとき）。 */
