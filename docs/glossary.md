@@ -201,7 +201,9 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   `src/server/core/report-tool.ts`。`Stop` フックの関所も同じファイルにあり、SDK のターンの最後の
   `report` のあと（無ければターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す。
   **呼び出しそのものも検査する**: 機械で判定できる記法の条に違反した呼び出しは描かずに、違反と
-  直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/core/report-review.ts`）
+  直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/core/report-review.ts`）。
+  通った `body` は描く前に整形し、意味の変わらない行（`conclusion` の繰り返し・定型だけの行・
+  中身の無い見出し）を落とす（`src/shared/report-tidy.ts`）
 - **避ける言い方**: レポートツール、reply
 
 ### remember ツール

@@ -12,7 +12,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { Sidebar } from "../../../../src/browser/features/sidebar/sidebar.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo } from "../../../fixture/character.ts"
+import { characterInfo, characterPackEntry } from "../../../fixture/character.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -31,7 +31,7 @@ function renderSidebar(stateOverrides: Partial<SessionState>): void {
 describe("Sidebar", () => {
   it("見出しは「タスク」の1つだけ（「セッション情報」の見出しは無い）", () => {
     renderSidebar({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: characterInfo({ pack: "tsukumo-spirit" }),
     })
 
@@ -45,7 +45,7 @@ describe("Sidebar", () => {
 
   it("キャラクターの <select> と顔は、区画ではなく下端の帯の中に出る", () => {
     renderSidebar({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: characterInfo({ pack: "tsukumo-spirit", face: "/character/face.png" }),
     })
 
@@ -65,7 +65,7 @@ const RUNNING_SESSION: SessionState["session"] = {
 
 const CHAT_STATE: Partial<SessionState> = {
   chatMode: true,
-  characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+  characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
   character: characterInfo({
     pack: "tsukumo-spirit",
     name: "架空の精霊",

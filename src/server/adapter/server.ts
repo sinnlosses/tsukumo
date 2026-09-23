@@ -23,7 +23,11 @@ import process from "node:process"
 
 import { isPlainObject } from "remeda"
 
-import { CHARACTER_ASSET_PATH_PREFIX } from "../../shared/character-asset.ts"
+import {
+  CHARACTER_ASSET_PATH_PREFIX,
+  type CharacterAssetLocation,
+  readCharacterAssetPath,
+} from "../../shared/character-asset.ts"
 import {
   CONTEXT_USAGE_PATH,
   type ContextUsageReport,
@@ -84,17 +88,20 @@ export type ViewAssets = {
   readonly styleSheet: () => string
 }
 
-/** `/character/<file>` を1件配るために要るもの。中身は core（`character-pack.ts`）が決める。 */
+/** `/character/<pack>/<file>` を1件配るために要るもの。中身は `character-pack.ts` が決める。 */
 export type CharacterAssetFile = {
   readonly contentType: string
   readonly content: Buffer
 }
 
 /**
- * `/character/<file>` の名前1つを配ってよい形にする。**allowlist に無い・ディスクに無い**ときは
- * undefined（呼び出し側が404にする）。core の `readCharacterPackFile` を束ねる。
+ * `/character/<pack>/<file>` の1件を配ってよい形にする。**無いパック・allowlist に無い・
+ * ディスクに無い**ときは undefined（呼び出し側が404にする）。`character-pack.ts` の
+ * `readCharacterAsset` を束ねる。
  */
-export type ServeCharacterAsset = (fileName: string) => CharacterAssetFile | undefined
+export type ServeCharacterAsset = (
+  location: CharacterAssetLocation,
+) => CharacterAssetFile | undefined
 
 /**
  * 入力欄の `@` 補完に配るファイルのパス（`src/server/adapter/repository-file.ts` の
@@ -136,8 +143,8 @@ export type ViewServerOptions = {
    */
   readonly assets: ViewAssets
   /**
-   * `/character/<file>` の1件を配ってよい形にする（`src/server/adapter/character-pack.ts` の
-   * `readCharacterPackFile` を束ねたもの）。
+   * `/character/<pack>/<file>` の1件を配ってよい形にする（`src/server/adapter/character-pack.ts` の
+   * `readCharacterAsset` を束ねたもの）。
    */
   readonly serveCharacterAsset: ServeCharacterAsset
   /** `/repository-file` に配るファイルのパス。 */
@@ -318,15 +325,17 @@ function writeVendorAsset(response: ServerResponse, name: string): void {
 }
 
 /**
- * `/character/<file>` を配る。名前が指す中身の判断（allowlist・ファイルの読み取り）は
- * `serveCharacterAsset`（core 側）に任せ、ここは結果をそのまま配るか404にするだけ。
+ * `/character/<pack>/<file>` を配る。経路をパック名とファイル名に読み分けるのは
+ * `readCharacterAssetPath`（形が崩れていれば404）、名前が指す中身の判断（一覧・allowlist・
+ * ファイルの読み取り）は `serveCharacterAsset` に任せ、ここは結果をそのまま配るか404にするだけ。
  */
 function writeCharacterAsset(
   response: ServerResponse,
-  fileName: string,
+  rest: string,
   serveCharacterAsset: ServeCharacterAsset,
 ): void {
-  const asset = serveCharacterAsset(fileName)
+  const location = readCharacterAssetPath(rest)
+  const asset = location === undefined ? undefined : serveCharacterAsset(location)
   if (asset === undefined) {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
     response.end("not found\n")

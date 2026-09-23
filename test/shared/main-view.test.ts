@@ -810,6 +810,31 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 
+  it("body は整形してから組む（落とせる行は描かず、残りと favor はそのまま）", () => {
+    const turn = turnOf(
+      [
+        ask,
+        report(
+          "架空の結論。",
+          "架空の結論。\n\n架空の根拠。\n\n## 架空の空の節\n\n以上です。",
+          "架空のお願い",
+        ),
+        finished,
+      ],
+      false,
+    )
+
+    expect(shownReports(turn)).toEqual([
+      '架空の結論。\n\n架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+    ])
+  })
+
+  it("report が呼ばれなかったターンの本文には整形を掛けない", () => {
+    const turn = turnOf([ask, text("架空の答え。\n\n以上です。"), finished], false)
+
+    expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
+  })
+
   it("body と favor が空ならその塊を置かない", () => {
     const turn = turnOf([ask, report("架空の結論だけ。"), finished], false)
 

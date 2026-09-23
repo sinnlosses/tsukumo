@@ -4,7 +4,7 @@
 // インライン**にし（差し色の CSS 変数 `--outfit-accent` を効かせるため。`<img>` で読み込むと
 // 独立した文書扱いになり届かない。`characters/README.md` の実測）、ラスタは `<img>` で出す
 // （docs/requirements.md 4.4）。
-// 素材は `/character/<file>` から取りに行くだけで、`SessionState` には URL しか乗らない
+// 素材は `/character/<pack>/<file>` から取りに行くだけで、`SessionState` には URL しか乗らない
 // （docs/design.md 4.2・5章）。
 //
 // **`expression` / `outfit` は表情・衣装の差し替えにだけ使う**（立ち絵そのものの差し替えで
@@ -26,7 +26,7 @@ import { type PortraitMotion } from "../../shared/portrait-motion.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {
-  /** `/character/<file>` の URL。 */
+  /** `/character/<pack>/<file>` の URL。 */
   readonly url: string
   /** CSS 変数 `--outfit-accent` に渡す差し色。インライン SVG のときだけ見た目に効く。 */
   readonly accent: string | undefined
@@ -48,8 +48,8 @@ export type PortraitProps = {
 }
 
 /**
- * SVG の中身を `fetch` する（TanStack Query）。**`/character/<file>` の URL は
- * パックの名前と素材の版を問い合わせ文字列に含む**（`characterAssetCacheKey`）ので、立ち絵や
+ * SVG の中身を `fetch` する（TanStack Query）。**`/character/<pack>/<file>` の URL は
+ * パックの名前を経路に、素材の版を問い合わせ文字列に含む**（`characterAssetPath`）ので、立ち絵や
  * 差し色を変えると URL 自体が変わる。`queryKey` を URL だけにすれば、中身が変わったときは
  * 別のキャッシュ行になり、**同じ URL の中身はセッション中変わらない**ので取り直す理由が無い
  * （`staleTime` / `gcTime` を `Infinity` にする）。
@@ -77,7 +77,7 @@ function useSvgMarkup(url: string | undefined): string | undefined {
  * 移り変わりが終わり、そのあとで絵がいきなり現れる（実測: 初めての表情で約250ms）。
  *
  * SVG は {@link useSvgMarkup} と同じキャッシュ行へ入れ、ラスタは `Image` に読ませて
- * **キャラクターが変わるまで参照を持ち続ける**（`/character/<file>` は `no-store` で配るので、
+ * **キャラクターが変わるまで参照を持ち続ける**（`/character/<pack>/<file>` は `no-store` で配るので、
  * 参照が切れた絵はブラウザが読み直すことがある）。
  */
 export function usePortraitPreload(portraits: Readonly<Record<string, string>> | undefined): void {
