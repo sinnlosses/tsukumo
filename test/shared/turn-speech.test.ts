@@ -8,34 +8,24 @@ import {
 } from "../../src/shared/main-view.ts"
 import { INITIAL_SESSION_STATE, type SessionRecord } from "../../src/shared/session-state.ts"
 import { turnSpeeches } from "../../src/shared/turn-speech.ts"
+import {
+  compactBoundaryRecord,
+  detailRecord,
+  requestRecord,
+  speechRecord,
+} from "../fixture/session-record.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・セリフ（docs/coding-standards.md「会話内容の扱い」）。
-
-const request = (text: string, turnId = 0): SessionRecord => ({
-  kind: "request",
-  turnId,
-  text,
-  images: [],
-  time: { kind: "stamped", at: 0 },
-})
-const detail = (markdown: string): SessionRecord => ({ kind: "detail", markdown })
-const speech = (text: string, expression: "default" | "proud" = "default"): SessionRecord => ({
-  kind: "speech",
-  text,
-  expression,
-  time: { kind: "stamped", at: 0 },
-})
-const compactBoundary = (): SessionRecord => ({ kind: "compact-boundary" })
 
 describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
   it("依頼ごとに分かれ、各ターンのセリフだけを古い→新しいの順で返す", () => {
     const turns = turnSpeeches([
-      request("1つ目の依頼", 0),
-      speech("1つ目のセリフA"),
-      detail("1つ目のレポート"),
-      speech("1つ目のセリフB"),
-      request("2つ目の依頼", 1),
-      speech("2つ目のセリフ"),
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフA" }),
+      detailRecord("1つ目のレポート"),
+      speechRecord({ text: "1つ目のセリフB" }),
+      requestRecord({ text: "2つ目の依頼", turnId: 1 }),
+      speechRecord({ text: "2つ目のセリフ" }),
     ])
 
     expect(turns.map((turn) => turn.speeches)).toEqual([
@@ -46,12 +36,12 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
 
   it("セリフの無いターンは空になる（ターン自体は消えない）", () => {
     const turns = turnSpeeches([
-      request("1つ目の依頼", 0),
-      speech("1つ目のセリフ"),
-      request("2つ目の依頼", 1),
-      detail("2つ目のレポート"),
-      request("3つ目の依頼", 2),
-      speech("3つ目のセリフ"),
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフ" }),
+      requestRecord({ text: "2つ目の依頼", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
+      requestRecord({ text: "3つ目の依頼", turnId: 2 }),
+      speechRecord({ text: "3つ目のセリフ" }),
     ])
 
     expect(turns.map((turn) => turn.speeches)).toEqual([["1つ目のセリフ"], [], ["3つ目のセリフ"]])
@@ -60,11 +50,11 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
 
   it("表情はそのターンの最後のセリフのもの", () => {
     const turns = turnSpeeches([
-      request("1つ目の依頼", 0),
-      speech("1つ目のセリフA", "proud"),
-      speech("1つ目のセリフB", "default"),
-      request("2つ目の依頼", 1),
-      speech("2つ目のセリフ", "proud"),
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフA", expression: "proud" }),
+      speechRecord({ text: "1つ目のセリフB", expression: "default" }),
+      requestRecord({ text: "2つ目の依頼", turnId: 1 }),
+      speechRecord({ text: "2つ目のセリフ", expression: "proud" }),
     ])
 
     expect(turns.map((turn) => turn.expression)).toEqual(["default", "proud"])
@@ -78,14 +68,14 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
 describe("turnSpeeches（通し番号）", () => {
   it("ターンの通し番号が mainViewTurns と揃う", () => {
     const records: readonly SessionRecord[] = [
-      request("1つ目の依頼", 0),
-      speech("1つ目のセリフ"),
-      detail("1つ目のレポート"),
-      request("2つ目の依頼", 1),
-      detail("2つ目のレポート"),
-      request("3つ目の依頼", 2),
-      speech("3つ目のセリフ"),
-      detail("3つ目のレポート"),
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフ" }),
+      detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目の依頼", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
+      requestRecord({ text: "3つ目の依頼", turnId: 2 }),
+      speechRecord({ text: "3つ目のセリフ" }),
+      detailRecord("3つ目のレポート"),
     ]
 
     const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
@@ -95,12 +85,12 @@ describe("turnSpeeches（通し番号）", () => {
 
   it("最初の依頼より前にレポートがあるときも、通し番号が mainViewTurns と揃う", () => {
     const records: readonly SessionRecord[] = [
-      detail("依頼より前のレポート"),
-      speech("依頼より前のセリフ"),
-      request("1つ目の依頼", 0),
-      speech("1つ目のセリフ"),
-      request("2つ目の依頼", 1),
-      speech("2つ目のセリフ"),
+      detailRecord("依頼より前のレポート"),
+      speechRecord({ text: "依頼より前のセリフ" }),
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフ" }),
+      requestRecord({ text: "2つ目の依頼", turnId: 1 }),
+      speechRecord({ text: "2つ目のセリフ" }),
     ]
 
     const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
@@ -117,9 +107,9 @@ describe("turnSpeeches（通し番号）", () => {
 
   it("先頭が圧縮の区切りだけのときは、通し番号が mainViewTurns と揃う（前のまとまりを作らない）", () => {
     const records: readonly SessionRecord[] = [
-      compactBoundary(),
-      request("1つ目の依頼", 0),
-      speech("1つ目のセリフ"),
+      compactBoundaryRecord(),
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフ" }),
     ]
 
     const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
@@ -132,9 +122,9 @@ describe("turnSpeeches（通し番号）", () => {
   it(`直近${String(MAX_MAIN_VIEW_TURNS)}ターンに絞られたあとも、窓の中の番号でそのターンのセリフが引ける`, () => {
     const turnCount = MAX_MAIN_VIEW_TURNS + 2
     const records: readonly SessionRecord[] = Array.from({ length: turnCount }, (_, index) => [
-      request(`依頼${String(index)}`, index),
-      speech(`セリフ${String(index)}`),
-      detail(`レポート${String(index)}`),
+      requestRecord({ text: `依頼${String(index)}`, turnId: index }),
+      speechRecord({ text: `セリフ${String(index)}` }),
+      detailRecord(`レポート${String(index)}`),
     ]).flat()
 
     const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)

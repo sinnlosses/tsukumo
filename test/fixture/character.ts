@@ -18,12 +18,12 @@
 // （`toCharacterInfo` と同じ畳み方で、呼ぶ側は「ある」ものだけを書く）。
 //
 // `character-changed` イベントは `{ kind } & CharacterInfo & { packs }`（src/shared/session-event.ts）
-// なので、組み立て関数は置かず `{ kind: "character-changed", ...characterInfo(), packs: [] }` と
-// 広げて使う。
+// なので、{@link characterChangedEvent} は `characterInfo` に `kind` / `packs` を足して広げるだけ。
 
 import { type CharacterDefinition } from "../../src/shared/character-definition.ts"
-import { type CharacterInfo } from "../../src/shared/character.ts"
+import { type CharacterInfo, type CharacterPackChoice } from "../../src/shared/character.ts"
 import { type Expression, EXPRESSIONS, type Outfit } from "../../src/shared/expression.ts"
+import { type SessionEvent } from "../../src/shared/session-event.ts"
 
 /** 画面に渡る姿（`SessionState.character` と `character-changed` の中身）。 */
 export function characterInfo(overrides: Partial<CharacterInfo> = {}): CharacterInfo {
@@ -40,6 +40,18 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     editable: true,
     ...overrides,
   }
+}
+
+/**
+ * キャラクターパックが決まった（`character-changed`）イベント。**`packs` の既定は
+ * `characterInfo()` の既定と同じ1枠**（`{ name: "fictional", label: "架空の精霊" }`）。
+ * 切り替え先が複数あるテストは呼ぶ側で渡す。
+ */
+export function characterChangedEvent(
+  overrides: Partial<CharacterInfo> = {},
+  packs: readonly CharacterPackChoice[] = [{ name: "fictional", label: "架空の精霊" }],
+): Extract<SessionEvent, { readonly kind: "character-changed" }> {
+  return { kind: "character-changed", ...characterInfo(overrides), packs }
 }
 
 /** 定義ファイル（character.json）を読んだ形。値はファイル名で、URL ではない。 */

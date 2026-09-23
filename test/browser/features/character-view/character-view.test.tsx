@@ -15,6 +15,7 @@ import {
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
+import { requestRecord, speechRecord } from "../../../fixture/session-record.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
@@ -52,25 +53,13 @@ function renderCharacterView(
   )
 }
 
-const request = (text: string, turnId = 0): SessionRecord => ({
-  kind: "request",
-  turnId,
-  text,
-  images: [],
-  time: { kind: "stamped", at: 0 },
-})
-const speech = (
-  text: string,
-  expression: "default" | "proud" | "flustered" = "default",
-): SessionRecord => ({ kind: "speech", text, expression, time: { kind: "stamped", at: 0 } })
-
 /** 通し番号 0 / 1 の2ターン分の記録（0 が過去、1 が今回）。 */
 const TWO_TURN_RECORDS: readonly SessionRecord[] = [
-  request("1つ目の依頼"),
-  speech("1つ目のセリフA", "proud"),
-  speech("1つ目のセリフB", "flustered"),
-  request("2つ目の依頼"),
-  speech("2つ目のセリフ", "default"),
+  requestRecord({ text: "1つ目の依頼" }),
+  speechRecord({ text: "1つ目のセリフA", expression: "proud" }),
+  speechRecord({ text: "1つ目のセリフB", expression: "flustered" }),
+  requestRecord({ text: "2つ目の依頼" }),
+  speechRecord({ text: "2つ目のセリフ", expression: "default" }),
 ]
 
 describe("CharacterView", () => {
@@ -205,9 +194,9 @@ describe("CharacterView", () => {
 
   it("(3) セリフが1件も無い過去のターンでも壊れず、そのターン向けの文言が出る", () => {
     const records: readonly SessionRecord[] = [
-      request("1つ目の依頼"),
-      request("2つ目の依頼"),
-      speech("2つ目のセリフ"),
+      requestRecord({ text: "1つ目の依頼" }),
+      requestRecord({ text: "2つ目の依頼" }),
+      speechRecord({ text: "2つ目のセリフ" }),
     ]
 
     expect(() =>

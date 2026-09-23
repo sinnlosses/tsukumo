@@ -6,37 +6,50 @@ import {
   chatLogRows,
   type ChatLogEntry,
 } from "../../src/shared/chat-log.ts"
-import { type RecordTime, type SessionRecord } from "../../src/shared/session-state.ts"
+import { type SessionRecord } from "../../src/shared/session-state.ts"
+import {
+  compactBoundaryRecord,
+  detailRecord,
+  requestRecord,
+  speechRecord,
+} from "../fixture/session-record.ts"
 
 // 雑談のログは**素直な時系列**（docs/design.md 13.7）。`mainViewEntries` のように依頼で
 // まとめ直さないことを、並びと落とすものの2点で固定する。
 //
 // 文面は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 
-/** 時刻に依らないテストの記録に添える時刻。 */
-const STAMPED = { kind: "stamped", at: 0 } satisfies RecordTime
-
 const RECORDS: readonly SessionRecord[] = [
-  { kind: "request", turnId: 0, text: "1つめの依頼", images: [], time: STAMPED },
-  { kind: "speech", text: "1つめのセリフ", expression: "default", time: STAMPED },
-  { kind: "request", turnId: 1, text: "2つめの依頼", images: [], time: STAMPED },
-  { kind: "speech", text: "2つめのセリフ", expression: "proud", time: STAMPED },
+  requestRecord({ turnId: 0, text: "1つめの依頼" }),
+  speechRecord({ text: "1つめのセリフ" }),
+  requestRecord({ turnId: 1, text: "2つめの依頼" }),
+  speechRecord({ text: "2つめのセリフ", expression: "proud" }),
 ]
 
 describe("chatLogEntries", () => {
   it("利用者の発言とセリフが、記録の順（古い→新しい）のまま交互に積む", () => {
     expect(chatLogEntries(RECORDS)).toEqual([
-      { speaker: "user", text: "1つめの依頼", images: [], time: STAMPED },
-      { speaker: "character", text: "1つめのセリフ", expression: "default", time: STAMPED },
-      { speaker: "user", text: "2つめの依頼", images: [], time: STAMPED },
-      { speaker: "character", text: "2つめのセリフ", expression: "proud", time: STAMPED },
+      { speaker: "user", text: "1つめの依頼", images: [], time: { kind: "stamped", at: 0 } },
+      {
+        speaker: "character",
+        text: "1つめのセリフ",
+        expression: "default",
+        time: { kind: "stamped", at: 0 },
+      },
+      { speaker: "user", text: "2つめの依頼", images: [], time: { kind: "stamped", at: 0 } },
+      {
+        speaker: "character",
+        text: "2つめのセリフ",
+        expression: "proud",
+        time: { kind: "stamped", at: 0 },
+      },
     ])
   })
 
   it("本文・ツール・質問は落とす（雑談中はレポートを出さない）", () => {
     const entries = chatLogEntries([
-      { kind: "request", turnId: 2, text: "架空の依頼", images: [], time: STAMPED },
-      { kind: "detail", markdown: "## 架空のレポート" },
+      requestRecord({ turnId: 2, text: "架空の依頼" }),
+      detailRecord("## 架空のレポート"),
       {
         kind: "tool",
         toolUseId: "t-1",
@@ -46,7 +59,7 @@ describe("chatLogEntries", () => {
         status: { kind: "running" },
       },
       { kind: "question", questions: [], answers: [] },
-      { kind: "speech", text: "架空のセリフ", expression: "default", time: STAMPED },
+      speechRecord({ text: "架空のセリフ" }),
     ])
 
     expect(entries.map((entry) => entry.speaker)).toEqual(["user", "character"])
@@ -65,15 +78,20 @@ describe("chatLogEntries", () => {
 
   it("圧縮の区切り（compact-boundary）は1件のイベントから1件のログの区切りになる", () => {
     const entries = chatLogEntries([
-      { kind: "request", turnId: 3, text: "1つめの依頼", images: [], time: STAMPED },
-      { kind: "compact-boundary" },
-      { kind: "speech", text: "2つめのセリフ", expression: "default", time: STAMPED },
+      requestRecord({ turnId: 3, text: "1つめの依頼" }),
+      compactBoundaryRecord(),
+      speechRecord({ text: "2つめのセリフ" }),
     ])
 
     expect(entries).toEqual([
-      { speaker: "user", text: "1つめの依頼", images: [], time: STAMPED },
+      { speaker: "user", text: "1つめの依頼", images: [], time: { kind: "stamped", at: 0 } },
       { speaker: "boundary" },
-      { speaker: "character", text: "2つめのセリフ", expression: "default", time: STAMPED },
+      {
+        speaker: "character",
+        text: "2つめのセリフ",
+        expression: "default",
+        time: { kind: "stamped", at: 0 },
+      },
     ])
   })
 })
@@ -85,54 +103,44 @@ describe("chatLogByteSize", () => {
 
   it("利用者だけの文面を UTF-8 バイト数で数える", () => {
     // "あ" は UTF-8 で3バイト。
-    const entries = chatLogEntries([
-      { kind: "request", turnId: 4, text: "あああ", images: [], time: STAMPED },
-    ])
+    const entries = chatLogEntries([requestRecord({ turnId: 4, text: "あああ" })])
 
     expect(chatLogByteSize(entries)).toBe(9)
   })
 
   it("セリフだけの文面も数える", () => {
-    const entries = chatLogEntries([
-      { kind: "speech", text: "架空のセリフ", expression: "default", time: STAMPED },
-    ])
+    const entries = chatLogEntries([speechRecord({ text: "架空のセリフ" })])
 
     expect(chatLogByteSize(entries)).toBe(new TextEncoder().encode("架空のセリフ").length)
   })
 
   it("画像つきの依頼でも、添えた画像は数えない", () => {
     const withImages = chatLogEntries([
-      {
-        kind: "request",
+      requestRecord({
         turnId: 0,
         text: "あああ",
         images: ["data:image/png;base64,architecture-tallying-decoy"],
-        time: STAMPED,
-      },
+      }),
     ])
-    const withoutImages = chatLogEntries([
-      { kind: "request", turnId: 5, text: "あああ", images: [], time: STAMPED },
-    ])
+    const withoutImages = chatLogEntries([requestRecord({ turnId: 5, text: "あああ" })])
 
     expect(chatLogByteSize(withImages)).toBe(chatLogByteSize(withoutImages))
   })
 
   it("圧縮の区切りは文面を持たないので数えない", () => {
     const withBoundary = chatLogEntries([
-      { kind: "request", turnId: 6, text: "あああ", images: [], time: STAMPED },
-      { kind: "compact-boundary" },
+      requestRecord({ turnId: 6, text: "あああ" }),
+      compactBoundaryRecord(),
     ])
-    const withoutBoundary = chatLogEntries([
-      { kind: "request", turnId: 7, text: "あああ", images: [], time: STAMPED },
-    ])
+    const withoutBoundary = chatLogEntries([requestRecord({ turnId: 7, text: "あああ" })])
 
     expect(chatLogByteSize(withBoundary)).toBe(chatLogByteSize(withoutBoundary))
   })
 
   it("複数件は合算する", () => {
     const entries = chatLogEntries([
-      { kind: "request", turnId: 8, text: "1つめの依頼", images: [], time: STAMPED },
-      { kind: "speech", text: "1つめのセリフ", expression: "default", time: STAMPED },
+      requestRecord({ turnId: 8, text: "1つめの依頼" }),
+      speechRecord({ text: "1つめのセリフ" }),
     ])
 
     expect(chatLogByteSize(entries)).toBe(

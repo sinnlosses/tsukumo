@@ -27,7 +27,11 @@ import {
   type ScopeUsage,
   type TurnUsageBreakdown,
 } from "../../../src/shared/token-usage.ts"
-import { characterInfo, shownOutfitAccents, shownPortraits } from "../../fixture/character.ts"
+import {
+  characterChangedEvent,
+  shownOutfitAccents,
+  shownPortraits,
+} from "../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
@@ -103,14 +107,10 @@ function createStubDriver(): StubDriver {
  * 見た目の編集で流し直す `character-changed`（手で書いた架空のパック）。**書き込みそのものは
  * 配線層の仕事**なので、ここでは「書けた/書けなかった」だけを差し替える。
  */
-const CHARACTER_EVENT: SessionEvent = {
-  kind: "character-changed",
-  ...characterInfo({
-    ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
-    outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
-  }),
-  packs: [{ name: "fictional", label: "架空の精霊" }],
-}
+const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
+  ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
+  outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
+})
 
 function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const stub = createStubDriver()

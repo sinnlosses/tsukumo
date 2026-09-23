@@ -7,7 +7,12 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../src/shared/session-state.ts"
-import { characterInfo, shownOutfitAccents, shownPortraits } from "../fixture/character.ts"
+import {
+  characterChangedEvent,
+  characterInfo,
+  shownOutfitAccents,
+  shownPortraits,
+} from "../fixture/character.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
@@ -38,11 +43,7 @@ function sessionIdOf(state: SessionState): string | undefined {
 }
 
 /** 架空のキャラクターパックが決まったところ。 */
-const CHARACTER_FIXTURE: SessionEvent = {
-  kind: "character-changed",
-  ...characterInfo(),
-  packs: [{ name: "fictional", label: "架空の精霊" }],
-}
+const CHARACTER_FIXTURE: SessionEvent = characterChangedEvent()
 
 describe("applySessionEvent", () => {
   it("書きかけの本文をつなぎ、完成した本文が来たら置き換える（二重に積まない）", () => {
@@ -863,11 +864,7 @@ describe("applySessionEvent", () => {
       outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
     })
 
-    const view = apply({
-      kind: "character-changed",
-      ...character,
-      packs: [{ name: "fictional", label: "架空の精霊" }],
-    })
+    const view = apply(characterChangedEvent(character))
 
     expect(view.character).toEqual(character)
   })

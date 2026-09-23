@@ -7,7 +7,7 @@ import {
   type SessionLaunchPorts,
 } from "../../../src/server/core/session-launch.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { characterInfo, shownPortraits } from "../../fixture/character.ts"
+import { characterChangedEvent, shownPortraits } from "../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。
@@ -40,19 +40,6 @@ function createStubDriver(): { readonly driver: SessionDriver; readonly calls: s
   }
 }
 
-function characterEventOf(pack: Pack): SessionEvent {
-  return {
-    kind: "character-changed",
-    ...characterInfo({
-      pack: pack.name,
-      name: pack.name,
-      editable: false,
-      ...shownPortraits({ default: `/character/${pack.name}.png` }),
-    }),
-    packs: [{ name: pack.name, label: pack.name }],
-  }
-}
-
 type Harness = {
   readonly ports: SessionLaunchPorts<Pack>
   /** 駆動（と見張り）から新しく届いたイベントと、復元の再生の両方を時系列に混ぜたもの。 */
@@ -80,7 +67,16 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
       return selection.by === "name" ? SWITCHED : INITIAL
     },
     rememberPack: (pack) => calls.push(`rememberPack:${pack.name}`),
-    characterEvent: (pack) => characterEventOf(pack),
+    characterEvent: (pack: Pack) =>
+      characterChangedEvent(
+        {
+          pack: pack.name,
+          name: pack.name,
+          editable: false,
+          ...shownPortraits({ default: `/character/${pack.name}.png` }),
+        },
+        [{ name: pack.name, label: pack.name }],
+      ),
     watchTasks: () => ({ close: () => calls.push("watchTasks:close") }),
     findResumeSession: (pack, chat) => {
       calls.push(`findResumeSession:${pack.name}:${modeOf(chat)}`)

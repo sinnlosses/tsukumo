@@ -10,6 +10,7 @@ import { type SessionStore, SessionStoreContext } from "../../../../src/browser/
 import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
 import { type MainViewQuestion } from "../../../../src/shared/main-view.ts"
 import { INITIAL_SESSION_STATE, type SessionRecord } from "../../../../src/shared/session-state.ts"
+import { detailRecord, requestRecord, speechRecord } from "../../../fixture/session-record.ts"
 import { putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -17,18 +18,6 @@ afterEach(() => {
   // 過去のタブを選ぶと hash に乗る（`stores/turn-selection.tsx`）ので、次のテストへ持ち越さない。
   window.location.hash = ""
 })
-
-function request(text: string, turnId = 0): SessionRecord {
-  return { kind: "request", turnId, text, images: [], time: { kind: "stamped", at: 0 } }
-}
-
-function detail(markdown: string): SessionRecord {
-  return { kind: "detail", markdown }
-}
-
-function speech(text: string): SessionRecord {
-  return { kind: "speech", text, expression: "default", time: { kind: "stamped", at: 0 } }
-}
 
 function tool(
   overrides: Partial<Extract<SessionRecord, { readonly kind: "tool" }>>,
@@ -83,7 +72,10 @@ describe("MainView（ミニ立ち絵を置く原点）", () => {
   // ミニ立ち絵の置き場所が黙って消える**ので、名前が付いていることだけをここで見る
   // （実際にどこに見えるかは目視。`docs/architecture.md`「手で確かめること」）。
   it("ターンを載せる入れ物に、筆先の原点の印が付く", () => {
-    const { container } = renderMainView([request("1つ目", 0), detail("1つ目のレポート")])
+    const { container } = renderMainView([
+      requestRecord({ text: "1つ目", turnId: 0 }),
+      detailRecord("1つ目のレポート"),
+    ])
 
     expect(container.querySelector(`[${BRUSH_ORIGIN_ATTRIBUTE}]`)).not.toBeNull()
   })
@@ -92,12 +84,12 @@ describe("MainView（ミニ立ち絵を置く原点）", () => {
 describe("MainView（タブの規則）", () => {
   it("3ターンまでタブが出て、新しいターンで先頭（今回）へ戻る", () => {
     renderMainView([
-      request("1つ目", 0),
-      detail("1つ目のレポート"),
-      request("2つ目", 1),
-      detail("2つ目のレポート"),
-      request("3つ目", 2),
-      detail("3つ目のレポート"),
+      requestRecord({ text: "1つ目", turnId: 0 }),
+      detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
+      requestRecord({ text: "3つ目", turnId: 2 }),
+      detailRecord("3つ目のレポート"),
     ])
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
@@ -109,14 +101,14 @@ describe("MainView（タブの規則）", () => {
 
     // 4つ目が始まると、先頭（今回）は自動でそちらに変わる。
     rerenderMainView([
-      request("1つ目", 0),
-      detail("1つ目のレポート"),
-      request("2つ目", 1),
-      detail("2つ目のレポート"),
-      request("3つ目", 2),
-      detail("3つ目のレポート"),
-      request("4つ目", 3),
-      detail("4つ目のレポート"),
+      requestRecord({ text: "1つ目", turnId: 0 }),
+      detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
+      requestRecord({ text: "3つ目", turnId: 2 }),
+      detailRecord("3つ目のレポート"),
+      requestRecord({ text: "4つ目", turnId: 3 }),
+      detailRecord("4つ目のレポート"),
     ])
 
     expect(screen.getByText("4つ目のレポート")).toBeDefined()
@@ -125,12 +117,12 @@ describe("MainView（タブの規則）", () => {
 
   it("過去のタブを見ている間は、新しいターンが来ても動かない", () => {
     renderMainView([
-      request("1つ目", 0),
-      detail("1つ目のレポート"),
-      request("2つ目", 1),
-      detail("2つ目のレポート"),
-      request("3つ目", 2),
-      detail("3つ目のレポート"),
+      requestRecord({ text: "1つ目", turnId: 0 }),
+      detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
+      requestRecord({ text: "3つ目", turnId: 2 }),
+      detailRecord("3つ目のレポート"),
     ])
 
     // 1つ前（2つ目）のタブを選ぶ。
@@ -139,14 +131,14 @@ describe("MainView（タブの規則）", () => {
 
     // 新しいターンが始まっても、選んだタブのままでいる。
     rerenderMainView([
-      request("1つ目", 0),
-      detail("1つ目のレポート"),
-      request("2つ目", 1),
-      detail("2つ目のレポート"),
-      request("3つ目", 2),
-      detail("3つ目のレポート"),
-      request("4つ目", 3),
-      detail("4つ目のレポート"),
+      requestRecord({ text: "1つ目", turnId: 0 }),
+      detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
+      requestRecord({ text: "3つ目", turnId: 2 }),
+      detailRecord("3つ目のレポート"),
+      requestRecord({ text: "4つ目", turnId: 3 }),
+      detailRecord("4つ目のレポート"),
     ])
 
     expect(screen.getByText("2つ目のレポート")).toBeDefined()
@@ -155,12 +147,12 @@ describe("MainView（タブの規則）", () => {
 
   it("やり取りが1つ進んでも、前からあるタブの名前は変わらない（位置は title だけが追う）", () => {
     const three = [
-      request("架空の依頼A", 0),
-      detail("Aのレポート"),
-      request("架空の依頼B", 1),
-      detail("Bのレポート"),
-      request("架空の依頼C", 2),
-      detail("Cのレポート"),
+      requestRecord({ text: "架空の依頼A", turnId: 0 }),
+      detailRecord("Aのレポート"),
+      requestRecord({ text: "架空の依頼B", turnId: 1 }),
+      detailRecord("Bのレポート"),
+      requestRecord({ text: "架空の依頼C", turnId: 2 }),
+      detailRecord("Cのレポート"),
     ]
     renderMainView(three)
 
@@ -169,7 +161,7 @@ describe("MainView（タブの規則）", () => {
     expect(screen.getByRole("button", { name: "架空の依頼B" }).title).toBe("1つ前: 架空の依頼B")
 
     // 次のやり取りが始まる（レポートはまだ無い）。
-    rerenderMainView([...three, request("架空の依頼D", 3)])
+    rerenderMainView([...three, requestRecord({ text: "架空の依頼D", turnId: 3 })])
 
     const labels = screen
       .getAllByRole("button")
@@ -186,10 +178,10 @@ describe("MainView（タブの規則）", () => {
 describe("MainView（タブ切り替えでレポートの先頭へ戻す）", () => {
   it("タブを切り替えると、先頭へ戻す scrollIntoView が1回呼ばれる", () => {
     renderMainView([
-      request("1つ目", 0),
-      detail("1つ目のレポート"),
-      request("2つ目", 1),
-      detail("2つ目のレポート"),
+      requestRecord({ text: "1つ目", turnId: 0 }),
+      detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
     ])
 
     const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
@@ -216,12 +208,12 @@ describe("MainView（タブ切り替えでレポートの先頭へ戻す）", ()
 describe("MainView（セリフはレポートに出さない）", () => {
   it("セリフの記録が混ざっても、レポートには出ずタブの並びも変わらない", () => {
     renderMainView([
-      request("1つ目", 0),
-      speech("1つ目のセリフ"),
-      detail("1つ目のレポート"),
-      request("2つ目", 1),
-      speech("2つ目のセリフ"),
-      detail("2つ目のレポート"),
+      requestRecord({ text: "1つ目", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフ" }),
+      detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目", turnId: 1 }),
+      speechRecord({ text: "2つ目のセリフ" }),
+      detailRecord("2つ目のレポート"),
     ])
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
@@ -241,7 +233,7 @@ describe("MainView（セリフはレポートに出さない）", () => {
 describe("MainView（ツールの行はレポートに出ない）", () => {
   it("ファイルを変えた操作もサブエージェントの起動も行にならない（枠ごと消える）", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
+      requestRecord({ text: "依頼", turnId: 0 }),
       tool({ toolUseId: "t1", name: "Edit", input: { file_path: "src/a.ts" } }),
       tool({ toolUseId: "t2", name: "Agent", input: { description: "調査タスク" } }),
     ])
@@ -255,7 +247,7 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 
   it("失敗したツールも引数も出力も行にならない（過程はサイドバーに寄せた）", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
+      requestRecord({ text: "依頼", turnId: 0 }),
       tool({
         toolUseId: "t1",
         name: "Bash",
@@ -272,8 +264,8 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 
   it("本文の後ろにツールが続くと本文は落ち、チップも残らない（枠ごと消える）", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
-      detail("まず直すね"),
+      requestRecord({ text: "依頼", turnId: 0 }),
+      detailRecord("まず直すね"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
     ])
 
@@ -283,12 +275,12 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 
   it("ツールを何十件呼んだやり取りでも「省略した」の行は出ない（上限に数えない）", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
-      detail("## 調べた結果\n\n- 1つめ\n- 2つめ"),
+      requestRecord({ text: "依頼", turnId: 0 }),
+      detailRecord("## 調べた結果\n\n- 1つめ\n- 2つめ"),
       ...Array.from({ length: 60 }, (_, index) =>
         tool({ toolUseId: `t${String(index)}`, name: "Read", input: { file_path: "src/a.ts" } }),
       ),
-      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     expect(container.querySelector(".turn-dropped")).toBeNull()
@@ -300,8 +292,8 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 describe("MainView（中間レポート）", () => {
   it("まとまった本文の後ろにツールが続くと、中間レポートの印が付いた枠で残る", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
-      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      requestRecord({ text: "依頼", turnId: 0 }),
+      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
     ])
 
@@ -312,10 +304,10 @@ describe("MainView（中間レポート）", () => {
 
   it("最後に書いた本文は中間レポートにしない（印は付かない）", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
-      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      requestRecord({ text: "依頼", turnId: 0 }),
+      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     expect(screen.getByText("直した箇所")).toBeDefined()
@@ -325,10 +317,10 @@ describe("MainView（中間レポート）", () => {
 
   it("後ろに別のレポートが現れた中間レポートは <details> で畳んで出す（T-161）", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
-      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      requestRecord({ text: "依頼", turnId: 0 }),
+      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
     ])
 
     const interimSteps = container.querySelectorAll(".main-step.is-interim")
@@ -340,8 +332,8 @@ describe("MainView（中間レポート）", () => {
 
   it("まだ追い越されていない最後の中間レポートは畳まず開いたまま（<section> のまま）", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
-      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      requestRecord({ text: "依頼", turnId: 0 }),
+      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
     ])
 
@@ -353,12 +345,12 @@ describe("MainView（中間レポート）", () => {
 
   it("複数の中間レポートが追い越されると全部畳まれ、それぞれの <summary> に先頭行が出る", () => {
     const { container } = renderMainView([
-      request("依頼", 0),
-      detail("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
+      requestRecord({ text: "依頼", turnId: 0 }),
+      detailRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
       tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/a.ts" } }),
-      detail("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
+      detailRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
       tool({ toolUseId: "t2", name: "Write", input: { file_path: "src/b.ts" } }),
-      detail("## 片付いた\n\n- 1件目\n- 2件目"),
+      detailRecord("## 片付いた\n\n- 1件目\n- 2件目"),
     ])
 
     const interimSteps = [...container.querySelectorAll(".main-step.is-interim")]
@@ -378,14 +370,14 @@ describe("MainView（中間レポート）", () => {
     // <details> で畳まれる（既存の「複数の中間レポートが追い越されると全部畳まれ」ケースと
     // 同じ形）。
     const pair = (index: number): SessionRecord[] => [
-      detail(`## 見出し${String(index)}\n\n- 発見A\n- 発見B`),
+      detailRecord(`## 見出し${String(index)}\n\n- 発見A\n- 発見B`),
       tool({ toolUseId: `t${String(index)}`, name: "Write", input: { file_path: "src/a.ts" } }),
     ]
 
     const buildRecords = (pairCount: number): SessionRecord[] => [
-      request("依頼", 0),
+      requestRecord({ text: "依頼", turnId: 0 }),
       ...Array.from({ length: pairCount }, (_, index) => pair(index)).flat(),
-      detail("できたよ"),
+      detailRecord("できたよ"),
     ]
 
     // 45件（i=0..44）: レポート45件＋締めの1件が上限（40）を超えるので、前のほうは落ちる。

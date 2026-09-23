@@ -13,6 +13,12 @@ import {
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
+import {
+  compactBoundaryRecord,
+  detailRecord,
+  requestRecord,
+  speechRecord,
+} from "../../../fixture/session-record.ts"
 import { type CommandSpy, putState, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -23,14 +29,11 @@ afterEach(() => {
 // **その順が DOM の順にそのまま出る**ことだけを見る（`column-reverse` などで
 // 見かけを反転していない）。文面は手で書いた架空のもの。
 
-/** 時刻に依らないテストの記録に添える時刻。 */
-const STAMPED = { kind: "stamped", at: 0 } satisfies RecordTime
-
 const RECORDS: readonly SessionRecord[] = [
-  { kind: "request", turnId: 0, text: "1つめの依頼", images: [], time: STAMPED },
-  { kind: "speech", text: "1つめのセリフ", expression: "default", time: STAMPED },
-  { kind: "request", turnId: 1, text: "2つめの依頼", images: [], time: STAMPED },
-  { kind: "speech", text: "2つめのセリフ", expression: "proud", time: STAMPED },
+  requestRecord({ turnId: 0, text: "1つめの依頼" }),
+  speechRecord({ text: "1つめのセリフ" }),
+  requestRecord({ turnId: 1, text: "2つめの依頼" }),
+  speechRecord({ text: "2つめのセリフ", expression: "proud" }),
 ]
 
 // 立ち絵（`<Portrait>`）は `useQuery` を使うので `QueryClientProvider` が要る。表情を見る
@@ -99,8 +102,8 @@ describe("ChatView", () => {
   it("本文（レポート）は積まない（雑談中はレポートを出さない）", () => {
     renderChatView({
       records: [
-        { kind: "request", turnId: 2, text: "架空の依頼", images: [], time: STAMPED },
-        { kind: "detail", markdown: "## 架空のレポート" },
+        requestRecord({ turnId: 2, text: "架空の依頼" }),
+        detailRecord("## 架空のレポート"),
       ],
     })
 
@@ -121,9 +124,9 @@ describe("ChatView", () => {
   it("圧縮の区切りは文言を添えない細い線1本（`<hr>`）で出し、押せない", () => {
     renderChatView({
       records: [
-        { kind: "request", turnId: 3, text: "1つめの依頼", images: [], time: STAMPED },
-        { kind: "compact-boundary" },
-        { kind: "speech", text: "2つめのセリフ", expression: "default", time: STAMPED },
+        requestRecord({ turnId: 3, text: "1つめの依頼" }),
+        compactBoundaryRecord(),
+        speechRecord({ text: "2つめのセリフ" }),
       ],
     })
 
@@ -301,10 +304,7 @@ describe("ChatView のセリフを遡る", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [
-          ...RECORDS,
-          { kind: "speech", text: "3つめのセリフ", expression: "curious", time: STAMPED },
-        ],
+        records: [...RECORDS, speechRecord({ text: "3つめのセリフ", expression: "curious" })],
         character: FIXTURE_CHARACTER,
         speechExpression: "curious",
       })
@@ -322,7 +322,7 @@ describe("ChatView のセリフを遡る", () => {
 
   it("まだ何も話していなければ印はどこにも付かない", () => {
     renderChatView({
-      records: [{ kind: "request", turnId: 5, text: "架空の依頼", images: [], time: STAMPED }],
+      records: [requestRecord({ turnId: 5, text: "架空の依頼" })],
       character: FIXTURE_CHARACTER,
     })
 
@@ -455,10 +455,7 @@ describe("ChatView のセリフを遡る", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [
-          ...RECORDS,
-          { kind: "speech", text: "3つめのセリフ", expression: "curious", time: STAMPED },
-        ],
+        records: [...RECORDS, speechRecord({ text: "3つめのセリフ", expression: "curious" })],
         character: FIXTURE_CHARACTER,
         speechExpression: "curious",
       })
@@ -503,10 +500,7 @@ describe("ChatView のセリフを遡る", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [
-          ...RECORDS,
-          { kind: "request", turnId: 4, text: "3つめの依頼", images: [], time: STAMPED },
-        ],
+        records: [...RECORDS, requestRecord({ turnId: 4, text: "3つめの依頼" })],
         character: FIXTURE_CHARACTER,
         // 送った時点でターンが始まり、最新の表情は既定へ戻っている（`beginTurn`）。
         speechExpression: INITIAL_SESSION_STATE.speechExpression,
@@ -534,7 +528,7 @@ describe("ChatView の末尾のセリフが育つ", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [...RECORDS, { kind: "speech", text, expression, time: STAMPED }],
+        records: [...RECORDS, speechRecord({ text, expression })],
         character: FIXTURE_CHARACTER,
         speechExpression: expression,
       })
@@ -620,8 +614,8 @@ describe("ChatView の末尾のセリフが育つ", () => {
         ...INITIAL_SESSION_STATE,
         records: [
           ...RECORDS,
-          { kind: "speech", text: "3つめのセリフ", expression: "curious", time: STAMPED },
-          { kind: "speech", text: "4つめのセリフ", expression: "default", time: STAMPED },
+          speechRecord({ text: "3つめのセリフ", expression: "curious" }),
+          speechRecord({ text: "4つめのセリフ", expression: "default" }),
         ],
         character: FIXTURE_CHARACTER,
         speechExpression: "default",
@@ -672,10 +666,7 @@ describe("ChatView の「...」（返事を待つ間）", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [
-          ...RECORDS,
-          { kind: "speech", text: "3つめのセリフ", expression: "curious", time: STAMPED },
-        ],
+        records: [...RECORDS, speechRecord({ text: "3つめのセリフ", expression: "curious" })],
         character: FIXTURE_CHARACTER,
         speechExpression: "curious",
         turn: { kind: "running", startedAt: 0 },

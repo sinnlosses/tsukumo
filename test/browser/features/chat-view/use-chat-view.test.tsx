@@ -16,6 +16,11 @@ import {
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
+import {
+  compactBoundaryRecord,
+  requestRecord,
+  speechRecord,
+} from "../../../fixture/session-record.ts"
 import { type CommandSpy, putState, sessionStoreWith } from "../../session-store.ts"
 
 /**
@@ -29,13 +34,11 @@ afterEach(() => {
   cleanup()
 })
 
-const STAMPED = { kind: "stamped", at: 0 } satisfies RecordTime
-
 const RECORDS: readonly SessionRecord[] = [
-  { kind: "request", turnId: 0, text: "1つめの依頼", images: [], time: STAMPED },
-  { kind: "speech", text: "1つめのセリフ", expression: "default", time: STAMPED },
-  { kind: "request", turnId: 1, text: "2つめの依頼", images: [], time: STAMPED },
-  { kind: "speech", text: "2つめのセリフ", expression: "proud", time: STAMPED },
+  requestRecord({ turnId: 0, text: "1つめの依頼" }),
+  speechRecord({ text: "1つめのセリフ" }),
+  requestRecord({ turnId: 1, text: "2つめの依頼" }),
+  speechRecord({ text: "2つめのセリフ", expression: "proud" }),
 ]
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
@@ -112,7 +115,7 @@ describe("useChatView の行への畳み方", () => {
 
   it("圧縮の区切りは文言を持たない行になる", () => {
     const { result } = renderUseChatView({
-      records: [...RECORDS.slice(0, 2), { kind: "compact-boundary" }, ...RECORDS.slice(2)],
+      records: [...RECORDS.slice(0, 2), compactBoundaryRecord(), ...RECORDS.slice(2)],
     })
 
     expect(result.current.rows.map((row) => row.kind)).toContain("boundary")
@@ -167,10 +170,7 @@ describe("useChatView のセリフを遡る", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [
-          ...RECORDS,
-          { kind: "speech", text: "3つめのセリフ", expression: "default", time: STAMPED },
-        ],
+        records: [...RECORDS, speechRecord({ text: "3つめのセリフ" })],
         character: FIXTURE_CHARACTER,
         speechExpression: "default",
       })
@@ -188,10 +188,7 @@ describe("useChatView の育つ行", () => {
     act(() => {
       putState(store, {
         ...INITIAL_SESSION_STATE,
-        records: [
-          ...RECORDS,
-          { kind: "speech", text: "3つめのセリフ", expression: "default", time: STAMPED },
-        ],
+        records: [...RECORDS, speechRecord({ text: "3つめのセリフ" })],
       })
     })
 

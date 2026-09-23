@@ -55,6 +55,12 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 テストが手で組む記録とキャラクターのイベントを、共通の組み立て関数に寄せた（T-370）
+
+`test/fixture/session-record.ts` に `requestRecord` / `speechRecord` / `detailRecord` /
+`compactBoundaryRecord` を置き、`test/fixture/character.ts` に `characterChangedEvent` を足して、
+10ファイルに散っていたローカルの組み立て関数と `STAMPED` 定数を消した。テスト件数は前後とも1364件。
+
 ### 2026-09-23 キャラクター画面の2つのフォームを、決めた型で分けた（T-338）
 
 `character-edit.tsx` と `character-create.tsx` を container / presentational / `hooks/` に割り（編集は `components/` の2部品も）、フックを部品を起こさずに測るテストを足した。
