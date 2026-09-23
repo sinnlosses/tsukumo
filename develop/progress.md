@@ -59,6 +59,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
 
+### 2026-09-23 記録をターンに割る処理を src/shared/turn.ts の1か所に寄せた（T-438）
+
+`splitIntoTurns`（依頼より前は先頭の `pre-request`）を置き、`main-view.ts`・`turn-speech.ts`・`turn-step.ts`・`session-state.ts` の `trimToRecentTurns` がその上で自分の形に変えるようにした。メインビューの上限が依頼より前のまとまりを1ターンと数え、記録の窓は数えない差は、揃えると見え方が変わるので残した。
+
+### 2026-09-23 requirements.md に残った節を 4.9・4.2 と同じ基準で削った（T-468）
+
+`docs/requirements.md` の 887行・41,076字を 821行・37,607字にし、4.1/4.3/4.7/4.8/4.10 の採らなかった案・ユーザーの発言の引用・実測・撤回の経緯を `docs/history/decision.md` の新規5節（142行）へ移した。他の正典と二重の箇所は参照1行に畳み、決定といまも効く理由は残した（太字377件は本文361・decision.md 8・他の正典6・`character.json` 2 で全件引ける）。節の索引にあった古い「表情8つ」を「表情の一覧」に直した（本文は 2026-09-22 から9つ）。
+
 ### 2026-09-23 質問に答えている間、入力欄の送信ボタンを答え待ちの黄色で塗る（T-481）
 
 答え待ちの `<form>`（`.is-answering`）の内側にある `.dispatch-send` の塗り・枠・hover を `--state-warn` 基準にし、札の「これで答える」と揃えた。答え待ちでないときは `--accent` のまま。`docs/display.md` 4.2 に送るボタンの塗りを書き足した。
@@ -74,14 +82,6 @@ SDK の `background_tasks_changed` を `background-tasks-changed` に変換し�
 ### 2026-09-23 切り替えの立ち絵を「移して見せる」から「最初から切り替えた先の姿」に改めた（ユーザー報告）
 
 チカッとした正体は、起こし直しの間に新しい代の `chat-mode-changed` などが `events` で先に配られ、前のセッションの姿のままモードだけ切り替わっていたこと。起こし直しの代は新しい `hello` を配るまで束を配らないようにし（`session-manager.ts`）、T-478 で足した View Transition は外した（先読みと履歴の await は残す）。
-
-### 2026-09-23 requirements.md に残った節を 4.9・4.2 と同じ基準で削った（T-468）
-
-`docs/requirements.md` の 887行・41,076字を 821行・37,607字にし、4.1/4.3/4.7/4.8/4.10 の採らなかった案・ユーザーの発言の引用・実測・撤回の経緯を `docs/history/decision.md` の新規5節（142行）へ移した。他の正典と二重の箇所は参照1行に畳み、決定といまも効く理由は残した（太字377件は本文361・decision.md 8・他の正典6・`character.json` 2 で全件引ける）。節の索引にあった古い「表情8つ」を「表情の一覧」に直した（本文は 2026-09-22 から9つ）。
-
-### 2026-09-23 記録をターンに割る処理を src/shared/turn.ts の1か所に寄せた（T-438）
-
-`splitIntoTurns`（依頼より前は先頭の `pre-request`）を置き、`main-view.ts`・`turn-speech.ts`・`turn-step.ts`・`session-state.ts` の `trimToRecentTurns` がその上で自分の形に変えるようにした。メインビューの上限が依頼より前のまとまりを1ターンと数え、記録の窓は数えない差は、揃えると見え方が変わるので残した。
 
 ## 未解決
 
