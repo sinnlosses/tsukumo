@@ -37,3 +37,21 @@ const CATEGORY_LOOKS = new Map<string, CategoryLook>([
 export function categoryLook(name: string): CategoryLook {
   return CATEGORY_LOOKS.get(name) ?? { label: name, tone: "other" }
 }
+
+/**
+ * 読み込み中の骨組みが凡例に並べる分類の名前（`context-usage-card.tsx` の
+ * `ContextUsageCardSkeleton`）。**窓の外（`deferred`）は除く**（届く札でも横棒には積まないので、
+ * 骨組みでも数えない）。トークン数はまだ分からないが、**分類そのものは毎回同じ6+2種**なので、
+ * 名前と色は実物と同じものを出す（届いてから変わるのは数だけ）。並びは届く札の並び
+ * （`used` → `free` → `buffer`）に合わせる。
+ */
+export const SKELETON_ROW_NAMES = [
+  "System prompt",
+  "System tools",
+  "MCP tools",
+  "Memory files",
+  "Skills",
+  "Messages",
+  "Free space",
+  "Autocompact buffer",
+] as const

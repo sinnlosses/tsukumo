@@ -41,10 +41,11 @@ const FAKE_CONTEXT_USAGE = {
   categories: [
     { name: "System prompt", tokens: 7800, kind: "used" },
     { name: "System tools", tokens: 8700, kind: "used" },
+    { name: "MCP tools", tokens: 800, kind: "used" },
     { name: "MCP tools (deferred)", tokens: 2100, kind: "deferred" },
     { name: "Memory files", tokens: 12_200, kind: "used" },
     { name: "Skills", tokens: 4700, kind: "used" },
-    { name: "Messages", tokens: 88_100, kind: "used" },
+    { name: "Messages", tokens: 87_300, kind: "used" },
     { name: "Autocompact buffer", tokens: 45_000, kind: "buffer" },
     { name: "Free space", tokens: 33_500, kind: "free" },
   ],

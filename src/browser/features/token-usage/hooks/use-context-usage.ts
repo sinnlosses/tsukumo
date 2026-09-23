@@ -6,8 +6,10 @@
 // サーバが駆動へ問い合わせて返す）。**ターンの実行中に呼んでも待たされない**ので、進行中でも
 // 同じように取りに行く（実測は `src/server/adapter/sdk-driver.ts` の `CONTEXT_USAGE_DETAIL`）。
 //
-// **「まだ届いていない」も「取れなかった」も、描く側から見れば同じ「取れない」**
-// （`use-token-usage.ts` と同じ畳み方）。
+// **「取れなかった」は理由を問わず1つに畳む**（応答が落ちた・読めない形は区別しない。
+// 画面ですることが同じなので `use-token-usage.ts` と同じ畳み方）。**「まだ届いていない」は
+// 別の種類にする**（骨組みを出すか一言を出すかで見た目が変わるため。`query.isPending` から
+// 導くので `useEffect` は要らない）。
 
 import { useQuery } from "@tanstack/react-query"
 
@@ -35,8 +37,10 @@ export type ContextUsageRow = {
 /**
  * 札1枚を描くために要るもの。**判別可能な合併型**で、取れないときは札そのものを出さない
  * （`src/shared/context-usage.ts` の {@link ContextUsageReport} と同じ割り方）。
+ * `pending` は届く前の骨組み用、`unavailable` は取れなかったときの一言用。
  */
 export type UseContextUsageResult =
+  | { readonly kind: "pending" }
   | { readonly kind: "unavailable" }
   | {
       readonly kind: "ready"
@@ -64,6 +68,10 @@ export function useContextUsage(): UseContextUsageResult {
     // 開くたびに取り直す（読んでいる間にも積み上がるので、前に開いたときの内訳を見せない）。
     staleTime: 0,
   })
+  // 初回の応答がまだ無い間は骨組み（`query.isPending` から導くだけで `useEffect` は要らない）。
+  if (query.isPending) {
+    return { kind: "pending" }
+  }
   return toCard(query.data ?? UNAVAILABLE_CONTEXT_USAGE, query.dataUpdatedAt)
 }
 

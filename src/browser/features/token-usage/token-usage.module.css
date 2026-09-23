@@ -483,6 +483,60 @@
   margin-bottom: 0.4rem;
 }
 
+/* 読み込み中の骨組み（`ContextUsageCardSkeleton`）が出す塊。**中身の値だけを灰色にする**
+   （見出し・添え書き・分類名は実物と同じ文字を出す。`context-usage-card.tsx` 冒頭のコメント）。
+   うっすら明滅させる。`prefers-reduced-motion: reduce` では `theme.css` の全体規則
+   （`*, *::before, *::after { animation-duration: 0.01ms !important; }`）がこの
+   `animation` も止めるので、ここに専用の対応は要らない。
+   **`height` を自分では持たない**（`SkeletonBlock` の中身の `&nbsp;` が、届いた実物の文字と
+   同じ `font-size` で本文の行間（`--line-height-body`）ぶんの行の高さを自然に作る。固定の
+   `1em` などを指定すると、行間を含む実物の文字の高さより低くなり、届いた札とずれる。実測は
+   `context-usage-card.tsx` の `SkeletonBlock` のコメント）。文字は `color: transparent` で
+   見えなくする（読み上げは `aria-hidden` で別に止める）。 */
+.context-skeleton-block {
+  display: inline-block;
+  border-radius: 0.25rem;
+  background-color: var(--usage-well);
+  color: transparent;
+  animation: context-skeleton-pulse 1.6s ease-in-out infinite;
+}
+@keyframes context-skeleton-pulse {
+  0%,
+  100% {
+    background-color: var(--usage-well);
+  }
+  50% {
+    background-color: var(--usage-chosen);
+  }
+}
+/* 塊ごとの幅。 */
+.context-skeleton-until {
+  width: 3.5rem;
+}
+.context-skeleton-taken {
+  width: 9rem;
+}
+.context-skeleton-total-value {
+  width: 5rem;
+}
+.context-skeleton-total-max {
+  width: 3rem;
+}
+.context-skeleton-total-share {
+  width: 2.5rem;
+}
+.context-skeleton-legend-value {
+  width: 4.5rem;
+}
+/* 横棒だけは幅・高さを親（`.context-bar`）に合わせる（`flex: 1 1 auto` + 高さの指定なしで
+   `align-items: stretch` の既定に乗る）。届いた札の1本ずつの区間と違い、骨組みは分類ごとの
+   割合が分からないので1本の塊にする。**中身が無い**ので `&nbsp;` は要らない（高さは
+   `stretch` が決める）。 */
+.context-skeleton-bar {
+  flex: 1 1 auto;
+  border-radius: 0.375rem;
+}
+
 /* 分類ごとの塗り（`context-usage-category.ts` の `tone` と対。16進は theme.css だけが持つ）。 */
 .context-tone-system-prompt {
   background: var(--context-system-prompt);
