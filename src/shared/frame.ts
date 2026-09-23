@@ -19,10 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に `previousUsageReview`（前回の見直しの結果）を足したことで上げた（古いタブは
- * 畳み込みがこのフィールドを知らず、「前回の提案」のリンクを出せない）。
+ * 直近は `turn-finished` の `status` を `outcome`（終わり方と失敗の理由）に替え、状態に
+ * `apiTrouble` / `rateLimit` と、終わったターンの `ending` を足したことで上げた（古いタブは
+ * `outcome` を読めず、失敗で終わったターンを成功と見分けられない）。
  */
-export const PROTOCOL_VERSION = 11
+export const PROTOCOL_VERSION = 12
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の

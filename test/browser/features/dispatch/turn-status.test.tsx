@@ -68,14 +68,18 @@ describe("TurnStatus", () => {
   })
 
   it("(5) finished になると経過時間が止まり、ラベルが「所要」に変わる", () => {
-    renderTurnStatus({ turn: { kind: "finished", startedAt: 0, finishedAt: 125_000 } })
+    renderTurnStatus({
+      turn: { kind: "finished", startedAt: 0, finishedAt: 125_000, ending: { kind: "ended" } },
+    })
 
     expect(screen.getByText("所要")).toBeDefined()
     expect(screen.getByText("2分05秒")).toBeDefined()
   })
 
   it("始まった時刻と終わった時刻が同じなら 0秒（60秒未満は N秒 の形）", () => {
-    renderTurnStatus({ turn: { kind: "finished", startedAt: 500, finishedAt: 500 } })
+    renderTurnStatus({
+      turn: { kind: "finished", startedAt: 500, finishedAt: 500, ending: { kind: "ended" } },
+    })
 
     expect(screen.getByText("0秒")).toBeDefined()
   })
@@ -116,5 +120,100 @@ describe("TurnStatus", () => {
     fireEvent.click(button)
 
     expect(calls).toEqual([])
+  })
+  describe("API の知らせ（docs/display.md 4.2「入力欄」）", () => {
+    it("失敗で終わったターンは「所要」ではなく「失敗」と理由の字を出す（色だけに頼らない）", () => {
+      renderTurnStatus({
+        turn: {
+          kind: "finished",
+          startedAt: 0,
+          finishedAt: 12_000,
+          ending: { kind: "failed", failure: { kind: "api-error", error: "overloaded" } },
+        },
+      })
+
+      expect(screen.getByText("失敗")).toBeDefined()
+      expect(screen.queryByText("所要")).toBeNull()
+      expect(screen.getByRole("status").textContent).toBe("API が混んでいる（overloaded）")
+    })
+
+    it("成功で終わったターンは「所要」のままで、知らせを出さない", () => {
+      renderTurnStatus({
+        turn: { kind: "finished", startedAt: 0, finishedAt: 12_000, ending: { kind: "ended" } },
+      })
+
+      expect(screen.getByText("所要")).toBeDefined()
+      expect(screen.queryByRole("status")).toBeNull()
+    })
+
+    it("進行中に呼び直しを待っているあいだは「再試行中 n/m」を出し、理由と待ち時間は title で読ませる", () => {
+      renderTurnStatus({
+        turn: { kind: "running", startedAt: 0 },
+        apiTrouble: {
+          kind: "retrying",
+          at: 0,
+          attempt: 2,
+          maxRetries: 10,
+          retryDelayMs: 4000,
+          errorStatus: 529,
+          error: "overloaded",
+        },
+      })
+
+      const notice = screen.getByRole("status")
+      expect(notice.textContent).toBe("再試行中 2/10")
+      expect(notice.title).toBe("API が混んでいる（529）。4秒おいて呼び直す")
+    })
+
+    it("利用上限に達していれば、戻る時刻を添えて出す（失敗の理由より強い）", () => {
+      const now = Temporal.ZonedDateTime.from("2026-09-24T12:00:00[UTC]")
+      const clock = spyOn(Temporal.Now, "instant").mockReturnValue(now.toInstant())
+      const zone = spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
+      try {
+        renderTurnStatus({
+          turn: {
+            kind: "finished",
+            startedAt: 0,
+            finishedAt: 1000,
+            ending: { kind: "failed", failure: { kind: "api-error", error: "rate_limit" } },
+          },
+          rateLimit: {
+            kind: "rejected",
+            bucket: "five-hour",
+            resetsAt: now.add({ hours: 6 }).epochMilliseconds,
+          },
+        })
+
+        const notice = screen.getByRole("status")
+        expect(notice.textContent).toBe("利用上限 18:00まで")
+        expect(notice.title).toBe("5時間枠の利用上限に達した。18:00に戻る")
+        expect(screen.getByText("失敗")).toBeDefined()
+      } finally {
+        clock.mockRestore()
+        zone.mockRestore()
+      }
+    })
+
+    it("利用上限が近いときは「利用上限が近い」を出し、別の日に戻るなら日付も添える", () => {
+      const now = Temporal.ZonedDateTime.from("2026-09-24T12:00:00[UTC]")
+      const clock = spyOn(Temporal.Now, "instant").mockReturnValue(now.toInstant())
+      const zone = spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
+      try {
+        renderTurnStatus({
+          rateLimit: {
+            kind: "warning",
+            bucket: "seven-day",
+            resetsAt: now.add({ days: 2 }).epochMilliseconds,
+          },
+        })
+
+        const notice = screen.getByRole("status")
+        expect(notice.textContent).toBe("利用上限が近い")
+        expect(notice.title).toBe("7日間枠の利用上限が近い。9/26 12:00に戻る")
+      } finally {
+        clock.mockRestore()
+        zone.mockRestore()
+      }
+    })
   })
 })

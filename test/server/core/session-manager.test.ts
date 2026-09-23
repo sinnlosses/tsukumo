@@ -275,7 +275,7 @@ describe("createSessionManager", () => {
 
     stub.emit({ kind: "partial-utterance", text: "架空の" })
     stub.emit({ kind: "partial-utterance", text: "本文" })
-    stub.emit({ kind: "turn-finished", status: "success" })
+    stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
     await waitForBatch()
 
     const events = frames.filter((frame) => frame.type === "events")
@@ -284,7 +284,7 @@ describe("createSessionManager", () => {
     if (first?.type === "events") {
       expect(first.events.map((stamped) => stamped.event)).toEqual([
         { kind: "partial-utterance", text: "架空の本文" },
-        { kind: "turn-finished", status: "success" },
+        { kind: "turn-finished", outcome: { kind: "completed" } },
       ])
     }
   })
@@ -432,7 +432,7 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
     expect(stub.calls).not.toContain("close")
 
-    stub.emit({ kind: "turn-finished", status: "success" })
+    stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
     await waitForBatch()
 
     expect(
@@ -511,7 +511,7 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
     expect(stub.calls).not.toContain("close")
 
-    stub.emit({ kind: "turn-finished", status: "success" })
+    stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
     await waitForBatch()
 
     expect(
@@ -853,7 +853,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
       stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
       stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       const compactCalls = stub.calls.filter((call) =>
@@ -868,7 +868,7 @@ describe("createSessionManager", () => {
       // 送ったら走行合計が0に戻るので、続けて終わっただけの次のターンでは再送しない
       // （「投げたら数え直す」）。
       stub.emit({ kind: "request", text: "b", images: [] })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(
@@ -885,7 +885,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
       stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
       stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       // 圧縮は `promptWithoutRecord` で送るので `request` イベントを一切生まない
@@ -907,7 +907,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
       stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
       stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(
@@ -935,7 +935,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
       stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
       stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(stub.calls.some((call) => call.startsWith("promptWithoutRecord:/compact "))).toBe(
@@ -950,7 +950,7 @@ describe("createSessionManager", () => {
       // chat-mode-changed を流さないので chatMode は既定の false のまま。
       stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
       stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(stub.calls.some((call) => call.startsWith("promptWithoutRecord:/compact "))).toBe(
@@ -971,7 +971,7 @@ describe("createSessionManager", () => {
       for (let turn = 0; turn < 150; turn += 1) {
         stub.emit({ kind: "request", text: "xxxxx", images: [] })
         stub.emit({ kind: "speech", text: "yyyyy", expression: "default" })
-        stub.emit({ kind: "turn-finished", status: "success" })
+        stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       }
       await waitForBatch()
 
@@ -1519,7 +1519,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
       expect(finishTurnCalls.count).toBe(0)
 
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(finishTurnCalls.count).toBe(1)
@@ -1531,7 +1531,7 @@ describe("createSessionManager", () => {
 
       stub.emitRestored(CHARACTER_EVENT)
       stub.emitRestored({ kind: "chat-mode-changed", chat: true })
-      stub.emitRestored({ kind: "turn-finished", status: "success" })
+      stub.emitRestored({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(finishTurnCalls.count).toBe(0)
@@ -1652,9 +1652,9 @@ describe("createSessionManager", () => {
 
       stub.emit(SESSION_INFO)
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       stub.emit({ kind: "token-usage", cumulative: cumulative(260, 35, 1.25) })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries).toEqual([
@@ -1750,7 +1750,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "tool-finished", toolUseId: "t-2", content: "123", isError: false })
       stub.emit({ kind: "step-usage", messageId: "msg-1", scope: "main", usage: STEP_USAGE })
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries.map((written) => written.breakdown.main)).toEqual([
@@ -1782,7 +1782,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "step-usage", messageId: "msg-1", scope: "subagent", usage: STEP_USAGE })
       stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "123456", isError: false })
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries.map((written) => written.breakdown)).toEqual([
@@ -1815,9 +1815,9 @@ describe("createSessionManager", () => {
       })
       stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "12345", isError: false })
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       stub.emit({ kind: "token-usage", cumulative: cumulative(200, 40, 1) })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries.map((written) => written.breakdown.main.tools)).toEqual([
@@ -1858,7 +1858,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "speech", text: secrets[1] ?? "", expression: "default" })
       stub.emit({ kind: "utterance", text: secrets[4] ?? "" })
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries.length).toBe(1)
@@ -1940,10 +1940,10 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
-      stub.emit({ kind: "turn-finished", status: "success" })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries).toEqual([
@@ -1958,10 +1958,10 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
       stub.emit(sessionInfo("claude-session-2"))
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries.map((entry) => entry.sessionId)).toEqual([
@@ -1978,12 +1978,12 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries).toEqual([])
 
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries.map((entry) => entry.sessionId)).toEqual(["claude-session-1"])
@@ -1993,7 +1993,7 @@ describe("createSessionManager", () => {
       const { stub, entries, asked } = startContextUsageManagerWithStub([readyContextUsage()])
       await waitForBatch()
 
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries).toEqual([])
@@ -2006,7 +2006,7 @@ describe("createSessionManager", () => {
 
       stub.emit(sessionInfo("claude-session-1"))
       stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "turn-finished", status: "success" })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries.map((entry) => entry.mode)).toEqual(["chat"])
@@ -2017,7 +2017,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emitRestored({ kind: "turn-finished", status: "success" })
+      stub.emitRestored({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(entries).toEqual([])
@@ -2110,7 +2110,7 @@ describe("依頼に添えた画像の棚", () => {
           prompt: (text: string, images: readonly ShelvedPromptImage[]) => {
             prompted.push([...images])
             onEvent({ kind: "request", text, images: recordedPromptImages(images) })
-            onEvent({ kind: "turn-finished", status: "success" })
+            onEvent({ kind: "turn-finished", outcome: { kind: "completed" } })
           },
         })
       },

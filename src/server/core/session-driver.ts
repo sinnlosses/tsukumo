@@ -319,7 +319,7 @@ export type SessionDriver = {
    * 画像は添えられない（tsukumo が自分で足す一言のための口で、利用者の持ち物を運ばない）。
    */
   readonly promptWithoutRecord: (text: string) => void
-  /** 実行中のターンを中断する。中断されたターンは `turn-finished` の `error` で終わる。 */
+  /** 実行中のターンを中断する。中断されたターンは `turn-finished` の `interrupted` で終わる（失敗にはしない）。 */
   readonly interrupt: () => Promise<void>
   /** 答え待ちに答える。解決済み・知らない id のときは `false`。 */
   readonly answer: (id: string, answer: Answer) => boolean

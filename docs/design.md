@@ -751,6 +751,19 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 1件あたり URL が十数本（1〜2 KB）で、パックが数十に増えても数十 KB に収まり、流れるのは上の契機の
 ときだけ（ターンの中では流れない）。1件の形・配り直す契機・素材の URL は 7.2。
 
+**API の不調は3つのイベントと `turn-finished` の `outcome` で運ぶ**（2026-09-24）。`api-retry`
+（`system` / `api_retry`）・`api-error`（メインの `assistant` の `error`）・`rate-limit-changed`
+（`rate_limit_event`）を足し、`turn-finished` の `status: "success" | "error"` を
+`outcome: completed | interrupted | failed(cause)` に替えた（型は `src/shared/turn-failure.ts`）。
+**`api-error` だけではターンの失敗にしない**——出力の上限のように本体が立て直して続けることが
+あるので、失敗かどうかは `result` を写した `outcome` が決め、`api-error` はその理由の材料になる。
+`result` は API のエラーの種類を持たないので、**種類を足すのは畳み込み**（そのターンで届いた
+`api-error`、無ければ最後の `api-retry`、どちらも無ければ `unknown`）。変換（`sdk-message.ts`）を
+状態を持たない1メッセージ1変換のまま保つため。**中断は失敗にしない**: `error_during_execution` は
+`terminal_reason` が中断（`aborted_*`）か無いときは `interrupted` に倒す。**運ぶのは型の決まった値
+だけ**で、`result` の `errors` の自由文は契約に入れない（`docs/requirements.md` 4.1）。
+`turn-finished` の形を変えたので `PROTOCOL_VERSION` を上げた（4.5）。
+
 イベントは `StampedEvent`（`src/shared/session-event.ts`）として**時刻を持って**送る。`at` は
 サーバの `Date.now()`。reducer は `applySessionEvent(state, event, at)`（いまの第3引数 `now` と同じ）。
 **ブラウザ側で `Date.now()` を reducer に渡さない**（両側の状態が同じになるように、時刻はイベントの
@@ -778,6 +791,19 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 **経過時間の表示**は `turn` が持つ時刻（`running` の `startedAt`、`finished` の `startedAt` /
 `finishedAt`）から browser が計算する（1秒ごとの刻みは browser の
 ローカルな時計。`SessionState` に秒数は入れない）。
+
+**API の不調の持ち方**（2026-09-24 決定）。3つに分けて持つ。消える理由がそれぞれ違うため:
+
+- **`apiTrouble`**（`src/shared/api-trouble.ts`）は**いまのターンの中だけ**の状態（呼び直し中・
+  API がエラーを返した）。ターンの境目と、**モデルが何かを出したとき**（本文・セリフ・ツール・
+  ステップの使用量など。`session-state.ts` の `MODEL_OUTPUT_EVENT_KINDS`）に下ろす。呼び直しが
+  実った合図は SDK から来ないので、応答が届いたことを合図の代わりにする
+- **`rateLimit`**（`src/shared/rate-limit.ts`）は**セッションを通した**状態で、ターンの境目では
+  戻さない。次の `rate-limit-changed` が来るまで持つ（戻る時刻を過ぎても、戻ったかは次の知らせで
+  しか分からない）
+- **失敗の理由**は2か所に残す。`turn` の `finished` の `ending`（いちばん新しいターンが失敗だったか。
+  入力欄の「失敗」の字と立ち絵の動きが読む）と、記録の `turn-failure`（そのやり取りの末尾に出す
+  印。過去のターンを遡っても読める）。寿命が違う（前者は次の依頼まで、後者は記録の窓から落ちるまで）
 
 **記録の時刻**（2026-09-23 決定）。記録（`SessionRecord`）のうち**依頼（`request`）とセリフ
 （`speech`）の2種類だけ**が `time: RecordTime` を持つ。読むのは雑談のログ（13.7「時刻と日の
@@ -1288,6 +1314,10 @@ react-markdown
   領域の中をゆっくり歩く）/ **書いている**（メインが `report` の引数を書いている間、
   筆を運ぶように小さく速く横へ揺れる。2026-09-23 決定。材料は 2026-09-24 に `report` の引数へ移した）/ **完了の反応**（小さく跳ねる）/
   **失敗でびくっ**（一瞬のけぞる）
+- **ターンが失敗で終わったときも「失敗でびくっ」にし、「完了の反応」は出さない**（2026-09-24 決定。
+  材料は `turn` の `finished` の `ending`）。びくっのあとに跳ねると失敗を喜んで見える。**表情は
+  変えない**（表情の源は `speak` だけ。`docs/requirements.md` 4.3）——動きは矩形の位置だけなので
+  この原則に触れない
 - **`<Portrait>` の4つの動きは領域の外へ出さない。** `.character-region` の中で閉じる。
   **レポートの上に出てよいのはミニ立ち絵だけ**（`docs/requirements.md` 4.3。2026-09-20 に
   「レポートの上に被らせない」をこの1件だけ見直した）。ミニ立ち絵は `features/main-view/` 側の

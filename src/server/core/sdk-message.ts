@@ -11,15 +11,14 @@
 
 import { isPlainObject } from "remeda"
 
+import { API_ERROR_KINDS, type ApiErrorKind } from "../../shared/api-trouble.ts"
 import { type BackgroundTask, type BackgroundTaskKind } from "../../shared/background-task.ts"
 import { isBlankText } from "../../shared/blank-text.ts"
 import { type Expression } from "../../shared/expression.ts"
-import {
-  type CommandDescription,
-  type SessionEvent,
-  type TurnStatus,
-} from "../../shared/session-event.ts"
+import { type RateLimit, type RateLimitBucket } from "../../shared/rate-limit.ts"
+import { type CommandDescription, type SessionEvent } from "../../shared/session-event.ts"
 import { type ModelTokenUsage } from "../../shared/token-usage.ts"
+import { type TurnOutcome } from "../../shared/turn-failure.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
@@ -69,6 +68,13 @@ export const REPORT_TOOL_NAME = "report"
  *   `model-changed` を出す。** `command` が `model` 以外の局所コマンド
  *   （`/clear` など）や、形が崩れている・`args` が無いときは出さない。エイリアスとして
  *   知っているかどうかの検証はここでしない（docs/design.md 4.1、session-state.ts の仕事）
+ * - **`system` / `api_retry` は `api-retry`、`rate_limit_event` は `rate-limit-changed`、
+ *   メインの `assistant` の `error` は `api-error` にする**（docs/requirements.md 4.1）。運ぶのは
+ *   型の決まった値（エラーの列挙値・HTTP の状態コード・回数・待ち時間・枠・戻る時刻）だけで、
+ *   **`result` の `errors` は運ばない**（自由文で、会話の断片が混ざりうる）。`error` の付いた
+ *   `assistant` の本文は今までどおり本文として流す（出力の上限で切れた本物の本文のこともあり、
+ *   本体が作った API エラーの文面と見分ける印が型に無い）
+ * - **`result` の終わり方は `outcome` に畳む**（{@link turnOutcome}。中断は失敗にしない）
  * - 知らない `type`・壊れた形は空の並びを返す（落ちない）
  */
 export function toSessionEvents(
@@ -92,6 +98,9 @@ export function toSessionEvents(
       if (message.subtype === "background_tasks_changed") {
         return backgroundTaskEvents(message.tasks)
       }
+      if (message.subtype === "api_retry") {
+        return apiRetryEvents(message)
+      }
       // `compact_boundary` は claude 自身の圧縮が起きた合図（`compact_metadata` に
       // `trigger` / `pre_tokens` / `post_tokens` / `duration_ms` が乗るが、画面には
       // 出さないので運ばない。docs/chat-mode.md 4.9「記憶の圧縮と忘却」）。
@@ -103,6 +112,8 @@ export function toSessionEvents(
       ]
     case "assistant":
       return assistantMessageEvents(message, expressions)
+    case "rate_limit_event":
+      return rateLimitEvents(message.rate_limit_info)
     case "user":
       return toolResultEvents(message.message)
     case "result":
@@ -113,7 +124,7 @@ export function toSessionEvents(
       return optionalString(message.parent_tool_use_id) === undefined
         ? [
             ...tokenUsageEvents(message.modelUsage),
-            { kind: "turn-finished", status: turnStatus(message.subtype) },
+            { kind: "turn-finished", outcome: turnOutcome(message) },
           ]
         : []
     case "conversation_reset":
@@ -286,7 +297,102 @@ function assistantMessageEvents(
     ...assistantEvents(message.message, expressions, parentToolUseId),
     ...stepUsageEvents(message.message, parentToolUseId),
     ...modelChangeEvents(message.local_command_run),
+    // **`step-usage` より後ろに置く。** 畳み込みはステップの使用量を「モデルが応答した」合図に
+    // して API の不調を下ろすので、同じメッセージの `error` をその前に置くと消えてしまう。
+    ...apiErrorEvents(message.error, parentToolUseId),
   ]
+}
+
+/**
+ * `assistant` の `error` を `api-error` にする。**メインのものだけ**（サブエージェントの中の
+ * エラーは本体のターンの終わり方に効かない）。知らない綴りは `unknown` に畳む。
+ */
+function apiErrorEvents(
+  error: unknown,
+  parentToolUseId: string | undefined,
+): readonly SessionEvent[] {
+  return parentToolUseId === undefined && typeof error === "string"
+    ? [{ kind: "api-error", error: toApiErrorKind(error) }]
+    : []
+}
+
+/**
+ * `system` / `api_retry` を `api-retry` にする。回数・上限・待ち時間のどれかが数でなければ
+ * 出さない（壊れた知らせで「再試行中」を出さない）。`error_status` の `null`（応答が無かった
+ * 失敗）と数でない値は undefined に畳む。`no_response` の内訳は運ばない（画面は待ち時間しか
+ * 出さない）。
+ */
+function apiRetryEvents(message: Readonly<Record<string, unknown>>): readonly SessionEvent[] {
+  const { attempt, max_retries: maxRetries, retry_delay_ms: retryDelayMs } = message
+  if (!isFiniteNumber(attempt) || !isFiniteNumber(maxRetries) || !isFiniteNumber(retryDelayMs)) {
+    return []
+  }
+
+  return [
+    {
+      kind: "api-retry",
+      retry: {
+        attempt,
+        maxRetries,
+        retryDelayMs,
+        errorStatus: isFiniteNumber(message.error_status) ? message.error_status : undefined,
+        error: toApiErrorKind(message.error),
+      },
+    },
+  ]
+}
+
+function toApiErrorKind(value: unknown): ApiErrorKind {
+  return API_ERROR_KINDS.find((kind) => kind === value) ?? "unknown"
+}
+
+/**
+ * `rate_limit_event` の `rate_limit_info` を `rate-limit-changed` にする。`status` が3つの
+ * どれでもなければ出さない。**`resetsAt` は秒で届くのでミリ秒に直す**（Claude Code 本体が
+ * `resetsAt*1000` で扱っているのを 0.3.280 の同梱の本体で確かめた）。超過利用（`overage*`）と
+ * 使用率は運ばない（`src/shared/rate-limit.ts`）。
+ */
+function rateLimitEvents(info: unknown): readonly SessionEvent[] {
+  if (!isPlainObject(info)) {
+    return []
+  }
+
+  const rateLimit = toRateLimit(info)
+  return rateLimit === undefined ? [] : [{ kind: "rate-limit-changed", rateLimit }]
+}
+
+function toRateLimit(info: Readonly<Record<string, unknown>>): RateLimit | undefined {
+  switch (info.status) {
+    case "allowed":
+      return { kind: "clear" }
+    case "allowed_warning":
+    case "rejected":
+      return {
+        kind: info.status === "rejected" ? "rejected" : "warning",
+        bucket: rateLimitBucket(info.rateLimitType),
+        resetsAt: isFiniteNumber(info.resetsAt) ? info.resetsAt * 1000 : undefined,
+      }
+    default:
+      return undefined
+  }
+}
+
+function rateLimitBucket(value: unknown): RateLimitBucket {
+  switch (value) {
+    case "five_hour":
+      return "five-hour"
+    case "seven_day":
+    case "seven_day_overage_included":
+      return "seven-day"
+    case "seven_day_opus":
+      return "seven-day-opus"
+    case "seven_day_sonnet":
+      return "seven-day-sonnet"
+    case "overage":
+      return "overage"
+    default:
+      return "other"
+  }
 }
 
 /**
@@ -541,11 +647,47 @@ function finiteNumber(value: unknown): number {
 }
 
 /**
- * `result` の subtype を終わり方に倒す。中断されたターンは `error_during_execution` で終わる
- * ので、成功以外はまとめて `error` にする。
+ * `result` を終わり方に畳む（`src/shared/turn-failure.ts` の {@link TurnOutcome}）。
+ *
+ * - `success` は完了。**ただし `is_error` が true なら API のエラーで止まった失敗**（SDK の型定義:
+ *   「with is_error true, the error text when the turn ended on an API error」）
+ * - `error_max_turns` / `error_max_budget_usd` はそれぞれの上限に当たった失敗
+ * - **`error_during_execution` は中断のことが多い**（中断されたターンはこれで終わる。実測）。
+ *   `terminal_reason` が中断（`aborted_streaming` / `aborted_tools`）か、無い（古い本体）ときは
+ *   中断に倒し、それ以外の理由が付いているときだけ実行中のエラーの失敗にする
+ * - 知らない subtype は実行中のエラーの失敗（成功と言い切れないものを黙って成功にしない）
  */
-function turnStatus(subtype: unknown): TurnStatus {
-  return subtype === "success" ? "success" : "error"
+function turnOutcome(message: Readonly<Record<string, unknown>>): TurnOutcome {
+  switch (message.subtype) {
+    case "success":
+      return message.is_error === true
+        ? { kind: "failed", cause: { kind: "api-error" } }
+        : { kind: "completed" }
+    case "error_max_turns":
+      return { kind: "failed", cause: { kind: "max-turns" } }
+    case "error_max_budget_usd":
+      return { kind: "failed", cause: { kind: "max-budget" } }
+    case "error_during_execution":
+      return INTERRUPTED_TERMINAL_REASONS.has(message.terminal_reason)
+        ? { kind: "interrupted" }
+        : { kind: "failed", cause: { kind: "execution-error" } }
+    default:
+      return { kind: "failed", cause: { kind: "execution-error" } }
+  }
+}
+
+/**
+ * `error_during_execution` を中断とみなす `terminal_reason`。**無い（undefined）も含める**——
+ * `terminal_reason` を載せない古い本体でも、中断を失敗と出さないため。
+ */
+const INTERRUPTED_TERMINAL_REASONS: ReadonlySet<unknown> = new Set([
+  "aborted_streaming",
+  "aborted_tools",
+  undefined,
+])
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value)
 }
 
 function optionalString(value: unknown): string | undefined {

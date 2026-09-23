@@ -20,7 +20,7 @@ const SESSION_INFO: SessionEvent = {
   slashCommands: [],
   terminalSlashCommands: [],
 }
-const FINISHED: SessionEvent = { kind: "turn-finished", status: "success" }
+const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
 const report = (toolUseId: string): Extract<SessionEvent, { kind: "report" }> => ({
   kind: "report",

@@ -14,7 +14,7 @@ const INIT: SessionEvent = {
   terminalSlashCommands: [],
 }
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-const FINISHED: SessionEvent = { kind: "turn-finished", status: "success" }
+const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const UTTERANCE: SessionEvent = { kind: "utterance", text: "架空の続きの報告" }
 
 /** 包んだ口に `events` を順に流し、外へ出たイベントの kind の並びを返す。 */

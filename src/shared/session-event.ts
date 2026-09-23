@@ -14,20 +14,20 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { type ApiErrorKind, type ApiRetry } from "./api-trouble.ts"
 import { type BackgroundTask } from "./background-task.ts"
 import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
+import { type RateLimit } from "./rate-limit.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { type SessionDefault } from "./session-default.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
+import { type TurnOutcome } from "./turn-failure.ts"
 import { type UsageReviewFindings, type UsageReviewStage } from "./usage-review.ts"
-
-/** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
-export type TurnStatus = "success" | "error"
 
 /**
  * `/` 補完に出すコマンド1件。**説明は SDK 側が持っている**（`init` の `slash_commands` は
@@ -178,7 +178,30 @@ export type SessionEvent =
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
     }
-  | { readonly kind: "turn-finished"; readonly status: TurnStatus }
+  /**
+   * ターンが終わった（`result`。サブエージェントの中の `result` は変換で捨てる）。`outcome` は
+   * 終わり方（`src/shared/turn-failure.ts` の {@link TurnOutcome}）。**中断は失敗にしない**。
+   * 駆動が自分で起こすのは fake driver の中断（`interrupted`）と、復元の再生の区切り（`completed`）。
+   */
+  | { readonly kind: "turn-finished"; readonly outcome: TurnOutcome }
+  /**
+   * API の呼び出しが失敗し、待ってから呼び直す（SDK の `system` / `api_retry`）。**呼び直す
+   * たびに1回ずつ**届く。呼び直しが実った合図は来ないので、畳み込みはモデルが何かを出した
+   * ところで「呼び直し中」を下ろす（`src/shared/session-state.ts`）。サブエージェントの呼び直しも
+   * 見分けずに届く（SDK のメッセージに持ち場の印が無い）。
+   */
+  | { readonly kind: "api-retry"; readonly retry: ApiRetry }
+  /**
+   * API がエラーを返した（`assistant` の `error`。メインのものだけ）。**これだけではターンの
+   * 失敗にしない**——本体が立て直して続けることがある（出力の上限など）。失敗で終わったかは
+   * 続く `turn-finished` の `outcome` が決め、この種類がその理由になる。
+   */
+  | { readonly kind: "api-error"; readonly error: ApiErrorKind }
+  /**
+   * 利用上限（docs/glossary.md「利用上限」）の状態が変わった（SDK の `rate_limit_event`。
+   * 型定義は「変わったときに届く」と言う）。届くたびに丸ごと置き換える。
+   */
+  | { readonly kind: "rate-limit-changed"; readonly rateLimit: RateLimit }
   /**
    * そのターンの終わりに SDK が渡してきたトークンの使用量（`result` の `modelUsage`）。
    * **運ぶのは `query()` の中の累計そのまま**で、ターンごとの増分に直すのは受け取った側

@@ -238,7 +238,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       playNextTurn()
     },
     interrupt: () => {
-      emit({ kind: "turn-finished", status: "error" })
+      emit({ kind: "turn-finished", outcome: { kind: "interrupted" } })
       return Promise.resolve()
     },
     answer: (id, answer) => settle(id, answer),

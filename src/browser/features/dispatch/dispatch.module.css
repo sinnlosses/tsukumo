@@ -172,6 +172,10 @@
 .dispatch-toolbar {
   display: flex;
   flex: 0 0 auto;
+  /* 経過時間の行（.dispatch-row）に API の知らせが載って道具の口の横に収まらないときは、行ごと
+     次の段へ送る（狭い画面で「再試行中 2/10」の数が省略記号に食われないように。目視で確認）。
+     知らせが無いときは今までどおり1段に収まる。 */
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
   min-width: 0;
@@ -205,13 +209,36 @@
   color: var(--ink);
 }
 /* 経過時間と送信⇄中断（<TurnStatus>）。道具の口との間に伸び縮みする要素が無いので、
-   ここで右端へ寄せる。 */
+   ここで右端へ寄せる。**縮めてよいのは API の知らせだけ**なので、行ごと縮められるように
+   しておき（`min-width: 0`）、縮む役は .dispatch-notice に持たせる。 */
 .dispatch-row {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
   margin-left: auto;
+}
+/* API の知らせ（再試行中・利用上限・失敗の理由。docs/display.md 4.2「入力欄」）。**色は枠と字
+   だけ**で地は塗らない（入力欄で塗ってよいのは送るボタンだけ）。色は意味を固定した state の
+   2色で、**字が意味を言う**（13.1 原則5）。狭い画面で行に収まらなければ末尾を省略し、全文は
+   `title` で読ませる。 */
+.dispatch-notice {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dispatch-notice[data-tone="warn"] {
+  color: var(--state-warn);
+}
+.dispatch-notice[data-tone="ng"] {
+  color: var(--state-ng);
 }
 /* 「送信」は行の主目的なので、**accent で塗りつぶす**（入力欄で塗ってよいのはこれ1つだけ。
    13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。字は地の色で抜く。

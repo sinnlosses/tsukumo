@@ -5,6 +5,7 @@ import {
   type HookEvent,
   type PermissionMode as SdkPermissionMode,
   type PostCompactHookInput,
+  type SDKAssistantMessageError,
   type StopHookInput,
 } from "@anthropic-ai/claude-agent-sdk"
 
@@ -20,6 +21,7 @@ import {
   type SessionDriverOptions,
   type SessionMode,
 } from "../../../src/server/core/session-driver.ts"
+import { API_ERROR_KINDS } from "../../../src/shared/api-trouble.ts"
 import { MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
@@ -225,6 +227,29 @@ describe("shared の値の一覧と SDK の型", () => {
       "default",
       "plan",
     ])
+  })
+
+  it("API_ERROR_KINDS は SDK の SDKAssistantMessageError と同じ綴りの集まり", () => {
+    // 片方の向きは代入で、もう片方の向きは全域の表（`satisfies Record<...>`）で確かめる。
+    // SDK に綴りが増えたら表の `satisfies` が型で落ち、shared に足し忘れたと分かる。
+    const asSdk: readonly SDKAssistantMessageError[] = API_ERROR_KINDS
+    const everySdkError = {
+      authentication_failed: true,
+      oauth_org_not_allowed: true,
+      account_on_hold: true,
+      verification_required: true,
+      billing_error: true,
+      rate_limit: true,
+      overloaded: true,
+      invalid_request: true,
+      model_not_found: true,
+      server_error: true,
+      unknown: true,
+      max_output_tokens: true,
+      cloud_credential_error: true,
+    } satisfies Record<SDKAssistantMessageError, true>
+
+    expect(Object.keys(everySdkError).toSorted()).toEqual(asSdk.toSorted())
   })
 
   it("MODEL_ALIASES は既定のモデルを含む4語", () => {

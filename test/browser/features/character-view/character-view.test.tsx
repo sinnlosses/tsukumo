@@ -132,7 +132,12 @@ describe("CharacterView", () => {
     try {
       renderCharacterView({
         character: FIXTURE_CHARACTER,
-        turn: { kind: "finished", startedAt: now - 200, finishedAt: now - 100 },
+        turn: {
+          kind: "finished",
+          startedAt: now - 200,
+          finishedAt: now - 100,
+          ending: { kind: "ended" },
+        },
         lastToolFailureAt: undefined,
       })
 

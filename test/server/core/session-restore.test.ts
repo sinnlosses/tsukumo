@@ -541,10 +541,10 @@ describe("toRestoredEvents", () => {
       },
       { kind: "tool-finished", toolUseId: "t-1", content: "架空の結果", isError: false },
       { kind: "speech", text: "できたよ", expression: "proud" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       { kind: "request", text: "架空の依頼その2", images: [] },
       { kind: "utterance", text: "架空の本文その2" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -631,7 +631,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -649,7 +649,7 @@ describe("toRestoredEvents", () => {
 
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "/架空コマンド", images: [] },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -663,7 +663,7 @@ describe("toRestoredEvents", () => {
 
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "/架空コマンド 架空の引数", images: [] },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -673,7 +673,7 @@ describe("toRestoredEvents", () => {
 
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の普通の依頼", images: [] },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -688,7 +688,7 @@ describe("toRestoredEvents", () => {
 
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -702,7 +702,7 @@ describe("toRestoredEvents", () => {
 
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の依頼の前半\n\n架空の依頼の後半", images: [] },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -717,7 +717,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -736,7 +736,7 @@ describe("toRestoredEvents", () => {
       { kind: "compact-boundary" },
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })
@@ -751,7 +751,7 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
       { kind: "compact-boundary" },
       { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])
   })

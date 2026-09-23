@@ -315,7 +315,7 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
         { kind: "request", text: "架空の依頼の文面", images: [] },
         { kind: "utterance", text: "架空の本文" },
         { kind: "speech", text: "架空のセリフ", expression: "default" },
-        { kind: "turn-finished", status: "success" },
+        { kind: "turn-finished", outcome: { kind: "completed" } },
       ]),
     )
 

@@ -31,7 +31,7 @@ const REPORT: SessionEvent = {
   favor: "",
 }
 const SPEECH: SessionEvent = { kind: "speech", text: "架空の締め", expression: "default" }
-const FINISHED: SessionEvent = { kind: "turn-finished", status: "success" }
+const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })
 const LONG_BODY = utterance("架空の本文の1行目\n架空の本文の2行目\n架空の本文の3行目")
 const ONE_LINE = utterance("完了")

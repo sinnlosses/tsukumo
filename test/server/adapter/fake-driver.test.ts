@@ -13,7 +13,7 @@ const FAKE_SESSION = {
       name: "架空の場面1",
       steps: [
         { afterMs: 0, event: { kind: "utterance", text: "架空の本文" } },
-        { afterMs: 0, event: { kind: "turn-finished", status: "success" } },
+        { afterMs: 0, event: { kind: "turn-finished", outcome: { kind: "completed" } } },
       ],
     },
     {
@@ -70,7 +70,7 @@ describe("startFakeSession", () => {
     expect(sink.events.slice(2)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
 
@@ -92,7 +92,7 @@ describe("startFakeSession", () => {
     expect(sink.events.slice(2)).toEqual([
       { kind: "turn-started" },
       { kind: "utterance", text: "架空の本文" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
 

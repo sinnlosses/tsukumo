@@ -18,6 +18,7 @@ import {
   type SessionState,
   type ToolRunStatus,
 } from "./session-state.ts"
+import { type TurnFailure } from "./turn-failure.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
 
 /**
@@ -80,12 +81,28 @@ export type MainViewEntry =
    * 本文（`detail`）を出さないため（{@link selectToolReports}）。
    */
   | { readonly kind: "report"; readonly markdown: string }
+  /**
+   * 失敗で終わったターンの理由（`SessionRecord` の `turn-failure` をそのまま通す）。**ステップには
+   * 入れない**——やり取りの末尾に1つだけ出す印なので、{@link groupIntoTurns} がステップから外して
+   * `MainViewTurn.failure` に移す。
+   */
+  | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
 export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question" }>
 
 /** ステップの中で起きたこと。ツールの実行か、キャラクターからの質問。 */
 export type MainViewAction = MainViewToolRun | MainViewQuestion
+
+/**
+ * やり取りが失敗で終わったか（`MainViewTurn.failure`）。`failed` のときだけ、描く側が
+ * やり取りの末尾に「失敗で終わった」と理由を出す（`src/browser/features/main-view/turn.tsx`）。
+ * 1つのやり取りに失敗が2つ以上あれば（背景のタスクのあとの続きのターンも失敗したときなど）、
+ * いちばん新しいものを出す。
+ */
+export type MainViewTurnFailure =
+  | { readonly kind: "none" }
+  | { readonly kind: "failed"; readonly failure: TurnFailure }
 
 /**
  * 1ステップ＝レポート1件と、それに続く出来事。
@@ -160,6 +177,8 @@ export type MainViewTurn = {
   readonly hasInterimReport: boolean
   /** 上限を超えて落とした**画面に出す**記録の件数。0 のときは何も落としていない。 */
   readonly droppedCount: number
+  /** このやり取りが失敗で終わったか（{@link MainViewTurnFailure}）。 */
+  readonly failure: MainViewTurnFailure
 }
 
 /**
@@ -231,7 +250,7 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
   if (record.kind === "report") {
     return [{ kind: "report", markdown: reportMarkdown(record) }]
   }
-  // `detail` / `question` は `MainViewEntry` と同じ形なのでそのまま通す。
+  // `detail` / `question` / `turn-failure` は `MainViewEntry` と同じ形なのでそのまま通す。
   if (record.kind !== "tool") {
     return [record]
   }
@@ -274,7 +293,8 @@ type GroupedTurn = {
  */
 function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn[] {
   return splitIntoTurns(entries).map((turn) => {
-    const { steps, toolReportIds } = groupIntoSteps(turn.records)
+    const failure = turn.records.findLast(isTurnFailure)
+    const { steps, toolReportIds } = groupIntoSteps(turn.records.filter(isStepEntry))
     return {
       turn: {
         id: turnIdOf(turn),
@@ -285,10 +305,25 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn
         steps,
         hasInterimReport: false,
         droppedCount: 0,
+        failure:
+          failure === undefined ? { kind: "none" } : { kind: "failed", failure: failure.failure },
       },
       toolReportIds,
     }
   })
+}
+
+/** やり取りの中の記録のうち、ステップに入るもの（失敗の印以外）。 */
+type StepEntry = Exclude<TurnRest<MainViewEntry>, { readonly kind: "turn-failure" }>
+
+function isTurnFailure(
+  entry: TurnRest<MainViewEntry>,
+): entry is Extract<MainViewEntry, { readonly kind: "turn-failure" }> {
+  return entry.kind === "turn-failure"
+}
+
+function isStepEntry(entry: TurnRest<MainViewEntry>): entry is StepEntry {
+  return entry.kind !== "turn-failure"
 }
 
 /**
@@ -302,7 +337,7 @@ type GroupedSteps = {
 }
 
 /** やり取り1つぶんの記録（依頼の後ろ）を、本文1件ごとのステップにまとめる。 */
-function groupIntoSteps(entries: readonly TurnRest<MainViewEntry>[]): GroupedSteps {
+function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
   return entries.reduce<GroupedSteps>(
     ({ steps, toolReportIds }, entry) => {
       const id = steps.length

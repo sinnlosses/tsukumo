@@ -26,6 +26,7 @@ function turn(overrides: Partial<MainViewTurn>): MainViewTurn {
     steps: [],
     hasInterimReport: false,
     droppedCount: 0,
+    failure: { kind: "none" },
     ...overrides,
   }
 }

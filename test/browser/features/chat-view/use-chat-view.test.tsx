@@ -367,7 +367,7 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
           ],
           speechCalledInTurn: true,
           // ターンはもう終わっている。
-          turn: { kind: "finished", startedAt: 0, finishedAt: 100 },
+          turn: { kind: "finished", startedAt: 0, finishedAt: 100, ending: { kind: "ended" } },
         })
       })
 

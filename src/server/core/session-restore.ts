@@ -152,10 +152,13 @@ export function canResume(config: Pick<Config, "newSession" | "driver">): boolea
 
 /**
  * 組み直した履歴のターンの終わり。**transcript には `result`（ターンの終わり）が残らない**ので、
- * 終わり方は分からない。成功に倒すのは、失敗の印を出すより「終わったこと」を伝えるほうが
+ * 終わり方は分からない。完了（`completed`）に倒すのは、失敗の印を出すより「終わったこと」を伝えるほうが
  * 画面の意味に合うため（進行中に見えると入力欄が中断ボタンのまま止まる）。
  */
-const RESTORED_TURN_FINISHED: SessionEvent = { kind: "turn-finished", status: "success" }
+const RESTORED_TURN_FINISHED: SessionEvent = {
+  kind: "turn-finished",
+  outcome: { kind: "completed" },
+}
 
 /** 組み直した再生の終わりの印（{@link toRestoredEvents}）。 */
 const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }

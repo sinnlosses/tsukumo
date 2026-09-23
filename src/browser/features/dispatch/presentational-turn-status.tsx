@@ -18,6 +18,18 @@ export type PresentationalTurnStatusProps = TurnStatusModel
 export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): ReactElement {
   return (
     <div className={styles["dispatch-row"]}>
+      {/* API の知らせ（再試行中・利用上限・失敗の理由）。行に出すのは短い字だけで、全文は
+          `title` で読ませる。`role="status"` で、変わったことを支援技術にも伝える。 */}
+      {props.notice.kind === "shown" && (
+        <span
+          role="status"
+          className={styles["dispatch-notice"]}
+          data-tone={props.notice.tone}
+          title={props.notice.detail}
+        >
+          {props.notice.label}
+        </span>
+      )}
       <span className={styles["dispatch-elapsed-row"]}>
         <span>{props.elapsedLabel}</span>{" "}
         <span className={styles["dispatch-elapsed"]}>{props.elapsedText}</span>

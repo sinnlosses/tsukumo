@@ -2,7 +2,8 @@
 // （レポート・質問の記録）を縦に1本で積む（`docs/display.md` 4.2
 // 「ステップは縦に1本で積む」。番号は振らない）。**ツールの実行は描かない**
 // （`docs/display.md` 4.2「メインビュー」。進行は帯の「いまの作業」が持つ。
-// `docs/screen-design.md` 13.9）。
+// `docs/screen-design.md` 13.9）。**失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を
+// 出す**（`docs/display.md` 4.2「メインビュー」。色だけでなく字で成功と見分ける）。
 
 import { Fragment, useState, type ReactElement } from "react"
 
@@ -13,7 +14,9 @@ import {
   type MainViewStepBody,
   type MainViewTurn,
 } from "../../../shared/main-view.ts"
+import { type TurnFailure } from "../../../shared/turn-failure.ts"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
+import { turnFailureLabel } from "../../domain/api-error-label.ts"
 import { requestLinesAfterTitle } from "./domain/turn-title.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
@@ -44,7 +47,7 @@ export function Turn(props: TurnProps): ReactElement {
       {turn.droppedCount > 0 && (
         <p className={styles["turn-dropped"]}>これ以前の {turn.droppedCount} 件は省略した</p>
       )}
-      {turn.steps.length > 0 && (
+      {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
         <div className={styles["main-steps"]}>
           {/* `key` は配列の添字ではなく `step.id`（`limitTurnEntries` が古いステップを落とす前に
               振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
@@ -60,9 +63,23 @@ export function Turn(props: TurnProps): ReactElement {
               key={step.id}
             />
           ))}
+          {turn.failure.kind === "failed" && <TurnFailureNotice failure={turn.failure.failure} />}
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * やり取りの末尾に出す「失敗で終わった」の札。見出しの字が失敗を言い、理由は型の決まった語だけ
+ * （`domain/api-error-label.ts`。SDK の自由文は出さない）。枠は `--state-ng`（色だけに頼らない）。
+ */
+function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactElement {
+  return (
+    <section className={`${styles["main-step"]} ${styles["is-failed"]}`} role="note">
+      <p className={styles["step-heading"]}>失敗で終わった</p>
+      <p className={styles["turn-failure-reason"]}>{turnFailureLabel(props.failure)}</p>
+    </section>
   )
 }
 

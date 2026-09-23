@@ -42,7 +42,7 @@ describe("mainViewTurnsOf", () => {
           time: { kind: "stamped", at: 0 },
         },
       ],
-      turn: { kind: "finished", startedAt: 0, finishedAt: 100 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 100, ending: { kind: "ended" } },
       partialUtterance: "架空の書きかけ",
     }
 

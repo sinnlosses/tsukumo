@@ -64,6 +64,7 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
     steps,
     hasInterimReport: false,
     droppedCount: 0,
+    failure: { kind: "none" },
   }
 }
 
@@ -184,5 +185,46 @@ describe("Turn（最終レポートのラベル）", () => {
     )
 
     expect(container.textContent).not.toContain("最終レポート")
+  })
+})
+
+describe("Turn（失敗で終わったやり取り）", () => {
+  it("失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を字で出す", () => {
+    const { container } = render(
+      <Turn
+        turn={{
+          ...turn([step({ id: 0, body: text("架空の本文"), final: true })]),
+          failure: { kind: "failed", failure: { kind: "api-error", error: "rate_limit" } },
+        }}
+        newest={false}
+      />,
+    )
+
+    const notice = container.querySelector('[role="note"]')
+    expect(notice?.textContent).toBe("失敗で終わった利用上限に当たった（rate_limit）")
+    // 本文より後ろ（やり取りの末尾）に置く。
+    expect(container.textContent?.endsWith(notice?.textContent ?? "")).toBe(true)
+  })
+
+  it("本文が1つも無いまま失敗したやり取りでも、失敗の札は出す", () => {
+    const { container } = render(
+      <Turn
+        turn={{ ...turn([]), failure: { kind: "failed", failure: { kind: "max-turns" } } }}
+        newest={false}
+      />,
+    )
+
+    expect(container.querySelector('[role="note"]')?.textContent).toBe(
+      "失敗で終わった往復の上限に当たった",
+    )
+  })
+
+  it("成功したやり取りには失敗の札を出さない", () => {
+    const { container } = render(
+      <Turn turn={turn([step({ id: 0, body: text("架空の本文"), final: true })])} newest={false} />,
+    )
+
+    expect(container.querySelector('[role="note"]')).toBeNull()
+    expect(container.textContent).not.toContain("失敗")
   })
 })

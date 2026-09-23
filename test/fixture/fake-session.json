@@ -120,7 +120,7 @@
           "afterMs": 1000,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -197,7 +197,7 @@
           "afterMs": 4800,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -240,7 +240,7 @@
           "afterMs": 1300,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -316,7 +316,7 @@
           "afterMs": 1300,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -395,7 +395,7 @@
           "afterMs": 1300,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -474,7 +474,7 @@
           "afterMs": 1300,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -568,7 +568,7 @@
           "afterMs": 700,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -649,7 +649,7 @@
           "afterMs": 1100,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -696,7 +696,7 @@
           "afterMs": 20200,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -806,7 +806,7 @@
           "afterMs": 19000,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -863,7 +863,7 @@
           "afterMs": 600,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -898,7 +898,7 @@
           "afterMs": 200,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         },
         {
@@ -927,7 +927,7 @@
           "afterMs": 600,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         },
         {
@@ -950,7 +950,7 @@
           "afterMs": 900,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1033,7 +1033,7 @@
           "afterMs": 13000,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1060,7 +1060,7 @@
           "afterMs": 9000,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         },
         {
@@ -1094,7 +1094,7 @@
           "afterMs": 12200,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1164,7 +1164,7 @@
           "afterMs": 3000,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1191,7 +1191,7 @@
           "afterMs": 200,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         },
         {
@@ -1213,7 +1213,7 @@
           "afterMs": 600,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         },
         {
@@ -1235,7 +1235,7 @@
           "afterMs": 1000,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         },
         {
@@ -1257,7 +1257,7 @@
           "afterMs": 1400,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1406,7 +1406,7 @@
           "afterMs": 8400,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1495,7 +1495,7 @@
           "afterMs": 3800,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1557,7 +1557,7 @@
           "afterMs": 2300,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         }
       ]
@@ -1627,7 +1627,7 @@
           "afterMs": 1500,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
           }
         },
         {
@@ -1662,7 +1662,190 @@
           "afterMs": 17300,
           "event": {
             "kind": "turn-finished",
-            "status": "success"
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "api-retry",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "API が混んでいる日に調べものを頼む（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "api-retry",
+            "retry": {
+              "attempt": 1,
+              "maxRetries": 10,
+              "retryDelayMs": 3000,
+              "errorStatus": 529,
+              "error": "overloaded"
+            }
+          }
+        },
+        {
+          "afterMs": 3500,
+          "event": {
+            "kind": "api-retry",
+            "retry": {
+              "attempt": 2,
+              "maxRetries": 10,
+              "retryDelayMs": 6000,
+              "errorStatus": 529,
+              "error": "overloaded"
+            }
+          }
+        },
+        {
+          "afterMs": 9800,
+          "event": {
+            "kind": "speech",
+            "text": "混んでたけど、つながったよ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 10000,
+          "event": {
+            "kind": "utterance",
+            "text": "## 再試行してから届いた\n\nこれは架空の本文で、実物の会話ではない。\n\n- API が混んでいて2回呼び直した（入力欄の行に「再試行中 n/m」が出ていた）\n- 本文が届いた時点で「再試行中」は消え、ターンは成功で終わる"
+          }
+        },
+        {
+          "afterMs": 10300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "completed"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "api-failure",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "API のサーバが不調な日に頼む（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "api-retry",
+            "retry": {
+              "attempt": 1,
+              "maxRetries": 2,
+              "retryDelayMs": 2000,
+              "errorStatus": 500,
+              "error": "server_error"
+            }
+          }
+        },
+        {
+          "afterMs": 2500,
+          "event": {
+            "kind": "api-retry",
+            "retry": {
+              "attempt": 2,
+              "maxRetries": 2,
+              "retryDelayMs": 4000,
+              "errorStatus": 500,
+              "error": "server_error"
+            }
+          }
+        },
+        {
+          "afterMs": 6800,
+          "event": {
+            "kind": "api-error",
+            "error": "server_error"
+          }
+        },
+        {
+          "afterMs": 7000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "failed",
+              "cause": {
+                "kind": "api-error"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "rate-limit",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "利用上限の近くで頼む（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "rate-limit-changed",
+            "rateLimit": {
+              "kind": "warning",
+              "bucket": "five-hour",
+              "resetsAt": 1790326800000
+            }
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "speech",
+            "text": "上限が近いみたい。手早くいくね。",
+            "expression": "serious"
+          }
+        },
+        {
+          "afterMs": 4000,
+          "event": {
+            "kind": "rate-limit-changed",
+            "rateLimit": {
+              "kind": "rejected",
+              "bucket": "five-hour",
+              "resetsAt": 1790326800000
+            }
+          }
+        },
+        {
+          "afterMs": 4200,
+          "event": {
+            "kind": "api-error",
+            "error": "rate_limit"
+          }
+        },
+        {
+          "afterMs": 4400,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "failed",
+              "cause": {
+                "kind": "api-error"
+              }
+            }
           }
         }
       ]

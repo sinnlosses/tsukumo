@@ -135,6 +135,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       kind: "finished",
       startedAt: 0,
       finishedAt: 1,
+      ending: { kind: "ended" },
     } satisfies SessionState["turn"]
     const SHELL_TASK = {
       taskId: "bash-1",
@@ -447,7 +448,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
   it("結果が届いていない手順は、ターンが終わっていても実行中のまま出す", () => {
     renderScreenNav({
-      turn: { kind: "finished", startedAt: 0, finishedAt: 100 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 100, ending: { kind: "ended" } },
       records: [
         requestRecord(),
         toolRecord({ toolUseId: "toolu_1", name: "Bash", input: { command: "echo" } }),

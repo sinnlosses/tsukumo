@@ -9,6 +9,35 @@ import {
 } from "../../src/shared/portrait-motion.ts"
 
 describe("resolvePortraitMotion", () => {
+  const FAILED_TURN = {
+    kind: "finished",
+    startedAt: 0,
+    finishedAt: 1000,
+    ending: { kind: "failed", failure: { kind: "api-error", error: "overloaded" } },
+  } satisfies PortraitMotionInput["turn"]
+
+  it("ターンが失敗で終わった直後（窓の内）は「失敗でびくっ」", () => {
+    const input: PortraitMotionInput = {
+      turn: FAILED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
+  })
+
+  it("失敗で終わったターンには、びくっの窓を過ぎても「完了の反応」を出さない", () => {
+    const input: PortraitMotionInput = {
+      turn: FAILED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + FAILURE_MOTION_WINDOW_MS)).toBe("reading")
+    expect(nextPortraitMotionTransitionDelayMs(input, 1000)).toBe(FAILURE_MOTION_WINDOW_MS)
+    expect(nextPortraitMotionTransitionDelayMs(input, 1000 + FAILURE_MOTION_WINDOW_MS)).toBe(
+      undefined,
+    )
+  })
+
   it("ターンが進行中でなく、直近の完了・失敗も無ければ「読んでいる」（呼吸だけ）", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "idle" },
@@ -29,7 +58,7 @@ describe("resolvePortraitMotion", () => {
 
   it("ターンが終わった直後（窓の内）は「完了の反応」", () => {
     const input: PortraitMotionInput = {
-      turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
       draftingReport: false,
     }
@@ -38,7 +67,7 @@ describe("resolvePortraitMotion", () => {
 
   it("完了の反応の窓を過ぎたら「読んでいる」に戻る", () => {
     const input: PortraitMotionInput = {
-      turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
       draftingReport: false,
     }
@@ -65,7 +94,7 @@ describe("resolvePortraitMotion", () => {
 
   it("失敗はターンが進行中でも完了の反応より優先する", () => {
     const input: PortraitMotionInput = {
-      turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: 1000,
       draftingReport: false,
     }
@@ -92,7 +121,7 @@ describe("resolvePortraitMotion", () => {
 
   it("完了の反応は「書いている」より優先する", () => {
     const input: PortraitMotionInput = {
-      turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
       draftingReport: true,
     }
@@ -121,7 +150,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
 
   it("窓をすでに過ぎていれば undefined", () => {
     const input: PortraitMotionInput = {
-      turn: { kind: "finished", startedAt: 0, finishedAt: 0 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 0, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
       draftingReport: false,
     }
@@ -130,7 +159,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
 
   it("完了の反応の窓が残っていれば、その残り時間を返す", () => {
     const input: PortraitMotionInput = {
-      turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
       draftingReport: false,
     }
@@ -139,7 +168,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
 
   it("失敗の窓のほうが早く終わるなら、そちらの残り時間を返す", () => {
     const input: PortraitMotionInput = {
-      turn: { kind: "finished", startedAt: 0, finishedAt: 1000 },
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: 1000,
       draftingReport: false,
     }

@@ -11,6 +11,7 @@
 // 入力欄の `/` 補完の候補は `command-suggestion.ts`）。ここが持つのは「状態そのもの」と
 // 「イベント1件でどう変わるか」だけ。
 
+import { type ApiTrouble } from "./api-trouble.ts"
 import { type BackgroundTask } from "./background-task.ts"
 import { isBlankText } from "./blank-text.ts"
 import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
@@ -20,10 +21,17 @@ import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
+import { type RateLimit } from "./rate-limit.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
+import {
+  type TurnEnding,
+  type TurnFailure,
+  type TurnFailureCause,
+  type TurnOutcome,
+} from "./turn-failure.ts"
 import { splitIntoTurns } from "./turn.ts"
 import {
   type PreviousUsageReview,
@@ -139,6 +147,13 @@ export type SessionRecord =
    * 変えない — 他の記録と同じく、窓から外れれば一緒に落ちる。
    */
   | { readonly kind: "compact-boundary" }
+  /**
+   * 失敗で終わったターンの理由（`turn-finished` の `outcome` が `failed`。docs/glossary.md
+   * 「ターンの失敗」）。**そのターンの記録の末尾に1つだけ積む**。メインビューがターンの末尾に
+   * 「失敗で終わった」と理由を出す（`shared/main-view.ts`）ので、過去のターンを遡っても
+   * 成功と見分けられる。雑談のログ・依頼の手順・吹き出しは拾わない。
+   */
+  | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
 
 /**
  * `init`（`session-info`）と、続きから始めたときの `sessions-changed` がどこまで届いたか。
@@ -182,7 +197,9 @@ export type SessionInfo =
  * - `running`: 依頼を送って、まだ終わっていない
  * - `finished`: 終わった。**`startedAt` は次の `request` まで持ち続ける**
  *   （入力欄の経過時間表示 `src/browser/features/dispatch/turn-status.tsx` が「所要」として
- *   出し続ける。docs/design.md 4.2）
+ *   出し続ける。docs/design.md 4.2）。`ending` は失敗で終わったか（{@link TurnEnding}。
+ *   入力欄の「失敗」の字と、立ち絵の「失敗でびくっ」の材料。`session-ended` で終わったときは
+ *   `ended`）
  *
  * 「進行中か」「始まった時刻」「終わった時刻」の3つを並べて持つと、**型としては書けるのに
  * 起きない組み合わせ**（終わっているのに始まっていない、進行中なのに終わった時刻がある）が
@@ -191,7 +208,12 @@ export type SessionInfo =
 export type TurnProgress =
   | { readonly kind: "idle" }
   | { readonly kind: "running"; readonly startedAt: number }
-  | { readonly kind: "finished"; readonly startedAt: number; readonly finishedAt: number }
+  | {
+      readonly kind: "finished"
+      readonly startedAt: number
+      readonly finishedAt: number
+      readonly ending: TurnEnding
+    }
 
 /** メインが `report` の引数を書いている途中か（{@link SessionState.reportDrafting}）。 */
 export type ReportDrafting =
@@ -385,6 +407,17 @@ export type SessionState = {
    * ようにするため）。
    */
   readonly previousUsageReview: PreviousUsageReview
+  /**
+   * いまのターンで API が不調か（{@link ApiTrouble}。入力欄の経過時間の行に「再試行中」を出す
+   * 材料と、失敗で終わったときの理由の材料）。**源は `api-retry` / `api-error`** で、ターンの
+   * 境目と、モデルが何かを出したとき（{@link MODEL_OUTPUT_EVENT_KINDS}）に `none` へ戻る。
+   */
+  readonly apiTrouble: ApiTrouble
+  /**
+   * 利用上限の状態（{@link RateLimit}。入力欄の経過時間の行が出す）。**源は `rate-limit-changed`
+   * だけ**で、ターンの境目では戻さない（セッションを通した状態で、次の知らせが来るまで持つ）。
+   */
+  readonly rateLimit: RateLimit
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -415,7 +448,24 @@ export const INITIAL_SESSION_STATE: SessionState = {
   backgroundTasks: [],
   usageReview: { kind: "idle" },
   previousUsageReview: { kind: "none" },
+  apiTrouble: { kind: "none" },
+  rateLimit: { kind: "clear" },
 }
+
+/**
+ * **モデルが何かを出した**と言えるイベント。届いたら {@link SessionState.apiTrouble} を下ろす
+ * （呼び直しが実った・API のエラーから立て直した合図は別に来ないため）。`step-usage` は
+ * 思考だけのステップでも届くので、本文が出る前に「再試行中」を下ろせる。
+ */
+const MODEL_OUTPUT_EVENT_KINDS: ReadonlySet<SessionEvent["kind"]> = new Set([
+  "partial-utterance",
+  "utterance",
+  "speech",
+  "report-drafting",
+  "report",
+  "tool-started",
+  "step-usage",
+] satisfies SessionEvent["kind"][])
 
 /**
  * イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。
@@ -429,6 +479,15 @@ export function applySessionEvent(
   event: SessionEvent,
   at: number,
 ): SessionState {
+  return foldSessionEvent(
+    MODEL_OUTPUT_EVENT_KINDS.has(event.kind) ? { ...state, apiTrouble: { kind: "none" } } : state,
+    event,
+    at,
+  )
+}
+
+/** {@link applySessionEvent} の本体（API の不調を下ろしたあとの姿に、イベント1件を畳む）。 */
+function foldSessionEvent(state: SessionState, event: SessionEvent, at: number): SessionState {
   switch (event.kind) {
     case "session-info":
       return {
@@ -553,22 +612,32 @@ export function applySessionEvent(
         ],
       }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
-    case "turn-finished":
+    case "turn-finished": {
+      const ending = turnEnding(event.outcome, state.apiTrouble)
       return {
-        ...settleUtterance(state),
-        turn: finishTurn(state.turn, at),
+        ...recordTurnFailure(settleUtterance(state), ending),
+        turn: finishTurn(state.turn, at, ending),
         reportDrafting: { kind: "idle" },
         usageReview: settleUsageReview(state.usageReview),
+        apiTrouble: { kind: "none" },
       }
+    }
     case "session-ended":
       return {
         ...settleUtterance(state),
         reportDrafting: { kind: "idle" },
         endedReason: event.reason,
-        turn: finishTurn(state.turn, at),
+        turn: finishTurn(state.turn, at, { kind: "ended" }),
         backgroundTasks: [],
         usageReview: settleUsageReview(state.usageReview),
+        apiTrouble: { kind: "none" },
       }
+    case "api-retry":
+      return { ...state, apiTrouble: { kind: "retrying", at, ...event.retry } }
+    case "api-error":
+      return { ...state, apiTrouble: { kind: "errored", error: event.error } }
+    case "rate-limit-changed":
+      return { ...state, rateLimit: event.rateLimit }
     case "conversation-cleared":
       // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**。
       // 消すのは吹き出しとメインビューが読む値だけで、キャラクター・セッション情報・
@@ -745,7 +814,34 @@ function beginTurn(state: SessionState, at: number): SessionState {
     turn: { kind: "running", startedAt: at },
     nextTurnId: state.nextTurnId + 1,
     speechCalledInTurn: false,
+    apiTrouble: { kind: "none" },
   }
+}
+
+/**
+ * ターンの終わり方を、失敗だったかどうかに畳む（中断は失敗にしない）。失敗の理由が API の
+ * エラーなら、そのターンで届いた種類を足す——`assistant` の `error`（`errored`）、無ければ
+ * 最後の呼び直しの知らせ（`retrying`。呼び直しを使い切って止まったとき）、どちらも無ければ
+ * `unknown`。
+ */
+function turnEnding(outcome: TurnOutcome, trouble: ApiTrouble): TurnEnding {
+  return outcome.kind === "failed"
+    ? { kind: "failed", failure: toTurnFailure(outcome.cause, trouble) }
+    : { kind: "ended" }
+}
+
+function toTurnFailure(cause: TurnFailureCause, trouble: ApiTrouble): TurnFailure {
+  if (cause.kind !== "api-error") {
+    return cause
+  }
+  return { kind: "api-error", error: trouble.kind === "none" ? "unknown" : trouble.error }
+}
+
+/** 失敗で終わったなら、理由を記録の末尾に積む（{@link SessionRecord} の `turn-failure`）。 */
+function recordTurnFailure(state: SessionState, ending: TurnEnding): SessionState {
+  return ending.kind === "failed"
+    ? { ...state, records: [...state.records, { kind: "turn-failure", failure: ending.failure }] }
+    : state
 }
 
 /**
@@ -754,11 +850,11 @@ function beginTurn(state: SessionState, at: number): SessionState {
  * が届く経路がある。そこでは立ち絵の「完了の反応」も出さない）。終わったあとにもう一度
  * 届いたときは、起点を動かさずに終わった時刻だけ進める。
  */
-function finishTurn(turn: TurnProgress, at: number): TurnProgress {
+function finishTurn(turn: TurnProgress, at: number, ending: TurnEnding): TurnProgress {
   if (turn.kind === "idle") {
     return turn
   }
-  return { kind: "finished", startedAt: turn.startedAt, finishedAt: at }
+  return { kind: "finished", startedAt: turn.startedAt, finishedAt: at, ending }
 }
 
 /**

@@ -105,6 +105,18 @@
   margin-bottom: 0.5rem;
 }
 
+/* 失敗で終わったやり取りの末尾の札（turn.tsx の TurnFailureNotice）。枠だけを --state-ng にし、
+   見出し「失敗で終わった」の字も同じ色にする（色だけで伝えない。13.1 原則5）。地は本文と同じ。 */
+.main-step.is-failed {
+  border-color: var(--state-ng);
+}
+.main-step.is-failed > .step-heading {
+  color: var(--state-ng);
+}
+.turn-failure-reason {
+  margin: 0;
+}
+
 .step-heading {
   margin: 0 0 0.5rem;
   font-size: var(--font-label);

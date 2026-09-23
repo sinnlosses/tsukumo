@@ -76,7 +76,7 @@ describe("applySessionEvent", () => {
   it("書きかけのまま終わったターンの本文を捨てない", () => {
     const view = apply(
       { kind: "partial-utterance", text: "途中まで" },
-      { kind: "turn-finished", status: "error" },
+      { kind: "turn-finished", outcome: { kind: "interrupted" } },
     )
 
     expect(view.partialUtterance).toBe("")
@@ -90,7 +90,7 @@ describe("applySessionEvent", () => {
       { kind: "speech", text: "できたよ！", expression: "proud" },
       { kind: "partial-utterance", text: "​" },
       { kind: "utterance", text: "​" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
     )
 
     expect(view.partialUtterance).toBe("")
@@ -215,7 +215,7 @@ describe("applySessionEvent", () => {
       { kind: "request", text: "組み直した依頼", images: [] },
       { kind: "speech", text: "組み直したセリフ", expression: "default" },
       { kind: "compact-boundary" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       { kind: "history-restored" },
       { kind: "request", text: "いまの依頼", images: [] },
     )
@@ -507,7 +507,11 @@ describe("applySessionEvent", () => {
     const started = apply({ kind: "request", text: "ダミーの依頼", images: [] })
     expect(started.turn.kind).toBe("running")
 
-    const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" }, 0)
+    const finished = applySessionEvent(
+      started,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      0,
+    )
     expect(finished.turn.kind).toBe("finished")
   })
 
@@ -551,8 +555,17 @@ describe("applySessionEvent", () => {
     )
     expect(started.turn).toEqual({ kind: "running", startedAt: 100 })
 
-    const finished = applySessionEvent(started, { kind: "turn-finished", status: "success" }, 300)
-    expect(finished.turn).toEqual({ kind: "finished", startedAt: 100, finishedAt: 300 })
+    const finished = applySessionEvent(
+      started,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      300,
+    )
+    expect(finished.turn).toEqual({
+      kind: "finished",
+      startedAt: 100,
+      finishedAt: 300,
+      ending: { kind: "ended" },
+    })
 
     // 次の依頼で0から数え直す（`running` に戻るので、終わった時刻はもう持たない）。
     const restarted = applySessionEvent(
@@ -586,7 +599,12 @@ describe("applySessionEvent", () => {
       250,
     )
 
-    expect(ended.turn).toEqual({ kind: "finished", startedAt: 100, finishedAt: 250 })
+    expect(ended.turn).toEqual({
+      kind: "finished",
+      startedAt: 100,
+      finishedAt: 250,
+      ending: { kind: "ended" },
+    })
   })
 
   it("tool-finished が isError:true のとき lastToolFailureAt にその時刻を打つ（立ち絵の「失敗でびくっ」の材料）", () => {
@@ -886,7 +904,7 @@ describe("applySessionEvent", () => {
     for (let turn = 0; turn < 25; turn += 1) {
       events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
       events.push({ kind: "utterance", text: `本文${String(turn)}` })
-      events.push({ kind: "turn-finished", status: "success" })
+      events.push({ kind: "turn-finished", outcome: { kind: "completed" } })
     }
 
     const view = apply(...events)
@@ -965,7 +983,8 @@ describe("applySessionEvent（report を書いている間）", () => {
 
   it("ターンが終わったら（中断で呼び出しが届かなくても）下りる", () => {
     expect(
-      apply(REQUEST, DRAFTING, { kind: "turn-finished", status: "error" }).reportDrafting,
+      apply(REQUEST, DRAFTING, { kind: "turn-finished", outcome: { kind: "interrupted" } })
+        .reportDrafting,
     ).toEqual({ kind: "idle" })
   })
 })
@@ -1000,7 +1019,7 @@ describe("applySessionEvent（背景のタスク）", () => {
     const view = apply(
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "background-tasks-changed", tasks: [SHELL_TASK] },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
     )
 
     expect(view.turn.kind).toBe("finished")
@@ -1029,7 +1048,7 @@ describe("applySessionEvent（背景のタスク）", () => {
     const view = apply(
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "speech", text: "架空の一言", expression: "default" },
-      { kind: "turn-finished", status: "success" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
       { kind: "background-tasks-changed", tasks: [] },
       { kind: "turn-started" },
     )
@@ -1200,13 +1219,21 @@ describe("applySessionEvent（見直し）", () => {
       { kind: "usage-review-result", findings: FINDINGS },
       700,
     )
-    const finished = applySessionEvent(result, { kind: "turn-finished", status: "success" }, 800)
+    const finished = applySessionEvent(
+      result,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      800,
+    )
 
     expect(finished.usageReview).toEqual({ kind: "result", reviewedAt: 700, findings: FINDINGS })
   })
 
   it("結果を渡さずにターンが終わるとふだんへ戻る", () => {
-    const finished = applySessionEvent(running(), { kind: "turn-finished", status: "success" }, 800)
+    const finished = applySessionEvent(
+      running(),
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      800,
+    )
 
     expect(finished.usageReview).toEqual({ kind: "idle" })
   })
@@ -1214,7 +1241,7 @@ describe("applySessionEvent（見直し）", () => {
   it("割り込まれて（error で）ターンが終わってもふだんへ戻る", () => {
     const interrupted = applySessionEvent(
       running(),
-      { kind: "turn-finished", status: "error" },
+      { kind: "turn-finished", outcome: { kind: "interrupted" } },
       800,
     )
 
@@ -1231,8 +1258,171 @@ describe("applySessionEvent（見直し）", () => {
     expect(
       apply(
         { kind: "request", text: "架空の依頼", images: [] },
-        { kind: "turn-finished", status: "success" },
+        { kind: "turn-finished", outcome: { kind: "completed" } },
       ).usageReview,
     ).toEqual({ kind: "idle" })
+  })
+})
+
+describe("applySessionEvent（API の不調と失敗）", () => {
+  const REQUEST = { kind: "request", text: "架空の依頼", images: [] } satisfies SessionEvent
+  const RETRY = {
+    kind: "api-retry",
+    retry: {
+      attempt: 2,
+      maxRetries: 10,
+      retryDelayMs: 4000,
+      errorStatus: 529,
+      error: "overloaded",
+    },
+  } satisfies SessionEvent
+  const FAILED_BY_API = {
+    kind: "turn-finished",
+    outcome: { kind: "failed", cause: { kind: "api-error" } },
+  } satisfies SessionEvent
+
+  it("api-retry で呼び直し中になり、届いた時刻を持つ", () => {
+    const state = applySessionEvent(apply(REQUEST), RETRY, 1234)
+
+    expect(state.apiTrouble).toEqual({ kind: "retrying", at: 1234, ...RETRY.retry })
+  })
+
+  it("モデルが何かを出したら（本文・ステップの使用量など）呼び直し中を下ろす", () => {
+    const outputs = [
+      { kind: "partial-utterance", text: "架空の書きかけ" },
+      {
+        kind: "step-usage",
+        messageId: "msg_1",
+        scope: "main",
+        usage: {
+          inputTokens: 1,
+          outputTokens: 1,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+        },
+      },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
+    ] satisfies SessionEvent[]
+
+    for (const output of outputs) {
+      expect(apply(REQUEST, RETRY, output).apiTrouble).toEqual({ kind: "none" })
+    }
+  })
+
+  it("モデルの出力でないイベント（答え待ち・使用量の累計）では呼び直し中を下ろさない", () => {
+    const state = apply(
+      REQUEST,
+      RETRY,
+      { kind: "pending-changed", pending: [] },
+      { kind: "token-usage", cumulative: [] },
+    )
+
+    expect(state.apiTrouble.kind).toBe("retrying")
+  })
+
+  it("API のエラーで失敗したターンは、届いたエラーの種類を理由にして記録の末尾に積む", () => {
+    const state = applySessionEvent(
+      apply(REQUEST, { kind: "api-error", error: "rate_limit" }),
+      FAILED_BY_API,
+      500,
+    )
+
+    const failure = { kind: "api-error", error: "rate_limit" } as const
+    expect(state.records.at(-1)).toEqual({ kind: "turn-failure", failure })
+    expect(state.turn).toEqual({
+      kind: "finished",
+      startedAt: 0,
+      finishedAt: 500,
+      ending: { kind: "failed", failure },
+    })
+    expect(state.apiTrouble).toEqual({ kind: "none" })
+  })
+
+  it("呼び直しを使い切って止まったときは、最後の呼び直しの種類を理由にする", () => {
+    const state = apply(REQUEST, RETRY, FAILED_BY_API)
+
+    expect(state.records.at(-1)).toEqual({
+      kind: "turn-failure",
+      failure: { kind: "api-error", error: "overloaded" },
+    })
+  })
+
+  it("種類が1つも届かずに API のエラーで止まったら unknown にする", () => {
+    expect(apply(REQUEST, FAILED_BY_API).records.at(-1)).toEqual({
+      kind: "turn-failure",
+      failure: { kind: "api-error", error: "unknown" },
+    })
+  })
+
+  it("API のエラーのあとにモデルが続けて完了したターンは失敗にしない（立て直した）", () => {
+    const state = apply(
+      REQUEST,
+      { kind: "api-error", error: "max_output_tokens" },
+      { kind: "utterance", text: "架空の続きの本文" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+    )
+
+    expect(state.records.some((record) => record.kind === "turn-failure")).toBe(false)
+    expect(state.turn).toMatchObject({ kind: "finished", ending: { kind: "ended" } })
+  })
+
+  it("中断は失敗にせず、記録も積まない", () => {
+    const state = apply(REQUEST, { kind: "turn-finished", outcome: { kind: "interrupted" } })
+
+    expect(state.records.some((record) => record.kind === "turn-failure")).toBe(false)
+    expect(state.turn).toMatchObject({ kind: "finished", ending: { kind: "ended" } })
+  })
+
+  it("上限の失敗は理由をそのまま積む", () => {
+    const state = apply(REQUEST, {
+      kind: "turn-finished",
+      outcome: { kind: "failed", cause: { kind: "max-turns" } },
+    })
+
+    expect(state.records.at(-1)).toEqual({ kind: "turn-failure", failure: { kind: "max-turns" } })
+  })
+
+  it("次の依頼で呼び直し中も前のターンの失敗の印も持ち越さない（記録は残る）", () => {
+    const state = apply(REQUEST, RETRY, FAILED_BY_API, REQUEST, RETRY, REQUEST)
+
+    expect(state.apiTrouble).toEqual({ kind: "none" })
+    expect(state.turn).toEqual({ kind: "running", startedAt: 0 })
+    expect(state.records.filter((record) => record.kind === "turn-failure")).toHaveLength(1)
+  })
+
+  it("rate-limit-changed で利用上限を丸ごと置き換え、ターンの境目では戻さない", () => {
+    const rejected = { kind: "rejected", bucket: "five-hour", resetsAt: 1_800_000_000_000 } as const
+    const state = apply({ kind: "rate-limit-changed", rateLimit: rejected }, REQUEST, {
+      kind: "turn-finished",
+      outcome: { kind: "completed" },
+    })
+
+    expect(state.rateLimit).toEqual(rejected)
+    expect(
+      applySessionEvent(state, { kind: "rate-limit-changed", rateLimit: { kind: "clear" } }, 0)
+        .rateLimit,
+    ).toEqual({ kind: "clear" })
+  })
+
+  it("失敗の記録はメインビューのステップに入らず、やり取りの failure に移る", () => {
+    const state = apply(
+      REQUEST,
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "api-error", error: "overloaded" },
+      FAILED_BY_API,
+    )
+    const [turn] = mainViewTurns(mainViewEntries(state), false)
+
+    expect(turn?.failure).toEqual({
+      kind: "failed",
+      failure: { kind: "api-error", error: "overloaded" },
+    })
+    expect(turn?.steps).toHaveLength(1)
   })
 })

@@ -419,7 +419,7 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
     const state = [
       { kind: "request", text: "架空の依頼", images: [] } satisfies SessionEvent,
       ...events,
-      { kind: "turn-finished", status: "success" } satisfies SessionEvent,
+      { kind: "turn-finished", outcome: { kind: "completed" } } satisfies SessionEvent,
     ].reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
     return mainViewTurns(mainViewEntries(state), false)[0]?.steps ?? []
   }
@@ -530,7 +530,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     },
     { kind: "tool-finished", toolUseId: id, content: "ok", isError: false },
   ]
-  const finished: SessionEvent = { kind: "turn-finished", status: "success" }
+  const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const shownReports = (turn: ReturnType<typeof turnOf>) =>
     (turn?.steps ?? []).flatMap((step) => {
       const shown = reportOf(step)

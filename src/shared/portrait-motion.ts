@@ -5,7 +5,8 @@
 // 読んでいる間（ターンが進行中でない間）は呼吸だけに落とし、ターンが進行中は「待っている間の
 // 移動」にする。メインが `report` の引数を書いているあいだは「書いている」に替わる。
 // ターンが終わった直後・ツールが失敗した直後は、それぞれ一時的に「完了の反応」「失敗でびくっ」を
-// 優先して返す（優先順位は {@link resolvePortraitMotion} 参照）。
+// 優先して返す（優先順位は {@link resolvePortraitMotion} 参照）。**ターンが失敗で終わった直後も
+// 「失敗でびくっ」**で、そのときは「完了の反応」を出さない（docs/design.md 6.5）。
 
 import { type TurnProgress } from "./session-state.ts"
 
@@ -30,16 +31,18 @@ export type PortraitMotionInput = {
   readonly draftingReport: boolean
 }
 
-/** ツールが失敗してから、このミリ秒だけ「失敗でびくっ」を優先する。 */
+/** ツールが失敗してから（ターンが失敗で終わってから）、このミリ秒だけ「失敗でびくっ」を優先する。 */
 export const FAILURE_MOTION_WINDOW_MS = 400
 
-/** ターンが終わってから、このミリ秒だけ「完了の反応」を優先する。 */
+/** ターンが（失敗でなく）終わってから、このミリ秒だけ「完了の反応」を優先する。 */
 export const SUCCESS_MOTION_WINDOW_MS = 700
 
 /**
- * いま出す動き。**優先順位**: ツールが失敗した直後（{@link FAILURE_MOTION_WINDOW_MS} 以内）
- * が最優先（ターンが進行中でも、他のツールが動いていても割り込む）。次にターンが終わった
- * 直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内、かつターンが進行中でない）。次に、ターンが
+ * いま出す動き。**優先順位**: ツールが失敗した直後・ターンが失敗で終わった直後
+ * （{@link FAILURE_MOTION_WINDOW_MS} 以内）が最優先（ターンが進行中でも、他のツールが動いていても
+ * 割り込む）。次にターンが失敗でなく終わった直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内、かつ
+ * ターンが進行中でない）。**失敗で終わったターンには「完了の反応」を出さない**（びくっのあとに
+ * 跳ねると、失敗を喜んで見える）。次に、ターンが
  * 進行中で `report` の引数を書いている最中なら「書いている」。どれでもなければ、
  * ターンが進行中なら「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」。
  *
@@ -47,13 +50,15 @@ export const SUCCESS_MOTION_WINDOW_MS = 700
  * 同じ理由でサーバとブラウザの結果を揃える）。
  */
 export function resolvePortraitMotion(input: PortraitMotionInput, now: number): PortraitMotion {
-  if (
-    input.lastToolFailureAt !== undefined &&
-    now - input.lastToolFailureAt < FAILURE_MOTION_WINDOW_MS
-  ) {
+  const failedAt = lastFailureAt(input)
+  if (failedAt !== undefined && now - failedAt < FAILURE_MOTION_WINDOW_MS) {
     return "failure"
   }
-  if (input.turn.kind === "finished" && now - input.turn.finishedAt < SUCCESS_MOTION_WINDOW_MS) {
+  if (
+    input.turn.kind === "finished" &&
+    input.turn.ending.kind === "ended" &&
+    now - input.turn.finishedAt < SUCCESS_MOTION_WINDOW_MS
+  ) {
     return "success"
   }
   if (input.turn.kind === "running" && input.draftingReport) {
@@ -81,13 +86,31 @@ export function nextPortraitMotionTransitionDelayMs(
   input: Pick<PortraitMotionInput, "turn" | "lastToolFailureAt">,
   now: number,
 ): number | undefined {
+  const failedAt = lastFailureAt(input)
   const remaining = [
-    input.lastToolFailureAt === undefined
-      ? undefined
-      : input.lastToolFailureAt + FAILURE_MOTION_WINDOW_MS - now,
-    input.turn.kind === "finished"
+    failedAt === undefined ? undefined : failedAt + FAILURE_MOTION_WINDOW_MS - now,
+    input.turn.kind === "finished" && input.turn.ending.kind === "ended"
       ? input.turn.finishedAt + SUCCESS_MOTION_WINDOW_MS - now
       : undefined,
   ].filter((ms): ms is number => ms !== undefined && ms > 0)
   return remaining.length === 0 ? undefined : Math.min(...remaining)
+}
+
+/**
+ * 直近の失敗の時刻。ツールの失敗（`lastToolFailureAt`）と、失敗で終わったターンの終わった時刻の
+ * うち新しいほう。どちらも無ければ undefined。
+ */
+function lastFailureAt(
+  input: Pick<PortraitMotionInput, "turn" | "lastToolFailureAt">,
+): number | undefined {
+  const turnFailedAt =
+    input.turn.kind === "finished" && input.turn.ending.kind === "failed"
+      ? input.turn.finishedAt
+      : undefined
+  if (turnFailedAt === undefined) {
+    return input.lastToolFailureAt
+  }
+  return input.lastToolFailureAt === undefined
+    ? turnFailedAt
+    : Math.max(turnFailedAt, input.lastToolFailureAt)
 }
