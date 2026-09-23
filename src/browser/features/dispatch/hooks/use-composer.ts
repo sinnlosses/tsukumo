@@ -18,7 +18,8 @@
 // **下書き・候補の開閉と選択位置は `<Composer>` のローカル状態**（docs/design.md 6.2）。候補は
 // 姿の `slashCommands` / `commandDescriptions`（`commandSuggestions`）・取得したファイルの一覧と、
 // 下書きの文字列から毎回計算するだけの導出値で、別に持たない。絞り方は
-// `command-suggestions.tsx` / `file-suggestions.tsx` が持ち、ここはキー操作と確定だけを持つ
+// `command-suggestions.tsx` / `file-suggestions.tsx` が持ち、ファイルの一覧の取得は
+// `use-repository-file-paths.ts` が持ち、ここはキー操作と確定だけを持つ
 // （送信の Enter と同じ `keydown` を共有するため）。
 
 import {
@@ -43,12 +44,8 @@ import {
 import { useQuestionAnswer } from "../../../stores/question-answer.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { matchingCommands, shouldShowCommandSuggestions } from "../command-suggestions.tsx"
-import {
-  type FilePathQuery,
-  filePathQuery,
-  matchingFilePaths,
-  useRepositoryFilePaths,
-} from "../file-suggestions.tsx"
+import { type FilePathQuery, filePathQuery, matchingFilePaths } from "../file-suggestions.tsx"
+import { useRepositoryFilePaths } from "./use-repository-file-paths.ts"
 
 /** 入力欄の下のボタンが打つ、補完の合図の文字。 */
 export type CompletionTrigger = "/" | "@"

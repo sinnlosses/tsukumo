@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 container/presenter の割る基準を「振る舞いの種類の数」に決め直した（T-442）
+
+「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。
+
 ### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
 
 4か所で書き写していた `TextEncoder` のバイト数の数え方を `src/shared/lib/byte-length.ts` の `byteLength` に寄せた。実行環境の API を包む道具なので `lib/`、`core` と `shared` の両方から読むので `shared` に置いた。

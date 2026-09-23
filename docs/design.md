@@ -350,15 +350,42 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 
 ### 機能の中を分ける（container / presenter と `hooks/`）
 
-部品が「ロジック」と「見た目」の両方を抱えたら、**3つに割る**（2026-09-22 決定。それまでは
-`hooks/` を「採らない」と書いていた）。後続の分割（`chat-view` / `composer` / キャラクター画面の
-フォームなど）もこの形に揃える。
+**割るかどうかは、部品が抱えている「振る舞いの種類」の数で決める**（2026-09-23 決定。それまでは
+「フックが0本のときだけ割らない」と書いていて、ストアのセレクタを1本読むだけの部品まで3つに
+割る形になっていた）。**行数もフックの本数も数えない。** 数えるのは次の3つ:
+
+| 種類                   | どういうものか                                                                       | 例                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| **保つ**（state）      | `useState` / `useRef` で持ち、イベントで遷移する                                     | 開いているか・下書き・選んだ位置                          |
+| **外と同期**（副作用） | `useEffect`・タイマー・`<dialog>` の DOM・取得（`useQuery`）・DOM の出来事の読み替え | 1秒ごとの刻み・`showModal()`・`git ls-files` の一覧の取得 |
+| **畳む**（算出）       | 受け取った値を**画面に出す形**へ変える                                               | 経過秒 → 「1分05秒」・並びの反転・候補の絞り込み          |
+
+**ストアを読むだけは数えない。** `useSessionSelector` / `useSessionDispatch` / `useTurnRunning` /
+`useQuestionAnswer` は「props で降ろす代わりに自分で読む」だけで、読む場所が変わっても部品の
+中身は増えない（降ろす道が遠いときに読むためのもの。6.2）。**これしか無い部品はフックが何本
+あっても1ファイルのまま**（`sidebar/session-info.tsx` / `profile-card.tsx` /
+`recent-topic-section.tsx` / `sidebar.tsx` / `character-switch.tsx`）。
+
+**2種類以上そろったら割り、1種類までは1ファイルのままにする。** 1種類のあいだは、その部品の
+中身がまだ「1つのこと」で説明が付く（`sidebar/session-switch.tsx` は**選択肢のラベルの作り方**
+だけ、`sidebar/task-section.tsx` は**何を開いているか**だけ）。2種類そろうと、片方を読むために
+もう片方を読み飛ばすことになる。
+
+**割り方は「余分な種類を外へ出す」方向で決める。3つに割るのが唯一の形ではない**（2026-09-23 決定）:
+
+| 抱えているもの                                         | 割り方                                                                | 例                                                                                        |
+| ------------------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 3種類そろっている（見た目もロジックも重い）            | container / `hooks/use-<名前>.ts` / `presentational-<名前>.tsx` の3つ | `task-board` / `chat-view` / `dispatch/turn-status.tsx` / `character-view/speech-log.tsx` |
+| **外の世界に触るフックだけ**が余分                     | そのフックだけを `hooks/use-<概念>.ts` へ出し、残りは1ファイルのまま  | `dispatch/file-suggestions.tsx` → `dispatch/hooks/use-repository-file-paths.ts`           |
+| **純関数だけ**が余分で、**フックを呼ばない相手**が読む | `domain/<概念>.ts` へ出す                                             | `task-board/domain/task-status.ts`                                                        |
+
+3つに割るときの分担（2026-09-22 決定。それまでは `hooks/` を「採らない」と書いていた）:
 
 | ファイル                    | 持つもの                                                                          | 持たないもの                       |
 | --------------------------- | --------------------------------------------------------------------------------- | ---------------------------------- |
-| `<機能>.tsx`（container）   | フックを呼び、**戻り値を展開して渡す**（presenter の Props はフックの戻り値の型） | JSX の中身・算出・条件分岐         |
-| `hooks/use-<機能>.ts`       | state・副作用・イベントの読み替え。**画面に出す形の値と呼び先を返す**             | JSX                                |
-| `presentational-<機能>.tsx` | 器だけ。受け取ったものを `components/` に渡す                                     | **フックを1つも持たない**・算出    |
+| `<名前>.tsx`（container）   | フックを呼び、**戻り値を展開して渡す**（presenter の Props はフックの戻り値の型） | JSX の中身・算出・条件分岐         |
+| `hooks/use-<名前>.ts`       | state・副作用・イベントの読み替え。**画面に出す形の値と呼び先を返す**             | JSX                                |
+| `presentational-<名前>.tsx` | 器だけ。受け取ったものを `components/` に渡す                                     | **フックを1つも持たない**・算出    |
 | `components/*.tsx`          | 部品ひとつずつ。class を付けて値を置く                                            | 算出・判定（**畳んだ値で受ける**） |
 | `domain/*.ts`               | **フックに入れられない**機能固有の語彙（対応表・文言）                            | JSX・フック・React                 |
 
@@ -367,7 +394,7 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 ```
 features/task-board/
   task-board.tsx                  container。useTaskBoard を呼んで PresentationalTaskBoard へ渡す
-  task-list.tsx                   区画の中身（フック0なので割らない）
+  task-list.tsx                   区画の中身（畳むだけの1種類なので割らない）
   presentational-task-board.tsx   <dialog> の器（フック無し）
   hooks/use-task-board.ts         <dialog> の ref・backdrop のクリックと、行への畳み方（BoardRow）
   components/task-table.tsx       表（memo）
@@ -378,7 +405,7 @@ features/task-board/
   components/task-running-card.tsx  区画の一覧の先頭に出す進行中（doing）のカード
   components/task-count-chip-list.tsx  見出し下の件数のチップ
   components/task-run-button.tsx  押せるタスクID（一覧と表の両方が置く）
-  components/task-run-confirm.tsx 「<ID> を実行しますか」の確認（押した瞬間だけ組み立てる）
+  components/task-run-confirm.tsx 「<ID> を実行しますか」の確認（押した瞬間だけ組み立てる。下の「`components/` とストア」）
   domain/task-status.ts           status → 色の class（表の行が読む）
   domain/task-list-count.ts       見出し下の件数のチップの元（サイドバーが読む）
   domain/task-sidebar-order.ts    区画の一覧の並び（進行中を先頭にまとめる純関数）
@@ -388,7 +415,7 @@ features/task-board/
 - **部品に算出を残さない。** 「値が無いときどうするか」「どれを出すか」はフックが
   `BoardRow` へ畳んでから渡す。部品に残ってよいのは **class を選ぶ分岐だけ**
   （`domain/task-status.ts` の呼び出しのように、CSS の名前が絡むもの）
-- **純関数でも、まず `hooks/use-<機能>.ts` に入らないかを見る**（2026-09-22 ユーザーの選択）。
+- **純関数でも、まず `hooks/use-<名前>.ts` に入らないかを見る**（2026-09-22 ユーザーの選択）。
   呼ぶのがそのフック1つなら、機能直下に `*.ts` を増やさずフックの下に関数として置く
   （`use-task-board.ts` の `boardRows`）。**`components/` は型だけを `import type` で引く**
 - **`domain/` を切るのは、フックに入れないほうが良いもののうち、その機能固有の語彙で
@@ -404,18 +431,35 @@ features/task-board/
   「置き場所を名前にしたファイルは作らない」の例外）。**container と1対1で対になっている**
   ことがファイル名で分かるほうが、`task-table.tsx` のような概念の名前より追いやすいため。
   逆に、対になっていない部品に `presentational-` を付けない
-- **フックの名前は機能名（`use-<機能>.ts`）でよい。** container が呼ぶ1本なので、対応する
-  container を探せることのほうが大事。**1ファイル1フック**
+- **フックと presenter の名前は、機能名ではなく container の名前に合わせる**
+  （`use-<container>.ts` / `presentational-<container>.tsx`。2026-09-23 決定）。**1つの機能に
+  container はいくつあってもよく**（`dispatch` の `composer` / `pending-answer` / `turn-status`、
+  `character-screen` の `character-create` / `character-edit`、`sidebar` の区画ごと）、機能名で
+  名乗ると対が分からなくなる。機能名と一致するのは container が1つの機能だけ
+  （`task-board` の `use-task-board.ts`）。**1ファイル1フック**
 - **機能の中の `hooks/` に置くのは、その機能だけが読むフック。** 読み手が2つになったら
   **`browser/hooks/` へ上げる**（機能の語彙を持たないものだけが上がる。`use-modal-dialog.ts` は
-  `<dialog>` の開閉を DOM へ写すだけでタスクを知らないので、最初から `browser/hooks/`）
+  `<dialog>` の開閉を DOM へ写すだけでタスクを知らないので、最初から `browser/hooks/`）。
+  **container と対になっていないフック**（`use-repository-file-paths.ts` のように、外の世界に
+  触るぶんだけを出したもの）も同じ `hooks/` に置き、名前は container ではなく**その概念**にする
 - **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く
   （`features/layout/split.ts` がその形）
 - **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
   container はフックのぶん毎回描き直されるので、そこに `memo` を置いても効かない
 
-**割らないでよいのは、フックが0本のとき**（`task-list.tsx` は `orderTasksForSidebar` の
-純関数だけなので、1ファイルのまま）。
+**`components/` とストア**: **機能の中の `components/` はストアを読んでよい**（2026-09-23 決定。
+`browser/components/` のほうは読めない——箱の表で `stores/` を引く辺が無い）。**条件は2つ**で、
+両方そろったときだけ:
+
+1. **props で降ろす道に `memo` か、その事情を知らない部品が挟まっている**こと。
+   `components/task-run-confirm.tsx` がこれで、開くまでの道
+   （`PresentationalTaskBoard` → `TaskTable`（`memo`）→ `TaskRow` → `TaskRunButton`）に
+   「タスクを実行する口の都合」を知らない部品が並ぶ。降ろすと `memo` の前提が崩れ、
+   **黙って描き直しが増える**（`board-close.tsx` が context を使うのと同じ理由）
+2. **読んだ値で分けるのは class と文面だけ**であること。`task-run-confirm.tsx` は
+   `useTurnRunning()` で文面とボタンを出し分けるだけで、畳み込みは持たない
+
+どちらかを満たさないなら、ストアを読む側を**機能の直下（container）へ出す**。
 
 ### `lib/` と `utils/` に置く基準
 
