@@ -1,14 +1,66 @@
 /* タスク一覧の機能（`src/browser/features/task-board/`）。サイドバーの区画に置く一覧
    （`task-list.tsx`）と、そこから開く画面いっぱいの表（`task-board.tsx` の `<dialog>`）を
-   **この1枚**に持つ — 一覧と表は「終わったタスクは薄い（.task-done）」「status は色で区別する
-   （.task-status-*）」「IDは等幅（.task-id）」という語彙を共有していて、分けると同じ名前が
-   2つになるため。**枠（区画そのもの）の見た目はサイドバーの側**（`sidebar.module.css` の
+   **この1枚**に持つ — 一覧と表は「終わったタスクは薄い（.task-done）」「IDは等幅（.task-id）」
+   という語彙を共有していて、分けると同じ名前が2つになるため。**status の色分け
+   （.task-status-*）は表だけの見た目**（一覧は印の形 `.task-mark-*` で区別する。
+   2026-09-23 決定）。**枠（区画そのもの）の見た目はサイドバーの側**（`sidebar.module.css` の
    .sidebar-block）にあり、ここには持ち込まない。 */
 
 /* 中身が無いときの一言。区画の中に置いたときは .sidebar-block p の余白も重なる
    （表の中に置いたときは重ならない＝ブラウザ既定の余白のまま）。 */
 .task-empty {
   color: var(--ink-quiet);
+}
+/* 件数のチップ（サイドバーの見出し「タスク」の下に1行。`components/task-count-chip-list.tsx`）。
+   **押せない**——絞り込みは見出しの「一覧を見る」から開く表の仕事（docs/requirements.md 4.2）。
+   進行中 → 未着手 → 完了の順で、0件でも出す（並びが動かないよう常に3枚）。 */
+.task-count-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.task-count-chip {
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 進行中（doing）のタスクのカード（一覧の先頭。`components/task-running-card.tsx`）。
+   2件以上あれば（並行した作業ツリーなど）、この枚数ぶんカードが並ぶ。 */
+.task-running-list {
+  margin: 0 0 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+.task-running-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin: 0 0 0.3rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.5rem;
+  background: var(--surface-accent);
+}
+.task-running-card:last-child {
+  margin-bottom: 0;
+}
+/* 「進行中」の札。色だけでなく字でも状態を伝える（docs/design.md 13.1 原則1）。 */
+.task-running-badge {
+  padding: 0 0.4rem;
+  border-radius: 0.3rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+/* 進行中は他の行と違い summary を折り返して全文出す（1行に切り詰めない）。 */
+.task-running-body {
+  white-space: normal;
 }
 .task-list {
   /* 区画の一覧。ul の既定の余白と行頭の印を落とす（サイドバーの他の一覧は
@@ -23,14 +75,59 @@
   column-gap: 0.4rem;
   align-items: baseline;
 }
+/* done は色を薄くし、打ち消し線を引く。テキスト装飾は子（IDのボタン・summary）にも
+   見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。 */
 .task-item.task-done {
   color: var(--ink-quiet);
+  text-decoration: line-through;
+}
+/* ID＋summary を1行に並べ、summary だけを切り詰める側（`.task-item-summary`）。
+   grid の列は既定で子の内容ぶんの幅を確保しようとする（min-width: auto）ので、
+   ここで 0 に落とさないと summary の text-overflow が働かない。 */
+.task-item-body {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+/* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は
+   「一覧を見る」の表で読む。docs/requirements.md 4.2）。 */
+.task-item-summary {
+  overflow: hidden;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 /* タスクのIDは機械が付けた名前なので等幅（docs/design.md 13.1 原則3）。書体そのものの定義は
-   `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。 */
+   `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。
+   **`flex: none` と `white-space: nowrap` が要る**——body の `overflow-wrap: anywhere`
+   （`styles/theme.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだと
+   「T-」「332」の2行に割れるため。 */
 .task-item .task-id {
+  flex: none;
   opacity: 0.8;
   font-family: var(--font-mono);
+  white-space: nowrap;
+}
+/* status の印（区画の一覧の先頭列。`components/task-item.tsx` の `TaskMark`）。
+   **色だけで状態を伝えない**——todo は空の丸、done はチェック（.task-done の打ち消し線と
+   対）、想定外の値は注意色の「!」にする。 */
+.task-mark-todo {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border: 1.5px solid var(--ink-quiet);
+  border-radius: 50%;
+}
+.task-mark-done::before {
+  content: "✓";
+  color: var(--accent);
+  font-weight: 700;
+}
+.task-mark-other::before {
+  content: "!";
+  color: var(--state-warn);
+  font-weight: 700;
 }
 /* 押せるID（`components/task-run-button.tsx`。一覧と表の両方が同じ形で置く）。ボタンの既定の
    見た目（背景・枠・余白）を落として、周りの文字の並びに割り込まないようにする。
@@ -56,17 +153,11 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* 枠の色は文字色に追随させる（currentColor）。todo は既定の文字色のまま、doing だけ差し色
-   （--accent）を使う。--state-* はここでは使わない（意味が固定されている色なので、todo / doing に
-   宛てると ok / warn / ng / ask の意味が動く。docs/design.md 13.1 原則5）。 */
-.task-status {
-  padding: 0 0.3rem;
-  border: 1px solid currentColor;
-  border-radius: 0.3rem;
-  background: var(--surface);
-  font-size: var(--font-label);
-}
-/* todo は既定の文字色のまま。**class は状態の印**として付ける（下の doing / done / other と対）。 */
+/* 表の status 列の文字色（`components/task-row.tsx` が `taskStatusClass` で選ぶ）。--state-* は
+   ここでは使わない（意味が固定されている色なので、todo / doing に宛てると ok / warn / ng / ask
+   の意味が動く。docs/design.md 13.1 原則5）。**区画の一覧はこの色クラスを使わず、印の形
+   （`.task-mark-*`）で区別する**（2026-09-23 決定。バッジは表だけの見た目になった）。
+   todo は既定の文字色のまま。**class は状態の印**として付ける（下の doing / done / other と対）。 */
 .task-status-todo {
   color: inherit;
 }

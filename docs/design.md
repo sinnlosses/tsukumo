@@ -209,7 +209,8 @@ src/
                               置いてもらう機能**（下の「領域の機能と、置かれる機能」）
         hooks/                その機能だけが読むフック（`use-task-board.ts`）
         components/           その機能だけが使う部品（TaskTable・TaskRow・TaskItem ほか）
-        domain/               その機能の語彙の純関数（`task-status.ts`・`task-list-title.ts`）
+        domain/               その機能の語彙の純関数（`task-status.ts`・`task-list-count.ts`・
+                              `task-sidebar-order.ts`）
                               （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
     components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
     hooks/                    機能の語彙を持たない React のフック（`use-modal-dialog.ts`）
@@ -332,12 +333,14 @@ features/task-board/
   components/task-row.tsx         1行
   components/readiness-cell.tsx   着手の列
   components/task-id-list.tsx     IDの並び
-  components/task-item.tsx        区画の一覧1件
+  components/task-item.tsx        区画の一覧1件（進行中を除く。印の形で status を区別する）
+  components/task-running-card.tsx  区画の一覧の先頭に出す進行中（doing）のカード
+  components/task-count-chip-list.tsx  見出し下の件数のチップ
   components/task-run-button.tsx  押せるタスクID（一覧と表の両方が置く）
   components/task-run-confirm.tsx 「<ID> を実行しますか」の確認（押した瞬間だけ組み立てる）
-  components/task-status-badge.tsx  status のバッジ
-  domain/task-status.ts           status → 色の class（表の行とバッジの両方が読む）
-  domain/task-list-title.ts       区画の見出しの文言（サイドバーが読む）
+  domain/task-status.ts           status → 色の class（表の行が読む）
+  domain/task-list-count.ts       見出し下の件数のチップの元（サイドバーが読む）
+  domain/task-sidebar-order.ts    区画の一覧の並び（進行中を先頭にまとめる純関数）
 ```
 
 - **部品に算出を残さない。** 「値が無いときどうするか」「どれを出すか」はフックが
@@ -348,8 +351,9 @@ features/task-board/
   （`use-task-board.ts` の `boardRows`）。**`components/` は型だけを `import type` で引く**
 - **`domain/` を切るのは、フックに入れないほうが良いもののうち、その機能固有の語彙で
   名乗れるものだけ。** 「純関数だから `domain/`」ではない。入れないほうが良いのは、**フックを
-  呼ばない相手が読む**とき——`domain/task-status.ts` は表の行とバッジ（どちらもフックを呼ばない
-  部品）が読み、`domain/task-list-title.ts` はサイドバーの区画が読む。フックに置くと、
+  呼ばない相手が読む**とき——`domain/task-status.ts` は表の行（フックを呼ばない部品）が読み、
+  `domain/task-list-count.ts` と `domain/task-sidebar-order.ts` はサイドバーの区画
+  （`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
   フックを使わない側が `use-*.ts` を import することになる
 - **`components/` は機能の中の部品**で、`browser/components/`（機能の語彙を持たない部品）とは
   別物。**読み手が2つの機能にまたがったら `browser/components/` へ上げる**
@@ -368,8 +372,8 @@ features/task-board/
 - **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
   container はフックのぶん毎回描き直されるので、そこに `memo` を置いても効かない
 
-**割らないでよいのは、フックが0本のとき**（`task-list.tsx` は `taskListTitle` と
-`taskStatusCounts` の純関数だけなので、1ファイルのまま）。
+**割らないでよいのは、フックが0本のとき**（`task-list.tsx` は `orderTasksForSidebar` の
+純関数だけなので、1ファイルのまま）。
 
 ### `lib/` と `utils/` に置く基準
 

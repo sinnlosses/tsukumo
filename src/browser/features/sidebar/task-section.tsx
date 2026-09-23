@@ -8,7 +8,8 @@
 import { useState, type ReactElement } from "react"
 
 import { useSessionSelector } from "../../stores/session.tsx"
-import { taskListTitle } from "../task-board/domain/task-list-title.ts"
+import { TaskCountChipList } from "../task-board/components/task-count-chip-list.tsx"
+import { taskListCounts } from "../task-board/domain/task-list-count.ts"
 import { TaskBoard } from "../task-board/task-board.tsx"
 import { TaskList } from "../task-board/task-list.tsx"
 import { SidebarSection } from "./section.tsx"
@@ -21,7 +22,7 @@ export function TaskSection(): ReactElement {
   return (
     <>
       <SidebarSection
-        title={taskListTitle(tasks)}
+        title="タスク"
         extraClass={styles["sidebar-block-tasks"] ?? ""}
         action={{
           label: "一覧を見る",
@@ -30,6 +31,9 @@ export function TaskSection(): ReactElement {
           },
         }}
       >
+        {tasks.kind === "unknown" ? null : (
+          <TaskCountChipList counts={taskListCounts(tasks.items)} />
+        )}
         <TaskList tasks={tasks} />
       </SidebarSection>
       <TaskBoard

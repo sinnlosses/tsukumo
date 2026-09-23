@@ -1,16 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
-import { taskListTitle } from "../../../../../src/browser/features/task-board/domain/task-list-title.ts"
-import {
-  type TaskSummaryItem,
-  type TaskSummaryResult,
-} from "../../../../../src/shared/task-summary.ts"
+import { taskListCounts } from "../../../../../src/browser/features/task-board/domain/task-list-count.ts"
+import { type TaskSummaryItem } from "../../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
-
-function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-  return { kind: "known", items }
-}
 
 const TASKS: readonly TaskSummaryItem[] = [
   {
@@ -47,17 +40,21 @@ const TASKS: readonly TaskSummaryItem[] = [
   },
 ]
 
-describe("taskListTitle", () => {
-  it("tasks が不明のときは件数を添えない", () => {
-    expect(taskListTitle({ kind: "unknown" })).toBe("タスク一覧")
+describe("taskListCounts", () => {
+  it("進行中 → 未着手 → 完了の順で件数を返す", () => {
+    expect(taskListCounts(TASKS)).toEqual([
+      { label: "進行中", count: 1 },
+      { label: "未着手", count: 1 },
+      { label: "完了", count: 1 },
+    ])
   })
 
-  it("todo は常に添え、doing / done は 0 件でないときだけ添える", () => {
-    expect(taskListTitle(known(TASKS))).toBe("タスク一覧 todo 1 / doing 1 / done 1")
-  })
-
-  it("doing が 0 件のときは doing を足さない", () => {
+  it("0件のものも省かず出す（チップの並びを動かさない）", () => {
     const noDoing = TASKS.filter((task) => task.status !== "doing")
-    expect(taskListTitle(known(noDoing))).toBe("タスク一覧 todo 1 / done 1")
+    expect(taskListCounts(noDoing)).toEqual([
+      { label: "進行中", count: 0 },
+      { label: "未着手", count: 1 },
+      { label: "完了", count: 1 },
+    ])
   })
 })
