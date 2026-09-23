@@ -19,7 +19,7 @@ import {
 import { type ToolUsageCount } from "../../../shared/token-usage.ts"
 import { DailyUsageChart } from "./daily-usage-chart.tsx"
 import styles from "./token-usage.module.css"
-import { formatBytes, formatCost, formatCount } from "./usage-format.ts"
+import { formatBytes, formatCount } from "./usage-format.ts"
 
 /** 記録が1件も無い期間の一言（**空でも壊れない**。表もグラフも出さずこれだけ）。 */
 const EMPTY_NOTE = "この期間の記録はまだ無い"
@@ -66,7 +66,6 @@ export function PresentationalTokenUsageScreen(
       </div>
 
       <dl className={styles["token-usage-total"]}>
-        <Figure label="費用" value={formatCost(props.total.costUsd)} />
         <Figure label="入力" value={formatCount(props.total.inputTokens)} />
         <Figure label="出力" value={formatCount(props.total.outputTokens)} />
         <Figure label="キャッシュ読み" value={formatCount(props.total.cacheReadInputTokens)} />
@@ -129,14 +128,13 @@ type ModelTableProps = {
   readonly byModel: readonly ModelUsageTotal[]
 }
 
-/** モデル別の表（モデル名の昇順で届く順のまま）。**費用を左から2列目**に置く。 */
+/** モデル別の表（モデル名の昇順で届く順のまま）。 */
 function ModelTable(props: ModelTableProps): ReactElement {
   return (
     <table className={styles["token-usage-table"]}>
       <thead>
         <tr>
           <th scope="col">モデル</th>
-          <th scope="col">費用</th>
           <th scope="col">入力</th>
           <th scope="col">出力</th>
           <th scope="col">読み</th>
@@ -149,7 +147,6 @@ function ModelTable(props: ModelTableProps): ReactElement {
             <th scope="row" className={styles["token-usage-name"]}>
               {entry.model}
             </th>
-            <td>{formatCost(entry.totals.costUsd)}</td>
             <td>{formatCount(entry.totals.inputTokens)}</td>
             <td>{formatCount(entry.totals.outputTokens)}</td>
             <td>{formatCount(entry.totals.cacheReadInputTokens)}</td>
