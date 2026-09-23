@@ -25,13 +25,22 @@ export type BalloonTrackProps = {
    * そのターン向けの文言を渡す（`src/browser/features/character-view/hooks/use-character-view.ts`）。
    */
   readonly emptyMessage: string | undefined
+  /**
+   * 最新の吹き出しに添える話し手の名前（キャラクターの名前）。キャラクターが届いていない・名前が
+   * 無いときは undefined で、名前を出さない。**プレースホルダには添えない**（キャラクターの言葉ではない）。
+   */
+  readonly speakerName: string | undefined
 }
 
 export function BalloonTrack(props: BalloonTrackProps): ReactElement {
   if (props.speeches.length === 0) {
     return (
       <div className={styles["balloon-track"]}>
-        <Balloon text={props.emptyMessage ?? PLACEHOLDER_UTTERANCE} latest={true} />
+        <Balloon
+          text={props.emptyMessage ?? PLACEHOLDER_UTTERANCE}
+          latest={true}
+          speaker={undefined}
+        />
       </div>
     )
   }
@@ -52,7 +61,12 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
   return (
     <div className={styles["balloon-track"]}>
       {newestFirst.map((speech, index) => (
-        <Balloon key={oldestIndexOf(index)} text={speech} latest={index === 0} />
+        <Balloon
+          key={oldestIndexOf(index)}
+          text={speech}
+          latest={index === 0}
+          speaker={index === 0 ? props.speakerName : undefined}
+        />
       ))}
     </div>
   )

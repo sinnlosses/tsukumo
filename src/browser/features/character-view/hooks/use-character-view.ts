@@ -53,6 +53,8 @@ export type CharacterViewModel = {
   readonly speeches: readonly string[]
   /** セリフが1件も無いときに出す文言。今回のターンを見ていれば `undefined`（既定文に任せる）。 */
   readonly emptyMessage: string | undefined
+  /** 最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
+  readonly speakerName: string | undefined
 }
 
 export function useCharacterView(): CharacterViewModel {
@@ -92,6 +94,7 @@ export function useCharacterView(): CharacterViewModel {
     motion,
     speeches: pastTurn === undefined ? speeches : pastTurn.speeches,
     emptyMessage: pastTurn === undefined ? undefined : PAST_TURN_EMPTY_MESSAGE,
+    speakerName: character?.name,
   }
 }
 

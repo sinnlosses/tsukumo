@@ -120,7 +120,7 @@ describe("useComposer のプレースホルダ", () => {
         editable: false,
       }),
     })
-    expect(named.result.current.placeholder.startsWith("架空の名前への依頼を書く")).toBe(true)
+    expect(named.result.current.placeholder.startsWith("架空の名前 への依頼を書く")).toBe(true)
 
     const unnamed = renderUseComposer()
     expect(unnamed.result.current.placeholder.startsWith("依頼を書く")).toBe(true)

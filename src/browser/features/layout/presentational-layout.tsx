@@ -38,6 +38,9 @@ export type PresentationalLayoutProps = UseLayoutResult & {
 }
 
 // 狭い画面のタブ。**名前は用語集の語のまま**（docs/glossary.md）。
+/** 比率を戻す口の名前。絵だけのボタンなので、読み上げと `title` の両方にこれを出す。 */
+const RESET_SPLIT_LABEL = "領域の比率を既定に戻す"
+
 const NARROW_PANES = [
   { pane: "main", label: "メインビュー" },
   { pane: "sidebar", label: "サイドバー" },
@@ -72,61 +75,61 @@ export function PresentationalLayout({
   mainAsGround,
 }: PresentationalLayoutProps): ReactElement {
   return (
-    <>
-      <div
-        className={styles["layout-grid"]}
-        ref={gridRef}
-        data-collapse-character={collapseCharacter}
-        style={gridStyle}
-      >
-        <div className={styles["layout-tabs"]} role="tablist">
-          {NARROW_PANES.map((entry) => (
-            <button
-              type="button"
-              key={entry.pane}
-              role="tab"
-              aria-selected={entry.pane === narrowPane}
-              className={`${styles["layout-tab"]}${
-                entry.pane === narrowPane ? ` ${styles["is-active"]}` : ""
-              }`}
-              onClick={() => {
-                onNarrowPaneChange(entry.pane)
-              }}
-            >
-              {entry.label}
-            </button>
-          ))}
-        </div>
-        <div
-          className={`${styles["layout-row"]} ${styles["layout-row-top"]}`}
-          ref={rowTopRef}
-          data-narrow-pane={narrowPane}
-          style={rowTopStyle}
-        >
-          <section
-            className={`${styles["layout-region"]} ${styles["layout-main"]}${
-              mainAsGround ? ` ${styles["layout-ground"]}` : ""
+    <div
+      className={styles["layout-grid"]}
+      ref={gridRef}
+      data-collapse-character={collapseCharacter}
+      style={gridStyle}
+    >
+      <div className={styles["layout-tabs"]} role="tablist">
+        {NARROW_PANES.map((entry) => (
+          <button
+            type="button"
+            key={entry.pane}
+            role="tab"
+            aria-selected={entry.pane === narrowPane}
+            className={`${styles["layout-tab"]}${
+              entry.pane === narrowPane ? ` ${styles["is-active"]}` : ""
             }`}
-            data-region="main"
+            onClick={() => {
+              onNarrowPaneChange(entry.pane)
+            }}
           >
-            {main}
-          </section>
-          <LayoutResizer
-            orientation="vertical"
-            containerRef={rowTopRef}
-            ariaLabel="メインビューとサイドバーの境界"
-            onChange={onTopLeftChange}
-            onCommit={onTopLeftCommit}
-          />
-          <section
-            className={`${styles["layout-region"]} ${styles["layout-sidebar"]}`}
-            data-region="sidebar"
-          >
-            {sidebar}
-          </section>
-        </div>
-        {/* **畳んでいる間もこの仕切りは出す**（雑談中でも入力欄の高さを変えられる）。
+            {entry.label}
+          </button>
+        ))}
+      </div>
+      <div
+        className={`${styles["layout-row"]} ${styles["layout-row-top"]}`}
+        ref={rowTopRef}
+        data-narrow-pane={narrowPane}
+        style={rowTopStyle}
+      >
+        <section
+          className={`${styles["layout-region"]} ${styles["layout-main"]}${
+            mainAsGround ? ` ${styles["layout-ground"]}` : ""
+          }`}
+          data-region="main"
+        >
+          {main}
+        </section>
+        <LayoutResizer
+          orientation="vertical"
+          containerRef={rowTopRef}
+          ariaLabel="メインビューとサイドバーの境界"
+          onChange={onTopLeftChange}
+          onCommit={onTopLeftCommit}
+        />
+        <section
+          className={`${styles["layout-region"]} ${styles["layout-sidebar"]}`}
+          data-region="sidebar"
+        >
+          {sidebar}
+        </section>
+      </div>
+      {/* **畳んでいる間もこの仕切りは出す**（雑談中でも入力欄の高さを変えられる）。
             覚える先は `hooks/use-layout.ts` の中で切り替わるだけで、仕切りそのものは1本。 */}
+      <div className={styles["layout-divider"]}>
         <LayoutResizer
           orientation="horizontal"
           containerRef={gridRef}
@@ -134,42 +137,71 @@ export function PresentationalLayout({
           onChange={onRowTopChange}
           onCommit={onRowTopCommit}
         />
-        <div
-          className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}
-          ref={rowBottomRef}
-          data-collapse-character={collapseCharacter}
-          style={rowBottomStyle}
+        <button
+          type="button"
+          className={styles["layout-reset-split"]}
+          aria-label={RESET_SPLIT_LABEL}
+          title={RESET_SPLIT_LABEL}
+          onClick={onReset}
         >
-          {/* **畳むときは仕切りごと出さない。** 比率は state に残っているので、戻したときに
-              使う人が決めた幅がそのまま戻る。 */}
-          {!collapseCharacter && (
-            <>
-              <section
-                className={`${styles["layout-region"]} ${styles["layout-ground"]}`}
-                data-region="character"
-              >
-                {character}
-              </section>
-              <LayoutResizer
-                orientation="vertical"
-                containerRef={rowBottomRef}
-                ariaLabel="キャラビューと入力欄の境界"
-                onChange={onBottomLeftChange}
-                onCommit={onBottomLeftCommit}
-              />
-            </>
-          )}
-          <section
-            className={`${styles["layout-region"]} ${styles["layout-dispatch"]}`}
-            data-region="dispatch"
-          >
-            {dispatch}
-          </section>
-        </div>
+          <ResetSplitIcon />
+        </button>
       </div>
-      <button type="button" className={styles["layout-reset-split"]} onClick={onReset}>
-        領域の比率を既定に戻す
-      </button>
-    </>
+      <div
+        className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}
+        ref={rowBottomRef}
+        data-collapse-character={collapseCharacter}
+        style={rowBottomStyle}
+      >
+        {/* **畳むときは仕切りごと出さない。** 比率は state に残っているので、戻したときに
+              使う人が決めた幅がそのまま戻る。 */}
+        {!collapseCharacter && (
+          <>
+            <section
+              className={`${styles["layout-region"]} ${styles["layout-ground"]}`}
+              data-region="character"
+            >
+              {character}
+            </section>
+            <LayoutResizer
+              orientation="vertical"
+              containerRef={rowBottomRef}
+              ariaLabel="キャラビューと入力欄の境界"
+              onChange={onBottomLeftChange}
+              onCommit={onBottomLeftCommit}
+            />
+          </>
+        )}
+        <section
+          className={`${styles["layout-region"]} ${styles["layout-dispatch"]}`}
+          data-region="dispatch"
+        >
+          {dispatch}
+        </section>
+      </div>
+    </div>
+  )
+}
+
+/** 比率を戻す口の絵（回る矢印）。レイアウトの道具の絵なのでコードに置く（原則4 の対象外）。 */
+function ResetSplitIcon(): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+      <path
+        d="M13 8a5 5 0 1 1-1.5-3.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M11.8 1.8v2.9H8.9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }

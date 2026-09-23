@@ -9,6 +9,8 @@
 // - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は
 //   矢印キーに加えて Ctrl+P（前へ）/ Ctrl+N（次へ）でも行える（Meta 併用は無視）
 // - `@` 補完（git 管理下のファイルのパス）は同じキー操作で、確定すると `@<パス> ` が入る
+// - 入力欄の下の `/` と `@` のボタンは、**キャレットの位置にその1文字を打つのと同じ**
+//   （補完が開くかどうかは打ったときと同じ規則で決まる。`@` は前が空白でなければ空白を挟む）
 //
 // **`/` と `@` の候補は同時に出ない。** どちらを出しているかは1つの判別可能な合併型
 // （{@link ActiveSuggestions}）に畳んであり、選択位置と閉じたかどうかはその1つに対して持つ。
@@ -32,7 +34,12 @@ import {
 import { commandSuggestions } from "../../../../shared/command-suggestion.ts"
 import { MAX_PROMPT_IMAGES, type PromptImage } from "../../../../shared/prompt-image.ts"
 import { type CommandDescription } from "../../../../shared/session-event.ts"
-import { carriesFiles, promptImageFiles, readPromptImage } from "../../../lib/prompt-image.ts"
+import {
+  carriesFiles,
+  chosenPromptImageFiles,
+  promptImageFiles,
+  readPromptImage,
+} from "../../../lib/prompt-image.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 import { matchingCommands, shouldShowCommandSuggestions } from "../command-suggestions.tsx"
 import {
@@ -42,10 +49,8 @@ import {
   useRepositoryFilePaths,
 } from "../file-suggestions.tsx"
 
-// **画像の受け取り方はボタンではなくこの1行で伝える**（操作子を増やさない。
-// `docs/requirements.md` 4.10「受け取り方」）。
-const PLACEHOLDER_OPERATION_HINT =
-  "（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完、画像は貼り付け）"
+/** 入力欄の下のボタンが打つ、補完の合図の文字。 */
+export type CompletionTrigger = "/" | "@"
 
 /** 打ちかけの文面と、その中のキャレットの位置。**2つで1つの状態**なので一緒に持つ。 */
 type Draft = {
@@ -82,6 +87,8 @@ export type ComposerChange = {
 export type ComposerModel = {
   /** `<textarea>` の入れ物。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
   readonly textAreaRef: RefObject<HTMLTextAreaElement | null>
+  /** 画像を選ぶ `<input type="file">` の入れ物（画面には出さず、ボタンから開く）。 */
+  readonly imageInputRef: RefObject<HTMLInputElement | null>
   readonly placeholder: string
   readonly text: string
   /** 添えた画像（送るまでの間だけ持つ）。 */
@@ -97,6 +104,12 @@ export type ComposerModel = {
   readonly onDragOver: (event: Pick<DragEvent, "dataTransfer" | "preventDefault">) => void
   readonly onDrop: (event: Pick<DragEvent, "dataTransfer" | "preventDefault">) => void
   readonly onSubmit: (event: { readonly preventDefault: () => void }) => void
+  /** 画像のボタン。ファイルを選ぶ窓を開く。 */
+  readonly onPickImages: () => void
+  /** ファイルを選ぶ窓で選び終えたとき。 */
+  readonly onImagesChosen: (event: { readonly target: HTMLInputElement }) => void
+  /** `/` / `@` のボタン。キャレットの位置にその文字を打ち、入力欄へフォーカスを戻す。 */
+  readonly onInsertTrigger: (trigger: CompletionTrigger) => void
 }
 
 export function useComposer(): ComposerModel {
@@ -113,6 +126,7 @@ export function useComposer(): ComposerModel {
   // （`docs/requirements.md` 4.10。`localStorage` にもディスクにも置かない）。
   const [images, setImages] = useState<readonly PromptImage[]>([])
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
+  const imageInputRef = useRef<HTMLInputElement | null>(null)
 
   const commandActive =
     !suggestionsDismissed && shouldShowCommandSuggestions(draft.text, pendingActive)
@@ -186,8 +200,19 @@ export function useComposer(): ComposerModel {
     })()
   }
 
+  const insertTrigger = (trigger: CompletionTrigger): void => {
+    // ボタンを押した時点で入力欄のフォーカスは外れているが、選択の位置は残っている。
+    // **打っていない間にキャレットを動かしただけでは下書きの `caret` は追いつかない**ので、
+    // 入力欄から読めるならそちらを使う。
+    setDraft(insertedTrigger(draft, textAreaRef.current?.selectionStart ?? draft.caret, trigger))
+    setSelectedIndex(0)
+    setSuggestionsDismissed(false)
+    textAreaRef.current?.focus()
+  }
+
   return {
     textAreaRef,
+    imageInputRef,
     placeholder: composerPlaceholder(characterName),
     text: draft.text,
     images,
@@ -267,6 +292,17 @@ export function useComposer(): ComposerModel {
       }
       submit()
     },
+    onPickImages: () => {
+      imageInputRef.current?.click()
+    },
+    onImagesChosen: (event) => {
+      attachFiles(chosenPromptImageFiles(event.target.files))
+      // 同じファイルを続けて選び直しても `change` が届くように、選んだものを空に戻す
+      // （React の外にある入力の状態。札のほうは state が持っている）。
+      event.target.value = ""
+      textAreaRef.current?.focus()
+    },
+    onInsertTrigger: insertTrigger,
   }
 }
 
@@ -277,8 +313,24 @@ export function useComposer(): ComposerModel {
  * コードに書かない」）。
  */
 function composerPlaceholder(characterName: string | undefined): string {
-  const subject = characterName === undefined ? "" : `${characterName}への`
-  return `${subject}依頼を書く${PLACEHOLDER_OPERATION_HINT}`
+  const subject = characterName === undefined ? "" : `${characterName} への`
+  return `${subject}依頼を書く`
+}
+
+/**
+ * キャレットの位置に補完の合図の文字を差し込んだ下書き。**`@` は前が空白でなければ空白を
+ * 1つ挟む**（`@` 補完は語の頭でしか開かない。`file-suggestions.tsx` の `filePathQuery`）。
+ * `/` はそのまま差し込む（コマンドの補完が開くのは文面の頭だけで、それ以外の位置では
+ * 1文字を打ったのと同じになる）。
+ */
+function insertedTrigger(draft: Draft, caret: number, trigger: CompletionTrigger): Draft {
+  const before = draft.text.slice(0, caret)
+  const needsSpace = trigger === "@" && before !== "" && !/\s$/.test(before)
+  const inserted = `${needsSpace ? " " : ""}${trigger}`
+  return {
+    text: `${before}${inserted}${draft.text.slice(caret)}`,
+    caret: caret + inserted.length,
+  }
 }
 
 /** IME の変換確定中か。`isComposing` に加え、対応していない古いブラウザ向けに `keyCode` も見る。 */

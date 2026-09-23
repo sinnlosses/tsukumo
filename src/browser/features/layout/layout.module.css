@@ -104,7 +104,8 @@
 .layout-dispatch {
   position: relative;
 }
-/* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。 */
+/* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。**掴める幅（0.6rem）と
+   見える線（1px）を分ける** — 線は領域の枠より薄くして画面を割らず、掴む場所は細くしない。 */
 .layout-resizer {
   position: relative;
   touch-action: none;
@@ -120,24 +121,44 @@
 .layout-resizer::after {
   content: "";
   position: absolute;
-  background: var(--rule);
+  background: color-mix(in srgb, var(--rule) 45%, transparent);
 }
 .layout-resizer-vertical::after {
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 2px;
+  width: 1px;
   transform: translateX(-50%);
 }
 .layout-resizer-horizontal::after {
   left: 0;
   right: 0;
   top: 50%;
-  height: 2px;
+  height: 1px;
   transform: translateY(-50%);
 }
-.layout-resizer:hover::after {
+/* 上下の仕切りだけは中央に掴み手を置く。線を薄くしたぶん、動かせる境目だと分かる印がここに要る
+   （左右の2本は領域の縦の縁に沿っていて、カーソルの形で足りる）。 */
+.layout-resizer-horizontal::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 2.5rem;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--rule);
+  transform: translate(-50%, -50%);
+}
+.layout-resizer:hover::after,
+.layout-resizer:hover::before {
   background: var(--accent);
+}
+/* 上下の仕切りと、比率を戻す口を同じ行に置く入れ物。口は仕切りの右端に重ねる（口の中に
+   仕切りを入れると、押したつもりがドラッグの始まりになる）。 */
+.layout-divider {
+  position: relative;
 }
 /* 狭い画面でだけ出る、上段の2領域（メインビュー・サイドバー）を切り替えるタブ
    （docs/requirements.md 4.7）。**広い画面では display: none** なので grid の item にもならず、
@@ -168,24 +189,29 @@
 }
 
 /* 領域の比率を既定に戻す常設ボタン（`<Layout>` が直接描く。docs/design.md 13.6）。
-   画面右下に固定で置く
-   （常設の要素は差し引きゼロ。仕切りのドラッグ操作と取り合わない場所という理由も同じ）。 */
+   **上下の仕切りの右端**に絵だけで置く。以前は画面右下に固定していたが、入力欄の送信ボタンと
+   同じ角に重なった。仕切りの行は 0.6rem しかないので、口は上下の隙間（grid の gap）へはみ出して
+   縦の中央に乗る。 */
 .layout-reset-split {
-  position: fixed;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  z-index: 20;
-  padding: 0.3rem 0.6rem;
-  background: var(--surface);
-  color: inherit;
-  border: 1px solid var(--rule);
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  border: 1px solid color-mix(in srgb, var(--rule) 60%, transparent);
   border-radius: 0.4rem;
-  font: inherit;
-  font-size: var(--font-label);
   cursor: pointer;
+  transform: translateY(-50%);
 }
 .layout-reset-split:hover {
   border-color: var(--accent);
+  color: var(--ink);
 }
 
 /* 狭い画面（スマホの幅で会話を回せるようにする形。docs/requirements.md 4.7）。
@@ -235,7 +261,7 @@
      （動かせる比率が無い1列表示では戻す先が無い。色と立ち絵の固定はキャラクター画面へ
      移っているので、隠しても設定にたどり着けなくなることはない）。 */
   .layout-resizer,
-  .layout-reset-split {
+  .layout-divider {
     display: none;
   }
   .layout-dispatch {

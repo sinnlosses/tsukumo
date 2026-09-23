@@ -24328,3 +24328,268 @@ bun run check: typecheck・lint・format:check 通過、1368 pass / 0 fail（115
 
 - `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
 - 13.9「帯が奪う面積（実測）」の数値はこのタスクでは触らない（T-384 の担当）
+
+## T-371
+
+**タスク**: container を「フックの戻り値をそのまま展開して渡す」形に揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+4つの container（screen-nav / task-board / token-usage-screen / layout）を `{...use<機能>()}` の形に揃え、presenter の Props をフックの戻り値の型のエイリアスにした。`find src/browser/features -name 'presentational-*.tsx'` の対になる container 11個すべてで `{...use` を確認。docs/design.md の container の行を書き換え、`grep -c '^#\{2,3\} '` は前後とも 53。\nbun run check: typecheck / oxlint / oxfmt --check 通過、bun test --isolate 1370 pass 0 fail（2761 expect、115ファイル）。\n目視（TSUKUMO_DRIVER=fake、ポート 7591・一時ホーム）: 帯（1400x900 と 720x900）・「≡」を押して落ちるパネル・トークン消費の画面・タスク表のダイアログ・レイアウトの4領域と仕切りを撮り、変更前と同じ見た目と挙動だった。
+
+## 背景
+
+部屋の表示名を帯に出したコミット（`ee75d15`）では、値1つ（`room`）が
+`hooks/use-screen-nav.ts` → `screen-nav.tsx`（container）→ `presentational-screen-nav.tsx` →
+`components/screen-nav-menu.tsx` → `components/screen-nav-room.tsx` の5ファイルを通り、container と
+presenter の両方で Props と受け渡しに同じ名前を書き足した。帯にモデル・許可モード・ブランチを
+出したコミット（`f919914`）も同じ経路を通った。
+
+container は11個あり、**7個はすでに1行**で、presenter の Props はフックの戻り値の型そのもの:
+
+```tsx
+export function ChatView(): ReactElement {
+  return <PresentationalChatView {...useChatView()} />
+}
+// presentational-chat-view.tsx: export type PresentationalChatViewProps = ChatViewModel
+```
+
+名前を1つずつ並べて渡しているのは残りの4個（着手時に確かめる: 各 `presentational-*.tsx` の対になる
+container を開き、`{...use` があるかを見る）:
+
+- `features/screen-nav/screen-nav.tsx`
+- `features/task-board/task-board.tsx`
+- `features/token-usage/token-usage-screen.tsx`
+- `features/layout/layout.tsx`（フックの値は展開済みで、container が受けた子要素だけを名前で渡している）
+
+## やること
+
+1. 4つの container を1行の形に揃える。フックが「presenter に渡す形」の型を返し、presenter の
+   Props をその型にする（`ChatViewModel` と同じ）。フックの戻り値と presenter の props で名前が
+   違うもの（`toggleMenu` と `onToggleMenu` など）は、presenter 側の名前に揃える
+2. container が外から受け取る props（`task-board` の `tasks` / `open` / `onClose`、`layout` の
+   子要素）は、**呼ぶ側を変えない**。フックの引数に渡すか、展開と並べて presenter へそのまま渡す。
+   container が持っている React の要素（`task-board` の `BoardCloseContext.Provider`）は残してよい
+3. `docs/design.md`「機能の中を分ける（container / presenter と `hooks/`）」の表で、container の
+   行に「フックの戻り値を展開して渡す（presenter の Props はフックの戻り値の型）」を書く。
+   **表の行を直すだけで、小節は増やさない**
+4. **振る舞いを変えない**
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- 上の4つの container が、フックの戻り値を名前ごとに並べて渡していない
+- `grep -c '^#\{2,3\} ' docs/design.md` の値が編集の前後で変わらない
+- **目視**: `TSUKUMO_DRIVER=fake` で起こし、帯（狭い幅で「≡」を開いた状態も）・タスク表の
+  ダイアログ・トークン消費の画面・レイアウトの仕切りが変更前と同じに出ることを
+  `scripts/capture-view.ts` で撮って確かめ、見たものを `evidence` に書く
+
+## 注意
+
+- presenter はフックを1つも持たない（`docs/design.md` の同じ節）。展開に寄せても崩さない
+- `docs/design.md` の冒頭の索引表には節の見出し名が入っている。行頭から位置を特定する
+- 起こすときは既定以外のポートと一時ホームを使い、`bun run scripts/stop.ts --port <ポート>` で
+  止める（`docs/workflow.md`「起こすときの作法」）
+- 人に委ねる判断は残らないので `"Y"`
+
+## T-372
+
+**タスク**: docs/design.md 4章からコードの写しを外し、型定義への参照と決定の理由だけにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/design.md 4章の写し（4.1/4.2 の表、4.3/4.4 の型のコードブロック）を型定義への参照に置き換え、decision だけ残した（28挿入52削除、design.md のみ）。外した文は frame.ts / command.ts の doc コメントに同じ内容が既にあることを確認済み。`grep -n 'new-session' docs/design.md` は0件、`grep -c '^#\{2,3\} '` は前後とも 53。bun run check 通過（1370 pass 0 fail、2761 expect、115ファイル）。\n写しが腐っていた実例を4つ直した: 実物に無い `new-session`（4.3 と8章）と `session-started`（4.1）、`MAX_SESSION_VIEW_TURNS`→`MAX_SESSION_STATE_TURNS`、`MAX_DISPATCH_TEXT_LENGTH`→`MAX_PROMPT_TEXT_LENGTH`。解消済みだった「PermissionMode/ModelAlias の写しが session-driver.ts と view.ts にある」も削除。\n5章に同じ形の写しが3つ残る（直していない）: 「session-manager.ts（core）」の `SessionHost` のコードブロック、「server.ts と session-socket.ts（adapter）」の経路の表（`GET /token-usage` が表に無くドリフト済み）、「config.ts（core）」の環境変数の表（ただし config.ts 側が design.md を正典と明記しているので逆方向）。6章に写しは無い。
+
+## 背景
+
+`docs/design.md`「4. shared」は、`SessionEvent` と `SessionState` のフィールドを表で、
+`ClientCommand` と `ServerFrame` を型のコードブロックで写している。写しがあるので、`shared` の
+型を触るたびに design.md も直すことになる（直近250コミットで `src/shared/` を触った58コミットの
+うち30コミットが design.md も直した）。直し漏れも起きている:
+
+- `4.3 ClientCommand` のコードブロックは7種で、実物に無い `new-session` を含む。実物の
+  `src/shared/command.ts` は15種で、`nudge` / `set-chat-mode` / `switch-session` / `set-portrait`
+  などが写しに無い
+- 型を変えたのに表が古いまま残り、次のタスクの受け入れで気づいて直したことが2回あった
+  （`develop/retrospective.md` の `8f585d6`..`c37d714`）
+
+## やること
+
+1. 4章の各小節で、**型の中身を写している部分**（フィールドや種別を並べた表の列、型のコード
+   ブロック）を、正典の型定義への参照（ファイル名と型名）に置き換える
+2. 残すのは**コードから読めない決定とその理由**だけ（例: zod を境界にだけ使う理由、
+   `state.model` の出どころが3つある理由、時刻を打つのはサーバであること、記録の時刻を合併型に
+   した理由）。表の「用途」「理由」の列のうち決定を言っているものは、文に直して残す
+3. 型定義の側に説明が足りなくなるものは、その型の doc コメントに1〜2行で移す
+4. 5章・6章にも同じ形の写しがあれば、直さずに一覧（小節名と写している型）だけ `evidence` に書く
+
+## 完了条件
+
+- `bun run check` が通る
+- `grep -n 'new-session' docs/design.md` が0件
+- 4章に `ClientCommand` / `ServerFrame` の型のコードブロックが無い
+- `grep -c '^#\{2,3\} ' docs/design.md` の値が編集の前後で変わらない（小節を消すなら、その理由と
+  索引表の直しを `evidence` に書く）
+
+## 注意
+
+- `docs/design.md` の冒頭の索引表には節の見出し名が入っている。見出し名で位置を探すと索引の行に
+  先に当たるので、行頭から位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- ドキュメントにタスク番号を書かない
+- 人に委ねる判断は残らないので `"Y"`
+
+## T-381
+
+**タスク**: 仕事/雑談・モデル・許可モードの変える口を帯へ移し、サイドバーの <select> を外す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-380 / **passes**: True
+
+**evidence**:
+
+帯に仕事/雑談のトグル（screen-nav-chat-mode.tsx）とモデル・許可モードの <select>（screen-nav-model-permission.tsx）を置き、session-info.tsx から3つの <select> と screen-nav-status.tsx を外した。FRAME_ERROR_REASON.chatModeSwitchDuringTurn を足し set-chat-mode の断りを差し替え。テストは screen-nav.test.tsx（トグル5件・ドロップダウン11件。サイドバーから移したモデルの選び方4件を含む）/ session-info.test.tsx /session-manager.test.ts。
+bun run check: 1369 pass / 0 fail（115 files）。
+目視（Playwright、ポート 47391・一時ホーム）: 1400x900 で帯に 部屋名→トグル→3つの口→「Opus」「自動判定」、サイドバーはキャラクター・セッションのみ。390 幅は「≡」の面に 部屋名→トグル→3つの口→モデル/許可モード、横スクロールなし。雑談を押すと起こし直されて雑談の画面へ、仕事で戻った
+
+## 背景
+
+ヘッダーをモック `docs/history/mockup/header-2026-09-23.png` の形に作り直すうちの、変える口の移動。いま `src/browser/features/sidebar/session-info.tsx` に `<Select>` が4つ（キャラクター・モデル・許可モード・雑談モード）とセッションの切り替えがあり、帯（`src/browser/features/screen-nav/`）は `components/screen-nav-status.tsx` でモデル・許可モードを押せない字で名乗っているだけ。帯の形は T-380 で `docs/design.md` 13.9 / 13.7 に書いてある。
+
+## 決まっていること（蒸し返さない）
+
+- モデル・許可モード・仕事/雑談を帯へ移し、サイドバーの同じ `<select>` は外す。キャラクターとセッションの切り替えはサイドバーに残す
+- 狭い画面（760px 以下）では「≡」の中に畳む
+- 部品の形・ターン中の扱いは `docs/design.md` 13.9「動き方の操作子」/ 13.7 に従う（T-380 で決めた）。要点: 仕事/雑談は `aria-pressed` の2つの `<button>`（かばん・湯のみのインライン SVG + 字。`role="group"`）で、反対側を1回押すと確かめなしに `set-chat-mode` を送る。ターン進行中は `disabled` ではなく `aria-disabled` + `title`。モデル・許可モードは `components/select.tsx` の素の `<select>` を `appearance: none` で帯に合わせる（見える項目名は置かず `aria-label` と `title`）。表示はサーバから届いた値だけに従う
+- 仕事/雑談をターン中に断る文面は、`FRAME_ERROR_REASON` に「ターン進行中は仕事と雑談を切り替えられない（中断すると切り替えられる）」を足して使う。サーバの `set-chat-mode` の断りもこれに替える（いまはキャラクターの文面を借りている）
+
+## やること
+
+1. `docs/design.md` 13.9 / 13.7 を読む
+2. 帯に仕事/雑談のトグル・モデル・許可モードの操作子を置く。送るコマンドはいまサイドバーが送っているものと同じにする（`useSessionDispatch`）
+3. サイドバーから3つの `<select>` を外す（セッション情報に残るのはキャラクターとセッションの切り替えだけ）。帯の読み（`screen-nav-status.tsx` と `ScreenNavReading`）は操作子が兼ねるので外す
+4. `frame.ts` に上の文面を足し、`session-manager.ts` の `set-chat-mode` の断りをそれに替える
+5. 狭い画面の「≡」の面に、13.9「狭い画面」の順（顔と部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード）で操作子を入れる（いまの作業と顔は T-382 / T-383 が足す）。「≡」の `aria-label` を「メニュー」に直す
+6. 機能どうしの import を増やさない（共有が要るものは `browser/lib/` か `components/`。`docs/design.md` 2章）
+7. 古くなったコメントと図を直す: `session-info.tsx` の冒頭、`chat-view/components/nudge-portrait.tsx` の「モードの `<select>`」、`screen-nav` の各ファイルの冒頭、`docs/design.md` 2章のディレクトリの図と 6.1 の部品の木（`<SessionInfo>` の行と帯の行）
+8. テスト: 帯の操作子を変えるとサイドバーが送っていたのと同じコマンドが送られる / いまの側を押しても送らない / ターン進行中はトグルを押しても送らず `aria-disabled` になる / サーバが進行中の `set-chat-mode` を新しい文面で断る / サイドバーに3つの `<select>` が無い
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅）: 広い画面は帯から3つとも変えられ、サイドバーから消えている。狭い画面は「≡」の中から変えられる。仕事→雑談で起こし直され、雑談から仕事へ戻れる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 雑談⇄仕事の切り替えはセッションの起こし直し（`docs/requirements.md` 4.9）。画面が初期化されるのは既定の挙動
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-388
+
+**タスク**: サイドバーのタスクの区画を、件数のチップ・進行中のカード・状態の印の形にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1375 pass / 0 fail（typecheck・lint・format:check 含む）。目視（fake driver・Chrome ヘッドレス・TSUKUMO_VIEW_PORT=39488 / TSUKUMO_HOME を分離、develop/tasks.json は doing 2・done 1・todo 21）: 1400幅で見出し「タスク」＋チップ 「進行中 2 / 未着手 21 / 完了 1」、進行中カード2枚（T-381・T-388、差し色の地に「進行中」の札とsummary全文）、未着手は空の丸＋ID＋1行の「…」、T-371 はチェック＋打ち消し線。390幅はサイドバーのタブでチップ3枚が1行（top 244 で横並び）、横のはみ出し 0px。受け入れで2点直した: taskListCounts の `| undefined` を外して判定を呼ぶ側へ、行のIDに flex:none / white-space:nowrap（theme.css の overflow-wrap:anywhere で「T-」「332」に割れていた）。コミット 404ff56
+
+## 背景
+
+ユーザーが、ヘッダー（`docs/design.md` 13.9）に合わせたサイドバーのモック `docs/history/mockup/sidebar-2026-09-23.png` と、済んだタスクの行のモック `docs/history/mockup/sidebar-done-2026-09-23.png` を示した（2026-09-23）。
+
+いまのタスクの区画:
+
+- 見出しは `taskListTitle`（`src/browser/features/task-board/domain/task-list-title.ts`）が作る1本の文字列「タスク一覧 todo 14 / doing 1 / done 1」（todo は常に、doing / done は 0 件でないときだけ）。枠と見出しは `src/browser/features/sidebar/section.tsx`、組み立ては `task-section.tsx`
+- 行は `components/task-item.tsx`: 先頭列に status の文字のバッジ（`TaskStatusBadge`、色は `domain/task-status.ts`）、2列目に押せるID（`TaskRunButton`。押すと `/next-task <ID>` の確認が開く）と summary。`done` は薄く出す（`task-done`）
+- 並びは `task-list.tsx` のとおり**ファイルの順**（`docs/requirements.md` 4.2「全件をファイルの順で並べ」）
+
+モックの形:
+
+- 見出し「タスク」と右端の「一覧を見る」。その下に件数のチップ「進行中 1」「未着手 14」「完了 1」
+- 進行中のタスクは先頭に差し色の地のカードで出す（「進行中」のバッジ・ID・summary を折り返して全文）
+- 未着手は空の丸の印・ID（薄く）・summary（1行で末尾を「…」）
+- 済んだタスクは差し色のチェックの印・ID・summary を薄くして打ち消し線（`docs/history/mockup/sidebar-done-2026-09-23.png`）
+
+## 決まっていること（蒸し返さない）
+
+- **並びは、進行中だけ先頭（カード）にし、残りはファイルの順**（未着手と完了は混ざったまま。2026-09-23 のユーザーの選択）
+- **件数のチップは数を出すだけで押せない**（絞り込みは「一覧を見る」の表の仕事）
+- IDを押すと実行を頼める挙動（`TaskRunButton`）は変えない。「一覧を見る」の表（`task-board.tsx`）も変えない
+- 状態は印の形（丸・チェック・カード）と字（打ち消し線・「進行中」）でも区別する。色だけで伝えない（13.1 原則1）
+
+## 解くべき論点
+
+- チップを 0 件のときに出すか（いまの見出しは doing / done を 0 件なら出さない。理由は `docs/requirements.md` 4.2。モックは3つとも出ている）
+- 進行中が2件以上あるとき（別の作業ツリーと並行しているとき）、カードを何枚にするか
+- 想定外の status（`task-status-other`）の印
+
+## やること
+
+1. 件数のチップを作り、見出しを「タスク」にする（`taskListTitle` を件数の組を返す形に変えるか分けるか）
+2. 行を印の形にし、進行中のカード・済みの打ち消し線を作る
+3. 並びを「進行中だけ先頭、残りはファイルの順」にする（純関数にしてテストする）
+4. `docs/requirements.md` 4.2 のタスク一覧の記述（バッジ・見出しの件数・並び）と、`docs/design.md` の該当箇所を直す
+5. テスト: 並び / チップの件数 / 済みの行に打ち消しの class が付く / IDを押すと確認が開く（既存）
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅。進行中・未着手・済みが混ざった `develop/tasks.json` を読ませる）: モックと同じ並びと印で出る。何が見えたかを `evidence` に書く
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-393
+
+**タスク**: セッションの切り替え先を、いまの部屋（ビューのポート）の印を持つものだけに絞る
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+一覧の絞り込みを sessionTagFamily から sessionTag へ変更（session-restore.ts / sdk-driver.ts / session-start.ts）。SessionMark.family を削除し sessionTagFamily を非公開化。session-restore.test.ts に「別の部屋は並ばない」「昔の目印は対応する部屋に並ぶ」を追加。docs/requirements.md 4.8 と docs/design.md 13.9 に一覧の範囲を明記（見出し数 27/53 で不変）。bun run check 通過（1370 pass / 0 fail）。
+
+## 背景
+
+セッションの切り替え（サイドバーの `<select>`、`src/browser/features/sidebar/session-switch.tsx`）に、**いまの部屋以外のセッションも並んでいる**。一覧を組むのは `src/server/core/session-restore.ts` の `listMarkedSessions(sessions, family)` で、呼ぶのは `src/server/adapter/sdk-driver.ts` の `listSwitchableSessions(cwd, family)`、その呼び出し元は `src/session-start.ts` の `listPackSessions`。渡している `family` は `src/server/core/config.ts` の `sessionTagFamily(characterName, chat)`（目印＝ポートを外した印）なので、**同じパック・同じモードの、目印（ポート）の違うものまで全部**並ぶ。
+
+部屋はビューのポート1つにつき1つ（`src/shared/room.ts`、`docs/glossary.md`「部屋」、`docs/design.md` 13.9「部屋の名前」）。ユーザーの指摘（2026-09-23）: 「あるポートに部屋の名前が紐づいているのだから、別の部屋に行けるのはおかしい。ポート 7327 なら空色の間のセッションだけを選べるようにする」。
+
+続きから始めるセッションを選ぶ側（`session-restore.ts` の、印が `tag` と一致するもののうち最新を返す関数と `src/session-start.ts` の `findSessionToResume`）は、すでに目印まで揃えた印（`sessionTag(characterName, chat, viewPort)`）で引いている。**一覧だけが一族（`family`）で絞っている**のがずれ。
+
+## 決まっていること（蒸し返さない）
+
+- 切り替え先に並べるのは、**いまの部屋（いま起きている tsukumo のビューのポート）の印を持つセッションだけ**。別の部屋のセッションには画面から行けない
+- 鍵は続きから始めるときと同じ「ディレクトリ×キャラクター×モード×目印」（`docs/requirements.md` 4.8「鍵」）。新しい保存先は作らない
+- 行の見出し（何を出すか）はこのタスクでは変えない（T-394 の担当）
+
+## 解くべき論点
+
+- `listMarkedSessions` の引数を一族から印（`sessionTag` の値）へ替えるか、別の絞り込みを足すか。**続きから始めるときと同じ比べ方（`readSessionMark` で昔の印をポートへ戻した後の印どうし）になっているか**を優先する（昔の印 `tsukumo:<パック名>` や `@A` は 7327 の部屋に並ぶべき）
+- `sessionTagFamily` と `TaggedSession.family` が一覧以外で使われていなければ消す（使っているなら残す）
+- `listSessions` には `includeWorktrees: true` を渡しているので、**同じリポジトリの別の作業ツリーで同じポートに起こした tsukumo のセッションも同じ部屋に並ぶ**。これは続きから始める側も同じ挙動なので、このタスクでは揃えたままにし、変えない。気づいたことがあれば `develop/progress.md` の「未解決」に1行書く
+
+## やること
+
+1. `docs/requirements.md` 4.8「鍵」の「印の一覧がそのままセッションの一覧」の段落と、4.7 のサイドバーの記述、`docs/design.md` 13.9「部屋の名前」を読む
+2. 一覧の絞り込みを、目印まで揃えた印に替える（`session-restore.ts` / `sdk-driver.ts` / `session-start.ts`）。関数・引数の名前とコメント（「目印の違うもの」「同じ目印の行が複数返る」など一族を前提にした記述）も合わせて直す。`src/shared/session-choice.ts` の `SessionChoice.viewPort` のコメントも同じ
+3. `docs/requirements.md` 4.8 の該当段落と `docs/design.md` 13.9 に「一覧はいまの部屋のものだけ」を書く（`docs/requirements.md` 4.8 の「人が読む部屋の名前はまだ無い」の行は古いので、13.9 への参照に直す）
+4. テスト（`test/server/core/session-restore.test.ts`）: 同じ一族で目印の違うものは並ばない / 昔の印（目印なし・1文字の目印）は対応するポートの部屋に並ぶ / 新しい順・上限の件数は今までどおり
+
+## 完了条件
+
+- 上のテストがあり、別の部屋（目印の違う印）のセッションが一覧に入らないことを確かめている
+- `docs/requirements.md` 4.8 と `docs/design.md` 13.9 に、一覧がいまの部屋のものだけであることが書いてある
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 印の組み立てと読み取りは `src/server/core/config.ts`（`sessionTag` / `readSessionMark`）だけで行う。印の文字列を他所で組まない
