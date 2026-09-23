@@ -207,6 +207,35 @@ describe("toCharacterInfo", () => {
     ).toBe("/character/default.svg?v=fictional%402")
   })
 
+  it("face があればその URL（mini と違い、default の立ち絵には畳まない）", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ face: "face.png", portraits: { default: "default.svg" } }),
+    )
+
+    expect(
+      definition === undefined
+        ? undefined
+        : toCharacterInfo({
+            definition,
+            pack: "fictional",
+            revision: "2",
+            editable: true,
+          }).face,
+    ).toBe("/character/face.png?v=fictional%402")
+  })
+
+  it("face が無いパックでは undefined（mini や portraits.default から補わない）", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.svg" }, mini: "mini.png" }),
+    )
+
+    expect(
+      definition === undefined
+        ? undefined
+        : toCharacterInfo({ definition, pack: "fictional", revision: "2", editable: true }).face,
+    ).toBeUndefined()
+  })
+
   it("背景も /character/<file> の URL にする（覆いの濃さはそのまま）", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ background: { image: "background.png", veil: 0.8 } }),
@@ -246,6 +275,7 @@ describe("toCharacterInfo", () => {
     expect(info.portraits).toBeUndefined()
     expect(info.expressionsWithPortrait).toEqual([])
     expect(info.mini).toBeUndefined()
+    expect(info.face).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()
     expect(info.background).toBeUndefined()
     expect(info.editable).toBe(false)

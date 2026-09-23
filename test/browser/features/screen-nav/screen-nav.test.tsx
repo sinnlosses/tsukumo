@@ -12,6 +12,7 @@ import {
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
 import { setPageUrl } from "../../../dom-environment.ts"
+import { characterInfo } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件。docs/coding-standards.md「会話内容の扱い」）。
@@ -124,6 +125,58 @@ describe("ScreenNav", () => {
     renderScreenNav()
 
     expect(document.querySelector(".screen-nav > .screen-nav-room")?.textContent).toBe("9000")
+  })
+
+  // 顔は帯の左端、部屋の名前の左（13.9「顔」）。
+  describe("顔", () => {
+    it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {
+      renderScreenNav({
+        character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
+      })
+
+      const face = document.querySelector(".screen-nav > .screen-nav-face")
+      expect(face?.tagName).toBe("IMG")
+      expect(face?.getAttribute("src")).toBe("/character/face.png")
+      expect(face?.getAttribute("alt")).toBe("架空の精霊")
+    })
+
+    it("face が無いパックでは何も出さない（mini や立ち絵からは補わない）", () => {
+      renderScreenNav({ character: characterInfo({ face: undefined }) })
+
+      expect(document.querySelector(".screen-nav > .screen-nav-face")).toBeNull()
+    })
+
+    it("character が届く前（undefined）も何も出さない", () => {
+      renderScreenNav()
+
+      expect(document.querySelector(".screen-nav > .screen-nav-face")).toBeNull()
+    })
+
+    it("キャラクターを切り替えると顔も変わる（character-changed で state.character が入れ替わる想定）", () => {
+      renderScreenNav({ character: characterInfo({ name: "甲", face: "/character/a-face.png" }) })
+      expect(document.querySelector(".screen-nav-face")?.getAttribute("src")).toBe(
+        "/character/a-face.png",
+      )
+
+      cleanup()
+      renderScreenNav({ character: characterInfo({ name: "乙", face: "/character/b-face.png" }) })
+      expect(document.querySelector(".screen-nav-face")?.getAttribute("src")).toBe(
+        "/character/b-face.png",
+      )
+      expect(document.querySelector(".screen-nav-face")?.getAttribute("alt")).toBe("乙")
+    })
+
+    it("「≡」を開くと、落ちてきた面の先頭にも顔が出る（狭い画面）", () => {
+      renderScreenNav({
+        character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
+      })
+
+      fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
+
+      expect(
+        document.querySelector(".screen-nav-panel .screen-nav-face")?.getAttribute("src"),
+      ).toBe("/character/face.png")
+    })
   })
 
   // 狭い画面の「≡」（広い画面では CSS が消す。ここでは DOM の有無だけを見る）。

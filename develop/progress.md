@@ -62,6 +62,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 10px 内側へ重ねた。モックの半透明の地と 12px の字は `docs/design.md` 13.8 / 13.3 に反するので
 採らず、既存のトークンへ寄せた。
 
+### 2026-09-23 帯の左端、部屋の名前の前にいまのキャラクターの顔を出した（T-383）
+
+`character.json` に任意の欄 `face` を足し、`CharacterInfo.face` に `/character/<file>` の URL で
+載せて帯（狭い画面では「≡」の面の先頭）に丸く出す。`face` が無いパックでは何も出さない。
+同梱の `tsukumo` は `default.png` から切り出した `face.png`、`tsukumo-spirit` は `viewBox` を
+顔に寄せた `face.svg` を持つ。
+
 ### 2026-09-23 変更前と撮り比べる手順を1つに決め、手で確かめることに書いた（T-367）
 
 名指ししたコミットを一時 index で /tmp へ取り出し、そこで組み立てて空きポートと一時ホームで起こす
