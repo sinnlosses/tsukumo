@@ -24,7 +24,11 @@ import {
   type CharacterDefinition,
   parseCharacterDefinition,
 } from "../../shared/character-definition.ts"
-import { type CharacterPackEntry, toCharacterInfo } from "../../shared/character.ts"
+import {
+  type CharacterPackEntry,
+  type CharacterPackRemoval,
+  toCharacterInfo,
+} from "../../shared/character.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { bundledFilePath } from "./bundled-path.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
@@ -121,6 +125,27 @@ export function isEditableCharacterPack(pack: CharacterPack, cwd: string): boole
 }
 
 /**
+ * このパックを画面から消すと何が起きるか（`docs/design.md` 7.1「消すときの細部」）。**消せるのは
+ * 一覧に勝ち残ったパックがホームの版そのもの（`<roots.home>/<name>`）のときだけ**で、同梱にも
+ * 同じ名前があれば、消したあとは同梱の版が一覧に戻る（`"revert-to-bundled"`）。
+ *
+ * **起動先の `characters/local` はホームより後ろで勝つ**ので、ホームに同じ名前があっても
+ * ここで `"none"` になる（{@link isEditableCharacterPack} と同じ理由）。**使用中かどうかは見ない**
+ * （画面は `inUse` と合わせて押せなくし、消す側は別に断る）。
+ *
+ * **画面に配る値と、消す側が断る判断の両方がこれを通る**ので、出した口と通る口がずれない。
+ */
+export function characterPackRemoval(
+  pack: CharacterPack,
+  roots: CharacterPackRoots,
+): CharacterPackRemoval {
+  if (pack.dir !== join(roots.home, pack.name)) {
+    return "none"
+  }
+  return hasDefinition(join(roots.bundled, pack.name)) ? "revert-to-bundled" : "delete"
+}
+
+/**
  * 切り替えられるパックを列挙する（docs/design.md 7章・7.1）。探し先は3箇所:
  *
  * 1. **tsukumo 同梱の `characters/`** の各ディレクトリ（`character.json` があるものだけ）
@@ -164,13 +189,14 @@ export function characterChangedEvent(
   current: CharacterPack,
   packs: readonly CharacterPack[],
   cwd: string,
+  roots: CharacterPackRoots = defaultCharacterPackRoots(),
 ): SessionEvent {
   const entries = withCurrentPack(current, packs).map((pack) =>
-    toCharacterPackEntry(pack, pack === current, cwd),
+    toCharacterPackEntry(pack, pack === current, cwd, roots),
   )
   return {
     kind: "character-changed",
-    ...toCharacterPackEntry(current, true, cwd).character,
+    ...toCharacterPackEntry(current, true, cwd, roots).character,
     packs: entries,
   }
 }
@@ -264,13 +290,14 @@ function withCurrentPack(
 }
 
 /**
- * 一覧の1件を組む。「変えられるか」は {@link isEditableCharacterPack}、「消せるか」は
- * **消す口がまだ無いのでどれも false**（使用中のパックは口ができても消せない）。
+ * 一覧の1件を組む。「変えられるか」は {@link isEditableCharacterPack}、「消すと何が起きるか」は
+ * {@link characterPackRemoval}。
  */
 function toCharacterPackEntry(
   pack: CharacterPack,
   inUse: boolean,
   cwd: string,
+  roots: CharacterPackRoots,
 ): CharacterPackEntry {
   return {
     name: pack.name,
@@ -282,7 +309,7 @@ function toCharacterPackEntry(
       editable: isEditableCharacterPack(pack, cwd),
     }),
     inUse,
-    deletable: false,
+    removal: characterPackRemoval(pack, roots),
   }
 }
 

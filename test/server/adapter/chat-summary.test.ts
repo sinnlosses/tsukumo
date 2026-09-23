@@ -6,6 +6,7 @@ import { join } from "node:path"
 import {
   CHAT_SUMMARY_LIMIT_BYTES,
   createChatSummary,
+  discardChatSummary,
 } from "../../../src/server/adapter/chat-summary.ts"
 
 const textEncoder = new TextEncoder()
@@ -173,5 +174,29 @@ describe("createChatSummary", () => {
     chatSummary.write(SUMMARY)
 
     expect(readdirSync(root())).toEqual(["fictional-pack.md"])
+  })
+})
+
+describe("discardChatSummary", () => {
+  it("そのパックの写しだけを消し、ほかのパックの写しは残す", () => {
+    createChatSummary("fictional-2", root()).write(SUMMARY)
+    createChatSummary("fictional", root()).write(SUMMARY)
+
+    discardChatSummary("fictional-2", root())
+
+    expect(createChatSummary("fictional-2", root()).read()).toBeUndefined()
+    expect(createChatSummary("fictional", root()).read()?.summary).toBe(SUMMARY)
+  })
+
+  it("パックの名前として通らない値ではパスを組み立てず、何も消さない", () => {
+    createChatSummary("fictional", root()).write(SUMMARY)
+
+    discardChatSummary("../chat-summary/fictional", root())
+
+    expect(readdirSync(root())).toEqual(["fictional.md"])
+  })
+
+  it("写しが無くても投げない", () => {
+    expect(() => discardChatSummary("fictional", root())).not.toThrow()
   })
 })

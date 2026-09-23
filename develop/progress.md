@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 キャラクターを消すコマンドを足した（T-492）
+
+`delete-character` はホームの版だけを消し、使用中・同梱だけ・`characters/local`・一覧外は断る。一覧の `deletable` は `removal`（`delete` / `revert-to-bundled` / `none`）に置き換え、本当に消えるときだけ雑談の要約とアーカイブも消す（`docs/design.md` 7.1「消すときの細部」）。
+
 ### 2026-09-24 関所とパイプラインを入れた report を実セッションで試し直し、採用と決めた（T-489）
 
 16ターンで呼び忘れは6件から0件になり、3条件とも満たした（`docs/research/report-tool-trial.md`「試し直し」）。利用者が採用と決め、関所のあとに受理済みの `report` を同じ引数で送り直して抜けた穴（2回）は T-505 で塞ぐ。

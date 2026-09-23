@@ -59,6 +59,7 @@ export const FRAME_ERROR_REASON = {
   driverFailed: "セッション駆動が受け付けなかった",
   characterEditFailed: "キャラクターの見た目を変えられなかった",
   characterCreateFailed: "キャラクターを作れなかった",
+  characterDeleteFailed: "キャラクターを消せなかった",
   sessionDefaultFailed: "新しいセッションの既定を覚えられなかった",
   switchDuringTurn: "ターン進行中はキャラクターを切り替えられない（中断すると切り替えられる）",
   sessionSwitchDuringTurn: "ターン進行中はセッションを切り替えられない（中断すると切り替えられる）",

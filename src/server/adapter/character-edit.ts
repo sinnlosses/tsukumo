@@ -1,7 +1,7 @@
-// 画面から届いたキャラクターの変更（**新しいパックを作る**・立ち絵と差し色と背景を差し替える）を
-// キャラクターパックに書き込む。**書き込んでよいのは `~/.tsukumo/characters/<name>/` の下だけ**
-// （`docs/design.md` 7.1。`state.json` と同じ親の下で、リポジトリの作業ツリーが汚れない）。
-// 読む側は `src/server/adapter/character-pack.ts`。
+// 画面から届いたキャラクターの変更（**新しいパックを作る**・立ち絵と差し色と背景を差し替える・
+// **パックを消す**）をキャラクターパックに書き込む。**書き込んでよい・消してよいのは
+// `~/.tsukumo/characters/<name>/` の下だけ**（`docs/design.md` 7.1。`state.json` と同じ親の下で、
+// リポジトリの作業ツリーが汚れない）。読む側は `src/server/adapter/character-pack.ts`。
 //
 // **ディレクトリ名になる名前だけは外から受け取る**（新しいパックを作るときの `<name>`）ので、
 // 形は境界（`src/shared/character.ts` の `isCharacterPackName`）で見てある。ここは**既にある
@@ -47,12 +47,20 @@ import {
   definitionWithPortrait,
   parseCharacterDefinition,
 } from "../../shared/character-definition.ts"
-import { type CharacterCreateCommand, type CharacterEditCommand } from "../../shared/command.ts"
+import { type CharacterPackRemoval } from "../../shared/character.ts"
+import {
+  type CharacterCreateCommand,
+  type CharacterDeleteCommand,
+  type CharacterEditCommand,
+} from "../../shared/command.ts"
 import { type Expression, EXPRESSIONS, type RequiredExpression } from "../../shared/expression.ts"
 import { parsePortraitImage, portraitFileName } from "../../shared/portrait-image.ts"
 import {
   type CharacterPack,
   CHARACTER_DEFINITION_FILE_NAME,
+  type CharacterPackRoots,
+  characterPackRemoval,
+  defaultCharacterPackRoots,
   findCharacterPack,
   homeCharacterDir,
   isEditableCharacterPack,
@@ -143,6 +151,49 @@ export function createCharacterPack(
     return readCharacterPack(dir)
   } catch {
     discardDir(dir)
+    return undefined
+  }
+}
+
+/**
+ * `remove.pack` で指されたパックの**ホームの版**（`<roots.home>/<name>`）を消し、**消して起きた
+ * こと**を返す（`"delete"` なら一覧から消え、`"revert-to-bundled"` なら同梱の版が一覧に戻る。
+ * 呼び出し側は一覧を読み直して `character-changed` を流し直し、`"delete"` のときだけ雑談の
+ * 記録も消す。`docs/design.md` 7.1「消すときの細部」）。消さないときは undefined:
+ *
+ * - 一覧（素材を配る・見た目を変えるのと同じ `findCharacterPack` の規則）に無い名前
+ * - 使用中のパック（`current`）
+ * - 一覧に勝ち残ったのがホームの版ではない（同梱だけ・起動先の `characters/local`・
+ *   `TSUKUMO_CHARACTER` で指した一覧の外。{@link characterPackRemoval} が `"none"`）
+ * - ディスクから消せない
+ *
+ * **消す先はホームの置き場と一覧の名前から組む**（`characterPackRemoval` が、一覧のパックの
+ * 場所がまさにそこだと確かめてある）。届いた名前はパスに使わない。ホームの版がシンボリック
+ * リンクなら消えるのはリンクだけで、指している先は残る（`rmSync` はリンクを辿らない）。
+ *
+ * `roots` は同梱とホームの置き場（既定は本物の置き場。差し替えられるのはテストがホームを
+ * 汚さないためにある）。
+ */
+export function deleteCharacterPack(
+  current: CharacterPack,
+  packs: readonly CharacterPack[],
+  remove: CharacterDeleteCommand,
+  roots: CharacterPackRoots = defaultCharacterPackRoots(),
+): Exclude<CharacterPackRemoval, "none"> | undefined {
+  const pack = findCharacterPack(current, packs, remove.pack)
+  if (pack === undefined || pack.name === current.name) {
+    return undefined
+  }
+
+  const removal = characterPackRemoval(pack, roots)
+  if (removal === "none") {
+    return undefined
+  }
+
+  try {
+    rmSync(join(roots.home, pack.name), { recursive: true })
+    return removal
+  } catch {
     return undefined
   }
 }

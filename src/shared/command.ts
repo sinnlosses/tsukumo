@@ -313,6 +313,18 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     accent: accentColorSchema,
   }),
   /**
+   * キャラクターパックを消す（`docs/design.md` 7.1「消すときの細部」）。**消すのはホームの版だけ**で、
+   * 同梱のパックを画面で直したものなら同梱の版が一覧に戻る。名前は一覧と突き合わせて引くだけで、
+   * 形は見た目の編集と同じ {@link isCharacterPackName} で見る。**id を打って確かめるのは画面の側**
+   * で、サーバは名前を受けて消すだけ（使用中・ホームに無いパックは断る。
+   * `src/server/adapter/character-edit.ts` の `deleteCharacterPack`）。
+   */
+  z.object({
+    type: z.literal("delete-character"),
+    commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
+  }),
+  /**
    * 雑談のサイドバー「覚えていること」の「編集」から1行消す（`docs/design.md` 7.1「1行だけ
    * 忘れる」）。**指し方はキャラクター自身の `forget` ツールと同じ完全一致**——チップに出した
    * 文面（`- ` を外した1行）をそのまま送る。書き込みは
@@ -363,6 +375,12 @@ export type CharacterEditCommand = Extract<
 export type CharacterCreateCommand = Extract<ClientCommand, { readonly type: "create-character" }>
 
 /**
+ * キャラクターパックを消すコマンド。**これも駆動には渡らない**（消したあと、選択肢の減った
+ * `character-changed` を流し直すだけ。使用中のパックは消せないので、セッションは起こし直さない）。
+ */
+export type CharacterDeleteCommand = Extract<ClientCommand, { readonly type: "delete-character" }>
+
+/**
  * 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる。
  * `nudge` も文面をサーバ側が足すので外れる）。**`forget-remembered-line` も外れる** —
  * 書き込みと `remembered-lines-changed` の流し直しで済み、`editCharacter` と同じくセッションは
@@ -372,6 +390,7 @@ export type DriverCommand = Exclude<
   ClientCommand,
   | CharacterEditCommand
   | CharacterCreateCommand
+  | CharacterDeleteCommand
   | { readonly type: "switch-character" }
   | { readonly type: "switch-session" }
   | { readonly type: "set-chat-mode" }

@@ -4,8 +4,8 @@
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
 // - コマンドの分岐（`switch (command.type)`）は**ここが唯一**。旧の POST 6本ぶんの判断が1つになる
 //   （`switch-character` は駆動へ渡すのではなく起こし直しとして、キャラクターへの書き込み
-//   （`set-portrait` / `clear-portrait` / `set-outfit-accent` / `create-character`）は
-//   **書き込みと `character-changed` の流し直し**として、どちらも手前で捌く）
+//   （`set-portrait` / `clear-portrait` / `set-outfit-accent` / `create-character` /
+//   `delete-character`）は**書き込みと `character-changed` の流し直し**として、どちらも手前で捌く）
 // - **持つセッションは1つだけで、鍵を持たない**（docs/design.md 8章）。キャラクター・雑談モード・
 //   セッションの切り替えはこの持ち物の中で駆動を起こし直す（`restart`）ので、古い側と新しい側を
 //   並べて持つことが無い
@@ -18,6 +18,7 @@
 
 import {
   type CharacterCreateCommand,
+  type CharacterDeleteCommand,
   type CharacterEditCommand,
   type ClientCommand,
   isCharacterEditCommand,
@@ -135,6 +136,15 @@ export type SessionManagerOptions = {
    * 初期化されるので、作る操作の副作用にしない。`docs/design.md` 7.1）。
    */
   readonly createCharacter: (create: CharacterCreateCommand) => Promise<SessionEvent | undefined>
+  /**
+   * キャラクターパックを消し、**選択肢の減った `character-changed` イベントを返す**（消す範囲と
+   * 受け付けない条件は `src/server/adapter/character-edit.ts` の `deleteCharacterPack`。使用中・
+   * ホームに版の無いパックは消さない）。消せなかったときは undefined（呼び出し側は定型文の
+   * `error` を返す）。
+   *
+   * **ターン中も受け付ける**（使用中のパックは消せないので、いまの会話には触らない）。
+   */
+  readonly deleteCharacter: (remove: CharacterDeleteCommand) => Promise<SessionEvent | undefined>
   /**
    * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
    * `remembered-lines-changed` を返す**（書き込み先と受け付けない条件は
@@ -524,6 +534,11 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
           return write(
             () => options.createCharacter(command),
             FRAME_ERROR_REASON.characterCreateFailed,
+          )
+        case "delete-character":
+          return write(
+            () => options.deleteCharacter(command),
+            FRAME_ERROR_REASON.characterDeleteFailed,
           )
         case "forget-remembered-line":
           return write(

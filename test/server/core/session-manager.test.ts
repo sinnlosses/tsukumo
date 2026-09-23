@@ -23,6 +23,7 @@ import { type TokenUsageEntry, type TokenUsageLog } from "../../../src/server/co
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"
 import {
   type CharacterCreateCommand,
+  type CharacterDeleteCommand,
   type CharacterEditCommand,
 } from "../../../src/shared/command.ts"
 import {
@@ -148,6 +149,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const stub = createStubDriver()
   const edits: CharacterEditCommand[] = []
   const creates: CharacterCreateCommand[] = []
+  const deletes: CharacterDeleteCommand[] = []
   /** 覚えた「新しいセッションの既定」（覚え先は配線層なので、ここでは積むだけ）。 */
   const remembered: SessionDefault[] = []
   /** 画面の「編集」から消そうとした行（書き先は配線層なので、ここでは積むだけ）。 */
@@ -180,12 +182,16 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
       creates.push(create)
       return Promise.resolve(written())
     },
+    deleteCharacter: (remove) => {
+      deletes.push(remove)
+      return Promise.resolve(written())
+    },
     forgetRememberedLine: (line) => {
       forgottenLines.push(line)
       return Promise.resolve(writtenRemembered())
     },
   })
-  return { manager, stub, edits, creates, remembered, forgottenLines }
+  return { manager, stub, edits, creates, deletes, remembered, forgottenLines }
 }
 
 function waitForBatch(): Promise<void> {
@@ -329,6 +335,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
@@ -430,6 +437,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
     manager.subscribe(() => {})
@@ -504,6 +512,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
     manager.subscribe(() => {})
@@ -549,6 +558,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
     releases[0]?.()
@@ -591,6 +601,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
     manager.subscribe(() => {})
@@ -645,6 +656,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
@@ -761,6 +773,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub }
@@ -1010,6 +1023,35 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterCreateFailed })
   })
 
+  it("パックを消すコマンドも駆動へ渡さず、ターン中でも選択肢の減った character-changed を配る", async () => {
+    const { manager, stub, deletes } = startManagerWithStub()
+    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+    await waitForBatch()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+
+    expect(
+      await manager.dispatch({ type: "delete-character", commandId: "c-1", pack: "fictional-2" }),
+    ).toEqual({ ok: true })
+    await waitForBatch()
+
+    // 使用中のパックは消せないので、起こし直しも駆動への受け渡しも起きない。
+    expect(stub.calls).toEqual([])
+    expect(deletes.map((remove) => remove.pack)).toEqual(["fictional-2"])
+    const events = frames.filter((frame) => frame.type === "events").at(-1)
+    if (events?.type === "events") {
+      expect(events.events.map((stamped) => stamped.event)).toEqual([CHARACTER_EVENT])
+    }
+  })
+
+  it("パックを消せなかったら、消す側の定型文の理由を返す", async () => {
+    const { manager } = startManagerWithStub("rejected")
+
+    expect(
+      await manager.dispatch({ type: "delete-character", commandId: "c-1", pack: "fictional" }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterDeleteFailed })
+  })
+
   describe("画面の「編集」から覚えたことを1行消す", () => {
     it("雑談モードなら、消したい行を渡して流し直しを配る（駆動には渡らない）", async () => {
       const { manager, stub, forgottenLines } = startManagerWithStub()
@@ -1105,6 +1147,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
@@ -1142,6 +1185,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.reject(new Error("架空の書き込み失敗")),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
@@ -1182,6 +1226,7 @@ describe("createSessionManager", () => {
         }),
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
@@ -1254,6 +1299,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub, archiveCalls, finishTurnCalls }
@@ -1478,6 +1524,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub, entries }
@@ -1760,6 +1807,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub, entries, asked: () => asked }
@@ -1946,6 +1994,7 @@ describe("依頼に添えた画像の棚", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
     })
     const prompt = (images: readonly PromptImage[]) =>
