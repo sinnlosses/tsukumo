@@ -6,9 +6,9 @@
     "dependencies": [],
     "summary": "report-reveal.ts をフックとそれ以外に割る",
     "task": "## 背景\n\n`src/browser/features/main-view/report-reveal.ts` は 361行で、export しているのは\n`useReportReveal`（86行）1本だけなのに、DOM を測って `clip-path` を進める関数が16個同居して\nいる。**専用ファイルだが `hooks/` の外にある。** 読み手は `report.tsx:17` の1つ。\n\n同じ機能には `reveal-band.ts`（帯の位置）・`reveal-plan.ts`（いつ出すか）・`brush-scroll.ts` が\n既に概念の名前で並んでいる。T-328 で決めた形は `docs/design.md`「機能の中を分ける\n（container / presenter と `hooks/`）」。\n\nエージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。\n\n## 解くべき論点\n\n- **フックの外に出す16個を、どの名前の概念でまとめるか。** `reveal-band.ts` /\n  `reveal-plan.ts` と役割が重ならない名前にする\n- **`domain/` には置かない**（`docs/design.md` の線では `domain/` は「フックを呼ばない相手が\n  読む」もの限定で、ここは読み手がフック1つ）。フックの下に関数として置くか、機能の直下に\n  概念の名前でファイルを作るか\n- `startReveal` 以下は DOM を書き換える。どこまでをフックの責任にするか\n\n## やること\n\n1. 上を決める\n2. `useReportReveal` を `features/main-view/hooks/` へ出し、残りを決めたとおりに置く\n3. **振る舞いを変えない**（式も順番も動かさない）\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `hooks/` の下に `useReportReveal` がある\n- **目視**: 新しい依頼を投げて、書き上げる演出が前と同じように最後まで走ることを人が見て\n  確かめた結果が `evidence` にある\n\n## 注意\n\n- **演出はマウントした時点の DOM にだけ掛かる。** 開いた時点の本文には掛からないので、\n  確かめるには新しい依頼を投げて着地を見る必要があり、`scripts/capture-view.ts` の待ちでは\n  撮れない（`loopable` が `\"N\"` なのはこのため）\n- 背景のタスクなどで `turn-finished` が先に届く経路があるので、そこを変えない\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "382行の report-reveal.ts を hooks/use-report-reveal.ts（フレームを回す。useReportReveal / startReveal / advanceBlock）・reveal-measure.ts（DOM を測る）・reveal-paint.ts（clip-path と opacity を書く）の3つに割り、旧ファイルを消した。旧の関数13個を新3ファイルと突き合わせ、11個は本体が同一、advanceBlock と endLineOf の差は両方に重複していた測定式を shapesOf() に括り出した分だけ（式・評価順・呼ばれる回数は同じ）。参照を src 13 / test 6ファイルと docs/design.md・docs/architecture.md で追随。bun run check 1604 pass / 0 fail。目視: 2026-09-23 に利用者がタブを読み込み直して新しい依頼を1つ投げ、書き上げる演出が最後まで走ることを確認した。"
   },
   {
     "id": "T-375",

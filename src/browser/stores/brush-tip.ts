@@ -1,6 +1,6 @@
 // 筆先（いま本文を書いている筆の先。塊の上をZ字になぞる）を配る。**書いているのは
-// `features/main-view/report-reveal.ts` だが、読むのは立ち絵の側**（キャラビュー）になるので、
-// 機能どうしの import にならないよう `stores/` に置く（`docs/design.md` 2章。
+// `features/main-view/hooks/use-report-reveal.ts` だが、読むのは立ち絵の側**（キャラビュー）に
+// なるので、機能どうしの import にならないよう `stores/` に置く（`docs/design.md` 2章。
 // `stores/turn-selection.tsx` と同じ理由）。
 //
 // **`SessionState` には入れない。** サーバから来るものではなく、ブラウザの描画のあいだだけ
@@ -15,7 +15,7 @@
 // 浮く**（画面で出た）。捨てずに持たせておくのは、過去のターンを見て戻ったときに
 // 元の場所へそのまま戻れるようにするため。
 //
-// React の外に1つだけ持つ（演出は同時に1つしか走らない。`report-reveal.ts`）。
+// React の外に1つだけ持つ（演出は同時に1つしか走らない。`hooks/use-report-reveal.ts`）。
 
 import { useSyncExternalStore } from "react"
 
@@ -41,9 +41,9 @@ export type BrushStroke = "sweep" | "return"
  *
  * **原点を本文側に取るのは、書き終わった筆先がそこに残るから**（`mini-portrait.tsx`）。
  * ビューポート基準のまま残すと、本文を転がしたときに関係ない場所へ浮いたまま居座る。測るのは
- * ビューポート座標（`getBoundingClientRect()`）なので、写すのは `report-reveal.ts` の仕事。
+ * ビューポート座標（`getBoundingClientRect()`）なので、写すのは `reveal-measure.ts` の仕事。
  *
- * `top` / `bottom` は**いま書いている帯**（Z字の1画。`report-reveal.ts`）の上端と下端。
+ * `top` / `bottom` は**いま書いている帯**（Z字の1画。`hooks/use-report-reveal.ts`）の上端と下端。
  * 帯は**トピック（見出しから次の見出しまで）の行を上下に割ったもの**で、要素をまたいで伸びる。
  * 行が1つしか取れないトピックでは、その上端と下端がそのまま入る。
  */
@@ -61,7 +61,7 @@ export type BrushPlace = {
  *   （画ごとに別の口で配ると、位置と種別がずれたフレームができる）
  * - `resting`: 書き終わってその場に残っている。位置は**最後の行が終わったところ**（帯ではなく
  *   行。帯の右端はその帯でいちばん長い行の右なので、短い行で終わる本文では右へ外れる。
- *   `report-reveal.ts`）。**次に書き始めるまで消えない**ので、なぞる画も持たない
+ *   `hooks/use-report-reveal.ts`）。**次に書き始めるまで消えない**ので、なぞる画も持たない
  */
 export type BrushTip = BrushPlace & {
   /**
@@ -82,8 +82,8 @@ export function publishBrushTip(next: BrushTip | undefined): void {
 
 /**
  * 書いていた筆先を**最後に配ったところに残す**。演出が終わるときの**落とし先**で、ふだんは
- * 本文の末尾を測って残す（`report-reveal.ts` の `finish()`）——ここを使うのは末尾が測れなかった
- * ときだけ。**書いていなければ何もしない**——測れないまま終わった演出が、前に残した筆先を
+ * 本文の末尾を測って残す（`hooks/use-report-reveal.ts` の `finish()`）——ここを使うのは末尾が
+ * 測れなかったときだけ。**書いていなければ何もしない**——測れないまま終わった演出が、前に残した筆先を
  * 消さないようにする。
  */
 export function restBrushTip(): void {
