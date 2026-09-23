@@ -282,14 +282,14 @@ export type SessionState = {
   readonly lastToolFailureAt: number | undefined
   /**
    * 雑談モードに入っているか（`docs/requirements.md` 4.9）。入っている間はレポートを出さず、
-   * メインビューが立ち絵と会話のログになる（`docs/design.md` 13.7）。
+   * メインビューが立ち絵と会話のログになる（`docs/screen-design.md` 13.7）。
    *
    * **源は `chat-mode-changed` だけ。** 切り替えは駆動の起こし直しなので、起こし直したあとに
    * サーバから流れ直す（起こし直しで状態が初期値へ戻るため）。
    */
   readonly chatMode: boolean
   /**
-   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/design.md` 13.7）。
+   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
    * **要約の本文ではなく、写しから取り出した見出しだけ**（`docs/requirements.md` 4.9）。
    *
    * **源は `chat-topics-changed` だけ**で、届くたびに丸ごと置き換える。起こし直すと初期値の
@@ -299,7 +299,7 @@ export type SessionState = {
   readonly chatTopics: readonly string[]
   /**
    * 雑談のサイドバーの「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`。
-   * `docs/design.md` 7.1・13.7）。`- ` を外した文面で、古い→新しいの順。
+   * `docs/design.md` 7.1・`docs/screen-design.md` 13.7）。`- ` を外した文面で、古い→新しいの順。
    *
    * **源は `remembered-lines-changed` だけ。** 雑談で起こしたとき、キャラクター自身の
    * `remember` / `forget`、画面の「編集」から消したときのいずれかで流れ直す。起こし直すと
@@ -307,7 +307,7 @@ export type SessionState = {
    */
   readonly rememberedLines: readonly string[]
   /**
-   * 新しいセッションを起こすときの既定（`docs/design.md` 13.6。帯の右端の歯車が読み書きする）。
+   * 新しいセッションを起こすときの既定（`docs/screen-design.md` 13.6。帯の右端の歯車が読み書きする）。
    * **いま動いているセッションの値ではない** — そちらは {@link SessionState.model} と
    * {@link SessionInfo} の `permissionMode` で、帯から変えてもここは変わらない。
    *
@@ -406,7 +406,7 @@ export function applySessionEvent(
         ),
       }
     case "turn-started":
-      // **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。docs/design.md 13.7）。
+      // **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。docs/screen-design.md 13.7）。
       // 積むものが無いだけで、吹き出し・表情・進行中の印は `request` と同じに動かす。
       return beginTurn(state, at)
     case "partial-utterance":

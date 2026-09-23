@@ -1,4 +1,4 @@
-// 雑談モードの会話のログ（`docs/design.md` 13.7）。**セッションの姿（`session-state.ts`）から
+// 雑談モードの会話のログ（`docs/screen-design.md` 13.7）。**セッションの姿（`session-state.ts`）から
 // 導くだけ**で、状態は持たない。
 //
 // **`main-view.ts` とは別に置く。** あちらは依頼を境目にやり取りへまとめ、タブで遡る形を作る
@@ -13,7 +13,7 @@ import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type RecordTime, type SessionRecord } from "./session-state.ts"
 
 /**
- * 会話のログ1件。**話したのがどちらか**と文面、話した時刻を持つ（`docs/design.md` 13.7 の
+ * 会話のログ1件。**話したのがどちらか**と文面、話した時刻を持つ（`docs/screen-design.md` 13.7 の
  * 「利用者の発言とキャラクターのセリフが交互に並ぶ」「時刻と日の区切り」）。
  *
  * `expression` はキャラクターの側にだけ付く（話者の印に使う）。利用者の側は代わりに、
@@ -70,7 +70,7 @@ export function chatLogEntries(records: readonly SessionRecord[]): readonly Chat
 }
 
 /**
- * ログに並べる1行。発言（{@link ChatLogEntry}）と、**日の区切り**（`docs/design.md` 13.7
+ * ログに並べる1行。発言（{@link ChatLogEntry}）と、**日の区切り**（`docs/screen-design.md` 13.7
  * 「時刻と日の区切り」）の2種類。
  *
  * 発言の行が持つ `index` は {@link chatLogEntries} の並びでの位置（押して遡る行を指すのに使う。
@@ -81,7 +81,7 @@ export type ChatLogRow =
   | { readonly kind: "day"; readonly date: Temporal.PlainDate }
 
 /**
- * ログの並びに日の区切りを差し込む（`docs/design.md` 13.7「時刻と日の区切り」）。
+ * ログの並びに日の区切りを差し込む（`docs/screen-design.md` 13.7「時刻と日の区切り」）。
  * **区切りが入るのは、日が変わった発言の手前だけ**で、並びの先頭には入れない。
  *
  * - 日を比べる相手は**1つ前の発言**。圧縮の区切り（`boundary`）は時刻を持たないので飛ばす

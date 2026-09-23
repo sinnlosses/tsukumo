@@ -1,7 +1,7 @@
 // キャラクターのセリフ1件（`components/chat-speech.tsx`）の押し方の読み替え。**押すとその時の
 // 表情へ立ち絵が遡り**、**届いたばかりの1件は育つ**（`use-speech-growth.ts`）。
 //
-// **育っている最中の押しは打ち切りに使い、遡りはその回には起きない**（docs/design.md 13.7）。
+// **育っている最中の押しは打ち切りに使い、遡りはその回には起きない**（docs/screen-design.md 13.7）。
 // 揃うより先に留めても、何を留めたのかが読めないため。
 
 import { useRef, type KeyboardEvent, type MouseEvent } from "react"

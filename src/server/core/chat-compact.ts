@@ -11,7 +11,7 @@
 
 import { type ChatSummary } from "./session-driver.ts"
 
-/** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/design.md` 13.7）。 */
+/** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/screen-design.md` 13.7）。 */
 export const CHAT_TOPIC_LIMIT = 3
 
 /** 話題の見出しを挟む印。要約の中で1行を占める前提で、行の中の位置は問わない。 */

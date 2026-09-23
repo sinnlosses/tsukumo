@@ -1,4 +1,4 @@
-/* 雑談ビュー（`<ChatView>`。docs/design.md 13.7）。**メインビューの領域を左右に割り**、
+/* 雑談ビュー（`<ChatView>`。docs/screen-design.md 13.7）。**メインビューの領域を左右に割り**、
    左に立ち絵、右に会話のログを置く。
 
    **これはプロトタイプ**。立ち絵とログの比率は目視で仮に決めたもので、
@@ -18,7 +18,7 @@
   --chat-poke-sway-rotate: 1.6deg;
   --chat-poke-sway-duration: 0.5s;
 }
-/* つつける立ち絵（`components/nudge-portrait.tsx`。docs/design.md 13.7）。**立ち絵を包む
+/* つつける立ち絵（`components/nudge-portrait.tsx`。docs/screen-design.md 13.7）。**立ち絵を包む
    `<button>` がそのまま立ち絵の置き場所**なので、置き方（下端で揃える・幅の上限・床へ沈める量）
    はここが持ち、`.chat-portrait` は中でいっぱいに広がるだけにする。
 
@@ -36,12 +36,12 @@
   padding: 0;
   border: none;
   background: none;
-  /* **指の形にする**のはホバーの合図の1つ（docs/design.md 13.7）。揺れ・案内と合わせて3つ。 */
+  /* **指の形にする**のはホバーの合図の1つ（docs/screen-design.md 13.7）。揺れ・案内と合わせて3つ。 */
   cursor: pointer;
   /* 揺れは床を軸に振る（立ち絵は床に立っているので、中心で振ると足が浮いて見える）。 */
   transform-origin: bottom center;
 }
-/* **載せるとひと揺らしする**（docs/design.md 13.7。ログの行と同じ「載せると立ち絵が応える」の
+/* **載せるとひと揺らしする**（docs/screen-design.md 13.7。ログの行と同じ「載せると立ち絵が応える」の
    語彙）。**揺らすのは包んだボタンのほうで、立ち絵そのものではない** — 立ち絵は `data-motion`
    の呼吸や歩行を自分で持っているので、同じ要素に当てると上書きして息が止まる。入れ子にすれば
    transform が掛け合わさり、呼吸したまま揺れる。**一度きり**（`animation-iteration-count: 1`）
@@ -60,7 +60,7 @@
   outline-offset: -2px;
 }
 /* ターン進行中（返事を待っている間）は押せない。**立ち絵は薄めない**（要素の `opacity` は
-   地ごと透かす。docs/design.md 13.8 の「過去の吹き出しは要素の opacity で薄めない」と同じ
+   地ごと透かす。docs/screen-design.md 13.8 の「過去の吹き出しは要素の opacity で薄めない」と同じ
    理由）ので、見せ方は**応えないこと**のほうで作る: 指の形にならず、揺れず、案内も出ない
    （`components/nudge-portrait.tsx` が `.chat-poke-hint` ごと描かない）。 */
 .chat-poke[aria-disabled="true"] {
@@ -78,7 +78,7 @@
     transform: rotate(calc(-1 * var(--chat-poke-sway-rotate)));
   }
 }
-/* 載せている間だけ出る案内（docs/design.md 13.7）。**常設の枠は増えない** — ホバーと
+/* 載せている間だけ出る案内（docs/screen-design.md 13.7）。**常設の枠は増えない** — ホバーと
    フォーカスの間だけ見え、離せば消える（13.1 原則2）。
 
    **隠すのは透明にするだけ**（`display: none` / `visibility: hidden` は支援技術の木からも
@@ -129,7 +129,7 @@
 /* **下端から積む。** 件数が少ないうちに上へ貼り付くと、立ち絵の顔の高さと話が合わない
    （LINE / Discord も新しい発言が下に来る）。`justify-content: flex-end` は使わない
    — column flex で使うと、溢れた分が block-start（上）側へ出るのに scrollable overflow は
-   end 方向にしか伸びないため、上へ出た分がクリップされて掴めなくなる（docs/design.md 13.7）。
+   end 方向にしか伸びないため、上へ出た分がクリップされて掴めなくなる（docs/screen-design.md 13.7）。
    代わりに先頭の子へ `margin-top: auto` を当てる。中身が容器より低いうちはその子が
    余白を全部吸って下へ押し下げ、溢れたら margin は 0 に落ちて通常の overflow のまま
    上へスクロールできる。 */
@@ -142,7 +142,7 @@
   flex-shrink: 0;
 }
 /* 発言1件ぶんの行（吹き出しと、その脇の時刻）。**話者で左右に寄せるのはこの行**で、
-   吹き出しと時刻は下端で揃える（LINE と同じ読み方。docs/design.md 13.7「時刻と日の区切り」）。
+   吹き出しと時刻は下端で揃える（LINE と同じ読み方。docs/screen-design.md 13.7「時刻と日の区切り」）。
    行はログの幅いっぱいに取り、吹き出しの `max-width` はログの幅から測る。 */
 .chat-row {
   display: flex;
@@ -172,7 +172,7 @@
   font-size: var(--font-secondary);
   line-height: var(--line-height-body);
 }
-/* 日の区切り（docs/design.md 13.7「時刻と日の区切り」）。**日付の字を中央に置くだけ**で、
+/* 日の区切り（docs/screen-design.md 13.7「時刻と日の区切り」）。**日付の字を中央に置くだけ**で、
    線は引かない —— 圧縮の区切り（破線1本・文言なし）と、字の有無で見分ける。
    地・色は時刻と同じ（`ground` の地に `ink-quiet`）。 */
 .chat-day {
@@ -195,7 +195,7 @@
   border: 1px solid var(--rule);
   border-radius: 1.1rem;
   background: var(--surface);
-  /* **セリフの文字は `ink`**（docs/design.md 13.1 原則1。長い往復でも濃さを変えない）。 */
+  /* **セリフの文字は `ink`**（docs/screen-design.md 13.1 原則1。長い往復でも濃さを変えない）。 */
   color: var(--ink);
   font-size: var(--font-body);
   line-height: var(--line-height-body);
@@ -203,7 +203,7 @@
   overflow-wrap: anywhere;
 }
 /* キャラクターの発言は差し色の縁で話者を示す（立ち絵の側＝左へ寄せるのは `.chat-row-character`）。
-   **行そのものが押せる**（押すとその時の表情へ立ち絵が遡る。docs/design.md 13.7）。
+   **行そのものが押せる**（押すとその時の表情へ立ち絵が遡る。docs/screen-design.md 13.7）。
    **操作子も枠も増やさない**（13.1 原則2）ので、行の外に印や矢印は足さない。
    **文字はドラッグで選べる**（セリフをコピーできること）ので、
    押せることを示すのは指の形だけにし、選ぶのを妨げる `user-select` は当てない。 */
@@ -219,14 +219,14 @@
 .chat-entry-character:hover:not(.is-selected) {
   background: color-mix(in srgb, var(--surface), var(--accent) 18%);
 }
-/* **立ち絵がいま従っている行**（docs/design.md 13.7）。押して留めた行か、何も押していなければ
+/* **立ち絵がいま従っている行**（docs/screen-design.md 13.7）。押して留めた行か、何も押していなければ
    最新のセリフに付く。**縁は太らせない**（行の高さが動いて並び全体がずれる）ので、
    内側の影で1px ぶん重ねて濃くし、地も差し色の側へさらに寄せる。 */
 .chat-entry-character.is-selected {
   background: color-mix(in srgb, var(--surface), var(--accent) 26%);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
-/* **育っている行の筆先**（docs/design.md 13.7「末尾のセリフは育つ」）。文字が出そろうまでの
+/* **育っている行の筆先**（docs/screen-design.md 13.7「末尾のセリフは育つ」）。文字が出そろうまでの
    あいだだけ、最後の文字の後ろに細い縦棒を1本置く（出し切ると `data-growing` ごと消える）。
    **要素は増えない**（疑似要素なので DOM にも支援技術の木にも出ない。13.1 原則2）。
    **点滅させない** — 動いているものはこの行に1つ（文字が増えること）だけにする。
@@ -241,7 +241,7 @@
   transform: translateY(0.15em);
   background: var(--accent);
 }
-/* 返事を待っている間だけ末尾に出す「...」（`components/chat-typing.tsx`。docs/design.md
+/* 返事を待っている間だけ末尾に出す「...」（`components/chat-typing.tsx`。docs/screen-design.md
    13.7「返事を待つ間の「...」」）。**キャラクター側の吹き出しとして出す**が、押せない・
    選べる文字を持たないので `.chat-entry-character` の cursor と hover は乗せない。 */
 .chat-entry-typing {
@@ -304,7 +304,7 @@
   border-top: 1px dashed var(--rule);
 }
 /* まだ一度も話していないときの案内。**最初の一言を促すのもこの1件**（促す操作子はログの
-   末尾から立ち絵へ移った。docs/design.md 13.7）。**地は `.chat-poke-hint` と同じ理由で
+   末尾から立ち絵へ移った。docs/screen-design.md 13.7）。**地は `.chat-poke-hint` と同じ理由で
    `ground` 一色を1枚**（背景の絵を字の背後に回り込ませない。13.8）。余白と角丸はその1枚の
    ためのもので、背景の無いパックでは地と同じ色なので見えない。 */
 .chat-empty {

@@ -45,6 +45,7 @@ import { type SessionEvent } from "../../shared/session-event.ts"
 import { readChatTopics } from "../core/chat-compact.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
+import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import {
   SPEAK_TOOL_NAME,
@@ -66,6 +67,7 @@ import {
   selectSessionToResume,
   toRestoredEvents,
 } from "../core/session-restore.ts"
+import { readClaudeAccountTier } from "./claude-account.ts"
 
 /**
  * 既定の reasoning effort。high に固定した
@@ -239,7 +241,7 @@ export function startSdkDriver(options: SessionDriverOptions): SessionDriver {
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     promptWithoutRecord: (text) => {
-      // **`request` を流さない**（送った文面をログにも記録にも残さない。docs/design.md 13.7）。
+      // **`request` を流さない**（送った文面をログにも記録にも残さない。docs/screen-design.md 13.7）。
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
       options.onEvent({ kind: "turn-started" })
       input.push({ text, images: [] })
@@ -295,7 +297,7 @@ export type QuerySeedOptions = {
  * 検査できるように、`startSdkDriver` から切り出してある。**
  *
  * **モデルと許可モードは呼び出し側から来る**（`src/session-start.ts` が
- * `readRememberedSessionDefault` で読んだ値。`docs/design.md` 13.6）。ここで定数に倒すと、
+ * `readRememberedSessionDefault` で読んだ値。`docs/screen-design.md` 13.6）。ここで定数に倒すと、
  * 歯車で変えた既定が起こし直しても効かない。
  */
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
@@ -320,7 +322,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * `"auto"` でも同じ扱いにする（`docs/design.md` 7章）。
  *
  * 写したあとは、**書いた写しから取り出した最近の話題の見出しだけ**を `chat-topics-changed` で
- * 流す（`docs/design.md` 13.7）。取り出し方は core（`readChatTopics`）が持ち、ここは中身を
+ * 流す（`docs/screen-design.md` 13.7）。取り出し方は core（`readChatTopics`）が持ち、ここは中身を
  * 見ない。
  *
  * `startSdkDriver` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
@@ -600,6 +602,10 @@ async function relayCommandDescriptions(
  * `organization` も返すが、**駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ**
  * （`toPlan` の戻り値しか触らないので、他のフィールドに触れる経路が無い）。
  *
+ * **名前は Claude Code の控えを先に見て決める**（`src/server/core/plan.ts`。SDK の
+ * `subscriptionType` は契約の段と合わないことがあり、控えのほうが段と枠を別々に持つ）。
+ * 控えから決まらなければ SDK の値をそのまま出す。
+ *
  * **取れなくてもセッションは続ける**（API キーや Bedrock のときは元々この値が無い。
  * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」。
  * {@link relayCommandDescriptions} と同じ形）。
@@ -607,9 +613,10 @@ async function relayCommandDescriptions(
 async function relayPlan(
   session: { readonly accountInfo: () => Promise<unknown> },
   options: SessionDriverOptions,
+  readTier: () => ClaudeAccountTier = readClaudeAccountTier,
 ): Promise<void> {
   try {
-    const plan = toPlan(await session.accountInfo())
+    const plan = planName(readTier(), toPlan(await session.accountInfo()))
     if (plan !== undefined) {
       options.onEvent({ kind: "plan", plan })
     }

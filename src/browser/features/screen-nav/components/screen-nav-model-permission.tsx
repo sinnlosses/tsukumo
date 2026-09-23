@@ -1,4 +1,4 @@
-// 帯の右端、モデル・許可モードのドロップダウン（docs/design.md 13.9「動き方の操作子」）。
+// 帯の右端、モデル・許可モードのドロップダウン（docs/screen-design.md 13.9「動き方の操作子」）。
 // **枠と下向きの矢印は部品（`components/select.tsx`）が持つ**ので、ここは置き方と字の色だけを
 // `.screen-nav-select` で渡す（screen-nav.module.css）。キーボードの操作・読み上げ・選択肢の
 // 開き方はブラウザに任せる。

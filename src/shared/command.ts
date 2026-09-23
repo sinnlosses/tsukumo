@@ -97,7 +97,7 @@ const portraitDataUrlSchema = z
   .refine((value) => parsePortraitImage(value) !== undefined)
 
 /**
- * 背景1枚の data URL（`docs/design.md` 13.8）。**受け取るのは `.png` / `.jpg` / `.webp` の
+ * 背景1枚の data URL（`docs/screen-design.md` 13.8）。**受け取るのは `.png` / `.jpg` / `.webp` の
  * 3つだけ**（`src/shared/character-background.ts`。`.gif` は入れない — 動く背景は読む面の隣で
  * 気が散る）。立ち絵と同じく文字列のまま持ち、ほどくのは書き込む側。
  */
@@ -199,7 +199,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     chat: z.boolean(),
   }),
   /**
-   * キャラクターから話しかけてもらう（`docs/design.md` 13.7）。**文面はここを通らない** —
+   * キャラクターから話しかけてもらう（`docs/screen-design.md` 13.7）。**文面はここを通らない** —
    * 送る一言は `src/server/core/chat-nudge.ts` が持ち、押した事実だけが届く（原則4。話題は
    * tsukumo が列挙しない）。**送った文面はログにも記録にも残さない**ので、
    * `prompt` とは別のコマンドにしてある。
@@ -240,7 +240,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     color: accentColorSchema,
   }),
   /**
-   * 画面の差し色（`accent` / `chatAccent`）を差す（`docs/design.md` 13.6）。**`target` で
+   * 画面の差し色（`accent` / `chatAccent`）を差す（`docs/screen-design.md` 13.6）。**`target` で
    * どちらを差すかを分ける**（`set-outfit-accent` が衣装を引数で分けているのに揃える。型を
    * 2つに割らない）。
    */
@@ -252,12 +252,12 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   }),
   /**
    * 雑談の差し色（`chatAccent`）を消し、雑談中も仕事の差し色（`accent`）と同じに戻す
-   * （`docs/design.md` 13.6「仕事と同じにする」）。**`accent` を消す口は無い**
+   * （`docs/screen-design.md` 13.6「仕事と同じにする」）。**`accent` を消す口は無い**
    * （`src/shared/character-definition.ts` の `definitionWithoutChatAccent`）。
    */
   z.object({ type: z.literal("clear-chat-accent"), commandId: commandIdSchema }),
   /**
-   * キャラビューに敷く背景を差し替える／消す（`docs/design.md` 13.8）。**覆いの濃さは
+   * キャラビューに敷く背景を差し替える／消す（`docs/screen-design.md` 13.8）。**覆いの濃さは
    * 画面から変えない**ので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
    */
   z.object({
@@ -267,7 +267,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("clear-background"), commandId: commandIdSchema }),
   /**
-   * 新しいセッションの既定（モデル・許可モード）を覚える（`docs/design.md` 13.6。帯の右端の
+   * 新しいセッションの既定（モデル・許可モード）を覚える（`docs/screen-design.md` 13.6。帯の右端の
    * 歯車）。**いま動いているセッションには効かない** — 効くのは次に起こすときからで、
    * 帯の `set-model` / `set-permission-mode`（セッション限り）とは別の口にしてある。
    *

@@ -44,7 +44,7 @@ export function PeriodUsageCard(props: PeriodUsageCardProps): ReactElement {
         {props.trend.points.map((point) => (
           <span
             key={point.key}
-            className={styles["usage-card-bar"]}
+            className={barClassName(props.pick(point.totals))}
             style={{ "--usage-bar-height": barHeight(props.pick(point.totals), peak) }}
           />
         ))}
@@ -65,6 +65,15 @@ function peakClassName(values: readonly number[], peak: number): string {
   const index = values.indexOf(peak)
   const side = index * 2 < values.length ? "usage-card-peak-left" : "usage-card-peak-right"
   return `${styles["usage-card-peak"]} ${styles[side]}`
+}
+
+/**
+ * 棒1本の綴り。**記録の無い刻みは塗りを落とす**（高さの印だけを残す。同じ塗りのままだと、
+ * 空だった刻みと「少しだけ使った」刻みが同じに見える）。
+ */
+function barClassName(value: number): string {
+  const zero = value === 0 ? ` ${styles["usage-card-bar-zero"]}` : ""
+  return `${styles["usage-card-bar"]}${zero}`
 }
 
 /**

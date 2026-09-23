@@ -54,7 +54,7 @@ export type CharacterInfo = {
    */
   readonly mini: string | undefined
   /**
-   * 帯の左端に出す顔の URL（`/character/<file>`。`docs/design.md` 13.9「顔」）。**定義に `face`
+   * 帯の左端に出す顔の URL（`/character/<file>`。`docs/screen-design.md` 13.9「顔」）。**定義に `face`
    * が無いパックでは undefined**——`mini` と違い、`portraits.default` へのフォールバックはしない
    * （無いパックでは帯に何も出さない）。表情では変わらない1枚。
    */
@@ -70,7 +70,7 @@ export type CharacterInfo = {
    */
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
-   * キャラビューに敷く背景（`docs/design.md` 13.8）。**`image` は `/character/<file>` の URL**
+   * キャラビューに敷く背景（`docs/screen-design.md` 13.8）。**`image` は `/character/<file>` の URL**
    * （立ち絵と同じ経路・同じ取り直しの印）。無ければ背景は出ない（`ground` の上に立ち絵が
    * 直接立つ、いままでの見え方）。**効くのはキャラビューだけ。**
    */
@@ -161,7 +161,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
 }
 
 /**
- * 画面に流し込む `--accent` の値（`docs/design.md` 13.2「雑談中は」）。**雑談中だけ**
+ * 画面に流し込む `--accent` の値（`docs/screen-design.md` 13.2「雑談中は」）。**雑談中だけ**
  * {@link CharacterInfo.chatAccent} を使い、無ければ {@link CharacterInfo.accent} に落ちる
  * （雑談用の色を持たないパックは仕事と同じ差し色のまま）。**つまみは増えない** — `accent` という
  * 1つの枠が、モードに応じて別の値を取るだけ。

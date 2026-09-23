@@ -177,7 +177,7 @@ function startDriver(options: {
   return startSdkDriver({
     cwd,
     expressions: expressionChoices(seed.pack.definition),
-    // **覚えた既定で起こす**（`docs/design.md` 13.6）。起こしたあと帯から変えた値は
+    // **覚えた既定で起こす**（`docs/screen-design.md` 13.6）。起こしたあと帯から変えた値は
     // そのセッション限りで、ここには戻らない。
     permissionMode: seed.sessionDefault.permissionMode,
     model: seed.sessionDefault.model,
@@ -197,7 +197,7 @@ function startDriver(options: {
 
 /**
  * 歯車から届いた「新しいセッションの既定」を覚え、画面へ流すイベントを返す
- * （`docs/design.md` 13.6）。**書き込みは失敗しても例外を投げない**ので、返すイベントは
+ * （`docs/screen-design.md` 13.6）。**書き込みは失敗しても例外を投げない**ので、返すイベントは
  * 常に1つ（`writeRememberedSessionDefault`）。
  */
 function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
@@ -226,7 +226,7 @@ function sessionMode(
   return {
     kind: "chat",
     // **書けた・消せたときだけ**、更新後の一覧を画面へ流し直す（`persona-memory.ts` の
-    // `createPersonaMemory` の `onChange`。`docs/design.md` 7.1・13.7）。
+    // `createPersonaMemory` の `onChange`。`docs/design.md` 7.1・`docs/screen-design.md` 13.7）。
     personaMemory: createPersonaMemory(seed.pack, cwd, undefined, (lines) =>
       onEvent({ kind: "remembered-lines-changed", lines }),
     ),

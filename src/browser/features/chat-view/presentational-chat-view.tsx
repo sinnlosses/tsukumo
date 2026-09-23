@@ -1,4 +1,4 @@
-// 雑談ビューの**器だけ**（<PresentationalChatView>。docs/design.md 13.7）。左に立ち絵、右に会話の
+// 雑談ビューの**器だけ**（<PresentationalChatView>。docs/screen-design.md 13.7）。左に立ち絵、右に会話の
 // ログを置く。フックも算出も持たず、`hooks/use-chat-view.ts` が組み立てた値をそのまま部品へ
 // 渡す（docs/design.md 2章「機能の中を分ける」）。
 //

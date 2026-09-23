@@ -1,4 +1,4 @@
-// 帯のまん中の札「いまの作業」のロジック（docs/design.md 13.9「いまの作業」/ docs/glossary.md
+// 帯のまん中の札「いまの作業」のロジック（docs/screen-design.md 13.9「いまの作業」/ docs/glossary.md
 // 「いまの作業」「依頼の手順」）。tsukumo がいま何をしているかの語と、押すと開く**依頼の手順**の
 // 一覧を、見た目が受け取れる形まで畳んで返す。
 //
@@ -37,7 +37,7 @@ import { useTurnSelection } from "../../../stores/turn-selection.tsx"
 /** 閉じている間に出す手順の件数（依頼の手順が6件以上あると「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
 
-/** 4つの状態の語（上ほど強い。表の並びは docs/design.md 13.9「いまの作業」）。 */
+/** 4つの状態の語（上ほど強い。表の並びは docs/screen-design.md 13.9「いまの作業」）。 */
 export type ScreenNavCurrentWorkState = "stopped" | "pending" | "running" | "idle"
 
 const WORK_WORD_LABEL: Record<ScreenNavCurrentWorkState, string> = {
@@ -81,7 +81,7 @@ export type ScreenNavCurrentWorkRunningStep =
 
 /**
  * 札に出す要約（`.screen-nav-work-summary`）。**答え待ちで先頭の答え待ちが質問なら、実行中の
- * 手順の要約より質問の要約を優先する**（`docs/design.md` 13.9「いまの作業」。答え待ちは
+ * 手順の要約より質問の要約を優先する**（`docs/screen-design.md` 13.9「いまの作業」。答え待ちは
  * ターンの途中で作業が止まっている状態で、利用者がいま向き合うべきものは質問のため）。
  * 許可要求の答え待ちはこれまでどおり実行中の手順の要約に従う。
  */
@@ -116,7 +116,7 @@ export type ScreenNavCurrentWorkStepList =
     }
 
 /**
- * 一覧の見出しに添える、答えの場所の案内（`docs/design.md` 13.9「いまの作業」）。
+ * 一覧の見出しに添える、答えの場所の案内（`docs/screen-design.md` 13.9「いまの作業」）。
  * 答え待ちのときだけ意味を持ち、**答え待ちの中身で行き先が変わる**ので判別可能な合併型にする
  * （docs/coding-standards.md「2つ以上の `| undefined` が1つの状態」と同じ理由で、
  * boolean 1つには畳まない）:
@@ -137,7 +137,7 @@ export type ScreenNavCurrentWork = {
   /** 印（○ / ●）。依頼待ちは中抜きだが、**雑談中の依頼待ちだけ埋める**（{@link chatIdle}）。 */
   readonly mark: "○" | "●"
   /**
-   * 雑談中の依頼待ちか（`docs/design.md` 13.9「いまの作業」/ 13.7）。true のときだけ
+   * 雑談中の依頼待ちか（`docs/screen-design.md` 13.9「いまの作業」/ 13.7）。true のときだけ
    * `wordLabel` が「<名前> とおしゃべり中」になり、印と字の色が `--accent` に変わる
    * （`screen-nav.module.css` の `[data-chat-idle="true"]`）。
    */
@@ -213,7 +213,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
 
   useDismissSignal({ open, rootRef: navRef, onDismiss })
 
-  // **質問へ**（`docs/design.md` 13.9「いまの作業」）。一覧を閉じ、キャラクター/トークン消費の
+  // **質問へ**（`docs/screen-design.md` 13.9「いまの作業」）。一覧を閉じ、キャラクター/トークン消費の
   // 画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューの
   // 質問の札までスクロールさせる（`stores/question-scroll.tsx`）。
   const onGoToQuestion = useCallback((): void => {
@@ -240,7 +240,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
         ? "running"
         : "idle"
 
-  // **雑談中の依頼待ちだけ**「<名前> とおしゃべり中」に変える（`docs/design.md` 13.9「いまの作業」。
+  // **雑談中の依頼待ちだけ**「<名前> とおしゃべり中」に変える（`docs/screen-design.md` 13.9「いまの作業」。
   // 答え待ち・作業中・止まっているは、雑談中でもそのまま意味を持つ語なので変えない）。
   const chatIdle = state === "idle" && chatMode
 
@@ -290,7 +290,7 @@ function isRunningStep(step: TurnStep): boolean {
 
 /**
  * {@link ScreenNavCurrentWorkSummary} を組み立てる。**答え待ちの先頭が質問なら、実行中の手順の
- * 要約より質問の要約を優先する**（docs/design.md 13.9「いまの作業」）。許可要求の答え待ちは
+ * 要約より質問の要約を優先する**（docs/screen-design.md 13.9「いまの作業」）。許可要求の答え待ちは
  * 今までどおり実行中の手順の要約に従う。
  */
 function toSummaryView(

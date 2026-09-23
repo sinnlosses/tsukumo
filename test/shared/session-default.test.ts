@@ -7,7 +7,7 @@ import {
   SESSION_DEFAULT_PERMISSION_MODES,
 } from "../../src/shared/session-default.ts"
 
-// 新しいセッションの既定（docs/requirements.md 4.1 / docs/design.md 13.6）。
+// 新しいセッションの既定（docs/requirements.md 4.1 / docs/screen-design.md 13.6）。
 describe("既定に選べる許可モード", () => {
   it("「全部許す」（bypassPermissions）だけを落とした一覧になっている", () => {
     expect([...SESSION_DEFAULT_PERMISSION_MODES]).toEqual(

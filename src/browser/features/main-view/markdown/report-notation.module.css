@@ -24,7 +24,7 @@
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 0.75rem;
 }
-/* カードは「浮く」塊（docs/design.md 13.2）。地を親のステップと同じ surface にしていたときは
+/* カードは「浮く」塊（docs/screen-design.md 13.2）。地を親のステップと同じ surface にしていたときは
    枠しか効いていなかった。 */
 .detail-block .report-card {
   padding: 0.6rem 0.75rem;
@@ -35,7 +35,7 @@
 /* 数の要約（KPI タイル）。**数そのものが結論になる値**（件数・前後の差）を、地の文に埋めずに
    並べる塊。`.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より
    狭く取り、3〜4枚が1行に収まるようにする。
-   **タイプスケールの段は増やさない**（docs/design.md 13.3）ので、「大きい数」は段の上端
+   **タイプスケールの段は増やさない**（docs/screen-design.md 13.3）ので、「大きい数」は段の上端
    （--font-heading）と下端（--font-label）の落差・太さ・縦積みで出す。
    **意味を固定した色（state-*）は使わない**（13.1 原則5）。数そのものは良し悪しを持たず、良し悪しを言いたいときは
    同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
@@ -85,14 +85,14 @@
 /* 情報の塊（素の `note`。結論を言う役）。**いちばん読ませたい印がいちばん弱かった**（引用と同じ
    灰色の3px の縦罫で、地の差も無かった。実測）ので、縦罫を ink まで上げ、地を「浮く」段にする。
    6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白と縦罫もここが持つ。
-   引用（blockquote）は目立たせないための印なので今のまま。docs/design.md 13.2。 */
+   引用（blockquote）は目立たせないための印なので今のまま。docs/screen-design.md 13.2。 */
 .detail-block .report-note {
   margin: 0.5rem 0;
   padding: 0.5rem 0.75rem;
   border-left: 3px solid var(--ink);
   background: var(--surface-raised);
 }
-/* 注意・異常の塊は、**意味を固定した色で地を1割だけ染める**（縦罫は実色。docs/design.md 13.2）。
+/* 注意・異常の塊は、**意味を固定した色で地を1割だけ染める**（縦罫は実色。docs/screen-design.md 13.2）。
    1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。 */
 .detail-block .report-note-warn {
   border-left-color: var(--state-warn);
@@ -143,9 +143,9 @@
 }
 /* レポートの見出し（`##` / `###`）。`src/browser/features/main-view/markdown/markdown.tsx` が `h4` / `h5` として描く
    （タグは札の頭のタイトル `h2.turn-title` と段が被らないよう一段落としてある）。**タイプスケールはこの4段だけ**
-   （docs/design.md 13.3）なので新しい段は作らず、太さ・余白・罫線の3つで `##` と `###` を
+   （docs/screen-design.md 13.3）なので新しい段は作らず、太さ・余白・罫線の3つで `##` と `###` を
    見分けられるようにする。
-   **罫線の側にだけキャラクターの色を混ぜる**（docs/design.md 13.2「レポートの見出しと表に」。
+   **罫線の側にだけキャラクターの色を混ぜる**（docs/screen-design.md 13.2「レポートの見出しと表に」。
    文字は `ink` のまま — 13.1 原則1 が accent を許すのは文字ではなく罫線の側）。`##` は領域の幅
    いっぱいの1本、`###` は文字の幅だけの1本（`width: fit-content`）で、**段の深さを運ぶのは罫線の
    長さ**のほう（色は段の違いを運ばない）。
@@ -202,7 +202,7 @@
 /* チェックリスト（`- [ ]` / `- [x]`）の印。`remark-gfm` が出す <input type="checkbox"> は
    許可リストに無く、`markdown/task-check.ts` がこの span に書き替える（理由はそちら）。
    **済みと未了は枠の中の印（✓）で見分け、済みには差し色を重ねる**（2026-09-23。利用者の注文。
-   印の文字は tsukumo が必ず入れるので、色だけで済みを伝えることにはならない。docs/design.md
+   印の文字は tsukumo が必ず入れるので、色だけで済みを伝えることにはならない。docs/screen-design.md
    13.1 原則1・5）。意味を固定した色（state-ok）にしないのは、済みは良し悪しではないため。
    行頭の点は印と二重になるので消す。 */
 .detail-block .report-task-item {
@@ -244,7 +244,7 @@
   height: auto;
 }
 
-/* コードは機械の側の文字なので等幅（docs/design.md 13.1 原則3）。ブラウザ既定でも等幅には
+/* コードは機械の側の文字なので等幅（docs/screen-design.md 13.1 原則3）。ブラウザ既定でも等幅には
    なるが、それは汎用の monospace で、インラインのコード（下の `:not(pre) > code`）だけが
    --font-mono になる不揃いが出る。書体そのものの定義は `src/browser/styles/theme.css` のトークン。 */
 .detail-block pre {
@@ -257,7 +257,7 @@
   overflow-wrap: anywhere;
 }
 /* フェンスに書いたファイル名（```diff src/foo.ts）を、ブロックの左上に出すラベルと、その器。
-   差分だけを見てどのファイルか分からない、を防ぐ（docs/design.md 13.2）。**別の枠を足さず、
+   差分だけを見てどのファイルか分からない、を防ぐ（docs/screen-design.md 13.2）。**別の枠を足さず、
    コードの地（--ground）を上へ伸ばして1つの塊に見せる**（箱が2つ並ぶと、差分そのものより
    境目のほうが目立つ）。文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段（13.3）。
    器は Markdown のレンダラ側（markdown/markdown.tsx の `pre` の上書き）が作るので、
@@ -299,7 +299,7 @@
   padding: 0.3rem 0.5rem;
   text-align: left;
 }
-/* 見出し行は表の中の「浮く」塊（docs/design.md 13.2）。太字は Markdown の th の既定で付くが、
+/* 見出し行は表の中の「浮く」塊（docs/screen-design.md 13.2）。太字は Markdown の th の既定で付くが、
    **行そのものが見出しだと分かる**のは地の段のほう。
    **見出し行と中身の境目の1本にだけ、見出し（上の h4 / h5）と同じ割合でキャラクターの色を
    混ぜる**（13.2「レポートの見出しと表に」）。太さが 2px なのは `border-collapse` の解決で
@@ -344,7 +344,7 @@
 .detail-block kbd,
 .detail-block samp,
 .detail-block :not(pre) > code {
-  /* 機械の名前は本文の上に**浮かせる**（docs/design.md 13.2）。ground に落とすと本文との比が
+  /* 機械の名前は本文の上に**浮かせる**（docs/screen-design.md 13.2）。ground に落とすと本文との比が
      1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（実測）。 */
   background: var(--surface-raised);
   font-family: var(--font-mono);

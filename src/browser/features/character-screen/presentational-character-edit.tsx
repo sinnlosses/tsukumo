@@ -1,5 +1,5 @@
 // キャラクター画面の主役、**立ち絵の並びと差し色と背景**の**器だけ**
-// （<PresentationalCharacterEdit>。docs/design.md 13.6 / 7.1）。表情ごとのカードは
+// （<PresentationalCharacterEdit>。docs/screen-design.md 13.6 / 7.1）。表情ごとのカードは
 // `components/portrait-card.tsx`、背景の行は `components/background-field.tsx` に任せる。
 // フックも算出も持たず、`hooks/use-character-edit.ts` が畳んだ値をそのまま置く
 // （docs/design.md 2章「機能の中を分ける」）。

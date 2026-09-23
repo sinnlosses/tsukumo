@@ -346,7 +346,7 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: true })
 
     // 前の駆動は閉じ、新しい駆動が**画面から選ばれた名前**で起きている（＝覚える側。
-    // docs/design.md 13.6）。
+    // docs/screen-design.md 13.6）。
     expect(started[0]?.stub.calls).toContain("close")
     expect(started).toHaveLength(2)
     expect(started[1]?.selection).toEqual({ by: "name", name: "fictional" })
@@ -445,7 +445,7 @@ describe("createSessionManager", () => {
     expect(started).toHaveLength(2)
     // 変わるのは「どの transcript の続きから始めるか」だけ。
     expect(started[1]?.resume).toEqual({ by: "id", sessionId: "架空の別セッション" })
-    // **パックは「いま出しているまま」**（名前で渡すと覚えた値が書き換わる。docs/design.md 13.6）。
+    // **パックは「いま出しているまま」**（名前で渡すと覚えた値が書き換わる。docs/screen-design.md 13.6）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     expect(started[1]?.chat).toBe(false)
     // 起動の1回目は今までどおり印から探す。
@@ -516,7 +516,7 @@ describe("createSessionManager", () => {
     expect(started[1]?.chat).toBe(true)
     // **パックは「いま出しているまま」として渡す**（名前では渡さない）。名前で渡すと画面から
     // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
-    // （docs/design.md 13.6）。
+    // （docs/screen-design.md 13.6）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     // 起動の1回目は初期パック（こちらも覚えない側）。
     expect(started[0]?.selection).toEqual({ by: "initial" })
@@ -640,7 +640,7 @@ describe("createSessionManager", () => {
       })
 
       // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
-      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/design.md 13.7）。
+      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/screen-design.md 13.7）。
       expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
     })
 
@@ -1784,7 +1784,7 @@ describe("createSessionManager", () => {
   })
 })
 
-// 新しいセッションの既定（docs/design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
+// 新しいセッションの既定（docs/screen-design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
 // ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
 describe("createSessionManager（新しいセッションの既定）", () => {
   it("set-session-default を覚えさせ、姿に載せて配る", async () => {
@@ -1816,7 +1816,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
     })
   })
 
-  // 帯のドロップダウンはセッション限り（`docs/design.md` 13.6）。**既定は書き換わらない。**
+  // 帯のドロップダウンはセッション限り（`docs/screen-design.md` 13.6）。**既定は書き換わらない。**
   it("帯の set-model / set-permission-mode では既定を覚えない", async () => {
     const { manager, stub, remembered } = startManagerWithStub()
 

@@ -2,7 +2,7 @@
 // （キャラクターの行は右脇、利用者の行は左脇。LINE と同じ読み方）。機械が付けた値なので
 // 等幅（13.1 原則3）で、文字は `ink-quiet`。
 //
-// **前のセッションを組み直した発言（時刻が `unknown`）には何も出さない**（docs/design.md 13.7）。
+// **前のセッションを組み直した発言（時刻が `unknown`）には何も出さない**（docs/screen-design.md 13.7）。
 
 import { type ReactElement } from "react"
 

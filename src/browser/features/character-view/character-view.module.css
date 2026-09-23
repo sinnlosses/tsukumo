@@ -106,7 +106,7 @@
 }
 /* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。
    ここは**過去の吹き出し**の見た目（モック値）。**地は不透明な `surface` のまま**にする
-   （下の `.balloon:not(:first-child)` のコメント、docs/design.md 13.8「文字が乗る要素の地は
+   （下の `.balloon:not(:first-child)` のコメント、docs/screen-design.md 13.8「文字が乗る要素の地は
    不透明を保つ」— モックは半透明だが、背景画像が入ると文字の裏へ透けるので採らない）。
    薄く見せるのは枠と、下の `.balloon:not(:first-child)` の文字色だけ。 */
 .balloon {
@@ -124,7 +124,7 @@
   white-space: pre-wrap;
 }
 /* 話し手の名前（最新の1件にだけ付く。`balloon.tsx`）。吹き出しの主が誰かを示す札なので、
-   accent を出してよい場所に数える（docs/design.md 13.1 原則1）。本文とは gap ではなく
+   accent を出してよい場所に数える（docs/screen-design.md 13.1 原則1）。本文とは gap ではなく
    margin-bottom で離す（吹き出し内の唯一の要素間隔なので、`.balloon` 側に汎用の gap を
    持たせない）。 */
 .balloon-speaker {
@@ -195,7 +195,7 @@
   border-bottom-width: calc(var(--balloon-tail) - 2px);
   border-right-color: var(--surface-accent);
 }
-/* 過去の吹き出しは**地ごと薄めず、文字の色だけを地へ混ぜて薄める**（docs/design.md 13.8）。
+/* 過去の吹き出しは**地ごと薄めず、文字の色だけを地へ混ぜて薄める**（docs/screen-design.md 13.8）。
    要素ごと `opacity` で薄めると吹き出しの地まで半透明になり、背景を敷いたときに画像が文字の
    裏へ透ける（覆いを 0.9 まで濃くしても比は 4.27 で、`veil` をいくら上げても 4.5 に届かない）。
    **混ぜる量の上限は 45%**（4.83。50% だと 4.24 で下回る）。背景を敷かなくても、旧の
@@ -244,8 +244,8 @@
    overflow の切り取りは padding box の縁なので切れない）。行を1段足すと、立ち絵の高さ（--portrait-height は .character-layout の高さの
    割合）がそのぶん縮むため、行を増やさず重ねにしてある。キャラビューは枠を持たない領域なので、
    口は地（ground）の色で塗って背景の絵の上でも読めるようにする（**モックは半透明だが、
-   docs/design.md 13.8「文字が乗る要素の地は不透明を保つ」に合わせて不透明のまま**にする）。
-   字は 12px ではなく `--font-secondary`（13px。docs/design.md 13.3「段はこの4つだけ」— 新しい
+   docs/screen-design.md 13.8「文字が乗る要素の地は不透明を保つ」に合わせて不透明のまま**にする）。
+   字は 12px ではなく `--font-secondary`（13px。docs/screen-design.md 13.3「段はこの4つだけ」— 新しい
    寸法は足さない）。 */
 .speech-log-open {
   position: absolute;
@@ -268,7 +268,7 @@
   border-color: var(--accent);
   color: var(--ink);
 }
-/* セリフのログのモーダル。一時的に重なるものなので常設の枠を増やさない（docs/design.md 13.1
+/* セリフのログのモーダル。一時的に重なるものなので常設の枠を増やさない（docs/screen-design.md 13.1
    原則2）。見出しと閉じる口は動かさず、並びだけが内側でスクロールする（タスク一覧の表と同じ形）。 */
 .speech-log {
   box-sizing: border-box;
