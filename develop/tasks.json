@@ -83,7 +83,7 @@
     "dependencies": [],
     "summary": "docs/design.md 4章からコードの写しを外し、型定義への参照と決定の理由だけにする",
     "task": "## 背景\n\n`docs/design.md`「4. shared」は、`SessionEvent` と `SessionState` のフィールドを表で、\n`ClientCommand` と `ServerFrame` を型のコードブロックで写している。写しがあるので、`shared` の\n型を触るたびに design.md も直すことになる（直近250コミットで `src/shared/` を触った58コミットの\nうち30コミットが design.md も直した）。直し漏れも起きている:\n\n- `4.3 ClientCommand` のコードブロックは7種で、実物に無い `new-session` を含む。実物の\n  `src/shared/command.ts` は15種で、`nudge` / `set-chat-mode` / `switch-session` / `set-portrait`\n  などが写しに無い\n- 型を変えたのに表が古いまま残り、次のタスクの受け入れで気づいて直したことが2回あった\n  （`develop/retrospective.md` の `8f585d6`..`c37d714`）\n\n## やること\n\n1. 4章の各小節で、**型の中身を写している部分**（フィールドや種別を並べた表の列、型のコード\n   ブロック）を、正典の型定義への参照（ファイル名と型名）に置き換える\n2. 残すのは**コードから読めない決定とその理由**だけ（例: zod を境界にだけ使う理由、\n   `state.model` の出どころが3つある理由、時刻を打つのはサーバであること、記録の時刻を合併型に\n   した理由）。表の「用途」「理由」の列のうち決定を言っているものは、文に直して残す\n3. 型定義の側に説明が足りなくなるものは、その型の doc コメントに1〜2行で移す\n4. 5章・6章にも同じ形の写しがあれば、直さずに一覧（小節名と写している型）だけ `evidence` に書く\n\n## 完了条件\n\n- `bun run check` が通る\n- `grep -n 'new-session' docs/design.md` が0件\n- 4章に `ClientCommand` / `ServerFrame` の型のコードブロックが無い\n- `grep -c '^#\\{2,3\\} ' docs/design.md` の値が編集の前後で変わらない（小節を消すなら、その理由と\n  索引表の直しを `evidence` に書く）\n\n## 注意\n\n- `docs/design.md` の冒頭の索引表には節の見出し名が入っている。見出し名で位置を探すと索引の行に\n  先に当たるので、行頭から位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- ドキュメントにタスク番号を書かない\n- 人に委ねる判断は残らないので `\"Y\"`\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
