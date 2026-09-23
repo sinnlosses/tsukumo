@@ -58,6 +58,13 @@ export type CharacterDefinition = {
    * 1枚（`mini` と同じ）で、正方形を勧める。
    */
   readonly face: string | undefined
+  /**
+   * ひとことプロフィール（`docs/design.md` 13.7「雑談のときのサイドバー」）。雑談中のサイドバーの
+   * プロフィールの札で、名前の下に1行添える。**任意**で、無いパックは名前だけになる。
+   * **キャラクターの言葉なのでコードに持たない**（`CLAUDE.md` 原則4）。空白だけの値は無いのと
+   * 同じに畳む（札に空の行が出ないように）。
+   */
+  readonly tagline: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景（`docs/design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
@@ -148,6 +155,8 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
     face: typeof value.face === "string" ? value.face : undefined,
+    tagline:
+      typeof value.tagline === "string" && value.tagline.trim() !== "" ? value.tagline : undefined,
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
   }

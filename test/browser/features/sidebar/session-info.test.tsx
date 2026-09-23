@@ -37,7 +37,7 @@ function renderSessionInfo(
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
     <SessionStoreContext.Provider value={store}>
-      <SessionInfo />
+      <SessionInfo withCharacter={true} />
     </SessionStoreContext.Provider>,
   )
 }
