@@ -119,7 +119,7 @@ describe("ScreenNav", () => {
     setPageUrl("http://127.0.0.1:7329/")
     renderScreenNav()
 
-    expect(document.querySelector(".screen-nav > .screen-nav-room")?.textContent).toBe("山吹の間")
+    expect(document.querySelector(".screen-nav > .screen-nav-room")?.textContent).toBe("菜の花の間")
   })
 
   // 語彙の外のポートは番号のまま（13個め以降・`TSUKUMO_VIEW_PORT` で遠い番号を指したとき）。
@@ -176,7 +176,7 @@ describe("ScreenNav", () => {
     fireEvent.click(screen.getByRole("button", { name: "画面を選ぶ" }))
 
     expect(document.querySelector(".screen-nav-panel .screen-nav-room")?.textContent).toBe(
-      "萌黄の間",
+      "若葉の間",
     )
   })
 

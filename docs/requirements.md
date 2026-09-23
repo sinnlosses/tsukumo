@@ -358,6 +358,9 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   本文の読みやすさが変わらないようにするため（**長く読み続ける面**なので、読みやすさを
   キャラクター性より優先する）。書く場所は `src/server/core/report-notation.ts` で、
   **`persona.md` の側には書かない**
+- **レポートは必ず日本語で書かせる**（2026-09-23 決定）。`CLAUDE.md` の「対話は日本語」だけでは
+  本文が英語で出たことがあるため、同じ `report-notation.ts` の文面で縛り、送る前の検算にも入れる。
+  英語のまま残してよいのは識別子・パス・コマンド・コード・エラー文・原文の引用だけ
 - **HTML・mermaid・chart の規約は tsukumo が持つ。** `query()` の
   `systemPrompt: { type: "preset", preset: "claude_code", append }` で足す。正典がリポジトリ内に
   来るので、**描ける記法の一覧が `src/browser/features/main-view/markdown/sanitize-schema.ts` と同じコミットで動く**
