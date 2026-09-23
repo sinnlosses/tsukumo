@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 report ツールを実セッションで試し、穴を仕組みで塞いでから試し直すと決めた（T-474）
+
+依頼9・合図11ターンのうち、最後の `report` のあとに1行を超える本文で終えたターンが6件あり、合格条件1を満たさなかった（`docs/research/report-tool-trial.md`）。利用者の方針で不採用にせず、`Stop` の関所（T-486）・検査（T-487）・整形（T-488）を入れてから試し直す（T-489）。
+
 ### 2026-09-23 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにした（T-448）
 
 SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
