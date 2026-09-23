@@ -83,9 +83,9 @@
     "dependencies": [],
     "summary": "report の引数を規約で検査し、違反を戻り値で返して書き直させる",
     "task": "## 背景\n\n2026-09-23 のユーザーの方針で、レポートの出力を「検査 → 整形 → 描画」のパイプラインにする。この段は検査。\n\nいまの `report` の経路: モデルが呼ぶ → `src/server/adapter/sdk-tool.ts` の `reportTool` の handler が引数を読まずに `\"ok\"` を返す → `src/server/core/sdk-message.ts` の `reportEvents` が `report` イベントにする → `src/shared/main-view.ts` の `reportMarkdown` が1つの本文に組んで描く。規約は `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（10か条と印の表）、印の名前は `src/shared/report-notation.ts`、試行中の差し替えは `src/server/core/report-tool.ts`。\n\n`docs/display.md` の「出力の分離（セリフと詳細）」節に「**戻り値は `\"ok\"` だけ**…**2つ目を足すにはユーザーの決定が要る**」とある。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの決定: `report` の戻り値で規約違反を返してよい（「`\"ok\"` だけ」の決定を `report` について変える）。`docs/display.md` の該当箇条を、例外が `recall` と `report` の2つになる形に直す\n- パイプラインは「検査 → 整形 → 描画」の段に分ける。整形は T-488 が持つ\n- 検査するのは機械で判定できる条だけ。読み手によって結論が変わる条（「効能書き」「根拠は結論を支える分だけ」など）は入れない\n- 切り替えないとき（`TSUKUMO_REPORT_TOOL` 未設定）の挙動は変えない\n\n## 解くべき論点\n\n1. **検査する条**: 候補は `conclusion` が2文以内 / 地の文の段落が3文まで / `#` の見出しを使わない / 表の直前に太字1行の見出し / 前置き・締めの定型の行（「〜してみます」「以上です」など）/ mermaid の種類が規約の10種 / `note` の塊が1〜2個まで / お願いを `body` に書いている（`note-favor` の塊が `body` にある）。採る条と採らない条を理由つきで決める\n2. **違反のときの扱い**: 画面に出さずに差し戻すか、出したうえで直しを求めるか。1ターンに何回まで差し戻すか（無限に往復させない。1回を推す）\n3. **層の置き場**: 判定は shared か core の純粋関数、戻り値を組むのは adapter の handler（引数を読むように変える）。差し戻した呼び出しを `sdk-message.ts` が `report` イベントにしてしまう食い違いをどう防ぐか（handler と変換のどちらか一方を判定の窓口にする）\n4. **戻り値の文面**: 違反した条と直し方を短く返す（モデルの文脈に戻るので長くしない）\n\n## やること\n\n1. 論点を決め、検査の段を実装する\n2. テストを足す: 条ごとに違反と非違反の例 / 差し戻しの回数の上限 / 違反の無い呼び出しは今と同じに描かれる / 切り替えないときは変わらない\n3. `docs/display.md` の「戻り値は `\"ok\"` だけ」の箇条を直す（編集の前後で `grep -c '^#\\{2,4\\} ' docs/display.md` の数が変わらないこと。`CLAUDE.md`「ドキュメントを編集するときの罠」）\n4. 疑似セッションに、違反を含む `report` を呼ぶ場面を1つ足し、差し戻しのあと直った `report` が描かれることを目視で確かめる（`TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける）。疑似セッションで差し戻しを再現できなければ、その旨と理由を `evidence` に書き、テストで代える\n\n## 完了条件\n\n- 上の2のテストが通り、切り替えないときの既存テストが無修正で通る\n- `grep -n '\"ok\"' docs/display.md` の箇条に `report` の例外が書かれている\n- 目視で確かめたなら何が見えたか、確かめられなかったならその理由が `evidence` にある\n- `bun run check` が通る\n\n## 注意\n\n- **会話内容をログ・テストのフィクスチャ・`evidence` に写さない**（`CLAUDE.md`「会話内容の扱い」。他のどの規約よりも優先する）\n- 戻り値に画面の状態（描けたか・どこに出たか）を載せない。返すのは規約違反だけ\n- T-486 / T-488 と同じファイルを触りうる。着手時に `main` の状態を見て、先に入っていればそれに合わせる",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check: 1916 pass / 0 fail（151ファイル）。検査の条は test/server/core/report-violation.test.ts、差し戻し1回・預かり・切り替えないときは report-review.test.ts、復元で差し戻しを落とすのは session-restore.test.ts。docs/display.md の \"ok\" の箇条に report の例外を書いた（見出し数 8 のまま）。目視: 疑似セッション（TSUKUMO_FAKE_SCENE=report-rejected、ポートとホームを分けた）を Playwright で 0.2 秒ごとに7秒見て、差し戻した report は一度も出ず直した report だけが約3.8秒で描かれた。判定そのもの（handler）は疑似の駆動に無いのでテストで代えた"
   },
   {
     "id": "T-488",
@@ -94,7 +94,7 @@
     "dependencies": ["T-487"],
     "summary": "report の本文から、意味を変えずに落とせる行を落として描く",
     "task": "## 背景\n\n2026-09-23 のユーザーの方針で、レポートの出力を「検査 → 整形 → 描画」のパイプラインにする。この段は整形で、検査（T-487）のあとに置く。\n\n`report` の引数は `src/shared/main-view.ts` の `reportMarkdown` で1つの本文に組まれ、テキストの本文と同じ経路（サニタイズ・記法の解釈・書き上げる演出）で描かれる。今は組むだけで何も落とさない。推測の経路には、本文を出し分ける判定（`src/shared/japanese-prose.ts`、`main-view.ts` の `selectShownReports`）があるが、`report` の本文には掛からない。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの決定: パイプラインのフィルターと整形でより良いレポートにする\n- 落とすのは**意味を変えずに落とせるものだけ**。本文の言い換え・要約・並べ替えはしない\n- 対象は `report` の本文だけ。推測の経路（`report` の無いターン）には掛けない\n- 検査（T-487）で差し戻す条と、ここで黙って直す条を重ねない\n\n## 解くべき論点\n\n1. **どこで掛けるか**: 受け取ったときに記録を整形するか、記録は引数のまま持ってメインビューの導出（`main-view.ts`）で掛けるか。後者を推す（規則を変えたとき過去のターンにも効き、記録が生のまま残る）\n2. **落とす対象**: 候補は、前置き・締めの定型だけの行 / 連続する空行 / `conclusion` を `body` の冒頭で繰り返している行 / 中身の無い見出し。採るものと採らないものを理由つきで決める\n3. **T-487 との分担**: 同じ条を検査と整形の両方でやらない。どちらに置くかの基準（書き直させたほうが読み手に効くか、黙って直して困らないか）\n\n## やること\n\n1. 論点を決め、整形の段を実装する\n2. テストを足す: 落とす対象ごとに落ちる例と落ちない例（フェンスの中・表の中・引用の中は触らない）\n3. 疑似セッションに、落とす行を含む `report` の場面を足し、その行が描かれず、残りが今と同じに描かれることを目視で確かめる（`TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける）\n\n## 完了条件\n\n- 上の2のテストが通り、既存テストが無修正で通る\n- 目視で何が見えたか（落ちた行・残った印）が `evidence` にある\n- `bun run check` が通る\n\n## 注意\n\n- **会話内容をログ・テストのフィクスチャ・`evidence` に写さない**（`CLAUDE.md`「会話内容の扱い」。他のどの規約よりも優先する）\n- T-486 / T-487 と同じファイルを触りうる。着手時に `main` の状態を見て、先に入っていればそれに合わせる",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
@@ -105,6 +105,105 @@
     "dependencies": ["T-486", "T-487", "T-488"],
     "summary": "関所とパイプラインを入れた report を実セッションで試し直す",
     "task": "## 背景\n\nT-474 の試行は合格条件1を満たさなかった（`docs/research/report-tool-trial.md`）。2026-09-23 のユーザーの方針（仕組み化につながるなら採用し、穴は塞ぐ手段を考える）で、T-486（`Stop` の関所）・T-487（検査して差し戻す）・T-488（整形）を入れてから同じ3条件で試し直す。\n\n数え方は `docs/research/report-tool-trial.md`「数え方」と同じ: `~/.claude/projects/<作業ツリー>/<セッション>.jsonl` から**構造だけ**（ツールの名前・回数・呼び出し元・テキストの長さと行数・並び）を数える。区切りは SDK のターン（依頼で始まるものと、サブエージェントの合図で始まるもの）。\n\n## 決まっていること（蒸し返さない）\n\n- 合格条件は T-474 と同じ3つ: (1) `report` の呼び忘れ（最後の `report` のあとに1行を超える本文で終えたターン）が1件以下 (2) 委譲中、合図を `speak` で言い直す流れが途切れない (3) `body` の中のフェンス・表・HTML が今と同じに描ける\n- 実セッションを10ターン程度回す。サブエージェントへ委譲するターンを必ず含める\n- 3つとも満たせば採用し、T-475 以降へ進む。満たさなければ、穴の形を research に書き、塞ぐ手段を利用者と決める（不採用にするかも利用者が決める）\n- 合否の条件ではないが記録するもの: 関所の `block` の回数、検査の差し戻しの回数、それで増えた往復\n\n## やること\n\n1. 利用者に `TSUKUMO_REPORT_TOOL=1`・別ポート・別の `TSUKUMO_HOME` で tsukumo を起こしてもらい、普段の仕事を10ターン程度してもらう\n2. 構造を数える（本文は写さない）\n3. `docs/research/report-tool-trial.md` に「試し直し」の節を足し、3条件の合否と数を書く\n4. 採否を利用者に確かめる\n\n## 完了条件\n\n- `docs/research/report-tool-trial.md` に試し直しの数と3条件の合否がある\n- 採否を利用者が確かめたことを `evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- **会話内容をログ・テストのフィクスチャ・`evidence` に写さない**（`CLAUDE.md`「会話内容の扱い」。他のどの規約よりも優先する）\n- 利用者が実際に仕事をするターンが要る（`loopable` が `\"N\"` の理由）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-490",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "全パックの見た目の情報を画面に配り、素材をパック名つきの URL で配る",
+    "task": "## 背景\n\nキャラクター画面を「左に一覧・右に選んだキャラクターの詳しい設定」の2段組にする（見本は下）。一覧は各パックの顔・名前・表情の枚数・使用中かを、詳しい設定は**使用中以外のパックも**立ち絵・差し色・背景・ひとことを出す（2026-09-23 ユーザー決定: 一覧で使用中以外を選んだら詳細を開いて編集もできる）。\n\nいまブラウザに届くのは使用中のパックの `CharacterInfo`（`src/shared/character.ts`）と、ほかのパックの `CharacterPackChoice`（`name` と `label` だけ。`src/server/adapter/character-pack.ts` の `toCharacterPackChoices`、`character-changed` イベントの `packs`）だけで、素材の配信 `/character/<file>`（`src/server/adapter/server.ts`・`readCharacterPackFile`）も使用中のパックに限られる。\n\n見本（2026-09-23 にユーザーが決めたデザイン。`docs/history/mockup/` に写してある。HTML は inline の `style` に値が入っていて、同じ名前の `.png` はその撮影）:\n\n| 場面 | HTML | 撮影 |\n| --- | --- | --- |\n| 初期表示（一覧と詳しい設定） | `docs/history/mockup/character-screen-2026-09-23.html` | `character-screen-2026-09-23.png`（1440x1260） |\n| 新しく作る | `docs/history/mockup/character-create-2026-09-23.html` | `character-create-2026-09-23.png` |\n| 表情を消す（その場で確かめる） | `docs/history/mockup/character-delete-expression-2026-09-23.html` | `character-delete-expression-2026-09-23.png` |\n| キャラクターを消す（id を打って確かめる） | `docs/history/mockup/character-delete-2026-09-23.html` | `character-delete-2026-09-23.png` |\n\n- 見本の最上部の帯（浅葱の間・仕事/雑談・会話/キャラクター/トークン消費・作業中の札・モデル・歯車）は `features/screen-nav/` に既にあるもので、**このタスクの対象外**\n- `[別のキャラクター]` `[数]` `[ひとことプロフィール]` `[id]` は差し込みの目印で、実物の値を入れる\n- 色は見本の16進をそのまま書かず、`src/browser/styles/theme.css` のトークン（`--accent` など）に当てる。当たるトークンが無い色だけ `character-screen.module.css` に置く（見本の `#66d1be` は仕事の差し色＝`--accent`）\n\n## 解くべき論点\n\n- 配り方: `character-changed` の `packs` を広げるか、一覧だけの別イベントにするか（パックが増えたときの大きさ・配り直す契機を比べる）\n- URL の形: `/character/<pack>/<file>` にして使用中も同じ形に揃えるか、使用中だけ今の形を残すか。キャッシュの鍵（`revision`）の持ち方\n- 一覧を配り直す契機（編集・作成・消去のあと。T-491〜T-493 が使う口をここで用意する）\n- パックごとに「画面から変えられるか」（今の `isEditableCharacterPack`。起動先の `characters/local`）と「消せるか」（T-492 が中身を決める。ここでは入れ物だけ用意してよい）をサーバが決めて持たせる形\n\n## やること\n\n1. `src/shared/` にパック1件ぶんの画面向けの形を足す（顔・名前・id・ひとこと・表情ごとの立ち絵の URL と有無・差し色（仕事・雑談・衣装ごと）・背景・変えられるか）。`CharacterInfo` と重なる部分は1つの型にまとめられるか先に見る\n2. サーバで全パックぶんを組んで配る。素材の配信をパック名つきにし、**定義に載っているファイル名だけ**を許す今の allowlist の考え方をパックごとに保つ\n3. `docs/design.md` の該当章（4.1 のイベント・7章）を書き直す\n\n## 完了条件\n\n- 使用中以外のパックの立ち絵・背景の URL を GET して 200 が返るテストがある\n- 定義に無いファイル名・`..` を含む名前・無いパック名は 404 になるテストがある\n- 一覧の各パックの形（表情の枚数・使用中か・変えられるか）を確かめるテストがある\n- `bun run check` が通る\n\n## 注意\n\n- 画面の見た目（一覧・詳しい設定の部品）はこのタスクで作らない（T-494）\n- 同梱の `characters/` のパックを書き換えない",
+    "status": "doing",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-491",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-490"],
+    "summary": "編集コマンドに対象のパック名を持たせ、使用中以外も直せるようにする",
+    "task": "## 背景\n\n2026-09-23 のユーザー決定で、キャラクター画面の一覧で使用中以外のパックを選んだら、その詳細を開いて**編集もできる**ようにする（見本 `docs/history/mockup/character-screen-2026-09-23.html`）。\n\nいまの編集コマンド（`src/shared/command.ts` の `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` / `clear-chat-accent` / `set-background` / `clear-background`。一覧は `isCharacterEditCommand`）は対象のパックを持たず、サーバは**使用中のパック**に書き込む（`src/server/adapter/character-edit.ts` の `editCharacterPack`。書く前に `copyPackOnce` で同梱のパックをホームへ写す）。\n\n## 解くべき論点\n\n- コマンドにパック名を必須で持たせるか（使用中を暗黙にしない）。形の検査は `isCharacterPackName`（`src/shared/character.ts`）と一覧との突き合わせ\n- 使用中以外を直したときは**起こし直さない**。使用中を直したときの今の挙動（画面への反映の仕方）は変えない\n- 直したあとに一覧の情報（T-490）を配り直す\n- 無いパック・画面から変えられないパック（起動先の `characters/local`）を指されたときの断り方（定型文の `error`。`FRAME_ERROR_REASON`）\n\n## やること\n\n1. コマンドの形を変え、ブラウザ側の送り手（`src/browser/features/character-screen/hooks/use-character-edit.ts`）を追随させる（この時点では使用中のパック名を入れて送るだけでよい）\n2. サーバで対象のパックを引いて書き込む。同梱のパックならホームへ写してから書く今の手順を、対象のパックに対して行う\n3. `docs/design.md` 7.1 を書き直す\n\n## 完了条件\n\n- 使用中以外のパックの立ち絵・差し色・背景を変えると、`~/.tsukumo/characters/<そのパック>/` の下だけが書き変わり、セッションが起こし直されないテストがある\n- 使用中のパックを変えたときの今のテストがそのまま通る\n- 無いパック・`characters/local` を指したコマンドが断られるテストがある\n- `bun run check` が通る\n\n## 注意\n\n- 書き込み先はホームの下だけ（同梱の `characters/` と起動先の `characters/local` を書き換えない）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-492",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-490"],
+    "summary": "キャラクターを消すコマンドを足す（ホームのパックだけ・使用中は断る）",
+    "task": "## 背景\n\n見本（`docs/history/mockup/character-screen-2026-09-23.html` の最下部の赤い帯と `character-delete-2026-09-23.html` のダイアログ）で、キャラクターを消せるようになる。見本の文言: 「表情・差し色・背景もいっしょに消えます。使用中のキャラクターは、先に別のキャラクターに切り替えてから消せます。」「消したあとは元に戻せません。」\n\nいまはパックを消すコマンドが無い（`src/shared/command.ts`）。パックの置き場は同梱の `characters/`・ホームの `~/.tsukumo/characters/`・起動先の `characters/local` の3つで、同名は後勝ち（`src/server/adapter/character-pack.ts` の `listCharacterPacks`）。画面で同梱のパック（tsukumo など）を直すと、ホームに丸ごと写ってから書かれる（`src/server/adapter/character-edit.ts` の `copyPackOnce`）。\n\n## 決まっていること（蒸し返さない）\n\n- 使用中のパックは消せない（画面は口を押せなくし、サーバも断る）\n- id を打って確かめるのは画面の側（T-497）。サーバはパック名を受けて消すだけ\n\n## 解くべき論点\n\n- 消せる範囲: ホームのパックだけを消す。**同梱と同名のホームのパック**（同梱を画面で直したもの）を消すと同梱のものが一覧に戻る——これを「消す」と見せるか「同梱に戻す」と見せるか、あるいは消す口を出さないかを決め、画面が出し分けられるフィールドで T-490 の一覧に載せる。同梱だけ・`characters/local` のパックは消す口を出さない\n- パックに紐づくほかの記録（ホームの雑談の要約 `src/server/adapter/chat-summary.ts` はパック名ごとのファイル。会話のアーカイブ `chat-archive.ts`・人格の書き戻し `persona-memory.ts`）を一緒に消すか残すか。残すなら、同じ id で作り直したときに古い記録を拾う問題をどう扱うか\n- 消す範囲をホームの下に閉じ込める確かめ方（パス名の組み立てを外から受け取らない今の方針を保つ）\n\n## やること\n\n1. 論点を決め、`docs/design.md` 7.1 に書く\n2. コマンドを足し、サーバで消して一覧を配り直す\n3. 論点の結論を画面が読めるフィールドにする\n\n## 完了条件\n\n- ホームのパックが消え、一覧から消えるテストがある\n- 使用中・同梱だけ・`characters/local`・無いパックを指したときに断られ、ファイルが残るテストがある\n- 消すのがホームの下だけであることを確かめるテストがある（別の置き場の同名ディレクトリが残る）\n- `bun run check` が通る\n\n## 注意\n\n- テストは一時ディレクトリをホームにして行い、実際の `~/.tsukumo/` に触らない",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-493",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-490"],
+    "summary": "名前とひとことを変える口を足し、作る口に id・雑談の差し色を足す",
+    "task": "## 背景\n\n見本（`docs/history/mockup/character-screen-2026-09-23.html` の「名前とプロフィールを変える」と、`character-create-2026-09-23.html` の作るダイアログ）で、キャラクターの表示名とひとことプロフィールを画面から変え、作るときに**名前（画面や吹き出しに出る名前）と id（保存するフォルダの名前）を分けて**受け取り、画面の差し色を仕事・雑談の2色で受け取る。\n\nいまの `create-character`（`src/shared/command.ts`）は `name`（＝ディレクトリ名。`newCharacterPackNameSchema`）・`portraits.default`・`accent` の3つで、表示名を持たない。定義（`src/shared/character-definition.ts` の `CharacterDefinition`）は `name`・`tagline`（ひとことプロフィール）・`chatAccent` を持っている。表示名とひとことを変えるコマンドは無い。\n\n## 決まっていること（蒸し返さない）\n\n- id は作ったあと変えない（名前とひとことだけ変えられる）\n- 作っても自動では切り替えない（今の `docs/design.md` 7.1 のまま）\n\n## やること\n\n1. `create-character` を id・名前・いつもの顔の立ち絵・仕事の差し色・雑談の差し色に分ける。名前が空なら id を名前に使うか、必須にするかは見本（プレースホルダ「例：tsukumo」）と今の定義の扱いから決めて `docs/design.md` 7.1 に書く\n2. id の形は今の `isCharacterPackName` のまま（見本の説明文「英数字とハイフン」は画面の側で規則に合わせて直す。T-495）\n3. 名前とひとことを変えるコマンドを足す（対象のパック名を持つ。T-491 と同じ形）。書いたら一覧を配り直す\n4. ブラウザ側の今の作る画面（`src/browser/features/character-screen/hooks/use-character-create.ts`）を新しい形で送るよう追随させる（見た目はまだ変えない）\n\n## 完了条件\n\n- 作ったパックの `character.json` に名前・`chatAccent` が入り、ディレクトリ名が id になるテストがある\n- 名前とひとことを変えると定義が書き変わり、一覧に反映されるテストがある\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-494",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-490", "T-491"],
+    "summary": "キャラクター画面を左の一覧と右の詳しい設定の2段組にし、見本の見た目に揃える",
+    "task": "## 背景\n\nキャラクター画面（`src/browser/features/character-screen/`。`character-screen.tsx` が見出しと「新しく作る」、`presentational-character-edit.tsx` が立ち絵のカード・差し色の `<input type=\"color\">`・背景を縦に並べる）を、2026-09-23 に決まった見本の形に作り直す。\n\n見本（2026-09-23 にユーザーが決めたデザイン。`docs/history/mockup/` に写してある。HTML は inline の `style` に値が入っていて、同じ名前の `.png` はその撮影）:\n\n| 場面 | HTML | 撮影 |\n| --- | --- | --- |\n| 初期表示（一覧と詳しい設定） | `docs/history/mockup/character-screen-2026-09-23.html` | `character-screen-2026-09-23.png`（1440x1260） |\n| 新しく作る | `docs/history/mockup/character-create-2026-09-23.html` | `character-create-2026-09-23.png` |\n| 表情を消す（その場で確かめる） | `docs/history/mockup/character-delete-expression-2026-09-23.html` | `character-delete-expression-2026-09-23.png` |\n| キャラクターを消す（id を打って確かめる） | `docs/history/mockup/character-delete-2026-09-23.html` | `character-delete-2026-09-23.png` |\n\n- 見本の最上部の帯（浅葱の間・仕事/雑談・会話/キャラクター/トークン消費・作業中の札・モデル・歯車）は `features/screen-nav/` に既にあるもので、**このタスクの対象外**\n- `[別のキャラクター]` `[数]` `[ひとことプロフィール]` `[id]` は差し込みの目印で、実物の値を入れる\n- 色は見本の16進をそのまま書かず、`src/browser/styles/theme.css` のトークン（`--accent` など）に当てる。当たるトークンが無い色だけ `character-screen.module.css` に置く（見本の `#66d1be` は仕事の差し色＝`--accent`）\n\n見本の形（初期表示）:\n\n- 左（幅 260px）: 見出し「キャラクター」と件数、パックごとの行（丸い顔・名前・「表情 9 · 使用中」）、点線の「新しく作る」\n- 右: 大きな丸い顔・名前（明朝）・`id: <id>`・「使用中」の札・ひとこと・「名前とプロフィールを変える」\n- 表情: 5列の格子。カードは立ち絵と名前、`default` には「いつもの顔」の札。**乗せると右上に「差し替える」「消す」の2つのアイコン**が出る（見出しの添え書き「乗せると差し替え・消すが出ます」）。画像をカードにドロップしても入れられる\n- 画面の差し色（仕事・雑談の2つの色見本と16進。「雑談も仕事と同じにする」）と立ち絵の差し色（既定・軽装 haiku・通常装備 sonnet・戦闘配置 opus）を横に並べる\n- 背景: いまの背景の縮図と「差し替える」「消す」\n\n## 決まっていること（蒸し返さない）\n\n- 一覧で使用中以外を選んだら、そのパックの詳細を開いて編集もできる（T-491 のコマンドで送る）。使用中以外の詳細には「このキャラクターに切り替える」を置く（見本に無いので、見本の「名前とプロフィールを変える」と同じ形のボタンで。ターン進行中は押せない今の規則を保つ）\n- **立ち絵がまだ無い表情は、どの表情か分かるように名前つきの空欄のカードで出す**（見本の「表情を足す」の点線の枠の形で、中の字をその表情の名前にする）。9つそろったら空欄は出ない。汎用の「表情を足す」カードは置かない（2026-09-23 ユーザー決定）\n- 見本の最下部の「このキャラクターを消す」の帯は T-497、「名前とプロフィールを変える」の中身は T-498、表情を消す確かめは T-496、作るダイアログは T-495 で入れる。このタスクでは、口の中身がまだ無いボタンは置かない（「新しく作る」は今の `#character/new` へ飛ぶままでよい）\n\n## 解くべき論点\n\n- 選んでいるパックをどこに持つか（`#character/<pack>` のように URL に持たせて再読み込みで残すか。`src/browser/stores/screen.tsx`）\n- 乗せたときだけ出るボタンをキーボードで届かせる方法（フォーカスでも出す）\n- 起動先の `characters/local` のように変えられないパックの見せ方（今の `NOT_EDITABLE_NOTE` をどこに置くか）\n\n## やること\n\n1. 一覧と詳しい設定の部品を作る（container / presenter の分け方は `docs/design.md` 2章「機能の中を分ける」）\n2. 表情の格子・差し色・背景を見本の形にする\n3. `docs/screen-design.md` 13.6「キャラクター画面の中身」を書き直す（行頭を含めて位置を特定する。`CLAUDE.md`「ドキュメントを編集するときの罠」）\n\n## 完了条件\n\n- 一覧で別のパックを選ぶと右側がそのパックの中身に替わり、そこで差し替えた立ち絵がそのパックに書かれる（部品のテスト）\n- 立ち絵の無い表情が名前つきの空欄で出て、9つそろうと空欄が消える（部品のテスト）\n- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか、ダイアログを開いた状態も含む）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-495",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-493", "T-494"],
+    "summary": "新しく作るを画面の上に重ねるダイアログにし、id・名前・雑談の差し色を受け取る",
+    "task": "## 背景\n\nいまの作る口は別の画面（`#character/new`。`src/browser/features/character-screen/presentational-character-create.tsx` と `hooks/use-character-create.ts`）で、名前・立ち絵・差し色1色を縦に並べている。見本 `docs/history/mockup/character-create-2026-09-23.html`（撮影 `character-create-2026-09-23.png`）では、キャラクター画面の上に重なるダイアログになる。\n\n見本の形: 幅 720px、上から 110px。見出し「新しいキャラクター」（明朝）。左に点線の大きな枠「いつもの顔の立ち絵 / 画像をドロップ、または押して選ぶ / ほかの表情はあとから足せます」、右に「名前」（説明: 画面や吹き出しに出る名前）・「id」（等幅。説明: 英数字とハイフン。保存するフォルダの名前に使います）・「画面の差し色」（仕事・雑談の2つ）。下の区切り線の下に「背景と立ち絵の差し色は、作ったあとに設定できます」と「やめる」「作る」。\n\n## 決まっていること（蒸し返さない）\n\n- 作っても自動では切り替えない（`docs/design.md` 7.1）。作れたらダイアログを閉じ、一覧で作ったパックを選んだ状態にする（切り替えは T-494 の詳細の「このキャラクターに切り替える」で行う）\n- id の説明文は今の規則（`isCharacterPackName`）に合う文面に直す（見本の「英数字とハイフン」は規則より狭い）\n\n## やること\n\n1. ダイアログを作り、キャラクター画面の「新しく作る」から開く。`#character/new` の画面は撤去する（再読み込みで開いたままにしたいなら URL に持たせてよい）\n2. id がぶつかる・形が合わないときの一言は今の `INVALID_NAME_NOTE` / `TAKEN_NAME_NOTE` を id の欄の下に出す\n3. `docs/screen-design.md` 13.6 の作る画面の記述を書き直す\n\n## 完了条件\n\n- ダイアログから作ると T-493 の形のコマンドが送られ、閉じて一覧で新しいパックが選ばれる（部品のテスト）\n- 「やめる」と Esc で閉じる（部品のテスト）\n- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか、ダイアログを開いた状態も含む）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-496",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-494"],
+    "summary": "表情を消す前に、カードに添う確かめの吹き出しを出す",
+    "task": "## 背景\n\nいまは立ち絵のカードの「消す」を押すとすぐ `clear-portrait` が送られる（`src/browser/features/character-screen/components/portrait-card.tsx`）。見本 `docs/history/mockup/character-delete-expression-2026-09-23.html`（撮影 `character-delete-expression-2026-09-23.png`）では、押したカードに添って小さな確かめが出る（画面全体を覆わない）。\n\n見本の形: カードの右下に重なる幅 300px ほどの箱。左に消す立ち絵の小さな縮図、見出し「「あわわ」を消しますか？」、本文「この表情を使う場面では「いつもの顔」が出ます。」、「やめる」と赤い「消す」。枠は赤みがかった線。\n\n## やること\n\n1. 確かめの吹き出しを作り、「消す」で開いて「消す」で送る。外を押す・Esc で閉じる\n2. 見出しと本文の表情の名前はパックのラベルを使う（原則4。`resolveExpressionLabel`）\n3. `docs/screen-design.md` 13.6 に1行足す\n\n## 完了条件\n\n- 「消す」を押しただけでは送られず、確かめの「消す」で `clear-portrait` が1回送られる（部品のテスト）\n- 「やめる」・Esc で閉じて何も送られない（部品のテスト）\n- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか、ダイアログを開いた状態も含む）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-497",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-492", "T-494"],
+    "summary": "キャラクターを消す帯と、id を打って確かめるダイアログを足す",
+    "task": "## 背景\n\n見本 `docs/history/mockup/character-screen-2026-09-23.html` の詳しい設定の最下部に、赤い帯「このキャラクターを消す / 表情・差し色・背景もいっしょに消えます。使用中のキャラクターは、先に別のキャラクターに切り替えてから消せます。」と「<名前> を消す」がある。押すと `character-delete-2026-09-23.html`（撮影 `character-delete-2026-09-23.png`）のダイアログが出る。\n\n見本のダイアログ: 幅 520px ほど、枠は赤みがかった線。左上に丸い顔、見出し「<名前> を消しますか？」、本文「表情 <数> 枚・差し色・背景もいっしょに消えます。 / 消したあとは元に戻せません。」、「確かめのため、id を入力してください」と入力欄（プレースホルダは id）、「やめる」と赤い「消す」。\n\n## 決まっていること（蒸し返さない）\n\n- 使用中のパックは帯のボタンを押せない（理由は帯の文言で伝わる）\n- **打った文字が id と完全に一致するまで「消す」は押せない**\n\n## やること\n\n1. 帯とダイアログを作り、T-492 のコマンドを送る。消せないパック（T-492 が決めたフィールド）には帯を出さないか、T-492 の結論どおりの文言で出す\n2. 消えたら一覧の先頭（使用中のパック）を選んだ状態に戻る\n3. `docs/screen-design.md` 13.6 に書き足す\n\n## 完了条件\n\n- id を1文字でも違えると「消す」が押せず、一致すると押せてコマンドが1回送られる（部品のテスト）\n- 使用中のパックでは帯のボタンが押せない（部品のテスト）\n- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか、ダイアログを開いた状態も含む）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-498",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-493", "T-494"],
+    "summary": "「名前とプロフィールを変える」のダイアログを足す",
+    "task": "## 背景\n\n見本 `docs/history/mockup/character-screen-2026-09-23.html` の詳しい設定の見出しの右に「名前とプロフィールを変える」（鉛筆のアイコン）がある。押したあとの形は見本に無い。T-493 が名前とひとことを変えるコマンドを足す。\n\n## 決まっていること（蒸し返さない）\n\n- 形は作るダイアログ（T-495。見本 `character-create-2026-09-23.html`）と同じ枠・同じ欄の書き方にし、欄は「名前」と「ひとことプロフィール」の2つだけ。id は変えられない（欄を出さないか、読むだけで出す）\n\n## やること\n\n1. ダイアログを作り、T-493 のコマンドを対象のパック名つきで送る。「やめる」・Esc で閉じる\n2. ひとことプロフィールは雑談のサイドバーのプロフィールの札（`docs/screen-design.md` 13.7）にも出ることを欄の説明に1行添える\n3. `docs/screen-design.md` 13.6 に書き足す\n\n## 完了条件\n\n- 保存するとコマンドが1回送られ、詳しい設定の名前・ひとことと一覧の名前が替わる（部品のテスト）\n- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか、ダイアログを開いた状態も含む）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る",
     "status": "todo",
     "passes": false,
     "evidence": ""

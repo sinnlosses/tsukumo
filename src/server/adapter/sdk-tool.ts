@@ -14,6 +14,7 @@ import {
 } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
+import { type ReportReview } from "../core/report-review.ts"
 import { type ReportChannel, REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
 import {
@@ -91,8 +92,9 @@ const RECALL_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。**戻り値は既定が "ok" だけ**で、tsukumo の内部の状態や画面の事情が
  * モデルへ戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
- * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` の1つ**で、返すのは**そのセッションが
- * 自分で読める外の事実**（自分の過去の雑談）だけ。
+ * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` と `report` の2つ**で、`recall` が
+ * 返すのは**そのセッションが自分で読める外の事実**（自分の過去の雑談）だけ、`report` が返すのは
+ * 差し戻すときの**規約違反**だけ（docs/display.md 4.2）。
  *
  * 常に載るのは `speak` の1つで、**`remember` / `forget` / `keep` / `index` / `recall` は
  * 雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
@@ -103,12 +105,13 @@ const RECALL_TOOL_DESCRIPTION =
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
- * `report` の引数も同じ。
+ * `report` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。
  */
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   mode: SessionMode,
   reportChannel: ReportChannel,
+  reportReview: ReportReview,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -125,7 +128,7 @@ export function tsukumoServer(
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
-      ...(mode.kind === "work" && reportChannel === "tool" ? [reportTool()] : []),
+      ...(mode.kind === "work" && reportChannel === "tool" ? [reportTool(reportReview)] : []),
       ...(mode.kind === "chat"
         ? [
             rememberTool(mode.personaMemory),
@@ -140,11 +143,13 @@ export function tsukumoServer(
 }
 
 /**
- * レポートを受け取るツール（**試行中**）。**戻り値は "ok" だけ**（`speak` と同じく、画面の事情を
- * モデルへ戻さない。docs/display.md 4.2）。引数は handler では読まず、`assistant` メッセージの
- * 変換が取り出す（src/server/core/sdk-message.ts）。
+ * レポートを受け取るツール（**試行中**）。**差し戻しの判定の窓口はここだけ**
+ * （src/server/core/report-review.ts）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
+ * 直し方だけを `isError` 付きで返す（画面の事情は載せない。docs/display.md 4.2）。描くか捨てるかは
+ * この `isError` を見て決まる。レポートにする引数は、ここではなく `assistant` メッセージの変換が
+ * 取り出す（src/server/core/sdk-message.ts）。
  */
-function reportTool() {
+function reportTool(review: ReportReview) {
   return tool(
     REPORT_TOOL_NAME,
     REPORT_TOOL_DESCRIPTION,
@@ -153,7 +158,12 @@ function reportTool() {
       body: z.string().optional().describe("結論のあとの根拠・比較・手順（記法は規約のまま）"),
       favor: z.string().optional().describe("利用者へのお願い（判断・作業・情報）。無ければ省く"),
     },
-    async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
+    async ({ conclusion, body, favor }) => {
+      const verdict = review.judge({ conclusion, body: body ?? "", favor: favor ?? "" })
+      return verdict.kind === "rejected"
+        ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
+        : { content: [{ type: "text" as const, text: "ok" }] }
+    },
   )
 }
 
