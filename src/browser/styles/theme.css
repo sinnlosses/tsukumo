@@ -42,6 +42,17 @@
   --state-ng: #e88b8b;
   --state-ask: #8ab4e8;
 
+  /* コンテキストの内訳（13.2）の分類の色。**誰が来ても変わらない固定の色**で、横棒の区間と
+     凡例の四角が同じ1つを読む。**凡例に分類名が必ず並ぶ**ので、色だけで意味を伝えることには
+     ならない（13.1 原則5）。知らない分類は `context-other` に落ちる。 */
+  --context-system-prompt: #6fa8dc;
+  --context-system-tools: #6fc7b6;
+  --context-mcp-tools: #b79ce0;
+  --context-memory-files: #dcae6a;
+  --context-skills: #a3c96a;
+  --context-messages: #e79aa8;
+  --context-other: #8f8a99;
+
   /* タイプスケール。段はこの6つだけ（13.3）。 */
   --font-label: 0.6875rem;
   --font-action: 0.75rem;

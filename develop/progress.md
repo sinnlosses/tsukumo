@@ -95,6 +95,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `button` / `input` / `select` / `textarea` はブラウザの既定では親の書体を継がないので、`theme.css` の `body` 直後の1か所で継がせる形にし、機能の CSS 13ファイルの42か所を消した。大きさ・行の高さ・太さも継ぐ `font: inherit` を選んだのは、大きさを上書きしていない部品が行の高さ（本文の 1.75）まで親から継いでいたため。`docs/design.md` 13.3 に「機能の CSS には書かない」を足した。
 
+### 2026-09-23 いまのセッションの /context 内訳をトークン消費の画面に出した（T-375）
+
+`getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の
