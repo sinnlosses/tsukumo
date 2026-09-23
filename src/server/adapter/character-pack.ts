@@ -190,8 +190,21 @@ export function readCharacterAsset(
   packs: readonly CharacterPack[],
   location: CharacterAssetLocation,
 ): CharacterAssetFile | undefined {
-  const pack = withCurrentPack(current, packs).find((listed) => listed.name === location.pack)
+  const pack = findCharacterPack(current, packs, location.pack)
   return pack === undefined ? undefined : readCharacterPackFile(pack, location.fileName)
+}
+
+/**
+ * 一覧（`current` で置き換えたもの。{@link withCurrentPack}）から名前でパックを1つ引く（無ければ
+ * undefined）。**素材を配る側と画面から変える側（`src/server/adapter/character-edit.ts`）が同じ
+ * 規則で引く**ので、一覧に載せた名前は配れるし変えられる。名前はパスに使わない。
+ */
+export function findCharacterPack(
+  current: CharacterPack,
+  packs: readonly CharacterPack[],
+  name: string,
+): CharacterPack | undefined {
+  return withCurrentPack(current, packs).find((listed) => listed.name === name)
 }
 
 /**

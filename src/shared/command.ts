@@ -137,6 +137,15 @@ const accentColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
  */
 const newCharacterPackNameSchema = z.string().refine(isCharacterPackName)
 
+/**
+ * 見た目の編集で**書き込む先の**パックの名前（`docs/design.md` 7.1）。**使用中を暗黙にしない**ので
+ * 編集のコマンドはどれもこれを必須で持つ。形は作るときと同じ {@link isCharacterPackName} で見る
+ * （書き込み先 `~/.tsukumo/characters/<name>/` のディレクトリ名になる値なので、切り替えの
+ * 「長さだけ」より厳しくする）。**一覧にある名前かどうかは書き込む側が突き合わせる**
+ * （`src/server/adapter/character-edit.ts` の `editCharacterPack`）。
+ */
+const editedCharacterPackNameSchema = z.string().refine(isCharacterPackName)
+
 const expressionSchema = z.custom<Expression>(
   (value) => typeof value === "string" && isExpression(value),
 )
@@ -225,17 +234,20 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("set-portrait"),
     commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
     expression: expressionSchema,
     image: portraitDataUrlSchema,
   }),
   z.object({
     type: z.literal("clear-portrait"),
     commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
     expression: removableExpressionSchema,
   }),
   z.object({
     type: z.literal("set-outfit-accent"),
     commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
     outfit: outfitSchema,
     color: accentColorSchema,
   }),
@@ -247,6 +259,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("set-accent"),
     commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
     target: accentTargetSchema,
     color: accentColorSchema,
   }),
@@ -255,7 +268,11 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
    * （`docs/screen-design.md` 13.6「仕事と同じにする」）。**`accent` を消す口は無い**
    * （`src/shared/character-definition.ts` の `definitionWithoutChatAccent`）。
    */
-  z.object({ type: z.literal("clear-chat-accent"), commandId: commandIdSchema }),
+  z.object({
+    type: z.literal("clear-chat-accent"),
+    commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
+  }),
   /**
    * キャラビューに敷く背景を差し替える／消す（`docs/screen-design.md` 13.8）。**覆いの濃さは
    * 画面から変えない**ので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
@@ -263,9 +280,14 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("set-background"),
     commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
     image: backgroundDataUrlSchema,
   }),
-  z.object({ type: z.literal("clear-background"), commandId: commandIdSchema }),
+  z.object({
+    type: z.literal("clear-background"),
+    commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
+  }),
   /**
    * 新しいセッションの既定（モデル・許可モード）を覚える（`docs/screen-design.md` 13.6。帯の右端の
    * 歯車）。**いま動いているセッションには効かない** — 効くのは次に起こすときからで、
@@ -322,8 +344,9 @@ const CHARACTER_EDIT_COMMAND_TYPES = [
 ] as const
 
 /**
- * いま出しているキャラクターパックの見た目（立ち絵・差し色・背景）を変えるコマンド。**どれも
- * 駆動には渡らない**（書き込みと `character-changed` の流し直しで済むので、セッションは
+ * キャラクターパックの見た目（立ち絵・差し色・背景）を変えるコマンド。**書き込む先は `pack` で
+ * 指す**（使用中のパックに限らない）。**どれも駆動には渡らない**（書き込みと
+ * `character-changed` の流し直しで済むので、使用中のパックを変えたときもセッションは
  * 起こし直さない。`docs/design.md` 7.1）。
  */
 export type CharacterEditCommand = Extract<

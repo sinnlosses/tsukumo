@@ -124,7 +124,7 @@ describe("CharacterEdit", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
 
-    expect(calls).toEqual([{ type: "clear-portrait", expression: "proud" }])
+    expect(calls).toEqual([{ type: "clear-portrait", pack: "fictional", expression: "proud" }])
   })
 
   it("立ち絵を選ぶと data URL を載せた set-portrait を dispatch し、入力欄を空に戻す", async () => {
@@ -141,6 +141,7 @@ describe("CharacterEdit", () => {
     expect(calls).toEqual([
       {
         type: "set-portrait",
+        pack: "fictional",
         expression: "proud",
         image: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
       },
@@ -158,7 +159,9 @@ describe("CharacterEdit", () => {
     expect(calls).toEqual([])
     await waitForDebounce()
 
-    expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#123456" }])
+    expect(calls).toEqual([
+      { type: "set-outfit-accent", pack: "fictional", outfit: "heavy", color: "#123456" },
+    ])
   })
 
   // 画面を開いただけでは何も送らない（`docs/coding-standards.md`「useEffect は4類型だけ」の
@@ -183,7 +186,9 @@ describe("CharacterEdit", () => {
     fireEvent.change(input, { target: { value: "#333333" } })
     await waitForDebounce()
 
-    expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#333333" }])
+    expect(calls).toEqual([
+      { type: "set-outfit-accent", pack: "fictional", outfit: "heavy", color: "#333333" },
+    ])
   })
 
   // 引きずったまま画面を閉じても、まだ送っていない最後の値を落とさない
@@ -196,7 +201,9 @@ describe("CharacterEdit", () => {
     expect(calls).toEqual([])
     cleanup()
 
-    expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#123456" }])
+    expect(calls).toEqual([
+      { type: "set-outfit-accent", pack: "fictional", outfit: "heavy", color: "#123456" },
+    ])
   })
 
   it("画面の差し色（仕事 / 雑談）の口を出す", () => {
@@ -225,7 +232,9 @@ describe("CharacterEdit", () => {
     expect(calls).toEqual([])
     await waitForDebounce()
 
-    expect(calls).toEqual([{ type: "set-accent", target: "work", color: "#123456" }])
+    expect(calls).toEqual([
+      { type: "set-accent", pack: "fictional", target: "work", color: "#123456" },
+    ])
   })
 
   it("「仕事と同じにする」を押すと clear-chat-accent を dispatch する", () => {
@@ -236,7 +245,7 @@ describe("CharacterEdit", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "仕事と同じにする" }))
 
-    expect(calls).toEqual([{ type: "clear-chat-accent" }])
+    expect(calls).toEqual([{ type: "clear-chat-accent", pack: "fictional" }])
   })
 
   it("画面から変えられないパックでは、画面の差し色と戻す口も操作できない", () => {
@@ -313,7 +322,7 @@ describe("CharacterEdit", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "背景を消す" }))
 
-    expect(calls).toEqual([{ type: "clear-background" }])
+    expect(calls).toEqual([{ type: "clear-background", pack: "fictional" }])
   })
 
   it("背景を選ぶと data URL を載せた set-background を dispatch し、入力欄を空に戻す", async () => {
@@ -329,6 +338,7 @@ describe("CharacterEdit", () => {
     expect(calls).toEqual([
       {
         type: "set-background",
+        pack: "fictional",
         image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
       },
     ])

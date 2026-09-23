@@ -101,12 +101,14 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-portrait",
         commandId: "c-6",
+        pack: "fictional",
         expression: "proud",
         image: TINY_PNG_DATA_URL,
       }),
     ).toEqual({
       type: "set-portrait",
       commandId: "c-6",
+      pack: "fictional",
       expression: "proud",
       image: TINY_PNG_DATA_URL,
     })
@@ -117,10 +119,17 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-outfit-accent",
         commandId: "c-7",
+        pack: "fictional",
         outfit: "heavy",
         color: "#ffb3a7",
       }),
-    ).toEqual({ type: "set-outfit-accent", commandId: "c-7", outfit: "heavy", color: "#ffb3a7" })
+    ).toEqual({
+      type: "set-outfit-accent",
+      commandId: "c-7",
+      pack: "fictional",
+      outfit: "heavy",
+      color: "#ffb3a7",
+    })
   })
 
   it("set-accent は target（work / chat）と16進の色を受け付ける", () => {
@@ -128,18 +137,32 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-accent",
         commandId: "c-7",
+        pack: "fictional",
         target: "work",
         color: "#f2b0a0",
       }),
-    ).toEqual({ type: "set-accent", commandId: "c-7", target: "work", color: "#f2b0a0" })
+    ).toEqual({
+      type: "set-accent",
+      commandId: "c-7",
+      pack: "fictional",
+      target: "work",
+      color: "#f2b0a0",
+    })
     expect(
       parseClientCommand({
         type: "set-accent",
         commandId: "c-7",
+        pack: "fictional",
         target: "chat",
         color: "#f2984a",
       }),
-    ).toEqual({ type: "set-accent", commandId: "c-7", target: "chat", color: "#f2984a" })
+    ).toEqual({
+      type: "set-accent",
+      commandId: "c-7",
+      pack: "fictional",
+      target: "chat",
+      color: "#f2984a",
+    })
   })
 
   it("set-accent は知らない target・16進でない色を受け付けない", () => {
@@ -147,6 +170,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-accent",
         commandId: "c-7",
+        pack: "fictional",
         target: "battle",
         color: "#f2b0a0",
       }),
@@ -155,35 +179,78 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-accent",
         commandId: "c-7",
+        pack: "fictional",
         target: "work",
         color: "rebeccapurple",
       }),
     ).toBeUndefined()
   })
 
-  it("clear-chat-accent を受け付ける（commandId だけでよい）", () => {
-    expect(parseClientCommand({ type: "clear-chat-accent", commandId: "c-7" })).toEqual({
+  it("clear-chat-accent を受け付ける（commandId と書き込む先のパックだけでよい）", () => {
+    expect(
+      parseClientCommand({ type: "clear-chat-accent", commandId: "c-7", pack: "fictional" }),
+    ).toEqual({
       type: "clear-chat-accent",
       commandId: "c-7",
+      pack: "fictional",
     })
+  })
+
+  // **使用中を暗黙にしない**（`docs/design.md` 7.1）。書き込む先のディレクトリ名になる値なので、
+  // 作るときと同じ形の検査を通す。
+  it("見た目の編集は書き込む先のパックが無い・パックの名前として通らない形なら undefined", () => {
+    expect(parseClientCommand({ type: "clear-background", commandId: "c-9" })).toBeUndefined()
+    for (const pack of ["", "..", "../fictional", "fictional/other", ".hidden", "架空"]) {
+      expect(
+        parseClientCommand({ type: "clear-background", commandId: "c-9", pack }),
+      ).toBeUndefined()
+    }
+    expect(
+      parseClientCommand({ type: "clear-background", commandId: "c-9", pack: "fictional-2" }),
+    ).toEqual({ type: "clear-background", commandId: "c-9", pack: "fictional-2" })
   })
 
   it("clear-portrait は必須でない表情（thinking / proud / flustered）だけを受け付ける", () => {
     expect(
-      parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "thinking" }),
-    ).toEqual({ type: "clear-portrait", commandId: "c-8", expression: "thinking" })
+      parseClientCommand({
+        type: "clear-portrait",
+        commandId: "c-8",
+        pack: "fictional",
+        expression: "thinking",
+      }),
+    ).toEqual({
+      type: "clear-portrait",
+      commandId: "c-8",
+      pack: "fictional",
+      expression: "thinking",
+    })
     expect(
-      parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "proud" }),
-    ).toEqual({ type: "clear-portrait", commandId: "c-8", expression: "proud" })
+      parseClientCommand({
+        type: "clear-portrait",
+        commandId: "c-8",
+        pack: "fictional",
+        expression: "proud",
+      }),
+    ).toEqual({ type: "clear-portrait", commandId: "c-8", pack: "fictional", expression: "proud" })
     expect(
-      parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "flustered" }),
+      parseClientCommand({
+        type: "clear-portrait",
+        commandId: "c-8",
+        pack: "fictional",
+        expression: "flustered",
+      }),
     ).toBeDefined()
   })
 
   // **必須の1つ（`docs/requirements.md` 4.4 / characters/README.md）を消す操作は境界で弾く。**
   it("clear-portrait で default を消そうとすると undefined（必須は消せない）", () => {
     expect(
-      parseClientCommand({ type: "clear-portrait", commandId: "c-8", expression: "default" }),
+      parseClientCommand({
+        type: "clear-portrait",
+        commandId: "c-8",
+        pack: "fictional",
+        expression: "default",
+      }),
     ).toBeUndefined()
   })
 
@@ -192,6 +259,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-portrait",
         commandId: "c-6",
+        pack: "fictional",
         expression: "angry",
         image: TINY_PNG_DATA_URL,
       }),
@@ -200,6 +268,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-portrait",
         commandId: "c-6",
+        pack: "fictional",
         expression: "proud",
         image: "https://example.com/portrait.png",
       }),
@@ -208,6 +277,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-outfit-accent",
         commandId: "c-7",
+        pack: "fictional",
         outfit: "battle",
         color: "#ffb3a7",
       }),
@@ -216,6 +286,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-outfit-accent",
         commandId: "c-7",
+        pack: "fictional",
         outfit: "heavy",
         color: "rebeccapurple",
       }),
@@ -229,6 +300,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({
         type: "set-portrait",
         commandId: "c-6",
+        pack: "fictional",
         expression: "proud",
         image: tooLarge,
       }),
@@ -265,11 +337,23 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
 
   it("isCharacterEditCommand が見た目の5つだけを true にする", () => {
     const edits = [
-      { type: "set-portrait", commandId: "c-1", expression: "proud", image: TINY_PNG_DATA_URL },
-      { type: "clear-portrait", commandId: "c-2", expression: "proud" },
-      { type: "set-outfit-accent", commandId: "c-3", outfit: "light", color: "#a8e6c0" },
-      { type: "set-accent", commandId: "c-7", target: "work", color: "#f2b0a0" },
-      { type: "clear-chat-accent", commandId: "c-8" },
+      {
+        type: "set-portrait",
+        commandId: "c-1",
+        pack: "fictional",
+        expression: "proud",
+        image: TINY_PNG_DATA_URL,
+      },
+      { type: "clear-portrait", commandId: "c-2", pack: "fictional", expression: "proud" },
+      {
+        type: "set-outfit-accent",
+        commandId: "c-3",
+        pack: "fictional",
+        outfit: "light",
+        color: "#a8e6c0",
+      },
+      { type: "set-accent", commandId: "c-7", pack: "fictional", target: "work", color: "#f2b0a0" },
+      { type: "clear-chat-accent", commandId: "c-8", pack: "fictional" },
     ]
     const others = [
       { type: "interrupt", commandId: "c-4" },

@@ -116,12 +116,13 @@ export type SessionManagerOptions = {
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
-   * いま出しているキャラクターパックの立ち絵・差し色を変え、**画面へ流す
-   * `character-changed` イベントを返す**（書き込み先と受け付けない条件は
-   * `src/server/adapter/character-edit.ts`）。**受け付けられなかったときは undefined**
+   * `edit.pack` で指されたキャラクターパック（使用中に限らない）の立ち絵・差し色・背景を変え、
+   * **画面へ流す `character-changed` イベントを返す**（書き込み先と受け付けない条件は
+   * `src/server/adapter/character-edit.ts`。無いパック・起動先の `characters/local` も
+   * ここで undefined になる）。**受け付けられなかったときは undefined**
    * （呼び出し側は定型文の `error` を返す）。
    *
-   * セッションは起こし直さない（会話も履歴も消えない）。**`speak` が受け付ける表情の一覧は
+   * どのパックを変えてもセッションは起こし直さない（会話も履歴も消えない）。**`speak` が受け付ける表情の一覧は
    * 起こしたときのままなので、立ち絵を足した表情をキャラクター自身が選べるのは次の起動から。**
    */
   readonly editCharacter: (edit: CharacterEditCommand) => Promise<SessionEvent | undefined>
