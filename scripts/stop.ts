@@ -10,13 +10,13 @@
 //   bun run scripts/stop.ts                # 動いている tsukumo を一覧する（止めない）
 //   bun run scripts/stop.ts --port 7398    # そのポートで待っているものだけ止める
 
-import { execFileSync } from "node:child_process"
 import process from "node:process"
 
 import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../src/server/core/port-resolution.ts"
+import { candidatePorts, findListener } from "./lib/port-listener.ts"
 
 const USAGE = `使い方:
   bun run scripts/stop.ts                # 動いている tsukumo を一覧する（止めない）
@@ -24,13 +24,6 @@ const USAGE = `使い方:
 
 /** SIGTERM を送ってから、本当に終わったかを見に行くまでの待ち時間（ミリ秒）。 */
 const TERMINATION_GRACE_MS = 700
-
-/** ポートで待っている1つのプロセス。 */
-type Listener = {
-  readonly port: number
-  readonly pid: number
-  readonly command: string
-}
 
 const port = parsePortOption(process.argv.slice(2))
 if (port === "invalid") {
@@ -104,45 +97,6 @@ function parsePortOption(args: readonly string[]): number | "none" | "invalid" {
     return "invalid"
   }
   return parsed
-}
-
-/** 既定のポートから、ずらして試される範囲までのポート番号。 */
-function candidatePorts(): readonly number[] {
-  return Array.from(
-    { length: VIEW_PORT_FALLBACK_ATTEMPTS },
-    (_unused, index) => DEFAULT_VIEW_PORT + index,
-  )
-}
-
-/**
- * そのポートで **listen している** プロセスを引く。接続してきた側（ブラウザ）を拾わないよう
- * `-sTCP:LISTEN` を付ける。見つからないとき `lsof` は終了コード 1 で終わるので、例外は
- * 「居なかった」として畳む。
- */
-function findListener(listenPort: number): Listener | undefined {
-  const pid = firstNumber(run("lsof", ["-ti", `tcp:${String(listenPort)}`, "-sTCP:LISTEN"]))
-  if (pid === undefined) {
-    return undefined
-  }
-  const command = run("ps", ["-p", String(pid), "-o", "command="]).trim()
-  return { port: listenPort, pid, command: command === "" ? "(不明)" : command }
-}
-
-function run(file: string, args: readonly string[]): string {
-  try {
-    return execFileSync(file, [...args], { encoding: "utf8" })
-  } catch {
-    return ""
-  }
-}
-
-function firstNumber(output: string): number | undefined {
-  const first = output.split("\n")[0]?.trim()
-  if (first === undefined || first === "") {
-    return undefined
-  }
-  const parsed = Number(first)
-  return Number.isInteger(parsed) ? parsed : undefined
 }
 
 /** シグナル 0 は「送らずに届くかどうかだけ確かめる」（プロセスの生死を見る常套手段）。 */
