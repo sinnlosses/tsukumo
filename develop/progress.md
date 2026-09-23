@@ -87,6 +87,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `/compact` の依頼で要約の最後に `<topics>` の組を書かせ、`chat-compact.ts` の `chatTopics` が取り出す。起動時と PostCompact のあとに `chat-topics-changed` で流す（`PROTOCOL_VERSION` 6）。本物の圧縮でモデルが組を書くかは未確認。
 
+### 2026-09-23 コンテキストの内訳をセッションごとに1行だけ記録するようにした（T-376）
+
+最初のターンの終わりに `getContextUsage()` を1回取り、`~/.tsukumo/context-usage/<日付>.jsonl` へ1行だけ積む（取れなければ次のターンで取り直す）。ターンごとの記録とは置き場も版も分けてあり、「書いてよいもの」の線は `src/shared/context-usage-record.ts` の冒頭が正典。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の
