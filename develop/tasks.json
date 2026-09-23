@@ -160,9 +160,9 @@
     "dependencies": ["T-404"],
     "summary": "CLAUDE.md のタスク運用節を、並行の作業ツリーと merge commit を前提に直す",
     "task": "## 背景\n\n`CLAUDE.md`「## タスク運用」の「1サイクルの形」は、手順1（`git merge main`）のあと「どちらのマージも fast-forward になり merge commit は出ない」と書いている。これは作業ツリーが1本のときしか成り立たず、並行して動かすと相手が先に `main` を進めるので、手順1の取り込みが merge commit になり、それが手順3・5の `--ff-only` でそのまま `main` に乗る（振り返りの範囲の40コミットのうち11件が `Merge branch 'main' into tsukumo-N`）。\n\n同じ節の並行の箇条書きは「検証コマンドは並行して打ってよい（自分の作業ツリーで走るので、相手の作業中の変更を拾わない）」と書いているが、**ポートは作業ツリーで分かれない**。T-372 を合流したあとの `bun run check` で `test/cli.test.ts` の「既定ポートから上限まで全部塞がっていると…終了コード1で終わる」が時間切れになった（テスト側は T-406 が直す）。\n\nT-404 で `develop/progress.md` の3wayマージドライバ（`scripts/merge-progress.ts` と `.gitattributes`）ができる。登録（`git config merge.progress.driver ...`）はクローンに1回で全部の作業ツリーに効き、登録し忘れても既定の3wayに落ちるだけで壊れない。\n\n## 決まっていること（蒸し返さない）\n\n- **手順1は `git merge main` のまま**にし、merge commit が出て `main` に乗ることを前提に書き直す（rebase には変えない。2026-09-23 ユーザー）\n- 取り込みで衝突したとき: `develop/progress.md` はドライバが畳むので手が要らない。それ以外が衝突したら止めて預ける\n\n## やること\n\n1. 「1サイクルの形」の「fast-forward になり merge commit は出ない」の段落を、並行のときは手順1が merge commit を作り、それが `main` に入ると書き直す（fast-forward になるのは手順3・5の `--ff-only` の送り方のほう）\n2. 手順1に、取り込みで衝突したときの扱いを1行足す\n3. 並行の箇条書きの「検証コマンドは並行して打ってよい」に、ポートは分かれない例外を足す（T-406 が済んでいればその直し方に合わせる）\n4. 「## セットアップ / 環境構築」に、クローンに1回 `git config merge.progress.driver` を打つことを足す（**「新しい作業ツリーごと」ではなく「クローンごとに1回」**。`- 新しい作業ツリーの立ち上げは人がやる` の箇条書きと揃える）。打つコマンドはそのまま書く\n5. `develop/progress.md`「未解決」の **`develop/progress.md` の完了ブロックを分けるかは未決** の項目を畳む\n6. `docs/workflow.md` に同じ内容の記述があれば合わせる（`grep -n 'fast-forward\\|merge commit' docs/workflow.md CLAUDE.md`）\n\n## 完了条件\n\n- `grep -n 'merge commit は出ない' CLAUDE.md docs/workflow.md` が0件\n- `grep -n 'merge.progress.driver' CLAUDE.md` が1件以上\n- `bun run check` が通る\n\n## 注意\n\n- **このリポジトリの `.git/config` への登録はしない**（登録は人がやる。完了報告でユーザーに打つコマンドを伝える）\n- `~/.claude/skills/task-workflow/WORKFLOW.md`（共通の正典）は触らない\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "CLAUDE.md:「1サイクルの形」の fast-forward の段落を、ff になるのは手順3・5の送り方のほうで手順1は merge commit を作りうると書き直し、手順1に衝突時の扱い（progress.md はドライバが畳む/それ以外は預ける）を追記。セットアップに git config merge.progress.driver \"bun run scripts/merge-progress.ts %O %A %B\" をクローンに1回打つ手順を追加。並行の箇条書きにポートは分かれない例外を追記。docs/workflow.md の同趣旨の記述も合わせ、develop/progress.md の未解決から完了ブロックの項目を畳んだ。完了条件: grep 'merge commit は出ない' 0件 / 'merge.progress.driver' 1件 / bun run check 通過（1504 pass, 0 fail）。節の数は CLAUDE.md 17・docs/workflow.md 5 で編集前後とも同じ。"
   },
   {
     "id": "T-406",
