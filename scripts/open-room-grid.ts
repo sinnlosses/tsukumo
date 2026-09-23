@@ -17,25 +17,32 @@ import process from "node:process"
 
 import { closeTab, listTabs, openTab, type OrcaTab } from "../src/server/adapter/orca-host.ts"
 import { roomName } from "../src/shared/room.ts"
-import { candidatePorts, findListener } from "./lib/port-listener.ts"
+import { candidatePorts, findListener, type Listener } from "./lib/port-listener.ts"
 import { buildRoomGridHtml, pickRooms, ROOM_GRID_TITLE, scanPorts, type Room } from "./room-grid.ts"
 
 /** 開いたタブの `<title>` が格子のものに変わるまで待つ間隔と上限。 */
 const LOAD_POLL_INTERVAL_MS = 150
 const LOAD_POLL_TIMEOUT_MS = 8_000
 
+/** 止まっているタブを作業ツリーの名指しで起こすときの、聞き直す回数と間隔。 */
+const WAKE_POLL_ATTEMPTS = 10
+const WAKE_POLL_INTERVAL_MS = 300
+
 await main()
 
 async function main(): Promise<void> {
-  const tabsResult = await listTabs()
+  const tabsResult = await listTabs("all")
   if (!tabsResult.ok) {
     process.stderr.write(`タブ一覧を取得できなかった: ${tabsResult.reason}\n`)
     process.exit(1)
   }
 
-  const tabUrls = tabsResult.tabs.map((tab) => tab.url)
-  const ports = scanPorts(candidatePorts(), tabUrls)
+  const listedUrls = tabsResult.tabs.map((tab) => tab.url)
+  const ports = scanPorts(candidatePorts(), listedUrls)
   const listeners = ports.flatMap((port) => findListener(port) ?? [])
+  const unlisted = listeners.filter((listener) => pickRooms([listener], listedUrls).length === 0)
+  const wokenUrls = await Promise.all(unlisted.map((listener) => wakeViewTabUrls(listener)))
+  const tabUrls = [...listedUrls, ...wokenUrls.flat()]
   const matched = pickRooms(listeners, tabUrls)
 
   if (matched.length === 0) {
@@ -89,7 +96,7 @@ async function closePreviousGridTabs(tabs: readonly OrcaTab[]): Promise<void> {
 async function waitUntilLoaded(pageId: string): Promise<boolean> {
   const deadline = Temporal.Now.instant().epochMilliseconds + LOAD_POLL_TIMEOUT_MS
   while (Temporal.Now.instant().epochMilliseconds < deadline) {
-    const tabsResult = await listTabs()
+    const tabsResult = await listTabs("all")
     if (
       tabsResult.ok &&
       tabsResult.tabs.some((tab) => tab.pageId === pageId && tab.title === ROOM_GRID_TITLE)
@@ -99,6 +106,28 @@ async function waitUntilLoaded(pageId: string): Promise<boolean> {
     await delay(LOAD_POLL_INTERVAL_MS)
   }
   return false
+}
+
+/**
+ * 待ち受けているのに `"all"` の一覧にタブが出てこなかった部屋について、そのプロセスの cwd の
+ * 作業ツリーを名指しして聞き直す。名指しで聞くと止まっていたページが起きて `url` が埋まる
+ * （`listTabs` の説明）ので、その部屋のビューの URL が出てくるまで短い間隔で繰り返す。
+ * 最後まで出てこなければ空で返し、その部屋は並べない。
+ */
+async function wakeViewTabUrls(listener: Listener): Promise<readonly string[]> {
+  const cwd = processCwd(listener.pid)
+  if (cwd === undefined) {
+    return []
+  }
+  for (let attempt = 0; attempt < WAKE_POLL_ATTEMPTS; attempt += 1) {
+    const listed = await listTabs({ worktreePath: cwd })
+    const urls = listed.ok ? listed.tabs.map((tab) => tab.url) : []
+    if (pickRooms([listener], urls).length > 0) {
+      return urls
+    }
+    await delay(WAKE_POLL_INTERVAL_MS)
+  }
+  return []
 }
 
 /** 部屋1件ぶんの表示用の情報を組み立てる。cwd・ブランチが取れないときは欄を空けるだけでマスは出す。 */

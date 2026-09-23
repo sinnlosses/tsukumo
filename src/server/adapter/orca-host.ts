@@ -36,15 +36,24 @@ export type OrcaTab = {
 }
 
 /**
- * **すべての作業ツリーの**タブを一覧する。`--worktree all` を付けないと今の作業ツリーの
- * タブしか返らない（`scripts/open-room-grid.ts` は手元に並んだ作業ツリーぶんの部屋を横断して
- * 探すため、常にこれを使う）。一覧が取れない・形が想定と違う要素は境界で弾き、キャストしない。
+ * タブを一覧する。`"all"` は**すべての作業ツリーの**タブ（`--worktree` を付けないと今の作業ツリーの
+ * タブしか返らない）、`{ worktreePath }` はその作業ツリーのタブだけ。
+ *
+ * **`"all"` は、しばらく表示していない作業ツリーのタブを落とすことがある**（止まっているページは
+ * 一覧に出ないか、`url` が空で出る）。作業ツリーを名指しして聞くとそのページが起き、何度か聞き直す
+ * うちに `url` が埋まる。一覧が取れない・形が想定と違う要素は境界で弾き、キャストしない。
  */
-export async function listTabs(): Promise<
+export async function listTabs(
+  scope: "all" | { readonly worktreePath: string },
+): Promise<
   | { readonly ok: true; readonly tabs: readonly OrcaTab[] }
   | { readonly ok: false; readonly reason: string }
 > {
-  const listed = await runOrca(["tab", "list", "--worktree", "all", "--json"], "タブ一覧を取得する")
+  const worktree = scope === "all" ? "all" : `path:${scope.worktreePath}`
+  const listed = await runOrca(
+    ["tab", "list", "--worktree", worktree, "--json"],
+    "タブ一覧を取得する",
+  )
   if (!listed.ok) {
     return { ok: false, reason: listed.reason }
   }
