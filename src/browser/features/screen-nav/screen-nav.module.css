@@ -61,37 +61,46 @@
   height: 24px;
   background: var(--rule);
 }
-/* 仕事 / 雑談のトグル（13.9「動き方の操作子」）。**2つの `<button>` を1つの枠に並べる**。 */
+/* 仕事 / 雑談のトグル（13.9「動き方の操作子」）。**2つの `<button>` を1つの枠に並べる**。
+   外枠は帯の地（`color-mix(ground, surface 50%)`）より暗い `--ground` を敷き、4px の余白で
+   ボタンを枠から浮かせる。外寸は 4px + 30px + 4px + 枠2px = 40px で、帯の地 52px
+   （`--screen-nav-height`）の上下に 6px ずつ空く。見本（ボタン 36px・余白 3px）は帯の地 60px に
+   合わせた値で、52px の帯にそのまま載せると上下が 4px しか空かず詰まって見える。 */
 .screen-nav-chat-mode {
   display: flex;
   flex: none;
-  gap: 1px;
+  gap: 2px;
+  padding: 4px;
   border: 1px solid var(--rule);
-  border-radius: 999px;
-  overflow: hidden;
+  border-radius: 11px;
+  background: var(--ground);
 }
 .screen-nav-chat-mode-button {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.6rem;
+  gap: 7px;
+  height: 30px;
+  padding: 0 16px;
   border: none;
-  background: var(--surface);
+  border-radius: 8px;
+  background: transparent;
   color: var(--ink-quiet);
   font: inherit;
-  font-size: var(--font-secondary);
-  line-height: 1.4;
+  font-size: var(--font-subheading);
   white-space: nowrap;
   cursor: pointer;
 }
 .screen-nav-chat-mode-button:hover {
   color: var(--ink);
 }
-/* いまの側は地を --accent、字を --ground にして太さも変える（色だけにしない。13.1 原則1）。 */
+/* いまの側は地を --accent、字を --ground にして太さも変える（色だけにしない。13.1 原則1）。
+   **字に `--ground` を使うのは `dispatch-send`（送信ボタン）と同じ組み合わせ**——地の色は
+   使う人が差すもので、パックの `accent` は歯車で変わっても淡い色に寄るぶん、暗い `--ground` の
+   字なら濃さが保たれる。 */
 .screen-nav-chat-mode-button[aria-pressed="true"] {
   background: var(--accent);
   color: var(--ground);
-  font-weight: 600;
+  font-weight: 700;
 }
 /* ターン進行中は押せない。`disabled` にはせず `aria-disabled` で伝える
    （13.9「動き方の操作子」。`disabled` だとフォーカスも理由の title も届かなくなる）。 */
@@ -140,30 +149,48 @@
   position: relative;
   display: flex;
   flex: 1 1 auto;
+  justify-content: center;
   min-width: 0;
 }
-/* **幅は帯の空きをつねに埋める**（`width: 100%`。`max-width` だけだと中身の幅になり、要約
-   （コマンドなど）が変わるたびに札そのものが伸び縮みしてチカチカする。要約が無い状態
-   （依頼待ちなど）でも幅は保つ。`box-sizing: border-box` は padding・border のぶんが `.screen-nav-work`
-   からはみ出さないため（既定の content-box のままだと `width: 100%` で約24px あふれる）。 */
+/* **幅は帯の空きをつねに埋めつつ、最大 600px で頭打ちにする**（見本の値）。`width: 100%` は
+   残り幅より広い帯でも中身の幅にならず、要約（コマンドなど）が変わるたびに札そのものが
+   伸び縮みしてチカチカしないため。600px を超える空きは `.screen-nav-work` の
+   `justify-content: center` が中央へ寄せる。要約が無い状態（依頼待ちなど）でも幅は保つ。
+   `box-sizing: border-box` は padding・border のぶんが `.screen-nav-work` からはみ出さないため
+   （既定の content-box のままだと `width: 100%` で約24px あふれる）。 */
 .screen-nav-work-toggle {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 10px;
   box-sizing: border-box;
   width: 100%;
-  padding: 0.2rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--surface);
+  max-width: 600px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 35%);
+  border-radius: 17px;
+  background: var(--surface-accent);
   color: var(--ink-quiet);
   font: inherit;
   font-size: var(--font-secondary);
-  line-height: 1.4;
+  /* `<button>` の既定の中央揃えを外す。残すと、幅を揃えた状態の語と残り幅いっぱいに伸びた
+     要約の字がそれぞれの箱の中央に寄り、仕切りから離れて浮く。 */
+  text-align: left;
   cursor: pointer;
 }
+/* 丸は 7px。周りの薄い輪は `currentColor` を20%だけ透かして重ねるだけなので、マークの色が
+   状態ごとに変わればそのまま輪の色も追従する（下の `data-work-state` の色分け）。答え待ち・
+   止まった・依頼待ちも含めて同じ作りで出す——輪は色分けの上に足す飾りであって新しい意味を
+   運ばないので、状態によって出したり消したりする理由が無い（13.1 原則5）。 */
 .screen-nav-work-mark {
+  display: inline-flex;
   flex: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  line-height: 1;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
 }
 /* **いちばん長い状態語「止まっている」（6字）に幅を合わせる**——状態が変わるたびに区切り
    （|）と要約の始まりの位置がずれるのを抑える。雑談中の呼びかけ（「<名前> とおしゃべり中」）は
@@ -175,11 +202,18 @@
   font-weight: 700;
   white-space: nowrap;
 }
+/* 縦の仕切り（見本の値: 高さ14px・幅1px）。字の「|」では幅が1pxに揃わないので、中身の無い
+   要素の地で描く（飾りなので読み上げない。`aria-hidden`）。 */
 .screen-nav-work-sep {
   flex: none;
-  color: var(--rule);
+  width: 1px;
+  height: 14px;
+  background: color-mix(in srgb, var(--rule), var(--accent) 25%);
 }
-/* 実行中の手順の要約だけを縮める（**要約の末尾が「…」になる**。13.9「帯の要素」）。 */
+/* 実行中の手順の要約だけを縮める（**要約の末尾が「…」になる**。13.9「帯の要素」）。
+   見本は12pxの等幅だが、13.3 の段は13pxの等幅（ID・ツール名・キー）までしか無い——段を
+   増やさない決定（13.3）に沿って新しい段は足さず、既存の13px（`.screen-nav-work-toggle` の
+   `font-size` を継ぐ）にそのまま宛てる。14pxの見本を13pxへ寄せた `dispatch-send` と同じ判断。 */
 .screen-nav-work-summary {
   flex: 1 1 auto;
   min-width: 0;
@@ -338,31 +372,17 @@
   margin-left: auto;
   min-width: 0;
 }
-/* 部品は `components/select.tsx` の素の `<select>` のまま。見た目だけ帯に合わせる（13.9）。
-   **幅は選んでいる値の字の幅**（`field-sizing: content`）にし、下向きの矢印を字のすぐ右に置く
-   （既定の `<select>` はいちばん長い選択肢の幅になり、「Opus」と矢印の間が空く）。矢印は包みの
-   `::after` に `currentColor` で描く——字と同じ色で、「全部許す」のときは矢印も `--state-ng` になる。 */
+/* 見た目だけ帯に合わせる（13.9）。**枠と矢印は部品が持つ**（`components/select.module.css`）ので、
+   ここは置き方と字の色だけ。字と矢印は同じ色で、「全部許す」のときは矢印も `--state-ng` になる
+   （矢印は `currentColor` で描かれる）。 */
 .screen-nav-select {
-  position: relative;
-  display: flex;
   flex: none;
-  align-items: center;
   color: var(--ink);
 }
-.screen-nav-select::after {
-  position: absolute;
-  right: 10px;
-  width: 12px;
-  height: 12px;
-  background: currentColor;
-  content: "";
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
-    center / contain no-repeat;
-  pointer-events: none;
-}
+/* **幅は選んでいる値の字の幅**（`field-sizing: content`）にする（既定の `<select>` はいちばん
+   長い選択肢の幅になり、「Opus」と矢印の間が空く）。右の余白は矢印ぶん。 */
 .screen-nav-model-select,
 .screen-nav-permission-mode-select {
-  appearance: none;
   field-sizing: content;
   box-sizing: border-box;
   height: 32px;
@@ -467,21 +487,23 @@
   gap: 1rem;
   min-height: 1.9rem;
 }
-/* 既定の `<select>`（新しいセッションの既定）。**帯のドロップダウンと同じ見た目**にして、
-   同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。 */
+/* 設定パネルの `<select>`（新しいセッションの既定・演出の速さ）。**帯のドロップダウンと同じ
+   見た目**にして、同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。字が一段
+   小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `components/select.module.css`）。 */
+.screen-nav-settings-select-frame {
+  --select-chevron-inset: 0.3rem;
+  --select-chevron-size: 10px;
+  flex: none;
+  color: var(--ink-quiet);
+}
 .screen-nav-settings-select {
-  appearance: none;
   padding: 0.15rem 1.1rem 0.15rem 0.3rem;
   border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  background: var(--surface)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E")
-    no-repeat right 0.3rem center;
-  background-size: 0.5rem;
-  color: var(--ink-quiet);
+  background: var(--surface);
+  color: inherit;
   font: inherit;
   font-size: var(--font-label);
-  cursor: pointer;
 }
 .screen-nav-settings-reset {
   margin-left: auto;

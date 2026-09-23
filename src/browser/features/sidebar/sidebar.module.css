@@ -21,6 +21,14 @@
   gap: 0.5rem;
   min-width: 0;
 }
+/* 帯の <select> を包む枠（キャラクター／セッションで共有。枠と矢印そのものは
+   `components/select.module.css`）。**この行の残り幅をすべて取る** — 顔のぶんを除いた右端までが
+   <select> の幅になり、矢印はその右端に付く。 */
+.session-info-select-frame {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+}
 /* 帯の <select>（キャラクター／セッションで同じ見た目。セッション側は
    session-switch.module.css）。見本は高さ 34px・角 8px・内側 8px で、**サイドバーの他の
    <select> より大きい** — 帯は下端に1段だけ残る操作なので、押す的を小さくしない。 */
@@ -28,7 +36,8 @@
   flex: 1 1 auto;
   min-width: 0;
   height: 2.125rem;
-  padding: 0 0.5rem;
+  padding: 0 1.75rem 0 0.5rem;
+  text-overflow: ellipsis;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--surface);

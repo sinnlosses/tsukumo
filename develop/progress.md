@@ -87,6 +87,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `MAX_MAIN_VIEW_TURNS` を 5 の直書きから `MAX_SESSION_STATE_TURNS.work`（20）の導出に変え、「メインビューの窓 ≤ 記録の窓」という関係を2つの定数の間ではなく1本の式で保つようにした。`docs/requirements.md` 4.7 と `docs/design.md` の「直近5件」も20件に直した。
 
+### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
+
+`command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
+
+### 2026-09-23 帯のトグルといまの作業の札を見本の値に揃えた（T-419）
+
+トグルは `--ground` の外枠に 36px のボタン、札は最大 600px・34px で丸の輪と 1px の仕切りを付け、`<button>` の中央揃えを外して要約を仕切りのすぐ右から出した。要約は段を増やさず 13px の等幅のまま。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の

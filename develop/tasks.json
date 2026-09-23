@@ -5,7 +5,7 @@
     "loopable": "Y",
     "dependencies": ["T-381", "T-382", "T-389"],
     "summary": "雑談中のサイドバーの形を決め、プロフィールの札とセッションの選択を出す",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": "",
     "task": "## 背景\n\n**雑談中もサイドバーが仕事のまま**になっている。`src/browser/main.tsx` の `<Root>` は `chatMode` を見てメインビューを `<ChatView>` に差し替え、キャラビューを畳む（`collapseCharacter`）が、`sidebar={<Sidebar />}` は分岐していない。ヘッダーの作り直し（T-381 / T-382。`docs/design.md` 13.9）で、モードの切り替えは帯のトグルへ、「いま何をしているか」は帯のピルへ移り、サイドバーはタスク一覧と、キャラクター・セッションの選択（T-389 が顔つきで横に並べる）の2つになる。\n\nユーザーが雑談中のサイドバーのモック `docs/history/mockup/chat-sidebar-2026-09-23.png` を示した（2026-09-23。「プロフィールと好きなものとか出せたらいいな」）。上から:\n\n1. **プロフィールの札**: 顔（パックの `face`。13.9「顔」）・キャラクターの名前・ひとことプロフィール・右端に「変える ⌄」（キャラクターの切り替え）\n2. **最近の話題**: 直近3件の見出し（中身は T-390）\n3. **覚えていること** と右端の「編集」: チップの並び（中身は T-391）\n4. **セッション**: いまの `<select>`（`session-switch.tsx`）\n\n辛口レビューの指摘（2026-09-22、ユーザーが「刺さる」として採った）: 「雑談していても画面の一部が仕事の話を続けている」。\n\n## 決まっていること（蒸し返さない）\n\n- 雑談中はタスク一覧を出さず、モックの4段に差し替える。仕事へ戻ると元に戻る\n- キャラクターの切り替えはプロフィールの札の「変える」に入る（挙動は今の `<select>` と同じ。選ぶと起こし直す・ターン中は断る）\n- **ひとことプロフィールはパックの定義ファイル（`character.json`）に新しい欄として持つ**（キャラクターの中身をコードに書かない。`CLAUDE.md` 原則4）。無いパックは名前だけ\n- 最近の話題は雑談の要約に書かせる話題の見出しから出す（T-390）。覚えていることは `persona.md` の `## 覚えたこと` の1行ずつをチップにし、「編集」では1行ずつ消せるだけ（T-391）\n- このタスクは器とプロフィールの札・セッションまで。2段目と3段目は見出しと空のときの案内だけ置き、中身は T-390 / T-391 が入れる\n\n## 解くべき論点\n\n- 雑談のサイドバーを誰が組むか（`<Root>` が別の部品を渡すか、`<Sidebar>` が `chatMode` を見るか）と、どの機能に置くか（`features/sidebar/` の中か、雑談の側か）\n- 「変える ⌄」の部品（今の `<Select>` を札に収めるか、ボタン + 選択肢か）\n- 狭い画面（760px 以下）での4段の高さの配分（どこがスクロールするか）\n\n## やること\n\n1. `docs/design.md` 13.7 / 13.9 と 6.1「部品の木」を読み、上の論点を決めて 13.7 に書く（雑談のときのサイドバーの段・誰が組むか・採らなかった案）\n2. `character.json` にひとことプロフィールの欄を足す（`src/shared/character-definition.ts` の検証・`characters/README.md`・同梱パックの `characters/tsukumo` と `characters/tsukumo-spirit`）\n3. 雑談中のサイドバーを作る（プロフィールの札・最近の話題と覚えていることの枠・セッション）\n4. `docs/requirements.md` 4.9「雑談モードで変わるもの」の表にサイドバーの行を足す\n5. テスト: 雑談中はタスク一覧が出ずプロフィールの札が出る / 仕事では今までどおり / ひとことプロフィールが無いパックは名前だけ / 「変える」で切り替えのコマンドが送られる\n\n## 完了条件\n\n- 上のテストがある\n- `docs/requirements.md` 4.9 の表にサイドバーの行がある\n- `bun run check` が通る\n- 目視（1400x900 と 390 幅）: 雑談に入るとモックの4段になり、仕事へ戻すとタスク一覧に戻る。「変える」からキャラクターを替えると札の顔と名前が変わる。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 雑談⇄仕事の切り替えはセッションの起こし直し（`docs/requirements.md` 4.9）。画面が初期化されるのは既定の挙動\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n"
@@ -22,24 +22,13 @@
     "evidence": ""
   },
   {
-    "id": "T-374",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "プラン名を accountInfo() から取り、トークン消費の画面に出す",
-    "task": "## 背景\n\nAgent SDK（`@anthropic-ai/claude-agent-sdk` 0.3.280）の `Query` には `accountInfo(): Promise<AccountInfo>` がある。\n`AccountInfo` は `email` / `organization` / `subscriptionType` / `tokenSource` / `apiKeySource` / `apiProvider`\nを持ち、どれも省略されうる（`sdk.d.ts` の `AccountInfo`。API キーや Bedrock のときは `subscriptionType` が無い）。\n\ntsukumo はいまこれを呼んでいない。起動直後に SDK へ問い合わせて結果をイベントにする前例は\n`src/server/adapter/sdk-driver.ts` の `relayCommandDescriptions`（`supportedCommands()` を1回呼んで\n`command-descriptions` イベントを流す。取れなくてもセッションは続ける）。\n\n## 決まっていること（蒸し返さない）\n\n- 出すのは**プラン名だけ**。5時間・7日の枠の使用率（`rate_limit_event` / `usage_EXPERIMENTAL_...`）は出さない（2026-09-23 ユーザー）\n\n## 出す場所（2026-09-23 ユーザー）\n\n- **ページの題「トークン消費」の右に小さな札で出す**（例:「Max」）。トークン消費の画面の形はモック `docs/history/mockup/token-usage-2026-09-23.png` で、そこにプラン名は無いが、ページ全体に掛かる情報なので題の横に置く\n\n## 解くべき論点\n\n- プラン名を画面まで運ぶ経路。`relayCommandDescriptions` と同じく駆動が起動直後に1回取りに行き、\n  イベント → `SessionState` → 画面、の形が第一候補。トークン消費の画面が `SessionState` を読めるか\n  （`docs/design.md` 2章の region の規則）を確かめてから決める\n- `subscriptionType` の値（`\"max\"` / `\"pro\"` など）をそのまま出すか、表示名に直すか。値の一覧は SDK に\n  無いので、**知らない値はそのまま出す**形にする\n\n## やること\n\n1. `sdk-driver.ts` で `accountInfo()` を1回呼び、`subscriptionType` だけを取り出してイベントにする\n   （`src/shared/session-event.ts` に種類を1つ足す）。**`email` と `organization` は駆動の外へ出さない**\n2. `src/server/adapter/fake-driver.ts` にも同じイベントを流させる（疑似セッションで画面を確かめるため）\n3. 状態に畳み、トークン消費の画面の上部に出す。**取れなかったとき（値が無い・呼び出しが落ちた）は\n   何も出さない**\n4. テストを足す（イベントの畳み込み・画面に出る/出ない）\n5. `bun run build` のあと本物で起こし、トークン消費の画面にプラン名が出ることを目視で確かめる\n\n## 完了条件\n\n- `bun run check` が通る\n- `grep -rn \"email\\|organization\" src/shared/` に `AccountInfo` 由来のものが無い\n- 本物のセッションでプラン名が出たことを、端末と見えた値とともに `evidence` に書く\n\n## 注意\n\n- `SessionDriver`（`src/server/core/session-driver.ts`）に口を足すなら sdk / fake の両方を直す\n- `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET` は使わない（SDK が不安定と明言している）\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
-  },
-  {
     "id": "T-375",
     "difficulty": "opus",
     "loopable": "Y",
     "dependencies": [],
     "summary": "いまのセッションの /context 内訳をトークン消費の画面にグラフで出す",
     "task": "## 背景\n\nClaude Code の `/context` は文脈の使い方を分類ごと（System prompt / System tools / MCP tools /\nMemory files / Skills / Messages / Free space / Autocompact buffer など）に出す。Agent SDK\n（0.3.280）の `Query.getContextUsage(opts?: { detail?: 'summary' | 'full' })` が同じ中身を\n`SDKControlGetContextUsageResponse` で返す（`sdk.d.ts` の `SDKContextUsage` / `SDKContextUsageCategory`）。\n\n- `categories[]` は `name` / `tokens` / `kind`（`'used' | 'free' | 'buffer' | 'deferred'`）。**分類には `kind` を使い、`name`（英語の表示名）で判定しない**と SDK の型の説明にある\n- ほかに `mcp_tools[]`（name / server_name / tokens）、`memory_files[]`（path / type / tokens）、`agents[]`、`skills[]`（省略されうる）、`total_tokens` / `raw_max_tokens` / `percentage` / `model`\n- `detail: 'full'` は分類ごとに token-count API を呼ぶ。`'summary'` は直前の応答の usage と手元の見積もりで答える（既定は `'full'`）\n\ntsukumo はいまこれを呼んでいない。トークン消費の画面（`src/browser/features/token-usage/`）は記録の\n集計（`GET /token-usage`、`src/server/adapter/server.ts`）だけを出している。SDK へ問い合わせる口は\n`SessionDriver`（`src/server/core/session-driver.ts`）にあり、実装は `src/server/adapter/sdk-driver.ts`\nと `src/server/adapter/fake-driver.ts` の2つ。\n\n## 決まっていること（蒸し返さない）\n\n- 画面に出すのは**いまのセッションの内訳**。過去の推移は出さない（2026-09-23 ユーザー）\n- 記録（セッションごとに1回）は後ろのタスク T-376 がやる。このタスクでは記録に書かない\n\n## モックの形（2026-09-23 にユーザーが示した。`docs/history/mockup/token-usage-2026-09-23.png` の「いまのコンテキスト」）\n\n- 画面のいちばん上に、枠のある札を1枚置く。見出し「いまのコンテキスト」の横に小さく「このセッション · /context と同じ内容」\n- 大きな数で「121.5k」、続けて小さく「/ 200k」と「61%」（使っている量 / 窓の大きさ / 割合）\n- 右上に「自動圧縮まで あと 33.5k」の小さな札、その下に等幅で「Opus · 更新 [14:32]」（内訳のモデルと、取った時刻）\n- 横棒1本: `used` の分類を色分けして積み、続けて空き（地より一段明るい無地）、最後に自動圧縮バッファ（斜線）\n- 凡例は3列の格子で、各行に色の四角・分類名（日本語: システムプロンプト / システムツール / MCP ツール / メモリファイル / スキル / メッセージ / 空き / 自動圧縮バッファ）・トークン数・割合。空きと自動圧縮バッファの四角は横棒と同じ無地と斜線\n- 札の下端に畳んだ「▶ MCP ツール・メモリファイル・スキルの内訳を見る」（`details`。開くと表）\n- モックの「[サンプル値]」は見本の注記で、作るものではない\n- 分類名は SDK の `name`（英語の表示名）を日本語に置き換えて出すが、**判定には `kind` を使う**。知らない `name` は英語のまま出す\n- 色は分類ごとに違う色を使う。凡例に分類名が必ず並ぶので、`docs/design.md` 13.1 原則5（色は文字と対でだけ増やす）に当たる\n\n上の形は「解くべき論点」のグラフの形の問いへの答えを兼ねる（`deferred` を横棒に入れないのは変わらない）。\n\n## 解くべき論点\n\n- 画面へ運ぶ経路。(a) `/token-usage` と同じ HTTP の経路を1本足し、開いたときに取りに行く、(b) WebSocket のコマンドとフレームで頼んで受け取る。どちらも起動トークンが要る\n- `detail` を `'full'` にするか `'summary'` にするか。画面を開くたびに呼ぶなら呼び出しの回数と待ち時間で決める。**実際に両方で呼んで、かかった時間と値の差を `evidence` に書く**\n- ターンの実行中に呼んで答えが返るか、待たされるか。実測して、待たされるなら実行中は前回の値を出す・出さないを決める\n- セッションがまだ起きていない（`init` 前）ときの見せ方\n- グラフの形。`kind` が `used` の分類を積み上げ、`free` と `buffer` を並べた横棒1本が第一候補（`/context` の見た目に近い）。`deferred` は窓の外なので別に出す。`memory_files` / `skills` / `mcp_tools` は表にする\n\n## やること\n\n1. `src/shared/` に内訳の形を置く（SDK の型をそのまま運ばず、画面が要る数と名前だけに写す。検証は境界で zod）\n2. `SessionDriver` に内訳を取る口を足し、sdk / fake の両方で実装する。取れなかったら例外を投げず「無い」を返す\n3. 選んだ経路で画面まで運び、トークン消費の画面にグラフと表を足す\n4. テストを足す（境界の写し・経路・画面の部品）\n5. `bun run build` のあと本物で起こし、`/context` を別に打った値と画面の値が近いことを目視で確かめる\n\n## 完了条件\n\n- `bun run check` が通る\n- 本物のセッションで、画面の内訳と `/context` の出力を並べて比べた結果（分類ごとの値）を `evidence` に書く\n- 上の論点それぞれに何を選んだかを `evidence` に1行ずつ書く\n\n## 注意\n\n- 内訳に入る文字列はメモリファイルのパス・スキル名・MCP ツール名・エージェント名で、会話の文面は入らない。**Messages の中身は数だけで、文面を取りに行かない**（`docs/coding-standards.md`「会話内容の扱い」）\n- T-373 / T-374 と同じ画面のファイルを触る。並行して進めたときは合流で `presentational-token-usage-screen.tsx` がぶつかりうる\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
@@ -88,17 +77,6 @@
     "evidence": ""
   },
   {
-    "id": "T-400",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-398", "T-399"],
-    "summary": "メインビューで遡れるやり取りの件数（MAX_MAIN_VIEW_TURNS）を5件から広げる",
-    "task": "## 背景\n\nメインビューで遡れるやり取りは `src/shared/main-view.ts` の `MAX_MAIN_VIEW_TURNS`（5）で絞られている（`mainViewTurns` が `groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)`）。5件なのは横並びのタブの幅に収めるためだったが、T-398 / T-399 で札の頭（前後ボタン・一覧）に置き換えたので、その制約が無くなった。2026-09-23 にユーザーが「上限を広げる」を選んだ（モックの札も「7 / 7」）。\n\nブラウザが持つ記録そのものの窓は `src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS`（仕事 20・雑談 100）で、**仕事のメインビューはこれを超えて遡れない**。\n\n## 決まっていること（蒸し返さない）\n\n- 5件から広げる。上限は `MAX_SESSION_STATE_TURNS.work`（20）を超えない\n\n## やること\n\n1. 件数を決める。20 にそろえるなら、2つの定数の関係（メインビューの窓 ≤ 記録の窓）をどこで表すかも決める（片方からもう片方を導く、または型・テストで守る）。**`MAX_SESSION_STATE_TURNS` 側の中身を合わせて増やすことはしない**（常駐プロセスの記録の上限なので、別の判断）\n2. `MAX_MAIN_VIEW_TURNS` を直す。これに触れているコメント（`src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS` の説明、`src/browser/stores/turn-selection.tsx`、`src/browser/features/main-view/` の冒頭コメント）を直す\n3. `test/shared/main-view.test.ts` と `test/shared/turn-speech.test.ts` は定数から件数を作っているので、定数を変えても通るかを見る（通らなければ直す）\n4. `docs/requirements.md`（`grep -n 'MAX_MAIN_VIEW_TURNS\\|直近5件' docs/requirements.md docs/design.md docs/research/configuration-and-state.md`）の件数の記述を直す\n\n## 完了条件\n\n- `grep -rn '直近5件' src docs --exclude-dir=history` が0件\n- `bun run check` が通る\n- 目視（1400x900）: 疑似セッションでやり取りを6件以上流し、札の「n / N」の N が6以上になり、一覧からいちばん古いものへ飛べる。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "MAX_MAIN_VIEW_TURNS を MAX_SESSION_STATE_TURNS.work（20）からの導出に変えた（値を2箇所に書かず「メインビューの窓 ≤ 記録の窓」を等号で保つ）。grep -rn '直近5件' src docs --exclude-dir=history は0件。bun run check は 1522 pass / 0 fail（126ファイル）。目視（1400x900、TSUKUMO_VIEW_PORT=39400・TSUKUMO_HOME を分離、fake driver の turn-history）: 札の頭が「1 / 7」になり、⌄ の一覧から最古のターンへ飛べて ‹ が無効化された。"
-  },
-  {
     "id": "T-401",
     "difficulty": "opus",
     "loopable": "Y",
@@ -132,24 +110,13 @@
     "evidence": ""
   },
   {
-    "id": "T-407",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-398"],
-    "summary": "答え待ちの質問をメインビューの札へ移し、自由入力は入力欄で答える",
-    "task": "## 背景\n\n答え待ちの質問（`AskUserQuestion`）はいま、入力欄の上の箱で答える: `src/browser/features/dispatch/presentational-question-ask.tsx`・`components/question-card.tsx`・自由入力の欄 `components/free-text-option.tsx`（ロジックは `hooks/use-question-ask.ts`）。メインビューには `preview` があるときだけ比べる面（`src/browser/features/main-view/pending-question.tsx` の `PendingQuestion`。タブより上）が出る。\n\n2026-09-23 にユーザーがモック `docs/history/mockup/question-2026-09-23.png` を示した（**キャラビューは変えない**）:\n\n- **メインビュー**（いまのターンのレポートの下）に質問の札を出す。枠と地は `--state-warn` の系統。頭に「質問」のチップと `header`、右端に「1 / 1」（何問目か）\n- 本文は質問の `text`。その下に選択肢を**横に並べたカード**（丸い選択の印・太字のラベル・説明）。選んだカードは枠が `--state-warn` になる。**ラベル末尾の `(Recommended)` は「おすすめ」のバッジにして字からは外す**（SDK へ返す答えは元のラベルのまま）\n- 札の下端に、左「選択肢にない答えは、下の入力欄に書いて送れます」、右に「これで答える」ボタン\n- **入力欄の側**: 上に帯「↑ <キャラクター名> が質問しています。上の選択肢から選ぶか、ここに書いて答えてください」、プレースホルダ「選択肢以外の答えを書く…」、送るボタンの字が「答える ⌘⏎」、枠も `--state-warn`。**自由入力は入力欄が担い、札の中の自由入力の欄は無くなる**\n\n`browser/` の領域の機能どうしは import できない（`docs/design.md` 2章、`test/architecture.test.ts`）。いまの質問のロジックは `dispatch` にあり、札は `main-view` に出るので、置き場所を決め直す必要がある。\n\n## 決まっていること（蒸し返さない）\n\n- `preview` は**札の中、説明の下**に出す。比べる面（`pending-question.tsx`）は無くす\n- **今回は質問だけ。** 許可要求は入力欄の上の箱のまま\n- 変えないこと: 選択肢の並び（`sortQuestionOptions` の辞書順、自由入力は末尾）、答えの形（`QuestionAnswer`）、複数選択はチェックボックス、複数の質問は「戻る」と進むボタンで1問ずつ\n- モックの中の「[この選択肢の説明]」「T-[番号]」「[未着手のタスク]」は見本の穴埋めで、作るものではない\n- 帯の「答え待ち」の札の直しは T-408 がやる\n\n## 解くべき論点\n\n1. 質問のロジック（選んでいる選択肢・何問目か・送る）の置き場所。札（`main-view`）と入力欄（`dispatch`）の両方が触るので、`browser/stores/` に上げるか、1つの機能に寄せてもう片方には値だけ渡すか（`docs/design.md` 2章と 6.2 の状態の置き場所の表）\n2. 入力欄に書いて送った字を、いまの質問の自由入力の答えとしてどう組むか（複数の質問のときは、いま見ている1問の答えにするか）\n3. 札を置く位置。T-398 で札の頭（前後ボタンとタイトル）がレポートの上に来るので、質問の札は**いまのやり取りのレポートの下**。過去のやり取りを見ているときに質問が来たら、どう知らせるか\n4. 選択肢のカードが横に並びきらない幅（狭い画面・選択肢が4つ）のときの折り返し\n\n## やること\n\n1. 論点1〜4を決める\n2. 質問の札をメインビューに作り、入力欄の上の箱から質問を外す。`pending-question.tsx` と `free-text-option.tsx` を消す\n3. 入力欄の側（帯・プレースホルダ・送るボタンの字・枠の色）を答え待ちのときだけ切り替える\n4. テストを直す・足す（`test/browser/features/main-view/` と `test/browser/features/dispatch/`）: 札に header・text・選択肢・おすすめのバッジが出る / 選んで「これで答える」で元のラベルのまま答えが送られる / 入力欄に書いて送ると自由入力の答えになる / preview が説明の下に出る / 複数の質問を1問ずつ進める / 許可要求は入力欄の上の箱のまま\n5. `docs/design.md`（6.1 の図・6.2 の表の「質問の選択」の行・13章の該当箇所）と `docs/requirements.md` 4.2 の質問の記述を直す\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900 と 760px 以下）: 疑似セッションで質問を出し、札の見た目がモックに沿うこと・選択肢で答えられること・入力欄に書いて答えられること・preview つきの質問が札の中に出ること。開いた状態で横スクロールが出ないこと。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n- T-398 がメインビューの並びを変えるので、その後に着手する\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 通過（1497 pass / 0 fail / 3038 expect、124ファイル）。質問の札を src/browser/features/main-view/question-ask.tsx に新設し、答えの組み立てを src/browser/stores/question-answer.tsx へ上げ、dispatch の質問の箱一式（question-ask / presentational-question-ask / question-card / free-text-option / use-question-ask）と main-view/pending-question.tsx・stores/question-focus.tsx を削除（32ファイル、+447 / -1895）。目視（TSUKUMO_VIEW_PORT=7907 / TSUKUMO_HOME=~/.tsukumo-t407、場面 question-pair / question-multi / question-preview）: 1400x900 で札が選択肢3列・選んだカードの枠が --state-warn・「おすすめ」バッジ・preview が説明の下・入力欄の帯と「答える ⌘⏎」、選択肢と入力欄の両方から答えて記録に元のラベルで残ることを確認。390x844 は1列に折り返し、720x900 は2列。どちらも scrollWidth == clientWidth で横スクロールなし。"
-  },
-  {
     "id": "T-408",
     "difficulty": "sonnet",
     "loopable": "Y",
     "dependencies": ["T-403", "T-407"],
     "summary": "答え待ちのとき、帯の札に質問の要約を出し、一覧から質問の札へ飛べるようにする",
     "task": "## 背景\n\n帯の「いまの作業」の札（`src/browser/features/screen-nav/components/screen-nav-current-work.tsx`、ロジックは `hooks/use-current-work.ts`）は、答え待ち（`state.pending` が空でない）のとき語が「答え待ち」になり、押すと手順の一覧が開いて見出しに「。入力欄の上で答えられる」（`pendingHint`）が添わる（`docs/design.md` 13.9）。T-407 で質問はメインビューの札で答えるようになるので、この案内が古くなる。\n\nモック `docs/history/mockup/question-2026-09-23.png` では、帯の札が「答え待ち | <質問の要約> — クリックで質問へ」になっている。\n\n## 決まっていること（蒸し返さない）\n\n- **押したときは今までどおり手順の一覧を開く**（13.9 の設計を保つ。2026-09-23 ユーザー）。一覧の中に「質問へ」の口を置き、押すとメインビューの質問の札までスクロールして一覧を閉じる\n- 答え待ちのとき、札の要約の位置に質問の要約を出す（語は「答え待ち」のまま）\n- 札の外形は T-403 の固定長のまま動かさない\n\n## 解くべき論点\n\n- 要約に質問の `header` を使うか、`text` を切り詰めるか（`header` は短いが省略されうるか、SDK の型で確かめる）\n- 複数の質問があるときの要約（1問目だけか、「ほか n 問」を添えるか）\n- 札の要約（実行中の手順）と質問の要約のどちらを出すか。答え待ちの間は質問を優先する案が第一候補\n- メインビューの札へのスクロールの仕方（`browser/` の機能どうしは import できないので、`location.hash` か `browser/stores/` を経由する。過去のやり取りを見ているなら最新へ戻してから飛ぶ）\n\n## やること\n\n1. 論点を決め、`use-current-work.ts` と札・一覧を直す。`pendingHint` の「入力欄の上で答えられる」を直す\n2. テストを直す・足す（`test/browser/features/screen-nav/`）: 答え待ちで要約が質問のものになる / 一覧に「質問へ」があり、押すと質問の札へ移る / 答え終わると元に戻る\n3. `docs/design.md` 13.9「いまの作業」の表と記述を直す\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900）: 疑似セッションで質問を出し、帯の札に質問の要約が出ること、一覧の「質問へ」で質問の札まで移ること。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
@@ -198,28 +165,6 @@
     "evidence": ""
   },
   {
-    "id": "T-415",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "入力欄の画像の札で、外す × が絵の右上の角に来るようにする",
-    "task": "## 背景\n\n入力欄に画像を添えると `<textarea>` の上に札が並ぶ（`src/browser/components/prompt-image.tsx` の `PromptImageChips`）。札の右上に外す `×`（`.prompt-image-remove`）を重ねているが、画面のスクリーンショットで**絵の右端からだいぶ内側に寄って見える**と報告された（2026-09-23）。\n\n`src/browser/components/prompt-image.module.css` では `×` を `position: absolute; top: 0.15rem; right: 0.15rem` で置き、基準は札の `<li>`（`.prompt-image-chip`、`position: relative; flex: 0 0 auto; line-height: 0`）。絵（`.prompt-image`）は `height: 4rem; width: auto; max-width: 100%; object-fit: contain`。**原因は調べていない。** `<li>` の箱が絵より広くなっている（`×` は `<li>` の右端に付くので、絵の右端より内側に見える）か、`object-fit: contain` で `<img>` の箱の中に余白ができているかの、どちらかが候補。\n\n## 解くべき論点\n\n- ずれの原因がどちらか（`<li>` と `<img>` の `getBoundingClientRect()` の幅と、`<img>` の `naturalWidth / naturalHeight` から描かれる絵の幅を比べれば分かる）\n- 横長の絵と縦長の絵で、どちらも角に来るか\n\n## やること\n\n1. 横長・縦長の画像を添えた状態を作り、札の `<li>`・`<img>`・`×` の位置を測って原因を特定する（`docs/architecture.md`「手で確かめること」の手順）\n2. 原因に合わせて CSS を直す。`×` が絵の外へはみ出さない（はみ出すと入力欄の領域がスクロールする。CSS の既存コメント）ことは保つ\n3. `prompt-image.module.css` のコメントが直した後の形と合っているかを見る\n\n## 完了条件\n\n- 横長・縦長の2種類の画像で、`×` の右端と絵の右端の差、`×` の上端と絵の上端の差が、どちらも `0.15rem` 相当（± 1px）に収まっている（測った値を `evidence` に書く）\n- 狭い画面（390x844）で入力欄の領域が横にスクロールしない\n- `bun run check` が通る\n\n## 注意\n\n- 描画の変更なので、目視（実ブラウザで測った値）を `evidence` に含める\n- 札を押して拡大する機能は T-416 の担当。ここでは `×` の位置だけを直す\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "実測(fake driver+headless Chrome): 800x300/300x800 で × と絵の右端・上端の差がどちらも 2.39px(0.15rem±1px)、li/img の箱の差 0px。1400x100 は修正前 × ごと画面外、修正後 645px に収まり角に見える。 / 390x844 で入力欄の scrollWidth=clientWidth=332(横スクロール無し) / bun run check: 1530 pass 0 fail(126 files)。Orca の実タブでの目視はしていない"
-  },
-  {
-    "id": "T-416",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-415"],
-    "summary": "入力欄の画像の札にホバーで虫眼鏡を出し、押すと原寸を拡大の面で見られるようにする",
-    "task": "## 背景\n\n入力欄の札（`src/browser/components/prompt-image.tsx` の `PromptImageChips`）はいま押せず、押せるのは `×` だけ。札が受け取る `PromptImage`（`src/shared/prompt-image.ts`）は控え（`thumbnail`）と原寸（`full`）を両方持っていて、**原寸は送るまでブラウザのメモリに既にある**（`src/browser/features/dispatch/hooks/use-composer.ts` が送信時に `setImages([])` で捨てているだけ）。なので入力欄の札の拡大には、サーバ側の仕組みも記録の形の変更も要らない。\n\n`<dialog>` の開閉には既存のフック `src/browser/hooks/use-modal-dialog.ts`（`useModalDialog`）がある。拡大の面は、あとで T-417 でメインビューと雑談の控えからも開くので、`src/browser/components/` に置く。\n\n`docs/requirements.md` 4.10「画面での見え方」には「**札も控えも押せない。** 拡大して見る面は作らない」とあり、`prompt-image.tsx` 冒頭のコメントにも同じことが書いてある。**このタスクでは札のぶんだけ書き換える**。「会話内容の扱い」の約束（ディスクに書かない、原寸は送った時点で手放す）は、このタスクでは変わらない。\n\n## 決まっていること（蒸し返さない）\n\n- 拡大の面は3段階に分けて作る。この件は1段目の「入力欄の札だけ」で、控えからの拡大（T-417）と 4.10「会話内容の扱い」の書き換え（T-418）は後ろのタスクでやる（2026-09-23 ユーザーの指示）\n- 拡大の面は、原寸の data URL（`PromptImage.full`）をそのまま `<img>` で出す\n\n## 解くべき論点\n\n- 押す場所: `<li>` の中に `<button>` を2つ並べる（絵を包むボタンと `×`）。ボタンの中にボタンを入れない\n- ホバーの無い端末（タッチ）: 虫眼鏡はホバーとフォーカスで出す飾りにし、押せば開くのは虫眼鏡が見えていなくても同じにする\n- 拡大の面の大きさ: 画面より大きい絵は、画面の内側に収めて縮める（面の中で横にスクロールさせない）。閉じ方は Esc・背景を押す・閉じるボタンの3つ\n\n## やること\n\n1. 拡大の面の部品を `src/browser/components/` に作る（`useModalDialog` を使う）\n2. `PromptImageChips` の絵を押せるボタンにし、ホバーとフォーカスで虫眼鏡を重ね、押すとその原寸を拡大の面で開く\n3. `docs/requirements.md` 4.10「画面での見え方」の「札も控えも押せない」の箇条を、「札は押すと原寸を拡大して見られる。控えはまだ押せない」という趣旨に書き換える。`prompt-image.tsx` 冒頭のコメントも同じように直す\n4. 部品のテストを足す（押すと面が開く、`×` を押しても面は開かない、Esc で閉じる）\n\n## 完了条件\n\n- 入力欄の札にホバーすると虫眼鏡が出て、押すと原寸が拡大の面に出る。`×` は今までどおり画像を外すだけ（目視の結果を `evidence` に書く）\n- 狭い画面（390x844）で、面を開いた状態でも横スクロールが出ない（面の中まで測る）\n- `docs/requirements.md` の節の数が編集の前後で変わらない（`grep -c '^#\\{2,3\\} ' docs/requirements.md`）\n- `bun run check` が通る\n\n## 注意\n\n- 描画の変更なので、目視の結果を `evidence` に含める。モーダルを開いた場面も測る\n- `docs/requirements.md` を編集するときは、節の索引の表に当たらないよう行頭から位置を特定する\n- 「会話内容の扱い」の箇条（原寸は送った時点で手放す）はこのタスクでは触らない（T-418 の担当）\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 1529 pass / 0 fail（test/browser/components/prompt-image.test.tsx 新規6件: 開く・×では開かない・Esc・閉じる・背景）。requirements.md の節数 27→27\n目視: fake driver + Playwright(Chrome) 390x844 で札を添え、虫眼鏡の opacity 既定0・hover/focus で1、押すと dialog が open で img src が原寸と一致\n2000x1500 の絵でも面を開いた状態で scrollWidth=clientWidth=390、img 332x249 がビューポート内。閉じるで dialog が DOM から外れる"
-  },
-  {
     "id": "T-417",
     "difficulty": "opus",
     "loopable": "Y",
@@ -242,17 +187,6 @@
     "evidence": ""
   },
   {
-    "id": "T-419",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-384"],
-    "summary": "帯のトグルといまの作業の札を見本の値に揃える",
-    "task": "## 背景\n\nT-384 で帯の骨格と、モデル・許可モードのドロップダウン・歯車を見本（`docs/history/mockup/sidebar-tasks-2026-09-23.html` の `<header>`。絵は `docs/history/mockup/header-2026-09-23.png`。**値を写す参照でありコードとして持ち込まない**）に揃えたあと、帯の中の部品の見た目を揃える（2026-09-23 のユーザーの指示「ヘッダーのデザインを見本に合わせてほしい」の残り）。**モデル・許可モードと歯車は T-384 の追補で済んだ**（2026-09-23 にユーザーが「ヘッダーの高さを少し狭く・設定アイコン・字の明るさ・プルダウン内の字の配置」を直すよう頼み、この2つが T-384 の中で見本に揃った。ユーザーの判断でこのタスクから外した）。ここでは残りの2つ（トグル・いまの作業の札）を揃える。帯の地は 52px（見本の 60px から下げた）なので、36px のトグルが収まるかも見る。\n\nいまの作り（いずれも `src/browser/features/screen-nav/`。CSS は `screen-nav.module.css`）:\n\n- 仕事/雑談のトグル: `components/screen-nav-chat-mode.tsx`（`role=\"group\"` に2つの `<button>`・`aria-pressed`・14px のインライン SVG）。CSS は `.screen-nav-chat-mode*`（角丸 999px の枠・ボタンは padding 0.2rem 0.6rem・13px）\n- いまの作業の札: `components/screen-nav-current-work.tsx`。CSS は `.screen-nav-work*`（T-403 で中身で幅が変わらない固定長にした。状態ごとの見た目は `data-work-state`）\n\n**見本の値**（inline style から。px は写し、色は hex を書かずトークンに宛てる）:\n\n| 部位 | 値 |\n| --- | --- |\n| トグルの外枠 | 帯の地より暗い地・1px の枠・角丸 11px・padding 3px・ボタンの間 2px |\n| トグルのボタン | 高さ 36px・左右 16px・角丸 8px・枠なし・14px・アイコン 15px とテキストの間 7px。押されている側は差し色の地に暗い字・太字、他方は透明の地に薄い字 |\n| いまの作業の札 | 帯の残りの幅の中央に置き、最大 600px・高さ 34px・左右 14px・角丸 17px・差し色寄りの地（`--surface-accent` 相当）と差し色寄りの 1px の枠。中身は 7px の丸（差し色・周りに 3px の薄い輪）→ 間 10px → 状態の語（13px・太字・明るい差し色の字）→ 高さ 14px・幅 1px の縦の仕切り → いまのツールと引数（12px・等幅・1行で「…」） |\n\n## 決まっていること（蒸し返さない）\n\n- 書体は `system-ui` と等幅の2本のまま、字の大きさは `docs/design.md` 13.3 の段に宛てて段を足さない\n- 部品の種類は変えない\n- いまの作業の札は中身で幅が変わらない（T-403 の決定）。状態ごとの見分け（`data-work-state`）と、色だけで伝えない原則（13.1 原則1）は保つ\n- 狭い画面（760px 以下）の「≡」の面にも同じ部品が出る（13.9「狭い画面」）。そちらで崩れないこと\n\n## 解くべき論点\n\n- トグルの押されている側の字の色（見本は差し色の地に暗い字）をどのトークンに宛てるか。歯車から差し色を変えても読める濃さを保つ方法\n- いまの作業の札の要約（見本は 12px の等幅）を 13.3 のどの段に宛てるか（ID・ツール名の 13px 等幅か、12px の段か）\n- 丸の周りの薄い輪を、作業中以外の状態（答え待ち・止まった・依頼待ち）でどう出すか\n\n## やること\n\n1. `docs/design.md` 13.1・13.3・13.9（「動き方の操作子」「いまの作業」「狭い画面（760px 以下）」）を読む\n2. 2つの部品の CSS を上の表の値に揃える\n3. `docs/design.md` 13.9 の該当箇所に、値の羅列ではない決定を足す\n4. 既存のテスト（`test/browser/features/screen-nav/`）が通ることを確かめる。見た目の値そのものはテストしない（`CLAUDE.md`「ブラウザに出た絵は自動テストで守らない」）\n\n## 完了条件\n\n- `bun run check` が通る\n- 目視（1400x900 と 390 幅。DevTools の computed style で測る）: トグルのボタンが高さ 36px で押されている側が差し色の地・太字、いまの作業の札が高さ 34px・最大 600px で帯の残りの中央に出て長い要約は「…」で切れる。答え待ち・止まった状態の札が作業中と見分けられる。390 幅で「≡」の面の中で崩れず横のはみ出し 0px。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 色は hex をそのまま書かない（歯車から地・字の色を変えたときに追従しなくなる）\n- T-408 が後で帯の札に質問の要約を足す。札の中身の並びは変えない\n- T-413 も `src/browser/features/screen-nav/` を触る。先に `main` に入っていたら取り込んでから始める\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
-  },
-  {
     "id": "T-421",
     "difficulty": "sonnet",
     "loopable": "Y",
@@ -270,7 +204,7 @@
     "dependencies": [],
     "summary": "並行の作業ツリーでのアーカイブを、単独のコミットですぐ main へ送る手順にする",
     "task": "## 背景\n\n振り返り（2026-09-23、`develop/retrospective.md` の `e59e0be`..`e2a24c5`）で見つかったこと。アーカイブ（`develop/tasks.json` の完了したタスクを `docs/history/tasks.md` へ、`develop/progress.md` の完了した小節を `docs/history/progress.md` へ移す）の手順は共通の `~/.claude/skills/task-workflow/WORKFLOW.md` にあり、`/plan-tasks` の手順5と `/next-task` の手順1が `archive.py` で行う。開始の基準は `develop/tasks.json` の完了件数と文字数で決まる。\n\n並行の作業ツリーでは、`main` の完了件数が基準に達すると、どの作業ツリーも同じ時点で基準に達する。2026-09-23 の `/plan-tasks` では、枝の上で完了6件をアーカイブしている間に、別の作業ツリーが `4fd2169` で同じ範囲（に T-404 を足した7件）を `main` へアーカイブした。その結果、`git merge main` が `develop/tasks.json` と `docs/history/tasks.md` の両方で衝突した。`develop/progress.md` はマージドライバ（`scripts/merge-progress.ts`）が畳むが、この2ファイルと `docs/history/progress.md` には無い。そのときは、自分のアーカイブのコミットを捨てて `main` に追い付き、登録だけやり直して解消した。アーカイブは `archive.py` でやり直せる機械的な操作なので、衝突を手で解くより捨ててやり直すほうが安い。\n\n手順の正典は `CLAUDE.md`「## タスク運用」の「1サイクルの形」（`/next-task` がその節を読み込む）で、理由は `docs/workflow.md` に置く形になっている（`docs/workflow.md`「`doing` をコミットする」冒頭）。\n\n## 決まっていること（蒸し返さない）\n\n- アーカイブは単独のコミットにし、`doing` と同じく `git -C <本体> merge --ff-only <枝>` ですぐ `main` へ送る。`--ff-only` が落ちたら、そのコミットを捨てて `git merge main` し、基準を判定し直す（2026-09-23 に振り返りのドラフトをユーザーが承認）\n\n## やること\n\n1. `CLAUDE.md`「## タスク運用」の「1サイクルの形」に、アーカイブの扱いを箇条で足す（上の決定。`docs/history/progress.md` への移動も同じ扱い）。自分のコミットを捨てるのは、自分の作業ツリーの中のまだ `main` に入っていないコミットに限る、と書き添える（`CLAUDE.md`「## Git運用」の「自分の足元だけを触る」と矛盾しないように）\n2. `docs/workflow.md` に理由を足す（「`doing` をコミットする」の節の後ろに小節を1つか、その節の箇条に1つ。基準が `main` の件数で決まるので一斉に基準に達すること・ドライバが無い2ファイル・やり直しが安いこと）\n3. `git -C <本体> merge --ff-only` が `main` の作業ツリーで起こしたセッションでは要らないこと（「1サイクルの形」の既存の例外）と整合しているか確かめる\n\n## 完了条件\n\n- `CLAUDE.md` の「1サイクルの形」に、アーカイブを単独のコミットで `--ff-only` 送りにすることと、落ちたときに捨ててやり直すことが書かれている（`grep -n 'アーカイブ' CLAUDE.md` で該当行を `evidence` に書く）\n- `docs/workflow.md` に理由がある\n- 各ファイルの節の数が編集の前後で変わらない（小節を足した場合は1つ増える）\n- `bun run check` が通る\n\n## 注意\n\n- 共通の `~/.claude/skills/task-workflow/WORKFLOW.md` と `/plan-tasks`・`/next-task` のスキル本体は書き換えない（複数のプロジェクトで共通。このリポジトリの上乗せとして書く）\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数を確かめる\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   }

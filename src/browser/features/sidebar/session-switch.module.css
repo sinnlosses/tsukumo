@@ -9,7 +9,8 @@
   flex: 1 1 auto;
   min-width: 0;
   height: 2.125rem;
-  padding: 0 0.5rem;
+  padding: 0 1.75rem 0 0.5rem;
+  text-overflow: ellipsis;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--surface);

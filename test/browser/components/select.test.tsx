@@ -14,6 +14,7 @@ describe("Select", () => {
       <Select
         id="dummy-select"
         ariaLabel="ダミー"
+        frameClassName="dummy-select-frame"
         className="dummy-select"
         value="b"
         disabled={false}
@@ -37,6 +38,7 @@ describe("Select", () => {
       <Select
         id="dummy-select"
         ariaLabel="ダミー"
+        frameClassName="dummy-select-frame"
         className="dummy-select"
         value="a"
         disabled={true}
@@ -57,6 +59,7 @@ describe("Select", () => {
       <Select
         id="dummy-select"
         ariaLabel="ダミー"
+        frameClassName="dummy-select-frame"
         className="dummy-select"
         value="a"
         disabled={false}

@@ -17,14 +17,15 @@
      立ち絵を領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる。
      `.portrait` の max-width（45%）と `.balloon-track` の flex-basis（11rem）が先に当たるので、
      ここを上げすぎても吹き出しの幅は 11rem 未満には潰れない（下の `.balloon-track` 参照）。 */
-  --portrait-height: 78%;
+  --portrait-height: 88%;
   --portrait-drop: 2.25rem;
   --balloon-tail: 8px;
   /* 尻尾を最新の吹き出しの下端から浮かせる量（モック値）。縦中央ではなく下寄りに付く。 */
   --balloon-tail-bottom: 26px;
-  /* 吹き出しの列を立ち絵に重ねる量（モックの `margin-left: -30px`）。列は立ち絵の右に
-     隙間を空けて並べず、この分だけ立ち絵の上へ被せる（下の `.portrait + .balloon-track`）。 */
-  --balloon-overlap: 30px;
+  /* 吹き出しの列を立ち絵に重ねる量（モックは `margin-left: -30px`）。列は立ち絵の右に
+     隙間を空けて並べず、この分だけ立ち絵の上へ被せる（下の `.portrait + .balloon-track`）。
+     モック値（30px）では立ち絵の顔の側に寄りすぎるので、12px 詰めてある。 */
+  --balloon-overlap: 18px;
   /* 最新の吹き出しの下端を領域の下端から浮かせる固定量と、列の右端を領域の右端から離す量
      （モックの `padding: 20px 20px 28px 0`）。**px の絶対値で持つ**（margin/max-height の
      パーセントは containing block の幅に対して解決されるため、高さの意図で書くと壊れる）。
@@ -32,9 +33,9 @@
      重なっても顔にはかからないことを目視で確認済み（T-395 の evidence）。 */
   --balloon-bottom-gap: 28px;
   --balloon-right-gap: 20px;
-  /* 右上の「ログ」の口（top/right とも 10px、高さ 30px）が占める高さぶんの余白。吹き出しの並びが
+  /* 右上の「ログ」の口（領域の角から 4px、高さ 30px）が占める高さぶんの余白。吹き出しの並びが
      スクロールしてもここまでは伸びない（下の .balloon-track）。 */
-  --speech-log-open-space: 44px;
+  --speech-log-open-space: 26px;
 }
 
 /* 立ち絵も吹き出しの並びも**下端で揃える**（床に立つ見え方にする
@@ -237,7 +238,10 @@
 }
 
 /* 「ログ」の口（`speech-log.tsx`）。領域の右上、絵の上に**重ねて**置く（モックは top/right とも
-   10px 内側）。行を1段足すと、立ち絵の高さ（--portrait-height は .character-layout の高さの
+   10px 内側だが、ここでは領域の角まで寄せる。**基準の `.character-region` は領域の
+   padding の内側**なので、`--region-padding`（`layout.module.css` の `.layout-region`）を
+   打ち消して角からの距離を直に書く。はみ出した先は `.layout-region` の padding の中で、
+   overflow の切り取りは padding box の縁なので切れない）。行を1段足すと、立ち絵の高さ（--portrait-height は .character-layout の高さの
    割合）がそのぶん縮むため、行を増やさず重ねにしてある。キャラビューは枠を持たない領域なので、
    口は地（ground）の色で塗って背景の絵の上でも読めるようにする（**モックは半透明だが、
    docs/design.md 13.8「文字が乗る要素の地は不透明を保つ」に合わせて不透明のまま**にする）。
@@ -245,8 +249,8 @@
    寸法は足さない）。 */
 .speech-log-open {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: calc(4px - var(--region-padding));
+  right: calc(4px - var(--region-padding));
   z-index: 1;
   display: inline-flex;
   align-items: center;

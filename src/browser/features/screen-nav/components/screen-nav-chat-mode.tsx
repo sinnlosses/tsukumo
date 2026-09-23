@@ -22,7 +22,7 @@ export type ScreenNavChatModeProps = {
 /** かばんの絵（仕事）。 */
 function WorkIcon(): ReactElement {
   return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
       <rect
         x="1.5"
         y="5.5"
@@ -47,7 +47,7 @@ function WorkIcon(): ReactElement {
 /** 湯のみの絵（雑談）。 */
 function ChatIcon(): ReactElement {
   return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
       <path
         d="M2.5 6.5h8v3a4 4 0 0 1-4 4v0a4 4 0 0 1-4-4v-3z"
         fill="none"

@@ -1,5 +1,5 @@
 // ターンの札の頭（`docs/requirements.md` 4.2）。左に `‹` `›`（`‹` が1つ古いターン、`›` が1つ
-// 新しいターン。端ではその側を押せなくする）、続けて見ているターンのタイトル（`⌄` と同じ1つの
+// 新しいターン。端ではその側を押せなくする）、続けて見ているターンのタイトル（矢印と同じ1つの
 // ボタン。押すと窓の中のやり取りへ一度で飛べる一覧が開く）、右端に「n / N」（窓の中の何件目か。
 // 古いほうが1）と、最新を見ているときは「最新」の印・過去を見ているときは「最新へ」の口。
 //
@@ -21,9 +21,9 @@
 // 閉じてターンを移す——最新の行を選べば `onSelect` の先（`stores/turn-selection.tsx` の
 // `selectTurn`）がそのまま追従に戻す規則を持っているので、ここで特別扱いはしない。
 //
-// **開く口は `h2` の中の1つの `<button>`**（タイトルの文字 + `⌄`）。h2 に直接 `onClick` を
+// **開く口は `h2` の中の1つの `<button>`**（タイトルの文字 + 下向きの矢印）。h2 に直接 `onClick` を
 // 付ける形は採らない——押せるのはボタンだけにする。アクセシブルネームはタイトルの文字そのもの
-// （`⌄` は `aria-hidden`）。
+// （矢印は `aria-hidden`）。
 
 import { useCallback, useId, useRef, useState, type ReactElement } from "react"
 
@@ -113,7 +113,7 @@ export function TurnHeader(props: TurnHeaderProps): ReactElement {
         </button>
       </div>
       {/* ページの中の本物の `h2` はこれ1つ（レポートの `##` は `h4` に落とす。
-          `markdown/markdown.tsx`）。**中身は1つの `<button>`**（タイトルの文字 + `⌄`）——
+          `markdown/markdown.tsx`）。**中身は1つの `<button>`**（タイトルの文字 + 下向きの矢印）——
           h2 に直接 `onClick` を付けず、押せるのはボタンだけにする。1行に収まらないぶんは
           CSS が省略するので、全文はボタンの `title` で読ませる。一覧はこの枠（`titleGroupRef`）の
           中に置き、そこが `useDismissSignal` の「外側」の基準になる。 */}
@@ -131,9 +131,7 @@ export function TurnHeader(props: TurnHeaderProps): ReactElement {
             }}
           >
             <span className={styles["turn-title-text"]}>{activeTitle}</span>
-            <span className={styles["turn-title-chevron"]} aria-hidden="true">
-              ⌄
-            </span>
+            <span className={styles["turn-title-chevron"]} aria-hidden="true" />
           </button>
         </h2>
         {historyOpen ? (
@@ -169,7 +167,7 @@ export function TurnHeader(props: TurnHeaderProps): ReactElement {
   )
 }
 
-/** `⌄` で開く、窓の中のやり取りの一覧（新しい順）。行を押すとそのやり取りへ移って閉じる。 */
+/** 矢印で開く、窓の中のやり取りの一覧（新しい順）。行を押すとそのやり取りへ移って閉じる。 */
 function TurnHistoryList(props: {
   readonly id: string
   readonly turns: readonly TurnHeaderEntry[]

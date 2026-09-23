@@ -71,6 +71,7 @@ export function SessionInfo(): ReactElement {
             <Select
               id={CHARACTER_SELECT_ID}
               ariaLabel="キャラクター"
+              frameClassName={styles["session-info-select-frame"] ?? ""}
               className={styles["character-select"] ?? ""}
               value={currentPack}
               disabled={turnInProgress}
