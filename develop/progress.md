@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 SessionHost の閉包から世代の持ち物・副作用・コマンドの振り分けを分けた（T-427）
+
+世代ごとの持ち物を `SessionGeneration` に畳み、`restart` は `generation = startGeneration(request)` の1行で丸ごと作り直す形にした。`receive` の副作用は `chat-compact` / `token-usage` / `context-usage` と新規の `event-batch.ts` / `chat-archive-entry.ts` へ寄せ、`session-manager.ts` は 801行 → 556行に。テストは期待値を1文字も変えずに通っている（`session-manager.test.ts` は差分ゼロ）。
+
 ### 2026-09-23 いまのコンテキストの札に読み込み中の骨組みを出した（T-458）
 
 `useContextUsage` に `pending` を足して「取れなかった」と分け、届いた札と同じ外形の骨組み（値だけ灰色の塊）を出すようにした。`/context-usage` を遅らせて測った札の高さと「期間の消費」の位置の差は 0px。

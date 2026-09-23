@@ -307,22 +307,28 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
 export type ClientCommand = z.infer<typeof clientCommandSchema>
 
 /**
+ * 見た目の編集のコマンドの種類。**型（{@link CharacterEditCommand}）も判定
+ * （{@link isCharacterEditCommand}）もこの1つの並びから導く** — 二重に列挙すると、足した種類が
+ * 型には入って判定には入らない（＝駆動へ流れてしまう）ずれが黙って起きる。
+ */
+const CHARACTER_EDIT_COMMAND_TYPES = [
+  "set-portrait",
+  "clear-portrait",
+  "set-outfit-accent",
+  "set-accent",
+  "clear-chat-accent",
+  "set-background",
+  "clear-background",
+] as const
+
+/**
  * いま出しているキャラクターパックの見た目（立ち絵・差し色・背景）を変えるコマンド。**どれも
  * 駆動には渡らない**（書き込みと `character-changed` の流し直しで済むので、セッションは
  * 起こし直さない。`docs/design.md` 7.1）。
  */
 export type CharacterEditCommand = Extract<
   ClientCommand,
-  {
-    readonly type:
-      | "set-portrait"
-      | "clear-portrait"
-      | "set-outfit-accent"
-      | "set-accent"
-      | "clear-chat-accent"
-      | "set-background"
-      | "clear-background"
-  }
+  { readonly type: (typeof CHARACTER_EDIT_COMMAND_TYPES)[number] }
 >
 
 /**
@@ -355,16 +361,6 @@ export type DriverCommand = Exclude<
 export function isCharacterEditCommand(command: ClientCommand): command is CharacterEditCommand {
   return CHARACTER_EDIT_COMMAND_TYPES.some((type) => type === command.type)
 }
-
-const CHARACTER_EDIT_COMMAND_TYPES = [
-  "set-portrait",
-  "clear-portrait",
-  "set-outfit-accent",
-  "set-accent",
-  "clear-chat-accent",
-  "set-background",
-  "clear-background",
-] as const
 
 /**
  * 届いた値をコマンドとして検証する。形が合わないときは undefined を返す
