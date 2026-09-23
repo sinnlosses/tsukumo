@@ -94,9 +94,9 @@
     "dependencies": [],
     "summary": "ローカル時刻の HH:MM を作る手を browser/utils/clock.ts に寄せる",
     "task": "## 背景\n\n`src/browser/utils/clock.ts` は「ブラウザ側で OS のタイムゾーンを読む場所をここに揃える」として `localTimeZoneId()` を持つが、機能の中で同じことを直に書いている:\n\n- `src/browser/features/sidebar/session-switch.tsx` の `localTimestamp`（`Temporal.Now.timeZoneId()` を直に読み、`M/D HH:MM`）\n- `src/browser/features/token-usage/context-usage-card.tsx` の `clockLabel`（`Temporal.Now.timeZoneId()` を直に読み、`HH:MM`）\n- `src/browser/features/chat-view/hooks/use-chat-view.ts` の `timeStamp`（`HH:MM` と `dateTime`）\n\n`toPlainTime().toString({ smallestUnit: \"minute\" })` の書き方が3か所にある。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. 3か所の書式（`HH:MM` / `M/D HH:MM` / `dateTime` 属性）を並べる\n2. タイムゾーンの読み取りを `localTimeZoneId()` に揃え、`HH:MM` を作る手を `browser/utils/clock.ts` に1つ置く（`utils/` の歯止め3つを満たすか確かめる。満たさなければ `lib/`）。`M/D` を足した形を共通にするかは読み手の数で決める\n3. 3か所をそれに寄せる\n\n## 完了条件\n\n- `grep -rn 'Temporal.Now' src/browser | grep -v utils/clock.ts` が0件\n- `grep -rn 'smallestUnit: \"minute\"' src/browser` が `utils/clock.ts` の中だけ\n- `bun run check` が通る\n\n## 注意\n\n- `context-usage-card.tsx` は T-401・T-402（トークン消費の画面）も触る。並行して進めているときは `git merge main` で取り込んでから着手する",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "src/browser/utils/clock.ts に zonedDateTime / clockTime（HH:MM）/ clockDateTime（<time> の dateTime）を足し、session-switch.tsx・context-usage-card.tsx・use-chat-view.ts を寄せた。タイムゾーンは3か所とも localTimeZoneId() 経由。M/D は読み手が1つなので session-switch.tsx に残した。utils/ の歯止め3つ（import は Temporal だけ・手法の名前・そのままコピーして通じる）を満たすので utils/ のまま。\ngrep 'Temporal.Now' src/browser（clock.ts を除く）→ 0件。'smallestUnit: \"minute\"' → clock.ts の2行だけ。新規 test/browser/utils/clock.test.ts。\nbun run check: 1724 pass / 0 fail（141ファイル）、bun run build 成功"
   },
   {
     "id": "T-434",

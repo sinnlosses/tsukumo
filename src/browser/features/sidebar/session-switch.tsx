@@ -19,6 +19,7 @@ import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { type SessionChoice } from "../../../shared/session-choice.ts"
 import { Select } from "../../components/select.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../stores/session.tsx"
+import { clockTime, localTimeZoneId, zonedDateTime } from "../../utils/clock.ts"
 import switchStyles from "./session-switch.module.css"
 import styles from "./sidebar.module.css"
 
@@ -140,8 +141,6 @@ function truncateHeading(heading: string): string {
  * 場面が無い）。
  */
 function localTimestamp(epochMilliseconds: number): string {
-  const at = Temporal.Instant.fromEpochMilliseconds(epochMilliseconds).toZonedDateTimeISO(
-    Temporal.Now.timeZoneId(),
-  )
-  return `${String(at.month)}/${String(at.day)} ${at.toPlainTime().toString({ smallestUnit: "minute" })}`
+  const at = zonedDateTime(epochMilliseconds, localTimeZoneId())
+  return `${String(at.month)}/${String(at.day)} ${clockTime(at)}`
 }

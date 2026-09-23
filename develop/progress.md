@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 ローカル時刻の HH:MM を作る手を clock.ts に寄せた（T-433）
+
+ブラウザ側の3か所がタイムゾーンを直に読んで `HH:MM` を組んでいたのを、`src/browser/utils/clock.ts` の `zonedDateTime` / `clockTime` / `clockDateTime` と `localTimeZoneId()` に揃えた。表示の書式は変えていない。
+
 ### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
 
 4か所で書き写していた `TextEncoder` のバイト数の数え方を `src/shared/lib/byte-length.ts` の `byteLength` に寄せた。実行環境の API を包む道具なので `lib/`、`core` と `shared` の両方から読むので `shared` に置いた。
