@@ -207,5 +207,16 @@
     "status": "doing",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-423",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "キャラクター画面から仕事と雑談の差し色を変え、雑談を仕事と同じに戻せるようにする",
+    "task": "## 背景\n\n画面全体の差し色はパックの持ち物で、`characters/<name>/character.json` の `accent`（仕事）と `chatAccent`（雑談中だけ。無ければ `accent` のまま）から来る（検証は `src/shared/character-definition.ts`、雑談中の切り替えは `src/shared/character.ts` の `effectiveAccent`、`:root` への流し込みは `src/browser/stores/session.tsx` の `--accent`。`docs/design.md` 13.2「雑談中は」/ 13.7）。**どちらも画面から変える口が無い。** キャラクター画面（`src/browser/features/character-screen/`）の「差し色」の行が変えるのは立ち絵の中だけに効く衣装ごとの色（`outfitAccents`。コマンド `set-outfit-accent`、書き込みは `src/server/adapter/character-edit.ts` の `applyEdit` → `definitionWithOutfitAccent`）で、`accent` / `chatAccent` とは別物。作る画面の差し色1色も `outfitAccents.default` に入る（`character-edit.ts` の作成の経路）。\n\nT-392 で `chatAccent` を足したときは編集UIを作らなかった。ユーザーが画面から設定したいと言った（2026-09-23）。\n\n## 決まっていること（蒸し返さない）\n\n- **仕事の差し色（`accent`）と雑談の差し色（`chatAccent`）の両方を**キャラクター画面から変えられるようにする（ユーザーの選択。2026-09-23）\n- **雑談の差し色を「仕事と同じ」（`chatAccent` の欄なし）に戻す口を付ける**（ユーザーの選択。一度色を選ぶと画面から欄なしに戻れない、を避ける）\n- 置き場所はキャラクター画面（パックの持ち物。`docs/design.md` 13.6 の表「キャラクターの立ち絵・差し色」の行）。帯の歯車（利用者の設定）には置かない\n- 書き込み先は既存の編集と同じく `~/.tsukumo/characters/<name>/character.json`（同梱パックを直さない。書く前にホームへ写す既存の手順に乗せる）\n\n## 解くべき論点\n\n- 衣装ごとの「差し色」の行との並べ方と呼び名（例: 「画面の差し色 ■ 仕事 ■ 雑談 [仕事と同じにする]」の行を立ち絵の差し色の行の上に置く。立ち絵の色と画面の色が同じ「差し色」の名で並んで区別が付かないなら、既存の行のラベルも「立ち絵の差し色」などに直す）。`docs/design.md` 13.6 の画面の図と箇条を合わせて直す\n- コマンドの形: `set-outfit-accent` に倣って `set-accent`（仕事/雑談を引数で分けるか、型を2つにするか）と、戻す口のコマンド。色の検証は既存の `accentColorSchema` を使う\n- `editedDefinitionJson` は入れ子の欄（`portraits` / `outfitAccents` / `background`）しか書かない。最上位の欄 `accent` / `chatAccent` を書く・消す関数をどう足すか（ほかのキーを残す・2スペース整形はそのまま）\n- 変えた色がいま開いている画面の `--accent` にすぐ効くか（衣装の差し色を変えたときにパックが配り直される経路に乗るかを確かめる）。引きずっている間の送信は衣装の差し色と同じく debounce でまとめる（`use-character-edit.ts` の `OUTFIT_ACCENT_DEBOUNCE_MS`）\n- `chatAccent` が無いときの雑談の色見本に何を出すか（`accent` の値を出し、「仕事と同じ」と分かるようにする）\n\n## やること\n\n1. 上の論点を決める\n2. `src/shared/command.ts` にコマンドを足し、`src/shared/character-definition.ts` に最上位の欄を書く・消す関数を足す\n3. `src/server/adapter/character-edit.ts` の `applyEdit` に分岐を足す\n4. `src/browser/features/character-screen/` の hook と presentational に行を足す（`editable: false` のパックでは無効）\n5. `docs/design.md` 13.6（画面の図・箇条）と 13.2 / 13.5 の「画面から変えない」旨の記述があれば直す。`characters/README.md` に編集できる旨があれば揃える\n6. テスト: 定義の書き換え（`accent` を差す・`chatAccent` を差す・`chatAccent` を消すと欄が無くなりほかのキーは残る）、`applyEdit` の3分岐、hook が送るコマンド（仕事・雑談・戻す）と `chatAccent` なしのときの色見本\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900、一時の `TSUKUMO_HOME`）: キャラクター画面で仕事の差し色を変えると帯・トグルの色が変わる。雑談の差し色を変えて雑談に切り替えるとその色になり、「仕事と同じにする」を押すと雑談中も仕事の色になる。`~/.tsukumo/characters/<name>/character.json`（一時ホームの側）の `accent` / `chatAccent` が期待どおりになっている。何が見えたかを `evidence` に書く\n\n## 注意\n\n- ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。目視は一時の `TSUKUMO_HOME` で行い、本物のホームのパックを書き換えない\n- 同梱パック（`characters/`）の `character.json` は書き換えない（既定値はそのまま）\n- 13.1 原則1・原則5（色を足さない）は変えない。足すのは既にある `accent` の値を変える口だけで、新しい色のトークンは作らない\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
