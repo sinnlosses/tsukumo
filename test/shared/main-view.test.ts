@@ -4,8 +4,11 @@ import {
   MAX_MAIN_VIEW_TURNS,
   type MainViewEntry,
   type MainViewStep,
+  mainViewEntries,
   mainViewTurns,
 } from "../../src/shared/main-view.ts"
+import { type SessionEvent } from "../../src/shared/session-event.ts"
+import { applySessionEvent, INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
 
 /** 本文を持つステップならその本文。持たなければ（ステップが無ければ）undefined。 */
 const reportOf = (step: MainViewStep | undefined) =>
@@ -589,6 +592,80 @@ describe("mainViewTurns（最終レポートの印）", () => {
     expect(withInterim[0]?.hasInterimReport).toBe(true)
     expect(alone[0]?.hasInterimReport).toBe(false)
     expect(alone[0]?.steps.map((step) => step.final)).toEqual([true])
+  })
+})
+
+describe("mainViewTurns（締めの speak → レポートで終える並び）", () => {
+  // `report-notation.ts` の「ターンは締めの `speak` → レポートの順で終える」に沿った並びを、
+  // SDK から届くイベントの形で流す。**締めの `speak` は `speech` になって `tool` の記録に
+  // ならない**ので、そのあとのレポートは「あとにツールが続いていない最後の本文」のまま残る。
+  const speech = (text: string): SessionEvent => ({ kind: "speech", text, expression: "default" })
+  const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })
+  const editRun = (toolUseId: string): readonly SessionEvent[] => [
+    {
+      kind: "tool-started",
+      toolUseId,
+      name: "Edit",
+      input: { file_path: "src/a.ts" },
+      parentToolUseId: undefined,
+    },
+    { kind: "tool-finished", toolUseId, content: "ok", isError: false },
+  ]
+
+  /** 架空のやり取りを1ターン流し終えたときのメインビュー（確定したやり取りとして描く）。 */
+  function settledSteps(events: readonly SessionEvent[]): readonly MainViewStep[] {
+    const state = [
+      { kind: "request", text: "架空の依頼", images: [] } satisfies SessionEvent,
+      ...events,
+      { kind: "turn-finished", status: "success" } satisfies SessionEvent,
+    ].reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
+    return mainViewTurns(mainViewEntries(state), false)[0]?.steps ?? []
+  }
+
+  it("作業のあとに締めの speak を挟んで書いたレポートが最終レポートになる", () => {
+    const steps = settledSteps([
+      speech("見てくるぞ！"),
+      utterance("まず `src/a.ts` を読むね"),
+      ...editRun("toolu_1"),
+      utterance("テストも通った"),
+      speech("片付いたぞ！まとめを書いておくね"),
+      utterance(materialReport("砂時計の目盛りを直した")),
+    ])
+
+    expect(steps.map((step) => reportOf(step))).toEqual([
+      undefined,
+      undefined,
+      materialReport("砂時計の目盛りを直した"),
+    ])
+    expect(steps.map((step) => step.final)).toEqual([false, false, true])
+    expect(steps.map((step) => step.interim)).toEqual([false, false, false])
+  })
+
+  it("手前の資料は中間レポートのまま、締めの speak のあとのレポートが最終レポートになる", () => {
+    const steps = settledSteps([
+      utterance(materialReport("調べた結果")),
+      ...editRun("toolu_1"),
+      speech("ひとつ頼みたいことがあるんだ。まとめの最後に書いておく"),
+      utterance(materialReport("直した結果")),
+    ])
+
+    expect(steps.map((step) => reportOf(step))).toEqual([
+      materialReport("調べた結果"),
+      materialReport("直した結果"),
+    ])
+    expect(steps.map((step) => step.interim)).toEqual([true, false])
+    expect(steps.map((step) => step.final)).toEqual([false, true])
+  })
+
+  it("レポートの無いターンでも、締めの speak のあとの短い答えが最終レポートになる", () => {
+    const steps = settledSteps([
+      ...editRun("toolu_1"),
+      speech("直しておいたぞ！ひとことだけ書いておくね"),
+      utterance("`src/a.ts` の1行を直した。"),
+    ])
+
+    expect(reportOf(steps.at(-1))).toBe("`src/a.ts` の1行を直した。")
+    expect(steps.at(-1)?.final).toBe(true)
   })
 })
 
