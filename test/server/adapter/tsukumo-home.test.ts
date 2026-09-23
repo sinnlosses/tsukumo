@@ -7,7 +7,7 @@ import process from "node:process"
 import { homeCharacterDir } from "../../../src/server/adapter/character-pack.ts"
 import { chatArchiveDir } from "../../../src/server/adapter/chat-archive.ts"
 import { chatSummaryDir } from "../../../src/server/adapter/chat-summary.ts"
-import { readRememberedCharacter } from "../../../src/server/adapter/remembered-character.ts"
+import { readRememberedCharacter } from "../../../src/server/adapter/remembered-default.ts"
 import { tokenUsageDir } from "../../../src/server/adapter/token-usage-log.ts"
 import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
 

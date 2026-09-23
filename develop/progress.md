@@ -59,6 +59,19 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `TurnTabs` を `turn-header.tsx` の `TurnHeader`（`‹` `›`・依頼の1行目のタイトル・n / N・最新 / 最新へ）に替え、依頼の1行目は頭にだけ出して本文側は2行目以降を「依頼の続き」で畳む。頭は sticky で、1件だけでも出し、キー操作は付けない（`⌄` は後続の T-399）。
 
+### 2026-09-23 帯の「いまの作業」の札を、中身で幅が変わらない固定長にした（T-403）
+
+`.screen-nav-work-toggle` を `width: 100%` + `box-sizing: border-box` にして帯の空きをつねに
+埋めるようにし、`.screen-nav-work-word` に `min-width: 6em` を置いて状態の語が変わっても
+区切りと要約の始まりがずれないようにした。Bash のコマンドが変わるたびに札が伸び縮みして
+チカチカする、という報告への対処。
+
+### 2026-09-23 新しいセッションの既定を state.json に覚え、歯車から変えられるようにした（T-386）
+
+`remembered-character.ts` を `remembered-default.ts` に改名してキャラクターと既定を1つの境界で持ち、
+`set-session-default` コマンドと `SessionState.sessionDefault` を足した。既定に「全部許す」は
+境界で落とし、壊れた `state.json` では Opus・`auto` に畳んで起動を止めない。
+
 ### 2026-09-23 比率を既定に戻す口を、比率を動かしたときだけ出る絵と字のピルにした（T-397）
 
 `split.ts` の `isDefaultSplit` で3本の比率と雑談の上下比を既定と比べ、違うときだけ上下の仕切りの

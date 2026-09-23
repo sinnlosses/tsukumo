@@ -48,7 +48,6 @@ import {
 import {
   type ChatKeep,
   type ChatRecall,
-  DEFAULT_MODEL,
   type PersonaMemory,
   type SessionDriver,
   type SessionDriverOptions,
@@ -235,8 +234,12 @@ export type QuerySeedOptions = {
 
 /**
  * `query()` に渡す `options` のうち、クロージャを含まない部分を組み立てる。**本物の
- * `query()` を呼ばずに既定値（{@link DEFAULT_MODEL} / {@link DEFAULT_EFFORT}）が渡る形を
+ * `query()` を呼ばずに、覚えた既定（モデル・許可モード）と {@link DEFAULT_EFFORT} が渡る形を
  * 検査できるように、`startSession` から切り出してある。**
+ *
+ * **モデルと許可モードは呼び出し側から来る**（`src/session-start.ts` が
+ * `readRememberedSessionDefault` で読んだ値。`docs/design.md` 13.6）。ここで定数に倒すと、
+ * 歯車で変えた既定が起こし直しても効かない。
  */
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
   return {
@@ -244,7 +247,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     includePartialMessages: true,
     systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },
     permissionMode: options.permissionMode,
-    model: DEFAULT_MODEL,
+    model: options.model,
     effort: DEFAULT_EFFORT,
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
   }

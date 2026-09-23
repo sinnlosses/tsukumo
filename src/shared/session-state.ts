@@ -19,6 +19,7 @@ import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
+import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 
@@ -285,6 +286,15 @@ export type SessionState = {
    * サーバから流れ直す（起こし直しで状態が初期値へ戻るため）。
    */
   readonly chatMode: boolean
+  /**
+   * 新しいセッションを起こすときの既定（`docs/design.md` 13.6。帯の右端の歯車が読み書きする）。
+   * **いま動いているセッションの値ではない** — そちらは {@link SessionState.model} と
+   * {@link SessionInfo} の `permissionMode` で、帯から変えてもここは変わらない。
+   *
+   * **源は `session-default-changed` だけ。** 起こし直すと状態が初期値へ戻るので、
+   * `chat-mode-changed` と同じくサーバから流れ直す（届くまでは同梱の既定）。
+   */
+  readonly sessionDefault: SessionDefault
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -307,6 +317,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   sessions: [],
   lastToolFailureAt: undefined,
   chatMode: false,
+  sessionDefault: BUILTIN_SESSION_DEFAULT,
 }
 
 /**
@@ -490,6 +501,8 @@ export function applySessionEvent(
       return state
     case "chat-mode-changed":
       return { ...state, chatMode: event.chat }
+    case "session-default-changed":
+      return { ...state, sessionDefault: event.sessionDefault }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
     case "history-restored":
