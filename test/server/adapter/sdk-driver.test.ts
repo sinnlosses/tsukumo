@@ -1,15 +1,20 @@
 import { describe, expect, it } from "bun:test"
 
 import {
+  type HookCallbackMatcher,
+  type HookEvent,
   type PermissionMode as SdkPermissionMode,
   type PostCompactHookInput,
+  type StopHookInput,
 } from "@anthropic-ai/claude-agent-sdk"
 
 import {
   buildQuerySeedOptions,
   chatSummaryHooks,
   DEFAULT_EFFORT,
+  reportGateHooks,
 } from "../../../src/server/adapter/sdk-driver.ts"
+import { createReportGate, REPORT_GATE_REASON } from "../../../src/server/core/report-tool.ts"
 import {
   type ChatSummary,
   type SessionDriverOptions,
@@ -144,6 +149,69 @@ describe("chatSummaryHooks", () => {
     })
 
     expect(events).toEqual([{ kind: "chat-topics-changed", topics: ["架空の本の話"] }])
+  })
+})
+
+/** `Stop` フックの入力（テスト用）。`last_assistant_message` は関所が見ないので載せない。 */
+function stopInput(stopHookActive: boolean): StopHookInput {
+  return {
+    session_id: "s-1",
+    transcript_path: "/tmp/tsukumo-test/fake.jsonl",
+    cwd: "/tmp/tsukumo-test",
+    hook_event_name: "Stop",
+    stop_hook_active: stopHookActive,
+  }
+}
+
+/** 登録された `Stop` フックを1回呼び、戻り値を返す。 */
+async function runStop(
+  hooks: Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined,
+  stopHookActive: boolean,
+): Promise<unknown> {
+  const callback = hooks?.Stop?.[0]?.hooks[0]
+  expect(callback).toBeDefined()
+  return callback?.(stopInput(stopHookActive), undefined, { signal: new AbortController().signal })
+}
+
+describe("reportGateHooks（report の関所）", () => {
+  // 本文は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
+  const LONG_BODY: SessionEvent = { kind: "utterance", text: "架空の本文の1行目\n架空の2行目" }
+
+  it("切り替えないとき（reportChannel が text）は hooks を登録しない", () => {
+    expect(reportGateHooks(WORK_MODE, "text", createReportGate())).toBeUndefined()
+  })
+
+  it("雑談のときは切り替えても登録しない", () => {
+    expect(reportGateHooks(chatMode(fakeChatSummary()), "tool", createReportGate())).toBeUndefined()
+  })
+
+  it("仕事で切り替えたときは Stop だけを登録し、SubagentStop には載せない", () => {
+    const hooks = reportGateHooks(WORK_MODE, "tool", createReportGate())
+    expect(Object.keys(hooks ?? {})).toEqual(["Stop"])
+  })
+
+  it("1行を超える本文で止まろうとしたら、固定の理由文で block を返す", async () => {
+    const gate = createReportGate()
+    gate.observe(LONG_BODY)
+
+    expect(await runStop(reportGateHooks(WORK_MODE, "tool", gate), false)).toEqual({
+      decision: "block",
+      reason: REPORT_GATE_REASON,
+    })
+  })
+
+  it("1行以内なら何も返さない（止まってよい）", async () => {
+    const gate = createReportGate()
+    gate.observe({ kind: "utterance", text: "完了" })
+
+    expect(await runStop(reportGateHooks(WORK_MODE, "tool", gate), false)).toEqual({})
+  })
+
+  it("stop_hook_active のときは長い本文でも block しない", async () => {
+    const gate = createReportGate()
+    gate.observe(LONG_BODY)
+
+    expect(await runStop(reportGateHooks(WORK_MODE, "tool", gate), true)).toEqual({})
   })
 })
 

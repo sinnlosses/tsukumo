@@ -152,6 +152,15 @@ export function toPlan(value: unknown): string | undefined {
   return plan === "" ? undefined : plan
 }
 
+/**
+ * サブエージェントの中から届いたメッセージか（`parent_tool_use_id` が文字列）。`report` の関所
+ * （`src/server/core/report-tool.ts` の `createReportGate`）にメインの本文だけを渡すために、
+ * 駆動（`src/server/adapter/sdk-driver.ts`）が {@link toSessionEvents} と並べて使う。
+ */
+export function isSubagentMessage(message: unknown): boolean {
+  return isPlainObject(message) && optionalString(message.parent_tool_use_id) !== undefined
+}
+
 function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly SessionEvent[] {
   if (typeof message.session_id !== "string") {
     return []

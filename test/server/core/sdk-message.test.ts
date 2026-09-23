@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import {
+  isSubagentMessage,
   REPORT_TOOL_NAME,
   TSUKUMO_MCP_SERVER_NAME,
   SPEAK_TOOL_NAME,
@@ -848,5 +849,14 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+})
+
+describe("isSubagentMessage", () => {
+  it("parent_tool_use_id が文字列のものだけをサブエージェントの中のメッセージとする", () => {
+    expect(isSubagentMessage({ type: "assistant", parent_tool_use_id: "toolu_fake" })).toBe(true)
+    expect(isSubagentMessage({ type: "assistant", parent_tool_use_id: null })).toBe(false)
+    expect(isSubagentMessage({ type: "system", subtype: "init" })).toBe(false)
+    expect(isSubagentMessage("壊れた形")).toBe(false)
   })
 })

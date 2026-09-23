@@ -17,7 +17,12 @@
 // **キャラクターの人格（`persona.md`）には差分を当てない。** パックはホームのものが同梱のものを
 // 覆い、利用者が画面から作ったパックもあるので、文言を当てにできない。人格の締めの例を
 // 読み替えさせる一文は、差し替えた規約の側に置く（規約は人格より優先すると冒頭で言っている）。
+//
+// **規約のほかに `Stop` フックの関所を置く**（{@link createReportGate}。登録は
+// `src/server/adapter/sdk-driver.ts`）。SDK のターンの最後の `report` のあと（無ければターンの頭から）
+// に1行を超える本文を書いて止まろうとしたら差し戻し、`report` で渡し直させる。
 
+import { type SessionEvent } from "../../shared/session-event.ts"
 import { REPORT_NOTATION_PROMPT } from "./report-notation.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 
@@ -113,6 +118,74 @@ export function unmatchedReportToolClauses(): readonly string[] {
     ...unmatchedClauses(REPORT_NOTATION_PROMPT, NOTATION_SWAPS),
     ...unmatchedClauses(SPEECH_CADENCE_PROMPT, CADENCE_SWAPS),
   ]
+}
+
+/**
+ * `Stop` の関所が差し戻すときにモデルへ返す理由。**固定の文面だけ**で、モデルが書いた本文は
+ * 写さない（会話の中身をモデルの文脈へ戻す経路を作らない）。
+ */
+export const REPORT_GATE_REASON =
+  "いま書いた本文は画面に出ていない。その内容を `report` ツール（`mcp__tsukumo__report`）で" +
+  "渡し直すこと。`report` のあとに書いてよいのは締めの `speak` と1行のテキストだけ。"
+
+/**
+ * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの中で**最後の
+ * `report` のあと（無ければターンの頭から）に書いた本文**を覚えておき、止まろうとしたときに
+ * {@link ReportGate.shouldBlock} が差し戻すかを決める。
+ *
+ * - **ターンの頭は `session-info`**（`init` は SDK のターンの頭に毎回届く。依頼で始まるターンも、
+ *   背景のタスクやサブエージェントの合図で claude が自分で始めるターンも同じ）。`turn-finished`
+ *   でも空に戻す（`init` が来ない経路があっても前のターンの本文を持ち越さない）
+ * - **本文は `utterance` だけ**を数える（書きかけの断片は、同じ本文が `utterance` で届き直す）
+ * - **サブエージェントの中の本文は渡さないこと**（呼び出し側の仕事。委譲先の報告はメインにだけ
+ *   届くもので、画面に出すかの判断はメインの本文で決まる）
+ */
+export type ReportGate = {
+  readonly observe: (event: SessionEvent) => void
+  /**
+   * 差し戻すか。`stopHookActive`（すでに一度差し戻して続けているところ）なら差し戻さない
+   * （ループさせない）。それ以外は、覚えた本文が1行を超えていれば差し戻す。
+   */
+  readonly shouldBlock: (stopHookActive: boolean) => boolean
+}
+
+/** {@link ReportGate} を1つ作る。**セッション1つに1つ**（ターンの区切りを自分で見ている）。 */
+export function createReportGate(): ReportGate {
+  let unreported: readonly string[] = []
+
+  return {
+    observe: (event) => {
+      unreported = nextUnreported(unreported, event)
+    },
+    shouldBlock: (stopHookActive) => !stopHookActive && exceedsOneLine(unreported),
+  }
+}
+
+/**
+ * 「1行」の字数の上限（コードポイントで数える）。改行を含まなくても、これを超えたら1行と
+ * 見なさない（改行の無い段落1つでレポートを書き切ることがあるため）。試行で通ってよかった
+ * 1行（背景の委譲を待つ一言、`report` → 締めの `speak` のあとの1行）は64字以下、差し戻すべき
+ * だった本文は131字以上だった（`docs/research/report-tool-trial.md`）。その間に余裕を取って置く。
+ */
+const ONE_LINE_MAX_CHARS = 100
+
+function nextUnreported(unreported: readonly string[], event: SessionEvent): readonly string[] {
+  switch (event.kind) {
+    case "session-info":
+    case "turn-finished":
+    case "report":
+      return []
+    case "utterance":
+      return [...unreported, event.text]
+    default:
+      return unreported
+  }
+}
+
+/** 本文の並びが1行を超えるか。本文が2つ以上あれば、それぞれ1行でも2行と数える。 */
+function exceedsOneLine(texts: readonly string[]): boolean {
+  const text = texts.join("\n").trim()
+  return text.includes("\n") || [...text].length > ONE_LINE_MAX_CHARS
 }
 
 /** 元の文面の条を順に差し替える。 */
