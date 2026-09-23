@@ -12,7 +12,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { readRepositoryFileList, REPOSITORY_FILE_PATH } from "../../../../shared/repository-file.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../../../../shared/session-socket.ts"
+import { sessionTokenUrl } from "../../../lib/session-token-url.ts"
 
 /**
  * 一覧を取り直す間隔。**0 でも `Infinity` でもない**のは、セッションの間にファイルが増える
@@ -47,10 +47,8 @@ export function useRepositoryFilePaths(enabled: boolean): readonly string[] {
 }
 
 /**
- * 一覧の URL。**起動トークンを付ける**（`/ws` と同じ守り方で、値は今開いているページの URL から
- * 引く。`lib/socket.ts` の `socketUrl` と同じ）。
+ * 一覧の URL。**起動トークンを付ける**（`/ws` と同じ守り方。`lib/session-token-url.ts` に寄せた）。
  */
 function repositoryFileUrl(): string {
-  const token = new URL(window.location.href).searchParams.get(SESSION_TOKEN_QUERY_NAME) ?? ""
-  return `${REPOSITORY_FILE_PATH}?${SESSION_TOKEN_QUERY_NAME}=${encodeURIComponent(token)}`
+  return sessionTokenUrl(REPOSITORY_FILE_PATH)
 }

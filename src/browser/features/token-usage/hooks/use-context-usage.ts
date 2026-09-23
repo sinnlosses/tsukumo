@@ -20,7 +20,7 @@ import {
   readContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../../shared/context-usage.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../../../../shared/session-socket.ts"
+import { sessionTokenUrl } from "../../../lib/session-token-url.ts"
 
 /** 横棒の一区間と、凡例の1行（**同じ並びを両方が使う**ので、色と名前が必ず対になる）。 */
 export type ContextUsageRow = {
@@ -124,11 +124,9 @@ async function fetchContextUsage(): Promise<ContextUsageReport> {
 }
 
 /**
- * 内訳の URL。**起動トークンを付ける**（`/token-usage` と同じ守り方で、値は今開いている
- * ページの URL から引く）。
+ * 内訳の URL。**起動トークンを付ける**（`/token-usage` と同じ守り方。
+ * `lib/session-token-url.ts` に寄せた）。
  */
 function contextUsageUrl(): string {
-  const token = new URL(window.location.href).searchParams.get(SESSION_TOKEN_QUERY_NAME) ?? ""
-  const query = new URLSearchParams({ [SESSION_TOKEN_QUERY_NAME]: token })
-  return `${CONTEXT_USAGE_PATH}?${query.toString()}`
+  return sessionTokenUrl(CONTEXT_USAGE_PATH)
 }

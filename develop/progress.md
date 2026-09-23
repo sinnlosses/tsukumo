@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 起動トークン付きの URL の組み立てを browser/lib の1つに寄せた（T-434）
+
+`/ws`・`/repository-file`・`/token-usage`・`/context-usage`・`/prompt-image/<id>` の5か所に散っていた手を `src/browser/lib/session-token-url.ts` の `sessionTokenUrl` にまとめた。`ws:` / `wss:` とホストの組み立ては `/ws` 固有の関心なので `lib/socket.ts` に残し、この関数はどの経路も相対パス+クエリとしてだけ知る。
+
 ### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
 
 `newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。

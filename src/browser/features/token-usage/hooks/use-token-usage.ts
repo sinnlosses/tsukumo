@@ -8,7 +8,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
-import { SESSION_TOKEN_QUERY_NAME } from "../../../../shared/session-socket.ts"
 import {
   DEFAULT_TOKEN_USAGE_DAYS,
   EMPTY_TOKEN_USAGE_SUMMARY,
@@ -19,6 +18,7 @@ import {
   type TokenUsageSummary,
   type TokenUsageTotals,
 } from "../../../../shared/token-usage-summary.ts"
+import { sessionTokenUrl } from "../../../lib/session-token-url.ts"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import { totalUsage } from "../usage-format.ts"
 
@@ -67,14 +67,11 @@ async function fetchTokenUsageSummary(days: TokenUsageDays): Promise<TokenUsageS
 }
 
 /**
- * 集計の URL。**起動トークンを付ける**（`/repository-file` と同じ守り方で、値は今開いている
- * ページの URL から引く）。
+ * 集計の URL。**起動トークンを付ける**（`/repository-file` と同じ守り方。
+ * `lib/session-token-url.ts` に寄せた）。日数は経路ごとの追加のクエリとして渡す。
  */
 function tokenUsageSummaryUrl(days: TokenUsageDays): string {
-  const token = new URL(window.location.href).searchParams.get(SESSION_TOKEN_QUERY_NAME) ?? ""
-  const query = new URLSearchParams({
-    [SESSION_TOKEN_QUERY_NAME]: token,
+  return sessionTokenUrl(TOKEN_USAGE_SUMMARY_PATH, {
     [TOKEN_USAGE_DAYS_QUERY_NAME]: String(days),
   })
-  return `${TOKEN_USAGE_SUMMARY_PATH}?${query.toString()}`
 }
