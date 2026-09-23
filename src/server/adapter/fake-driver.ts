@@ -20,6 +20,12 @@ import { type SessionDriver } from "../core/session-driver.ts"
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
 const DEFAULT_SESSION_URL = new URL("../../../test/fixture/fake-session.json", import.meta.url)
 
+/**
+ * fake driver が流す固定のプラン（`docs/glossary.md`「プラン」）。**会話の内容ではない**ので、
+ * 疑似セッションの JSON に持たせず、ここに直接書く。
+ */
+const FAKE_PLAN = "Claude Max"
+
 /** 疑似セッションの1手。`afterMs` は**その場面の始まりからの経過**（前の手からの差分ではない）。 */
 const fakeSessionStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
 
@@ -148,6 +154,11 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     emit({ kind: "pending-changed", pending: pending.filter((candidate) => candidate.id !== id) })
     return true
   }
+
+  // 本物の駆動は `accountInfo()` を起動直後に1回だけ取りに行く（`src/server/adapter/sdk-driver.ts`
+  // の `relayPlan`）。fake driver は claude を起こさないので、疑似セッションで画面を確かめられる
+  // ように固定値を1回流す。
+  emit({ kind: "plan", plan: FAKE_PLAN })
 
   play(options.session.opening, 0)
 

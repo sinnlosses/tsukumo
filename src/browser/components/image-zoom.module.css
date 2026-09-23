@@ -1,0 +1,47 @@
+/* 画像を原寸で拡大して見る面（src/browser/components/image-zoom.tsx）。一時的に重なるものなので
+   常設の枠を増やさない（docs/design.md 13.1 原則2）。**面も絵も画面の内側に収める**——横に
+   はみ出す絵は幅で頭打ちにして縮め、面の中で横スクロールを起こさない（狭い画面 390x844 でも）。 */
+.image-zoom {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  margin: auto;
+  padding: 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  font: inherit;
+  overflow: hidden;
+}
+.image-zoom::backdrop {
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+}
+/* 絵そのもの。器（.image-zoom）の内側に収まるところまでしか広がらない。 */
+.image-zoom-image {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 7rem);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.4rem;
+}
+.image-zoom-close {
+  align-self: flex-end;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.image-zoom-close:hover {
+  border-color: var(--accent);
+}

@@ -295,6 +295,15 @@ export type SessionState = {
    * `chat-mode-changed` と同じくサーバから流れ直す（届くまでは同梱の既定）。
    */
   readonly sessionDefault: SessionDefault
+  /**
+   * 契約プラン（`docs/glossary.md`「プラン」）。トークン消費の画面の題の右の札に出す。
+   *
+   * **源は `plan` だけ**（駆動が起動直後に1回だけ取りに行く。`src/server/adapter/sdk-driver.ts`）。
+   * まだ届いていない・取れなかった（`accountInfo()` が落ちた・`subscriptionType` が無い）の
+   * どちらも同じ undefined——どちらだったかを画面は区別しない（何も出さないだけ）ので、
+   * 型でも分けない。
+   */
+  readonly plan: string | undefined
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -318,6 +327,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   lastToolFailureAt: undefined,
   chatMode: false,
   sessionDefault: BUILTIN_SESSION_DEFAULT,
+  plan: undefined,
 }
 
 /**
@@ -346,6 +356,8 @@ export function applySessionEvent(
       }
     case "command-descriptions":
       return { ...state, commandDescriptions: event.descriptions }
+    case "plan":
+      return { ...state, plan: event.plan }
     case "model-changed":
       // **`MODEL_ALIASES` に完全一致するときだけ先回りで更新する**（`/model best` のような
       // tsukumo が知らない値では状態を変えない。次の依頼の `init` が正しい値で上書きするので、

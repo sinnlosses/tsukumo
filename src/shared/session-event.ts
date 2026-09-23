@@ -76,6 +76,22 @@ export type SessionEvent =
       readonly descriptions: readonly CommandDescription[]
     }
   /**
+   * 起動直後に分かった**プラン**（`docs/glossary.md`「プラン」。Agent SDK の `accountInfo()` の
+   * `subscriptionType`）。`command-descriptions` と同じく駆動が起動直後に1回だけ取りに行く
+   * （`src/server/adapter/sdk-driver.ts`）。
+   *
+   * **`email` / `organization` はここに乗らない** — 取り出すのは `subscriptionType` だけで、
+   * 駆動の外へは出さない（`AccountInfo` にはアカウントを特定する値も入っている）。
+   *
+   * **値は SDK が返したものをそのまま出す**（実測では `"Claude Pro"` のように人が読める
+   * 文字列。tsukumo 側に表示名の対応表は持たない——知らない値が増えても直さずに出せる）。
+   *
+   * **取れなかったとき（`subscriptionType` が無い・呼び出しが落ちた）は流れない**
+   * （`command-descriptions` と同じ、動作中の一時的な失敗の扱い。API キーや Bedrock の
+   * ときは元々この値が無い。`sdk.d.ts` の `AccountInfo`）。
+   */
+  | { readonly kind: "plan"; readonly plan: string }
+  /**
    * 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。
    *
    * `images` は添えた画像の**控え**（縮めた data URL の並び。添えていなければ空）。
