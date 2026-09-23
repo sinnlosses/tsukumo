@@ -10,16 +10,18 @@
 // - `#character?turn=3`           キャラクター画面（使用中のパック）。ターンは会話の画面へ戻ったときのために運ぶ
 // - `#character?pack=tsukumo`     キャラクター画面で `tsukumo` のパックを選んでいる
 //
-// **パックを `?` の前（`#character/<名前>`）に置かない**のは、作る画面の `#character/new` と
-// 区別できなくなるため（`new` はパックの名前として使える。`isCharacterPackName`）。`pack` を
-// 読むのはキャラクター画面のときだけで、ほかの画面へ移ると落ちる（戻ると使用中のパックから）。
+// **パックを `?` の前（`#character/<名前>`）に置かない**のは、`turn` と同じく画面の上に乗る
+// 付随情報だから。`pack` を読むのはキャラクター画面のときだけで、ほかの画面へ移ると落ちる
+// （戻ると使用中のパックから）。**新しく作るダイアログは URL を持たない**（表示上の状態なので
+// 保存しない。開いているかどうかはキャラクター画面の state が持つ。`character-screen.tsx`。
+// `docs/screen-design.md` 13.6）。
 //
 // **今回に追従しているときは `turn` を書かない。** 留めたターンだけが URL に乗るので、何も
 // 選んでいない人のリロードは今までどおり今回を出す。
 
 import { useSyncExternalStore } from "react"
 
-const SCREENS = ["conversation", "character", "character-create", "token-usage"] as const
+const SCREENS = ["conversation", "character", "token-usage"] as const
 
 /** 出している画面。hash が対応しない値のときは会話の画面に落ちる。 */
 export type Screen = (typeof SCREENS)[number]
@@ -54,7 +56,6 @@ type HashSnapshot = string | number
 const SCREEN_PATH = {
   conversation: "",
   character: "character",
-  "character-create": "character/new",
   "token-usage": "token-usage",
 } as const satisfies Readonly<Record<Screen, string>>
 

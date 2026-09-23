@@ -1,203 +1,193 @@
-// `<CharacterCreate>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 作りかけの名前・選んだ立ち絵・差し色を持ち、押せるか・名前の欄の下に出す一言・作る／
-// 切り替えるの送り先を、presenter がそのまま置ける形へ畳んで返す。
+// `<CharacterCreate>`（新しく作るダイアログ）のロジック（docs/design.md 2章「機能の中を分ける」の
+// container / presenter）。名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）の作りかけの値を持ち、
+// 押せるか・id の欄の下に出す一言・作る先を presenter がそのまま置ける形へ畳んで返す。
 //
-// 受け取るのは**名前・必須の立ち絵1枚・差し色1色**だけで、表情を足す・衣装ごとに差し色を
-// 分けるのは作ったあと `<CharacterEdit>` の側で行う（作る口は最低限にする）。
+// **受け取るのは名前・id・必須の立ち絵1枚・画面の差し色2つだけ**で、表情を足す・衣装ごとに
+// 差し色を分ける・背景を敷くのは作ったあと `<CharacterEdit>` の側で行う（作る口は最低限にする。
+// `docs/design.md` 7.1）。
 //
-// **作っても自動では切り替わらない**（切り替えは駆動の起こし直しで画面が初期化されるので、
-// 作る操作の副作用にしない。docs/design.md 7.1）。作れたら「このキャラクターに切り替える」を
-// 出し、**押したときだけ** `switch-character` を送ってキャラクター画面へ戻る。ターン進行中は
-// 押せない（サイドバーの `<select>` と同じ理由・同じ文言）。
+// **`<dialog>` は常にマウントし、`open` に開閉だけを追随させる**（`browser/hooks/use-modal-dialog.ts`。
+// `features/task-board/hooks/use-task-board.ts` と同じ形）。**作れたら一覧で作ったパックを選んだ
+// 状態にして、呼び出し元へ閉じたことを知らせる**（`switch-character` は送らない。切り替えは
+// `<CharacterEdit>` の「このキャラクターに切り替える」の仕事。`docs/screen-design.md` 13.6）。
 //
-// **名前の形はサーバと同じ規則で先に見る**（`src/shared/character.ts` の
-// `isCharacterPackName`）。送ってから黙って落ちるのではなく、押せない理由を画面に出すため
-// （`error` フレームは画面にまだ出していない）。
+// **下書きの掃除はこのフックでは行わない。** 閉じるたびに呼び出し元（`character-screen.tsx`）が
+// `<CharacterCreate>` を `key` で作り直すので、次に開いたときは自然に空へ戻る
+// （`docs/coding-standards.md`「useEffect の代わりに使うもの」の「props が変わったら state を
+// 捨てる」）。**`onClose` はこのフックの戻り値に含めない**（`features/task-board/task-board.tsx`
+// と同じ形で、素通りする prop は呼び出し側〔`character-create.tsx`〕が直接つなぐ）。
+//
+// **id の形はサーバと同じ規則で先に見る**（`src/shared/character.ts` の `isCharacterPackName`）。
+// 送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す（`error` フレームは
+// 画面にまだ出していない）。
 
-import { useState } from "react"
+import { useCallback, useEffect, useState, type MouseEvent, type RefObject } from "react"
 
 import { isCharacterPackName } from "../../../../shared/character.ts"
-import { resolveExpressionLabel } from "../../../../shared/expression-choice.ts"
-import { REQUIRED_EXPRESSIONS, type RequiredExpression } from "../../../../shared/expression.ts"
-import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { readAccentColor } from "../../../domain/appearance-color.ts"
+import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { readDataUrl } from "../../../lib/data-url.ts"
-import { navigateTo, useScreenHref } from "../../../stores/screen.tsx"
-import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
+import { selectPack } from "../../../stores/screen.tsx"
+import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { type AccentSwatchModel } from "./use-character-edit.ts"
 
-const INVALID_NAME_NOTE = "名前に使えるのは半角の英数字と . _ - だけ（. では始められない）"
-const TAKEN_NAME_NOTE = "その名前はもう使われている"
-const CREATED_NOTE = "作った。"
+const NAME_HINT = "画面や吹き出しに出る名前"
+const ID_HINT =
+  "半角の英数字と . _ - が使えます（. では始められません）。保存するフォルダの名前になります"
+const INVALID_ID_NOTE = "id に使えるのは半角の英数字と . _ - だけ（. では始められない）"
+const TAKEN_ID_NOTE = "その id はもう使われている"
 
-// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面は**サーバが
-// 断るときと同じ1つ**（`shared` の定型文）を使う（サイドバーの `<select>` と同じ）。
-const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
-
-/** 選んだ立ち絵（data URL）。**必須の1つぶん**で、そろうまで「作る」は押せない。 */
-type HeldPortraits = Readonly<Record<RequiredExpression, string | undefined>>
-
-const NO_PORTRAITS: HeldPortraits = { default: undefined }
-
-/** 必須の立ち絵を選ぶ欄1つ。 */
-export type CreatePortraitFieldModel = {
-  readonly expression: RequiredExpression
-  readonly inputId: string
-  /** 表情の呼び名はキャラクターごとの言葉なので、いま出しているパックのラベルを借りる（原則4）。 */
-  readonly label: string
+/** 必須の立ち絵（`default`）を選ぶ大きな枠。 */
+export type PortraitDropModel = {
+  readonly image: { readonly kind: "blank" } | { readonly kind: "picked"; readonly url: string }
+  readonly pickAriaLabel: string
   readonly onPick: (input: HTMLInputElement) => void
+  readonly onDropFile: (file: File) => void
 }
 
-/** 名前の欄の下に出す一言。作れたあとだけ「切り替える」を添える。 */
-export type CreateNoteModel =
-  | { readonly kind: "none" }
-  | { readonly kind: "message"; readonly text: string }
-  | {
-      readonly kind: "created"
-      readonly text: string
-      readonly switchDisabled: boolean
-      /** 押せない理由（`title`。React の `title` がそのまま undefined を受けるので畳まない）。 */
-      readonly switchTitle: string | undefined
-      readonly onSwitch: () => void
-    }
+/** id の欄の下に出す一言。空・形が合う・押せる間は静かな案内、崩れたら理由に変わる。 */
+export type CreateIdNoteModel =
+  | { readonly kind: "hint"; readonly text: string }
+  | { readonly kind: "invalid" | "taken"; readonly text: string }
 
-/** `<CharacterCreate>` が画面に出す形。**戻る口は常に出す**（行き止まりにしない）。 */
 export type CharacterCreateModel = {
-  readonly backHref: string
-  readonly form:
-    | {
-        /**
-         * まだ `character-changed` が届いていない（接続直後の一瞬）。表情のラベルが決まらない
-         * ので口を出さない。
-         */
-        readonly kind: "waiting"
-      }
-    | {
-        readonly kind: "ready"
-        readonly name: string
-        readonly onNameChange: (name: string) => void
-        readonly portraitFields: readonly CreatePortraitFieldModel[]
-        readonly accent: string
-        readonly onAccentChange: (accent: string) => void
-        readonly note: CreateNoteModel
-        readonly canSubmit: boolean
-        readonly onSubmit: () => void
-      }
+  readonly ref: RefObject<HTMLDialogElement | null>
+  /** backdrop のクリックで閉じる（`onClose` は呼び出し側が直接つなぐ。下の注記）。 */
+  readonly onDialogClick: (event: MouseEvent<HTMLDialogElement>) => void
+  readonly form: {
+    readonly nameHint: string
+    readonly name: string
+    readonly onNameChange: (name: string) => void
+    readonly id: string
+    readonly onIdChange: (id: string) => void
+    readonly idNote: CreateIdNoteModel
+    readonly portrait: PortraitDropModel
+    readonly workAccent: AccentSwatchModel
+    readonly chatAccent: AccentSwatchModel
+    readonly canSubmit: boolean
+    readonly onSubmit: () => void
+  }
 }
 
-export function useCharacterCreate(): CharacterCreateModel {
-  const screenHref = useScreenHref()
+/**
+ * `open` と、作れたら閉じて呼び出し元へ返す `onClose` は呼び出し側（`character-screen.tsx`）の
+ * state。表示上の状態なので URL には持たせない（`stores/location-hash.ts`）。
+ */
+export function useCharacterCreate(open: boolean, onClose: () => void): CharacterCreateModel {
   const dispatch = useSessionDispatch()
-  const character = useSessionSelector((session) => session.state.character)
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
-  const turnInProgress = useTurnRunning()
+  const dialogRef = useModalDialog(open)
+
   const [name, setName] = useState("")
-  const [portraits, setPortraits] = useState<HeldPortraits>(NO_PORTRAITS)
+  const [id, setId] = useState("")
+  const [portraitImage, setPortraitImage] = useState<string | undefined>(undefined)
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
   const [accent, setAccent] = useState(readAccentColor)
-  // 最後に送った名前。**作れたかどうかは一覧に出たかで見る**（`error` フレームは画面に
-  // 出していないので、成否の手がかりはこれだけ）。
-  const [sentName, setSentName] = useState<string | undefined>(undefined)
-  const backHref = screenHref("character")
+  const [chatAccent, setChatAccent] = useState(readAccentColor)
+  // 送った id。**作れたかどうかは一覧に出たかで見る**（`error` フレームは画面に出していないので、
+  // 成否の手がかりはこれだけ）。
+  const [sentId, setSentId] = useState<string | undefined>(undefined)
 
-  if (character === undefined) {
-    return { backHref, form: { kind: "waiting" } }
-  }
-
-  const taken = characterPacks.some((pack) => pack.name === name)
-  const filled = REQUIRED_EXPRESSIONS.every((expression) => portraits[expression] !== undefined)
-  const canSubmit = isCharacterPackName(name) && !taken && filled
-
-  /** 選ばれた画像を data URL にして持つ（送るのは「作る」を押したとき1回だけ）。 */
-  async function holdPortrait(
-    expression: RequiredExpression,
-    input: HTMLInputElement,
-  ): Promise<void> {
-    const file = input.files?.[0]
-    if (file === undefined) {
-      return
+  // 送った id が一覧に出たら作れている。一覧でそのパックを選んだ状態にして、呼び出し元へ
+  // 閉じたことを知らせる（切り替えはしない。`docs/screen-design.md` 13.6）。**下書きの掃除は
+  // ここでは行わない**（上の注記）。`selectPack`（URL）と `onClose`（呼び出し元の開閉）という
+  // React の外にある状態への書き込みなので `useEffect`
+  // （`docs/coding-standards.md`「React」の4類型の2つ目）。
+  useEffect(() => {
+    if (sentId !== undefined && characterPacks.some((pack) => pack.name === sentId)) {
+      selectPack(sentId)
+      onClose()
     }
+  }, [sentId, characterPacks, onClose])
 
+  // backdrop のクリックは `<dialog>` 自身が受け取る（中身は子要素が受け取る）。
+  const onDialogClick = useCallback(
+    (event: MouseEvent<HTMLDialogElement>): void => {
+      if (event.target === dialogRef.current) {
+        onClose()
+      }
+    },
+    [dialogRef, onClose],
+  )
+
+  async function holdPortraitFile(file: File): Promise<void> {
     const image = await readDataUrl(file)
     if (image !== undefined) {
-      setPortraits((held) => ({ ...held, [expression]: image }))
+      setPortraitImage(image)
     }
   }
 
+  const taken = id !== "" && characterPacks.some((pack) => pack.name === id)
+  const validFormat = isCharacterPackName(id)
+  const canSubmit = validFormat && !taken && portraitImage !== undefined
+
   function create(): void {
-    const defaultImage = portraits.default
-    if (!canSubmit || defaultImage === undefined) {
+    if (!canSubmit || portraitImage === undefined) {
       return
     }
 
-    // この画面の1つの欄はまだ id を打つだけ（表示名の欄はまだ無い）。**表示名は空で送り、
-    // 書き込む側に id へ落としてもらう**（`definitionWithName`）。雑談の差し色もまだ選ぶ口が
-    // 無いので、仕事の差し色と同じ値を送る（境界は両方 required だが、見た目は変えない。
-    // `docs/design.md` 7.1）。
     dispatch({
       type: "create-character",
-      id: name,
-      name: "",
-      portraits: { default: defaultImage },
+      id,
+      name,
+      portraits: { default: portraitImage },
       accent,
-      chatAccent: accent,
+      chatAccent,
     })
-    setSentName(name)
+    setSentId(id)
   }
 
-  /** 作ったパックへ切り替えて、キャラクター画面へ戻る（整える続きはそちらで行う）。 */
-  function switchTo(created: string): void {
-    dispatch({ type: "switch-character", name: created })
-    navigateTo("character")
-  }
-
-  const portraitFields = REQUIRED_EXPRESSIONS.map((expression): CreatePortraitFieldModel => ({
-    expression,
-    inputId: `character-create-portrait-${expression}`,
-    label: `${resolveExpressionLabel(character.expressions, expression)}の立ち絵`,
-    onPick: (input) => {
-      void holdPortrait(expression, input)
-    },
-  }))
+  const idNote: CreateIdNoteModel = taken
+    ? { kind: "taken", text: TAKEN_ID_NOTE }
+    : id !== "" && !validFormat
+      ? { kind: "invalid", text: INVALID_ID_NOTE }
+      : { kind: "hint", text: ID_HINT }
 
   return {
-    backHref,
+    ref: dialogRef,
+    onDialogClick,
     form: {
-      kind: "ready",
+      nameHint: NAME_HINT,
       name,
       onNameChange: setName,
-      portraitFields,
-      accent,
-      onAccentChange: setAccent,
-      note: createNote(name, taken, sentName, turnInProgress, switchTo),
+      id,
+      onIdChange: setId,
+      idNote,
+      portrait: {
+        image:
+          portraitImage === undefined ? { kind: "blank" } : { kind: "picked", url: portraitImage },
+        pickAriaLabel:
+          portraitImage === undefined
+            ? "いつもの顔の立ち絵を選ぶ"
+            : "いつもの顔の立ち絵を差し替える",
+        onPick: (input) => {
+          const file = input.files?.[0]
+          if (file !== undefined) {
+            void holdPortraitFile(file)
+          }
+        },
+        onDropFile: (file) => {
+          void holdPortraitFile(file)
+        },
+      },
+      workAccent: {
+        inputId: "character-create-accent-work",
+        label: "仕事",
+        sublabel: { kind: "none" },
+        ariaLabel: "仕事",
+        value: accent,
+        onChange: setAccent,
+      },
+      chatAccent: {
+        inputId: "character-create-accent-chat",
+        label: "雑談",
+        sublabel: { kind: "none" },
+        ariaLabel: "雑談",
+        value: chatAccent,
+        onChange: setChatAccent,
+      },
       canSubmit,
       onSubmit: create,
     },
   }
-}
-
-/** 名前の欄の下に出す一言を畳む。送った名前が一覧に出た ＝ サーバ側に書けた。 */
-function createNote(
-  name: string,
-  taken: boolean,
-  sentName: string | undefined,
-  turnInProgress: boolean,
-  switchTo: (created: string) => void,
-): CreateNoteModel {
-  if (sentName !== undefined && name === sentName && taken) {
-    return {
-      kind: "created",
-      text: CREATED_NOTE,
-      switchDisabled: turnInProgress,
-      switchTitle: turnInProgress ? SWITCH_BLOCKED_TITLE : undefined,
-      onSwitch: () => {
-        switchTo(sentName)
-      },
-    }
-  }
-  if (taken) {
-    return { kind: "message", text: TAKEN_NAME_NOTE }
-  }
-  return name !== "" && !isCharacterPackName(name)
-    ? { kind: "message", text: INVALID_NAME_NOTE }
-    : { kind: "none" }
 }

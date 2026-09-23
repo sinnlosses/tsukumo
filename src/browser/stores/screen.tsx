@@ -1,5 +1,5 @@
 // いま出している画面（会話 / キャラクター / 作る / トークン消費）を `location.hash` から読む
-// （`docs/screen-design.md` 13.6 / 6.2。**ルーターのライブラリは入れない** — 画面は4つで、
+// （`docs/screen-design.md` 13.6 / 6.2。**ルーターのライブラリは入れない** — 画面は3つで、
 // 分岐は hook 1つで足りる）。
 //
 // **Context ではなく `useSyncExternalStore`** にしてあるのは、正典が React の外
@@ -59,4 +59,14 @@ export function usePackSelection(): PackSelection {
 export function usePackHref(): (pack: string) => string {
   const turn = useHashRoute((route) => route.turn)
   return (pack) => formatHash({ screen: "character", turn, pack: { kind: "named", name: pack } })
+}
+
+/**
+ * 一覧でそのパックを選んだ状態にする（キャラクター画面の `pack` を書き換える）。作るダイアログで
+ * 作れたパックを、閉じたあと一覧で選ぶために呼ぶ（切り替えはしない。`docs/screen-design.md` 13.6）。
+ * リンクではなく呼び出し（`navigateTo` と同じ形）なのは、作った直後という**コマンドを送った
+ * あとの合図**で移すため。
+ */
+export function selectPack(pack: string): void {
+  writeHashRoute({ ...readHashRoute(), screen: "character", pack: { kind: "named", name: pack } })
 }

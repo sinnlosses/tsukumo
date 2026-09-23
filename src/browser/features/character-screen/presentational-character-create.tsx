@@ -1,93 +1,103 @@
-// **新しいキャラクターパックを作る画面**（`#character/new`。`docs/design.md` 7.1 / `docs/screen-design.md` 13.6）の
-// **器だけ**（<PresentationalCharacterCreate>）。左上の「← キャラクターへ戻る」と、名前・必須の
-// 立ち絵・差し色の口、名前の欄の下の一言（作れたら「このキャラクターに切り替える」を添える）を
-// 置く。フックも算出も持たず、`hooks/use-character-create.ts` が畳んだ値をそのまま置く
+// **新しいキャラクターパックを作るダイアログ**（`docs/design.md` 7.1 / `docs/screen-design.md` 13.6）の
+// **器だけ**（<PresentationalCharacterCreate>）。見出し・立ち絵の口（`components/portrait-drop.tsx`）・
+// 名前と id と画面の差し色2つ（`components/accent-swatch.tsx`）・「やめる」「作る」を置く。
+// フックも算出も持たず、`hooks/use-character-create.ts` が畳んだ値をそのまま置く
 // （docs/design.md 2章「機能の中を分ける」）。
+//
+// **`<dialog>` は top layer に出る**ので、キャラクター画面の `overflow` には切り取られない。
+// Esc で閉じるのはブラウザのモーダル挙動に任せ、閉じたときの後始末（下書きを空へ戻す）は
+// `<dialog onClose={onClose}>` を通す（`onClose` はフックを介さず呼び出し側から直接渡る。
+// `character-create.tsx`）。
 
 import { type ReactElement } from "react"
 
 import styles from "./character-screen.module.css"
+import { AccentSwatch } from "./components/accent-swatch.tsx"
+import { PortraitDrop } from "./components/portrait-drop.tsx"
 import { type CharacterCreateModel } from "./hooks/use-character-create.ts"
 
-/** `<input type="file">` に出す受け付ける種類（`components/portrait-card.tsx` と同じ3つ）。 */
-const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
+export type PresentationalCharacterCreateProps = CharacterCreateModel & {
+  readonly onClose: () => void
+}
 
-export type PresentationalCharacterCreateProps = CharacterCreateModel
-
-export function PresentationalCharacterCreate(
-  props: PresentationalCharacterCreateProps,
-): ReactElement {
-  const { form } = props
-
+/** **props はここだけ分解して受ける**（`presentational-task-board.tsx` と同じ理由。`ref` を
+ * `props.ref` の形で描画中に読むと react(refs) が落ちるため）。 */
+export function PresentationalCharacterCreate({
+  ref,
+  onDialogClick,
+  onClose,
+  form,
+}: PresentationalCharacterCreateProps): ReactElement {
   return (
-    <div className={styles["character-screen"]}>
-      <div className={styles["character-screen-bar"]}>
-        <a className={styles["character-screen-back"]} href={props.backHref}>
-          ← キャラクターへ戻る
-        </a>
-      </div>
-      {form.kind === "waiting" ? null : (
-        <fieldset className={styles["character-screen-fieldset"]}>
-          <legend>新しいキャラクター</legend>
-          <div className={styles["character-screen-field"]}>
-            <label htmlFor="character-create-name">名前</label>
-            <input
-              id="character-create-name"
-              type="text"
-              className={styles["character-screen-create-name"]}
-              value={form.name}
-              onChange={(event) => form.onNameChange(event.target.value)}
-            />
-          </div>
-          {form.portraitFields.map((field) => (
-            <div className={styles["character-screen-field"]} key={field.expression}>
-              <label htmlFor={field.inputId}>{field.label}</label>
+    <dialog
+      ref={ref}
+      className={styles["character-create-dialog"]}
+      aria-label="新しいキャラクターを作る"
+      onClose={onClose}
+      onClick={onDialogClick}
+    >
+      <div className={styles["character-create-body"]}>
+        <h2 className={styles["character-create-heading"]}>新しいキャラクター</h2>
+        <div className={styles["character-create-grid"]}>
+          <PortraitDrop drop={form.portrait} />
+          <div className={styles["character-create-fields"]}>
+            <div className={styles["character-create-field"]}>
+              <label className={styles["character-create-label"]} htmlFor="character-create-name">
+                名前
+              </label>
               <input
-                id={field.inputId}
-                type="file"
-                className={styles["character-screen-create-file"]}
-                accept={PORTRAIT_FILE_ACCEPT}
-                onChange={(event) => {
-                  field.onPick(event.currentTarget)
-                }}
+                id="character-create-name"
+                type="text"
+                className={styles["character-create-input"]}
+                value={form.name}
+                onChange={(event) => form.onNameChange(event.target.value)}
               />
+              <span className={styles["character-create-hint"]}>{form.nameHint}</span>
             </div>
-          ))}
-          <div className={styles["character-screen-field"]}>
-            <label htmlFor="character-create-accent">差し色</label>
-            <input
-              id="character-create-accent"
-              type="color"
-              value={form.accent}
-              onChange={(event) => form.onAccentChange(event.target.value)}
-            />
+            <div className={styles["character-create-field"]}>
+              <label className={styles["character-create-label"]} htmlFor="character-create-id">
+                id
+              </label>
+              <input
+                id="character-create-id"
+                type="text"
+                className={`${styles["character-create-input"]} ${styles["character-create-input-mono"]}`}
+                value={form.id}
+                onChange={(event) => form.onIdChange(event.target.value)}
+              />
+              {form.idNote.kind === "hint" ? (
+                <span className={styles["character-create-hint"]}>{form.idNote.text}</span>
+              ) : (
+                <p className={styles["character-screen-note"]}>{form.idNote.text}</p>
+              )}
+            </div>
+            <div className={styles["character-create-field"]}>
+              <span className={styles["character-create-label"]}>画面の差し色</span>
+              <div className={styles["character-swatches-screen"]}>
+                <AccentSwatch swatch={form.workAccent} disabled={false} />
+                <AccentSwatch swatch={form.chatAccent} disabled={false} />
+              </div>
+            </div>
           </div>
-          {form.note.kind === "none" ? null : (
-            <p className={styles["character-screen-note"]}>
-              {form.note.text}
-              {form.note.kind === "created" ? (
-                <button
-                  type="button"
-                  className={styles["character-screen-switch"]}
-                  disabled={form.note.switchDisabled}
-                  title={form.note.switchTitle}
-                  onClick={form.note.onSwitch}
-                >
-                  このキャラクターに切り替える
-                </button>
-              ) : null}
-            </p>
-          )}
+        </div>
+        <div className={styles["character-create-footer"]}>
+          <span className={styles["character-create-footer-hint"]}>
+            背景と立ち絵の差し色は、作ったあとに設定できます
+          </span>
+          <div className={styles["character-create-footer-spacer"]} />
+          <button type="button" className={styles["character-button"]} onClick={onClose}>
+            やめる
+          </button>
           <button
             type="button"
-            className={styles["character-screen-create-submit"]}
+            className={styles["character-create-submit"]}
             disabled={!form.canSubmit}
             onClick={form.onSubmit}
           >
             作る
           </button>
-        </fieldset>
-      )}
-    </div>
+        </div>
+      </div>
+    </dialog>
   )
 }

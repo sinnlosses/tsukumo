@@ -78,13 +78,6 @@ describe("ScreenNav", () => {
     )
   })
 
-  // 作る画面はキャラクター画面から入る一時的な画面なので、帯には並べない（13.9）。
-  it("作る画面の口は帯に出ない", () => {
-    renderScreenNav()
-
-    expect(document.querySelector('.screen-nav a[href="#character/new"]')).toBeNull()
-  })
-
   // **色だけで伝えない**ので、いまの画面の口には地と字の濃さを変える class が付く（13.9）。
   it("いま出している画面の口に is-active が付く", () => {
     window.location.hash = "#token-usage"

@@ -50,9 +50,9 @@
     "dependencies": ["T-493", "T-494"],
     "summary": "新しく作るを画面の上に重ねるダイアログにし、id・名前・雑談の差し色を受け取る",
     "task": "## 背景\n\nいまの作る口は別の画面（`#character/new`。`src/browser/features/character-screen/presentational-character-create.tsx` と `hooks/use-character-create.ts`）で、名前・立ち絵・差し色1色を縦に並べている。見本 `docs/history/mockup/character-create-2026-09-23.html`（撮影 `character-create-2026-09-23.png`）では、キャラクター画面の上に重なるダイアログになる。\n\n見本の形: 幅 720px、上から 110px。見出し「新しいキャラクター」（明朝）。左に点線の大きな枠「いつもの顔の立ち絵 / 画像をドロップ、または押して選ぶ / ほかの表情はあとから足せます」、右に「名前」（説明: 画面や吹き出しに出る名前）・「id」（等幅。説明: 英数字とハイフン。保存するフォルダの名前に使います）・「画面の差し色」（仕事・雑談の2つ）。下の区切り線の下に「背景と立ち絵の差し色は、作ったあとに設定できます」と「やめる」「作る」。\n\n## 決まっていること（蒸し返さない）\n\n- 作っても自動では切り替えない（`docs/design.md` 7.1）。作れたらダイアログを閉じ、一覧で作ったパックを選んだ状態にする（切り替えは T-494 の詳細の「このキャラクターに切り替える」で行う）\n- id の説明文は今の規則（`isCharacterPackName`）に合う文面に直す（見本の「英数字とハイフン」は規則より狭い）\n\n## やること\n\n1. ダイアログを作り、キャラクター画面の「新しく作る」から開く。`#character/new` の画面は撤去する（再読み込みで開いたままにしたいなら URL に持たせてよい）\n2. id がぶつかる・形が合わないときの一言は今の `INVALID_NAME_NOTE` / `TAKEN_NAME_NOTE` を id の欄の下に出す\n3. `docs/screen-design.md` 13.6 の作る画面の記述を書き直す\n\n## 完了条件\n\n- ダイアログから作ると T-493 の形のコマンドが送られ、閉じて一覧で新しいパックが選ばれる（部品のテスト）\n- 「やめる」と Esc で閉じる（部品のテスト）\n- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか、ダイアログを開いた状態も含む）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（2023 pass / 0 fail, 155ファイル）。部品のテストで作成→create-character 送信→一覧に現れたら閉じて #character?pack=<id> が選ばれること、やめる・Esc で閉じることを確認。#character/new の画面は撤去。\n目視: build 後 port 4871・別ホームで Playwright。1440px・390px ともダイアログの開閉どちらでも横スクロール無し。1440 は見本とほぼ同じ配置、390 は1列に畳まれダイアログ内の縦スクロールで作る/やめるに届く。\n実ブラウザで id=fictional-check を作ると自動で閉じ一覧の行が選択状態になり、使用中は切り替わらなかった。Esc は実ブラウザの <dialog> で閉じた。"
   },
   {
     "id": "T-496",

@@ -114,8 +114,7 @@ export type ScreenNavView = {
   readonly ref: RefObject<HTMLElement | null>
 }
 
-// 帯に出す画面と、その字。**作る画面（`#character/new`）は入れない**（13.9）。
-// 名前は用語集の語のまま（docs/glossary.md）。
+// 帯に出す画面と、その字。名前は用語集の語のまま（docs/glossary.md）。
 const NAV_SCREENS = [
   { screen: "conversation", label: "会話" },
   { screen: "character", label: "キャラクター" },

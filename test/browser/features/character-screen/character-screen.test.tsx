@@ -8,7 +8,7 @@ import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry, shownPortraits } from "../../../fixture/character.ts"
-import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
+import { type CommandSpy, putState, sessionStoreWith } from "../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック2つ（docs/coding-standards.md「会話内容の扱い」）。
 // 使用中の `fictional` と、使用中ではない `other`。立ち絵は**ラスタ**にしてある（`<Portrait>` は
@@ -107,9 +107,7 @@ describe("CharacterScreen", () => {
 
     const list = screen.getByRole("navigation", { name: "キャラクター一覧" })
     expect(list.querySelector(".character-list-count")?.textContent).toBe("2")
-    expect(screen.getByRole("link", { name: "新しく作る" }).getAttribute("href")).toBe(
-      "#character/new",
-    )
+    expect(screen.getByRole("button", { name: "新しく作る" })).toBeDefined()
     // 使用中の行は表情の枚数と「使用中」を添え、選ばれている（aria-current）。
     const inUseRow = screen.getByRole("link", { name: /架空の精霊/ })
     expect(inUseRow.textContent).toContain("使用中")
@@ -122,6 +120,64 @@ describe("CharacterScreen", () => {
     expect(screen.getByText("架空のひとこと")).toBeDefined()
     // 使用中のパックには切り替える口を出さない。
     expect(screen.queryByRole("button", { name: /このキャラクターに切り替える/ })).toBeNull()
+  })
+
+  // 完了条件: ダイアログから作ると T-493 の形のコマンドが送られ、閉じて一覧で新しいパックが
+  // 選ばれる。
+  it("新しく作るはダイアログを開き、作れたら閉じて一覧でそのパックを選ぶ", async () => {
+    const calls: unknown[] = []
+    const store = sessionStoreWith(
+      { ...INITIAL_SESSION_STATE, character: FIXTURE_CHARACTER, characterPacks: FIXTURE_PACKS },
+      (command) => calls.push(command),
+    )
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <SessionStoreContext.Provider value={store}>
+          <CharacterScreen />
+        </SessionStoreContext.Provider>
+      </QueryClientProvider>,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "新しく作る" }))
+    expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
+
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-3" } })
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
+        target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
+      })
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "作る" }))
+    expect(calls).toEqual([
+      {
+        type: "create-character",
+        id: "fictional-3",
+        name: "",
+        portraits: {
+          default: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
+        },
+        accent: "#f2b0a0",
+        chatAccent: "#f2b0a0",
+      },
+    ])
+    // まだ一覧に出ていないので、ダイアログは開いたまま。
+    expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
+
+    // 選択肢の増えた character-changed（`hello` で丸ごと入れ替え）が届いたあと。
+    act(() => {
+      putState(store, {
+        ...INITIAL_SESSION_STATE,
+        character: FIXTURE_CHARACTER,
+        characterPacks: [...FIXTURE_PACKS, characterPackEntry("fictional-3", "fictional-3")],
+      })
+    })
+
+    expect(screen.queryByRole("heading", { name: "新しいキャラクター" })).toBeNull()
+    expect(screen.getByRole("link", { name: /fictional-3/ }).getAttribute("aria-current")).toBe(
+      "page",
+    )
   })
 
   // 完了条件: 一覧で別のパックを選ぶと右側がそのパックの中身に替わり、そこで差し替えた立ち絵が
@@ -215,7 +271,7 @@ describe("CharacterScreen", () => {
   it("キャラクターが届く前でも作る口を出す", () => {
     renderCharacterScreen({ character: undefined, characterPacks: [] })
 
-    expect(screen.getByRole("link", { name: "新しく作る" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "新しく作る" })).toBeDefined()
     expect(document.querySelector(".character-profile-name")).toBeNull()
   })
 })

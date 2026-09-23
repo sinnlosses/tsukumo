@@ -10,11 +10,6 @@ describe("parseHash", () => {
     expect(parseHash("#")).toEqual({ screen: "conversation", turn: "newest", pack: IN_USE })
     expect(parseHash("#?turn=3")).toEqual({ screen: "conversation", turn: 3, pack: IN_USE })
     expect(parseHash("#character")).toEqual({ screen: "character", turn: "newest", pack: IN_USE })
-    expect(parseHash("#character/new?turn=0")).toEqual({
-      screen: "character-create",
-      turn: 0,
-      pack: IN_USE,
-    })
     expect(parseHash("#token-usage?turn=-1")).toEqual({
       screen: "token-usage",
       turn: -1,
@@ -49,11 +44,6 @@ describe("parseHash", () => {
       turn: "newest",
       pack: IN_USE,
     })
-    expect(parseHash("#character/new?pack=other")).toEqual({
-      screen: "character-create",
-      turn: "newest",
-      pack: IN_USE,
-    })
   })
 })
 
@@ -65,12 +55,10 @@ describe("formatHash", () => {
 
   it("留めたターンは turn に書く", () => {
     expect(formatHash({ screen: "conversation", turn: 3, pack: IN_USE })).toBe("#?turn=3")
-    expect(formatHash({ screen: "character-create", turn: 3, pack: IN_USE })).toBe(
-      "#character/new?turn=3",
-    )
+    expect(formatHash({ screen: "character", turn: 3, pack: IN_USE })).toBe("#character?turn=3")
   })
 
-  // `#character/<名前>` にしないのは、作る画面の `#character/new` とぶつかるため。
+  // `#character/<名前>` にせず `pack` に持つのは、`turn` と同じく画面の上に乗る付随情報だから。
   it("選んでいるパックは pack に書き、キャラクター画面以外では落とす", () => {
     const named = { kind: "named", name: "new" } as const
     expect(formatHash({ screen: "character", turn: 3, pack: named })).toBe(

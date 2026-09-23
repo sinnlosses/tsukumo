@@ -4,6 +4,7 @@ import { act, cleanup, renderHook } from "@testing-library/react"
 
 import {
   navigateTo,
+  selectPack,
   usePackHref,
   usePackSelection,
   useScreen,
@@ -35,12 +36,9 @@ describe("useScreen", () => {
     expect(result.current).toBe("conversation")
   })
 
-  it("#character はキャラクター画面、#character/new は作る画面", () => {
+  it("#character はキャラクター画面", () => {
     window.location.hash = "#character"
     expect(renderHook(() => useScreen()).result.current).toBe("character")
-
-    window.location.hash = "#character/new"
-    expect(renderHook(() => useScreen()).result.current).toBe("character-create")
   })
 
   it("知らない hash は会話の画面に落ちる", () => {
@@ -64,9 +62,6 @@ describe("useScreen", () => {
     goToHash("#character")
     expect(result.current).toBe("character")
 
-    goToHash("#character/new")
-    expect(result.current).toBe("character-create")
-
     goToHash("")
     expect(result.current).toBe("conversation")
   })
@@ -87,9 +82,6 @@ describe("navigateTo", () => {
     navigateTo("character")
     expect(window.location.hash).toBe("#character")
 
-    navigateTo("character-create")
-    expect(window.location.hash).toBe("#character/new")
-
     navigateTo("conversation")
     expect(window.location.hash).toBe("")
   })
@@ -102,7 +94,6 @@ describe("useScreenHref", () => {
 
     expect(result.current("conversation")).toBe("#")
     expect(result.current("character")).toBe("#character")
-    expect(result.current("character-create")).toBe("#character/new")
   })
 
   it("見ているターンを hash に残したまま画面を移す href になる", () => {
@@ -141,5 +132,25 @@ describe("usePackHref", () => {
     const { result } = renderHook(() => useScreenHref())
 
     expect(result.current("character")).toBe("#character")
+  })
+})
+
+describe("selectPack", () => {
+  // 作るダイアログで作れたパックを、閉じたあと一覧で選んだ状態にするために呼ぶ
+  // （docs/screen-design.md 13.6）。
+  it("キャラクター画面でそのパックを選んだ状態に書き換える", () => {
+    window.location.hash = "#character?turn=3"
+
+    selectPack("fictional-2")
+
+    expect(window.location.hash).toBe("#character?pack=fictional-2&turn=3")
+  })
+
+  it("会話の画面にいても、キャラクター画面へ移してパックを選ぶ", () => {
+    window.location.hash = "#?turn=3"
+
+    selectPack("fictional-2")
+
+    expect(window.location.hash).toBe("#character?pack=fictional-2&turn=3")
   })
 })
