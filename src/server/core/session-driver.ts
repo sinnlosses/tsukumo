@@ -18,8 +18,8 @@ import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
 import { type ExpressionChoice } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
-import { type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
+import { type ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
  * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口（`docs/design.md` 7.1）。
@@ -298,11 +298,12 @@ export type SessionDriver = {
   /**
    * 依頼を1つ送る（ストリーミング入力への追加）。`request` イベントも同時に流れる。
    *
-   * `images` は添えた画像の**原寸と控えの対**（`docs/requirements.md` 4.10）。原寸は
-   * モデルへ渡すだけ、控えは `request` イベントに載せる——**分けるのは駆動の側**で、
-   * ここから先へ原寸は出ない。
+   * `images` は添えた画像の**原寸と控えの対に、棚が振った id を添えたもの**
+   * （`docs/requirements.md` 4.10。棚に置くのは呼び出し側 = `session-manager.ts`）。原寸は
+   * モデルへ渡すだけ、控えと id は `request` イベントに載せる——**分けるのは駆動の側**で
+   * （`recordedPromptImages`）、ここから先の記録へ原寸は出ない。
    */
-  readonly prompt: (text: string, images: readonly PromptImage[]) => void
+  readonly prompt: (text: string, images: readonly ShelvedPromptImage[]) => void
   /**
    * 依頼を1つ送るが、**記録に残さない**（`docs/design.md` 13.7「キャラクターから話しかけて
    * もらう」）。流れるのは `request` ではなく `turn-started` なので、**送った文面は画面のログにも

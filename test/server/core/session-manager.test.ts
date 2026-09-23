@@ -3,6 +3,12 @@ import { describe, expect, it } from "bun:test"
 import { type CharacterSelection } from "../../../src/server/core/character-selection.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../src/server/core/chat-nudge.ts"
 import {
+  createPromptImageShelf,
+  type PromptImageShelf,
+  recordedPromptImages,
+  type ShelvedPromptImage,
+} from "../../../src/server/core/prompt-image-shelf.ts"
+import {
   type ChatArchive,
   type ChatArchiveEntry,
   type SessionDriver,
@@ -20,9 +26,13 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../src/shared/frame.ts"
+import { type PromptImage } from "../../../src/shared/prompt-image.ts"
 import { type SessionDefault } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  MAX_SESSION_STATE_TURNS,
+} from "../../../src/shared/session-state.ts"
 import {
   type ModelTokenUsage,
   type ScopeUsage,
@@ -127,6 +137,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     chatArchive: NOOP_CHAT_ARCHIVE,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+    promptImageShelf: createPromptImageShelf(),
   })
   manager.create({
     rememberSessionDefault: (sessionDefault) => {
@@ -275,6 +286,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
       rememberSessionDefault: (sessionDefault) => ({
@@ -376,6 +388,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
       rememberSessionDefault: (sessionDefault) => ({
@@ -450,6 +463,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
       rememberSessionDefault: (sessionDefault) => ({
@@ -490,6 +504,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
       rememberSessionDefault: (sessionDefault) => ({
@@ -543,6 +558,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
       rememberSessionDefault: (sessionDefault) => ({
@@ -662,6 +678,7 @@ describe("createSessionManager", () => {
         chatCompactThresholdBytes: thresholdBytes,
         chatArchive: archive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        promptImageShelf: createPromptImageShelf(),
       })
       manager.create({
         rememberSessionDefault: (sessionDefault) => ({
@@ -925,6 +942,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
       rememberSessionDefault: (sessionDefault) => ({
@@ -965,6 +983,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     const stub = createStubDriver()
     manager.create({
@@ -997,6 +1016,7 @@ describe("createSessionManager", () => {
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
     })
     manager.create({
       rememberSessionDefault: (sessionDefault) => ({
@@ -1075,6 +1095,7 @@ describe("createSessionManager", () => {
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        promptImageShelf: createPromptImageShelf(),
       })
       manager.create({
         rememberSessionDefault: (sessionDefault) => ({
@@ -1124,7 +1145,10 @@ describe("createSessionManager", () => {
       stub.emit({
         kind: "request",
         text: "架空の依頼",
-        images: ["data:image/png;base64,AAAA", "data:image/png;base64,BBBB"],
+        images: [
+          { id: "fictional-id-a", thumbnail: "data:image/png;base64,AAAA" },
+          { id: "fictional-id-b", thumbnail: "data:image/png;base64,BBBB" },
+        ],
       })
       await waitForBatch()
 
@@ -1296,6 +1320,7 @@ describe("createSessionManager", () => {
           },
           readRange: () => [],
         },
+        promptImageShelf: createPromptImageShelf(),
       })
       manager.create({
         rememberSessionDefault: (sessionDefault) => ({
@@ -1583,5 +1608,124 @@ describe("createSessionManager（新しいセッションの既定）", () => {
 
     expect(remembered).toEqual([])
     expect(stub.calls).toEqual(["setModel:haiku", "setPermissionMode:bypassPermissions"])
+  })
+})
+
+describe("依頼に添えた画像の棚", () => {
+  // 原寸は**手で組んだ大きめの架空の data URL**（実物の画像は使わない）。hello に載っていれば
+  // 長さで分かるように、控えより桁違いに長くしてある。
+  function fullImage(label: string): PromptImage {
+    return {
+      full: `data:image/png;base64,${label.repeat(4096)}`,
+      thumbnail: `data:image/png;base64,${label}`,
+    }
+  }
+
+  /**
+   * 本物の駆動と同じく、`prompt` を受けたら控えと id だけを `request` として流す駆動。
+   * 受け取った画像（原寸と id つき）も覚える。
+   */
+  function startManagerWithShelf() {
+    const shelf: PromptImageShelf = createPromptImageShelf()
+    const prompted: ShelvedPromptImage[][] = []
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      promptImageShelf: shelf,
+    })
+    manager.create({
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
+      sessionId: SESSION_ID,
+      startDriver: (onEvent) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        return Promise.resolve({
+          ...stub.driver,
+          prompt: (text: string, images: readonly ShelvedPromptImage[]) => {
+            prompted.push([...images])
+            onEvent({ kind: "request", text, images: recordedPromptImages(images) })
+            onEvent({ kind: "turn-finished", status: "success" })
+          },
+        })
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+    })
+    const prompt = (images: readonly PromptImage[]) =>
+      manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c", text: "架空の依頼", images })
+    return { manager, shelf, prompted, prompt }
+  }
+
+  function helloOf(frames: readonly ServerFrame[]): string {
+    const hello = frames.find((frame) => frame.type === "hello")
+    return JSON.stringify(hello)
+  }
+
+  it("prompt の原寸を棚に置き、振った id を駆動へ渡す（棚から同じ原寸が引ける）", async () => {
+    const { shelf, prompted, prompt } = startManagerWithShelf()
+
+    await prompt([fullImage("A")])
+
+    const [shelved] = prompted[0] ?? []
+    expect(shelved?.full).toBe(fullImage("A").full)
+    expect(shelf.find(shelved?.id ?? "")).toBe(fullImage("A").full)
+  })
+
+  it("hello には控えと id だけが載り、原寸の枚数に比例して大きくならない", async () => {
+    const one = startManagerWithShelf()
+    await one.prompt([fullImage("A")])
+    const two = startManagerWithShelf()
+    await two.prompt([fullImage("A"), fullImage("B")])
+    await two.prompt([fullImage("C"), fullImage("D")])
+
+    const oneFrames: ServerFrame[] = []
+    one.manager.subscribe(SESSION_ID, (frame) => oneFrames.push(frame))
+    const twoFrames: ServerFrame[] = []
+    two.manager.subscribe(SESSION_ID, (frame) => twoFrames.push(frame))
+
+    const oneHello = helloOf(oneFrames)
+    const twoHello = helloOf(twoFrames)
+    expect(oneHello).not.toContain(fullImage("A").full)
+    expect(twoHello).not.toContain(fullImage("D").full)
+    expect(twoHello).toContain(fullImage("D").thumbnail)
+    // 原寸（1枚 16 KiB 強）が1枚でも載れば、この差には収まらない。
+    expect(twoHello.length - oneHello.length).toBeLessThan(fullImage("A").full.length)
+  })
+
+  it("記録の窓から依頼が落ちたら、その原寸を棚から捨てる", async () => {
+    const { shelf, prompted, prompt } = startManagerWithShelf()
+
+    await prompt([fullImage("old")])
+    const oldId = prompted[0]?.[0]?.id ?? ""
+    expect(shelf.find(oldId)).toBeDefined()
+
+    // 仕事の窓は MAX_SESSION_STATE_TURNS.work ターン。画像の無い依頼で押し出す。
+    for (let turn = 0; turn < MAX_SESSION_STATE_TURNS.work; turn += 1) {
+      await prompt([])
+    }
+
+    expect(shelf.find(oldId)).toBeUndefined()
+  })
+
+  it("起こし直して記録が空に戻ったら、それまでの原寸を棚から捨てる", async () => {
+    const { manager, shelf, prompted, prompt } = startManagerWithShelf()
+
+    await prompt([fullImage("A")])
+    const id = prompted[0]?.[0]?.id ?? ""
+    expect(shelf.find(id)).toBeDefined()
+
+    await manager.dispatch(SESSION_ID, {
+      type: "switch-character",
+      commandId: "c-switch",
+      name: "fictional",
+    })
+
+    expect(shelf.find(id)).toBeUndefined()
   })
 })

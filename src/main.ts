@@ -21,6 +21,7 @@ import { createTokenUsageLog } from "./server/adapter/token-usage-log.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { type Host } from "./server/core/host.ts"
 import { resolveViewPort } from "./server/core/port-resolution.ts"
+import { createPromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import { startSession } from "./session-start.ts"
 import { startViewDelivery } from "./view-delivery.ts"
 
@@ -68,12 +69,16 @@ export async function run(config: Config): Promise<number> {
   // トークン消費の記録の口は**1つをここで作って両側へ渡す**（書くのはセッション、読むのは
   // 分析の画面へ配る側）。置き場（`~/.tsukumo/token-usage/`）を知っているファイルを増やさない。
   const tokenUsageLog = createTokenUsageLog()
+  // 依頼に添えた画像の原寸の棚も**1つをここで作って両側へ渡す**（置く・捨てるのはセッション、
+  // 引いて配るのはビューの側）。メモリにだけ置く（ディスクには書かない）。
+  const promptImageShelf = createPromptImageShelf()
 
   const view = await startViewDelivery({
     portResolution,
     bundle: built.bundle,
     character,
     tokenUsageLog,
+    promptImageShelf,
     watchSource: config.watchUi,
   })
   if (!view.ok) {
@@ -89,6 +94,7 @@ export async function run(config: Config): Promise<number> {
     character,
     fakeSession,
     tokenUsageLog,
+    promptImageShelf,
     viewPort: view.port,
   })
   view.connect(session)
