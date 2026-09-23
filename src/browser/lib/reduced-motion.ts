@@ -2,7 +2,7 @@
 //
 // **CSS の規則だけでは足りない**（`styles/theme.css` の `@media (prefers-reduced-motion: reduce)`
 // は CSS のアニメーションとトランジションにしか効かない）ので、**時間で見せ方を進める演出は
-// ここを自分で見る**（レポートを書き上げる `features/main-view/report-reveal.ts`、
+// ここを自分で見る**（レポートを書き上げる `features/main-view/hooks/use-report-reveal.ts`、
 // 雑談のセリフが育つ `features/chat-view/hooks/use-speech-growth.ts`）。
 
 /** 利用者が「動きを減らす」を選んでいるか。 */

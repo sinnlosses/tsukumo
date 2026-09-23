@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 import { type ReactElement } from "react"
 
-import { useReportReveal } from "../../../../src/browser/features/main-view/report-reveal.ts"
+import { useReportReveal } from "../../../../src/browser/features/main-view/hooks/use-report-reveal.ts"
 import { saveRevealSpeed } from "../../../../src/browser/lib/reveal-speed.ts"
 import {
   BRUSH_ORIGIN_ATTRIBUTE,
@@ -89,7 +89,7 @@ const ORIGIN_BOX = [0, 50, 400, 600] as const
 /**
  * happy-dom はレイアウトを持たない（どの矩形も 0）ので、**筆先の居場所を見る回だけ**測れる値に
  * 差し替える。図の塊（`.chart-block`）は行ではなく box をそのまま1行として測られる
- * （`report-reveal.ts` の `lineBoxesOf`）ので、**文字の行を作らずに行を並べられる**。
+ * （`reveal-measure.ts` の `lineBoxesOf`）ので、**文字の行を作らずに行を並べられる**。
  */
 function measureBoxes(): () => void {
   const original = Element.prototype.getBoundingClientRect
