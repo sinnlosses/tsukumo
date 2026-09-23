@@ -2,8 +2,8 @@
 // モードで2つに分かれる** — 仕事のときは下端の帯（`session-info.tsx`。ラベル「キャラクター」の
 // 真下）、雑談のときはプロフィールの札の「変える」（`profile-card.tsx`。見た目のボタンの上に
 // 透明にして重ねる。docs/design.md 13.7「雑談のときのサイドバー」）。**どちらでも振る舞いは同じ**
-// なので、選択肢・値・塞ぐ条件・送るコマンドをここに1つだけ持ち、見た目（`className`）と名前
-// （`ariaLabel`）だけを置く側が渡す（セッションの行の `session-switch.tsx` と対）。
+// なので、選択肢・値・塞ぐ条件・送るコマンドをここに1つだけ持ち、見た目（`frameClassName` /
+// `className`）と名前（`ariaLabel`）だけを置く側が渡す（セッションの行の `session-switch.tsx` と対）。
 //
 // **次に届く `session-info` で選択が上書きされる**（サーバ側の値が正になる）。**選択肢が1つでも
 // 出す**（docs/design.md 7章）。パックの一覧がまだ届いていなければ何も出さない。
@@ -22,6 +22,7 @@ const CHARACTER_SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 export type CharacterSwitchProps = {
   readonly id: string
   readonly ariaLabel: string
+  readonly frameClassName: string
   readonly className: string
 }
 
@@ -39,6 +40,7 @@ export function CharacterSwitch(props: CharacterSwitchProps): ReactElement | nul
     <Select
       id={props.id}
       ariaLabel={props.ariaLabel}
+      frameClassName={props.frameClassName}
       className={props.className}
       value={resolveCharacterPack(characterPacks, currentPackName)}
       disabled={turnInProgress}

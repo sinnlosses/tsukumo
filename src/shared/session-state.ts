@@ -17,6 +17,7 @@ import { commandCandidates } from "./command-suggestion.ts"
 import { isModelAlias } from "./command.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
+import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
@@ -72,8 +73,9 @@ export type RecordTime =
  */
 export type SessionRecord =
   /**
-   * 利用者の依頼。`images` は添えた画像の**控え**だけ（`docs/requirements.md` 4.10）。
-   * **原寸は記録に入らない**ので、ここから拡大して見る道は無い。
+   * 利用者の依頼。`images` は添えた画像の**控えと、棚の原寸を指す id の組**
+   * （`docs/requirements.md` 4.10）。**原寸は記録に入らない**（`hello` に載せない）。拡大して
+   * 見るときは id で棚から取りに行く（`src/shared/prompt-image.ts` の `promptImagePath`）。
    *
    * `turnId` は**そのターンの通し番号**（{@link SessionState.nextTurnId}）。窓から古い記録が
    * 落ちても番号は振り直されないので、**同じターンはセッションが続くかぎり同じ番号**になる。
@@ -82,7 +84,7 @@ export type SessionRecord =
       readonly kind: "request"
       readonly turnId: number
       readonly text: string
-      readonly images: readonly string[]
+      readonly images: readonly RecordedPromptImage[]
       readonly time: RecordTime
     }
   | { readonly kind: "detail"; readonly markdown: string }
@@ -295,6 +297,15 @@ export type SessionState = {
    * `chat-mode-changed` と同じくサーバから流れ直す（届くまでは同梱の既定）。
    */
   readonly sessionDefault: SessionDefault
+  /**
+   * 契約プラン（`docs/glossary.md`「プラン」）。トークン消費の画面の題の右の札に出す。
+   *
+   * **源は `plan` だけ**（駆動が起動直後に1回だけ取りに行く。`src/server/adapter/sdk-driver.ts`）。
+   * まだ届いていない・取れなかった（`accountInfo()` が落ちた・`subscriptionType` が無い）の
+   * どちらも同じ undefined——どちらだったかを画面は区別しない（何も出さないだけ）ので、
+   * 型でも分けない。
+   */
+  readonly plan: string | undefined
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -318,6 +329,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   lastToolFailureAt: undefined,
   chatMode: false,
   sessionDefault: BUILTIN_SESSION_DEFAULT,
+  plan: undefined,
 }
 
 /**
@@ -346,6 +358,8 @@ export function applySessionEvent(
       }
     case "command-descriptions":
       return { ...state, commandDescriptions: event.descriptions }
+    case "plan":
+      return { ...state, plan: event.plan }
     case "model-changed":
       // **`MODEL_ALIASES` に完全一致するときだけ先回りで更新する**（`/model best` のような
       // tsukumo が知らない値では状態を変えない。次の依頼の `init` が正しい値で上書きするので、

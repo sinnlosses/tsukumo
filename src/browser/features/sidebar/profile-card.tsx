@@ -3,7 +3,8 @@
 // 右端の「変える ⌄」でキャラクターを切り替える。
 //
 // **「変える」は見た目のボタンの上に、透明にした本物の `<select>` を重ねたもの**
-// （`character-switch.tsx`）。押すとブラウザの選択肢の一覧が開き、キーボード（矢印・先頭の字・
+// （`character-switch.tsx`）。**⌄ は共有の `<Select>` の枠が描く矢印**で、枠ごと札の口いっぱいに
+// 広げるので、`<select>` を透明にしても矢印だけは見えたまま残る。押すとブラウザの選択肢の一覧が開き、キーボード（矢印・先頭の字・
 // Esc）も読み上げもブラウザが持つ。独自の開閉にしない理由は 13.9「採らなかった案」の
 // 「ドロップダウンを独自の開閉にする」と同じ。**見える字は「変える」のまま**で、選んでいる
 // パックの名前は札の名前の側が見せる。
@@ -37,22 +38,11 @@ export function ProfileCard(): ReactElement {
         <span className={styles["profile-card-change"]}>
           <span aria-hidden="true" className={styles["profile-card-change-face"]}>
             変える
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
           </span>
           <CharacterSwitch
             id={PROFILE_CHARACTER_SELECT_ID}
             ariaLabel="キャラクターを変える"
+            frameClassName={styles["profile-card-change-frame"] ?? ""}
             className={styles["profile-card-change-select"] ?? ""}
           />
         </span>

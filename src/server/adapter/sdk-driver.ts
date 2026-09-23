@@ -39,9 +39,11 @@ import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
+import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import {
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
+  toPlan,
   toSessionEvents,
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
@@ -174,12 +176,14 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
   void applyNeutralOutputStyle(session)
   void relayMessages(session, options)
   void relayCommandDescriptions(session, options)
+  void relayPlan(session, options)
 
   return {
     prompt: (text, images) => {
-      // **原寸と控えはここで分かれる。** 控えだけが記録（`request`）へ行き、原寸は
-      // ストリーミング入力へ流れてこの場で手放す（`docs/requirements.md` 4.10）。
-      options.onEvent({ kind: "request", text, images: images.map((image) => image.thumbnail) })
+      // **原寸と控えはここで分かれる。** 控えと id だけが記録（`request`）へ行き、原寸は
+      // ストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる。
+      // `docs/requirements.md` 4.10）。
+      options.onEvent({ kind: "request", text, images: recordedPromptImages(images) })
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     promptWithoutRecord: (text) => {
@@ -477,6 +481,29 @@ async function relayCommandDescriptions(
 }
 
 /**
+ * プラン（`docs/glossary.md`「プラン」）を1回だけ取りに行く。`accountInfo()` は `email` /
+ * `organization` も返すが、**駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ**
+ * （`toPlan` の戻り値しか触らないので、他のフィールドに触れる経路が無い）。
+ *
+ * **取れなくてもセッションは続ける**（API キーや Bedrock のときは元々この値が無い。
+ * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」。
+ * {@link relayCommandDescriptions} と同じ形）。
+ */
+async function relayPlan(
+  session: { readonly accountInfo: () => Promise<unknown> },
+  options: SessionDriverOptions,
+): Promise<void> {
+  try {
+    const plan = toPlan(await session.accountInfo())
+    if (plan !== undefined) {
+      options.onEvent({ kind: "plan", plan })
+    }
+  } catch {
+    // プランが取れないだけなので、何も流さずに諦める。
+  }
+}
+
+/**
  * 許可要求と質問を答え待ちの列へ回す。**`canUseTool` の戻り値の型（`PermissionResult`）に
  * 合わせるのはここだけ**で、列の側は SDK を知らない（構造は一致している）。
  */
@@ -640,7 +667,10 @@ function labelOf(expressions: readonly ExpressionChoice[], name: Expression): st
   return expressions.find((choice) => choice.name === name)?.label ?? name
 }
 
-/** 送る依頼1件。**原寸の画像はここまでで、`stream()` が渡したあとは誰も持たない。** */
+/**
+ * 送る依頼1件。**駆動が持つ原寸の画像はここまでで、`stream()` が渡したあとは持たない**
+ * （拡大表示のために残すのは棚 = `src/server/core/prompt-image-shelf.ts` の側）。
+ */
 type Prompt = {
   readonly text: string
   readonly images: readonly PromptContentBlock[]

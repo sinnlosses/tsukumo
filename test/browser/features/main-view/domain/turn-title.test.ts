@@ -65,7 +65,15 @@ describe("turnTitle（札の頭のタイトル）", () => {
 
     expect(turnTitle(turn({ request: undefined, steps }))).toBe("架空のレポートの見出し")
     expect(
-      turnTitle(turn({ request: { text: "", images: ["data:image/png;base64,AA=="] }, steps })),
+      turnTitle(
+        turn({
+          request: {
+            text: "",
+            images: [{ id: "fictional-id", thumbnail: "data:image/png;base64,AA==" }],
+          },
+          steps,
+        }),
+      ),
     ).toBe("架空のレポートの見出し")
   })
 

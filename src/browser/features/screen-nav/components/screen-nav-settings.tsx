@@ -89,6 +89,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             <Select
               id={`${fieldId}-default-model`}
               ariaLabel="新しいセッションの既定のモデル"
+              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
               className={styles["screen-nav-settings-select"] ?? ""}
               value={settings.sessionDefault.model}
               disabled={false}
@@ -102,6 +103,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             <Select
               id={`${fieldId}-default-permission-mode`}
               ariaLabel="新しいセッションの既定の許可モード"
+              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
               className={styles["screen-nav-settings-select"] ?? ""}
               value={settings.sessionDefault.permissionMode}
               disabled={false}
@@ -116,6 +118,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             <Select
               id={`${fieldId}-reveal-speed`}
               ariaLabel="書き上げる演出の速さ"
+              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
               className={styles["screen-nav-settings-select"] ?? ""}
               value={settings.revealSpeed.value}
               disabled={false}

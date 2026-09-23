@@ -19,6 +19,7 @@ import {
   type TokenUsageSummary,
   type TokenUsageTotals,
 } from "../../../../shared/token-usage-summary.ts"
+import { useSessionSelector } from "../../../stores/session.tsx"
 import { totalUsage } from "../usage-format.ts"
 
 export type UseTokenUsageResult = {
@@ -27,6 +28,8 @@ export type UseTokenUsageResult = {
   readonly summary: TokenUsageSummary
   readonly total: TokenUsageTotals
   readonly isError: boolean
+  /** プラン（`docs/glossary.md`「プラン」）。まだ届いていない・取れなかったときは undefined。 */
+  readonly plan: string | undefined
 }
 
 export function useTokenUsage(): UseTokenUsageResult {
@@ -38,6 +41,7 @@ export function useTokenUsage(): UseTokenUsageResult {
     staleTime: 0,
   })
   const summary = query.data ?? EMPTY_TOKEN_USAGE_SUMMARY
+  const plan = useSessionSelector((session) => session.state.plan)
 
   return {
     days,
@@ -45,6 +49,7 @@ export function useTokenUsage(): UseTokenUsageResult {
     summary,
     total: totalUsage(summary.byModel),
     isError: query.isError,
+    plan,
   }
 }
 

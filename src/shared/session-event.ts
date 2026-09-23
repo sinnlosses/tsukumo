@@ -17,6 +17,7 @@ import { z } from "zod"
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
+import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { type SessionDefault } from "./session-default.ts"
@@ -76,13 +77,33 @@ export type SessionEvent =
       readonly descriptions: readonly CommandDescription[]
     }
   /**
+   * 起動直後に分かった**プラン**（`docs/glossary.md`「プラン」。Agent SDK の `accountInfo()` の
+   * `subscriptionType`）。`command-descriptions` と同じく駆動が起動直後に1回だけ取りに行く
+   * （`src/server/adapter/sdk-driver.ts`）。
+   *
+   * **`email` / `organization` はここに乗らない** — 取り出すのは `subscriptionType` だけで、
+   * 駆動の外へは出さない（`AccountInfo` にはアカウントを特定する値も入っている）。
+   *
+   * **値は SDK が返したものをそのまま出す**（実測では `"Claude Pro"` のように人が読める
+   * 文字列。tsukumo 側に表示名の対応表は持たない——知らない値が増えても直さずに出せる）。
+   *
+   * **取れなかったとき（`subscriptionType` が無い・呼び出しが落ちた）は流れない**
+   * （`command-descriptions` と同じ、動作中の一時的な失敗の扱い。API キーや Bedrock の
+   * ときは元々この値が無い。`sdk.d.ts` の `AccountInfo`）。
+   */
+  | { readonly kind: "plan"; readonly plan: string }
+  /**
    * 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。
    *
-   * `images` は添えた画像の**控え**（縮めた data URL の並び。添えていなければ空）。
-   * **原寸はここに載らない** — 原寸はモデルへ渡って終わりで、記録に残るのは控えだけ
-   * （`docs/requirements.md` 4.10）。
+   * `images` は添えた画像の**控えと、棚の原寸を指す id の組**（添えていなければ空）。
+   * **原寸はここに載らない** — 原寸はモデルへ渡り、あとは棚（`src/server/core/prompt-image-shelf.ts`）
+   * が直近ぶんだけメモリで持つ（`docs/requirements.md` 4.10）。
    */
-  | { readonly kind: "request"; readonly text: string; readonly images: readonly string[] }
+  | {
+      readonly kind: "request"
+      readonly text: string
+      readonly images: readonly RecordedPromptImage[]
+    }
   /**
    * **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。`docs/design.md` 13.7）。
    * `request` と同じくターンの境目になるが、**文面を持たない** — 送った一言はログにも記録にも

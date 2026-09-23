@@ -19,7 +19,7 @@ export type Split = {
 
 // 下段の左右は半々（ユーザーの指定）。
 export const DEFAULT_SPLIT: Split = {
-  rowTop: 60,
+  rowTop: 65,
   topLeft: 75,
   bottomLeft: 50,
   collapsedRowTop: undefined,

@@ -21,6 +21,15 @@
   font-size: var(--font-heading);
   font-weight: normal;
 }
+/* プランの札。題の右に添えるだけの静かな印（13.1 原則1。状態の警告ではないので accent は使わない）。 */
+.token-usage-plan {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  line-height: 1.4;
+}
 .token-usage-period {
   display: flex;
   margin-left: auto;

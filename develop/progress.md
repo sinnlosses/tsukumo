@@ -91,6 +91,18 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `MAX_MAIN_VIEW_TURNS` を 5 の直書きから `MAX_SESSION_STATE_TURNS.work`（20）の導出に変え、「メインビューの窓 ≤ 記録の窓」という関係を2つの定数の間ではなく1本の式で保つようにした。`docs/requirements.md` 4.7 と `docs/design.md` の「直近5件」も20件に直した。
 
+### 2026-09-23 並行の作業ツリーでのアーカイブを、単独のコミットですぐ main へ送る手順にした（T-422）
+
+アーカイブの開始の基準は `main` の完了件数で決まるので、並行する作業ツリーがどれも同じ時点で基準に達し、`develop/tasks.json` と `docs/history/tasks.md`（マージドライバが無い）で衝突する。`CLAUDE.md`「1サイクルの形」に単独コミットで `--ff-only` 送りにすること・落ちたら自分のコミットを捨ててやり直すことを足し、理由を `docs/workflow.md` の小節に置いた。
+
+### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
+
+`command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
+
+### 2026-09-23 控えを押すと、サーバの棚から原寸を取り寄せて拡大できるようにした（T-417）
+
+原寸は `src/server/core/prompt-image-shelf.ts` がメモリに直近8枚だけ持ち、記録から依頼が消えたら捨てる。記録には控えと id だけが載る（`PROTOCOL_VERSION` 5）。`GET /prompt-image/<id>` は起動トークンで守る。棚から消えた id は 404 になり、拡大の面には控えと注記1行が出る。同じページで一度開いた原寸は、棚から消えても Chrome の画像キャッシュで出続ける（直していない）。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の

@@ -5,7 +5,10 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
 import { useTokenUsage } from "../../../../src/browser/features/token-usage/hooks/use-token-usage.ts"
+import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../src/shared/token-usage-summary.ts"
+import { sessionStoreWith } from "../../session-store.ts"
 
 /**
  * 画面（`token-usage-screen.tsx`）を丸ごと描かずに、期間の選択と取得の畳み方だけを測る
@@ -41,10 +44,19 @@ function stubTokenUsageFetch(respond: () => StubResponse): void {
 }
 
 /** `useQuery` が要る `QueryClientProvider`。**client は呼び出し側で1回だけ作る**（再レンダーの
- * たびに作り直すとキャッシュが毎回リセットされ、選び直した日数の取り直しが測れない）。 */
-function tokenUsageWrapper(client: QueryClient): (props: { children: ReactNode }) => ReactElement {
+ * たびに作り直すとキャッシュが毎回リセットされ、選び直した日数の取り直しが測れない）。
+ * `useTokenUsage` は `useSessionSelector`（`plan`）も読むので、`SessionStoreContext` も一緒に
+ * 包む（既定は `INITIAL_SESSION_STATE` そのまま。`plan` を変えたいテストは `store` を渡す）。 */
+function tokenUsageWrapper(
+  client: QueryClient,
+  store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE),
+): (props: { children: ReactNode }) => ReactElement {
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    return (
+      <SessionStoreContext.Provider value={store}>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </SessionStoreContext.Provider>
+    )
   }
 }
 
@@ -163,5 +175,34 @@ describe("useTokenUsage", () => {
     })
     expect(result.current.isError).toBe(false)
     expect(result.current.summary.byDay).toEqual([])
+  })
+
+  it("plan は state.plan をそのまま返す", async () => {
+    stubTokenUsageFetch(() => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(FIXTURE_SUMMARY),
+    }))
+    const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, plan: "max" })
+
+    const { result } = renderHook(() => useTokenUsage(), {
+      wrapper: tokenUsageWrapper(newClient(), store),
+    })
+
+    expect(result.current.plan).toBe("max")
+  })
+
+  it("state.plan がまだ届いていなければ undefined", async () => {
+    stubTokenUsageFetch(() => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(FIXTURE_SUMMARY),
+    }))
+
+    const { result } = renderHook(() => useTokenUsage(), {
+      wrapper: tokenUsageWrapper(newClient()),
+    })
+
+    expect(result.current.plan).toBeUndefined()
   })
 })

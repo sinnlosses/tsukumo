@@ -66,6 +66,7 @@ export function SessionSwitch(): ReactElement | null {
         <Select
           id={SESSION_SELECT_ID}
           ariaLabel="セッション"
+          frameClassName={styles["session-info-select-frame"] ?? ""}
           className={switchStyles["session-select"] ?? ""}
           value={current}
           disabled={turnInProgress}

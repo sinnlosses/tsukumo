@@ -21,6 +21,14 @@
   gap: 0.5rem;
   min-width: 0;
 }
+/* 帯の <select> を包む枠（キャラクター／セッションで共有。枠と矢印そのものは
+   `components/select.module.css`）。**この行の残り幅をすべて取る** — 顔のぶんを除いた右端までが
+   <select> の幅になり、矢印はその右端に付く。 */
+.session-info-select-frame {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink);
+}
 /* 帯の <select>（キャラクター／セッションで同じ見た目。セッション側は
    session-switch.module.css）。見本は高さ 34px・角 8px・内側 8px で、**サイドバーの他の
    <select> より大きい** — 帯は下端に1段だけ残る操作なので、押す的を小さくしない。 */
@@ -28,7 +36,8 @@
   flex: 1 1 auto;
   min-width: 0;
   height: 2.125rem;
-  padding: 0 0.5rem;
+  padding: 0 1.75rem 0 0.5rem;
+  text-overflow: ellipsis;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--surface);
@@ -225,7 +234,8 @@
   line-height: 1.5;
 }
 /* 「変える ⌄」。見た目のボタン（.profile-card-change-face）の上に、本物の <select> を透明にして
-   同じ大きさで重ねる（押すのは <select>。`profile-card.tsx`）。枠は `rule`、字は `ink` で、
+   同じ大きさで重ねる（押すのは <select>。`profile-card.tsx`）。⌄ は共有の枠（`select.module.css`
+   の `::after`）が描き、既定の右 10px・12px がそのまま見本の値になる。枠は `rule`、字は `ink` で、
    差し色は `:hover` の縁とフォーカスの輪にだけ出す（13.1 原則1「機械が指し示す場所」）。 */
 .profile-card-change {
   position: relative;
@@ -242,25 +252,29 @@
   border-color: var(--accent);
 }
 /* <select> は透明なので、フォーカスの輪（theme.css の :focus-visible）は外側の枠に移して描く。 */
-.profile-card-change:has(> .profile-card-change-select:focus-visible) {
+.profile-card-change:has(.profile-card-change-select:focus-visible) {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 /* ターン中は塞ぐ（理由は <select> の title）。押せないことは薄さと矢印の形で見せる。 */
-.profile-card-change:has(> .profile-card-change-select:disabled) {
+.profile-card-change:has(.profile-card-change-select:disabled) {
   border-color: var(--rule);
   opacity: 0.6;
 }
+/* 右の余白は矢印（右 10px + 12px）と見本の gap 4px のぶん。 */
 .profile-card-change-face {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0 0.625rem;
+  padding: 0 1.625rem 0 0.625rem;
   white-space: nowrap;
 }
-.profile-card-change-select {
+/* 共有の枠を口いっぱいに広げる。**`.select-frame` の `position: relative` と同じ強さにしない**
+   （読み込み順で負けうる。`select.module.css` 冒頭）ので、親の class を重ねて1段強くする。 */
+.profile-card-change > .profile-card-change-frame {
   position: absolute;
   inset: 0;
+}
+.profile-card-change-select {
   width: 100%;
   height: 100%;
   margin: 0;
