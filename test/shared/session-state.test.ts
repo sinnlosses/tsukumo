@@ -828,6 +828,12 @@ describe("applySessionEvent", () => {
     expect(view.character?.chatAccent).toBe("#f2984a")
   })
 
+  it("character-changed の tagline（ひとことプロフィール）もそのまま持つ", () => {
+    const view = apply(characterChangedEvent({ tagline: "架空のひとこと" }))
+
+    expect(view.character?.tagline).toBe("架空のひとこと")
+  })
+
   it("答え待ちの列をそのまま持つ", () => {
     const view = apply({
       kind: "pending-changed",

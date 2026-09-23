@@ -5,6 +5,7 @@ import {
   startViewServer,
   type ViewServer,
 } from "../../../src/server/adapter/server.ts"
+import { promptImagePath } from "../../../src/shared/prompt-image.ts"
 import { REPOSITORY_FILE_PATH } from "../../../src/shared/repository-file.ts"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
@@ -42,18 +43,25 @@ function noTokenUsage(): TokenUsageSummary {
   return EMPTY_TOKEN_USAGE_SUMMARY
 }
 
+/** 棚の代役。既定では何も置いていない（どの id を引いても無い）。 */
+function noPromptImage(): undefined {
+  return undefined
+}
+
 async function startView(
   serveCharacterAsset: (
     fileName: string,
   ) => { contentType: string; content: Buffer } | undefined = noCharacterAsset,
   listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
   readTokenUsageSummary: (days: TokenUsageDays) => TokenUsageSummary = noTokenUsage,
+  findPromptImage: (id: string) => string | undefined = noPromptImage,
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
     serveCharacterAsset,
     listRepositoryFiles,
     readTokenUsageSummary,
+    findPromptImage,
     token: TOKEN,
   })
   runningView = server
@@ -290,6 +298,74 @@ describe("startViewServer", () => {
     expect((await fetch(tokenUsageUrl(server, undefined))).status).toBe(403)
     expect((await fetch(tokenUsageUrl(server, "ちがう"))).status).toBe(403)
     expect(asked).toBe(0)
+  })
+
+  describe("/prompt-image/<id>", () => {
+    // 棚に置いた原寸の代役。**中身は手で書いた数バイト**（実物の画像は使わない）。
+    const SHELVED_ID = "0b6f7a52-3c1e-4d7a-9f2b-5e8c1d4a6b3f"
+    const SHELVED_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x01, 0x02, 0x03])
+    const SHELVED_DATA_URL = `data:image/png;base64,${SHELVED_BYTES.toString("base64")}`
+
+    function promptImageUrl(server: ViewServer, id: string, token: string | undefined): string {
+      const path = `${viewOrigin(server)}${promptImagePath(id)}`
+      return token === undefined ? path : `${path}?t=${token}`
+    }
+
+    function startWithShelf(requested: string[] = []): Promise<ViewServer> {
+      return startView(noCharacterAsset, noRepositoryFile, noTokenUsage, (id) => {
+        requested.push(id)
+        return id === SHELVED_ID ? SHELVED_DATA_URL : undefined
+      })
+    }
+
+    it("正しいトークンなら、棚の原寸をデコードして受け取ったときのメディアタイプで配る", async () => {
+      const server = await startWithShelf()
+
+      const response = await fetch(promptImageUrl(server, SHELVED_ID, TOKEN))
+
+      expect(response.status).toBe(200)
+      expect(response.headers.get("content-type")).toBe("image/png")
+      expect(response.headers.get("cache-control")).toBe("no-store")
+      expect(Buffer.from(await response.arrayBuffer())).toEqual(SHELVED_BYTES)
+    })
+
+    it("トークンが無い・違うときは 403（棚を引きにも行かない）", async () => {
+      const requested: string[] = []
+      const server = await startWithShelf(requested)
+
+      const missing = await fetch(promptImageUrl(server, SHELVED_ID, undefined))
+      const wrong = await fetch(promptImageUrl(server, SHELVED_ID, createStartupToken()))
+
+      expect(missing.status).toBe(403)
+      expect(wrong.status).toBe(403)
+      expect(requested).toEqual([])
+    })
+
+    it("棚に無い id（捨てられた原寸）は 404", async () => {
+      const server = await startWithShelf()
+
+      const response = await fetch(
+        promptImageUrl(server, "7d1c2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", TOKEN),
+      )
+
+      expect(response.status).toBe(404)
+    })
+
+    it("id の形が違う（UUID でない・上のディレクトリを指す）ときは 404（棚を引きにも行かない）", async () => {
+      const requested: string[] = []
+      const server = await startWithShelf(requested)
+
+      const malformed = await fetch(promptImageUrl(server, "not-an-id", TOKEN))
+      const traversal = await fetch(
+        `${viewOrigin(server)}/prompt-image/..%2F..%2Fetc%2Fpasswd?t=${TOKEN}`,
+      )
+      const empty = await fetch(promptImageUrl(server, "", TOKEN))
+
+      expect(malformed.status).toBe(404)
+      expect(traversal.status).toBe(404)
+      expect(empty.status).toBe(404)
+      expect(requested).toEqual([])
+    })
   })
 
   it("/character/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {

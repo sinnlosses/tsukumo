@@ -65,6 +65,15 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ face: 3 }))?.face).toBeUndefined()
   })
 
+  it("任意の tagline（ひとことプロフィール）を読む。無い・壊れた値・空白だけは undefined", () => {
+    expect(
+      parseCharacterDefinition(JSON.stringify({ tagline: "窓辺に棲む架空の精霊" }))?.tagline,
+    ).toBe("窓辺に棲む架空の精霊")
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.tagline).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ tagline: 3 }))?.tagline).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ tagline: "  " }))?.tagline).toBeUndefined()
+  })
+
   it("任意の chatAccent（雑談中だけの accent）を読む。無い・壊れた値は undefined", () => {
     expect(parseCharacterDefinition(JSON.stringify({ chatAccent: "#f2984a" }))?.chatAccent).toBe(
       "#f2984a",

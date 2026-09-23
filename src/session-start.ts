@@ -27,6 +27,7 @@ import {
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
+import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import {
   type ChatArchive,
   type ChatRecall,
@@ -81,6 +82,11 @@ export type SessionStartOptions = {
    */
   readonly tokenUsageLog: TokenUsageLog
   /**
+   * 依頼に添えた画像の原寸の棚。**持ち主は `src/main.ts`**（`tokenUsageLog` と同じ形で、
+   * 置く・捨てるのはセッション、配るのは `view-delivery.ts`）。
+   */
+  readonly promptImageShelf: PromptImageShelf
+  /**
    * ビューが実際に待ち受けているポート。**セッションの印の目印がここから決まる**
    * （`sessionTag`。docs/requirements.md 4.8「鍵」）。同じディレクトリで2つめを起こすと
    * ポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
@@ -90,7 +96,7 @@ export type SessionStartOptions = {
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export function startSession(options: SessionStartOptions): RunningSession {
-  const { config, character, fakeSession, tokenUsageLog, viewPort } = options
+  const { config, character, fakeSession, tokenUsageLog, promptImageShelf, viewPort } = options
   // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
   const cwd = process.cwd()
   const sessionId = randomUUID()
@@ -110,6 +116,8 @@ export function startSession(options: SessionStartOptions): RunningSession {
     // トークン消費の記録の口。書くかどうか・何を書くかを決めるのは `session-manager` なので、
     // ここも受け取った口を渡すだけ。
     tokenUsageLog,
+    // 置く契機（`prompt`）と捨てる契機（記録の窓）を決めるのも `session-manager`。
+    promptImageShelf,
   })
 
   manager.create({
