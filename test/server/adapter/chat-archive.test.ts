@@ -709,7 +709,7 @@ describe("createChatArchive の日ごとの索引", () => {
     expect(opened).toEqual([dayIndexPath()])
   })
 
-  it("同じ日に2行あれば、あとの行が索引になる", () => {
+  it("同じ日に2行以上あれば、最初の行の語でも最後の行の語でもその日が当たる", () => {
     writeIndexFixture([
       { date: "2026-09-19", line: "架空の見出し: 散歩の話" },
       { date: "2026-09-19", line: "架空の見出し: 書き直した見出し" },
@@ -717,9 +717,40 @@ describe("createChatArchive の日ごとの索引", () => {
     writeDayFixture("2026-09-19", ["その日の架空の依頼"])
     const chatArchive = createChatArchive(root())
 
-    expect(chatArchive.recall("fictional-pack", "書き直した", READ_ALL).kind).toBe("found")
+    // 最初の行の語で当たる。
+    expect(chatArchive.recall("fictional-pack", "散歩", READ_ALL)).toEqual({
+      kind: "found",
+      entries: [{ speaker: "user", text: "その日の架空の依頼", date: "2026-09-19" }],
+    })
     chatArchive.finishTurn()
-    expect(chatArchive.recall("fictional-pack", "散歩", READ_ALL).kind).toBe("not-found")
+
+    // 最後の行の語でも当たる。
+    expect(chatArchive.recall("fictional-pack", "書き直した", READ_ALL)).toEqual({
+      kind: "found",
+      entries: [{ speaker: "user", text: "その日の架空の依頼", date: "2026-09-19" }],
+    })
+  })
+
+  it("同じ日の複数行に当たっても、その日のファイルは1回だけ読まれ、会話は重複しない", () => {
+    writeIndexFixture([
+      { date: "2026-09-19", line: "架空の見出し: 散歩の話" },
+      { date: "2026-09-19", line: "架空の見出し: 書き直した見出し" },
+    ])
+    writeDayFixture("2026-09-19", ["その日の架空の依頼"])
+    const chatArchive = createChatArchive(root())
+
+    const spy = spyOn(fs, "readFileSync")
+    // 「架空」は両方の見出しに含まれるので、素朴に見出しごとに日付を集めると
+    // 同じ日が2回拾われてしまう。
+    const result = chatArchive.recall("fictional-pack", "架空", READ_ALL)
+    const opened = spy.mock.calls.map((call) => String(call[0]))
+    spy.mockRestore()
+
+    expect(result).toEqual({
+      kind: "found",
+      entries: [{ speaker: "user", text: "その日の架空の依頼", date: "2026-09-19" }],
+    })
+    expect(opened).toEqual([dayIndexPath(), join(root(), "fictional-pack", "2026-09-19.jsonl")])
   })
 
   it("日付そのものでも引ける（語は空白で分け、どれかに当たれば拾う）", () => {
