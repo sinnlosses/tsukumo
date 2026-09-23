@@ -3,6 +3,30 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-23 サイドバーのタスク一覧を `main` の `develop/tasks.json` から読む
+
+（会話での相談「worktree で足したタスクが main を取り込むまで別の worktree に出ない。JIRA などと同期するボタンはどうか」への提案に「それでいいよ!」）
+
+困りごと: ある作業ツリーでタスクを足して `main` へ送っても、別の作業ツリーのサイドバーには
+その作業ツリーが `git merge main` するまで出ない。
+
+- JIRA などチケット管理システムとの同期ボタンは作らない（同期も手作業のまま・正典が2つになり
+  `doing` の `--ff-only` の錠を作り直すことになる・共通スキルが `tasks.json` 前提・外部への送信に
+  なる。会話で合意済み）
+- 代わりに `src/server/adapter/task-summary.ts` の見張りを、作業ツリーの `develop/tasks.json` の
+  mtime ではなく `main` の先端（`git rev-parse main`）の変化で読み直し、中身は
+  `git show main:develop/tasks.json` から読む形に変える。解釈（`src/shared/task-summary.ts` の
+  `readTaskSummaries`）はそのまま使う。`git` は `src/server/adapter/repository-file.ts` が
+  既に呼んでいるので、外部コマンドの依存は増えない
+- あわせて、`/plan-tasks` で登録したタスクのコミットがすぐ `main` へ送られているかを確かめ、
+  送られていなければ `CLAUDE.md`「## タスク運用」に「登録したら `--ff-only` で `main` へ送る」を
+  足す（枝に残ったままだと上の変更でも一覧に出ない）
+
+| 項目 | タスク |
+| --- | --- |
+| 一覧を `main` の `develop/tasks.json` から読む | T-479 |
+| `/plan-tasks` の登録を `main` へすぐ送る | タスクにしない（`CLAUDE.md`「## Git運用」の「会話で頼まれた作業も…`main` へ送る」が既に覆っていて、`de69784a` などタスク化のコミットは実際に `main` に入っている） |
+
 ## 2026-09-23 雑談モードへ切り替えたときの立ち絵のチカチカを直す
 
 仕事から雑談にモードを切り替えたとき、tsukumo の立ち絵が瞬間的に切り替わるから目がチカチカする。

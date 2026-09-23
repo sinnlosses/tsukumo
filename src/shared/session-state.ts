@@ -428,7 +428,7 @@ export function applySessionEvent(
           },
         ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
-        // （docs/display.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
+        // （docs/display.md 4.2「吹き出し」の「今のターンの分を縦に積んで」）。
         speeches: [...(state.speechCalledInTurn ? state.speeches : []), event.text],
         speechExpression: event.expression,
         speechCalledInTurn: true,
