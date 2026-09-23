@@ -2,8 +2,8 @@
 // 持たず、受け取った値と呼び先をそのまま置く。
 //
 // **全画面の最上部に出る1本の帯**で、部屋の名前が左端、その右に仕事/雑談のトグル、その右に
-// 3つの口（会話 / キャラクター / トークン消費）、モデル・許可モードのドロップダウンと答え待ちの
-// 印が右端。**狭い画面では `<ScreenNavMenu>` の「≡」に畳む**（どちらを出すかは
+// 3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、右端にモデル・
+// 許可モードのドロップダウン。**狭い画面では `<ScreenNavMenu>` の「≡」に畳む**（どちらを出すかは
 // `screen-nav.module.css` の `@media` が決める）。
 //
 // **`data-screen` でいま出している画面を名乗る**のは、狭い画面で帯の置き方が変わるため
@@ -12,10 +12,10 @@
 import { type ReactElement } from "react"
 
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
+import { ScreenNavCurrentWorkPill } from "./components/screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
-import { ScreenNavPending } from "./components/screen-nav-pending.tsx"
 import { ScreenNavRoom } from "./components/screen-nav-room.tsx"
 import { type ScreenNavView } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"
@@ -33,6 +33,9 @@ export function PresentationalScreenNav({
   chatMode,
   modelPermission,
   pendingActive,
+  work,
+  workToggleRefWide,
+  workToggleRefNarrow,
   menuOpen,
   ref,
   onToggleMenu,
@@ -47,13 +50,15 @@ export function PresentationalScreenNav({
           <ScreenNavGate key={gate.screen} gate={gate} onSelect={onSelect} />
         ))}
       </div>
+      <ScreenNavCurrentWorkPill work={work} toggleRef={workToggleRefWide} />
       <ScreenNavModelPermissionSelect modelPermission={modelPermission} />
-      {pendingActive ? <ScreenNavPending /> : null}
       <ScreenNavMenu
         room={room}
         gates={gates}
         chatMode={chatMode}
         modelPermission={modelPermission}
+        work={work}
+        workToggleRefNarrow={workToggleRefNarrow}
         open={menuOpen}
         pendingActive={pendingActive}
         onToggle={onToggleMenu}

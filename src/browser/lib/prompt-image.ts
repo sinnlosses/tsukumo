@@ -1,4 +1,4 @@
-// 貼り付け・ドロップで届いたファイルを、依頼に添える画像（`src/shared/prompt-image.ts` の
+// 貼り付け・ドロップ・ファイルを選ぶ窓で届いたファイルを、依頼に添える画像（`src/shared/prompt-image.ts` の
 // `PromptImage`）にする（`docs/requirements.md` 4.10）。
 //
 // **縮めるのはここ（ブラウザ側）だけ。** サーバは受け取った控えをそのまま記録に載せるので、
@@ -36,6 +36,14 @@ export function promptImageFiles(transfer: DataTransfer | null | undefined): rea
   return transfer === null || transfer === undefined
     ? []
     : [...transfer.files].filter((file) => isPromptImageMediaType(file.type))
+}
+
+/**
+ * ファイルを選ぶ窓（`<input type="file">`）で選ばれたものから、依頼に添えられる画像だけを拾う。
+ * 外来の `null`（何も選ばなかった）はここで空に畳む。
+ */
+export function chosenPromptImageFiles(files: FileList | null): readonly File[] {
+  return files === null ? [] : [...files].filter((file) => isPromptImageMediaType(file.type))
 }
 
 /**

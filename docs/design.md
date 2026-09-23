@@ -196,11 +196,12 @@ src/
     features/                 機能。**機能どうしは import しない**
       layout/                 Layout・領域の枠・リサイザ・比率の保存
       screen-nav/             全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
-                              モデル/許可モードの操作子・答え待ちの印（13.9）
+                              いまの作業の札（押すと依頼の手順の一覧）・モデル/許可モードの
+                              操作子（13.9）
       main-view/              TurnTabs・Turn・Report・QuestionRecord と markdown/（unified 一式）
       character-view/         Portrait・BalloonTrack・Balloon・動きの hooks
-      sidebar/                Activity・SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
-                              3区画の枠（SidebarSection）
+      sidebar/                SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
+                              2区画の枠（SidebarSection）
       dispatch/               Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
       chat-view/              雑談モードでメインの領域に差し替わるビュー（13.7）
       token-usage/            トークン消費の画面（グラフと集計）
@@ -748,10 +749,11 @@ type SessionHost = {
    └ <Root>                  main.tsx の中（export しない）。useScreen() で出す画面を選ぶ（6.2・13.6）。
       │                      **会話の画面は外さず hidden で隠す**（下書き・選んでいるターン・スクロール位置を保つ）
       ├ <ScreenNav>          **全画面の最上部の帯**（13.9）。部屋の名前・仕事/雑談のトグル・
-      │                      3つの口（会話 / キャラクター / トークン消費）・モデル/許可モードの
-      │                      ドロップダウン・答え待ちの印。狭い画面ではタブ帯の右端の「≡」に畳む
+      │                      3つの口（会話 / キャラクター / トークン消費）・いまの作業の札
+      │                      （押すと依頼の手順の一覧）・モデル/許可モードのドロップダウン。
+      │                      狭い画面ではタブ帯の右端の「≡」に畳む
       ├ <Layout>             会話の画面。grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
-      │  │                   右下に「領域の比率を既定に戻す」を常設（13.6）。**狭い画面では画面の高さに
+      │  │                   上下の仕切りの右端に「領域の比率を既定に戻す」を常設（13.6）。**狭い画面では画面の高さに
       │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
       │  ├ <MainView>        <PendingQuestion> + <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
       │  │   └ <PendingQuestion> 答え待ちの質問の**比べる面**。選択肢の `preview`（Markdown）を札に並べる。
@@ -759,12 +761,13 @@ type SessionHost = {
       │  │   └ <Turn>        <RequestHeading>（依頼の見出し + <PromptImageThumbnails>）
       │  │                    + [<Report> | <QuestionRecord>]*
       │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
-      │  ├ <CharacterView>   <Portrait> + <BalloonTrack>
+      │  ├ <CharacterView>   <SpeechLog> + <Portrait> + <BalloonTrack>
+      │  │   ├ <SpeechLog>   右上の「ログ」と、このセッションのセリフをターンごとに並べるモーダル（4.2）
       │  │   ├ <Portrait>    立ち絵。**components/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
       │  │   │               インラインで差し色、ラスタは <img>。動きの hooks はキャラビュー側に残る（6.5）
       │  │   └ <BalloonTrack> <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）。
-      │  │                   出るのは `speak` で来たセリフだけ（4.2）
-      │  ├ <Sidebar>         <Activity> + {taskSection} + <SessionInfo>
+      │  │                   出るのは `speak` で来たセリフだけ。最新にだけ話し手の名前を添える（4.2）
+      │  ├ <Sidebar>         {taskSection} + <SessionInfo>
       │  │   └ <TaskSection> **features/task-board/**（置かれる機能。2章）。枠は props で受け取り、
       │  │                   <TaskList>（区画の中身）と <TaskBoard> を描く。差し込むのは main.tsx
       │  │   └ <TaskBoard>   タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
@@ -774,10 +777,11 @@ type SessionHost = {
       │      ├ <PendingAnswer> 許可（許可 / 拒否）・質問（**1問ずつ**。選択肢 + 自由入力。**複数選択はチェックボックス**）。
       │      │                何問目・どの選択肢に目を置いているかは `stores/question-focus.tsx`
       │      │                （触れた選択肢が <PendingQuestion> の札で光る）
-      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。貼り付け / ドロップで画像を添える
-      │      │                （**ボタンは置かない**。4.10）。<CommandSuggestions>（`/`）と
-      │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包
-      │      └ <TurnStatus>  送信 ⇄ 中断、経過 / 所要
+      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。貼り付け / ドロップ / 画像のボタンで
+      │      │                画像を添える（4.10）。<CommandSuggestions>（`/`）と
+      │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包。
+      │      │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
+      │      └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
       ├ <CharacterScreen>    キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
       │   │                  パックのラベルと名前・「新しく作る」（#character/new へ）
       │   ├ <CharacterEdit>  立ち絵の並び（表情ごと。<Portrait> を使う）と差し色（衣装ごと）の差し替え（7.1）
@@ -881,7 +885,7 @@ react-markdown
 - **まばたき・表情のクロスフェード・部分の動きは作らない**（素材の構造に依存するため）。
   Lottie / Live2D も同じ理由で採らない
 - **動くのは利用者の注意が空いているときだけ。** `<Portrait>` は `SessionState` の
-  `turn` / `runningTools` から「いま読んでいるか、待っているか」を
+  `turn`（と、失敗の判定に使う `lastToolFailureAt`）から「いま読んでいるか、待っているか」を
   決め、**読んでいる間は呼吸だけに落とす**
 - 作るのは4つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に
   領域の中をゆっくり歩く）/ **完了の反応**（小さく跳ねる）/ **失敗でびくっ**（一瞬のけぞる）
@@ -1870,7 +1874,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 | キャラクターの切り替え                           | **選択はセッション限り（起こし直す）、次回の初期値は覚える** | サイドバー「セッション情報」         |
 | セッションの切り替え                             | セッション限り（起こし直す）                                 | サイドバー「セッション情報」         |
 | 地・領域・字の色（`ground` / `surface` / `ink`） | 利用者の設定（`localStorage`）                               | キャラクター画面                     |
-| 領域の比率を既定に戻す                           | 利用者の設定（`localStorage`）                               | 会話の画面の右下（常設のボタン）     |
+| 領域の比率を既定に戻す                           | 利用者の設定（`localStorage`）                               | 上下の仕切りの右端（常設のボタン）   |
 | キャラクターの立ち絵・差し色                     | **ずっと**（`~/.tsukumo/characters/<name>/`。7.1）           | キャラクター画面                     |
 | キャラクターの背景                               | **ずっと**（同上）                                           | キャラクター画面                     |
 | 新しいパックを作る                               | **ずっと**（同上）                                           | 作る画面（キャラクター画面から入る） |

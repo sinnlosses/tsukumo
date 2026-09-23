@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { summarizeToolInput } from "../../../src/browser/lib/tool-summary.ts"
+import { summarizeToolInput, toolInputText } from "../../../src/browser/lib/tool-summary.ts"
 
 describe("summarizeToolInput", () => {
   it("Bash はコマンドを出す", () => {
@@ -41,5 +41,23 @@ describe("summarizeToolInput", () => {
   it("入力がオブジェクトの形でないときは空文字", () => {
     expect(summarizeToolInput("Bash", "echo dummy")).toBe("")
     expect(summarizeToolInput("Bash", undefined)).toBe("")
+  })
+})
+
+describe("toolInputText（同じ欄を切り詰めずに返す。帯の「実行中の手順の全文」用）", () => {
+  it("120文字を超えても切り詰めない（summarizeToolInput とは違う）", () => {
+    const long = "a".repeat(200)
+
+    expect(toolInputText("Bash", { command: long })).toBe(long)
+  })
+
+  it("summarizeToolInput と同じ欄を読む（Edit は file_path）", () => {
+    expect(
+      toolInputText("Edit", { file_path: "/tmp/dummy.txt", old_string: "a", new_string: "b" }),
+    ).toBe("/tmp/dummy.txt")
+  })
+
+  it("入力がオブジェクトの形でないときは空文字", () => {
+    expect(toolInputText("Bash", "echo dummy")).toBe("")
   })
 })

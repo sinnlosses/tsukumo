@@ -426,57 +426,111 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.dispatch-row {
+/* textarea の下の道具の行。左に補完と画像の口、真ん中に操作の案内（入らなければ省く）、右端に
+   経過時間と送信⇄中断（<TurnStatus> の .dispatch-row）。 */
+.dispatch-toolbar {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-/* button は、他の3領域が使う語彙（var(--surface) の暗い地、var(--rule) の枠線、0.4remの角丸）に
-   揃える。素のブラウザ既定の見た目のままだと、ダークな画面の中でここだけ浮いていた。 */
-.dispatch-row button {
   flex: 0 0 auto;
-  padding: 0.4rem 0.75rem;
-  background: var(--surface);
-  color: inherit;
-  border: 1px solid var(--rule);
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+/* 画像・`/`・`@` の口。絵か1文字だけの四角いボタンにして、案内の字と並んでも操作子だと分かる
+   ようにする（枠は textarea より一段薄い）。 */
+.dispatch-tool {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
   border-radius: 0.4rem;
+  background: none;
+  color: var(--ink-quiet);
   font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--font-body);
   cursor: pointer;
 }
-.dispatch-row button:hover:not(:disabled) {
-  border-color: var(--accent);
+.dispatch-tool:hover {
+  border-color: color-mix(in srgb, var(--rule) 70%, transparent);
+  color: var(--ink);
 }
-.dispatch-row button:disabled {
-  opacity: 0.5;
-  cursor: default;
+.dispatch-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 0.4rem;
+  overflow: hidden;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-/* 「送る」は行の主目的なので、キャラクターの色（accent）を帯びた地と枠で他のボタンより
-   目立たせる（13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。 */
+.dispatch-row {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+/* 「送信」は行の主目的なので、**accent で塗りつぶす**（入力欄で塗ってよいのはこれ1つだけ。
+   13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。字は地の色で抜く。 */
+.dispatch-send,
+.dispatch-interrupt {
+  flex: 0 0 auto;
+  padding: 0.45rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
 .dispatch-send {
-  background: var(--surface-accent);
-  border-color: var(--accent);
-  font-weight: 600;
+  background: var(--accent);
+  color: var(--ground);
+}
+.dispatch-send:hover {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+/* 「中断」は塗らない。送信と同じ位置に出るので、塗りの有無で「いまは送れない」を示す。 */
+.dispatch-interrupt {
+  background: none;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+.dispatch-interrupt:hover {
+  border-color: var(--state-ng);
+  color: var(--state-ng);
 }
 /* Command+Enter で送信できることを示す記号（<TurnStatus> が data-shortcut 属性に持たせる）。
-   ラベルの文字とは別の擬似要素にして、弱い色で添える。中断のときは属性ごと出ないので、
+   ラベルの文字とは別の擬似要素にして、少し薄めて添える。中断のときは属性ごと出ないので、
    この擬似要素も出ない。 */
 .dispatch-send[data-shortcut]::after {
   content: " " attr(data-shortcut);
-  color: var(--ink-quiet);
+  opacity: 0.7;
   /* キーは機械の側の名前なので等幅（13.1 原則3）。 */
   font-family: var(--font-mono);
   font-weight: 400;
 }
+/* 依頼を書く面。領域の地（surface）より一段沈めた ground に置き、枠は薄くして、フォーカスが
+   来たときだけ accent に寄せる。 */
 .dispatch-text {
   flex: 1 1 auto;
   min-height: 0;
   resize: none;
-  padding: 0.5rem;
+  padding: 0.75rem 0.9rem;
   background: var(--ground);
   color: inherit;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: 0.5rem;
   font: inherit;
+}
+.dispatch-text::placeholder {
+  color: var(--ink-quiet);
+}
+.dispatch-text:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
 }
 /* 経過時間（送信ボタンと同じ行）。他の2つ（ボタン・候補）と同じく伸び縮みしない
    固定幅にしておく。 */

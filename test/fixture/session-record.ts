@@ -45,5 +45,20 @@ export function compactBoundaryRecord(): SessionRecord {
   return { kind: "compact-boundary" }
 }
 
+/** ツール呼び出し1件。既定は実行中（結果がまだ届いていない）。 */
+export function toolRecord(
+  overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "tool" }>, "kind">> = {},
+): SessionRecord {
+  return {
+    kind: "tool",
+    toolUseId: "toolu_dummy",
+    name: "Bash",
+    input: { command: "架空のコマンド" },
+    nested: false,
+    status: { kind: "running" },
+    ...overrides,
+  }
+}
+
 /** 時刻に依らないテストの記録に添える既定の時刻。 */
 const STAMPED = { kind: "stamped", at: 0 } satisfies RecordTime

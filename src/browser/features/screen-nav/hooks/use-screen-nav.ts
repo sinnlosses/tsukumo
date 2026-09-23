@@ -1,6 +1,7 @@
 // 画面のナビの帯のロジック（docs/design.md 13.9 / 2章「機能の中を分ける」）。**いま出している
-// 画面・3つの口・仕事/雑談のトグル・モデル/許可モードの操作子・答え待ちの印・狭い画面の「≡」の
-// 開閉**を、見た目が受け取れる形まで畳んで返す。
+// 画面・3つの口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の「≡」の開閉**を、
+// 見た目が受け取れる形まで畳んで返す。「いまの作業」の札は `hooks/use-current-work.ts` に
+// 分けてある（別の概念なのでファイルを分ける。CLAUDE.md 原則5）。
 //
 // **帯に出すのは `Screen` の4つのうち3つ**（作る画面はキャラクター画面から入る一時的な画面なので
 // 出さない。13.9）。**口は `<a href>` で、画面の正典は `location.hash` のまま**（`navigateTo` は
@@ -27,6 +28,7 @@ import {
 import { type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
 
 /** 帯に並ぶ口1つ。**「いま出している画面か」は畳んで渡す**（部品は判定を持たない）。 */
 export type ScreenNavGate = {
@@ -69,7 +71,14 @@ export type ScreenNavView = {
   readonly gates: readonly ScreenNavGate[]
   readonly chatMode: ScreenNavChatMode
   readonly modelPermission: ScreenNavModelPermission
+  /** 狭い画面の「≡」に添える答え待ちの印（●）だけに使う（13.9「いまの作業」）。 */
   readonly pendingActive: boolean
+  /** 帯のまん中の札「いまの作業」（`hooks/use-current-work.ts`）。 */
+  readonly work: ScreenNavCurrentWork
+  /** 広い画面の帯にある札の DOM（Esc でフォーカスを戻す先）。 */
+  readonly workToggleRefWide: RefObject<HTMLButtonElement | null>
+  /** 狭い画面の「≡」の面の中にある札の DOM（同上）。 */
+  readonly workToggleRefNarrow: RefObject<HTMLButtonElement | null>
   readonly menuOpen: boolean
   readonly onToggleMenu: () => void
   readonly onSelect: () => void
@@ -98,6 +107,11 @@ export function useScreenNav(): ScreenNavView {
   )
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
+  const {
+    view: work,
+    toggleRefWide: workToggleRefWide,
+    toggleRefNarrow: workToggleRefNarrow,
+  } = useCurrentWork(ref)
 
   const onSelect = useCallback((): void => {
     setMenuOpen(false)
@@ -169,6 +183,9 @@ export function useScreenNav(): ScreenNavView {
       },
     },
     pendingActive,
+    work,
+    workToggleRefWide,
+    workToggleRefNarrow,
     menuOpen,
     onToggleMenu,
     onSelect,

@@ -1,9 +1,9 @@
-// サイドバー本体。「補足情報の置き場」であって単機能パネルではないので、独立した3つの区画
-// （いま何をしているか・タスク一覧・セッション情報）を並べる
-// （docs/design.md 6.1「部品の木」）。
+// サイドバー本体。「補足情報の置き場」であって単機能パネルではないので、独立した2つの区画
+// （タスク一覧・セッション情報）を並べる（docs/design.md 6.1「部品の木」）。**「いま何をしているか」
+// の区画は帯の「いまの作業」へ移した**（`src/browser/features/screen-nav/`。docs/design.md 13.9）。
 //
-// **3つの区画は互いに独立している。** どれか1つの中身が空・不明でも、残りは表示を続ける
-// （`Activity` / まん中の区画 / `SessionInfo` がそれぞれ自分の分だけ見る）。
+// **2つの区画は互いに独立している。** どちらかの中身が空・不明でも、残りは表示を続ける
+// （まん中の区画 / `SessionInfo` がそれぞれ自分の分だけ見る）。
 //
 // **まん中の区画（タスク一覧）は `task-section.tsx` にひとまとめにしてある。** 区画の枠は
 // ここが持ち、中身は置かれる機能（`features/task-board/`）から借りる
@@ -11,26 +11,14 @@
 
 import { type ReactElement } from "react"
 
-import { useSessionSelector } from "../../stores/session.tsx"
-import { Activity } from "./activity.tsx"
 import { SidebarSection } from "./section.tsx"
 import { SessionInfo } from "./session-info.tsx"
 import styles from "./sidebar.module.css"
 import { TaskSection } from "./task-section.tsx"
 
 export function Sidebar(): ReactElement {
-  const runningTools = useSessionSelector((session) => session.state.runningTools)
-  const finishedTools = useSessionSelector((session) => session.state.finishedTools)
-
   return (
     <>
-      <SidebarSection
-        title="いま何をしているか"
-        extraClass={styles["sidebar-block-activity"] ?? ""}
-        action={undefined}
-      >
-        <Activity running={runningTools} finished={finishedTools} />
-      </SidebarSection>
       <TaskSection />
       <SidebarSection
         title="セッション情報"
