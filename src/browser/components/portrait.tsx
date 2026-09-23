@@ -17,8 +17,8 @@
 // 「1枚の矩形」として位置・大きさ・傾き・上下・不透明度だけを動かす割り切りなので、
 // ここでは属性を渡すだけで動き自体は作らない（docs/design.md 6.5）。
 
-import { useQuery } from "@tanstack/react-query"
-import { type CSSProperties, type ReactElement } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useEffect, type CSSProperties, type ReactElement } from "react"
 
 import { classifyPortraitFile } from "../../shared/character-asset.ts"
 import { type Expression, type Outfit } from "../../shared/expression.ts"
@@ -60,19 +60,62 @@ export type PortraitProps = {
 function useSvgMarkup(url: string | undefined): string | undefined {
   const { data } = useQuery({
     queryKey: [url] as const,
-    queryFn: async ({ queryKey: [target] }) => {
-      if (target === undefined) {
-        return undefined
-      }
-      const response = await fetch(target)
-      return response.ok ? await response.text() : undefined
-    },
+    queryFn: async ({ queryKey: [target] }) =>
+      target === undefined ? undefined : await fetchSvgMarkup(target),
     enabled: url !== undefined,
     staleTime: Infinity,
     gcTime: Infinity,
   })
 
   return data
+}
+
+/**
+ * キャラクターの立ち絵を**表情の数だけ先に読んでおく**（docs/screen-design.md 13.7「切り替えの
+ * ときの立ち絵」）。仕事 / 雑談を切り替えると立ち絵は別の領域で新しくマウントされ、表情も
+ * 切り替え前と違うことがある。読んでいない絵だと、読み終わるまで立ち絵の場所が空いたまま
+ * 移り変わりが終わり、そのあとで絵がいきなり現れる（実測: 初めての表情で約250ms）。
+ *
+ * SVG は {@link useSvgMarkup} と同じキャッシュ行へ入れ、ラスタは `Image` に読ませて
+ * **キャラクターが変わるまで参照を持ち続ける**（`/character/<file>` は `no-store` で配るので、
+ * 参照が切れた絵はブラウザが読み直すことがある）。
+ */
+export function usePortraitPreload(portraits: Readonly<Record<string, string>> | undefined): void {
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (portraits === undefined) {
+      return undefined
+    }
+    const urls = [...new Set(Object.values(portraits))]
+    const images = urls
+      .filter((url) => classifyPortraitFile(url) === "raster")
+      .map((url) => {
+        const image = new Image()
+        image.src = url
+        return image
+      })
+    for (const url of urls.filter((candidate) => classifyPortraitFile(candidate) === "svg")) {
+      void queryClient.prefetchQuery({
+        queryKey: [url] as const,
+        queryFn: () => fetchSvgMarkup(url),
+        staleTime: Infinity,
+        gcTime: Infinity,
+      })
+    }
+    // 前のキャラクターの絵は読みかけでも止めて手放す（`src` を空にすると読み込みが打ち切られる）。
+    return () => {
+      for (const image of images) {
+        image.src = ""
+      }
+    }
+  }, [portraits, queryClient])
+}
+
+/** SVG の中身を読む。読めなかったときは `undefined`（呼び出し側は「中身が無い」と同じに扱う）。 */
+async function fetchSvgMarkup(url: string): Promise<string | undefined> {
+  const response = await fetch(url)
+  return response.ok ? await response.text() : undefined
 }
 
 /**
