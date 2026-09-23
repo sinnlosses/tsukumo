@@ -1,15 +1,15 @@
 // サイドバーの「タスク一覧」。**進行中（doing）だけ先頭のカードにまとめ、残りはファイルの順**
 // で出す（`domain/task-sidebar-order.ts`。todo と done は混ざったまま。経緯は
-// docs/requirements.md 4.2）。`done` は薄く打ち消し線で出す。読めない・まだ届いていないときは
+// docs/display.md 4.2）。`done` は薄く打ち消し線で出す。読めない・まだ届いていないときは
 // undefined。
 //
 // **区画には全件を並べ、入りきらない分は区画の内側でスクロールする。** 一覧を見渡すのは
 // 見出しの「一覧を見る」から開く表（`task-board.tsx`）の仕事で、ここは直近の並びを
-// 視界の端に置いておくだけ（docs/requirements.md 4.2）。
+// 視界の端に置いておくだけ（docs/display.md 4.2）。
 //
 // **件数のチップで絞れる**（`selectedStatus` は `features/sidebar/task-section.tsx` の
 // state。並びは変えず、`domain/task-sidebar-filter.ts` で出す・出さないだけを決めてから
-// `orderTasksForSidebar` に渡す。経緯は docs/requirements.md 4.2）。絞った結果が0件のときは
+// `orderTasksForSidebar` に渡す。経緯は docs/display.md 4.2）。絞った結果が0件のときは
 // 「タスクが無い」ではなく、選んだ状態の名前を添えた一言にする（全件が0件のときと区別する）。
 //
 // **置き場所（サイドバーの区画）はサイドバーの持ち物で、ここは中身だけを描く。** 区画の枠と

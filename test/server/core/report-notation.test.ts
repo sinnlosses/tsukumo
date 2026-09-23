@@ -13,12 +13,12 @@ afterEach(() => {
   cleanup()
 })
 
-// この規約は**レンダラが描けるものの一覧**でもある（docs/requirements.md 4.2）。文面だけが先に
+// この規約は**レンダラが描けるものの一覧**でもある（docs/display.md 4.2）。文面だけが先に
 // 進んで「勧めた記法が描かれない」が起きないよう、名乗った要素と class を両側に突き合わせる。
 
 /**
  * tsukumo が配る mermaid（package.json で 12.0.0 に固定）で**実際に描けることを目視で確かめた種類**
- * （11.15.0 と 12.0.0 の両方で確かめた。docs/requirements.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
+ * （11.15.0 と 12.0.0 の両方で確かめた。docs/display.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
  * 先にメインビューへ出して描けることを確かめる**。
  */
 const DRAWN_MERMAID_KINDS = [
@@ -129,12 +129,12 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("レポートの文体は中立と決めている（キャラクターの口調はセリフが担う）", () => {
     // どのパックに切り替えても本文の読みやすさが変わらないようにするための決定
-    // （docs/requirements.md 4.2）。文体を persona.md 側に持たせない。
+    // （docs/display.md 4.2）。文体を persona.md 側に持たせない。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは中立の文体で書く")
   })
 
   it("レポートは日本語で書くと決め、送る前の検算にも入れている", () => {
-    // 読んだコードや英語の文面に引きずられて本文が英語で出たことがある（docs/requirements.md 4.2）。
+    // 読んだコードや英語の文面に引きずられて本文が英語で出たことがある（docs/display.md 4.2）。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
     const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
     expect(beforeSend).toContain("日本語でない地の文")
@@ -162,7 +162,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("印の使いどころは「文へ倒す条件」ではなく用途で書く", () => {
-    // 3列目を「迷ったときの判断」から「使う目安」へ反転させた決定（docs/requirements.md 4.2）。
+    // 3列目を「迷ったときの判断」から「使う目安」へ反転させた決定（docs/display.md 4.2）。
     // 下限（「3行以上あるときだけ」）を各行に並べると、印を使える内容まで文のまま残る。
     expect(REPORT_NOTATION_PROMPT).toContain("| 内容 | 使う印 | 使う目安 |")
     expect(REPORT_NOTATION_PROMPT).not.toContain("迷ったときの判断")
@@ -171,7 +171,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("表には見出しを付けさせ、その中身をセルに無いことへ絞る", () => {
     // 条3（同じことを二度言わない）とのぶつかりを、見出しに書いてよい中身を絞って畳んだ決定
-    // （docs/requirements.md 4.2）。絞りを落とすと、見出しが表の言い直しになる。
+    // （docs/display.md 4.2）。絞りを落とすと、見出しが表の言い直しになる。
     expect(REPORT_NOTATION_PROMPT).toContain("表には直前の1行で見出しを付ける")
     expect(REPORT_NOTATION_PROMPT).toContain("セルに無いこと")
   })
@@ -184,7 +184,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("図にするかの判定は、下書きの上で数えられる形で書く", () => {
-    // 「関係が2つ以上」は数えられず、同じ表の「項目が2つ以上」に負けていた（docs/requirements.md 4.2）。
+    // 「関係が2つ以上」は数えられず、同じ表の「項目が2つ以上」に負けていた（docs/display.md 4.2）。
     expect(REPORT_NOTATION_PROMPT).toContain("名前が3つ以上出てきて")
     expect(REPORT_NOTATION_PROMPT).not.toContain("関係が2つ以上")
     expect(REPORT_NOTATION_PROMPT).toContain("迷ったら flowchart")

@@ -4,7 +4,7 @@ import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation
 import { SPEECH_CADENCE_PROMPT } from "../../../src/server/core/speech-cadence.ts"
 import { takeSystemPromptAppend } from "../../../src/server/core/system-prompt.ts"
 
-// この規約は**パックによらず同じもの**（docs/requirements.md 4.2）。文面そのものではなく、
+// この規約は**パックによらず同じもの**（docs/display.md 4.2）。文面そのものではなく、
 // **どのパックの append にも載ること**を見る（人格が無いパックで落ちると、そのパックだけ
 // 吹き出しが止まる）。**並びそのものの正典は `test/server/core/system-prompt.test.ts`**
 // （人格との前後関係と、人格が無いパックで規約だけになることは、そちらが append 全体の文字列

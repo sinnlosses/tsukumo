@@ -1,5 +1,5 @@
 // レポートの ```mermaid フェンスの中身を図として描く。**mermaid は tsukumo 自身のサーバから
-// 配り、その記法が実際に出てきたときだけ `<script>` で読み込む**（`docs/requirements.md` 4.2）。
+// 配り、その記法が実際に出てきたときだけ `<script>` で読み込む**（`docs/display.md` 4.2）。
 //
 // もとは別ファイルの処理だったものを、部品の `useEffect` に持ち替えた（移行の段6。
 // docs/design.md 6.4）。
