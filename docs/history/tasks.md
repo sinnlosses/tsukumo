@@ -28312,3 +28312,292 @@ Claude Code 本体は、ターンの最後の応答が空だと英語の固定�
 - `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{{2,3\}} ' <ファイル>` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
 - 先に移送先へ書いてから元を消す（`develop/progress.md`「注意」の大掃除の注意。途中で落ちても移り終わったところまでが残る）
 - 並行する他のタスクが同じ節に書き足していることがある。`git merge main` で `docs/` が衝突したら手を止めて預ける
+
+## T-427
+
+**タスク**: SessionHost の閉包から世代の持ち物・副作用・コマンドの振り分けを分ける
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-426 / **passes**: True
+
+**evidence**:
+
+7つの持ち物を「restart で戻すか」で割った: 戻すのは配信のまとめ（buffered/flushTimer）・駆動の世代（generation/live/driver）・雑談ログの走行合計・トークンの累計・1ターンの内訳の5つ、戻してはいけないのが /context 内訳の印（同じ sessionId なら2行目を書かないため）、外から渡るのが依頼の原寸の棚（持ち主は main.ts で replaceState 経由）。論点の答え: (1) 世代の持ち物は SessionGeneration（GenerationTally + driver + close）に配信のまとめごとまとめ、receive は外側の変数を読まずその代の勘定を引数で受ける（launchSession が async の同期部分で onEvent を呼ぶので、外側の let generation を読むと初回に TDZ で落ちる）。(2) receive の副作用は概念のファイルへ寄せた（chat-compact.ts に ChatCompactWatch、token-usage.ts に TokenUsageRecorder、context-usage.ts に ContextUsageRecorder、新規 chat-archive-entry.ts と event-batch.ts）。session-manager.ts に残したのは「どの順で・どちらの由来のときに呼ぶか」だけ。(3) 振り分けは switch の3段（表にしないのはキーが部分的でキャストが要り「型を迂回するキャストを書かない」に触れるため。網羅は dispatchToDriver の DriverCommand の switch が担う）。順が「雑談の外か」→「ターン中か」なのは、仕事モードの nudge に nudgeOutsideChat を返す既存の振る舞いを保つため。CHARACTER_EDIT_COMMAND_TYPES の二重列挙は src/shared/command.ts で並びを1つにし、型も判定もそこから導く形に畳んだ（キャスト無し）。(4) テストは分けなかった——既存の describe はすべて createSessionManager を起こして観測する形で対象は session-manager.ts であり、移すと「その名前のファイルを試していないテスト」になる（coding-standards「置き場所とモック」の1対1）。加えて移すと「同じテストが期待値を変えずに通る」という唯一の証拠が失われる。
+restart は世代の持ち物を丸ごと作り直す1行（generation = startGeneration(request)）になり、旧の chatLogBytesSinceCompact = 0 / cumulativeTokenUsage = [] / turnUsage = EMPTY / buffered = [] / cancelFlush() / live = undefined / generation += 1 は全部消えた。計測: grep -c 'state.turn.kind === "running"' src/server/core/session-manager.ts が着手前 4 → 着手後 1。wc -l src/server/core/session-manager.ts が着手前 801 → 着手後 556。
+556行が500行を超えた理由: 内訳は実コード300行・コメント237行・空行20行で、SessionManagerOptions（109行）は10個の受け口の doc コメントがほぼ全部。残るのは receive / startGeneration / restart / dispatch という配線だけで、これ以上削るには startGeneration を別ファイルへ出して receive / deliver / isCurrent / isClosed の4つのコールバックを渡すことになり、CLAUDE.md「案が2つ以上あるとき」の3つの物差しで読みにくくなる側（同じ節が「工数と行数は指標にしない」と言っている）。振る舞いを変えていない証拠: test/server/core/session-manager.test.ts は差分ゼロで 64 pass / 147 expect が着手前後とも同じ。テスト側の変更は session-socket.test.ts の DispatchResult の import 先1行だけ。bun run check 1778 pass / 0 fail / 3604 expect() / 145 files（typecheck・oxlint・oxfmt --check も緑）。docs/design.md の2章の木と5章を追随し、grep -c '^#\{2,3\} ' は前後とも 43。画面の描画に関わらないので目視確認はしていない。
+
+## 背景
+
+`src/server/core/session-manager.ts`（818行）の `createSessionHost` は1つの閉包で次を全部持つ:
+
+- 配信のまとめ（`buffered` / `flushTimer` / `flush` / `joinPartialUtterances`）
+- 駆動の世代（`generation` / `live` / `driver` / `start` / `restart`）
+- 雑談のログの走行合計と `/compact`（`chatLogBytesSinceCompact` / `requestChatCompactIfNeeded`）
+- トークン消費の累計と1ターンの内訳（`cumulativeTokenUsage` / `turnUsage` / `appendTokenUsage`）
+- `/context` 内訳の記録（2026-09-23 の T-376 で足された）
+- 依頼の原寸の棚の寿命（`replaceState` の `releasedPromptImageIds`）
+- コマンドの振り分け（`dispatch` の if の列と、外の `dispatchToDriver`）
+
+このため次のことが起きている:
+
+- `restart` は駆動の世代に属する変数を**1つずつ手で空に戻している**（`buffered` / `chatLogBytesSinceCompact` / `cumulativeTokenUsage` / `turnUsage` …）。世代ごとの持ち物を1つ足すたびに、宣言・`receive`・`restart` の3か所を書き足すことになり、`restart` へ足し忘れても型は落とさない
+- `receive` は `origin === "driver"` と `state.chatMode` の条件を並べた if の列で、雑談のアーカイブ・トークンの内訳・トークンの記録・ターンの終わり・`/compact` の副作用の順序がそこにしか書かれていない
+- `dispatch` は「ターン中なら断る → `restart`」を `switch-character` / `set-chat-mode` / `switch-session` の3つで書き写している。キャラクター編集のコマンドは `src/shared/command.ts` の `CHARACTER_EDIT_COMMAND_TYPES` にスキーマとは別に列挙されている
+- テスト `test/server/core/session-manager.test.ts` は 1751 行ある
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- 振る舞い（イベントの順序・配信のまとめ方・失敗の理由）は変えない
+
+## 解くべき論点
+
+- 世代ごとの持ち物を1つの値（型）にまとめ、`restart` で丸ごと作り直す形にするか。まとめる範囲（配信のまとめも入れるか）
+- `receive` の副作用を「イベントを受けて何かを記録するもの」の並びとして分けるか。分けるなら `core` のどこに置くか（`token-usage.ts` のように概念のファイルへ寄せるか）。**ファイル名が概念になっているか**（`CLAUDE.md` 原則5）で決める
+- コマンドの振り分けを表にするか、`switch` の網羅（`satisfies never`）にするか。`CHARACTER_EDIT_COMMAND_TYPES` の二重の列挙をどう畳むか
+- テストの分け方（分けた単位ごとに `test/server/core/<名前>.test.ts` を持つか）
+
+## やること
+
+1. `createSessionHost` を読み、上の7つの持ち物ごとに「宣言・読む場所・書く場所・`restart` で戻す場所」を表にする（`evidence` に要約を残す）
+2. 論点に答え、振る舞いを変えずに分ける。先にテストが全部通ることを確かめ、分けたあとも同じテストが通ることを確かめる
+3. `docs/design.md` 5章の `session-manager` の説明と2章の木を新しい形に合わせる
+
+## 完了条件
+
+- `restart` の中で世代ごとの変数へ個別に代入する行が無い（まとめた値を作り直す1行になっている）、または残した理由を `evidence` に書く
+- 「ターン中なら断る」の判定が `dispatch` の中に1か所だけある（`grep -c 'state.turn.kind === "running"' src/server/core/session-manager.ts` の数を前後で `evidence` に書く）
+- `wc -l src/server/core/session-manager.ts` が 500 行以下、または超えた理由を `evidence` に書く
+- 既存のテストが期待値を変えずに通る
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 会話の中身をログやテストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-461
+
+**タスク**: 締めのセリフのあとに本文が伸びているあいだ、立ち絵に書いている動きを出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-459 / **passes**: True
+
+**evidence**:
+
+PortraitMotion に writing（用語集「書いている」を先に追加）を足し、resolvePortraitMotion の優先順位を failure > success > writing > waiting/reading に。条件は「ターン実行中かつ speechCalledInTurn かつ partialUtterance が空でない」で、状態から導く（useEffect は足していない）。動きは portrait.module.css の小さく速い横揺れ（既存の4つの動きと同じ置き場）。test/shared/portrait-motion.test.ts に条件と優先順位の4件。 / 目視（macOS、TSUKUMO_VIEW_PORT=39461・一時ホーム、本物の claude、headless Chrome で data-motion を80msおきに記録）: 締めの speak の約8秒後に waiting → writing、約21.4秒続いて本文確定で success へ替わった。 / bun run check は 1783 pass / 0 fail（145ファイル）。
+
+## 背景
+
+T-459 で並びが「締めの `speak` → レポート（本文で終える）」になると、締めのセリフ（「片付いたぞ！まとめを書いておくね」）が吹き出しに出てから、レポートを書き終えてターンが確定するまで数十秒、画面には何も起きない（最終レポートは確定してから出る。`src/shared/main-view.ts` の `settled`）。この間、立ち絵は `waiting`（`src/shared/portrait-motion.ts` の `resolvePortraitMotion`）のまま。
+
+書きかけの本文は `src/shared/session-state.ts` の `partialUtterance` に積まれている（完成した本文が来たら空に戻る）。立ち絵の動きは `resolvePortraitMotion` が「失敗でびくっ（`failure`）＞ 完了の反応（`success`）＞ 実行中なら `waiting`、そうでなければ `reading`」の順で決め、描き方は `src/browser/features/character-view/character-view.module.css` にある。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの判断: 締めのセリフのあとに本文が伸びているあいだ、立ち絵に「書いている」動きを出す（「いいよ、任せる!」）
+- 出す条件: ターンが実行中で、最後のセリフより後ろに書きかけの本文（`partialUtterance` が空でない）があるあいだ
+- 優先順位: `failure` ＞ `success` ＞ **書いている** ＞ `waiting` / `reading`
+- 表情は増やさない（キャラクターパックの素材を増やさない）。CSS の動き1つで表す。`prefers-reduced-motion: reduce` では止める（`src/browser/styles/theme.css` の全体規則）
+
+## やること
+
+1. `portrait-motion.ts` の `PortraitMotion` に「書いている」を足し、`resolvePortraitMotion` の入力に「最後のセリフのあとに書きかけの本文があるか」を足す。この真偽は `session-state.ts` の状態から導く（`useEffect` を足さない）。名前は `docs/glossary.md` に合わせ、無ければ先に用語集へ足す
+2. `use-character-view.ts` から新しい入力を渡し、`character-view.module.css` に動きを置く（小さく、読む邪魔にならないもの。筆を運ぶような横の揺れなど）
+3. `test/shared/portrait-motion.test.ts` に、条件と優先順位を確かめるテストを足す
+4. 目視で確かめる: `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分けて起こし、レポートを書かせる依頼を送って、締めのセリフのあとに動きが出て、ターンの確定で完了の反応へ替わることを見る
+
+## 完了条件
+
+- 条件（書きかけがあるか・セリフより後ろか・実行中か）と優先順位（`failure` / `success` に負ける）をテストで確かめている
+- 目視確認の結果（どの端末で、何が見えたか。動きが出ていた時間の目安）が `evidence` にある
+- `bun run check` が通る
+
+## 注意
+
+- 並びの反転（T-459）が入っていないと、締めのセリフのあとに本文が伸びる場面が起きず目視できない
+- 目視確認に起こしたプロセスは `bun run scripts/stop.ts --port <n>` で止める
+
+## T-463
+
+**タスク**: セリフのログを、キャラビューを上に伸ばして遡る見本の形に作り替える
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+セリフのログをキャラビューの舞台を上へ伸ばす <dialog> に置き換えた（anchor positioning で立ち絵・最新の吹き出しをキャラビューに重ね、古い→新しい・依頼の区切りに依頼の時刻・過去は3段で薄く最薄でも 4.5:1）。
+目視（Playwright Chromium 148・本物の claude でセリフ12件・ログを開いた状態）: 1440×900 で枠 L16/R707.2/B884 が領域と差0、上端72=帯の下端56+16。390×844 で L16/R374/B650 が一致。どちらも横スクロールなし・最新が下端・上へ転がせる。
+bun run check: 1783 pass / 0 fail（speech-log.test.tsx の8件で開閉・Esc・枠の外・並び・区切りの時刻・最新の見た目）。
+
+## 背景
+
+キャラビューの右上の「ログ」（`src/browser/features/character-view/presentational-speech-log.tsx`）は、いま画面の中央に出る `<dialog>`（`.speech-log`。幅 `min(40rem, …)`、地は `--surface`）で、「セリフのログ」の見出しの下に**新しいターンを上**にして、ターンごとに依頼の1行目の見出し＋セリフの箇条書きを並べる（`hooks/use-speech-log.ts` の `logTurns`。材料は `src/shared/turn-speech.ts` の `turnSpeeches`）。`docs/glossary.md`「セリフのログ」の定義もこの形で書かれている。
+
+ユーザーが作った見本（`/Users/sinnlos/Downloads/発話ログ案2 — キャラ表示をそのまま上に伸ばして読み返す（おすすめ）-html/LG-2-Stage.dc.html`。書き出しの React 実行時込みの1枚で、値はインラインの `style` にある。「ログ」を押して開いた状態の1場面）は、別の形をとる: **キャラビュー（立ち絵と吹き出しの舞台）をそのまま上へ伸ばし、吹き出しを遡って読む**。
+
+見本の形（見本のファイルが消えていてもこの表で足りる。数値は幅 1440×高さ 900 の場面のもの）:
+
+| 部分 | 見本 |
+| --- | --- |
+| 位置 | 左右はキャラビューの領域と同じ（見本では left 24px・幅 736px）。下端もキャラビューの下端と同じ（bottom 20px）。上端は帯のすぐ下（top 79px = 差し色の線 3px + 帯 60px + 余白 16px）。メインビューとサイドバーの左側の上に重なる |
+| 枠 | 地 `#131219`、枠 `1px solid #3a3946`、角 12px、影 `0 20px 50px rgba(0,0,0,0.55)`。`role="dialog"`・`aria-label="発話ログ"` |
+| 立ち絵 | 左下に、キャラビューと**同じ高さ**（353px）で置く。右端を `mask-image: linear-gradient(90deg, #000 78%, transparent)` で溶かす |
+| 吹き出しの列 | 立ち絵の右（`margin-left: -30px` で少し重ねる）、下から上へ積む（`justify-content: flex-end`、間 12px、padding `60px 20px 28px 0`）。上端 90px を `mask-image: linear-gradient(180deg, transparent 0, #000 90px)` で溶かす |
+| いちばん上 | 「もっと前を読む ↑」（12px、`#6f6d7a`、中央寄せ） |
+| 依頼の区切り | 横罫で挟んだ1行: 左右に `1px #34333f` の線、真ん中に `きみ「<依頼の1行目>」 <時刻>`（12px、`#9a98a6`。時刻は等幅・`#6f6d7a`。見本の `[14:32]` の角括弧は見本の仮の値の印） |
+| 過去の吹き出し | 左寄せ、最大幅 88%、padding `10px 14px`、角 12px、地 `rgba(34,33,43,0.85)`、枠 `1px solid #34333f`、文字 `#b5b3c0` 14px・行間 1.65。**古いほど薄い**（見本では新しい側から 0.75 → 0.55 → 0.4。依頼の区切りも古い側は 0.55） |
+| 最新の吹き出し | キャラビューの最新の吹き出しと同じ（地 `#1b2b2a`、枠 `1.5px solid` 差し色、文字 `#eceaf1` 15px、最大幅 92%、名前「tsukumo」11px 太字・差し色、左下のしっぽ） |
+| 閉じる口 | 右上（top/right 12px）に「ログを閉じる」（高さ 32px、枠は差し色、地 `#1f2e2e`、文字 `#bfeee4`） |
+| 開く口 | キャラビューの右上の「ログ」は、開いているあいだ `aria-expanded="true"`・枠が差し色の押された見た目になる |
+
+見本の差し色 `#66d1be` と、それを混ぜた地（`#1b2b2a` / `#1f2e2e` / `#bfeee4`）は見本のキャラクターの差し色。実装では `--accent` とその導出で表す（`src/browser/styles/theme.css`）。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの指示「見本を見てキャラ画面のログボタン押下時のモーダルを実装してほしい」
+- 今のセリフのログ（中央の一覧のモーダル）を、見本の「舞台を上に伸ばす」形に**置き換える**（両方は残さない）
+- 並びは**古い→新しいを上→下**に変え、開いたときは最新（下端）が見えている。材料は今と同じ記録（`turnSpeeches`）で、別に溜めない。「もっと前を読む ↑」は読み込みの口ではなく、上へスクロールできることの印（ページ送りは作らない）
+- 依頼の区切りの時刻は記録の依頼の時刻（`SessionRecord` の `request` の `time`。`stamped` でないものは時刻を出さない）
+- 書体（見本の Shippori Mincho / Zen Kaku Gothic New / IBM Plex Mono）は取り込まない（`docs/screen-design.md` 13.3 の2本のまま）。色は見本の値を `theme.css` のトークン経由で当てる（16進を書いてよいのは `theme.css` だけ）
+
+## 解くべき論点
+
+- **位置の決め方**: キャラビューの領域の左右・下端に合わせ、上端を帯の下まで伸ばす。`<dialog>` は top layer に出るので、領域の位置を知る手段が要る。CSS の anchor positioning（`anchor-name` / `position-anchor` / `anchor()`）が Orca のブラウザで効くか確かめ、効かなければ領域の矩形を購読して写す（`useEffect` の「外部システムの購読」）か、`<dialog>` をやめて `layout` の grid の上に重ねるかを比べて選ぶ。画面の幅が狭く上下に積む配置（`layout.module.css` の狭い幅の場合）でどう出すかも決める
+- **薄くする段**: 見本は3段（0.75 / 0.55 / 0.4）。何件目から最小にするか、ホバー・フォーカスで濃く戻すか（読み返すための画面なので、読めないほど薄くしない）
+- **立ち絵**: ログの中の立ち絵の表情は、キャラビューがいま出している表情（`use-character-view.ts` の `expression`）と同じにするか。雑談ビューの「過去の行を押すとその表情へ遡る」（`docs/screen-design.md` 13.7）は入れない（見本に無い）
+- **閉じ方**: 「ログを閉じる」・もう一度「ログ」・Esc・枠の外を押す。枠の外がメインビューの上になるので、そこを押したときに閉じるだけでメインビューを操作しないようにする
+- **部品の割り方**: 最新の吹き出しの見た目をキャラビューの `balloon.tsx` と共有するか
+
+## やること
+
+1. 見本を開いて形を確かめる（`python3 -m http.server` で見本のフォルダを配り、`LG-2-Stage.dc.html` を開く。file:// ではスクリプトが止まる）。見本が無ければ上の表で進める
+2. `hooks/use-speech-log.ts` の並びを古い→新しいに変え、依頼の区切り（依頼の1行目・時刻）とセリフを1本の並びにする。ターンの中の「最新かどうか」「どれだけ古いか」もここで畳む
+3. `presentational-speech-log.tsx` と `character-view.module.css` を見本の形に作り替える。色は `theme.css` のトークン（足すなら `docs/screen-design.md` 13.2 の考え方に沿って）
+4. `test/browser/features/character-view/` のログのテストを新しい並び・区切り・開閉に合わせる
+5. `docs/glossary.md`「セリフのログ」の定義、`docs/design.md` の部品の木（`<SpeechLog>` の行）と該当する節、`docs/requirements.md` 4.2 のログの記述を新しい形に合わせる
+6. 目視で確かめる: `bun run build` のあと `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分けて起こし、セリフのあるターンを3つ以上作ってから「ログ」を押す。1440×900 と 390 幅で、見本と並べてスクリーンショットで見比べる。**開いた状態の中まで**、横スクロールが出ないか・最新が下端に見えているか・上へスクロールできるかを測る（記憶メモ `visual-check-covers-modal-states`）
+
+## 完了条件
+
+- 開いたログの左右・下端がキャラビューの領域と一致し（差 1px 以下）、上端が帯のすぐ下にあることを、1440×900 で `getBoundingClientRect` で測った値が `evidence` にある
+- 開いた直後に最新のセリフ（最新の吹き出しの見た目）が下端に見え、依頼の区切りに依頼の1行目と時刻が出ることをテストで確かめている
+- 「ログを閉じる」・Esc・枠の外で閉じることをテストで確かめている
+- 目視確認の結果（どの端末・どの幅で、何が見えたか）が `evidence` にある
+- `bun run check` が通る
+
+## 注意
+
+- テストのフィクスチャのセリフ・依頼は架空の文面にする（`docs/coding-standards.md`「会話内容の扱い」）
+- 同じ機能の中を T-436（立ち絵の URL・差し色の導き方を1つにする）と T-461（書いている動き）も触る。先に入っていたらその形に合わせる
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} '` の数が合うか確かめる
+- 目視確認に起こしたプロセスは `bun run scripts/stop.ts --port <n>` で止める
+
+## T-467
+
+**タスク**: 移した 4.2「表示」を、決定を落とさず削れるだけ削る
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-465, T-466 / **passes**: True
+
+**evidence**:
+
+docs/display.md 486→445行・23,430→20,947字（約11%減。残した基準: 決定といまも効く理由、現在形の「採らない」、外の正典が repo 外の出力スタイル規約、他の正典より具体的な段落）。docs/history/decision.md に「## display.md 4.2 …」の4節（77+38+36+47行）を追加。削る前の太字253件は本文240・decision.md 13で全件引ける。src/test/docs から引かれる 4.2「…」の句は9件残存（「記録の時刻」など2件は着手前から display.md に無く、direction.md のドラフトに積んだ）。bun run check: 1778 pass / 0 fail（145ファイル）
+
+## 背景
+
+T-466 で `docs/requirements.md` の `### 4.2 表示` を別ファイルへ逐字で移した（ファイル名は T-466 の evidence にある）。移した時点で約449行あり、中身は決定のほかに、採らなかった案とその理由・ユーザーの発言の引用と日付・実測の数字・他の正典（`docs/screen-design.md` など）と同じことの書き直しが混ざっている（4.9 を 2026-09-23 に数えた時点で、日付38個・「採らなかった／採らない」18行・「実測」12行）。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの承認: `develop/direction.md` のドラフト（`requirements.md` 4章を 4.x の節の単位で別ファイルに出す）に「いいと思うけどできる限り文章量を削減するのとセットでお願い」。**移すことと削ることはセット**で、このタスク群（T-464〜T-468）で両方やる
+- 2026-09-23 のユーザーの判断（T-465 が約2割減で止まったのを受けて）: 「削れるなら削る、削れないなら削らない」。**行数の目標は置かない**。上の基準で削れるものは削り、決定といまも効く理由は削らない。行数を合わせるために空行を詰めたり段落を箇条へ詰めたりしない（T-465 で一度やって捨てた）
+- **決定（何をする・しない）と、いまも効いている理由（制約・前提）は1つも落とさない**
+- `docs/history/decision.md` へ移すもの（見出しは既存の流儀 `## requirements.md 4.2 <小見出し>（採らなかった案）` などに合わせる）: 採らなかった案とその理由 / ユーザーの発言の引用と「誰がいつ言ったか」/ 実測の数字と測り方（本文には結論だけ残す）/ 撤回・変更の経緯
+- 落とすもの: 他の正典（`docs/design.md` / `docs/screen-design.md` / `docs/coding-standards.md` / `docs/glossary.md`）と二重に書いてあることは参照1行にする / コードを読めば分かる実装の細部（関数の中身の説明・ファイル内の手順）
+- 決定の日付は「（2026-09-20 決定）」のような括弧1つまでは残してよい
+
+## 解くべき論点
+
+- 個々の段落が「いまも効いている理由」か「経緯」か。迷ったら残す側に倒し、残した理由を evidence に1行書く
+- 他の正典と重なっている段落のうち、どちらを正典にするか（原則はより具体的なほうを正典にし、もう片方を参照1行にする）
+
+## やること
+
+1. 削る前に、移した先の太字の文（`**…**`。決定を表していることが多い）を一覧に取る（スクリプトで。件数を控える）
+2. 上の基準で、`docs/history/decision.md` へ移すものを**先に**移送先へ書き、それから本文を削る
+3. 削った後に1の一覧を突き合わせ、各項目が移した先の本文か `decision.md` のどちらかに残っていることを確かめる（落としてよいのは他の正典との二重だけで、その場合は参照先を控える）
+
+## 完了条件
+
+- 上の基準で削れるものが残っていない（残した段落の基準を evidence に書く）。`wc -l` と `wc -m` の前後も evidence に書く
+- 手順1の太字の文の一覧が、本文・`decision.md`・参照先のいずれかで全件引ける（件数の内訳を evidence に書く）
+- 移した先の節の索引が、削った後の見出しと合っている
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{{2,3\}} ' <ファイル>` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 先に移送先へ書いてから元を消す（`develop/progress.md`「注意」の大掃除の注意。途中で落ちても移り終わったところまでが残る）
+- 並行する他のタスクが同じ節に書き足していることがある。`git merge main` で `docs/` が衝突したら手を止めて預ける
+- 決定の中身を変えない（言い回しを縮めるのはよいが、する・しないが変わる書き換えはしない）。決定そのものを見直したくなったら、変えずに `develop/direction.md` の `## エージェントのドラフト` に積む
+
+## T-469
+
+**タスク**: 画面のナビの帯の上端にある差し色の横線をなくし、顔の輪を細くする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+grep -rn screen-nav-accent-line src docs は0件。.screen-nav に border-top なし、.screen-nav-face は box-shadow: 0 0 0 1px var(--accent)。目視（fake driver・Playwright）: 1400x900 の仕事と雑談で帯は top0/bottom53（地52+罫線1）・上端に線なし・口の下線は罫線に重なる・会話の画面は窓内に収まり縦スクロールなし、390x900 は変化なし（main 482.88 / キャラ 152 が記録と一致）、顔の輪は 1px で縁が地に溶けない（メインでも /tmp/t469-wide.png・t469-face-zoom.png を見て確認）。screen-design.md の見出し数 36→36。「帯が奪う面積」は注記（split 比率が他タスクで変わり切り分けられないため）。bun run check: 1779 pass / 0 fail（145ファイル）
+
+## 背景
+
+画面の最上部にある画面のナビの帯（`docs/screen-design.md` 13.9）の上端に、差し色（`--accent`）の 3px の横線が出ている。ユーザーから「印象が強すぎるのでなくしてほしい」と指示があった（2026-09-23）。
+
+あわせて、帯の左端の顔を囲む差し色の輪も「細くしてもらえるかな」と指示があった（同日）。輪は `src/browser/features/screen-nav/screen-nav.module.css` の `.screen-nav-face` の `box-shadow: 0 0 0 2px var(--accent);` で、`docs/screen-design.md` 13.9「顔」に「外側に差し色の 2px の輪（`box-shadow: 0 0 0 2px var(--accent)`）」と書いてある。狭い画面の「≡」の面の顔（`.screen-nav-panel .screen-nav-face`）は `box-shadow: none` で輪が無い。
+
+線は次の3か所で成り立っている:
+
+- `src/browser/features/screen-nav/screen-nav.module.css` の `.screen-nav` の `border-top: var(--screen-nav-accent-line) solid var(--accent);`
+- `src/browser/styles/theme.css` のトークン `--screen-nav-accent-line: 3px;` と、その直前のコメント（「帯の外寸は **上端の差し色の線 + 帯の地 + 下の罫線** の3つの和」）
+- `src/browser/features/layout/layout.module.css` 21行目付近の会話の画面の grid の高さの計算（`- var(--screen-nav-accent-line)` の項）
+
+狭い画面（760px 以下）の `@media` は `border: none` で線ごと外していて、そのコメントに「帯の地・上端の線・下の罫線…は外す」とある。
+
+`docs/screen-design.md` は線を前提に書いてある:
+
+- 13.9 の帯の図の1行目（`━━━…  ← 上端の差し色の線`）
+- 13.9 の「帯の要素を左から」の表の1行目「上端の線」（並びの番号 1〜9 と、表の下の箇条書きの「1〜5 は左から詰め、7・8・9 は右端に寄せる」「6 は 5 の右」「9（歯車）」が番号で参照している）
+- 13.9「帯の形」の「外寸は**上端の線 3px（`--screen-nav-accent-line`）＋帯の地 52px…」と「上端の線は `--accent`」
+- 雑談中の帯の節（「`--accent` / `--surface-accent` を読んでいる場所（帯の上端の枠・…）」）
+- 13.9「帯が奪う面積（実測）」の冒頭（2026-09-23 時点の実測の条件として「上端の線 3px」と書いてある。これは当時の測定条件の記録）
+
+## 決まっていること（蒸し返さない）
+
+- 線は弱めたり色を変えたりせず、なくす（ユーザーの指示「なくしてください」）
+- 顔の輪は 2px から 1px にする。色（`--accent`）・顔の大きさ（36px）・「≡」の面の顔（輪なし）は変えない
+- 下の罫線（`--screen-nav-rule`）・帯の地・口の差し色の下線は変えない
+
+## やること
+
+1. `.screen-nav` の `border-top` を消す
+2. `--screen-nav-accent-line` のトークンを `theme.css` から消し、`layout.module.css` の高さの計算から同じ項を消す（使う場所が無くなるトークンは残さない）。`theme.css` と `screen-nav.module.css` のコメントの「上端の線」への言及を、今の形（帯の地 + 下の罫線の2つの和）に直す
+3. `docs/screen-design.md` 13.9 を直す: 帯の図の1行目を消す／「帯の要素を左から」の表から「上端の線」の行を消して番号を振り直し、表の下の箇条書きの番号の参照も合わせる／「帯の形」の外寸を「帯の地 52px ＋下の罫線 1px」にし、「上端の線は `--accent`」を消す。線をなくした決定（2026-09-23、印象が強すぎるため）を「帯の形」に1行残す
+4. 雑談中の帯の節の「帯の上端の枠」を列挙から外す
+5. `.screen-nav-face` の `box-shadow` を `0 0 0 1px var(--accent)` にし、`docs/screen-design.md` 13.9「顔」の「2px の輪」「`box-shadow: 0 0 0 2px var(--accent)`」を 1px に直す（細くした決定を 2026-09-23 として1行残す）
+6. 「帯が奪う面積（実測）」は当時の測定条件の記録なので書き換えない。ただし「帯 52px（いま）」の列が今の外寸と合わなくなるので、測り直すか、列見出しに「上端の線 3px があったとき」と注記するかのどちらかにする（測り直すなら `scripts/capture-view.ts` と同じ手順で、表の値を差し替える）
+7. 目視確認: `bun run build` のあと疑似セッション（fake driver。`docs/architecture.md`「手で確かめること」）で、広い画面（1400px）で帯の上端に線が無いこと、帯の下の罫線と口の下線がずれていないこと、会話の画面の下端が窓の下端で切れず縦スクロールも出ないことを確かめる。狭い画面（390px）も見た目が変わっていないことを確かめる。顔の輪が 1px で、顔の縁が帯の地に溶けていないことも見る。仕事と雑談の両方で見る
+
+## 完了条件
+
+- `grep -rn "screen-nav-accent-line" src docs` が0件
+- `.screen-nav` に `border-top` が無い
+- `.screen-nav-face` の `box-shadow` が `0 0 0 1px var(--accent)` で、`docs/screen-design.md` 13.9「顔」の記述が 1px になっている
+- `docs/screen-design.md` の帯の図・表・「帯の形」に上端の線が出てこない（「帯が奪う面積（実測）」の当時の記録は除く）。見出しの数が編集の前後で変わらない（`grep -c '^#\{2,4\} ' docs/screen-design.md`）
+- 目視確認の結果（幅・モード・見えたもの）を evidence に書く
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 目視で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける（`CLAUDE.md`「## タスク運用」）
+- 帯の外寸が 3px 縮むので、`layout.module.css` の grid の高さの計算を直し忘れると会話の画面の下に 3px の隙間ができる
