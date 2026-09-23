@@ -75,8 +75,8 @@ describe("SessionSwitch", () => {
     const select = screen.getByLabelText("セッション")
     expect((select as HTMLSelectElement).value).toBe("s-current")
     expect(options(select)).toEqual([
-      `萌黄の間・${localLabel(LATER)}`,
-      `浅葱の間・${localLabel(EARLIER)}（表示中）`,
+      `若葉の間・${localLabel(LATER)}`,
+      `空色の間・${localLabel(EARLIER)}（表示中）`,
     ])
   })
 

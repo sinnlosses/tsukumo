@@ -14,17 +14,17 @@ describe("roomName", () => {
     const named = Array.from({ length: 12 }, (_, index) => roomName(FIRST_ROOM_PORT + index))
 
     expect(named).toEqual([
-      "浅葱の間",
-      "萌黄の間",
-      "山吹の間",
-      "茜の間",
+      "空色の間",
+      "若葉の間",
+      "菜の花の間",
+      "夕焼けの間",
       "藍の間",
-      "紫苑の間",
+      "藤の間",
       "朱の間",
-      "鈍色の間",
+      "灰の間",
       "若草の間",
-      "群青の間",
-      "香色の間",
+      "海の間",
+      "桜の間",
       "墨の間",
     ])
   })
