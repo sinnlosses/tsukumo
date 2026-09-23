@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import {
+  REPORT_TOOL_NAME,
   TSUKUMO_MCP_SERVER_NAME,
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
@@ -662,5 +663,73 @@ describe("toPlan", () => {
     expect(toPlan(undefined)).toBeUndefined()
     expect(toPlan(null)).toBeUndefined()
     expect(toPlan("max")).toBeUndefined()
+  })
+})
+
+describe("toSessionEvents（report ツール）", () => {
+  const REPORT_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${REPORT_TOOL_NAME}`
+
+  it("メインの report の呼び出しはレポートにする（ツールの開始にはしない）", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_r1",
+        name: REPORT_TOOL_FULL_NAME,
+        input: { conclusion: "架空の結論。", body: "## 架空の見出し", favor: "架空のお願い" },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "report",
+        conclusion: "架空の結論。",
+        body: "## 架空の見出し",
+        favor: "架空のお願い",
+      },
+    ])
+  })
+
+  it("body と favor が無いときは空の文字列に畳む", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_r1",
+        name: REPORT_TOOL_FULL_NAME,
+        input: { conclusion: "架空の結論。" },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "report", conclusion: "架空の結論。", body: "", favor: "" },
+    ])
+  })
+
+  it("サブエージェントの report の呼び出しは捨てる（レポートにもツールの開始にもしない）", () => {
+    const message = assistantMessage(
+      [
+        {
+          type: "tool_use",
+          id: "toolu_r1",
+          name: REPORT_TOOL_FULL_NAME,
+          input: { conclusion: "架空の結論。" },
+        },
+      ],
+      "toolu_agent",
+    )
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
+  it("conclusion が文字列でない report は捨てる", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_r1",
+        name: REPORT_TOOL_FULL_NAME,
+        input: { body: "架空の本文" },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 })

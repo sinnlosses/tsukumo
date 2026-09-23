@@ -764,3 +764,130 @@ describe("mainViewTurns（ターンが進行中のあいだは、確定してい
     expect(reportOf(turns[1]?.steps[0])).toBeUndefined()
   })
 })
+
+describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
+  // フィクスチャはすべて手で書いた架空の本文（docs/coding-standards.md「会話内容の扱い」）。
+  const fold = (events: readonly SessionEvent[]) =>
+    events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
+  const turnOf = (events: readonly SessionEvent[], turnUnsettled: boolean) =>
+    mainViewTurns(mainViewEntries(fold(events)), turnUnsettled).at(-1)
+  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const text = (markdown: string): SessionEvent => ({ kind: "utterance", text: markdown })
+  const report = (conclusion: string, body = "", favor = ""): SessionEvent => ({
+    kind: "report",
+    conclusion,
+    body,
+    favor,
+  })
+  const toolRun = (id: string): readonly SessionEvent[] => [
+    {
+      kind: "tool-started",
+      toolUseId: id,
+      name: "Edit",
+      input: { file_path: "/tmp/dummy/a.ts" },
+      parentToolUseId: undefined,
+    },
+    { kind: "tool-finished", toolUseId: id, content: "ok", isError: false },
+  ]
+  const finished: SessionEvent = { kind: "turn-finished", status: "success" }
+  const shownReports = (turn: ReturnType<typeof turnOf>) =>
+    (turn?.steps ?? []).flatMap((step) => {
+      const shown = reportOf(step)
+      return shown === undefined ? [] : [shown]
+    })
+
+  it("conclusion → body → favor（お願いの塊）の順に1つの本文へ組み、最終レポートにする", () => {
+    const turn = turnOf(
+      [ask, report("架空の結論。", "| 列 |\n| --- |\n| 値 |", "架空のお願い"), finished],
+      false,
+    )
+
+    expect(shownReports(turn)).toEqual([
+      '架空の結論。\n\n| 列 |\n| --- |\n| 値 |\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+    ])
+    expect(turn?.steps.map((step) => step.final)).toEqual([true])
+    expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
+  })
+
+  it("body と favor が空ならその塊を置かない", () => {
+    const turn = turnOf([ask, report("架空の結論だけ。"), finished], false)
+
+    expect(shownReports(turn)).toEqual(["架空の結論だけ。"])
+  })
+
+  it("report が呼ばれたターンではツールの外に書いた本文を出さない（資料も締めのテキストも）", () => {
+    const turn = turnOf(
+      [
+        ask,
+        text(materialReport("テキストで書いた資料")),
+        ...toolRun("toolu_1"),
+        report("架空の結論。"),
+        { kind: "speech", text: "書けたよ", expression: "default" },
+        text("完了"),
+        finished,
+      ],
+      false,
+    )
+
+    expect(shownReports(turn)).toEqual(["架空の結論。"])
+    expect(turn?.steps.find((step) => step.final)?.body).toEqual({
+      kind: "text",
+      report: "架空の結論。",
+      firstLine: "架空の結論。",
+    })
+  })
+
+  it("最後の呼び出しが最終レポート、それより前は中間レポートになる", () => {
+    const turn = turnOf(
+      [ask, report("途中の結論。"), ...toolRun("toolu_1"), report("最後の結論。"), finished],
+      false,
+    )
+
+    expect(shownReports(turn)).toEqual(["途中の結論。", "最後の結論。"])
+    const shown = (turn?.steps ?? []).filter((step) => step.body.kind === "text")
+    expect(shown.map((step) => step.interim)).toEqual([true, false])
+    expect(shown.map((step) => step.final)).toEqual([false, true])
+    expect(turn?.hasInterimReport).toBe(true)
+  })
+
+  it("最後の report のあとに作業が続いて終わっても、それが最終レポートになる", () => {
+    const turn = turnOf([ask, report("唯一の結論。"), ...toolRun("toolu_1"), finished], false)
+
+    expect(turn?.steps.find((step) => step.final)?.body).toEqual({
+      kind: "text",
+      report: "唯一の結論。",
+      firstLine: "唯一の結論。",
+    })
+  })
+
+  it("動いているあいだは、いちばん新しい report を出さず、それより前は中間レポートとして出す", () => {
+    const running = turnOf(
+      [ask, report("途中の結論。"), ...toolRun("toolu_1"), report("最後の結論。")],
+      true,
+    )
+
+    expect(shownReports(running)).toEqual(["途中の結論。"])
+    expect(running?.steps.find((step) => step.body.kind === "text")?.interim).toBe(true)
+  })
+
+  it("report が呼ばれなかったターンは、同じセッションでも今までの推測で本文を選ぶ", () => {
+    const turns = mainViewTurns(
+      mainViewEntries(
+        fold([
+          ask,
+          report("前のターンの結論。"),
+          finished,
+          { kind: "request", text: "次の架空の依頼", images: [] },
+          text("テキストで書いた答え"),
+          finished,
+        ]),
+      ),
+      false,
+    )
+
+    expect(turns.map((turn) => shownReports(turn))).toEqual([
+      ["前のターンの結論。"],
+      ["テキストで書いた答え"],
+    ])
+  })
+})

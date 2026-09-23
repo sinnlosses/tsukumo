@@ -24,6 +24,12 @@ import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
 /** セリフを受け取るツールの名前（docs/glossary.md「speak ツール」）。 */
 export const SPEAK_TOOL_NAME = "speak"
+/**
+ * レポートを受け取るツールの名前（docs/glossary.md「report ツール」）。**試行中**で、載るのは
+ * 切り替えたときだけ（`src/server/core/report-tool.ts`）。載っていなければ呼ばれないので、
+ * 見分ける側はいつも見ている。
+ */
+export const REPORT_TOOL_NAME = "report"
 
 /**
  * SDK のメッセージ1つを内部イベントの並びに変換する。1つのメッセージから複数のイベントが
@@ -32,6 +38,9 @@ export const SPEAK_TOOL_NAME = "speak"
  * - **`thinking` は変換しない。** モデルの内部の思考なので内部の型にも入れない
  *   （docs/requirements.md 4.1）
  * - **`speak` の呼び出しは `tool-started` にしない。** `speech` として別に出す（吹き出し行き）
+ * - **`report` の呼び出しも `tool-started` にしない。** `report` として別に出す（メインビュー行き）。
+ *   **`parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる**——ターンの
+ *   レポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
  * - `expression` は `expressions`（キャラクター定義にある表情名）に無ければ `default` に落とす
  *   （docs/architecture.md 原則4 — 表情名をコードに書かない）
  * - **`tool-started` の `parentToolUseId`** は、メッセージ本体（`message.message` の外）にある
@@ -238,6 +247,10 @@ function assistantBlockEvents(
     return speechEvents(block.input, expressions)
   }
 
+  if (block.name === tsukumoToolFullName(REPORT_TOOL_NAME)) {
+    return parentToolUseId === undefined ? reportEvents(block.input) : []
+  }
+
   return typeof block.id === "string"
     ? [
         {
@@ -261,9 +274,33 @@ function speechEvents(input: unknown, expressions: readonly Expression[]): reado
   ]
 }
 
+/**
+ * `report` の引数を取り出す。**`body` と `favor` の「無い」は空の文字列に畳む**（描く側は空の塊を
+ * 置かないだけで済む）。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
+ * モデルには本体がエラーを返す）。
+ */
+function reportEvents(input: unknown): readonly SessionEvent[] {
+  if (!isPlainObject(input) || typeof input.conclusion !== "string") {
+    return []
+  }
+
+  return [
+    {
+      kind: "report",
+      conclusion: input.conclusion,
+      body: optionalString(input.body) ?? "",
+      favor: optionalString(input.favor) ?? "",
+    },
+  ]
+}
+
 /** モデルから見えるツールのフルネーム。MCP サーバ名とツール名から決まる。 */
 function speakToolFullName(): string {
-  return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
+  return tsukumoToolFullName(SPEAK_TOOL_NAME)
+}
+
+function tsukumoToolFullName(toolName: string): string {
+  return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${toolName}`
 }
 
 function toExpression(value: unknown, expressions: readonly Expression[]): Expression {
