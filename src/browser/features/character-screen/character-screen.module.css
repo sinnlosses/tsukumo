@@ -390,6 +390,74 @@
   white-space: nowrap;
 }
 
+/* 表情を消す前の確かめ（`components/portrait-clear-confirm.tsx`）。**画面全体は覆わない**——
+   UA 既定の中央寄せ（`inset: 0; margin: auto;`）を外し、押したカードの位置から自前で置く
+   （`top` / `left` は部品側の inline style）。`showModal()` なので top layer に出て
+   `.character-card` の `overflow: hidden` には切り取られない。 */
+.character-clear-confirm {
+  position: fixed;
+  inset: auto;
+  box-sizing: border-box;
+  width: 300px;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  border-radius: 0.875rem;
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--ground) 70%, transparent);
+}
+/* 画面を暗く覆わない（`showModal()` の既定の暗いベールを消し、外側クリックの読み替えだけ使う）。 */
+.character-clear-confirm::backdrop {
+  background: transparent;
+}
+.character-clear-confirm-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.character-clear-confirm-portrait {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  background: var(--ground);
+  border-radius: 0.5rem;
+}
+.character-clear-confirm-question {
+  font-size: var(--font-secondary);
+  font-weight: bold;
+}
+.character-clear-confirm-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+  line-height: 1.7;
+}
+.character-clear-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.character-clear-confirm-ok {
+  height: 34px;
+  padding: 0 0.875rem;
+  background: var(--state-ng);
+  color: var(--ground);
+  border: none;
+  border-radius: 0.5rem;
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.character-clear-confirm-ok:hover {
+  background: color-mix(in srgb, var(--state-ng) 85%, var(--ink));
+}
+
 /* 差し色。**画面の差し色（2つ）と立ち絵の差し色（4つ）を横に並べる**（見本の 2 : 4）。 */
 .character-accents {
   display: grid;

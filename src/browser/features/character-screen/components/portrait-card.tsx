@@ -7,13 +7,19 @@
 //
 // どちらのカードにも画像を落とせる（落とすと差し替え・足す）。出し分けは
 // `hooks/use-character-edit.ts` が畳んだ値のとおりで、判定を持たない。
+//
+// **「消す」は押しただけでは送らない。** 押すとカードの位置を測って確かめの吹き出し
+// （`components/portrait-clear-confirm.tsx`）を開き、その中の「消す」で初めて `card.clear.onClear`
+// を呼ぶ。開いているかどうかと、開いた瞬間に測った位置だけをここで持つ（`保つ」の1種類。
+// docs/design.md 2章「機能の中を分ける」）。
 
-import { type DragEvent, type ReactElement } from "react"
+import { type DragEvent, type ReactElement, useRef, useState } from "react"
 
 import { Portrait } from "../../../components/portrait.tsx"
 import styles from "../character-screen.module.css"
 import { type PortraitCardModel } from "../hooks/use-character-edit.ts"
 import { PlusIcon, TrashIcon, UploadIcon } from "./action-icon.tsx"
+import { PortraitClearConfirm } from "./portrait-clear-confirm.tsx"
 
 /**
  * `<input type="file">` に出す受け付ける種類。**中身の検証はサーバ側**
@@ -29,6 +35,12 @@ export function PortraitCard(props: {
   readonly disabled: boolean
 }): ReactElement {
   const { card, disabled } = props
+  // 消す前の確かめの吹き出し。開いているかと、開いた瞬間に測った位置を一緒に持つ
+  // （どちらも「保つ」の1種類。`components/task-board/task-run-button.tsx` と同じ形）。
+  const cardRef = useRef<HTMLElement>(null)
+  const [confirmClear, setConfirmClear] = useState<{ readonly anchor: DOMRect } | undefined>(
+    undefined,
+  )
 
   // 画像を落とせるのは変えられるパックだけ（`preventDefault` しない ＝ 落とせない）。
   const onDragOver = (event: DragEvent): void => {
@@ -75,48 +87,73 @@ export function PortraitCard(props: {
     )
   }
 
+  const clear = card.clear
+
   return (
-    <figure
-      className={styles["character-card"]}
-      data-expression={card.expression}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-    >
-      <div className={styles["character-card-stage"]}>
-        <Portrait
-          url={card.image.url}
-          accent={card.image.accent}
-          altText={card.label}
-          expression={card.expression}
-          outfit={card.image.outfit}
-          motion={undefined}
-          className={styles["character-card-portrait"]}
-        />
-      </div>
-      <figcaption className={styles["character-card-label"]}>{card.label}</figcaption>
-      {card.badge.kind === "shown" ? (
-        <span className={styles["character-card-badge"]}>{card.badge.text}</span>
-      ) : null}
-      <div className={styles["character-card-actions"]}>
-        {/* 見える字は無い（アイコンだけ）。**どの表情のことかは読み上げに残す**ので、
-            `<input>` 側に aria-label を置き、`title` で乗せたときの名前を出す。 */}
-        <label className={styles["character-card-action"]} title="差し替える">
-          <UploadIcon />
-          {fileInput}
-        </label>
-        {card.clear.kind === "shown" ? (
-          <button
-            type="button"
-            className={`${styles["character-card-action"]} ${styles["character-card-action-danger"]}`}
-            aria-label={card.clear.ariaLabel}
-            title="消す"
-            disabled={disabled}
-            onClick={card.clear.onClear}
-          >
-            <TrashIcon />
-          </button>
+    <>
+      <figure
+        ref={cardRef}
+        className={styles["character-card"]}
+        data-expression={card.expression}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+      >
+        <div className={styles["character-card-stage"]}>
+          <Portrait
+            url={card.image.url}
+            accent={card.image.accent}
+            altText={card.label}
+            expression={card.expression}
+            outfit={card.image.outfit}
+            motion={undefined}
+            className={styles["character-card-portrait"]}
+          />
+        </div>
+        <figcaption className={styles["character-card-label"]}>{card.label}</figcaption>
+        {card.badge.kind === "shown" ? (
+          <span className={styles["character-card-badge"]}>{card.badge.text}</span>
         ) : null}
-      </div>
-    </figure>
+        <div className={styles["character-card-actions"]}>
+          {/* 見える字は無い（アイコンだけ）。**どの表情のことかは読み上げに残す**ので、
+              `<input>` 側に aria-label を置き、`title` で乗せたときの名前を出す。 */}
+          <label className={styles["character-card-action"]} title="差し替える">
+            <UploadIcon />
+            {fileInput}
+          </label>
+          {clear.kind === "shown" ? (
+            <button
+              type="button"
+              className={`${styles["character-card-action"]} ${styles["character-card-action-danger"]}`}
+              aria-label={clear.ariaLabel}
+              title="消す"
+              disabled={disabled}
+              onClick={() => {
+                const anchor = cardRef.current?.getBoundingClientRect()
+                if (anchor !== undefined) {
+                  setConfirmClear({ anchor })
+                }
+              }}
+            >
+              <TrashIcon />
+            </button>
+          ) : null}
+        </div>
+      </figure>
+      {confirmClear !== undefined && clear.kind === "shown" ? (
+        <PortraitClearConfirm
+          anchor={confirmClear.anchor}
+          label={card.label}
+          fallbackLabel={clear.fallbackLabel}
+          portraitUrl={card.image.url}
+          onConfirm={() => {
+            clear.onClear()
+            setConfirmClear(undefined)
+          }}
+          onClose={() => {
+            setConfirmClear(undefined)
+          }}
+        />
+      ) : null}
+    </>
   )
 }

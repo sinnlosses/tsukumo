@@ -146,7 +146,13 @@ export type PortraitCardModel = {
   /** 消す口（`default` と、自分の絵が無い表情には出さない）。 */
   readonly clear:
     | { readonly kind: "hidden" }
-    | { readonly kind: "shown"; readonly ariaLabel: string; readonly onClear: () => void }
+    | {
+        readonly kind: "shown"
+        readonly ariaLabel: string
+        /** 消したあとに代わりに出る表情（`default`）のラベル。消す前の確かめの本文に使う（原則4）。 */
+        readonly fallbackLabel: string
+        readonly onClear: () => void
+      }
 }
 
 /** 色見本1つ（画面の差し色・衣装ごとの差し色の両方）。`value` は16進のまま字にも出す。 */
@@ -391,6 +397,8 @@ function portraitCards(
   galleryAccent: string,
   send: PortraitSenders,
 ): readonly PortraitCardModel[] {
+  // `default` は消せないので1回だけ解けばよい（消す前の確かめの本文がどのカードでも同じ値を読む）。
+  const fallbackLabel = resolveExpressionLabel(character.expressions, "default")
   return EXPRESSIONS.map((expression): PortraitCardModel => {
     const label = resolveExpressionLabel(character.expressions, expression)
     // 畳んだ表では `default` の絵が入っているので、自分の絵を持つ表情だけを引く。
@@ -420,7 +428,12 @@ function portraitCards(
       },
       clear:
         isRemovableExpression(expression) && url !== undefined
-          ? { kind: "shown", ariaLabel: `${label}を消す`, onClear: clearOf(expression, send) }
+          ? {
+              kind: "shown",
+              ariaLabel: `${label}を消す`,
+              fallbackLabel,
+              onClear: clearOf(expression, send),
+            }
           : { kind: "hidden" },
     }
   })

@@ -61,9 +61,9 @@
     "dependencies": ["T-494"],
     "summary": "表情を消す前に、カードに添う確かめの吹き出しを出す",
     "task": "## 背景\n\nいまは立ち絵のカードの「消す」を押すとすぐ `clear-portrait` が送られる（`src/browser/features/character-screen/components/portrait-card.tsx`）。見本 `docs/history/mockup/character-delete-expression-2026-09-23.html`（撮影 `character-delete-expression-2026-09-23.png`）では、押したカードに添って小さな確かめが出る（画面全体を覆わない）。\n\n見本の形: カードの右下に重なる幅 300px ほどの箱。左に消す立ち絵の小さな縮図、見出し「「あわわ」を消しますか？」、本文「この表情を使う場面では「いつもの顔」が出ます。」、「やめる」と赤い「消す」。枠は赤みがかった線。\n\n## やること\n\n1. 確かめの吹き出しを作り、「消す」で開いて「消す」で送る。外を押す・Esc で閉じる\n2. 見出しと本文の表情の名前はパックのラベルを使う（原則4。`resolveExpressionLabel`）\n3. `docs/screen-design.md` 13.6 に1行足す\n\n## 完了条件\n\n- 「消す」を押しただけでは送られず、確かめの「消す」で `clear-portrait` が1回送られる（部品のテスト）\n- 「やめる」・Esc で閉じて何も送られない（部品のテスト）\n- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか、ダイアログを開いた状態も含む）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（2027 pass / 0 fail, 155ファイル）。部品のテストで消す口だけでは送らず確かめの消すで clear-portrait が1回、やめる・Esc・外側クリックでは送らないことを確認。\n目視: build 後 fake driver・port 4872・別ホームで Playwright。1440px・390px で閉じた状態・4列目「あわわ」・右下寄りの最終カードを開いた状態すべて横スクロール無し。吹き出しはカード右下に重なり、端では内側に寄せて収まった。\n見本との差: 本文の代わりに出る顔は見本の「いつもの顔」ではなく default のラベル（例「にっと」）を出す（原則4）。"
   },
   {
     "id": "T-497",

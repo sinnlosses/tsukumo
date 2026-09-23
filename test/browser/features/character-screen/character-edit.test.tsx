@@ -68,6 +68,11 @@ function waitForDebounce(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 250))
 }
 
+/** 表情を消す前の確かめ（`portrait-clear-confirm.tsx`）。開いていなければ `null`。 */
+function clearConfirmDialog(): Element | null {
+  return document.querySelector(".character-clear-confirm")
+}
+
 describe("CharacterEdit", () => {
   it("8つの表情ぶんの立ち絵の口と、4つの衣装ぶんの差し色を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -187,13 +192,74 @@ describe("CharacterEdit", () => {
     ])
   })
 
-  it("消す口を押すと clear-portrait を dispatch する", () => {
+  // 消す前の確かめ（docs/screen-design.md 13.6「表情を消す前の確かめ」）。
+  it("消す口を押しただけでは送らず、確かめの吹き出しを開く", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
     fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
 
+    expect(calls).toEqual([])
+    expect(clearConfirmDialog()?.hasAttribute("open")).toBe(true)
+    expect(screen.getByText("「どや顔」を消しますか？")).toBeDefined()
+    // 本文の「代わりに出る表情」の名前もパックのラベル（`resolveExpressionLabel`。原則4）。
+    expect(screen.getByText("この表情を使う場面では「通常」が出ます。")).toBeDefined()
+  })
+
+  it("確かめの「消す」を押すと clear-portrait を1回だけ dispatch し、吹き出しを閉じる", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    fireEvent.click(screen.getByRole("button", { name: "消す" }))
+
     expect(calls).toEqual([{ type: "clear-portrait", pack: "fictional", expression: "proud" }])
+    expect(clearConfirmDialog()).toBeNull()
+  })
+
+  it("確かめの「やめる」で閉じ、何も送らない", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    fireEvent.click(screen.getByRole("button", { name: "やめる" }))
+
+    expect(calls).toEqual([])
+    expect(clearConfirmDialog()).toBeNull()
+  })
+
+  // Esc は `<dialog>` を閉じて `close` イベントを出す（ブラウザの既定の振る舞い。
+  // `task-board/task-run.test.tsx` と同じ起こし方）。
+  it("Esc で閉じたときも何も送らない", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    const dialog = clearConfirmDialog()
+    if (dialog === null) {
+      throw new Error("確かめが開いていない")
+    }
+    fireEvent(dialog, new Event("close"))
+
+    expect(calls).toEqual([])
+    expect(clearConfirmDialog()).toBeNull()
+  })
+
+  // 外側のクリックは `<dialog>` 自身への click として届く（`onDialogClick` の読み替え。
+  // `task-run-confirm.tsx` と同じ形）。
+  it("外側のクリックで閉じ、何も送らない", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    const dialog = clearConfirmDialog()
+    if (dialog === null) {
+      throw new Error("確かめが開いていない")
+    }
+    fireEvent.click(dialog)
+
+    expect(calls).toEqual([])
+    expect(clearConfirmDialog()).toBeNull()
   })
 
   it("立ち絵を選ぶと data URL を載せた set-portrait を dispatch し、入力欄を空に戻す", async () => {
