@@ -344,6 +344,7 @@ features/task-board/
   domain/task-status.ts           status → 色の class（表の行が読む）
   domain/task-list-count.ts       見出し下の件数のチップの元（サイドバーが読む）
   domain/task-sidebar-order.ts    区画の一覧の並び（進行中を先頭にまとめる純関数）
+  domain/task-sidebar-filter.ts   件数のチップで選んだ状態だけに絞る純関数（2026-09-23 決定）
 ```
 
 - **部品に算出を残さない。** 「値が無いときどうするか」「どれを出すか」はフックが
@@ -355,8 +356,8 @@ features/task-board/
 - **`domain/` を切るのは、フックに入れないほうが良いもののうち、その機能固有の語彙で
   名乗れるものだけ。** 「純関数だから `domain/`」ではない。入れないほうが良いのは、**フックを
   呼ばない相手が読む**とき——`domain/task-status.ts` は表の行（フックを呼ばない部品）が読み、
-  `domain/task-list-count.ts` と `domain/task-sidebar-order.ts` はサイドバーの区画
-  （`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
+  `domain/task-list-count.ts`・`domain/task-sidebar-order.ts`・`domain/task-sidebar-filter.ts`
+  はサイドバーの区画（`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
   フックを使わない側が `use-*.ts` を import することになる
 - **`components/` は機能の中の部品**で、`browser/components/`（機能の語彙を持たない部品）とは
   別物。**読み手が2つの機能にまたがったら `browser/components/` へ上げる**

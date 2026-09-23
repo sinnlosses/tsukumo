@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 件数のチップを押すと、その状態のタスクだけ区画に出るようにした（T-412）
+
+選んだ状態は `task-section.tsx` の state（保存しない）で、絞り込みは `domain/task-sidebar-filter.ts` の純関数。想定外の status は全件のときだけ出し、0件なら「◯◯のタスクが無い」と出して選択は外さない。
+
 ### 2026-09-23 develop/progress.md の完了した小節を両側とも残すマージドライバを作った（T-404）
 
 `scripts/progress-done-section.ts`（「## 完了したこと」を `###` 小節に割る・3wayで畳む純粋関数）と

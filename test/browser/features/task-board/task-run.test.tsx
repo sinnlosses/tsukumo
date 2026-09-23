@@ -46,7 +46,7 @@ const RUNNING_TURN: Partial<SessionState> = { turn: { kind: "running", startedAt
 
 /** サイドバーの区画の一覧。確認は姿と送り口が要るので store で包む。 */
 function renderList(spy: CommandSpy = () => {}, overrides: Partial<SessionState> = {}): void {
-  renderWithStore(<TaskList tasks={known(TASKS)} />, spy, overrides)
+  renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />, spy, overrides)
 }
 
 /** 見出しの「一覧を見る」で開く表（開いた状態で描く）。閉じる要求は `closed` に溜まる。 */
