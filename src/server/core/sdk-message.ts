@@ -26,9 +26,8 @@ export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
 /** セリフを受け取るツールの名前（docs/glossary.md「speak ツール」）。 */
 export const SPEAK_TOOL_NAME = "speak"
 /**
- * レポートを受け取るツールの名前（docs/glossary.md「report ツール」）。**試行中**で、載るのは
- * 切り替えたときだけ（`src/server/core/report-tool.ts`）。載っていなければ呼ばれないので、
- * 見分ける側はいつも見ている。
+ * レポートを受け取るツールの名前（docs/glossary.md「report ツール」）。載るのは仕事のときだけ
+ * （`src/server/adapter/sdk-tool.ts`）。雑談では呼ばれないので、見分ける側はいつも見ている。
  */
 export const REPORT_TOOL_NAME = "report"
 
@@ -42,6 +41,9 @@ export const REPORT_TOOL_NAME = "report"
  * - **`report` の呼び出しも `tool-started` にしない。** `report` として別に出す（メインビュー行き）。
  *   **`parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる**——ターンの
  *   レポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
+ * - **`includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を
+ *   出す**（立ち絵の「書いている」の材料。メインのものだけ）。引数の断片（`input_json_delta`）は
+ *   運ばない——描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない
  * - `expression` は `expressions`（キャラクター定義にある表情名）に無ければ `default` に落とす
  *   （docs/architecture.md 原則4 — 表情名をコードに書かない）
  * - **`tool-started` の `parentToolUseId`** は、メッセージ本体（`message.message` の外）にある
@@ -95,7 +97,10 @@ export function toSessionEvents(
       // 出さないので運ばない。docs/chat-mode.md 4.9「記憶の圧縮と忘却」）。
       return message.subtype === "compact_boundary" ? [{ kind: "compact-boundary" }] : []
     case "stream_event":
-      return partialUtteranceEvents(message.event)
+      return [
+        ...partialUtteranceEvents(message.event),
+        ...reportDraftingEvents(message.event, optionalString(message.parent_tool_use_id)),
+      ]
     case "assistant":
       return assistantMessageEvents(message, expressions)
     case "user":
@@ -241,6 +246,31 @@ function partialUtteranceEvents(event: unknown): readonly SessionEvent[] {
   }
 
   return [{ kind: "partial-utterance", text: delta.text }]
+}
+
+/**
+ * `includePartialMessages` の断片のうち、メインの `report` の呼び出しの塊が開いた合図
+ * （`content_block_start` の `tool_use`）だけを `report-drafting` にする。
+ */
+function reportDraftingEvents(
+  event: unknown,
+  parentToolUseId: string | undefined,
+): readonly SessionEvent[] {
+  if (
+    parentToolUseId !== undefined ||
+    !isPlainObject(event) ||
+    event.type !== "content_block_start" ||
+    !isPlainObject(event.content_block)
+  ) {
+    return []
+  }
+
+  const block = event.content_block
+  return block.type === "tool_use" &&
+    block.name === tsukumoToolFullName(REPORT_TOOL_NAME) &&
+    typeof block.id === "string"
+    ? [{ kind: "report-drafting", toolUseId: block.id }]
+    : []
 }
 
 /**

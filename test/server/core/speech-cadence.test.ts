@@ -25,10 +25,13 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("5〜10回")
   })
 
-  it("締めの speak はレポートの直前に置く（ターンは本文で終える）", () => {
-    // `speak` で終えると本体が英語の催促を差し込むので、締めはレポートより前に来る。
-    expect(SPEECH_CADENCE_PROMPT).toContain("レポートを書く直前に締めの1回")
-    expect(SPEECH_CADENCE_PROMPT).not.toContain("完了の報告")
+  it("締めの speak は report を呼んだ直後に置き、書き終えたことを言う", () => {
+    // `report` は呼び出しの時点で中身が確定するので、締めのセリフはそのあとに言える
+    // （`report-notation.ts` の終わり方の条と揃える）。
+    expect(SPEECH_CADENCE_PROMPT).toContain("`report` を呼んだ直後に締めの1回")
+    expect(SPEECH_CADENCE_PROMPT).toContain("書き終えたことの一言")
+    expect(SPEECH_CADENCE_PROMPT).not.toContain("書く直前")
+    expect(SPEECH_CADENCE_PROMPT).not.toContain("これから何を書くかの予告")
   })
 
   it("委譲中の間合い（背景委譲・合図の形式）を持ち、append に載る", () => {

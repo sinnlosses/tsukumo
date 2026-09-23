@@ -16,7 +16,7 @@
      ある（ユーザーと詰めて調整する前提）。
      --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
      --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
-     --portrait-write-*: 書いている（締めのセリフのあと本文が伸びている間、筆を運ぶように
+     --portrait-write-*: 書いている（`report` の引数を書いている間、筆を運ぶように
        小さく速く横へ揺れる。待っている間の移動より小さく速い）。
      --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
      --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。 */
@@ -114,8 +114,8 @@
     transform: translateX(calc(-1 * var(--portrait-walk-amount)));
   }
 }
-/* 書いている。筆を運ぶように小さく速く横へ揺れる（`portrait-walk` より小さく速い）。締めの
-   セリフのあと本文が伸びている間、ずっと当たり続ける動きなので `portrait-walk` と同じ
+/* 書いている。筆を運ぶように小さく速く横へ揺れる（`portrait-walk` より小さく速い）。`report` の
+   引数を書いている間、ずっと当たり続ける動きなので `portrait-walk` と同じ
    無限ループにする。 */
 @keyframes portrait-write {
   0%,

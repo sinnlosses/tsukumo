@@ -4,10 +4,6 @@ import { CHAT_MANNER_PROMPT } from "../../../src/server/core/chat-manner.ts"
 import { takeChatMemoryPromptParts } from "../../../src/server/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation.ts"
 import {
-  REPORT_TOOL_NOTATION_PROMPT,
-  REPORT_TOOL_SPEECH_CADENCE_PROMPT,
-} from "../../../src/server/core/report-tool.ts"
-import {
   type ChatArchive,
   type ChatArchiveRecentEntry,
   type ChatSummary,
@@ -161,39 +157,6 @@ describe("takeSystemPromptAppend", () => {
     // 正典を2つにしない（`report-notation.ts` と同じ切り分け。docs/chat-mode.md 4.9）。
     expect(CHAT_MANNER_PROMPT).toContain("speak")
     expect(CHAT_MANNER_PROMPT).not.toContain("一人称")
-  })
-})
-
-describe("takeSystemPromptAppend（レポートの受け取り方の試行）", () => {
-  it("受け取り方を渡さなければ、今までどおり（text と同じ）", () => {
-    const seed = { persona: PERSONA, mode: { kind: "work" } } as const
-
-    expect(takeSystemPromptAppend(seed)).toBe(takeSystemPromptAppend(seed, "text"))
-  })
-
-  it("仕事で tool のときは、仕事の2つの節が差し替えた文面に入れ替わる（並びは同じ）", () => {
-    const append = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } }, "tool")
-
-    expect(append).toBe(
-      `${PERSONA}\n\n${REPORT_TOOL_SPEECH_CADENCE_PROMPT}\n\n${REPORT_TOOL_NOTATION_PROMPT}`,
-    )
-  })
-
-  it("雑談では tool を渡しても変わらない（雑談は本文を書かない）", () => {
-    const chat = (reportChannel: "text" | "tool") =>
-      takeSystemPromptAppend(
-        {
-          persona: PERSONA,
-          mode: chatMode(
-            { kind: "resume", sessionId: "fictional" },
-            fakeChatSummary({ summary: SUMMARY, delivered: true }),
-            fakeChatArchive(),
-          ),
-        },
-        reportChannel,
-      )
-
-    expect(chat("tool")).toBe(chat("text"))
   })
 })
 

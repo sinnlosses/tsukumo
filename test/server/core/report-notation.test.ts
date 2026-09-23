@@ -153,11 +153,41 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(beforeSend).toContain("日本語でない地の文")
   })
 
-  it("ターンは締めの speak → レポートで終えさせる（speak で終えると本体が英語の催促を差し込む）", () => {
-    expect(REPORT_NOTATION_PROMPT).toContain("ターンは締めの `speak` → レポートの順で終える")
-    expect(REPORT_NOTATION_PROMPT).toContain("本文を書かずに `speak` で")
+  it("レポートは report ツールで渡させ、その外に書いた本文は画面に出ないと言う", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain("`report` ツールで渡す本文")
+    expect(REPORT_NOTATION_PROMPT).toContain(
+      "レポートは `report` ツール（`mcp__tsukumo__report`）で渡す",
+    )
+    expect(REPORT_NOTATION_PROMPT).toContain("`report` の外に書いたテキストは")
+  })
+
+  it("ターンは report → 締めの speak → 「完了」の1行で終えさせる（締めの speak → レポートの条は無い）", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain(
+      "ターンは `report` → 締めの `speak` → 「完了」の1行の順で終える",
+    )
+    expect(REPORT_NOTATION_PROMPT).toContain("最後に「完了」とだけ書いて終える")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("ターンは締めの `speak` → レポートの順で終える")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("レポートの前に言う")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("レポートの前の `speak`")
     const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
-    expect(beforeSend).toContain("レポートのあとに続けようとしているもの")
+    expect(beforeSend).toContain("`report` のあとに続けようとしているもの")
+  })
+
+  it("人格の締めの例（予告の形）を、書き終えたことの一言に言い換えさせる", () => {
+    // ホームのパックや画面から作ったパックの persona.md は tsukumo から直せないため。
+    expect(REPORT_NOTATION_PROMPT).toContain("締めの `speak` は書き終えた")
+    expect(REPORT_NOTATION_PROMPT).toContain("キャラクターの人格に締めの例があれば")
+  })
+
+  it("「結論から書く」「お願いはいちばん最後に1つ」は文面から外し、report の欄に任せる", () => {
+    // 順番は `conclusion` → `body` → `favor` の欄の並びが型で持つ。条の番号はずらさない
+    // （条2・条3・条9 を番号で引いているところがある）。
+    expect(REPORT_NOTATION_PROMPT).not.toContain("結論から書く")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("いちばん最後")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("末尾の「お願い」")
+    expect(REPORT_NOTATION_PROMPT).toContain("1. **結論は `conclusion` に1〜2文で書く。**")
+    expect(REPORT_NOTATION_PROMPT).toContain("`favor` に入れる")
+    expect(REPORT_NOTATION_PROMPT).toContain("10. **見出しを付けるなら")
   })
 
   it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {

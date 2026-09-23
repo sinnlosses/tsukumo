@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 report ツールを常に載せ、終わりの並びを report → 締めの speak → 「完了」に変えた（T-475）
+
+試行の切り替えを撤去して規約・人格の締めの例・文書を新しい並びに書き直し、立ち絵の「書いている」は `report` の引数が流れてくる間に出すようにした。締めのセリフは最終レポートより先に画面に出る（`main-view.ts` の `selectToolReports` が `turn-finished` まで最新の `report` を保留するため。疑似セッションで約0.8秒）のが未解決で、扱うタスクは未定。
+
 ### 2026-09-24 キャラクターを消すコマンドを足した（T-492）
 
 `delete-character` はホームの版だけを消し、使用中・同梱だけ・`characters/local`・一覧外は断る。一覧の `deletable` は `removal`（`delete` / `revert-to-bundled` / `none`）に置き換え、本当に消えるときだけ雑談の要約とアーカイブも消す（`docs/design.md` 7.1「消すときの細部」）。

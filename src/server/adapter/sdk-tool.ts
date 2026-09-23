@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール（`speak` / `remember` / `forget` /
-// `keep` / `index` / `recall`、試行中の `report`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
+// `keep` / `index` / `recall`、仕事のときの `report`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
 // `query()` の `mcpServers` へ渡す。
 //
 // サーバの名前と `speak` の名前は src/server/core/sdk-message.ts が持つ（届いた `assistant`
@@ -15,7 +15,7 @@ import {
 import { type Expression } from "../../shared/expression.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { type ReportReview } from "../core/report-review.ts"
-import { type ReportChannel, REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
+import { REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
 import {
   type ChatKeep,
@@ -100,8 +100,8 @@ const RECALL_TOOL_DESCRIPTION =
  * 雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
  * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
- * **`report` は仕事のときに、試行の口（`reportChannel`）が `tool` のときだけ**載る
- * （`src/server/core/report-tool.ts`。雑談は本文を書かない決まりなので載せない）。
+ * **`report` は仕事のときだけ**載る（仕事ではレポートを常にこれで受け取る。雑談は本文を
+ * 書かない決まりなので載せない。`src/server/core/report-tool.ts`）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -110,7 +110,6 @@ const RECALL_TOOL_DESCRIPTION =
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   mode: SessionMode,
-  reportChannel: ReportChannel,
   reportReview: ReportReview,
 ) {
   return createSdkMcpServer({
@@ -128,7 +127,7 @@ export function tsukumoServer(
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
-      ...(mode.kind === "work" && reportChannel === "tool" ? [reportTool(reportReview)] : []),
+      ...(mode.kind === "work" ? [reportTool(reportReview)] : []),
       ...(mode.kind === "chat"
         ? [
             rememberTool(mode.personaMemory),
@@ -143,7 +142,7 @@ export function tsukumoServer(
 }
 
 /**
- * レポートを受け取るツール（**試行中**）。**差し戻しの判定の窓口はここだけ**
+ * レポートを受け取るツール。**差し戻しの判定の窓口はここだけ**
  * （src/server/core/report-review.ts）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
  * 直し方だけを `isError` 付きで返す（画面の事情は載せない。docs/display.md 4.2）。描くか捨てるかは
  * この `isError` を見て決まる。レポートにする引数は、ここではなく `assistant` メッセージの変換が

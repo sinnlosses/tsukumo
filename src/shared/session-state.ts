@@ -91,7 +91,7 @@ export type SessionRecord =
     }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
-   * `report` ツールで受け取ったレポート（**試行中**。docs/glossary.md「report ツール」）。
+   * `report` ツールで受け取ったレポート（docs/glossary.md「report ツール」）。
    * 引数をそのまま持ち、**1つの本文に組むのはメインビューの導出**（`shared/main-view.ts`）。
    * 本文（`detail`）とは別の種類にしてあるのは、**このレポートがあるターンでは本文を出さない**
    * という判定に、どちらから来たかが要るため。
@@ -186,6 +186,11 @@ export type TurnProgress =
   | { readonly kind: "idle" }
   | { readonly kind: "running"; readonly startedAt: number }
   | { readonly kind: "finished"; readonly startedAt: number; readonly finishedAt: number }
+
+/** メインが `report` の引数を書いている途中か（{@link SessionState.reportDrafting}）。 */
+export type ReportDrafting =
+  | { readonly kind: "idle" }
+  | { readonly kind: "drafting"; readonly toolUseId: string }
 
 /**
  * セッションの今の姿。**イベントを1件ずつ畳んで作る**ので、ここに無い情報は画面にも出ない。
@@ -296,6 +301,12 @@ export type SessionState = {
    */
   readonly lastToolFailureAt: number | undefined
   /**
+   * メインがいま `report` の引数を書いているか。**立ち絵の「書いている」の判定にだけ使う**
+   * （`shared/portrait-motion.ts`）。`report-drafting` で書き始め、同じ `toolUseId` の `report` か
+   * `tool-finished`（差し戻されて `report` が届かないときもこちらは届く）、ターンの境目で終わる。
+   */
+  readonly reportDrafting: ReportDrafting
+  /**
    * 雑談モードに入っているか（`docs/chat-mode.md` 4.9）。入っている間はレポートを出さず、
    * メインビューが立ち絵と会話のログになる（`docs/screen-design.md` 13.7）。
    *
@@ -370,6 +381,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   characterPacks: [],
   sessions: [],
   lastToolFailureAt: undefined,
+  reportDrafting: { kind: "idle" },
   chatMode: false,
   chatTopics: [],
   rememberedLines: [],
@@ -459,10 +471,12 @@ export function applySessionEvent(
         speechExpression: event.expression,
         speechCalledInTurn: true,
       }
+    case "report-drafting":
+      return { ...state, reportDrafting: { kind: "drafting", toolUseId: event.toolUseId } }
     case "report":
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
       return {
-        ...state,
+        ...settleReportDrafting(state, event.toolUseId),
         records: [
           ...state.records,
           {
@@ -491,7 +505,13 @@ export function applySessionEvent(
       }
     }
     case "tool-finished":
-      return finishTool(state, event.toolUseId, event.content, event.isError, at)
+      return finishTool(
+        settleReportDrafting(state, event.toolUseId),
+        event.toolUseId,
+        event.content,
+        event.isError,
+        at,
+      )
     case "pending-changed":
       return { ...state, pending: event.pending }
     case "question-answered":
@@ -507,10 +527,15 @@ export function applySessionEvent(
       }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished":
-      return { ...settleUtterance(state), turn: finishTurn(state.turn, at) }
+      return {
+        ...settleUtterance(state),
+        turn: finishTurn(state.turn, at),
+        reportDrafting: { kind: "idle" },
+      }
     case "session-ended":
       return {
         ...settleUtterance(state),
+        reportDrafting: { kind: "idle" },
         endedReason: event.reason,
         turn: finishTurn(state.turn, at),
         backgroundTasks: [],
@@ -529,6 +554,7 @@ export function applySessionEvent(
         speechCalledInTurn: false,
         records: [],
         partialUtterance: "",
+        reportDrafting: { kind: "idle" },
       }
     case "tasks-changed":
       return { ...state, tasks: event.tasks }
@@ -618,6 +644,7 @@ function beginTurn(state: SessionState, at: number): SessionState {
     // （表情の源は `speak` の1つだけ。docs/requirements.md 4.3）。
     speechExpression: INITIAL_SESSION_STATE.speechExpression,
     partialUtterance: "",
+    reportDrafting: { kind: "idle" },
     turn: { kind: "running", startedAt: at },
     nextTurnId: state.nextTurnId + 1,
     speechCalledInTurn: false,
@@ -650,6 +677,13 @@ function settleUtterance(state: SessionState): SessionState {
     records: [...state.records, { kind: "detail", markdown: state.partialUtterance }],
     partialUtterance: "",
   }
+}
+
+/** 書いていた `report` の呼び出しが届いた・終わったなら、書いている途中の印を下ろす。 */
+function settleReportDrafting(state: SessionState, toolUseId: string): SessionState {
+  return state.reportDrafting.kind === "drafting" && state.reportDrafting.toolUseId === toolUseId
+    ? { ...state, reportDrafting: { kind: "idle" } }
+    : state
 }
 
 /**
