@@ -1487,6 +1487,68 @@
       ]
     },
     {
+      "name": "report-tidied",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "整形で落ちる行の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "まとめて書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-tidied-1",
+            "conclusion": "架空の結論: 整形で落ちる行は描かれず、残りはそのまま出る。",
+            "body": "架空の結論: 整形で落ちる行は描かれず、残りはそのまま出る。\n\n以下にまとめます。\n\n## 残る見出し（架空）\n\n**残る表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| 以上です | 1 |\n\n> 以上です。（引用の中なので残る）\n\n```text\n以上です。（フェンスの中なので残る）\n## フェンスの中の見出し（残る）\n```\n\n## 落ちる空の見出し（架空）\n\n### 落ちる空の小見出し（架空）\n\n## 残る2つめの見出し（架空）\n\n架空の本文の最後の段落。\n\n以上です。",
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-tidied-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "speech",
+            "text": "書けたよ！",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 1900,
+          "event": {
+            "kind": "utterance",
+            "text": "完了"
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "status": "success"
+          }
+        }
+      ]
+    },
+    {
       "name": "background-task",
       "steps": [
         {

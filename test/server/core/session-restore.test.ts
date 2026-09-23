@@ -16,8 +16,10 @@ import {
   toRestoredEvents,
 } from "../../../src/server/core/session-restore.ts"
 import { type Expression } from "../../../src/shared/expression.ts"
+import { mainViewEntries } from "../../../src/shared/main-view.ts"
 import { MAX_SESSION_CHOICES } from "../../../src/shared/session-choice.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
+import { applySessionEvent, INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
@@ -578,6 +580,29 @@ describe("toRestoredEvents", () => {
 
     expect(reports).toEqual([
       { kind: "report", toolUseId: "r-2", conclusion: "架空の二", body: "", favor: "" },
+    ])
+  })
+
+  it("組み直した report も、動いているときと同じく整形してから描く", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      assistantMessage([
+        {
+          type: "tool_use",
+          id: "r-1",
+          name: REPORT_TOOL_FULL_NAME,
+          input: { conclusion: "架空の結論。", body: "架空の結論。\n\n架空の根拠。\n\n以上です。" },
+        },
+      ]),
+      userMessage([{ type: "tool_result", tool_use_id: "r-1", content: "ok" }]),
+    ]
+    const state = toRestoredEvents(messages, EXPRESSIONS).reduce(
+      (current, event) => applySessionEvent(current, event, 0),
+      INITIAL_SESSION_STATE,
+    )
+
+    expect(mainViewEntries(state).filter((entry) => entry.kind === "report")).toEqual([
+      { kind: "report", markdown: "架空の結論。\n\n架空の根拠。" },
     ])
   })
 
