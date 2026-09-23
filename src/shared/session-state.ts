@@ -11,6 +11,7 @@
 // 入力欄の `/` 補完の候補は `command-suggestion.ts`）。ここが持つのは「状態そのもの」と
 // 「イベント1件でどう変わるか」だけ。
 
+import { isBlankText } from "./blank-text.ts"
 import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import { isModelAlias } from "./command.ts"
@@ -480,6 +481,7 @@ export function applySessionEvent(
           pack: event.pack,
           name: event.name,
           accent: event.accent,
+          chatAccent: event.chatAccent,
           expressions: event.expressions,
           portraits: event.portraits,
           expressionsWithPortrait: event.expressionsWithPortrait,
@@ -557,16 +559,13 @@ function finishTurn(turn: TurnProgress, at: number): TurnProgress {
  * 書きかけの本文を確定した記録に移す。空のときは何もしない（空の本文を積まない）。
  */
 function settleUtterance(state: SessionState): SessionState {
-  if (state.partialUtterance.trim() === "") {
+  if (isBlankText(state.partialUtterance)) {
     return { ...state, partialUtterance: "" }
   }
 
-  const markdown = state.partialUtterance
-
   return {
     ...state,
-    records:
-      markdown.trim() === "" ? state.records : [...state.records, { kind: "detail", markdown }],
+    records: [...state.records, { kind: "detail", markdown: state.partialUtterance }],
     partialUtterance: "",
   }
 }

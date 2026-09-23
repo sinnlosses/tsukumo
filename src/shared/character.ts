@@ -28,6 +28,11 @@ export type CharacterInfo = {
   readonly name: string | undefined
   /** {@link CharacterDefinition.accent} をそのまま持つ。ブラウザ側は `--accent` に流す。 */
   readonly accent: string | undefined
+  /**
+   * {@link CharacterDefinition.chatAccent} をそのまま持つ。雑談中だけ `--accent` に流す
+   * （無ければ {@link accent} のまま。{@link effectiveAccent}）。
+   */
+  readonly chatAccent: string | undefined
   readonly expressions: readonly ExpressionChoice[]
   /**
    * 表情 → 立ち絵の URL。**`default` に畳み済みの全域な表**で、読む側は表を引くだけでよい
@@ -131,6 +136,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     pack: source.pack,
     name: definition?.name,
     accent: definition?.accent,
+    chatAccent: definition?.chatAccent,
     expressions: expressionChoices(definition),
     portraits,
     expressionsWithPortrait: EXPRESSIONS.filter(
@@ -146,6 +152,22 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     background: backgroundWithUrl(definition?.background, cacheKey),
     editable: source.editable,
   }
+}
+
+/**
+ * 画面に流し込む `--accent` の値（`docs/design.md` 13.2「雑談中は」）。**雑談中だけ**
+ * {@link CharacterInfo.chatAccent} を使い、無ければ {@link CharacterInfo.accent} に落ちる
+ * （雑談用の色を持たないパックは仕事と同じ差し色のまま）。**つまみは増えない** — `accent` という
+ * 1つの枠が、モードに応じて別の値を取るだけ。
+ */
+export function effectiveAccent(
+  character: CharacterInfo | undefined,
+  chatMode: boolean,
+): string | undefined {
+  if (character === undefined) {
+    return undefined
+  }
+  return chatMode ? (character.chatAccent ?? character.accent) : character.accent
 }
 
 /** 背景の素材のファイル名を `/character/<file>` の URL に変える（覆いの濃さはそのまま）。 */

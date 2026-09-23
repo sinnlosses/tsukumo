@@ -38,8 +38,11 @@ export type PresentationalLayoutProps = UseLayoutResult & {
 }
 
 // 狭い画面のタブ。**名前は用語集の語のまま**（docs/glossary.md）。
-/** 比率を戻す口の名前。絵だけのボタンなので、読み上げと `title` の両方にこれを出す。 */
-const RESET_SPLIT_LABEL = "領域の比率を既定に戻す"
+/**
+ * 比率を戻す口の字。**字そのものが見えているピルなので、`aria-label` / `title` は持たない**
+ * （見える字がそのままアクセシブルネームになる）。
+ */
+const RESET_SPLIT_LABEL = "比率を既定に戻す"
 
 const NARROW_PANES = [
   { pane: "main", label: "メインビュー" },
@@ -67,6 +70,7 @@ export function PresentationalLayout({
   onBottomLeftChange,
   onBottomLeftCommit,
   onReset,
+  isSplitChanged,
   main,
   sidebar,
   character,
@@ -137,15 +141,14 @@ export function PresentationalLayout({
           onChange={onRowTopChange}
           onCommit={onRowTopCommit}
         />
-        <button
-          type="button"
-          className={styles["layout-reset-split"]}
-          aria-label={RESET_SPLIT_LABEL}
-          title={RESET_SPLIT_LABEL}
-          onClick={onReset}
-        >
-          <ResetSplitIcon />
-        </button>
+        {/* 押して消えたあとのフォーカスは動かさない（仕切り `role="separator"` はキー操作を
+              持たないので、そこへ移すと押せないものにフォーカスが残る。body へ落ちるのに任せる） */}
+        {isSplitChanged && (
+          <button type="button" className={styles["layout-reset-split"]} onClick={onReset}>
+            <ResetSplitIcon />
+            {RESET_SPLIT_LABEL}
+          </button>
+        )}
       </div>
       <div
         className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}

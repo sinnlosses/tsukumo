@@ -31,6 +31,7 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     pack: "fictional",
     name: "架空の精霊",
     accent: undefined,
+    chatAccent: undefined,
     expressions: [{ name: "default", label: "通常" }],
     portraits: undefined,
     expressionsWithPortrait: [],
@@ -62,6 +63,7 @@ export function characterDefinition(
   return {
     name: "架空の精霊",
     accent: undefined,
+    chatAccent: undefined,
     // 表情のラベル（定義ファイル側の言葉）。立ち絵と同じ形の対応表なので同じ既定を使う。
     expressions: NO_EXPRESSION_VALUES,
     portraits: portraits(),

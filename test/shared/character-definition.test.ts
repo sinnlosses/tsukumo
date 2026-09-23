@@ -65,6 +65,14 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ face: 3 }))?.face).toBeUndefined()
   })
 
+  it("任意の chatAccent（雑談中だけの accent）を読む。無い・壊れた値は undefined", () => {
+    expect(parseCharacterDefinition(JSON.stringify({ chatAccent: "#f2984a" }))?.chatAccent).toBe(
+      "#f2984a",
+    )
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.chatAccent).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ chatAccent: 3 }))?.chatAccent).toBeUndefined()
+  })
+
   it("expressions（表情名 → ラベル）を読む", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
 

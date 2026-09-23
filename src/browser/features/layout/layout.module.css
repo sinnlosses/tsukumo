@@ -188,30 +188,33 @@
   color: var(--ink);
 }
 
-/* 領域の比率を既定に戻す常設ボタン（`<Layout>` が直接描く。docs/design.md 13.6）。
-   **上下の仕切りの右端**に絵だけで置く。以前は画面右下に固定していたが、入力欄の送信ボタンと
-   同じ角に重なった。仕切りの行は 0.6rem しかないので、口は上下の隙間（grid の gap）へはみ出して
-   縦の中央に乗る。 */
+/* 領域の比率を既定に戻すピル（`<Layout>` が直接描く。docs/design.md 13.6）。比率が既定と
+   違うときだけ出る。**上下の仕切りの右端**に絵＋字で置く。
+   仕切りの行は 0.6rem しかないので、口は上下の隙間（grid の gap）へはみ出して仕切りの線の高さに
+   縦の中央を合わせる。右端は下段の領域の右端（.layout-row-bottom）に揃える。 */
 .layout-reset-split {
   position: absolute;
   top: 50%;
   right: 0;
   z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  padding: 0;
-  background: var(--ground);
-  color: var(--ink-quiet);
-  border: 1px solid color-mix(in srgb, var(--rule) 60%, transparent);
-  border-radius: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: var(--surface-accent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   transform: translateY(-50%);
 }
 .layout-reset-split:hover {
+  background: color-mix(in srgb, var(--surface), var(--accent) 24%);
   border-color: var(--accent);
-  color: var(--ink);
 }
 
 /* 狭い画面（スマホの幅で会話を回せるようにする形。docs/requirements.md 4.7）。

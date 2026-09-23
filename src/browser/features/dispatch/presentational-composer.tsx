@@ -93,7 +93,7 @@ export function PresentationalComposer({
           title="コマンドを補完する"
           onClick={() => onInsertTrigger("/")}
         >
-          /
+          <SlashIcon />
         </button>
         <button
           type="button"
@@ -102,7 +102,7 @@ export function PresentationalComposer({
           title="ファイルを補完する"
           onClick={() => onInsertTrigger("@")}
         >
-          @
+          <AtIcon />
         </button>
         <input
           ref={imageInputRef}
@@ -121,28 +121,68 @@ export function PresentationalComposer({
   )
 }
 
+/** 道具の口の絵の一辺（px）。3つの口で揃える。 */
+const TOOL_ICON_SIZE = 18
+
 /** 山と日の絵（画像を添える）。入力欄の道具の絵なのでコードに置く（原則4 の対象外）。 */
 function ImageIcon(): ReactElement {
   return (
-    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false">
-      <rect
-        x="1.8"
-        y="2.8"
-        width="12.4"
-        height="10.4"
-        rx="1.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-      <circle cx="5.6" cy="6.3" r="1.2" fill="none" stroke="currentColor" strokeWidth="1.1" />
-      <path
-        d="M2.2 11.6l3.6-3.2 2.6 2.2 2.2-1.8 3.2 2.8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
+    <svg
+      width={TOOL_ICON_SIZE}
+      height={TOOL_ICON_SIZE}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="2" />
+      <path d="M21 16l-5-5-9 9" />
+    </svg>
+  )
+}
+
+/** 斜めの線（コマンドを補完する）。入力欄の道具の絵なのでコードに置く（原則4 の対象外）。 */
+function SlashIcon(): ReactElement {
+  return (
+    <svg
+      width={TOOL_ICON_SIZE}
+      height={TOOL_ICON_SIZE}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M15 4L9 20" />
+    </svg>
+  )
+}
+
+/** @ の絵（ファイルを補完する）。入力欄の道具の絵なのでコードに置く（原則4 の対象外）。 */
+function AtIcon(): ReactElement {
+  return (
+    <svg
+      width={TOOL_ICON_SIZE}
+      height={TOOL_ICON_SIZE}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1" />
     </svg>
   )
 }
