@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 
 import {
   createPromptImageShelf,
-  MAX_SHELVED_PROMPT_IMAGES,
+  MAX_SHELVED_PROMPT_IMAGE_BYTES,
   releasedPromptImageIds,
 } from "../../../src/server/core/prompt-image-shelf.ts"
 import { type PromptImage, promptImageIdSchema } from "../../../src/shared/prompt-image.ts"
@@ -14,6 +14,15 @@ import { type SessionRecord } from "../../../src/shared/session-state.ts"
 function image(label: string): PromptImage {
   return {
     full: `data:image/png;base64,full${label}`,
+    thumbnail: `data:image/png;base64,thumb${label}`,
+  }
+}
+
+// 合計の大きさを確かめるテスト用に、同じ文字を並べて `full` の文字数を指定の大きさに
+// そろえた架空の data URL（実物の画像は使わない）。
+function sizedImage(label: string, size: number): PromptImage {
+  return {
+    full: `data:image/png;base64,${label}`.padEnd(size, "A"),
     thumbnail: `data:image/png;base64,thumb${label}`,
   }
 }
@@ -56,16 +65,38 @@ describe("createPromptImageShelf", () => {
     expect(shelf.find("00000000-0000-4000-8000-000000000000")).toBeUndefined()
   })
 
-  it(`${MAX_SHELVED_PROMPT_IMAGES} 枚を超えたら古いほうから捨てる`, () => {
+  it("0.5 MiB の画像なら20枚置いても全部残る", () => {
     const shelf = createPromptImageShelf()
+    const halfMebibyte = 512 * 1024
 
-    const first = shelf.shelve([image("first")])
-    const rest = Array.from({ length: MAX_SHELVED_PROMPT_IMAGES }, (_, index) =>
-      shelf.shelve([image(String(index))]),
+    const entries = Array.from({ length: 20 }, (_, index) =>
+      shelf.shelve([sizedImage(String(index), halfMebibyte)]),
     ).flat()
 
-    expect(shelf.find(first[0]?.id ?? "")).toBeUndefined()
-    expect(rest.every((entry) => shelf.find(entry.id) === entry.full)).toBe(true)
+    expect(entries).toHaveLength(20)
+    expect(entries.every((entry) => shelf.find(entry.id) === entry.full)).toBe(true)
+  })
+
+  it("合計の大きさが上限を超えるあいだ、古いほうから捨てる", () => {
+    const shelf = createPromptImageShelf()
+    const quarter = MAX_SHELVED_PROMPT_IMAGE_BYTES / 4
+
+    // 4枚ぶん（ちょうど上限）まではどれも残る。
+    const first = shelf.shelve([sizedImage("a", quarter)])[0]
+    const second = shelf.shelve([sizedImage("b", quarter)])[0]
+    const third = shelf.shelve([sizedImage("c", quarter)])[0]
+    const fourth = shelf.shelve([sizedImage("d", quarter)])[0]
+    expect(
+      [first, second, third, fourth].every((entry) => shelf.find(entry?.id ?? "") !== undefined),
+    ).toBe(true)
+
+    // 5枚目で合計が上限を超え、いちばん古い1枚目だけが落ちる。
+    const fifth = shelf.shelve([sizedImage("e", quarter)])[0]
+
+    expect(shelf.find(first?.id ?? "")).toBeUndefined()
+    expect(
+      [second, third, fourth, fifth].every((entry) => shelf.find(entry?.id ?? "") !== undefined),
+    ).toBe(true)
   })
 
   it("release した id は引けなくなり、他は残る", () => {

@@ -2,9 +2,12 @@
 // （「外に触るのはここだけ」の側。定義の解釈は src/shared/character-definition.ts の仕事。
 // docs/design.md 5章「character-pack.ts」）。
 //
-// **fs に触らない関数（`buildSystemPromptAppend` / `toCharacterPackChoices` /
-// `characterChangedEvent`）もここに置く。** 層は「外の世界に触るか」で決め、ファイルの中身の
-// 純度では割らない（理由は docs/architecture.md「新しいコードを置く場所」）。
+// **fs に触らない関数（`toCharacterPackChoices` / `characterChangedEvent`）もここに置く。**
+// 層は「外の世界に触るか」で決め、ファイルの中身の純度では割らない（理由は
+// docs/architecture.md「新しいコードを置く場所」）。**`systemPrompt` の append の組み立ては
+// `src/server/core/system-prompt.ts` へ移してある**——`core` 側の規約と雑談の記憶を並べる判断が
+// 要るようになり、概念で切るほうに当たったため（同じ段落）。ここが持つのは `persona` の文字列を
+// 読むところまで。
 //
 // **素材の中身（SVG・画像のバイト列）は SessionState にも character-changed イベントにも乗せない。**
 // ブラウザは `/character/<file>` から取りに行く（docs/design.md 4.1・5章）。
@@ -148,20 +151,6 @@ export function toCharacterPackChoices(
   packs: readonly CharacterPack[],
 ): readonly CharacterPackChoice[] {
   return packs.map((pack) => ({ name: pack.name, label: pack.definition?.name ?? pack.name }))
-}
-
-/**
- * `systemPrompt` の append を組み立てる。**人格 → tsukumo 側の規約の順**にするのは、規約
- * （機械的な決まりごと）を後ろに置いて人格の文章に埋もれさせないため。人格が無いパックでは
- * 規約だけになる（docs/design.md 7章）。
- *
- * `rules` はパックによらず同じもの（`src/server/core/speech-cadence.ts` と
- * `src/server/core/report-notation.ts`）で、**並べる順は呼び出し側（`src/session-start.ts`）が決める**。
- */
-export function buildSystemPromptAppend(pack: CharacterPack, rules: readonly string[]): string {
-  return [pack.persona, ...rules]
-    .filter((part) => part !== undefined && part.trim() !== "")
-    .join("\n\n")
 }
 
 /**

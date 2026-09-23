@@ -8,7 +8,7 @@
 import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
-import { buildSystemPromptAppend, type CharacterPack } from "./server/adapter/character-pack.ts"
+import { type CharacterPack } from "./server/adapter/character-pack.ts"
 import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
@@ -26,7 +26,6 @@ import {
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
-import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import {
@@ -42,7 +41,7 @@ import {
   EVENT_BATCH_INTERVAL_MS,
   type SessionManager,
 } from "./server/core/session-manager.ts"
-import { sessionRules } from "./server/core/session-rule.ts"
+import { type SystemPromptMode, takeSystemPromptAppend } from "./server/core/system-prompt.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
 import {
   CHAT_COMPACT_THRESHOLD_BYTES,
@@ -178,25 +177,6 @@ function startDriver(options: {
   // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
   const mode = sessionMode(seed, chatArchive, cwd, onEvent)
-  // **「仕事のときは載せない」の判断はここの1回の分岐**（`mode.kind === "chat"`）。
-  // 雑談のときだけ `takeChatMemoryPromptParts` を呼び、それ以外の載せるかどうかの判断
-  // （write の有無・写しの印）は core（`takeChatMemoryPromptParts`）が閉じている——ここは
-  // 決まった文面を規約の並びへ足すだけ。**要約の写しと直近の逐語は同じ機会に組み立てて返る**
-  // ので、載せたときは呼んだ側で印が「渡し済み」に戻る（`docs/design.md` 7章）。
-  const chatMemoryParts =
-    mode.kind === "chat"
-      ? takeChatMemoryPromptParts({
-          start: seed.start,
-          chatSummary: mode.chatSummary,
-          chatArchive,
-          packName: seed.pack.name,
-          readbackLimits: {
-            recentBytes: CHAT_RECENT_READBACK_BYTES,
-            keptBytes: CHAT_KEPT_READBACK_BYTES,
-          },
-        })
-      : []
-  const rules = [...sessionRules(seed.chat), ...chatMemoryParts]
 
   return startSdkSession({
     cwd,
@@ -205,7 +185,13 @@ function startDriver(options: {
     // そのセッション限りで、ここには戻らない。
     permissionMode: seed.sessionDefault.permissionMode,
     model: seed.sessionDefault.model,
-    systemPromptAppend: buildSystemPromptAppend(seed.pack, rules),
+    // **何がどの順で載るかは core（`system-prompt.ts`）が持つ**ので、ここは人格の文面と口を
+    // 渡すだけ（`docs/design.md` 7章）。**人格の「無い」はここで畳む**（core へ
+    // `| undefined` を運ばない）。
+    systemPromptAppend: takeSystemPromptAppend({
+      persona: seed.pack.persona ?? "",
+      mode: systemPromptMode(seed, mode, chatArchive),
+    }),
     start: seed.start,
     tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
     mode,
@@ -251,6 +237,35 @@ function sessionMode(
     chatSummary: createChatSummary(seed.pack.name),
     chatKeep: chatArchive,
     chatRecall: chatRecallFor(chatArchive, seed.pack.name),
+  }
+}
+
+/**
+ * `systemPrompt` を組むのに渡すモード（`docs/design.md` 7章）。**雑談のときだけ記憶の口を束ねる**
+ * ——載せるかどうかの判断（新規か・写しの印が未渡しか）は core が閉じているので、ここがするのは
+ * **口を渡すことと、読む量を縛ること**だけ（`chatRecallFor` と同じ手）。
+ */
+function systemPromptMode(
+  seed: SessionLaunchSeed<CharacterPack>,
+  mode: SessionMode,
+  chatArchive: ChatArchive,
+): SystemPromptMode {
+  if (mode.kind !== "chat") {
+    return { kind: "work" }
+  }
+
+  return {
+    kind: "chat",
+    memory: {
+      start: seed.start,
+      chatSummary: mode.chatSummary,
+      chatArchive,
+      packName: seed.pack.name,
+      readbackLimits: {
+        recentBytes: CHAT_RECENT_READBACK_BYTES,
+        keptBytes: CHAT_KEPT_READBACK_BYTES,
+      },
+    },
   }
 }
 

@@ -87,6 +87,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `bun run scripts/open-room-grid.ts` で、待ち受けていてタブもある部屋だけを 16:9 のマスに PC の並びのまま縮めて並べ、拡大・戻るは JS を使わずラジオの label で切り替える。起動トークンを含む HTML は読み込みを確かめたら消すので、見直すときは打ち直す。
 
+### 2026-09-23 systemPrompt に足す文面の組み立てを core の1ファイルへ寄せた（T-429）
+
+配線層（`src/session-start.ts`）・`core/session-rule.ts`・`adapter/character-pack.ts` に割れていた `append` の組み立てを `src/server/core/system-prompt.ts` の `takeSystemPromptAppend` に寄せ、`session-rule.ts` は畳んで消した。人格は文字列で渡すので core は fs もパックの型も知らない。文面は1文字も変えておらず、寄せる前後で3通りの `append` が sha256 で一致することを確かめた。
+
+### 2026-09-23 貼った画像の棚を、枚数ではなく合計128 MiBで切るようにした（T-456）
+
+`prompt-image-shelf.ts` の上限を `MAX_SHELVED_PROMPT_IMAGES`（8枚）から `MAX_SHELVED_PROMPT_IMAGE_BYTES`（原寸の data URL の長さの合計 128 MiB）に置き換え、いま置いた画像を除いて古いほうから捨てる。`docs/requirements.md` 4.10 も合わせた。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の
