@@ -7,7 +7,7 @@
   gap: 0.5rem;
 }
 /* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
-   （permission-mode-select-danger の var(--state-ng)、破壊的操作向け）とは別の、注意を引くための
+   （帯の screen-nav-permission-mode-select.is-danger の var(--state-ng)、破壊的操作向け）とは別の、注意を引くための
    var(--state-warn) にしてある。`.layout-dispatch` の内側の縁に沿わせる
    （`position: relative` は features/layout/layout.module.css 側で用意してある）。 */
 .dispatch-pending-glow {
