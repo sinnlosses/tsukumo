@@ -338,31 +338,17 @@
   margin-left: auto;
   min-width: 0;
 }
-/* 部品は `components/select.tsx` の素の `<select>` のまま。見た目だけ帯に合わせる（13.9）。
-   **幅は選んでいる値の字の幅**（`field-sizing: content`）にし、下向きの矢印を字のすぐ右に置く
-   （既定の `<select>` はいちばん長い選択肢の幅になり、「Opus」と矢印の間が空く）。矢印は包みの
-   `::after` に `currentColor` で描く——字と同じ色で、「全部許す」のときは矢印も `--state-ng` になる。 */
+/* 見た目だけ帯に合わせる（13.9）。**枠と矢印は部品が持つ**（`components/select.module.css`）ので、
+   ここは置き方と字の色だけ。字と矢印は同じ色で、「全部許す」のときは矢印も `--state-ng` になる
+   （矢印は `currentColor` で描かれる）。 */
 .screen-nav-select {
-  position: relative;
-  display: flex;
   flex: none;
-  align-items: center;
   color: var(--ink);
 }
-.screen-nav-select::after {
-  position: absolute;
-  right: 10px;
-  width: 12px;
-  height: 12px;
-  background: currentColor;
-  content: "";
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
-    center / contain no-repeat;
-  pointer-events: none;
-}
+/* **幅は選んでいる値の字の幅**（`field-sizing: content`）にする（既定の `<select>` はいちばん
+   長い選択肢の幅になり、「Opus」と矢印の間が空く）。右の余白は矢印ぶん。 */
 .screen-nav-model-select,
 .screen-nav-permission-mode-select {
-  appearance: none;
   field-sizing: content;
   box-sizing: border-box;
   height: 32px;
@@ -467,21 +453,23 @@
   gap: 1rem;
   min-height: 1.9rem;
 }
-/* 既定の `<select>`（新しいセッションの既定）。**帯のドロップダウンと同じ見た目**にして、
-   同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。 */
+/* 設定パネルの `<select>`（新しいセッションの既定・演出の速さ）。**帯のドロップダウンと同じ
+   見た目**にして、同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。字が一段
+   小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `components/select.module.css`）。 */
+.screen-nav-settings-select-frame {
+  --select-chevron-inset: 0.3rem;
+  --select-chevron-size: 10px;
+  flex: none;
+  color: var(--ink-quiet);
+}
 .screen-nav-settings-select {
-  appearance: none;
   padding: 0.15rem 1.1rem 0.15rem 0.3rem;
   border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  background: var(--surface)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E")
-    no-repeat right 0.3rem center;
-  background-size: 0.5rem;
-  color: var(--ink-quiet);
+  background: var(--surface);
+  color: inherit;
   font: inherit;
   font-size: var(--font-label);
-  cursor: pointer;
 }
 .screen-nav-settings-reset {
   margin-left: auto;

@@ -131,7 +131,7 @@ export function TurnHeader(props: TurnHeaderProps): ReactElement {
             }}
           >
             <span className={styles["turn-title-text"]}>{activeTitle}</span>
-            <ChevronDownIcon />
+            <span className={styles["turn-title-chevron"]} aria-hidden="true" />
           </button>
         </h2>
         {historyOpen ? (
@@ -164,31 +164,6 @@ export function TurnHeader(props: TurnHeaderProps): ReactElement {
         )}
       </div>
     </header>
-  )
-}
-
-/**
- * タイトルの右に添える下向きの矢印。**字（`⌄`）ではなく線画**にする — 字は書体ごとに
- * 太さも高さも変わり、帯の <select> の矢印（`screen-nav.module.css` の
- * `.screen-nav-select::after`）と揃わない。形・太さ・大きさはその矢印と同じ
- * （見本は `docs/history/mockup/` の履歴案）。
- */
-function ChevronDownIcon(): ReactElement {
-  return (
-    <svg
-      className={styles["turn-title-chevron"]}
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
   )
 }
 

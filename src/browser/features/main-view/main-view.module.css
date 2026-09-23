@@ -129,11 +129,17 @@
   font-size: var(--font-subheading);
   font-weight: 700;
 }
-/* 下向きの矢印（`ChevronDownIcon`。線画で、大きさは svg の width/height が持つ）。タイトルの
-   縮みを邪魔しないよう固定幅にする。色はタイトルより一段薄い、「n / N」と同じ扱い。 */
+/* 下向きの矢印。**字（`⌄`）ではなく線画**にする — 字は書体ごとに太さも高さも変わり、
+   プルダウンの矢印（`components/select.module.css`）と揃わない。形はそれと同じものを
+   `theme.css` のトークンから引き、`currentColor` で塗る。タイトルの縮みを邪魔しないよう
+   固定の大きさにし、色はタイトルより一段薄い「n / N」と同じ扱い。 */
 .turn-title-chevron {
   flex: none;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
   color: var(--ink-quiet);
+  mask: var(--icon-chevron-down) center / contain no-repeat;
 }
 /* 窓の中のやり取りの一覧。DOM は `.turn-title-group` の中だが、`position` を持たないその枠を
    飛ばして**`.turn-header`（position: sticky）を基準にヘッダーいっぱいの幅で重ねる**
