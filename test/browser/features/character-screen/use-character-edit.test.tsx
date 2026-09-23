@@ -137,7 +137,7 @@ describe("useCharacterEdit", () => {
 
     clear.onClear()
 
-    expect(calls).toEqual([{ type: "clear-portrait", expression: "proud" }])
+    expect(calls).toEqual([{ type: "clear-portrait", pack: "fictional", expression: "proud" }])
   })
 
   it("選んだ立ち絵を data URL にして set-portrait を送り、入力欄を空に戻す", async () => {
@@ -153,6 +153,7 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([
       {
         type: "set-portrait",
+        pack: "fictional",
         expression: "proud",
         image: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
       },
@@ -186,7 +187,9 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([])
 
     await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#123456" }])
+    expect(calls).toEqual([
+      { type: "set-outfit-accent", pack: "fictional", outfit: "heavy", color: "#123456" },
+    ])
   })
 
   it("画面の差し色（仕事）は見た目だけ先に進め、送るのは少し待ってから set-accent", async () => {
@@ -208,7 +211,9 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([])
 
     await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(calls).toEqual([{ type: "set-accent", target: "work", color: "#123456" }])
+    expect(calls).toEqual([
+      { type: "set-accent", pack: "fictional", target: "work", color: "#123456" },
+    ])
   })
 
   it("chatAccent が無いパックでは、雑談の色見本に仕事の差し色を出し、戻す口は出さない", () => {
@@ -242,7 +247,7 @@ describe("useCharacterEdit", () => {
       reset.onClick()
     })
 
-    expect(calls).toEqual([{ type: "clear-chat-accent" }])
+    expect(calls).toEqual([{ type: "clear-chat-accent", pack: "fictional" }])
   })
 
   it("雑談の差し色を変えると、少し待ってから set-accent（target: chat）を送る", async () => {
@@ -256,7 +261,9 @@ describe("useCharacterEdit", () => {
     })
     await new Promise((resolve) => setTimeout(resolve, 250))
 
-    expect(calls).toEqual([{ type: "set-accent", target: "chat", color: "#f2984a" }])
+    expect(calls).toEqual([
+      { type: "set-accent", pack: "fictional", target: "chat", color: "#f2984a" },
+    ])
   })
 
   it("背景の有無を字に畳み、消す口は clear-background を送る", () => {
@@ -284,6 +291,6 @@ describe("useCharacterEdit", () => {
       label: "いまの背景",
     })
     background.onClear()
-    expect(calls).toEqual([{ type: "clear-background" }])
+    expect(calls).toEqual([{ type: "clear-background", pack: "fictional" }])
   })
 })

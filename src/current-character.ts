@@ -50,9 +50,10 @@ export type CurrentCharacter = {
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly remember: (pack: CharacterPack) => void
   /**
-   * 画面から届いた立ち絵・差し色を書き込み、流し直す `character-changed` を返す
-   * （受け付けられなければ undefined）。**書けたパックをそのまま持ち替える**ので、
-   * そのパックの素材もこのあと書いた先から配る。
+   * 画面から届いた立ち絵・差し色・背景を `edit.pack` のパックへ書き込み、一覧ごと流し直す
+   * `character-changed` を返す（受け付けられなければ undefined）。**使用中のパックなら書けた
+   * パックにそのまま持ち替える**ので、そのパックの素材もこのあと書いた先から配る。使用中以外は
+   * 持ち替えない（一覧を読み直すだけで、使用中の姿は変わらない）。
    */
   readonly applyEdit: (edit: CharacterEditCommand) => SessionEvent | undefined
   /**
@@ -131,11 +132,13 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
     },
     remember: (pack) => writeRememberedCharacter(pack.name),
     applyEdit: (edit) => {
-      const edited = editCharacterPack(current, edit, process.cwd())
+      const edited = editCharacterPack(current, packs, edit, process.cwd())
       if (edited === undefined) {
         return undefined
       }
-      current = edited
+      if (edited.name === current.name) {
+        current = edited
+      }
       return event()
     },
     applyCreate: (create) => {

@@ -215,7 +215,14 @@ describe("attachSessionSocket", () => {
     const client = await connect(socketUrl(started.origin, TOKEN))
     await nextFrame(client)
 
-    client.send(JSON.stringify({ type: "clear-portrait", commandId: "c-1", expression: "default" }))
+    client.send(
+      JSON.stringify({
+        type: "clear-portrait",
+        commandId: "c-1",
+        pack: "fictional",
+        expression: "default",
+      }),
+    )
     const frame = await nextFrame(client)
 
     expect(frame).toEqual({
@@ -232,11 +239,18 @@ describe("attachSessionSocket", () => {
     const client = await connect(socketUrl(started.origin, TOKEN))
     await nextFrame(client)
 
-    client.send(JSON.stringify({ type: "clear-portrait", commandId: "c-2", expression: "proud" }))
+    client.send(
+      JSON.stringify({
+        type: "clear-portrait",
+        commandId: "c-2",
+        pack: "fictional",
+        expression: "proud",
+      }),
+    )
     await new Promise((resolve) => setTimeout(resolve, 50))
 
     expect(started.dispatched).toEqual([
-      { type: "clear-portrait", commandId: "c-2", expression: "proud" },
+      { type: "clear-portrait", commandId: "c-2", pack: "fictional", expression: "proud" },
     ])
     client.close()
   })

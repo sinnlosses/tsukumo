@@ -61,9 +61,9 @@
     "dependencies": ["T-490"],
     "summary": "編集コマンドに対象のパック名を持たせ、使用中以外も直せるようにする",
     "task": "## 背景\n\n2026-09-23 のユーザー決定で、キャラクター画面の一覧で使用中以外のパックを選んだら、その詳細を開いて**編集もできる**ようにする（見本 `docs/history/mockup/character-screen-2026-09-23.html`）。\n\nいまの編集コマンド（`src/shared/command.ts` の `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` / `clear-chat-accent` / `set-background` / `clear-background`。一覧は `isCharacterEditCommand`）は対象のパックを持たず、サーバは**使用中のパック**に書き込む（`src/server/adapter/character-edit.ts` の `editCharacterPack`。書く前に `copyPackOnce` で同梱のパックをホームへ写す）。\n\n## 解くべき論点\n\n- コマンドにパック名を必須で持たせるか（使用中を暗黙にしない）。形の検査は `isCharacterPackName`（`src/shared/character.ts`）と一覧との突き合わせ\n- 使用中以外を直したときは**起こし直さない**。使用中を直したときの今の挙動（画面への反映の仕方）は変えない\n- 直したあとに一覧の情報（T-490）を配り直す\n- 無いパック・画面から変えられないパック（起動先の `characters/local`）を指されたときの断り方（定型文の `error`。`FRAME_ERROR_REASON`）\n\n## やること\n\n1. コマンドの形を変え、ブラウザ側の送り手（`src/browser/features/character-screen/hooks/use-character-edit.ts`）を追随させる（この時点では使用中のパック名を入れて送るだけでよい）\n2. サーバで対象のパックを引いて書き込む。同梱のパックならホームへ写してから書く今の手順を、対象のパックに対して行う\n3. `docs/design.md` 7.1 を書き直す\n\n## 完了条件\n\n- 使用中以外のパックの立ち絵・差し色・背景を変えると、`~/.tsukumo/characters/<そのパック>/` の下だけが書き変わり、セッションが起こし直されないテストがある\n- 使用中のパックを変えたときの今のテストがそのまま通る\n- 無いパック・`characters/local` を指したコマンドが断られるテストがある\n- `bun run check` が通る\n\n## 注意\n\n- 書き込み先はホームの下だけ（同梱の `characters/` と起動先の `characters/local` を書き換えない）",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check: 1973 pass / 0 fail（154ファイル）。編集コマンド7種に必須の pack（isCharacterPackName）を足し、editCharacterPack が findCharacterPack で一覧から引いて書く（使用中のときだけ持ち替え）。test/server/adapter/character-edit.test.ts に使用中以外のパックはホームの下だけ書く・無い名前・local を断る、session-manager.test.ts に起こし直さないテストを追加"
   },
   {
     "id": "T-492",

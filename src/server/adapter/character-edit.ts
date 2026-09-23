@@ -12,7 +12,10 @@
 // （`src/shared/character-background.ts` の `backgroundFileName`）ので、届いた文字列がパスの一部に
 // なる経路がそもそも無い。
 //
-// **書き込む前に、いま出しているパックをホームへ丸ごと写す**（同梱のパックを直さないため）。
+// **書き込む先のパックはコマンドの `pack` で指す**（使用中のパックに限らない）。名前は一覧と
+// 突き合わせて引くだけで、パスには使わない（書く先はホームの下の、引けたパックの名前）。
+//
+// **書き込む前に、書き込む先のパックをホームへ丸ごと写す**（同梱のパックを直さないため）。
 // 写すのは定義・人格・定義が指している素材（立ち絵・背景）で、ホームに既に同じ名前のパックが
 // あるときは写さない（画面から重ねた変更を上書きしてしまわないため）。
 //
@@ -50,6 +53,7 @@ import { parsePortraitImage, portraitFileName } from "../../shared/portrait-imag
 import {
   type CharacterPack,
   CHARACTER_DEFINITION_FILE_NAME,
+  findCharacterPack,
   homeCharacterDir,
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
@@ -70,9 +74,11 @@ const EXTRA_IMAGE_FILES_PER_PACK = 2
 export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_PER_PACK
 
 /**
- * 立ち絵1枚・差し色1色・背景1枚を書き込み、**書けたパックを読み直して返す**（呼び出し側はそれを
- * `characterChangedEvent` に渡して画面へ流す）。受け付けられなかったときは undefined:
+ * `edit.pack` で指されたパックに立ち絵1枚・差し色1色・背景1枚を書き込み、**書けたパックを
+ * 読み直して返す**（呼び出し側は、使用中のパックならそれに持ち替え、どちらでも
+ * `characterChangedEvent` で一覧ごと画面へ流し直す）。受け付けられなかったときは undefined:
  *
+ * - 一覧（`current` と `packs`。素材を配るのと同じ `findCharacterPack` の規則）に無い名前
  * - 起動先の `characters/local` と同じ名前のパック（書いても次の起動で読まれない。7.1）
  * - 画像（立ち絵・背景）の数が {@link MAX_IMAGE_FILES_PER_PACK} を超える
  * - ディスクに書けない
@@ -81,12 +87,14 @@ export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_P
  * テストがホームを汚さないためにある）。
  */
 export function editCharacterPack(
-  pack: CharacterPack,
+  current: CharacterPack,
+  packs: readonly CharacterPack[],
   edit: CharacterEditCommand,
   cwd: string,
   root: string = homeCharacterDir(),
 ): CharacterPack | undefined {
-  if (!isEditableCharacterPack(pack, cwd)) {
+  const pack = findCharacterPack(current, packs, edit.pack)
+  if (pack === undefined || !isEditableCharacterPack(pack, cwd)) {
     return undefined
   }
 
@@ -140,7 +148,7 @@ export function createCharacterPack(
 }
 
 /**
- * ホームにまだ同じ名前のパックが無ければ、いま出しているパックを丸ごと写す。**人格
+ * ホームにまだ同じ名前のパックが無ければ、書き込む先のパックを丸ごと写す。**人格
  * （`persona.md`）も写す**（写し忘れると、次の起動でそのパックの人格が消える）。
  *
  * **ホームへ書く前に必ず通る道**なので、立ち絵の差し替え以外の書き込み
