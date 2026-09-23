@@ -153,6 +153,7 @@ src/
     session-default.ts        新しいセッションの既定（モデル・許可モード。次に起こすときの初期値）
     session-socket.ts         WebSocket の経路名とトークンのクエリ名（サーバとブラウザの両方が同じ値を見る）
     main-view.ts              メインビューに出す形（MainViewEntry）と、ターンごとのまとめ
+    turn.ts                   記録を依頼の区切りでターンに割る（割り方の唯一の持ち主。4.2）
     turn-step.ts              「依頼の手順」を確定した記録（SessionRecord）から導く純関数
     turn-speech.ts            ターンごとのセリフと表情を確定した記録（SessionRecord）から引き直す純関数
     portrait-motion.ts        立ち絵をいま動かしてよいか・どれで動かすかを決める純関数
@@ -759,6 +760,12 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
 `MAX_SESSION_STATE_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。
+
+**記録（`SessionRecord`）を依頼の区切りでターンに割るのは `src/shared/turn.ts` の
+`splitIntoTurns` だけ**（2026-09-23）。メインビュー（`main-view.ts`）・ターンごとのセリフ
+（`turn-speech.ts`）・依頼の手順（`turn-step.ts`）・記録の窓（`session-state.ts` の
+`trimToRecentTurns`）はその並びの上で自分の形に変え、依頼より前の記録（先頭の `pre-request`。
+番号は `PRE_REQUEST_TURN_ID`）をどう扱うかも各所が決める。
 
 **経過時間の表示**は `turn` が持つ時刻（`running` の `startedAt`、`finished` の `startedAt` /
 `finishedAt`）から browser が計算する（1秒ごとの刻みは browser の

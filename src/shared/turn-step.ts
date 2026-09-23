@@ -5,6 +5,7 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { type SessionRecord } from "./session-state.ts"
+import { splitIntoTurns } from "./turn.ts"
 
 /**
  * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身
@@ -53,13 +54,13 @@ export function currentTurnSteps(
   records: readonly SessionRecord[],
   sessionEnded: boolean,
 ): TurnStepList {
-  const lastRequestIndex = records.findLastIndex((record) => record.kind === "request")
-  if (lastRequestIndex === -1) {
+  // 依頼より前のまとまりは先頭にしか来ないので、最後のまとまりがそれなら依頼は一度も無い。
+  const currentTurn = splitIntoTurns(records).at(-1)
+  if (currentTurn === undefined || currentTurn.kind === "pre-request") {
     return { kind: "no-request" }
   }
 
-  const steps = records
-    .slice(lastRequestIndex + 1)
+  const steps = currentTurn.records
     .filter(isToolRecord)
     .map(toTurnStep)
     .filter((step) => !(sessionEnded && step.status.kind === "running"))

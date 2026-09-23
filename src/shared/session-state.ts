@@ -24,6 +24,7 @@ import { type SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
+import { splitIntoTurns } from "./turn.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが
@@ -684,23 +685,24 @@ function finishTool(
 }
 
 /**
- * 直近何ターンぶんだけを残す。**ターンの境目は `request`** なので、古い `request` から数えて
- * 窓の外に出たものをまとめて落とす。窓の広さは `chatMode` で選ぶ
+ * 直近何ターンぶんだけを残す。**ターンの境目は `request`**（`shared/turn.ts` の `splitIntoTurns`）
+ * なので、古いターンから数えて窓の外に出たものをまとめて落とす。窓の広さは `chatMode` で選ぶ
  * （{@link MAX_SESSION_STATE_TURNS}）。
+ *
+ * **依頼より前の記録はターンに数えない。** 窓に収まっているあいだは残し、窓を超えて古い
+ * ターンを落とすときに一緒に落とす。
  */
 function trimToRecentTurns(
   records: readonly SessionRecord[],
   chatMode: boolean,
 ): readonly SessionRecord[] {
   const limit = chatMode ? MAX_SESSION_STATE_TURNS.chat : MAX_SESSION_STATE_TURNS.work
-  const requestIndexes = records.reduce<readonly number[]>(
-    (indexes, record, index) => (record.kind === "request" ? [...indexes, index] : indexes),
-    [],
+  const turns = splitIntoTurns(records).flatMap((turn) =>
+    turn.kind === "pre-request" ? [] : [turn],
   )
-  if (requestIndexes.length <= limit) {
+  if (turns.length <= limit) {
     return records
   }
 
-  const cutAt = requestIndexes[requestIndexes.length - limit]
-  return cutAt === undefined ? records : records.slice(cutAt)
+  return turns.slice(-limit).flatMap((turn) => [turn.request, ...turn.records])
 }

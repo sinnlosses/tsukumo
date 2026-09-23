@@ -9,8 +9,8 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { type Expression } from "./expression.ts"
-import { PRE_REQUEST_TURN_ID } from "./main-view.ts"
 import { type SessionRecord } from "./session-state.ts"
+import { splitIntoTurns, turnIdOf } from "./turn.ts"
 
 /**
  * 1ターン分のセリフ。`id` は `shared/main-view.ts` の `mainViewTurns` が振る通し番号と同じ
@@ -30,7 +30,8 @@ export type TurnSpeech = {
 }
 
 /**
- * 記録を利用者の依頼（`request`）を境目にしてターンへ分け、ターンごとのセリフを返す。
+ * 記録を利用者の依頼（`request`）を境目にしてターンへ分け（`shared/turn.ts` の
+ * `splitIntoTurns`）、ターンごとのセリフを返す。
  * **昇順（古い→新しい）で返し、セリフが1件も無いターンも空のまま並べる**（タブの番号から
  * 引けるようにするため）。
  *
@@ -38,31 +39,25 @@ export type TurnSpeech = {
  * も同じ値を読むので、タブの選択がそのまま引ける——数え方を両側に書き写さない。
  */
 export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSpeech[] {
-  const turns: TurnSpeech[] = []
-  // 依頼より前に届いたセリフの置き場（`mainViewTurns` 側の同じ番号のまとまりに対応する）。
-  // **1件も無ければ最後に落とす**ので、引く先の無い空のまとまりは残らない。
-  let current: TurnSpeech = {
-    id: PRE_REQUEST_TURN_ID,
-    request: undefined,
-    speeches: [],
-    expression: undefined,
-  }
+  return (
+    splitIntoTurns(records)
+      // 依頼より前に届いた記録のまとまり（`mainViewTurns` 側の同じ番号のまとまりに対応する）は、
+      // **セリフが1件も無ければ落とす**ので、引く先の無い空のまとまりは残らない。
+      .filter((turn) => turn.kind !== "pre-request" || turn.records.some(isSpeechRecord))
+      .map((turn): TurnSpeech => {
+        const speeches = turn.records.filter(isSpeechRecord)
+        return {
+          id: turnIdOf(turn),
+          request: turn.kind === "pre-request" ? undefined : turn.request.text,
+          speeches: speeches.map((speech) => speech.text),
+          expression: speeches.at(-1)?.expression,
+        }
+      })
+  )
+}
 
-  for (const record of records) {
-    if (record.kind === "request") {
-      turns.push(current)
-      current = { id: record.turnId, request: record.text, speeches: [], expression: undefined }
-      continue
-    }
-    if (record.kind === "speech") {
-      current = {
-        ...current,
-        speeches: [...current.speeches, record.text],
-        expression: record.expression,
-      }
-    }
-  }
-  turns.push(current)
-
-  return turns.filter((turn) => turn.id !== PRE_REQUEST_TURN_ID || turn.speeches.length > 0)
+function isSpeechRecord(
+  record: SessionRecord,
+): record is Extract<SessionRecord, { readonly kind: "speech" }> {
+  return record.kind === "speech"
 }
