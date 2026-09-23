@@ -53,9 +53,7 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
         <span className={styles["screen-nav-work-word"]}>{work.wordLabel}</span>
         {work.runningStep.kind === "shown" ? (
           <>
-            <span className={styles["screen-nav-work-sep"]} aria-hidden="true">
-              |
-            </span>
+            <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
             <span className={styles["screen-nav-work-summary"]}>
               {work.runningStep.summaryLabel}
             </span>
