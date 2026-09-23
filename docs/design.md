@@ -659,17 +659,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### session-manager.ts（core）
 
-```ts
-type SessionHost = {
-  readonly sessionId: string
-  readonly driver: SessionDriver
-  state: SessionState // サーバ側でも reducer を回す（hello の snapshot のため）
-  readonly subscribers: Set<(frame: ServerFrame) => void>
-}
-```
+`SessionManager` の契約と、セッション1つぶんの持ち物（`SessionHost`）の型定義は
+`src/server/core/session-manager.ts` を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
 - `create(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
-  (3) バッチに積む**。50〜100ms ごとに `events` フレームを購読者へ配る（`throttle` で間引く）
+  (3) バッチに積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms）ごとに `events` フレームを購読者へ配る
 - `dispatch(sessionId, command)`: `switch (command.type)` で駆動へ渡す。**ここが唯一の分岐**
 - `subscribe(sessionId, send)`: 接続ごとに `hello` を送ってから購読に加える
 - **いまは要素1つ。** 鍵（`sessionId`）を持たせておくのは 8章のため
@@ -706,38 +700,41 @@ type SessionHost = {
 
 ### server.ts と session-socket.ts（adapter）
 
-**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と
-`/repository-file` は `server.ts`（listen するのもここ）、`/ws` の upgrade とコマンドの受け口は
-`session-socket.ts`（listen 済みのサーバに受け口を足すだけ）。**起動トークンは1つ**で、
-`server.ts` の `createStartupToken` が作ったものを両方が見る。
+**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と、会話を含まない
+JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`）と会話の内容を運ぶ
+`/prompt-image/<id>` は `server.ts`（listen するのもここ。経路の一覧は `respond` 関数と、経路ごとの
+定数（`LAYOUT_PATH` / `uiScriptPath()` ・ `styleSheetPath()` / `VENDOR_PATH_PREFIX` /
+`CHARACTER_ASSET_PATH_PREFIX` / `REPOSITORY_FILE_PATH` / `TOKEN_USAGE_SUMMARY_PATH` /
+`CONTEXT_USAGE_PATH` / `PROMPT_IMAGE_PATH_PREFIX`）が正典）、`/ws` の upgrade とコマンドの受け口は
+`session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を足すだけ）。**起動トークンは
+1つ**で、`server.ts` の `createStartupToken` が作ったものを両方が見る。
 
-| 経路                              | 中身                                                                                                                  | トークン |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
-| `GET /`                           | ページ（`<div id="app">` と `<script src="/assets/ui.js">` と `<link href="/assets/style.css">`。**本文は入れない**） | 不要     |
-| `GET /assets/ui.js` / `style.css` | 束ねたもの（メモリ。11章の見張りで差し替わる）                                                                        | 不要     |
-| `GET /vendor/<name>`              | allowlist の対応表にある外部ライブラリだけ（実ファイルは `node_modules`。`vendor-asset.ts`）                          | 不要     |
-| `GET /character/<file>`           | いまのパックの素材。**`character.json` に書かれたファイル名だけ**を配る（パスから組み立てない）                       | 不要     |
-| `GET /repository-file?t=<token>`  | git 管理下のファイルのパス（入力欄の `@` 補完。実体は `repository-file.ts` の `git ls-files`）                        | **必要** |
-| `GET /ws?t=<token>`               | WebSocket。Origin とトークンを確かめてから upgrade                                                                    | **必要** |
-
-会話の内容が乗るのは `/ws` だけ（`session-socket.ts`）。ページ・同梱物・素材は静的な物なので
-トークン無しでよい。
-**`/repository-file` は会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの
-中身（パスだけ。ファイルは開かない）で、誰にでも配ってよい静的な物ではない。
+会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
+だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので
+トークン無しでよい。**`/repository-file`・`/token-usage`・`/context-usage` は会話を含まないが
+トークンが要る** — 配るのは利用者の作業ディレクトリの中身・使った量・いまのセッションが積んでいる
+ものの内訳で、誰にでも配ってよい静的な物ではない（各経路の判断の理由は `server.ts` の関数ごとの
+doc コメントを参照）。
 
 ### config.ts（core）
 
-| 環境変数                          | 意味                                                         | 既定             |
-| --------------------------------- | ------------------------------------------------------------ | ---------------- |
-| `TSUKUMO_VIEW_PORT`               | いまのまま（既定 7327、塞がっていれば +1 で20個）            | 7327             |
-| `TSUKUMO_VIEW_PORT_FALLBACK_BASE` | `TSUKUMO_VIEW_PORT` が未設定のときの起点を差し替える（下記） | 7327             |
-| `TSUKUMO_CHARACTER`               | パック定義ディレクトリのパス（相対は cwd 相対）              | `tsukumo-spirit` |
-| `TSUKUMO_OPEN_VIEW`               | いまのまま                                                   | 開く             |
-| `TSUKUMO_DRIVER`                  | `sdk` / `fake`                                               | `sdk`            |
-| `TSUKUMO_FAKE_SCENE`              | `fake` のとき起こした直後に流す場面の名前                    | 流さない         |
-| `TSUKUMO_NEW_SESSION`             | `1` で復元せず新規に起こす（8章の逃げ道）                    | 復元する         |
-| `TSUKUMO_WATCH_UI`                | `1` で `src/browser/` を見張って組み立て直す（11章）         | 見張らない       |
-| `TSUKUMO_HOME`                    | tsukumo の持ち物を置くホーム（相対は cwd 相対）              | `~/.tsukumo`     |
+**この表を正典のままにする**（2026-09-23 決定。`src/server/core/config.ts` 冒頭のコメントも
+同じ向きを明記している）。4章の `SessionEvent` / `SessionState` と違い、各環境変数名の doc コメントは
+読み取り方や関連ファイルだけを持ち、既定値と挙動の説明は `port-resolution.ts` ・
+`tsukumo-home.ts` など複数のファイルに分かれている。1つの型の doc コメントに寄せられないので、
+表だけがこの9個をまとめて見渡せる場所になる。
+
+| 環境変数                          | 意味                                                                                           | 既定             |
+| --------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------- |
+| `TSUKUMO_VIEW_PORT`               | ビューを配るポート（既定のまま塞がっていれば +1 で20個まで試す。明示指定したときはずらさない） | 7327             |
+| `TSUKUMO_VIEW_PORT_FALLBACK_BASE` | `TSUKUMO_VIEW_PORT` が未設定のときの起点を差し替える（下記）                                   | 7327             |
+| `TSUKUMO_CHARACTER`               | パック定義ディレクトリのパス（相対は cwd 相対）                                                | `tsukumo-spirit` |
+| `TSUKUMO_OPEN_VIEW`               | 起動時にタブを自動で開くか（`0` のときだけ開かない）                                           | 開く             |
+| `TSUKUMO_DRIVER`                  | `sdk` / `fake`                                                                                 | `sdk`            |
+| `TSUKUMO_FAKE_SCENE`              | `fake` のとき起こした直後に流す場面の名前                                                      | 流さない         |
+| `TSUKUMO_NEW_SESSION`             | `1` で復元せず新規に起こす（8章の逃げ道）                                                      | 復元する         |
+| `TSUKUMO_WATCH_UI`                | `1` で `src/browser/` を見張って組み立て直す（11章）                                           | 見張らない       |
+| `TSUKUMO_HOME`                    | tsukumo の持ち物を置くホーム（相対は cwd 相対）                                                | `~/.tsukumo`     |
 
 `TSUKUMO_VIEW_PORT_FALLBACK_BASE` は**既定の帯（`DEFAULT_VIEW_PORT`〜+19）そのものを差し替える
 口**で、`TSUKUMO_VIEW_PORT` を明示したときは効かない（明示指定はそもそもずらさないため）。
@@ -1219,6 +1216,27 @@ characters/<name>/
   流れたら、写しの印を「未渡し」に戻す。見る場所は `relayMessages` の中で、`turn-finished` で
   `personaMemory.finishTurn()` を呼んでいるのと同じ1行の形
 
+**最近の話題の見出しも同じ写しから取る**（2026-09-23 決定。範囲と理由は
+`docs/requirements.md` 4.9「記憶の圧縮と忘却」。画面は 13.7「雑談のときのサイドバー」）。
+別のファイルは持たない。
+
+- **書かせ方**: `/compact` の依頼の文面（`src/server/core/chat-compact.ts` の
+  `CHAT_COMPACT_COMMAND`）に、要約のいちばん最後へ `<topics>` と `</topics>` の行で挟んだ見出しを
+  新しい順に3件まで（1行1件、`- ` で始める）書くよう足す。**印を XML の組にするのは**、
+  `/compact` がもともと `<analysis>` と `<summary>` の組で書かせる形で、`compact_summary` にも
+  その生の出力（下書きの `<analysis>` を含む）がそのまま届くから
+- **取り出し方**: `chat-compact.ts` の `chatTopics`（純関数）。**最後の `<topics>` から次の
+  `</topics>` まで**を読むので、下書きにも組があれば本文のほうが採られる。箇条の印を落とし、
+  空行を飛ばし、3件で切る。**印が無い・閉じが無いときは空**（推し量って出さない）。依頼の
+  文面と同じファイルに置くのは、印の形を両側で1つに保つため
+- **流す契機は2つ**で、どちらも `chat-topics-changed` イベント（`SessionState.chatTopics` に
+  畳む）: (1) **雑談で起こしたとき**（`src/server/core/session-launch.ts` が
+  `chat-mode-changed` の直後に、ポート `readChatTopics` 越しに写しを読む） (2) **`PostCompact`
+  で写したあと**（`sdk-driver.ts` の `chatSummaryHooks` が、**書いた直後の写しを読み直して**
+  流す。上限で行が落ちたあとの写しから取るので、次に起こしたときと同じ見出しになる）。
+  写しを読んで見出しにするのは core の `readChatTopics` 1つで、2つの契機はそれを呼ぶだけ
+- **運ぶのは見出しだけ**で、要約の本文はブラウザへ渡らない
+
 **渡し方は `systemPrompt` の append**（`persona.md` と同じ道。`buildSystemPromptAppend`）。
 **2026-09-21 に、同じ口で直近の逐語も渡すことにした**（`docs/requirements.md` 4.9「直近の会話は
 逐語のまま読み戻す」）。載せるかどうかの条件は下の2つで**要約の写しと逐語に共通**なので、
@@ -1573,7 +1591,7 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
 | ディスク                                           | 会話を**書く**のは**2つの例外だけ**（下の「雑談の要約の写し」と「雑談の会話のアーカイブ」。その次の行は書かずに**読む**ほう）。`bun build` の出力もメモリ。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                               |
 | ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**（いまも DOM として持っている。持ち方が変わるだけ）                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ログ                                               | `error` フレームの `reason` は定型文。サーバの stderr に会話を出さない（いまのまま）                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 雑談の記憶の要約                                   | 作るのは claude 自身の圧縮（`/compact`）で、tsukumo がするのは容量を数えて圧縮を頼むことと、区切りを画面に出すことだけ。**要約の文面は画面にも `error` フレームにも stderr にも出さない**                                                                                                                                                                                                                                                                                                                                                         |
+| 雑談の記憶の要約                                   | 作るのは claude 自身の圧縮（`/compact`）で、tsukumo がするのは容量を数えて圧縮を頼むことと、区切りを画面に出すことだけ。**要約の文面は画面にも `error` フレームにも stderr にも出さない**（画面に出すのは写しから取り出した話題の見出しだけ。7章）                                                                                                                                                                                                                                                                                                |
 | 雑談の要約の写し                                   | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで）。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の1つ目**（範囲と理由は `docs/requirements.md` 4.9、形と上限は7章）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（写しの1行目の印が持つ）                                                                                                                                                                                     |
 | 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の2つ目**（範囲と理由は `docs/requirements.md` 4.9、形と上限は7章）。**画面の 100 ターンには影響されない。** 画面にも `error` フレームにも stderr にも出さない                                                                                                                                                                                                                     |
 | 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件は要約の写しと同じ2つ。**渡す先はそこだけ**で、画面にも `error` フレームにも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/requirements.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口は7章）                                                                                                                                  |
@@ -2334,10 +2352,14 @@ import 先が解けないとき（＝書きかけを保存したとき）。
    13.2「意味を持つ塊の地」の範囲。選ばれたものの地の `surface-accent` とは分ける）。下の罫線は
    `rule` のまま（差し色の仕切り線はレポートの3本に絞ってある。13.2）。**名前とひとことは読む面の
    文字**なので `ink` / `ink-quiet`（13.1 原則1）
-2. **最近の話題** / 3. **覚えていること**: 区画の枠（`SidebarSection`）で見出しを出し、**いまは
-   空のときの案内だけ**。中身の出どころ・件数・「編集」を押したときの形は後から入れる
-   （話題は雑談の要約の見出し、覚えていることは `persona.md` の `## 覚えたこと`）。**「編集」は
-   消せる行があるときだけ置く**（空のときに押せても何もできない）
+2. **最近の話題** / 3. **覚えていること**: 区画の枠（`SidebarSection`）で見出しを出す。
+   **最近の話題は雑談の要約の写しから取り出した見出し**（`state.chatTopics`。出どころと取り出し方は
+   7章「雑談の記憶の要約はどこに置くか」）を**新しい順に3件まで**、届いた順のまま並べる
+   （各行の上に `rule` の細い線。印は付けない）。**更新されるのは圧縮のときだけ**で、それまでは
+   前回の話題のまま。**空のとき**（一度も圧縮していない・見出しを取り出せなかった）は
+   「まだ話題が無い（話が積もると、ここに並ぶ）」を出す。覚えていることは**いまは空のときの
+   案内だけ**で、中身（`persona.md` の `## 覚えたこと`）と「編集」を押したときの形は後から入れる。
+   **「編集」は消せる行があるときだけ置く**（空のときに押せても何もできない）
 3. **セッション**: 仕事のときと同じ下端の帯（`SessionInfo`）から、キャラクターの対を外したもの
    （キャラクターの切り替えは札の「変える」へ移る）。**切り替え先が1つも無いときは帯ごと出さない**
    （罫線と沈んだ地だけの空の帯が残らないように）

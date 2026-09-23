@@ -19,11 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は依頼の記録の `images` を、控えの data URL の並びから**控えと棚の原寸を指す id の組**
- * （`src/shared/prompt-image.ts` の `RecordedPromptImage`）の並びに変えたことで上げた。
- * 古いタブが繋がったままだと、文字列のつもりで組を `<img src>` に渡して控えが壊れる。
+ * 直近は状態に雑談の「最近の話題」（`SessionState.chatTopics`）を足したことで上げた。
+ * 古いタブが繋がったままだと、`hello` の状態に欄が無く、サイドバーが並びのつもりで
+ * undefined を読む。
  */
-export const PROTOCOL_VERSION = 5
+export const PROTOCOL_VERSION = 6
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の

@@ -87,6 +87,12 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly readSessionDefault: () => SessionDefault
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
+  /**
+   * そのパックの雑談の要約の写しから、最近の話題の見出しを読む（写しがまだ無い・取り出せない
+   * ときは空。取り出し方は `src/server/core/chat-compact.ts` の `readChatTopics`）。
+   * **雑談で起こすときだけ呼ばれる。**
+   */
+  readonly readChatTopics: (pack: Pack) => readonly string[]
   /** 駆動と同じ間だけ動く見張りを起こす。流すイベントは駆動のものと同じ受け口へ。 */
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
   /**
@@ -118,7 +124,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  *
  * 順序は**起動時も起こし直しも同じ**:
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・
- * `session-default-changed` を流す → 見張りを起こす → 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
+ * （雑談のときだけ `chat-topics-changed`）・`session-default-changed` を流す → 見張りを起こす →
+ * 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
  * 続きから始まったなら履歴を組み直す。
  *
  * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
@@ -148,6 +155,11 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // **起こし直すと状態が初期値へ戻る**ので、雑談かどうかもここで流し直す（画面は
     // `chat-mode-changed` でしか知れない。`docs/requirements.md` 4.9）。
     onEvent({ kind: "chat-mode-changed", chat })
+    // 最近の話題も同じ理由で流し直す（`docs/design.md` 13.7）。**仕事のときは写しを読まない**
+    // （起こし直しで状態が初期値の空へ戻っているので、流さなくても空のまま）。
+    if (chat) {
+      onEvent({ kind: "chat-topics-changed", topics: ports.readChatTopics(pack) })
+    }
     // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値。`docs/design.md` 13.6）。
     // **読むのはここ1回だけ**で、同じ値をこれから起こす駆動にも渡す。
     const sessionDefault = ports.readSessionDefault()
