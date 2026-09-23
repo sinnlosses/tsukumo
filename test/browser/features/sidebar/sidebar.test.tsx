@@ -109,8 +109,23 @@ describe("Sidebar（雑談中）", () => {
   it("最近の話題と覚えていることは、空のときの案内を出す", () => {
     renderSidebar(CHAT_STATE)
 
-    expect(screen.getByText("まだ話題が無い")).toBeDefined()
+    expect(screen.getByText("まだ話題が無い（話が積もると、ここに並ぶ）")).toBeDefined()
     expect(screen.getByText("まだ覚えていることが無い")).toBeDefined()
+  })
+
+  it("最近の話題は、届いた見出しを届いた順（新しい順）に並べ、案内は出さない", () => {
+    renderSidebar({
+      ...CHAT_STATE,
+      chatTopics: ["架空の新しい話題", "架空の二番目の話題", "架空の三番目の話題"],
+    })
+
+    const topics = screen.getByRole("list", { name: "最近の話題" })
+    expect(Array.from(topics.querySelectorAll("li")).map((item) => item.textContent)).toEqual([
+      "架空の新しい話題",
+      "架空の二番目の話題",
+      "架空の三番目の話題",
+    ])
+    expect(screen.queryByText(/まだ話題が無い/u)).toBeNull()
   })
 
   it("下端の帯はセッションだけで、キャラクターの <select> は札の「変える」へ移る", () => {

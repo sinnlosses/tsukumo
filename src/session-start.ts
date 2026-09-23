@@ -25,6 +25,7 @@ import {
   startSession as startSdkSession,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
+import { readChatTopics } from "./server/core/chat-compact.ts"
 import { takeChatMemoryPromptParts } from "./server/core/chat-memory-prompt.ts"
 import { type Config, sessionTag } from "./server/core/config.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
@@ -128,6 +129,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
       // 覚えた既定は**起こすたびに読む**（歯車で書き換えたあと、起こし直しで効く）。
       readSessionDefault: () => readRememberedSessionDefault(),
       characterEvent: () => character.event(),
+      // 雑談で起こすときだけ呼ばれる（`createSessionLaunch`）。写しを読む口は駆動へ渡すものと
+      // 同じ作り方で、取り出し方は core（`readChatTopics`）。
+      readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
       // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
       watchTasks: (onEvent) =>

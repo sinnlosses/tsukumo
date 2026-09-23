@@ -17,6 +17,7 @@ import {
 } from "../../../src/server/core/session-driver.ts"
 import { MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
+import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
@@ -82,11 +83,17 @@ function chatMode(chatSummary: ChatSummary): SessionMode {
   }
 }
 
-/** メモリ上の `ChatSummary`（テスト用）。`write` に渡った引数を控える。 */
+/**
+ * メモリ上の `ChatSummary`（テスト用）。`write` に渡った引数を控え、**書いたものを `read` が返す**
+ * （フックは書いたあとの写しから最近の話題を読み直す）。
+ */
 function fakeChatSummary(): ChatSummary & { readonly writtenSummaries: () => readonly string[] } {
   const written: string[] = []
   return {
-    read: () => undefined,
+    read: () => {
+      const summary = written.at(-1)
+      return summary === undefined ? undefined : { summary, delivered: true }
+    },
     write: (summary) => {
       written.push(summary)
     },
@@ -104,23 +111,35 @@ const POST_COMPACT_INPUT: PostCompactHookInput = {
   cwd: "/tmp/tsukumo-test",
   hook_event_name: "PostCompact",
   trigger: "manual",
-  compact_summary: "（テスト用の架空の要約）最近読んだ本の話をした。",
+  compact_summary:
+    "（テスト用の架空の要約）最近読んだ本の話をした。\n<topics>\n- 架空の本の話\n</topics>",
 }
 
 describe("chatSummaryHooks", () => {
   it("仕事のとき（mode が work）は hooks を登録しない", () => {
-    expect(chatSummaryHooks(WORK_MODE)).toBeUndefined()
+    expect(chatSummaryHooks(WORK_MODE, () => {})).toBeUndefined()
   })
 
   it("雑談のとき（mode が chat）だけ PostCompact を登録し、compact_summary をそのまま write へ渡す", async () => {
     const chatSummary = fakeChatSummary()
-    const hooks = chatSummaryHooks(chatMode(chatSummary))
+    const hooks = chatSummaryHooks(chatMode(chatSummary), () => {})
 
     const callback = hooks?.PostCompact?.[0]?.hooks[0]
     expect(callback).toBeDefined()
     await callback?.(POST_COMPACT_INPUT, undefined, { signal: new AbortController().signal })
 
     expect(chatSummary.writtenSummaries()).toEqual([POST_COMPACT_INPUT.compact_summary])
+  })
+
+  it("写したあと、書いた写しから取り出した最近の話題を流す", async () => {
+    const events: SessionEvent[] = []
+    const hooks = chatSummaryHooks(chatMode(fakeChatSummary()), (event) => events.push(event))
+
+    await hooks?.PostCompact?.[0]?.hooks[0]?.(POST_COMPACT_INPUT, undefined, {
+      signal: new AbortController().signal,
+    })
+
+    expect(events).toEqual([{ kind: "chat-topics-changed", topics: ["架空の本の話"] }])
   })
 })
 

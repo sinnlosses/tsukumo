@@ -917,6 +917,21 @@ describe("applySessionEvent", () => {
   })
 })
 
+describe("applySessionEvent（最近の話題）", () => {
+  it("届くまでは空", () => {
+    expect(INITIAL_SESSION_STATE.chatTopics).toEqual([])
+  })
+
+  it("chat-topics-changed で丸ごと置き換わる（継ぎ足さない）", () => {
+    const view = apply(
+      { kind: "chat-topics-changed", topics: ["架空の古い話題"] },
+      { kind: "chat-topics-changed", topics: ["架空の新しい話題", "架空の二番目の話題"] },
+    )
+
+    expect(view.chatTopics).toEqual(["架空の新しい話題", "架空の二番目の話題"])
+  })
+})
+
 describe("applySessionEvent（質問の記録）", () => {
   // 架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
   const singleQuestion = {
