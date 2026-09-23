@@ -127,7 +127,7 @@
     "dependencies": ["T-380"],
     "summary": "帯の左端、部屋の名前の前にいまのキャラクターの顔を出す",
     "task": "## 背景\n\nヘッダーをモック `docs/history/mockup/header-2026-09-23.png` の形に作り直すうちの、左端のアイコン。いまの帯の左端は部屋の名前だけ（`src/browser/features/screen-nav/components/screen-nav-room.tsx`）。キャラクターの素材はパックの定義ファイル（`characters/<name>/character.json`、検証は `src/shared/character-definition.ts`）にあり、`mini` の欄がすでにある。顔の素材をどこから取るか・無いパックの落とし方は T-380 で `docs/design.md` 13.9 に書いてある。\n\n## 決まっていること（蒸し返さない）\n\n- いまのパックのキャラクターの顔を出し、キャラクターを替えると変わる\n- 素材はパックの定義ファイル側に置く（`CLAUDE.md` 原則4）\n- 狭い画面では部屋の名前と同じく「≡」の先頭に出す\n- 形は `docs/design.md` 13.9「顔」（T-380 で決めた）。要点: **`character.json` に新しい欄 `face`**（ファイル名1つ。立ち絵と同じ種類を受け付ける）を足し、`CharacterInfo` に `/character/<file>` の URL で載せる（`mini` と同じ経路）。表情では変わらない。丸く切り抜き、丸の地は `--surface-accent`。`alt` はパックの `name`。**`face` が無いパックでは何も出さない**（`mini` や立ち絵から切り抜かない・頭文字の丸も出さない）。キャラクター画面から差し替える口は作らない\n\n## やること\n\n1. `docs/design.md` 13.9 を読む\n2. `character-definition.ts` の検証と `CharacterInfo` に `face` を足し、`characters/README.md` の欄の説明に書く\n3. 同梱パックに顔を足す: `characters/tsukumo` は `default.png` から顔を正方形に切り出した1枚、`characters/tsukumo-spirit` は `default.svg` の `viewBox` を顔に寄せた1枚。切り出しは手元で1回だけ行い、リポジトリの依存や起動時の処理は足さない\n4. 帯の左端（部屋の名前の左）に顔を出す。無いパックでは何も出さない\n5. テスト: 定義の `face` が検証を通る・壊れた値は落ちる / 素材があるパックで `alt` 付きの画像が出る / 無いパックで何も出ない\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視: 同梱の tsukumo パックで顔が出て、サイドバーでキャラクターを切り替えると顔も変わる。何が見えたかを `evidence` に書く\n\n## 注意\n\n- ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。素材を足したら、目視は一時の `TSUKUMO_HOME` で行う（利用者のホームを書き換えない）\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
