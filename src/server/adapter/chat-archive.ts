@@ -35,6 +35,7 @@ import { z } from "zod"
 
 import { isCharacterPackName } from "../../shared/character.ts"
 import { type Expression } from "../../shared/expression.ts"
+import { byteLength } from "../../shared/lib/byte-length.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
@@ -97,8 +98,6 @@ const dayIndexLineSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   line: z.string(),
 })
-
-const textEncoder = new TextEncoder()
 
 /**
  * 画面から作ったキャラクターパックと同じ親（`~/.tsukumo/chat-archive`）。書き込んでよいのは
@@ -495,9 +494,4 @@ function toTimedEntry(raw: unknown): TimedEntry | undefined {
 type TimedEntry = {
   readonly at: string
   readonly entry: ChatArchiveRecentEntry
-}
-
-/** 文面の UTF-8 バイト数（読み戻す量を数える物差し。`docs/requirements.md` 4.9）。 */
-function byteLength(text: string): number {
-  return textEncoder.encode(text).length
 }

@@ -22,6 +22,7 @@
 // 本文は捨てる。依頼の文面もセリフもツールの引数もここには残らない
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
+import { byteLength } from "../../shared/lib/byte-length.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import {
   type ModelUsageTotal,
@@ -127,8 +128,6 @@ const EMPTY_TOTALS = {
   cacheCreationInputTokens: 0,
   costUsd: 0,
 } satisfies TokenUsageTotals
-
-const textEncoder = new TextEncoder()
 
 /** ターンの始まりの状態（何も積んでいない）。 */
 export const EMPTY_TURN_USAGE_TALLY = { calls: [], steps: [] } satisfies TurnUsageTally
@@ -343,11 +342,6 @@ function foldToolCalls(calls: readonly ToolCallTally[]): readonly ToolUsageCount
 
 function compareName(left: ToolUsageCount, right: ToolUsageCount): number {
   return left.name < right.name ? -1 : left.name > right.name ? 1 : 0
-}
-
-/** ツールの結果の長さ（UTF-8 のバイト数）。物差しは雑談のログ（`src/shared/chat-log.ts`）と同じ。 */
-function byteLength(text: string): number {
-  return textEncoder.encode(text).length
 }
 
 /** 行のローカル日付が期間（両端含む）に入っているか。 */

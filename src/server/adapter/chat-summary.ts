@@ -19,6 +19,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 import { isCharacterPackName } from "../../shared/character.ts"
+import { byteLength } from "../../shared/lib/byte-length.ts"
 import { type ChatSummary, type ChatSummaryRecord } from "../core/session-driver.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
@@ -34,8 +35,6 @@ const UNDELIVERED_MARK = "undelivered"
  * 書き込みで揃う1つのファイルなので、上限も分けずに数える。
  */
 export const CHAT_SUMMARY_LIMIT_BYTES = 8 * 1024
-
-const textEncoder = new TextEncoder()
 
 /**
  * 画面から作ったキャラクターパックと同じ親（`~/.tsukumo/chat-summary`）。書き込んでよいのは
@@ -138,10 +137,6 @@ function truncatedSummary(summary: string): string {
   }
 
   return kept.join("\n")
-}
-
-function byteLength(text: string): number {
-  return textEncoder.encode(text).length
 }
 
 function readOptionalFile(path: string): string | undefined {

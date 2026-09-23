@@ -27119,3 +27119,249 @@ bun run check: 1712 pass / 0 fail（139ファイル）
 ## 注意
 
 - 読み書きするファイルには会話の中身が入る（雑談のアーカイブ）。テストのフィクスチャに実物を使わない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-424
+
+**タスク**: 動いている部屋のビューを iframe の格子に並べた1枚を、スクリプトで Orca に開く
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+scripts/open-room-grid.ts（本体）・scripts/room-grid.ts（純粋関数。テスト test/scripts/room-grid.test.ts 17件）・scripts/lib/port-listener.ts（stop.ts から切り出し、stop.ts の出力は前後で同一）・orca-host.ts の listTabs/openTab/closeTab。マスは 1600×900 で描いて 16:9 のマスへ縮小（PC の並び）、拡大/戻るはラジオの label と :has(:checked)（# への移動は Orca が消した file:// を読み直すため不採用）。bun run check 1738 pass / 0 fail（main 取り込み後）
+目視（macOS・Orca のブラウザタブ、Chrome 150）: 疑似セッション 7410/7411 を別 TSUKUMO_HOME で起こし格子を開くと7部屋が並び iframe 内に画面が描けた（WebSocket 接続）。打ち直しで格子タブは1つのまま、$TMPDIR の HTML は毎回0件。拡大→全面・戻る→格子、URL 不変を実測。ユーザーが同タブで操作して「良さそう」
+iframe 内の入力: Playwright の Chrome で同じ HTML を開き textarea に字が入った。Orca の自動操作（orca mouse/type）ではフォーカスが IFRAME まで移るが字は入らなかった（合成入力が別オリジンの iframe に届かないためと推定。人の手で字が入るかは個別には確かめていない）
+
+## 背景
+
+手元では作業ツリーごとに tsukumo を並べて動かしている（2026-09-23 の実測で 7327〜7332 の6つ）。それぞれのビューは Orca の別々のタブに出ていて、全部の様子を一度に見る手段が無い。**動いている部屋のビューを iframe で格子に並べた1枚の HTML** を、手で打つスクリプトで作って Orca に開く。方針はユーザーと会話で決めた（下の「決まっていること」）。
+
+いまの関連箇所:
+
+- ビューの URL は `http://127.0.0.1:<port>/?t=<起動トークン>`。トークンは起動ごとの乱数で**ディスクに書かない**（`docs/design.md` 9章）。持っているのはそのプロセスのメモリと、Orca のタブの URL だけ
+- `scripts/stop.ts` が既定ポート（`DEFAULT_VIEW_PORT` = 7327）から `VIEW_PORT_FALLBACK_ATTEMPTS`（20）個を `lsof -ti tcp:<port> -sTCP:LISTEN` で引いて待ち受けを数え上げている（`candidatePorts` / `findListener`。どちらもファイル内の非公開関数）
+- `orca` コマンドを起こすのは `src/server/adapter/orca-host.ts` だけで、`test/architecture.test.ts`「orca コマンドを起こす箇所」が見張る。いまあるのは `createOrcaHost()` が返す `Host`（`src/server/core/host.ts`）の `showView` だけ。`scripts/open-views.ts` はそれを import して使っている
+- 部屋の名前は `roomName(port)`（`src/shared/room.ts`）
+- 2026-09-23 に手元で確かめた前提:
+  - `orca tab list --worktree all --json` の `result.tabs[]` は `browserPageId` / `url`（トークン込み）/ `title` / `worktreeId` などを持つ。`--worktree all` を付けないと今の作業ツリーのタブしか返らない
+  - `orca tab create --url data:text/html,…` は**中身が捨てられて** `data:text/html,` になる（base64・パーセントエンコードの両方）。`file://` の HTML は開けて、その中の iframe（`http://127.0.0.1:7327/`）で `load` が発火した
+  - ビューのページ（`/`）は `X-Frame-Options` も CSP も返さない
+  - `src/server/adapter/session-socket.ts` は接続ごとに `subscribe` するので、同じ部屋をタブと iframe の2か所から開いてよい。iframe の中のオリジンは部屋自身なので `Origin` の照合も通る
+  - 開いただけでブラウザ側が送るコマンドは無い（`nudge` も `use-chat-view.ts` のボタンからだけ）
+  - `orca tab close --page <id>` でタブを名指しで閉じられる
+  - 実際に「プロセスは動いているがタブが無い部屋」（7328・7331）と「プロセスが止まったのにタブだけ残った部屋」（7390）が両方あった
+
+## 決まっていること（蒸し返さない）
+
+- 形は**各ビューを iframe で1枚に並べた格子**（リンクの一覧ではない）。ユーザー: 「各ビューを1枚に並べたものだね」
+- 並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。**タブの無い部屋と、止まったプロセスのタブは表示しない**。ユーザー: 「(2)は表示不要だよ」。したがってトークンを取り戻す仕組み（シグナルでタブを開き直させる等）は作らない
+- tsukumo のサーバ側は変えない。手で打つスクリプトが1回ぶんのスナップショットを作る。常駐のダッシュボードにはしない（`docs/requirements.md` 2.2「複数セッション・常駐」）。各部屋が隣を問い合わせる案・起動時に登録ファイルを書く案はトークンを配る／書くことになるので採らない
+- HTML は `$TMPDIR` に 0600 で書いて `file://` で開き、**読み込めたら消す**（トークンをディスクに残さない）。見直すときはスクリプトを打ち直す
+- 前回の格子のタブは `<title>` で見分けて閉じてから開く（タブを溜めない）
+- 各マスの見出しは部屋の名前・作業ツリー名・ブランチ・ポート。**セッションの見出し（SDK の `summary`）は会話由来なので出さない**
+- 見出しを押すと `:target` の CSS でそのマスが全面に広がる。格子の HTML に JS は置かない（読み込み完了の判定は下の「解くべき論点」）
+- `orca tab list` / `orca tab close` は `orca-host.ts` に足す。`Host` ポート（`showView`）には入れない（サーバ側は使わない）
+
+## 解くべき論点
+
+- スクリプトの名前。仮名は `scripts/open-room-grid.ts`（原則5: ファイルは単数形。既存の `open-views.ts` にならって動詞から始める）
+- `orca-host.ts` に足す関数の形（`Host` の外に `listViewTabs()` / `closeTab(pageId)` のような別の輸出にするか。スクリプトから使うだけなので `Host` の型は広げない）
+- 「読み込めたら消す」をどう判定するか（例: `orca tab list` でそのページの `title` が格子の題になるまで短い間隔で見て、上限時間を過ぎたら消して警告だけ出す）。JS を置かずに済む方法を選ぶ
+- 走査範囲: 既定の20個に、タブの URL に出てきた `127.0.0.1` のポートを足す（`TSUKUMO_VIEW_PORT` で範囲外を指した部屋を拾うため）。待ち受けているのが tsukumo かどうかは、タブの URL のパスが `LAYOUT_PATH` であることと合わせて判断する
+- 部屋ごとの cwd は `lsof -a -p <pid> -d cwd -Fn`、ブランチは `git -C <cwd> branch --show-current`。取れないときはその欄を空にしてマスは出す
+- 格子の列の決め方（`grid-template-columns: repeat(auto-fit, minmax(…, 1fr))` の最小幅）。マスが狭いと各ビューは狭い画面のレイアウト（`docs/requirements.md` 4.7）で描かれるが、それは受け入れる
+
+## やること
+
+1. `scripts/stop.ts` の待ち受けの探し方（`candidatePorts` / `findListener` と、その下の `run` / `firstNumber`）を `scripts/lib/` の概念名のファイルへ切り出し、`stop.ts` はそれを使うように直す（振る舞いは変えない）
+2. `orca-host.ts` にタブの一覧（`--worktree all`）と、ページIDを指定して閉じる操作を足す。出力の形は境界で検証する（`isPlainObject` などで。キャストしない）
+3. 突き合わせ（待ち受け × タブ → 並べる部屋の一覧）と HTML の組み立てを、外の世界に触らない純粋な関数として書き、`test/scripts/` にテストを足す（タブだけの部屋・待ち受けだけの部屋が落ちること、範囲外のポートを拾うこと、HTML の属性値がエスケープされること、見出しに部屋の名前が出ること）。**テストのフィクスチャのトークンは架空の値にする**
+4. スクリプト本体: 集める → 並べる部屋が0件ならその旨を1行出して終わる → `$TMPDIR` に 0600 で書く → 前回の格子のタブを閉じる → `file://` で開く → 読み込めたらファイルを消す
+5. `docs/requirements.md` 2.2「複数セッション・常駐」の箇条に、格子のページは tsukumo の外で作る1枚で各マスは1画面＝1セッションのままなので当たらない、と1行足す。CLAUDE.md の「よく使うコマンド」に1行足す
+6. 目視: 疑似セッション（`TSUKUMO_DRIVER=fake`）を `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分けて2つ起こし（タブは自動で開く）、スクリプトで格子を開く。**トークン付きの iframe の中で WebSocket がつながって画面が描けるか**と、**iframe の中の入力欄にキーが入るか**を確かめる。本物の部屋は開いて見るだけにし、依頼は送らない
+7. **6で iframe の中の WebSocket がつながらない・入力できないと分かったら**、回避を押し切らずに、原因と観察を `evidence` に書いて `passes: false` で閉じる（サーバ側を変える必要が出たら、それは方針の変更になるため）
+
+## 完了条件
+
+- `bun run scripts/open-room-grid.ts`（名前は論点で決めたもの）を打つと、待ち受けていてタブもある部屋だけが格子に並んだタブが Orca に1つ開き、打ち直すと前のタブが閉じて1つのまま
+- 格子を開いたあと `$TMPDIR` に書いた HTML が残っていない
+- `scripts/stop.ts` の一覧と停止の振る舞いが変わらない（切り出しの前後で `bun run scripts/stop.ts` の出力が同じ）
+- 追加した純粋な関数のテストが `test/scripts/` にある
+- 疑似セッション2つで、iframe の中に画面が描かれ、入力欄にキーが入ることを目視で確かめ、その結果（どの端末で何が見えたか）を `evidence` に書いている
+- `bun run check` が通る
+
+## 注意
+
+- 起動トークンを stdout・ログ・`evidence`・コミットに出さない（URL を出すときは `t=` の値を伏せる）
+- 格子の HTML・スクリーンショットに本物の部屋の会話が写る。撮った画像はリポジトリに置かない（`docs/coding-standards.md`「会話内容の扱い」）
+- 目視のために開いたタブは自分で作ったものだけを `--page <id>` で閉じる。他の部屋のタブや `orca tab close` の引数なしの呼び出しは使わない
+- `orca` 以外の外部コマンド（`lsof` / `ps` / `git`）は `stop.ts` で既に使っているもので足りる。増やすならユーザーの承認が要る
+
+## T-426
+
+**タスク**: SessionManager の sessionId の鍵を外し、正典の理由を書き直す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+createSessionManager(options) が SessionHost の中身を直接返し Map・create・sessionId 引数・RunningSession を撤去、hello.sessionId と noSession を消して PROTOCOL_VERSION 8（grep -n 'new Map' src/server/core/session-manager.ts は0件）。design.md 2・3・5・8章と移行表、requirements.md 2.2 から「起こし直しの一瞬」の理由を消し書き直し（見出し数 53/27 で前後一致）。bun run check: 1717 pass / 0 fail（139 files）、切り替え系テストの期待値は不変
+
+## 背景
+
+`src/server/core/session-manager.ts` の `createSessionManager` は `Map<string, SessionHost>` を持ち、`create` / `dispatch(sessionId, …)` / `readContextUsage(sessionId)` / `subscribe(sessionId, …)` の全部が鍵を引いてから `SessionHost` に渡す。しかし:
+
+- 鍵に入るのは `src/session-start.ts` の `startSession` が `randomUUID()` で作った1つだけで、`RunningSession`（`subscribe` / `dispatch` / `readContextUsage` / `close`）はその鍵を閉じ込めて包み直している
+- キャラクターの切り替え・雑談モードの切り替え・セッションの切り替えは、`SessionHost` の中の `restart`（`generation` を1つ進め、古い駆動のイベントを捨てる）で起こし直していて、**鍵は変わらない**
+- それでも `docs/design.md` 8章は「`SessionManager` は `sessionId` を鍵に持つが、これは『将来のため』ではなく、セッションを起こし直すときに古い側と新しい側が同時に存在する一瞬を表す形である」と書き、`docs/requirements.md` 2.2 も「`SessionManager` が `sessionId` を鍵に持つのは起こし直しの一瞬のためで、複数化の布石ではない」と書く。**正典の理由がいまのコードと合っていない**
+- 複数セッションは 2026-09-21 に要件から落とした（`docs/requirements.md` 2.2）
+
+読む人は「鍵がある → 複数ある」と読み、`noSession` の失敗（`FRAME_ERROR_REASON.noSession`）や `hello` の `sessionId` がどこで効くのかを追いに行くことになる。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- 複数セッションへ広げないこと自体は蒸し返さない（`docs/requirements.md` 2.2）
+
+## 解くべき論点
+
+- 鍵を外した形: (a) `createSessionManager` をやめて `createSessionHost` 相当を公開し、`session-start.ts` の包み直しも消す / (b) `SessionManager` の名前と口は残し、中の `Map` と引数の `sessionId` だけを外す / (c) それ以外。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ
+- `hello` フレームの `sessionId`（`src/shared/frame.ts`）と `FRAME_ERROR_REASON.noSession` を残すか。ブラウザ側（`src/browser/stores/session.tsx`）が `sessionId` を何に使っているかを見て決める。**プロトコルを変えるなら `PROTOCOL_VERSION` を上げる**
+- `docs/design.md` 8章の「広げたくなったら (1)(2)」の段落を残すか（残すなら理由を今のコードに合う文で）
+
+## やること
+
+1. `session-manager.ts` の `createSessionManager` と `SessionHost`、`session-start.ts` の `startSession`、`src/view-delivery.ts` の `connect`、`src/server/adapter/session-socket.ts` を読み、鍵がどこで効いているかを一覧にする
+2. 上の論点に答えを出し、コードとテスト（`test/server/core/session-manager.test.ts` のうち鍵の有無を確かめているもの）をその形に寄せる
+3. `docs/design.md` 8章・2章の木と5章のモジュールの説明、`docs/requirements.md` 2.2 の該当行、`docs/glossary.md` に `SessionManager` の行があればそれを、新しい形の理由で書き直す
+
+## 完了条件
+
+- `grep -n 'new Map' src/server/core/session-manager.ts` が0件（または残る Map が sessionId を鍵にしていないことを `evidence` に書く）
+- `docs/design.md` 8章と `docs/requirements.md` 2.2 に「起こし直しの一瞬」を理由にした文が無い
+- キャラクターの切り替え・雑談モードの切り替え・セッションの切り替えの既存テストが、期待値を変えずに通る
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `src/session-start.ts` は T-414（コメントの畳み込み）と T-430 も触る。着手前に `git merge main` で取り込み、衝突したら手を止める
+- 同じファイルの持ち物の整理は T-427 が後ろで行う。**ここでは鍵を外すことだけ**をし、`createSessionHost` の中身は動かさない
+
+## T-432
+
+**タスク**: 文字列の UTF-8 バイト長を数える関数が4か所にあるのを1つにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-431 / **passes**: True
+
+**evidence**:
+
+4か所（core/token-usage.ts・adapter/chat-archive.ts・adapter/chat-summary.ts・shared/chat-log.ts）はどれも TextEncoder().encode(text).length で同じ定義だった。src/shared/lib/byte-length.ts の byteLength に寄せ、test/shared/lib/byte-length.test.ts を足した。
+置き場の判断: TextEncoder は ECMAScript の組み込みではない実行環境の API なので design.md 2章の表の「ライブラリを包む道具」＝ lib/。core と shared の両方から読むので層は shared。
+grep -rn 'new TextEncoder' src → 1件。bun run check: 1722 pass / 0 fail（140ファイル）
+
+## 背景
+
+`new TextEncoder()` を持ってバイト長を数える関数が4か所で書かれている:
+
+- `src/server/core/token-usage.ts` の `byteLength`
+- `src/server/adapter/chat-archive.ts` の `byteLength`
+- `src/server/adapter/chat-summary.ts` の `byteLength`
+- `src/shared/chat-log.ts`（`textEncoder` を持って数えている）
+
+どれも「読み戻す量の上限」「雑談のログの走行合計」「ツールの結果の長さ」の物差しで、同じ定義（UTF-8 のバイト数）であることが前提になっている。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+
+## やること
+
+1. 4か所が同じ定義で数えていることを確かめる
+2. 1つに寄せる。置き場は `docs/design.md` 2章「`lib/` と `utils/` に置く基準」で決める（`TextEncoder` は ECMAScript の組み込みではなくサーバとブラウザの両方にある実行環境の API。`shared` と `core` の両方から読むので `shared` の中に置くことになる。基準の表のどちらに当たるかを決めて、判断を `evidence` に1行書く）
+3. 4か所をそれに寄せる
+
+## 完了条件
+
+- `grep -rn 'new TextEncoder' src` が1件
+- 寄せた関数にテストがある
+- `bun run check` が通る
+
+## T-433
+
+**タスク**: ローカル時刻の HH:MM を作る手を browser/utils/clock.ts に寄せる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+src/browser/utils/clock.ts に zonedDateTime / clockTime（HH:MM）/ clockDateTime（<time> の dateTime）を足し、session-switch.tsx・context-usage-card.tsx・use-chat-view.ts を寄せた。タイムゾーンは3か所とも localTimeZoneId() 経由。M/D は読み手が1つなので session-switch.tsx に残した。utils/ の歯止め3つ（import は Temporal だけ・手法の名前・そのままコピーして通じる）を満たすので utils/ のまま。
+grep 'Temporal.Now' src/browser（clock.ts を除く）→ 0件。'smallestUnit: "minute"' → clock.ts の2行だけ。新規 test/browser/utils/clock.test.ts。
+bun run check: 1724 pass / 0 fail（141ファイル）、bun run build 成功
+
+## 背景
+
+`src/browser/utils/clock.ts` は「ブラウザ側で OS のタイムゾーンを読む場所をここに揃える」として `localTimeZoneId()` を持つが、機能の中で同じことを直に書いている:
+
+- `src/browser/features/sidebar/session-switch.tsx` の `localTimestamp`（`Temporal.Now.timeZoneId()` を直に読み、`M/D HH:MM`）
+- `src/browser/features/token-usage/context-usage-card.tsx` の `clockLabel`（`Temporal.Now.timeZoneId()` を直に読み、`HH:MM`）
+- `src/browser/features/chat-view/hooks/use-chat-view.ts` の `timeStamp`（`HH:MM` と `dateTime`）
+
+`toPlainTime().toString({ smallestUnit: "minute" })` の書き方が3か所にある。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+
+## やること
+
+1. 3か所の書式（`HH:MM` / `M/D HH:MM` / `dateTime` 属性）を並べる
+2. タイムゾーンの読み取りを `localTimeZoneId()` に揃え、`HH:MM` を作る手を `browser/utils/clock.ts` に1つ置く（`utils/` の歯止め3つを満たすか確かめる。満たさなければ `lib/`）。`M/D` を足した形を共通にするかは読み手の数で決める
+3. 3か所をそれに寄せる
+
+## 完了条件
+
+- `grep -rn 'Temporal.Now' src/browser | grep -v utils/clock.ts` が0件
+- `grep -rn 'smallestUnit: "minute"' src/browser` が `utils/clock.ts` の中だけ
+- `bun run check` が通る
+
+## 注意
+
+- `context-usage-card.tsx` は T-401・T-402（トークン消費の画面）も触る。並行して進めているときは `git merge main` で取り込んでから着手する
+
+## T-451
+
+**タスク**: 入力欄で ↑・↓ を押すと、このセッションで送った依頼を呼び出せるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: False
+
+**evidence**:
+
+2026-09-23 に着手しない判断（ユーザー）。`/clear` は `conversation-cleared` で `records` を空にする（`src/shared/session-state.ts` の `conversation-cleared`）ため、履歴から `/clear` をまたぐことはできず、`/clear` 自身も呼び戻せない。残る恩恵は「長い自由文の依頼を少し変えて送り直す」「中断した依頼を呼び戻す」の2つだけで、`/next-task` の繰り返しは `/` の補完がすでに吸収している。やること1の ↑・↓ 自体も、Enter が改行で複数行の下書きが常態のこの入力欄ではキャレットの行移動と衝突する（Ctrl+P / Ctrl+N は補完の上下移動が使用済み）。作るなら履歴のボタンか記号（`!` など）で補完リストとして出す形になるが、頻度が見合わないため作らない。必要になったら作り直す。
+
+## 背景
+
+`docs/requirements.md` 4.2 の入力欄の項は「**入力履歴と繰り返しの仕組みは次**（v1 に含めない）」と書いたまま残っている。同じ依頼を少し変えて送り直す（`/next-task T-xxx` を続けて打つ、中断したものを送り直す）たびに打ち直すことになる。
+
+送った依頼の文面は `SessionState.records` の `request`（`src/shared/session-state.ts`）にすでにあり、続きから始めたセッションでも復元される。**新しく保存する必要は無い**（`localStorage` やディスクに依頼の文面を書くと `docs/coding-standards.md`「会話内容の扱い」に当たる）。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+- 呼び出す元は `SessionState` の記録だけにし、どこにも保存しない
+
+## やること
+
+1. Claude Code の TUI の手触り（入力が空か、キャレットが先頭行にあるときだけ ↑ が履歴になる。↓ で新しいほうへ戻り、最後は打ちかけの下書きに戻る）に寄せた規則を `docs/requirements.md` 4.2 の入力欄の項に書く（「次」の一文を置き換える）。`/` と `@` の補完が出ているときは補完の上下移動を優先する。IME の変換中は奪わない
+2. 記録から「新しい順の依頼の文面」を導く純粋関数を置き、`src/browser/features/dispatch/hooks/` のフックで使う。画像つきの依頼は文面だけを戻す
+
+## 完了条件
+
+- 導く関数と、↑・↓・補完中・変換中の振る舞いの部品のテストがある
+- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- `src/browser/features/dispatch/hooks/use-composer.ts` は T-444（補完の分離）も触る。並行して進めているときは `git merge main` で取り込んでから着手する

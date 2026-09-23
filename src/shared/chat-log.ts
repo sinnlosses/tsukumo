@@ -8,6 +8,7 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { type Expression } from "./expression.ts"
+import { byteLength } from "./lib/byte-length.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type RecordTime, type SessionRecord } from "./session-state.ts"
 
@@ -156,8 +157,6 @@ export const CHAT_KEPT_READBACK_BYTES = 8_192 satisfies number
  */
 export const CHAT_RECALL_READBACK_BYTES = 8_192 satisfies number
 
-const textEncoder = new TextEncoder()
-
 /**
  * 雑談のログの文面（利用者の依頼とキャラクターのセリフ）の UTF-8 バイト数を数える。
  * **添えた画像とツールの入出力は数えない**（`docs/requirements.md` 4.9「数え落としは許す」）——
@@ -166,8 +165,7 @@ const textEncoder = new TextEncoder()
  */
 export function chatLogByteSize(entries: readonly ChatLogEntry[]): number {
   return entries.reduce(
-    (total, entry) =>
-      total + (entry.speaker === "boundary" ? 0 : textEncoder.encode(entry.text).length),
+    (total, entry) => total + (entry.speaker === "boundary" ? 0 : byteLength(entry.text)),
     0,
   )
 }

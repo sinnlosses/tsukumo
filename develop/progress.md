@@ -55,9 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
-### 2026-09-23 SessionManager の sessionId の鍵を外した（T-426）
+### 2026-09-23 ローカル時刻の HH:MM を作る手を clock.ts に寄せた（T-433）
 
-`createSessionManager(options)` がセッション1つの持ち物をそのまま返す形にし、`Map`・`create`・`RunningSession`・`hello.sessionId`・`noSession` を撤去して `PROTOCOL_VERSION` を 8 に上げた。`docs/design.md` 8章と `docs/requirements.md` 2.2 の「起こし直しの一瞬」という理由は、「1つだけ持ち、切り替えは中で起こし直す」に書き直した。
+ブラウザ側の3か所がタイムゾーンを直に読んで `HH:MM` を組んでいたのを、`src/browser/utils/clock.ts` の `zonedDateTime` / `clockTime` / `clockDateTime` と `localTimeZoneId()` に揃えた。表示の書式は変えていない。
+
+### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
+
+4か所で書き写していた `TextEncoder` のバイト数の数え方を `src/shared/lib/byte-length.ts` の `byteLength` に寄せた。実行環境の API を包む道具なので `lib/`、`core` と `shared` の両方から読むので `shared` に置いた。
 
 ### 2026-09-23 日付ごとの jsonl の読み書きを1つにまとめた（T-431）
 
@@ -71,25 +75,9 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。
 
-### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
+### 2026-09-23 動いている部屋のビューを iframe の格子に並べて Orca に開くスクリプトを足した（T-424）
 
-`command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
-
-### 2026-09-23 メインビューで遡れるやり取りを20件へ広げた（T-400）
-
-`MAX_MAIN_VIEW_TURNS` を 5 の直書きから `MAX_SESSION_STATE_TURNS.work`（20）の導出に変え、「メインビューの窓 ≤ 記録の窓」という関係を2つの定数の間ではなく1本の式で保つようにした。`docs/requirements.md` 4.7 と `docs/design.md` の「直近5件」も20件に直した。
-
-### 2026-09-23 答え待ちの質問をメインビューの札へ移し、自由入力を入力欄に寄せた（T-407）
-
-質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
-
-### 2026-09-23 design.md 1〜3章と architecture.md の置き場の記述を実物に合わせた（T-425）
-
-`docs/design.md` 2章の木に欠けていた33ファイル（shared 18・core 8・adapter 5・browser 直下2）と `stores/` の8つを足し、1章の表と3章「起動」を `dist/browser/` を読むだけの現状に直した。`docs/architecture.md` の原則5と表に `hooks/` と `presentational-<機能>.tsx` の例外を足し、箱ごとの中身は design.md 2章への参照にした。
-
-### 2026-09-23 モデル別・ツール別を横に並べた2枚の札と比べ棒つきの表にした（T-402）
-
-縦に積んでいた表2つを枠のある札にして横に並べ、並べ順を決めている列だけに CSS の横棒を添えた。モデル別の並びはモデル名順から出力の多い順に変わり、ツール別は6件＋「ほか n 件を見る」で開閉する。
+`bun run scripts/open-room-grid.ts` で、待ち受けていてタブもある部屋だけを 16:9 のマスに PC の並びのまま縮めて並べ、拡大・戻るは JS を使わずラジオの label で切り替える。起動トークンを含む HTML は読み込みを確かめたら消すので、見直すときは打ち直す。
 
 ## 未解決
 

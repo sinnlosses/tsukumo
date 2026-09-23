@@ -13,6 +13,7 @@
 import { type ReactElement } from "react"
 
 import { type ContextUsageItem } from "../../../shared/context-usage.ts"
+import { clockTime, localTimeZoneId, zonedDateTime } from "../../utils/clock.ts"
 import { categoryLook } from "./context-usage-category.ts"
 import { type ContextUsageRow, type UseContextUsageResult } from "./hooks/use-context-usage.ts"
 import styles from "./token-usage.module.css"
@@ -180,8 +181,5 @@ function formatShare(share: number): string {
 
 /** 内訳を取った時刻（この端末のローカルの `HH:MM`）。 */
 function clockLabel(epochMilliseconds: number): string {
-  return Temporal.Instant.fromEpochMilliseconds(epochMilliseconds)
-    .toZonedDateTimeISO(Temporal.Now.timeZoneId())
-    .toPlainTime()
-    .toString({ smallestUnit: "minute" })
+  return clockTime(zonedDateTime(epochMilliseconds, localTimeZoneId()))
 }
