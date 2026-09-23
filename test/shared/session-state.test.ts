@@ -82,6 +82,34 @@ describe("applySessionEvent", () => {
     expect(mainViewEntries(view)).toEqual([{ kind: "detail", markdown: "途中まで" }])
   })
 
+  it("見えない文字だけの本文は積まず、その前の本文を締めの本文から外さない", () => {
+    const view = apply(
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "utterance", text: "ダミーのレポート" },
+      { kind: "speech", text: "できたよ！", expression: "proud" },
+      { kind: "partial-utterance", text: "​" },
+      { kind: "utterance", text: "​" },
+      { kind: "turn-finished", status: "success" },
+    )
+
+    expect(view.partialUtterance).toBe("")
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
+      { kind: "detail", markdown: "ダミーのレポート" },
+    ])
+  })
+
+  it("書きかけの本文が見えない文字だけのあいだは、メインビューに出さない", () => {
+    const streaming = apply(
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      { kind: "partial-utterance", text: "​" },
+    )
+
+    expect(mainViewEntries(streaming)).toEqual([
+      { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
+    ])
+  })
+
   it("セリフと表情を持つ", () => {
     const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
