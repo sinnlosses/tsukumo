@@ -19,11 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に雑談の「最近の話題」（`SessionState.chatTopics`）を足したことで上げた。
- * 古いタブが繋がったままだと、`hello` の状態に欄が無く、サイドバーが並びのつもりで
- * undefined を読む。
+ * 直近は `hello` から `sessionId` を外したことで上げた（サーバがセッションの鍵を持たなくなり、
+ * ブラウザも読んでいなかった）。**7 のタブはこの `hello` を封筒の検証で捨てる**（`sessionId` を
+ * 必須にしていた）ので「読み込み直してください」も出ない。繋がったままの古いタブは手で読み込み直す。
  */
-export const PROTOCOL_VERSION = 6
+export const PROTOCOL_VERSION = 8
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
@@ -44,7 +44,6 @@ export type ServerFrame =
   | {
       readonly type: "hello"
       readonly protocolVersion: number
-      readonly sessionId: string
       readonly state: SessionState
     }
   | { readonly type: "events"; readonly events: readonly StampedEvent[] }
@@ -57,7 +56,6 @@ export type ServerFrame =
  */
 export const FRAME_ERROR_REASON = {
   invalidCommand: "依頼の形式が正しくない",
-  noSession: "セッションがまだ起きていない",
   unresolvedAnswer: "解決済み、または知らない答え待ち",
   driverFailed: "セッション駆動が受け付けなかった",
   characterEditFailed: "キャラクターの見た目を変えられなかった",
@@ -69,6 +67,8 @@ export const FRAME_ERROR_REASON = {
     "ターン進行中は仕事と雑談を切り替えられない（中断すると切り替えられる）",
   nudgeDuringTurn: "ターン進行中は話しかけてもらえない（返事を待つ）",
   nudgeOutsideChat: "話しかけてもらえるのは雑談モードのときだけ",
+  forgetRememberedLineFailed: "覚えたことを消せなかった",
+  forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
 } as const
 
 /**
@@ -79,7 +79,6 @@ export const serverFrameSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("hello"),
     protocolVersion: z.number().int(),
-    sessionId: z.string(),
     state: z.custom<SessionState>((value) => isPlainObject(value)),
   }),
   z.object({ type: z.literal("events"), events: z.array(stampedEventSchema) }),

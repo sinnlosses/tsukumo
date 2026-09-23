@@ -20,6 +20,7 @@ import {
   type RemovableExpression,
 } from "./expression.ts"
 import { answerSchema } from "./pending-ask.ts"
+import { MAX_REMEMBERED_LINE_LENGTH } from "./persona-memory.ts"
 import { MAX_PORTRAIT_DATA_URL_LENGTH, parsePortraitImage } from "./portrait-image.ts"
 import {
   MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
@@ -289,6 +290,18 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     portraits: z.object({ default: portraitDataUrlSchema }),
     accent: accentColorSchema,
   }),
+  /**
+   * 雑談のサイドバー「覚えていること」の「編集」から1行消す（`docs/design.md` 7.1「1行だけ
+   * 忘れる」）。**指し方はキャラクター自身の `forget` ツールと同じ完全一致**——チップに出した
+   * 文面（`- ` を外した1行）をそのまま送る。書き込みは
+   * `src/server/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen` を通し、
+   * 1ターン1行の上限（モデルの `forget` の上限）は掛からない。
+   */
+  z.object({
+    type: z.literal("forget-remembered-line"),
+    commandId: commandIdSchema,
+    line: z.string().min(1).max(MAX_REMEMBERED_LINE_LENGTH),
+  }),
 ])
 
 export type ClientCommand = z.infer<typeof clientCommandSchema>
@@ -322,7 +335,9 @@ export type CharacterCreateCommand = Extract<ClientCommand, { readonly type: "cr
 
 /**
  * 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる。
- * `nudge` も文面をサーバ側が足すので外れる）。
+ * `nudge` も文面をサーバ側が足すので外れる）。**`forget-remembered-line` も外れる** —
+ * 書き込みと `remembered-lines-changed` の流し直しで済み、`editCharacter` と同じくセッションは
+ * 起こし直さない（`docs/design.md` 7.1）。
  */
 export type DriverCommand = Exclude<
   ClientCommand,
@@ -333,6 +348,7 @@ export type DriverCommand = Exclude<
   | { readonly type: "set-chat-mode" }
   | { readonly type: "nudge" }
   | { readonly type: "set-session-default" }
+  | { readonly type: "forget-remembered-line" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */

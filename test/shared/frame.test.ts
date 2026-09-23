@@ -10,7 +10,6 @@ describe("parseServerFrame（受け付ける形）", () => {
     const frame = parseServerFrame({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
-      sessionId: "s-1",
       state: INITIAL_SESSION_STATE,
     })
 
@@ -18,7 +17,6 @@ describe("parseServerFrame（受け付ける形）", () => {
     expect(frame).toEqual({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
-      sessionId: "s-1",
       state: INITIAL_SESSION_STATE,
     })
   })
@@ -60,12 +58,8 @@ describe("parseServerFrame（受け付ける形）", () => {
 describe("parseServerFrame（落とす形）", () => {
   it("知らない type・封筒の欠けた形は undefined", () => {
     expect(parseServerFrame({ type: "greeting" })).toBeUndefined()
-    expect(
-      parseServerFrame({ type: "hello", sessionId: "s-1", state: INITIAL_SESSION_STATE }),
-    ).toBeUndefined()
-    expect(
-      parseServerFrame({ type: "hello", protocolVersion: "1", sessionId: "s-1", state: {} }),
-    ).toBeUndefined()
+    expect(parseServerFrame({ type: "hello", state: INITIAL_SESSION_STATE })).toBeUndefined()
+    expect(parseServerFrame({ type: "hello", protocolVersion: "1", state: {} })).toBeUndefined()
     expect(parseServerFrame({ type: "events", events: [{ at: 1 }] })).toBeUndefined()
     expect(parseServerFrame({ type: "refresh", target: "everything" })).toBeUndefined()
     expect(parseServerFrame(null)).toBeUndefined()

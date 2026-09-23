@@ -5,7 +5,6 @@
 //
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
 
-import { randomUUID } from "node:crypto"
 import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
@@ -14,7 +13,7 @@ import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
-import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
+import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedSessionDefault,
   writeRememberedSessionDefault,
@@ -40,8 +39,8 @@ import {
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import {
   createSessionManager,
-  type DispatchResult,
   EVENT_BATCH_INTERVAL_MS,
+  type SessionManager,
 } from "./server/core/session-manager.ts"
 import { sessionRules } from "./server/core/session-rule.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
@@ -51,31 +50,10 @@ import {
   CHAT_RECALL_READBACK_BYTES,
   CHAT_RECENT_READBACK_BYTES,
 } from "./shared/chat-log.ts"
-import { type ClientCommand } from "./shared/command.ts"
-import { type ContextUsageReport } from "./shared/context-usage.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
-import { type ServerFrame } from "./shared/frame.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
 import { type SessionDefault } from "./shared/session-default.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
-
-/**
- * 起こしたセッション。**`sessionId` は外へ出さない** — 繋ぐ側（`src/view-delivery.ts`）が
- * 知るのは購読・受け渡し・終わらせ方の3つだけでよい。
- */
-export type RunningSession = {
-  /** フレームの押し先を1つ加える。外すための関数を返す。 */
-  readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
-  /** 画面から届いたコマンドを渡す。 */
-  readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
-  /**
-   * いまのコンテキストの内訳を取る（トークン消費の画面が `/context-usage` で引く。
-   * `docs/glossary.md`「コンテキストの内訳」）。取れなかったときは「取れない」。
-   */
-  readonly readContextUsage: () => Promise<ContextUsageReport>
-  /** 駆動を閉じる（claude の子プロセスを残さないため、終了時に必ず呼ぶ）。 */
-  readonly close: () => void
-}
 
 export type SessionStartOptions = {
   readonly config: Config
@@ -103,11 +81,10 @@ export type SessionStartOptions = {
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
-export function startSession(options: SessionStartOptions): RunningSession {
+export function startSession(options: SessionStartOptions): SessionManager {
   const { config, character, fakeSession, tokenUsageLog, promptImageShelf, viewPort } = options
   // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
   const cwd = process.cwd()
-  const sessionId = randomUUID()
   // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。**書くのは `session-manager` から
   // 1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が違うが、触るファイルは同じなので
   // 境界は増やさない（原則3）。
@@ -116,7 +93,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
   // `session-manager` から、セッション1つにつき1行だけ**で、読むのは tsukumo の外なので、
   // ここで作ってそのまま渡す。
   const contextUsageLog = createContextUsageLog()
-  const manager = createSessionManager({
+  return createSessionManager({
     // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す
     // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
     now: () => Temporal.Now.instant().epochMilliseconds,
@@ -133,10 +110,6 @@ export function startSession(options: SessionStartOptions): RunningSession {
     contextUsageLog,
     // 置く契機（`prompt`）と捨てる契機（記録の窓）を決めるのも `session-manager`。
     promptImageShelf,
-  })
-
-  manager.create({
-    sessionId,
     startDriver: createSessionLaunch<CharacterPack>({
       choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
@@ -146,6 +119,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
       // 雑談で起こすときだけ呼ばれる（`createSessionLaunch`）。写しを読む口は駆動へ渡すものと
       // 同じ作り方で、取り出し方は core（`readChatTopics`）。
       readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
+      // 覚えたことの一覧も、雑談で起こすときだけ呼ばれる。読むのは adapter
+      // （`persona-memory.ts` の `readRememberedLines`）。
+      readRememberedLines: (pack) => readRememberedLines(pack),
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
       // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
       watchTasks: (onEvent) =>
@@ -170,14 +146,8 @@ export function startSession(options: SessionStartOptions): RunningSession {
     rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
     editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
     createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
+    forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
   })
-
-  return {
-    subscribe: (send) => manager.subscribe(sessionId, send),
-    dispatch: (command) => manager.dispatch(sessionId, command),
-    readContextUsage: () => manager.readContextUsage(sessionId),
-    close: manager.close,
-  }
 }
 
 /**
@@ -207,7 +177,7 @@ function startDriver(options: {
 
   // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
-  const mode = sessionMode(seed, chatArchive, cwd)
+  const mode = sessionMode(seed, chatArchive, cwd, onEvent)
   // **「仕事のときは載せない」の判断はここの1回の分岐**（`mode.kind === "chat"`）。
   // 雑談のときだけ `takeChatMemoryPromptParts` を呼び、それ以外の載せるかどうかの判断
   // （write の有無・写しの印）は core（`takeChatMemoryPromptParts`）が閉じている——ここは
@@ -265,6 +235,7 @@ function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   chatArchive: ChatArchive,
   cwd: string,
+  onEvent: (event: SessionEvent) => void,
 ): SessionMode {
   if (!seed.chat) {
     return { kind: "work" }
@@ -272,7 +243,11 @@ function sessionMode(
 
   return {
     kind: "chat",
-    personaMemory: createPersonaMemory(seed.pack, cwd),
+    // **書けた・消せたときだけ**、更新後の一覧を画面へ流し直す（`persona-memory.ts` の
+    // `createPersonaMemory` の `onChange`。`docs/design.md` 7.1・13.7）。
+    personaMemory: createPersonaMemory(seed.pack, cwd, undefined, (lines) =>
+      onEvent({ kind: "remembered-lines-changed", lines }),
+    ),
     chatSummary: createChatSummary(seed.pack.name),
     chatKeep: chatArchive,
     chatRecall: chatRecallFor(chatArchive, seed.pack.name),

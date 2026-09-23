@@ -26833,3 +26833,289 @@ T-417 で、サーバの `src/server/core/` に原寸を直近ぶんだけメモ
 
 - `docs/` を編集するときは、節の索引の表に当たらないよう行頭から位置を特定する（CLAUDE.md「ドキュメントを編集するときの罠」）
 - コードは変えない。ドキュメントだけのタスク
+
+## T-391
+
+**タスク**: 覚えていることをチップで出し、画面から1行ずつ消せるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-332 / **passes**: True
+
+**evidence**:
+
+bun run check: 1677 pass / 0 fail（136ファイル）。追加テスト: test/browser/features/sidebar/persona-memory-section.test.tsx（チップ・全文・編集・確認・送信）、test/server/adapter/persona-memory.test.ts の readRememberedLines / forgetRememberedLineFromScreen（その行だけ消える・節より前は触らない）。
+契約: SessionState.rememberedLines + remembered-lines-changed、コマンド forget-remembered-line（PROTOCOL_VERSION 6→7）。チップは先頭20文字+…で押すと全文、「編集」でチップに × と確認ダイアログ。
+目視（TSUKUMO_DRIVER=fake・一時 TSUKUMO_HOME の複製パック・Playwright）: チップ3件、長い行は切れて押すと全文、「編集」→×→キャンセルは無変化、「消す」でその1チップと persona.md のその1行だけが消えた（節より前と残り2行は無変化）
+
+## 背景
+
+雑談中のサイドバー（モック `docs/history/mockup/chat-sidebar-2026-09-23.png`、器は T-332）の「覚えていること」と「編集」。中身はパックの `persona.md` の末尾の `## 覚えたこと` の箇条書きで、書き足すのも忘れるのも雑談中のキャラクター自身（`remember` / `forget` ツール。`src/server/core/chat-manner.ts`、ファイルに触るのは `src/server/adapter/persona-memory.ts`。`docs/design.md` 7.1「覚えたことを人格に書き足す・1行だけ忘れる」）。**画面から `persona.md` を触る口は無い。** 各行は1〜2文で、種類は付いていない。
+
+## 決まっていること（蒸し返さない）
+
+- **1行＝チップ1つ。行の頭を短く切って出し、押す（か重ねる）と全文**（書き方は変えない。種類で分ける案は採らなかった）
+- **「編集」でできるのは1行ずつ消すことだけ**。消し方は `forget` と同じ（`persona-memory.ts` の忘れる口を使う）。書き足しは雑談の中で
+- 消した行は戻せない（7.1 は世代バックアップを採らない）ので、消す前に確認を出す
+
+## 解くべき論点
+
+- チップに切る長さと、全文の出し方（`title` か、押して開くか）
+- 「編集」を押したときの形（チップに × が付く編集の状態にするか、一覧を開くか）
+- 覚えたことをブラウザへどう届けるか（`SessionState` に載せるか。書き足し・忘れたときに送り直す）と、ブラウザから消すコマンド（`src/shared/` の契約）
+- ターン中に消されたとき（キャラクターが同時に `forget` / `remember` しているとき）の扱い
+
+## やること
+
+1. 覚えたことの読み取りと、消すコマンドの契約を足す（消すのは `persona-memory.ts` の既存の忘れる口を通す）
+2. チップ・全文・「編集」・消す前の確認を作る
+3. `docs/design.md` 7.1 / 13.7 と `docs/requirements.md` 4.9 に「画面から1行ずつ消せる」を書く
+4. テスト: 覚えたことがチップに出る / 消すと確認のあと送られ、その行だけが消える / `## 覚えたこと` より前は触らない（既存の忘れる口の約束）
+
+## 完了条件
+
+- 上のテストがある（フィクスチャは作った文面）
+- `bun run check` が通る
+- 目視（一時の `TSUKUMO_HOME` に置いたパックで）: チップが出て全文が読め、「編集」から1行消すと確認のあと消え、`persona.md` からもその行だけが消えている。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 雑談の要約・覚えたこと・会話は利用者の会話から来たもの。テストのフィクスチャに実物を使わない、ログに全文を出さない（`docs/coding-standards.md`「会話内容の扱い」）
+- 同梱パックと利用者の `~/.tsukumo/characters/` の `persona.md` を目視のために書き換えない
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-401
+
+**タスク**: トークン消費の期間を今日・7日・30日にし、合計を小さな棒グラフつきの4枚の札にする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+論点の結論: 集計は byDay を廃して trend={unit:"day"|"hour", points:[{key,totals}]} に一般化（byDay/byHour だと常に片方が空配列で1つの状態を2つの入れ物が表す）。穴埋めはサーバ（ブラウザはサーバの「今日」を知らないので棒の本数と両端を決められない）。棒は CSS（軸も凡例も無く、canvas 4枚と読み込み失敗の見せ方を抱える価値がない）。下のラベルは両端だけで、最大は棒の上に高いほうへ寄せて出す。期間は 1/7/30 の3段。 / bun run check は 1673 pass / 0 fail（137ファイル）。 / 目視（TSUKUMO_VIEW_PORT=39401・専用ホーム、架空の記録98行）: 1400x900 で札4枚が1行（幅231px・横スクロール0）、760px で2×2、400px で1列。7日=棒7本/09-17・09-23、今日=24本/0時・23時、30日=30本/08-25・09-23。切り替えで合計も棒も追従し押した札だけ aria-pressed。記録を置かない別ホームでは「この期間の記録はまだ無い」の一言だけで札も表も出ない。
+
+## 背景
+
+トークン消費の画面（`src/browser/features/token-usage/presentational-token-usage-screen.tsx`）は、上の帯に題と期間の切り替え（`TOKEN_USAGE_DAYS_CHOICES` = `[7, 30]`。`src/shared/token-usage-summary.ts`）、その下に期間の合計4つ（`Figure`。入力・出力・キャッシュ読み・キャッシュ作成）、その下に「日ごと」のグラフ（`daily-usage-chart.tsx` の `DailyUsageChart`。Chart.js で2枚: 入力・出力・キャッシュ作成の積み上げと、桁の違うキャッシュ読み）を出している。`Section` は枠を持たない。
+
+集計は `src/server/core/token-usage.ts` の `summarizeTokenUsage`（純関数。期間は行の `at` の頭10文字で切る）と `summarizeRecentTokenUsage`（「今日を含む直近 `days` 日」）が作り、`GET /token-usage?days=<日数>` で配る。`TokenUsageSummary.byDay` は**記録がある日だけ**を並べる。`TokenUsageRecord.at` はオフセット付きの ISO 8601 で、ローカルの時刻を持つ。
+
+2026-09-23 にユーザーがモック `docs/history/mockup/token-usage-2026-09-23.png` を示した。その「期間の消費」の部分:
+
+- 見出し「期間の消費」の右端に期間の切り替え「今日 / 7日 / 30日」（いまの帯から移す。ページの題「トークン消費」は単独で上に大きく出す）
+- その下に**枠のある札を4枚横に並べる**（入力・出力・キャッシュ読み・キャッシュ作成）。札ごとに、見出し（小さく）・期間の合計（大きく、等幅）・**その数だけの小さな棒グラフ**。棒は期間の日ごと（記録の無い日も高さ0の印として並ぶ）、いちばん高い棒の上に「最大 18.5k」、下に期間の最初と最後の日付（`09-17` / `09-23`）
+- 札ごとに縦軸が独立するので、キャッシュ読みの桁が大きくてもほかが潰れない（いまの2枚に分けた理由が消える）
+
+## 決まっていること（蒸し返さない）
+
+- 期間は「今日 / 7日 / 30日」の3つ。既定は7日のまま
+- **「今日」のときの棒は時間ごと（0〜23時の24本）**（2026-09-23 ユーザー）
+- 棒は記録の無い日（時間）も並べる。いまの「日ごと」の2枚のグラフ（`DailyUsageChart`）はこの4枚に置き換えて無くす
+- モックの中の「日ごとの値は元のグラフの目盛りからの概算」「[サンプル値]」はモックを作ったときの注記で、作るものではない
+- この画面の上には T-375 が「いまのコンテキスト」の札を置き、題の横には T-374 がプラン名を置く。このタスクはそれらの場所を空けておくだけでよい
+
+## 解くべき論点
+
+1. 時間ごとの切り方を集計の形（`TokenUsageSummary`）にどう載せるか。候補: (a) `byHour` を足して期間が1日のときだけ埋める (b) `byDay` を「区間」（`buckets` と単位）に一般化する。`src/shared/token-usage-summary.ts` の zod の形と、`readTokenUsageDays` の読み方も合わせて直す
+2. 記録の無い日（時間）を埋めるのをサーバでやるかブラウザでやるか（`byDay` の「記録が無い日は含まない」という約束を変えるか）
+3. 小さな棒を Chart.js で描くか、CSS / SVG で描くか。4枚を同時に出すので、Chart.js を開いたときに読む作り（`src/browser/lib/chart.ts`）の重さと、読み込みに失敗したときの見せ方で決める。軸も凡例も無い棒なので、Chart.js を使わない案が第一候補
+4. 30本・24本のときの下のラベル（最初と最後だけでよいか。「今日」なら `0時` / `23時` など）
+5. `TOKEN_USAGE_DAYS_CHOICES` の冒頭コメント（「1日・90日は減らす判断が変わらない」）の書き直し
+
+## やること
+
+1. 論点1・2を決め、`src/shared/token-usage-summary.ts` と `src/server/core/token-usage.ts` を直す（時間の頭は `at` の11〜13文字目でローカルの時刻として読める。タイムゾーンを変換し直さない）
+2. 画面を直す: 題を単独にし、「期間の消費」の見出しと期間の切り替え、4枚の札を置く。`DailyUsageChart` を消す。`Section` の「枠は持たない」はモックに合わせて枠のある札に変える（`docs/design.md` 13.1 原則2 は「枠を持たないのはキャラクターだけ」なので食い違わない）
+3. 狭い画面（≤760px）では札を2列または1列に折る
+4. テストを足す・直す: 集計（`test/server/core/` の該当ファイル。時間ごと・日の埋め方・1日の期間）、`readTokenUsageDays`（`1` を読める）、画面（期間を押すと取り直す・札が4枚・最大のラベル・記録が無い期間の一言）
+5. `docs/design.md` にトークン消費の画面の記述があれば直す（`grep -n 'token-usage\|トークン消費' docs/design.md docs/requirements.md`）
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 760px 以下）: 本物か疑似の記録で「今日 / 7日 / 30日」を切り替え、札が4枚並んで棒と最大のラベルが出る・今日は24本になる・記録の無い期間は一言だけになる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける（記録は `~/.tsukumo/token-usage/` にある）
+- T-374 / T-375 / T-402 と同じ `presentational-token-usage-screen.tsx` を触る。並行させたときは合流でぶつかりうる
+- 記録の形（`TokenUsageRecord`）は変えない。変えるのは集計の形だけ
+
+## T-402
+
+**タスク**: トークン消費のモデル別・ツール別を、横に並べた2枚の札と比べ棒つきの表にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-401 / **passes**: True
+
+**evidence**:
+
+summarizeByModel を出力の降順（同点はモデル名順）にし、shared の説明も追随。表2つを .usage-card の枠で横並びの札にし、並べ順を決めている列（出力／結果の大きさ）だけに横棒を添えた（色は既存の --ink-quiet で、意味を固定した色を増やしていない）。ツール別は6件＋「ほか n 件を見る」で、開くと「閉じる」に変わり6件へ戻せる（useState）。 / bun run check は 1709 pass / 0 fail（138ファイル）。 / 目視（TSUKUMO_VIEW_PORT=39402・専用ホーム、架空の記録でモデル4種・ツール11種）: 1400x900 でモデル別（左・広い）とツール別（右・狭い）が横に並び、見出しの横に「出力の多い順」「結果の大きい順」。「ほか 5 件を見る」を押すと11件に開き、「閉じる」で6件へ戻る。375px では期間の札4枚もこの2枚も1列に積まれる。どちらの幅も scrollWidth == clientWidth で横スクロール無し。
+
+## 背景
+
+トークン消費の画面（`src/browser/features/token-usage/presentational-token-usage-screen.tsx`）の下半分は、枠の無い `Section` に `ModelTable`（モデル名の昇順。列は入力・出力・読み・作成）と `ToolTable`（結果の大きさの降順で上位 `TOOL_ROWS` = 10件、残りは「ほか n 件」の文字だけ）を縦に積んでいる。モデル別の並びは `src/server/core/token-usage.ts` の `summarizeByModel` が決め、`TokenUsageSummary.byModel` の説明（`src/shared/token-usage-summary.ts`）も「モデル名の昇順」。
+
+2026-09-23 にユーザーがモック `docs/history/mockup/token-usage-2026-09-23.png` を示した。その下半分:
+
+- **枠のある札を2枚、横に並べる**（左にモデル別、右にツール別。幅は左が広い）
+- 札の見出しの横に並べ順を小さく書く（「出力の多い順」「結果の大きい順」）
+- モデル別: 列はモデル・入力・出力・キャッシュ読み・キャッシュ作成（列名は略さない）。**出力の多い順**に並べ、**出力の列だけ**数の右に横棒（その列の最大に対する長さ）を添える
+- ツール別: 列はツール・回数・結果の大きさ。**結果の大きさの列だけ**数の右に横棒を添える。**上から6件だけ出し、下に「ほか 10 件を見る」**（押せる字。押すと残りも出る）
+- モデル名・ツール名・数は等幅（`docs/design.md` 13.1 原則3）
+
+## 決まっていること（蒸し返さない）
+
+- 形はモックのとおり。横棒は**並べ順を決めている列にだけ**付ける
+- モデル別の並びは出力の多い順に変える
+
+## やること
+
+1. `summarizeByModel` を出力の降順（同じならモデル名順）にし、`TokenUsageSummary.byModel` の説明を直す
+2. 表の2つを札にして横に並べ、見出しの横に並べ順を添える。横棒は CSS で描く（Chart.js を使わない）。色は既存のトークンから選び、`docs/design.md` 13.1 原則5（意味を固定した色を増やさない）に触れないものにする
+3. ツール別は6件まで出し、残りがあれば「ほか n 件を見る」で開く（開いたら閉じる口も置くかを決める）。`TOOL_ROWS` を直す
+4. 狭い画面（≤760px）では2枚を縦に積む
+5. テストを直す・足す: 集計の並び（`test/server/core/` の該当ファイル）、画面（モデル別が出力の順・ツール別が6件で「ほか n 件を見る」を押すと全件・横棒が並べ順の列にだけある）
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 760px 以下）: 2枚が横に並び（狭い画面では縦に積まれ）、横棒と「ほか n 件を見る」が働く。横スクロールが出ない。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+- T-401 が同じファイルで札の枠と期間の部分を作るので、その後に着手する（札の見た目は T-401 のものに揃える）
+
+## T-413
+
+**タスク**: 帯の部品を広い画面と「≡」の面へ届ける配線を、項目ごとの書き写しから1本にする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+ScreenNavView を current / parts / menu / ref の4項目にし、帯の部品の値は束 ScreenNavParts で2つの面へ配る形にした。ScreenNavMenuProps は parts と menu の2項目だけで、ScreenNavView からの同名の写しは残っていない。採らなかった案: (a) ScreenNavView をそのまま渡す——current / ref は面に要らず menuOpen / pendingActive / onToggleMenu は帯に要らないので「渡したが使わない」項目が両側に残る。(b) 部品を1度だけ組んで両方に置く——2つの面は DOM の入れ子（identity / gates の包み）と並びが違い、screen-nav.module.css の @media がその違いに載っているので見え方が変わる。広い/狭いの ref の組は RefCallback 1本（付いている札を Set に集め、Esc のとき全部へ focus）に畳んで ScreenNavView から消した（grep 'ToggleRefWide|ToggleRefNarrow' が0件）。目視は 1400x900 と 390x844 で変更前（scripts/serve-revision.ts HEAD）と比べ、帯の並び・可視/不可視・いまの作業と歯車の開閉・Esc の戻り先（広い画面は押した口へ、狭い画面は面ごと閉じて body）が一致。bun run check 1653 pass / 0 fail / 135ファイル（screen-nav は 76 pass。Esc の戻り先のテストを3件足した）。
+
+## 背景
+
+帯の部品（`src/browser/features/screen-nav/`）は `docs/design.md` 13.9「狭い画面（760px 以下）」の決定どおり、広い画面の帯と狭い画面の「≡」の面の**両方に同じ部品を置き**、どちらを出すかは `screen-nav.module.css` の `@media` が決める。この置き方は変えない。問題は、2つの面へ値を届ける配線が項目ごとの手書きになっていること:
+
+- `hooks/use-screen-nav.ts` の `ScreenNavView` を `presentational-screen-nav.tsx` の `PresentationalScreenNav` が1項目ずつ分解し、`components/screen-nav-menu.tsx` の `ScreenNavMenuProps`（14項目）へ1項目ずつ渡し直している。`ScreenNavMenuProps` の14項目のうち11項目は `ScreenNavView` と同じ名前・同じ型の写し
+- Esc で閉じたときにフォーカスを押した口へ戻すため、開閉する部品は ref を広い画面用と狭い画面用の2本持つ（`hooks/use-current-work.ts` と `hooks/use-settings.ts` の `toggleRefWide` / `toggleRefNarrow`）。2本とも `ScreenNavView` に上がって（`workToggleRefWide` / `workToggleRefNarrow` / `settingsToggleRefWide` / `settingsToggleRefNarrow`）、上の経路を通って2つの面へ配られる。戻すときは両方へ `.focus()` を呼ぶ（見えていないほうは `display: none` で効かない）
+
+このため帯の部品を1つ足すたびに、同じ値を型・分解・受け渡し・部品の型・JSX の各所へ書き足すことになる。T-383（顔）は `presentational-screen-nav.tsx` を5回、`use-screen-nav.ts` と `screen-nav-menu.tsx` を3回ずつ直した。T-382（いまの作業の札）と T-385（設定の歯車）は ref の組を1組ずつ足した。この先も T-403・T-408 が帯に手を入れる。
+
+## 解くべき論点
+
+- 2つの面へ値を届ける形をどれにするか。候補: (a) `<ScreenNavMenu>` が `ScreenNavView`（または `Pick` した型）をそのまま受ける / (b) 帯の部品を `PresentationalScreenNav` で一度だけ組み立て、広い画面と「≡」の面の両方に置く / (c) それ以外。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ（開くファイルの数・呼ぶ側が外の事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）
+- 広い画面用と狭い画面用の ref の組をどう畳むか（1つの口につき1つの値で済ませられるか）。`docs/coding-standards.md`「レンダー中に ref を読み書きしない」と `presentational-screen-nav.tsx` 冒頭の「props はここだけ分解して受ける」の理由（`react(refs)` の lint）に反しない形にする
+- 「≡」の面の並び（顔と部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード → 設定の歯車）と広い画面の並びは違う。並びの違いをどこで表すか
+
+## やること
+
+1. `docs/design.md` 13.9「狭い画面（760px 以下）」と `src/browser/features/screen-nav/` の全ファイルを読み、上の論点に答えを出す
+2. 選んだ形に寄せる。**画面の見え方と振る舞い（並び・開閉・Esc でフォーカスを押した口へ戻すこと・答え待ちの ● ）は変えない**
+3. `test/browser/features/screen-nav/` の既存のテストがそのまま通ることを確かめる。Esc で閉じたときのフォーカスの戻り先を広い画面・狭い画面の両方で見ているテストが無ければ足す
+4. 選ばなかった案とその理由を `evidence` に1行ずつ書く。`docs/design.md` 13.9 に配線の記述があれば合わせる
+
+## 完了条件
+
+- `ScreenNavMenuProps`（またはその後継）に、`ScreenNavView` の項目を同じ名前で書き写した項目が残っていない。残すものがあれば、残す理由を `evidence` に書く
+- `toggleRefWide` / `toggleRefNarrow` のような、1つの口に対する ref の組が `ScreenNavView` に上がっていない。畳めなかった場合はその理由を `evidence` に書く
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅）: 帯の各部品（顔・部屋の名前・トグル・3つの口・いまの作業・モデル・許可モード・歯車）が変更前と同じ並びで出て、いまの作業と歯車が開き、Esc で閉じるとフォーカスが押した口へ戻る。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 見え方を変えるタスクではない。変更前と撮り比べる手順は `docs/architecture.md`「手で確かめること」（`scripts/serve-revision.ts`）
+- T-403・T-408 も `src/browser/features/screen-nav/` を触る。どちらかが先に `main` に入っていたら取り込んでから始める
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-425
+
+**タスク**: design.md 1〜3章と architecture.md の置き場の記述を実物に合わせる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+design.md 2章の木に src/shared・src/server の全ファイル名が現れる（git ls-files と突き合わせて欠け0）。grep '実体は4つ' 0件、'メモリに持つ' は雑談アーカイブの1件だけ。architecture.md 原則5に hooks/。見出し数 design 53・architecture 10 で不変、src/ 差分なし。bun run check 通過（1703 pass / 0 fail、138ファイル）
+
+## 背景
+
+`docs/design.md` の構造の章が実物から離れている（2026-09-23 に `git ls-files src` と突き合わせた）:
+
+- **2章「ディレクトリ」の木**に無いファイルが多い。`src/shared/` では `blank-text.ts` `chat-log.ts` `context-usage.ts` `context-usage-record.ts` `image-data-url.ts` `portrait-image.ts` `portrait-motion.ts` `prompt-image.ts` `session-choice.ts` `session-default.ts` `session-socket.ts` `token-usage.ts` `token-usage-summary.ts` `turn-speech.ts` `turn-step.ts` `vendor-asset.ts`、`src/server/core/` では `chat-compact.ts` `chat-manner.ts` `chat-memory-prompt.ts` `chat-nudge.ts` `context-usage.ts` `prompt-image-shelf.ts` `session-rule.ts` `token-usage.ts`、`src/server/adapter/` では `context-usage-log.ts` `local-time.ts` `source-fingerprint.ts` `token-usage-log.ts` `vendor-asset.ts`、`src/browser/` 直下の `css-global.d.ts` `vendor-global.d.ts`
+- 2章の `stores/` の説明は「**実体は4つあり**」と書くが、いまは8つ（`brush-tip.ts` `location-hash.ts` `main-view-turn.ts` `question-answer.tsx` `question-scroll.tsx` `screen.tsx` `session.tsx` `turn-selection.tsx`）
+- 1章の「残すもの」の表の「起動時に `bun build` で束ねてメモリから配る（ディスクに成果物を置かない）」と、3章「起動」の手順2「`bundle.ts` が `browser/main.tsx` を `bun build` で束ねられるか（スクリプトと CSS の1組をメモリに持つ）」は、2026-09-21 に起動時の組み立てをやめて `dist/browser/` を読むだけにした現状（`src/main.ts` の `readUiBundle`、`CLAUDE.md`「セットアップ」）と違う
+- `docs/architecture.md`「新しいコードを置く場所」の原則5は `src/browser/` の箱を `features/` `components/` `stores/` `styles/` と `lib/` `utils/` としか書かず、`hooks/` と機能の中の `hooks/` `components/` `domain/`、`presentational-<機能>.tsx` の例外（`CLAUDE.md` 原則5と design.md 2章にはある）が抜けている。同じ節の表の `src/browser/` の行も `hooks/` `utils/` を欠く
+- `docs/architecture.md` の同じ節は「`shared` に置くのは両側の契約と、`SessionState` から純粋に導けるものだけ」と書くが、design.md 2章「層と依存の向き」の表の `shared` の行は後者（ブラウザしか読まない導出。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`）に触れていない
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- このタスクは**記述を実物に合わせるだけ**。構造を変える判断は同じ棚卸しで切った別タスク（SessionManager の鍵・browser の箱の基準・CSS の置き方など）が持つ
+
+## やること
+
+1. `sed -n '/^## 1\. 何を変え/,/^## 4\./p' docs/design.md` と `docs/architecture.md`「新しいコードを置く場所」を読み、上の食い違いを1件ずつ確かめる（着手時点で他のタスクが直していれば飛ばす）
+2. 2章の木に欠けたファイルを1行ずつ足す（説明はファイル冒頭のコメントから1行で。既存の行の書き方に揃える）。`stores/` の実体の数と並びを直す
+3. 1章の表と3章「起動」を、成果物を読むだけ・無ければ前提不足で終了・ソースが新しければ1行知らせる、の現状に直す
+4. `docs/architecture.md` の原則5と表を `CLAUDE.md` 原則5・design.md 2章と同じ箱の集合にする。**二重に書かず、design.md 2章への参照で足りるところは参照にする**
+5. design.md 2章の `shared` の行に「`SessionState` から純粋に導けるもの（ブラウザしか読まないものを含む）」を足す
+
+## 完了条件
+
+- `git ls-files src/shared src/server | sed 's#.*/##'` の各ファイル名が `docs/design.md` 2章の木に現れる（`grep -c` で確かめ、欠けが0）
+- `grep -n '実体は4つ' docs/design.md` が0件
+- `grep -n 'メモリに持つ\|メモリから配る' docs/design.md` が0件（残すなら現状の説明として正しい文になっている）
+- `docs/architecture.md` の原則5に `hooks/` が現れる
+- `src/` の差分が無い
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-431
+
+**タスク**: 日付ごとの jsonl の読み書きを3つの adapter から1つにまとめる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+共通化: src/server/adapter/lib/jsonl.ts（appendJsonLine / readJsonLines / dateFileNames）へ token-usage-log.ts・chat-archive.ts・context-usage-log.ts を寄せた。スキーマ・索引ファイル・後ろから読む読み戻し・期間の絞り込みは各ファイルに残した。
+grep -rn 'function appendLine\|function parseJson\|function readLines' src/server/adapter → lib/jsonl.ts の1件だけ。新規 test/server/adapter/lib/jsonl.test.ts。既存3ファイルのテストは無変更。
+bun run check: 1712 pass / 0 fail（139ファイル）
+
+## 背景
+
+`~/.tsukumo/<置き場>/<YYYY-MM-DD>.jsonl` に1行ずつ追記して、あとで日付の範囲で読み戻す記録が3つあり、同じ手を書き写している:
+
+- `src/server/adapter/token-usage-log.ts`: `appendLine`（`mkdirSync` + `appendFileSync`、失敗は握る）・`fileNamesInRange`・`readLines`・`parseJson`
+- `src/server/adapter/chat-archive.ts`: `appendLine`・`readArchiveLines`・`newestFirstFileNames`・`parseJson`
+- `src/server/adapter/context-usage-log.ts`: `appendLine`（2026-09-23 の T-376 で、上の2つと同じ形を3度目に書いた）
+
+版の付け方（`v`）・ファイル名の正規表現・読み飛ばし（zod の `safeParse` に落ちた行を捨てる）も同じ形で並んでいる。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+
+## やること
+
+1. 3ファイルの読み書きの手を並べ、共通の部分（追記・日付のファイル名・範囲の列挙・行の読み出しと JSON の解釈）と、それぞれ固有の部分（スキーマ・索引ファイル・後ろから読む読み戻し）を分ける
+2. 共通の部分を1つにする。置き場は `docs/design.md` 2章「`lib/` と `utils/` に置く基準」で決める（`node:fs` を引くので `server/adapter/lib/` が候補。ファイル名は形式か手法の名前）
+3. 3ファイルをそれに寄せる。失敗を握る範囲（1行の追記の失敗で常駐プロセスを落とさない）は変えない
+
+## 完了条件
+
+- `grep -rn 'function appendLine\|function parseJson\|function readLines' src/server/adapter` が0件（共通の1か所を除く）
+- 共通にしたものに `test/server/adapter/lib/…` のテストがある
+- 3つの記録の既存テストが期待値を変えずに通る
+- `bun run check` が通る
+
+## 注意
+
+- 読み書きするファイルには会話の中身が入る（雑談のアーカイブ）。テストのフィクスチャに実物を使わない（`docs/coding-standards.md`「会話内容の扱い」）

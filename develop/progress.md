@@ -55,9 +55,17 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
-### 2026-09-23 同じ前提はコメント1か所に書く規約を足し、セッションの印の説明の重なりを畳んだ（T-414）
+### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
 
-`docs/coding-standards.md`「コメント」節に規約を足した。印の読み戻しは `config.ts` の `sessionTag`、絞り込みと並びは `session-restore.ts` の `listMarkedSessions` を正典にし、ほかの4か所は参照に畳んだ（コードは不変）。
+4か所で書き写していた `TextEncoder` のバイト数の数え方を `src/shared/lib/byte-length.ts` の `byteLength` に寄せた。実行環境の API を包む道具なので `lib/`、`core` と `shared` の両方から読むので `shared` に置いた。
+
+### 2026-09-23 日付ごとの jsonl の読み書きを1つにまとめた（T-431）
+
+`token-usage-log.ts`・`chat-archive.ts`・`context-usage-log.ts` が書き写していた追記・日付のファイル名の列挙・行の JSON 読み出しを `src/server/adapter/lib/jsonl.ts` に寄せた。スキーマの検証と索引・読み戻しの形は各ファイルに残した。
+
+### 2026-09-23 覚えていることをチップで出し、画面から1行ずつ消せるようにした（T-391）
+
+`SessionState.rememberedLines` と `remembered-lines-changed` で `## 覚えたこと` を雑談のサイドバーへ届け、チップ（先頭20文字、押すと全文）と「編集」→ × →確認で `forget-remembered-line` を送る。消し方は `forget` と同じ突き合わせで、画面からのときだけ1ターン1行の上限を掛けない（`docs/design.md` 7.1）。
 
 ### 2026-09-23 版の合わない hello の知らせに、部品のテストを足した（T-410）
 
@@ -75,25 +83,17 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
 
-### 2026-09-23 いまのセッションの /context 内訳をトークン消費の画面に出した（T-375）
+### 2026-09-23 design.md 1〜3章と architecture.md の置き場の記述を実物に合わせた（T-425）
 
-`getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
+`docs/design.md` 2章の木に欠けていた33ファイル（shared 18・core 8・adapter 5・browser 直下2）と `stores/` の8つを足し、1章の表と3章「起動」を `dist/browser/` を読むだけの現状に直した。`docs/architecture.md` の原則5と表に `hooks/` と `presentational-<機能>.tsx` の例外を足し、箱ごとの中身は design.md 2章への参照にした。
 
-### 2026-09-23 docs/design.md 5章の SessionHost と経路の表を、型定義・実装への参照に置き換えた（T-409）
+### 2026-09-23 モデル別・ツール別を横に並べた2枚の札と比べ棒つきの表にした（T-402）
 
-経路の表からは `/token-usage` のほかに `/context-usage` と `/prompt-image/<id>` も抜けていた。環境変数の表は design.md を正典のままにし、その理由を節に書いた。
+縦に積んでいた表2つを枠のある札にして横に並べ、並べ順を決めている列だけに CSS の横棒を添えた。モデル別の並びはモデル名順から出力の多い順に変わり、ツール別は6件＋「ほか n 件を見る」で開閉する。
 
-### 2026-09-23 雑談の要約に話題の見出しを書かせ、サイドバーの「最近の話題」に直近3件を出すようにした（T-390）
+### 2026-09-23 SessionManager の sessionId の鍵を外した（T-426）
 
-`/compact` の依頼で要約の最後に `<topics>` の組を書かせ、`chat-compact.ts` の `chatTopics` が取り出す。起動時と PostCompact のあとに `chat-topics-changed` で流す（`PROTOCOL_VERSION` 6）。本物の圧縮でモデルが組を書くかは未確認。
-
-### 2026-09-23 requirements.md 4.10 の原寸を手放す約束を、棚の寿命に書き換えた（T-418）
-
-原寸は直近8枚だけサーバのメモリの棚に残り、記録の窓から落ちたときか枚数を超えたときに捨てる、と書き直した。控えも押せる旨を 4.10 と `docs/design.md` 4.1・13章・13.7 に揃えた（ドキュメントのみ）。
-
-### 2026-09-23 コンテキストの内訳をセッションごとに1行だけ記録するようにした（T-376）
-
-最初のターンの終わりに `getContextUsage()` を1回取り、`~/.tsukumo/context-usage/<日付>.jsonl` へ1行だけ積む（取れなければ次のターンで取り直す）。ターンごとの記録とは置き場も版も分けてあり、「書いてよいもの」の線は `src/shared/context-usage-record.ts` の冒頭が正典。
+`createSessionManager(options)` がセッション1つの持ち物をそのまま返す形にし、`Map`・`create`・`RunningSession`・`hello.sessionId`・`noSession` を撤去して `PROTOCOL_VERSION` を 8 に上げた。`docs/design.md` 8章と `docs/requirements.md` 2.2 の「起こし直しの一瞬」という理由は、「1つだけ持ち、切り替えは中で起こし直す」に書き直した。
 
 ## 未解決
 
@@ -424,3 +424,15 @@ sonnet → opus に上げた。`bun run check` は 415 pass / 0 fail（コード
   `/plan-tasks` で気づいた）。T-322 は決めるだけのタスクで、**ヘッダーの帯はまだコードに無い**
   （`src/browser/main.tsx` に帯の部品が無く、画面への口はサイドバー・キャラクター画面・
   トークン消費の3箇所に散ったまま）。実装は T-356。13.9 を読んで「もうある」と思わないこと
+
+**T-451 は着手しない判断で閉じた（`done` / `passes: false`）。** 入力欄の履歴（↑・↓ で送った依頼を
+呼び戻す）は、**`/clear` をまたげない**ことがはっきりした——`conversation-cleared` は `records` を
+空にする（`src/shared/session-state.ts`。「`/clear` は会話そのものを消す操作なので records も
+落とす」と明示してある）ので、`/clear` の直後の履歴はゼロで `/clear` 自身も呼び戻せない。
+残る恩恵は「長い自由文の依頼を少し変えて送り直す」「中断した依頼を呼び戻す」の2つだけで、
+`/next-task` の繰り返しは `/` の補完がすでに吸収している。**キー割り当ても TUI からそのままは
+持ってこられない**: この入力欄は Enter が改行・Command+Enter が送信で複数行の下書きが常態なので
+↑・↓ はキャレットの行移動として現役、Ctrl+P / Ctrl+N は補完の上下移動が使用済み
+（`src/browser/features/dispatch/hooks/use-composer.ts`）。作るなら道具の行に履歴のボタンを足すか
+記号（`!` など）を割り当てて `suggestions.kind` に1つ増やす形になる（`onInsertTrigger` と
+補完の器は既にある）。**必要になったら作り直す**（ユーザー: 「必要ならまた言うね」）。

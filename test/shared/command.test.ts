@@ -6,6 +6,7 @@ import {
   MAX_PROMPT_TEXT_LENGTH,
   parseClientCommand,
 } from "../../src/shared/command.ts"
+import { MAX_REMEMBERED_LINE_LENGTH } from "../../src/shared/persona-memory.ts"
 import { MAX_PORTRAIT_BYTES } from "../../src/shared/portrait-image.ts"
 import {
   MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
@@ -81,6 +82,16 @@ describe("parseClientCommand（受け付ける形）", () => {
     expect(
       parseClientCommand({ type: "set-permission-mode", commandId: "c-5", mode: "plan" }),
     ).toEqual({ type: "set-permission-mode", commandId: "c-5", mode: "plan" })
+  })
+
+  it("forget-remembered-line は消したい1行の文面をそのまま受け付ける", () => {
+    expect(
+      parseClientCommand({
+        type: "forget-remembered-line",
+        commandId: "c-6",
+        line: "架空の覚えたこと",
+      }),
+    ).toEqual({ type: "forget-remembered-line", commandId: "c-6", line: "架空の覚えたこと" })
   })
 })
 
@@ -384,6 +395,19 @@ describe("parseClientCommand（落とす形）", () => {
         name: "fictional-2",
         portraits: { default: "data:text/plain;base64,AAAA" },
         accent: "#b8c7ff",
+      }),
+    ).toBeUndefined()
+  })
+
+  it("空の行と、上限を超えた行を持つ forget-remembered-line は undefined", () => {
+    expect(
+      parseClientCommand({ type: "forget-remembered-line", commandId: "c-6", line: "" }),
+    ).toBeUndefined()
+    expect(
+      parseClientCommand({
+        type: "forget-remembered-line",
+        commandId: "c-6",
+        line: "あ".repeat(MAX_REMEMBERED_LINE_LENGTH + 1),
       }),
     ).toBeUndefined()
   })

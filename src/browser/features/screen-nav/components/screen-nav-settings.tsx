@@ -8,9 +8,10 @@
 // **同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く**（「いまの作業」の札と同じ
 // 畳み方。どちらを出すかは CSS の `@media` が決める）。開閉の状態は1つの hook が持つので、
 // どちらから押しても同じ面が開く——**id は `useId()` でこの器ごとに振る**（2箇所に描くため、
-// `aria-controls` と `<label for>` が指す先が重ならないようにする）。
+// `aria-controls` と `<label for>` が指す先が重ならないようにする）。**Esc の戻り先として歯車の
+// DOM を預ける口（`settings.toggleRef`）も、2箇所ぶんを集めるコールバック ref**（`use-settings.ts`）。
 
-import { useId, type ReactElement, type RefObject } from "react"
+import { useId, type ReactElement } from "react"
 
 import { isSessionDefaultPermissionMode } from "../../../../shared/session-default.ts"
 import { Select } from "../../../components/select.tsx"
@@ -22,8 +23,6 @@ import styles from "../screen-nav.module.css"
 
 export type ScreenNavSettingsProps = {
   readonly settings: ScreenNavSettings
-  /** この器の歯車の DOM（Esc で閉じたときにフォーカスを戻す先。`use-settings.ts` が持つ）。 */
-  readonly toggleRef: RefObject<HTMLButtonElement | null>
 }
 
 /** 読み上げに渡す名前（歯車は絵だけなので、名前は `aria-label` と `title` で渡す）。 */
@@ -44,7 +43,11 @@ const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
 const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({ value, label }))
 
 export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactElement {
-  const { settings, toggleRef } = props
+  const { settings } = props
+  // **預け先はここで分解して受ける**（`settings.toggleRef` の形のまま `ref` に渡すと、
+  // `react(refs)`（規約「レンダー中に ref を読み書きしない」）が `settings` への参照ごと
+  // レンダー中の ref の読み書きとみなして落ちる。`presentational-screen-nav.tsx` と同じ事情）。
+  const { toggleRef } = settings
   const panelId = useId()
   const fieldId = useId()
 

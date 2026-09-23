@@ -29,13 +29,13 @@
 // `docs/coding-standards.md`「会話内容の扱い」の書き出しの例外表に数えずに済む。**どのやり取りに
 // 立てるかの判断はここが決めない**（モデルが `keep` ツールを呼ぶかどうかだけ）。
 
-import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { join } from "node:path"
 
 import { z } from "zod"
 
 import { isCharacterPackName } from "../../shared/character.ts"
 import { type Expression } from "../../shared/expression.ts"
+import { byteLength } from "../../shared/lib/byte-length.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
@@ -44,6 +44,7 @@ import {
   type ChatReadbackLimits,
   type ChatRecallResult,
 } from "../core/session-driver.ts"
+import { appendJsonLine, dateFileNames, readJsonLines } from "./lib/jsonl.ts"
 import { isoWithOffset, localDateKey, todayLocalDateKey } from "./local-time.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
@@ -53,18 +54,15 @@ const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
 /** 行の形の版（`docs/design.md` 7章）。形を変えたら上げ、古い行と見分ける。 */
 const ARCHIVE_FORMAT_VERSION = 1 satisfies number
 
-/** 読むファイルの名前（`YYYY-MM-DD.jsonl`）。**これ以外のファイルは読まない。** */
-const ARCHIVE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
-
 /**
  * 「残す」旗の索引の名前（`docs/design.md` 7章）。**日付のファイルと同じディレクトリに置くが、
- * {@link ARCHIVE_FILE_NAME} を通らないので窓の側は読まない。**
+ * {@link dateFileNames} が拾う `YYYY-MM-DD.jsonl` の形を通らないので窓の側は読まない。**
  */
 const KEPT_INDEX_FILE_NAME = "kept.jsonl"
 
 /**
  * 日ごとの見出しの索引の名前（`docs/design.md` 7章）。**`kept.jsonl` と同じく
- * {@link ARCHIVE_FILE_NAME} を通らない**ので、窓の走査には混ざらない。
+ * {@link dateFileNames} の形を通らない**ので、窓の走査には混ざらない。
  */
 const DAY_INDEX_FILE_NAME = "index.jsonl"
 
@@ -100,8 +98,6 @@ const dayIndexLineSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   line: z.string(),
 })
-
-const textEncoder = new TextEncoder()
 
 /**
  * 画面から作ったキャラクターパックと同じ親（`~/.tsukumo/chat-archive`）。書き込んでよいのは
@@ -140,7 +136,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
         return
       }
       const record = toArchiveRecord(packName, entry)
-      appendLine(join(root, packName, `${localDateKey(entry.at)}.jsonl`), record)
+      appendJsonLine(join(root, packName, `${localDateKey(entry.at)}.jsonl`), record)
       turnMarks = [...turnMarks, { pack: packName, at: record.at }]
     },
     keep: () => {
@@ -162,12 +158,12 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
         return
       }
       indexed = true
-      appendLine(join(root, packName, DAY_INDEX_FILE_NAME), {
+      appendJsonLine(join(root, packName, DAY_INDEX_FILE_NAME), {
         v: ARCHIVE_FORMAT_VERSION,
         date: todayLocalDateKey(),
         pack: packName,
         line: trimmed,
-      })
+      } satisfies DayIndexRecord)
     },
     recall: (packName, keyword, limitBytes) => {
       if (recalled) {
@@ -182,16 +178,6 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
   }
 }
 
-/** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
-function appendLine(path: string, record: KeptRecord | ArchiveRecord | DayIndexRecord): void {
-  try {
-    mkdirSync(dirname(path), { recursive: true })
-    appendFileSync(path, `${JSON.stringify(record)}\n`)
-  } catch {
-    // 書けなかった回は諦めて次へ進む。
-  }
-}
-
 /**
  * 旗の立ったターンの行を、パックごとの索引へ1行ずつ書く。**書くのは版・時刻・パック名だけ**で、
  * **文面は複製しない**（`docs/coding-standards.md`「会話内容の扱い」の例外表を増やさないため。
@@ -199,11 +185,11 @@ function appendLine(path: string, record: KeptRecord | ArchiveRecord | DayIndexR
  */
 function appendKeptMarks(root: string, marks: readonly KeptMark[]): void {
   for (const mark of marks) {
-    appendLine(join(root, mark.pack, KEPT_INDEX_FILE_NAME), {
+    appendJsonLine(join(root, mark.pack, KEPT_INDEX_FILE_NAME), {
       v: ARCHIVE_FORMAT_VERSION,
       at: mark.at,
       pack: mark.pack,
-    })
+    } satisfies KeptRecord)
   }
 }
 
@@ -324,8 +310,8 @@ function readEntriesBackward(
   let usedBytes = 0
   for (const fileName of fileNames) {
     let reachedLimit = false
-    for (const line of [...readArchiveLines(join(dir, fileName))].reverse()) {
-      const timed = toTimedEntry(line)
+    for (const raw of [...readJsonLines(join(dir, fileName))].reverse()) {
+      const timed = toTimedEntry(raw)
       if (timed === undefined) {
         continue
       }
@@ -372,8 +358,8 @@ function readKeptEntries(
   let usedBytes = 0
   for (const date of newestFirstMarkedDates(marks)) {
     let reachedLimit = false
-    for (const line of [...readArchiveLines(join(dir, `${date}.jsonl`))].reverse()) {
-      const timed = toTimedEntry(line)
+    for (const raw of [...readJsonLines(join(dir, `${date}.jsonl`))].reverse()) {
+      const timed = toTimedEntry(raw)
       if (timed === undefined || !marks.has(timed.at) || seen.has(entryKey(timed))) {
         continue
       }
@@ -396,8 +382,8 @@ function readKeptEntries(
 
 /** 索引が指している時刻（読めない行・知らない版は落とす。索引が無いときは空）。 */
 function readKeptMarks(path: string): ReadonlySet<string> {
-  const marks = readArchiveLines(path).flatMap((line) => {
-    const record = keptLineSchema.safeParse(parseJson(line))
+  const marks = readJsonLines(path).flatMap((raw) => {
+    const record = keptLineSchema.safeParse(raw)
     return record.success ? [record.data.at] : []
   })
   return new Set(marks)
@@ -455,8 +441,8 @@ function matchedIndexDates(dir: string, keyword: string): readonly string[] {
  */
 function readDayIndexHeadings(path: string): ReadonlyMap<string, string> {
   const headings = new Map<string, string>()
-  for (const line of readArchiveLines(path)) {
-    const record = dayIndexLineSchema.safeParse(parseJson(line))
+  for (const raw of readJsonLines(path)) {
+    const record = dayIndexLineSchema.safeParse(raw)
     if (record.success) {
       headings.set(record.data.date, record.data.line)
     }
@@ -481,25 +467,7 @@ function entryKey(timed: TimedEntry): string {
 
 /** 日付のファイル名だけを新しい順に並べる（読めないディレクトリは空）。 */
 function newestFirstFileNames(dir: string): readonly string[] {
-  try {
-    return readdirSync(dir)
-      .filter((name) => ARCHIVE_FILE_NAME.test(name))
-      .sort()
-      .reverse()
-  } catch {
-    return []
-  }
-}
-
-/** 1ファイルの行（読めないファイルは空。空行は落とす）。 */
-function readArchiveLines(path: string): readonly string[] {
-  try {
-    return readFileSync(path, "utf8")
-      .split("\n")
-      .filter((line) => line !== "")
-  } catch {
-    return []
-  }
+  return [...dateFileNames(dir)].reverse()
 }
 
 /**
@@ -510,8 +478,8 @@ function readArchiveLines(path: string): readonly string[] {
  * `docs/requirements.md` 4.9）。日付は `at` の頭10文字で、**行だけで意味が決まる**
  * （ファイル名には頼らない）。
  */
-function toTimedEntry(line: string): TimedEntry | undefined {
-  const record = archiveLineSchema.safeParse(parseJson(line))
+function toTimedEntry(raw: unknown): TimedEntry | undefined {
+  const record = archiveLineSchema.safeParse(raw)
   if (!record.success) {
     return undefined
   }
@@ -526,18 +494,4 @@ function toTimedEntry(line: string): TimedEntry | undefined {
 type TimedEntry = {
   readonly at: string
   readonly entry: ChatArchiveRecentEntry
-}
-
-/** JSON として読む（壊れていれば undefined。JSONL は壊れても被害が1行）。 */
-function parseJson(line: string): unknown {
-  try {
-    return JSON.parse(line)
-  } catch {
-    return undefined
-  }
-}
-
-/** 文面の UTF-8 バイト数（読み戻す量を数える物差し。`docs/requirements.md` 4.9）。 */
-function byteLength(text: string): number {
-  return textEncoder.encode(text).length
 }

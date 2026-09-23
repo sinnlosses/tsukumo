@@ -281,6 +281,17 @@ export type SessionEvent =
    */
   | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }
   /**
+   * 雑談のサイドバーの「覚えていること」に出す一覧（`docs/design.md` 7.1・13.7）。
+   * **雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の
+   * `forget-remembered-line` のどれかで `persona.md` の `## 覚えたこと` が変わったとき**に流れる
+   * （`src/server/core/session-launch.ts` と `src/server/adapter/persona-memory.ts`）。
+   *
+   * **運ぶのは節の行そのもの**（`- ` を外した文面、古い→新しいの順）。上限に当たった・
+   * 一致する行が無かった・書けなかったときは流れない（`PersonaMemory` の契約どおり、
+   * 変わらなかった回は知らせない）。
+   */
+  | { readonly kind: "remembered-lines-changed"; readonly lines: readonly string[] }
+  /**
    * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/design.md` 13.6）。
    * **駆動を起こしたときと、起こし直したときの1回ずつ**（`character-changed` と同じ契機）と、
    * **歯車から `set-session-default` で覚え直したとき**に流れる。

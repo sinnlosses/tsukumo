@@ -24,9 +24,10 @@
 // **ポップオーバーは2箇所に描かれる**（広い画面の帯・狭い画面の「≡」の面の中。「いまの作業」の
 // 札と同じ畳み方で、どちらを出すかは CSS が決める）。**開閉の状態は1つ**なので、押した先の
 // DOM がどちらでも同じ面が開く。閉じる合図は「≡」・「いまの作業」と同じ
-// `browser/hooks/use-dismiss-signal.ts`。
+// `browser/hooks/use-dismiss-signal.ts` で、Esc の戻り先の歯車も同じくコールバック ref で
+// 集める（{@link ScreenNavSettings.toggleRef}）。
 
-import { useCallback, useRef, useState, type RefObject } from "react"
+import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
 import { isModelAlias, type ModelAlias } from "../../../../shared/command.ts"
 import {
@@ -90,14 +91,12 @@ export type ScreenNavSettings = {
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
-}
-
-export type UseSettingsResult = {
-  readonly view: ScreenNavSettings
-  /** 広い画面の帯にある歯車（`presentational-screen-nav.tsx`）。 */
-  readonly toggleRefWide: RefObject<HTMLButtonElement | null>
-  /** 狭い画面の「≡」の面の中にある歯車（`screen-nav-menu.tsx`）。 */
-  readonly toggleRefNarrow: RefObject<HTMLButtonElement | null>
+  /**
+   * 歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。**2箇所に描かれる**
+   * ので入れ物は1つにできず、付いている歯車を全部集めるコールバック ref にする
+   * （理由は `hooks/use-current-work.ts` の {@link ScreenNavCurrentWork.toggleRef} と同じ）。
+   */
+  readonly toggleRef: RefCallback<HTMLButtonElement>
 }
 
 const COLOR_FIELDS = [
@@ -113,12 +112,12 @@ const APPEARANCE_COLOR_DEBOUNCE_MS = 200
 const APPEARANCE_COLOR_SAVE_KEY = "appearance-color"
 
 /** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」・「いまの作業」と同じ `ref`）。 */
-export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsResult {
+export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSettings {
   const dispatch = useSessionDispatch()
   const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
   const [open, setOpen] = useState(false)
-  const toggleRefWide = useRef<HTMLButtonElement>(null)
-  const toggleRefNarrow = useRef<HTMLButtonElement>(null)
+  // いま DOM に付いている歯車。React の外にある資源を持つ可変の入れ物なので ref に置く。
+  const toggleNodes = useRef(new Set<HTMLButtonElement>())
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
   const [override, setOverride] = useState<AppearanceColorOverride>(loadAppearanceColorOverride)
@@ -137,13 +136,26 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsR
     setOpen((wasOpen) => !wasOpen)
   }, [])
 
+  const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
+    // **cleanup を返す形なので React 19 は `null` で呼び直さない**（外れるのは下の cleanup）。
+    if (node === null) {
+      return
+    }
+    const nodes = toggleNodes.current
+    nodes.add(node)
+    return () => {
+      nodes.delete(node)
+    }
+  }, [])
+
   const onDismiss = useCallback((cause: DismissCause): void => {
     setOpen(false)
     if (cause === "escape") {
-      // どちらか一方しか押せる状態にない（もう片方は `display: none` で `.focus()` が
-      // 効かない）ので、両方へ呼んで構わない。
-      toggleRefWide.current?.focus()
-      toggleRefNarrow.current?.focus()
+      // 押せる状態にある歯車は1つだけ（もう片方は `display: none` で `.focus()` が効かない）
+      // なので、付いているものへ順に呼んで構わない。
+      for (const node of toggleNodes.current) {
+        node.focus()
+      }
     }
   }, [])
 
@@ -183,50 +195,47 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsR
   }
 
   return {
-    view: {
-      open,
-      onToggle,
-      colors: COLOR_FIELDS.map((field) => ({
-        key: field.key,
-        label: field.label,
-        value: displayColor[field.key],
-        onChange: (value) => {
-          changeColor(field.key, value)
-        },
-      })),
-      resetDisabled: !hasOverride(override),
-      onReset: reset,
-      sessionDefault: {
-        model: sessionDefault.model,
-        onChangeModel: (value) => {
-          // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
-          if (isModelAlias(value)) {
-            dispatch({
-              type: "set-session-default",
-              model: value,
-              permissionMode: sessionDefault.permissionMode,
-            })
-          }
-        },
-        permissionMode: sessionDefault.permissionMode,
-        onChangePermissionMode: (value) => {
-          // 「全部許す」はここを通らない（選択肢にも無い。`docs/requirements.md` 4.1）。
-          if (isSessionDefaultPermissionMode(value)) {
-            dispatch({
-              type: "set-session-default",
-              model: sessionDefault.model,
-              permissionMode: value,
-            })
-          }
-        },
+    open,
+    onToggle,
+    colors: COLOR_FIELDS.map((field) => ({
+      key: field.key,
+      label: field.label,
+      value: displayColor[field.key],
+      onChange: (value) => {
+        changeColor(field.key, value)
       },
-      revealSpeed: {
-        value: revealSpeed,
-        onChange: changeRevealSpeed,
+    })),
+    resetDisabled: !hasOverride(override),
+    onReset: reset,
+    sessionDefault: {
+      model: sessionDefault.model,
+      onChangeModel: (value) => {
+        // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
+        if (isModelAlias(value)) {
+          dispatch({
+            type: "set-session-default",
+            model: value,
+            permissionMode: sessionDefault.permissionMode,
+          })
+        }
+      },
+      permissionMode: sessionDefault.permissionMode,
+      onChangePermissionMode: (value) => {
+        // 「全部許す」はここを通らない（選択肢にも無い。`docs/requirements.md` 4.1）。
+        if (isSessionDefaultPermissionMode(value)) {
+          dispatch({
+            type: "set-session-default",
+            model: sessionDefault.model,
+            permissionMode: value,
+          })
+        }
       },
     },
-    toggleRefWide,
-    toggleRefNarrow,
+    revealSpeed: {
+      value: revealSpeed,
+      onChange: changeRevealSpeed,
+    },
+    toggleRef,
   }
 }
 

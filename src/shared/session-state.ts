@@ -298,6 +298,15 @@ export type SessionState = {
    */
   readonly chatTopics: readonly string[]
   /**
+   * 雑談のサイドバーの「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`。
+   * `docs/design.md` 7.1・13.7）。`- ` を外した文面で、古い→新しいの順。
+   *
+   * **源は `remembered-lines-changed` だけ。** 雑談で起こしたとき、キャラクター自身の
+   * `remember` / `forget`、画面の「編集」から消したときのいずれかで流れ直す。起こし直すと
+   * 初期値の空へ戻る（`chatTopics` と同じ扱い）。
+   */
+  readonly rememberedLines: readonly string[]
+  /**
    * 新しいセッションを起こすときの既定（`docs/design.md` 13.6。帯の右端の歯車が読み書きする）。
    * **いま動いているセッションの値ではない** — そちらは {@link SessionState.model} と
    * {@link SessionInfo} の `permissionMode` で、帯から変えてもここは変わらない。
@@ -338,6 +347,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   lastToolFailureAt: undefined,
   chatMode: false,
   chatTopics: [],
+  rememberedLines: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
   plan: undefined,
 }
@@ -528,6 +538,8 @@ export function applySessionEvent(
       return { ...state, chatMode: event.chat }
     case "chat-topics-changed":
       return { ...state, chatTopics: event.topics }
+    case "remembered-lines-changed":
+      return { ...state, rememberedLines: event.lines }
     case "session-default-changed":
       return { ...state, sessionDefault: event.sessionDefault }
     case "compact-boundary":
