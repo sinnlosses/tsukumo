@@ -309,21 +309,21 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
 
 /**
  * 切り替え先として選べるセッションを一覧にする（画面のセッションの `<select>`。
- * `docs/requirements.md` 4.8）。**同じ作業ディレクトリの、同じ一族の印**（同じパック・同じ
- * モード）を持つものだけが残り、**新しい順**に並ぶ。
+ * `docs/requirements.md` 4.8）。**同じ作業ディレクトリの、いまの部屋の印**（同じパック・同じ
+ * モード・同じ目印）を持つものだけが残り、**新しい順**に並ぶ。
  *
  * 絞り込みの鍵も `includeWorktrees` を入れる理由も {@link findSessionToResume} と同じで、違うのは
- * 「最新の1つ」ではなく「目印の違うものを全部」返すところだけ。
+ * 「最新の1つ」ではなく「同じ印を持つものを全部」返すところだけ。
  *
  * **一覧が読めなくても落とさない**（切り替えの選択肢が出ないだけ。
  * docs/coding-standards.md「エラーハンドリング」）。
  */
 export async function listSwitchableSessions(
   cwd: string,
-  family: string,
+  tag: string,
 ): Promise<readonly SessionChoice[]> {
   try {
-    return listMarkedSessions(await listSessions({ dir: cwd, includeWorktrees: true }), family)
+    return listMarkedSessions(await listSessions({ dir: cwd, includeWorktrees: true }), tag)
   } catch {
     return []
   }

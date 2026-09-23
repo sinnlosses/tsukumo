@@ -130,15 +130,12 @@ export function sessionTag(characterName: string, chat: boolean, viewPort: numbe
 }
 
 /**
- * 目印を外した印（`tsukumo:<パック>` / `tsukumo:<パック>:chat`）。**同じパックの、同じモードの
- * セッションの一族**を指す。
- *
- * 使うのは**画面に出す切り替え先の一覧を絞るとき**（`src/server/core/session-restore.ts` の
- * `listMarkedSessions`）。一覧を一族で絞るのは、切り替えてもキャラクターとモードは
- * いま出しているままだから（`docs/requirements.md` 4.8）——別のパックのセッションを混ぜると、
- * 選んだ瞬間に会話の相手だけが入れ替わる。
+ * 目印を外した印（`tsukumo:<パック>` / `tsukumo:<パック>:chat`）。**{@link sessionTag} が
+ * 目印（ポート番号）を足すための下ごしらえ**で、外へは出さない——画面に出す切り替え先の一覧も
+ * 続きから始めるセッションを選ぶのも、目印まで揃えた {@link sessionTag} の値で絞る
+ * （`src/server/core/session-restore.ts`）。
  */
-export function sessionTagFamily(characterName: string, chat: boolean): string {
+function sessionTagFamily(characterName: string, chat: boolean): string {
   const packTag = `${SESSION_TAG_PREFIX}:${characterName}`
   return chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
 }
@@ -151,15 +148,11 @@ export type SessionMark = {
    */
   readonly viewPort: number
   /**
-   * 目印まで揃えた印。**選ぶときはこれ同士を比べる**（`tsukumo:<パック>` と
-   * `tsukumo:<パック>@A` と `tsukumo:<パック>@7327` は同じセッションを指す）。
+   * 目印まで揃えた印。**続きから始めるセッションを選ぶときも、切り替え先の一覧をいまの部屋に
+   * 絞るときも、これ同士を比べる**（`tsukumo:<パック>` と `tsukumo:<パック>@A` と
+   * `tsukumo:<パック>@7327` は同じセッションを指す）。
    */
   readonly tag: string
-  /**
-   * 目印を外した印（{@link sessionTagFamily} が組み立てるのと同じ形）。**一覧を一族で絞るときに
-   * これ同士を比べる**ので、印の文字列を切り分けるのはここだけで済む。
-   */
-  readonly family: string
 }
 
 /**
@@ -184,7 +177,7 @@ export function readSessionMark(tag: string): SessionMark | undefined {
   const marked = separator === -1 ? undefined : markedViewPort(tag.slice(separator + 1))
   const family = marked === undefined ? tag : tag.slice(0, separator)
   const viewPort = marked ?? DEFAULT_VIEW_PORT
-  return { viewPort, tag: `${family}${SESSION_MARK_SEPARATOR}${String(viewPort)}`, family }
+  return { viewPort, tag: `${family}${SESSION_MARK_SEPARATOR}${String(viewPort)}` }
 }
 
 /**

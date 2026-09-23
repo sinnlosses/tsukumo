@@ -48,19 +48,22 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
 /**
  * 切り替え先として選べるセッションを一覧にする（**印そのものがセッションの一覧**。別の保存先は
  * 作らない。docs/requirements.md 4.8「鍵」）。**新しい順**に並べ、tsukumo の印を持たないものと、
- * 一族（`family`）の違うものは落とす。
+ * **いまの部屋（渡した `tag`）と違う印のもの**は落とす。
  *
- * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。**一族で絞るのは
- * 呼び出し側ではなくここ**で、渡すのは `src/server/core/config.ts` の `sessionTagFamily` が
- * 組み立てた印（同じパックの、同じモード）。目印（`@7327` / `@7328`）だけが違うものが残るので、
- * **同じ目印の行が複数返ることがある**（落ちた tsukumo の印と動いている tsukumo の印は
- * 見分けられない）。見分け方は最終更新時刻の側。
+ * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。**渡す `tag` は
+ * {@link selectSessionToResume} と同じ、目印まで揃えた印**（`src/server/core/config.ts` の
+ * `sessionTag`）——部屋はビューのポート1つにつき1つなので（`docs/glossary.md`「部屋」）、
+ * 切り替え先も自分の部屋のものだけに絞る。**目印まで揃えてから比べる**ので、昔の印（目印の
+ * 無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
+ *
+ * 一覧に並ぶのはいつも同じ部屋（同じ `tag`）のセッションなので、**行が複数あるのは、落ちた
+ * tsukumo の印といま動いている tsukumo の印が見分けられないため**（見分け方は最終更新時刻の側）。
  *
  * **返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで**（印は使うほど増え続ける）。
  */
-export function listMarkedSessions(sessions: unknown, family: string): readonly SessionChoice[] {
+export function listMarkedSessions(sessions: unknown, tag: string): readonly SessionChoice[] {
   return markedSessions(sessions)
-    .filter((session) => session.family === family)
+    .filter((session) => session.tag === tag)
     .map(({ viewPort, sessionId, lastModified }) => ({ viewPort, sessionId, lastModified }))
     .sort((left, right) => right.lastModified - left.lastModified)
     .slice(0, MAX_SESSION_CHOICES)
@@ -98,12 +101,13 @@ export function toRestoredEvents(
   return events.length === 0 ? events : [...events, HISTORY_RESTORED]
 }
 
-/** 印の付いたセッション1件（目印まで揃えた印と、目印を外した一族つき）。 */
+/** 印の付いたセッション1件（目印まで揃えた印つき）。 */
 type TaggedSession = SessionChoice & {
-  /** 目印まで揃えた印。**選ぶときはこれ同士を比べる**（`readSessionMark`）。 */
+  /**
+   * 目印まで揃えた印。**続きから始めるセッションを選ぶときも、切り替え先の一覧をいまの部屋に
+   * 絞るときも、これ同士を比べる**（`readSessionMark`）。
+   */
   readonly tag: string
-  /** 目印を外した印。**一覧を絞るときはこれ同士を比べる**（`sessionTagFamily`）。 */
-  readonly family: string
 }
 
 /**
@@ -131,7 +135,7 @@ function taggedSession(value: unknown): readonly TaggedSession[] {
     sessionId !== "" &&
     typeof lastModified === "number" &&
     Number.isFinite(lastModified)
-    ? [{ viewPort: mark.viewPort, tag: mark.tag, family: mark.family, sessionId, lastModified }]
+    ? [{ viewPort: mark.viewPort, tag: mark.tag, sessionId, lastModified }]
     : []
 }
 

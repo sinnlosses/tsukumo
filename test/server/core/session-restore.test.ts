@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { sessionTag, sessionTagFamily } from "../../../src/server/core/config.ts"
+import { sessionTag } from "../../../src/server/core/config.ts"
 import { DEFAULT_VIEW_PORT } from "../../../src/server/core/port-resolution.ts"
 import { TSUKUMO_MCP_SERVER_NAME, SPEAK_TOOL_NAME } from "../../../src/server/core/sdk-message.ts"
 import {
@@ -22,11 +22,8 @@ const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 const TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT)
 const CHAT_TAG = sessionTag("架空のパック", true, DEFAULT_VIEW_PORT)
 const OTHER_PACK_TAG = sessionTag("別の架空のパック", false, DEFAULT_VIEW_PORT)
-// 2つめの tsukumo（ポートが1つずれたぶん、目印も 7328 になる）。
+// 2つめの tsukumo（ポートが1つずれたぶん、目印も 7328 になる＝別の部屋）。
 const SECOND_TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)
-// 一覧を絞る鍵（目印を外した印）。同じパック・同じモードのものだけが残る。
-const FAMILY = sessionTagFamily("架空のパック", false)
-const CHAT_FAMILY = sessionTagFamily("架空のパック", true)
 
 const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
@@ -190,17 +187,31 @@ describe("selectSessionToResume", () => {
 })
 
 describe("listMarkedSessions", () => {
-  it("同じ一族のセッションを、目印つきで新しい順に並べる", () => {
+  it("いまの部屋（同じ印）のセッションを新しい順に並べる", () => {
     const sessions = [
       sessionInfo({ sessionId: "s-first", lastModified: 100, tag: TAG }),
-      sessionInfo({ sessionId: "s-second", lastModified: 300, tag: SECOND_TAG }),
       sessionInfo({ sessionId: "s-third", lastModified: 200, tag: TAG }),
     ]
 
-    expect(listMarkedSessions(sessions, FAMILY)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT + 1, sessionId: "s-second", lastModified: 300 },
+    expect(listMarkedSessions(sessions, TAG)).toEqual([
       { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-third", lastModified: 200 },
       { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-first", lastModified: 100 },
+    ])
+  })
+
+  // 部屋はビューのポート1つにつき1つ（`docs/glossary.md`「部屋」）。同じパック・同じモードでも
+  // 目印（ポート）が違えば別の部屋なので、一覧には並ばない。
+  it("同じ一族でも目印の違うもの（別の部屋）は並ばない", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-here", lastModified: 100, tag: TAG }),
+      sessionInfo({ sessionId: "s-other-room", lastModified: 300, tag: SECOND_TAG }),
+    ]
+
+    expect(listMarkedSessions(sessions, TAG)).toEqual([
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-here", lastModified: 100 },
+    ])
+    expect(listMarkedSessions(sessions, SECOND_TAG)).toEqual([
+      { viewPort: DEFAULT_VIEW_PORT + 1, sessionId: "s-other-room", lastModified: 300 },
     ])
   })
 
@@ -213,15 +224,15 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-other-pack", lastModified: 400, tag: OTHER_PACK_TAG }),
     ]
 
-    expect(listMarkedSessions(sessions, FAMILY)).toEqual([
+    expect(listMarkedSessions(sessions, TAG)).toEqual([
       { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-work", lastModified: 100 },
     ])
-    expect(listMarkedSessions(sessions, CHAT_FAMILY)).toEqual([
+    expect(listMarkedSessions(sessions, CHAT_TAG)).toEqual([
       { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-chat", lastModified: 300 },
     ])
   })
 
-  it("印の無いセッションと壊れた要素は落とす（昔の印は既定のポートとして残す）", () => {
+  it("印の無いセッションと壊れた要素は落とす（昔の印は対応するポートの部屋に残す）", () => {
     const sessions = [
       null,
       sessionInfo({ sessionId: "s-bare", lastModified: 900 }),
@@ -230,8 +241,24 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-legacy", lastModified: 500, tag: "tsukumo:架空のパック" }),
     ]
 
-    expect(listMarkedSessions(sessions, FAMILY)).toEqual([
+    expect(listMarkedSessions(sessions, TAG)).toEqual([
       { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-legacy", lastModified: 500 },
+    ])
+  })
+
+  // かつて目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。読み取りでポートへ
+  // 戻したあとは、対応するポートの部屋の一覧に並ぶ（別の部屋には並ばない）。
+  it("1文字だった昔の目印も、対応するポートの部屋に並ぶ（互換）", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-legacy-a", lastModified: 900, tag: "tsukumo:架空のパック@A" }),
+      sessionInfo({ sessionId: "s-legacy-b", lastModified: 800, tag: "tsukumo:架空のパック@B" }),
+    ]
+
+    expect(listMarkedSessions(sessions, TAG)).toEqual([
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-legacy-a", lastModified: 900 },
+    ])
+    expect(listMarkedSessions(sessions, SECOND_TAG)).toEqual([
+      { viewPort: DEFAULT_VIEW_PORT + 1, sessionId: "s-legacy-b", lastModified: 800 },
     ])
   })
 
@@ -241,15 +268,15 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: `s-${String(index)}`, lastModified: index, tag: TAG }),
     )
 
-    const listed = listMarkedSessions(many, FAMILY)
+    const listed = listMarkedSessions(many, TAG)
     expect(listed).toHaveLength(MAX_SESSION_CHOICES)
     expect(listed[0]?.sessionId).toBe(`s-${String(MAX_SESSION_CHOICES + 4)}`)
   })
 
   it("一覧が空・形が壊れているときは空（落ちない）", () => {
-    expect(listMarkedSessions([], FAMILY)).toEqual([])
-    expect(listMarkedSessions(undefined, FAMILY)).toEqual([])
-    expect(listMarkedSessions({ sessions: [] }, FAMILY)).toEqual([])
+    expect(listMarkedSessions([], TAG)).toEqual([])
+    expect(listMarkedSessions(undefined, TAG)).toEqual([])
+    expect(listMarkedSessions({ sessions: [] }, TAG)).toEqual([])
   })
 })
 

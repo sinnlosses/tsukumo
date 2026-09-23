@@ -21,11 +21,11 @@ export const MAX_SESSION_CHOICES = 10
  */
 export type SessionChoice = {
   /**
-   * 目印（印を付けた tsukumo のビューのポート番号）。**同じディレクトリで2つめを起こすと
-   * ポートがずれる**ので、これがセッションの別々の部屋にあたる。昔の印（目印の無いもの・
-   * 1文字の `A` / `B` …）はポートへ戻してある（`src/server/core/config.ts` の
-   * `readSessionMark`）。**同じ目印の行が複数並ぶことがある**（落ちた tsukumo の印と、
-   * いま動いている tsukumo の印は見分けられない）ので、見分けるのは
+   * 目印（印を付けた tsukumo のビューのポート番号）。**一覧はいまの部屋（このビューのポート）の
+   * ものだけ**なので、並ぶ行はすべて同じ値になる（`src/server/core/session-restore.ts` の
+   * `listMarkedSessions`）。昔の印（目印の無いもの・1文字の `A` / `B` …）はポートへ戻してある
+   * （`src/server/core/config.ts` の `readSessionMark`）。**行が複数あるのは、落ちた tsukumo の
+   * 印といま動いている tsukumo の印が見分けられないため**で、見分けるのは
    * {@link SessionChoice.lastModified} の側。
    */
   readonly viewPort: number
