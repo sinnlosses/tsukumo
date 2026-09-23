@@ -25808,3 +25808,302 @@ bun run check 1524 pass / 0 fail（125 files）。目視（fake の turn-history
 - T-399（`⌄` で一覧を開く）が同じ `turn-header.tsx` と `.turn-header` まわりを触っている。依存に入れてあるので、`main` に入ったのを取り込んでから始める
 - `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
 - 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-374
+
+**タスク**: プラン名を accountInfo() から取り、トークン消費の画面に出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+accountInfo() の subscriptionType だけを取り出す toPlan を server/core に置き、sdk-driver の relayPlan が起動直後に1回呼んで SessionEvent{kind:"plan"} を流す（email / organization は toPlan の戻り値に乗らないので駆動の外へ出る経路が無い。grep -rn 'email|organization' src/shared/ は説明のコメント1件のみ）。bun run check は 1532 pass / 0 fail（126ファイル）。目視: TSUKUMO_VIEW_PORT=39374・TSUKUMO_HOME を分けて本物の駆動を起こし、headless Chromium で #token-usage を開くと題「トークン消費」の右の札に「Claude Pro」が出た（WebSocket の hello でも state.plan: "Claude Pro" を確認）。
+
+## 背景
+
+Agent SDK（`@anthropic-ai/claude-agent-sdk` 0.3.280）の `Query` には `accountInfo(): Promise<AccountInfo>` がある。
+`AccountInfo` は `email` / `organization` / `subscriptionType` / `tokenSource` / `apiKeySource` / `apiProvider`
+を持ち、どれも省略されうる（`sdk.d.ts` の `AccountInfo`。API キーや Bedrock のときは `subscriptionType` が無い）。
+
+tsukumo はいまこれを呼んでいない。起動直後に SDK へ問い合わせて結果をイベントにする前例は
+`src/server/adapter/sdk-driver.ts` の `relayCommandDescriptions`（`supportedCommands()` を1回呼んで
+`command-descriptions` イベントを流す。取れなくてもセッションは続ける）。
+
+## 決まっていること（蒸し返さない）
+
+- 出すのは**プラン名だけ**。5時間・7日の枠の使用率（`rate_limit_event` / `usage_EXPERIMENTAL_...`）は出さない（2026-09-23 ユーザー）
+
+## 出す場所（2026-09-23 ユーザー）
+
+- **ページの題「トークン消費」の右に小さな札で出す**（例:「Max」）。トークン消費の画面の形はモック `docs/history/mockup/token-usage-2026-09-23.png` で、そこにプラン名は無いが、ページ全体に掛かる情報なので題の横に置く
+
+## 解くべき論点
+
+- プラン名を画面まで運ぶ経路。`relayCommandDescriptions` と同じく駆動が起動直後に1回取りに行き、
+  イベント → `SessionState` → 画面、の形が第一候補。トークン消費の画面が `SessionState` を読めるか
+  （`docs/design.md` 2章の region の規則）を確かめてから決める
+- `subscriptionType` の値（`"max"` / `"pro"` など）をそのまま出すか、表示名に直すか。値の一覧は SDK に
+  無いので、**知らない値はそのまま出す**形にする
+
+## やること
+
+1. `sdk-driver.ts` で `accountInfo()` を1回呼び、`subscriptionType` だけを取り出してイベントにする
+   （`src/shared/session-event.ts` に種類を1つ足す）。**`email` と `organization` は駆動の外へ出さない**
+2. `src/server/adapter/fake-driver.ts` にも同じイベントを流させる（疑似セッションで画面を確かめるため）
+3. 状態に畳み、トークン消費の画面の上部に出す。**取れなかったとき（値が無い・呼び出しが落ちた）は
+   何も出さない**
+4. テストを足す（イベントの畳み込み・画面に出る/出ない）
+5. `bun run build` のあと本物で起こし、トークン消費の画面にプラン名が出ることを目視で確かめる
+
+## 完了条件
+
+- `bun run check` が通る
+- `grep -rn "email\|organization" src/shared/` に `AccountInfo` 由来のものが無い
+- 本物のセッションでプラン名が出たことを、端末と見えた値とともに `evidence` に書く
+
+## 注意
+
+- `SessionDriver`（`src/server/core/session-driver.ts`）に口を足すなら sdk / fake の両方を直す
+- `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET` は使わない（SDK が不安定と明言している）
+
+## T-400
+
+**タスク**: メインビューで遡れるやり取りの件数（MAX_MAIN_VIEW_TURNS）を5件から広げる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-398, T-399 / **passes**: True
+
+**evidence**:
+
+MAX_MAIN_VIEW_TURNS を MAX_SESSION_STATE_TURNS.work（20）からの導出に変えた（値を2箇所に書かず「メインビューの窓 ≤ 記録の窓」を等号で保つ）。grep -rn '直近5件' src docs --exclude-dir=history は0件。bun run check は 1522 pass / 0 fail（126ファイル）。目視（1400x900、TSUKUMO_VIEW_PORT=39400・TSUKUMO_HOME を分離、fake driver の turn-history）: 札の頭が「1 / 7」になり、⌄ の一覧から最古のターンへ飛べて ‹ が無効化された。
+
+## 背景
+
+メインビューで遡れるやり取りは `src/shared/main-view.ts` の `MAX_MAIN_VIEW_TURNS`（5）で絞られている（`mainViewTurns` が `groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)`）。5件なのは横並びのタブの幅に収めるためだったが、T-398 / T-399 で札の頭（前後ボタン・一覧）に置き換えたので、その制約が無くなった。2026-09-23 にユーザーが「上限を広げる」を選んだ（モックの札も「7 / 7」）。
+
+ブラウザが持つ記録そのものの窓は `src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS`（仕事 20・雑談 100）で、**仕事のメインビューはこれを超えて遡れない**。
+
+## 決まっていること（蒸し返さない）
+
+- 5件から広げる。上限は `MAX_SESSION_STATE_TURNS.work`（20）を超えない
+
+## やること
+
+1. 件数を決める。20 にそろえるなら、2つの定数の関係（メインビューの窓 ≤ 記録の窓）をどこで表すかも決める（片方からもう片方を導く、または型・テストで守る）。**`MAX_SESSION_STATE_TURNS` 側の中身を合わせて増やすことはしない**（常駐プロセスの記録の上限なので、別の判断）
+2. `MAX_MAIN_VIEW_TURNS` を直す。これに触れているコメント（`src/shared/session-state.ts` の `MAX_SESSION_STATE_TURNS` の説明、`src/browser/stores/turn-selection.tsx`、`src/browser/features/main-view/` の冒頭コメント）を直す
+3. `test/shared/main-view.test.ts` と `test/shared/turn-speech.test.ts` は定数から件数を作っているので、定数を変えても通るかを見る（通らなければ直す）
+4. `docs/requirements.md`（`grep -n 'MAX_MAIN_VIEW_TURNS\|直近5件' docs/requirements.md docs/design.md docs/research/configuration-and-state.md`）の件数の記述を直す
+
+## 完了条件
+
+- `grep -rn '直近5件' src docs --exclude-dir=history` が0件
+- `bun run check` が通る
+- 目視（1400x900）: 疑似セッションでやり取りを6件以上流し、札の「n / N」の N が6以上になり、一覧からいちばん古いものへ飛べる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-407
+
+**タスク**: 答え待ちの質問をメインビューの札へ移し、自由入力は入力欄で答える
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-398 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1497 pass / 0 fail / 3038 expect、124ファイル）。質問の札を src/browser/features/main-view/question-ask.tsx に新設し、答えの組み立てを src/browser/stores/question-answer.tsx へ上げ、dispatch の質問の箱一式（question-ask / presentational-question-ask / question-card / free-text-option / use-question-ask）と main-view/pending-question.tsx・stores/question-focus.tsx を削除（32ファイル、+447 / -1895）。目視（TSUKUMO_VIEW_PORT=7907 / TSUKUMO_HOME=~/.tsukumo-t407、場面 question-pair / question-multi / question-preview）: 1400x900 で札が選択肢3列・選んだカードの枠が --state-warn・「おすすめ」バッジ・preview が説明の下・入力欄の帯と「答える ⌘⏎」、選択肢と入力欄の両方から答えて記録に元のラベルで残ることを確認。390x844 は1列に折り返し、720x900 は2列。どちらも scrollWidth == clientWidth で横スクロールなし。
+
+## 背景
+
+答え待ちの質問（`AskUserQuestion`）はいま、入力欄の上の箱で答える: `src/browser/features/dispatch/presentational-question-ask.tsx`・`components/question-card.tsx`・自由入力の欄 `components/free-text-option.tsx`（ロジックは `hooks/use-question-ask.ts`）。メインビューには `preview` があるときだけ比べる面（`src/browser/features/main-view/pending-question.tsx` の `PendingQuestion`。タブより上）が出る。
+
+2026-09-23 にユーザーがモック `docs/history/mockup/question-2026-09-23.png` を示した（**キャラビューは変えない**）:
+
+- **メインビュー**（いまのターンのレポートの下）に質問の札を出す。枠と地は `--state-warn` の系統。頭に「質問」のチップと `header`、右端に「1 / 1」（何問目か）
+- 本文は質問の `text`。その下に選択肢を**横に並べたカード**（丸い選択の印・太字のラベル・説明）。選んだカードは枠が `--state-warn` になる。**ラベル末尾の `(Recommended)` は「おすすめ」のバッジにして字からは外す**（SDK へ返す答えは元のラベルのまま）
+- 札の下端に、左「選択肢にない答えは、下の入力欄に書いて送れます」、右に「これで答える」ボタン
+- **入力欄の側**: 上に帯「↑ <キャラクター名> が質問しています。上の選択肢から選ぶか、ここに書いて答えてください」、プレースホルダ「選択肢以外の答えを書く…」、送るボタンの字が「答える ⌘⏎」、枠も `--state-warn`。**自由入力は入力欄が担い、札の中の自由入力の欄は無くなる**
+
+`browser/` の領域の機能どうしは import できない（`docs/design.md` 2章、`test/architecture.test.ts`）。いまの質問のロジックは `dispatch` にあり、札は `main-view` に出るので、置き場所を決め直す必要がある。
+
+## 決まっていること（蒸し返さない）
+
+- `preview` は**札の中、説明の下**に出す。比べる面（`pending-question.tsx`）は無くす
+- **今回は質問だけ。** 許可要求は入力欄の上の箱のまま
+- 変えないこと: 選択肢の並び（`sortQuestionOptions` の辞書順、自由入力は末尾）、答えの形（`QuestionAnswer`）、複数選択はチェックボックス、複数の質問は「戻る」と進むボタンで1問ずつ
+- モックの中の「[この選択肢の説明]」「T-[番号]」「[未着手のタスク]」は見本の穴埋めで、作るものではない
+- 帯の「答え待ち」の札の直しは T-408 がやる
+
+## 解くべき論点
+
+1. 質問のロジック（選んでいる選択肢・何問目か・送る）の置き場所。札（`main-view`）と入力欄（`dispatch`）の両方が触るので、`browser/stores/` に上げるか、1つの機能に寄せてもう片方には値だけ渡すか（`docs/design.md` 2章と 6.2 の状態の置き場所の表）
+2. 入力欄に書いて送った字を、いまの質問の自由入力の答えとしてどう組むか（複数の質問のときは、いま見ている1問の答えにするか）
+3. 札を置く位置。T-398 で札の頭（前後ボタンとタイトル）がレポートの上に来るので、質問の札は**いまのやり取りのレポートの下**。過去のやり取りを見ているときに質問が来たら、どう知らせるか
+4. 選択肢のカードが横に並びきらない幅（狭い画面・選択肢が4つ）のときの折り返し
+
+## やること
+
+1. 論点1〜4を決める
+2. 質問の札をメインビューに作り、入力欄の上の箱から質問を外す。`pending-question.tsx` と `free-text-option.tsx` を消す
+3. 入力欄の側（帯・プレースホルダ・送るボタンの字・枠の色）を答え待ちのときだけ切り替える
+4. テストを直す・足す（`test/browser/features/main-view/` と `test/browser/features/dispatch/`）: 札に header・text・選択肢・おすすめのバッジが出る / 選んで「これで答える」で元のラベルのまま答えが送られる / 入力欄に書いて送ると自由入力の答えになる / preview が説明の下に出る / 複数の質問を1問ずつ進める / 許可要求は入力欄の上の箱のまま
+5. `docs/design.md`（6.1 の図・6.2 の表の「質問の選択」の行・13章の該当箇所）と `docs/requirements.md` 4.2 の質問の記述を直す
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 760px 以下）: 疑似セッションで質問を出し、札の見た目がモックに沿うこと・選択肢で答えられること・入力欄に書いて答えられること・preview つきの質問が札の中に出ること。開いた状態で横スクロールが出ないこと。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+- T-398 がメインビューの並びを変えるので、その後に着手する
+
+## T-415
+
+**タスク**: 入力欄の画像の札で、外す × が絵の右上の角に来るようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+実測(fake driver+headless Chrome): 800x300/300x800 で × と絵の右端・上端の差がどちらも 2.39px(0.15rem±1px)、li/img の箱の差 0px。1400x100 は修正前 × ごと画面外、修正後 645px に収まり角に見える。 / 390x844 で入力欄の scrollWidth=clientWidth=332(横スクロール無し) / bun run check: 1530 pass 0 fail(126 files)。Orca の実タブでの目視はしていない
+
+## 背景
+
+入力欄に画像を添えると `<textarea>` の上に札が並ぶ（`src/browser/components/prompt-image.tsx` の `PromptImageChips`）。札の右上に外す `×`（`.prompt-image-remove`）を重ねているが、画面のスクリーンショットで**絵の右端からだいぶ内側に寄って見える**と報告された（2026-09-23）。
+
+`src/browser/components/prompt-image.module.css` では `×` を `position: absolute; top: 0.15rem; right: 0.15rem` で置き、基準は札の `<li>`（`.prompt-image-chip`、`position: relative; flex: 0 0 auto; line-height: 0`）。絵（`.prompt-image`）は `height: 4rem; width: auto; max-width: 100%; object-fit: contain`。**原因は調べていない。** `<li>` の箱が絵より広くなっている（`×` は `<li>` の右端に付くので、絵の右端より内側に見える）か、`object-fit: contain` で `<img>` の箱の中に余白ができているかの、どちらかが候補。
+
+## 解くべき論点
+
+- ずれの原因がどちらか（`<li>` と `<img>` の `getBoundingClientRect()` の幅と、`<img>` の `naturalWidth / naturalHeight` から描かれる絵の幅を比べれば分かる）
+- 横長の絵と縦長の絵で、どちらも角に来るか
+
+## やること
+
+1. 横長・縦長の画像を添えた状態を作り、札の `<li>`・`<img>`・`×` の位置を測って原因を特定する（`docs/architecture.md`「手で確かめること」の手順）
+2. 原因に合わせて CSS を直す。`×` が絵の外へはみ出さない（はみ出すと入力欄の領域がスクロールする。CSS の既存コメント）ことは保つ
+3. `prompt-image.module.css` のコメントが直した後の形と合っているかを見る
+
+## 完了条件
+
+- 横長・縦長の2種類の画像で、`×` の右端と絵の右端の差、`×` の上端と絵の上端の差が、どちらも `0.15rem` 相当（± 1px）に収まっている（測った値を `evidence` に書く）
+- 狭い画面（390x844）で入力欄の領域が横にスクロールしない
+- `bun run check` が通る
+
+## 注意
+
+- 描画の変更なので、目視（実ブラウザで測った値）を `evidence` に含める
+- 札を押して拡大する機能は T-416 の担当。ここでは `×` の位置だけを直す
+
+## T-416
+
+**タスク**: 入力欄の画像の札にホバーで虫眼鏡を出し、押すと原寸を拡大の面で見られるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-415 / **passes**: True
+
+**evidence**:
+
+bun run check 1529 pass / 0 fail（test/browser/components/prompt-image.test.tsx 新規6件: 開く・×では開かない・Esc・閉じる・背景）。requirements.md の節数 27→27
+目視: fake driver + Playwright(Chrome) 390x844 で札を添え、虫眼鏡の opacity 既定0・hover/focus で1、押すと dialog が open で img src が原寸と一致
+2000x1500 の絵でも面を開いた状態で scrollWidth=clientWidth=390、img 332x249 がビューポート内。閉じるで dialog が DOM から外れる
+
+## 背景
+
+入力欄の札（`src/browser/components/prompt-image.tsx` の `PromptImageChips`）はいま押せず、押せるのは `×` だけ。札が受け取る `PromptImage`（`src/shared/prompt-image.ts`）は控え（`thumbnail`）と原寸（`full`）を両方持っていて、**原寸は送るまでブラウザのメモリに既にある**（`src/browser/features/dispatch/hooks/use-composer.ts` が送信時に `setImages([])` で捨てているだけ）。なので入力欄の札の拡大には、サーバ側の仕組みも記録の形の変更も要らない。
+
+`<dialog>` の開閉には既存のフック `src/browser/hooks/use-modal-dialog.ts`（`useModalDialog`）がある。拡大の面は、あとで T-417 でメインビューと雑談の控えからも開くので、`src/browser/components/` に置く。
+
+`docs/requirements.md` 4.10「画面での見え方」には「**札も控えも押せない。** 拡大して見る面は作らない」とあり、`prompt-image.tsx` 冒頭のコメントにも同じことが書いてある。**このタスクでは札のぶんだけ書き換える**。「会話内容の扱い」の約束（ディスクに書かない、原寸は送った時点で手放す）は、このタスクでは変わらない。
+
+## 決まっていること（蒸し返さない）
+
+- 拡大の面は3段階に分けて作る。この件は1段目の「入力欄の札だけ」で、控えからの拡大（T-417）と 4.10「会話内容の扱い」の書き換え（T-418）は後ろのタスクでやる（2026-09-23 ユーザーの指示）
+- 拡大の面は、原寸の data URL（`PromptImage.full`）をそのまま `<img>` で出す
+
+## 解くべき論点
+
+- 押す場所: `<li>` の中に `<button>` を2つ並べる（絵を包むボタンと `×`）。ボタンの中にボタンを入れない
+- ホバーの無い端末（タッチ）: 虫眼鏡はホバーとフォーカスで出す飾りにし、押せば開くのは虫眼鏡が見えていなくても同じにする
+- 拡大の面の大きさ: 画面より大きい絵は、画面の内側に収めて縮める（面の中で横にスクロールさせない）。閉じ方は Esc・背景を押す・閉じるボタンの3つ
+
+## やること
+
+1. 拡大の面の部品を `src/browser/components/` に作る（`useModalDialog` を使う）
+2. `PromptImageChips` の絵を押せるボタンにし、ホバーとフォーカスで虫眼鏡を重ね、押すとその原寸を拡大の面で開く
+3. `docs/requirements.md` 4.10「画面での見え方」の「札も控えも押せない」の箇条を、「札は押すと原寸を拡大して見られる。控えはまだ押せない」という趣旨に書き換える。`prompt-image.tsx` 冒頭のコメントも同じように直す
+4. 部品のテストを足す（押すと面が開く、`×` を押しても面は開かない、Esc で閉じる）
+
+## 完了条件
+
+- 入力欄の札にホバーすると虫眼鏡が出て、押すと原寸が拡大の面に出る。`×` は今までどおり画像を外すだけ（目視の結果を `evidence` に書く）
+- 狭い画面（390x844）で、面を開いた状態でも横スクロールが出ない（面の中まで測る）
+- `docs/requirements.md` の節の数が編集の前後で変わらない（`grep -c '^#\{2,3\} ' docs/requirements.md`）
+- `bun run check` が通る
+
+## 注意
+
+- 描画の変更なので、目視の結果を `evidence` に含める。モーダルを開いた場面も測る
+- `docs/requirements.md` を編集するときは、節の索引の表に当たらないよう行頭から位置を特定する
+- 「会話内容の扱い」の箇条（原寸は送った時点で手放す）はこのタスクでは触らない（T-418 の担当）
+
+## T-419
+
+**タスク**: 帯のトグルといまの作業の札を見本の値に揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-384 / **passes**: True
+
+**evidence**:
+
+bun run check 1522 pass / 0 fail、design.md の見出し数 53 のまま。目視（fake driver・ヘッドレス Chrome）: 1440x900 でトグル外寸 44px・ボタン 36px・押された側は accent 地に ground の太字、札 34px（2000 幅で 600px・左右 253.75px ずつ中央）、送信直後の作業中で丸・語・1x14 の仕切り・要約が左から並ぶ。答え待ちは state-warn の丸と控えめの枠で作業中と区別（止まっているは fake で出せず未確認）。390x844 の「≡」の面で崩れず scrollWidth 390
+
+## 背景
+
+T-384 で帯の骨格と、モデル・許可モードのドロップダウン・歯車を見本（`docs/history/mockup/sidebar-tasks-2026-09-23.html` の `<header>`。絵は `docs/history/mockup/header-2026-09-23.png`。**値を写す参照でありコードとして持ち込まない**）に揃えたあと、帯の中の部品の見た目を揃える（2026-09-23 のユーザーの指示「ヘッダーのデザインを見本に合わせてほしい」の残り）。**モデル・許可モードと歯車は T-384 の追補で済んだ**（2026-09-23 にユーザーが「ヘッダーの高さを少し狭く・設定アイコン・字の明るさ・プルダウン内の字の配置」を直すよう頼み、この2つが T-384 の中で見本に揃った。ユーザーの判断でこのタスクから外した）。ここでは残りの2つ（トグル・いまの作業の札）を揃える。帯の地は 52px（見本の 60px から下げた）なので、36px のトグルが収まるかも見る。
+
+いまの作り（いずれも `src/browser/features/screen-nav/`。CSS は `screen-nav.module.css`）:
+
+- 仕事/雑談のトグル: `components/screen-nav-chat-mode.tsx`（`role="group"` に2つの `<button>`・`aria-pressed`・14px のインライン SVG）。CSS は `.screen-nav-chat-mode*`（角丸 999px の枠・ボタンは padding 0.2rem 0.6rem・13px）
+- いまの作業の札: `components/screen-nav-current-work.tsx`。CSS は `.screen-nav-work*`（T-403 で中身で幅が変わらない固定長にした。状態ごとの見た目は `data-work-state`）
+
+**見本の値**（inline style から。px は写し、色は hex を書かずトークンに宛てる）:
+
+| 部位 | 値 |
+| --- | --- |
+| トグルの外枠 | 帯の地より暗い地・1px の枠・角丸 11px・padding 3px・ボタンの間 2px |
+| トグルのボタン | 高さ 36px・左右 16px・角丸 8px・枠なし・14px・アイコン 15px とテキストの間 7px。押されている側は差し色の地に暗い字・太字、他方は透明の地に薄い字 |
+| いまの作業の札 | 帯の残りの幅の中央に置き、最大 600px・高さ 34px・左右 14px・角丸 17px・差し色寄りの地（`--surface-accent` 相当）と差し色寄りの 1px の枠。中身は 7px の丸（差し色・周りに 3px の薄い輪）→ 間 10px → 状態の語（13px・太字・明るい差し色の字）→ 高さ 14px・幅 1px の縦の仕切り → いまのツールと引数（12px・等幅・1行で「…」） |
+
+## 決まっていること（蒸し返さない）
+
+- 書体は `system-ui` と等幅の2本のまま、字の大きさは `docs/design.md` 13.3 の段に宛てて段を足さない
+- 部品の種類は変えない
+- いまの作業の札は中身で幅が変わらない（T-403 の決定）。状態ごとの見分け（`data-work-state`）と、色だけで伝えない原則（13.1 原則1）は保つ
+- 狭い画面（760px 以下）の「≡」の面にも同じ部品が出る（13.9「狭い画面」）。そちらで崩れないこと
+
+## 解くべき論点
+
+- トグルの押されている側の字の色（見本は差し色の地に暗い字）をどのトークンに宛てるか。歯車から差し色を変えても読める濃さを保つ方法
+- いまの作業の札の要約（見本は 12px の等幅）を 13.3 のどの段に宛てるか（ID・ツール名の 13px 等幅か、12px の段か）
+- 丸の周りの薄い輪を、作業中以外の状態（答え待ち・止まった・依頼待ち）でどう出すか
+
+## やること
+
+1. `docs/design.md` 13.1・13.3・13.9（「動き方の操作子」「いまの作業」「狭い画面（760px 以下）」）を読む
+2. 2つの部品の CSS を上の表の値に揃える
+3. `docs/design.md` 13.9 の該当箇所に、値の羅列ではない決定を足す
+4. 既存のテスト（`test/browser/features/screen-nav/`）が通ることを確かめる。見た目の値そのものはテストしない（`CLAUDE.md`「ブラウザに出た絵は自動テストで守らない」）
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅。DevTools の computed style で測る）: トグルのボタンが高さ 36px で押されている側が差し色の地・太字、いまの作業の札が高さ 34px・最大 600px で帯の残りの中央に出て長い要約は「…」で切れる。答え待ち・止まった状態の札が作業中と見分けられる。390 幅で「≡」の面の中で崩れず横のはみ出し 0px。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 色は hex をそのまま書かない（歯車から地・字の色を変えたときに追従しなくなる）
+- T-408 が後で帯の札に質問の要約を足す。札の中身の並びは変えない
+- T-413 も `src/browser/features/screen-nav/` を触る。先に `main` に入っていたら取り込んでから始める
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
