@@ -150,7 +150,7 @@ export type ScreenNavCurrentWorkStepList =
 /**
  * 一覧の見出しに添える、答えの場所の案内（`docs/screen-design.md` 13.9「いまの作業」）。
  * 答え待ちのときだけ意味を持ち、**答え待ちの中身で行き先が変わる**ので判別可能な合併型にする
- * （docs/coding-standards.md「2つ以上の `| undefined` が1つの状態」と同じ理由で、
+ * （docs/coding-standards.md「複数の「無い」が1つの状態」と同じ理由で、
  * boolean 1つには畳まない）:
  *
  * - `none`: 答え待ちでない

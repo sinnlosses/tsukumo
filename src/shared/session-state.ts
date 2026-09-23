@@ -192,8 +192,8 @@ export type TurnProgress =
  *
  * `partialUtterance` は書きかけの本文で、完成した本文（`utterance`）が来たら空に戻る。
  * こうしておくと、断片と完成メッセージの**両方が届いても二重に積まれない**
- * （docs/display.md 4.2「書きかけの本文がそのまま流れていき、ターンが終わった瞬間に
- * 整形し直す」）。
+ * （docs/display.md 4.2「書きかけの本文はそのまま記録の末尾に積まれ、ターンが終わった
+ * 瞬間に整形し直す」）。
  */
 export type SessionState = {
   /**

@@ -384,6 +384,11 @@ tsukumo は**起こしたディレクトリでそのまま claude を動かす**
 grep -c '^#\{2,3\} ' docs/requirements.md   # 編集の前後で数が合うか
 ```
 
+**節を削る・移す・見出しを変えるときは、ほかから「ファイル名＋番号＋「句」」で引かれている句が
+消えていないかも見る。** `bun run check` の `test/section-reference.test.ts` が、参照先に文字として
+無い句を落とす（一覧だけなら `bun run scripts/find-stray-reference.ts`。拾う形と照合の強さは
+`scripts/section-reference.ts` の冒頭）。
+
 ## 関連リンク
 
 - 要件定義（やること・**やらないこと**・技術制約・環境の実測値・未決事項）: `docs/requirements.md`

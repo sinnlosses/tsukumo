@@ -23,7 +23,7 @@ import {
 /**
  * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」
  * （docs/requirements.md 4.4）。無い表情・衣装はキーごと消すのではなく値を undefined にして持つ
- * （`?:` は使わない。docs/coding-standards.md「無いかもしれない値」）。
+ * （`?:` は使わない。docs/coding-standards.md「「無いかもしれない」値」）。
  */
 export type CharacterDefinition = {
   readonly name: string | undefined

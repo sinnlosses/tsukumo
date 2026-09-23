@@ -148,8 +148,8 @@ function stepClassName(step: MainViewStep): string | undefined {
 
 /**
  * 演出を掛ける候補のステップ（**最終レポート**＝確定したレポートを持つ最後のステップ）。
- * 中間レポートは流れている最中に少しずつ出る本文なので、ここでは選ばない
- * （`docs/requirements.md` 4.3「中間レポート・既に出し切った本文には掛けない」）。
+ * 中間レポートは流れている最中に少しずつ出る本文なので、ここでは選ばない（演出は中間レポートにも
+ * 既に出し切った本文にも掛けない）。
  * 選び方そのものは `src/shared/main-view.ts` の `markFinalReport` が済ませてある。
  */
 function finalReportStepId(turn: MainViewTurn): number | undefined {

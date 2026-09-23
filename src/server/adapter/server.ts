@@ -454,7 +454,7 @@ function hasStartupToken(request: IncomingMessage, token: string): boolean {
 
 /**
  * クエリ1つの値（無ければ undefined）。**外来の `null` はここで畳む**
- * （`docs/coding-standards.md`「`null` を自前の型・関数の戻り値に出さない」）。
+ * （`docs/coding-standards.md`「null は自前の型に出さない」）。
  */
 function queryValue(request: IncomingMessage, name: string): string | undefined {
   const url = new URL(request.url ?? "/", `http://${BIND_HOST}`)
