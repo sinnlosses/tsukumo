@@ -1740,6 +1740,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub, entries, asked: () => asked }
     }
