@@ -932,6 +932,21 @@ describe("applySessionEvent（最近の話題）", () => {
   })
 })
 
+describe("applySessionEvent（覚えていること）", () => {
+  it("届くまでは空", () => {
+    expect(INITIAL_SESSION_STATE.rememberedLines).toEqual([])
+  })
+
+  it("remembered-lines-changed で丸ごと置き換わる（継ぎ足さない）", () => {
+    const view = apply(
+      { kind: "remembered-lines-changed", lines: ["架空の古い1行"] },
+      { kind: "remembered-lines-changed", lines: ["架空の新しい1行", "架空の二番目の1行"] },
+    )
+
+    expect(view.rememberedLines).toEqual(["架空の新しい1行", "架空の二番目の1行"])
+  })
+})
+
 describe("applySessionEvent（質問の記録）", () => {
   // 架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
   const singleQuestion = {

@@ -129,14 +129,24 @@ const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
   outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
 })
 
+/** 覚えたことを1行消したあとに流し直す `remembered-lines-changed`（作り物の1行）。 */
+const REMEMBERED_LINES_EVENT: SessionEvent = {
+  kind: "remembered-lines-changed",
+  lines: ["架空の残った1行"],
+}
+
 function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const stub = createStubDriver()
   const edits: CharacterEditCommand[] = []
   const creates: CharacterCreateCommand[] = []
   /** 覚えた「新しいセッションの既定」（覚え先は配線層なので、ここでは積むだけ）。 */
   const remembered: SessionDefault[] = []
+  /** 画面の「編集」から消そうとした行（書き先は配線層なので、ここでは積むだけ）。 */
+  const forgottenLines: string[] = []
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
+  const writtenRemembered = (): SessionEvent | undefined =>
+    writeResult === "written" ? REMEMBERED_LINES_EVENT : undefined
   const manager = createSessionManager({
     now: () => 1_000,
     batchIntervalMs: BATCH_MS,
@@ -163,8 +173,12 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
       creates.push(create)
       return Promise.resolve(written())
     },
+    forgetRememberedLine: (line) => {
+      forgottenLines.push(line)
+      return Promise.resolve(writtenRemembered())
+    },
   })
-  return { manager, stub, edits, creates, remembered }
+  return { manager, stub, edits, creates, remembered, forgottenLines }
 }
 
 function waitForBatch(): Promise<void> {
@@ -321,6 +335,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
     const frames: ServerFrame[] = []
@@ -423,6 +438,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
     manager.subscribe(SESSION_ID, () => {})
 
@@ -498,6 +514,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
     manager.subscribe(SESSION_ID, () => {})
 
@@ -539,6 +556,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
     manager.subscribe(SESSION_ID, () => {})
 
@@ -594,6 +612,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
     const frames: ServerFrame[] = []
@@ -711,6 +730,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub }
     }
@@ -937,6 +957,60 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterCreateFailed })
   })
 
+  describe("画面の「編集」から覚えたことを1行消す", () => {
+    it("雑談モードなら、消したい行を渡して流し直しを配る（駆動には渡らない）", async () => {
+      const { manager, stub, forgottenLines } = startManagerWithStub()
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      await waitForBatch()
+      const frames: ServerFrame[] = []
+      manager.subscribe(SESSION_ID, (frame) => frames.push(frame))
+
+      expect(
+        await manager.dispatch(SESSION_ID, {
+          type: "forget-remembered-line",
+          commandId: "c-1",
+          line: "架空の消したい1行",
+        }),
+      ).toEqual({ ok: true })
+      await waitForBatch()
+
+      expect(forgottenLines).toEqual(["架空の消したい1行"])
+      expect(stub.calls).toEqual([])
+      const events = frames.filter((frame) => frame.type === "events").at(-1)
+      if (events?.type === "events") {
+        expect(events.events.map((stamped) => stamped.event)).toEqual([
+          { kind: "remembered-lines-changed", lines: ["架空の残った1行"] },
+        ])
+      }
+    })
+
+    it("仕事のモードでは受け付けない（サイドバーの「覚えていること」自体が雑談中にしか出ない）", async () => {
+      const { manager, forgottenLines } = startManagerWithStub()
+
+      expect(
+        await manager.dispatch(SESSION_ID, {
+          type: "forget-remembered-line",
+          commandId: "c-1",
+          line: "架空の消したい1行",
+        }),
+      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat })
+      expect(forgottenLines).toEqual([])
+    })
+
+    it("消せなかったら、消す側の定型文の理由を返す", async () => {
+      const { manager, stub } = startManagerWithStub("rejected")
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+
+      expect(
+        await manager.dispatch(SESSION_ID, {
+          type: "forget-remembered-line",
+          commandId: "c-1",
+          line: "架空の消したい1行",
+        }),
+      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.forgetRememberedLineFailed })
+    })
+  })
+
   it("書き込みが受け付けられなかったら定型文の理由を返し、状態は動かさない", async () => {
     const { manager } = startManagerWithStub("rejected")
     const frames: ServerFrame[] = []
@@ -979,6 +1053,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
     expect(
@@ -1017,6 +1092,7 @@ describe("createSessionManager", () => {
       },
       editCharacter: () => Promise.reject(new Error("架空の書き込み失敗")),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
     expect(
@@ -1057,6 +1133,7 @@ describe("createSessionManager", () => {
         }),
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
 
     expect(await manager.dispatch(SESSION_ID, { type: "interrupt", commandId: "c-1" })).toEqual({
@@ -1130,6 +1207,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub, archiveCalls, finishTurnCalls }
     }
@@ -1355,6 +1433,7 @@ describe("createSessionManager", () => {
         },
         editCharacter: () => Promise.resolve(undefined),
         createCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
       })
       return { manager, stub, entries }
     }
@@ -1676,6 +1755,7 @@ describe("依頼に添えた画像の棚", () => {
       },
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
     })
     const prompt = (images: readonly PromptImage[]) =>
       manager.dispatch(SESSION_ID, { type: "prompt", commandId: "c", text: "架空の依頼", images })

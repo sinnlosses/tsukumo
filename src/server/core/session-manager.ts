@@ -130,6 +130,15 @@ export type SessionCreateOptions = {
    */
   readonly createCharacter: (create: CharacterCreateCommand) => Promise<SessionEvent | undefined>
   /**
+   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
+   * `remembered-lines-changed` を返す**（書き込み先と受け付けない条件は
+   * `src/server/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen`）。**受け付けられ
+   * なかったときは undefined**（呼び出し側は定型文の `error` を返す）。
+   *
+   * セッションは起こし直さない（`editCharacter` と同じ立場。`docs/design.md` 7.1）。
+   */
+  readonly forgetRememberedLine: (line: string) => Promise<SessionEvent | undefined>
+  /**
    * 新しいセッションの既定（モデル・許可モード）を覚え、**画面へ流す
    * `session-default-changed` イベントを返す**（覚え先は `~/.tsukumo/state.json`。
    * `docs/design.md` 13.6）。
@@ -563,6 +572,20 @@ function createSessionHost(
         return write(
           () => created.createCharacter(command),
           FRAME_ERROR_REASON.characterCreateFailed,
+        )
+      }
+      if (command.type === "forget-remembered-line") {
+        // **雑談モードのときだけ**（サイドバーの「覚えていること」自体が雑談中にしか出ない。
+        // 画面を経ない依頼の取りこぼし対策として、`nudge` と同じ理由でここでも見る）。
+        if (!state.chatMode) {
+          return Promise.resolve({
+            ok: false,
+            reason: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat,
+          })
+        }
+        return write(
+          () => created.forgetRememberedLine(command.line),
+          FRAME_ERROR_REASON.forgetRememberedLineFailed,
         )
       }
       if (command.type === "set-session-default") {

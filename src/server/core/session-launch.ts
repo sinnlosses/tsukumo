@@ -93,6 +93,12 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    * **雑談で起こすときだけ呼ばれる。**
    */
   readonly readChatTopics: (pack: Pack) => readonly string[]
+  /**
+   * そのパックの「覚えたこと」（`persona.md` の `## 覚えたこと`）の一覧を読む（節が無い・
+   * 読めないときは空。取り出し方は `src/server/adapter/persona-memory.ts` の
+   * `readRememberedLines`）。**雑談で起こすときだけ呼ばれる。**
+   */
+  readonly readRememberedLines: (pack: Pack) => readonly string[]
   /** 駆動と同じ間だけ動く見張りを起こす。流すイベントは駆動のものと同じ受け口へ。 */
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
   /**
@@ -124,7 +130,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  *
  * 順序は**起動時も起こし直しも同じ**:
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・
- * （雑談のときだけ `chat-topics-changed`）・`session-default-changed` を流す → 見張りを起こす →
+ * （雑談のときだけ `chat-topics-changed` と `remembered-lines-changed`）・
+ * `session-default-changed` を流す → 見張りを起こす →
  * 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
  * 続きから始まったなら履歴を組み直す。
  *
@@ -159,6 +166,9 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // （起こし直しで状態が初期値の空へ戻っているので、流さなくても空のまま）。
     if (chat) {
       onEvent({ kind: "chat-topics-changed", topics: ports.readChatTopics(pack) })
+      // 「覚えていること」も同じ理由で流し直す（7.1・13.7）。**仕事のときは読まない**
+      // （仕事の side では雑談のサイドバーごと出ないので、状態が初期値の空のままでよい）。
+      onEvent({ kind: "remembered-lines-changed", lines: ports.readRememberedLines(pack) })
     }
     // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値。`docs/design.md` 13.6）。
     // **読むのはここ1回だけ**で、同じ値をこれから起こす駆動にも渡す。

@@ -20,6 +20,7 @@ import {
   readCharacterPackFile,
   toCharacterPackChoices,
 } from "./server/adapter/character-pack.ts"
+import { forgetRememberedLineFromScreen } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedCharacter,
   writeRememberedCharacter,
@@ -59,6 +60,12 @@ export type CurrentCharacter = {
    * 切り替えず、`<select>` から選んだときに起こし直す（docs/design.md 7.1）。
    */
   readonly applyCreate: (create: CharacterCreateCommand) => SessionEvent | undefined
+  /**
+   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
+   * `remembered-lines-changed` を返す**（一致する行が無い・書けない・そのパックが編集できない
+   * ときは undefined。`docs/design.md` 7.1「1行だけ忘れる」）。
+   */
+  readonly forgetRememberedLine: (line: string) => SessionEvent | undefined
   /** `/character/<file>` に配ってよい1件（allowlist に無い・ディスクに無いときは undefined）。 */
   readonly serveAsset: (fileName: string) => CharacterAssetFile | undefined
 }
@@ -137,6 +144,10 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
       }
       packs = findPacks()
       return event()
+    },
+    forgetRememberedLine: (line) => {
+      const lines = forgetRememberedLineFromScreen(current, process.cwd(), line)
+      return lines === undefined ? undefined : { kind: "remembered-lines-changed", lines }
     },
     serveAsset: (fileName) => readCharacterPackFile(current, fileName),
   }

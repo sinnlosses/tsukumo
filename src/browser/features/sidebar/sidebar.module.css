@@ -320,3 +320,108 @@
   color: var(--ink);
   overflow-wrap: anywhere;
 }
+
+/* 「覚えていること」（persona-memory-section.tsx）。**1行＝チップ1つ**（docs/design.md 7.1）で、
+   .sidebar-topic-list と同じく上に rule の細い線、印は付けない。チップと × は横並び。 */
+.sidebar-persona-memory-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sidebar-persona-memory-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--rule);
+}
+/* チップ本体。押すと全文に開く（.sidebar-persona-memory-chip[aria-expanded="true"]）ので、
+   枠なしのボタンにして押せることだけを示す（13.1 原則1。ホバーの下線で押せると分かる）。
+   **読む面の文字**なので ink。 */
+.sidebar-persona-memory-chip {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font-size: inherit;
+  font-family: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.sidebar-persona-memory-chip:hover {
+  text-decoration: underline;
+}
+/* 「編集」の状態でだけ出る × ボタン。押しやすさより場所を取らないことを優先する
+   （行の右端に小さく置く）。 */
+.sidebar-persona-memory-remove {
+  flex: none;
+  padding: 0 0.25rem;
+  border: none;
+  background: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+  line-height: 1.5;
+  cursor: pointer;
+}
+.sidebar-persona-memory-remove:hover {
+  color: var(--state-warn);
+}
+
+/* 消す前の確認（`PersonaMemoryForgetConfirm`）。**サイドバーの上に重ねて開く**——`showModal()` は
+   top layer に積むので必ず上に出る。`task-run-confirm.tsx` と同じ形（枠は常設しない。
+   docs/design.md 13.1 原則2）。 */
+.sidebar-persona-memory-confirm {
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 2rem));
+  margin: auto;
+  padding: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  font-size: var(--font-secondary);
+}
+.sidebar-persona-memory-confirm::backdrop {
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+}
+.sidebar-persona-memory-confirm-question {
+  margin: 0;
+  font-size: var(--font-heading);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sidebar-persona-memory-confirm-note {
+  margin: 0.5rem 0 0;
+  color: var(--ink-quiet);
+}
+.sidebar-persona-memory-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.sidebar-persona-memory-confirm-cancel,
+.sidebar-persona-memory-confirm-ok {
+  padding: 0.2rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: none;
+  color: inherit;
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.sidebar-persona-memory-confirm-cancel:hover {
+  border-color: var(--accent);
+}
+/* 消すほうは差し色ではなく警告色にする（削除は既定の行き先ではない。task-run-ok は既定の実行なので
+   差し色だが、こちらは戻せない操作なので `--state-warn` で分ける）。 */
+.sidebar-persona-memory-confirm-ok {
+  border-color: var(--state-warn);
+  color: var(--state-warn);
+}
+.sidebar-persona-memory-confirm-ok:hover {
+  background: color-mix(in srgb, var(--state-warn) 12%, transparent);
+}
