@@ -110,6 +110,43 @@ export function usageProposalKey(proposal: Pick<UsageProposal, "kind" | "target"
 }
 
 /**
+ * 前回の見直しの結果。トークン消費の画面の「前回の提案」のリンクが読む
+ * （`docs/design.md`「見直しのツールと状態」）。**{@link UsageReview} の `result` とは別の状態**
+ * ——`usageReview` は起こし直すとふだんへ戻るが（`docs/glossary.md`「見直し」）、こちらは
+ * ホームのファイル（`~/.tsukumo/usage-review.json`）に残り続け、起こし直しでも
+ * プロセスの再起動でも消えない。
+ *
+ * - `none`: 一度も見直していない（リンクを出さない）
+ * - `found`: 直前の1回の結果。**持つのは直前の1回だけ**——古い結果は新しいもので置き換わり、
+ *   履歴には残らない
+ */
+export type PreviousUsageReview =
+  | { readonly kind: "none" }
+  | { readonly kind: "found"; readonly reviewedAt: number; readonly findings: UsageReviewFindings }
+
+/**
+ * ホームから読んだ前回の結果から、見送った提案を除く。**見送りは前回の結果のファイルを
+ * 書き換えない**ので、起動し直したときはここで除かないと見送った札が戻ってくる。
+ */
+export function withoutDismissedProposals(
+  previous: PreviousUsageReview,
+  dismissedKeys: readonly string[],
+): PreviousUsageReview {
+  if (previous.kind === "none") {
+    return previous
+  }
+  return {
+    ...previous,
+    findings: {
+      ...previous.findings,
+      proposals: previous.findings.proposals.filter(
+        (proposal) => !dismissedKeys.includes(usageProposalKey(proposal)),
+      ),
+    },
+  }
+}
+
+/**
  * 押す口を押したときに会話へ送る依頼文。**提案に依頼文を持たせない**のは、スキルが書く欄を
  * 増やさず、押す口ごとの頼み方を1箇所で揃えるため。
  */

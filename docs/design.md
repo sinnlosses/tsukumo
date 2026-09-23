@@ -1031,12 +1031,15 @@ doc コメントを参照）。
 `token-usage-diet` を流し、結果を tsukumo の MCP ツールで構造のまま受け取る**（2026-09-24。
 語は `docs/glossary.md`「見直し」「見直しの段」「提案」）。tsukumo 本体は分析しない。
 
-| 置き場                                 | 持つもの                                                                                                           |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `src/shared/usage-review.ts`           | 段・提案の型と列挙、状態 `UsageReview`、提案の識別子 `usageProposalKey`、押す口の依頼文 `usageProposalRequestText` |
-| `src/server/core/usage-review-tool.ts` | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しをイベントにする窓口 `createUsageReviewIntake`           |
-| `src/server/adapter/sdk-tool.ts`       | 2つのツール（zod の形）を仕事のときだけ載せる                                                                      |
-| `src/shared/session-state.ts`          | `usageReview` の畳み込み（`usage-review-stage` / `usage-review-result` / ターンの終わり）                          |
+| 置き場                                           | 持つもの                                                                                                                                       |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/usage-review.ts`                     | 段・提案の型と列挙、状態 `UsageReview` / `PreviousUsageReview`、提案の識別子 `usageProposalKey`、押す口の依頼文 `usageProposalRequestText`     |
+| `src/server/core/usage-review-tool.ts`           | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しをイベントにする窓口 `createUsageReviewIntake`                                       |
+| `src/server/adapter/sdk-tool.ts`                 | 2つのツール（zod の形）を仕事のときだけ載せる                                                                                                  |
+| `src/shared/session-state.ts`                    | `usageReview` / `previousUsageReview` の畳み込み（`usage-review-stage` / `usage-review-result` / `usage-proposal-dismissed` / ターンの終わり） |
+| `src/server/adapter/previous-usage-review.ts`    | 前回の見直しの結果の読み書き（`~/.tsukumo/usage-review.json`。持つのは直前の1回だけ）                                                          |
+| `src/server/adapter/usage-proposal-dismissal.ts` | 見送った提案の識別子の読み書き（`~/.tsukumo/usage-review-dismissed.json`）                                                                     |
+| `src/shared/command.ts`                          | 画面から提案を見送るコマンド `dismiss-usage-proposal`                                                                                          |
 
 決めたこと（論点ごと）:
 
@@ -1074,10 +1077,40 @@ doc コメントを参照）。
 - **見送った提案の一覧は `usage_review_stage` の戻り値で返す**（`"ok"` のあとに識別子を並べる）。
   ボタンが送る依頼文に含める形だと、入力欄で呼んだときに渡らない。結果の検査も同じ一覧を見て、
   混じっていれば差し戻す。一覧を読む口は `SessionDriverOptions.dismissedUsageProposalKeys` で、
-  **見送りの記録はまだ無いので、いまは配線（`src/session-start.ts`）が空を渡している**。記録を
-  足すときはここを読み口へ差し替える
+  **`src/session-start.ts` が `usage-proposal-dismissal.ts` の読み口を渡している**（段に入る
+  たびに呼び直すので、見直しの途中で見送りが増えても効く）
 - 2つのツールは**仕事のときだけ**載る（`report` と同じ）。`PROTOCOL_VERSION` は状態に
   `usageReview` を足したので上げた
+
+見送りと前回の結果の記録:
+
+- **見送りの記録はホームのファイル**（`~/.tsukumo/usage-review-dismissed.json`。読み書きは
+  `usage-proposal-dismissal.ts`）に**識別子の並びとして持つ**。取り消す口は画面に無い
+  （見本にも無い）——取り消したくなったら、このファイルの `keys` から手で1件消す
+- **画面から見送るコマンドは `dismiss-usage-proposal`**（`src/shared/command.ts`）。書き込みは
+  `forget-remembered-line` と同じ立場——駆動には渡さず、書いてから `usage-proposal-dismissed`
+  を流し直すだけで、セッションは起こし直さない。見送りは書けなかった回も含めて常に受け付けた
+  ことにする（`rememberSessionDefault` と同じ。失敗を区別して画面へ返す手立てが無い）
+- **前回の見直しの結果はホームのファイル**（`~/.tsukumo/usage-review.json`。読み書きは
+  `previous-usage-review.ts`）に**直前の1回だけ**を上書きで持つ。見本の「前回の提案（日付）」も
+  直前の1回しか指さないので、履歴を並べて選ぶ画面は作らない——新しい結果が届くたびに丸ごと
+  置き換える
+- **`SessionState` にこの前回の結果を別の状態として持つ**（`previousUsageReview`）。`usageReview`
+  は起こし直すとふだんへ戻る決まりのままにし（蒸し返さない）、「前回の提案」はその別の状態が
+  出す。起こしたときに1回だけホームから読み、駆動の起こし直し（`switch-character` など）を
+  またいで残る（起こし直しは `usageReview` だけをふだんへ戻し、`previousUsageReview` は
+  そのまま引き継ぐ）。プロセスを再起動したときは、次に起こした `session-manager` が改めて
+  ホームから読む
+- **`usage-review-result` は `usageReview` と `previousUsageReview` の両方をいっぺんに更新し、
+  ホームへも書く。** 結果が届いたその場で「前回の提案」も最新になる（次の起動を待たない）
+- **`usage-proposal-dismissed` は両方の状態から該当の提案を取り除く**（識別子の一致は
+  `usageProposalKey`）。**ホームの「前回の結果」ファイルそのものは書き換えない**——見送りは
+  次の見直しを除く効果があれば十分で、そのプロセスが生きている間の画面の食い違い（見送った
+  はずの札が「前回の提案」を開き直すと出る）は起きない。プロセスを再起動したときは、
+  ホームから読んだ前回の結果から見送り済みの識別子を除いて配る（`withoutDismissedProposals`）。
+  書き込み経路を1つ増やすより、読む側で除くほうが単純なため
+- 会話の文面はここでも書かない——入るのは見直しの結果（`UsageReviewFindings`）と識別子の文字列
+  だけで、どちらの型にも文面の口が無い（`docs/coding-standards.md`「会話内容の扱い」）
 
 ## 6. browser
 
@@ -2132,6 +2165,7 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
 | 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件は要約の写しと同じ2つ。**渡す先はそこだけ**で、画面にも `error` フレームにも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口は7章）                                                                                                                                     |
 | 人格への書き戻し（覚えたこと）                     | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲は `docs/chat-mode.md` 4.9、形と上限は 7.1）。会話の文面はディスクに届かない                                                                                                                                                                                                                                                                                                                                              |
 | コンテキストの内訳の記録                           | `~/.tsukumo/context-usage/<日付>.jsonl` に、**セッション1つにつき1行**だけ積む（最初のターンが終わったとき、`detail: "full"` で取った値）。**会話の複製ではない** — 入るのは数と、SDK が内訳として返す名前（分類の表示名・MCP ツール名・メモリファイルのパス・スキル名）だけで、文面の口が型に無い。**ターンごとのトークン消費の記録（`~/.tsukumo/token-usage/`）とは置き場も版も分ける** — 「書いてよいもの」の線が種類ごとに違い、同じファイルに混ぜると広いほうの線が狭いほうにもかかるため（線の正典は `src/shared/context-usage-record.ts`） |
+| 見直しの結果と見送りの記録                         | `~/.tsukumo/usage-review.json`（前回の見直しの結果。直前の1回だけ）と `~/.tsukumo/usage-review-dismissed.json`（見送った提案の識別子）。**会話の複製ではない** — 入るのはスキルが渡した見直しの結果（`UsageReviewFindings`。見出し・根拠・やることの文字列を含むが、これ自体が「見直しの結果」であって会話ではない）と、種類:対象の形の識別子の文字列だけ（線の正典は `src/shared/usage-review.ts`）                                                                                                                                              |
 | テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ## 10. テスト

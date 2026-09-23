@@ -4,6 +4,7 @@ import {
   type UsageProposal,
   usageProposalKey,
   usageProposalRequestText,
+  withoutDismissedProposals,
 } from "../../src/shared/usage-review.ts"
 
 // 提案は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
@@ -38,5 +39,26 @@ describe("usageProposalRequestText", () => {
     expect(task).toContain("「架空の見出し」をあとでやるタスクとして登録してほしい")
     expect(delegate).toContain("やること: 架空のやること")
     expect(delegate).toContain("根拠: 架空の根拠")
+  })
+})
+
+describe("withoutDismissedProposals", () => {
+  it("見送った識別子の提案を前回の結果から除き、ほかは残す", () => {
+    const other = { ...PROPOSAL, kind: "memory-file", target: "" } as const satisfies UsageProposal
+    const previous = withoutDismissedProposals(
+      {
+        kind: "found",
+        reviewedAt: 1,
+        findings: { days: 7, headline: "架空の一言", proposals: [PROPOSAL, other] },
+      },
+      [usageProposalKey(PROPOSAL)],
+    )
+    expect(previous.kind === "found" ? previous.findings.proposals : []).toEqual([other])
+  })
+
+  it("前回の結果が無ければそのまま返す", () => {
+    expect(withoutDismissedProposals({ kind: "none" }, ["unused-mcp:example-server"])).toEqual({
+      kind: "none",
+    })
   })
 })

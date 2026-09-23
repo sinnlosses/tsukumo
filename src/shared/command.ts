@@ -35,6 +35,7 @@ import {
   parsePromptImageThumbnail,
 } from "./prompt-image.ts"
 import { SESSION_DEFAULT_PERMISSION_MODES } from "./session-default.ts"
+import { USAGE_PROPOSAL_KINDS } from "./usage-review.ts"
 
 /**
  * 依頼として送れる文面の上限。送信のための素朴な上限であって、秘匿・検閲のためではない
@@ -47,6 +48,13 @@ export const MAX_PROMPT_TEXT_LENGTH = 20_000
  * ない（知らないIDは起こす側が新規に倒すので、ここで形まで縛らない）。
  */
 const MAX_SESSION_ID_LENGTH = 200
+
+/**
+ * 提案の対象（`UsageProposal.target`）の上限。**形の検査ではなく素朴な上限**——対象は
+ * MCP ツール名・メモリファイルのパス・モデル名などで、パスがいちばん長くなりうるので
+ * 余裕を見た値にしてある。
+ */
+const MAX_USAGE_PROPOSAL_TARGET_LENGTH = 1_000
 
 /**
  * 許可モードの値の全体。**この一覧は shared に1つだけ置く**（docs/design.md 4.3）。
@@ -379,6 +387,18 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     commandId: commandIdSchema,
     line: z.string().min(1).max(MAX_REMEMBERED_LINE_LENGTH),
   }),
+  /**
+   * トークン消費の画面の結果の札から、提案を1件見送る。**識別子は種類と対象の組**
+   * （`usageProposalKey`）——見出しや根拠の言い回しが変わっても同じ提案を指す。次の見直しでも
+   * 出さない（`src/server/core/usage-review-tool.ts` の `dismissedKeys`）。**取り消す口は無い**
+   * （`docs/design.md`「見直しのツールと状態」）。
+   */
+  z.object({
+    type: z.literal("dismiss-usage-proposal"),
+    commandId: commandIdSchema,
+    kind: z.enum(USAGE_PROPOSAL_KINDS),
+    target: z.string().max(MAX_USAGE_PROPOSAL_TARGET_LENGTH),
+  }),
 ])
 
 export type ClientCommand = z.infer<typeof clientCommandSchema>
@@ -425,6 +445,15 @@ export type CharacterCreateCommand = Extract<ClientCommand, { readonly type: "cr
 export type CharacterDeleteCommand = Extract<ClientCommand, { readonly type: "delete-character" }>
 
 /**
+ * 提案を1件見送るコマンド。**これも駆動には渡らない**（書いたあと、`usage-proposal-dismissed`を
+ * 流し直すだけ。`forget-remembered-line` と同じ立場で、セッションは起こし直さない）。
+ */
+export type DismissUsageProposalCommand = Extract<
+  ClientCommand,
+  { readonly type: "dismiss-usage-proposal" }
+>
+
+/**
  * 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる。
  * `nudge` も文面をサーバ側が足すので外れる）。**`forget-remembered-line` も外れる** —
  * 書き込みと `remembered-lines-changed` の流し直しで済み、`editCharacter` と同じくセッションは
@@ -441,6 +470,7 @@ export type DriverCommand = Exclude<
   | { readonly type: "nudge" }
   | { readonly type: "set-session-default" }
   | { readonly type: "forget-remembered-line" }
+  | { readonly type: "dismiss-usage-proposal" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */

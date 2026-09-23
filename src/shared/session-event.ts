@@ -364,6 +364,12 @@ export type SessionEvent =
   | { readonly kind: "usage-review-stage"; readonly stage: UsageReviewStage; readonly days: number }
   /** 見直しの結果が届いた（`usage_review_result` ツールが受け付けた呼び出し。出し手は上と同じ）。 */
   | { readonly kind: "usage-review-result"; readonly findings: UsageReviewFindings }
+  /**
+   * 提案を1件見送った（画面の `dismiss-usage-proposal` コマンド）。**出し手は
+   * `src/session-start.ts`**（書き込み先は `src/server/adapter/usage-proposal-dismissal.ts`）。
+   * `key` は {@link usageProposalKey} と同じ形（`kind:target`）。
+   */
+  | { readonly kind: "usage-proposal-dismissed"; readonly key: string }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

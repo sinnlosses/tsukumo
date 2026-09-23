@@ -21,6 +21,7 @@ import {
   type CharacterDeleteCommand,
   type CharacterEditCommand,
   type ClientCommand,
+  type DismissUsageProposalCommand,
   isCharacterEditCommand,
 } from "../../shared/command.ts"
 import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "../../shared/context-usage.ts"
@@ -32,6 +33,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../shared/session-state.ts"
+import { type PreviousUsageReview, type UsageReviewFindings } from "../../shared/usage-review.ts"
 import { appendChatArchiveEntry } from "./chat-archive-entry.ts"
 import { type ChatCompactWatch, createChatCompactWatch } from "./chat-compact.ts"
 import { type ContextUsageLog, createContextUsageRecorder } from "./context-usage.ts"
@@ -164,6 +166,25 @@ export type SessionManagerOptions = {
    * — 書き込みは失敗しても例外を投げない口なので、失敗を区別して返す手立てがここには無い。
    */
   readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
+  /**
+   * ホームに残っている前回の見直しの結果（`docs/design.md`「見直しのツールと状態」）。**起こした
+   * ときに1回だけ**読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる——
+   * `INITIAL_SESSION_STATE` は静的な定数なので、ここでしか差し込めない。
+   */
+  readonly readPreviousUsageReview: () => PreviousUsageReview
+  /**
+   * 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く
+   * （`src/server/adapter/previous-usage-review.ts`）。**駆動由来（`"driver"`）の
+   * `usage-review-result` を畳んだときだけ呼ぶ**（復元の再生には出てこない種類のイベントだが、
+   * ほかの書き込みと条件を揃えてある）。
+   */
+  readonly writePreviousUsageReview: (reviewedAt: number, findings: UsageReviewFindings) => void
+  /**
+   * トークン消費の画面の札から提案を1件見送り、**流し直す `usage-proposal-dismissed` を返す**
+   * （書き込み先は `src/server/adapter/usage-proposal-dismissal.ts`）。**書けたかどうかに関わらず
+   * 常に1つ返す**（`rememberSessionDefault` と同じ立場）。セッションは起こし直さない。
+   */
+  readonly dismissUsageProposal: (dismiss: DismissUsageProposalCommand) => SessionEvent
 }
 
 /**
@@ -228,7 +249,13 @@ type SessionGeneration = GenerationTally & {
 
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()
-  let state: SessionState = INITIAL_SESSION_STATE
+  // **前回の見直しの結果だけ、起こしたときにホームから読んで載せる**——`INITIAL_SESSION_STATE`
+  // は静的な定数なので、実行時の値をここで1回だけ差し込む（`docs/design.md`「見直しの
+  // ツールと状態」）。
+  let state: SessionState = {
+    ...INITIAL_SESSION_STATE,
+    previousUsageReview: options.readPreviousUsageReview(),
+  }
   // 閉じたあとに駆動が投げてくるイベントは捨てる（配る先がもう無いのにタイマーを立てない）。
   let closed = false
   // 何代目まで起こしたか。**閉じた駆動があとから投げてくるイベントを捨てる**ための印
@@ -301,6 +328,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     // 内訳を捨てるのも同じ合図で行う（1ターンぶんだけ持つ）。**`token-usage` は
     // `turn-finished` より先に届く**（`sdk-message.ts` が `result` 1つをこの順に変換する）ので、
     // 書き終えたあとに捨てることになる。
+    // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。**駆動由来
+    // （`"driver"`）だけ**——復元の再生にはこの種類のイベントは出てこない
+    // （`docs/design.md`「見直しのツールと状態」）が、ほかの書き込みと条件を揃えてある。
+    if (origin === "driver" && event.kind === "usage-review-result") {
+      options.writePreviousUsageReview(at, event.findings)
+    }
     if (origin === "driver" && event.kind === "turn-finished") {
       options.chatArchive.finishTurn()
       tally.tokenUsage.finishTurn()
@@ -421,7 +454,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   const restart = async (request: SessionLaunchRequest): Promise<DispatchResult> => {
     try {
       generation.close()
-      replaceState(INITIAL_SESSION_STATE)
+      // **`previousUsageReview` だけは起こし直しをまたいで残す**——ホームのファイルに残る
+      // 記録であって、駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る。
+      // `docs/design.md`「見直しのツールと状態」）。
+      replaceState({ ...INITIAL_SESSION_STATE, previousUsageReview: state.previousUsageReview })
       generation = startGeneration(request, "after-hello")
       await generation.driver
       announceGeneration()
@@ -544,6 +580,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
           return write(
             () => options.forgetRememberedLine(command.line),
             FRAME_ERROR_REASON.forgetRememberedLineFailed,
+          )
+        // **起こし直さない**（`forget-remembered-line` と同じ立場。書いて、
+        // `usage-proposal-dismissed` を流すだけ）。
+        case "dismiss-usage-proposal":
+          return write(
+            () => Promise.resolve(options.dismissUsageProposal(command)),
+            FRAME_ERROR_REASON.usageProposalDismissFailed,
           )
         // **起こし直さない**（次に起こすときから効く値なので、いまの会話には触らない）。
         // 書いて、覚えた値を画面へ流すだけ。

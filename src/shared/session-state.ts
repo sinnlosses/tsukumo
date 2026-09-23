@@ -25,7 +25,12 @@ import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 import { splitIntoTurns } from "./turn.ts"
-import { type UsageReview } from "./usage-review.ts"
+import {
+  type PreviousUsageReview,
+  type UsageReview,
+  type UsageReviewFindings,
+  usageProposalKey,
+} from "./usage-review.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが
@@ -369,6 +374,17 @@ export type SessionState = {
    * 初期値のふだんから始まる（前回の結果を出すのはこの状態ではない）。
    */
   readonly usageReview: UsageReview
+  /**
+   * 前回の見直しの結果。トークン消費の画面の「前回の提案」のリンクが読む
+   * （`docs/glossary.md`「見直し」、`docs/design.md`「見直しのツールと状態」）。
+   *
+   * **{@link usageReview} とは別の状態**——起こし直しでもプロセスの再起動でも消えない
+   * （源は `usage-review-result` が届くたびと、起こしたとき1回だけホームのファイルを
+   * 読む口。持つのは直前の1回だけ）。**`usage-proposal-dismissed` が届くと、見送った提案を
+   * ここからも取り除く**（`前回の提案」を開き直したときに、見送ったはずの札が出ない
+   * ようにするため）。
+   */
+  readonly previousUsageReview: PreviousUsageReview
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -398,6 +414,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   plan: undefined,
   backgroundTasks: [],
   usageReview: { kind: "idle" },
+  previousUsageReview: { kind: "none" },
 }
 
 /**
@@ -636,7 +653,22 @@ export function applySessionEvent(
         },
       }
     case "usage-review-result":
-      return { ...state, usageReview: { kind: "result", reviewedAt: at, findings: event.findings } }
+      return {
+        ...state,
+        usageReview: { kind: "result", reviewedAt: at, findings: event.findings },
+        // **`usageReview` と両方いっぺんに更新する**——結果が届いたその場で「前回の提案」も
+        // 最新になる（次の起動を待たなくても、そのプロセスの中では常に同じものを指す）。
+        previousUsageReview: { kind: "found", reviewedAt: at, findings: event.findings },
+      }
+    case "usage-proposal-dismissed":
+      return {
+        ...state,
+        usageReview: withoutDismissedProposal(state.usageReview, event.key),
+        previousUsageReview: withoutDismissedProposalFromPrevious(
+          state.previousUsageReview,
+          event.key,
+        ),
+      }
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
       // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと
@@ -661,6 +693,31 @@ function usageReviewStartedAt(state: SessionState, at: number): number {
     return state.usageReview.startedAt
   }
   return state.turn.kind === "running" ? state.turn.startedAt : at
+}
+
+/** 見送った提案を結果から取り除く。`result` でなければ何もしない（`idle` / `running` はそのまま）。 */
+function withoutDismissedProposal(review: UsageReview, key: string): UsageReview {
+  return review.kind === "result"
+    ? { ...review, findings: withoutProposal(review.findings, key) }
+    : review
+}
+
+/** 見送った提案を「前回の提案」から取り除く。`found` でなければ何もしない。 */
+function withoutDismissedProposalFromPrevious(
+  previous: PreviousUsageReview,
+  key: string,
+): PreviousUsageReview {
+  return previous.kind === "found"
+    ? { ...previous, findings: withoutProposal(previous.findings, key) }
+    : previous
+}
+
+/** 提案の並びから、識別子（{@link usageProposalKey}）が一致する1件を除く。 */
+function withoutProposal(findings: UsageReviewFindings, key: string): UsageReviewFindings {
+  return {
+    ...findings,
+    proposals: findings.proposals.filter((proposal) => usageProposalKey(proposal) !== key),
+  }
 }
 
 /** ターンの終わりで、結果を渡さずに終わった見直しをふだんへ戻す（結果・ふだんはそのまま）。 */

@@ -6,10 +6,10 @@
 // `docs/coding-standards.md`「外の世界に依存する値」）。cwd には依存させない — どのプロジェクトから
 // 起こしても同じものを読む（相対パスを渡したときだけ、渡した人の意図として cwd 相対で解く）。
 //
-// **`process.env` を読む2箇所めをここに置いた**のは、`tsukumoHomeDir()` を呼ぶのが adapter 5ファイルの
-// 既定引数の中で、配線層（`src/cli.ts` / `src/main.ts`）から設定を渡す道が無いため。配って回ると
-// ホームの下に置き場が1つ増えるたびに配線を足すことになり、足し忘れが**黙って効かない**形で残る
-// （読み取り箇所が2つを超えないことは `test/architecture.test.ts` が見張る）。
+// **`process.env` を読む2箇所めをここに置いた**のは、`tsukumoHomeDir()` を呼ぶのが adapter の
+// 複数ファイルの既定引数の中で、配線層（`src/cli.ts` / `src/main.ts`）から設定を渡す道が無いため。
+// 配って回るとホームの下に置き場が1つ増えるたびに配線を足すことになり、足し忘れが**黙って
+// 効かない**形で残る（読み取り箇所が2つを超えないことは `test/architecture.test.ts` が見張る）。
 
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"

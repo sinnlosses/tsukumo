@@ -50,9 +50,9 @@
     "dependencies": ["T-499"],
     "summary": "見直しの結果を ~/.tsukumo/ に残し、前回の提案と見送りを配る",
     "task": "## 背景\n\n見本 `docs/history/mockup/token-advice-idle-2026-09-23.html` の「減らし方を見てもらう」の横に「前回の提案（[09-16]）」のリンクがあり、`token-advice-result-2026-09-23.html` の提案の札ごとに「見送る」がある。T-499 で見直しの結果を受け取る口と提案の識別子ができる。\n\nホームの記録は `src/server/adapter/` の1ファイル＝1境界に閉じ込めてある（前例: `token-usage-log.ts`・`context-usage-log.ts`。置き場の読み取りは `tsukumo-home.ts`。`TSUKUMO_HOME` で置き場が変わる）。ホームの置き場の一覧は `docs/design.md` の表（「コンテキストの内訳の記録」の行がある表）。\n\n## 決まっていること（蒸し返さない）\n\n- 見直しの結果は `~/.tsukumo/` の下に残し、「前回の提案」から開ける（2026-09-23 ユーザー決定）\n- **見送った提案は次の見直しでも出さない**（照合は T-499 で決めた識別子）\n- 起動したときの区画は「ふだん」の場面で、前回の結果はリンクから開く\n\n## 解くべき論点\n\n- ファイルの形（1回の見直し＝1ファイルか JSONL か）と版の持ち方\n- 「前回の提案」として配る範囲（見本は直前の1回だけ。古いものを消すかどうか）\n- 見送りを取り消す口を作るか（見本に無い。作らないなら、取り消し方を docs に書く）\n\n## やること\n\n1. 記録と見送りの読み書きを `src/server/adapter/` に置く\n2. 見送りのコマンドを `src/shared/command.ts` に足し、前回の提案と見送りの一覧を画面へ配る\n3. T-499 で決めた口で、見送りの一覧がスキルに渡るようにする\n4. `docs/design.md` のホームの置き場の表に行を足す\n\n## 完了条件\n\n- 見直しの結果が書かれ、起動し直したあとに前回の提案として配られるテストがある\n- 見送った提案がスキルへ渡る一覧に載るテストがある（除くのが tsukumo 側なら、次の結果から除かれるテスト）\n- `bun run check` が通る\n\n## 注意\n\n- テストは一時ディレクトリをホームにして行い、実際の `~/.tsukumo/` に触らない\n- 会話の文面を書かない（入るのは見直しの結果だけ）",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（2065 pass / 0 fail, 159ファイル）。previous-usage-review.test.ts・session-manager.test.ts で結果が一時ホームに書かれ、起こし直すと previousUsageReview として配られることを確認。\nusage-review-tool.test.ts で見送った識別子が実ファイル経由でスキルへの一覧に載り次の結果で断られること、usage-review.test.ts で再起動時に前回の結果から見送り済みが除かれることを確認。\n置き場は ~/.tsukumo/usage-review.json と usage-review-dismissed.json（design.md のホームの表）。コマンド dismiss-usage-proposal を追加、PROTOCOL_VERSION 10→11。"
   },
   {
     "id": "T-501",

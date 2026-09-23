@@ -13,8 +13,7 @@
 // 保存するのは**パックの名前と既定の2語だけ**。会話に関わる値をここに混ぜない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { join } from "node:path"
 
 import { z } from "zod"
 
@@ -24,6 +23,7 @@ import {
   SESSION_DEFAULT_PERMISSION_MODES,
   type SessionDefault,
 } from "../../shared/session-default.ts"
+import { readJsonFile, writeJsonFile } from "./lib/json-file.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
 const STATE_FILE_NAME = "state.json"
@@ -97,7 +97,7 @@ export function writeRememberedSessionDefault(
 
 /** 状態ファイルを読む。**読めない欄はその欄だけ undefined**（ファイルごと捨てない）。 */
 function readState(path: string): RememberedState {
-  const parsed = readStateJson(path)
+  const parsed = readJsonFile(path)
   const character = characterStateSchema.safeParse(parsed)
   const sessionDefault = sessionDefaultStateSchema.safeParse(parsed)
   return {
@@ -106,33 +106,12 @@ function readState(path: string): RememberedState {
   }
 }
 
-/** 状態ファイルの JSON。読めない・壊れているときは undefined（どの欄も無いのと同じ扱いになる）。 */
-function readStateJson(path: string): unknown {
-  let content: string
-  try {
-    content = readFileSync(path, "utf8")
-  } catch {
-    return undefined
-  }
-
-  try {
-    return JSON.parse(content)
-  } catch {
-    return undefined
-  }
-}
-
 /**
  * 状態ファイルを書く。**値の無い欄は書かない**（`JSON.stringify` が `undefined` の欄を落とす）
  * ので、一度も覚えていない欄は現れない。
  */
 function writeState(state: RememberedState, path: string): void {
-  try {
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, JSON.stringify(state))
-  } catch {
-    // 書けなかった回は諦めて次へ進む。
-  }
+  writeJsonFile(path, state)
 }
 
 /** 既定の保存先。ホームの場所は `src/server/adapter/tsukumo-home.ts` が持つ（呼んだときだけ読む）。 */

@@ -19,10 +19,10 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に `usageReview`（見直しの状態）を足したことで上げた（古いタブは畳み込みが
- * このフィールドを知らず、提案の区画を出せない）。
+ * 直近は状態に `previousUsageReview`（前回の見直しの結果）を足したことで上げた（古いタブは
+ * 畳み込みがこのフィールドを知らず、「前回の提案」のリンクを出せない）。
  */
-export const PROTOCOL_VERSION = 10
+export const PROTOCOL_VERSION = 11
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
@@ -69,6 +69,7 @@ export const FRAME_ERROR_REASON = {
   nudgeOutsideChat: "話しかけてもらえるのは雑談モードのときだけ",
   forgetRememberedLineFailed: "覚えたことを消せなかった",
   forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
+  usageProposalDismissFailed: "提案を見送れなかった",
 } as const
 
 /**

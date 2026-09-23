@@ -25,6 +25,7 @@ import {
   type CharacterCreateCommand,
   type CharacterDeleteCommand,
   type CharacterEditCommand,
+  type DismissUsageProposalCommand,
 } from "../../../src/shared/command.ts"
 import {
   type ContextUsageReport,
@@ -47,6 +48,7 @@ import {
   type ScopeUsage,
   type TurnUsageBreakdown,
 } from "../../../src/shared/token-usage.ts"
+import { type PreviousUsageReview, usageProposalKey } from "../../../src/shared/usage-review.ts"
 import {
   characterChangedEvent,
   shownOutfitAccents,
@@ -154,6 +156,10 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const remembered: SessionDefault[] = []
   /** 画面の「編集」から消そうとした行（書き先は配線層なので、ここでは積むだけ）。 */
   const forgottenLines: string[] = []
+  /** ホームへ書いた「前回の見直しの結果」（書き先は配線層なので、ここでは積むだけ）。 */
+  const writtenPreviousUsageReviews: readonly [number, unknown][] = []
+  /** 見送った提案の識別子（書き先は配線層なので、ここでは積むだけ）。 */
+  const dismissedUsageProposals: DismissUsageProposalCommand[] = []
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const writtenRemembered = (): SessionEvent | undefined =>
@@ -190,8 +196,26 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
       forgottenLines.push(line)
       return Promise.resolve(writtenRemembered())
     },
+    readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+    writePreviousUsageReview: (reviewedAt, findings) => {
+      ;(writtenPreviousUsageReviews as [number, unknown][]).push([reviewedAt, findings])
+    },
+    dismissUsageProposal: (dismiss) => {
+      dismissedUsageProposals.push(dismiss)
+      return { kind: "usage-proposal-dismissed", key: usageProposalKey(dismiss) }
+    },
   })
-  return { manager, stub, edits, creates, deletes, remembered, forgottenLines }
+  return {
+    manager,
+    stub,
+    edits,
+    creates,
+    deletes,
+    remembered,
+    forgottenLines,
+    writtenPreviousUsageReviews,
+    dismissedUsageProposals,
+  }
 }
 
 function waitForBatch(): Promise<void> {
@@ -337,6 +361,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
 
     const frames: ServerFrame[] = []
@@ -439,6 +469,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
     manager.subscribe(() => {})
 
@@ -514,6 +550,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
     manager.subscribe(() => {})
 
@@ -560,6 +602,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
     releases[0]?.()
     const frames: ServerFrame[] = []
@@ -603,6 +651,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
     manager.subscribe(() => {})
 
@@ -658,6 +712,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
 
     const frames: ServerFrame[] = []
@@ -775,6 +835,12 @@ describe("createSessionManager", () => {
         createCharacter: () => Promise.resolve(undefined),
         deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
       })
       return { manager, stub }
     }
@@ -1169,6 +1235,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
 
     expect(
@@ -1207,6 +1279,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
 
     expect(
@@ -1248,6 +1326,12 @@ describe("createSessionManager", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
 
     expect(await manager.dispatch({ type: "interrupt", commandId: "c-1" })).toEqual({
@@ -1321,6 +1405,12 @@ describe("createSessionManager", () => {
         createCharacter: () => Promise.resolve(undefined),
         deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
       })
       return { manager, stub, archiveCalls, finishTurnCalls }
     }
@@ -1546,6 +1636,12 @@ describe("createSessionManager", () => {
         createCharacter: () => Promise.resolve(undefined),
         deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
       })
       return { manager, stub, entries }
     }
@@ -1829,6 +1925,12 @@ describe("createSessionManager", () => {
         createCharacter: () => Promise.resolve(undefined),
         deleteCharacter: () => Promise.resolve(undefined),
         forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
       })
       return { manager, stub, entries, asked: () => asked }
     }
@@ -2016,6 +2118,12 @@ describe("依頼に添えた画像の棚", () => {
       createCharacter: () => Promise.resolve(undefined),
       deleteCharacter: () => Promise.resolve(undefined),
       forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
     })
     const prompt = (images: readonly PromptImage[]) =>
       manager.dispatch({ type: "prompt", commandId: "c", text: "架空の依頼", images })
@@ -2124,6 +2232,139 @@ describe("createSessionManager（見直し）", () => {
       kind: "result",
       reviewedAt: 1_000,
       findings,
+    })
+  })
+
+  it("受け付けた見直しの結果は previousUsageReview にも同時に載る（ホームへ書く口も1回呼ぶ）", async () => {
+    const { manager, stub, writtenPreviousUsageReviews } = startManagerWithStub()
+    const findings = {
+      days: 7,
+      headline: "架空の冒頭の一言。",
+      proposals: [],
+    } as const
+
+    stub.emit({ kind: "usage-review-result", findings })
+    await waitForBatch()
+
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    const [hello] = frames
+    expect(hello?.type === "hello" ? hello.state.previousUsageReview : undefined).toEqual({
+      kind: "found",
+      reviewedAt: 1_000,
+      findings,
+    })
+    expect(writtenPreviousUsageReviews).toEqual([[1_000, findings]])
+  })
+
+  it("起こしたときにホームから読んだ前回の結果が、最初の hello の previousUsageReview になる", () => {
+    const previous = {
+      kind: "found" as const,
+      reviewedAt: 500,
+      findings: { days: 7, headline: "架空の前回の一言。", proposals: [] },
+    }
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
+      launchSession: () => Promise.resolve(createStubDriver().driver),
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => previous,
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
+    })
+
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    const [hello] = frames
+
+    expect(hello?.type === "hello" ? hello.state.previousUsageReview : undefined).toEqual(previous)
+  })
+
+  it("起こし直しても previousUsageReview は残る（usageReview はふだんへ戻る）", async () => {
+    const { manager, stub } = startManagerWithStub()
+    const findings = { days: 7, headline: "架空の一言。", proposals: [] } as const
+    stub.emit({ kind: "usage-review-result", findings })
+    await waitForBatch()
+
+    await manager.dispatch({ type: "switch-character", commandId: "c-switch", name: "fictional" })
+
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    const [hello] = frames
+    expect(hello?.type === "hello" ? hello.state.usageReview : undefined).toEqual({ kind: "idle" })
+    expect(hello?.type === "hello" ? hello.state.previousUsageReview : undefined).toEqual({
+      kind: "found",
+      reviewedAt: 1_000,
+      findings,
+    })
+  })
+
+  it("見送るとホームへ書く口が1回呼ばれ、いまの結果と前回の提案の両方から取り除かれる", async () => {
+    const { manager, stub, dismissedUsageProposals } = startManagerWithStub()
+    const dismissed = {
+      kind: "session-length",
+      target: "",
+      impact: "medium",
+      title: "見送られる提案",
+      basis: "架空の根拠",
+      action: "架空のやること",
+      followUp: "delegate",
+    } as const
+    const kept = {
+      ...dismissed,
+      kind: "model-choice",
+      target: "sonnet",
+      title: "残る提案",
+    } as const
+    const findings = { days: 7, headline: "架空の一言。", proposals: [dismissed, kept] } as const
+    stub.emit({ kind: "usage-review-result", findings })
+    await waitForBatch()
+
+    const result = await manager.dispatch({
+      type: "dismiss-usage-proposal",
+      commandId: "c-dismiss",
+      kind: dismissed.kind,
+      target: dismissed.target,
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(dismissedUsageProposals).toEqual([
+      {
+        type: "dismiss-usage-proposal",
+        commandId: "c-dismiss",
+        kind: dismissed.kind,
+        target: dismissed.target,
+      },
+    ])
+
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    const [hello] = frames
+    const state = hello?.type === "hello" ? hello.state : undefined
+    expect(state?.usageReview).toEqual({
+      kind: "result",
+      reviewedAt: 1_000,
+      findings: { ...findings, proposals: [kept] },
+    })
+    expect(state?.previousUsageReview).toEqual({
+      kind: "found",
+      reviewedAt: 1_000,
+      findings: { ...findings, proposals: [kept] },
     })
   })
 })

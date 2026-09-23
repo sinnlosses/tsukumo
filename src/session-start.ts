@@ -15,6 +15,10 @@ import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
+  readPreviousUsageReview,
+  writePreviousUsageReview,
+} from "./server/adapter/previous-usage-review.ts"
+import {
   readRememberedSessionDefault,
   writeRememberedSessionDefault,
 } from "./server/adapter/remembered-default.ts"
@@ -25,6 +29,10 @@ import {
   readRestoredEvents,
 } from "./server/adapter/sdk-session.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
+import {
+  readDismissedUsageProposalKeys,
+  writeDismissedUsageProposalKey,
+} from "./server/adapter/usage-proposal-dismissal.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
@@ -42,10 +50,12 @@ import { canResume, sessionTag } from "./server/core/session-restore.ts"
 import { takeSystemPromptAppend, toSystemPromptMode } from "./server/core/system-prompt.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
+import { type DismissUsageProposalCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
 import { type SessionDefault } from "./shared/session-default.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
+import { usageProposalKey, withoutDismissedProposals } from "./shared/usage-review.ts"
 
 export type SessionStartOptions = {
   readonly config: Config
@@ -140,7 +150,26 @@ export function startSession(options: SessionStartOptions): SessionManager {
     createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
     deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
     forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
+    // 前回の見直しの結果は、起こしたときにホームから読んで初期の姿へ差し込む
+    // （`docs/design.md`「見直しのツールと状態」）。書くのは結果が届くたびで、
+    // どちらも既定の置き場（`~/.tsukumo/usage-review.json`）をそのまま使う。読むときに
+    // 見送った提案を除く（見送りは前回の結果のファイルを書き換えないため）。
+    readPreviousUsageReview: () =>
+      withoutDismissedProposals(readPreviousUsageReview(), readDismissedUsageProposalKeys()),
+    writePreviousUsageReview,
+    dismissUsageProposal: (dismiss) => dismissUsageProposal(dismiss),
   })
+}
+
+/**
+ * 提案を1件見送る。**識別子（種類と対象の組）で書き、同じ識別子を返す**（画面はこの識別子で
+ * 札を消す）。書き込みは失敗しても例外を投げないので、返すイベントは常に1つ
+ * （`rememberSessionDefault` と同じ立場）。
+ */
+function dismissUsageProposal(dismiss: DismissUsageProposalCommand): SessionEvent {
+  const key = usageProposalKey(dismiss)
+  writeDismissedUsageProposalKey(key)
+  return { kind: "usage-proposal-dismissed", key }
 }
 
 /**
@@ -189,9 +218,9 @@ function startDriver(options: {
     start: seed.start,
     tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
     mode,
-    // 見送りはまだ記録していないので、スキルへ渡す一覧はいつも空（記録の置き場を足すときに
-    // ここを読み口へ差し替える。docs/design.md「見直しのツールと状態」）。
-    dismissedUsageProposalKeys: () => [],
+    // **段に入るたびに読み直す**（見直しの途中で見送りが増えても効く。
+    // `docs/design.md`「見直しのツールと状態」）。
+    dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
     onEvent,
   })
 }
