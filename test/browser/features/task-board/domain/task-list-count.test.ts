@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
-import { taskListCounts } from "../../../../../src/browser/features/task-board/domain/task-list-count.ts"
+import {
+  taskListCounts,
+  taskListFilterLabel,
+} from "../../../../../src/browser/features/task-board/domain/task-list-count.ts"
 import { type TaskSummaryItem } from "../../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
@@ -56,5 +59,13 @@ describe("taskListCounts", () => {
       { status: "todo", label: "未着手", count: 1 },
       { status: "done", label: "完了", count: 1 },
     ])
+  })
+})
+
+describe("taskListFilterLabel", () => {
+  it("チップと同じ文言を返す", () => {
+    expect(taskListFilterLabel("doing")).toBe("進行中")
+    expect(taskListFilterLabel("todo")).toBe("未着手")
+    expect(taskListFilterLabel("done")).toBe("完了")
   })
 })

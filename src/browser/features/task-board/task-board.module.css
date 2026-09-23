@@ -12,9 +12,10 @@
   color: var(--ink-quiet);
 }
 /* 件数のチップ（サイドバーの見出し「タスク」の下に1行。`components/task-count-chip-list.tsx`）。
-   **押せない**——絞り込みは見出しの「一覧を見る」から開く表の仕事（docs/requirements.md 4.2）。
-   進行中 → 未着手 → 完了の順で、0件でも出す（並びが動かないよう常に3枚。見出しの下との間・
-   進行中カードとの間はどちらも 12px = 区画の中の要素どうしの間隔。
+   **押すとその状態だけに絞る**（1つだけ選べ、もう一度押すと全件に戻る。2026-09-23 決定。
+   それまでは押せず、絞り込みは見出しの「一覧を見る」から開く表の仕事だった
+   〔2026-09-16 決定〕）。進行中 → 未着手 → 完了の順で、0件でも出す（並びが動かないよう常に
+   3枚。見出しの下との間・進行中カードとの間はどちらも 12px = 区画の中の要素どうしの間隔。
    docs/history/mockup/sidebar-tasks-2026-09-23.html）。 */
 .task-count-chips {
   display: flex;
@@ -28,7 +29,7 @@
   display: inline-flex;
   align-items: center;
   height: 22px;
-  padding: 0 0.5rem;
+  padding: 0;
   border-radius: 11px;
   background: var(--surface-raised);
   color: var(--ink-quiet);
@@ -40,6 +41,30 @@
 .task-count-chip-doing {
   background: var(--surface-accent);
   color: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+/* チップを押す口。地は `.task-count-chip` に任せ、ここはボタンとしての振る舞いだけを足す。
+   **選んでいることを色だけで示さない**（docs/design.md 13.1 原則1）ので、選んだときは枠線と
+   太字を足す——進行中のチップは元から差し色の地なので、色の変化だけでは選択と区別できない。 */
+.task-count-chip-button {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 0.5rem;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+.task-count-chip-button[aria-pressed="true"] {
+  border-color: currentColor;
+  font-weight: 700;
+}
+.task-count-chip-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 /* 進行中（doing）のタスクのカード（一覧の先頭。`components/task-running-card.tsx`）。
    2件以上あれば（並行した作業ツリーなど）、この枚数ぶんカードが並ぶ。 */

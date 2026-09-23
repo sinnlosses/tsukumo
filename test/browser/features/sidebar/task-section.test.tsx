@@ -28,6 +28,36 @@ const TASKS: TaskSummaryResult = {
   ],
 }
 
+const MIXED_TASKS: TaskSummaryResult = {
+  kind: "known",
+  items: [
+    {
+      id: "X-001",
+      summary: "架空の未着手",
+      status: "todo",
+      difficulty: "sonnet",
+      loopable: "Y",
+      dependencies: [],
+    },
+    {
+      id: "X-002",
+      summary: "架空の進行中",
+      status: "doing",
+      difficulty: "sonnet",
+      loopable: "Y",
+      dependencies: [],
+    },
+    {
+      id: "X-003",
+      summary: "架空の完了",
+      status: "done",
+      difficulty: "sonnet",
+      loopable: "Y",
+      dependencies: [],
+    },
+  ],
+}
+
 function renderTaskSection(tasks: TaskSummaryResult): void {
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, tasks })
   render(
@@ -94,5 +124,51 @@ describe("TaskSection", () => {
         .queryAllByRole("listitem")
         .filter((item: HTMLElement) => item.className.includes("task-count-chip")),
     ).toHaveLength(0)
+  })
+
+  it("チップを押すとその状態だけに絞る", () => {
+    renderTaskSection(MIXED_TASKS)
+
+    fireEvent.click(inSection().getByRole("button", { name: "未着手 1" }))
+
+    expect(inSection().getByText("架空の未着手")).toBeDefined()
+    expect(inSection().queryByText("架空の進行中")).toBeNull()
+    expect(inSection().queryByText("架空の完了")).toBeNull()
+  })
+
+  it("選んでいるチップをもう一度押すと全件に戻る", () => {
+    renderTaskSection(MIXED_TASKS)
+
+    const chip = inSection().getByRole("button", { name: "未着手 1" })
+    fireEvent.click(chip)
+    fireEvent.click(chip)
+
+    expect(inSection().getByText("架空の未着手")).toBeDefined()
+    expect(inSection().getByText("架空の進行中")).toBeDefined()
+    expect(inSection().getByText("架空の完了")).toBeDefined()
+  })
+
+  it("別のチップを押すと絞り込みが切り替わる", () => {
+    renderTaskSection(MIXED_TASKS)
+
+    fireEvent.click(inSection().getByRole("button", { name: "未着手 1" }))
+    fireEvent.click(inSection().getByRole("button", { name: "完了 1" }))
+
+    expect(inSection().queryByText("架空の未着手")).toBeNull()
+    expect(inSection().getByText("架空の完了")).toBeDefined()
+  })
+
+  it("aria-pressed が選んでいるチップにだけ付く", () => {
+    renderTaskSection(MIXED_TASKS)
+
+    const todoChip = inSection().getByRole("button", { name: "未着手 1" })
+    const doingChip = inSection().getByRole("button", { name: "進行中 1" })
+    expect(todoChip.getAttribute("aria-pressed")).toBe("false")
+    expect(doingChip.getAttribute("aria-pressed")).toBe("false")
+
+    fireEvent.click(todoChip)
+
+    expect(todoChip.getAttribute("aria-pressed")).toBe("true")
+    expect(doingChip.getAttribute("aria-pressed")).toBe("false")
   })
 })

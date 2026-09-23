@@ -67,9 +67,8 @@ export function MainView(): ReactElement {
       {activeTurn !== undefined && (
         <article className={styles["turn-card"]}>
           <TurnHeader
-            turnIds={turns.map((turn) => turn.id)}
+            turns={turns.map((turn) => ({ id: turn.id, title: turnTitle(turn) }))}
             activeTurnId={activeTurn.id}
-            title={turnTitle(activeTurn)}
             onSelect={selectTurn}
           />
           <div className={styles["turn-body"]}>

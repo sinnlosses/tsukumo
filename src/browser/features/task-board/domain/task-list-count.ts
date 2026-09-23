@@ -11,6 +11,16 @@ export type TaskListCountItem = {
   readonly count: number
 }
 
+/** チップの絞り込みで選べる値。3チップの `status` と同じ3つだけ（`domain/task-sidebar-filter.ts` が読む）。 */
+export type TaskListFilterStatus = TaskListCountItem["status"]
+
+/** チップの並び（進行中 → 未着手 → 完了）と文言。件数はここでは持たない（`taskListCounts` が足す）。 */
+const CHIP_ORDER = [
+  { status: "doing", label: "進行中" },
+  { status: "todo", label: "未着手" },
+  { status: "done", label: "完了" },
+] satisfies readonly { readonly status: TaskListFilterStatus; readonly label: string }[]
+
 /**
  * サイドバーの「タスク一覧」のチップ。**進行中 → 未着手 → 完了の順で、0件でも出す**
  * （モックの3チップが常に並ぶ形に合わせる。`taskListTitle` 時代の「0件は足さない」は
@@ -20,12 +30,16 @@ export type TaskListCountItem = {
  * （`features/sidebar/task-section.tsx`）が持ち、ここは件数を数えられる並びだけを受ける。
  */
 export function taskListCounts(items: readonly TaskSummaryItem[]): readonly TaskListCountItem[] {
-  const { todo, doing, done } = taskStatusCounts(items)
-  return [
-    { status: "doing", label: "進行中", count: doing },
-    { status: "todo", label: "未着手", count: todo },
-    { status: "done", label: "完了", count: done },
-  ]
+  const counts = taskStatusCounts(items)
+  return CHIP_ORDER.map((chip) => ({ ...chip, count: counts[chip.status] }))
+}
+
+/**
+ * 絞り込んだ状態が0件になったときの一言（`task-list.tsx`）に添える、チップと同じ文言。
+ * 3チップ以外の値は渡らない（呼ぶ側が選んだ状態だけを渡す）。
+ */
+export function taskListFilterLabel(status: TaskListFilterStatus): string {
+  return CHIP_ORDER.find((chip) => chip.status === status)?.label ?? status
 }
 
 /** todo / doing / done の件数を、全件を1回だけ走査して数える。 */
