@@ -370,8 +370,8 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
 
 /**
  * 切り替え先として選べるセッションを一覧にする（画面のセッションの `<select>`。
- * `docs/requirements.md` 4.8）。**同じ作業ディレクトリの、いまの部屋の印**（同じパック・同じ
- * モード・同じ目印）を持つものだけが残り、**新しい順**に並ぶ。
+ * `docs/requirements.md` 4.8）。絞り込みと並びは `src/server/core/session-restore.ts` の
+ * `listMarkedSessions` が決める。
  *
  * 絞り込みの鍵も `includeWorktrees` を入れる理由も {@link findSessionToResume} と同じで、違うのは
  * 「最新の1つ」ではなく「同じ印を持つものを全部」返すところだけ。

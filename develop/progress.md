@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 同じ前提はコメント1か所に書く規約を足し、セッションの印の説明の重なりを畳んだ（T-414）
+
+`docs/coding-standards.md`「コメント」節に規約を足した。印の読み戻しは `config.ts` の `sessionTag`、絞り込みと並びは `session-restore.ts` の `listMarkedSessions` を正典にし、ほかの4か所は参照に畳んだ（コードは不変）。
+
 ### 2026-09-23 版の合わない hello の知らせに、部品のテストを足した（T-410）
 
 `hello` の `protocolVersion` の照合と知らせの部品は、別のセッションが不具合対応のコミット（`2b1cfa6`）で先に入れていた。欠けていた `ProtocolMismatch` の部品のテストだけを足して完了条件を満たした。
