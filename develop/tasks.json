@@ -11,17 +11,6 @@
     "evidence": ""
   },
   {
-    "id": "T-475",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-489"],
-    "summary": "report ツールを常に載せ、終わりの並びを report → 締めの speak → 1行に変える",
-    "task": "## 背景\n\nT-474 の試行で `report` ツールの採用が決まったら（**不採用なら、やらずに理由を evidence に書いて閉じる**）、試行の切り替えを外して仕事モードでは常に `report` で受け取る形にする。\n\n今の終わり方は「締めの `speak`（これから書くことの予告）→ レポート（本文で終える）」（`src/server/core/report-notation.ts` の条、`characters/*/persona.md` の締めの例）。締めのセリフを予告に限ったのは、本文で終えないと Claude Code 本体が英語の催促を差し込むため（2026-09-23 決定）。`report` はツール呼び出しの時点で中身が確定するので、締めのセリフを `report` のあとに置けば、読めるレポートへの反応として言える。\n\nT-461 の「書いている」の動き（`src/shared/portrait-motion.ts` の `resolvePortraitMotion`。材料は `hasPartialUtteranceAfterSpeech`）は、**締めの `speak` のあとに本文が伸びている間**を前提にしている。\n\n## 決まっていること（蒸し返さない）\n\n- 並びは `report` → 締めの `speak`（完了の一言）→ 1行のテキスト（出さない）（Q10 の β）。締めのセリフを予告に限った 2026-09-23 の決定は戻す\n- 記法の文面から「結論から書く」（10か条の条1）と「お願いはいちばん最後に1つ」の条を外す（`conclusion` と `favor` の欄が型で持つ）\n- 雑談モードには載せない\n- メインがサブエージェントの `SendMessage` を受けて `speak` で状況を伝える流れは変えない\n\n## 解くべき論点\n\n1. 「書いている」の動きの発火条件: `report` の引数が流れてくる間（`includePartialMessages` の部分メッセージ）を材料にするのか、並びが変わって待ちの間がほぼ無くなるので外すのか。外すなら `docs/glossary.md`「書いている」と `docs/design.md` 6.5 も直す\n2. 1行のテキストに何を書かせるか（中身は問わない、と書くだけで足りるか）\n\n## やること\n\n1. T-473 の切り替えの口を外し、仕事モードでは常に `report` を載せる。`README.md` の環境変数の表と `--help` から試行用の行を消す\n2. `report-notation.ts` の終わり方の条・10か条・「送る前に消すもの」、`persona.md`（2パック）の締めの例を新しい並びに書き直す\n3. 論点1を決めて `portrait-motion.ts` とテストを直す\n4. `docs/display.md` 4.2 の「出力の分離（セリフと詳細）」「メインビュー」の項を、レポートは `report` ツールで受け取る形に直す（受け皿の縮小は T-476）\n\n## 完了条件\n\n- 仕事モードのセッションで `report` が常に載り、雑談モードでは載らない（テストで検査）\n- `grep -rn 'TSUKUMO_REPORT_TOOL' src README.md` が0件（試行の口の名前が違えばその名前で）\n- `report-notation.ts` に「締めの `speak` → レポートの順で終える」の条が無く、`report` → 締めの `speak` の並びの条がある（テストで検査）\n- 疑似セッションで最終レポートと締めのセリフの並びを目視で確かめ、evidence に書く\n- `bun run check` が通る\n\n## 注意\n\n- `~/.tsukumo/characters/` の同名パックが同梱パックを覆う。画面で確かめるならホーム側も見る\n- `docs/` の編集は節の索引に当たらないよう行頭から位置を特定する",
-    "status": "done",
-    "passes": true,
-    "evidence": "試行の切り替え（TSUKUMO_REPORT_TOOL・ReportChannel・規約の差し替え表）を撤去し、仕事モードは常に report を載せる（test/server/adapter/sdk-tool.test.ts が MCP tools/list で仕事=[speak,report]・雑談=[speak] を検査）。grep -rn TSUKUMO_REPORT_TOOL src README.md は0件。\n規約を report → 締めの speak → 「完了」の1行に書き直し（report-notation.test.ts）。論点1は report の引数が流れる間を材料にし、report-drafting イベント → SessionState.reportDrafting → 立ち絵の writing。論点2は最後の1行を「完了」に固定。\n疑似セッション（fake driver・ポート47591・一時ホーム・Playwright）で writing → 中間 → 締めのセリフ → 最終レポートの順を目視。bun run check: 1999 pass / 0 fail（155ファイル）。"
-  },
-  {
     "id": "T-476",
     "difficulty": "opus",
     "loopable": "Y",
@@ -42,50 +31,6 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-489",
-    "difficulty": "opus",
-    "loopable": "N",
-    "dependencies": ["T-486", "T-487", "T-488"],
-    "summary": "関所とパイプラインを入れた report を実セッションで試し直す",
-    "task": "## 背景\n\nT-474 の試行は合格条件1を満たさなかった（`docs/research/report-tool-trial.md`）。2026-09-23 のユーザーの方針（仕組み化につながるなら採用し、穴は塞ぐ手段を考える）で、T-486（`Stop` の関所）・T-487（検査して差し戻す）・T-488（整形）を入れてから同じ3条件で試し直す。\n\n数え方は `docs/research/report-tool-trial.md`「数え方」と同じ: `~/.claude/projects/<作業ツリー>/<セッション>.jsonl` から**構造だけ**（ツールの名前・回数・呼び出し元・テキストの長さと行数・並び）を数える。区切りは SDK のターン（依頼で始まるものと、サブエージェントの合図で始まるもの）。\n\n## 決まっていること（蒸し返さない）\n\n- 合格条件は T-474 と同じ3つ: (1) `report` の呼び忘れ（最後の `report` のあとに1行を超える本文で終えたターン）が1件以下 (2) 委譲中、合図を `speak` で言い直す流れが途切れない (3) `body` の中のフェンス・表・HTML が今と同じに描ける\n- 実セッションを10ターン程度回す。サブエージェントへ委譲するターンを必ず含める\n- 3つとも満たせば採用し、T-475 以降へ進む。満たさなければ、穴の形を research に書き、塞ぐ手段を利用者と決める（不採用にするかも利用者が決める）\n- 合否の条件ではないが記録するもの: 関所の `block` の回数、検査の差し戻しの回数、それで増えた往復\n\n## やること\n\n1. 利用者に `TSUKUMO_REPORT_TOOL=1`・別ポート・別の `TSUKUMO_HOME` で tsukumo を起こしてもらい、普段の仕事を10ターン程度してもらう\n2. 構造を数える（本文は写さない）\n3. `docs/research/report-tool-trial.md` に「試し直し」の節を足し、3条件の合否と数を書く\n4. 採否を利用者に確かめる\n\n## 完了条件\n\n- `docs/research/report-tool-trial.md` に試し直しの数と3条件の合否がある\n- 採否を利用者が確かめたことを `evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- **会話内容をログ・テストのフィクスチャ・`evidence` に写さない**（`CLAUDE.md`「会話内容の扱い」。他のどの規約よりも優先する）\n- 利用者が実際に仕事をするターンが要る（`loopable` が `\"N\"` の理由）",
-    "status": "done",
-    "passes": true,
-    "evidence": "docs/research/report-tool-trial.md「試し直し」: 16ターン（依頼6・合図10、tsukumo-2 da883290 と tsukumo-4 7289cd6b の構造だけ）で呼び忘れ 6→0・合図の speak 10/10・表と HTML は利用者の目視で崩れなし（フェンスは0件で未確認）。関所の block 4回・検査の差し戻し 4回・増えた応答15。2026-09-24 に利用者が採用と決め、block のあと同じ引数で送り直して抜けた穴（2回）は T-505 で塞ぐ。bun run check: 1937 pass / 0 fail"
-  },
-  {
-    "id": "T-491",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-490"],
-    "summary": "編集コマンドに対象のパック名を持たせ、使用中以外も直せるようにする",
-    "task": "## 背景\n\n2026-09-23 のユーザー決定で、キャラクター画面の一覧で使用中以外のパックを選んだら、その詳細を開いて**編集もできる**ようにする（見本 `docs/history/mockup/character-screen-2026-09-23.html`）。\n\nいまの編集コマンド（`src/shared/command.ts` の `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` / `clear-chat-accent` / `set-background` / `clear-background`。一覧は `isCharacterEditCommand`）は対象のパックを持たず、サーバは**使用中のパック**に書き込む（`src/server/adapter/character-edit.ts` の `editCharacterPack`。書く前に `copyPackOnce` で同梱のパックをホームへ写す）。\n\n## 解くべき論点\n\n- コマンドにパック名を必須で持たせるか（使用中を暗黙にしない）。形の検査は `isCharacterPackName`（`src/shared/character.ts`）と一覧との突き合わせ\n- 使用中以外を直したときは**起こし直さない**。使用中を直したときの今の挙動（画面への反映の仕方）は変えない\n- 直したあとに一覧の情報（T-490）を配り直す\n- 無いパック・画面から変えられないパック（起動先の `characters/local`）を指されたときの断り方（定型文の `error`。`FRAME_ERROR_REASON`）\n\n## やること\n\n1. コマンドの形を変え、ブラウザ側の送り手（`src/browser/features/character-screen/hooks/use-character-edit.ts`）を追随させる（この時点では使用中のパック名を入れて送るだけでよい）\n2. サーバで対象のパックを引いて書き込む。同梱のパックならホームへ写してから書く今の手順を、対象のパックに対して行う\n3. `docs/design.md` 7.1 を書き直す\n\n## 完了条件\n\n- 使用中以外のパックの立ち絵・差し色・背景を変えると、`~/.tsukumo/characters/<そのパック>/` の下だけが書き変わり、セッションが起こし直されないテストがある\n- 使用中のパックを変えたときの今のテストがそのまま通る\n- 無いパック・`characters/local` を指したコマンドが断られるテストがある\n- `bun run check` が通る\n\n## 注意\n\n- 書き込み先はホームの下だけ（同梱の `characters/` と起動先の `characters/local` を書き換えない）",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check: 1973 pass / 0 fail（154ファイル）。編集コマンド7種に必須の pack（isCharacterPackName）を足し、editCharacterPack が findCharacterPack で一覧から引いて書く（使用中のときだけ持ち替え）。test/server/adapter/character-edit.test.ts に使用中以外のパックはホームの下だけ書く・無い名前・local を断る、session-manager.test.ts に起こし直さないテストを追加"
-  },
-  {
-    "id": "T-492",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": ["T-490"],
-    "summary": "キャラクターを消すコマンドを足す（ホームのパックだけ・使用中は断る）",
-    "task": "## 背景\n\n見本（`docs/history/mockup/character-screen-2026-09-23.html` の最下部の赤い帯と `character-delete-2026-09-23.html` のダイアログ）で、キャラクターを消せるようになる。見本の文言: 「表情・差し色・背景もいっしょに消えます。使用中のキャラクターは、先に別のキャラクターに切り替えてから消せます。」「消したあとは元に戻せません。」\n\nいまはパックを消すコマンドが無い（`src/shared/command.ts`）。パックの置き場は同梱の `characters/`・ホームの `~/.tsukumo/characters/`・起動先の `characters/local` の3つで、同名は後勝ち（`src/server/adapter/character-pack.ts` の `listCharacterPacks`）。画面で同梱のパック（tsukumo など）を直すと、ホームに丸ごと写ってから書かれる（`src/server/adapter/character-edit.ts` の `copyPackOnce`）。\n\n## 決まっていること（蒸し返さない）\n\n- 使用中のパックは消せない（画面は口を押せなくし、サーバも断る）\n- id を打って確かめるのは画面の側（T-497）。サーバはパック名を受けて消すだけ\n\n## 解くべき論点\n\n- 消せる範囲: ホームのパックだけを消す。**同梱と同名のホームのパック**（同梱を画面で直したもの）を消すと同梱のものが一覧に戻る——これを「消す」と見せるか「同梱に戻す」と見せるか、あるいは消す口を出さないかを決め、画面が出し分けられるフィールドで T-490 の一覧に載せる。同梱だけ・`characters/local` のパックは消す口を出さない\n- パックに紐づくほかの記録（ホームの雑談の要約 `src/server/adapter/chat-summary.ts` はパック名ごとのファイル。会話のアーカイブ `chat-archive.ts`・人格の書き戻し `persona-memory.ts`）を一緒に消すか残すか。残すなら、同じ id で作り直したときに古い記録を拾う問題をどう扱うか\n- 消す範囲をホームの下に閉じ込める確かめ方（パス名の組み立てを外から受け取らない今の方針を保つ）\n\n## やること\n\n1. 論点を決め、`docs/design.md` 7.1 に書く\n2. コマンドを足し、サーバで消して一覧を配り直す\n3. 論点の結論を画面が読めるフィールドにする\n\n## 完了条件\n\n- ホームのパックが消え、一覧から消えるテストがある\n- 使用中・同梱だけ・`characters/local`・無いパックを指したときに断られ、ファイルが残るテストがある\n- 消すのがホームの下だけであることを確かめるテストがある（別の置き場の同名ディレクトリが残る）\n- `bun run check` が通る\n\n## 注意\n\n- テストは一時ディレクトリをホームにして行い、実際の `~/.tsukumo/` に触らない",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check: 1990 pass / 0 fail（154 files）。削除は test/server/adapter/character-edit.test.ts の deleteCharacterPack 7件（ホームだけ消える・同梱に戻る・使用中/同梱だけ/local/一覧外は断りファイルが残る・リンクだけ消える）。\n一覧の deletable を removal: \"delete\"|\"revert-to-bundled\"|\"none\" に置換（src/shared/character.ts・character-pack.ts の characterPackRemoval）。\"delete\" のときだけ雑談の要約とアーカイブも消す（discardChatSummary/discardChatArchive）。\n論点の結論は docs/design.md 7.1「消すときの細部」。画面（帯とダイアログ）は T-497。"
-  },
-  {
-    "id": "T-493",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-490"],
-    "summary": "名前とひとことを変える口を足し、作る口に id・雑談の差し色を足す",
-    "task": "## 背景\n\n見本（`docs/history/mockup/character-screen-2026-09-23.html` の「名前とプロフィールを変える」と、`character-create-2026-09-23.html` の作るダイアログ）で、キャラクターの表示名とひとことプロフィールを画面から変え、作るときに**名前（画面や吹き出しに出る名前）と id（保存するフォルダの名前）を分けて**受け取り、画面の差し色を仕事・雑談の2色で受け取る。\n\nいまの `create-character`（`src/shared/command.ts`）は `name`（＝ディレクトリ名。`newCharacterPackNameSchema`）・`portraits.default`・`accent` の3つで、表示名を持たない。定義（`src/shared/character-definition.ts` の `CharacterDefinition`）は `name`・`tagline`（ひとことプロフィール）・`chatAccent` を持っている。表示名とひとことを変えるコマンドは無い。\n\n## 決まっていること（蒸し返さない）\n\n- id は作ったあと変えない（名前とひとことだけ変えられる）\n- 作っても自動では切り替えない（今の `docs/design.md` 7.1 のまま）\n\n## やること\n\n1. `create-character` を id・名前・いつもの顔の立ち絵・仕事の差し色・雑談の差し色に分ける。名前が空なら id を名前に使うか、必須にするかは見本（プレースホルダ「例：tsukumo」）と今の定義の扱いから決めて `docs/design.md` 7.1 に書く\n2. id の形は今の `isCharacterPackName` のまま（見本の説明文「英数字とハイフン」は画面の側で規則に合わせて直す。T-495）\n3. 名前とひとことを変えるコマンドを足す（対象のパック名を持つ。T-491 と同じ形）。書いたら一覧を配り直す\n4. ブラウザ側の今の作る画面（`src/browser/features/character-screen/hooks/use-character-create.ts`）を新しい形で送るよう追随させる（見た目はまだ変えない）\n\n## 完了条件\n\n- 作ったパックの `character.json` に名前・`chatAccent` が入り、ディレクトリ名が id になるテストがある\n- 名前とひとことを変えると定義が書き変わり、一覧に反映されるテストがある\n- `bun run check` が通る",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check: 2010 pass / 0 fail（154 files）。test/server/adapter/character-edit.test.ts の「ホームに id のディレクトリを作り、必須の1枚・画面の差し色2つ・定義を書く」「id とは別の表示名を指定すると character.json に書かれる」「名前とひとことプロフィールを差し替える（set-profile。ほかのキーは残る）」。\ncreate-character を id・name・portraits.default・accent・chatAccent に分け（名前が空なら name を書かず id に落ちる）、set-profile（pack・name・tagline）を編集コマンドに足した（src/shared/command.ts）。\n決定は docs/design.md 7.1「新しく作るときの細部」。作る画面は見た目を変えず新しい形で送るだけ（use-character-create.ts）。"
   },
   {
     "id": "T-494",
@@ -207,16 +152,5 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-505",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "関所のあとに受理済みの report を同じ引数で送り直して抜ける穴を塞ぐ",
-    "task": "## 背景\n\n`report` ツールの試し直し（`docs/research/report-tool-trial.md`「試し直し」）は3条件とも満たし、2026-09-24 に利用者が採用と決めた。ただし `Stop` の関所の `block` 4回のうち2回は、**止められた本文を `report` に入れず、そのターンで受理済みの `report` を同じ引数で送り直して関所を抜けた**（「残った穴の形」の1つ目）。関所は `stop_hook_active` のときは2回目を止めないので、止めた本文（364字・5行と217字・1行）は画面に出ないまま終わり、同じ `report` の記録が2回積まれて前の1回が中間レポートになった。\n\n関連する実装: 関所は `src/server/core/report-tool.ts` の `createReportGate` と `REPORT_GATE_REASON`（登録は `src/server/adapter/sdk-driver.ts` の `reportGateHooks`）、検査と差し戻しは `src/server/core/report-review.ts`（`judge` / `pass`）と `src/server/core/report-violation.ts`、描画は `src/shared/main-view.ts`。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-24 の利用者の決定: `report` ツールは採用し、この穴は仕組みで塞ぐ\n- 関所の判定（最後の `report` のあとに1行を超える本文で止まろうとしたら `block`）と、`stop_hook_active` のときは止めない（ループさせない）は変えない\n- 戻り値・理由文に会話の文面を写さない（固定の文面と数だけ）\n\n## 解くべき論点\n\n1. **どこで塞ぐか**: 候補は (a) 関所の理由文で「止めた本文の中身を `report` に入れて呼び直す。前の `report` を同じ引数で送り直さない」と明示する (b) 同じターンで受理済みの `report` と同じ引数の呼び出しを検査で差し戻す（`report-review.ts` の `judge` に前回の引数を覚えさせる。差し戻しの1回の枠と別に数えるか） (c) 同じ引数の送り直しを描画で1つに畳む（二重の記録は消えるが、止めた本文は戻らない）。(a) だけでは推測に頼るので、(b) を主に (a) を添える形を推す\n2. **「同じ引数」の判定**: 完全一致にするか、`conclusion` と `body` の前後の空白を無視するか\n3. **(b) で差し戻したあとも送り直したとき**: 2回目は通すか（1ターンに1回までの既存の枠との関係）\n\n## やること\n\n1. 論点を決めて塞ぐ\n2. テストを足す: 同じ引数の送り直しを差し戻す / 中身の違う呼び直しは通す / 差し戻しの回数の上限 / 切り替えないとき（`TSUKUMO_REPORT_TOOL` 未設定）は変わらない\n3. `docs/research/report-tool-trial.md`「試し直しの判定」に、塞いだ手段を1行足す\n\n## 完了条件\n\n- 上の2のテストが通り、既存テストが無修正で通る\n- `bun run check` が通る\n\n## 注意\n\n- **会話内容をログ・テストのフィクスチャ・`evidence` に写さない**（`CLAUDE.md`「会話内容の扱い」。他のどの規約よりも優先する）\n- 実セッションでの確かめは要らない（効いたかは次に `report` を使うセッションの構造で見る）",
-    "status": "done",
-    "passes": true,
-    "evidence": "report-review.ts: 同じターンで描いた report と同じ引数（3欄の前後の空白を無視）の呼び出しを、規約違反とは別枠で1ターン1回まで固定の一文で差し戻す。report-tool.ts の REPORT_GATE_REASON に送り直し禁止の1文。\n足したテスト10件（report-review 9・report-tool 1）。既存テスト無修正。docs/research/report-tool-trial.md「試し直しの判定」と docs/display.md 4.2 に1行ずつ追記。\nbun run check: typecheck・lint・format:check 通過、1983 pass / 0 fail（154ファイル）。"
   }
 ]
