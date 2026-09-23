@@ -83,9 +83,9 @@
     "dependencies": ["T-431"],
     "summary": "文字列の UTF-8 バイト長を数える関数が4か所にあるのを1つにする",
     "task": "## 背景\n\n`new TextEncoder()` を持ってバイト長を数える関数が4か所で書かれている:\n\n- `src/server/core/token-usage.ts` の `byteLength`\n- `src/server/adapter/chat-archive.ts` の `byteLength`\n- `src/server/adapter/chat-summary.ts` の `byteLength`\n- `src/shared/chat-log.ts`（`textEncoder` を持って数えている）\n\nどれも「読み戻す量の上限」「雑談のログの走行合計」「ツールの結果の長さ」の物差しで、同じ定義（UTF-8 のバイト数）であることが前提になっている。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. 4か所が同じ定義で数えていることを確かめる\n2. 1つに寄せる。置き場は `docs/design.md` 2章「`lib/` と `utils/` に置く基準」で決める（`TextEncoder` は ECMAScript の組み込みではなくサーバとブラウザの両方にある実行環境の API。`shared` と `core` の両方から読むので `shared` の中に置くことになる。基準の表のどちらに当たるかを決めて、判断を `evidence` に1行書く）\n3. 4か所をそれに寄せる\n\n## 完了条件\n\n- `grep -rn 'new TextEncoder' src` が1件\n- 寄せた関数にテストがある\n- `bun run check` が通る",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "4か所（core/token-usage.ts・adapter/chat-archive.ts・adapter/chat-summary.ts・shared/chat-log.ts）はどれも TextEncoder().encode(text).length で同じ定義だった。src/shared/lib/byte-length.ts の byteLength に寄せ、test/shared/lib/byte-length.test.ts を足した。\n置き場の判断: TextEncoder は ECMAScript の組み込みではない実行環境の API なので design.md 2章の表の「ライブラリを包む道具」＝ lib/。core と shared の両方から読むので層は shared。\ngrep -rn 'new TextEncoder' src → 1件。bun run check: 1722 pass / 0 fail（140ファイル）"
   },
   {
     "id": "T-433",

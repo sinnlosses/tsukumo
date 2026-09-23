@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
+
+4か所で書き写していた `TextEncoder` のバイト数の数え方を `src/shared/lib/byte-length.ts` の `byteLength` に寄せた。実行環境の API を包む道具なので `lib/`、`core` と `shared` の両方から読むので `shared` に置いた。
+
 ### 2026-09-23 日付ごとの jsonl の読み書きを1つにまとめた（T-431）
 
 `token-usage-log.ts`・`chat-archive.ts`・`context-usage-log.ts` が書き写していた追記・日付のファイル名の列挙・行の JSON 読み出しを `src/server/adapter/lib/jsonl.ts` に寄せた。スキーマの検証と索引・読み戻しの形は各ファイルに残した。
