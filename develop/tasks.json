@@ -17,9 +17,9 @@
     "dependencies": ["T-332"],
     "summary": "覚えていることをチップで出し、画面から1行ずつ消せるようにする",
     "task": "## 背景\n\n雑談中のサイドバー（モック `docs/history/mockup/chat-sidebar-2026-09-23.png`、器は T-332）の「覚えていること」と「編集」。中身はパックの `persona.md` の末尾の `## 覚えたこと` の箇条書きで、書き足すのも忘れるのも雑談中のキャラクター自身（`remember` / `forget` ツール。`src/server/core/chat-manner.ts`、ファイルに触るのは `src/server/adapter/persona-memory.ts`。`docs/design.md` 7.1「覚えたことを人格に書き足す・1行だけ忘れる」）。**画面から `persona.md` を触る口は無い。** 各行は1〜2文で、種類は付いていない。\n\n## 決まっていること（蒸し返さない）\n\n- **1行＝チップ1つ。行の頭を短く切って出し、押す（か重ねる）と全文**（書き方は変えない。種類で分ける案は採らなかった）\n- **「編集」でできるのは1行ずつ消すことだけ**。消し方は `forget` と同じ（`persona-memory.ts` の忘れる口を使う）。書き足しは雑談の中で\n- 消した行は戻せない（7.1 は世代バックアップを採らない）ので、消す前に確認を出す\n\n## 解くべき論点\n\n- チップに切る長さと、全文の出し方（`title` か、押して開くか）\n- 「編集」を押したときの形（チップに × が付く編集の状態にするか、一覧を開くか）\n- 覚えたことをブラウザへどう届けるか（`SessionState` に載せるか。書き足し・忘れたときに送り直す）と、ブラウザから消すコマンド（`src/shared/` の契約）\n- ターン中に消されたとき（キャラクターが同時に `forget` / `remember` しているとき）の扱い\n\n## やること\n\n1. 覚えたことの読み取りと、消すコマンドの契約を足す（消すのは `persona-memory.ts` の既存の忘れる口を通す）\n2. チップ・全文・「編集」・消す前の確認を作る\n3. `docs/design.md` 7.1 / 13.7 と `docs/requirements.md` 4.9 に「画面から1行ずつ消せる」を書く\n4. テスト: 覚えたことがチップに出る / 消すと確認のあと送られ、その行だけが消える / `## 覚えたこと` より前は触らない（既存の忘れる口の約束）\n\n## 完了条件\n\n- 上のテストがある（フィクスチャは作った文面）\n- `bun run check` が通る\n- 目視（一時の `TSUKUMO_HOME` に置いたパックで）: チップが出て全文が読め、「編集」から1行消すと確認のあと消え、`persona.md` からもその行だけが消えている。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 雑談の要約・覚えたこと・会話は利用者の会話から来たもの。テストのフィクスチャに実物を使わない、ログに全文を出さない（`docs/coding-standards.md`「会話内容の扱い」）\n- 同梱パックと利用者の `~/.tsukumo/characters/` の `persona.md` を目視のために書き換えない\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check: 1677 pass / 0 fail（136ファイル）。追加テスト: test/browser/features/sidebar/persona-memory-section.test.tsx（チップ・全文・編集・確認・送信）、test/server/adapter/persona-memory.test.ts の readRememberedLines / forgetRememberedLineFromScreen（その行だけ消える・節より前は触らない）。\n契約: SessionState.rememberedLines + remembered-lines-changed、コマンド forget-remembered-line（PROTOCOL_VERSION 6→7）。チップは先頭20文字+…で押すと全文、「編集」でチップに × と確認ダイアログ。\n目視（TSUKUMO_DRIVER=fake・一時 TSUKUMO_HOME の複製パック・Playwright）: チップ3件、長い行は切れて押すと全文、「編集」→×→キャンセルは無変化、「消す」でその1チップと persona.md のその1行だけが消えた（節より前と残り2行は無変化）"
   },
   {
     "id": "T-401",

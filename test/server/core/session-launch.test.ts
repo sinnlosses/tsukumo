@@ -33,6 +33,9 @@ const CHOICES = [
 // 最近の話題の見出し（作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
 const CHAT_TOPICS = ["架空の話題その1", "架空の話題その2"] as const
 
+// 覚えたことの一覧（作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
+const REMEMBERED_LINES = ["架空の覚えたことその1"] as const
+
 /** 起こされたことと閉じられたことだけを覚える fake driver 相当のスタブ。 */
 function createStubDriver(): { readonly driver: SessionDriver; readonly calls: string[] } {
   const calls: string[] = []
@@ -96,6 +99,10 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     readChatTopics: (pack) => {
       calls.push(`readChatTopics:${pack.name}`)
       return CHAT_TOPICS
+    },
+    readRememberedLines: (pack) => {
+      calls.push(`readRememberedLines:${pack.name}`)
+      return REMEMBERED_LINES
     },
     watchTasks: () => ({ close: () => calls.push("watchTasks:close") }),
     findResumeSession: (pack, chat) => {
@@ -254,6 +261,7 @@ describe("createSessionLaunch", () => {
     expect(harness.calls).toEqual([
       "choosePack:initial",
       "readChatTopics:tsukumo-spirit",
+      "readRememberedLines:tsukumo-spirit",
       "readSessionDefault",
       "findResumeSession:tsukumo-spirit:chat",
       "listSessions:tsukumo-spirit:chat",
@@ -280,7 +288,25 @@ describe("createSessionLaunch", () => {
     })
   })
 
-  it("仕事で起こすときは写しを読まず、最近の話題も流さない", async () => {
+  it("雑談で起こすと、覚えたことの一覧を chat-topics-changed のあとに流す", async () => {
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: true,
+      resume: { by: "latest" },
+    })
+    await settle()
+
+    const kinds = harness.driverEvents.map((event) => event.kind)
+    expect(kinds.indexOf("remembered-lines-changed")).toBe(kinds.indexOf("chat-topics-changed") + 1)
+    expect(harness.driverEvents).toContainEqual({
+      kind: "remembered-lines-changed",
+      lines: REMEMBERED_LINES,
+    })
+  })
+
+  it("仕事で起こすときは写しを読まず、最近の話題も覚えたことも流さない", async () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
@@ -291,7 +317,9 @@ describe("createSessionLaunch", () => {
     await settle()
 
     expect(harness.calls.some((call) => call.startsWith("readChatTopics:"))).toBe(false)
+    expect(harness.calls.some((call) => call.startsWith("readRememberedLines:"))).toBe(false)
     expect(harness.events.some((event) => event.kind === "chat-topics-changed")).toBe(false)
+    expect(harness.events.some((event) => event.kind === "remembered-lines-changed")).toBe(false)
   })
 
   it("起動時（画面から選んでいないとき）は覚えない", async () => {
@@ -323,6 +351,7 @@ describe("createSessionLaunch", () => {
     expect(harness.calls).toEqual([
       "choosePack:current",
       "readChatTopics:tsukumo-spirit",
+      "readRememberedLines:tsukumo-spirit",
       "readSessionDefault",
       "findResumeSession:tsukumo-spirit:chat",
       "listSessions:tsukumo-spirit:chat",

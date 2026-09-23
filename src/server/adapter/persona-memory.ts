@@ -15,10 +15,16 @@
 // 上限に当たった回も、消す行が見つからなかった回も**何も知らせない**（呼び出し側が返すのは
 // `"ok"` だけ）。失敗しても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
+//
+// **画面の「編集」から1行消す口（{@link forgetRememberedLineFromScreen}）もここに置く**
+// （`docs/design.md` 7.1「1行だけ忘れる」）。キャラクター自身の `forget`（{@link PersonaMemory.forget}）
+// と同じ消し方（完全一致・節より前は触らない）を通すが、**1ターン1行の上限は掛からない**——
+// その上限はモデルの暴走を防ぐためのもので、利用者が画面から名指しした削除には要らない。
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { MAX_REMEMBERED_LINE_LENGTH } from "../../shared/persona-memory.ts"
 import { type PersonaMemory } from "../core/session-driver.ts"
 import { copyPackOnce } from "./character-edit.ts"
 import {
@@ -30,9 +36,6 @@ import {
 
 /** 書き足す節の見出し。**`persona.md` のいちばん最後に置く**（7.1）。 */
 export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"
-
-/** 1行の長さの上限（超えた行は書かない。7.1 の表）。 */
-export const MAX_REMEMBERED_LINE_LENGTH = 120
 
 /** 節が持てる行数（超えたらいちばん古い行を落とす。7.1 の表）。 */
 export const MAX_REMEMBERED_LINES = 20
@@ -54,11 +57,17 @@ export const MAX_REMEMBERED_LINES = 20
  *
  * `root` は書き込み先の親（既定は `~/.tsukumo/characters`。差し替えられるのは置き場所だけで、
  * テストがホームを汚さないためにある）。
+ *
+ * `onChange` は**書けた・消せたときだけ**、更新後の一覧（{@link readRememberedLines}）を渡して
+ * 呼ぶ（画面のサイドバーへ流し直す `remembered-lines-changed` の出どころ。配線は
+ * `src/session-start.ts`）。**モデルへは戻さない**（ツールの戻り値は `"ok"` のまま）ので、
+ * ここは規約とぶつからない。既定は何もしない関数（テストが気にしなくてよいように）。
  */
 export function createPersonaMemory(
   pack: CharacterPack,
   cwd: string,
   root: string = homeCharacterDir(),
+  onChange: (lines: readonly string[]) => void = () => {},
 ): PersonaMemory {
   // このターンで既に1行書いたか・消したか（どちらも1ターン1行の上限。**別々に数える**ので、
   // 覚え違いを同じターンで言い直せる。ターンの終わりは駆動が知らせる）。
@@ -73,6 +82,9 @@ export function createPersonaMemory(
       }
 
       written = writeRememberedLine(pack, join(root, pack.name), trimmed)
+      if (written) {
+        onChange(readRememberedLines(pack, root))
+      }
     },
     forget: (line) => {
       const target = forgetTarget(line)
@@ -81,12 +93,58 @@ export function createPersonaMemory(
       }
 
       forgotten = eraseRememberedLine(pack, join(root, pack.name), target)
+      if (forgotten) {
+        onChange(readRememberedLines(pack, root))
+      }
     },
     finishTurn: () => {
       written = false
       forgotten = false
     },
   }
+}
+
+/**
+ * いまの「覚えたこと」の一覧（`- ` を外した文面。新しい行が末尾）。ホームの写しがあればそれ、
+ * 無ければいま出しているパックの人格を読む（{@link eraseRememberedLine} と同じ考え方——
+ * まだ1行も書き足していないセッションでは、起動時に読んだ全文で足りる）。節が無い・
+ * 読めないときは空。
+ */
+export function readRememberedLines(
+  pack: CharacterPack,
+  root: string = homeCharacterDir(),
+): readonly string[] {
+  const path = join(root, pack.name, PERSONA_FILE_NAME)
+  const current = readOptionalFile(path) ?? pack.persona ?? ""
+  const start = rememberedSectionStart(current)
+  return start === undefined
+    ? []
+    : rememberedLines(current.slice(start)).map((line) => line.slice(2))
+}
+
+/**
+ * 画面の「編集」から1行消す（`docs/design.md` 7.1「1行だけ忘れる」）。消し方は
+ * {@link PersonaMemory.forget} と同じ（完全一致・同じ文面が2行あればいちばん古いほうを消す・
+ * 節より前は触らない）だが、**1ターン1行の上限は掛からない**——その上限はモデルの暴走を防ぐ
+ * ためのもので、利用者が画面から名指しした削除には要らない。
+ *
+ * 消せたら更新後の一覧を返す。一致する行が無い・そのパックが編集できない
+ * （`isEditableCharacterPack`）・書けないときは undefined。
+ */
+export function forgetRememberedLineFromScreen(
+  pack: CharacterPack,
+  cwd: string,
+  line: string,
+  root: string = homeCharacterDir(),
+): readonly string[] | undefined {
+  const target = forgetTarget(line)
+  if (target === "" || !isEditableCharacterPack(pack, cwd)) {
+    return undefined
+  }
+
+  return eraseRememberedLine(pack, join(root, pack.name), target)
+    ? readRememberedLines(pack, root)
+    : undefined
 }
 
 /** 1行として受け取れる形か（空でない・改行を含まない・長さが上限以内）。 */

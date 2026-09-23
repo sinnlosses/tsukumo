@@ -19,11 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に雑談の「最近の話題」（`SessionState.chatTopics`）を足したことで上げた。
+ * 直近は状態に雑談の「覚えていること」（`SessionState.rememberedLines`）を足したことで上げた。
  * 古いタブが繋がったままだと、`hello` の状態に欄が無く、サイドバーが並びのつもりで
  * undefined を読む。
  */
-export const PROTOCOL_VERSION = 6
+export const PROTOCOL_VERSION = 7
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
@@ -69,6 +69,8 @@ export const FRAME_ERROR_REASON = {
     "ターン進行中は仕事と雑談を切り替えられない（中断すると切り替えられる）",
   nudgeDuringTurn: "ターン進行中は話しかけてもらえない（返事を待つ）",
   nudgeOutsideChat: "話しかけてもらえるのは雑談モードのときだけ",
+  forgetRememberedLineFailed: "覚えたことを消せなかった",
+  forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
 } as const
 
 /**

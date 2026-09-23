@@ -14,7 +14,7 @@ import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
-import { createPersonaMemory } from "./server/adapter/persona-memory.ts"
+import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedSessionDefault,
   writeRememberedSessionDefault,
@@ -146,6 +146,9 @@ export function startSession(options: SessionStartOptions): RunningSession {
       // 雑談で起こすときだけ呼ばれる（`createSessionLaunch`）。写しを読む口は駆動へ渡すものと
       // 同じ作り方で、取り出し方は core（`readChatTopics`）。
       readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
+      // 覚えたことの一覧も、雑談で起こすときだけ呼ばれる。読むのは adapter
+      // （`persona-memory.ts` の `readRememberedLines`）。
+      readRememberedLines: (pack) => readRememberedLines(pack),
       // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
       // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
       watchTasks: (onEvent) =>
@@ -170,6 +173,7 @@ export function startSession(options: SessionStartOptions): RunningSession {
     rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
     editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
     createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
+    forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
   })
 
   return {
@@ -207,7 +211,7 @@ function startDriver(options: {
 
   // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
-  const mode = sessionMode(seed, chatArchive, cwd)
+  const mode = sessionMode(seed, chatArchive, cwd, onEvent)
   // **「仕事のときは載せない」の判断はここの1回の分岐**（`mode.kind === "chat"`）。
   // 雑談のときだけ `takeChatMemoryPromptParts` を呼び、それ以外の載せるかどうかの判断
   // （write の有無・写しの印）は core（`takeChatMemoryPromptParts`）が閉じている——ここは
@@ -265,6 +269,7 @@ function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   chatArchive: ChatArchive,
   cwd: string,
+  onEvent: (event: SessionEvent) => void,
 ): SessionMode {
   if (!seed.chat) {
     return { kind: "work" }
@@ -272,7 +277,11 @@ function sessionMode(
 
   return {
     kind: "chat",
-    personaMemory: createPersonaMemory(seed.pack, cwd),
+    // **書けた・消せたときだけ**、更新後の一覧を画面へ流し直す（`persona-memory.ts` の
+    // `createPersonaMemory` の `onChange`。`docs/design.md` 7.1・13.7）。
+    personaMemory: createPersonaMemory(seed.pack, cwd, undefined, (lines) =>
+      onEvent({ kind: "remembered-lines-changed", lines }),
+    ),
     chatSummary: createChatSummary(seed.pack.name),
     chatKeep: chatArchive,
     chatRecall: chatRecallFor(chatArchive, seed.pack.name),
