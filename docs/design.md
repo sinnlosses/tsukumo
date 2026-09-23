@@ -212,7 +212,7 @@ src/
       chat-summary.ts         雑談の要約の写しと印（~/.tsukumo/chat-summary/<pack>.md）
       chat-archive.ts         雑談の会話のアーカイブ（~/.tsukumo/chat-archive/<pack>/<日付>.jsonl）
       remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード）
-      task-summary.ts         develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
+      task-summary.ts         main の develop/tasks.json の読み直し（main の先端の変化を tasks-changed イベントにする。`git rev-parse` / `git show` を起こす）
       repository-file.ts      git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
       context-usage-log.ts    コンテキストの内訳の記録（ファイルに触るのはここだけ）。~/.tsukumo/context-usage/<日付>.jsonl
       token-usage-log.ts      トークン消費の記録（ファイルに触るのはここだけ）。~/.tsukumo/token-usage/<日付>.jsonl
@@ -909,8 +909,21 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### task-summary.ts（adapter）
 
-いまの読み直し係を、**mtime が変わったときだけ `tasks-changed` を起こす**形にする（1〜2秒の
-ポーリング。`fs.watch` は macOS でも取りこぼすことがあるので使わない）。
+**読むのは作業ツリーのファイルではなく `main` の `develop/tasks.json`**（タスクの正典は `main` の
+もので、作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない）。
+1.5秒ごとに `git rev-parse refs/heads/main` で先端を取り、**先端が変わったときだけ**そのコミットから
+`git show <先端>:./develop/tasks.json` で読み直して `tasks-changed` を起こす。`git rev-parse` は
+1回約10msなので、毎回子プロセスを起こしても負荷は無視できる。1回の見回りが終わってから次を
+予約するので、`git` が遅くても見回りは重ならない。
+
+- **`git` を起こすのはこのファイル自身**（`test/architecture.test.ts`「子プロセスを起こす箇所」の
+  許可に入っている）。`main` の上のファイルを読む汎用の adapter を別に切らないのは、読み手が
+  この一覧しかなく、切っても開くファイルが増えるだけで概念が増えないため
+- **`main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`main` に
+  `develop/tasks.json` が無い）は `{ kind: "unknown" }`**。作業ツリーのファイルへは落とさない
+  （読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る）。最初から
+  読めないときは通知そのものを送らない（既定値の「不明」と同じ）
+- **`git` がタイムアウトしたときはその回を諦め**、覚えている先端も変えない（次の回で読み直す）
 
 ### server.ts と session-socket.ts（adapter）
 

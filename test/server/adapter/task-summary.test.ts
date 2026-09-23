@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs"
+import { execFileSync } from "node:child_process"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -8,44 +9,84 @@ import {
   type TaskSummaryWatcher,
 } from "../../../src/server/adapter/task-summary.ts"
 
+// 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
+// 一時ディレクトリに毎回作り、中身は架空のタスクだけにする。
+
 // 実際のポーリング間隔（TASK_SUMMARY_POLL_INTERVAL_MS）を待つとテストが遅くなるので、
-// テストだけ短い間隔に差し替える（`pollOnce` はこの間隔より少し長く待つ）。
+// テストだけ短い間隔に差し替える。
 const TEST_POLL_INTERVAL_MS = 10
 
-let dir: string
+/** 通知を待つ上限。1回の見回りは `git` を2回起こすので、間隔より十分長くとる。 */
+const WAIT_LIMIT_MS = 3000
+
+/** 「通知が来ない」ことを確かめるときに待つ長さ（見回りが何周もする長さ）。 */
+const QUIET_PERIOD_MS = 300
+
+let root: string
 let watcher: TaskSummaryWatcher | undefined
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-task-summary-"))
-  mkdirSync(join(dir, "develop"), { recursive: true })
+  root = mkdtempSync(join(tmpdir(), "tsukumo-task-summary-"))
 })
 
 afterEach(() => {
   watcher?.close()
   watcher = undefined
-  rmSync(dir, { recursive: true, force: true })
+  rmSync(root, { recursive: true, force: true })
 })
 
-function tasksPath(): string {
-  return join(dir, "develop", "tasks.json")
+function git(cwd: string, ...args: readonly string[]): void {
+  execFileSync("git", args, { cwd, stdio: "ignore" })
 }
 
-// 秒より細かい精度（ファイルシステムの丸め）に振り回されないよう、mtime は常に明示的に
-// 秒単位で指定する（自然な書き込み時刻には頼らない）。`utimesSync` は Unix エポック秒の
-// 数をそのまま受け取れるので `Date` を経由しない。
-function writeTasks(content: string, mtimeSecondsFromEpoch: number): void {
-  writeFileSync(tasksPath(), content)
-  utimesSync(tasksPath(), mtimeSecondsFromEpoch, mtimeSecondsFromEpoch)
+/** `branch` を初期ブランチにしたリポジトリを作る。署名やフックは利用者の設定に左右されないよう切る。 */
+function initRepository(branch: string): string {
+  const repository = join(root, "repository")
+  mkdirSync(repository)
+  git(repository, "init", "-b", branch)
+  git(repository, "config", "user.name", "tsukumo-test")
+  git(repository, "config", "user.email", "tsukumo-test@example.invalid")
+  git(repository, "config", "commit.gpgsign", "false")
+  git(repository, "config", "core.hooksPath", "/dev/null")
+  return repository
 }
 
-function watch(onChange: (tasks: unknown) => void): TaskSummaryWatcher {
-  const created = watchTaskSummary(dir, onChange, TEST_POLL_INTERVAL_MS)
-  watcher = created
-  return created
+function writeTasks(cwd: string, tasks: readonly Record<string, string>[]): void {
+  mkdirSync(join(cwd, "develop"), { recursive: true })
+  writeFileSync(join(cwd, "develop", "tasks.json"), JSON.stringify(tasks))
+}
+
+function commitTasks(cwd: string, tasks: readonly Record<string, string>[]): void {
+  writeTasks(cwd, tasks)
+  git(cwd, "add", "develop/tasks.json")
+  git(cwd, "commit", "-m", "tasks")
+}
+
+/** `main` を出している本体とは別に、`git merge main` をしない作業ツリーを切る。 */
+function addWorktree(repository: string): string {
+  const worktree = join(root, "worktree")
+  git(repository, "worktree", "add", "-b", "feature", worktree)
+  return worktree
+}
+
+function watch(cwd: string, changes: unknown[]): void {
+  watcher = watchTaskSummary(cwd, (tasks) => changes.push(tasks), TEST_POLL_INTERVAL_MS)
+}
+
+/** 通知が `count` 件に達するまで待つ（超えたら、そこまでの通知のまま期待値との比較で落ちる）。 */
+async function waitForChanges(changes: readonly unknown[], count: number): Promise<void> {
+  const deadline = performance.now() + WAIT_LIMIT_MS
+  while (changes.length < count && performance.now() < deadline) {
+    await sleep(TEST_POLL_INTERVAL_MS)
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /** 通知されるはずの1件。**フィールドの一覧は shared 側の仕事**なので、ここでは1箇所にまとめて
- * 置き、この層が見ている「読み直したかどうか」だけがテストの主題であることを保つ。 */
+ * 置き、この層が見ている「どこから・いつ読み直したか」だけがテストの主題であることを保つ。 */
 function notified(id: string, summary: string, status: string): Record<string, unknown> {
   return { id, summary, status, difficulty: undefined, dependencies: [] }
 }
@@ -57,47 +98,32 @@ function known(...items: readonly Record<string, unknown>[]): Record<string, unk
 
 const UNKNOWN: Record<string, unknown> = { kind: "unknown" }
 
-function pollOnce(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, TEST_POLL_INTERVAL_MS * 3))
-}
-
 describe("watchTaskSummary", () => {
-  it("develop/tasks.json が無いときは呼ばれない（既定の「不明」のまま）", () => {
+  it("起こした時点で main の develop/tasks.json を読んで通知する", async () => {
+    const repository = initRepository("main")
+    commitTasks(repository, [{ id: "T-1", summary: "ダミーのタスク", status: "todo" }])
     const changes: unknown[] = []
-    watch((tasks) => changes.push(tasks))
-
-    expect(changes).toEqual([])
-  })
-
-  it("起こした時点で develop/tasks.json を読んで通知する", () => {
-    writeTasks(JSON.stringify([{ id: "T-1", summary: "ダミーのタスク", status: "todo" }]), 0)
-    const changes: unknown[] = []
-    watch((tasks) => changes.push(tasks))
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
 
     expect(changes).toEqual([known(notified("T-1", "ダミーのタスク", "todo"))])
   })
 
-  it("mtime が変わらない間は読み直さず、通知もしない", async () => {
-    writeTasks(JSON.stringify([{ id: "T-1", summary: "1つめ", status: "todo" }]), 0)
+  it("main だけに入ったコミットが、merge main していない作業ツリーに届く（作業ツリーのファイルは見ない）", async () => {
+    const repository = initRepository("main")
+    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    const worktree = addWorktree(repository)
     const changes: unknown[] = []
-    watch((tasks) => changes.push(tasks))
+    watch(worktree, changes)
+    await waitForChanges(changes, 1)
+
+    // 作業ツリーのファイルを書き換えても（コミットしても）main が動かなければ読み直さない。
+    commitTasks(worktree, [{ id: "T-9", summary: "作業ツリーだけ", status: "todo" }])
+    await sleep(QUIET_PERIOD_MS)
     expect(changes).toHaveLength(1)
 
-    // ファイルの中身を直接書き換えても、mtime を同じ秒のまま保てば通知が増えない
-    // （読み直しの判断が mtime だけを見ていることの確認）。
-    writeTasks(JSON.stringify([{ id: "T-2", summary: "2つめ", status: "todo" }]), 0)
-    await pollOnce()
-
-    expect(changes).toHaveLength(1)
-  })
-
-  it("mtime が変わったら読み直して通知する", async () => {
-    writeTasks(JSON.stringify([{ id: "T-1", summary: "1つめ", status: "todo" }]), 0)
-    const changes: unknown[] = []
-    watch((tasks) => changes.push(tasks))
-
-    writeTasks(JSON.stringify([{ id: "T-2", summary: "2つめ", status: "in_progress" }]), 5)
-    await pollOnce()
+    commitTasks(repository, [{ id: "T-2", summary: "2つめ", status: "in_progress" }])
+    await waitForChanges(changes, 2)
 
     expect(changes).toEqual([
       known(notified("T-1", "1つめ", "todo")),
@@ -105,16 +131,19 @@ describe("watchTaskSummary", () => {
     ])
   })
 
-  it("ファイルが消えたら「不明」を通知し、また現れたら追従する", async () => {
-    writeTasks(JSON.stringify([{ id: "T-1", summary: "1つめ", status: "todo" }]), 0)
+  it("main に develop/tasks.json が無くなったら「不明」を通知し、戻ったら追従する", async () => {
+    const repository = initRepository("main")
+    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
-    watch((tasks) => changes.push(tasks))
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
 
-    rmSync(tasksPath())
-    await pollOnce()
+    git(repository, "rm", "--quiet", "develop/tasks.json")
+    git(repository, "commit", "-m", "remove")
+    await waitForChanges(changes, 2)
 
-    writeTasks(JSON.stringify([{ id: "T-1", summary: "1つめ", status: "todo" }]), 5)
-    await pollOnce()
+    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    await waitForChanges(changes, 3)
 
     expect(changes).toEqual([
       known(notified("T-1", "1つめ", "todo")),
@@ -123,13 +152,35 @@ describe("watchTaskSummary", () => {
     ])
   })
 
-  it("close するとそれ以降は通知しない", async () => {
-    writeTasks(JSON.stringify([{ id: "T-1", summary: "1つめ", status: "todo" }]), 0)
+  it("main ブランチが無いリポジトリでは、作業ツリーにファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
+    const repository = initRepository("trunk")
+    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
-    watch((tasks) => changes.push(tasks)).close()
+    watch(repository, changes)
+    await sleep(QUIET_PERIOD_MS)
 
-    writeTasks(JSON.stringify([{ id: "T-2", summary: "2つめ", status: "todo" }]), 5)
-    await pollOnce()
+    expect(changes).toEqual([])
+  })
+
+  it("git リポジトリでないディレクトリでは、ファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
+    writeTasks(root, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(root, changes)
+    await sleep(QUIET_PERIOD_MS)
+
+    expect(changes).toEqual([])
+  })
+
+  it("close するとそれ以降は通知しない", async () => {
+    const repository = initRepository("main")
+    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+    watcher?.close()
+
+    commitTasks(repository, [{ id: "T-2", summary: "2つめ", status: "todo" }])
+    await sleep(QUIET_PERIOD_MS)
 
     expect(changes).toHaveLength(1)
   })

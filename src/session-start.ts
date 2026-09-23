@@ -114,7 +114,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
       // 覚えたことの一覧も、雑談で起こすときだけ呼ばれる。読むのは adapter
       // （`persona-memory.ts` の `readRememberedLines`）。
       readRememberedLines: (pack) => readRememberedLines(pack),
-      // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
+      // `main` の develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
       // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
       watchTasks: (onEvent) =>
         watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
