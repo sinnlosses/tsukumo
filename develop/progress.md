@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 requirements.md 2.2 のセッション切り替えの禁止を実物に合わせた（T-455）
+
+「過去のセッションの一覧・切り替えも作らない」を落とし、対象外なのは「起動のたびに選ばせる画面」だけにした（切り替えは 4.8 の帯の `<select>`）。経緯は `docs/history/decision.md` へ送った。
+
 ### 2026-09-23 サイドバーのタスク一覧を main の develop/tasks.json から読むようにした（T-479）
 
 `watchTaskSummary` が1.5秒ごとに `git rev-parse refs/heads/main` を見て、先端が変わったときだけそのコミットから `git show` で読み直す。`main` が読めないときは作業ツリーへ落とさず「不明」、`git` のタイムアウトだけはその回を諦める。
