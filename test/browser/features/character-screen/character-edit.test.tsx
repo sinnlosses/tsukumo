@@ -86,6 +86,12 @@ function deleteConfirmDialog(): Element | null {
   return document.querySelector(".character-delete-dialog")
 }
 
+/** 名前とプロフィールを変えるダイアログ（`character-profile-edit-dialog.tsx`）。開いていなければ
+ * `null`。作るダイアログと同じ `.character-create-dialog` を流用しているので `aria-label` で見分ける。 */
+function profileEditDialog(): Element | null {
+  return document.querySelector('dialog[aria-label="名前とプロフィールを変える"]')
+}
+
 describe("CharacterEdit", () => {
   it("8つの表情ぶんの立ち絵の口と、4つの衣装ぶんの差し色を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -500,6 +506,59 @@ describe("CharacterEdit", () => {
 
     expect(document.querySelectorAll("section")).toHaveLength(0)
     expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
+  })
+
+  // 名前とプロフィールを変えるダイアログ（docs/screen-design.md 13.6「名乗り」）。
+  describe("名前とプロフィールを変える", () => {
+    it("押すと、いまの名前とひとことを入れたダイアログを開く", () => {
+      renderCharacterEdit({ ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" })
+
+      fireEvent.click(screen.getByRole("button", { name: "名前とプロフィールを変える" }))
+
+      expect(profileEditDialog()?.hasAttribute("open")).toBe(true)
+      expect((screen.getByLabelText("名前") as HTMLInputElement).value).toBe("架空の精霊")
+      expect((screen.getByLabelText("ひとことプロフィール") as HTMLInputElement).value).toBe(
+        "気ままな相棒",
+      )
+    })
+
+    it("名前とひとことを書き換えて保存すると、set-profile を1回送って閉じる", () => {
+      const calls: unknown[] = []
+      renderCharacterEdit(
+        { ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" },
+        (command) => calls.push(command),
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "名前とプロフィールを変える" }))
+      fireEvent.change(screen.getByLabelText("名前"), { target: { value: "新しい名前" } })
+      fireEvent.change(screen.getByLabelText("ひとことプロフィール"), {
+        target: { value: "新しいひとこと" },
+      })
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }))
+
+      expect(calls).toEqual([
+        { type: "set-profile", pack: "fictional", name: "新しい名前", tagline: "新しいひとこと" },
+      ])
+      expect(profileEditDialog()).toBeNull()
+    })
+
+    it("「やめる」で閉じ、何も送らない", () => {
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+      fireEvent.click(screen.getByRole("button", { name: "名前とプロフィールを変える" }))
+      fireEvent.change(screen.getByLabelText("名前"), { target: { value: "触らない名前" } })
+      fireEvent.click(screen.getByRole("button", { name: "やめる" }))
+
+      expect(calls).toEqual([])
+      expect(profileEditDialog()).toBeNull()
+    })
+
+    it("画面から変えられないパックでは口を出さない", () => {
+      renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false })
+
+      expect(screen.queryByRole("button", { name: "名前とプロフィールを変える" })).toBeNull()
+    })
   })
 
   // このキャラクターを消す帯とその確かめ（docs/screen-design.md 13.6「このキャラクターを消す」）。

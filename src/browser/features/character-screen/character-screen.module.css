@@ -185,7 +185,12 @@
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
 }
-.character-profile-action {
+/* 「名前とプロフィールを変える」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
+.character-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
   margin-left: auto;
 }
 
@@ -598,7 +603,7 @@
   gap: 0.5rem;
 }
 
-/* 字つきの口（背景の差し替える・消す、このキャラクターに切り替える）。 */
+/* 字つきの口（背景の差し替える・消す、このキャラクターに切り替える、名前とプロフィールを変える）。 */
 .character-button {
   display: inline-flex;
   align-items: center;

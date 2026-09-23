@@ -40,6 +40,15 @@ export function SwitchIcon(): ReactElement {
   )
 }
 
+/** 名乗りを変える（鉛筆）。 */
+export function PencilIcon(): ReactElement {
+  return (
+    <svg {...ICON_ATTRIBUTES}>
+      <path d="M4 20h4L19 9l-4-4L4 16v4z" />
+    </svg>
+  )
+}
+
 const ICON_ATTRIBUTES = {
   width: 15,
   height: 15,

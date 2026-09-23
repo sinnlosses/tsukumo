@@ -387,6 +387,51 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([{ type: "delete-character", pack: "other" }])
   })
 
+  // 名前とプロフィールを変えるダイアログの種（`components/character-profile-edit.tsx`）。
+  it("名前とひとことプロフィールを、いまの値を種にした editProfile へ畳み、set-profile を送る", () => {
+    const calls: unknown[] = []
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(
+        { ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" },
+        (command) => calls.push(command),
+      ),
+    })
+
+    const edit = ready(result.current).profile.editProfile
+    if (edit.kind !== "shown") {
+      throw new Error("編集の口が出ていない")
+    }
+    expect(edit.name).toBe("架空の精霊")
+    expect(edit.tagline).toBe("気ままな相棒")
+
+    edit.onSubmit("新しい名前", "新しいひとこと")
+
+    expect(calls).toEqual([
+      { type: "set-profile", pack: "fictional", name: "新しい名前", tagline: "新しいひとこと" },
+    ])
+  })
+
+  it("名前・ひとこと無しのパックでは editProfile の種が空文字になる", () => {
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor({ ...FIXTURE_CHARACTER, name: undefined, tagline: undefined }, () => {}),
+    })
+
+    const edit = ready(result.current).profile.editProfile
+    if (edit.kind !== "shown") {
+      throw new Error("編集の口が出ていない")
+    }
+    expect(edit.name).toBe("")
+    expect(edit.tagline).toBe("")
+  })
+
+  it("変えられないパックでは editProfile を出さない", () => {
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor({ ...FIXTURE_CHARACTER, editable: false }, () => {}),
+    })
+
+    expect(ready(result.current).profile.editProfile).toEqual({ kind: "hidden" })
+  })
+
   it("同梱を直したパックは「同梱に戻す」の文言になる", () => {
     window.location.hash = "#character?pack=other"
     const { result } = renderHook(() => useCharacterEdit(), {

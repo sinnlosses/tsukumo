@@ -161,7 +161,23 @@ export type CharacterProfileModel = {
         readonly title: string | undefined
         readonly onSwitch: () => void
       }
+  /** 「名前とプロフィールを変える」（見本の鉛筆のボタン。`docs/screen-design.md` 13.6）。
+   * 変えられないパックでは出さない。 */
+  readonly editProfile: CharacterProfileEditModel
 }
+
+/**
+ * 名前とひとことプロフィールを変えるダイアログの下書きの種（`components/character-profile-edit.tsx`）。
+ * 空文字も渡す——空なら書き込む側（`set-profile`）が畳む（名前は id へ、ひとことは「無い」へ）。
+ */
+export type CharacterProfileEditModel =
+  | { readonly kind: "hidden" }
+  | {
+      readonly kind: "shown"
+      readonly name: string
+      readonly tagline: string
+      readonly onSubmit: (name: string, tagline: string) => void
+    }
 
 /**
  * 表情のカード1枚。**自分の絵を持たない表情は `blank`**（その表情の名前を書いた点線の枠。
@@ -443,6 +459,16 @@ export function useCharacterEdit(): CharacterEditModel {
           title: turnInProgress ? SWITCH_BLOCKED_TITLE : undefined,
           onSwitch: () => {
             dispatch({ type: "switch-character", name: pack })
+          },
+        },
+    editProfile: disabled
+      ? { kind: "hidden" }
+      : {
+          kind: "shown",
+          name: character.name ?? "",
+          tagline: character.tagline ?? "",
+          onSubmit: (name, tagline) => {
+            dispatch({ type: "set-profile", pack, name, tagline })
           },
         },
   }
