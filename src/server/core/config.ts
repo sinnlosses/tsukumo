@@ -1,5 +1,5 @@
-// 環境変数の解釈と、**環境変数の名前の一覧**（docs/coding-standards.md「外の世界に依存する値は
-// 読み取りを1モジュールに集約する」。モジュールのトップレベルでは触らず、{@link readConfig} を
+// 環境変数の解釈と、**環境変数の名前の一覧**（docs/coding-standards.md「外部の入力を読む場所を
+// 1つにする」。モジュールのトップレベルでは触らず、{@link readConfig} を
 // 呼んだときだけ読む）。値を読むのは呼び出し側の src/cli.ts。
 //
 // 値の意味と既定は docs/design.md 5章「config.ts」の表が正典。

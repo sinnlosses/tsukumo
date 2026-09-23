@@ -29,7 +29,7 @@ export type ViewDeliveryOptions = {
    * 直すとここで差し替わる**ので、持ち主はサーバではなくこちら側。
    */
   readonly bundle: UiBundle
-  /** `/character/<file>` に配る1件の出どころ。 */
+  /** `/character/<pack>/<file>` に配る1件の出どころ。 */
   readonly character: CurrentCharacter
   /**
    * トークン消費の記録の読み口（`/token-usage` に配る集計の出どころ。持ち主は `src/main.ts`）。
@@ -90,7 +90,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const started = await startOnResolvedPort(options.portResolution, (port) =>
     startViewServer(port, {
       assets: { uiScript: () => assets.uiScript, styleSheet: () => assets.styleSheet },
-      serveCharacterAsset: (fileName) => options.character.serveAsset(fileName),
+      serveCharacterAsset: (location) => options.character.serveAsset(location),
       listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
       // **「今日」を決めるのは配線層**（core は今日が何日かを知らない。OS のタイムゾーンに
       // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。

@@ -197,7 +197,7 @@ function appendKeptMarks(root: string, marks: readonly KeptMark[]): void {
 /**
  * JSONL の1行の形（`docs/design.md` 7章の表）。**tsukumo の内部の型をそのまま書き出さない。**
  * `expression` / `images` は「無いかもしれない」プロパティなので `T | undefined` で持つ（`?:`
- * は使わない。`docs/coding-standards.md`「無いかもしれない値」）——どちらを持つかは `speaker`
+ * は使わない。`docs/coding-standards.md`「「無いかもしれない」値」）——どちらを持つかは `speaker`
  * が決めるので、値を渡すたびにもう片方へ明示的に `undefined` を渡す。
  */
 type ArchiveRecord = {

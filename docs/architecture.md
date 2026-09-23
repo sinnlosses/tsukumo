@@ -88,7 +88,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/shared/pending-ask.ts`                                                  | shared     | 答え待ちの語彙（`PendingAsk` / `Answer`）と、届いた答えの検証                                                                                |
 | `src/shared/expression.ts` / `character.ts` / `question.ts` / `utterance.ts` | shared     | 表情と衣装・いま出しているキャラクターの姿・質問・セリフと詳細の分け方（どれも純粋関数）                                                     |
 | `src/shared/character-definition.ts`                                         | shared     | `character.json` そのものの形。解析と、1件を重ねた書き戻しの文字列（I/Oは持たない）                                                          |
-| `src/shared/character-asset.ts`                                              | shared     | `/character/<file>` の URL・取り直しの印・拡張子による立ち絵の仕分け                                                                         |
+| `src/shared/character-asset.ts`                                              | shared     | `/character/<pack>/<file>` の URL・取り直しの印・拡張子による立ち絵の仕分け                                                                  |
 | `src/shared/expression-choice.ts`                                            | shared     | `speak` が選べる表情とラベル（ラベルの出どころはキャラクター定義）                                                                           |
 | `src/shared/task-summary.ts`                                                 | shared     | `develop/tasks.json` の要約の型と読み取り（ファイルI/Oは持たない）                                                                           |
 | `src/server/core/sdk-message.ts`                                             | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                                                             |
@@ -108,7 +108,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/core/port-resolution.ts`                                         | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                                                                 |
 | `src/server/adapter/bundle.ts`                                               | adapter    | `bun build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                                                             |
 | `src/server/adapter/bundled-path.ts`                                         | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く                                         |
-| `src/server/adapter/character-pack.ts`                                       | adapter    | キャラクターパックの列挙・読み込みと `/character/<file>` が配ってよい1件の判定                                                               |
+| `src/server/adapter/character-pack.ts`                                       | adapter    | キャラクターパックの列挙・読み込みと `/character/<pack>/<file>` が配ってよい1件の判定                                                        |
 | `src/server/adapter/task-summary.ts`                                         | adapter    | `main` の `develop/tasks.json` の読み直し。`main` の先端が変わったときだけ `tasks-changed` を起こす（`git rev-parse` / `git show` を起こす） |
 | `src/server/adapter/repository-file.ts`                                      | adapter    | 入力欄の `@` 補完に配るパスの列挙。**`git ls-files` を起こすのはここだけ**（失敗したら空）                                                   |
 | `src/server/core/host.ts`                                                    | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                                                                |
@@ -233,7 +233,8 @@ tsukumo の画面だけになる。
 
 **境界のファイルの中に、外の世界に触らない関数が混じっていてよい**（2026-09-16 決定）。層は
 「外の世界に触るか」で決め、**ファイルの中身の純度で割り直さない**。`adapter/character-pack.ts` の
-`characterChangedEvent` / `toCharacterPackChoices` は fs を読まないが `core` へは出さない。
+`characterChangedEvent` はほとんど fs を読まない（読むのは一覧の1件ごとの「変えられるか」を決める
+起動先の `characters/local` の有無だけ）が `core` へは出さない。
 呼び出し側が配線層だけで、パックの供給元も fs の1つしかないので、割っても「型1つ + 一行関数」の
 浅いモジュールが増え、同じ名前のファイルが2つの層に並ぶだけになる
 （`docs/research/architecture-proposal.md` 7章が仮定として置いていた分岐は、これで確定）。

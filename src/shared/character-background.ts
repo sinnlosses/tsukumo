@@ -16,7 +16,7 @@
 import { maxImageDataUrlLength, parseImageDataUrl } from "./image-data-url.ts"
 
 /**
- * 背景1つ分。**`image` はファイル名（定義側）か `/character/<file>` の URL（画面に渡す側）**で、
+ * 背景1つ分。**`image` はファイル名（定義側）か `/character/<pack>/<file>` の URL（画面に渡す側）**で、
  * どちらを持つかは作った人が知っている（`portraits` と同じ扱い。`src/shared/character.ts` の
  * `toCharacterInfo` がファイル名を URL に変える）。
  */
@@ -88,7 +88,7 @@ export function toBackgroundVeil(value: unknown): number {
 
 /**
  * 背景の素材として扱ってよいファイル名か。**定義ファイルに書かれた名前も外部由来**なので、
- * ここで形を確かめてから `/character/<file>` の URL にする:
+ * ここで形を確かめてから `/character/<pack>/<file>` の URL にする:
  *
  * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・引用符・括弧が入らないので、
  *   ディレクトリを跨ぐ名前にも、CSS の `url()` を抜け出す名前にもならない）

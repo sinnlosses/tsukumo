@@ -61,7 +61,7 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   const older = props.turns[index - 1]?.id
   const newer = props.turns[index + 1]?.id
   const newest = props.turns.at(-1)?.id
-  // `noUncheckedIndexedAccess` が生む `| undefined`（`docs/coding-standards.md`「無いかもしれない
+  // `noUncheckedIndexedAccess` が生む `| undefined`（`docs/coding-standards.md`「「無いかもしれない」
   // 値」）。呼び出し側は必ず `turns` に含まれる id を渡す契約だが、畳まずそのまま使う。
   const activeTitle = props.turns[index]?.title
 

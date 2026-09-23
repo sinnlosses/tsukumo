@@ -3,7 +3,8 @@
 // data URL にして送る呼び先と一緒に返す。
 //
 // 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` /
-// `clear-chat-accent` / `set-background` / `clear-background` で、**書き込み先と反映はサーバ側**
+// `clear-chat-accent` / `set-background` / `clear-background` で、**どれも書き込む先のパックの
+// 名前（`pack`）を持つ**（いまは使用中のパックの名前を入れる）。**書き込み先と反映はサーバ側**
 // （`src/server/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
 // にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
@@ -60,6 +61,15 @@ const GALLERY_OUTFIT: Outfit = "default"
  * 画面の差し色（仕事 / 雑談）の両方が使う**。
  */
 const ACCENT_DEBOUNCE_MS = 200
+
+/**
+ * まとめて送る差し色1つ。**書き込む先のパックは引きずった時点のものを値と一緒に持つ**（まとめて
+ * いる間に画面の姿が入れ替わっても、別のパックへ書かない）。
+ */
+type PendingAccent = {
+  readonly pack: string
+  readonly color: string
+}
 
 /** 立ち絵のカード1枚。**自分の絵を持たない表情は `blank`**（点線の枠の空きを出す）。 */
 export type PortraitCardModel = {
@@ -151,17 +161,24 @@ export function useCharacterEdit(): CharacterEditModel {
   >({})
   // 差し色が定義に無い衣装・パックの初期値（`--accent`）。読みは描画の外（マウント時の1回）に置く。
   const [accentFallback] = useState(readAccentColor)
-  const sendOutfitAccent = useDebouncedCallback<Outfit, string>((outfit, color) => {
-    dispatch({ type: "set-outfit-accent", outfit, color })
-  }, ACCENT_DEBOUNCE_MS)
-  const sendAccent = useDebouncedCallback<AccentTarget, string>((target, color) => {
-    dispatch({ type: "set-accent", target, color })
-  }, ACCENT_DEBOUNCE_MS)
+  const sendOutfitAccent = useDebouncedCallback<Outfit, PendingAccent>(
+    (outfit, { pack, color }) => {
+      dispatch({ type: "set-outfit-accent", pack, outfit, color })
+    },
+    ACCENT_DEBOUNCE_MS,
+  )
+  const sendAccent = useDebouncedCallback<AccentTarget, PendingAccent>(
+    (target, { pack, color }) => {
+      dispatch({ type: "set-accent", pack, target, color })
+    },
+    ACCENT_DEBOUNCE_MS,
+  )
 
   if (character === undefined) {
     return { kind: "waiting" }
   }
 
+  const pack = character.pack
   const accentOf = (outfit: Outfit): string =>
     pendingAccents[outfit] ?? character.outfitAccents[outfit] ?? accentFallback
 
@@ -184,7 +201,7 @@ export function useCharacterEdit(): CharacterEditModel {
       pickAriaLabel: `${label}を${pickText}`,
       onPick: (input) => {
         void readPicked(input, (image) => {
-          dispatch({ type: "set-portrait", expression, image })
+          dispatch({ type: "set-portrait", pack, expression, image })
         })
       },
       clear:
@@ -193,7 +210,7 @@ export function useCharacterEdit(): CharacterEditModel {
               kind: "shown",
               ariaLabel: `${label}を消す`,
               onClear: () => {
-                dispatch({ type: "clear-portrait", expression })
+                dispatch({ type: "clear-portrait", pack, expression })
               },
             }
           : { kind: "hidden" },
@@ -207,7 +224,7 @@ export function useCharacterEdit(): CharacterEditModel {
     value: accentOf(outfit),
     onChange: (color) => {
       setPendingAccents((current) => ({ ...current, [outfit]: color }))
-      sendOutfitAccent(outfit, color)
+      sendOutfitAccent(outfit, { pack, color })
     },
   }))
 
@@ -219,7 +236,7 @@ export function useCharacterEdit(): CharacterEditModel {
     value: workAccentValue,
     onChange: (color) => {
       setPendingScreenAccents((current) => ({ ...current, work: color }))
-      sendAccent("work", color)
+      sendAccent("work", { pack, color })
     },
   }
 
@@ -234,7 +251,7 @@ export function useCharacterEdit(): CharacterEditModel {
     value: chatAccentValue,
     onChange: (color) => {
       setPendingScreenAccents((current) => ({ ...current, chat: color }))
-      sendAccent("chat", color)
+      sendAccent("chat", { pack, color })
     },
   }
   const resetChatAccent: ChatAccentResetModel = hasChatAccent
@@ -242,7 +259,7 @@ export function useCharacterEdit(): CharacterEditModel {
         kind: "shown",
         onClick: () => {
           setPendingScreenAccents((current) => ({ ...current, chat: undefined }))
-          dispatch({ type: "clear-chat-accent" })
+          dispatch({ type: "clear-chat-accent", pack })
         },
       }
     : { kind: "hidden" }
@@ -256,11 +273,11 @@ export function useCharacterEdit(): CharacterEditModel {
     // 背景も立ち絵と同じ受け渡し（data URL）。
     onPick: (input) => {
       void readPicked(input, (image) => {
-        dispatch({ type: "set-background", image })
+        dispatch({ type: "set-background", pack, image })
       })
     },
     onClear: () => {
-      dispatch({ type: "clear-background" })
+      dispatch({ type: "clear-background", pack })
     },
   }
 

@@ -14,11 +14,9 @@ import {
   type CharacterPack,
   characterChangedEvent,
   DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
-  isEditableCharacterPack,
   listCharacterPacks,
+  readCharacterAsset,
   readCharacterPack,
-  readCharacterPackFile,
-  toCharacterPackChoices,
 } from "./server/adapter/character-pack.ts"
 import { forgetRememberedLineFromScreen } from "./server/adapter/persona-memory.ts"
 import {
@@ -31,14 +29,17 @@ import {
   selectInitialCharacterPack,
 } from "./server/core/character-selection.ts"
 import { type Config } from "./server/core/config.ts"
+import { type CharacterAssetLocation } from "./shared/character-asset.ts"
 import { type CharacterCreateCommand, type CharacterEditCommand } from "./shared/command.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
 
 /** いま出しているキャラクターパックへの窓口。**持っているパックそのものは外へ出さない。** */
 export type CurrentCharacter = {
   /**
-   * いま出しているパックを画面へ流す形。**立ち絵の URL・選択肢・画面から変えられるかの3つ**を
-   * 組み立てるのはここ1箇所で、起こしたときと見た目を変えたときの両方から呼ぶ。
+   * いま出しているパックと全パックの一覧を画面へ流す形（`character-changed`）。**呼ぶたびに
+   * パックの一覧を読み直す**ので、パックを変えた・作った・消したあとはこれを返せば一覧も
+   * 配り直される（`docs/design.md` 7.2）。起こしたとき・起こし直したとき・
+   * 見た目を変えたとき・作ったときのすべてがここを通る。
    */
   readonly event: () => SessionEvent
   /**
@@ -49,9 +50,10 @@ export type CurrentCharacter = {
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly remember: (pack: CharacterPack) => void
   /**
-   * 画面から届いた立ち絵・差し色を書き込み、流し直す `character-changed` を返す
-   * （受け付けられなければ undefined）。**書けたパックをそのまま持ち替える**ので、
-   * `/character/<file>` もこのあと書いた先から配る。
+   * 画面から届いた立ち絵・差し色・背景を `edit.pack` のパックへ書き込み、一覧ごと流し直す
+   * `character-changed` を返す（受け付けられなければ undefined）。**使用中のパックなら書けた
+   * パックにそのまま持ち替える**ので、そのパックの素材もこのあと書いた先から配る。使用中以外は
+   * 持ち替えない（一覧を読み直すだけで、使用中の姿は変わらない）。
    */
   readonly applyEdit: (edit: CharacterEditCommand) => SessionEvent | undefined
   /**
@@ -66,14 +68,18 @@ export type CurrentCharacter = {
    * ときは undefined。`docs/design.md` 7.1「1行だけ忘れる」）。
    */
   readonly forgetRememberedLine: (line: string) => SessionEvent | undefined
-  /** `/character/<file>` に配ってよい1件（allowlist に無い・ディスクに無いときは undefined）。 */
-  readonly serveAsset: (fileName: string) => CharacterAssetFile | undefined
+  /**
+   * `/character/<pack>/<file>` に配ってよい1件（無いパック・allowlist に無い・ディスクに無い
+   * ときは undefined）。**使用中以外のパックの素材も配る**（キャラクター画面の一覧と詳しい設定）。
+   * 突き合わせる一覧は、最後に {@link event} で配ったときに読んだもの。
+   */
+  readonly serveAsset: (location: CharacterAssetLocation) => CharacterAssetFile | undefined
 }
 
 /**
  * 起動時の初期パックを決め、以降の持ち回りを引き受ける。**一覧は読み直せる形で持つ** —
  * 画面から立ち絵を変えるとホーム（`~/.tsukumo/characters/`）にパックが現れるので、
- * そのときに引き直す（docs/design.md 7.1）。
+ * `character-changed` を組むたびに引き直す（docs/design.md 7.1）。
  */
 export function createCurrentCharacter(config: Config): CurrentCharacter {
   const defaultPack = readCharacterPack(
@@ -97,12 +103,12 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
   })
   let current = initialPack
 
-  const event = (): SessionEvent =>
-    characterChangedEvent(
-      current,
-      toCharacterPackChoices(packs),
-      isEditableCharacterPack(current, process.cwd()),
-    )
+  // 一覧を読み直してから組む。**画面に配った一覧と、素材を配るときに突き合わせる一覧を
+  // 同じものにする**ため（配った URL が 404 にならない）。
+  const event = (): SessionEvent => {
+    packs = findPacks()
+    return characterChangedEvent(current, packs, process.cwd())
+  }
 
   // これから起こすパックを決め方から引く。**「画面から選ばれた名前」と「いま出しているパックの
   // まま」を分けて受ける**ので、モードを切り替えただけの起こし直しが名前として届かない
@@ -126,12 +132,13 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
     },
     remember: (pack) => writeRememberedCharacter(pack.name),
     applyEdit: (edit) => {
-      const edited = editCharacterPack(current, edit, process.cwd())
+      const edited = editCharacterPack(current, packs, edit, process.cwd())
       if (edited === undefined) {
         return undefined
       }
-      current = edited
-      packs = findPacks()
+      if (edited.name === current.name) {
+        current = edited
+      }
       return event()
     },
     applyCreate: (create) => {
@@ -142,13 +149,12 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
       if (created === undefined) {
         return undefined
       }
-      packs = findPacks()
       return event()
     },
     forgetRememberedLine: (line) => {
       const lines = forgetRememberedLineFromScreen(current, process.cwd(), line)
       return lines === undefined ? undefined : { kind: "remembered-lines-changed", lines }
     },
-    serveAsset: (fileName) => readCharacterPackFile(current, fileName),
+    serveAsset: (location) => readCharacterAsset(current, packs, location),
   }
 }

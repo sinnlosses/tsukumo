@@ -9,7 +9,7 @@ import {
   type SessionInfo as SessionInfoState,
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
-import { characterInfo } from "../../../fixture/character.ts"
+import { characterInfo, characterPackEntry } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 afterEach(() => {
@@ -43,9 +43,7 @@ function renderSessionInfo(
 }
 
 // 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-  pack: undefined,
-})
+const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo()
 
 function selectValue(element: HTMLElement): string {
   return (element as HTMLSelectElement).value
@@ -68,7 +66,7 @@ describe("SessionInfo", () => {
 
   it("キャラクターの <select> は選択肢が1つでも出す", () => {
     renderSessionInfo({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
     })
 
@@ -81,7 +79,7 @@ describe("SessionInfo", () => {
   // ここには同じ口を2つ置かない。
   it("キャラクターの行にキャラクター画面への口は置かない", () => {
     renderSessionInfo({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
     })
 
@@ -93,8 +91,8 @@ describe("SessionInfo", () => {
     renderSessionInfo(
       {
         characterPacks: [
-          { name: "tsukumo-spirit", label: "つくもの精霊" },
-          { name: "local", label: "架空の同居人" },
+          characterPackEntry("tsukumo-spirit", "つくもの精霊"),
+          characterPackEntry("local", "架空の同居人"),
         ],
         character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
       },
@@ -111,7 +109,7 @@ describe("SessionInfo", () => {
   it("ターン進行中はキャラクターの <select> が無効になり、理由が title に出る", () => {
     renderSessionInfo({
       turn: { kind: "running", startedAt: 0 },
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
     })
 
@@ -123,7 +121,7 @@ describe("SessionInfo", () => {
   it("ターンが終わるとキャラクターの <select> は有効に戻る", () => {
     renderSessionInfo({
       turn: { kind: "idle" },
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
     })
 
@@ -144,7 +142,7 @@ describe("SessionInfo", () => {
 describe("SessionInfo の顔", () => {
   it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {
     renderSessionInfo({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: {
         ...FIXTURE_CHARACTER,
         pack: "tsukumo-spirit",
@@ -161,7 +159,7 @@ describe("SessionInfo の顔", () => {
 
   it("face が無いパックでは何も出さない", () => {
     renderSessionInfo({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit", face: undefined },
     })
 
@@ -170,7 +168,7 @@ describe("SessionInfo の顔", () => {
 
   it("キャラクターを切り替えると顔も変わる（character-changed で state.character が入れ替わる想定）", () => {
     renderSessionInfo({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: {
         ...FIXTURE_CHARACTER,
         pack: "tsukumo-spirit",
@@ -184,7 +182,7 @@ describe("SessionInfo の顔", () => {
 
     cleanup()
     renderSessionInfo({
-      characterPacks: [{ name: "local", label: "架空の同居人" }],
+      characterPacks: [characterPackEntry("local", "架空の同居人")],
       character: {
         ...FIXTURE_CHARACTER,
         pack: "local",
@@ -203,7 +201,7 @@ describe("SessionInfo の顔", () => {
 describe("SessionInfo の並び", () => {
   it("並びは キャラクター・セッション の順", () => {
     renderSessionInfo({
-      characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
+      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
       sessions: [{ sessionId: "s1", viewPort: 7327, lastModified: 0, heading: undefined }],
       session: { ...RUNNING_SESSION, sessionId: "s1" },

@@ -254,7 +254,7 @@
    割合）がそのぶん縮むため、行を増やさず重ねにしてある。キャラビューは枠を持たない領域なので、
    口は地（ground）の色で塗って背景の絵の上でも読めるようにする（**モックは半透明だが、
    docs/screen-design.md 13.8「文字が乗る要素の地は不透明を保つ」に合わせて不透明のまま**にする）。
-   字は 12px ではなく `--font-secondary`（13px。docs/screen-design.md 13.3「段はこの4つだけ」— 新しい
+   字は 12px ではなく `--font-secondary`（13px。docs/screen-design.md 13.3「段はこの6つだけ」— 新しい
    寸法は足さない）。 */
 .speech-log-open {
   position: absolute;

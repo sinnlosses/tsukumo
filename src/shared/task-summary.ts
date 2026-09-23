@@ -1,7 +1,7 @@
 // develop/tasks.json の内容から、タスク一覧の要約（id・summary・status・difficulty・loopable・依存）を読む。「読む」層。
 //
 // develop/tasks.json は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは
-// 別物（`docs/workflow.md`「tasks.json のフィールド」）。ここは会話の内容を一切扱わない。
+// 別物。ここは会話の内容を一切扱わない。
 //
 // ここはファイルI/Oを持たない。`main` の上のファイルを読み、`main` の先端が変わったら読み直すのは
 // src/server/adapter/task-summary.ts。

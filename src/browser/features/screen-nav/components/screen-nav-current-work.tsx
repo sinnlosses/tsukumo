@@ -26,8 +26,7 @@ export type ScreenNavCurrentWorkProps = {
 }
 
 // 入力・出力を読める形の文字列にしてから切り詰める上限。表示を壊さないためであって秘匿の
-// ためではない（元は `sidebar/activity.tsx`。docs/requirements.md「切り詰めは表示のためであって
-// 秘匿のためではない」）。
+// ためではない（元は `sidebar/activity.tsx`）。
 const MAX_TOOL_TEXT_LENGTH = 8000
 
 /** 答え待ちが質問のときに一覧へ出す口（docs/screen-design.md 13.9「いまの作業」）。 */

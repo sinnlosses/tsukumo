@@ -13,7 +13,7 @@
 
 import { type BackgroundTask } from "./background-task.ts"
 import { isBlankText } from "./blank-text.ts"
-import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
+import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import { isModelAlias } from "./command.ts"
 import { type Expression } from "./expression.ts"
@@ -192,8 +192,8 @@ export type TurnProgress =
  *
  * `partialUtterance` は書きかけの本文で、完成した本文（`utterance`）が来たら空に戻る。
  * こうしておくと、断片と完成メッセージの**両方が届いても二重に積まれない**
- * （docs/display.md 4.2「書きかけの本文がそのまま流れていき、ターンが終わった瞬間に
- * 整形し直す」）。
+ * （docs/display.md 4.2「書きかけの本文はそのまま記録の末尾に積まれ、ターンが終わった
+ * 瞬間に整形し直す」）。
  */
 export type SessionState = {
   /**
@@ -268,16 +268,17 @@ export type SessionState = {
   readonly tasks: TaskSummaryResult
   /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
-   * **素材そのものは持たない**（`portraits` の値は `/character/<file>` の URL。docs/design.md
+   * **素材そのものは持たない**（`portraits` の値は `/character/<pack>/<file>` の URL。docs/design.md
    * 4.2）。
    */
   readonly character: CharacterInfo | undefined
   /**
-   * 切り替えられるキャラクターパックの一覧（サイドバーの `<select>`。docs/design.md 7章）。
+   * キャラクターパックの一覧（サイドバーの `<select>` と、キャラクター画面の一覧・詳しい設定。
+   * docs/design.md 7.2）。**使用中以外のパックも姿ごと持つ**。
    * `character-changed` と一緒に届く。**まだ届いていないときは空**で、そのときは選択肢を
    * 出せないので `<select>` ごと出さない。
    */
-  readonly characterPacks: readonly CharacterPackChoice[]
+  readonly characterPacks: readonly CharacterPackEntry[]
   /**
    * 切り替え先として選べるセッションの一覧（サイドバーの `<select>`。
    * `docs/requirements.md` 4.8）。`sessions-changed` と一緒に届き、**起こしたときの姿のまま

@@ -911,6 +911,7 @@ describe("createSessionManager", () => {
       await manager.dispatch({
         type: "set-portrait",
         commandId: "c-1",
+        pack: "fictional",
         expression: "proud",
         image: "data:image/png;base64,AAAA",
       }),
@@ -928,6 +929,26 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
   })
 
+  it("使用中でないパックを変えるコマンドも起こし直さず、書き込み先へ pack をそのまま渡す", async () => {
+    const { manager, stub, edits } = startManagerWithStub()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+
+    expect(
+      await manager.dispatch({
+        type: "set-background",
+        commandId: "c-1",
+        pack: "fictional-other",
+        image: "data:image/png;base64,AAAA",
+      }),
+    ).toEqual({ ok: true })
+    await waitForBatch()
+
+    expect(stub.calls).toEqual([])
+    expect(edits.map((edit) => edit.pack)).toEqual(["fictional-other"])
+    expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
+  })
+
   it("差し色を変えるコマンドも同じ経路を通る", async () => {
     const { manager, edits } = startManagerWithStub()
 
@@ -935,6 +956,7 @@ describe("createSessionManager", () => {
       await manager.dispatch({
         type: "set-outfit-accent",
         commandId: "c-1",
+        pack: "fictional",
         outfit: "heavy",
         color: "#ffb3a7",
       }),
@@ -1051,6 +1073,7 @@ describe("createSessionManager", () => {
       await manager.dispatch({
         type: "clear-portrait",
         commandId: "c-1",
+        pack: "fictional",
         expression: "proud",
       }),
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterEditFailed })
@@ -1126,6 +1149,7 @@ describe("createSessionManager", () => {
       await manager.dispatch({
         type: "clear-portrait",
         commandId: "c-1",
+        pack: "fictional",
         expression: "proud",
       }),
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterEditFailed })

@@ -2,7 +2,7 @@
 // （tsconfig の `"jsx": "react-jsx"`）。**CSS もここから辿る**（下の `styles/theme.css` と、
 // 各機能が import する `*.module.css`）ので、スクリプトと CSS は1回の組み立てから出る対になる
 // （`src/server/adapter/bundle.ts`）。副作用（`createRoot(...).render(...)`）を持つのは
-// ここだけ（`docs/architecture.md`「入口だけに副作用を置く」）。
+// ここだけ（`docs/architecture.md`「各ファイルの責務」）。
 //
 // **選んでいるターンは `<TurnSelectionProvider>` が配る**（メインビューのタブとキャラビューの
 // 吹き出しが同じ選択に従うため。`src/browser/stores/turn-selection.tsx`）。

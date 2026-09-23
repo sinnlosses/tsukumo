@@ -19,9 +19,10 @@
 //
 // `character-changed` イベントは `{ kind } & CharacterInfo & { packs }`（src/shared/session-event.ts）
 // なので、{@link characterChangedEvent} は `characterInfo` に `kind` / `packs` を足して広げるだけ。
+// 一覧の1件（`CharacterPackEntry`）は {@link characterPackEntry} で組む。
 
 import { type CharacterDefinition } from "../../src/shared/character-definition.ts"
-import { type CharacterInfo, type CharacterPackChoice } from "../../src/shared/character.ts"
+import { type CharacterInfo, type CharacterPackEntry } from "../../src/shared/character.ts"
 import { type Expression, EXPRESSIONS, type Outfit } from "../../src/shared/expression.ts"
 import { type SessionEvent } from "../../src/shared/session-event.ts"
 
@@ -47,14 +48,34 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
 
 /**
  * キャラクターパックが決まった（`character-changed`）イベント。**`packs` の既定は
- * `characterInfo()` の既定と同じ1枠**（`{ name: "fictional", label: "架空の精霊" }`）。
+ * `characterInfo()` の既定と同じ1枠**（`characterPackEntry("fictional", "架空の精霊")`）。
  * 切り替え先が複数あるテストは呼ぶ側で渡す。
  */
 export function characterChangedEvent(
   overrides: Partial<CharacterInfo> = {},
-  packs: readonly CharacterPackChoice[] = [{ name: "fictional", label: "架空の精霊" }],
+  packs: readonly CharacterPackEntry[] = [characterPackEntry("fictional", "架空の精霊")],
 ): Extract<SessionEvent, { readonly kind: "character-changed" }> {
   return { kind: "character-changed", ...characterInfo(overrides), packs }
+}
+
+/**
+ * パックの一覧の1件。**姿は `characterInfo` の既定にパックの名前と表示名を入れたもの**で、
+ * 使用中でも消せもしない（選択肢として並べるだけのテストが多いため）。違うところは
+ * `overrides` で渡す。
+ */
+export function characterPackEntry(
+  name: string,
+  label: string,
+  overrides: Partial<Omit<CharacterPackEntry, "name" | "label">> = {},
+): CharacterPackEntry {
+  return {
+    name,
+    label,
+    character: characterInfo({ pack: name, name: label }),
+    inUse: false,
+    deletable: false,
+    ...overrides,
+  }
 }
 
 /** 定義ファイル（character.json）を読んだ形。値はファイル名で、URL ではない。 */

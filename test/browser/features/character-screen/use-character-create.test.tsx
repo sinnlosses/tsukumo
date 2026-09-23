@@ -8,10 +8,10 @@ import {
   useCharacterCreate,
 } from "../../../../src/browser/features/character-screen/hooks/use-character-create.ts"
 import { type SessionStore, SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
-import { type CharacterPackChoice } from "../../../../src/shared/character.ts"
+import { type CharacterPackEntry } from "../../../../src/shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { characterInfo } from "../../../fixture/character.ts"
+import { characterInfo, characterPackEntry } from "../../../fixture/character.ts"
 import { type CommandSpy, putState, sessionStoreWith } from "../../session-store.ts"
 
 /**
@@ -25,7 +25,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
   expressions: [{ name: "default", label: "通常" }],
 })
 
-const FIXTURE_PACKS: readonly CharacterPackChoice[] = [{ name: "fictional", label: "架空の精霊" }]
+const FIXTURE_PACKS: readonly CharacterPackEntry[] = [characterPackEntry("fictional", "架空の精霊")]
 
 const BASE_STATE: SessionState = {
   ...INITIAL_SESSION_STATE,
@@ -156,7 +156,7 @@ describe("useCharacterCreate", () => {
     act(() => {
       putState(store, {
         ...BASE_STATE,
-        characterPacks: [...FIXTURE_PACKS, { name: "fictional-2", label: "fictional-2" }],
+        characterPacks: [...FIXTURE_PACKS, characterPackEntry("fictional-2", "fictional-2")],
         turn: { kind: "running", startedAt: 0 },
       })
     })

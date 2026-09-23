@@ -142,7 +142,7 @@ export type ChatRecall = {
 /**
  * {@link ChatRecall.recall} が返すもの。**判別可能な合併型**にしてあるのは、「当たらなかった」と
  * 「このターンではもう引けない」がモデルへ返す文面の違う別の状態だから
- * （`docs/coding-standards.md`「無いかもしれない値」）。文面に変えるのは
+ * （`docs/coding-standards.md`「「無いかもしれない」値」）。文面に変えるのは
  * `src/server/core/chat-memory-prompt.ts`。
  */
 export type ChatRecallResult =
@@ -306,8 +306,8 @@ export type SessionDriver = {
    */
   readonly prompt: (text: string, images: readonly ShelvedPromptImage[]) => void
   /**
-   * 依頼を1つ送るが、**記録に残さない**（`docs/screen-design.md` 13.7「キャラクターから話しかけて
-   * もらう」）。流れるのは `request` ではなく `turn-started` なので、**送った文面は画面のログにも
+   * 依頼を1つ送るが、**記録に残さない**（`docs/screen-design.md` 13.7「立ち絵をつつくと話しかけて
+   * くれる」）。流れるのは `request` ではなく `turn-started` なので、**送った文面は画面のログにも
    * 記録にも雑談の会話のアーカイブにも残らない**（落とすのは組み立ての側ではなく、この時点）。
    *
    * 画像は添えられない（tsukumo が自分で足す一言のための口で、利用者の持ち物を運ばない）。

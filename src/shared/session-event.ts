@@ -15,7 +15,7 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { type BackgroundTask } from "./background-task.ts"
-import { type CharacterInfo, type CharacterPackChoice } from "./character.ts"
+import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
@@ -247,16 +247,17 @@ export type SessionEvent =
    */
   | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryResult }
   /**
-   * キャラクターパックが決まった（core の `character-pack.ts`。**起こしたときと、
-   * `switch-character` で起こし直したときの1回ずつ**）。キャラビューが立ち絵を取りに行く先
-   * （`docs/design.md` 4.1・7章）。**中身は URL だけ**（素材そのものは乗らない。
+   * キャラクターパックが決まった・一覧が変わった（adapter の `character-pack.ts`。**起こしたとき・
+   * 起こし直したときの1回ずつと、画面からパックを変えた・作ったとき**）。キャラビューが立ち絵を
+   * 取りに行く先（`docs/design.md` 4.1・7.2）。**中身は URL だけ**（素材そのものは乗らない。
    * docs/coding-standards.md「会話内容の扱い」と同じ考え方）。
    *
-   * 切り替えの選択肢（`packs`）も一緒に運ぶ。**一覧は起動先とキャラクターパックの置き場を
-   * 見て決まる**もので、いま出しているキャラクターと出どころが同じなので、イベントを分けない。
+   * 全パックぶんの一覧（`packs`。使用中以外のパックの姿も含む）も一緒に運ぶ。**一覧が変わる契機は
+   * いま出しているパックが変わる契機と同じ**で、使用中の印（`inUse`）も持ち替えで動くので、
+   * イベントを分けない（`docs/design.md` 4.1）。
    */
   | ({ readonly kind: "character-changed" } & CharacterInfo & {
-        readonly packs: readonly CharacterPackChoice[]
+        readonly packs: readonly CharacterPackEntry[]
       })
   /**
    * 切り替え先として選べるセッションの一覧が分かった（`docs/requirements.md` 4.8）。
