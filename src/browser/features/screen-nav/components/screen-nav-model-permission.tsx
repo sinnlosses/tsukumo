@@ -1,7 +1,8 @@
 // 帯の右端、モデル・許可モードのドロップダウン（docs/design.md 13.9「動き方の操作子」）。
 // **部品は `components/select.tsx` の素の `<select>` のまま**にし、見た目だけ帯に合わせる
 // （`appearance: none`。screen-nav.module.css）。キーボードの操作・読み上げ・選択肢の開き方は
-// ブラウザに任せる。
+// ブラウザに任せる。**`<select>` を1つずつ `.screen-nav-select` で包む**のは、下向きの矢印を
+// 字の色（`currentColor`）で描くため（`<select>` 自身は `::after` を持てない）。
 //
 // **見える項目名は置かない。** 値（「Opus」「自動判定」）が何の値かは字で分かるので、
 // `aria-label` と `title` に「モデル」「許可モード」を入れるだけにとどめる。
@@ -37,26 +38,30 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
 
   return (
     <span className={styles["screen-nav-model-permission"]}>
-      <Select
-        id={modelSelectId}
-        ariaLabel="モデル"
-        className={styles["screen-nav-model-select"] ?? ""}
-        value={model}
-        disabled={false}
-        title="モデル"
-        options={MODEL_LABELS.map(([value, label]) => ({ value, label }))}
-        onChange={onSetModel}
-      />
-      <Select
-        id={permissionModeSelectId}
-        ariaLabel="許可モード"
-        className={permissionModeClass}
-        value={permissionMode}
-        disabled={false}
-        title="許可モード"
-        options={PERMISSION_MODE_LABELS.map(([value, label]) => ({ value, label }))}
-        onChange={onSetPermissionMode}
-      />
+      <span className={styles["screen-nav-select"]}>
+        <Select
+          id={modelSelectId}
+          ariaLabel="モデル"
+          className={styles["screen-nav-model-select"] ?? ""}
+          value={model}
+          disabled={false}
+          title="モデル"
+          options={MODEL_LABELS.map(([value, label]) => ({ value, label }))}
+          onChange={onSetModel}
+        />
+      </span>
+      <span className={styles["screen-nav-select"]}>
+        <Select
+          id={permissionModeSelectId}
+          ariaLabel="許可モード"
+          className={permissionModeClass}
+          value={permissionMode}
+          disabled={false}
+          title="許可モード"
+          options={PERMISSION_MODE_LABELS.map(([value, label]) => ({ value, label }))}
+          onChange={onSetPermissionMode}
+        />
+      </span>
     </span>
   )
 }
