@@ -43,18 +43,18 @@ const TASKS: readonly TaskSummaryItem[] = [
 describe("taskListCounts", () => {
   it("進行中 → 未着手 → 完了の順で件数を返す", () => {
     expect(taskListCounts(TASKS)).toEqual([
-      { label: "進行中", count: 1 },
-      { label: "未着手", count: 1 },
-      { label: "完了", count: 1 },
+      { status: "doing", label: "進行中", count: 1 },
+      { status: "todo", label: "未着手", count: 1 },
+      { status: "done", label: "完了", count: 1 },
     ])
   })
 
   it("0件のものも省かず出す（チップの並びを動かさない）", () => {
     const noDoing = TASKS.filter((task) => task.status !== "doing")
     expect(taskListCounts(noDoing)).toEqual([
-      { label: "進行中", count: 0 },
-      { label: "未着手", count: 1 },
-      { label: "完了", count: 1 },
+      { status: "doing", label: "進行中", count: 0 },
+      { status: "todo", label: "未着手", count: 1 },
+      { status: "done", label: "完了", count: 1 },
     ])
   })
 })

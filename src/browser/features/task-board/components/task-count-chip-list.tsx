@@ -12,7 +12,14 @@ export function TaskCountChipList(props: {
   return (
     <ul className={styles["task-count-chips"]}>
       {props.counts.map((item) => (
-        <li key={item.label} className={styles["task-count-chip"]}>
+        <li
+          key={item.status}
+          className={
+            item.status === "doing"
+              ? `${styles["task-count-chip"]} ${styles["task-count-chip-doing"]}`
+              : styles["task-count-chip"]
+          }
+        >
           {item.label} {String(item.count)}
         </li>
       ))}
