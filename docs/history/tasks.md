@@ -23987,3 +23987,344 @@ composer.tsx: 分けた（339→19行）。hooks/use-composer.ts が下書き・
   コードを読む人が把握しやすいほうを選ぶ」の物差し（開くファイルの数・呼ぶ側が自分の外の
   事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）で判断する
 - 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）
+
+## T-338
+
+**タスク**: キャラクター画面の2つのフォームを、決めた型で分ける
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-328 / **passes**: True
+
+**evidence**:
+
+character-edit.tsx: 分けた（262→16行）。hooks/use-character-edit.ts が引きずり中の差し色・--accent の読み取り・200ms まとめて送る・カード/背景の畳み（waiting | ready の合併型、消す口は RemovableExpression でだけ onClear を持つ合併型）を持ち、立ち絵と背景で同じだった data URL の読み取りを1つにした。presentational-character-edit.tsx は器、分岐を持つ塊だけ components/portrait-card.tsx・background-field.tsx にした。character-create.tsx: 分けた（194→17行）。hooks/use-character-create.ts が名前・立ち絵・差し色・送った名前と一言の畳み（none | message | created）を持ち、presentational は器だけで項目が一度ずつしか出ないので components/ は切らない。共通のフックへ寄せない（編集はサーバの姿を映してすぐ送り、作成は手元に持って1回送る。value を戻すかも違う）。expressionsWithPortrait と畳んだ portraits の読み方は変えていない。既存の character-screen のテスト4本は手を入れずに通過し、renderHook のテスト2本（11件）を足した。bun run check: 1364 pass / 0 fail。目視（疑似セッション、ポート 7391、1400x900、一時 HOME）: 編集で空き枠に png を選ぶと絵と差し替え/消すが出て、差し色 #123456 と背景も反映、一時ホームの character.json に書かれた。作成で ../bad は注意が出て押せず、visual-check と立ち絵1枚で作れて、切り替えると #character に戻り見出しが visual-check になった。利用者の ~/.tsukumo/ は変わっていないことを確認
+
+## 背景
+
+`src/browser/features/character-screen/` の2つのフォームが、ロジックと見た目を同居させて
+いる。
+
+| ファイル | 行数 | フック | 中に混ざっているもの |
+| --- | ---: | ---: | --- |
+| `character-edit.tsx` | 264 | 4 | 編集中の値の状態・保存の呼び出し・検証 |
+| `character-create.tsx` | 193 | 5 | 作成中の値の状態・作成の呼び出し・検証 |
+
+同じディレクトリの `appearance-color.ts`（238行）は**すでに関数だけのファイル**として
+分かれていて（`localStorage` への読み書きと色の計算）、`character-screen.tsx`（130行）が
+画面を組む。**残っているのがこの2つのフォーム**。
+
+ユーザーの指示（2026-09-22）: 「他のコンポーネントでも同様に整理できるか洗い出して
+タスク化してほしい」。
+
+## 決まっていること（蒸し返さない）
+
+- **分け方の型は T-328 が `docs/design.md` 2章に書いている**（フックは
+  `features/<機能>/hooks/use-*.ts`）
+- このタスクは**振る舞いを変えない**
+
+## やること
+
+1. `docs/design.md` 2章の型を読む
+2. `character-edit.tsx` と `character-create.tsx` を型に沿って分ける。**2つは似た形の
+   フォームなので、共通のフックに寄せられるかも見る**（寄せるなら、寄せた先が
+   `features/character-screen/hooks/` の中に置ける1つの概念かどうかで判断する）
+3. `test/browser/features/character-screen/` のテストが**そのまま通ること**を確かめる。
+   切り出したフックと純関数に、部品を起こさずに測れるテストを足す
+
+5. **調べて T-328 の型に当てはまらない（分けると読みにくくなる）と分かったファイルは、
+   やらずに理由を `evidence` に書いて閉じる。** 対象の全部を分ける必要は無い
+
+## 完了条件
+
+- `bun run check` が通る
+- 2ファイルの行数が分ける前より減っている（前後の行数を evidence に書く）
+- 切り出したフック・純関数に、部品を起こさずに測るテストがある
+- 目視: キャラクター画面でキャラクターを新しく作れる・既存のキャラクターを編集して保存できる。
+  何を確かめたかを evidence に書く
+
+## 注意
+
+- **T-328 が `docs/design.md` 2章に書いた型に従う。** 型を読まずに自分で決め直さない
+- 分けたぶん**開くファイルの数が増える**。`CLAUDE.md`「案が2つ以上あるときは、書いたあとの
+  コードを読む人が把握しやすいほうを選ぶ」の物差し（開くファイルの数・呼ぶ側が自分の外の
+  事情を知らずに済むか・前提が変わったときに黙って効かなくならないか）で判断する
+- **素材のパスや表情の対応はキャラクターパックの定義ファイル側**（原則4）。分けるときに
+  コード側へ持ってこない
+- 目視確認は tsukumo を起こす必要がある（他のセッションと並行させない）
+
+## T-370
+
+**タスク**: テストが手で組む記録とキャラクターのイベントを、共通の組み立て関数に寄せる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1364 pass / 0 fail（114ファイル）で、着手前の bun run test 1364 pass と同数。test/fixture/session-record.ts（requestRecord / speechRecord / detailRecord / compactBoundaryRecord）と test/fixture/character.ts の characterChangedEvent を足し、表の10ファイルから組み立てのローカル関数・定数（request / speech / detail / compactBoundary / STAMPED / CHARACTER_FIXTURE の中身 / CHARACTER_EVENT の中身 / characterEventOf）を消した（grep -nE '^(const|function) (request|speech|detail|compactBoundary|STAMPED|characterEventOf)\b' が空）。grep -rc 'kind: "stamped", at: 0' test の合計は 18 → 15（残りはフィクスチャの定義1・chat-log.test.ts の期待値6・対象外の session-state.test.ts の SessionEvent 6・main-view-turn.test.ts 2）。時刻そのものを確かめる chat-view / use-chat-view のテストは time を明示した記録を直書きのまま残した。
+
+## 背景
+
+記録（`SessionRecord`）の依頼とセリフに `time` を足したコミット（`468aed8`）では、記録を手で
+組み立てているテストの5ファイルに同じ `time: { kind: "stamped", at: 0 }` を書き足した。いまも
+次の組み立てが各ファイルにばらばらにある:
+
+| 組み立てるもの | 置き場（着手時に grep で取り直す） |
+| --- | --- |
+| 依頼・セリフ・本文の記録（`request` / `speech` / `detail` などのローカル関数） | `test/shared/turn-speech.test.ts`・`test/browser/features/main-view/main-view.test.tsx`・`test/browser/features/character-view/character-view.test.tsx`・`test/browser/stores/turn-selection.test.tsx` の `turns` |
+| 記録の並び（`RECORDS`） | `test/browser/features/chat-view/chat-view.test.tsx`・`test/browser/features/chat-view/use-chat-view.test.tsx`・`test/shared/chat-log.test.ts` |
+| `character-changed` イベント | `test/shared/session-state.test.ts` の `CHARACTER_FIXTURE`・`test/server/core/session-manager.test.ts` の `CHARACTER_EVENT`・`test/server/core/session-launch.test.ts` の `characterEventOf` |
+
+一覧を取り直すコマンド: `grep -rn 'SessionRecord' test` と `grep -rn '"character-changed"' test`
+
+キャラクターの値は、同じ理由で `test/fixture/character.ts` の `characterInfo(overrides)` に寄せた
+前例がある。`docs/coding-standards.md`「テスト」節の表も「同じ準備が複数ファイルに重複している
+ときは共通のフィクスチャに寄せる」としている。
+
+## やること
+
+1. `test/fixture/session-record.ts` を作り、依頼・セリフ・本文の記録を組み立てる関数を置く。
+   形は `characterInfo(overrides)` と同じ（既定値を持ち、変えたいフィールドだけ渡す）。関数名は
+   `docs/glossary.md` の英語識別子に合わせる
+2. 上の表の1行目・2行目のローカル関数と並びを、その関数で組む形に置き換える。**期待値
+   （`toEqual` の右辺）は直書きのまま残してよい**（何を確かめているかが読めるほうを優先する）
+3. `character-changed` イベントを組む関数を `test/fixture/character.ts` に足し、表の3行目を置き換える
+4. 別の型（`MainViewEntry` を組む `test/shared/main-view.test.ts` など）は対象外
+
+## 完了条件
+
+- `bun run check` が通り、**テスト件数が前後で同じ**（両方の件数を `evidence` に書く）
+- 表に挙げたファイルに、記録や `character-changed` を組むローカル関数・定数が残っていない
+- `grep -rc 'kind: "stamped", at: 0' test` の合計を前後で `evidence` に書く
+
+## 注意
+
+- 文面は架空のものを使う（会話の実物をフィクスチャに入れない。`CLAUDE.md` の IMPORTANT）
+- テストの意図（どの入力で何を確かめるか）は変えない。組み立て方だけを変える
+- 人に委ねる判断は残らないので `"Y"`
+
+## T-373
+
+**タスク**: トークン消費の画面から費用を外し、日ごとのグラフをキャッシュ読みと分ける
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1368 pass / 0 fail、grep -rn "formatCost\|費用" src/browser/features/token-usage/ は0件。縦軸の幅を2枚とも84pxに固定して、同じ日が上下で同じ横位置に来るようにした（daily-usage-chart.tsx の Y_AXIS_WIDTH）。
+目視: TSUKUMO_DRIVER=fake と架空の記録を置いた TSUKUMO_HOME で起こし、capture-view.ts で #token-usage を1400x900と720x900で撮った。上は入力・出力・キャッシュ作成の積み上げ、下はキャッシュ読みだけの1枚で、記録の無い日（09-19）を抜いても2枚の日付は同じ横位置。9桁の目盛りも欠けず、横のはみ出しは0px。
+
+## 背景
+
+トークン消費の画面（`src/browser/features/token-usage/`）は費用（USD）を3か所に出している。
+`presentational-token-usage-screen.tsx` の合計の数の並び（`<Figure label="費用">`）、モデル別の表の
+2列目（`ModelTable` の `費用` 列）、`daily-usage-chart.tsx` の日ごとのグラフの線と右の軸（`yAxisID: "cost"`）。
+利用者はサブスクリプションで使っているので、費用は判断に使わない。
+
+`daily-usage-chart.tsx` は入力・出力・キャッシュ読み・キャッシュ作成を1本の縦軸に積み上げている。
+キャッシュ読みはほかより桁が大きく、ほかの3つは棒の根元に潰れて読めない。
+
+## 決まっていること（蒸し返さない）
+
+- 日ごとのグラフは**2枚に分ける**。上が「入力・出力・キャッシュ作成」の積み上げ棒、下が
+  「キャッシュ読み」の棒。どちらも自分の縦軸を持つ（2026-09-23 ユーザー）
+- 費用は画面に出さない（2026-09-23 ユーザー「費用は不要」）
+
+## 解くべき論点
+
+- 2枚のグラフの横軸（日付）を上下で揃える。片方の日だけ棒が無くても、同じ日が同じ横位置に来るようにする
+
+## やること
+
+1. 画面から費用を外す。合計の数の並び・モデル別の表の列・日ごとのグラフの線と右の軸の3か所で、
+   `usage-format.ts` の `formatCost` は使う場所が無くなれば消す
+2. **記録（`~/.tsukumo/token-usage/*.jsonl` の `costUsd`）と集計の形（`src/shared/token-usage-summary.ts`
+   の `TokenUsageTotals`）はそのまま残す。** 変えると記録の形の版を上げることになり、画面から
+   消すだけなら要らない
+3. `daily-usage-chart.tsx` を2枚のグラフに分ける。分けたあとに部品が1ファイルに収まらなくなったら、
+   ファイル名が概念になる単位で割る（`CLAUDE.md` 原則5）
+4. テスト（`test/browser/features/token-usage/`）を直す。費用の表示を見ているものは消し、2枚に
+   分かれたことを見るものを足す
+5. `bun run build` のあと、疑似セッションか本物で起こしてトークン消費の画面を開き、2枚のグラフの
+   両方で棒が読めることを目視で確かめる（手順は `docs/architecture.md`「手で確かめること」）
+
+## 完了条件
+
+- `bun run check` が通る
+- `grep -rn "formatCost\|費用" src/browser/features/token-usage/` が0件
+- 日ごとのグラフが2枚あり、キャッシュ読みが下の1枚にだけ出ていることを目視で確かめ、端末と見えたものを `evidence` に書く
+
+## 注意
+
+- 記録の形（`src/shared/token-usage.ts`）と `TOKEN_USAGE_FORMAT_VERSION` は触らない
+- `docs/design.md` にトークン消費の画面の記述があれば、費用とグラフの枚数の記述を直す
+
+## T-378
+
+**タスク**: 部屋の名前の語彙を読みやすい色名（空色・若葉・菜の花…）に入れ替える
+
+**difficulty**: haiku / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+ROOM_COLORS を 空色/若葉/菜の花/夕焼け/藍/藤/朱/灰/若草/海/桜/墨 に置き換え、test/shared/room.test.ts が roomName(7327)=空色の間・roomName(7338)=墨の間 を確かめている。
+git grep -n 浅葱 -- src test docs ':!docs/history' は0件。docs/design.md 13.9 と docs/glossary.md「部屋」も追随（見出し数は前後とも 53 / 61 で変わらず）。
+bun run check: 1364 pass 0 fail（114ファイル）。帯の表示は screen-nav.test.tsx の DOM 断定で覆っており、字面だけの差し替えなので tsukumo を起こした目視はしていない。
+
+## 背景
+
+部屋の名前（`src/shared/room.ts` の `roomName`）は `ROOM_COLORS` の和の色名12個をポートの並び順
+（7327 から）に割り当て、「〜の間」と表示している。いまの語彙は 浅葱 / 萌黄 / 山吹 / 茜 / 藍 / 紫苑 /
+朱 / 鈍色 / 若草 / 群青 / 香色 / 墨 で、浅葱・萌黄・紫苑・鈍色・香色は読みにくい。名前は画面
+（帯とサイドバーのセッションの行）のためだけのもので、セッションの印はポート番号のまま
+（`docs/design.md` 13.9「部屋の名前」）なので、語彙を入れ替えても過去のセッションの移行は要らない。
+
+## 決まっていること（蒸し返さない）
+
+- 新しい語彙は、ポート 7327 から順に 空色 / 若葉 / 菜の花 / 夕焼け / 藍 / 藤 / 朱 / 灰 / 若草 / 海 / 桜 / 墨（2026-09-23 ユーザー決定）
+- 結びの「の間」・12個という数・語彙の外はポート番号を名乗る挙動・「和の色名」という位置づけは変えない
+
+## やること
+
+1. `src/shared/room.ts` の `ROOM_COLORS` を上の12個に置き換える（コメントの例「浅葱」も「空色」に直す）
+2. `test/shared/room.test.ts` の期待値の並びと、`test/browser/features/sidebar/session-switch.test.tsx` の
+   「浅葱の間」「萌黄の間」を新しい名前（空色の間・若葉の間）に直す
+3. `docs/design.md` 13.9 の「部屋の名前」小節の語彙の列挙と、同じ章の帯の図にある「浅葱の間」を直す
+4. `docs/glossary.md`「部屋」の注記の「7327 が「浅葱の間」」を「空色の間」に直す
+5. `git grep -n 浅葱 -- src test docs ':!docs/history'` が0件になることを確かめる（`docs/history/` は当時の記録なので直さない）
+
+## 完了条件
+
+- `roomName(7327)` が「空色の間」、`roomName(7338)` が「墨の間」を返し、そのことを `test/shared/room.test.ts` が確かめている
+- `git grep -n 浅葱 -- src test docs ':!docs/history'` が0件
+- `bun run check` が通る
+
+## 注意
+
+- `docs/history/` 配下は書き換えない
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' docs/design.md` の数が変わらないことを確かめる
+
+## T-379
+
+**タスク**: レポートを書く演出の自動送りを、帯ぜんたいではなくミニ立ち絵の位置に追わせて揺れを止める
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+brush-scroll.test.ts に往復テストを2件追加。変更前のコードで1件目が落ちた（1フレーム目 scrollTop=46 → 2フレーム目 -46 へ戻る往復を再現）。bun run check: 1367 pass / 0 fail / 114ファイル（変更前から3件純増）。
+追う範囲を BrushTipRange {tipBottom, tipHeight} に変え、高さは report-reveal.ts が固定 96px （--mini-portrait-height の上限）を渡す (a)案。(b) の DOM 実測は brush-scroll.ts が mini-portrait の素材欠けの分岐まで抱えるので、読む人が開くファイルが2つ増える。
+fake driver の long-report を目視（TSUKUMO_VIEW_PORT=7391 / TSUKUMO_HOME を分離）: 1400x900 で scrollTop 0→1069（428サンプル、減少0回）、720x900 で 0→1107（379サンプル、減少0回）。ミニ立ち絵は器の中（top 173〜395px）に収まり続けた。
+
+## 背景
+
+レポートを書き上げる演出の最中に、メインビューの本文が上下に小刻みに揺れることがある（利用者の報告）。
+
+演出は `src/browser/features/main-view/report-reveal.ts` の `startReveal` が毎フレーム `tick` を回し、`advanceBlock` が返した `BrushStep` をそのまま `scroller.follow(step)` に渡している。`src/browser/features/main-view/brush-scroll.ts` の `brushScroller().follow` は、受け取った `tipTop`〜`tipBottom` の範囲を器の上下の縁から `KEEP_MARGIN_PX`（96px）内側に収めようとして、`below > 0` なら下へ、`above > 0` なら上へ `scrollTop` を動かす。
+
+ところが `tipTop` / `tipBottom` は筆先の点ではなく**いま書いている帯ぜんたい**の上端と下端（`src/browser/features/main-view/reveal-band.ts` の `brushStep`。横画では `band.top` / `band.bottom` をそのまま入れる）。帯はトピック（見出しから次の見出しまで）の行を上下2つに割ったものなので、行の多いトピックや表・図を含むトピックでは帯が器の高さ − 192px を超える。そのとき:
+
+1. 下端がはみ出す → `below` の分だけ下へ送る
+2. 次のフレームでは上端が縁より上に出る → `above` の分だけ上へ戻す
+3. 以降フレームごとに 1・2 を繰り返す
+
+となり、横画のあいだ本文が毎フレーム往復する。「ことがある」のは帯が背高になるトピックでだけ起きるため。**ここまではコードを読んだ見立てで、実機での再現はまだ取っていない。**
+
+ミニ立ち絵（`src/browser/features/main-view/mini-portrait.tsx`）は筆先の**右・帯の下端**に、`translateY(-100%)` で立ち絵の高さぶん上へ伸びて立つ（`followStyle`）。高さは `mini-portrait.module.css` の `--mini-portrait-height`（`clamp(60px, 8vmin, 96px)`）で、器の高さより十分小さい。
+
+## 決まっていること（蒸し返さない）
+
+- 自動送りが追う対象を「帯ぜんたい」から「ミニ立ち絵の立つ位置」（帯の下端と、そこから立ち絵の高さぶん上まで）に変える（利用者の提案「レポートを書いているときは自動でミニキャラの位置に追従すれば解決する?」を採る）
+- ミニ立ち絵が出ないとき（`data-brush-origin` が見つからない・パックに素材が無い）も、自動送りは同じ位置（帯の下端基準）を追う
+- 手で転がしたら自動送りを降りる挙動（`HAND_SCROLL_EVENT_NAMES`）と、打ち切りの口（`SKIP_EVENT_NAMES`）は変えない
+
+## 解くべき論点
+
+- 立ち絵の高さをどう知るか。候補は (a) `BrushTipRange` を「下端と高さ」で渡し、高さは呼ぶ側が固定の見積もり（上限の 96px など）で渡す、(b) ミニ立ち絵の要素を測る。(b) は `brush-scroll.ts` が立ち絵の DOM を知ることになり、立ち絵が出ないときの分岐も要る。**読む人が開くファイルの数が少ないほう**を選び、理由をコメントではなく `evidence` に書く
+- 斜めの戻り（`stroke: "return"`）のあいだも同じ追い方でよいか（戻りでは帯の下端が次の帯の下端へ滑るので、下端基準なら連続に動くはず）
+- 追う範囲が器の高さ − 2×`KEEP_MARGIN_PX` を超える場合が残るなら、上下のどちらを優先するかを決め、往復しないことをテストで押さえる
+
+## やること
+
+1. `test/browser/features/main-view/brush-scroll.test.ts` に、**器より背の高い範囲を2回続けて `follow` しても `scrollTop` が往復しない**ことを確かめるテストを先に書き、いまのコードで落ちることを確かめる（落ちなければ見立てが違うので、fake driver で帯の背が高いトピックを流して揺れを再現してから原因を探し直す。**原因が上の見立てと違えば、直さずに分かったことを `evidence` に書いて `difficulty` を上げて止まる**）
+2. 追う範囲をミニ立ち絵の立つ位置に変える（`brush-scroll.ts` の `BrushTipRange` と `follow`、`report-reveal.ts` の呼び出し。`reveal-band.ts` の `BrushStep` は立ち絵以外の用途（`clip-path` の肩と opacity）にも使うので変えない）
+3. 先頭の説明コメント（`brush-scroll.ts` と `report-reveal.ts` 冒頭の「筆先が画面から出たら器を送る」）を新しい追い方に合わせる
+4. `docs/requirements.md` 4.3 と `docs/design.md` 6.5 に自動送りの追う範囲が書かれていれば直す（無ければ触らない）
+5. fake driver（`src/server/adapter/fake-driver.ts`、手順は `docs/architecture.md`「手で確かめること」）で、背の高いトピックを含むレポートを流して目視する
+
+## 完了条件
+
+- 手順1のテストが、変更前のコードで落ち、変更後に通る
+- 既存の `brush-scroll.test.ts` のテスト（下にはみ出したら送る・上にはみ出したら戻す・手で転がしたら降りる）が通る
+- fake driver で、帯が器より背の高いトピックを書いているあいだ本文が往復しないことと、ミニ立ち絵が器の中に見え続けることを目視し、窓の大きさと見えたものを `evidence` に書く
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 演出の目視は開いた時点の本文には掛からない。新しい依頼を出して演出を走らせてから見る
+
+## T-380
+
+**タスク**: ヘッダーの新しい形（操作子・作業中のピル・顔）を決めて design.md と要件に書く
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/design.md 13.9 に帯の要素を左から並べた図と表・「帯に何を置くか」「動き方の操作子」「いまの作業」「顔」を書き、13.4/13.6/13.7 と requirements.md 2.1/4.1/4.2（サイドバー2区画）/4.7/4.9、glossary.md（顔・いまの作業・依頼の手順）、T-381〜T-384 の本文を直した。見出し数 design 53→53 / requirements 27→27 / glossary 61→64（用語3つ）。
+src/ の差分 0、13.9「帯が奪う面積（実測）」は旧版と diff なし。
+bun run check: typecheck・lint・format:check 通過、1368 pass / 0 fail（115 files）
+
+## 背景
+
+ユーザーがヘッダー（画面のナビの帯）のモック `docs/history/mockup/header-2026-09-23.png` を示し、この形に作り直したいと言った（2026-09-23）。いまの帯は `src/browser/features/screen-nav/`（`presentational-screen-nav.tsx` が器、`hooks/use-screen-nav.ts` がロジック）で、部屋の名前（`components/screen-nav-room.tsx`）・3つの口・いまの動き方の読み（`components/screen-nav-status.tsx`。押せない字）・答え待ちの印・狭い画面の「≡」（`components/screen-nav-menu.tsx`）を持つ。高さは 30px（`screen-nav.module.css`）。
+
+モックが帯に足すもの（左から）: 上端の差し色の細い線 / キャラクターの顔のアイコン + 部屋の名前 / 仕事・雑談のセグメント型トグル（かばんと湯のみのアイコン） / 3つの口（いまの画面に下線） / 作業中のピル「● tsukumo 作業中 | Bash: git add …」と、押すと開くポップオーバー（「実行中のコマンド」の全文・「この依頼での手順」（済みはチェック、実行中は回転の印。ツール名 + 対象）・「会話ログで全部見る」） / モデル（Opus ⌄）・許可モード（自動判定 ⌄）のドロップダウン / 歯車。
+
+いまの設計書と食い違うところ:
+
+- `docs/design.md` 13.6: モデル・許可モードの変える口はサイドバー「セッション情報」の `<select>`（`src/browser/features/sidebar/session-info.tsx`）。13.9「いまの動き方の読み」は「帯は名乗り、サイドバーは触らせる」「帯に `<select>` やボタンは置かない」
+- 13.9 の「出さない」表に雑談モードがある。13.7「モードの操作子はどこに置くか」はセッション情報の `<select>`
+- サイドバーは3区画（`src/browser/features/sidebar/sidebar.tsx`: いま何をしているか / タスク一覧 / セッション情報。`docs/requirements.md` 4.2）。`activity.tsx` は**失敗したツールの引数と出力を読める唯一の場所**（`FailureDetail`）
+- 「いま何をしているか」が持つのは `runningTools` / `finishedTools`（`src/shared/session-state.ts`）で、「直近」であって依頼（ターン）単位ではない
+- キャラクターの素材は定義ファイル側（`CLAUDE.md` 原則4）。`character.json` にはすでに `mini`（`src/shared/character-definition.ts`）がある
+
+## 決まっていること（蒸し返さない）
+
+- モデル・許可モード・仕事/雑談の変える口は帯へ移し、サイドバーの同じ `<select>` は外す。キャラクターの切り替えとセッションの切り替えはサイドバーに残す
+- 作業中のピルとポップオーバーは、サイドバーの「いま何をしているか」の区画と置き換える（サイドバーはタスク一覧・セッション情報の2区画になる）
+- 「会話ログで全部見る」は新しい画面を作らず、同じポップオーバーの中で全件に広げる
+- 左端のアイコンはいまのパックのキャラクターの顔（キャラクターを替えると変わる）
+- 歯車は今回置かない（設定の画面を新しく作る予定だが、デザインは未定）
+- 狭い画面（760px 以下）では、新しい操作子と作業中のピルも、いまの「≡」に畳む（段を増やさない）
+- 帯の高さはこのタスクでは決めない（T-384 で案を実測し、ユーザーが選ぶ）
+
+## 解くべき論点
+
+- 顔の素材: `mini` を丸く切り抜いて使うか、`character.json` に新しい欄を足すか。どちらも無いパックの落とし方
+- 仕事/雑談の切り替えはセッションの起こし直し（`docs/requirements.md` 4.9）。ターン中に押されたときの扱い（キャラクターの切り替えの `CHARACTER_SWITCH_BLOCKED_TITLE` と揃えるか）と、トグル1回で起こし直してよいか
+- ドロップダウンの部品: `src/browser/components/select.tsx` の `<select>` を帯に置くか、モックのような独自の開閉にするか（キーボード操作・a11y）
+- ピルの状態の出し方: 作業中 / 待っている / 答え待ち。いまの答え待ちの印とピルを1つにするか並べるか。実行中のツールが無いときピルに何を出すか
+- 「この依頼での手順」の範囲: いまの `finishedTools` のままでよいか、ターン単位にするならサーバ側（`src/shared/` の畳み込み）に何が要るか
+- 失敗したツールの引数と出力をポップオーバーのどこで読ませるか（読める場所を無くさない）
+- 帯が「名乗る場所」から「触らせる場所」も兼ねるので、13.9 の資格の規則（画面を見ても分からず、かつターンの結果を変えるもの）を書き直す
+- 雑談モード中の帯に何を出すか（13.7）
+
+## やること
+
+1. `frontend-design` スキルを読み、モックと上の論点を決める
+2. `docs/design.md` 13.6 / 13.7 / 13.9 を新しい形に書き直す（帯の要素を左から並べた図・操作子・ピル・ポップオーバー・顔・狭い画面・採らなかった案）。13.9「何を外すか」に、サイドバーの3つの `<select>` と「いま何をしているか」の区画を足す
+3. `docs/requirements.md` 4.2（サイドバーの区画）と 4.9 を直す
+4. 新しい呼び名が要るなら、先に `docs/glossary.md` に足す
+5. 決めたことが後続（T-381 / T-382 / T-383 / T-384）の本文と食い違ったら、その本文も直す
+
+## 完了条件
+
+- `docs/design.md` 13.9 に、帯の要素を左から並べた図と、上の論点それぞれの決定が書かれている
+- `docs/requirements.md` 4.2 のサイドバーが2区画になっている
+- `src/` を変えていない
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 13.9「帯が奪う面積（実測）」の数値はこのタスクでは触らない（T-384 の担当）

@@ -77,30 +77,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `ROOM_COLORS` を 空色 / 若葉 / 菜の花 / 夕焼け / 藍 / 藤 / 朱 / 灰 / 若草 / 海 / 桜 / 墨 に置き換え、テスト3ファイルと `docs/design.md` 13.9・`docs/glossary.md`「部屋」を追随させた。結びの「の間」・12個という数・語彙の外はポート番号を名乗る挙動は変えていない。
 
-### 2026-09-23 キャラクター画面の2つのフォームを、決めた型で分けた（T-338）
-
-`character-edit.tsx` と `character-create.tsx` を container / presentational / `hooks/` に割り（編集は `components/` の2部品も）、フックを部品を起こさずに測るテストを足した。
-
-### 2026-09-23 composer と pending-answer を、決めた型で分けた（T-337）
-
-`composer.tsx` と `pending-answer.tsx` を container / presentational / `hooks/` に割り、質問の箱は別の container にした。フックを部品を起こさずに測るテストを足した。
-
-### 2026-09-23 chat-view.tsx を、決めた型でロジックと UI に分けた（T-336）
-
-626行あった `chat-view.tsx` を container / presentational / `hooks/` の3つのフック / `components/` の6部品に割り、フックを部品を起こさずに測るテストを足した。見た目は変更前と撮り比べて同じ。
-
-### 2026-09-23 雑談のログに日の区切りと行ごとの時刻を出した（T-330）
-
-依頼とセリフの記録にサーバが打った時刻を持たせ、雑談のログに行ごとの `HH:MM` と日の区切りを出した。前のセッションから組み直した行は時刻を運べないので時刻を出さず、今の発言との境目に日の区切りを入れる。
-
-### 2026-09-23 立ち絵の対応表を入口で全域に畳んだ（T-314）
-
-`CharacterInfo.portraits` を `default` に畳んだ全域の表にし、差し色は衣装ごとに `default` へ畳んだ。空の既定値と引き直しの関数が消え、呼ぶ側は表を引くだけになった。編集画面の空き枠のために `expressionsWithPortrait` を足した。
-
-### 2026-09-23 見ているやり取りを location.hash に乗せた（T-299）
-
-留めたやり取りを `#<画面>?turn=<番号>` の形で hash に乗せ、リロードと戻る・進むで同じやり取りへ戻れるようにした。hash の読み書きは `stores/location-hash.ts` の1つに集めた。
-
 ## 未解決
 
 - **`develop/progress.md` の完了ブロックを分けるかは未決**（2026-09-23 にユーザーが判断。
