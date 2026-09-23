@@ -1,6 +1,6 @@
 // 入力欄本体の**器だけ**（<PresentationalComposer>。docs/design.md 6.1）。`<textarea>` と補完の
 // 候補一覧（`/` の <CommandSuggestions>・`@` の <FileSuggestions>）を内包し、その下に道具の行
-// （画像・`/`・`@` のボタン、操作の案内、経過時間と送信⇄中断の <TurnStatus>）を置いた
+// （画像・`/`・`@` のボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた
 // `<form>` を置く。フックも算出も持たず、`hooks/use-composer.ts` が
 // 組み立てた値と呼び先をそのまま置く（docs/design.md 2章「機能の中を分ける」）。
 
@@ -15,10 +15,6 @@ import { type ComposerModel } from "./hooks/use-composer.ts"
 import { TurnStatus } from "./turn-status.tsx"
 
 export type PresentationalComposerProps = ComposerModel
-
-/** 操作の案内。道具の行に1行で出し、入らなければ末尾から省く（全文は `title` で読める）。 */
-const OPERATION_HINT =
-  "Enter で改行 · ⌘Enter で送信 · / でコマンド · @ でファイル · 画像は貼り付けかドロップでも"
 
 /**
  * **props はここだけ分解して受ける**。ref を持つ入れ物を `props.textAreaRef` の形で描画中に
@@ -119,9 +115,6 @@ export function PresentationalComposer({
           hidden
           onChange={onImagesChosen}
         />
-        <span className={styles["dispatch-hint"]} title={OPERATION_HINT}>
-          {OPERATION_HINT}
-        </span>
         <TurnStatus />
       </div>
     </form>

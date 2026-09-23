@@ -75,7 +75,7 @@
 .turn-to-newest:hover {
   border-color: var(--accent);
 }
-/* タイトル（`⌄` を含むボタン）と一覧そのものをまとめる枠。**`position` は付けない**
+/* タイトル（下向きの矢印を含むボタン）と一覧そのものをまとめる枠。**`position` は付けない**
    ——一覧（.turn-history）はこの枠のさらに外、`.turn-header`（position: sticky）を基準に
    ヘッダーいっぱいの幅で重ねる（下の `.turn-history` 参照）。この枠自体は
    `useDismissSignal` の「外側」の基準（`ref`）としてだけ使う——一覧を外側扱いさせないため、
@@ -90,7 +90,7 @@
   margin: 0;
   min-width: 0;
 }
-/* タイトルの文字 + `⌄` を1つにまとめた開く口。**既定の枠・背景は消し**、押せる面だと
+/* タイトルの文字 + 下向きの矢印を1つにまとめた開く口。**既定の枠・背景は消し**、押せる面だと
    分かるのはホバーと `aria-expanded` のときの枠だけにする（フォーカスの輪は
    `theme.css` の `:focus-visible` にまかせる——ここでは打ち消さない）。
    幅いっぱいに広げて `.turn-title-text` 側で省略するので、タイトルの縮み方は前と変わらない。
@@ -129,13 +129,11 @@
   font-size: var(--font-subheading);
   font-weight: 700;
 }
-/* `⌄`。タイトルの縮みを邪魔しないよう固定幅にする。字はタイトルより一段下の、「n / N」と
-   同じ段。 */
+/* 下向きの矢印（`ChevronDownIcon`。線画で、大きさは svg の width/height が持つ）。タイトルの
+   縮みを邪魔しないよう固定幅にする。色はタイトルより一段薄い、「n / N」と同じ扱い。 */
 .turn-title-chevron {
   flex: none;
   color: var(--ink-quiet);
-  font-size: var(--font-secondary);
-  line-height: 1;
 }
 /* 窓の中のやり取りの一覧。DOM は `.turn-title-group` の中だが、`position` を持たないその枠を
    飛ばして**`.turn-header`（position: sticky）を基準にヘッダーいっぱいの幅で重ねる**

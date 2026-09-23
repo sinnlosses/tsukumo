@@ -13,22 +13,43 @@
   font-size: var(--font-label);
 }
 /* ラベルの真下の1行（顔 + <select>）。見本の gap は 8px。**折り返さない** — 顔が下へ
-   回ると行の高さが倍になり、帯が伸びてタスクの区画を押し上げる。 */
+   回ると行の高さが倍になり、帯が伸びてタスクの区画を押し上げる。
+   `position: relative` は下向きの矢印（::after）を <select> の右端に重ねるための基準
+   （<select> は `flex: 1 1 auto` でこの行の右端まで伸びるので、行の右端＝<select> の右端）。 */
 .session-info-value {
+  position: relative;
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: 0.5rem;
   min-width: 0;
+  color: var(--ink);
+}
+/* 矢印は帯（`screen-nav.module.css` の `.screen-nav-select::after`）と同じ形・同じ描き方。
+   **ブラウザ既定の矢印は使わない**（<select> の中に描かれるため、省略記号（…）と同じ場所に
+   重なって字が矢印の下に潜る）。`appearance: none` で消したぶんをここで描き、字の側は
+   下の padding-right で矢印ぶんを空ける。 */
+.session-info-value::after {
+  position: absolute;
+  right: 0.625rem;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  content: "";
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  pointer-events: none;
 }
 /* 帯の <select>（キャラクター／セッションで同じ見た目。セッション側は
    session-switch.module.css）。見本は高さ 34px・角 8px・内側 8px で、**サイドバーの他の
    <select> より大きい** — 帯は下端に1段だけ残る操作なので、押す的を小さくしない。 */
 .character-select {
+  appearance: none;
   flex: 1 1 auto;
   min-width: 0;
   height: 2.125rem;
-  padding: 0 0.5rem;
+  padding: 0 1.75rem 0 0.5rem;
+  text-overflow: ellipsis;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
   background: var(--surface);
