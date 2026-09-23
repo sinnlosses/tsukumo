@@ -28,9 +28,9 @@
     "dependencies": [],
     "summary": "タスク本文の場所と件数は、行番号ではなくシンボル名と grep で書く規約を足す",
     "task": "## 背景\n\n`docs/workflow.md`「## タスクを書くとき・受け入れるとき」に、次のことが書かれていない。直近の振り返り\n（`develop/retrospective.md` の `8f585d6`..`c37d714`）で、同じ形の取りこぼしが続けて出たもの。\n\n**タスク本文の行番号・件数は、着手時にはずれている。** 本文が指した場所と実物がずれていた例:\nT-313 は `src/browser/features/sidebar/task-list.tsx:14,25` を指したが、実物は\n`src/browser/features/task-board/` の下の4ファイルに移っていた。T-360 は `clock.ts` の読み手を\n2つとしたが実物は3つで、`character-view.tsx:31` は実はフック\n（`hooks/use-character-view.ts`）だった。T-340 は日付つきコメントを4件としたが、着手時点で\n20件あった。作業ツリーを分けて並行に進めているので、書いた時点の行番号と件数は、着手までに\n他の作業ツリーの分割・移動で古くなる\n\n## やること\n\n1. `docs/workflow.md`「## タスクを書くとき・受け入れるとき」の箇条書きの末尾に1項目足す\n   - **対象の場所は行番号ではなくシンボル名（関数名・型名・ファイル名）で書き、件数を挙げる\n     ときは着手時に一覧を取り直す grep のコマンドを添える。** 行番号と件数は、並行する作業ツリーの\n     分割・移動で着手までにずれる\n2. 同じ趣旨がすでに `CLAUDE.md`・`docs/architecture.md`・`task-workflow` の `WORKFLOW.md` に\n   あれば、足さずにそちらへの参照だけを書く（正典を二重にしない）\n\n## 完了条件\n\n- `bun run check` が通る\n- `docs/workflow.md`「## タスクを書くとき・受け入れるとき」の箇条書きが1項目増え、行番号と\n  シンボル名の語がある\n- `grep -c '^#\\{2,3\\} ' docs/workflow.md` の値が編集の前後で変わらない\n\n## 注意\n\n- `shared` の型を変えたときに `docs/design.md` の表を追随させる規約は足さない。表の写しそのものを\n  外すタスク（T-372）で要らなくなるため（ユーザーの判断）\n- `docs/workflow.md` の冒頭の索引表には節の見出し名が入っている。見出し名で位置を探すと索引の行に\n  先に当たるので、行頭から位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- コメントやドキュメントにタスク番号（`T-` + 3桁）を書かない（例に挙げるときも番号を使わない）\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "docs/workflow.md「## タスクを書くとき・受け入れるとき」の箇条書きに1項目追加（`grep -n シンボル名 docs/workflow.md` が1件当たる）。`grep -c '^#\\{2,3\\} ' docs/workflow.md` は編集の前後で 5 のまま。`bun run check` 1375 pass / 0 fail。同趣旨が WORKFLOW.md・CLAUDE.md・docs/architecture.md・docs/coding-standards.md に無いことを grep で確かめたので、参照ではなく新規の項目にした。"
   },
   {
     "id": "T-367",
