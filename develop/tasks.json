@@ -204,7 +204,7 @@
     "dependencies": [],
     "summary": "入力欄の画像の札で、外す × が絵の右上の角に来るようにする",
     "task": "## 背景\n\n入力欄に画像を添えると `<textarea>` の上に札が並ぶ（`src/browser/components/prompt-image.tsx` の `PromptImageChips`）。札の右上に外す `×`（`.prompt-image-remove`）を重ねているが、画面のスクリーンショットで**絵の右端からだいぶ内側に寄って見える**と報告された（2026-09-23）。\n\n`src/browser/components/prompt-image.module.css` では `×` を `position: absolute; top: 0.15rem; right: 0.15rem` で置き、基準は札の `<li>`（`.prompt-image-chip`、`position: relative; flex: 0 0 auto; line-height: 0`）。絵（`.prompt-image`）は `height: 4rem; width: auto; max-width: 100%; object-fit: contain`。**原因は調べていない。** `<li>` の箱が絵より広くなっている（`×` は `<li>` の右端に付くので、絵の右端より内側に見える）か、`object-fit: contain` で `<img>` の箱の中に余白ができているかの、どちらかが候補。\n\n## 解くべき論点\n\n- ずれの原因がどちらか（`<li>` と `<img>` の `getBoundingClientRect()` の幅と、`<img>` の `naturalWidth / naturalHeight` から描かれる絵の幅を比べれば分かる）\n- 横長の絵と縦長の絵で、どちらも角に来るか\n\n## やること\n\n1. 横長・縦長の画像を添えた状態を作り、札の `<li>`・`<img>`・`×` の位置を測って原因を特定する（`docs/architecture.md`「手で確かめること」の手順）\n2. 原因に合わせて CSS を直す。`×` が絵の外へはみ出さない（はみ出すと入力欄の領域がスクロールする。CSS の既存コメント）ことは保つ\n3. `prompt-image.module.css` のコメントが直した後の形と合っているかを見る\n\n## 完了条件\n\n- 横長・縦長の2種類の画像で、`×` の右端と絵の右端の差、`×` の上端と絵の上端の差が、どちらも `0.15rem` 相当（± 1px）に収まっている（測った値を `evidence` に書く）\n- 狭い画面（390x844）で入力欄の領域が横にスクロールしない\n- `bun run check` が通る\n\n## 注意\n\n- 描画の変更なので、目視（実ブラウザで測った値）を `evidence` に含める\n- 札を押して拡大する機能は T-416 の担当。ここでは `×` の位置だけを直す\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
