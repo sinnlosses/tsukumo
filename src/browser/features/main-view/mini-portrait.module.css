@@ -73,10 +73,19 @@
 .mini-portrait-returning {
   transition-duration: var(--mini-portrait-return-duration);
 }
-/* 書き終わって本文の下へ降りるときの間合い（`mini-portrait.tsx` の `followStyle` が、
-   残っているあいだは `translateY(-100%)` を外す）。**降りるのは立ち絵の高さぶんの縦移動**
-   なので、横画の 0.05s のままだと落ちたように見える。ease-out は着地で緩めるため。 */
+/* 書き終わって本文の右下の隅へ寄るときの置き方と間合い（`mini-portrait.tsx` の `followStyle` が、
+   残っているあいだは `translateY(-100%)` を外し、横の座標も渡さなくなる）。
+
+   **横は筆先ではなく本文の右端に付ける**（`left` をやめて `right`）——筆が止まるのは最後の行が
+   終わったところなので、そこに立たせると**最後の行が短いときに本文の途中の行へ重なる**
+   （画面で出た）。縦は最後の行の下端で、そこには床（`.mini-portrait-floor`）が敷いてあるので、
+   右端と組にすると止まったあとはどの行にも重ならない。
+
+   **降りるのは立ち絵の高さぶんの縦移動**なので、横画の 0.05s のままだと落ちたように見える。
+   ease-out は着地で緩めるため。 */
 .mini-portrait-resting {
+  right: var(--mini-portrait-gap);
+  left: auto;
   transition-duration: var(--mini-portrait-rest-duration);
   transition-timing-function: ease-out;
 }
