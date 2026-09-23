@@ -109,7 +109,9 @@ function logEntries(
     const offset = turns
       .slice(0, turnIndex)
       .reduce((count, earlier) => count + earlier.speeches.length, 0)
-    const request = requestEntry(turn, requestTimes.get(turn.id), turn.id === lastTurnId, timeZone)
+    const requestTime = requestTimes.get(turn.id)
+    const time: SpeechLogTime =
+      requestTime === undefined ? { kind: "unknown" } : logTime(requestTime, timeZone)
     const speeches = turn.speeches.map((text, index): SpeechLogEntry => ({
       kind: "speech",
       // セリフはターンの中で末尾へ積むだけなので、ターンの番号と位置がそのまま同一性になる。
@@ -117,28 +119,29 @@ function logEntries(
       text,
       age: speechAge(speechCount - 1 - (offset + index)),
     }))
-    return request === undefined ? speeches : [request, ...speeches]
+    return [...requestEntries(turn, time, turn.id === lastTurnId), ...speeches]
   })
 }
 
 /** 依頼の区切り。依頼より前に届いたセリフのまとまり（起動直後の挨拶など）には区切りを置かない。 */
-function requestEntry(
+function requestEntries(
   turn: TurnSpeech,
-  time: RecordTime | undefined,
+  time: SpeechLogTime,
   current: boolean,
-  timeZone: string,
-): SpeechLogEntry | undefined {
+): readonly SpeechLogEntry[] {
   if (turn.request === undefined) {
-    return undefined
+    return []
   }
-  return {
-    kind: "request",
-    key: `request-${String(turn.id)}`,
-    heading: firstLine(turn.request),
-    requestText: turn.request,
-    time: time === undefined ? { kind: "unknown" } : logTime(time, timeZone),
-    current,
-  }
+  return [
+    {
+      kind: "request",
+      key: `request-${String(turn.id)}`,
+      heading: firstLine(turn.request),
+      requestText: turn.request,
+      time,
+      current,
+    },
+  ]
 }
 
 /** 依頼の時刻をターンの番号で引けるようにする（`TurnSpeech` は時刻を持たない）。 */
