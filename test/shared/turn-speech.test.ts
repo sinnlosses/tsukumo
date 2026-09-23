@@ -1,13 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
-import {
-  MAX_MAIN_VIEW_TURNS,
-  mainViewEntries,
-  mainViewTurns,
-  PRE_REQUEST_TURN_ID,
-} from "../../src/shared/main-view.ts"
+import { MAX_MAIN_VIEW_TURNS, mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
 import { INITIAL_SESSION_STATE, type SessionRecord } from "../../src/shared/session-state.ts"
 import { turnSpeeches } from "../../src/shared/turn-speech.ts"
+import { PRE_REQUEST_TURN_ID } from "../../src/shared/turn.ts"
 import {
   compactBoundaryRecord,
   detailRecord,

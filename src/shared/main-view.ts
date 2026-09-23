@@ -18,6 +18,7 @@ import {
   type SessionState,
   type ToolRunStatus,
 } from "./session-state.ts"
+import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
 
 /**
  * 出すやり取りの数。札の頭（前後ボタン・一覧）で遡るので、横並びのタブの幅に収める制約は無い。
@@ -27,12 +28,6 @@ import {
  * 関係が黙って崩れる）。
  */
 export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
-
-/**
- * 依頼で始まっていないまとまりに振る番号。**実在のターンの番号（0以上）とぶつからない値**に
- * する。窓の外へ依頼が落ちたあとの記録・依頼より前に届いた記録が、ここへ入る。
- */
-export const PRE_REQUEST_TURN_ID = -1
 
 /**
  * 1つのやり取りの中で**画面に出す**記録の上限。超えた分は**古いほうから**落とし、件数だけを残す
@@ -114,7 +109,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
  *
  * `id` は**追加されても番号がずれない**ように、そのやり取りの中で作られた順に先頭から数えた
  * 通し番号（`MainViewTurn.id` と同じ考え方）。`limitTurnEntries` が上限を超えた分を古いほうから
- * 落としても、残ったステップの `id` は変わらない（`groupIntoTurns` で、`limitTurnEntries` より
+ * 落としても、残ったステップの `id` は変わらない（`groupIntoSteps` で、`limitTurnEntries` より
  * 前に振る）。`src/browser/features/main-view/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
  * すると**、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に、React が別のステップの
  * DOM を使い回して描き直してしまう（`<details>` の `open` のような制御されていない DOM の状態が
@@ -266,19 +261,6 @@ function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report"
 }
 
 /**
- * 組み立て中のやり取り。`nextStepId` は、そのやり取りの中で次に作るステップへ振る番号
- * （`limitTurnEntries` で古いステップを落とす前に、作られた順で振り切る。落としたあとに
- * 振り直すと `MainViewStep.id` が「番号がずれない」約束を満たせなくなる）。
- */
-type PendingTurn = {
-  readonly id: number
-  readonly request: MainViewRequest | undefined
-  steps: MainViewStep[]
-  nextStepId: number
-  toolReportIds: number[]
-}
-
-/**
  * まとめたやり取りと、その中で `report` ツールから来たステップの id（呼ばれた順）。**id の並びは
  * 描く側へ渡さない**（どの本文を出すかを決めるまでの材料で、決めたあとは本文の有無と印に畳まれる）。
  */
@@ -287,80 +269,79 @@ type GroupedTurn = {
   readonly toolReportIds: readonly number[]
 }
 
-/** 時系列に積まれた記録を、利用者の依頼を境目にしてやり取りごとへまとめる。 */
+/**
+ * 時系列に積まれた記録を、利用者の依頼を境目にしてやり取りごとへまとめる（割るのは
+ * `shared/turn.ts` の {@link splitIntoTurns}）。**割るのは表示の形に変えたあと**なので、
+ * 依頼より前のまとまりは、メインビューに出す記録（セリフと圧縮の区切りを落としたあと）が
+ * 1件でもあるときだけできる。
+ */
 function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn[] {
-  const turns: GroupedTurn[] = []
-  let current: PendingTurn | undefined = undefined
-
-  const flush = () => {
-    if (current !== undefined) {
-      turns.push({
-        turn: {
-          id: current.id,
-          request: current.request,
-          steps: current.steps,
-          hasInterimReport: false,
-          droppedCount: 0,
-        },
-        toolReportIds: current.toolReportIds,
-      })
+  return splitIntoTurns(entries).map((turn) => {
+    const { steps, toolReportIds } = groupIntoSteps(turn.records)
+    return {
+      turn: {
+        id: turnIdOf(turn),
+        request:
+          turn.kind === "pre-request"
+            ? undefined
+            : { text: turn.request.text, images: turn.request.images },
+        steps,
+        hasInterimReport: false,
+        droppedCount: 0,
+      },
+      toolReportIds,
     }
-  }
+  })
+}
 
-  for (const entry of entries) {
-    if (entry.kind === "request") {
-      flush()
-      current = {
-        id: entry.turnId,
-        request: { text: entry.text, images: entry.images },
-        steps: [],
-        nextStepId: 0,
-        toolReportIds: [],
+/**
+ * 1つのやり取りの中のステップと、`report` ツールから来たステップの id（{@link GroupedTurn}）。
+ * **ステップの id は作られた順の通し番号**（`MainViewStep.id`。`limitTurnEntries` で古い
+ * ステップを落とす前に振り切る。落としたあとに振り直すと「番号がずれない」約束を満たせなくなる）。
+ */
+type GroupedSteps = {
+  readonly steps: readonly MainViewStep[]
+  readonly toolReportIds: readonly number[]
+}
+
+/** やり取り1つぶんの記録（依頼の後ろ）を、本文1件ごとのステップにまとめる。 */
+function groupIntoSteps(entries: readonly TurnRest<MainViewEntry>[]): GroupedSteps {
+  return entries.reduce<GroupedSteps>(
+    ({ steps, toolReportIds }, entry) => {
+      const id = steps.length
+      if (entry.kind === "detail" || entry.kind === "report") {
+        const body = {
+          kind: "text",
+          report: entry.markdown,
+          firstLine: extractFirstLine(entry.markdown),
+        } as const satisfies MainViewStepBody
+        return {
+          steps: [...steps, newStep(id, body, [])],
+          toolReportIds: entry.kind === "report" ? [...toolReportIds, id] : toolReportIds,
+        }
       }
-      continue
-    }
 
-    current ??= {
-      id: PRE_REQUEST_TURN_ID,
-      request: undefined,
-      steps: [],
-      nextStepId: 0,
-      toolReportIds: [],
-    }
-    if (entry.kind === "report") {
-      current.toolReportIds.push(current.nextStepId)
-    }
-    if (entry.kind === "detail" || entry.kind === "report") {
-      current.steps.push({
-        id: current.nextStepId++,
-        body: { kind: "text", report: entry.markdown, firstLine: extractFirstLine(entry.markdown) },
-        interim: false,
-        superseded: false,
-        final: false,
-        actions: [],
-      })
-      continue
-    }
+      const step = steps.at(-1)
+      // レポートより前に起きたことは、レポートを持たないステップにまとめる。
+      return {
+        steps:
+          step === undefined
+            ? [newStep(id, NO_BODY, [entry])]
+            : [...steps.slice(0, -1), { ...step, actions: [...step.actions, entry] }],
+        toolReportIds,
+      }
+    },
+    { steps: [], toolReportIds: [] },
+  )
+}
 
-    const step = current.steps.at(-1)
-    // レポートより前に起きたことは、レポートを持たないステップにまとめる。
-    current.steps =
-      step === undefined
-        ? [
-            {
-              id: current.nextStepId++,
-              body: NO_BODY,
-              interim: false,
-              superseded: false,
-              final: false,
-              actions: [entry],
-            },
-          ]
-        : [...current.steps.slice(0, -1), { ...step, actions: [...step.actions, entry] }]
-  }
-  flush()
-
-  return turns
+/** 作ったばかりのステップ。印（`interim` / `superseded` / `final`）はあとのパスが立てる。 */
+function newStep(
+  id: number,
+  body: MainViewStepBody,
+  actions: readonly MainViewAction[],
+): MainViewStep {
+  return { id, body, interim: false, superseded: false, final: false, actions }
 }
 
 /**
@@ -396,8 +377,8 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn
  * 最終的な本文 1303 文字の 94% には筆が一度も通っていなかった）。確定してから出せば、一度出した
  * 本文は二度と消えず、囲いも演出の相手も最初から決まる。
  *
- * **締めかどうかは最後のステップだけを見れば決まる。** `tool` の記録は {@link groupIntoTurns} が
- * `current.steps.at(-1)` にしか足さないので、最後でないステップにはもうツールが続かない。
+ * **締めかどうかは最後のステップだけを見れば決まる。** `tool` の記録は {@link groupIntoSteps} が
+ * `steps.at(-1)` にしか足さないので、最後でないステップにはもうツールが続かない。
  *
  * 代わりに、**進行中の本文はどれも流れて見えない**（資料はツールが始まった時点で中間レポートと
  * して出て、締めの本文はターンが終わった時点で出る）。中間レポートは出た瞬間に `interim` が
