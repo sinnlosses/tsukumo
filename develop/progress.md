@@ -87,6 +87,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `bun run scripts/open-room-grid.ts` で、待ち受けていてタブもある部屋だけを 16:9 のマスに PC の並びのまま縮めて並べ、拡大・戻るは JS を使わずラジオの label で切り替える。起動トークンを含む HTML は読み込みを確かめたら消すので、見直すときは打ち直す。
 
+### 2026-09-23 貼った画像の棚を、枚数ではなく合計128 MiBで切るようにした（T-456）
+
+`prompt-image-shelf.ts` の上限を `MAX_SHELVED_PROMPT_IMAGES`（8枚）から `MAX_SHELVED_PROMPT_IMAGE_BYTES`（原寸の data URL の長さの合計 128 MiB）に置き換え、いま置いた画像を除いて古いほうから捨てる。`docs/requirements.md` 4.10 も合わせた。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の

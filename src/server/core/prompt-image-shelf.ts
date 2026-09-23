@@ -9,25 +9,27 @@
 //
 // 捨てる契機は2つ:
 //   - 記録の窓（`MAX_SESSION_STATE_TURNS`）から依頼が落ちたとき（{@link releasedPromptImageIds}）
-//   - 枚数が {@link MAX_SHELVED_PROMPT_IMAGES} を超えたとき（古いほうから）
+//   - 持っている原寸の合計の大きさが {@link MAX_SHELVED_PROMPT_IMAGE_BYTES} を超えたとき
+//     （古いほうから）
 
 import { type PromptImage, type RecordedPromptImage } from "../../shared/prompt-image.ts"
 import { type SessionRecord } from "../../shared/session-state.ts"
 
 /**
- * 棚に置く原寸の枚数の上限。**なぜ 8 枚か**: 1枚の上限（5 MiB。`MAX_PROMPT_IMAGE_BYTES`）で
- * 積んでも 40 MiB で頭打ちになる。雑談の窓（100 ターン × 2 枚）まで持つと天井が 1000 MiB に
- * なるので、窓とは別に枚数で切る。
+ * 棚に置く原寸の合計の大きさ（data URL の文字列の長さの合計）の上限。**なぜ枚数ではなく
+ * 大きさか**: 枚数で切ると1枚の上限（5 MiB。`MAX_PROMPT_IMAGE_BYTES`）を基準にした最悪値で
+ * 決めるしかなく、実際のスクリーンショット（1枚 0.5 MiB 前後）では天井のごく一部しか使わない
+ * まま原寸が落ちる。大きさで切れば、小さい画像ほど多く残る。
  */
-export const MAX_SHELVED_PROMPT_IMAGES = 8
+export const MAX_SHELVED_PROMPT_IMAGE_BYTES = 128 * 1024 * 1024
 
 /** 棚に置いた1枚。原寸と控えの対に、棚が振った id を添えたもの（駆動へはこの形で渡す）。 */
 export type ShelvedPromptImage = PromptImage & RecordedPromptImage
 
 export type PromptImageShelf = {
   /**
-   * 原寸を棚に置き、1枚ごとに id を振って返す（並びは受け取った順のまま）。上限を超えたぶんは
-   * 古いほうから捨てる。
+   * 原寸を棚に置き、1枚ごとに id を振って返す（並びは受け取った順のまま）。合計の大きさが
+   * 上限を超えるあいだ、いま置いた画像を除いて古いほうから捨てる。
    */
   readonly shelve: (images: readonly PromptImage[]) => readonly ShelvedPromptImage[]
   /** id が指す原寸の data URL。棚に無ければ undefined（配る側が 404 にする）。 */
@@ -42,12 +44,23 @@ export function createPromptImageShelf(): PromptImageShelf {
 
   return {
     shelve: (images) => {
+      // 古いほうから捨てる対象は、いま置く前から棚にあった id だけ（挿入順で先頭側）。
+      const previousIds = [...shelved.keys()]
       const entries = images.map((image) => ({ ...image, id: crypto.randomUUID() }))
       for (const entry of entries) {
         shelved.set(entry.id, entry.full)
       }
-      for (const id of [...shelved.keys()].slice(0, -MAX_SHELVED_PROMPT_IMAGES)) {
+      let total = [...shelved.values()].reduce((sum, full) => sum + full.length, 0)
+      for (const id of previousIds) {
+        if (total <= MAX_SHELVED_PROMPT_IMAGE_BYTES) {
+          break
+        }
+        const full = shelved.get(id)
+        if (full === undefined) {
+          continue
+        }
         shelved.delete(id)
+        total -= full.length
       }
       return entries
     },
