@@ -55,6 +55,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 帯の「いまの作業」の札を、中身で幅が変わらない固定長にした（T-403）
+
+`.screen-nav-work-toggle` を `width: 100%` + `box-sizing: border-box` にして帯の空きをつねに
+埋めるようにし、`.screen-nav-work-word` に `min-width: 6em` を置いて状態の語が変わっても
+区切りと要約の始まりがずれないようにした。Bash のコマンドが変わるたびに札が伸び縮みして
+チカチカする、という報告への対処。
+
 ### 2026-09-23 新しいセッションの既定を state.json に覚え、歯車から変えられるようにした（T-386）
 
 `remembered-character.ts` を `remembered-default.ts` に改名してキャラクターと既定を1つの境界で持ち、
