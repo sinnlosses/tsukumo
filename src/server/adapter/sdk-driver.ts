@@ -45,6 +45,7 @@ import { type SessionEvent } from "../../shared/session-event.ts"
 import { readChatTopics } from "../core/chat-compact.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
+import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import {
   SPEAK_TOOL_NAME,
@@ -66,6 +67,7 @@ import {
   selectSessionToResume,
   toRestoredEvents,
 } from "../core/session-restore.ts"
+import { readClaudeAccountTier } from "./claude-account.ts"
 
 /**
  * 既定の reasoning effort。high に固定した
@@ -595,6 +597,10 @@ async function relayCommandDescriptions(
  * `organization` も返すが、**駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ**
  * （`toPlan` の戻り値しか触らないので、他のフィールドに触れる経路が無い）。
  *
+ * **名前は Claude Code の控えを先に見て決める**（`src/server/core/plan.ts`。SDK の
+ * `subscriptionType` は契約の段と合わないことがあり、控えのほうが段と枠を別々に持つ）。
+ * 控えから決まらなければ SDK の値をそのまま出す。
+ *
  * **取れなくてもセッションは続ける**（API キーや Bedrock のときは元々この値が無い。
  * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」。
  * {@link relayCommandDescriptions} と同じ形）。
@@ -602,9 +608,10 @@ async function relayCommandDescriptions(
 async function relayPlan(
   session: { readonly accountInfo: () => Promise<unknown> },
   options: SessionDriverOptions,
+  readTier: () => ClaudeAccountTier = readClaudeAccountTier,
 ): Promise<void> {
   try {
-    const plan = toPlan(await session.accountInfo())
+    const plan = planName(readTier(), toPlan(await session.accountInfo()))
     if (plan !== undefined) {
       options.onEvent({ kind: "plan", plan })
     }

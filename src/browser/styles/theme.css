@@ -19,6 +19,10 @@
   /* 固定の導出（使う人にもパックにも差せない。13.2）。 */
   --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
   --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  /* 読む面の**静かな罫線**。カードの枠や表の行のように、線そのものは意味を持たず「ここで
+     切れている」とだけ言えばよい場所に使う（`--rule` は押せる部品の縁のように、線が輪郭を
+     担う場所）。新しいつまみではなく ink の混ぜ方を変えただけの導出値。 */
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
   /* surface を accent でわずかに染めた地。**新しいつまみではない**（accent 1つから
      計算するだけの導出値）。「選ばれたタブ」と同じ扱いでよい場所
      （最新の吹き出し・選ばれた選択肢・送信ボタン）にだけ使う。13.1 原則1。 */
@@ -45,13 +49,27 @@
   /* コンテキストの内訳（13.2）の分類の色。**誰が来ても変わらない固定の色**で、横棒の区間と
      凡例の四角が同じ1つを読む。**凡例に分類名が必ず並ぶ**ので、色だけで意味を伝えることには
      ならない（13.1 原則5）。知らない分類は `context-other` に落ちる。 */
-  --context-system-prompt: #6fa8dc;
-  --context-system-tools: #6fc7b6;
-  --context-mcp-tools: #b79ce0;
-  --context-memory-files: #dcae6a;
-  --context-skills: #a3c96a;
-  --context-messages: #e79aa8;
+  --context-system-prompt: #3987e5;
+  --context-system-tools: #d95926;
+  --context-mcp-tools: #199e70;
+  --context-memory-files: #c98500;
+  --context-skills: #d55181;
+  --context-messages: #008300;
   --context-other: #8f8a99;
+  /* 空きと自動圧縮バッファは**色ではなく地と柄**で分ける（どちらも「使っていない」側なので、
+     分類の色と同じ強さで主張させない）。四角だけを見たときに地と見分けがつくよう、凡例の
+     四角にはこの縁を付ける。 */
+  --context-free: #2a2933;
+  --context-buffer: #211f29;
+  --context-buffer-stripe: #3a3946;
+  --context-outline: #4a4955;
+
+  /* 消費の棒（期間の札の縦棒・モデル別／ツール別の横棒）。**分類の色ではない**ので、
+     凡例にも表にも名前が必ず並ぶ（13.1 原則5）。`zero` は記録の無い刻みの印で、
+     「その刻みはあったが空だった」ことだけを言う。 */
+  --usage-bar: #3987e5;
+  --usage-bar-track: #26252f;
+  --usage-bar-zero: #3a3946;
 
   /* タイプスケール。段はこの6つだけ（13.3）。 */
   --font-label: 0.6875rem;
