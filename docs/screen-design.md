@@ -357,8 +357,8 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 `<input type="color">` が並んでいても、**一方は「どの端末でも自分が読みやすい画面」、もう一方は
 「このキャラクターの見た目」**で、変えたくなる時機も持ち先（`localStorage` と
 `~/.tsukumo/characters/<name>/`）も違う。**保存の仕方は変えていない**（`localStorage` の鍵も
-検証も `src/browser/lib/appearance-color.ts` のまま。機能をまたいで読まれるようになったので
-`browser/lib/` へ上げただけ。2章）。
+検証も `src/browser/domain/appearance-color.ts` のまま。機能をまたいで読まれるようになったので
+`browser/domain/` へ上げただけ。2章）。
 
 **歯車に置くのは上の3群だけ**（モックのうち 送信キー・通知・吹き出しで話しかける・発話を
 読み上げる・文字の大きさ は置かない。通知は Orca の機能に任せる）。**領域の比率を戻すボタンも
@@ -384,9 +384,9 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **`TSUKUMO_HOME` を分ければ既定も分かれる**（ホームごと差し替わるため。5章）
 
 **書き上げる演出の速さは `localStorage` に持つ**（色と同じ並び。保存と読み取りは
-`src/browser/lib/reveal-speed.ts` に集める——歯車（`features/screen-nav/`）とレポートの演出
+`src/browser/domain/reveal-speed.ts` に集める——歯車（`features/screen-nav/`）とレポートの演出
 （`features/main-view/hooks/use-report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
-`browser/lib/` へ置く。2章）。選択肢は3つ（既定は**標準**）:
+`browser/domain/` へ置く。2章）。選択肢は3つ（既定は**標準**）:
 
 | 選択肢 | 文字1つあたり  | 塊の下限 | 塊の上限 |
 | ------ | -------------- | -------- | -------- |
@@ -1014,7 +1014,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 
 1. **覆いの不透明度 `veil` は 0.7 以上。** 画像は `ground` 一色の覆いの下に敷き、**見えるのは
    最大でも 30%**。加えて、**画像が真っ白（`#ffffff`）・真っ黒（`#000000`）だと仮定して合成した
-   地**が `ink` との比 `MIN_CONTRAST`（4.5。`src/browser/lib/appearance-color.ts`）を
+   地**が `ink` との比 `MIN_CONTRAST`（4.5。`src/browser/domain/appearance-color.ts`）を
    下回らないところまで `veil` を引き上げる。**画像の中身を1ピクセルも読まずに検算できる**のは、
    合成した色が必ず `ground` と画像の色を結ぶ線分の上に来て、その線分の端がいちばん危ない色
    （真っ白・真っ黒）だからである。`ground` と `ink` の比は 13.2 の境界がすでに 4.5 以上に
@@ -1232,7 +1232,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   「全部許す」の文字が必ず付いているので、色だけで意味を伝えることにならない（13.1 原則5）
 - **ターン進行中も変えられる**（起こし直さない。いまのサイドバーと同じ）
 - **まだ届いていない値は見た目上の既定に倒す**（モデルは `Opus`、許可モードは「自動判定」。
-  字と畳み方は `src/browser/lib/model-label.ts` / `permission-mode-label.ts` の1箇所）
+  字と畳み方は `src/browser/features/screen-nav/domain/model-label.ts` / `permission-mode-label.ts` の1箇所）
 
 #### いまの作業
 
@@ -1379,7 +1379,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   ときは歯車へフォーカスを戻す）。購読は `src/browser/hooks/use-dismiss-signal.ts` の1本に
   まとめてあり、**3つの面が同じ閉じ方をすることがコードでも1箇所で決まる**
 - **色の操作子は `<input type="color">` のまま**（キャラクター画面にあったものをそのまま移した。
-  13.6）。**検証も保存も `src/browser/lib/appearance-color.ts` のまま**で、`ground` と `ink` の
+  13.6）。**検証も保存も `src/browser/domain/appearance-color.ts` のまま**で、`ground` と `ink` の
   コントラストが下限を割る色は受け取らない（13.2）
 - **「既定に戻す」は群ごとに1つ**（色ごとには置かない）。3色を一度に既定へ戻すほうが、
   「1色だけ戻す」より欲しくなる場面が多い（読みにくい組み合わせから抜けたいとき）。

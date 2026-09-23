@@ -247,6 +247,8 @@ src/
                               （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
     components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
     hooks/                    機能の語彙を持たない React のフック（`use-modal-dialog.ts`）
+    domain/                   画面全体の語彙（複数の機能が読む、状態でも部品でもないもの。
+                              `appearance-color.ts`＝画面の色・`reveal-speed.ts`＝演出の速さ）
     lib/                      ライブラリを包む道具（WebSocket・`FileReader`・React の hook）
     utils/                    ライブラリに依存しない汎用の道具（`clock.ts`）
     stores/                   画面全体で共有する状態（セッション・選んでいるターン・出している画面）
@@ -257,7 +259,7 @@ characters/<name>/            character.json・persona.md・素材
 
 **ファイル名は概念**（原則5）。`helpers/` と `common/` は作らない（`lib/` と `utils/` を
 置く基準は下の「`lib/` と `utils/` に置く基準」）。**単数形の規約は
-`src/browser/` の置き場所のディレクトリ（`features/` `components/` `hooks/` `lib/` `utils/`
+`src/browser/` の置き場所のディレクトリ（`features/` `components/` `hooks/` `domain/` `lib/` `utils/`
 `stores/` `styles/` と、機能の中の `hooks/` `components/` `domain/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
 `adapter` と、
 機能の中のファイル名は単数形のまま。`main-view/` のように機能の名前は用語集の語に合わせる）。
@@ -265,16 +267,17 @@ characters/<name>/            character.json・persona.md・素材
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
 「その機能しか読まないなら機能の中」が既定）:
 
-| 箱            | 置くもの                                                                      | import してよい先                                              |
-| ------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）             | すべて                                                         |
-| `features/`   | 1つの機能に閉じた部品・状態・保存                                             | `components` / `hooks` / `lib` / `utils` / `stores` / `shared` |
-| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）             | `hooks` / `lib` / `utils` / `shared`                           |
-| `hooks/`      | **機能の語彙を持たない** React のフック（`use-modal-dialog.ts`）              | `lib` / `utils` / `shared`                                     |
-| `lib/`        | **ライブラリを包む**道具（React の部品ではないもの）                          | `utils` / `shared`                                             |
-| `utils/`      | **ライブラリに依存しない**汎用の道具（下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                          |
-| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook               | `lib` / `utils` / `shared`                                     |
-| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）              | —                                                              |
+| 箱            | 置くもの                                                                      | import してよい先                                                         |
+| ------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）             | すべて                                                                    |
+| `features/`   | 1つの機能に閉じた部品・状態・保存                                             | `components` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
+| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）             | `hooks` / `lib` / `utils` / `shared`                                      |
+| `hooks/`      | **機能の語彙を持たない** React のフック（`use-modal-dialog.ts`）              | `lib` / `utils` / `shared`                                                |
+| `domain/`     | **画面全体の語彙**（tsukumo の語彙を名乗り、複数の機能が読むもの）            | `lib` / `utils` / `shared`                                                |
+| `lib/`        | **ライブラリを包む**道具（React の部品ではないもの）                          | `utils` / `shared`                                                        |
+| `utils/`      | **ライブラリに依存しない**汎用の道具（下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                                     |
+| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook               | `lib` / `utils` / `shared`                                                |
+| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）              | —                                                                         |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
   （zustand を入れない決定は 6.2 のまま）。実体は8つあり、
@@ -285,9 +288,9 @@ characters/<name>/            character.json・persona.md・素材
   **出している画面**を読む（書く口 `navigateTo` も同じ
   ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**（`screen.tsx` と
   `turn-selection.tsx` の2つがここを通して読み書きする）。`stores/brush-tip.ts` は**筆先**
-  （いま本文を書いている筆の先）を配る——書いているのは `features/main-view/` の
-  `use-report-reveal.ts` だが**読むのは立ち絵の側**（キャラビュー）になるので機能どうしの
-  import にならないよう `stores/` に置く。`stores/question-answer.tsx` は答え待ちの質問に対する
+  （いま本文を書いている筆の先）を配る——キャラビューの立ち絵が読む想定で `stores/` に置いたが、
+  **いまの読み手は `features/main-view/` だけ**（ミニ立ち絵がメインビューの中にある）。
+  メインビューの演出のファイル群をまとめるときに機能の中へ戻す。`stores/question-answer.tsx` は答え待ちの質問に対する
   **答えの組み立て**を配る Context（質問の札はメインビュー、自由入力は入力欄と、読み手が
   2機能にまたがる）。`stores/question-scroll.tsx` は帯の「いまの作業」の一覧の「質問へ」から
   メインビューの質問の札へスクロールしてほしいという**一回限りの合図**を配る Context。**どれも
@@ -296,11 +299,27 @@ characters/<name>/            character.json・persona.md・素材
 - **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。
   入口の `main.tsx` は直下のまま（`app/` を作らない理由は下の表）
 - **機能どうしは import しない**（唯一の例外が「領域 → 置かれる機能」の1方向。次の節）。
-  機能をまたいで要るものは、**部品なら `components/`、
-  部品でないなら `lib/`、状態なら `stores/` へ上げる**。上げる引き金は「2つ目の読み手が出たとき」で、
+  機能をまたいで要るものは、**部品なら `components/`、フックなら `hooks/`、状態なら `stores/`、
+  それ以外は tsukumo の語彙を名乗るなら `domain/`、ライブラリを包む道具なら `lib/` へ上げる**。
+  上げる引き金は「2つ目の読み手が出たとき」で、
   1つの機能しか読まないものは機能の中に残す（`features/layout/split.ts` がその例。
   `appearance-color.ts` は**引き金が引かれたほう**の例——3色の操作子が帯の歯車へ移って
-  `screen-nav` と `character-screen` の2つが読むようになったので、`browser/lib/` へ上げた）
+  `screen-nav` と `character-screen` の2つが読むようになったので、`browser/domain/` へ上げた）
+- **引き金は逆にも引く。** 読み手が1つの機能だけに戻ったら、その機能の中へ**下ろす**
+  （2026-09-23 決定。`browser/lib/` に溜まっていた `model-label.ts` /
+  `permission-mode-label.ts` → `features/screen-nav/domain/`、`prompt-image.ts` →
+  `features/dispatch/`、`chart.ts` / `vendor-script.ts` → `features/main-view/markdown/`）。
+  **`browser/lib/` と `browser/domain/` に「1つの機能だけが読むファイル」が無いことは
+  `test/architecture.test.ts` が見る**（機能が1つも読まない——`stores/` や `main.tsx` だけが
+  読む `socket.ts` / `refresh.ts` のようなもの——は対象外）
+- **`domain/` と `lib/` の線は、包んでいる技術の有無では引かない。** 引くのは
+  「**ファイル名が tsukumo の語彙を名乗るか**」（下の「`lib/` と `utils/` に置く基準」の手順1）。
+  `domain/appearance-color.ts` は `localStorage` と `getComputedStyle` を包むが、名前が指すのは
+  **画面の色**という tsukumo の語彙なので `domain/`。逆に `lib/tool-summary.ts` は純関数だが、
+  名前が指すのは Claude Code のツールという**外部システムの語彙**なので `lib/`。
+  **機能の中の `domain/`（その機能の語彙）を画面全体へ1段上げたもの**が
+  `browser/domain/` で、`components/` と `hooks/` が機能の中と画面全体の2段に分かれているのと
+  同じ形（2026-09-23 決定）
 - **機能は `main.tsx` と `stores/` の中身を「組み立てる側」として import しない。** 機能が触れるのは
   `stores/` が公開する hook（`useSessionSelector` / `useSessionDispatch` / `useMainViewTurns` /
   `useTurnSelection`）まで
@@ -316,7 +335,9 @@ characters/<name>/            character.json・persona.md・素材
 （1つずつの理由は `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（採らなかった
 bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/` は 2026-09-22 に
 採ることにした**（`browser/hooks/` の箱と、機能の中の `features/<機能>/hooks/` の両方。
-下の2つの節）。
+下の2つの節）。**`browser/domain/` は 2026-09-23 に足した**——bullet-proof-react には無い名前だが、
+機能の中で既に使っている `domain/`（その機能の語彙）と同じ語を1段上げただけで、
+**実体が2つ（画面の色・演出の速さ）出てから作った**。
 
 ### 領域の機能と、置かれる機能
 
@@ -477,7 +498,9 @@ features/task-board/
 
 - ファイル名が指すのが **tsukumo の語彙**（`docs/glossary.md` に載る語。セッション・ターン・
   立ち絵・表情・キャラクターパック・フレーム・覆い…）なら、`lib/` にも `utils/` にも置かない。
-  層の直下に平置きする
+  置き場は層で分かれる: `shared` / `server/core` / `server/adapter` は**層の直下に平置き**、
+  `browser` は **`browser/domain/`**（直下に置くと入口の `main.tsx` と並ぶうえ、機能は入口を
+  import できないため。上の箱の表）
 - `src/browser/features/` の中のものは、**その機能しか読まないなら機能の中に残す**
   （上げる引き金は「2つ目の読み手が出たとき」。`features/layout/split.ts` と
   `features/main-view/markdown/split-blocks.ts` がその例で、名前が形式（Markdown）を指していても
@@ -531,14 +554,19 @@ features/task-board/
   ——外部パッケージ・`shared/` を含めて `utils/` の外を引いたら落ちる——を検査する）。
   他の層に `utils/` を作るときも、同じ検査を足す
 
-**いまのファイルの行き先**（2026-09-21 時点の分類。移動そのものは別タスク）:
+**いまのファイルの行き先**（2026-09-23 に読み手を数え直して振り分けた）:
 
-- `browser/lib/` は**すべて `lib/` のまま**。`socket.ts`=WebSocket、`refresh.ts`=`<link>` と
-  `location`、`data-url.ts`=`FileReader`、`debounce.ts`=React、`prompt-image.ts`=`canvas`、
-  `reduced-motion.ts`=`matchMedia`、`vendor-script.ts`=`<script>`、`chart.ts`=Chart.js、
-  `appearance-color.ts`=`localStorage` と `getComputedStyle`、
-  `tool-summary.ts` / `model-label.ts` / `permission-mode-label.ts`=Claude Code のツール名・
-  モデル・許可モード。いずれも言語の外のもの（手順2の表の上の行）を包んでいる
+- **`browser/lib/` に残るのは7つ**。`socket.ts`=WebSocket、`refresh.ts`=`<link>` と `location`、
+  `session-token-url.ts`=`URL` と `location`、`data-url.ts`=`FileReader`、`debounce.ts`=React、
+  `reduced-motion.ts`=`matchMedia`、`tool-summary.ts`=Claude Code のツール。いずれも
+  **ファイル名が指すのが言語の外のもの**（手順2の表の上の行）で、tsukumo の語彙は名乗らない
+- **`browser/domain/` は2つ**。`appearance-color.ts`（画面の色）と `reveal-speed.ts`（演出の速さ）は
+  どちらも `localStorage` を包むが、**名前が指すのが tsukumo の語彙**なので手順1で `lib/` から外れる
+- **機能の中へ下ろしたのは5つ**（読み手が1つの機能しか無かったもの）。
+  `model-label.ts` / `permission-mode-label.ts` → `features/screen-nav/domain/`、
+  `prompt-image.ts` → `features/dispatch/`、`chart.ts` / `vendor-script.ts` →
+  `features/main-view/markdown/`（6.3 が「Markdown 一式はメインビューの機能の中」と書いていたのに
+  `lib/` に残っていた2つ）
 - `shared/image-data-url.ts` は **`shared/lib/` へ**。名前が指すのは data URL という**形式**で、
   tsukumo の語彙を名乗らず、import も持たない（読み手は `portrait-image.ts` /
   `character-background.ts` / `prompt-image.ts` の3つ）
@@ -901,7 +929,7 @@ doc コメントを参照）。
       │                      （押すと依頼の手順の一覧）・モデル/許可モードのドロップダウン・
       │                      右端の設定の歯車。狭い画面ではタブ帯の右端の「≡」に畳む
       │   └ 設定の歯車       押すとポップオーバー（13.9「設定の歯車」）。いまある群は
-      │                      画面の色（ground / surface / ink。lib/appearance-color.ts。localStorage）
+      │                      画面の色（ground / surface / ink。domain/appearance-color.ts。localStorage）
       ├ <Layout>             会話の画面。grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
       │  │                   比率を動かして既定と違う値になったときだけ、上下の仕切りの右端に
       │  │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに

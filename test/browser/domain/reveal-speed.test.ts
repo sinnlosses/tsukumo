@@ -6,7 +6,7 @@ import {
   loadRevealSpeed,
   revealTimingOf,
   saveRevealSpeed,
-} from "../../../src/browser/lib/reveal-speed.ts"
+} from "../../../src/browser/domain/reveal-speed.ts"
 
 const STORAGE_KEY = "tsukumo-reveal-speed:v1"
 

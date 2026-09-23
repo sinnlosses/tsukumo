@@ -33,7 +33,7 @@ import {
   type Outfit,
   OUTFITS,
 } from "../../../../shared/expression.ts"
-import { readAccentColor } from "../../../lib/appearance-color.ts"
+import { readAccentColor } from "../../../domain/appearance-color.ts"
 import { readDataUrl } from "../../../lib/data-url.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"

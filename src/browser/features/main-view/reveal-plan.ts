@@ -9,7 +9,7 @@
 // 折り返して落ち着かず、目で追えなくなる。1つのトピックを大きく1回のZ字で書く。
 //
 // **塊1つぶんの時間を決める物差し（{@link RevealTiming}）は呼び出し側から受け取る**
-// （`src/browser/lib/reveal-speed.ts`。利用者が歯車で選ぶ「書き上げる演出の速さ」）。ここは
+// （`src/browser/domain/reveal-speed.ts`。利用者が歯車で選ぶ「書き上げる演出の速さ」）。ここは
 // 値を持たず、渡された物差しで計算するだけ（純粋な割り当てのまま）。
 //
 // トピックの中の要素は、見せ方が2種類ある:
@@ -21,7 +21,7 @@
 //   （`mermaid` / `chart-block`。`markdown/mermaid-block.tsx` / `markdown/chart-block.tsx` が付ける）
 //   で見分ける——描き終わる前でも後でも同じ判定になる
 
-import { type RevealTiming } from "../../lib/reveal-speed.ts"
+import { type RevealTiming } from "../../domain/reveal-speed.ts"
 
 /** 見せる範囲を進められる要素。`clip-path` と `opacity` を持つもの（レポートの塊は全部これ）。 */
 export type RevealElement = HTMLElement | SVGElement
@@ -55,7 +55,7 @@ const TOPIC_START_SELECTOR = "h1, h2, h3, h4, h5, h6, hr"
 /**
  * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。**1つぶんの時間は
  * そのトピックの大きさで決まる**（レポート全体の長さに左右されない）。`timing` は利用者が
- * 選んだ「書き上げる演出の速さ」の物差し（`src/browser/lib/reveal-speed.ts`）。
+ * 選んだ「書き上げる演出の速さ」の物差し（`src/browser/domain/reveal-speed.ts`）。
  *
  * 塊の間に隙間は空けない（前の塊が終わった時刻が次の塊の始まり）。
  */

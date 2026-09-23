@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 import { type ReactElement } from "react"
 
+import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
 import { useReportReveal } from "../../../../src/browser/features/main-view/hooks/use-report-reveal.ts"
-import { saveRevealSpeed } from "../../../../src/browser/lib/reveal-speed.ts"
 import {
   BRUSH_ORIGIN_ATTRIBUTE,
   publishBrushTip,

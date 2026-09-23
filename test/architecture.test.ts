@@ -237,7 +237,8 @@ describe("browser/ の機能どうしの import", () => {
 
 // `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
 // 上の `BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
-// `main.tsx` / `features/` / `components/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
+// `main.tsx` / `features/` / `components/` / `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という
+// 箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
 // `browser/hooks/` は**機能の語彙を持たない React のフック**の箱で、`components/` と同じ扱い
@@ -249,17 +250,29 @@ describe("browser/ の機能どうしの import", () => {
 // import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下に増えたときに
 // テストの直し忘れで素通りしないよう、`main.tsx` でも `*.d.ts`/`styles` でもない未知の区画は
 // `layerOf` と同じく `throw` する。
-const BROWSER_BOXES = ["main", "features", "components", "hooks", "lib", "utils", "stores"] as const
+// `browser/domain/` は**画面全体の語彙**（tsukumo の語彙を名乗り、2つ以上の機能が読むもの）の箱で、
+// `lib/`（ライブラリを包む道具）とは「ファイル名が tsukumo の語彙を名乗るか」で分かれる。
+const BROWSER_BOXES = [
+  "main",
+  "features",
+  "components",
+  "hooks",
+  "domain",
+  "lib",
+  "utils",
+  "stores",
+] as const
 type BrowserBox = (typeof BROWSER_BOXES)[number]
 
 // 各箱が import してよい先（docs/design.md 2章の表そのもの。`main` は「すべて」なので全箱を許す）。
 // `utils/` は誰からも引けて、自分は `utils/` の中しか引かない（外部パッケージ・`shared` も
 // 引かないことは、この表では見えないので下の「browser/utils/ の import」が見る）。
 const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
-  main: new Set(["main", "features", "components", "hooks", "lib", "utils", "stores"]),
-  features: new Set(["features", "components", "hooks", "lib", "utils", "stores"]),
+  main: new Set(["main", "features", "components", "hooks", "domain", "lib", "utils", "stores"]),
+  features: new Set(["features", "components", "hooks", "domain", "lib", "utils", "stores"]),
   components: new Set(["components", "hooks", "lib", "utils"]),
   hooks: new Set(["hooks", "lib", "utils"]),
+  domain: new Set(["domain", "lib", "utils"]),
   lib: new Set(["lib", "utils"]),
   utils: new Set(["utils"]),
   stores: new Set(["stores", "lib", "utils"]),
@@ -300,6 +313,57 @@ describe("browser/utils/ の import", () => {
   })
 })
 
+// 機能をまたぐ箱に、**1つの機能しか読まないファイル**が残っていないことを見る
+// （`docs/design.md` 2章「上げる引き金は2つ目の読み手が出たとき」。引き金は逆にも引き、
+// 読み手が1つに戻ったものはその機能の中へ下ろす）。
+//
+// **読み手が機能の外だけのものは対象外**（`lib/socket.ts` と `lib/refresh.ts` は `stores/` が
+// 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` をまだ見ていないのは、
+// `stores/brush-tip.ts` の読み手が `main-view` の1つだけで、メインビューの演出のファイル群を
+// まとめるときに一緒に下ろすため。
+const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
+
+describe("browser/ の機能をまたぐ箱", () => {
+  it("browser/lib/ と browser/domain/ に、1つの機能だけが読むファイルは無い", () => {
+    const files = listSourceFiles(SRC_ROOT).filter((relPath) =>
+      SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)),
+    )
+    expect(files.length).toBeGreaterThan(0)
+
+    const offenders = files.flatMap((relPath) => {
+      const readers = browserReadersOf(relPath)
+      return readers.features.length === 1 && readers.outsideFeatureCount === 0
+        ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
+        : []
+    })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
+/**
+ * `browser/` のファイル1件を import している機能の名前（重複を畳んだもの）と、機能の外
+ * （`main.tsx` / `stores/` / `lib/` など）からの読み手の数。
+ */
+function browserReadersOf(targetRelPath: string): {
+  readonly features: readonly string[]
+  readonly outsideFeatureCount: number
+} {
+  const readers = listSourceFiles(SRC_ROOT)
+    .filter((relPath) => relPath.startsWith("browser/") && relPath !== targetRelPath)
+    .filter((relPath) =>
+      relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
+        (specifier) => resolveRelativeImport(relPath, specifier) === targetRelPath,
+      ),
+    )
+
+  return {
+    features: [...new Set(readers.flatMap((relPath) => browserFeatureOf(relPath)?.name ?? []))],
+    outsideFeatureCount: readers.filter((relPath) => browserFeatureOf(relPath) === undefined)
+      .length,
+  }
+}
+
 /** ファイル1件の相対 import から、許した箱の辺に無いものだけを違反として返す。 */
 function findBrowserBoxViolations(relPath: string): readonly BrowserBoxViolation[] {
   const fromBox = browserBoxOf(relPath)
@@ -337,6 +401,7 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
     second === "features" ||
     second === "components" ||
     second === "hooks" ||
+    second === "domain" ||
     second === "lib" ||
     second === "utils" ||
     second === "stores"

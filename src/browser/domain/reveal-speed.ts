@@ -1,6 +1,7 @@
 // レポートを「書き上げていくように見せる」演出の速さ（`docs/requirements.md` 4.3 /
 // `docs/screen-design.md` 13.6）を `localStorage` に持つ。**利用者の設定**なので `appearance-color.ts` と
-// 同じ並び（`docs/design.md` 2章「`lib/` と `utils/` に置く基準」）。読めない・欠けている値は
+// 同じ並び（`browser/domain/`。ファイル名が指すのが「演出の速さ」という tsukumo の語彙なので
+// `lib/` ではない。`docs/design.md` 2章「`lib/` と `utils/` に置く基準」の手順1）。読めない・欠けている値は
 // 既定（`standard`）へ畳む。
 //
 // **読み手は2つ**（2つ目の読み手が出たときに上げる、appearance-color.ts と同じ引き金）:
@@ -9,7 +10,7 @@
 // import を増やさないため、保存と読み取りをここへ集める。**
 //
 // 具体の ms 値（`REVEAL_TIMING`）もここに置く。`reveal-plan.ts` は値を持たず、渡された
-// {@link RevealTiming} で計算するだけ（純粋な割り当てのまま）——`browser/lib/` は
+// {@link RevealTiming} で計算するだけ（純粋な割り当てのまま）——`browser/domain/` は
 // `browser/features/` を import できない（`docs/design.md` 2章の箱の表）ので、型と具体値は
 // 渡す側（ここ）に置き、`reveal-plan.ts` が型だけを読む向きにする。
 //

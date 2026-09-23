@@ -1,13 +1,12 @@
 // Claude Code のモデルのエイリアス（`src/shared/command.ts` の `MODEL_ALIASES`）を、画面に出す
-// 日本語ラベルにする。**サイドバーの `<select>`（`features/sidebar/session-info.tsx`）と
-// 帯の読み（`features/screen-nav/`）の両方が読む**ので、機能をまたぐ道具として `browser/lib/` に
-// 置く（`docs/design.md` 2章。**機能どうしの import は増やさない**）。
+// 日本語ラベルにする。**読むのは帯（`features/screen-nav/`）だけ**——操作子も読みも帯へ集まったので、
+// 機能の中に置く（`docs/design.md` 2章「その機能しか読まないなら機能の中」）。
 //
-// `lib/` なのは、名前が指すのが tsukumo の語彙ではなく**外部システム（Claude Code）の語彙**だから
-// （`browser/lib/tool-summary.ts` と同じ理由）。**表示の整形はサーバとブラウザの契約ではない**ので
+// 機能の中の `domain/` なのは、**フックを呼ばない相手（`components/` の `<select>` と札）が読む**
+// 対応表だから（同2章「機能の中を分ける」）。**表示の整形はサーバとブラウザの契約ではない**ので
 // `shared` には置かない（`shared/command.ts`「画面に出す日本語ラベルは描く側が持つ」）。
 
-import { type ModelAlias } from "../../shared/command.ts"
+import { type ModelAlias } from "../../../../shared/command.ts"
 
 /**
  * モデルのエイリアスと、日本語ラベル。**並びは重い順**（Fable は Opus の上の階層なので先頭）で、

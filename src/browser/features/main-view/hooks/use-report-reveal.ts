@@ -30,8 +30,8 @@
 
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
+import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../../domain/reveal-speed.ts"
 import { prefersReducedMotion } from "../../../lib/reduced-motion.ts"
-import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../../lib/reveal-speed.ts"
 import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "../../../stores/brush-tip.ts"
 import { brushScroller } from "../brush-scroll.ts"
 import { brushStep, toBands, type BrushStep } from "../reveal-band.ts"
@@ -66,7 +66,7 @@ const SKIP_LISTENER_OPTIONS = { capture: true, passive: true } as const
  *
  * **見るのはマウントした時点の `reveal` だけ。** あとから対象でなくなっても（後ろに別の
  * レポートが現れても）始めた演出は最後まで進める——途中で止めると書きかけの本文が残る。
- * **「書き上げる演出の速さ」（`lib/reveal-speed.ts`）もマウント時の値だけを見る**（歯車で
+ * **「書き上げる演出の速さ」（`domain/reveal-speed.ts`）もマウント時の値だけを見る**（歯車で
  * 速さを変えても、書いている最中の演出は前の速さのまま進み切る。次に書き始めたときから効く）。
  */
 export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTMLDivElement | null> {
@@ -87,7 +87,7 @@ export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTML
     if (!revealOnMount || revealedOnce.current || root === null || prefersReducedMotion()) {
       return undefined
     }
-    // **「切る」は物差しを持たない**（`lib/reveal-speed.ts`）。`startReveal` を呼ばずに
+    // **「切る」は物差しを持たない**（`domain/reveal-speed.ts`）。`startReveal` を呼ばずに
     // 済ませると本文はすぐ全部出た状態のままで、ミニ立ち絵の筆も出ない。
     if (revealSpeed === "off") {
       return undefined
