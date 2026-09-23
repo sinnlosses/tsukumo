@@ -119,6 +119,19 @@ export function toCommandDescriptions(value: unknown): readonly CommandDescripti
   })
 }
 
+/**
+ * `accountInfo()` の戻り値からプラン（`docs/glossary.md`「プラン」）を取り出す。**`email` /
+ * `organization` はここで捨てる**（駆動の外へ出さない。呼び出し側はこの関数の戻り値しか
+ * 受け取らないので、他のフィールドに触れる経路が無い）。空文字は「無い」に畳む。
+ */
+export function toPlan(value: unknown): string | undefined {
+  if (!isPlainObject(value)) {
+    return undefined
+  }
+  const plan = optionalString(value.subscriptionType)
+  return plan === "" ? undefined : plan
+}
+
 function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly SessionEvent[] {
   if (typeof message.session_id !== "string") {
     return []

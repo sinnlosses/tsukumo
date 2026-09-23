@@ -40,6 +40,9 @@ export function PresentationalTokenUsageScreen(
     <div className={styles["token-usage"]}>
       <div className={styles["token-usage-bar"]}>
         <h1 className={styles["token-usage-title"]}>トークン消費</h1>
+        {props.plan === undefined ? null : (
+          <span className={styles["token-usage-plan"]}>{props.plan}</span>
+        )}
         <div className={styles["token-usage-period"]}>
           {TOKEN_USAGE_DAYS_CHOICES.map((choice) => (
             <button
