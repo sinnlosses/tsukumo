@@ -52,6 +52,7 @@ const FIXTURE_SUMMARY: TokenUsageSummary = {
   byTool: [],
 }
 
+/** 内訳は別のテスト（`context-usage-card.test.tsx`）で測るので、ここでは取れない側で描く。 */
 function renderScreen(plan?: string): ReturnType<typeof render> {
   return render(
     <PresentationalTokenUsageScreen
@@ -61,6 +62,7 @@ function renderScreen(plan?: string): ReturnType<typeof render> {
       total={FIXTURE_TOTALS}
       isError={false}
       plan={plan}
+      contextUsage={{ kind: "unavailable" }}
     />,
   )
 }

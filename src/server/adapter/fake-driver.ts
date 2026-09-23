@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url"
 
 import { z } from "zod"
 
+import { type ContextUsage } from "../../shared/context-usage.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent, sessionEventSchema } from "../../shared/session-event.ts"
@@ -26,6 +27,37 @@ const DEFAULT_SESSION_URL = new URL("../../../test/fixture/fake-session.json", i
  * 疑似セッションの JSON に持たせず、ここに直接書く。
  */
 const FAKE_PLAN = "Claude Max"
+
+/**
+ * fake driver が返すコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）の数。
+ * **会話の内容ではない**ので疑似セッションの JSON には持たせず、ここに直接書く。架空の値だが、
+ * **分類の並びと種別・合計と窓の関係だけは本物に合わせてある**（`used` の合計が
+ * `totalTokens`、それに `buffer` と `free` を足すと窓の大きさになる）。
+ */
+const FAKE_CONTEXT_USAGE = {
+  totalTokens: 121_500,
+  maxTokens: 200_000,
+  percentage: 61,
+  categories: [
+    { name: "System prompt", tokens: 7800, kind: "used" },
+    { name: "System tools", tokens: 8700, kind: "used" },
+    { name: "MCP tools (deferred)", tokens: 2100, kind: "deferred" },
+    { name: "Memory files", tokens: 12_200, kind: "used" },
+    { name: "Skills", tokens: 4700, kind: "used" },
+    { name: "Messages", tokens: 88_100, kind: "used" },
+    { name: "Autocompact buffer", tokens: 45_000, kind: "buffer" },
+    { name: "Free space", tokens: 33_500, kind: "free" },
+  ],
+  mcpTools: [
+    { name: "mcp__tsukumo__speak", source: "tsukumo", tokens: 180 },
+    { name: "mcp__tsukumo__remember", source: "tsukumo", tokens: 120 },
+  ],
+  memoryFiles: [
+    { name: "CLAUDE.md", source: "Project", tokens: 11_400 },
+    { name: "MEMORY.md", source: "AutoMem", tokens: 800 },
+  ],
+  skills: [{ name: "next-task", source: "userSettings", tokens: 120 }],
+} satisfies Omit<ContextUsage, "model">
 
 /** 疑似セッションの1手。`afterMs` は**その場面の始まりからの経過**（前の手からの差分ではない）。 */
 const fakeSessionStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
@@ -201,6 +233,10 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     },
     answer: (id, answer) => settle(id, answer),
     pending: () => pending,
+    // 本物は SDK に問い合わせる。fake driver は claude を起こさないので、**いま動いている
+    // モデルだけを載せた**固定の内訳を返す（画面の札を疑似セッションでも確かめられるように）。
+    readContextUsage: () =>
+      Promise.resolve({ kind: "ready", usage: { model, ...FAKE_CONTEXT_USAGE } }),
     setModel: (next) => {
       // **名前が無い切り替えは覚えない**（本物も `undefined` のときは何も知らせない）。
       if (next !== undefined) {

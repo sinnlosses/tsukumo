@@ -1,7 +1,8 @@
 // ビューサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信**を持つ
 // （docs/design.md 5章「server.ts」）。入力欄の `@` 補完が引くファイル一覧
 // （`GET /repository-file?t=<起動トークン>`）と、分析の画面が引くトークン消費の集計
-// （`GET /token-usage?t=<起動トークン>&days=<日数>`）、控えを押したときに引く依頼の画像の原寸
+// （`GET /token-usage?t=<起動トークン>&days=<日数>`）・いまのコンテキストの内訳
+// （`GET /context-usage?t=<起動トークン>`）・控えを押したときに引く依頼の画像の原寸
 // （`GET /prompt-image/<id>?t=<起動トークン>`）もここから配る。**フレームとコマンドが通る
 // WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに受け口を足す）。
 //
@@ -10,9 +11,10 @@
 // 安全のための決まり（docs/design.md 9章）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
 //   - **起動トークン**（起動ごとの乱数。ディスクに書かない）は `/repository-file` と
-//     `/token-usage` と `/prompt-image` を守る（ページ・同梱物・素材そのものは会話を含まないので、
-//     トークンは求めない。いまのまま）。配るのは利用者の作業ディレクトリの中身・使った量・
-//     依頼に添えた画像（会話の内容）で、誰にでも配ってよい静的な物ではない。
+//     `/token-usage`・`/context-usage`・`/prompt-image` を守る（ページ・同梱物・素材そのものは
+//     会話を含まないので、トークンは求めない。いまのまま）。配るのは利用者の作業ディレクトリの
+//     中身・使った量・いまのセッションが積んでいるものの内訳・依頼に添えた画像（会話の内容）で、
+//     誰にでも配ってよい静的な物ではない。
 //     **同じ1つを WebSocket の upgrade も見る**（`session-socket.ts`）
 
 import { randomBytes } from "node:crypto"
@@ -22,6 +24,11 @@ import process from "node:process"
 import { isPlainObject } from "remeda"
 
 import { CHARACTER_ASSET_PATH_PREFIX } from "../../shared/character-asset.ts"
+import {
+  CONTEXT_USAGE_PATH,
+  type ContextUsageReport,
+  UNAVAILABLE_CONTEXT_USAGE,
+} from "../../shared/context-usage.ts"
 import {
   parsePromptImage,
   PROMPT_IMAGE_PATH_PREFIX,
@@ -104,6 +111,14 @@ export type ListRepositoryFiles = () => Promise<readonly string[]>
 export type ReadTokenUsageSummary = (days: TokenUsageDays) => TokenUsageSummary
 
 /**
+ * トークン消費の画面に配るコンテキストの内訳（セッションの駆動へ問い合わせたもの。
+ * `docs/glossary.md`「コンテキストの内訳」）。**セッションがまだ繋がっていない・取れなかった
+ * ときは「取れない」を返す契約**で、サーバは理由を区別しない（{@link ListRepositoryFiles} と
+ * 同じ割り切り）。
+ */
+export type ReadContextUsage = () => Promise<ContextUsageReport>
+
+/**
  * 棚（`src/server/core/prompt-image-shelf.ts`）から、id が指す原寸の data URL を引く。
  * **棚に無い（捨てた・知らない）ときは undefined**（配る側が 404 にする）。
  */
@@ -129,11 +144,13 @@ export type ViewServerOptions = {
   readonly listRepositoryFiles: ListRepositoryFiles
   /** `/token-usage` に配るトークン消費の集計。 */
   readonly readTokenUsageSummary: ReadTokenUsageSummary
+  /** `/context-usage` に配るコンテキストの内訳。 */
+  readonly readContextUsage: ReadContextUsage
   /** `/prompt-image/<id>` に配る原寸の引き口（棚の `find`）。 */
   readonly findPromptImage: FindPromptImage
   /**
    * 起動トークン（{@link createStartupToken}）。**`/repository-file`・`/token-usage`・
-   * `/prompt-image` はこれが合わないと配らない**
+   * `/context-usage`・`/prompt-image` はこれが合わないと配らない**
    * （`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
    */
   readonly token: string
@@ -241,6 +258,11 @@ function respond(
 
   if (path === TOKEN_USAGE_SUMMARY_PATH && request.method === "GET") {
     writeTokenUsageSummary(request, response, options)
+    return
+  }
+
+  if (path === CONTEXT_USAGE_PATH && request.method === "GET") {
+    writeContextUsage(request, response, options)
     return
   }
 
@@ -356,6 +378,29 @@ function writeTokenUsageSummary(
 
   const days = readTokenUsageDays(queryValue(request, TOKEN_USAGE_DAYS_QUERY_NAME))
   writeJson(response, options.readTokenUsageSummary(days))
+}
+
+/**
+ * いまのコンテキストの内訳を JSON で配る。**起動トークンが合わなければ 403**（`/token-usage` と
+ * 同じ）。**駆動へ問い合わせる経路なので応答を待つ**が、取れなかった回は「取れない」をそのまま
+ * 配る（画面は一言だけ出す）。**配る中身に会話の文面は入らない** — メッセージは分類1行の数
+ * としてだけ出る（`src/shared/context-usage.ts`）。
+ */
+function writeContextUsage(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: ViewServerOptions,
+): void {
+  if (!hasStartupToken(request, options.token)) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
+    response.end("forbidden\n")
+    return
+  }
+
+  options.readContextUsage().then(
+    (report) => writeJson(response, report),
+    () => writeJson(response, UNAVAILABLE_CONTEXT_USAGE),
+  )
 }
 
 /**

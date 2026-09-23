@@ -149,3 +149,166 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
+
+/* いまのコンテキストの内訳の札（`context-usage-card.tsx`）。**この画面で唯一枠を持つ塊**で、
+   下の集計（期間で切ったもの）と出どころが違うことを枠で示す。 */
+.context-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface-raised);
+}
+/* 見出しの行。**右の2つは `margin-left: auto` で押しやる**（狭い画面では下へ折り返す）。 */
+.context-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.context-title {
+  margin: 0;
+  font-size: var(--font-subheading);
+  font-weight: normal;
+}
+.context-note {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.context-aside {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+/* 自動圧縮までの残り。**枠のある小さな札**（プランの札と同じ静かな扱い）。 */
+.context-until {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  line-height: 1.4;
+}
+/* 内訳のモデルと取った時刻（機械の側の名前なので等幅。13.1 原則3）。 */
+.context-taken {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+/* 使っている量・窓の大きさ・割合。**数が主**で、右の2つは小さく静かに。 */
+.context-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0;
+}
+.context-total-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+.context-total-max {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 横棒1本。**区間の幅は行ごとの `--context-share`**（割合をそのまま幅にする）。窓を超えた回は
+   合計が100%を超えるので、はみ出しはここで切る。 */
+.context-bar {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+  background: var(--surface);
+}
+.context-span {
+  width: var(--context-share);
+}
+
+/* 凡例。**3列の格子**（狭い画面では列が減る。1列の下限は、いちばん長い分類名と数が1行に
+   収まる幅）。 */
+.context-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.15rem 1rem;
+  margin: 0;
+}
+.context-legend-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: var(--font-label);
+}
+.context-legend-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.context-legend-value {
+  margin-left: auto;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* 凡例の四角。**横棒と同じ塗り**（同じ `.context-tone-*` を重ねる）。 */
+.context-swatch {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 0.15rem;
+}
+
+/* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。**名前の列は左に寄せる**（長いパスが右寄せだと
+   折り返した行の頭が揃わず読めない）。`.token-usage-name` だけでは `.token-usage-table th` の
+   右寄せに詳細度で負けるので、この札の中だけ上書きする。 */
+.context-detail .token-usage-name {
+  text-align: left;
+}
+.context-detail {
+  font-size: var(--font-label);
+}
+.context-detail-summary {
+  color: var(--ink-quiet);
+  cursor: pointer;
+}
+.context-detail[open] .context-detail-summary {
+  margin-bottom: 0.4rem;
+}
+
+/* 分類ごとの塗り（`context-usage-category.ts` の `tone` と対。16進は theme.css だけが持つ）。 */
+.context-tone-system-prompt {
+  background: var(--context-system-prompt);
+}
+.context-tone-system-tools {
+  background: var(--context-system-tools);
+}
+.context-tone-mcp-tools {
+  background: var(--context-mcp-tools);
+}
+.context-tone-memory-files {
+  background: var(--context-memory-files);
+}
+.context-tone-skills {
+  background: var(--context-skills);
+}
+.context-tone-messages {
+  background: var(--context-messages);
+}
+.context-tone-other {
+  background: var(--context-other);
+}
+/* 空きは**地より一段明るい無地**、自動圧縮バッファは**斜線**（色ではなく柄で分ける。
+   どちらも凡例の四角に同じものが出る）。 */
+.context-tone-free {
+  background: var(--surface-raised);
+}
+.context-tone-buffer {
+  background: repeating-linear-gradient(-45deg, var(--ink-quiet) 0 1px, transparent 1px 5px);
+}
