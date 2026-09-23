@@ -137,6 +137,12 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(beforeSend).toContain("日本語でない地の文")
   })
 
+  it("締めの speak のあとに本文を書かせない（英訳の書き足しが最終レポートの席を取った）", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain("締めの `speak` のあとには何も書かない")
+    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
+    expect(beforeSend).toContain("締めの `speak` のあとに書こうとしている本文")
+  })
+
   it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("描けない")
   })

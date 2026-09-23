@@ -9,6 +9,7 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { isBlankText } from "./blank-text.ts"
+import { isJapaneseProse } from "./japanese-prose.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import {
@@ -371,8 +372,11 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
       if (!settled && !hasToolRun(step)) {
         return { ...step, body: NO_BODY }
       }
+      if (step.id === promotedId) {
+        return step
+      }
       return isInterimReport(step.body.report)
-        ? { ...step, interim: step.id !== promotedId }
+        ? { ...step, interim: true }
         : { ...step, body: NO_BODY }
     }),
   }
@@ -392,20 +396,42 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
  * **繰り上げるのは確定したやり取りだけ**（呼ぶ側が `settled` で絞る）。書きかけの本文は
  * 実況から資料へ育つ途中かもしれず、繰り上げが途中で外れると前の資料の `interim` が
  * true→false へ反転して `<details>` が開き直る。
+ *
+ * **締めの本文が日本語でないときは、そのあとの作業が無い日本語の本文へ席を戻す**
+ * （{@link isJapaneseProse}）。**日本語のレポート → `speak` → 同じ内容の英訳** という並びで、
+ * 英訳が位置だけで最終レポートの席を取り、日本語のほうが中間レポートに回っていた（規約
+ * 「レポートは必ず日本語で書く」を読んだうえで3回起きた）。戻す先は資料に限らない——短い答えの
+ * あとに英訳が付いても同じなので。代わりに**戻す先より後ろにツールが続いていないこと**を求め、
+ * 作業の手前に書いた実況（「まず読むね」）へ席が渡らないようにする。
  */
 function promotedReportId(turn: MainViewTurn): number | undefined {
   const closing = turn.steps.at(-1)
-  if (
-    closing === undefined ||
-    closing.body.kind === "none" ||
-    hasToolRun(closing) ||
-    isInterimReport(closing.body.report)
-  ) {
+  if (closing === undefined || closing.body.kind === "none" || hasToolRun(closing)) {
+    return undefined
+  }
+  const japaneseReport = isJapaneseProse(closing.body.report)
+    ? undefined
+    : lastJapaneseReportAfterWork(turn.steps.slice(0, -1))
+  if (japaneseReport !== undefined) {
+    return japaneseReport.id
+  }
+  if (isInterimReport(closing.body.report)) {
     return undefined
   }
   return turn.steps
     .slice(0, -1)
     .findLast((step) => step.body.kind === "text" && isInterimReport(step.body.report))?.id
+}
+
+/**
+ * 最後のツールの実行より後ろに書かれた本文のうち、いちばん新しい日本語の本文
+ * （{@link promotedReportId}）。
+ */
+function lastJapaneseReportAfterWork(steps: readonly MainViewStep[]): MainViewStep | undefined {
+  const afterWork = steps.slice(steps.findLastIndex(hasToolRun) + 1)
+  return afterWork.findLast(
+    (step) => step.body.kind === "text" && isJapaneseProse(step.body.report),
+  )
 }
 
 /**

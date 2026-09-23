@@ -28,6 +28,94 @@ export function createOrcaHost(): Host {
   return { showView: (url) => showView(url) }
 }
 
+/** `orca tab list` に出てくるタブ1つ分。`Host` の外の輸出（`scripts/open-room-grid.ts` が使う）。 */
+export type OrcaTab = {
+  readonly pageId: string
+  readonly url: string
+  readonly title: string
+}
+
+/**
+ * **すべての作業ツリーの**タブを一覧する。`--worktree all` を付けないと今の作業ツリーの
+ * タブしか返らない（`scripts/open-room-grid.ts` は手元に並んだ作業ツリーぶんの部屋を横断して
+ * 探すため、常にこれを使う）。一覧が取れない・形が想定と違う要素は境界で弾き、キャストしない。
+ */
+export async function listTabs(): Promise<
+  | { readonly ok: true; readonly tabs: readonly OrcaTab[] }
+  | { readonly ok: false; readonly reason: string }
+> {
+  const listed = await runOrca(["tab", "list", "--worktree", "all", "--json"], "タブ一覧を取得する")
+  if (!listed.ok) {
+    return { ok: false, reason: listed.reason }
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(listed.stdout)
+  } catch {
+    return { ok: false, reason: "タブ一覧の JSON を読めない" }
+  }
+
+  return { ok: true, tabs: parseTabList(parsed) }
+}
+
+/** `orca tab list --json` の要素から、必要な3つのフィールドが揃ったタブだけを採る。 */
+function parseTabList(value: unknown): readonly OrcaTab[] {
+  if (!isPlainObject(value) || !isPlainObject(value.result) || !Array.isArray(value.result.tabs)) {
+    return []
+  }
+
+  const tabs: readonly unknown[] = value.result.tabs
+  return tabs.flatMap((tab) => {
+    if (
+      isPlainObject(tab) &&
+      typeof tab.browserPageId === "string" &&
+      typeof tab.url === "string" &&
+      typeof tab.title === "string"
+    ) {
+      return [{ pageId: tab.browserPageId, url: tab.url, title: tab.title }]
+    }
+    return []
+  })
+}
+
+/** 新しいタブを開き、そのページIDを返す。 */
+export async function openTab(
+  url: string,
+): Promise<
+  { readonly ok: true; readonly pageId: string } | { readonly ok: false; readonly reason: string }
+> {
+  const created = await runOrca(["tab", "create", "--url", url, "--json"], "タブを開く")
+  if (!created.ok) {
+    return { ok: false, reason: created.reason }
+  }
+
+  const pageId = parseCreatedPageId(created.stdout)
+  return pageId === undefined
+    ? { ok: false, reason: "作ったタブのページIDを読めない" }
+    : { ok: true, pageId }
+}
+
+function parseCreatedPageId(stdout: string): string | undefined {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(stdout)
+  } catch {
+    return undefined
+  }
+  if (!isPlainObject(parsed) || !isPlainObject(parsed.result)) {
+    return undefined
+  }
+  const pageId = parsed.result.browserPageId
+  return typeof pageId === "string" ? pageId : undefined
+}
+
+/** ページIDを名指ししてタブを閉じる。 */
+export async function closeTab(pageId: string): Promise<HostResult> {
+  const result = await runOrca(["tab", "close", "--page", pageId, "--json"], "タブを閉じる")
+  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
+}
+
 async function showView(url: string): Promise<HostResult> {
   const pageId = await findViewPageId(url)
   if (pageId !== undefined) {
