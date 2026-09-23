@@ -131,7 +131,7 @@ const CATALOG: readonly CatalogEntry[] = [
   },
   { name: "permission", scene: "permission", label: "許可プロンプト", prepare: [] },
   { name: "report", scene: "report", label: "レポートとツールの進行", prepare: [] },
-  { name: "turn-tabs", scene: "turn-tabs", label: "やり取りのタブ（4件）", prepare: [] },
+  { name: "turn-history", scene: "turn-history", label: "ターンの札（4件）", prepare: [] },
   { name: "notation", scene: "notation", label: "レポートの記法（引用・表・注意）", prepare: [] },
   // **記法の見本は領域に1枚ぶんが入らない**（1400x900 で 1358px のうち 855px が領域の外）。
   // 領域を伸ばして1枚にすると他の領域が重なって本番と別の姿になるので、**送って複数枚に分ける**。

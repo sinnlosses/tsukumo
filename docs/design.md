@@ -198,7 +198,7 @@ src/
       screen-nav/             全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
                               いまの作業の札（押すと依頼の手順の一覧）・モデル/許可モードの
                               操作子（13.9）
-      main-view/              TurnTabs・Turn・Report・QuestionRecord と markdown/（unified 一式）
+      main-view/              TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
       character-view/         Portrait・BalloonTrack・Balloon・動きの hooks
       sidebar/                SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
                               2区画の枠（SidebarSection）
@@ -769,10 +769,11 @@ type SessionHost = {
       │  │                   比率を動かして既定と違う値になったときだけ、上下の仕切りの右端に
       │  │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに
       │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
-      │  ├ <MainView>        <PendingQuestion> + <TurnTabs> + <Turn>（直近5件、`MAX_MAIN_VIEW_TURNS`）
+      │  ├ <MainView>        <PendingQuestion> + 札（<TurnHeader> + <Turn>）。札の頭は ‹ › ・依頼の1行目の
+      │  │                    タイトル・n / N・最新 / 最新へで、直近5件（`MAX_MAIN_VIEW_TURNS`）を1件ずつ遡る
       │  │   └ <PendingQuestion> 答え待ちの質問の**比べる面**。選択肢の `preview`（Markdown）を札に並べる。
       │  │                    `preview` を持つ選択肢が1つも無ければ何も描かない（2026-09-21）
-      │  │   └ <Turn>        <RequestHeading>（依頼の見出し + <PromptImageThumbnails>）
+      │  │   └ <Turn>        <RequestRest>（依頼の2行目以降 + <PromptImageThumbnails>）
       │  │                    + [<Report> | <QuestionRecord>]*
       │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
       │  ├ <CharacterView>   <SpeechLog> + <Portrait> + <BalloonTrack>
@@ -818,7 +819,7 @@ type SessionHost = {
 入力欄の下書きは `<Composer>` のローカル状態に残ったままになる（6.2）。
 
 **選んでいるターンは `<SessionProvider>` の内側の `<TurnSelectionProvider>`
-（`browser/stores/turn-selection.tsx`）が配る**（6.2）。`<MainView>` のタブだけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
+（`browser/stores/turn-selection.tsx`）が配る**（6.2）。`<MainView>` の札だけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
 従う**（過去のターンを選んでいる間は、そのターンのセリフと**最後のセリフの表情**に戻す。
 ターンごとのセリフは `shared/turn-speech.ts` が記録から引く）。**立ち絵の「動き」は遡らない**
 （時間相対のアニメーションなので、遡るには `docs/requirements.md` 4.3 の決定の見直しが要る）。
@@ -923,7 +924,7 @@ react-markdown
 トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
 **16進の色を書いてよいのもそこだけ**（13.2）。
 
-class 名は用語集の語（`balloon` / `portrait` / `turn-tab` など）を**そのまま**保ち、部品からは
+class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）を**そのまま**保ち、部品からは
 `styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
 `balloon-track_uHH43w` のように**組み立てのたびにハッシュ化される**ので、外から要素を指す口が
 要るところは `data-*` を持つ（4領域の `data-region`。`scripts/capture-view.ts` が使う）。
@@ -2104,7 +2105,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 
 - **立ち絵は左、会話のログは右**（2026-09-20、ユーザーの選択）。ログは LINE / Discord と同じく
   **古い→新しいの順に縦へ積み**、利用者の発言とキャラクターのセリフが交互に並ぶ。
-  仕事のときのメインビュー（依頼の見出しでやり取りを区切り、タブで遡る）とは並びの規則が違う
+  仕事のときのメインビュー（依頼ごとの札に区切り、`‹` `›` で遡る）とは並びの規則が違う
 - **キャラビューの領域は雑談中は畳む。** 立ち絵がメインへ移るので、残しても空の帯になる。
   吹き出しもメインのログが引き受ける。**4領域が3領域になるのは雑談の間だけ**で、
   仕事へ戻せば 13.4 の形に戻る
@@ -2117,7 +2118,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 - **会話のログは `speak` のセリフから作る。** `shared/main-view.ts` の `mainViewEntries` は
   セリフの記録を落とし続け、**雑談のログは `shared/chat-log.ts` の `chatLogEntries` が
   別に組む**（2026-09-20、プロトタイプで確かめて決めた）。`mainViewEntries` は依頼を境目に
-  やり取りへまとめてタブで遡る形を作っており、**素直な時系列で積む雑談とは並びの規則が違う**
+  やり取りへまとめて札で遡る形を作っており、**素直な時系列で積む雑談とは並びの規則が違う**
 - **ログに並ぶのは雑談のセッションのぶんだけ**（2026-09-20 決定。`docs/requirements.md` 4.9）。
   雑談と仕事は**セッションの印から分かれていて**（`tsukumo:<パック名>:chat`）、雑談へ入る
   起こし直しが `resume` するのは前の雑談。**仕事の会話はログに混ざらず**、仕事へ戻した
@@ -2297,7 +2298,7 @@ LINE / Discord と同じ形で、日の区切りだけの案・ホバーした�
 採らなかった。持つ幅（雑談は 100 ターン）は `docs/requirements.md` 4.9 が決める。
 
 **セリフの行を押すと、そのときの表情へ立ち絵が遡る**（2026-09-21。キャラビューが過去のターンの
-タブでやっていることの、雑談での対応物。遡る先が「ターン」ではなく「1件のセリフ」なのは、
+札でやっていることの、雑談での対応物。遡る先が「ターン」ではなく「1件のセリフ」なのは、
 雑談のログが依頼で区切られていないため）。**立ち絵の動きは遡らない**（キャラビューと同じ扱い）。
 
 - **押せるのはキャラクターのセリフの行だけ。** 利用者の発言は遡る先の表情を持たないので、

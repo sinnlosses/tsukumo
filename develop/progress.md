@@ -59,6 +59,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 タイプスケールに `--font-subheading`（14px）と `--font-action`（12px）を足して6段にし（`docs/design.md` 13.3）、「一覧を見る」は枠なしの差し色のリンク風にした。進行中のチップは `TaskListCountItem.status` で選ぶ（並び順に頼らない）。
 
+### 2026-09-23 やり取りのタブを、前後ボタンと依頼のタイトルを持つ札の頭に置き換えた（T-398）
+
+`TurnTabs` を `turn-header.tsx` の `TurnHeader`（`‹` `›`・依頼の1行目のタイトル・n / N・最新 / 最新へ）に替え、依頼の1行目は頭にだけ出して本文側は2行目以降を「依頼の続き」で畳む。頭は sticky で、1件だけでも出し、キー操作は付けない（`⌄` は後続の T-399）。
+
 ### 2026-09-23 帯の「いまの作業」の札を、中身で幅が変わらない固定長にした（T-403）
 
 `.screen-nav-work-toggle` を `width: 100%` + `box-sizing: border-box` にして帯の空きをつねに

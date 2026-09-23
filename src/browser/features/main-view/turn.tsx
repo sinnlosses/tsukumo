@@ -1,4 +1,4 @@
-// 1つのやり取り（依頼 → ステップの並び）。`<RequestHeading>` + ステップの並び
+// 1つのやり取り（依頼の続き → ステップの並び）。`<RequestRest>` + ステップの並び
 // （レポート・質問の記録）を縦に1本で積む（`docs/requirements.md` 4.2
 // 「ステップは縦に1本で積む」。番号は振らない）。**ツールの実行は描かない**
 // （`docs/requirements.md` 4.2「メインビュー」。進行はサイドバーが持つ）。
@@ -13,6 +13,7 @@ import {
   type MainViewTurn,
 } from "../../../shared/main-view.ts"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
+import { requestLinesAfterTitle } from "./domain/turn-title.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { Report } from "./report.tsx"
@@ -21,7 +22,7 @@ export type TurnProps = {
   readonly turn: MainViewTurn
   /**
    * 今回（いちばん新しい）のやり取りか。**演出（`report-reveal.ts`）を掛けてよいのは今回だけ**
-   * で、過去のタブでは本文が最初から全部出ている（`docs/requirements.md` 4.3）。
+   * で、過去のターンでは本文が最初から全部出ている（`docs/requirements.md` 4.3）。
    */
   readonly newest: boolean
 }
@@ -29,7 +30,7 @@ export type TurnProps = {
 export function Turn(props: TurnProps): ReactElement {
   const { turn } = props
   const writingStepId = finalReportStepId(turn)
-  // **このやり取りを出し始めた時点で既にあった本文は演出しない。** 過去のタブを開いたとき・
+  // **このやり取りを出し始めた時点で既にあった本文は演出しない。** 過去のターンを開いたとき・
   // ページを読み込み直したときは「確定済みの本文が一度も書かれない」ので、**あとから現れた
   // 本文だけ**が対象になる（`<MainView>` がやり取りの番号を `key` に渡すので、この初期値は
   // やり取りごとに取り直される）。
@@ -38,7 +39,7 @@ export function Turn(props: TurnProps): ReactElement {
 
   return (
     <div>
-      {turn.request !== undefined && <RequestHeading request={turn.request} />}
+      {turn.request !== undefined && <RequestRest request={turn.request} />}
       {turn.droppedCount > 0 && (
         <p className={styles["turn-dropped"]}>これ以前の {turn.droppedCount} 件は省略した</p>
       )}
@@ -164,7 +165,7 @@ function isQuestion(
   return action.kind === "question"
 }
 
-// 見出しに出す依頼の全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
+// 札に出す依頼の全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
 const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
 
 function truncateRequestText(request: string): string {
@@ -174,43 +175,31 @@ function truncateRequestText(request: string): string {
 }
 
 /**
- * 依頼の見出しと、添えた画像の控え（`docs/requirements.md` 4.10。**控えは見出しの下**に並び、
- * 添えていなければ何も出ない）。**全行を既定で見せる**（複数行の依頼が1行しか出ないと困るため）。
+ * 依頼のうち**札の頭のタイトル（`turn-header.tsx`）に出なかったぶん**と、添えた画像の控え
+ * （`docs/requirements.md` 4.10。**控えはその下**に並び、添えていなければ何も出ない）。
  *
- * - **1行の依頼は `<h2>` のまま。** 畳む先が無いのに開閉の三角を出さない
- * - **複数行の依頼は `<details open>`。** 既定で開いているので全行が読め、読み終わったら
- *   閉じて1行目だけにできる。**`<summary>` に1行目、中の `<div>` には2行目以降**を入れて
- *   1行目が二重に出ないようにする
+ * - **1行の依頼は何も出さない。** タイトルと同じ行を二度出さない
+ * - **複数行の依頼は2行目以降を `<details open>` で出す。** 既定で開いているので全行が読め、
+ *   読み終わったら閉じられる。どの行がタイトルに取られたかは `domain/turn-title.ts` と同じ規則
  */
-function RequestHeading(props: { readonly request: MainViewRequest }): ReactElement {
-  const text = truncateRequestText(props.request.text)
-  const lineBreak = text.indexOf("\n")
-
-  if (lineBreak === -1) {
-    return (
-      <>
-        <h2 className={styles["turn-request"]}>{text}</h2>
-        <PromptImageThumbnails images={props.request.images} />
-      </>
-    )
-  }
-
-  const firstLine = text.slice(0, lineBreak)
-  const rest = text.slice(lineBreak + 1)
+function RequestRest(props: { readonly request: MainViewRequest }): ReactElement {
+  const rest = requestLinesAfterTitle(truncateRequestText(props.request.text))
 
   return (
     <>
-      <details className={styles["turn-request"]} open>
-        <summary>{firstLine}</summary>
-        <div className={styles["turn-request-full"]}>
-          {rest.split("\n").map((line, index) => (
-            <Fragment key={index}>
-              {index > 0 && <br />}
-              {line}
-            </Fragment>
-          ))}
-        </div>
-      </details>
+      {rest.length > 0 && (
+        <details className={styles["turn-request"]} open>
+          <summary>依頼の続き（{String(rest.length)} 行）</summary>
+          <div className={styles["turn-request-full"]}>
+            {rest.map((line, index) => (
+              <Fragment key={index}>
+                {index > 0 && <br />}
+                {line}
+              </Fragment>
+            ))}
+          </div>
+        </details>
+      )}
       <PromptImageThumbnails images={props.request.images} />
     </>
   )

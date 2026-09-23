@@ -61,7 +61,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const { container } = render(<Markdown text="## みだし2" />)
 
     expect(container.querySelector("h4")?.textContent).toBe("みだし2")
-    // ページ本体の依頼の見出し（h2.turn-request）と段を混同しないよう、DOM には h2 を残さない。
+    // 札の頭の依頼のタイトル（h2.turn-title）と段を混同しないよう、DOM には h2 を残さない。
     expect(container.querySelector("h2")).toBeNull()
   })
 

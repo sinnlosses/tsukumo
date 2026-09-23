@@ -46,7 +46,7 @@ import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"
  * ときのタグ名（`h1` は無い。規約が「レポートの見出しに `#` は使わない」と決めているため通さない）。
  * **DOM に出るのは実際には `h4` / `h5`**（`src/browser/features/main-view/markdown/markdown.tsx` の
  * `components` が写す。
- * ページには利用者の依頼を示す本物の `<h2 class="turn-request">` が1つあるので、レポート側の
+ * ページには利用者の依頼を示す本物の `<h2 class="turn-title">`（札の頭）が1つあるので、レポート側の
  * 見出しがそれと同じ段に並ぶと見出しの階層が壊れるため、タグを一段落とす）。ここで `h2`/`h3` を
  * 許可リストに残すのは、その書き替えが起きる前に hast-util-sanitize が中身ごと落としてしまう
  * （サニタイズは `components` より前に効く）のを防ぐため。
