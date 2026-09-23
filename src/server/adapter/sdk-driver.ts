@@ -33,6 +33,7 @@ import { readChatTopics } from "../core/chat-compact.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
+import { type ReportChannel } from "../core/report-tool.ts"
 import {
   toCommandDescriptions,
   toPlan,
@@ -67,8 +68,14 @@ export const DEFAULT_EFFORT: EffortLevel = "high"
  * 反復が例外で終わったら `session-ended` を流すだけで、**プロセスは落とさない**
  * （docs/coding-standards.md「エラーハンドリング」）。`try`/`catch` は反復を包む1つだけに
  * まとめてある。
+ *
+ * `reportChannel` は試行の口（`src/server/core/report-tool.ts`）で、`report` ツールを載せるか
+ * だけを決める（`options` に混ぜていないのは、採否が決まったら引数ごと消すため）。
  */
-export function startSdkDriver(options: SessionDriverOptions): SessionDriver {
+export function startSdkDriver(
+  options: SessionDriverOptions,
+  reportChannel: ReportChannel,
+): SessionDriver {
   const input = createPromptStream()
   const queue = createPendingAnswerQueue({
     onChange: (pending) => {
@@ -85,7 +92,7 @@ export function startSdkDriver(options: SessionDriverOptions): SessionDriver {
       ...buildQuerySeedOptions(options),
       hooks: chatSummaryHooks(options.mode, options.onEvent),
       mcpServers: {
-        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode),
+        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode, reportChannel),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),

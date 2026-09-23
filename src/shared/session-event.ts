@@ -120,6 +120,17 @@ export type SessionEvent =
   | { readonly kind: "utterance"; readonly text: string }
   /** `speak` ツールの呼び出し。セリフと表情（docs/glossary.md「セリフ」「表情」）。 */
   | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
+  /**
+   * `report` ツールの呼び出し（docs/glossary.md「report ツール」。**試行中**）。メインが呼んだ
+   * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`body` と `favor` は無ければ空の
+   * 文字列。
+   */
+  | {
+      readonly kind: "report"
+      readonly conclusion: string
+      readonly body: string
+      readonly favor: string
+    }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

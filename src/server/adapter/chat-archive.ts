@@ -17,10 +17,11 @@
 // stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
-// **古い雑談は、同じディレクトリの `index.jsonl`（1日1行の見出し）を引いてから、当たった日の
-// ファイルだけを開く**（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。
+// **古い雑談は、同じディレクトリの `index.jsonl`（日ごとの見出し。1日に何行でもある）を
+// 引いてから、当たった日のファイルだけを開く**（`docs/chat-mode.md` 4.9
+// 「古い雑談は索引を引いて思い出す」）。**同じ日の行はどれか1行にでも当たればその日を拾う。**
 // **当たらない日のファイルは開かない**のがこの口の要点で、**引くのに外部コマンド（`grep`）を
-// 起こさない** — 索引は1日1行なので `node:fs` で読んで絞るだけで足りる。**見出しの文面を
+// 起こさない** — 索引は日ごとに数行なので `node:fs` で読んで絞るだけで足りる。**見出しの文面を
 // 決めるのはモデル**で、ここが持つのは置き場と形と上限だけ。
 //
 // **「残す」旗は、同じディレクトリの `kept.jsonl` に「時刻だけ」の索引として積む**
@@ -412,11 +413,13 @@ function readRecalled(dir: string, keyword: string, limitBytes: number): ChatRec
 }
 
 /**
- * `keyword` に当たった日を新しい順に並べる（索引が無い・当たらないときは空）。
+ * `keyword` に当たった日を新しい順に並べる（索引が無い・当たらないときは空。返る日付に
+ * 重複は無い）。
  *
  * **照合は小文字にしての部分一致**で、空白で分けた語は**どれか1つでも当たれば**その日を拾う
- * （言葉のずれを吸収するのが索引の役。足りないより多いほうへ倒す）。**日付そのものも照合の
- * 対象**なので、日付の文字列をそのまま鍵にしても引ける。
+ * （言葉のずれを吸収するのが索引の役。足りないより多いほうへ倒す）。**同じ日の行は全部照合の
+ * 対象にする**——1日に何行書かれていても、**どれか1行にでも当たればその日**を拾う。**日付
+ * そのものも照合の対象**なので、日付の文字列をそのまま鍵にしても引ける。
  */
 function matchedIndexDates(dir: string, keyword: string): readonly string[] {
   const terms = keyword
@@ -429,22 +432,25 @@ function matchedIndexDates(dir: string, keyword: string): readonly string[] {
 
   const headings = readDayIndexHeadings(join(dir, DAY_INDEX_FILE_NAME))
   const matched = [...headings]
-    .filter(([date, line]) => terms.some((term) => `${date} ${line}`.toLowerCase().includes(term)))
+    .filter(([date, lines]) =>
+      lines.some((line) => terms.some((term) => `${date} ${line}`.toLowerCase().includes(term))),
+    )
     .map(([date]) => date)
   return matched.sort().reverse()
 }
 
 /**
- * 索引の日付と見出しの対（読めない行・知らない版は落とす。索引が無いときは空）。
- * **同じ日に2行以上あれば、あとの行が勝つ**（1日1行の索引を、書き換えずに追記だけで保つ形。
- * `docs/design.md` 7章）。
+ * 索引の日付と、その日に積まれた見出しの全部（読めない行・知らない版は落とす。索引が無いときは
+ * 空）。**1日に何行あっても全部持つ**——`chat-manner.ts` の指示どおり区切りごとに書かれるので、
+ * 古い行の語だけに当たった検索が抜け落ちないようにする（`docs/design.md` 7章）。
  */
-function readDayIndexHeadings(path: string): ReadonlyMap<string, string> {
-  const headings = new Map<string, string>()
+function readDayIndexHeadings(path: string): ReadonlyMap<string, readonly string[]> {
+  const headings = new Map<string, readonly string[]>()
   for (const raw of readJsonLines(path)) {
     const record = dayIndexLineSchema.safeParse(raw)
     if (record.success) {
-      headings.set(record.data.date, record.data.line)
+      const lines = headings.get(record.data.date) ?? []
+      headings.set(record.data.date, [...lines, record.data.line])
     }
   }
   return headings

@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール（`speak` / `remember` / `forget` /
-// `keep` / `index` / `recall`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
+// `keep` / `index` / `recall`、試行中の `report`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
 // `query()` の `mcpServers` へ渡す。
 //
 // サーバの名前と `speak` の名前は src/server/core/sdk-message.ts が持つ（届いた `assistant`
@@ -14,7 +14,8 @@ import {
 } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
-import { SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
+import { type ReportChannel, REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
+import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
 import {
   type ChatKeep,
   type ChatRecall,
@@ -97,10 +98,18 @@ const RECALL_TOOL_DESCRIPTION =
  * 雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
  * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
+ * **`report` は仕事のときに、試行の口（`reportChannel`）が `tool` のときだけ**載る
+ * （`src/server/core/report-tool.ts`。雑談は本文を書かない決まりなので載せない）。
+ *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
+ * `report` の引数も同じ。
  */
-export function tsukumoServer(expressions: readonly ExpressionChoice[], mode: SessionMode) {
+export function tsukumoServer(
+  expressions: readonly ExpressionChoice[],
+  mode: SessionMode,
+  reportChannel: ReportChannel,
+) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
     version: "0.0.0",
@@ -116,6 +125,7 @@ export function tsukumoServer(expressions: readonly ExpressionChoice[], mode: Se
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
+      ...(mode.kind === "work" && reportChannel === "tool" ? [reportTool()] : []),
       ...(mode.kind === "chat"
         ? [
             rememberTool(mode.personaMemory),
@@ -127,6 +137,24 @@ export function tsukumoServer(expressions: readonly ExpressionChoice[], mode: Se
         : []),
     ],
   })
+}
+
+/**
+ * レポートを受け取るツール（**試行中**）。**戻り値は "ok" だけ**（`speak` と同じく、画面の事情を
+ * モデルへ戻さない。docs/display.md 4.2）。引数は handler では読まず、`assistant` メッセージの
+ * 変換が取り出す（src/server/core/sdk-message.ts）。
+ */
+function reportTool() {
+  return tool(
+    REPORT_TOOL_NAME,
+    REPORT_TOOL_DESCRIPTION,
+    {
+      conclusion: z.string().describe("結論。レポートの冒頭の1〜2文"),
+      body: z.string().optional().describe("結論のあとの根拠・比較・手順（記法は規約のまま）"),
+      favor: z.string().optional().describe("利用者へのお願い（判断・作業・情報）。無ければ省く"),
+    },
+    async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
+  )
 }
 
 /**

@@ -4,7 +4,7 @@
 // `session-start.ts`）が持つ。
 //
 // **即時終了する前提不足はこの1つの関数に集めてある**（ポート・ブラウザ側の成果物・
-// 疑似セッションの3つ。docs/coding-standards.md「常駐プロセスは描画1回の失敗で落ちない」— 動作中の一時的な失敗は
+// 疑似セッション・試行中の report ツールの規約の差し替えの4つ。docs/coding-standards.md「常駐プロセスは描画1回の失敗で落ちない」— 動作中の一時的な失敗は
 // その回を諦めて次へ進む）。
 //
 // ここは配線層（`src/` 直下。`shared` / `core` / `adapter` / `browser` のすべてを import して
@@ -18,18 +18,21 @@ import { readUiBundle } from "./server/adapter/bundle.ts"
 import { readFakeSession } from "./server/adapter/fake-driver.ts"
 import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createTokenUsageLog } from "./server/adapter/token-usage-log.ts"
-import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
+import { type Config, REPORT_TOOL_ENV_NAME, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { type Host } from "./server/core/host.ts"
 import { resolveViewPort, resolveViewPortFallbackBase } from "./server/core/port-resolution.ts"
 import { createPromptImageShelf } from "./server/core/prompt-image-shelf.ts"
+import { type ReportChannel, unmatchedReportToolClauses } from "./server/core/report-tool.ts"
 import { startSession } from "./session-start.ts"
 import { startViewDelivery } from "./view-delivery.ts"
 
 /**
  * 起動の段取りを順に進め、終了コードを返す。0 のときはビューサーバとセッションを残したまま
  * プロセスを生かし続けるので、呼び出し側は 0 以外のときだけ `process.exit` する。
+ *
+ * `reportChannel` は試行の口（`src/server/core/report-tool.ts`）で、セッションへ渡すだけ。
  */
-export async function run(config: Config): Promise<number> {
+export async function run(config: Config, reportChannel: ReportChannel): Promise<number> {
   // 起動時に前提（ポート番号として読める）が満たされていないときだけ即時終了する。
   const portResolution = resolveViewPort(
     config.rawViewPort,
@@ -67,6 +70,15 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
+  // 試行の report ツールで起こすときは、規約の差し替えがすべて当たることを先に確かめる
+  // （当たらない条が古いまま残ると、試行の結果が黙って汚れる。`report-tool.ts` 冒頭）。
+  if (reportChannel === "tool" && unmatchedReportToolClauses().length > 0) {
+    process.stderr.write(
+      `tsukumo: ${REPORT_TOOL_ENV_NAME} の規約の差し替えが元の文面に当たらない（src/server/core/report-tool.ts を直す）\n`,
+    )
+    return 1
+  }
+
   const character = createCurrentCharacter(config)
 
   // トークン消費の記録の口は**1つをここで作って両側へ渡す**（書くのはセッション、読むのは
@@ -99,6 +111,7 @@ export async function run(config: Config): Promise<number> {
     tokenUsageLog,
     promptImageShelf,
     viewPort: view.port,
+    reportChannel,
   })
   view.connect(session)
 

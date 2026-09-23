@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
+import { type SessionEvent } from "../../src/shared/session-event.ts"
+import { applySessionEvent, INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
 import { currentTurnSteps, type TurnStep } from "../../src/shared/turn-step.ts"
 import { requestRecord, speechRecord, toolRecord } from "../fixture/session-record.ts"
 
@@ -130,5 +132,20 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
     )
 
     expect(turnSteps(list).map((step) => step.toolUseId)).toEqual(["toolu_done"])
+  })
+})
+
+describe("currentTurnSteps（report ツール）", () => {
+  it("report の呼び出しは依頼の手順に出ない（speak と同じく tool-started にならない）", () => {
+    const events: readonly SessionEvent[] = [
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "report", conclusion: "架空の結論。", body: "", favor: "" },
+    ]
+    const state = events.reduce(
+      (current, event) => applySessionEvent(current, event, 0),
+      INITIAL_SESSION_STATE,
+    )
+
+    expect(currentTurnSteps(state.records, false)).toEqual({ kind: "turn", steps: [] })
   })
 })

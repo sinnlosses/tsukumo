@@ -89,6 +89,18 @@ export type SessionRecord =
     }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
+   * `report` ツールで受け取ったレポート（**試行中**。docs/glossary.md「report ツール」）。
+   * 引数をそのまま持ち、**1つの本文に組むのはメインビューの導出**（`shared/main-view.ts`）。
+   * 本文（`detail`）とは別の種類にしてあるのは、**このレポートがあるターンでは本文を出さない**
+   * という判定に、どちらから来たかが要るため。
+   */
+  | {
+      readonly kind: "report"
+      readonly conclusion: string
+      readonly body: string
+      readonly favor: string
+    }
+  /**
    * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
    * 書き換えない（docs/display.md 4.2「許可と質問」）。形は
    * `MainViewEntry` の `question` と同じなので、`mainViewEntries` はそのまま通す
@@ -432,6 +444,20 @@ export function applySessionEvent(
         speeches: [...(state.speechCalledInTurn ? state.speeches : []), event.text],
         speechExpression: event.expression,
         speechCalledInTurn: true,
+      }
+    case "report":
+      // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
+      return {
+        ...state,
+        records: [
+          ...state.records,
+          {
+            kind: "report",
+            conclusion: event.conclusion,
+            body: event.body,
+            favor: event.favor,
+          },
+        ],
       }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
