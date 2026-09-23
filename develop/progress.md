@@ -75,30 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。
 
-### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
-
-4か所で書き写していた `TextEncoder` のバイト数の数え方を `src/shared/lib/byte-length.ts` の `byteLength` に寄せた。実行環境の API を包む道具なので `lib/`、`core` と `shared` の両方から読むので `shared` に置いた。
-
-### 2026-09-23 日付ごとの jsonl の読み書きを1つにまとめた（T-431）
-
-`token-usage-log.ts`・`chat-archive.ts`・`context-usage-log.ts` が書き写していた追記・日付のファイル名の列挙・行の JSON 読み出しを `src/server/adapter/lib/jsonl.ts` に寄せた。スキーマの検証と索引・読み戻しの形は各ファイルに残した。
-
-### 2026-09-23 design.md 13章「画面のデザイン」を docs/screen-design.md へ出した（T-445）
-
-13章を節番号 `13.x` のまま逐字で移し、`design.md` は 3378→1862 行（章は 1〜11 で連続になり、「未解決」の章番号の穴も畳んだ）。`design.md 13.x` への参照は一括置換し、番号だけの `13.x` は両ファイル冒頭の1行の読み替えで引ける。`requirements.md` 4章の分け方は `develop/direction.md` のドラフトに積んだ。
-
-### 2026-09-23 英語のレポートが出た理由を確かめた。判定ではなくターンまるごと英語だった（T-462）
-
-英訳を落とす判定は効いていて、「英語だね」と言われたターンは日本語の本文が1本も無く戻す先が無かった（本文を書かずに `speak` で終え、催促のあとに英語で書いた）。コードは直さず、表と `note` を持つ並びのテストを1件足した。
-
-### 2026-09-23 起動トークン付きの URL の組み立てを browser/lib の1つに寄せた（T-434）
-
-`/ws`・`/repository-file`・`/token-usage`・`/context-usage`・`/prompt-image/<id>` の5か所に散っていた手を `src/browser/lib/session-token-url.ts` の `sessionTokenUrl` にまとめた。`ws:` / `wss:` とホストの組み立ては `/ws` 固有の関心なので `lib/socket.ts` に残し、この関数はどの経路も相対パス+クエリとしてだけ知る。
-
-### 2026-09-23 695行の screen-nav.module.css を帯の部品ごとに割った（T-440）
-
-帯の7部品の見た目をそれぞれの隣へ出して器を199行にした。広い画面と「≡」の面の出し分け（`@media`）は帯全体の組み立てなので器に残し、ファイルをまたぐ打ち消しは各部品が器の class を重ねて解いている。
-
 ## 未解決
 
 - **英訳を落とす判定（`promotedReportId` の `lastJapaneseReportAfterWork`）を残すか外すか**は、T-459（締めの `speak` → レポートで終える並び）が done になってから決める（2026-09-23 の T-462 で保留）。判定は 18:44 のターンで実際に英訳を画面から落としていた。一方、ターンまるごと英語へ滑った回は救えないので、そちらは書く側（T-459 と英語へ滑る件の対策）の受け持ち
