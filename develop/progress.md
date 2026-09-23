@@ -87,6 +87,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 6部品に基準を当て、3種そろう `turn-header` と `question-record` を3分割、2種の `main-view` と `question-ask` は外に触るフックだけ `hooks/` へ出し、1種の `mini-portrait` と `turn` は割らなかった。画面の振る舞いは変えていない。
 
+### 2026-09-23 use-composer.ts から補完と画像の添付を別のフックに分けた（T-444）
+
+420行の `useComposer` を223行にし、補完を `use-suggestion.ts`、画像の添付を `use-prompt-image.ts` へ出した。入力欄の振る舞いは変えていない。
+
 ## 未解決
 
 - **雑談モードでは `speak` で終える並びが残り、英語の催促の入口も残っている**（2026-09-23 の T-459 で判明）。雑談は本文を書かない決まりなので、仕事の側の反転がそのまま当てはまらない。塞ぐなら雑談の終え方を別に決める話
