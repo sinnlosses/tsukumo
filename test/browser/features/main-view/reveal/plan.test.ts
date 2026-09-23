@@ -4,8 +4,8 @@ import {
   blockProgress,
   planReveal,
   type RevealBlock,
-} from "../../../../src/browser/features/main-view/reveal-plan.ts"
-import { revealTimingOf, type RevealTiming } from "../../../../src/browser/lib/reveal-speed.ts"
+} from "../../../../../src/browser/features/main-view/reveal/plan.ts"
+import { revealTimingOf, type RevealTiming } from "../../../../../src/browser/lib/reveal-speed.ts"
 
 /** `standard` の物差し（`lib/reveal-speed.ts`）。個々のテストはこれで固定する。 */
 const STANDARD_TIMING = revealTimingOf("standard")

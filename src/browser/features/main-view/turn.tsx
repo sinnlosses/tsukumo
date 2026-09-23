@@ -21,7 +21,7 @@ import { Report } from "./report.tsx"
 export type TurnProps = {
   readonly turn: MainViewTurn
   /**
-   * 今回（いちばん新しい）のやり取りか。**演出（`hooks/use-report-reveal.ts`）を掛けてよいのは
+   * 今回（いちばん新しい）のやり取りか。**演出（`reveal/use-report-reveal.ts`）を掛けてよいのは
    * 今回だけ**で、過去のターンでは本文が最初から全部出ている（`docs/requirements.md` 4.3）。
    */
   readonly newest: boolean
@@ -90,7 +90,7 @@ function Step(props: {
   readonly step: MainViewStep
   /**
    * このステップが載っているやり取り（`<Report>` から筆先へ渡る。
-   * `hooks/use-report-reveal.ts`）。
+   * `reveal/use-report-reveal.ts`）。
    */
   readonly turnId: number
   readonly reveal: boolean

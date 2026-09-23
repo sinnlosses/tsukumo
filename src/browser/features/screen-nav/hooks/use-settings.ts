@@ -6,7 +6,7 @@
 // `browser/lib/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
 // `set-session-default` で送り、`SessionState.sessionDefault` を読む）。**既定は次に起こすときから
 // 効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
-// セッション限りの別物）。演出の速さは `hooks/use-report-reveal.ts` がマウント時に読むだけなので、
+// セッション限りの別物）。演出の速さは `features/main-view/reveal/use-report-reveal.ts` がマウント時に読むだけなので、
 // 変えても書いている最中の演出には効かない（次に書き始めたときから）。
 //
 // **色の持ち方は `browser/lib/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
