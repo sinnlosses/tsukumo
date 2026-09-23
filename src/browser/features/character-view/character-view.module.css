@@ -7,6 +7,11 @@
    なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
 .character-region {
   position: relative;
+  /* セリフのログ（`<dialog>`）が領域の大きさを `cqw` / `cqh` で読むためのもの（下の
+     `.speech-log-stage::before`）。top layer に出ても DOM の祖先はここなので、コンテナは引ける。
+     大きさは外（`.layout-region` の高さ 100% と幅）から決まるので、中身を大きさの計算から外す
+     封じ込めを掛けても寸法は変わらない。 */
+  container-type: size;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -332,6 +337,38 @@
 .speech-log-stage {
   position: relative;
   height: 100%;
+}
+/* 背景（docs/screen-design.md 13.8）。**キャラビューの領域と同じ縮尺・同じ位置で敷き、上へは
+   そのまま続ける**ので、開いても立ち絵の後ろの絵は動かない。
+   箱の**中身の領域（content box）を領域の矩形に重ね**（幅は枠の外まで 1px ずつ広げて領域の幅に、
+   高さは `cqh` で読んだ領域の高さ）、絵の位置決めをそこに置く（`background-origin: content-box`）。
+   `cover` はその矩形に対して解かれるので `.layout-ground` と同じ絵になり、`padding-top` で上へ
+   伸ばした箱の中に、領域では切り落とされていた上の部分が描かれる（はみ出しは枠の overflow が切る）。
+   覆いは領域と同じ `--character-veil`（`.layout-ground` が作る。`<dialog>` はその DOM の子孫なので
+   継ぐ）。絵の上端が見えないように、領域の上端から上 6rem で地（ground）へ溶かす。背景の無い
+   パックでは覆いが不透明な ground、絵が `none` に落ちて、いままでと同じ地になる。 */
+.speech-log-stage::before {
+  content: "";
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
+  box-sizing: content-box;
+  height: calc(100cqh + 2 * var(--region-padding));
+  padding-top: 100vh;
+  background-image:
+    linear-gradient(
+      to top,
+      transparent calc(100cqh + 2 * var(--region-padding)),
+      var(--ground) calc(100cqh + 2 * var(--region-padding) + 6rem)
+    ),
+    linear-gradient(var(--character-veil, var(--ground)), var(--character-veil, var(--ground))),
+    var(--character-background-image, none);
+  background-origin: border-box, border-box, content-box;
+  background-position: center bottom;
+  background-size: auto, auto, cover;
+  background-repeat: no-repeat;
+  pointer-events: none;
 }
 /* 立ち絵の床。キャラビューの `.character-layout` に重ね、中の `.portrait` はキャラビューと同じ
    規則（`--portrait-height` / `--portrait-drop` / max-width）で立つ。足元を切るのも同じ
