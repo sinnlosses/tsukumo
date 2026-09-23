@@ -1,5 +1,33 @@
 # 進捗のアーカイブ
 
+### 2026-09-23 締めのセリフのあとに本文が伸びるあいだ、立ち絵に「書いている」動きを出した（T-461）
+
+並びの反転で締めのセリフからターン確定まで画面が止まって見えるようになったので、その間だけ立ち絵を小さく速い横揺れにする。優先順位は失敗 ＞ 完了 ＞ 書いている ＞ 待ち／読んでいる で、実機では約21秒出て完了の反応へ替わった。
+
+### 2026-09-23 トークン消費の画面の地・罫・文字の段を見本（案1）の値に揃えた（T-457）
+
+`theme.css` に画面専用の `--usage-*`（札・箱・選択の地、罫2段、文字6段、基線）を足し、`token-usage.module.css` を塗り直した。`--context-other` は無彩の灰 `#a6a2b0` に替え、`docs/screen-design.md` 13.2 に値の表を記した（内訳の6色と棒の青は `b674e13` で入っていた）。
+
+### 2026-09-23 requirements.md 4.9「雑談モード」を docs/chat-mode.md へ逐字で移した（T-464）
+
+節の番号 `4.9` のまま移し、`requirements.md` は 1979→1330 行。`requirements.md 4.9` への参照114件を一括置換し、`docs/history/` の78件は据え置いた。削るのは T-465。
+
+### 2026-09-23 requirements.md 4.2「表示」を docs/display.md へ逐字で移した（T-466）
+
+節の番号 `4.2` のまま移し、`requirements.md` は 1330→881 行。`requirements.md 4.2` への参照101件を一括置換し、`docs/history/` の234件と `decision.md` の見出し名を引く2件は据え置いた。削るのは T-467。
+
+### 2026-09-23 画面のナビの帯の上端の差し色の線をなくし、顔の輪を 1px にした（T-469）
+
+`border-top` とトークン `--screen-nav-accent-line` を消し、会話の画面の grid の高さの計算からも同じ項を外した（帯の外寸は 56→53px）。`docs/screen-design.md` 13.9 の図・表・寸法を合わせ、「帯が奪う面積（実測）」は測り直さず線があったときの記録だと注記した。
+
+### 2026-09-23 docs/display.md を削り、発言の引用・経緯・実測を decision.md へ移した（T-467）
+
+486→445 行・23,430→20,947 字（約11%減）。決定といまも効く理由が大半を占めていたため減りは小さい。太字の文253件は本文240・`decision.md` 13で全件引ける。
+
+### 2026-09-23 T-467 で見つけた古い参照3件を実物に合わせた（T-470）
+
+`docs/display.md` のレポートの構造の箇条を `report-notation.ts` と「レポートの記法は、TUI と tsukumo で出し分ける」へ向け直し、`turn.tsx` の進行の置き場を帯の「いまの作業」に、`session-state.ts` の迷子の句を `docs/display.md` 4.2「吹き出し」の「今のターンの分を縦に積んで」に直した。`docs/design.md` の `speeches.slice(-1)` の記述が実装と食い違うのは範囲外として残した。
+
 ### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
 
 `newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
