@@ -17,7 +17,7 @@
     "dependencies": ["T-475"],
     "summary": "report が無いターンの受け皿を最後の本文だけにし、英訳・実況の判定を消す",
     "task": "## 背景\n\nT-475 でレポートは `report` ツールで受け取るようになった。**T-474 の試行が不採用なら、やらずに理由を evidence に書いて閉じる。**\n\n`report` が1回も呼ばれなかったターンは、まだ今の推測（`src/shared/main-view.ts` の `promotedReportId` / `selectShownReports`）でテキストからレポートを選んでいる。推測には、規約が破られた形ごとに足した例外がある: 締めが実況でしかなければ資料を繰り上げる（2026-09-21）、締めが日本語でなければ席を戻す（`lastJapaneseReportAfterWork` と `src/shared/japanese-prose.ts`。2026-09-23）、見えない文字だけの本文を選ばない、ツールの付いていない本文を出さない（2026-09-22）。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの決定（Q11）: 試行が合格したら、受け皿は「**最後の本文をそのまま出す**」だけに縮め、英訳・実況・見えない文字の判定（`promotedReportId` の例外と `japanese-prose.ts`）は消す\n- `develop/progress.md` の「未解決」にある「英訳を落とす判定を残すか外すか」は、この決定で外すことに決まった\n\n## やること\n\n1. `report` が呼ばれたターンではテキストを一切出さないことを確かめ、呼ばれなかったターンは最後の本文（空白だけのものは除く）を最終レポートにする形へ `main-view.ts` を縮める\n2. 使われなくなった判定・`japanese-prose.ts`・そのテストを消す\n3. `docs/display.md` 4.2「メインビュー」の項から消した判定の説明を落とし、経緯は `docs/history/decision.md` へ移す\n4. `develop/progress.md` の「未解決」の上の項目を消す\n\n## 完了条件\n\n- `test -e src/shared/japanese-prose.ts` が偽\n- `grep -n 'lastJapaneseReportAfterWork' -r src` が0件\n- `main-view.test.ts` に、`report` が呼ばれなかったターンで最後の本文が最終レポートになることのテストがある\n- `bun run check` が通る\n\n## 注意\n\n- T-438（記録をターンに割る処理を1つにする）と同じファイルを触る。着手時に `main` の状態を見る\n- 素の TUI には tsukumo の判定が効かないので、`report-notation.ts` の条は判定を消しても残す",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
