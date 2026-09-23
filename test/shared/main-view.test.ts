@@ -470,6 +470,51 @@ describe("mainViewTurns（最終レポートの印）", () => {
     expect(steps.map((step) => step.final)).toEqual([false, true, false])
   })
 
+  it("表と note を持つ日本語のレポートのあとに表を持つ英訳が来ても、日本語のほうが最終レポートになる", () => {
+    // 締めの `speak` のあとに本体の催促が入り、英語で書き直した並び。催促は依頼にならず、
+    // `speak` は `speech` になって落ちるので、記録は「作業 → 日本語 → 英語」と並ぶ。
+    const japanese = [
+      "## 砂時計の目盛りを直した",
+      "",
+      "目盛りが半分ずれていたのは、`tick` を2回数えていたため。",
+      "",
+      "**直したファイル**",
+      "",
+      "| ファイル | 変えたこと |",
+      "| --- | --- |",
+      "| `src/hourglass.ts` | 目盛りを1回だけ数える |",
+      "| `test/hourglass.test.ts` | ずれを再現する場合を足した |",
+      "",
+      '<div class="note">砂の量そのものは変えていない。</div>',
+      "",
+      '<div class="note note-favor">古い砂時計を捨ててよいか教えてほしい。</div>',
+    ].join("\n")
+    const english = [
+      "## Fixed the hourglass ticks",
+      "",
+      "The ticks were off by half because `tick` was counted twice.",
+      "",
+      "**Files changed**",
+      "",
+      "| File | Change |",
+      "| --- | --- |",
+      "| `src/hourglass.ts` | Count each tick once |",
+      "| `test/hourglass.test.ts` | Added a case that reproduces the drift |",
+      "",
+      '<div class="note">The amount of sand is unchanged.</div>',
+      "",
+      '<div class="note note-favor">Let me know if the old hourglass can go.</div>',
+    ].join("\n")
+    const turns = mainViewTurns(
+      [request("依頼"), edit("src/hourglass.ts"), detail(japanese), detail(english)],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => reportOf(step))).toEqual([undefined, japanese, undefined])
+    expect(steps.map((step) => step.final)).toEqual([false, true, false])
+  })
+
   it("短い日本語の答えのあとの英訳でも、日本語の答えが最終レポートになる", () => {
     const turns = mainViewTurns(
       [request("依頼"), edit("src/a.ts"), detail("直しておいたよ。"), detail("I fixed it.")],

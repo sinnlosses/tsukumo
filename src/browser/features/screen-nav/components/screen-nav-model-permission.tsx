@@ -18,7 +18,8 @@ import { Select } from "../../../components/select.tsx"
 import { MODEL_LABELS } from "../../../lib/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../../../lib/permission-mode-label.ts"
 import { type ScreenNavModelPermission } from "../hooks/use-screen-nav.ts"
-import styles from "../screen-nav.module.css"
+import shellStyles from "../screen-nav.module.css"
+import styles from "./screen-nav-model-permission.module.css"
 
 export type ScreenNavModelPermissionProps = {
   readonly modelPermission: ScreenNavModelPermission
@@ -35,8 +36,15 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
   const modelSelectId = useId()
   const permissionModeSelectId = useId()
 
+  // **`shellStyles["screen-nav-model-permission"]` は見た目を持たない**（広い画面から隠す規則
+  // `.screen-nav > .screen-nav-model-permission` と「≡」の面の中で縦に積む規則
+  // `.screen-nav-panel .screen-nav-model-permission` のためだけの参照）。CSS Modules は
+  // class 名をファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるには
+  // このファイル自身の class も要る（docs/design.md 6.6）。
   return (
-    <span className={styles["screen-nav-model-permission"]}>
+    <span
+      className={`${styles["screen-nav-model-permission"]} ${shellStyles["screen-nav-model-permission"]}`}
+    >
       <Select
         id={modelSelectId}
         ariaLabel="モデル"

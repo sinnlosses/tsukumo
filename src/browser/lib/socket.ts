@@ -2,14 +2,16 @@
 // （docs/design.md 6.1 / 6.2「接続・再接続・フレームの zod 検証」）。**core を import しない**
 // （原則2/3。`browser` が触れる契約は `shared` だけ）。`/ws` の経路名・トークンのクエリ名の値は
 // `shared/session-socket.ts` が正典で、`adapter/session-socket.ts` と両方から import する（値の再掲は
-// しない）。
+// しない）。経路にトークンを足す口は `lib/session-token-url.ts` に寄せてあり、ここは
+// `ws:` / `wss:` とホストの組み立てだけを持つ。
 //
 // 接続が切れたら、間隔を指数的に伸ばしながら再接続する。読めないフレームは黙って捨てて
 // 次のフレームを待つ（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」と
 // 同じ考え方をブラウザ側でも取る）。
 
 import { parseServerFrame, type ServerFrame } from "../../shared/frame.ts"
-import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
+import { SESSION_SOCKET_PATH } from "../../shared/session-socket.ts"
+import { sessionTokenUrl } from "./session-token-url.ts"
 
 const RECONNECT_INITIAL_DELAY_MS = 500
 const RECONNECT_MAX_DELAY_MS = 8000
@@ -80,9 +82,8 @@ export function connectSessionSocket(handlers: SessionSocketHandlers): SessionSo
 
 function socketUrl(): string {
   const here = new URL(window.location.href)
-  const token = here.searchParams.get(SESSION_TOKEN_QUERY_NAME) ?? ""
   const protocol = here.protocol === "https:" ? "wss:" : "ws:"
-  return `${protocol}//${here.host}${SESSION_SOCKET_PATH}?${SESSION_TOKEN_QUERY_NAME}=${encodeURIComponent(token)}`
+  return `${protocol}//${here.host}${sessionTokenUrl(SESSION_SOCKET_PATH)}`
 }
 
 /** WebSocket のメッセージ（文字列のはず）を JSON として読む。読めなければ undefined。 */

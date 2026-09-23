@@ -1,0 +1,30 @@
+/* 帯に並ぶ口1つ（`screen-nav-gate.tsx`）。もとは screen-nav.module.css の一部だったが、
+   この部品しか使わない class の塊なので隣へ分けた（docs/design.md 6.6）。**狭い画面の「≡」の面
+   の中の見た目**（`.screen-nav-panel .screen-nav-gate` / `:hover` / `.is-active`）は
+   `screen-nav.module.css` の @media が持つ（`screen-nav-gate.tsx` がそちらのハッシュも
+   自分の要素に重ねて渡す。docs/design.md 6.6）。 */
+
+/* 口は枠も地も無い文字のタブ。下線は `margin-bottom: -1px` で帯の下の罫線に重ねる
+   （いまの口の下線が罫線の上に載って見える）。いまの口以外も透明の下線を持つので、
+   選ばれても字の位置が動かない。 */
+.screen-nav-gate {
+  display: flex;
+  align-items: center;
+  margin-bottom: calc(-1 * var(--screen-nav-rule));
+  padding: 0 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-quiet);
+  font-size: var(--font-subheading);
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.screen-nav-gate:hover {
+  color: var(--ink);
+}
+/* いまの口は字の濃さ・太さ・差し色の下線の3つで示す（色だけで伝えない。13.1 原則1）。 */
+.screen-nav-gate.is-active {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+  font-weight: 500;
+}
