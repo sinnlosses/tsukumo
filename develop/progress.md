@@ -55,6 +55,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 develop/progress.md の完了した小節を両側とも残すマージドライバを作った（T-404）
+
+`scripts/progress-done-section.ts`（「## 完了したこと」を `###` 小節に割る・3wayで畳む純粋関数）と
+`scripts/merge-progress.ts`（`%O %A %B` を読んで `%A` に書く入口）、`.gitattributes` の1行。
+両側が足した小節は両方残し、片方が消した小節（アーカイブ）は消えたまま、同じ小節を両側が
+書き換えたら非0で返す。**`.git/config` への登録は人が1回打つ**（未登録のあいだは git が
+既定の3wayに落ちるだけ。手順は T-405 が CLAUDE.md に書く）。
+
 ### 2026-09-23 タスク区画の行を罫線で分け、字の大きさに段を付けてモックの値に揃えた（T-411）
 
 タイプスケールに `--font-subheading`（14px）と `--font-action`（12px）を足して6段にし（`docs/design.md` 13.3）、「一覧を見る」は枠なしの差し色のリンク風にした。進行中のチップは `TaskListCountItem.status` で選ぶ（並び順に頼らない）。
