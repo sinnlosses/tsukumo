@@ -6,7 +6,7 @@
 // 右上の「ログ」（<SpeechLog>）は自分で記録を読む部品で、ここは置くだけ。
 //
 // **立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる**
-// （docs/requirements.md 4.2「フォールバック」）。
+// （docs/display.md 4.2「フォールバック」）。
 
 import { type ReactElement } from "react"
 

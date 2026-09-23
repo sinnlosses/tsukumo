@@ -1,5 +1,5 @@
 // メインビュー本体（`<MainView>`。docs/design.md 6.1）。**レポートだけを出す**。そこに
-// 質問の記録が挟まる（`docs/requirements.md` 4.2。ツールの実行は描かない。
+// 質問の記録が挟まる（`docs/display.md` 4.2。ツールの実行は描かない。
 // 作業の**進行**はサイドバーが別に持つ）。
 //
 // **1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する**
@@ -7,14 +7,16 @@
 // 動かさない（規則は `src/browser/stores/turn-selection.tsx` にある。docs/design.md 6.2）。
 //
 // 選んでいるターン（`turnId`）は `<TurnSelectionProvider>` の Context
-// （キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。ここに残るのは
-// **見ているターンが替わったときにレポートの先頭へスクロールを戻す**配線だけ。
+// （キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。**見ているターンが
+// 替わったときにレポートの先頭へスクロールを戻す**配線は `hooks/use-active-turn-scroll.ts`
+// へ出した（外の世界に触るフックだけが余分。docs/design.md 2章「機能の中を分ける」）。
 
-import { useEffect, useRef, type ReactElement } from "react"
+import { type ReactElement } from "react"
 
 import { useMainViewTurns } from "../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { turnTitle } from "./domain/turn-title.ts"
+import { useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
 import { MiniPortrait } from "./mini-portrait.tsx"
 import { QuestionAsk } from "./question-ask.tsx"
@@ -28,22 +30,7 @@ export function MainView(): ReactElement {
   // 畳んだ結果は `stores/main-view-turn.ts` が姿ごとに1回だけ作る（昇順。追従を決める
   // `stores/turn-selection.tsx` と同じものを読む）。
   const turns = useMainViewTurns()
-  const scrollerRef = useRef<HTMLDivElement>(null)
-
-  // 見ているターンが変わったら（自分で前後へ移った・新しいターンに連れていかれた・選んでいた
-  // ターンが窓から外れた）、そのターンのレポートの先頭から読ませる。
-  useEffect(() => {
-    const scroller = scrollerRef.current
-    // 出ているターンが無い（下で placeholder を返す）ときは、戻す先そのものが無い。
-    if (scroller === null || activeTurnId === undefined) {
-      return
-    }
-    // `scrollTop` ではなく `scrollIntoView`: 実際に転がる祖先が画面幅で入れ替わる
-    // （広い画面は `section[data-region="main"]`、狭い画面（≤760px）はページ自身）。
-    // `scrollIntoView` は「どの祖先が転がっているか」を呼ぶ側が知らなくても、転がる祖先を
-    // 全部たどって動かす。
-    scroller.scrollIntoView({ block: "start" })
-  }, [activeTurnId])
+  const scrollerRef = useActiveTurnScroll(activeTurnId)
 
   if (turns.length === 0) {
     return (

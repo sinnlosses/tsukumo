@@ -151,7 +151,7 @@ describe("applySessionEvent", () => {
       { kind: "speech", text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 0 } },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
-    // メインビューにはセリフを出さない（吹き出しだけ。docs/requirements.md 4.2）。
+    // メインビューにはセリフを出さない（吹き出しだけ。docs/display.md 4.2）。
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーのレポート" },
@@ -348,7 +348,7 @@ describe("applySessionEvent", () => {
     )
 
     // ツールの記録そのものは `toolUseId` / `nested` を持つ（サイドバー用途と
-    // 突き合わせ用。docs/requirements.md 4.2）。
+    // 突き合わせ用。docs/display.md 4.2）。
     expect(view.records).toEqual([
       {
         kind: "tool",

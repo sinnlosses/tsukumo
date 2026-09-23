@@ -168,7 +168,7 @@ export type MainViewTurn = {
  *
  * **`tool` の記録も渡す**（`docs/design.md` 6.1「`<Turn>` = `<RequestRest>` +
  * `[<Report> | <QuestionRecord>]*`」）が、`src/browser/features/main-view/turn.tsx` はそこから描かない
- * （`docs/requirements.md` 4.2）。**{@link groupIntoTurns} /
+ * （`docs/display.md` 4.2）。**{@link groupIntoTurns} /
  * {@link selectShownReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
  * `tool` の記録自体は残す。帯の「いまの作業」は別に `src/shared/turn-step.ts` の
  * `currentTurnSteps` が同じ記録から直接導くので、ここで両方に配っても重複にはならない。
@@ -209,7 +209,7 @@ export function mainViewTurns(
  * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
  *
  * **`speech` は落とす**（セリフは吹き出しだけに出し、レポートに混ぜない。
- * docs/requirements.md 4.2）。ターンの通し番号は `request` の記録が持っているので、
+ * docs/display.md 4.2）。ターンの通し番号は `request` の記録が持っているので、
  * 何を落としても番号はずれない。
  *
  * **`compact-boundary` も落とす**（`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
@@ -311,7 +311,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
 }
 
 /**
- * **出す本文を選ぶ**（`docs/requirements.md` 4.2）。本文は3つに分かれ、残すのは前の2つ:
+ * **出す本文を選ぶ**（`docs/display.md` 4.2）。本文は3つに分かれ、残すのは前の2つ:
  *
  * - **最終レポート**: そのやり取りの**締めの本文**（最後のステップの本文で、あとにツールが
  *   続いていないもの）。**資料がほかに1つも無いときは中身を問わず残す**——短い返事だけの
@@ -391,7 +391,7 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
  * **資料 → `speak` → 「また呼んでください」** という並びで、挨拶のほうが
  * 位置だけで最終レポートの席を取り、中身のある資料が `<details>` に畳まれていた。規約
  * （`src/server/core/report-notation.ts` の「締めを書かない」）で抑えきれない点は、ほかの
- * 実況と同じ（`docs/requirements.md` 4.2「分離を文章の規約で表す案は採らない」）。
+ * 実況と同じ（`docs/display.md` 4.2「分離を文章の規約で表す案は採らない」）。
  *
  * **繰り上げるのは確定したやり取りだけ**（呼ぶ側が `settled` で絞る）。書きかけの本文は
  * 実況から資料へ育つ途中かもしれず、繰り上げが途中で外れると前の資料の `interim` が
@@ -572,7 +572,7 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 /**
  * そのステップが画面に出す記録の件数。**`src/browser/features/main-view/turn.tsx` が描くもの**
  * （レポートと質問の記録）だけを数え、**ツールの実行は数えない**
- * （メインビューに出ないため。`docs/requirements.md` 4.2）。
+ * （メインビューに出ないため。`docs/display.md` 4.2）。
  */
 function shownEntryCount(step: MainViewStep): number {
   return (

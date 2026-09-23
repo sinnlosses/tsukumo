@@ -1,7 +1,7 @@
 // サイドバーの「タスク一覧」区画の見出し下に出す件数のチップ。文言だけをここから渡す
 // （`features/sidebar/task-section.tsx`）。見出しの文言そのものは固定の「タスク」になった
 // ので、この機能はもう持たない（以前は `taskListTitle` が「タスク一覧 todo N / doing N /
-// done N」を組み立てていた。経緯は docs/requirements.md 4.2）。
+// done N」を組み立てていた。経緯は docs/display.md 4.2）。
 
 import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
 
@@ -24,7 +24,7 @@ const CHIP_ORDER = [
 /**
  * サイドバーの「タスク一覧」のチップ。**進行中 → 未着手 → 完了の順で、0件でも出す**
  * （モックの3チップが常に並ぶ形に合わせる。`taskListTitle` 時代の「0件は足さない」は
- * 採らない。経緯は docs/requirements.md 4.2）。
+ * 採らない。経緯は docs/display.md 4.2）。
  *
  * tasks が読めていない（`kind: "unknown"`）ときはチップを出さない。その判定は呼ぶ側
  * （`features/sidebar/task-section.tsx`）が持ち、ここは件数を数えられる並びだけを受ける。

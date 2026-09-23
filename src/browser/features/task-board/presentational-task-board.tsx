@@ -3,7 +3,7 @@
 // `components/`、行の畳み方は `board-row.ts`、開閉の同期は `hooks/use-task-board.ts`。
 //
 // サイドバーの区画は幅が 300px ほどしかなく要約が2〜3行に折り返すので、**一覧を見渡すのは
-// 画面いっぱいの表**に任せる（docs/requirements.md 4.2）。
+// 画面いっぱいの表**に任せる（docs/display.md 4.2）。
 //
 // **`<dialog>` は top layer に出る**ので、サイドバー領域の `overflow` には切り取られない。
 // Esc で閉じるのと、閉じたときにフォーカスを開く口へ戻すのはブラウザのモーダル挙動に任せる。
