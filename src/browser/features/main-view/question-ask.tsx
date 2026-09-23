@@ -110,7 +110,7 @@ export function QuestionAsk(): ReactElement | null {
 
 /**
  * 選択肢1つぶんのカード。**押す口は `<input>` と `<label>` の組**（単一選択は radio、
- * **複数選択はチェックボックス**。`docs/requirements.md` 4.2）で、説明と `preview` は
+ * **複数選択はチェックボックス**。`docs/display.md` 4.2）で、説明と `preview` は
  * その外に置く——`preview` は表や図になるので、`<label>`（中身は文字の並びだけ）にも
  * `<button>` にも入れられない。
  */

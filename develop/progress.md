@@ -79,6 +79,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
 
+### 2026-09-23 requirements.md 4.2「表示」を docs/display.md へ逐字で移した（T-466）
+
+節の番号 `4.2` のまま移し、`requirements.md` は 1330→881 行。`requirements.md 4.2` への参照101件を一括置換し、`docs/history/` の234件と `decision.md` の見出し名を引く2件は据え置いた。削るのは T-467。
+
 ## 未解決
 
 - **雑談モードでは `speak` で終える並びが残り、英語の催促の入口も残っている**（2026-09-23 の T-459 で判明）。雑談は本文を書かない決まりなので、仕事の側の反転がそのまま当てはまらない。塞ぐなら雑談の終え方を別に決める話

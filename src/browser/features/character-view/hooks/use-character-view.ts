@@ -101,7 +101,7 @@ export function useCharacterView(): CharacterViewModel {
 /**
  * 過去のターンを見ているときだけ、そのターンのセリフと表情を返す（今回を見ていれば undefined）。
  * 今のターンを記録から導き直さないのは、`request` の時点で「前のターンの最後の1件だけ残す」
- * 規則（docs/requirements.md 4.2）が `SessionState.speeches` 側にしか無いため。
+ * 規則（docs/display.md 4.2）が `SessionState.speeches` 側にしか無いため。
  */
 function pastTurnSpeech(
   records: readonly SessionRecord[],

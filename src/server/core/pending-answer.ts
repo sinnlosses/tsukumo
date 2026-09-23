@@ -103,7 +103,7 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
       }
 
       // 質問の記録は**答えが確定したここ1回だけ**知らせる（未回答のまま終わった質問は残さない。
-      // docs/requirements.md 4.2「許可と質問」）。解決より先に知らせるので、答えを受けて動き
+      // docs/display.md 4.2「許可と質問」）。解決より先に知らせるので、答えを受けて動き
       // 出したツールのイベントより前に記録が積まれる。
       if (entry.ask.kind === "question" && answer.kind === "answers") {
         handlers.onAnswered(entry.ask.questions, answer.labels)

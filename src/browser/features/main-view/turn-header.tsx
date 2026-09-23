@@ -1,4 +1,4 @@
-// ターンの札の頭（`<TurnHeader>`。`docs/requirements.md` 4.2）の**入口**。
+// ターンの札の頭（`<TurnHeader>`。`docs/display.md` 4.2）の**入口**。
 //
 // 開閉・一覧の並び・前後の押す先は `hooks/use-turn-header.ts` が持ち、見た目は
 // `presentational-turn-header.tsx` が持つ（docs/design.md 2章「機能の中を分ける」の

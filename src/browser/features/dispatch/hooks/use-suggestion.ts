@@ -115,7 +115,7 @@ export function useSuggestion(args: UseSuggestionArgs): SuggestionModel {
         return true
       }
       if (event.key === "Tab" || event.key === "Enter") {
-        // Tab・Enter のどちらも確定だけ（送信しない。docs/requirements.md 4.2）。
+        // Tab・Enter のどちらも確定だけ（送信しない。docs/display.md 4.2）。
         event.preventDefault()
         select(clampedSelectedIndex)
         return true

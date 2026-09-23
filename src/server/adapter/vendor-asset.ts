@@ -4,7 +4,7 @@
 //
 // **束ね（`src/server/adapter/bundle.ts`）には入れない。** mermaid だけで 5.3MB あり、入れると
 // レポートに図が1つも無いときでも最初の読み込みで運ぶことになる。ここから配れば、その記法が
-// 実際に出てきたときだけブラウザが `<script src>` で取りに来る（`docs/requirements.md` 4.2）。
+// 実際に出てきたときだけブラウザが `<script src>` で取りに来る（`docs/display.md` 4.2）。
 // CDN から読まないのも同じ節の決まり（表示時の外部通信はゼロ）。
 //
 // **パッケージ名で `require.resolve` しない。** chart.js の `exports` が `dist/` を公開して
