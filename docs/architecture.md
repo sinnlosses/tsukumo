@@ -842,6 +842,24 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 **タスク一覧のモーダルを撮る件には `develop/tasks.json` の実データのタスク一覧が写る**ので、
 画像そのものを他所へ共有・複製しない。
 
+**変更前と撮り比べるときは `bun run scripts/serve-revision.ts <コミット>`。** 名指ししたコミットを
+`/tmp/tsukumo-revision/<sha>/` へ取り出し、そこで組み立てて、空けたポート（既定 7340）と一時ホームで
+tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの場面も流せる）。その URL を
+`capture-view.ts` / `capture-catalog.ts` に渡して撮り、いま居る作業ツリーで起こしたほうと並べる。
+**撮り終えたら `bun run scripts/stop.ts --port 7340` で必ず止める** — 起こしたものは自分では
+止まらない（`stop.ts` が中の tsukumo を止めると、外側の `serve-revision.ts` も続いて終わるので、
+打つのは1回でよい）。**利用者の tsukumo が 7327〜7330 あたりで動いていることがあるので、
+そこは止めない・触らない。**
+
+**変更前を手元に作らない。** `git stash` で退避する方法は採らない——**stash の stack は他の作業ツリーと
+共有**なので、別のセッションの退避を取り違えうる。`git checkout` や手での書き戻しで一時的に変更前へ
+巻き戻す方法も採らない——戻し忘れると書きかけの変更を失うし、`dist/browser/` が変更前のまま残る
+（受け入れ側で `bun run build` を打ち直すことになる）。`serve-revision.ts` は取り出しに
+**一時 index**（`GIT_INDEX_FILE`）を使うので、**作業ツリーも index も `dist/browser/` も読むだけ**で
+済む。`node_modules` はいま居る作業ツリーのものを symlink で借りるので `bun install` も要らない
+（**`package.json` をまたいで比べるときだけ**この前提が崩れる。そのときは取り出し先で手で打つ）。
+手順の前後で `git status --short` が変わっていないことを確かめてから `evidence` を書く。
+
 **配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が
 表示されるので、`curl <URL>` で HTML が返るかを見る。WebSocket 側はブラウザの開発者ツールの
 Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届くかを見る。ここまで出ていれば
