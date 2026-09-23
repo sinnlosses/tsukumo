@@ -3,13 +3,13 @@
 // mermaid・Chart.js が未完成のソースで作り直され、非同期に描く mermaid は途中の形で失敗する。
 //
 // **筆は1行ずつではなく、トピック1つをZ字で書く**（それまでは `Range`
-// で1文字ずつ位置を取り、行の途中で止めていた）。塊の切り方は `reveal-plan.ts`——見出しから
+// で1文字ずつ位置を取り、行の途中で止めていた）。塊の切り方は `plan.ts`——見出しから
 // 次の見出しまでが1つで、**段落や表の1つ1つではない**。その中の行を上下2つの帯に割り、帯ごとに
 // 左から右へなぞって、あいだを斜めに戻る——つまりZ字の3画。**帯の切れ目は実際の行の box に
 // 合わせる**ので、文字が上下に切れることはない（1行しかない塊は1画で書く）。
 //
-// **ここはフレームを回すだけ**で、測るのは `reveal-measure.ts`、要素に書くのは
-// `reveal-paint.ts`、帯の割り出しと帯の上の筆の居場所は `reveal-band.ts`（純粋な計算）。
+// **ここはフレームを回すだけ**で、測るのは `measure.ts`、要素に書くのは
+// `paint.ts`、帯の割り出しと帯の上の筆の居場所は `band.ts`（純粋な計算）。
 // なぞる右端は**帯ごとに、その帯にある行のいちばん右**（同ファイル冒頭）。
 //
 // **ミニ立ち絵の立つ位置が画面から出たら器を送る**（`brush-scroll.ts`）。追う範囲は
@@ -17,7 +17,7 @@
 // 帯の背が器の見える高さに迫り、帯ぜんたいを収めようとすると送っては戻す往復が起きるため
 // （`brush-scroll.ts` 冒頭）。**器を送るのはビューポート座標のまま**だが、配る筆先は本文の
 // 入れ物（`data-brush-origin`）の座標へ写す——書き上げたあとも筆先はその場に残るので、
-// ビューポート基準のままだと転がすたびに関係ない場所へずれる（`stores/brush-tip.ts`）。
+// ビューポート基準のままだと転がすたびに関係ない場所へずれる（`brush-tip.ts`）。
 //
 // **打ち切る口は2つ**（クリック・キー入力）。**ホイールと指では打ち切らない**——先を読もうと
 // して転がすのは「もう要らない」ではなく「見ていたい」の側なので、打ち切ると筆を追うたびに
@@ -32,12 +32,12 @@ import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
 import { prefersReducedMotion } from "../../../lib/reduced-motion.ts"
 import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../../lib/reveal-speed.ts"
-import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "../../../stores/brush-tip.ts"
-import { brushScroller } from "../brush-scroll.ts"
-import { brushStep, toBands, type BrushStep } from "../reveal-band.ts"
-import { endLineOf, frameOf, lineBoxesOf, placeIn, shapesOf } from "../reveal-measure.ts"
-import { applyStep, hideBlock, showBlock } from "../reveal-paint.ts"
-import { blockProgress, planReveal, type RevealBlock } from "../reveal-plan.ts"
+import { brushStep, toBands, type BrushStep } from "./band.ts"
+import { brushScroller } from "./brush-scroll.ts"
+import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "./brush-tip.ts"
+import { endLineOf, frameOf, lineBoxesOf, placeIn, shapesOf } from "./measure.ts"
+import { applyStep, hideBlock, showBlock } from "./paint.ts"
+import { blockProgress, planReveal, type RevealBlock } from "./plan.ts"
 
 /** 見せる範囲を進めているあいだだけ根に立てる印（目視確認と、外から終わりを知るための口）。 */
 const REVEALING_ATTRIBUTE = "data-revealing"
@@ -62,7 +62,7 @@ const SKIP_LISTENER_OPTIONS = { capture: true, passive: true } as const
 /**
  * レポートの根に付ける ref を返す。`reveal` が立っていたら、**マウントした直後から**見せる範囲を
  * 進める。`turnId` は**この本文が載っているやり取り**で、配る筆先に添えて持たせる
- * （`stores/brush-tip.ts`。別のやり取りが出ているあいだ、残った筆先は使われない）。
+ * （`brush-tip.ts`。別のやり取りが出ているあいだ、残った筆先は使われない）。
  *
  * **見るのはマウントした時点の `reveal` だけ。** あとから対象でなくなっても（後ろに別の
  * レポートが現れても）始めた演出は最後まで進める——途中で止めると書きかけの本文が残る。
@@ -116,7 +116,7 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
   root.setAttribute(REVEALING_ATTRIBUTE, "yes")
 
   const scroller = brushScroller(root)
-  // 筆先の座標の原点（`stores/brush-tip.ts`）。**印が見つからなければ筆先を配らない**
+  // 筆先の座標の原点（`brush-tip.ts`）。**印が見つからなければ筆先を配らない**
   // ——ミニ立ち絵は出ないが、本文を書き上げる演出そのものは進む。
   const origin = root.closest(`[${BRUSH_ORIGIN_ATTRIBUTE}]`)
   // 書き終わりに筆先を残す先（`finish()`）。塊は時間の順に並んでいるので、末尾が最後に書く塊。
