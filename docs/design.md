@@ -49,15 +49,15 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 ブラウザ側の React の部品が状態から描く**形にする。言語は TypeScript のまま、ランタイムは当面 Bun
 （Node で動く形を保つ）。
 
-| 残すもの                                                                     | 変えるもの                                                           |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Agent SDK で Claude Code を動かす。SDK を import する場所を1ファイルに閉じる | サーバ側の HTML 組み立て（`presentation/view.ts`）→ ブラウザ側の部品 |
-| `speak(text, expression)` の MCP ツール。戻り値は `"ok"` だけ                | SSE 5本 + POST 6本 → WebSocket 1本（フレームとコマンド）             |
-| `SessionEvent` の union と `applySessionEvent` の純粋な畳み込み              | 自前の Markdown レンダラとサニタイザ → unified（remark / rehype）    |
-| 答え待ちの列（`canUseTool` の Promise を保留する）                           | 4層（domain / usecase / presentation / infrastructure）→ 3層         |
-| 会話をプロセスの外へ出さない。`127.0.0.1` だけ。ディスクに書かない           | キャラクター定義 → 人格を含む**パック**                              |
-| 起動時に `bun build` で束ねてメモリから配る（ディスクに成果物を置かない）    | 1プロセス = 1セッション固定 → 鍵付きの `SessionManager`（いまは1つ） |
-| ホストのポート（`showView` 1つ）と Orca のアダプタ                           | HTML の文字列一致のテスト → 部品のテストと fake driver               |
+| 残すもの                                                                                                                       | 変えるもの                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Agent SDK で Claude Code を動かす。SDK を import する場所を1ファイルに閉じる                                                   | サーバ側の HTML 組み立て（`presentation/view.ts`）→ ブラウザ側の部品 |
+| `speak(text, expression)` の MCP ツール。戻り値は `"ok"` だけ                                                                  | SSE 5本 + POST 6本 → WebSocket 1本（フレームとコマンド）             |
+| `SessionEvent` の union と `applySessionEvent` の純粋な畳み込み                                                                | 自前の Markdown レンダラとサニタイザ → unified（remark / rehype）    |
+| 答え待ちの列（`canUseTool` の Promise を保留する）                                                                             | 4層（domain / usecase / presentation / infrastructure）→ 3層         |
+| 会話をプロセスの外へ出さない。`127.0.0.1` だけ。ディスクに書かない                                                             | キャラクター定義 → 人格を含む**パック**                              |
+| 起動時は組み立て済みの成果物（`dist/browser/`）を読むだけ（束ねるのは `bun run build`。2026-09-21 に起動時の組み立てをやめた） | 1プロセス = 1セッション固定 → 鍵付きの `SessionManager`（いまは1つ） |
+| ホストのポート（`showView` 1つ）と Orca のアダプタ                                                                             | HTML の文字列一致のテスト → 部品のテストと fake driver               |
 
 **決めたこと**（迷ったら蒸し返さない。理由は `docs/research/architecture-rethink.md`）:
 
@@ -116,13 +116,13 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 （`server/adapter/`）」に割ってある**（この形に至った比較は
 `docs/research/architecture-proposal.md` / `docs/research/architecture-placement.md`）。
 
-| 層               | 置くもの                                                                                   | import してよい先                 | 実行場所         |
-| ---------------- | ------------------------------------------------------------------------------------------ | --------------------------------- | ---------------- |
-| `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod  | `shared` のみ（`zod` は可）       | サーバとブラウザ |
-| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈 | `shared` / `core`                 | サーバ（Bun）    |
-| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver        | `shared` / `core` / `adapter`     | サーバ（Bun）    |
-| `browser`        | React の部品・hooks・CSS・Markdown の変換                                                  | `shared`（React などの npm は可） | ブラウザ         |
-| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                              | すべて                            | サーバ           |
+| 層               | 置くもの                                                                                                                                                                                                                                                                          | import してよい先                 | 実行場所         |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ---------------- |
+| `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod。**`SessionState` から純粋に導けるもの**も含む（ブラウザしか読まないものを含む。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`） | `shared` のみ（`zod` は可）       | サーバとブラウザ |
+| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈                                                                                                                                                                                        | `shared` / `core`                 | サーバ（Bun）    |
+| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver                                                                                                                                                                                               | `shared` / `core` / `adapter`     | サーバ（Bun）    |
+| `browser`        | React の部品・hooks・CSS・Markdown の変換                                                                                                                                                                                                                                         | `shared`（React などの npm は可） | ブラウザ         |
+| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                                                                                                                                                                                                                     | すべて                            | サーバ           |
 
 - **`core` と `browser` は互いを import しない。** 両者が知っているのは `shared` だけ
 - **`core → adapter` は禁止。** 辺は `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、
@@ -149,17 +149,35 @@ src/
   shared/
     session-event.ts          SessionEvent（zod と z.infer）
     session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
+    session-choice.ts         切り替え先として選べるセッション1件（サーバとブラウザの両方が読む契約）
+    session-default.ts        新しいセッションの既定（モデル・許可モード。次に起こすときの初期値）
+    session-socket.ts         WebSocket の経路名とトークンのクエリ名（サーバとブラウザの両方が同じ値を見る）
     main-view.ts              メインビューに出す形（MainViewEntry）と、ターンごとのまとめ
+    turn-step.ts              「依頼の手順」を確定した記録（SessionRecord）から導く純関数
+    turn-speech.ts            ターンごとのセリフと表情を確定した記録（SessionRecord）から引き直す純関数
+    portrait-motion.ts        立ち絵をいま動かしてよいか・どれで動かすかを決める純関数
     command-suggestion.ts     入力欄の / 補完に出す候補（姿から導くだけ）
     command.ts                ClientCommand（zod）
     frame.ts                  ServerFrame（zod）・PROTOCOL_VERSION
+    vendor-asset.ts           外部ライブラリ（npm の依存）を配る経路の名前
     expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
                               語彙（いまの domain のうち、両側が使うもの）
     character-definition.ts   character.json そのものの形。解析と、1件を重ねた書き戻しの文字列
     character-asset.ts        /character/<file> の URL・取り直しの印・拡張子による仕分け
+    character-background.ts   キャラビューに敷く背景（character.json の background から導く）
     expression-choice.ts      speak が選べる表情とラベル（ラベルの出どころは定義ファイル）
+    image-data-url.ts         画面から届いた画像1枚の data URL の受け渡しの形（立ち絵・背景・依頼の画像で共有）
+    portrait-image.ts         画面から届いた立ち絵1枚（data URL）の受け渡しの形
+    prompt-image.ts           依頼に添える画像（貼り付け・ドロップで届く data URL）
+    persona-memory.ts         覚えたこと（persona.md の節）に関わる、両側が見る値（1行の長さの上限）
+    chat-log.ts               雑談モードの会話のログ（セッションの姿から導くだけ）
+    context-usage.ts          いまのセッションのコンテキストの内訳と、配る経路の名前
+    context-usage-record.ts   コンテキストの内訳を記録に残すときの形（1行 = 1セッション）
+    token-usage.ts            トークン消費の記録の形（型だけ）
+    token-usage-summary.ts    トークン消費の集計（期間で切って軸ごとに畳んだ形）と、配る経路の名前
     repository-file.ts        ファイル一覧の経路名と読み取り（入力欄の @ 補完。両側が見る）
     room.ts                   部屋の名前（ビューのポート1つ＝部屋1つ。語彙と、語彙の外の名乗り方。13.9）
+    blank-text.ts             本文が読める文字を1字も持たないかを判定する純関数（ゼロ幅スペース等も空扱い）
   server/                     サーバ（Bun）側。判断（core/）と境界（adapter/）の2段
     core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
       session-driver.ts       駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
@@ -171,7 +189,12 @@ src/
       session-restore.ts      続きから始めるセッションを選ぶ・transcript を履歴イベントにする
       port-resolution.ts      どのポートで試すかの決定（listen そのものは adapter/server.ts）
       config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
-      report-notation.ts / speech-cadence.ts   systemPrompt に足す規約の文面
+      context-usage.ts        コンテキストの内訳を記録に残す書き口の契約（書くのは adapter/context-usage-log.ts）
+      token-usage.ts          トークン消費を記録する判断（何を1行にするか）と書き口の契約（書くのは adapter/token-usage-log.ts）
+      prompt-image-shelf.ts   依頼に添えた画像の原寸の棚（直近の数枚をプロセスのメモリに持ち、/prompt-image/<id> で配る）
+      report-notation.ts / speech-cadence.ts / chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-compact.ts
+                              systemPrompt に足す規約・記憶・話しかけの文面（どれを渡すかは session-rule.ts が決める）
+      session-rule.ts         セッションに足す規約を、モードに応じて選ぶ（report-notation.ts / speech-cadence.ts / chat-manner.ts のどれを渡すか）
       host.ts                 ホストのポート（showView）。実装は adapter/orca-host.ts
     adapter/                  外の世界に触る場所。1ファイル = 1つの境界
       sdk-driver.ts           SDK を import する唯一の場所。SessionDriver の本物の実装
@@ -186,13 +209,20 @@ src/
       remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード）
       task-summary.ts         develop/tasks.json の読み直し（変化を tasks-changed イベントにする）
       repository-file.ts      git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
+      context-usage-log.ts    コンテキストの内訳の記録（ファイルに触るのはここだけ）。~/.tsukumo/context-usage/<日付>.jsonl
+      token-usage-log.ts      トークン消費の記録（ファイルに触るのはここだけ）。~/.tsukumo/token-usage/<日付>.jsonl
+      local-time.ts           ~/.tsukumo/ に積む JSONL の「いつ」の書き方（日の境目も時差もそのマシンのローカル時刻）
       bundle.ts / ui-rebuild.ts bun build（browser の入口と CSS）と src/browser/ の見張り
+      source-fingerprint.ts   ソースの置き場の中身から指紋（ハッシュ）を作る（見張りつき起動で画面だけ組み直してよいかを決める）
       bundled-path.ts         同梱物の位置（import.meta.url）。tsukumo-home.ts は ~/.tsukumo/
+      vendor-asset.ts         ブラウザへそのまま配る外部ライブラリの実ファイルを読む（node_modules のどのファイルを指すか知っているのはここだけ）
       orca-host.ts            `orca` コマンドを起こす唯一の場所
   browser/
     main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）
     css-variable.d.ts         browser 全体に効く型拡張（import されない ambient 宣言）
     css-module.d.ts           `*.module.css` を import したときの型（同上）
+    css-global.d.ts           `styles/theme.css` を副作用だけで import したときの宣言（中身は空。同上）
+    vendor-global.d.ts        外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分。同上）
     features/                 機能。**機能どうしは import しない**
       layout/                 Layout・領域の枠・リサイザ・比率の保存
       screen-nav/             全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
@@ -246,13 +276,21 @@ characters/<name>/            character.json・persona.md・素材
 | `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）              | —                                                              |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
-  （zustand を入れない決定は 6.2 のまま）。実体は4つあり、
+  （zustand を入れない決定は 6.2 のまま）。実体は8つあり、
   `stores/session.tsx` は `SessionState` を畳んで全機能に配り（`useSyncExternalStore` + セレクタ。
   Context で配るのは store そのもの）、`stores/main-view-turn.ts` はそこから**ターンの畳み**を
   姿ごとに1回だけ導き、`stores/turn-selection.tsx` は `location.hash` の `turn` から
   メインビューとキャラビューに同じターンの選択を配り、`stores/screen.tsx` は `location.hash` から
   **出している画面**を読む（書く口 `navigateTo` も同じ
-  ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**。**どれも複数の機能が読む**ので機能の中に置けず、`main.tsx` に残すと機能が
+  ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**（`screen.tsx` と
+  `turn-selection.tsx` の2つがここを通して読み書きする）。`stores/brush-tip.ts` は**筆先**
+  （いま本文を書いている筆の先）を配る——書いているのは `features/main-view/` の
+  `use-report-reveal.ts` だが**読むのは立ち絵の側**（キャラビュー）になるので機能どうしの
+  import にならないよう `stores/` に置く。`stores/question-answer.tsx` は答え待ちの質問に対する
+  **答えの組み立て**を配る Context（質問の札はメインビュー、自由入力は入力欄と、読み手が
+  2機能にまたがる）。`stores/question-scroll.tsx` は帯の「いまの作業」の一覧の「質問へ」から
+  メインビューの質問の札へスクロールしてほしいという**一回限りの合図**を配る Context。**どれも
+  複数の機能が読む**ので機能の中に置けず、`main.tsx` に残すと機能が
   入口を import することになる（だから箱が要る）
 - **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。
   入口の `main.tsx` は直下のまま（`app/` を作らない理由は下の表）
@@ -474,8 +512,10 @@ features/task-board/
 1. `cli.ts` が `config.ts` で環境変数を読み、`main.ts` の `run(config)` を呼ぶ
    （ポート・キャラクター・自動オープン・駆動の種類・新規起動）
 2. `main.ts` が**即時終了する前提**を3つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
-   `bundle.ts` が `browser/main.tsx` を `bun build` で束ねられるか（**スクリプトと CSS の1組**を
-   メモリに持つ）、fake driver なら疑似セッションを読めるか
+   `bundle.ts` の `readUiBundle` が**組み立て済みの成果物**（`dist/browser/` のスクリプトと CSS の
+   1組。束ねるのは事前の `bun run build`）を読めるか（無ければ前提不足で即時終了。ソース
+   （`src/browser/` / `src/shared/`）のほうが新しければ、止めずに1行知らせる）、fake driver なら
+   疑似セッションを読めるか
 3. `current-character.ts` が `character-pack.ts` で一覧を引き、既定のパック（または指定されたもの・
    覚えていたもの）を初期パックに決める。**以降このパックの持ち回りはここに閉じる**
 4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
