@@ -1,5 +1,5 @@
 // tsukumo がセッションに足す「レポートの記法」の規約。**グローバルの出力スタイルとの差分**を
-// `systemPrompt` の append で渡す（`docs/requirements.md` 4.2「レポートの記法は、TUI と tsukumo で
+// `systemPrompt` の append で渡す（`docs/display.md` 4.2「レポートの記法は、TUI と tsukumo で
 // 出し分ける」）。
 //
 // **なぜリポジトリ内に置くのか**: 出力スタイルは全プロジェクトに同じものが当たるため、そこに
@@ -15,7 +15,7 @@
  * `query()` の `systemPrompt: { type: "preset", preset: "claude_code", append }` に渡す。
  *
  * **ここに並ぶ記法は `src/browser/features/main-view/markdown/sanitize-schema.ts` が通すものと揃っている必要がある**
- * （片方だけ直すと、勧めた記法が画面で落ちる。docs/requirements.md 4.2）。
+ * （片方だけ直すと、勧めた記法が画面で落ちる。docs/display.md 4.2）。
  *
  * **レポートの文体もここが決める**（キャラクターパックの `persona.md` ではない）。どのパックに
  * 切り替えても本文の読みやすさが変わらないようにするため（4.2）。**レポートは

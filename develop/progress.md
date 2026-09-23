@@ -59,14 +59,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 世代ごとの持ち物を `SessionGeneration` に畳み、`restart` は `generation = startGeneration(request)` の1行で丸ごと作り直す形にした。`receive` の副作用は `chat-compact` / `token-usage` / `context-usage` と新規の `event-batch.ts` / `chat-archive-entry.ts` へ寄せ、`session-manager.ts` は 801行 → 556行に。テストは期待値を1文字も変えずに通っている（`session-manager.test.ts` は差分ゼロ）。
 
-### 2026-09-23 いまのコンテキストの札に読み込み中の骨組みを出した（T-458）
-
-`useContextUsage` に `pending` を足して「取れなかった」と分け、届いた札と同じ外形の骨組み（値だけ灰色の塊）を出すようにした。`/context-usage` を遅らせて測った札の高さと「期間の消費」の位置の差は 0px。
-
-### 2026-09-23 browser の置き場の基準を決め直し、新しい箱 domain/ を作った（T-435）
-
-「tsukumo の語彙を名乗り、2つ以上の機能が読むもの」の置き場が無く `lib/` が受け皿になっていたので、`src/browser/domain/` を作って差し色と演出の速さを移した。読み手が1機能だけだった5つは機能の中へ下ろし、`test/architecture.test.ts` に「機能をまたぐ箱に1機能しか読まないファイルは無い」という検査を足した。`stores/brush-tip.ts` は T-441 に任せた。
-
 ### 2026-09-23 トークン消費の画面の地・罫・文字の段を見本（案1）の値に揃えた（T-457）
 
 `theme.css` に画面専用の `--usage-*`（札・箱・選択の地、罫2段、文字6段、基線）を足し、`token-usage.module.css` を塗り直した。`--context-other` は無彩の灰 `#a6a2b0` に替え、`docs/screen-design.md` 13.2 に値の表を記した（内訳の6色と棒の青は `b674e13` で入っていた）。
@@ -79,25 +71,21 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
 
-### 2026-09-23 CSS を部品ごとに分けてよいと 6.6 に書き、main-view.module.css を割った（T-439）
-
-928行の `main-view.module.css` を、ターンの見出し・質問2つ・レポートの記法の4枚へ分けて113行にした。ファイルをまたぐ `.detail-block` の打ち消しは、両方の class を同じ要素に重ねて解いている。
-
-### 2026-09-23 container/presenter の割る基準を「振る舞いの種類の数」に決め直した（T-442）
-
-「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。
-
 ### 2026-09-23 レポートの演出の7ファイルを main-view の中にまとめた（T-441）
 
 3つの箱に散っていた筆の演出を `features/main-view/reveal/` へ集め、`stores/brush-tip.ts` も読み手が1機能だけなのでそこへ下ろした。`docs/design.md` 2章に「機能の中に概念の名前のディレクトリを置いてよい条件」を書いた。
 
-### 2026-09-23 docs/chat-mode.md を削り、採らなかった案・発言の引用・実測を decision.md へ移した（T-465）
+### 2026-09-23 SDK の設定に language: japanese を渡し、催促への返事が英語に滑らないようにした（T-460）
 
-685→541 行・29,453→22,720 字（約23%減）で、目標の390行には届かなかった（決定を書いた表9つ・コードから句で引かれている文・いまも効く理由を残したため）。太字の文336件は本文・`decision.md`・参照先のどれかで全件引ける。
+締めの並びを反転したあとも空の応答で終えたときの保険として、`buildQuerySeedOptions` に固定の `language: "japanese"` を足した。`--settings` の有無で user の hooks の実行回数が変わらないことを本体の `--debug` で確かめた。
 
-### 2026-09-23 締めの speak → レポートで終える並びへ反転し、英語の催促を無くした（T-459）
+### 2026-09-23 requirements.md 4.2「表示」を docs/display.md へ逐字で移した（T-466）
 
-本文を書かずに `speak` で終えると本体が英語の催促を差し込み、レポートが英語で書き直されていた。規約と人格（同梱2つとホーム）を「締めの `speak`（予告）→ レポート」に書き換え、実機の3ターンで催促0件・最終レポートは全部日本語を確かめた。
+節の番号 `4.2` のまま移し、`requirements.md` は 1330→881 行。`requirements.md 4.2` への参照101件を一括置換し、`docs/history/` の234件と `decision.md` の見出し名を引く2件は据え置いた。削るのは T-467。
+
+### 2026-09-23 main-view の部品を T-442 の基準で container/presenter に割った（T-443）
+
+6部品に基準を当て、3種そろう `turn-header` と `question-record` を3分割、2種の `main-view` と `question-ask` は外に触るフックだけ `hooks/` へ出し、1種の `mini-portrait` と `turn` は割らなかった。画面の振る舞いは変えていない。
 
 ## 未解決
 

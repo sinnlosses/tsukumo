@@ -68,7 +68,7 @@ export type RecordTime =
  *
  * **`speech` はここにしか無い**（`MainViewEntry` には対応する種類が無く、
  * `mainViewEntries` が落とす）。セリフが出るのは吹き出しだけで、レポートには混ぜない
- * （docs/requirements.md 4.2）。記録に残すのは、過去のターンの吹き出しを引き直せるように
+ * （docs/display.md 4.2）。記録に残すのは、過去のターンの吹き出しを引き直せるように
  * するため（`shared/turn-speech.ts` の `turnSpeeches`）。
  */
 export type SessionRecord =
@@ -90,7 +90,7 @@ export type SessionRecord =
   | { readonly kind: "detail"; readonly markdown: string }
   /**
    * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
-   * 書き換えない（docs/requirements.md 4.2「許可と質問」）。形は
+   * 書き換えない（docs/display.md 4.2「許可と質問」）。形は
    * `MainViewEntry` の `question` と同じなので、`mainViewEntries` はそのまま通す
    * （`shared/main-view.ts`）。
    */
@@ -178,14 +178,14 @@ export type TurnProgress =
  *
  * `partialUtterance` は書きかけの本文で、完成した本文（`utterance`）が来たら空に戻る。
  * こうしておくと、断片と完成メッセージの**両方が届いても二重に積まれない**
- * （docs/requirements.md 4.2「書きかけの本文がそのまま流れていき、ターンが終わった瞬間に
+ * （docs/display.md 4.2「書きかけの本文がそのまま流れていき、ターンが終わった瞬間に
  * 整形し直す」）。
  */
 export type SessionState = {
   /**
    * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。**件数の上限は無い**、
    * ターンの境目だけで区切る）。**`request` の時点で空にする**（プレースホルダーに切り替わり、
-   * 次のターンに移ったことが画面から分かる。docs/requirements.md 4.2。
+   * 次のターンに移ったことが画面から分かる。docs/display.md 4.2。
    * {@link applySessionEvent} の `request` を参照）。まだ一度も `speak` が呼ばれていない・
    * そのターンでまだ呼ばれていなければ空配列。
    */
@@ -216,7 +216,7 @@ export type SessionState = {
   /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
    * （`terminal_slash_commands`）は除いてある**（`commandCandidates`。
-   * docs/requirements.md 4.2「入力欄」）。**`init`（`session-info`）は最初の依頼を送るまで
+   * docs/display.md 4.2「入力欄」）。**`init`（`session-info`）は最初の依頼を送るまで
    * 届かない**（実測。SDK の `system`/`init` はターンのたびに届く仕組みで、
    * セッション開始直後には来ない）ので、それまでは空配列のまま。その間の名前の出どころは
    * `commandSuggestions`（`shared/command-suggestion.ts`）が `commandDescriptions` 側に振る。
@@ -428,7 +428,7 @@ export function applySessionEvent(
           },
         ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
-        // （docs/requirements.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
+        // （docs/display.md 4.2「次の speak が来た時点でそのターンのものだけになる」）。
         speeches: [...(state.speechCalledInTurn ? state.speeches : []), event.text],
         speechExpression: event.expression,
         speechCalledInTurn: true,
