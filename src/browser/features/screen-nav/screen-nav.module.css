@@ -4,7 +4,7 @@
    ドロップダウン、いちばん右端に設定の歯車。
 
    **帯は body の padding の外へはみ出して画面の端から端まで出る**（負の margin で `--page-padding`
-   を打ち消す）。外寸は上端の差し色の線（`border-top`）＋帯の地（`--screen-nav-height`、60px）＋
+   を打ち消す）。外寸は上端の差し色の線（`border-top`）＋帯の地（`--screen-nav-height`、52px）＋
    下の罫線（`border-bottom`）で、**同じ変数を `<Layout>` も読む**（帯のぶんだけ grid を縮めるため。
    layout.module.css）。地は画面の地（`--ground`）と領域の地（`--surface`）の中間で、どちらも
    歯車から変えられるので混ぜて導出する。
@@ -34,7 +34,7 @@
   gap: 10px;
 }
 /* いまのパックのキャラクターの顔（13.9「顔」）。**丸く切り抜き**、透過の縁が帯に溶けないように
-   丸の地を --surface-accent で塗り、外側に差し色の輪を掛ける。大きさは帯の高さ（60px）に
+   丸の地を --surface-accent で塗り、外側に差し色の輪を掛ける。大きさは帯の高さ（52px）に
    合わせて決めた固定値（式にすると「≡」の面の顔まで帯の高さに引きずられる）。`face` が無い
    パックでは `<CharacterFace>` が何も描かないので、この class 自体が出ない。 */
 .screen-nav-face {
@@ -171,6 +171,8 @@
 .screen-nav-work-word {
   flex: none;
   min-width: 6em;
+  color: var(--ink);
+  font-weight: 700;
   white-space: nowrap;
 }
 .screen-nav-work-sep {
@@ -332,26 +334,58 @@
   flex: none;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.3rem;
+  gap: 8px;
   margin-left: auto;
   min-width: 0;
 }
-/* 部品は `components/select.tsx` の素の `<select>` のまま。見た目だけ帯に合わせる
-   （枠を消し、下向きの矢印を CSS で描く。13.9）。 */
+/* 部品は `components/select.tsx` の素の `<select>` のまま。見た目だけ帯に合わせる（13.9）。
+   **幅は選んでいる値の字の幅**（`field-sizing: content`）にし、下向きの矢印を字のすぐ右に置く
+   （既定の `<select>` はいちばん長い選択肢の幅になり、「Opus」と矢印の間が空く）。矢印は包みの
+   `::after` に `currentColor` で描く——字と同じ色で、「全部許す」のときは矢印も `--state-ng` になる。 */
+.screen-nav-select {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  color: var(--ink);
+}
+.screen-nav-select::after {
+  position: absolute;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  content: "";
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  pointer-events: none;
+}
 .screen-nav-model-select,
 .screen-nav-permission-mode-select {
   appearance: none;
-  padding: 0.15rem 1.1rem 0.15rem 0.3rem;
+  field-sizing: content;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 28px 0 10px;
   border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  background: var(--surface)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E")
-    no-repeat right 0.3rem center;
-  background-size: 0.5rem;
-  color: var(--ink-quiet);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
   font: inherit;
-  font-size: var(--font-label);
+  font-size: var(--font-secondary);
+  line-height: 30px;
   cursor: pointer;
+}
+.screen-nav-model-select:hover,
+.screen-nav-permission-mode-select:hover {
+  border-color: var(--accent);
+}
+/* 開いた一覧の地は帯ではなくブラウザが描くので、選択肢の地と字は明示する（透明のままだと
+   OS の既定の白地に明るい字が載る）。 */
+.screen-nav-model-select option,
+.screen-nav-permission-mode-select option {
+  background: var(--surface);
+  color: var(--ink);
 }
 /* 機械が付けた名前は等幅（13.1 原則3）。 */
 .screen-nav-model-select {
@@ -359,9 +393,11 @@
 }
 /* 「全部許す」のときだけ字に意味の色を載せる。**ラベルの文字が必ず付く**ので、色だけで
    意味を伝えることにならない（13.1 原則5。色は既にある `--state-ng`）。 */
+.screen-nav-select:has(> .is-danger) {
+  color: var(--state-ng);
+}
 .screen-nav-permission-mode-select.is-danger {
   border-color: var(--state-ng);
-  color: var(--state-ng);
 }
 /* 設定の歯車（13.9「設定の歯車」）。**帯のいちばん右端**で、モデル・許可モードの右に付く
    （`.screen-nav-model-permission` の `margin-left: auto` が左側を押し切ったあとの並び）。
@@ -372,28 +408,27 @@
   display: flex;
   flex: none;
 }
+/* 見本どおり枠も地も無い 36px の四角に線画の歯車だけを置く（`GearIcon`）。開いているときは
+   字の濃さに加えて地も敷く（色だけで伝えない。13.1 原則1）。 */
 .screen-nav-settings-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.7rem;
-  height: 1.7rem;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--surface);
+  border: none;
+  border-radius: 8px;
+  background: transparent;
   color: var(--ink-quiet);
   font: inherit;
-  font-size: var(--font-secondary);
-  line-height: 1;
   cursor: pointer;
 }
 .screen-nav-settings-toggle:hover {
-  border-color: var(--accent);
   color: var(--ink);
 }
 .screen-nav-settings-toggle[aria-expanded="true"] {
-  border-color: var(--accent);
+  background: var(--surface-raised);
   color: var(--ink);
 }
 /* ポップオーバー。**歯車の真下に、右端を揃えて重ねる**（下の領域を押し下げない。
@@ -612,7 +647,13 @@
     width: 100%;
     height: auto;
     padding: 0.2rem 0;
+    border: 1px solid var(--rule);
     border-radius: 0.6rem;
+    background: var(--surface);
+  }
+  .screen-nav-panel .screen-nav-settings-toggle:hover,
+  .screen-nav-panel .screen-nav-settings-toggle[aria-expanded="true"] {
+    border-color: var(--accent);
   }
   /* **`box-sizing` は既定（content-box）のまま**なので、`width: 100%` だけだと padding と枠の
      ぶん（約28px）が面からはみ出して「既定に戻す」が画面の外に切れる（実測）。ここだけ

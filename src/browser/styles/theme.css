@@ -65,7 +65,7 @@
      `--screen-nav-height` は線と罫線を含まない帯の地の高さで、口の下線はこの下端に重なる。
      帯の下の隙間は画面の縁と同じだけ空ける。 */
   --screen-nav-accent-line: 3px;
-  --screen-nav-height: 60px;
+  --screen-nav-height: 52px;
   --screen-nav-rule: 1px;
   --screen-nav-gap: var(--page-padding);
 }
