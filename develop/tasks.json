@@ -28,7 +28,7 @@
     "dependencies": [],
     "summary": "「ターンが走っているか」の読み取りを1つのフックに寄せる",
     "task": "## 背景\n\nターンの進み具合を `turnInProgress: boolean` から合併型 `turn` に変えたコミット（`1d8c101`）では、\n部品5つで同じ1行のセレクタを書き換えた。いまも browser に同じ1行が並んでいる:\n\n```ts\nuseSessionSelector((session) => session.state.turn.kind === \"running\")\n```\n\n着手時の一覧: `grep -rn 'state.turn.kind === \"running\")' src/browser`（書いた時点で6ファイル:\n`sidebar/session-switch.tsx`・`sidebar/session-info.tsx`・`chat-view/hooks/use-chat-view.ts`・\n`dispatch/hooks/use-composer.ts`・`task-board/components/task-run-confirm.tsx`・\n`character-screen/hooks/use-character-create.ts`）\n\n## やること\n\n1. `src/browser/stores/session.tsx` の `useSessionSelector` の隣に `useTurnRunning(): boolean` を\n   足す（中身は上の1行）\n2. 上の一覧をすべて `useTurnRunning()` に置き換える\n3. **セレクタでないもの**（`stores/main-view-turn.ts` の関数、`dispatch/turn-status.tsx` の\n   `turn.kind` による分岐）と、`src/server/` / `src/shared/` の同じ式は触らない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `grep -rn 'state.turn.kind === \"running\")' src/browser` が `stores/session.tsx` の1件だけになる\n\n## 注意\n\n- 振る舞いは変えない。テストを書き換える必要が出たら、置き換えを間違えている\n- 人に委ねる判断は残らないので `\"Y\"`\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
