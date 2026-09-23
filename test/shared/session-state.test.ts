@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
+import { MAX_MAIN_VIEW_TURNS, mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
 import { type SessionEvent, type StampedEvent } from "../../src/shared/session-event.ts"
 import {
   applySessionEvent,
@@ -878,7 +878,9 @@ describe("applySessionEvent", () => {
     const turns = mainViewTurns(mainViewEntries(view), false)
 
     expect(turns.at(-1)?.id).toBe(24)
-    expect(turns.map((turn) => turn.id)).toEqual([20, 21, 22, 23, 24])
+    expect(turns.map((turn) => turn.id)).toEqual(
+      Array.from({ length: MAX_MAIN_VIEW_TURNS }, (_, index) => 25 - MAX_MAIN_VIEW_TURNS + index),
+    )
   })
 
   it("圧縮の区切り（compact-boundary）を挟んでも、窓の数え方（request の数）は変わらない", () => {

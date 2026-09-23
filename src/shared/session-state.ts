@@ -24,14 +24,14 @@ import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 
 /**
- * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。**過去のやり取りは
- * `buildMainBody` 側のタブ（`MAX_MAIN_VIEW_TURNS`）でさらに絞られる**が、常駐プロセスが
+ * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
+ * **`work` は `main-view.ts` の `MAX_MAIN_VIEW_TURNS` の導出元**（関係の理由はそちら）。
  *
  * **モードごとに値が違う**（`docs/requirements.md` 4.9）。雑談の1ターンは
  * セリフ1〜2件で軽く、仕事と同じ20往復では会話として短すぎるため、雑談だけ100まで持つ。
  */
-const MAX_SESSION_STATE_TURNS = {
+export const MAX_SESSION_STATE_TURNS = {
   work: 20,
   chat: 100,
 } satisfies Record<"work" | "chat", number>

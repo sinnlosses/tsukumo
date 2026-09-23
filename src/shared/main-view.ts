@@ -10,13 +10,21 @@
 
 import { isBlankText } from "./blank-text.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
-import { type SessionRecord, type SessionState, type ToolRunStatus } from "./session-state.ts"
+import {
+  MAX_SESSION_STATE_TURNS,
+  type SessionRecord,
+  type SessionState,
+  type ToolRunStatus,
+} from "./session-state.ts"
 
 /**
- * 出すやり取りの数。もとは5だったが、ユーザーの指定
- * （「2つ前までで良さそう」）で3へ下げ、その後5へ戻した。
+ * 出すやり取りの数。札の頭（前後ボタン・一覧）で遡るので、横並びのタブの幅に収める制約は無い。
+ *
+ * **値は {@link MAX_SESSION_STATE_TURNS}.work から導く**（メインビューの窓が記録の窓を超える
+ * ことは無い、という関係を導出で保つ。別々の定数として持つと、どちらかだけを直したときに
+ * 関係が黙って崩れる）。
  */
-export const MAX_MAIN_VIEW_TURNS = 5
+export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 /**
  * 依頼で始まっていないまとまりに振る番号。**実在のターンの番号（0以上）とぶつからない値**に
