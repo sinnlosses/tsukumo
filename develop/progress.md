@@ -59,6 +59,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 依頼9・合図11ターンのうち、最後の `report` のあとに1行を超える本文で終えたターンが6件あり、合格条件1を満たさなかった（`docs/research/report-tool-trial.md`）。利用者の方針で不採用にせず、`Stop` の関所（T-486）・検査（T-487）・整形（T-488）を入れてから試し直す（T-489）。
 
+### 2026-09-23 progress.md のマージドライバで main 側の同じ日付の小節を下へ落とさなくした（T-483）
+
+`mergeDoneSections` は同じ日付のあいだで base に無い小節を base にある小節より上に置き、両側が新しく足した小節どうしは ours（枝）を上にする。規則は `scripts/progress-done-section.ts` の `orderByDateDescending` のコメントにまとめ、日付の無い小節は末尾のままにした。
+
 ### 2026-09-23 背景で動くタスクを帯に出し、ターン後も動いていると分かるようにした（T-448）
 
 SDK の `background_tasks_changed` を `background-tasks-changed` に変換して `SessionState.backgroundTasks` を丸ごと置き換え、帯の札に「背景で作業中」と一覧の「背景で動いているもの（n 件）」を足した（`PROTOCOL_VERSION` 9）。背景のタスクが終わって claude が依頼なしで始める続きのターンには、ターン外の `init` を合図に `turn-started` を補う（`src/server/core/self-started-turn.ts`）。
@@ -86,10 +90,6 @@ SDK の `background_tasks_changed` を `background-tasks-changed` に変換し�
 ### 2026-09-23 切り替えの立ち絵を「移して見せる」から「最初から切り替えた先の姿」に改めた（ユーザー報告）
 
 チカッとした正体は、起こし直しの間に新しい代の `chat-mode-changed` などが `events` で先に配られ、前のセッションの姿のままモードだけ切り替わっていたこと。起こし直しの代は新しい `hello` を配るまで束を配らないようにし（`session-manager.ts`）、T-478 で足した View Transition は外した（先読みと履歴の await は残す）。
-
-### 2026-09-23 progress.md のマージドライバで main 側の同じ日付の小節を下へ落とさなくした（T-483）
-
-`mergeDoneSections` は同じ日付のあいだで base に無い小節を base にある小節より上に置き、両側が新しく足した小節どうしは ours（枝）を上にする。規則は `scripts/progress-done-section.ts` の `orderByDateDescending` のコメントにまとめ、日付の無い小節は末尾のままにした。
 
 ## 未解決
 
