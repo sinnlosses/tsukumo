@@ -522,6 +522,53 @@ describe("createSessionManager", () => {
     expect(started[0]?.selection).toEqual({ by: "initial" })
   })
 
+  it("起こし直しの間に新しい駆動が流したイベントは、新しい hello より先に配らない", async () => {
+    // 起き上がりに時間がかかる駆動（本物の claude は起動に数秒かかる）。その間に
+    // `chat-mode-changed` などが先に流れると、ブラウザは前のセッションの姿のまま雑談へ
+    // 切り替わり、前の立ち絵が一瞬出てから新しい hello で入れ替わる。
+    const releases: (() => void)[] = []
+    const manager = createSessionManager({
+      now: () => 1_000,
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
+      launchSession: (onEvent, _onRestoredEvent, request) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        onEvent({ kind: "chat-mode-changed", chat: request.chat ?? false })
+        return new Promise((resolve) => {
+          releases.push(() => resolve(stub.driver))
+        })
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
+    })
+    releases[0]?.()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    await waitForBatch()
+    const before = frames.length
+
+    const switched = manager.dispatch({ type: "set-chat-mode", commandId: "c-1", chat: true })
+    await waitForBatch()
+    expect(frames.slice(before)).toEqual([])
+
+    releases[1]?.()
+    expect(await switched).toEqual({ ok: true })
+    await waitForBatch()
+    expect(frames.slice(before).map((frame) => frame.type)).toEqual(["hello"])
+    const hello = frames[before]
+    expect(hello?.type === "hello" && hello.state.chatMode).toBe(true)
+  })
+
   it("雑談から仕事へ戻すときも起こし直す", async () => {
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({

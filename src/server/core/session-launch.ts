@@ -133,7 +133,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * （雑談のときだけ `chat-topics-changed` と `remembered-lines-changed`）・
  * `session-default-changed` を流す → 見張りを起こす →
  * 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
- * 続きから始まったなら履歴を組み直す。
+ * 続きから始まったなら履歴を組み直して流し終える → 駆動を返す。
  *
  * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
  * 前のセッションの記録を組み直した再生だけを流す（`docs/design.md` 7章「雑談の会話のアーカイブは
@@ -195,8 +195,11 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     })
     const driver = ports.startDriver({ pack, start, chat, sessionDefault }, onEvent)
 
+    // **流し終えてから駆動を返す。** 起こし直しの `hello`（`session-manager` の `restart`）は
+    // 駆動が返るのを待って配るので、ここで待たないと履歴の無い `hello` が先に出て、立ち絵の表情が
+    // 既定から続きの表情へもう一度飛ぶ（docs/screen-design.md 13.7「切り替えのときの立ち絵」）。
     if (start.kind === "resume") {
-      void replayRestoredSession(ports, start.sessionId, pack, onRestoredEvent)
+      await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvent)
     }
 
     return {

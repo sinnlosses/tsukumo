@@ -11,42 +11,23 @@
 import { type JSX, type ReactElement, type ReactNode } from "react"
 import { type ExtraProps } from "react-markdown"
 
+import { REPORT_NOTATION_NAMES, REPORT_NOTE_KINDS } from "../../../../shared/report-notation.ts"
 import styles from "./report-notation.module.css"
 
 /**
  * モデルが書く class 名 → tsukumo が装飾に使う class 名（`report-notation.module.css` のもの。
- * 組み立て時にハッシュ化される）。ここに無い名前は素通しする。
+ * 組み立て時にハッシュ化される）。ここに無い名前は素通しする。**印の名前の集合は
+ * `src/shared/report-notation.ts` が正典**（`report-<名前>` が CSS 側の綴りの規則）。
  */
-const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map([
-  ["note", styles["report-note"]],
-  ["note-warn", styles["report-note-warn"]],
-  ["note-ng", styles["report-note-ng"]],
-  ["note-ask", styles["report-note-ask"]],
-  ["note-memo", styles["report-note-memo"]],
-  ["note-favor", styles["report-note-favor"]],
-  ["badge", styles["report-badge"]],
-  ["badge-ok", styles["report-badge-ok"]],
-  ["badge-warn", styles["report-badge-warn"]],
-  ["badge-ng", styles["report-badge-ng"]],
-  ["cols", styles["report-cols"]],
-  ["card", styles["report-card"]],
-  ["stats", styles["report-stats"]],
-  ["stat", styles["report-stat"]],
-])
+const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map(
+  REPORT_NOTATION_NAMES.map((name) => [name, styles[`report-${name}`]]),
+)
 
 /**
  * `note` の種別（モデルが書く class 名）→ tsukumo が文字として描くラベル。**上から順に見て
- * 最初に当たったものを使う**（モデルは `class="note note-warn"` のように素の `note` と並べて
- * 書くので、種別を言っている側を先に置く。素の `note` は「情報」の受け皿なので最後）。
+ * 最初に当たったものを使う**（並びの理由は `src/shared/report-notation.ts` の `REPORT_NOTE_KINDS`）。
  */
-const NOTE_LABELS = [
-  ["note-warn", "注意"],
-  ["note-ng", "異常"],
-  ["note-ask", "疑問"],
-  ["note-memo", "メモ"],
-  ["note-favor", "お願い"],
-  ["note", "情報"],
-] as const satisfies readonly (readonly [string, string])[]
+const NOTE_LABELS = REPORT_NOTE_KINDS
 
 type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 

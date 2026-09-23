@@ -211,6 +211,8 @@ type SessionGeneration = GenerationTally & {
   readonly driver: Promise<SessionDriver>
   /** 駆動を閉じ、積み残したイベントを捨てる。 */
   readonly close: () => void
+  /** 新しい `hello` を配り終えたと知らせ、束を配り始める（起こし直しの代だけが待っている）。 */
+  readonly announce: () => void
 }
 
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
@@ -311,16 +313,26 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    * 駆動を1代起こし、その代ぶんの勘定をまとめて作る。**起こし直し（`restart`）はこれを丸ごと
    * 呼び直すこと**なので、勘定を1つ足しても空へ戻す場所を書き足さなくてよい。
    */
-  const startGeneration = (request: SessionLaunchRequest): SessionGeneration => {
+  const startGeneration = (
+    request: SessionLaunchRequest,
+    delivery: "immediate" | "after-hello",
+  ): SessionGeneration => {
     bornCount += 1
     const born = bornCount
     // 起き上がった駆動を入れる可変の入れ物（起き上がるまでは空）。
     let live: SessionDriver | undefined = undefined
+    // **起こし直しの代は、新しい `hello` を配るまで束を配らない。** 駆動が起き上がるまでの数秒に
+    // 流れたイベント（`chat-mode-changed` など）を先に配ると、ブラウザは前のセッションの姿の
+    // まま雑談 / 仕事へ切り替わり、前の立ち絵が一瞬出てから `hello` で入れ替わる。その間の
+    // 姿は `hello` に入るので、配らずに捨ててよい。
+    let held = delivery === "after-hello"
     const tally: GenerationTally = {
       batch: createEventBatch({
         intervalMs: options.batchIntervalMs,
         deliver: (events) => {
-          publish({ type: "events", events }, subscribers)
+          if (!held) {
+            publish({ type: "events", events }, subscribers)
+          }
         },
       }),
       chatCompact: createChatCompactWatch(options.chatCompactThresholdBytes),
@@ -364,16 +376,22 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         live?.close()
         tally.batch.discard()
       },
+      announce: () => {
+        held = false
+      },
     }
   }
 
   // **起動時は覚えない** — その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の
   // 初期値として残らないように（docs/screen-design.md 13.6）。
-  let generation = startGeneration({
-    selection: { by: "initial" },
-    chat: undefined,
-    resume: { by: "latest" },
-  })
+  let generation = startGeneration(
+    {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "latest" },
+    },
+    "immediate",
+  )
 
   /**
    * 駆動を起こし直す（docs/design.md 7章。**そのパックのセッションの
@@ -393,14 +411,23 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     try {
       generation.close()
       replaceState(INITIAL_SESSION_STATE)
-      generation = startGeneration(request)
+      generation = startGeneration(request, "after-hello")
       await generation.driver
-      generation.batch.discard()
-      publish(helloFrame(), subscribers)
+      announceGeneration()
       return { ok: true }
     } catch {
+      // 起こせなくても、組み直した姿（キャラクター・モード）は `hello` で配り、束も止めたままに
+      // しない（見た目の編集などで積んだイベントが、次の起こし直しまで届かなくなる）。
+      announceGeneration()
       return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
     }
+  }
+
+  /** 起こし直した代の姿を `hello` で配り直し、それより前に積んだぶんは捨てて束を配り始める。 */
+  const announceGeneration = (): void => {
+    generation.batch.discard()
+    publish(helloFrame(), subscribers)
+    generation.announce()
   }
 
   /**

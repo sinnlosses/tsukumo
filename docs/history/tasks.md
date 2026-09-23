@@ -28901,3 +28901,262 @@ JIRA などとの同期ボタンは作らない（2026-09-23 に会話で決定�
 - `docs/` を直すときは「節の索引」の行に先に当たる。行頭から位置を特定し、`grep -c '^#\{2,3\} ' docs/design.md` が前後で合うことを確かめる
 - テストのフィクスチャに実物の `develop/tasks.json` を使わない（架空のタスクで作る）
 - 描画は変わらないので目視確認は要らない
+
+## T-428
+
+**タスク**: 879行の sdk-driver.ts を、SDK を import してよいファイルの規則ごと見直して分ける
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+規則を「src/server/adapter/ 直下で sdk- で始まるファイルだけが SDK を import してよい」に変え、sdk-driver 456 / sdk-tool 238 / sdk-session 129 / sdk-context-usage 108 行に割った（1ファイルのまま外へ出すと約670行が残り、adapter/sdk/ は下の段を境界にしない決め事と衝突）。正典（CLAUDE.md 原則3・architecture.md・design.md 1/2/5/7章・requirements.md）を書き換え、見出し数は前後一致。 / わざと破る確認: fake-driver.ts に SDK の import を足すと「…import するのは src/server/adapter/ 直下の sdk- で始まるファイルだけ」が落ち、core/plan.ts では層の検査も落ちた（戻して差分なし）。疑似セッション（port 39428）で1ターン流れることを確認。 / bun run check は 1790 pass / 0 fail（146ファイル）。
+
+## 背景
+
+`src/server/adapter/sdk-driver.ts` は 879 行で、次を1ファイルに持つ:
+
+- 駆動の本体（`startSession` / `relayMessages` / `createPromptStream` / `promptContent`）
+- tsukumo の MCP サーバと6つのツール（`speak` / `remember` / `forget` / `keep` / `index` / `recall`。`tsukumoServer` / `rememberTool` … と、それぞれの `*_TOOL_NAME` / `*_TOOL_DESCRIPTION`）
+- セッションの一覧と続き（`findSessionToResume` / `listSwitchableSessions` / `readRestoredEvents` / `scheduleMarkSession` / `markSession`）
+- `/context` 内訳（`readContextUsage` / `toContextUsage` / `sdkContextUsageSchema`）
+- 雑談の要約の hooks（`chatSummaryHooks`）、出力スタイルの中立化、コマンドの説明、プラン
+
+分けられないのは、`test/architecture.test.ts`「Agent SDK を import する箇所」が **`@anthropic-ai/claude-agent-sdk` を import するのは `src/server/adapter/sdk-driver.ts` だけ**と決めていて（`docs/architecture.md` 原則3、`docs/design.md` 2章「SDK を import する唯一の場所」）、MCP ツールの定義（SDK の `tool()` / `createSdkMcpServer`）もセッションの一覧（`listSessions` / `getSessionMessages`）も SDK を import するため。git の履歴では `sdk-driver.ts` は `src/session-start.ts`・`src/server/core/session-driver.ts` と一緒に直されることが多い（直近400コミットでそれぞれ11回・10回）。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- 「SDK を import する場所を限る」こと自体は残す（原則3）。変えてよいのは限り方（1ファイルか、名前で決まる数ファイルか）
+
+## 解くべき論点
+
+- 規則の形: (a) `sdk-` で始まる adapter のファイル（例: `sdk-driver.ts` / `sdk-tool.ts` / `sdk-session.ts`）だけに許す / (b) `adapter/sdk/` のようなディレクトリ（原則5の単数形・概念名の規約に合うか） / (c) 1ファイルのまま、SDK に触らない部分だけを外へ出す / (d) それ以外。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ
+- どこで切るか（ツールの定義・セッションの一覧と続き・`/context`・駆動の本体）。1ファイル = 1つの境界（原則3）に照らして、境界として名乗れるか
+- `DEFAULT_EFFORT` や `SPEAK_TOOL_NAME`（`core/sdk-message.ts`）のように他のファイルと共有する定数の置き場
+
+## やること
+
+1. `sdk-driver.ts` を読み、関数ごとに「SDK を import するか・誰が呼ぶか」を表にする
+2. 論点に答え、`test/architecture.test.ts` の規則・`docs/architecture.md` 原則3・`docs/design.md` 2章と5章・`CLAUDE.md` の該当箇所を新しい規則に書き換える
+3. その規則でファイルを分ける。テストも `src` の相対パスに合わせて分ける（`test/server/adapter/…`）
+
+## 完了条件
+
+- `wc -l` で、分けたどのファイルも 500 行以下
+- `test/architecture.test.ts` に新しい規則の検査があり、規則の外のファイルで SDK を import すると落ちる（1度わざと破って落ちることを確かめ、`evidence` に書く）
+- 正典（`docs/architecture.md` / `docs/design.md` / `CLAUDE.md`）に「`sdk-driver.ts` だけ」と書いた文が残っていない（新しい規則の文になっている）
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- 本物の claude を起こす目視確認は要らない（振る舞いを変えない）。疑似セッション（`TSUKUMO_DRIVER=fake`）で起動して1ターン流れることは確かめる
+
+## T-436
+
+**タスク**: 立ち絵の URL・差し色・代替テキストの導き方をキャラビューと雑談ビューで1つにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-435 / **passes**: True
+
+**evidence**:
+
+src/browser/domain/portrait-appearance.ts に portraitAppearance() と DEFAULT_CHARACTER_NAME を置き、character-view / chat-view / screen-nav の3フックを寄せた。既定名の定数は1か所（同ファイル10行目。use-screen-nav.ts:121 の同じ文字列は画面名のラベルで別物）、portraits?.[ は character-screen の use-character-edit.ts:173 だけ。既存テストは期待値を変えず bun run check 1790 pass / 0 fail（目視はしていない）。
+
+## 背景
+
+立ち絵に「いまの表情と衣装で、どの絵を・どの差し色で・どの代替テキストで出すか」を導く手が2つの機能に書き写されている:
+
+- `src/browser/features/character-view/hooks/use-character-view.ts`: `character?.portraits?.[expression]`・`character?.outfitAccents[outfit]`・`` `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(…)}）` ``・`resolveOutfit(model)`
+- `src/browser/features/chat-view/hooks/use-chat-view.ts`: 同じ4つを同じ式で書き、`DEFAULT_CHARACTER_ALT_NAME = "キャラクター"` も別に持つ
+
+`src/browser/features/screen-nav/hooks/use-current-work.ts` も `DEFAULT_CHARACTER_NAME = "キャラクター"` を持つ。機能どうしは import できないので、共通にするには機能の外に置く必要があり、その置き場は T-435 が決める。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+
+## やること
+
+1. T-435 で決まった置き場の基準を読む
+2. 「キャラクター・表情・衣装（またはモデル）→ 立ち絵の URL・差し色・代替テキスト」を1つの関数（またはフック）にし、その置き場へ置く
+3. 2つの機能をそれに寄せる。既定の名前「キャラクター」を1か所にする（`use-current-work.ts` の既定名が同じ意味なら一緒に）
+
+## 完了条件
+
+- `grep -rn '"キャラクター"' src/browser --include='*.ts'` で既定の名前の定数が1か所
+- `grep -rn 'portraits?.\[' src/browser/features` が `character-screen`（編集画面）以外に無い
+- 2つのビューの既存テストが期待値を変えずに通る
+- `bun run check` が通る
+
+## T-437
+
+**タスク**: レポートの記法の語彙を shared に1つ置き、プロンプトと画面が引く
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+3か所（REPORT_NOTATION_PROMPT・notation.tsx・report-notation.module.css）の印は14種で差は無かった。語彙を src/shared/report-notation.ts に置き、notation.tsx の対応表とラベルをそこから引く形にした。文面は無変更（変更前後で書き出して cmp が一致、git diff も0行）。 / 語彙の各印が文面に現れ・部品で解決され・CSS まで届くことを test/server/core/report-notation.test.ts で確認。語彙から note-ask を消すとこのテスト（Expected 14 / Received 13）と notation.test.tsx の「疑問」のラベルのテストが落ちた（戻して差分なし）。 / bun run check は 1791 pass / 0 fail（146ファイル）。
+
+## 背景
+
+レポートの記法（`<div class="note note-warn">` などの印）の語彙が、サーバとブラウザに別々に書かれている:
+
+- `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（claude に教える文面。`note` / `note-warn` / `note-ng` / `note-memo` / `note-ask` / `note-favor` / `badge-ok` / `badge-warn` / `badge-ng` / `cols` / `card` / `stats` / `stat`）
+- `src/browser/features/main-view/markdown/notation.tsx` の class の対応表と、ラベルの対応表（`note-warn` → 「注意」など）
+- `src/browser/features/main-view/main-view.module.css` の `.report-note-*` / `.report-badge-*` / `.report-cols` / `.report-stats`
+
+印を1つ足す・名前を変えると、この3か所を揃えて直す必要があり、どれかを忘れても型もテストも落ちない（プロンプトに書いた印が画面で素の `div` になる）。
+
+## 決まっていること（蒸し返さない）
+
+- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの
+- 文面（`REPORT_NOTATION_PROMPT`）の中身は変えない。変えてよいのは、印の名前を語彙から差し込むことだけ
+
+## やること
+
+1. 3か所の印の集合を突き合わせ、差があれば `evidence` に書く（差は直さずユーザーに預けてよい）
+2. 印の名前と種別のラベルを `src/shared/` の1ファイルに置く（ファイル名は概念。`docs/glossary.md` に「レポートの記法」の語があればそれに合わせる）
+3. `notation.tsx` の対応表をその語彙から引く形にする。`report-notation.ts` の文面は、語彙の各印が文面に現れることをテストで確かめる形にする（文面をテンプレートで組み立て直すかは、読みやすさで決める）
+
+## 完了条件
+
+- 語彙の各印が `REPORT_NOTATION_PROMPT` に現れ、`notation.tsx` の対応表に載っていることを確かめるテストがある
+- 語彙から1つ消すとそのテストが落ちることを確かめ、`evidence` に書く
+- `bun run check` が通る
+
+## 注意
+
+- `report-notation.ts` の文面は毎ターン claude に入る。文字の差分が出ていないことを `git diff` で確かめる
+
+## T-455
+
+**タスク**: requirements.md 2.2 のセッション切り替えの禁止を、実物に合わせる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+docs/requirements.md 2.2 の項目を「起動時に選ばせる画面」に絞り、切り替えは 4.8 を指すよう書き換えた。経緯は docs/history/decision.md へ1件追記。grep -n '一覧・切り替えも作らない' docs/requirements.md は0件、節見出し（grep -c '^#\{2,3\} '）は編集前後とも25、src/ の差分なし。bun run check 1790 pass / 0 fail。
+
+## 背景
+
+`docs/requirements.md` 2.2（対象外）は「**セッションを選ばせる画面**（2026-09-13）。…過去のセッションの一覧・切り替えも作らない（4.8）」と書く。しかし 2026-09-22 にサイドバーの下端の帯へセッションの `<select>`（`switch-session`）が入り、同じ文書の 4.7（615行付近「キャラクター・セッションの切り替え」）と 4.8（1124行付近「切り替え先の一覧は…」）、`docs/design.md` 8章（「どのセッションの続きから始めるかは画面から選べる（2026-09-22）」）はそれを前提に書かれている。**対象外の節が、実装済みの機能を禁じている。**
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+- 起動時にどれを続けるかを選ばせる画面は作らない（起動時は自動で続きから）、という部分は今も正しい。変えるのは「一覧・切り替えも作らない」の部分だけ
+
+## やること
+
+1. 2.2 の該当項目を「起動のたびに選ばせる画面は作らない。続けるセッションは起動後に帯の `<select>` から切り替えられる（4.8）」の趣旨に書き換える。経緯（2026-09-13 に作らないと決め、2026-09-22 に切り替えを足した）は `docs/history/decision.md` へ1行で送る
+2. 4.8 の冒頭に同じ食い違いが無いかを見て、あれば合わせる
+
+## 完了条件
+
+- `grep -n '一覧・切り替えも作らない' docs/requirements.md` が0件
+- `src/` の差分が無い
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## T-471
+
+**タスク**: 締め方の条を report-notation.ts に寄せ、persona.md は言い回しだけにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-470 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1790 pass / 0 fail、145ファイル）。grep -n '何も続けない' characters/*/persona.md は0件、docs/display.md の asuna.md は TUI 向けと明記した行だけ
+2つの persona.md の節を「締めのセリフの言い方」（言い回しの例3つ＋正典は report-notation.ts／雑談モードは「雑談モード」の節、の参照）にした。report-notation.ts の条は既存の「短い答えならその答え」で足り、雑談モードでは REPORT_NOTATION_PROMPT が載らない（system-prompt.ts）ので条は足していない
+~/.tsukumo/characters/tsukumo/persona.md（同梱パックを覆う）は旧文面だったので、利用者の許可を得て同じ節に差し替えた（「## 覚えたこと」の10行は残した）
+
+## 背景
+
+「締めの `speak` → レポート → 何も続けない」というターンの終わり方の条が、2か所に本文で書かれていて、毎ターン二度読ませている:
+
+- `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` 冒頭「**ターンは締めの `speak` → レポートの順で終える。**」の段落と「送る前に消すもの」
+- `characters/tsukumo/persona.md` と `characters/tsukumo-spirit/persona.md` の「### ターンの終わりは締めのセリフのあとのレポート」（本文を書かずに `speak` で終えない・レポートのあとに何も続けない・レポートが無いターンでも最後は本文、などの条と、締めのセリフの言い方の例）
+
+呼ぶ回数・契機は tsukumo 側（`src/server/core/speech-cadence.ts`）、言い方はパック（`persona.md`）という線引きがすでにある。締め方もどのパックでも同じ tsukumo の体験なので、条は `report-notation.ts` に寄せる。
+
+あわせて `docs/display.md`「#### 出力の分離（セリフと詳細）」の段落「**出力スタイル側の規約（2026-09-12 改訂。正典は `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）**」が、tsukumo のセリフの規約の正典を `asuna.md` と書いている。tsukumo はセッションを起こすときに `applyFlagSettings({ outputStyle: "default" })` で出力スタイルを打ち消しており（`src/server/adapter/sdk-driver.ts` の `applyNeutralOutputStyle`）、tsukumo の中では `asuna.md` を誰も読んでいない。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 のユーザーの決定（`/grill-with-docs` の Q3）: 締め方の正典は `report-notation.ts`。`persona.md` には締めのセリフで何をどう言うかの言い回しの例だけを残す
+- `asuna.md` は TUI だけに効くものとして扱う（リポジトリの外のグローバル設定なので中身は触らない）
+
+## やること
+
+1. 2つの `persona.md` の「### ターンの終わりは締めのセリフのあとのレポート」から、`report-notation.ts` の条と同じことを言っている箇条を消し、締めのセリフの言い回しの例（片付いたとき・お願いがあるとき・外したとき）と、条は tsukumo 側にあることの参照1行だけを残す。見出しの名前は中身に合わせて変えてよい
+2. `report-notation.ts` の条に、`persona.md` にだけあって落とすと効き目が変わるもの（例: 「レポートが無いターンでも最後は本文」「雑談モードのときは雑談モードの節に従う」）が無いかを突き合わせ、あれば条の側へ移す。JSDoc の「**締めのセリフで何をどう言うか**は…`persona.md`…が正典」の言い回しを、見出しの名前に合わせて直す
+3. `docs/display.md` の上の段落を、tsukumo の中ではセリフの規約は `speech-cadence.ts`（回数・契機）・`report-notation.ts`（締め方）・`persona.md`（言い方）が持ち、`asuna.md` は TUI だけに効く、という形に書き直す。同じファイルの「#### レポートの記法は、TUI と tsukumo で出し分ける」と二重になる部分はそちらへの参照に畳んでよい
+4. `test/server/core/report-notation.test.ts` と、`persona.md` の文面を検査しているテストがあれば（`grep -rn 'ターンの終わり' test`）追随させる
+
+## 完了条件
+
+- 2つの `persona.md` に「本文を書かずに `speak` で終えない」「レポートのあとには何も続けない」に当たる条の本文が無い（`grep -n '何も続けない' characters/*/persona.md` が0件）
+- `grep -n 'asuna.md' docs/display.md` の結果のうち、tsukumo の中の規約の正典として `asuna.md` を指す行が0件（TUI 向けと明記した行は残ってよい）
+- `bun run check` が通る
+
+## 注意
+
+- **`~/.tsukumo/characters/` にある同名のパックが同梱パックを覆う**ので、画面の吹き出しで確かめるならホーム側の `persona.md` も同じに直っているかを見る（ホーム側はリポジトリの外。書き換えるなら evidence に書く）
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' docs/display.md` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- T-470 が同じ節の別の箇条（「レポートの構造は出力スタイル側の規約で決める」）を直すので、その後に着手する（依存に入れてある）
+- 規約の変更は次にプロセスを起こしたときから効く
+
+## T-478
+
+**タスク**: 仕事と雑談を切り替えたとき立ち絵が瞬時に入れ替わるチカチカの原因を調べて直す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1799 pass / 0 fail（146ファイル）。追加テスト: session-launch（駆動を返す前に履歴を流し終える。修正前は落ちる）・lib/view-transition・stores/session（モードが変わる hello だけ載せる）・components/portrait（先読み）。
+Playwright の実ブラウザ（fake driver・PNG パック）で仕事↔雑談を4回切り替え、立ち絵が16〜17フレームかけて移り、幅0や img-loading のフレームが0件なのを計測。Orca のタブと本物の SDK での切り替えは未目視。
+
+## 背景
+
+仕事から雑談へモードを切り替えた瞬間、立ち絵がパッと入れ替わって目がチカチカする（2026-09-23 のユーザーの報告）。切り替えの経路は次のとおりで、どこにも移り変わりの間が無い:
+
+- `src/browser/main.tsx` の `Root` が `chatMode` を見て、`<Layout>` の `main` を `<MainView />` から `<ChatView />` へ差し替え、同時に `collapseCharacter` と `mainAsGround` を立てる
+- `src/browser/features/layout/presentational-layout.tsx` は `collapseCharacter` のとき下段のキャラビューの領域（`data-region=\"character\"`）と仕切りを**描かない**（`{!collapseCharacter && …}`）。`layout.module.css` の `.layout-row-bottom[data-collapse-character=\"true\"]` で下段が1列に変わる
+- 立ち絵はキャラビューの `<Portrait>`（`src/browser/components/portrait.tsx`）が消え、雑談ビューの `components/nudge-portrait.tsx` が**別の `<Portrait>` を新しくマウント**する。大きさ・位置（下段 → 上段の左）・`motion`（キャラビューは `resolvePortraitMotion`、雑談は `waiting` / `reading` だけ）が一度に変わる
+- 雑談ビューの表情は `hooks/use-chat-view.ts` の `speechExpressionAt(entries, pinnedIndex) ?? speechExpression` で決まり、キャラビューの表情と一致するとは限らない。立ち絵の URL は表情ごとに違う（`character.portraits[expression]`）ので、違う表情なら SVG の `fetch`（`portrait.tsx` の `useSvgMarkup`）が走り、読み終わるまで立ち絵が空く可能性がある
+- 同時に `--accent` がパックの `chatAccent` に切り替わり（`docs/screen-design.md` 13.7）、背景がメインの領域へ移る（`mainAsGround`）
+
+どれがチカチカの主因かは確かめていない。仕様側は `docs/chat-mode.md` の表（「キャラビュー: **畳む**（立ち絵がメインへ移る）」）と `docs/screen-design.md` 13.7「キャラビューの領域は雑談中は畳む」が正典で、移り変わりの見せ方は書かれていない。
+
+## 解くべき論点
+
+- チカチカの主因はどれか（立ち絵の再マウントと位置・大きさの瞬間移動 / 表情の食い違いによる絵の差し替え / SVG の読み込み待ちの空白 / 差し色と背景の一斉切り替え）。**推測で直さず、実ブラウザで切り替えの前後を撮って（または DOM を時系列で測って）主因を特定してから**直す
+- 直し方: 立ち絵を移すあいだの見せ方（短いフェード・位置の移り変わり・表情を切り替え前と揃える、など）をどれにするか。`prefers-reduced-motion: reduce` では動かさない（`styles/theme.css` の全体規則に従う）。**使う人が操作してから画面が落ち着くまでを長引かせない**（切り替えを遅く感じさせない長さにする）
+- 雑談 → 仕事へ戻す向きも同じ問題を持つか。持つなら同じ直し方で揃える
+
+## やること
+
+1. 実ブラウザ（`webapp-testing` スキルの Playwright など）で tsukumo を起こし、帯の仕事/雑談のトグルで切り替えて、前後の数フレームの立ち絵（位置・大きさ・表情・SVG の有無）を記録する。**本物の claude を起こさずに済む経路があればそちらを使う**（`docs/architecture.md`「手で確かめること」）
+2. 主因を決め、`docs/screen-design.md` 13.7 に「切り替えのときの立ち絵の移り方」を1段落で書く（行頭から位置を特定して編集し、前後で `grep -c '^#\{2,3\} ' docs/screen-design.md` が変わらないことを確かめる）
+3. 直す。振る舞い（表情の揃え方・再取得の有無など）はテストで守り、絵は目視で確かめる
+4. 調べた結果、チカチカが tsukumo のコードでは直せない原因（ブラウザやホストの描画）だと分かったら、直さずに根拠を `evidence` に書いて閉じ、`develop/progress.md` の「未解決」に残す
+
+## 完了条件
+
+- 切り替え前後の記録（どのフレームで何が変わっていたか）と主因が `evidence` にある
+- 仕事 → 雑談・雑談 → 仕事の両方向で、立ち絵が消えて別の場所に瞬時に現れる・違う表情へ一瞬で飛ぶ、が起きないことを実ブラウザで確かめ、その結果（どの端末・どう見えたか）が `evidence` にある
+- `docs/screen-design.md` 13.7 に切り替えのときの立ち絵の移り方が書かれている
+- `bun run check` が通る
+
+## 注意
+
+- 目視確認で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける（CLAUDE.md「## タスク運用」）
+- 素材の反映を確かめるときは `~/.tsukumo/characters/` 側のパックが同梱パックを覆う点に注意する
+- T-436（立ち絵の URL・差し色・代替テキストの導き方をキャラビューと雑談ビューで1つにする）と触るファイルが重なる。導き方の共通化はそちらの担当で、ここではやらない

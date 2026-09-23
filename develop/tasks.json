@@ -11,39 +11,6 @@
     "evidence": ""
   },
   {
-    "id": "T-428",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "879行の sdk-driver.ts を、SDK を import してよいファイルの規則ごと見直して分ける",
-    "task": "## 背景\n\n`src/server/adapter/sdk-driver.ts` は 879 行で、次を1ファイルに持つ:\n\n- 駆動の本体（`startSession` / `relayMessages` / `createPromptStream` / `promptContent`）\n- tsukumo の MCP サーバと6つのツール（`speak` / `remember` / `forget` / `keep` / `index` / `recall`。`tsukumoServer` / `rememberTool` … と、それぞれの `*_TOOL_NAME` / `*_TOOL_DESCRIPTION`）\n- セッションの一覧と続き（`findSessionToResume` / `listSwitchableSessions` / `readRestoredEvents` / `scheduleMarkSession` / `markSession`）\n- `/context` 内訳（`readContextUsage` / `toContextUsage` / `sdkContextUsageSchema`）\n- 雑談の要約の hooks（`chatSummaryHooks`）、出力スタイルの中立化、コマンドの説明、プラン\n\n分けられないのは、`test/architecture.test.ts`「Agent SDK を import する箇所」が **`@anthropic-ai/claude-agent-sdk` を import するのは `src/server/adapter/sdk-driver.ts` だけ**と決めていて（`docs/architecture.md` 原則3、`docs/design.md` 2章「SDK を import する唯一の場所」）、MCP ツールの定義（SDK の `tool()` / `createSdkMcpServer`）もセッションの一覧（`listSessions` / `getSessionMessages`）も SDK を import するため。git の履歴では `sdk-driver.ts` は `src/session-start.ts`・`src/server/core/session-driver.ts` と一緒に直されることが多い（直近400コミットでそれぞれ11回・10回）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 「SDK を import する場所を限る」こと自体は残す（原則3）。変えてよいのは限り方（1ファイルか、名前で決まる数ファイルか）\n\n## 解くべき論点\n\n- 規則の形: (a) `sdk-` で始まる adapter のファイル（例: `sdk-driver.ts` / `sdk-tool.ts` / `sdk-session.ts`）だけに許す / (b) `adapter/sdk/` のようなディレクトリ（原則5の単数形・概念名の規約に合うか） / (c) 1ファイルのまま、SDK に触らない部分だけを外へ出す / (d) それ以外。物差しは `CLAUDE.md`「案が2つ以上あるとき」の3つ\n- どこで切るか（ツールの定義・セッションの一覧と続き・`/context`・駆動の本体）。1ファイル = 1つの境界（原則3）に照らして、境界として名乗れるか\n- `DEFAULT_EFFORT` や `SPEAK_TOOL_NAME`（`core/sdk-message.ts`）のように他のファイルと共有する定数の置き場\n\n## やること\n\n1. `sdk-driver.ts` を読み、関数ごとに「SDK を import するか・誰が呼ぶか」を表にする\n2. 論点に答え、`test/architecture.test.ts` の規則・`docs/architecture.md` 原則3・`docs/design.md` 2章と5章・`CLAUDE.md` の該当箇所を新しい規則に書き換える\n3. その規則でファイルを分ける。テストも `src` の相対パスに合わせて分ける（`test/server/adapter/…`）\n\n## 完了条件\n\n- `wc -l` で、分けたどのファイルも 500 行以下\n- `test/architecture.test.ts` に新しい規則の検査があり、規則の外のファイルで SDK を import すると落ちる（1度わざと破って落ちることを確かめ、`evidence` に書く）\n- 正典（`docs/architecture.md` / `docs/design.md` / `CLAUDE.md`）に「`sdk-driver.ts` だけ」と書いた文が残っていない（新しい規則の文になっている）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- 本物の claude を起こす目視確認は要らない（振る舞いを変えない）。疑似セッション（`TSUKUMO_DRIVER=fake`）で起動して1ターン流れることは確かめる",
-    "status": "done",
-    "passes": true,
-    "evidence": "規則を「src/server/adapter/ 直下で sdk- で始まるファイルだけが SDK を import してよい」に変え、sdk-driver 456 / sdk-tool 238 / sdk-session 129 / sdk-context-usage 108 行に割った（1ファイルのまま外へ出すと約670行が残り、adapter/sdk/ は下の段を境界にしない決め事と衝突）。正典（CLAUDE.md 原則3・architecture.md・design.md 1/2/5/7章・requirements.md）を書き換え、見出し数は前後一致。 / わざと破る確認: fake-driver.ts に SDK の import を足すと「…import するのは src/server/adapter/ 直下の sdk- で始まるファイルだけ」が落ち、core/plan.ts では層の検査も落ちた（戻して差分なし）。疑似セッション（port 39428）で1ターン流れることを確認。 / bun run check は 1790 pass / 0 fail（146ファイル）。"
-  },
-  {
-    "id": "T-436",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-435"],
-    "summary": "立ち絵の URL・差し色・代替テキストの導き方をキャラビューと雑談ビューで1つにする",
-    "task": "## 背景\n\n立ち絵に「いまの表情と衣装で、どの絵を・どの差し色で・どの代替テキストで出すか」を導く手が2つの機能に書き写されている:\n\n- `src/browser/features/character-view/hooks/use-character-view.ts`: `character?.portraits?.[expression]`・`character?.outfitAccents[outfit]`・`` `${character?.name ?? DEFAULT_CHARACTER_ALT_NAME}（${resolveExpressionLabel(…)}）` ``・`resolveOutfit(model)`\n- `src/browser/features/chat-view/hooks/use-chat-view.ts`: 同じ4つを同じ式で書き、`DEFAULT_CHARACTER_ALT_NAME = \"キャラクター\"` も別に持つ\n\n`src/browser/features/screen-nav/hooks/use-current-work.ts` も `DEFAULT_CHARACTER_NAME = \"キャラクター\"` を持つ。機能どうしは import できないので、共通にするには機能の外に置く必要があり、その置き場は T-435 が決める。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n\n## やること\n\n1. T-435 で決まった置き場の基準を読む\n2. 「キャラクター・表情・衣装（またはモデル）→ 立ち絵の URL・差し色・代替テキスト」を1つの関数（またはフック）にし、その置き場へ置く\n3. 2つの機能をそれに寄せる。既定の名前「キャラクター」を1か所にする（`use-current-work.ts` の既定名が同じ意味なら一緒に）\n\n## 完了条件\n\n- `grep -rn '\"キャラクター\"' src/browser --include='*.ts'` で既定の名前の定数が1か所\n- `grep -rn 'portraits?.\\[' src/browser/features` が `character-screen`（編集画面）以外に無い\n- 2つのビューの既存テストが期待値を変えずに通る\n- `bun run check` が通る",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
-  },
-  {
-    "id": "T-437",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "レポートの記法の語彙を shared に1つ置き、プロンプトと画面が引く",
-    "task": "## 背景\n\nレポートの記法（`<div class=\"note note-warn\">` などの印）の語彙が、サーバとブラウザに別々に書かれている:\n\n- `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（claude に教える文面。`note` / `note-warn` / `note-ng` / `note-memo` / `note-ask` / `note-favor` / `badge-ok` / `badge-warn` / `badge-ng` / `cols` / `card` / `stats` / `stat`）\n- `src/browser/features/main-view/markdown/notation.tsx` の class の対応表と、ラベルの対応表（`note-warn` → 「注意」など）\n- `src/browser/features/main-view/main-view.module.css` の `.report-note-*` / `.report-badge-*` / `.report-cols` / `.report-stats`\n\n印を1つ足す・名前を変えると、この3か所を揃えて直す必要があり、どれかを忘れても型もテストも落ちない（プロンプトに書いた印が画面で素の `div` になる）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 文面（`REPORT_NOTATION_PROMPT`）の中身は変えない。変えてよいのは、印の名前を語彙から差し込むことだけ\n\n## やること\n\n1. 3か所の印の集合を突き合わせ、差があれば `evidence` に書く（差は直さずユーザーに預けてよい）\n2. 印の名前と種別のラベルを `src/shared/` の1ファイルに置く（ファイル名は概念。`docs/glossary.md` に「レポートの記法」の語があればそれに合わせる）\n3. `notation.tsx` の対応表をその語彙から引く形にする。`report-notation.ts` の文面は、語彙の各印が文面に現れることをテストで確かめる形にする（文面をテンプレートで組み立て直すかは、読みやすさで決める）\n\n## 完了条件\n\n- 語彙の各印が `REPORT_NOTATION_PROMPT` に現れ、`notation.tsx` の対応表に載っていることを確かめるテストがある\n- 語彙から1つ消すとそのテストが落ちることを確かめ、`evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `report-notation.ts` の文面は毎ターン claude に入る。文字の差分が出ていないことを `git diff` で確かめる",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
-  },
-  {
     "id": "T-438",
     "difficulty": "opus",
     "loopable": "Y",
@@ -94,20 +61,9 @@
     "dependencies": ["T-413"],
     "summary": "Claude Code の Todo を、帯の手順の一覧にチェックリストで出す",
     "task": "## 背景\n\nClaude Code は長い作業の見通しを `TodoWrite`（または `TaskCreate` / `TaskUpdate` / `TaskList`。入力の型は `node_modules/@anthropic-ai/claude-agent-sdk/sdk-tools.d.ts` の `TodoWriteInput` / `TaskCreateInput` / `TaskUpdateInput`）で持つ。TUI ではこれがチェックリストとして見えるが、tsukumo ではただのツール呼び出しとして帯の「依頼の手順」（`src/shared/turn-step.ts` → `src/browser/features/screen-nav/hooks/use-current-work.ts`）に1行ずつ並ぶだけで、**いまいくつ中いくつ済んだか**が見えない（`grep -rn 'TodoWrite\\|TaskCreate' src` は0件）。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの\n\n## やること\n\n1. 本物の claude で長めの依頼を1つ送り、いまの版がどちらのツール（`TodoWrite` か `TaskCreate` / `TaskUpdate`）を使うかを確かめる（中身は `evidence` に書かない）\n2. 記録（`tool` の `input`）から「いまの Todo の並びと状態」を導く純粋関数を `src/shared/` に置く（`turn-step.ts` と同じ置き方。両方のツールに対応するかは手順1の結果で決める）\n3. 帯のいまの作業の札（と、押すと開く手順の一覧）に「n / N 済み」とチェックリストを出す。色だけで伝えない。`docs/requirements.md` 4.2 の帯の項と `docs/design.md` 13.9 に書く\n\n## 完了条件\n\n- 導く関数のテストがある（未着手・進行中・済みの混在、Todo が1度も無いターン）\n- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る\n\n## 注意\n\n- 帯の配線は T-413 が作り替えている。T-413 の後の形に載せる\n- 会話の中身（依頼・出力・ファイルの中身）をログ・ディスク・テストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
-  },
-  {
-    "id": "T-455",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "requirements.md 2.2 のセッション切り替えの禁止を、実物に合わせる",
-    "task": "## 背景\n\n`docs/requirements.md` 2.2（対象外）は「**セッションを選ばせる画面**（2026-09-13）。…過去のセッションの一覧・切り替えも作らない（4.8）」と書く。しかし 2026-09-22 にサイドバーの下端の帯へセッションの `<select>`（`switch-session`）が入り、同じ文書の 4.7（615行付近「キャラクター・セッションの切り替え」）と 4.8（1124行付近「切り替え先の一覧は…」）、`docs/design.md` 8章（「どのセッションの続きから始めるかは画面から選べる（2026-09-22）」）はそれを前提に書かれている。**対象外の節が、実装済みの機能を禁じている。**\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの\n- 起動時にどれを続けるかを選ばせる画面は作らない（起動時は自動で続きから）、という部分は今も正しい。変えるのは「一覧・切り替えも作らない」の部分だけ\n\n## やること\n\n1. 2.2 の該当項目を「起動のたびに選ばせる画面は作らない。続けるセッションは起動後に帯の `<select>` から切り替えられる（4.8）」の趣旨に書き換える。経緯（2026-09-13 に作らないと決め、2026-09-22 に切り替えを足した）は `docs/history/decision.md` へ1行で送る\n2. 4.8 の冒頭に同じ食い違いが無いかを見て、あれば合わせる\n\n## 完了条件\n\n- `grep -n '一覧・切り替えも作らない' docs/requirements.md` が0件\n- `src/` の差分が無い\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）",
     "status": "done",
-    "passes": true,
-    "evidence": "docs/requirements.md 2.2 の項目を「起動時に選ばせる画面」に絞り、切り替えは 4.8 を指すよう書き換えた。経緯は docs/history/decision.md へ1件追記。grep -n '一覧・切り替えも作らない' docs/requirements.md は0件、節見出し（grep -c '^#\\{2,3\\} '）は編集前後とも25、src/ の差分なし。bun run check 1790 pass / 0 fail。"
+    "passes": false,
+    "evidence": "着手しない判断（2026-09-23、ユーザー判断）。帯（画面最上部のナビ）に n / N を出すのは Claude Code の TUI の焼き直しで、効くのは長い依頼で席を立つときだけ。進み具合をセリフで 言うのに tsukumo 側で Todo の input を解析する必要はない——speak を呼ぶ claude 自身が Todo を持っているので src/server/core/speech-cadence.ts に書けば済む。帯の枠は T-448（背景で動くタスクを帯に出す）に使う。"
   },
   {
     "id": "T-468",
@@ -119,17 +75,6 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-471",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": ["T-470"],
-    "summary": "締め方の条を report-notation.ts に寄せ、persona.md は言い回しだけにする",
-    "task": "## 背景\n\n「締めの `speak` → レポート → 何も続けない」というターンの終わり方の条が、2か所に本文で書かれていて、毎ターン二度読ませている:\n\n- `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` 冒頭「**ターンは締めの `speak` → レポートの順で終える。**」の段落と「送る前に消すもの」\n- `characters/tsukumo/persona.md` と `characters/tsukumo-spirit/persona.md` の「### ターンの終わりは締めのセリフのあとのレポート」（本文を書かずに `speak` で終えない・レポートのあとに何も続けない・レポートが無いターンでも最後は本文、などの条と、締めのセリフの言い方の例）\n\n呼ぶ回数・契機は tsukumo 側（`src/server/core/speech-cadence.ts`）、言い方はパック（`persona.md`）という線引きがすでにある。締め方もどのパックでも同じ tsukumo の体験なので、条は `report-notation.ts` に寄せる。\n\nあわせて `docs/display.md`「#### 出力の分離（セリフと詳細）」の段落「**出力スタイル側の規約（2026-09-12 改訂。正典は `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）**」が、tsukumo のセリフの規約の正典を `asuna.md` と書いている。tsukumo はセッションを起こすときに `applyFlagSettings({ outputStyle: \"default\" })` で出力スタイルを打ち消しており（`src/server/adapter/sdk-driver.ts` の `applyNeutralOutputStyle`）、tsukumo の中では `asuna.md` を誰も読んでいない。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの決定（`/grill-with-docs` の Q3）: 締め方の正典は `report-notation.ts`。`persona.md` には締めのセリフで何をどう言うかの言い回しの例だけを残す\n- `asuna.md` は TUI だけに効くものとして扱う（リポジトリの外のグローバル設定なので中身は触らない）\n\n## やること\n\n1. 2つの `persona.md` の「### ターンの終わりは締めのセリフのあとのレポート」から、`report-notation.ts` の条と同じことを言っている箇条を消し、締めのセリフの言い回しの例（片付いたとき・お願いがあるとき・外したとき）と、条は tsukumo 側にあることの参照1行だけを残す。見出しの名前は中身に合わせて変えてよい\n2. `report-notation.ts` の条に、`persona.md` にだけあって落とすと効き目が変わるもの（例: 「レポートが無いターンでも最後は本文」「雑談モードのときは雑談モードの節に従う」）が無いかを突き合わせ、あれば条の側へ移す。JSDoc の「**締めのセリフで何をどう言うか**は…`persona.md`…が正典」の言い回しを、見出しの名前に合わせて直す\n3. `docs/display.md` の上の段落を、tsukumo の中ではセリフの規約は `speech-cadence.ts`（回数・契機）・`report-notation.ts`（締め方）・`persona.md`（言い方）が持ち、`asuna.md` は TUI だけに効く、という形に書き直す。同じファイルの「#### レポートの記法は、TUI と tsukumo で出し分ける」と二重になる部分はそちらへの参照に畳んでよい\n4. `test/server/core/report-notation.test.ts` と、`persona.md` の文面を検査しているテストがあれば（`grep -rn 'ターンの終わり' test`）追随させる\n\n## 完了条件\n\n- 2つの `persona.md` に「本文を書かずに `speak` で終えない」「レポートのあとには何も続けない」に当たる条の本文が無い（`grep -n '何も続けない' characters/*/persona.md` が0件）\n- `grep -n 'asuna.md' docs/display.md` の結果のうち、tsukumo の中の規約の正典として `asuna.md` を指す行が0件（TUI 向けと明記した行は残ってよい）\n- `bun run check` が通る\n\n## 注意\n\n- **`~/.tsukumo/characters/` にある同名のパックが同梱パックを覆う**ので、画面の吹き出しで確かめるならホーム側の `persona.md` も同じに直っているかを見る（ホーム側はリポジトリの外。書き換えるなら evidence に書く）\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/display.md` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- T-470 が同じ節の別の箇条（「レポートの構造は出力スタイル側の規約で決める」）を直すので、その後に着手する（依存に入れてある）\n- 規約の変更は次にプロセスを起こしたときから効く",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 通過（1790 pass / 0 fail、145ファイル）。grep -n '何も続けない' characters/*/persona.md は0件、docs/display.md の asuna.md は TUI 向けと明記した行だけ\n2つの persona.md の節を「締めのセリフの言い方」（言い回しの例3つ＋正典は report-notation.ts／雑談モードは「雑談モード」の節、の参照）にした。report-notation.ts の条は既存の「短い答えならその答え」で足り、雑談モードでは REPORT_NOTATION_PROMPT が載らない（system-prompt.ts）ので条は足していない\n~/.tsukumo/characters/tsukumo/persona.md（同梱パックを覆う）は旧文面だったので、利用者の許可を得て同じ節に差し替えた（「## 覚えたこと」の10行は残した）"
   },
   {
     "id": "T-473",
@@ -187,12 +132,23 @@
     "evidence": ""
   },
   {
-    "id": "T-478",
-    "difficulty": "opus",
+    "id": "T-480",
+    "difficulty": "sonnet",
     "loopable": "Y",
     "dependencies": [],
-    "summary": "仕事と雑談を切り替えたとき立ち絵が瞬時に入れ替わるチカチカの原因を調べて直す",
-    "task": "## 背景\n\n仕事から雑談へモードを切り替えた瞬間、立ち絵がパッと入れ替わって目がチカチカする（2026-09-23 のユーザーの報告）。切り替えの経路は次のとおりで、どこにも移り変わりの間が無い:\n\n- `src/browser/main.tsx` の `Root` が `chatMode` を見て、`<Layout>` の `main` を `<MainView />` から `<ChatView />` へ差し替え、同時に `collapseCharacter` と `mainAsGround` を立てる\n- `src/browser/features/layout/presentational-layout.tsx` は `collapseCharacter` のとき下段のキャラビューの領域（`data-region=\\\"character\\\"`）と仕切りを**描かない**（`{!collapseCharacter && …}`）。`layout.module.css` の `.layout-row-bottom[data-collapse-character=\\\"true\\\"]` で下段が1列に変わる\n- 立ち絵はキャラビューの `<Portrait>`（`src/browser/components/portrait.tsx`）が消え、雑談ビューの `components/nudge-portrait.tsx` が**別の `<Portrait>` を新しくマウント**する。大きさ・位置（下段 → 上段の左）・`motion`（キャラビューは `resolvePortraitMotion`、雑談は `waiting` / `reading` だけ）が一度に変わる\n- 雑談ビューの表情は `hooks/use-chat-view.ts` の `speechExpressionAt(entries, pinnedIndex) ?? speechExpression` で決まり、キャラビューの表情と一致するとは限らない。立ち絵の URL は表情ごとに違う（`character.portraits[expression]`）ので、違う表情なら SVG の `fetch`（`portrait.tsx` の `useSvgMarkup`）が走り、読み終わるまで立ち絵が空く可能性がある\n- 同時に `--accent` がパックの `chatAccent` に切り替わり（`docs/screen-design.md` 13.7）、背景がメインの領域へ移る（`mainAsGround`）\n\nどれがチカチカの主因かは確かめていない。仕様側は `docs/chat-mode.md` の表（「キャラビュー: **畳む**（立ち絵がメインへ移る）」）と `docs/screen-design.md` 13.7「キャラビューの領域は雑談中は畳む」が正典で、移り変わりの見せ方は書かれていない。\n\n## 解くべき論点\n\n- チカチカの主因はどれか（立ち絵の再マウントと位置・大きさの瞬間移動 / 表情の食い違いによる絵の差し替え / SVG の読み込み待ちの空白 / 差し色と背景の一斉切り替え）。**推測で直さず、実ブラウザで切り替えの前後を撮って（または DOM を時系列で測って）主因を特定してから**直す\n- 直し方: 立ち絵を移すあいだの見せ方（短いフェード・位置の移り変わり・表情を切り替え前と揃える、など）をどれにするか。`prefers-reduced-motion: reduce` では動かさない（`styles/theme.css` の全体規則に従う）。**使う人が操作してから画面が落ち着くまでを長引かせない**（切り替えを遅く感じさせない長さにする）\n- 雑談 → 仕事へ戻す向きも同じ問題を持つか。持つなら同じ直し方で揃える\n\n## やること\n\n1. 実ブラウザ（`webapp-testing` スキルの Playwright など）で tsukumo を起こし、帯の仕事/雑談のトグルで切り替えて、前後の数フレームの立ち絵（位置・大きさ・表情・SVG の有無）を記録する。**本物の claude を起こさずに済む経路があればそちらを使う**（`docs/architecture.md`「手で確かめること」）\n2. 主因を決め、`docs/screen-design.md` 13.7 に「切り替えのときの立ち絵の移り方」を1段落で書く（行頭から位置を特定して編集し、前後で `grep -c '^#\\{2,3\\} ' docs/screen-design.md` が変わらないことを確かめる）\n3. 直す。振る舞い（表情の揃え方・再取得の有無など）はテストで守り、絵は目視で確かめる\n4. 調べた結果、チカチカが tsukumo のコードでは直せない原因（ブラウザやホストの描画）だと分かったら、直さずに根拠を `evidence` に書いて閉じ、`develop/progress.md` の「未解決」に残す\n\n## 完了条件\n\n- 切り替え前後の記録（どのフレームで何が変わっていたか）と主因が `evidence` にある\n- 仕事 → 雑談・雑談 → 仕事の両方向で、立ち絵が消えて別の場所に瞬時に現れる・違う表情へ一瞬で飛ぶ、が起きないことを実ブラウザで確かめ、その結果（どの端末・どう見えたか）が `evidence` にある\n- `docs/screen-design.md` 13.7 に切り替えのときの立ち絵の移り方が書かれている\n- `bun run check` が通る\n\n## 注意\n\n- 目視確認で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける（CLAUDE.md「## タスク運用」）\n- 素材の反映を確かめるときは `~/.tsukumo/characters/` 側のパックが同梱パックを覆う点に注意する\n- T-436（立ち絵の URL・差し色・代替テキストの導き方をキャラビューと雑談ビューで1つにする）と触るファイルが重なる。導き方の共通化はそちらの担当で、ここではやらない",
+    "summary": "雑談の索引で、同じ日に書いた見出しを最後の1行だけでなく全部照合する",
+    "task": "## 背景\n\n雑談で前の日の話を持ち出されたのに、`recall` が当たらなかった（2026-09-23 のユーザーの報告）。原因は、索引を読む側と書かせる側の食い違い:\n\n- 読む側: `src/server/adapter/chat-archive.ts` の `readDayIndexHeadings` は `index.jsonl` を `Map<日付, 見出し>` に積み、**同じ日に2行以上あれば最後の1行だけ**を残す。`matchedIndexDates` はその1行（と日付）だけを照合する。根拠は `docs/design.md` 7章「日ごとの索引はどこに置くか」の「1日1行は「あとの行が勝つ」で保つ」\n- 書かせる側: `src/server/core/chat-manner.ts` の「思い出す（tsukumo）」の段は `index` を「1ターンに1行」「その日の話がひと区切りついたとき」に呼ばせるので、1日に何度も書く。実際に 2026-09-22 は4行書かれ、最初の3行の語では引けなくなっていた\n\nあわせて、索引が導入される前の日（2026-09-21）は `index.jsonl` に行が無く、その日の雑談は `recall` から届かない。\n\n## 決まっていること（蒸し返さない）\n\n- 読む側に寄せる: **同じ日の行は全部照合の対象にする**（どれか1行に当たればその日を拾う）。`chat-manner.ts` の指示（区切りごとに書く）は変えない（2026-09-23 ユーザー承認）\n- 索引の無い日を届かせる手段は**用意しない**。届かないことを既知の制約として書くだけにする（本文照合の追加・`index` に日付の引数を足す案は採らない。2026-09-23 ユーザー承認）\n- 書く側の形（追記だけ・行の形・`v`・1ターンに1行・120文字まで）は変えない\n\n## やること\n\n1. `test/server/adapter/chat-archive.test.ts` に、同じ日に2行以上書いたとき**最初の行の語でも最後の行の語でもその日が当たる**テストを先に足し、落ちることを確かめる（同じ日が複数行に当たっても、その日のファイルは1回だけ読まれ、返る会話が重複しないことも確かめる）\n2. `readDayIndexHeadings` を、日付ごとに見出しを全部持つ形に変える（例: `ReadonlyMap<string, readonly string[]>`）。`matchedIndexDates` は、日付とその日の見出しのどれかに語が当たれば拾う。関数名・JSDoc も「あとの行が勝つ」を外して今の挙動に合わせる。ファイル冒頭のコメント（20〜23行目あたりの「1日1行」）も同様\n3. ドキュメントを今の挙動に合わせる:\n   - `docs/design.md` 7章「日ごとの索引はどこに置くか」: 「1日1行は「あとの行が勝つ」で保つ」の箇条と、表の「積み重ね方」「索引の上限」、「日ごとに割らない」「`grep` を起こさない」の「1日1行なので」の根拠。**1日に数行**になっても太り方は日数と区切りの数で読める、という形に直す\n   - `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」: 表の「何を書くか」を実態（1ターンに1行、1日に何行でも）に合わせ、**索引の無い日（索引の導入前の日）は `recall` から届かない**ことを1行足す\n   - `docs/glossary.md` の索引の定義（「1日1行だけ並べたファイル」）と `docs/coding-standards.md` の会話内容の表の「1日1行の JSONL」\n   - `docs/` を編集するときは CLAUDE.md「ドキュメントを編集するときの罠」に従い、編集の前後で `grep -c '^#\\{2,3\\} '` の数が合うことを確かめる\n4. `grep -rn \"1日1行\\|あとの行が勝つ\" docs src test`（`docs/history/` を除く）で、今の挙動と食い違う記述が残っていないことを確かめる\n\n## 完了条件\n\n- 手順1のテストが通り、変更前のコードでは落ちることを確かめてある\n- `grep -rn \"あとの行が勝つ\" docs src test | grep -v docs/history` が0件\n- `docs/chat-mode.md` 4.9 に、索引の無い日は `recall` から届かないことが書いてある\n- `bun run check` が通る\n\n## 注意\n\n- `~/.tsukumo/chat-archive/` の実物（会話が入っている）をテストのフィクスチャに使わない・中身をログや evidence に写さない（CLAUDE.md「会話内容の扱い」）\n- `chat-manner.ts` の `index` の段と、`index` ツールの説明（`src/server/adapter/sdk-tool.ts`）の書かせ方は変えない",
+    "status": "doing",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-481",
+    "difficulty": "haiku",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "質問に答えている間、入力欄の送信ボタンを差し色ではなく答え待ちの黄色で塗る",
+    "task": "## 背景\n\n質問（`AskUserQuestion`）に答えている間、答え待ちの色（`--state-warn`、黄色）に揃っていないものが入力欄の送信ボタンだけ残っている（2026-09-23 のユーザーの報告）:\n\n- メインビューの札（`src/browser/features/main-view/question-ask.module.css`）は、枠も「これで答える」の塗り（`.question-ask-answer`）も `--state-warn`。コメントには「入力欄の「答える」と対になる」とある\n- 入力欄（`src/browser/features/dispatch/dispatch.module.css`）は、答え待ちのあいだ `.dispatch-form.is-answering` で枠が `--state-warn` になり、帯（`.dispatch-band`）の字も `--state-warn`。ところが送信ボタン（`.dispatch-send`）は常に `--accent`（パックの差し色）で塗られ、`:hover` も `--accent` 基準のまま。字は `docs/display.md` 4.2 のとおり「答える」に変わるが、色は変わらない\n- `is-answering` を付けているのは `src/browser/features/dispatch/presentational-composer.tsx` の `<form>`。送信ボタンは `presentational-turn-status.tsx` が描く\n\n`docs/display.md` 4.2「許可と質問」は、答え待ちの入力欄の字・プレースホルダ・枠の色までを決めていて、送るボタンの色は書いていない。\n\n## 決まっていること（蒸し返さない）\n\n- 答え待ちのあいだ、入力欄の送信ボタンの塗り・枠・hover を `--state-warn` 系にし、札の `.question-ask-answer` と同じ見た目にする（2026-09-23 ユーザーの指示）\n- 答え待ちでないときの送信ボタンは `--accent` のまま変えない\n\n## やること\n\n1. 答え待ちのときだけ、`.dispatch-send` の `background` / `border-color` / `:hover` を `--state-warn` 基準にする。`.question-ask-answer` の指定（塗り `var(--state-warn)`、hover `color-mix(in srgb, var(--state-warn) 85%, var(--ink))`、字 `var(--ground)`）に合わせる。送信ボタンが `.is-answering` の `<form>` の内側にあれば、子孫セレクタで足りる。外側にあるなら、答え待ちかどうかをボタンの側へ渡す（`use-composer.ts` の `answering` の出どころを見る）\n2. `dispatch.module.css` の「送信」のコメント（「accent で塗りつぶす（入力欄で塗ってよいのはこれ1つだけ…）」）に、答え待ちの間は答え待ちの色で塗ることを足す\n3. `docs/display.md` 4.2「許可と質問」の自由入力の箇条の「送るボタンの字は「答える」、枠は `--state-warn` になる」に、送るボタンの塗りも `--state-warn` になることを足す（CLAUDE.md「ドキュメントを編集するときの罠」に従い、編集の前後で `grep -c '^#\\{2,3\\} ' docs/display.md` の数が合うことを確かめる）\n4. 目視で確かめる。`bun run build` のあと tsukumo を起こし（並行して動かすなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける）、質問を出させて、次の3つを見る。手順は `docs/architecture.md`「手で確かめること」\n   - 答え待ちの間: 入力欄の送信ボタンが黄色で、札の「これで答える」と同じ色に見える\n   - 答え終わったあと: 送信ボタンが差し色に戻っている\n   - hover: 送信ボタンの色が少し沈む\n\n## 完了条件\n\n- 答え待ちの間は送信ボタンの塗りが `--state-warn`、そうでない間は `--accent` であることを目視で確かめ、`evidence` に何を見たかを書いてある\n- `docs/display.md` 4.2 に送るボタンの塗りが書いてある\n- `bun run check` が通る\n\n## 注意\n\n- 変えるのは送信ボタンだけ。テキスト入力欄のフォーカス時の枠（`.dispatch-text:focus-visible` の `--accent`）と中断ボタン（`.dispatch-interrupt`）は、この指示の範囲外なので変えない\n- 描画の変更なので、絵は自動テストで守らない（CLAUDE.md「テスト方針」）",
     "status": "doing",
     "passes": false,
     "evidence": ""

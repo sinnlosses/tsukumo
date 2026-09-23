@@ -27,6 +27,7 @@ import {
   type TurnStepList,
   type TurnStepStatus,
 } from "../../../../shared/turn-step.ts"
+import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { summarizeToolInput, toolInputText } from "../../../lib/tool-summary.ts"
 import { useQuestionScroll } from "../../../stores/question-scroll.tsx"
@@ -46,9 +47,6 @@ const WORK_WORD_LABEL: Record<ScreenNavCurrentWorkState, string> = {
   running: "作業中",
   idle: "依頼待ち",
 }
-
-/** パックに `name` が無いときの呼び名（`features/chat-view` / `character-view` と同じ落ち先）。 */
-const DEFAULT_CHARACTER_NAME = "キャラクター"
 
 /** 一覧に出す手順1件（見た目が読める形まで畳んだもの）。 */
 export type ScreenNavCurrentWorkStep = {

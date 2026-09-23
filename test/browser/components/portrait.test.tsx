@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, waitFor } from "@testing-library/react"
 
-import { Portrait } from "../../../src/browser/components/portrait.tsx"
+import { Portrait, usePortraitPreload } from "../../../src/browser/components/portrait.tsx"
 
 // フィクスチャはすべて手で書いた架空の SVG・URL（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -199,5 +199,78 @@ describe("Portrait", () => {
 
     const wrapper = document.querySelector(".portrait") as HTMLElement
     expect(wrapper.getAttribute("data-motion")).toBe("waiting")
+  })
+})
+
+/** `usePortraitPreload` を呼ぶだけの部品（フックを部品の中で呼ぶため）。 */
+function Preload(props: { readonly portraits: Readonly<Record<string, string>> }): null {
+  usePortraitPreload(props.portraits)
+  return null
+}
+
+describe("usePortraitPreload", () => {
+  it("SVG の立ち絵を先に読み、あとからマウントした立ち絵は読み終わった絵で描き始める", async () => {
+    stubFetch(PLAUSIBLE_SVG)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const portraits = {
+      default: "/character/default.svg",
+      proud: "/character/proud.svg",
+      // 立ち絵を持たない表情は `default` の絵に畳まれて届く（同じ URL は1回だけ読む）。
+      thinking: "/character/default.svg",
+    }
+    render(
+      <QueryClientProvider client={client}>
+        <Preload portraits={portraits} />
+      </QueryClientProvider>,
+    )
+    await waitFor(() => {
+      expect(client.getQueryData<string>(["/character/proud.svg"])).toBe(PLAUSIBLE_SVG)
+    })
+
+    // 仕事 / 雑談を切り替えたときの新しいマウント。**最初の描画から絵がある**（空かない）。
+    render(
+      <QueryClientProvider client={client}>
+        <Portrait
+          url="/character/proud.svg"
+          accent={undefined}
+          altText="架空の精霊（得意げ）"
+          expression="proud"
+          outfit="default"
+          motion="reading"
+          className={undefined}
+        />
+      </QueryClientProvider>,
+    )
+    expect(document.querySelector(".portrait svg")).not.toBeNull()
+    expect(fetchCalls.toSorted()).toEqual(["/character/default.svg", "/character/proud.svg"])
+  })
+
+  it("ラスタの立ち絵は `Image` に読ませ、外れたら読み込みを打ち切る", () => {
+    const images: { src: string }[] = []
+    Object.defineProperty(globalThis, "Image", {
+      configurable: true,
+      value: class {
+        src = ""
+        constructor() {
+          images.push(this)
+        }
+      },
+    })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    const { unmount } = render(
+      <QueryClientProvider client={client}>
+        <Preload portraits={{ default: "/character/default.png", proud: "/character/proud.png" }} />
+      </QueryClientProvider>,
+    )
+    expect(images.map((image) => image.src)).toEqual([
+      "/character/default.png",
+      "/character/proud.png",
+    ])
+    expect(fetchCalls).toEqual([])
+
+    unmount()
+    expect(images.map((image) => image.src)).toEqual(["", ""])
+    Reflect.deleteProperty(globalThis, "Image")
   })
 })
