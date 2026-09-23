@@ -978,6 +978,22 @@ describe("createSessionManager", () => {
     expect(edits.map((edit) => edit.type)).toEqual(["set-outfit-accent"])
   })
 
+  it("名前とプロフィールを変えるコマンド（set-profile）も同じ経路を通る", async () => {
+    const { manager, edits } = startManagerWithStub()
+
+    expect(
+      await manager.dispatch({
+        type: "set-profile",
+        commandId: "c-1",
+        pack: "fictional",
+        name: "新しい表示名",
+        tagline: "ひとこと",
+      }),
+    ).toEqual({ ok: true })
+
+    expect(edits.map((edit) => edit.type)).toEqual(["set-profile"])
+  })
+
   it("新しいパックを作るコマンドも駆動へ渡さず、選択肢の増えた character-changed を配る", async () => {
     const { manager, stub, edits, creates } = startManagerWithStub()
     const frames: ServerFrame[] = []
@@ -987,11 +1003,13 @@ describe("createSessionManager", () => {
       await manager.dispatch({
         type: "create-character",
         commandId: "c-1",
-        name: "fictional-2",
+        id: "fictional-2",
+        name: "",
         portraits: {
           default: "data:image/png;base64,AAAA",
         },
         accent: "#b8c7ff",
+        chatAccent: "#eaa77a",
       }),
     ).toEqual({ ok: true })
     await waitForBatch()
@@ -999,7 +1017,7 @@ describe("createSessionManager", () => {
     // 駆動には何も渡らない（**作っただけでは切り替えない**ので、起こし直しも起きない）。
     expect(stub.calls).toEqual([])
     expect(edits).toEqual([])
-    expect(creates.map((create) => create.name)).toEqual(["fictional-2"])
+    expect(creates.map((create) => create.id)).toEqual(["fictional-2"])
     const events = frames.filter((frame) => frame.type === "events").at(-1)
     if (events?.type === "events") {
       expect(events.events.map((stamped) => stamped.event)).toEqual([CHARACTER_EVENT])
@@ -1014,11 +1032,13 @@ describe("createSessionManager", () => {
       await manager.dispatch({
         type: "create-character",
         commandId: "c-1",
-        name: "fictional",
+        id: "fictional",
+        name: "",
         portraits: {
           default: "data:image/png;base64,AAAA",
         },
         accent: "#b8c7ff",
+        chatAccent: "#eaa77a",
       }),
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterCreateFailed })
   })

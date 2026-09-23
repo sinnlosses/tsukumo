@@ -92,14 +92,24 @@ function setPortrait(
   return { type: "set-portrait", commandId: "c-1", pack, expression, image }
 }
 
-/** 新しいパックを作るコマンド（必須の1枚は境界で required なので、ここでも必ず入る）。 */
-function createCharacter(name: string): CharacterCreateCommand {
+/**
+ * 新しいパックを作るコマンド（必須の1枚・仕事と雑談の差し色は境界で required なので、ここでも
+ * 必ず入る）。**名前は既定で空**（=「id をそのまま表示名に使う」を試すテストが多いため）で、
+ * 表示名を試すテストだけ `overrides` で足す。
+ */
+function createCharacter(
+  id: string,
+  overrides: Partial<CharacterCreateCommand> = {},
+): CharacterCreateCommand {
   return {
     type: "create-character",
     commandId: "c-1",
-    name,
+    id,
+    name: "",
     portraits: { default: SVG_DATA_URL },
     accent: "#b8c7ff",
+    chatAccent: "#eaa77a",
+    ...overrides,
   }
 }
 
@@ -342,6 +352,72 @@ describe("editCharacterPack（画面の差し色）", () => {
   })
 })
 
+describe("editCharacterPack（名前とプロフィール）", () => {
+  it("名前とひとことプロフィールを差し替える（set-profile。ほかのキーは残る）", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      {
+        type: "set-profile",
+        commandId: "c-1",
+        pack: "tsukumo",
+        name: "新しい表示名",
+        tagline: "ひとことプロフィール",
+      },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.name).toBe("新しい表示名")
+    expect(edited?.definition?.tagline).toBe("ひとことプロフィール")
+    // set-portrait / set-accent と同じく、触っていないキーは残る。
+    expect(edited?.definition?.outfitAccents.default).toBe("#b8c7ff")
+
+    // 一覧に読み直しても書き変わった定義が出る（サーバは書いたあと `event()` で一覧を読み直す。
+    // `src/current-character.ts` の `applyEdit`）。
+    const packs = listCharacterPacks(join(dir, "cwd"), {
+      bundled: join(dir, "bundled"),
+      home: home(),
+    })
+    expect(packs.find((pack) => pack.name === "tsukumo")?.definition?.name).toBe("新しい表示名")
+    expect(packs.find((pack) => pack.name === "tsukumo")?.definition?.tagline).toBe(
+      "ひとことプロフィール",
+    )
+  })
+
+  it("名前を空にすると character.json から name が消え、id（パック名）へ落ちる", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { type: "set-profile", commandId: "c-1", pack: "tsukumo", name: "", tagline: "残る一言" },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.name).toBeUndefined()
+    expect(edited?.definition?.tagline).toBe("残る一言")
+  })
+
+  it("ひとことを空にすると消える（前後の空白だけも同じ）", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { type: "set-profile", commandId: "c-1", pack: "tsukumo", name: "残る名前", tagline: "  " },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.name).toBe("残る名前")
+    expect(edited?.definition?.tagline).toBeUndefined()
+  })
+})
+
 describe("editCharacterPack（背景）", () => {
   it("背景を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
     const bundled = writeBundledPack("tsukumo")
@@ -530,16 +606,29 @@ describe("editCharacterPack（使用中でないパック）", () => {
 })
 
 describe("createCharacterPack", () => {
-  it("ホームに名前のディレクトリを作り、必須の1枚と定義を書く", () => {
+  it("ホームに id のディレクトリを作り、必須の1枚・画面の差し色2つ・定義を書く", () => {
     const created = createCharacterPack(createCharacter("fictional-2"), [], home())
 
     expect(created?.dir).toBe(join(home(), "fictional-2"))
-    // 表示名はディレクトリ名と同じ（画面から表示名を変える口はまだ無い）。
-    expect(created?.definition?.name).toBe("fictional-2")
+    // 名前を空にすると character.json に name を書かない（読む側が id へ落とす。docs/design.md 7.1）。
+    expect(created?.definition?.name).toBeUndefined()
     // 立ち絵のファイル名は表情と形式から組み立てる（届いた文字列がパスの一部にならない）。
     expect(created?.definition?.portraits.default).toBe("default.svg")
-    expect(created?.definition?.outfitAccents.default).toBe("#b8c7ff")
+    // 画面の差し色は仕事・雑談の両方が書かれる（衣装ごとの outfitAccents はここでは書かない）。
+    expect(created?.definition?.accent).toBe("#b8c7ff")
+    expect(created?.definition?.chatAccent).toBe("#eaa77a")
     expect(readFileSync(join(home(), "fictional-2", "default.svg"), "utf8")).toBe(PLAUSIBLE_SVG)
+  })
+
+  it("id とは別の表示名を指定すると character.json に書かれる", () => {
+    const created = createCharacterPack(
+      createCharacter("fictional-2", { name: "架空の2号" }),
+      [],
+      home(),
+    )
+
+    expect(created?.dir).toBe(join(home(), "fictional-2"))
+    expect(created?.definition?.name).toBe("架空の2号")
   })
 
   it("作ったパックは切り替えの一覧に出て、次の起動でも残る", () => {

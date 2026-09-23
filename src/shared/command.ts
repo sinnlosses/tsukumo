@@ -9,7 +9,12 @@
 import { z } from "zod"
 
 import { MAX_BACKGROUND_DATA_URL_LENGTH, parseBackgroundImage } from "./character-background.ts"
-import { type AccentTarget, isAccentTarget } from "./character-definition.ts"
+import {
+  type AccentTarget,
+  isAccentTarget,
+  MAX_CHARACTER_NAME_LENGTH,
+  MAX_CHARACTER_TAGLINE_LENGTH,
+} from "./character-definition.ts"
 import { isCharacterPackName, MAX_CHARACTER_PACK_NAME_LENGTH } from "./character.ts"
 import {
   type Expression,
@@ -146,6 +151,20 @@ const newCharacterPackNameSchema = z.string().refine(isCharacterPackName)
  */
 const editedCharacterPackNameSchema = z.string().refine(isCharacterPackName)
 
+/**
+ * 表示名（`character.json` の `name`）。**空文字も通す** — 空なら書き込む側が id へ落とす
+ * （`src/shared/character-definition.ts` の `definitionWithName`。`docs/design.md` 7.1）ので、
+ * ここでは長さの素朴な上限だけを見る。ディレクトリ名になる {@link newCharacterPackNameSchema} /
+ * {@link editedCharacterPackNameSchema} と違って文字種は縛らない（日本語も使える）。
+ */
+const characterNameSchema = z.string().max(MAX_CHARACTER_NAME_LENGTH)
+
+/**
+ * ひとことプロフィール（`character.json` の `tagline`）。**空文字も通す** — 空なら消したのと
+ * 同じに畳む（`definitionWithTagline`）。
+ */
+const characterTaglineSchema = z.string().max(MAX_CHARACTER_TAGLINE_LENGTH)
+
 const expressionSchema = z.custom<Expression>(
   (value) => typeof value === "string" && isExpression(value),
 )
@@ -274,6 +293,21 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     pack: editedCharacterPackNameSchema,
   }),
   /**
+   * 名前とひとことプロフィールを変える（見本の「名前とプロフィールを変える」ボタン。画面側は
+   * `docs/screen-design.md` 13.6）。**1つの画面のボタンから2つの欄をまとめて
+   * 送る**ので、コマンドも1つにする
+   * （`set-accent` の `target` のように分けるほど値の性質が離れていないため）。**どちらも
+   * 空文字を通し、空なら書き込む側が畳む**（名前は id へ、ひとことは「無い」へ。
+   * `src/shared/character-definition.ts` の `definitionWithName` / `definitionWithTagline`）。
+   */
+  z.object({
+    type: z.literal("set-profile"),
+    commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
+    name: characterNameSchema,
+    tagline: characterTaglineSchema,
+  }),
+  /**
    * キャラビューに敷く背景を差し替える／消す（`docs/screen-design.md` 13.8）。**覆いの濃さは
    * 画面から変えない**ので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
    */
@@ -306,11 +340,20 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("create-character"),
     commandId: commandIdSchema,
-    name: newCharacterPackNameSchema,
+    // **保存するフォルダの名前**（`docs/design.md` 7.1「新しく作るときの細部」）。作ったあとは
+    // 変えない。
+    id: newCharacterPackNameSchema,
+    // **画面や吹き出しに出る名前。空なら id をそのまま使う**（`definitionWithName`）ので、
+    // ディレクトリ名になる `id` と違って文字種は縛らない（`characterNameSchema`）。
+    name: characterNameSchema,
     // **必須の1つ（`REQUIRED_EXPRESSIONS`）をここで required にする**ので、立ち絵が無いパックは
     // 書き込む側まで届かない（`docs/design.md` 7.1・`characters/README.md`）。
     portraits: z.object({ default: portraitDataUrlSchema }),
+    // 画面の差し色（仕事・雑談の2つ）。**どちらも必須**——見本の作るダイアログが2色とも
+    // 埋まった状態で出すのに揃える（`docs/design.md` 7.1）。作ったあとに片方だけ消したくなったら
+    // `clear-chat-accent` で外せる。
     accent: accentColorSchema,
+    chatAccent: accentColorSchema,
   }),
   /**
    * キャラクターパックを消す（`docs/design.md` 7.1「消すときの細部」）。**消すのはホームの版だけ**で、
@@ -351,15 +394,16 @@ const CHARACTER_EDIT_COMMAND_TYPES = [
   "set-outfit-accent",
   "set-accent",
   "clear-chat-accent",
+  "set-profile",
   "set-background",
   "clear-background",
 ] as const
 
 /**
- * キャラクターパックの見た目（立ち絵・差し色・背景）を変えるコマンド。**書き込む先は `pack` で
- * 指す**（使用中のパックに限らない）。**どれも駆動には渡らない**（書き込みと
- * `character-changed` の流し直しで済むので、使用中のパックを変えたときもセッションは
- * 起こし直さない。`docs/design.md` 7.1）。
+ * キャラクターパックの見た目（立ち絵・差し色・背景）とプロフィール（名前・ひとこと）を変える
+ * コマンド。**書き込む先は `pack` で指す**（使用中のパックに限らない）。**どれも駆動には
+ * 渡らない**（書き込みと `character-changed` の流し直しで済むので、使用中のパックを変えたときも
+ * セッションは起こし直さない。`docs/design.md` 7.1）。
  */
 export type CharacterEditCommand = Extract<
   ClientCommand,

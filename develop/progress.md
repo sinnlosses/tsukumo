@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 名前とひとことを変える口を足し、作る口に id・雑談の差し色を足した（T-493）
+
+`create-character` を id・名前・立ち絵・仕事と雑談の差し色に分け、名前が空なら `name` を書かずに id へ落とす。名前とひとことを変える `set-profile` を見た目の編集コマンドと同じ経路に足した（`docs/design.md` 7.1）。
+
 ### 2026-09-24 キャラクターを消すコマンドを足した（T-492）
 
 `delete-character` はホームの版だけを消し、使用中・同梱だけ・`characters/local`・一覧外は断る。一覧の `deletable` は `removal`（`delete` / `revert-to-bundled` / `none`）に置き換え、本当に消えるときだけ雑談の要約とアーカイブも消す（`docs/design.md` 7.1「消すときの細部」）。

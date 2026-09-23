@@ -162,6 +162,43 @@ export function definitionWithoutChatAccent(content: string | undefined): string
 }
 
 /**
+ * 表示名として受け付ける長さの上限（`docs/design.md` 7.1）。**作るとき・`set-profile` で
+ * 変えるときの両方**が境界（`src/shared/command.ts`）でこれを見る。文字種は縛らない
+ * （表示名は日本語も使える。長さだけがネットワーク越しに届く値としての素朴な歯止め）。
+ */
+export const MAX_CHARACTER_NAME_LENGTH = 100
+
+/**
+ * ひとことプロフィールとして受け付ける長さの上限（`docs/design.md` 7.1）。**「1行」の性質は
+ * 覚えたこと1行の上限（`MAX_REMEMBERED_LINE_LENGTH`）と同じ値**を採る。
+ */
+export const MAX_CHARACTER_TAGLINE_LENGTH = 120
+
+/**
+ * 表示名（`character.json` の `name`）を差し替えた JSON を返す。**空文字（前後の空白だけも
+ * 含む）は書かない**（`toCharacterDefinition` が空白だけの `tagline` を無いものへ畳むのと
+ * 同じ考え方）。名前が無い定義は、読む側（`src/browser/features/character-screen/character-screen.tsx`
+ * の `character.name ?? character.pack`・`src/server/adapter/character-pack.ts` が
+ * `CharacterPackChoice.label` を組むときの `pack.definition?.name ?? pack.name`）が id へ
+ * 落とすので、ここでわざわざ id を書き込まない（`docs/design.md` 7.1「新しく作るときの細部」）。
+ */
+export function definitionWithName(content: string | undefined, name: string): string {
+  return editedTopLevelDefinitionJson(content, "name", name.trim() === "" ? undefined : name)
+}
+
+/**
+ * ひとことプロフィール（`tagline`）を差し替えた JSON を返す。**空文字は消すのと同じ**
+ * （`toCharacterDefinition` の読み取りが空白だけの値をもともと無いものへ畳むのに揃える）。
+ */
+export function definitionWithTagline(content: string | undefined, tagline: string): string {
+  return editedTopLevelDefinitionJson(
+    content,
+    "tagline",
+    tagline.trim() === "" ? undefined : tagline,
+  )
+}
+
+/**
  * 背景の素材を差し替えた JSON を返す。**覆いの不透明度（`veil`）はそのまま残す** — 画面から
  * 変えられるのは素材だけで、濃さは定義ファイルを手で直す（`docs/screen-design.md` 13.6 / 13.8）。
  */
@@ -234,12 +271,12 @@ function editedDefinitionJson(
 }
 
 /**
- * 最上位のキー1つ（`accent` / `chatAccent`）を差し替えた JSON 文字列を作る。入れ子を重ねない点だけ
- * {@link editedDefinitionJson} と違う。
+ * 最上位のキー1つ（`accent` / `chatAccent` / `name` / `tagline`）を差し替えた JSON 文字列を作る。
+ * 入れ子を重ねない点だけ {@link editedDefinitionJson} と違う。
  */
 function editedTopLevelDefinitionJson(
   content: string | undefined,
-  key: "accent" | "chatAccent",
+  key: "accent" | "chatAccent" | "name" | "tagline",
   value: string | undefined,
 ): string {
   const source = parsedDefinitionRecord(content)

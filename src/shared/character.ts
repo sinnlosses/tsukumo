@@ -145,8 +145,8 @@ export const MAX_CHARACTER_PACK_NAME_LENGTH = 200
  * - `.` で始まらない（`.` `..` と隠しディレクトリが名前として通らないので、パストラバーサルの
  *   経路が生まれない）
  *
- * 表示名（`character.json` の `name`）はこの制限とは別で、パックを作ったあと定義ファイルを
- * 手で直せば日本語も使える。
+ * 表示名（`character.json` の `name`）は**別の関数**（`create-character` / `set-profile` が
+ * 受け取る `name`。`src/shared/command.ts`）が見ていて、文字種を縛らないので日本語も使える。
  */
 export function isCharacterPackName(value: string): boolean {
   return value.length <= MAX_CHARACTER_PACK_NAME_LENGTH && CHARACTER_PACK_NAME_PATTERN.test(value)

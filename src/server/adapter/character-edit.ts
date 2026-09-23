@@ -40,11 +40,13 @@ import {
   type CharacterDefinition,
   definitionWithAccent,
   definitionWithBackground,
+  definitionWithName,
   definitionWithOutfitAccent,
   definitionWithoutBackground,
   definitionWithoutChatAccent,
   definitionWithoutPortrait,
   definitionWithPortrait,
+  definitionWithTagline,
   parseCharacterDefinition,
 } from "../../shared/character-definition.ts"
 import { type CharacterPackRemoval } from "../../shared/character.ts"
@@ -134,8 +136,8 @@ export function createCharacterPack(
   taken: readonly string[],
   root: string = homeCharacterDir(),
 ): CharacterPack | undefined {
-  const dir = join(root, create.name)
-  if (taken.includes(create.name) || existsSync(dir)) {
+  const dir = join(root, create.id)
+  if (taken.includes(create.id) || existsSync(dir)) {
     return undefined
   }
 
@@ -234,6 +236,12 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
       return true
     case "clear-chat-accent":
       writeFileSync(definitionPath, definitionWithoutChatAccent(content))
+      return true
+    case "set-profile":
+      writeFileSync(
+        definitionPath,
+        definitionWithTagline(definitionWithName(content, edit.name), edit.tagline),
+      )
       return true
     case "clear-portrait": {
       const previous = portraitFileNameOf(content, edit.expression)
@@ -374,20 +382,21 @@ function writeRequiredPortraits(
 }
 
 /**
- * 新しいパックの `character.json`。**表示名はディレクトリ名と同じ**（画面から表示名を変える口は
- * まだ無いので、あとから定義ファイルを手で直す前提。`characters/README.md`）。差し色は
- * `default` の1色だけを入れ、衣装ごとの出し分けは作ったあと「見た目」の引き出しで変える。
+ * 新しいパックの `character.json`。**表示名（`name`）は空なら書かない**——読む側
+ * （`character-screen.tsx` の `character.name ?? character.pack` / `CharacterPackChoice.label` の
+ * `pack.definition?.name ?? pack.name`）が id へ落とすので、ここで id を代入し直さない
+ * （`definitionWithName`）。画面の差し色（仕事・雑談）は境界で両方 required なので、必ず
+ * 2つとも書く。衣装ごとの出し分け（`outfitAccents`）は作ったあと「見た目」の引き出しで足す
+ * （ここでは書かない。`docs/design.md` 7.1）。
  */
 function newDefinitionJson(
   create: CharacterCreateCommand,
   fileNames: Readonly<Record<RequiredExpression, string>>,
 ): string {
-  const withPortraits = definitionWithPortrait(
-    JSON.stringify({ name: create.name }),
-    "default",
-    fileNames.default,
-  )
-  return definitionWithOutfitAccent(withPortraits, "default", create.accent)
+  const withName = definitionWithName(undefined, create.name)
+  const withPortraits = definitionWithPortrait(withName, "default", fileNames.default)
+  const withAccent = definitionWithAccent(withPortraits, "work", create.accent)
+  return definitionWithAccent(withAccent, "chat", create.chatAccent)
 }
 
 /** 書きかけのディレクトリを消す（消せなくてもそのまま続ける）。 */

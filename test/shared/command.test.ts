@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
+import {
+  MAX_CHARACTER_NAME_LENGTH,
+  MAX_CHARACTER_TAGLINE_LENGTH,
+} from "../../src/shared/character-definition.ts"
 import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../src/shared/character.ts"
 import {
   isCharacterEditCommand,
@@ -24,14 +28,16 @@ function promptWithImages(images: readonly unknown[]): unknown {
   return { type: "prompt", commandId: "c-1", text: "架空の依頼", images }
 }
 
-/** 名前だけを差し替えた `create-character`（ほかの欄は通る形で固定する）。 */
-function createCharacter(name: string): unknown {
+/** id だけを差し替えた `create-character`（ほかの欄は通る形で固定する）。 */
+function createCharacter(id: string): unknown {
   return {
     type: "create-character",
     commandId: "c-1",
-    name,
+    id,
+    name: "",
     portraits: { default: TINY_PNG_DATA_URL },
     accent: "#b8c7ff",
+    chatAccent: "#eaa77a",
   }
 }
 
@@ -307,22 +313,100 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     ).toBeUndefined()
   })
 
-  it("create-character を受け付ける（必須の1枚と差し色が揃った形）", () => {
+  it("create-character を受け付ける（id・名前・必須の1枚・仕事と雑談の差し色が揃った形）", () => {
     expect(
       parseClientCommand({
         type: "create-character",
         commandId: "c-1",
-        name: "fictional-2",
+        id: "fictional-2",
+        name: "架空の2号",
         portraits: { default: TINY_PNG_DATA_URL },
         accent: "#b8c7ff",
+        chatAccent: "#eaa77a",
       }),
     ).toEqual({
       type: "create-character",
       commandId: "c-1",
-      name: "fictional-2",
+      id: "fictional-2",
+      name: "架空の2号",
       portraits: { default: TINY_PNG_DATA_URL },
       accent: "#b8c7ff",
+      chatAccent: "#eaa77a",
     })
+  })
+
+  it("create-character の名前は空文字でも受け付ける（空なら書き込む側が id へ落とす）", () => {
+    expect(
+      parseClientCommand({
+        type: "create-character",
+        commandId: "c-1",
+        id: "fictional-2",
+        name: "",
+        portraits: { default: TINY_PNG_DATA_URL },
+        accent: "#b8c7ff",
+        chatAccent: "#eaa77a",
+      }),
+    ).toMatchObject({ name: "" })
+  })
+
+  it("set-profile を受け付ける（対象のパック名・名前・ひとことプロフィール）", () => {
+    expect(
+      parseClientCommand({
+        type: "set-profile",
+        commandId: "c-1",
+        pack: "fictional",
+        name: "架空の精霊",
+        tagline: "ひとこと",
+      }),
+    ).toEqual({
+      type: "set-profile",
+      commandId: "c-1",
+      pack: "fictional",
+      name: "架空の精霊",
+      tagline: "ひとこと",
+    })
+  })
+
+  it("set-profile の名前・ひとことは空文字でも受け付ける（空なら消えたのと同じに畳む）", () => {
+    expect(
+      parseClientCommand({
+        type: "set-profile",
+        commandId: "c-1",
+        pack: "fictional",
+        name: "",
+        tagline: "",
+      }),
+    ).toEqual({ type: "set-profile", commandId: "c-1", pack: "fictional", name: "", tagline: "" })
+  })
+
+  it("set-profile は名前・ひとことが長すぎると undefined、パックの名前がパスになると undefined", () => {
+    expect(
+      parseClientCommand({
+        type: "set-profile",
+        commandId: "c-1",
+        pack: "fictional",
+        name: "あ".repeat(MAX_CHARACTER_NAME_LENGTH + 1),
+        tagline: "ひとこと",
+      }),
+    ).toBeUndefined()
+    expect(
+      parseClientCommand({
+        type: "set-profile",
+        commandId: "c-1",
+        pack: "fictional",
+        name: "架空",
+        tagline: "あ".repeat(MAX_CHARACTER_TAGLINE_LENGTH + 1),
+      }),
+    ).toBeUndefined()
+    expect(
+      parseClientCommand({
+        type: "set-profile",
+        commandId: "c-1",
+        pack: "../escape",
+        name: "架空",
+        tagline: "ひとこと",
+      }),
+    ).toBeUndefined()
   })
 
   it("switch-session を受け付ける（空のIDは弾く）", () => {
@@ -335,7 +419,7 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     expect(parseClientCommand({ type: "switch-session", commandId: "c-3" })).toBeUndefined()
   })
 
-  it("isCharacterEditCommand が見た目の5つだけを true にする", () => {
+  it("isCharacterEditCommand が見た目の編集とプロフィールの編集だけを true にする", () => {
     const edits = [
       {
         type: "set-portrait",
@@ -354,6 +438,13 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       },
       { type: "set-accent", commandId: "c-7", pack: "fictional", target: "work", color: "#f2b0a0" },
       { type: "clear-chat-accent", commandId: "c-8", pack: "fictional" },
+      {
+        type: "set-profile",
+        commandId: "c-9",
+        pack: "fictional",
+        name: "架空",
+        tagline: "ひとこと",
+      },
     ]
     const others = [
       { type: "interrupt", commandId: "c-4" },
@@ -476,9 +567,11 @@ describe("parseClientCommand（落とす形）", () => {
       parseClientCommand({
         type: "create-character",
         commandId: "c-1",
-        name: "fictional-2",
+        id: "fictional-2",
+        name: "",
         portraits: {},
         accent: "#b8c7ff",
+        chatAccent: "#eaa77a",
       }),
     ).toBeUndefined()
   })
@@ -488,8 +581,23 @@ describe("parseClientCommand（落とす形）", () => {
       parseClientCommand({
         type: "create-character",
         commandId: "c-1",
-        name: "fictional-2",
+        id: "fictional-2",
+        name: "",
         portraits: { default: "data:text/plain;base64,AAAA" },
+        accent: "#b8c7ff",
+        chatAccent: "#eaa77a",
+      }),
+    ).toBeUndefined()
+  })
+
+  it("雑談の差し色が欠けた create-character は undefined（両方 required）", () => {
+    expect(
+      parseClientCommand({
+        type: "create-character",
+        commandId: "c-1",
+        id: "fictional-2",
+        name: "",
+        portraits: { default: TINY_PNG_DATA_URL },
         accent: "#b8c7ff",
       }),
     ).toBeUndefined()

@@ -129,7 +129,18 @@ export function useCharacterCreate(): CharacterCreateModel {
       return
     }
 
-    dispatch({ type: "create-character", name, portraits: { default: defaultImage }, accent })
+    // この画面の1つの欄はまだ id を打つだけ（表示名の欄はまだ無い）。**表示名は空で送り、
+    // 書き込む側に id へ落としてもらう**（`definitionWithName`）。雑談の差し色もまだ選ぶ口が
+    // 無いので、仕事の差し色と同じ値を送る（境界は両方 required だが、見た目は変えない。
+    // `docs/design.md` 7.1）。
+    dispatch({
+      type: "create-character",
+      id: name,
+      name: "",
+      portraits: { default: defaultImage },
+      accent,
+      chatAccent: accent,
+    })
     setSentName(name)
   }
 

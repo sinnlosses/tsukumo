@@ -154,11 +154,13 @@ describe("CharacterCreate", () => {
     expect(calls).toEqual([
       {
         type: "create-character",
-        name: "fictional-2",
+        id: "fictional-2",
+        name: "",
         portraits: {
           default: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
         },
         accent: "#22ff88",
+        chatAccent: "#22ff88",
       },
     ])
   })
