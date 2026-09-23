@@ -39,9 +39,9 @@
     "dependencies": [],
     "summary": "/usage などローカルのスラッシュコマンドの出力を、メインビューに出す",
     "task": "## 背景\n\n入力欄の `/` 補完から Claude Code のローカルコマンド（`/usage` `/cost` `/status` `/context` など）を選んで送れるが、その出力は画面に出ない。SDK は出力を `system` の **`local_command_output`**（`content: string`。`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（0.3.280） の `SDKLocalCommandOutputMessage`、「Displayed as assistant-style text in the transcript」）で流すが、`src/server/core/sdk-message.ts` の `toSessionEvents` は `system` のうち `init` / `commands_changed` / `compact_boundary` しか見ず、これを捨てる。`/model` だけは `modelChangeEvents` が別の経路で拾っている。\n\nTUI を使わない tsukumo では、打ったコマンドの結果を見る場所が画面しかない。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの\n\n## やること\n\n1. 疑似でなく本物の claude（`bun run start`）で `/usage` か `/cost` を1回送り、`local_command_output` が届くか、届く順（`result` の前か後か）を確かめる。**届かなければ、届く経路（`user` メッセージの `<local-command-stdout>` など）を探し、どれも無ければ理由を `evidence` に書いて閉じる**\n2. 届くなら `SessionEvent` を1つ足し、メインビューのそのターンに、レポートと見分けられる形（等幅の塊など）で出す。`docs/requirements.md` 4.1 の表と 4.2 のメインビューの項に書く。`PROTOCOL_VERSION` を上げる\n3. 疑似セッションに場面を足す\n\n## 完了条件\n\n- `local_command_output`（または確かめた経路）を `SessionEvent` にするテストがある\n- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\\n### ` のように改行から）、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- 会話の中身（依頼・出力・ファイルの中身）をログ・ディスク・テストのフィクスチャに出さない（`docs/coding-standards.md`「会話内容の扱い」）\n- 本物の claude を起こすのは手順1の確認の1回だけ。確かめた結果（届いたか・順番）だけを `evidence` に書き、出力の中身は書かない",
-    "status": "todo",
+    "status": "done",
     "passes": false,
-    "evidence": ""
+    "evidence": "着手しない判断（2026-09-23、ユーザー判断。課題感が生まれたらやる）。本文の前提「出力が画面に出ない」は実物と違い、/usage の出力はメインビューに出ている（sdk-message.ts は local_command_output を捨てているので、別の経路で本文として届いていると読んでいる。経路は未確認）。残る不便は改行が潰れてレポートと見分けがつかないことだけで、打つのはたまにで数字は読めるので見送った。"
   },
   {
     "id": "T-448",
