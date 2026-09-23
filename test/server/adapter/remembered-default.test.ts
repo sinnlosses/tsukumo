@@ -106,7 +106,7 @@ describe("writeRememberedCharacter", () => {
   })
 })
 
-// 新しいセッションの既定（モデル・許可モード。docs/design.md 13.6）。**壊れた state.json でも
+// 新しいセッションの既定（モデル・許可モード。docs/screen-design.md 13.6）。**壊れた state.json でも
 // 起動を止めない**ので、読めないときは同梱の既定へ畳む。
 describe("readRememberedSessionDefault", () => {
   it("ファイルが無いときは同梱の既定（Opus・auto）", () => {

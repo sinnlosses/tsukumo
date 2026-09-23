@@ -115,7 +115,7 @@ describe("ChatView", () => {
     renderChatView({ records: [] })
 
     expect(document.querySelectorAll("[data-speaker]")).toHaveLength(0)
-    // **最初の一言を促すのはこの文面**（促す操作子は立ち絵へ移った。docs/design.md 13.7）。
+    // **最初の一言を促すのはこの文面**（促す操作子は立ち絵へ移った。docs/screen-design.md 13.7）。
     expect(
       screen.getByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
     ).toBeTruthy()
@@ -285,7 +285,7 @@ describe("ChatView のセリフを遡る", () => {
   it("何も押していなければ、最新のセリフに印が付いている", () => {
     renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
 
-    // 印は「立ち絵がいま従っている行」を指す（docs/design.md 13.7）。押す前から最新に付く。
+    // 印は「立ち絵がいま従っている行」を指す（docs/screen-design.md 13.7）。押す前から最新に付く。
     expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([
       null,
       "false",
@@ -514,7 +514,7 @@ describe("ChatView のセリフを遡る", () => {
 })
 
 describe("ChatView の末尾のセリフが育つ", () => {
-  /** 育っている行（`components/chat-speech.tsx` が出す印。docs/design.md 13.7「末尾のセリフは育つ」）。 */
+  /** 育っている行（`components/chat-speech.tsx` が出す印。docs/screen-design.md 13.7「末尾のセリフは育つ」）。 */
   function growingEntry(): HTMLElement {
     const entry = document.querySelector("[data-growing]")
     if (!(entry instanceof HTMLElement)) {
@@ -631,7 +631,7 @@ describe("ChatView の末尾のセリフが育つ", () => {
 })
 
 describe("ChatView の「...」（返事を待つ間）", () => {
-  /** 「...」の行（`components/chat-typing.tsx`。docs/design.md 13.7）。 */
+  /** 「...」の行（`components/chat-typing.tsx`。docs/screen-design.md 13.7）。 */
   function typingEntry(): Element | null {
     return document.querySelector('[data-speaker="typing"]')
   }
@@ -735,7 +735,7 @@ describe("ChatView のホバー", () => {
 })
 
 describe("ChatView の立ち絵をつつく", () => {
-  /** 載せたときに出る案内の字（`components/nudge-portrait.tsx` が持つ。docs/design.md 13.7）。 */
+  /** 載せたときに出る案内の字（`components/nudge-portrait.tsx` が持つ。docs/screen-design.md 13.7）。 */
   const NUDGE_HINT = "話しかけてもらう"
 
   /**
@@ -778,7 +778,7 @@ describe("ChatView の立ち絵をつつく", () => {
 
     fireEvent.click(portraitButton())
 
-    // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/design.md 13.7）。
+    // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/screen-design.md 13.7）。
     expect(logEntries()).toHaveLength(before)
   })
 
@@ -810,7 +810,7 @@ describe("ChatView の立ち絵をつつく", () => {
     )
 
     // **`disabled` にはしない**（キーボードで辿り着ける道ごと消える）。押せないことは
-    // `aria-disabled` で伝え、**案内は出さない**（`docs/design.md` 13.7）。
+    // `aria-disabled` で伝え、**案内は出さない**（`docs/screen-design.md` 13.7）。
     const button = blockedPortraitButton()
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(screen.queryByText(NUDGE_HINT)).toBe(null)

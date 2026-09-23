@@ -103,7 +103,7 @@ export type SessionManagerOptions = {
    *
    * `request.selection` は**これから起こすパックの決め方**で、起動時は「初期パック」、
    * `switch-character` は「画面から選ばれた名前」、`set-chat-mode` は「いま出しているパックの
-   * まま」の3つ（docs/design.md 7章・13.6）。知らない名前のときに何を起こすかも、名前を
+   * まま」の3つ（docs/design.md 7章・docs/screen-design.md 13.6）。知らない名前のときに何を起こすかも、名前を
    * 覚えるかどうかも呼び出し側が決める。
    * `request.chat` は雑談モードで起こすか（`docs/requirements.md` 4.9）。
    * `request.resume` は**これから起こすセッションの決め方**で、印から探すか、画面から選ばれた
@@ -148,7 +148,7 @@ export type SessionManagerOptions = {
   /**
    * 新しいセッションの既定（モデル・許可モード）を覚え、**画面へ流す
    * `session-default-changed` イベントを返す**（覚え先は `~/.tsukumo/state.json`。
-   * `docs/design.md` 13.6）。
+   * `docs/screen-design.md` 13.6）。
    *
    * **いま動いているセッションには効かない**（効くのは次に起こすときから）。だから駆動には
    * 渡らず、セッションを起こし直しもしない。**書けたかどうかに関わらず、返すイベントは常に1つ**
@@ -442,7 +442,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   // **起動時は覚えない** — その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の
-  // 初期値として残らないように（docs/design.md 13.6）。
+  // 初期値として残らないように（docs/screen-design.md 13.6）。
   let driver = start({ selection: { by: "initial" }, chat: undefined, resume: { by: "latest" } })
 
   /**
@@ -519,7 +519,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         }
         // **雑談かどうかは切り替えをまたいで保つ**（パックを変えただけで仕事へ戻らない）。
         // 画面から名前が届いた唯一の口なので、**ここで選んだパックだけが次の起動の初期値に
-        // なる**（docs/design.md 13.6）。
+        // なる**（docs/screen-design.md 13.6）。
         return restart({
           selection: { by: "name", name: command.name },
           chat: state.chatMode,
@@ -528,7 +528,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
       if (command.type === "set-chat-mode") {
         // 起こし直しなので `switch-character` と同じ条件で弾く（理由の文面だけは、何が
-        // 切り替わらなかったかで分ける。docs/design.md 13.9「動き方の操作子」）。
+        // 切り替わらなかったかで分ける。docs/screen-design.md 13.9「動き方の操作子」）。
         if (state.turn.kind === "running") {
           return Promise.resolve({
             ok: false,
@@ -537,7 +537,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         }
         // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
         // とは決めていない）。**名前では渡さない** — 渡すと「画面から選ばれた名前」と
-        // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（docs/design.md 13.6）。
+        // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（docs/screen-design.md 13.6）。
         return restart({
           selection: { by: "current" },
           chat: command.chat,
@@ -562,7 +562,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       if (command.type === "nudge") {
         // 画面のボタンも同じ2つの条件で塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が
         // 間に合わなかったときの取りこぼし対策。`switch-character` と同じ立場）。
-        // **雑談のときだけ**（`docs/design.md` 13.7）——仕事のメインビューは記録を積んで
+        // **雑談のときだけ**（`docs/screen-design.md` 13.7）——仕事のメインビューは記録を積んで
         // レポートを出す面なので、キャラクターから始まるターンを混ぜない。
         if (!state.chatMode) {
           return Promise.resolve({ ok: false, reason: FRAME_ERROR_REASON.nudgeOutsideChat })
@@ -693,7 +693,7 @@ async function dispatchToDriver(
 }
 
 /**
- * キャラクターから話しかけてもらう（`docs/design.md` 13.7）。**文面は core が持ち**
+ * キャラクターから話しかけてもらう（`docs/screen-design.md` 13.7）。**文面は core が持ち**
  * （{@link CHAT_NUDGE_PROMPT}）、**記録に残さない口**（`promptWithoutRecord`）で渡すので、
  * 利用者が打っていない一言はログにも記録にも雑談の会話のアーカイブにも並ばない。
  *

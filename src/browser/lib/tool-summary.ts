@@ -31,7 +31,7 @@ const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
 /**
  * ツール名＋入力を、画面に出してよい1行の要約にする。入力がオブジェクトの形でないときは空文字。
  * **切り詰めるだけ**（どの欄を読むかは {@link toolInputText} の1箇所で決める。
- * docs/design.md 13.9「いまの作業」）。
+ * docs/screen-design.md 13.9「いまの作業」）。
  */
 export function summarizeToolInput(toolName: string, input: unknown): string {
   return truncateToolSummary(toolInputText(toolName, input))
@@ -40,7 +40,7 @@ export function summarizeToolInput(toolName: string, input: unknown): string {
 /**
  * ツール名＋入力から、要約と同じ欄（Bash は `command`、Edit / Write / Read は `file_path`）の値を
  * **切り詰めずに**返す。帯の「いまの作業」が開く一覧の「実行中の手順の全文」に使う
- * （docs/design.md 13.9）。入力がオブジェクトの形でない・欄が見つからないときは空文字。
+ * （docs/screen-design.md 13.9）。入力がオブジェクトの形でない・欄が見つからないときは空文字。
  */
 export function toolInputText(toolName: string, input: unknown): string {
   if (!isPlainObject(input)) {

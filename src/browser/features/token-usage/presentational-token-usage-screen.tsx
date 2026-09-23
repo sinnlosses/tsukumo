@@ -293,7 +293,7 @@ type BarredValueProps = {
  * 数の右に横棒を添える（並べ順を決めている列だけに使う。`period-usage-card.tsx` の縦棒と
  * 同じ「その列の最大に対する割合」）。**塗りは `--ink-quiet`**——期間の合計の棒
  * （`.usage-card-bar`）と同じ色で、意味を固定した新しい色を増やさない
- * （`docs/design.md` 13.1 原則5）。
+ * （`docs/screen-design.md` 13.1 原則5）。
  */
 function BarredValue(props: BarredValueProps): ReactElement {
   return (

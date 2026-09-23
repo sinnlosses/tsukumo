@@ -43,7 +43,7 @@
   color: color-mix(in srgb, var(--accent) 85%, var(--ink));
 }
 /* チップを押す口。地は `.task-count-chip` に任せ、ここはボタンとしての振る舞いだけを足す。
-   **選んでいることを色だけで示さない**（docs/design.md 13.1 原則1）ので、選んだときは枠線と
+   **選んでいることを色だけで示さない**（docs/screen-design.md 13.1 原則1）ので、選んだときは枠線と
    太字を足す——進行中のチップは元から差し色の地なので、色の変化だけでは選択と区別できない。 */
 .task-count-chip-button {
   display: inline-flex;
@@ -81,7 +81,7 @@
   padding: 0.75rem 0.875rem;
   border-radius: 0.625rem;
   background: var(--surface-accent);
-  /* 差し色寄りの枠。`main-view.module.css` の見出しの罫線と同じ配合（docs/design.md 13.2
+  /* 差し色寄りの枠。`main-view.module.css` の見出しの罫線と同じ配合（docs/screen-design.md 13.2
      「素の accent ではなく rule に6割混ぜる」）。 */
   border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
 }
@@ -94,7 +94,7 @@
   align-items: center;
   gap: 0.5rem;
 }
-/* 「進行中」の札。色だけでなく字でも状態を伝える（docs/design.md 13.1 原則1）。高さ・角丸は
+/* 「進行中」の札。色だけでなく字でも状態を伝える（docs/screen-design.md 13.1 原則1）。高さ・角丸は
    件数のチップと揃える（角丸 11px = 高さ 22px の半分でカプセル型になる）。 */
 .task-running-badge {
   display: inline-flex;
@@ -169,7 +169,7 @@
   text-overflow: ellipsis;
   font-size: var(--font-secondary);
 }
-/* タスクのIDは機械が付けた名前なので等幅（docs/design.md 13.1 原則3）。書体そのものの定義は
+/* タスクのIDは機械が付けた名前なので等幅（docs/screen-design.md 13.1 原則3）。書体そのものの定義は
    `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。summary（13px）より
    一段小さい 11px にして、印・チップ・札と同じ段に揃える。
    **`flex: none` と `white-space: nowrap` が要る**——body の `overflow-wrap: anywhere`
@@ -228,7 +228,7 @@
 }
 /* 表の status 列の文字色（`components/task-row.tsx` が `taskStatusClass` で選ぶ）。--state-* は
    ここでは使わない（意味が固定されている色なので、todo / doing に宛てると ok / warn / ng / ask
-   の意味が動く。docs/design.md 13.1 原則5）。**区画の一覧はこの色クラスを使わず、印の形
+   の意味が動く。docs/screen-design.md 13.1 原則5）。**区画の一覧はこの色クラスを使わず、印の形
    （`.task-mark-*`）で区別する**（2026-09-23 決定。バッジは表だけの見た目になった）。
    todo は既定の文字色のまま。**class は状態の印**として付ける（下の doing / done / other と対）。 */
 .task-status-todo {
@@ -245,7 +245,7 @@
 }
 
 /* タスク一覧の表（`src/browser/features/task-board/task-board.tsx`。`<dialog>` を `showModal()` で開く）。
-   一時的に重なるものなので常設の枠を増やさない（docs/design.md 13.1 原則2）。
+   一時的に重なるものなので常設の枠を増やさない（docs/screen-design.md 13.1 原則2）。
    `showModal()` で開いている間はブラウザが top layer に載せるので、サイドバー領域の
    overflow には切り取られない。 */
 .task-board {
@@ -301,7 +301,7 @@
 }
 .task-board-table {
   /* 狭い画面では器のほうが足りなくなるので、**表は器より広がってよい**（.task-board-scroll が
-     その表だけ横スクロールさせる。docs/design.md 13.3）。width: 100% にすると要約の列が
+     その表だけ横スクロールさせる。docs/screen-design.md 13.3）。width: 100% にすると要約の列が
      1〜2字ずつの折り返しにつぶれ、表が器に収まってしまって横スクロールも働かない。 */
   min-width: 100%;
   border-collapse: collapse;
@@ -332,7 +332,7 @@
   vertical-align: top;
 }
 /* ID・status・難易度・loopable は機械が付けた名前なので、折り返さず1行に置く
-   （docs/design.md 13.1 原則3）。 */
+   （docs/screen-design.md 13.1 原則3）。 */
 .task-board-table tbody th,
 .task-board-table td:nth-child(2),
 .task-board-table td:nth-child(3),
@@ -354,7 +354,7 @@
 .task-board-row.task-done {
   color: var(--ink-quiet);
 }
-/* 着手可否。**意味を固定した色**（docs/design.md 13.1 原則5）を使うが、色だけで伝えないよう
+/* 着手可否。**意味を固定した色**（docs/screen-design.md 13.1 原則5）を使うが、色だけで伝えないよう
    文字（READY / 待ち: …）も出す。 */
 .task-ready {
   color: var(--state-ok);
@@ -365,7 +365,7 @@
 
 /* タスクを実行する確認（`components/task-run-confirm.tsx`）。**表の上に重ねて開く**——
    `showModal()` は top layer に積むので、下の表より必ず上に出る。常設の枠ではないので
-   ここでも枠を増やさない（docs/design.md 13.1 原則2）。 */
+   ここでも枠を増やさない（docs/screen-design.md 13.1 原則2）。 */
 .task-run-confirm {
   box-sizing: border-box;
   width: min(28rem, calc(100vw - 2rem));
@@ -426,7 +426,7 @@
    （docs/requirements.md 4.7）。390px の器に7列の表を入れると 691px に広がり、いちばん
    知りたい要約の列が丸ごと画面の外へ出てしまう（実測）。組み替えるのは
    ここだけで、`task-board.tsx` は幅を測らず表のまま書く。
-   **レポートの中の表（.table-scroll。docs/design.md 13.3「表は器より広がってよい」）は
+   **レポートの中の表（.table-scroll。docs/screen-design.md 13.3「表は器より広がってよい」）は
    この対象ではない。** あちらは中身が何列になるか分からない一般の表で、こちらは列と
    意味が分かっている一覧なので、狭いときの形をこちらで決められる。 */
 @media (max-width: 760px) {

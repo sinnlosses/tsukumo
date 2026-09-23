@@ -105,7 +105,7 @@ export type SessionEvent =
       readonly images: readonly RecordedPromptImage[]
     }
   /**
-   * **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。`docs/design.md` 13.7）。
+   * **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。`docs/screen-design.md` 13.7）。
    * `request` と同じくターンの境目になるが、**文面を持たない** — 送った一言はログにも記録にも
    * 残さないと決めたので、イベントにも載せない。
    *
@@ -271,7 +271,7 @@ export type SessionEvent =
    */
   | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
   /**
-   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/design.md` 13.7）。
+   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
    * **雑談で起こしたときと、圧縮で要約の写しが新しくなったとき**に流れる
    * （`src/server/core/session-launch.ts` と `src/server/adapter/sdk-driver.ts`）。
    *
@@ -281,7 +281,7 @@ export type SessionEvent =
    */
   | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }
   /**
-   * 雑談のサイドバーの「覚えていること」に出す一覧（`docs/design.md` 7.1・13.7）。
+   * 雑談のサイドバーの「覚えていること」に出す一覧（`docs/design.md` 7.1・`docs/screen-design.md` 13.7）。
    * **雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の
    * `forget-remembered-line` のどれかで `persona.md` の `## 覚えたこと` が変わったとき**に流れる
    * （`src/server/core/session-launch.ts` と `src/server/adapter/persona-memory.ts`）。
@@ -292,7 +292,7 @@ export type SessionEvent =
    */
   | { readonly kind: "remembered-lines-changed"; readonly lines: readonly string[] }
   /**
-   * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/design.md` 13.6）。
+   * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/screen-design.md` 13.6）。
    * **駆動を起こしたときと、起こし直したときの1回ずつ**（`character-changed` と同じ契機）と、
    * **歯車から `set-session-default` で覚え直したとき**に流れる。
    *

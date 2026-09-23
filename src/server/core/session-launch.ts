@@ -29,7 +29,7 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
    */
   readonly chat: boolean
   /**
-   * このセッションを起こす既定（モデル・許可モード。`docs/design.md` 13.6）。**読むのは
+   * このセッションを起こす既定（モデル・許可モード。`docs/screen-design.md` 13.6）。**読むのは
    * 起こすたびに1回**（{@link SessionLaunchPorts.readSessionDefault}）で、同じ値が画面へ流す
    * `session-default-changed` にも渡る（画面に出る既定と、実際に起こした既定がずれない）。
    */
@@ -81,7 +81,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly rememberPack: (pack: Pack) => void
   /**
-   * 覚えた「新しいセッションの既定」を読む（`docs/design.md` 13.6）。**覚えた値が無い・
+   * 覚えた「新しいセッションの既定」を読む（`docs/screen-design.md` 13.6）。**覚えた値が無い・
    * 読めないときは同梱の既定へ畳んだあとの値**が返るので、ここから先に「無い」は出ない。
    */
   readonly readSessionDefault: () => SessionDefault
@@ -154,7 +154,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const pack = ports.choosePack(selection)
     // **覚えるのは画面から名前が届いたときだけ。** 起動時やモードの切り替えでも覚えると、
     // その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の初期値として残ってしまう
-    // （docs/design.md 13.6）。
+    // （docs/screen-design.md 13.6）。
     if (selection.by === "name") {
       ports.rememberPack(pack)
     }
@@ -162,7 +162,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // **起こし直すと状態が初期値へ戻る**ので、雑談かどうかもここで流し直す（画面は
     // `chat-mode-changed` でしか知れない。`docs/requirements.md` 4.9）。
     onEvent({ kind: "chat-mode-changed", chat })
-    // 最近の話題も同じ理由で流し直す（`docs/design.md` 13.7）。**仕事のときは写しを読まない**
+    // 最近の話題も同じ理由で流し直す（`docs/screen-design.md` 13.7）。**仕事のときは写しを読まない**
     // （起こし直しで状態が初期値の空へ戻っているので、流さなくても空のまま）。
     if (chat) {
       onEvent({ kind: "chat-topics-changed", topics: ports.readChatTopics(pack) })
@@ -170,7 +170,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
       // （仕事の side では雑談のサイドバーごと出ないので、状態が初期値の空のままでよい）。
       onEvent({ kind: "remembered-lines-changed", lines: ports.readRememberedLines(pack) })
     }
-    // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値。`docs/design.md` 13.6）。
+    // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値。`docs/screen-design.md` 13.6）。
     // **読むのはここ1回だけ**で、同じ値をこれから起こす駆動にも渡す。
     const sessionDefault = ports.readSessionDefault()
     onEvent({ kind: "session-default-changed", sessionDefault })

@@ -1,6 +1,6 @@
 // 「依頼の手順」（帯の「いまの作業」の札を押すと開く一覧。docs/glossary.md「依頼の手順」）を、
 // **確定した記録（`SessionRecord`）から導く**純粋関数だけを置く（姿から導くだけのものなので
-// `session-state.ts` には置かない。`shared/turn-speech.ts` と同じ置き方。docs/design.md 13.9）。
+// `session-state.ts` には置かない。`shared/turn-speech.ts` と同じ置き方。docs/screen-design.md 13.9）。
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
@@ -8,7 +8,7 @@ import { type SessionRecord } from "./session-state.ts"
 
 /**
  * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身
- * （`<details>` で開いて読む。docs/design.md 13.9）。
+ * （`<details>` で開いて読む。docs/screen-design.md 13.9）。
  */
 export type TurnStepStatus =
   | { readonly kind: "running" }
@@ -40,7 +40,7 @@ export type TurnStepList =
 
 /**
  * 記録から、**最後の `request` より後の `tool` の記録**を拾って、依頼の手順を古い→新しいの順で
- * 返す（docs/design.md 13.9「いまの作業」）。**範囲は依頼1つ**——「直近の何件」ではない。
+ * 返す（docs/screen-design.md 13.9「いまの作業」）。**範囲は依頼1つ**——「直近の何件」ではない。
  *
  * - **依頼が一度も無ければ `{ kind: "no-request" }`**。0件の配列（依頼はあったが
  *   まだツールを使っていない）とは型で区別する

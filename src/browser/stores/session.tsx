@@ -210,13 +210,13 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
     }
   }, [store])
 
-  // パックが差す `accent`（docs/design.md 13.2 / 13.5）を、`:root` の既定値の上から
+  // パックが差す `accent`（docs/screen-design.md 13.2 / 13.5）を、`:root` の既定値の上から
   // `document.documentElement` に差し替える。`<Layout>` の外まで届く唯一の場所がここ
   // （`document.title` を差し替える `src/browser/features/dispatch/dispatch.tsx` と同じ、ホスト側の値を
   // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
   // 手口で `src/browser/lib/appearance-color.ts` が持つ）。届いていない・パックに `accent`
   // が無いときは既定値（theme.css の `:root`）に戻す。**雑談中はパックが `chatAccent` を持てば
-  // そちらに切り替わる**（`effectiveAccent`。docs/design.md 13.2「雑談中は」/ 13.7）。
+  // そちらに切り替わる**（`effectiveAccent`。docs/screen-design.md 13.2「雑談中は」/ 13.7）。
   //
   // **Context の外なので store を直に読む**（自分が配っている Context は自分では読めない）。
   const accent = useStoreSelector(store, (session) =>
@@ -230,7 +230,7 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
     }
   }, [accent])
 
-  // パックが差す背景（docs/design.md 13.8）も同じ手口で流す。**敷くのは枠を持たない領域**
+  // パックが差す背景（docs/screen-design.md 13.8）も同じ手口で流す。**敷くのは枠を持たない領域**
   // （キャラビューと、雑談中のメインビュー）で、どう敷くか（覆いを1枚重ねる・下端で合わせる）は
   // CSS（`src/browser/features/layout/layout.module.css` の `.layout-ground`）が持つ。ここは
   // 素材の URL と覆いの濃さを渡すだけ。**素材の名前は `character.json` 由来の外部の値**だが、

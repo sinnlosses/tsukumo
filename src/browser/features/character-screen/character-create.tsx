@@ -1,5 +1,5 @@
 // **新しいキャラクターパックを作る画面**（<CharacterCreate>。`#character/new`。`docs/design.md`
-// 7.1 / 13.6）の**入口**。キャラクター画面から入り、左上の「← キャラクターへ戻る」で戻る。
+// 7.1 / `docs/screen-design.md` 13.6）の**入口**。キャラクター画面から入り、左上の「← キャラクターへ戻る」で戻る。
 // 作りかけの値・押せるか・作る／切り替えるの送り先は `hooks/use-character-create.ts`、見た目は
 // `presentational-character-create.tsx` が持つ（docs/design.md 2章「機能の中を分ける」の
 // container / presenter）。

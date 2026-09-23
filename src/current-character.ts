@@ -106,7 +106,7 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
 
   // これから起こすパックを決め方から引く。**「画面から選ばれた名前」と「いま出しているパックの
   // まま」を分けて受ける**ので、モードを切り替えただけの起こし直しが名前として届かない
-  // （docs/design.md 13.6）。
+  // （docs/screen-design.md 13.6）。
   const chosen = (selection: CharacterSelection): CharacterPack => {
     switch (selection.by) {
       case "initial":

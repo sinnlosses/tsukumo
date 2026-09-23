@@ -1,4 +1,4 @@
-/* キャラクター画面と作る画面（`src/browser/features/character-screen/`。docs/design.md 13.6）。
+/* キャラクター画面と作る画面（`src/browser/features/character-screen/`。docs/screen-design.md 13.6）。
    **会話の画面と入れ替わる**（重ねない）ので、ここは1枚のページとして縦に流す — 4領域の
    grid も仕切りも持たない。**立ち絵の並びが主役**で、残りは静かな行に保つ。
    狭い画面（760px 以下）用の規則は書かない（並びが折り返すだけ）。 */
@@ -11,7 +11,7 @@
   padding: 0 0.25rem 2rem;
 }
 /* 戻る口の行。**いま使うのは作る画面だけ**（キャラクター画面の「← 会話へ戻る」と答え待ちの
-   印は、全画面の最上部の帯へ移った。docs/design.md 13.9）。 */
+   印は、全画面の最上部の帯へ移った。docs/screen-design.md 13.9）。 */
 .character-screen-bar {
   display: flex;
   align-items: baseline;

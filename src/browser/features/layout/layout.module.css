@@ -13,7 +13,7 @@
   grid-template-columns: 1fr;
   grid-template-rows: var(--layout-row-top, 65fr) auto var(--layout-row-bottom, 35fr);
   gap: 0.5rem;
-  /* 最上部の帯（画面のナビ。docs/design.md 13.9）の外寸（上端の線＋帯の地＋下の罫線）とその下の
+  /* 最上部の帯（画面のナビ。docs/screen-design.md 13.9）の外寸（上端の線＋帯の地＋下の罫線）とその下の
      隙間、body の下の padding を差し引いて、grid 自体は残りの高さぴったりにする。**上の padding は
      引かない**——帯がその中へはみ出して画面の上端に付くため。**帯は別の機能
      （features/screen-nav/）が描く**ので、ここは奪われる高さ（theme.css の変数）だけを読む。 */
@@ -34,7 +34,7 @@
 .layout-row-bottom {
   grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
 }
-/* キャラビューを畳んだとき（雑談モード。立ち絵が上段へ移る。docs/design.md 13.7）。
+/* キャラビューを畳んだとき（雑談モード。立ち絵が上段へ移る。docs/screen-design.md 13.7）。
    **領域と仕切りは <Layout> が描かない**ので、ここは残った入力欄に全幅を渡すだけ。 */
 .layout-row-bottom[data-collapse-character="true"] {
   grid-template-columns: 1fr;
@@ -58,7 +58,7 @@
   overflow-y: auto;
 }
 /* 枠も地の色も持たず、`ground` の上に直接置く領域。**キャラビューは常にこちら**（付喪神は
-   器物に宿るのであって、ウィジェットの中に座っているのではない。docs/design.md 13.1 原則2 /
+   器物に宿るのであって、ウィジェットの中に座っているのではない。docs/screen-design.md 13.1 原則2 /
    13.4）で、**雑談中のメインビューもこちらになる**（立ち絵と会話がそこへ移り、畳んだキャラビューと
    同じ立場になるため。13.7 / 13.8）。**2つの領域が同じ class を共有する**のは、
    下の覆いの式を1箇所にしか書かないため。
@@ -186,7 +186,7 @@
   font-size: var(--font-secondary);
   cursor: pointer;
 }
-/* 選ばれたタブは accent を出してよい場所（docs/design.md 13.1 原則1）。**色だけに頼らない**
+/* 選ばれたタブは accent を出してよい場所（docs/screen-design.md 13.1 原則1）。**色だけに頼らない**
    ので、地の濃さ（--surface-accent）と文字の濃さも一緒に変える。 */
 .layout-tab.is-active {
   border-color: var(--accent);
@@ -194,7 +194,7 @@
   color: var(--ink);
 }
 
-/* 領域の比率を既定に戻すピル（`<Layout>` が直接描く。docs/design.md 13.6）。比率が既定と
+/* 領域の比率を既定に戻すピル（`<Layout>` が直接描く。docs/screen-design.md 13.6）。比率が既定と
    違うときだけ出る。**上下の仕切りの右端**に絵＋字で置く。
    仕切りの行は 0.6rem しかないので、口は上下の隙間（grid の gap）へはみ出して仕切りの線の高さに
    縦の中央を合わせる。右端は下段の領域の右端（.layout-row-bottom）に揃える。 */
@@ -236,7 +236,7 @@
     height: calc(100dvh - 2 * var(--page-padding));
   }
   /* **狭い画面では帯が段を増やさない**（画面のナビは右端の「≡」に畳まれてこのタブ帯に
-     重なる。docs/design.md 13.9）ので、grid の高さは画面のぶんそのまま。 */
+     重なる。docs/screen-design.md 13.9）ので、grid の高さは画面のぶんそのまま。 */
   .layout-tabs {
     display: flex;
     /* 右端の 44px（+ タブどうしの隙間）は「≡」の席として空ける。重なっているのは
