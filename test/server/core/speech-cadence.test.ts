@@ -25,6 +25,12 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("5〜10回")
   })
 
+  it("締めの speak はレポートの直前に置く（ターンは本文で終える）", () => {
+    // `speak` で終えると本体が英語の催促を差し込むので、締めはレポートより前に来る。
+    expect(SPEECH_CADENCE_PROMPT).toContain("レポートを書く直前に締めの1回")
+    expect(SPEECH_CADENCE_PROMPT).not.toContain("完了の報告")
+  })
+
   it("委譲中の間合い（背景委譲・合図の形式）を持ち、append に載る", () => {
     // 文面の全文は写さず、決めた4点（背景委譲・間隔・合図の形式）が入っているかだけを見る
     // （フォアグラウンドの委譲は吹き出しを数分止める）。
