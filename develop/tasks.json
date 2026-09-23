@@ -39,9 +39,9 @@
     "dependencies": [],
     "summary": "レポートの記法の語彙を shared に1つ置き、プロンプトと画面が引く",
     "task": "## 背景\n\nレポートの記法（`<div class=\"note note-warn\">` などの印）の語彙が、サーバとブラウザに別々に書かれている:\n\n- `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（claude に教える文面。`note` / `note-warn` / `note-ng` / `note-memo` / `note-ask` / `note-favor` / `badge-ok` / `badge-warn` / `badge-ng` / `cols` / `card` / `stats` / `stat`）\n- `src/browser/features/main-view/markdown/notation.tsx` の class の対応表と、ラベルの対応表（`note-warn` → 「注意」など）\n- `src/browser/features/main-view/main-view.module.css` の `.report-note-*` / `.report-badge-*` / `.report-cols` / `.report-stats`\n\n印を1つ足す・名前を変えると、この3か所を揃えて直す必要があり、どれかを忘れても型もテストも落ちない（プロンプトに書いた印が画面で素の `div` になる）。\n\n## 決まっていること（蒸し返さない）\n\n- この課題は 2026-09-23 のリポジトリの棚卸し（ユーザー: 「共通化が不十分で同じ修正を複数箇所で行っているところ／ファイルが肥大化してきたところ／正典に従ってアーキテクチャやディレクトリ構成がキレイではなくなってしまっているところ（正典を書き換えたほうが良いと思える箇所）／処理の流れが把握しづらく至る所のファイルをつまみ食いするようなコードになっているところ」を洗い出してタスク化）で見つけたもの\n- 文面（`REPORT_NOTATION_PROMPT`）の中身は変えない。変えてよいのは、印の名前を語彙から差し込むことだけ\n\n## やること\n\n1. 3か所の印の集合を突き合わせ、差があれば `evidence` に書く（差は直さずユーザーに預けてよい）\n2. 印の名前と種別のラベルを `src/shared/` の1ファイルに置く（ファイル名は概念。`docs/glossary.md` に「レポートの記法」の語があればそれに合わせる）\n3. `notation.tsx` の対応表をその語彙から引く形にする。`report-notation.ts` の文面は、語彙の各印が文面に現れることをテストで確かめる形にする（文面をテンプレートで組み立て直すかは、読みやすさで決める）\n\n## 完了条件\n\n- 語彙の各印が `REPORT_NOTATION_PROMPT` に現れ、`notation.tsx` の対応表に載っていることを確かめるテストがある\n- 語彙から1つ消すとそのテストが落ちることを確かめ、`evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `report-notation.ts` の文面は毎ターン claude に入る。文字の差分が出ていないことを `git diff` で確かめる",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "3か所（REPORT_NOTATION_PROMPT・notation.tsx・report-notation.module.css）の印は14種で差は無かった。語彙を src/shared/report-notation.ts に置き、notation.tsx の対応表とラベルをそこから引く形にした。文面は無変更（変更前後で書き出して cmp が一致、git diff も0行）。 / 語彙の各印が文面に現れ・部品で解決され・CSS まで届くことを test/server/core/report-notation.test.ts で確認。語彙から note-ask を消すとこのテスト（Expected 14 / Received 13）と notation.test.tsx の「疑問」のラベルのテストが落ちた（戻して差分なし）。 / bun run check は 1791 pass / 0 fail（146ファイル）。"
   },
   {
     "id": "T-438",
