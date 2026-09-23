@@ -2,9 +2,8 @@
 // 歯車」）。ロジックは `hooks/use-settings.ts`、ここは受け取った値をそのまま置く器
 // （2章「機能の中を分ける」）。
 //
-// **区切りの見出し + ラベルと操作子の2列**（13.9 が指す設定のモックの形）。いまある群は
-// 「画面の色」と「新しいセッションの既定」の2つで、後続が同じ器へ「書き上げる演出の速さ」を
-// 足す。
+// **区切りの見出し + ラベルと操作子の2列**（13.9 が指す設定のモックの形）。群は「画面の色」・
+// 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
 //
 // **同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く**（「いまの作業」の札と同じ
 // 畳み方。どちらを出すかは CSS の `@media` が決める）。開閉の状態は1つの hook が持つので、
@@ -17,6 +16,7 @@ import { isSessionDefaultPermissionMode } from "../../../../shared/session-defau
 import { Select } from "../../../components/select.tsx"
 import { MODEL_LABELS } from "../../../lib/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../../../lib/permission-mode-label.ts"
+import { REVEAL_SPEED_LABELS } from "../../../lib/reveal-speed.ts"
 import { type ScreenNavSettings } from "../hooks/use-settings.ts"
 import styles from "../screen-nav.module.css"
 
@@ -40,6 +40,9 @@ const MODEL_OPTIONS = MODEL_LABELS.map(([value, label]) => ({ value, label }))
 const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
   isSessionDefaultPermissionMode(value),
 ).map(([value, label]) => ({ value, label }))
+
+/** 「書き上げる演出の速さ」の `<select>` に出す選択肢（`REVEAL_SPEED_LABELS` の並びのまま）。 */
+const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({ value, label }))
 
 export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactElement {
   const { settings, toggleRef } = props
@@ -106,6 +109,20 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               title={undefined}
               options={PERMISSION_MODE_OPTIONS}
               onChange={settings.sessionDefault.onChangePermissionMode}
+            />
+          </div>
+          <p className={styles["screen-nav-settings-heading"]}>書き上げる演出の速さ</p>
+          <div className={styles["screen-nav-settings-row"]}>
+            <label htmlFor={`${fieldId}-reveal-speed`}>速さ</label>
+            <Select
+              id={`${fieldId}-reveal-speed`}
+              ariaLabel="書き上げる演出の速さ"
+              className={styles["screen-nav-settings-select"] ?? ""}
+              value={settings.revealSpeed.value}
+              disabled={false}
+              title={undefined}
+              options={REVEAL_SPEED_OPTIONS}
+              onChange={settings.revealSpeed.onChange}
             />
           </div>
           <div className={styles["screen-nav-settings-row"]}>

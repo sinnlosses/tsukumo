@@ -25153,3 +25153,350 @@ bun run check 1425 pass/0 fail。テスト: layout.test.tsx（既定で無い/�
 
 - 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
 - `localStorage` はポートごとに分かれるので、既定の状態から見るなら新しいポートで開く
+
+## T-369
+
+**タスク**: 「ターンが走っているか」の読み取りを1つのフックに寄せる
+
+**difficulty**: haiku / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check: 1471 pass / 0 fail（120ファイル）。grep -rn 'state.turn.kind === "running")' src/browser が stores/session.tsx:96 の1件だけ。置き換えは useTurnRunning() への8ファイル（書いた時点の6件＋screen-nav の use-current-work.ts / use-screen-nav.ts）
+
+## 背景
+
+ターンの進み具合を `turnInProgress: boolean` から合併型 `turn` に変えたコミット（`1d8c101`）では、
+部品5つで同じ1行のセレクタを書き換えた。いまも browser に同じ1行が並んでいる:
+
+```ts
+useSessionSelector((session) => session.state.turn.kind === "running")
+```
+
+着手時の一覧: `grep -rn 'state.turn.kind === "running")' src/browser`（書いた時点で6ファイル:
+`sidebar/session-switch.tsx`・`sidebar/session-info.tsx`・`chat-view/hooks/use-chat-view.ts`・
+`dispatch/hooks/use-composer.ts`・`task-board/components/task-run-confirm.tsx`・
+`character-screen/hooks/use-character-create.ts`）
+
+## やること
+
+1. `src/browser/stores/session.tsx` の `useSessionSelector` の隣に `useTurnRunning(): boolean` を
+   足す（中身は上の1行）
+2. 上の一覧をすべて `useTurnRunning()` に置き換える
+3. **セレクタでないもの**（`stores/main-view-turn.ts` の関数、`dispatch/turn-status.tsx` の
+   `turn.kind` による分岐）と、`src/server/` / `src/shared/` の同じ式は触らない
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `grep -rn 'state.turn.kind === "running")' src/browser` が `stores/session.tsx` の1件だけになる
+
+## 注意
+
+- 振る舞いは変えない。テストを書き換える必要が出たら、置き換えを間違えている
+- 人に委ねる判断は残らないので `"Y"`
+
+## T-386
+
+**タスク**: 既定のモデル・許可モードを state.json に覚え、歯車から変えられるようにする
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-385 / **passes**: True
+
+**evidence**:
+
+state.json は1ファイルのまま remembered-character.ts を remembered-default.ts に改名して両方の欄を持たせた（書き込みがファイル丸ごとの置き換えなので、別モジュールから書くと後の書き込みが相手の欄を消す。欄ごとに別スキーマで読むので片方が壊れても他方は読める）。契約は set-session-default コマンド＋session-default-changed イベント＋SessionState.sessionDefault で chat-mode-changed と同じ「起こすたびに流し直す」形（読むのは session-launch の1回だけなので、出ている既定と実際に起こした既定がずれない）。bypassPermissions は SESSION_DEFAULT_PERMISSION_MODES を zod の enum に使って境界で落とす。TSUKUMO_HOME は既存どおり path 引数1本（既定 tsukumoHomeDir()）を読み書き共通で通す。目視（7354 / TSUKUMO_HOME=/tmp/tsukumo-t386-home / fake）: 空のホームでは帯が Opus・自動判定で、歯車の「新しいセッションの既定」の許可モードは 毎回聞く/編集は自動/自動判定/プラン の4つ（全部許すは無い）。Sonnet・プランに変えると state.json が {"sessionDefault":{"model":"sonnet","permissionMode":"plan"}} になり帯は Opus・自動判定のまま。stop.ts で止めて起こし直すと帯も歯車も Sonnet・プランになり立ち絵も sonnet の衣装に変わった。state.json を壊して起こし直すと起動は止まらず Opus・自動判定へ落ちた。7354 は停止済みで 7327〜7330・7332 は無傷。bun run check: 1440 pass / 0 fail / 120ファイル。節数は requirements 27・design 53・architecture 10 でいずれも前後不変。受け入れ側で session-manager.ts の二重否定のコメント1文を書き直した。
+
+## 背景
+
+設定のポップオーバー（モック `docs/history/mockup/settings-2026-09-23.png`、器は T-385）の「新しいセッションの既定」。いまはセッションを起こすたびに定数を渡している: `src/server/adapter/sdk-driver.ts` が `model: DEFAULT_MODEL` を `query()` に渡し（`resume` のときも同じ）、許可モードの既定は `auto`（`docs/requirements.md` 4.1「既定のモデルは Opus」「既定の許可モードは `auto`」）。帯（T-381）で変えたモデル・許可モードはそのセッション限りで、起こし直すと定数に戻る。
+
+キャラクターの「次回の初期値」は `~/.tsukumo/state.json` に覚えている（`src/server/adapter/remembered-character.ts`。`docs/design.md` 13.6 の注記・5章）。セッションはブラウザがつながる前にサーバ側で起こすので、`localStorage` には置けない。
+
+## 決まっていること（蒸し返さない）
+
+- **既定は起こすたびに効く**（起動・起こし直し。復元でも新規でも同じ）。いまの定数と同じ効き方で、定数を覚えた値に差し替えるだけ
+- **セッションの自動復元はそのまま残す**（復元が戻すのは会話の続きで、モデル・許可モードはもともと毎回既定で始まっている。2026-09-23 にユーザーへ確認済み）
+- **既定の許可モードに「全部許す」（`bypassPermissions`）は選べない**。全部許すは起こしたあと帯からその都度選ぶ
+- 覚える場所は `~/.tsukumo/state.json`（キャラクターと同じファイル。cwd に依存させない）
+- 帯で変えたモデル・許可モードは既定を書き換えない（セッション限りのまま）
+
+## 解くべき論点
+
+- `state.json` の形（キャラクターと同じファイルに欄を足す。読めない・欠けている値は `DEFAULT_MODEL` / `auto` に畳む）と、それを読む adapter を1つにするか分けるか（1ファイル = 1つの境界。`CLAUDE.md` 原則3）
+- ブラウザからサーバへの新しいコマンド（`src/shared/` の契約）と、いまの既定をブラウザへどう届けるか（`SessionState` に載せるか）
+- `TSUKUMO_HOME` を分けたときに別のホームの値が混ざらないこと
+
+## やること
+
+1. adapter に既定の読み書きを足す（壊れた `state.json` でも起動が落ちない。キャラクターの覚え方と同じ扱い）
+2. `sdk-driver.ts` の `DEFAULT_MODEL` / 許可モードの定数の代わりに覚えた値を渡す
+3. 契約（コマンドと状態）を足し、歯車のポップオーバーに「新しいセッションの既定」の モデル・許可モード を置く（許可モードの選択肢から全部許すを外す）
+4. `docs/requirements.md` 4.1 の既定の記述と `docs/design.md` 13.6 の表・5章を直す
+5. テスト: 覚えた値で起こされる / 値が無い・壊れているときは Opus・`auto` / 全部許すは受け付けない / 帯で変えても既定は変わらない
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（一時の `TSUKUMO_HOME`）: 歯車で既定を Sonnet・別の許可モードにして起こし直すと、帯にその値が出る。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 利用者の `~/.tsukumo/state.json` を目視で書き換えない（一時の `TSUKUMO_HOME` を使う）
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-387
+
+**タスク**: 書き上げる演出の速さを歯車から選べるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-385 / **passes**: True
+
+**evidence**:
+
+選択肢は 標準/速い/切る の3つ（標準は既存のまま 40ms・下限2400ms・上限8000ms、速いは3つとも半分の 20ms・1200ms・4000ms — 比を保たないと短い塊だけ下限に張り付いて速さが変わって見えない。切るは物差しを持たず report-reveal.ts が startReveal ごと呼ばない）。走っている演出には効かせない（既存の reveal がマウント時の値しか見ない設計なので speed も useState(loadRevealSpeed) で1回だけ読み、選び直しても次に書き始めるレポートから効く）。値は browser/lib/reveal-speed.ts に置き、歯車（screen-nav）と演出（main-view）の機能どうしの import を増やさない。目視（7358 / TSUKUMO_HOME=/tmp/tsukumo-t387-home / fake / 場面 long-report。演出はマウント時の DOM しか見ないので依頼を2回送って走らせてから実測）: 標準 40205ms（既存の記録「1233文字で約39.9秒」と一致）、速い 20104ms（ほぼ半分）、切るは data-revealing が一度も立たず本文が到着直後から全部見えている。standard→fast のあと page.reload() しても select は fast のまま、サーバを起こし直した別プロセスからも localStorage の fast が読めた。7358 は停止済みで利用者のセッションは無傷。bun run check: 1480 pass / 0 fail / 121ファイル。節数は requirements 27・design 53 でいずれも前後不変。progress.md の「未解決」から「書き上げる演出が長い」の1項目を削除した。
+
+## 背景
+
+設定のポップオーバー（モック `docs/history/mockup/settings-2026-09-23.png`、器は T-385）に、ユーザーが「書き上げる演出の速さ」を足したいと答えた（2026-09-23）。演出の速さは定数: `src/browser/features/main-view/reveal-plan.ts` の `MS_PER_CHARACTER = 40`（文字1つ）と `MAX_BLOCK_MS = 8000`（塊ごとの上限）。`develop/progress.md` の「未解決」に「1233文字の疑似セッションで演出が約39.9秒続く。長すぎると感じるかはユーザーが決める」とある。
+
+## 決まっていること（蒸し返さない）
+
+- 歯車のポップオーバーから選べるようにする。利用者の設定なので `localStorage` に持つ（地・領域・字の色と同じ）
+- 既定はいまの速さ（標準）
+
+## 解くべき論点
+
+- 選択肢の数と値（例: 標準 / 速い / 切る）。「切る」なら本文をすぐ全部出し、ミニ立ち絵の筆も出さない形になるか
+- 途中で変えたとき、書いている最中の演出に効かせるか（演出はマウント時の DOM しか見ない）
+
+## やること
+
+1. `reveal-plan.ts` の速さを選択で変えられるようにする（定数の代わりに値を受ける）
+2. 歯車のポップオーバーに選択を置き、`localStorage` に保存する（読めない値は標準に畳む）
+3. `docs/requirements.md` 4.3 と `docs/design.md` 13.6 の表に書き足す。`develop/progress.md` の「未解決」の「書き上げる演出が長い」の項目を閉じる
+4. テスト: 選択ごとに1文字あたりの時間・塊の上限が変わる / 読めない値は標準
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（fake driver の `long-report` の場面）: 選択ごとに演出の長さが変わり、リロードしても選択が残る。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 演出の目視は開いた時点の本文には効かない。新しい依頼を出して演出を走らせてから見る
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+
+## T-398
+
+**タスク**: やり取りのタブを、前後ボタンと依頼のタイトルを持つ札の頭に置き換える
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1446 pass / 0 fail（119 files）。main-view.test.tsx に札の頭（‹›で移る・端で押せない・n / N・最新 / 最新へで追従に戻る・タイトル）と依頼の続き、turn-title.test.ts を足した。目視: TSUKUMO_DRIVER=fake の turn-history（4ターン）を 1400x900 と 720x900 で、‹›で 4/4→1/4 と移り端で押せない・最新へで 4/4 に戻る・複数行の依頼の2行目以降が「依頼の続き」で読める・横スクロールなし・長いレポートで頭が sticky に残るのを確かめた
+
+## 背景
+
+メインビューのやり取りの履歴はいま、`src/browser/features/main-view/turn-tabs.tsx` の `TurnTabs` が窓の中のやり取り（`MAX_MAIN_VIEW_TURNS` 件。`src/shared/main-view.ts`）を**新しいものを左に**横へ並べ、先頭に「今回」を添える形になっている。タブの名前は `domain/turn-tab-label.ts` の `turnTab` が依頼の1行目を14字（`MAX_TURN_TAB_LABEL_LENGTH`）で切ったもの。並べているのは `main-view.tsx` の `MainView`、スタイルは `main-view.module.css` の `.turn-tabs` / `.turn-tab*`。
+
+2026-09-23 にユーザーがモック `docs/history/mockup/turn-history-2026-09-23.png`（題「履歴案1 — 前後ボタン＋いまの依頼をタイトルに」）を示し、これを横並びのタブから置き換えると決めた。モックの形:
+
+- やり取り1件を角丸の枠で囲った1枚の札。頭の1行と、その下の区切り線、その下にレポート（いまの `<Turn>` の中身）
+- 頭の1行: 左に `‹` `›` の四角いボタン（`‹` が古いほう、`›` が新しいほう。端では押せない見た目に落とす）、続けて**見ているやり取りの依頼の1行目を太字のタイトル**、その右に `⌄`（一覧を開く口。中身は後続タスク）。右端に「7 / 7」（窓の中の何件目か / 件数。古いほうが1）と、最新を見ているときは `--accent` 系の地の「最新」のバッジ
+
+選択の規則は `src/browser/stores/turn-selection.tsx`（`useTurnSelection` の `activeTurnId` / `newestTurnId` / `selectTurn`。正典は `location.hash` の `turn`）にあり、**変えない**。
+
+依頼の全文は、いま `turn.tsx` の `RequestHeading` がやり取りの先頭に出している（1行なら `h2.turn-request`、複数行なら `details[open]` で2行目以降も見せ、画像は `PromptImageThumbnails`）。札のタイトルも依頼の1行目なので、**そのままだと同じ行が二度出る**。
+
+## 決まっていること（蒸し返さない）
+
+- 形はモックの「前後ボタン＋いまの依頼をタイトル」。横並びのタブ（`TurnTabs`）は無くす
+- **過去のやり取りを見ているときは「最新」のバッジの位置に「最新へ」ボタンを出す。** 押すと最新に戻り追従を再開する（いま「今回」のタブを押したときと同じ `selectTurn(newestTurnId)`）
+- タイトルの出どころは今の `turnTab` と同じ（依頼の1行目。無ければ最初のレポートの先頭行、どちらも無ければ「（依頼なし）」）
+- `⌄` を押したときの一覧はこのタスクではやらない（後続タスク）。このタスクでは `⌄` を置かないか、押せない見た目で置くかのどちらでもよい
+- 遡れる件数（`MAX_MAIN_VIEW_TURNS`）はこのタスクでは変えない（後続タスク）
+
+## 解くべき論点
+
+1. `RequestHeading` との二重をどう畳むか。候補: (a) 1行の依頼は見出しを出さず、複数行のときだけ2行目以降を `details` で残す (b) 見出しごと外し、全文はタイトルの `title` 属性で読ませる。**複数行の依頼の全文と添付画像がどこからも読めなくなる案は採らない**
+2. タイトルの切り方: いまの14字で切るか、1行に収まらないぶんを CSS の省略（`text-overflow: ellipsis`）にするか。横に並べる制約が無くなったので後者が自然だが、`turn-tab-label.ts` の `label` / `fullLabel` の分け方をどうするか（使わなくなる値を残さない）
+3. 札の頭を `position: sticky` で残すか（いまの `.turn-tabs` は sticky）。長いレポートを読みながら前後へ移れるかどうか
+4. 狭い画面（≤760px）で頭の1行に収まらないときの折り返し（タイトルを2行目に落とす等）
+5. やり取りが1件だけのとき（いまはタブ自体を出さない）の頭。モックの形なら `‹` `›` が両方押せない札になる。出すか省くか
+6. `‹` `›` にキー操作を付けるか（付けるなら入力欄に字を打っている間は効かないこと）
+
+## やること
+
+1. `turn-tabs.tsx` を札の頭の部品に置き換える（ファイル名は概念に合わせて付け直してよい。`presentational-` の例外規則は CLAUDE.md 原則5）。`main-view.tsx` の並べ方と、`main-view.module.css` のスタイルを直す。色は既存のトークン（`--accent` / `--rule` / `--surface` / `--ink` / `--ink-quiet` など）を使う
+2. 論点1〜6を決め、`RequestHeading` を直す
+3. テストを直す・足す（`test/browser/features/main-view/main-view.test.tsx` と `domain/turn-tab-label.test.ts`）: `‹` `›` で1つ古い / 新しいやり取りへ移る / 端ではその側が押せない / 「n / N」の数 / 最新を見ているときはバッジ、過去を見ているときは「最新へ」で、押すと追従に戻る / タイトルが見ているやり取りの依頼の1行目
+4. `docs/requirements.md` 4.2 の「過去は直近5件までタブで選ぶ…タブの名前は…」の段落と、`docs/design.md` 6.1 の図（`<MainView>` の行）・`turn-selection.tsx` と `main-view.tsx` の冒頭コメントの「タブ」を札の形に直す（`grep -n 'タブ' docs/requirements.md docs/design.md` で、やり取りのタブを指すものだけ）
+
+## 完了条件
+
+- 横並びのタブが無くなり、札の頭（`‹` `›`・タイトル・n / N・最新 / 最新へ）が出る
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900 と 760px 以下の2つ）: 疑似セッション（`TSUKUMO_FAKE_SCENE`）でやり取りを3件以上流し、`‹` `›` で移れる・端で押せない・最新へで戻る・複数行の依頼の全文が読める、を見る。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+- `develop/direction.md` の「答え待ちの質問を、入力欄の上の箱からメインビューの札へ移す」指示が同じ領域（メインビュー）を触る予定。質問の札は**いまのターンのレポートの下**に出る形なので、札の頭をレポートの上に置くこのタスクとは食い違わない。`PendingQuestion`（いまは頭より上）は動かさない
+- キャラビューの吹き出しも同じ選択に従う（`turn-selection.tsx`）。選択の規則は触らない
+
+## T-403
+
+**タスク**: 帯の「いまの作業」の札を、中身で幅が変わらない固定長にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-385 / **passes**: True
+
+**evidence**:
+
+.screen-nav-work-toggle を width:100%+box-sizing:border-box に、.screen-nav-work-word に min-width:6em。bun run check 通過（1462 pass / 0 fail / 120 files）。目視1400x900: 要約が長い/短い/無いの3状態とも札の枠が x=510.23 width=692.22 で一致、一覧は札の直下 y=49.08 に開く。375x800: 「≡」の面で札がフル幅（176px）、一覧は札の直下に開く。
+
+## 背景
+
+帯のまん中の札「いまの作業」（`src/browser/features/screen-nav/components/screen-nav-current-work.tsx` の `ScreenNavCurrentWorkPill`）は、ボタン `.screen-nav-work-toggle`（`src/browser/features/screen-nav/screen-nav.module.css`）が `max-width: 100%` で**中身の幅**になっている。中身は印・状態の語（`WORK_WORD_LABEL`。`hooks/use-current-work.ts`）・区切り・実行中の手順の要約（`summaryLabel`。等幅で末尾が「…」）なので、Bash のコマンドが変わるたびに札の幅が伸び縮みし、ユーザーから「コマンドのたびにチカチカと目に映る」と言われた。外側の `.screen-nav-work` は `flex: 1 1 auto; min-width: 0` で帯の空きを受け取れる。
+
+## 決まっていること（蒸し返さない）
+
+- **札の幅は帯の空きを常に埋める**（口とモデルの選択のあいだ）。幅は窓の幅だけで決まり、中身では変わらない。要約は右端で「…」になる（2026-09-23 ユーザー）
+- 状態の語が変わる（作業中 / 答え待ち / 止まった / 依頼待ち）ときも、札の外形は動かさない
+
+## やること
+
+1. `.screen-nav-work-toggle` を空きいっぱいに広げる。要約が無い状態（依頼待ちなど）でも幅を保つ
+2. 状態の語の幅の違いで区切りと要約の始まりがずれるのを、語の側に最小幅を持たせて抑えるかを決める（抑えるなら、いちばん長い語に合わせる）
+3. 札の真下に重ねる一覧（`.screen-nav-work-list`）の位置と幅が、札が広がったあとも崩れないか見る
+4. 狭い画面の「≡」の面に置いた同じ部品でも崩れないか見る
+5. `docs/design.md` 13.9「いまの作業」に幅の決まり方を1行足す
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視（1400x900 と 760px 以下）: 疑似セッションで手順の要約が長い/短い/無いを切り替えても札の外形が動かないこと、一覧が札の下に正しく開くこと。何が見えたかを `evidence` に書く
+
+## 注意
+
+- T-385（帯に歯車を置く）が同じ帯のスタイルを触っているので、その後に着手する
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-404
+
+**タスク**: develop/progress.md の完了した小節を両側とも残す3wayマージドライバを作る
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+scripts/progress-done-section.ts（割る・畳む純粋関数）と scripts/merge-progress.ts（%O %A %B を読んで %A に書く入口）、.gitattributes の1行。bun run check 通過（1486 pass / 0 fail / 123 files）。test/scripts/ に単体（両側が足した/片方が消した/節が無い/片方だけ触った/両側が書き換え→非0）と、一時リポジトリで実際に git merge を走らせる結合テスト（258ms）。実測: ours が T-401、theirs が T-402 の小節を足してマージし、衝突なし（git status 空）で両方が日付降順で残り、## 未解決 と ## 注意 も無傷。.git/config への登録はしていない（git config --get merge.progress.driver は未設定）。
+
+## 背景
+
+並行の作業ツリーから `main` へ送るとき、`develop/progress.md` がぶつかる。直近40コミットの完了コミットは**ほぼ全部が `@@ -57` から始まる**（`## 完了したこと（このセッション）` の直下に `### ` の小節を差し込む動きを全セッションがやっている）。T-393 と T-388 の衝突もこの1か所だけで、中身は「両側が別々の小節を先頭に足しただけ・共通祖先は空」という純粋な追加どうしだった。
+
+git の attributes で `develop/progress.md merge=progress` と書き、`git config merge.progress.driver "<コマンド> %O %A %B"` を登録すると、そのファイルだけ自前のドライバで3wayマージできる（ドライバは `%A` に結果を書き、衝突が残れば非0で終わる）。2026-09-23 に空のリポジトリで確かめたこと: (1) `.gitattributes` に書いてあってもドライバが `git config` に無ければ**git は黙って既定の3wayに落ちる**（登録し忘れても今と同じ挙動で、壊れない）。(2) 作業ツリーの中で `git config --local` を打つと**共通の `.git/config` に書かれる**ので、登録は1クローンに1回で全部の作業ツリーに効く。
+
+アーカイブ判定（`~/.claude/skills/task-workflow/scripts/status.py` の `is_newest_first`）は小節の**日付だけ**を非増加で見るので、同じ日の小節どうしの前後は自由。
+
+## 決まっていること（蒸し返さない）
+
+- `.gitattributes` に `develop/progress.md merge=progress` を置き、`scripts/merge-progress.ts` を3wayのドライバにする（2026-09-23 ユーザー）
+- `## 完了したこと` の節だけを `### ` 見出しで小節に割り、両側が**足した**小節を両方残し、どちらかが**消した**小節（アーカイブ）は消えたままにする。`## 未解決` と `## 注意` は通常の3way（`git merge-file`）に任せる
+- 採らない案: `merge=union`（削除を打ち消すのでアーカイブが巻き戻る）、1タスク1ファイル（共通のスクリプト `archive.py` / `status.py` が `### ` 小節を数える作りで、ここの都合で触らない）、並び順を変える（両側が同じ位置へ足すことは変わらない）
+- `develop/tasks.json` は対象外
+
+## 解くべき論点
+
+- 両側が足した小節を並べる順（日付の降順を崩さないこと。同じ日どうしは問わない）
+- 同じ見出しの小節を両側が別々に書き換えたときは、衝突として非0で返す（黙ってどちらかを捨てない）
+- 節の外（`## 完了したこと` の前後）を `git merge-file` に任せるときの、節ごとの切り貼りのやり方
+
+## やること
+
+1. 割る・畳む処理を純粋な関数にし（置き場所は `scripts/` の規約に合わせる）、`scripts/merge-progress.ts` は `%O %A %B` を読んで `%A` に書く薄い入口にする。ファイルは `node:` の標準APIで扱う（`Bun.*` に寄せない）
+2. `.gitattributes` を置く
+3. テストを `test/scripts/` に置く: 両側が足した / 片方が消した（アーカイブ） / 節が無い / 片方だけが触った / 同じ小節を両側が書き換えた（非0）
+4. 一時ディレクトリに作ったリポジトリで、実際に `git merge` を走らせて両側の小節が残ることを確かめるテストを1つ置けるなら置く（`git` を子プロセスで呼ぶ。遅ければ見送って理由を `evidence` に書く）
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 一時リポジトリで2本の枝がそれぞれ小節を足してマージし、衝突なしに両方が残ったことを `evidence` に書く
+
+## 注意
+
+- **このリポジトリの `.git/config` への登録はしない**（登録は人がやる。手順は T-405 が CLAUDE.md に書く）。確かめは一時リポジトリで行う
+- `~/.claude/skills/task-workflow/` の共通スクリプトは触らない
+
+## T-411
+
+**タスク**: タスク区画を、行の罫線と字の大きさの段を付けてモックの値に揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（1427 pass / 0 fail。1回目は1件落ち、打ち直しで全通過）。目視は TSUKUMO_VIEW_PORT=4711・TSUKUMO_HOME を分けて起こし Playwright で実測: 1400x900 と 390x900 の両方で見出し 14px/700/--ink・進行中カード summary 14px・行 summary 13px・「一覧を見る」12px/枠なし/--accent・行の border-top 1px と上下 8px。
+390 幅で scrollWidth-clientWidth=0、「一覧を見る」で dialog.task-board が open になる。進行中チップの選び方を :first-child から status のクラスに直したあとは dist/browser/main.css にクラスが出ることだけ確かめ、画面は見直していない
+
+## 背景
+
+ユーザーがサイドバーのタスク区画のモック `docs/history/mockup/sidebar-tasks-2026-09-23.png`（寸法と色の値は同じ名前の `.html` の inline style にある。デザインツールの書き出しで、**値を写す参照でありコードとして持ち込まない**）を示した（2026-09-23）。形は T-388 で入れたもの（見出し「タスク」・件数のチップ・進行中のカード・印の形の行）と同じだが、**いまは行どうしの区切りが無く詰まって見え、字の大きさの差も小さい**。ユーザーの注文: 「タスク同士は罫線で分かれていて窮屈にならないように」「フォントサイズを工夫して見やすく」「『一覧を見る』のデザインも確認」。
+
+いまの作り:
+
+- 区画の枠と見出し・右端の「一覧を見る」は `src/browser/features/sidebar/section.tsx`（`SidebarSection`）、CSS は `sidebar.module.css` の `.sidebar-block h2`（`--font-secondary` = 13px・`--ink-quiet`）と `.sidebar-block-action`（枠線つきのボタン・`--font-label`）。組み立ては `task-section.tsx`
+- 中身は `src/browser/features/task-board/` の `task-list.tsx`・`components/task-item.tsx`（未着手・完了の行）・`components/task-running-card.tsx`（進行中のカード）・`components/task-count-chip-list.tsx`（件数のチップ）。CSS は `task-board.module.css` の `.task-count-chip*` / `.task-running-*` / `.task-item*` / `.task-mark-*`。**`.task-item` には上下の余白も罫線も無い**
+- 字の大きさのトークンは `src/browser/styles/theme.css` の `--font-label`（11px）/ `--font-secondary`（13px）/ `--font-body`（15px）/ `--font-heading`（18px）。色もトークン（`--ink` / `--ink-quiet` / `--rule` / `--surface-accent` / `--accent` など）で、地・領域・字の色は歯車から変えられるようになる（T-385）
+
+モックの値（`.html` から。**px の値は写すが、色は hex を書かずトークンに宛てる**）:
+
+| 部位 | 値 |
+| --- | --- |
+| 区画の内側 | padding 18px、見出し・チップ・カード・一覧の間は 12px |
+| 見出し「タスク」 | 14px・太字・明るめの字（いまの `--ink-quiet` より強い） |
+| 「一覧を見る」 | 枠なし・下線なし・12px・差し色の字（ホバーで明るく）。見出しの行の右端 |
+| 件数のチップ | 高さ 22px・左右 8px・角丸 11px・11px・枠なし・間 6px。進行中のチップは差し色の地（`--surface-accent` 相当）に明るい差し色の字、未着手・完了は暗い地に薄い字 |
+| 進行中のカード | 角丸 10px・差し色の地＋差し色寄りの 1px の枠・padding 12px 14px・行間 6px。1行目に「進行中」の札（高さ 22px の丸いピル・差し色の地・11px）と ID（11px・等幅・差し色寄りの薄い字）を横に並べ、2行目に summary（14px・行の高さ 1.5・折り返して全文） |
+| 未着手・完了の行 | **各行の上に 1px の罫線**（`--rule` より薄め）・上下 8px・要素の間 10px。印は 10px の丸（枠 1.5px）、ID は 11px の等幅で薄く、summary は 13px で1行に収めて「…」 |
+
+## 決まっていること（蒸し返さない）
+
+- **行どうしは罫線で分ける**（各行の上に 1px。上下の余白で詰まって見えないようにする）
+- 字の大きさは段を付ける: 見出し 14px / カードの summary 14px / 行の summary 13px / 「一覧を見る」12px / ID・チップ・札 11px
+- **「一覧を見る」は入口の見た目だけ直す**（枠なしのリンク風・12px・差し色）。押すと開く表（`task-board.tsx` のモーダル）は変えない（2026-09-23 のユーザーの選択）。押せることを色だけで示さない（ホバー・フォーカスの印を持たせる。13.1 原則1）
+- 並び（進行中だけ先頭のカード、残りはファイルの順）・印の形（空の丸・チェック＋打ち消し線・注意色の「!」）・IDを押すと実行を頼める挙動（`TaskRunButton`）は T-388 のまま
+- **チップはこのタスクでは押せないまま**（絞り込みは T-412）
+
+## 解くべき論点
+
+- 14px と 12px はトークンに無い。トークンを足すか（`theme.css` の段の意味が崩れないか）、既存のトークンから導くか
+- 見出しの字の色と、行の罫線の色（モックは `--rule` より一段薄い）をどのトークンに宛てるか。新しいトークンを足すなら `theme.css` の他の使い道と衝突しないか
+- 「一覧を見る」の見た目を `SidebarSection` の `action` 共通にするか（区画の口はいまこれ1つ。`docs/design.md` 13章に区画の見出しの口の横展開の記述がある）
+- 390 幅（サイドバーがタブになる畳み方）でも同じ値でよいか
+
+## やること
+
+1. `docs/design.md` 13.1（原則）と、サイドバー・タスク一覧の節（13.6 / 13.7 あたり）と 6.1「部品の木」を読む
+2. 見出し・「一覧を見る」・チップ・進行中のカード・行の CSS をモックの値に揃える（上の表）
+3. 行の上に罫線を引き、上下の余白を付ける（最初の行もカードとの間に罫線が出るのがモックの形）
+4. `docs/requirements.md` 4.2 のサイドバーの記述と `docs/design.md` の該当箇所に、罫線と字の段を足す（値の羅列は書かず、決まったことだけ）
+5. 既存のテスト（`test/` の task-board・sidebar まわり）が通ることを確かめる。見た目の値そのものはテストしない（`CLAUDE.md`「ブラウザに出た絵は自動テストで守らない」）
+
+## 完了条件
+
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅。進行中・未着手・完了が混ざった `develop/tasks.json` を読ませる）: 行どうしが罫線で分かれ、見出し 14px・カードの summary 14px・行の summary 13px・「一覧を見る」12px になっている（DevTools の computed style で測る）。「一覧を見る」に枠が無く差し色で、押すと今までどおり表が開く。390 幅で横のはみ出しが 0px。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 区画の下端（キャラクター・セッションの選択と仕切り線）は T-389 の担当。ここでは触らない
+- 色は hex をそのまま書かない（歯車から地・字の色を変えたときに追従しなくなる）
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける

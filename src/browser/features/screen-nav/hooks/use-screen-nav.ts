@@ -28,7 +28,7 @@ import {
 } from "../../../lib/permission-mode-label.ts"
 import { type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
-import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
 import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 
@@ -116,7 +116,7 @@ export function useScreenNav(): ScreenNavView {
   const screenHref = useScreenHref()
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
   const chatMode = useSessionSelector((session) => session.state.chatMode)
-  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const turnInProgress = useTurnRunning()
   const model = useSessionSelector((session) => session.state.model)
   const permissionMode = useSessionSelector((session) =>
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,

@@ -7,18 +7,21 @@ import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { sessionStoreWith, type CommandSpy } from "../../session-store.ts"
 
-// 帯の右端の歯車で開く設定（docs/design.md 13.6 / 13.9）。いまここにある群は「画面の色」と
-// 「新しいセッションの既定」の2つ。
+// 帯の右端の歯車で開く設定（docs/design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
+// 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
 // **保存の仕方は `browser/lib/appearance-color.ts` のまま**なので、鍵も検証も
-// `appearance-color.test.ts` と同じものを見ている。
+// `appearance-color.test.ts` と同じものを見ている。演出の速さの保存は
+// `browser/lib/reveal-speed.ts`（`reveal-speed.test.ts` と同じ鍵）。
 
 const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
 const COLOR_TOKENS = ["--ground", "--surface", "--ink"] as const
+const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 
 let themeStyleElement: HTMLStyleElement | undefined
 
 beforeEach(() => {
   localStorage.removeItem(COLOR_STORAGE_KEY)
+  localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
   for (const token of COLOR_TOKENS) {
     document.documentElement.style.removeProperty(token)
   }
@@ -32,6 +35,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   localStorage.removeItem(COLOR_STORAGE_KEY)
+  localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
   for (const token of COLOR_TOKENS) {
     document.documentElement.style.removeProperty(token)
   }
@@ -110,7 +114,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(panel()).toBeNull()
   })
 
-  it("地・領域・字の色の3つと、新しいセッションの既定の2つを出す", () => {
+  it("地・領域・字の色の3つ、新しいセッションの既定の2つ、演出の速さの1つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
@@ -118,7 +122,7 @@ describe("設定の歯車（帯の右端）", () => {
       [...document.querySelectorAll(".screen-nav-settings-panel label")].map(
         (node) => node.textContent,
       ),
-    ).toEqual(["画面の地", "領域の地", "字の色", "モデル", "許可モード"])
+    ).toEqual(["画面の地", "領域の地", "字の色", "モデル", "許可モード", "速さ"])
   })
 
   it("色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
@@ -306,3 +310,51 @@ function defaultSelect(label: string): HTMLSelectElement {
   ) as HTMLLabelElement
   return document.getElementById(labelNode.htmlFor) as HTMLSelectElement
 }
+
+// 書き上げる演出の速さ（docs/design.md 13.6。`browser/lib/reveal-speed.ts`）。**利用者の設定**
+// なので色と同じ `localStorage`（保存先は違う鍵）。
+describe("設定の歯車（書き上げる演出の速さ）", () => {
+  it("既定は「標準」", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    expect(defaultSelect("速さ").value).toBe("standard")
+  })
+
+  it("選ぶとすぐ localStorage に保存される（色と違いデバウンスしない）", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("速さ"), { target: { value: "fast" } })
+
+    expect(localStorage.getItem(REVEAL_SPEED_STORAGE_KEY)).toBe("fast")
+  })
+
+  it("「切る」も選べる", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("速さ"), { target: { value: "off" } })
+
+    expect(localStorage.getItem(REVEAL_SPEED_STORAGE_KEY)).toBe("off")
+  })
+
+  // 保存済みの選択を `useState` の初期値として読むだけなので、リロードして開き直した形を作る。
+  it("保存済みの選択が、開いたときの操作子の値に出る（リロードしても残る）", () => {
+    localStorage.setItem(REVEAL_SPEED_STORAGE_KEY, "fast")
+
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    expect(defaultSelect("速さ").value).toBe("fast")
+  })
+
+  it("読めない値は「標準」に畳む", () => {
+    localStorage.setItem(REVEAL_SPEED_STORAGE_KEY, "very-fast")
+
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    expect(defaultSelect("速さ").value).toBe("standard")
+  })
+})

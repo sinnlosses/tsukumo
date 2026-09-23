@@ -17,7 +17,7 @@
 import { type MouseEvent, type ReactElement } from "react"
 
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
-import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useSessionDispatch, useTurnRunning } from "../../../stores/session.tsx"
 import { useBoardClose } from "../board-close.tsx"
 import styles from "../task-board.module.css"
 
@@ -34,7 +34,7 @@ export type TaskRunConfirmProps = {
  */
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSessionDispatch()
-  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const turnInProgress = useTurnRunning()
   const dialogRef = useModalDialog(true)
   const closeBoard = useBoardClose()
   const prompt = `/next-task ${props.taskId}`
