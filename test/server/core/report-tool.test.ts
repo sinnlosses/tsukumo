@@ -94,7 +94,13 @@ const INIT: SessionEvent = {
   slashCommands: [],
   terminalSlashCommands: [],
 }
-const REPORT: SessionEvent = { kind: "report", conclusion: "架空の結論", body: "", favor: "" }
+const REPORT: SessionEvent = {
+  kind: "report",
+  toolUseId: "toolu_r1",
+  conclusion: "架空の結論",
+  body: "",
+  favor: "",
+}
 const SPEECH: SessionEvent = { kind: "speech", text: "架空の締め", expression: "default" }
 const FINISHED: SessionEvent = { kind: "turn-finished", status: "success" }
 const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })

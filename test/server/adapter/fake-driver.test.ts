@@ -190,6 +190,41 @@ describe("startFakeSession", () => {
     // 合図なので、`close` で止められるのは疑似セッションの続きだけ）。
     expect(sink.events).toEqual([{ kind: "plan", plan: "Claude Max" }])
   })
+
+  it("report は結果が届くまで預かり、差し戻された（isError の）ものは流さない（本物の駆動と同じ）", async () => {
+    const report = (toolUseId: string) =>
+      ({ kind: "report", toolUseId, conclusion: "架空の結論", body: "", favor: "" }) as const
+    const finished = (toolUseId: string, isError: boolean) =>
+      ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
+    const sink = collect()
+    const driver = startFakeSession({
+      session: {
+        opening: [],
+        turns: [
+          {
+            name: "架空の差し戻し",
+            steps: [
+              { afterMs: 0, event: report("fake-r1") },
+              { afterMs: 1, event: finished("fake-r1", true) },
+              { afterMs: 2, event: report("fake-r2") },
+              { afterMs: 3, event: finished("fake-r2", false) },
+            ],
+          },
+        ],
+      },
+      scene: "架空の差し戻し",
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      onEvent: sink.onEvent,
+    })
+    await tick()
+    driver.close()
+
+    expect(sink.events.slice(1)).toEqual([
+      finished("fake-r1", true),
+      report("fake-r2"),
+      finished("fake-r2", false),
+    ])
+  })
 })
 
 describe("readFakeSession", () => {

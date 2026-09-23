@@ -17,6 +17,7 @@ import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent, sessionEventSchema } from "../../shared/session-event.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
+import { createReportReview } from "../core/report-review.ts"
 import { type SessionDriver } from "../core/session-driver.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
@@ -155,14 +156,22 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
   let model: string = options.sessionDefault.model
   let permissionMode: string = options.sessionDefault.permissionMode
+  // `report` の差し戻しの預かり（本物の駆動と同じ。`src/server/core/report-review.ts`）。判定は
+  // しない（handler が無いので）——疑似セッションが書いた `tool-finished` の `isError` に従って
+  // 描くか捨てるかだけが決まる。
+  const reportReview = createReportReview()
 
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
       pending = event.pending
     }
-    // 疑似セッションが書いた `session-info` のモデル・許可モードは**いまの値で置き換える**
-    // （疑似セッションの持ち物ではなく、起こし方で決まる値なので）。
-    options.onEvent(event.kind === "session-info" ? { ...event, model, permissionMode } : event)
+    for (const passed of reportReview.pass(event)) {
+      // 疑似セッションが書いた `session-info` のモデル・許可モードは**いまの値で置き換える**
+      // （疑似セッションの持ち物ではなく、起こし方で決まる値なので）。
+      options.onEvent(
+        passed.kind === "session-info" ? { ...passed, model, permissionMode } : passed,
+      )
+    }
   }
 
   const play = (steps: readonly FakeSessionStep[], startMs: number): void => {

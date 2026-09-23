@@ -312,7 +312,9 @@ function assistantBlockEvents(
   }
 
   if (block.name === tsukumoToolFullName(REPORT_TOOL_NAME)) {
-    return parentToolUseId === undefined ? reportEvents(block.input) : []
+    return parentToolUseId === undefined && typeof block.id === "string"
+      ? reportEvents(block.id, block.input)
+      : []
   }
 
   return typeof block.id === "string"
@@ -343,7 +345,7 @@ function speechEvents(input: unknown, expressions: readonly Expression[]): reado
  * 置かないだけで済む）。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
  * モデルには本体がエラーを返す）。
  */
-function reportEvents(input: unknown): readonly SessionEvent[] {
+function reportEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
   if (!isPlainObject(input) || typeof input.conclusion !== "string") {
     return []
   }
@@ -351,6 +353,7 @@ function reportEvents(input: unknown): readonly SessionEvent[] {
   return [
     {
       kind: "report",
+      toolUseId,
       conclusion: input.conclusion,
       body: optionalString(input.body) ?? "",
       favor: optionalString(input.favor) ?? "",

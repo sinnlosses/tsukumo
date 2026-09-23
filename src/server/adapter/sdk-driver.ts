@@ -35,6 +35,7 @@ import { readChatTopics } from "../core/chat-compact.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
+import { createReportReview, type ReportReview } from "../core/report-review.ts"
 import {
   createReportGate,
   REPORT_GATE_REASON,
@@ -100,6 +101,7 @@ export function startSdkDriver(
   })
 
   const reportGate = createReportGate()
+  const reportReview = createReportReview()
 
   const session = query({
     prompt: input.stream(),
@@ -110,7 +112,12 @@ export function startSdkDriver(
         chatSummaryHooks(options.mode, options.onEvent) ??
         reportGateHooks(options.mode, reportChannel, reportGate),
       mcpServers: {
-        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode, reportChannel),
+        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
+          options.expressions,
+          options.mode,
+          reportChannel,
+          reportReview,
+        ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),
@@ -118,7 +125,7 @@ export function startSdkDriver(
   })
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options, reportGate)
+  void relayMessages(session, options, reportGate, reportReview)
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
 
@@ -299,11 +306,16 @@ export function reportGateHooks(
  *
  * `report` の関所（`reportGate`）には**メインのメッセージから出たイベントだけ**を見せる
  * （サブエージェントの本文を数えない。関所を登録していないときも見せるが、判定されないだけ）。
+ *
+ * メインのイベントは先に `report` の差し戻し（`reportReview`）を通す——`report` を同じ呼び出しの
+ * 結果まで預かり、差し戻した呼び出しを描かない（`src/server/core/report-review.ts`）。`report`
+ * ツールが載っていなければ `report` イベントは来ないので、切り替えないときはそのまま流れる。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
   options: SessionDriverOptions,
   reportGate: ReportGate,
+  reportReview: ReportReview,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに
   // 印を付け直す（{@link scheduleMarkSession}）。
@@ -311,7 +323,9 @@ async function relayMessages(
   try {
     for await (const message of session) {
       const fromMain = !isSubagentMessage(message)
-      for (const event of toSessionEvents(message, toExpressionNames(options.expressions))) {
+      const converted = toSessionEvents(message, toExpressionNames(options.expressions))
+      const events = fromMain ? converted.flatMap((event) => reportReview.pass(event)) : converted
+      for (const event of events) {
         if (fromMain) {
           reportGate.observe(event)
         }
