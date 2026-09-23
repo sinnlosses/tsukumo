@@ -130,6 +130,13 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは中立の文体で書く")
   })
 
+  it("レポートは日本語で書くと決め、送る前の検算にも入れている", () => {
+    // 読んだコードや英語の文面に引きずられて本文が英語で出たことがある（docs/requirements.md 4.2）。
+    expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
+    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
+    expect(beforeSend).toContain("日本語でない地の文")
+  })
+
   it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("描けない")
   })
