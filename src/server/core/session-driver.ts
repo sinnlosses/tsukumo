@@ -8,7 +8,7 @@
 // **境目の基準は「shared の語彙で書けるか / SDK の語彙を名乗るか」**。shared の語彙だけで
 // 書けるもの（契約の型）はここに、SDK の語彙を名乗るもの（`DEFAULT_EFFORT` の `EffortLevel`、
 // `query()` の options、`listSessions` / `getSessionMessages` を使う関数）は
-// `src/server/adapter/sdk-driver.ts` に置く。
+// `src/server/adapter/` の `sdk-` で始まるファイル（`sdk-driver.ts` / `sdk-session.ts` など）に置く。
 //
 // **既定のモデルと許可モードはここに無い**（`src/shared/session-default.ts` の
 // `BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
@@ -253,7 +253,7 @@ export type SessionMode =
  * このセッションを新規に起こすか、続きから始めるか（`docs/requirements.md` 4.8「セッションの
  * 復元」）。**`resume: string | undefined` が「セッションIDが無い」ではなく「新規である」という
  * 意味を運んでいたのを判別可能な合併型にした**（`docs/coding-standards.md`「複数の「無い」が
- * 1つの状態」）。続きから始めるIDを選ぶのは `src/server/adapter/sdk-driver.ts` の
+ * 1つの状態」）。続きから始めるIDを選ぶのは `src/server/adapter/sdk-session.ts` の
  * `findSessionToResume`。
  */
 export type SessionStart =
@@ -285,7 +285,7 @@ export type SessionDriverOptions = {
   /**
    * このセッションに付ける印（組み立ては `src/server/core/session-restore.ts` の `sessionTag`。
    * キャラクターパックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
-   * セッションだけを見分ける。付け直す理由は `src/server/adapter/sdk-driver.ts` の
+   * セッションだけを見分ける。付け直す理由は `src/server/adapter/sdk-session.ts` の
    * `SESSION_TAG_DELAY_MS`）。
    */
   readonly tag: string

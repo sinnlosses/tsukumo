@@ -18,12 +18,12 @@ import {
   readRememberedSessionDefault,
   writeRememberedSessionDefault,
 } from "./server/adapter/remembered-default.ts"
+import { startSdkDriver } from "./server/adapter/sdk-driver.ts"
 import {
   findSessionToResume,
   listSwitchableSessions,
   readRestoredEvents,
-  startSdkDriver,
-} from "./server/adapter/sdk-driver.ts"
+} from "./server/adapter/sdk-session.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
@@ -114,7 +114,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
       // 覚えたことの一覧も、雑談で起こすときだけ呼ばれる。読むのは adapter
       // （`persona-memory.ts` の `readRememberedLines`）。
       readRememberedLines: (pack) => readRememberedLines(pack),
-      // develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
+      // `main` の develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
       // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
       watchTasks: (onEvent) =>
         watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),

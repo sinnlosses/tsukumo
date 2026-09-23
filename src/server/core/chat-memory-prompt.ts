@@ -156,7 +156,7 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
 }
 
 /**
- * `recall` の結果をモデルへ返す文面に変える（`src/server/adapter/sdk-driver.ts` の `recall`
+ * `recall` の結果をモデルへ返す文面に変える（`src/server/adapter/sdk-tool.ts` の `recall`
  * ツールの戻り値）。**当たったときだけ逐語が入る**——当たらなかったときと、そのターンで既に
  * 引いたときは短い一言だけで、会話の文面は1バイトも入らない。
  *

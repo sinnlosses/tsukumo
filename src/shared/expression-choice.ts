@@ -2,7 +2,7 @@
 // キャラクター定義ファイル側の言葉**（docs/architecture.md 原則4「キャラクターの中身をコードに
 // 書かない」、docs/design.md 7章）。
 //
-// 読むのは `speak` ツールの enum を組み立てる駆動（`src/server/adapter/sdk-driver.ts`）と、
+// 読むのは `speak` ツールの enum を組み立てる側（`src/server/adapter/sdk-tool.ts`）と、
 // 表情のラベルを出す画面。`node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import { type CharacterDefinition } from "./character-definition.ts"

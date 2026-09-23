@@ -4,7 +4,7 @@
 // 考え方。ここは値と型だけで `node:` にも `document` にも触らない）。
 //
 // **SDK の形をそのまま運ばない。** 画面が要る数と名前だけに写したのがここの型で、SDK の戻り値
-// （`getContextUsage()`）からの写しと検証は `src/server/adapter/sdk-driver.ts` が1箇所で行う。
+// （`getContextUsage()`）からの写しと検証は `src/server/adapter/sdk-context-usage.ts` が1箇所で行う。
 //
 // **運ぶのは数と名前だけ** — メモリファイルのパス・スキル名・MCP ツール名・分類の表示名で、
 // 会話の文面は入らない（メッセージは分類1行の数として出るだけ。

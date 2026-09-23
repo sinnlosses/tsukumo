@@ -81,14 +81,17 @@ describe("orca コマンドを起こす箇所", () => {
 
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
-// SDK（`@anthropic-ai/claude-agent-sdk`）を起こすのは駆動のファイル1つに閉じ込める
-// （docs/architecture.md 原則3、src/server/adapter/sdk-driver.ts 冒頭コメント）。import 文の
-// クォートされた specifier だけを拾うので、バッククォートで囲んだ日本語の説明文は拾わない
-// （orca の検査と同じやり方）。
+// SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは `server/adapter/` 直下の `sdk-` で
+// 始まるファイルに閉じ込める（docs/architecture.md 原則3）。SDK は1つの境界だが1ファイルには
+// 収まらないので、**許す先を一覧ではなく名前で決める** — 足すファイルは名前で SDK の境界を
+// 名乗ることになり、名乗らずに import すればここで落ちる。import 文のクォートされた specifier
+// だけを拾うので、バッククォートで囲んだ日本語の説明文は拾わない（orca の検査と同じやり方）。
+const SDK_BOUNDARY_FILE = /^server\/adapter\/sdk-[^/]+\.ts$/
+
 describe("Agent SDK を import する箇所", () => {
-  it("`@anthropic-ai/claude-agent-sdk` を import するのは src/server/adapter/sdk-driver.ts だけ", () => {
+  it("`@anthropic-ai/claude-agent-sdk` を import するのは src/server/adapter/ 直下の sdk- で始まるファイルだけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath !== "server/adapter/sdk-driver.ts")
+      .filter((relPath) => !SDK_BOUNDARY_FILE.test(relPath))
       .filter((relPath) =>
         /from\s+["']@anthropic-ai\/claude-agent-sdk["']/.test(
           readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"),
@@ -100,13 +103,15 @@ describe("Agent SDK を import する箇所", () => {
 })
 
 // `node:child_process` を起こすのはホスト（orca）・ビルド（bun build）・git 管理下のファイルの
-// 列挙（git ls-files）の3つの境界に閉じ込める（docs/architecture.md 原則3）。
+// 列挙（git ls-files）・`main` の上のタスク一覧（git rev-parse / git show）の4つの境界に
+// 閉じ込める（docs/architecture.md 原則3）。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは src/server/adapter/ の orca-host.ts・bundle.ts・repository-file.ts だけ", () => {
+  it("`node:child_process` を import するのは src/server/adapter/ の orca-host.ts・bundle.ts・repository-file.ts・task-summary.ts だけ", () => {
     const allowed = new Set([
       "server/adapter/orca-host.ts",
       "server/adapter/bundle.ts",
       "server/adapter/repository-file.ts",
+      "server/adapter/task-summary.ts",
     ])
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))
