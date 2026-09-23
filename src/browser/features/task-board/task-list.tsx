@@ -1,5 +1,7 @@
-// サイドバーの「タスク一覧」。**status ごとにまとめず、ファイルの順で出す**
-// （develop/tasks.json の決定）。`done` は薄く出す。読めない・まだ届いていないときは undefined。
+// サイドバーの「タスク一覧」。**進行中（doing）だけ先頭のカードにまとめ、残りはファイルの順**
+// で出す（`domain/task-sidebar-order.ts`。todo と done は混ざったまま。経緯は
+// docs/requirements.md 4.2）。`done` は薄く打ち消し線で出す。読めない・まだ届いていないときは
+// undefined。
 //
 // **区画には全件を並べ、入りきらない分は区画の内側でスクロールする。** 一覧を見渡すのは
 // 見出しの「一覧を見る」から開く表（`task-board.tsx`）の仕事で、ここは直近の並びを
@@ -12,6 +14,8 @@ import { type ReactElement } from "react"
 
 import { type TaskSummaryResult } from "../../../shared/task-summary.ts"
 import { TaskItem } from "./components/task-item.tsx"
+import { TaskRunningCard } from "./components/task-running-card.tsx"
+import { orderTasksForSidebar } from "./domain/task-sidebar-order.ts"
 import styles from "./task-board.module.css"
 
 export type TaskListProps = {
@@ -26,11 +30,22 @@ export function TaskList(props: TaskListProps): ReactElement {
     return <p className={styles["task-empty"]}>タスクが無い</p>
   }
 
+  const { running, rest } = orderTasksForSidebar(props.tasks.items)
+
   return (
-    <ul className={styles["task-list"]}>
-      {props.tasks.items.map((task) => (
-        <TaskItem key={task.id} task={task} />
-      ))}
-    </ul>
+    <>
+      {running.length > 0 && (
+        <ul className={styles["task-running-list"]}>
+          {running.map((task) => (
+            <TaskRunningCard key={task.id} task={task} />
+          ))}
+        </ul>
+      )}
+      <ul className={styles["task-list"]}>
+        {rest.map((task) => (
+          <TaskItem key={task.id} task={task} />
+        ))}
+      </ul>
+    </>
   )
 }
