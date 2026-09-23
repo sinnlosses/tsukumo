@@ -1,15 +1,17 @@
-// いま見ているターンを配る Context（`<TurnSelectionProvider>`）。**メインビューのタブの選択が
-// キャラビューの吹き出し・表情にも効く**ので、機能のローカル状態ではなく `browser/stores/` に置く
-// （`test/architecture.test.ts`「browser/ の機能どうしの import」。docs/design.md 2章 / 6.2）。
+// いま見ているターンを配る Context（`<TurnSelectionProvider>`）。**メインビューの札で選んだ
+// ターンがキャラビューの吹き出し・表情にも効く**ので、機能のローカル状態ではなく
+// `browser/stores/` に置く（`test/architecture.test.ts`「browser/ の機能どうしの import」。
+// docs/design.md 2章 / 6.2）。
 //
 // **正典は `location.hash` の `turn`**（書き方は `stores/location-hash.ts`）。リロードしても
 // 同じターンを開いたまま戻り、ブラウザの「戻る」で1つ前に見ていたターンへ移る。
 // **`SessionState` には入れない。** サーバから来るものではなく、画面の都合の状態だから。
 //
 // 規則: hash に `turn` が無ければ今回に追従する（新しいターンが始まれば先頭へ移る）。
-// 過去のタブを選ぶと hash にそのターンが乗り、新しいターンが来ても動かない。今回のタブを
-// 選ぶと `turn` を外して追従に戻る。hash が指すターンが窓（`MAX_MAIN_VIEW_TURNS` 件）に
-// 無ければ今回を出す（hash は書き換えない — 描くたびに外の状態を書くことになるため）。
+// 札の `‹` `›` で過去のターンを選ぶと hash にそのターンが乗り、新しいターンが来ても動かない。
+// 最新のターンを選ぶ（`›` で端まで戻る・「最新へ」）と `turn` を外して追従に戻る。hash が
+// 指すターンが窓（`MAX_MAIN_VIEW_TURNS` 件）に無ければ今回を出す（hash は書き換えない —
+// 描くたびに外の状態を書くことになるため）。
 //
 // **姿からはターンの通し番号しか読まない**（畳んだ結果そのものは `stores/main-view-turn.ts` が
 // 姿ごとに覚えていて、中身を出す `features/main-view/` と同じものを使う）。
@@ -51,7 +53,7 @@ export type TurnSelectionProviderProps = {
 }
 
 export function TurnSelectionProvider(props: TurnSelectionProviderProps): ReactElement {
-  // タブに出るターン（窓の中）は昇順なので、末尾が今回。
+  // 札で行き来できるターン（窓の中）は昇順なので、末尾が今回。
   const newestTurnId = useSessionSelector((session) => mainViewTurnsOf(session.state).at(-1)?.id)
   const viewedTurn = useHashRoute((route) => route.turn)
   const viewedStillShown = useSessionSelector(

@@ -41,9 +41,12 @@
    **横に長いものは、中身の側が自前のスクロール容器を持つ**（レポートの表は .table-scroll、
    コードは pre-wrap、svg は max-width: 100%、長い語は overflow-wrap: anywhere で折り返す）。 */
 .layout-region {
+  /* 中身の側が「領域の内側の余白」を知るための変数。メインビューの札の頭（`position: sticky`）は
+     これだけ上へずらして、転がっても余白の帯から本文が覗かないようにする（`main-view.module.css`）。 */
+  --region-padding: 0.75rem;
   min-width: 0;
   min-height: 0;
-  padding: 0.75rem;
+  padding: var(--region-padding);
   border: 1px solid var(--rule);
   border-radius: 0.75rem;
   background: var(--surface);

@@ -188,7 +188,7 @@ type SectionHeadingProps = JSX.IntrinsicElements["h2"] & ExtraProps
 
 /**
  * レポートの見出し `##`（mdast の depth 2。hast では `h2`）を `h4` として描く。ページには
- * 利用者の依頼を示す本物の `<h2 className={styles["turn-request"]}>` が1つあるので（`turn.tsx`）、
+ * 利用者の依頼を示す本物の `<h2 className={styles["turn-title"]}>` が1つあるので（`turn-header.tsx`）、
  * レポートの中の見出しが同じ段に並ぶと見出しの階層が壊れる。**許可リスト
  * （{@link REPORT_SANITIZE_SCHEMA}）には `h2` のまま残す**（サニタイズはここより前に効くので、
  * 落としてしまうと書き替える前に中身が消える）。見た目は `.detail-block h4`
