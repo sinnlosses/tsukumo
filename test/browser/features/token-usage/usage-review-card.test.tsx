@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render } from "@testing-library/react"
 
 import {
+  type UsageReviewResultProposalView,
   type UsageReviewStageView,
   type UseUsageReviewResult,
 } from "../../../../src/browser/features/token-usage/hooks/use-usage-review.ts"
@@ -149,5 +150,140 @@ describe("UsageReviewCard（見直し中）", () => {
     fireEvent.click(getByText("止める"))
 
     expect(interrupted).toBe(1)
+  })
+})
+
+describe("UsageReviewCard（結果）", () => {
+  const FIXTURE_PROPOSALS: readonly UsageReviewResultProposalView[] = [
+    {
+      key: "tool-result:Bash",
+      impact: "large",
+      title: "Bash の出力を絞る",
+      basis: "Bash を多く呼び、結果が大きい。",
+      action: "head / tail / grep で必要な行だけ受け取る。",
+      followUp: "delegate",
+      onPrimary: () => {},
+      onDismiss: () => {},
+    },
+    {
+      key: "model-choice:",
+      impact: "medium",
+      title: "長いセッションは区切る",
+      basis: "キャッシュ読みが多い。",
+      action: "タスクが一区切りしたら /compact する。",
+      followUp: "task",
+      onPrimary: () => {},
+      onDismiss: () => {},
+    },
+  ]
+
+  const resultReview: UseUsageReviewResult = {
+    kind: "result",
+    face: FIXTURE_FACE,
+    reviewedAtLabel: "09-23 15:40",
+    periodLabel: "直近 7 日",
+    headline: "見てきたぞ！ 効きそうなのは 2 つ。",
+    proposals: FIXTURE_PROPOSALS,
+    retry: { kind: "available" },
+    onRetry: () => {},
+    close: { kind: "none" },
+  }
+
+  it("提案の数だけ札が出て、効きめと主ボタンの文言が中身どおりになる", () => {
+    const { container, getByText } = render(<UsageReviewCard review={resultReview} />)
+
+    expect(container.querySelectorAll(".usage-review-proposal")).toHaveLength(2)
+    expect(getByText("Bash の出力を絞る")).not.toBeNull()
+    expect(getByText("長いセッションは区切る")).not.toBeNull()
+    expect(getByText("大")).not.toBeNull()
+    expect(getByText("中")).not.toBeNull()
+    expect(getByText("tsukumo に頼む")).not.toBeNull()
+    expect(getByText("タスクにする")).not.toBeNull()
+    expect(getByText("09-23 15:40 · 直近 7 日")).not.toBeNull()
+    expect(getByText("見てきたぞ！ 効きそうなのは 2 つ。")).not.toBeNull()
+  })
+
+  it("主ボタンで依頼が1回送られ、「見送る」でコマンドが1回送られる", () => {
+    let primaryCalled = 0
+    let dismissCalled = 0
+    const review: UseUsageReviewResult = {
+      ...resultReview,
+      proposals: [
+        {
+          ...FIXTURE_PROPOSALS[0]!,
+          onPrimary: () => (primaryCalled += 1),
+          onDismiss: () => (dismissCalled += 1),
+        },
+      ],
+    }
+    const { getByText } = render(<UsageReviewCard review={review} />)
+
+    fireEvent.click(getByText("tsukumo に頼む"))
+    fireEvent.click(getByText("見送る"))
+
+    expect(primaryCalled).toBe(1)
+    expect(dismissCalled).toBe(1)
+  })
+
+  it("提案が0件のときは一言だけ出る", () => {
+    const review: UseUsageReviewResult = { ...resultReview, proposals: [] }
+    const { getByText, container } = render(<UsageReviewCard review={review} />)
+
+    expect(getByText("いま出せる提案は無い。")).not.toBeNull()
+    expect(container.querySelectorAll(".usage-review-proposal")).toHaveLength(0)
+  })
+
+  it("もう一度見てもらうを押すと retry が1回呼ばれる", () => {
+    let retried = 0
+    const review: UseUsageReviewResult = { ...resultReview, onRetry: () => (retried += 1) }
+    const { getByText } = render(<UsageReviewCard review={review} />)
+
+    fireEvent.click(getByText("もう一度見てもらう"))
+
+    expect(retried).toBe(1)
+  })
+
+  it("ターンが進行中は主ボタンともう一度見てもらうが押せず、理由が出る", () => {
+    const review: UseUsageReviewResult = {
+      ...resultReview,
+      retry: {
+        kind: "blocked",
+        reason: "いまターンが動いているので送れない。終わってからもう一度押す。",
+      },
+    }
+    const { getByText } = render(<UsageReviewCard review={review} />)
+
+    expect(getByText("もう一度見てもらう").hasAttribute("disabled")).toBe(true)
+    expect(getByText("tsukumo に頼む").hasAttribute("disabled")).toBe(true)
+    expect(
+      getByText("いまターンが動いているので送れない。終わってからもう一度押す。"),
+    ).not.toBeNull()
+  })
+
+  it("「見送る」はターンが進行中でも押せる", () => {
+    const review: UseUsageReviewResult = {
+      ...resultReview,
+      retry: { kind: "blocked", reason: "いまターンが動いているので送れない。" },
+    }
+    const { getAllByText } = render(<UsageReviewCard review={review} />)
+
+    for (const dismiss of getAllByText("見送る")) {
+      expect(dismiss.hasAttribute("disabled")).toBe(false)
+    }
+  })
+
+  it("「前回の提案」から開いたときだけ「閉じる」が出て、押すと close が1回呼ばれる", () => {
+    const { queryByText } = render(<UsageReviewCard review={resultReview} />)
+    expect(queryByText("閉じる")).toBeNull()
+
+    let closed = 0
+    const withClose: UseUsageReviewResult = {
+      ...resultReview,
+      close: { kind: "shown", onClose: () => (closed += 1) },
+    }
+    const { getByText } = render(<UsageReviewCard review={withClose} />)
+
+    fireEvent.click(getByText("閉じる"))
+    expect(closed).toBe(1)
   })
 })

@@ -1,13 +1,17 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, renderHook, waitFor } from "@testing-library/react"
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
 import { useUsageReview } from "../../../../src/browser/features/token-usage/hooks/use-usage-review.ts"
 import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import { USAGE_REVIEW_REQUEST_TEXT } from "../../../../src/shared/usage-review.ts"
+import {
+  USAGE_REVIEW_REQUEST_TEXT,
+  type UsageProposal,
+  type UsageReviewFindings,
+} from "../../../../src/shared/usage-review.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 /**
@@ -250,5 +254,152 @@ describe("useUsageReview（見直し中）", () => {
     }
 
     expect(sent).toEqual([{ type: "interrupt" }])
+  })
+})
+
+const FIXTURE_PROPOSAL: UsageProposal = {
+  kind: "tool-result",
+  target: "架空ツール",
+  impact: "large",
+  title: "架空の提案",
+  basis: "架空の根拠。",
+  action: "架空のやること。",
+  followUp: "delegate",
+}
+
+const FIXTURE_FINDINGS: UsageReviewFindings = {
+  days: 7,
+  headline: "架空の一言。",
+  proposals: [FIXTURE_PROPOSAL],
+}
+
+describe("useUsageReview（結果）", () => {
+  it("結果の場面には reviewedAtLabel・periodLabel・headline・提案が並ぶ", () => {
+    const state = stateWith({
+      usageReview: { kind: "result", reviewedAt: 1_700_000_000_000, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state)
+
+    expect(result.current.kind).toBe("result")
+    if (result.current.kind === "result") {
+      expect(result.current.periodLabel).toBe("直近 7 日")
+      expect(result.current.headline).toBe("架空の一言。")
+      expect(result.current.reviewedAtLabel).toMatch(/^\d{2}-\d{2} \d{2}:\d{2}$/)
+      expect(result.current.proposals).toHaveLength(1)
+      expect(result.current.proposals[0]?.title).toBe("架空の提案")
+      expect(result.current.close).toEqual({ kind: "none" })
+    }
+  })
+
+  it("1日の見直しは periodLabel が「今日」になる", () => {
+    const state = stateWith({
+      usageReview: {
+        kind: "result",
+        reviewedAt: 0,
+        findings: { ...FIXTURE_FINDINGS, days: 1 },
+      },
+    })
+    const { result } = renderUsageReview(state)
+
+    expect(result.current.kind === "result" ? result.current.periodLabel : "").toBe("今日")
+  })
+
+  it("主ボタンは会話へ依頼を1回送る", () => {
+    const sent: unknown[] = []
+    const state = stateWith({
+      usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state, (command) => sent.push(command))
+
+    if (result.current.kind === "result") {
+      result.current.proposals[0]?.onPrimary()
+    }
+
+    expect(sent).toHaveLength(1)
+    const sentCommand = sent[0] as { readonly type: string; readonly text: string }
+    expect(sentCommand.type).toBe("prompt")
+    expect(sentCommand.text).toContain("架空の提案")
+  })
+
+  it("見送るは種類と対象を添えて dismiss-usage-proposal を1回送る", () => {
+    const sent: unknown[] = []
+    const state = stateWith({
+      usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state, (command) => sent.push(command))
+
+    if (result.current.kind === "result") {
+      result.current.proposals[0]?.onDismiss()
+    }
+
+    expect(sent).toEqual([
+      { type: "dismiss-usage-proposal", kind: "tool-result", target: "架空ツール" },
+    ])
+  })
+
+  it("もう一度見てもらうは USAGE_REVIEW_REQUEST_TEXT を送る", () => {
+    const sent: unknown[] = []
+    const state = stateWith({
+      usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state, (command) => sent.push(command))
+
+    if (result.current.kind === "result") {
+      result.current.onRetry()
+    }
+
+    expect(sent).toEqual([{ type: "prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] }])
+  })
+
+  it("ターンが進行中は retry が blocked になる", () => {
+    const state = stateWith({
+      usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+      turn: { kind: "running", startedAt: 0 },
+    })
+    const { result } = renderUsageReview(state)
+
+    expect(result.current.kind === "result" ? result.current.retry.kind : "").toBe("blocked")
+  })
+})
+
+describe("useUsageReview（前回の提案を開く）", () => {
+  it("「前回の提案」を開くと同じ形の結果が出て、close が shown になる", () => {
+    const state = stateWith({
+      previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state)
+
+    expect(result.current.kind).toBe("idle")
+    act(() => {
+      if (result.current.kind === "idle" && result.current.previousReview.kind === "found") {
+        result.current.previousReview.onOpen()
+      }
+    })
+
+    expect(result.current.kind).toBe("result")
+    if (result.current.kind === "result") {
+      expect(result.current.headline).toBe("架空の一言。")
+      expect(result.current.close.kind).toBe("shown")
+    }
+  })
+
+  it("閉じるを押すと前回の提案の表示をやめ、idle へ戻る", () => {
+    const state = stateWith({
+      previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state)
+
+    act(() => {
+      if (result.current.kind === "idle" && result.current.previousReview.kind === "found") {
+        result.current.previousReview.onOpen()
+      }
+    })
+    act(() => {
+      if (result.current.kind === "result" && result.current.close.kind === "shown") {
+        result.current.close.onClose()
+      }
+    })
+
+    expect(result.current.kind).toBe("idle")
   })
 })

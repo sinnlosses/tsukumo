@@ -539,6 +539,203 @@
   font-size: var(--font-label);
 }
 
+/* 結果の場面（`kind === "result"`）。**「ふだん」と同じ染め**（`.usage-review-invite`と同じ
+   `color-mix`）で、縦に積む中身は見直し中と同じ組み方にする（頭の行 + 提案の並び）。今回の
+   結果でも「前回の提案」を開いたときでも同じクラスを使う（`usage-review-card.tsx`
+   `ResultReviewCard`）。 */
+.usage-review-result {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 1.125rem;
+  background: color-mix(in srgb, var(--usage-card), var(--accent) 6%);
+  border-color: color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
+}
+.usage-review-result-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+/* 吹き出し。三角は描かず、左上の角だけ立てて（`border-radius`）向きを示す
+   （見本 `token-advice-result-2026-09-23.html` と同じ手）。 */
+.usage-review-result-bubble {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.6rem 0.875rem;
+  border-radius: 0.25rem 0.875rem 0.875rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
+  background: color-mix(in srgb, var(--usage-well), var(--accent) 10%);
+}
+.usage-review-result-bubble-label {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--accent);
+  font-size: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.usage-review-result-bubble-text {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-body);
+  line-height: 1.7;
+}
+.usage-review-result-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.usage-review-result-timestamp {
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+.usage-review-result-close {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.usage-review-result-close:hover {
+  text-decoration: underline;
+}
+/* 「もう一度見てもらう」。**中立の枠**（`.usage-review-stop` と同じ地味さ）——押せる区画の
+   染めはすでに区画全体が持っているので、ここまで `accent` を足すと強すぎる。 */
+.usage-review-retry {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--usage-ink-cell);
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.usage-review-retry:hover {
+  border-color: var(--accent);
+  color: var(--usage-ink);
+}
+.usage-review-retry:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.usage-review-proposals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+/* 提案の札1枚。**地は `--usage-well`**（区画全体の染めより1段沈め、区画の地とは別の面だと
+   分かるようにする）。 */
+.usage-review-proposal {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.875rem;
+  background: var(--usage-well);
+}
+/* 効きめの札。**大は `--accent`（キャラクターの色。押せる区画そのものの強調と同じ）、中は
+   `--state-warn`（意味を固定した色。13.1 原則5の「状態を運ぶ色」に相乗り——大小関係を運ぶのも
+   状態の一種）、小は色を足さず `--usage-rule` の無地**（新しい固定色を増やさずに3段を分ける。
+   docs/screen-design.md 13.2「結果の場面」）。 */
+.usage-review-impact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
+}
+.usage-review-impact-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+.usage-review-impact-value {
+  font-size: var(--font-subheading);
+  font-weight: 700;
+}
+.usage-review-impact-large {
+  background: var(--accent);
+  color: var(--ground);
+}
+.usage-review-impact-medium {
+  background: var(--state-warn);
+  color: var(--ground);
+}
+.usage-review-impact-small {
+  background: var(--usage-rule);
+  color: var(--usage-ink-label);
+}
+.usage-review-proposal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.usage-review-proposal-title {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+.usage-review-proposal-basis,
+.usage-review-proposal-action {
+  margin: 0;
+  font-size: var(--font-label);
+  line-height: 1.7;
+}
+.usage-review-proposal-basis {
+  color: var(--usage-ink-label);
+}
+.usage-review-proposal-action {
+  color: var(--usage-ink-cell);
+}
+.usage-review-proposal-note-label {
+  color: var(--usage-ink-note);
+}
+.usage-review-proposal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+/* 主ボタン。**`--usage-rule` に `--accent` を重ねるだけ**（13.2「染める」— 素の16進は増やさない）。 */
+.usage-review-proposal-primary {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--usage-rule), var(--accent) 45%);
+  border-radius: 0.5rem;
+  background: none;
+  color: color-mix(in srgb, var(--usage-ink), var(--accent) 55%);
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.usage-review-proposal-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.usage-review-proposal-dismiss {
+  padding: 0.45rem 0.4rem;
+  border: none;
+  background: none;
+  color: var(--usage-ink-faint);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.usage-review-proposal-dismiss:hover {
+  color: var(--usage-ink-cell);
+}
+
 /* いまのコンテキストの内訳の札（`context-usage-card.tsx`）。期間の消費の札（`.usage-card`）と
    同じ枠・同じ地で、出どころが違うことは見出しの言葉のほうが持つ。 */
 .context-card {
@@ -818,6 +1015,21 @@
   }
   .usage-review-blocked {
     text-align: left;
+  }
+  /* 結果の頭の行・提案の札も同じ境目で折り返す（`usage-review-blocked` と同じ理由）。 */
+  .usage-review-result-head {
+    flex-wrap: wrap;
+  }
+  .usage-review-result-meta {
+    align-items: flex-start;
+  }
+  .usage-review-proposal {
+    flex-wrap: wrap;
+  }
+  .usage-review-proposal-actions {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
   }
 }
 @media (max-width: 420px) {
