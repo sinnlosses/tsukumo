@@ -27,57 +27,38 @@ export type PresentationalScreenNavProps = ScreenNavView
 /**
  * **props はここだけ分解して受ける**（`ref` を `props.ref` の形で描画中に読むと
  * `react(refs)` が落ちるため。`presentational-task-board.tsx` と同じ）。
+ *
+ * **部品の値は束（`parts`）のまま `<ScreenNavMenu>` へ渡す**（項目ごとに配り直さない。
+ * `hooks/use-screen-nav.ts` の `ScreenNavParts`）。ここが持つのは**広い画面の並び**
+ * だけで、「≡」の面の並びは `components/screen-nav-menu.tsx` の側にある。
  */
 export function PresentationalScreenNav({
   current,
-  room,
-  face,
-  gates,
-  chatMode,
-  modelPermission,
-  pendingActive,
-  work,
-  workToggleRefWide,
-  workToggleRefNarrow,
-  settings,
-  settingsToggleRefWide,
-  settingsToggleRefNarrow,
-  menuOpen,
+  parts,
+  menu,
   ref,
-  onToggleMenu,
-  onSelect,
 }: PresentationalScreenNavProps): ReactElement {
   return (
     <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
       <div className={styles["screen-nav-identity"]}>
-        <CharacterFace url={face.url} alt={face.alt} className={styles["screen-nav-face"] ?? ""} />
-        <ScreenNavRoom name={room} />
+        <CharacterFace
+          url={parts.face.url}
+          alt={parts.face.alt}
+          className={styles["screen-nav-face"] ?? ""}
+        />
+        <ScreenNavRoom name={parts.room} />
       </div>
-      <ScreenNavChatModeToggle chatMode={chatMode} />
+      <ScreenNavChatModeToggle chatMode={parts.chatMode} />
       <span className={styles["screen-nav-divider"]} aria-hidden="true" />
       <div className={styles["screen-nav-gates"]}>
-        {gates.map((gate) => (
-          <ScreenNavGate key={gate.screen} gate={gate} onSelect={onSelect} />
+        {parts.gates.map((gate) => (
+          <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
         ))}
       </div>
-      <ScreenNavCurrentWorkPill work={work} toggleRef={workToggleRefWide} />
-      <ScreenNavModelPermissionSelect modelPermission={modelPermission} />
-      <ScreenNavSettingsGear settings={settings} toggleRef={settingsToggleRefWide} />
-      <ScreenNavMenu
-        room={room}
-        face={face}
-        gates={gates}
-        chatMode={chatMode}
-        modelPermission={modelPermission}
-        work={work}
-        workToggleRefNarrow={workToggleRefNarrow}
-        settings={settings}
-        settingsToggleRefNarrow={settingsToggleRefNarrow}
-        open={menuOpen}
-        pendingActive={pendingActive}
-        onToggle={onToggleMenu}
-        onSelect={onSelect}
-      />
+      <ScreenNavCurrentWorkPill work={parts.work} />
+      <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
+      <ScreenNavSettingsGear settings={parts.settings} />
+      <ScreenNavMenu parts={parts} menu={menu} />
     </nav>
   )
 }

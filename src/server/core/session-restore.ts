@@ -56,8 +56,8 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
  * 切り替え先も自分の部屋のものだけに絞る。**目印まで揃えてから比べる**ので、昔の印（目印の
  * 無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
  *
- * 一覧に並ぶのはいつも同じ部屋（同じ `tag`）のセッションなので、**行が複数あるのは、落ちた
- * tsukumo の印といま動いている tsukumo の印が見分けられないため**（見分け方は最終更新時刻の側）。
+ * 一覧に並ぶのはいつも同じ部屋（同じ `tag`）のセッションなので、**行が複数ある理由は
+ * `config.ts` の `sessionTag`**。新しいほうを選ぶ手がかりは最終更新時刻（新しい順に並べる）。
  *
  * **返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで**（印は使うほど増え続ける）。
  */
@@ -108,10 +108,7 @@ export function toRestoredEvents(
 
 /** 印の付いたセッション1件（目印まで揃えた印つき）。 */
 type TaggedSession = SessionChoice & {
-  /**
-   * 目印まで揃えた印。**続きから始めるセッションを選ぶときも、切り替え先の一覧をいまの部屋に
-   * 絞るときも、これ同士を比べる**（`readSessionMark`）。
-   */
+  /** 目印まで揃えた印。`config.ts` の `SessionMark.tag` と同じ意味で使う（`readSessionMark`）。 */
   readonly tag: string
 }
 

@@ -79,6 +79,11 @@ function workToggle(): HTMLElement {
   ) as HTMLElement
 }
 
+/** 狭い画面の「≡」の面の中にある同じ札（開いていないと無い）。 */
+function panelWorkToggle(): HTMLElement {
+  return document.querySelector(".screen-nav-panel .screen-nav-work-toggle") as HTMLElement
+}
+
 describe("いまの作業（帯の札と、押すと開く依頼の手順の一覧）", () => {
   it("依頼が一度も無ければ「依頼待ち」で、開くと「まだ依頼が無い」と出る", () => {
     renderScreenNav()
@@ -397,5 +402,22 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     fireEvent.keyDown(document, { key: "Escape" })
     expect(document.querySelector(".screen-nav-work-list")).toBeNull()
     expect(document.activeElement).toBe(toggle)
+  })
+
+  // 狭い画面では札そのものが「≡」の面の中にあり、Esc は面ごと閉じる（「≡」も同じ合図で
+  // 閉じる。`browser/hooks/use-dismiss-signal.ts`）ので、戻り先の札は DOM から消える。
+  // **帯の側の札（狭い画面では `display: none`）へフォーカスを飛ばさない**ことをここで守る。
+  it("「≡」の面の中の札でも Esc で閉じ、隠れている帯の側の札へは戻さない", () => {
+    renderScreenNav({ records: [requestRecord()] })
+    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
+
+    fireEvent.click(panelWorkToggle())
+    expect(document.querySelector(".screen-nav-panel .screen-nav-work-list")).not.toBeNull()
+
+    fireEvent.keyDown(document, { key: "Escape" })
+
+    expect(document.querySelector(".screen-nav-panel")).toBeNull()
+    expect(document.activeElement).not.toBe(workToggle())
+    expect(document.activeElement).toBe(document.body)
   })
 })

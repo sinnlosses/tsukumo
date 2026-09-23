@@ -11,6 +11,10 @@
 // `<select>` が送っていたものと同じ**（`set-chat-mode` / `set-model` / `set-permission-mode`）。
 // 表示はサーバから届いた値だけに従い、押した側へ先に倒さない（13.9「動き方の操作子」）。
 //
+// **2つの面（広い画面の帯・狭い画面の「≡」の面）へは、部品の値を1つの束で配る**
+// （{@link ScreenNavParts}）。同じ値を項目ごとに配り直さないので、帯に部品を足すときに
+// 触るのはこの束の型と2つの置き場の JSX だけになる。
+//
 // 「≡」を閉じる合図（外側を押した・Esc）は `browser/hooks/use-dismiss-signal.ts` が取る
 // （**開いている間だけ `document` を購読する**）。「いまの作業」の札と歯車も同じフックを使う
 // ので、3つの面の閉じ方が1箇所で決まる。
@@ -71,9 +75,13 @@ export type ScreenNavFace = {
   readonly alt: string
 }
 
-export type ScreenNavView = {
-  /** いま出している画面。**狭い画面での帯の置き方**（タブ帯へ畳むか）を CSS が決めるのに使う。 */
-  readonly current: Screen
+/**
+ * **帯に並ぶ部品の値ひとそろい**（13.9 の表の 2〜9）。広い画面の帯（`presentational-screen-nav.tsx`）
+ * と狭い画面の「≡」の面（`components/screen-nav-menu.tsx`）が、**この束をそのまま受け取って
+ * それぞれの並びで置く**——どちらを出すかは CSS が決めるので、値の配り方は1本で足りる。
+ * 部品を1つ足すときに触るのは、ここと2つの置き場の JSX だけになる。
+ */
+export type ScreenNavParts = {
   /** この tsukumo の部屋の名前（`src/shared/room.ts`。13.9）。 */
   readonly room: string
   /** いまのパックのキャラクターの顔（`CharacterInfo.face`。13.9「顔」）。 */
@@ -81,23 +89,27 @@ export type ScreenNavView = {
   readonly gates: readonly ScreenNavGate[]
   readonly chatMode: ScreenNavChatMode
   readonly modelPermission: ScreenNavModelPermission
-  /** 狭い画面の「≡」に添える答え待ちの印（●）だけに使う（13.9「いまの作業」）。 */
-  readonly pendingActive: boolean
   /** 帯のまん中の札「いまの作業」（`hooks/use-current-work.ts`）。 */
   readonly work: ScreenNavCurrentWork
-  /** 広い画面の帯にある札の DOM（Esc でフォーカスを戻す先）。 */
-  readonly workToggleRefWide: RefObject<HTMLButtonElement | null>
-  /** 狭い画面の「≡」の面の中にある札の DOM（同上）。 */
-  readonly workToggleRefNarrow: RefObject<HTMLButtonElement | null>
   /** 帯の右端の歯車で開く設定（`hooks/use-settings.ts`）。 */
   readonly settings: ScreenNavSettings
-  /** 広い画面の帯にある歯車の DOM（Esc でフォーカスを戻す先）。 */
-  readonly settingsToggleRefWide: RefObject<HTMLButtonElement | null>
-  /** 狭い画面の「≡」の面の中にある歯車の DOM（同上）。 */
-  readonly settingsToggleRefNarrow: RefObject<HTMLButtonElement | null>
-  readonly menuOpen: boolean
-  readonly onToggleMenu: () => void
+  /** 口を押したあとに「≡」を閉じる呼び先（広い画面では開いていないので何も起きない）。 */
   readonly onSelect: () => void
+}
+
+/** 狭い画面の「≡」そのもの（広い画面では CSS が消す。13.9「狭い画面」）。 */
+export type ScreenNavMenu = {
+  readonly open: boolean
+  /** 閉じている間だけ「≡」に添える答え待ちの印（●）。13.9「いまの作業」。 */
+  readonly pendingActive: boolean
+  readonly onToggle: () => void
+}
+
+export type ScreenNavView = {
+  /** いま出している画面。**狭い画面での帯の置き方**（タブ帯へ畳むか）を CSS が決めるのに使う。 */
+  readonly current: Screen
+  readonly parts: ScreenNavParts
+  readonly menu: ScreenNavMenu
   /** 帯の外側を押したかを見るための入れ物（「≡」を閉じる判定に使う）。 */
   readonly ref: RefObject<HTMLElement | null>
 }
@@ -128,16 +140,8 @@ export function useScreenNav(): ScreenNavView {
   const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
-  const {
-    view: work,
-    toggleRefWide: workToggleRefWide,
-    toggleRefNarrow: workToggleRefNarrow,
-  } = useCurrentWork(ref)
-  const {
-    view: settings,
-    toggleRefWide: settingsToggleRefWide,
-    toggleRefNarrow: settingsToggleRefNarrow,
-  } = useSettings(ref)
+  const work = useCurrentWork(ref)
+  const settings = useSettings(ref)
 
   const onSelect = useCallback((): void => {
     setMenuOpen(false)
@@ -160,50 +164,46 @@ export function useScreenNav(): ScreenNavView {
 
   return {
     current,
-    room: currentRoomName(),
-    face: { url: character?.face, alt: character?.name ?? "" },
-    gates: NAV_SCREENS.map((entry) => ({
-      screen: entry.screen,
-      label: entry.label,
-      href: screenHref(entry.screen),
-      active: entry.screen === current,
-    })),
-    chatMode: {
-      chat: chatMode,
-      disabled: turnInProgress,
-      title: turnInProgress ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
-      onChange: (chat) => {
-        if (turnInProgress || chat === chatMode) {
-          return
-        }
-        dispatch({ type: "set-chat-mode", chat })
+    parts: {
+      room: currentRoomName(),
+      face: { url: character?.face, alt: character?.name ?? "" },
+      gates: NAV_SCREENS.map((entry) => ({
+        screen: entry.screen,
+        label: entry.label,
+        href: screenHref(entry.screen),
+        active: entry.screen === current,
+      })),
+      chatMode: {
+        chat: chatMode,
+        disabled: turnInProgress,
+        title: turnInProgress ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
+        onChange: (chat) => {
+          if (turnInProgress || chat === chatMode) {
+            return
+          }
+          dispatch({ type: "set-chat-mode", chat })
+        },
       },
+      modelPermission: {
+        model: model === undefined ? sessionDefault.model : resolveModelAlias(model),
+        onSetModel: (value) => {
+          if (isModelAlias(value)) {
+            dispatch({ type: "set-model", model: value })
+          }
+        },
+        permissionMode: shownPermissionMode,
+        permissionModeDangerous: isDangerousPermissionMode(shownPermissionMode),
+        onSetPermissionMode: (value) => {
+          if (isPermissionMode(value)) {
+            dispatch({ type: "set-permission-mode", mode: value })
+          }
+        },
+      },
+      work,
+      settings,
+      onSelect,
     },
-    modelPermission: {
-      model: model === undefined ? sessionDefault.model : resolveModelAlias(model),
-      onSetModel: (value) => {
-        if (isModelAlias(value)) {
-          dispatch({ type: "set-model", model: value })
-        }
-      },
-      permissionMode: shownPermissionMode,
-      permissionModeDangerous: isDangerousPermissionMode(shownPermissionMode),
-      onSetPermissionMode: (value) => {
-        if (isPermissionMode(value)) {
-          dispatch({ type: "set-permission-mode", mode: value })
-        }
-      },
-    },
-    pendingActive,
-    work,
-    workToggleRefWide,
-    workToggleRefNarrow,
-    settings,
-    settingsToggleRefWide,
-    settingsToggleRefNarrow,
-    menuOpen,
-    onToggleMenu,
-    onSelect,
+    menu: { open: menuOpen, pendingActive, onToggle: onToggleMenu },
     ref,
   }
 }

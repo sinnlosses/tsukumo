@@ -91,6 +91,18 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `/compact` の依頼で要約の最後に `<topics>` の組を書かせ、`chat-compact.ts` の `chatTopics` が取り出す。起動時と PostCompact のあとに `chat-topics-changed` で流す（`PROTOCOL_VERSION` 6）。本物の圧縮でモデルが組を書くかは未確認。
 
+### 2026-09-23 帯の部品を2つの面へ配る配線を、束1本にした（T-413）
+
+`ScreenNavView` を `current` / `parts` / `menu` / `ref` の4項目にし、帯に並ぶ部品の値は束 `ScreenNavParts` のまま広い画面の帯と「≡」の面の両方へ渡す形にした（`ScreenNavMenuProps` は14項目から2項目へ）。広い画面用・狭い画面用で2本持っていた ref の組は、付いている口を集めるコールバック ref 1本に畳んで `ScreenNavView` から消えた。
+
+### 2026-09-23 同じ前提はコメント1か所に書く規約を足し、セッションの印の説明の重なりを畳んだ（T-414）
+
+`docs/coding-standards.md`「コメント」節に規約を足した。印の読み戻しは `config.ts` の `sessionTag`、絞り込みと並びは `session-restore.ts` の `listMarkedSessions` を正典にし、ほかの4か所は参照に畳んだ（コードは不変）。
+
+### 2026-09-23 requirements.md 4.10 の原寸を手放す約束を、棚の寿命に書き換えた（T-418）
+
+原寸は直近8枚だけサーバのメモリの棚に残り、記録の窓から落ちたときか枚数を超えたときに捨てる、と書き直した。控えも押せる旨を 4.10 と `docs/design.md` 4.1・13章・13.7 に揃えた（ドキュメントのみ）。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の

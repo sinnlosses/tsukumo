@@ -15,9 +15,10 @@
 //
 // 閉じる合図（外側を押した・Esc）は「≡」と歯車と同じ `browser/hooks/use-dismiss-signal.ts` で
 // 取る（**開いている間だけ `document` を購読する**）。**Esc のときだけ押した口へフォーカスを
-// 戻す**のはこの札の事情なので、合図の種類を見てここで決める。
+// 戻す**のはこの札の事情なので、合図の種類を見てここで決める。**戻り先の札は
+// コールバック ref で集める**（{@link ScreenNavCurrentWork.toggleRef}）。
 
-import { useCallback, useRef, useState, type RefObject } from "react"
+import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
 import { type PendingAsk } from "../../../../shared/pending-ask.ts"
 import {
@@ -148,18 +149,18 @@ export type ScreenNavCurrentWork = {
   readonly stepList: ScreenNavCurrentWorkStepList
   readonly open: boolean
   readonly onToggle: () => void
-}
-
-export type UseCurrentWorkResult = {
-  readonly view: ScreenNavCurrentWork
-  /** 広い画面の帯にある札（`presentational-screen-nav.tsx`）。 */
-  readonly toggleRefWide: RefObject<HTMLButtonElement | null>
-  /** 狭い画面の「≡」の面の中にある札（`screen-nav-menu.tsx`）。 */
-  readonly toggleRefNarrow: RefObject<HTMLButtonElement | null>
+  /**
+   * 札の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。**`RefObject` ではなく
+   * コールバック ref** なのは、同じ札が広い画面の帯と「≡」の面の2箇所に描かれるため——
+   * 入れ物を1つにすると後から付いたほうで上書きされ、面を閉じた時点で戻り先が空になる。
+   * 付いている札を**全部**集めておき、Esc のときはその全部へ `.focus()` を呼ぶ
+   * （見えていないほうは `display: none` で効かない）。
+   */
+  readonly toggleRef: RefCallback<HTMLButtonElement>
 }
 
 /** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」と同じ `ref`）。 */
-export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurrentWorkResult {
+export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNavCurrentWork {
   const endedReason = useSessionSelector((session) => session.state.endedReason)
   const pending = useSessionSelector((session) => session.state.pending)
   const turnInProgress = useTurnRunning()
@@ -172,8 +173,22 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
 
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
-  const toggleRefWide = useRef<HTMLButtonElement>(null)
-  const toggleRefNarrow = useRef<HTMLButtonElement>(null)
+  // いま DOM に付いている札（{@link ScreenNavCurrentWork.toggleRef}）。React の外にある資源を
+  // 持つ可変の入れ物なので ref に置く（書き換えはコールバック ref = 取り付けのときだけ）。
+  const toggleNodes = useRef(new Set<HTMLButtonElement>())
+
+  const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
+    // **cleanup を返す形なので React 19 は `null` で呼び直さない**（外れるのは下の cleanup）。
+    // 型の上では `null` が来うるので、そのときは何も預からない。
+    if (node === null) {
+      return
+    }
+    const nodes = toggleNodes.current
+    nodes.add(node)
+    return () => {
+      nodes.delete(node)
+    }
+  }, [])
 
   const onToggle = useCallback((): void => {
     setOpen((wasOpen) => !wasOpen)
@@ -188,10 +203,11 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
     setOpen(false)
     setExpanded(false)
     if (cause === "escape") {
-      // どちらか一方しか押せる状態にない（もう片方は `display: none` で `.focus()` が
-      // 効かない）ので、両方へ呼んで構わない。
-      toggleRefWide.current?.focus()
-      toggleRefNarrow.current?.focus()
+      // 押せる状態にある札は1つだけ（もう片方は `display: none` で `.focus()` が効かない）
+      // なので、付いているものへ順に呼んで構わない。
+      for (const node of toggleNodes.current) {
+        node.focus()
+      }
     }
   }, [])
 
@@ -231,22 +247,19 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
   const runningStep = toRunningStepView(turnStepList, state)
 
   return {
-    view: {
-      state,
-      wordLabel: chatIdle
-        ? `${characterName ?? DEFAULT_CHARACTER_NAME} とおしゃべり中`
-        : WORK_WORD_LABEL[state],
-      mark: state === "idle" && !chatIdle ? "○" : "●",
-      chatIdle,
-      pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
-      summary: toSummaryView(state, firstPending, runningStep),
-      runningStep,
-      stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
-      open,
-      onToggle,
-    },
-    toggleRefWide,
-    toggleRefNarrow,
+    state,
+    wordLabel: chatIdle
+      ? `${characterName ?? DEFAULT_CHARACTER_NAME} とおしゃべり中`
+      : WORK_WORD_LABEL[state],
+    mark: state === "idle" && !chatIdle ? "○" : "●",
+    chatIdle,
+    pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
+    summary: toSummaryView(state, firstPending, runningStep),
+    runningStep,
+    stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
+    open,
+    onToggle,
+    toggleRef,
   }
 }
 
