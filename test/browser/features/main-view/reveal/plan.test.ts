@@ -1,11 +1,14 @@
 import { describe, expect, it } from "bun:test"
 
-import { revealTimingOf, type RevealTiming } from "../../../../src/browser/domain/reveal-speed.ts"
+import {
+  revealTimingOf,
+  type RevealTiming,
+} from "../../../../../src/browser/domain/reveal-speed.ts"
 import {
   blockProgress,
   planReveal,
   type RevealBlock,
-} from "../../../../src/browser/features/main-view/reveal-plan.ts"
+} from "../../../../../src/browser/features/main-view/reveal/plan.ts"
 
 /** `standard` の物差し（`domain/reveal-speed.ts`）。個々のテストはこれで固定する。 */
 const STANDARD_TIMING = revealTimingOf("standard")

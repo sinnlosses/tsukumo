@@ -1,5 +1,5 @@
 // レポートを「書き上げていくように見せる」演出で、**見せる範囲を要素に書く**（測るのは
-// `reveal-measure.ts`、進めるのは `hooks/use-report-reveal.ts`）。**本文の見え方に触るのは
+// `measure.ts`、進めるのは `use-report-reveal.ts`）。**本文の見え方に触るのは
 // ここだけ**——隠す・出し切る・途中まで見せるの3つを持つ。
 //
 // 帯は**要素をまたいで1本に伸びる**（見出しと段落と表が同じ帯に入る）。だから筆の居場所は
@@ -12,9 +12,9 @@
 // どちらもレイアウトを動かさない（`clip-path` も `opacity` も場所を取ったまま隠す）ので、
 // 本文の高さは最初から最後まで変わらない。
 
-import { type BrushStep } from "./reveal-band.ts"
-import { type MemberShape } from "./reveal-measure.ts"
-import { type RevealBlock } from "./reveal-plan.ts"
+import { type BrushStep } from "./band.ts"
+import { type MemberShape } from "./measure.ts"
+import { type RevealBlock } from "./plan.ts"
 
 /** 何も見せていない状態の `clip-path`（高さ 0 に畳む。場所は取ったまま）。 */
 const HIDDEN_CLIP = "inset(0 0 100% 0)"

@@ -1,5 +1,5 @@
 // レポートを「書き上げていくように見せる」演出で、**どの塊をいつ出すか**を決める（純粋な割り当て。
-// DOM は読むだけで書き換えない）。進める側は `hooks/use-report-reveal.ts`。
+// DOM は読むだけで書き換えない）。進める側は `use-report-reveal.ts`。
 //
 // **文字を足していく実装にしない**（`docs/requirements.md` 4.3）。DOM は完成品のまま置き、
 // 見せる範囲だけを進めるので、ここが返すのは「塊ごとの出し始めと出し終わりの時刻」だけになる。
@@ -14,14 +14,14 @@
 //
 // トピックの中の要素は、見せ方が2種類ある:
 //
-// - **文字の要素（`text`）**: `reveal-paint.ts` が `clip-path` で見せる範囲を進める
+// - **文字の要素（`text`）**: `paint.ts` が `clip-path` で見せる範囲を進める
 // - **図・グラフの要素（`figure`）**: 文字の位置が取れない・取っても意味が無いので `opacity` で
 //   出す（`docs/requirements.md` 4.3「文字を持たない図・グラフの塊は塊ごと出し」）。mermaid と
 //   Chart.js は**非同期に描いたあとで中身が入れ替わる**ので、中身ではなく入れ物の class
 //   （`mermaid` / `chart-block`。`markdown/mermaid-block.tsx` / `markdown/chart-block.tsx` が付ける）
 //   で見分ける——描き終わる前でも後でも同じ判定になる
 
-import { type RevealTiming } from "../../domain/reveal-speed.ts"
+import { type RevealTiming } from "../../../domain/reveal-speed.ts"
 
 /** 見せる範囲を進められる要素。`clip-path` と `opacity` を持つもの（レポートの塊は全部これ）。 */
 export type RevealElement = HTMLElement | SVGElement
@@ -83,7 +83,7 @@ export function planReveal(root: Element, timing: RevealTiming): readonly Reveal
  * 見せて、読み手が待つだけの真ん中を速く抜ける**。**塊の持ち時間は変えない**
  * （`planReveal` が {@link RevealTiming} から決めたまま）ので、レポート全体の長さは前と同じ。
  *
- * 進み具合を**どこの位置に直すか**は `reveal-band.ts`（空間の話）。ここは時間の話だけを持つ。
+ * 進み具合を**どこの位置に直すか**は `band.ts`（空間の話）。ここは時間の話だけを持つ。
  */
 export function blockProgress(block: RevealBlock, elapsedMs: number): number {
   const span = block.endMs - block.startMs

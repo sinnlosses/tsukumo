@@ -79,6 +79,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。
 
+### 2026-09-23 レポートの演出の7ファイルを main-view の中にまとめた（T-441）
+
+3つの箱に散っていた筆の演出を `features/main-view/reveal/` へ集め、`stores/brush-tip.ts` も読み手が1機能だけなのでそこへ下ろした。`docs/design.md` 2章に「機能の中に概念の名前のディレクトリを置いてよい条件」を書いた。
+
+### 2026-09-23 docs/chat-mode.md を削り、採らなかった案・発言の引用・実測を decision.md へ移した（T-465）
+
+685→541 行・29,453→22,720 字（約23%減）で、目標の390行には届かなかった（決定を書いた表9つ・コードから句で引かれている文・いまも効く理由を残したため）。太字の文336件は本文・`decision.md`・参照先のどれかで全件引ける。
+
 ## 未解決
 
 - **英訳を落とす判定（`promotedReportId` の `lastJapaneseReportAfterWork`）を残すか外すか**は、T-459（締めの `speak` → レポートで終える並び）が done になってから決める（2026-09-23 の T-462 で保留）。判定は 18:44 のターンで実際に英訳を画面から落としていた。一方、ターンまるごと英語へ滑った回は救えないので、そちらは書く側（T-459 と英語へ滑る件の対策）の受け持ち

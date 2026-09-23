@@ -338,7 +338,7 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly MainViewTur
  * （`partialUtterance`）は常に最後のステップへ積まれるので、締めの本文はまだ伸びる途中かも
  * しれない。出してしまうと **(1)** 前の中間レポートの `superseded`（{@link markSupersededSteps}）が
  * true→false へ反転して `<details>` が畳まれてから開き直し、**(2)** 書きかけのまま `final` が
- * 立つので、書き上げる演出（`src/browser/features/main-view/hooks/use-report-reveal.ts`）が
+ * 立つので、書き上げる演出（`src/browser/features/main-view/reveal/use-report-reveal.ts`）が
  * **始めた時点の DOM しか相手にしない**（実測で、演出が相手にしたのは開始した時点の 74 文字だけ。
  * 最終的な本文 1303 文字の 94% には筆が一度も通っていなかった）。確定してから出せば、一度出した
  * 本文は二度と消えず、囲いも演出の相手も最初から決まる。
@@ -367,7 +367,7 @@ function selectShownReports(turn: MainViewTurn, settled: boolean): MainViewTurn 
       // だけで「最後のステップ」から外れるが、その本文が実況で終われば {@link promotedReportId}
       // がこの資料を締めへ繰り上げる。**進行中に中間レポートとして出してしまうと**、繰り上がった
       // 瞬間に「もう画面にある本文」が最終レポートになり、**マウントした時点でしか始まらない
-      // 書き上げる演出**（`src/browser/features/main-view/hooks/use-report-reveal.ts`）が二度と
+      // 書き上げる演出**（`src/browser/features/main-view/reveal/use-report-reveal.ts`）が二度と
       // 掛からない（実測: 資料が中間レポートとして出た 2.2 秒後に締めへ変わり、筆は一度も走らなかった）。
       if (!settled && !hasToolRun(step)) {
         return { ...step, body: NO_BODY }

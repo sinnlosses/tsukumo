@@ -318,9 +318,10 @@ describe("browser/utils/ の import", () => {
 // 読み手が1つに戻ったものはその機能の中へ下ろす）。
 //
 // **読み手が機能の外だけのものは対象外**（`lib/socket.ts` と `lib/refresh.ts` は `stores/` が
-// 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` をまだ見ていないのは、
-// `stores/brush-tip.ts` の読み手が `main-view` の1つだけで、メインビューの演出のファイル群を
-// まとめるときに一緒に下ろすため。
+// 読む。下ろす先の機能が無いので、ここに残るのが正しい）。**`stores/` はまだ対象にしていない**
+// ——`stores/location-hash.ts`（`screen-nav` だけ）と `stores/main-view-turn.ts`
+// （`main-view` だけ）の読み手が1機能で、状態を機能の中へ下ろしてよいかは置き場の基準とは
+// 別の判断が要るため。
 const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
 
 describe("browser/ の機能をまたぐ箱", () => {

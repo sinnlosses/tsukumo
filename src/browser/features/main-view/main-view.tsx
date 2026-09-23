@@ -57,7 +57,7 @@ export function MainView(): ReactElement {
   const activeTurn = turns.find((turn) => turn.id === activeTurnId)
 
   return (
-    // `data-brush-origin`: ミニ立ち絵を置く座標の原点（印の名前は `stores/brush-tip.ts` の
+    // `data-brush-origin`: ミニ立ち絵を置く座標の原点（印の名前は `reveal/brush-tip.ts` の
     // `BRUSH_ORIGIN_ATTRIBUTE`。JSX の属性名に定数を書けないので直に置き、ずれていないことは
     // テストが見る）。
     <div className={styles["main-turns"]} ref={scrollerRef} data-brush-origin="">

@@ -5,7 +5,7 @@ import {
   toBands,
   type LineBox,
   type RevealBands,
-} from "../../../../src/browser/features/main-view/reveal-band.ts"
+} from "../../../../../src/browser/features/main-view/reveal/band.ts"
 
 // 実際に見えている範囲（`clip-path` のポリゴン）とミニ立ち絵の見え方は目視で確かめる
 // （`docs/architecture.md`「手で確かめること」）。ここで守るのは**帯の割り出しと、その上の

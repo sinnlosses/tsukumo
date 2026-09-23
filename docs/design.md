@@ -229,7 +229,8 @@ src/
       screen-nav/             全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
                               いまの作業の札（押すと依頼の手順の一覧）・モデル/許可モードの
                               操作子（13.9）
-      main-view/              TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
+      main-view/              TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）・
+                              reveal/（レポートを筆で書き上げる演出ひとまとまり）
       character-view/         Portrait・BalloonTrack・Balloon・動きの hooks
       sidebar/                SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
                               2区画の枠（SidebarSection）
@@ -280,17 +281,14 @@ characters/<name>/            character.json・persona.md・素材
 | `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）              | —                                                                         |
 
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
-  （zustand を入れない決定は 6.2 のまま）。実体は8つあり、
+  （zustand を入れない決定は 6.2 のまま）。実体は7つあり、
   `stores/session.tsx` は `SessionState` を畳んで全機能に配り（`useSyncExternalStore` + セレクタ。
   Context で配るのは store そのもの）、`stores/main-view-turn.ts` はそこから**ターンの畳み**を
   姿ごとに1回だけ導き、`stores/turn-selection.tsx` は `location.hash` の `turn` から
   メインビューとキャラビューに同じターンの選択を配り、`stores/screen.tsx` は `location.hash` から
   **出している画面**を読む（書く口 `navigateTo` も同じ
   ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**（`screen.tsx` と
-  `turn-selection.tsx` の2つがここを通して読み書きする）。`stores/brush-tip.ts` は**筆先**
-  （いま本文を書いている筆の先）を配る——キャラビューの立ち絵が読む想定で `stores/` に置いたが、
-  **いまの読み手は `features/main-view/` だけ**（ミニ立ち絵がメインビューの中にある）。
-  メインビューの演出のファイル群をまとめるときに機能の中へ戻す。`stores/question-answer.tsx` は答え待ちの質問に対する
+  `turn-selection.tsx` の2つがここを通して読み書きする）。`stores/question-answer.tsx` は答え待ちの質問に対する
   **答えの組み立て**を配る Context（質問の札はメインビュー、自由入力は入力欄と、読み手が
   2機能にまたがる）。`stores/question-scroll.tsx` は帯の「いまの作業」の一覧の「質問へ」から
   メインビューの質問の札へスクロールしてほしいという**一回限りの合図**を配る Context。**どれも
@@ -468,6 +466,33 @@ features/task-board/
   （`features/layout/split.ts` がその形）
 - **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
   container はフックのぶん毎回描き直されるので、そこに `memo` を置いても効かない
+
+**機能の中に、概念の名前のサブディレクトリを置いてよい**（2026-09-23 決定。`markdown/` が先に
+この形で、`reveal/` が2件目）。`hooks/` `components/` `domain/` が**置き場所**を名乗るのに対し、
+こちらは**その機能の中の概念**を名乗る（原則5）。**条件は3つで、そろったときだけ切る**:
+
+1. **ファイルが3つ以上**あり、**その概念だけで閉じている**こと（機能の中の他の部品が触るのは
+   入口の1つか2つで、残りは中どうしでしか読まない）
+2. **`hooks/` `components/` `domain/` のどれか1つに収まらない**こと。収まるならそちらへ置く。
+   `reveal/` はフック・DOM を測る/書く道具・純関数・React の外の入れ物が混ざる
+3. **名前がその機能の中の概念**（用語集の語か、それに準ずるもの）であること
+
+**そろったら、`hooks/` `components/` `domain/` より概念のディレクトリを優先する。** 概念を
+追うのに開くディレクトリが1つで済み、機能の直下に「接頭辞だけが仲間を表す」ファイルが並ばなく
+なる。**中では接頭辞を落とす**（`reveal/band.ts`。`markdown/split-blocks.ts` と同じ）。
+
+| ディレクトリ          | 中身                                                                     | 外から呼ぶ入口                                                           |
+| --------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `main-view/markdown/` | unified の設定・記法の部品・塊の切り方                                   | `Markdown` / `splitReportBlocks`                                         |
+| `main-view/reveal/`   | レポートを筆で書き上げる演出（段取り・測る・塗る・帯・ぶら下がり・筆先） | `useReportReveal`（`report.tsx`）と `useBrushTip`（`mini-portrait.tsx`） |
+
+- **その概念のフックもこの中に置く。** 機能の中の `hooks/` は「その機能だけが読むフック」の箱
+  だが、概念のディレクトリを切ったなら、そのフックはそちらへ入れる
+  （`reveal/use-report-reveal.ts`）。`hooks/` に残すと、演出を追うのに2つのディレクトリを開く
+- **読み手が1つの機能に閉じているかどうかは、いつもどおり数える。** `reveal/brush-tip.ts` は
+  `stores/` にあったが、読むのは同じ機能の `mini-portrait.tsx` だけなので機能の中へ下ろした
+  （2026-09-23。`stores/` は**複数の機能が読む**状態の箱）。逆に2つ目の読み手が出たら、
+  部品は `browser/components/`、道具は `browser/lib/`、状態は `stores/` へ上げる
 
 **`components/` とストア**: **機能の中の `components/` はストアを読んでよい**（2026-09-23 決定。
 `browser/components/` のほうは読めない——箱の表で `stores/` を引く辺が無い）。**条件は2つ**で、

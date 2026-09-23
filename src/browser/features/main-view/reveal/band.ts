@@ -1,5 +1,5 @@
 // レポートを「書き上げていくように見せる」演出で、**筆がどこをなぞるか**を決める（純粋な計算。
-// 位置を測るのは `reveal-measure.ts`、いつ出すかは `reveal-plan.ts`）。
+// 位置を測るのは `measure.ts`、いつ出すかは `plan.ts`）。
 //
 // 塊（トピック）の行をZ字の**帯**に割り、帯の上の `progress`（0〜1）から筆の居場所を出す。
 //
@@ -13,19 +13,19 @@
 //
 // **横画の時間は帯の幅で按分する**。右端が帯ごとに変わるのに時間を等分したままだと、
 // 筆の速さが帯ごとに変わる（実測で同じ塊の中でも 2.2倍）。塊の持ち時間はもともと文字数で
-// 決まる（`reveal-plan.ts`）ので、帯へ配り直すときも**幅＝その帯の文字数の目安**で分ける。
+// 決まる（`plan.ts`）ので、帯へ配り直すときも**幅＝その帯の文字数の目安**で分ける。
 //
 // **いまどの画をなぞっているかも返す**（`BrushStep.stroke`）。横画と斜めの戻りでは
 // 筆の速さが数倍ちがうので、筆先に付いて歩くミニ立ち絵が追従の間合いを画ごとに変えられるように
 // する（`mini-portrait.tsx`）。
 
-import { type BrushStroke } from "../../stores/brush-tip.ts"
+import { type BrushStroke } from "./brush-tip.ts"
 
 /**
  * 行1つの位置（ビューポート座標）。**左端は持たない**——筆はどの帯も塊の左端から書き始めるので、
  * 行ごとの左端は使わない（箇条書きの字下げのぶん筆が右から始まることもない）。
  *
- * 図・グラフは行を持たないので、要素の box をまるごと1行として渡す（`reveal-measure.ts`）。
+ * 図・グラフは行を持たないので、要素の box をまるごと1行として渡す（`measure.ts`）。
  */
 export type LineBox = {
   readonly top: number
@@ -106,7 +106,7 @@ export function toBands(boxes: readonly LineBox[], frame: RevealFrame): RevealBa
 
 /**
  * 書き終わりの行（**行であって帯ではない**）。書き上げたあとに筆先を残す位置に使う
- * （`hooks/use-report-reveal.ts`）——帯の右端は**その帯でいちばん長い行の右**なので、短い行で終わる
+ * （`use-report-reveal.ts`）——帯の右端は**その帯でいちばん長い行の右**なので、短い行で終わる
  * 本文に使うと、書き終わっていない場所まで筆先が飛ぶ。
  */
 export function lastLineOf(boxes: readonly LineBox[]): LineBox | undefined {

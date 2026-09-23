@@ -8,7 +8,7 @@ import {
   publishBrushTip,
   restBrushTip,
   type BrushTip,
-} from "../../../../src/browser/stores/brush-tip.ts"
+} from "../../../../src/browser/features/main-view/reveal/brush-tip.ts"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
