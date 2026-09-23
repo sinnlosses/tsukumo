@@ -214,7 +214,8 @@
   margin-left: auto;
 }
 /* 「送信」は行の主目的なので、**accent で塗りつぶす**（入力欄で塗ってよいのはこれ1つだけ。
-   13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。字は地の色で抜く。 */
+   13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。字は地の色で抜く。
+   答え待ちの質問がある間は、答え待ちの色（--state-warn）で塗って札と揃える。 */
 .dispatch-send,
 .dispatch-interrupt {
   display: flex;
@@ -238,6 +239,13 @@
 }
 .dispatch-send:hover {
   background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+.dispatch-form.is-answering .dispatch-send {
+  background: var(--state-warn);
+  border-color: var(--state-warn);
+}
+.dispatch-form.is-answering .dispatch-send:hover {
+  background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
 }
 /* 「中断」は塗らない。送信と同じ位置に出るので、塗りの有無で「いまは送れない」を示す。 */
 .dispatch-interrupt {
