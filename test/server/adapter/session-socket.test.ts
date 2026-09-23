@@ -51,7 +51,6 @@ async function start(dispatchResult: DispatchResult = { ok: true }): Promise<Sta
       send({
         type: "hello",
         protocolVersion: PROTOCOL_VERSION,
-        sessionId: "s-1",
         state: INITIAL_SESSION_STATE,
       })
       return () => {
@@ -243,7 +242,7 @@ describe("attachSessionSocket", () => {
   })
 
   it("受け付けられなかったコマンドには、理由を添えた error を返す", async () => {
-    const started = await start({ ok: false, reason: FRAME_ERROR_REASON.noSession })
+    const started = await start({ ok: false, reason: FRAME_ERROR_REASON.driverFailed })
     const client = await connect(socketUrl(started.origin, TOKEN))
     await nextFrame(client)
 
@@ -253,7 +252,7 @@ describe("attachSessionSocket", () => {
     expect(frame).toEqual({
       type: "error",
       commandId: "c-9",
-      reason: FRAME_ERROR_REASON.noSession,
+      reason: FRAME_ERROR_REASON.driverFailed,
     })
     client.close()
   })

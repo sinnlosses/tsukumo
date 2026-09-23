@@ -30,7 +30,6 @@ export function putState(store: SessionStore, state: SessionState): void {
   store.receive({
     type: "hello",
     protocolVersion: PROTOCOL_VERSION,
-    sessionId: "fictional-session",
     state,
   })
 }

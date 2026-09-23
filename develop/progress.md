@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 SessionManager の sessionId の鍵を外した（T-426）
+
+`createSessionManager(options)` がセッション1つの持ち物をそのまま返す形にし、`Map`・`create`・`RunningSession`・`hello.sessionId`・`noSession` を撤去して `PROTOCOL_VERSION` を 8 に上げた。`docs/design.md` 8章と `docs/requirements.md` 2.2 の「起こし直しの一瞬」という理由は、「1つだけ持ち、切り替えは中で起こし直す」に書き直した。
+
 ### 2026-09-23 日付ごとの jsonl の読み書きを1つにまとめた（T-431）
 
 `token-usage-log.ts`・`chat-archive.ts`・`context-usage-log.ts` が書き写していた追記・日付のファイル名の列挙・行の JSON 読み出しを `src/server/adapter/lib/jsonl.ts` に寄せた。スキーマの検証と索引・読み戻しの形は各ファイルに残した。

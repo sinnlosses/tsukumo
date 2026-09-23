@@ -1,6 +1,6 @@
 // セッションを起こす一続き。**パックを決めて
 // 続きのセッションを探し、駆動を起こし、復元した履歴と `character-changed` を流すまでの順序**を
-// 持つのがここで、起動時（`session-manager.create`）と起こし直し（`session-manager.restart`。
+// 持つのがここで、起動時（`createSessionManager`）と起こし直し（`session-manager.restart`。
 // `switch-character` / `set-chat-mode` / `switch-session`）の4つともこの1つを通る。
 //
 // **画面を初期状態に戻すかどうかは持たない** — それは起こし直しだけの判断で、
