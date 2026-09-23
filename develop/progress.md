@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 動いている部屋のビューを iframe の格子に並べて Orca に開くスクリプトを足した（T-424）
+
+`bun run scripts/open-room-grid.ts` で、待ち受けていてタブもある部屋だけを 16:9 のマスに PC の並びのまま縮めて並べ、拡大・戻るは JS を使わずラジオの label で切り替える。起動トークンを含む HTML は読み込みを確かめたら消すので、見直すときは打ち直す。
+
 ### 2026-09-23 UTF-8 のバイト数を数える関数を1つにした（T-432）
 
 4か所で書き写していた `TextEncoder` のバイト数の数え方を `src/shared/lib/byte-length.ts` の `byteLength` に寄せた。実行環境の API を包む道具なので `lib/`、`core` と `shared` の両方から読むので `shared` に置いた。
