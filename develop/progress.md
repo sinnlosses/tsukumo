@@ -79,6 +79,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 経路の表からは `/token-usage` のほかに `/context-usage` と `/prompt-image/<id>` も抜けていた。環境変数の表は design.md を正典のままにし、その理由を節に書いた。
 
+### 2026-09-23 雑談の要約に話題の見出しを書かせ、サイドバーの「最近の話題」に直近3件を出すようにした（T-390）
+
+`/compact` の依頼で要約の最後に `<topics>` の組を書かせ、`chat-compact.ts` の `chatTopics` が取り出す。起動時と PostCompact のあとに `chat-topics-changed` で流す（`PROTOCOL_VERSION` 6）。本物の圧縮でモデルが組を書くかは未確認。
+
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の

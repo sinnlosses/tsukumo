@@ -271,6 +271,16 @@ export type SessionEvent =
    */
   | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
   /**
+   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/design.md` 13.7）。
+   * **雑談で起こしたときと、圧縮で要約の写しが新しくなったとき**に流れる
+   * （`src/server/core/session-launch.ts` と `src/server/adapter/sdk-driver.ts`）。
+   *
+   * **運ぶのは写しから取り出した見出しだけ**で、要約の本文は乗らない（`docs/requirements.md`
+   * 4.9。取り出すのは `src/server/core/chat-compact.ts` の `chatTopics`）。取り出せなかった・
+   * 写しがまだ無いときは空の並び。
+   */
+  | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }
+  /**
    * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/design.md` 13.6）。
    * **駆動を起こしたときと、起こし直したときの1回ずつ**（`character-changed` と同じ契機）と、
    * **歯車から `set-session-default` で覚え直したとき**に流れる。

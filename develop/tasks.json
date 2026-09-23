@@ -28,9 +28,9 @@
     "dependencies": ["T-332"],
     "summary": "雑談の要約に話題の見出しを書かせ、サイドバーの「最近の話題」に直近を出す",
     "task": "## 背景\n\n雑談中のサイドバー（モック `docs/history/mockup/chat-sidebar-2026-09-23.png`、器は T-332）の「最近の話題」。**話題の一覧というデータはまだ無い。** 雑談の記憶は、ログが閾値を超えると tsukumo が `/compact` を送り（`src/server/core/session-manager.ts`、文面は `src/server/core/chat-compact.ts`）、claude 自身が作った要約を `~/.tsukumo/chat-summary/<パック名>.md` に写す（`src/server/adapter/chat-summary.ts`。1行目が渡し済みの印、2行目から本文）。次のセッションへは `src/server/core/chat-memory-prompt.ts` が載せる。\n\n## 決まっていること（蒸し返さない）\n\n- **要約に話題の見出しも書かせ、その直近の数件を出す**（2026-09-23 のユーザーの選択）。「残す」旗の会話から出す案と、話題を記録するツールを足す案は採らなかった\n- 更新されるのは圧縮のときだけ（それまでは前回の話題のまま）\n- 会話はプロセスの外へ出さない（要約は同じ claude が作る。`docs/requirements.md` 2.2）\n\n## 解くべき論点\n\n- 要約の中で話題の見出しをどう区切るか（`/compact` の依頼の文面に見出しの節を指定し、写しから機械的に取り出せる形にする）と、取り出せなかったときの扱い（出さない）\n- 何件出すか（モックは3件）、新しい順か\n- 見出しをブラウザへどう届けるか（`SessionState` に載せるか。`src/shared/` の契約が増える）\n- 圧縮がまだ一度も起きていないパックの空のときの案内\n\n## やること\n\n1. `chat-compact.ts` の依頼の文面に話題の見出しの節を足す\n2. 写しから見出しを取り出す純関数を `src/server/core/` か `src/shared/` に置き、テストする\n3. 契約を足して「最近の話題」に出す\n4. `docs/requirements.md` 4.9 と `docs/design.md` 7章（要約の置き場）・13.7 を直す\n5. 調べて「`/compact` の要約の形を指定しても見出しが安定して取り出せない」と分かったら、実装せずに理由と見た要約の形（中身ではなく構造だけ）を `evidence` に書いて閉じる\n\n## 完了条件\n\n- 取り出しの純関数のテストがある（フィクスチャは作った文面）\n- `bun run check` が通る\n- 目視（一時の `TSUKUMO_HOME` に作った要約を置く）: 雑談のサイドバーに見出しが並ぶ。要約が無いときは案内が出る。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 雑談の要約・覚えたこと・会話は利用者の会話から来たもの。テストのフィクスチャに実物を使わない、ログに全文を出さない（`docs/coding-standards.md`「会話内容の扱い」）\n- 利用者の `~/.tsukumo/chat-summary/` を目視のために書き換えない\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 1599 pass / 0 fail（test/server/core/chat-compact.test.ts 新規12件は作った文面。session-state・session-launch・sdk-driver・sidebar のテストに追加）。docs の節数 requirements 27→27・design 53→53・glossary 68→69（最近の話題の1節）\n目視: fake driver + Playwright(Chrome)、一時 TSUKUMO_HOME に手で書いた要約（見出し4件）。1440x900 で雑談のサイドバーに3件が書いた順に並び、4件目は出ず、長い見出しは折り返した。390x844 のサイドバーのタブでも同じ3件で scrollWidth=clientWidth=390\n写しの無いパックでは「まだ話題が無い（話が積もると、ここに並ぶ）」。本物の /compact でモデルが <topics> を書くかは未確認（fake では圧縮が起きない）"
   },
   {
     "id": "T-391",

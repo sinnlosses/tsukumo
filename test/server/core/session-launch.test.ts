@@ -30,6 +30,9 @@ const CHOICES = [
   },
 ] as const
 
+// 最近の話題の見出し（作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
+const CHAT_TOPICS = ["架空の話題その1", "架空の話題その2"] as const
+
 /** 起こされたことと閉じられたことだけを覚える fake driver 相当のスタブ。 */
 function createStubDriver(): { readonly driver: SessionDriver; readonly calls: string[] } {
   const calls: string[] = []
@@ -90,6 +93,10 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
         },
         [{ name: pack.name, label: pack.name }],
       ),
+    readChatTopics: (pack) => {
+      calls.push(`readChatTopics:${pack.name}`)
+      return CHAT_TOPICS
+    },
     watchTasks: () => ({ close: () => calls.push("watchTasks:close") }),
     findResumeSession: (pack, chat) => {
       calls.push(`findResumeSession:${pack.name}:${modeOf(chat)}`)
@@ -246,12 +253,45 @@ describe("createSessionLaunch", () => {
 
     expect(harness.calls).toEqual([
       "choosePack:initial",
+      "readChatTopics:tsukumo-spirit",
       "readSessionDefault",
       "findResumeSession:tsukumo-spirit:chat",
       "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
       "restoreEvents:prev-chat-session",
     ])
+  })
+
+  it("雑談で起こすと、写しから取り出した最近の話題を chat-mode-changed のあとに流す", async () => {
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: true,
+      resume: { by: "latest" },
+    })
+    await settle()
+
+    const kinds = harness.driverEvents.map((event) => event.kind)
+    expect(kinds.indexOf("chat-topics-changed")).toBe(kinds.indexOf("chat-mode-changed") + 1)
+    expect(harness.driverEvents).toContainEqual({
+      kind: "chat-topics-changed",
+      topics: CHAT_TOPICS,
+    })
+  })
+
+  it("仕事で起こすときは写しを読まず、最近の話題も流さない", async () => {
+    const harness = createHarness()
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: false,
+      resume: { by: "latest" },
+    })
+    await settle()
+
+    expect(harness.calls.some((call) => call.startsWith("readChatTopics:"))).toBe(false)
+    expect(harness.events.some((event) => event.kind === "chat-topics-changed")).toBe(false)
   })
 
   it("起動時（画面から選んでいないとき）は覚えない", async () => {
@@ -282,6 +322,7 @@ describe("createSessionLaunch", () => {
 
     expect(harness.calls).toEqual([
       "choosePack:current",
+      "readChatTopics:tsukumo-spirit",
       "readSessionDefault",
       "findResumeSession:tsukumo-spirit:chat",
       "listSessions:tsukumo-spirit:chat",

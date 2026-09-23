@@ -42,6 +42,7 @@ import { type Expression } from "../../shared/expression.ts"
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
+import { readChatTopics } from "../core/chat-compact.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
@@ -210,7 +211,7 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      hooks: chatSummaryHooks(options.mode),
+      hooks: chatSummaryHooks(options.mode, options.onEvent),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode),
       },
@@ -313,11 +314,16 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * 渡す（`docs/coding-standards.md`「会話内容の扱い」）。フックは `trigger` が `"manual"` でも
  * `"auto"` でも同じ扱いにする（`docs/design.md` 7章）。
  *
+ * 写したあとは、**書いた写しから取り出した最近の話題の見出しだけ**を `chat-topics-changed` で
+ * 流す（`docs/design.md` 13.7）。取り出し方は core（`readChatTopics`）が持ち、ここは中身を
+ * 見ない。
+ *
  * `startSession` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
  * ようにするため（{@link buildQuerySeedOptions} と同じ理由）。
  */
 export function chatSummaryHooks(
   mode: SessionMode,
+  onEvent: (event: SessionEvent) => void,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined {
   if (mode.kind !== "chat") {
     return undefined
@@ -331,6 +337,7 @@ export function chatSummaryHooks(
           async (input) => {
             if (input.hook_event_name === "PostCompact") {
               chatSummary.write(input.compact_summary)
+              onEvent({ kind: "chat-topics-changed", topics: readChatTopics(chatSummary) })
             }
             return {}
           },

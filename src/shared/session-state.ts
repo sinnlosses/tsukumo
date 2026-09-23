@@ -289,6 +289,15 @@ export type SessionState = {
    */
   readonly chatMode: boolean
   /**
+   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/design.md` 13.7）。
+   * **要約の本文ではなく、写しから取り出した見出しだけ**（`docs/requirements.md` 4.9）。
+   *
+   * **源は `chat-topics-changed` だけ**で、届くたびに丸ごと置き換える。起こし直すと初期値の
+   * 空へ戻り、雑談で起こしたときだけサーバから流れ直す（仕事のときは空のまま）。空のときは
+   * サイドバーが案内を出す。
+   */
+  readonly chatTopics: readonly string[]
+  /**
    * 新しいセッションを起こすときの既定（`docs/design.md` 13.6。帯の右端の歯車が読み書きする）。
    * **いま動いているセッションの値ではない** — そちらは {@link SessionState.model} と
    * {@link SessionInfo} の `permissionMode` で、帯から変えてもここは変わらない。
@@ -328,6 +337,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   sessions: [],
   lastToolFailureAt: undefined,
   chatMode: false,
+  chatTopics: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
   plan: undefined,
 }
@@ -516,6 +526,8 @@ export function applySessionEvent(
       return state
     case "chat-mode-changed":
       return { ...state, chatMode: event.chat }
+    case "chat-topics-changed":
+      return { ...state, chatTopics: event.topics }
     case "session-default-changed":
       return { ...state, sessionDefault: event.sessionDefault }
     case "compact-boundary":
