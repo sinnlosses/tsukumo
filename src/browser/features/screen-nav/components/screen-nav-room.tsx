@@ -6,12 +6,21 @@
 
 import { type ReactElement } from "react"
 
-import styles from "../screen-nav.module.css"
+import shellStyles from "../screen-nav.module.css"
+import styles from "./screen-nav-room.module.css"
 
 export type ScreenNavRoomProps = {
   readonly name: string
 }
 
 export function ScreenNavRoom(props: ScreenNavRoomProps): ReactElement {
-  return <span className={styles["screen-nav-room"]}>{props.name}</span>
+  // **`shellStyles["screen-nav-room"]` は見た目を持たない**（「≡」の面の中の見た目の打ち消し
+  // `.screen-nav-panel .screen-nav-room` のためだけの参照）。CSS Modules は class 名を
+  // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル
+  // 自身の class も要る（docs/design.md 6.6）。
+  return (
+    <span className={`${styles["screen-nav-room"]} ${shellStyles["screen-nav-room"]}`}>
+      {props.name}
+    </span>
+  )
 }

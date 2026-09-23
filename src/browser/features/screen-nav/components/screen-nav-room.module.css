@@ -1,0 +1,15 @@
+/* 帯の左端の部屋の名前（`screen-nav-room.tsx`）。もとは screen-nav.module.css の一部だったが、
+   この部品しか使わない class の塊なので隣へ分けた（docs/design.md 6.6）。 */
+
+/* 部屋の名前は押せない字（13.9）。帯の左端で「どの部屋か」を名乗るので、明るい字の太字にする。
+   **狭い画面の「≡」の面の中の見た目**（`.screen-nav-panel .screen-nav-room`）は
+   `screen-nav.module.css` の @media が持つ。CSS Modules は class 名をファイルごとに
+   ハッシュ化するので、`screen-nav-room.tsx` がそちら側のハッシュを自分の要素に重ねて渡す
+   （`components/portrait.module.css` の `.portrait` と同じ手口。docs/design.md 6.6）。 */
+.screen-nav-room {
+  color: var(--ink);
+  font-size: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}

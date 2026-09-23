@@ -13,7 +13,8 @@
 import { type ReactElement } from "react"
 
 import { type ScreenNavChatMode } from "../hooks/use-screen-nav.ts"
-import styles from "../screen-nav.module.css"
+import shellStyles from "../screen-nav.module.css"
+import styles from "./screen-nav-chat-mode.module.css"
 
 export type ScreenNavChatModeProps = {
   readonly chatMode: ScreenNavChatMode
@@ -68,8 +69,16 @@ function ChatIcon(): ReactElement {
 export function ScreenNavChatModeToggle(props: ScreenNavChatModeProps): ReactElement {
   const { chat, disabled, title, onChange } = props.chatMode
 
+  // **`shellStyles["screen-nav-chat-mode"]` は見た目を持たない**（広い画面から隠す規則
+  // `.screen-nav > .screen-nav-chat-mode` のためだけの参照。CSS Modules は class 名を
+  // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル
+  // 自身の class も要る。docs/design.md 6.6）。
   return (
-    <div className={styles["screen-nav-chat-mode"]} role="group" aria-label="モード">
+    <div
+      className={`${styles["screen-nav-chat-mode"]} ${shellStyles["screen-nav-chat-mode"]}`}
+      role="group"
+      aria-label="モード"
+    >
       <button
         type="button"
         className={styles["screen-nav-chat-mode-button"]}
