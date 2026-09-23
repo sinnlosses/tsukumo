@@ -75,38 +75,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
 
-### 2026-09-23 いまのセッションの /context 内訳をトークン消費の画面に出した（T-375）
-
-`getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
-
-### 2026-09-23 docs/design.md 5章の SessionHost と経路の表を、型定義・実装への参照に置き換えた（T-409）
-
-経路の表からは `/token-usage` のほかに `/context-usage` と `/prompt-image/<id>` も抜けていた。環境変数の表は design.md を正典のままにし、その理由を節に書いた。
-
-### 2026-09-23 雑談の要約に話題の見出しを書かせ、サイドバーの「最近の話題」に直近3件を出すようにした（T-390）
-
-`/compact` の依頼で要約の最後に `<topics>` の組を書かせ、`chat-compact.ts` の `chatTopics` が取り出す。起動時と PostCompact のあとに `chat-topics-changed` で流す（`PROTOCOL_VERSION` 6）。本物の圧縮でモデルが組を書くかは未確認。
-
-### 2026-09-23 トークン消費の期間を今日・7日・30日にし、合計を棒つきの札4枚にした（T-401）
-
-集計の `byDay` を `trend = { unit, points }` に一般化してサーバ側で穴を0で埋め、日ごとのグラフ2枚（Chart.js）を CSS の棒を持つ札4枚（入力・出力・キャッシュ読み・キャッシュ作成）に置き換えた。「今日」を選ぶと棒が時間ごとの24本に割れる。
-
-### 2026-09-23 コンテキストの内訳をセッションごとに1行だけ記録するようにした（T-376）
-
-最初のターンの終わりに `getContextUsage()` を1回取り、`~/.tsukumo/context-usage/<日付>.jsonl` へ1行だけ積む（取れなければ次のターンで取り直す）。ターンごとの記録とは置き場も版も分けてあり、「書いてよいもの」の線は `src/shared/context-usage-record.ts` の冒頭が正典。
-
-### 2026-09-23 帯の部品を2つの面へ配る配線を、束1本にした（T-413）
-
-`ScreenNavView` を `current` / `parts` / `menu` / `ref` の4項目にし、帯に並ぶ部品の値は束 `ScreenNavParts` のまま広い画面の帯と「≡」の面の両方へ渡す形にした（`ScreenNavMenuProps` は14項目から2項目へ）。広い画面用・狭い画面用で2本持っていた ref の組は、付いている口を集めるコールバック ref 1本に畳んで `ScreenNavView` から消えた。
-
-### 2026-09-23 同じ前提はコメント1か所に書く規約を足し、セッションの印の説明の重なりを畳んだ（T-414）
-
-`docs/coding-standards.md`「コメント」節に規約を足した。印の読み戻しは `config.ts` の `sessionTag`、絞り込みと並びは `session-restore.ts` の `listMarkedSessions` を正典にし、ほかの4か所は参照に畳んだ（コードは不変）。
-
-### 2026-09-23 requirements.md 4.10 の原寸を手放す約束を、棚の寿命に書き換えた（T-418）
-
-原寸は直近8枚だけサーバのメモリの棚に残り、記録の窓から落ちたときか枚数を超えたときに捨てる、と書き直した。控えも押せる旨を 4.10 と `docs/design.md` 4.1・13章・13.7 に揃えた（ドキュメントのみ）。
-
 ## 未解決
 
 - **同じポートの別の作業ツリーで起こしたセッションも、同じ部屋として一覧に並ぶ**（2026-09-23 の
