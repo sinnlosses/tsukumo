@@ -291,6 +291,12 @@ export type SessionDriverOptions = {
   readonly tag: string
   /** 仕事か雑談か。雑談のときだけ渡る4つの口も、この中にまとまっている。 */
   readonly mode: SessionMode
+  /**
+   * 利用者が見送った提案の識別子（`usageProposalKey`）を読む口。見直しのツールが呼ばれる
+   * たびに読み直す（`src/server/core/usage-review-tool.ts`）。**読めないときは空を返し、
+   * 例外を投げない**。
+   */
+  readonly dismissedUsageProposalKeys: () => readonly string[]
   /** 内部イベントの受け取り口。**ここで例外を投げないこと**（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }

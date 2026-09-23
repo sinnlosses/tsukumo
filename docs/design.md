@@ -1025,6 +1025,60 @@ doc コメントを参照）。
 （展開するのはシェルの仕事）。読むのは `src/server/adapter/tsukumo-home.ts`
 （`readConfig` ではない。理由はそのファイルの冒頭）。
 
+### 見直しのツールと状態（usage-review-tool.ts と usage-review.ts）
+
+トークン消費の画面の「減らし方を見てもらう」は、**いまの会話の1ターンとしてスキル
+`token-usage-diet` を流し、結果を tsukumo の MCP ツールで構造のまま受け取る**（2026-09-24。
+語は `docs/glossary.md`「見直し」「見直しの段」「提案」）。tsukumo 本体は分析しない。
+
+| 置き場                                 | 持つもの                                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `src/shared/usage-review.ts`           | 段・提案の型と列挙、状態 `UsageReview`、提案の識別子 `usageProposalKey`、押す口の依頼文 `usageProposalRequestText` |
+| `src/server/core/usage-review-tool.ts` | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しをイベントにする窓口 `createUsageReviewIntake`           |
+| `src/server/adapter/sdk-tool.ts`       | 2つのツール（zod の形）を仕事のときだけ載せる                                                                      |
+| `src/shared/session-state.ts`          | `usageReview` の畳み込み（`usage-review-stage` / `usage-review-result` / ターンの終わり）                          |
+
+決めたこと（論点ごと）:
+
+- **ツールは2つに分ける**: 段の進みを渡す `usage_review_stage`（`stage` と `days`）と、結果を1回で
+  渡す `usage_review_result`（`days`・`headline`・`proposals`）。見直し中の画面が段ごとの済 /
+  進行中 / 未着手を出すので、結果だけでは足りない。段は**いまの段だけ**を運び、並び
+  （`USAGE_REVIEW_STAGES`）より前を済と読む
+- **イベントを流すのはツールの handler**（`report` と逆）。`report` は `assistant` メッセージの
+  変換がイベントを作り、差し戻しの判定が出るまで預かるが、見直しは**検査を通したものだけを
+  状態に入れればよい**ので、handler が検査して通したときに駆動の `onEvent` へ流す。預かりが要らず、
+  変換（`sdk-message.ts`）は2つのツールを知らない（呼び出しはふつうのツールとして記録に残る）。
+  復元の再生には出てこないので、**起こし直すと状態はふだんから始まる**
+- **段の右の数（モデルの数・キャッシュ読み・ツールの種類）はスキルから受け取らない。** 画面が
+  既存の集計（`GET /token-usage?days=<見直しの期間>`。`src/shared/token-usage-summary.ts`）から
+  出す。tsukumo が持っている数を tsukumo が出せば、スキルの書き間違いが画面に出ない。そのために
+  段にも `days` を持たせる
+- **提案の識別子は種類 + 対象**（`usageProposalKey`。`kind:target`）。種類は `shared` に固定した
+  列挙（`USAGE_PROPOSAL_KINDS`。スキルの SKILL.md「4. 何を候補にするか」の候補に揃える）で、
+  列挙の外は境界で断る——自由な文字列だと言い回しの揺れで同じ提案を見分けられず、見送りが
+  黙って効かなくなる。種類を足すときは `shared` とスキルを一緒に直す
+- **押す口は `delegate`（「tsukumo に頼む」）と `task`（「タスクにする」）の2つ。** 押したときの
+  依頼文は**提案に持たせず**、`usageProposalRequestText` が見出し・やること・根拠から組み立てる
+  （スキルが書く欄を増やさず、頼み方を1箇所で揃える）。画面はこれを `prompt` で送るだけ
+- **見直し中の判定は「そのターンで `usage_review_stage` が届いた」こと。** 画面のボタンから
+  頼んだか、入力欄でスキルを呼んだかは見ない（依頼の文面を読まないので、スキルの名前が変わっても
+  黙って効かなくならない）。経過の起点はそのターンの始まり（ボタンを押してから最初の段までも
+  数える）。**見直し中のままターンが終わったら（成功・止めた・失敗のどれでも）、セッションが
+  終わったら、ふだんへ戻す。** 結果はターンが終わっても次の見直しまで残る。状態は判別可能な
+  合併型（`idle` / `running` / `result`）
+- **引数の検査は境界で2段**: 型・列挙・整数は zod の形で SDK が先に断り（handler は呼ばれず、
+  SDK が理由を `isError` 付きで返す）、形の外の条（空の `headline`・空の欄・
+  `MAX_USAGE_PROPOSALS` を超える件数・識別子の重なり・見送った提案）は core が断って、直し方を
+  `isError` 付きの戻り値で返す（`report` と同じく、モデルが書いた文面は写さない）。**断った
+  呼び出しは状態を変えない**
+- **見送った提案の一覧は `usage_review_stage` の戻り値で返す**（`"ok"` のあとに識別子を並べる）。
+  ボタンが送る依頼文に含める形だと、入力欄で呼んだときに渡らない。結果の検査も同じ一覧を見て、
+  混じっていれば差し戻す。一覧を読む口は `SessionDriverOptions.dismissedUsageProposalKeys` で、
+  **見送りの記録はまだ無いので、いまは配線（`src/session-start.ts`）が空を渡している**。記録を
+  足すときはここを読み口へ差し替える
+- 2つのツールは**仕事のときだけ**載る（`report` と同じ）。`PROTOCOL_VERSION` は状態に
+  `usageReview` を足したので上げた
+
 ## 6. browser
 
 ### 6.1 部品の木

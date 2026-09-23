@@ -38,6 +38,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   start: { kind: "new" },
   tag: "tsukumo-test",
   mode: WORK_MODE,
+  dismissedUsageProposalKeys: () => [],
   onEvent: () => {},
 }
 

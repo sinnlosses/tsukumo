@@ -189,6 +189,9 @@ function startDriver(options: {
     start: seed.start,
     tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
     mode,
+    // 見送りはまだ記録していないので、スキルへ渡す一覧はいつも空（記録の置き場を足すときに
+    // ここを読み口へ差し替える。docs/design.md「見直しのツールと状態」）。
+    dismissedUsageProposalKeys: () => [],
     onEvent,
   })
 }

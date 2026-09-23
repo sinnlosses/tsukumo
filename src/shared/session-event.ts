@@ -24,6 +24,7 @@ import { type SessionChoice } from "./session-choice.ts"
 import { type SessionDefault } from "./session-default.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
+import { type UsageReviewFindings, type UsageReviewStage } from "./usage-review.ts"
 
 /** ターンの終わり方。`result` の subtype が `success` 以外はすべて `error` に倒す。 */
 export type TurnStatus = "success" | "error"
@@ -355,6 +356,14 @@ export type SessionEvent =
    * （`src/server/core/sdk-message.ts`）。
    */
   | { readonly kind: "background-tasks-changed"; readonly tasks: readonly BackgroundTask[] }
+  /**
+   * 見直し（docs/glossary.md「見直し」）が段に入った（`usage_review_stage` ツールが受け付けた
+   * 呼び出し）。**出すのはツールの handler**（`src/server/core/usage-review-tool.ts`）で、
+   * `assistant` メッセージの変換からは出ない——引数を検査して通したものだけを流すため。
+   */
+  | { readonly kind: "usage-review-stage"; readonly stage: UsageReviewStage; readonly days: number }
+  /** 見直しの結果が届いた（`usage_review_result` ツールが受け付けた呼び出し。出し手は上と同じ）。 */
+  | { readonly kind: "usage-review-result"; readonly findings: UsageReviewFindings }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

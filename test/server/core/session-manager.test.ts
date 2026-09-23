@@ -2089,3 +2089,41 @@ describe("依頼に添えた画像の棚", () => {
     expect(shelf.find(id)).toBeUndefined()
   })
 })
+
+describe("createSessionManager（見直し）", () => {
+  it("受け付けた見直しの結果は events で画面へ届き、次の hello の姿も結果になる", async () => {
+    const { manager, stub } = startManagerWithStub()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    const findings = {
+      days: 7,
+      headline: "架空の冒頭の一言。",
+      proposals: [
+        {
+          kind: "session-length",
+          target: "",
+          impact: "medium",
+          title: "架空の見出し",
+          basis: "架空の根拠",
+          action: "架空のやること",
+          followUp: "delegate",
+        },
+      ],
+    } as const
+
+    stub.emit({ kind: "usage-review-result", findings })
+    await waitForBatch()
+
+    expect(frames.filter((frame) => frame.type === "events")).toEqual([
+      { type: "events", events: [{ at: 1_000, event: { kind: "usage-review-result", findings } }] },
+    ])
+    const later: ServerFrame[] = []
+    manager.subscribe((frame) => later.push(frame))
+    const [hello] = later
+    expect(hello?.type === "hello" ? hello.state.usageReview : undefined).toEqual({
+      kind: "result",
+      reviewedAt: 1_000,
+      findings,
+    })
+  })
+})

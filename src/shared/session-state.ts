@@ -25,6 +25,7 @@ import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.
 import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 import { splitIntoTurns } from "./turn.ts"
+import { type UsageReview } from "./usage-review.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが
@@ -360,6 +361,14 @@ export type SessionState = {
    * 流さないので、起こし直しで初期値の空へ戻るのもそのまま正しい）。
    */
   readonly backgroundTasks: readonly BackgroundTask[]
+  /**
+   * 見直し（docs/glossary.md「見直し」）の状態。トークン消費の画面の提案の区画が読む。
+   *
+   * **源は `usage-review-stage` / `usage-review-result` の2つ**（ツールが受け付けた呼び出し）で、
+   * **見直し中のままターンが終わったら（止めた・失敗したも同じ）ふだんへ戻す**。起こし直すと
+   * 初期値のふだんから始まる（前回の結果を出すのはこの状態ではない）。
+   */
+  readonly usageReview: UsageReview
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -388,6 +397,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   sessionDefault: BUILTIN_SESSION_DEFAULT,
   plan: undefined,
   backgroundTasks: [],
+  usageReview: { kind: "idle" },
 }
 
 /**
@@ -531,6 +541,7 @@ export function applySessionEvent(
         ...settleUtterance(state),
         turn: finishTurn(state.turn, at),
         reportDrafting: { kind: "idle" },
+        usageReview: settleUsageReview(state.usageReview),
       }
     case "session-ended":
       return {
@@ -539,6 +550,7 @@ export function applySessionEvent(
         endedReason: event.reason,
         turn: finishTurn(state.turn, at),
         backgroundTasks: [],
+        usageReview: settleUsageReview(state.usageReview),
       }
     case "conversation-cleared":
       // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**。
@@ -613,6 +625,18 @@ export function applySessionEvent(
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
     case "background-tasks-changed":
       return { ...state, backgroundTasks: event.tasks }
+    case "usage-review-stage":
+      return {
+        ...state,
+        usageReview: {
+          kind: "running",
+          startedAt: usageReviewStartedAt(state, at),
+          days: event.days,
+          stage: event.stage,
+        },
+      }
+    case "usage-review-result":
+      return { ...state, usageReview: { kind: "result", reviewedAt: at, findings: event.findings } }
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
       // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと
@@ -626,6 +650,22 @@ function withRestoredTime(record: SessionRecord): SessionRecord {
   return record.kind === "request" || record.kind === "speech"
     ? { ...record, time: { kind: "restored" } }
     : record
+}
+
+/**
+ * 見直しが始まった時刻。すでに見直し中なら動かさず、始まったところならそのターンの始まり
+ * （ボタンを押してから最初の段が届くまでも経過に数える）。ターンの外で届いたときだけ `at`。
+ */
+function usageReviewStartedAt(state: SessionState, at: number): number {
+  if (state.usageReview.kind === "running") {
+    return state.usageReview.startedAt
+  }
+  return state.turn.kind === "running" ? state.turn.startedAt : at
+}
+
+/** ターンの終わりで、結果を渡さずに終わった見直しをふだんへ戻す（結果・ふだんはそのまま）。 */
+function settleUsageReview(review: UsageReview): UsageReview {
+  return review.kind === "running" ? { kind: "idle" } : review
 }
 
 /**

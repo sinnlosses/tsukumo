@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール（`speak` / `remember` / `forget` /
-// `keep` / `index` / `recall`、仕事のときの `report`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
+// `keep` / `index` / `recall`、仕事のときの `report` / `usage_review_stage` / `usage_review_result`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
 // `query()` の `mcpServers` へ渡す。
 //
 // サーバの名前と `speak` の名前は src/server/core/sdk-message.ts が持つ（届いた `assistant`
@@ -13,6 +13,12 @@ import {
   expressionNames as toExpressionNames,
 } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
+import {
+  USAGE_PROPOSAL_FOLLOW_UPS,
+  USAGE_PROPOSAL_IMPACTS,
+  USAGE_PROPOSAL_KINDS,
+  USAGE_REVIEW_STAGES,
+} from "../../shared/usage-review.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { type ReportReview } from "../core/report-review.ts"
 import { REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
@@ -23,6 +29,15 @@ import {
   type PersonaMemory,
   type SessionMode,
 } from "../core/session-driver.ts"
+import {
+  USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
+  USAGE_REVIEW_RESULT_TOOL_NAME,
+  USAGE_REVIEW_STAGE_TOOL_DESCRIPTION,
+  USAGE_REVIEW_STAGE_TOOL_NAME,
+  type UsageReviewIntake,
+  usageProposalKindGuide,
+  usageReviewStageGuide,
+} from "../core/usage-review-tool.ts"
 
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
@@ -92,25 +107,30 @@ const RECALL_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。**戻り値は既定が "ok" だけ**で、tsukumo の内部の状態や画面の事情が
  * モデルへ戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
- * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` と `report` の2つ**で、`recall` が
- * 返すのは**そのセッションが自分で読める外の事実**（自分の過去の雑談）だけ、`report` が返すのは
- * 差し戻すときの**規約違反**だけ（docs/display.md 4.2）。
+ * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` と `report` と見直しの2つ**で、
+ * `recall` が返すのは**そのセッションが自分で読める外の事実**（自分の過去の雑談）だけ、`report` が
+ * 返すのは差し戻すときの**規約違反**だけ（docs/display.md 4.2）、見直しの2つが返すのは
+ * **利用者が見送った提案の識別子**と差し戻しの理由だけ（docs/design.md「見直しのツールと状態」）。
  *
  * 常に載るのは `speak` の1つで、**`remember` / `forget` / `keep` / `index` / `recall` は
  * 雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
  * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
  * **`report` は仕事のときだけ**載る（仕事ではレポートを常にこれで受け取る。雑談は本文を
- * 書かない決まりなので載せない。`src/server/core/report-tool.ts`）。
+ * 書かない決まりなので載せない。`src/server/core/report-tool.ts`）。**見直しの2つも仕事の
+ * ときだけ**（トークン消費の画面から頼むのは仕事の会話への依頼）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
- * `report` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。
+ * `report` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。**見直しの2つだけは
+ * 逆に handler がイベントを流す**（検査を通したものだけを状態に入れるため。
+ * `src/server/core/usage-review-tool.ts`）。
  */
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   mode: SessionMode,
   reportReview: ReportReview,
+  usageReview: UsageReviewIntake,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -127,7 +147,7 @@ export function tsukumoServer(
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
-      ...(mode.kind === "work" ? [reportTool(reportReview)] : []),
+      ...(mode.kind === "work" ? [reportTool(reportReview), ...usageReviewTools(usageReview)] : []),
       ...(mode.kind === "chat"
         ? [
             rememberTool(mode.personaMemory),
@@ -164,6 +184,64 @@ function reportTool(review: ReportReview) {
         : { content: [{ type: "text" as const, text: "ok" }] }
     },
   )
+}
+
+/** 見直しの期間の引数（2つのツールで同じ）。 */
+const USAGE_REVIEW_DAYS = z.number().int().positive().describe("見た期間。今日を含む直近何日か")
+
+/**
+ * 見直しを受け取る2つのツール（`usage_review_stage` / `usage_review_result`）。**形の検査は
+ * ここの zod の形**で、崩れた引数は handler に届かずに SDK が理由を返す。形の外の条と、
+ * 受け付けたときにイベントを流すのは {@link UsageReviewIntake}。提案の件数の上限を zod に
+ * 書かないのは、差し戻しの文面を core の1箇所で揃えるため。
+ */
+function usageReviewTools(intake: UsageReviewIntake) {
+  return [
+    tool(
+      USAGE_REVIEW_STAGE_TOOL_NAME,
+      USAGE_REVIEW_STAGE_TOOL_DESCRIPTION,
+      {
+        stage: z.enum(USAGE_REVIEW_STAGES).describe(usageReviewStageGuide()),
+        days: USAGE_REVIEW_DAYS,
+      },
+      async ({ stage, days }) => ({
+        content: [{ type: "text" as const, text: intake.enterStage(stage, days) }],
+      }),
+    ),
+    tool(
+      USAGE_REVIEW_RESULT_TOOL_NAME,
+      USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
+      {
+        days: USAGE_REVIEW_DAYS,
+        headline: z.string().describe("冒頭の一言。キャラクターの口調で、見てきた結果を1〜2文で"),
+        proposals: z
+          .array(
+            z.object({
+              kind: z.enum(USAGE_PROPOSAL_KINDS).describe(usageProposalKindGuide()),
+              target: z.string().describe("対象の名前（入れ方は kind の説明のとおり。無ければ空）"),
+              impact: z
+                .enum(USAGE_PROPOSAL_IMPACTS)
+                .describe("効きめ。large（大）/ medium（中）/ small（小）"),
+              title: z.string().describe("見出し。何を変えるかが分かる短い1行"),
+              basis: z.string().describe("根拠。どの数から言っているか（記録の件数つき）"),
+              action: z.string().describe("やること。利用者が何をすればよいか"),
+              followUp: z
+                .enum(USAGE_PROPOSAL_FOLLOW_UPS)
+                .describe(
+                  "押す口。delegate（tsukumo に頼む。この会話ですぐ変えられる）/ task（タスクにする。あとでやる作業）",
+                ),
+            }),
+          )
+          .describe("提案。効きめの大きい順"),
+      },
+      async (findings) => {
+        const verdict = intake.submit(findings)
+        return verdict.kind === "rejected"
+          ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
+          : { content: [{ type: "text" as const, text: "ok" }] }
+      },
+    ),
+  ]
 }
 
 /**

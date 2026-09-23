@@ -50,6 +50,7 @@ import {
   type SessionDriverOptions,
   type SessionMode,
 } from "../core/session-driver.ts"
+import { createUsageReviewIntake } from "../core/usage-review-tool.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { scheduleMarkSession } from "./sdk-session.ts"
@@ -91,6 +92,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   const reportGate = createReportGate()
   const reportReview = createReportReview()
+  const usageReview = createUsageReviewIntake(options.dismissedUsageProposalKeys, options.onEvent)
 
   const session = query({
     prompt: input.stream(),
@@ -101,7 +103,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
         chatSummaryHooks(options.mode, options.onEvent) ??
         reportGateHooks(options.mode, reportGate),
       mcpServers: {
-        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(options.expressions, options.mode, reportReview),
+        [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
+          options.expressions,
+          options.mode,
+          reportReview,
+          usageReview,
+        ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
         askForAnswer(queue, toolUseID, toolName, toolInput, signal),

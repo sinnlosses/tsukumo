@@ -19,10 +19,10 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に `backgroundTasks`（背景のタスク）を足したことで上げた（古いタブは畳み込みが
- * このフィールドを知らず、帯が背景のタスクを出せない）。
+ * 直近は状態に `usageReview`（見直しの状態）を足したことで上げた（古いタブは畳み込みが
+ * このフィールドを知らず、提案の区画を出せない）。
  */
-export const PROTOCOL_VERSION = 9
+export const PROTOCOL_VERSION = 10
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の

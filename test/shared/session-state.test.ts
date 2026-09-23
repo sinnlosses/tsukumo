@@ -1154,3 +1154,85 @@ describe("applySessionEvent（質問の記録）", () => {
     ])
   })
 })
+
+describe("applySessionEvent（見直し）", () => {
+  const FINDINGS = {
+    days: 7,
+    headline: "架空の冒頭の一言。",
+    proposals: [
+      {
+        kind: "tool-result",
+        target: "ExampleTool",
+        impact: "large",
+        title: "架空の見出し",
+        basis: "架空の根拠",
+        action: "架空のやること",
+        followUp: "task",
+      },
+    ],
+  } as const
+
+  /** 依頼を 100 で送り、最初の段を 300、次の段を 500 で渡した見直し中の姿。 */
+  function running(): SessionState {
+    const events: readonly StampedEvent[] = [
+      { at: 100, event: { kind: "request", text: "架空の依頼", images: [] } },
+      { at: 300, event: { kind: "usage-review-stage", stage: "model", days: 7 } },
+      { at: 500, event: { kind: "usage-review-stage", stage: "cache", days: 7 } },
+    ]
+    return events.reduce<SessionState>(
+      (state, { at, event }) => applySessionEvent(state, event, at),
+      INITIAL_SESSION_STATE,
+    )
+  }
+
+  it("段が届くと見直し中になり、始まりはそのターンの始まり・段はいまの段", () => {
+    expect(running().usageReview).toEqual({
+      kind: "running",
+      startedAt: 100,
+      days: 7,
+      stage: "cache",
+    })
+  })
+
+  it("結果が届くと結果になり、そのあとターンが終わっても結果のまま", () => {
+    const result = applySessionEvent(
+      running(),
+      { kind: "usage-review-result", findings: FINDINGS },
+      700,
+    )
+    const finished = applySessionEvent(result, { kind: "turn-finished", status: "success" }, 800)
+
+    expect(finished.usageReview).toEqual({ kind: "result", reviewedAt: 700, findings: FINDINGS })
+  })
+
+  it("結果を渡さずにターンが終わるとふだんへ戻る", () => {
+    const finished = applySessionEvent(running(), { kind: "turn-finished", status: "success" }, 800)
+
+    expect(finished.usageReview).toEqual({ kind: "idle" })
+  })
+
+  it("割り込まれて（error で）ターンが終わってもふだんへ戻る", () => {
+    const interrupted = applySessionEvent(
+      running(),
+      { kind: "turn-finished", status: "error" },
+      800,
+    )
+
+    expect(interrupted.usageReview).toEqual({ kind: "idle" })
+  })
+
+  it("見直し中にセッションが終わってもふだんへ戻る", () => {
+    const ended = applySessionEvent(running(), { kind: "session-ended", reason: "架空" }, 800)
+
+    expect(ended.usageReview).toEqual({ kind: "idle" })
+  })
+
+  it("見直しに関わらないターンの終わりでは、ふだんのまま", () => {
+    expect(
+      apply(
+        { kind: "request", text: "架空の依頼", images: [] },
+        { kind: "turn-finished", status: "success" },
+      ).usageReview,
+    ).toEqual({ kind: "idle" })
+  })
+})
