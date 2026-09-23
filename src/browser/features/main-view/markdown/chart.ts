@@ -1,11 +1,12 @@
 // Chart.js（同梱のライブラリ）を読む口。**tsukumo 自身のサーバから配り、グラフが実際に要る
 // ときだけ `<script>` で読み込む**（`docs/requirements.md` 4.2。束ねには入れない）。
 //
-// **読み込みと暗い配色への寄せ方はここに置く**（機能どうしは import しないので、読み手が
-// 増えても置き場を動かさずに済む。`docs/design.md` 2章）。いまの読み手はレポートの ```chart
-// フェンス（`features/main-view/markdown/chart-block.tsx`）だけで、**描く config は読み手が持つ。**
+// **読み込みと暗い配色への寄せ方はここに置く。** 読み手はレポートの ```chart
+// フェンス（`chart-block.tsx`）だけなので機能の中に置く（`docs/design.md` 2章「その機能しか
+// 読まないなら機能の中」。**2つ目の機能が読み始めたら `browser/lib/` へ上げる**）。
+// **描く config は読み手が持つ。**
 
-import { vendorAssetPath } from "../../shared/vendor-asset.ts"
+import { vendorAssetPath } from "../../../../shared/vendor-asset.ts"
 import { loadVendorScript } from "./vendor-script.ts"
 
 const CHART_SRC = vendorAssetPath("chart.umd.min.js")

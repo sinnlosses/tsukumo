@@ -7,14 +7,18 @@
 //
 // 読めなかった1枚は undefined にして呼び出し側が諦める（例外を投げない。**画面は1回の失敗で
 // 落ちない**。`docs/coding-standards.md`「エラーハンドリング」）。
+//
+// **読むのは入力欄（`features/dispatch/`）だけ**なので機能の中に置く（`docs/design.md` 2章
+// 「その機能しか読まないなら機能の中」。**2つ目の機能が読み始めたら `browser/lib/` へ上げる**）。
+// フックではないので `hooks/` には置かず、機能の直下に概念の名前で置く。
 
 import {
   isPromptImageMediaType,
   parsePromptImage,
   parsePromptImageThumbnail,
   type PromptImage,
-} from "../../shared/prompt-image.ts"
-import { readDataUrl } from "./data-url.ts"
+} from "../../../shared/prompt-image.ts"
+import { readDataUrl } from "../../lib/data-url.ts"
 
 /**
  * 控えの長いほうの辺（px）。**記録に残り続けるものなので小さく持つ**

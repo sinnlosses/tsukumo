@@ -112,4 +112,37 @@ describe("useContextUsage", () => {
     })
     expect(result.current.kind).toBe("unavailable")
   })
+
+  it("届くまでは「読み込み中」で、取れなかったときとは別の種類になる", async () => {
+    stubContextUsageFetch(() => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(readyContextUsage()),
+    }))
+
+    const { result } = renderHook(() => useContextUsage(), {
+      wrapper: contextUsageWrapper(newClient()),
+    })
+
+    // まだ応答が届いていない最初のレンダーでは「読み込み中」（「取れない」ではない）。
+    expect(result.current.kind).toBe("pending")
+
+    await waitFor(() => {
+      expect(result.current.kind).toBe("ready")
+    })
+  })
+
+  it("応答が落ちたときは「読み込み中」を経てから「取れない」になる", async () => {
+    stubContextUsageFetch(() => ({ ok: false, status: 403, json: () => Promise.resolve(null) }))
+
+    const { result } = renderHook(() => useContextUsage(), {
+      wrapper: contextUsageWrapper(newClient()),
+    })
+
+    expect(result.current.kind).toBe("pending")
+
+    await waitFor(() => {
+      expect(result.current.kind).toBe("unavailable")
+    })
+  })
 })

@@ -35,16 +35,16 @@ import {
 import { commandSuggestions } from "../../../../shared/command-suggestion.ts"
 import { MAX_PROMPT_IMAGES, type PromptImage } from "../../../../shared/prompt-image.ts"
 import { type CommandDescription } from "../../../../shared/session-event.ts"
+import { useQuestionAnswer } from "../../../stores/question-answer.tsx"
+import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
+import { matchingCommands, shouldShowCommandSuggestions } from "../command-suggestions.tsx"
+import { type FilePathQuery, filePathQuery, matchingFilePaths } from "../file-suggestions.tsx"
 import {
   carriesFiles,
   chosenPromptImageFiles,
   promptImageFiles,
   readPromptImage,
-} from "../../../lib/prompt-image.ts"
-import { useQuestionAnswer } from "../../../stores/question-answer.tsx"
-import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
-import { matchingCommands, shouldShowCommandSuggestions } from "../command-suggestions.tsx"
-import { type FilePathQuery, filePathQuery, matchingFilePaths } from "../file-suggestions.tsx"
+} from "../prompt-image.ts"
 import { useRepositoryFilePaths } from "./use-repository-file-paths.ts"
 
 /** 入力欄の下のボタンが打つ、補完の合図の文字。 */

@@ -15,8 +15,8 @@
 import { useId, type ReactElement } from "react"
 
 import { Select } from "../../../components/select.tsx"
-import { MODEL_LABELS } from "../../../lib/model-label.ts"
-import { PERMISSION_MODE_LABELS } from "../../../lib/permission-mode-label.ts"
+import { MODEL_LABELS } from "../domain/model-label.ts"
+import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
 import { type ScreenNavModelPermission } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-model-permission.module.css"

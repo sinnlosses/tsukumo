@@ -7,7 +7,7 @@
 //
 // **地・領域・字の色（利用者の設定）は帯の歯車にある**（13.6 の表。色を「利用者が決める部分」と
 // 「キャラクターが決める部分」に割ったので、パックの持ち物である差し色だけがここに残る）。
-// 保存の仕方は変えていない（`browser/lib/appearance-color.ts`）。
+// 保存の仕方は変えていない（`browser/domain/appearance-color.ts`）。
 
 import { type ReactElement } from "react"
 

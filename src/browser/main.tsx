@@ -21,6 +21,10 @@ import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
 import { ProtocolMismatch } from "./components/protocol-mismatch.tsx"
+import {
+  applyAppearanceColorOverride,
+  loadAppearanceColorOverride,
+} from "./domain/appearance-color.ts"
 import { CharacterCreate } from "./features/character-screen/character-create.tsx"
 import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
 import { CharacterView } from "./features/character-view/character-view.tsx"
@@ -31,10 +35,6 @@ import { MainView } from "./features/main-view/main-view.tsx"
 import { ScreenNav } from "./features/screen-nav/screen-nav.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
 import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
-import {
-  applyAppearanceColorOverride,
-  loadAppearanceColorOverride,
-} from "./lib/appearance-color.ts"
 import { QuestionAnswerProvider } from "./stores/question-answer.tsx"
 import { QuestionScrollProvider } from "./stores/question-scroll.tsx"
 import { useScreen } from "./stores/screen.tsx"

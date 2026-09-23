@@ -9,12 +9,18 @@
 //
 // **画面に会話の文面は出ない** — メッセージは分類1行の数としてだけ出る
 // （`src/shared/context-usage.ts`）。
+//
+// **届く前は「骨組み」を出す**（`ContextUsageCardSkeleton`）。届いた札と**同じ外形**
+// （同じ `section`・見出しと添え書き・数の行・横棒・凡例・畳んだ内訳の見出し）で、**中身の
+// 値だけを灰色の塊にする**。分類の名前と色は毎回同じ6+2種類なので、骨組みでも実物と同じ文字・
+// 同じ塗りを出せる（値（トークン数・割合・時刻）だけが届くまで分からない）。**骨組みと届いた
+// 札の高さを揃え、レイアウトシフトを防ぐのが目的。**
 
 import { type ReactElement } from "react"
 
 import { type ContextUsageItem } from "../../../shared/context-usage.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../utils/clock.ts"
-import { categoryLook } from "./context-usage-category.ts"
+import { categoryLook, SKELETON_ROW_NAMES } from "./context-usage-category.ts"
 import { type ContextUsageRow, type UseContextUsageResult } from "./hooks/use-context-usage.ts"
 import styles from "./token-usage.module.css"
 import { formatCount } from "./usage-format.ts"
@@ -34,11 +40,15 @@ export type ContextUsageCardProps = {
 }
 
 export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
-  if (props.card.kind !== "ready") {
+  const card = props.card
+
+  if (card.kind === "pending") {
+    return <ContextUsageCardSkeleton />
+  }
+  if (card.kind === "unavailable") {
     return <p className={styles["token-usage-note"]}>{UNAVAILABLE_NOTE}</p>
   }
 
-  const card = props.card
   return (
     <section className={styles["context-card"]}>
       <div className={styles["context-head"]}>
@@ -65,7 +75,7 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         {card.rows.map((row) => (
           <span
             key={row.name}
-            className={`${styles["context-span"]} ${toneClassName(row)}`}
+            className={`${styles["context-span"]} ${toneClassName(row.name)}`}
             style={{ "--context-share": `${row.share}%` }}
           />
         ))}
@@ -75,7 +85,7 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         {card.rows.map((row) => (
           <div key={row.name} className={styles["context-legend-row"]}>
             <dt className={styles["context-legend-name"]}>
-              <span className={`${styles["context-swatch"]} ${toneClassName(row)}`} />
+              <span className={`${styles["context-swatch"]} ${toneClassName(row.name)}`} />
               {categoryLook(row.name).label}
             </dt>
             <dd className={styles["context-legend-value"]}>
@@ -94,6 +104,94 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         <DeferredTable rows={card.deferredRows} />
       </details>
     </section>
+  )
+}
+
+/**
+ * 届く前の骨組み。**届いた札（上の `ContextUsageCard` の `ready` 分岐）と同じ `section`・
+ * クラス名を使う**ので、余白・罫線・高さの取り方はそのまま揃う。`aria-busy` は `section` に
+ * 付け、値の塊（`SkeletonBlock`）は `aria-hidden` で読み上げに出さない。凡例は
+ * `SKELETON_ROW_NAMES` の8行（中身6分類 + 空き + 自動圧縮バッファ。窓の外は数えない）。
+ */
+function ContextUsageCardSkeleton(): ReactElement {
+  return (
+    <section className={styles["context-card"]} aria-busy="true">
+      <div className={styles["context-head"]}>
+        <h2 className={styles["context-title"]}>{CARD_TITLE}</h2>
+        <span className={styles["context-note"]}>{CARD_NOTE}</span>
+        <div className={styles["context-aside"]}>
+          <span className={styles["context-until"]}>
+            <span className={styles["context-until-label"]}>自動圧縮まで</span>{" "}
+            <SkeletonBlock className={`${styles["context-skeleton-until"]}`} />
+          </span>
+          <span className={styles["context-taken"]}>
+            <SkeletonBlock className={`${styles["context-skeleton-taken"]}`} />
+          </span>
+        </div>
+      </div>
+
+      <p className={styles["context-total"]}>
+        <SkeletonBlock
+          className={`${styles["context-total-value"]} ${styles["context-skeleton-total-value"]}`}
+        />
+        <SkeletonBlock
+          className={`${styles["context-total-max"]} ${styles["context-skeleton-total-max"]}`}
+        />
+        <SkeletonBlock
+          className={`${styles["context-total-share"]} ${styles["context-skeleton-total-share"]}`}
+        />
+      </p>
+
+      <div className={styles["context-bar"]}>
+        {/* 横棒だけは他と違い、中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の
+            高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SkeletonBlock` は使わない。 */}
+        <span
+          className={`${styles["context-skeleton-block"]} ${styles["context-skeleton-bar"]}`}
+          aria-hidden="true"
+        />
+      </div>
+
+      <dl className={styles["context-legend"]}>
+        {SKELETON_ROW_NAMES.map((name) => {
+          const look = categoryLook(name)
+          return (
+            <div key={name} className={styles["context-legend-row"]}>
+              <dt className={styles["context-legend-name"]}>
+                <span className={`${styles["context-swatch"]} ${toneClassName(name)}`} />
+                {look.label}
+              </dt>
+              <dd className={styles["context-legend-value"]}>
+                <SkeletonBlock className={`${styles["context-skeleton-legend-value"]}`} />
+              </dd>
+            </div>
+          )
+        })}
+      </dl>
+
+      <details className={styles["context-detail"]}>
+        <summary className={styles["context-detail-summary"]}>{DETAIL_SUMMARY}</summary>
+      </details>
+    </section>
+  )
+}
+
+type SkeletonBlockProps = {
+  readonly className: string
+}
+
+/**
+ * 骨組みの値1つぶんの塊。読み上げには出さない（`aria-hidden`）。明滅は
+ * `token-usage.module.css` の `.context-skeleton-block` が持つ。**中身に `&nbsp;` を1つ
+ * 持たせる**——高さを持たない空の `span` だと、届いた札の実物の文字（同じ場所・同じ
+ * `font-size`）が乗せる行の高さ（本文の行間 `--line-height-body` ぶん）より低くなり、
+ * 骨組みと届いた札の高さがずれる（実測）。読み上げに出ないよう見た目は透明にする
+ * （`.context-skeleton-block` の `color: transparent`）。
+ */
+function SkeletonBlock(props: SkeletonBlockProps): ReactElement {
+  return (
+    <span className={`${styles["context-skeleton-block"]} ${props.className}`} aria-hidden="true">
+      {"\u00a0"}
+    </span>
   )
 }
 
@@ -171,9 +269,11 @@ function DeferredTable(props: DeferredTableProps): ReactElement | null {
   )
 }
 
-/** 横棒の一区間と凡例の四角に付ける色の綴り（`token-usage.module.css`）。 */
-function toneClassName(row: ContextUsageRow): string {
-  return styles[`context-tone-${categoryLook(row.name).tone}`] ?? ""
+/** 横棒の一区間と凡例の四角に付ける色の綴り（`token-usage.module.css`）。**分類の表示名から
+ * 引く**（骨組みは `ContextUsageRow` を持たず名前だけ知っているので、届いた札の行
+ * （`row.name`）と骨組みの分類名（`SKELETON_ROW_NAMES` の要素）の両方から呼べる形にしてある）。 */
+function toneClassName(name: string): string {
+  return styles[`context-tone-${categoryLook(name).tone}`] ?? ""
 }
 
 /** 割合（`3.9%`）。**小数第1位まで**（1%未満の分類も0にならない）。 */

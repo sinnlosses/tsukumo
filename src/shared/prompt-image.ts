@@ -47,7 +47,7 @@ export const MAX_PROMPT_IMAGE_DATA_URL_LENGTH = maxImageDataUrlLength(MAX_PROMPT
  * 控え1枚（デコード後）の上限。**記録に残り続けるのは控えだけ**なので、原寸とは別に、
  * 桁の違う小さな値で切る（雑談の 100 ターンぶん積んでも記録の大きさが暴れない。
  * `docs/requirements.md` 4.10「控えだけを記録に残すので、記録の大きさが上限を持つ」）。
- * 縮めるのはブラウザ側（`src/browser/lib/prompt-image.ts`）で、**サーバは加工しない**。
+ * 縮めるのはブラウザ側（`src/browser/features/dispatch/prompt-image.ts`）で、**サーバは加工しない**。
  */
 export const MAX_PROMPT_IMAGE_THUMBNAIL_BYTES = 128 * 1024
 
