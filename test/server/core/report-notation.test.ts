@@ -8,6 +8,7 @@ import { createElement } from "react"
 import { NotationBlock } from "../../../src/browser/features/main-view/markdown/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../src/browser/features/main-view/markdown/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation.ts"
+import { REPORT_NOTATION_NAMES, REPORT_NOTE_KINDS } from "../../../src/shared/report-notation.ts"
 
 afterEach(() => {
   cleanup()
@@ -87,20 +88,32 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
+  it("語彙（src/shared/report-notation.ts）の印がすべて文面に現れ、部品で解決され、CSS まで届く", () => {
+    // 前の2つのテストは文面から拾った class 名しか見ないので、**文面が地の文の言葉としてしか
+    // 挙げていない印**（`note-warn` / `note-ng` / `note-ask` / `note-memo` / `badge-warn` /
+    // `badge-ng` は `class="..."` の外の言い添えでしか出てこない）は拾えない。語彙を唯一の
+    // 出どころにして、14の印すべてで同じ鎖（文面 → 部品 → CSS）を見る。
+    expect(REPORT_NOTATION_NAMES.length).toBe(14)
+
+    for (const name of REPORT_NOTATION_NAMES) {
+      expect(REPORT_NOTATION_PROMPT).toContain(name)
+
+      const { container } = render(createElement(NotationBlock, { className: name }, "中身"))
+      const element = container.firstElementChild
+
+      expect(element?.className).not.toBe(name)
+      for (const resolved of element?.className.split(" ") ?? []) {
+        expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
+      }
+    }
+  })
+
   it("note の6種を名乗り、どれも部品がラベルを出し、その先に見た目が付いている", () => {
     // 規約（モデルが書く名前）→ 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。**種別の文字を
     // 出すのは tsukumo 側**（docs/screen-design.md 13.1 原則5）なので、印だけ足してラベルを足し忘れる
-    // と、素の note と同じ「何の塊か読み取れない」状態に戻る。
-    const kinds = [
-      ["note", "情報"],
-      ["note-warn", "注意"],
-      ["note-ng", "異常"],
-      ["note-ask", "疑問"],
-      ["note-memo", "メモ"],
-      ["note-favor", "お願い"],
-    ] as const
-
-    for (const [name, label] of kinds) {
+    // と、素の note と同じ「何の塊か読み取れない」状態に戻る。**種別の並びは
+    // `src/shared/report-notation.ts` の `REPORT_NOTE_KINDS` が正典**（並びの理由もそこにある）。
+    for (const [name, label] of REPORT_NOTE_KINDS) {
       expect(REPORT_NOTATION_PROMPT).toContain(name)
 
       const { container } = render(
