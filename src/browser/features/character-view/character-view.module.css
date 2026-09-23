@@ -6,6 +6,7 @@
    領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく
    なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
 .character-region {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -23,8 +24,10 @@
      containing block の幅に対して解決されるため、高さの意図で書くと壊れる）。 */
   --portrait-height: 78%;
   --portrait-drop: 2.25rem;
-  --balloon-tail: 14px;
+  --balloon-tail: 8px;
   --balloon-bottom-gap: 7rem;
+  /* 右上の「ログ」の口が占める高さ。吹き出しの並びはここまで伸びない（下の .balloon-track）。 */
+  --speech-log-open-space: 2.25rem;
 }
 
 /* 立ち絵も吹き出しの並びも**下端で揃える**（床に立つ見え方にする
@@ -84,29 +87,44 @@
   /* max() の下限は、領域を仕切りで低くしたときに calc の側が 0 以下になって**吹き出しが
      丸ごと消える**のを防ぐためのもの。下限が勝つのは領域が --balloon-bottom-gap + 6rem
      より低いときだけで、そこでは最新の位置の固定より読めることを優先する。 */
-  max-height: max(6rem, calc(100% - var(--balloon-bottom-gap)));
+  max-height: max(6rem, calc(100% - var(--balloon-bottom-gap) - var(--speech-log-open-space)));
   overflow-y: auto;
 }
-/* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。 */
+/* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。
+   **角は小さく（0.5rem）、影も付けない** — 丸い風船ではなく、線で切った札に近い見え方にする。 */
 .balloon {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   width: fit-content;
   max-width: 100%;
-  padding: 0.75rem 1.1rem;
-  border: 1px solid var(--rule);
-  border-radius: 1.25rem;
+  padding: 0.6rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: 0.5rem;
   background: var(--surface);
+}
+.balloon-text {
   white-space: pre-wrap;
+}
+/* 話し手の名前（最新の1件にだけ付く。`balloon.tsx`）。吹き出しの主が誰かを示す札なので、
+   accent を出してよい場所に数える（docs/design.md 13.1 原則1）。 */
+.balloon-speaker {
+  font-size: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
 }
 /* **DOM の先頭が最新**（column-reverse で視覚上は下端に出る）。いま読んでほしい1件だけを
    濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。過去の分は小さく薄くして、
-   残ってはいるが読み返す対象だと分かる見た目にする。 */
+   残ってはいるが読み返す対象だと分かる見た目にする。枠は accent の 1px だけで、にじむ輪は
+   付けない（線をくっきりさせる）。 */
 .balloon:first-child {
   animation: balloon-appear 0.3s ease-out;
+  padding: 0.8rem 1.1rem;
   font-size: var(--font-body);
   background: var(--surface-accent);
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 /* 尻尾ぶんの場所を左に確保する。`.balloon-track` は overflow-y: auto を持ち、CSS の規則で
    overflow-x も自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を
@@ -191,6 +209,125 @@
   }
 }
 
+/* 「ログ」の口（`speech-log.tsx`）。領域の右上に重ねる — 行を1段足すと、立ち絵の高さ
+   （--portrait-height は .character-layout の高さの割合）がそのぶん縮むため。キャラビューは枠を
+   持たない領域なので、口は地（ground）の色で塗って背景の絵の上でも読めるようにする。 */
+.speech-log-open {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: 0.4rem;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.speech-log-open:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+/* セリフのログのモーダル。一時的に重なるものなので常設の枠を増やさない（docs/design.md 13.1
+   原則2）。見出しと閉じる口は動かさず、並びだけが内側でスクロールする（タスク一覧の表と同じ形）。 */
+.speech-log {
+  box-sizing: border-box;
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  margin: auto;
+  padding: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  font: inherit;
+  overflow: hidden;
+}
+.speech-log::backdrop {
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+}
+.speech-log-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: calc(100vh - 6rem);
+}
+.speech-log-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.speech-log-heading {
+  margin: 0;
+  font-size: var(--font-heading);
+  font-weight: 600;
+}
+.speech-log-close {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.speech-log-close:hover {
+  border-color: var(--accent);
+}
+.speech-log-empty {
+  margin: 0;
+  color: var(--ink-quiet);
+}
+.speech-log-turns {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+.speech-log-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+/* ターンの見出し＝そのターンの依頼の1行目。利用者の言葉なので本文より弱く、1行に切る。 */
+.speech-log-request {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.speech-log-speeches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* セリフ1件。吹き出しと同じ角と線で描き、キャラビューで見たものと同じだと分かるようにする。 */
+.speech-log-speech {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: 0.5rem;
+  background: var(--ground);
+  white-space: pre-wrap;
+}
+
 /* 狭い画面（docs/requirements.md 4.7）。**領域は下段に 9.5rem で固定される**
    （features/layout/layout.module.css の @media）ので、高さの基準そのものは残る。変えるのは
    割合と固定量のほうで、広い領域向けの既定（立ち絵 78% ＋ 2.25rem 沈める、吹き出しの下に
@@ -211,6 +348,6 @@
      （最新は column-reverse で常に下端に居る）。 */
   .balloon-track {
     flex-basis: 8rem;
-    max-height: 100%;
+    max-height: calc(100% - var(--speech-log-open-space));
   }
 }

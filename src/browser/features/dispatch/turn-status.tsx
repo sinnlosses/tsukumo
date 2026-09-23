@@ -64,10 +64,14 @@ export function TurnStatus(): ReactElement {
 
   return (
     <div className={styles["dispatch-row"]}>
+      <span className={styles["dispatch-elapsed-row"]}>
+        <span>{elapsedLabel}</span>{" "}
+        <span className={styles["dispatch-elapsed"]}>{elapsedText(turn, now)}</span>
+      </span>
       {turn.kind === "running" ? (
         <button
           type="button"
-          className={styles["dispatch-send"]}
+          className={styles["dispatch-interrupt"]}
           onClick={() => dispatch({ type: "interrupt" })}
         >
           {INTERRUPT_LABEL}
@@ -81,10 +85,6 @@ export function TurnStatus(): ReactElement {
           {SEND_LABEL}
         </button>
       )}
-      <span className={styles["dispatch-elapsed-row"]}>
-        <span>{elapsedLabel}</span>:{" "}
-        <span className={styles["dispatch-elapsed"]}>{elapsedText(turn, now)}</span>
-      </span>
     </div>
   )
 }
