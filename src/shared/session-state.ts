@@ -501,6 +501,7 @@ export function applySessionEvent(
           expressionsWithPortrait: event.expressionsWithPortrait,
           mini: event.mini,
           face: event.face,
+          tagline: event.tagline,
           outfitAccents: event.outfitAccents,
           background: event.background,
           editable: event.editable,

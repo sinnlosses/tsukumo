@@ -174,3 +174,137 @@
 /* 狭い画面でも**横並びのまま**にする（390px 幅でも1列あたり 160px 前後あり、見本の 176px と
    ほぼ変わらない。実測は T-389 の evidence）。縦に積むと帯が倍の高さになり、狭い画面ほど
    惜しいタスクの区画を削ってしまう。 */
+/* 下端の帯に何も並ばないとき（雑談中で、切り替え先のセッションがまだ1つも無い）は帯ごと
+   出さない。罫線と沈んだ地だけの空の帯が残ると、中身のある段に見える。 */
+.sidebar-footer:has(> .session-info:empty) {
+  display: none;
+}
+
+/* ── 雑談中の4段（docs/design.md 13.7「雑談のときのサイドバー」） ──────────────────────
+   **寸法の出どころは「雑談モードのサイドバー案（T-332）」の見本**（見本の inline style の px を
+   `theme.css` のトークンと rem に写した値。色は16進を書かず、パックの `--accent` からの導出で
+   表す——見本の橙は雑談中の `--accent`〔パックの `chatAccent`〕にあたる）。 */
+
+/* 1段目。プロフィールの札。**領域の左右と上の縁までぴたりと広げる**（下端の帯と同じ負の
+   マージン。角の丸めは領域の `overflow` が切る）。伸び縮みしないので、余った高さはすべて
+   2段目・3段目の入れ物へ行く。地は `surface` を差し色で**5%だけ**染める（見本の「橙を薄く
+   混ぜた地」。`--surface-accent` の12%は選ばれたものの地なので使わない）。名前という文字の
+   ラベルがある塊なので、差し色で地を染めてよい（13.2「意味を持つ塊の地」）。下の罫線は
+   `rule` のまま（差し色の仕切り線はレポートの3本に絞ってある。13.2）。 */
+.profile-card {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.875rem;
+  margin: calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding)) 0;
+  padding: 1.125rem;
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--surface), var(--accent) 5%);
+}
+/* 顔は帯の顔（13.9「顔」）と同じ丸・同じ差し色の輪で、大きさだけ見本の 64px にする。 */
+.profile-card-face {
+  flex: none;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: var(--surface-accent);
+  box-shadow: 0 0 0 2px var(--accent);
+  object-fit: cover;
+}
+.profile-card-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+/* 名前とひとことは**読む面の文字**なので差し色を受け取らない（13.1 原則1。見本の淡い橙の
+   字は `ink` / `ink-quiet` に写す）。書体も見本の明朝ではなく本文の1本（13.3）。 */
+.profile-card-name {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.profile-card-tagline {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+  line-height: 1.5;
+}
+/* 「変える ⌄」。見た目のボタン（.profile-card-change-face）の上に、本物の <select> を透明にして
+   同じ大きさで重ねる（押すのは <select>。`profile-card.tsx`）。⌄ は共有の枠（`select.module.css`
+   の `::after`）が描き、既定の右 10px・12px がそのまま見本の値になる。枠は `rule`、字は `ink` で、
+   差し色は `:hover` の縁とフォーカスの輪にだけ出す（13.1 原則1「機械が指し示す場所」）。 */
+.profile-card-change {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  box-sizing: border-box;
+  height: 2rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font-size: var(--font-action);
+}
+.profile-card-change:hover {
+  border-color: var(--accent);
+}
+/* <select> は透明なので、フォーカスの輪（theme.css の :focus-visible）は外側の枠に移して描く。 */
+.profile-card-change:has(.profile-card-change-select:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* ターン中は塞ぐ（理由は <select> の title）。押せないことは薄さと矢印の形で見せる。 */
+.profile-card-change:has(.profile-card-change-select:disabled) {
+  border-color: var(--rule);
+  opacity: 0.6;
+}
+/* 右の余白は矢印（右 10px + 12px）と見本の gap 4px のぶん。 */
+.profile-card-change-face {
+  display: flex;
+  align-items: center;
+  padding: 0 1.625rem 0 0.625rem;
+  white-space: nowrap;
+}
+/* 共有の枠を口いっぱいに広げる。**`.select-frame` の `position: relative` と同じ強さにしない**
+   （読み込み順で負けうる。`select.module.css` 冒頭）ので、親の class を重ねて1段強くする。 */
+.profile-card-change > .profile-card-change-frame {
+  position: absolute;
+  inset: 0;
+}
+.profile-card-change-select {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.profile-card-change-select:disabled {
+  cursor: not-allowed;
+}
+
+/* 2段目（最近の話題）と3段目（覚えていること）の入れ物。**ここだけが伸び縮みし、入りきらない
+   ぶんはこの中で転がる**（札と下端の帯は動かない。狭い画面でも同じ配分）。左右は領域の縁まで
+   広げ、区画（.sidebar-block）の 1.125rem で札・帯と字の位置を揃える。 */
+.sidebar-chat-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.625rem;
+  min-height: 0;
+  margin: 0 calc(-1 * var(--region-padding));
+  padding: 1rem 0;
+  overflow-y: auto;
+}
+/* 雑談の区画は自分では転がらない（中身なりの高さを取り、転がすのは .sidebar-chat-body）。 */
+.sidebar-block-chat {
+  flex: none;
+  margin: 0;
+}
+/* 区画が空のときの一言。 */
+.sidebar-empty {
+  color: var(--ink-quiet);
+}

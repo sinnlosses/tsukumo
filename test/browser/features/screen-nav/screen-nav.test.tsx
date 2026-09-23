@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ScreenNav } from "../../../../src/browser/features/screen-nav/screen-nav.tsx"
+import { QuestionScrollProvider } from "../../../../src/browser/stores/question-scroll.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
+import { TurnSelectionProvider } from "../../../../src/browser/stores/turn-selection.tsx"
 import { MODEL_ALIASES } from "../../../../src/shared/command.ts"
 import { type PendingAsk } from "../../../../src/shared/pending-ask.ts"
 import {
@@ -48,7 +50,11 @@ function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = ()
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state }, spy)
   render(
     <SessionStoreContext.Provider value={store}>
-      <ScreenNav />
+      <TurnSelectionProvider>
+        <QuestionScrollProvider>
+          <ScreenNav />
+        </QuestionScrollProvider>
+      </TurnSelectionProvider>
     </SessionStoreContext.Provider>,
   )
 }

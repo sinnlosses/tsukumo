@@ -17,6 +17,7 @@
 import { useEffect, useRef, type ReactElement } from "react"
 
 import { useQuestionAnswer, type QuestionOptionRow } from "../../stores/question-answer.tsx"
+import { useQuestionScroll } from "../../stores/question-scroll.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import styles from "./main-view.module.css"
 import { Markdown } from "./markdown/markdown.tsx"
@@ -38,6 +39,7 @@ export function QuestionAsk(): ReactElement | null {
   // 過去のやり取りを見ている間も札は出す（答えは待たせたままにできない）。そのときだけ、
   // 質問が**いまのやり取り**のものだと分かるように戻る口を添える。
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
+  const { signal: scrollSignal } = useQuestionScroll()
   const cardRef = useRef<HTMLElement>(null)
   const askId = question.kind === "asking" ? question.id : undefined
 
@@ -50,6 +52,17 @@ export function QuestionAsk(): ReactElement | null {
     }
     cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
   }, [askId])
+
+  // 帯の「いまの作業」の一覧にある「質問へ」（`stores/question-scroll.tsx`）を押したときも、
+  // 同じ質問を見ている間（`askId` が変わっていない間）は上の effect が働かないので、別の
+  // effect で同じスクロールをやり直す。**`scrollSignal === 0` は初回描画**（まだ一度も
+  // 押されていない）ので何もしない。
+  useEffect(() => {
+    if (scrollSignal === 0) {
+      return
+    }
+    cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [scrollSignal])
 
   if (question.kind === "none") {
     return null

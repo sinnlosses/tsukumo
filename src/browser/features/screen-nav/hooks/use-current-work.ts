@@ -19,6 +19,7 @@
 
 import { useCallback, useRef, useState, type RefObject } from "react"
 
+import { type PendingAsk } from "../../../../shared/pending-ask.ts"
 import {
   currentTurnSteps,
   type TurnStep,
@@ -27,7 +28,10 @@ import {
 } from "../../../../shared/turn-step.ts"
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { summarizeToolInput, toolInputText } from "../../../lib/tool-summary.ts"
+import { useQuestionScroll } from "../../../stores/question-scroll.tsx"
+import { navigateTo, useScreen } from "../../../stores/screen.tsx"
 import { useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
+import { useTurnSelection } from "../../../stores/turn-selection.tsx"
 
 /** 閉じている間に出す手順の件数（依頼の手順が6件以上あると「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
@@ -74,6 +78,16 @@ export type ScreenNavCurrentWorkRunningStep =
       readonly summaryLabel: string
     }
 
+/**
+ * 札に出す要約（`.screen-nav-work-summary`）。**答え待ちで先頭の答え待ちが質問なら、実行中の
+ * 手順の要約より質問の要約を優先する**（`docs/design.md` 13.9「いまの作業」。答え待ちは
+ * ターンの途中で作業が止まっている状態で、利用者がいま向き合うべきものは質問のため）。
+ * 許可要求の答え待ちはこれまでどおり実行中の手順の要約に従う。
+ */
+export type ScreenNavCurrentWorkSummary =
+  | { readonly kind: "none" }
+  | { readonly kind: "text"; readonly label: string }
+
 /** 「手順をすべて見る」の口。6件以下なら出さない（`fixed`）。 */
 export type ScreenNavCurrentWorkToggleAll =
   | { readonly kind: "fixed" }
@@ -100,6 +114,22 @@ export type ScreenNavCurrentWorkStepList =
       readonly toggleAll: ScreenNavCurrentWorkToggleAll
     }
 
+/**
+ * 一覧の見出しに添える、答えの場所の案内（`docs/design.md` 13.9「いまの作業」）。
+ * 答え待ちのときだけ意味を持ち、**答え待ちの中身で行き先が変わる**ので判別可能な合併型にする
+ * （docs/coding-standards.md「2つ以上の `| undefined` が1つの状態」と同じ理由で、
+ * boolean 1つには畳まない）:
+ *
+ * - `none`: 答え待ちでない
+ * - `input`: 許可要求。今までどおり「。入力欄の上で答えられる」を添える
+ * - `question`: 質問（メインビューの札で答える）。見出しの文面は変えず、
+ *   一覧に「質問へ」の口を出す
+ */
+export type ScreenNavCurrentWorkPendingHint =
+  | { readonly kind: "none" }
+  | { readonly kind: "input" }
+  | { readonly kind: "question"; readonly onGoToQuestion: () => void }
+
 export type ScreenNavCurrentWork = {
   readonly state: ScreenNavCurrentWorkState
   readonly wordLabel: string
@@ -111,8 +141,9 @@ export type ScreenNavCurrentWork = {
    * （`screen-nav.module.css` の `[data-chat-idle="true"]`）。
    */
   readonly chatIdle: boolean
-  /** 答え待ちのときだけ true（一覧の見出しに「入力欄の上で答えられる」を添える）。 */
-  readonly pendingHint: boolean
+  readonly pendingHint: ScreenNavCurrentWorkPendingHint
+  /** 札の要約（{@link ScreenNavCurrentWorkSummary}）。答え待ちの質問はこれで実行中の手順を覆う。 */
+  readonly summary: ScreenNavCurrentWorkSummary
   readonly runningStep: ScreenNavCurrentWorkRunningStep
   readonly stepList: ScreenNavCurrentWorkStepList
   readonly open: boolean
@@ -130,11 +161,14 @@ export type UseCurrentWorkResult = {
 /** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」と同じ `ref`）。 */
 export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurrentWorkResult {
   const endedReason = useSessionSelector((session) => session.state.endedReason)
-  const pendingCount = useSessionSelector((session) => session.state.pending.length)
+  const pending = useSessionSelector((session) => session.state.pending)
   const turnInProgress = useTurnRunning()
   const records = useSessionSelector((session) => session.state.records)
   const chatMode = useSessionSelector((session) => session.state.chatMode)
   const characterName = useSessionSelector((session) => session.state.character?.name)
+  const screen = useScreen()
+  const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
+  const { requestScroll } = useQuestionScroll()
 
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -163,12 +197,28 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
 
   useDismissSignal({ open, rootRef: navRef, onDismiss })
 
+  // **質問へ**（`docs/design.md` 13.9「いまの作業」）。一覧を閉じ、キャラクター/トークン消費の
+  // 画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューの
+  // 質問の札までスクロールさせる（`stores/question-scroll.tsx`）。
+  const onGoToQuestion = useCallback((): void => {
+    setOpen(false)
+    setExpanded(false)
+    if (screen !== "conversation") {
+      navigateTo("conversation")
+    }
+    if (newestTurnId !== undefined && activeTurnId !== newestTurnId) {
+      selectTurn(newestTurnId)
+    }
+    requestScroll()
+  }, [screen, activeTurnId, newestTurnId, selectTurn, requestScroll])
+
   const sessionEnded = endedReason !== undefined
   const turnStepList = currentTurnSteps(records, sessionEnded)
+  const firstPending = pending[0]
 
   const state: ScreenNavCurrentWorkState = sessionEnded
     ? "stopped"
-    : pendingCount > 0
+    : firstPending !== undefined
       ? "pending"
       : turnInProgress
         ? "running"
@@ -178,6 +228,8 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
   // 答え待ち・作業中・止まっているは、雑談中でもそのまま意味を持つ語なので変えない）。
   const chatIdle = state === "idle" && chatMode
 
+  const runningStep = toRunningStepView(turnStepList, state)
+
   return {
     view: {
       state,
@@ -186,8 +238,9 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
         : WORK_WORD_LABEL[state],
       mark: state === "idle" && !chatIdle ? "○" : "●",
       chatIdle,
-      pendingHint: state === "pending",
-      runningStep: toRunningStepView(turnStepList, state),
+      pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
+      summary: toSummaryView(state, firstPending, runningStep),
+      runningStep,
       stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
       open,
       onToggle,
@@ -220,6 +273,58 @@ function toRunningStepView(
 
 function isRunningStep(step: TurnStep): boolean {
   return step.status.kind === "running"
+}
+
+/**
+ * {@link ScreenNavCurrentWorkSummary} を組み立てる。**答え待ちの先頭が質問なら、実行中の手順の
+ * 要約より質問の要約を優先する**（docs/design.md 13.9「いまの作業」）。許可要求の答え待ちは
+ * 今までどおり実行中の手順の要約に従う。
+ */
+function toSummaryView(
+  state: ScreenNavCurrentWorkState,
+  firstPending: PendingAsk | undefined,
+  runningStep: ScreenNavCurrentWorkRunningStep,
+): ScreenNavCurrentWorkSummary {
+  if (state === "pending" && firstPending?.kind === "question") {
+    const label = questionSummaryLabel(firstPending)
+    if (label !== undefined) {
+      return { kind: "text", label }
+    }
+  }
+  return runningStep.kind === "shown"
+    ? { kind: "text", label: runningStep.summaryLabel }
+    : { kind: "none" }
+}
+
+/**
+ * 質問の要約。**1問目の `header` をそのまま使う**（`AskUserQuestion` の入力の型
+ * （`node_modules/@anthropic-ai/claude-agent-sdk/sdk-tools.d.ts`）で「最大12字」と決まっている
+ * ので、`text` を切り詰める必要が無い）。**2問以上あれば「ほか n問」を添える**
+ * （`shared/question.ts` の `parseQuestions` が返す質問は1〜4件）。
+ */
+function questionSummaryLabel(
+  pending: Extract<PendingAsk, { readonly kind: "question" }>,
+): string | undefined {
+  const [first, ...rest] = pending.questions
+  if (first === undefined) {
+    return undefined
+  }
+  return rest.length > 0 ? `${first.header} ほか${String(rest.length)}問` : first.header
+}
+
+/**
+ * {@link ScreenNavCurrentWorkPendingHint} を組み立てる。答え待ちでなければ `none`、
+ * 許可要求なら今までどおり `input`、質問なら `question`（一覧に「質問へ」を出す）。
+ */
+function toPendingHintView(
+  state: ScreenNavCurrentWorkState,
+  firstPending: PendingAsk | undefined,
+  onGoToQuestion: () => void,
+): ScreenNavCurrentWorkPendingHint {
+  if (state !== "pending" || firstPending === undefined) {
+    return { kind: "none" }
+  }
+  return firstPending.kind === "question" ? { kind: "question", onGoToQuestion } : { kind: "input" }
 }
 
 /** {@link ScreenNavCurrentWorkStepList} を組み立てる。 */

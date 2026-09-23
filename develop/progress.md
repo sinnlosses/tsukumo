@@ -55,13 +55,21 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
-### 2026-09-23 控えを押すと、サーバの棚から原寸を取り寄せて拡大できるようにした（T-417）
+### 2026-09-23 答え待ちの質問を帯の札に要約で出し、一覧の「質問へ」で質問の札へ移れるようにした（T-408）
 
-原寸は `src/server/core/prompt-image-shelf.ts` がメモリに直近8枚だけ持ち、記録から依頼が消えたら捨てる。記録には控えと id だけが載る（`PROTOCOL_VERSION` 5）。`GET /prompt-image/<id>` は起動トークンで守る。棚から消えた id は 404 になり、拡大の面には控えと注記1行が出る。同じページで一度開いた原寸は、棚から消えても Chrome の画像キャッシュで出続ける（直していない）。
+札の要約は1問目の `header`（2問以上なら「ほか n問」）で、許可要求の答え待ちは今までどおり実行中の手順。「質問へ」は一覧を閉じ、会話の画面・最新のやり取りへ戻してから、新設の `stores/question-scroll.tsx` の合図で質問の札へスクロールする。
 
-### 2026-09-23 入力欄の画像の札を押すと原寸を拡大の面で見られるようにした（T-416）
+### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
 
-拡大の面は `src/browser/components/image-zoom.tsx`（T-417 で控えからも使う）。札は絵のボタンと `×` を兄弟に並べ、虫眼鏡はホバー・フォーカスで出す飾り。4.10「会話内容の扱い」の「札も控えも押せない」を引く文言は T-418 の担当で残っている。
+`command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
+
+### 2026-09-23 メインビューで遡れるやり取りを20件へ広げた（T-400）
+
+`MAX_MAIN_VIEW_TURNS` を 5 の直書きから `MAX_SESSION_STATE_TURNS.work`（20）の導出に変え、「メインビューの窓 ≤ 記録の窓」という関係を2つの定数の間ではなく1本の式で保つようにした。`docs/requirements.md` 4.7 と `docs/design.md` の「直近5件」も20件に直した。
+
+### 2026-09-23 答え待ちの質問をメインビューの札へ移し、自由入力を入力欄に寄せた（T-407）
+
+質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
 
 ### 2026-09-23 develop/progress.md の完了した小節を両側とも残すマージドライバを作った（T-404）
 
@@ -70,30 +78,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 両側が足した小節は両方残し、片方が消した小節（アーカイブ）は消えたまま、同じ小節を両側が
 書き換えたら非0で返す。**`.git/config` への登録は人が1回打つ**（未登録のあいだは git が
 既定の3wayに落ちるだけ。手順は T-405 が CLAUDE.md に書く）。
-
-### 2026-09-23 タスク区画の行を罫線で分け、字の大きさに段を付けてモックの値に揃えた（T-411）
-
-タイプスケールに `--font-subheading`（14px）と `--font-action`（12px）を足して6段にし（`docs/design.md` 13.3）、「一覧を見る」は枠なしの差し色のリンク風にした。進行中のチップは `TaskListCountItem.status` で選ぶ（並び順に頼らない）。
-
-### 2026-09-23 やり取りのタブを、前後ボタンと依頼のタイトルを持つ札の頭に置き換えた（T-398）
-
-`TurnTabs` を `turn-header.tsx` の `TurnHeader`（`‹` `›`・依頼の1行目のタイトル・n / N・最新 / 最新へ）に替え、依頼の1行目は頭にだけ出して本文側は2行目以降を「依頼の続き」で畳む。頭は sticky で、1件だけでも出し、キー操作は付けない（`⌄` は後続の T-399）。
-
-### 2026-09-23 答え待ちの質問をメインビューの札へ移し、自由入力を入力欄に寄せた（T-407）
-
-質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
-
-### 2026-09-23 メインビューで遡れるやり取りを20件へ広げた（T-400）
-
-`MAX_MAIN_VIEW_TURNS` を 5 の直書きから `MAX_SESSION_STATE_TURNS.work`（20）の導出に変え、「メインビューの窓 ≤ 記録の窓」という関係を2つの定数の間ではなく1本の式で保つようにした。`docs/requirements.md` 4.7 と `docs/design.md` の「直近5件」も20件に直した。
-
-### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
-
-`command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
-
-### 2026-09-23 帯のトグルといまの作業の札を見本の値に揃えた（T-419）
-
-トグルは `--ground` の外枠に 36px のボタン、札は最大 600px・34px で丸の輪と 1px の仕切りを付け、`<button>` の中央揃えを外して要約を仕切りのすぐ右から出した。要約は段を増やさず 13px の等幅のまま。
 
 ## 未解決
 
