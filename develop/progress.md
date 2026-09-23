@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 systemPrompt に足す文面の組み立てを core の1ファイルへ寄せた（T-429）
+
+配線層（`src/session-start.ts`）・`core/session-rule.ts`・`adapter/character-pack.ts` に割れていた `append` の組み立てを `src/server/core/system-prompt.ts` の `takeSystemPromptAppend` に寄せ、`session-rule.ts` は畳んで消した。人格は文字列で渡すので core は fs もパックの型も知らない。文面は1文字も変えておらず、寄せる前後で3通りの `append` が sha256 で一致することを確かめた。
+
 ### 2026-09-23 container/presenter の割る基準を「振る舞いの種類の数」に決め直した（T-442）
 
 「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。

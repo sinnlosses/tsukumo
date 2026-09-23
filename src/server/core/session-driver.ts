@@ -275,8 +275,8 @@ export type SessionDriverOptions = {
   /** このセッションを起こすモデル（**覚えた既定**。許可モードと同じ扱い）。 */
   readonly model: ModelAlias
   /**
-   * `systemPrompt` に足す文字列（人格とレポートの記法。組み立ては
-   * `src/server/adapter/character-pack.ts` の `buildSystemPromptAppend`）。**中身をこのファイルが
+   * `systemPrompt` に足す文字列（人格と tsukumo 側の規約と雑談の記憶。組み立ては
+   * `src/server/core/system-prompt.ts` の `takeSystemPromptAppend`）。**中身をこのファイルが
    * 決めない**（docs/design.md 5章）。
    */
   readonly systemPromptAppend: string

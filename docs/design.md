@@ -194,8 +194,8 @@ src/
       token-usage.ts          トークン消費を記録する判断（何を1行にするか）と書き口の契約（書くのは adapter/token-usage-log.ts）
       prompt-image-shelf.ts   依頼に添えた画像の原寸の棚（直近の数枚をプロセスのメモリに持ち、/prompt-image/<id> で配る）
       report-notation.ts / speech-cadence.ts / chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-compact.ts
-                              systemPrompt に足す規約・記憶・話しかけの文面（どれを渡すかは session-rule.ts が決める）
-      session-rule.ts         セッションに足す規約を、モードに応じて選ぶ（report-notation.ts / speech-cadence.ts / chat-manner.ts のどれを渡すか）
+                              systemPrompt に足す規約・記憶・話しかけの文面（どれをどの順で渡すかは system-prompt.ts が決める）
+      system-prompt.ts        systemPrompt の append の組み立て（人格 → 規約 → 雑談の記憶。モードで並びが入れ替わる）
       host.ts                 ホストのポート（showView）。実装は adapter/orca-host.ts
     adapter/                  外の世界に触る場所。1ファイル = 1つの境界
       sdk-driver.ts           SDK を import する唯一の場所。SessionDriver の本物の実装
@@ -727,8 +727,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 `query()` を回す `startSession` と `buildQuerySeedOptions`・`findSessionToResume` /
 `readRestoredEvents`・SDK の型を持つ `DEFAULT_EFFORT` は `adapter` 側。
 
-- `persona: string | undefined` を受け取り、`systemPrompt.append` に tsukumo 側の規約
-  （`SPEECH_CADENCE_PROMPT` / `REPORT_NOTATION_PROMPT`）と一緒に足す（7章）
+- `systemPromptAppend: string` を受け取ってそのまま `systemPrompt.append` にする。**何が
+  どの順で載るかは決めない**（組み立ては `core/system-prompt.ts` の `takeSystemPromptAppend`。7章）
 - `resume: string | undefined`（8章）
 
 ### fake-driver.ts（adapter）
@@ -1092,6 +1092,23 @@ characters/<name>/
 - パックの探し先は**同梱の `characters/`・`~/.tsukumo/characters/`・起動先の
   `characters/local/`** の3箇所。同名は後ろが勝つ（7.1）
 
+**`systemPrompt` の append を組むのは `core/system-prompt.ts` の `takeSystemPromptAppend` 1つだけ**
+（2026-09-23。それまでは並べる順を配線層が、モードごとの選び方を `core/session-rule.ts` が、人格との
+連結を `adapter/character-pack.ts` が持っていた。寄せた理由は `docs/architecture.md`「新しいコードを
+置く場所」）。**`persona.md` の全文を fs から読むのは adapter（`character-pack.ts`）のままで、
+組み立てには文字列で渡す**ので、`core` はパックの型も fs も知らない。並びはモードで入れ替わる:
+
+| 場面                             | append に入る節の並び                                              |
+| -------------------------------- | ------------------------------------------------------------------ |
+| 仕事                             | 人格 → セリフの間合い → レポートの記法                             |
+| 雑談（記憶が載るとき）           | 人格 → 雑談の作法 → 前回までの要約 → 残すと決めた雑談 → 直近の雑談 |
+| 雑談（続きから・写しが渡し済み） | 人格 → 雑談の作法                                                  |
+
+- **人格が無いパックは先頭が落ちるだけ**（tsukumo 側の規約だけで起動する）
+- **雑談の記憶の3節は、中身が無ければそれぞれ落ちる**（載せるかどうかの条件は下の「雑談の記憶の
+  要約はどこに置くか」）
+- **仕事と雑談は入れ替え**（並べない。理由は `core/chat-manner.ts` の冒頭）
+
 ### 7.1 画面から作るときの置き場と受け取り方
 
 **書き込み先は `~/.tsukumo/characters/<name>/` の1箇所だけ。** `state.json` と同じ
@@ -1204,7 +1221,7 @@ characters/<name>/
 モデルが呼んだときだけ書く。引数は**1行の文字列1つ**だけ、戻り値は `"ok"` だけ（tsukumo から
 モデルへ情報が戻る経路を作らない。`speak` と同じ）。
 
-- **ツールは雑談モードのときだけ載せる**（`core/session-rule.ts` が `CHAT_MANNER_PROMPT` を
+- **ツールは雑談モードのときだけ載せる**（`core/system-prompt.ts` が `CHAT_MANNER_PROMPT` を
   選ぶのと同じ単位）。仕事のときに出すと、作業の文脈（プロジェクトの事情・利用者の都合）が
   人格に入り込む経路になる
 - **何を書くかの判断は `core/chat-manner.ts` の条が持つ**（4.9 の3条件と書かないものの一覧を
@@ -1359,7 +1376,7 @@ characters/<name>/
   写しを読んで見出しにするのは core の `readChatTopics` 1つで、2つの契機はそれを呼ぶだけ
 - **運ぶのは見出しだけ**で、要約の本文はブラウザへ渡らない
 
-**渡し方は `systemPrompt` の append**（`persona.md` と同じ道。`buildSystemPromptAppend`）。
+**渡し方は `systemPrompt` の append**（`persona.md` と同じ道。`takeSystemPromptAppend`）。
 **2026-09-21 に、同じ口で直近の逐語も渡すことにした**（`docs/requirements.md` 4.9「直近の会話は
 逐語のまま読み戻す」）。載せるかどうかの条件は下の2つで**要約の写しと逐語に共通**なので、
 **判断は1箇所にまとめる**。
@@ -1375,7 +1392,7 @@ characters/<name>/
 - **印が無い・読めないときは「未渡し」として扱う。** 倒れる方向を「同じ要約が2度載る」側にして、
   **黙って記憶が消えるほうへ倒さない**
 - **載せたら印を「渡し済み」に戻す**（同じ写しを起こし直しのたびに重ねない）
-- **雑談のときだけ**渡す（`personaMemory` と同じ単位。`session-rule.ts` が規約を選ぶのと同じ境目）
+- **雑談のときだけ**渡す（`personaMemory` と同じ単位。`system-prompt.ts` が規約を選ぶのと同じ境目）
 - 前置きの文面は core（`chat-manner.ts` の隣）。**要約であって会話ではないこと**と、
   **引用しないこと**を短く添える
 - **判断と印の書き換えを1回で済ませ、要約の写しと直近の逐語を同じ機会に組み立てて返す**

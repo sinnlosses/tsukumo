@@ -4,7 +4,6 @@ import { tmpdir } from "node:os"
 import { basename, join } from "node:path"
 
 import {
-  buildSystemPromptAppend,
   characterChangedEvent,
   isEditableCharacterPack,
   listCharacterPacks,
@@ -126,32 +125,26 @@ describe("characterChangedEvent", () => {
 })
 
 // **人格は手で書いた架空の一文だけ**（実物の人格ファイルも会話も使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
+// docs/coding-standards.md「会話内容の扱い」）。**この文面を `systemPrompt` のどこへ並べるかは
+// ここの担当ではない**（`test/server/core/system-prompt.test.ts`）。ここが見るのは読めたかどうか。
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
-const SPEECH_CADENCE = "（セリフの間合い。テスト用の短い文）"
-const REPORT_NOTATION = "（レポートの記法。テスト用の短い文）"
-const RULES = [SPEECH_CADENCE, REPORT_NOTATION]
 
 describe("persona.md", () => {
-  it("パックの persona.md を読み、人格 → tsukumo 側の規約の順につなぐ", () => {
+  it("パックの persona.md を全文そのまま読む", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
     writeFileSync(join(dir, "persona.md"), PERSONA)
 
     const pack = readCharacterPack(dir)
 
     expect(pack.persona).toBe(PERSONA)
-    expect(buildSystemPromptAppend(pack, RULES)).toBe(
-      `${PERSONA}\n\n${SPEECH_CADENCE}\n\n${REPORT_NOTATION}`,
-    )
   })
 
-  it("persona.md が無いパックでも起動する（append が tsukumo 側の規約だけになる）", () => {
+  it("persona.md が無いパックでも読める（人格は undefined。append が規約だけになる）", () => {
     writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
 
     const pack = readCharacterPack(dir)
 
     expect(pack.persona).toBeUndefined()
-    expect(buildSystemPromptAppend(pack, RULES)).toBe(`${SPEECH_CADENCE}\n\n${REPORT_NOTATION}`)
   })
 })
 
