@@ -11,7 +11,7 @@
 // 見えるのは最大でも 30%。**0.7 を下回る値は受け取らずに引き上げる** — 背景は「出さない」より
 // 「薄く出す」ほうが書いた人の意図に近いため（受け取らずに既定へ落とす `accent` と違う）。
 // いまの地と字の色で 0.7 では足りないとき、どこまで引き上げるかは描く側が決める
-// （`src/browser/features/character-screen/appearance-color.ts`）。
+// （`src/browser/lib/appearance-color.ts`）。
 
 import { maxImageDataUrlLength, parseImageDataUrl } from "./image-data-url.ts"
 

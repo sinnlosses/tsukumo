@@ -13,11 +13,11 @@
 // 「≡」を開かずにこの一覧だけを開く経路が無い（画面の形で担保されるので、状態の突き合わせは
 // 要らない）。
 //
-// 閉じる合図（外側を押した・Esc）の購読は「≡」と同じ（`use-screen-nav.ts`）——**開いている間だけ
-// `document` の `pointerdown` / `keydown` を `useEffect` で取る**
-// （docs/coding-standards.md「React」の4類型のうち「外部システムの購読」）。
+// 閉じる合図（外側を押した・Esc）は「≡」と歯車と同じ `browser/hooks/use-dismiss-signal.ts` で
+// 取る（**開いている間だけ `document` を購読する**）。**Esc のときだけ押した口へフォーカスを
+// 戻す**のはこの札の事情なので、合図の種類を見てここで決める。
 
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
+import { useCallback, useRef, useState, type RefObject } from "react"
 
 import {
   currentTurnSteps,
@@ -25,6 +25,7 @@ import {
   type TurnStepList,
   type TurnStepStatus,
 } from "../../../../shared/turn-step.ts"
+import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { summarizeToolInput, toolInputText } from "../../../lib/tool-summary.ts"
 import { useSessionSelector } from "../../../stores/session.tsx"
 
@@ -136,37 +137,18 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): UseCurren
     setExpanded((wasExpanded) => !wasExpanded)
   }, [])
 
-  useEffect(() => {
-    if (!open) {
-      return
+  const onDismiss = useCallback((cause: DismissCause): void => {
+    setOpen(false)
+    setExpanded(false)
+    if (cause === "escape") {
+      // どちらか一方しか押せる状態にない（もう片方は `display: none` で `.focus()` が
+      // 効かない）ので、両方へ呼んで構わない。
+      toggleRefWide.current?.focus()
+      toggleRefNarrow.current?.focus()
     }
+  }, [])
 
-    function closeOnOutside(event: PointerEvent): void {
-      const root = navRef.current
-      if (root !== null && event.target instanceof Node && !root.contains(event.target)) {
-        setOpen(false)
-        setExpanded(false)
-      }
-    }
-
-    function closeOnEscape(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        setOpen(false)
-        setExpanded(false)
-        // どちらか一方しか押せる状態にない（もう片方は `display: none` で `.focus()` が
-        // 効かない）ので、両方へ呼んで構わない。
-        toggleRefWide.current?.focus()
-        toggleRefNarrow.current?.focus()
-      }
-    }
-
-    document.addEventListener("pointerdown", closeOnOutside)
-    document.addEventListener("keydown", closeOnEscape)
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutside)
-      document.removeEventListener("keydown", closeOnEscape)
-    }
-  }, [open, navRef])
+  useDismissSignal({ open, rootRef: navRef, onDismiss })
 
   const sessionEnded = endedReason !== undefined
   const turnStepList = currentTurnSteps(records, sessionEnded)
