@@ -60,6 +60,16 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
     expect(turns.map((turn) => turn.expression)).toEqual(["default", "proud"])
   })
 
+  it("各ターンに依頼の文面が付き、依頼より前のまとまりには付かない", () => {
+    const turns = turnSpeeches([
+      speechRecord({ text: "依頼より前のセリフ" }),
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "1つ目のセリフ" }),
+    ])
+
+    expect(turns.map((turn) => turn.request)).toEqual([undefined, "1つ目の依頼"])
+  })
+
   it("記録が空なら空を返す", () => {
     expect(turnSpeeches([])).toEqual([])
   })
@@ -100,6 +110,7 @@ describe("turnSpeeches（通し番号）", () => {
     // 依頼より前のまとまり（`PRE_REQUEST_TURN_ID`）にも、そのぶんのセリフが入る。
     expect(speechTurns[0]).toEqual({
       id: PRE_REQUEST_TURN_ID,
+      request: undefined,
       speeches: ["依頼より前のセリフ"],
       expression: "default",
     })
@@ -116,7 +127,9 @@ describe("turnSpeeches（通し番号）", () => {
     const speechTurns = turnSpeeches(records)
 
     expect(speechTurns.map((turn) => turn.id)).toEqual(viewTurns.map((turn) => turn.id))
-    expect(speechTurns).toEqual([{ id: 0, speeches: ["1つ目のセリフ"], expression: "default" }])
+    expect(speechTurns).toEqual([
+      { id: 0, request: "1つ目の依頼", speeches: ["1つ目のセリフ"], expression: "default" },
+    ])
   })
 
   it(`直近${String(MAX_MAIN_VIEW_TURNS)}ターンに絞られたあとも、窓の中の番号でそのターンのセリフが引ける`, () => {

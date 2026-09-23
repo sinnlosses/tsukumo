@@ -3,6 +3,8 @@
 // （`docs/glossary.md`「キャラビュー」）。フックも算出も持たず、`hooks/use-character-view.ts` が
 // 組み立てた値をそのまま部品へ渡す（docs/design.md 2章「機能の中を分ける」）。
 //
+// 右上の「ログ」（<SpeechLog>）は自分で記録を読む部品で、ここは置くだけ。
+//
 // **立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる**
 // （docs/requirements.md 4.2「フォールバック」）。
 
@@ -12,6 +14,7 @@ import { Portrait } from "../../components/portrait.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
 import { type CharacterViewModel } from "./hooks/use-character-view.ts"
+import { SpeechLog } from "./speech-log.tsx"
 
 export type PresentationalCharacterViewProps = CharacterViewModel
 
@@ -24,9 +27,11 @@ export function PresentationalCharacterView({
   motion,
   speeches,
   emptyMessage,
+  speakerName,
 }: PresentationalCharacterViewProps): ReactElement {
   return (
     <div className={styles["character-region"]}>
+      <SpeechLog />
       <div className={styles["character-layout"]}>
         {portraitUrl !== undefined && (
           <Portrait
@@ -39,7 +44,7 @@ export function PresentationalCharacterView({
             className={styles["portrait"]}
           />
         )}
-        <BalloonTrack speeches={speeches} emptyMessage={emptyMessage} />
+        <BalloonTrack speeches={speeches} emptyMessage={emptyMessage} speakerName={speakerName} />
       </div>
     </div>
   )

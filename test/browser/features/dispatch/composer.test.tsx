@@ -223,17 +223,37 @@ describe("Composer", () => {
   it("キャラクターの名前があるときは、プレースホルダにその名前が出る", () => {
     renderComposer({ character: FIXTURE_CHARACTER })
 
-    expect(textArea().placeholder).toBe(
-      "架空の名前への依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完、画像は貼り付け）",
-    )
+    expect(textArea().placeholder).toBe("架空の名前 への依頼を書く")
   })
 
   it("キャラクターがまだ届いていない・名前が無いときは、名前を使わない言い方に落ちる", () => {
     renderComposer({ character: undefined })
 
-    expect(textArea().placeholder).toBe(
-      "依頼を書く（Enter で改行、Command+Enter で送信、/ でコマンド補完、@ でファイル補完、画像は貼り付け）",
-    )
+    expect(textArea().placeholder).toBe("依頼を書く")
+  })
+
+  it("「コマンドを補完する」は空の入力欄に `/` を打ち、コマンドの候補が開く（送信しない）", () => {
+    const calls: unknown[] = []
+    renderComposer({ slashCommands: ["clear"] }, (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: "コマンドを補完する" }))
+
+    expect(textArea().value).toBe("/")
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["/clear"])
+    expect(calls).toEqual([])
+  })
+
+  it("「ファイルを補完する」は語の途中なら空白を挟んで `@` を打ち、ファイルの候補が開く", async () => {
+    stubFileListFetch()
+    renderComposer()
+
+    fireEvent.change(textArea(), { target: { value: "架空の依頼", selectionStart: 5 } })
+    fireEvent.click(screen.getByRole("button", { name: "ファイルを補完する" }))
+
+    expect(textArea().value).toBe("架空の依頼 @")
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(FIXTURE_FILE_PATHS.length)
+    })
   })
 
   it("@ で git 管理下のファイルの候補が出て、Tab で `@<パス> ` が入り送信しない", async () => {

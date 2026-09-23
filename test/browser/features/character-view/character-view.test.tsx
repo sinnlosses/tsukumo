@@ -70,7 +70,7 @@ describe("CharacterView", () => {
 
     expect(document.querySelector(".portrait")).toBeNull()
     expect(document.querySelector(".balloon-track")).not.toBeNull()
-    expect(document.querySelector(".balloon")?.textContent).toBe("やあ、調子はどう？")
+    expect(document.querySelector(".balloon-text")?.textContent).toBe("やあ、調子はどう？")
   })
 
   it("(4) ツールが動いていても、表情は直近の speak のまま変わらない（自動の上書きは撤去済み）", () => {
@@ -108,7 +108,7 @@ describe("CharacterView", () => {
       "/character/proud.png",
     )
     expect(
-      [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+      [...document.querySelectorAll(".balloon-text")].map((balloon) => balloon.textContent),
     ).toEqual(["さっき言ったセリフ"])
   })
 
@@ -175,7 +175,7 @@ describe("CharacterView", () => {
     )
 
     expect(
-      [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+      [...document.querySelectorAll(".balloon-text")].map((balloon) => balloon.textContent),
     ).toEqual(["1つ目のセリフB", "1つ目のセリフA"])
     // 最新（そのターンの最後）の1件だけが濃い（吹き出しの規則は変えない）。
     expect(document.querySelector(".balloon")?.getAttribute("data-latest")).toBe("true")
@@ -188,7 +188,7 @@ describe("CharacterView", () => {
     )
 
     expect(
-      [...document.querySelectorAll(".balloon")].map((balloon) => balloon.textContent),
+      [...document.querySelectorAll(".balloon-text")].map((balloon) => balloon.textContent),
     ).toEqual(["2つ目のセリフ"])
   })
 
@@ -207,7 +207,7 @@ describe("CharacterView", () => {
     ).not.toThrow()
 
     expect(document.querySelectorAll(".balloon")).toHaveLength(1)
-    expect(document.querySelector(".balloon")?.textContent).toBe(
+    expect(document.querySelector(".balloon-text")?.textContent).toBe(
       "（このターンでは発話がありませんでした）",
     )
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
