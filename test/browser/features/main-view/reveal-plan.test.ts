@@ -5,13 +5,26 @@ import {
   planReveal,
   type RevealBlock,
 } from "../../../../src/browser/features/main-view/reveal-plan.ts"
+import { revealTimingOf, type RevealTiming } from "../../../../src/browser/lib/reveal-speed.ts"
 
-/** 文字1つぶんの持ち時間（`reveal-plan.ts` の `MS_PER_CHARACTER`）。 */
-const MS_PER_CHARACTER = 40
+/** `standard` の物差し（`lib/reveal-speed.ts`）。個々のテストはこれで固定する。 */
+const STANDARD_TIMING = revealTimingOf("standard")
 
-/** トピック1つぶんの下限と上限（`reveal-plan.ts` の `MIN_BLOCK_MS` / `MAX_BLOCK_MS`）。 */
-const MIN_BLOCK_MS = 2400
-const MAX_BLOCK_MS = 8000
+/** テストだけで使う物差し。`standard` からの倍率で組み立て、値の意味は名前で示す。 */
+function timingOf(scale: number): RevealTiming {
+  return {
+    msPerCharacter: STANDARD_TIMING.msPerCharacter * scale,
+    minBlockMs: STANDARD_TIMING.minBlockMs * scale,
+    maxBlockMs: STANDARD_TIMING.maxBlockMs * scale,
+  }
+}
+
+/** 文字1つぶんの持ち時間（`standard` の物差し）。 */
+const MS_PER_CHARACTER = STANDARD_TIMING.msPerCharacter
+
+/** トピック1つぶんの下限と上限（`standard` の物差し）。 */
+const MIN_BLOCK_MS = STANDARD_TIMING.minBlockMs
+const MAX_BLOCK_MS = STANDARD_TIMING.maxBlockMs
 
 function rootWith(html: string): HTMLElement {
   const root = document.createElement("div")
@@ -20,11 +33,15 @@ function rootWith(html: string): HTMLElement {
 }
 
 function kindsOf(root: HTMLElement): readonly (readonly string[])[] {
-  return planReveal(root).map((block) => block.members.map((member) => member.kind))
+  return planReveal(root, STANDARD_TIMING).map((block) =>
+    block.members.map((member) => member.kind),
+  )
 }
 
 function tagsOf(root: HTMLElement): readonly (readonly string[])[] {
-  return planReveal(root).map((block) => block.members.map((member) => member.element.tagName))
+  return planReveal(root, STANDARD_TIMING).map((block) =>
+    block.members.map((member) => member.element.tagName),
+  )
 }
 
 /** 時間帯だけを見る塊（`blockProgress` は位置を見ない）。 */
@@ -38,7 +55,7 @@ function blockBetween(startMs: number, endMs: number): RevealBlock {
 
 describe("planReveal（トピックへのまとめ方と時間の割り当て）", () => {
   it("塊が1つも無ければ何も返さない", () => {
-    expect(planReveal(rootWith(""))).toEqual([])
+    expect(planReveal(rootWith(""), STANDARD_TIMING)).toEqual([])
   })
 
   it("見出しから次の見出しまでを1つの塊にまとめる", () => {
@@ -66,14 +83,14 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
 
   it("塊1つぶんの時間は、その塊の中の文字数の合計で決まる", () => {
     const body = "あ".repeat(100)
-    const blocks = planReveal(rootWith(`<h3>見出し</h3><p>${body}</p>`))
+    const blocks = planReveal(rootWith(`<h3>見出し</h3><p>${body}</p>`), STANDARD_TIMING)
 
     expect(blocks[0]?.startMs).toBe(0)
     expect(blocks[0]?.endMs).toBe((3 + 100) * MS_PER_CHARACTER)
   })
 
   it("短い塊でもZ字をゆっくり書き切れるだけの時間を渡す", () => {
-    const blocks = planReveal(rootWith("<h3>見出し</h3>"))
+    const blocks = planReveal(rootWith("<h3>見出し</h3>"), STANDARD_TIMING)
 
     // 3文字を素直に比例させると 60ms で、2画のZ字が一瞬で終わって筆が飛んで見える。
     expect(blocks[0]?.endMs).toBe(MIN_BLOCK_MS)
@@ -81,21 +98,24 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
 
   it("同じ塊は、後ろに何が続いても同じ時間で出る（全体の長さに引きずられない）", () => {
     const head = `<h3>見出し</h3><p>${"あ".repeat(100)}</p>`
-    const alone = planReveal(rootWith(head))
-    const withTail = planReveal(rootWith(`${head}<h3>つぎ</h3><p>${"う".repeat(500)}</p>`))
+    const alone = planReveal(rootWith(head), STANDARD_TIMING)
+    const withTail = planReveal(
+      rootWith(`${head}<h3>つぎ</h3><p>${"う".repeat(500)}</p>`),
+      STANDARD_TIMING,
+    )
 
     expect(withTail[0]?.endMs).toBe(alone[0]?.endMs ?? -1)
   })
 
   it("極端に長い塊だけを上限で打ち切る", () => {
-    const blocks = planReveal(rootWith(`<p>${"あ".repeat(500)}</p>`))
+    const blocks = planReveal(rootWith(`<p>${"あ".repeat(500)}</p>`), STANDARD_TIMING)
 
     // 500文字は素直に比例させると10秒。打ち切られるのはこの塊だけで、他の塊は速くならない。
     expect(blocks[0]?.endMs).toBe(MAX_BLOCK_MS)
   })
 
   it("塊は隙間なく前から順に並ぶ", () => {
-    const blocks = planReveal(rootWith("<h3>あ</h3><h3>い</h3><h3>う</h3>"))
+    const blocks = planReveal(rootWith("<h3>あ</h3><h3>い</h3><h3>う</h3>"), STANDARD_TIMING)
 
     expect(blocks.map((block) => block.startMs)).toEqual([
       0,
@@ -119,7 +139,10 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
   })
 
   it("図は文字数を持たないので、段落1つぶんの重みで数える", () => {
-    const blocks = planReveal(rootWith('<div class="chart-block"><canvas></canvas></div>'))
+    const blocks = planReveal(
+      rootWith('<div class="chart-block"><canvas></canvas></div>'),
+      STANDARD_TIMING,
+    )
 
     expect(blocks[0]?.endMs).toBe(100 * MS_PER_CHARACTER)
   })
@@ -131,6 +154,30 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
 
     expect(kindsOf(root)).toEqual([["text", "text", "figure", "text"]])
     expect(tagsOf(root)).toEqual([["H3", "P", "PRE", "P"]])
+  })
+})
+
+describe("planReveal（物差し=timing を変えると速さが変わる）", () => {
+  it("文字1つあたりの時間は timing の msPerCharacter で決まる", () => {
+    const body = "あ".repeat(100)
+    const html = `<h3>見出し</h3><p>${body}</p>`
+    const half = planReveal(rootWith(html), timingOf(0.5))
+
+    // `standard` の半分の物差しなら、同じ本文でも塊の持ち時間が半分になる。
+    expect(half[0]?.endMs).toBe(((3 + 100) * MS_PER_CHARACTER) / 2)
+  })
+
+  it("塊の上限も timing の maxBlockMs で決まる", () => {
+    const html = `<p>${"あ".repeat(500)}</p>`
+    const half = planReveal(rootWith(html), timingOf(0.5))
+
+    expect(half[0]?.endMs).toBe(MAX_BLOCK_MS / 2)
+  })
+
+  it("塊の下限も timing の minBlockMs で決まる", () => {
+    const half = planReveal(rootWith("<h3>見出し</h3>"), timingOf(0.5))
+
+    expect(half[0]?.endMs).toBe(MIN_BLOCK_MS / 2)
   })
 })
 

@@ -28,9 +28,9 @@
     "dependencies": [],
     "summary": "「ターンが走っているか」の読み取りを1つのフックに寄せる",
     "task": "## 背景\n\nターンの進み具合を `turnInProgress: boolean` から合併型 `turn` に変えたコミット（`1d8c101`）では、\n部品5つで同じ1行のセレクタを書き換えた。いまも browser に同じ1行が並んでいる:\n\n```ts\nuseSessionSelector((session) => session.state.turn.kind === \"running\")\n```\n\n着手時の一覧: `grep -rn 'state.turn.kind === \"running\")' src/browser`（書いた時点で6ファイル:\n`sidebar/session-switch.tsx`・`sidebar/session-info.tsx`・`chat-view/hooks/use-chat-view.ts`・\n`dispatch/hooks/use-composer.ts`・`task-board/components/task-run-confirm.tsx`・\n`character-screen/hooks/use-character-create.ts`）\n\n## やること\n\n1. `src/browser/stores/session.tsx` の `useSessionSelector` の隣に `useTurnRunning(): boolean` を\n   足す（中身は上の1行）\n2. 上の一覧をすべて `useTurnRunning()` に置き換える\n3. **セレクタでないもの**（`stores/main-view-turn.ts` の関数、`dispatch/turn-status.tsx` の\n   `turn.kind` による分岐）と、`src/server/` / `src/shared/` の同じ式は触らない\n\n## 完了条件\n\n- `bun run check` が通る（テスト件数を `evidence` に書く）\n- `grep -rn 'state.turn.kind === \"running\")' src/browser` が `stores/session.tsx` の1件だけになる\n\n## 注意\n\n- 振る舞いは変えない。テストを書き換える必要が出たら、置き換えを間違えている\n- 人に委ねる判断は残らないので `\"Y\"`\n",
-    "status": "todo",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check: 1471 pass / 0 fail（120ファイル）。grep -rn 'state.turn.kind === \"running\")' src/browser が stores/session.tsx:96 の1件だけ。置き換えは useTurnRunning() への8ファイル（書いた時点の6件＋screen-nav の use-current-work.ts / use-screen-nav.ts）"
   },
   {
     "id": "T-374",
@@ -105,9 +105,9 @@
     "dependencies": ["T-385"],
     "summary": "書き上げる演出の速さを歯車から選べるようにする",
     "task": "## 背景\n\n設定のポップオーバー（モック `docs/history/mockup/settings-2026-09-23.png`、器は T-385）に、ユーザーが「書き上げる演出の速さ」を足したいと答えた（2026-09-23）。演出の速さは定数: `src/browser/features/main-view/reveal-plan.ts` の `MS_PER_CHARACTER = 40`（文字1つ）と `MAX_BLOCK_MS = 8000`（塊ごとの上限）。`develop/progress.md` の「未解決」に「1233文字の疑似セッションで演出が約39.9秒続く。長すぎると感じるかはユーザーが決める」とある。\n\n## 決まっていること（蒸し返さない）\n\n- 歯車のポップオーバーから選べるようにする。利用者の設定なので `localStorage` に持つ（地・領域・字の色と同じ）\n- 既定はいまの速さ（標準）\n\n## 解くべき論点\n\n- 選択肢の数と値（例: 標準 / 速い / 切る）。「切る」なら本文をすぐ全部出し、ミニ立ち絵の筆も出さない形になるか\n- 途中で変えたとき、書いている最中の演出に効かせるか（演出はマウント時の DOM しか見ない）\n\n## やること\n\n1. `reveal-plan.ts` の速さを選択で変えられるようにする（定数の代わりに値を受ける）\n2. 歯車のポップオーバーに選択を置き、`localStorage` に保存する（読めない値は標準に畳む）\n3. `docs/requirements.md` 4.3 と `docs/design.md` 13.6 の表に書き足す。`develop/progress.md` の「未解決」の「書き上げる演出が長い」の項目を閉じる\n4. テスト: 選択ごとに1文字あたりの時間・塊の上限が変わる / 読めない値は標準\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（fake driver の `long-report` の場面）: 選択ごとに演出の長さが変わり、リロードしても選択が残る。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 演出の目視は開いた時点の本文には効かない。新しい依頼を出して演出を走らせてから見る\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "選択肢は 標準/速い/切る の3つ（標準は既存のまま 40ms・下限2400ms・上限8000ms、速いは3つとも半分の 20ms・1200ms・4000ms — 比を保たないと短い塊だけ下限に張り付いて速さが変わって見えない。切るは物差しを持たず report-reveal.ts が startReveal ごと呼ばない）。走っている演出には効かせない（既存の reveal がマウント時の値しか見ない設計なので speed も useState(loadRevealSpeed) で1回だけ読み、選び直しても次に書き始めるレポートから効く）。値は browser/lib/reveal-speed.ts に置き、歯車（screen-nav）と演出（main-view）の機能どうしの import を増やさない。目視（7358 / TSUKUMO_HOME=/tmp/tsukumo-t387-home / fake / 場面 long-report。演出はマウント時の DOM しか見ないので依頼を2回送って走らせてから実測）: 標準 40205ms（既存の記録「1233文字で約39.9秒」と一致）、速い 20104ms（ほぼ半分）、切るは data-revealing が一度も立たず本文が到着直後から全部見えている。standard→fast のあと page.reload() しても select は fast のまま、サーバを起こし直した別プロセスからも localStorage の fast が読めた。7358 は停止済みで利用者のセッションは無傷。bun run check: 1480 pass / 0 fail / 121ファイル。節数は requirements 27・design 53 でいずれも前後不変。progress.md の「未解決」から「書き上げる演出が長い」の1項目を削除した。"
   },
   {
     "id": "T-389",
@@ -160,7 +160,7 @@
     "dependencies": ["T-398"],
     "summary": "札のタイトル横の ⌄ で、やり取りの一覧を開いて飛べるようにする",
     "task": "## 背景\n\nT-398 でメインビューの横並びのタブを「前後ボタン＋依頼のタイトル」の札の頭に置き換えた。タブが持っていた「**窓の中の任意の1件へ一度で飛ぶ**」役が `‹` `›` だけでは失われるので、モック `docs/history/mockup/turn-history-2026-09-23.png` のタイトル横の `⌄` にそれを持たせる（2026-09-23 にユーザーが「やり取りの一覧」を選んだ）。\n\n選択は `src/browser/stores/turn-selection.tsx` の `selectTurn(turnId)` で行う（最新を選ぶと追従に戻る規則もそこにある）。一覧の名前には `src/browser/features/main-view/domain/turn-tab-label.ts` の `turnTab` が作る依頼の1行目を使える（T-398 で名前が変わっていればそちら）。\n\n開閉する部品は帯に前例がある: 外側の押下と `Escape` で閉じる購読は `src/browser/hooks/use-dismiss-signal.ts` の `useDismissSignal` を使う（帯の「≡」・作業中の札・設定の歯車が使っている。同じ購読を機能の中に書き直さない）。`aria-expanded` は `src/browser/features/screen-nav/components/screen-nav-current-work.tsx` が前例。\n\n## 決まっていること（蒸し返さない）\n\n- `⌄`（とタイトル）を押すと、窓の中のやり取りの一覧が開く。依頼の1行目で縦に並べ、押すとそのやり取りへ移って閉じる\n- 見ているやり取りには印を付ける（色だけにしない）\n\n## やること\n\n1. 札の頭に一覧の口と一覧を足す。並びは新しいものを上にするか古いものを上にするかを決め（札の「n / N」が古いほうを1にしているのと矛盾しない書き方にする）、各行に「n / N」の番号か「最新」を添える\n2. 閉じ方: もう一度押す・外側を押す・`Escape`・行を選ぶ。`useEffect` は「React の外と同期する」類型だけ（`docs/coding-standards.md`「React」節）\n3. テストを足す（`test/browser/features/main-view/`）: 開く / 行を押すとそのやり取りへ移り閉じる / 最新の行を押すと追従に戻る / `Escape` で閉じる / 見ている行に印がある\n4. `docs/design.md` 6.1 の `<MainView>` の行に一覧を足す\n\n## 完了条件\n\n- 上のテストがある\n- `bun run check` が通る\n- 目視（1400x900 と 760px 以下）: やり取り3件以上で一覧を開き、別のやり取りへ飛べる・一覧がレポートや帯に隠れず読める。何が見えたかを `evidence` に書く\n\n## 注意\n\n- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける\n- 一覧はモーダルの一種なので、目視は開いた状態でも横スクロールが出ないかまで測る\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
@@ -325,6 +325,50 @@
     "dependencies": [],
     "summary": "同じ前提はコメント1か所に書く規約を足し、セッションの印の説明の重なりを畳む",
     "task": "## 背景\n\n仕様の理由が、呼び出しの経路にあるすべての関数のコメントに書き写されている。T-393 はセッションの切り替え先の一覧を絞り込む鍵を `family` から `tag` へ替えただけだったが、`src/` の変更85行のうち62行がコメントで、5つのファイルで同じ理由を書き直した:\n\n- `src/server/adapter/sdk-driver.ts` の `listSwitchableSessions`\n- `src/server/core/config.ts` の `sessionTag` と `SessionMark.tag`\n- `src/server/core/session-restore.ts` の `listMarkedSessions` と `TaggedSession.tag`\n- `src/session-start.ts` の `listPackSessions`\n- `src/shared/session-choice.ts` の `SessionChoice.viewPort`\n\nいまも「落ちた tsukumo の印と動いている tsukumo の印は見分けられない」は `config.ts`・`session-restore.ts`・`session-choice.ts` の3か所に、「部屋はビューのポート1つにつき1つ」は `session-restore.ts`・`session-start.ts` の2か所に書かれている（`grep -rn '見分けられない' src` / `grep -rn 'ポート1つにつき' src` で数える）。\n\n`docs/coding-standards.md`「コメント」節の表は「今の挙動の制約・前提はコードに残す。必要なだけ長くてよい」とだけ言っていて、**同じ前提を何か所に書くか**を決めていない。\n\n## 決まっていること（蒸し返さない）\n\n- 規約に足すのは「同じ制約・前提は、それを決めている関数（絞り込むなら絞り込む関数）に1回だけ書き、経路上の他の関数は `{@link}` で指す」という趣旨。2026-09-23 の振り返りで出し、ユーザーが承認した\n\n## やること\n\n1. `docs/coding-standards.md`「コメント」節に上の趣旨を足す。節の索引の表に行を足す必要があるかも見る\n2. 上の5ファイルのコメントを、その趣旨に沿って畳む。どの関数が決めているかは次を目安にする: 印の組み立てと読み戻しは `config.ts`、一覧の絞り込みと並びは `session-restore.ts` の `listMarkedSessions`。他のファイルは `{@link}` か1行の参照にする。**コードは変えない**\n3. 畳んだ結果、`docs/requirements.md` 4.8「鍵」や `docs/glossary.md`「部屋」にしか無い理由がコードに残っていたら、それは正典への参照で足りるかを見る（正典に無い理由は消さない）\n\n## 完了条件\n\n- `docs/coding-standards.md`「コメント」節に、同じ前提を1か所に書くことが書かれている\n- `grep -rn '見分けられない' src` で、セッションの印についての説明が1か所だけになっている（`session-switch.tsx` の時刻の話は別の件なので残ってよい）\n- `grep -rn 'ポート1つにつき' src` が1件以下\n- `git diff` の `src/` の変更がコメントの行だけ\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/coding-standards.md` の数が変わらないことを確かめる\n- 経緯（昔はこうだった）の段落を見つけても、このタスクでは正典へ移さない。同じ前提の重なりを畳むことだけをする\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-415",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "入力欄の画像の札で、外す × が絵の右上の角に来るようにする",
+    "task": "## 背景\n\n入力欄に画像を添えると `<textarea>` の上に札が並ぶ（`src/browser/components/prompt-image.tsx` の `PromptImageChips`）。札の右上に外す `×`（`.prompt-image-remove`）を重ねているが、画面のスクリーンショットで**絵の右端からだいぶ内側に寄って見える**と報告された（2026-09-23）。\n\n`src/browser/components/prompt-image.module.css` では `×` を `position: absolute; top: 0.15rem; right: 0.15rem` で置き、基準は札の `<li>`（`.prompt-image-chip`、`position: relative; flex: 0 0 auto; line-height: 0`）。絵（`.prompt-image`）は `height: 4rem; width: auto; max-width: 100%; object-fit: contain`。**原因は調べていない。** `<li>` の箱が絵より広くなっている（`×` は `<li>` の右端に付くので、絵の右端より内側に見える）か、`object-fit: contain` で `<img>` の箱の中に余白ができているかの、どちらかが候補。\n\n## 解くべき論点\n\n- ずれの原因がどちらか（`<li>` と `<img>` の `getBoundingClientRect()` の幅と、`<img>` の `naturalWidth / naturalHeight` から描かれる絵の幅を比べれば分かる）\n- 横長の絵と縦長の絵で、どちらも角に来るか\n\n## やること\n\n1. 横長・縦長の画像を添えた状態を作り、札の `<li>`・`<img>`・`×` の位置を測って原因を特定する（`docs/architecture.md`「手で確かめること」の手順）\n2. 原因に合わせて CSS を直す。`×` が絵の外へはみ出さない（はみ出すと入力欄の領域がスクロールする。CSS の既存コメント）ことは保つ\n3. `prompt-image.module.css` のコメントが直した後の形と合っているかを見る\n\n## 完了条件\n\n- 横長・縦長の2種類の画像で、`×` の右端と絵の右端の差、`×` の上端と絵の上端の差が、どちらも `0.15rem` 相当（± 1px）に収まっている（測った値を `evidence` に書く）\n- 狭い画面（390x844）で入力欄の領域が横にスクロールしない\n- `bun run check` が通る\n\n## 注意\n\n- 描画の変更なので、目視（実ブラウザで測った値）を `evidence` に含める\n- 札を押して拡大する機能は T-416 の担当。ここでは `×` の位置だけを直す\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-416",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-415"],
+    "summary": "入力欄の画像の札にホバーで虫眼鏡を出し、押すと原寸を拡大の面で見られるようにする",
+    "task": "## 背景\n\n入力欄の札（`src/browser/components/prompt-image.tsx` の `PromptImageChips`）はいま押せず、押せるのは `×` だけ。札が受け取る `PromptImage`（`src/shared/prompt-image.ts`）は控え（`thumbnail`）と原寸（`full`）を両方持っていて、**原寸は送るまでブラウザのメモリに既にある**（`src/browser/features/dispatch/hooks/use-composer.ts` が送信時に `setImages([])` で捨てているだけ）。なので入力欄の札の拡大には、サーバ側の仕組みも記録の形の変更も要らない。\n\n`<dialog>` の開閉には既存のフック `src/browser/hooks/use-modal-dialog.ts`（`useModalDialog`）がある。拡大の面は、あとで T-417 でメインビューと雑談の控えからも開くので、`src/browser/components/` に置く。\n\n`docs/requirements.md` 4.10「画面での見え方」には「**札も控えも押せない。** 拡大して見る面は作らない」とあり、`prompt-image.tsx` 冒頭のコメントにも同じことが書いてある。**このタスクでは札のぶんだけ書き換える**。「会話内容の扱い」の約束（ディスクに書かない、原寸は送った時点で手放す）は、このタスクでは変わらない。\n\n## 決まっていること（蒸し返さない）\n\n- 拡大の面は3段階に分けて作る。この件は1段目の「入力欄の札だけ」で、控えからの拡大（T-417）と 4.10「会話内容の扱い」の書き換え（T-418）は後ろのタスクでやる（2026-09-23 ユーザーの指示）\n- 拡大の面は、原寸の data URL（`PromptImage.full`）をそのまま `<img>` で出す\n\n## 解くべき論点\n\n- 押す場所: `<li>` の中に `<button>` を2つ並べる（絵を包むボタンと `×`）。ボタンの中にボタンを入れない\n- ホバーの無い端末（タッチ）: 虫眼鏡はホバーとフォーカスで出す飾りにし、押せば開くのは虫眼鏡が見えていなくても同じにする\n- 拡大の面の大きさ: 画面より大きい絵は、画面の内側に収めて縮める（面の中で横にスクロールさせない）。閉じ方は Esc・背景を押す・閉じるボタンの3つ\n\n## やること\n\n1. 拡大の面の部品を `src/browser/components/` に作る（`useModalDialog` を使う）\n2. `PromptImageChips` の絵を押せるボタンにし、ホバーとフォーカスで虫眼鏡を重ね、押すとその原寸を拡大の面で開く\n3. `docs/requirements.md` 4.10「画面での見え方」の「札も控えも押せない」の箇条を、「札は押すと原寸を拡大して見られる。控えはまだ押せない」という趣旨に書き換える。`prompt-image.tsx` 冒頭のコメントも同じように直す\n4. 部品のテストを足す（押すと面が開く、`×` を押しても面は開かない、Esc で閉じる）\n\n## 完了条件\n\n- 入力欄の札にホバーすると虫眼鏡が出て、押すと原寸が拡大の面に出る。`×` は今までどおり画像を外すだけ（目視の結果を `evidence` に書く）\n- 狭い画面（390x844）で、面を開いた状態でも横スクロールが出ない（面の中まで測る）\n- `docs/requirements.md` の節の数が編集の前後で変わらない（`grep -c '^#\\{2,3\\} ' docs/requirements.md`）\n- `bun run check` が通る\n\n## 注意\n\n- 描画の変更なので、目視の結果を `evidence` に含める。モーダルを開いた場面も測る\n- `docs/requirements.md` を編集するときは、節の索引の表に当たらないよう行頭から位置を特定する\n- 「会話内容の扱い」の箇条（原寸は送った時点で手放す）はこのタスクでは触らない（T-418 の担当）\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-417",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-416"],
+    "summary": "控えからも原寸を拡大できるよう、直近ぶんを持つ棚と配信の経路を足す",
+    "task": "## 背景\n\n送ったあとの控え（`src/browser/components/prompt-image.tsx` の `PromptImageThumbnails`）は、メインビューの依頼の見出しの下（`src/browser/features/main-view/turn.tsx`）と、雑談の利用者の吹き出しの中（`src/browser/features/chat-view/components/chat-log.tsx`）に出ていて、押せない。記録（`src/shared/session-state.ts` の `SessionRecord.request.images`）は控えの data URL の配列（`readonly string[]`）で、原寸はどこにも残っていない（`docs/requirements.md` 4.10「会話内容の扱い」の「原寸は送った時点で手放す」）。\n\n入力欄の札から開く拡大の面は T-416 で `src/browser/components/` にできている。\n\n## 決まっていること（蒸し返さない）\n\n2026-09-23 に案を出し、ユーザーが「案C」を選んだ。\n\n- **`SessionState` と `hello` フレームには原寸を載せない。** 記録に載るのは今までどおり控え（上限 128 KiB）だけ。理由: 原寸を記録に積むと、雑談 100 ターン（`MAX_SESSION_STATE_TURNS.chat`）× 2枚 × 5 MiB で天井が 1000 MiB になる。`hello` は接続のたびに状態を丸ごと送る（控えだけなら同じ計算で 25 MiB）\n- **原寸は `src/server/core/` の「棚」がメモリで持ち、枚数で切る**（目安は直近8枚 = 40 MiB の天井）。記録の窓（仕事 20 / 雑談 100 ターン）から出たターンの原寸は、そのとき捨てる\n- **配るのは HTTP。** `src/server/adapter/server.ts` が `/character/<file>` を接頭辞で分岐して起動トークンで守っているのと同じ形で、`/prompt-image/<id>` を1本足す。**WebSocket のフレームに数 MiB を載せない**（押したときだけ GET が飛ぶ）\n- **ディスクには書かない**（4.10 の1つめの約束はそのまま）\n- `SessionRecord.request.images` に原寸を指す id を持たせるぶん状態の形が変わるので、`PROTOCOL_VERSION`（`src/shared/frame.ts`、いま 4）を 5 へ上げる\n- **雑談の吹き出しの控えも押せるようにする**（部品が同じ `PromptImageThumbnails`。2026-09-23 ユーザー確認）\n- 採らなかった案: 閲覧用の版を控えに足して2段にする（記録の天井が上がる）。ディスクに書く（会話の内容に新しい保存先を作る話なので、拡大表示のついでにはやらない）\n\n## 解くべき論点\n\n- id の作り方と形。推測できない値にする（`crypto.randomUUID()` など）。`shared` に検証のスキーマを置き、`/prompt-image/<id>` で受けた値もそれで検証する\n- 棚から消えた原寸を押したとき: GET が 404 になる。拡大の面には控えを出して「原寸はもう手放した」旨を1行出すのか、虫眼鏡を出さないのか。ブラウザは棚の中身を知らないので、404 を受けてから決める形が素直\n- 棚と記録の窓の結び方。状態を畳んだあとで、窓に残っている依頼が指す id だけを残し、そのうえで直近8枚に切る、が候補。棚は `core` に置き、窓の判断は `shared/session-state.ts` の畳み込みの結果から読む（棚を畳み込みの中に入れない）\n- 4.8 の復元で transcript から戻したターンには原寸が無い。id を持たせない（押せない控え）にする形が素直\n- 配るときの `Content-Type` は、受け取ったときのメディアタイプ（`PROMPT_IMAGE_MEDIA_TYPES` の4つ）から決める。data URL を配る側でデコードする\n\n## やること\n\n1. `shared` の型を変える（`request.images` の要素を控えと id の組にする）。`PROTOCOL_VERSION` を 5 にする。`test/fixture/fake-session.json` など、形に依存するフィクスチャを直す\n2. `src/server/core/` に棚を作る（持つ・引く・窓と枚数で捨てる）。テストを先に書く\n3. `prompt` コマンドを受けたところで原寸を棚に入れ、id を依頼の記録に載せる\n4. `server.ts` に `/prompt-image/<id>` を足す。起動トークンで守るのは `/character/<file>` と同じ形にする。配信のテストを足す（トークンが無い・違う・id が無い・形が違う）\n5. `PromptImageThumbnails` を押せるようにし、押すと T-416 の拡大の面で `/prompt-image/<id>` を開く。id の無い控えは押せないまま\n6. 原寸が「どこにも残らない」と書いているコードのコメント（`src/shared/prompt-image.ts` の冒頭、`prompt-image.tsx` の冒頭など）を、棚の寿命に合わせて直す。`docs/requirements.md` 4.10 は T-418 で直すので、ここでは触らない\n\n## 完了条件\n\n- メインビューの控えと雑談の吹き出しの控えを押すと、原寸が拡大の面に出る（目視の結果を `evidence` に書く）\n- 棚から消えた id・復元したターンの控えを押しても、壊れない（論点で決めた形になっている）\n- `hello` フレームの大きさが原寸の数に比例して増えない（控えだけが載っていることをテストで確かめる）\n- `/prompt-image/<id>` が起動トークン無しでは配られないことをテストで確かめる\n- 原寸をディスクに書くコードが無い（`src/server/adapter/` に書き込み先が増えていない）\n- `bun run check` が通る\n\n## 注意\n\n- 画像は会話の内容（`docs/coding-standards.md`「会話内容の扱い」）。ログに出さない。テストのフィクスチャに実物の画像を使わない（小さな合成の画像を使う）\n- `src/server/core/` から `src/server/adapter/` を import しない（`test/architecture.test.ts`）\n- 描画の変更なので目視を `evidence` に含める。拡大の面を開いた状態も狭い画面（390x844）で測る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-418",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-417"],
+    "summary": "requirements.md 4.10 の原寸を手放す約束を、棚の寿命に書き換える",
+    "task": "## 背景\n\n`docs/requirements.md` 4.10「会話内容の扱い」の2つめの箇条は「**原寸は送った時点で手放す。** 記録に残るのは控えだけで、tsukumo のどちらの側も原寸を持ち続けない」と書いている。「画面での見え方」の「控えは押せない」はその帰結として書かれている（札のぶんは T-416 で書き換え済み）。\n\nT-417 で、サーバの `src/server/core/` に原寸を直近ぶんだけメモリで持つ「棚」と、`/prompt-image/<id>` の配信ができた。これで 4.10 の2つめの約束は実態と合わなくなっている。\n\n## 決まっていること（蒸し返さない）\n\n- 覆すのは 4.10「会話内容の扱い」の**2つめの約束だけ**。棚の寿命（直近N枚・記録の窓から出たら捨てる・ディスクには書かない）の約束に書き換える（2026-09-23 ユーザーが案Cを選んだ）\n- 1つめの約束（ディスクに書かない・一時ファイルに落とさない）はそのまま残す\n- 「控えだけを記録に残すので、記録の大きさが上限を持つ」の箇条もそのまま残す（`SessionState` と `hello` には今も控えしか載らない）\n\n## やること\n\n1. `docs/requirements.md` 4.10「会話内容の扱い」の2つめの箇条を、棚の寿命の約束に書き換える。枚数・窓・ディスクに書かないことを、T-417 で実装した値のとおりに書く\n2. 同じ 4.10「画面での見え方」の、控えが押せないという記述を、控えも押せる（棚に原寸が残っている間は原寸、無ければ論点で決めた形）という記述に直す\n3. `docs/design.md`（13.7 など）・`docs/coding-standards.md`「会話内容の扱い」・`docs/glossary.md` に、「原寸をどこにも残さない」という前提の記述が残っていないか `grep` で探し、あれば同じように直す\n\n## 完了条件\n\n- `docs/requirements.md` 4.10 に「原寸は送った時点で手放す」「控えは押せない」の趣旨の記述が残っていない\n- 4.10 に書いた棚の枚数・捨てる契機が、T-417 のコードの値と一致している（どの定数かを `evidence` に書く）\n- 各ファイルの節の数が編集の前後で変わらない（`grep -c '^#\\{2,3\\} ' <ファイル>`）\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは、節の索引の表に当たらないよう行頭から位置を特定する（CLAUDE.md「ドキュメントを編集するときの罠」）\n- コードは変えない。ドキュメントだけのタスク\n",
     "status": "todo",
     "passes": false,
     "evidence": ""

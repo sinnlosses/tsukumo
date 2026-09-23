@@ -23,7 +23,7 @@ import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { readAccentColor } from "../../../lib/appearance-color.ts"
 import { readDataUrl } from "../../../lib/data-url.ts"
 import { navigateTo, useScreenHref } from "../../../stores/screen.tsx"
-import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 
 const INVALID_NAME_NOTE = "名前に使えるのは半角の英数字と . _ - だけ（. では始められない）"
 const TAKEN_NAME_NOTE = "その名前はもう使われている"
@@ -89,7 +89,7 @@ export function useCharacterCreate(): CharacterCreateModel {
   const dispatch = useSessionDispatch()
   const character = useSessionSelector((session) => session.state.character)
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
-  const turnInProgress = useSessionSelector((session) => session.state.turn.kind === "running")
+  const turnInProgress = useTurnRunning()
   const [name, setName] = useState("")
   const [portraits, setPortraits] = useState<HeldPortraits>(NO_PORTRAITS)
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。

@@ -1,11 +1,13 @@
 // 帯の右端の歯車で開く**設定**のロジック（docs/design.md 13.6「設定の置き場所」/ 13.9「設定の
-// 歯車」）。いまここにあるのは**地・領域・字の色**と**新しいセッションの既定**の2群で、
-// 後続が「書き上げる演出の速さ」を同じポップオーバーへ足す。
+// 歯車」）。いまここにあるのは**地・領域・字の色**・**新しいセッションの既定**・**書き上げる
+// 演出の速さ**の3群。
 //
-// **2群は持ち先が違う。** 色は利用者の端末の設定（`localStorage`）、既定はサーバが覚える値
-// （`~/.tsukumo/state.json`。`set-session-default` で送り、`SessionState.sessionDefault` を読む）。
-// **既定は次に起こすときから効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない
-// （帯のドロップダウンはセッション限りの別物）。
+// **3群は持ち先が違う。** 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
+// `browser/lib/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
+// `set-session-default` で送り、`SessionState.sessionDefault` を読む）。**既定は次に起こすときから
+// 効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
+// セッション限りの別物）。演出の速さは `report-reveal.ts` がマウント時に読むだけなので、
+// 変えても書いている最中の演出には効かない（次に書き始めたときから）。
 //
 // **色の持ち方は `browser/lib/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
 // いない。キャラクター画面から移したのは操作子だけ）。見た目（`documentElement`）
@@ -43,6 +45,12 @@ import {
   type AppearanceColorOverride,
 } from "../../../lib/appearance-color.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
+import {
+  isRevealSpeed,
+  loadRevealSpeed,
+  saveRevealSpeed,
+  type RevealSpeed,
+} from "../../../lib/reveal-speed.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 
 /** 色の操作子1つ（見た目が受け取れる形まで畳んだもの）。 */
@@ -64,11 +72,21 @@ export type ScreenNavSettingsSessionDefault = {
   readonly onChangePermissionMode: (value: string) => void
 }
 
+/**
+ * 書き上げる演出の速さの操作子（`docs/design.md` 13.6。`lib/reveal-speed.ts`）。色と同じ
+ * 利用者の設定なので、書いた値をそのまま表示値にする（読み直さない）。
+ */
+export type ScreenNavSettingsRevealSpeed = {
+  readonly value: RevealSpeed
+  readonly onChange: (value: string) => void
+}
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onToggle: () => void
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly sessionDefault: ScreenNavSettingsSessionDefault
+  readonly revealSpeed: ScreenNavSettingsRevealSpeed
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -112,6 +130,8 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsR
   const saveOverride = useDebouncedCallback<string, AppearanceColorOverride>((_key, value) => {
     saveAppearanceColorOverride(value)
   }, APPEARANCE_COLOR_DEBOUNCE_MS)
+  // 選ぶたびに保存する（色のようにドラッグで連続しないので、まとめる必要が無い）。
+  const [revealSpeed, setRevealSpeed] = useState<RevealSpeed>(loadRevealSpeed)
 
   const onToggle = useCallback((): void => {
     setOpen((wasOpen) => !wasOpen)
@@ -154,6 +174,14 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsR
     })
   }
 
+  function changeRevealSpeed(value: string): void {
+    // **知らない値は受け取らない**（`<select>` の選択肢の外から来たときは何もしない）。
+    if (isRevealSpeed(value)) {
+      setRevealSpeed(value)
+      saveRevealSpeed(value)
+    }
+  }
+
   return {
     view: {
       open,
@@ -191,6 +219,10 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsR
             })
           }
         },
+      },
+      revealSpeed: {
+        value: revealSpeed,
+        onChange: changeRevealSpeed,
       },
     },
     toggleRefWide,

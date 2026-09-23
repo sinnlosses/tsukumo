@@ -40,6 +40,7 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
 import { prefersReducedMotion } from "../../lib/reduced-motion.ts"
+import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../lib/reveal-speed.ts"
 import {
   BRUSH_ORIGIN_ATTRIBUTE,
   publishBrushTip,
@@ -93,10 +94,13 @@ const SKIP_LISTENER_OPTIONS = { capture: true, passive: true } as const
  *
  * **見るのはマウントした時点の `reveal` だけ。** あとから対象でなくなっても（後ろに別の
  * レポートが現れても）始めた演出は最後まで進める——途中で止めると書きかけの本文が残る。
+ * **「書き上げる演出の速さ」（`lib/reveal-speed.ts`）もマウント時の値だけを見る**（歯車で
+ * 速さを変えても、書いている最中の演出は前の速さのまま進み切る。次に書き始めたときから効く）。
  */
 export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTMLDivElement | null> {
   const rootRef = useRef<HTMLDivElement>(null)
   const [revealOnMount] = useState(reveal)
+  const [revealSpeed] = useState(loadRevealSpeed)
   // **同じ本文を二度書かない。** `<Activity mode="hidden">`（キャラクター画面を開いている間）は
   // 部品の状態を残したまま効果だけを外すので、戻ってきたときにこの効果がもう一度走る。
   const revealedOnce = useRef(false)
@@ -111,19 +115,25 @@ export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTML
     if (!revealOnMount || revealedOnce.current || root === null || prefersReducedMotion()) {
       return undefined
     }
+    // **「切る」は物差しを持たない**（`lib/reveal-speed.ts`）。`startReveal` を呼ばずに
+    // 済ませると本文はすぐ全部出た状態のままで、ミニ立ち絵の筆も出ない。
+    if (revealSpeed === "off") {
+      return undefined
+    }
     revealedOnce.current = true
-    return startReveal(root, turnId)
-  }, [revealOnMount, turnId])
+    return startReveal(root, turnId, revealTimingOf(revealSpeed))
+  }, [revealOnMount, turnId, revealSpeed])
 
   return rootRef
 }
 
 /**
  * 根の下の塊を隠してから、フレームごとに見せる範囲を進める。戻り値を呼ぶと**その場で全部出す**
- * （スキップと、部品が外れたときの後始末を兼ねる）。
+ * （スキップと、部品が外れたときの後始末を兼ねる）。`timing` は利用者が選んだ「書き上げる演出の
+ * 速さ」の物差し（`off` はここまで来ない。呼び出し側が `startReveal` ごと呼ばずに済ませる）。
  */
-function startReveal(root: HTMLElement, turnId: number): () => void {
-  const blocks = planReveal(root)
+function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): () => void {
+  const blocks = planReveal(root, timing)
   if (blocks.length === 0) {
     return () => undefined
   }
