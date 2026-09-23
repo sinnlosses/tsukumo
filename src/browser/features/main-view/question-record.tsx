@@ -18,8 +18,9 @@ import {
   type Question,
   type QuestionAnswer,
 } from "../../../shared/question.ts"
-import styles from "./main-view.module.css"
 import { Markdown } from "./markdown/markdown.tsx"
+import notationStyles from "./markdown/report-notation.module.css"
+import styles from "./question-record.module.css"
 
 export type QuestionRecordProps = {
   readonly entry: MainViewQuestion
@@ -120,8 +121,9 @@ function QuestionPreviews(props: {
       <summary>比べた内容</summary>
       {opened
         ? previews.map((preview) => (
-            // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ）に乗せる。
-            <div className={styles["detail-block"]} key={preview.label}>
+            // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ。
+            // `markdown/report-notation.module.css`）に乗せる。
+            <div className={notationStyles["detail-block"]} key={preview.label}>
               <p className={styles["question-preview-label"]}>
                 <QuestionMark chosen={preview.chosen} /> {preview.label}
               </p>
@@ -139,7 +141,7 @@ function QuestionPreviews(props: {
  * （`chosen`）だけに `accent` を当てる。選ばなかった `○` は親の `.question-option` の色を
  * そのまま継ぎ、素の `accent` を当てない（`docs/design.md` 13.1 原則1が許すのは
  * 「選んだ選択肢」で、選ばなかった側ではない）。答え待ちの札
- * （`main-view.module.css` の `.question-ask-option.is-selected`）と同じ、
+ * （`question-ask.module.css` の `.question-ask-option.is-selected`）と同じ、
  * 「選んだ＝accent」という意味を記録の側にも揃える。折りたたみの中の preview の札
  * （`question-preview-label`）も同じ印を使うので、ここで共有する。
  */

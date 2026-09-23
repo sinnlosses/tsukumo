@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 CSS を部品ごとに分けてよいと 6.6 に書き、main-view.module.css を割った（T-439）
+
+928行の `main-view.module.css` を、ターンの見出し・質問2つ・レポートの記法の4枚へ分けて113行にした。ファイルをまたぐ `.detail-block` の打ち消しは、両方の class を同じ要素に重ねて解いている。
+
 ### 2026-09-23 container/presenter の割る基準を「振る舞いの種類の数」に決め直した（T-442）
 
 「フックが0本のときだけ割らない」をやめ、ストアの読みは数えず「保つ（state）・外と同期（副作用）・畳む（算出）」の3種類のうち2種類以上そろったら割る、に `docs/design.md` 2章を書き換えた。新しい基準で割ったのは `dispatch/turn-status.tsx` / `character-view/speech-log.tsx`（3つに）と `dispatch/file-suggestions.tsx`（取得のフックだけ外へ）の3件で、`sidebar` の7ファイルと `task-board/components/task-run-confirm.tsx` は割らないと決めた。

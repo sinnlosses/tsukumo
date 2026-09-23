@@ -14,6 +14,7 @@ import { memo, type ReactElement } from "react"
 import { useReportReveal } from "./hooks/use-report-reveal.ts"
 import styles from "./main-view.module.css"
 import { Markdown } from "./markdown/markdown.tsx"
+import notationStyles from "./markdown/report-notation.module.css"
 import { splitReportBlocks } from "./markdown/split-blocks.ts"
 
 export type ReportProps = {
@@ -39,7 +40,12 @@ function ReportView(props: ReportProps): ReactElement {
   const rootRef = useReportReveal(props.reveal, props.turnId)
 
   return (
-    <div className={styles["detail-block"]} ref={rootRef}>
+    // **`.detail-block` を2つ重ねる。** 見た目の本体は `markdown/report-notation.module.css`
+    // にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は
+    // `main-view.module.css` にある。CSS Modules は class 名をファイルごとにハッシュ化するので、
+    // 片方だけでは打ち消しが当たらない（`components/portrait.module.css` の `.portrait` と
+    // 同じ手口。docs/design.md 6.6）。
+    <div className={`${notationStyles["detail-block"]} ${styles["detail-block"]}`} ref={rootRef}>
       {blocks.map((block) => (
         <ReportBlock key={block} text={block} />
       ))}

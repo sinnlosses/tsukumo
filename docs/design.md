@@ -1036,6 +1036,13 @@ react-markdown
 トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
 **16進の色を書いてよいのもそこだけ**（13.2）。
 
+**機能の中の部品でも、見た目が独立しているときはその部品の隣に `<部品>.module.css` を置いてよい**
+（`features/main-view/mini-portrait.module.css` / `features/sidebar/session-switch.module.css`
+がその形）。分ける目安は「**その部品しか使わない class の塊になっているか**」——1つの
+`*.module.css` に複数の部品の class が混ざって育ち、どれがどの部品のものか読み取りにくく
+なったら、部品ごとに分ける側へ倒す（機能の1枚に戻すのが原則で、これは「その機能の中でも
+部品の輪郭がはっきりしている」ときだけの例外）。
+
 class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）を**そのまま**保ち、部品からは
 `styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
 `balloon-track_uHH43w` のように**組み立てのたびにハッシュ化される**ので、外から要素を指す口が

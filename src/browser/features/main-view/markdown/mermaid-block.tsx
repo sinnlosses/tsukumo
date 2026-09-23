@@ -21,7 +21,7 @@ import { isObjectType } from "remeda"
 
 import { vendorAssetPath } from "../../../../shared/vendor-asset.ts"
 import { loadVendorScript } from "../../../lib/vendor-script.ts"
-import styles from "../main-view.module.css"
+import styles from "./report-notation.module.css"
 
 const MERMAID_SRC = vendorAssetPath("mermaid.min.js")
 

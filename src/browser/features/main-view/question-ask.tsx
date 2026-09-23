@@ -19,8 +19,9 @@ import { useEffect, useRef, type ReactElement } from "react"
 import { useQuestionAnswer, type QuestionOptionRow } from "../../stores/question-answer.tsx"
 import { useQuestionScroll } from "../../stores/question-scroll.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
-import styles from "./main-view.module.css"
 import { Markdown } from "./markdown/markdown.tsx"
+import notationStyles from "./markdown/report-notation.module.css"
+import styles from "./question-ask.module.css"
 
 const QUESTION_CHIP = "質問"
 const BACK_LABEL = "戻る"
@@ -160,8 +161,13 @@ function QuestionOption(props: {
         <p className={styles["question-ask-option-description"]}>{option.description}</p>
       )}
       {option.preview !== undefined && (
-        // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ）に乗せる。
-        <div className={styles["detail-block"]}>
+        // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ。
+        // `markdown/report-notation.module.css`）に乗せる。**`.question-ask-option .detail-block`
+        // の余白の打ち消し（`question-ask.module.css`）は CSS Modules が class 名をファイルごとに
+        // ハッシュ化するため、そちらの `.detail-block`（この選択子のためだけの空の再定義）も
+        // 一緒に付ける**（`components/portrait.module.css` の `.portrait` と同じ手口。
+        // docs/design.md 6.6）。
+        <div className={`${notationStyles["detail-block"]} ${styles["detail-block"]}`}>
           <Markdown text={option.preview} />
         </div>
       )}

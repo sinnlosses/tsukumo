@@ -13,7 +13,7 @@
 
 import { type Element, type ElementContent, type Properties, type Root } from "hast"
 
-import styles from "../main-view.module.css"
+import styles from "./report-notation.module.css"
 
 /** 済みの印として文字で置くもの（色に頼らず、選択・コピー・読み上げでも「済み」と分かる）。 */
 const CHECKED_MARK = "✓"

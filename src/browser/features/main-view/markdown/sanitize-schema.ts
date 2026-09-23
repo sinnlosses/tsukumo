@@ -36,7 +36,7 @@ import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"
  *   そのまま出るので、通しても通さなくても読み手が見るものは変わらない）
  * - `del` / `ins` / `sup` / `sub` のように、**ブラウザ既定の見た目がこの配色から浮かない**もの
  * - `small` / `kbd` / `samp` / `figure` / `figcaption` のように、**既定のままだとタイプスケールや
- *   配色から外れるので、`main-view.module.css` の `.detail-block` 配下で当て直した**もの
+ *   配色から外れるので、`report-notation.module.css` の `.detail-block` 配下で当て直した**もの
  *
  * **`mark` は通さない。** 既定の黄地に黒文字はこの配色から浮くうえ、当て直すと
  * 強調の道具が `strong` / `badge` と並んで3通りになる（`meter` / `progress` を載せない理由と

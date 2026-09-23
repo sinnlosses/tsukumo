@@ -11,10 +11,10 @@
 import { type JSX, type ReactElement, type ReactNode } from "react"
 import { type ExtraProps } from "react-markdown"
 
-import styles from "../main-view.module.css"
+import styles from "./report-notation.module.css"
 
 /**
- * モデルが書く class 名 → tsukumo が装飾に使う class 名（`main-view.module.css` のもの。
+ * モデルが書く class 名 → tsukumo が装飾に使う class 名（`report-notation.module.css` のもの。
  * 組み立て時にハッシュ化される）。ここに無い名前は素通しする。
  */
 const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map([

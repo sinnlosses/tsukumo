@@ -41,11 +41,11 @@ import rehypeSanitize from "rehype-sanitize"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
-import styles from "../main-view.module.css"
 import { ChartBlock } from "./chart-block.tsx"
 import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationBlock, NotationInline } from "./notation.tsx"
+import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
@@ -192,7 +192,7 @@ type SectionHeadingProps = JSX.IntrinsicElements["h2"] & ExtraProps
  * レポートの中の見出しが同じ段に並ぶと見出しの階層が壊れる。**許可リスト
  * （{@link REPORT_SANITIZE_SCHEMA}）には `h2` のまま残す**（サニタイズはここより前に効くので、
  * 落としてしまうと書き替える前に中身が消える）。見た目は `.detail-block h4`
- * （`main-view.module.css`）。
+ * （`report-notation.module.css`）。
  */
 function SectionHeading(props: SectionHeadingProps): ReactElement {
   const { node: _node, children, ...rest } = props
@@ -227,7 +227,7 @@ type TableProps = JSX.IntrinsicElements["table"] & ExtraProps
 
 /**
  * 表。**列が多い表は領域の内幅に収まらない**ので、横スクロールの器で包んで表だけを転がす
- * （ページ全体は横スクロールさせない。`.table-scroll` の CSS は `main-view.module.css`）。
+ * （ページ全体は横スクロールさせない。`.table-scroll` の CSS は `report-notation.module.css`）。
  * **器は React 側で作るので、{@link REPORT_SANITIZE_SCHEMA} の許可リストは通らない**
  * （レポートの記法は増えない）。
  */

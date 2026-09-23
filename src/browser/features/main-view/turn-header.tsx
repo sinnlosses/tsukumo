@@ -28,7 +28,7 @@
 import { useCallback, useId, useRef, useState, type ReactElement } from "react"
 
 import { useDismissSignal, type DismissCause } from "../../hooks/use-dismiss-signal.ts"
-import styles from "./main-view.module.css"
+import styles from "./turn-header.module.css"
 
 /** 一覧の1行ぶん（`main-view.tsx` が `domain/turn-title.ts` の `turnTitle` で作る）。 */
 export type TurnHeaderEntry = {
