@@ -194,8 +194,18 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-third", lastModified: 200 },
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-first", lastModified: 100 },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-third",
+        lastModified: 200,
+        heading: "架空のセッション",
+      },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-first",
+        lastModified: 100,
+        heading: "架空のセッション",
+      },
     ])
   })
 
@@ -208,10 +218,20 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-here", lastModified: 100 },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-here",
+        lastModified: 100,
+        heading: "架空のセッション",
+      },
     ])
     expect(listMarkedSessions(sessions, SECOND_TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT + 1, sessionId: "s-other-room", lastModified: 300 },
+      {
+        viewPort: DEFAULT_VIEW_PORT + 1,
+        sessionId: "s-other-room",
+        lastModified: 300,
+        heading: "架空のセッション",
+      },
     ])
   })
 
@@ -225,10 +245,20 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-work", lastModified: 100 },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-work",
+        lastModified: 100,
+        heading: "架空のセッション",
+      },
     ])
     expect(listMarkedSessions(sessions, CHAT_TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-chat", lastModified: 300 },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-chat",
+        lastModified: 300,
+        heading: "架空のセッション",
+      },
     ])
   })
 
@@ -242,7 +272,12 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-legacy", lastModified: 500 },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-legacy",
+        lastModified: 500,
+        heading: "架空のセッション",
+      },
     ])
   })
 
@@ -255,10 +290,20 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(listMarkedSessions(sessions, TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-legacy-a", lastModified: 900 },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-legacy-a",
+        lastModified: 900,
+        heading: "架空のセッション",
+      },
     ])
     expect(listMarkedSessions(sessions, SECOND_TAG)).toEqual([
-      { viewPort: DEFAULT_VIEW_PORT + 1, sessionId: "s-legacy-b", lastModified: 800 },
+      {
+        viewPort: DEFAULT_VIEW_PORT + 1,
+        sessionId: "s-legacy-b",
+        lastModified: 800,
+        heading: "架空のセッション",
+      },
     ])
   })
 
@@ -277,6 +322,39 @@ describe("listMarkedSessions", () => {
     expect(listMarkedSessions([], TAG)).toEqual([])
     expect(listMarkedSessions(undefined, TAG)).toEqual([])
     expect(listMarkedSessions({ sessions: [] }, TAG)).toEqual([])
+  })
+
+  // SDK の `summary` は行の見出しになる外来の値なので、境界（taggedSession）で検証する。
+  // 文字列でない・空・空白だけなら無いものとして畳み、`SessionSwitch` 側の「（題なし）」に任せる。
+  it("summary が読める文字列ならそのまま見出しにし、文字列でない・空・空白だけなら無いものとして畳む", () => {
+    const sessions = [
+      sessionInfo({
+        sessionId: "s-titled",
+        lastModified: 400,
+        tag: TAG,
+        summary: "架空の作業その1",
+      }),
+      sessionInfo({ sessionId: "s-missing", lastModified: 300, tag: TAG, summary: undefined }),
+      sessionInfo({ sessionId: "s-number", lastModified: 200, tag: TAG, summary: 12345 }),
+      sessionInfo({ sessionId: "s-blank", lastModified: 100, tag: TAG, summary: "   " }),
+    ]
+
+    expect(listMarkedSessions(sessions, TAG)).toEqual([
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-titled",
+        lastModified: 400,
+        heading: "架空の作業その1",
+      },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-missing",
+        lastModified: 300,
+        heading: undefined,
+      },
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-number", lastModified: 200, heading: undefined },
+      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-blank", lastModified: 100, heading: undefined },
+    ])
   })
 })
 

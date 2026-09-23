@@ -16,10 +16,16 @@ type Pack = { readonly name: string }
 const INITIAL: Pack = { name: "tsukumo-spirit" }
 const SWITCHED: Pack = { name: "kagami" }
 
-// 切り替え先の一覧（目印と最終更新時刻だけ。会話の内容は入らない）。
+// 切り替え先の一覧（目印・最終更新時刻・見出し。見出しは作り物の文字列
+// docs/coding-standards.md「会話内容の扱い」）。
 const CHOICES = [
-  { viewPort: 7328, sessionId: "other-session", lastModified: 2_000 },
-  { viewPort: 7327, sessionId: "prev-work-session", lastModified: 1_000 },
+  { viewPort: 7328, sessionId: "other-session", lastModified: 2_000, heading: "架空の見出しその1" },
+  {
+    viewPort: 7327,
+    sessionId: "prev-work-session",
+    lastModified: 1_000,
+    heading: "架空の見出しその2",
+  },
 ] as const
 
 /** 起こされたことと閉じられたことだけを覚える fake driver 相当のスタブ。 */

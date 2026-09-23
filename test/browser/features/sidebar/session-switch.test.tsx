@@ -17,13 +17,23 @@ afterEach(() => {
   cleanup()
 })
 
-// 一覧に会話の内容は入らない（目印・ID・最終更新時刻だけ）。時刻は手で書いた架空の瞬間。
+// 見出しは作り物の文字列（docs/coding-standards.md「会話内容の扱い」）。時刻は手で書いた架空の瞬間。
 const EARLIER = Temporal.ZonedDateTime.from("2026-09-20T09:05:00+09:00[Asia/Tokyo]")
 const LATER = Temporal.ZonedDateTime.from("2026-09-22T15:36:00+09:00[Asia/Tokyo]")
 
 const SESSIONS: readonly SessionChoice[] = [
-  { viewPort: 7328, sessionId: "s-other", lastModified: LATER.epochMilliseconds },
-  { viewPort: 7327, sessionId: "s-current", lastModified: EARLIER.epochMilliseconds },
+  {
+    viewPort: 7328,
+    sessionId: "s-other",
+    lastModified: LATER.epochMilliseconds,
+    heading: "架空の作業その1",
+  },
+  {
+    viewPort: 7327,
+    sessionId: "s-current",
+    lastModified: EARLIER.epochMilliseconds,
+    heading: "架空の作業その2",
+  },
 ]
 
 /**
@@ -68,28 +78,59 @@ describe("SessionSwitch", () => {
     expect(screen.queryByLabelText("セッション")).toBeNull()
   })
 
-  // 目印は**部屋の名前**として出す（`src/shared/room.ts`。ポートの並び順に割り当たる）。
-  it("部屋の名前と最終更新時刻（ローカル時刻）を並べ、いま出しているものに印を付ける", () => {
+  // 一覧はいまの部屋のものだけなので部屋の名前では見分けが付かない。見分けるのは
+  // SDK の見出し（`heading`）と最終更新時刻。
+  it("見出しと最終更新時刻（ローカル時刻）を並べ、いま出しているものに印を付ける", () => {
     renderSessionSwitch({ sessions: SESSIONS, session: identifiedSession("s-current") })
 
     const select = screen.getByLabelText("セッション")
     expect((select as HTMLSelectElement).value).toBe("s-current")
     expect(options(select)).toEqual([
-      `若葉の間・${localLabel(LATER)}`,
-      `空色の間・${localLabel(EARLIER)}（表示中）`,
+      `架空の作業その1・${localLabel(LATER)}`,
+      `架空の作業その2・${localLabel(EARLIER)}（表示中）`,
     ])
   })
 
-  // 語彙の外のポート（13個め以降・遠い番号）は、今までどおり番号のまま出る。
-  it("名前が無いポートの行は、ポート番号をそのまま出す", () => {
+  // SDK の `summary` が空・読めないときは `SessionChoice.heading` が undefined になる
+  // （`src/server/core/session-restore.ts`）。行から見出しが消えないよう代わりの字を出す。
+  it("見出しが無いときは「（題なし）」を代わりに出す", () => {
     renderSessionSwitch({
-      sessions: [{ viewPort: 9000, sessionId: "s-far", lastModified: LATER.epochMilliseconds }],
-      session: identifiedSession("s-far"),
+      sessions: [
+        {
+          viewPort: 7327,
+          sessionId: "s-untitled",
+          lastModified: LATER.epochMilliseconds,
+          heading: undefined,
+        },
+      ],
+      session: identifiedSession("s-untitled"),
     })
 
     expect(options(screen.getByLabelText("セッション"))).toEqual([
-      `9000・${localLabel(LATER)}（表示中）`,
+      `（題なし）・${localLabel(LATER)}（表示中）`,
     ])
+  })
+
+  // `<select>` の選択肢は折り返せないので、見出しは文字数で切る。**時刻は切らない**
+  // （同じ部屋の行を見分けるのは時刻なので、見出しがどれだけ長くても必ず残す）。
+  it("長い見出しは文字数で切り、時刻はそのまま残す", () => {
+    const longHeading = "あ".repeat(40)
+    renderSessionSwitch({
+      sessions: [
+        {
+          viewPort: 7327,
+          sessionId: "s-long",
+          lastModified: LATER.epochMilliseconds,
+          heading: longHeading,
+        },
+      ],
+      session: identifiedSession("s-long"),
+    })
+
+    const label = options(screen.getByLabelText("セッション"))[0] ?? ""
+    expect(label.endsWith(`${localLabel(LATER)}（表示中）`)).toBe(true)
+    expect(label).not.toContain(longHeading)
+    expect(label).toContain("…")
   })
 
   it("新規に起こしてIDも分からないうちは、先頭に「記録前」を出す", () => {

@@ -145,7 +145,7 @@ describe("SessionInfo の並び", () => {
     renderSessionInfo({
       characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
-      sessions: [{ sessionId: "s1", viewPort: 7327, lastModified: 0 }],
+      sessions: [{ sessionId: "s1", viewPort: 7327, lastModified: 0, heading: undefined }],
       session: { ...RUNNING_SESSION, sessionId: "s1" },
     })
 

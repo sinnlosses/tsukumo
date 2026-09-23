@@ -1,9 +1,12 @@
 // 切り替え先として選べるセッション1件（`docs/requirements.md` 4.8「鍵」）。**サーバとブラウザの
 // 両方が読む契約**なので shared に置く。
 //
-// **中身は印から読めるものだけ**（目印・セッションのID・最終更新時刻）。会話の内容は一切
-// 入らない（`docs/coding-standards.md`「会話内容の扱い」）ので、画面に出せるのは
-// 「どの起動の、いつまでの作業か」までで、何を話したかは切り替えて組み直すまで分からない。
+// **中身は印から読めるものと、SDK が付けた見出し（`heading`）だけ**（目印・セッションのID・
+// 最終更新時刻・見出し）。**`heading` は会話の内容そのものではなく、SDK 自身が作った表示用の
+// 題**（`customTitle` → 自動要約 → 最初の依頼、の順に決まる。`src/server/adapter/sdk-driver.ts`）
+// で、`127.0.0.1` のページに出すだけ（ログ・ファイル・外部へは出さない。
+// `docs/coding-standards.md`「会話内容の扱い」。メインビューが会話を出すのと同じ扱いで、
+// 複製にはあたらない）。
 
 /**
  * 画面に並べる切り替え先の上限。**同じディレクトリで作業を続けるほど印の付いたセッションは
@@ -33,4 +36,10 @@ export type SessionChoice = {
   readonly sessionId: string
   /** transcript の最終更新時刻（エポックミリ秒）。**新しい順**に並んで届く。 */
   readonly lastModified: number
+  /**
+   * 行の見出し（SDK の `summary`）。**外来の値なので境界（`session-restore.ts` の
+   * `taggedSession`）で検証し、文字列でない・空なら無いものとして畳む**。無いときの見え方は
+   * 呼び出し側（`src/browser/features/sidebar/session-switch.tsx`）が決める。
+   */
+  readonly heading: string | undefined
 }
