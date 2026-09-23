@@ -62,14 +62,15 @@
   background: var(--rule);
 }
 /* 仕事 / 雑談のトグル（13.9「動き方の操作子」）。**2つの `<button>` を1つの枠に並べる**。
-   外枠は帯の地（`color-mix(ground, surface 50%)`）より暗い `--ground` を敷き、3px の余白で
-   ボタンを枠から浮かせる（見本の値）。外寸は 3px + 36px + 3px + 枠2px = 44px で、
-   帯の地 52px（`--screen-nav-height`）に収まる。 */
+   外枠は帯の地（`color-mix(ground, surface 50%)`）より暗い `--ground` を敷き、4px の余白で
+   ボタンを枠から浮かせる。外寸は 4px + 30px + 4px + 枠2px = 40px で、帯の地 52px
+   （`--screen-nav-height`）の上下に 6px ずつ空く。見本（ボタン 36px・余白 3px）は帯の地 60px に
+   合わせた値で、52px の帯にそのまま載せると上下が 4px しか空かず詰まって見える。 */
 .screen-nav-chat-mode {
   display: flex;
   flex: none;
   gap: 2px;
-  padding: 3px;
+  padding: 4px;
   border: 1px solid var(--rule);
   border-radius: 11px;
   background: var(--ground);
@@ -78,7 +79,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  height: 36px;
+  height: 30px;
   padding: 0 16px;
   border: none;
   border-radius: 8px;
