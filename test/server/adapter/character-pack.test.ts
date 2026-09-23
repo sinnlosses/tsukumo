@@ -172,11 +172,11 @@ describe("characterChangedEvent の一覧（packs）", () => {
     return found
   }
 
-  it("全パックについて、表情の枚数・使用中か・変えられるか・消せるかを持つ", () => {
+  it("全パックについて、表情の枚数・使用中か・変えられるか・消すと何が起きるかを持つ", () => {
     writeThreePacks()
     const packs = listCharacterPacks(cwd(), roots())
 
-    const event = characterChangedEvent(currentByName("spirit"), packs, cwd())
+    const event = characterChangedEvent(currentByName("spirit"), packs, cwd(), roots())
 
     expect(
       event.kind === "character-changed"
@@ -186,7 +186,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
             expressionsWithPortrait: entry.character.expressionsWithPortrait.length,
             inUse: entry.inUse,
             editable: entry.character.editable,
-            deletable: entry.deletable,
+            removal: entry.removal,
           }))
         : undefined,
     ).toEqual([
@@ -196,7 +196,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
         expressionsWithPortrait: 2,
         inUse: true,
         editable: true,
-        deletable: false,
+        removal: "none",
       },
       {
         name: "from-screen",
@@ -204,7 +204,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
         expressionsWithPortrait: 1,
         inUse: false,
         editable: true,
-        deletable: false,
+        removal: "delete",
       },
       // 起動先の characters/local は画面から変えられない（ホームに書いても次の起動で負ける）。
       {
@@ -213,8 +213,29 @@ describe("characterChangedEvent の一覧（packs）", () => {
         expressionsWithPortrait: 3,
         inUse: false,
         editable: false,
-        deletable: false,
+        removal: "none",
       },
+    ])
+  })
+
+  it("同梱を画面で直したホームの版は同梱に戻す口、local に負けるホームの版は口なし、使用中でも口の種類は変わらない", () => {
+    writeThreePacks()
+    // 同梱の spirit を画面で直した版と、起動先の local に負ける同名の版をホームに置く。
+    writePack(roots().home, "spirit", { name: "直した精霊", portraits: { default: "d.svg" } })
+    writePack(roots().home, "local", { portraits: { default: "d.svg" } })
+    const packs = listCharacterPacks(cwd(), roots())
+
+    const event = characterChangedEvent(currentByName("from-screen"), packs, cwd(), roots())
+
+    expect(
+      event.kind === "character-changed"
+        ? event.packs.map(({ name, inUse, removal }) => ({ name, inUse, removal }))
+        : undefined,
+    ).toEqual([
+      { name: "spirit", inUse: false, removal: "revert-to-bundled" },
+      // 使用中を押せなくするのは画面（inUse を見る）。消すと何が起きるかは使用中でも同じ。
+      { name: "from-screen", inUse: true, removal: "delete" },
+      { name: "local", inUse: false, removal: "none" },
     ])
   })
 

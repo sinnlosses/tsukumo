@@ -8,7 +8,11 @@
 import process from "node:process"
 
 import { resolveBundledDir } from "./server/adapter/bundled-path.ts"
-import { createCharacterPack, editCharacterPack } from "./server/adapter/character-edit.ts"
+import {
+  createCharacterPack,
+  deleteCharacterPack,
+  editCharacterPack,
+} from "./server/adapter/character-edit.ts"
 import {
   type CharacterAssetFile,
   type CharacterPack,
@@ -18,6 +22,8 @@ import {
   readCharacterAsset,
   readCharacterPack,
 } from "./server/adapter/character-pack.ts"
+import { discardChatArchive } from "./server/adapter/chat-archive.ts"
+import { discardChatSummary } from "./server/adapter/chat-summary.ts"
 import { forgetRememberedLineFromScreen } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedCharacter,
@@ -30,7 +36,11 @@ import {
 } from "./server/core/character-selection.ts"
 import { type Config } from "./server/core/config.ts"
 import { type CharacterAssetLocation } from "./shared/character-asset.ts"
-import { type CharacterCreateCommand, type CharacterEditCommand } from "./shared/command.ts"
+import {
+  type CharacterCreateCommand,
+  type CharacterDeleteCommand,
+  type CharacterEditCommand,
+} from "./shared/command.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
 
 /** いま出しているキャラクターパックへの窓口。**持っているパックそのものは外へ出さない。** */
@@ -39,7 +49,7 @@ export type CurrentCharacter = {
    * いま出しているパックと全パックの一覧を画面へ流す形（`character-changed`）。**呼ぶたびに
    * パックの一覧を読み直す**ので、パックを変えた・作った・消したあとはこれを返せば一覧も
    * 配り直される（`docs/design.md` 7.2）。起こしたとき・起こし直したとき・
-   * 見た目を変えたとき・作ったときのすべてがここを通る。
+   * 見た目を変えたとき・作ったとき・消したときのすべてがここを通る。
    */
   readonly event: () => SessionEvent
   /**
@@ -62,6 +72,14 @@ export type CurrentCharacter = {
    * 切り替えず、`<select>` から選んだときに起こし直す（docs/design.md 7.1）。
    */
   readonly applyCreate: (create: CharacterCreateCommand) => SessionEvent | undefined
+  /**
+   * 画面から指されたパックのホームの版を消し、**選択肢の減った（同梱に戻ったものは同梱の姿の）
+   * `character-changed` を返す**（消せなければ undefined。使用中は消さないので、いま出している
+   * パックは持ち替えない）。**一覧から名前ごと消えたときだけ、そのパックの雑談の要約と
+   * アーカイブも消す**（同じ名前で作り直したパックが古い記録を拾わないため。同梱に戻っただけなら
+   * 同じキャラクターが続くので残す。`docs/design.md` 7.1「消すときの細部」）。
+   */
+  readonly applyDelete: (remove: CharacterDeleteCommand) => SessionEvent | undefined
   /**
    * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
    * `remembered-lines-changed` を返す**（一致する行が無い・書けない・そのパックが編集できない
@@ -148,6 +166,17 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
       )
       if (created === undefined) {
         return undefined
+      }
+      return event()
+    },
+    applyDelete: (remove) => {
+      const removal = deleteCharacterPack(current, packs, remove)
+      if (removal === undefined) {
+        return undefined
+      }
+      if (removal === "delete") {
+        discardChatSummary(remove.pack)
+        discardChatArchive(remove.pack)
       }
       return event()
     },

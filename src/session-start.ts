@@ -150,6 +150,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
     rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
     editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
     createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
+    deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
     forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
   })
 }

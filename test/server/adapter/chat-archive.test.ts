@@ -12,7 +12,7 @@ import {
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { createChatArchive } from "../../../src/server/adapter/chat-archive.ts"
+import { createChatArchive, discardChatArchive } from "../../../src/server/adapter/chat-archive.ts"
 import {
   type ChatArchive,
   type ChatReadbackLimits,
@@ -824,5 +824,40 @@ describe("createChatArchive の日ごとの索引", () => {
     expect(createChatArchive(root()).recall("../evil", "散歩", READ_ALL)).toEqual({
       kind: "not-found",
     })
+  })
+})
+
+describe("discardChatArchive", () => {
+  /** パック1つぶんの置き場に、日ごとの会話と索引と旗の3種を置く（中身は形だけ）。 */
+  function writeArchiveOf(packName: string): string {
+    const packDir = join(root(), packName)
+    mkdirSync(packDir, { recursive: true })
+    for (const fileName of ["2026-09-21.jsonl", "index.jsonl", "kept.jsonl"]) {
+      writeFileSync(join(packDir, fileName), "{}\n")
+    }
+    return packDir
+  }
+
+  it("そのパックの置き場をディレクトリごと消し、ほかのパックの置き場は残す", () => {
+    const deleted = writeArchiveOf("fictional-2")
+    const other = writeArchiveOf("fictional")
+
+    discardChatArchive("fictional-2", root())
+
+    expect(existsSync(deleted)).toBe(false)
+    expect(readdirSync(other).toSorted()).toEqual(["2026-09-21.jsonl", "index.jsonl", "kept.jsonl"])
+  })
+
+  it("パックの名前として通らない値ではパスを組み立てず、何も消さない", () => {
+    writeArchiveOf("fictional")
+
+    discardChatArchive("..", join(root(), "fictional"))
+    discardChatArchive("", root())
+
+    expect(existsSync(join(root(), "fictional", "index.jsonl"))).toBe(true)
+  })
+
+  it("置き場が無くても投げない", () => {
+    expect(() => discardChatArchive("fictional", root())).not.toThrow()
   })
 })

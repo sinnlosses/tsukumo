@@ -458,6 +458,18 @@ describe("parseClientCommand（落とす形）", () => {
     expect(parseClientCommand(createCharacter("my_pack-2.0"))).toBeDefined()
   })
 
+  it("delete-character はパックの名前だけを受け付け、パスになる名前は通さない", () => {
+    expect(
+      parseClientCommand({ type: "delete-character", commandId: "c-1", pack: "fictional-2" }),
+    ).toEqual({ type: "delete-character", commandId: "c-1", pack: "fictional-2" })
+
+    for (const pack of ["../escape", "..", ".hidden", "nested/name", ""]) {
+      expect(
+        parseClientCommand({ type: "delete-character", commandId: "c-1", pack }),
+      ).toBeUndefined()
+    }
+  })
+
   // **`default` はここで required**（欠けたパックが書き込む側まで届かない）。
   it("必須の立ち絵が欠けた create-character は undefined", () => {
     expect(

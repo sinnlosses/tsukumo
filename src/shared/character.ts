@@ -110,11 +110,25 @@ export type CharacterPackEntry = CharacterPackChoice & {
   /** いま出しているパックか（一覧の中でちょうど1件だけ true。サーバが決める）。 */
   readonly inUse: boolean
   /**
-   * 画面から消してよいか（サーバが決める）。**消す口がまだ無いあいだはどのパックも false**
-   * （使用中のパックは口ができても false のまま。`docs/design.md` 7.2）。
+   * 画面から消すと何が起きるか（サーバが決める。{@link CharacterPackRemoval}）。**使用中かどうかは
+   * 混ぜない** — 使用中のパックも消したときに起きることは同じで、押せなくするのは画面が
+   * {@link inUse} を見て行う（サーバも使用中は断る。`docs/design.md` 7.1「消すときの細部」）。
    */
-  readonly deletable: boolean
+  readonly removal: CharacterPackRemoval
 }
+
+/**
+ * パックを画面から消したときに起きること（`docs/design.md` 7.1「消すときの細部」）。**消すのは
+ * いつもホーム（`~/.tsukumo/characters/<name>/`）の版だけ**で、違いは消したあとに一覧に何が残るか:
+ *
+ * - `"delete"`: ホームにしか無いパック。一覧から消え、雑談の要約とアーカイブも一緒に消える
+ * - `"revert-to-bundled"`: 同梱のパックを画面で直したもの。ホームの版が消えて**同梱の版が一覧に
+ *   戻る**（画面で直したことと、キャラクター自身が人格に書き足した「覚えたこと」が消える。
+ *   雑談の要約とアーカイブは残る）
+ * - `"none"`: 画面からは消せない（同梱だけ・起動先の `characters/local`・一覧の外を指した
+ *   `TSUKUMO_CHARACTER`）
+ */
+export type CharacterPackRemoval = "delete" | "revert-to-bundled" | "none"
 
 /**
  * キャラクターパックの名前（`characters/<name>` のディレクトリ名）として受け付ける長さの上限。

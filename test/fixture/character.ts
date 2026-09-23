@@ -73,7 +73,7 @@ export function characterPackEntry(
     label,
     character: characterInfo({ pack: name, name: label }),
     inUse: false,
-    deletable: false,
+    removal: "none",
     ...overrides,
   }
 }

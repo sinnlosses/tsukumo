@@ -15,7 +15,7 @@
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 import { isCharacterPackName } from "../../shared/character.ts"
@@ -69,6 +69,24 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
     write: (summary) => writeRecord(path, { summary: truncatedSummary(summary), delivered: true }),
     markUndelivered: () => rewriteMark(path, false),
     markDelivered: () => rewriteMark(path, true),
+  }
+}
+
+/**
+ * パック1つぶんの写しを消す（**キャラクターパックを消したときだけ**呼ばれる。
+ * `docs/design.md` 7.1「消すときの細部」）。同じ名前で作り直したパックが、消したパックの要約を
+ * 黙って拾わないため。無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を
+ * 通らなければパスを組み立てない（{@link createChatSummary} と同じ規則）。
+ */
+export function discardChatSummary(packName: string, root: string = chatSummaryDir()): void {
+  if (!isCharacterPackName(packName)) {
+    return
+  }
+
+  try {
+    rmSync(join(root, `${packName}.md`), { force: true })
+  } catch {
+    // 消せないだけ。パックはもう一覧に無いので、写しは次に同じ名前で作るまで読まれない。
   }
 }
 

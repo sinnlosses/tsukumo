@@ -30,6 +30,7 @@
 // `docs/coding-standards.md`「会話内容の扱い」の書き出しの例外表に数えずに済む。**どのやり取りに
 // 立てるかの判断はここが決めない**（モデルが `keep` ツールを呼ぶかどうかだけ）。
 
+import { rmSync } from "node:fs"
 import { join } from "node:path"
 
 import { z } from "zod"
@@ -106,6 +107,25 @@ const dayIndexLineSchema = z.object({
  */
 export function chatArchiveDir(): string {
   return join(tsukumoHomeDir(), CHAT_ARCHIVE_DIR_NAME)
+}
+
+/**
+ * パック1つぶんのアーカイブ（日ごとの会話・「残す」旗・日ごとの索引）をディレクトリごと消す
+ * （**キャラクターパックを消したときだけ**呼ばれる。`docs/design.md` 7.1「消すときの細部」）。
+ * 同じ名前で作り直したパックが、消したパックとの会話を読み戻したり思い出したりしないため。
+ * 無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を通らなければパスを
+ * 組み立てない（書く口と同じ規則）。
+ */
+export function discardChatArchive(packName: string, root: string = chatArchiveDir()): void {
+  if (!isCharacterPackName(packName)) {
+    return
+  }
+
+  try {
+    rmSync(join(root, packName), { recursive: true, force: true })
+  } catch {
+    // 消せないだけ。パックはもう一覧に無いので、次に同じ名前で作るまで読まれない。
+  }
 }
 
 /**
