@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 並行の作業ツリーでのアーカイブを、単独のコミットですぐ main へ送る手順にした（T-422）
+
+アーカイブの開始の基準は `main` の完了件数で決まるので、並行する作業ツリーがどれも同じ時点で基準に達し、`develop/tasks.json` と `docs/history/tasks.md`（マージドライバが無い）で衝突する。`CLAUDE.md`「1サイクルの形」に単独コミットで `--ff-only` 送りにすること・落ちたら自分のコミットを捨ててやり直すことを足し、理由を `docs/workflow.md` の小節に置いた。
+
 ### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
 
 `command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
