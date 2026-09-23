@@ -126,7 +126,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
 }
 
 /**
- * セッションを起こす関数を作る（`session-manager` の `startDriver` にそのまま渡せる形）。
+ * セッションを起こす関数を作る（`session-manager` の `launchSession` にそのまま渡せる形）。
  *
  * 順序は**起動時も起こし直しも同じ**:
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・

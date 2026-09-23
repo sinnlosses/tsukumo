@@ -570,6 +570,45 @@ features/task-board/
    `view-delivery.ts` の `connect` で `/ws` に繋ぐ
 6. ホストのポートで `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）
 
+**起こし直し**（`switch-character` / `set-chat-mode` / `switch-session`）も、駆動を起こす一続き
+（`core/session-launch.ts` の `createSessionLaunch`）は起動時とまったく同じものを通る。違うのは
+`session-manager.ts` が `generation` を1つ進めて古い駆動のイベントを捨ててから同じ一続きを
+もう一度呼ぶ、という外側だけ（8章）。
+
+```mermaid
+sequenceDiagram
+    participant Client as 画面（ブラウザ）
+    participant Manager as session-manager.ts
+    participant Launch as session-launch.ts（createSessionLaunch）
+    participant Wiring as session-start.ts（SessionLaunchPorts の実装）
+    participant Driver as sdk-driver.ts / fake-driver.ts
+
+    alt 起動（main.ts が呼ぶ）
+        Manager->>Launch: launchSession(onEvent, onRestoredEvent, { selection: "initial", resume: "latest" })
+    else 起こし直し（switch-character / set-chat-mode / switch-session）
+        Client->>Manager: dispatch(command)
+        Manager->>Manager: generation を1つ進める（古い駆動のイベントを捨てる）
+        Manager->>Launch: launchSession(onEvent, onRestoredEvent, request)
+    end
+    Launch->>Wiring: choosePack / characterEvent / readChatTopics / readRememberedLines
+    Wiring-->>Launch: パック・記憶の状態
+    Launch->>Wiring: findResumeSession(pack, chat)
+    Wiring-->>Launch: SessionStart（new か resume）
+    Launch->>Wiring: listSessions(pack, chat)
+    Wiring-->>Launch: 切り替え先の一覧
+    Launch->>Wiring: startDriver(seed, onEvent)
+    Wiring->>Driver: startSdkDriver / startFakeSession
+    Driver-->>Wiring: SessionDriver
+    Wiring-->>Launch: SessionDriver
+    opt 続きから始まった場合
+        Launch->>Wiring: restoreEvents(sessionId, pack)
+        Wiring-->>Launch: 復元したイベント列
+        Launch-->>Manager: onRestoredEvent(...)（履歴の再生）
+    end
+    Launch-->>Manager: SessionDriver
+    Manager-->>Client: events フレーム（character-changed / chat-mode-changed / sessions-changed …）
+```
+
 ### 接続
 
 1. ページが `/assets/ui.js` を読み、`<App>` が `/ws?t=<token>` へ接続する
@@ -724,8 +763,10 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 「`shared` の語彙で書けるか / SDK の語彙を名乗るか」で、`SessionDriver` の契約
 （`prompt` / `interrupt` / `answer` / `pending` / `setModel` / `setPermissionMode` / `close`）と
 `onEvent`・`SessionDriverOptions`・`DEFAULT_PERMISSION_MODE` / `DEFAULT_MODEL` は `core` 側、
-`query()` を回す `startSession` と `buildQuerySeedOptions`・`findSessionToResume` /
-`readRestoredEvents`・SDK の型を持つ `DEFAULT_EFFORT` は `adapter` 側。
+`query()` を回す `startSdkDriver` と `buildQuerySeedOptions`・`findSessionToResume` /
+`readRestoredEvents`・SDK の型を持つ `DEFAULT_EFFORT` は `adapter` 側。**名前が `startSession`
+ではないのは、`src/session-start.ts` の `startSession`（セッションを1つ起こす配線）と役割が
+違うから**（駆動を1つ起こすだけで、覚えた既定を読む・履歴を復元するといった段取りは持たない）。
 
 - `systemPromptAppend: string` を受け取ってそのまま `systemPrompt.append` にする。**何が
   どの順で載るかは決めない**（組み立ては `core/system-prompt.ts` の `takeSystemPromptAppend`。7章）
@@ -1080,7 +1121,7 @@ characters/<name>/
   書き換わらない）で中立に戻してから `persona.md` を足す。**実測と、`settingSources` から
   ユーザー設定を外す案を採らない理由は `docs/requirements.md` 4.4**
 - **切り替え**（`switch-character`）は**別のパックでセッションを起こし直す**。`speak` の enum も
-  人格も、起こし直せば確実に入れ替わる（`startSession` が `mcpServers` を毎回組み直しているので
+  人格も、起こし直せば確実に入れ替わる（`startSdkDriver` が `mcpServers` を毎回組み直しているので
   `setMcpServers` は要らない。2026-09-14 実測）。切り替え時に画面から消すのは吹き出し・立ち絵・
   メインビューの3つ
 - **キャラクターごとに別のセッションを持つ**（2026-09-14 決定。「キャラクターごとに別の部屋が
@@ -1088,8 +1129,8 @@ characters/<name>/
   **`tsukumo:<パック名>:chat@<目印>`**。13.7。**末尾の目印はビューのポート番号そのもの**
   （`@7327` / `@7328` …）。`docs/requirements.md` 4.8「鍵」）にし、**起動時も切り替え時も、これから起こす側の印を
   持つ最新のセッションを探して `resume` する**（無ければ新規）。印の組み立ても読み取りも
-  `core/config.ts` の `sessionTag` / `readSessionMark` 1箇所で、
-  `session-start.ts` はそれを `findSessionToResume` と `startSession` の `tag` の両方に渡す。
+  `core/session-restore.ts` の `sessionTag` / `readSessionMark` 1箇所で、
+  `session-start.ts` はそれを `findSessionToResume` と `startSdkDriver` の `tag` の両方に渡す。
   **戻ってくれば、そのパックの会話も口調も戻る**
   - 画面の履歴は `readRestoredEvents` の再生をそのまま使う（8章）
   - **印はターンが終わって3秒後に付く**（`SESSION_TAG_DELAY_MS`）。ターンを1つも終えずに離れた

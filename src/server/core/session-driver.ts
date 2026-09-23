@@ -283,8 +283,8 @@ export type SessionDriverOptions = {
   /** 新規に起こすか、続きから始めるか（`docs/requirements.md` 4.8）。 */
   readonly start: SessionStart
   /**
-   * このセッションに付ける印（組み立ては `src/server/core/config.ts` の `sessionTag`。キャラクター
-   * パックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
+   * このセッションに付ける印（組み立ては `src/server/core/session-restore.ts` の `sessionTag`。
+   * キャラクターパックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
    * セッションだけを見分ける。付け直す理由は `src/server/adapter/sdk-driver.ts` の
    * `SESSION_TAG_DELAY_MS`）。
    */

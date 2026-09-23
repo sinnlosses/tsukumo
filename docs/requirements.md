@@ -382,7 +382,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 1ファイルのまま条件分岐で書く案。
 
 **文面は `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
-`startSession`（`src/server/adapter/sdk-driver.ts`）が `query()` の `systemPrompt` へ渡す。**
+`startSdkDriver`（`src/server/adapter/sdk-driver.ts`）が `query()` の `systemPrompt` へ渡す。**
 
 #### 読む時間を減らすために足すのは、規約の側（2026-09-13 決定）
 

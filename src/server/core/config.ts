@@ -4,11 +4,9 @@
 //
 // 値の意味と既定は docs/design.md 5章「config.ts」の表が正典。
 //
-// セッションの印（{@link sessionTag} / {@link readSessionMark}）もここに置く。環境変数では
-// ないが、**外の世界（claude の transcript）に書かれる値**なので、組み立てと読み取りを
-// 1箇所に集める。
-
-import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "./port-resolution.ts"
+// セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、目印を読み書きする
+// 持ち主 `src/server/core/session-restore.ts` に置く（続きから始めるセッションを選ぶ計算と
+// 同じ場所）。
 
 /** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
@@ -41,24 +39,6 @@ export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
  * そのファイルの冒頭。配線層から配る道が無い）。
  */
 export const HOME_ENV_NAME = "TSUKUMO_HOME"
-
-/** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */
-const SESSION_TAG_PREFIX = "tsukumo"
-/** 雑談のセッションの印に足す後置き。**仕事のときは足さない**（{@link sessionTag}）。 */
-const SESSION_TAG_CHAT_SUFFIX = "chat"
-/**
- * 目印の区切り。**`:` を使わない**のは、後置きの `chat` と読み違えないため
- * （`tsukumo:<パック>:chat@7328` の最後の `@` から後ろが目印だと、区切りだけで分かる）。
- */
-const SESSION_MARK_SEPARATOR = "@"
-/**
- * 目印に使っていた文字（`A` / `B` / …）。**読むときだけ使う**（かつてはビューのポートの
- * 並び順を1文字に畳んでいた）。`A` が {@link DEFAULT_VIEW_PORT}、+1 ごとに次の文字だったので、
- * 同じ式で元のポートへ戻せる（{@link readSessionMark}）。**組み立てはもう文字を使わない。**
- */
-const LEGACY_SESSION_MARK_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-/** ポート番号として読める目印の形（`@0`〜`@65535`）。 */
-const SESSION_MARK_PORT = /^[0-9]{1,5}$/
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、疑似セッションどおりにイベントを
@@ -111,104 +91,6 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     watchUi: env[WATCH_UI_ENV_NAME]?.trim() === "1",
   }
-}
-
-/**
- * キャラクターパック1つぶんの、そのモードのセッションの印（SDK の `tagSession`）。**続きから
- * 始めるセッションを選ぶ鍵の片方**で、もう片方は起動した作業ディレクトリ
- * （docs/requirements.md 4.8「鍵」）。
- *
- * 印にパックの名前を混ぜるのは、**キャラクターごとに別のセッションを持つ**ため
- * （docs/design.md 7章）。印の無いセッション（同じディレクトリで使った素の `claude`）も、
- * 別のパックのセッションも、これで外れる。
- *
- * **雑談のときだけ `:chat` を足す**のは、雑談と仕事で claude 側の文脈ごと分けるため
- * （docs/requirements.md 4.9）。
- *
- * **末尾の目印（`@7327` / `@7328` …）は、同じディレクトリで tsukumo を何個も起こしたときに
- * 別々のセッションを持たせるためのもの**（docs/requirements.md 4.8「鍵」）。**目印はビューが
- * 実際に待ち受けているポートの番号そのもの**で、畳まない——セッションを指す ID が
- * 「キャラクターパック × ポート番号」だから。
- *
- * ポートを使うのは、**「その目印がいま使われているか」を知っているものが他に無い**ため。印は
- * transcript に残るだけなので、落ちた tsukumo の印と動いている tsukumo の印は見分けられない
- * （実測。docs/requirements.md 4.8「鍵」）。ポートは OS が握っていて、**既定の
- * ときは塞がっていれば +1 へずれ**（`port-resolution.ts`）、**プロセスが落ちれば空く**ので、
- * 起こし直せば同じ番号＝同じセッションへ戻る。
- *
- * **昔の印（目印の無いもの・1文字の `@A`）も同じセッションを指す**（{@link readSessionMark} が
- * ポートへ戻す）ので、いま続いている仕事のセッションは今までどおり見つかる。
- *
- * **印は会話の内容ではない**ので、claude 自身の transcript に付けても「会話内容の扱い」には
- * 触れない。
- */
-export function sessionTag(characterName: string, chat: boolean, viewPort: number): string {
-  return `${sessionTagFamily(characterName, chat)}${SESSION_MARK_SEPARATOR}${String(viewPort)}`
-}
-
-/**
- * 目印を外した印（`tsukumo:<パック>` / `tsukumo:<パック>:chat`）。**{@link sessionTag} が
- * 目印（ポート番号）を足すための下ごしらえ**で、外へは出さない——画面に出す切り替え先の一覧も
- * 続きから始めるセッションを選ぶのも、目印まで揃えた {@link sessionTag} の値で絞る
- * （`src/server/core/session-restore.ts`）。
- */
-function sessionTagFamily(characterName: string, chat: boolean): string {
-  const packTag = `${SESSION_TAG_PREFIX}:${characterName}`
-  return chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
-}
-
-/** 印を読み解いた姿（{@link readSessionMark}）。 */
-export type SessionMark = {
-  /**
-   * 目印（印を付けた tsukumo のビューのポート番号）。**昔の印は既定のポートへ戻してある**
-   * （目印が無いもの＝`DEFAULT_VIEW_PORT`、1文字の `A` / `B` / …＝そこから並び順に +1）。
-   */
-  readonly viewPort: number
-  /**
-   * 目印まで揃えた印。**続きから始めるセッションを選ぶときも、切り替え先の一覧をいまの部屋に
-   * 絞るときも、これ同士を比べる**（`tsukumo:<パック>` と `tsukumo:<パック>@A` と
-   * `tsukumo:<パック>@7327` は同じセッションを指す）。
-   */
-  readonly tag: string
-}
-
-/**
- * transcript に付いていた印を読み解く。**tsukumo の印でなければ undefined**（同じディレクトリで
- * 使った素の `claude` のセッションはここで落ちる）。
- *
- * **読めた目印は必ずポート番号に戻し、印も `@<ポート>` の形へ揃えてから返す**ので、昔の印と
- * 今の印が同じセッションを指す:
- *
- * - `@7328` のような数字 → そのポート
- * - `@A` / `@B` … の1文字 → 並び順から戻したポート（`A` が `DEFAULT_VIEW_PORT`）
- * - それ以外（目印が無い・名前に `@` を含むパックの尻尾）→ `DEFAULT_VIEW_PORT`
- *
- * 最後の行のおかげで、`tsukumo:<パック>` は `tsukumo:<パック>@7327` と同じセッションを指す。
- */
-export function readSessionMark(tag: string): SessionMark | undefined {
-  if (!tag.startsWith(`${SESSION_TAG_PREFIX}:`)) {
-    return undefined
-  }
-
-  const separator = tag.lastIndexOf(SESSION_MARK_SEPARATOR)
-  const marked = separator === -1 ? undefined : markedViewPort(tag.slice(separator + 1))
-  const family = marked === undefined ? tag : tag.slice(0, separator)
-  const viewPort = marked ?? DEFAULT_VIEW_PORT
-  return { viewPort, tag: `${family}${SESSION_MARK_SEPARATOR}${String(viewPort)}` }
-}
-
-/**
- * 印の末尾を目印として読む。**目印として読めなければ undefined**（パック名に `@` が入っている
- * ときの尻尾がここで落ちる）。
- */
-function markedViewPort(mark: string): number | undefined {
-  if (SESSION_MARK_PORT.test(mark)) {
-    const port = Number(mark)
-    return port <= MAX_PORT_NUMBER ? port : undefined
-  }
-
-  const legacyIndex = mark.length === 1 ? LEGACY_SESSION_MARK_LETTERS.indexOf(mark) : -1
-  return legacyIndex === -1 ? undefined : DEFAULT_VIEW_PORT + legacyIndex
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

@@ -15,9 +15,11 @@
 // ようになったら、層を写した `core/character-pack.ts` ではなく概念で切る
 // （`docs/architecture.md`「新しいコードを置く場所」）。
 
+import { CHAT_KEPT_READBACK_BYTES, CHAT_RECENT_READBACK_BYTES } from "../../shared/chat-log.ts"
 import { CHAT_MANNER_PROMPT } from "./chat-manner.ts"
 import { type ChatMemorySources, takeChatMemoryPromptParts } from "./chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "./report-notation.ts"
+import { type ChatArchive, type SessionMode, type SessionStart } from "./session-driver.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 
 /** {@link takeSystemPromptAppend} に渡すもの。 */
@@ -43,6 +45,42 @@ export type SystemPromptMode =
       /** 雑談の記憶（要約の写しと逐語）の読み戻し口と条件。 */
       readonly memory: ChatMemorySources
     }
+
+/**
+ * 駆動の `SessionMode`（`./session-driver.ts`）を、`systemPrompt` を組むのに要る形
+ * （{@link SystemPromptMode}）へ変える。**この関数は純粋**——渡された口（`chatArchive`）を
+ * 束ねるだけで、雑談かどうかで4つの口を作るかどうかを決める判断（`src/session-start.ts` の
+ * `sessionMode`）とは別（そちらは `personaMemory` の adapter 実装を組み立てる必要があり、
+ * 配線層に残る）。
+ *
+ * **雑談のときだけ記憶の口を束ねる**——載せるかどうかの判断（新規か・写しの印が未渡しか）は
+ * {@link takeChatMemoryPromptParts} が閉じているので、ここがするのは**口を渡すことと、
+ * 読む量を縛ること**だけ。
+ */
+export function toSystemPromptMode(
+  mode: SessionMode,
+  chatArchive: ChatArchive,
+  start: SessionStart,
+  packName: string,
+): SystemPromptMode {
+  if (mode.kind !== "chat") {
+    return { kind: "work" }
+  }
+
+  return {
+    kind: "chat",
+    memory: {
+      start,
+      chatSummary: mode.chatSummary,
+      chatArchive,
+      packName,
+      readbackLimits: {
+        recentBytes: CHAT_RECENT_READBACK_BYTES,
+        keptBytes: CHAT_KEPT_READBACK_BYTES,
+      },
+    },
+  }
+}
 
 /**
  * `systemPrompt` の append を組み立てる。**人格 → tsukumo 側の規約 → 雑談の記憶**の順で、

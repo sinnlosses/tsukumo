@@ -189,14 +189,19 @@ const RECALL_TOOL_DESCRIPTION =
   "当たらなければ何も返らない。引けるのは1ターンに1回だけ。呼ぶ条件は雑談モードの規約に従う。"
 
 /**
- * セッションを起こす。**この関数は待たない**（`query()` の反復はバックグラウンドで回り続け、
- * 結果は `onEvent` に流れる）。
+ * Agent SDK の駆動を1つ起こす（`docs/glossary.md`「セッション駆動」の実装）。**この関数は
+ * 待たない**（`query()` の反復はバックグラウンドで回り続け、結果は `onEvent` に流れる）。
+ *
+ * **名前が `startSession` ではなく `startSdkDriver` なのは、`src/session-start.ts` の
+ * `startSession`（セッションを1つ起こす配線）と役割が違うから** — こちらは駆動を1つ起こす
+ * だけで、覚えた既定を読む・見張りを起こす・履歴を復元するといった一続きの段取りは持たない
+ * （その段取りは `core/session-launch.ts`）。
  *
  * 反復が例外で終わったら `session-ended` を流すだけで、**プロセスは落とさない**
  * （docs/coding-standards.md「エラーハンドリング」）。`try`/`catch` は反復を包む1つだけに
  * まとめてある。
  */
-export function startSession(options: SessionDriverOptions): SessionDriver {
+export function startSdkDriver(options: SessionDriverOptions): SessionDriver {
   const input = createPromptStream()
   const queue = createPendingAnswerQueue({
     onChange: (pending) => {
@@ -287,7 +292,7 @@ export type QuerySeedOptions = {
 /**
  * `query()` に渡す `options` のうち、クロージャを含まない部分を組み立てる。**本物の
  * `query()` を呼ばずに、覚えた既定（モデル・許可モード）と {@link DEFAULT_EFFORT} が渡る形を
- * 検査できるように、`startSession` から切り出してある。**
+ * 検査できるように、`startSdkDriver` から切り出してある。**
  *
  * **モデルと許可モードは呼び出し側から来る**（`src/session-start.ts` が
  * `readRememberedSessionDefault` で読んだ値。`docs/design.md` 13.6）。ここで定数に倒すと、
@@ -318,7 +323,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * 流す（`docs/design.md` 13.7）。取り出し方は core（`readChatTopics`）が持ち、ここは中身を
  * 見ない。
  *
- * `startSession` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
+ * `startSdkDriver` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
  * ようにするため（{@link buildQuerySeedOptions} と同じ理由）。
  */
 export function chatSummaryHooks(
@@ -444,7 +449,7 @@ async function readContextUsage(session: ContextUsageSource): Promise<ContextUsa
  * そこから取り出して他の2つと同じ形に揃える。`rawMaxTokens` のほうを窓の大きさに使うのは、
  * 使用量を測る相手がそれだと SDK の型の説明にあるため。
  *
- * **本物の `query()` を呼ばずに写しを検査できるように**、`startSession` の外に出して公開して
+ * **本物の `query()` を呼ばずに写しを検査できるように**、`startSdkDriver` の外に出して公開して
  * ある（{@link buildQuerySeedOptions} と同じ理由）。
  */
 export function toContextUsage(value: unknown): ContextUsageReport {

@@ -168,7 +168,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
       remembered.push(sessionDefault)
       return { kind: "session-default-changed", sessionDefault }
     },
-    startDriver: (onEvent) => {
+    launchSession: (onEvent) => {
       stub.attach(onEvent)
       return Promise.resolve(stub.driver)
     },
@@ -307,7 +307,7 @@ describe("createSessionManager", () => {
   })
 
   it("switch-character で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
-    // 起こされた駆動を順に覚える（`startDriver` に渡るパックの決め方もここで見る）。
+    // 起こされた駆動を順に覚える（`launchSession` に渡るパックの決め方もここで見る）。
     const started: { readonly selection: CharacterSelection; readonly stub: StubDriver }[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -321,7 +321,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push({ selection: request.selection, stub })
@@ -422,7 +422,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -496,7 +496,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -536,7 +536,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -575,7 +575,7 @@ describe("createSessionManager", () => {
   })
 
   it("駆動が起き上がるのを待ってから、新しい hello を配る（続きから始めるセッションを探す間）", async () => {
-    // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`startDriver` は待てる形で返る。
+    // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`launchSession` は待てる形で返る。
     const started: StubDriver[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -589,7 +589,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: async (onEvent) => {
+      launchSession: async (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         await waitForBatch()
@@ -708,7 +708,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent) => {
+        launchSession: (onEvent) => {
           stub.attach(onEvent)
           return Promise.resolve(stub.driver)
         },
@@ -1025,7 +1025,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvent, request) => {
         if (request.selection.by === "initial") {
           const stub = createStubDriver()
           stub.attach(onEvent)
@@ -1066,7 +1066,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent) => {
+      launchSession: (onEvent) => {
         stub.attach(onEvent)
         return Promise.resolve(stub.driver)
       },
@@ -1097,7 +1097,7 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: () =>
+      launchSession: () =>
         Promise.resolve({
           prompt: () => {},
           promptWithoutRecord: () => {},
@@ -1176,7 +1176,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
           return Promise.resolve(stub.driver)
@@ -1400,7 +1400,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
           return Promise.resolve(stub.driver)
@@ -1682,7 +1682,7 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
-        startDriver: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
           return Promise.resolve(driver)
@@ -1861,7 +1861,7 @@ describe("依頼に添えた画像の棚", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
-      startDriver: (onEvent) => {
+      launchSession: (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         return Promise.resolve({

@@ -92,8 +92,12 @@ export type SessionManagerOptions = {
    */
   readonly promptImageShelf: PromptImageShelf
   /**
-   * 駆動を起こす。**渡された `onEvent` / `onRestoredEvent` を駆動に配線する**のは呼び出し側の
-   * 仕事で、ここは種類（SDK か fake driver か）を知らない。
+   * セッションを1つ起こす（起こし直しも含む）一続き。**駆動を起こすだけでなく、パックを決めて
+   * 続きを探し、復元した履歴を流すところまでを1つでやる**（`core/session-launch.ts` の
+   * `createSessionLaunch` が実体。名前が `startDriver` ではなく `launchSession` なのは、
+   * 駆動そのものを起こす低レベルの口（`SessionLaunchPorts.startDriver`）と役割が違うから）。
+   * **渡された `onEvent` / `onRestoredEvent` を駆動に配線する**のは呼び出し側の仕事で、ここは
+   * 種類（SDK か fake driver か）を知らない。
    *
    * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
    * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md` 7章「雑談の会話の
@@ -112,7 +116,7 @@ export type SessionManagerOptions = {
    * **待てる形（Promise）で返す**のは、そのパックの続きから始めるセッションを探すのに
    * 外の世界（claude 自身の transcript の一覧）を読むから（docs/requirements.md 4.8）。
    */
-  readonly startDriver: (
+  readonly launchSession: (
     onEvent: (event: SessionEvent) => void,
     onRestoredEvent: (event: SessionEvent) => void,
     request: SessionLaunchRequest,
@@ -409,7 +413,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
 
   const start = (request: SessionLaunchRequest): Promise<SessionDriver> => {
     const born = generation
-    const starting = options.startDriver(
+    const starting = options.launchSession(
       (event) => {
         if (born !== generation) {
           return

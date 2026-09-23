@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 session-start.ts の判断を core へ寄せ、startSession 等の同名を解いた（T-430）
+
+`newSession`／fake のガードを `core/session-restore.ts` の `canResume` に、`systemPromptMode` を `core/system-prompt.ts` の `toSystemPromptMode` に移し、`sessionTag` と `readSessionMark` は `config.ts` から `session-restore.ts` へ寄せた。`sdk-driver.ts` の `startSession` は `startSdkDriver`、`SessionManagerOptions.startDriver` は `launchSession` に改名し、`docs/design.md` 3章に起動と起こし直しの sequenceDiagram を足した。
+
 ### 2026-09-23 CSS を部品ごとに分けてよいと 6.6 に書き、main-view.module.css を割った（T-439）
 
 928行の `main-view.module.css` を、ターンの見出し・質問2つ・レポートの記法の4枚へ分けて113行にした。ファイルをまたぐ `.detail-block` の打ち消しは、両方の class を同じ要素に重ねて解いている。

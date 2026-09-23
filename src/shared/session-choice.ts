@@ -27,7 +27,7 @@ export type SessionChoice = {
    * 目印（印を付けた tsukumo のビューのポート番号）。**一覧はいまの部屋のものだけ**なので、
    * 並ぶ行はすべて同じ値になる（絞り込みと、行が複数ある理由は `src/server/core/session-restore.ts`
    * の `listMarkedSessions`）。昔の印（目印の無いもの・1文字の `A` / `B` …）はポートへ戻してある
-   * （`src/server/core/config.ts` の `readSessionMark`）。見分けるのは
+   * （`src/server/core/session-restore.ts` の `readSessionMark`）。見分けるのは
    * {@link SessionChoice.lastModified} の側。
    */
   readonly viewPort: number

@@ -22,11 +22,11 @@ import {
   findSessionToResume,
   listSwitchableSessions,
   readRestoredEvents,
-  startSession as startSdkSession,
+  startSdkDriver,
 } from "./server/adapter/sdk-driver.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
-import { type Config, sessionTag } from "./server/core/config.ts"
+import { type Config } from "./server/core/config.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import {
   type ChatArchive,
@@ -41,14 +41,10 @@ import {
   EVENT_BATCH_INTERVAL_MS,
   type SessionManager,
 } from "./server/core/session-manager.ts"
-import { type SystemPromptMode, takeSystemPromptAppend } from "./server/core/system-prompt.ts"
+import { canResume, sessionTag } from "./server/core/session-restore.ts"
+import { takeSystemPromptAppend, toSystemPromptMode } from "./server/core/system-prompt.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
-import {
-  CHAT_COMPACT_THRESHOLD_BYTES,
-  CHAT_KEPT_READBACK_BYTES,
-  CHAT_RECALL_READBACK_BYTES,
-  CHAT_RECENT_READBACK_BYTES,
-} from "./shared/chat-log.ts"
+import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
 import { type SessionDefault } from "./shared/session-default.ts"
@@ -109,7 +105,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
     contextUsageLog,
     // 置く契機（`prompt`）と捨てる契機（記録の窓）を決めるのも `session-manager`。
     promptImageShelf,
-    startDriver: createSessionLaunch<CharacterPack>({
+    launchSession: createSessionLaunch<CharacterPack>({
       choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
       // 覚えた既定は**起こすたびに読む**（歯車で書き換えたあと、起こし直しで効く）。
@@ -178,7 +174,7 @@ function startDriver(options: {
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
   const mode = sessionMode(seed, chatArchive, cwd, onEvent)
 
-  return startSdkSession({
+  return startSdkDriver({
     cwd,
     expressions: expressionChoices(seed.pack.definition),
     // **覚えた既定で起こす**（`docs/design.md` 13.6）。起こしたあと帯から変えた値は
@@ -190,7 +186,7 @@ function startDriver(options: {
     // `| undefined` を運ばない）。
     systemPromptAppend: takeSystemPromptAppend({
       persona: seed.pack.persona ?? "",
-      mode: systemPromptMode(seed, mode, chatArchive),
+      mode: toSystemPromptMode(mode, chatArchive, seed.start, seed.pack.name),
     }),
     start: seed.start,
     tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
@@ -241,35 +237,6 @@ function sessionMode(
 }
 
 /**
- * `systemPrompt` を組むのに渡すモード（`docs/design.md` 7章）。**雑談のときだけ記憶の口を束ねる**
- * ——載せるかどうかの判断（新規か・写しの印が未渡しか）は core が閉じているので、ここがするのは
- * **口を渡すことと、読む量を縛ること**だけ（`chatRecallFor` と同じ手）。
- */
-function systemPromptMode(
-  seed: SessionLaunchSeed<CharacterPack>,
-  mode: SessionMode,
-  chatArchive: ChatArchive,
-): SystemPromptMode {
-  if (mode.kind !== "chat") {
-    return { kind: "work" }
-  }
-
-  return {
-    kind: "chat",
-    memory: {
-      start: seed.start,
-      chatSummary: mode.chatSummary,
-      chatArchive,
-      packName: seed.pack.name,
-      readbackLimits: {
-        recentBytes: CHAT_RECENT_READBACK_BYTES,
-        keptBytes: CHAT_KEPT_READBACK_BYTES,
-      },
-    },
-  }
-}
-
-/**
  * 索引の書き口・引く口を、1つのパックに縛って駆動へ渡す形にする（`docs/design.md` 7章）。
  * **読む量を決めるのも配線層**で、アーカイブ側は渡されたバイト数までしか読まない
  * （`readRecent` に窓と旗の上限を渡すのと同じ手）。
@@ -286,7 +253,7 @@ function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
  * **いまの部屋の印を持つもの**だけが並ぶ（絞り込みの理由は
  * `src/server/core/session-restore.ts` の `listMarkedSessions`）。
  *
- * **続きを探さない起こし方のときは一覧も出さない**（`TSUKUMO_NEW_SESSION=1` と fake driver。
+ * **続きを探さない起こし方のときは一覧も出さない**（{@link canResume}。
  * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない）。
  */
 async function listPackSessions(
@@ -296,9 +263,9 @@ async function listPackSessions(
   chat: boolean,
   viewPort: number,
 ): Promise<readonly SessionChoice[]> {
-  return config.newSession || config.driver === "fake"
-    ? []
-    : listSwitchableSessions(cwd, sessionTag(characterName, chat, viewPort))
+  return canResume(config)
+    ? listSwitchableSessions(cwd, sessionTag(characterName, chat, viewPort))
+    : []
 }
 
 /**
@@ -319,7 +286,8 @@ async function listPackSessions(
  * **`findSessionToResume` の「見つからない」（`string | undefined`）をここで `SessionStart` へ
  * 畳む**——見つかったかどうかという外の世界の事実と、それが運ぶ「新規か続きか」という
  * 意味とを、この入口で1つの合併型に変える（`docs/coding-standards.md`「「無い」を層をまたいで
- * 運ばない」）。
+ * 運ばない」）。**探さない起こし方（{@link canResume}）のときも同じ合併型で `{ kind: "new" }`
+ * に畳む**（探した結果の「無い」と、探さないと決めていることを呼び出し側が区別しなくて済む）。
  */
 async function findPackSessionToResume(
   config: Config,
@@ -328,7 +296,7 @@ async function findPackSessionToResume(
   chat: boolean,
   viewPort: number,
 ): Promise<SessionStart> {
-  if (config.newSession || config.driver === "fake") {
+  if (!canResume(config)) {
     return { kind: "new" }
   }
 
