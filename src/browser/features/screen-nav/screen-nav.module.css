@@ -1,40 +1,65 @@
 /* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
-   **全画面の最上部に1本**。左端に顔、その右に部屋の名前、その右に仕事/雑談のトグル、その右に3つの口
-   （会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・許可モードの
-   ドロップダウン、いちばん右端に設定の歯車。高さは `--screen-nav-height`（30px）で、**同じ値を `<Layout>` も読む**
-   （帯と gap のぶんだけ grid を縮めるため。layout.module.css）。
+   **全画面の最上部に1本**。左端に顔と部屋の名前（名乗り）、その右に仕事/雑談のトグル、縦の仕切り、
+   3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・許可モードの
+   ドロップダウン、いちばん右端に設定の歯車。
 
-   **口の見た目は狭い画面のタブ（`.layout-tab`）に合わせる**（押せる高さ・丸い枠）。
-   いま出している画面の口は枠の色だけでなく**地の濃さと字の濃さも変える**（色だけで伝えない。
-   13.1 原則1）。
+   **帯は body の padding の外へはみ出して画面の端から端まで出る**（負の margin で `--page-padding`
+   を打ち消す）。外寸は上端の差し色の線（`border-top`）＋帯の地（`--screen-nav-height`、60px）＋
+   下の罫線（`border-bottom`）で、**同じ変数を `<Layout>` も読む**（帯のぶんだけ grid を縮めるため。
+   layout.module.css）。地は画面の地（`--ground`）と領域の地（`--surface`）の中間で、どちらも
+   歯車から変えられるので混ぜて導出する。
 
-   狭い画面（760px 以下）は段を増やさず「≡」に畳む。その規則はこのファイルの末尾の @media。 */
+   **口は枠も地も無い文字のタブ**で、帯の高さいっぱいに伸びる。いま出している画面の口は
+   字の濃さと太さ、下端の差し色の下線で示す（色だけで伝えない。13.1 原則1）。
+
+   狭い画面（760px 以下）は段を増やさず「≡」に畳む。その規則はこのファイルの末尾の @media で、
+   帯の地・線・はみ出しもそこで外す。 */
 .screen-nav {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 20px;
   height: var(--screen-nav-height);
-  margin-bottom: var(--screen-nav-gap);
+  margin: calc(-1 * var(--page-padding)) calc(-1 * var(--page-padding)) var(--screen-nav-gap);
+  padding: 0 24px;
+  border-top: var(--screen-nav-accent-line) solid var(--accent);
+  border-bottom: var(--screen-nav-rule) solid var(--rule);
+  background: color-mix(in srgb, var(--ground), var(--surface) 50%);
+}
+/* 名乗り（顔と部屋の名前）。帯の要素どうしの間（20px）より詰めて1つの塊に見せる。 */
+.screen-nav-identity {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
 }
 /* いまのパックのキャラクターの顔（13.9「顔」）。**丸く切り抜き**、透過の縁が帯に溶けないように
-   丸の地を --surface-accent で塗る。大きさは帯の高さに合わせる。`face` が無いパックでは
-   `<ScreenNavFace>` が何も描かないので、この class 自体が出ない。 */
+   丸の地を --surface-accent で塗り、外側に差し色の輪を掛ける。大きさは帯の高さ（60px）に
+   合わせて決めた固定値（式にすると「≡」の面の顔まで帯の高さに引きずられる）。`face` が無い
+   パックでは `<ScreenNavFace>` が何も描かないので、この class 自体が出ない。 */
 .screen-nav-face {
   flex: none;
-  width: calc(var(--screen-nav-height) - 4px);
-  height: calc(var(--screen-nav-height) - 4px);
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--surface-accent);
+  box-shadow: 0 0 0 2px var(--accent);
   object-fit: cover;
 }
-/* 部屋の名前は押せない字（13.9）。**口より控えめに**して、並んだ口のほうが先に目に入るように
-   する（部屋の名前は「どれを見ているか」を確かめるときだけ要る）。 */
+/* 部屋の名前は押せない字（13.9）。帯の左端で「どの部屋か」を名乗るので、明るい字の太字にする。 */
 .screen-nav-room {
-  margin-right: 0.3rem;
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
+  color: var(--ink);
+  font-size: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.08em;
   white-space: nowrap;
+}
+/* トグルと口の間の縦の仕切り（飾りなので読み上げない）。 */
+.screen-nav-divider {
+  flex: none;
+  width: 1px;
+  height: 24px;
+  background: var(--rule);
 }
 /* 仕事 / 雑談のトグル（13.9「動き方の操作子」）。**2つの `<button>` を1つの枠に並べる**。 */
 .screen-nav-chat-mode {
@@ -74,35 +99,38 @@
   cursor: default;
   opacity: 0.6;
 }
-/* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。 */
+/* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。帯の高さいっぱいに
+   伸ばして、口の下線が帯の下端に来るようにする。 */
 .screen-nav-gates {
   display: flex;
   flex: none;
-  gap: 0.4rem;
+  align-self: stretch;
+  gap: 2px;
   min-width: 0;
 }
-/* 口は字だけのリンクではなくタブと同じ丸い枠にする（並んだ3つが1つの帯に見えるため）。
-   下線は外すので、**選ばれている口は地と字の濃さで**区別する（下の .is-active）。 */
+/* 口は枠も地も無い文字のタブ。下線は `margin-bottom: -1px` で帯の下の罫線に重ねる
+   （いまの口の下線が罫線の上に載って見える）。いまの口以外も透明の下線を持つので、
+   選ばれても字の位置が動かない。 */
 .screen-nav-gate {
-  padding: 0.2rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--surface);
+  display: flex;
+  align-items: center;
+  margin-bottom: calc(-1 * var(--screen-nav-rule));
+  padding: 0 12px;
+  border-bottom: 2px solid transparent;
   color: var(--ink-quiet);
-  font-size: var(--font-secondary);
-  /* theme の本文用 line-height（1.75）のままだと帯の高さ（30px）に口が収まらない。
-     帯の中だけ詰める。 */
+  font-size: var(--font-subheading);
   line-height: 1.4;
   text-decoration: none;
   white-space: nowrap;
 }
 .screen-nav-gate:hover {
-  border-color: var(--accent);
-}
-.screen-nav-gate.is-active {
-  border-color: var(--accent);
-  background: var(--surface-accent);
   color: var(--ink);
+}
+/* いまの口は字の濃さ・太さ・差し色の下線の3つで示す（色だけで伝えない。13.1 原則1）。 */
+.screen-nav-gate.is-active {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+  font-weight: 500;
 }
 /* いまの作業の札（13.9「いまの作業」）。**5（3つの口）の右に置き、幅が足りないときに
    最初に縮む**——モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない
@@ -444,24 +472,28 @@
 @media (max-width: 760px) {
   /* **段を増やさない**（13.9）。会話の画面はいまあるタブ帯（.layout-tabs）の右端 44px に
      重ね、そのぶんの余白はタブ帯の側が空けている（layout.module.css の @media）。
-     位置は body の padding（1rem）に合わせる＝タブ帯の上端と同じ高さに載る。 */
+     位置は body の padding に合わせる＝タブ帯の上端と同じ高さに載る。 */
   .screen-nav[data-screen="conversation"] {
     position: fixed;
-    top: 1rem;
-    right: 1rem;
+    top: var(--page-padding);
+    right: var(--page-padding);
     z-index: 20;
   }
   /* 会話以外の画面（キャラクター・作る・トークン消費）は縦に流れる1枚のページなので、
-     重ねずにそのまま最上部の行として置く（右端に寄せる）。 */
+     重ねずにそのまま最上部の行として置く（右端に寄せる）。**帯の地・上端の線・下の罫線・
+     画面の端へのはみ出しは外す**（残るのは「≡」だけなので、帯の形を出す理由が無い）。 */
   .screen-nav {
     justify-content: flex-end;
     height: auto;
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.5rem;
+    padding: 0;
+    border: none;
+    background: none;
   }
-  /* 並んだ3つの口・トグル・いまの作業の札・ドロップダウン・左端の顔と部屋の名前は「≡」の中へ移る。 */
+  /* 並んだ3つの口・トグル・仕切り・いまの作業の札・ドロップダウン・左端の名乗りは「≡」の中へ移る。 */
   .screen-nav-gates,
-  .screen-nav > .screen-nav-face,
-  .screen-nav > .screen-nav-room,
+  .screen-nav > .screen-nav-identity,
+  .screen-nav > .screen-nav-divider,
   .screen-nav > .screen-nav-chat-mode,
   .screen-nav > .screen-nav-work,
   .screen-nav > .screen-nav-model-permission,
@@ -512,12 +544,39 @@
     border-radius: 0.6rem;
     background: var(--surface);
   }
-  .screen-nav-panel .screen-nav-gate {
-    text-align: center;
+  /* 面の中の顔・部屋の名前・口は、帯の上の見た目（大きな顔と輪・大きな字・文字のタブ）を
+     使わず、面に合わせた小さな形のまま出す（狭い画面のタブ `.layout-tab` と同じ丸い枠の口）。 */
+  .screen-nav-panel .screen-nav-face {
+    width: 26px;
+    height: 26px;
+    box-shadow: none;
   }
   .screen-nav-panel .screen-nav-room {
-    margin-right: 0;
+    color: var(--ink-quiet);
+    font-size: var(--font-secondary);
+    font-weight: normal;
+    letter-spacing: normal;
     text-align: center;
+  }
+  .screen-nav-panel .screen-nav-gate {
+    display: block;
+    margin-bottom: 0;
+    padding: 0.2rem 0.7rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: var(--font-secondary);
+    text-align: center;
+  }
+  .screen-nav-panel .screen-nav-gate:hover {
+    border-color: var(--accent);
+    color: var(--ink-quiet);
+  }
+  .screen-nav-panel .screen-nav-gate.is-active {
+    border-color: var(--accent);
+    background: var(--surface-accent);
+    color: var(--ink);
+    font-weight: normal;
   }
   /* 落ちてくる面ではドロップダウンを縦に積む（横に並べる幅が無い）。 */
   .screen-nav-panel .screen-nav-model-permission {

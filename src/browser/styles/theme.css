@@ -55,16 +55,24 @@
   --font-sans: system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
 
-  /* 画面のナビの帯（13.9）が最上部で奪う高さ。**帯（screen-nav.module.css）と、そのぶん
-     縮む会話の画面の grid（layout.module.css）の両方が読む**ので、値はここに1つだけ置く
-     （狭い画面では帯がタブ帯へ畳まれるので、grid は縮まない）。 */
-  --screen-nav-height: 30px;
-  --screen-nav-gap: 0.4rem;
+  /* 画面の縁の余白（body の padding）。**帯（13.9）はこの余白の外へはみ出して画面の端から端まで
+     出る**ので、帯（screen-nav.module.css）と会話の画面の grid（layout.module.css）も読む。 */
+  --page-padding: 1rem;
+
+  /* 画面のナビの帯（13.9）が最上部で奪う高さ。帯の外寸は **上端の差し色の線 + 帯の地 + 下の罫線**
+     の3つの和。**帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の
+     両方が読む**ので、値はここに1つだけ置く（狭い画面では帯がタブ帯へ畳まれるので、grid は縮まない）。
+     `--screen-nav-height` は線と罫線を含まない帯の地の高さで、口の下線はこの下端に重なる。
+     帯の下の隙間は画面の縁と同じだけ空ける。 */
+  --screen-nav-accent-line: 3px;
+  --screen-nav-height: 60px;
+  --screen-nav-rule: 1px;
+  --screen-nav-gap: var(--page-padding);
 }
 
 body {
   margin: 0;
-  padding: 1rem;
+  padding: var(--page-padding);
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-sans);

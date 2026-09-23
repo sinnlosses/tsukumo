@@ -116,7 +116,9 @@ describe("ScreenNav", () => {
     setPageUrl("http://127.0.0.1:7329/")
     renderScreenNav()
 
-    expect(document.querySelector(".screen-nav > .screen-nav-room")?.textContent).toBe("菜の花の間")
+    expect(document.querySelector(".screen-nav-identity > .screen-nav-room")?.textContent).toBe(
+      "菜の花の間",
+    )
   })
 
   // 語彙の外のポートは番号のまま（13個め以降・`TSUKUMO_VIEW_PORT` で遠い番号を指したとき）。
@@ -124,7 +126,9 @@ describe("ScreenNav", () => {
     setPageUrl("http://127.0.0.1:9000/")
     renderScreenNav()
 
-    expect(document.querySelector(".screen-nav > .screen-nav-room")?.textContent).toBe("9000")
+    expect(document.querySelector(".screen-nav-identity > .screen-nav-room")?.textContent).toBe(
+      "9000",
+    )
   })
 
   // 顔は帯の左端、部屋の名前の左（13.9「顔」）。
@@ -134,7 +138,7 @@ describe("ScreenNav", () => {
         character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
       })
 
-      const face = document.querySelector(".screen-nav > .screen-nav-face")
+      const face = document.querySelector(".screen-nav-identity > .screen-nav-face")
       expect(face?.tagName).toBe("IMG")
       expect(face?.getAttribute("src")).toBe("/character/face.png")
       expect(face?.getAttribute("alt")).toBe("架空の精霊")
@@ -143,13 +147,13 @@ describe("ScreenNav", () => {
     it("face が無いパックでは何も出さない（mini や立ち絵からは補わない）", () => {
       renderScreenNav({ character: characterInfo({ face: undefined }) })
 
-      expect(document.querySelector(".screen-nav > .screen-nav-face")).toBeNull()
+      expect(document.querySelector(".screen-nav-identity > .screen-nav-face")).toBeNull()
     })
 
     it("character が届く前（undefined）も何も出さない", () => {
       renderScreenNav()
 
-      expect(document.querySelector(".screen-nav > .screen-nav-face")).toBeNull()
+      expect(document.querySelector(".screen-nav-identity > .screen-nav-face")).toBeNull()
     })
 
     it("キャラクターを切り替えると顔も変わる（character-changed で state.character が入れ替わる想定）", () => {

@@ -1,10 +1,10 @@
 // 画面のナビの帯の**器だけ**（docs/design.md 2章「機能の中を分ける」/ 13.9）。フックも算出も
 // 持たず、受け取った値と呼び先をそのまま置く。
 //
-// **全画面の最上部に出る1本の帯**で、顔と部屋の名前が左端、その右に仕事/雑談のトグル、その右に
-// 3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・
-// 許可モードのドロップダウン、**いちばん右端に設定の歯車**。**狭い画面では `<ScreenNavMenu>` の
-// 「≡」に畳む**（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
+// **全画面の最上部に出る1本の帯**で、顔と部屋の名前（名乗りの塊）が左端、その右に仕事/雑談の
+// トグル、縦の仕切り、3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、
+// その右にモデル・許可モードのドロップダウン、**いちばん右端に設定の歯車**。**狭い画面では
+// `<ScreenNavMenu>` の「≡」に畳む**（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
 //
 // **`data-screen` でいま出している画面を名乗る**のは、狭い画面で帯の置き方が変わるため
 // （会話の画面だけは、いまあるタブ帯の右端に重ねる。13.9）。
@@ -49,9 +49,12 @@ export function PresentationalScreenNav({
 }: PresentationalScreenNavProps): ReactElement {
   return (
     <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
-      <ScreenNavFace url={face.url} alt={face.alt} />
-      <ScreenNavRoom name={room} />
+      <div className={styles["screen-nav-identity"]}>
+        <ScreenNavFace url={face.url} alt={face.alt} />
+        <ScreenNavRoom name={room} />
+      </div>
       <ScreenNavChatModeToggle chatMode={chatMode} />
+      <span className={styles["screen-nav-divider"]} aria-hidden="true" />
       <div className={styles["screen-nav-gates"]}>
         {gates.map((gate) => (
           <ScreenNavGate key={gate.screen} gate={gate} onSelect={onSelect} />
