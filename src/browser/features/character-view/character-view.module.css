@@ -86,7 +86,7 @@
    基準に実測で決めた）。高さの起点はここでも中身なり・上限は領域なり（基準は
    .character-region → .character-layout と継いだ高さから --balloon-bottom-gap を引いたもの）
    で、入りきらなくなったぶんだけ内側でスクロールする。「どれが最新か」は位置と
-   **見た目の強弱**の両方で示す（下の .balloon:first-child）。 */
+   **見た目の強弱**の両方で示す（下の .balloon[data-latest="true"]）。 */
 .balloon-track {
   display: flex;
   align-self: flex-end;
@@ -106,9 +106,9 @@
 }
 /* 吹き出しは**中身なりの幅**にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。
    ここは**過去の吹き出し**の見た目（モック値）。**地は不透明な `surface` のまま**にする
-   （下の `.balloon:not(:first-child)` のコメント、docs/screen-design.md 13.8「文字が乗る要素の地は
+   （下の `.balloon[data-latest="false"]` のコメント、docs/screen-design.md 13.8「文字が乗る要素の地は
    不透明を保つ」— モックは半透明だが、背景画像が入ると文字の裏へ透けるので採らない）。
-   薄く見せるのは枠と、下の `.balloon:not(:first-child)` の文字色だけ。 */
+   薄く見せるのは枠と、下の `.balloon[data-latest="false"]` の文字色だけ。 */
 .balloon {
   position: relative;
   display: flex;
@@ -134,12 +134,13 @@
   letter-spacing: 0.08em;
   color: var(--accent);
 }
-/* **DOM の先頭が最新**（column-reverse で視覚上は下端に出る）。いま読んでほしい1件だけを
+/* **最新の1件**（`balloon.tsx` の `data-latest`。キャラビューでは DOM の先頭で、column-reverse で
+   視覚上は下端に出る。セリフのログでは並びの末尾）。いま読んでほしい1件だけを
    濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。過去の分は小さく薄くして、
    残ってはいるが読み返す対象だと分かる見た目にする。枠は accent の 1.5px だけで、にじむ輪は
    付けない（線をくっきりさせる）。影（box-shadow）は地から浮いていることを示すためのもので、
    色は黒系の生値ではなく `--ground` から作る（16進の色を書くのは theme.css だけ、の方針）。 */
-.balloon:first-child {
+.balloon[data-latest="true"] {
   animation: balloon-appear 0.3s ease-out;
   max-width: 96%;
   padding: 14px 18px 16px;
@@ -171,8 +172,10 @@
    border-right を色付きに、border-top と border-bottom を透明にした二等辺三角形で、
    right: 100% で吹き出しの左外側に置く。**縦の位置は下端から --balloon-tail-bottom**（以前は
    top: 50% + translateY(-50%) で縦中央に合わせていたが、モックでは吹き出しの下寄りを指す）。 */
-.portrait + .balloon-track > .balloon:first-child::before,
-.portrait + .balloon-track > .balloon:first-child::after {
+.portrait + .balloon-track > .balloon[data-latest="true"]::before,
+.portrait + .balloon-track > .balloon[data-latest="true"]::after,
+.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::before,
+.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
   content: "";
   position: absolute;
   bottom: var(--balloon-tail-bottom);
@@ -188,7 +191,8 @@
    **小さくしたぶん bottom も 2px 上げる** — 2つの三角の頂点の高さを揃えるため。縦中央合わせ
    （translateY(-50%)）はこれを自動でやっていたが、下端合わせにしたので手で足す。揃えないと
    枠線が上の斜辺だけに寄り、下の斜辺から消える。 */
-.portrait + .balloon-track > .balloon:first-child::after {
+.portrait + .balloon-track > .balloon[data-latest="true"]::after,
+.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
   bottom: calc(var(--balloon-tail-bottom) + 2px);
   right: calc(100% - 1px);
   border-top-width: calc(var(--balloon-tail) - 2px);
@@ -200,7 +204,7 @@
    裏へ透ける（覆いを 0.9 まで濃くしても比は 4.27 で、`veil` をいくら上げても 4.5 に届かない）。
    **混ぜる量の上限は 45%**（4.83。50% だと 4.24 で下回る）。背景を敷かなくても、旧の
    `opacity: 0.5` は 4.20 で下限を割っていた。 */
-.balloon:not(:first-child) {
+.balloon[data-latest="false"] {
   font-size: var(--font-secondary);
   line-height: 1.6;
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
@@ -209,10 +213,10 @@
 /* 差し替えは React の再描画（`src/browser/features/character-view/balloon-track.tsx`）。key は
    セリフの古い側から数えた通し番号（`props.speeches` に足された時点の位置。**speeches はターンの
    中で末尾へ積むだけなので、増えても既存のセリフの番号は変わらない**）。そのため既存の吹き出しは
-   中身の差し替えで使い回されず、**最新から1つ落ちて `:first-child` から外れた瞬間に
+   中身の差し替えで使い回されず、**最新から1つ落ちて `data-latest` が `false` に変わった瞬間に
    `animation-name` が `balloon-appear` → `balloon-push-up` へ変わり、押し上げが毎回そこで
    再生される**（CSS アニメーションは `animation-name` の値が変わったときに生成し直されるため）。
-   ただし**2つ以上前へ落ちる吹き出し**（既に `:not(:first-child)` だったものがさらに上へ
+   ただし**2つ以上前へ落ちる吹き出し**（既に `data-latest="false"` だったものがさらに上へ
    押し出される場合）は `animation-name` の値そのものは変わらないので再生されない
    （実機の `getAnimations`/`animationstart` の実測で確認）。最終位置は React の
    再配置で正しく動くので見た目は破綻しないが、揺れて見えるのは「直前まで最新だった1件」だけ。
@@ -264,101 +268,232 @@
   font-size: var(--font-secondary);
   cursor: pointer;
 }
-.speech-log-open:hover {
+.speech-log-open:hover,
+.speech-log-open[aria-expanded="true"] {
   border-color: var(--accent);
   color: var(--ink);
 }
-/* セリフのログのモーダル。一時的に重なるものなので常設の枠を増やさない（docs/screen-design.md 13.1
-   原則2）。見出しと閉じる口は動かさず、並びだけが内側でスクロールする（タスク一覧の表と同じ形）。 */
+/* 開いているあいだは押された見た目（地を accent で染める）。枠はログに覆われて見えないことが
+   多いが、狭い画面・ログの枠より口が外にある配置でも状態が読めるように付けておく。 */
+.speech-log-open[aria-expanded="true"] {
+  background: var(--surface-accent);
+}
+
+/* セリフのログ（`presentational-speech-log.tsx`）。**キャラビューの舞台をそのまま上へ伸ばす**
+   （docs/requirements.md 4.2）: 左右と下端はキャラビューの領域に揃え、上端だけを帯のすぐ下まで
+   伸ばす。立ち絵と吹き出しの列は、キャラビューの立ち絵の床（`.character-layout`）と吹き出しの
+   並び（`.balloon-track`）に**そのまま重ねる**ので、開いても立ち絵と最新の吹き出しは動かない。
+
+   **位置は CSS の anchor positioning で決める**（`<dialog>` は top layer に出るので、領域の
+   位置を知る手段が要る。領域の矩形を JS で購読して写す案より、読む場所がこのファイル1つで
+   済む）。基準は下の2つの `anchor-name`。枠は領域の padding の外まで広げる
+   （`--region-padding` は `.layout-region` から継ぐ。`.speech-log-open` と同じ打ち消し方）。
+   床と列は `position: fixed` の子で、`<dialog>` に transform などを掛けないかぎり包含ブロックは
+   画面のままなので、枠の外の要素を基準にできる。 */
+.character-layout {
+  anchor-name: --speech-log-floor;
+}
+.balloon-track {
+  anchor-name: --speech-log-track;
+}
 .speech-log {
+  /* 枠の上端＝帯（画面のナビ）の外寸とその下の隙間のすぐ下。会話の画面の grid の上端と同じ
+     （layout.module.css の .layout-grid と同じ変数を足す）。 */
+  --speech-log-top: calc(
+    var(--screen-nav-accent-line) + var(--screen-nav-height) + var(--screen-nav-rule) +
+      var(--screen-nav-gap)
+  );
+  position: fixed;
+  position-anchor: --speech-log-floor;
+  inset: auto;
+  top: var(--speech-log-top);
+  left: calc(anchor(left) - var(--region-padding));
+  right: calc(anchor(right) - var(--region-padding));
+  bottom: calc(anchor(bottom) - var(--region-padding));
   box-sizing: border-box;
-  width: min(40rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 4rem);
-  margin: auto;
-  padding: 1rem;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-.speech-log::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
-.speech-log-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  max-height: calc(100vh - 6rem);
-}
-.speech-log-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-.speech-log-heading {
-  margin: 0;
-  font-size: var(--font-heading);
-  font-weight: 600;
-}
-.speech-log-close {
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  background: none;
-  color: inherit;
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.speech-log-close:hover {
-  border-color: var(--accent);
-}
-.speech-log-empty {
-  margin: 0;
-  color: var(--ink-quiet);
-}
-.speech-log-turns {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-height: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
   margin: 0;
   padding: 0;
-  list-style: none;
-  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: 12px;
+  /* 地はキャラビューと同じ ground（舞台がそのまま伸びた見え方）。影はメインビューの surface の
+     上に落ちるので、ground から作っても見える。 */
+  background: var(--ground);
+  color: var(--ink);
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
+  overflow: hidden;
 }
-.speech-log-turn {
+/* 見本どおり、後ろは暗くしない（開いているあいだの操作は modal が止める）。 */
+.speech-log::backdrop {
+  background: transparent;
+}
+/* 枠の中を丸ごと覆う箱。空いたところを押しても `<dialog>` 自身が target にならない
+   （`use-speech-log.ts` の onDialogClick は target が `<dialog>` のときだけ閉じる）。 */
+.speech-log-stage {
+  position: relative;
+  height: 100%;
+}
+/* 立ち絵の床。キャラビューの `.character-layout` に重ね、中の `.portrait` はキャラビューと同じ
+   規則（`--portrait-height` / `--portrait-drop` / max-width）で立つ。足元を切るのも同じ
+   overflow: hidden。 */
+.speech-log-floor {
+  position: fixed;
+  position-anchor: --speech-log-floor;
+  top: anchor(top);
+  right: anchor(right);
+  bottom: anchor(bottom);
+  left: anchor(left);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* 吹き出しの列。左右と下端はキャラビューの `.balloon-track` に重ね（最新の吹き出しの下端が
+   キャラビューと同じ高さに来る）、上端だけ枠の上端まで伸ばす。並びは古い→新しいを上→下で、
+   開いた直後に下端へ転がしてある（`use-speech-log.ts`）。 */
+.speech-log-scroller {
+  position: fixed;
+  position-anchor: --speech-log-track;
+  top: calc(var(--speech-log-top) + 1px);
+  right: anchor(right);
+  bottom: anchor(bottom);
+  left: anchor(left);
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  overflow-y: auto;
 }
-/* ターンの見出し＝そのターンの依頼の1行目。利用者の言葉なので本文より弱く、1行に切る。 */
-.speech-log-request {
+/* 立ち絵があるときは、キャラビューの列（`.portrait + .balloon-track`）と同じく尻尾ぶんを左に空ける。 */
+.speech-log-stage:has(.portrait) .speech-log-scroller {
+  padding-left: var(--balloon-tail);
+}
+/* 上へ転がせることの印（読み込みの口ではない）。列の上端に貼り付き、下地を ground から透明へ
+   抜いて、上へ流れていく吹き出しを溶かす（見本の上端 90px の溶かし）。字は閉じる口
+   （枠の上端から 44px）より下に置く（狭い画面では列の真ん中と口が重なる）。
+   **出すのは上へ転がせるときだけ**: 列の転がりを時間軸にした動き（`animation-timeline: scroll()`）
+   で、上端から 24px 下りたところまでに現れる。溢れていない（転がせない）ときは時間軸が働かず、
+   素の `opacity: 0` のまま場所だけ取る（場所は見本の列の上の余白を兼ねる）。 */
+.speech-log-more {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  flex: none;
   margin: 0;
-  overflow: hidden;
-  font-size: var(--font-secondary);
+  padding: 52px 0 36px;
+  background: linear-gradient(var(--ground) 60%, transparent);
   color: var(--ink-quiet);
+  font-size: var(--font-action);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  animation: speech-log-more-appear linear both;
+  animation-timeline: scroll(nearest block);
+  animation-range: 0 24px;
+}
+@keyframes speech-log-more-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.speech-log-empty {
+  margin: auto 0 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+/* 並び本体。転がせないほど短いときは下端に寄せる（`margin-top: auto`。`justify-content: flex-end`
+   だと、溢れたときに上端が転がしても届かない側へはみ出す）。 */
+.speech-log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* 依頼の区切り: 左右の横罫で挟んだ1行。利用者の言葉なので本文より弱く、1行に切る。 */
+.speech-log-request {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+}
+.speech-log-request::before,
+.speech-log-request::after {
+  content: "";
+  flex: 1 0 1rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--rule) 70%, transparent);
+}
+.speech-log-request-text {
+  min-width: 0;
+  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.speech-log-speeches {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.speech-log-request-time {
+  flex: none;
+  margin-left: -4px;
+  font-family: var(--font-mono);
 }
-/* セリフ1件。吹き出しと同じ角と線で描き、キャラビューで見たものと同じだと分かるようにする。 */
+/* 最新のセリフより前のターンの区切りは一段薄くする。**字は ground の上で 4.5:1 を割らない
+   ところで止める**（ink 55% で約 5.0。読み返すための画面なので、読めないほど薄くしない）。 */
+.speech-log-request[data-current="false"] {
+  color: color-mix(in srgb, var(--ink) 55%, var(--ground));
+}
+.speech-log-request[data-current="false"]::before,
+.speech-log-request[data-current="false"]::after {
+  background: var(--rule-quiet);
+}
 .speech-log-speech {
-  width: fit-content;
-  max-width: 100%;
-  padding: 0.5rem 0.85rem;
-  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
-  border-radius: 0.5rem;
-  background: var(--ground);
-  white-space: pre-wrap;
+  display: flex;
+}
+/* ログの中の吹き出しは動かさない（開いた瞬間に全部が押し上がって見えるのを避ける）。 */
+.speech-log-speech > .balloon {
+  animation: none;
+}
+/* 過去の吹き出しは見本の 14px。**古いほど薄い**が、地ごと薄めず字の色だけを surface へ混ぜる
+   （`.balloon[data-latest="false"]` と同じ理由。docs/screen-design.md 13.8）。いちばん薄い段でも
+   surface の上で 4.5:1 を割らない ink 55%（約 4.8）で止め、3つ前から先はずっとその段。 */
+.speech-log-speech > .balloon[data-latest="false"] {
+  font-size: var(--font-subheading);
+  line-height: 1.65;
+}
+.speech-log-speech[data-age="recent"] > .balloon {
+  color: color-mix(in srgb, var(--ink) 85%, var(--surface));
+}
+.speech-log-speech[data-age="older"] > .balloon {
+  color: color-mix(in srgb, var(--ink) 70%, var(--surface));
+}
+.speech-log-speech[data-age="oldest"] > .balloon {
+  color: color-mix(in srgb, var(--ink) 55%, var(--surface));
+}
+/* 閉じる口。枠の右上で、転がる列より上に重ねる（地は不透明）。 */
+.speech-log-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-accent);
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
+  font-size: var(--font-action);
+  cursor: pointer;
+}
+.speech-log-close:hover {
+  color: var(--ink);
 }
 
 /* 狭い画面（docs/requirements.md 4.7）。**領域は下段に 9.5rem で固定される**
@@ -385,5 +520,10 @@
   .balloon-track {
     flex-basis: 8rem;
     max-height: calc(100% - var(--balloon-bottom-gap) - var(--speech-log-open-space));
+  }
+  /* 帯はタブ帯へ畳まれて段を持たないので、ログの枠は画面の縁の余白のすぐ下（会話の画面の grid の
+     上端）から始める。 */
+  .speech-log {
+    --speech-log-top: var(--page-padding);
   }
 }

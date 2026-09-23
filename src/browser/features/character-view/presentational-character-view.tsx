@@ -3,7 +3,8 @@
 // （`docs/glossary.md`「キャラビュー」）。フックも算出も持たず、`hooks/use-character-view.ts` が
 // 組み立てた値をそのまま部品へ渡す（docs/design.md 2章「機能の中を分ける」）。
 //
-// 右上の「ログ」（<SpeechLog>）は自分で記録を読む部品で、ここは置くだけ。
+// 右上の「ログ」（<SpeechLog>）は自分で記録を読む部品で、ここは置くだけ。ログの床にも同じ
+// 立ち絵を立たせるので、立ち絵と話し手の名前はここから渡す。
 //
 // **立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる**
 // （docs/requirements.md 4.2「フォールバック」）。
@@ -29,21 +30,22 @@ export function PresentationalCharacterView({
   emptyMessage,
   speakerName,
 }: PresentationalCharacterViewProps): ReactElement {
+  const portrait = portraitUrl !== undefined && (
+    <Portrait
+      url={portraitUrl}
+      accent={accent}
+      altText={altText}
+      expression={expression}
+      outfit={outfit}
+      motion={motion}
+      className={styles["portrait"]}
+    />
+  )
   return (
     <div className={styles["character-region"]}>
-      <SpeechLog />
+      <SpeechLog portrait={portrait} speakerName={speakerName} />
       <div className={styles["character-layout"]}>
-        {portraitUrl !== undefined && (
-          <Portrait
-            url={portraitUrl}
-            accent={accent}
-            altText={altText}
-            expression={expression}
-            outfit={outfit}
-            motion={motion}
-            className={styles["portrait"]}
-          />
-        )}
+        {portrait}
         <BalloonTrack speeches={speeches} emptyMessage={emptyMessage} speakerName={speakerName} />
       </div>
     </div>

@@ -755,7 +755,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 **記録の時刻**（2026-09-23 決定）。記録（`SessionRecord`）のうち**依頼（`request`）とセリフ
 （`speech`）の2種類だけ**が `time: RecordTime` を持つ。読むのは雑談のログ（13.7「時刻と日の
-区切り」）だけで、仕事のメインビューへ渡す形（`MainViewEntry`）には載せない。
+区切り」）と、キャラビューのセリフのログの依頼の区切り（依頼の時刻だけ。`restored` には出さない）で、
+仕事のメインビューへ渡す形（`MainViewEntry`）には載せない。
 
 - **形は判別可能な合併型**（`RecordTime`。`src/shared/session-state.ts`）: `stamped` は起きた
   時刻が分かり、`restored` は前のセッションを組み直したもので時刻が分からない。
@@ -972,7 +973,9 @@ doc コメントを参照）。
       │  │                    + [<Report> | <QuestionRecord>]*
       │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
       │  ├ <CharacterView>   <SpeechLog> + <Portrait> + <BalloonTrack>
-      │  │   ├ <SpeechLog>   右上の「ログ」と、このセッションのセリフをターンごとに並べるモーダル（4.2）
+      │  │   ├ <SpeechLog>   右上の「ログ」と、舞台を帯の下まで上へ伸ばしてセリフを遡るモーダル（4.2）。
+      │  │   │               立ち絵はキャラビューから受け取り、吹き出しは <Balloon> を共有。位置は
+      │  │   │               CSS の anchor positioning でキャラビューの床と吹き出しの並びに重ねる
       │  │   ├ <Portrait>    立ち絵。**components/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
       │  │   │               インラインで差し色、ラスタは <img>。動きの hooks はキャラビュー側に残る（6.5）
       │  │   └ <BalloonTrack> <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）。

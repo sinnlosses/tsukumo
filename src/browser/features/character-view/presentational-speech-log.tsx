@@ -2,70 +2,121 @@
 // `<dialog>` を置く。フックも算出も持たず、`hooks/use-speech-log.ts` が畳んだ値と呼び先を
 // そのまま置く（docs/design.md 2章「機能の中を分ける」）。
 //
+// **中身はキャラビューの舞台をそのまま上へ伸ばした形**（docs/requirements.md 4.2）。立ち絵は
+// キャラビューのものと同じ `<Portrait>` を受け取って床（`.speech-log-floor`）に置き、吹き出しは
+// キャラビューと同じ `<Balloon>` で描く。どこに重ねるかは CSS（`character-view.module.css` の
+// anchor positioning）が決める。
+//
 // **`<dialog>` は top layer に出る**ので、キャラビューの `overflow` には切り取られない。
 
-import { type ReactElement } from "react"
+import { type ReactElement, type ReactNode } from "react"
 
+import { Balloon } from "./balloon.tsx"
 import styles from "./character-view.module.css"
-import { type SpeechLogModel } from "./hooks/use-speech-log.ts"
+import { type SpeechLogEntry, type SpeechLogModel } from "./hooks/use-speech-log.ts"
 
 const OPEN_LABEL = "ログ"
-const HEADING = "セリフのログ"
+const CLOSE_LABEL = "ログを閉じる"
+const DIALOG_LABEL = "セリフのログ"
+const MORE_LABEL = "もっと前を読む ↑"
 const EMPTY_MESSAGE = "（まだ発話がありません）"
 
-export type PresentationalSpeechLogProps = SpeechLogModel
+export type PresentationalSpeechLogProps = SpeechLogModel & {
+  /** キャラビューに立っている立ち絵（素材が無ければ何も描かない）。床に同じものを立たせる。 */
+  readonly portrait: ReactNode
+  /** 最新の吹き出しに添える話し手の名前（キャラビューの最新の吹き出しと同じ）。 */
+  readonly speakerName: string | undefined
+}
 
+/**
+ * **props はここだけ分解して受ける**（ref を持つ入れ物を `props.ref` の形で描画中に読むと
+ * `react(refs)` が落ちるため。`layout/presentational-layout.tsx` と同じ理由）。
+ */
 export function PresentationalSpeechLog({
   ref,
-  turns,
+  scrollerRef,
+  open,
+  entries,
   onOpen,
   onClose,
   onDialogClick,
+  portrait,
+  speakerName,
 }: PresentationalSpeechLogProps): ReactElement {
   return (
     <>
-      <button type="button" className={styles["speech-log-open"]} onClick={onOpen}>
+      <button
+        type="button"
+        className={styles["speech-log-open"]}
+        aria-expanded={open}
+        onClick={onOpen}
+      >
         <LogIcon />
         {OPEN_LABEL}
       </button>
       <dialog
         ref={ref}
         className={styles["speech-log"]}
-        aria-label={HEADING}
+        aria-label={DIALOG_LABEL}
         onClose={onClose}
         onClick={onDialogClick}
       >
-        <div className={styles["speech-log-body"]}>
-          <div className={styles["speech-log-head"]}>
-            <h2 className={styles["speech-log-heading"]}>{HEADING}</h2>
-            <button type="button" className={styles["speech-log-close"]} onClick={onClose}>
-              閉じる
-            </button>
+        {/* 枠の中を丸ごと覆う。空いたところを押しても target が `<dialog>` にならない
+            （＝枠の外を押したときだけ閉じる）。 */}
+        <div className={styles["speech-log-stage"]}>
+          {/* 閉じる口を列より先に置く。`showModal()` は中の最初のフォーカスできる要素へ
+              フォーカスを移すので、後ろに置くと転がる列（溢れると Tab で届く）が先に選ばれる。 */}
+          <button type="button" className={styles["speech-log-close"]} onClick={onClose}>
+            <CloseIcon />
+            {CLOSE_LABEL}
+          </button>
+          <div className={styles["speech-log-floor"]}>{portrait}</div>
+          <div ref={scrollerRef} className={styles["speech-log-scroller"]}>
+            <p className={styles["speech-log-more"]} aria-hidden="true">
+              {MORE_LABEL}
+            </p>
+            {entries.length === 0 ? (
+              <p className={styles["speech-log-empty"]}>{EMPTY_MESSAGE}</p>
+            ) : (
+              <ol className={styles["speech-log-entries"]}>
+                {entries.map((entry) => (
+                  <SpeechLogRow key={entry.key} entry={entry} speakerName={speakerName} />
+                ))}
+              </ol>
+            )}
           </div>
-          {turns.length === 0 ? (
-            <p className={styles["speech-log-empty"]}>{EMPTY_MESSAGE}</p>
-          ) : (
-            <ol className={styles["speech-log-turns"]}>
-              {turns.map((turn) => (
-                <li key={turn.id} className={styles["speech-log-turn"]}>
-                  <p className={styles["speech-log-request"]} title={turn.requestText}>
-                    {turn.heading}
-                  </p>
-                  <ol className={styles["speech-log-speeches"]}>
-                    {/* セリフはターンの中で末尾へ積むだけなので、位置がそのまま同一性になる。 */}
-                    {turn.speeches.map((speech, index) => (
-                      <li key={index} className={styles["speech-log-speech"]}>
-                        {speech}
-                      </li>
-                    ))}
-                  </ol>
-                </li>
-              ))}
-            </ol>
-          )}
         </div>
       </dialog>
     </>
+  )
+}
+
+/** 並びの1行。依頼の区切りは横罫で挟んだ1行、セリフは吹き出し1つ。 */
+function SpeechLogRow(props: {
+  readonly entry: SpeechLogEntry
+  readonly speakerName: string | undefined
+}): ReactElement {
+  const { entry } = props
+  if (entry.kind === "request") {
+    return (
+      <li className={styles["speech-log-request"]} data-current={entry.current}>
+        {/* 依頼が長いときに切るのは文面だけで、時刻は切らない。 */}
+        <span className={styles["speech-log-request-text"]} title={entry.requestText}>
+          きみ「{entry.heading}」
+        </span>
+        {entry.time.kind === "known" && (
+          <time className={styles["speech-log-request-time"]} dateTime={entry.time.dateTime}>
+            {entry.time.text}
+          </time>
+        )}
+      </li>
+    )
+  }
+  const latest = entry.age === "latest"
+  return (
+    <li className={styles["speech-log-speech"]} data-age={entry.age}>
+      <Balloon text={entry.text} latest={latest} speaker={latest ? props.speakerName : undefined} />
+    </li>
   )
 }
 
@@ -95,6 +146,21 @@ function LogIcon(): ReactElement {
         strokeWidth="1.3"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** 閉じる印（×）。 */
+function CloseIcon(): ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+      <path
+        d="M6 6l12 12M18 6L6 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
       />
     </svg>
   )

@@ -1,5 +1,6 @@
 // セリフのログ（<SpeechLog>）の**入口**。キャラビューの右上の「ログ」から開くモーダルで、
-// **このセッションで言ったセリフをターンごとに並べる**。吹き出しは今のターンのぶんしか出さない
+// **キャラビューの舞台をそのまま上へ伸ばし、このセッションで言ったセリフを吹き出しのまま遡って
+// 読む**。吹き出しは今のターンのぶんしか出さない
 // （前のターンの最後の1件だけ残す。docs/requirements.md 4.2）ので、流れていったセリフを読み返す
 // 口はここになる。
 //
@@ -10,11 +11,21 @@
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。**条件分岐も算出もここには
 // 置かない**（増えたらフックか見た目のどちらかに寄せる）。
 
-import { type ReactElement } from "react"
+import { type ReactElement, type ReactNode } from "react"
 
 import { useSpeechLog } from "./hooks/use-speech-log.ts"
 import { PresentationalSpeechLog } from "./presentational-speech-log.tsx"
 
-export function SpeechLog(): ReactElement {
-  return <PresentationalSpeechLog {...useSpeechLog()} />
+export type SpeechLogProps = {
+  /**
+   * キャラビューに立っている立ち絵。**キャラビューが渡す**（表情・衣装・動きがキャラビューと
+   * 同じものになる）。素材が無いときは何も描かない値。
+   */
+  readonly portrait: ReactNode
+  /** 最新の吹き出しに添える話し手の名前。キャラビューの最新の吹き出しと同じもの。 */
+  readonly speakerName: string | undefined
+}
+
+export function SpeechLog(props: SpeechLogProps): ReactElement {
+  return <PresentationalSpeechLog {...useSpeechLog()} {...props} />
 }
