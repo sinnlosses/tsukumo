@@ -261,7 +261,6 @@
   border-radius: 8px;
   background: var(--ground);
   color: var(--ink-quiet);
-  font: inherit;
   font-size: var(--font-secondary);
   cursor: pointer;
 }
@@ -281,7 +280,6 @@
   color: var(--ink);
   border: 1px solid var(--rule);
   border-radius: 0.75rem;
-  font: inherit;
   overflow: hidden;
 }
 .speech-log::backdrop {
@@ -310,7 +308,6 @@
   border-radius: 0.4rem;
   background: none;
   color: inherit;
-  font: inherit;
   font-size: var(--font-secondary);
   cursor: pointer;
 }

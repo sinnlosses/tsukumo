@@ -27,6 +27,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   listRepositoryFiles: () => Promise.resolve([]),
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
   readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+  findPromptImage: () => undefined,
   token: "架空の起動トークン",
 }
 

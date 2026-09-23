@@ -1,9 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
 import {
+  definitionWithAccent,
   definitionWithBackground,
   definitionWithOutfitAccent,
   definitionWithoutBackground,
+  definitionWithoutChatAccent,
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
@@ -63,6 +65,15 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ face: "face.png" }))?.face).toBe("face.png")
     expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.face).toBeUndefined()
     expect(parseCharacterDefinition(JSON.stringify({ face: 3 }))?.face).toBeUndefined()
+  })
+
+  it("任意の tagline（ひとことプロフィール）を読む。無い・壊れた値・空白だけは undefined", () => {
+    expect(
+      parseCharacterDefinition(JSON.stringify({ tagline: "窓辺に棲む架空の精霊" }))?.tagline,
+    ).toBe("窓辺に棲む架空の精霊")
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.tagline).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ tagline: 3 }))?.tagline).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ tagline: "  " }))?.tagline).toBeUndefined()
   })
 
   it("任意の chatAccent（雑談中だけの accent）を読む。無い・壊れた値は undefined", () => {
@@ -178,6 +189,45 @@ describe("definitionWithPortrait / definitionWithoutPortrait / definitionWithOut
 
     expect(edited.endsWith("\n")).toBe(true)
     expect(edited).toContain('\n  "outfitAccents": {')
+  })
+})
+
+describe("definitionWithAccent / definitionWithoutChatAccent", () => {
+  it("仕事の差し色（accent）を差し替え、ほかのキーは残す", () => {
+    const edited = definitionWithAccent(FULL_DEFINITION_JSON, "work", "#123456")
+    const definition = parseCharacterDefinition(edited)
+
+    expect(definition?.accent).toBe("#123456")
+    expect(definition?.name).toBe("架空の精霊")
+    expect(definition?.portraits.default).toBe("default.svg")
+  })
+
+  it("雑談の差し色（chatAccent）を差し替え、仕事の差し色（accent）はそのまま", () => {
+    const edited = definitionWithAccent(FULL_DEFINITION_JSON, "chat", "#f2984a")
+    const definition = parseCharacterDefinition(edited)
+
+    expect(definition?.chatAccent).toBe("#f2984a")
+    expect(definition?.accent).toBe("#f2b0a0")
+  })
+
+  it("chatAccent を消すと欄が無くなり、ほかのキーは残る（仕事と同じにする）", () => {
+    const withChatAccent = definitionWithAccent(FULL_DEFINITION_JSON, "chat", "#f2984a")
+
+    const cleared = definitionWithoutChatAccent(withChatAccent)
+
+    expect(parseCharacterDefinition(cleared)?.chatAccent).toBeUndefined()
+    expect(JSON.parse(cleared)).not.toHaveProperty("chatAccent")
+    expect(parseCharacterDefinition(cleared)?.accent).toBe("#f2b0a0")
+    expect(parseCharacterDefinition(cleared)?.name).toBe("架空の精霊")
+  })
+
+  it("定義が無い・壊れているときは、その1件だけを持つ定義を作る", () => {
+    expect(
+      parseCharacterDefinition(definitionWithAccent(undefined, "work", "#123456"))?.accent,
+    ).toBe("#123456")
+    expect(
+      parseCharacterDefinition(definitionWithAccent("{壊れた", "chat", "#f2984a"))?.chatAccent,
+    ).toBe("#f2984a")
   })
 })
 

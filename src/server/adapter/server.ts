@@ -2,7 +2,8 @@
 // （docs/design.md 5章「server.ts」）。入力欄の `@` 補完が引くファイル一覧
 // （`GET /repository-file?t=<起動トークン>`）と、分析の画面が引くトークン消費の集計
 // （`GET /token-usage?t=<起動トークン>&days=<日数>`）・いまのコンテキストの内訳
-// （`GET /context-usage?t=<起動トークン>`）もここから配る。**フレームとコマンドが通る
+// （`GET /context-usage?t=<起動トークン>`）・控えを押したときに引く依頼の画像の原寸
+// （`GET /prompt-image/<id>?t=<起動トークン>`）もここから配る。**フレームとコマンドが通る
 // WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに受け口を足す）。
 //
 // **`Bun.serve` は使わない**（`node:http`。docs/coding-standards.md「Bun固有APIに寄せない」）。
@@ -10,9 +11,10 @@
 // 安全のための決まり（docs/design.md 9章）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
 //   - **起動トークン**（起動ごとの乱数。ディスクに書かない）は `/repository-file` と
-//     `/token-usage` と `/context-usage` を守る（ページ・同梱物・素材そのものは会話を含まない
-//     ので、トークンは求めない。いまのまま）。配るのは利用者の作業ディレクトリの中身・使った量・
-//     いまのセッションが積んでいるものの内訳で、誰にでも配ってよい静的な物ではない。
+//     `/token-usage`・`/context-usage`・`/prompt-image` を守る（ページ・同梱物・素材そのものは
+//     会話を含まないので、トークンは求めない。いまのまま）。配るのは利用者の作業ディレクトリの
+//     中身・使った量・いまのセッションが積んでいるものの内訳・依頼に添えた画像（会話の内容）で、
+//     誰にでも配ってよい静的な物ではない。
 //     **同じ1つを WebSocket の upgrade も見る**（`session-socket.ts`）
 
 import { randomBytes } from "node:crypto"
@@ -27,6 +29,11 @@ import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../shared/context-usage.ts"
+import {
+  parsePromptImage,
+  PROMPT_IMAGE_PATH_PREFIX,
+  promptImageIdSchema,
+} from "../../shared/prompt-image.ts"
 import { REPOSITORY_FILE_PATH } from "../../shared/repository-file.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
 import {
@@ -111,6 +118,12 @@ export type ReadTokenUsageSummary = (days: TokenUsageDays) => TokenUsageSummary
  */
 export type ReadContextUsage = () => Promise<ContextUsageReport>
 
+/**
+ * 棚（`src/server/core/prompt-image-shelf.ts`）から、id が指す原寸の data URL を引く。
+ * **棚に無い（捨てた・知らない）ときは undefined**（配る側が 404 にする）。
+ */
+export type FindPromptImage = (id: string) => string | undefined
+
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
 
@@ -133,8 +146,11 @@ export type ViewServerOptions = {
   readonly readTokenUsageSummary: ReadTokenUsageSummary
   /** `/context-usage` に配るコンテキストの内訳。 */
   readonly readContextUsage: ReadContextUsage
+  /** `/prompt-image/<id>` に配る原寸の引き口（棚の `find`）。 */
+  readonly findPromptImage: FindPromptImage
   /**
-   * 起動トークン（{@link createStartupToken}）。**`/repository-file` はこれが合わないと配らない**
+   * 起動トークン（{@link createStartupToken}）。**`/repository-file`・`/token-usage`・
+   * `/context-usage`・`/prompt-image` はこれが合わないと配らない**
    * （`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
    */
   readonly token: string
@@ -247,6 +263,11 @@ function respond(
 
   if (path === CONTEXT_USAGE_PATH && request.method === "GET") {
     writeContextUsage(request, response, options)
+    return
+  }
+
+  if (path.startsWith(PROMPT_IMAGE_PATH_PREFIX) && request.method === "GET") {
+    writePromptImage(request, response, path.slice(PROMPT_IMAGE_PATH_PREFIX.length), options)
     return
   }
 
@@ -380,6 +401,41 @@ function writeContextUsage(
     (report) => writeJson(response, report),
     () => writeJson(response, UNAVAILABLE_CONTEXT_USAGE),
   )
+}
+
+/**
+ * 依頼に添えた画像の原寸を1枚配る。**起動トークンが合わなければ 403**（配るのは会話の内容）。
+ * id の形が違う・棚に無い（記録の窓から落ちた・枚数の上限で押し出された）ときは 404 で、
+ * どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す。
+ * `src/browser/components/prompt-image.tsx`）。
+ *
+ * **data URL はここでデコードする**（棚は受け取った data URL のまま持つ）。`Content-Type` は
+ * 受け取ったときのメディアタイプ（`PROMPT_IMAGE_MEDIA_TYPES` の4つ）。ブラウザのディスクの
+ * キャッシュにも残さない（`no-store`）。
+ */
+function writePromptImage(
+  request: IncomingMessage,
+  response: ServerResponse,
+  rawId: string,
+  options: ViewServerOptions,
+): void {
+  if (!hasStartupToken(request, options.token)) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
+    response.end("forbidden\n")
+    return
+  }
+
+  const id = promptImageIdSchema.safeParse(rawId)
+  const dataUrl = id.success ? options.findPromptImage(id.data) : undefined
+  const image = dataUrl === undefined ? undefined : parsePromptImage(dataUrl)
+  if (image === undefined) {
+    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+    response.end("not found\n")
+    return
+  }
+
+  response.writeHead(200, { "content-type": image.mediaType, "cache-control": "no-store" })
+  response.end(Buffer.from(image.base64, "base64"))
 }
 
 /** 起動トークン（`?t=<token>`）が合うか。経路の照合は呼び出し側が済ませている。 */

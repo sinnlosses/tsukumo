@@ -14,18 +14,40 @@
 // 左右いっぱいに広がり、上端の罫線と一段沈んだ地で、伸び縮みするタスクの区画と切り分ける
 // （寸法の出どころは `sidebar.module.css` 冒頭の見本）。
 
+// **雑談中は4段に差し替える**（docs/design.md 13.7「雑談のときのサイドバー」）: 上から
+// プロフィールの札（`profile-card.tsx`）・最近の話題・覚えていること・下端の帯（セッションだけ）。
+// **差し替えを決めるのはこのファイル**で、`main.tsx` の `<Root>` ではない — 下端の帯は両方の
+// モードで同じ部品を使い、区画ひとまとまりは領域の側に置く（docs/design.md 2章「領域の機能と、
+// 置かれる機能」）ので、どちらの形もサイドバーの中に閉じる。
+
 import { type ReactElement } from "react"
 
+import { useSessionSelector } from "../../stores/session.tsx"
+import { PersonaMemorySection } from "./persona-memory-section.tsx"
+import { ProfileCard } from "./profile-card.tsx"
+import { RecentTopicSection } from "./recent-topic-section.tsx"
 import { SessionInfo } from "./session-info.tsx"
 import styles from "./sidebar.module.css"
 import { TaskSection } from "./task-section.tsx"
 
 export function Sidebar(): ReactElement {
+  const chatMode = useSessionSelector((session) => session.state.chatMode)
   return (
     <>
-      <TaskSection />
+      {chatMode ? (
+        <>
+          <ProfileCard />
+          {/* 2段目と3段目はまとめて1つの入れ物で転がす（札と下端の帯は伸び縮みしない）。 */}
+          <div className={styles["sidebar-chat-body"]}>
+            <RecentTopicSection />
+            <PersonaMemorySection />
+          </div>
+        </>
+      ) : (
+        <TaskSection />
+      )}
       <div className={styles["sidebar-footer"]}>
-        <SessionInfo />
+        <SessionInfo withCharacter={!chatMode} />
       </div>
     </>
   )

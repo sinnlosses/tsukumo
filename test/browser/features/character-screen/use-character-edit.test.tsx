@@ -189,6 +189,76 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([{ type: "set-outfit-accent", outfit: "heavy", color: "#123456" }])
   })
 
+  it("画面の差し色（仕事）は見た目だけ先に進め、送るのは少し待ってから set-accent", async () => {
+    const calls: unknown[] = []
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor({ ...FIXTURE_CHARACTER, accent: "#f2b0a0" }, (command) =>
+        calls.push(command),
+      ),
+    })
+    expect(ready(result.current).workAccent.value).toBe("#f2b0a0")
+
+    act(() => {
+      ready(result.current).workAccent.onChange("#111111")
+    })
+    act(() => {
+      ready(result.current).workAccent.onChange("#123456")
+    })
+    expect(ready(result.current).workAccent.value).toBe("#123456")
+    expect(calls).toEqual([])
+
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    expect(calls).toEqual([{ type: "set-accent", target: "work", color: "#123456" }])
+  })
+
+  it("chatAccent が無いパックでは、雑談の色見本に仕事の差し色を出し、戻す口は出さない", () => {
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(
+        { ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: undefined },
+        () => {},
+      ),
+    })
+
+    expect(ready(result.current).chatAccent.value).toBe("#f2b0a0")
+    expect(ready(result.current).resetChatAccent).toEqual({ kind: "hidden" })
+  })
+
+  it("chatAccent があるパックでは、その値を出し、戻す口が clear-chat-accent を送る", () => {
+    const calls: unknown[] = []
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(
+        { ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: "#f2984a" },
+        (command) => calls.push(command),
+      ),
+    })
+
+    expect(ready(result.current).chatAccent.value).toBe("#f2984a")
+    const reset = ready(result.current).resetChatAccent
+    if (reset.kind !== "shown") {
+      throw new Error("戻す口が出ていない")
+    }
+
+    act(() => {
+      reset.onClick()
+    })
+
+    expect(calls).toEqual([{ type: "clear-chat-accent" }])
+  })
+
+  it("雑談の差し色を変えると、少し待ってから set-accent（target: chat）を送る", async () => {
+    const calls: unknown[] = []
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(FIXTURE_CHARACTER, (command) => calls.push(command)),
+    })
+
+    act(() => {
+      ready(result.current).chatAccent.onChange("#f2984a")
+    })
+    await new Promise((resolve) => setTimeout(resolve, 250))
+
+    expect(calls).toEqual([{ type: "set-accent", target: "chat", color: "#f2984a" }])
+  })
+
   it("背景の有無を字に畳み、消す口は clear-background を送る", () => {
     const calls: unknown[] = []
     const absent = renderHook(() => useCharacterEdit(), {

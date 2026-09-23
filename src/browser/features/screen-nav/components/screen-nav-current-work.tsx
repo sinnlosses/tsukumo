@@ -29,6 +29,9 @@ export type ScreenNavCurrentWorkProps = {
 // 秘匿のためではない」）。
 const MAX_TOOL_TEXT_LENGTH = 8000
 
+/** 答え待ちが質問のときに一覧へ出す口（docs/design.md 13.9「いまの作業」）。 */
+const GO_TO_QUESTION_LABEL = "質問へ"
+
 export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): ReactElement {
   const { work, toggleRef } = props
   const listId = useId()
@@ -51,12 +54,10 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
           {work.mark}
         </span>
         <span className={styles["screen-nav-work-word"]}>{work.wordLabel}</span>
-        {work.runningStep.kind === "shown" ? (
+        {work.summary.kind === "text" ? (
           <>
             <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
-            <span className={styles["screen-nav-work-summary"]}>
-              {work.runningStep.summaryLabel}
-            </span>
+            <span className={styles["screen-nav-work-summary"]}>{work.summary.label}</span>
           </>
         ) : null}
       </button>
@@ -75,8 +76,17 @@ function CurrentWorkList(props: {
     <div id={props.id} className={styles["screen-nav-work-list"]} role="region">
       <p className={styles["screen-nav-work-heading"]}>
         {work.wordLabel}
-        {work.pendingHint ? "。入力欄の上で答えられる" : ""}
+        {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}
       </p>
+      {work.pendingHint.kind === "question" ? (
+        <button
+          type="button"
+          className={styles["screen-nav-work-go-to-question"]}
+          onClick={work.pendingHint.onGoToQuestion}
+        >
+          {GO_TO_QUESTION_LABEL}
+        </button>
+      ) : null}
       {work.runningStep.kind === "none" ? null : (
         <div className={styles["screen-nav-work-full"]}>
           <p className={styles["screen-nav-work-full-heading"]}>

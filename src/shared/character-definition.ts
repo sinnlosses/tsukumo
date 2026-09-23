@@ -58,6 +58,13 @@ export type CharacterDefinition = {
    * 1枚（`mini` と同じ）で、正方形を勧める。
    */
   readonly face: string | undefined
+  /**
+   * ひとことプロフィール（`docs/design.md` 13.7「雑談のときのサイドバー」）。雑談中のサイドバーの
+   * プロフィールの札で、名前の下に1行添える。**任意**で、無いパックは名前だけになる。
+   * **キャラクターの言葉なのでコードに持たない**（`CLAUDE.md` 原則4）。空白だけの値は無いのと
+   * 同じに畳む（札に空の行が出ないように）。
+   */
+  readonly tagline: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景（`docs/design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
@@ -120,6 +127,41 @@ export function definitionWithOutfitAccent(
 }
 
 /**
+ * 画面の差し色（`accent` / `chatAccent`）のうちどちらを差すか。`work` は仕事中（`accent`）、
+ * `chat` は雑談中だけ（`chatAccent`）に対応する（`docs/design.md` 13.2「雑談中は」/ 13.6）。
+ */
+export const ACCENT_TARGETS = ["work", "chat"] as const
+
+export type AccentTarget = (typeof ACCENT_TARGETS)[number]
+
+/** 外から届いた文字列が {@link ACCENT_TARGETS} のいずれかかどうかを検証する。 */
+export function isAccentTarget(value: string): value is AccentTarget {
+  return ACCENT_TARGETS.some((target) => target === value)
+}
+
+/**
+ * 画面の差し色（`accent` / `chatAccent`）1件を差し替えた JSON を返す。ほかのキーはそのまま残す。
+ * **`portraits` / `outfitAccents` と違い最上位の欄**なので、入れ子を重ねる
+ * {@link editedDefinitionJson} ではなく {@link editedTopLevelDefinitionJson} を使う。
+ */
+export function definitionWithAccent(
+  content: string | undefined,
+  target: AccentTarget,
+  color: string,
+): string {
+  return editedTopLevelDefinitionJson(content, target === "work" ? "accent" : "chatAccent", color)
+}
+
+/**
+ * `chatAccent` を消した JSON を返す（画面の「仕事と同じにする」）。**`accent` を消す口は無い**
+ * ——`accent` が無いと吹き出しなど画面全体の色が既定値へ落ちてしまい、`outfitAccents` の
+ * 「無ければ既定へ」に相当する戻り先が無いため（`docs/design.md` 13.6）。
+ */
+export function definitionWithoutChatAccent(content: string | undefined): string {
+  return editedTopLevelDefinitionJson(content, "chatAccent", undefined)
+}
+
+/**
  * 背景の素材を差し替えた JSON を返す。**覆いの不透明度（`veil`）はそのまま残す** — 画面から
  * 変えられるのは素材だけで、濃さは定義ファイルを手で直す（`docs/design.md` 13.6 / 13.8）。
  */
@@ -148,6 +190,8 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
     face: typeof value.face === "string" ? value.face : undefined,
+    tagline:
+      typeof value.tagline === "string" && value.tagline.trim() !== "" ? value.tagline : undefined,
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
   }
@@ -184,9 +228,26 @@ function editedDefinitionJson(
   key: string,
   value: string | undefined,
 ): string {
-  const source = asRecord(content === undefined ? undefined : parseJson(content))
+  const source = parsedDefinitionRecord(content)
   const edited = { ...asRecord(source[group]), [key]: value }
   return `${JSON.stringify({ ...source, [group]: edited }, undefined, 2)}\n`
+}
+
+/**
+ * 最上位のキー1つ（`accent` / `chatAccent`）を差し替えた JSON 文字列を作る。入れ子を重ねない点だけ
+ * {@link editedDefinitionJson} と違う。
+ */
+function editedTopLevelDefinitionJson(
+  content: string | undefined,
+  key: "accent" | "chatAccent",
+  value: string | undefined,
+): string {
+  const source = parsedDefinitionRecord(content)
+  return `${JSON.stringify({ ...source, [key]: value }, undefined, 2)}\n`
+}
+
+function parsedDefinitionRecord(content: string | undefined): Readonly<Record<string, unknown>> {
+  return asRecord(content === undefined ? undefined : parseJson(content))
 }
 
 function parseJson(content: string): unknown {

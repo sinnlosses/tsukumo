@@ -15,7 +15,6 @@
   color: var(--ink);
   border: 1px solid var(--rule);
   border-radius: 0.75rem;
-  font: inherit;
   overflow: hidden;
 }
 .image-zoom::backdrop {
@@ -31,6 +30,14 @@
   object-fit: contain;
   border-radius: 0.4rem;
 }
+/* 絵の代わりに控えを出しているときの1行（なぜ小さいのか）。絵の下・閉じるボタンの上に置く。 */
+.image-zoom-note {
+  margin: 0;
+  max-width: 100%;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  overflow-wrap: anywhere;
+}
 .image-zoom-close {
   align-self: flex-end;
   padding: 0.2rem 0.6rem;
@@ -38,7 +45,6 @@
   border-radius: 0.4rem;
   background: none;
   color: inherit;
-  font: inherit;
   font-size: var(--font-secondary);
   cursor: pointer;
 }

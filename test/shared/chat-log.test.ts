@@ -119,7 +119,9 @@ describe("chatLogByteSize", () => {
       requestRecord({
         turnId: 0,
         text: "あああ",
-        images: ["data:image/png;base64,architecture-tallying-decoy"],
+        images: [
+          { id: "fictional-id", thumbnail: "data:image/png;base64,architecture-tallying-decoy" },
+        ],
       }),
     ])
     const withoutImages = chatLogEntries([requestRecord({ turnId: 5, text: "あああ" })])

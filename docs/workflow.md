@@ -115,6 +115,26 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 **印が git の履歴に残らない**ので、取り残しも「誰がいつ取ったか」も `.git` を覗かないと分からない。
 `doing` を `main` に入れる形なら、同じことが `tasks.json` を読むだけで分かる。
 
+### アーカイブも `main` へ単独で送る（2026-09-23 決定）
+
+アーカイブ（`develop/tasks.json` の完了したタスクを `docs/history/tasks.md` へ、
+`develop/progress.md` の完了した小節を `docs/history/progress.md` へ移すこと）も、
+`doing`・`done` と同じく単独のコミットで `git -C <本体> merge --ff-only <枝>` を使う
+（手順は `CLAUDE.md`「## タスク運用」の「1サイクルの形」）。理由は3つ。
+
+- **開始の基準が `main` の完了件数で決まる。** `WORKFLOW.md` の基準（完了件数と文字数）は
+  `main` の `develop/tasks.json` を見て判定するので、並行して動かしている作業ツリーが
+  どれも同じ時点で基準に達する。一方だけがアーカイブして済む話ではない
+- **衝突を畳むドライバが無い2ファイルが絡む。** `develop/progress.md` はマージドライバ
+  （`scripts/merge-progress.ts`）が衝突を畳むが、`develop/tasks.json`・
+  `docs/history/tasks.md`・`docs/history/progress.md` には無い。基準に一斉に達した
+  作業ツリーが両方ともアーカイブのコミットを作ると、`git merge main` がこれらのファイルで
+  手で解く衝突になる
+- **アーカイブはやり直しが安い。** `archive.py` は `tasks.json` と `progress.md` の完了分を
+  機械的に移すだけの操作なので、衝突を手で解くより、自分のコミットを捨てて `main` に
+  追い付いてからやり直すほうが安い（2026-09-23 に実際に踏んで、この形に決めた。
+  `develop/retrospective.md` の `e59e0be`..`e2a24c5` の範囲）
+
 ## 関連
 
 - 手順そのもの: `CLAUDE.md`「進捗管理とHandoff」と「## タスク運用」の「1サイクルの形」

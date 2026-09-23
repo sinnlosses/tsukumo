@@ -17,6 +17,7 @@ import { commandCandidates } from "./command-suggestion.ts"
 import { isModelAlias } from "./command.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
+import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
@@ -72,8 +73,9 @@ export type RecordTime =
  */
 export type SessionRecord =
   /**
-   * 利用者の依頼。`images` は添えた画像の**控え**だけ（`docs/requirements.md` 4.10）。
-   * **原寸は記録に入らない**ので、ここから拡大して見る道は無い。
+   * 利用者の依頼。`images` は添えた画像の**控えと、棚の原寸を指す id の組**
+   * （`docs/requirements.md` 4.10）。**原寸は記録に入らない**（`hello` に載せない）。拡大して
+   * 見るときは id で棚から取りに行く（`src/shared/prompt-image.ts` の `promptImagePath`）。
    *
    * `turnId` は**そのターンの通し番号**（{@link SessionState.nextTurnId}）。窓から古い記録が
    * 落ちても番号は振り直されないので、**同じターンはセッションが続くかぎり同じ番号**になる。
@@ -82,7 +84,7 @@ export type SessionRecord =
       readonly kind: "request"
       readonly turnId: number
       readonly text: string
-      readonly images: readonly string[]
+      readonly images: readonly RecordedPromptImage[]
       readonly time: RecordTime
     }
   | { readonly kind: "detail"; readonly markdown: string }
@@ -499,6 +501,7 @@ export function applySessionEvent(
           expressionsWithPortrait: event.expressionsWithPortrait,
           mini: event.mini,
           face: event.face,
+          tagline: event.tagline,
           outfitAccents: event.outfitAccents,
           background: event.background,
           editable: event.editable,

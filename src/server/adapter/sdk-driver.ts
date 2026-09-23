@@ -44,6 +44,7 @@ import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
+import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import {
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
@@ -225,9 +226,10 @@ export function startSession(options: SessionDriverOptions): SessionDriver {
 
   return {
     prompt: (text, images) => {
-      // **原寸と控えはここで分かれる。** 控えだけが記録（`request`）へ行き、原寸は
-      // ストリーミング入力へ流れてこの場で手放す（`docs/requirements.md` 4.10）。
-      options.onEvent({ kind: "request", text, images: images.map((image) => image.thumbnail) })
+      // **原寸と控えはここで分かれる。** 控えと id だけが記録（`request`）へ行き、原寸は
+      // ストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる。
+      // `docs/requirements.md` 4.10）。
+      options.onEvent({ kind: "request", text, images: recordedPromptImages(images) })
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     promptWithoutRecord: (text) => {
@@ -768,7 +770,10 @@ function labelOf(expressions: readonly ExpressionChoice[], name: Expression): st
   return expressions.find((choice) => choice.name === name)?.label ?? name
 }
 
-/** 送る依頼1件。**原寸の画像はここまでで、`stream()` が渡したあとは誰も持たない。** */
+/**
+ * 送る依頼1件。**駆動が持つ原寸の画像はここまでで、`stream()` が渡したあとは持たない**
+ * （拡大表示のために残すのは棚 = `src/server/core/prompt-image-shelf.ts` の側）。
+ */
 type Prompt = {
   readonly text: string
   readonly images: readonly PromptContentBlock[]

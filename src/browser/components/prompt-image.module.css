@@ -20,7 +20,7 @@
   max-width: 100%;
   line-height: 0;
 }
-/* 控え（送ったあと）。外す口を持たないので、重ねるものが無い。`max-width: 100%` の理由は
+/* 控え（送ったあと）。押すと拡大するが、外す口は持たない。`max-width: 100%` の理由は
    `.prompt-image-chip` と同じ。 */
 .prompt-image-thumbnail {
   flex: 0 0 auto;
@@ -40,7 +40,7 @@
   border-radius: 0.4rem;
   background: var(--surface);
 }
-/* 札の絵を押すボタン（押すと原寸を拡大の面で開く）。既定のボタンの見た目は消し、
+/* 札・控えの絵を押すボタン（押すと原寸を拡大の面で開く）。既定のボタンの見た目は消し、
    絵と同じ矩形にする。`position: relative` は虫眼鏡を重ねる基準で、`×` はこのボタンの
    兄弟なので `.prompt-image-chip` のほうを基準に重なる。 */
 .prompt-image-zoom {
@@ -70,7 +70,7 @@
 .prompt-image-zoom:focus-visible .prompt-image-zoom-icon {
   opacity: 1;
 }
-/* 外す `×`。**札にだけ付く**（控えは押せない）。絵の右上の角に重ね、絵の外へはみ出さない
+/* 外す `×`。**札にだけ付く**（控えは送ったあとなので外せない）。絵の右上の角に重ね、絵の外へはみ出さない
    （はみ出すと入力欄の領域がスクロールする）。 */
 .prompt-image-remove {
   position: absolute;
@@ -86,7 +86,6 @@
   border-radius: 50%;
   background: var(--ground);
   color: var(--ink);
-  font: inherit;
   font-size: var(--font-secondary);
   line-height: 1;
   cursor: pointer;

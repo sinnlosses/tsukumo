@@ -14,6 +14,7 @@ import {
   useSessionSelector,
   type SessionStore,
 } from "../../../src/browser/stores/session.tsx"
+import { PROTOCOL_VERSION } from "../../../src/shared/frame.ts"
 import { type PendingAsk } from "../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
 import { sessionStoreWith } from "../session-store.ts"
@@ -118,5 +119,48 @@ describe("姿の store の購読", () => {
     })
 
     expect(commits).toBe(afterFirstRender)
+  })
+})
+
+describe("サーバと版が合わないとき（docs/design.md 4.4）", () => {
+  const REQUEST_EVENTS = {
+    type: "events",
+    events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
+  } as const
+
+  it("`hello` の版が違えば `mismatched` になり、そのあとの `events` を畳まない", () => {
+    const store = sessionStoreWith(INITIAL_SESSION_STATE)
+
+    store.receive({
+      type: "hello",
+      protocolVersion: PROTOCOL_VERSION - 1,
+      sessionId: "fictional-session",
+      state: INITIAL_SESSION_STATE,
+    })
+    store.receive(REQUEST_EVENTS)
+
+    expect(store.getSnapshot().protocol).toBe("mismatched")
+    expect(store.getSnapshot().state.records).toHaveLength(0)
+  })
+
+  it("版の合う `hello` がまた届けば `compatible` に戻り、その姿を使う", () => {
+    const store = sessionStoreWith(INITIAL_SESSION_STATE)
+    store.receive({
+      type: "hello",
+      protocolVersion: PROTOCOL_VERSION - 1,
+      sessionId: "fictional-session",
+      state: INITIAL_SESSION_STATE,
+    })
+
+    store.receive({
+      type: "hello",
+      protocolVersion: PROTOCOL_VERSION,
+      sessionId: "fictional-session",
+      state: INITIAL_SESSION_STATE,
+    })
+    store.receive(REQUEST_EVENTS)
+
+    expect(store.getSnapshot().protocol).toBe("compatible")
+    expect(store.getSnapshot().state.records).toHaveLength(1)
   })
 })
