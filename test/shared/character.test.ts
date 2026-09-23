@@ -1,9 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
 import { parseCharacterDefinition } from "../../src/shared/character-definition.ts"
-import { type CharacterInfo, toCharacterInfo } from "../../src/shared/character.ts"
+import { type CharacterInfo, effectiveAccent, toCharacterInfo } from "../../src/shared/character.ts"
 import { expressionChoices } from "../../src/shared/expression-choice.ts"
 import { EXPRESSIONS } from "../../src/shared/expression.ts"
+import { characterInfo } from "../fixture/character.ts"
 
 // characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const FULL_DEFINITION_JSON = JSON.stringify({
@@ -117,6 +118,7 @@ describe("toCharacterInfo", () => {
     expect(info?.editable).toBe(true)
     expect(info?.name).toBe("架空の精霊")
     expect(info?.accent).toBe("#f2b0a0")
+    expect(info?.chatAccent).toBeUndefined()
     expect(info?.expressions.map((choice) => choice.name)).toEqual([
       "default",
       "thinking",
@@ -260,6 +262,19 @@ describe("toCharacterInfo", () => {
     ).toBeUndefined()
   })
 
+  it("chatAccent があればそのまま持つ", () => {
+    const definition = parseCharacterDefinition(
+      JSON.stringify({ accent: "#6fe3cd", chatAccent: "#f2984a" }),
+    )
+
+    expect(
+      definition === undefined
+        ? undefined
+        : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
+            .chatAccent,
+    ).toBe("#f2984a")
+  })
+
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
     const info = toCharacterInfo({
       definition: undefined,
@@ -279,5 +294,27 @@ describe("toCharacterInfo", () => {
     expect(info.outfitAccents.default).toBeUndefined()
     expect(info.background).toBeUndefined()
     expect(info.editable).toBe(false)
+  })
+})
+
+describe("effectiveAccent（雑談中に切り替える accent。docs/design.md 13.2「雑談中は」）", () => {
+  it("仕事中は accent のまま", () => {
+    expect(
+      effectiveAccent(characterInfo({ accent: "#6fe3cd", chatAccent: "#f2984a" }), false),
+    ).toBe("#6fe3cd")
+  })
+
+  it("雑談中は chatAccent があればそちらに切り替わる", () => {
+    expect(effectiveAccent(characterInfo({ accent: "#6fe3cd", chatAccent: "#f2984a" }), true)).toBe(
+      "#f2984a",
+    )
+  })
+
+  it("雑談用の色を持たないパックは、雑談中も accent のまま", () => {
+    expect(effectiveAccent(characterInfo({ accent: "#6fe3cd" }), true)).toBe("#6fe3cd")
+  })
+
+  it("パックそのものが無ければ undefined（既定値に落ちる）", () => {
+    expect(effectiveAccent(undefined, true)).toBeUndefined()
   })
 })

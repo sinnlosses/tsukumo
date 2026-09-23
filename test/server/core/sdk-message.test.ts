@@ -41,6 +41,12 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
+  it("ゼロ幅スペースのような見えない文字だけのテキストも本文にしない", () => {
+    const message = assistantMessage([{ type: "text", text: "​\n﻿" }])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
   it("thinking は変換しない（内部の型にも入れない）", () => {
     const message = assistantMessage([
       { type: "thinking", thinking: "ダミーの思考" },

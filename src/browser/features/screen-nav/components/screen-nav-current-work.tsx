@@ -34,7 +34,11 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
   const listId = useId()
 
   return (
-    <div className={styles["screen-nav-work"]} data-work-state={work.state}>
+    <div
+      className={styles["screen-nav-work"]}
+      data-work-state={work.state}
+      data-chat-idle={work.chatIdle}
+    >
       <button
         type="button"
         ref={toggleRef}
@@ -44,7 +48,7 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
         onClick={work.onToggle}
       >
         <span className={styles["screen-nav-work-mark"]} aria-hidden="true">
-          {work.state === "idle" ? "○" : "●"}
+          {work.mark}
         </span>
         <span className={styles["screen-nav-work-word"]}>{work.wordLabel}</span>
         {work.runningStep.kind === "shown" ? (

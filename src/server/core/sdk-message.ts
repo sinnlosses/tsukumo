@@ -11,6 +11,7 @@
 
 import { isPlainObject } from "remeda"
 
+import { isBlankText } from "../../shared/blank-text.ts"
 import { type Expression } from "../../shared/expression.ts"
 import {
   type CommandDescription,
@@ -211,7 +212,7 @@ function assistantBlockEvents(
   }
 
   if (block.type === "text") {
-    return typeof block.text === "string" && block.text.trim() !== ""
+    return typeof block.text === "string" && !isBlankText(block.text)
       ? [{ kind: "utterance", text: block.text }]
       : []
   }

@@ -114,6 +114,22 @@ describe("useLayout", () => {
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
   })
 
+  it("isSplitChanged は既定の比率では false、動かすと true になり、onReset で false に戻る", () => {
+    const { result } = renderHook(() => useLayout(false))
+
+    expect(result.current.isSplitChanged).toBe(false)
+
+    act(() => {
+      result.current.onTopLeftCommit(35)
+    })
+    expect(result.current.isSplitChanged).toBe(true)
+
+    act(() => {
+      result.current.onReset()
+    })
+    expect(result.current.isSplitChanged).toBe(false)
+  })
+
   it("ref が未接続のときの onChange は書き込み先が無いだけで落ちない", () => {
     const { result } = renderHook(() => useLayout(false))
 

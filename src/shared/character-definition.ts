@@ -39,6 +39,12 @@ export type CharacterDefinition = {
    * フォーカスの輪など、13.1 原則1が許す場所）に効く。無ければ画面側の既定値に落ちる。
    */
   readonly accent: string | undefined
+  /**
+   * 雑談中だけ効くキャラクターの色（`docs/design.md` 13.2「雑談中は」/ 13.7）。**`accent` と
+   * 同じ枠を、モードに応じて差し替えるだけ**（つまみは増えない）。**任意**で、無いパックは
+   * 雑談中も `accent` のまま（仕事と同じ差し色）。
+   */
+  readonly chatAccent: string | undefined
   readonly portraits: Readonly<Record<Expression, string | undefined>>
   /**
    * ミニ立ち絵の素材のファイル名（レポートの筆先に添う1体。docs/requirements.md 4.3）。
@@ -137,6 +143,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
   return {
     name: typeof value.name === "string" ? value.name : undefined,
     accent: typeof value.accent === "string" ? value.accent : undefined,
+    chatAccent: typeof value.chatAccent === "string" ? value.chatAccent : undefined,
     expressions: toExpressionLabels(value.expressions),
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
