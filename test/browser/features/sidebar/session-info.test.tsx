@@ -4,7 +4,6 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { SessionInfo } from "../../../../src/browser/features/sidebar/session-info.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
-import { MODEL_ALIASES } from "../../../../src/shared/command.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionInfo as SessionInfoState,
@@ -19,8 +18,7 @@ afterEach(() => {
 
 /**
  * `init` が届いたあと（`running`）の架空の土台。テストはここから `permissionMode` /
- * `sessionId` だけを変えて使う。**`model` はここに無い**（`SessionState.model` は
- * `session` と独立なので、`renderSessionInfo` の第一引数に直接渡す）。
+ * `sessionId` だけを変えて使う。
  */
 const RUNNING_SESSION: Extract<SessionInfoState, { kind: "running" }> = {
   kind: "running",
@@ -54,14 +52,18 @@ function selectValue(element: HTMLElement): string {
 }
 
 describe("SessionInfo", () => {
-  it("状態の model / permissionMode の値を <select> に選択する", () => {
+  // 仕事/雑談のトグル・モデル・許可モードのドロップダウンは帯（`features/screen-nav/`）へ
+  // 移った（docs/design.md 13.9「何を外すか」）。ここに同じ <select> を2つ置かない。
+  it("モード・モデル・許可モードの <select> は無い（帯へ移った）", () => {
     renderSessionInfo({
       model: "claude-sonnet-5",
+      chatMode: true,
       session: { ...RUNNING_SESSION, permissionMode: "plan" },
     })
 
-    expect(selectValue(screen.getByLabelText("モデル"))).toBe("sonnet")
-    expect(selectValue(screen.getByLabelText("許可モード"))).toBe("plan")
+    expect(screen.queryByLabelText("モード")).toBeNull()
+    expect(screen.queryByLabelText("モデル")).toBeNull()
+    expect(screen.queryByLabelText("許可モード")).toBeNull()
   })
 
   it("キャラクターの <select> は選択肢が1つでも出す", () => {
@@ -130,127 +132,16 @@ describe("SessionInfo", () => {
     expect(select.title).toBe("")
   })
 
-  it("ターン進行中でもモデル・許可モードの <select> は無効にしない（会話は消えないため）", () => {
-    renderSessionInfo({ turn: { kind: "running", startedAt: 0 } })
-
-    expect((screen.getByLabelText("モデル") as HTMLSelectElement).disabled).toBe(false)
-    expect((screen.getByLabelText("許可モード") as HTMLSelectElement).disabled).toBe(false)
-  })
-
-  it("状態の chatMode をモードの <select> に選択する", () => {
-    renderSessionInfo({ chatMode: false })
-    expect(selectValue(screen.getByLabelText("モード"))).toBe("work")
-
-    cleanup()
-    renderSessionInfo({ chatMode: true })
-    expect(selectValue(screen.getByLabelText("モード"))).toBe("chat")
-  })
-
-  it("モードを変更すると set-chat-mode が dispatch される", () => {
-    const calls: unknown[] = []
-    renderSessionInfo({ chatMode: false }, (command) => {
-      calls.push(command)
-    })
-
-    fireEvent.change(screen.getByLabelText("モード"), { target: { value: "chat" } })
-
-    expect(calls).toEqual([{ type: "set-chat-mode", chat: true }])
-  })
-
-  it("ターン進行中はモードの <select> が無効になり、理由が title に出る", () => {
-    // 切り替えは駆動の起こし直しで画面が初期化されるので、キャラクターの <select> と
-    // 同じ条件で塞ぐ（docs/requirements.md 4.9）。
-    renderSessionInfo({ turn: { kind: "running", startedAt: 0 } })
-
-    const select = screen.getByLabelText("モード") as HTMLSelectElement
-    expect(select.disabled).toBe(true)
-    expect(select.title.length).toBeGreaterThan(0)
-  })
-
-  it("ターンが終わるとモードの <select> は有効に戻る", () => {
-    renderSessionInfo({ turn: { kind: "idle" } })
-
-    const select = screen.getByLabelText("モード") as HTMLSelectElement
-    expect(select.disabled).toBe(false)
-    expect(select.title).toBe("")
-  })
-
   it("パックの一覧が届いていなければ、キャラクターの <select> は出さない", () => {
     renderSessionInfo({})
 
     expect(screen.queryByLabelText("キャラクター")).toBeNull()
   })
-
-  it("モデルの<select>の選択肢は MODEL_ALIASES と過不足なく一致する（片方だけの追加漏れを防ぐ）", () => {
-    renderSessionInfo({})
-
-    const select = screen.getByLabelText("モデル") as HTMLSelectElement
-    const optionValues = Array.from(select.options).map((option) => option.value)
-
-    expect([...optionValues].sort()).toEqual([...MODEL_ALIASES].sort())
-  })
-
-  it("model が fable を含むとき、モデルの<select>は fable を選択する", () => {
-    renderSessionInfo({ model: "claude-fable-5-1" })
-
-    expect(selectValue(screen.getByLabelText("モデル"))).toBe("fable")
-  })
-
-  it("model が opus のみを含むとき、fable を誤って選択しない", () => {
-    renderSessionInfo({ model: "claude-opus-5" })
-
-    expect(selectValue(screen.getByLabelText("モデル"))).toBe("opus")
-  })
-
-  it("model が sonnet / haiku のとき、fable を誤って選択しない", () => {
-    renderSessionInfo({ model: "claude-sonnet-5" })
-    expect(selectValue(screen.getByLabelText("モデル"))).toBe("sonnet")
-
-    cleanup()
-    renderSessionInfo({ model: "claude-haiku-5" })
-    expect(selectValue(screen.getByLabelText("モデル"))).toBe("haiku")
-  })
-
-  it("モデルを変更すると set-model が dispatch される", () => {
-    const calls: unknown[] = []
-    renderSessionInfo({ model: "claude-sonnet-5" }, (command) => {
-      calls.push(command)
-    })
-
-    fireEvent.change(screen.getByLabelText("モデル"), { target: { value: "opus" } })
-
-    expect(calls).toEqual([{ type: "set-model", model: "opus" }])
-  })
-
-  it("許可モードを変更すると set-permission-mode が dispatch される", () => {
-    const calls: unknown[] = []
-    renderSessionInfo({ session: { ...RUNNING_SESSION, permissionMode: "auto" } }, (command) => {
-      calls.push(command)
-    })
-
-    fireEvent.change(screen.getByLabelText("許可モード"), { target: { value: "plan" } })
-
-    expect(calls).toEqual([{ type: "set-permission-mode", mode: "plan" }])
-  })
-
-  it("bypassPermissions を選ぶと警告の見た目のクラスが付く", () => {
-    renderSessionInfo({ session: { ...RUNNING_SESSION, permissionMode: "bypassPermissions" } })
-
-    expect(screen.getByLabelText("許可モード").className).toContain("permission-mode-select-danger")
-  })
-
-  it("bypassPermissions 以外では警告のクラスが付かない", () => {
-    renderSessionInfo({ session: { ...RUNNING_SESSION, permissionMode: "auto" } })
-
-    expect(screen.getByLabelText("許可モード").className).not.toContain(
-      "permission-mode-select-danger",
-    )
-  })
 })
 
 // 並びは寿命順ではなく触る頻度順（`session-info.tsx` の冒頭コメント）。
 describe("SessionInfo の並び", () => {
-  it("並びは モード・モデル・許可モード・キャラクター・セッション の順", () => {
+  it("並びは キャラクター・セッション の順", () => {
     renderSessionInfo({
       characterPacks: [{ name: "tsukumo-spirit", label: "つくもの精霊" }],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
@@ -259,9 +150,9 @@ describe("SessionInfo の並び", () => {
     })
 
     const labels = screen
-      .getAllByText(/^(モード|モデル|許可モード|キャラクター|セッション)$/)
+      .getAllByText(/^(キャラクター|セッション)$/)
       .map((element) => element.textContent)
 
-    expect(labels).toEqual(["モード", "モデル", "許可モード", "キャラクター", "セッション"])
+    expect(labels).toEqual(["キャラクター", "セッション"])
   })
 })

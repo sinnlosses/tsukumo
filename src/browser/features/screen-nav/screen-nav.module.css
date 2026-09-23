@@ -1,6 +1,6 @@
 /* 画面のナビの帯（`<ScreenNav>`。src/browser/features/screen-nav/。docs/design.md 13.9）。
-   **全画面の最上部に1本**。左端に部屋の名前、その右に3つの口（会話 / キャラクター /
-   トークン消費）、その右にいまの動き方の読み（モデル・許可モード・ブランチ）、右端に答え待ちの印。
+   **全画面の最上部に1本**。左端に部屋の名前、その右に仕事/雑談のトグル、その右に3つの口
+   （会話 / キャラクター / トークン消費）、右端にモデル・許可モードのドロップダウンと答え待ちの印。
    高さは `--screen-nav-height`（30px）で、**同じ値を `<Layout>` も読む**（帯と gap のぶんだけ
    grid を縮めるため。layout.module.css）。
 
@@ -24,6 +24,44 @@
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
   white-space: nowrap;
+}
+/* 仕事 / 雑談のトグル（13.9「動き方の操作子」）。**2つの `<button>` を1つの枠に並べる**。 */
+.screen-nav-chat-mode {
+  display: flex;
+  flex: none;
+  gap: 1px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.screen-nav-chat-mode-button {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border: none;
+  background: var(--surface);
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-secondary);
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.screen-nav-chat-mode-button:hover {
+  color: var(--ink);
+}
+/* いまの側は地を --accent、字を --ground にして太さも変える（色だけにしない。13.1 原則1）。 */
+.screen-nav-chat-mode-button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--ground);
+  font-weight: 600;
+}
+/* ターン進行中は押せない。`disabled` にはせず `aria-disabled` で伝える
+   （13.9「動き方の操作子」。`disabled` だとフォーカスも理由の title も届かなくなる）。 */
+.screen-nav-chat-mode-button[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.6;
 }
 /* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。 */
 .screen-nav-gates {
@@ -55,36 +93,46 @@
   background: var(--surface-accent);
   color: var(--ink);
 }
-/* いまの動き方の読み（モデル・許可モード。13.9）。**押せない字**で、右端へ寄せる
+/* モデル・許可モードのドロップダウン（13.9「動き方の操作子」）。右端へ寄せる
    （残りの幅はここが吸うので、口は左に詰まったまま）。**区切りの記号は置かず**、等幅と本文書体の
    交替で区切る（13.1 原則3）。 */
-.screen-nav-status {
+.screen-nav-model-permission {
   display: flex;
   flex: 1;
-  align-items: baseline;
+  align-items: center;
   justify-content: flex-end;
-  gap: 0.45rem;
+  gap: 0.3rem;
   min-width: 0;
+}
+/* 部品は `components/select.tsx` の素の `<select>` のまま。見た目だけ帯に合わせる
+   （枠を消し、下向きの矢印を CSS で描く。13.9）。 */
+.screen-nav-model-select,
+.screen-nav-permission-mode-select {
+  appearance: none;
+  padding: 0.15rem 1.1rem 0.15rem 0.3rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E")
+    no-repeat right 0.3rem center;
+  background-size: 0.5rem;
   color: var(--ink-quiet);
+  font: inherit;
   font-size: var(--font-label);
+  cursor: pointer;
 }
 /* 機械が付けた名前は等幅（13.1 原則3）。 */
-.screen-nav-model {
+.screen-nav-model-select {
   font-family: var(--font-mono);
-  white-space: nowrap;
-}
-/* 人の言葉なので本文書体のまま（`.screen-nav-model` との交替が区切りになる）。 */
-.screen-nav-permission-mode {
-  white-space: nowrap;
 }
 /* 「全部許す」のときだけ字に意味の色を載せる。**ラベルの文字が必ず付く**ので、色だけで
    意味を伝えることにならない（13.1 原則5。色は既にある `--state-ng`）。 */
-.screen-nav-permission-mode.is-danger {
+.screen-nav-permission-mode-select.is-danger {
+  border-color: var(--state-ng);
   color: var(--state-ng);
 }
 /* 答え待ちの印は帯の右端（13.9。もとはキャラクター画面とトークン消費の画面の戻る口の横に
-   あった）。**色だけにしない**ので字も出す。右へ押すのは読み（`.screen-nav-status`）の役目なので、
-   ここは読みの隣に置くだけ。 */
+   あった）。**色だけにしない**ので字も出す。 */
 .screen-nav-pending {
   margin-left: 0.5rem;
   color: var(--state-warn);
@@ -113,10 +161,11 @@
     height: auto;
     margin-bottom: 0.5rem;
   }
-  /* 並んだ3つの口と、帯の右端の読み・印・左端の部屋の名前は「≡」の中へ移る。 */
+  /* 並んだ3つの口・トグル・ドロップダウン・帯の右端の印・左端の部屋の名前は「≡」の中へ移る。 */
   .screen-nav-gates,
   .screen-nav > .screen-nav-room,
-  .screen-nav > .screen-nav-status,
+  .screen-nav > .screen-nav-chat-mode,
+  .screen-nav > .screen-nav-model-permission,
   .screen-nav > .screen-nav-pending {
     display: none;
   }
@@ -147,7 +196,8 @@
     color: var(--state-warn);
     font-size: var(--font-label);
   }
-  /* 押している間だけ落ちてくる3つの口。**重ねて出す**ので段は増えない。 */
+  /* 押している間だけ落ちてくる面。**重ねて出す**ので段は増えない。**顔と部屋の名前 → トグル →
+     3つの口 → いまの作業 → モデル・許可モード**の順（13.9「狭い画面」）。 */
   .screen-nav-panel {
     position: absolute;
     top: calc(100% + 0.25rem);
@@ -155,6 +205,7 @@
     z-index: 21;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 0.3rem;
     min-width: 11rem;
     padding: 0.5rem;
@@ -173,10 +224,9 @@
     margin-left: 0;
     text-align: center;
   }
-  /* 落ちてくる面では読みを縦に積む（横に並べる幅が無い）。 */
-  .screen-nav-panel .screen-nav-status {
+  /* 落ちてくる面ではドロップダウンを縦に積む（横に並べる幅が無い）。 */
+  .screen-nav-panel .screen-nav-model-permission {
     flex-direction: column;
-    align-items: center;
     margin-left: 0;
   }
 }

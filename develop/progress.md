@@ -55,6 +55,14 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 仕事/雑談・モデル・許可モードの変える口を帯へ移した（T-381）
+
+帯に仕事/雑談のトグルとモデル・許可モードの `<select>` を置き、サイドバーのセッション情報はキャラクターとセッションの切り替えだけになった。ターン中の仕事/雑談の断りは専用の文面になった。
+
+### 2026-09-23 design.md 4章から型の写しを外し、参照と決定の理由だけにした（T-372）
+
+`SessionEvent` / `SessionState` の表と `ClientCommand` / `ServerFrame` のコードブロックを`src/shared/` の型定義への参照に置き換え、コードから読めない決定だけ残した。腐っていた写し（実物に無い `new-session` と `session-started`、2つの定数の旧名）も同時に直した。
+
 ### 2026-09-23 container をフックの戻り値の展開渡しに揃えた（T-371）
 
 `screen-nav` / `task-board` / `token-usage-screen` / `layout` の4つを `{...use<機能>()}` の1行にし、presenter の Props をフックの戻り値の型のエイリアスにした。値を1つ足すのに container と presenter の両方へ名前を書き足す往復が消え、対になる container 11個すべてが同じ形になった。
