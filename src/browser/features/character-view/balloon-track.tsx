@@ -1,13 +1,13 @@
 // 吹き出しの並び（<BalloonTrack>。docs/design.md 6.1）。**吹き出しはセリフ1件につき1つ**、
 // DOM は新しい順（先頭が最新）に並べる。CSS の `.balloon-track`（`column-reverse`。
 // `character-view.module.css`）が視覚上は最新を下端に置き、過去のセリフを上へ押し上げる
-// （旧・サーバ側で HTML を組み立てていた頃と同じ並びの規約。docs/requirements.md 4.2「吹き出し」）。
+// （旧・サーバ側で HTML を組み立てていた頃と同じ並びの規約。docs/display.md 4.2「吹き出し」）。
 //
 // セリフが1件も無いときは、プレースホルダを吹き出し1件として出す（案内文に差し替える案を
 // 見送った経緯は docs/history/tasks-archive.md）。
 //
 // **吹き出しに出るのは `speak` で来たセリフだけ。** ツールの実行中に「作業中」の一言を重ねる
-// 経路は、表情の自動の上書きごと撤去した（docs/requirements.md 4.2）。
+// 経路は、表情の自動の上書きごと撤去した（docs/display.md 4.2）。
 
 import { type ReactElement } from "react"
 

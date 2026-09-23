@@ -2,7 +2,7 @@
 // `<dialog>` を置く。フックも算出も持たず、`hooks/use-speech-log.ts` が畳んだ値と呼び先を
 // そのまま置く（docs/design.md 2章「機能の中を分ける」）。
 //
-// **中身はキャラビューの舞台をそのまま上へ伸ばした形**（docs/requirements.md 4.2）。立ち絵は
+// **中身はキャラビューの舞台をそのまま上へ伸ばした形**（docs/display.md 4.2）。立ち絵は
 // キャラビューのものと同じ `<Portrait>` を受け取って床（`.speech-log-floor`）に置き、吹き出しは
 // キャラビューと同じ `<Balloon>` で描く。どこに重ねるかは CSS（`character-view.module.css` の
 // anchor positioning）が決める。

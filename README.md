@@ -316,6 +316,7 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 - [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
 - [`docs/design.md`](./docs/design.md) — 設計書（`shared` / `server`（`core`・`adapter`）/ `browser` の層・プロトコル・部品・キャラクターパック）
 - [`docs/screen-design.md`](./docs/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
+- [`docs/display.md`](./docs/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
 - [`docs/chat-mode.md`](./docs/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
 - [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図・設計判断・目視確認の手順・既知の制約）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）

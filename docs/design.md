@@ -182,7 +182,10 @@ src/
   server/                     サーバ（Bun）側。判断（core/）と境界（adapter/）の2段
     core/                     サーバ側の純粋な判断。node: / SDK / ws を import しない
       session-driver.ts       駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
-      session-manager.ts      セッション1つの { driver, state, subscribers }。reducer をサーバ側でも回す
+      session-manager.ts      セッション1つの { generation, state, subscribers }。reducer をサーバ側でも回す
+      event-batch.ts          届いたイベントをまとめて配る束（間隔と、書きかけの本文の連結）
+      driver-command.ts       起き上がっている駆動に1件頼む（受け付けたかどうかの返し方 DispatchResult も）
+      chat-archive-entry.ts   届いたイベント1件を雑談の会話のアーカイブの1行に変える（残すのは依頼とセリフだけ）
       session-launch.ts       起こす一続きの順序（外に触る部分は session-start.ts が渡す。起動も切り替えも同じ）
       character-selection.ts  どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
       pending-answer.ts       答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
@@ -190,11 +193,12 @@ src/
       session-restore.ts      続きから始めるセッションを選ぶ・transcript を履歴イベントにする
       port-resolution.ts      どのポートで試すかの決定（listen そのものは adapter/server.ts）
       config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
-      context-usage.ts        コンテキストの内訳を記録に残す書き口の契約（書くのは adapter/context-usage-log.ts）
-      token-usage.ts          トークン消費を記録する判断（何を1行にするか）と書き口の契約（書くのは adapter/token-usage-log.ts）
+      context-usage.ts        コンテキストの内訳を記録に残す書き口の契約と、セッション1つにつき1行だけ書く係
+      token-usage.ts          トークン消費を記録する判断（何を1行にするか）と書き口の契約、1代ぶんの累計と内訳を持つ係
       prompt-image-shelf.ts   依頼に添えた画像の原寸の棚（直近の数枚をプロセスのメモリに持ち、/prompt-image/<id> で配る）
       report-notation.ts / speech-cadence.ts / chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-compact.ts
-                              systemPrompt に足す規約・記憶・話しかけの文面（どれをどの順で渡すかは system-prompt.ts が決める）
+                              systemPrompt に足す規約・記憶・話しかけの文面（どれをどの順で渡すかは system-prompt.ts が決める）。
+                              chat-compact.ts は /compact の文面に加えて、雑談のログの走行合計と閾値の見張りも持つ
       system-prompt.ts        systemPrompt の append の組み立て（人格 → 規約 → 雑談の記憶。モードで並びが入れ替わる）
       host.ts                 ホストのポート（showView）。実装は adapter/orca-host.ts
     adapter/                  外の世界に触る場所。1ファイル = 1つの境界
@@ -844,10 +848,39 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 `src/server/core/session-manager.ts` を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
 - `createSessionManager(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
-  (3) バッチに積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms）ごとに `events` フレームを購読者へ配る
+  (3) その代の束に積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms。`event-batch.ts`）ごとに `events`
+  フレームを購読者へ配る
 - `dispatch(command)`: `switch (command.type)` で駆動へ渡す。**ここが唯一の分岐**
 - `subscribe(send)`: 接続ごとに `hello` を送ってから購読に加える
 - **セッションは1つで、鍵を持たない**（8章）
+
+**代のあいだだけ意味のある勘定は、駆動1代ぶんの持ち物（`SessionGeneration`）に集める。**
+起こし直し（`restart`）は**それを丸ごと作り直すこと**で、勘定を1つずつ空へ戻す行を持たない
+——勘定を1つ足すたびに「宣言」「積むところ」「`restart` で戻すところ」の3か所を書き足すことに
+なり、`restart` へ足し忘れても型は落とさなかった。いま `restart` が戻すのは、代の持ち物
+（`generation = startGeneration(request)`）と画面の状態（`replaceState(INITIAL_SESSION_STATE)`）の
+2つだけ。
+
+| 持ち物                            | 置き場                                        | 代をまたぐか                                     |
+| --------------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| 配る束（間隔と連結）              | `event-batch.ts`                              | またがない（積み残しを新しい画面へ配らない）     |
+| 雑談のログの走行合計と `/compact` | `chat-compact.ts`                             | またがない（復元されたログが新しい圧縮点から先） |
+| トークンの累計と1ターンの内訳     | `token-usage.ts`                              | またがない（`query()` が変われば累計も振り出し） |
+| 起き上がった駆動                  | `session-manager.ts`（代の入れ物）            | またがない                                       |
+| コンテキストの内訳を書いた印      | `context-usage.ts`                            | **またぐ**（同じIDなら2行目を書かない）          |
+| 依頼の原寸の棚                    | `prompt-image-shelf.ts`（持ち主は `main.ts`） | **またぐ**（捨てるのは記録から消えたときだけ）   |
+
+**「イベントを受けて何かを記録するもの」は、その概念のファイルへ寄せる**（`session-manager.ts`
+が `if` の列で全部を持たない）。`chat-compact.ts` / `token-usage.ts` / `context-usage.ts` は
+**書き口の契約と一緒に、走行中の勘定を持つ係**も出し、`chat-archive-entry.ts` は「どのイベントを
+アーカイブの1行にするか」だけを持つ。`session-manager.ts` に残るのは**どの順で・どちらの由来の
+ときに呼ぶか**（`origin` と `chatMode` の門）だけ。
+
+**「ターン中なら断る」の判定は `dispatch` に1か所**（`state.turn.kind === "running"` の中で
+コマンドの種類ごとに定型文を選ぶ）。その手前に「雑談の外なら断る」の門が1つあり、**順は
+「雑談の外か」→「ターン中か」**——仕事のときに押された `nudge` にターン中の理由を返さないため。
+見た目の編集のコマンドの一覧（`CHARACTER_EDIT_COMMAND_TYPES`）は `src/shared/command.ts` の
+1つの並びから型も判定も導く（二重に列挙しない）。
 
 ### character-pack.ts（adapter）
 

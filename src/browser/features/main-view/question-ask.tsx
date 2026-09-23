@@ -13,12 +13,16 @@
 //
 // **質問の本文は会話の内容そのもの**なので、ここから外へ出す経路は作らない
 // （`docs/coding-standards.md`「会話内容の扱い」）。
+//
+// **札まで連れてくるスクロールは `hooks/use-question-ask-scroll.ts`**（外の世界に触るフックだけが
+// 余分。docs/design.md 2章「機能の中を分ける」）。
 
-import { useEffect, useRef, type ReactElement } from "react"
+import { type ReactElement } from "react"
 
 import { useQuestionAnswer, type QuestionOptionRow } from "../../stores/question-answer.tsx"
 import { useQuestionScroll } from "../../stores/question-scroll.tsx"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
+import { useQuestionAskScroll } from "./hooks/use-question-ask-scroll.ts"
 import { Markdown } from "./markdown/markdown.tsx"
 import notationStyles from "./markdown/report-notation.module.css"
 import styles from "./question-ask.module.css"
@@ -41,29 +45,8 @@ export function QuestionAsk(): ReactElement | null {
   // 質問が**いまのやり取り**のものだと分かるように戻る口を添える。
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   const { signal: scrollSignal } = useQuestionScroll()
-  const cardRef = useRef<HTMLElement>(null)
   const askId = question.kind === "asking" ? question.id : undefined
-
-  // 新しい質問が来たら札まで連れてくる（長いレポートの下に出るので、そのままでは画面の外に
-  // いることがある）。**React の外＝スクロール位置への書き込み**なので `useEffect`。
-  // `block: "nearest"` なので、すでに見えている札では動かない。
-  useEffect(() => {
-    if (askId === undefined) {
-      return
-    }
-    cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }, [askId])
-
-  // 帯の「いまの作業」の一覧にある「質問へ」（`stores/question-scroll.tsx`）を押したときも、
-  // 同じ質問を見ている間（`askId` が変わっていない間）は上の effect が働かないので、別の
-  // effect で同じスクロールをやり直す。**`scrollSignal === 0` は初回描画**（まだ一度も
-  // 押されていない）ので何もしない。
-  useEffect(() => {
-    if (scrollSignal === 0) {
-      return
-    }
-    cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }, [scrollSignal])
+  const cardRef = useQuestionAskScroll(askId, scrollSignal)
 
   if (question.kind === "none") {
     return null
@@ -127,7 +110,7 @@ export function QuestionAsk(): ReactElement | null {
 
 /**
  * 選択肢1つぶんのカード。**押す口は `<input>` と `<label>` の組**（単一選択は radio、
- * **複数選択はチェックボックス**。`docs/requirements.md` 4.2）で、説明と `preview` は
+ * **複数選択はチェックボックス**。`docs/display.md` 4.2）で、説明と `preview` は
  * その外に置く——`preview` は表や図になるので、`<label>`（中身は文字の並びだけ）にも
  * `<button>` にも入れられない。
  */

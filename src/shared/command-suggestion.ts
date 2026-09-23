@@ -1,5 +1,5 @@
 // 入力欄の `/` 補完に出す候補。**セッションの姿（`session-state.ts`）から導くだけの純粋関数**で、
-// 状態そのものは持たない（`docs/requirements.md` 4.2「入力欄」）。
+// 状態そのものは持たない（`docs/display.md` 4.2「入力欄」）。
 //
 // 出どころは2つある: `init` で届く名前の一覧（`SessionState.slashCommands`）と、駆動が起動直後に
 // 取りに行く説明付きの一覧（`SessionState.commandDescriptions`）。**どちらを名前の出どころに
@@ -22,7 +22,7 @@ import { type CommandDescription } from "./session-event.ts"
  *
  * **`slashCommands` がまだ空（`init` が届く前）は `commandDescriptions` をそのまま名前の出どころに
  * する。** `supportedCommands()` は `init` を待たずに届くため、これで最初の依頼を送る前でも
- * 候補が出せる（実測。docs/requirements.md 4.2）。ただしこの間は端末専用
+ * 候補が出せる（実測。docs/display.md 4.2）。ただしこの間は端末専用
  * （`doctor` など）の除外がまだ効かない。**`init` が届き `slashCommands` が埋まった時点で、
  * 除外込みの一覧に戻る**ので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
  */
@@ -43,7 +43,7 @@ export function commandSuggestions(
 /**
  * 入力欄の `/` 補完に出せるコマンド名。`slashCommands` から端末専用
  * （`terminalSlashCommands`。`doctor` / `color` / `reload-plugins` など）を除く
- * （docs/requirements.md 4.2「入力欄」）。
+ * （docs/display.md 4.2「入力欄」）。
  */
 export function commandCandidates(
   slashCommands: readonly string[],

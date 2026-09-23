@@ -61,7 +61,7 @@ export type SessionEvent =
       /**
        * `slash_commands` のうち、端末専用（UX が端末に結び付く。`doctor` / `color` /
        * `reload-plugins` など）のもの。**入力欄の補完からは除く**
-       * （docs/requirements.md 4.2「入力欄」。除く計算は
+       * （docs/display.md 4.2「入力欄」。除く計算は
        * src/shared/command-suggestion.ts の `commandCandidates`）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
        */
       readonly terminalSlashCommands: readonly string[]
@@ -114,7 +114,7 @@ export type SessionEvent =
    * 雑談の会話のアーカイブにも、初めから流れようが無い。
    */
   | { readonly kind: "turn-started" }
-  /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/requirements.md 4.2）。 */
+  /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/display.md 4.2）。 */
   | { readonly kind: "partial-utterance"; readonly text: string }
   /** 完成したターンの本文。仮の本文を置き換える。 */
   | { readonly kind: "utterance"; readonly text: string }
@@ -141,7 +141,7 @@ export type SessionEvent =
   | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
   /**
    * 質問（`AskUserQuestion`）に利用者が答えた。**答えが確定した時点で1回だけ流す**
-   * （docs/requirements.md 4.2「許可と質問」）。`pending-changed` は列が
+   * （docs/display.md 4.2「許可と質問」）。`pending-changed` は列が
    * 空になったことしか伝えないので、**「何を聞いて、どう答えたか」を残せるのはこの経路だけ**
    * （メインビューの質問の記録。`src/browser/features/main-view/question-record.tsx`）。
    *

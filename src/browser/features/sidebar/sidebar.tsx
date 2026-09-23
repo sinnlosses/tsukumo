@@ -10,7 +10,7 @@
 // （docs/design.md 2章「領域の機能と、置かれる機能」）。
 //
 // **セッション情報は区画ではなく「下端の帯」**（`docs/screen-design.md` 13.9「顔」・
-// `docs/requirements.md` 4.2）。見出しを名乗らず、`SidebarSection` の枠も借りない——サイドバーの
+// `docs/display.md` 4.2）。見出しを名乗らず、`SidebarSection` の枠も借りない——サイドバーの
 // 左右いっぱいに広がり、上端の罫線と一段沈んだ地で、伸び縮みするタスクの区画と切り分ける
 // （寸法の出どころは `sidebar.module.css` 冒頭の見本）。
 
