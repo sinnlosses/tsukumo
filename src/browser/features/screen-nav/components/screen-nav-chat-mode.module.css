@@ -1,0 +1,52 @@
+/* 帯の仕事 / 雑談のトグル（`screen-nav-chat-mode.tsx`）。もとは screen-nav.module.css の一部
+   だったが、この部品しか使わない class の塊なので隣へ分けた（docs/design.md 6.6）。**広い画面で
+   帯から消す規則**（`.screen-nav > .screen-nav-chat-mode`）は `screen-nav.module.css` の @media が
+   持つ（`screen-nav-chat-mode.tsx` がそちらのハッシュを自分の要素に重ねて渡す。docs/design.md
+   6.6）。狭い画面の「≡」の面の中では、専用の見た目の上書きが無く広い画面と同じ見た目のまま出る。 */
+
+/* 仕事 / 雑談のトグル（13.9「動き方の操作子」）。**2つの `<button>` を1つの枠に並べる**。
+   外枠は帯の地（`color-mix(ground, surface 50%)`）より暗い `--ground` を敷き、4px の余白で
+   ボタンを枠から浮かせる。外寸は 4px + 30px + 4px + 枠2px = 40px で、帯の地 52px
+   （`--screen-nav-height`）の上下に 6px ずつ空く。見本（ボタン 36px・余白 3px）は帯の地 60px に
+   合わせた値で、52px の帯にそのまま載せると上下が 4px しか空かず詰まって見える。 */
+.screen-nav-chat-mode {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: 11px;
+  background: var(--ground);
+}
+.screen-nav-chat-mode-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-quiet);
+  font-size: var(--font-subheading);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.screen-nav-chat-mode-button:hover {
+  color: var(--ink);
+}
+/* いまの側は地を --accent、字を --ground にして太さも変える（色だけにしない。13.1 原則1）。
+   **字に `--ground` を使うのは `dispatch-send`（送信ボタン）と同じ組み合わせ**——地の色は
+   使う人が差すもので、パックの `accent` は歯車で変わっても淡い色に寄るぶん、暗い `--ground` の
+   字なら濃さが保たれる。 */
+.screen-nav-chat-mode-button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--ground);
+  font-weight: 700;
+}
+/* ターン進行中は押せない。`disabled` にはせず `aria-disabled` で伝える
+   （13.9「動き方の操作子」。`disabled` だとフォーカスも理由の title も届かなくなる）。 */
+.screen-nav-chat-mode-button[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.6;
+}

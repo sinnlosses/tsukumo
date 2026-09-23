@@ -1,0 +1,57 @@
+/* 狭い画面（760px 以下）の「≡」と、押すと落ちてくる面（`screen-nav-menu.tsx`）。もとは
+   screen-nav.module.css の一部だったが、この部品しか使わない class の塊なので隣へ分けた
+   （docs/design.md 6.6）。**面の中で他の部品を並べ直す規則**
+   （`.screen-nav-panel .screen-nav-room` など）は他の部品しか使わないので、それぞれの部品の
+   隣（`screen-nav.module.css` の @media）に残る。`screen-nav-menu.tsx` はそちらのハッシュ
+   （`.screen-nav-panel`）を自分の要素に重ねて渡す（docs/design.md 6.6）。 */
+
+/* 「≡」は狭い画面だけの口。広い画面では3つの口がそのまま並ぶので出さない。 */
+.screen-nav-menu {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .screen-nav-menu {
+    display: block;
+  }
+  /* 指で押す口。**上下の余白と字の大きさをタブ（.layout-tab）に合わせる**ので、同じ高さに
+     揃う（13.9 の 44px は横幅）。 */
+  .screen-nav-toggle {
+    width: 2.75rem;
+    padding: 0.45rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    /* `line-height` は `theme.css` の既定（本文の 1.75）を継いだままにしておくと、上下の余白と
+       合わせてタブ帯とぴったり同じ高さ（39.1px）に揃う（実測。13.9）。ここで上書きしない。 */
+    font-size: var(--font-secondary);
+    cursor: pointer;
+  }
+  .screen-nav-toggle:hover {
+    border-color: var(--accent);
+  }
+  /* 閉じている間の答え待ちの印（印が出ているかどうかで分かるので、色だけに頼らない）。 */
+  .screen-nav-toggle-mark {
+    margin-left: 0.15rem;
+    color: var(--state-warn);
+    font-size: var(--font-label);
+  }
+  /* 押している間だけ落ちてくる面。**重ねて出す**ので段は増えない。**顔と部屋の名前 → トグル →
+     3つの口 → いまの作業 → モデル・許可モード**の順（13.9「狭い画面」）。 */
+  .screen-nav-panel {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    right: 0;
+    z-index: 21;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 11rem;
+    padding: 0.5rem;
+    border: 1px solid var(--rule);
+    border-radius: 0.6rem;
+    background: var(--surface);
+  }
+}

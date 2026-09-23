@@ -1,5 +1,5 @@
 // tsukumo がセッションに足す「雑談の作法」の規約。**雑談モードのときだけ**
-// `systemPrompt` の append で渡す（`docs/requirements.md` 4.9）。
+// `systemPrompt` の append で渡す（`docs/chat-mode.md` 4.9）。
 //
 // **仕事のときの2つ（{@link ./report-notation.ts} と {@link ./speech-cadence.ts}）と入れ替わる。**
 // 並べて渡さないのは、片方が「本文は中立・簡潔に」と言い、もう片方が「本文を書くな」と言う形に
@@ -20,7 +20,7 @@
  * `report-notation.ts` と同じ切り分け）。ここが決めるのは**どこに何を出すか**と、
  * **何を覚えてよいか・何を忘れてよいか・どのやり取りを残すか・いつ索引を書いて引くか**
  * （`remember` / `forget` / `keep` / `index` / `recall` ツールを呼ぶ条件。
- * `docs/requirements.md` 4.9 の3条件と書かないものの一覧、消してよい3つの場合）だけ。**書く場所・消す行の突き合わせ・上限は tsukumo 側**が持つ
+ * `docs/chat-mode.md` 4.9 の3条件と書かないものの一覧、消してよい3つの場合）だけ。**書く場所・消す行の突き合わせ・上限は tsukumo 側**が持つ
  * （`src/server/adapter/persona-memory.ts` と `src/server/adapter/chat-archive.ts`）。
  */
 export const CHAT_MANNER_PROMPT = `## 雑談モード（tsukumo）

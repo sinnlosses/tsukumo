@@ -186,7 +186,7 @@ describe("applySessionEvent", () => {
         time: { kind: "stamped", at: 0 },
       },
     ])
-    // 仕事のメインビューには出さない（docs/requirements.md 4.9）。
+    // 仕事のメインビューには出さない（docs/chat-mode.md 4.9）。
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },

@@ -109,7 +109,7 @@ export type SessionManagerOptions = {
    * `switch-character` は「画面から選ばれた名前」、`set-chat-mode` は「いま出しているパックの
    * まま」の3つ（docs/design.md 7章・docs/screen-design.md 13.6）。知らない名前のときに何を起こすかも、名前を
    * 覚えるかどうかも呼び出し側が決める。
-   * `request.chat` は雑談モードで起こすか（`docs/requirements.md` 4.9）。
+   * `request.chat` は雑談モードで起こすか（`docs/chat-mode.md` 4.9）。
    * `request.resume` は**これから起こすセッションの決め方**で、印から探すか、画面から選ばれた
    * IDをそのまま続きにするかの2つ（`docs/requirements.md` 4.8）。
    *
@@ -202,7 +202,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // 起き上がったあとの駆動。**閉じるのを待たない**ために値でも持つ（プロセスの終了は
   // `process.exit` ですぐ進むので、待っていると claude の子プロセスが閉じられずに残る）。
   let live: SessionDriver | undefined = undefined
-  // 雑談のログの文面を**受け取るたびに足していく走行合計**（docs/requirements.md 4.9
+  // 雑談のログの文面を**受け取るたびに足していく走行合計**（docs/chat-mode.md 4.9
   // 「数える範囲は前の圧縮点から先だけ」）。**`state.records` からは数えない** —
   // `trimToRecentTurns`（`src/shared/session-state.ts`）で直近何ターンかに切り詰められるので、
   // そこから数えると古いターンが落ちるたびに減り、閾値へ一生届かないことがある
@@ -245,13 +245,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   })
 
   /**
-   * 雑談のログが閾値を超えていたら `/compact` を1回投げる（docs/requirements.md 4.9
+   * 雑談のログが閾値を超えていたら `/compact` を1回投げる（docs/chat-mode.md 4.9
    * 「記憶の圧縮と忘却」）。数えるのは {@link chatLogBytesSinceCompact}
    * （前の圧縮点から先の走行合計）で、超えていたら送って 0 に戻す（＝そこが新しい圧縮点）。
    *
    * **記録に残さない口（`promptWithoutRecord`）で渡す。** 流れるのは `request` ではなく
    * `turn-started` だけなので、利用者が打っていない `/compact` の文面が雑談のログにも
-   * 会話のアーカイブにも並ばない（docs/requirements.md 4.9「記憶の圧縮と忘却」）。圧縮が
+   * 会話のアーカイブにも並ばない（docs/chat-mode.md 4.9「記憶の圧縮と忘却」）。圧縮が
    * 起きたこと自体は、SDK から届く `compact-boundary`（`sdk-message.ts`）が別に画面の区切りへ
    * 変換するので、ここで文面を残さなくても失われない。
    *
@@ -371,12 +371,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       flushTimer = setTimeout(flush, options.batchIntervalMs)
     }
     // 雑談のログに乗る文面（依頼とセリフ）だけ、届いたその場で走行合計に足す
-    // （`state.records` の切り詰めに影響されない。docs/requirements.md 4.9）。
+    // （`state.records` の切り詰めに影響されない。docs/chat-mode.md 4.9）。
     if (state.chatMode) {
       chatLogBytesSinceCompact += chatLogEventByteSize(event, at)
     }
     // 雑談の会話のアーカイブへ1行足す。**駆動由来（`"driver"`）・雑談モード・パックが
-    // 分かっているときだけ**（docs/requirements.md 4.9「誰がいつ書くか」）。
+    // 分かっているときだけ**（docs/chat-mode.md 4.9「誰がいつ書くか」）。
     if (origin === "driver" && state.chatMode) {
       appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
     }
@@ -391,7 +391,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       appendTokenUsage(event.cumulative, at)
     }
     // 「残す」旗が立っていれば、**このターンで書いた行を指す印**をここで書く
-    // （旗を立てるのはターンの途中、書くのは終わり。docs/requirements.md 4.9
+    // （旗を立てるのはターンの途中、書くのは終わり。docs/chat-mode.md 4.9
     // 「残すと決めた1往復は窓から落とさない」）。立っていなければ覚えていた行を忘れるだけ
     // なので、雑談かどうかで呼び分けない。
     // 内訳を捨てるのも同じ合図で行う（1ターンぶんだけ持つ）。**`token-usage` は
@@ -404,7 +404,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       // だけを見る。問い合わせを待たずに次へ進む（ターンの終わりを遅らせない）。
       void recordContextUsageOnce(at)
     }
-    // **ターンの終わりに1回だけ見る**（docs/requirements.md 4.9）。仕事のときは何もしない
+    // **ターンの終わりに1回だけ見る**（docs/chat-mode.md 4.9）。仕事のときは何もしない
     // （`requestChatCompactIfNeeded` が `state.chatMode` を見て弾く）。
     if (event.kind === "turn-finished") {
       requestChatCompactIfNeeded()
@@ -454,7 +454,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    * 続きから始まる** — 会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる）。
    * **契機は3つ**: 別のキャラクターパックに切り替えたとき（`switch-character`）、
    * 雑談モードを切り替えたとき（`set-chat-mode`。`systemPrompt` を差し替えるため。
-   * `docs/requirements.md` 4.9）、画面から別のセッションを選んだとき（`switch-session`。
+   * `docs/chat-mode.md` 4.9）、画面から別のセッションを選んだとき（`switch-session`。
    * `docs/requirements.md` 4.8）。
    * **画面は初期状態に戻す** — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
    * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）は
@@ -472,7 +472,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       replaceState(INITIAL_SESSION_STATE)
       buffered = []
       // 起こし直した直後の記録は、復元されたログがそのまま圧縮点から先になる
-      // （docs/requirements.md 4.9）。走行合計も一緒に戻す。
+      // （docs/chat-mode.md 4.9）。走行合計も一緒に戻す。
       chatLogBytesSinceCompact = 0
       // 新しい `query()` の累計は 0 から始まる（前の累計を引くと増分が足りなくなる）。
       cumulativeTokenUsage = []
@@ -716,7 +716,7 @@ async function nudge(driver: Promise<SessionDriver>): Promise<DispatchResult> {
 /**
  * イベント1件を雑談の会話のアーカイブへ渡す。拾うのは `chatLogEntries`
  * （`src/shared/chat-log.ts`）と同じ2種類（依頼とセリフ）だけ——本文・ツールの入出力・
- * 許可プロンプト・質問は渡さない（`docs/requirements.md` 4.9「広げていないこと」）。
+ * 許可プロンプト・質問は渡さない（`docs/chat-mode.md` 4.9「広げていないこと」）。
  *
  * `packName` がまだ分からない（`character-changed` が一度も届いていない）ときは何もしない。
  */
@@ -751,7 +751,7 @@ function appendChatArchiveEntry(
 /**
  * イベント1件ぶんの、雑談のログに乗る文面の UTF-8 バイト数。拾うのは
  * `chatLogEntries`（`src/shared/chat-log.ts`）と同じ2種類（依頼とセリフ）だけで、
- * それ以外は0（画像とツールの入出力は数えない。docs/requirements.md 4.9）。
+ * それ以外は0（画像とツールの入出力は数えない。docs/chat-mode.md 4.9）。
  */
 function chatLogEventByteSize(event: SessionEvent, at: number): number {
   // 時刻は数えないが、ログの1件の形に揃えるために添える。

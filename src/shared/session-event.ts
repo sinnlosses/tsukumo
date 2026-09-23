@@ -263,7 +263,7 @@ export type SessionEvent =
       readonly current: string | undefined
     }
   /**
-   * 雑談モードに入っている／出ている（`docs/requirements.md` 4.9）。**駆動を起こしたときと、
+   * 雑談モードに入っている／出ている（`docs/chat-mode.md` 4.9）。**駆動を起こしたときと、
    * `set-chat-mode` で起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機）。
    *
    * 起こし直すと状態が初期値へ戻るので、**このイベントが無いと画面は雑談中かどうかを
@@ -304,7 +304,7 @@ export type SessionEvent =
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`。
    * docs/glossary.md「圧縮の区切り」）。**数値（`compact_metadata` の `pre_tokens` /
    * `post_tokens` / `duration_ms`）は運ばない** — 画面に出さないものを契約に入れない
-   * （`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
+   * （`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
    *
    * 画面に出すのは雑談のログの細い線1本だけで、**文言は添えない**。
    */

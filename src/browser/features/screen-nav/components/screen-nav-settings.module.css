@@ -1,0 +1,105 @@
+/* 帯の右端の歯車と、押すと開く設定のポップオーバー（`screen-nav-settings.tsx`）。もとは
+   screen-nav.module.css の一部だったが、この部品しか使わない class の塊なので隣へ分けた
+   （docs/design.md 6.6）。**広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則**
+   （`.screen-nav > .screen-nav-settings` / `.screen-nav-panel .screen-nav-settings*`）は
+   `screen-nav.module.css` の @media が持つ（`screen-nav-settings.tsx` がそちらの
+   ハッシュを自分の要素に重ねて渡す。docs/design.md 6.6）。 */
+
+/* 設定の歯車（13.9「設定の歯車」）。**帯のいちばん右端**で、モデル・許可モードの右に付く
+   （`.screen-nav-model-permission` の `margin-left: auto` が左側を押し切ったあとの並び）。
+   `position: relative` はポップオーバー（.screen-nav-settings-panel）を歯車の真下に重ねる
+   ための基準。 */
+.screen-nav-settings {
+  position: relative;
+  display: flex;
+  flex: none;
+}
+/* 見本どおり枠も地も無い 36px の四角に線画の歯車だけを置く（`GearIcon`）。開いているときは
+   字の濃さに加えて地も敷く（色だけで伝えない。13.1 原則1）。 */
+.screen-nav-settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: pointer;
+}
+.screen-nav-settings-toggle:hover {
+  color: var(--ink);
+}
+.screen-nav-settings-toggle[aria-expanded="true"] {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+/* ポップオーバー。**歯車の真下に、右端を揃えて重ねる**（下の領域を押し下げない。
+   「いまの作業」の一覧と同じ作り）。 */
+.screen-nav-settings-panel {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  z-index: 21;
+  width: max-content;
+  min-width: 15rem;
+  max-width: 24rem;
+  max-height: 70dvh;
+  overflow-y: auto;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  font-size: var(--font-secondary);
+}
+/* 群の区切りの見出し（モックの小さな字）。**後続の群（新しいセッションの既定・書き上げる
+   演出の速さ）も同じ見出しで足す**ので、2つ目からは上に余白を置く。 */
+.screen-nav-settings-heading {
+  margin: 0 0 0.4rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.screen-nav-settings-heading ~ .screen-nav-settings-heading {
+  margin-top: 0.8rem;
+}
+/* ラベルと操作子の2列（モックの形）。 */
+.screen-nav-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 1.9rem;
+}
+/* 設定パネルの `<select>`（新しいセッションの既定・演出の速さ）。**帯のドロップダウンと同じ
+   見た目**にして、同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。字が一段
+   小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `components/select.module.css`）。 */
+.screen-nav-settings-select-frame {
+  --select-chevron-inset: 0.3rem;
+  --select-chevron-size: 10px;
+  flex: none;
+  color: var(--ink-quiet);
+}
+.screen-nav-settings-select {
+  padding: 0.15rem 1.1rem 0.15rem 0.3rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  color: inherit;
+  font-size: var(--font-label);
+}
+.screen-nav-settings-reset {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+/* 上書きが1つも無いとき（戻す先が無い）。 */
+.screen-nav-settings-reset:disabled {
+  color: var(--ink-quiet);
+  cursor: default;
+}

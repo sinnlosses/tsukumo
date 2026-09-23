@@ -189,7 +189,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     mode: z.enum(PERMISSION_MODES),
   }),
   /**
-   * 雑談モードへ入る／出る（`docs/requirements.md` 4.9）。**`switch-character` と同じく
+   * 雑談モードへ入る／出る（`docs/chat-mode.md` 4.9）。**`switch-character` と同じく
    * 駆動の起こし直し**になる（`systemPrompt` はセッションを起こすときに固定されるので、
    * レポートの記法を外すには起こし直すしかない）。
    */

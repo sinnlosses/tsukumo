@@ -76,7 +76,7 @@ export type ChatSummaryRecord = {
  * 契約だけ。
  *
  * **読む口は {@link readRecent} の1つだけ**（直近の雑談を逐語のまま
- * `systemPrompt` へ戻す唯一の出どころ。`docs/requirements.md` 4.9「直近の会話は逐語のまま
+ * `systemPrompt` へ戻す唯一の出どころ。`docs/chat-mode.md` 4.9「直近の会話は逐語のまま
  * 読み戻す」）。**それ以外の読み戻しは作らない** — 旗の付いたやり取りも同じ1つの口が一緒に
  * 返す（窓と重なった件をここで落とせるのは、両方を1度に見ているときだけ）。
  */
@@ -89,7 +89,7 @@ export type ChatArchive = {
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
   /**
    * いま進行中のやり取りに「残す」旗を立てる（{@link ChatKeep.keep} の実体。
-   * `docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」）。**書くのは
+   * `docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」）。**書くのは
    * {@link finishTurn} のとき**なので、ターンの途中のどこで呼んでも同じ1往復に付く。
    */
   readonly keep: () => void
@@ -110,7 +110,7 @@ export type ChatArchive = {
   readonly readRecent: (packName: string, limits: ChatReadbackLimits) => ChatArchiveReadback
   /**
    * その日の**見出しを1行**、索引に残す（{@link ChatRecall.index} の実体。
-   * `docs/requirements.md` 4.9「古い雑談は索引を引いて思い出す」）。**付くのは書いた日**で、
+   * `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。**付くのは書いた日**で、
    * 前の日を指し直せない。書けない行（空・改行つき・長すぎる）と、そのターンで2行目に当たる
    * 呼び出しは黙って捨てる。
    */
@@ -178,7 +178,7 @@ export type ChatReadbackLimits = {
 /**
  * {@link ChatArchive.readRecent} が返すもの。**2つに分かれているのは、載せる場所が分かれて
  * いるから** — 旗のぶんは直近より前で、間に抜けた会話がある（時系列がつながらない）。
- * 混ぜて1つの並びにすると、読む側にその断絶が見えない（`docs/requirements.md` 4.9）。
+ * 混ぜて1つの並びにすると、読む側にその断絶が見えない（`docs/chat-mode.md` 4.9）。
  */
 export type ChatArchiveReadback = {
   /** 旗が付いていて、かつ**窓に入らなかった**件（窓に入っている件はここに重ねない）。 */
@@ -189,7 +189,7 @@ export type ChatArchiveReadback = {
 
 /**
  * {@link ChatArchive.readRecent} が返す1件。**話者の別・文面・その行の日付だけ**で、
- * `expression` も `images` も持たない（`docs/requirements.md` 4.9。**読む側が落とすのではなく、
+ * `expression` も `images` も持たない（`docs/chat-mode.md` 4.9。**読む側が落とすのではなく、
  * 口が最初から渡さない**）。
  */
 export type ChatArchiveRecentEntry = {

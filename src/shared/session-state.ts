@@ -29,7 +29,7 @@ import { type TaskSummaryResult } from "./task-summary.ts"
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
  * **`work` は `main-view.ts` の `MAX_MAIN_VIEW_TURNS` の導出元**（関係の理由はそちら）。
  *
- * **モードごとに値が違う**（`docs/requirements.md` 4.9）。雑談の1ターンは
+ * **モードごとに値が違う**（`docs/chat-mode.md` 4.9）。雑談の1ターンは
  * セリフ1〜2件で軽く、仕事と同じ20往復では会話として短すぎるため、雑談だけ100まで持つ。
  */
 export const MAX_SESSION_STATE_TURNS = {
@@ -281,7 +281,7 @@ export type SessionState = {
    */
   readonly lastToolFailureAt: number | undefined
   /**
-   * 雑談モードに入っているか（`docs/requirements.md` 4.9）。入っている間はレポートを出さず、
+   * 雑談モードに入っているか（`docs/chat-mode.md` 4.9）。入っている間はレポートを出さず、
    * メインビューが立ち絵と会話のログになる（`docs/screen-design.md` 13.7）。
    *
    * **源は `chat-mode-changed` だけ。** 切り替えは駆動の起こし直しなので、起こし直したあとに
@@ -290,7 +290,7 @@ export type SessionState = {
   readonly chatMode: boolean
   /**
    * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
-   * **要約の本文ではなく、写しから取り出した見出しだけ**（`docs/requirements.md` 4.9）。
+   * **要約の本文ではなく、写しから取り出した見出しだけ**（`docs/chat-mode.md` 4.9）。
    *
    * **源は `chat-topics-changed` だけ**で、届くたびに丸ごと置き換える。起こし直すと初期値の
    * 空へ戻り、雑談で起こしたときだけサーバから流れ直す（仕事のときは空のまま）。空のときは

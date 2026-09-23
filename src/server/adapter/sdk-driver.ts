@@ -514,7 +514,7 @@ async function relayMessages(
         if (event.kind === "conversation-cleared") {
           // `/clear` を見た合図。写しの印を「未渡し」に戻す——印はターンが終わるたびに
           // そのときのセッションIDへ付け直されるので、`/clear` のあと1ターン回すと空のほうが
-          // 印を持つ（`docs/requirements.md` 4.9「印はターンが終わるたびに…」）。ここで戻さないと
+          // 印を持つ（`docs/chat-mode.md` 4.9「印はターンが終わるたびに…」）。ここで戻さないと
           // 次に起こしたとき記憶が二度と戻らない。
           if (options.mode.kind === "chat") {
             options.mode.chatSummary.markUndelivered()
@@ -749,7 +749,7 @@ function indexTool(chatRecall: ChatRecall) {
 /**
  * 索引を引いて古い雑談を思い出すツール。**戻り値が "ok" でない唯一のツール**で、返すのは
  * **その会話自身の過去**だけ（tsukumo の状態も画面の事情も載せない。
- * docs/requirements.md 4.9「古い雑談は索引を引いて思い出す」）。**文面に組み立てるのは core**
+ * docs/chat-mode.md 4.9「古い雑談は索引を引いて思い出す」）。**文面に組み立てるのは core**
  * （src/server/core/chat-memory-prompt.ts）で、**どの日を開くかを決めるのは
  * src/server/adapter/chat-archive.ts**。
  */

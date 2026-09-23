@@ -54,7 +54,7 @@ import "./styles/theme.css"
 function Root(): ReactElement {
   const screen = useScreen()
   // **雑談モードではメインビューを雑談ビューに差し替え、キャラビューを畳む**
-  // （立ち絵が上段へ移るため。docs/requirements.md 4.9 / docs/screen-design.md 13.7）。
+  // （立ち絵が上段へ移るため。docs/chat-mode.md 4.9 / docs/screen-design.md 13.7）。
   // 差し替えを入口が持つのは、`<Layout>` が他の機能を知らないのと同じ理由。
   // **同時にメインの領域を地そのものにする**（枠と角丸が外れ、背景がそこへ移る。13.8）。
   // 「いま雑談か」を知っているのはここだけなので、`<Layout>` には2つの旗を別々に渡す

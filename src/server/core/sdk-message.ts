@@ -72,7 +72,7 @@ export function toSessionEvents(
       }
       // `compact_boundary` は claude 自身の圧縮が起きた合図（`compact_metadata` に
       // `trigger` / `pre_tokens` / `post_tokens` / `duration_ms` が乗るが、画面には
-      // 出さないので運ばない。docs/requirements.md 4.9「記憶の圧縮と忘却」）。
+      // 出さないので運ばない。docs/chat-mode.md 4.9「記憶の圧縮と忘却」）。
       return message.subtype === "compact_boundary" ? [{ kind: "compact-boundary" }] : []
     case "stream_event":
       return partialUtteranceEvents(message.event)
