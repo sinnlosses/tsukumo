@@ -280,7 +280,6 @@
   border: none;
   background: none;
   color: var(--accent);
-  font: inherit;
   font-size: var(--font-label);
   cursor: pointer;
 }
