@@ -229,5 +229,82 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-471",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-470"],
+    "summary": "締め方の条を report-notation.ts に寄せ、persona.md は言い回しだけにする",
+    "task": "## 背景\n\n「締めの `speak` → レポート → 何も続けない」というターンの終わり方の条が、2か所に本文で書かれていて、毎ターン二度読ませている:\n\n- `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` 冒頭「**ターンは締めの `speak` → レポートの順で終える。**」の段落と「送る前に消すもの」\n- `characters/tsukumo/persona.md` と `characters/tsukumo-spirit/persona.md` の「### ターンの終わりは締めのセリフのあとのレポート」（本文を書かずに `speak` で終えない・レポートのあとに何も続けない・レポートが無いターンでも最後は本文、などの条と、締めのセリフの言い方の例）\n\n呼ぶ回数・契機は tsukumo 側（`src/server/core/speech-cadence.ts`）、言い方はパック（`persona.md`）という線引きがすでにある。締め方もどのパックでも同じ tsukumo の体験なので、条は `report-notation.ts` に寄せる。\n\nあわせて `docs/display.md`「#### 出力の分離（セリフと詳細）」の段落「**出力スタイル側の規約（2026-09-12 改訂。正典は `~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」）**」が、tsukumo のセリフの規約の正典を `asuna.md` と書いている。tsukumo はセッションを起こすときに `applyFlagSettings({ outputStyle: \"default\" })` で出力スタイルを打ち消しており（`src/server/adapter/sdk-driver.ts` の `applyNeutralOutputStyle`）、tsukumo の中では `asuna.md` を誰も読んでいない。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの決定（`/grill-with-docs` の Q3）: 締め方の正典は `report-notation.ts`。`persona.md` には締めのセリフで何をどう言うかの言い回しの例だけを残す\n- `asuna.md` は TUI だけに効くものとして扱う（リポジトリの外のグローバル設定なので中身は触らない）\n\n## やること\n\n1. 2つの `persona.md` の「### ターンの終わりは締めのセリフのあとのレポート」から、`report-notation.ts` の条と同じことを言っている箇条を消し、締めのセリフの言い回しの例（片付いたとき・お願いがあるとき・外したとき）と、条は tsukumo 側にあることの参照1行だけを残す。見出しの名前は中身に合わせて変えてよい\n2. `report-notation.ts` の条に、`persona.md` にだけあって落とすと効き目が変わるもの（例: 「レポートが無いターンでも最後は本文」「雑談モードのときは雑談モードの節に従う」）が無いかを突き合わせ、あれば条の側へ移す。JSDoc の「**締めのセリフで何をどう言うか**は…`persona.md`…が正典」の言い回しを、見出しの名前に合わせて直す\n3. `docs/display.md` の上の段落を、tsukumo の中ではセリフの規約は `speech-cadence.ts`（回数・契機）・`report-notation.ts`（締め方）・`persona.md`（言い方）が持ち、`asuna.md` は TUI だけに効く、という形に書き直す。同じファイルの「#### レポートの記法は、TUI と tsukumo で出し分ける」と二重になる部分はそちらへの参照に畳んでよい\n4. `test/server/core/report-notation.test.ts` と、`persona.md` の文面を検査しているテストがあれば（`grep -rn 'ターンの終わり' test`）追随させる\n\n## 完了条件\n\n- 2つの `persona.md` に「本文を書かずに `speak` で終えない」「レポートのあとには何も続けない」に当たる条の本文が無い（`grep -n '何も続けない' characters/*/persona.md` が0件）\n- `grep -n 'asuna.md' docs/display.md` の結果のうち、tsukumo の中の規約の正典として `asuna.md` を指す行が0件（TUI 向けと明記した行は残ってよい）\n- `bun run check` が通る\n\n## 注意\n\n- **`~/.tsukumo/characters/` にある同名のパックが同梱パックを覆う**ので、画面の吹き出しで確かめるならホーム側の `persona.md` も同じに直っているかを見る（ホーム側はリポジトリの外。書き換えるなら evidence に書く）\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/display.md` の数を確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- T-470 が同じ節の別の箇条（「レポートの構造は出力スタイル側の規約で決める」）を直すので、その後に着手する（依存に入れてある）\n- 規約の変更は次にプロセスを起こしたときから効く",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-472",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "レポートの記法に「地の文の段落は3文まで」の条を足す",
+    "task": "## 背景\n\n利用者の不満（2026-09-23）: レポートを読む時間が長い。症状は「根拠・補足が多すぎる」と「地の文が続いて構造が足りない」の2つ。\n\n`src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` は、量の上限を数で書かない（`docs/display.md` 4.2「読む時間を減らすために足すのは、規約の側」。長い調査の報告まで同じ長さに押し込めないため、2026-09-13 のユーザーの選択）。「文のままでよいのは次のときだけ」の3条件（一息（2〜3文）で言い切れる、など）はあるが、段落が続くことを止める条は無い。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの決定（`/grill-with-docs` の Q9）: **段落の単位にだけ数を入れる**。「地の文の段落は3文まで。4文目が要るなら表・箇条書き・`<details>` に移す」\n- 全体の量の上限は引き続き数で書かない（段落の上限は長い報告を押し込めるものではなく、地の文を構造へ移させるもの）\n\n## やること\n\n1. `REPORT_NOTATION_PROMPT` に上の条を足す。10か条のどれかに畳むか、表の前の「文のままでよいのは次のときだけ」の近くに置くかは、文面が重複しないほうを選ぶ（条の数を11に増やさずに済むなら増やさない）。「送る前に消すもの」に検算の1行を足す\n2. JSDoc に、段落の上限が「量の上限を数で書かない」決定とぶつからない理由を1〜2文で書く\n3. `docs/display.md` 4.2「#### 読む時間を減らすために足すのは、規約の側」の「**量の上限は数で書かない**」の近くに、段落の単位だけは数で書く（2026-09-23 決定）ことを1〜2文で足す\n4. `test/server/core/report-notation.test.ts` に、条が文面に入っていることの検査を足す\n\n## 完了条件\n\n- `REPORT_NOTATION_PROMPT` に「段落は3文まで」に当たる条と、`<details>` を逃がし先に挙げた文がある（テストで検査）\n- `docs/display.md` に 2026-09-23 の段落の決定が1か所ある\n- `bun run check` が通る\n\n## 注意\n\n- T-437（レポートの記法の語彙を shared に1つ置く）も同じファイルを触る。条の文面だけの変更なので語彙の表には触らない\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/display.md` の数を確かめる\n- 規約の変更は次にプロセスを起こしたときから効く",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-473",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-471", "T-472"],
+    "summary": "試行用に、レポートを受け取る MCP ツール report を切り替えで足す",
+    "task": "## 背景\n\nいまはターンのテキストをすべてレポートの候補にし、位置と形から最終・中間・実況・英訳を推測している（`src/shared/main-view.ts` の `promotedReportId` / `selectShownReports`、`src/shared/japanese-prose.ts`）。規約（`src/server/core/report-notation.ts`）が破られるたびに、この推測へ条件を継ぎ足してきた（2026-09-16・09-21・09-22・09-23）。\n\n2026-09-23 の `/grill-with-docs` で、`speak` と同じくレポートも MCP ツール `report` で明示的に受け取る案を、**小さく試してから**採るかどうかを決めることになった。このタスクは試行の仕掛けを入れるところまで（測るのは T-474）。\n\n今の配線:\n\n- MCP サーバは `src/server/adapter/sdk-driver.ts` の `tsukumoServer`（`speak` は常に、`remember` ほかは雑談モードだけ載る）\n- `assistant` メッセージの変換は `src/server/core/sdk-message.ts` の `assistantBlockEvents`。`speak` は `speech` イベントになり、`tool-started` にはならない。**テキストと `speak` にはサブエージェントかどうか（`parent_tool_use_id`）が付いていない**（ツールにだけ `parentToolUseId` が付く）\n- 環境変数の読み取りは `src/cli.ts` / `src/server/core/port-resolution.ts` / `src/server/adapter/tsukumo-home.ts` に集まっている\n\n## 決まっていること（蒸し返さない）\n\n- 引数は `conclusion`（必須。冒頭の1〜2文）/ `body`（任意。記法は今と同じ）/ `favor`（任意。お願い）。tsukumo はこの順で描く（Q7）\n- **メインの呼び出し（`parent_tool_use_id` が無いもの）だけ**をレポートにし、サブエージェントの呼び出しは捨てる。最後の呼び出しが最終レポート、それより前は中間レポート（Q6）\n- 記法の規約は `systemPrompt` の append に残し、`report` の説明文からは1行で参照する。MCP ツールの説明文は既定で 2048 字まで（同梱の本体の定数）だが、上限を環境変数で上げる経路は採らない（Q8）\n- ターンの終わりは `report` → 締めの `speak`（完了の一言）→ 1行のテキスト（ツールで終えると本体の催促が入るので1行が要る。そのテキストは出さない）（Q10）\n- 試行のあいだも、メインがサブエージェントの `SendMessage` の合図を受けて `speak` で状況を伝える流れ（`src/server/core/speech-cadence.ts`）は変えない\n\n## 解くべき論点\n\n1. **試行の切り替え方**: 既定は今のまま（推測）にし、切り替えたときだけ `report` を載せて規約の文面も差し替える形を推す。切り替えの口は環境変数（例 `TSUKUMO_REPORT_TOOL=1`）を推すが、読み取りは既存の集約先に置き、`README.md` の環境変数の表と `--help` に「試行用・採否が決まったら消す」と書く。別の口のほうが読み手に分かりやすければそちら\n2. **`report` が呼ばれたターンの本文の扱い**: 本文テキストは出さない。**`report` が1回も呼ばれなかったターンは今の推測をそのまま使う**（受け皿の縮小は採用後の T-476）\n3. **`report` の記録の形**: `shared` の記録（`SessionRecord` / `MainViewStep`）に report を足すのか、既存の本文の記録に「どこから来たか」を足すのか。T-438（記録をターンに割る処理を1つにする）と衝突しない形を選ぶ\n4. **帯の「いまの作業」と依頼の手順の一覧に出さない**（`speak` と同じく `tool-started` にしない）\n5. 雑談モードでは載せない（雑談は本文を書かない決まり。`docs/chat-mode.md`）\n6. 描画: `conclusion` → `body` → `favor`（`note note-favor` の塊と同じ見た目）を、今のレポートと同じサニタイズ・記法の経路で描く。書き上げる演出（`use-report-reveal.ts`）が掛かるか\n\n## やること\n\n1. 論点1〜6を決め、`report` ツールと切り替えの口を実装する。切り替えたときの規約の文面（`report-notation.ts` の終わり方の条と「お願いは最後に1つ」の条、`persona.md` の締めの例）は、切り替えたときだけ差し替わるようにする\n2. `sdk-message.ts` の変換・`shared` の畳み込み・メインビューの描画にテストを足す（サブエージェントの `report` を捨てる、最後の呼び出しが最終・それより前が中間、呼ばれなかったターンは今と同じ、帯に出ない）\n3. 疑似セッション（`TSUKUMO_DRIVER` / `TSUKUMO_FAKE_SCENE`）に `report` を呼ぶ場面を1つ足し、ブラウザで描かれることを目視で確かめる（`docs/architecture.md`「手で確かめること」）\n\n## 完了条件\n\n- 切り替えないときの挙動が変わっていない（既存のテストが無修正で通る）\n- 上の2のテストが通る\n- 疑似セッションの場面で `conclusion` / `body`（表・フェンス・`note` を含む）/ `favor` が描かれたことを目視で確かめ、evidence に何が見えたかを書く\n- `bun run check` が通る\n\n## 注意\n\n- 会話内容をフィクスチャに使わない（`CLAUDE.md`「会話内容の扱い」）\n- `speak` の戻り値と同じく `report` の戻り値は `\"ok\"` だけにする（`docs/display.md` 4.2。ツールの結果に情報を載せない）\n- T-437 / T-438 と同じファイルを触りうる。着手時に `main` の状態を見て、先に入っていればそれに合わせる",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-474",
+    "difficulty": "opus",
+    "loopable": "N",
+    "dependencies": ["T-473"],
+    "summary": "report ツールの試行を実セッション10ターンで回し、3つの合格条件で採否を判定する",
+    "task": "## 背景\n\nT-473 で、レポートを MCP ツール `report` で受け取る仕掛けを切り替えて使えるようにした。2026-09-23 の `/grill-with-docs` で、採用は実セッションでの試行の結果で決めることになっている。\n\n## 決まっていること（蒸し返さない）\n\n- 実セッションを10ターン程度回す。**サブエージェントへ委譲するターンを必ず含める**\n- 合格条件は3つ（Q11）。3つとも満たせば採用（T-475 以降へ進む）、1つでも満たさなければ不採用:\n  1. `report` の呼び忘れが1件以下\n  2. 委譲中、メインがサブエージェントの `SendMessage` の合図を `speak` で言い直す流れが途切れない（`report` がその代わりに使われていない）\n  3. `body` の中のフェンス・表・HTML が今と同じに描ける（JSON 文字列の中に本文が入っても崩れない）\n- 懸念として、`report` のあとの1行のテキストの前に本体の催促が入って1往復増えていないかも見る（合否の条件ではないが記録する）\n\n## やること\n\n1. 利用者に試行の切り替えを入れた tsukumo を起こしてもらい（`TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分けると本体のセッションを汚さない）、普段の仕事を10ターン程度してもらう\n2. 各ターンについて、**構造だけ**を数える: `report` の呼び出し回数とどこから呼ばれたか、`speak` の回数と委譲中の合図への応答、最後のテキストの有無と長さ、催促が入ったか、描画の崩れの有無。**本文そのものは写さない**\n3. 結果を `docs/research/report-tool-trial.md` に書き（3条件それぞれの合否と数）、採否を利用者に確かめる\n4. 不採用なら、T-473 の切り替えの口と `report` ツールを外すタスクを `develop/direction.md` の `## エージェントのドラフト` に積み、T-475〜T-477 を理由を添えて閉じる\n\n## 完了条件\n\n- `docs/research/report-tool-trial.md` に、10ターン程度の構造の数と3条件の合否がある\n- 採否を利用者が確かめたことを evidence に書く\n- `bun run check` が通る\n\n## 注意\n\n- **SDK のイベントと transcript には利用者の生の会話が入っている。** 数えるのは構造だけで、本文・依頼の文面を research やログに写さない（`CLAUDE.md`「会話内容の扱い」。この規約は他のどの規約よりも優先する）\n- `loopable` が N なのは、利用者が実際に仕事をするターンが要るため（聞いて解ける種類ではない）",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-475",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-474"],
+    "summary": "report ツールを常に載せ、終わりの並びを report → 締めの speak → 1行に変える",
+    "task": "## 背景\n\nT-474 の試行で `report` ツールの採用が決まったら（**不採用なら、やらずに理由を evidence に書いて閉じる**）、試行の切り替えを外して仕事モードでは常に `report` で受け取る形にする。\n\n今の終わり方は「締めの `speak`（これから書くことの予告）→ レポート（本文で終える）」（`src/server/core/report-notation.ts` の条、`characters/*/persona.md` の締めの例）。締めのセリフを予告に限ったのは、本文で終えないと Claude Code 本体が英語の催促を差し込むため（2026-09-23 決定）。`report` はツール呼び出しの時点で中身が確定するので、締めのセリフを `report` のあとに置けば、読めるレポートへの反応として言える。\n\nT-461 の「書いている」の動き（`src/shared/portrait-motion.ts` の `resolvePortraitMotion`。材料は `hasPartialUtteranceAfterSpeech`）は、**締めの `speak` のあとに本文が伸びている間**を前提にしている。\n\n## 決まっていること（蒸し返さない）\n\n- 並びは `report` → 締めの `speak`（完了の一言）→ 1行のテキスト（出さない）（Q10 の β）。締めのセリフを予告に限った 2026-09-23 の決定は戻す\n- 記法の文面から「結論から書く」（10か条の条1）と「お願いはいちばん最後に1つ」の条を外す（`conclusion` と `favor` の欄が型で持つ）\n- 雑談モードには載せない\n- メインがサブエージェントの `SendMessage` を受けて `speak` で状況を伝える流れは変えない\n\n## 解くべき論点\n\n1. 「書いている」の動きの発火条件: `report` の引数が流れてくる間（`includePartialMessages` の部分メッセージ）を材料にするのか、並びが変わって待ちの間がほぼ無くなるので外すのか。外すなら `docs/glossary.md`「書いている」と `docs/design.md` 6.5 も直す\n2. 1行のテキストに何を書かせるか（中身は問わない、と書くだけで足りるか）\n\n## やること\n\n1. T-473 の切り替えの口を外し、仕事モードでは常に `report` を載せる。`README.md` の環境変数の表と `--help` から試行用の行を消す\n2. `report-notation.ts` の終わり方の条・10か条・「送る前に消すもの」、`persona.md`（2パック）の締めの例を新しい並びに書き直す\n3. 論点1を決めて `portrait-motion.ts` とテストを直す\n4. `docs/display.md` 4.2 の「出力の分離（セリフと詳細）」「メインビュー」の項を、レポートは `report` ツールで受け取る形に直す（受け皿の縮小は T-476）\n\n## 完了条件\n\n- 仕事モードのセッションで `report` が常に載り、雑談モードでは載らない（テストで検査）\n- `grep -rn 'TSUKUMO_REPORT_TOOL' src README.md` が0件（試行の口の名前が違えばその名前で）\n- `report-notation.ts` に「締めの `speak` → レポートの順で終える」の条が無く、`report` → 締めの `speak` の並びの条がある（テストで検査）\n- 疑似セッションで最終レポートと締めのセリフの並びを目視で確かめ、evidence に書く\n- `bun run check` が通る\n\n## 注意\n\n- `~/.tsukumo/characters/` の同名パックが同梱パックを覆う。画面で確かめるならホーム側も見る\n- `docs/` の編集は節の索引に当たらないよう行頭から位置を特定する",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-476",
+    "difficulty": "opus",
+    "loopable": "Y",
+    "dependencies": ["T-475"],
+    "summary": "report が無いターンの受け皿を最後の本文だけにし、英訳・実況の判定を消す",
+    "task": "## 背景\n\nT-475 でレポートは `report` ツールで受け取るようになった。**T-474 の試行が不採用なら、やらずに理由を evidence に書いて閉じる。**\n\n`report` が1回も呼ばれなかったターンは、まだ今の推測（`src/shared/main-view.ts` の `promotedReportId` / `selectShownReports`）でテキストからレポートを選んでいる。推測には、規約が破られた形ごとに足した例外がある: 締めが実況でしかなければ資料を繰り上げる（2026-09-21）、締めが日本語でなければ席を戻す（`lastJapaneseReportAfterWork` と `src/shared/japanese-prose.ts`。2026-09-23）、見えない文字だけの本文を選ばない、ツールの付いていない本文を出さない（2026-09-22）。\n\n## 決まっていること（蒸し返さない）\n\n- 2026-09-23 のユーザーの決定（Q11）: 試行が合格したら、受け皿は「**最後の本文をそのまま出す**」だけに縮め、英訳・実況・見えない文字の判定（`promotedReportId` の例外と `japanese-prose.ts`）は消す\n- `develop/progress.md` の「未解決」にある「英訳を落とす判定を残すか外すか」は、この決定で外すことに決まった\n\n## やること\n\n1. `report` が呼ばれたターンではテキストを一切出さないことを確かめ、呼ばれなかったターンは最後の本文（空白だけのものは除く）を最終レポートにする形へ `main-view.ts` を縮める\n2. 使われなくなった判定・`japanese-prose.ts`・そのテストを消す\n3. `docs/display.md` 4.2「メインビュー」の項から消した判定の説明を落とし、経緯は `docs/history/decision.md` へ移す\n4. `develop/progress.md` の「未解決」の上の項目を消す\n\n## 完了条件\n\n- `test -e src/shared/japanese-prose.ts` が偽\n- `grep -n 'lastJapaneseReportAfterWork' -r src` が0件\n- `main-view.test.ts` に、`report` が呼ばれなかったターンで最後の本文が最終レポートになることのテストがある\n- `bun run check` が通る\n\n## 注意\n\n- T-438（記録をターンに割る処理を1つにする）と同じファイルを触る。着手時に `main` の状態を見る\n- 素の TUI には tsukumo の判定が効かないので、`report-notation.ts` の条は判定を消しても残す",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-477",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": ["T-476"],
+    "summary": "用語集に最終レポートを立て、report ツールの設計判断を書く",
+    "task": "## 背景\n\n「最終レポート」「実況」「締めの本文」は仕様とコードの中心にある語なのに、`docs/glossary.md` に項目が無い（2026-09-23 の `/grill-with-docs` の Q2 で判明）。T-475 / T-476 でレポートを `report` ツールで受け取る形になり、定義が定まった。**T-474 の試行が不採用なら、やらずに理由を evidence に書いて閉じる**（そのときは用語集の3項目だけを今の推測方式の定義で書く別タスクを `## エージェントのドラフト` に積む）。\n\n## 決まっていること（蒸し返さない）\n\n- 設計判断は試行が合格したあとに書く（Q13）。採らなかった推測方式と、その理由（規約が破られるたびに推測へ条件を継ぎ足していた）を一緒に書く\n\n## やること\n\n1. `docs/glossary.md` の「## 表示」に「最終レポート」（最後の `report` の呼び出し）を立てる。「実況」「締めの本文」は受け皿の中でしか意味を持たなくなるので、項目を立てるか「中間レポート」「最終レポート」の注記に留めるかを決める。索引の行も直す\n2. `docs/architecture.md` に「レポートはテキストではなく `report` ツールで受け取る」の設計判断を、`speak` の設計判断（「セリフはテキストの規約ではなく、ツール呼び出しで受け取る」）と並べて書く。試行の数は `docs/research/report-tool-trial.md` を参照する\n3. `docs/glossary.md`「中間レポート」の定義（`selectShownReports` の構造の印で選ぶ）を `report` の形に直す\n\n## 完了条件\n\n- `grep -n '^### 最終レポート' docs/glossary.md` が1件\n- `docs/architecture.md` に `report` ツールの設計判断の見出しが1つある\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} '` の数を確かめる",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
