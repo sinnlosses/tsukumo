@@ -86,7 +86,6 @@
   border-radius: 50%;
   background: var(--ground);
   color: var(--ink);
-  font: inherit;
   font-size: var(--font-secondary);
   line-height: 1;
   cursor: pointer;

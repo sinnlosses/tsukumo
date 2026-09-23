@@ -54,7 +54,6 @@
   border-radius: inherit;
   background: none;
   color: inherit;
-  font: inherit;
   font-size: inherit;
   cursor: pointer;
 }
@@ -213,7 +212,6 @@
   border: none;
   background: none;
   color: inherit;
-  font: inherit;
   font-family: var(--font-mono);
   text-decoration: underline dotted;
   text-underline-offset: 0.2em;
@@ -260,7 +258,6 @@
   color: var(--ink);
   border: 1px solid var(--rule);
   border-radius: 0.75rem;
-  font: inherit;
   font-size: var(--font-secondary);
   overflow: hidden;
 }
@@ -292,7 +289,6 @@
   border-radius: 0.4rem;
   background: none;
   color: inherit;
-  font: inherit;
   font-size: var(--font-secondary);
   cursor: pointer;
 }
@@ -379,7 +375,6 @@
   color: var(--ink);
   border: 1px solid var(--rule);
   border-radius: 0.75rem;
-  font: inherit;
   font-size: var(--font-secondary);
 }
 .task-run-confirm::backdrop {
@@ -412,7 +407,6 @@
   border-radius: 0.4rem;
   background: none;
   color: inherit;
-  font: inherit;
   font-size: var(--font-secondary);
   cursor: pointer;
 }

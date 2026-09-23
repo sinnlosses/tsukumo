@@ -42,7 +42,6 @@
   border-radius: 0.5rem;
   background: var(--surface);
   color: var(--ink);
-  font: inherit;
   font-size: var(--font-secondary);
 }
 /* キャラクターの <select> の左に添える顔（13.9「顔」）。帯（screen-nav.module.css の
@@ -130,7 +129,6 @@
   border: none;
   background: none;
   color: var(--accent);
-  font: inherit;
   font-size: var(--font-action);
   cursor: pointer;
 }

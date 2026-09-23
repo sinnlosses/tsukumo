@@ -183,7 +183,6 @@
   border-radius: 999px;
   background: var(--surface);
   color: var(--ink-quiet);
-  font: inherit;
   font-size: var(--font-secondary);
   cursor: pointer;
 }
@@ -212,7 +211,6 @@
   color: var(--accent);
   border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: 999px;
-  font: inherit;
   font-size: 0.75rem;
   line-height: 1;
   white-space: nowrap;

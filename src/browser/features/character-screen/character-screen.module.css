@@ -89,7 +89,6 @@
   color: inherit;
   border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  font: inherit;
   font-size: var(--font-label);
   cursor: pointer;
 }
@@ -180,11 +179,9 @@
   color: inherit;
   border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  font: inherit;
   font-size: var(--font-label);
 }
 .character-screen-create-file {
-  font: inherit;
   font-size: var(--font-label);
 }
 .character-screen-create-submit,
@@ -195,7 +192,6 @@
   color: inherit;
   border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  font: inherit;
   font-size: var(--font-label);
   cursor: pointer;
 }
