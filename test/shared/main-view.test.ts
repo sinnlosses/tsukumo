@@ -451,6 +451,48 @@ describe("mainViewTurns（最終レポートの印）", () => {
     expect(turns[0]?.hasInterimReport).toBe(true)
   })
 
+  it("締めの本文が英語なら落とし、手前の日本語のレポートを最終レポートにする", () => {
+    // 日本語のレポート → `speak` → 同じ内容の英訳、という並び。英訳が位置だけで席を取っていた。
+    const english = "## Keys removed\n\n- Dropped the `Map` and `create`\n- Bumped the protocol"
+    const turns = mainViewTurns(
+      [request("依頼"), edit("src/a.ts"), detail(materialReport("鍵を外した")), detail(english)],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    // 先頭は、レポートより前に起きた編集をまとめた本文の無いステップ。
+    expect(steps.map((step) => reportOf(step))).toEqual([
+      undefined,
+      materialReport("鍵を外した"),
+      undefined,
+    ])
+    expect(steps.map((step) => step.interim)).toEqual([false, false, false])
+    expect(steps.map((step) => step.final)).toEqual([false, true, false])
+  })
+
+  it("短い日本語の答えのあとの英訳でも、日本語の答えが最終レポートになる", () => {
+    const turns = mainViewTurns(
+      [request("依頼"), edit("src/a.ts"), detail("直しておいたよ。"), detail("I fixed it.")],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => reportOf(step))).toEqual([undefined, "直しておいたよ。", undefined])
+    expect(steps.map((step) => step.final)).toEqual([false, true, false])
+  })
+
+  it("英語の締めでも、作業の手前に書いた日本語の実況へは席を渡さない", () => {
+    // 席を戻す先は「そのあとにツールが続いていない本文」だけ。実況「まず読むね」はツールの手前。
+    const turns = mainViewTurns(
+      [request("依頼"), detail("まず読むね"), edit("src/a.ts"), detail("I fixed it.")],
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => reportOf(step))).toEqual([undefined, "I fixed it."])
+    expect(steps.map((step) => step.final)).toEqual([false, true])
+  })
+
   it("資料が1つも無ければ、締めの短い本文はそのまま最終レポートになる", () => {
     const turns = mainViewTurns(
       [request("依頼"), edit("src/a.ts"), detail("直しておいたよ")],

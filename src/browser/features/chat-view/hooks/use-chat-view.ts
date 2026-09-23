@@ -13,7 +13,7 @@ import { resolveOutfit, type Expression, type Outfit } from "../../../../shared/
 import { type RecordedPromptImage } from "../../../../shared/prompt-image.ts"
 import { type RecordTime } from "../../../../shared/session-state.ts"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
-import { localTimeZoneId } from "../../../utils/clock.ts"
+import { clockDateTime, clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"
 
 /** character.json に `name` が無い・定義自体が無いときの、立ち絵 alt テキストの既定名。 */
@@ -237,11 +237,11 @@ function timeStamp(time: RecordTime, timeZone: string): ChatTimeStamp {
   if (time.kind === "restored") {
     return { kind: "unknown" }
   }
-  const at = Temporal.Instant.fromEpochMilliseconds(time.at).toZonedDateTimeISO(timeZone)
+  const at = zonedDateTime(time.at, timeZone)
   return {
     kind: "known",
-    dateTime: at.toString({ timeZoneName: "never", smallestUnit: "minute" }),
-    text: at.toPlainTime().toString({ smallestUnit: "minute" }),
+    dateTime: clockDateTime(at),
+    text: clockTime(at),
   }
 }
 
