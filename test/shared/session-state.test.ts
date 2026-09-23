@@ -880,7 +880,7 @@ describe("applySessionEvent", () => {
   it("窓がいっぱいになっても、ターンの通し番号は止まらずに増え続ける", () => {
     // 番号を位置で決めていたころは、窓（20ターン）を超えると**いちばん新しいターンの番号が
     // 19 で止まり**、描く側が `key` に使っているせいで部品が作り直されず、書き上げる演出が
-    // 二度と起動しなかった（`src/browser/features/main-view/report-reveal.ts`）。
+    // 二度と起動しなかった（`src/browser/features/main-view/hooks/use-report-reveal.ts`）。
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
       events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })

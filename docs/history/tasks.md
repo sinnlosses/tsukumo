@@ -26107,3 +26107,507 @@ T-384 で帯の骨格と、モデル・許可モードのドロップダウン�
 - T-408 が後で帯の札に質問の要約を足す。札の中身の並びは変えない
 - T-413 も `src/browser/features/screen-nav/` を触る。先に `main` に入っていたら取り込んでから始める
 - 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-332
+
+**タスク**: 雑談中のサイドバーの形を決め、プロフィールの札とセッションの選択を出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-381, T-382, T-389 / **passes**: True
+
+**evidence**:
+
+bun run check 1543 pass / 0 fail（typecheck・lint・format 込み）。design.md の見出し数 53・requirements.md 27 のまま（glossary は用語2件を足して 65→67）。テスト: sidebar.test.tsx に雑談中は見出しが「最近の話題」「覚えていること」だけでタスクと「一覧を見る」が無く札が出る・札→話題→帯の並び・空の案内・帯はセッションだけ／仕事は「タスク」とキャラクター・セッションの <select> で札なし、profile-card.test.tsx に顔・名前・ひとこと／tagline 無しは名前だけ／「変える」の change で switch-character／ターン中は disabled と title／パック一覧が無ければ「変える」なし、shared に tagline の解析（空白だけは undefined）・toCharacterInfo・character-changed の畳み込み。目視（fake driver・ポート 4873・TSUKUMO_HOME=/tmp/tsukumo-home-t332・ヘッドレス Chrome）: 1400x900 で帯の「雑談」を押すとサイドバーが札（高さ 101px・顔 64x64・名前「つくもの精霊」・ひとこと2行・「変える」71x32）＋最近の話題／覚えていること（空の案内）の4段になり、「変える」の <select> で tsukumo を選ぶと起こし直しのあと札の顔が face.svg→face.png・名前が「tsukumo」に替わった。「仕事」へ戻すと見出しが「タスク」に戻り札は消えた。390x844 でも同じ4段（サイドバー 587px・札 101px・中段 472px が転がる入れ物）で、横スクロールなし。セッションの帯は fake が一覧を持たないため WebSocket の hello に架空の一覧2件を差して確かめ、1400 で高さ 84px・<select> 298x34、390 で 320x34。キーボードで「変える」に来ると外枠に差し色の輪が出た。
+
+## 背景
+
+**雑談中もサイドバーが仕事のまま**になっている。`src/browser/main.tsx` の `<Root>` は `chatMode` を見てメインビューを `<ChatView>` に差し替え、キャラビューを畳む（`collapseCharacter`）が、`sidebar={<Sidebar />}` は分岐していない。ヘッダーの作り直し（T-381 / T-382。`docs/design.md` 13.9）で、モードの切り替えは帯のトグルへ、「いま何をしているか」は帯のピルへ移り、サイドバーはタスク一覧と、キャラクター・セッションの選択（T-389 が顔つきで横に並べる）の2つになる。
+
+ユーザーが雑談中のサイドバーのモック `docs/history/mockup/chat-sidebar-2026-09-23.png` を示した（2026-09-23。「プロフィールと好きなものとか出せたらいいな」）。上から:
+
+1. **プロフィールの札**: 顔（パックの `face`。13.9「顔」）・キャラクターの名前・ひとことプロフィール・右端に「変える ⌄」（キャラクターの切り替え）
+2. **最近の話題**: 直近3件の見出し（中身は T-390）
+3. **覚えていること** と右端の「編集」: チップの並び（中身は T-391）
+4. **セッション**: いまの `<select>`（`session-switch.tsx`）
+
+辛口レビューの指摘（2026-09-22、ユーザーが「刺さる」として採った）: 「雑談していても画面の一部が仕事の話を続けている」。
+
+## 決まっていること（蒸し返さない）
+
+- 雑談中はタスク一覧を出さず、モックの4段に差し替える。仕事へ戻ると元に戻る
+- キャラクターの切り替えはプロフィールの札の「変える」に入る（挙動は今の `<select>` と同じ。選ぶと起こし直す・ターン中は断る）
+- **ひとことプロフィールはパックの定義ファイル（`character.json`）に新しい欄として持つ**（キャラクターの中身をコードに書かない。`CLAUDE.md` 原則4）。無いパックは名前だけ
+- 最近の話題は雑談の要約に書かせる話題の見出しから出す（T-390）。覚えていることは `persona.md` の `## 覚えたこと` の1行ずつをチップにし、「編集」では1行ずつ消せるだけ（T-391）
+- このタスクは器とプロフィールの札・セッションまで。2段目と3段目は見出しと空のときの案内だけ置き、中身は T-390 / T-391 が入れる
+
+## 解くべき論点
+
+- 雑談のサイドバーを誰が組むか（`<Root>` が別の部品を渡すか、`<Sidebar>` が `chatMode` を見るか）と、どの機能に置くか（`features/sidebar/` の中か、雑談の側か）
+- 「変える ⌄」の部品（今の `<Select>` を札に収めるか、ボタン + 選択肢か）
+- 狭い画面（760px 以下）での4段の高さの配分（どこがスクロールするか）
+
+## やること
+
+1. `docs/design.md` 13.7 / 13.9 と 6.1「部品の木」を読み、上の論点を決めて 13.7 に書く（雑談のときのサイドバーの段・誰が組むか・採らなかった案）
+2. `character.json` にひとことプロフィールの欄を足す（`src/shared/character-definition.ts` の検証・`characters/README.md`・同梱パックの `characters/tsukumo` と `characters/tsukumo-spirit`）
+3. 雑談中のサイドバーを作る（プロフィールの札・最近の話題と覚えていることの枠・セッション）
+4. `docs/requirements.md` 4.9「雑談モードで変わるもの」の表にサイドバーの行を足す
+5. テスト: 雑談中はタスク一覧が出ずプロフィールの札が出る / 仕事では今までどおり / ひとことプロフィールが無いパックは名前だけ / 「変える」で切り替えのコマンドが送られる
+
+## 完了条件
+
+- 上のテストがある
+- `docs/requirements.md` 4.9 の表にサイドバーの行がある
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅）: 雑談に入るとモックの4段になり、仕事へ戻すとタスク一覧に戻る。「変える」からキャラクターを替えると札の顔と名前が変わる。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 雑談⇄仕事の切り替えはセッションの起こし直し（`docs/requirements.md` 4.9）。画面が初期化されるのは既定の挙動
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-408
+
+**タスク**: 答え待ちのとき、帯の札に質問の要約を出し、一覧から質問の札へ飛べるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-403, T-407 / **passes**: True
+
+**evidence**:
+
+bun run check 1545 pass / 0 fail（test/browser/features/screen-nav/current-work.test.tsx に質問の要約・ほか n問・質問へ・答え終わりの6件）。目視 1400x900（fake driver・Playwright）: question-multi で札が「答え待ち | 架空の選択」、question-pair で「架空の選択1 ほか1問」、一覧の見出しは「答え待ち」のみで直下に「質問へ」。#character の画面から「質問へ」を押すと一覧が閉じ会話の画面に戻り質問の札が y=249 に出た（札が画面外にある場面は疑似セッションに無く、スクロールそのものは未確認）
+
+## 背景
+
+帯の「いまの作業」の札（`src/browser/features/screen-nav/components/screen-nav-current-work.tsx`、ロジックは `hooks/use-current-work.ts`）は、答え待ち（`state.pending` が空でない）のとき語が「答え待ち」になり、押すと手順の一覧が開いて見出しに「。入力欄の上で答えられる」（`pendingHint`）が添わる（`docs/design.md` 13.9）。T-407 で質問はメインビューの札で答えるようになるので、この案内が古くなる。
+
+モック `docs/history/mockup/question-2026-09-23.png` では、帯の札が「答え待ち | <質問の要約> — クリックで質問へ」になっている。
+
+## 決まっていること（蒸し返さない）
+
+- **押したときは今までどおり手順の一覧を開く**（13.9 の設計を保つ。2026-09-23 ユーザー）。一覧の中に「質問へ」の口を置き、押すとメインビューの質問の札までスクロールして一覧を閉じる
+- 答え待ちのとき、札の要約の位置に質問の要約を出す（語は「答え待ち」のまま）
+- 札の外形は T-403 の固定長のまま動かさない
+
+## 解くべき論点
+
+- 要約に質問の `header` を使うか、`text` を切り詰めるか（`header` は短いが省略されうるか、SDK の型で確かめる）
+- 複数の質問があるときの要約（1問目だけか、「ほか n 問」を添えるか）
+- 札の要約（実行中の手順）と質問の要約のどちらを出すか。答え待ちの間は質問を優先する案が第一候補
+- メインビューの札へのスクロールの仕方（`browser/` の機能どうしは import できないので、`location.hash` か `browser/stores/` を経由する。過去のやり取りを見ているなら最新へ戻してから飛ぶ）
+
+## やること
+
+1. 論点を決め、`use-current-work.ts` と札・一覧を直す。`pendingHint` の「入力欄の上で答えられる」を直す
+2. テストを直す・足す（`test/browser/features/screen-nav/`）: 答え待ちで要約が質問のものになる / 一覧に「質問へ」があり、押すと質問の札へ移る / 答え終わると元に戻る
+3. `docs/design.md` 13.9「いまの作業」の表と記述を直す
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900）: 疑似セッションで質問を出し、帯の札に質問の要約が出ること、一覧の「質問へ」で質問の札まで移ること。何が見えたかを `evidence` に書く
+
+## 注意
+
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-417
+
+**タスク**: 控えからも原寸を拡大できるよう、直近ぶんを持つ棚と配信の経路を足す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: T-416 / **passes**: True
+
+**evidence**:
+
+bun run check 1549 pass / 0 fail（test/server/core/prompt-image-shelf.test.ts 新規、server.test.ts に /prompt-image の403/404 4件、session-manager.test.ts に棚4件・hello に原寸が載らず1枚と4枚の差が原寸1枚未満）
+目視: fake driver + Playwright(Chrome) で、メインビューの控えと雑談の吹き出しの控えを押すと /prompt-image/<uuid> から原寸 1600x1000 が出た。棚から押し出した id は 404 になり、控えと注記1行が出た
+390x844 で原寸の面・手放した控えの面とも scrollWidth=390、面の scrollWidth=clientWidth（356 / 344）。変更した adapter にディスクへ書き込むコードは無い
+
+## 背景
+
+送ったあとの控え（`src/browser/components/prompt-image.tsx` の `PromptImageThumbnails`）は、メインビューの依頼の見出しの下（`src/browser/features/main-view/turn.tsx`）と、雑談の利用者の吹き出しの中（`src/browser/features/chat-view/components/chat-log.tsx`）に出ていて、押せない。記録（`src/shared/session-state.ts` の `SessionRecord.request.images`）は控えの data URL の配列（`readonly string[]`）で、原寸はどこにも残っていない（`docs/requirements.md` 4.10「会話内容の扱い」の「原寸は送った時点で手放す」）。
+
+入力欄の札から開く拡大の面は T-416 で `src/browser/components/` にできている。
+
+## 決まっていること（蒸し返さない）
+
+2026-09-23 に案を出し、ユーザーが「案C」を選んだ。
+
+- **`SessionState` と `hello` フレームには原寸を載せない。** 記録に載るのは今までどおり控え（上限 128 KiB）だけ。理由: 原寸を記録に積むと、雑談 100 ターン（`MAX_SESSION_STATE_TURNS.chat`）× 2枚 × 5 MiB で天井が 1000 MiB になる。`hello` は接続のたびに状態を丸ごと送る（控えだけなら同じ計算で 25 MiB）
+- **原寸は `src/server/core/` の「棚」がメモリで持ち、枚数で切る**（目安は直近8枚 = 40 MiB の天井）。記録の窓（仕事 20 / 雑談 100 ターン）から出たターンの原寸は、そのとき捨てる
+- **配るのは HTTP。** `src/server/adapter/server.ts` が `/character/<file>` を接頭辞で分岐して起動トークンで守っているのと同じ形で、`/prompt-image/<id>` を1本足す。**WebSocket のフレームに数 MiB を載せない**（押したときだけ GET が飛ぶ）
+- **ディスクには書かない**（4.10 の1つめの約束はそのまま）
+- `SessionRecord.request.images` に原寸を指す id を持たせるぶん状態の形が変わるので、`PROTOCOL_VERSION`（`src/shared/frame.ts`、いま 4）を 5 へ上げる
+- **雑談の吹き出しの控えも押せるようにする**（部品が同じ `PromptImageThumbnails`。2026-09-23 ユーザー確認）
+- 採らなかった案: 閲覧用の版を控えに足して2段にする（記録の天井が上がる）。ディスクに書く（会話の内容に新しい保存先を作る話なので、拡大表示のついでにはやらない）
+
+## 解くべき論点
+
+- id の作り方と形。推測できない値にする（`crypto.randomUUID()` など）。`shared` に検証のスキーマを置き、`/prompt-image/<id>` で受けた値もそれで検証する
+- 棚から消えた原寸を押したとき: GET が 404 になる。拡大の面には控えを出して「原寸はもう手放した」旨を1行出すのか、虫眼鏡を出さないのか。ブラウザは棚の中身を知らないので、404 を受けてから決める形が素直
+- 棚と記録の窓の結び方。状態を畳んだあとで、窓に残っている依頼が指す id だけを残し、そのうえで直近8枚に切る、が候補。棚は `core` に置き、窓の判断は `shared/session-state.ts` の畳み込みの結果から読む（棚を畳み込みの中に入れない）
+- 4.8 の復元で transcript から戻したターンには原寸が無い。id を持たせない（押せない控え）にする形が素直
+- 配るときの `Content-Type` は、受け取ったときのメディアタイプ（`PROMPT_IMAGE_MEDIA_TYPES` の4つ）から決める。data URL を配る側でデコードする
+
+## やること
+
+1. `shared` の型を変える（`request.images` の要素を控えと id の組にする）。`PROTOCOL_VERSION` を 5 にする。`test/fixture/fake-session.json` など、形に依存するフィクスチャを直す
+2. `src/server/core/` に棚を作る（持つ・引く・窓と枚数で捨てる）。テストを先に書く
+3. `prompt` コマンドを受けたところで原寸を棚に入れ、id を依頼の記録に載せる
+4. `server.ts` に `/prompt-image/<id>` を足す。起動トークンで守るのは `/character/<file>` と同じ形にする。配信のテストを足す（トークンが無い・違う・id が無い・形が違う）
+5. `PromptImageThumbnails` を押せるようにし、押すと T-416 の拡大の面で `/prompt-image/<id>` を開く。id の無い控えは押せないまま
+6. 原寸が「どこにも残らない」と書いているコードのコメント（`src/shared/prompt-image.ts` の冒頭、`prompt-image.tsx` の冒頭など）を、棚の寿命に合わせて直す。`docs/requirements.md` 4.10 は T-418 で直すので、ここでは触らない
+
+## 完了条件
+
+- メインビューの控えと雑談の吹き出しの控えを押すと、原寸が拡大の面に出る（目視の結果を `evidence` に書く）
+- 棚から消えた id・復元したターンの控えを押しても、壊れない（論点で決めた形になっている）
+- `hello` フレームの大きさが原寸の数に比例して増えない（控えだけが載っていることをテストで確かめる）
+- `/prompt-image/<id>` が起動トークン無しでは配られないことをテストで確かめる
+- 原寸をディスクに書くコードが無い（`src/server/adapter/` に書き込み先が増えていない）
+- `bun run check` が通る
+
+## 注意
+
+- 画像は会話の内容（`docs/coding-standards.md`「会話内容の扱い」）。ログに出さない。テストのフィクスチャに実物の画像を使わない（小さな合成の画像を使う）
+- `src/server/core/` から `src/server/adapter/` を import しない（`test/architecture.test.ts`）
+- 描画の変更なので目視を `evidence` に含める。拡大の面を開いた状態も狭い画面（390x844）で測る
+
+## T-421
+
+**タスク**: フォーム部品の書体を theme.css で継がせ、各 CSS の font: inherit をやめる
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+theme.css に `button,input,select,textarea { font: inherit }` を1か所置き、機能側の42か所を消した（うち2か所は取り込んだ main が後から足したもの）（`grep -rn "font: inherit" src/browser --include='*.css'` は theme.css:98 の1か所のみ、`font-family: inherit` は0か所）。消した40ルールのうち6つは dialog / label（.image-zoom / .speech-log / .task-board / .task-run-confirm / .character-gallery-pick / .character-screen-create-file）で元から no-op、`font: inherit` より前に font 系の宣言を持つルールは0だったので上書きの順も変わらない。実ブラウザ（1400x900 と 390）で前後を比較し、送信ボタン・帯のトグル/モデル/許可モード・歯車の select・タスクのチップ・札の頭の口・キャラクター画面のボタンで font-family / font-size / line-height / 高さが一致（例: .dispatch-send system-ui 13px 22.75px 700 h40px、.screen-nav-model-select ui-monospace 13px h32px）。bun run check 1559 pass / 0 fail。
+
+## 背景
+
+振り返り（2026-09-23、`develop/retrospective.md` の `e59e0be`..`e2a24c5`）で見つかったこと。`src/browser/styles/theme.css` には `button` / `input` / `select` / `textarea` の書体の既定が無い。フォーム部品はブラウザの既定では親の書体を継がないので、各機能の CSS が部品ごとに `font: inherit` を書いている（2026-09-23 時点で `src/browser/` の12ファイル・43か所。`font-family: inherit` は0か所）。
+
+- 振り返りの範囲では、7タスク（T-385, T-386, T-396, T-397, T-398, T-399, T-412）がこの1行を合わせて9行書き足した
+- T-396 ではモックの値を写す途中で `.dispatch-send` / `.dispatch-interrupt` の `font: inherit` が消え、送信ボタンの書体が UA 既定（Arial）に落ちた。受け入れで気づいて戻した（`docs/history/tasks.md` の T-396 の evidence）
+- 43か所のうち27か所は、次の行で `font-size` を上書きしている（`font: inherit` で親の大きさ・行の高さ・太さまで継いでから、大きさだけ変える形）
+
+## 決まっていること（蒸し返さない）
+
+- 書体の継承は `theme.css` の1か所に寄せ、各 `*.module.css` の `font: inherit` をやめる（2026-09-23 に振り返りのドラフトをユーザーが承認）
+
+## 解くべき論点
+
+- `theme.css` に置くのを `font: inherit`（大きさ・行の高さ・太さも継ぐ）にするか `font-family: inherit`（書体だけ）にするか。**いま `font: inherit` を書いていない部品**（例えばチェックボックス・色の `<input type="color">`・`<select>` のうちいくつか）は、全体に `font: inherit` を掛けると大きさと行の高さ（本文の 1.75）が変わる。どれが変わるかを先に洗い出して決める
+- 各ファイルから消すときに残すもの。`font: inherit` だけで意味があった箇所（大きさも行の高さも親のまま）と、直後に `font-size` などを上書きしている箇所の扱い。全体の既定が `font-family: inherit` になった場合、行の高さや太さを親から継いでいた箇所は、消すと見え方が変わる
+
+## やること
+
+1. `grep -rn "font: inherit" src/browser --include='*.css'` で43か所を洗い、それぞれの部品と、直後に上書きしている値を一覧にする。`font: inherit` を書いていないフォーム部品も洗う
+2. 論点の答えを決め、`theme.css` に既定を1つ置く（置き場は `body` の直後。コメントに理由を1行）
+3. 各 `*.module.css` から、既定と同じ意味になった `font: inherit` を消す。見え方が変わる箇所は、変わらないように必要な値だけ残す
+4. `docs/design.md` 13.3 に「フォーム部品の書体は `theme.css` が継がせる。機能の CSS には書かない」を1行足す
+5. 既存のテストが通ることを確かめる。見た目の値そのものはテストしない
+
+## 完了条件
+
+- `grep -rn "font: inherit" src/browser --include='*.css'` が `theme.css` の1か所だけになる。残したものがあれば、残した理由を `evidence` に書く
+- `bun run check` が通る
+- 目視（1400x900 と 390 幅。DevTools の computed style で測る）: 入力欄の送信・中断ボタン、帯のトグル・モデル・許可モード、歯車の面の `<select>`、サイドバーのタスク区画のチップ、札の頭の前後の口、キャラクター画面のボタンの `font-family` が本文と同じ（Arial などの UA 既定になっていない）で、`font-size` と高さが変更前と同じ。変更前と後の値を `evidence` に書く（撮り比べる手順は `docs/architecture.md`「手で確かめること」の `scripts/serve-revision.ts`）
+
+## 注意
+
+- 並行で T-384・T-419・T-420 が `screen-nav.module.css` と `main-view.module.css` を触っている。先に `main` に入っていたら取り込んでから始める。自分があとから入れる側なら、相手が足した `font: inherit` も消す
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける
+
+## T-422
+
+**タスク**: 並行の作業ツリーでのアーカイブを、単独のコミットですぐ main へ送る手順にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+CLAUDE.md「1サイクルの形」の箇条にアーカイブを単独コミットで --ff-only 送りにすること・落ちたら捨ててやり直すことを足した（grep -n 'アーカイブ' CLAUDE.md の 296/302/306 行）。docs/workflow.md に小節「アーカイブも `main` へ単独で送る」で理由3点。節数は CLAUDE.md 17→17・docs/workflow.md 5→6。bun run check 通過（1539 pass / 0 fail / 127ファイル）。
+
+## 背景
+
+振り返り（2026-09-23、`develop/retrospective.md` の `e59e0be`..`e2a24c5`）で見つかったこと。アーカイブ（`develop/tasks.json` の完了したタスクを `docs/history/tasks.md` へ、`develop/progress.md` の完了した小節を `docs/history/progress.md` へ移す）の手順は共通の `~/.claude/skills/task-workflow/WORKFLOW.md` にあり、`/plan-tasks` の手順5と `/next-task` の手順1が `archive.py` で行う。開始の基準は `develop/tasks.json` の完了件数と文字数で決まる。
+
+並行の作業ツリーでは、`main` の完了件数が基準に達すると、どの作業ツリーも同じ時点で基準に達する。2026-09-23 の `/plan-tasks` では、枝の上で完了6件をアーカイブしている間に、別の作業ツリーが `4fd2169` で同じ範囲（に T-404 を足した7件）を `main` へアーカイブした。その結果、`git merge main` が `develop/tasks.json` と `docs/history/tasks.md` の両方で衝突した。`develop/progress.md` はマージドライバ（`scripts/merge-progress.ts`）が畳むが、この2ファイルと `docs/history/progress.md` には無い。そのときは、自分のアーカイブのコミットを捨てて `main` に追い付き、登録だけやり直して解消した。アーカイブは `archive.py` でやり直せる機械的な操作なので、衝突を手で解くより捨ててやり直すほうが安い。
+
+手順の正典は `CLAUDE.md`「## タスク運用」の「1サイクルの形」（`/next-task` がその節を読み込む）で、理由は `docs/workflow.md` に置く形になっている（`docs/workflow.md`「`doing` をコミットする」冒頭）。
+
+## 決まっていること（蒸し返さない）
+
+- アーカイブは単独のコミットにし、`doing` と同じく `git -C <本体> merge --ff-only <枝>` ですぐ `main` へ送る。`--ff-only` が落ちたら、そのコミットを捨てて `git merge main` し、基準を判定し直す（2026-09-23 に振り返りのドラフトをユーザーが承認）
+
+## やること
+
+1. `CLAUDE.md`「## タスク運用」の「1サイクルの形」に、アーカイブの扱いを箇条で足す（上の決定。`docs/history/progress.md` への移動も同じ扱い）。自分のコミットを捨てるのは、自分の作業ツリーの中のまだ `main` に入っていないコミットに限る、と書き添える（`CLAUDE.md`「## Git運用」の「自分の足元だけを触る」と矛盾しないように）
+2. `docs/workflow.md` に理由を足す（「`doing` をコミットする」の節の後ろに小節を1つか、その節の箇条に1つ。基準が `main` の件数で決まるので一斉に基準に達すること・ドライバが無い2ファイル・やり直しが安いこと）
+3. `git -C <本体> merge --ff-only` が `main` の作業ツリーで起こしたセッションでは要らないこと（「1サイクルの形」の既存の例外）と整合しているか確かめる
+
+## 完了条件
+
+- `CLAUDE.md` の「1サイクルの形」に、アーカイブを単独のコミットで `--ff-only` 送りにすることと、落ちたときに捨ててやり直すことが書かれている（`grep -n 'アーカイブ' CLAUDE.md` で該当行を `evidence` に書く）
+- `docs/workflow.md` に理由がある
+- 各ファイルの節の数が編集の前後で変わらない（小節を足した場合は1つ増える）
+- `bun run check` が通る
+
+## 注意
+
+- 共通の `~/.claude/skills/task-workflow/WORKFLOW.md` と `/plan-tasks`・`/next-task` のスキル本体は書き換えない（複数のプロジェクトで共通。このリポジトリの上乗せとして書く）
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数を確かめる
+
+## T-359
+
+**タスク**: report-reveal.ts をフックとそれ以外に割る
+
+**difficulty**: opus / **loopable**: N / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+382行の report-reveal.ts を hooks/use-report-reveal.ts（フレームを回す。useReportReveal / startReveal / advanceBlock）・reveal-measure.ts（DOM を測る）・reveal-paint.ts（clip-path と opacity を書く）の3つに割り、旧ファイルを消した。旧の関数13個を新3ファイルと突き合わせ、11個は本体が同一、advanceBlock と endLineOf の差は両方に重複していた測定式を shapesOf() に括り出した分だけ（式・評価順・呼ばれる回数は同じ）。参照を src 13 / test 6ファイルと docs/design.md・docs/architecture.md で追随。bun run check 1604 pass / 0 fail。目視: 2026-09-23 に利用者がタブを読み込み直して新しい依頼を1つ投げ、書き上げる演出が最後まで走ることを確認した。
+
+## 背景
+
+`src/browser/features/main-view/report-reveal.ts` は 361行で、export しているのは
+`useReportReveal`（86行）1本だけなのに、DOM を測って `clip-path` を進める関数が16個同居して
+いる。**専用ファイルだが `hooks/` の外にある。** 読み手は `report.tsx:17` の1つ。
+
+同じ機能には `reveal-band.ts`（帯の位置）・`reveal-plan.ts`（いつ出すか）・`brush-scroll.ts` が
+既に概念の名前で並んでいる。T-328 で決めた形は `docs/design.md`「機能の中を分ける
+（container / presenter と `hooks/`）」。
+
+エージェントのドラフトからの登録で、2026-09-22 にユーザーが2件ともタスク化を選んだ。
+
+## 解くべき論点
+
+- **フックの外に出す16個を、どの名前の概念でまとめるか。** `reveal-band.ts` /
+  `reveal-plan.ts` と役割が重ならない名前にする
+- **`domain/` には置かない**（`docs/design.md` の線では `domain/` は「フックを呼ばない相手が
+  読む」もの限定で、ここは読み手がフック1つ）。フックの下に関数として置くか、機能の直下に
+  概念の名前でファイルを作るか
+- `startReveal` 以下は DOM を書き換える。どこまでをフックの責任にするか
+
+## やること
+
+1. 上を決める
+2. `useReportReveal` を `features/main-view/hooks/` へ出し、残りを決めたとおりに置く
+3. **振る舞いを変えない**（式も順番も動かさない）
+
+## 完了条件
+
+- `bun run check` が通る（テスト件数を `evidence` に書く）
+- `hooks/` の下に `useReportReveal` がある
+- **目視**: 新しい依頼を投げて、書き上げる演出が前と同じように最後まで走ることを人が見て
+  確かめた結果が `evidence` にある
+
+## 注意
+
+- **演出はマウントした時点の DOM にだけ掛かる。** 開いた時点の本文には掛からないので、
+  確かめるには新しい依頼を投げて着地を見る必要があり、`scripts/capture-view.ts` の待ちでは
+  撮れない（`loopable` が `"N"` なのはこのため）
+- 背景のタスクなどで `turn-finished` が先に届く経路があるので、そこを変えない
+
+## T-375
+
+**タスク**: いまのセッションの /context 内訳をトークン消費の画面にグラフで出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+論点の結論: 経路=HTTP を1本（GET /context-usage?t=）——WS の dispatch は片方向で値を返せず、画面は既に /token-usage を同じ形で引いている。detail=full 固定——実測で full は初回571ms・以降8〜16ms、summary は6〜9msだが分類ごとが最大2.1倍ずれる（Memory files 12244 vs 5730）。ターン実行中でも待たされない（依頼の4秒後に full 13ms で返る）ので前回の値を出す仕組みは作らない。init 前は「取れない」1状態に畳む（ContextUsageReport = ready | unavailable の合併型）。グラフはモックどおり横棒1本＋3列の凡例＋details の表で、deferred は横棒に積まず別表。 / bun run check は 1560 pass / 0 fail（130ファイル）。 / 目視（本物のセッション、TSUKUMO_VIEW_PORT=39375・専用ホーム、Chrome 1400x900 と 720x900）: 同じセッションに打った /context と分類ごとに一致（System prompt 10.6k / System tools 4.4k / MCP tools 689 / Memory files 12.3k / Skills 4.7k / Free 93.1% / buffer 3.3k。Messages だけ /context 自身のレポート1件ぶん後で 3.3k→4.98k）。details の中の4つの表（MCP 9件・メモリ2件・スキル38件・窓の外2件）も一致し、1400px・720px とも横のはみ出し 0px。
+
+## 背景
+
+Claude Code の `/context` は文脈の使い方を分類ごと（System prompt / System tools / MCP tools /
+Memory files / Skills / Messages / Free space / Autocompact buffer など）に出す。Agent SDK
+（0.3.280）の `Query.getContextUsage(opts?: { detail?: 'summary' | 'full' })` が同じ中身を
+`SDKControlGetContextUsageResponse` で返す（`sdk.d.ts` の `SDKContextUsage` / `SDKContextUsageCategory`）。
+
+- `categories[]` は `name` / `tokens` / `kind`（`'used' | 'free' | 'buffer' | 'deferred'`）。**分類には `kind` を使い、`name`（英語の表示名）で判定しない**と SDK の型の説明にある
+- ほかに `mcp_tools[]`（name / server_name / tokens）、`memory_files[]`（path / type / tokens）、`agents[]`、`skills[]`（省略されうる）、`total_tokens` / `raw_max_tokens` / `percentage` / `model`
+- `detail: 'full'` は分類ごとに token-count API を呼ぶ。`'summary'` は直前の応答の usage と手元の見積もりで答える（既定は `'full'`）
+
+tsukumo はいまこれを呼んでいない。トークン消費の画面（`src/browser/features/token-usage/`）は記録の
+集計（`GET /token-usage`、`src/server/adapter/server.ts`）だけを出している。SDK へ問い合わせる口は
+`SessionDriver`（`src/server/core/session-driver.ts`）にあり、実装は `src/server/adapter/sdk-driver.ts`
+と `src/server/adapter/fake-driver.ts` の2つ。
+
+## 決まっていること（蒸し返さない）
+
+- 画面に出すのは**いまのセッションの内訳**。過去の推移は出さない（2026-09-23 ユーザー）
+- 記録（セッションごとに1回）は後ろのタスク T-376 がやる。このタスクでは記録に書かない
+
+## モックの形（2026-09-23 にユーザーが示した。`docs/history/mockup/token-usage-2026-09-23.png` の「いまのコンテキスト」）
+
+- 画面のいちばん上に、枠のある札を1枚置く。見出し「いまのコンテキスト」の横に小さく「このセッション · /context と同じ内容」
+- 大きな数で「121.5k」、続けて小さく「/ 200k」と「61%」（使っている量 / 窓の大きさ / 割合）
+- 右上に「自動圧縮まで あと 33.5k」の小さな札、その下に等幅で「Opus · 更新 [14:32]」（内訳のモデルと、取った時刻）
+- 横棒1本: `used` の分類を色分けして積み、続けて空き（地より一段明るい無地）、最後に自動圧縮バッファ（斜線）
+- 凡例は3列の格子で、各行に色の四角・分類名（日本語: システムプロンプト / システムツール / MCP ツール / メモリファイル / スキル / メッセージ / 空き / 自動圧縮バッファ）・トークン数・割合。空きと自動圧縮バッファの四角は横棒と同じ無地と斜線
+- 札の下端に畳んだ「▶ MCP ツール・メモリファイル・スキルの内訳を見る」（`details`。開くと表）
+- モックの「[サンプル値]」は見本の注記で、作るものではない
+- 分類名は SDK の `name`（英語の表示名）を日本語に置き換えて出すが、**判定には `kind` を使う**。知らない `name` は英語のまま出す
+- 色は分類ごとに違う色を使う。凡例に分類名が必ず並ぶので、`docs/design.md` 13.1 原則5（色は文字と対でだけ増やす）に当たる
+
+上の形は「解くべき論点」のグラフの形の問いへの答えを兼ねる（`deferred` を横棒に入れないのは変わらない）。
+
+## 解くべき論点
+
+- 画面へ運ぶ経路。(a) `/token-usage` と同じ HTTP の経路を1本足し、開いたときに取りに行く、(b) WebSocket のコマンドとフレームで頼んで受け取る。どちらも起動トークンが要る
+- `detail` を `'full'` にするか `'summary'` にするか。画面を開くたびに呼ぶなら呼び出しの回数と待ち時間で決める。**実際に両方で呼んで、かかった時間と値の差を `evidence` に書く**
+- ターンの実行中に呼んで答えが返るか、待たされるか。実測して、待たされるなら実行中は前回の値を出す・出さないを決める
+- セッションがまだ起きていない（`init` 前）ときの見せ方
+- グラフの形。`kind` が `used` の分類を積み上げ、`free` と `buffer` を並べた横棒1本が第一候補（`/context` の見た目に近い）。`deferred` は窓の外なので別に出す。`memory_files` / `skills` / `mcp_tools` は表にする
+
+## やること
+
+1. `src/shared/` に内訳の形を置く（SDK の型をそのまま運ばず、画面が要る数と名前だけに写す。検証は境界で zod）
+2. `SessionDriver` に内訳を取る口を足し、sdk / fake の両方で実装する。取れなかったら例外を投げず「無い」を返す
+3. 選んだ経路で画面まで運び、トークン消費の画面にグラフと表を足す
+4. テストを足す（境界の写し・経路・画面の部品）
+5. `bun run build` のあと本物で起こし、`/context` を別に打った値と画面の値が近いことを目視で確かめる
+
+## 完了条件
+
+- `bun run check` が通る
+- 本物のセッションで、画面の内訳と `/context` の出力を並べて比べた結果（分類ごとの値）を `evidence` に書く
+- 上の論点それぞれに何を選んだかを `evidence` に1行ずつ書く
+
+## 注意
+
+- 内訳に入る文字列はメモリファイルのパス・スキル名・MCP ツール名・エージェント名で、会話の文面は入らない。**Messages の中身は数だけで、文面を取りに行かない**（`docs/coding-standards.md`「会話内容の扱い」）
+- T-373 / T-374 と同じ画面のファイルを触る。並行して進めたときは合流で `presentational-token-usage-screen.tsx` がぶつかりうる
+
+## T-406
+
+**タスク**: cli.test.ts のポートを塞ぐテストを、並行の tsukumo に左右されなくする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1585 pass / 0 fail。7327〜7332 を他の tsukumo が使っている状態で、既定の帯に fake driver の tsukumo を1つ起こし（7333 に着地）、動かしたまま bun test --isolate test/cli.test.ts を3回続けて 4 pass / 0 fail。確認後 stop.ts --port 7333 で止めた
+
+## 背景
+
+`test/cli.test.ts` の「既定ポートから上限まで全部塞がっていると、試した範囲を伝えて終了コード1で終わる」は、`DEFAULT_VIEW_PORT` から `VIEW_PORT_FALLBACK_ATTEMPTS` 個のポートを `listenOnPortIfFree` で塞いでから CLI を起こし、終了コード1を期待する。**ポートは作業ツリーで分かれない**ので、別の作業ツリーで tsukumo やテストが同じ帯を使っていると結果が揺れる。T-372 を合流したあとの `bun run check` でこのテストが20秒で時間切れになり（`result.status` が 1 でなく 0 = CLI がポートを掴めてしまった）、単体で走らせると通った（作業ツリーは3本動いていた）。
+
+## 解くべき論点
+
+- 帯をずらす方法。候補: (a) CLI が `TSUKUMO_VIEW_PORT` を起点に探すなら、テストが空いている帯を見つけてそこを起点に渡す (b) 起点を CLI の引数で渡せるようにする。**テストのためだけに公開しない**規約（`docs/coding-standards.md`）に当たらない方を選ぶ
+- 「塞いだつもりが一部塞げていなかった」ときにテストが黙って通らないよう、全部塞げたことを前提として確かめる
+
+## やること
+
+1. CLI がポートを探す起点をどこから読むかを確かめる（`src/server/adapter/config.ts` と `src/cli.ts`）
+2. テストが使う帯を、ほかの tsukumo と重ならない場所に動かす
+3. 同じテストファイルの中で既定ポートを前提にしている他のテストがあれば、同じ直し方にする
+
+## 完了条件
+
+- 別に `bun run start`（`TSUKUMO_OPEN_VIEW=0`）で既定ポートの tsukumo を動かしたまま `bun test --isolate test/cli.test.ts` が通ることを `evidence` に書く
+- `bun run check` が通る
+
+## 注意
+
+- 動かした tsukumo は `bun run scripts/stop.ts --port <n>` で止める（`pkill` は hook が拒否する）
+
+## T-409
+
+**タスク**: docs/design.md 5章に残る型と経路の写しを、型定義への参照に置き換える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1625 pass / 0 fail。5章の awk|grep 'interface SessionHost|type SessionHost' が 0、5章に token-usage / TOKEN_USAGE が3か所、見出しの数は前後とも53。参照先の EVENT_BATCH_INTERVAL_MS・server.ts の経路の定数9個と respond・SESSION_SOCKET_PATH が実在することを grep で確認。README.md の環境変数の表に TSUKUMO_FAKE_SCENE と TSUKUMO_HOME が無いのは範囲外として残した
+
+## 背景
+
+T-372 で `docs/design.md` 4章の型の写しを型定義への参照に置き換えたとき、腐っていた写しが4つ出た（実物に無い `new-session` と `session-started`、旧名の `MAX_SESSION_VIEW_TURNS` と `MAX_DISPATCH_TEXT_LENGTH`）。5章（`## 5. core と adapter`）に同じ形の写しが3つ残っている:
+
+- 「session-manager.ts（core）」の `SessionHost` のコードブロック
+- 「server.ts と session-socket.ts（adapter）」の経路の表。**すでにずれている**（`GET /token-usage?t=<起動トークン>&days=<日数>` が `src/server/adapter/server.ts` にあるのに表に無い）
+- `config.ts` の環境変数の表。こちらは `src/server/adapter/config.ts` 側が design.md を正典と明記しているので、写しの向きが逆
+
+## 解くべき論点
+
+- `config.ts` の環境変数の表の正典をどちらに置くか。design.md を正典のままにするなら表は残し、実物とのずれを直す（`README.md` の環境変数の表と `--help` とも突き合わせる）。コードを正典にするなら `config.ts` のコメントを直して表を参照に置き換える
+
+## やること
+
+1. `SessionHost` のコードブロックと経路の表を、型定義・実装のファイルとシンボル名への参照に置き換える（4章でやった形に揃える）。経路の表を残す理由があるなら、残して `/token-usage` を足す
+2. 論点を決め、`config.ts` の表を直す
+3. 置き換えで消える記述のうち、コードから読めない決定（なぜその形か）があれば残す
+
+## 完了条件
+
+- `awk '/^## 5\. /{f=1} /^## 6\. /{f=0} f' docs/design.md | grep -c 'interface SessionHost\|type SessionHost'` が 0
+- 5章に `/token-usage` の経路が抜けていない（参照に置き換えたなら参照先に載っている）
+- `grep -c '^#\{2,3\} ' docs/design.md` が編集の前後で変わらない
+- `bun run check` が通る
+
+## 注意
+
+- `docs/design.md` は冒頭の「節の索引」に見出し名がそのまま入っている。位置は行頭を含めて特定する（CLAUDE.md「ドキュメントを編集するときの罠」）
+
+## T-423
+
+**タスク**: キャラクター画面から仕事と雑談の差し色を変え、雑談を仕事と同じに戻せるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 1598 pass / 0 fail。set-accent（target: work/chat）と clear-chat-accent を足し、キャラクター画面に「画面の差し色 仕事/雑談」の行（chatAccent なしは仕事の色と「仕事と同じ」の字、ありは「仕事と同じにする」）を置き、衣装の行を「立ち絵の差し色」に改名。
+目視（fake・1400x900・一時 TSUKUMO_HOME）: 仕事を #112233 にすると帯のトグルと上端の線が変わり、雑談に #ff8800 を差すと雑談中のトグル・線・札がその色、「仕事と同じにする」で雑談中も #112233 に戻り口が「仕事と同じ」の字に替わった。
+一時ホームの character.json は accent だけ更新・chatAccent は欄ごと消え、他のキーは無傷（同梱パックと本物のホームは未変更）。
+
+## 背景
+
+画面全体の差し色はパックの持ち物で、`characters/<name>/character.json` の `accent`（仕事）と `chatAccent`（雑談中だけ。無ければ `accent` のまま）から来る（検証は `src/shared/character-definition.ts`、雑談中の切り替えは `src/shared/character.ts` の `effectiveAccent`、`:root` への流し込みは `src/browser/stores/session.tsx` の `--accent`。`docs/design.md` 13.2「雑談中は」/ 13.7）。**どちらも画面から変える口が無い。** キャラクター画面（`src/browser/features/character-screen/`）の「差し色」の行が変えるのは立ち絵の中だけに効く衣装ごとの色（`outfitAccents`。コマンド `set-outfit-accent`、書き込みは `src/server/adapter/character-edit.ts` の `applyEdit` → `definitionWithOutfitAccent`）で、`accent` / `chatAccent` とは別物。作る画面の差し色1色も `outfitAccents.default` に入る（`character-edit.ts` の作成の経路）。
+
+T-392 で `chatAccent` を足したときは編集UIを作らなかった。ユーザーが画面から設定したいと言った（2026-09-23）。
+
+## 決まっていること（蒸し返さない）
+
+- **仕事の差し色（`accent`）と雑談の差し色（`chatAccent`）の両方を**キャラクター画面から変えられるようにする（ユーザーの選択。2026-09-23）
+- **雑談の差し色を「仕事と同じ」（`chatAccent` の欄なし）に戻す口を付ける**（ユーザーの選択。一度色を選ぶと画面から欄なしに戻れない、を避ける）
+- 置き場所はキャラクター画面（パックの持ち物。`docs/design.md` 13.6 の表「キャラクターの立ち絵・差し色」の行）。帯の歯車（利用者の設定）には置かない
+- 書き込み先は既存の編集と同じく `~/.tsukumo/characters/<name>/character.json`（同梱パックを直さない。書く前にホームへ写す既存の手順に乗せる）
+
+## 解くべき論点
+
+- 衣装ごとの「差し色」の行との並べ方と呼び名（例: 「画面の差し色 ■ 仕事 ■ 雑談 [仕事と同じにする]」の行を立ち絵の差し色の行の上に置く。立ち絵の色と画面の色が同じ「差し色」の名で並んで区別が付かないなら、既存の行のラベルも「立ち絵の差し色」などに直す）。`docs/design.md` 13.6 の画面の図と箇条を合わせて直す
+- コマンドの形: `set-outfit-accent` に倣って `set-accent`（仕事/雑談を引数で分けるか、型を2つにするか）と、戻す口のコマンド。色の検証は既存の `accentColorSchema` を使う
+- `editedDefinitionJson` は入れ子の欄（`portraits` / `outfitAccents` / `background`）しか書かない。最上位の欄 `accent` / `chatAccent` を書く・消す関数をどう足すか（ほかのキーを残す・2スペース整形はそのまま）
+- 変えた色がいま開いている画面の `--accent` にすぐ効くか（衣装の差し色を変えたときにパックが配り直される経路に乗るかを確かめる）。引きずっている間の送信は衣装の差し色と同じく debounce でまとめる（`use-character-edit.ts` の `OUTFIT_ACCENT_DEBOUNCE_MS`）
+- `chatAccent` が無いときの雑談の色見本に何を出すか（`accent` の値を出し、「仕事と同じ」と分かるようにする）
+
+## やること
+
+1. 上の論点を決める
+2. `src/shared/command.ts` にコマンドを足し、`src/shared/character-definition.ts` に最上位の欄を書く・消す関数を足す
+3. `src/server/adapter/character-edit.ts` の `applyEdit` に分岐を足す
+4. `src/browser/features/character-screen/` の hook と presentational に行を足す（`editable: false` のパックでは無効）
+5. `docs/design.md` 13.6（画面の図・箇条）と 13.2 / 13.5 の「画面から変えない」旨の記述があれば直す。`characters/README.md` に編集できる旨があれば揃える
+6. テスト: 定義の書き換え（`accent` を差す・`chatAccent` を差す・`chatAccent` を消すと欄が無くなりほかのキーは残る）、`applyEdit` の3分岐、hook が送るコマンド（仕事・雑談・戻す）と `chatAccent` なしのときの色見本
+
+## 完了条件
+
+- 上のテストがある
+- `bun run check` が通る
+- 目視（1400x900、一時の `TSUKUMO_HOME`）: キャラクター画面で仕事の差し色を変えると帯・トグルの色が変わる。雑談の差し色を変えて雑談に切り替えるとその色になり、「仕事と同じにする」を押すと雑談中も仕事の色になる。`~/.tsukumo/characters/<name>/character.json`（一時ホームの側）の `accent` / `chatAccent` が期待どおりになっている。何が見えたかを `evidence` に書く
+
+## 注意
+
+- ホームのパック（`~/.tsukumo/characters/`）が同梱パックを覆う。目視は一時の `TSUKUMO_HOME` で行い、本物のホームのパックを書き換えない
+- 同梱パック（`characters/`）の `character.json` は書き換えない（既定値はそのまま）
+- 13.1 原則1・原則5（色を足さない）は変えない。足すのは既にある `accent` の値を変える口だけで、新しい色のトークンは作らない
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる
+- 目視は tsukumo を起こす。並行させるなら `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を2つとも分ける

@@ -62,7 +62,6 @@
   border-radius: 0.5rem;
   background: var(--surface);
   color: var(--ink);
-  font: inherit;
   cursor: pointer;
 }
 .pending-action:hover:not(:disabled) {
@@ -226,12 +225,9 @@
   padding: 0 1.125rem;
   border: 1px solid var(--accent);
   border-radius: 0.5625rem;
-  /* font: inherit を先に置く（消すと font-family が button の UA 既定に落ちて、書体だけ
-     ページから外れる）。そのうえで大きさと太さを上書きする。
-     モックの 14px（--font-subheading）は区画の見出しの段で、ボタンには使わない。ボタンの字は
+  /* モックの 14px（--font-subheading）は区画の見出しの段で、ボタンには使わない。ボタンの字は
      機械のラベルではなく操作の名前そのものなので「補助・サイドバーの本文」寄りに見て
-     --font-secondary（13px）に寄せた。 */
-  font: inherit;
+     --font-secondary（13px）に寄せた（大きさ以外は `theme.css` の既定を継ぐ）。 */
   font-size: var(--font-secondary);
   font-weight: 700;
   cursor: pointer;
@@ -278,7 +274,6 @@
   color: inherit;
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
   border-radius: 0.5rem;
-  font: inherit;
 }
 .dispatch-text::placeholder {
   color: var(--ink-quiet);

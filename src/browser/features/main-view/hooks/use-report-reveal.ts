@@ -1,4 +1,4 @@
-// 確定したレポートを「書き上げていくように見せる」演出（`docs/requirements.md` 4.3）。
+// 確定したレポートを「書き上げていくように見せる」演出（`docs/requirements.md` 4.3）の入口。
 // **DOM は完成品を一度に作り、見せる範囲だけを進める**——文字を足していく実装にすると、表・
 // mermaid・Chart.js が未完成のソースで作り直され、非同期に描く mermaid は途中の形で失敗する。
 //
@@ -8,18 +8,9 @@
 // 左から右へなぞって、あいだを斜めに戻る——つまりZ字の3画。**帯の切れ目は実際の行の box に
 // 合わせる**ので、文字が上下に切れることはない（1行しかない塊は1画で書く）。
 //
-// **ここは測って書くだけ**で、帯の割り出しと帯の上の筆の居場所は `reveal-band.ts`（純粋な計算）。
+// **ここはフレームを回すだけ**で、測るのは `reveal-measure.ts`、要素に書くのは
+// `reveal-paint.ts`、帯の割り出しと帯の上の筆の居場所は `reveal-band.ts`（純粋な計算）。
 // なぞる右端は**帯ごとに、その帯にある行のいちばん右**（同ファイル冒頭）。
-//
-// 帯は**要素をまたいで1本に伸びる**（見出しと段落と表が同じ帯に入る）。だから筆の居場所は
-// ビューポート座標で1つだけ持ち、要素ごとの見せ方へ {@link applyStep} で翻訳する:
-//
-// - 文字の要素は、Z字が通ったところまでを `clip-path` のポリゴンで見せる
-// - 図・グラフの要素は、筆が通り過ぎた割合を `opacity` にする。**入れ物に触るだけ**なので、
-//   mermaid と Chart.js が描き直されることはない（部品は `memo` のまま一度しかマウントされない）
-//
-// どちらもレイアウトを動かさない（`clip-path` も `opacity` も場所を取ったまま隠す）ので、
-// 本文の高さは最初から最後まで変わらない。
 //
 // **ミニ立ち絵の立つ位置が画面から出たら器を送る**（`brush-scroll.ts`）。追う範囲は
 // 帯ぜんたいではなく、帯の下端から立ち絵の高さの見積もりぶん上まで——行の多いトピックでは
@@ -39,36 +30,17 @@
 
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
-import { prefersReducedMotion } from "../../lib/reduced-motion.ts"
-import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../lib/reveal-speed.ts"
-import {
-  BRUSH_ORIGIN_ATTRIBUTE,
-  publishBrushTip,
-  restBrushTip,
-  type BrushPlace,
-} from "../../stores/brush-tip.ts"
-import { brushScroller } from "./brush-scroll.ts"
-import {
-  brushStep,
-  lastLineOf,
-  toBands,
-  type BrushStep,
-  type LineBox,
-  type RevealFrame,
-} from "./reveal-band.ts"
-import {
-  blockProgress,
-  planReveal,
-  type RevealBlock,
-  type RevealElement,
-  type RevealMember,
-} from "./reveal-plan.ts"
+import { prefersReducedMotion } from "../../../lib/reduced-motion.ts"
+import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../../lib/reveal-speed.ts"
+import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "../../../stores/brush-tip.ts"
+import { brushScroller } from "../brush-scroll.ts"
+import { brushStep, toBands, type BrushStep } from "../reveal-band.ts"
+import { endLineOf, frameOf, lineBoxesOf, placeIn, shapesOf } from "../reveal-measure.ts"
+import { applyStep, hideBlock, showBlock } from "../reveal-paint.ts"
+import { blockProgress, planReveal, type RevealBlock } from "../reveal-plan.ts"
 
 /** 見せる範囲を進めているあいだだけ根に立てる印（目視確認と、外から終わりを知るための口）。 */
 const REVEALING_ATTRIBUTE = "data-revealing"
-
-/** 何も見せていない状態の `clip-path`（高さ 0 に畳む。場所は取ったまま）。 */
-const HIDDEN_CLIP = "inset(0 0 100% 0)"
 
 /**
  * 自動送りが追う範囲（`brush-scroll.ts` の `BrushTipRange.tipHeight`）に渡す、ミニ立ち絵の
@@ -229,37 +201,12 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
   return finish
 }
 
-function hideBlock(block: RevealBlock): void {
-  for (const member of block.members) {
-    if (member.kind === "figure") {
-      member.element.style.opacity = "0"
-    } else {
-      member.element.style.clipPath = HIDDEN_CLIP
-    }
-  }
-}
-
-function showBlock(block: RevealBlock): void {
-  for (const member of block.members) {
-    member.element.style.removeProperty(member.kind === "figure" ? "opacity" : "clip-path")
-  }
-}
-
-/** 要素1つと、そのいまの位置。1フレームの中で box を2度測らないために組で持ち回る。 */
-type MemberShape = {
-  readonly member: RevealMember
-  readonly box: DOMRect
-}
-
 /**
  * 塊1つを `progress`（0〜1）まで出し、そのときの筆の居場所を返す（**ビューポート座標**。
- * 配るときに原点を移す。{@link brushTipAt}）。
+ * 配るときに原点を移す。{@link placeIn}）。
  */
 function advanceBlock(block: RevealBlock, progress: number): BrushStep | undefined {
-  const shapes = block.members.map((member) => ({
-    member,
-    box: member.element.getBoundingClientRect(),
-  }))
+  const shapes = shapesOf(block)
   const frame = frameOf(shapes)
   if (frame === undefined) {
     // まだレイアウトされていない。隠したまま次のフレームで追いつく。
@@ -272,111 +219,4 @@ function advanceBlock(block: RevealBlock, progress: number): BrushStep | undefin
   }
 
   return step
-}
-
-/**
- * 書き終わりの行（ビューポート座標）。**行が1つも取れない塊では無い**——そのときは筆先を
- * 置き直さず、最後に配ったところへ落とす（`finish()`）。
- */
-function endLineOf(block: RevealBlock): LineBox | undefined {
-  const shapes = block.members.map((member) => ({
-    member,
-    box: member.element.getBoundingClientRect(),
-  }))
-  return lastLineOf(shapes.flatMap(lineBoxesOf))
-}
-
-/**
- * 測った居場所（ビューポート座標）を、**本文の入れ物を原点にした座標**へ写す
- * （`stores/brush-tip.ts`）。入れ物の矩形は**毎フレーム測り直す**——書いているあいだは器が
- * 送られ、窓の幅も変わりうるので、始めに測った1回では合わなくなる。
- */
-function placeIn(origin: Element, viewport: BrushPlace): BrushPlace {
-  const box = origin.getBoundingClientRect()
-  return {
-    x: viewport.x - box.left,
-    top: viewport.top - box.top,
-    bottom: viewport.bottom - box.top,
-  }
-}
-
-/**
- * 塊を囲む枠。**筆が枠から出ないための落とし先**で、なぞる右端そのものではない
- * （右端は帯ごとに決まる。`reveal-band.ts`）。
- */
-function frameOf(shapes: readonly MemberShape[]): RevealFrame | undefined {
-  const boxes = shapes.map((shape) => shape.box).filter((box) => box.width > 0 || box.height > 0)
-  const first = boxes.at(0)
-  if (first === undefined) {
-    return undefined
-  }
-
-  return {
-    left: boxes.reduce((left, box) => Math.min(left, box.left), first.left),
-    right: boxes.reduce((right, box) => Math.max(right, box.right), first.right),
-  }
-}
-
-/**
- * 要素の中の行。**文字そのものの矩形だけ**を返す——文字の要素に `range.selectNodeContents` を
- * かけると、箇条書きの `<li>` や表の `<tr>` のような**ブロックの箱まで混じって右端が行の幅では
- * なく欄の幅になる**ので、文字の節点を1つずつ測る。
- *
- * **図・グラフは行を持たない**ので、その要素の box をまるごと1行として扱う（筆はその上を
- * 1画で通る）。
- */
-function lineBoxesOf(shape: MemberShape): readonly LineBox[] {
-  if (shape.member.kind === "figure") {
-    return shape.box.height > 0
-      ? [{ top: shape.box.top, bottom: shape.box.bottom, right: shape.box.right }]
-      : []
-  }
-
-  return textNodesOf(shape.member.element).flatMap((node) => {
-    const range = document.createRange()
-    range.selectNodeContents(node)
-    return [...range.getClientRects()]
-      .filter((rect) => rect.height > 0 && rect.width > 0)
-      .map((rect) => ({ top: rect.top, bottom: rect.bottom, right: rect.right }))
-  })
-}
-
-/** 要素の下にある文字の節点。**空白だけのもの**（タグのあいだの改行）は数えない。 */
-function textNodesOf(element: RevealElement): readonly Node[] {
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
-  const nodes: Node[] = []
-  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
-    if ((node.nodeValue ?? "").trim().length > 0) {
-      nodes.push(node)
-    }
-  }
-  return nodes
-}
-
-/** 塊ぜんたいの筆の居場所を、要素1つぶんの見せ方に翻訳する。 */
-function applyStep(shape: MemberShape, step: BrushStep): void {
-  const box = shape.box
-  const filled = clamp(step.filled - box.top, 0, box.height)
-  const bottom = clamp(step.bottom - box.top, filled, box.height)
-
-  if (shape.member.kind === "figure") {
-    // 筆がこの要素の上を通り過ぎた割合。戻りのあいだは `swept` が 0 なので薄くならない。
-    const swept = filled + (bottom - filled) * step.swept
-    shape.member.element.style.opacity =
-      box.height === 0 ? "0" : String(clamp(swept / box.height, 0, 1))
-    return
-  }
-
-  const x = clamp(step.writtenX - box.left, 0, box.width)
-  shape.member.element.style.clipPath =
-    `polygon(0px 0px, ${px(box.width)} 0px, ${px(box.width)} ${px(filled)}, ` +
-    `${px(x)} ${px(filled)}, ${px(x)} ${px(bottom)}, 0px ${px(bottom)})`
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
-}
-
-function px(value: number): string {
-  return `${String(Math.round(value))}px`
 }

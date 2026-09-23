@@ -14,7 +14,9 @@ import {
   type ModelUsageTotal,
 } from "../../../shared/token-usage-summary.ts"
 import { type ToolUsageCount } from "../../../shared/token-usage.ts"
+import { ContextUsageCard } from "./context-usage-card.tsx"
 import { DailyUsageChart } from "./daily-usage-chart.tsx"
+import { type UseContextUsageResult } from "./hooks/use-context-usage.ts"
 import { type UseTokenUsageResult } from "./hooks/use-token-usage.ts"
 import styles from "./token-usage.module.css"
 import { formatBytes, formatCount } from "./usage-format.ts"
@@ -31,7 +33,10 @@ const FAILED_NOTE = "集計を取れなかった"
  */
 const TOOL_ROWS = 10
 
-export type PresentationalTokenUsageScreenProps = UseTokenUsageResult
+export type PresentationalTokenUsageScreenProps = UseTokenUsageResult & {
+  /** いまのコンテキストの内訳（`hooks/use-context-usage.ts`）。 */
+  readonly contextUsage: UseContextUsageResult
+}
 
 export function PresentationalTokenUsageScreen(
   props: PresentationalTokenUsageScreenProps,
@@ -59,6 +64,8 @@ export function PresentationalTokenUsageScreen(
           ))}
         </div>
       </div>
+
+      <ContextUsageCard card={props.contextUsage} />
 
       <dl className={styles["token-usage-total"]}>
         <Figure label="入力" value={formatCount(props.total.inputTokens)} />

@@ -42,6 +42,17 @@
   --state-ng: #e88b8b;
   --state-ask: #8ab4e8;
 
+  /* コンテキストの内訳（13.2）の分類の色。**誰が来ても変わらない固定の色**で、横棒の区間と
+     凡例の四角が同じ1つを読む。**凡例に分類名が必ず並ぶ**ので、色だけで意味を伝えることには
+     ならない（13.1 原則5）。知らない分類は `context-other` に落ちる。 */
+  --context-system-prompt: #6fa8dc;
+  --context-system-tools: #6fc7b6;
+  --context-mcp-tools: #b79ce0;
+  --context-memory-files: #dcae6a;
+  --context-skills: #a3c96a;
+  --context-messages: #e79aa8;
+  --context-other: #8f8a99;
+
   /* タイプスケール。段はこの6つだけ（13.3）。 */
   --font-label: 0.6875rem;
   --font-action: 0.75rem;
@@ -85,6 +96,17 @@ body {
   font-size: var(--font-body);
   line-height: var(--line-height-body);
   overflow-wrap: anywhere;
+}
+
+/* フォーム部品（button/input/select/textarea）はブラウザの既定では親の書体を継がないので、
+   ここで1回だけ継がせる。**大きさ・行の高さ・太さも一緒に継ぐ**（`font-family` だけにすると、
+   大きさを上書きしていない部品で行の高さが本文の 1.75 から UA 既定に戻る）。機能の CSS には
+   書かず、ここから変える値（`font-size` など）だけを書く（docs/design.md 13.3）。 */
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 /* フォーカスの輪は、キャラクターの色（accent）を出してよい場所の1つ（13.1 原則1）。 */

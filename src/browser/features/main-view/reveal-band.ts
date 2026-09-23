@@ -1,5 +1,5 @@
 // レポートを「書き上げていくように見せる」演出で、**筆がどこをなぞるか**を決める（純粋な計算。
-// 位置を測るのは `report-reveal.ts`、いつ出すかは `reveal-plan.ts`）。
+// 位置を測るのは `reveal-measure.ts`、いつ出すかは `reveal-plan.ts`）。
 //
 // 塊（トピック）の行をZ字の**帯**に割り、帯の上の `progress`（0〜1）から筆の居場所を出す。
 //
@@ -25,7 +25,7 @@ import { type BrushStroke } from "../../stores/brush-tip.ts"
  * 行1つの位置（ビューポート座標）。**左端は持たない**——筆はどの帯も塊の左端から書き始めるので、
  * 行ごとの左端は使わない（箇条書きの字下げのぶん筆が右から始まることもない）。
  *
- * 図・グラフは行を持たないので、要素の box をまるごと1行として渡す（`report-reveal.ts`）。
+ * 図・グラフは行を持たないので、要素の box をまるごと1行として渡す（`reveal-measure.ts`）。
  */
 export type LineBox = {
   readonly top: number
@@ -106,7 +106,7 @@ export function toBands(boxes: readonly LineBox[], frame: RevealFrame): RevealBa
 
 /**
  * 書き終わりの行（**行であって帯ではない**）。書き上げたあとに筆先を残す位置に使う
- * （`report-reveal.ts`）——帯の右端は**その帯でいちばん長い行の右**なので、短い行で終わる
+ * （`hooks/use-report-reveal.ts`）——帯の右端は**その帯でいちばん長い行の右**なので、短い行で終わる
  * 本文に使うと、書き終わっていない場所まで筆先が飛ぶ。
  */
 export function lastLineOf(boxes: readonly LineBox[]): LineBox | undefined {

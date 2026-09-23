@@ -616,8 +616,9 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 - `protocolVersion` が browser の `PROTOCOL_VERSION` と違えば、browser は会話の画面の代わりに
   「ページを読み込み直してください」を出し、以降の `events` を畳まない（起こし直したプロセスと
-  古いタブの組み合わせのほか、見張りつきの起動で**画面だけ**組み直されたときにも起きる。後者は
-  tsukumo を上げ直すまで直らないので、知らせにはそれも書く）。版の合う `hello` がまた届けば戻る
+  古いタブの組み合わせで起きる。見張りつきの起動で**画面だけ**組み直されたときの道は11章の
+  指紋の突き合わせで塞いだが、塞ぎ損ねたときは tsukumo を上げ直すまで直らないので、知らせには
+  それも書く）。版の合う `hello` がまた届けば戻る
   （`src/browser/stores/session.tsx` の `protocol`）
 
 ### 4.5 版と互換
@@ -658,17 +659,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### session-manager.ts（core）
 
-```ts
-type SessionHost = {
-  readonly sessionId: string
-  readonly driver: SessionDriver
-  state: SessionState // サーバ側でも reducer を回す（hello の snapshot のため）
-  readonly subscribers: Set<(frame: ServerFrame) => void>
-}
-```
+`SessionManager` の契約と、セッション1つぶんの持ち物（`SessionHost`）の型定義は
+`src/server/core/session-manager.ts` を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
 - `create(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
-  (3) バッチに積む**。50〜100ms ごとに `events` フレームを購読者へ配る（`throttle` で間引く）
+  (3) バッチに積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms）ごとに `events` フレームを購読者へ配る
 - `dispatch(sessionId, command)`: `switch (command.type)` で駆動へ渡す。**ここが唯一の分岐**
 - `subscribe(sessionId, send)`: 接続ごとに `hello` を送ってから購読に加える
 - **いまは要素1つ。** 鍵（`sessionId`）を持たせておくのは 8章のため
@@ -705,37 +700,49 @@ type SessionHost = {
 
 ### server.ts と session-socket.ts（adapter）
 
-**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と
-`/repository-file` は `server.ts`（listen するのもここ）、`/ws` の upgrade とコマンドの受け口は
-`session-socket.ts`（listen 済みのサーバに受け口を足すだけ）。**起動トークンは1つ**で、
-`server.ts` の `createStartupToken` が作ったものを両方が見る。
+**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と、会話を含まない
+JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`）と会話の内容を運ぶ
+`/prompt-image/<id>` は `server.ts`（listen するのもここ。経路の一覧は `respond` 関数と、経路ごとの
+定数（`LAYOUT_PATH` / `uiScriptPath()` ・ `styleSheetPath()` / `VENDOR_PATH_PREFIX` /
+`CHARACTER_ASSET_PATH_PREFIX` / `REPOSITORY_FILE_PATH` / `TOKEN_USAGE_SUMMARY_PATH` /
+`CONTEXT_USAGE_PATH` / `PROMPT_IMAGE_PATH_PREFIX`）が正典）、`/ws` の upgrade とコマンドの受け口は
+`session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を足すだけ）。**起動トークンは
+1つ**で、`server.ts` の `createStartupToken` が作ったものを両方が見る。
 
-| 経路                              | 中身                                                                                                                  | トークン |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
-| `GET /`                           | ページ（`<div id="app">` と `<script src="/assets/ui.js">` と `<link href="/assets/style.css">`。**本文は入れない**） | 不要     |
-| `GET /assets/ui.js` / `style.css` | 束ねたもの（メモリ。11章の見張りで差し替わる）                                                                        | 不要     |
-| `GET /vendor/<name>`              | allowlist の対応表にある外部ライブラリだけ（実ファイルは `node_modules`。`vendor-asset.ts`）                          | 不要     |
-| `GET /character/<file>`           | いまのパックの素材。**`character.json` に書かれたファイル名だけ**を配る（パスから組み立てない）                       | 不要     |
-| `GET /repository-file?t=<token>`  | git 管理下のファイルのパス（入力欄の `@` 補完。実体は `repository-file.ts` の `git ls-files`）                        | **必要** |
-| `GET /ws?t=<token>`               | WebSocket。Origin とトークンを確かめてから upgrade                                                                    | **必要** |
-
-会話の内容が乗るのは `/ws` だけ（`session-socket.ts`）。ページ・同梱物・素材は静的な物なので
-トークン無しでよい。
-**`/repository-file` は会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの
-中身（パスだけ。ファイルは開かない）で、誰にでも配ってよい静的な物ではない。
+会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
+だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので
+トークン無しでよい。**`/repository-file`・`/token-usage`・`/context-usage` は会話を含まないが
+トークンが要る** — 配るのは利用者の作業ディレクトリの中身・使った量・いまのセッションが積んでいる
+ものの内訳で、誰にでも配ってよい静的な物ではない（各経路の判断の理由は `server.ts` の関数ごとの
+doc コメントを参照）。
 
 ### config.ts（core）
 
-| 環境変数              | 意味                                                 | 既定             |
-| --------------------- | ---------------------------------------------------- | ---------------- |
-| `TSUKUMO_VIEW_PORT`   | いまのまま（既定 7327、塞がっていれば +1 で20個）    | 7327             |
-| `TSUKUMO_CHARACTER`   | パック定義ディレクトリのパス（相対は cwd 相対）      | `tsukumo-spirit` |
-| `TSUKUMO_OPEN_VIEW`   | いまのまま                                           | 開く             |
-| `TSUKUMO_DRIVER`      | `sdk` / `fake`                                       | `sdk`            |
-| `TSUKUMO_FAKE_SCENE`  | `fake` のとき起こした直後に流す場面の名前            | 流さない         |
-| `TSUKUMO_NEW_SESSION` | `1` で復元せず新規に起こす（8章の逃げ道）            | 復元する         |
-| `TSUKUMO_WATCH_UI`    | `1` で `src/browser/` を見張って組み立て直す（11章） | 見張らない       |
-| `TSUKUMO_HOME`        | tsukumo の持ち物を置くホーム（相対は cwd 相対）      | `~/.tsukumo`     |
+**この表を正典のままにする**（2026-09-23 決定。`src/server/core/config.ts` 冒頭のコメントも
+同じ向きを明記している）。4章の `SessionEvent` / `SessionState` と違い、各環境変数名の doc コメントは
+読み取り方や関連ファイルだけを持ち、既定値と挙動の説明は `port-resolution.ts` ・
+`tsukumo-home.ts` など複数のファイルに分かれている。1つの型の doc コメントに寄せられないので、
+表だけがこの9個をまとめて見渡せる場所になる。
+
+| 環境変数                          | 意味                                                                                           | 既定             |
+| --------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------- |
+| `TSUKUMO_VIEW_PORT`               | ビューを配るポート（既定のまま塞がっていれば +1 で20個まで試す。明示指定したときはずらさない） | 7327             |
+| `TSUKUMO_VIEW_PORT_FALLBACK_BASE` | `TSUKUMO_VIEW_PORT` が未設定のときの起点を差し替える（下記）                                   | 7327             |
+| `TSUKUMO_CHARACTER`               | パック定義ディレクトリのパス（相対は cwd 相対）                                                | `tsukumo-spirit` |
+| `TSUKUMO_OPEN_VIEW`               | 起動時にタブを自動で開くか（`0` のときだけ開かない）                                           | 開く             |
+| `TSUKUMO_DRIVER`                  | `sdk` / `fake`                                                                                 | `sdk`            |
+| `TSUKUMO_FAKE_SCENE`              | `fake` のとき起こした直後に流す場面の名前                                                      | 流さない         |
+| `TSUKUMO_NEW_SESSION`             | `1` で復元せず新規に起こす（8章の逃げ道）                                                      | 復元する         |
+| `TSUKUMO_WATCH_UI`                | `1` で `src/browser/` を見張って組み立て直す（11章）                                           | 見張らない       |
+| `TSUKUMO_HOME`                    | tsukumo の持ち物を置くホーム（相対は cwd 相対）                                                | `~/.tsukumo`     |
+
+`TSUKUMO_VIEW_PORT_FALLBACK_BASE` は**既定の帯（`DEFAULT_VIEW_PORT`〜+19）そのものを差し替える
+口**で、`TSUKUMO_VIEW_PORT` を明示したときは効かない（明示指定はそもそもずらさないため）。
+読めない値は `TSUKUMO_VIEW_PORT` と違って**起動を止めず**、黙って既定の 7327 に倒す
+（`resolveViewPortFallbackBase`）。**この口が要る場面は1つだけ**——`test/cli.test.ts`
+「既定ポートから上限まで全部塞がっている」テストが、実際の 7327〜7346 帯（他の tsukumo が
+日常的に使っている）を塞がずに、その帯が全滅したときの失敗経路（試した範囲を伝えて終了コード1）
+を確かめるための私的な帯を選ぶために使う。
 
 `TSUKUMO_CHARACTER` は**パスとしてだけ解く**（`src/server/adapter/bundled-path.ts` の
 `resolveBundledDir`。相対は cwd 相対、絶対はそのまま）。**パックの名前では指せない** —
@@ -1645,12 +1652,12 @@ HMR そのものになり、規模が跳ねる）。配るのは前と同じく�
 
 **救えるのはブラウザに配る側だけ**で、`src/` を直すたびに上げ直さずに済むわけではない:
 
-| 直した場所                       | どうなるか                                                                   |
-| -------------------------------- | ---------------------------------------------------------------------------- |
-| `src/browser/**/*.css`           | ページを読み込み直す（下の注記）。状態は繋ぎ直しの `hello` で戻る            |
-| `src/browser/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る |
-| `src/shared/`                    | **プロセスの上げ直しが要る**（下）                                           |
-| `src/server/core/` `src/` 直下   | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある |
+| 直した場所                       | どうなるか                                                                                                       |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `src/browser/**/*.css`           | ページを読み込み直す（下の注記）。状態は繋ぎ直しの `hello` で戻る                                                |
+| `src/browser/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る                                     |
+| `src/shared/`                    | **プロセスの上げ直しが要る**（下）。上げ直すまで画面の組み直しも止まる                                           |
+| `src/server/core/` `src/` 直下   | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある。上げ直すまで画面の組み直しも止まる |
 
 **CSS だけを取り直す道（`refresh` の `style`）は使わない**（2026-09-20）。CSS Modules の class 名は
 ハッシュ化されて JS 側の対応表にも焼かれるので、片方だけ新しくすると綴りが食い違って崩れた画面が
@@ -1659,6 +1666,16 @@ HMR そのものになり、規模が跳ねる）。配るのは前と同じく�
 `src/shared/` を見張らないのは、**畳み込み（`session-state.ts`）がサーバ側でも回っている**から。
 ブラウザ側だけ新しくすると、新旧が食い違ったまま動く状態ができる。片方だけ救うより
 「`src/browser/` だけが救える」という1本の線のほうが信用できる。
+
+**サーバ側のソースが起動時から変わっていたら、組み直さない**（2026-09-23 決定）。見張るのは
+`src/browser/` だけでも、**組み立ては import で辿れる `src/shared/` も束ねる**。tsukumo の中の
+Claude が同じ作業ツリーで `git merge main` を打つと `src/browser/` と `src/shared/` が一度に
+変わり、見張りが新しい契約の画面を組んで古いサーバへ配っていた（版が合わない知らせが出て、
+読み込み直しても同じ画面が配られるので戻れなかった）。そこで見張りの始めに**サーバ側のソース
+（`src/` の下で `browser/` 以外）の中身の指紋**を取り、組み直す前に取り直して比べる
+（`src/server/adapter/source-fingerprint.ts`）。違えば組み立てず、前の版を配り続けて理由の1行を
+ペインに出す（組み立てに失敗したときと同じ扱い）。**時刻ではなく中身で比べる**ので、同じ中身へ
+書き戻されただけなら組み直しは止まらない。指紋が取れなかったときは止める根拠が無いので組み直す。
 
 **見張るのは `TSUKUMO_WATCH_UI=1` のときだけ**（既定は見張らない）。`tsukumo` は `bun link` で
 リポジトリを指していて**普段使いと開発が同じ経路**なので、常に入れると仕事中の保存でページが
@@ -1854,6 +1871,15 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 見出しの文字に色を当てる・最終レポートの枠を `accent` の縦罫にする）の理由は
 `docs/history/decision.md`「design.md 13.2 Color（採らなかった案）」。
 
+**コンテキストの内訳の分類には、固定の色を7つ置く**（`context-system-prompt` /
+`context-system-tools` / `context-mcp-tools` / `context-memory-files` / `context-skills` /
+`context-messages` / `context-other`。トークン消費の画面の札で、横棒の区間と凡例の四角が同じ
+1つを読む）。**差せるつまみは4つのまま**で、これも `state-*` と同じ「意味を固定した色」の側
+（誰が来ても変わらない）。**増やしてよい根拠は 13.1 原則5** — 凡例に分類名が必ず並ぶので、色は
+読みやすさの重ねがけになり、色だけで意味を伝えることにならない。**知らない分類は
+`context-other` に落ちる**ので、SDK 側に分類が増えても色を足さずに出せる。**空きと自動圧縮
+バッファには色を割り当てない**（無地と斜線で分ける。柄のほうが「中身ではない」ことを運ぶ）。
+
 ### 13.3 Type
 
 **書体は `system-ui` と等幅の2本のまま**にする。外部フォントは足さない。ネットワークへ出るのは
@@ -1895,6 +1921,10 @@ import 先が解けないとき（＝書きかけを保存したとき）。
   ページ全体は横スクロールさせない）。**表のセルは最低4全角を1行で出す**（`min-width: 4em`）。
   この下限が無いと `width: 100%` の表は列の数だけ詰まってセルが1〜2字ずつの折り返しになり、
   表が器に収まってしまうので横スクロールも働かない
+- **フォーム部品（`button` / `input` / `select` / `textarea`）の書体は `theme.css` が継がせる。**
+  ブラウザの既定では親の書体を継がないので、`theme.css` の `body` 直後の1か所だけが継がせる
+  （大きさ・行の高さ・太さも一緒に継ぐ）。機能の CSS には書かない——書くのは大きさなど、既定から
+  変える値だけ
 
 ### 13.4 Layout
 
@@ -1993,7 +2023,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 
 **書き上げる演出の速さは `localStorage` に持つ**（色と同じ並び。保存と読み取りは
 `src/browser/lib/reveal-speed.ts` に集める——歯車（`features/screen-nav/`）とレポートの演出
-（`features/main-view/report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
+（`features/main-view/hooks/use-report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
 `browser/lib/` へ置く。2章）。選択肢は3つ（既定は**標準**）:
 
 | 選択肢 | 文字1つあたり  | 塊の下限 | 塊の上限 |
@@ -2005,7 +2035,7 @@ import 先が解けないとき（＝書きかけを保存したとき）。
 - **速いは3つとも標準の半分**。下限・上限を一緒に半分にしないと、短い塊が下限に張り付いた
   まま「速い」を選んでも速さが変わって見えない（`reveal-plan.ts` の `topicDurationMs` が
   塊の大きさをこの3値で時間に直す）
-- **切ると演出そのものを走らせない**。`report-reveal.ts` の `useReportReveal` が
+- **切ると演出そのものを走らせない**。`hooks/use-report-reveal.ts` の `useReportReveal` が
   `revealSpeed === "off"` を見て `startReveal` を呼ばずに済ませるので、本文はマウントした時点で
   すぐ全部出て、筆先に付くミニ立ち絵（13.6 冒頭の表・`docs/requirements.md` 4.3）も出ない
 - **選び直しても、書いている最中の演出には効かない。** `useReportReveal` は速さも `reveal`
@@ -2097,8 +2127,9 @@ import 先が解けないとき（＝書きかけを保存したとき）。
  [差し替える]   [差し替える]   [差し替える]  [選ぶ]
                 [消す]         [消す]
 
-差し色    ■ 既定  ■ 軽装（haiku）  ■ 通常装備（sonnet）  ■ 戦闘配置（opus）
-背景      ▭ いまの背景  [差し替える]  [消す]
+画面の差し色  ■ 仕事  ■ 雑談  [仕事と同じにする]
+立ち絵の差し色  ■ 既定  ■ 軽装（haiku）  ■ 通常装備（sonnet）  ■ 戦闘配置（opus）
+背景          ▭ いまの背景  [差し替える]  [消す]
 ```
 
 - **並びは上から** パックのラベルと名前（名前は等幅。13.1 原則3）と「新しく作る」 →
@@ -2116,9 +2147,36 @@ import 先が解けないとき（＝書きかけを保存したとき）。
   `character-screen.module.css` が決め、`<Portrait>` に `className` で渡す（キャラビュー側の
   割合指定は `.character-region` の変数が無いので効かない。6.6）
 - 変えられないパック（`editable: false`）は、並びの上に一言を出して口を無効にする（7.1）
-- 差し色は衣装4つを1行に（色見本＋ラベル）。`<input type="color">` のまま
+- **画面の差し色（`accent` / `chatAccent`）は立ち絵の並びのすぐ下、衣装ごとの差し色の行より
+  前に置く**（2026-09-23 決定）。仕事と雑談の2色を1行に並べ、`chatAccent` を持つときだけ
+  「仕事と同じにする」を雑談の色見本の横に出す（無ければ戻すものが無いので、同じ場所に
+  「仕事と同じ」の字を出す）。
+  **呼び名がかぶる**ので、衣装ごとの行は「差し色」から「立ち絵の差し色」に改めた
+- **立ち絵の差し色（衣装4つ）は1行に**（色見本＋ラベル）。`<input type="color">` のまま
 - **背景の行は「差し替える」と「消す」の2つだけ**（いまの背景を行の左に小さく出す）。
   **覆いの濃さは画面から変えない**（定義ファイルを手で直す。13.8）
+
+**画面の差し色を編集する口の形**（2026-09-23 決定）:
+
+- **コマンドは `set-accent`（`target: "work" | "chat"` で1つの色を差す）と、雑談の差し色を消す
+  `clear-chat-accent` の2つ**。`target` を引数で分けたのは、`set-outfit-accent` が衣装を
+  引数（型を4つに割らない）で受けているのに揃えたため（採らなかった案: `set-work-accent` /
+  `set-chat-accent` の2コマンドに分ける——`isCharacterEditCommand` の一覧が1つ増えるだけの違いで、
+  書き込み側の分岐は結局2つに割れ、コマンドの形だけ増える）
+- **`accent`（仕事）を消す口は無い。** `outfitAccents` は無ければ既定値（`--accent`）に
+  落ちるので消しても壊れないが、`accent` は画面全体の色の元なので、消すと戻り先が無い。
+  戻す口を持つのは「決まっていること」どおり `chatAccent` だけ
+- **`character-definition.ts` に最上位の欄を書く関数を足した**（`definitionWithAccent` /
+  `definitionWithoutChatAccent`）。既存の `editedDefinitionJson` は `portraits` /
+  `outfitAccents` / `background` という**入れ子**の1件を差し替える形なので、そのまま `group` を
+  省略可能にはせず、入れ子を重ねない `editedTopLevelDefinitionJson` を別に置いた（採らなかった案:
+  `editedDefinitionJson` の `group` を `undefined` も取れるように広げる——「無いかもしれない」
+  引数が1つ増えるだけで、呼び出し側からは動きの違いが読み取れなくなる）
+- **雑談の差し色が無いときの色見本は、いまの仕事の差し色（引きずり中の値も含む）をそのまま出す。**
+  仕事の色をドラッグしている最中も雑談側が一緒に動く。**「仕事と同じ」であることは色だけで
+  伝えず**、戻す口の場所に同じ字を添える（13.1 原則1）
+- **送信の debounce は衣装の差し色と同じ定数（`ACCENT_DEBOUNCE_MS`）を使う。** 衣装の差し色も画面の差し色も「ドラッグ中の色を
+  離れてから1回にまとめる」という同じ操作なので、間隔を2つに分ける理由が無い
 
 **作る画面は別**（`#character/new`。2026-09-17 決定。ユーザーの選択）。キャラクター画面の
 パック名の行の「新しく作る」から入る:

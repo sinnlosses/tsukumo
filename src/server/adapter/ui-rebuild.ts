@@ -6,6 +6,12 @@
 // **見張るのは `src/browser/` だけ。** `src/shared/` はサーバ側でも畳み込みに使われていて、
 // ブラウザ側だけ新しくすると両側の食い違った状態が動いてしまう（docs/design.md 11章）。
 //
+// **ただし組み立ては `src/browser/` から import で辿れる `src/shared/` も束ねる**ので、見張りの
+// 外で `src/shared/` が変わったあと（`git merge` で両方が一度に変わったときなど）に組み直すと、
+// 新しい契約の画面が古いサーバへ配られる（版が合わない知らせが出て、読み込み直しても同じ画面が
+// 配られるので戻れない）。**そこで、起動時にサーバ側のソース（`src/` の `browser/` 以外）の指紋を
+// 取っておき、変わっていたら組み直さず前の版を配り続ける**（`src/server/adapter/source-fingerprint.ts`）。
+//
 // **`fs.watch` を使う**のは、`src/server/adapter/task-summary.ts` が `develop/tasks.json` で選んだ
 // ポーリングと逆に見えるが、取りこぼしの理由が違う。あちらは**ファイル1つ**を見張るので、
 // 保存で inode ごと差し替わると監視が古い実体に残って鳴らなくなる。ここは**ディレクトリを
@@ -18,6 +24,7 @@ import { watch } from "node:fs"
 
 import { buildUiBundle, UI_SOURCE_DIR_RELATIVE_PATH, type UiBundle } from "./bundle.ts"
 import { bundledFilePath } from "./bundled-path.ts"
+import { sourceFingerprint } from "./source-fingerprint.ts"
 
 /**
  * 最後の通知からこれだけ静かになってから組み立て直す。**エディタの保存1回で `fs.watch` は
@@ -33,6 +40,8 @@ const REBUILD_DEBOUNCE_MS = 120
 export const UI_REBUILD_FAILURE_REASON = {
   buildFailed: "ブラウザ側を組み立て直せなかった（前の版を配り続ける）",
   watchFailed: "src/browser/ を見張れなくなった（上げ直すまで反映されない）",
+  serverSourceChanged:
+    "サーバ側のソース（src/ の browser 以外）が起動時から変わったので、画面は組み直さない（tsukumo を上げ直すまで前の版を配り続ける）",
 } as const
 
 /** 組み立て直せなかったことの知らせ。見出しと、あるなら具体的な理由。 */
@@ -67,6 +76,8 @@ export type UiSourceWatcher = {
  */
 export function watchUiSource(options: UiSourceWatchOptions): UiSourceWatcher {
   const root = bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH)
+  // 動いているサーバのコードと同じ中身かを、組み直すたびにこれと比べる。
+  const startupServerSource = serverSourceFingerprint()
   let debounceTimer: ReturnType<typeof setTimeout> | undefined = undefined
   let pending = false
   let building = false
@@ -78,7 +89,7 @@ export function watchUiSource(options: UiSourceWatchOptions): UiSourceWatcher {
     }
     pending = false
     building = true
-    void rebuild(options).finally(() => {
+    void rebuild(options, startupServerSource).finally(() => {
       building = false
       flush()
     })
@@ -109,8 +120,21 @@ export function watchUiSource(options: UiSourceWatchOptions): UiSourceWatcher {
   }
 }
 
-/** スクリプトと CSS を組み立て直す（1回の `bun build` から出る1組。bundle.ts）。 */
-async function rebuild(options: UiSourceWatchOptions): Promise<void> {
+/**
+ * スクリプトと CSS を組み立て直す（1回の `bun build` から出る1組。bundle.ts）。**サーバ側の
+ * ソースが起動時から変わっていたら組み立てない**（前の版を配り続ける）。どちらかの指紋が
+ * 取れなかったときは、止める根拠が無いので組み立てる。
+ */
+async function rebuild(
+  options: UiSourceWatchOptions,
+  startupServerSource: Promise<string | undefined>,
+): Promise<void> {
+  const [atStartup, now] = await Promise.all([startupServerSource, serverSourceFingerprint()])
+  if (atStartup !== undefined && now !== undefined && atStartup !== now) {
+    options.onFailure({ reason: UI_REBUILD_FAILURE_REASON.serverSourceChanged, detail: undefined })
+    return
+  }
+
   const built = await buildUiBundle()
   if (!built.ok) {
     // **失敗した回は再試行しない**（`flush` は次の保存まで動かない）。直すには保存が要り、
@@ -123,4 +147,9 @@ async function rebuild(options: UiSourceWatchOptions): Promise<void> {
   }
 
   options.onRebuilt(built.bundle)
+}
+
+/** 動いているプロセスが読み込んだサーバ側のソース（`src/` の下で `browser/` 以外）の指紋。 */
+function serverSourceFingerprint(): Promise<string | undefined> {
+  return sourceFingerprint(bundledFilePath("src"), [UI_SOURCE_DIR_RELATIVE_PATH.at(-1) ?? ""])
 }

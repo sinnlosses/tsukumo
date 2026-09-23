@@ -21,6 +21,7 @@ import {
   type CharacterCreateCommand,
   type CharacterEditCommand,
 } from "../../../src/shared/command.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
@@ -43,6 +44,7 @@ import {
   shownOutfitAccents,
   shownPortraits,
 } from "../../fixture/character.ts"
+import { readyContextUsage } from "../../fixture/context-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SESSION_ID = "s-test"
@@ -90,6 +92,10 @@ function createStubDriver(): StubDriver {
         return stub.answerable
       },
       pending: () => [],
+      readContextUsage: () => {
+        calls.push("readContextUsage")
+        return Promise.resolve(readyContextUsage())
+      },
       setModel: (model: string | undefined) => {
         calls.push(`setModel:${model ?? ""}`)
         return Promise.resolve()
@@ -187,6 +193,19 @@ describe("createSessionManager", () => {
         { at: 1_000, event: { kind: "speech", text: "架空のセリフ", expression: "default" } },
       ],
     })
+  })
+
+  it("コンテキストの内訳は駆動へ問い合わせてそのまま返す", async () => {
+    const { manager, stub } = startManagerWithStub()
+
+    expect(await manager.readContextUsage(SESSION_ID)).toEqual(readyContextUsage())
+    expect(stub.calls).toContain("readContextUsage")
+  })
+
+  it("知らないセッションの内訳は「取れない」（駆動を探しに行かない）", async () => {
+    const { manager } = startManagerWithStub()
+
+    expect(await manager.readContextUsage("知らないセッション")).toEqual(UNAVAILABLE_CONTEXT_USAGE)
   })
 
   it("hello の snapshot は、それまでのイベントをサーバ側でも畳んだ姿", async () => {
@@ -1031,6 +1050,7 @@ describe("createSessionManager", () => {
           interrupt: () => Promise.reject(new Error("架空の駆動エラー")),
           answer: () => true,
           pending: () => [],
+          readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
           setModel: () => Promise.resolve(),
           setPermissionMode: () => Promise.resolve(),
           close: () => {},

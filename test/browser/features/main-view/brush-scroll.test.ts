@@ -94,13 +94,13 @@ describe("brushScroller（ミニ立ち絵の立つ位置を画面の中に保つ
   it("帯が器より背が高いトピックでも、2回続けて follow しても scrollTop が往復しない", () => {
     const scroller = scrollerWith({ top: 0, bottom: 500 })
     const brush = brushScroller(rootIn(scroller))
-    // tipHeight は report-reveal.ts が渡す見積もり（96px）。帯ぜんたい（行の多いトピックでは
-    // 器の高さに迫る）ではなくこの狭い範囲だけを追うので、往復しないはず。
+    // tipHeight は hooks/use-report-reveal.ts が渡す見積もり（96px）。帯ぜんたい（行の多い
+    // トピックでは器の高さに迫る）ではなくこの狭い範囲だけを追うので、往復しないはず。
     brush.follow({ tipBottom: 450, tipHeight: 96 })
     const afterFirst = scroller.scrollTop
 
     // 2フレーム目: 送った分だけ実際のDOMも上へ動く（送った量だけ座標を詰めてもう一度渡す
-    // ——report-reveal.ts が毎フレーム測り直す座標を模す）。
+    // ——reveal-measure.ts が毎フレーム測り直す座標を模す）。
     brush.follow({ tipBottom: 450 - afterFirst, tipHeight: 96 })
 
     expect(scroller.scrollTop).toBe(afterFirst)

@@ -59,10 +59,6 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 `/compact` の依頼で要約の最後に `<topics>` の組を書かせ、`chat-compact.ts` の `chatTopics` が取り出す。起動時と PostCompact のあとに `chat-topics-changed` で流す（`PROTOCOL_VERSION` 6）。本物の圧縮でモデルが組を書くかは未確認。
 
-### 2026-09-23 答え待ちの質問を帯の札に要約で出し、一覧の「質問へ」で質問の札へ移れるようにした（T-408）
-
-札の要約は1問目の `header`（2問以上なら「ほか n問」）で、許可要求の答え待ちは今までどおり実行中の手順。「質問へ」は一覧を閉じ、会話の画面・最新のやり取りへ戻してから、新設の `stores/question-scroll.tsx` の合図で質問の札へスクロールする。
-
 ### 2026-09-23 プラン名を accountInfo() から取り、トークン消費の題の右に出した（T-374）
 
 `command-descriptions` と同じ形で駆動が起動直後に1回 `accountInfo()` を呼び、`subscriptionType` だけを `SessionEvent{kind:"plan"}` → `SessionState.plan` → トークン消費の画面へ運ぶ経路を足した。`email` / `organization` は `toPlan` の戻り値に乗らない。表示名の対応表は持たず、SDK が返した文字列をそのまま出す。
@@ -75,13 +71,13 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 質問の札を `src/browser/features/main-view/question-ask.tsx` に新設し、答えの組み立て（何問目・質問ごとの選択・入力欄に書いた答え）を `src/browser/stores/question-answer.tsx` へ上げて、札（`main-view`）と入力欄（`dispatch`）の両方が同じ1つの状態を読む形にした。入力欄の上の質問の箱一式と比べる面（`pending-question.tsx`）は消え、`preview` は選択肢の説明の下に入る。
 
-### 2026-09-23 develop/progress.md の完了した小節を両側とも残すマージドライバを作った（T-404）
+### 2026-09-23 docs/design.md 5章の SessionHost と経路の表を、型定義・実装への参照に置き換えた（T-409）
 
-`scripts/progress-done-section.ts`（「## 完了したこと」を `###` 小節に割る・3wayで畳む純粋関数）と
-`scripts/merge-progress.ts`（`%O %A %B` を読んで `%A` に書く入口）、`.gitattributes` の1行。
-両側が足した小節は両方残し、片方が消した小節（アーカイブ）は消えたまま、同じ小節を両側が
-書き換えたら非0で返す。**`.git/config` への登録は人が1回打つ**（未登録のあいだは git が
-既定の3wayに落ちるだけ。手順は T-405 が CLAUDE.md に書く）。
+経路の表からは `/token-usage` のほかに `/context-usage` と `/prompt-image/<id>` も抜けていた。環境変数の表は design.md を正典のままにし、その理由を節に書いた。
+
+### 2026-09-23 いまのセッションの /context 内訳をトークン消費の画面に出した（T-375）
+
+`getContextUsage({ detail: "full" })` の結果を `src/shared/context-usage.ts` の形へ境界で写し、`GET /context-usage` で画面へ配って、横棒1本・3列の凡例・畳んだ表の札にした。SDK の戻り値は camelCase で、`skills` も配列ではなく1つのまとまりだった（調査時の想定と違う）。
 
 ## 未解決
 
