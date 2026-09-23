@@ -249,7 +249,7 @@ function replaced<T>(values: readonly T[], target: number, value: T, filler: T):
 
 /**
  * 選択肢を札の行へ畳む。**並びはラベルの辞書順**（`shared/question.ts` の
- * `sortQuestionOptions`。docs/requirements.md 4.2）。
+ * `sortQuestionOptions`。docs/display.md 4.2）。
  *
  * **自由入力（「その他」）の選択肢は札に出さない**（自由入力は入力欄が担うので、押しても
  * 意味のない札になる）。`sortQuestionOptions` は今までどおり通すので、モデルが

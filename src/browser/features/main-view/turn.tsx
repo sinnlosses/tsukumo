@@ -1,7 +1,7 @@
 // 1つのやり取り（依頼の続き → ステップの並び）。`<RequestRest>` + ステップの並び
-// （レポート・質問の記録）を縦に1本で積む（`docs/requirements.md` 4.2
+// （レポート・質問の記録）を縦に1本で積む（`docs/display.md` 4.2
 // 「ステップは縦に1本で積む」。番号は振らない）。**ツールの実行は描かない**
-// （`docs/requirements.md` 4.2「メインビュー」。進行はサイドバーが持つ）。
+// （`docs/display.md` 4.2「メインビュー」。進行はサイドバーが持つ）。
 
 import { Fragment, useState, type ReactElement } from "react"
 

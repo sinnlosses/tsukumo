@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-23 requirements.md 4.2「表示」を docs/display.md へ逐字で移した（T-466）
+
+節の番号 `4.2` のまま移し、`requirements.md` は 1330→881 行。`requirements.md 4.2` への参照101件を一括置換し、`docs/history/` の234件と `decision.md` の見出し名を引く2件は据え置いた。削るのは T-467。
+
 ### 2026-09-23 いまのコンテキストの札に読み込み中の骨組みを出した（T-458）
 
 `useContextUsage` に `pending` を足して「取れなかった」と分け、届いた札と同じ外形の骨組み（値だけ灰色の塊）を出すようにした。`/context-usage` を遅らせて測った札の高さと「期間の消費」の位置の差は 0px。

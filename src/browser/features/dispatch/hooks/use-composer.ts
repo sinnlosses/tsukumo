@@ -2,7 +2,7 @@
 // 下書き・補完の候補と選択位置・添えた画像を持ち、キーと貼り付け・ドロップを読み替えて、
 // presenter がそのまま置ける値と呼び先を返す。
 //
-// 入力欄の規則（docs/requirements.md 4.2「入力欄」。**規則は変えない**）:
+// 入力欄の規則（docs/display.md 4.2「入力欄」。**規則は変えない**）:
 // - Enter は改行、Command+Enter で送信。IME の変換確定の Command+Enter は送らない
 //   （`isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
 // - 送信後は入力欄を空にしてフォーカスを残す
@@ -266,7 +266,7 @@ export function useComposer(): ComposerModel {
           return
         }
         if (event.key === "Tab" || event.key === "Enter") {
-          // Tab・Enter のどちらも確定だけ（送信しない。docs/requirements.md 4.2）。
+          // Tab・Enter のどちらも確定だけ（送信しない。docs/display.md 4.2）。
           event.preventDefault()
           confirmSelected(clampedSelectedIndex)
           return

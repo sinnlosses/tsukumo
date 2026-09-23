@@ -132,7 +132,7 @@
   padding-left: 0;
 }
 /* **各行の上に罫線を引く**（`:not(:first-child)` にしない）——最初の行も、直前の要素
-   （件数のチップ・進行中のカード）との間に線が出るのがモックの形（docs/requirements.md 4.2）。
+   （件数のチップ・進行中のカード）との間に線が出るのがモックの形（docs/display.md 4.2）。
    色は `--rule` より
    薄め（他の「淡い枠」と同じ配合。`character-view.module.css` / `dispatch.module.css`）。 */
 .task-item {
@@ -159,7 +159,7 @@
   min-width: 0;
 }
 /* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は
-   「一覧を見る」の表で読む。docs/requirements.md 4.2）。**font-size を明示する**——親
+   「一覧を見る」の表で読む。docs/display.md 4.2）。**font-size を明示する**——親
    （`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` がサイドバー以外の文脈に
    置かれたときに黙って崩れる。 */
 .task-item-summary {

@@ -16,7 +16,7 @@
 // - {@link rehypeTaskCheck} で、チェックリストの `<input type="checkbox">` を静的な印に畳む
 //   （**サニタイズより前**。理由は `task-check.ts`）
 // - `rehype-sanitize`（{@link REPORT_SANITIZE_SCHEMA}）で許可リストに無い要素・属性を落とす。
-//   **サニタイズはここ1箇所に集約**（docs/requirements.md 4.2）
+//   **サニタイズはここ1箇所に集約**（docs/display.md 4.2）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。
 //   テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る。
 //   `src/server/adapter/vendor-asset.ts`）
