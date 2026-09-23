@@ -212,7 +212,7 @@ export function mainViewTurns(
  * docs/requirements.md 4.2）。ターンの通し番号は `request` の記録が持っているので、
  * 何を落としても番号はずれない。
  *
- * **`compact-boundary` も落とす**（`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
+ * **`compact-boundary` も落とす**（`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
  * 圧縮の区切りは雑談のログ（`shared/chat-log.ts`）だけに出し、**仕事のメインビューには出さない**。
  *
  * **`tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の

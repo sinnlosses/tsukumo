@@ -35,14 +35,14 @@ export type ChatLogEntry =
     }
   /**
    * 圧縮の区切り（`docs/glossary.md`「圧縮の区切り」）。**中身を持たない** — 出すのは細い線
-   * 1本だけで、文言は添えない（`docs/requirements.md` 4.9「記憶の圧縮と忘却」）。
+   * 1本だけで、文言は添えない（`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
    */
   | { readonly speaker: "boundary" }
 
 /**
  * 記録から雑談のログを組む（**古い→新しいの順**）。拾うのは利用者の依頼（`request`）と
  * セリフ（`speech`）、そして圧縮の区切り（`compact-boundary`）の3種類だけで、**本文
- * （`detail`）とツールは落とす**（雑談中はレポートを出さないと決めた。`docs/requirements.md` 4.9）。
+ * （`detail`）とツールは落とす**（雑談中はレポートを出さないと決めた。`docs/chat-mode.md` 4.9）。
  *
  * **落としたぶんを「省略した」と見せない。** 雑談中に本文が出るのは規約が守られなかった
  * ときだけで、画面にその事実を出しても利用者にできることが無い。
@@ -118,13 +118,13 @@ export function chatLogRows(
 /**
  * 雑談の記憶を畳む閾値（バイト）。**逐語で読み戻す量（{@link CHAT_RECENT_READBACK_BYTES}）の
  * 2倍**で、絶対値はその倍率から出ている——揃えると畳んだ範囲を次のセッションが丸ごと逐語で
- * 戻すことになり、忘却が起きない。値の根拠は `docs/requirements.md` 4.9「記憶の圧縮と忘却」。
+ * 戻すことになり、忘却が起きない。値の根拠は `docs/chat-mode.md` 4.9「記憶の圧縮と忘却」。
  */
 export const CHAT_COMPACT_THRESHOLD_BYTES = 131_072 satisfies number
 
 /**
  * 雑談を起こし直すときに、アーカイブから**逐語のまま**読み戻す量（バイト）。数えるのは各行の
- * 文面だけで、時刻・話者・表情は数えない。値の根拠は `docs/requirements.md` 4.9「直近の会話は
+ * 文面だけで、時刻・話者・表情は数えない。値の根拠は `docs/chat-mode.md` 4.9「直近の会話は
  * 逐語のまま読み戻す」。
  *
  * **畳む閾値（{@link CHAT_COMPACT_THRESHOLD_BYTES}）とは別の値で、閾値のほうが大きい。**
@@ -137,7 +137,7 @@ export const CHAT_RECENT_READBACK_BYTES = 65_536 satisfies number
 /**
  * 「残す」旗の付いたやり取りを、上の窓（{@link CHAT_RECENT_READBACK_BYTES}）の**外側に足して**
  * 読み戻す量（バイト）。数えるものは同じ（各行の文面だけ）。値の根拠は
- * `docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」。
+ * `docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」。
  *
  * **窓とは別に持つ。** 窓の中で優先すると、旗の付いた件が増えるほど直近が押し出され、
  * 「いまの話が通じなくなる」ほうへ倒れる。外に足せば、読み戻し全体の上限は
@@ -147,7 +147,7 @@ export const CHAT_KEPT_READBACK_BYTES = 8_192 satisfies number
 
 /**
  * `recall` で索引を引いたとき、**当たった日から一度に読み戻す量**（バイト）。数えるものは
- * 上の2つと同じ（各行の文面だけ）。値の根拠は `docs/requirements.md` 4.9「古い雑談は索引を
+ * 上の2つと同じ（各行の文面だけ）。値の根拠は `docs/chat-mode.md` 4.9「古い雑談は索引を
  * 引いて思い出す」。
  *
  * **窓（{@link CHAT_RECENT_READBACK_BYTES}）とも旗（{@link CHAT_KEPT_READBACK_BYTES}）とも
@@ -159,7 +159,7 @@ export const CHAT_RECALL_READBACK_BYTES = 8_192 satisfies number
 
 /**
  * 雑談のログの文面（利用者の依頼とキャラクターのセリフ）の UTF-8 バイト数を数える。
- * **添えた画像とツールの入出力は数えない**（`docs/requirements.md` 4.9「数え落としは許す」）——
+ * **添えた画像とツールの入出力は数えない**（`docs/chat-mode.md` 4.9「数え落としは許す」）——
  * `entries` は {@link chatLogEntries} の出力なので、本文・ツール・質問は最初から入っていない。
  * **圧縮の区切り（`boundary`）は文面を持たないので数えない。**
  */

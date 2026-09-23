@@ -12,19 +12,19 @@
 // `docs/coding-standards.md`「エラーハンドリング」）。
 //
 // **読む口は `readRecent` の1つだけ**（かつて決めた「読む口は持たない」を覆している。理由と
-// 量の正典は `docs/requirements.md` 4.9「直近の会話は逐語のまま読み戻す」）。
+// 量の正典は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）。
 // 読んだものの行き先は**雑談のセッションの `systemPrompt`** だけで、画面にも `error` フレームにも
 // stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
 // **古い雑談は、同じディレクトリの `index.jsonl`（1日1行の見出し）を引いてから、当たった日の
-// ファイルだけを開く**（`docs/requirements.md` 4.9「古い雑談は索引を引いて思い出す」）。
+// ファイルだけを開く**（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。
 // **当たらない日のファイルは開かない**のがこの口の要点で、**引くのに外部コマンド（`grep`）を
 // 起こさない** — 索引は1日1行なので `node:fs` で読んで絞るだけで足りる。**見出しの文面を
 // 決めるのはモデル**で、ここが持つのは置き場と形と上限だけ。
 //
 // **「残す」旗は、同じディレクトリの `kept.jsonl` に「時刻だけ」の索引として積む**
-// （`docs/requirements.md` 4.9「残すと決めた1往復は窓から落とさない」）。**日付のファイルは
+// （`docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」）。**日付のファイルは
 // 書き換えない**（追記のまま）し、**文面も複製しない** — ディスクの上に会話は1つだけで、
 // `docs/coding-standards.md`「会話内容の扱い」の書き出しの例外表に数えずに済む。**どのやり取りに
 // 立てるかの判断はここが決めない**（モデルが `keep` ツールを呼ぶかどうかだけ）。
@@ -285,7 +285,7 @@ function readReadback(
  * バイト数の合計が `limitBytes` に届いたところで**それ以上は読まない**ので、アーカイブが
  * 何年ぶん増えても読む量は変わらない。
  *
- * **溢れる1件は載せない**（`docs/requirements.md` 4.9「切り方」）。1件だけで `limitBytes` を
+ * **溢れる1件は載せない**（`docs/chat-mode.md` 4.9「切り方」）。1件だけで `limitBytes` を
  * 超える行が先頭に来たときは空を返す——行の途中で切るくらいなら逐語なしで始める。
  */
 function readRecentEntries(dir: string, limitBytes: number): readonly TimedEntry[] {
@@ -393,7 +393,7 @@ function readKeptMarks(path: string): ReadonlySet<string> {
  * 索引を引き、当たった日のファイルだけを新しい順に開く（{@link ChatArchive.recall} の実装）。
  *
  * **索引に当たる日が1つも無ければ、日のファイルは1つも開かない**（`not-found` を返す。
- * `docs/requirements.md` 4.9「古い雑談は索引を引いて思い出す」）。当たった日を全部読んでも
+ * `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。当たった日を全部読んでも
  * 1件も残らなかったとき（指す先が消えている・全部壊れている）も `not-found` にする——
  * 呼ぶ側に「空の found」を持たせない。
  */
@@ -475,7 +475,7 @@ function newestFirstFileNames(dir: string): readonly string[] {
  * 足りない行は undefined**（1行ずつ落とす。JSONL は壊れても被害が1行）。
  *
  * **`expression` と `images` はここで読まない**（口が最初から渡さない。
- * `docs/requirements.md` 4.9）。日付は `at` の頭10文字で、**行だけで意味が決まる**
+ * `docs/chat-mode.md` 4.9）。日付は `at` の頭10文字で、**行だけで意味が決まる**
  * （ファイル名には頼らない）。
  */
 function toTimedEntry(raw: unknown): TimedEntry | undefined {

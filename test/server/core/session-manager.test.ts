@@ -482,7 +482,7 @@ describe("createSessionManager", () => {
 
   it("set-chat-mode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
     // 雑談の切り替えは `systemPrompt` の差し替えなので、`switch-character` と同じ起こし直しに
-    // なる（docs/requirements.md 4.9）。**パックは変えない**ことをここで見る。
+    // なる（docs/chat-mode.md 4.9）。**パックは変えない**ことをここで見る。
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -672,7 +672,7 @@ describe("createSessionManager", () => {
   describe("雑談の記憶の圧縮", () => {
     // 本番の閾値（128 KiB）だと架空の短い文面では届かないので、**`SessionManagerOptions` の
     // フィールドに小さい閾値を渡して**テストする（`batchIntervalMs` と同じ形。
-    // docs/requirements.md 4.9）。
+    // docs/chat-mode.md 4.9）。
     const TINY_THRESHOLD_BYTES = 10
 
     /** 追記された内容を覚える、テスト用の雑談の会話のアーカイブ。 */
@@ -736,7 +736,7 @@ describe("createSessionManager", () => {
       expect(compactCalls).toHaveLength(1)
       // `prompt`（`request` の記録を積む口）は一度も呼ばない —
       // 利用者が打っていない `/compact` の文面が雑談のログにもアーカイブにも並ばない
-      // （docs/requirements.md 4.9「記憶の圧縮と忘却」）。
+      // （docs/chat-mode.md 4.9「記憶の圧縮と忘却」）。
       expect(stub.calls.some((call) => call.startsWith("prompt:"))).toBe(false)
 
       // 送ったら走行合計が0に戻るので、続けて終わっただけの次のターンでは再送しない
@@ -837,7 +837,7 @@ describe("createSessionManager", () => {
       // 閾値 1,200 は「窓に残る直近100ターンぶん」（1,000バイト）より大きく、
       // 「150ターン分の総量」（1,500バイト）より小さい —
       // `state.records`（`trimToRecentTurns` で直近100ターンに切り詰められる）から数えていたら
-      // 一生届かない値を、あえて選んでいる（`docs/requirements.md` 4.9）。
+      // 一生届かない値を、あえて選んでいる（`docs/chat-mode.md` 4.9）。
       const { stub } = startChatManagerWithStub(1_200)
       await waitForBatch()
 
@@ -1145,7 +1145,7 @@ describe("createSessionManager", () => {
 
   describe("雑談の会話のアーカイブ", () => {
     // `chatArchive` の実装（ファイルI/O）は adapter のテストが持つ。ここで見るのは
-    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/requirements.md 4.9）。
+    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/chat-mode.md 4.9）。
 
     function startArchiveManagerWithStub() {
       const stub = createStubDriver()

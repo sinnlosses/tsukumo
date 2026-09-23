@@ -143,7 +143,7 @@ describe("takeSystemPromptAppend", () => {
 
   it("雑談のときだけ載る条（覚える・忘れる・残す）は、仕事の append に入らない", () => {
     // 2つのツールは雑談のときだけ載るので、呼ぶ条件もこの文面だけが持つ
-    // （docs/design.md 7.1・docs/requirements.md 4.9）。
+    // （docs/design.md 7.1・docs/chat-mode.md 4.9）。
     const work = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
 
     expect(CHAT_MANNER_PROMPT).toContain("remember")
@@ -154,7 +154,7 @@ describe("takeSystemPromptAppend", () => {
   })
 
   it("雑談の作法は口調を決めない（口調はキャラクターパックの persona.md の担当）", () => {
-    // 正典を2つにしない（`report-notation.ts` と同じ切り分け。docs/requirements.md 4.9）。
+    // 正典を2つにしない（`report-notation.ts` と同じ切り分け。docs/chat-mode.md 4.9）。
     expect(CHAT_MANNER_PROMPT).toContain("speak")
     expect(CHAT_MANNER_PROMPT).not.toContain("一人称")
   })

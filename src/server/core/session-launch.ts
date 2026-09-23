@@ -24,7 +24,7 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
   /** 新規に起こすか、続きから始めるか（`SessionStart`）。 */
   readonly start: SessionStart
   /**
-   * 雑談モードで起こすか（`docs/requirements.md` 4.9）。**`systemPrompt` はセッションを
+   * 雑談モードで起こすか（`docs/chat-mode.md` 4.9）。**`systemPrompt` はセッションを
    * 起こすときに固定される**ので、レポートの記法を外すにはここで決まっている必要がある。
    */
   readonly chat: boolean
@@ -104,7 +104,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /**
    * そのパックの、そのモードの続きから始めるセッションを探す（見つからなければ
    * `{ kind: "new" }`）。**雑談と仕事は別のセッション**なので、引く印も分かれる
-   * （`docs/requirements.md` 4.9）。
+   * （`docs/chat-mode.md` 4.9）。
    */
   readonly findResumeSession: (pack: Pack, chat: boolean) => Promise<SessionStart>
   /** 駆動を1つ起こす（本物か偽物かはここが選ぶ）。 */
@@ -160,7 +160,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     }
     onEvent(ports.characterEvent(pack))
     // **起こし直すと状態が初期値へ戻る**ので、雑談かどうかもここで流し直す（画面は
-    // `chat-mode-changed` でしか知れない。`docs/requirements.md` 4.9）。
+    // `chat-mode-changed` でしか知れない。`docs/chat-mode.md` 4.9）。
     onEvent({ kind: "chat-mode-changed", chat })
     // 最近の話題も同じ理由で流し直す（`docs/screen-design.md` 13.7）。**仕事のときは写しを読まない**
     // （起こし直しで状態が初期値の空へ戻っているので、流さなくても空のまま）。
@@ -177,7 +177,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
 
     const watcher = ports.watchTasks(onEvent)
     // **キャラクターごと・モードごとに別のセッションを持つ**（docs/design.md 7章、
-    // docs/requirements.md 4.9）。起動時も切り替え時も、これから起こす側の続きを探す。
+    // docs/chat-mode.md 4.9）。起動時も切り替え時も、これから起こす側の続きを探す。
     // **画面から選ばれたときだけは探さない**（選ばれたIDがそのまま続きになる）。
     const start: SessionStart =
       request.resume.by === "id"
