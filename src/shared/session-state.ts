@@ -22,12 +22,6 @@ import { type CommandDescription, type SessionEvent } from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 
 /**
- * サイドバーの「終わったもの」に残す、直近に使い終えたツールの数。並びは自前でスクロールするが、
- * 常駐プロセスがセッションを通して持ち続けるので無限には増やさない。
- */
-const MAX_RECENT_FINISHED_TOOLS = 50
-
-/**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。**過去のやり取りは
  * `buildMainBody` 側のタブ（`MAX_MAIN_VIEW_TURNS`）でさらに絞られる**が、常駐プロセスが
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
@@ -39,26 +33,6 @@ const MAX_SESSION_STATE_TURNS = {
   work: 20,
   chat: 100,
 } satisfies Record<"work" | "chat", number>
-
-/**
- * サイドバーの「いま何をしているか」1件分。**引数はここまで持ち込む**（要約は表示側
- * `src/browser/lib/tool-summary.ts` の `summarizeToolInput` の仕事。`docs/coding-standards.md`
- * 「会話内容の扱い」のとおり、要約に断片が入りうることは呼び出し側が承知した上で使う）。
- */
-export type ToolActivity = {
-  readonly toolUseId: string
-  readonly name: string
-  readonly input: unknown
-  /** サブエージェントの中で動いたか（`tool-started` の `parentToolUseId` があるか）。 */
-  readonly nested: boolean
-  /**
-   * 失敗して終わったときの出力。成功したときと実行中は undefined
-   * （**「失敗した」という印そのもの**を兼ねる）。**ツールの実行はレポートに出さない**
-   * （docs/requirements.md 4.2）ので、エラーの内容を読める場所はここから開くサイドバーの
-   * 並びだけになる。
-   */
-  readonly failureOutput: string | undefined
-}
 
 /**
  * ツールの実行がどこまで進んだか。結果が届くまでは `running` で、届いたら `finished` に
@@ -223,13 +197,6 @@ export type SessionState = {
   readonly records: readonly SessionRecord[]
   /** 書きかけの本文。完成した本文が来たら空に戻る。 */
   readonly partialUtterance: string
-  /** 実行中のツール（`tool_use` は届いたが結果がまだ来ていないもの）。新しい順。 */
-  readonly runningTools: readonly ToolActivity[]
-  /**
-   * 直近に使い終えたツール。新しい順、最大 {@link MAX_RECENT_FINISHED_TOOLS} 件
-   * （サイドバーの「いま何をしているか」の並びに、実行中の下へ積む）。
-   */
-  readonly finishedTools: readonly ToolActivity[]
   /** 答え待ちの列（許可プロンプトと質問）。 */
   readonly pending: readonly PendingAsk[]
   /** `init` がまだ届いていないか、届いてセッションID・許可モードが分かっているか。 */
@@ -325,8 +292,6 @@ export const INITIAL_SESSION_STATE: SessionState = {
   speechCalledInTurn: false,
   records: [],
   partialUtterance: "",
-  runningTools: [],
-  finishedTools: [],
   pending: [],
   session: { kind: "starting" },
   model: undefined,
@@ -437,16 +402,6 @@ export function applySessionEvent(
             status: { kind: "running" },
           },
         ],
-        runningTools: [
-          {
-            toolUseId: event.toolUseId,
-            name: event.name,
-            input: event.input,
-            nested,
-            failureOutput: undefined,
-          },
-          ...state.runningTools,
-        ],
       }
     }
     case "tool-finished":
@@ -471,7 +426,6 @@ export function applySessionEvent(
       return {
         ...settleUtterance(state),
         endedReason: event.reason,
-        runningTools: [],
         turn: finishTurn(state.turn, at),
       }
     case "conversation-cleared":
@@ -606,8 +560,9 @@ function settleUtterance(state: SessionState): SessionState {
 /**
  * ツール1件の結果を記録に合わせる。**対応する `tool_use` が見つからないときは何もしない**
  * （対応が取れない結果を作らない）。`isError` が true のときは `lastToolFailureAt` に `at` を
- * 打ち（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）、出力を
- * {@link ToolActivity.failureOutput} に移す（サイドバーで開いて読むため）。
+ * 打つ（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）。**失敗した出力は記録の
+ * `status` にそのまま残る**——読める場所は帯の「いまの作業」が開く一覧
+ * （`src/shared/turn-step.ts` の `currentTurnSteps`）。
  */
 function finishTool(
   state: SessionState,
@@ -624,14 +579,6 @@ function finishTool(
     return state
   }
 
-  const activity: ToolActivity = {
-    toolUseId: record.toolUseId,
-    name: record.name,
-    input: record.input,
-    nested: record.nested,
-    failureOutput: isError ? content : undefined,
-  }
-
   return {
     ...state,
     records: [
@@ -639,8 +586,6 @@ function finishTool(
       { ...record, status: { kind: "finished", result: { content, isError } } },
       ...state.records.slice(index + 1),
     ],
-    runningTools: state.runningTools.filter((running) => running.toolUseId !== toolUseId),
-    finishedTools: [activity, ...state.finishedTools].slice(0, MAX_RECENT_FINISHED_TOOLS),
     lastToolFailureAt: isError ? at : state.lastToolFailureAt,
   }
 }

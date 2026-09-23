@@ -4,16 +4,19 @@
 // **落ちてくる面は開いている間だけの要素**（閉じているときは描かない）。奪う面積を
 // タブ帯の右端の 44px だけに保つための形で、開いている間は上に重ねて出す（段を増やさない）。
 //
-// **落ちてくる面の並びは 顔と部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード**
-// （13.9「狭い画面」。いまの作業と顔は T-382 / T-383 が足す）。振る舞い（ターン進行中の扱い・
-// 送るコマンド）は広い画面と同じ部品をそのまま使う。
+// **落ちてくる面の並びは 部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード**
+// （13.9「狭い画面」。顔は別のタスクが足す）。振る舞い（ターン進行中の扱い・送るコマンド）は
+// 広い画面と同じ部品をそのまま使う。**「いまの作業」を押すと、一覧はこの面の中でその場で
+// 下に開く**（重ねない。面ごと縦に伸び、面の内側でスクロールする。13.9「狭い画面」）。
 //
 // **答え待ちは閉じていても分かるようにする**。狭い画面では「答え待ち」の字を帯に置く幅が
-// 無いので、閉じている間は「≡」に印（`●`）を添え、開いたら字で出す（**印の有無という形**でも
-// 伝わるので、色だけに頼らない。13.1 原則1）。
+// 無いので、閉じている間は「≡」に印（`●`）を添える（**印の有無という形**でも伝わるので、
+// 色だけに頼らない。13.1 原則1）。開くと「いまの作業」の札の語が「答え待ち」に変わるので、
+// 帯の右端にあった専用の印（`screen-nav-pending.tsx`）はもう無い（13.9「何を外すか」）。
 
-import { type ReactElement } from "react"
+import { type ReactElement, type RefObject } from "react"
 
+import { type ScreenNavCurrentWork } from "../hooks/use-current-work.ts"
 import {
   type ScreenNavChatMode,
   type ScreenNavGate as Gate,
@@ -21,9 +24,9 @@ import {
 } from "../hooks/use-screen-nav.ts"
 import styles from "../screen-nav.module.css"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
+import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import { ScreenNavModelPermissionSelect } from "./screen-nav-model-permission.tsx"
-import { PENDING_NOTE, ScreenNavPending } from "./screen-nav-pending.tsx"
 import { ScreenNavRoom } from "./screen-nav-room.tsx"
 
 export type ScreenNavMenuProps = {
@@ -34,6 +37,9 @@ export type ScreenNavMenuProps = {
   readonly chatMode: ScreenNavChatMode
   /** モデル・許可モードのドロップダウン。 */
   readonly modelPermission: ScreenNavModelPermission
+  /** いまの作業の札（帯と同じ部品。13.9「狭い画面」）。 */
+  readonly work: ScreenNavCurrentWork
+  readonly workToggleRefNarrow: RefObject<HTMLButtonElement | null>
   readonly open: boolean
   readonly pendingActive: boolean
   readonly onToggle: () => void
@@ -44,6 +50,7 @@ export type ScreenNavMenuProps = {
  * （画面を選ぶだけの面ではなくなったため。13.9「狭い画面」）。 */
 const MENU_MARK = "≡"
 const MENU_LABEL = "メニュー"
+const PENDING_NOTE = "答え待ち"
 
 /** 閉じている間の答え待ちの印。 */
 const PENDING_MARK = "●"
@@ -70,7 +77,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
           {props.gates.map((gate) => (
             <ScreenNavGate key={gate.screen} gate={gate} onSelect={props.onSelect} />
           ))}
-          {props.pendingActive ? <ScreenNavPending /> : null}
+          <ScreenNavCurrentWorkPill work={props.work} toggleRef={props.workToggleRefNarrow} />
           <ScreenNavModelPermissionSelect modelPermission={props.modelPermission} />
         </div>
       ) : null}

@@ -159,8 +159,8 @@ export type MainViewTurn = {
  * `[<Report> | <QuestionRecord>]*`」）が、`src/browser/features/main-view/turn.tsx` はそこから描かない
  * （`docs/requirements.md` 4.2）。**{@link groupIntoTurns} /
  * {@link selectShownReports} が「そのステップにツール呼び出しが続いたか」の材料に使う**ので、
- * `tool` の記録自体は残す。サイドバーの「いま何をしているか」は別に `runningTools` /
- * `finishedTools` を直接読むので、ここで両方に配っても重複にはならない。
+ * `tool` の記録自体は残す。帯の「いまの作業」は別に `src/shared/turn-step.ts` の
+ * `currentTurnSteps` が同じ記録から直接導くので、ここで両方に配っても重複にはならない。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
   const settled = state.records.flatMap(toMainViewEntries)

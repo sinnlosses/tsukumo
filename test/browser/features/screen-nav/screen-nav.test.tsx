@@ -97,14 +97,16 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "会話" }).className).toContain("is-active")
   })
 
-  it("答え待ちがあるときだけ、帯の右端に印を出す", () => {
+  // 帯の右端にあった専用の印（screen-nav-pending.tsx）は「いまの作業」の札にまとめた
+  // （13.9「何を外すか」）。
+  it("答え待ちがあるときだけ、いまの作業の札の語が「答え待ち」になる", () => {
     renderScreenNav()
-    expect(document.querySelector(".screen-nav-pending")).toBeNull()
+    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("依頼待ち")
 
     cleanup()
     renderScreenNav({ pending: [FIXTURE_PENDING] })
 
-    expect(document.querySelector(".screen-nav-pending")?.textContent).toBe("答え待ち")
+    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
   })
 
   // 部屋の名前は帯の左端（13.9）。**ポートの並び順に割り当たる**（`src/shared/room.ts`）ので、
@@ -175,15 +177,16 @@ describe("ScreenNav", () => {
     )
   })
 
-  // 答え待ちの間は「≡」に印が付き、開くと字でも出る（狭い画面では帯に「答え待ち」を置く幅が無い）。
-  it("答え待ちの間は「≡」に印が付き、開くと字でも出る", () => {
+  // 答え待ちの間は「≡」に印が付き、開くと面の中の「いまの作業」の札の語でも分かる
+  // （狭い画面では帯に「答え待ち」を置く幅が無い。13.9「狭い画面」）。
+  it("答え待ちの間は「≡」に印が付き、開くと面の中の札の語でも出る", () => {
     renderScreenNav({ pending: [FIXTURE_PENDING] })
     const toggle = screen.getByRole("button", { name: "メニュー（答え待ち）" })
     expect(document.querySelector(".screen-nav-toggle-mark")).not.toBeNull()
 
     fireEvent.click(toggle)
 
-    expect(document.querySelector(".screen-nav-panel .screen-nav-pending")?.textContent).toBe(
+    expect(document.querySelector(".screen-nav-panel .screen-nav-work-word")?.textContent).toBe(
       "答え待ち",
     )
   })

@@ -1,5 +1,5 @@
-// ツール名＋入力を、画面に出してよい1行の要約にする。**サイドバーの「いま何をしているか」
-// （`src/browser/features/sidebar/activity.tsx`）と入力欄の答え待ちの箱
+// ツール名＋入力を、画面に出してよい1行の要約にする。**帯の「いまの作業」
+// （`src/browser/features/screen-nav/`）と入力欄の答え待ちの箱
 // （`src/browser/features/dispatch/pending-answer.tsx`）の両方が読む**ので、機能をまたぐ道具として
 // `browser/lib/` に置く（docs/design.md 2章「`src/browser/` の箱と、置く基準」）。
 //
@@ -30,15 +30,26 @@ const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
 
 /**
  * ツール名＋入力を、画面に出してよい1行の要約にする。入力がオブジェクトの形でないときは空文字。
+ * **切り詰めるだけ**（どの欄を読むかは {@link toolInputText} の1箇所で決める。
+ * docs/design.md 13.9「いまの作業」）。
  */
 export function summarizeToolInput(toolName: string, input: unknown): string {
+  return truncateToolSummary(toolInputText(toolName, input))
+}
+
+/**
+ * ツール名＋入力から、要約と同じ欄（Bash は `command`、Edit / Write / Read は `file_path`）の値を
+ * **切り詰めずに**返す。帯の「いまの作業」が開く一覧の「実行中の手順の全文」に使う
+ * （docs/design.md 13.9）。入力がオブジェクトの形でない・欄が見つからないときは空文字。
+ */
+export function toolInputText(toolName: string, input: unknown): string {
   if (!isPlainObject(input)) {
     return ""
   }
 
   const field = TOOL_SUMMARY_FIELD_BY_TOOL[toolName]
   const value = field === undefined ? firstStringValue(input) : stringField(input, field)
-  return value === undefined ? "" : truncateToolSummary(value)
+  return value ?? ""
 }
 
 function firstStringValue(input: Readonly<Record<string, unknown>>): string | undefined {

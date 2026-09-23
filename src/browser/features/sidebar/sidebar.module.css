@@ -1,8 +1,8 @@
-/* サイドバー（`src/browser/features/sidebar/`）。3つの区画（いま何をしているか・タスク一覧・
-   セッション情報）の**枠**と、サイドバー自身が描く中身（いま何をしているか・セッション情報）を
-   持つ。**まん中の区画の中身（タスク一覧）と、そこから開く表の見た目はここには無い** — 置かれる
-   機能の側に1枚でまとまっている（docs/design.md 2章「領域の機能と、置かれる機能」）。
-   サイドバーは置き場所を貸しているだけ。 */
+/* サイドバー（`src/browser/features/sidebar/`）。2つの区画（タスク一覧・セッション情報）の
+   **枠**と、サイドバー自身が描く中身（セッション情報）を持つ。**まん中の区画の中身
+   （タスク一覧）と、そこから開く表の見た目はここには無い** — 置かれる機能の側に1枚で
+   まとまっている（docs/design.md 2章「領域の機能と、置かれる機能」）。サイドバーは置き場所を
+   貸しているだけ。 */
 
 .session-info-label {
   white-space: nowrap;
@@ -72,12 +72,10 @@
   overflow-y: auto;
   padding: 4px;
 }
-/* 「いま何をしているか」「タスク一覧」は中身の量が変わるので、残りの高さを2等分して割り当てる。
-   「セッション情報」は3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの
-   高さで止める（等分すると中身が短いぶんだけ下に空白が間延びするため）。
+/* 「タスク一覧」は中身の量が変わるので、残りの高さをここへ割り当てる。「セッション情報」は
+   3行固定の中身なので伸びしろを持たせず（flex-grow: 0）、中身なりの高さで止める。
    **一覧を見渡すのは区画ではなく画面いっぱいの表（モーダル）**なので、ここは一覧の全長に合わせて
    高さを取りに行かない。入りきらない分は .sidebar-block-scroll が内側でスクロールする。 */
-.sidebar-block-activity,
 .sidebar-block-tasks {
   flex: 1 1 0;
 }
@@ -103,54 +101,6 @@
 }
 .sidebar-block-action:hover {
   border-color: var(--accent);
-}
-.sidebar-empty {
-  color: var(--ink-quiet);
-}
-.sidebar-list {
-  margin: 0.2rem 0 0;
-  padding-left: 1.2rem;
-}
-/* 実行中は既定の見た目のまま。**class は状態の印**として付ける（下の完了・入れ子・失敗と対）。 */
-.activity-running {
-  color: inherit;
-}
-.activity-item.activity-finished {
-  color: var(--ink-quiet);
-}
-.activity-item.activity-nested {
-  margin-left: 1rem;
-  list-style-type: circle;
-}
-/* 失敗した回。**引数と出力を読める場所はここだけ**なので、薄い色に落とさず開ける形にする
-   （docs/requirements.md 4.2）。印は文字（「失敗」）で、色はその補助。 */
-.activity-item.activity-failed {
-  color: var(--ink);
-}
-.activity-failure > summary {
-  cursor: pointer;
-}
-.activity-failure-mark {
-  color: var(--state-ng);
-  font-weight: 600;
-}
-.activity-failure pre {
-  margin: 0.3rem 0 0;
-  font-family: var(--font-mono);
-  padding: 0.4rem;
-  max-height: 12rem;
-  overflow: auto;
-  border-radius: 0.4rem;
-  background: var(--ground);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.activity-failure-output {
-  border: 1px solid var(--state-ng);
-}
-/* 引数の側は枠を持たない（出力の裏取りに使う従の情報）。**class は中身の別を示す印**。 */
-.activity-failure-input {
-  border: none;
 }
 /* ラベル列（`.session-info-label`）と値列（`.session-info-value`）を2列の grid で揃える。
    行ごとに別々の flex で並べると、ラベルの文字数の差（「モデル」3字 /「許可モード」5字）が
