@@ -19,6 +19,7 @@ import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type SessionChoice } from "./session-choice.ts"
+import { type SessionDefault } from "./session-default.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
 
@@ -248,6 +249,15 @@ export type SessionEvent =
    * 見失う**（`INITIAL_SESSION_STATE.chatMode` は `false`）。
    */
   | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
+  /**
+   * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/design.md` 13.6）。
+   * **駆動を起こしたときと、起こし直したときの1回ずつ**（`character-changed` と同じ契機）と、
+   * **歯車から `set-session-default` で覚え直したとき**に流れる。
+   *
+   * 運ぶのは覚えた値（読めなければ同梱の既定へ畳んだあとの値）で、**いま動いている
+   * セッションの値ではない**（そちらは `session-info` の `model` / `permissionMode`）。
+   */
+  | { readonly kind: "session-default-changed"; readonly sessionDefault: SessionDefault }
   /**
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`。
    * docs/glossary.md「圧縮の区切り」）。**数値（`compact_metadata` の `pre_tokens` /

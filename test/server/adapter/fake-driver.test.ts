@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import { readFakeSession, startFakeSession } from "../../../src/server/adapter/fake-driver.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
@@ -40,6 +41,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -53,6 +55,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -72,6 +75,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -92,6 +96,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: "架空の場面2",
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -105,6 +110,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: "架空の場面1",
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -120,6 +126,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: "無い場面",
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -144,6 +151,7 @@ describe("startFakeSession", () => {
         turns: [],
       },
       scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     await tick()
@@ -163,6 +171,7 @@ describe("startFakeSession", () => {
         turns: [],
       },
       scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
       onEvent: sink.onEvent,
     })
     driver.close()

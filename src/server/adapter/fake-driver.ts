@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url"
 import { z } from "zod"
 
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
+import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent, sessionEventSchema } from "../../shared/session-event.ts"
 import { type SessionDriver } from "../core/session-driver.ts"
 
@@ -63,6 +64,13 @@ export type FakeDriverOptions = {
    * 流す。
    */
   readonly scene: string | undefined
+  /**
+   * このセッションを起こした既定（モデル・許可モード。`docs/design.md` 13.6）。**疑似
+   * セッションが流す `session-info` にもこの値を載せる** — 固定値のままだと、歯車で既定を
+   * 変えて起こし直しても帯が疑似セッションに書いた値を出してしまう（本物は SDK の `init` が
+   * 実際に起こした値を返す）。
+   */
+  readonly sessionDefault: SessionDefault
   /** 内部イベントの受け取り口（本物の駆動と同じ契約）。 */
   readonly onEvent: (event: SessionEvent) => void
 }
@@ -103,12 +111,18 @@ export function readFakeSession(
 export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const timers = new Set<ReturnType<typeof setTimeout>>()
   let pending: readonly PendingAsk[] = []
+  // いま動いているモデルと許可モード。起こした既定から始まり、`setModel` /
+  // `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
+  let model: string = options.sessionDefault.model
+  let permissionMode: string = options.sessionDefault.permissionMode
 
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
       pending = event.pending
     }
-    options.onEvent(event)
+    // 疑似セッションが書いた `session-info` のモデル・許可モードは**いまの値で置き換える**
+    // （疑似セッションの持ち物ではなく、起こし方で決まる値なので）。
+    options.onEvent(event.kind === "session-info" ? { ...event, model, permissionMode } : event)
   }
 
   const play = (steps: readonly FakeSessionStep[], startMs: number): void => {
@@ -175,12 +189,17 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     },
     answer: (id, answer) => settle(id, answer),
     pending: () => pending,
-    setModel: (model) => {
-      emit({ kind: "session-info", ...sessionInfo(), model })
+    setModel: (next) => {
+      // **名前が無い切り替えは覚えない**（本物も `undefined` のときは何も知らせない）。
+      if (next !== undefined) {
+        model = next
+      }
+      emit({ kind: "session-info", ...sessionInfo() })
       return Promise.resolve()
     },
     setPermissionMode: (mode) => {
-      emit({ kind: "session-info", ...sessionInfo(), permissionMode: mode })
+      permissionMode = mode
+      emit({ kind: "session-info", ...sessionInfo() })
       return Promise.resolve()
     },
     close: () => {
@@ -204,8 +223,8 @@ function openingSpanMs(opening: readonly FakeSessionStep[]): number {
  * 形は `SessionEvent`（`kind: "session-info"`）と同じものを使う（同じ「無い」を2箇所で
  * 書き直さない）。**`model` / `permissionMode` がここで `| undefined` なのは、SDK の `init`
  * をそのまま写す境界だから**（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
- * 状態側（`src/shared/session-state.ts`）では `model` は `SessionState.model` へ独立に写り、
- * `permissionMode` が無ければ `session` は `sessionId` だけの `identified` に畳まれる。
+ * **値そのものは `emit` が載せ替える**ので、この土台が持つのは「無い」のまま。
+ * 状態側（`src/shared/session-state.ts`）では `model` は `SessionState.model` へ独立に写る。
  */
 function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "kind"> {
   return {

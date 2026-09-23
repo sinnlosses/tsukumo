@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 
 import {
   DEFAULT_SPLIT,
+  isDefaultSplit,
   loadSplit,
   saveSplit,
 } from "../../../../src/browser/features/layout/split.ts"
@@ -80,5 +81,28 @@ describe("loadSplit", () => {
 
     saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
     expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
+  })
+})
+
+// 「比率を既定に戻す」ピルを出すかどうかの判定（`hooks/use-layout.ts`）。
+describe("isDefaultSplit", () => {
+  it("DEFAULT_SPLIT そのものは既定", () => {
+    expect(isDefaultSplit(DEFAULT_SPLIT)).toBe(true)
+  })
+
+  it.each([
+    ["rowTop", { rowTop: 40 }],
+    ["topLeft", { topLeft: 30 }],
+    ["bottomLeft", { bottomLeft: 60 }],
+  ] as const)("%s が既定と違えば既定ではない", (_key, patch) => {
+    expect(isDefaultSplit({ ...DEFAULT_SPLIT, ...patch })).toBe(false)
+  })
+
+  it("collapsedRowTop に値が入っていれば既定ではない（雑談だけ動かした場合）", () => {
+    expect(isDefaultSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })).toBe(false)
+  })
+
+  it("collapsedRowTop が undefined のままなら既定（まだ一度も動かしていない）", () => {
+    expect(isDefaultSplit({ ...DEFAULT_SPLIT, collapsedRowTop: undefined })).toBe(true)
   })
 })

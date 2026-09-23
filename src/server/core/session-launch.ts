@@ -10,6 +10,7 @@
 // 渡された関数（{@link SessionLaunchPorts}）越しに頼む。結ぶのは配線層（`src/session-start.ts`）。
 
 import { type SessionChoice } from "../../shared/session-choice.ts"
+import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { type CharacterSelection, type NamedCharacterPack } from "./character-selection.ts"
 import { type SessionDriver, type SessionStart } from "./session-driver.ts"
@@ -27,6 +28,12 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
    * 起こすときに固定される**ので、レポートの記法を外すにはここで決まっている必要がある。
    */
   readonly chat: boolean
+  /**
+   * このセッションを起こす既定（モデル・許可モード。`docs/design.md` 13.6）。**読むのは
+   * 起こすたびに1回**（{@link SessionLaunchPorts.readSessionDefault}）で、同じ値が画面へ流す
+   * `session-default-changed` にも渡る（画面に出る既定と、実際に起こした既定がずれない）。
+   */
+  readonly sessionDefault: SessionDefault
 }
 
 /**
@@ -73,6 +80,11 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly choosePack: (selection: CharacterSelection) => Pack
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly rememberPack: (pack: Pack) => void
+  /**
+   * 覚えた「新しいセッションの既定」を読む（`docs/design.md` 13.6）。**覚えた値が無い・
+   * 読めないときは同梱の既定へ畳んだあとの値**が返るので、ここから先に「無い」は出ない。
+   */
+  readonly readSessionDefault: () => SessionDefault
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
   /** 駆動と同じ間だけ動く見張りを起こす。流すイベントは駆動のものと同じ受け口へ。 */
@@ -105,8 +117,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * セッションを起こす関数を作る（`session-manager` の `startDriver` にそのまま渡せる形）。
  *
  * 順序は**起動時も起こし直しも同じ**:
- * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed` と `chat-mode-changed` を
- * 流す → 見張りを起こす → 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
+ * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・
+ * `session-default-changed` を流す → 見張りを起こす → 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
  * 続きから始まったなら履歴を組み直す。
  *
  * **受け口は2つ。** `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
@@ -136,6 +148,10 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // **起こし直すと状態が初期値へ戻る**ので、雑談かどうかもここで流し直す（画面は
     // `chat-mode-changed` でしか知れない。`docs/requirements.md` 4.9）。
     onEvent({ kind: "chat-mode-changed", chat })
+    // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値。`docs/design.md` 13.6）。
+    // **読むのはここ1回だけ**で、同じ値をこれから起こす駆動にも渡す。
+    const sessionDefault = ports.readSessionDefault()
+    onEvent({ kind: "session-default-changed", sessionDefault })
 
     const watcher = ports.watchTasks(onEvent)
     // **キャラクターごと・モードごとに別のセッションを持つ**（docs/design.md 7章、
@@ -155,7 +171,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
       sessions: await ports.listSessions(pack, chat),
       current: start.kind === "resume" ? start.sessionId : undefined,
     })
-    const driver = ports.startDriver({ pack, start, chat }, onEvent)
+    const driver = ports.startDriver({ pack, start, chat, sessionDefault }, onEvent)
 
     if (start.kind === "resume") {
       void replayRestoredSession(ports, start.sessionId, pack, onRestoredEvent)

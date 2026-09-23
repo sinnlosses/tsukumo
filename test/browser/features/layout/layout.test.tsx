@@ -66,19 +66,57 @@ afterEach(() => {
 })
 
 describe("Layout", () => {
-  it("比率を戻すボタンは常設で出る", () => {
+  it("既定の比率のときは、比率を戻すピルが無い", () => {
     renderLayout()
 
-    expect(screen.getByRole("button", { name: "領域の比率を既定に戻す" })).toBeDefined()
+    expect(screen.queryByRole("button", { name: "比率を既定に戻す" })).toBeNull()
   })
 
-  it("比率を戻すボタンを押すと、保存済みの比率が DEFAULT_SPLIT に戻る", () => {
+  it("保存済みの比率が既定と違うと、開いた直後からピルが出る", () => {
+    saveSplit({ ...DEFAULT_SPLIT, topLeft: 30 })
+    renderLayout()
+
+    expect(screen.getByRole("button", { name: "比率を既定に戻す" })).toBeDefined()
+  })
+
+  it("仕切りを動かして確定すると、比率を戻すピルが出る", () => {
+    renderLayout()
+    const rowTop = rowTopElement()
+    stubBoundingRect(rowTop, 1000, 400)
+    const resizer = screen.getByRole("separator", { name: "メインビューとサイドバーの境界" })
+
+    expect(screen.queryByRole("button", { name: "比率を既定に戻す" })).toBeNull()
+
+    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 750, clientY: 0 })
+    fireEvent.pointerMove(resizer, { clientX: 400, clientY: 0 })
+    fireEvent.pointerUp(resizer, { clientX: 400, clientY: 0 })
+
+    expect(screen.getByRole("button", { name: "比率を既定に戻す" })).toBeDefined()
+  })
+
+  it("比率を戻すピルを押すと、保存済みの比率が DEFAULT_SPLIT に戻り、ピルも消える", () => {
     saveSplit({ ...DEFAULT_SPLIT, rowTop: 20, topLeft: 30, bottomLeft: 40 })
     renderLayout()
 
-    fireEvent.click(screen.getByRole("button", { name: "領域の比率を既定に戻す" }))
+    fireEvent.click(screen.getByRole("button", { name: "比率を既定に戻す" }))
 
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
+    expect(screen.queryByRole("button", { name: "比率を既定に戻す" })).toBeNull()
+  })
+
+  it("雑談の上下比だけ動かしても、比率を戻すピルが出る", () => {
+    renderLayout(true)
+    const grid = requireElement(rowTopElement().parentElement, "grid")
+    stubBoundingRect(grid, 1000, 500)
+    const resizer = screen.getByRole("separator", { name: "上段と下段の境界" })
+
+    expect(screen.queryByRole("button", { name: "比率を既定に戻す" })).toBeNull()
+
+    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 0, clientY: 300 })
+    fireEvent.pointerMove(resizer, { clientX: 0, clientY: 400 })
+    fireEvent.pointerUp(resizer, { clientX: 0, clientY: 400 })
+
+    expect(screen.getByRole("button", { name: "比率を既定に戻す" })).toBeDefined()
   })
 
   it("ドラッグ中は CSS カスタムプロパティだけが追随し、離したときに保存される", () => {
@@ -203,7 +241,7 @@ describe("Layout", () => {
     saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
     renderLayout(true)
 
-    fireEvent.click(screen.getByRole("button", { name: "領域の比率を既定に戻す" }))
+    fireEvent.click(screen.getByRole("button", { name: "比率を既定に戻す" }))
 
     expect(loadSplit().collapsedRowTop).toBeUndefined()
   })

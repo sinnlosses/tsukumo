@@ -23,7 +23,7 @@ import {
 import {
   readRememberedCharacter,
   writeRememberedCharacter,
-} from "./server/adapter/remembered-character.ts"
+} from "./server/adapter/remembered-default.ts"
 import {
   type CharacterSelection,
   selectCharacterPack,

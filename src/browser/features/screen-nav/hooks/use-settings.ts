@@ -1,6 +1,11 @@
 // 帯の右端の歯車で開く**設定**のロジック（docs/design.md 13.6「設定の置き場所」/ 13.9「設定の
-// 歯車」）。いまここにあるのは**地・領域・字の色**の1群だけで、後続が「新しいセッションの既定」と
-// 「書き上げる演出の速さ」を同じポップオーバーへ足す。
+// 歯車」）。いまここにあるのは**地・領域・字の色**と**新しいセッションの既定**の2群で、
+// 後続が「書き上げる演出の速さ」を同じポップオーバーへ足す。
+//
+// **2群は持ち先が違う。** 色は利用者の端末の設定（`localStorage`）、既定はサーバが覚える値
+// （`~/.tsukumo/state.json`。`set-session-default` で送り、`SessionState.sessionDefault` を読む）。
+// **既定は次に起こすときから効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない
+// （帯のドロップダウンはセッション限りの別物）。
 //
 // **色の持ち方は `browser/lib/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
 // いない。キャラクター画面から移したのは操作子だけ）。見た目（`documentElement`）
@@ -21,6 +26,11 @@
 
 import { useCallback, useRef, useState, type RefObject } from "react"
 
+import { isModelAlias, type ModelAlias } from "../../../../shared/command.ts"
+import {
+  isSessionDefaultPermissionMode,
+  type SessionDefaultPermissionMode,
+} from "../../../../shared/session-default.ts"
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import {
   applyAppearanceColorOverride,
@@ -33,6 +43,7 @@ import {
   type AppearanceColorOverride,
 } from "../../../lib/appearance-color.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
+import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 
 /** 色の操作子1つ（見た目が受け取れる形まで畳んだもの）。 */
 export type ScreenNavSettingsColor = {
@@ -42,10 +53,22 @@ export type ScreenNavSettingsColor = {
   readonly onChange: (value: string) => void
 }
 
+/**
+ * 新しいセッションの既定の操作子（`docs/design.md` 13.6）。**表示はサーバから届いた値だけに
+ * 従う**（押した側へ先に倒さない。帯の操作子と同じ作法）。
+ */
+export type ScreenNavSettingsSessionDefault = {
+  readonly model: ModelAlias
+  readonly onChangeModel: (value: string) => void
+  readonly permissionMode: SessionDefaultPermissionMode
+  readonly onChangePermissionMode: (value: string) => void
+}
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onToggle: () => void
   readonly colors: readonly ScreenNavSettingsColor[]
+  readonly sessionDefault: ScreenNavSettingsSessionDefault
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -73,6 +96,8 @@ const APPEARANCE_COLOR_SAVE_KEY = "appearance-color"
 
 /** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」・「いまの作業」と同じ `ref`）。 */
 export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsResult {
+  const dispatch = useSessionDispatch()
+  const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
   const [open, setOpen] = useState(false)
   const toggleRefWide = useRef<HTMLButtonElement>(null)
   const toggleRefNarrow = useRef<HTMLButtonElement>(null)
@@ -143,6 +168,30 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): UseSettingsR
       })),
       resetDisabled: !hasOverride(override),
       onReset: reset,
+      sessionDefault: {
+        model: sessionDefault.model,
+        onChangeModel: (value) => {
+          // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
+          if (isModelAlias(value)) {
+            dispatch({
+              type: "set-session-default",
+              model: value,
+              permissionMode: sessionDefault.permissionMode,
+            })
+          }
+        },
+        permissionMode: sessionDefault.permissionMode,
+        onChangePermissionMode: (value) => {
+          // 「全部許す」はここを通らない（選択肢にも無い。`docs/requirements.md` 4.1）。
+          if (isSessionDefaultPermissionMode(value)) {
+            dispatch({
+              type: "set-session-default",
+              model: sessionDefault.model,
+              permissionMode: value,
+            })
+          }
+        },
+      },
     },
     toggleRefWide,
     toggleRefNarrow,

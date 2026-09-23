@@ -59,6 +59,24 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 タイプスケールに `--font-subheading`（14px）と `--font-action`（12px）を足して6段にし（`docs/design.md` 13.3）、「一覧を見る」は枠なしの差し色のリンク風にした。進行中のチップは `TaskListCountItem.status` で選ぶ（並び順に頼らない）。
 
+### 2026-09-23 帯の「いまの作業」の札を、中身で幅が変わらない固定長にした（T-403）
+
+`.screen-nav-work-toggle` を `width: 100%` + `box-sizing: border-box` にして帯の空きをつねに
+埋めるようにし、`.screen-nav-work-word` に `min-width: 6em` を置いて状態の語が変わっても
+区切りと要約の始まりがずれないようにした。Bash のコマンドが変わるたびに札が伸び縮みして
+チカチカする、という報告への対処。
+
+### 2026-09-23 新しいセッションの既定を state.json に覚え、歯車から変えられるようにした（T-386）
+
+`remembered-character.ts` を `remembered-default.ts` に改名してキャラクターと既定を1つの境界で持ち、
+`set-session-default` コマンドと `SessionState.sessionDefault` を足した。既定に「全部許す」は
+境界で落とし、壊れた `state.json` では Opus・`auto` に畳んで起動を止めない。
+
+### 2026-09-23 比率を既定に戻す口を、比率を動かしたときだけ出る絵と字のピルにした（T-397）
+
+`split.ts` の `isDefaultSplit` で3本の比率と雑談の上下比を既定と比べ、違うときだけ上下の仕切りの
+右端に回る矢印＋「比率を既定に戻す」のピルを出す。押して消えたあとのフォーカスは動かさない。
+
 ### 2026-09-23 パックに雑談の差し色 chatAccent を持たせ、雑談中は --accent を切り替えた（T-392）
 
 `character.json` の任意欄 `chatAccent`（`tsukumo` は橙 `#f2984a`）を `effectiveAccent` で雑談中だけ `--accent` に流し、雑談中の依頼待ちの札を「<名前> とおしゃべり中」にした。編集UIは作らず、13.2 / 13.7 / 13.9 に決定を書いた。
