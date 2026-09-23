@@ -174,5 +174,16 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-379",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "レポートを書く演出の自動送りを、帯ぜんたいではなくミニ立ち絵の位置に追わせて揺れを止める",
+    "task": "## 背景\n\nレポートを書き上げる演出の最中に、メインビューの本文が上下に小刻みに揺れることがある（利用者の報告）。\n\n演出は `src/browser/features/main-view/report-reveal.ts` の `startReveal` が毎フレーム `tick` を回し、`advanceBlock` が返した `BrushStep` をそのまま `scroller.follow(step)` に渡している。`src/browser/features/main-view/brush-scroll.ts` の `brushScroller().follow` は、受け取った `tipTop`〜`tipBottom` の範囲を器の上下の縁から `KEEP_MARGIN_PX`（96px）内側に収めようとして、`below > 0` なら下へ、`above > 0` なら上へ `scrollTop` を動かす。\n\nところが `tipTop` / `tipBottom` は筆先の点ではなく**いま書いている帯ぜんたい**の上端と下端（`src/browser/features/main-view/reveal-band.ts` の `brushStep`。横画では `band.top` / `band.bottom` をそのまま入れる）。帯はトピック（見出しから次の見出しまで）の行を上下2つに割ったものなので、行の多いトピックや表・図を含むトピックでは帯が器の高さ − 192px を超える。そのとき:\n\n1. 下端がはみ出す → `below` の分だけ下へ送る\n2. 次のフレームでは上端が縁より上に出る → `above` の分だけ上へ戻す\n3. 以降フレームごとに 1・2 を繰り返す\n\nとなり、横画のあいだ本文が毎フレーム往復する。「ことがある」のは帯が背高になるトピックでだけ起きるため。**ここまではコードを読んだ見立てで、実機での再現はまだ取っていない。**\n\nミニ立ち絵（`src/browser/features/main-view/mini-portrait.tsx`）は筆先の**右・帯の下端**に、`translateY(-100%)` で立ち絵の高さぶん上へ伸びて立つ（`followStyle`）。高さは `mini-portrait.module.css` の `--mini-portrait-height`（`clamp(60px, 8vmin, 96px)`）で、器の高さより十分小さい。\n\n## 決まっていること（蒸し返さない）\n\n- 自動送りが追う対象を「帯ぜんたい」から「ミニ立ち絵の立つ位置」（帯の下端と、そこから立ち絵の高さぶん上まで）に変える（利用者の提案「レポートを書いているときは自動でミニキャラの位置に追従すれば解決する?」を採る）\n- ミニ立ち絵が出ないとき（`data-brush-origin` が見つからない・パックに素材が無い）も、自動送りは同じ位置（帯の下端基準）を追う\n- 手で転がしたら自動送りを降りる挙動（`HAND_SCROLL_EVENT_NAMES`）と、打ち切りの口（`SKIP_EVENT_NAMES`）は変えない\n\n## 解くべき論点\n\n- 立ち絵の高さをどう知るか。候補は (a) `BrushTipRange` を「下端と高さ」で渡し、高さは呼ぶ側が固定の見積もり（上限の 96px など）で渡す、(b) ミニ立ち絵の要素を測る。(b) は `brush-scroll.ts` が立ち絵の DOM を知ることになり、立ち絵が出ないときの分岐も要る。**読む人が開くファイルの数が少ないほう**を選び、理由をコメントではなく `evidence` に書く\n- 斜めの戻り（`stroke: \"return\"`）のあいだも同じ追い方でよいか（戻りでは帯の下端が次の帯の下端へ滑るので、下端基準なら連続に動くはず）\n- 追う範囲が器の高さ − 2×`KEEP_MARGIN_PX` を超える場合が残るなら、上下のどちらを優先するかを決め、往復しないことをテストで押さえる\n\n## やること\n\n1. `test/browser/features/main-view/brush-scroll.test.ts` に、**器より背の高い範囲を2回続けて `follow` しても `scrollTop` が往復しない**ことを確かめるテストを先に書き、いまのコードで落ちることを確かめる（落ちなければ見立てが違うので、fake driver で帯の背が高いトピックを流して揺れを再現してから原因を探し直す。**原因が上の見立てと違えば、直さずに分かったことを `evidence` に書いて `difficulty` を上げて止まる**）\n2. 追う範囲をミニ立ち絵の立つ位置に変える（`brush-scroll.ts` の `BrushTipRange` と `follow`、`report-reveal.ts` の呼び出し。`reveal-band.ts` の `BrushStep` は立ち絵以外の用途（`clip-path` の肩と opacity）にも使うので変えない）\n3. 先頭の説明コメント（`brush-scroll.ts` と `report-reveal.ts` 冒頭の「筆先が画面から出たら器を送る」）を新しい追い方に合わせる\n4. `docs/requirements.md` 4.3 と `docs/design.md` 6.5 に自動送りの追う範囲が書かれていれば直す（無ければ触らない）\n5. fake driver（`src/server/adapter/fake-driver.ts`、手順は `docs/architecture.md`「手で確かめること」）で、背の高いトピックを含むレポートを流して目視する\n\n## 完了条件\n\n- 手順1のテストが、変更前のコードで落ち、変更後に通る\n- 既存の `brush-scroll.test.ts` のテスト（下にはみ出したら送る・上にはみ出したら戻す・手で転がしたら降りる）が通る\n- fake driver で、帯が器より背の高いトピックを書いているあいだ本文が往復しないことと、ミニ立ち絵が器の中に見え続けることを目視し、窓の大きさと見えたものを `evidence` に書く\n- `bun run check` が通る\n\n## 注意\n\n- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' <ファイル>` の数が変わらないことを確かめる\n- 演出の目視は開いた時点の本文には掛からない。新しい依頼を出して演出を走らせてから見る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
