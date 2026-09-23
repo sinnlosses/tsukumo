@@ -24,11 +24,12 @@
 
 import { type SessionEvent } from "../../shared/session-event.ts"
 import {
-  type DailyTokenUsage,
   type ModelUsageTotal,
   type TokenUsageDays,
   type TokenUsageSummary,
   type TokenUsageTotals,
+  type TokenUsageTrend,
+  type TokenUsageTrendUnit,
 } from "../../shared/token-usage-summary.ts"
 import {
   type ModelTokenUsage,
@@ -218,12 +219,16 @@ export function turnUsageBreakdown(tally: TurnUsageTally): TurnUsageBreakdown {
 }
 
 /**
- * 期間に入る行を、**日ごと・モデル別・ツール別**の3つの軸で畳む（分析画面が要る軸だけ。
+ * 期間に入る行を、**推移・モデル別・ツール別**の3つの軸で畳む（分析画面が要る軸だけ。
  * 使わない軸＝モード別・1ターンあたりの中央値は作らない）。
  *
  * **期間の判定は行の `at` の頭10文字（ローカル日付）で行う** — 記録は書いた時点のローカル日付を
  * 持つので（`isoWithOffset`）、ここで改めてタイムゾーンを変換し直さない。`readRange` が渡す
  * 行が既に期間の外を含んでいても、ここで確定的に切り直す。
+ *
+ * **推移の刻みは期間の長さが決める** — 1日なら時間ごと（0〜23時の24点）、それより長ければ
+ * 日ごと。**穴は0で埋める**（棒の数と両端が期間から決まるので、描く側は点の数を数えるだけで
+ * 済み、「今日が何日か」を知らずに端のラベルを出せる）。
  */
 export function summarizeTokenUsage(
   records: readonly TokenUsageRecord[],
@@ -231,7 +236,7 @@ export function summarizeTokenUsage(
 ): TokenUsageSummary {
   const withinPeriod = records.filter((record) => isWithinPeriod(record, period))
   return {
-    byDay: summarizeByDay(withinPeriod),
+    trend: summarizeTrend(withinPeriod, period),
     byModel: summarizeByModel(withinPeriod),
     byTool: summarizeByTool(withinPeriod),
   }
@@ -356,15 +361,50 @@ function localDateOf(record: TokenUsageRecord): string {
   return record.at.slice(0, 10)
 }
 
-/** 日ごとに畳む。記録の無い日は並ばない（**穴を0で埋めない** — 埋めるかどうかは描く側が決める）。 */
-function summarizeByDay(records: readonly TokenUsageRecord[]): readonly DailyTokenUsage[] {
-  const dates = [...new Set(records.map(localDateOf))].toSorted()
-  return dates.map((date) => ({
-    date,
-    totals: sumTotals(
-      records.filter((record) => localDateOf(record) === date).flatMap((r) => r.models),
-    ),
-  }))
+/**
+ * 行の `at` の11〜13文字目（ローカル時刻の時。`YYYY-MM-DDTHH:...` の `HH`）。**日付と同じく
+ * 書いた時点のローカル時刻をそのまま読む**ので、ここでもタイムゾーンを変換し直さない。
+ */
+function localHourOf(record: TokenUsageRecord): string {
+  return record.at.slice(11, 13)
+}
+
+/** 1日ぶんの時の鍵（`00`〜`23`）。 */
+const HOUR_KEYS: readonly string[] = Array.from({ length: 24 }, (_, hour) =>
+  String(hour).padStart(2, "0"),
+)
+
+/** 期間の刻み（1日だけの期間は時間ごと、それより長ければ日ごと）。 */
+function trendUnitOf(period: TokenUsagePeriod): TokenUsageTrendUnit {
+  return period.startDate === period.endDate ? "hour" : "day"
+}
+
+/** 期間の刻みごとに畳む。**期間のすべての刻みを並べ、記録の無い刻みは0で埋める。** */
+function summarizeTrend(
+  records: readonly TokenUsageRecord[],
+  period: TokenUsagePeriod,
+): TokenUsageTrend {
+  const unit = trendUnitOf(period)
+  const keyOf = unit === "hour" ? localHourOf : localDateOf
+  return {
+    unit,
+    points: trendKeys(unit, period).map((key) => ({
+      key,
+      totals: sumTotals(records.filter((record) => keyOf(record) === key).flatMap((r) => r.models)),
+    })),
+  }
+}
+
+/** 期間に並ぶ刻みの鍵（古い→新しい順）。 */
+function trendKeys(unit: TokenUsageTrendUnit, period: TokenUsagePeriod): readonly string[] {
+  return unit === "hour" ? HOUR_KEYS : datesInPeriod(period)
+}
+
+/** 両端を含む日付の並び（`YYYY-MM-DD`）。 */
+function datesInPeriod(period: TokenUsagePeriod): readonly string[] {
+  const start = Temporal.PlainDate.from(period.startDate)
+  const length = start.until(Temporal.PlainDate.from(period.endDate)).days + 1
+  return Array.from({ length }, (_, offset) => start.add({ days: offset }).toString())
 }
 
 /** モデルごとに畳む（モデル名の昇順）。 */

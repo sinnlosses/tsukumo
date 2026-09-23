@@ -263,19 +263,22 @@ describe("startViewServer", () => {
 
   it("/token-usage は、正しいトークンなら集計を JSON で返す", async () => {
     const summary = {
-      byDay: [
-        {
-          date: "2026-09-21",
-          totals: {
-            inputTokens: 12,
-            outputTokens: 34,
-            thinkingTokens: 5,
-            cacheReadInputTokens: 6,
-            cacheCreationInputTokens: 7,
-            costUsd: 0.5,
+      trend: {
+        unit: "day",
+        points: [
+          {
+            key: "2026-09-21",
+            totals: {
+              inputTokens: 12,
+              outputTokens: 34,
+              thinkingTokens: 5,
+              cacheReadInputTokens: 6,
+              cacheCreationInputTokens: 7,
+              costUsd: 0.5,
+            },
           },
-        },
-      ],
+        ],
+      },
       byModel: [],
       byTool: [{ name: "Bash", calls: 3, resultBytes: 800 }],
     } satisfies TokenUsageSummary
