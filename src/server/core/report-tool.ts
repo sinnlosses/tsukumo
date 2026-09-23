@@ -127,7 +127,8 @@ export function unmatchedReportToolClauses(): readonly string[] {
  */
 export const REPORT_GATE_REASON =
   "いま書いた本文は画面に出ていない。その内容を `report` ツール（`mcp__tsukumo__report`）で" +
-  "渡し直すこと。`report` のあとに書いてよいのは締めの `speak` と1行のテキストだけ。"
+  "渡し直すこと。前に渡した `report` を同じ引数で送り直さない（送り直しは差し戻す）。" +
+  "`report` のあとに書いてよいのは締めの `speak` と1行のテキストだけ。"
 
 /**
  * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの中で**最後の
