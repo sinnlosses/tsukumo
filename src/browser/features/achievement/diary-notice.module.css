@@ -1,0 +1,59 @@
+/* 書き終わりの知らせ（`diary-notice.tsx`。13.10「書き終わりの知らせ」）。画面の下の中央に浮く札。
+   値は見本（`docs/history/mockup/achievement-diary-2026-09-25/SEIKA-4c-Written.dc.html`）から
+   取り、色は既存のトークンに寄せた（地は `--surface`、枠は `--rule`、字は `--ink`、
+   「日記帳で開く」は見開きの主ボタンと同じ `--accent` 地・`--ground` 字、鈴は `--diary-gold`）。
+   `--screen-nav` の帯（z-index 20）より上に出す。 */
+
+.diary-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 14px 12px 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--ground) 70%, transparent);
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
+}
+
+.diary-notice-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.diary-notice-text {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.diary-notice-open {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: none;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.diary-notice-dismiss {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--ink-quiet);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}

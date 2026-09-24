@@ -52,6 +52,8 @@ import {
   type SessionDispatch,
 } from "../../../stores/session.tsx"
 import { dayLabel } from "../../../utils/day-label.ts"
+import { monthDayLabel } from "../../../utils/month-day-label.ts"
+import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "../diary-book-request.ts"
 import { diaryWriterPortraitOf } from "../diary-writer.ts"
 import { kanjiDateLabel, kanjiNumeral, kanjiWeekdayLabel } from "../domain/kanji-date.ts"
 import { type AchievementCalendarView } from "./use-achievement-calendar.ts"
@@ -65,12 +67,14 @@ const EMPTY_DAY_REASON = "振り返る成果が無い"
 const TURN_RUNNING_REASON = "いまターンが動いているので送れない"
 const BLANK_REVIEW_LABEL = "この日を振り返る"
 
-/** 見開きを開いた口（13.10「日記帳の見開き」頭の行の添え書き）。 */
-export type DiaryBookOpenSource = "calendar" | "diary-section"
+/** 見開きを開いた口（13.10「日記帳の見開き」頭の行の添え書き）。`notice` は書き終わりの知らせの
+ * 「日記帳で開く」（`diary-notice.tsx`。13.10「書き終わりの知らせ」）。 */
+export type DiaryBookOpenSource = "calendar" | "diary-section" | "notice"
 
 const OPEN_NOTE: Readonly<Record<DiaryBookOpenSource, string>> = {
   calendar: "灯りの暦から開きました",
   "diary-section": "この日の日記から開きました",
+  notice: "書き終わりの知らせから開きました",
 }
 
 const LAMP_LABEL: Readonly<Record<LampLevel, string>> = {
@@ -191,6 +195,15 @@ export function useDiaryBook(params: {
   const character = useSessionSelector((session) => session.state.character)
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
 
+  // 書き終わりの知らせの「日記帳で開く」（`diary-notice.tsx`）を拾って開く。**`useEffect` は
+  // 使わない**——4類型のどれにも当たらない（`docs/coding-standards.md`「React」）。合図は
+  // `useDiaryBookOpenRequest`（`useSyncExternalStore`。「外部ストアの購読」）で拾い、拾ったかどうかは
+  // `takeDiaryBookOpenRequest` が React の外に持つ（画面を開き直しても同じ合図で開き直さない）。
+  const pendingRequest = takeDiaryBookOpenRequest(useDiaryBookOpenRequest())
+  if (pendingRequest !== undefined) {
+    setState({ kind: "open", source: "notice", date: pendingRequest.date, tocOpen: false })
+  }
+
   const queryDate = state.kind === "open" ? state.date : undefined
   const query = useQuery({
     queryKey: ["achievement", queryDate ?? ""],
@@ -256,8 +269,11 @@ export function useDiaryBook(params: {
     previous:
       previousDate === undefined
         ? undefined
-        : { date: previousDate, label: monthDayLabel(previousDate) },
-    next: nextDate === undefined ? undefined : { date: nextDate, label: monthDayLabel(nextDate) },
+        : { date: previousDate, label: monthDayLabel(Temporal.PlainDate.from(previousDate)) },
+    next:
+      nextDate === undefined
+        ? undefined
+        : { date: nextDate, label: monthDayLabel(Temporal.PlainDate.from(nextDate)) },
     toc: { open: state.tocOpen, months: tocMonthsOf(diaryDates) },
     onOpenFromCalendar,
     onOpenFromDiarySection,
@@ -490,10 +506,4 @@ function tocMonthsOf(diaryDates: readonly string[]): readonly DiaryBookTocMonth[
 function monthHeadingOf(dateKey: string): string {
   const date = Temporal.PlainDate.from(dateKey)
   return `${String(date.year)}年${String(date.month)}月`
-}
-
-/** 「9月15日」の形（前後の送りのボタンの文言。曜日は付けない）。 */
-function monthDayLabel(dateKey: string): string {
-  const date = Temporal.PlainDate.from(dateKey)
-  return `${String(date.month)}月${String(date.day)}日`
 }

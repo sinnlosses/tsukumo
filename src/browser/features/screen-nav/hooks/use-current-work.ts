@@ -36,6 +36,7 @@ import { useQuestionScroll } from "../../../stores/question-scroll.tsx"
 import { navigateTo, useScreen } from "../../../stores/screen.tsx"
 import { useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { useTurnSelection } from "../../../stores/turn-selection.tsx"
+import { monthDayLabel } from "../../../utils/month-day-label.ts"
 
 /** 閉じている間に出す手順の件数（依頼の手順が6件以上あると「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
@@ -352,7 +353,10 @@ function toSummaryView(
   diaryWriting: DiaryWriting,
 ): ScreenNavCurrentWorkSummary {
   if (state === "diary" && diaryWriting.kind === "writing") {
-    return { kind: "text", label: `${diaryDateLabel(diaryWriting.date)}の日記を書いています` }
+    return {
+      kind: "text",
+      label: `${monthDayLabel(Temporal.PlainDate.from(diaryWriting.date))}の日記を書いています`,
+    }
   }
   if (state === "background") {
     const label = backgroundSummaryLabel(backgroundTasks)
@@ -400,12 +404,6 @@ function backgroundSummaryLabel(tasks: readonly BackgroundTask[]): string | unde
 
 function backgroundTaskLabel(task: BackgroundTask): string {
   return task.description === "" ? BACKGROUND_TASK_KIND_LABEL[task.kind] : task.description
-}
-
-/** 「9月23日」の形（`docs/screen-design.md` 13.9「いまの作業」。曜日は付けない）。 */
-function diaryDateLabel(date: string): string {
-  const parsed = Temporal.PlainDate.from(date)
-  return `${String(parsed.month)}月${String(parsed.day)}日`
 }
 
 /** {@link ScreenNavCurrentWorkBackgroundList} を組み立てる。動いているものが無ければ `none`。 */

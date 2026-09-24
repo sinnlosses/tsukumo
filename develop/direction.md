@@ -19,3 +19,7 @@
 - **`docs/architecture.md`「手で確かめること」に、「起こしたままの tsukumo は `bun run build` を打ち直しても古い組み立てを配り続ける。直しながら目視するなら `TSUKUMO_WATCH_UI=1` で起こすか、組み立てのたびに上げ直す」を書く**（振り返り: T-567）
   - 根拠: T-567 のサブエージェントが CSS を直して `bun run build` を打ったのに画面が変わらず、原因を調べてから毎回上げ直した（`bun run` 27回。build・start・stop の往復）。手順の節は「build を打ってから start」とだけあり、動いているプロセスに組み立てが届かないことは書いていない
   - 出し先: `docs/architecture.md`「手で確かめること」の起動の手順に1行
+
+- **`docs/coding-standards.md`「React」に、「画面を離れるとアンマウントされる部品（`main.tsx` の `OVERLAY_SCREEN`）では、一回限りの合図や『もう見せた』の印を部品の state に持たない。React の外（モジュールの store）に持つ」を書く**（振り返り: T-568）
+  - 根拠: T-568 で、知らせから見開きを開く合図の「拾った token」を `useDiaryBook` の `useState(0)` に持ったため、一度使うと成果の画面を開き直すたびに見開きが勝手に開いた。受け入れでメインが見つけて直した。T-566 の書き上げの演出（`revealedDiaryKeys`）は同じ理由でモジュールに持っていて、同じ機能の中で判断が割れた
+  - 出し先: `docs/coding-standards.md`「React」の state の置き場の項に1行

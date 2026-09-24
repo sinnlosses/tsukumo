@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
+import { requestDiaryBookOpen } from "../../../../src/browser/features/achievement/diary-book-request.ts"
 import { type AchievementCalendarView } from "../../../../src/browser/features/achievement/hooks/use-achievement-calendar.ts"
 import { type AchievementDaySwitch } from "../../../../src/browser/features/achievement/hooks/use-achievement.ts"
 import { useDiaryBook } from "../../../../src/browser/features/achievement/hooks/use-diary-book.ts"
@@ -468,5 +469,64 @@ describe("useDiaryBook（前後の送りと目次）", () => {
     expect(result.current.previous).toBeUndefined()
     expect(result.current.next).toBeUndefined()
     expect(result.current.toc.months).toEqual([])
+  })
+})
+
+describe("useDiaryBook（書き終わりの知らせから開く）", () => {
+  // `diary-book-request.ts` はこの起動のあいだ持ち続けるモジュールの外の store なので、
+  // **このテストはファイルの最後に置き、「マウント時に既に無い」ことを見るテストを先に置く**
+  // （`requestDiaryBookOpen` を呼ぶのはこの2件だけ。呼んだ後の状態が他のテストの初回描画に
+  // 混ざらないようにする）。
+  it("マウント中に来た新しい合図も拾って開き直す", async () => {
+    stubFetch(() => okResponse(WRITTEN_DAY))
+    const { result } = renderHook(
+      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      { wrapper: wrapper(newClient()) },
+    )
+    expect(result.current.open).toBe(false)
+
+    act(() => {
+      requestDiaryBookOpen("2026-09-16")
+    })
+
+    expect(result.current.open).toBe(true)
+    expect(result.current.openNote).toBe("書き終わりの知らせから開きました")
+  })
+
+  it("知らせの合図をマウント時に拾って開く", async () => {
+    stubFetch(() => okResponse(WRITTEN_DAY))
+    act(() => {
+      requestDiaryBookOpen("2026-09-16")
+    })
+
+    const { result } = renderHook(
+      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      { wrapper: wrapper(newClient()) },
+    )
+
+    expect(result.current.open).toBe(true)
+    expect(result.current.openNote).toBe("書き終わりの知らせから開きました")
+    await waitFor(() => {
+      expect(result.current.page.kind).toBe("ready")
+    })
+  })
+
+  it("拾った合図は、画面を開き直しても（マウントし直しても）もう一度は開かない", () => {
+    stubFetch(() => okResponse(WRITTEN_DAY))
+    act(() => {
+      requestDiaryBookOpen("2026-09-16")
+    })
+    const first = renderHook(
+      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      { wrapper: wrapper(newClient()) },
+    )
+    expect(first.result.current.open).toBe(true)
+    first.unmount()
+
+    const second = renderHook(
+      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      { wrapper: wrapper(newClient()) },
+    )
+    expect(second.result.current.open).toBe(false)
   })
 })

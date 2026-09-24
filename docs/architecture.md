@@ -969,6 +969,16 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
 `report` を出したままで、吹き出しは「（まだ発話がありません）」に戻らず前のセリフを保っている
 ことを確かめる（`docs/screen-design.md` 13.9「背景のタスク」）。
 
+**書き終わりの知らせ（`docs/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
+疑似セッションの場面 `diary-written`（`TSUKUMO_FAKE_SCENE=diary-written`）を使う。** `diary-requested`
+→ `diary-drafting` → `diary-stage`（`write` → `pick`）→ `diary-written` と流れ、成果の画面
+（`#achievement?date=2026-09-20`）でも会話の画面でも画面の下中央に札が出ることと、「日記帳で開く」で
+その日の見開きが開くこと、× で消えて再読み込みするまで戻らないことを見る。日記の中身（本文・
+しおり）も見るときは、`~/.tsukumo/diary/<リポジトリ>/2026-09-20.json`（`TSUKUMO_HOME` を
+分けていればその下。置き場の形は `src/server/adapter/diary.ts`）に架空の日記を1件置いてから
+起こす——fake driver は `diary` ツールの中身を持たないので、置かなければ `GET /achievement` の
+その日は「日記が無い」のまま。
+
 **fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る
 ことがある**（再現条件は分かっておらず、手で触ったときには起きていない。操作側の問題の
 可能性もある）。そのときは疑似セッションの `opening` に質問を足して、開いた時点で出す形で

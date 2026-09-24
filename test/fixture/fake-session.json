@@ -2014,6 +2014,63 @@
           }
         }
       ]
+    },
+    {
+      "name": "diary-written",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "この日を振り返って（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "diary-requested",
+            "date": "2026-09-20"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "diary-drafting",
+            "toolUseId": "fake-tool-diary-1"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "diary-stage",
+            "stage": "write"
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "diary-stage",
+            "stage": "pick"
+          }
+        },
+        {
+          "afterMs": 1800,
+          "event": {
+            "kind": "diary-written",
+            "date": "2026-09-20"
+          }
+        },
+        {
+          "afterMs": 2000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "completed"
+            }
+          }
+        }
+      ]
     }
   ]
 }

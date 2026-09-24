@@ -27,6 +27,7 @@ import {
   loadAppearanceColorOverride,
 } from "./domain/appearance-color.ts"
 import { AchievementScreen } from "./features/achievement/achievement-screen.tsx"
+import { DiaryNotice } from "./features/achievement/diary-notice.tsx"
 import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
 import { CharacterView } from "./features/character-view/character-view.tsx"
 import { ChatView } from "./features/chat-view/chat-view.tsx"
@@ -88,6 +89,9 @@ function Root(): ReactElement {
       {/* 画面のナビの帯（13.9）。**どの画面でも最上部に出る**ので、画面を選ぶ分岐の外に置く。
           会話の画面の `<Layout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
       <ScreenNav />
+      {/* 書き終わりの知らせ（13.10「書き終わりの知らせ」）。**どの画面でも出す**ので、帯と同じく
+          画面を選ぶ分岐の外に置く。 */}
+      <DiaryNotice />
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
         <Layout
           main={chatMode ? <ChatView /> : <MainView />}
