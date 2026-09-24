@@ -498,6 +498,61 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
+  // 顔（`docs/screen-design.md` 13.9「顔」）。**口は「差し替える」と「消す」の2つだけ**で、背景と
+  // 同じ形。
+  it("顔が無いパックでは、点線の丸と「顔なし」を出し、消す口は出さない", () => {
+    renderCharacterEdit(FIXTURE_CHARACTER)
+
+    expect(document.querySelectorAll(".character-face-field-blank")).toHaveLength(1)
+    expect(screen.getByText("顔なし")).toBeDefined()
+    expect(screen.getByLabelText("顔を差し替える")).toBeDefined()
+    expect(screen.queryByRole("button", { name: "顔を消す" })).toBeNull()
+  })
+
+  it("顔があるパックでは、いまの顔を小さく出して消す口も出す", () => {
+    renderCharacterEdit({
+      ...FIXTURE_CHARACTER,
+      face: "/character/face.png?v=fictional@1",
+    })
+
+    expect((screen.getByAltText("いまの顔") as HTMLImageElement).getAttribute("src")).toBe(
+      "/character/face.png?v=fictional@1",
+    )
+    expect(screen.getByRole("button", { name: "顔を消す" })).toBeDefined()
+  })
+
+  it("顔を消す口を押すと clear-face を dispatch する", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(
+      { ...FIXTURE_CHARACTER, face: "/character/face.png?v=fictional@1" },
+      (command) => calls.push(command),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "顔を消す" }))
+
+    expect(calls).toEqual([{ type: "clear-face", pack: "fictional" }])
+  })
+
+  it("顔を選ぶと data URL を載せた set-face を dispatch し、入力欄を空に戻す", async () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+    const input = screen.getByLabelText("顔を差し替える") as HTMLInputElement
+
+    fireEvent.change(input, {
+      target: { files: [new File(["png"], "face.png", { type: "image/png" })] },
+    })
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(calls).toEqual([
+      {
+        type: "set-face",
+        pack: "fictional",
+        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+      },
+    ])
+    expect(input.value).toBe("")
+  })
+
   it("キャラクターが届く前は何も出さない", () => {
     renderCharacterEdit(undefined)
 

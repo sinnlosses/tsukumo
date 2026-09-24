@@ -3,7 +3,8 @@
 // 表情のカード・差し色・背景へ畳み、選んだ画像を data URL にして送る呼び先と一緒に返す。
 //
 // 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` /
-// `clear-chat-accent` / `set-background` / `clear-background` で、**どれも書き込む先のパックの
+// `clear-chat-accent` / `set-background` / `clear-background` / `set-face` / `clear-face` で、
+// **どれも書き込む先のパックの
 // 名前（`pack`）を持つ**（選んでいるパックの名前を入れる。使用中以外を直しても使用中の姿は
 // 変わらない。`docs/design.md` 7.1）。使用中以外のパックには「このキャラクターに切り替える」を
 // 出し、押すと `switch-character` を送る（ターン進行中は押せない。サイドバーの `<select>` と
@@ -52,6 +53,9 @@ import { useSelectedPack } from "./use-selected-pack.ts"
 
 /** 背景の行の、いまの状態を表す字（**印だけにしない**。13.1 原則1）。 */
 const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } as const
+
+/** 顔の行の、いまの状態を表す字（背景と同じ考え方。`docs/screen-design.md` 13.9「顔」）。 */
+const FACE_LABEL = { present: "いまの顔", absent: "顔なし" } as const
 
 /**
  * 衣装のラベル。**モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じ**なので画面側が
@@ -242,6 +246,14 @@ export type BackgroundFieldModel = {
   readonly onClear: () => void
 }
 
+/** 顔の行（`docs/screen-design.md` 13.9「顔」）。形は背景の行と同じ。 */
+export type FaceFieldModel = {
+  readonly image: { readonly kind: "absent" } | { readonly kind: "present"; readonly url: string }
+  readonly label: string
+  readonly onPick: (input: HTMLInputElement) => void
+  readonly onClear: () => void
+}
+
 /**
  * 詳しい設定の最下部、キャラクターを消す／同梱に戻す帯とその確かめ
  * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。**消せないパック
@@ -288,6 +300,7 @@ export type CharacterEditModel =
       readonly chatAccent: AccentSwatchModel
       readonly resetChatAccent: ChatAccentResetModel
       readonly outfitAccents: readonly OutfitAccentFieldModel[]
+      readonly face: FaceFieldModel
       readonly background: BackgroundFieldModel
       readonly deleteBand: CharacterDeleteBandModel
     }
@@ -408,6 +421,21 @@ export function useCharacterEdit(): CharacterEditModel {
       }
     : { kind: "hidden" }
 
+  const face: FaceFieldModel = {
+    image:
+      character.face === undefined ? { kind: "absent" } : { kind: "present", url: character.face },
+    label: character.face === undefined ? FACE_LABEL.absent : FACE_LABEL.present,
+    // 立ち絵・背景と同じ受け渡し（data URL）。
+    onPick: (input) => {
+      void readPicked(input, (image) => {
+        dispatch({ type: "set-face", pack, image })
+      })
+    },
+    onClear: () => {
+      dispatch({ type: "clear-face", pack })
+    },
+  }
+
   const background: BackgroundFieldModel = {
     image:
       character.background === undefined
@@ -472,6 +500,7 @@ export function useCharacterEdit(): CharacterEditModel {
     chatAccent,
     resetChatAccent,
     outfitAccents,
+    face,
     background,
     deleteBand,
   }

@@ -3,9 +3,11 @@ import { describe, expect, it } from "bun:test"
 import {
   definitionWithAccent,
   definitionWithBackground,
+  definitionWithFace,
   definitionWithOutfitAccent,
   definitionWithoutBackground,
   definitionWithoutChatAccent,
+  definitionWithoutFace,
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
@@ -265,5 +267,23 @@ describe("definitionWithBackground / definitionWithoutBackground", () => {
 
     expect(parseCharacterDefinition(edited)?.background).toBeUndefined()
     expect(JSON.parse(edited)["background"]).toEqual({ veil: 0.9 })
+  })
+})
+
+describe("definitionWithFace / definitionWithoutFace", () => {
+  it("顔の素材を差し替え、ほかのキーは残す", () => {
+    const edited = definitionWithFace(FULL_DEFINITION_JSON, "face.png")
+    const definition = parseCharacterDefinition(edited)
+
+    expect(definition?.face).toBe("face.png")
+    expect(definition?.name).toBe("架空の精霊")
+    expect(definition?.portraits.default).toBe("default.svg")
+  })
+
+  it("消すと顔なしになる", () => {
+    const withFace = JSON.stringify({ face: "old.png" })
+    const edited = definitionWithoutFace(withFace)
+
+    expect(parseCharacterDefinition(edited)?.face).toBeUndefined()
   })
 })

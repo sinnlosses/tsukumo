@@ -15,6 +15,7 @@ import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "./character-definition.ts"
+import { MAX_FACE_DATA_URL_LENGTH, parseFaceImage } from "./character-face.ts"
 import { isCharacterPackName, MAX_CHARACTER_PACK_NAME_LENGTH } from "./character.ts"
 import {
   type Expression,
@@ -124,6 +125,17 @@ const backgroundDataUrlSchema = z
   .string()
   .max(MAX_BACKGROUND_DATA_URL_LENGTH)
   .refine((value) => parseBackgroundImage(value) !== undefined)
+
+/**
+ * 帯の左端・一覧の丸・名乗りの大きな丸に出す顔1枚の data URL（`docs/screen-design.md` 13.9「顔」）。
+ * **受け取るのは立ち絵と同じ `.svg` / `.png` / `.gif` の3つだけ**（`src/shared/character-face.ts`。
+ * 立ち絵と同じ「キャラクターの絵」という素材の性質なので、写真が主な背景〔`.png` / `.jpg` /
+ * `.webp`〕ではなく立ち絵に揃える）。
+ */
+const faceDataUrlSchema = z
+  .string()
+  .max(MAX_FACE_DATA_URL_LENGTH)
+  .refine((value) => parseFaceImage(value) !== undefined)
 
 /**
  * 依頼に添える画像1枚（`docs/requirements.md` 4.10）。**原寸と控えの対**で、大きさと種類は
@@ -337,6 +349,21 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     pack: editedCharacterPackNameSchema,
   }),
   /**
+   * 帯の左端・一覧の丸・名乗りの大きな丸に出す顔を差し替える／外す（`docs/screen-design.md` 13.9「顔」）。
+   * **`set-background` / `clear-background` と同じ形**（`pack` で書き込む先を指し、駆動には渡らない）。
+   */
+  z.object({
+    type: z.literal("set-face"),
+    commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
+    image: faceDataUrlSchema,
+  }),
+  z.object({
+    type: z.literal("clear-face"),
+    commandId: commandIdSchema,
+    pack: editedCharacterPackNameSchema,
+  }),
+  /**
    * 新しいセッションの既定（モデル・許可モード）を覚える（`docs/screen-design.md` 13.6。帯の右端の
    * 歯車）。**いま動いているセッションには効かない** — 効くのは次に起こすときからで、
    * 帯の `set-model` / `set-permission-mode`（セッション限り）とは別の口にしてある。
@@ -436,6 +463,8 @@ const CHARACTER_EDIT_COMMAND_TYPES = [
   "set-profile",
   "set-background",
   "clear-background",
+  "set-face",
+  "clear-face",
 ] as const
 
 /**

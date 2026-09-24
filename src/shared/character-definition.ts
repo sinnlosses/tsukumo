@@ -212,6 +212,19 @@ export function definitionWithTagline(content: string | undefined, tagline: stri
 }
 
 /**
+ * 帯の左端・一覧の丸・名乗りの大きな丸に出す顔（`character.json` の `face`）を差し替えた JSON を
+ * 返す。**`mini` や `portraits` へのフォールバックは無い1枚**（`docs/screen-design.md` 13.9「顔」）。
+ */
+export function definitionWithFace(content: string | undefined, fileName: string): string {
+  return editedTopLevelDefinitionJson(content, "face", fileName)
+}
+
+/** 顔を消した JSON を返す（消すと帯・一覧・名乗りの丸には何も出なくなる。点線の丸に戻る）。 */
+export function definitionWithoutFace(content: string | undefined): string {
+  return editedTopLevelDefinitionJson(content, "face", undefined)
+}
+
+/**
  * 背景の素材を差し替えた JSON を返す。**覆いの不透明度（`veil`）はそのまま残す** — 画面から
  * 変えられるのは素材だけで、濃さは定義ファイルを手で直す（`docs/screen-design.md` 13.6 / 13.8）。
  */
@@ -293,7 +306,7 @@ function editedDefinitionJson(
  */
 function editedTopLevelDefinitionJson(
   content: string | undefined,
-  key: "accent" | "chatAccent" | "name" | "tagline",
+  key: "accent" | "chatAccent" | "name" | "tagline" | "face",
   value: string | undefined,
 ): string {
   const source = parsedDefinitionRecord(content)

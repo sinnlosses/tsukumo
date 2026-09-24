@@ -508,6 +508,80 @@ describe("editCharacterPack（背景）", () => {
   })
 })
 
+describe("editCharacterPack（顔）", () => {
+  it("顔を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { type: "set-face", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.face).toBe("face.png")
+    expect(existsSync(join(home(), "tsukumo", "face.png"))).toBe(true)
+    // 同梱側は触っていない。
+    expect(readCharacterPack(bundled).definition?.face).toBeUndefined()
+  })
+
+  it("形式を変えて差し替えると、参照が外れた古い顔は残らない", () => {
+    const bundled = writeBundledPack("tsukumo")
+    const cwd = join(dir, "cwd")
+
+    const first = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { type: "set-face", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      cwd,
+      home(),
+    )
+    expect(first).toBeDefined()
+    if (first === undefined) {
+      return
+    }
+    const second = editCharacterPack(
+      first,
+      [],
+      { type: "set-face", commandId: "c-2", pack: "tsukumo", image: SVG_DATA_URL },
+      cwd,
+      home(),
+    )
+
+    expect(second?.definition?.face).toBe("face.svg")
+    expect(existsSync(join(home(), "tsukumo", "face.png"))).toBe(false)
+  })
+
+  it("顔を消すと定義から外れ、ファイルも残らない（立ち絵は残る）", () => {
+    const bundled = writeBundledPack("tsukumo")
+    const cwd = join(dir, "cwd")
+
+    const withFace = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { type: "set-face", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      cwd,
+      home(),
+    )
+    expect(withFace).toBeDefined()
+    if (withFace === undefined) {
+      return
+    }
+    const cleared = editCharacterPack(
+      withFace,
+      [],
+      { type: "clear-face", commandId: "c-2", pack: "tsukumo" },
+      cwd,
+      home(),
+    )
+
+    expect(cleared?.definition?.face).toBeUndefined()
+    expect(existsSync(join(home(), "tsukumo", "face.png"))).toBe(false)
+    expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
+  })
+})
+
 describe("editCharacterPack（受け付けないもの）", () => {
   it("起動先の characters/local のパックは書かない（ホームに書いても次の起動で負けるため）", () => {
     const cwd = join(dir, "cwd")

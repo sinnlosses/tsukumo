@@ -36,15 +36,18 @@ import {
   type CharacterDefinition,
   definitionWithAccent,
   definitionWithBackground,
+  definitionWithFace,
   definitionWithName,
   definitionWithOutfitAccent,
   definitionWithoutBackground,
   definitionWithoutChatAccent,
+  definitionWithoutFace,
   definitionWithoutPortrait,
   definitionWithPortrait,
   definitionWithTagline,
   parseCharacterDefinition,
 } from "../../shared/character-definition.ts"
+import { type FaceImage, faceFileName, parseFaceImage } from "../../shared/character-face.ts"
 import { type CharacterPackRemoval } from "../../shared/character.ts"
 import {
   type CharacterCreateCommand,
@@ -76,12 +79,12 @@ import {
   readOptionalFile,
 } from "./character-pack.ts"
 
-/** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1）。 */
-const EXTRA_IMAGE_FILES_PER_PACK = 2
+/** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1・顔1）。 */
+const EXTRA_IMAGE_FILES_PER_PACK = 3
 
 /**
- * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**立ち絵・ミニ立ち絵・背景を
- * 全部入れた数**で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1。
+ * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**立ち絵・ミニ立ち絵・背景・顔を
+ * 全部入れた数**で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1 ＋ 顔1。
  *
  * **数を直に書かないのは、表情を足したときに黙って足りなくなるから。** 表情が 6つから8つに
  * 増えたあとも 8 のまま据え置かれていて、立ち絵を全部そろえたパックでは背景の差し替えだけが
@@ -267,6 +270,12 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
       // 立ち絵と同じく、検証は境界（`src/shared/command.ts`）で済んでいる。`parseImage` が
       // undefined を返すのは配線の誤りのときだけ。
       return applyImageEdit(dir, definitionPath, content, backgroundSetEdit(edit.image))
+    case "clear-face":
+      return applyImageEdit(dir, definitionPath, content, faceClearEdit())
+    case "set-face":
+      // 立ち絵・背景と同じく、検証は境界（`src/shared/command.ts`）で済んでいる。`parseImage` が
+      // undefined を返すのは配線の誤りのときだけ。
+      return applyImageEdit(dir, definitionPath, content, faceSetEdit(edit.image))
   }
 }
 
@@ -374,6 +383,27 @@ function backgroundClearEdit(): ImageEdit<BackgroundImage> {
   }
 }
 
+/** 顔の差し替え（背景と同じく、パックに1つだけなので表情を受け取らない）。 */
+function faceSetEdit(image: string): ImageEdit<FaceImage> {
+  return {
+    kind: "set",
+    image,
+    parseImage: parseFaceImage,
+    fileName: (face) => faceFileName(face.format),
+    previousFileName: faceFileNameOf,
+    withImage: definitionWithFace,
+  }
+}
+
+/** 顔の消去。 */
+function faceClearEdit(): ImageEdit<FaceImage> {
+  return {
+    kind: "clear",
+    previousFileName: faceFileNameOf,
+    withoutImage: definitionWithoutFace,
+  }
+}
+
 /** 書き換える前の、その表情の立ち絵のファイル名（定義が無い・読めないときは undefined）。 */
 function portraitFileNameOf(
   content: string | undefined,
@@ -387,6 +417,11 @@ function portraitFileNameOf(
 /** 書き換える前の背景のファイル名（定義が無い・背景が無いときは undefined）。 */
 function backgroundFileNameOf(content: string | undefined): string | undefined {
   return content === undefined ? undefined : parseCharacterDefinition(content)?.background?.image
+}
+
+/** 書き換える前の顔のファイル名（定義が無い・顔が無いときは undefined）。 */
+function faceFileNameOf(content: string | undefined): string | undefined {
+  return content === undefined ? undefined : parseCharacterDefinition(content)?.face
 }
 
 /**
@@ -425,6 +460,7 @@ function referencedImageFileNames(definition: CharacterDefinition | undefined): 
     ...Object.values(definition?.portraits ?? {}),
     definition?.mini,
     definition?.background?.image,
+    definition?.face,
   ].filter(isCharacterImageFileName)
   return [...new Set(names)]
 }

@@ -222,6 +222,34 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
     ).toEqual({ type: "clear-background", commandId: "c-9", pack: "fictional-2" })
   })
 
+  it("set-face / clear-face は書き込む先のパックと data URL を受け付ける", () => {
+    expect(
+      parseClientCommand({
+        type: "set-face",
+        commandId: "c-10",
+        pack: "fictional",
+        image: TINY_PNG_DATA_URL,
+      }),
+    ).toEqual({
+      type: "set-face",
+      commandId: "c-10",
+      pack: "fictional",
+      image: TINY_PNG_DATA_URL,
+    })
+    expect(
+      parseClientCommand({ type: "clear-face", commandId: "c-11", pack: "fictional" }),
+    ).toEqual({ type: "clear-face", commandId: "c-11", pack: "fictional" })
+    // 立ち絵と同じ形式だけを受け付ける（背景の形式・写真の URL は弾く）。
+    expect(
+      parseClientCommand({
+        type: "set-face",
+        commandId: "c-12",
+        pack: "fictional",
+        image: "https://example.com/face.png",
+      }),
+    ).toBeUndefined()
+  })
+
   it("clear-portrait は必須でない表情（thinking / proud / flustered）だけを受け付ける", () => {
     expect(
       parseClientCommand({
@@ -451,6 +479,13 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
         name: "架空",
         tagline: "ひとこと",
       },
+      {
+        type: "set-face",
+        commandId: "c-10",
+        pack: "fictional",
+        image: TINY_PNG_DATA_URL,
+      },
+      { type: "clear-face", commandId: "c-11", pack: "fictional" },
     ]
     const others = [
       { type: "interrupt", commandId: "c-4" },

@@ -1,7 +1,8 @@
 // キャラクター画面の右側、**選んでいるパックの詳しい設定**の**器だけ**
-// （<PresentationalCharacterEdit>。docs/screen-design.md 13.6 / 7.1）。上から 名乗り → 表情の格子 →
-// 差し色（画面の差し色と立ち絵の差し色を横に並べる） → 背景。名乗りは `components/character-profile.tsx`、
-// 表情のカードは `components/portrait-card.tsx`、色見本は `components/accent-swatch.tsx`、背景は
+// （<PresentationalCharacterEdit>。docs/screen-design.md 13.6 / 7.1）。上から 名乗り → 顔 →
+// 表情の格子 → 差し色（画面の差し色と立ち絵の差し色を横に並べる） → 背景。名乗りは
+// `components/character-profile.tsx`、顔は `components/face-field.tsx`、表情のカードは
+// `components/portrait-card.tsx`、色見本は `components/accent-swatch.tsx`、背景は
 // `components/background-field.tsx` に任せる。フックも算出も持たず、`hooks/use-character-edit.ts` が
 // 畳んだ値をそのまま置く（docs/design.md 2章「機能の中を分ける」）。
 
@@ -12,6 +13,7 @@ import { AccentSwatch } from "./components/accent-swatch.tsx"
 import { BackgroundField } from "./components/background-field.tsx"
 import { CharacterDelete } from "./components/character-delete.tsx"
 import { CharacterProfile } from "./components/character-profile.tsx"
+import { FaceField } from "./components/face-field.tsx"
 import { PortraitCard } from "./components/portrait-card.tsx"
 import { type CharacterEditModel } from "./hooks/use-character-edit.ts"
 
@@ -27,6 +29,12 @@ export function PresentationalCharacterEdit(
   return (
     <div className={styles["character-detail"]}>
       <CharacterProfile profile={props.profile} />
+      <section className={styles["character-section"]} aria-labelledby="character-face">
+        <h2 className={styles["character-section-heading"]} id="character-face">
+          顔
+        </h2>
+        <FaceField face={props.face} disabled={props.disabled} />
+      </section>
       <section className={styles["character-section"]} aria-labelledby="character-expressions">
         <h2 className={styles["character-section-heading"]} id="character-expressions">
           表情

@@ -322,6 +322,31 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([{ type: "clear-background", pack: "fictional" }])
   })
 
+  it("顔の有無を字に畳み、消す口は clear-face を送る", () => {
+    const calls: unknown[] = []
+    const absent = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(FIXTURE_CHARACTER, () => {}),
+    })
+    expect(ready(absent.result.current).face).toMatchObject({
+      image: { kind: "absent" },
+      label: "顔なし",
+    })
+
+    const present = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(
+        { ...FIXTURE_CHARACTER, face: "/character/face.png?v=fictional@1" },
+        (command) => calls.push(command),
+      ),
+    })
+    const face = ready(present.result.current).face
+    expect(face).toMatchObject({
+      image: { kind: "present", url: "/character/face.png?v=fictional@1" },
+      label: "いまの顔",
+    })
+    face.onClear()
+    expect(calls).toEqual([{ type: "clear-face", pack: "fictional" }])
+  })
+
   // このキャラクターを消す／同梱に戻す帯（docs/screen-design.md 13.6「このキャラクターを消す」）。
   it("removal が none のパックには帯を出さない", () => {
     const { result } = renderHook(() => useCharacterEdit(), {

@@ -567,6 +567,41 @@
   cursor: default;
 }
 
+/* 顔（13.9「顔」）。帯・一覧・名乗りの丸と同じ丸い縮図と、字と2つの口。 */
+.character-face-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+.character-face-field-preview,
+.character-face-field-blank {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+.character-face-field-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: cover;
+}
+/* 顔が無いときは、背景と同じ点線の枠（丸め）。 */
+.character-face-field-blank {
+  border: 1.5px dashed var(--rule);
+}
+.character-face-field-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: var(--font-secondary);
+}
+.character-face-field-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 /* 背景（13.8）。**敷いたときと同じ切り取り方**（cover・下端合わせ）の縮図と、字と2つの口。 */
 .character-background {
   display: flex;
