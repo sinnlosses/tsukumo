@@ -34,7 +34,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | ## 2. 全体構成                 | 層（shared / server / browser）の図、依存の向き、ディレクトリ                                                            |
 | ## 3. 動きの流れ               | 起動・接続・依頼・答え待ち・再接続の順序                                                                                 |
 | ## 4. shared                   | **両側が共有する契約**。イベント・状態・reducer・コマンド・フレーム・版                                                  |
-| ## 5. core と adapter          | サーバ側のモジュールと責務。判断（core）と外の世界に触る境界（adapter）                                                  |
+| ## 5. core と adapter          | サーバ側のモジュールと責務。判断（core）と外の世界に触る境界（adapter）。成果の集め方                                    |
 | ## 6. browser                  | ブラウザ側の部品の木、状態の持ち方、Markdown、重いライブラリ、立ち絵の動き                                               |
 | ## 7. キャラクターパック       | `character.json` + `persona.md` + 素材。人格の注入と切り替え、書き戻し、雑談の要約とアーカイブ、パックの一覧と素材の URL |
 | ## 8. セッションの復元と複数化 | 復元（4.8）を新しい形に載せる。複数セッションへ広げる余地                                                                |
@@ -1163,6 +1163,95 @@ doc コメントを参照）。
   書き込み経路を1つ増やすより、読む側で除くほうが単純なため
 - 会話の文面はここでも書かない——入るのは見直しの結果（`UsageReviewFindings`）と識別子の文字列
   だけで、どちらの型にも文面の口が無い（`docs/coding-standards.md`「会話内容の扱い」）
+
+### 成果の集め方と配り方（main-history.ts と achievement.ts）
+
+成果の画面（13.10）の中身は、**画面が開いているときにブラウザが HTTP で取りに行く**（2026-09-24
+決定。数え方の規則は `docs/requirements.md` 4.11 が正典で、ここは置き場と渡し方だけ）。語は
+`docs/glossary.md`「成果」「成果の振り返り」。
+
+| 置き場                               | 持つもの                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/achievement.ts`          | 応答の型 `DailyAchievement`、経路の名前 `ACHIEVEMENT_PATH`（`/achievement`）とクエリ名（`date`）、応答の読み手（配られない形は「取れなかった」に倒す）、日付キーの前後（`Temporal.PlainDate` の足し引き。時計は読まない）、振り返りの依頼文 `achievementReflectionRequestText`                                                               |
+| `src/server/core/achievement.ts`     | 判断だけ: 運用の帳面のパスの判定、`git log` の出力からその日のコミットを数える、切り口の中身（3つの読み元）から `done` の ID と `summary` を集める、2つの切り口の差を取る。旧形式の `tasks.json`（`passes` まで読む）と `docs/history/tasks.md` の読み手もここ。新形式のファイルは `src/shared/task-summary.ts` の `parseNewTaskFile` を使う |
+| `src/server/adapter/main-history.ts` | `main` の履歴を読む境界。下の手順で `git` を起こし、core に渡す                                                                                                                                                                                                                                                                              |
+| `src/server/adapter/git.ts`          | `git` を起こす口（`runGit` と `git cat-file --batch`）。いま `task-summary.ts` の中にあるものを出し、`task-summary.ts` と `main-history.ts` の両方が使う。`test/architecture.test.ts` の「子プロセスを起こす箇所」の許可は `task-summary.ts` を `git.ts` に置き換える                                                                        |
+| `src/server/adapter/local-time.ts`   | 日付キーからその日の始まりと終わり（エポックミリ秒）を出す口を足す。今日の日付キーは既にある `todayLocalDateKey`                                                                                                                                                                                                                             |
+| `src/server/adapter/server.ts`       | `GET /achievement?date=YYYY-MM-DD`。**起動トークンが要る**（`/token-usage` と同じ）                                                                                                                                                                                                                                                          |
+| `src/browser/features/achievement/`  | 領域の機能（`BROWSER_REGIONS` に足す）。取りに行く hook と画面の部品。`stores/location-hash.ts` の `SCREENS` に `achievement` と、hash の `date` を足す                                                                                                                                                                                      |
+
+**応答の形**（`DailyAchievement`）:
+
+```ts
+type DailyAchievement =
+  | { readonly kind: "unknown" } // main が読めない
+  | {
+      readonly kind: "known"
+      readonly date: string // 見た日（YYYY-MM-DD）
+      readonly today: string // サーバのローカル時刻の今日（ブラウザは時計を読まない）
+      readonly commitCount: number
+      readonly doneTasks:
+        | { readonly kind: "unknown" } // タスクの記録が無いリポジトリ
+        | {
+            readonly kind: "known"
+            readonly items: readonly { readonly id: string; readonly summary: string }[]
+          }
+    }
+```
+
+- `date` が無い・`YYYY-MM-DD` に読めない・今日より先のときは**今日に倒す**（`readTokenUsageDays` と
+  同じく、読めない値で断らない）。応答の `date` が実際に見た日で、ブラウザはそれを出す
+- **`today` を応答に入れる**のは、日の境目を決める場所をサーバの `local-time.ts` の1つに保つため
+  （ブラウザは「今日」「昨日」の言い方と「次の日」を押せるかを `today` との比較で決める）
+
+**`main-history.ts` の手順**（1回の応答ぶん。日 D の始まり `start`・終わり `end`）:
+
+1. `git rev-parse --verify --quiet refs/heads/main^{commit}` で先端 H を取る。取れなければ
+   `{ kind: "unknown" }`（`task-summary.ts` と同じく、作業ツリーのファイルへは落とさない）
+2. **コミット**: `git log H --no-merges --since=<start の7日前> --format=<区切り>%H %ct --name-only`。
+   core が committer date（`%ct`）で `[start, end)` に入るものだけを残し、変更したファイルが
+   すべて運用の帳面のものを外して数える。**`--since` に7日の余裕を持たせる**のは、`git log` の
+   `--since` がコミットの日付の古いものに続けて当たると辿るのを打ち切るため（旧形式では
+   作業ツリーで積んだ時刻のままのコミットが後から `main` に入り、日付が前後する）
+3. **切り口**: `git rev-list -1 --first-parent --before=<end> H` と `--before=<start>`。
+   前の日の切り口が無ければ（リポジトリの最初の日）空の集合として比べる
+4. **切り口ごとの中身**: `git ls-tree --name-only <切り口> develop/task/` で新形式のファイルを
+   列挙し、それと `<切り口>:develop/tasks.json`・`<切り口>:docs/history/tasks.md` を
+   **1回の `git cat-file --batch`** で読む（無いものは飛ばす）。どの形式を読むかを選ばず、あるものを
+   全部読んで ID で合わせる（形式の切り替えの前後で読み方を変えない）
+5. **タスクの記録が無いかどうかは先端 H で決める**（H に3つの読み元のどれも無ければ
+   `doneTasks` を「数えられない」にする）。その日の切り口に無いだけなら0件
+
+`git` の呼び出しは `task-summary.ts` と同じ上限（5秒・16MB）。**どれか1つでも時間切れ・失敗
+したら 503 を返し**、ブラウザは「取れなかった」を出す（部分的な数を出さない）。
+`docs/history/tasks.md` は 2.7MB あり、1回の応答で2版読む。新形式に移ったあとは書き足されないので、
+2つの切り口で blob が同じなら1回だけ読む。
+
+**push ではなく取りに行く形にした理由**:
+
+- **要るのは画面を開いているときだけ。** `SessionState` に入れると、どの画面を見ていても
+  フレームと再接続のたびに運ぶことになり、`PROTOCOL_VERSION` も上がる
+- **日を選べる。** push で運べるのは「今日」の1つで、遡る日は結局取りに行く口が要る
+- **数えるのに `git` を何度も起こし、大きいファイルも読む。** 先端が動くたびにサーバが数え直す
+  形にすると、画面を開いていなくても重い仕事が走る
+- 先例がある: トークン消費の画面（`GET /token-usage`）と同じ取り方・守り方で、ブラウザは
+  TanStack Query で持つ
+
+**取り直す契機**: 画面を開いたとき・日を切り替えたとき・窓にフォーカスが戻ったとき
+（`staleTime: 0`。前の日の数も、あとから `main` に入った分で変わりうる）。**今日を見ているあいだ
+だけ、60秒ごとにも取り直す**（`refetchInterval`）。タスク板の `tasks-changed` には繋がない —
+その知らせは着手の印の出入りでも飛び、成果の画面がタスク板の見張りの都合に縛られる。振り返りの
+画面なので、1分の遅れは問題にならない。
+
+**振り返りの依頼**は新しいコマンドを作らず、入力欄と同じ `prompt` を送る（依頼文は
+`achievementReflectionRequestText(achievement, chatMode)` が組み立て、文面の規則は
+`docs/requirements.md` 4.11「振り返りの依頼」）。依頼文を shared に置くのは、
+`usageProposalRequestText` と同じく頼み方を1箇所で揃えるため。サーバ側に新しいツールは
+足さない（感想は `speak` で届く）。
+
+**会話内容と安全**: 応答に入るのはコミットの数とタスクの ID・`summary` だけで、**コミットの件名も
+会話の文面も入らない**。数えた結果はどこにも書かず、ログにも出さない。起動トークンを要るのは、
+利用者のリポジトリの中身（タスクの要約）を配るため（9章。`/repository-file` と同じ判断）。
 
 ## 6. browser
 
