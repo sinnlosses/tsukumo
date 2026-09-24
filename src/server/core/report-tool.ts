@@ -25,7 +25,7 @@ export const REPORT_TOOL_DESCRIPTION =
 export const REPORT_GATE_REASON =
   "いま書いた本文は画面に出ていない。その内容を `report` ツール（`mcp__tsukumo__report`）で" +
   "渡し直すこと。前に渡した `report` を同じ引数で送り直さない（送り直しは差し戻す）。" +
-  "`report` のあとに書いてよいのは締めの `speak` と「完了」の1行だけ。"
+  "`report` のあとに書いてよいのは締めの `speak` だけ。"
 
 /**
  * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの中で**最後の

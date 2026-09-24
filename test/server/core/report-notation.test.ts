@@ -161,11 +161,10 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("`report` の外に書いたテキストは")
   })
 
-  it("ターンは report → 締めの speak → 「完了」の1行で終えさせる（締めの speak → レポートの条は無い）", () => {
-    expect(REPORT_NOTATION_PROMPT).toContain(
-      "ターンは `report` → 締めの `speak` → 「完了」の1行の順で終える",
-    )
-    expect(REPORT_NOTATION_PROMPT).toContain("最後に「完了」とだけ書いて終える")
+  it("ターンは report → 締めの speak で終えさせ、そのあとに本文を書かせない（「完了」の1行の条は無い）", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain("ターンは `report` → 締めの `speak` の順で終える")
+    expect(REPORT_NOTATION_PROMPT).toContain("締めの `speak` のあとには何も\n書かない")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("「完了」")
     expect(REPORT_NOTATION_PROMPT).not.toContain("ターンは締めの `speak` → レポートの順で終える")
     expect(REPORT_NOTATION_PROMPT).not.toContain("レポートの前に言う")
     expect(REPORT_NOTATION_PROMPT).not.toContain("レポートの前の `speak`")

@@ -25,8 +25,8 @@ export type PortraitMotionInput = {
   readonly lastToolFailureAt: number | undefined
   /**
    * メインがいま `report` の引数を書いているか（`SessionState.reportDrafting` が `drafting`）。
-   * レポートは `report` ツールで受け取るので、`report` の外に書く本文（締めのあとの「完了」の
-   * 1行など）は画面に出ず、「書いている」の材料にしない。
+   * レポートは `report` ツールで受け取るので、`report` の外に書く本文（背景の委譲を待つ一言
+   * など）は画面に出ず、「書いている」の材料にしない。
    */
   readonly draftingReport: boolean
 }

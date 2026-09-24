@@ -91,10 +91,11 @@ describe("createReportGate（Stop の関所）", () => {
 })
 
 describe("REPORT_GATE_REASON", () => {
-  it("report で渡し直すことと、report のあとは締めの speak と1行だけであることを言う", () => {
+  it("report で渡し直すことと、report のあとは締めの speak だけであることを言う", () => {
     expect(REPORT_GATE_REASON).toContain("`report` ツール")
     expect(REPORT_GATE_REASON).toContain("渡し直す")
-    expect(REPORT_GATE_REASON).toContain("締めの `speak` と「完了」の1行")
+    expect(REPORT_GATE_REASON).toContain("締めの `speak` だけ")
+    expect(REPORT_GATE_REASON).not.toContain("「完了」")
   })
 
   it("前の report を同じ引数で送り直さないことを言う", () => {
