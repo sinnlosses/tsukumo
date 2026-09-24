@@ -219,6 +219,8 @@ function startDriver(options: {
   return startSdkDriver({
     cwd,
     expressions: expressionChoices(seed.pack.definition),
+    // **表示名の「無い」はここで畳む**（ディレクトリ名へ落とす。core へ `| undefined` を運ばない）。
+    diaryWriter: { pack: seed.pack.name, name: seed.pack.definition?.name ?? seed.pack.name },
     // **覚えた既定で起こす**（`docs/screen-design.md` 13.6）。起こしたあと帯から変えた値は
     // そのセッション限りで、ここには戻らない。
     permissionMode: seed.sessionDefault.permissionMode,

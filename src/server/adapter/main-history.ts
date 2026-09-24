@@ -176,6 +176,9 @@ export async function readAchievement(
         doneTasks: { kind: "unknown" },
         graduations: [],
         milestones: commitMilestone === undefined ? [] : [commitMilestone],
+        // 日記は `diary.ts` が持つ一覧なので、ここでは常に「まだ振り返っていない」を返し、
+        // 実際の値は配線層（`src/view-delivery.ts`）が差し替える（`diaryDates` と同じ形）。
+        diary: { kind: "none" },
       },
     }
   }
@@ -232,6 +235,7 @@ export async function readAchievement(
       doneTasks: { kind: "known", items },
       graduations,
       milestones,
+      diary: { kind: "none" },
     },
   }
 }
@@ -314,8 +318,8 @@ async function readAllCommitsUntil(
  * 入れ物（持ち主は `src/view-delivery.ts`）。
  *
  * **範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を
- * 覚える。すべて覚えていれば、今日の分だけを取り直す**。`diaryDates` は日記の保存（別タスク）が
- * まだ無いので常に空。
+ * 覚える。すべて覚えていれば、今日の分だけを取り直す**。**`diaryDates` は `diary.ts` が持つ
+ * 一覧なので、ここでは常に空を返し、実際の値は配線層（`src/view-delivery.ts`）が差し替える。**
  */
 export async function readCommitCalendar(
   cwd: string,

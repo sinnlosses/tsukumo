@@ -400,6 +400,12 @@ export type SessionEvent =
    * `key` は {@link usageProposalKey} と同じ形（`kind:target`）。
    */
   | { readonly kind: "usage-proposal-dismissed"; readonly key: string }
+  /**
+   * `diary` ツールが振り返りの日記を1段落受け付けた（保存も済んだ。出し手は handler = 窓口
+   * `src/server/core/diary-tool.ts` の `createDiaryIntake`。**検査を通して保存できたものだけ**
+   * 流す）。`date` は振り返りの対象の日（`YYYY-MM-DD`）。
+   */
+  | { readonly kind: "diary-written"; readonly date: string }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

@@ -33,6 +33,7 @@ import { expressionNames as toExpressionNames } from "../../shared/expression-ch
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { readChatTopics } from "../core/chat-compact.ts"
+import { createDiaryIntake } from "../core/diary-tool.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
@@ -55,6 +56,7 @@ import { createSessionTitleIntake, type SessionTitleIntake } from "../core/sessi
 import { createUsageReviewIntake } from "../core/usage-review-tool.ts"
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
+import { appendDiaryParagraph } from "./diary.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import {
   createSessionTitleWriter,
@@ -107,6 +109,11 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const reportGate = createReportGate()
   const reportReview = createReportReview()
   const usageReview = createUsageReviewIntake(options.dismissedUsageProposalKeys, options.onEvent)
+  const diaryIntake = createDiaryIntake(
+    () => Temporal.Now.instant().epochMilliseconds,
+    (paragraph) => appendDiaryParagraph(options.cwd, { ...paragraph, writer: options.diaryWriter }),
+    options.onEvent,
+  )
   const titleIntake = createSessionTitleIntake()
   const titleWriter = createSessionTitleWriter()
 
@@ -124,6 +131,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.mode,
           reportReview,
           usageReview,
+          diaryIntake,
           titleIntake.note,
         ),
       },

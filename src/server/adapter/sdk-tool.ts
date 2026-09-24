@@ -1,5 +1,6 @@
-// tsukumo がプロセス内の MCP サーバとして提供するツール（`speak` / `remember` / `forget` /
-// `keep` / `index` / `recall`、仕事のときの `report` / `usage_review_stage` / `usage_review_result`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
+// tsukumo がプロセス内の MCP サーバとして提供するツール（`speak` / `diary`、`remember` /
+// `forget` / `keep` / `index` / `recall`、仕事のときの `report` / `usage_review_stage` /
+// `usage_review_result`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
 // `query()` の `mcpServers` へ渡す。
 //
 // サーバの名前と `speak` の名前は src/server/core/sdk-message.ts が持つ（届いた `assistant`
@@ -20,6 +21,12 @@ import {
   USAGE_REVIEW_STAGES,
 } from "../../shared/usage-review.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
+import {
+  DIARY_BOOKMARK_DESCRIPTION,
+  DIARY_TOOL_DESCRIPTION,
+  DIARY_TOOL_NAME,
+  type DiaryIntake,
+} from "../core/diary-tool.ts"
 import { type ReportReview } from "../core/report-review.ts"
 import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
@@ -107,18 +114,20 @@ const RECALL_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。**戻り値は既定が "ok" だけ**で、tsukumo の内部の状態や画面の事情が
  * モデルへ戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
- * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` と `report` と見直しの2つ**で、
- * `recall` が返すのは**そのセッションが自分で読める外の事実**（自分の過去の雑談）だけ、`report` が
- * 返すのは差し戻すときの**規約違反**だけ（docs/display.md 4.2）、見直しの2つが返すのは
- * **利用者が見送った提案の識別子**と差し戻しの理由だけ（docs/design.md「見直しのツールと状態」）。
+ * 呼び出しで受け取る」・docs/design.md 7.1）。**例外は `recall` と `report` と見直しの2つと
+ * `diary`**で、`recall` が返すのは**そのセッションが自分で読める外の事実**（自分の過去の雑談）
+ * だけ、`report` が返すのは差し戻すときの**規約違反**だけ（docs/display.md 4.2）、見直しの2つが
+ * 返すのは**利用者が見送った提案の識別子**と差し戻しの理由だけ、`diary` が返すのは**断るときの
+ * 理由**だけ（モデルが書いた本文は写さない。docs/design.md「日記の受け取りと保存」）。
  *
- * 常に載るのは `speak` の1つで、**`remember` / `forget` / `keep` / `index` / `recall` は
- * 雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
+ * 常に載るのは `speak` と `diary` の2つで、**`remember` / `forget` / `keep` / `index` / `recall`
+ * は雑談モードのときだけ**（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
  * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
  * **`report` は仕事のときだけ**載る（仕事ではレポートを常にこれで受け取る。雑談は本文を
  * 書かない決まりなので載せない。`src/server/core/report-tool.ts`）。**見直しの2つも仕事の
- * ときだけ**（トークン消費の画面から頼むのは仕事の会話への依頼）。
+ * ときだけ**（トークン消費の画面から頼むのは仕事の会話への依頼）。**`diary` は仕事にも雑談にも
+ * 載る**（振り返りは雑談中でも送れる）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -131,6 +140,7 @@ export function tsukumoServer(
   mode: SessionMode,
   reportReview: ReportReview,
   usageReview: UsageReviewIntake,
+  diaryIntake: DiaryIntake,
   onReportTitle: (title: string) => void,
 ) {
   return createSdkMcpServer({
@@ -148,6 +158,9 @@ export function tsukumoServer(
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
+      // **`diary` は仕事にも雑談にも載る**（振り返りは雑談中でも送れる。docs/design.md
+      // 「日記の受け取りと保存」）。
+      diaryTool(diaryIntake, expressions),
       ...(mode.kind === "work"
         ? [reportTool(reportReview, onReportTitle), ...usageReviewTools(usageReview)]
         : []),
@@ -162,6 +175,38 @@ export function tsukumoServer(
         : []),
     ],
   })
+}
+
+/**
+ * 日記を受け取るツール。**仕事にも雑談にも載る**（振り返りは雑談中でも送れる。docs/design.md
+ * 「日記の受け取りと保存」）。形の外の条の検査と保存は {@link DiaryIntake.submit}
+ * （src/server/core/diary-tool.ts）。通すときの戻り値は "ok" だけ、断るときは理由だけを
+ * `isError` 付きで返す（モデルが書いた文面は写さない）。
+ */
+function diaryTool(intake: DiaryIntake, expressions: readonly ExpressionChoice[]) {
+  return tool(
+    DIARY_TOOL_NAME,
+    DIARY_TOOL_DESCRIPTION,
+    {
+      body: z
+        .string()
+        .describe("日記の本文。キャラクターの口調で、この日の仕事の感想とねぎらいを短く"),
+      expression: z.enum(speakExpressionEnum(expressions)).describe(expressionGuide(expressions)),
+      bookmark: z
+        .object({
+          taskId: z.string().describe("しおりに選ぶタスクの id（その日の終えたタスクから1件）"),
+          reason: z.string().describe("選んだ理由を1文で"),
+        })
+        .optional()
+        .describe(DIARY_BOOKMARK_DESCRIPTION),
+    },
+    async ({ body, expression, bookmark }) => {
+      const verdict = await intake.submit({ body, expression, bookmark })
+      return verdict.kind === "rejected"
+        ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
+        : { content: [{ type: "text" as const, text: "ok" }] }
+    },
+  )
 }
 
 /**

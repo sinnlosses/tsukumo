@@ -437,6 +437,7 @@ describe("startViewServer", () => {
       doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
       graduations: [],
       milestones: [],
+      diary: { kind: "none" },
     }
     const server = await startView(
       noCharacterAsset,

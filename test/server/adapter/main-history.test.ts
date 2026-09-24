@@ -260,6 +260,7 @@ describe("readAchievement", () => {
       doneTasks: { kind: "unknown" },
       graduations: [],
       milestones: [],
+      diary: { kind: "none" },
     })
   })
 

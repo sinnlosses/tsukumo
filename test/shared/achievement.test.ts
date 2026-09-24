@@ -22,6 +22,7 @@ const FIXTURE_ACHIEVEMENT = {
   doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
   graduations: [],
   milestones: [],
+  diary: { kind: "none" },
 } satisfies DailyAchievement
 
 describe("readDailyAchievement", () => {

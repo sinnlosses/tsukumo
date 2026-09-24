@@ -268,6 +268,11 @@ export type SessionDriverOptions = {
   /** `speak` の `expression` で受け付ける表情と、そのラベル（キャラクターパックから作る）。 */
   readonly expressions: readonly ExpressionChoice[]
   /**
+   * `diary` ツールが書いた日記に添える、書いた時点のパック（ディレクトリ名と表示名。
+   * `docs/design.md`「日記の受け取りと保存」）。あとでキャラクターを替えても誰が書いたかが残る。
+   */
+  readonly diaryWriter: { readonly pack: string; readonly name: string }
+  /**
    * このセッションを起こす許可モード（**覚えた既定**。`src/shared/session-default.ts`）。
    * 起こしたあと帯から変えた値はここに戻らない（セッション限り）。
    */

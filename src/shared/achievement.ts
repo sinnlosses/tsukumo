@@ -9,6 +9,8 @@
 
 import { z } from "zod"
 
+import { dailyDiaryStatusSchema, type DailyDiaryStatus } from "./diary.ts"
+
 /** 成果の経路（`GET /achievement?t=<起動トークン>&date=<日付キー>`）。 */
 export const ACHIEVEMENT_PATH = "/achievement"
 
@@ -71,6 +73,8 @@ export type DailyAchievement =
       readonly graduations: readonly AchievementGraduation[]
       /** 該当が無ければ空の並び。タスクの記録が無いリポジトリでは節目「task」はいつも空。 */
       readonly milestones: readonly AchievementMilestone[]
+      /** その日の日記の状態（`src/shared/diary.ts`）。読めなくても成果そのものは配る（`unreadable`）。 */
+      readonly diary: DailyDiaryStatus
     }
 
 /** 読めない・配られない形は「取れなかった」に倒す既定値。 */
@@ -105,6 +109,7 @@ const dailyAchievementSchema = z.discriminatedUnion("kind", [
     doneTasks: achievementDoneTasksSchema,
     graduations: z.array(achievementGraduationSchema),
     milestones: z.array(achievementMilestoneSchema),
+    diary: dailyDiaryStatusSchema,
   }),
 ])
 

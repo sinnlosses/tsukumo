@@ -9,6 +9,7 @@ import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
 import { type UiBundle } from "./server/adapter/bundle.ts"
+import { listDiaryDates, readDiaryDay } from "./server/adapter/diary.ts"
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import {
   createAchievementCommitCache,
@@ -109,19 +110,30 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       findPromptImage: (id) => options.promptImageShelf.find(id),
       // **「今日」を決めるのは配線層**（`readTokenUsageSummary` と同じ理由）。クエリの `date` を
       // 検証・今日への丸め込みをするのも呼ぶたびにここで済ませ、`main-history.ts` には
-      // 検証済みの日付キーだけを渡す。
-      readAchievement: (rawDate) => {
+      // 検証済みの日付キーだけを渡す。**日記（`diary.ts`）はここで合わせる**（`main-history.ts` は
+      // 数だけを持ち、日記の置き場を知らない。`docs/design.md`「成果の集め方と配り方」）。
+      readAchievement: async (rawDate) => {
         const today = todayLocalDateKey()
-        return readAchievement(
-          process.cwd(),
-          resolveAchievementDateKey(rawDate, today),
-          today,
-          achievementCommitCache,
-        )
+        const dateKey = resolveAchievementDateKey(rawDate, today)
+        const [result, diary] = await Promise.all([
+          readAchievement(process.cwd(), dateKey, today, achievementCommitCache),
+          readDiaryDay(process.cwd(), dateKey),
+        ])
+        return result.kind === "ok" && result.achievement.kind === "known"
+          ? { kind: "ok", achievement: { ...result.achievement, diary } }
+          : result
       },
       // 灯りの暦（直近5週ぶん）。「今日」を決めるのは配線層（`readAchievement` と同じ理由）。
-      readAchievementCalendar: () =>
-        readCommitCalendar(process.cwd(), todayLocalDateKey(), achievementCommitCache),
+      // **日記のある日の一覧もここで合わせる**（`readAchievement` と同じ理由）。
+      readAchievementCalendar: async () => {
+        const [result, diaryDates] = await Promise.all([
+          readCommitCalendar(process.cwd(), todayLocalDateKey(), achievementCommitCache),
+          listDiaryDates(process.cwd()),
+        ])
+        return result.kind === "ok" && result.calendar.kind === "known"
+          ? { kind: "ok", calendar: { ...result.calendar, diaryDates } }
+          : result
+      },
       token,
     }),
   )

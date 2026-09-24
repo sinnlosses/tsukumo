@@ -766,6 +766,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           event.key,
         ),
       }
+    case "diary-written":
+      // 日記が書けたことを姿へ載せる（進み・帯の「振り返り中」）のは、渡す口ができてから。
+      // ここでは受け付けたことそのものは変えず、そのまま通す。
+      return state
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
       // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと

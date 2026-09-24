@@ -81,6 +81,7 @@ const KNOWN_TODAY: DailyAchievement = {
   doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
   graduations: [],
   milestones: [],
+  diary: { kind: "none" },
 }
 
 const KNOWN_YESTERDAY: DailyAchievement = {
@@ -91,6 +92,7 @@ const KNOWN_YESTERDAY: DailyAchievement = {
   doneTasks: { kind: "known", items: [] },
   graduations: [],
   milestones: [],
+  diary: { kind: "none" },
 }
 
 describe("useAchievement", () => {
@@ -287,6 +289,7 @@ describe("useAchievement（振り返りのボタン）", () => {
       doneTasks: { kind: "known", items: [] },
       graduations: [],
       milestones: [],
+      diary: { kind: "none" },
     }
     stubAchievementFetch(() => okResponse(emptyDay))
     const spy: CommandSpy = (command) => sent.push(command)
