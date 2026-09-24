@@ -46,11 +46,16 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  * 隠されないまま流れ込み、筆先に添うミニ立ち絵が本文の途中に立ったまま残る（画面で出た）。
  *
  * 書きかけがあるあいだ（`partialUtterance` が空でない）は伸びる途中とみなす。
+ *
+ * **`report` の外の本文だけは、前の SDK ターンのものも伏せる。** ターンが動いているあいだと、
+ * 背景のタスクが残っているあいだ（続きのターンが来うる）は出さない。`report` の無いやり取りで
+ * 出るのは `report` を呼ぶまでのつなぎの一言が多く、`report` が来た時点でどのみち消える
+ * （`shared/main-view.ts` の `selectToolReports`）ので、出したものが消える往復も起きない。
  */
 function unsettledBodies(state: SessionState): TurnBodies {
   const running = state.turn.kind === "running"
   return {
     report: running && state.bodiesInTurn.report,
-    utterance: (running && state.bodiesInTurn.utterance) || state.partialUtterance !== "",
+    utterance: running || state.backgroundTasks.length > 0 || state.partialUtterance !== "",
   }
 }

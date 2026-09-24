@@ -205,8 +205,8 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * 本文を出さないために要る（`report` を {@link selectToolReports} が、ツールの外の本文を
  * {@link selectLastText} が見る）。**`SessionState.turn` が `running` かどうかそのものではない**
  * ——いま走っている SDK ターンで届いた本文だけが伸びうるもので、前の SDK ターンで届いた本文は、
- * 背景のタスクの通知などで claude が同じやり取りの続きを始めても確定したまま
- * （作るのは `browser/stores/main-view-turn.ts`）。
+ * 背景のタスクの通知などで claude が同じやり取りの続きを始めても確定したまま（`report` の外の
+ * 本文は例外で、続きが来うるあいだは伸びうる側に数える。作るのは `browser/stores/main-view-turn.ts`）。
  */
 export function mainViewTurns(
   entries: readonly MainViewEntry[],

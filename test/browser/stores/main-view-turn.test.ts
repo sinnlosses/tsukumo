@@ -123,8 +123,34 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     ])
   })
 
-  it("report の無いやり取りでも、前の SDK ターンの本文は続きのターンが動いていても出したまま", () => {
-    const state = fold([ask, { kind: "utterance", text: "架空の答え" }, finished, resumed])
+  // report の外の本文は、report を呼ぶまでのつなぎの独り言のことが多い（英語のこともある）。
+  // 背景の委譲を待つあいだに前の SDK ターンの本文として出て、report が来ると消えていた。
+  it("report の無いやり取りの本文は、続きのターンが動いているあいだ出さない", () => {
+    const state = fold([ask, { kind: "utterance", text: "架空の一言" }, finished, resumed])
+
+    expect(shownBodies(state)).toEqual([])
+  })
+
+  it("report の無いやり取りの本文は、背景のタスクが残っているあいだ出さない", () => {
+    const waiting = fold([
+      ask,
+      { kind: "utterance", text: "架空の一言" },
+      {
+        kind: "background-tasks-changed",
+        tasks: [{ taskId: "task-1", kind: "agent", description: "架空の委譲" }],
+      },
+      finished,
+    ])
+
+    expect(waiting.turn.kind).toBe("finished")
+    expect(shownBodies(waiting)).toEqual([])
+    expect(
+      shownBodies(applySessionEvent(waiting, { kind: "background-tasks-changed", tasks: [] }, 0)),
+    ).toEqual(["架空の一言"])
+  })
+
+  it("report の無いやり取りは、ターンが止まり背景のタスクも無ければ最後の本文を出す", () => {
+    const state = fold([ask, { kind: "utterance", text: "架空の答え" }, finished])
 
     expect(shownBodies(state)).toEqual(["架空の答え"])
   })
