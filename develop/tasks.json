@@ -127,7 +127,7 @@
     "dependencies": ["T-522", "T-523"],
     "summary": "共通スキル5本と WORKFLOW.md を新しい運用に書き直す（入れるのは切り替えで）",
     "task": "## 背景\n\n`task` コマンド（T-521〜T-523）ができたので、手順の文章をコマンドの呼び方だけに縮める。承認済みの方針は `docs/history/direction.md` の 2026-09-24 の「タスク運用の作り直し」の項にある（1件1ファイル・着手の印は共有の `.git` の中・完了は作業のコミットに同梱して rebase → ff-only で1回送る・錠の中で採番・`progress.md` をなくす・登録は粗く着手時に確かめ直す・手順は `task` コマンドに）。 いまは共通の `WORKFLOW.md`（563行）と `next-task`・`plan-tasks`・`list-tasks`・`retrospect`（計約740行）に、tsukumo の `CLAUDE.md` と `docs/workflow.md` の上書きが重なっている。\n\n## やること\n\n1. claude-skills の枝 `feature/tsukumo-T-524` で、`task-workflow/WORKFLOW.md`・`next-task`・`plan-tasks`・`list-tasks`・`retrospect`・`setup-tasks` を T-520 の設計書どおりに書き直す。スキルの本文は「どのサブコマンドをいつ打つか」と、人が判断する点だけにする\n2. 使わなくなるスクリプト（`archive.py` など）の扱いは設計書に従う\n3. **この枝は claude-skills の `main` に入れない**（入れた瞬間に symlink 越しに全プロジェクトへ効き、tsukumo がまだ旧形式のまま動けなくなる）。入れるのは T-526\n\n## 完了条件\n\n- 枝の上で claude-skills の `./check.sh` が通る\n- 書き直した後の行数を、前（`WORKFLOW.md` 563行とスキル4本の合計）と並べて `evidence` に書く\n- 旧形式のプロジェクトでスキルを呼ぶと移行の案内で止まる手順になっている\n\n## 注意\n\n- 作業するのは claude-skills のリポジトリ（`~/ghq/github.com/sinnlosses/claude-skills`。`~/.claude/skills/` の各スキルはそこへの symlink）。**着手時に `git -C ~/ghq/github.com/sinnlosses/claude-skills status --short` が空でなければ止めて預ける**（2026-09-24 の登録時点で `skills/next-task/SKILL.md` と `skills/task-workflow/WORKFLOW.md` に他人の未コミットの変更があった。触らない）\n- claude-skills の運用（検証コマンド `./check.sh`、ブランチ既定）はそのリポジトリの `CLAUDE.md` に従う。枝の名前は claude-skills 自身のタスクIDとぶつからないよう `feature/tsukumo-<このタスクのID>` にする\n- コミットは claude-skills の側に入る。tsukumo の `evidence` には claude-skills のコミットハッシュを書く\n- 枝は T-526 まで残す（消さない）\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
