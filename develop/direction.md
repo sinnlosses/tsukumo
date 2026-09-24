@@ -2,6 +2,8 @@
 
 ## ユーザーから
 
+- 画面から effort を切り替えたい（例: Opus 5.5 の medium と high）。いまは `DEFAULT_EFFORT = "medium"` を起動時に渡すだけで、`docs/requirements.md` 4.1 に「effort を画面の要素にしない」と決めてある。根拠は「effort は外から観測できない」（2026-09-12 の実測。`docs/history/decision.md` 220行目）だが、SDK 0.3.280 の型には `applyFlagSettings({ effortLevel })`（途中で変える）・制御要求 `get_settings` の `applied.effort`（実際に送る値を読む）・hook の入力の `effort` がある。**まず実機でこの2つ（途中で変えて効くか、`query()` から読めるか）を確かめ**、通れば 4.1 の決定を覆して帯に切り替えの口を置く（モデルのドロップダウンに混ぜるか、別に置くかも決める）。既定を覚える歯車（`~/.tsukumo/state.json`）に effort も載せるかも併せて決める
+
 ## エージェントのドラフト
 
 - **`src/` と `test/` のコメント・テスト名に新しくタスク番号（`develop/task/T-xxx.md` のパスを含む）が入ったら落とす検査を足す**（振り返り: T-553）
