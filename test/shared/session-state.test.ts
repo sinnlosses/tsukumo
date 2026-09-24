@@ -908,7 +908,7 @@ describe("applySessionEvent", () => {
     }
 
     const view = apply(...events)
-    const turns = mainViewTurns(mainViewEntries(view), false)
+    const turns = mainViewTurns(mainViewEntries(view), { report: false, utterance: false })
 
     expect(turns.at(-1)?.id).toBe(24)
     expect(turns.map((turn) => turn.id)).toEqual(
@@ -1417,7 +1417,7 @@ describe("applySessionEvent（API の不調と失敗）", () => {
       { kind: "api-error", error: "overloaded" },
       FAILED_BY_API,
     )
-    const [turn] = mainViewTurns(mainViewEntries(state), false)
+    const [turn] = mainViewTurns(mainViewEntries(state), { report: false, utterance: false })
 
     expect(turn?.failure).toEqual({
       kind: "failed",

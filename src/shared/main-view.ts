@@ -17,6 +17,7 @@ import {
   type SessionRecord,
   type SessionState,
   type ToolRunStatus,
+  type TurnBodies,
 } from "./session-state.ts"
 import { type TurnFailure } from "./turn-failure.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
@@ -200,24 +201,25 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * 時系列の記録を、やり取り（ターン）ごとにまとめ、直近 {@link MAX_MAIN_VIEW_TURNS} 件へ絞る。
  * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
  *
- * `turnUnsettled` は**いちばん新しいやり取りの締めの本文がまだ伸びうるか**で、確定していない
- * 本文を出さないために要る（{@link selectLastText} / {@link selectToolReports}）。**`SessionState.turn` が
- * `running` かどうかそのものではない**——背景の仕事を待って黙ると `turn-finished` が来て
- * `finished` に落ちるが、
- * 通知で再開したぶんの本文はそこから伸びる（作るのは `browser/stores/main-view-turn.ts`）。
+ * `unsettled` は**いちばん新しいやり取りで、まだ伸びうる本文の種類**で、確定していない
+ * 本文を出さないために要る（`report` を {@link selectToolReports} が、ツールの外の本文を
+ * {@link selectLastText} が見る）。**`SessionState.turn` が `running` かどうかそのものではない**
+ * ——いま走っている SDK ターンで届いた本文だけが伸びうるもので、前の SDK ターンで届いた本文は、
+ * 背景のタスクの通知などで claude が同じやり取りの続きを始めても確定したまま
+ * （作るのは `browser/stores/main-view-turn.ts`）。
  */
 export function mainViewTurns(
   entries: readonly MainViewEntry[],
-  turnUnsettled: boolean,
+  unsettled: TurnBodies,
 ): readonly MainViewTurn[] {
   const turns = groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)
   return turns
     .map(({ turn, toolReportIds }, index) => {
       // 動いているのはいちばん新しいやり取りだけで、それ以外の本文はもう確定している。
-      const settled = !turnUnsettled || index !== turns.length - 1
+      const latest = index === turns.length - 1
       return toolReportIds.length === 0
-        ? selectLastText(turn, settled)
-        : selectToolReports(turn, toolReportIds, settled)
+        ? selectLastText(turn, !latest || !unsettled.utterance)
+        : selectToolReports(turn, toolReportIds, !latest || !unsettled.report)
     })
     .map((turn) => markSupersededSteps(turn))
     .map((turn) => markFinalReport(turn))
