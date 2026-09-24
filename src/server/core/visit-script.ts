@@ -147,7 +147,9 @@ export function visitWaitedMs(wait: VisitWait, now: number): number {
 /**
  * 台本を作っている最中に、そのイベントで作るのをやめるか。帰る合図（`visit-timing.ts` の
  * `visitDeparture`）と同じ顔ぶれ——依頼・本物の `speak`・セッションの終わり・待ちの終わり
- * （答え待ちが積まれたときも待ちでなくなる）。
+ * （答え待ちが積まれたときも待ちでなくなる）。**歯車の「訪問」をオフにしたときも中断する**
+ * （`visit-started` がまだ流れていないので `visitDeparture` は関与しない——ここで止めないと、
+ * オフにした直後でも作りかけの客がそのまま来てしまう）。
  */
 export function interruptsVisitScript(state: SessionState, event: SessionEvent): boolean {
   switch (event.kind) {
@@ -155,6 +157,8 @@ export function interruptsVisitScript(state: SessionState, event: SessionEvent):
     case "speech":
     case "session-ended":
       return true
+    case "visit-enabled-changed":
+      return !event.visitEnabled
     default:
       return !isWaiting(state)
   }

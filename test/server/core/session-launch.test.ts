@@ -9,6 +9,7 @@ import {
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
+import { DEFAULT_VISIT_ENABLED } from "../../../src/shared/visit.ts"
 import {
   characterChangedEvent,
   characterPackEntry,
@@ -90,6 +91,10 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     readSessionDefault: () => {
       calls.push("readSessionDefault")
       return BUILTIN_SESSION_DEFAULT
+    },
+    readVisitEnabled: () => {
+      calls.push("readVisitEnabled")
+      return DEFAULT_VISIT_ENABLED
     },
     characterEvent: (pack: Pack) =>
       characterChangedEvent(
@@ -178,6 +183,7 @@ describe("createSessionLaunch", () => {
     expect(harness.calls).toEqual([
       "choosePack:initial",
       "readSessionDefault",
+      "readVisitEnabled",
       "findResumeSession:tsukumo-spirit:work",
       "listSessions:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:prev-work-session",
@@ -187,6 +193,7 @@ describe("createSessionLaunch", () => {
       "character-changed",
       "chat-mode-changed",
       "session-default-changed",
+      "visit-enabled-changed",
       "sessions-changed",
       "utterance",
     ])
@@ -231,6 +238,7 @@ describe("createSessionLaunch", () => {
       "character-changed",
       "chat-mode-changed",
       "session-default-changed",
+      "visit-enabled-changed",
       "sessions-changed",
     ])
   })
@@ -256,6 +264,7 @@ describe("createSessionLaunch", () => {
       "character-changed",
       "chat-mode-changed",
       "session-default-changed",
+      "visit-enabled-changed",
       "sessions-changed",
     ])
     expect(harness.stub.calls).toEqual(["prompt:架空の依頼"])
@@ -290,6 +299,7 @@ describe("createSessionLaunch", () => {
       "readChatTopics:tsukumo-spirit",
       "readRememberedLines:tsukumo-spirit",
       "readSessionDefault",
+      "readVisitEnabled",
       "findResumeSession:tsukumo-spirit:chat",
       "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
@@ -380,6 +390,7 @@ describe("createSessionLaunch", () => {
       "readChatTopics:tsukumo-spirit",
       "readRememberedLines:tsukumo-spirit",
       "readSessionDefault",
+      "readVisitEnabled",
       "findResumeSession:tsukumo-spirit:chat",
       "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
@@ -402,6 +413,7 @@ describe("createSessionLaunch", () => {
     expect(harness.calls).toEqual([
       "choosePack:current",
       "readSessionDefault",
+      "readVisitEnabled",
       "listSessions:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:other-session",
       "restoreEvents:other-session",
@@ -483,6 +495,7 @@ describe("createSessionLaunch", () => {
       "character-changed",
       "chat-mode-changed",
       "session-default-changed",
+      "visit-enabled-changed",
       "sessions-changed",
     ])
     // restoreEvents が組み直した履歴は onRestoredEvent 側だけに乗る。
@@ -492,8 +505,27 @@ describe("createSessionLaunch", () => {
       "character-changed",
       "chat-mode-changed",
       "session-default-changed",
+      "visit-enabled-changed",
       "sessions-changed",
       "utterance",
     ])
+  })
+
+  // 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6）。覚え方は「新しいセッションの既定」
+  // と同じで、**読むのも起こすたびに1回**（`readSessionDefault` と同じ理由）。
+  it("覚えた visitEnabled を、起こした初期値として visit-enabled-changed で流す", async () => {
+    const harness = createHarness({ readVisitEnabled: () => false })
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "latest" },
+    })
+    await settle()
+
+    expect(harness.driverEvents).toContainEqual({
+      kind: "visit-enabled-changed",
+      visitEnabled: false,
+    })
   })
 })

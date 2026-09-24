@@ -200,6 +200,19 @@ describe("visitArrival", () => {
     })
   })
 
+  it("歯車の「訪問」がオフのあいだは、しきい値に届いても来ない", () => {
+    const disabled = applySessionEvent(
+      TOOL_WAITING,
+      { kind: "visit-enabled-changed", visitEnabled: false },
+      0,
+    )
+    const tally = waitingSince(1_000)
+
+    expect(visitArrival(tally, disabled, 1_000 + VISIT_TIMING.waitMs, VISIT_TIMING)).toEqual({
+      kind: "never",
+    })
+  })
+
   it("前の訪問から間が空くまでは、次の待ちでも来ない", () => {
     const ended: SessionEvent = { kind: "visit-ended", reason: "wait-over" }
     const idle = stateAfter(REQUEST, TURN_FINISHED)
@@ -242,6 +255,7 @@ describe("visitDeparture", () => {
     ["speech", { kind: "speech", text: "架空のセリフ", expression: "proud" }],
     ["session-ended", { kind: "session-ended", reason: "架空の理由" }],
     ["wait-over", TOOL_FINISHED],
+    ["disabled", { kind: "visit-enabled-changed", visitEnabled: false }],
   ] satisfies readonly (readonly [VisitEndReason, SessionEvent])[])(
     "帰る合図 %s で帰る",
     (reason, event) => {
@@ -251,6 +265,25 @@ describe("visitDeparture", () => {
       })
     },
   )
+
+  it("歯車をオフにすると、待ちが続いていてもその場で帰る（`wait-over` とは違い isWaiting を見ない）", () => {
+    const stillWaiting = applySessionEvent(visiting, TOOL_STARTED, 1)
+    const toggledOff: SessionEvent = { kind: "visit-enabled-changed", visitEnabled: false }
+
+    expect(visitDeparture(applySessionEvent(stillWaiting, toggledOff, 2), toggledOff)).toEqual({
+      kind: "leave",
+      reason: "disabled",
+    })
+  })
+
+  it("歯車をオンに戻しても、訪問中でなければ帰らない（トグルだけでは訪問が始まらない）", () => {
+    const idle = stateAfter(REQUEST, TURN_FINISHED)
+    const toggledOn: SessionEvent = { kind: "visit-enabled-changed", visitEnabled: true }
+
+    expect(visitDeparture(applySessionEvent(idle, toggledOn, 1), toggledOn)).toEqual({
+      kind: "stay",
+    })
+  })
 
   it("信号 A の背景のタスクが終わった・続きのターンが始まったら帰る", () => {
     const background = applySessionEvent(BACKGROUND_WAITING, VISIT_STARTED, 0)

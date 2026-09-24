@@ -152,6 +152,14 @@ describe("interruptsVisitScript", () => {
     }
     expect(interruptsVisitScript(applySessionEvent(waiting, finished, 0), finished)).toBe(true)
   })
+
+  it("歯車の「訪問」をオフにすると、待ちが続いていても中断する。オンに戻すだけでは中断しない", () => {
+    const toggledOff: SessionEvent = { kind: "visit-enabled-changed", visitEnabled: false }
+    expect(interruptsVisitScript(waiting, toggledOff)).toBe(true)
+
+    const toggledOn: SessionEvent = { kind: "visit-enabled-changed", visitEnabled: true }
+    expect(interruptsVisitScript(waiting, toggledOn)).toBe(false)
+  })
 })
 
 describe("visitCast", () => {

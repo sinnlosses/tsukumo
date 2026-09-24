@@ -15,6 +15,14 @@
 import { type VisitScript } from "./character-visit.ts"
 
 /**
+ * 歯車の「訪問」のオン・オフの同梱の既定（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
+ * **覚えた値が無い・読めないときはここへ畳む**ので、`SessionState.visitEnabled` の初期値
+ * （`src/shared/session-state.ts`）と、読めなかったときの `readRememberedVisitEnabled`
+ * （`src/server/adapter/remembered-default.ts`）はどちらもこの1つを指す。
+ */
+export const DEFAULT_VISIT_ENABLED = true
+
+/**
  * 帰った理由。**帰る合図はサーバで1つの `visit-ended` にまとめる**（ブラウザ側で別々に判定
  * しない。判定は `src/server/core/visit-timing.ts` の `visitDeparture`）。
  *
@@ -26,6 +34,7 @@ import { type VisitScript } from "./character-visit.ts"
  * - `script-finished`: 台本を言い終えた
  * - `session-ended`: セッションが終わった（切り替えは起こし直しで状態ごと初期値へ戻るので、
  *   この理由では届かない）
+ * - `disabled`: 歯車の「訪問」をオフにした（`docs/screen-design.md` 13.6・13.9「設定の歯車」）
  */
 export type VisitEndReason =
   | "request"
@@ -34,6 +43,7 @@ export type VisitEndReason =
   | "wait-over"
   | "script-finished"
   | "session-ended"
+  | "disabled"
 
 /**
  * 訪問の様子。

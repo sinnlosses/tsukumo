@@ -10,7 +10,7 @@ import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared
 import { sessionStoreWith, type CommandSpy } from "../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/screen-design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
-// 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
+// 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
 // **保存の仕方は `browser/domain/appearance-color.ts` のまま**なので、鍵も検証も
 // `appearance-color.test.ts` と同じものを見ている。演出の速さの保存は
 // `browser/domain/reveal-speed.ts`（`reveal-speed.test.ts` と同じ鍵）。
@@ -151,7 +151,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(document.activeElement).toBe(document.body)
   })
 
-  it("地・領域・字の色の3つ、新しいセッションの既定の2つ、演出の速さの1つを出す", () => {
+  it("地・領域・字の色の3つ、新しいセッションの既定の2つ、演出の速さの1つ、訪問の1つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
@@ -159,7 +159,7 @@ describe("設定の歯車（帯の右端）", () => {
       [...document.querySelectorAll(".screen-nav-settings-panel label")].map(
         (node) => node.textContent,
       ),
-    ).toEqual(["画面の地", "領域の地", "字の色", "モデル", "許可モード", "速さ"])
+    ).toEqual(["画面の地", "領域の地", "字の色", "モデル", "許可モード", "速さ", "客の出入り"])
   })
 
   it("色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
@@ -393,5 +393,44 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
     fireEvent.click(gear())
 
     expect(defaultSelect("速さ").value).toBe("standard")
+  })
+})
+
+// 訪問のオン・オフ（docs/screen-design.md 13.6・13.9）。**覚えるのはいま動いているセッションの
+// 値だけ**（ディスクには覚えない）ので、ここが見るのは「届いた値をそのまま出す」「選ぶと
+// `set-visit-enabled` を送る」の2つ。
+describe("設定の歯車（訪問）", () => {
+  it("届いた値をそのまま出す（既定は「する」）", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    expect(defaultSelect("客の出入り").value).toBe("on")
+  })
+
+  it("visitEnabled が false なら「しない」を出す", () => {
+    renderScreenNav({ visitEnabled: false })
+    fireEvent.click(gear())
+
+    expect(defaultSelect("客の出入り").value).toBe("off")
+  })
+
+  it("「しない」を選ぶと set-visit-enabled を送る", () => {
+    const sent: unknown[] = []
+    renderScreenNav({ visitEnabled: true }, (command) => sent.push(command))
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("客の出入り"), { target: { value: "off" } })
+
+    expect(sent).toEqual([{ type: "set-visit-enabled", enabled: false }])
+  })
+
+  it("「する」を選ぶと set-visit-enabled を送る", () => {
+    const sent: unknown[] = []
+    renderScreenNav({ visitEnabled: false }, (command) => sent.push(command))
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("客の出入り"), { target: { value: "on" } })
+
+    expect(sent).toEqual([{ type: "set-visit-enabled", enabled: true }])
   })
 })

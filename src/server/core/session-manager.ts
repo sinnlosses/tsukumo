@@ -174,6 +174,17 @@ export type SessionManagerOptions = {
    */
   readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
   /**
+   * 歯車の「訪問」のオン・オフを覚え、**画面へ流す `visit-enabled-changed` イベントを返す**
+   * （覚え先は `rememberSessionDefault` と同じ `~/.tsukumo/state.json`。
+   * `docs/screen-design.md` 13.6）。
+   *
+   * **`rememberSessionDefault` と違い、いま動いているセッションにも即座に効く**——このイベントは
+   * ほかの駆動由来のイベントと同じ道（`receive`）で畳まれるので、訪問の見張り
+   * （`GenerationTally.visit`）にも同じタイミングで届く（`src/server/core/visit-timing.ts` の
+   * `visitArrival` / `departureReason` がゲートと帰る合図にする）。セッションは起こし直さない。
+   */
+  readonly rememberVisitEnabled: (visitEnabled: boolean) => SessionEvent
+  /**
    * ホームに残っている前回の見直しの結果（`docs/design.md`「見直しのツールと状態」）。**起こした
    * ときに1回だけ**読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる——
    * `INITIAL_SESSION_STATE` は静的な定数なので、ここでしか差し込めない。
@@ -714,6 +725,15 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
                 }),
               ),
             FRAME_ERROR_REASON.sessionDefaultFailed,
+          )
+        // **起こし直さない。覚え方は `set-session-default` と同じ**（`~/.tsukumo/state.json`。
+        // 歯車の「訪問」。`docs/screen-design.md` 13.6）が、**効き方は違う**——書いて返した
+        // `visit-enabled-changed` は訪問の見張りにも同じ道（`receive`）で即座に届き、オフなら
+        // 来ない・訪問中なら帰る（`src/server/core/visit-timing.ts`）。
+        case "set-visit-enabled":
+          return write(
+            () => Promise.resolve(options.rememberVisitEnabled(command.enabled)),
+            FRAME_ERROR_REASON.visitEnabledFailed,
           )
         // **起こし直さない。画面の状態も動かさない**（レポートに書かれたパスを Orca の
         // エディタで開くだけ。`docs/display.md` 4.2「各表示物」）。

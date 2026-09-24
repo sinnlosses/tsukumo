@@ -40,7 +40,12 @@ import {
   type UsageReviewFindings,
   usageProposalKey,
 } from "./usage-review.ts"
-import { applyVisitEvent, INITIAL_VISIT_STATE, type VisitState } from "./visit.ts"
+import {
+  applyVisitEvent,
+  DEFAULT_VISIT_ENABLED,
+  INITIAL_VISIT_STATE,
+  type VisitState,
+} from "./visit.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが
@@ -398,6 +403,18 @@ export type SessionState = {
    */
   readonly sessionDefault: SessionDefault
   /**
+   * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。**覚え方は
+   * `sessionDefault` と同じ**（`~/.tsukumo/state.json`。`src/server/adapter/remembered-default.ts`）
+   * だが、**効き方は違う**——`set-visit-enabled` はいま動いているセッションにも即座に効く（次に
+   * 起こすまで待たない）。起こすたびに覚えた値へ流れ直す（届くまでは同梱の既定
+   * `DEFAULT_VISIT_ENABLED`）。
+   *
+   * **源は `visit-enabled-changed` だけ。** `src/server/core/visit-timing.ts` の `visitArrival` /
+   * `departureReason` がこの値を読み、オフなら来ない・訪問中にオフにしたらその場で帰る
+   * （理由は `"disabled"`）。
+   */
+  readonly visitEnabled: boolean
+  /**
    * 契約プラン（`docs/glossary.md`「プラン」）。トークン消費の画面の題の右の札に出す。
    *
    * **源は `plan` だけ**（駆動が起動直後に1回だけ取りに行く。`src/server/adapter/sdk-driver.ts`）。
@@ -490,6 +507,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   chatTopics: [],
   rememberedLines: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
+  visitEnabled: DEFAULT_VISIT_ENABLED,
   plan: undefined,
   backgroundTasks: [],
   usageReview: { kind: "idle" },
@@ -757,6 +775,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, rememberedLines: event.lines }
     case "session-default-changed":
       return { ...state, sessionDefault: event.sessionDefault }
+    case "visit-enabled-changed":
+      return { ...state, visitEnabled: event.visitEnabled }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
     case "background-tasks-changed":

@@ -19,10 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に `visit`（訪問の様子。`src/shared/visit.ts`）を足したことで 15 から 16 へ上げた
- * （古いタブは持たず、訪問の状態を読めない）。
+ * 直近は状態に `visitEnabled`（歯車の「訪問」のオン・オフ。`src/shared/session-state.ts`）を
+ * 足したことで 16 から 17 へ上げた（その前は `visit` を足して 15 から 16 へ。どちらも古いタブは
+ * 持たず読めない）。
  */
-export const PROTOCOL_VERSION = 16
+export const PROTOCOL_VERSION = 17
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
@@ -61,6 +62,7 @@ export const FRAME_ERROR_REASON = {
   characterCreateFailed: "キャラクターを作れなかった",
   characterDeleteFailed: "キャラクターを消せなかった",
   sessionDefaultFailed: "新しいセッションの既定を覚えられなかった",
+  visitEnabledFailed: "訪問のオン・オフを切り替えられなかった",
   switchDuringTurn: "ターン進行中はキャラクターを切り替えられない（中断すると切り替えられる）",
   sessionSwitchDuringTurn: "ターン進行中はセッションを切り替えられない（中断すると切り替えられる）",
   chatModeSwitchDuringTurn:

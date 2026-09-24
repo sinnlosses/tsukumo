@@ -85,6 +85,14 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    * 読めないときは同梱の既定へ畳んだあとの値**が返るので、ここから先に「無い」は出ない。
    */
   readonly readSessionDefault: () => SessionDefault
+  /**
+   * 覚えた「訪問」のオン・オフを読む（`docs/screen-design.md` 13.6）。**覚え方は
+   * `readSessionDefault` と同じ**（`~/.tsukumo/state.json`）で、**読むのも起こすたびに1回**。
+   * ただし `set-visit-enabled` はいま動いているセッションにも即座に効くので、ここで読むのは
+   * 「起こした直後の初期値」だけ（`readSessionDefault` と違い、駆動の種〔`SessionLaunchSeed`〕
+   * には渡さない——訪問は SDK ではなくサーバの状態が読むだけの値のため）。
+   */
+  readonly readVisitEnabled: () => boolean
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
   /**
@@ -131,7 +139,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * 順序は**起動時も起こし直しも同じ**:
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・
  * （雑談のときだけ `chat-topics-changed` と `remembered-lines-changed`）・
- * `session-default-changed` を流す → 見張りを起こす →
+ * `session-default-changed`・`visit-enabled-changed` を流す → 見張りを起こす →
  * 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
  * 続きから始まったなら履歴を組み直して流し終える → 駆動を返す。
  *
@@ -174,6 +182,10 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // **読むのはここ1回だけ**で、同じ値をこれから起こす駆動にも渡す。
     const sessionDefault = ports.readSessionDefault()
     onEvent({ kind: "session-default-changed", sessionDefault })
+    // 訪問のオン・オフも同じ理由で流し直す（歯車が読む値。`docs/screen-design.md` 13.6）。
+    // **読むのはここ1回だけ**——`set-visit-enabled` で書き換えたあとは、この起動の駆動が
+    // 続くかぎりその値のまま（次に起こすまで読み直さない）。
+    onEvent({ kind: "visit-enabled-changed", visitEnabled: ports.readVisitEnabled() })
 
     const watcher = ports.watchTasks(onEvent)
     // **キャラクターごと・モードごとに別のセッションを持つ**（docs/design.md 7章、

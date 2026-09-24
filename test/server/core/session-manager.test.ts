@@ -176,6 +176,8 @@ function startManagerWithStub(
   const deletes: CharacterDeleteCommand[] = []
   /** 覚えた「新しいセッションの既定」（覚え先は配線層なので、ここでは積むだけ）。 */
   const remembered: SessionDefault[] = []
+  /** 覚えた「訪問」のオン・オフ（覚え先は配線層なので、ここでは積むだけ）。 */
+  const rememberedVisitEnabled: boolean[] = []
   /** 画面の「編集」から消そうとした行（書き先は配線層なので、ここでは積むだけ）。 */
   const forgottenLines: string[] = []
   /** ホームへ書いた「前回の見直しの結果」（書き先は配線層なので、ここでは積むだけ）。 */
@@ -205,6 +207,10 @@ function startManagerWithStub(
     rememberSessionDefault: (sessionDefault) => {
       remembered.push(sessionDefault)
       return { kind: "session-default-changed", sessionDefault }
+    },
+    rememberVisitEnabled: (visitEnabled) => {
+      rememberedVisitEnabled.push(visitEnabled)
+      return { kind: "visit-enabled-changed", visitEnabled }
     },
     launchSession: (onEvent) => {
       stub.attach(onEvent)
@@ -242,6 +248,7 @@ function startManagerWithStub(
     creates,
     deletes,
     remembered,
+    rememberedVisitEnabled,
     forgottenLines,
     writtenPreviousUsageReviews,
     dismissedUsageProposals,
@@ -385,6 +392,10 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
       launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -496,6 +507,10 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
       launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -580,6 +595,10 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
       launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -632,6 +651,10 @@ describe("createSessionManager", () => {
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
       }),
       launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
@@ -686,6 +709,10 @@ describe("createSessionManager", () => {
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
       }),
       launchSession: (onEvent, _onRestoredEvent, request) => {
         const stub = createStubDriver()
@@ -749,6 +776,10 @@ describe("createSessionManager", () => {
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
       }),
       launchSession: async (onEvent) => {
         const stub = createStubDriver()
@@ -985,6 +1016,10 @@ describe("createSessionManager", () => {
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
         }),
         launchSession: (onEvent) => {
           stub.attach(onEvent)
@@ -1418,6 +1453,10 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
       launchSession: (onEvent, _onRestoredEvent, request) => {
         if (request.selection.by === "initial") {
           const stub = createStubDriver()
@@ -1469,6 +1508,10 @@ describe("createSessionManager", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
       launchSession: (onEvent) => {
         stub.attach(onEvent)
         return Promise.resolve(stub.driver)
@@ -1510,6 +1553,10 @@ describe("createSessionManager", () => {
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
       }),
       launchSession: () =>
         Promise.resolve({
@@ -1600,6 +1647,10 @@ describe("createSessionManager", () => {
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
         }),
         launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
@@ -1834,6 +1885,10 @@ describe("createSessionManager", () => {
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
         }),
         launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
@@ -2127,6 +2182,10 @@ describe("createSessionManager", () => {
           kind: "session-default-changed",
           sessionDefault,
         }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
+        }),
         launchSession: (onEvent, onRestoredEvent) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvent)
@@ -2284,6 +2343,36 @@ describe("createSessionManager（新しいセッションの既定）", () => {
   })
 })
 
+// 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6）。**覚え方は「新しいセッションの既定」と
+// 同じ**（`~/.tsukumo/state.json`）だが、**訪問の見張りが即座に読む値でもある**（実地での
+// 「訪問中にオフにすると帰る」「オフのままだと来ない」は下の `describe("訪問")` で確かめる）。
+describe("createSessionManager（訪問のオン・オフ）", () => {
+  it("set-visit-enabled を覚えさせ、姿に載せて配る", async () => {
+    const { manager, rememberedVisitEnabled } = startManagerWithStub()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+
+    const result = await manager.dispatch({
+      type: "set-visit-enabled",
+      commandId: "c-1",
+      enabled: false,
+    })
+    await waitForBatch()
+
+    expect(result).toEqual({ ok: true })
+    expect(rememberedVisitEnabled).toEqual([false])
+    expect(frames.at(-1)).toEqual({
+      type: "events",
+      events: [
+        {
+          at: 1_000,
+          event: { kind: "visit-enabled-changed", visitEnabled: false },
+        },
+      ],
+    })
+  })
+})
+
 describe("依頼に添えた画像の棚", () => {
   // 原寸は**手で組んだ大きめの架空の data URL**（実物の画像は使わない）。hello に載っていれば
   // 長さで分かるように、控えより桁違いに長くしてある。
@@ -2315,6 +2404,10 @@ describe("依頼に添えた画像の棚", () => {
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
       }),
       launchSession: (onEvent) => {
         const stub = createStubDriver()
@@ -2492,6 +2585,10 @@ describe("createSessionManager（見直し）", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
       launchSession: () => Promise.resolve(createStubDriver().driver),
       editCharacter: () => Promise.resolve(undefined),
       createCharacter: () => Promise.resolve(undefined),
@@ -2625,6 +2722,10 @@ describe("訪問", () => {
         kind: "session-default-changed",
         sessionDefault,
       }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
       launchSession: (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -2745,5 +2846,44 @@ describe("訪問", () => {
 
     expect(run.snapshot().visit).toEqual({ kind: "none" })
     expect(run.pendingTimers()).toBe(0)
+  })
+
+  // 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9）。
+  it("歯車をオフにすると訪問中でもその場で帰り、visitEnabled も画面へ流れる", async () => {
+    const run = startManagerWithVisit(GUESTS)
+    await Promise.resolve()
+    waitForVisit(run)
+    run.advance(VISIT_TIMING.lineIntervalMs)
+    expect(run.snapshot().visit.kind).toBe("visiting")
+
+    const result = await run.manager.dispatch({
+      type: "set-visit-enabled",
+      commandId: "c-visit-off",
+      enabled: false,
+    })
+
+    expect(result).toEqual({ ok: true })
+    const after = run.snapshot()
+    expect(after.visitEnabled).toBe(false)
+    expect(after.visit).toEqual({
+      kind: "left",
+      guest: "fictional-guest",
+      farewell: "架空の帰りの一言",
+      leftAt: VISIT_TIMING.waitMs + VISIT_TIMING.lineIntervalMs,
+    })
+  })
+
+  it("歯車がオフのあいだは、しきい値に届いても来ない", async () => {
+    const run = startManagerWithVisit(GUESTS)
+    await Promise.resolve()
+    await run.manager.dispatch({
+      type: "set-visit-enabled",
+      commandId: "c-visit-off",
+      enabled: false,
+    })
+
+    waitForVisit(run)
+
+    expect(run.snapshot().visit).toEqual({ kind: "none" })
   })
 })

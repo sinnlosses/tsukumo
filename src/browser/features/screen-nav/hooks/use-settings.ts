@@ -1,13 +1,16 @@
 // 帯の右端の歯車で開く**設定**のロジック（docs/screen-design.md 13.6「設定の置き場所」/ 13.9「設定の
 // 歯車」）。いまここにあるのは**地・領域・字の色**・**新しいセッションの既定**・**書き上げる
-// 演出の速さ**の3群。
+// 演出の速さ**・**訪問のオン・オフ**の4群。
 //
-// **3群は持ち先が違う。** 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
+// **4群は持ち先が違う。** 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
 // `browser/domain/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
 // `set-session-default` で送り、`SessionState.sessionDefault` を読む）。**既定は次に起こすときから
 // 効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
 // セッション限りの別物）。演出の速さは `domain/reveal/use-report-reveal.ts` がマウント時に読むだけなので、
-// 変えても書いている最中の演出には効かない（次に書き始めたときから）。
+// 変えても書いている最中の演出には効かない（次に書き始めたときから）。**訪問のオン・オフは
+// 上のどちらでもない**——サーバの `SessionState.visitEnabled` だが、ディスクには覚えず
+// いま動いているセッションに即座に効く（`set-visit-enabled`。オフにすると訪問中でもその場で
+// 帰る。`docs/design.md` 5章「訪問の契機と状態」）。
 //
 // **色の持ち方は `browser/domain/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
 // いない。キャラクター画面から移したのは操作子だけ）。見た目（`documentElement`）
@@ -53,6 +56,11 @@ import {
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import {
+  isVisitToggleValue,
+  visitToggleValueOf,
+  type VisitToggleValue,
+} from "../domain/visit-toggle-label.ts"
 
 /** 色の操作子1つ（見た目が受け取れる形まで畳んだもの）。 */
 export type ScreenNavSettingsColor = {
@@ -82,12 +90,23 @@ export type ScreenNavSettingsRevealSpeed = {
   readonly onChange: (value: string) => void
 }
 
+/**
+ * 訪問のオン・オフの操作子（`docs/screen-design.md` 13.6・13.9）。**表示はサーバから届いた値だけに
+ * 従う**（`sessionDefault` と同じ作法）——`SessionState.visitEnabled` はディスクに覚えないので、
+ * 起こし直すたびに既定の「する」へ戻る。
+ */
+export type ScreenNavSettingsVisit = {
+  readonly value: VisitToggleValue
+  readonly onChange: (value: string) => void
+}
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onToggle: () => void
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
+  readonly visit: ScreenNavSettingsVisit
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -115,6 +134,7 @@ const APPEARANCE_COLOR_SAVE_KEY = "appearance-color"
 export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSettings {
   const dispatch = useSessionDispatch()
   const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
+  const visitEnabled = useSessionSelector((session) => session.state.visitEnabled)
   const [open, setOpen] = useState(false)
   // いま DOM に付いている歯車。React の外にある資源を持つ可変の入れ物なので ref に置く。
   const toggleNodes = useRef(new Set<HTMLButtonElement>())
@@ -234,6 +254,15 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     revealSpeed: {
       value: revealSpeed,
       onChange: changeRevealSpeed,
+    },
+    visit: {
+      value: visitToggleValueOf(visitEnabled),
+      onChange: (value) => {
+        // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
+        if (isVisitToggleValue(value)) {
+          dispatch({ type: "set-visit-enabled", enabled: value === "on" })
+        }
+      },
     },
     toggleRef,
   }

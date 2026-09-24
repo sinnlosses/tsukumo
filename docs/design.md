@@ -216,7 +216,7 @@ src/
       persona-memory.ts       雑談で覚えた1行を ~/.tsukumo/characters/<pack>/persona.md の末尾の節へ書く
       chat-summary.ts         雑談の要約の写しと印（~/.tsukumo/chat-summary/<pack>.md）
       chat-archive.ts         雑談の会話のアーカイブ（~/.tsukumo/chat-archive/<pack>/<日付>.jsonl）
-      remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード）
+      remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード・訪問のオン・オフ）
       task-summary.ts         main のタスク一覧の読み直し（main の先端の変化を tasks-changed イベントにする。develop/task/ を `git ls-tree` / `git cat-file --batch` で読む）
       git.ts                  `git` を起こす唯一の口（`runGit` / `runGitCatFileBatch`）。task-summary.ts・main-history.ts・repository-file.ts が使う
       repository-file.ts      git 管理下のファイルの列挙（`git.ts` の `runGit` で `git ls-files` を呼ぶ）
@@ -963,19 +963,23 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 もここ（7.2）。
 
 **`remembered-default.ts`** はその隣に置く別モジュールで、**次に起こすときの初期値**を
-`~/.tsukumo/state.json` に読み書きする（書き込みの失敗で例外を投げない）。覚えるのは2つ:
+`~/.tsukumo/state.json` に読み書きする（書き込みの失敗で例外を投げない）。覚えるのは3つ:
 
-| 欄                                           | 読む口                         | 書く口                          | 読めないとき                                            |
-| -------------------------------------------- | ------------------------------ | ------------------------------- | ------------------------------------------------------- |
-| キャラクター名                               | `readRememberedCharacter`      | `writeRememberedCharacter`      | `undefined`（呼び出し側が既定へ）                       |
-| 新しいセッションの既定（モデル・許可モード） | `readRememberedSessionDefault` | `writeRememberedSessionDefault` | 同梱の既定（Opus・`auto`。`shared/session-default.ts`） |
+| 欄                                           | 読む口                         | 書く口                          | 読めないとき                                                     |
+| -------------------------------------------- | ------------------------------ | ------------------------------- | ---------------------------------------------------------------- |
+| キャラクター名                               | `readRememberedCharacter`      | `writeRememberedCharacter`      | `undefined`（呼び出し側が既定へ）                                |
+| 新しいセッションの既定（モデル・許可モード） | `readRememberedSessionDefault` | `writeRememberedSessionDefault` | 同梱の既定（Opus・`auto`。`shared/session-default.ts`）          |
+| 歯車の「訪問」のオン・オフ                   | `readRememberedVisitEnabled`   | `writeRememberedVisitEnabled`   | 同梱の既定（する。`shared/visit.ts` の `DEFAULT_VISIT_ENABLED`） |
 
-**2つを1ファイルに置いてあるのは、書き込みがファイル丸ごとの置き換えだから**（別のモジュールから
+**3つを1ファイルに置いてあるのは、書き込みがファイル丸ごとの置き換えだから**（別のモジュールから
 書くと後から書いたほうが相手の欄を消す。原則3「1ファイル = 1つの境界」）。**欄ごとに別のスキーマで
-読む**ので、片方が壊れていてももう片方は読める。外の世界（ホームのファイル）に触るのはここだけで、
+読む**ので、1つが壊れていてもほかは読める。外の世界（ホームのファイル）に触るのはここだけで、
 覚えた名前が `listCharacterPacks` の一覧に無いときに既定へ落とす判断は呼び出し側
-（`current-character.ts`）が持つ。どちらも**選択そのものはセッション限り**だが、次に起こすときの
-初期値としては覚える（13.6「第3の扱い」と「新しいセッションの既定」）。
+（`current-character.ts`）が持つ。**キャラクター名・新しいセッションの既定は選択そのものが
+セッション限り**で、次に起こすときの初期値としてだけ覚える（13.6「第3の扱い」と「新しいセッションの
+既定」）。**「訪問」のオン・オフだけは、覚え方（この1ファイル）は同じでも効き方が違う**——次に
+起こすときの初期値であることに加えて、書き換えた `visit-enabled-changed` はいま動いている
+セッションにも即座に効く（5章「訪問の契機と状態」）。
 
 **`character-edit.ts`** は書き込む側（7.1）。画面から届いた立ち絵・差し色・背景を、コマンドが
 名前で指したパックの `~/.tsukumo/characters/<name>/` に書き、書けたパックを読み直して返す
@@ -1525,6 +1529,20 @@ type Diary = {
 - **しきい値**は `VISIT_TIMING`（90 秒・30 分・2 秒）。`TSUKUMO_VISIT_QUICK=1` で
   `QUICK_VISIT_TIMING`（5 秒・間を空けない・2 秒）に縮める。「1回の待ちに1度」は縮めない
 - **台本は会話の内容に当たる**。状態とフレームに乗るだけで、ログにもファイルにも書かない（9章）
+- **歯車の「訪問」のオン・オフ**（`SessionState.visitEnabled`。`docs/screen-design.md` 13.6・
+  13.9「設定の歯車」）は `set-visit-enabled` で書き換える。**覚え方は `sessionDefault` と同じ**
+  （`~/.tsukumo/state.json`。`remembered-default.ts` の3つ目の欄）で、起こすたびに
+  `readVisitEnabled`（`session-launch.ts`）が読んで `visit-enabled-changed` を流す（起こし直すと
+  一度この値へ戻る）。**効き方だけが違う**——`rememberSessionDefault` は書いて画面へ流すだけ
+  （いま動いているセッションには効かない）が、`rememberVisitEnabled`
+  （`src/session-start.ts`）が返す `visit-enabled-changed` はほかの駆動由来のイベントと同じ
+  `receive` を通るので、**いま動いている訪問の見張りにも即座に届く**。オフのあいだは
+  `visitArrival` が「来ない」を返し、訪問中に届けば `departureReason` が `visit-enabled-changed`
+  を見て帰る合図（理由 `"disabled"`）にする。台本を作っている最中（`visit-started` の前）に
+  オフが届いたときも `interruptsVisitScript`（`visit-script.ts`）が中断するので、作りかけの客が
+  そのまま来ることはない。訪問専用の新しいファイルは増やさず、`visit-timing.ts` /
+  `visit-script.ts` の純関数に条件を1つずつ足しただけ（既存の見張り〔`visit-watch.ts`〕の
+  `observe` は変えていない——このイベントも他と同じ道を通るので、ゲートだけで正しく効く）
 
 ### 訪問の台本（visit-script.ts と sdk-visit-script.ts）
 

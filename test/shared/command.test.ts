@@ -120,6 +120,21 @@ describe("parseClientCommand（受け付ける形）", () => {
       parseClientCommand({ type: "reflect-achievement", commandId: "c-8", date: "" }),
     ).toBeUndefined()
   })
+
+  it("set-visit-enabled は真偽値をそのまま受け付ける", () => {
+    expect(
+      parseClientCommand({ type: "set-visit-enabled", commandId: "c-9", enabled: false }),
+    ).toEqual({ type: "set-visit-enabled", commandId: "c-9", enabled: false })
+    expect(
+      parseClientCommand({ type: "set-visit-enabled", commandId: "c-9", enabled: true }),
+    ).toEqual({ type: "set-visit-enabled", commandId: "c-9", enabled: true })
+  })
+
+  it("set-visit-enabled は真偽値でない enabled を拒む", () => {
+    expect(
+      parseClientCommand({ type: "set-visit-enabled", commandId: "c-9", enabled: "yes" }),
+    ).toBeUndefined()
+  })
 })
 
 describe("parseClientCommand（キャラクターの見た目）", () => {

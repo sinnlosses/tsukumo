@@ -27,7 +27,9 @@ import {
 } from "./server/adapter/previous-usage-review.ts"
 import {
   readRememberedSessionDefault,
+  readRememberedVisitEnabled,
   writeRememberedSessionDefault,
+  writeRememberedVisitEnabled,
 } from "./server/adapter/remembered-default.ts"
 import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { startSdkDriver } from "./server/adapter/sdk-driver.ts"
@@ -144,6 +146,10 @@ export function startSession(options: SessionStartOptions): SessionManager {
       rememberPack: (pack) => character.remember(pack),
       // 覚えた既定は**起こすたびに読む**（歯車で書き換えたあと、起こし直しで効く）。
       readSessionDefault: () => readRememberedSessionDefault(),
+      // 覚えた「訪問」のオン・オフも起こすたびに読む。`set-visit-enabled` はこれとは別に
+      // いま動いているセッションにも即座に効くので、ここで読むのは「起こした直後の初期値」だけ
+      // （`docs/screen-design.md` 13.6）。
+      readVisitEnabled: () => readRememberedVisitEnabled(),
       characterEvent: () => character.event(),
       // 雑談で起こすときだけ呼ばれる（`createSessionLaunch`）。写しを読む口は駆動へ渡すものと
       // 同じ作り方で、取り出し方は core（`readChatTopics`）。
@@ -174,6 +180,9 @@ export function startSession(options: SessionStartOptions): SessionManager {
     }),
     // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
     rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
+    // 歯車から届いた「訪問」のオン・オフは、覚えてから画面へ流し直す。**こちらは
+    // いま動いているセッションにも即座に効く**（`rememberVisitEnabled` の doc コメント）。
+    rememberVisitEnabled: (visitEnabled) => rememberVisitEnabled(visitEnabled),
     editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
     createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
     deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
@@ -317,6 +326,17 @@ function startDriver(options: {
 function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
   writeRememberedSessionDefault(sessionDefault)
   return { kind: "session-default-changed", sessionDefault }
+}
+
+/**
+ * 歯車から届いた「訪問」のオン・オフを覚え、画面へ流すイベントを返す（`docs/screen-design.md`
+ * 13.6）。**覚え方は {@link rememberSessionDefault} と同じ**（書き込みは失敗しても例外を
+ * 投げないので、返すイベントは常に1つ）。**このイベントは駆動由来のイベントと同じ `receive` を
+ * 通る**ので、いま動いているセッションの訪問の見張りにも即座に届く（`session-manager.ts`）。
+ */
+function rememberVisitEnabled(visitEnabled: boolean): SessionEvent {
+  writeRememberedVisitEnabled(visitEnabled)
+  return { kind: "visit-enabled-changed", visitEnabled }
 }
 
 /**

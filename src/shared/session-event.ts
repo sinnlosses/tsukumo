@@ -359,6 +359,14 @@ export type SessionEvent =
    */
   | { readonly kind: "session-default-changed"; readonly sessionDefault: SessionDefault }
   /**
+   * 歯車の「訪問」のオン・オフが変わった（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
+   * **`session-default-changed` と違い、いま動いているセッションに即座に効く**——オフのあいだは
+   * 客が来ず、訪問中にオフにしたらその場で帰る（`src/server/core/visit-timing.ts`）。
+   * **ディスクには覚えない**ので、起こし直すと初期値の「する」へ戻る（`set-visit-enabled` で
+   * 書き換えるたびに流れる、この1つだけが源）。
+   */
+  | { readonly kind: "visit-enabled-changed"; readonly visitEnabled: boolean }
+  /**
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`。
    * docs/glossary.md「圧縮の区切り」）。**数値（`compact_metadata` の `pre_tokens` /
    * `post_tokens` / `duration_ms`）は運ばない** — 画面に出さないものを契約に入れない

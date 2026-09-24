@@ -117,7 +117,8 @@ export function spendWait(tally: VisitTally): VisitTally {
 
 /**
  * 来るか・まだか（何時に）・来ないか。待ちが続けて {@link VisitTiming.waitMs} に届き、かつ前の
- * 訪問から {@link VisitTiming.cooldownMs} 空いていれば来る。
+ * 訪問から {@link VisitTiming.cooldownMs} 空いていれば来る。**歯車の「訪問」がオフ
+ * （`state.visitEnabled === false`）のあいだは来ない**（`docs/screen-design.md` 13.6）。
  */
 export function visitArrival(
   tally: VisitTally,
@@ -125,7 +126,12 @@ export function visitArrival(
   now: number,
   timing: VisitTiming,
 ): VisitArrival {
-  if (state.visit.kind === "visiting" || tally.wait.kind !== "waiting" || !isWaiting(state)) {
+  if (
+    !state.visitEnabled ||
+    state.visit.kind === "visiting" ||
+    tally.wait.kind !== "waiting" ||
+    !isWaiting(state)
+  ) {
     return { kind: "never" }
   }
   const waited = tally.wait.since + timing.waitMs
@@ -183,6 +189,10 @@ function departureReason(state: SessionState, event: SessionEvent): VisitEndReas
         return "pending"
       }
       break
+    // **`isWaiting` を見ない**（オフにしたら、走っているツールや背景のタスクが終わって
+    // いなくても帰る）。
+    case "visit-enabled-changed":
+      return event.visitEnabled ? "stay" : "disabled"
     default:
       break
   }

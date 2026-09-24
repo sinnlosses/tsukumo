@@ -1038,6 +1038,21 @@ describe("applySessionEvent（最近の話題）", () => {
   })
 })
 
+describe("applySessionEvent（訪問のオン・オフ）", () => {
+  it("届くまでは「する」（true）", () => {
+    expect(INITIAL_SESSION_STATE.visitEnabled).toBe(true)
+  })
+
+  it("visit-enabled-changed で置き換わる", () => {
+    const view = apply(
+      { kind: "visit-enabled-changed", visitEnabled: false },
+      { kind: "visit-enabled-changed", visitEnabled: true },
+    )
+
+    expect(view.visitEnabled).toBe(true)
+  })
+})
+
 describe("applySessionEvent（背景のタスク）", () => {
   const SHELL_TASK = {
     taskId: "bash-1",

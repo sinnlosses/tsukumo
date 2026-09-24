@@ -378,6 +378,16 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     model: z.enum(MODEL_ALIASES),
     permissionMode: z.enum(SESSION_DEFAULT_PERMISSION_MODES),
   }),
+  /**
+   * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
+   * **`set-session-default` と違い、いま動いているセッションに即座に効く**——ディスクには
+   * 覚えないので、起こし直すと既定の「する」へ戻る（`src/server/core/session-manager.ts`）。
+   */
+  z.object({
+    type: z.literal("set-visit-enabled"),
+    commandId: commandIdSchema,
+    enabled: z.boolean(),
+  }),
   z.object({
     type: z.literal("create-character"),
     commandId: commandIdSchema,
@@ -519,7 +529,8 @@ export type DismissUsageProposalCommand = Extract<
  * 起こし直さない（`docs/design.md` 7.1）。**`open-file` も外れる** — git 管理下の一覧との
  * 照合と `orca file open` の呼び出しだけで、駆動には触らない。**`reflect-achievement` も外れる** —
  * `nudge` と同じく文面（依頼文）をサーバ側が組んでから駆動へ送る（`docs/design.md`「日記の受け取りと
- * 保存」「コマンドと依頼」）。
+ * 保存」「コマンドと依頼」）。**`set-visit-enabled` も外れる** — `session-manager.ts` が
+ * `visit-enabled-changed` を組み立てて流すだけで、駆動には触らない。
  */
 export type DriverCommand = Exclude<
   ClientCommand,
@@ -531,6 +542,7 @@ export type DriverCommand = Exclude<
   | { readonly type: "set-chat-mode" }
   | { readonly type: "nudge" }
   | { readonly type: "set-session-default" }
+  | { readonly type: "set-visit-enabled" }
   | { readonly type: "forget-remembered-line" }
   | { readonly type: "dismiss-usage-proposal" }
   | { readonly type: "open-file" }

@@ -3,7 +3,7 @@
 // （2章「機能の中を分ける」）。
 //
 // **区切りの見出し + ラベルと操作子の2列**（13.9 が指す設定のモックの形）。群は「画面の色」・
-// 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
+// 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
 //
 // **同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く**（「いまの作業」の札と同じ
 // 畳み方。どちらを出すかは CSS の `@media` が決める）。開閉の状態は1つの hook が持つので、
@@ -18,6 +18,7 @@ import { Select } from "../../../components/select.tsx"
 import { REVEAL_SPEED_LABELS } from "../../../domain/reveal-speed.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
+import { VISIT_TOGGLE_LABELS } from "../domain/visit-toggle-label.ts"
 import { type ScreenNavSettings } from "../hooks/use-settings.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-settings.module.css"
@@ -42,6 +43,9 @@ const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
 
 /** 「書き上げる演出の速さ」の `<select>` に出す選択肢（`REVEAL_SPEED_LABELS` の並びのまま）。 */
 const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({ value, label }))
+
+/** 「訪問」の `<select>` に出す選択肢（`VISIT_TOGGLE_LABELS` の並びのまま）。 */
+const VISIT_TOGGLE_OPTIONS = VISIT_TOGGLE_LABELS.map(([value, label]) => ({ value, label }))
 
 export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
@@ -134,6 +138,21 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               title={undefined}
               options={REVEAL_SPEED_OPTIONS}
               onChange={settings.revealSpeed.onChange}
+            />
+          </div>
+          <p className={styles["screen-nav-settings-heading"]}>訪問</p>
+          <div className={styles["screen-nav-settings-row"]}>
+            <label htmlFor={`${fieldId}-visit-enabled`}>客の出入り</label>
+            <Select
+              id={`${fieldId}-visit-enabled`}
+              ariaLabel="訪問のオン・オフ"
+              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
+              className={styles["screen-nav-settings-select"] ?? ""}
+              value={settings.visit.value}
+              disabled={false}
+              title={undefined}
+              options={VISIT_TOGGLE_OPTIONS}
+              onChange={settings.visit.onChange}
             />
           </div>
           <div className={styles["screen-nav-settings-row"]}>
