@@ -37,6 +37,8 @@ export type DiarySectionProps = {
   readonly reveal: boolean
   readonly review: AchievementReviewButton
   readonly onWatchConversation: () => void
+  /** 頭の行の「日記帳で読む」（13.10「並べるもの」2）。押すとこの日の見開きが開く。 */
+  readonly onOpenDiaryBook: () => void
 }
 
 export function DiarySection(props: DiarySectionProps): ReactElement {
@@ -60,7 +62,12 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
         />
       )}
       <div className={styles["achievement-diary-body"]}>
-        <Header portrait={props.portrait} view={props.view} writing={props.writing} />
+        <Header
+          portrait={props.portrait}
+          view={props.view}
+          writing={props.writing}
+          onOpenDiaryBook={props.onOpenDiaryBook}
+        />
         <Bubble view={props.view} writing={props.writing} reveal={props.reveal} />
         {props.writing.kind === "writing" ? <Progress stage={props.writing.stage} /> : null}
         {props.view.kind === "ready" ? (
@@ -84,6 +91,7 @@ function Header(props: {
   readonly portrait: DiaryWriterPortrait
   readonly view: Exclude<AchievementView, { readonly kind: "unavailable" }>
   readonly writing: AchievementWriting
+  readonly onOpenDiaryBook: () => void
 }): ReactElement {
   const { view, writing } = props
   const written =
@@ -100,6 +108,15 @@ function Header(props: {
           振り返り [{timeLabel(latest.writtenAt)}]
         </span>
       ) : null}
+      {latest === undefined ? null : (
+        <button
+          type="button"
+          className={styles["achievement-diary-open-book"]}
+          onClick={props.onOpenDiaryBook}
+        >
+          日記帳で読む
+        </button>
+      )}
     </div>
   )
 }

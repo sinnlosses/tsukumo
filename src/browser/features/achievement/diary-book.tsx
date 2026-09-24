@@ -1,0 +1,344 @@
+// つくもの日記帳の見開き（`<DiaryBook>`。`docs/screen-design.md` 13.10「日記帳の見開き」）。
+// `hooks/use-diary-book.ts` が畳んだ値をそのまま並べるだけの部品——`DiarySection` /
+// `LanternCalendar` と同じく、フックは持たない（`docs/design.md` 2章「機能の中を分ける」）。
+//
+// `<dialog>` は開閉に関わらず常に描画し、中身だけ `open` で出し分ける（`ref` を安定させるため。
+// `speech-log.tsx` と同じ形）。Esc は `<dialog onClose>` で拾い、枠の外（backdrop）は
+// `event.target === event.currentTarget` で判定する。
+
+import { type ReactElement } from "react"
+
+import { Portrait } from "../../components/portrait.tsx"
+import styles from "./achievement.module.css"
+import { type AchievementReviewButton } from "./hooks/use-achievement.ts"
+import {
+  type DiaryBookBadge,
+  type DiaryBookBookmark,
+  type DiaryBookModel,
+  type DiaryBookPage,
+  type DiaryBookTaskList,
+  type DiaryBookTocMonth,
+} from "./hooks/use-diary-book.ts"
+
+const TITLE = "つくもの日記帳"
+const CLOSE_LABEL = "閉じる"
+const TOC_LABEL = "目次"
+const PREVIOUS_LABEL = "前の日"
+const NEXT_LABEL = "次の日"
+const BOOKMARK_HEADING = "しおり ── この日のいちばん"
+const DONE_HEADING = "この日に終えたこと"
+const UNKNOWN_TASKS_NOTE = "タスクの記録が無い"
+const BLANK_BODY = "このページは、まだ白紙。"
+const LOADING_NOTE = "…"
+const FAILED_NOTE = "成果を取れなかった。"
+const GRADUATION_LABEL = "卒業"
+
+/**
+ * **props はここだけ分解して受ける**（ref を持つ入れ物を `props.ref` の形で描画中に読むと
+ * `react(refs)` が落ちるため。`presentational-speech-log.tsx` と同じ理由）。
+ */
+export function DiaryBook({
+  ref,
+  open,
+  openNote,
+  page,
+  previous,
+  next,
+  toc,
+  onPrevious,
+  onNext,
+  onToggleToc,
+  onSelectTocDate,
+  onClose,
+  onDialogClick,
+}: DiaryBookModel): ReactElement {
+  return (
+    <dialog
+      ref={ref}
+      className={styles["diary-book"]}
+      aria-label={dialogLabel(page)}
+      onClose={onClose}
+      onClick={onDialogClick}
+    >
+      {open ? (
+        <div className={styles["diary-book-stage"]}>
+          <div className={styles["diary-book-topbar"]}>
+            <span className={styles["diary-book-title"]}>{TITLE}</span>
+            <span className={styles["diary-book-open-note"]}>{openNote}</span>
+            <div className={styles["diary-book-topbar-spacer"]} />
+            <NavButton label={previous?.label} fallback={PREVIOUS_LABEL} onClick={onPrevious} />
+            <NavButton label={next?.label} fallback={NEXT_LABEL} onClick={onNext} reverse />
+            <button
+              type="button"
+              className={styles["diary-book-topbar-button"]}
+              onClick={onToggleToc}
+            >
+              {TOC_LABEL}
+            </button>
+            <button type="button" className={styles["diary-book-topbar-button"]} onClick={onClose}>
+              {CLOSE_LABEL}
+            </button>
+          </div>
+          <div className={styles["diary-book-spread"]}>
+            <Spread page={page} />
+          </div>
+          {toc.open ? <Toc months={toc.months} onSelect={onSelectTocDate} /> : null}
+        </div>
+      ) : null}
+    </dialog>
+  )
+}
+
+function NavButton(props: {
+  readonly label: string | undefined
+  readonly fallback: string
+  readonly onClick: () => void
+  readonly reverse?: boolean
+}): ReactElement {
+  const disabled = props.label === undefined
+  const text = props.label ?? props.fallback
+  return (
+    <button
+      type="button"
+      className={styles["diary-book-topbar-button"]}
+      aria-disabled={disabled}
+      onClick={props.onClick}
+    >
+      {props.reverse ? (
+        <>
+          {text}
+          {" ›"}
+        </>
+      ) : (
+        <>
+          {"‹ "}
+          {text}
+        </>
+      )}
+    </button>
+  )
+}
+
+function Spread(props: { readonly page: DiaryBookPage }): ReactElement {
+  const { page } = props
+  if (page.kind === "loading") {
+    return <p className={styles["achievement-note"]}>{LOADING_NOTE}</p>
+  }
+  if (page.kind === "failed") {
+    return <p className={styles["achievement-note"]}>{FAILED_NOTE}</p>
+  }
+  return (
+    <>
+      <LeftPage page={page} />
+      <div className={styles["diary-book-gutter"]} />
+      <RightPage page={page} />
+    </>
+  )
+}
+
+function LeftPage(props: {
+  readonly page: Extract<DiaryBookPage, { readonly kind: "ready" }>
+}): ReactElement {
+  const { page } = props
+  return (
+    <div className={styles["diary-book-left"]}>
+      <Bookmark bookmark={page.bookmark} writerName={page.portraitName} />
+      <TaskListing tasks={page.tasks} />
+      {page.badges.length > 0 ? <Badges badges={page.badges} /> : null}
+    </div>
+  )
+}
+
+function Bookmark(props: {
+  readonly bookmark: DiaryBookBookmark
+  readonly writerName: string
+}): ReactElement | null {
+  const { bookmark } = props
+  if (bookmark.kind === "none") {
+    return null
+  }
+  return (
+    <div className={styles["diary-book-bookmark"]}>
+      <span className={styles["diary-book-ribbon"]} data-state={bookmark.kind} aria-hidden="true" />
+      <p className={styles["diary-book-bookmark-heading"]}>{BOOKMARK_HEADING}</p>
+      {bookmark.kind === "pending" ? (
+        <p className={styles["diary-book-bookmark-pending"]}>
+          振り返りのあとに、{props.writerName}が挟みます。
+        </p>
+      ) : (
+        <>
+          <p className={styles["diary-book-bookmark-task"]}>
+            <span className={styles["diary-book-bookmark-task-id"]}>{bookmark.taskId}</span>
+            {bookmark.summary}
+          </p>
+          <p className={styles["diary-book-bookmark-reason"]}>「{bookmark.reason}」</p>
+        </>
+      )}
+    </div>
+  )
+}
+
+function TaskListing(props: { readonly tasks: DiaryBookTaskList }): ReactElement {
+  const { tasks } = props
+  return (
+    <div className={styles["diary-book-tasks"]}>
+      <p className={styles["diary-book-tasks-heading"]}>{DONE_HEADING}</p>
+      {tasks.tasksKnown ? (
+        <ul className={styles["diary-book-task-list"]}>
+          {tasks.items.map((task) => (
+            <li key={task.id} className={styles["diary-book-task-row"]}>
+              <span className={styles["diary-book-task-id"]}>{task.id}</span>
+              <span className={styles["diary-book-task-summary"]}>{task.summary}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={styles["achievement-note"]}>{UNKNOWN_TASKS_NOTE}</p>
+      )}
+      <p className={styles["diary-book-tasks-footer"]}>
+        {tasks.moreCount > 0
+          ? `ほか ${String(tasks.moreCount)} 件 · コミット ${String(tasks.commitCount)}`
+          : `コミット ${String(tasks.commitCount)}`}
+      </p>
+    </div>
+  )
+}
+
+function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): ReactElement {
+  return (
+    <div className={styles["diary-book-badges"]}>
+      {props.badges.map((badge) => (
+        <div key={badge.key} className={styles["diary-book-badge"]}>
+          {badge.kind === "graduation" ? (
+            <>
+              <span className={styles["diary-book-badge-title"]}>{GRADUATION_LABEL}</span>
+              <span className={styles["diary-book-badge-sub"]}>{badge.taskId}</span>
+            </>
+          ) : (
+            <>
+              <span className={styles["diary-book-badge-title"]}>{badge.countLabel}</span>
+              <span className={styles["diary-book-badge-sub"]}>{badge.unitLabel}</span>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RightPage(props: {
+  readonly page: Extract<DiaryBookPage, { readonly kind: "ready" }>
+}): ReactElement {
+  const { page } = props
+  return (
+    <div className={styles["diary-book-right"]}>
+      <div className={styles["diary-book-date-head"]}>
+        <span className={styles["diary-book-kanji-date"]}>{page.kanjiDate}</span>
+        <span className={styles["diary-book-weekday"]}>{page.weekday}</span>
+        <span className={styles["diary-book-lamp"]}>{page.lampLabel}</span>
+      </div>
+      {page.right.kind === "written" ? (
+        <div className={styles["diary-book-body"]}>
+          {page.right.paragraphs.map((paragraph) => (
+            <p key={paragraph.key} className={styles["diary-book-paragraph"]}>
+              {paragraph.timeLabel === undefined ? null : (
+                <span className={styles["diary-book-paragraph-time"]}>{paragraph.timeLabel}</span>
+              )}
+              {paragraph.body}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p className={styles["diary-book-blank-body"]}>{BLANK_BODY}</p>
+      )}
+      <div className={styles["diary-book-signature"]}>
+        {page.right.kind === "blank" ? (
+          <BlankReview review={page.right.review} writerName={page.portraitName} />
+        ) : null}
+        <div className={styles["diary-book-signature-portrait"]}>
+          {page.portrait.portraitUrl === undefined ? null : (
+            <Portrait
+              url={page.portrait.portraitUrl}
+              accent={page.portrait.accent}
+              altText={page.portrait.altText}
+              expression="default"
+              outfit="default"
+              motion={undefined}
+              className={styles["diary-book-signature-image"]}
+            />
+          )}
+          <span className={styles["diary-book-signature-name"]}>{page.portraitName}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BlankReview(props: {
+  readonly review: AchievementReviewButton
+  readonly writerName: string
+}): ReactElement {
+  const { review } = props
+  return (
+    <div className={styles["diary-book-review"]}>
+      <button
+        type="button"
+        className={styles["diary-book-review-button"]}
+        aria-disabled={review.availability.kind === "blocked"}
+        onClick={review.onReview}
+      >
+        {review.label}
+      </button>
+      {review.availability.kind === "blocked" && review.availability.reason !== "" ? (
+        <p className={styles["diary-book-review-note"]}>{review.availability.reason}</p>
+      ) : (
+        <p className={styles["diary-book-review-note"]}>
+          {props.writerName}がこのページに日記を書きます
+        </p>
+      )}
+    </div>
+  )
+}
+
+function Toc(props: {
+  readonly months: readonly DiaryBookTocMonth[]
+  readonly onSelect: (date: string) => void
+}): ReactElement {
+  return (
+    <div className={styles["diary-book-toc"]} role="dialog" aria-label={TOC_LABEL}>
+      {props.months.length === 0 ? (
+        <p className={styles["achievement-note"]}>まだ日記が無い。</p>
+      ) : (
+        props.months.map((month) => (
+          <section key={month.heading} className={styles["diary-book-toc-month"]}>
+            <h3 className={styles["diary-book-toc-heading"]}>{month.heading}</h3>
+            <ul className={styles["diary-book-toc-list"]}>
+              {month.days.map((day) => (
+                <li key={day.date}>
+                  <button
+                    type="button"
+                    className={styles["diary-book-toc-day"]}
+                    onClick={() => {
+                      props.onSelect(day.date)
+                    }}
+                  >
+                    {day.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      )}
+    </div>
+  )
+}
+
+function dialogLabel(page: DiaryBookPage): string {
+  if (page.kind !== "ready") {
+    return TITLE
+  }
+  return page.right.kind === "written"
+    ? `${page.kanjiDate}の日記`
+    : `${page.kanjiDate}のページ（まだ白紙）`
+}

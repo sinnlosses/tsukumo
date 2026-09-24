@@ -6,6 +6,7 @@ import {
   type AchievementDaySwitch,
   type AchievementReviewButton,
 } from "../../../../src/browser/features/achievement/hooks/use-achievement.ts"
+import { type DiaryBookModel } from "../../../../src/browser/features/achievement/hooks/use-diary-book.ts"
 import {
   PresentationalAchievementScreen,
   type PresentationalAchievementScreenProps,
@@ -33,6 +34,24 @@ const AVAILABLE_REVIEW: AchievementReviewButton = {
   onReview: NOOP,
 }
 
+const CLOSED_DIARY_BOOK: DiaryBookModel = {
+  ref: { current: null },
+  open: false,
+  openNote: "",
+  page: { kind: "loading" },
+  previous: undefined,
+  next: undefined,
+  toc: { open: false, months: [] },
+  onOpenFromCalendar: NOOP_DATE,
+  onOpenFromDiarySection: NOOP,
+  onPrevious: NOOP,
+  onNext: NOOP,
+  onToggleToc: NOOP,
+  onSelectTocDate: NOOP_DATE,
+  onClose: NOOP,
+  onDialogClick: NOOP,
+}
+
 const DEFAULT_PROPS: PresentationalAchievementScreenProps = {
   view: {
     kind: "ready",
@@ -57,6 +76,8 @@ const DEFAULT_PROPS: PresentationalAchievementScreenProps = {
   diaryReveal: false,
   onWatchConversation: NOOP,
   calendar: { kind: "loading" },
+  onOpenDiaryBook: NOOP,
+  diaryBook: CLOSED_DIARY_BOOK,
 }
 
 function renderScreen(

@@ -12,10 +12,25 @@ import { type ReactElement } from "react"
 
 import { useAchievementCalendar } from "./hooks/use-achievement-calendar.ts"
 import { useAchievement } from "./hooks/use-achievement.ts"
+import { useDiaryBook } from "./hooks/use-diary-book.ts"
 import { PresentationalAchievementScreen } from "./presentational-achievement-screen.tsx"
 
 export function AchievementScreen(): ReactElement {
+  const achievement = useAchievement()
+  const calendar = useAchievementCalendar()
+  const diaryBook = useDiaryBook({
+    calendar,
+    daySwitch: achievement.daySwitch,
+    onDateSelected: achievement.onSelectDate,
+  })
+
   return (
-    <PresentationalAchievementScreen {...useAchievement()} calendar={useAchievementCalendar()} />
+    <PresentationalAchievementScreen
+      {...achievement}
+      calendar={calendar}
+      onSelectDate={diaryBook.onOpenFromCalendar}
+      onOpenDiaryBook={diaryBook.onOpenFromDiarySection}
+      diaryBook={diaryBook}
+    />
   )
 }

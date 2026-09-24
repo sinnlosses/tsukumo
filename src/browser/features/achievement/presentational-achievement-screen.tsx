@@ -7,9 +7,11 @@ import { type ReactElement } from "react"
 import styles from "./achievement.module.css"
 import { BookmarkSection } from "./bookmark-section.tsx"
 import { DaySwitch } from "./day-switch.tsx"
+import { DiaryBook } from "./diary-book.tsx"
 import { DiarySection } from "./diary-section.tsx"
 import { type AchievementCalendarView } from "./hooks/use-achievement-calendar.ts"
 import { type UseAchievementResult } from "./hooks/use-achievement.ts"
+import { type DiaryBookModel } from "./hooks/use-diary-book.ts"
 import { LanternCalendar } from "./lantern-calendar.tsx"
 import { SurpriseSection } from "./surprise-section.tsx"
 
@@ -17,6 +19,9 @@ const UNAVAILABLE_NOTE = "このディレクトリでは成果を数えられな
 
 export type PresentationalAchievementScreenProps = UseAchievementResult & {
   readonly calendar: AchievementCalendarView
+  /** 日記の区画の「日記帳で読む」（13.10「並べるもの」2）。 */
+  readonly onOpenDiaryBook: () => void
+  readonly diaryBook: DiaryBookModel
 }
 
 export function PresentationalAchievementScreen(
@@ -24,48 +29,58 @@ export function PresentationalAchievementScreen(
 ): ReactElement {
   if (props.view.kind === "unavailable") {
     return (
-      <div className={styles["achievement"]}>
-        <h1 className={styles["achievement-title"]}>成果</h1>
-        <p className={styles["achievement-note"]}>{UNAVAILABLE_NOTE}</p>
-      </div>
+      <>
+        <div className={styles["achievement"]}>
+          <h1 className={styles["achievement-title"]}>成果</h1>
+          <p className={styles["achievement-note"]}>{UNAVAILABLE_NOTE}</p>
+        </div>
+        <DiaryBook {...props.diaryBook} />
+      </>
     )
   }
 
   const viewedDate = props.daySwitch.kind === "known" ? props.daySwitch.date : undefined
 
   return (
-    <div className={styles["achievement"]}>
-      <DaySwitch
-        daySwitch={props.daySwitch}
-        onPreviousDay={props.onPreviousDay}
-        onNextDay={props.onNextDay}
-        onToday={props.onToday}
-      />
-      <DiarySection
-        view={props.view}
-        isFetching={props.isFetching}
-        writing={props.writing}
-        portrait={props.diaryPortrait}
-        reveal={props.diaryReveal}
-        review={props.review}
-        onWatchConversation={props.onWatchConversation}
-      />
-      {props.view.kind === "ready" ? (
-        <BookmarkSection
-          bookmark={
-            props.view.diary.kind === "written" ? props.view.diary.diary.bookmark : undefined
-          }
-          writerName={props.diaryPortrait.name}
+    <>
+      <div className={styles["achievement"]}>
+        <DaySwitch
+          daySwitch={props.daySwitch}
+          onPreviousDay={props.onPreviousDay}
+          onNextDay={props.onNextDay}
+          onToday={props.onToday}
         />
-      ) : null}
-      {props.view.kind === "ready" ? (
-        <SurpriseSection graduations={props.view.graduations} milestones={props.view.milestones} />
-      ) : null}
-      <LanternCalendar
-        calendar={props.calendar}
-        viewedDate={viewedDate}
-        onSelectDate={props.onSelectDate}
-      />
-    </div>
+        <DiarySection
+          view={props.view}
+          isFetching={props.isFetching}
+          writing={props.writing}
+          portrait={props.diaryPortrait}
+          reveal={props.diaryReveal}
+          review={props.review}
+          onWatchConversation={props.onWatchConversation}
+          onOpenDiaryBook={props.onOpenDiaryBook}
+        />
+        {props.view.kind === "ready" ? (
+          <BookmarkSection
+            bookmark={
+              props.view.diary.kind === "written" ? props.view.diary.diary.bookmark : undefined
+            }
+            writerName={props.diaryPortrait.name}
+          />
+        ) : null}
+        {props.view.kind === "ready" ? (
+          <SurpriseSection
+            graduations={props.view.graduations}
+            milestones={props.view.milestones}
+          />
+        ) : null}
+        <LanternCalendar
+          calendar={props.calendar}
+          viewedDate={viewedDate}
+          onSelectDate={props.onSelectDate}
+        />
+      </div>
+      <DiaryBook {...props.diaryBook} />
+    </>
   )
 }

@@ -101,6 +101,7 @@ function renderSection(overrides: {
   readonly reveal?: boolean
   readonly isFetching?: boolean
   readonly onWatchConversation?: () => void
+  readonly onOpenDiaryBook?: () => void
 }): ReturnType<typeof render> {
   return render(
     <DiarySection
@@ -111,6 +112,7 @@ function renderSection(overrides: {
       reveal={overrides.reveal ?? false}
       review={overrides.review ?? AVAILABLE_REVIEW}
       onWatchConversation={overrides.onWatchConversation ?? NOOP}
+      onOpenDiaryBook={overrides.onOpenDiaryBook ?? NOOP}
     />,
   )
 }
@@ -252,5 +254,18 @@ describe("DiarySection", () => {
 
     screen.getByRole("button", { name: "架空の名前と振り返る" }).click()
     expect(calls).toBe(1)
+  })
+
+  it("日記があれば「日記帳で読む」が出て、押すと onOpenDiaryBook が呼ばれる", () => {
+    let calls = 0
+    renderSection({ view: READY_WITH_DIARY, onOpenDiaryBook: () => (calls += 1) })
+
+    screen.getByRole("button", { name: "日記帳で読む" }).click()
+    expect(calls).toBe(1)
+  })
+
+  it("日記が無い日は「日記帳で読む」を出さない", () => {
+    renderSection({ view: READY_NO_DIARY })
+    expect(screen.queryByRole("button", { name: "日記帳で読む" })).toBeNull()
   })
 })
