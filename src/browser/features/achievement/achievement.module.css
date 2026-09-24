@@ -1,0 +1,137 @@
+/* 成果の画面（`src/browser/features/achievement/`。docs/screen-design.md 13.10）。**会話の画面と
+   入れ替わる**ので、トークン消費・キャラクターの画面と同じく1枚のページとして縦に流す
+   （4領域の grid も仕切りも持たない）。**新しい色のトークンは足さない**——地・枠・字は
+   `--surface` / `--rule` / `--ink` / `--ink-quiet` の既存のもの（13.10「並べるもの」）。 */
+.achievement {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 0 0.25rem 2rem;
+}
+.achievement-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-heading);
+  font-weight: normal;
+}
+
+/* 日の切り替え（13.10「並べるもの」1）。 */
+.achievement-day-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.achievement-day-switch-button {
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  font-family: var(--font-sans);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+.achievement-day-switch-button[aria-disabled="true"] {
+  color: var(--ink-quiet);
+  cursor: default;
+}
+.achievement-day-switch-label {
+  flex: 1 1 auto;
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  text-align: center;
+}
+.achievement-day-switch-today {
+  margin-left: auto;
+}
+
+/* 数の札2枚（13.10「並べるもの」2）。**狭い画面でも横に並べる**（どちらも短いので折り返す
+   必要が無い。13.10「並べるもの」）。 */
+.achievement-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  min-width: 0;
+}
+.achievement-card-label {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+.achievement-card-value {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+.achievement-card-note {
+  margin: 0.2rem 0 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+
+.achievement-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+/* 日を切り替えている間、前の日の中身を薄く残す（13.10「空の日・数えられないとき」
+   「取りに行っている間」）。 */
+.achievement-content.is-fetching {
+  opacity: 0.5;
+}
+
+/* 終えたタスクの一覧（13.10「並べるもの」3）。 */
+.achievement-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.achievement-tasks-title {
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  font-weight: 500;
+}
+.achievement-task {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+.achievement-task:last-child {
+  border-bottom: none;
+}
+.achievement-task-id {
+  flex: 0 0 auto;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+}
+.achievement-task-summary {
+  color: var(--ink);
+  font-size: var(--font-body);
+  overflow-wrap: anywhere;
+}
+
+/* どれも読むだけの1行のお知らせ（空の日・main が読めない・取れなかった。13.10
+   「空の日・数えられないとき」）。 */
+.achievement-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-body);
+}

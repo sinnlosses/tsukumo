@@ -14,11 +14,9 @@ import { type RecordTime } from "../../../../shared/session-state.ts"
 import { portraitAppearance } from "../../../domain/portrait-appearance.ts"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { clockDateTime, clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
+import { dayLabel } from "../../../utils/day-label.ts"
 import { useRevealedChatLog } from "./use-speech-reveal.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"
-
-/** 日の区切りに出す曜日（`Temporal.PlainDate.dayOfWeek` は月曜が 1、日曜が 7）。 */
-const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
 
 /**
  * 発言の脇に添える時刻。**前のセッションを組み直した発言は `unknown`** で、何も出さない
@@ -196,6 +194,8 @@ function chatRows(
         kind: "day",
         key: `day-${row.date.toString()}`,
         dateTime: row.date.toString(),
+        // 年も「今日」「昨日」も書かない —— ログが持つのは雑談の 100 ターンぶんで年をまたいでも
+        // 並びの順で読めるし、時計を読んで書くと日付が変わったあとに描き直すまで古い呼び名が残る。
         label: dayLabel(row.date),
       }
     }
@@ -226,16 +226,6 @@ function chatRows(
         }
     }
   })
-}
-
-/**
- * 日の区切りの文字（`9月23日（水）`）。年は出さない（ログが持つのは雑談の 100 ターンぶんで、
- * 年をまたいでも並びの順で読める）。「今日」「昨日」とも書かない —— 時計を読むと、日付が
- * 変わったあとに描き直すまで古い呼び名が残る。
- */
-function dayLabel(date: Temporal.PlainDate): string {
-  const weekday = WEEKDAY_LABELS[date.dayOfWeek - 1] ?? ""
-  return `${String(date.month)}月${String(date.day)}日（${weekday}）`
 }
 
 /** 発言の脇の時刻（`HH:MM`。秒は出さない）。組み直した発言は時刻が分からない。 */

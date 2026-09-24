@@ -212,6 +212,7 @@ const BROWSER_REGIONS = [
   "character-screen",
   "chat-view",
   "token-usage",
+  "achievement",
   "sidebar",
   "dispatch",
 ] as const

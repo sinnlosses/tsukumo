@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 帯に「成果」の口を足し、日ごとの成果を並べる画面を作った（T-513）
+
+`src/browser/features/achievement/` に画面を置き、帯の4つ目の口と `#achievement?date=` で開く。`dayLabel` は2つ目の読み手ができたので `src/browser/utils/day-label.ts` へ上げた。「つくもと振り返る」ボタンは次の T-514。
+
 ### 2026-09-24 main の履歴とタスクから日ごとの成果を集め、ブラウザへ渡す経路を作った（T-512）
 
 `src/server/adapter/main-history.ts` が集め、`GET /achievement?date=` で `DailyAchievement` を返す。画面はまだ無い（T-513）。`git log` の区切りは NUL ではなく `\x1e`（`execFile` の引数に NUL を渡せないため）。

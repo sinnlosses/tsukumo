@@ -3,9 +3,9 @@
 // 見た目が受け取れる形まで畳んで返す。「いまの作業」の札は `hooks/use-current-work.ts` に
 // 分けてある（別の概念なのでファイルを分ける。CLAUDE.md 原則5）。
 //
-// **帯に出すのは `Screen` の4つのうち3つ**（作る画面はキャラクター画面から入る一時的な画面なので
-// 出さない。13.9）。**口は `<a href>` で、画面の正典は `location.hash` のまま**（`navigateTo` は
-// 使わない）。
+// **帯に出すのは `Screen` の4つすべて**（作るダイアログはキャラクター画面から開く一時的な画面
+// （13.6「作るダイアログ」）で、独立した画面ではないのでここには挙げない。13.9「帯に何を置くか」）。
+// **口は `<a href>` で、画面の正典は `location.hash` のまま**（`navigateTo` は使わない）。
 //
 // **動き方の操作子（仕事/雑談・モデル・許可モード）が送るコマンドは、いままでサイドバーの
 // `<select>` が送っていたものと同じ**（`set-chat-mode` / `set-model` / `set-permission-mode`）。
@@ -117,6 +117,7 @@ const NAV_SCREENS = [
   { screen: "conversation", label: "会話" },
   { screen: "character", label: "キャラクター" },
   { screen: "token-usage", label: "トークン消費" },
+  { screen: "achievement", label: "成果" },
 ] satisfies readonly { readonly screen: Screen; readonly label: string }[]
 
 export function useScreenNav(): ScreenNavView {

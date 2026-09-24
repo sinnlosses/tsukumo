@@ -26,6 +26,7 @@ import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
 } from "./domain/appearance-color.ts"
+import { AchievementScreen } from "./features/achievement/achievement-screen.tsx"
 import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
 import { CharacterView } from "./features/character-view/character-view.tsx"
 import { ChatView } from "./features/chat-view/chat-view.tsx"
@@ -86,6 +87,7 @@ function Root(): ReactElement {
       </Activity>
       {screen === "character" ? <CharacterScreen /> : null}
       {screen === "token-usage" ? <TokenUsageScreen /> : null}
+      {screen === "achievement" ? <AchievementScreen /> : null}
     </>
   )
 }

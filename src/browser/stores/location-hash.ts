@@ -2,26 +2,32 @@
 // （出している画面は `stores/screen.tsx`、見ているターンは `stores/turn-selection.tsx`）ので、
 // 片方が書くときにもう片方の部分を消さないよう、読み書きはここの {@link HashRoute} を通す。
 //
-// 形は `#<画面>?pack=<名前>&turn=<番号>`。**画面は `?` の前、ターンは `turn` の値、キャラクター画面で
-// 選んでいるパックは `pack` の値**:
+// 形は `#<画面>?pack=<名前>&date=<日付>&turn=<番号>`。**画面は `?` の前、ターンは `turn` の値、
+// キャラクター画面で選んでいるパックは `pack` の値、成果の画面で見ている日は `date` の値**:
 //
 // - `#`                           会話の画面・今回に追従（リンクの `href` に空文字を書けないので `#`）
 // - `#?turn=3`                    会話の画面・通し番号 3 のターンに留める
 // - `#character?turn=3`           キャラクター画面（使用中のパック）。ターンは会話の画面へ戻ったときのために運ぶ
 // - `#character?pack=tsukumo`     キャラクター画面で `tsukumo` のパックを選んでいる
+// - `#achievement?date=YYYY-MM-DD` 成果の画面でその日を見ている
 //
-// **パックを `?` の前（`#character/<名前>`）に置かない**のは、`turn` と同じく画面の上に乗る
-// 付随情報だから。`pack` を読むのはキャラクター画面のときだけで、ほかの画面へ移ると落ちる
-// （戻ると使用中のパックから）。**新しく作るダイアログは URL を持たない**（表示上の状態なので
-// 保存しない。開いているかどうかはキャラクター画面の state が持つ。`character-screen.tsx`。
-// `docs/screen-design.md` 13.6）。
+// **パックと見ている日を `?` の前（`#character/<名前>`・`#achievement/<日付>`）に置かない**のは、
+// `turn` と同じく画面の上に乗る付随情報だから。`pack` を読むのはキャラクター画面のときだけ、
+// `date` を読むのは成果の画面のときだけで、ほかの画面へ移ると落ちる（戻ると使用中のパック・
+// 今日から。`docs/screen-design.md` 13.10）。**新しく作るダイアログは URL を持たない**（表示上の
+// 状態なので保存しない。開いているかどうかはキャラクター画面の state が持つ。
+// `character-screen.tsx`。`docs/screen-design.md` 13.6）。
 //
 // **今回に追従しているときは `turn` を書かない。** 留めたターンだけが URL に乗るので、何も
-// 選んでいない人のリロードは今までどおり今回を出す。
+// 選んでいない人のリロードは今までどおり今回を出す。**`date` も今日を見ているときは書かない**
+// （今日かどうかはサーバの応答でしか分からない——ブラウザは時計を読まない——ので、hash 側は
+// 「今日」を単なる「無い」として持つ。`docs/design.md` 5章「成果の集め方と配り方」）。
 
 import { useSyncExternalStore } from "react"
 
-const SCREENS = ["conversation", "character", "token-usage"] as const
+import { ACHIEVEMENT_DATE_QUERY_NAME } from "../../shared/achievement.ts"
+
+const SCREENS = ["conversation", "character", "token-usage", "achievement"] as const
 
 /** 出している画面。hash が対応しない値のときは会話の画面に落ちる。 */
 export type Screen = (typeof SCREENS)[number]
@@ -43,10 +49,20 @@ export type PackSelection =
   | { readonly kind: "in-use" }
   | { readonly kind: "named"; readonly name: string }
 
+/**
+ * 成果の画面で見ている日（`docs/screen-design.md` 13.10）。`"today"` は今日を見る
+ * （`date` が無いとき）。**「今日」の具体的な日付はサーバの応答でしか分からない**
+ * （ブラウザは時計を読まない）ので、ここでは「指定していない」ことだけを表す。
+ */
+export type AchievementDateSelection =
+  | { readonly kind: "today" }
+  | { readonly kind: "chosen"; readonly date: string }
+
 export type HashRoute = {
   readonly screen: Screen
   readonly turn: ViewedTurn
   readonly pack: PackSelection
+  readonly achievementDate: AchievementDateSelection
 }
 
 /** hash の値の型。スナップショットが同じ値なら描き直さないよう、プリミティブに限る。 */
@@ -57,11 +73,14 @@ const SCREEN_PATH = {
   conversation: "",
   character: "character",
   "token-usage": "token-usage",
+  achievement: "achievement",
 } as const satisfies Readonly<Record<Screen, string>>
 
 const TURN_PARAM = "turn"
 const PACK_PARAM = "pack"
+const DATE_PARAM = ACHIEVEMENT_DATE_QUERY_NAME
 const IN_USE: PackSelection = { kind: "in-use" }
+const TODAY: AchievementDateSelection = { kind: "today" }
 const TURN_ID_PATTERN = /^-?\d+$/
 
 /**
@@ -94,6 +113,7 @@ export function parseHash(hash: string): HashRoute {
     screen,
     turn: turnOf(params.get(TURN_PARAM)),
     pack: screen === "character" ? packOf(params.get(PACK_PARAM)) : IN_USE,
+    achievementDate: screen === "achievement" ? achievementDateOf(params.get(DATE_PARAM)) : TODAY,
   }
 }
 
@@ -102,6 +122,9 @@ export function formatHash(route: HashRoute): string {
   const params = new URLSearchParams()
   if (route.screen === "character" && route.pack.kind === "named") {
     params.set(PACK_PARAM, route.pack.name)
+  }
+  if (route.screen === "achievement" && route.achievementDate.kind === "chosen") {
+    params.set(DATE_PARAM, route.achievementDate.date)
   }
   if (route.turn !== "newest") {
     params.set(TURN_PARAM, String(route.turn))
@@ -132,4 +155,13 @@ function turnOf(value: string | null): ViewedTurn {
 /** 空の `pack` は「選んでいない」に畳む（パックの名前は空にならない）。 */
 function packOf(value: string | null): PackSelection {
   return value === null || value === "" ? IN_USE : { kind: "named", name: value }
+}
+
+/**
+ * 空の `date` は「今日」に畳む（見た日の日付キーは空にならない）。**形の検証はしない**——
+ * 読めない形はサーバの応答が今日に倒す（`docs/design.md` 5章）ので、ここで畳むと2箇所で
+ * 同じ判定を持つことになる。
+ */
+function achievementDateOf(value: string | null): AchievementDateSelection {
+  return value === null || value === "" ? TODAY : { kind: "chosen", date: value }
 }

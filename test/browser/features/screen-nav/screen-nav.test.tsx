@@ -65,10 +65,10 @@ function gateNames(): readonly string[] {
 }
 
 describe("ScreenNav", () => {
-  it("3つの口（会話 / キャラクター / トークン消費）を hash のリンクで出す", () => {
+  it("4つの口（会話 / キャラクター / トークン消費 / 成果）を hash のリンクで出す", () => {
     renderScreenNav()
 
-    expect(gateNames()).toEqual(["会話", "キャラクター", "トークン消費"])
+    expect(gateNames()).toEqual(["会話", "キャラクター", "トークン消費", "成果"])
     expect(screen.getByRole("link", { name: "会話" }).getAttribute("href")).toBe("#")
     expect(screen.getByRole("link", { name: "キャラクター" }).getAttribute("href")).toBe(
       "#character",
@@ -76,6 +76,7 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "トークン消費" }).getAttribute("href")).toBe(
       "#token-usage",
     )
+    expect(screen.getByRole("link", { name: "成果" }).getAttribute("href")).toBe("#achievement")
   })
 
   // **色だけで伝えない**ので、いまの画面の口には地と字の濃さを変える class が付く（13.9）。
@@ -184,7 +185,7 @@ describe("ScreenNav", () => {
 
   // 狭い画面の「≡」（広い画面では CSS が消す。ここでは DOM の有無だけを見る）。
   // 「≡」の aria-label は「画面を選ぶ」から「メニュー」に直した（13.9「狭い画面」）。
-  it("「≡」を押すと落ちてくる面に3つの口が出て、もう一度押すと閉じる", () => {
+  it("「≡」を押すと落ちてくる面に4つの口が出て、もう一度押すと閉じる", () => {
     renderScreenNav()
     const toggle = screen.getByRole("button", { name: "メニュー" })
     expect(document.querySelector(".screen-nav-panel")).toBeNull()
@@ -195,6 +196,7 @@ describe("ScreenNav", () => {
       "会話",
       "キャラクター",
       "トークン消費",
+      "成果",
     ])
     expect(toggle.getAttribute("aria-expanded")).toBe("true")
 
