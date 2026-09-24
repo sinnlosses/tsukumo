@@ -105,9 +105,9 @@
     "dependencies": ["T-521"],
     "summary": "task コマンドの done と ship（rebase して ff-only で送る）を作る",
     "task": "## 背景\n\nT-520 で決めた `task` コマンドのうち、完了と送り出しの側を作る。承認済みの方針は `docs/history/direction.md` の 2026-09-24 の「タスク運用の作り直し」の項にある（1件1ファイル・着手の印は共有の `.git` の中・完了は作業のコミットに同梱して rebase → ff-only で1回送る・錠の中で採番・`progress.md` をなくす・登録は粗く着手時に確かめ直す・手順は `task` コマンドに）。 いまの tsukumo は1タスクで `doing` と `done` の2回 `main` へ送り、そのたびに `git merge main` の取り込みが要る（1週間で取り込みのマージ209件）。\n\n## やること\n\n1. `done`: タスクファイルの `status` と `## 結果` を書き、作業の最後のコミットに含める形にする（設計書の決めた形で）。着手の印を消す\n2. `ship`: `main` より遅れていれば `git rebase main`（衝突したら `rebase --abort` して止め、衝突したファイルを出す）→ 付け替えが起きたときだけ検証コマンド → `main` へ fast-forward で送る。`--ff-only` が落ちたら上限3回まで繰り返す。`main` を出している作業ツリーが clean でなければ始めない。`main` の作業ツリーで起こしたときは送る段を飛ばす\n3. 一時ディレクトリの git リポジトリと作業ツリー2本で、上の分岐（追い付くだけ・付け替え・衝突で止まる・本体が汚れていて止まる・相手に先を越されて繰り返す）を自己テストに足す\n\n## 完了条件\n\n- 上のテストが claude-skills の `./check.sh` で通り、`main` に入っている\n- `ship` が merge commit を作らない（テストで `git log --merges` が0件）\n\n## 注意\n\n- 作業するのは claude-skills のリポジトリ（`~/ghq/github.com/sinnlosses/claude-skills`。`~/.claude/skills/` の各スキルはそこへの symlink）。**着手時に `git -C ~/ghq/github.com/sinnlosses/claude-skills status --short` が空でなければ止めて預ける**（2026-09-24 の登録時点で `skills/next-task/SKILL.md` と `skills/task-workflow/WORKFLOW.md` に他人の未コミットの変更があった。触らない）\n- claude-skills の運用（検証コマンド `./check.sh`、ブランチ既定）はそのリポジトリの `CLAUDE.md` に従う。枝の名前は claude-skills 自身のタスクIDとぶつからないよう `feature/tsukumo-<このタスクのID>` にする\n- コミットは claude-skills の側に入る。tsukumo の `evidence` には claude-skills のコミットハッシュを書く\n- 既存のスキルの `SKILL.md` はまだ書き換えない（T-524）\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "claude-skills b7814c7（main）: task.py に done・ship、ship.py と taskfile.set_result_section を追加。./check.sh 終了0（selftest_task.py 72件 ok / FAIL 0、selftest.py 全 ok、21スキル不整合なし）。ship の6分岐（追い付く・付け替え・衝突・本体が汚れている・main で完結・RACE で3回）を足し、どれも git log --merges main が0件。着手の印は設計書どおり done でなく ship で消す。"
   },
   {
     "id": "T-523",

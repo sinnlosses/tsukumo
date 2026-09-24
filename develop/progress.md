@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 task コマンドの done と ship を作った（T-522）
+
+claude-skills `b7814c7`。`ship` は遅れていれば rebase してから `--ff-only`（本体が無ければ比較付きの `update-ref`）で送り、3回まで繰り返す。`main` を別の作業ツリーが出している構成では `checkout main` が通らず `feature/T-xxx` の枝は消されずに残る（黙って残る）ので、T-524 でスキルに書くときに扱いを決める。
+
 ### 2026-09-24 task コマンドの new・status・claim・release と台帳を作った（T-521）
 
 claude-skills `2eda698` に `task.py` と台帳（共有 `.git` の下の `task-workflow/`）を足した。既存のスキルからはまだ呼ばれないので、どのプロジェクトの挙動も変わらない。
