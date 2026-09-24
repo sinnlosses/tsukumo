@@ -36,6 +36,8 @@ export const REPORT_TOOL_NAME = "report"
  *
  * - **`thinking` は変換しない。** モデルの内部の思考なので内部の型にも入れない
  *   （docs/requirements.md 4.1）
+ * - **サブエージェントの中の本文（`text` と `text_delta`）は変換しない。** メインビューの本文は
+ *   メインのものだけ
  * - **`speak` の呼び出しは `tool-started` にしない。** `speech` として別に出す（吹き出し行き）
  * - **`report` の呼び出しも `tool-started` にしない。** `report` として別に出す（メインビュー行き）。
  *   **`parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる**——ターンの
@@ -107,7 +109,7 @@ export function toSessionEvents(
       return message.subtype === "compact_boundary" ? [{ kind: "compact-boundary" }] : []
     case "stream_event":
       return [
-        ...partialUtteranceEvents(message.event),
+        ...partialUtteranceEvents(message.event, optionalString(message.parent_tool_use_id)),
         ...reportDraftingEvents(message.event, optionalString(message.parent_tool_use_id)),
       ]
     case "assistant":
@@ -241,9 +243,14 @@ function backgroundTaskKind(taskType: unknown): BackgroundTaskKind {
 /**
  * `includePartialMessages` で流れる断片から、本文のテキストだけを拾う。
  * 本文以外のイベント（`content_block_start` / `message_delta` など）は無視する。
+ * **メインの断片だけ**（サブエージェントの本文は拾わない。{@link assistantBlockEvents}）。
  */
-function partialUtteranceEvents(event: unknown): readonly SessionEvent[] {
+function partialUtteranceEvents(
+  event: unknown,
+  parentToolUseId: string | undefined,
+): readonly SessionEvent[] {
   if (
+    parentToolUseId !== undefined ||
     !isPlainObject(event) ||
     event.type !== "content_block_delta" ||
     !isPlainObject(event.delta)
@@ -434,7 +441,12 @@ function assistantBlockEvents(
   }
 
   if (block.type === "text") {
-    return typeof block.text === "string" && !isBlankText(block.text)
+    // サブエージェントの本文は委譲先の独り言で、メインの手元に届くだけにする（`report` と同じ）。
+    // 進み具合は委譲先が `SendMessage` で送り、メインが `speak` で言い直す
+    // （`src/server/core/speech-cadence.ts`）。
+    return parentToolUseId === undefined &&
+      typeof block.text === "string" &&
+      !isBlankText(block.text)
       ? [{ kind: "utterance", text: block.text }]
       : []
   }

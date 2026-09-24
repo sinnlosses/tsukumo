@@ -73,6 +73,25 @@ describe("toSessionEvents", () => {
     ])
   })
 
+  it("サブエージェントの中のテキストは本文にしない（委譲先の独り言をメインビューに出さない）", () => {
+    const message = assistantMessage(
+      [{ type: "text", text: "Dummy progress note." }],
+      "toolu_sub_1",
+    )
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
+  it("サブエージェントの中の text_delta は書きかけの本文にしない", () => {
+    const message = {
+      type: "stream_event",
+      event: { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "Dum" } },
+      parent_tool_use_id: "toolu_sub_1",
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
   it("stream_event でも本文以外の断片は無視する", () => {
     const started = {
       type: "stream_event",
