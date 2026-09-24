@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render, screen } from "@testing-library/react"
 
-import { type AchievementDaySwitch } from "../../../../src/browser/features/achievement/hooks/use-achievement.ts"
+import {
+  type AchievementDaySwitch,
+  type AchievementReviewButton,
+} from "../../../../src/browser/features/achievement/hooks/use-achievement.ts"
 import {
   PresentationalAchievementScreen,
   type PresentationalAchievementScreenProps,
@@ -27,6 +30,12 @@ const KNOWN_YESTERDAY: AchievementDaySwitch = {
 
 const NOOP = (): void => {}
 
+const AVAILABLE_REVIEW: AchievementReviewButton = {
+  label: "つくもと振り返る",
+  availability: { kind: "available" },
+  onReview: NOOP,
+}
+
 const DEFAULT_PROPS: PresentationalAchievementScreenProps = {
   view: { kind: "ready", commitCount: 3, doneTasks: { kind: "known", items: [] } },
   daySwitch: KNOWN_TODAY,
@@ -34,6 +43,7 @@ const DEFAULT_PROPS: PresentationalAchievementScreenProps = {
   onPreviousDay: NOOP,
   onNextDay: NOOP,
   onToday: NOOP,
+  review: AVAILABLE_REVIEW,
 }
 
 function renderScreen(
@@ -175,9 +185,39 @@ describe("PresentationalAchievementScreen", () => {
     expect(document.querySelector(".achievement-content")?.className).toContain("is-fetching")
   })
 
-  it("「つくもと振り返る」ボタンは置かない（T-514の担当）", () => {
-    renderScreen()
+  it("押せるときはボタンが出て、押すと onReview が1回呼ばれる", () => {
+    let calls = 0
+    renderScreen({ review: { ...AVAILABLE_REVIEW, onReview: () => (calls += 1) } })
 
+    const button = screen.getByRole("button", { name: "つくもと振り返る" })
+    expect(button.getAttribute("aria-disabled")).toBe("false")
+
+    button.click()
+
+    expect(calls).toBe(1)
+  })
+
+  it("押せないときは aria-disabled になり、理由が下に出る", () => {
+    renderScreen({
+      review: {
+        label: "つくもと振り返る",
+        availability: { kind: "blocked", reason: "いまターンが動いているので送れない" },
+        onReview: NOOP,
+      },
+    })
+
+    expect(
+      screen.getByRole("button", { name: "つくもと振り返る" }).getAttribute("aria-disabled"),
+    ).toBe("true")
+    expect(screen.getByText("いまターンが動いているので送れない")).toBeDefined()
+  })
+
+  it("読み込み中・取れなかったときはボタンを出さない", () => {
+    renderScreen({ view: { kind: "loading" }, daySwitch: { kind: "unknown" } })
+    expect(screen.queryByRole("button", { name: /振り返る/ })).toBeNull()
+
+    cleanup()
+    renderScreen({ view: { kind: "failed" }, daySwitch: KNOWN_YESTERDAY })
     expect(screen.queryByRole("button", { name: /振り返る/ })).toBeNull()
   })
 })

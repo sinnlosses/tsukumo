@@ -135,3 +135,40 @@
   color: var(--ink-quiet);
   font-size: var(--font-body);
 }
+
+/* 振り返りのボタン（13.10「並べるもの」4）。**唯一キャラクターの色（--accent）を載せる**
+   （13.1 原則1。ほかはどれも読むだけの面なので地・枠・字は既存のトークンのまま）。形は
+   入力欄の送信ボタン（`dispatch-send`）と同じ組み合わせ。 */
+.achievement-review {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+.achievement-review-button {
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5625rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-family: var(--font-sans);
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.achievement-review-button:hover {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+.achievement-review-button[aria-disabled="true"] {
+  background: var(--surface);
+  border-color: var(--rule);
+  color: var(--ink-quiet);
+  cursor: default;
+}
+.achievement-review-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}

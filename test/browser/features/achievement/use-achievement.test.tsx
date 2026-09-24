@@ -5,7 +5,10 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
 import { useAchievement } from "../../../../src/browser/features/achievement/hooks/use-achievement.ts"
+import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
 import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
+import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 /**
  * 画面（`achievement-screen.tsx`）を丸ごと描かずに、日の切り替えと取得の畳み方だけを測る
@@ -46,16 +49,28 @@ function okResponse(body: unknown): StubResponse {
   return { ok: true, status: 200, json: () => Promise.resolve(body) }
 }
 
-/** `useQuery` が要る `QueryClientProvider`。**client は呼び出し側で1回だけ作る**
- * （再レンダーのたびに作り直すとキャッシュが毎回リセットされ、日を切り替えた取り直しが測れない）。 */
-function achievementWrapper(client: QueryClient): (props: { children: ReactNode }) => ReactElement {
+/** `useQuery` が要る `QueryClientProvider` と、`useAchievement` が読む session store。
+ * **client は呼び出し側で1回だけ作る**（再レンダーのたびに作り直すとキャッシュが毎回リセット
+ * され、日を切り替えた取り直しが測れない）。 */
+function achievementWrapper(
+  client: QueryClient,
+  store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE),
+): (props: { children: ReactNode }) => ReactElement {
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    return (
+      <SessionStoreContext.Provider value={store}>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </SessionStoreContext.Provider>
+    )
   }
 }
 
 function newClient(): QueryClient {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } })
+}
+
+function stateWith(patch: Partial<SessionState>): SessionState {
+  return { ...INITIAL_SESSION_STATE, ...patch }
 }
 
 const KNOWN_TODAY: DailyAchievement = {
@@ -212,5 +227,107 @@ describe("useAchievement", () => {
     })
 
     expect(window.location.hash).toBe("#achievement")
+  })
+})
+
+describe("useAchievement（振り返りのボタン）", () => {
+  it("押すと依頼を1回送り、会話の画面へ移る", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const spy: CommandSpy = (command) => sent.push(command)
+    const sent: unknown[] = []
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({}), spy)),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    expect(result.current.review.availability).toEqual({ kind: "available" })
+
+    act(() => {
+      result.current.review.onReview()
+    })
+
+    expect(sent).toHaveLength(1)
+    expect((sent[0] as { readonly type: string }).type).toBe("prompt")
+    expect(window.location.hash.startsWith("#achievement")).toBe(false)
+  })
+
+  it("ターンが進行中は押せず、押しても送らない", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const spy: CommandSpy = (command) => sent.push(command)
+    const sent: unknown[] = []
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(stateWith({ turn: { kind: "running", startedAt: 0 } }), spy),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    expect(result.current.review.availability.kind).toBe("blocked")
+
+    act(() => {
+      result.current.review.onReview()
+    })
+
+    expect(sent).toHaveLength(0)
+  })
+
+  it("空の日は押せず、送らない（ターンが進行中でも空の日の理由になる）", async () => {
+    const emptyDay: DailyAchievement = {
+      kind: "known",
+      date: "2026-09-24",
+      today: "2026-09-24",
+      commitCount: 0,
+      doneTasks: { kind: "known", items: [] },
+    }
+    stubAchievementFetch(() => okResponse(emptyDay))
+    const spy: CommandSpy = (command) => sent.push(command)
+    const sent: unknown[] = []
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(stateWith({ turn: { kind: "running", startedAt: 0 } }), spy),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    expect(
+      result.current.review.availability.kind === "blocked"
+        ? result.current.review.availability.reason
+        : "",
+    ).toBe("振り返る成果が無い")
+
+    act(() => {
+      result.current.review.onReview()
+    })
+
+    expect(sent).toHaveLength(0)
+  })
+
+  it("雑談中でも押せる", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({ chatMode: true }))),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.review.availability).toEqual({ kind: "available" })
+  })
+
+  it("キャラクターの名前を持たないときは既定の名前でボタンの文言を組む", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({}))),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.review.label).toBe("キャラクターと振り返る")
   })
 })

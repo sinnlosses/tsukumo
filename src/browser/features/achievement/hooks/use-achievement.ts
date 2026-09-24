@@ -6,25 +6,42 @@
 // hash の raw な値だけでは「前の日」「今日」を計算できない。`docs/design.md` 5章「成果の集め方と
 // 配り方」）。前の日は常に計算できる（そのまま引くだけ）が、次の日と「今日へ」は「いま見ている日が
 // 今日かどうか」が要るので、応答が届くまで押せない。
+//
+// **「つくもと振り返る」ボタン（`docs/screen-design.md` 13.10「並べるもの」4）のロジックもここに
+// 持つ**——押せない条件（ターンが進行中・空の日）は `use-usage-review.ts` の
+// `startAvailability` と同じ形、押したあとの依頼と画面遷移は `use-current-work.ts` の
+// `onGoToQuestion` と同じ形（コマンドを送った直後だけ `navigateTo` を読む。`stores/screen.tsx`
+// 冒頭の注記）。
 
 import { useQuery, type Query } from "@tanstack/react-query"
 
 import {
+  achievementReviewRequestText,
   ACHIEVEMENT_DATE_QUERY_NAME,
   ACHIEVEMENT_PATH,
+  isEmptyAchievementDay,
   nextDateKey,
   previousDateKey,
   readDailyAchievement,
   type AchievementDoneTasks,
   type DailyAchievement,
 } from "../../../../shared/achievement.ts"
+import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { sessionTokenUrl } from "../../../lib/session-token-url.ts"
-import { type AchievementDateSelection } from "../../../stores/location-hash.ts"
+import { type AchievementDateSelection, type Screen } from "../../../stores/location-hash.ts"
 import {
+  navigateTo,
   selectAchievementDate,
   selectAchievementToday,
   useAchievementDateSelection,
+  useScreen,
 } from "../../../stores/screen.tsx"
+import {
+  useSessionDispatch,
+  useSessionSelector,
+  useTurnRunning,
+  type SessionDispatch,
+} from "../../../stores/session.tsx"
 
 /** 今日を見ているあいだだけ取り直す間隔（13.10「並べるもの」のさらに上、5章「取り直す契機」）。 */
 const TODAY_REFETCH_INTERVAL_MS = 60_000
@@ -52,6 +69,19 @@ export type AchievementView =
       readonly doneTasks: AchievementDoneTasks
     }
 
+/** 振り返りのボタンを押せるか（13.10「ボタンを押せないとき・押したあと」）。 */
+export type AchievementReviewAvailability =
+  | { readonly kind: "available" }
+  | { readonly kind: "blocked"; readonly reason: string }
+
+/** 振り返りのボタン1つぶんの見た目と押す口。 */
+export type AchievementReviewButton = {
+  /** 「<パックの名前>と振り返る」（13.10「並べるもの」4）。 */
+  readonly label: string
+  readonly availability: AchievementReviewAvailability
+  readonly onReview: () => void
+}
+
 export type UseAchievementResult = {
   readonly view: AchievementView
   readonly daySwitch: AchievementDaySwitch
@@ -60,10 +90,21 @@ export type UseAchievementResult = {
   readonly onPreviousDay: () => void
   readonly onNextDay: () => void
   readonly onToday: () => void
+  readonly review: AchievementReviewButton
 }
+
+const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない"
+const EMPTY_DAY_BLOCKED_REASON = "振り返る成果が無い"
 
 export function useAchievement(): UseAchievementResult {
   const selection = useAchievementDateSelection()
+  const dispatch = useSessionDispatch()
+  const turnRunning = useTurnRunning()
+  const chatMode = useSessionSelector((session) => session.state.chatMode)
+  const characterName = useSessionSelector(
+    (session) => session.state.character?.name ?? DEFAULT_CHARACTER_NAME,
+  )
+  const screen = useScreen()
   const query = useQuery({
     queryKey: ["achievement", queryDateKey(selection)],
     queryFn: () => fetchAchievement(selection),
@@ -78,9 +119,10 @@ export function useAchievement(): UseAchievementResult {
   })
 
   const daySwitch = daySwitchOf(query.data)
+  const view = viewOf(query.data, query.isPending, query.isError)
 
   return {
-    view: viewOf(query.data, query.isPending, query.isError),
+    view,
     daySwitch,
     isFetching: query.isFetching,
     onPreviousDay: () => {
@@ -95,6 +137,65 @@ export function useAchievement(): UseAchievementResult {
     },
     onToday: () => {
       selectAchievementToday()
+    },
+    review: reviewButtonOf(view, daySwitch, turnRunning, chatMode, characterName, dispatch, screen),
+  }
+}
+
+/**
+ * 振り返りのボタン（13.10「並べるもの」4・「ボタンを押せないとき・押したあと」）。
+ * **空の日の理由をターンが動いている理由より先に見る**——両方成り立つときは空の日の理由だけを
+ * 出す決まり（同節）。押すと依頼を1回送り、会話の画面へ移る（`use-current-work.ts` の
+ * `onGoToQuestion` と同じく、いま居る画面が違うときだけ `navigateTo` を呼ぶ）。
+ */
+function reviewButtonOf(
+  view: AchievementView,
+  daySwitch: AchievementDaySwitch,
+  turnRunning: boolean,
+  chatMode: boolean,
+  characterName: string,
+  dispatch: SessionDispatch,
+  screen: Screen,
+): AchievementReviewButton {
+  const label = `${characterName}と振り返る`
+
+  if (view.kind !== "ready" || daySwitch.kind !== "known") {
+    return { label, availability: { kind: "blocked", reason: "" }, onReview: () => {} }
+  }
+
+  const availability: AchievementReviewAvailability = isEmptyAchievementDay(
+    view.commitCount,
+    view.doneTasks,
+  )
+    ? { kind: "blocked", reason: EMPTY_DAY_BLOCKED_REASON }
+    : turnRunning
+      ? { kind: "blocked", reason: TURN_RUNNING_BLOCKED_REASON }
+      : { kind: "available" }
+
+  return {
+    label,
+    availability,
+    // **押せないときは何も送らない**（`use-screen-nav.ts` の `onChange` と同じく、guard は
+    // ここに置き、部品は「押した事実を渡すだけ」。`aria-disabled` はフォーカスを通すための
+    // 見た目の扱いで、クリックそのものは止めない）。
+    onReview: () => {
+      if (availability.kind !== "available") {
+        return
+      }
+      dispatch({
+        type: "prompt",
+        text: achievementReviewRequestText({
+          date: daySwitch.date,
+          today: daySwitch.today,
+          commitCount: view.commitCount,
+          doneTasks: view.doneTasks,
+          chatMode,
+        }),
+        images: [],
+      })
+      if (screen !== "conversation") {
+        navigateTo("conversation")
+      }
     },
   }
 }

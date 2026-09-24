@@ -1,7 +1,9 @@
 // 成果の画面の器（docs/design.md 2章「機能の中を分ける」）。フックも算出も持たず、受け取った値を
 // そのまま置く。並べるもの・空の日の見せ方は docs/screen-design.md 13.10 が正典。
 //
-// **「つくもと振り返る」ボタンはここには無い**（T-514 の担当。13.10「並べるもの」4）。
+// **振り返りのボタン（13.10「並べるもの」4）は `ready` の中身の下に置く**——`loading` /
+// `failed` のときは押しても送る数が定まらないので、`use-achievement.ts` の `review` が
+// `blocked` かつ理由を持たない形で返ってくる（そのときはボタンを出さない）。
 
 import { type ReactElement } from "react"
 
@@ -10,6 +12,7 @@ import { dayLabel } from "../../utils/day-label.ts"
 import styles from "./achievement.module.css"
 import {
   type AchievementDaySwitch,
+  type AchievementReviewButton,
   type AchievementView,
   type UseAchievementResult,
 } from "./hooks/use-achievement.ts"
@@ -43,7 +46,7 @@ export function PresentationalAchievementScreen(
             onNextDay={props.onNextDay}
             onToday={props.onToday}
           />
-          <Content view={props.view} isFetching={props.isFetching} />
+          <Content view={props.view} isFetching={props.isFetching} review={props.review} />
         </>
       )}
     </div>
@@ -119,6 +122,7 @@ function dayHeading(daySwitch: AchievementDaySwitch): string {
 type ContentProps = {
   readonly view: Exclude<AchievementView, { readonly kind: "unavailable" }>
   readonly isFetching: boolean
+  readonly review: AchievementReviewButton
 }
 
 /**
@@ -167,6 +171,29 @@ function Content(props: ContentProps): ReactElement {
       ) : (
         <TaskList items={doneTasks.items} />
       )}
+      <ReviewButton review={props.review} />
+    </div>
+  )
+}
+
+/** 「<パックの名前>と振り返る」ボタン（13.10「並べるもの」4）。押せないときは理由を下に添える。 */
+function ReviewButton(props: { readonly review: AchievementReviewButton }): ReactElement {
+  const { review } = props
+  const { availability } = review
+
+  return (
+    <div className={styles["achievement-review"]}>
+      <button
+        type="button"
+        className={styles["achievement-review-button"]}
+        aria-disabled={availability.kind === "blocked"}
+        onClick={review.onReview}
+      >
+        {review.label}
+      </button>
+      {availability.kind === "blocked" && availability.reason !== "" ? (
+        <p className={styles["achievement-review-note"]}>{availability.reason}</p>
+      ) : null}
     </div>
   )
 }

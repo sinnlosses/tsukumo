@@ -78,6 +78,91 @@ export function readDailyAchievement(value: unknown): DailyAchievement {
   return parsed.success ? parsed.data : UNKNOWN_ACHIEVEMENT
 }
 
+/** 一覧に並べるタスクの上限（`docs/requirements.md` 4.11「振り返りの依頼」）。 */
+const MAX_LISTED_REQUEST_TASKS = 20
+
+/**
+ * 空の日か（コミットも終えたタスクも0）。**終えたタスクの記録が無い（`unknown`）ときは
+ * 「空」と決めない**——コミットが0でもタスクの有無が分からないため、押せなくする理由には
+ * しない（`docs/screen-design.md` 13.10「コミットはあり、終えたタスクが0」の割り切りを、
+ * タスクが数えられないときにも安全側へ倒す）。
+ */
+export function isEmptyAchievementDay(
+  commitCount: number,
+  doneTasks: AchievementDoneTasks,
+): boolean {
+  return commitCount === 0 && doneTasks.kind === "known" && doneTasks.items.length === 0
+}
+
+/**
+ * 振り返りのボタンを押したときに会話へ送る依頼文（`docs/requirements.md` 4.11「振り返りの依頼」）。
+ * **画面に出している数だけから組み立てる**——コミットの件名や会話の文面は入れない
+ * （`docs/coding-standards.md`「会話内容の扱い」）。
+ */
+export function achievementReviewRequestText(params: {
+  readonly date: string
+  readonly today: string
+  readonly commitCount: number
+  readonly doneTasks: AchievementDoneTasks
+  /** 雑談中は `report` ツールが無いので、その1行を足さない。 */
+  readonly chatMode: boolean
+}): string {
+  const dayPhrase = achievementRequestDayPhrase(params.date, params.today)
+  const taskCountClause = achievementTaskCountClause(params.doneTasks)
+  const commitClause = `main に入ったコミットは ${String(params.commitCount)} 件`
+  const headLine =
+    taskCountClause === ""
+      ? `${dayPhrase}の成果を一緒に振り返ってほしい。${commitClause}。`
+      : `${dayPhrase}の成果を一緒に振り返ってほしい。${commitClause}、${taskCountClause}`
+
+  const lines = [headLine]
+  const taskListLines = achievementTaskListLines(params.doneTasks)
+  if (taskListLines.length > 0) {
+    lines.push("終えたタスク:", ...taskListLines)
+  }
+  lines.push(
+    "感想を speak で聞かせて。どれか1〜2件に触れてくれると嬉しい。ファイルやログは読みに行かず、この一覧だけで話してほしい。次にやることの提案はいらない。",
+  )
+  if (!params.chatMode) {
+    lines.push("report は、何日の分を振り返ったかの1行でよい。")
+  }
+  return lines.join("\n")
+}
+
+/** 「今日」「昨日」、それより前は「9月21日」の形（`dayLabel` と違い曜日は付けない）。 */
+function achievementRequestDayPhrase(date: string, today: string): string {
+  if (date === today) {
+    return "今日"
+  }
+  if (date === previousDateKey(today)) {
+    return "昨日"
+  }
+  const parsed = Temporal.PlainDate.from(date)
+  return `${String(parsed.month)}月${String(parsed.day)}日`
+}
+
+/** 「終えたタスクは 5 件。」/「終えたタスクは無いけれど。」/数えられないときは空文字。 */
+function achievementTaskCountClause(doneTasks: AchievementDoneTasks): string {
+  if (doneTasks.kind === "unknown") {
+    return ""
+  }
+  if (doneTasks.items.length === 0) {
+    return "終えたタスクは無いけれど。"
+  }
+  return `終えたタスクは ${String(doneTasks.items.length)} 件。`
+}
+
+/** 「- T-xxx summary」の並び。20件を超えたら「ほか n 件」の1行に畳む。 */
+function achievementTaskListLines(doneTasks: AchievementDoneTasks): readonly string[] {
+  if (doneTasks.kind === "unknown" || doneTasks.items.length === 0) {
+    return []
+  }
+  const shown = doneTasks.items.slice(0, MAX_LISTED_REQUEST_TASKS)
+  const rest = doneTasks.items.length - shown.length
+  const lines = shown.map((task) => `- ${task.id} ${task.summary}`)
+  return rest > 0 ? [...lines, `- ほか ${String(rest)} 件`] : lines
+}
+
 /** 前の日の日付キー（`Temporal.PlainDate` の引き算。時計は読まない）。 */
 export function previousDateKey(dateKey: string): string {
   return Temporal.PlainDate.from(dateKey).subtract({ days: 1 }).toString()
