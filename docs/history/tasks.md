@@ -30788,3 +30788,306 @@ summarize_usage.py --json に節 estimates（version 1・measured false・status
 - 触るのは T-377 で承認を得た `token-usage-diet` スキルだけ。ほかのグローバルな設定（`~/.claude/settings.json` など）には触らない
 - 記録を外部へ送らない・別の場所に複製しない・生の JSONL を文脈に読み込まない（`docs/coding-standards.md`「会話内容の扱い」、SKILL.md「6. 記録の扱い」）
 - T-503 は、このタスクの見積もりの節を使って冒頭の「約X%」と効きめを埋める
+
+## T-446
+
+**タスク**: API の再試行・失敗・利用上限を捨てずに受け取り、画面に理由を出す
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2132 pass / 0 fail, 161ファイル）。test/server/core/sdk-message.test.ts に api_retry・rate_limit_event・assistant の error・result の失敗のテスト、turn.test.tsx に失敗で終わったターンが字（「失敗で終わった」と理由）で見分けられるテスト。PROTOCOL_VERSION 11→12。
+目視: fake driver（port 4879・一時ホーム）で Playwright、1440×900 と 390×844 で場面 api-retry（入力欄に「再試行中 1/10→2/10」、本文が届くと消える）・api-failure（メインビューに「失敗で終わった / API のサーバの不調（server_error）」、入力欄「失敗 7秒」）・rate-limit（「利用上限が近い」→「利用上限 9/25 18:00まで」）を確認、横スクロール無し。
+残り: 上限の表示は次の rate_limit_event まで消えない。本物の API での確認はしていない。
+
+## 背景
+
+API がうまくいかなかったとき、tsukumo の画面には何も出ない:
+
+- `src/server/core/sdk-message.ts` の `toSessionEvents` は `system` のうち `init` / `commands_changed` / `compact_boundary` しか見ず、**`api_retry`**（再試行の回数・待ち時間・`error_status`・`error`）を捨てる。`rate_limit_event`（claude.ai の利用上限の情報）も `switch` に無い
+- `assistant` メッセージの **`error`**（`SDKAssistantMessageError`: `rate_limit` / `overloaded` / `authentication_failed` / `billing_error` / `max_output_tokens` / `server_error` …）を見ていない
+- `result` は `turnStatus` で `success` / `error` に倒すだけで、`result` の `errors` も `subtype`（`error_max_turns` など）も捨てる。`turn-finished` の `status` は `src/shared/session-event.ts` にあるが、**ブラウザ側で `status` を読んでいる場所が無い**（`grep -rn 'TurnStatus' src/browser` は部品名だけ）
+
+このため、利用上限に当たった・API が混んでいて再試行している・認証が切れた、のどれでも、利用者には「ターンが黙って終わった」か「経過時間が進み続ける」ようにしか見えない。仕事が捗ることにも、キャラクターが一緒にいる感じにも反する。型は `node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（0.3.280） の `SDKAPIRetryMessage` / `SDKRateLimitEvent` / `SDKAssistantMessageError` / `SDKResultMessage`。
+
+## 決まっていること（蒸し返さない）
+
+- 2026-09-23 の「tsukumo の目的に合う、まだ作っていない機能で必要な機能や改善すべき機能を洗い出し、タスク化してほしい」（ユーザー）で見つけたもの
+
+## 解くべき論点
+
+- 画面のどこに出すか（入力欄の `TurnStatus` の行・メインビューのターンの末尾・帯のいまの作業）。再試行中（まだ続く）と失敗で終わった（もう続かない）と利用上限（いつ戻るか）を同じ場所に出すか
+- `SessionEvent` をどう足すか（再試行・失敗の理由・利用上限の状態）。`SessionState` に何を持つか。**`PROTOCOL_VERSION` を上げる**
+- 表情は `speak` の1つだけが源（`docs/requirements.md` 4.3）。立ち絵の動き（道具の失敗で「びくっ」とするもの。`src/shared/portrait-motion.ts`）を失敗にも当てるか
+- 利用上限の情報（`rate_limit_info`）のうち何を出すか（戻る時刻・種別）
+
+## やること
+
+1. 型定義を読み、それぞれのメッセージが**いつ・何回**来るかを確かめる（疑似セッションで再現できるものは足す。本物の API で上限や再試行を起こす必要は無い）
+2. 論点に答え、`sdk-message.ts` → `SessionEvent` → `SessionState` → 部品の順に足す。`docs/requirements.md` 4.1 の表と 4.2 の該当箇所、`docs/design.md` 4章・該当する画面の節に書く
+3. 疑似セッションに「再試行してから成功」「失敗で終わる」「利用上限」の場面を足す
+
+## 完了条件
+
+- `api_retry` / `rate_limit_event` / `assistant` の `error` / `result` の失敗の各々について、`sdk-message.ts` のテストがある
+- 失敗で終わったターンを、画面で成功と見分けられる（色だけでなく文字でも）
+- 疑似セッション（`TSUKUMO_DRIVER=fake`。要れば疑似セッションに場面を足す）で見え方を目視で確かめ、どの端末で何が見えたかを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## 注意
+
+- `docs/` を編集するときは節の索引に当たらないよう行頭から位置を特定し（`\n### ` のように改行から）、編集の前後で `grep -c '^#\{2,3\} ' <ファイル>` の数が変わらないことを確かめる（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+- エラーの文面に会話の断片が混ざりうる（`result` の `errors`）。出すのは型の決まった理由（`error` の列挙値・`error_status`・回数と待ち時間）に限り、自由文をそのまま画面やログへ流すかは論点で決める
+
+## T-501
+
+**タスク**: トークン消費の画面に減らし方の提案の区画を足し、ふだんと見直し中を見本に揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-499, T-500, T-503 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2085 pass / 0 fail, 161ファイル）。部品のテストでボタン→依頼1回、見直し中に段の印・経過・止める→interrupt 1回、前回の提案が無いとリンクが出ないことを確認。
+目視: fake driver で ふだん・雑談中（押せない理由つき）を 1440/390 で確認し横スクロール0。本物のセッション（port 4876）でボタンを押し、題の帯に「見直し中」、段が model→proposal と進み数・経過・直近のセリフ・止めるが出た（1440/390 とも横スクロール0）。
+終わるとふだんに戻り「前回の提案」リンクが出て、ヘッダーの札は依頼待ちに戻った。札への追記は不要と判断（screen-design.md 13.2 に記録）。前回の提案リンクは T-502 まで押しても何も起きない。
+
+## 背景
+
+トークン消費の画面は container `src/browser/features/token-usage/token-usage-screen.tsx` と器 `presentational-token-usage-screen.tsx` で、上から題の帯（`token-usage-bar`。題とプラン名）・いまのコンテキストの札（`ContextUsageCard`）・期間の消費・モデル別とツール別の表。2026-09-23 にユーザーが決めた見本:
+
+| 場面 | HTML | 撮影 |
+| --- | --- | --- |
+| ふだん（ボタン） | `docs/history/mockup/token-advice-idle-2026-09-23.html` | `token-advice-idle-2026-09-23.png`（1440x780） |
+| 見直し中 | `docs/history/mockup/token-advice-running-2026-09-23.html` | `token-advice-running-2026-09-23.png`（1440x860） |
+| 結果 | `docs/history/mockup/token-advice-result-2026-09-23.html` | `token-advice-result-2026-09-23.png`（1440x980） |
+
+- **見本の「いまのコンテキスト」はいまの `ContextUsageCard` そのもので、このタスクの対象外**。最上部の帯（`features/screen-nav/`）も対象外
+- 区画は題の帯といまのコンテキストの札のあいだに入る
+- `[09-16]` `[0:24]` `[サンプル値]` などの角括弧は差し込みの目印で、実物の値を入れる
+- 色は見本の16進をそのまま書かず、`src/browser/styles/theme.css` のトークンに当てる（見本の `#66d1be` は仕事の差し色＝`--accent`）
+
+見本の形:
+
+- ふだん: 丸い顔・「tsukumo に減らし方を見てもらう」・説明「直近 7 日の使い方（モデル・ツール・キャッシュ・コンテキスト）から、効きそうな見直しを挙げます。見るだけで、設定は変えません。」・差し色の「減らし方を見てもらう」ボタン・「前回の提案（日付）」のリンク
+- 見直し中: 区画の枠が差し色になり、題の帯の右に押せない「見直し中」。区画の中は顔・「見直し中…」・直近のセリフ（かぎ括弧つき）・経過時間・「止める」・進みの棒・5つの段を2列（済は ✓、進行中は回る印、未着手は ○。右に数）・注記「ほかの画面に移っても続きます。終わったらヘッダーとキャラの吹き出しで知らせます。」
+
+## 決まっていること（蒸し返さない）
+
+- ボタンは**いまの会話へ1ターンの依頼**を送る（スキル `token-usage-diet` の呼び出し。T-377 が作り、T-503 で tsukumo の口に載る。名前が変わっていたら T-377 の `evidence` を見る）。送り方は `src/browser/features/task-board/components/task-run-confirm.tsx` の `dispatch({ type: "prompt", ... })` と同じ
+- 「止める」は `interrupt` を送る
+- 見直し中かどうか・段の進み・前回の提案はサーバが持つ（T-499・T-500）。ほかの画面に移っても続く
+
+## 解くべき論点
+
+- ほかのターンが進んでいるとき・雑談モードのときのボタンの扱い（押せなくするなら理由を添える）
+- 終わりの知らせ: 吹き出しはスキルの締めの `speak` が受け持つ。ヘッダーのいまの作業の札（`features/screen-nav/`）がターンの終わりにどう変わるかを確かめ、見直しが済んだことが分からなければ札に一言を足す（足すなら `docs/screen-design.md` の帯の節も直す）。確かめて足りていれば足さずに `evidence` に書く
+- 直近のセリフの出どころ（吹き出しと同じ最新の `speak`）
+- 狭い幅での段の並び（2列→1列）と、動きを減らす設定のときの回る印
+
+## やること
+
+1. 区画の部品（ふだん・見直し中）を作る（container / presenter の分け方は `docs/design.md` 2章「機能の中を分ける」）
+2. 題の帯の右に押せない「見直し中」を置く
+3. `docs/screen-design.md` のトークン消費の画面の節に書き足す（行頭を含めて位置を特定する。`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## 完了条件
+
+- ボタンを押すと依頼が1回送られる（部品のテスト）
+- 見直し中の状態で段の印・経過・「止める」が出て、「止める」で `interrupt` が1回送られる（部品のテスト）
+- 前回の提案が無いときはリンクが出ない（部品のテスト）
+- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）。見直し中は実際にボタンを押して撮る
+- `bun run check` が通る
+
+## T-502
+
+**タスク**: 見直しの結果を提案の札に並べ、頼む・タスクにする・見送るを押せるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-501 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2100 pass / 0 fail, 161ファイル）。部品のテストで提案の数だけ札・効きめ・主ボタンの文言が中身どおり、主ボタンで依頼1回、見送るでコマンド1回と札の消滅を確認。
+目視: 本物のセッション（port 4878）で「減らし方を見てもらう」を押し、見直し中→結果で5件（大1・中2・小2）が出た。1440/390 とも横スクロール0、390 は札が縦積み。進行中は主ボタンと「もう一度見てもらう」が理由つきで押せない。
+見送るを1件押すと札が4件に減り、再起動後の「前回の提案」から同じ札が見送り分を除いて開き、閉じるで戻れた。主ボタンは本物では押していない。試した見送りのファイルは後で消した。
+
+## 背景
+
+T-501 でトークン消費の画面に提案の区画（ふだん・見直し中）ができる。残りは結果の場面（見本 `docs/history/mockup/token-advice-result-2026-09-23.html`、撮影 `token-advice-result-2026-09-23.png`。見本の一覧は T-501 の本文）。
+
+見本の形:
+
+- 上段: 丸い顔と吹き出しの形の一言（小さく「tsukumo」、その下に冒頭の一言）。右に日時 · 期間（「直近 7 日」）と「もう一度見てもらう」
+- 提案の札（縦に並ぶ）: 左に「効きめ」の札（大は差し色、中は黄、小は灰）、見出し・「根拠：」・「やること：」、右に枠つきの主ボタンと文字だけの「見送る」
+- 見本の結果の場面にはいまのコンテキストの札が写っていないが、画面の残り（いまのコンテキスト・期間の消費・表）は区画の下にそのまま置く
+
+## 決まっていること（蒸し返さない）
+
+- 「tsukumo に頼む」「タスクにする」は**会話への依頼**を送る（文面は T-499 の結論）
+- 見本の「設定を開く」は置かず、「tsukumo に頼む」にする（行き先が無いため。2026-09-23 ユーザー決定）
+- 「見送る」は T-500 のコマンドを送り、札はその場で消える。次の見直しでも出ない
+- 「前回の提案」のリンクから開いたときも同じ札の形で出る
+
+## 解くべき論点
+
+- 依頼を送ったあと画面をどうするか（会話の画面へ移るか、留まるか）
+- 全部見送ったときの区画の一言
+- ターンが進んでいるあいだの主ボタン・「もう一度見てもらう」の扱い
+
+## やること
+
+1. 結果の部品を作る（上段・札）
+2. 主ボタン・「見送る」・「もう一度見てもらう」をつなぐ
+3. `docs/screen-design.md` のトークン消費の画面の節に書き足す
+
+## 完了条件
+
+- 結果の状態で、提案の数だけ札が出て、効きめの札と主ボタンの文言が提案の中身どおりになる（部品のテスト）
+- 主ボタンで依頼が1回送られ、「見送る」でコマンドが1回送られて札が消える（部品のテスト）
+- 実際の tsukumo で「減らし方を見てもらう」を押し、スキルが流れて見直し中から結果まで進むのを確かめる。描画に関わるので、`bun run build` のうえで tsukumo を起こし、見本の撮影と見比べた結果（どの場面で何が見えたか。横スクロールが出ないか）を `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## T-503
+
+**タスク**: token-usage-diet スキルを、見直しの段と結果を tsukumo のツールで渡す形に直す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-377, T-499, T-500, T-504 / **passes**: True
+
+**evidence**:
+
+SKILL.md に冒頭の分岐（2つのツールがあれば7章、無ければ3章の本文レポート）と「7. tsukumo の中で見直しの2つのツールを呼ぶ」（7.1 段ごとに usage_review_stage / 7.2 提案を usage_review_result の引数に写す / 7.3 report ゲートとの折り合い：結果の受理後に report を短く1回）を足した。
+実機1回（port 4875・本物のホーム）: usage_review_stage 5回、usage_review_result 1回で受理（差し戻し無し）、そのあと report → 締めの speak で Stop の関所に掛からず終了。
+受理5件: 長いセッションを区切る(large)・Bash の結果を絞る(medium)・使わないスキルの定義を外す(medium)・CLAUDE.md を細くする(small)・サブエージェントの文脈を見直す(small)。src は無変更。
+
+## 背景
+
+T-377 が `~/.claude/skills/token-usage-diet/` にトークン消費を減らす提案を書くスキルを作る（2026-09-23 時点で別の作業ツリーが着手中）。T-377 の形では、提案は**本文のレポート**で返る。
+
+2026-09-23 にユーザーが、トークン消費の画面の「減らし方を見てもらう」から**このスキルがいまの会話の1ターンとして流れ、結果を tsukumo が整えて札に描く**と決めた（見本 `docs/history/mockup/token-advice-running-2026-09-23.html`・`token-advice-result-2026-09-23.html`）。T-499 が結果と段の進みを受け取る tsukumo の MCP ツールを、T-500 が見送った提案の一覧を渡す口を作る。
+
+## 決まっていること（蒸し返さない）
+
+- 見直しの段は見本の5つ（モデルの使い分け / キャッシュの効き方 / ツールの呼び方と結果の大きさ / コンテキストの中身 / 見直し案をまとめる）の順
+- 提案は 効きめ（大 / 中 / 小）・見出し・根拠・やること・押す口（「tsukumo に頼む」か「タスクにする」）の形で、T-499 のツールに渡す
+- 見送った提案（T-500 の口で受け取る）は出さない
+- 期間の既定は直近7日（見本の「直近 7 日」）
+- 分析はスキルが持ち、tsukumo 本体（`src/`）には足さない（T-377 の決定のまま）
+
+## 解くべき論点
+
+- tsukumo のツールが無い場（tsukumo の外の Claude Code）で呼ばれたときは、T-377 の形どおり本文のレポートで返すか
+- 冒頭の一言（見本「見てきたぞ！ 効きそうなのは 4 つ。…[約 X%] は減らせそうだ。」）の「約 X%」を数から出せるか。出せなければ言わない
+
+## やること
+
+1. T-499 のツールの説明文と T-500 の口を読み、スキルの手順を段ごとにツールを呼ぶ形に直す
+2. tsukumo の中で1回流し、段の進みと結果がツールに渡ることを確かめる
+
+## 完了条件
+
+- `~/.claude/skills/token-usage-diet/SKILL.md` が T-499 のツールを呼ぶ手順になっている（`evidence` に直した節の名前を書く）
+- tsukumo の中で1回流し、ツールが受け付けた提案の数と見出しを `evidence` に書く（記録の中身そのものは貼らない）
+- リポジトリの変更が `develop/` の更新だけなら `bun run check` は要らない。`src/` を触ったなら `bun run check` が通る
+
+## 注意
+
+- 触るのは T-377 で承認を得た `token-usage-diet` スキルだけ。ほかのグローバルな設定（`~/.claude/settings.json` など）には触らない
+- 記録を外部へ送らない・別の場所に複製しない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## T-506
+
+**タスク**: 同梱パックの締めのセリフの例を消し、ホームのパックの古い締めの節も揃える
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 2132 pass / 0 fail（161ファイル）。完了条件の grep 2本はどちらも空、ホームのパックの ## 覚えたこと は前後とも12行。 / ホームの persona.md は「### 締めのセリフの言い方」節の中（旧120〜131行）だけが変わり、151行→147行。 / 同梱パック2つは節の例3項目を消して地の文へ統合、docs/display.md:292 を「言い方の条は」に
+
+## 背景
+
+2026-09-24 のプロンプト監査（`/claude-api prompt-audit`）で見つかった F5。
+
+キャラクターパックの `persona.md`「### 締めのセリフの言い方」の節は、締めの `speak` で言う一言の**例を3つ固定で**並べている:
+
+- `characters/tsukumo/persona.md:126-130`（「片付いたぞ！まとめを書いておいたよ」「ひとつ頼みたいことがあるんだ。まとめの最後に書いておいた」「うわ、外した……。何が起きたか書いておいたよ」）
+- `characters/tsukumo-spirit/persona.md:97-101` 付近（同じ形の例）
+
+例はモデルが最も強くなぞる信号で、毎ターンほぼ同じ締めの一言になる。利用者は締めの一言を固定にしたくない。
+
+加えて、実際に効いているのはホームのパック `~/.tsukumo/characters/tsukumo/persona.md`（ホームのパックが同梱パックを覆う）で、こちらは古いまま残っている。123〜130行が「締めは**完了の宣言ではなく、これから書くことの予告**にする」「本文の `note-favor` の塊が正典」と言っていて、`src/server/core/report-notation.ts` の終わり方の条（`report` → 締めの `speak` → 「完了」）と、`src/server/core/report-violation.ts` の `favor-in-body`（上限0件。本文に `note-favor` を書くと差し戻す）の両方と食い違う。
+
+## 決まっていること（蒸し返さない）
+
+- 締めの一言の例（片付いたとき・お願いがあるとき・外したとき）は**削除する**。言い換えた例に差し替えない（利用者の指示「締めの一言を固定にしたくない」）
+- 同梱パックを直してから、ホームのパックの同じ節を同梱パックの文面に揃える。**ホームのファイル（リポジトリ外）を書き換えることは承認済み**
+- 節に残すのは、正典（`report-notation.ts`）への参照、「1〜2文で、書き終えたレポートへの一言」「レポートの中身を繰り返さない」「お願いの中身は言わない（`favor` が正典）」の言い方の条だけ
+- `src/server/core/report-notation.ts:139-141` の「予告の形で書かれていても『書いた』に言い換える」は**触らない**（tsukumo から直せないパックに備えたもので、`test/server/core/report-notation.test.ts:176` が守っている）
+
+## 解くべき論点
+
+- 例を消したあと「お願いがあるとき、中身は言わない」をどう箇条にせず言うか（例の括弧書きに入っていた理由を地の文へ移す）
+- `characters/tsukumo/persona.md:75`「終わったら得意げに報告する（「ほら、片付いたぞ」「えへん」）」は「応答のトーン運用ルール」の例で、この節の外。**触らない**（締めの節の例だけが対象）
+
+## やること
+
+1. `characters/tsukumo/persona.md` の「### 締めのセリフの言い方」から例の3項目（126〜130行）を消し、お願いの中身を言わない理由を地の文に残す
+2. `characters/tsukumo-spirit/persona.md` の同じ節も同じ形に直す
+3. `docs/display.md:292` の「言い方の例は `persona.md`「締めのセリフの言い方」」を、例ではなく言い方の条を指す言い方に直す
+4. `~/.tsukumo/characters/tsukumo/persona.md`（`TSUKUMO_HOME` が設定されていればその下）の「### 締めのセリフの言い方」の節を、1で直した同梱パックの節と同じ文面に置き換える。**それ以外の行（とくに末尾の `## 覚えたこと`）は変えない**。直す前にファイルの写しを取り、差分が節の中だけであることを `diff` で確かめる
+5. `bun run check` を通す
+
+## 完了条件
+
+- `grep -n "片付いたとき\|お願いがあるとき:\|外したとき" characters/*/persona.md ~/.tsukumo/characters/tsukumo/persona.md` が何も返さない
+- `grep -n "予告\|note-favor" ~/.tsukumo/characters/tsukumo/persona.md` が何も返さない
+- ホームのパックの `## 覚えたこと` の行数が作業の前後で同じ
+- `bun run check` が通る
+
+## 注意
+
+- ホームのパックはリポジトリ外なのでコミットに入らない。`evidence` に直す前後の `diff` の要約（変わった行の範囲）を書く
+- 会話の内容を含むファイルではないが、ホームの `persona.md` の `## 覚えたこと` は雑談で書かれた行なので、`evidence` や `progress.md` に写さない
+
+## T-517
+
+**タスク**: サイドバーのセッション情報に、いまのコンテキスト量を1行で出す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2147 pass / 0 fail, 163ファイル）。test/browser/domain/context-usage.test.tsx に「終わる→次のターン→終わる」で途中は取り直さず終わりに1回取り直すテスト、test/shared/session-state.test.ts に lastTurnFinishedAt が running で戻らないテスト、context-usage-row.test.tsx に数・棒・取得中/取れない表示のテスト。PROTOCOL_VERSION 12→14（main の turn-resumed を取り込むときに合わせて上げた。取り込み後 2151 pass）。
+目視: 本物のセッション（port 7351/7352・一時ホーム）で Playwright。サイドバーの行が「使用 34.0k / 1.00M」→ターン中36秒・24回測って変わらず→終わると「54.6k / 1.00M」。押すと #token-usage の札も同じ数。1440/390 とも横スクロール0。
+判断: hook は browser/domain/context-usage.ts（2機能が読む）、formatCount は browser/utils/format-count.ts へ。出す数は札の totalTokens/maxTokens（バッファ・deferred は含めない）。
+
+## 背景
+
+- いまのコンテキストの内訳は、トークン消費の画面の札（`src/browser/features/token-usage/context-usage-card.tsx`「いまのコンテキスト」）にしか出ていない。取得と畳み込みは `src/browser/features/token-usage/hooks/use-context-usage.ts` で、**画面を開いたときに1回** `GET /context-usage`（`src/shared/context-usage.ts` の `CONTEXT_USAGE_PATH`。サーバは `src/server/adapter/sdk-context-usage.ts` で駆動の `getContextUsage()` を引く）を取りに行く。ターンの実行中に呼んでも待たされない
+- 会話の画面のサイドバーは `src/browser/features/sidebar/`。セッション情報の区画は `session-info.tsx`（`docs/screen-design.md` 13.9 の図にある「タスク一覧 / セッション情報の2区画」）
+- ターンの終わりはブラウザの状態として届いている（`src/browser/stores/main-view-turn.ts` などが `turn-finished` を読んでいる）
+- `use-context-usage.ts` を2つの機能（トークン消費とサイドバー）が読むことになるので、置き場が `src/browser/domain/` などへ動くかもしれない（`CLAUDE.md` 原則5・`docs/design.md` 2章）
+
+## 決まっていること（蒸し返さない）
+
+- 置き場はサイドバーのセッション情報の区画。使っている量と窓の大きさ（例「使用 81K / 1M」）と細い棒を1行で出し、押すとトークン消費の画面へ移る（2026-09-24 ユーザー決定）
+- 取り直すのはターンが終わるたび。ターンの途中は前の値のまま
+
+## 解くべき論点
+
+- 「使っている量」にどの数を採るか（札の合計と同じにする。自動圧縮バッファ・`deferred` を含めるか）
+- 取れないとき・まだ届いていないときの見せ方（札の骨組みと同じ考え方で、行の高さを揺らさない）
+- 背景のタスクで `turn-finished` が先に届く経路で、取り直しが二重にならないか
+
+## やること
+
+1. 取得の hook を2つの機能から読める置き場へ移し、ターンの終わりで取り直せるようにする
+2. セッション情報の区画に1行を足し、押すとトークン消費の画面（`#token-usage`）へ移るようにする
+3. `docs/screen-design.md`（サイドバーのセッション情報の節）に書き足す。行頭を含めて位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## 完了条件
+
+- 届いた内訳から数と棒の割合が出て、取れないとき・届く前の表示が決めたとおりになる（部品のテスト）
+- ターンが終わると1回取り直す（テスト）
+- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、会話の画面のサイドバーで、ターンの前後に数が変わったこと・幅 1440 と 390 で横スクロールが出ないことを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
