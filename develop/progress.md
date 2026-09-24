@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 タスク板を develop/task/ と台帳の着手の印から読むようにした（T-525）
+
+`main` に `develop/task/` があれば front matter と台帳の印から一覧を作り、無ければ `develop/tasks.json` を読む。着手・解除は `main` を動かさないので、新形式のあいだは先端が同じでも見回りごとに印を読み直す。
+
 ### 2026-09-24 共通スキル5本と WORKFLOW.md を新しい運用に書き直した（T-524）
 
 claude-skills の枝 `feature/tsukumo-T-524`（`c8d8ca2`）に置き、`main` には入れていない（入れるのは T-526）。`~/.claude/skills/` は claude-skills の本体の作業ツリーを指すので、枝の作業は別の作業ツリーで行った。`maintenance-docs` がまだ `archive.py` と旧形式を前提にしているので、T-526 の前に扱いを決める。

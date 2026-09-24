@@ -1,32 +1,53 @@
-// `main` ブランチの develop/tasks.json を見張る。`main` の先端のコミットが変わったときだけ
-// 読み直し、`onChange` を呼ぶ（docs/design.md 5章「task-summary.ts」）。呼び出し側
-// （src/session-start.ts）がこれを `tasks-changed` イベントに変えて、他のセッションのイベントと
-// 同じ経路へ流す。
+// `main` のタスク一覧を見張る。`main` の先端のコミットが変わったとき、**または新形式で台帳の
+// 着手の印が変わったとき**に読み直し、`onChange` を呼ぶ（docs/design.md 5章「task-summary.ts」）。
+// 呼び出し側（src/session-start.ts）がこれを `tasks-changed` イベントに変えて、他のセッションの
+// イベントと同じ経路へ流す。
 //
-// **読むのは作業ツリーのファイルではなく `main` の上のもの**。タスクの正典は `main` の
-// develop/tasks.json で（CLAUDE.md「## タスク運用」）、作業ツリーのものは `git merge main` するまで
-// 別の作業ツリーで足したタスクを知らない。**境界は「`main` の上のタスク一覧」の1つ**で、
-// そのために `git` を起こす（`node:child_process` を import してよいファイルは
-// `test/architecture.test.ts` が絞っている）。`main` の上のファイルを読む汎用の adapter を別に
-// 切らないのは、読み手がこの一覧しかなく、切っても開くファイルが増えるだけで概念が増えないため。
+// **読むのは作業ツリーのファイルではなく `main` の上のもの**。タスクの正典は `main` のもので、
+// 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。**境界は
+// 「`main` の上のタスク一覧」の1つ**で、そのために `git` を起こす（`node:child_process` を
+// import してよいファイルは `test/architecture.test.ts` が絞っている）。`main` の上のファイルを
+// 読む汎用の adapter を別に切らないのは、読み手がこの一覧しかなく、切っても開くファイルが
+// 増えるだけで概念が増えないため。
 //
-// **`main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`main` に
-// develop/tasks.json が無い・`git` が無い）は「不明」にする。作業ツリーのファイルへは落とさない。**
-// 落とすと読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る
-// （「不明」なら画面で気付ける）。tsukumo を他のプロジェクトで起こしたときは develop/tasks.json
-// がそもそも無いので、どちらでも「不明」になる。
-// **`git` がタイムアウトしたときだけはその回を諦め、覚えている先端も変えない**（一時的な失敗なので
+// **形式は2つ、読み方も2通り**（claude-skills の `docs/task-workflow-redesign.md`。移行の途中で
+// T-528 が旧形式の読み方を消す）:
+// - **新形式**: `main` に `develop/task/` があれば、そこの `*.md` を1件ずつ front matter として
+//   読む（`git ls-tree` で列挙し、`git cat-file --batch` で1回の子プロセスでまとめて読む）。
+//   着手中（旧 `doing`）はファイルに書かれない。**台帳の着手の印（`task claim` / `task release`）は
+//   共有の `.git` の下だけで完結し、`main` を動かさない**（claude-skills の
+//   `docs/task-workflow-redesign.md` 4.2）ので、`main` の先端が同じ見回りでも
+//   `task-workflow/claim/` の一覧だけは毎回読み直し、前回と変わっていれば
+//   `onChange` する。**このときファイルは読み直さない**——`git cat-file --batch` は先端が
+//   動いたときだけで足りるので、前回読んだ front matter（`NewTaskFile[]`）に新しい印の集合を
+//   当て直すだけにする（`src/shared/task-summary.ts` の `taskSummaryItemsOfNewTaskFiles`）
+// - **旧形式**: `develop/task/` が無ければ、いままでどおり `main` の `develop/tasks.json` を
+//   `git show` で読む（着手中はファイルの `status` がそのまま `"doing"` なので、台帳は見ない）
+//
+// **`main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、
+// どちらの形式も無いときは「不明」にする。** 作業ツリーのファイルへは落とさない。落とすと
+// 読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る（「不明」なら
+// 画面で気付ける）。tsukumo を他のプロジェクトで起こしたときはどちらの形式も無いので「不明」になる。
+// **`git` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない**（一時的な失敗なので
 // 次の回で読み直す。「不明」にすると一覧が一瞬消えて戻る）。
 //
-// 中身の解釈は src/shared/task-summary.ts の `readTaskSummaries` の仕事で、ここは読み直すかどうかの
-// 判断と `git` の呼び出しだけを持つ。
+// 中身の解釈（front matter の文法・台帳の印から `doing` を作る）は src/shared/task-summary.ts の
+// 仕事で、ここは読み直すかどうかの判断と `git`・台帳の読み出しだけを持つ。
 
-import { execFile } from "node:child_process"
+import { execFile, spawn } from "node:child_process"
+import { readdir } from "node:fs/promises"
+import { basename, join } from "node:path"
 
-import { readTaskSummaries, type TaskSummaryResult } from "../../shared/task-summary.ts"
+import {
+  parseNewTaskFile,
+  readTaskSummaries,
+  taskSummaryItemsOfNewTaskFiles,
+  type NewTaskFile,
+  type TaskSummaryResult,
+} from "../../shared/task-summary.ts"
 
-/** 先端を見に行く間隔。`git rev-parse` 1回は手元で約10msなので、この間隔なら毎回起こしても
- * 負荷は無視できる。develop/tasks.json はタスクの着手・完了で書き換わるだけなので、秒単位の
+/** 見回りの間隔。`git rev-parse` 1回は手元で約10msなので、この間隔なら毎回起こしても
+ * 負荷は無視できる。タスク一覧はタスクの着手・完了で書き換わるだけなので、秒単位の
  * 反映で十分（`docs/requirements.md`「5. 実行環境・非機能要件」の1秒目安とは別枠）。 */
 export const TASK_SUMMARY_POLL_INTERVAL_MS = 1500
 
@@ -36,6 +57,13 @@ const MAIN_BRANCH_REF = "refs/heads/main"
 /** `./` から始めると `git show` は cwd からの相対で解く（サブディレクトリで起こしたときも、
  * 作業ツリーのファイルを読んでいたころと同じ基準になる）。 */
 const TASKS_FILE_PATH = "./develop/tasks.json"
+
+/** 末尾の `/` を付けて `git ls-tree` に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
+const TASK_DIR_PATH = "develop/task/"
+
+/** 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、
+ * 着手の印（claude-skills の `docs/task-workflow-redesign.md` 4.2）。 */
+const LEDGER_CLAIM_DIR_SEGMENTS = ["task-workflow", "claim"]
 
 /** `git` の応答を待つ上限。超えたらその回を諦める（上のコメント）。 */
 const GIT_TIMEOUT_MS = 5000
@@ -49,9 +77,9 @@ export type TaskSummaryWatcher = {
 }
 
 /**
- * `main` の develop/tasks.json を見張り始める。**呼んだ時点で1回見に行き、以後はポーリングで
- * `main` の先端を見る。** 1回の見回りが終わってから次の見回りを予約するので、`git` が遅くても
- * 見回りは重ならない。
+ * `main` のタスク一覧を見張り始める。**呼んだ時点で1回見に行き、以後はポーリングで
+ * `main` の先端（と、新形式なら台帳の着手の印）を見る。** 1回の見回りが終わってから次の
+ * 見回りを予約するので、`git` が遅くても見回りは重ならない。
  * `main` が最初から読めない（先端が取れない）ときは `onChange` を呼ばない（先端が「無い→無い」で
  * 変わっていないため。`INITIAL_SESSION_STATE.tasks` の既定値 `{ kind: "unknown" }` と一致するので、
  * 呼ばなくても見た目は変わらない）。
@@ -64,16 +92,16 @@ export function watchTaskSummary(
   onChange: (result: TaskSummaryResult) => void,
   pollIntervalMs = TASK_SUMMARY_POLL_INTERVAL_MS,
 ): TaskSummaryWatcher {
-  let cachedHead: string | undefined = undefined
+  let cache: WatcherCache = { kind: "other", head: undefined }
   let timer: ReturnType<typeof setTimeout> | undefined = undefined
   let closed = false
 
   const poll = async (): Promise<void> => {
-    const read = await readMainTasks(cwd, cachedHead)
+    const read = await pollOnce(cwd, cache)
     if (closed || read.kind === "unchanged") {
       return
     }
-    cachedHead = read.head
+    cache = read.cache
     onChange(read.result)
   }
 
@@ -97,12 +125,27 @@ export function watchTaskSummary(
   }
 }
 
-/** 1回の見回りの結果。`head` は次の回で比べる先端（`main` が読めなければ `undefined`）。 */
+/**
+ * 見回りのあいだ覚えておく状態。`head` は前回見た `main` の先端。**新形式を見ているときだけ**
+ * `git cat-file --batch` で読んだ front matter とそのときの台帳の印を持つ（先端が動かないあいだ、
+ * 印だけの変化をファイルを読み直さずに拾うため）。旧形式・不明のときは先端だけ（`main` が
+ * 読めなければ `undefined`）。
+ */
+type WatcherCache =
+  | {
+      readonly kind: "new-format"
+      readonly head: string
+      readonly files: readonly NewTaskFile[]
+      readonly claimedIds: ReadonlySet<string>
+    }
+  | { readonly kind: "other"; readonly head: string | undefined }
+
+/** 1回の見回りの結果。 */
 type MainTasksRead =
   | { readonly kind: "unchanged" }
   | {
       readonly kind: "changed"
-      readonly head: string | undefined
+      readonly cache: WatcherCache
       readonly result: TaskSummaryResult
     }
 
@@ -112,12 +155,19 @@ type GitOutcome =
   | { readonly kind: "failed" }
   | { readonly kind: "timed-out" }
 
+/** `git cat-file --batch` 1回の結果。`contents` は渡した順（`requests` と同じ長さ）で、読めなかった
+ * 対象（存在しない blob）は `undefined`。 */
+type BatchOutcome =
+  | { readonly kind: "output"; readonly contents: readonly (string | undefined)[] }
+  | { readonly kind: "failed" }
+  | { readonly kind: "timed-out" }
+
 /**
- * `main` の先端を取り、`cachedHead` から変わっていれば develop/tasks.json を読む。
- * 中身は先端を取ったコミットから読む（`main` という名前で読むと、2回の `git` の間に `main` が
- * 進んだとき、覚える先端と読んだ中身がずれる）。
+ * `main` の先端を取る。**先端が前回と同じでも、新形式を見ているときは台帳の着手の印だけ
+ * 読み直す**（着手・解除は `main` を動かさないため）。先端が変わっていれば {@link readAtHead} で
+ * 中身から読み直す。
  */
-async function readMainTasks(cwd: string, cachedHead: string | undefined): Promise<MainTasksRead> {
+async function pollOnce(cwd: string, cache: WatcherCache): Promise<MainTasksRead> {
   const revParse = await runGit(cwd, [
     "rev-parse",
     "--verify",
@@ -129,11 +179,48 @@ async function readMainTasks(cwd: string, cachedHead: string | undefined): Promi
   }
 
   const head = revParse.kind === "output" ? revParse.stdout.trim() : undefined
-  if (head === cachedHead) {
+  if (head !== cache.head) {
+    return readAtHead(cwd, head)
+  }
+
+  if (cache.kind === "other") {
     return { kind: "unchanged" }
   }
+
+  const claimedIds = await readClaimedTaskIds(cwd)
+  if (setsEqual(claimedIds, cache.claimedIds)) {
+    return { kind: "unchanged" }
+  }
+
+  return {
+    kind: "changed",
+    cache: { ...cache, claimedIds },
+    result: {
+      kind: "known",
+      items: taskSummaryItemsOfNewTaskFiles(cache.files, claimedIds),
+    },
+  }
+}
+
+/**
+ * 先端（`head`）が変わったときの読み直し。中身は先端を取ったコミットから読む（`main` という
+ * 名前で読むと、2回の `git` の間に `main` が進んだとき、覚える先端と読んだ中身がずれる）。
+ * 形式の判定は新形式が優先（`develop/task/` に1件でもあれば新形式）。
+ */
+async function readAtHead(cwd: string, head: string | undefined): Promise<MainTasksRead> {
   if (head === undefined) {
-    return { kind: "changed", head, result: { kind: "unknown" } }
+    return { kind: "changed", cache: { kind: "other", head }, result: { kind: "unknown" } }
+  }
+
+  const taskDirListing = await runGit(cwd, ["ls-tree", "--name-only", head, TASK_DIR_PATH])
+  if (taskDirListing.kind === "timed-out") {
+    return { kind: "unchanged" }
+  }
+
+  const taskFilePaths =
+    taskDirListing.kind === "output" ? taskFilePathsOf(taskDirListing.stdout) : []
+  if (taskFilePaths.length > 0) {
+    return readNewFormatTasksAtHead(cwd, head, taskFilePaths)
   }
 
   const show = await runGit(cwd, ["show", `${head}:${TASKS_FILE_PATH}`])
@@ -141,15 +228,89 @@ async function readMainTasks(cwd: string, cachedHead: string | undefined): Promi
     case "timed-out":
       return { kind: "unchanged" }
     case "failed":
-      return { kind: "changed", head, result: { kind: "unknown" } }
+      return { kind: "changed", cache: { kind: "other", head }, result: { kind: "unknown" } }
     case "output":
-      return { kind: "changed", head, result: taskSummaryResultOf(show.stdout) }
+      return {
+        kind: "changed",
+        cache: { kind: "other", head },
+        result: taskSummaryResultOf(show.stdout),
+      }
   }
+}
+
+/** 新形式の中身を、1回の `git cat-file --batch` と台帳の着手の印から組み立てる。 */
+async function readNewFormatTasksAtHead(
+  cwd: string,
+  head: string,
+  taskFilePaths: readonly string[],
+): Promise<MainTasksRead> {
+  const batch = await runGitCatFileBatch(
+    cwd,
+    taskFilePaths.map((path) => `${head}:${path}`),
+  )
+  if (batch.kind === "timed-out") {
+    return { kind: "unchanged" }
+  }
+  if (batch.kind === "failed") {
+    return { kind: "changed", cache: { kind: "other", head }, result: { kind: "unknown" } }
+  }
+
+  const files = taskFilePaths.flatMap((path, index) => {
+    const content = batch.contents[index]
+    return content === undefined ? [] : [{ name: basename(path), content }]
+  })
+  const parsedFiles = files.flatMap((file) => {
+    const task = parseNewTaskFile(file.name, file.content)
+    return task === undefined ? [] : [task]
+  })
+
+  const claimedIds = await readClaimedTaskIds(cwd)
+  return {
+    kind: "changed",
+    cache: { kind: "new-format", head, files: parsedFiles, claimedIds },
+    result: { kind: "known", items: taskSummaryItemsOfNewTaskFiles(parsedFiles, claimedIds) },
+  }
+}
+
+/** 共有の `.git` の下の台帳から、着手の印がある ID の集合を作る。**台帳が無い・読めないときは
+ * 「印なし」に倒す**（この一覧は表示だけで、台帳が正典の取り合いの判定には使わない。台帳が
+ * 一時的に読めないだけで一覧全体を「不明」にはしない）。 */
+async function readClaimedTaskIds(cwd: string): Promise<ReadonlySet<string>> {
+  const commonDir = await runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])
+  if (commonDir.kind !== "output") {
+    return new Set()
+  }
+
+  const claimDir = join(commonDir.stdout.trim(), ...LEDGER_CLAIM_DIR_SEGMENTS)
+  try {
+    const entries = await readdir(claimDir, { withFileTypes: true })
+    return new Set(entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name))
+  } catch {
+    return new Set()
+  }
+}
+
+/** 2つの集合が同じ中身かどうか（順序は見ない）。 */
+function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  if (a.size !== b.size) {
+    return false
+  }
+  for (const value of a) {
+    if (!b.has(value)) {
+      return false
+    }
+  }
+  return true
 }
 
 function taskSummaryResultOf(content: string): TaskSummaryResult {
   const items = readTaskSummaries(content)
   return items === undefined ? { kind: "unknown" } : { kind: "known", items }
+}
+
+/** `git ls-tree --name-only` の出力を、`.md` のパス（`develop/task/T-xxx.md` の形）だけに絞る。 */
+function taskFilePathsOf(output: string): readonly string[] {
+  return output.split("\n").filter((line) => line.endsWith(".md"))
 }
 
 /** `git` を起こす。**例外を投げない**（失敗は `failed` / `timed-out` として返す）。 */
@@ -169,4 +330,101 @@ function runGit(cwd: string, args: readonly string[]): Promise<GitOutcome> {
       },
     )
   })
+}
+
+/**
+ * `git cat-file --batch` を1回起こし、`requests`（`<コミット>:<パス>` の並び）を渡した順に読む。
+ * **バイト列として切り出す**（`--batch` の1件は `<sha> <type> <size>\n` の見出し行の次に
+ * ちょうど `<size>` バイトの中身、そのあとに区切りの改行が1つ続く形なので、UTF-8 の文字数では
+ * なくバイト数で進める）。**例外を投げない**（失敗は `failed` / `timed-out`）。
+ */
+function runGitCatFileBatch(cwd: string, requests: readonly string[]): Promise<BatchOutcome> {
+  if (requests.length === 0) {
+    return Promise.resolve({ kind: "output", contents: [] })
+  }
+
+  return new Promise((resolve) => {
+    const child = spawn("git", ["cat-file", "--batch"], { cwd })
+    const chunks: Buffer[] = []
+    let receivedBytes = 0
+    let settled = false
+
+    const finish = (outcome: BatchOutcome): void => {
+      if (settled) {
+        return
+      }
+      settled = true
+      clearTimeout(timer)
+      child.kill()
+      resolve(outcome)
+    }
+
+    const timer = setTimeout(() => finish({ kind: "timed-out" }), GIT_TIMEOUT_MS)
+
+    child.stdout.on("data", (chunk: Buffer) => {
+      receivedBytes += chunk.length
+      if (receivedBytes > MAX_OUTPUT_BYTES) {
+        finish({ kind: "failed" })
+        return
+      }
+      chunks.push(chunk)
+    })
+    child.on("error", () => finish({ kind: "failed" }))
+    child.on("close", (code) => {
+      if (settled) {
+        return
+      }
+      if (code !== 0) {
+        finish({ kind: "failed" })
+        return
+      }
+      settled = true
+      clearTimeout(timer)
+      resolve({
+        kind: "output",
+        contents: parseCatFileBatchOutput(Buffer.concat(chunks), requests.length),
+      })
+    })
+
+    child.stdin.write(requests.map((request) => `${request}\n`).join(""))
+    child.stdin.end()
+  })
+}
+
+/** {@link runGitCatFileBatch} の出力を、送った順の `count` 件に割る。 */
+function parseCatFileBatchOutput(buffer: Buffer, count: number): readonly (string | undefined)[] {
+  const results: (string | undefined)[] = []
+  let pos = 0
+
+  for (let i = 0; i < count; i++) {
+    const newlineIndex = buffer.indexOf(0x0a, pos)
+    if (newlineIndex === -1) {
+      results.push(undefined)
+      continue
+    }
+
+    const headerLine = buffer.toString("utf8", pos, newlineIndex)
+    pos = newlineIndex + 1
+
+    const size = blobSizeOf(headerLine)
+    if (size === undefined) {
+      results.push(undefined)
+      continue
+    }
+
+    results.push(buffer.toString("utf8", pos, pos + size))
+    pos += size + 1 // 中身のバイトと、そのあとの区切りの改行を1つ読み飛ばす。
+  }
+
+  return results
+}
+
+/** `<sha> <type> <size>` なら `<size>`、`<input> missing` なら `undefined`。 */
+function blobSizeOf(headerLine: string): number | undefined {
+  const parts = headerLine.split(" ")
+  if (parts.length !== 3) {
+    return undefined
+  }
+  const size = Number(parts[2])
+  return Number.isInteger(size) && size >= 0 ? size : undefined
 }
