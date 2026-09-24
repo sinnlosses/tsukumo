@@ -20,8 +20,9 @@
      （docs/history/mockup/bottom-2026-09-23.html の section[aria-label="キャラクター"]）に
      合わせた固定量。立ち絵は領域いっぱいには出さず、少し小さくして床に置く。--portrait-drop は
      立ち絵を領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる。
-     `.portrait` の max-width（45%）と `.balloon-track` の flex-basis（11rem）が先に当たるので、
-     ここを上げすぎても吹き出しの幅は 11rem 未満には潰れない（下の `.balloon-track` 参照）。 */
+     `.portrait` の max-width（45%）と `.balloon-track` の flex-basis（既定 11rem。領域が低いときは
+     --balloon-track-basis が縮む。下の `.balloon-track` 参照）が先に当たるので、ここを上げすぎても
+     吹き出しの幅は下限（8rem）未満には潰れない。 */
   --portrait-height: 88%;
   --portrait-drop: 2.25rem;
   --balloon-tail: 8px;
@@ -41,6 +42,18 @@
   /* 右上の「ログ」の口（領域の角から 4px、高さ 30px）が占める高さぶんの余白。吹き出しの並びが
      スクロールしてもここまでは伸びない（下の .balloon-track）。 */
   --speech-log-open-space: 26px;
+  /* 領域を仕切り（features/layout/layout-resizer.tsx）で低くしたとき、吹き出しの文字・余白・
+     列の幅を領域の高さ（`cqh`）に連動させて縮める（利用者の報告: 立ち絵は --portrait-height で
+     領域の高さに比例して縮むのに、吹き出しは固定量のままで縮まないぶん相対的に大きく見える）。
+     **既定の高さでは変えない**——実測（T-530）で既定の領域の高さは 252px。clamp() の中間の式が
+     既定より大きい値になるよう、余裕を見て 210px を境目に選んだ（式が上限＝現状の固定値を
+     超えるので clamp が上限側で止まり、既定の見た目は変わらない）。境目を下回ってはじめて
+     式の値が効き、読める下限（--font-label、11px）まで縮む。下限より下へは縮めない。
+     境目の px を `cqh` の係数へ直す式は「上限の px × 100 ÷ 境目の px」（例: 最新の文字は
+     15 × 100 ÷ 210 ≈ 7.143）。 */
+  --balloon-latest-scale: clamp(var(--font-label), 7.143cqh, var(--font-body));
+  --balloon-past-scale: clamp(var(--font-label), 6.19cqh, var(--font-secondary));
+  --balloon-track-basis: clamp(8rem, 83.81cqh, 11rem);
 }
 
 /* 立ち絵も吹き出しの並びも**下端で揃える**（床に立つ見え方にする
@@ -96,7 +109,7 @@
   display: flex;
   align-self: flex-end;
   align-items: flex-start;
-  flex: 1 1 11rem;
+  flex: 1 1 var(--balloon-track-basis);
   flex-direction: column-reverse;
   gap: 10px;
   min-width: 0;
@@ -113,14 +126,17 @@
    ここは**過去の吹き出し**の見た目（モック値）。**地は不透明な `surface` のまま**にする
    （下の `.balloon[data-latest="false"]` のコメント、docs/screen-design.md 13.8「文字が乗る要素の地は
    不透明を保つ」— モックは半透明だが、背景画像が入ると文字の裏へ透けるので採らない）。
-   薄く見せるのは枠と、下の `.balloon[data-latest="false"]` の文字色だけ。 */
+   薄く見せるのは枠と、下の `.balloon[data-latest="false"]` の文字色だけ。
+   padding はモック値（10px 14px）を --balloon-past-scale（既定 13px）に対する比で持つ
+   （10÷13・14÷13）——既定では計算結果が丸ごとモック値に戻り、領域が低いときだけ
+   --balloon-past-scale と一緒に縮む。 */
 .balloon {
   position: relative;
   display: flex;
   flex-direction: column;
   width: fit-content;
   max-width: 88%;
-  padding: 10px 14px;
+  padding: calc(var(--balloon-past-scale) * 10 / 13) calc(var(--balloon-past-scale) * 14 / 13);
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
   border-radius: 12px;
   background: var(--surface);
@@ -148,8 +164,11 @@
 .balloon[data-latest="true"] {
   animation: balloon-appear 0.3s ease-out;
   max-width: 96%;
-  padding: 14px 18px 16px;
-  font-size: var(--font-body);
+  /* padding はモック値（14px 18px 16px）を --balloon-latest-scale（既定 15px＝--font-body）に
+     対する比で持つ（14÷15・18÷15・16÷15）。上の `.balloon` の padding と同じ理由。 */
+  padding: calc(var(--balloon-latest-scale) * 14 / 15) calc(var(--balloon-latest-scale) * 18 / 15)
+    calc(var(--balloon-latest-scale) * 16 / 15);
+  font-size: var(--balloon-latest-scale);
   line-height: 1.7;
   background: var(--surface-accent);
   border-width: 1.5px;
@@ -210,7 +229,7 @@
    **混ぜる量の上限は 45%**（4.83。50% だと 4.24 で下回る）。背景を敷かなくても、旧の
    `opacity: 0.5` は 4.20 で下限を割っていた。 */
 .balloon[data-latest="false"] {
-  font-size: var(--font-secondary);
+  font-size: var(--balloon-past-scale);
   line-height: 1.6;
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
   animation: balloon-push-up 0.3s ease-out;
@@ -540,6 +559,13 @@
     --portrait-height: 100%;
     --portrait-drop: 0.4rem;
     --balloon-bottom-gap: 0.4rem;
+    /* 狭い画面では仕切り自体が無く（layout.module.css の @media で .layout-resizer が
+       display: none）領域の高さは 9.5rem に固定されたまま動かせないので、上の cqh 連動
+       （--balloon-latest-scale / --balloon-past-scale）を効かせない。固定の 9.5rem は
+       仕切りで縮められる下限よりも低く、連動させたままだと常に縮んだ側の値になって
+       既定の見た目が変わってしまう。 */
+    --balloon-latest-scale: var(--font-body);
+    --balloon-past-scale: var(--font-secondary);
   }
   /* 立ち絵の幅の上限は、低い領域では高さ側が先に当たって効かなくなるぶん、吹き出しの場所を
      守るために詰める。 */

@@ -138,8 +138,8 @@
     "dependencies": [],
     "summary": "キャラ画面を小さくしたとき、吹き出しも立ち絵に合わせて縮める",
     "task": "## 背景\n\nキャラ画面（キャラビュー）の領域を仕切り（`src/browser/features/layout/layout-resizer.tsx`）で小さくすると、立ち絵に比べて吹き出しが大きすぎる（利用者の報告）。`src/browser/features/character-view/character-view.module.css` で、立ち絵は `.portrait` の `height: var(--portrait-height)`（領域の高さの 88%。`.character-region` は `container-type: size`）で領域に合わせて伸び縮みする。一方、吹き出しの文字（`--font-body` 0.9375rem など）、余白（`padding: 10px 14px`）、列の幅（`.balloon-track` の `flex-basis: 11rem`）は固定量で、領域の大きさに連動しない。\n\n## 決まっていること（蒸し返さない）\n\n- 崩れ方は「小さくすると吹き出しが大きい」（利用者の回答）。大きくしたときの見え方は今のままでよい\n- 既定の大きさでの見え方は変えない\n\n## やること\n\n1. 領域の高さを段階的に変えて（既定、仕切りで縮めた中間、縮められる最小）撮り、立ち絵の高さと最新の吹き出しの高さ・幅・文字の大きさを `scripts/capture-view.ts --measure` で測る\n2. 領域が既定より小さいときだけ、吹き出しの文字・余白・列の幅を領域の大きさ（`cqh` など）に合わせて縮める。読める下限（文字の大きさの最小）を決め、それより下は縮めない\n3. 狭い画面（`@media (max-width: 760px)`）の既定が崩れないことを確かめる\n\n## 完了条件\n\n- 既定の大きさで、吹き出しの寸法が変更前と同じ（測った値を並べる）\n- 縮めた2段階で、「吹き出しの高さ ÷ 立ち絵の高さ」が変更前より小さく、既定の大きさでの比に近づいている（3段階の測定値を変更前と後で表にして `evidence` に書く）\n- 画像を読んで、最小の大きさで吹き出しの文字が切れずに読めることを確かめる\n- `bun run check` が通る\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（2189 pass / 0 fail）。character-view.module.css で吹き出しの文字・余白・列幅を cqh 連動の clamp（上限=従来の固定値、下限は文字 11px=--font-label・列 8rem、連動は領域の高さ 210px 未満から）にした。高さ比（吹き出し÷立ち絵）前→後: 既定 252px 0.591→0.591（画像 AE=0）/ 中間 173px 0.693→0.600（文字 15→12.38px）/ 最小 94px 1.273→1.012（文字 15→11px）。狭い画面 700px は前後一致。最小の画像 scratchpad/after-rt85-crop.png で吹き出しの全文が2行で切れずに読めることを確かめた"
   }
 ]
