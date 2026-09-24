@@ -358,6 +358,16 @@ describe("listCharacterPacks", () => {
     expect(packs.map((pack) => pack.name)).toEqual(["tsukumo-spirit", "from-screen", "local"])
   })
 
+  it("tsukumo は名前順・置き場の順より前、一覧の先頭に出る", () => {
+    writePack(roots().bundled, "chou", DEFINITION_JSON)
+    writePack(roots().bundled, "tsukumo-spirit", DEFINITION_JSON)
+    writePack(roots().home, "tsukumo", DEFINITION_JSON)
+
+    const packs = listCharacterPacks(join(dir, "cwd"), roots())
+
+    expect(packs.map((pack) => pack.name)).toEqual(["tsukumo", "chou", "tsukumo-spirit"])
+  })
+
   it("同名はホームが同梱に勝つ（画面から変えたものが出る）", () => {
     const bundledSpirit = writePack(roots().bundled, "tsukumo-spirit", DEFINITION_JSON)
     const homeSpirit = writePack(roots().home, "tsukumo-spirit", DEFINITION_JSON)

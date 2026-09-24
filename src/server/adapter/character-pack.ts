@@ -50,6 +50,13 @@ const CHARACTER_DIR_NAME = "characters"
 const LOCAL_PACK_NAME = "local"
 
 /**
+ * 一覧の先頭に置くパックの名前。**このプロジェクトの顔**（`characters/README.md`「既定の
+ * キャラクター」）なので、名前順で後ろに回さない。どの置き場にあっても（ホームで上書きされても）
+ * 先頭に来る。
+ */
+const LEADING_PACK_NAME = "tsukumo"
+
+/**
  * キャラクター定義ディレクトリの既定値。自作で権利がクリーンな tsukumo-spirit を使う
  * （docs/requirements.md 4.4）。**tsukumo 自身の場所からの相対**で読む（bundledFilePath）。
  * develop/tasks.json とは違い、こちらは同梱物なので cwd には依存させない。
@@ -153,6 +160,7 @@ export function characterPackRemoval(
  * 3. **起動先の `characters/local/`**（利用者が自分で用意した素材。ここは1つ固定）
  *
  * **同名は後ろが勝つ**（ホームは同梱を上書きし、起動先はそのホームにも勝つ。7.1）。
+ * 並びはこの3箇所の順（各置き場の中は名前順）で、**`tsukumo` だけは先頭に出す**。
  * 読めないディレクトリは黙って飛ばす（一覧が短くなるだけで、起動は止めない。
  * docs/coding-standards.md「エラーハンドリング」）。
  *
@@ -172,7 +180,11 @@ export function listCharacterPacks(
 
   // 同名は後勝ち。同梱 → ホーム → 起動先の順に並べてあるので、これがそのまま 7.1 の優先順になる。
   const packs = dirs.map(readCharacterPack)
-  return [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
+  const unique = [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
+  return [
+    ...unique.filter((pack) => pack.name === LEADING_PACK_NAME),
+    ...unique.filter((pack) => pack.name !== LEADING_PACK_NAME),
+  ]
 }
 
 /**
