@@ -15,7 +15,7 @@ import { type ReactElement } from "react"
 
 import { useMainViewTurns } from "../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../stores/turn-selection.tsx"
-import { turnTitle } from "./domain/turn-title.ts"
+import { turnHistoryText, turnTitle } from "./domain/turn-title.ts"
 import { useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
 import { MiniPortrait } from "./mini-portrait.tsx"
@@ -54,7 +54,11 @@ export function MainView(): ReactElement {
       {activeTurn !== undefined && (
         <article className={styles["turn-card"]}>
           <TurnHeader
-            turns={turns.map((turn) => ({ id: turn.id, title: turnTitle(turn) }))}
+            turns={turns.map((turn) => ({
+              id: turn.id,
+              title: turnTitle(turn),
+              historyText: turnHistoryText(turn),
+            }))}
             activeTurnId={activeTurn.id}
             onSelect={selectTurn}
           />

@@ -112,7 +112,12 @@ export function PresentationalTurnHeader({
   )
 }
 
-/** 矢印で開く、窓の中のやり取りの一覧（新しい順）。行を押すとそのやり取りへ移って閉じる。 */
+/**
+ * 矢印で開く、窓の中のやり取りの一覧（新しい順）。**行は2つに分かれる**——依頼の全文
+ * （`row.text`）を出す選択できる文字と、そのやり取りへ移って閉じる飛ぶ口（印 + 番号だけの
+ * 小さな `<button>`）。行ぜんぶを1つの `<button>` にすると、中の文字が（UAの既定で）
+ * 選択できなくなる。
+ */
 function TurnHistoryList(props: {
   readonly id: string
   readonly rows: readonly TurnHeaderHistoryRow[]
@@ -129,27 +134,29 @@ function TurnHistoryList(props: {
       <ul className={styles["turn-history-rows"]}>
         {props.rows.map((row) => (
           <li key={row.id}>
-            <button
-              type="button"
-              className={styles["turn-history-row"]}
-              aria-current={row.isActive ? "true" : undefined}
-              // JSX は隣り合う要素の間に空白を残さないので、そのまま読ませると
-              // 「2 / 3」と本文がくっつく。読める名前にするため `aria-label` を別に組む。
-              aria-label={`${row.positionLabel}: ${row.title}`}
-              onClick={() => {
-                props.onSelect(row.id)
-              }}
-            >
-              <span className={styles["turn-history-mark"]} aria-hidden="true">
-                {row.isActive ? HISTORY_CURRENT_MARK : HISTORY_OTHER_MARK}
-              </span>
-              <span className={styles["turn-history-position"]} aria-hidden="true">
-                {row.positionLabel}
-              </span>
-              <span className={styles["turn-history-title"]} aria-hidden="true">
-                {row.title}
-              </span>
-            </button>
+            <div className={styles["turn-history-row"]}>
+              <button
+                type="button"
+                className={styles["turn-history-jump"]}
+                aria-current={row.isActive ? "true" : undefined}
+                // JSX は隣り合う要素の間に空白を残さないので、そのまま読ませると
+                // 「2 / 3」と本文がくっつく。読める名前にするため `aria-label` を別に組む。
+                aria-label={`${row.positionLabel}: ${row.title}`}
+                onClick={() => {
+                  props.onSelect(row.id)
+                }}
+              >
+                <span className={styles["turn-history-mark"]} aria-hidden="true">
+                  {row.isActive ? HISTORY_CURRENT_MARK : HISTORY_OTHER_MARK}
+                </span>
+                <span className={styles["turn-history-position"]} aria-hidden="true">
+                  {row.positionLabel}
+                </span>
+              </button>
+              {/* 選択してコピーするための、ただの文字（ボタンではない）。改行はそのまま
+                  `white-space: pre-wrap`（`turn-header.module.css`）で見せる。 */}
+              <span className={styles["turn-history-text"]}>{row.text}</span>
+            </div>
           </li>
         ))}
       </ul>

@@ -17,6 +17,25 @@ export function turnTitle(turn: MainViewTurn): string {
   return firstLineOf(turn.request?.text ?? "")?.line ?? firstReportLine(turn) ?? TURN_TITLE_FALLBACK
 }
 
+// 依頼の全文（`turn.tsx` の `RequestRest` と、下の `turnHistoryText`）の長さの上限。
+// 無いと際限なく長い依頼で DOM が育ち続ける。
+const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
+
+export function truncateRequestText(request: string): string {
+  return request.length <= MAX_REQUEST_HEADING_TEXT_LENGTH
+    ? request
+    : `${request.slice(0, MAX_REQUEST_HEADING_TEXT_LENGTH)}…`
+}
+
+/**
+ * 窓の中のやり取りの一覧（`turn-header.tsx` の `TurnHistoryList`）の行に出す、依頼の全文。
+ * `turnTitle` と違って**改行や空白を詰めない**——行の中で選択してコピーしたときに、2行目以降
+ * まで含めた依頼そのものが入るようにするため。依頼が無いターンは `turnTitle` と同じ表示にする。
+ */
+export function turnHistoryText(turn: MainViewTurn): string {
+  return turn.request !== undefined ? truncateRequestText(turn.request.text) : turnTitle(turn)
+}
+
 /**
  * 依頼の文面のうち、タイトルに取られた行（最初の空でない行）より後ろの行。**タイトルと同じ行を
  * 二度出さない**ために、札の本文側（`turn.tsx` の `RequestRest`）はこちらだけを出す。

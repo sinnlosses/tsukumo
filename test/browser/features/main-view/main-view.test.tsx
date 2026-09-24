@@ -335,12 +335,38 @@ describe("MainView（一覧: 窓の中のやり取りへ飛ぶ）", () => {
 
     const rows = [...document.querySelectorAll(".turn-history-row")]
     const marks = rows.map((row) => row.querySelector(".turn-history-mark")?.textContent)
-    const current = rows.filter((row) => row.getAttribute("aria-current") === "true")
+    const current = rows.filter((row) => row.querySelector('[aria-current="true"]') !== null)
 
     expect(current).toHaveLength(1)
-    expect(current[0]?.getAttribute("aria-label")).toBe("2 / 3: 2つ目")
+    expect(current[0]?.querySelector('[aria-current="true"]')?.getAttribute("aria-label")).toBe(
+      "2 / 3: 2つ目",
+    )
     expect(marks.filter((mark) => mark === "●")).toHaveLength(1)
     expect(marks.filter((mark) => mark === "○")).toHaveLength(2)
+  })
+
+  it("行は選択できる依頼の全文（複数行）と、飛ぶ口（印 + 番号だけの別のボタン）に分かれる", () => {
+    renderMainView([
+      requestRecord({ text: "1つ目の1行目\n1つ目の2行目", turnId: 0 }),
+      detailRecord("1つ目のレポート"),
+    ])
+
+    openHistory()
+
+    const row = document.querySelector(".turn-history-row")
+    if (row === null) {
+      throw new Error("行が見つからない")
+    }
+    const text = row.querySelector(".turn-history-text")
+    const jump = row.querySelector(".turn-history-jump")
+
+    // 全文（2行目以降も含む）が、選択できるただの文字として入っている。
+    expect(text?.textContent).toBe("1つ目の1行目\n1つ目の2行目")
+    // 飛ぶ口は印 + 番号だけで、依頼の文字は持たない（ボタンの中は選択できないため）。
+    expect(jump?.textContent).not.toContain("1つ目の1行目")
+    expect(jump?.tagName).toBe("BUTTON")
+    // 依頼の文字は `<button>` の外にある。
+    expect(text?.closest("button")).toBeNull()
   })
 })
 

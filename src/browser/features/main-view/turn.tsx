@@ -17,7 +17,7 @@ import {
 import { type TurnFailure } from "../../../shared/turn-failure.ts"
 import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
 import { turnFailureLabel } from "../../domain/api-error-label.ts"
-import { requestLinesAfterTitle } from "./domain/turn-title.ts"
+import { requestLinesAfterTitle, truncateRequestText } from "./domain/turn-title.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { Report } from "./report.tsx"
@@ -183,15 +183,6 @@ function isQuestion(
   action: MainViewAction,
 ): action is Extract<MainViewAction, { kind: "question" }> {
   return action.kind === "question"
-}
-
-// 札に出す依頼の全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
-const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
-
-function truncateRequestText(request: string): string {
-  return request.length <= MAX_REQUEST_HEADING_TEXT_LENGTH
-    ? request
-    : `${request.slice(0, MAX_REQUEST_HEADING_TEXT_LENGTH)}…`
 }
 
 /**

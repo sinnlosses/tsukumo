@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test"
 
 import {
   requestLinesAfterTitle,
+  truncateRequestText,
+  turnHistoryText,
   turnTitle,
 } from "../../../../../src/browser/features/main-view/domain/turn-title.ts"
 import { type MainViewStep, type MainViewTurn } from "../../../../../src/shared/main-view.ts"
@@ -102,5 +104,40 @@ describe("requestLinesAfterTitle（タイトルに取られなかった依頼の
 
   it("文面が空なら何も残らない", () => {
     expect(requestLinesAfterTitle("")).toEqual([])
+  })
+})
+
+describe("turnHistoryText（一覧の行に出す依頼の全文）", () => {
+  it("依頼があれば、改行も空白も詰めずにそのまま返す", () => {
+    expect(
+      turnHistoryText(turn({ request: { text: "1行目\n\n2行目  にも空白", images: [] } })),
+    ).toBe("1行目\n\n2行目  にも空白")
+  })
+
+  it("依頼が無いターンは turnTitle と同じ表示にする", () => {
+    const steps = [reportStep(0, "架空のレポートの見出し")]
+
+    expect(turnHistoryText(turn({ request: undefined, steps }))).toBe("架空のレポートの見出し")
+    expect(turnHistoryText(turn({ request: undefined, steps: [] }))).toBe("（依頼なし）")
+  })
+
+  it("長い依頼は上限で切って末尾に … を付ける（truncateRequestText と同じ規則）", () => {
+    const long = "あ".repeat(2001)
+
+    expect(turnHistoryText(turn({ request: { text: long, images: [] } }))).toBe(
+      `${"あ".repeat(2000)}…`,
+    )
+  })
+})
+
+describe("truncateRequestText（依頼の全文の長さの上限）", () => {
+  it("上限以下ならそのまま返す", () => {
+    expect(truncateRequestText("架空の依頼")).toBe("架空の依頼")
+  })
+
+  it("上限を超えたら切って末尾に … を付ける", () => {
+    const long = "あ".repeat(2001)
+
+    expect(truncateRequestText(long)).toBe(`${"あ".repeat(2000)}…`)
   })
 })

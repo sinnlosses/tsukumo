@@ -153,24 +153,38 @@
   padding: 0;
   list-style: none;
 }
+/* 一覧の1行の枠（`<div>`）。**それ自体は押せない**——押せるのは中の `.turn-history-jump` だけ
+   （行ぜんぶが1つの `<button>` だと、中の文字が選択できないため）。 */
 .turn-history-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   width: 100%;
   padding: 0.3rem 0.4rem;
   border: 1px solid transparent;
   border-radius: 0.4rem;
-  background: transparent;
   color: var(--ink);
-  text-align: left;
+}
+/* 印 + 番号だけの、そのやり取りへ飛ぶ口。形は前の行ボタンの左側（印・番号）をそのまま引き継ぐ
+   （「行の見た目から大きく変えない」）。押せる面だと分かるようホバーと `aria-current` のときだけ
+   枠を出す（`.turn-title-toggle` と同じ手口）。 */
+.turn-history-jump {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0.3rem;
+  margin: -0.15rem 0;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: transparent;
   cursor: pointer;
 }
-.turn-history-row:hover {
+.turn-history-jump:hover {
   border-color: var(--rule);
 }
 /* 見ているやり取りには色以外の印も付ける（●。13.1 原則5）。枠も足して二重に示す。 */
-.turn-history-row[aria-current="true"] {
+.turn-history-jump[aria-current="true"] {
   border-color: var(--accent);
   background: var(--surface-accent);
 }
@@ -185,12 +199,15 @@
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
 }
-.turn-history-title {
+/* 依頼の全文。選択してコピーするための、ただの文字（ボタンではない）。改行を保ったまま見せ、
+   長い行は折り返す（横スクロールを出さない）。 */
+.turn-history-text {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  padding: 0.15rem 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
 }
 .turn-meta {
   grid-area: meta;

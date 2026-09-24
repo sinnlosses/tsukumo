@@ -14,10 +14,16 @@ import { useCallback, useId, useRef, useState, type RefObject } from "react"
 
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 
-/** 一覧の1行ぶんの見出し（`main-view.tsx` が `domain/turn-title.ts` の `turnTitle` で作る）。 */
+/**
+ * 一覧の1行ぶんの見出しと全文（`main-view.tsx` が `domain/turn-title.ts` の `turnTitle` /
+ * `turnHistoryText` で作る）。**`title` は札の頭とアクセシブルネームに使う1行**、
+ * **`historyText` は一覧の行に出す、選択してコピーできる依頼の全文**（複数行を含む）で、
+ * 別のもの。
+ */
 export type TurnHeaderEntry = {
   readonly id: number
   readonly title: string
+  readonly historyText: string
 }
 
 export type TurnHeaderProps = {
@@ -27,12 +33,17 @@ export type TurnHeaderProps = {
   readonly onSelect: (turnId: number) => void
 }
 
-/** 開いた一覧の1行。番号は古いほうを1とする通し番号のまま、並びだけ新しい順（`toReversed`）。 */
+/**
+ * 開いた一覧の1行。番号は古いほうを1とする通し番号のまま、並びだけ新しい順（`toReversed`）。
+ * **`title` は飛ぶ口のアクセシブルネームに使う1行、`text` は行に出す選択できる依頼の全文**
+ * （`presentational-turn-header.tsx` の `TurnHistoryList`）。
+ */
 export type TurnHeaderHistoryRow = {
   readonly id: number
   readonly isActive: boolean
   readonly positionLabel: string
   readonly title: string
+  readonly text: string
 }
 
 /** `<TurnHeader>` が画面に出す形。 */
@@ -123,6 +134,7 @@ function historyRows(
     .map((turn, position) => ({
       id: turn.id,
       title: turn.title,
+      text: turn.historyText,
       isActive: turn.id === activeTurnId,
       positionLabel:
         position === total - 1 ? NEWEST_ROW_BADGE : `${String(position + 1)} / ${String(total)}`,
