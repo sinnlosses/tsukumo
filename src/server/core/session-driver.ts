@@ -14,7 +14,7 @@
 // `BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
 // **ブラウザも同じ畳み先を読む**ようになったため（`docs/screen-design.md` 13.6）。
 
-import { type ModelAlias, type PermissionMode } from "../../shared/command.ts"
+import { type EffortLevel, type ModelAlias, type PermissionMode } from "../../shared/command.ts"
 import { type ContextUsageReport } from "../../shared/context-usage.ts"
 import { type ExpressionChoice } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
@@ -350,6 +350,13 @@ export type SessionDriver = {
   readonly readContextUsage: () => Promise<ContextUsageReport>
   /** モデルを切り替える（画面からの切り替えは後続タスクで配線する）。 */
   readonly setModel: (model: string | undefined) => Promise<void>
+  /**
+   * effort を切り替える（`docs/screen-design.md` 13.9「動き方の操作子」）。**モデルと違って
+   * 確認の合図を返さない** — 帯に表示する値は次のターンの `Stop` フック入力から読み取った
+   * ものだけで、送った値をここから先回りで流さない（押した値へ先に倒さない。理由は
+   * `docs/screen-design.md` 13.9「動き方の操作子」）。
+   */
+  readonly setEffort: (effort: EffortLevel) => Promise<void>
   /** 許可モードを切り替える（画面からの切り替えは後続タスクで配線する）。 */
   readonly setPermissionMode: (mode: PermissionMode) => Promise<void>
   /** 入力を閉じてセッションを終える。子プロセスも止まる。 */

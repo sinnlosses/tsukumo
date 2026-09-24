@@ -12,10 +12,15 @@ import { fileURLToPath } from "node:url"
 
 import { z } from "zod"
 
+import { type EffortLevel } from "../../shared/command.ts"
 import { type ContextUsage } from "../../shared/context-usage.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type SessionDefault } from "../../shared/session-default.ts"
-import { type SessionEvent, sessionEventSchema } from "../../shared/session-event.ts"
+import {
+  type ModelEffortSupport,
+  type SessionEvent,
+  sessionEventSchema,
+} from "../../shared/session-event.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { createReportReview } from "../core/report-review.ts"
 import { type SessionDriver } from "../core/session-driver.ts"
@@ -28,6 +33,36 @@ const DEFAULT_SESSION_URL = new URL("../../../test/fixture/fake-session.json", i
  * 疑似セッションの JSON に持たせず、ここに直接書く。
  */
 const FAKE_PLAN = "Claude Max"
+
+/**
+ * fake driver が起こした直後に1回だけ流す、モデルごとの effort の対応（`docs/screen-design.md`
+ * 13.9「動き方の操作子」）。**会話の内容ではない**ので疑似セッションの JSON には持たせず、
+ * ここに直接書く。**本物の `supportedModels()` の実測値をそのまま写した**（`opus` / `sonnet` は
+ * 5段すべてに対応し、`fable` はエイリアスと違う値〔`claude-fable-5-1`〕で返る。`haiku` は
+ * `supportsEffort` 自体が無い）——effort に対応しないモデルで選べなくなることと、エイリアスと
+ * 一致しない値の当て方（`src/browser/features/screen-nav/domain/effort-label.ts`）の両方を
+ * 疑似セッションでも確かめられるようにしてある。
+ */
+export const FAKE_MODEL_EFFORT_SUPPORT: readonly ModelEffortSupport[] = [
+  { model: "opus", supportsEffort: true, effortLevels: ["low", "medium", "high", "xhigh", "max"] },
+  {
+    model: "claude-fable-5-1",
+    supportsEffort: true,
+    effortLevels: ["low", "medium", "high", "xhigh", "max"],
+  },
+  {
+    model: "sonnet",
+    supportsEffort: true,
+    effortLevels: ["low", "medium", "high", "xhigh", "max"],
+  },
+  { model: "haiku", supportsEffort: false, effortLevels: [] },
+]
+
+/**
+ * fake driver が起こしたときに効いている既定の effort（`src/server/adapter/sdk-driver.ts` の
+ * `DEFAULT_EFFORT` と同じ値を、疑似セッションだけの値として独立に持つ）。
+ */
+export const FAKE_DEFAULT_EFFORT: EffortLevel = "medium"
 
 /**
  * fake driver が返すコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）の数。
@@ -156,6 +191,10 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
   let model: string = options.sessionDefault.model
   let permissionMode: string = options.sessionDefault.permissionMode
+  // いま効いている effort。`setEffort` で変わるが、**画面に届くのはターンが終わったとき**
+  // （本物の `Stop` フック入力と同じ遅れを疑似セッションでも再現する。`docs/screen-design.md`
+  // 13.9「動き方の操作子」の「effort のドロップダウンだけ、表示の更新が遅れる」）。
+  let effort: EffortLevel = FAKE_DEFAULT_EFFORT
   // `report` の差し戻しの預かり（本物の駆動と同じ。`src/server/core/report-review.ts`）。判定は
   // しない（handler が無いので）——疑似セッションが書いた `tool-finished` の `isError` に従って
   // 描くか捨てるかだけが決まる。
@@ -171,6 +210,11 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       options.onEvent(
         passed.kind === "session-info" ? { ...passed, model, permissionMode } : passed,
       )
+    }
+    // **ターンが終わるたびに、そのとき効いている effort を読めたことにする**（本物の `Stop`
+    // フック入力を疑似する。`reportReview.pass` は通さない——`report` の差し戻しとは無関係）。
+    if (event.kind === "turn-finished") {
+      options.onEvent({ kind: "effort-changed", effort })
     }
   }
 
@@ -202,6 +246,8 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // の `relayPlan`）。fake driver は claude を起こさないので、疑似セッションで画面を確かめられる
   // ように固定値を1回流す。
   emit({ kind: "plan", plan: FAKE_PLAN })
+  // 同じく `supportedModels()` の代わり（`relaySupportedModels`）。
+  emit({ kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT })
 
   play(options.session.opening, 0)
 
@@ -257,6 +303,12 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
         model = next
       }
       emit({ kind: "session-info", ...sessionInfo() })
+      return Promise.resolve()
+    },
+    // **確認の合図をここで流さない**（本物の `sdk-driver.ts` の `setEffort` と同じ）。画面に
+    // 届くのは、次にターンが終わって `emit` が `effort-changed` を流したとき。
+    setEffort: (next) => {
+      effort = next
       return Promise.resolve()
     },
     setPermissionMode: (mode) => {

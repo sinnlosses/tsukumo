@@ -27,6 +27,7 @@
 /* **幅は選んでいる値の字の幅**（`field-sizing: content`）にする（既定の `<select>` はいちばん
    長い選択肢の幅になり、「Opus」と矢印の間が空く）。右の余白は矢印ぶん。 */
 .screen-nav-model-select,
+.screen-nav-effort-select,
 .screen-nav-permission-mode-select {
   field-sizing: content;
   box-sizing: border-box;
@@ -41,18 +42,26 @@
   cursor: pointer;
 }
 .screen-nav-model-select:hover,
+.screen-nav-effort-select:hover,
 .screen-nav-permission-mode-select:hover {
   border-color: var(--accent);
+}
+/* 選べない（対応しない・まだ読めていない）ときは、押せないことが分かるカーソルにする。 */
+.screen-nav-effort-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 /* 開いた一覧の地は帯ではなくブラウザが描くので、選択肢の地と字は明示する（透明のままだと
    OS の既定の白地に明るい字が載る）。 */
 .screen-nav-model-select option,
+.screen-nav-effort-select option,
 .screen-nav-permission-mode-select option {
   background: var(--surface);
   color: var(--ink);
 }
-/* 機械が付けた名前は等幅（13.1 原則3）。 */
-.screen-nav-model-select {
+/* 機械が付けた名前・値は等幅（13.1 原則3）。 */
+.screen-nav-model-select,
+.screen-nav-effort-select {
   font-family: var(--font-mono);
 }
 /* 「全部許す」のときだけ字に意味の色を載せる。**ラベルの文字が必ず付く**ので、色だけで

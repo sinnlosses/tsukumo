@@ -90,6 +90,14 @@ describe("parseClientCommand（受け付ける形）", () => {
     ).toEqual({ type: "set-permission-mode", commandId: "c-5", mode: "plan" })
   })
 
+  it("set-effort を受け付ける（set-model と同じ形）", () => {
+    expect(parseClientCommand({ type: "set-effort", commandId: "c-10", effort: "high" })).toEqual({
+      type: "set-effort",
+      commandId: "c-10",
+      effort: "high",
+    })
+  })
+
   it("forget-remembered-line は消したい1行の文面をそのまま受け付ける", () => {
     expect(
       parseClientCommand({
@@ -697,6 +705,9 @@ describe("parseClientCommand（落とす形）", () => {
     ).toBeUndefined()
     expect(
       parseClientCommand({ type: "set-permission-mode", commandId: "c-5", mode: "dontAsk" }),
+    ).toBeUndefined()
+    expect(
+      parseClientCommand({ type: "set-effort", commandId: "c-10", effort: "ultra" }),
     ).toBeUndefined()
     expect(
       parseClientCommand({

@@ -415,4 +415,86 @@ describe("ScreenNav", () => {
       expect(panelModelSelect?.value).toBe("haiku")
     })
   })
+
+  // モデルの隣、モデル → effort → 許可モードの並び（13.9「動き方の操作子」）。
+  describe("effort のドロップダウン", () => {
+    const OPUS_SUPPORT = {
+      model: "opus",
+      supportsEffort: true,
+      effortLevels: ["low", "medium", "high", "xhigh", "max"],
+    } as const
+    const HAIKU_SUPPORT = { model: "haiku", supportsEffort: false, effortLevels: [] } as const
+
+    it("対応表も読み取った値もまだ届いていないうちは選べず、title に理由が出る", () => {
+      renderScreenNav()
+
+      const select = screen.getByLabelText("effort") as HTMLSelectElement
+      expect(select.disabled).toBe(true)
+      expect(select.title.length).toBeGreaterThan(0)
+    })
+
+    it("対応表が届き effort も読めたら、選べる段だけを選択肢にして読んだ値を選択する", () => {
+      renderScreenNav({
+        model: "claude-opus-5",
+        modelEffortSupport: [OPUS_SUPPORT],
+        effort: "high",
+      })
+
+      const select = screen.getByLabelText("effort") as HTMLSelectElement
+      expect(select.disabled).toBe(false)
+      expect(select.value).toBe("high")
+      expect(Array.from(select.options).map((option) => option.value)).toEqual([
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+      ])
+    })
+
+    // haiku は実測で supportsEffort が無いモデル（docs/history/decision.md）。
+    it("対応表がいまのモデルは対応しないと言っていれば選べない", () => {
+      renderScreenNav({
+        model: "claude-haiku-5",
+        modelEffortSupport: [OPUS_SUPPORT, HAIKU_SUPPORT],
+        effort: "medium",
+      })
+
+      const select = screen.getByLabelText("effort") as HTMLSelectElement
+      expect(select.disabled).toBe(true)
+    })
+
+    it("押した値へ先に倒さない：set-effort を送ってもすぐには表示が変わらない", () => {
+      const calls: unknown[] = []
+      renderScreenNav(
+        { model: "claude-opus-5", modelEffortSupport: [OPUS_SUPPORT], effort: "low" },
+        (command) => {
+          calls.push(command)
+        },
+      )
+
+      fireEvent.change(screen.getByLabelText("effort"), { target: { value: "high" } })
+
+      expect(calls).toEqual([{ type: "set-effort", effort: "high" }])
+      // 状態の effort をまだ変えていないので、表示は送る前の値のまま。
+      expect((screen.getByLabelText("effort") as HTMLSelectElement).value).toBe("low")
+    })
+
+    // 実測: モデルによっては段が5つより少ない（`xhigh` の無い段など。docs/history/decision.md）。
+    // モデルを切り替えた直後、前に読んだ値がいまのモデルに無い段なら選べない（古い値を出さない）。
+    it("対応はするが、読み取った値がいまのモデルの選べる段に無ければ選べない", () => {
+      const SONNET_4_6_SUPPORT = {
+        model: "sonnet",
+        supportsEffort: true,
+        effortLevels: ["low", "medium", "high", "max"],
+      } as const
+      renderScreenNav({
+        model: "claude-sonnet-4-6",
+        modelEffortSupport: [OPUS_SUPPORT, SONNET_4_6_SUPPORT],
+        effort: "xhigh",
+      })
+
+      expect((screen.getByLabelText("effort") as HTMLSelectElement).disabled).toBe(true)
+    })
+  })
 })

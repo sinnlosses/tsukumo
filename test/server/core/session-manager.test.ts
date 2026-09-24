@@ -130,6 +130,10 @@ function createStubDriver(): StubDriver {
         calls.push(`setModel:${model ?? ""}`)
         return Promise.resolve()
       },
+      setEffort: (effort: string) => {
+        calls.push(`setEffort:${effort}`)
+        return Promise.resolve()
+      },
       setPermissionMode: (mode: string) => {
         calls.push(`setPermissionMode:${mode}`)
         return Promise.resolve()
@@ -345,6 +349,9 @@ describe("createSessionManager", () => {
       await manager.dispatch({ type: "set-model", commandId: "c-3", model: "sonnet" }),
     ).toEqual({ ok: true })
     expect(
+      await manager.dispatch({ type: "set-effort", commandId: "c-3b", effort: "high" }),
+    ).toEqual({ ok: true })
+    expect(
       await manager.dispatch({
         type: "set-permission-mode",
         commandId: "c-4",
@@ -356,6 +363,7 @@ describe("createSessionManager", () => {
       "prompt:架空の依頼",
       "interrupt",
       "setModel:sonnet",
+      "setEffort:high",
       "setPermissionMode:plan",
     ])
   })
@@ -488,6 +496,27 @@ describe("createSessionManager", () => {
       }),
     ).toEqual({ ok: true })
     expect(stub.calls).toContain("close")
+  })
+
+  it("ターン進行中の set-effort は set-model と同じく起こし直さず、駆動へそのまま渡す", async () => {
+    const { manager, stub } = startManagerWithStub()
+
+    expect(
+      await manager.dispatch({
+        type: "prompt",
+        commandId: "c-1",
+        text: "架空の依頼",
+        images: [],
+      }),
+    ).toEqual({ ok: true })
+    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+    await waitForBatch()
+
+    expect(
+      await manager.dispatch({ type: "set-effort", commandId: "c-2", effort: "xhigh" }),
+    ).toEqual({ ok: true })
+    expect(stub.calls).not.toContain("close")
+    expect(stub.calls).toContain("setEffort:xhigh")
   })
 
   it("switch-session で、選ばれたIDの続きから起こし直す（パックもモードも変えない）", async () => {
@@ -1568,6 +1597,7 @@ describe("createSessionManager", () => {
           pending: () => [],
           readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
           setModel: () => Promise.resolve(),
+          setEffort: () => Promise.resolve(),
           setPermissionMode: () => Promise.resolve(),
           close: () => {},
         }),

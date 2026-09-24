@@ -52,6 +52,9 @@ export async function dispatchToDriver(
       case "set-model":
         await started.setModel(command.model)
         return { ok: true }
+      case "set-effort":
+        await started.setEffort(command.effort)
+        return { ok: true }
       case "set-permission-mode":
         await started.setPermissionMode(command.mode)
         return { ok: true }

@@ -16,7 +16,7 @@ import { type BackgroundTask } from "./background-task.ts"
 import { isBlankText } from "./blank-text.ts"
 import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
 import { commandCandidates } from "./command-suggestion.ts"
-import { isModelAlias } from "./command.ts"
+import { type EffortLevel, isModelAlias } from "./command.ts"
 import { type DiaryStage, type DiaryWriting } from "./diary.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
@@ -25,7 +25,11 @@ import { type Question, type QuestionAnswer } from "./question.ts"
 import { type RateLimit } from "./rate-limit.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
-import { type CommandDescription, type SessionEvent } from "./session-event.ts"
+import {
+  type CommandDescription,
+  type ModelEffortSupport,
+  type SessionEvent,
+} from "./session-event.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
 import {
   type TurnEnding,
@@ -283,6 +287,25 @@ export type SessionState = {
    */
   readonly model: string | undefined
   /**
+   * モデルごとの effort の対応（{@link ModelEffortSupport}）。帯の effort のドロップダウンが、
+   * いまのモデルで選べる段を絞るのに読む（`docs/screen-design.md` 13.9「動き方の操作子」）。
+   *
+   * **源は `model-effort-support` だけ**（駆動が起動直後に1回だけ取りに行く）。まだ届いて
+   * いなければ空——空のときは「対応するかどうか分からない」に畳む（読む側は
+   * `src/browser/features/screen-nav/domain/effort-label.ts`）。
+   */
+  readonly modelEffortSupport: readonly ModelEffortSupport[]
+  /**
+   * いま効いている effort。**送った値ではなく、`Stop` フック入力から読み取った値**
+   * （`effort-changed`。`docs/screen-design.md` 13.9「動き方の操作子」）。
+   *
+   * まだ一度もターンが終わっていない・読めていなければ undefined（**読めない値は出さない**
+   * という決定どおり、見た目上の既定へは畳まない——`model` / `permissionMode` と違う扱い）。
+   * `model` と同じく `session` の外に置く（ターンの境目で戻さない。次に読めるまで前の値を
+   * 保つのが「効き目と表示が食い違わない」ための挙動）。
+   */
+  readonly effort: EffortLevel | undefined
+  /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
    * （`terminal_slash_commands`）は除いてある**（`commandCandidates`。
    * docs/display.md 4.2「入力欄」）。**`init`（`session-info`）は最初の依頼を送るまで
@@ -491,6 +514,8 @@ export const INITIAL_SESSION_STATE: SessionState = {
   pending: [],
   session: { kind: "starting" },
   model: undefined,
+  modelEffortSupport: [],
+  effort: undefined,
   slashCommands: [],
   commandDescriptions: [],
   endedReason: undefined,
@@ -578,6 +603,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // の間に届いても更新できる）。ここで `running` に絞ると、切り替えても数秒で古い値に
       // 戻って見える不具合になる（`src/server/adapter/sdk-driver.ts` の `setModel` 参照）。
       return isModelAlias(event.model) ? { ...state, model: event.model } : state
+    case "model-effort-support":
+      return { ...state, modelEffortSupport: event.models }
+    case "effort-changed":
+      return { ...state, effort: event.effort }
     case "request":
       return {
         ...beginTurn(state, at),

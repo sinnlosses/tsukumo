@@ -14,9 +14,14 @@ import { isPlainObject } from "remeda"
 import { API_ERROR_KINDS, type ApiErrorKind } from "../../shared/api-trouble.ts"
 import { type BackgroundTask, type BackgroundTaskKind } from "../../shared/background-task.ts"
 import { isBlankText } from "../../shared/blank-text.ts"
+import { type EffortLevel, isEffortLevel } from "../../shared/command.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { type RateLimit, type RateLimitBucket } from "../../shared/rate-limit.ts"
-import { type CommandDescription, type SessionEvent } from "../../shared/session-event.ts"
+import {
+  type CommandDescription,
+  type ModelEffortSupport,
+  type SessionEvent,
+} from "../../shared/session-event.ts"
 import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 import { type TurnOutcome } from "../../shared/turn-failure.ts"
 import { optionalString } from "../../shared/utils/optional-string.ts"
@@ -171,6 +176,38 @@ export function toPlan(value: unknown): string | undefined {
   }
   const plan = optionalString(value.subscriptionType)
   return plan === "" ? undefined : plan
+}
+
+/**
+ * `supportedModels()` の戻り値から、effort に関わる部分だけを取り出す（`ModelEffortSupport`）。
+ * **駆動側（src/server/adapter/sdk-driver.ts）が起動直後に1回だけ呼ぶ**——「いま効いている値」
+ * ではなく「対応の有無・選べる段」だけを運ぶ（実測は `docs/history/decision.md`「effort の
+ * 途中変更と読み取りが成り立った実測」）。
+ *
+ * `value` が文字列でない要素は捨てる。`supportsEffort` は真偽値でなければ `false` に、
+ * `supportedEffortLevels` は配列でない・{@link isEffortLevel} を通らない要素を捨て、
+ * 最終的に空になれば `[]` に畳む（未知の段が増えても、知っている段だけを選べる一覧として出す）。
+ */
+export function toModelEffortSupport(value: unknown): readonly ModelEffortSupport[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.flatMap((item) => {
+    if (!isPlainObject(item) || typeof item.value !== "string") {
+      return []
+    }
+    const levels = Array.isArray(item.supportedEffortLevels) ? item.supportedEffortLevels : []
+    return [
+      {
+        model: item.value,
+        supportsEffort: item.supportsEffort === true,
+        effortLevels: levels.filter(
+          (level): level is EffortLevel => typeof level === "string" && isEffortLevel(level),
+        ),
+      },
+    ]
+  })
 }
 
 /**

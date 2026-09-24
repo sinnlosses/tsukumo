@@ -20,7 +20,6 @@
 import { setImmediate } from "node:timers/promises"
 
 import {
-  type EffortLevel,
   type HookCallbackMatcher,
   type HookEvent,
   type PermissionResult,
@@ -28,7 +27,7 @@ import {
   type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk"
 
-import { type PermissionMode } from "../../shared/command.ts"
+import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../shared/command.ts"
 import { expressionNames as toExpressionNames } from "../../shared/expression-choice.ts"
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
@@ -48,6 +47,7 @@ import { createReportGate, REPORT_GATE_REASON, type ReportGate } from "../core/r
 import {
   isSubagentMessage,
   toCommandDescriptions,
+  toModelEffortSupport,
   toPlan,
   toSessionEvents,
   tsukumoToolFullName,
@@ -73,7 +73,9 @@ import {
 import { tsukumoServer } from "./sdk-tool.ts"
 
 /**
- * 既定の reasoning effort（docs/requirements.md 4.1）。画面には出さない（設定するだけ）。
+ * 既定の reasoning effort（docs/requirements.md 4.1）。**起こすときに `query()` へ渡す値**で、
+ * 画面の effort のドロップダウンはこの値を先回りで出さない——表示は `Stop` フック入力から
+ * 読み取った値だけに従う（`docs/screen-design.md` 13.9「動き方の操作子」）。
  */
 export const DEFAULT_EFFORT: EffortLevel = "medium"
 
@@ -130,10 +132,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      // 2つは雑談と仕事で分かれていて、同時に登録されることはない。
-      hooks:
-        chatSummaryHooks(options.mode, options.onEvent) ??
-        reportGateHooks(options.mode, reportGate),
+      // `PostCompact` は雑談のときだけ、`Stop` はモードによらず常に登録する
+      // （{@link stopHooks}。effort を読む口は仕事でも雑談でも要るため）。
+      hooks: {
+        ...chatSummaryHooks(options.mode, options.onEvent),
+        ...stopHooks(options.mode, reportGate, options.onEvent),
+      },
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
           options.expressions,
@@ -162,6 +166,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   )
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
+  void relaySupportedModels(session, options)
 
   return {
     prompt: (text, images) => {
@@ -196,6 +201,10 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
         options.onEvent({ kind: "model-changed", model })
       }
     },
+    // **確認の合図をここで流さない**（`setModel` と違う）。帯に表示する値は次のターンの
+    // `Stop` フック入力から読み取ったものだけで、送った値の先回りは「押した値へ先に倒さない」
+    // という決定に反する（`docs/screen-design.md` 13.9「動き方の操作子」）。
+    setEffort: (effort) => session.applyFlagSettings({ effortLevel: effort }),
     setPermissionMode: (mode) => session.setPermissionMode(mode),
     close: () => {
       input.end()
@@ -303,32 +312,43 @@ export function chatSummaryHooks(
 }
 
 /**
- * `report` の関所（`src/server/core/report-tool.ts` の {@link createReportGate}）を `Stop` フックに
- * 載せる。**仕事のときだけ登録する**——雑談のときは `hooks` そのものを渡さない（undefined）。`SubagentStop` には載せない
- * （サブエージェントの `report` は捨てるので、渡し直させても画面に出ない）。
+ * `Stop` フックを1つ登録する。**モードによらず常に登録する**（`chatSummaryHooks` と違い
+ * `undefined` を返さない）——effort を読む口（{@link EffortLevel}。`docs/screen-design.md` 13.9
+ * 「動き方の操作子」）は仕事でも雑談でも要るが、`report` の関所
+ * （`src/server/core/report-tool.ts` の {@link createReportGate}）で止めるのは仕事のときだけ。
+ * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に
+ * 出ない。effort もメインの手元の値だけを読めばよい）。
  *
- * **判定の前に1回だけ macrotask を待つ。** SDK はフックの呼び出し（制御リクエスト）を読んだ
- * その場で処理し、それより前に届いたメッセージは列に積んで {@link relayMessages} の反復へ渡すので、
- * 待たないと止まる直前の本文が関所に届く前に判定しうる。列を空けるのは microtask だけなので、
- * macrotask を1回待てば足りる。
+ * **effort はブロック判定より先に読む。** `input.effort?.level` が
+ * {@link isEffortLevel} を通れば `effort-changed` を流す——**帯に表示する値の源はここだけ**
+ * （実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
+ *
+ * **関所の判定の前に1回だけ macrotask を待つ。** SDK はフックの呼び出し（制御リクエスト）を
+ * 読んだその場で処理し、それより前に届いたメッセージは列に積んで {@link relayMessages} の反復へ
+ * 渡すので、待たないと止まる直前の本文が関所に届く前に判定しうる。列を空けるのは microtask
+ * だけなので、macrotask を1回待てば足りる（**雑談のときはこの待ちも関所の判定も行わない**）。
  *
  * `startSdkDriver` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
  * ようにするため（{@link chatSummaryHooks} と同じ理由）。
  */
-export function reportGateHooks(
+export function stopHooks(
   mode: SessionMode,
   gate: ReportGate,
-): Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined {
-  if (mode.kind !== "work") {
-    return undefined
-  }
-
+  onEvent: (event: SessionEvent) => void,
+): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     Stop: [
       {
         hooks: [
           async (input) => {
             if (input.hook_event_name !== "Stop") {
+              return {}
+            }
+            const level = input.effort?.level
+            if (level !== undefined && isEffortLevel(level)) {
+              onEvent({ kind: "effort-changed", effort: level })
+            }
+            if (mode.kind !== "work") {
               return {}
             }
             await setImmediate()
@@ -497,6 +517,31 @@ async function relayPlan(
     }
   } catch {
     // プランが取れないだけなので、何も流さずに諦める。
+  }
+}
+
+/**
+ * モデルごとの effort の対応（`ModelEffortSupport`。`src/shared/session-event.ts`）を1回だけ
+ * 取りに行く（`supportedModels()`。`relayCommandDescriptions` / `relayPlan` と同じ契機）。帯の
+ * effort の
+ * ドロップダウンが、いまのモデルで選べる段を絞るのに使う（`docs/screen-design.md` 13.9
+ * 「動き方の操作子」）。
+ *
+ * **取れなくても・空でもセッションは続ける**（画面は effort を「対応するかどうか分からない」
+ * のまま扱うだけ。docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」。
+ * {@link relayCommandDescriptions} と同じ形）。
+ */
+async function relaySupportedModels(
+  session: { readonly supportedModels: () => Promise<unknown> },
+  options: SessionDriverOptions,
+): Promise<void> {
+  try {
+    const models = toModelEffortSupport(await session.supportedModels())
+    if (models.length > 0) {
+      options.onEvent({ kind: "model-effort-support", models })
+    }
+  } catch {
+    // 対応が取れないだけなので、何も流さずに諦める。
   }
 }
 

@@ -478,6 +478,34 @@ describe("applySessionEvent", () => {
     expect(view.model).toBe("sonnet")
   })
 
+  it("model-effort-support はモデルごとの effort の対応をそのまま置き換える", () => {
+    expect(INITIAL_SESSION_STATE.modelEffortSupport).toEqual([])
+
+    const view = apply({
+      kind: "model-effort-support",
+      models: [
+        { model: "opus", supportsEffort: true, effortLevels: ["low", "medium", "high"] },
+        { model: "haiku", supportsEffort: false, effortLevels: [] },
+      ],
+    })
+
+    expect(view.modelEffortSupport).toEqual([
+      { model: "opus", supportsEffort: true, effortLevels: ["low", "medium", "high"] },
+      { model: "haiku", supportsEffort: false, effortLevels: [] },
+    ])
+  })
+
+  it("effort-changed は読み取った effort をそのまま置き換える。届くまでは undefined", () => {
+    expect(INITIAL_SESSION_STATE.effort).toBeUndefined()
+
+    const view = apply(
+      { kind: "effort-changed", effort: "low" },
+      { kind: "effort-changed", effort: "high" },
+    )
+
+    expect(view.effort).toBe("high")
+  })
+
   it("plan が届くまでは undefined、届いたらそのまま持つ（docs/glossary.md「プラン」）", () => {
     expect(INITIAL_SESSION_STATE.plan).toBeUndefined()
 

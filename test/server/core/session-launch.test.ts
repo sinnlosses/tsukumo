@@ -55,6 +55,7 @@ function createStubDriver(): { readonly driver: SessionDriver; readonly calls: s
       pending: () => [],
       readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
       setModel: () => Promise.resolve(),
+      setEffort: () => Promise.resolve(),
       setPermissionMode: () => Promise.resolve(),
       close: () => calls.push("close"),
     },

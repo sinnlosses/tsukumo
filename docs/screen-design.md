@@ -1452,9 +1452,14 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 - **`bypassPermissions` のときだけ字に `--state-ng` を載せる**（新しい色は足さない）。
   「全部許す」の文字が必ず付いているので、色だけで意味を伝えることにならない（13.1 原則5）
 - **ターン進行中も変えられる**（起こし直さない。いまのサイドバーと同じ）
-- **まだ届いていない値は見た目上の既定に倒す**（モデルは `Opus`、許可モードは「自動判定」、
-  effort は既定の `medium`。字と畳み方は
-  `src/browser/features/screen-nav/domain/model-label.ts` / `permission-mode-label.ts` の1箇所）
+- **モデル・許可モードは、まだ届いていない値を見た目上の既定に倒す**（モデルは `Opus`、
+  許可モードは「自動判定」。字と畳み方は
+  `src/browser/features/screen-nav/domain/model-label.ts` / `permission-mode-label.ts` の1箇所）。
+  **effort だけ既定へ倒さない**（下の「effort のドロップダウンだけ、表示の更新が遅れる」。
+  「読めない値は出さない」という決定と、既定の `medium` へ倒すことは両立しない——起こした
+  直後・対応表がまだ届いていない・対応する値をまだ1件も読めていないときは選べなくし、
+  理由を `title` に出す。字と畳み方は
+  `src/browser/features/screen-nav/domain/effort-label.ts` の1箇所）
 
 **effort のドロップダウンだけ、表示の更新が遅れる**（モデル・許可モードのドロップダウンは
 サーバの `session-info` で即座に更新されるのに対し、effort は hook 入力の `effort.level` からしか

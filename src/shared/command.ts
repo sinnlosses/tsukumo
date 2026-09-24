@@ -87,6 +87,16 @@ export const MODEL_ALIASES = ["opus", "sonnet", "haiku", "fable"] as const
 
 export type ModelAlias = (typeof MODEL_ALIASES)[number]
 
+/**
+ * effort の段（`docs/requirements.md` 4.1）。SDK の `EffortLevel` と同じ5語（実測は
+ * `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。**送るときの
+ * 一覧はここだけ**——読み取った値の検証も同じ一覧で行う（`src/server/adapter/sdk-driver.ts` の
+ * `stopHooks`）。
+ */
+export const EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"] as const
+
+export type EffortLevel = (typeof EFFORT_LEVELS)[number]
+
 /** 外から届いた文字列が {@link PERMISSION_MODES} のいずれかかどうかを検証する。 */
 export function isPermissionMode(value: string): value is PermissionMode {
   return PERMISSION_MODES.some((mode) => mode === value)
@@ -95,6 +105,11 @@ export function isPermissionMode(value: string): value is PermissionMode {
 /** 外から届いた文字列が {@link MODEL_ALIASES} のいずれかかどうかを検証する。 */
 export function isModelAlias(value: string): value is ModelAlias {
   return MODEL_ALIASES.some((alias) => alias === value)
+}
+
+/** 外から届いた文字列が {@link EFFORT_LEVELS} のいずれかかどうかを検証する。 */
+export function isEffortLevel(value: string): value is EffortLevel {
+  return EFFORT_LEVELS.some((level) => level === value)
 }
 
 /**
@@ -236,6 +251,18 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     type: z.literal("set-model"),
     commandId: commandIdSchema,
     model: z.enum(MODEL_ALIASES),
+  }),
+  /**
+   * effort を切り替える（`docs/screen-design.md` 13.9「動き方の操作子」）。**`set-model` と
+   * 同じ形**——セッション限りで、サーバは `applyFlagSettings({ effortLevel })` で SDK へ渡す
+   * だけ（`src/server/adapter/sdk-driver.ts`）。**帯に表示する値はこのコマンドで送った値では
+   * なく、hook 入力から読み取った値**（`effort-changed`。押した値へ先に倒さない。理由は
+   * `docs/screen-design.md` 13.9「動き方の操作子」）。
+   */
+  z.object({
+    type: z.literal("set-effort"),
+    commandId: commandIdSchema,
+    effort: z.enum(EFFORT_LEVELS),
   }),
   z.object({
     type: z.literal("set-permission-mode"),

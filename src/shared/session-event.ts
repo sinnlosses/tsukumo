@@ -17,6 +17,7 @@ import { z } from "zod"
 import { type ApiErrorKind, type ApiRetry } from "./api-trouble.ts"
 import { type BackgroundTask } from "./background-task.ts"
 import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
+import { type EffortLevel } from "./command.ts"
 import { type DiaryStage } from "./diary.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
@@ -40,6 +41,21 @@ import { type VisitEvent } from "./visit.ts"
 export type CommandDescription = {
   readonly name: string
   readonly description: string | undefined
+}
+
+/**
+ * SDK のモデル一覧（`supportedModels()`）1件のうち、effort に関わる部分だけを写したもの
+ * （`docs/screen-design.md` 13.9「動き方の操作子」）。**「いま効いている値」ではなく「対応の
+ * 有無・選べる段」だけ**（実測は `docs/history/decision.md`「effort の途中変更と読み取りが
+ * 成り立った実測」）。`model` は SDK の `ModelInfo.value`（実測: エイリアスと一致するとは
+ * 限らない——`fable` は `claude-fable-5-1` のような値になる）で、エイリアスへの対応付けは
+ * 読む側（`src/browser/features/screen-nav/domain/effort-label.ts`）が持つ（表示の整形は
+ * サーバとブラウザの契約ではない）。
+ */
+export type ModelEffortSupport = {
+  readonly model: string
+  readonly supportsEffort: boolean
+  readonly effortLevels: readonly EffortLevel[]
 }
 
 /**
@@ -279,6 +295,20 @@ export type SessionEvent =
    * `init` を待つだけにする）。
    */
   | { readonly kind: "model-changed"; readonly model: string }
+  /**
+   * 起動直後に分かった、モデルごとの effort の対応（{@link ModelEffortSupport}）。
+   * **駆動が起動直後に1回だけ取りに行く**（`supportedModels()`。`plan` / `command-descriptions`
+   * と同じ契機）。**取れなかったとき（呼び出しが落ちた・空だった）は流れない**（動作中の
+   * 一時的な失敗の扱い。`docs/coding-standards.md`「エラーハンドリング」）。
+   */
+  | { readonly kind: "model-effort-support"; readonly models: readonly ModelEffortSupport[] }
+  /**
+   * いま効いている effort が分かった（`Stop` フック入力の `effort.level`。`docs/screen-design.md`
+   * 13.9「動き方の操作子」）。**読める口はこれだけ**——`帯から送った値をそのまま出さない`
+   * （実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
+   * ターンが終わるたびに、そのとき効いていた値で届く（変わっていなくても届く）。
+   */
+  | { readonly kind: "effort-changed"; readonly effort: EffortLevel }
   /**
    * `main` の develop/tasks.json が変わった（adapter の `task-summary.ts` が `main` の先端を見て起こす）。
    * ファイルが読めない・消えたときは `tasks: { kind: "unknown" }`（サイドバーの「不明」表示に

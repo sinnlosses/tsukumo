@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
 import {
+  type EffortLevel as SdkEffortLevel,
   type HookCallbackMatcher,
   type HookEvent,
   type PermissionMode as SdkPermissionMode,
@@ -13,7 +14,7 @@ import {
   buildQuerySeedOptions,
   chatSummaryHooks,
   DEFAULT_EFFORT,
-  reportGateHooks,
+  stopHooks,
 } from "../../../src/server/adapter/sdk-driver.ts"
 import { createReportGate, REPORT_GATE_REASON } from "../../../src/server/core/report-tool.ts"
 import {
@@ -22,7 +23,7 @@ import {
   type SessionMode,
 } from "../../../src/server/core/session-driver.ts"
 import { API_ERROR_KINDS } from "../../../src/shared/api-trouble.ts"
-import { MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
+import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
@@ -168,13 +169,14 @@ describe("chatSummaryHooks", () => {
 })
 
 /** `Stop` フックの入力（テスト用）。`last_assistant_message` は関所が見ないので載せない。 */
-function stopInput(stopHookActive: boolean): StopHookInput {
+function stopInput(stopHookActive: boolean, effortLevel?: string): StopHookInput {
   return {
     session_id: "s-1",
     transcript_path: "/tmp/tsukumo-test/fake.jsonl",
     cwd: "/tmp/tsukumo-test",
     hook_event_name: "Stop",
     stop_hook_active: stopHookActive,
+    ...(effortLevel === undefined ? {} : { effort: { level: effortLevel } }),
   }
 }
 
@@ -182,30 +184,36 @@ function stopInput(stopHookActive: boolean): StopHookInput {
 async function runStop(
   hooks: Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined,
   stopHookActive: boolean,
+  effortLevel?: string,
 ): Promise<unknown> {
   const callback = hooks?.Stop?.[0]?.hooks[0]
   expect(callback).toBeDefined()
-  return callback?.(stopInput(stopHookActive), undefined, { signal: new AbortController().signal })
+  return callback?.(stopInput(stopHookActive, effortLevel), undefined, {
+    signal: new AbortController().signal,
+  })
 }
 
-describe("reportGateHooks（report の関所）", () => {
+describe("stopHooks（report の関所と effort の読み取り）", () => {
   // 本文は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
   const LONG_BODY: SessionEvent = { kind: "utterance", text: "架空の本文の1行目\n架空の2行目" }
 
-  it("雑談のときは登録しない", () => {
-    expect(reportGateHooks(chatMode(fakeChatSummary()), createReportGate())).toBeUndefined()
+  it("仕事でも雑談でも Stop だけを登録し、SubagentStop には載せない", () => {
+    expect(Object.keys(stopHooks(WORK_MODE, createReportGate(), () => {}))).toEqual(["Stop"])
+    expect(
+      Object.keys(stopHooks(chatMode(fakeChatSummary()), createReportGate(), () => {})),
+    ).toEqual(["Stop"])
   })
 
-  it("仕事のときは常に Stop だけを登録し、SubagentStop には載せない", () => {
-    const hooks = reportGateHooks(WORK_MODE, createReportGate())
-    expect(Object.keys(hooks ?? {})).toEqual(["Stop"])
-  })
-
-  it("1行を超える本文で止まろうとしたら、固定の理由文で block を返す", async () => {
+  it("1行を超える本文で止まろうとしたら、固定の理由文で block を返す（仕事のときだけ）", async () => {
     const gate = createReportGate()
     gate.observe(LONG_BODY)
 
-    expect(await runStop(reportGateHooks(WORK_MODE, gate), false)).toEqual({
+    expect(
+      await runStop(
+        stopHooks(WORK_MODE, gate, () => {}),
+        false,
+      ),
+    ).toEqual({
       decision: "block",
       reason: REPORT_GATE_REASON,
     })
@@ -215,14 +223,71 @@ describe("reportGateHooks（report の関所）", () => {
     const gate = createReportGate()
     gate.observe({ kind: "utterance", text: "完了" })
 
-    expect(await runStop(reportGateHooks(WORK_MODE, gate), false)).toEqual({})
+    expect(
+      await runStop(
+        stopHooks(WORK_MODE, gate, () => {}),
+        false,
+      ),
+    ).toEqual({})
   })
 
   it("stop_hook_active のときは長い本文でも block しない", async () => {
     const gate = createReportGate()
     gate.observe(LONG_BODY)
 
-    expect(await runStop(reportGateHooks(WORK_MODE, gate), true)).toEqual({})
+    expect(
+      await runStop(
+        stopHooks(WORK_MODE, gate, () => {}),
+        true,
+      ),
+    ).toEqual({})
+  })
+
+  it("雑談のときは長い本文でも block しない（関所は仕事だけ）", async () => {
+    const gate = createReportGate()
+    gate.observe(LONG_BODY)
+
+    expect(
+      await runStop(
+        stopHooks(chatMode(fakeChatSummary()), gate, () => {}),
+        false,
+      ),
+    ).toEqual({})
+  })
+
+  it("effort.level が読めたら effort-changed を流す（仕事でも雑談でも）", async () => {
+    const workEvents: SessionEvent[] = []
+    await runStop(
+      stopHooks(WORK_MODE, createReportGate(), (event) => workEvents.push(event)),
+      false,
+      "high",
+    )
+    expect(workEvents).toEqual([{ kind: "effort-changed", effort: "high" }])
+
+    const chatEvents: SessionEvent[] = []
+    await runStop(
+      stopHooks(chatMode(fakeChatSummary()), createReportGate(), (event) => chatEvents.push(event)),
+      false,
+      "low",
+    )
+    expect(chatEvents).toEqual([{ kind: "effort-changed", effort: "low" }])
+  })
+
+  it("effort が無い・知らない段のときは effort-changed を流さない", async () => {
+    const withoutEffort: SessionEvent[] = []
+    await runStop(
+      stopHooks(WORK_MODE, createReportGate(), (event) => withoutEffort.push(event)),
+      false,
+    )
+    expect(withoutEffort).toEqual([])
+
+    const unknownLevel: SessionEvent[] = []
+    await runStop(
+      stopHooks(WORK_MODE, createReportGate(), (event) => unknownLevel.push(event)),
+      false,
+      "未来の段",
+    )
+    expect(unknownLevel).toEqual([])
   })
 })
 
@@ -266,5 +331,12 @@ describe("shared の値の一覧と SDK の型", () => {
 
   it("MODEL_ALIASES は既定のモデルを含む4語", () => {
     expect(MODEL_ALIASES).toEqual(["opus", "sonnet", "haiku", "fable"])
+  })
+
+  it("EFFORT_LEVELS はすべて SDK の EffortLevel として渡せる値", () => {
+    // 代入できること自体が型の検査（PERMISSION_MODES と同じやり方）。
+    const asSdk: readonly SdkEffortLevel[] = EFFORT_LEVELS
+
+    expect([...asSdk].sort()).toEqual(["high", "low", "max", "medium", "xhigh"])
   })
 })

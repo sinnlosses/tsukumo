@@ -21,7 +21,7 @@
 
 import { useCallback, useRef, useState, type RefObject } from "react"
 
-import { isModelAlias, isPermissionMode } from "../../../../shared/command.ts"
+import { isEffortLevel, isModelAlias, isPermissionMode } from "../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { roomName } from "../../../../shared/room.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../domain/character-face.ts"
@@ -29,6 +29,7 @@ import { useDismissSignal } from "../../../hooks/use-dismiss-signal.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
+import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import { resolveModelAlias } from "../domain/model-label.ts"
 import {
   isDangerousPermissionMode,
@@ -60,10 +61,17 @@ export type ScreenNavChatMode = {
   readonly onChange: (chat: boolean) => void
 }
 
-/** モデル・許可モードの操作子が受け取れる形。**ターン進行中も変えられる**（起こし直さない）。 */
+/** モデル・effort・許可モードの操作子が受け取れる形。**ターン進行中も変えられる**（起こし直さない）。 */
 export type ScreenNavModelPermission = {
   readonly model: string
   readonly onSetModel: (value: string) => void
+  /**
+   * effort（{@link EffortSelect}）。**押した値へ先に倒さない**——選べる段・いまの値は
+   * サーバから届いた値（`model-effort-support` / `effort-changed`）だけに従う
+   * （`docs/screen-design.md` 13.9「動き方の操作子」）。
+   */
+  readonly effort: EffortSelect
+  readonly onSetEffort: (value: string) => void
   readonly permissionMode: string
   /** 「全部許す」のときだけ字に意味の色を載せる（13.1 原則5）。 */
   readonly permissionModeDangerous: boolean
@@ -120,6 +128,8 @@ export function useScreenNav(): ScreenNavView {
   const chatMode = useSessionSelector((session) => session.state.chatMode)
   const turnInProgress = useTurnRunning()
   const model = useSessionSelector((session) => session.state.model)
+  const modelEffortSupport = useSessionSelector((session) => session.state.modelEffortSupport)
+  const effort = useSessionSelector((session) => session.state.effort)
   const permissionMode = useSessionSelector((session) =>
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
   )
@@ -151,6 +161,9 @@ export function useScreenNav(): ScreenNavView {
     permissionMode === undefined
       ? sessionDefault.permissionMode
       : resolvePermissionMode(permissionMode)
+  // effort の選べる段は「いま帯に出しているモデル」で決まるので、model の畳み込みと同じ値を使う
+  // （`modelPermission.model` と二重の畳み方にしない）。
+  const shownModel = model === undefined ? sessionDefault.model : resolveModelAlias(model)
 
   return {
     current,
@@ -175,10 +188,16 @@ export function useScreenNav(): ScreenNavView {
         },
       },
       modelPermission: {
-        model: model === undefined ? sessionDefault.model : resolveModelAlias(model),
+        model: shownModel,
         onSetModel: (value) => {
           if (isModelAlias(value)) {
             dispatch({ type: "set-model", model: value })
+          }
+        },
+        effort: resolveEffortSelect(shownModel, modelEffortSupport, effort),
+        onSetEffort: (value) => {
+          if (isEffortLevel(value)) {
+            dispatch({ type: "set-effort", effort: value })
           }
         },
         permissionMode: shownPermissionMode,

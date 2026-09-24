@@ -19,11 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に `visitEnabled`（歯車の「訪問」のオン・オフ。`src/shared/session-state.ts`）を
- * 足したことで 16 から 17 へ上げた（その前は `visit` を足して 15 から 16 へ。どちらも古いタブは
- * 持たず読めない）。
+ * 直近は状態に `modelEffortSupport` / `effort`（帯の effort のドロップダウン。
+ * `src/shared/session-state.ts`）を足したことで 17 から 18 へ上げた（その前は `visitEnabled` を
+ * 足して 16 から 17 へ。どちらも古いタブは持たず読めない）。
  */
-export const PROTOCOL_VERSION = 17
+export const PROTOCOL_VERSION = 18
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の

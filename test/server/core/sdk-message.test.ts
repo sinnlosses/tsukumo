@@ -7,6 +7,7 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
   SPEAK_TOOL_NAME,
   toCommandDescriptions,
+  toModelEffortSupport,
   toPlan,
   toSessionEvents,
 } from "../../../src/server/core/sdk-message.ts"
@@ -980,6 +981,53 @@ describe("toPlan", () => {
     expect(toPlan(undefined)).toBeUndefined()
     expect(toPlan(null)).toBeUndefined()
     expect(toPlan("max")).toBeUndefined()
+  })
+})
+
+describe("toModelEffortSupport", () => {
+  it("value・supportsEffort・supportedEffortLevels を取り出す（実測: supportedModels() の形）", () => {
+    expect(
+      toModelEffortSupport([
+        {
+          value: "opus",
+          resolvedModel: "claude-opus-5-5",
+          displayName: "Opus 5.5",
+          description: "架空の説明",
+          supportsEffort: true,
+          supportedEffortLevels: ["low", "medium", "high", "xhigh", "max"],
+        },
+        { value: "haiku", resolvedModel: "claude-haiku-4-5", displayName: "Haiku 4.5" },
+      ]),
+    ).toEqual([
+      {
+        model: "opus",
+        supportsEffort: true,
+        effortLevels: ["low", "medium", "high", "xhigh", "max"],
+      },
+      { model: "haiku", supportsEffort: false, effortLevels: [] },
+    ])
+  })
+
+  it("知らない段の値は落とす。supportedEffortLevels が配列でなければ空にする", () => {
+    expect(
+      toModelEffortSupport([
+        {
+          value: "opus",
+          supportsEffort: true,
+          supportedEffortLevels: ["low", "未来の段", 7, "max"],
+        },
+        { value: "sonnet", supportsEffort: true, supportedEffortLevels: "high" },
+      ]),
+    ).toEqual([
+      { model: "opus", supportsEffort: true, effortLevels: ["low", "max"] },
+      { model: "sonnet", supportsEffort: true, effortLevels: [] },
+    ])
+  })
+
+  it("value が文字列でない要素は捨てる。配列でない値は空配列にする", () => {
+    expect(toModelEffortSupport([{ supportsEffort: true }, { value: 7 }, "opus", null])).toEqual([])
+    expect(toModelEffortSupport(undefined)).toEqual([])
+    expect(toModelEffortSupport({ models: [] })).toEqual([])
   })
 })
 

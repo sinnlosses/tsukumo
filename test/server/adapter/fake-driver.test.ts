@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { readFakeSession, startFakeSession } from "../../../src/server/adapter/fake-driver.ts"
+import {
+  FAKE_DEFAULT_EFFORT,
+  FAKE_MODEL_EFFORT_SUPPORT,
+  readFakeSession,
+  startFakeSession,
+} from "../../../src/server/adapter/fake-driver.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
@@ -49,6 +54,7 @@ describe("startFakeSession", () => {
 
     expect(sink.events).toEqual([
       { kind: "plan", plan: "Claude Max" },
+      { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
       { kind: "speech", text: "架空の挨拶", expression: "default" },
     ])
   })
@@ -66,11 +72,13 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 先頭2件は起こした直後の分（プランと opening の場面）。
-    expect(sink.events.slice(2)).toEqual([
+    // 先頭3件は起こした直後の分（プラン・effort の対応・opening の場面）。
+    expect(sink.events.slice(3)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
+      // ターンが終わったので、いま効いている effort が読めたことになる（13.9「動き方の操作子」）。
+      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
     ])
   })
 
@@ -87,13 +95,36 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 送った文面はどのイベントにも乗らない（docs/screen-design.md 13.7）。先頭2件は起こした直後の分
-    // （プランと opening の場面）。
-    expect(sink.events.slice(2)).toEqual([
+    // 送った文面はどのイベントにも乗らない（docs/screen-design.md 13.7）。先頭3件は起こした直後の分
+    // （プラン・effort の対応・opening の場面）。
+    expect(sink.events.slice(3)).toEqual([
       { kind: "turn-started" },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
+      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
     ])
+  })
+
+  it("setEffort は確認の合図を流さず、次のターンが終わったときの effort-changed に新しい値で出る", async () => {
+    const sink = collect()
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      onEvent: sink.onEvent,
+    })
+    await tick()
+
+    await driver.setEffort("xhigh")
+    // **setEffort 自体は何も流さない**（押した値へ先に倒さない。13.9「動き方の操作子」）。
+    expect(sink.events.some((event) => event.kind === "effort-changed")).toBe(false)
+
+    driver.prompt("架空の依頼", [])
+    await tick()
+    driver.close()
+
+    // 「架空の場面1」の turn-finished のあとに、切り替えた値で届く。
+    expect(sink.events.at(-1)).toEqual({ kind: "effort-changed", effort: "xhigh" })
   })
 
   it("scene で名指しした場面は、依頼を待たずに opening の続きとして流れる", async () => {
@@ -107,8 +138,8 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 先頭2件は起こした直後の分（プランと opening の場面）。
-    expect(sink.events.slice(2)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
+    // 先頭3件は起こした直後の分（プラン・effort の対応・opening の場面）。
+    expect(sink.events.slice(3)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
   })
 
   it("scene で名指しした次の依頼は、その次の場面から続く（名指しした場面を繰り返さない）", async () => {
@@ -140,6 +171,7 @@ describe("startFakeSession", () => {
 
     expect(sink.events).toEqual([
       { kind: "plan", plan: "Claude Max" },
+      { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
       { kind: "speech", text: "架空の挨拶", expression: "default" },
     ])
   })
@@ -186,9 +218,12 @@ describe("startFakeSession", () => {
     driver.close()
     await new Promise((resolve) => setTimeout(resolve, 80))
 
-    // プランは opening のタイマーより先、`close` より前に同期で流れる（起こしたことそのものの
-    // 合図なので、`close` で止められるのは疑似セッションの続きだけ）。
-    expect(sink.events).toEqual([{ kind: "plan", plan: "Claude Max" }])
+    // プランと effort の対応は opening のタイマーより先、`close` より前に同期で流れる
+    // （起こしたことそのものの合図なので、`close` で止められるのは疑似セッションの続きだけ）。
+    expect(sink.events).toEqual([
+      { kind: "plan", plan: "Claude Max" },
+      { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
+    ])
   })
 
   it("report は結果が届くまで預かり、差し戻された（isError の）ものは流さない（本物の駆動と同じ）", async () => {
@@ -219,7 +254,8 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    expect(sink.events.slice(1)).toEqual([
+    // 先頭2件は起こした直後の分（プランと effort の対応。この疑似セッションは opening が空）。
+    expect(sink.events.slice(2)).toEqual([
       finished("fake-r1", true),
       report("fake-r2"),
       finished("fake-r2", false),
