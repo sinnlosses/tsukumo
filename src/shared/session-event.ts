@@ -29,6 +29,7 @@ import { type TaskSummaryResult } from "./task-summary.ts"
 import { type ModelTokenUsage, type StepTokenUsage, type TurnUsageScope } from "./token-usage.ts"
 import { type TurnOutcome } from "./turn-failure.ts"
 import { type UsageReviewFindings, type UsageReviewStage } from "./usage-review.ts"
+import { type VisitEvent } from "./visit.ts"
 
 /**
  * `/` 補完に出すコマンド1件。**説明は SDK 側が持っている**（`init` の `slash_commands` は
@@ -426,6 +427,8 @@ export type SessionEvent =
    * 引数の中身はイベントに載せない。
    */
   | { readonly kind: "diary-stage"; readonly stage: DiaryStage }
+  /** 訪問の出入りと台本の進み（出し手はサーバの訪問の見張り。形は `src/shared/visit.ts`）。 */
+  | VisitEvent
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

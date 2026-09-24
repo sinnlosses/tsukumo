@@ -8,7 +8,7 @@
 import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
-import { type CharacterPack } from "./server/adapter/character-pack.ts"
+import { type CharacterPack, listCharacterPacks } from "./server/adapter/character-pack.ts"
 import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
@@ -37,6 +37,7 @@ import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
 } from "./server/adapter/usage-proposal-dismissal.ts"
+import { createVisitClock } from "./server/adapter/visit-clock.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
@@ -54,6 +55,8 @@ import { canResume, sessionTag } from "./server/core/session-restore.ts"
 import { takeSystemPromptAppend, toSystemPromptMode } from "./server/core/system-prompt.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
 import { openTrackedFile } from "./server/core/tracked-file.ts"
+import { visitGuests } from "./server/core/visit-guest.ts"
+import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/core/visit-timing.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
 import { type DismissUsageProposalCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
@@ -184,6 +187,14 @@ export function startSession(options: SessionStartOptions): SessionManager {
     readAchievementDay: async (date) => {
       const result = await readAchievement(cwd, date, todayLocalDateKey(), achievementCommitCache)
       return result.kind === "ok" ? result.achievement : undefined
+    },
+    // 訪問の見張りの口。客の候補は**来るときに**パックの一覧を読み直して拾う（画面から作った・
+    // 直したパックもその場で効く）。しきい値を縮めるのは `TSUKUMO_VISIT_QUICK=1` のときだけ。
+    visit: {
+      timing: config.quickVisit ? QUICK_VISIT_TIMING : VISIT_TIMING,
+      clock: createVisitClock(),
+      listGuests: () => visitGuests(listCharacterPacks(cwd)),
+      random: Math.random,
     },
   })
 }

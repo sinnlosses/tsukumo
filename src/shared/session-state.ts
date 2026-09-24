@@ -40,6 +40,7 @@ import {
   type UsageReviewFindings,
   usageProposalKey,
 } from "./usage-review.ts"
+import { applyVisitEvent, INITIAL_VISIT_STATE, type VisitState } from "./visit.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが
@@ -455,6 +456,12 @@ export type SessionState = {
    * だけ**で、ターンの境目では戻さない（セッションを通した状態で、次の知らせが来るまで持つ）。
    */
   readonly rateLimit: RateLimit
+  /**
+   * 訪問（{@link VisitState}。`src/shared/visit.ts`）。**源は訪問の3つのイベントだけ**で、
+   * 出すのはサーバの訪問の見張り。台本の表情はここにだけ持ち、`speechExpression` と
+   * `records` には書かない。起こし直すと初期値の `none` へ戻る。
+   */
+  readonly visit: VisitState
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -490,6 +497,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   diaryWriting: { kind: "idle" },
   apiTrouble: { kind: "none" },
   rateLimit: { kind: "clear" },
+  visit: INITIAL_VISIT_STATE,
 }
 
 /**
@@ -794,6 +802,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ...state,
         diaryWriting: { kind: "written", date: event.date, writtenAt: at },
       }
+    case "visit-started":
+    case "visit-line-advanced":
+    case "visit-ended":
+      return { ...state, visit: applyVisitEvent(state.visit, event, at) }
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
       // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと

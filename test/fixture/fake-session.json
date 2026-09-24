@@ -2071,6 +2071,181 @@
           }
         }
       ]
+    },
+    {
+      "name": "visit-long-tool",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "長いツールを待つあいだに客が来るか見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "長めに走らせるね。しばらく待ってて。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-visit-long-1",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 30",
+              "description": "架空の長い待ち（30秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 30000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-visit-long-1",
+            "content": "架空の長い待ちの結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 30300,
+          "event": {
+            "kind": "speech",
+            "text": "終わったよ。お待たせ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 30500,
+          "event": {
+            "kind": "utterance",
+            "text": "## 長いツールを待った\n\nこれは架空の本文で、実物の会話ではない。**ツールが走っているあいだに客が訪ねてきて、台本を言い終えて帰る**（`TSUKUMO_VISIT_QUICK=1` で起こしたとき。同じ待ちのあいだは二度は来ない）。"
+          }
+        },
+        {
+          "afterMs": 30800,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "completed"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "visit-background",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "背景の待ちのあいだに客が来て、待ちが終わると帰るか見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "背景で走らせておくね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-visit-bg-1",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 10",
+              "run_in_background": true,
+              "description": "架空の背景の待ち（10秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-visit-bg-1",
+            "content": "架空の背景実行の受付（ID: fake-visit-bg-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-visit-bg-1",
+                "kind": "shell",
+                "description": "架空の背景の待ち（10秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景で1件走らせた\n\nこれは架空の本文で、実物の会話ではない。ターンはここで終わり、背景のタスクだけが動き続ける。"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "completed"
+            }
+          }
+        },
+        {
+          "afterMs": 9000,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": []
+          }
+        },
+        {
+          "afterMs": 9100,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 9400,
+          "event": {
+            "kind": "speech",
+            "text": "背景の待ちが終わったよ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 9700,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景の待ちが終わった\n\nこれは架空の本文で、実物の会話ではない。**客は台本の途中でも、背景のタスクが終わった時点で帰る**（`visit-ended` の理由は `wait-over`）。"
+          }
+        },
+        {
+          "afterMs": 10000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "completed"
+            }
+          }
+        }
+      ]
     }
   ]
 }

@@ -13,6 +13,7 @@ describe("readConfig", () => {
       fakeScene: undefined,
       newSession: false,
       watchUi: false,
+      quickVisit: false,
       inheritedEnv: {},
     })
   })
@@ -27,6 +28,7 @@ describe("readConfig", () => {
       TSUKUMO_FAKE_SCENE: " question-multi ",
       TSUKUMO_NEW_SESSION: "1",
       TSUKUMO_WATCH_UI: "1",
+      TSUKUMO_VISIT_QUICK: "1",
     }
 
     expect(readConfig(env)).toEqual({
@@ -38,6 +40,7 @@ describe("readConfig", () => {
       fakeScene: "question-multi",
       newSession: true,
       watchUi: true,
+      quickVisit: true,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
       inheritedEnv: env,
     })

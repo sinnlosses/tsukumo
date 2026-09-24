@@ -21,7 +21,11 @@ import {
 import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
 import { createSessionManager } from "../../../src/server/core/session-manager.ts"
 import { type TokenUsageEntry, type TokenUsageLog } from "../../../src/server/core/token-usage.ts"
+import { type VisitGuest } from "../../../src/server/core/visit-guest.ts"
+import { VISIT_TIMING } from "../../../src/server/core/visit-timing.ts"
+import { type VisitPorts } from "../../../src/server/core/visit-watch.ts"
 import { type DailyAchievement } from "../../../src/shared/achievement.ts"
+import { type VisitScript } from "../../../src/shared/character-visit.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"
 import {
   type CharacterCreateCommand,
@@ -44,6 +48,7 @@ import { type SessionEvent } from "../../../src/shared/session-event.ts"
 import {
   INITIAL_SESSION_STATE,
   MAX_SESSION_STATE_TURNS,
+  type SessionState,
 } from "../../../src/shared/session-state.ts"
 import {
   type ModelTokenUsage,
@@ -57,6 +62,7 @@ import {
   shownPortraits,
 } from "../../fixture/character.ts"
 import { contextUsage, readyContextUsage } from "../../fixture/context-usage.ts"
+import { createManualClock } from "../../fixture/manual-clock.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const BATCH_MS = 5
@@ -76,6 +82,14 @@ const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () =>
 
 /** コンテキストの内訳の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
+
+/** 訪問を気にしないテストに渡す口（客の候補が居ないので来ない。時計は起こさない）。 */
+const NO_VISIT_PORTS: VisitPorts = {
+  timing: VISIT_TIMING,
+  clock: { after: () => () => {} },
+  listGuests: () => [],
+  random: () => 0,
+}
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
@@ -182,6 +196,7 @@ function startManagerWithStub(
     readAchievementDay,
     batchIntervalMs: BATCH_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    visit: NO_VISIT_PORTS,
     chatArchive: NOOP_CHAT_ARCHIVE,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -360,6 +375,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -470,6 +486,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -553,6 +570,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -605,6 +623,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -658,6 +677,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -720,6 +740,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -955,6 +976,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
+        visit: NO_VISIT_PORTS,
         chatArchive: archive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1386,6 +1408,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1436,6 +1459,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1477,6 +1501,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1566,6 +1591,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        visit: NO_VISIT_PORTS,
         chatArchive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1794,6 +1820,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        visit: NO_VISIT_PORTS,
         chatArchive: NOOP_CHAT_ARCHIVE,
         tokenUsageLog: {
           append: (entry) => {
@@ -2086,6 +2113,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        visit: NO_VISIT_PORTS,
         chatArchive: NOOP_CHAT_ARCHIVE,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: {
@@ -2278,6 +2306,7 @@ describe("依頼に添えた画像の棚", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -2453,6 +2482,7 @@ describe("createSessionManager（見直し）", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: NO_VISIT_PORTS,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -2552,5 +2582,166 @@ describe("createSessionManager（見直し）", () => {
       reviewedAt: 1_000,
       findings: { ...findings, proposals: [kept] },
     })
+  })
+})
+
+describe("訪問", () => {
+  // 台本は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
+  const SCRIPT: VisitScript = [
+    { speaker: "guest", expression: "curious", text: "架空の客の一言目" },
+    { speaker: "host", expression: "sad", text: "架空のあるじの返事" },
+    { speaker: "guest", expression: "bored", text: "架空の客の二言目" },
+  ]
+  const GUESTS: readonly VisitGuest[] = [
+    {
+      pack: "fictional-guest",
+      visit: { peek: undefined, farewell: ["架空の帰りの一言"], scripts: [SCRIPT] },
+    },
+  ]
+
+  /** 手で進める時計で訪問を回す session-manager（`guests` が空なら客は来ない）。 */
+  function startManagerWithVisit(guests: readonly VisitGuest[]) {
+    const manual = createManualClock()
+    const drivers: StubDriver[] = []
+    const manager = createSessionManager({
+      now: manual.now,
+      openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
+      batchIntervalMs: BATCH_MS,
+      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      visit: {
+        timing: VISIT_TIMING,
+        clock: manual.clock,
+        listGuests: () => guests,
+        random: () => 0,
+      },
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
+      launchSession: (onEvent) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        drivers.push(stub)
+        return Promise.resolve(stub.driver)
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
+    })
+    const emit = (event: SessionEvent): void => {
+      drivers.at(-1)?.emit(event)
+    }
+    /** いまの snapshot（接続し直したタブが受け取る `hello` の状態）。 */
+    const snapshot = (): SessionState => {
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))()
+      const [hello] = frames
+      if (hello?.type !== "hello") {
+        throw new Error("hello が届いていない")
+      }
+      return hello.state
+    }
+    return { manager, emit, snapshot, advance: manual.advance, pendingTimers: manual.pending }
+  }
+
+  /** ツールを走らせたまま、訪問が来るしきい値まで待つところまで進める。 */
+  function waitForVisit(run: ReturnType<typeof startManagerWithVisit>): void {
+    run.emit(CHARACTER_EVENT)
+    run.emit({ kind: "request", text: "架空の依頼", images: [] })
+    run.emit({ kind: "speech", text: "架空の前のセリフ", expression: "proud" })
+    run.emit({
+      kind: "tool-started",
+      toolUseId: "fictional-tool-1",
+      name: "Bash",
+      input: { command: "fictional-long-command" },
+      parentToolUseId: undefined,
+    })
+    run.advance(VISIT_TIMING.waitMs)
+  }
+
+  it("接続し直したタブの snapshot には、いま出している台本の行がそのまま載る", async () => {
+    const run = startManagerWithVisit(GUESTS)
+    await Promise.resolve()
+    waitForVisit(run)
+
+    run.advance(VISIT_TIMING.lineIntervalMs)
+
+    expect(run.snapshot().visit).toEqual({
+      kind: "visiting",
+      guest: "fictional-guest",
+      script: SCRIPT,
+      line: 1,
+      farewell: "架空の帰りの一言",
+    })
+  })
+
+  it("訪問の最中に speak が届くと帰り、speechExpression と records は訪問が無かったときと同じ", async () => {
+    const visited = startManagerWithVisit(GUESTS)
+    const unvisited = startManagerWithVisit([])
+    await Promise.resolve()
+    const speech: SessionEvent = {
+      kind: "speech",
+      text: "架空の新しいセリフ",
+      expression: "flustered",
+    }
+
+    for (const run of [visited, unvisited]) {
+      waitForVisit(run)
+      run.advance(VISIT_TIMING.lineIntervalMs)
+    }
+    const during = visited.snapshot()
+    for (const run of [visited, unvisited]) {
+      run.emit(speech)
+    }
+    const after = visited.snapshot()
+    const without = unvisited.snapshot()
+
+    expect(during.visit.kind).toBe("visiting")
+    expect(during.speechExpression).toBe("proud")
+    expect(after.visit).toEqual({
+      kind: "left",
+      guest: "fictional-guest",
+      farewell: "架空の帰りの一言",
+      leftAt: VISIT_TIMING.waitMs + VISIT_TIMING.lineIntervalMs,
+    })
+    expect(after.speechExpression).toBe("flustered")
+    expect({ ...after, visit: without.visit }).toEqual(without)
+  })
+
+  it("起こし直すと訪問は消え、前の代の時計はもう何も起こさない", async () => {
+    const run = startManagerWithVisit(GUESTS)
+    await Promise.resolve()
+    // ターン中は切り替えを断るので、背景のタスクだけが動いている待ち（信号 A）で来させる。
+    run.emit(CHARACTER_EVENT)
+    run.emit({ kind: "request", text: "架空の依頼", images: [] })
+    run.emit({
+      kind: "background-tasks-changed",
+      tasks: [{ taskId: "fictional-bg-1", kind: "shell", description: "架空の待ち" }],
+    })
+    run.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+    run.advance(VISIT_TIMING.waitMs)
+    expect(run.snapshot().visit.kind).toBe("visiting")
+
+    await run.manager.dispatch({
+      type: "switch-character",
+      commandId: "c-switch",
+      name: "fictional",
+    })
+    run.advance(VISIT_TIMING.lineIntervalMs * 10)
+
+    expect(run.snapshot().visit).toEqual({ kind: "none" })
+    expect(run.pendingTimers()).toBe(0)
   })
 })

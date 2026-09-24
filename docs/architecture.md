@@ -979,6 +979,17 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
 起こす——fake driver は `diary` ツールの中身を持たないので、置かなければ `GET /achievement` の
 その日は「日記が無い」のまま。
 
+**訪問（`docs/design.md` 5章「訪問の契機と状態」）の出入りを確かめるときは、`TSUKUMO_VISIT_QUICK=1`
+を添えて疑似セッションの場面 `visit-long-tool` か `visit-background` を使う**（しきい値が 5 秒に
+縮む。添えないと 90 秒待つ）。画面にはまだ描かないので、見るのは状態だけ——開発者ツールの
+Network タブで `/ws` のフレームを見るか、接続し直して `hello` の `state.visit` を読む。
+`visit-long-tool` はツールが 30 秒走り、5 秒ほどで `visit-started` が届き、2 秒ごとに
+`visit-line-advanced` が進んで、台本を言い終えると `visit-ended`（`script-finished`）になる。同じ
+待ちのあいだに二度は来ない。`visit-background` は背景のタスクだけが動く待ちで来て、9 秒で待ちが
+終わると台本の途中でも `visit-ended`（`wait-over`）になる。訪問中に入力欄から依頼を送ると
+`request` で帰ることも、ここで確かめられる。客は同梱の `chou` で、**ホームに `visit` の無い
+`chou` があると来ない**（ホームのパックが同梱を覆うため）。
+
 **fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る
 ことがある**（再現条件は分かっておらず、手で触ったときには起きていない。操作側の問題の
 可能性もある）。そのときは疑似セッションの `opening` に質問を足して、開いた時点で出す形で

@@ -34,6 +34,11 @@ export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 /** `1` で `src/browser/` を見張り、変更のたびに組み立て直す（開発中だけ。docs/design.md 11章）。 */
 export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
 /**
+ * `1` で訪問のしきい値を縮める（`src/server/core/visit-timing.ts` の `QUICK_VISIT_TIMING`）。
+ * 疑似セッションや手元で、90 秒待たずに訪問の出入りを確かめるための口。
+ */
+export const VISIT_QUICK_ENV_NAME = "TSUKUMO_VISIT_QUICK"
+/**
  * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま）。**名前はここに
  * 置くが、読むのは {@link readConfig} ではなく src/server/adapter/tsukumo-home.ts**（理由は
  * そのファイルの冒頭。配線層から配る道が無い）。
@@ -74,6 +79,8 @@ export type Config = {
    * ページが読み込み直されうる（docs/design.md 11章）。
    */
   readonly watchUi: boolean
+  /** 訪問のしきい値を縮めるか（{@link VISIT_QUICK_ENV_NAME}。既定は縮めない）。 */
+  readonly quickVisit: boolean
   /**
    * 起こした環境変数の全部。**claude の子プロセスへそのまま引き継ぐためのもの**で、tsukumo 自身は
    * ここから読まない（読むのは上の各フィールド）。SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと
@@ -97,6 +104,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     watchUi: env[WATCH_UI_ENV_NAME]?.trim() === "1",
+    quickVisit: env[VISIT_QUICK_ENV_NAME]?.trim() === "1",
     inheritedEnv: env,
   }
 }

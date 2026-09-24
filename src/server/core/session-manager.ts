@@ -53,6 +53,7 @@ import {
   type TokenUsageLog,
   type TokenUsageRecorder,
 } from "./token-usage.ts"
+import { createVisitWatch, type VisitPorts, type VisitWatch } from "./visit-watch.ts"
 
 export type SessionManagerOptions = {
   /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */
@@ -206,6 +207,11 @@ export type SessionManagerOptions = {
    * 作る。`main` が読めない・`git` の呼び出しが失敗したときは undefined。
    */
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
+  /**
+   * 訪問の見張りに渡す口（しきい値・時計・客の候補・乱数。`src/server/core/visit-watch.ts`）。
+   * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
+   */
+  readonly visit: VisitPorts
 }
 
 /**
@@ -250,6 +256,8 @@ type GenerationTally = {
    * いない・起こせなかったときは `undefined`。
    */
   readonly liveDriver: () => SessionDriver | undefined
+  /** 訪問の見張り（待ちの勘定と掛けた時計。起こし直すと一緒に捨てる）。 */
+  readonly visit: VisitWatch
 }
 
 /**
@@ -372,6 +380,11 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         tally.chatCompact.requestIfNeeded(driver)
       }
     }
+    // 訪問の出入りを決める。**駆動由来だけ**（復元の再生は前のセッションの待ち）。見張りが
+    // 出した訪問のイベントもこの受け口へ戻ってくる（`visit-watch.ts`）。
+    if (origin === "driver") {
+      tally.visit.observe(event, at)
+    }
   }
 
   /**
@@ -403,6 +416,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       chatCompact: createChatCompactWatch(options.chatCompactThresholdBytes),
       tokenUsage: createTokenUsageRecorder(options.tokenUsageLog),
       liveDriver: () => live,
+      visit: createVisitWatch({
+        ...options.visit,
+        now: options.now,
+        readState: () => state,
+        emit: (event) => {
+          receiveIfCurrent(event, "driver")
+        },
+      }),
     }
     const receiveIfCurrent = (event: SessionEvent, origin: EventOrigin): void => {
       if (born !== bornCount) {
@@ -440,6 +461,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       close: () => {
         live?.close()
         tally.batch.discard()
+        tally.visit.close()
       },
       announce: () => {
         held = false
