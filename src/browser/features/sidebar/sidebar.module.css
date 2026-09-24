@@ -186,7 +186,9 @@
    **札として浮かせる**：左右は `.sidebar-footer` の内側 padding（1.125rem。footer 自身の値で
    `--region-padding` とは別物）ぶん外へ張り出し（負のマージン 10px）、自分の padding（10px）で
    中身は元の位置（footer の 18px の内側）へ戻す（見本の「margin 0 -10px・padding 8px 10px」と
-   同じ手口——ホバー時の地はこの張り出したぶん footer の縁に 8px まで近づく）。 */
+   同じ手口——警告時の地はこの張り出したぶん footer の縁に 8px まで近づく）。**札の地と枠は
+   ホバーで変えない**（押せるのは `›` だけなので、札が浮くと全体を押せるように見える。
+   ユーザーの指示）。 */
 .context-usage-row {
   display: flex;
   flex-direction: column;
@@ -197,28 +199,11 @@
   border-radius: 0.625rem;
   font-size: var(--font-secondary);
 }
-/* ホバー（札のどこでもよい）とキーボードのフォーカス（`›` のリンクにしか当たらないので
-   `:focus-within` で拾う）で地と枠が浮く。地は「読む面の上に浮く塊」の語彙
-   （`--surface-raised`。`.usage-card` などと同じ）、枠は `--rule`（ここで切れていると
-   示すだけの静かな罫線）。 */
-.context-usage-row:hover,
-.context-usage-row:focus-within {
-  background: var(--surface-raised);
-  border-color: var(--rule);
-}
-.context-usage-row:hover .context-usage-row-link-text,
-.context-usage-row:focus-within .context-usage-row-link-text {
-  display: inline;
-}
 /* 70%以上は警告にする（`context-usage-row.tsx` の `isWarn`）。**16進を写さず `--state-warn`
    からの導出で表す**（`.profile-card` が `--accent` を同じ手口で導出しているのと同じ考え方）。 */
 .context-usage-row-warn {
   background: color-mix(in srgb, var(--surface), var(--state-warn) 8%);
   border-color: color-mix(in srgb, var(--surface), var(--state-warn) 35%);
-}
-.context-usage-row-warn:hover,
-.context-usage-row-warn:focus-within {
-  background: color-mix(in srgb, var(--surface), var(--state-warn) 14%);
 }
 
 /* 1段目：ラベル・割合・量・右端の `›`。 */
@@ -256,28 +241,45 @@
   flex: 1 1 auto;
 }
 /* 押せるのはここだけ。**下線をホバーで足さない**（枠のない部品なので、色とホバー時の
-   「詳しく」表示で押せると示す。docs/screen-design.md 13.1 原則1）。 */
+   「詳しく」表示で押せると示す。docs/screen-design.md 13.1 原則1）。ホバーとフォーカスの
+   起点は `›` 自身で、札のどこに乗っても変わらない。 */
 .context-usage-row-link {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 0.125rem;
   color: var(--ink-quiet);
   text-decoration: none;
   font-size: var(--font-label);
 }
-.context-usage-row:hover .context-usage-row-link,
-.context-usage-row:focus-within .context-usage-row-link {
+.context-usage-row-link:hover,
+.context-usage-row-link:focus-visible {
   color: var(--accent);
 }
-.context-usage-row-warn:hover .context-usage-row-link,
-.context-usage-row-warn:focus-within .context-usage-row-link {
+.context-usage-row-warn .context-usage-row-link:hover,
+.context-usage-row-warn .context-usage-row-link:focus-visible {
   color: var(--state-warn);
 }
-/* 「詳しく」の文字はホバー・フォーカスまで隠す（`.context-usage-row:hover` 側で `inline` に
-   戻す）。 */
+/* 「詳しく」は幅 0 に畳んでおき、`›` のホバー・フォーカスで左へ伸ばしながら浮かべる。
+   `›` との間は gap ではなく自分の padding で取り、畳むときは padding も 0 にする（間だけが
+   残らないように）。
+   動きを減らす設定では `styles/theme.css` の全体規則が transition を潰す。 */
 .context-usage-row-link-text {
-  display: none;
+  display: inline-block;
+  max-width: 0;
+  padding-right: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition:
+    max-width 0.18s ease-out,
+    padding-right 0.18s ease-out,
+    opacity 0.18s ease-out;
+}
+.context-usage-row-link:hover .context-usage-row-link-text,
+.context-usage-row-link:focus-visible .context-usage-row-link-text {
+  max-width: 3.5em;
+  padding-right: 0.125rem;
+  opacity: 1;
 }
 
 /* 2段目：細い棒。取れない・届く前は 0% のまま出す（`context-usage-row.tsx` の
