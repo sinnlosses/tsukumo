@@ -164,9 +164,6 @@ describe("CharacterEdit", () => {
 
     expect(document.querySelectorAll(".character-card-blank")).toHaveLength(0)
     expect(document.querySelectorAll(".character-card")).toHaveLength(EXPRESSIONS.length)
-    expect(
-      screen.getByText(`${String(EXPRESSIONS.length)} 枚 · 乗せると差し替え・消すが出ます`),
-    ).toBeDefined()
   })
 
   it("default のカードにだけ「いつもの顔」の札を添える", () => {

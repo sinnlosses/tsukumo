@@ -30,7 +30,6 @@ export function PresentationalCharacterEdit(
       <section className={styles["character-section"]} aria-labelledby="character-expressions">
         <h2 className={styles["character-section-heading"]} id="character-expressions">
           表情
-          <span className={styles["character-section-note"]}>{props.expressionNote}</span>
         </h2>
         <div className={styles["character-gallery"]}>
           {props.cards.map((card) => (
@@ -65,7 +64,6 @@ export function PresentationalCharacterEdit(
         <section className={styles["character-section"]} aria-labelledby="character-outfit-accent">
           <h2 className={styles["character-section-heading"]} id="character-outfit-accent">
             立ち絵の差し色
-            <span className={styles["character-section-note"]}>モデルごとに変えられます</span>
           </h2>
           <div className={styles["character-swatches-outfit"]}>
             {props.outfitAccents.map((field) => (

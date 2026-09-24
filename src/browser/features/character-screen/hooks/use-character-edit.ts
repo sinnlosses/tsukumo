@@ -71,9 +71,6 @@ const GALLERY_OUTFIT: Outfit = "default"
 /** 必須の1つ（`default`）のカードに添える札。どの表情が「いつもの顔」かを字で出す。 */
 const DEFAULT_EXPRESSION_BADGE = "いつもの顔"
 
-/** 表情の見出しの添え書きの後半（口は乗せたとき・フォーカスしたときだけ出る）。 */
-const EXPRESSION_HOVER_HINT = "乗せると差し替え・消すが出ます"
-
 /** 画面から変えられないパックのときに出す一言（理由は探索の順。`docs/design.md` 7.1）。 */
 const NOT_EDITABLE_NOTE = "起動先の characters/local のパックは、画面からは変えられない"
 
@@ -284,8 +281,6 @@ export type CharacterEditModel =
       readonly profile: CharacterProfileModel
       /** 画面から変えられないパック。口をすべて塞ぐ（理由は `profile.note`）。 */
       readonly disabled: boolean
-      /** 表情の見出しの添え書き（枚数と、口の出し方）。 */
-      readonly expressionNote: string
       readonly cards: readonly PortraitCardModel[]
       /** 画面の差し色（仕事）。`accent` を差す。 */
       readonly workAccent: AccentSwatchModel
@@ -361,11 +356,6 @@ export function useCharacterEdit(): CharacterEditModel {
       dispatch({ type: "clear-portrait", pack, expression })
     },
   })
-  const withPortrait = character.expressionsWithPortrait.length
-  const count =
-    withPortrait === EXPRESSIONS.length
-      ? `${String(withPortrait)} 枚`
-      : `${String(withPortrait)} / ${String(EXPRESSIONS.length)} 枚`
 
   const outfitAccents = OUTFITS.map((outfit): OutfitAccentFieldModel => {
     const { label, sublabel } = OUTFIT_LABELS[outfit]
@@ -477,7 +467,6 @@ export function useCharacterEdit(): CharacterEditModel {
     kind: "ready",
     profile,
     disabled,
-    expressionNote: disabled ? count : `${count} · ${EXPRESSION_HOVER_HINT}`,
     cards,
     workAccent,
     chatAccent,
