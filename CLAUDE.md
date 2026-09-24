@@ -33,7 +33,7 @@ SDK で動かす」を必ず読む（採らなかった案もそこにある）�
 3層 + `src/cli.ts` への構造の移行）まで終えた**（WebSocket 1本、React の部品、unified の
 Markdown、キャラクターパック）。**正典は [`docs/design.md`](./docs/design.md)**。残る段8
 （キャラクターパック本体の移動・切り替え）と段9（セッションの復元）は独立した機能追加として
-`develop/tasks.json` に別タスクである。
+`develop/task/` に別タスクである。
 
 **2026-09-11 に方針を全面的に見直し、2026-09-12 に旧方針の実装を撤去した。** いまは新方針
 （Agent SDK で Claude Code を動かす）だけが動いている。**transcript の追従・hook と状態ファイル・
@@ -230,9 +230,9 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 `WORKFLOW.md` を正典**とし、**プロジェクト固有の値はこの `CLAUDE.md` の「## タスク運用」節**
 （検証コマンド・整形コマンド・ブランチ運用）から読む。
 
-- `next-task`: `develop/tasks.json` の未着手タスクを1件実行する。`/loop /next-task` で
+- `next-task`: `develop/task/` の未着手タスクを1件実行する。`/loop /next-task` で
   全件`done`になるまでの自動進行に使う
-- `plan-tasks`: `develop/direction.md` の指示をタスクに分解して `develop/tasks.json` に登録し、
+- `plan-tasks`: `develop/direction.md` の指示をタスクに分解して `develop/task/` に登録し、
   指示メモを `docs/history/direction.md` へ移す。**分解は方針決めを含むので委譲せず、
   `/loop` にも載せない**
 - `list-tasks`: 登録済みタスクを一覧の表で見るだけ（読み取り専用）
@@ -242,7 +242,7 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
   `/loop` には載せない**（無人だと根拠の薄い気づきが溜まるため）
 
 **共通のスキルはこのリポジトリの事情を知らない。** spec の出典（`docs/requirements.md` と
-`develop/tasks.json` の各タスク本文）、standards の出典（この `CLAUDE.md` ＋
+`develop/task/` の各タスク本文）、standards の出典（この `CLAUDE.md` ＋
 `docs/coding-standards.md` ＋ `docs/architecture.md`）、`main` に直接コミットすること、
 タスクを書くときの上乗せは、**このファイルと `docs/workflow.md` が補う**。
 
@@ -274,15 +274,24 @@ tsukumo は**起こしたディレクトリでそのまま claude を動かす**
 
 - 検証コマンド: `bun run check`（変更後は必ずこれを通す。受け入れ判定に使う）
 - 整形コマンド: `bun run format`
-- ブランチ: 自分で切らない。**枝の寿命は作業ツリーの寿命と同じ**で、1本の枝がいくつでも
-  タスクを持つ（`/next-task` の手順3は何もしない。手順8のブランチの削除もしない）
+- ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
+  1本の枝がいくつでもタスクを持つ
 
-`develop/tasks.json`・`develop/progress.md`・`develop/direction.md` で管理する。
-指示は `develop/direction.md` に溜め、`/plan-tasks` でタスク化して `/next-task` で進める。
+`develop/task/`（1件1ファイル）・`develop/progress.md`（解体の途中。T-527）・
+`develop/direction.md` で管理する。指示は `develop/direction.md` に溜め、`/plan-tasks` で
+タスク化して `/next-task` で進める。
 
 ### 1サイクルの形（2026-09-23 決定。共通の `WORKFLOW.md` より優先する）
 
-**タスクの正典は `main` の `develop/tasks.json`** で、自分の作業ツリーのものではない。
+**2026-09-24 に `develop/tasks.json` を `develop/task/` へ移した（T-526）。** 以下の手順は
+まだ旧形式（`tasks.json` に1行ずつ `doing`/`done` を書いてコミットする形）を前提にした記述の
+ままで、`task`（`claim`/`ship` など）コマンドの手順に置き換える全面の書き直しは T-528 が行う。
+それまでは次のように読み替える: **タスクファイルに `doing` は書かない**（`status: doing` は
+INVALID）。手順3の「`doing` を `main` に入れる」は `task claim T-xxx`（台帳に印を立てるだけで
+コミットは無い）、手順5の「`done` を `main` に入れる」は `task done` → 作業と1コミット →
+`task ship` になる（`WORKFLOW.md`「1サイクル」）。
+
+**タスクの正典は `main` の `develop/task/`** で、自分の作業ツリーのものではない。
 `doing` を `main` に入れてから着手し、`main` へマージして `done` にするまでが1サイクル。
 
 1. **ビハインドなら取り込む**: `git rev-list --count <枝>..main` が 0 でなければ `git merge main`
@@ -290,8 +299,8 @@ tsukumo は**起こしたディレクトリでそのまま claude を動かす**
    merge commit になる。**`develop/progress.md` の衝突はマージドライバ
    （`scripts/merge-progress.ts`。登録は「## セットアップ / 環境構築」参照）が畳むので
    手が要らない。それ以外のファイルで衝突したら手を止めて預ける**）
-2. **`main` から選ぶ**: `git show main:develop/tasks.json` を読み、`todo` かつ依存が済んだ1件を
-   選ぶ（`doing` の行があれば取り残し。共通の手順2の扱いに従って止まる）
+2. **`main` から選ぶ**: `task status` の `READY` から1件選ぶ（自分の作業ツリーの印が残って
+   いれば取り残し。共通の手順2の扱いに従って止まる）
 3. **`doing` を `main` に入れる**: その1行だけ `doing` に書き換えてコミットし、
    `git -C <本体> merge --ff-only <枝>` で `main` へ送る。**`--ff-only` が落ちたら手順1へ戻る**
    （自分以外が `main` を進めた合図。競合の検出はこれが兼ねる）
@@ -313,7 +322,7 @@ tsukumo は**起こしたディレクトリでそのまま claude を動かす**
 - **新しい作業ツリーの立ち上げは人がやる**（`bun install` と `bun run build`。
   `node_modules` と `dist/browser/` は `.gitignore` なので、切った直後は `bun run check` も
   `bun run start` も通らない。自動化はしない——2026-09-23 決定）
-- **アーカイブ（`develop/tasks.json` の完了したタスクを `docs/history/tasks.md` へ、
+- **アーカイブ（`develop/task/` の完了したタスクを `docs/history/tasks.md` へ、
   `develop/progress.md` の完了した小節を `docs/history/progress.md` へ移すこと）は単独の
   コミットにし、`doing`・`done` と同じく `git -C <本体> merge --ff-only <枝>` ですぐ `main` へ
   送る。** **`--ff-only` が落ちたら、そのコミットを捨てて手順1（`git merge main`）へ戻り、
@@ -339,29 +348,30 @@ tsukumo は**起こしたディレクトリでそのまま claude を動かす**
   2つとも分ける。** ポートだけ分けてもホーム（`~/.tsukumo/` の `state.json`・雑談の要約と
   アーカイブ・トークンの記録）は共有されたままで、とくに雑談の要約は全上書きなので後に書いた
   ほうが相手のものを丸ごと消す。分けたホームに覚えたキャラクターは本体のホームへは戻らない
-- `develop/tasks.json` も自分のブランチで書き換える。合流のときに同じ行がぶつかりうるので、
-  **着手したタスクの行だけを触る**（`tasks.json` を整形し直さない）
+- `develop/task/` のタスクファイルも自分のブランチで書き換える。合流のときに同じファイルが
+  ぶつかりうるので、**着手したタスクのファイルだけを触る**
 
 ## 進捗管理とHandoff
 
 会話やセッションが切れても再開できるよう、状態はチャットではなく `develop/` 配下の
-`tasks.json` / `progress.md` に記録する。ユーザーからの指示も同様に `direction.md` に書く。
+`task/`（1件1ファイル） / `progress.md`（2026-09-24 の切り替えで解体の途中。T-527）に記録する。
+ユーザーからの指示も同様に `direction.md` に書く。
 **各手順の詳細（フィールド定義・difficultyの基準と委譲の書き方・evidenceの粒度・アーカイブの
 トリガーと手順）は `~/.claude/skills/task-workflow/WORKFLOW.md` が正典**（複数のプロジェクトで
 共通）。**このリポジトリでの上乗せだけ**が [`docs/workflow.md`](./docs/workflow.md) にある。
 
-1. セッション開始時に `develop/progress.md` と `develop/tasks.json` を読み、アーカイブすべき
+1. セッション開始時に `develop/progress.md` と `develop/task/` を読み、アーカイブすべき
    タイミングなら作業前にアーカイブする（**両方が判定の対象**。基準は `task-workflow` の
    `WORKFLOW.md`）。
    `develop/direction.md` に見出し以外の中身があれば未タスク化の指示が残っているので、
    他の作業より先に `/plan-tasks` でタスク化する
-2. `tasks.json` から依存が完了済みの `todo` タスクを1つ選ぶ
+2. `develop/task/` から依存が完了済みの `todo` タスクを1つ選ぶ
 3. 作業する。タスクは **`difficulty` と同じモデルを指定したサブエージェントに委譲**する
    （メインセッションのモデルは判断材料にしない）。想定より判断が必要だと分かったら、
    その場で押し切らず `difficulty` を上げてから再開する
 4. 完了の判定はテスト結果・生成物・実行ログなど検証可能な証拠で行う（宣言だけで合格にしない）。
    **描画に関わる変更は目視確認の結果も証拠に含める**
-5. `develop/tasks.json` の `status`/`passes`/`evidence` と `develop/progress.md` を更新する
+5. `develop/task/T-xxx.md` の `status` と `## 結果` と `develop/progress.md` を更新する
 
 **IMPORTANT**: 以下は必ず人間の承認を得てから行う — 外部への公開・送信、破壊的なgit操作、
 認証情報や権限の変更、**`~/.claude/settings.json` などユーザーのグローバル設定の書き換え**、
@@ -403,7 +413,7 @@ grep -c '^#\{2,3\} ' docs/requirements.md   # 編集の前後で数が合うか
 - アーキテクチャ詳細（全体図、設計判断、目視確認の手順、既知の制約）: `docs/architecture.md`
 - コーディング規約の詳細（各ルールの理由・例外、**会話内容の扱い**）: `docs/coding-standards.md`
 - 用語集（日本語表記とコード上の識別子の対応、避ける言い方）: `docs/glossary.md`
-- 進捗管理の詳細（`develop/` の tasks.json・progress.md・direction.md のフィールド定義・
+- 進捗管理の詳細（`develop/` の task/・progress.md・direction.md のフィールド定義・
   evidenceの粒度・アーカイブ運用）: `~/.claude/skills/task-workflow/WORKFLOW.md`（共通の正典）と
   `docs/workflow.md`（このリポジトリでの上乗せ）
 - 検討当時のユーザーの指示メモ: `docs/history/direction.md`
