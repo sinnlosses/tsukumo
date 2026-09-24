@@ -138,7 +138,7 @@
     "dependencies": ["T-520"],
     "summary": "タスク板を develop/task/ と台帳の着手の印から読むようにする",
     "task": "## 背景\n\ntsukumo のサイドバーのタスク板は、`src/server/adapter/task-summary.ts` が `main` の `develop/tasks.json` を `git show` で読み、`src/shared/task-summary.ts` の `readTaskSummaries` が解釈している（表は `src/browser/features/task-board/`）。新しい運用ではタスクが `develop/task/T-xxx.md` の1件1ファイルになり、着手中（doing）は git の外の台帳（`git rev-parse --git-common-dir` の下）が持つ。承認済みの方針は `docs/history/direction.md` の 2026-09-24 の「タスク運用の作り直し」の項にある（1件1ファイル・着手の印は共有の `.git` の中・完了は作業のコミットに同梱して rebase → ff-only で1回送る・錠の中で採番・`progress.md` をなくす・登録は粗く着手時に確かめ直す・手順は `task` コマンドに）。\n\n## やること\n\n1. T-520 の設計書の書式に合わせ、`main` の `develop/task/` を `git ls-tree` と `git cat-file --batch` で読み、front matter から一覧を作る。着手中は台帳の印から出す\n2. **移行のあいだは、`main` に `develop/task/` が無ければ今までどおり `develop/tasks.json` を読む**（切り替えは T-526 で、この逃げ道は T-528 で消す）\n3. 並びは ID 順にする（今は `tasks.json` のファイルの順）\n4. `test/architecture.test.ts` の境界（`node:child_process` を import してよいファイル）を守る。`docs/design.md` 5章の `task-summary.ts` の記述を直す\n\n## 完了条件\n\n- 一時ディレクトリの git リポジトリで、新しい形式・旧形式・どちらも無い（「不明」）の3通りをテストで確かめる。着手の印があるタスクが doing として出る\n- `bun run check` が通る\n- 新しい形式の一時リポジトリで tsukumo を起こし（`TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける）、タスク板に一覧と doing が出ることを `scripts/capture-view.ts` で撮って確かめる\n\n## 注意\n\n- tsukumo の `develop/tasks.json` はこのタスクでは変換しない（T-526）\n",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
