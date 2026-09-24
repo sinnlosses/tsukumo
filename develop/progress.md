@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 雑談の作法から無い条への言及を消し、「思い出す」の太字を2つに絞った（T-509）
+
+`CHAT_MANNER_PROMPT` から「結論から書く」を打ち消す行を消し、`index` / `recall` の段落の太字をプライバシーと作り話の2つだけにした。
+
 ### 2026-09-24 既定の effort を high から medium に下げた（T-508）
 
 `DEFAULT_EFFORT` を `"medium"` にし、テストと `docs/requirements.md` 4.1 を合わせた（Opus 5.5 で API の既定が medium に下がったため）。
