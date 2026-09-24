@@ -5,10 +5,11 @@
 //
 // **読むのは作業ツリーのファイルではなく `main` の上のもの**。タスクの正典は `main` のもので、
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。**境界は
-// 「`main` の上のタスク一覧」の1つ**で、そのために `git` を起こす（`node:child_process` を
-// import してよいファイルは `test/architecture.test.ts` が絞っている）。`main` の上のファイルを
-// 読む汎用の adapter を別に切らないのは、読み手がこの一覧しかなく、切っても開くファイルが
-// 増えるだけで概念が増えないため。
+// 「`main` の上のタスク一覧」の1つ**。`git` を起こすのは `src/server/adapter/git.ts`
+// （`node:child_process` を import してよいファイルは `test/architecture.test.ts` が絞っている。
+// 成果の集計（`main-history.ts`）と同じ口を使う）。`main` の上のファイルを読む汎用の adapter を
+// 別に切らないのは、読み手がこの一覧しかなく、切っても開くファイルが増えるだけで概念が増えない
+// ため。
 //
 // **形式は2つ、読み方も2通り**（claude-skills の `docs/task-workflow-redesign.md`。移行の途中で
 // T-528 が旧形式の読み方を消す）:
@@ -34,7 +35,6 @@
 // 中身の解釈（front matter の文法・台帳の印から `doing` を作る）は src/shared/task-summary.ts の
 // 仕事で、ここは読み直すかどうかの判断と `git`・台帳の読み出しだけを持つ。
 
-import { execFile, spawn } from "node:child_process"
 import { readdir } from "node:fs/promises"
 import { basename, join } from "node:path"
 
@@ -45,6 +45,7 @@ import {
   type NewTaskFile,
   type TaskSummaryResult,
 } from "../../shared/task-summary.ts"
+import { runGit, runGitCatFileBatch } from "./git.ts"
 
 /** 見回りの間隔。`git rev-parse` 1回は手元で約10msなので、この間隔なら毎回起こしても
  * 負荷は無視できる。タスク一覧はタスクの着手・完了で書き換わるだけなので、秒単位の
@@ -64,12 +65,6 @@ const TASK_DIR_PATH = "develop/task/"
 /** 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、
  * 着手の印（claude-skills の `docs/task-workflow-redesign.md` 4.2）。 */
 const LEDGER_CLAIM_DIR_SEGMENTS = ["task-workflow", "claim"]
-
-/** `git` の応答を待つ上限。超えたらその回を諦める（上のコメント）。 */
-const GIT_TIMEOUT_MS = 5000
-
-/** 受け取る標準出力の上限。超えると `git` の呼び出しごと失敗し、「不明」になる。 */
-const MAX_OUTPUT_BYTES = 16 * 1024 * 1024
 
 export type TaskSummaryWatcher = {
   /** ポーリングを止める。 */
@@ -148,19 +143,6 @@ type MainTasksRead =
       readonly cache: WatcherCache
       readonly result: TaskSummaryResult
     }
-
-/** `git` 1回の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが変わるため。 */
-type GitOutcome =
-  | { readonly kind: "output"; readonly stdout: string }
-  | { readonly kind: "failed" }
-  | { readonly kind: "timed-out" }
-
-/** `git cat-file --batch` 1回の結果。`contents` は渡した順（`requests` と同じ長さ）で、読めなかった
- * 対象（存在しない blob）は `undefined`。 */
-type BatchOutcome =
-  | { readonly kind: "output"; readonly contents: readonly (string | undefined)[] }
-  | { readonly kind: "failed" }
-  | { readonly kind: "timed-out" }
 
 /**
  * `main` の先端を取る。**先端が前回と同じでも、新形式を見ているときは台帳の着手の印だけ
@@ -311,120 +293,4 @@ function taskSummaryResultOf(content: string): TaskSummaryResult {
 /** `git ls-tree --name-only` の出力を、`.md` のパス（`develop/task/T-xxx.md` の形）だけに絞る。 */
 function taskFilePathsOf(output: string): readonly string[] {
   return output.split("\n").filter((line) => line.endsWith(".md"))
-}
-
-/** `git` を起こす。**例外を投げない**（失敗は `failed` / `timed-out` として返す）。 */
-function runGit(cwd: string, args: readonly string[]): Promise<GitOutcome> {
-  return new Promise((resolve) => {
-    execFile(
-      "git",
-      args,
-      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
-      (error, stdout) => {
-        if (error === null) {
-          resolve({ kind: "output", stdout })
-        } else {
-          // `timeout` で打ち切られたときだけ `killed` が立つ（終了コードが 0 でないときは立たない）。
-          resolve({ kind: error.killed === true ? "timed-out" : "failed" })
-        }
-      },
-    )
-  })
-}
-
-/**
- * `git cat-file --batch` を1回起こし、`requests`（`<コミット>:<パス>` の並び）を渡した順に読む。
- * **バイト列として切り出す**（`--batch` の1件は `<sha> <type> <size>\n` の見出し行の次に
- * ちょうど `<size>` バイトの中身、そのあとに区切りの改行が1つ続く形なので、UTF-8 の文字数では
- * なくバイト数で進める）。**例外を投げない**（失敗は `failed` / `timed-out`）。
- */
-function runGitCatFileBatch(cwd: string, requests: readonly string[]): Promise<BatchOutcome> {
-  if (requests.length === 0) {
-    return Promise.resolve({ kind: "output", contents: [] })
-  }
-
-  return new Promise((resolve) => {
-    const child = spawn("git", ["cat-file", "--batch"], { cwd })
-    const chunks: Buffer[] = []
-    let receivedBytes = 0
-    let settled = false
-
-    const finish = (outcome: BatchOutcome): void => {
-      if (settled) {
-        return
-      }
-      settled = true
-      clearTimeout(timer)
-      child.kill()
-      resolve(outcome)
-    }
-
-    const timer = setTimeout(() => finish({ kind: "timed-out" }), GIT_TIMEOUT_MS)
-
-    child.stdout.on("data", (chunk: Buffer) => {
-      receivedBytes += chunk.length
-      if (receivedBytes > MAX_OUTPUT_BYTES) {
-        finish({ kind: "failed" })
-        return
-      }
-      chunks.push(chunk)
-    })
-    child.on("error", () => finish({ kind: "failed" }))
-    child.on("close", (code) => {
-      if (settled) {
-        return
-      }
-      if (code !== 0) {
-        finish({ kind: "failed" })
-        return
-      }
-      settled = true
-      clearTimeout(timer)
-      resolve({
-        kind: "output",
-        contents: parseCatFileBatchOutput(Buffer.concat(chunks), requests.length),
-      })
-    })
-
-    child.stdin.write(requests.map((request) => `${request}\n`).join(""))
-    child.stdin.end()
-  })
-}
-
-/** {@link runGitCatFileBatch} の出力を、送った順の `count` 件に割る。 */
-function parseCatFileBatchOutput(buffer: Buffer, count: number): readonly (string | undefined)[] {
-  const results: (string | undefined)[] = []
-  let pos = 0
-
-  for (let i = 0; i < count; i++) {
-    const newlineIndex = buffer.indexOf(0x0a, pos)
-    if (newlineIndex === -1) {
-      results.push(undefined)
-      continue
-    }
-
-    const headerLine = buffer.toString("utf8", pos, newlineIndex)
-    pos = newlineIndex + 1
-
-    const size = blobSizeOf(headerLine)
-    if (size === undefined) {
-      results.push(undefined)
-      continue
-    }
-
-    results.push(buffer.toString("utf8", pos, pos + size))
-    pos += size + 1 // 中身のバイトと、そのあとの区切りの改行を1つ読み飛ばす。
-  }
-
-  return results
-}
-
-/** `<sha> <type> <size>` なら `<size>`、`<input> missing` なら `undefined`。 */
-function blobSizeOf(headerLine: string): number | undefined {
-  const parts = headerLine.split(" ")
-  if (parts.length !== 3) {
-    return undefined
-  }
-  const size = Number(parts[2])
-  return Number.isInteger(size) && size >= 0 ? size : undefined
 }

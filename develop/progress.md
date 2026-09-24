@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 main の履歴とタスクから日ごとの成果を集め、ブラウザへ渡す経路を作った（T-512）
+
+`src/server/adapter/main-history.ts` が集め、`GET /achievement?date=` で `DailyAchievement` を返す。画面はまだ無い（T-513）。`git log` の区切りは NUL ではなく `\x1e`（`execFile` の引数に NUL を渡せないため）。
+
 ### 2026-09-24 main に入った成果を日ごとに振り返る画面の数え方と形を docs に書いた（T-511）
 
 `docs/requirements.md` 4.11・`docs/screen-design.md` 13.10・`docs/design.md` 5章「成果の集め方と配り方」。done の日は日の終わりの `main` の切り口の差で数えるので、タスク運用の新旧どちらの形式でも同じ規則で拾える。いまの `SCREENS` は3つなので、成果は「5枚目」ではなく4つ目の画面として書いた。

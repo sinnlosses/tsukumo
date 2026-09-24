@@ -23,6 +23,24 @@ export function todayLocalDateKey(): string {
   return Temporal.Now.plainDateISO().toString()
 }
 
+/**
+ * 日付キー（`YYYY-MM-DD`）が指すローカルの日の、始まりと終わり（エポックミリ秒。終わりは
+ * 次の日の始まりで、含まない）。**時計は読まない**——OS のタイムゾーンだけを読むので
+ * `adapter` に置く（冒頭のコメント）。呼ぶ側が既に検証した日付キーを渡す契約
+ * （`resolveAchievementDateKey` で決めた値をそのまま渡す）。
+ */
+export function localDateEpochRange(dateKey: string): {
+  readonly startEpochMilliseconds: number
+  readonly endEpochMilliseconds: number
+} {
+  const zone = Temporal.Now.timeZoneId()
+  const date = Temporal.PlainDate.from(dateKey)
+  return {
+    startEpochMilliseconds: date.toZonedDateTime(zone).epochMilliseconds,
+    endEpochMilliseconds: date.add({ days: 1 }).toZonedDateTime(zone).epochMilliseconds,
+  }
+}
+
 /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
 export function isoWithOffset(epochMilliseconds: number): string {
   // 秒より下は書かない（既に積んだ行と同じ書式を保つ。`fractionalSecondDigits` の既定は

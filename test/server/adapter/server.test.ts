@@ -11,10 +11,12 @@ import {
 } from "../../../src/server/adapter/character-pack.ts"
 import {
   createStartupToken,
+  type ReadAchievement,
   type ServeCharacterAsset,
   startViewServer,
   type ViewServer,
 } from "../../../src/server/adapter/server.ts"
+import { ACHIEVEMENT_PATH, type DailyAchievement } from "../../../src/shared/achievement.ts"
 import { type CharacterAssetLocation } from "../../../src/shared/character-asset.ts"
 import {
   CONTEXT_USAGE_PATH,
@@ -70,12 +72,18 @@ function noPromptImage(): undefined {
   return undefined
 }
 
+/** 成果の代役。既定では「main が読めない」（`main` ブランチが無いリポジトリと同じ）。 */
+function noAchievement(): Promise<{ readonly kind: "ok"; readonly achievement: DailyAchievement }> {
+  return Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } })
+}
+
 async function startView(
   serveCharacterAsset: ServeCharacterAsset = noCharacterAsset,
   listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
   readTokenUsageSummary: (days: TokenUsageDays) => TokenUsageSummary = noTokenUsage,
   readContextUsage: () => Promise<ContextUsageReport> = noContextUsage,
   findPromptImage: (id: string) => string | undefined = noPromptImage,
+  readAchievement: ReadAchievement = noAchievement,
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
@@ -84,6 +92,7 @@ async function startView(
     readTokenUsageSummary,
     readContextUsage,
     findPromptImage,
+    readAchievement,
     token: TOKEN,
   })
   runningView = server
@@ -115,6 +124,18 @@ function contextUsageUrl(server: ViewServer, token: string | undefined): string 
   const url = new URL(`${viewOrigin(server)}${CONTEXT_USAGE_PATH}`)
   if (token !== undefined) {
     url.searchParams.set("t", token)
+  }
+  return url.toString()
+}
+
+/** 成果の URL（起動トークンと、指定があれば見る日付付き）。 */
+function achievementUrl(server: ViewServer, token: string | undefined, date?: string): string {
+  const url = new URL(`${viewOrigin(server)}${ACHIEVEMENT_PATH}`)
+  if (token !== undefined) {
+    url.searchParams.set("t", token)
+  }
+  if (date !== undefined) {
+    url.searchParams.set("date", date)
   }
   return url.toString()
 }
@@ -380,6 +401,93 @@ describe("startViewServer", () => {
 
     expect((await fetch(contextUsageUrl(server, undefined))).status).toBe(403)
     expect((await fetch(contextUsageUrl(server, "ちがう"))).status).toBe(403)
+    expect(asked).toBe(0)
+  })
+
+  it("/achievement は、正しいトークンなら成果を JSON で返す", async () => {
+    const achievement: DailyAchievement = {
+      kind: "known",
+      date: "2026-09-23",
+      today: "2026-09-24",
+      commitCount: 3,
+      doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+    }
+    const server = await startView(
+      noCharacterAsset,
+      noRepositoryFile,
+      noTokenUsage,
+      noContextUsage,
+      noPromptImage,
+      () => Promise.resolve({ kind: "ok", achievement }),
+    )
+
+    const response = await fetch(achievementUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("application/json")
+    expect(await response.json()).toEqual(achievement)
+  })
+
+  it("/achievement は、date をそのまま読み取り側へ渡す（検証は配線層の仕事）", async () => {
+    const asked: (string | undefined)[] = []
+    const server = await startView(
+      noCharacterAsset,
+      noRepositoryFile,
+      noTokenUsage,
+      noContextUsage,
+      noPromptImage,
+      (rawDate) => {
+        asked.push(rawDate)
+        return noAchievement()
+      },
+    )
+
+    await fetch(achievementUrl(server, TOKEN, "2026-09-20"))
+    await fetch(achievementUrl(server, TOKEN))
+
+    expect(asked).toEqual(["2026-09-20", undefined])
+  })
+
+  it("/achievement は、main が読めなくても 200 で「不明」を返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(achievementUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ kind: "unknown" })
+  })
+
+  it("/achievement は、git の呼び出しが一時的に失敗したときは 503（部分的な数を出さない）", async () => {
+    const server = await startView(
+      noCharacterAsset,
+      noRepositoryFile,
+      noTokenUsage,
+      noContextUsage,
+      noPromptImage,
+      () => Promise.resolve({ kind: "unavailable" }),
+    )
+
+    const response = await fetch(achievementUrl(server, TOKEN))
+
+    expect(response.status).toBe(503)
+  })
+
+  it("/achievement は、トークンが無い・違うときは 403（読み取りにも行かない）", async () => {
+    let asked = 0
+    const server = await startView(
+      noCharacterAsset,
+      noRepositoryFile,
+      noTokenUsage,
+      noContextUsage,
+      noPromptImage,
+      () => {
+        asked += 1
+        return noAchievement()
+      },
+    )
+
+    expect((await fetch(achievementUrl(server, undefined))).status).toBe(403)
+    expect((await fetch(achievementUrl(server, "ちがう"))).status).toBe(403)
     expect(asked).toBe(0)
   })
 

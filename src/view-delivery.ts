@@ -10,6 +10,7 @@ import process from "node:process"
 import { type CurrentCharacter } from "./current-character.ts"
 import { type UiBundle } from "./server/adapter/bundle.ts"
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
+import { readAchievement } from "./server/adapter/main-history.ts"
 import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
@@ -18,6 +19,7 @@ import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-r
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import { type SessionManager } from "./server/core/session-manager.ts"
 import { summarizeRecentTokenUsage, type TokenUsageLog } from "./server/core/token-usage.ts"
+import { resolveAchievementDateKey } from "./shared/achievement.ts"
 import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
 
@@ -98,6 +100,13 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
         summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
       readContextUsage: () => readContextUsage(),
       findPromptImage: (id) => options.promptImageShelf.find(id),
+      // **「今日」を決めるのは配線層**（`readTokenUsageSummary` と同じ理由）。クエリの `date` を
+      // 検証・今日への丸め込みをするのも呼ぶたびにここで済ませ、`main-history.ts` には
+      // 検証済みの日付キーだけを渡す。
+      readAchievement: (rawDate) => {
+        const today = todayLocalDateKey()
+        return readAchievement(process.cwd(), resolveAchievementDateKey(rawDate, today), today)
+      },
       token,
     }),
   )

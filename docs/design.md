@@ -1018,20 +1018,20 @@ T-528 が旧形式の読み方を消す）:
 ### server.ts と session-socket.ts（adapter）
 
 **HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と、会話を含まない
-JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`）と会話の内容を運ぶ
-`/prompt-image/<id>` は `server.ts`（listen するのもここ。経路の一覧は `respond` 関数と、経路ごとの
-定数（`LAYOUT_PATH` / `uiScriptPath()` ・ `styleSheetPath()` / `VENDOR_PATH_PREFIX` /
+JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・`/achievement`）と会話の
+内容を運ぶ `/prompt-image/<id>` は `server.ts`（listen するのもここ。経路の一覧は `respond` 関数と、
+経路ごとの定数（`LAYOUT_PATH` / `uiScriptPath()` ・ `styleSheetPath()` / `VENDOR_PATH_PREFIX` /
 `CHARACTER_ASSET_PATH_PREFIX` / `REPOSITORY_FILE_PATH` / `TOKEN_USAGE_SUMMARY_PATH` /
-`CONTEXT_USAGE_PATH` / `PROMPT_IMAGE_PATH_PREFIX`）が正典）、`/ws` の upgrade とコマンドの受け口は
-`session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を足すだけ）。**起動トークンは
-1つ**で、`server.ts` の `createStartupToken` が作ったものを両方が見る。
+`CONTEXT_USAGE_PATH` / `PROMPT_IMAGE_PATH_PREFIX` / `ACHIEVEMENT_PATH`）が正典）、`/ws` の upgrade と
+コマンドの受け口は `session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を
+足すだけ）。**起動トークンは1つ**で、`server.ts` の `createStartupToken` が作ったものを両方が見る。
 
 会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
 だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので
-トークン無しでよい。**`/repository-file`・`/token-usage`・`/context-usage` は会話を含まないが
-トークンが要る** — 配るのは利用者の作業ディレクトリの中身・使った量・いまのセッションが積んでいる
-ものの内訳で、誰にでも配ってよい静的な物ではない（各経路の判断の理由は `server.ts` の関数ごとの
-doc コメントを参照）。
+トークン無しでよい。**`/repository-file`・`/token-usage`・`/context-usage`・`/achievement` は
+会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの中身・使った量・いまの
+セッションが積んでいるものの内訳・タスクの要約で、誰にでも配ってよい静的な物ではない
+（各経路の判断の理由は `server.ts` の関数ごとの doc コメントを参照）。
 
 ### config.ts（core）
 
@@ -1209,23 +1209,29 @@ type DailyAchievement =
 1. `git rev-parse --verify --quiet refs/heads/main^{commit}` で先端 H を取る。取れなければ
    `{ kind: "unknown" }`（`task-summary.ts` と同じく、作業ツリーのファイルへは落とさない）
 2. **コミット**: `git log H --no-merges --since=<start の7日前> --format=<区切り>%H %ct --name-only`。
-   core が committer date（`%ct`）で `[start, end)` に入るものだけを残し、変更したファイルが
-   すべて運用の帳面のものを外して数える。**`--since` に7日の余裕を持たせる**のは、`git log` の
-   `--since` がコミットの日付の古いものに続けて当たると辿るのを打ち切るため（旧形式では
-   作業ツリーで積んだ時刻のままのコミットが後から `main` に入り、日付が前後する）
+   **区切りは ASCII の record separator（`\x1e`）**——`node:child_process` の `execFile` は
+   引数に NUL（`\x00`）を含む文字列を渡すと例外を投げるため使えない。core が committer date
+   （`%ct`）で `[start, end)` に入るものだけを残し、変更したファイルがすべて運用の帳面のものを
+   外して数える。**`--since` に7日の余裕を持たせる**のは、`git log` の `--since` がコミットの
+   日付の古いものに続けて当たると辿るのを打ち切るため（旧形式では作業ツリーで積んだ時刻の
+   ままのコミットが後から `main` に入り、日付が前後する）
 3. **切り口**: `git rev-list -1 --first-parent --before=<end> H` と `--before=<start>`。
    前の日の切り口が無ければ（リポジトリの最初の日）空の集合として比べる
-4. **切り口ごとの中身**: `git ls-tree --name-only <切り口> develop/task/` で新形式のファイルを
-   列挙し、それと `<切り口>:develop/tasks.json`・`<切り口>:docs/history/tasks.md` を
-   **1回の `git cat-file --batch`** で読む（無いものは飛ばす）。どの形式を読むかを選ばず、あるものを
+4. **切り口ごとの中身**: H・その日の2つの切り口（今日ぶん・前の日ぶん）の**3つそれぞれ**に対し、
+   `git ls-tree --name-only <切り口> develop/task/` で新形式のファイルを列挙し、それと
+   `<切り口>:develop/tasks.json`・`<切り口>:docs/history/tasks.md` を**1回の
+   `git cat-file --batch`** で読む（無いものは飛ばす）。どの形式を読むかを選ばず、あるものを
    全部読んで ID で合わせる（形式の切り替えの前後で読み方を変えない）
-5. **タスクの記録が無いかどうかは先端 H で決める**（H に3つの読み元のどれも無ければ
-   `doneTasks` を「数えられない」にする）。その日の切り口に無いだけなら0件
+5. **タスクの記録が無いかどうかは先端 H で決める**（H の切り口を4と同じ形で読み、3つの読み元の
+   どれも無ければ `doneTasks` を「数えられない」にする）。その日の切り口に無いだけなら0件
 
 `git` の呼び出しは `task-summary.ts` と同じ上限（5秒・16MB）。**どれか1つでも時間切れ・失敗
 したら 503 を返し**、ブラウザは「取れなかった」を出す（部分的な数を出さない）。
-`docs/history/tasks.md` は 2.7MB あり、1回の応答で2版読む。新形式に移ったあとは書き足されないので、
-2つの切り口で blob が同じなら1回だけ読む。
+`docs/history/tasks.md` は 2.7MB あり、1回の応答で（H・今日・前の日の）**最大3版**読む。
+**切り口をまたいで blob が同じかどうかは見ない**——複数の切り口を1回の `git cat-file --batch`
+にまとめて呼ぶ形より、切り口ごとに素直に読むほうを実装の単純さで採った。新形式に移ったあとは
+このファイルへ書き足されなくなるので、読む回数を減らすなら次にここへ手を入れるときの課題として
+残す。
 
 **push ではなく取りに行く形にした理由**:
 

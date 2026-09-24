@@ -3,18 +3,19 @@
 // （`GET /repository-file?t=<起動トークン>`）と、分析の画面が引くトークン消費の集計
 // （`GET /token-usage?t=<起動トークン>&days=<日数>`）・いまのコンテキストの内訳
 // （`GET /context-usage?t=<起動トークン>`）・控えを押したときに引く依頼の画像の原寸
-// （`GET /prompt-image/<id>?t=<起動トークン>`）もここから配る。**フレームとコマンドが通る
-// WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに受け口を足す）。
+// （`GET /prompt-image/<id>?t=<起動トークン>`）・成果の画面が引く1日ぶんの数
+// （`GET /achievement?t=<起動トークン>&date=<日付キー>`）もここから配る。**フレームとコマンドが
+// 通る WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに受け口を足す）。
 //
 // **`Bun.serve` は使わない**（`node:http`。docs/coding-standards.md「Bun固有APIに寄せない」）。
 //
 // 安全のための決まり（docs/design.md 9章）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
 //   - **起動トークン**（起動ごとの乱数。ディスクに書かない）は `/repository-file` と
-//     `/token-usage`・`/context-usage`・`/prompt-image` を守る（ページ・同梱物・素材そのものは
-//     会話を含まないので、トークンは求めない。いまのまま）。配るのは利用者の作業ディレクトリの
-//     中身・使った量・いまのセッションが積んでいるものの内訳・依頼に添えた画像（会話の内容）で、
-//     誰にでも配ってよい静的な物ではない。
+//     `/token-usage`・`/context-usage`・`/prompt-image`・`/achievement` を守る（ページ・同梱物・
+//     素材そのものは会話を含まないので、トークンは求めない。いまのまま）。配るのは利用者の
+//     作業ディレクトリの中身・使った量・いまのセッションが積んでいるものの内訳・依頼に添えた
+//     画像（会話の内容）・タスクの要約で、誰にでも配ってよい静的な物ではない。
 //     **同じ1つを WebSocket の upgrade も見る**（`session-socket.ts`）
 
 import { randomBytes } from "node:crypto"
@@ -23,6 +24,7 @@ import process from "node:process"
 
 import { isPlainObject } from "remeda"
 
+import { ACHIEVEMENT_DATE_QUERY_NAME, ACHIEVEMENT_PATH } from "../../shared/achievement.ts"
 import {
   CHARACTER_ASSET_PATH_PREFIX,
   type CharacterAssetLocation,
@@ -48,6 +50,7 @@ import {
   type TokenUsageSummary,
 } from "../../shared/token-usage-summary.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../shared/vendor-asset.ts"
+import { type ReadAchievementResult } from "./main-history.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
@@ -131,6 +134,14 @@ export type ReadContextUsage = () => Promise<ContextUsageReport>
  */
 export type FindPromptImage = (id: string) => string | undefined
 
+/**
+ * 成果の画面に配る1日ぶんの応答（`src/server/adapter/main-history.ts` の `readAchievement` を
+ * 束ねたもの）。**クエリの `date`（生の文字列。無ければ undefined）をそのまま渡す**——
+ * 「今日」を決めて検証するのは配線層（`src/view-delivery.ts`。`readTokenUsageSummary` の
+ * `todayLocalDateKey()` と同じ置き場）で、ここでは検証しない。
+ */
+export type ReadAchievement = (rawDate: string | undefined) => Promise<ReadAchievementResult>
+
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
 
@@ -155,9 +166,11 @@ export type ViewServerOptions = {
   readonly readContextUsage: ReadContextUsage
   /** `/prompt-image/<id>` に配る原寸の引き口（棚の `find`）。 */
   readonly findPromptImage: FindPromptImage
+  /** `/achievement` に配る1日ぶんの成果。 */
+  readonly readAchievement: ReadAchievement
   /**
    * 起動トークン（{@link createStartupToken}）。**`/repository-file`・`/token-usage`・
-   * `/context-usage`・`/prompt-image` はこれが合わないと配らない**
+   * `/context-usage`・`/prompt-image`・`/achievement` はこれが合わないと配らない**
    * （`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
    */
   readonly token: string
@@ -275,6 +288,11 @@ function respond(
 
   if (path.startsWith(PROMPT_IMAGE_PATH_PREFIX) && request.method === "GET") {
     writePromptImage(request, response, path.slice(PROMPT_IMAGE_PATH_PREFIX.length), options)
+    return
+  }
+
+  if (path === ACHIEVEMENT_PATH && request.method === "GET") {
+    writeAchievement(request, response, options)
     return
   }
 
@@ -445,6 +463,41 @@ function writePromptImage(
 
   response.writeHead(200, { "content-type": image.mediaType, "cache-control": "no-store" })
   response.end(Buffer.from(image.base64, "base64"))
+}
+
+/**
+ * 成果を1日ぶん JSON で配る。**起動トークンが合わなければ 403**（`/token-usage` と同じ。
+ * 配るのは利用者のタスクの要約）。`date` は生の文字列のまま渡す（検証は配線層。
+ * {@link ReadAchievement}）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——
+ * `main` が読めないだけなら 200 で `{ kind: "unknown" }` を返す
+ * （`src/server/adapter/main-history.ts` の `ReadAchievementResult`）。
+ */
+function writeAchievement(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: ViewServerOptions,
+): void {
+  if (!hasStartupToken(request, options.token)) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
+    response.end("forbidden\n")
+    return
+  }
+
+  options.readAchievement(queryValue(request, ACHIEVEMENT_DATE_QUERY_NAME)).then(
+    (result) => {
+      if (result.kind === "unavailable") {
+        writeUnavailable(response)
+        return
+      }
+      writeJson(response, result.achievement)
+    },
+    () => writeUnavailable(response),
+  )
+}
+
+function writeUnavailable(response: ServerResponse): void {
+  response.writeHead(503, { "content-type": "text/plain; charset=utf-8" })
+  response.end("unavailable\n")
 }
 
 /** 起動トークン（`?t=<token>`）が合うか。経路の照合は呼び出し側が済ませている。 */
