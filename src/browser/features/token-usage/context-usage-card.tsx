@@ -1,6 +1,7 @@
 // いまのコンテキストの内訳の札（`docs/glossary.md`「コンテキストの内訳」）。トークン消費の
-// 画面のいちばん上に1枚だけ置く。取得と畳み込みは `hooks/use-context-usage.ts` で、ここは
-// 受け取った行をそのまま並べる。
+// 画面のいちばん上に1枚だけ置く。取得と畳み込みは `browser/domain/context-usage.ts`
+// （サイドバーの使用量の行と2つの機能が読むので `browser/domain/` に置いてある）で、
+// ここは受け取った行をそのまま並べる。
 //
 // **出すのはいまのセッションの内訳だけ**（過去の推移は出さない）。横棒は中身の分類を積み、
 // 続けて空き、最後に自動圧縮バッファ。**凡例は横棒と同じ並びを見る**ので、色と分類名が必ず
@@ -19,11 +20,11 @@
 import { type ReactElement } from "react"
 
 import { type ContextUsageItem } from "../../../shared/context-usage.ts"
+import { type ContextUsageRow, type UseContextUsageResult } from "../../domain/context-usage.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../utils/clock.ts"
+import { formatCount } from "../../utils/format-count.ts"
 import { categoryLook, SKELETON_ROW_NAMES } from "./context-usage-category.ts"
-import { type ContextUsageRow, type UseContextUsageResult } from "./hooks/use-context-usage.ts"
 import styles from "./token-usage.module.css"
-import { formatCount } from "./usage-format.ts"
 
 /** 札の見出しと、その横に小さく添える一言。 */
 const CARD_TITLE = "いまのコンテキスト"

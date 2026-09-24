@@ -178,6 +178,48 @@
   display: none;
 }
 
+/* いまのコンテキストの使用量（帯の3行目。docs/screen-design.md 13.9「使用量の行」）。
+   キャラクター・セッションの2つの対と並びを揃えず、帯の左右いっぱいに1行で敷く——2つの対の
+   `grid` は「ラベル→値」の対専用なので、ここは別の flex 行にする。押せることを色だけで
+   示さない（docs/screen-design.md 13.1 原則1）ので、ホバーで下線を足す。 */
+.context-usage-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  font-size: var(--font-secondary);
+}
+.context-usage-row:hover {
+  text-decoration: underline;
+}
+.context-usage-row-label {
+  flex: none;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.context-usage-row-value {
+  flex: none;
+  white-space: nowrap;
+}
+/* 細い棒。**残り幅をすべて取り**（`.session-info-select-frame` と同じ考え方）、値の右に伸びる。
+   取れない・届く前は 0% のまま出す（`context-usage-row.tsx` の `barPercentage`）ので、
+   ここでは幅の割合だけを気にすればよい。 */
+.context-usage-row-bar {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.context-usage-row-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
 /* ── 雑談中の4段（docs/screen-design.md 13.7「雑談のときのサイドバー」） ──────────────────────
    **寸法の出どころは「雑談モードのサイドバー案（T-332）」の見本**（見本の inline style の px を
    `theme.css` のトークンと rem に写した値。色は16進を書かず、パックの `--accent` からの導出で

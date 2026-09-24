@@ -1,7 +1,8 @@
-// サイドバーの「セッション情報」。**残るのはキャラクターとセッションの切り替えだけ**
-// （docs/screen-design.md 13.9「何を外すか」）。仕事/雑談のトグル・モデル・許可モードの
-// ドロップダウンは帯（`features/screen-nav/`）へ移った。**置かれるのは区画ではなくサイドバーの
-// 下端の帯**（`.sidebar-footer`。`sidebar.tsx`）なので、見出しは名乗らない。
+// サイドバーの「セッション情報」。**残るのはキャラクターとセッションの切り替え、それに
+// いまのコンテキストの使用量の行**（docs/screen-design.md 13.9「何を外すか」・「使用量の行」）。
+// 仕事/雑談のトグル・モデル・許可モードのドロップダウンは帯
+// （`features/screen-nav/`）へ移った。**置かれるのは区画ではなくサイドバーの下端の帯**
+// （`.sidebar-footer`。`sidebar.tsx`）なので、見出しは名乗らない。
 //
 // キャラクターの `<select>`（`character-switch.tsx`）は変更で `switch-character` を `dispatch`
 // する。**雑談中はここに置かない** — キャラクターの切り替えはプロフィールの札の「変える」へ
@@ -17,6 +18,7 @@ import { type ReactElement } from "react"
 import { CharacterFace } from "../../components/character-face.tsx"
 import { useSessionSelector } from "../../stores/session.tsx"
 import { CharacterSwitch } from "./character-switch.tsx"
+import { ContextUsageRow } from "./context-usage-row.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
 import styles from "./sidebar.module.css"
 
@@ -40,31 +42,36 @@ export function SessionInfo(props: SessionInfoProps): ReactElement {
   const characterName = useSessionSelector((session) => session.state.character?.name)
 
   return (
-    <div className={styles["session-info"]}>
-      {props.withCharacter && hasCharacterPacks ? (
-        <>
-          <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
-            キャラクター
-          </label>
-          <span className={styles["session-info-value"]}>
-            <CharacterFace
-              url={faceUrl}
-              alt={characterName ?? ""}
-              className={styles["session-info-face"] ?? ""}
-            />
-            <CharacterSwitch
-              id={CHARACTER_SELECT_ID}
-              ariaLabel="キャラクター"
-              frameClassName={styles["session-info-select-frame"] ?? ""}
-              className={styles["character-select"] ?? ""}
-            />
-          </span>
-        </>
-      ) : null}
-      {/* セッションの行（`session-switch.tsx`）。**同じ grid の直の子**として並ぶよう、
-          入れ物を挟まずラベルと値の対だけを返す部品にしてある。切り替え先が無ければ
-          何も出さない。 */}
-      <SessionSwitch />
-    </div>
+    <>
+      <div className={styles["session-info"]}>
+        {props.withCharacter && hasCharacterPacks ? (
+          <>
+            <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
+              キャラクター
+            </label>
+            <span className={styles["session-info-value"]}>
+              <CharacterFace
+                url={faceUrl}
+                alt={characterName ?? ""}
+                className={styles["session-info-face"] ?? ""}
+              />
+              <CharacterSwitch
+                id={CHARACTER_SELECT_ID}
+                ariaLabel="キャラクター"
+                frameClassName={styles["session-info-select-frame"] ?? ""}
+                className={styles["character-select"] ?? ""}
+              />
+            </span>
+          </>
+        ) : null}
+        {/* セッションの行（`session-switch.tsx`）。**同じ grid の直の子**として並ぶよう、
+            入れ物を挟まずラベルと値の対だけを返す部品にしてある。切り替え先が無ければ
+            何も出さない。 */}
+        <SessionSwitch />
+      </div>
+      {/* いまのコンテキストの使用量（`context-usage-row.tsx`）。**grid の外**——キャラクター・
+          セッションの対の並びとは別に、帯の左右いっぱいに1行で敷く。 */}
+      <ContextUsageRow />
+    </>
   )
 }

@@ -1,10 +1,25 @@
 // いまのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）を取りに行き、
-// 見た目（`../context-usage-card.tsx`）が算出せずにそのまま描ける形へ畳む
-// （docs/design.md 2章「機能の中を分ける」）。
+// 見た目（`features/token-usage/context-usage-card.tsx` / `features/sidebar/context-usage-row.tsx`）が
+// 算出せずにそのまま描ける形へ畳む。**2つの機能が読むので `browser/domain/`**（トークン消費の
+// 画面の札に加えて、サイドバーのセッション情報の行がこの内訳を読むようになったため。
+// docs/design.md 2章「上げる引き金は「2つ目の読み手が出たとき」」）。
 //
-// **画面を開いたときに1回引く**（押されてくる値ではない。`/token-usage` と同じ経路の形で、
-// サーバが駆動へ問い合わせて返す）。**ターンの実行中に呼んでも待たされない**ので、進行中でも
-// 同じように取りに行く（実測は `src/server/adapter/sdk-context-usage.ts` の `CONTEXT_USAGE_DETAIL`）。
+// **`browser/domain/` は `stores/` を import できない**（docs/design.md 2章の箱の表）ので、
+// 「いつ取り直すか」を自分では決めない。**`refetchKey` を呼び出し側から受け取り、値が変われば
+// 取り直す**（`useQuery` の `queryKey` に含めるだけで、`useEffect` は要らない）。「ターンが終わる
+// たびに取り直す」ための実際の値（`state.lastTurnFinishedAt` から作る）は
+// {@link contextUsageRefetchKey} が純関数として持ち、`state.lastTurnFinishedAt` を読む
+// `useSessionSelector` は `stores/` を読める機能の側（`token-usage-screen.tsx` /
+// `context-usage-row.tsx`）が呼ぶ。**`state.turn` ではなく `state.lastTurnFinishedAt` を読む**
+// ——`turn` は `running` に移ると終わった時刻を失う（`shared/session-state.ts` の
+// `TurnProgress`）ので、`turn` から作ると新しいターンが始まった瞬間に合図が `0` へ戻り、
+// ターンの途中で骨組み・古い値へ
+// 巻き戻ってしまう（実測。「取り直すのはターンが終わるたび。ターンの途中は前の値のまま」に
+// 反する）。`lastTurnFinishedAt` は `running` の間も直前の値を持ち続ける
+// （`shared/session-state.ts`）ので、ここは受け取った値をそのまま使うだけでよい。**同じ
+// `state` からは同じ `refetchKey` が出る**ので、2つの機能が同時にマウントされていても
+// （`main.tsx` の `<Activity>` は会話の画面を隠すだけで外さない）`useQuery` の cache 1本に
+// 相乗りし、取り直しは1回で済む。
 //
 // **「取れなかった」は理由を問わず1つに畳む**（応答が落ちた・読めない形は区別しない。
 // 画面ですることが同じなので `use-token-usage.ts` と同じ畳み方）。**「まだ届いていない」は
@@ -21,12 +36,12 @@ import {
   type ContextUsageReport,
   readContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../../shared/context-usage.ts"
-import { sessionTokenUrl } from "../../../lib/session-token-url.ts"
+} from "../../shared/context-usage.ts"
+import { sessionTokenUrl } from "../lib/session-token-url.ts"
 
 /** 横棒の一区間と、凡例の1行（**同じ並びを両方が使う**ので、色と名前が必ず対になる）。 */
 export type ContextUsageRow = {
-  /** SDK が返した分類の名前（日本語への置き換えと色は `../context-usage-category.ts`）。 */
+  /** SDK が返した分類の名前（日本語への置き換えと色は `../features/token-usage/context-usage-category.ts`）。 */
   readonly name: string
   readonly kind: ContextCategoryKind
   readonly tokens: number
@@ -35,7 +50,7 @@ export type ContextUsageRow = {
 }
 
 /**
- * 札1枚を描くために要るもの。**判別可能な合併型**で、取れないときは札そのものを出さない
+ * 内訳1つぶんを描くために要るもの。**判別可能な合併型**で、取れないときは実物を出さない
  * （`src/shared/context-usage.ts` の {@link ContextUsageReport} と同じ割り方）。
  * `pending` は届く前の骨組み用、`unavailable` は取れなかったときの一言用。
  */
@@ -61,11 +76,26 @@ export type UseContextUsageResult =
       readonly takenAt: number
     }
 
-export function useContextUsage(): UseContextUsageResult {
+/**
+ * `state.lastTurnFinishedAt` から、内訳を取り直す合図を作る。**ターンが終わるたびに違う値**
+ * になり、ターンが `running` へ移っても（`lastTurnFinishedAt` 自体が戻らないので）そのまま。
+ * 「無い」はここで畳む——まだ一度もターンが終わっていなければ `0`（エポックミリ秒として
+ * 現実には起きない値なので、番兵として使える）。
+ */
+export function contextUsageRefetchKey(lastTurnFinishedAt: number | undefined): number {
+  return lastTurnFinishedAt ?? 0
+}
+
+/**
+ * `refetchKey` が変わるたびに取り直す。**マウント時にも1回引く**（`staleTime: 0` なので
+ * 初回もキャッシュを信用しない）。「ターンの実行中に呼んでも待たされない」（実測は
+ * `src/server/adapter/sdk-context-usage.ts` の `CONTEXT_USAGE_DETAIL`）ので、進行中でも
+ * 同じように取りに行く。
+ */
+export function useContextUsage(refetchKey: number): UseContextUsageResult {
   const query = useQuery({
-    queryKey: ["context-usage"],
+    queryKey: ["context-usage", refetchKey],
     queryFn: fetchContextUsage,
-    // 開くたびに取り直す（読んでいる間にも積み上がるので、前に開いたときの内訳を見せない）。
     staleTime: 0,
   })
   // 初回の応答がまだ無い間は骨組み（`query.isPending` から導くだけで `useEffect` は要らない）。
@@ -76,7 +106,7 @@ export function useContextUsage(): UseContextUsageResult {
 }
 
 /**
- * 届いた内訳を札の形へ畳む。**横棒と凡例が同じ並びを見る**ように、中身・空き・自動圧縮
+ * 届いた内訳を描く形へ畳む。**横棒と凡例が同じ並びを見る**ように、中身・空き・自動圧縮
  * バッファをこの順で1本の並びにする（`deferred` は窓の外なので別の並び）。
  */
 function toCard(report: ContextUsageReport, takenAt: number): UseContextUsageResult {

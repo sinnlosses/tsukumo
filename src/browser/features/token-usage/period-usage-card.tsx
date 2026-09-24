@@ -16,8 +16,8 @@ import {
   type TokenUsageTrend,
   type TokenUsageTrendUnit,
 } from "../../../shared/token-usage-summary.ts"
+import { formatCount } from "../../utils/format-count.ts"
 import styles from "./token-usage.module.css"
-import { formatCount } from "./usage-format.ts"
 
 export type PeriodUsageCardProps = {
   /** 何の数か（入力・出力・キャッシュ読み・キャッシュ作成）。 */
