@@ -155,3 +155,84 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     expect(shownBodies(state)).toEqual(["架空の答え"])
   })
 })
+
+// docs/display.md 4.2「一度出した本文は二度と消えない」を、続きのターンを2回以上含む現実の並びで
+// 1件ずつ畳みながら確かめる。合図（turn-resumed）が届くたびに出ていたレポートが伏せられないことと、
+// 続きのターンが吹き出しを空に戻さないことの両方を、途中の姿で見る。
+describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件ずつ畳む）", () => {
+  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const interimReport: SessionEvent = {
+    kind: "report",
+    toolUseId: "toolu_r1",
+    conclusion: "架空の中間レポート",
+    body: "",
+    favor: "",
+  }
+  const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+  const resumed: SessionEvent = { kind: "turn-resumed" }
+  const speechAfterFirstSignal: SessionEvent = {
+    kind: "speech",
+    text: "架空のいちど目の続き",
+    expression: "default",
+  }
+  const speechAfterSecondSignal: SessionEvent = {
+    kind: "speech",
+    text: "架空のにど目の続き",
+    expression: "default",
+  }
+  const finalReport: SessionEvent = {
+    kind: "report",
+    toolUseId: "toolu_r2",
+    conclusion: "架空の最終レポート",
+    body: "",
+    favor: "",
+  }
+
+  // 依頼 → 中間 report → 合図（turn-resumed → speech → ターンの終わり）→ 合図（同じ形）→
+  // 完了の返事（speech）→ 最終 report → ターンの終わり、という現実の並び。続きのターンを2回含む。
+  const events: readonly SessionEvent[] = [
+    request,
+    interimReport,
+    finished,
+    resumed,
+    speechAfterFirstSignal,
+    finished,
+    resumed,
+    speechAfterSecondSignal,
+    finalReport,
+    finished,
+  ]
+
+  const shownBodies = (state: SessionState) =>
+    (mainViewTurnsOf(state).at(-1)?.steps ?? []).flatMap((step) =>
+      step.body.kind === "text" ? [step.body.report] : [],
+    )
+
+  it("1件畳むごとに、出ていた report の本文が消えず、吹き出しも空に戻らない", () => {
+    let state: SessionState = INITIAL_SESSION_STATE
+    let sawInterimReport = false
+    let sawFirstSpeech = false
+
+    for (const event of events) {
+      state = applySessionEvent(state, event, 0)
+
+      if (shownBodies(state).includes("架空の中間レポート")) {
+        sawInterimReport = true
+      }
+      if (sawInterimReport) {
+        expect(shownBodies(state)).toContain("架空の中間レポート")
+      }
+
+      if (state.speeches.includes("架空のいちど目の続き")) {
+        sawFirstSpeech = true
+      }
+      if (sawFirstSpeech) {
+        expect(state.speeches.length).toBeGreaterThan(0)
+      }
+    }
+
+    // 畳み終えたところで、中間・最終の両方のレポートが出ていて、吹き出しは2回ぶんとも残る。
+    expect(shownBodies(state)).toEqual(["架空の中間レポート", "架空の最終レポート"])
+    expect(state.speeches).toEqual(["架空のいちど目の続き", "架空のにど目の続き"])
+  })
+})
