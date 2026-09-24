@@ -963,6 +963,13 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
 
 `evidence` には「どの環境で何を見たか」を1行で書く。
 
+**claude が自分で始めた続きのターン（`turn-resumed`）の合間を測るときは、疑似セッションの場面
+`resumed-report`（`TSUKUMO_FAKE_SCENE=resumed-report`）を使う。** 中間の `report` のあと、
+`turn-resumed` → `speech` → ターンの終わりを2回はさみ、最後に完了の一言と最終 `report` が続く。
+`turn-resumed` が届いてから次の `speech` / `report` が届くまでのあいだも、メインビューは前の
+`report` を出したままで、吹き出しは「（まだ発話がありません）」に戻らず前のセリフを保っている
+ことを確かめる（`docs/screen-design.md` 13.9「背景のタスク」）。
+
 **fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る
 ことがある**（再現条件は分かっておらず、手で触ったときには起きていない。操作側の問題の
 可能性もある）。そのときは疑似セッションの `opening` に質問を足して、開いた時点で出す形で

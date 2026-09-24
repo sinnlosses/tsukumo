@@ -1668,6 +1668,171 @@
       ]
     },
     {
+      "name": "resumed-report",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "合図をまたいでも報告が消えないか確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "speech",
+            "text": "分かった、区切りごとに知らせながら進めるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-resume-1",
+            "name": "Bash",
+            "input": {
+              "command": "dummy-scan --targets /tmp/dummy",
+              "run_in_background": false,
+              "description": "架空の下調べ"
+            }
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-resume-1",
+            "content": "ダミーの下調べ結果（架空・3件）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-resume-1"
+          }
+        },
+        {
+          "afterMs": 1800,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-call-resume-1",
+            "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+            "body": "- 下調べは終わった（架空の結果）\n- 続きは合図を待って進める",
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 1850,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-resume-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2200,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 3200,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 3800,
+          "event": {
+            "kind": "speech",
+            "text": "1つ目の合図が届いた。まだ続けてるよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 4100,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 5100,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 5700,
+          "event": {
+            "kind": "speech",
+            "text": "2つ目の合図。もう少しで終わりそう。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 6000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 7000,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 7600,
+          "event": {
+            "kind": "speech",
+            "text": "終わったよ。まとめを届けるね。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 7900,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-resume-2"
+          }
+        },
+        {
+          "afterMs": 8200,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-call-resume-2",
+            "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
+            "body": "- 中間の報告は合図のあいだも出したまま\n- 吹き出しも前のセリフを保った\n- 最後にこの最終報告へ差し替わる",
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 8250,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-resume-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 8600,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "api-retry",
       "steps": [
         {
