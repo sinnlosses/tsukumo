@@ -73,13 +73,6 @@ import {
 import { tsukumoServer } from "./sdk-tool.ts"
 
 /**
- * 既定の reasoning effort（docs/requirements.md 4.1）。**起こすときに `query()` へ渡す値**で、
- * 画面の effort のドロップダウンはこの値を先回りで出さない——表示は `Stop` フック入力から
- * 読み取った値だけに従う（`docs/screen-design.md` 13.9「動き方の操作子」）。
- */
-export const DEFAULT_EFFORT: EffortLevel = "medium"
-
-/**
  * 本体の催促が届いたときに stderr へ出す1行。**固定の文面だけ**（届いたメッセージの中身は
  * 写さない）。出たら `CLAUDE_CODE_TERMINAL_MCP_TOOLS` が本体の更新で効かなくなっている
  * （`src/server/core/visible-output-nudge.ts` の冒頭）。
@@ -248,12 +241,14 @@ export type QuerySeedOptions = {
 
 /**
  * `query()` に渡す `options` のうち、クロージャを含まない部分を組み立てる。**本物の
- * `query()` を呼ばずに、覚えた既定（モデル・許可モード）と {@link DEFAULT_EFFORT} が渡る形を
- * 検査できるように、`startSdkDriver` から切り出してある。**
+ * `query()` を呼ばずに、覚えた既定（モデル・effort・許可モード）が渡る形を検査できるように、
+ * `startSdkDriver` から切り出してある。**
  *
- * **モデルと許可モードは呼び出し側から来る**（`src/session-start.ts` が
+ * **モデル・effort・許可モードは呼び出し側から来る**（`src/session-start.ts` が
  * `readRememberedSessionDefault` で読んだ値。`docs/screen-design.md` 13.6）。ここで定数に倒すと、
- * 歯車で変えた既定が起こし直しても効かない。
+ * 歯車で変えた既定が起こし直しても効かない。**effort は対応しないモデル（`haiku` など）でも
+ * 渡す**——`query()` 自身が対応の有無で読み分ける前提を崩さない（渡すかどうかをここで
+ * モデルごとに出し分けない）。
  */
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
   return {
@@ -262,7 +257,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },
     permissionMode: options.permissionMode,
     model: options.model,
-    effort: DEFAULT_EFFORT,
+    effort: options.effort,
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
     settings: { language: "japanese" },
     env: childProcessEnv(options.inheritedEnv),

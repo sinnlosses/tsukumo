@@ -391,18 +391,20 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     pack: editedCharacterPackNameSchema,
   }),
   /**
-   * 新しいセッションの既定（モデル・許可モード）を覚える（`docs/screen-design.md` 13.6。帯の右端の
-   * 歯車）。**いま動いているセッションには効かない** — 効くのは次に起こすときからで、
-   * 帯の `set-model` / `set-permission-mode`（セッション限り）とは別の口にしてある。
+   * 新しいセッションの既定（モデル・effort・許可モード）を覚える（`docs/screen-design.md` 13.6。
+   * 帯の右端の歯車）。**いま動いているセッションには効かない** — 効くのは次に起こすときからで、
+   * 帯の `set-model` / `set-effort` / `set-permission-mode`（セッション限り）とは別の口にしてある。
    *
-   * **2つを1つのコマンドで運ぶ**のは、覚え先（`~/.tsukumo/state.json`）が1組で書き換わる
-   * ものだから（片方だけ覚えている状態を作らない）。**「全部許す」は選択肢に無い**ので、
+   * **3つを1つのコマンドで運ぶ**のは、覚え先（`~/.tsukumo/state.json`）が1組で書き換わる
+   * ものだから（1つだけ覚えている状態を作らない）。**「全部許す」は選択肢に無い**ので、
    * 届いても検証で落ちる（`SESSION_DEFAULT_PERMISSION_MODES`。`src/shared/session-default.ts`）。
+   * effort は除外する値が無いので `EFFORT_LEVELS` をそのまま受け付ける。
    */
   z.object({
     type: z.literal("set-session-default"),
     commandId: commandIdSchema,
     model: z.enum(MODEL_ALIASES),
+    effort: z.enum(EFFORT_LEVELS),
     permissionMode: z.enum(SESSION_DEFAULT_PERMISSION_MODES),
   }),
   /**

@@ -17,7 +17,7 @@
 import { useId, type ReactElement } from "react"
 
 import { Select } from "../../../components/select.tsx"
-import { effortLabel } from "../domain/effort-label.ts"
+import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
 import { type ScreenNavModelPermission } from "../hooks/use-screen-nav.ts"
@@ -27,9 +27,6 @@ import styles from "./screen-nav-model-permission.module.css"
 export type ScreenNavModelPermissionProps = {
   readonly modelPermission: ScreenNavModelPermission
 }
-
-/** effort が選べないとき（`EffortSelect` の `unsupported` / `unknown`）の唯一の選択肢の値。 */
-const EFFORT_PLACEHOLDER_VALUE = ""
 
 export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionProps): ReactElement {
   const {

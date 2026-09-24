@@ -32,7 +32,7 @@
 
 import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
-import { isModelAlias, type ModelAlias } from "../../../../shared/command.ts"
+import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../shared/command.ts"
 import {
   isSessionDefaultPermissionMode,
   type SessionDefaultPermissionMode,
@@ -56,6 +56,7 @@ import {
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { useDebouncedCallback } from "../../../lib/debounce.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import {
   isVisitToggleValue,
   visitToggleValueOf,
@@ -77,6 +78,14 @@ export type ScreenNavSettingsColor = {
 export type ScreenNavSettingsSessionDefault = {
   readonly model: ModelAlias
   readonly onChangeModel: (value: string) => void
+  /**
+   * effort（{@link EffortSelect}）。**帯の判定をそのまま再利用する**
+   * （`resolveEffortSelect`。`domain/effort-label.ts`）——対応表（`modelEffortSupport`）は
+   * 駆動が起動直後に届けるモデル横断の一覧なので、いま帯に出しているモデルと無関係に、
+   * ここで選んでいる既定のモデルの対応も同じ関数で引ける。
+   */
+  readonly effort: EffortSelect
+  readonly onChangeEffort: (value: string) => void
   readonly permissionMode: SessionDefaultPermissionMode
   readonly onChangePermissionMode: (value: string) => void
 }
@@ -134,6 +143,7 @@ const APPEARANCE_COLOR_SAVE_KEY = "appearance-color"
 export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSettings {
   const dispatch = useSessionDispatch()
   const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
+  const modelEffortSupport = useSessionSelector((session) => session.state.modelEffortSupport)
   const visitEnabled = useSessionSelector((session) => session.state.visitEnabled)
   const [open, setOpen] = useState(false)
   // いま DOM に付いている歯車。React の外にある資源を持つ可変の入れ物なので ref に置く。
@@ -235,6 +245,18 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
           dispatch({
             type: "set-session-default",
             model: value,
+            effort: sessionDefault.effort,
+            permissionMode: sessionDefault.permissionMode,
+          })
+        }
+      },
+      effort: resolveEffortSelect(sessionDefault.model, modelEffortSupport, sessionDefault.effort),
+      onChangeEffort: (value) => {
+        if (isEffortLevel(value)) {
+          dispatch({
+            type: "set-session-default",
+            model: sessionDefault.model,
+            effort: value,
             permissionMode: sessionDefault.permissionMode,
           })
         }
@@ -246,6 +268,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
           dispatch({
             type: "set-session-default",
             model: sessionDefault.model,
+            effort: sessionDefault.effort,
             permissionMode: value,
           })
         }

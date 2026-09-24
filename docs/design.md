@@ -216,7 +216,7 @@ src/
       persona-memory.ts       雑談で覚えた1行を ~/.tsukumo/characters/<pack>/persona.md の末尾の節へ書く
       chat-summary.ts         雑談の要約の写しと印（~/.tsukumo/chat-summary/<pack>.md）
       chat-archive.ts         雑談の会話のアーカイブ（~/.tsukumo/chat-archive/<pack>/<日付>.jsonl）
-      remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード・訪問のオン・オフ）
+      remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・effort・許可モード・訪問のオン・オフ）
       task-summary.ts         main のタスク一覧の読み直し（main の先端の変化を tasks-changed イベントにする。develop/task/ を `git ls-tree` / `git cat-file --batch` で読む）
       git.ts                  `git` を起こす唯一の口（`runGit` / `runGitCatFileBatch`）。task-summary.ts・main-history.ts・repository-file.ts が使う
       repository-file.ts      git 管理下のファイルの列挙（`git.ts` の `runGit` で `git ls-files` を呼ぶ）
@@ -880,8 +880,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 **契約は `core/session-driver.ts`、SDK の実装は `adapter/` 直下の `sdk-` で始まるファイル**。
 境目の基準は「`shared` の語彙で書けるか / SDK の語彙を名乗るか」で、`SessionDriver` の契約
 （`prompt` / `interrupt` / `answer` / `pending` / `setModel` / `setPermissionMode` / `close`）と
-`onEvent`・`SessionDriverOptions`・`DEFAULT_PERMISSION_MODE` / `DEFAULT_MODEL` は `core` 側、
-`query()` を回す `startSdkDriver` と `buildQuerySeedOptions`・SDK の型を持つ `DEFAULT_EFFORT` は
+`onEvent`・`SessionDriverOptions`（覚えた既定のモデル・effort・許可モードを運ぶ）は `core` 側、
+`query()` を回す `startSdkDriver` と `buildQuerySeedOptions` は
 `adapter/sdk-driver.ts`、`findSessionToResume` / `readRestoredEvents` は `adapter/sdk-session.ts`。**名前が `startSession`
 ではないのは、`src/session-start.ts` の `startSession`（セッションを1つ起こす配線）と役割が
 違うから**（駆動を1つ起こすだけで、覚えた既定を読む・履歴を復元するといった段取りは持たない）。
@@ -900,8 +900,10 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 **他のファイルと共有する定数は、読む側の層で置き場を決める。** `TSUKUMO_MCP_SERVER_NAME` /
 `SPEAK_TOOL_NAME` は、届いた `assistant` メッセージから `speak` の呼び出しを見分ける
 `core/sdk-message.ts` が持ち、ツールを組む `sdk-tool.ts` がそこから取る（`core → adapter` は
-禁止なので、逆向きには置けない）。`DEFAULT_EFFORT` は SDK の型（`EffortLevel`）を名乗り、読むのが
-駆動だけなので `sdk-driver.ts` に置く。
+禁止なので、逆向きには置けない）。**既定の effort（`medium`）は `shared/session-default.ts` の
+`BUILTIN_SESSION_DEFAULT.effort` の1箇所だけに持つ**（起こすときに渡す値も歯車の同梱の既定も
+同じ値。`sdk-driver.ts` は `SessionDriverOptions.effort` をそのまま `query()` へ渡すだけで、
+自分の定数は持たない）。
 
 ### fake-driver.ts（adapter）
 
@@ -965,11 +967,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 **`remembered-default.ts`** はその隣に置く別モジュールで、**次に起こすときの初期値**を
 `~/.tsukumo/state.json` に読み書きする（書き込みの失敗で例外を投げない）。覚えるのは3つ:
 
-| 欄                                           | 読む口                         | 書く口                          | 読めないとき                                                     |
-| -------------------------------------------- | ------------------------------ | ------------------------------- | ---------------------------------------------------------------- |
-| キャラクター名                               | `readRememberedCharacter`      | `writeRememberedCharacter`      | `undefined`（呼び出し側が既定へ）                                |
-| 新しいセッションの既定（モデル・許可モード） | `readRememberedSessionDefault` | `writeRememberedSessionDefault` | 同梱の既定（Opus・`auto`。`shared/session-default.ts`）          |
-| 歯車の「訪問」のオン・オフ                   | `readRememberedVisitEnabled`   | `writeRememberedVisitEnabled`   | 同梱の既定（する。`shared/visit.ts` の `DEFAULT_VISIT_ENABLED`） |
+| 欄                                                   | 読む口                         | 書く口                          | 読めないとき                                                      |
+| ---------------------------------------------------- | ------------------------------ | ------------------------------- | ----------------------------------------------------------------- |
+| キャラクター名                                       | `readRememberedCharacter`      | `writeRememberedCharacter`      | `undefined`（呼び出し側が既定へ）                                 |
+| 新しいセッションの既定（モデル・effort・許可モード） | `readRememberedSessionDefault` | `writeRememberedSessionDefault` | 同梱の既定（Opus・`medium`・`auto`。`shared/session-default.ts`） |
+| 歯車の「訪問」のオン・オフ                           | `readRememberedVisitEnabled`   | `writeRememberedVisitEnabled`   | 同梱の既定（する。`shared/visit.ts` の `DEFAULT_VISIT_ENABLED`）  |
 
 **3つを1ファイルに置いてあるのは、書き込みがファイル丸ごとの置き換えだから**（別のモジュールから
 書くと後から書いたほうが相手の欄を消す。原則3「1ファイル = 1つの境界」）。**欄ごとに別のスキーマで

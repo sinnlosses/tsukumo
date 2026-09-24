@@ -721,6 +721,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
               Promise.resolve(
                 options.rememberSessionDefault({
                   model: command.model,
+                  effort: command.effort,
                   permissionMode: command.permissionMode,
                 }),
               ),

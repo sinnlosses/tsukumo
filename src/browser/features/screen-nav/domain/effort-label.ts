@@ -1,7 +1,9 @@
-// effort の段（`src/shared/command.ts` の `EFFORT_LEVELS`）を、帯の effort のドロップダウンが
-// 受け取れる形にする。置き場の理由は `model-label.ts` の冒頭と同じ（読むのは帯だけ、フックを
-// 呼ばない部品〔`components/select.tsx`〕が読む対応表、表示の整形はサーバとブラウザの契約では
-// ない）。
+// effort の段（`src/shared/command.ts` の `EFFORT_LEVELS`）を、effort のドロップダウンが
+// 受け取れる形にする。置き場の理由は `model-label.ts` の冒頭と同じ（読むのは
+// `features/screen-nav/` だけ——帯（`hooks/use-screen-nav.ts`）と歯車の「新しいセッションの既定」
+// （`hooks/use-settings.ts`）の両方、フックを呼ばない部品〔`components/select.tsx`〕が読む対応表、
+// 表示の整形はサーバとブラウザの契約ではない）。**選択肢と表示名は歯車も帯と同じものを使う**
+// （`EFFORT_LABELS`/`effortLabel` を二重に持たない）。
 //
 // **effort だけ「まだ届いていない値」を見た目上の既定へ倒さない**（`model-label.ts` /
 // `permission-mode-label.ts` と違う扱い。「読めない値は出さない」という決定は
@@ -36,7 +38,14 @@ export const EFFORT_UNSUPPORTED_REASON = "このモデルは effort に対応し
 export const EFFORT_UNKNOWN_REASON = "まだ effort を読み取れていない（ターンが終わると分かる）"
 
 /**
- * 帯の effort のドロップダウンが受け取れる形（{@link resolveEffortSelect}）。
+ * effort が選べないとき（`EffortSelect` の `unsupported` / `unknown`）に `<select>` へ置く
+ * 唯一の選択肢の値。帯（`screen-nav-model-permission.tsx`）と歯車
+ * （`screen-nav-settings.tsx`）の両方が使うので、ここに1つだけ持つ。
+ */
+export const EFFORT_PLACEHOLDER_VALUE = ""
+
+/**
+ * effort のドロップダウンが受け取れる形（{@link resolveEffortSelect}）。帯と歯車の両方が使う。
  *
  * - `unsupported`: 対応表にいまのモデルの行があり、**対応しないと分かっている**（`haiku` など）。
  *   選べない

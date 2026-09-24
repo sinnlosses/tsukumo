@@ -300,6 +300,7 @@ function startDriver(options: {
     // そのセッション限りで、ここには戻らない。
     permissionMode: seed.sessionDefault.permissionMode,
     model: seed.sessionDefault.model,
+    effort: seed.sessionDefault.effort,
     // **何がどの順で載るかは core（`system-prompt.ts`）が持つ**ので、ここは人格の文面と口を
     // 渡すだけ（`docs/design.md` 7章）。**人格の「無い」はここで畳む**（core へ
     // `| undefined` を運ばない）。

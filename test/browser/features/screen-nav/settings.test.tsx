@@ -151,7 +151,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(document.activeElement).toBe(document.body)
   })
 
-  it("地・領域・字の色の3つ、新しいセッションの既定の2つ、演出の速さの1つ、訪問の1つを出す", () => {
+  it("地・領域・字の色の3つ、新しいセッションの既定の3つ、演出の速さの1つ、訪問の1つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
@@ -159,7 +159,16 @@ describe("設定の歯車（帯の右端）", () => {
       [...document.querySelectorAll(".screen-nav-settings-panel label")].map(
         (node) => node.textContent,
       ),
-    ).toEqual(["画面の地", "領域の地", "字の色", "モデル", "許可モード", "速さ", "客の出入り"])
+    ).toEqual([
+      "画面の地",
+      "領域の地",
+      "字の色",
+      "モデル",
+      "effort",
+      "許可モード",
+      "速さ",
+      "客の出入り",
+    ])
   })
 
   it("色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
@@ -277,7 +286,7 @@ describe("設定の歯車（帯の右端）", () => {
 // 「届いた値をそのまま出す」「選ぶと `set-session-default` を送る」「全部許すは並べない」の3つ。
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
-    renderScreenNav({ sessionDefault: { model: "sonnet", permissionMode: "plan" } })
+    renderScreenNav({ sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" } })
     fireEvent.click(gear())
 
     expect(defaultSelect("モデル").value).toBe("sonnet")
@@ -296,37 +305,47 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     ])
   })
 
-  it("モデルを選ぶと、いまの許可モードと一緒に set-session-default を送る", () => {
+  it("モデルを選ぶと、いまの effort・許可モードと一緒に set-session-default を送る", () => {
     const sent: unknown[] = []
-    renderScreenNav({ sessionDefault: { model: "opus", permissionMode: "plan" } }, (command) =>
-      sent.push(command),
+    renderScreenNav(
+      { sessionDefault: { model: "opus", effort: "high", permissionMode: "plan" } },
+      (command) => sent.push(command),
     )
     fireEvent.click(gear())
 
     fireEvent.change(defaultSelect("モデル"), { target: { value: "sonnet" } })
 
-    expect(sent).toEqual([{ type: "set-session-default", model: "sonnet", permissionMode: "plan" }])
+    expect(sent).toEqual([
+      { type: "set-session-default", model: "sonnet", effort: "high", permissionMode: "plan" },
+    ])
   })
 
-  it("許可モードを選ぶと、いまのモデルと一緒に set-session-default を送る", () => {
+  it("許可モードを選ぶと、いまのモデル・effort と一緒に set-session-default を送る", () => {
     const sent: unknown[] = []
-    renderScreenNav({ sessionDefault: { model: "haiku", permissionMode: "auto" } }, (command) =>
-      sent.push(command),
+    renderScreenNav(
+      { sessionDefault: { model: "haiku", effort: "medium", permissionMode: "auto" } },
+      (command) => sent.push(command),
     )
     fireEvent.click(gear())
 
     fireEvent.change(defaultSelect("許可モード"), { target: { value: "acceptEdits" } })
 
     expect(sent).toEqual([
-      { type: "set-session-default", model: "haiku", permissionMode: "acceptEdits" },
+      {
+        type: "set-session-default",
+        model: "haiku",
+        effort: "medium",
+        permissionMode: "acceptEdits",
+      },
     ])
   })
 
   // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/screen-design.md` 13.6）。
   it("帯でモデルを変えても set-session-default は送らない", () => {
     const sent: unknown[] = []
-    renderScreenNav({ sessionDefault: { model: "opus", permissionMode: "auto" } }, (command) =>
-      sent.push(command),
+    renderScreenNav(
+      { sessionDefault: { model: "opus", effort: "medium", permissionMode: "auto" } },
+      (command) => sent.push(command),
     )
 
     fireEvent.change(
@@ -337,6 +356,77 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     )
 
     expect(sent).toEqual([{ type: "set-model", model: "haiku" }])
+  })
+})
+
+// effort の欄（帯の判定 `resolveEffortSelect` をそのまま再利用する。`docs/screen-design.md`
+// 13.6）。**帯のドロップダウンと同じ対応表（`modelEffortSupport`）から、既定のモデルの対応を
+// 引く**ので、帯といま出しているモデルが違っても既定のモデルの対応がそのまま出る。
+describe("設定の歯車（新しいセッションの既定の effort）", () => {
+  const OPUS_SUPPORT = {
+    model: "opus",
+    supportsEffort: true,
+    effortLevels: ["low", "medium", "high", "xhigh", "max"],
+  } as const
+  const HAIKU_SUPPORT = { model: "haiku", supportsEffort: false, effortLevels: [] } as const
+
+  it("対応表がまだ届いていないうちは選べず、title に理由が出る", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    const select = defaultSelect("effort")
+    expect(select.disabled).toBe(true)
+    expect(select.title.length).toBeGreaterThan(0)
+  })
+
+  it("対応表が届いていれば、選べる段だけを選択肢にして既定の effort を選択する", () => {
+    renderScreenNav({
+      sessionDefault: { model: "opus", effort: "high", permissionMode: "auto" },
+      modelEffortSupport: [OPUS_SUPPORT],
+    })
+    fireEvent.click(gear())
+
+    const select = defaultSelect("effort")
+    expect(select.disabled).toBe(false)
+    expect(select.value).toBe("high")
+    expect([...select.options].map((option) => option.value)).toEqual([
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ])
+  })
+
+  // haiku は実測で supportsEffort が無いモデル（docs/history/decision.md）。帯といま出している
+  // モデルが違っても、既定のモデル（haiku）の対応がそのまま出る。
+  it("既定のモデルが対応しないと対応表が言っていれば選べない", () => {
+    renderScreenNav({
+      model: "claude-opus-5",
+      sessionDefault: { model: "haiku", effort: "medium", permissionMode: "auto" },
+      modelEffortSupport: [OPUS_SUPPORT, HAIKU_SUPPORT],
+    })
+    fireEvent.click(gear())
+
+    expect(defaultSelect("effort").disabled).toBe(true)
+  })
+
+  it("effort を選ぶと、いまのモデル・許可モードと一緒に set-session-default を送る", () => {
+    const sent: unknown[] = []
+    renderScreenNav(
+      {
+        sessionDefault: { model: "opus", effort: "medium", permissionMode: "plan" },
+        modelEffortSupport: [OPUS_SUPPORT],
+      },
+      (command) => sent.push(command),
+    )
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("effort"), { target: { value: "xhigh" } })
+
+    expect(sent).toEqual([
+      { type: "set-session-default", model: "opus", effort: "xhigh", permissionMode: "plan" },
+    ])
   })
 })
 

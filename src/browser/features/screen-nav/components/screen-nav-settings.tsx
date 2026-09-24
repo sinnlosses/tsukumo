@@ -16,6 +16,7 @@ import { useId, type ReactElement } from "react"
 import { isSessionDefaultPermissionMode } from "../../../../shared/session-default.ts"
 import { Select } from "../../../components/select.tsx"
 import { REVEAL_SPEED_LABELS } from "../../../domain/reveal-speed.ts"
+import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
 import { VISIT_TOGGLE_LABELS } from "../domain/visit-toggle-label.ts"
@@ -110,6 +111,37 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               options={MODEL_OPTIONS}
               onChange={settings.sessionDefault.onChangeModel}
             />
+          </div>
+          <div className={styles["screen-nav-settings-row"]}>
+            <label htmlFor={`${fieldId}-default-effort`}>effort</label>
+            {settings.sessionDefault.effort.kind === "known" ? (
+              <Select
+                id={`${fieldId}-default-effort`}
+                ariaLabel="新しいセッションの既定の effort"
+                frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
+                className={styles["screen-nav-settings-select"] ?? ""}
+                value={settings.sessionDefault.effort.value}
+                disabled={false}
+                title={undefined}
+                options={settings.sessionDefault.effort.options.map((value) => ({
+                  value,
+                  label: effortLabel(value),
+                }))}
+                onChange={settings.sessionDefault.onChangeEffort}
+              />
+            ) : (
+              <Select
+                id={`${fieldId}-default-effort`}
+                ariaLabel="新しいセッションの既定の effort"
+                frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
+                className={styles["screen-nav-settings-select"] ?? ""}
+                value={EFFORT_PLACEHOLDER_VALUE}
+                disabled={true}
+                title={settings.sessionDefault.effort.reason}
+                options={[{ value: EFFORT_PLACEHOLDER_VALUE, label: "—" }]}
+                onChange={() => {}}
+              />
+            )}
           </div>
           <div className={styles["screen-nav-settings-row"]}>
             <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>

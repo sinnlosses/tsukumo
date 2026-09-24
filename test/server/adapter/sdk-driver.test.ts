@@ -13,7 +13,6 @@ import {
 import {
   buildQuerySeedOptions,
   chatSummaryHooks,
-  DEFAULT_EFFORT,
   stopHooks,
 } from "../../../src/server/adapter/sdk-driver.ts"
 import { createReportGate, REPORT_GATE_REASON } from "../../../src/server/core/report-tool.ts"
@@ -38,6 +37,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   diaryWriter: { pack: "tsukumo", name: "つくも" },
   permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode,
   model: BUILTIN_SESSION_DEFAULT.model,
+  effort: BUILTIN_SESSION_DEFAULT.effort,
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
   start: { kind: "new" },
   tag: "tsukumo-test",
@@ -48,27 +48,36 @@ const BASE_OPTIONS: SessionDriverOptions = {
 }
 
 describe("buildQuerySeedOptions", () => {
-  it("同梱の既定（opus）と既定の effort（medium）を渡す", () => {
+  it("同梱の既定（opus・medium）を渡す", () => {
     const seed = buildQuerySeedOptions(BASE_OPTIONS)
 
     expect(seed.model).toBe("opus")
-    expect(seed.effort).toBe(DEFAULT_EFFORT)
     expect(seed.effort).toBe("medium")
   })
 
   // 覚えた既定（`~/.tsukumo/state.json`）は配線層が読んで `SessionDriverOptions` に載せる
   // （`src/session-start.ts`）。ここで見るのは、その値がそのまま `query()` へ渡ること。
-  it("cwd・permissionMode・model は渡された SessionDriverOptions の値をそのまま使う", () => {
+  it("cwd・permissionMode・model・effort は渡された SessionDriverOptions の値をそのまま使う", () => {
     const seed = buildQuerySeedOptions({
       ...BASE_OPTIONS,
       cwd: "/tmp/tsukumo-other",
       permissionMode: "plan",
       model: "sonnet",
+      effort: "high",
     })
 
     expect(seed.cwd).toBe("/tmp/tsukumo-other")
     expect(seed.permissionMode).toBe("plan")
     expect(seed.model).toBe("sonnet")
+    expect(seed.effort).toBe("high")
+  })
+
+  // 対応しないモデル（haiku）でも渡すかどうかをここで出し分けない（`query()` 自身の判断に任せる）。
+  it("対応しないモデルの effort でも渡す（渡すかどうかをモデルごとに出し分けない）", () => {
+    const seed = buildQuerySeedOptions({ ...BASE_OPTIONS, model: "haiku", effort: "high" })
+
+    expect(seed.model).toBe("haiku")
+    expect(seed.effort).toBe("high")
   })
 
   it("続きから始めるセッションのIDを resume として渡す（新規のときは undefined）", () => {

@@ -2337,12 +2337,13 @@ describe("createSessionManager（新しいセッションの既定）", () => {
       type: "set-session-default",
       commandId: "c-1",
       model: "sonnet",
+      effort: "high",
       permissionMode: "plan",
     })
     await waitForBatch()
 
     expect(result).toEqual({ ok: true })
-    expect(remembered).toEqual([{ model: "sonnet", permissionMode: "plan" }])
+    expect(remembered).toEqual([{ model: "sonnet", effort: "high", permissionMode: "plan" }])
     expect(frames.at(-1)).toEqual({
       type: "events",
       events: [
@@ -2350,7 +2351,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
           at: 1_000,
           event: {
             kind: "session-default-changed",
-            sessionDefault: { model: "sonnet", permissionMode: "plan" },
+            sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" },
           },
         },
       ],

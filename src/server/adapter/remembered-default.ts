@@ -1,6 +1,6 @@
 // **次に起こすときの初期値**をホームの状態ファイル（`~/.tsukumo/state.json`）に覚える。
 // 覚えるのは3つ — 直前まで出していたキャラクターパックの名前、新しいセッションの既定
-// （モデル・許可モード）、歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6 の表）。
+// （モデル・effort・許可モード）、歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6 の表）。
 //
 // **状態ファイルに触るのはここだけ**（`docs/design.md` 5章）。**3つを1ファイルに置いてある
 // のは、書き込みがファイル丸ごとの置き換えだから** — 別々のモジュールから書くと、
@@ -20,7 +20,7 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { MODEL_ALIASES } from "../../shared/command.ts"
+import { EFFORT_LEVELS, MODEL_ALIASES } from "../../shared/command.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   SESSION_DEFAULT_PERMISSION_MODES,
@@ -42,6 +42,11 @@ const characterStateSchema = z.object({ character: z.string() })
 const sessionDefaultStateSchema = z.object({
   sessionDefault: z.object({
     model: z.enum(MODEL_ALIASES),
+    // **effort だけ optional**（`model` / `permissionMode` と違う扱い）。effort を足す前に
+    // 覚えた古い `state.json` にはこの欄が無いので、無くても `sessionDefault` 全体を読めた
+    // ことにし、欄の値だけ {@link readState} の出口で同梱の既定へ畳む（他の2つは今までどおり
+    // 1組——壊れている・知らない値なら3つとも同梱の既定へ倒れる）。
+    effort: z.enum(EFFORT_LEVELS).optional(),
     permissionMode: z.enum(SESSION_DEFAULT_PERMISSION_MODES),
   }),
 })
@@ -134,7 +139,15 @@ function readState(path: string): RememberedState {
   const visitEnabled = visitEnabledStateSchema.safeParse(parsed)
   return {
     character: character.success ? character.data.character : undefined,
-    sessionDefault: sessionDefault.success ? sessionDefault.data.sessionDefault : undefined,
+    sessionDefault: sessionDefault.success
+      ? {
+          model: sessionDefault.data.sessionDefault.model,
+          // effort の無い古い `state.json` は同梱の既定へ畳む（model / permissionMode は
+          // 読めた値をそのまま使う。冒頭の {@link sessionDefaultStateSchema} の注記）。
+          effort: sessionDefault.data.sessionDefault.effort ?? BUILTIN_SESSION_DEFAULT.effort,
+          permissionMode: sessionDefault.data.sessionDefault.permissionMode,
+        }
+      : undefined,
     visitEnabled: visitEnabled.success ? visitEnabled.data.visitEnabled : undefined,
   }
 }

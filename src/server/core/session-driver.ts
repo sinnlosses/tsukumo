@@ -6,11 +6,11 @@
 // （どちらが動いているかを知らない。docs/design.md 5章）。
 //
 // **境目の基準は「shared の語彙で書けるか / SDK の語彙を名乗るか」**。shared の語彙だけで
-// 書けるもの（契約の型）はここに、SDK の語彙を名乗るもの（`DEFAULT_EFFORT` の `EffortLevel`、
-// `query()` の options、`listSessions` / `getSessionMessages` を使う関数）は
+// 書けるもの（契約の型。`EffortLevel` 自体は `shared/command.ts` の語彙）はここに、SDK の語彙を
+// 名乗るもの（`query()` の options、`listSessions` / `getSessionMessages` を使う関数）は
 // `src/server/adapter/` の `sdk-` で始まるファイル（`sdk-driver.ts` / `sdk-session.ts` など）に置く。
 //
-// **既定のモデルと許可モードはここに無い**（`src/shared/session-default.ts` の
+// **既定のモデル・effort・許可モードはここに無い**（`src/shared/session-default.ts` の
 // `BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
 // **ブラウザも同じ畳み先を読む**ようになったため（`docs/screen-design.md` 13.6）。
 
@@ -280,6 +280,11 @@ export type SessionDriverOptions = {
   readonly permissionMode: PermissionMode
   /** このセッションを起こすモデル（**覚えた既定**。許可モードと同じ扱い）。 */
   readonly model: ModelAlias
+  /**
+   * このセッションを起こす effort（**覚えた既定**。モデル・許可モードと同じ扱い）。
+   * `adapter/sdk-driver.ts` の `buildQuerySeedOptions` がそのまま `query()` へ渡す。
+   */
+  readonly effort: EffortLevel
   /**
    * `systemPrompt` に足す文字列（人格と tsukumo 側の規約と雑談の記憶。組み立ては
    * `src/server/core/system-prompt.ts` の `takeSystemPromptAppend`）。**中身をこのファイルが

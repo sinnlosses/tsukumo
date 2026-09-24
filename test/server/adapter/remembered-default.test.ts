@@ -109,13 +109,14 @@ describe("writeRememberedCharacter", () => {
   })
 })
 
-// 新しいセッションの既定（モデル・許可モード。docs/screen-design.md 13.6）。**壊れた state.json でも
-// 起動を止めない**ので、読めないときは同梱の既定へ畳む。
+// 新しいセッションの既定（モデル・effort・許可モード。docs/screen-design.md 13.6）。**壊れた
+// state.json でも起動を止めない**ので、読めないときは同梱の既定へ畳む。
 describe("readRememberedSessionDefault", () => {
-  it("ファイルが無いときは同梱の既定（Opus・auto）", () => {
+  it("ファイルが無いときは同梱の既定（Opus・medium・auto）", () => {
     expect(readRememberedSessionDefault(statePath())).toEqual(BUILTIN_SESSION_DEFAULT)
     expect(readRememberedSessionDefault(statePath())).toEqual({
       model: "opus",
+      effort: "medium",
       permissionMode: "auto",
     })
   })
@@ -133,7 +134,9 @@ describe("readRememberedSessionDefault", () => {
   it("知らないモデル名のときは同梱の既定", () => {
     writeFileSync(
       statePath(),
-      JSON.stringify({ sessionDefault: { model: "no-such-model", permissionMode: "plan" } }),
+      JSON.stringify({
+        sessionDefault: { model: "no-such-model", effort: "high", permissionMode: "plan" },
+      }),
     )
     expect(readRememberedSessionDefault(statePath())).toEqual(BUILTIN_SESSION_DEFAULT)
   })
@@ -142,7 +145,7 @@ describe("readRememberedSessionDefault", () => {
     writeFileSync(
       statePath(),
       JSON.stringify({
-        sessionDefault: { model: "sonnet", permissionMode: "bypassPermissions" },
+        sessionDefault: { model: "sonnet", effort: "high", permissionMode: "bypassPermissions" },
       }),
     )
     expect(readRememberedSessionDefault(statePath())).toEqual(BUILTIN_SESSION_DEFAULT)
@@ -157,24 +160,73 @@ describe("readRememberedSessionDefault", () => {
     expect(readRememberedCharacter(statePath())).toBe("tsukumo")
     expect(readRememberedSessionDefault(statePath())).toEqual(BUILTIN_SESSION_DEFAULT)
   })
+
+  // **effort だけ、無い古い state.json でも他の2つを読める**（欄が無い＝ effort を足す前に
+  // 覚えたファイル）。model / permissionMode は今までどおり1組のまま——effort だけ optional
+  // にしてある（src/server/adapter/remembered-default.ts の sessionDefaultStateSchema）。
+  it("effort の無い古い state.json でも、モデル・許可モードは読めて effort だけ同梱の既定に落ちる", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({ sessionDefault: { model: "sonnet", permissionMode: "plan" } }),
+    )
+
+    expect(readRememberedSessionDefault(statePath())).toEqual({
+      model: "sonnet",
+      effort: "medium",
+      permissionMode: "plan",
+    })
+  })
+
+  it("知らない effort が書かれているときは3つとも同梱の既定に落ちる", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        sessionDefault: { model: "sonnet", effort: "no-such-effort", permissionMode: "plan" },
+      }),
+    )
+    expect(readRememberedSessionDefault(statePath())).toEqual(BUILTIN_SESSION_DEFAULT)
+  })
+
+  it("effort が書かれているときはその値を読める", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" },
+      }),
+    )
+
+    expect(readRememberedSessionDefault(statePath())).toEqual({
+      model: "sonnet",
+      effort: "high",
+      permissionMode: "plan",
+    })
+  })
 })
 
 describe("writeRememberedSessionDefault", () => {
   it("書いた値を読み返せる", () => {
-    writeRememberedSessionDefault({ model: "sonnet", permissionMode: "plan" }, statePath())
+    writeRememberedSessionDefault(
+      { model: "sonnet", effort: "high", permissionMode: "plan" },
+      statePath(),
+    )
 
     expect(readRememberedSessionDefault(statePath())).toEqual({
       model: "sonnet",
+      effort: "high",
       permissionMode: "plan",
     })
   })
 
   it("ディレクトリが無ければ作って書く", () => {
     const path = join(dir, "nested", "state.json")
-    writeRememberedSessionDefault({ model: "haiku", permissionMode: "default" }, path)
+    writeRememberedSessionDefault(
+      { model: "haiku", effort: "low", permissionMode: "default" },
+      path,
+    )
 
     expect(readRememberedSessionDefault(path)).toEqual({
       model: "haiku",
+      effort: "low",
       permissionMode: "default",
     })
   })
@@ -184,7 +236,10 @@ describe("writeRememberedSessionDefault", () => {
     mkdirSync(path)
 
     expect(() =>
-      writeRememberedSessionDefault({ model: "sonnet", permissionMode: "plan" }, path),
+      writeRememberedSessionDefault(
+        { model: "sonnet", effort: "high", permissionMode: "plan" },
+        path,
+      ),
     ).not.toThrow()
   })
 
@@ -192,21 +247,29 @@ describe("writeRememberedSessionDefault", () => {
   // （書き込みはファイル丸ごとの置き換え。src/server/adapter/remembered-default.ts）。
   it("既定を書いても覚えたキャラクターは残る", () => {
     writeRememberedCharacter("tsukumo", statePath())
-    writeRememberedSessionDefault({ model: "sonnet", permissionMode: "plan" }, statePath())
+    writeRememberedSessionDefault(
+      { model: "sonnet", effort: "high", permissionMode: "plan" },
+      statePath(),
+    )
 
     expect(readRememberedCharacter(statePath())).toBe("tsukumo")
     expect(readRememberedSessionDefault(statePath())).toEqual({
       model: "sonnet",
+      effort: "high",
       permissionMode: "plan",
     })
   })
 
   it("キャラクターを覚え直しても既定は残る", () => {
-    writeRememberedSessionDefault({ model: "sonnet", permissionMode: "plan" }, statePath())
+    writeRememberedSessionDefault(
+      { model: "sonnet", effort: "high", permissionMode: "plan" },
+      statePath(),
+    )
     writeRememberedCharacter("kagami", statePath())
 
     expect(readRememberedSessionDefault(statePath())).toEqual({
       model: "sonnet",
+      effort: "high",
       permissionMode: "plan",
     })
     expect(readRememberedCharacter(statePath())).toBe("kagami")
@@ -216,15 +279,23 @@ describe("writeRememberedSessionDefault", () => {
   // （置き場所の差し替えは `path` 引数1つで、読むのも書くのも同じ引数を通る）。
   it("別の置き場所の state.json とは混ざらない", () => {
     const otherPath = join(dir, "other-home", "state.json")
-    writeRememberedSessionDefault({ model: "sonnet", permissionMode: "plan" }, statePath())
-    writeRememberedSessionDefault({ model: "haiku", permissionMode: "acceptEdits" }, otherPath)
+    writeRememberedSessionDefault(
+      { model: "sonnet", effort: "high", permissionMode: "plan" },
+      statePath(),
+    )
+    writeRememberedSessionDefault(
+      { model: "haiku", effort: "low", permissionMode: "acceptEdits" },
+      otherPath,
+    )
 
     expect(readRememberedSessionDefault(statePath())).toEqual({
       model: "sonnet",
+      effort: "high",
       permissionMode: "plan",
     })
     expect(readRememberedSessionDefault(otherPath)).toEqual({
       model: "haiku",
+      effort: "low",
       permissionMode: "acceptEdits",
     })
   })
@@ -287,12 +358,16 @@ describe("writeRememberedVisitEnabled", () => {
   // （書き込みはファイル丸ごとの置き換え。src/server/adapter/remembered-default.ts）。
   it("訪問のオン・オフを書いても、覚えたキャラクターと既定は残る", () => {
     writeRememberedCharacter("tsukumo", statePath())
-    writeRememberedSessionDefault({ model: "sonnet", permissionMode: "plan" }, statePath())
+    writeRememberedSessionDefault(
+      { model: "sonnet", effort: "high", permissionMode: "plan" },
+      statePath(),
+    )
     writeRememberedVisitEnabled(false, statePath())
 
     expect(readRememberedCharacter(statePath())).toBe("tsukumo")
     expect(readRememberedSessionDefault(statePath())).toEqual({
       model: "sonnet",
+      effort: "high",
       permissionMode: "plan",
     })
     expect(readRememberedVisitEnabled(statePath())).toBe(false)
@@ -300,11 +375,15 @@ describe("writeRememberedVisitEnabled", () => {
 
   it("既定を書き直しても、覚えた訪問のオン・オフは残る", () => {
     writeRememberedVisitEnabled(false, statePath())
-    writeRememberedSessionDefault({ model: "haiku", permissionMode: "auto" }, statePath())
+    writeRememberedSessionDefault(
+      { model: "haiku", effort: "low", permissionMode: "auto" },
+      statePath(),
+    )
 
     expect(readRememberedVisitEnabled(statePath())).toBe(false)
     expect(readRememberedSessionDefault(statePath())).toEqual({
       model: "haiku",
+      effort: "low",
       permissionMode: "auto",
     })
   })
