@@ -86,5 +86,137 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
+  },
+  {
+    "id": "T-531",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "帯のモデルと許可モードの既定値を shared の既定から読む",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n`src/browser/features/screen-nav/domain/model-label.ts` の `MODEL_FALLBACK`（`\"opus\"`）と `permission-mode-label.ts` の `PERMISSION_MODE_FALLBACK`（`\"auto\"`）は値を直に書いていて、コメントは「`src/server/core/session-driver.ts` の `DEFAULT_MODEL` / `DEFAULT_PERMISSION_MODE` と同じ」と言う。しかしその定数はもう無く、既定の正典は `src/shared/session-default.ts` の `BUILTIN_SESSION_DEFAULT` になっている（browser から import してよい shared 層）。既定を変えても帯の表示だけが古い値のまま残る。\n\n同じ2ファイルの `modelLabel` / `permissionModeLabel` は export されているが、定義以外から呼ばれていない（帯は `MODEL_LABELS` / `PERMISSION_MODE_LABELS` を直に map している）。\n\n## やること\n\n1. 2つの FALLBACK 定数とそのコメントを消し、`BUILTIN_SESSION_DEFAULT.model` / `.permissionMode` を使う\n2. 着手時に `grep -rn \"modelLabel\\b\\|permissionModeLabel\\b\" src test scripts` で参照が定義だけなのを確かめ直し、2つの関数と、それだけを守るテストがあれば消す\n\n## 完了条件\n\n- `grep -rn \"MODEL_FALLBACK\\|PERMISSION_MODE_FALLBACK\\|DEFAULT_MODEL\\b\\|DEFAULT_PERMISSION_MODE\\b\" src` が0件\n- `modelLabel` / `permissionModeLabel` の定義が無い（着手時の grep で呼び手が見つかったら消さず、その場所を `evidence` に書く）\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-532",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "character-changed の畳み込みで CharacterInfo を手で写すのをやめる",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n`src/shared/session-state.ts` の `foldSessionEvent` の `case \"character-changed\"` は、`CharacterInfo`（`src/shared/character.ts`）の13項目（`pack` `name` `accent` … `editable`）を1つずつ手で写している。イベントの型（`src/shared/session-event.ts`）は `{ kind: \"character-changed\" } & CharacterInfo & { packs }` で `CharacterInfo` をそのまま持つので、`CharacterInfo` に項目を足しても型エラーにならず、畳み込みから黙って抜け落ちる（`CharacterInfo` はこれまで何度も項目が増えてきた）。\n\n## やること\n\n1. `kind` と `packs` を分割代入で外し、残りを `character` にそのまま入れる形にする（`const { kind, packs, ...character } = event` のような形。型を迂回するキャストは書かない）\n2. 残りがちょうど `CharacterInfo` になっていることを型で確かめる（`satisfies CharacterInfo` など）\n\n## 完了条件\n\n- `case \"character-changed\"` の中に `CharacterInfo` の項目名が1つずつ並んでいない\n- `CharacterInfo` に仮の項目を1つ足すと、畳み込みを直さなくても `state.character` に届く（`evidence` に確かめ方を書く。仮の項目は戻す）\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-533",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "キャラ編集の画像の差し替え・消去の4つの枝を1つにまとめる",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n`src/server/adapter/character-edit.ts` の `applyEdit` で、`set-portrait` と `set-background` の枝が「画像をほどく → ファイル名を決める → 上限を確かめる（`withinImageFileLimit`）→ 前のファイル名を控える → 書き込む → 定義を書き換える → 参照されなくなった画像を消す（`removeUnreferencedImage`）」を同じ順で書き写している。`clear-portrait` と `clear-background` も同じ3行の写し。画像の扱いを変えるたびに4箇所を揃える必要がある。\n\nまた、読めなければ `undefined` を返す `readOptionalFile` が `character-edit.ts` と `src/server/adapter/character-pack.ts` に同じ中身で1つずつある。\n\n## やること\n\n1. 立ち絵と背景で違うもの（画像のほどき方・ファイル名・定義の読み書き）だけを受け取る関数を1つ作り、set の2枝と clear の2枝をそれで書く\n2. `readOptionalFile` を `character-pack.ts` の側から export し、`character-edit.ts` はそれを使う（`character-edit.ts` はすでに `character-pack.ts` から import している）\n\n## 完了条件\n\n- `applyEdit` の set の枝と clear の枝が、それぞれ共通の関数を1回呼ぶだけになっている\n- `grep -rn \"function readOptionalFile\" src` が1件\n- 立ち絵・背景の差し替えと消去の既存テストが変更なしで通る（直したなら理由を `evidence` に書く）\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-534",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "画面の一覧を1つの表にまとめ、足すときの登録を1箇所にする",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n画面（`conversation` / `character` / `token-usage` / `achievement`）を1枚足すたびに、次の4箇所を揃える必要がある。1つ抜けると「hash には乗るがメニューに出ない」「メニューにはあるが描かれない」が黙って起きる。\n\n- `src/browser/stores/location-hash.ts` の `SCREENS`\n- 同じファイルの画面名の表（`achievement: \"achievement\"` などが並ぶもの）\n- `src/browser/features/screen-nav/hooks/use-screen-nav.ts` の帯のメニューの配列（`{ screen, label }`）\n- `src/browser/main.tsx` の画面部品の import と `screen === \"...\" ? <X /> : null` の分岐\n\n着手時に `grep -rn '\"achievement\"' src/browser` で、ほかに画面の一覧を持つ場所が無いか取り直す。\n\n## 解くべき論点\n\n- 表を置く場所。`stores/` は部品（React）を知らないので、画面の名前とラベルの表（`stores/` か `domain/`）と、名前から部品を引く表（`main.tsx` の側）の2つに分けてもよい。そのときも「名前の一覧」は1つにし、部品の表は `Record<Screen, ...>` で抜けを型エラーにする\n\n## やること\n\n1. 画面の名前・ラベルの一覧を1つにし、`SCREENS`・帯のメニュー・`main.tsx` の分岐をそこから導く\n2. 部品の表は `satisfies Record<Screen, ...>` などで、画面を足したのに部品を登録し忘れたら型エラーになるようにする\n\n## 完了条件\n\n- 画面を1つ足すときに触る場所が「名前とラベルの一覧」と「部品の表」の2つだけになり、部品の登録漏れが `bun run typecheck` で落ちる（`evidence` に仮の画面で確かめた結果を書き、仮の画面は戻す）\n- 帯のメニューの並び順と表示名が変わっていない\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-535",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "「文字列なら返す」の6つの写しを shared の1関数に寄せる",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n`typeof value === \"string\" ? value : undefined` だけの小さな関数が、層をまたいで別名で6つある（2026-09-24 時点: `src/server/core/sdk-message.ts`、`src/server/adapter/claude-account.ts`、`src/shared/task-summary.ts`（`optionalStringOf`）、`src/shared/character-definition.ts`、`src/browser/features/main-view/markdown/markdown.tsx`、`src/browser/lib/tool-summary.ts`）。着手時に次で取り直す:\n\n```bash\ngrep -rn 'typeof value === \"string\" ? value : undefined' src scripts\n```\n\n## 解くべき論点\n\n- 置き場所とファイル名。`src/shared/lib/byte-length.ts` の前例（複数箇所の物差しを1つに揃える）にならい、`src/shared/` の下で概念を名乗る単数形のファイルにする（`helpers.ts` / `utils.ts` のような置き場所の名前にしない。`CLAUDE.md` 原則5）。数値や真偽値の同じ形の関数が近くにあれば一緒に置くかも決める\n\n## やること\n\n1. `src/shared/` に関数を1つ置き、見つかった写しをすべてそれに置き換える\n2. 置き換えた先の関数名がファイルごとに違っていたら揃える\n\n## 完了条件\n\n- 上の grep が、新しく置いた1箇所だけを返す\n- `test/architecture.test.ts` が通る（`core → adapter` などの依存の向きを破っていない）\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-536",
+    "difficulty": "haiku",
+    "loopable": "Y",
+    "dependencies": ["T-535"],
+    "summary": "字句の同じ重複4組を1つずつに減らす",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n中身が字句まで同じ関数・処理が4組ある。どれも片方だけ直すと挙動が食い違う。\n\n- `clamp`: `src/browser/features/main-view/reveal/paint.ts` と `band.ts`\n- `fetchTokenUsageSummary`: `src/browser/features/token-usage/hooks/use-token-usage.ts` と `use-usage-review.ts`（後者のコメントも「同じ経路」と言っている）\n- `run()`（`execFileSync` の失敗を空文字にする）: `scripts/lib/port-listener.ts` と `scripts/open-room-grid.ts`（後者はすでに前者から `findListener` などを import している）\n- `src/server/adapter/claude-account.ts` が `JSON.parse(readFileSync(...))` を try/catch で手書きしている。同じことをする `src/server/adapter/lib/json-file.ts` の `readJsonFile` がある\n\nT-535 が `claude-account.ts` の同じあたりを触るので、その後に置く。\n\n## やること\n\n1. `clamp` は `reveal/` の中の1つのファイルに置き、両方から import する（置き場所の名前のファイルは作らない。`CLAUDE.md` 原則5。既存のファイルに同居させてもよい）\n2. `fetchTokenUsageSummary` は片方から export してもう片方が import する\n3. `run()` は `scripts/lib/port-listener.ts` から export して `open-room-grid.ts` が import する\n4. `claude-account.ts` は `readJsonFile` を呼び、戻り値の検証はいまの形のまま続ける\n\n## 完了条件\n\n- `grep -rn \"function clamp\\|function fetchTokenUsageSummary\" src` がそれぞれ1件、`grep -n \"function run(\" scripts/open-room-grid.ts` が0件\n- `grep -n \"JSON.parse\" src/server/adapter/claude-account.ts` が0件\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-537",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "repository-file の git 呼び出しを runGit に寄せる",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n`src/server/adapter/repository-file.ts` の `listRepositoryFiles`（入力欄の `@` 補完。`git ls-files -z`）は、`node:child_process` の `execFile` を自前で呼び、上限の定数 `LIST_TIMEOUT_MS`（5000）と `MAX_OUTPUT_BYTES`（16MiB）も自前で持っている。`src/server/adapter/git.ts` の `runGit` は同じ値（`GIT_TIMEOUT_MS` / `MAX_OUTPUT_BYTES`）で同じ呼び出しをし、失敗を `failed` / `timed-out` で返す。git を起こす場所が2つあるので、上限の方針を変えるときに2箇所を合わせる必要がある。\n\n`test/architecture.test.ts`「子プロセスを起こす箇所」は `node:child_process` を import してよいファイルを `orca-host.ts`・`bundle.ts`・`repository-file.ts`・`git.ts` の4つに絞っている。`docs/architecture.md` の表と `docs/design.md` のディレクトリ図は `repository-file.ts` を「`git ls-files` を起こす唯一の場所」と書いている。\n\n## やること\n\n1. `listRepositoryFiles` を `runGit(cwd, [\"ls-files\", \"-z\"])` で書き、`output` 以外は空を返す。自前の上限の定数と `node:child_process` の import を消す\n2. `test/architecture.test.ts` の許可から `repository-file.ts` を外し、テスト名と上のコメントの「4つの境界」を直す\n3. `docs/architecture.md` と `docs/design.md` の `repository-file.ts` / `git.ts` の説明を直す（`git.ts` が git を起こす唯一の口になる）\n\n## 完了条件\n\n- `grep -rn \"node:child_process\" src/server/adapter/repository-file.ts` が0件で、`test/architecture.test.ts` の許可が3ファイルになっている\n- `repository-file.ts` の既存テストが通る（失敗時に空を返す振る舞いが変わっていない）\n- `docs/` の節の数が編集の前後で変わっていない（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-538",
+    "difficulty": "haiku",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "成果の集計で、互いに依存しない git 呼び出しを同時に走らせる",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n`src/server/adapter/main-history.ts` の成果の集計（`GET /achievement` が呼ぶ）は、今日と昨日の切り口（`cutoffCommitBefore` を2回）と、今日と昨日のタスクの読み取り（`readTaskSnapshotSource` を2回）を、それぞれ `await` で1つずつ順に待っている。どちらの組も片方の結果をもう片方に渡していないので、同時に走らせてよい。成果の画面は今日を見ているあいだ60秒ごとに取り直す（`src/browser/features/achievement/hooks/use-achievement.ts`）。\n\n## やること\n\n1. 2組をそれぞれ `Promise.all` にする。`unavailable` の判定と返す値は変えない\n\n## 完了条件\n\n- 2組の呼び出しがそれぞれ `Promise.all` の中にある\n- `main-history.ts` の既存テストが変更なしで通る\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-539",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "テストのデバウンス待ちと1拍待ちを、条件で進む待ちにする",
+    "task": "## 背景\n\n2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果の1件（`docs/history/direction.md` の 2026-09-24「改修コストを下げる直し9件」）。\n\n`bun run test` は 21.3秒（2026-09-24 実測、172ファイル）。テストの中の固定時間の待ちは3種類ある。\n\n| 種類 | 例 | 何を待っているか | 扱い |\n| --- | --- | --- | --- |\n| デバウンスの待ち | `test/browser/features/character-screen/use-character-edit.test.tsx` の `setTimeout(resolve, 250)`、`character-edit.test.tsx` の `waitForDebounce` | 差し色の送信が 200ms（`src/browser/features/character-screen/hooks/use-character-edit.ts` の `ACCENT_DEBOUNCE_MS`）まとまり終えるまで | 置き換える（計約1.2秒） |\n| 1拍の待ち | `character-edit.test.tsx` などの `setTimeout(resolve, 20)` | `FileReader` の読み込みが終わって dispatch されるまで | 置き換える（縮むのは数十msだが、遅いマシンで20msに間に合わず落ちることが無くなる） |\n| 何も起きないことの確認 | `test/server/adapter/task-summary.test.ts` の `sleep(QUIET_PERIOD_MS)` | 変化が無いときに知らせが来ないこと | **残す**（待たないと確かめられない） |\n\n着手時に対象を取り直す:\n\n```bash\ngrep -rnE \"setTimeout\\(r(esolve)?, *[0-9A-Z_]+\\)\" test\n```\n\n## 決まっていること（蒸し返さない）\n\n- 置き換えるのはデバウンスの待ちと1拍の待ちだけ。「何も起きないこと」の待ちは残す（2026-09-24 に利用者が選んだ）\n- `src/` 側は変えない（待ち時間を注入できる形にするなどはしない）\n\n## 解くべき論点\n\n- `bun:test` の偽のタイマーが React の `act` と一緒に効くか（リポジトリに使った前例は無い）。効かなければ、条件が満たされるまで短い間隔で見に行く待ち方に揃える。どちらにするかを最初に確かめて決める\n\n## やること\n\n1. 変える前の `bun run test` の所要時間を3回測る\n2. 上の論点を小さく試して、待ち方を決める\n3. デバウンスの待ちと1拍の待ちを置き換える。条件で待つ関数を複数のテストファイルが使うなら `test/` の下の1か所に置く\n4. 変えたあとの所要時間を3回測る。**縮みが1秒未満なら変更を捨て、測った数を `evidence` に書いて閉じる**\n\n## 完了条件\n\n- 変える前と後の所要時間（各3回）が `evidence` にある\n- 上の grep に残っているのが「何も起きないこと」の待ちだけで、残した理由がその場のコメントか `evidence` にある\n- `bun run check` が通る\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-540",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "イベントを足すタスクには、それを起こす経路を列挙させる",
+    "task": "## 背景\n\n2026-09-24 の振り返り（T-448, T-475, 修正コミット 7b06eec3・1cdf60fd）から、利用者の承認を得て登録した。\n\nT-448 は続きのターン（ターンの外の `init`）を「背景のタスクが終わった知らせ」の1経路で、委譲1回につき1回起きると見て、吹き出しを空にする仕様を書いた（`docs/screen-design.md` 13.9）。一方で T-157 以来、`src/server/core/speech-cadence.ts` は委譲中に `SendMessage` の合図を送らせていて、実際には委譲1回で3回（合図2通と完了の返事）起きた。その結果、中間レポートが消えては出直し、吹き出しが「（まだ発話がありません）」に戻った。\n\n## やること\n\n1. `docs/workflow.md`「タスクを書くとき・受け入れるとき」に、「SDK のイベントを足す・扱いを変えるタスクは、そのイベントを起こす経路を本文に列挙し、1回のやり取りで何回起きうるかを書く」という項を1つ足す。上の事故を根拠として短く添える\n\n## 完了条件\n\n- `docs/workflow.md` の該当の節に項が1つ増えている\n- `docs/workflow.md` の節の数が編集の前後で変わっていない（`CLAUDE.md`「ドキュメントを編集するときの罠」）\n- `bun run check` が通る\n\n## 注意\n\n- T-528 が `docs/workflow.md` を tsukumo 固有の事情だけに縮める予定。この項は tsukumo 固有の事情なので、残す側に入る書き方にする\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-541",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "続きのターンを含む並びを1件ずつ畳み、出た本文が消えないことを確かめる",
+    "task": "## 背景\n\n2026-09-24 の振り返り（T-448, T-475）から、利用者の承認を得て登録した。\n\n`docs/display.md` 4.2 は「一度出した本文は二度と消えない」と言うが、それをイベント列で守るテストが無い。`mainViewTurns` のテストは `turnUnsettled` に真偽値を直に渡すだけで、イベント列から畳むテストは無かった。2026-09-24 の修正（7b06eec3・1cdf60fd）で `test/shared/session-state.test.ts` の期待値は「続きのターンは吹き出しと表情を持ち越す」に直り、`test/browser/stores/main-view-turn.test.ts` にも3件足されたが、どれも畳み終えた最後の姿しか見ていない。\n\n## やること\n\n1. 続きのターンを2回以上含む現実の並び（依頼 → 中間 `report` → 合図（`turn-resumed` → `speech` → ターンの終わり）→ 合図 → 完了の返事 → 最終 `report`）を、`foldSessionEvent` で1件ずつ畳むテストを足す\n2. 1件畳むごとに、「それまでに出ていた `report` の本文がメインビューから消えていない」「吹き出しが空に戻っていない」を確かめる。メインビューの側は `mainViewTurns` など画面が実際に使う関数を通して見る\n\n## 完了条件\n\n- 足したテストが通る\n- 7b06eec3 と 1cdf60fd の直しをそれぞれ一時的に戻すと、足したテストが落ちる（`evidence` に確かめた結果を書く。戻したものは元に戻す）\n- `bun run check` が通る\n\n## 注意\n\n- イベント列は作り物で書く。実際の会話をフィクスチャに使わない（`docs/coding-standards.md`「会話内容の扱い」）\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
+  },
+  {
+    "id": "T-542",
+    "difficulty": "sonnet",
+    "loopable": "Y",
+    "dependencies": [],
+    "summary": "疑似セッションに、合図つきの委譲の場面を足す",
+    "task": "## 背景\n\n2026-09-24 の振り返り（T-448）から、利用者の承認を得て登録した。\n\n`test/fixture/fake-session.json` の `background-task` の場面は、続きのターンが1回だけで `report` も無い。吹き出しが空になっても0.4秒後に次のセリフで埋まるので、`docs/architecture.md`「手で確かめること」の目視でも、続きのターンで中間レポートが消える・吹き出しが空に戻る不具合（2026-09-24 の 7b06eec3・1cdf60fd で直したもの）が見えなかった。\n\n## やること\n\n1. `test/fixture/fake-session.json` に、中間 `report` → 合図2通（それぞれ `turn-resumed` → `speech` → ターンの終わり）→ 完了の返事 → 最終 `report` の場面を足す\n2. `docs/architecture.md`「手で確かめること」から、この場面をどう呼んで何を見れば合格かを引けるようにする（`scripts/capture-catalog.ts` の場面の一覧に載せる必要があれば載せる）\n\n## 完了条件\n\n- 疑似セッションでその場面を流すと、合図のあいだも中間 `report` がメインビューに出たままで、吹き出しが「（まだ発話がありません）」に戻らない。撮った画面か DOM を測った結果を `evidence` に書く\n- `docs/` の節の数が編集の前後で変わっていない\n- `bun run check` が通る\n\n## 注意\n\n- 場面のセリフ・本文は作り物で書く。実際の会話を写さない（`docs/coding-standards.md`「会話内容の扱い」）\n- 目視で tsukumo を起こすときは `TSUKUMO_VIEW_PORT` と `TSUKUMO_HOME` を分ける（`CLAUDE.md`「タスク運用」）\n",
+    "status": "todo",
+    "passes": false,
+    "evidence": ""
   }
 ]
