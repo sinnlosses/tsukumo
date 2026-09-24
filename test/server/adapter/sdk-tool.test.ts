@@ -40,13 +40,51 @@ describe("tsukumoServer", () => {
 
   it("雑談のときは report も見直しの2つも載らない（雑談は本文を書かない）", async () => {
     const names = await listedToolNames(
-      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake()),
+      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}),
     )
 
     expect(names).not.toContain("report")
     expect(names).not.toContain("usage_review_result")
     expect(names).toContain("speak")
     expect(names).toContain("remember")
+  })
+})
+
+describe("report の title", () => {
+  it("通った report の title を渡す", async () => {
+    const titles: string[] = []
+
+    const reply = await callTool(workServer([], [], titles), "report", {
+      conclusion: "架空の結論",
+      title: "架空の題",
+    })
+
+    expect(reply).toEqual({ text: "ok", isError: false })
+    expect(titles).toEqual(["架空の題"])
+  })
+
+  it("title を渡さなくても report は通る", async () => {
+    const titles: string[] = []
+
+    const reply = await callTool(workServer([], [], titles), "report", {
+      conclusion: "架空の結論",
+    })
+
+    expect(reply).toEqual({ text: "ok", isError: false })
+    expect(titles).toEqual([])
+  })
+
+  it("規約違反で差し戻された report の title は渡さない", async () => {
+    const titles: string[] = []
+
+    // conclusion が3文以上（規約違反「冒頭の1〜2文で結論」）だと差し戻される。
+    const reply = await callTool(workServer([], [], titles), "report", {
+      conclusion: "架空の一文目。架空の二文目。架空の三文目。",
+      title: "架空の題",
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(titles).toEqual([])
   })
 })
 
@@ -148,10 +186,14 @@ const VALID_FINDINGS = {
   proposals: [VALID_PROPOSAL],
 } as const
 
-/** 仕事のサーバ。見直しのイベントは `events` に積み、見送りの一覧は `dismissed` を返す。 */
+/**
+ * 仕事のサーバ。見直しのイベントは `events` に積み、見送りの一覧は `dismissed` を返す。
+ * `report` が受け取った題は `titles` に積む。
+ */
 function workServer(
   events: SessionEvent[] = [],
   dismissed: readonly string[] = [],
+  titles: string[] = [],
 ): McpSdkServerConfigWithInstance {
   return tsukumoServer(
     EXPRESSIONS,
@@ -163,6 +205,9 @@ function workServer(
         events.push(event)
       },
     ),
+    (title) => {
+      titles.push(title)
+    },
   )
 }
 

@@ -8,6 +8,7 @@
 // ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻し、`report` で渡し直させる。
 // `report` の呼び出しそのものの検査と差し戻しは `report-review.ts`（こちらは描く前の検査の段）。
 
+import { MAX_SESSION_HEADING_LENGTH } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 
 /**
@@ -17,6 +18,15 @@ import { type SessionEvent } from "../../shared/session-event.ts"
 export const REPORT_TOOL_DESCRIPTION =
   "ターンのレポートをメインビューに出す。conclusion → body → favor の順に描かれる。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。"
+
+/**
+ * `report` の任意の `title` 引数の説明。**セッション一覧の見出しにする題を付けさせる条はここだけ**
+ * （人格ではなく tsukumo 側の条に書く）。利用者の `/rename` を上書きしない判断はモデルに任せず、
+ * `session-title.ts` が持つ。
+ */
+export const REPORT_TITLE_DESCRIPTION =
+  `セッション一覧の見出しにする短い題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。` +
+  "話の中心がはっきりした最初と、大きく変わったときだけ渡す。変える必要が無ければ省く。"
 
 /**
  * `Stop` の関所が差し戻すときにモデルへ返す理由。**固定の文面だけ**で、モデルが書いた本文は

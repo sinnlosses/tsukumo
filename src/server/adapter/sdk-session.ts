@@ -3,7 +3,13 @@
 // 履歴を読み直す・ターンの終わりに印を付け直す（docs/requirements.md 4.8「セッションの復元」）。
 // 選ぶ計算と履歴への変換は src/server/core/session-restore.ts が持ち、ここは SDK を呼ぶだけ。
 
-import { getSessionMessages, listSessions, tagSession } from "@anthropic-ai/claude-agent-sdk"
+import {
+  getSessionInfo,
+  getSessionMessages,
+  listSessions,
+  renameSession,
+  tagSession,
+} from "@anthropic-ai/claude-agent-sdk"
 
 import {
   type ExpressionChoice,
@@ -17,6 +23,11 @@ import {
   selectSessionToResume,
   toRestoredEvents,
 } from "../core/session-restore.ts"
+import {
+  decideSessionTitle,
+  INITIAL_SESSION_TITLE_STATE,
+  type SessionTitleState,
+} from "../core/session-title.ts"
 
 /**
  * ターンが終わってから印（`tagSession`）を付け直すまでの待ち。**本体もターンの終わりに
@@ -125,5 +136,54 @@ async function markSession(sessionId: string, options: SessionDriverOptions): Pr
     await tagSession(sessionId, options.tag, { dir: options.cwd })
   } catch {
     // 印が付かないだけなので、何も流さずに諦める。
+  }
+}
+
+/**
+ * Claude が `report` で付けた題を書く役。**`renameSession` を呼ぶのは
+ * ここだけ**（原則3）。書くかどうかの判断は {@link decideSessionTitle}（core）が持ち、ここは
+ * SDK を呼ぶだけ。
+ */
+export type SessionTitleWriter = {
+  /**
+   * ターンの終わりに、書けそうなら書く予約をする。{@link SESSION_TAG_DELAY_MS} だけ遅らせるのは
+   * {@link scheduleMarkSession} と同じ理由——本体がターンの終わりに自分の要約を書くのと
+   * 重なると、直後に書いた値が消える実測があるため。
+   */
+  readonly schedule: (sessionId: string, candidate: string, options: SessionDriverOptions) => void
+}
+
+/**
+ * {@link SessionTitleWriter} を1つ作る。**セッション1つに1つ**——「tsukumo が最後に書いた題」
+ * （{@link SessionTitleState}）をこの中に閉じ込め、呼び出し側には見せない
+ * （`docs/coding-standards.md`「引数として渡した入れ物が呼び出し先で書き変わる契約にしない」を、
+ * 可変な入れ物を渡し合う形ではなく `createReportGate` と同じ「工場関数が閉じ込める」形で守る）。
+ */
+export function createSessionTitleWriter(): SessionTitleWriter {
+  let state: SessionTitleState = INITIAL_SESSION_TITLE_STATE
+
+  const writeTitle = async (
+    sessionId: string,
+    candidate: string,
+    options: SessionDriverOptions,
+  ): Promise<void> => {
+    try {
+      const info = await getSessionInfo(sessionId, { dir: options.cwd })
+      const action = decideSessionTitle(state, candidate, info?.customTitle)
+      if (action.kind === "write") {
+        await renameSession(sessionId, action.title, { dir: options.cwd })
+        state = { lastWritten: action.title }
+      }
+    } catch {
+      // 題が書けなかっただけなので、何も流さずに諦める。
+    }
+  }
+
+  return {
+    schedule(sessionId, candidate, options) {
+      setTimeout(() => {
+        void writeTitle(sessionId, candidate, options)
+      }, SESSION_TAG_DELAY_MS).unref()
+    },
   }
 }

@@ -19,6 +19,14 @@
 export const MAX_SESSION_CHOICES = 10
 
 /**
+ * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**ので、表示側
+ * （`src/browser/features/sidebar/session-switch.tsx` の `truncateHeading`）はこれで切って
+ * `…` を足す。**tsukumo が題を付けるとき（`src/server/core/session-title.ts`）もこれに収まる
+ * 長さで切り詰める**——同じ値を指すことで、モデルに指示する長さと表示の切り詰めがずれない。
+ */
+export const MAX_SESSION_HEADING_LENGTH = 24
+
+/**
  * 切り替え先のセッション1件。組み立てるのは `src/server/core/session-restore.ts` の
  * `listMarkedSessions`（claude 自身の transcript の一覧から、印を読んで作る）。
  */

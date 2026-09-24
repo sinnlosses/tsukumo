@@ -21,7 +21,7 @@ import {
 } from "../../shared/usage-review.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
 import { type ReportReview } from "../core/report-review.ts"
-import { REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
+import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
 import {
   type ChatKeep,
@@ -131,6 +131,7 @@ export function tsukumoServer(
   mode: SessionMode,
   reportReview: ReportReview,
   usageReview: UsageReviewIntake,
+  onReportTitle: (title: string) => void,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -147,7 +148,9 @@ export function tsukumoServer(
         },
         async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
       ),
-      ...(mode.kind === "work" ? [reportTool(reportReview), ...usageReviewTools(usageReview)] : []),
+      ...(mode.kind === "work"
+        ? [reportTool(reportReview, onReportTitle), ...usageReviewTools(usageReview)]
+        : []),
       ...(mode.kind === "chat"
         ? [
             rememberTool(mode.personaMemory),
@@ -167,8 +170,13 @@ export function tsukumoServer(
  * 直し方だけを `isError` 付きで返す（画面の事情は載せない。docs/display.md 4.2）。描くか捨てるかは
  * この `isError` を見て決まる。レポートにする引数は、ここではなく `assistant` メッセージの変換が
  * 取り出す（src/server/core/sdk-message.ts）。
+ *
+ * **`title` は差し戻されなかったときだけ {@link onReportTitle} へ渡す**——差し戻された呼び出しの
+ * 題を渡すと、規約違反を書いたついでの題が残ってしまう。実際に書くかどうかの判断（利用者の
+ * `/rename` を上書きしないなど）は `onReportTitle` の先（`src/server/core/session-title.ts` /
+ * `src/server/adapter/sdk-session.ts`）が持つので、ここは渡すだけ。
  */
-function reportTool(review: ReportReview) {
+function reportTool(review: ReportReview, onReportTitle: (title: string) => void) {
   return tool(
     REPORT_TOOL_NAME,
     REPORT_TOOL_DESCRIPTION,
@@ -176,12 +184,17 @@ function reportTool(review: ReportReview) {
       conclusion: z.string().describe("結論。レポートの冒頭の1〜2文"),
       body: z.string().optional().describe("結論のあとの根拠・比較・手順（記法は規約のまま）"),
       favor: z.string().optional().describe("利用者へのお願い（判断・作業・情報）。無ければ省く"),
+      title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
     },
-    async ({ conclusion, body, favor }) => {
+    async ({ conclusion, body, favor, title }) => {
       const verdict = review.judge({ conclusion, body: body ?? "", favor: favor ?? "" })
-      return verdict.kind === "rejected"
-        ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
-        : { content: [{ type: "text" as const, text: "ok" }] }
+      if (verdict.kind === "rejected") {
+        return { content: [{ type: "text" as const, text: verdict.text }], isError: true }
+      }
+      if (title !== undefined) {
+        onReportTitle(title)
+      }
+      return { content: [{ type: "text" as const, text: "ok" }] }
     },
   )
 }

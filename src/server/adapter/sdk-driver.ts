@@ -51,11 +51,16 @@ import {
   type SessionDriverOptions,
   type SessionMode,
 } from "../core/session-driver.ts"
+import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { createUsageReviewIntake } from "../core/usage-review-tool.ts"
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
-import { scheduleMarkSession } from "./sdk-session.ts"
+import {
+  createSessionTitleWriter,
+  scheduleMarkSession,
+  type SessionTitleWriter,
+} from "./sdk-session.ts"
 import { tsukumoServer } from "./sdk-tool.ts"
 
 /**
@@ -102,6 +107,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const reportGate = createReportGate()
   const reportReview = createReportReview()
   const usageReview = createUsageReviewIntake(options.dismissedUsageProposalKeys, options.onEvent)
+  const titleIntake = createSessionTitleIntake()
+  const titleWriter = createSessionTitleWriter()
 
   const session = query({
     prompt: input.stream(),
@@ -117,6 +124,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.mode,
           reportReview,
           usageReview,
+          titleIntake.note,
         ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
@@ -125,7 +133,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   })
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options, reportGate, reportReview)
+  void relayMessages(session, options, reportGate, reportReview, titleIntake, titleWriter)
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
 
@@ -315,12 +323,17 @@ export function reportGateHooks(
  * メインのイベントは先に `report` の差し戻し（`reportReview`）を通す——`report` を同じ呼び出しの
  * 結果まで預かり、差し戻した呼び出しを描かない（`src/server/core/report-review.ts`）。`report`
  * ツールが載っていなければ `report` イベントは来ないので、切り替えないときはそのまま流れる。
+ *
+ * `titleIntake` が覚えている題（`report` の `title` 引数。`src/server/adapter/sdk-tool.ts`）も
+ * ターンの終わりに取り出し、`titleWriter` に書く予約をする。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
   options: SessionDriverOptions,
   reportGate: ReportGate,
   reportReview: ReportReview,
+  titleIntake: SessionTitleIntake,
+  titleWriter: SessionTitleWriter,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに
   // 印を付け直す（{@link scheduleMarkSession}）。
@@ -349,6 +362,10 @@ async function relayMessages(
           }
           if (sessionId !== undefined) {
             scheduleMarkSession(sessionId, options)
+            const title = titleIntake.take()
+            if (title !== undefined) {
+              titleWriter.schedule(sessionId, title, options)
+            }
           }
         }
         if (event.kind === "conversation-cleared") {

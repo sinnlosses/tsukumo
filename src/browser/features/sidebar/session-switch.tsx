@@ -16,7 +16,7 @@
 import { type ReactElement } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { type SessionChoice } from "../../../shared/session-choice.ts"
+import { MAX_SESSION_HEADING_LENGTH, type SessionChoice } from "../../../shared/session-choice.ts"
 import { Select } from "../../components/select.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../stores/session.tsx"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../utils/clock.ts"
@@ -109,13 +109,6 @@ function sessionOptions(
 const NO_HEADING_LABEL = "（題なし）"
 
 /**
- * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**（`docs/screen-design.md` 13.9）ので、
- * 文字数で切って `…` を足す。**見出しだけを切り、時刻は切らない**——同じ部屋の行を見分けるのは
- * 時刻なので（下の {@link sessionLabel}）、見出しがどれだけ長くても時刻は必ず残る。
- */
-const MAX_HEADING_LENGTH = 24
-
-/**
  * 1行の見え方。**見出し（SDK の `summary`）と最終更新時刻の両方**を出す（`docs/requirements.md`
  * 4.8）——一覧はいまの部屋のものだけなので部屋の名前では見分けが付かず、`/clear` で分かれた行は
  * それぞれの中身の分かる見出しで見分ける。
@@ -129,8 +122,16 @@ function sessionLabel(session: SessionChoice, isCurrent: boolean): string {
   return isCurrent ? `${label}${CURRENT_SUFFIX}` : label
 }
 
+/**
+ * 見出しを {@link MAX_SESSION_HEADING_LENGTH} で切って `…` を足す。**`<select>` の選択肢は
+ * 折り返せない**（`docs/screen-design.md` 13.9）ので、文字数で切る。**見出しだけを切り、時刻は
+ * 切らない**——同じ部屋の行を見分けるのは時刻なので（上の {@link sessionLabel}）、見出しが
+ * どれだけ長くても時刻は必ず残る。
+ */
 function truncateHeading(heading: string): string {
-  return heading.length <= MAX_HEADING_LENGTH ? heading : `${heading.slice(0, MAX_HEADING_LENGTH)}…`
+  return heading.length <= MAX_SESSION_HEADING_LENGTH
+    ? heading
+    : `${heading.slice(0, MAX_SESSION_HEADING_LENGTH)}…`
 }
 
 /**
