@@ -555,15 +555,16 @@ describe("readCharacterAsset", () => {
 // 同梱パック chou は設定画から切り出した実物の素材を使うので、フィクスチャでなく
 // リポジトリ上の実ファイルを読んで definition の読み取りとポートレートの存在を確かめる。
 describe("同梱パック chou（characters/chou/）", () => {
-  it("character.json が読め、portraits に挙げたファイルが実在する", () => {
+  it("character.json が読め、portraits と face に挙げたファイルが実在する", () => {
     const chouDir = bundledFilePath("characters", "chou")
     const pack = readCharacterPack(chouDir)
 
     expect(pack.definition?.name).toBe("帳")
     expect(pack.definition?.portraits.default).toBe("default.png")
+    expect(pack.definition?.face).toBe("face.png")
 
-    const portraits = pack.definition?.portraits
-    for (const fileName of Object.values(portraits ?? {})) {
+    const fileNames = [...Object.values(pack.definition?.portraits ?? {}), pack.definition?.face]
+    for (const fileName of fileNames) {
       if (fileName === undefined) {
         continue
       }

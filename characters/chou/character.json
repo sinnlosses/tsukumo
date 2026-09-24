@@ -7,6 +7,7 @@
   "license": "このリポジトリのために自作したもの（assets/chou-design-sheet.png 由来）。リポジトリのライセンスに従って自由に使ってよい。",
   "accent": "#6a7180",
   "chatAccent": "#cbb896",
+  "face": "face.png",
   "expressions": {
     "default": "通常",
     "proud": "にっこり",
