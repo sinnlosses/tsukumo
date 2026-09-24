@@ -1,38 +1,5 @@
 [
   {
-    "id": "T-507",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "セリフの間合いの規約から回数の数を落とし、話す契機で言う形にする",
-    "task": "## 背景\n\n2026-09-24 のプロンプト監査（`/claude-api prompt-audit`）で見つかった F1。対象モデルは Claude Opus 5.5（既定のモデル `opus`）。\n\n`src/server/core/speech-cadence.ts` の `SPEECH_CADENCE_PROMPT` は、話す回数を数で縛っている:\n\n- 42〜44行: 「**目安は1ターンに5〜10回。** …**下限は着手と締め…の2回**…**上限もこのあたり**で、数十回は呼ばない」\n- 68〜70行: 委譲中の合図を「**ツールを5〜10回呼ぶごとに1通**…（1回のツール呼び出しはおよそ5〜9秒なので、この間隔が上の目安に対応する）」\n\n回数を数で固定するのは、前のモデルで narrate が足りなかったころの型。Opus 5.5 の移行ガイドが勧めるのは「いつ・何を話すか」を書くことで、それは同じ節の「**話す契機**」の箇条がすでに書いている。「5〜9秒」は前のモデルで測った値。JSDoc（16〜17行）に「目安が無かったころは1ターン3〜5回に落ち着いた」とあるが、これも前のモデルでの実測。\n\n## 決まっていること（蒸し返さない）\n\n- 監査で出した差分の案どおりに直す（利用者の指示「提案通りに修正」）。置き換える文面は下の「やること」のとおり\n\n## やること\n\n1. `src/server/core/speech-cadence.ts`:\n   - JSDoc 16〜17行を `* **話す頻度はここだけに書く**（\\`persona.md\\` の側には書かない）。` の1行にする\n   - 42〜44行を次に置き換える:\n     ```\n     **作業が長いターンほど間を空けない。** 着手と締め（\\`report\\` を呼んだ直後）の2回だけでは、\n     ツールを何度も走らせるターンには少なすぎる。1回の \\`speak\\` はツール呼び出し1回のぶん時間が\n     かかるので、下の契機に当たらないところでは話さない。\n     ```\n   - 69〜70行（`**ツールを5〜10回呼ぶごとに1通、…` から `…この間隔が上の目安に対応する）`）を\n     `  **ひと区切りついたとき（何かが分かった・方針を変えた）と、長いコマンドを流す前に1通**` の1行にする\n2. `test/server/core/speech-cadence.test.ts` の「回数の目安を持つのはこちらで、レポートの記法の側には無い」を「話す頻度を持つのはこちらで、レポートの記法の側には無い」にし、`toContain(\"1ターンに5〜10回\")` を `toContain(\"作業が長いターンほど間を空けない\")` に、`not.toContain(\"5〜10回\")` を `not.toContain(\"間を空けない\")` に替える\n3. `docs/display.md:70` の「**目安は1ターンに5〜10回**で、」を「回数は数で縛らず契機で言い、」に替える（`docs/` は冒頭の節の索引に見出し名が入っているので、行頭を含めて位置を特定する）\n4. `grep -rn \"5〜10回\\|5〜9秒\" src test docs | grep -v docs/history` が何も返さないことを確かめる\n5. `bun run check` を通す\n\n## 完了条件\n\n- 上の4の `grep` が何も返さない\n- `bun run check` が通る\n\n## 注意\n\n- 「話す契機」の箇条・「1回のセリフは1〜2文」・委譲の合図の形（`状況 | n/N | …`）は吹き出しの大きさとプレビューの都合による書式の条なので**消さない**\n- 効いたかどうかは、あとでトークンの記録（`token-usage/`）の `speak` の回数で前後を比べる。このタスクでは比べない",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 通過（2158 pass / 0 fail、165 files）。grep \"5〜10回\\|5〜9秒\" は src test docs（history 除く）で0件。test/server/core/speech-cadence.test.ts が新しい文面「作業が長いターンほど間を空けない」を確かめる"
-  },
-  {
-    "id": "T-508",
-    "difficulty": "haiku",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "既定の effort を high から medium に下げる（Opus 5.5 の既定に合わせる）",
-    "task": "## 背景\n\n2026-09-24 のプロンプト監査（`/claude-api prompt-audit`）で見つかった F4。\n\n`src/server/adapter/sdk-driver.ts:59-63` の `DEFAULT_EFFORT` は `\"high\"` で、`buildQuerySeedOptions` がすべてのセッションの `query()` に渡す。`docs/requirements.md` 4.1（253行）に「既定のモデルは Opus、既定の effort は high（ユーザーの指示、2026-09-12）」とある。これは前の Opus に合わせて決めた値。\n\nClaude Opus 5.5 は API の既定の effort が `medium` に下がり、同じ段でも前の Opus（Opus 5）より多く考える。移行ガイドは `medium` から測り直すよう勧めている（Opus 5.5 の `medium` は、コーディングで Opus 5 の `high` 以上）。\n\n## 決まっていること（蒸し返さない）\n\n- 既定の effort を `medium` にする（利用者の指示「提案通りに修正」。2026-09-12 の high の指示を置き換える）\n\n## やること\n\n1. `src/server/adapter/sdk-driver.ts` の `DEFAULT_EFFORT` を `\"medium\"` にし、JSDoc の「high に固定した」を消して `既定の reasoning effort（docs/requirements.md 4.1）。画面には出さない（設定するだけ）。` にする\n2. `test/server/adapter/sdk-driver.test.ts` の「同梱の既定（opus）と既定の effort（high）を渡す」を `medium` に、`expect(seed.effort).toBe(\"high\")` を `toBe(\"medium\")` に直す\n3. `docs/requirements.md` 253行の「**既定のモデルは Opus、既定の effort は high**（ユーザーの指示、2026-09-12）。」を「**既定のモデルは Opus、既定の effort は medium**（2026-09-12 のユーザーの指示では high。Opus 5.5 で API の既定が medium に下がり、同じ段でも前の Opus より多く考えるため、2026-09-24 に見直した）。」にする。**`docs/requirements.md` は冒頭の節の索引に見出し名が入っているので、行頭を含めて位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/requirements.md` が同じことを確かめる**\n4. `grep -rn '\"high\"\\|effort は high\\|effort（high）' src test docs | grep -v docs/history` で取り残しを探し、effort の既定を言っているものがあれば直す\n5. `bun run check` を通す\n\n## 完了条件\n\n- `DEFAULT_EFFORT` が `\"medium\"` で、`test/server/adapter/sdk-driver.test.ts` がそれを確かめている\n- `bun run check` が通る\n\n## 注意\n\n- effort は画面に出さない（`docs/requirements.md` 4.1）。画面の要素は足さない",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 通過（2151 pass / 0 fail、163 files）。DEFAULT_EFFORT = \"medium\" を test/server/adapter/sdk-driver.test.ts が確かめる。docs/requirements.md 4.1 の既定を medium に直し、見出し数は前後とも25"
-  },
-  {
-    "id": "T-509",
-    "difficulty": "haiku",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "雑談の作法から無い条への言及を消し、「思い出す」の太字を2つに絞る",
-    "task": "## 背景\n\n2026-09-24 のプロンプト監査（`/claude-api prompt-audit`）で見つかった F2 と F3。どちらも `src/server/core/chat-manner.ts` の `CHAT_MANNER_PROMPT`（雑談モードのときだけ載る `systemPrompt` の追記）。\n\n- **F2**（36行）: 「仕事のときの「結論から書く」「根拠を添える」は**ここでは効かない**」。雑談のシステムプロンプトには `report-notation.ts` の記法の節は載らず（`src/server/core/system-prompt.ts` の `modeParts`）、しかも「結論から書く」は記法の節からも消してある（`test/server/core/report-notation.test.ts` が無いことを確かめている）。どこにも無い条を打ち消していて、モデルには存在しない別の規則をほのめかす\n- **F3**（69〜80行）: 「## 思い出す（tsukumo）」の `index` / `recall` の段落はほぼ全部が太字（12行に13か所。ファイル全体で76行に41か所）。強調が目印にならず、張り詰めた調子が応答にうつる\n\n## 決まっていること（蒸し返さない）\n\n- 監査で出した差分の案どおりに直す（利用者の指示「提案通りに修正」）\n- F3 で太字に残すのは「**ユーザーについて知ったことは書かない**」（プライバシー）と「**当たらなければ、覚えていないことを正直に言う**」（作り話を防ぐ）の2つだけ。ほかの節（`## 雑談モード`・`## 覚えたこと`・`## 残す`・`## 覚えたことを忘れる`）の太字は触らない\n\n## やること\n\n1. 36行 `- 仕事のときの「結論から書く」「根拠を添える」は**ここでは効かない**` を削除する\n2. 69〜80行を次に置き換える（テンプレートリテラルの中なのでバッククォートは `\\`` のまま）:\n   ```\n   \\`index\\`: その日の雑談に、あとで探すための見出しを1行付ける（1ターンに1行、120文字まで。\n   付くのは今日の日付で、前の日には付け直せない）。その日の話がひと区切りついたときか、\n   あとで思い出したくなりそうな話をしたときに呼ぶ。書くのは自分の言葉の見出しで、発言を\n   そのまま写さない。**ユーザーについて知ったことは書かない**（\\`remember\\` と同じ線）。\n   書いたことはセリフで報告しない。\n\n   \\`recall\\`: 覚えているはずなのに思い出せないとき（ユーザーが前の話を持ち出したのに、\n   渡されている直近の雑談にも要約にも見当たらないとき）に、引く言葉を渡して呼ぶ\n   （1ターンに1回だけ）。語を空白で区切ると、そのどれかが見出しに当たった日が返る。\n   **当たらなければ、覚えていないことを正直に言う**（作り話で埋めない）。返ってきた文面は\n   読み上げず、引用もしない（思い出したこととして話す）。いまの話の続きではないので、\n   間が空いていることを踏まえて話す。\n   ```\n3. `grep -rn \"ここでは効かない\" src test docs | grep -v docs/history` が何も返さないことを確かめる\n4. `bun run check` を通す\n\n## 完了条件\n\n- `CHAT_MANNER_PROMPT` の「## 思い出す（tsukumo）」節の太字が2か所だけ\n- 上の3の `grep` が何も返さない\n- `bun run check` が通る\n\n## 注意\n\n- 文面の意味（呼ぶ条件・回数・上限・引用しないこと）は変えない。変えるのは強調と、無い条への言及だけ",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 通過（2151 pass / 0 fail、163 files）。src/server/core/chat-manner.ts の「## 思い出す（tsukumo）」節の太字は2か所だけ。grep \"ここでは効かない\" は src test docs（history 除く）で0件"
-  },
-  {
     "id": "T-510",
     "difficulty": "sonnet",
     "loopable": "Y",
@@ -119,28 +86,6 @@
     "status": "todo",
     "passes": false,
     "evidence": ""
-  },
-  {
-    "id": "T-519",
-    "difficulty": "sonnet",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "タスクIDの重複を bun run check で落とす検査を足す",
-    "task": "## 背景\n\n`docs/history/tasks.md` に `## T-225` が2つある（「モバイルの orca から tsukumo に届くかを調べ…」と「レポートを書き上げていくように見せる演出を作る」）。2026-09-20 に `62509476` で T-225 を登録し、`73793bb5` のアーカイブでそれが `develop/tasks.json` から消えた直後、`c5c599fe` が `tasks.json` の最大（224）+ 1 で採番したため。ID の一意性を確かめる検査はリポジトリにも共通スキルのスクリプトにも無い。\n\nこれはタスク運用の作り直し（T-520〜T-528）の第1段（止血）。承認済みの方針は `docs/history/direction.md` の 2026-09-24 の「タスク運用の作り直し」の項にある（1件1ファイル・着手の印は共有の `.git` の中・完了は作業のコミットに同梱して rebase → ff-only で1回送る・錠の中で採番・`progress.md` をなくす・登録は粗く着手時に確かめ直す・手順は `task` コマンドに）。\n\n## 決まっていること（蒸し返さない）\n\n- 既存の T-225 の重複は履歴を書き換えず、**既知の例外として検査に名指しで載せる**（2件まで許す）\n- 読み元は切り替え（T-526）で新しい形式に差し替える。いまは `develop/tasks.json` と `docs/history/tasks.md` を読む\n\n## やること\n\n1. `develop/tasks.json` の `id` と `docs/history/tasks.md` の行頭 `## T-<数字>` を集め、同じIDが2回以上あれば落とすテストを `test/` に足す（置き場と名前は `docs/coding-standards.md`「テスト」節に従う）\n2. 例外の T-225 は、例外にした理由（上の背景）をテストのそばに1行で書く\n\n## 完了条件\n\n- いまのリポジトリで通る\n- 一時的に `docs/history/tasks.md` へ既存のIDの見出しを1つ足すと落ちる（確かめたら戻す。`evidence` に落ちたときのメッセージを書く）\n- `bun run check` が通る\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "bun run check 通過（2158 pass / 0 fail、165 files）。test/task-id.test.ts が develop/tasks.json と docs/history/tasks.md のIDの重複を落とす（T-225 のみ2件まで許す）。docs/history/tasks.md に ## T-001 を足すと「+ [\"T-001: 2回\"]」で落ち、戻して通ることを確かめた"
-  },
-  {
-    "id": "T-520",
-    "difficulty": "opus",
-    "loopable": "Y",
-    "dependencies": [],
-    "summary": "新しいタスク運用の形と task コマンドの仕様を共通スキルに書く",
-    "task": "## 背景\n\n2026-09-17〜24 の1週間で、tsukumo の `main` のマージ以外のコミット938件のうち `develop/tasks.json` を触ったものが694件、`src/` は312件。取り込みのマージが209件、アーカイブが92件あった。原因は、6本の作業ツリーが `main` の上の2ファイル（`tasks.json` と `progress.md`）をロック・データベース・作業ログとして共有していること。T-225 の重複（T-519）、`progress.md` の「未解決」「注意」が38k字・86項目から減らないこと、運用規則（tsukumo の `CLAUDE.md`・`docs/workflow.md`、共通の `WORKFLOW.md`、スキル4本で約1,900行）が1週間に37コミット書き換わったことも、同じところから出ている。\n\n承認済みの方針は `docs/history/direction.md` の 2026-09-24 の「タスク運用の作り直し」の項にある（1件1ファイル・着手の印は共有の `.git` の中・完了は作業のコミットに同梱して rebase → ff-only で1回送る・錠の中で採番・`progress.md` をなくす・登録は粗く着手時に確かめ直す・手順は `task` コマンドに）。\n\nいまの共通スキルは `~/.claude/skills/task-workflow/`（`WORKFLOW.md` と `scripts/` の `status.py`・`archive.py`・`taskfiles.py`・`init.py`・`selftest.py`）と、`next-task`・`plan-tasks`・`list-tasks`・`retrospect`・`setup-tasks`。tsukumo は `CLAUDE.md`「## タスク運用」と `docs/workflow.md` で共通版を上書きしている（`doing` をコミットする、アーカイブを単独で `main` へ送る）。共通スキルは tsukumo のほか Git-Bulk-Maestro・gitlab-watari-dori・helm-yadokari・claude-skills 自身が使っている。\n\n## 決まっていること（蒸し返さない）\n\n- 新しい形は**共通スキル**（claude-skills）に置く（ユーザー決定）。tsukumo 側で上書きする二層はやめる\n- 送る前の取り込みは `git rebase main`（ユーザー承認済み。自分の枝のまだ `main` に入っていないコミットだけを付け替える）\n- タスクは1件1ファイル `develop/task/T-xxx.md`（front matter: id / summary / status / difficulty / loopable / dependencies。status は todo / hold / done / dropped。本文は 目的 / 完了条件 / 背景 / 注意 / 結果）。done も同じ場所に残し、タスクのアーカイブはなくす\n- 着手の印は `$(git rev-parse --git-common-dir)` の下に `mkdir` で作る（コミットしない）。取り残しは人に預ける\n- 完了の記録は作業の最後のコミットに入れ、`main` へ送るのは1回\n- 採番は錠の中で、main と作業ツリーのタスクファイル・`docs/history/tasks.md`・台帳の最後の番号の最大 + 1\n- `progress.md` はなくす。知見は done の前に正典（各プロジェクトの docs）かタスクへ置く\n- 登録時は 目的・完了条件・背景 だけ書き、「やること」は着手直後に今の main で調べ直して書き足す。着手できる todo が並列数の2倍を超えたら、残りは ID を振らず `direction.md` の `## 積み残し` に置く\n- 旧形式（`develop/tasks.json`）のプロジェクトでは、スキルが移行コマンドを案内して止まる。他のプロジェクトを移行するかは各プロジェクトで決める\n\n## 解くべき論点\n\n- front matter の書式と読み方（Python の標準ライブラリだけで読める部分集合に絞るか）。tsukumo のタスク板（TypeScript）も同じ書式を読む\n- 台帳の置き場と中身（着手の印・最後の番号・錠）、取り残しの判定、`main` を出している作業ツリーで起こしたとき\n- `task` コマンドのサブコマンド（new / claim / release / done / ship / status / migrate）の引数・出力・終了コード。スキルからの呼び方（`${CLAUDE_SKILL_DIR}` 経由）\n- `ship` と各プロジェクトの `- ブランチ:` 設定の関係（tsukumo は「切らない。本体へ `git -C <本体> merge --ff-only`」、既定は `feature/T-xxx`）。検証コマンドをいつ打つか\n- `hold` のタスクを `/next-task` がどう扱うか、`/list-tasks` にどう出すか\n- 並列数の2倍の上限の「並列数」をどこから取るか（固定値か、`git worktree list` の数か、`CLAUDE.md` の設定か）\n- `retrospect` が今 `progress.md` の小節と `evidence` を読んでいる部分の置き換え\n- `migrate` で `progress.md` をどう扱うか（機械的に移せるのは「完了したこと」の小節だけで、「未解決」「注意」の振り分けは各プロジェクトの人の判断）\n\n## やること\n\n1. 上の論点を決め、claude-skills に設計書を1本書く（置き場は claude-skills の `CLAUDE.md` の決まりに従う。無ければ `docs/` の下）。タスクファイルの例、`task` の各サブコマンドの仕様、新しい `WORKFLOW.md` とスキルの章立て、移行の手順、採らなかった案を含める\n2. **コードと既存のスキルの振る舞いは変えない**（実装は T-521〜T-524）\n\n## 完了条件\n\n- 設計書が上の論点の1つ1つに結論を持っている（`evidence` に論点 → 結論の対応を1行ずつ書く）\n- claude-skills の `./check.sh` が通り、設計書が claude-skills の `main` に入っている\n\n## 注意\n\n- 作業するのは claude-skills のリポジトリ（`~/ghq/github.com/sinnlosses/claude-skills`。`~/.claude/skills/` の各スキルはそこへの symlink）。**着手時に `git -C ~/ghq/github.com/sinnlosses/claude-skills status --short` が空でなければ止めて預ける**（2026-09-24 の登録時点で `skills/next-task/SKILL.md` と `skills/task-workflow/WORKFLOW.md` に他人の未コミットの変更があった。触らない）\n- claude-skills の運用（検証コマンド `./check.sh`、ブランチ既定）はそのリポジトリの `CLAUDE.md` に従う。枝の名前は claude-skills 自身のタスクIDとぶつからないよう `feature/tsukumo-<このタスクのID>` にする\n- コミットは claude-skills の側に入る。tsukumo の `evidence` には claude-skills のコミットハッシュを書く\n- `~/.claude/skills/` の中身は symlink 越しに全プロジェクトへ即座に効くので、このタスクでは既存のスキルとスクリプトを変えない\n",
-    "status": "done",
-    "passes": true,
-    "evidence": "claude-skills 45d195f（main、./check.sh 終了0・21スキル不整合なし）で docs/task-workflow-redesign.md を追加。論点→結論は同書2章の表: 書式=YAMLでない固定6行 / 台帳=<common-dir>/task-workflow/ の claim・lock・last-id / 取り残し=自作業ツリーの印は停止・他はSTALE表示で人が消す / main起動=ship は印を消すだけ / サブコマンド=stdout TSV・終了コード0〜9・${CLAUDE_SKILL_DIR}経由 / ship=ブランチ行の先頭語で分岐・rebase→ff-only / 検証=done前に1回+rebase時 / hold=選ばず判断待ちで表示 / 並列数=main以外の worktree 数 / retrospect=タスクファイルと差分 / migrate=完了小節だけ機械移動。本文と違えた点: 着手の印は done でなく ship で消す（T-522 本文と要合わせ）、ID は3桁以上、台帳は tsukumo/ でなく task-workflow/"
   },
   {
     "id": "T-521",
