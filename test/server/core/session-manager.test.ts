@@ -89,6 +89,7 @@ const NO_VISIT_PORTS: VisitPorts = {
   clock: { after: () => () => {} },
   listGuests: () => [],
   random: () => 0,
+  scriptSource: { kind: "pack-only" },
 }
 
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
@@ -2614,6 +2615,7 @@ describe("訪問", () => {
         clock: manual.clock,
         listGuests: () => guests,
         random: () => 0,
+        scriptSource: { kind: "pack-only" },
       },
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,

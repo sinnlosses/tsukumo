@@ -1,9 +1,10 @@
 // 誰が訪ねてくるか・どの台本で話すか（`docs/design.md` 5章「訪問の契機と状態」）。純関数だけで、
 // パックの一覧を読むのも乱数を振るのも呼び出し側。
 //
-// 客になれるのは**`character.json` に `visit` を持ち、台本（`visit.scripts`）が1本以上ある
-// パックだけ**（台本を作れないパックは来ない。`docs/research/character-visit.md` 論点2・論点4）。
-// あるじと同じパックは来ない。候補が複数なら来るたびに等しい確率で1つ選ぶ。
+// 客になれるのは**`character.json` に `visit` を持つパックだけ**。台本はその場で作り
+// （`visit-script-writer.ts`）、作れなかったときは `visit.scripts` から1本選んで使う。それも無ければ
+// 来ない（`docs/research/character-visit.md` 論点2）。あるじと同じパックは来ない。候補が複数なら
+// 来るたびに等しい確率で1つ選ぶ。
 
 import { type CharacterVisit, type VisitScript } from "../../shared/character-visit.ts"
 
@@ -19,13 +20,18 @@ export type VisitGuestSource = {
   readonly definition: { readonly visit: CharacterVisit | undefined } | undefined
 }
 
-/** 来ることになった客と、話す台本と帰りの一言。候補が居なければ `none`（来ない）。 */
+/** 台本を作れなかったときに使う、パックに書いた台本（`visit.scripts` が空なら `none`）。 */
+export type VisitFallback =
+  | { readonly kind: "script"; readonly script: VisitScript }
+  | { readonly kind: "none" }
+
+/** 来ることになった客と、落とし先の台本と帰りの一言。候補が居なければ `none`（来ない）。 */
 export type VisitChoice =
   | { readonly kind: "none" }
   | {
       readonly kind: "chosen"
       readonly guest: string
-      readonly script: VisitScript
+      readonly fallback: VisitFallback
       readonly farewell: string
     }
 
@@ -33,12 +39,12 @@ export type VisitChoice =
 export function visitGuests(packs: readonly VisitGuestSource[]): readonly VisitGuest[] {
   return packs.flatMap((pack) => {
     const visit = pack.definition?.visit
-    return visit !== undefined && visit.scripts.length > 0 ? [{ pack: pack.name, visit }] : []
+    return visit === undefined ? [] : [{ pack: pack.name, visit }]
   })
 }
 
 /**
- * あるじ（`host`）を除いた候補から客を1人選び、その客の台本と帰りの一言を1つずつ選ぶ。
+ * あるじ（`host`）を除いた候補から客を1人選び、その客の落とし先の台本と帰りの一言を1つずつ選ぶ。
  * `random` は 0 以上 1 未満を返す（`Math.random` と同じ約束）。
  */
 export function chooseVisit(
@@ -55,9 +61,15 @@ export function chooseVisit(
   }
   const script = pick(guest.visit.scripts, random)
   const farewell = pick(guest.visit.farewell, random)
-  return script === undefined || farewell === undefined
-    ? { kind: "none" }
-    : { kind: "chosen", guest: guest.pack, script, farewell }
+  if (farewell === undefined) {
+    return { kind: "none" }
+  }
+  return {
+    kind: "chosen",
+    guest: guest.pack,
+    fallback: script === undefined ? { kind: "none" } : { kind: "script", script },
+    farewell,
+  }
 }
 
 /** 並びから1つ選ぶ（空なら undefined。添字の「無い」をそのまま返す）。 */

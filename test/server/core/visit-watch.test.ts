@@ -2,6 +2,12 @@ import { describe, expect, it } from "bun:test"
 
 import { readFakeSession } from "../../../src/server/adapter/fake-driver.ts"
 import { type VisitGuest } from "../../../src/server/core/visit-guest.ts"
+import {
+  type VisitScriptDraft,
+  type VisitScriptOutcome,
+  type VisitScriptSource,
+} from "../../../src/server/core/visit-script-writer.ts"
+import { VISIT_SCRIPT_TIMEOUT_MS } from "../../../src/server/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "../../../src/server/core/visit-timing.ts"
 import { createVisitWatch } from "../../../src/server/core/visit-watch.ts"
 import { type CharacterVisit, type VisitScript } from "../../../src/shared/character-visit.ts"
@@ -43,6 +49,7 @@ const TOOL_STARTED: SessionEvent = {
 function startWatch(
   guests: readonly VisitGuest[] = [{ pack: "guest", visit: GUEST_VISIT }],
   host: "known" | "unknown" = "known",
+  scriptSource: VisitScriptSource = { kind: "pack-only" },
 ) {
   const manual = createManualClock()
   let state: SessionState = INITIAL_SESSION_STATE
@@ -60,6 +67,7 @@ function startWatch(
       return guests
     },
     random: () => 0,
+    scriptSource,
     now: manual.now,
     readState: () => state,
     emit: (event) => {
@@ -167,6 +175,156 @@ describe("createVisitWatch", () => {
   })
 })
 
+describe("createVisitWatch（台本をその場で作る）", () => {
+  const WRITTEN: VisitScript = [
+    { speaker: "guest", expression: "excited", text: "架空の作られた一言目" },
+    { speaker: "host", expression: "thinking", text: "架空の作られた返事" },
+    { speaker: "guest", expression: "curious", text: "架空の作られた二言目" },
+  ]
+
+  /** 呼ばれた注文と中断の合図を覚え、返す結果をテストが後から決める作る口。 */
+  function createStubWriter() {
+    const calls: { readonly draft: VisitScriptDraft; readonly signal: AbortSignal }[] = []
+    let resolveLast: (outcome: VisitScriptOutcome) => void = () => {}
+    const source: VisitScriptSource = {
+      kind: "write",
+      write: (draft, signal) => {
+        calls.push({ draft, signal })
+        return new Promise((resolve) => {
+          resolveLast = resolve
+        })
+      },
+    }
+    return {
+      source,
+      calls,
+      resolve: async (outcome: VisitScriptOutcome) => {
+        resolveLast(outcome)
+        await settle()
+      },
+    }
+  }
+
+  /** 作る口の結果が見張りに届くまで待つ。 */
+  async function settle(): Promise<void> {
+    await new Promise((resolve) => {
+      setImmediate(resolve)
+    })
+  }
+
+  function startWriting(
+    writer: ReturnType<typeof createStubWriter>,
+    guests?: readonly VisitGuest[],
+  ) {
+    const run = startWatch(guests, "known", writer.source)
+    run.feed(REQUEST)
+    run.feed({ kind: "speech", text: "架空の前のセリフ", expression: "proud" })
+    run.feed(TOOL_STARTED)
+    run.advance(VISIT_TIMING.waitMs)
+    return run
+  }
+
+  it("しきい値に届くと作り始め、作れた台本で来る。注文には仕事の抜き書きと待った長さが載る", async () => {
+    const writer = createStubWriter()
+    const run = startWriting(writer)
+
+    expect(run.emitted).toEqual([])
+    expect(writer.calls).toHaveLength(1)
+    expect(writer.calls[0]?.draft).toEqual({
+      host: "fictional",
+      guest: "guest",
+      excerpt: {
+        request: "架空の依頼",
+        speeches: ["架空の前のセリフ"],
+        waitingOn: ["Bash: fictional-long-command"],
+      },
+      waitedMs: VISIT_TIMING.waitMs,
+    })
+
+    await writer.resolve({ kind: "written", script: WRITTEN })
+
+    expect(run.emitted).toEqual([
+      { kind: "visit-started", guest: "guest", script: WRITTEN, farewell: "架空の帰りの一言" },
+    ])
+  })
+
+  it("作れなかったらパックの台本で来る", async () => {
+    const writer = createStubWriter()
+    const run = startWriting(writer)
+
+    await writer.resolve({ kind: "failed" })
+
+    expect(run.emitted).toEqual([
+      { kind: "visit-started", guest: "guest", script: SCRIPT, farewell: "架空の帰りの一言" },
+    ])
+  })
+
+  it("時間切れなら中断してパックの台本で来る", async () => {
+    const writer = createStubWriter()
+    const run = startWriting(writer)
+
+    run.advance(VISIT_SCRIPT_TIMEOUT_MS)
+    expect(writer.calls[0]?.signal.aborted).toBe(true)
+    // 中断を受けた作る口は failed で返る（`createVisitScriptWriter` の約束）。
+    await writer.resolve({ kind: "failed" })
+
+    expect(run.emitted.map((event) => event.kind)).toEqual(["visit-started"])
+    expect(run.emitted[0]).toMatchObject({ script: SCRIPT })
+  })
+
+  it("作れず、パックにも台本が無ければ来ず、同じ待ちのあいだは作り直さない", async () => {
+    const writer = createStubWriter()
+    const run = startWriting(writer, [{ pack: "guest", visit: { ...GUEST_VISIT, scripts: [] } }])
+
+    await writer.resolve({ kind: "failed" })
+    run.advance(VISIT_TIMING.waitMs * 2)
+
+    expect(run.emitted).toEqual([])
+    expect(writer.calls).toHaveLength(1)
+  })
+
+  it("作っている最中に帰る合図が来たら中断し、あとから台本が届いても来ない", async () => {
+    const writer = createStubWriter()
+    const run = startWriting(writer)
+
+    run.feed({ kind: "speech", text: "架空の新しいセリフ", expression: "proud" })
+    expect(writer.calls[0]?.signal.aborted).toBe(true)
+    await writer.resolve({ kind: "written", script: WRITTEN })
+    run.advance(VISIT_SCRIPT_TIMEOUT_MS)
+
+    expect(run.emitted).toEqual([])
+    expect(run.pendingTimers()).toBe(0)
+  })
+
+  it("作っている最中に待ちが終わっても中断する", async () => {
+    const writer = createStubWriter()
+    const run = startWriting(writer)
+
+    run.feed({
+      kind: "tool-finished",
+      toolUseId: "fictional-tool-1",
+      content: "架空の出力",
+      isError: false,
+    })
+    await writer.resolve({ kind: "written", script: WRITTEN })
+
+    expect(writer.calls[0]?.signal.aborted).toBe(true)
+    expect(run.emitted).toEqual([])
+  })
+
+  it("閉じたら作っている最中の台本も中断する", async () => {
+    const writer = createStubWriter()
+    const run = startWriting(writer)
+
+    run.watch.close()
+    await writer.resolve({ kind: "written", script: WRITTEN })
+
+    expect(writer.calls[0]?.signal.aborted).toBe(true)
+    expect(run.emitted).toEqual([])
+    expect(run.pendingTimers()).toBe(0)
+  })
+})
+
 describe("疑似セッションの訪問の場面", () => {
   /**
    * 疑似セッション（`test/fixture/fake-session.json`）の場面を、縮めたしきい値
@@ -189,6 +347,7 @@ describe("疑似セッションの訪問の場面", () => {
       clock: manual.clock,
       listGuests: () => [{ pack: "guest", visit: GUEST_VISIT }],
       random: () => 0,
+      scriptSource: { kind: "pack-only" },
       now: manual.now,
       readState: () => state,
       emit: (event) => {

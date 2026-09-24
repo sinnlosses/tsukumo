@@ -13,8 +13,12 @@ import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
-import { todayLocalDateKey } from "./server/adapter/local-time.ts"
-import { createAchievementCommitCache, readAchievement } from "./server/adapter/main-history.ts"
+import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
+import {
+  type AchievementCommitCache,
+  createAchievementCommitCache,
+  readAchievement,
+} from "./server/adapter/main-history.ts"
 import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
@@ -32,6 +36,7 @@ import {
   listSwitchableSessions,
   readRestoredEvents,
 } from "./server/adapter/sdk-session.ts"
+import { queryVisitScript } from "./server/adapter/sdk-visit-script.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import {
   readDismissedUsageProposalKeys,
@@ -56,7 +61,13 @@ import { takeSystemPromptAppend, toSystemPromptMode } from "./server/core/system
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
 import { openTrackedFile } from "./server/core/tracked-file.ts"
 import { visitGuests } from "./server/core/visit-guest.ts"
+import {
+  createVisitScriptWriter,
+  type VisitScriptSource,
+} from "./server/core/visit-script-writer.ts"
+import { visitCast } from "./server/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/core/visit-timing.ts"
+import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
 import { type DismissUsageProposalCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
@@ -195,8 +206,38 @@ export function startSession(options: SessionStartOptions): SessionManager {
       clock: createVisitClock(),
       listGuests: () => visitGuests(listCharacterPacks(cwd)),
       random: Math.random,
+      // 台本はその場で作る。疑似セッションでは claude を起こさないので、パックの台本だけ。
+      scriptSource:
+        fakeSession === undefined
+          ? visitScriptSource(cwd, config.inheritedEnv, achievementCommitCache)
+          : { kind: "pack-only" },
     },
   })
+}
+
+/**
+ * 訪問の台本をその場で作る口（`docs/design.md` 5章「訪問の台本」）。人格と表情は**作るときに**
+ * パックの一覧を読み直し、今日の成果は `readAchievementDay` と同じ数え方で読む（読めなければ
+ * 「分からない」）。`query()` は仕事のセッションと同じ作業先・引き継いだ環境で起こす。
+ */
+function visitScriptSource(
+  cwd: string,
+  inheritedEnv: Readonly<Record<string, string | undefined>>,
+  achievementCommitCache: AchievementCommitCache,
+): VisitScriptSource {
+  return {
+    kind: "write",
+    write: createVisitScriptWriter({
+      readCast: (host, guest) => visitCast(listCharacterPacks(cwd), host, guest),
+      readAchievement: async () => {
+        const today = todayLocalDateKey()
+        const result = await readAchievement(cwd, today, today, achievementCommitCache)
+        return result.kind === "ok" ? result.achievement : UNKNOWN_ACHIEVEMENT
+      },
+      localTime: () => localTimeHHMM(Temporal.Now.instant().epochMilliseconds),
+      query: (request, signal) => queryVisitScript(request, { cwd, env: inheritedEnv }, signal),
+    }),
+  }
 }
 
 /**

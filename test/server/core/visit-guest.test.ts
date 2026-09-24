@@ -18,7 +18,7 @@ const VISIT: CharacterVisit = {
 }
 
 describe("visitGuests", () => {
-  it("visit を持ち、台本が1本以上あるパックだけが客になれる", () => {
+  it("visit を持つパックだけが客になれる（台本が無くても、作れたときのために候補に入る）", () => {
     const guests = visitGuests([
       { name: "with-visit", definition: { visit: VISIT } },
       { name: "no-visit", definition: { visit: undefined } },
@@ -26,7 +26,10 @@ describe("visitGuests", () => {
       { name: "no-definition", definition: undefined },
     ])
 
-    expect(guests).toEqual([{ pack: "with-visit", visit: VISIT }])
+    expect(guests).toEqual([
+      { pack: "with-visit", visit: VISIT },
+      { pack: "no-script", visit: { ...VISIT, scripts: [] } },
+    ])
   })
 })
 
@@ -40,7 +43,7 @@ describe("chooseVisit", () => {
     expect(chooseVisit(guests, "guest-a", () => 0)).toEqual({
       kind: "chosen",
       guest: "guest-b",
-      script: FIRST_SCRIPT,
+      fallback: { kind: "script", script: FIRST_SCRIPT },
       farewell: "架空のさようなら1",
     })
   })
@@ -49,13 +52,24 @@ describe("chooseVisit", () => {
     expect(chooseVisit(guests, "host", () => 0.99)).toEqual({
       kind: "chosen",
       guest: "guest-b",
-      script: SECOND_SCRIPT,
+      fallback: { kind: "script", script: SECOND_SCRIPT },
       farewell: "架空のさようなら2",
     })
     expect(chooseVisit(guests, "host", () => 0)).toEqual({
       kind: "chosen",
       guest: "guest-a",
-      script: FIRST_SCRIPT,
+      fallback: { kind: "script", script: FIRST_SCRIPT },
+      farewell: "架空のさようなら1",
+    })
+  })
+
+  it("客のパックに台本が無ければ、落とし先は none", () => {
+    expect(
+      chooseVisit([{ pack: "guest", visit: { ...VISIT, scripts: [] } }], "host", () => 0),
+    ).toEqual({
+      kind: "chosen",
+      guest: "guest",
+      fallback: { kind: "none" },
       farewell: "架空のさようなら1",
     })
   })
