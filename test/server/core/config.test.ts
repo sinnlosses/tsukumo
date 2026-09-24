@@ -13,22 +13,23 @@ describe("readConfig", () => {
       fakeScene: undefined,
       newSession: false,
       watchUi: false,
+      inheritedEnv: {},
     })
   })
 
   it("環境変数をそのまま読む（ポートは解釈せず生のまま渡す）", () => {
-    expect(
-      readConfig({
-        TSUKUMO_VIEW_PORT: "7398",
-        TSUKUMO_VIEW_PORT_FALLBACK_BASE: "20000",
-        TSUKUMO_CHARACTER: " characters/local ",
-        TSUKUMO_OPEN_VIEW: "0",
-        TSUKUMO_DRIVER: "fake",
-        TSUKUMO_FAKE_SCENE: " question-multi ",
-        TSUKUMO_NEW_SESSION: "1",
-        TSUKUMO_WATCH_UI: "1",
-      }),
-    ).toEqual({
+    const env = {
+      TSUKUMO_VIEW_PORT: "7398",
+      TSUKUMO_VIEW_PORT_FALLBACK_BASE: "20000",
+      TSUKUMO_CHARACTER: " characters/local ",
+      TSUKUMO_OPEN_VIEW: "0",
+      TSUKUMO_DRIVER: "fake",
+      TSUKUMO_FAKE_SCENE: " question-multi ",
+      TSUKUMO_NEW_SESSION: "1",
+      TSUKUMO_WATCH_UI: "1",
+    }
+
+    expect(readConfig(env)).toEqual({
       rawViewPort: "7398",
       rawViewPortFallbackBase: "20000",
       character: "characters/local",
@@ -37,6 +38,8 @@ describe("readConfig", () => {
       fakeScene: "question-multi",
       newSession: true,
       watchUi: true,
+      // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
+      inheritedEnv: env,
     })
   })
 

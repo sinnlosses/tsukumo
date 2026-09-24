@@ -153,6 +153,10 @@ describe("takeSystemPromptAppend", () => {
     expect(work).not.toContain("keep")
   })
 
+  it("雑談の作法にも「完了」の1行の条がある（speak で終えたターンの催促の保険。docs/chat-mode.md 4.9）", () => {
+    expect(CHAT_MANNER_PROMPT).toContain("「完了」とだけ書いて終える")
+  })
+
   it("雑談の作法は口調を決めない（口調はキャラクターパックの persona.md の担当）", () => {
     // 正典を2つにしない（`report-notation.ts` と同じ切り分け。docs/chat-mode.md 4.9）。
     expect(CHAT_MANNER_PROMPT).toContain("speak")

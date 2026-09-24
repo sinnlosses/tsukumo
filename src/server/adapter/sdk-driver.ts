@@ -14,7 +14,8 @@
 // docs/requirements.md 4.8「セッションの復元」。選ぶ計算は src/server/core/session-restore.ts）。
 //
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、**ログにもファイルにも書かない**
-// （docs/coding-standards.md「会話内容の扱い」）。stderr に出すのは SDK 自身のエラー文だけ。
+// （docs/coding-standards.md「会話内容の扱い」）。stderr に出すのは SDK 自身のエラー文と、本体の
+// 催促が届いたという事実の1行（`src/server/core/visible-output-nudge.ts`。中身は写さない）だけ。
 
 import { setImmediate } from "node:timers/promises"
 
@@ -51,6 +52,7 @@ import {
   type SessionMode,
 } from "../core/session-driver.ts"
 import { createUsageReviewIntake } from "../core/usage-review-tool.ts"
+import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { scheduleMarkSession } from "./sdk-session.ts"
@@ -60,6 +62,14 @@ import { tsukumoServer } from "./sdk-tool.ts"
  * 既定の reasoning effort（docs/requirements.md 4.1）。画面には出さない（設定するだけ）。
  */
 export const DEFAULT_EFFORT: EffortLevel = "medium"
+
+/**
+ * 本体の催促が届いたときに stderr へ出す1行。**固定の文面だけ**（届いたメッセージの中身は
+ * 写さない）。出たら `CLAUDE_CODE_TERMINAL_MCP_TOOLS` が本体の更新で効かなくなっている
+ * （`src/server/core/visible-output-nudge.ts` の冒頭）。
+ */
+export const VISIBLE_OUTPUT_NUDGE_NOTICE =
+  "tsukumo: 本体が「本文の無い応答」の催促を差し込んだ（CLAUDE_CODE_TERMINAL_MCP_TOOLS が効いていない）\n"
 
 /**
  * Agent SDK の駆動を1つ起こす（`docs/glossary.md`「セッション駆動」の実装）。**この関数は
@@ -182,6 +192,12 @@ export type QuerySeedOptions = {
    * キャラクターパックや利用者から変える口は作らない。
    */
   readonly settings: { readonly language: "japanese" }
+  /**
+   * 子プロセスの環境変数。**渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わる**ので、引き継いだ
+   * 環境に `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足したもの（`childProcessEnv`）を渡す。
+   * `speak` で終えたターンに本体が催促を差し込むのを止めるため（`docs/chat-mode.md` 4.9）。
+   */
+  readonly env: Readonly<Record<string, string | undefined>>
 }
 
 /**
@@ -203,6 +219,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     effort: DEFAULT_EFFORT,
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
     settings: { language: "japanese" },
+    env: childProcessEnv(options.inheritedEnv),
   }
 }
 
@@ -311,6 +328,10 @@ async function relayMessages(
   try {
     for await (const message of session) {
       const fromMain = !isSubagentMessage(message)
+      // 環境変数が効かなくなったことに気づくための1行。届いた事実だけで、中身は写さない。
+      if (fromMain && isVisibleOutputNudge(message)) {
+        process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
+      }
       const converted = toSessionEvents(message, toExpressionNames(options.expressions))
       const events = fromMain ? converted.flatMap((event) => reportReview.pass(event)) : converted
       for (const event of events) {

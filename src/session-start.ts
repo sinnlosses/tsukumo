@@ -145,6 +145,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
           scene: config.fakeScene,
           viewPort,
           cwd,
+          inheritedEnv: config.inheritedEnv,
           onEvent,
         }),
       restoreEvents: (resumed, pack) =>
@@ -197,9 +198,11 @@ function startDriver(options: {
   readonly viewPort: number
   /** claude の作業先（tsukumo を起こしたディレクトリ）。 */
   readonly cwd: string
+  /** claude の子プロセスへ引き継ぐ環境変数（`Config.inheritedEnv`）。 */
+  readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   readonly onEvent: (event: SessionEvent) => void
 }): SessionDriver {
-  const { seed, chatArchive, fakeSession, cwd, onEvent } = options
+  const { seed, chatArchive, fakeSession, cwd, inheritedEnv, onEvent } = options
   if (fakeSession !== undefined) {
     return startFakeSession({
       session: fakeSession,
@@ -230,6 +233,7 @@ function startDriver(options: {
     start: seed.start,
     tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
     mode,
+    inheritedEnv,
     // **段に入るたびに読み直す**（見直しの途中で見送りが増えても効く。
     // `docs/design.md`「見直しのツールと状態」）。
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),

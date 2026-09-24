@@ -463,6 +463,15 @@ tsukumo からモデルへの逆流路ができてしまう。逆流させない
 状態は載せない（tsukumo からモデルへの逆流路を広げない。上の「セリフはテキストの規約ではなく、
 ツール呼び出しで受け取る」の「戻り値は `"ok"` だけにする」と同じ理由）。
 
+**ターンが `speak` で終わると本体が催促を差し込む**（`[Your previous response had no visible
+output. ...]` を利用者の発言として足し、1往復増える）。塞ぐ手は2つ重ねてある（2026-09-24 決定、
+2026-09-25 実装。`docs/chat-mode.md` 4.9「雑談モードで変わるもの」）: **仕組み**は子プロセスに
+`CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak` を渡すこと（`src/server/core/visible-output-nudge.ts`。
+公式の文書に無い変数なので、催促が届いたら stderr に固定の1行を出す見張りを `sdk-driver.ts` に
+置く）、**条**は最後の `speak` のあとに「完了」の1行だけ書かせること（`report-notation.ts` と
+`chat-manner.ts`。変数が効かなくなったときの保険）。どちらも最後のツール結果への応答1回は
+要るので、往復の数は同じ。
+
 #### 箱（Orca のタブ）と中身（Web アプリ）を分ける
 
 画面を出す入れ物を「箱」と呼ぶ。**いまの箱は Orca のブラウザタブ**で、開くのに

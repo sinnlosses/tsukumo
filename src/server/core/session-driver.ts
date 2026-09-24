@@ -292,6 +292,11 @@ export type SessionDriverOptions = {
   /** 仕事か雑談か。雑談のときだけ渡る4つの口も、この中にまとまっている。 */
   readonly mode: SessionMode
   /**
+   * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに
+   * `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足して渡す（`src/server/core/visible-output-nudge.ts`）。
+   */
+  readonly inheritedEnv: Readonly<Record<string, string | undefined>>
+  /**
    * 利用者が見送った提案の識別子（`usageProposalKey`）を読む口。見直しのツールが呼ばれる
    * たびに読み直す（`src/server/core/usage-review-tool.ts`）。**読めないときは空を返し、
    * 例外を投げない**。

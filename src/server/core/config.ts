@@ -74,6 +74,13 @@ export type Config = {
    * ページが読み込み直されうる（docs/design.md 11章）。
    */
   readonly watchUi: boolean
+  /**
+   * 起こした環境変数の全部。**claude の子プロセスへそのまま引き継ぐためのもの**で、tsukumo 自身は
+   * ここから読まない（読むのは上の各フィールド）。SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと
+   * 置き換えるので、足したい変数（`src/server/core/visible-output-nudge.ts`）と一緒に渡す必要が
+   * あり、環境変数を読む場所（`src/cli.ts`）を増やさずに済ませるためにここで運ぶ。
+   */
+  readonly inheritedEnv: Readonly<Record<string, string | undefined>>
 }
 
 /**
@@ -90,6 +97,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     watchUi: env[WATCH_UI_ENV_NAME]?.trim() === "1",
+    inheritedEnv: env,
   }
 }
 

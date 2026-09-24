@@ -515,7 +515,8 @@ function speakToolFullName(): string {
   return tsukumoToolFullName(SPEAK_TOOL_NAME)
 }
 
-function tsukumoToolFullName(toolName: string): string {
+/** tsukumo のツールのフルネーム（`mcp__tsukumo__<ツール名>`）。 */
+export function tsukumoToolFullName(toolName: string): string {
   return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${toolName}`
 }
 
