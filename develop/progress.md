@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 共通スキル5本と WORKFLOW.md を新しい運用に書き直した（T-524）
+
+claude-skills の枝 `feature/tsukumo-T-524`（`c8d8ca2`）に置き、`main` には入れていない（入れるのは T-526）。`~/.claude/skills/` は claude-skills の本体の作業ツリーを指すので、枝の作業は別の作業ツリーで行った。`maintenance-docs` がまだ `archive.py` と旧形式を前提にしているので、T-526 の前に扱いを決める。
+
 ### 2026-09-24 旧形式の tasks.json を変換する task migrate と旧形式の検出を作った（T-523）
 
 claude-skills `6c66ab5`・`d962f9e`。`doing` のタスクが1件でもあると `migrate` は止まるので、切り替え（T-526）の前に全作業ツリーの `doing` を片付ける。`progress.md` は「完了したこと」だけを移し、前置き文と「未解決」「注意」は残す。
