@@ -98,14 +98,18 @@ export async function readAchievement(
     }
   }
 
-  const todayCutoff = await cutoffCommitBefore(cwd, head, range.endEpochMilliseconds)
-  const yesterdayCutoff = await cutoffCommitBefore(cwd, head, range.startEpochMilliseconds)
+  const [todayCutoff, yesterdayCutoff] = await Promise.all([
+    cutoffCommitBefore(cwd, head, range.endEpochMilliseconds),
+    cutoffCommitBefore(cwd, head, range.startEpochMilliseconds),
+  ])
   if (todayCutoff.kind === "unavailable" || yesterdayCutoff.kind === "unavailable") {
     return { kind: "unavailable" }
   }
 
-  const todaySource = await readTaskSnapshotSource(cwd, cutoffCommitOf(todayCutoff))
-  const yesterdaySource = await readTaskSnapshotSource(cwd, cutoffCommitOf(yesterdayCutoff))
+  const [todaySource, yesterdaySource] = await Promise.all([
+    readTaskSnapshotSource(cwd, cutoffCommitOf(todayCutoff)),
+    readTaskSnapshotSource(cwd, cutoffCommitOf(yesterdayCutoff)),
+  ])
   if (todaySource === "unavailable" || yesterdaySource === "unavailable") {
     return { kind: "unavailable" }
   }
