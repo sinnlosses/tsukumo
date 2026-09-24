@@ -78,13 +78,15 @@ export function frameOf(shapes: readonly MemberShape[]): RevealFrame | undefined
  * なく欄の幅になる**ので、文字の節点を1つずつ測る。
  *
  * **図・グラフは行を持たない**ので、その要素の box をまるごと1行として扱う（筆はその上を
- * 1画で通る）。
+ * 1画で通る）。**ただし右端は入れ物ではなく描かれた `svg` / `canvas` の右端を使う**——mermaid
+ * （`.mermaid`）や Chart.js（`.chart-block`）は全幅の入れ物に描くので、入れ物の box をそのまま
+ * 使うと帯が図の実際の幅より広く残る（`img` は入れ物を持たず要素そのものが描かれた図なので、
+ * この対象にならない）。
  */
 export function lineBoxesOf(shape: MemberShape): readonly LineBox[] {
   if (shape.member.kind === "figure") {
-    return shape.box.height > 0
-      ? [{ top: shape.box.top, bottom: shape.box.bottom, right: shape.box.right }]
-      : []
+    const box = drawnBoxOf(shape.member.element) ?? shape.box
+    return box.height > 0 ? [{ top: box.top, bottom: box.bottom, right: box.right }] : []
   }
 
   return textNodesOf(shape.member.element).flatMap((node) => {
@@ -94,6 +96,18 @@ export function lineBoxesOf(shape: MemberShape): readonly LineBox[] {
       .filter((rect) => rect.height > 0 && rect.width > 0)
       .map((rect) => ({ top: rect.top, bottom: rect.bottom, right: rect.right }))
   })
+}
+
+/**
+ * 図・グラフの入れ物の中で**実際に描かれた** `svg` / `canvas` の box。要素自身が `svg` /
+ * `canvas`（`img` もここでは対象外）ならそれ自身、mermaid や Chart.js のように入れ物に
+ * 描いているならその中の1つ目を測る。**描かれる前**（mermaid が非同期で描き終える前）や
+ * 描画に失敗した塊（`mermaid-broken`）では見つからず、呼び出し側が入れ物の box にそのまま
+ * 落とす。
+ */
+function drawnBoxOf(element: RevealElement): DOMRect | undefined {
+  const drawn = element.matches("svg, canvas") ? element : element.querySelector("svg, canvas")
+  return drawn?.getBoundingClientRect()
 }
 
 /** 要素の下にある文字の節点。**空白だけのもの**（タグのあいだの改行）は数えない。 */

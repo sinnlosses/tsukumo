@@ -117,7 +117,9 @@ function LinesProbe(): ReactElement {
     <div ref={rootRef}>
       {LINE_BOXES.map((_line, index) => (
         <div className="chart-block" data-line={index} key={index}>
-          <canvas />
+          {/* `measure.ts` の `lineBoxesOf` が図の塊で測るのは入れ物ではなく描かれた
+              `canvas` 自身なので、行に見立てた矩形はこちらにも付ける。 */}
+          <canvas data-line={index} />
         </div>
       ))}
     </div>
