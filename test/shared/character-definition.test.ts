@@ -69,6 +69,20 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ face: 3 }))?.face).toBeUndefined()
   })
 
+  it("任意の visit（客として訪ねてくるときの節）を読む。無い・farewell が崩れたものは undefined", () => {
+    const withVisit = parseCharacterDefinition(
+      JSON.stringify({ visit: { peek: "peek.png", farewell: ["またね"] } }),
+    )
+    expect(withVisit?.visit?.peek).toBe("peek.png")
+    expect(withVisit?.visit?.farewell).toEqual(["またね"])
+    expect(withVisit?.visit?.scripts).toEqual([])
+
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.visit).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ visit: { peek: "peek.png" } }))?.visit).toBe(
+      undefined,
+    )
+  })
+
   it("任意の tagline（ひとことプロフィール）を読む。無い・壊れた値・空白だけは undefined", () => {
     expect(
       parseCharacterDefinition(JSON.stringify({ tagline: "窓辺に棲む架空の精霊" }))?.tagline,

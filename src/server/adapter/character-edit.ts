@@ -79,12 +79,13 @@ import {
   readOptionalFile,
 } from "./character-pack.ts"
 
-/** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1・顔1）。 */
-const EXTRA_IMAGE_FILES_PER_PACK = 3
+/** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1・顔1・訪問の peek 1）。 */
+const EXTRA_IMAGE_FILES_PER_PACK = 4
 
 /**
- * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**立ち絵・ミニ立ち絵・背景・顔を
- * 全部入れた数**で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1 ＋ 顔1。
+ * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**立ち絵・ミニ立ち絵・背景・顔・
+ * 訪問の peek を全部入れた数**で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1 ＋
+ * 顔1 ＋ peek1。
  *
  * **数を直に書かないのは、表情を足したときに黙って足りなくなるから。** 表情が 6つから8つに
  * 増えたあとも 8 のまま据え置かれていて、立ち絵を全部そろえたパックでは背景の差し替えだけが
@@ -461,6 +462,7 @@ function referencedImageFileNames(definition: CharacterDefinition | undefined): 
     definition?.mini,
     definition?.background?.image,
     definition?.face,
+    definition?.visit?.peek,
   ].filter(isCharacterImageFileName)
   return [...new Set(names)]
 }

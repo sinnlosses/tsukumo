@@ -582,6 +582,40 @@ describe("editCharacterPack（顔）", () => {
   })
 })
 
+describe("editCharacterPack（訪問の peek）", () => {
+  it("visit を持つパックをほかの編集で写すとき、visit.peek もホームへ写る", () => {
+    const packDir = join(dir, "bundled", "tsukumo")
+    mkdirSync(packDir, { recursive: true })
+    writeFileSync(
+      join(packDir, "character.json"),
+      JSON.stringify({
+        name: "架空の精霊",
+        portraits: { default: "default.svg" },
+        visit: { peek: "peek.png", farewell: ["またね"] },
+      }),
+    )
+    writeFileSync(join(packDir, "default.svg"), PLAUSIBLE_SVG)
+    writeFileSync(join(packDir, "peek.png"), "x")
+
+    const edited = editCharacterPack(
+      readCharacterPack(packDir),
+      [],
+      {
+        type: "set-outfit-accent",
+        commandId: "c-1",
+        pack: "tsukumo",
+        outfit: "heavy",
+        color: "#ffb3a7",
+      },
+      join(dir, "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.visit?.peek).toBe("peek.png")
+    expect(existsSync(join(home(), "tsukumo", "peek.png"))).toBe(true)
+  })
+})
+
 describe("editCharacterPack（受け付けないもの）", () => {
   it("起動先の characters/local のパックは書かない（ホームに書いても次の起動で負けるため）", () => {
     const cwd = join(dir, "cwd")

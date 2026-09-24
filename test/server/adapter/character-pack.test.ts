@@ -571,4 +571,19 @@ describe("同梱パック chou（characters/chou/）", () => {
       expect(existsSync(join(chouDir, fileName))).toBe(true)
     }
   })
+
+  it("visit（客として訪ねてくるときの節）が読め、peek の絵が実在する", () => {
+    const chouDir = bundledFilePath("characters", "chou")
+    const pack = readCharacterPack(chouDir)
+
+    expect(pack.definition?.visit?.peek).toBe("peek.png")
+    expect(pack.definition?.visit?.farewell.length).toBeGreaterThan(0)
+    expect(pack.definition?.visit?.scripts.length).toBeGreaterThan(0)
+
+    const peek = pack.definition?.visit?.peek
+    expect(peek).toBeDefined()
+    if (peek !== undefined) {
+      expect(existsSync(join(chouDir, peek))).toBe(true)
+    }
+  })
 })

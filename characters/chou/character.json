@@ -23,5 +23,31 @@
     "sad": "sad.png",
     "flustered": "flustered.png",
     "bored": "bored.png"
+  },
+  "visit": {
+    "peek": "peek.png",
+    "farewell": [
+      "また覗きに来ますね。",
+      "お邪魔しました、続けてください。",
+      "わたしはこのへんで。またあとで。"
+    ],
+    "scripts": [
+      [
+        { "speaker": "guest", "expression": "curious", "text": "……何をしているんですか？" },
+        { "speaker": "host", "expression": "proud", "text": "見てのとおり、根を詰めてるとこ！" },
+        {
+          "speaker": "guest",
+          "expression": "proud",
+          "text": "そうですか。わたしも記録しておきますね。"
+        },
+        { "speaker": "host", "expression": "curious", "text": "お、手伝ってくれるの？" }
+      ],
+      [
+        { "speaker": "guest", "expression": "bored", "text": "……退屈してます？" },
+        { "speaker": "host", "expression": "sad", "text": "うっ、バレたか……" },
+        { "speaker": "guest", "expression": "proud", "text": "ふふ、もう少しの辛抱ですよ。" },
+        { "speaker": "host", "expression": "flustered", "text": "わ、分かってるって！" }
+      ]
+    ]
   }
 }

@@ -98,6 +98,7 @@ export function characterDefinition(
     miniCall: undefined,
     outfitAccents: outfitAccents(),
     background: undefined,
+    visit: undefined,
     ...overrides,
   }
 }

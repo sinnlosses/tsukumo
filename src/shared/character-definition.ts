@@ -12,6 +12,7 @@
 import { fromKeys, isPlainObject } from "remeda"
 
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
+import { type CharacterVisit, toCharacterVisit } from "./character-visit.ts"
 import {
   EXPRESSIONS,
   type Expression,
@@ -85,6 +86,12 @@ export type CharacterDefinition = {
    * `src/shared/character-background.ts` が undefined か帯の中の値に畳む。
    */
   readonly background: CharacterBackground | undefined
+  /**
+   * 客として訪ねてくるときにパックが持つもの（`docs/research/character-visit.md` 論点7）。型と
+   * 検証は {@link toCharacterVisit}（`src/shared/character-visit.ts`）が持つ。**任意**で、
+   * 持たないパックは客にならない。
+   */
+  readonly visit: CharacterVisit | undefined
 }
 
 /**
@@ -258,6 +265,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     miniCall: nonBlankString(value.miniCall),
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
+    visit: toCharacterVisit(value.visit),
   }
 }
 
