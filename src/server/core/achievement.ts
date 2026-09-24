@@ -9,8 +9,7 @@
 //   `doneTasks` を `unknown` にする）
 // - 日ごとの切り口（`main-history.ts` が `git` で取ったスナップショット）の中身から、
 //   `done` のタスクの ID と `summary` を集める（{@link doneTaskSummaries}。新形式・旧形式・
-//   アーカイブの3つの読み元。旧形式は `passes` まで読む——`src/shared/task-summary.ts` の
-//   `readTaskSummaries` は `passes` を持たないので、ここで別に読む）
+//   アーカイブの3つの読み元。旧形式はタスク板が読まなくなったので、`passes` まで含めてここで読む）
 // - 2つの切り口の差（前の日には無かった `done`）を取る（{@link doneTasksSince}）
 //
 // **会話の文面は扱わない**——運ぶのはコミットの数とタスクの ID・summary だけ
@@ -134,7 +133,7 @@ function isLedgerPath(path: string): boolean {
   )
 }
 
-// --- 旧形式（develop/tasks.json）。passes まで読む（shared の readTaskSummaries は持たない）。 ---
+// --- 旧形式（develop/tasks.json）。過去の切り口にだけ現れる。passes まで読む。 ---
 
 type OldFormatDoneTask = { readonly id: string; readonly summary: string }
 

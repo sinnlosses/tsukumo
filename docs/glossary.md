@@ -195,7 +195,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   背景のサブエージェントなど）。SDK の `system` / `background_tasks_changed` が顔ぶれ全体を
   運び、`ambient`（活動でないもの）は数えない
 - **注記**: 帯の「いまの作業」が、ターンの外でも「背景で作業中」として出す
-  （`docs/screen-design.md` 13.9「背景のタスク」）。**develop/tasks.json のタスク（サイドバーの
+  （`docs/screen-design.md` 13.9「背景のタスク」）。**develop/task/ のタスク（サイドバーの
   タスク一覧）とは別のもの**
 - **避ける言い方**: バックグラウンドジョブ、背景タスク（「タスク」単独はタスク一覧と紛れるので、
   「背景の」を付けて言う）

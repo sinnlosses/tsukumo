@@ -4,7 +4,7 @@
 `docs/research/architecture-rethink.md`）
 ステータス: **正典**。構造は `shared` / `server`（`core` と `adapter`）/ `browser` の3層 +
 `src/` 直下の配線（`docs/architecture.md`「現在の実装状況」）。**残っているのは
-キャラクターパック（7章）の段だけ**で、`develop/tasks.json` 側の別タスクとして進める。
+キャラクターパック（7章）の段だけ**で、`develop/task/` 側の別タスクとして進める。
 移行の段階そのものの記録は `docs/history/decision.md`「design.md 12. 移行の段階」にある。
 **13章「画面のデザイン」は `docs/screen-design.md` へ移した**（2026-09-23。節の番号 `13.x` は
 そのまま）。この設計書の中でファイル名を添えずに `13.6` のように書いた番号は、そちらの節を指す。
@@ -217,7 +217,7 @@ src/
       chat-summary.ts         雑談の要約の写しと印（~/.tsukumo/chat-summary/<pack>.md）
       chat-archive.ts         雑談の会話のアーカイブ（~/.tsukumo/chat-archive/<pack>/<日付>.jsonl）
       remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード）
-      task-summary.ts         main のタスク一覧の読み直し（main の先端の変化を tasks-changed イベントにする。新形式は develop/task/ を `git ls-tree` / `git cat-file --batch`、旧形式は develop/tasks.json を `git show`）
+      task-summary.ts         main のタスク一覧の読み直し（main の先端の変化を tasks-changed イベントにする。develop/task/ を `git ls-tree` / `git cat-file --batch` で読む）
       git.ts                  `git` を起こす唯一の口（`runGit` / `runGitCatFileBatch`）。task-summary.ts・main-history.ts・repository-file.ts が使う
       repository-file.ts      git 管理下のファイルの列挙（`git.ts` の `runGit` で `git ls-files` を呼ぶ）
       context-usage-log.ts    コンテキストの内訳の記録（ファイルに触るのはここだけ）。~/.tsukumo/context-usage/<日付>.jsonl
@@ -985,30 +985,27 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 起こしても負荷は無視できる。1回の見回りが終わってから次を予約するので、`git` が遅くても
 見回りは重ならない。
 
-**形式は2つ、読み方も2通り**（claude-skills の `docs/task-workflow-redesign.md`。移行の途中で
-T-528 が旧形式の読み方を消す）:
+**読むのは `develop/task/*.md` の front matter だけ**（claude-skills の
+`docs/task-workflow-redesign.md`。T-528 で develop/tasks.json の読み方を消した）:
 
-- **新形式**: 先端に `develop/task/` があれば（`git ls-tree --name-only <先端> develop/task/`
-  が1件でも返せば）、そちらを使う。列挙した `*.md` を `git cat-file --batch` の1回の子プロセスで
-  まとめて読み、front matter を `src/shared/task-summary.ts` の `parseNewTaskFile` が解釈する。
-  着手中（旧 `doing`）はファイルに書かれない（`develop/task/T-xxx.md` の3.2「着手中はファイルに
-  書かない」）ので、`git rev-parse --path-format=absolute --git-common-dir` で共有の `.git` の
-  台帳の場所を取り、`task-workflow/claim/` の直下のディレクトリ名（着手の印）を
-  `taskSummaryItemsOfNewTaskFiles` に渡して `status: "doing"` に読み替える。**`task claim` /
-  `task release` は共有の `.git` の中だけで完結し、`main` を動かさない**（claude-skills の
-  `docs/task-workflow-redesign.md` 4.2）ので、**先端が同じ見回りでも `task-workflow/claim/` の
-  一覧だけは毎回読み直し**、前回と違えば `onChange` する。このとき `git cat-file --batch` は
-  起こさず、前回読んだ front matter（`NewTaskFile[]`）に新しい印の集合を当て直すだけにする
-  （読む量を絞る）
-- **旧形式**: `develop/task/` が無ければ、いままでどおり `git show <先端>:./develop/tasks.json`
-  で読み、`readTaskSummaries` が解釈する（着手中はファイルの `status` がそのまま `"doing"` なので、
-  台帳は見ない）
+先端に `develop/task/` があれば（`git ls-tree --name-only <先端> develop/task/`
+が1件でも返せば）、そちらを使う。列挙した `*.md` を `git cat-file --batch` の1回の子プロセスで
+まとめて読み、front matter を `src/shared/task-summary.ts` の `parseNewTaskFile` が解釈する。
+着手中（旧 `doing`）はファイルに書かれない（`develop/task/T-xxx.md` の3.2「着手中はファイルに
+書かない」）ので、`git rev-parse --path-format=absolute --git-common-dir` で共有の `.git` の
+台帳の場所を取り、`task-workflow/claim/` の直下のディレクトリ名（着手の印）を
+`taskSummaryItemsOfNewTaskFiles` に渡して `status: "doing"` に読み替える。**`task claim` /
+`task release` は共有の `.git` の中だけで完結し、`main` を動かさない**（claude-skills の
+`docs/task-workflow-redesign.md` 4.2）ので、**先端が同じ見回りでも `task-workflow/claim/` の
+一覧だけは毎回読み直し**、前回と違えば `onChange` する。このとき `git cat-file --batch` は
+起こさず、前回読んだ front matter（`NewTaskFile[]`）に新しい印の集合を当て直すだけにする
+（読む量を絞る）。`develop/task/` が無ければ「不明」にする。
 
 - **`git` を起こすのはこのファイル自身**（`test/architecture.test.ts`「子プロセスを起こす箇所」の
   許可に入っている）。`main` の上のファイルを読む汎用の adapter を別に切らないのは、読み手が
   この一覧しかなく、切っても開くファイルが増えるだけで概念が増えないため
 - **`main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、
-  どちらの形式も無いときは `{ kind: "unknown" }`**。作業ツリーのファイルへは落とさない
+  `develop/task/` が無いときは `{ kind: "unknown" }`**。作業ツリーのファイルへは落とさない
   （読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る）。最初から
   読めないときは通知そのものを送らない（既定値の「不明」と同じ）
 - **`git` がタイムアウトしたときはその回を諦め**、覚えている状態も変えない（次の回で読み直す）

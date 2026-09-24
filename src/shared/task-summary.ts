@@ -1,16 +1,11 @@
 // タスク一覧の要約（id・summary・status・difficulty・loopable・依存）を読む。「読む」層。
-// 旧形式（develop/tasks.json）と新形式（develop/task/T-xxx.md の front matter）の両方の読み手を
-// 持つ（移行の途中。T-528 で旧形式の読み手を消す）。
+// develop/task/T-xxx.md の front matter（新形式）だけを読む。
 //
 // タスク一覧は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは別物。
 // ここは会話の内容を一切扱わない。
 //
 // ここはファイルI/Oを持たない。`main` の上のファイルを読み、`main` の先端が変わったら読み直すのは
-// src/server/adapter/task-summary.ts（どちらの形式で読むかの判定もそこの仕事）。
-
-import { isPlainObject } from "remeda"
-
-import { optionalString } from "./utils/optional-string.ts"
+// src/server/adapter/task-summary.ts。
 
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
@@ -29,8 +24,8 @@ export type TaskSummaryItem = {
 }
 
 /**
- * develop/tasks.json の一覧が読めているかどうか。**「まだ届いていない」（session-state.ts の
- * 初期値）と「読めない」（ファイルが無い・JSONとして壊れている・トップレベルが配列でない）を
+ * `develop/task/` の一覧が読めているかどうか。**「まだ届いていない」（session-state.ts の
+ * 初期値）と「読めない」（`develop/task/` が無い・front matter が INVALID）を
  * ここでは区別しない**——`watchTaskSummary`（`src/server/adapter/task-summary.ts`）は
  * `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは
  * 「まだ確認していない」と「確認して無かった」を型で分けられない。画面側もどちらも同じ
@@ -48,30 +43,6 @@ export type TaskSummaryResult =
 export type TaskReadiness =
   | { readonly kind: "ready" }
   | { readonly kind: "blocked"; readonly blockedBy: readonly string[] }
-
-/**
- * develop/tasks.json の内容から、一覧に出すフィールドをファイルの順で取り出す。**status ごとにまとめない**（サイドバーの決定。ファイルの順のまま出す）。
- *
- * `summary` が無い・空文字の要素は `task` フィールドの先頭行で代用する。`id` が文字列でない、
- * どちらも代用できない（`summary` も `task` も無い）要素は、その要素だけ読み飛ばす
- * （`docs/coding-standards.md`「型を迂回するキャストを使わない」と同じ、要素単位の安全側の判断）。
- * ファイル全体が JSON として不正、またはトップレベルが配列でないときは undefined を返す
- * （ファイルの形そのものが信用できないと判断する）。
- */
-export function readTaskSummaries(content: string): readonly TaskSummaryItem[] | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(content)
-  } catch {
-    return undefined
-  }
-
-  if (!Array.isArray(parsed)) {
-    return undefined
-  }
-
-  return parsed.flatMap((task) => taskSummaryItem(task))
-}
 
 /**
  * 1件の着手可否。**`task-workflow` の `status.py` と同じ規則**にする: `todo` 以外は判定せず、
@@ -222,46 +193,6 @@ export function taskSummaryItemsOfNewTaskFiles(
 ): readonly TaskSummaryItem[] {
   const items = files.map((task) => taskSummaryItemOfNewTaskFile(task, claimedIds))
   return [...items].sort((a, b) => newTaskIdNumber(a.id) - newTaskIdNumber(b.id))
-}
-
-function taskSummaryItem(task: unknown): readonly TaskSummaryItem[] {
-  if (!isPlainObject(task) || typeof task.id !== "string") {
-    return []
-  }
-
-  const summary =
-    typeof task.summary === "string" && task.summary !== "" ? task.summary : firstLineOf(task.task)
-  if (summary === undefined) {
-    return []
-  }
-
-  return [
-    {
-      id: task.id,
-      summary,
-      status: optionalString(task.status),
-      difficulty: optionalString(task.difficulty),
-      loopable: optionalString(task.loopable),
-      dependencies: dependenciesOf(task.dependencies),
-    },
-  ]
-}
-
-/** 依存は**文字列の配列のときだけ**受け取る。壊れていたら「依存なし」に倒す（表の1列が空になるだけ）。 */
-function dependenciesOf(value: unknown): readonly string[] {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value.flatMap((id: unknown) => (typeof id === "string" ? [id] : []))
-}
-
-function firstLineOf(value: unknown): string | undefined {
-  if (typeof value !== "string" || value === "") {
-    return undefined
-  }
-
-  return value.split("\n")[0]
 }
 
 function taskSummaryItemOfNewTaskFile(

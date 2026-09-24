@@ -51,17 +51,6 @@ function initRepository(branch: string): string {
   return repository
 }
 
-function writeTasks(cwd: string, tasks: readonly Record<string, string>[]): void {
-  mkdirSync(join(cwd, "develop"), { recursive: true })
-  writeFileSync(join(cwd, "develop", "tasks.json"), JSON.stringify(tasks))
-}
-
-function commitTasks(cwd: string, tasks: readonly Record<string, string>[]): void {
-  writeTasks(cwd, tasks)
-  git(cwd, "add", "develop/tasks.json")
-  git(cwd, "commit", "-m", "tasks")
-}
-
 /** 新形式（`develop/task/T-xxx.md`）の1件を front matter で書く（claude-skills の
  * `docs/task-workflow-redesign.md` 3.2）。 */
 function writeNewFormatTask(cwd: string, id: string, summary: string, status: string): void {
@@ -137,81 +126,75 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/** 通知されるはずの1件。**フィールドの一覧は shared 側の仕事**なので、ここでは1箇所にまとめて
- * 置き、この層が見ている「どこから・いつ読み直したか」だけがテストの主題であることを保つ。 */
-function notified(id: string, summary: string, status: string): Record<string, unknown> {
-  return { id, summary, status, difficulty: undefined, dependencies: [] }
-}
-
-/** `TaskSummaryResult` の `known` 側を、`notified` と組み合わせて作る。 */
+/** `TaskSummaryResult` の `known` 側を組み立てる。 */
 function known(...items: readonly Record<string, unknown>[]): Record<string, unknown> {
   return { kind: "known", items }
 }
 
-/** 新形式の1件（`difficulty`・`loopable` は `writeNewFormatTask` の既定値のまま）。 */
-function newFormatNotified(id: string, summary: string, status: string): Record<string, unknown> {
+/** 通知されるはずの1件（`difficulty`・`loopable` は `writeNewFormatTask` の既定値のまま）。 */
+function notified(id: string, summary: string, status: string): Record<string, unknown> {
   return { id, summary, status, difficulty: "sonnet", loopable: "Y", dependencies: [] }
 }
 
 const UNKNOWN: Record<string, unknown> = { kind: "unknown" }
 
 describe("watchTaskSummary", () => {
-  it("起こした時点で main の develop/tasks.json を読んで通知する", async () => {
+  it("起こした時点で main の develop/task/ を読んで通知する", async () => {
     const repository = initRepository("main")
-    commitTasks(repository, [{ id: "T-1", summary: "ダミーのタスク", status: "todo" }])
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "ダミーのタスク", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
 
-    expect(changes).toEqual([known(notified("T-1", "ダミーのタスク", "todo"))])
+    expect(changes).toEqual([known(notified("T-001", "ダミーのタスク", "todo"))])
   })
 
   it("main だけに入ったコミットが、merge main していない作業ツリーに届く（作業ツリーのファイルは見ない）", async () => {
     const repository = initRepository("main")
-    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const worktree = addWorktree(repository)
     const changes: unknown[] = []
     watch(worktree, changes)
     await waitForChanges(changes, 1)
 
     // 作業ツリーのファイルを書き換えても（コミットしても）main が動かなければ読み直さない。
-    commitTasks(worktree, [{ id: "T-9", summary: "作業ツリーだけ", status: "todo" }])
+    commitNewFormatTasks(worktree, [{ id: "T-009", summary: "作業ツリーだけ", status: "todo" }])
     await sleep(QUIET_PERIOD_MS)
     expect(changes).toHaveLength(1)
 
-    commitTasks(repository, [{ id: "T-2", summary: "2つめ", status: "in_progress" }])
+    commitNewFormatTasks(repository, [{ id: "T-002", summary: "2つめ", status: "done" }])
     await waitForChanges(changes, 2)
 
     expect(changes).toEqual([
-      known(notified("T-1", "1つめ", "todo")),
-      known(notified("T-2", "2つめ", "in_progress")),
+      known(notified("T-001", "1つめ", "todo")),
+      known(notified("T-001", "1つめ", "todo"), notified("T-002", "2つめ", "done")),
     ])
   })
 
-  it("main に develop/tasks.json が無くなったら「不明」を通知し、戻ったら追従する", async () => {
+  it("main の develop/task/ が無くなったら「不明」を通知し、戻ったら追従する", async () => {
     const repository = initRepository("main")
-    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
 
-    git(repository, "rm", "--quiet", "develop/tasks.json")
+    git(repository, "rm", "--quiet", "-r", "develop/task")
     git(repository, "commit", "-m", "remove")
     await waitForChanges(changes, 2)
 
-    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     await waitForChanges(changes, 3)
 
     expect(changes).toEqual([
-      known(notified("T-1", "1つめ", "todo")),
+      known(notified("T-001", "1つめ", "todo")),
       UNKNOWN,
-      known(notified("T-1", "1つめ", "todo")),
+      known(notified("T-001", "1つめ", "todo")),
     ])
   })
 
   it("main ブランチが無いリポジトリでは、作業ツリーにファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
     const repository = initRepository("trunk")
-    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
     await sleep(QUIET_PERIOD_MS)
@@ -220,7 +203,7 @@ describe("watchTaskSummary", () => {
   })
 
   it("git リポジトリでないディレクトリでは、ファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
-    writeTasks(root, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    writeNewFormatTask(root, "T-001", "1つめ", "todo")
     const changes: unknown[] = []
     watch(root, changes)
     await sleep(QUIET_PERIOD_MS)
@@ -230,122 +213,99 @@ describe("watchTaskSummary", () => {
 
   it("close するとそれ以降は通知しない", async () => {
     const repository = initRepository("main")
-    commitTasks(repository, [{ id: "T-1", summary: "1つめ", status: "todo" }])
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
     watcher?.close()
 
-    commitTasks(repository, [{ id: "T-2", summary: "2つめ", status: "todo" }])
+    commitNewFormatTasks(repository, [{ id: "T-002", summary: "2つめ", status: "todo" }])
     await sleep(QUIET_PERIOD_MS)
 
     expect(changes).toHaveLength(1)
   })
 
-  // 新形式・旧形式・どちらも無い（「不明」）の3通り（T-525 完了条件）。着手の印は
-  // develop/task/ が新形式のときだけ意味を持つ。
-  describe("develop/task/（新形式）", () => {
-    it("main の develop/task/ から ID の数字順で読む（ファイルの順ではない）", async () => {
-      const repository = initRepository("main")
-      commitNewFormatTasks(repository, [
-        { id: "T-030", summary: "後ろの番号", status: "todo" },
-        { id: "T-002", summary: "先の番号", status: "done" },
-      ])
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
+  it("main の develop/task/ から ID の数字順で読む（ファイルの順ではない）", async () => {
+    const repository = initRepository("main")
+    commitNewFormatTasks(repository, [
+      { id: "T-030", summary: "後ろの番号", status: "todo" },
+      { id: "T-002", summary: "先の番号", status: "done" },
+    ])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
 
-      expect(changes).toEqual([
-        known(
-          newFormatNotified("T-002", "先の番号", "done"),
-          newFormatNotified("T-030", "後ろの番号", "todo"),
-        ),
-      ])
-    })
-
-    it("develop/task/ があれば develop/tasks.json（旧形式）よりそちらを優先する", async () => {
-      const repository = initRepository("main")
-      writeTasks(repository, [{ id: "T-999", summary: "旧形式の残骸", status: "todo" }])
-      commitNewFormatTasks(repository, [{ id: "T-001", summary: "新形式", status: "todo" }])
-      git(repository, "add", "develop/tasks.json")
-      git(repository, "commit", "-m", "both")
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
-
-      expect(changes).toEqual([known(newFormatNotified("T-001", "新形式", "todo"))])
-    })
-
-    it("台帳に着手の印があるタスクは doing として出る（ファイルの status は todo のまま）", async () => {
-      const repository = initRepository("main")
-      commitNewFormatTasks(repository, [
-        { id: "T-001", summary: "着手中", status: "todo" },
-        { id: "T-002", summary: "未着手", status: "todo" },
-      ])
-      claim(repository, "T-001")
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
-
-      expect(changes).toEqual([
-        known(
-          newFormatNotified("T-001", "着手中", "doing"),
-          newFormatNotified("T-002", "未着手", "todo"),
-        ),
-      ])
-    })
-
-    it("着手の印は todo 以外には効かない（done はそのまま）", async () => {
-      const repository = initRepository("main")
-      commitNewFormatTasks(repository, [{ id: "T-001", summary: "済み", status: "done" }])
-      claim(repository, "T-001")
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
-
-      expect(changes).toEqual([known(newFormatNotified("T-001", "済み", "done"))])
-    })
-
-    // 台帳（着手の印）は共有の `.git` の中だけで完結し、`main` を動かさない（`task claim` /
-    // `task release`。claude-skills の `docs/task-workflow-redesign.md` 4.2）。**先端が同じ
-    // 見回りでも印だけ読み直して doing / todo を切り替える**（受け入れ時の差し戻し）。
-    it("main を動かさずに claim すると、次の見回りで doing になる", async () => {
-      const repository = initRepository("main")
-      commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
-      expect(changes).toEqual([known(newFormatNotified("T-001", "着手前", "todo"))])
-
-      claim(repository, "T-001")
-      await waitForChanges(changes, 2)
-
-      expect(changes).toEqual([
-        known(newFormatNotified("T-001", "着手前", "todo")),
-        known(newFormatNotified("T-001", "着手前", "doing")),
-      ])
-    })
-
-    it("main を動かさずに release すると、次の見回りで todo に戻る", async () => {
-      const repository = initRepository("main")
-      commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])
-      claim(repository, "T-001")
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
-      expect(changes).toEqual([known(newFormatNotified("T-001", "着手前", "doing"))])
-
-      release(repository, "T-001")
-      await waitForChanges(changes, 2)
-
-      expect(changes).toEqual([
-        known(newFormatNotified("T-001", "着手前", "doing")),
-        known(newFormatNotified("T-001", "着手前", "todo")),
-      ])
-    })
+    expect(changes).toEqual([
+      known(notified("T-002", "先の番号", "done"), notified("T-030", "後ろの番号", "todo")),
+    ])
   })
 
-  it("develop/tasks.json も develop/task/ も無い（どちらの形式も無い）ときは「不明」", async () => {
+  it("台帳に着手の印があるタスクは doing として出る（ファイルの status は todo のまま）", async () => {
+    const repository = initRepository("main")
+    commitNewFormatTasks(repository, [
+      { id: "T-001", summary: "着手中", status: "todo" },
+      { id: "T-002", summary: "未着手", status: "todo" },
+    ])
+    claim(repository, "T-001")
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    expect(changes).toEqual([
+      known(notified("T-001", "着手中", "doing"), notified("T-002", "未着手", "todo")),
+    ])
+  })
+
+  it("着手の印は todo 以外には効かない（done はそのまま）", async () => {
+    const repository = initRepository("main")
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "済み", status: "done" }])
+    claim(repository, "T-001")
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    expect(changes).toEqual([known(notified("T-001", "済み", "done"))])
+  })
+
+  // 台帳（着手の印）は共有の `.git` の中だけで完結し、`main` を動かさない（`task claim` /
+  // `task release`。claude-skills の `docs/task-workflow-redesign.md` 4.2）。**先端が同じ
+  // 見回りでも印だけ読み直して doing / todo を切り替える**（受け入れ時の差し戻し）。
+  it("main を動かさずに claim すると、次の見回りで doing になる", async () => {
+    const repository = initRepository("main")
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+    expect(changes).toEqual([known(notified("T-001", "着手前", "todo"))])
+
+    claim(repository, "T-001")
+    await waitForChanges(changes, 2)
+
+    expect(changes).toEqual([
+      known(notified("T-001", "着手前", "todo")),
+      known(notified("T-001", "着手前", "doing")),
+    ])
+  })
+
+  it("main を動かさずに release すると、次の見回りで todo に戻る", async () => {
+    const repository = initRepository("main")
+    commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])
+    claim(repository, "T-001")
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+    expect(changes).toEqual([known(notified("T-001", "着手前", "doing"))])
+
+    release(repository, "T-001")
+    await waitForChanges(changes, 2)
+
+    expect(changes).toEqual([
+      known(notified("T-001", "着手前", "doing")),
+      known(notified("T-001", "着手前", "todo")),
+    ])
+  })
+
+  it("develop/task/ が無いときは「不明」", async () => {
     const repository = initRepository("main")
     writeFileSync(join(repository, "README.md"), "架空のリポジトリ")
     git(repository, "add", "README.md")

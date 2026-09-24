@@ -221,7 +221,7 @@ function cutoffCommitOf(outcome: CutoffOutcome): string | undefined {
  * 1つの切り口ぶんのタスクの記録を読む。`cutoff` が `undefined`（切り口が無い＝リポジトリの
  * 最初の日）なら `git` を起こさずに空の読み元を返す。**新形式の列挙は1回の `git ls-tree`、
  * 中身（新形式のファイル・旧形式・アーカイブ）は1回の `git cat-file --batch`** にまとめる
- * （`task-summary.ts` の `readNewFormatTasksAtHead` と同じやり方）。
+ * （`task-summary.ts` の `readTasksAtHead` と同じやり方）。
  */
 async function readTaskSnapshotSource(
   cwd: string,
