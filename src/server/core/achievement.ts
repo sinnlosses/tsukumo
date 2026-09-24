@@ -17,6 +17,7 @@
 
 import { isPlainObject } from "remeda"
 
+import { type AchievementGraduation, type AchievementMilestone } from "../../shared/achievement.ts"
 import { parseNewTaskFile } from "../../shared/task-summary.ts"
 
 /** `git log` から読んだコミット1件（`main-history.ts` が `--name-only` の出力を割ったもの）。 */
@@ -40,12 +41,25 @@ export function countAchievementCommits(
   startEpochSeconds: number,
   endEpochSeconds: number,
 ): number {
+  return achievementCommitsInRange(commits, startEpochSeconds, endEpochSeconds).length
+}
+
+/**
+ * {@link countAchievementCommits} と同じ絞り込みで、該当するコミットそのもの（committer date
+ * の並び順のまま）を返す。**節目（コミットの節目。{@link commitMilestoneOf}）が、その日のどの
+ * 時刻のコミットで N 件目に届いたかを出すのに使う**——数だけでなく個々のコミットの時刻が要る。
+ */
+export function achievementCommitsInRange(
+  commits: readonly AchievementCommit[],
+  startEpochSeconds: number,
+  endEpochSeconds: number,
+): readonly AchievementCommit[] {
   return commits.filter(
     (commit) =>
       commit.committedAtEpochSeconds >= startEpochSeconds &&
       commit.committedAtEpochSeconds < endEpochSeconds &&
       !commit.changedFiles.every(isLedgerPath),
-  ).length
+  )
 }
 
 /** タスクの記録を読むための3つの読み元（`main-history.ts` が1つの切り口ぶん集めたもの）。 */
@@ -120,6 +134,216 @@ export function doneTasksSince(
   yesterday: ReadonlyMap<string, string>,
 ): readonly TaskSummaryDiffItem[] {
   return [...today].flatMap(([id, summary]) => (yesterday.has(id) ? [] : [{ id, summary }]))
+}
+
+/**
+ * 2つの読み元の `done` の ID → summary を足し合わせる。**同じ ID があれば先（`a`）を残す**
+ * （優先順は呼び出し側が決める。ここは足し合わせるだけ）。
+ */
+export function unionDoneTaskSummaries(
+  a: ReadonlyMap<string, string>,
+  b: ReadonlyMap<string, string>,
+): ReadonlyMap<string, string> {
+  const merged = new Map(a)
+  for (const [id, summary] of b) {
+    if (!merged.has(id)) {
+      merged.set(id, summary)
+    }
+  }
+  return merged
+}
+
+// --- タスクファイルの出入り（登録日・消えたファイル。docs/design.md「成果の集め方と配り方」「タスクファイルの出入り」） ---
+
+/** `develop/task/T-xxx.md` のパスから ID を取る。当てはまらなければ `undefined`。 */
+const TASK_FILE_PATH_PATTERN = /^develop\/task\/(T-\d{3,})\.md$/
+
+/**
+ * `develop/task/T-xxx.md` のパスから ID を取る（{@link TASK_FILE_PATH_PATTERN}）。
+ * `main-history.ts` が消えたファイル（`D`）の一覧を組み立てるのにも使う。
+ */
+export function taskFileIdOfPath(path: string): string | undefined {
+  return TASK_FILE_PATH_PATTERN.exec(path)?.[1]
+}
+
+/** `git log --name-status` の1行（`A\tdevelop/task/T-001.md` の形）。R（リネーム）は扱わない
+ * （タスクファイルはリネームしない運用のため）。 */
+export type TaskFileChange = { readonly status: string; readonly path: string }
+
+/**
+ * `git log H --first-parent --name-status -- develop/task/ develop/tasks.json` の1コミット分。
+ * `localDateKey` は committer date をローカルの日付に直したもの（`main-history.ts` が
+ * `local-time.ts` で変換して渡す。OS のタイムゾーンを読むのは adapter の仕事）。
+ */
+export type TaskFileHistoryCommit = {
+  readonly committedAtEpochSeconds: number
+  readonly localDateKey: string
+  readonly changes: readonly TaskFileChange[]
+}
+
+/**
+ * ファイルごとの登録日（最古の `A` のコミットの日付）の表（`docs/requirements.md` 4.11
+ * 「卒業と節目」）。**`develop/tasks.json` の `D` を含むコミット（形式の切り替え）で入った
+ * ファイルは表に入れない**——旧形式で登録したタスクとみなす。
+ */
+export function taskRegistrationDates(
+  commits: readonly TaskFileHistoryCommit[],
+): ReadonlyMap<string, string> {
+  const registeredOn = new Map<string, string>()
+
+  for (const commit of commits) {
+    const isFormatSwitch = commit.changes.some(
+      (change) => change.status === "D" && change.path === "develop/tasks.json",
+    )
+    if (isFormatSwitch) {
+      continue
+    }
+    for (const change of commit.changes) {
+      if (change.status !== "A") {
+        continue
+      }
+      const id = taskFileIdOfPath(change.path)
+      if (id === undefined) {
+        continue
+      }
+      const existing = registeredOn.get(id)
+      if (existing === undefined || commit.localDateKey < existing) {
+        registeredOn.set(id, commit.localDateKey)
+      }
+    }
+  }
+
+  return registeredOn
+}
+
+/**
+ * `develop/task/` から消えた（剪定された）ファイル1件。`content` は消したコミットの親の版
+ * （`<コミット>^:<パス>`。`main-history.ts` が `git cat-file --batch` で読む）。読めなかった
+ * ときは `undefined`。
+ */
+export type DeletedTaskFile = {
+  readonly id: string
+  readonly committedAtEpochSeconds: number
+  readonly content: string | undefined
+}
+
+/**
+ * 消えたファイルのうち、`beforeEpochSeconds` より前に消え、消える直前の版が `status: done` の
+ * ものを id → summary で返す（`docs/requirements.md` 4.11「`done` になった日」）。**切り口
+ * （{@link doneTaskSummaries}）の結果と {@link unionDoneTaskSummaries} で足し合わせて使う**——
+ * その日のうちに消されたタスクが、終えたタスクからも通算の数からも漏れないようにする。
+ */
+export function deletedDoneTaskSummariesBefore(
+  deletedFiles: readonly DeletedTaskFile[],
+  beforeEpochSeconds: number,
+): ReadonlyMap<string, string> {
+  const summaries = new Map<string, string>()
+  for (const file of deletedFiles) {
+    if (file.committedAtEpochSeconds >= beforeEpochSeconds || file.content === undefined) {
+      continue
+    }
+    const task = parseNewTaskFile(`${file.id}.md`, file.content)
+    if (task !== undefined && task.status === "done") {
+      summaries.set(file.id, task.summary)
+    }
+  }
+  return summaries
+}
+
+// --- 卒業と節目（docs/requirements.md 4.11「卒業と節目」）。区切りの値はプロトタイプとしての
+// 仮の値で、使いながら直す。---
+
+/** 卒業とみなす、登録からの日数の下限（仮）。 */
+export const GRADUATION_MIN_DAYS = 7
+
+/** タスクの節目の刻み（仮）。 */
+export const TASK_MILESTONE_STEP = 250
+
+/** コミットの節目の刻み（仮）。 */
+export const COMMIT_MILESTONE_STEP = 1000
+
+/**
+ * その日に終えたタスク（{@link doneTasksSince} の結果に消えたファイルの分も足したもの）のうち、
+ * 登録から {@link GRADUATION_MIN_DAYS} 日以上経っていたものを、登録の古い順で返す
+ * （`docs/requirements.md` 4.11「先輩タスクの卒業」。登録日が無い＝旧形式や形式切り替えで
+ * 登録したタスクは対象にしない）。`endedOn` はその日の日付キー（終えた日）。
+ */
+export function graduationsOf(
+  items: readonly TaskSummaryDiffItem[],
+  registeredOnById: ReadonlyMap<string, string>,
+  endedOn: string,
+): readonly AchievementGraduation[] {
+  const endedOnDate = Temporal.PlainDate.from(endedOn)
+  return items
+    .flatMap((item) => {
+      const registeredOn = registeredOnById.get(item.id)
+      if (registeredOn === undefined) {
+        return []
+      }
+      const days = endedOnDate.since(Temporal.PlainDate.from(registeredOn), {
+        largestUnit: "day",
+      }).days
+      return days >= GRADUATION_MIN_DAYS
+        ? [{ id: item.id, summary: item.summary, registeredOn, days }]
+        : []
+    })
+    .sort((a, b) =>
+      a.registeredOn < b.registeredOn ? -1 : a.registeredOn > b.registeredOn ? 1 : 0,
+    )
+}
+
+/** `T-561` の数の部分（`561`）。並び替えだけに使う。桁が読めなければ `Number.POSITIVE_INFINITY`
+ * （並びの最後に落ちるだけで、例外は投げない）。 */
+function taskIdNumber(id: string): number {
+  const match = /^T-(\d+)$/.exec(id)
+  const digits = match?.[1]
+  return digits === undefined ? Number.POSITIVE_INFINITY : Number(digits)
+}
+
+/**
+ * タスクの節目（`docs/requirements.md` 4.11「節目」）。その日に終えたタスクを ID の順に、
+ * 前の日の終わりまでの通算の数（`totalBeforeToday`）に足していき、{@link TASK_MILESTONE_STEP}
+ * の倍数に届いたものを返す。**1日に複数の刻みをまたいだら、大きいほう（最後に届いたもの）
+ * だけ**を返す（forward に足していくので、あとから見つかったほうが自然に上書きする）。
+ */
+export function taskMilestoneOf(
+  items: readonly TaskSummaryDiffItem[],
+  totalBeforeToday: number,
+): AchievementMilestone | undefined {
+  const sorted = [...items].sort((a, b) => taskIdNumber(a.id) - taskIdNumber(b.id))
+  let running = totalBeforeToday
+  let crossed: { readonly count: number; readonly taskId: string } | undefined
+  for (const item of sorted) {
+    running += 1
+    if (running % TASK_MILESTONE_STEP === 0) {
+      crossed = { count: running, taskId: item.id }
+    }
+  }
+  return crossed === undefined
+    ? undefined
+    : { kind: "task", count: crossed.count, taskId: crossed.taskId }
+}
+
+/**
+ * コミットの節目（`docs/requirements.md` 4.11「節目」）。その日のコミットを committer date の
+ * 順に、前の日の終わりまでの通算の数に足していき、{@link COMMIT_MILESTONE_STEP} の倍数に
+ * 届いたものを返す。**時刻（`HH:MM`）はここでは組み立てない**——呼び出し側
+ * （`main-history.ts`）が `local-time.ts` で committer date（エポック秒）から組み立てる。
+ */
+export function commitMilestoneOf(
+  todaysCommitEpochSeconds: readonly number[],
+  totalBeforeToday: number,
+): { readonly count: number; readonly committedAtEpochSeconds: number } | undefined {
+  const sorted = [...todaysCommitEpochSeconds].sort((a, b) => a - b)
+  let running = totalBeforeToday
+  let crossed: { readonly count: number; readonly committedAtEpochSeconds: number } | undefined
+  for (const epochSeconds of sorted) {
+    running += 1
+    if (running % COMMIT_MILESTONE_STEP === 0) {
+      crossed = { count: running, committedAtEpochSeconds: epochSeconds }
+    }
+  }
+  return crossed
 }
 
 /** コミットの数から外すファイル（`docs/requirements.md` 4.11「運用の帳面」）。 */

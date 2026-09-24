@@ -20,6 +20,8 @@ const FIXTURE_ACHIEVEMENT = {
   today: "2026-09-24",
   commitCount: 5,
   doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+  graduations: [],
+  milestones: [],
 } satisfies DailyAchievement
 
 describe("readDailyAchievement", () => {
@@ -31,6 +33,18 @@ describe("readDailyAchievement", () => {
     const achievement = {
       ...FIXTURE_ACHIEVEMENT,
       doneTasks: { kind: "unknown" },
+    } satisfies DailyAchievement
+    expect(readDailyAchievement(achievement)).toEqual(achievement)
+  })
+
+  it("卒業と節目もそのまま読む", () => {
+    const achievement = {
+      ...FIXTURE_ACHIEVEMENT,
+      graduations: [{ id: "T-1", summary: "架空のタスク", registeredOn: "2026-09-10", days: 13 }],
+      milestones: [
+        { kind: "task", count: 250, taskId: "T-1" },
+        { kind: "commit", count: 1000, time: "09:30" },
+      ],
     } satisfies DailyAchievement
     expect(readDailyAchievement(achievement)).toEqual(achievement)
   })

@@ -41,6 +41,12 @@ export function localDateEpochRange(dateKey: string): {
   }
 }
 
+/** ローカル時刻の `HH:MM`（節目のコミットの時刻。`docs/requirements.md` 4.11「節目」。
+ * 件名は出さず時刻だけ出す決まりなので、日付は含めない）。 */
+export function localTimeHHMM(epochMilliseconds: number): string {
+  return localTimeAt(epochMilliseconds).toPlainTime().toString({ smallestUnit: "minute" })
+}
+
 /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
 export function isoWithOffset(epochMilliseconds: number): string {
   // 秒より下は書かない（既に積んだ行と同じ書式を保つ。`fractionalSecondDigits` の既定は

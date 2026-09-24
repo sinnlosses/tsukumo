@@ -14,17 +14,28 @@
 
 import { basename } from "node:path"
 
-import { type DailyAchievement } from "../../shared/achievement.ts"
+import { type AchievementMilestone, type DailyAchievement } from "../../shared/achievement.ts"
 import {
+  achievementCommitsInRange,
+  commitMilestoneOf,
   countAchievementCommits,
+  deletedDoneTaskSummariesBefore,
   doneTasksSince,
   doneTaskSummaries,
+  graduationsOf,
   hasTaskTracking,
+  taskFileIdOfPath,
+  taskMilestoneOf,
+  taskRegistrationDates,
+  unionDoneTaskSummaries,
   type AchievementCommit,
+  type DeletedTaskFile,
+  type TaskFileChange,
+  type TaskFileHistoryCommit,
   type TaskSnapshotSource,
 } from "../core/achievement.ts"
 import { runGit, runGitCatFileBatch } from "./git.ts"
-import { localDateEpochRange } from "./local-time.ts"
+import { localDateEpochRange, localDateKey, localTimeHHMM } from "./local-time.ts"
 
 /** 完全な参照名で指す（`task-summary.ts` と同じ理由）。 */
 const MAIN_BRANCH_REF = "refs/heads/main"
@@ -66,6 +77,8 @@ export async function readAchievement(
   }
 
   const range = localDateEpochRange(dateKey)
+  const startEpochSeconds = epochSecondsOf(range.startEpochMilliseconds)
+  const endEpochSeconds = epochSecondsOf(range.endEpochMilliseconds)
 
   const commits = await readCommitsSince(
     cwd,
@@ -75,11 +88,22 @@ export async function readAchievement(
   if (commits === undefined) {
     return { kind: "unavailable" }
   }
-  const commitCount = countAchievementCommits(
+  const commitCount = countAchievementCommits(commits, startEpochSeconds, endEpochSeconds)
+
+  // 節目（コミットの節目）は、タスクの記録の有無に関わらず出す（`docs/requirements.md`
+  // 4.11「タスクの記録が無いリポジトリでは、卒業とタスクの節目は出さない（コミットの節目は
+  // 出す）」）。通算の数は履歴の頭から end までの1回の `git log` で数える。
+  const allCommitsUntilEnd = await readAllCommitsUntil(cwd, head, range.endEpochMilliseconds)
+  if (allCommitsUntilEnd === undefined) {
+    return { kind: "unavailable" }
+  }
+  const totalCommitsBeforeToday = countAchievementCommits(allCommitsUntilEnd, 0, startEpochSeconds)
+  const todaysCommitEpochSeconds = achievementCommitsInRange(
     commits,
-    epochSecondsOf(range.startEpochMilliseconds),
-    epochSecondsOf(range.endEpochMilliseconds),
-  )
+    startEpochSeconds,
+    endEpochSeconds,
+  ).map((commit) => commit.committedAtEpochSeconds)
+  const commitMilestone = commitMilestoneOfDay(todaysCommitEpochSeconds, totalCommitsBeforeToday)
 
   const headSource = await readTaskSnapshotSource(cwd, head)
   if (headSource === "unavailable") {
@@ -94,6 +118,8 @@ export async function readAchievement(
         today,
         commitCount,
         doneTasks: { kind: "unknown" },
+        graduations: [],
+        milestones: commitMilestone === undefined ? [] : [commitMilestone],
       },
     }
   }
@@ -114,7 +140,31 @@ export async function readAchievement(
     return { kind: "unavailable" }
   }
 
-  const items = doneTasksSince(doneTaskSummaries(todaySource), doneTaskSummaries(yesterdaySource))
+  // タスクファイルの出入り（登録日・消えたファイル）。
+  const history = await readTaskFileHistory(cwd, head)
+  if (history === undefined) {
+    return { kind: "unavailable" }
+  }
+  const deletedFiles = await readDeletedTaskFiles(cwd, history.deletions)
+  if (deletedFiles === undefined) {
+    return { kind: "unavailable" }
+  }
+  const registeredOnById = taskRegistrationDates(history.commits)
+
+  const endUnion = unionDoneTaskSummaries(
+    doneTaskSummaries(todaySource),
+    deletedDoneTaskSummariesBefore(deletedFiles, endEpochSeconds),
+  )
+  const startUnion = unionDoneTaskSummaries(
+    doneTaskSummaries(yesterdaySource),
+    deletedDoneTaskSummariesBefore(deletedFiles, startEpochSeconds),
+  )
+  const items = doneTasksSince(endUnion, startUnion)
+  const graduations = graduationsOf(items, registeredOnById, dateKey)
+  const taskMilestone = taskMilestoneOf(items, startUnion.size)
+  const milestones = [taskMilestone, commitMilestone].filter(
+    (milestone): milestone is AchievementMilestone => milestone !== undefined,
+  )
 
   return {
     kind: "ok",
@@ -124,8 +174,48 @@ export async function readAchievement(
       today,
       commitCount,
       doneTasks: { kind: "known", items },
+      graduations,
+      milestones,
     },
   }
+}
+
+/** {@link commitMilestoneOf} の結果を {@link AchievementMilestone} の形にする（時刻は
+ * `local-time.ts` で組み立てる）。 */
+function commitMilestoneOfDay(
+  todaysCommitEpochSeconds: readonly number[],
+  totalCommitsBeforeToday: number,
+): AchievementMilestone | undefined {
+  const crossed = commitMilestoneOf(todaysCommitEpochSeconds, totalCommitsBeforeToday)
+  return crossed === undefined
+    ? undefined
+    : {
+        kind: "commit",
+        count: crossed.count,
+        time: localTimeHHMM(crossed.committedAtEpochSeconds * 1000),
+      }
+}
+
+/**
+ * 履歴の頭から `untilEpochMs` までの全コミット（`--no-merges`、`git log --until`）。
+ * 通算のコミットの数（節目）を数えるのに使う。**まだ覚えない**——今日以外の日の数を覚える
+ * 入れ物は暦と共有する形で足す（`docs/design.md`「成果の集め方と配り方」手順7）。それまでは
+ * 1回の応答ごとに数え直す（同じ日は同じ値になる）。
+ */
+async function readAllCommitsUntil(
+  cwd: string,
+  head: string,
+  untilEpochMs: number,
+): Promise<readonly AchievementCommit[] | undefined> {
+  const result = await runGit(cwd, [
+    "log",
+    head,
+    "--no-merges",
+    `--until=${instantOf(untilEpochMs)}`,
+    `--format=${COMMIT_RECORD_SEPARATOR}%H %ct`,
+    "--name-only",
+  ])
+  return result.kind === "output" ? parseCommitLog(result.stdout) : undefined
 }
 
 /** `main` の先端。取れなければ `undefined`（「`main` が読めない」。冒頭のコメント）。 */
@@ -261,6 +351,133 @@ async function readTaskSnapshotSource(
 /** `git ls-tree --name-only` の出力を、`.md` のパスだけに絞る（`task-summary.ts` と同じ）。 */
 function taskFilePathsOf(output: string): readonly string[] {
   return output.split("\n").filter((line) => line.endsWith(".md"))
+}
+
+// --- タスクファイルの出入り（登録日・消えたファイル） ---
+
+/** {@link readTaskFileHistory} の結果。`commits` は登録日の表（`taskRegistrationDates`）が使う形、
+ * `deletions` は {@link readDeletedTaskFiles} が消える直前の版を読むのに使う一覧。 */
+type TaskFileHistory = {
+  readonly commits: readonly TaskFileHistoryCommit[]
+  readonly deletions: readonly TaskFileDeletion[]
+}
+
+/** 消えた（`D`）タスクファイル1件。`request` は `git cat-file --batch` に渡す `<コミット>^:<パス>`
+ * （消したコミットの親の版＝消える直前の版）。 */
+type TaskFileDeletion = {
+  readonly id: string
+  readonly committedAtEpochSeconds: number
+  readonly request: string
+}
+
+/** {@link parseTaskFileHistoryLog} の1コミット分。`hash` は消えたファイルの一覧を組み立てる
+ * ためだけに要り、core へは渡さない（core の {@link TaskFileHistoryCommit} は持たない）。 */
+type RawTaskFileHistoryCommit = {
+  readonly hash: string
+  readonly committedAtEpochSeconds: number
+  readonly changes: readonly TaskFileChange[]
+}
+
+/**
+ * `develop/task/` と `develop/tasks.json` の出入りを、`git log --name-status` 1回で読む
+ * （`docs/design.md`「成果の集め方と配り方」「タスクファイルの出入り」）。`git` が失敗・タイムアウトしたら `undefined`。
+ */
+async function readTaskFileHistory(
+  cwd: string,
+  head: string,
+): Promise<TaskFileHistory | undefined> {
+  const result = await runGit(cwd, [
+    "log",
+    head,
+    "--first-parent",
+    `--format=${COMMIT_RECORD_SEPARATOR}%H %ct`,
+    "--name-status",
+    "--",
+    TASK_DIR_PATH,
+    TASKS_FILE_PATH,
+  ])
+  if (result.kind !== "output") {
+    return undefined
+  }
+
+  const rawCommits = parseTaskFileHistoryLog(result.stdout)
+  const commits = rawCommits.map((commit) => ({
+    committedAtEpochSeconds: commit.committedAtEpochSeconds,
+    localDateKey: localDateKey(commit.committedAtEpochSeconds * 1000),
+    changes: commit.changes,
+  }))
+  const deletions = rawCommits.flatMap((commit) =>
+    commit.changes.flatMap((change) => {
+      if (change.status !== "D") {
+        return []
+      }
+      const id = taskFileIdOfPath(change.path)
+      return id === undefined
+        ? []
+        : [
+            {
+              id,
+              committedAtEpochSeconds: commit.committedAtEpochSeconds,
+              request: `${commit.hash}^:${change.path}`,
+            },
+          ]
+    }),
+  )
+  return { commits, deletions }
+}
+
+/** {@link readTaskFileHistory} の出力を割る。壊れた1件（見出し行が読めない）はその1件だけ捨てる
+ * （{@link parseCommitLog} と同じ形）。 */
+function parseTaskFileHistoryLog(output: string): readonly RawTaskFileHistoryCommit[] {
+  return output.split(COMMIT_RECORD_SEPARATOR).flatMap((record) => {
+    if (record === "") {
+      return []
+    }
+    const lines = record.split("\n")
+    const header = lines[0]
+    const [hash, committedAt] = header === undefined ? [] : header.split(" ")
+    const committedAtEpochSeconds = committedAt === undefined ? NaN : Number(committedAt)
+    if (hash === undefined || hash === "" || !Number.isInteger(committedAtEpochSeconds)) {
+      return []
+    }
+    return [{ hash, committedAtEpochSeconds, changes: lines.slice(1).flatMap(taskFileChangeOf) }]
+  })
+}
+
+/** `--name-status` の1行（`A\tpath` の形）。**リネーム（`R100\told\tnew`）は拾わない**——タスク
+ * ファイルはリネームしない運用で、`old` 側のパスだけ拾っても登録日にも消えたファイルにも使えない。 */
+function taskFileChangeOf(line: string): readonly TaskFileChange[] {
+  if (line === "") {
+    return []
+  }
+  const [status, path] = line.split("\t")
+  return status === undefined || path === undefined || status.startsWith("R")
+    ? []
+    : [{ status, path }]
+}
+
+/**
+ * 消えたファイルの、消える直前の版を1回の `git cat-file --batch` で読む。
+ * **`git` そのものが失敗・タイムアウトしたときだけ `undefined`**——個々のファイルが読めない
+ * （blob が既に無い）だけなら {@link DeletedTaskFile} の `content` が `undefined` になり、
+ * 呼び出し側（`deletedDoneTaskSummariesBefore`）がその1件だけ読み飛ばす。
+ */
+async function readDeletedTaskFiles(
+  cwd: string,
+  deletions: readonly TaskFileDeletion[],
+): Promise<readonly DeletedTaskFile[] | undefined> {
+  const batch = await runGitCatFileBatch(
+    cwd,
+    deletions.map((deletion) => deletion.request),
+  )
+  if (batch.kind !== "output") {
+    return undefined
+  }
+  return deletions.map((deletion, index) => ({
+    id: deletion.id,
+    committedAtEpochSeconds: deletion.committedAtEpochSeconds,
+    content: batch.contents[index],
+  }))
 }
 
 /** エポックミリ秒を `git` の `--since` / `--before` に渡す ISO 8601（UTC）にする。絶対時刻なので

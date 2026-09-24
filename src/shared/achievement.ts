@@ -33,6 +33,27 @@ export type AchievementDoneTasks =
   | { readonly kind: "known"; readonly items: readonly AchievementTask[] }
 
 /**
+ * 先輩タスクの卒業1件（`docs/requirements.md` 4.11「卒業と節目」）。**登録から7日以上経っていた**
+ * その日に終えたタスクだけが対象。
+ */
+export type AchievementGraduation = {
+  readonly id: string
+  readonly summary: string
+  /** 登録日（`YYYY-MM-DD`）。ファイルが初めて `main` に入ったコミットの日付。 */
+  readonly registeredOn: string
+  /** 登録から終えた日までの日数。 */
+  readonly days: number
+}
+
+/**
+ * 節目1件（`docs/requirements.md` 4.11「卒業と節目」）。通算のタスクの数・コミットの数が
+ * 刻みの倍数をその日にまたいだとき。1日に同じ種類を複数またいでも大きいほう1つだけ。
+ */
+export type AchievementMilestone =
+  | { readonly kind: "task"; readonly count: number; readonly taskId: string }
+  | { readonly kind: "commit"; readonly count: number; readonly time: string }
+
+/**
  * `GET /achievement` の応答。`main` が読めない（git リポジトリでない・`main` ブランチが無い・
  * `git` が無い）ときは画面ごと `unknown`。
  */
@@ -46,6 +67,10 @@ export type DailyAchievement =
       readonly today: string
       readonly commitCount: number
       readonly doneTasks: AchievementDoneTasks
+      /** 該当が無ければ空の並び。タスクの記録が無いリポジトリではいつも空。 */
+      readonly graduations: readonly AchievementGraduation[]
+      /** 該当が無ければ空の並び。タスクの記録が無いリポジトリでは節目「task」はいつも空。 */
+      readonly milestones: readonly AchievementMilestone[]
     }
 
 /** 読めない・配られない形は「取れなかった」に倒す既定値。 */
@@ -58,6 +83,18 @@ const achievementDoneTasksSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("known"), items: z.array(achievementTaskSchema) }),
 ])
 
+const achievementGraduationSchema = z.object({
+  id: z.string(),
+  summary: z.string(),
+  registeredOn: z.string(),
+  days: z.number(),
+})
+
+const achievementMilestoneSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("task"), count: z.number(), taskId: z.string() }),
+  z.object({ kind: z.literal("commit"), count: z.number(), time: z.string() }),
+])
+
 const dailyAchievementSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({
@@ -66,6 +103,8 @@ const dailyAchievementSchema = z.discriminatedUnion("kind", [
     today: z.string(),
     commitCount: z.number(),
     doneTasks: achievementDoneTasksSchema,
+    graduations: z.array(achievementGraduationSchema),
+    milestones: z.array(achievementMilestoneSchema),
   }),
 ])
 
