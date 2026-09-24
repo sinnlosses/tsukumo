@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, join } from "node:path"
 
+import { bundledFilePath } from "../../../src/server/adapter/bundled-path.ts"
 import {
   characterChangedEvent,
   isEditableCharacterPack,
@@ -538,5 +539,25 @@ describe("readCharacterAsset", () => {
     expect(
       readCharacterAsset(current, [current, other], { pack: "..", fileName: "other.svg" }),
     ).toBeUndefined()
+  })
+})
+
+// 同梱パック chou は設定画から切り出した実物の素材を使うので、フィクスチャでなく
+// リポジトリ上の実ファイルを読んで definition の読み取りとポートレートの存在を確かめる。
+describe("同梱パック chou（characters/chou/）", () => {
+  it("character.json が読め、portraits に挙げたファイルが実在する", () => {
+    const chouDir = bundledFilePath("characters", "chou")
+    const pack = readCharacterPack(chouDir)
+
+    expect(pack.definition?.name).toBe("帳")
+    expect(pack.definition?.portraits.default).toBe("default.png")
+
+    const portraits = pack.definition?.portraits
+    for (const fileName of Object.values(portraits ?? {})) {
+      if (fileName === undefined) {
+        continue
+      }
+      expect(existsSync(join(chouDir, fileName))).toBe(true)
+    }
   })
 })

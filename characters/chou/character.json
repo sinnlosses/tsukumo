@@ -1,0 +1,26 @@
+{
+  "name": "帳",
+  "tagline": "膝くらいの背丈の、古い帳面の付喪神",
+  "userCall": "せんぱい",
+  "miniCall": "帳面",
+  "description": "古い帳面に宿った付喪神。表紙に狐火をまとい、膝くらいの背丈で記録係をしている。立ち絵は assets/chou-design-sheet.png の表情6つから切り出した（地の除去は仮）。",
+  "license": "このリポジトリのために自作したもの（assets/chou-design-sheet.png 由来）。リポジトリのライセンスに従って自由に使ってよい。",
+  "accent": "#6a7180",
+  "chatAccent": "#cbb896",
+  "expressions": {
+    "default": "通常",
+    "proud": "にっこり",
+    "curious": "きょとん",
+    "sad": "しょんぼり",
+    "flustered": "びっくり",
+    "bored": "ねむい"
+  },
+  "portraits": {
+    "default": "default.png",
+    "proud": "proud.png",
+    "curious": "curious.png",
+    "sad": "sad.png",
+    "flustered": "flustered.png",
+    "bored": "bored.png"
+  }
+}
