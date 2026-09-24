@@ -17,9 +17,9 @@
     "dependencies": [],
     "summary": "既定の effort を high から medium に下げる（Opus 5.5 の既定に合わせる）",
     "task": "## 背景\n\n2026-09-24 のプロンプト監査（`/claude-api prompt-audit`）で見つかった F4。\n\n`src/server/adapter/sdk-driver.ts:59-63` の `DEFAULT_EFFORT` は `\"high\"` で、`buildQuerySeedOptions` がすべてのセッションの `query()` に渡す。`docs/requirements.md` 4.1（253行）に「既定のモデルは Opus、既定の effort は high（ユーザーの指示、2026-09-12）」とある。これは前の Opus に合わせて決めた値。\n\nClaude Opus 5.5 は API の既定の effort が `medium` に下がり、同じ段でも前の Opus（Opus 5）より多く考える。移行ガイドは `medium` から測り直すよう勧めている（Opus 5.5 の `medium` は、コーディングで Opus 5 の `high` 以上）。\n\n## 決まっていること（蒸し返さない）\n\n- 既定の effort を `medium` にする（利用者の指示「提案通りに修正」。2026-09-12 の high の指示を置き換える）\n\n## やること\n\n1. `src/server/adapter/sdk-driver.ts` の `DEFAULT_EFFORT` を `\"medium\"` にし、JSDoc の「high に固定した」を消して `既定の reasoning effort（docs/requirements.md 4.1）。画面には出さない（設定するだけ）。` にする\n2. `test/server/adapter/sdk-driver.test.ts` の「同梱の既定（opus）と既定の effort（high）を渡す」を `medium` に、`expect(seed.effort).toBe(\"high\")` を `toBe(\"medium\")` に直す\n3. `docs/requirements.md` 253行の「**既定のモデルは Opus、既定の effort は high**（ユーザーの指示、2026-09-12）。」を「**既定のモデルは Opus、既定の effort は medium**（2026-09-12 のユーザーの指示では high。Opus 5.5 で API の既定が medium に下がり、同じ段でも前の Opus より多く考えるため、2026-09-24 に見直した）。」にする。**`docs/requirements.md` は冒頭の節の索引に見出し名が入っているので、行頭を含めて位置を特定し、編集の前後で `grep -c '^#\\{2,3\\} ' docs/requirements.md` が同じことを確かめる**\n4. `grep -rn '\"high\"\\|effort は high\\|effort（high）' src test docs | grep -v docs/history` で取り残しを探し、effort の既定を言っているものがあれば直す\n5. `bun run check` を通す\n\n## 完了条件\n\n- `DEFAULT_EFFORT` が `\"medium\"` で、`test/server/adapter/sdk-driver.test.ts` がそれを確かめている\n- `bun run check` が通る\n\n## 注意\n\n- effort は画面に出さない（`docs/requirements.md` 4.1）。画面の要素は足さない",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（2151 pass / 0 fail、163 files）。DEFAULT_EFFORT = \"medium\" を test/server/adapter/sdk-driver.test.ts が確かめる。docs/requirements.md 4.1 の既定を medium に直し、見出し数は前後とも25"
   },
   {
     "id": "T-509",

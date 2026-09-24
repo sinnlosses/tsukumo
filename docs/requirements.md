@@ -250,7 +250,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 - **モデルと許可モードは SDK のオプションで渡す**（`/model` を入力文字列として送らない）。
   どちらも画面から切り替えられるようにする。**既定の許可モードは `auto`**（`default` だと
   読み取り専用以外が逐一 `canUseTool` に届く。実測は `docs/history/decision.md`）
-- **既定のモデルは Opus、既定の effort は high**（ユーザーの指示、2026-09-12）。`effort` は
+- **既定のモデルは Opus、既定の effort は medium**（2026-09-12 のユーザーの指示では high。Opus 5.5 で API の既定が medium に下がり、同じ段でも前の Opus より多く考えるため、2026-09-24 に見直した）。`effort` は
   `query()` に渡すだけで、画面には出さない。**effort は外から観測できない**（実測は
   `docs/history/decision.md`）ので、画面の切り替えで保たれるかは分からない。**分からないことを
   前提に、effort を画面の要素にしない**

@@ -45,12 +45,12 @@ const BASE_OPTIONS: SessionDriverOptions = {
 }
 
 describe("buildQuerySeedOptions", () => {
-  it("同梱の既定（opus）と既定の effort（high）を渡す", () => {
+  it("同梱の既定（opus）と既定の effort（medium）を渡す", () => {
     const seed = buildQuerySeedOptions(BASE_OPTIONS)
 
     expect(seed.model).toBe("opus")
     expect(seed.effort).toBe(DEFAULT_EFFORT)
-    expect(seed.effort).toBe("high")
+    expect(seed.effort).toBe("medium")
   })
 
   // 覚えた既定（`~/.tsukumo/state.json`）は配線層が読んで `SessionDriverOptions` に載せる

@@ -57,10 +57,9 @@ import { scheduleMarkSession } from "./sdk-session.ts"
 import { tsukumoServer } from "./sdk-tool.ts"
 
 /**
- * 既定の reasoning effort。high に固定した
- * （docs/requirements.md 4.1）。画面には出さない（設定するだけ）。
+ * 既定の reasoning effort（docs/requirements.md 4.1）。画面には出さない（設定するだけ）。
  */
-export const DEFAULT_EFFORT: EffortLevel = "high"
+export const DEFAULT_EFFORT: EffortLevel = "medium"
 
 /**
  * Agent SDK の駆動を1つ起こす（`docs/glossary.md`「セッション駆動」の実装）。**この関数は

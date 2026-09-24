@@ -86,7 +86,7 @@
 | ----------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `test/server/core/session-launch.test.ts:107`         | `expect(driver).toBeDefined()`                                              | `createSessionLaunch` の戻り値は `Promise<SessionDriver>` で `undefined` を取らない（型）。同テストの `harness.calls` の並びが本体                           |
 | `test/browser/features/sidebar/activity.test.tsx:100` | `expect(container.querySelector("details.activity-failure")).toBeDefined()` | `querySelector` は無いとき `null` を返し、`null` は `toBeDefined()` を**通る**ので常に真。直後の2行（`pre.activity-failure-input` / `-output` の中身）が本体 |
-| `test/server/adapter/sdk-driver.test.ts:70`           | `expect(MODEL_ALIASES).toContain(DEFAULT_MODEL)`                            | 直前の `toEqual(["opus", "sonnet", "haiku", "fable"])` と、同ファイルの `既定のモデル（opus）と既定の effort（high）を渡す` が既に固定                       |
+| `test/server/adapter/sdk-driver.test.ts:70`           | `expect(MODEL_ALIASES).toContain(DEFAULT_MODEL)`                            | 直前の `toEqual(["opus", "sonnet", "haiku", "fable"])` と、同ファイルの `既定のモデル（opus）と既定の effort（medium）を渡す` が既に固定                     |
 
 ### 候補から外したもの
 
