@@ -178,39 +178,114 @@
   display: none;
 }
 
-/* いまのコンテキストの使用量（帯の3行目。docs/screen-design.md 13.9「使用量の行」）。
-   キャラクター・セッションの2つの対と並びを揃えず、帯の左右いっぱいに1行で敷く——2つの対の
-   `grid` は「ラベル→値」の対専用なので、ここは別の flex 行にする。押せることを色だけで
-   示さない（docs/screen-design.md 13.1 原則1）ので、ホバーで下線を足す。 */
+/* いまのコンテキストの使用量（帯の3段目。docs/screen-design.md「使用量の行」）。**押せるのは
+   右端の `›` だけ**（外枠は `<a>` ではなく `<div>`。行全体を押せる札にはしない）。
+   キャラクター・セッションの2つの対と並びを揃えず、帯の左右いっぱいに1枚の
+   札で敷く——2つの対の `grid` は「ラベル→値」の対専用なので、ここは別の入れ物にする。
+
+   **札として浮かせる**：左右は `.sidebar-footer` の内側 padding（1.125rem。footer 自身の値で
+   `--region-padding` とは別物）ぶん外へ張り出し（負のマージン 10px）、自分の padding（10px）で
+   中身は元の位置（footer の 18px の内側）へ戻す（見本の「margin 0 -10px・padding 8px 10px」と
+   同じ手口——ホバー時の地はこの張り出したぶん footer の縁に 8px まで近づく）。 */
 .context-usage-row {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  color: inherit;
-  text-decoration: none;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0.5rem -0.625rem 0;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
   font-size: var(--font-secondary);
 }
-.context-usage-row:hover {
-  text-decoration: underline;
+/* ホバー（札のどこでもよい）とキーボードのフォーカス（`›` のリンクにしか当たらないので
+   `:focus-within` で拾う）で地と枠が浮く。地は「読む面の上に浮く塊」の語彙
+   （`--surface-raised`。`.usage-card` などと同じ）、枠は `--rule`（ここで切れていると
+   示すだけの静かな罫線）。 */
+.context-usage-row:hover,
+.context-usage-row:focus-within {
+  background: var(--surface-raised);
+  border-color: var(--rule);
+}
+.context-usage-row:hover .context-usage-row-link-text,
+.context-usage-row:focus-within .context-usage-row-link-text {
+  display: inline;
+}
+/* 70%以上は警告にする（`context-usage-row.tsx` の `isWarn`）。**16進を写さず `--state-warn`
+   からの導出で表す**（`.profile-card` が `--accent` を同じ手口で導出しているのと同じ考え方）。 */
+.context-usage-row-warn {
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 8%);
+  border-color: color-mix(in srgb, var(--surface), var(--state-warn) 35%);
+}
+.context-usage-row-warn:hover,
+.context-usage-row-warn:focus-within {
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 14%);
+}
+
+/* 1段目：ラベル・割合・量・右端の `›`。 */
+.context-usage-row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
 }
 .context-usage-row-label {
   flex: none;
   font-size: var(--font-label);
   color: var(--ink-quiet);
 }
+/* 割合は数字が主（見本 15px = --font-body）。等幅で桁が動いても読みやすくする。 */
+.context-usage-row-percentage {
+  flex: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-body);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
 .context-usage-row-value {
   flex: none;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-/* 細い棒。**残り幅をすべて取り**（`.session-info-select-frame` と同じ考え方）、値の右に伸びる。
-   取れない・届く前は 0% のまま出す（`context-usage-row.tsx` の `barPercentage`）ので、
-   ここでは幅の割合だけを気にすればよい。 */
-.context-usage-row-bar {
+.context-usage-row-warn .context-usage-row-percentage {
+  color: var(--state-warn);
+}
+.context-usage-row-spacer {
   flex: 1 1 auto;
-  min-width: 0;
-  height: 4px;
-  border-radius: 2px;
+}
+/* 押せるのはここだけ。**下線をホバーで足さない**（枠のない部品なので、色とホバー時の
+   「詳しく」表示で押せると示す。docs/screen-design.md 13.1 原則1）。 */
+.context-usage-row-link {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.125rem;
+  color: var(--ink-quiet);
+  text-decoration: none;
+  font-size: var(--font-label);
+}
+.context-usage-row:hover .context-usage-row-link,
+.context-usage-row:focus-within .context-usage-row-link {
+  color: var(--accent);
+}
+.context-usage-row-warn:hover .context-usage-row-link,
+.context-usage-row-warn:focus-within .context-usage-row-link {
+  color: var(--state-warn);
+}
+/* 「詳しく」の文字はホバー・フォーカスまで隠す（`.context-usage-row:hover` 側で `inline` に
+   戻す）。 */
+.context-usage-row-link-text {
+  display: none;
+}
+
+/* 2段目：細い棒。取れない・届く前は 0% のまま出す（`context-usage-row.tsx` の
+   `barPercentage`）ので、ここでは幅の割合だけを気にすればよい。 */
+.context-usage-row-bar {
+  display: block;
+  height: 0.5rem;
+  border-radius: 0.25rem;
   background: var(--rule);
   overflow: hidden;
 }
@@ -218,6 +293,20 @@
   display: block;
   height: 100%;
   background: var(--accent);
+}
+.context-usage-row-warn .context-usage-row-bar-fill {
+  background: var(--state-warn);
+}
+
+/* 3段目：自動圧縮までの残り。取れない・届く前は ` ` で高さだけ保つ
+   （`context-usage-row.tsx` の `untilText`）。 */
+.context-usage-row-until {
+  display: block;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.context-usage-row-warn .context-usage-row-until {
+  color: var(--state-warn);
 }
 
 /* ── 雑談中の4段（docs/screen-design.md 13.7「雑談のときのサイドバー」） ──────────────────────
