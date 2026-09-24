@@ -31485,3 +31485,208 @@ tsukumo のサイドバーのタスク板は、`src/server/adapter/task-summary.
 ## 注意
 
 - tsukumo の `develop/tasks.json` はこのタスクでは変換しない（T-526）
+
+## T-510
+
+**タスク**: レポートに出たファイルのパスを押すと、Orca のエディタで開けるようにする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2205 pass / 0 fail）。markdown.test.tsx が git 管理下の inline code（:行 を落として照合）・フェンスのパス・相対リンクだけを押せる button にし1回 open-file を送ることを、test/server/core/tracked-file.test.ts が一覧に無いパスではホストを呼ばないことを確かめる。目視: 疑似セッション（ポート4790）で3種を押し、WebSocket に open-file（path: docs/display.md）が1回ずつ出て error 無し。同じ引数の orca file open docs/display.md --json は exit 0・opened:true（Orca のタブを目で見たのではなく CLI の応答）。画像 scratchpad/after-click.png
+
+## 背景
+
+- レポートは `src/browser/features/main-view/markdown/markdown.tsx` で描く。ファイルのパスが出るのは主に3か所で、どれもいまは押しても開けない:
+  - inline code（`src/foo.ts:12` の形。人格の規約が `file_path:line_number` で書かせている）
+  - フェンスの info 文字列のパス（```diff src/foo.ts。`code-file-name.ts` の `rehypeCodeFileName` が `CODE_FILE_NAME_PROPERTY` に移し、ブロックの左上に出す）
+  - Markdown の相対リンク `[x](src/foo.ts)`。`sanitize-schema.ts` の `protocols` はスキームの無い相対リンクを素通しするので、押すと tsukumo のページが `/src/foo.ts` へ遷移してしまう
+- Orca には `orca file open <path> [--worktree <selector>] [--json]` がある（2026-09-24 に `orca agent-context --json` で確認。`--worktree` を省くと cwd から作業ツリーを推す）。**行番号を渡す引数は無い**
+- `orca` を呼ぶのは `src/server/adapter/orca-host.ts` だけで、ホスト依存の操作は `src/server/core/host.ts` の `Host`（いまは `showView` 1つ）の裏に置く（`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」）
+- git 管理下のファイル一覧は `src/server/adapter/repository-file.ts` の `listRepositoryFiles` が持っていて、`REPOSITORY_FILE_PATH`（`src/shared/repository-file.ts`。起動トークンが要る）で入力欄の `@` 補完に配っている。パスは cwd からの相対
+- ブラウザからサーバへの操作は `src/shared/command.ts` の `ClientCommand`（zod の判別合併）で送る
+
+## 決まっていること（蒸し返さない）
+
+- 開く先は Orca のエディタ（`orca file open`）だけ。VS Code（`code` コマンド）は足さない（2026-09-24 ユーザー決定）
+- 行番号へは飛ばない（Orca に口が無い）。表示の `:12` はそのまま残す
+
+## 解くべき論点
+
+- どの文字列をパスとみなすか。誤検出を避けるため、**git 管理下の一覧にあるものだけ**をリンクにする案が第一候補（`:行` / `:行:桁` の後ろを落として照合する。絶対パスで書かれたものを cwd 相対に直して拾うか）
+- 押す部品の形（`<a>` か `<button>` か）と見た目（`docs/screen-design.md` のトークンから）
+- サーバ側の検証: 届いたパスが git 管理下の一覧にあるときだけ `orca file open` を呼ぶ（任意の文字列を外部コマンドへ渡さない）。一覧に無い・`orca` が無い・失敗したときにどう知らせるか
+- ファイルを指さない相対リンクの扱い（押してもページが遷移しないようにするか）
+
+## やること
+
+1. `Host` に「ファイルを開く」を足し、`orca-host.ts` で `orca file open` を呼ぶ
+2. `ClientCommand` に開く依頼を足し、サーバで検証して `Host` へ渡す
+3. レポートの描画で、上の3か所のパスを押せる部品にする
+4. `docs/display.md`（レポートの節）・`docs/design.md`（プロトコル）・`docs/architecture.md`（`orca-host.ts` の Orca CLI の対応関係）に書き足す。行頭を含めて位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+
+## 完了条件
+
+- git 管理下のパスを書いた inline code・フェンスのパス・相対リンクが押せる部品になり、一覧に無い文字列はならない（部品のテスト）
+- 押すと開く依頼が1回送られる（部品のテスト）。一覧に無いパスの依頼ではホストが呼ばれない（サーバのテスト）
+- 描画に関わるので、`bun run build` のうえで tsukumo を起こし、レポートのパスを押して Orca のエディタにそのファイルが開いたことを `evidence` に書く（`docs/architecture.md`「手で確かめること」）
+- `bun run check` が通る
+
+## 注意
+
+- `orca` 以外の外部コマンドを足さない（`CLAUDE.md`「セットアップ / 環境構築」）
+- `orca-host.ts` 冒頭の境界の注記と `test/architecture.test.ts` の絞りを崩さない
+
+## T-511
+
+**タスク**: main に入った成果を日ごとに振り返る画面の、数え方と画面の形を決めて docs に書く
+
+**difficulty**: opus / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2205 pass / 0 fail、section-reference 含む）。見出し数 requirements 25→26・screen-design 13→14・design 45→46・glossary 83→85。論点→節: コミットの日=committer date のローカル日（requirements 4.11「コミットの「その日」」）/ done の日=日の終わりの main の切り口の差で新旧形式とも（4.11「`done` になった日」）/ progress は並べず summary・merge と運用の帳面だけのコミットは数えない（4.11「何を数えるか」）/ 並べるもの・空の日・見本は置かない（screen-design 13.10）/ 依頼の文面（4.11「振り返りの依頼」）/ 進行中・空の日は押せない・雑談では押せる（13.10「ボタンを押せないとき・押したあと」）/ GET /achievement?date= で取りに行く（design 5章「成果の集め方と配り方（main-history.ts と achievement.ts）」）。後続: 集める=design「成果の集め方と配り方」+requirements 4.11 / 画面=screen-design 13.10・13.9 / 振り返り=requirements 4.11「振り返りの依頼」・13.10。用語集に「成果」「成果の振り返り」を足した
+
+## 背景
+
+2026-09-24 に「成果が見えて、それをキャラクターと一緒に喜べるようにしたい」という指示が来た（`docs/history/direction.md` の同日の節）。材料はリポジトリの中にある:
+
+- コミット: `main` の git 履歴（参考: `main` の日ごとのコミット数は 9/20 が107、9/21 が168、9/22 が104、9/23 が636）
+- `done` になったタスク: `main` の `develop/tasks.json`（`src/server/adapter/task-summary.ts` が `main` の先端を見張って読んでいる）と、アーカイブ済みの `docs/history/tasks.md`
+- 進めたこと: `develop/progress.md` の完了した小節と、アーカイブ済みの `docs/history/progress.md`
+- 日の境目は `src/server/adapter/local-time.ts` が OS のローカル時刻で決めている
+- 画面は `src/browser/stores/location-hash.ts` の `SCREENS`（会話・キャラクター・トークン消費）と、帯の口（`src/browser/features/screen-nav/`。`docs/screen-design.md` 13.9）。トークン消費の画面（`src/browser/features/token-usage/`）が「別の画面 + 会話へ1ターンの依頼を送るボタン」の先例（送り方は `src/browser/features/task-board/components/task-run-confirm.tsx` の `dispatch({ type: "prompt", ... })`）
+
+## 決まっていること（蒸し返さない）
+
+- 見せ方は「区切りでまとめて振り返る」だけ。その場で反応するもの（`done` の瞬間・節目のコミット数）は作らない（2026-09-24 ユーザー決定）
+- 数えるのは `main` に入った分だけ。並行する作業ツリーの分も `main` に入れば数え、二重に数えない
+- 区切りはローカル時刻の日（0時で切る）。前の日へ遡れる
+- 置き場は帯に足す5枚目の画面（会話・キャラクター・トークン消費と並ぶ「成果」の口）
+- キャラクターは、画面の「つくもと振り返る」（仮の文言）を押したときに会話へ1ターンの依頼を送り、`speak` で感想を言う。画面を開いただけではターンを使わない
+
+## 解くべき論点
+
+- コミットの「その日」をどの時刻で決めるか。`--ff-only` で送るので、作業ツリーで積んだ時刻（コミットの日付）と `main` に入った時刻がずれる。reflog はクローンのローカルにしか無く期限で消える。どれを採るか
+- `done` になった日をどう知るか（`tasks.json` に日付の欄は無い。`done` にしたコミットの日付を git から引くか）。アーカイブ済みのタスクも同じ規則で拾えるか
+- 「進めたこと」に `progress.md` の小節を並べるか、タスクの `summary` で足りるか
+- 数えるコミットに merge commit・`doing` にするだけのコミット・アーカイブのコミットを含めるか
+- 画面に並べるもの（数の札・タスクの一覧・日の切り替え）と空の日の見せ方。見本を `docs/history/mockup/` に HTML で置くか
+- 振り返りの依頼の文面（何を渡し、キャラクターに何を言わせるか）
+- 雑談モードのとき・ターンが進んでいるときのボタンの扱い
+- 集めた成果をサーバからブラウザへ渡す形（push か、画面を開いたときに取りに行くか）
+
+## やること
+
+1. 上の論点を決め、`docs/requirements.md`（機能の節）・`docs/screen-design.md`（画面の節と 13.9 の帯の表）・`docs/design.md`（サーバが集めてブラウザへ渡す形）に書く。行頭を含めて位置を特定する（`CLAUDE.md`「ドキュメントを編集するときの罠」）
+2. 後続の T-512（集める）・T-513（画面）・T-514（振り返りの依頼）が読む節を、`evidence` に節の名前で並べる（後続タスクの本文は書き換えない）
+
+## 完了条件
+
+- 上の論点それぞれの結論がどの docs のどの節に書かれたかを `evidence` に並べる
+- `bun run check` が通る（`test/section-reference.test.ts` を含む）
+
+## 注意
+
+- 実装はしない（T-512 以降の担当）
+
+## T-512
+
+**タスク**: main の履歴とタスクから日ごとの成果を集め、ブラウザへ渡す
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: T-511 / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2251 pass / 0 fail）。test/server/adapter/main-history.test.ts が一時 git リポジトリ（GIT_COMMITTER_DATE 固定）で 日ごとのコミット数・merge と運用の帳面だけのコミットの除外・新形式/旧形式(passes)/アーカイブの done・移行した日に跳ねない・最初の日、main が無い/git リポジトリでないときに例外なく unknown を確かめる。server.test.ts が GET /achievement のトークン無し403・unknown でも200・git 失敗で503 を確かめる。git の起動口は src/server/adapter/git.ts に出し architecture.test.ts の許可も移した
+
+## 背景
+
+T-511 で、`main` に入った成果を日ごとに数える規則と、サーバからブラウザへ渡す形を決めた（書いた節は T-511 の `evidence`）。このタスクはその集める側を作る。
+
+- `main` の上を読む先例は `src/server/adapter/task-summary.ts`（`main` の先端の変化を見張り、`git` で読む。読めないときは「不明」にして作業ツリーのファイルへは落とさない）
+- `node:child_process` を import してよいファイルは `test/architecture.test.ts` が絞っている（原則3。1ファイル = 1つの境界）
+- 日の境目は `src/server/adapter/local-time.ts`
+- 両側で共有する型と読み取りは `src/shared/` に置く（`docs/design.md` 2章）
+
+## やること
+
+1. T-511 の結論どおりに、日ごとのコミット・`done` になったタスク・進めたことを集める adapter を作る
+2. 共有の型と、届いた値の読み取りを `src/shared/` に置く
+3. T-511 が決めた形でブラウザへ渡す経路をつなぐ
+4. `docs/design.md` の該当箇所を実装に合わせて直す（ずれが出たときだけ）
+
+## 完了条件
+
+- 一時ディレクトリに作った git リポジトリで、T-511 の規則どおりに日ごとの数と一覧が出る（テスト）
+- `git` が無い・`main` が無い・`develop/tasks.json` が無いときに例外を投げず、画面で分かる形の「不明」になる（テスト）
+- `bun run check` が通る
+
+## 注意
+
+- 読むのは git の履歴と `develop/`・`docs/history/` のファイルだけ。会話の中身は扱わない（`docs/coding-standards.md`「会話内容の扱い」）
+- テストのフィクスチャに実物のリポジトリの履歴を使わない
+
+## T-529
+
+**タスク**: 依頼の履歴の一覧で、依頼をコピーでき、飛ぶのは別の口にする
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2189 pass / 0 fail）。疑似セッション（ポート4790）を playwright で操作: 3行の依頼をドラッグ選択すると getSelection() が全文と一致、1行の依頼はドラッグで一致・トリプルクリックは Chrome が末尾に改行1つを足すだけ。ドラッグ中も一覧は閉じない。飛ぶ口（印+番号の button）はクリックでも Tab+Enter でもそのターンへ移る。画像: /private/tmp/claude-501/-Users-sinnlos-orca-workspaces-tsukumo-tsukumo-2/ddca48a4-a93c-496b-83ab-fd7e69df694b/scratchpad/t529-01-history-open.png / t529-03-drag-selected.png / t529-04-after-keyboard-jump.png
+
+## 背景
+
+メインビューで利用者の依頼をコピーできない。依頼の1行目はターンの札の見出し（`src/browser/features/main-view/presentational-turn-header.tsx` の `h2` の中の `<button>`）にしか出ず、ボタンの中の文字は選択できない。1行に収まらない分は CSS で省略され、全文はボタンの `title` にしかない。2行目以降は `turn.tsx` の `RequestRest` が出す。見出しのボタンを押すと開く履歴の一覧（`TurnHistory`。`turn-history-row`）も、1行がまるごと `<button>` なので選択できない。
+
+## 決まっていること（蒸し返さない）
+
+- 利用者の案: 見出しの依頼はボタンのまま。押すと依頼の履歴の一覧が出て、**そこで依頼をコピーできる**ようにし、**そのターンへ飛ぶのは行の中の選べる別の口**にする
+- コピーボタンは付けない。本文に依頼の全文を足すこともしない（どちらも利用者が不採用とした）
+
+## やること
+
+1. 履歴の一覧の行を、「依頼の文字（選択できるテキスト）」と「そのターンへ飛ぶ口（ボタン）」に分ける。飛ぶ口の形（番号・印など）は、今の行の見た目（`turn-header.module.css`）から大きく変えない範囲で決める
+2. 行の文字を選択してコピーしたとき、**依頼の全文**（2行目以降も含む）が入るようにする。ブラウザに届いている依頼が途中で切られていないかを確かめる（`truncateRequestText`）
+3. 外側を押すと閉じる（`useDismissSignal`）が、文字を選ぶためのドラッグで閉じないことを確かめる
+
+## 完了条件
+
+- 疑似セッション（`TSUKUMO_DRIVER=fake`）で起こし、playwright で一覧を開いて行の文字をトリプルクリックとドラッグで選び、`window.getSelection().toString()` が依頼の全文と一致する
+- 飛ぶ口を押すとそのターンへ移る。キーボード（Tab と Enter）でも移れる
+- `bun run check` が通る。`evidence` に上の確認と撮った画像のパスを書く
+
+## T-530
+
+**タスク**: キャラ画面を小さくしたとき、吹き出しも立ち絵に合わせて縮める
+
+**difficulty**: sonnet / **loopable**: Y / **dependencies**: なし / **passes**: True
+
+**evidence**:
+
+bun run check 通過（2189 pass / 0 fail）。character-view.module.css で吹き出しの文字・余白・列幅を cqh 連動の clamp（上限=従来の固定値、下限は文字 11px=--font-label・列 8rem、連動は領域の高さ 210px 未満から）にした。高さ比（吹き出し÷立ち絵）前→後: 既定 252px 0.591→0.591（画像 AE=0）/ 中間 173px 0.693→0.600（文字 15→12.38px）/ 最小 94px 1.273→1.012（文字 15→11px）。狭い画面 700px は前後一致。最小の画像 scratchpad/after-rt85-crop.png で吹き出しの全文が2行で切れずに読めることを確かめた
+
+## 背景
+
+キャラ画面（キャラビュー）の領域を仕切り（`src/browser/features/layout/layout-resizer.tsx`）で小さくすると、立ち絵に比べて吹き出しが大きすぎる（利用者の報告）。`src/browser/features/character-view/character-view.module.css` で、立ち絵は `.portrait` の `height: var(--portrait-height)`（領域の高さの 88%。`.character-region` は `container-type: size`）で領域に合わせて伸び縮みする。一方、吹き出しの文字（`--font-body` 0.9375rem など）、余白（`padding: 10px 14px`）、列の幅（`.balloon-track` の `flex-basis: 11rem`）は固定量で、領域の大きさに連動しない。
+
+## 決まっていること（蒸し返さない）
+
+- 崩れ方は「小さくすると吹き出しが大きい」（利用者の回答）。大きくしたときの見え方は今のままでよい
+- 既定の大きさでの見え方は変えない
+
+## やること
+
+1. 領域の高さを段階的に変えて（既定、仕切りで縮めた中間、縮められる最小）撮り、立ち絵の高さと最新の吹き出しの高さ・幅・文字の大きさを `scripts/capture-view.ts --measure` で測る
+2. 領域が既定より小さいときだけ、吹き出しの文字・余白・列の幅を領域の大きさ（`cqh` など）に合わせて縮める。読める下限（文字の大きさの最小）を決め、それより下は縮めない
+3. 狭い画面（`@media (max-width: 760px)`）の既定が崩れないことを確かめる
+
+## 完了条件
+
+- 既定の大きさで、吹き出しの寸法が変更前と同じ（測った値を並べる）
+- 縮めた2段階で、「吹き出しの高さ ÷ 立ち絵の高さ」が変更前より小さく、既定の大きさでの比に近づいている（3段階の測定値を変更前と後で表にして `evidence` に書く）
+- 画像を読んで、最小の大きさで吹き出しの文字が切れずに読めることを確かめる
+- `bun run check` が通る

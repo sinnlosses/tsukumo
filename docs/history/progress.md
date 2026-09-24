@@ -1,5 +1,29 @@
 # 進捗のアーカイブ
 
+### 2026-09-24 タスク板を develop/task/ と台帳の着手の印から読むようにした（T-525）
+
+`main` に `develop/task/` があれば front matter と台帳の印から一覧を作り、無ければ `develop/tasks.json` を読む。着手・解除は `main` を動かさないので、新形式のあいだは先端が同じでも見回りごとに印を読み直す。
+
+### 2026-09-24 共通スキル5本と WORKFLOW.md を新しい運用に書き直した（T-524）
+
+claude-skills の枝 `feature/tsukumo-T-524`（`c8d8ca2`）に置き、`main` には入れていない（入れるのは T-526）。`~/.claude/skills/` は claude-skills の本体の作業ツリーを指すので、枝の作業は別の作業ツリーで行った。`maintenance-docs` がまだ `archive.py` と旧形式を前提にしているので、T-526 の前に扱いを決める。
+
+### 2026-09-24 旧形式の tasks.json を変換する task migrate と旧形式の検出を作った（T-523）
+
+claude-skills `6c66ab5`・`d962f9e`。`doing` のタスクが1件でもあると `migrate` は止まるので、切り替え（T-526）の前に全作業ツリーの `doing` を片付ける。`progress.md` は「完了したこと」だけを移し、前置き文と「未解決」「注意」は残す。
+
+### 2026-09-24 task コマンドの done と ship を作った（T-522）
+
+claude-skills `b7814c7`。`ship` は遅れていれば rebase してから `--ff-only`（本体が無ければ比較付きの `update-ref`）で送り、3回まで繰り返す。`main` を別の作業ツリーが出している構成では `checkout main` が通らず `feature/T-xxx` の枝は消されずに残る（黙って残る）ので、T-524 でスキルに書くときに扱いを決める。
+
+### 2026-09-24 task コマンドの new・status・claim・release と台帳を作った（T-521）
+
+claude-skills `2eda698` に `task.py` と台帳（共有 `.git` の下の `task-workflow/`）を足した。既存のスキルからはまだ呼ばれないので、どのプロジェクトの挙動も変わらない。
+
+### 2026-09-24 新しいタスク運用の設計書を claude-skills に書いた（T-520）
+
+`docs/task-workflow-redesign.md`（claude-skills `45d195f`）に、1件1ファイル・台帳・`task` コマンドの仕様・移行・採らなかった案をまとめた。着手の印を消すのは `done` ではなく `ship` にしたので、T-522 は着手時にこの設計書に合わせる。
+
 ### 2026-09-24 セリフの間合いの規約から回数の数を落とし、話す契機で言う形にした（T-507）
 
 `SPEECH_CADENCE_PROMPT` の「1ターンに5〜10回」と委譲の合図の「5〜10回ごと」を消し、契機（ひと区切り・長いコマンドの前）で言う形にした。`docs/display.md` とテストも合わせた。
