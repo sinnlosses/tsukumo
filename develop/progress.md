@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 旧形式の tasks.json を変換する task migrate と旧形式の検出を作った（T-523）
+
+claude-skills `6c66ab5`・`d962f9e`。`doing` のタスクが1件でもあると `migrate` は止まるので、切り替え（T-526）の前に全作業ツリーの `doing` を片付ける。`progress.md` は「完了したこと」だけを移し、前置き文と「未解決」「注意」は残す。
+
 ### 2026-09-24 task コマンドの done と ship を作った（T-522）
 
 claude-skills `b7814c7`。`ship` は遅れていれば rebase してから `--ff-only`（本体が無ければ比較付きの `update-ref`）で送り、3回まで繰り返す。`main` を別の作業ツリーが出している構成では `checkout main` が通らず `feature/T-xxx` の枝は消されずに残る（黙って残る）ので、T-524 でスキルに書くときに扱いを決める。
