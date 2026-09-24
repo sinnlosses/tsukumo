@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { SessionInfo } from "../../../../src/browser/features/sidebar/session-info.tsx"
@@ -12,9 +13,31 @@ import {
 import { characterInfo, characterPackEntry } from "../../../fixture/character.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
+// `<SessionInfo>` は `<ContextUsageRow>`（`useContextUsage`。`useQuery`）を持つので、
+// ここのテストにも `QueryClientProvider` が要る。**ここでの内訳の中身は測らない**
+// （それは `test/browser/features/sidebar/context-usage-row.test.tsx`）ので、取りに行った先は
+// 常に「取れない」に落とす軽いスタブで足りる。
+
+let originalFetch: typeof globalThis.fetch | undefined = undefined
+
 afterEach(() => {
   cleanup()
+  if (originalFetch !== undefined) {
+    globalThis.fetch = originalFetch
+    originalFetch = undefined
+  }
 })
+
+function stubContextUsageUnavailable(): void {
+  originalFetch = globalThis.fetch
+  const stub = (): Promise<{ ok: false; status: 500; json: () => Promise<unknown> }> =>
+    Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve(null) })
+  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+}
+
+function newQueryClient(): QueryClient {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
+}
 
 /**
  * `init` が届いたあと（`running`）の架空の土台。テストはここから `permissionMode` /
@@ -34,10 +57,13 @@ function renderSessionInfo(
   stateOverrides: Partial<SessionState>,
   dispatch: CommandSpy = () => {},
 ): void {
+  stubContextUsageUnavailable()
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
     <SessionStoreContext.Provider value={store}>
-      <SessionInfo withCharacter={true} />
+      <QueryClientProvider client={newQueryClient()}>
+        <SessionInfo withCharacter={true} />
+      </QueryClientProvider>
     </SessionStoreContext.Provider>,
   )
 }

@@ -576,6 +576,40 @@ describe("applySessionEvent", () => {
     expect(restarted.turn).toEqual({ kind: "running", startedAt: 400 })
   })
 
+  it("lastTurnFinishedAt は turn が running に戻っても前の値のまま、次の turn-finished で進む（サイドバーの使用量の行・トークン消費の画面の取り直しの合図。受け入れの確認で見つかった不具合の再現）", () => {
+    expect(INITIAL_SESSION_STATE.lastTurnFinishedAt).toBeUndefined()
+
+    const started = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "request", text: "ダミーの依頼", images: [] },
+      100,
+    )
+    const finished = applySessionEvent(
+      started,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      300,
+    )
+    expect(finished.lastTurnFinishedAt).toBe(300)
+
+    // 次のターンが始まって turn は running に戻っても、直前に終わった時刻のまま
+    // （`turn.finished.finishedAt` は running の腕に無いので読めなくなるが、こちらは戻らない）。
+    const restarted = applySessionEvent(
+      finished,
+      { kind: "request", text: "次の依頼", images: [] },
+      400,
+    )
+    expect(restarted.turn.kind).toBe("running")
+    expect(restarted.lastTurnFinishedAt).toBe(300)
+
+    // そのターンが終わると、もう一度だけ進む。
+    const finishedAgain = applySessionEvent(
+      restarted,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      700,
+    )
+    expect(finishedAgain.lastTurnFinishedAt).toBe(700)
+  })
+
   it("始まっていないターンは session-ended でも終わらない（idle のまま）", () => {
     const ended = applySessionEvent(
       INITIAL_SESSION_STATE,

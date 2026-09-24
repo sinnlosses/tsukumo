@@ -4,13 +4,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
-import { useContextUsage } from "../../../../src/browser/features/token-usage/hooks/use-context-usage.ts"
-import { CONTEXT_USAGE_PATH } from "../../../../src/shared/context-usage.ts"
-import { readyContextUsage } from "../../../fixture/context-usage.ts"
+import {
+  contextUsageRefetchKey,
+  useContextUsage,
+} from "../../../src/browser/domain/context-usage.ts"
+import { CONTEXT_USAGE_PATH } from "../../../src/shared/context-usage.ts"
+import { readyContextUsage } from "../../fixture/context-usage.ts"
 
 /**
  * 画面を丸ごと描かずに、内訳の取得と畳み方だけを測る（docs/design.md 2章「機能の中を分ける」）。
  * フィクスチャは手で書いた架空の内訳（`docs/coding-standards.md`「会話内容の扱い」）。
+ *
+ * **`useContextUsage` は `refetchKey` を受け取る**（`browser/domain/` は `stores/` を読めないので、
+ * 「いつ取り直すか」は呼び出し側の責務）。ここではテストが直接キーを渡す。
  */
 
 let originalFetch: typeof globalThis.fetch | undefined = undefined
@@ -60,7 +66,7 @@ describe("useContextUsage", () => {
       json: () => Promise.resolve(readyContextUsage()),
     }))
 
-    renderHook(() => useContextUsage(), { wrapper: contextUsageWrapper(newClient()) })
+    renderHook(() => useContextUsage(0), { wrapper: contextUsageWrapper(newClient()) })
 
     await waitFor(() => {
       expect(fetchCalls[0]?.startsWith(`${CONTEXT_USAGE_PATH}?t=`)).toBe(true)
@@ -74,7 +80,7 @@ describe("useContextUsage", () => {
       json: () => Promise.resolve(readyContextUsage()),
     }))
 
-    const { result } = renderHook(() => useContextUsage(), {
+    const { result } = renderHook(() => useContextUsage(0), {
       wrapper: contextUsageWrapper(newClient()),
     })
 
@@ -103,12 +109,12 @@ describe("useContextUsage", () => {
     stubContextUsageFetch(() => ({ ok: false, status: 403, json: () => Promise.resolve(null) }))
     const client = newClient()
 
-    const { result } = renderHook(() => useContextUsage(), {
+    const { result } = renderHook(() => useContextUsage(0), {
       wrapper: contextUsageWrapper(client),
     })
 
     await waitFor(() => {
-      expect(client.getQueryState(["context-usage"])?.status).toBe("success")
+      expect(client.getQueryState(["context-usage", 0])?.status).toBe("success")
     })
     expect(result.current.kind).toBe("unavailable")
   })
@@ -120,7 +126,7 @@ describe("useContextUsage", () => {
       json: () => Promise.resolve(readyContextUsage()),
     }))
 
-    const { result } = renderHook(() => useContextUsage(), {
+    const { result } = renderHook(() => useContextUsage(0), {
       wrapper: contextUsageWrapper(newClient()),
     })
 
@@ -135,7 +141,7 @@ describe("useContextUsage", () => {
   it("応答が落ちたときは「読み込み中」を経てから「取れない」になる", async () => {
     stubContextUsageFetch(() => ({ ok: false, status: 403, json: () => Promise.resolve(null) }))
 
-    const { result } = renderHook(() => useContextUsage(), {
+    const { result } = renderHook(() => useContextUsage(0), {
       wrapper: contextUsageWrapper(newClient()),
     })
 
@@ -144,5 +150,81 @@ describe("useContextUsage", () => {
     await waitFor(() => {
       expect(result.current.kind).toBe("unavailable")
     })
+  })
+
+  it("refetchKey が変わると取り直す（ターンが終わるたびに1回。完了条件）", async () => {
+    stubContextUsageFetch(() => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(readyContextUsage()),
+    }))
+
+    const { result, rerender } = renderHook(({ key }: { key: number }) => useContextUsage(key), {
+      wrapper: contextUsageWrapper(newClient()),
+      initialProps: { key: 0 },
+    })
+
+    await waitFor(() => {
+      expect(result.current.kind).toBe("ready")
+    })
+    expect(fetchCalls).toHaveLength(1)
+
+    // 同じ key での再描画は取り直さない（二重取得にならない。「解くべき論点」）。
+    // `queryKey` が変わらない限り react-query は取り直しを起こさないので、待たずに測れる。
+    rerender({ key: 0 })
+    expect(fetchCalls).toHaveLength(1)
+
+    // ターンが終わって key が変わると、もう1回取り直す。
+    rerender({ key: 12_345 })
+    await waitFor(() => {
+      expect(fetchCalls).toHaveLength(2)
+    })
+  })
+
+  it("finished → running に移っても取り直さず前の値のまま、次の finished で1回取り直す", async () => {
+    stubContextUsageFetch(() => ({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(readyContextUsage()),
+    }))
+
+    // `state.lastTurnFinishedAt` から作った key の並び（`contextUsageRefetchKey` を経由）。
+    // `running` に移っても `lastTurnFinishedAt` 自体は戻らない（`shared/session-state.ts`）ので、
+    // ここでは同じ 300 が続くことをそのまま key に反映する——`state.turn` から作っていた旧実装が
+    // 巻き戻っていた場面（受け入れの確認で見つかった不具合）の再現。
+    const { result, rerender } = renderHook(
+      ({ lastTurnFinishedAt }: { lastTurnFinishedAt: number | undefined }) =>
+        useContextUsage(contextUsageRefetchKey(lastTurnFinishedAt)),
+      {
+        wrapper: contextUsageWrapper(newClient()),
+        initialProps: { lastTurnFinishedAt: 300 },
+      },
+    )
+
+    await waitFor(() => {
+      expect(result.current.kind).toBe("ready")
+    })
+    expect(fetchCalls).toHaveLength(1)
+
+    // 次のターンが running に移っても、直前に終わった時刻（300）のまま——取り直さない。
+    rerender({ lastTurnFinishedAt: 300 })
+    expect(fetchCalls).toHaveLength(1)
+    expect(result.current.kind).toBe("ready")
+
+    // そのターンが終わって lastTurnFinishedAt が進むと、もう1回だけ取り直す。
+    rerender({ lastTurnFinishedAt: 700 })
+    await waitFor(() => {
+      expect(fetchCalls).toHaveLength(2)
+    })
+  })
+})
+
+describe("contextUsageRefetchKey", () => {
+  it("まだ一度もターンが終わっていなければ 0", () => {
+    expect(contextUsageRefetchKey(undefined)).toBe(0)
+  })
+
+  it("最後にターンが終わった時刻をそのまま使う（running に移っても呼び出し側がそのまま渡し続ける）", () => {
+    expect(contextUsageRefetchKey(200)).toBe(200)
   })
 })

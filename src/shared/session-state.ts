@@ -283,6 +283,17 @@ export type SessionState = {
   /** ターンの進み具合（{@link TurnProgress}）。始まった時刻・終わった時刻もここが持つ。 */
   readonly turn: TurnProgress
   /**
+   * 直近でターンが終わった時刻（`turn-finished` / `session-ended` の `at`）。**`turn` が
+   * `running` に移っても戻さない**——`turn.finished.finishedAt` は次の依頼が始まると `running` の
+   * 腕に移って読めなくなる（{@link TurnProgress}）が、ターンの途中も「直前に終わったときの
+   * 取り直しの合図」を必要とする読み手がいる（サイドバーの使用量の行とトークン消費の画面の札。
+   * `browser/domain/context-usage.ts` の `contextUsageRefetchKey`。取り直すのはターンが
+   * 終わるたびで、ターンの途中は前の値のまま——`docs/screen-design.md` 13.9「使用量の行」）。
+   * `lastToolFailureAt` と同じ並び（次のターンが始まっても戻さない「直近の時刻」）。まだ一度も
+   * ターンが終わっていなければ undefined。
+   */
+  readonly lastTurnFinishedAt: number | undefined
+  /**
    * 次に始まるターンに振る通し番号。**ターンが始まるたびに1つ増え、記録が窓から落ちても
    * 戻らない**ので、**同じターンはセッションが続くかぎり同じ番号**になる。
    *
@@ -433,6 +444,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   commandDescriptions: [],
   endedReason: undefined,
   turn: { kind: "idle" },
+  lastTurnFinishedAt: undefined,
   nextTurnId: 0,
   tasks: { kind: "unknown" },
   character: undefined,
@@ -617,6 +629,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return {
         ...recordTurnFailure(settleUtterance(state), ending),
         turn: finishTurn(state.turn, at, ending),
+        lastTurnFinishedAt: lastTurnFinishedAtOf(state, at),
         reportDrafting: { kind: "idle" },
         usageReview: settleUsageReview(state.usageReview),
         apiTrouble: { kind: "none" },
@@ -628,6 +641,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         reportDrafting: { kind: "idle" },
         endedReason: event.reason,
         turn: finishTurn(state.turn, at, { kind: "ended" }),
+        lastTurnFinishedAt: lastTurnFinishedAtOf(state, at),
         backgroundTasks: [],
         usageReview: settleUsageReview(state.usageReview),
         apiTrouble: { kind: "none" },
@@ -855,6 +869,15 @@ function finishTurn(turn: TurnProgress, at: number, ending: TurnEnding): TurnPro
     return turn
   }
   return { kind: "finished", startedAt: turn.startedAt, finishedAt: at, ending }
+}
+
+/**
+ * {@link SessionState.lastTurnFinishedAt} を進める。**`finishTurn` と同じ判定**（始まっていない
+ * ターンの `turn-finished` / `session-ended` では進めない）で、実際にターンが終わったときだけ
+ * `at` にする。
+ */
+function lastTurnFinishedAtOf(state: SessionState, at: number): number | undefined {
+  return state.turn.kind === "idle" ? state.lastTurnFinishedAt : at
 }
 
 /**

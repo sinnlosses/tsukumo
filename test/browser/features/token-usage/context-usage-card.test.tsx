@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render } from "@testing-library/react"
 
+import { type UseContextUsageResult } from "../../../../src/browser/domain/context-usage.ts"
 import { ContextUsageCard } from "../../../../src/browser/features/token-usage/context-usage-card.tsx"
-import { type UseContextUsageResult } from "../../../../src/browser/features/token-usage/hooks/use-context-usage.ts"
 import { contextUsage } from "../../../fixture/context-usage.ts"
 
 // いまのコンテキストの内訳の札（`context-usage-card.tsx`）。**フックは素通し**なので、畳んだ
@@ -26,7 +26,7 @@ const TAKEN_AT = Temporal.ZonedDateTime.from({
   timeZone: Temporal.Now.timeZoneId(),
 }).epochMilliseconds
 
-/** 畳んだ札1枚（`hooks/use-context-usage.ts` が返すのと同じ形）。 */
+/** 畳んだ札1枚（`browser/domain/context-usage.ts` が返すのと同じ形）。 */
 function readyCard(overrides: Partial<Parameters<typeof contextUsage>[0]> = {}): {
   readonly card: UseContextUsageResult
 } {

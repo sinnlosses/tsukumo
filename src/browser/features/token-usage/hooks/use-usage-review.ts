@@ -55,7 +55,8 @@ import {
   nowEpochMilliseconds,
   zonedDateTime,
 } from "../../../utils/clock.ts"
-import { formatCount, totalUsage } from "../usage-format.ts"
+import { formatCount } from "../../../utils/format-count.ts"
+import { totalUsage } from "../usage-format.ts"
 
 const CHAT_MODE_BLOCKED_REASON = "雑談中は使えない。仕事に切り替えてから押す。"
 const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない。終わってからもう一度押す。"
