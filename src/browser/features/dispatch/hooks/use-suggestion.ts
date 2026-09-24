@@ -10,17 +10,17 @@
 // **`/` と `@` の候補は同時に出ない。** どちらを出しているかは1つの判別可能な合併型
 // （{@link ActiveSuggestions}）に畳んであり、選択位置と閉じたかどうかはその1つに対して持つ。
 // 絞り方は `command-suggestions.tsx` / `file-suggestions.tsx` が持ち、`@` の候補の元
-// （git 管理下のファイルのパス）を取るのは `use-repository-file-paths.ts`（外の世界に触るぶんだけ
-// 出したフック。読み手はここだけになった）。
+// （git 管理下のファイルのパス）を取るのは `browser/hooks/use-repository-file-paths.ts`
+// （外の世界に触るぶんだけ出したフック。`main-view/markdown/` も読むので `browser/hooks/` にある）。
 
 import { useState } from "react"
 
 import { commandSuggestions } from "../../../../shared/command-suggestion.ts"
 import { type CommandDescription } from "../../../../shared/session-event.ts"
+import { useRepositoryFilePaths } from "../../../hooks/use-repository-file-paths.ts"
 import { matchingCommands, shouldShowCommandSuggestions } from "../command-suggestions.tsx"
 import { type FilePathQuery, filePathQuery, matchingFilePaths } from "../file-suggestions.tsx"
 import { type ComposerKey, type Draft } from "./use-composer.ts"
-import { useRepositoryFilePaths } from "./use-repository-file-paths.ts"
 
 /** 入力欄の下のボタンが打つ、補完の合図の文字。 */
 export type CompletionTrigger = "/" | "@"

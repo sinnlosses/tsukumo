@@ -185,6 +185,13 @@ export type SessionManagerOptions = {
    * 常に1つ返す**（`rememberSessionDefault` と同じ立場）。セッションは起こし直さない。
    */
   readonly dismissUsageProposal: (dismiss: DismissUsageProposalCommand) => SessionEvent
+  /**
+   * レポートに書かれたパスを Orca のエディタで開く。**`path` が git 管理下の一覧にあるかどうかの
+   * 確かめと `Host.openFile` の呼び出しは呼び出し側（`src/session-start.ts`）が持つ**——ここは
+   * 「開けたかどうか」だけを受け取る。セッションは起こし直さず、画面へ流すイベントも無い
+   * （開けた・開けなかったの結果は `error` フレーム越しにだけ伝わる）。
+   */
+  readonly openFile: (path: string) => Promise<boolean>
 }
 
 /**
@@ -501,6 +508,20 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
   }
 
+  /**
+   * ファイルを1つ開く。**流すイベントが無い**（画面の状態は動かないので `write` は使わない）。
+   * `options.openFile` が例外を投げても常駐プロセスは落とさず、定型文の理由を返す
+   * （`dispatchToDriver` と同じ扱い）。
+   */
+  const openFile = async (path: string): Promise<DispatchResult> => {
+    try {
+      const opened = await options.openFile(path)
+      return opened ? { ok: true } : { ok: false, reason: FRAME_ERROR_REASON.openFileFailed }
+    } catch {
+      return { ok: false, reason: FRAME_ERROR_REASON.openFileFailed }
+    }
+  }
+
   return {
     dispatch: (command) => {
       // 画面は同じ条件で操作子を塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が
@@ -601,6 +622,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
               ),
             FRAME_ERROR_REASON.sessionDefaultFailed,
           )
+        // **起こし直さない。画面の状態も動かさない**（レポートに書かれたパスを Orca の
+        // エディタで開くだけ。`docs/display.md` 4.2「各表示物」）。
+        case "open-file":
+          return openFile(command.path)
         default:
           break
       }

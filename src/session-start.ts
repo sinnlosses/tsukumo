@@ -13,6 +13,7 @@ import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
+import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
   readPreviousUsageReview,
@@ -22,6 +23,7 @@ import {
   readRememberedSessionDefault,
   writeRememberedSessionDefault,
 } from "./server/adapter/remembered-default.ts"
+import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { startSdkDriver } from "./server/adapter/sdk-driver.ts"
 import {
   findSessionToResume,
@@ -49,6 +51,7 @@ import { createSessionManager, type SessionManager } from "./server/core/session
 import { canResume, sessionTag } from "./server/core/session-restore.ts"
 import { takeSystemPromptAppend, toSystemPromptMode } from "./server/core/system-prompt.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
+import { openTrackedFile } from "./server/core/tracked-file.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
 import { type DismissUsageProposalCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
@@ -95,6 +98,9 @@ export function startSession(options: SessionStartOptions): SessionManager {
   // `session-manager` から、セッション1つにつき1行だけ**で、読むのは tsukumo の外なので、
   // ここで作ってそのまま渡す。
   const contextUsageLog = createContextUsageLog()
+  // レポートのパスを開く先（`main.ts` の `openLayoutView` とは別に、ここでも1つ作る。
+  // `createOrcaHost()` は状態を持たないので、作り直しても構わない）。
+  const host = createOrcaHost()
   return createSessionManager({
     // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す
     // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
@@ -158,6 +164,12 @@ export function startSession(options: SessionStartOptions): SessionManager {
       withoutDismissedProposals(readPreviousUsageReview(), readDismissedUsageProposalKeys()),
     writePreviousUsageReview,
     dismissUsageProposal: (dismiss) => dismissUsageProposal(dismiss),
+    openFile: (path) =>
+      openTrackedFile(
+        path,
+        () => listRepositoryFiles(cwd),
+        (tracked) => host.openFile(tracked),
+      ),
   })
 }
 

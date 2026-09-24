@@ -10,6 +10,10 @@
 // （キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。**見ているターンが
 // 替わったときにレポートの先頭へスクロールを戻す**配線は `hooks/use-active-turn-scroll.ts`
 // へ出した（外の世界に触るフックだけが余分。docs/design.md 2章「機能の中を分ける」）。
+//
+// **レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が
+// 配る**（`markdown/repository-link.tsx`）。この機能（`main-view`）の中でしか描かないので、
+// ここで1回だけ mount する。
 
 import { type ReactElement } from "react"
 
@@ -18,6 +22,7 @@ import { useTurnSelection } from "../../stores/turn-selection.tsx"
 import { turnHistoryText, turnTitle } from "./domain/turn-title.ts"
 import { useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
+import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
 import { MiniPortrait } from "./mini-portrait.tsx"
 import { QuestionAsk } from "./question-ask.tsx"
 import { TurnHeader } from "./turn-header.tsx"
@@ -34,47 +39,49 @@ export function MainView(): ReactElement {
 
   if (turns.length === 0) {
     return (
-      <>
+      <RepositoryFileLinkProvider>
         <p className={styles["placeholder"]}>{EMPTY_MESSAGE}</p>
         <QuestionAsk />
-      </>
+      </RepositoryFileLinkProvider>
     )
   }
 
   const activeTurn = turns.find((turn) => turn.id === activeTurnId)
 
   return (
-    // `data-brush-origin`: ミニ立ち絵を置く座標の原点（印の名前は `reveal/brush-tip.ts` の
-    // `BRUSH_ORIGIN_ATTRIBUTE`。JSX の属性名に定数を書けないので直に置き、ずれていないことは
-    // テストが見る）。
-    <div className={styles["main-turns"]} ref={scrollerRef} data-brush-origin="">
-      {/* **`key` にターンの番号を渡す。** 前後へ移っても同じ位置の `<Turn>` を使い回すと、
-          「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料。`turn.tsx`）が
-          最初のターンのものに留まってしまう。 */}
-      {activeTurn !== undefined && (
-        <article className={styles["turn-card"]}>
-          <TurnHeader
-            turns={turns.map((turn) => ({
-              id: turn.id,
-              title: turnTitle(turn),
-              historyText: turnHistoryText(turn),
-            }))}
-            activeTurnId={activeTurn.id}
-            onSelect={selectTurn}
-          />
-          <div className={styles["turn-body"]}>
-            <Turn turn={activeTurn} newest={activeTurn.id === newestTurnId} key={activeTurn.id} />
-          </div>
-        </article>
-      )}
-      {/* 筆先に添うミニ立ち絵。**この入れ物の原点を基準に置く**（`position: absolute`）ので、
-          書き上げたあと残っているあいだも本文と一緒に転がる。**出ているやり取りを渡す**のは、
-          残った筆先が別のやり取りのものなら引っ込ませるため（`mini-portrait.tsx`）。 */}
-      {activeTurn !== undefined && <MiniPortrait shownTurnId={activeTurn.id} />}
-      {/* 答え待ちの質問の札。**いまのやり取りのレポートの下**に出す（札の頭は T-398 で
-          レポートの上に来たので、読み終わった先に質問が来る並びになる）。答え待ちが
-          無ければ何も描かない。 */}
-      <QuestionAsk />
-    </div>
+    <RepositoryFileLinkProvider>
+      {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点（印の名前は `reveal/brush-tip.ts` の
+          `BRUSH_ORIGIN_ATTRIBUTE`。JSX の属性名に定数を書けないので直に置き、ずれていないことは
+          テストが見る）。 */}
+      <div className={styles["main-turns"]} ref={scrollerRef} data-brush-origin="">
+        {/* **`key` にターンの番号を渡す。** 前後へ移っても同じ位置の `<Turn>` を使い回すと、
+            「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料。`turn.tsx`）が
+            最初のターンのものに留まってしまう。 */}
+        {activeTurn !== undefined && (
+          <article className={styles["turn-card"]}>
+            <TurnHeader
+              turns={turns.map((turn) => ({
+                id: turn.id,
+                title: turnTitle(turn),
+                historyText: turnHistoryText(turn),
+              }))}
+              activeTurnId={activeTurn.id}
+              onSelect={selectTurn}
+            />
+            <div className={styles["turn-body"]}>
+              <Turn turn={activeTurn} newest={activeTurn.id === newestTurnId} key={activeTurn.id} />
+            </div>
+          </article>
+        )}
+        {/* 筆先に添うミニ立ち絵。**この入れ物の原点を基準に置く**（`position: absolute`）ので、
+            書き上げたあと残っているあいだも本文と一緒に転がる。**出ているやり取りを渡す**のは、
+            残った筆先が別のやり取りのものなら引っ込ませるため（`mini-portrait.tsx`）。 */}
+        {activeTurn !== undefined && <MiniPortrait shownTurnId={activeTurn.id} />}
+        {/* 答え待ちの質問の札。**いまのやり取りのレポートの下**に出す（札の頭は T-398 で
+            レポートの上に来たので、読み終わった先に質問が来る並びになる）。答え待ちが
+            無ければ何も描かない。 */}
+        <QuestionAsk />
+      </div>
+    </RepositoryFileLinkProvider>
   )
 }

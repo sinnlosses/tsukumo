@@ -57,6 +57,12 @@ const MAX_SESSION_ID_LENGTH = 200
 const MAX_USAGE_PROPOSAL_TARGET_LENGTH = 1_000
 
 /**
+ * レポートから開く依頼のパスの上限。**形の検査ではなく素朴な上限**（実際に開けるかどうかは
+ * git 管理下の一覧にあるかどうかで決まるので、ここでは長さだけを見る）。
+ */
+const MAX_OPEN_FILE_PATH_LENGTH = 1_000
+
+/**
  * 許可モードの値の全体。**この一覧は shared に1つだけ置く**（docs/design.md 4.3）。
  * SDK の `PermissionMode` と同じ値であることは core 側のテスト
  * （test/server/adapter/sdk-driver.test.ts）が型で守る。画面に出す日本語ラベルは描く側が持つ。
@@ -399,6 +405,19 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     kind: z.enum(USAGE_PROPOSAL_KINDS),
     target: z.string().max(MAX_USAGE_PROPOSAL_TARGET_LENGTH),
   }),
+  /**
+   * レポートに書かれたパス（inline code・フェンスのファイル名・相対リンクの3か所。
+   * `docs/display.md` 4.2「各表示物」）を Orca のエディタで開く。**`path` は cwd 相対で、
+   * git 管理下の一覧にあるものだけを渡す**——ブラウザ側（`repository-link.tsx`）が
+   * 描くときに一覧と照合して押せる部品にするが、**サーバ側でも同じ一覧と照合してから
+   * `orca file open` を呼ぶ**（任意の文字列を外部コマンドへ渡さない。`src/session-start.ts`）。
+   * **行番号は運ばない**（Orca に口が無い。表示の `:12` は残るが、開くのは裸のパスだけ）。
+   */
+  z.object({
+    type: z.literal("open-file"),
+    commandId: commandIdSchema,
+    path: z.string().min(1).max(MAX_OPEN_FILE_PATH_LENGTH),
+  }),
 ])
 
 export type ClientCommand = z.infer<typeof clientCommandSchema>
@@ -457,7 +476,8 @@ export type DismissUsageProposalCommand = Extract<
  * 駆動へそのまま渡すコマンド（起こし直しと見た目の編集はサーバ側で捌くので外れる。
  * `nudge` も文面をサーバ側が足すので外れる）。**`forget-remembered-line` も外れる** —
  * 書き込みと `remembered-lines-changed` の流し直しで済み、`editCharacter` と同じくセッションは
- * 起こし直さない（`docs/design.md` 7.1）。
+ * 起こし直さない（`docs/design.md` 7.1）。**`open-file` も外れる** — git 管理下の一覧との
+ * 照合と `orca file open` の呼び出しだけで、駆動には触らない。
  */
 export type DriverCommand = Exclude<
   ClientCommand,
@@ -471,6 +491,7 @@ export type DriverCommand = Exclude<
   | { readonly type: "set-session-default" }
   | { readonly type: "forget-remembered-line" }
   | { readonly type: "dismiss-usage-proposal" }
+  | { readonly type: "open-file" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */

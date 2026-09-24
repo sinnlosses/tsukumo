@@ -160,12 +160,18 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
   const writtenPreviousUsageReviews: readonly [number, unknown][] = []
   /** 見送った提案の識別子（書き先は配線層なので、ここでは積むだけ）。 */
   const dismissedUsageProposals: DismissUsageProposalCommand[] = []
+  /** `orca file open` を呼ぼうとしたパス（呼び先は配線層なので、ここでは積むだけ）。 */
+  const openedFiles: string[] = []
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const writtenRemembered = (): SessionEvent | undefined =>
     writeResult === "written" ? REMEMBERED_LINES_EVENT : undefined
   const manager = createSessionManager({
     now: () => 1_000,
+    openFile: (path) => {
+      openedFiles.push(path)
+      return Promise.resolve(writeResult === "written")
+    },
     batchIntervalMs: BATCH_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     chatArchive: NOOP_CHAT_ARCHIVE,
@@ -215,6 +221,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
     forgottenLines,
     writtenPreviousUsageReviews,
     dismissedUsageProposals,
+    openedFiles,
   }
 }
 
@@ -341,6 +348,7 @@ describe("createSessionManager", () => {
     const started: { readonly selection: CharacterSelection; readonly stub: StubDriver }[] = []
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -449,6 +457,7 @@ describe("createSessionManager", () => {
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -530,6 +539,7 @@ describe("createSessionManager", () => {
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -580,6 +590,7 @@ describe("createSessionManager", () => {
     const releases: (() => void)[] = []
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -631,6 +642,7 @@ describe("createSessionManager", () => {
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -691,6 +703,7 @@ describe("createSessionManager", () => {
     const started: StubDriver[] = []
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -817,6 +830,7 @@ describe("createSessionManager", () => {
       const stub = createStubDriver()
       const manager = createSessionManager({
         now: () => 1_000,
+        openFile: () => Promise.resolve(true),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
         chatArchive: archive,
@@ -1192,6 +1206,39 @@ describe("createSessionManager", () => {
     })
   })
 
+  describe("レポートに書かれたパスを開く", () => {
+    it("開けたら ok を返し、渡したパスが options.openFile に届く", async () => {
+      const { manager, stub, openedFiles } = startManagerWithStub()
+
+      expect(
+        await manager.dispatch({ type: "open-file", commandId: "c-1", path: "src/foo.ts" }),
+      ).toEqual({ ok: true })
+      // 駆動へは渡らない・起こし直しも起きない。
+      expect(stub.calls).toEqual([])
+      expect(openedFiles).toEqual(["src/foo.ts"])
+    })
+
+    it("開けなかったら（一覧に無い・orca が無い・失敗）定型文の理由を返す", async () => {
+      const { manager, openedFiles } = startManagerWithStub("rejected")
+
+      expect(
+        await manager.dispatch({ type: "open-file", commandId: "c-1", path: "src/nope.ts" }),
+      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.openFileFailed })
+      expect(openedFiles).toEqual(["src/nope.ts"])
+    })
+
+    it("ターン進行中でも受け付ける（読むだけの操作なので断らない）", async () => {
+      const { manager, stub, openedFiles } = startManagerWithStub()
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      await waitForBatch()
+
+      expect(
+        await manager.dispatch({ type: "open-file", commandId: "c-1", path: "src/foo.ts" }),
+      ).toEqual({ ok: true })
+      expect(openedFiles).toEqual(["src/foo.ts"])
+    })
+  })
+
   it("書き込みが受け付けられなかったら定型文の理由を返し、状態は動かさない", async () => {
     const { manager } = startManagerWithStub("rejected")
     const frames: ServerFrame[] = []
@@ -1213,6 +1260,7 @@ describe("createSessionManager", () => {
   it("起こし直しに失敗したら定型文の理由を返し、常駐プロセスは落ちない", async () => {
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1261,6 +1309,7 @@ describe("createSessionManager", () => {
     const stub = createStubDriver()
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1300,6 +1349,7 @@ describe("createSessionManager", () => {
   it("駆動が例外を投げても定型文の理由を返し、常駐プロセスは落ちない", async () => {
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1386,6 +1436,7 @@ describe("createSessionManager", () => {
       }
       const manager = createSessionManager({
         now: () => 1_000,
+        openFile: () => Promise.resolve(true),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive,
@@ -1612,6 +1663,7 @@ describe("createSessionManager", () => {
       const entries: TokenUsageEntry[] = []
       const manager = createSessionManager({
         now: () => 1_000,
+        openFile: () => Promise.resolve(true),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1902,6 +1954,7 @@ describe("createSessionManager", () => {
       }
       const manager = createSessionManager({
         now: () => 1_000,
+        openFile: () => Promise.resolve(true),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2092,6 +2145,7 @@ describe("依頼に添えた画像の棚", () => {
     const prompted: ShelvedPromptImage[][] = []
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2265,6 +2319,7 @@ describe("createSessionManager（見直し）", () => {
     }
     const manager = createSessionManager({
       now: () => 1_000,
+      openFile: () => Promise.resolve(true),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,

@@ -9,6 +9,10 @@
 //   showView → orca tab list --json で**オリジンとパスが同じ**タブを探し、
 //              あれば orca goto --url <新しい URL> --page <pageId> --json、
 //              無ければ orca tab create --url <url> --json
+//   openFile → orca file open <path> --json（行番号を渡す引数は無い。`--worktree` は省く
+//              — cwd から作業ツリーを推してもらう。tsukumo は起こしたディレクトリでそのまま
+//              動くので、この execFile の cwd（既定は tsukumo 自身の process.cwd()）がそのまま
+//              合う。`orca agent-context --json` で実測）
 //
 // **URL のクエリを見比べないのは、起動ごとにトークンが変わるため**（`?t=<起動トークン>`。
 // docs/design.md 9章）。同じ場所を指すタブは貼り直して1つに保つ。
@@ -25,7 +29,7 @@ const ORCA_COMMAND = "orca"
 
 /** Orca のアダプタを作る。`orca` が入っていない環境でも、失敗を返すだけで例外は投げない。 */
 export function createOrcaHost(): Host {
-  return { showView: (url) => showView(url) }
+  return { showView: (url) => showView(url), openFile: (path) => openFile(path) }
 }
 
 /** `orca tab list` に出てくるタブ1つ分。`Host` の外の輸出（`scripts/open-room-grid.ts` が使う）。 */
@@ -138,6 +142,16 @@ async function showView(url: string): Promise<HostResult> {
 
   const created = await runOrca(["tab", "create", "--url", url, "--json"], "ビューを開く")
   return created.ok ? { ok: true } : { ok: false, reason: created.reason }
+}
+
+/**
+ * ファイルを1つ、Orca のエディタで開く。**`--worktree` は省く**（cwd から作業ツリーを推してもらう。
+ * このプロセスの cwd は tsukumo を起こしたディレクトリと同じ）。渡す前に `path` が
+ * git 管理下にあるかどうかを確かめるのは呼び出し側の役目で、ここでは検証しない。
+ */
+async function openFile(path: string): Promise<HostResult> {
+  const opened = await runOrca(["file", "open", path, "--json"], "ファイルを開く")
+  return opened.ok ? { ok: true } : { ok: false, reason: opened.reason }
 }
 
 /**

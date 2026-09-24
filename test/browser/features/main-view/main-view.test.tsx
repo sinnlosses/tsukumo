@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, spyOn } from "bun:test"
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 
 import { MainView } from "../../../../src/browser/features/main-view/main-view.tsx"
@@ -57,16 +58,23 @@ function renderMainView(
   const bodiesInTurn =
     turn.kind === "running" ? { report: true, utterance: true } : INITIAL_SESSION_STATE.bodiesInTurn
   store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records, turn, bodiesInTurn })
+  // `MainView` は `<RepositoryFileLinkProvider>`（レポートのパスを押せる部品にする一覧の取得）を
+  // 内側で mount するので `useQuery` が要る。ここでは一覧の中身を見ないので、フェッチそのものは
+  // 差し替えない（`window.fetch` は happy-dom の対象外なので落ちるだけで、テストは待たない）。
   return render(
-    <SessionStoreContext.Provider value={store}>
-      <TurnSelectionProvider>
-        <QuestionAnswerProvider>
-          <QuestionScrollProvider>
-            <MainView />
-          </QuestionScrollProvider>
-        </QuestionAnswerProvider>
-      </TurnSelectionProvider>
-    </SessionStoreContext.Provider>,
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <SessionStoreContext.Provider value={store}>
+        <TurnSelectionProvider>
+          <QuestionAnswerProvider>
+            <QuestionScrollProvider>
+              <MainView />
+            </QuestionScrollProvider>
+          </QuestionAnswerProvider>
+        </TurnSelectionProvider>
+      </SessionStoreContext.Provider>
+    </QueryClientProvider>,
   )
 }
 

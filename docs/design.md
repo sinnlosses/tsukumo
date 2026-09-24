@@ -406,7 +406,7 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 | 抱えているもの                                         | 割り方                                                                | 例                                                                                        |
 | ------------------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | 3種類そろっている（見た目もロジックも重い）            | container / `hooks/use-<名前>.ts` / `presentational-<名前>.tsx` の3つ | `task-board` / `chat-view` / `dispatch/turn-status.tsx` / `character-view/speech-log.tsx` |
-| **外の世界に触るフックだけ**が余分                     | そのフックだけを `hooks/use-<概念>.ts` へ出し、残りは1ファイルのまま  | `dispatch/file-suggestions.tsx` → `dispatch/hooks/use-repository-file-paths.ts`           |
+| **外の世界に触るフックだけ**が余分                     | そのフックだけを `hooks/use-<概念>.ts` へ出し、残りは1ファイルのまま  | `main-view.tsx` → `main-view/hooks/use-active-turn-scroll.ts`                             |
 | **純関数だけ**が余分で、**フックを呼ばない相手**が読む | `domain/<概念>.ts` へ出す                                             | `task-board/domain/task-status.ts`                                                        |
 
 3つに割るときの分担（2026-09-22 決定。それまでは `hooks/` を「採らない」と書いていた）:
@@ -470,8 +470,12 @@ features/task-board/
 - **機能の中の `hooks/` に置くのは、その機能だけが読むフック。** 読み手が2つになったら
   **`browser/hooks/` へ上げる**（機能の語彙を持たないものだけが上がる。`use-modal-dialog.ts` は
   `<dialog>` の開閉を DOM へ写すだけでタスクを知らないので、最初から `browser/hooks/`）。
-  **container と対になっていないフック**（`use-repository-file-paths.ts` のように、外の世界に
-  触るぶんだけを出したもの）も同じ `hooks/` に置き、名前は container ではなく**その概念**にする
+  **container と対になっていないフック**（`use-active-turn-scroll.ts` のように、外の世界に
+  触るぶんだけを出したもの）も同じ `hooks/` に置き、名前は container ではなく**その概念**にする。
+  **読み手が2つになったらこちらも `browser/hooks/` へ上げる**——`use-repository-file-paths.ts`
+  （`git ls-files` の一覧の取得）はもと `dispatch/hooks/` の1件目だったが、`main-view/markdown/`
+  （レポートに書かれたパスを押すと Orca のエディタで開ける部品）も読むようになったので
+  `browser/hooks/` へ上げた（2026-09-24）
 - **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く
   （`features/layout/split.ts` がその形）
 - **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。

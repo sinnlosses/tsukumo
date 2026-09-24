@@ -279,6 +279,26 @@
   margin-top: 0;
   border-radius: 0 0 0.4rem 0.4rem;
 }
+/* git 管理下のパスを押せる部品にしたときの見た目（inline code・フェンスのファイル名・相対
+   リンクの3か所。`markdown/repository-link.ts`）。**`<button>` を地の文のリンクと同じ下線の
+   文字に見せる**（色を取り上げるかわりに下線で区別する。docs/screen-design.md 13.1・
+   `src/browser/styles/theme.css` の `a`）。ボタンの既定の見た目（枠・地・行送り）は消し、
+   周りの文字（`.code-file-name` の等幅・inline code の地）をそのまま親から継ぐ。 */
+.detail-block .report-file-link {
+  display: inline;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.detail-block .report-file-link:hover {
+  text-decoration-color: var(--accent);
+}
 .detail-block {
   margin: 0 0 1rem;
 }

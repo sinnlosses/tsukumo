@@ -99,6 +99,12 @@ describe("parseClientCommand（受け付ける形）", () => {
       }),
     ).toEqual({ type: "forget-remembered-line", commandId: "c-6", line: "架空の覚えたこと" })
   })
+
+  it("open-file はパスをそのまま受け付ける", () => {
+    expect(parseClientCommand({ type: "open-file", commandId: "c-7", path: "src/foo.ts" })).toEqual(
+      { type: "open-file", commandId: "c-7", path: "src/foo.ts" },
+    )
+  })
 })
 
 describe("parseClientCommand（キャラクターの見た目）", () => {
@@ -614,6 +620,10 @@ describe("parseClientCommand（落とす形）", () => {
         line: "あ".repeat(MAX_REMEMBERED_LINE_LENGTH + 1),
       }),
     ).toBeUndefined()
+  })
+
+  it("空の path を持つ open-file は undefined", () => {
+    expect(parseClientCommand({ type: "open-file", commandId: "c-7", path: "" })).toBeUndefined()
   })
 
   it("一覧に無いモデル・許可モード、形の合わない答えは undefined", () => {

@@ -72,6 +72,7 @@ export const FRAME_ERROR_REASON = {
   forgetRememberedLineFailed: "覚えたことを消せなかった",
   forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
   usageProposalDismissFailed: "提案を見送れなかった",
+  openFileFailed: "ファイルを開けなかった",
 } as const
 
 /**

@@ -31,6 +31,10 @@
 // **表は横スクロールの器で包む**（{@link Table}）。器をここで作るのは、**`rehype-raw` が生の
 // HTML も同じ hast の木に入れる**ので、`table` の上書き1つで Markdown の表とレポートが直接
 // 書いた `<table>` の両方に効くため。
+//
+// **git 管理下のパスを押すと Orca のエディタで開ける**（inline code・フェンスのファイル名・
+// 相対リンクの3か所。判定と依頼は {@link repositoryFilePath} / `repository-link.tsx` に
+// まとめてある）。
 
 import { type Element } from "hast"
 import { type JSX, type ReactElement, type ReactNode } from "react"
@@ -46,6 +50,7 @@ import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationBlock, NotationInline } from "./notation.tsx"
 import styles from "./report-notation.module.css"
+import { repositoryFilePath, useRepositoryFileLink } from "./repository-link.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
@@ -55,6 +60,7 @@ import { rehypeTaskCheck } from "./task-check.ts"
  */
 const REPORT_COMPONENTS = {
   pre: Pre,
+  code: Code,
   a: Anchor,
   table: Table,
   h2: SectionHeading,
@@ -122,7 +128,8 @@ type PreProps = JSX.IntrinsicElements["pre"] & ExtraProps
  * **フェンスにファイル名が書いてあれば、ブロックの左上にラベルとして出す**
  * （```diff src/foo.ts。{@link rehypeCodeFileName} が属性に移してある）。差分だけを見て
  * どのファイルか分からない、を防ぐため。**書いていないフェンスは素の `<pre>` のまま**で、
- * ラベルの行は出ない。
+ * ラベルの行は出ない。**git 管理下の一覧にあるファイル名は押せるボタンにする**
+ * （`repository-link.tsx`）。
  */
 function Pre(props: PreProps): ReactElement {
   const codeNode = findCodeChild(props.node)
@@ -146,9 +153,32 @@ function Pre(props: PreProps): ReactElement {
   }
   return (
     <div className={styles["code-file"]}>
-      <div className={styles["code-file-name"]}>{fileName}</div>
+      <div className={styles["code-file-name"]}>
+        <FileNameLabel fileName={fileName} />
+      </div>
       <pre {...rest} />
     </div>
+  )
+}
+
+/** フェンスのファイル名のラベル。一覧にあれば押せるボタン、無ければ素のテキスト。 */
+function FileNameLabel(props: { readonly fileName: string }): ReactElement {
+  const link = useRepositoryFileLink()
+  const path = repositoryFilePath(props.fileName, link.files)
+
+  if (path === undefined) {
+    return <>{props.fileName}</>
+  }
+  return (
+    <button
+      type="button"
+      className={styles["report-file-link"]}
+      onClick={() => {
+        link.open(path)
+      }}
+    >
+      {props.fileName}
+    </button>
   )
 }
 
@@ -207,20 +237,87 @@ function SubHeading(props: SubHeadingProps): ReactElement {
   return <h5 {...rest}>{children as ReactNode}</h5>
 }
 
+type CodeProps = JSX.IntrinsicElements["code"] & ExtraProps
+
+/**
+ * コード（inline code・フェンスの中の `<code>` の両方がここを通る）。**中身の文字が git 管理下の
+ * 一覧にあるパスなら、押せるボタンで包む**（人格の規約が `file_path:line_number` の形で書く
+ * inline code）。フェンスの中の複数行のコードは1つのパスと一致しないので、そのまま
+ * `<code>` になる（色付け・言語の `className` は変えない）。
+ */
+function Code(props: CodeProps): ReactElement {
+  const { node, children, ...rest } = props
+  const link = useRepositoryFileLink()
+  const path = node === undefined ? undefined : repositoryFilePath(hastText(node), link.files)
+
+  const code = <code {...rest}>{children as ReactNode}</code>
+  if (path === undefined) {
+    return code
+  }
+  return (
+    <button
+      type="button"
+      className={styles["report-file-link"]}
+      onClick={() => {
+        link.open(path)
+      }}
+    >
+      {code}
+    </button>
+  )
+}
+
 type AnchorProps = JSX.IntrinsicElements["a"] & ExtraProps
 
 /**
  * リンク。**スキームの許可は {@link REPORT_SANITIZE_SCHEMA} の `protocols` が済ませている**
- * （通らない `href` はここに来る前に落ちている）ので、ここは外部ページへ飛ぶときの安全策
- * （`rel="noopener noreferrer"`）を添えるだけ。
+ * （通らない `href` はここに来る前に落ちている）ので、`http:` / `https:` / `mailto:` と、
+ * ページ内の合図（`#fnref` のような脚注の往復）はそのまま `<a>` にする（外部へ飛ぶときの
+ * 安全策 `rel="noopener noreferrer"` を添えるだけ）。
+ *
+ * **スキームの無い相対リンク（`[x](src/foo.ts)`）は別扱い。** **押すとページ自身が
+ * `/src/foo.ts` へ遷移してしまう不具合があった**（`sanitize-schema.ts` の `protocols` は相対
+ * リンクを素通しするため）ので、`<a>` にしない:
+ * - git 管理下の一覧にあれば、押すと Orca のエディタで開くボタン
+ * - 無ければ、ファイルを指さないリンクなので押しても何も起きない素のテキスト（`<span>`）
  */
 function Anchor(props: AnchorProps): ReactElement {
-  const { node: _node, children, ...rest } = props
+  const { node: _node, children, href, title, className } = props
+  const link = useRepositoryFileLink()
+
+  if (href === undefined || href.startsWith("#") || hasUrlScheme(href)) {
+    return (
+      <a href={href} title={title} className={className} rel="noopener noreferrer">
+        {children as ReactNode}
+      </a>
+    )
+  }
+
+  const path = repositoryFilePath(href, link.files)
+  if (path === undefined) {
+    return (
+      <span title={title} className={className}>
+        {children as ReactNode}
+      </span>
+    )
+  }
   return (
-    <a {...rest} rel="noopener noreferrer">
+    <button
+      type="button"
+      title={title}
+      className={`${styles["report-file-link"]}${className === undefined ? "" : ` ${className}`}`}
+      onClick={() => {
+        link.open(path)
+      }}
+    >
       {children as ReactNode}
-    </a>
+    </button>
   )
+}
+
+/** `href` にスキーム（`https:` のような `<scheme>:` の頭）があるかどうか。 */
+function hasUrlScheme(href: string): boolean {
+  return /^[a-z][a-z0-9+.-]*:/i.test(href)
 }
 
 type TableProps = JSX.IntrinsicElements["table"] & ExtraProps

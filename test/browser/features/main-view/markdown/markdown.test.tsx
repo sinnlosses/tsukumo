@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { cleanup, render } from "@testing-library/react"
-import { act } from "react"
+import { cleanup, fireEvent, render } from "@testing-library/react"
+import { act, type ReactNode } from "react"
 
 import { Markdown } from "../../../../../src/browser/features/main-view/markdown/markdown.tsx"
+import { RepositoryFileLinkContext } from "../../../../../src/browser/features/main-view/markdown/repository-link.tsx"
 
 afterEach(() => {
   cleanup()
@@ -454,5 +455,108 @@ describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る
     const link = container.querySelector("a")
     expect(link?.textContent).toBe("「リンク」")
     expect(link?.getAttribute("href")).toBe("https://example.com")
+  })
+})
+
+describe("Markdown（レポートのパスを押して Orca のエディタで開く）", () => {
+  /** `<RepositoryFileLinkProvider>` の実データ（`useQuery` / `useSessionDispatch`）は使わず、
+   * Context だけを直接差し込む（部品のテストを軽くするため。`main-view.tsx` が実データを配る）。 */
+  function withFiles(
+    paths: readonly string[],
+    open: (path: string) => void,
+  ): (children: ReactNode) => ReactNode {
+    return (children) => (
+      <RepositoryFileLinkContext.Provider value={{ files: new Set(paths), open }}>
+        {children}
+      </RepositoryFileLinkContext.Provider>
+    )
+  }
+
+  it("一覧にある inline code（file_path:line_number）が押せるボタンになり、押すと裸のパスで1回開く", () => {
+    const opened: string[] = []
+    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { container } = render(wrap(<Markdown text="見て `src/foo.ts:12` を直した" />))
+
+    const button = container.querySelector("button")
+    expect(button?.textContent).toBe("src/foo.ts:12")
+    // 表示の `:12` は残る（行番号へは飛べないので運ばない）。
+    fireEvent.click(button as HTMLButtonElement)
+    expect(opened).toEqual(["src/foo.ts"])
+
+    fireEvent.click(button as HTMLButtonElement)
+    expect(opened).toEqual(["src/foo.ts", "src/foo.ts"])
+  })
+
+  it("一覧に無い inline code はボタンにならない（素の <code> のまま）", () => {
+    const wrap = withFiles(["src/foo.ts"], () => {})
+    const { container } = render(wrap(<Markdown text="`src/bar.ts:3` は無い" />))
+
+    expect(container.querySelector("button")).toBeNull()
+    expect(container.querySelector("code")?.textContent).toBe("src/bar.ts:3")
+  })
+
+  it("一覧にあるフェンスのファイル名が押せるボタンになる", () => {
+    const opened: string[] = []
+    const wrap = withFiles(["develop/tasks.json"], (path) => opened.push(path))
+    const { container } = render(
+      wrap(<Markdown text={"```diff develop/tasks.json\n-  1\n+  2\n```"} />),
+    )
+
+    const label = container.querySelector(".code-file-name")
+    const button = label?.querySelector("button")
+    expect(button?.textContent).toBe("develop/tasks.json")
+    fireEvent.click(button as HTMLButtonElement)
+    expect(opened).toEqual(["develop/tasks.json"])
+  })
+
+  it("一覧に無いフェンスのファイル名は素のテキストのまま", () => {
+    const wrap = withFiles(["develop/tasks.json"], () => {})
+    const { container } = render(wrap(<Markdown text={"```diff src/nope.ts\n-a\n+b\n```"} />))
+
+    const label = container.querySelector(".code-file-name")
+    expect(label?.querySelector("button")).toBeNull()
+    expect(label?.textContent).toBe("src/nope.ts")
+  })
+
+  it("一覧にある相対リンクが押せるボタンになり、ページは遷移しない", () => {
+    const opened: string[] = []
+    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { container } = render(wrap(<Markdown text="[直した](src/foo.ts)" />))
+
+    expect(container.querySelector("a")).toBeNull()
+    const button = container.querySelector("button")
+    expect(button?.textContent).toBe("直した")
+    fireEvent.click(button as HTMLButtonElement)
+    expect(opened).toEqual(["src/foo.ts"])
+  })
+
+  it("ファイルを指さない相対リンクは <a> にならず、押しても何も起きない", () => {
+    const wrap = withFiles(["src/foo.ts"], () => {})
+    const { container } = render(wrap(<Markdown text="[無い](src/nope.ts)" />))
+
+    expect(container.querySelector("a")).toBeNull()
+    expect(container.querySelector("button")).toBeNull()
+    expect(container.textContent).toContain("無い")
+  })
+
+  it("外部リンク・脚注の `#` リンクはこれまでどおり <a> のまま", () => {
+    const wrap = withFiles(["src/foo.ts"], () => {})
+    const { container } = render(
+      wrap(<Markdown text={"[外部](https://example.com)\n\n結論[^1]\n\n[^1]: 補足。"} />),
+    )
+
+    const external = [...container.querySelectorAll("a")].find(
+      (a) => a.getAttribute("href") === "https://example.com",
+    )
+    expect(external?.textContent).toBe("外部")
+    expect(container.querySelector("sup > a")?.getAttribute("href")).toBe("#user-content-fn-1")
+  })
+
+  it("Provider が無い場（既存のレポートの多く）では、一致するパスが無いので何も押せない", () => {
+    const { container } = render(
+      <Markdown text={"`src/foo.ts:1` と [x](src/foo.ts) と ```diff src/foo.ts\n-a\n+b\n```"} />,
+    )
+
+    expect(container.querySelector("button")).toBeNull()
   })
 })
