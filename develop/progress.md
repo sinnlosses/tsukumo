@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 セリフの間合いの規約から回数の数を落とし、話す契機で言う形にした（T-507）
+
+`SPEECH_CADENCE_PROMPT` の「1ターンに5〜10回」と委譲の合図の「5〜10回ごと」を消し、契機（ひと区切り・長いコマンドの前）で言う形にした。`docs/display.md` とテストも合わせた。
+
 ### 2026-09-24 タスクIDの重複を bun run check で落とす検査を足した（T-519）
 
 `test/task-id.test.ts` が `develop/tasks.json` と `docs/history/tasks.md` のIDを合わせて数え、既知の例外 T-225（2件まで）以外の重複を落とす。拾う・数える純粋関数は `scripts/task-id.ts`。

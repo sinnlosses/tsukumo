@@ -19,10 +19,10 @@ function workAppend(persona: string): string {
 }
 
 describe("SPEECH_CADENCE_PROMPT", () => {
-  it("回数の目安を持つのはこちらで、レポートの記法の側には無い", () => {
+  it("話す頻度を持つのはこちらで、レポートの記法の側には無い", () => {
     // 正典を2つにしない（persona.md からも移した）。
-    expect(SPEECH_CADENCE_PROMPT).toContain("1ターンに5〜10回")
-    expect(REPORT_NOTATION_PROMPT).not.toContain("5〜10回")
+    expect(SPEECH_CADENCE_PROMPT).toContain("作業が長いターンほど間を空けない")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("間を空けない")
   })
 
   it("締めの speak は report を呼んだ直後に置き、書き終えたことを言う", () => {
