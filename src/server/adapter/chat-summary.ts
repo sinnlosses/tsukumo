@@ -15,12 +15,13 @@
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 import { isCharacterPackName } from "../../shared/character.ts"
 import { byteLength } from "../../shared/lib/byte-length.ts"
 import { type ChatSummary, type ChatSummaryRecord } from "../core/session-driver.ts"
+import { readOptionalFile } from "./character-pack.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-summary/`）。 */
@@ -155,12 +156,4 @@ function truncatedSummary(summary: string): string {
   }
 
   return kept.join("\n")
-}
-
-function readOptionalFile(path: string): string | undefined {
-  try {
-    return readFileSync(path, "utf8")
-  } catch {
-    return undefined
-  }
 }

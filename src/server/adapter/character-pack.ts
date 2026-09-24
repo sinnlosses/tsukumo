@@ -384,7 +384,8 @@ function hasDefinition(dir: string): boolean {
   }
 }
 
-function readOptionalFile(path: string): string | undefined {
+/** 読めなければ `undefined` を返す（無いこと自体はエラーではない読み取りに共通で使う）。 */
+export function readOptionalFile(path: string): string | undefined {
   try {
     return readFileSync(path, "utf8")
   } catch {

@@ -23,19 +23,15 @@
 // `docs/coding-standards.md`「エラーハンドリング」）。受け付けられなかった回は undefined を
 // 返し、呼び出し側が定型文の `error` を返す。
 
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
 import { classifyPortraitFile } from "../../shared/character-asset.ts"
-import { backgroundFileName, parseBackgroundImage } from "../../shared/character-background.ts"
+import {
+  type BackgroundImage,
+  backgroundFileName,
+  parseBackgroundImage,
+} from "../../shared/character-background.ts"
 import {
   type CharacterDefinition,
   definitionWithAccent,
@@ -55,8 +51,17 @@ import {
   type CharacterDeleteCommand,
   type CharacterEditCommand,
 } from "../../shared/command.ts"
-import { type Expression, EXPRESSIONS, type RequiredExpression } from "../../shared/expression.ts"
-import { parsePortraitImage, portraitFileName } from "../../shared/portrait-image.ts"
+import {
+  type Expression,
+  EXPRESSIONS,
+  type RemovableExpression,
+  type RequiredExpression,
+} from "../../shared/expression.ts"
+import {
+  type PortraitImage,
+  parsePortraitImage,
+  portraitFileName,
+} from "../../shared/portrait-image.ts"
 import {
   type CharacterPack,
   CHARACTER_DEFINITION_FILE_NAME,
@@ -68,6 +73,7 @@ import {
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
   readCharacterPack,
+  readOptionalFile,
 } from "./character-pack.ts"
 
 /** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1）。 */
@@ -243,57 +249,128 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
         definitionWithTagline(definitionWithName(content, edit.name), edit.tagline),
       )
       return true
-    case "clear-portrait": {
-      const previous = portraitFileNameOf(content, edit.expression)
-      writeFileSync(definitionPath, definitionWithoutPortrait(content, edit.expression))
-      removeUnreferencedImage(dir, previous)
-      return true
-    }
-    case "set-portrait": {
+    case "clear-portrait":
+      return applyImageEdit(dir, definitionPath, content, portraitClearEdit(edit.expression))
+    case "set-portrait":
       // 検証は境界（`src/shared/command.ts` の `portraitDataUrlSchema`）で済んでいるので、
-      // ここで undefined になるのは配線の誤りのときだけ。型を迂回せずほどくために、もう一度
-      // 同じ関数を通す。
-      const image = parsePortraitImage(edit.image)
-      if (image === undefined) {
-        return false
-      }
+      // `parseImage` が undefined を返すのは配線の誤りのときだけ。型を迂回せずほどくために、
+      // もう一度同じ関数を通す。
+      return applyImageEdit(
+        dir,
+        definitionPath,
+        content,
+        portraitSetEdit(edit.expression, edit.image),
+      )
+    case "clear-background":
+      return applyImageEdit(dir, definitionPath, content, backgroundClearEdit())
+    case "set-background":
+      // 立ち絵と同じく、検証は境界（`src/shared/command.ts`）で済んでいる。`parseImage` が
+      // undefined を返すのは配線の誤りのときだけ。
+      return applyImageEdit(dir, definitionPath, content, backgroundSetEdit(edit.image))
+  }
+}
 
-      const fileName = portraitFileName(edit.expression, image.format)
-      if (!withinImageFileLimit(dir, fileName)) {
-        return false
-      }
-
-      const previous = portraitFileNameOf(content, edit.expression)
-      writeFileSync(join(dir, fileName), Buffer.from(image.base64, "base64"))
-      writeFileSync(definitionPath, definitionWithPortrait(content, edit.expression, fileName))
-      removeUnreferencedImage(dir, previous)
-      return true
+/**
+ * 立ち絵と背景で違う部分だけをまとめた操作。`set` と `clear` を1つの型に同居させないのは、
+ * 立ち絵で受け取れる表情が違うから（`clear-portrait` は `default` を除いた
+ * {@link RemovableExpression}、`set-portrait` は {@link Expression}）。
+ */
+type ImageEdit<Image extends { readonly base64: string; readonly format: string }> =
+  | {
+      readonly kind: "set"
+      readonly image: string
+      /** data URL をほどく（読めない・受け付けない種類・大きすぎるときは undefined）。 */
+      readonly parseImage: (dataUrl: string) => Image | undefined
+      /** ほどいた画像から書き込み先のファイル名を組み立てる。 */
+      readonly fileName: (image: Image) => string
+      /** 書き換える前の、いまの定義が指しているファイル名。 */
+      readonly previousFileName: (content: string | undefined) => string | undefined
+      /** 定義にファイル名を書き込む。 */
+      readonly withImage: (content: string | undefined, fileName: string) => string
     }
-    case "clear-background": {
-      const previous = backgroundFileNameOf(content)
-      writeFileSync(definitionPath, definitionWithoutBackground(content))
-      removeUnreferencedImage(dir, previous)
-      return true
+  | {
+      readonly kind: "clear"
+      /** 書き換える前の、いまの定義が指しているファイル名。 */
+      readonly previousFileName: (content: string | undefined) => string | undefined
+      /** 定義から参照を外す。 */
+      readonly withoutImage: (content: string | undefined) => string
     }
-    case "set-background": {
-      // 立ち絵と同じく、検証は境界（`src/shared/command.ts`）で済んでいる。ここで undefined に
-      // なるのは配線の誤りのときだけ。
-      const image = parseBackgroundImage(edit.image)
-      if (image === undefined) {
-        return false
-      }
 
-      const fileName = backgroundFileName(image.format)
-      if (!withinImageFileLimit(dir, fileName)) {
-        return false
-      }
+/**
+ * 立ち絵・背景の差し替え（`set-*`）と消去（`clear-*`）に共通する手順
+ * （「ほどく → ファイル名を決める → 上限を確かめる → 前のファイル名を控える → 書き込む →
+ * 定義を書き換える → 参照されなくなった画像を消す」。`clear` はほどく・上限確認・書き込みを
+ * 飛ばす）を1箇所にまとめる。立ち絵と背景で違う部分は `edit` で受け取る。
+ */
+function applyImageEdit<Image extends { readonly base64: string; readonly format: string }>(
+  dir: string,
+  definitionPath: string,
+  content: string | undefined,
+  edit: ImageEdit<Image>,
+): boolean {
+  if (edit.kind === "clear") {
+    const previous = edit.previousFileName(content)
+    writeFileSync(definitionPath, edit.withoutImage(content))
+    removeUnreferencedImage(dir, previous)
+    return true
+  }
 
-      const previous = backgroundFileNameOf(content)
-      writeFileSync(join(dir, fileName), Buffer.from(image.base64, "base64"))
-      writeFileSync(definitionPath, definitionWithBackground(content, fileName))
-      removeUnreferencedImage(dir, previous)
-      return true
-    }
+  const image = edit.parseImage(edit.image)
+  if (image === undefined) {
+    return false
+  }
+
+  const fileName = edit.fileName(image)
+  if (!withinImageFileLimit(dir, fileName)) {
+    return false
+  }
+
+  const previous = edit.previousFileName(content)
+  writeFileSync(join(dir, fileName), Buffer.from(image.base64, "base64"))
+  writeFileSync(definitionPath, edit.withImage(content, fileName))
+  removeUnreferencedImage(dir, previous)
+  return true
+}
+
+/** 立ち絵の差し替え（表情ごとに書き込み先とファイル名が変わる）。 */
+function portraitSetEdit(expression: Expression, image: string): ImageEdit<PortraitImage> {
+  return {
+    kind: "set",
+    image,
+    parseImage: parsePortraitImage,
+    fileName: (portrait) => portraitFileName(expression, portrait.format),
+    previousFileName: (content) => portraitFileNameOf(content, expression),
+    withImage: (content, fileName) => definitionWithPortrait(content, expression, fileName),
+  }
+}
+
+/** 立ち絵の消去（`default` は消せないので {@link RemovableExpression} だけ受け取る）。 */
+function portraitClearEdit(expression: RemovableExpression): ImageEdit<PortraitImage> {
+  return {
+    kind: "clear",
+    previousFileName: (content) => portraitFileNameOf(content, expression),
+    withoutImage: (content) => definitionWithoutPortrait(content, expression),
+  }
+}
+
+/** 背景の差し替え（パックに1つだけなので、立ち絵と違い表情を受け取らない）。 */
+function backgroundSetEdit(image: string): ImageEdit<BackgroundImage> {
+  return {
+    kind: "set",
+    image,
+    parseImage: parseBackgroundImage,
+    fileName: (background) => backgroundFileName(background.format),
+    previousFileName: backgroundFileNameOf,
+    withImage: definitionWithBackground,
+  }
+}
+
+/** 背景の消去。 */
+function backgroundClearEdit(): ImageEdit<BackgroundImage> {
+  return {
+    kind: "clear",
+    previousFileName: backgroundFileNameOf,
+    withoutImage: definitionWithoutBackground,
   }
 }
 
@@ -413,13 +490,5 @@ function copyIfExists(from: string, to: string): void {
     copyFileSync(from, to)
   } catch {
     // 元が無いだけ（人格が無いパック・立ち絵が1枚だけのパック）。写せたものだけで続ける。
-  }
-}
-
-function readOptionalFile(path: string): string | undefined {
-  try {
-    return readFileSync(path, "utf8")
-  } catch {
-    return undefined
   }
 }

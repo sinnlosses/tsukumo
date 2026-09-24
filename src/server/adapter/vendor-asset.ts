@@ -55,11 +55,11 @@ export function readVendorAsset(name: string): VendorAssetFile | undefined {
     return undefined
   }
 
-  const content = readOptionalFile(bundledFilePath(NODE_MODULES, ...segments))
+  const content = readOptionalBinaryFile(bundledFilePath(NODE_MODULES, ...segments))
   return content === undefined ? undefined : { contentType, content }
 }
 
-function readOptionalFile(path: string): Buffer | undefined {
+function readOptionalBinaryFile(path: string): Buffer | undefined {
   try {
     return readFileSync(path)
   } catch {

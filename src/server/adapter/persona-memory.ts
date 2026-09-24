@@ -21,7 +21,7 @@
 // と同じ消し方（完全一致・節より前は触らない）を通すが、**1ターン1行の上限は掛からない**——
 // その上限はモデルの暴走を防ぐためのもので、利用者が画面から名指しした削除には要らない。
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../shared/persona-memory.ts"
@@ -32,6 +32,7 @@ import {
   homeCharacterDir,
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
+  readOptionalFile,
 } from "./character-pack.ts"
 
 /** 書き足す節の見出し。**`persona.md` のいちばん最後に置く**（7.1）。 */
@@ -283,12 +284,4 @@ function headingSeparator(content: string): string {
   }
 
   return content.endsWith("\n") ? "\n" : "\n\n"
-}
-
-function readOptionalFile(path: string): string | undefined {
-  try {
-    return readFileSync(path, "utf8")
-  } catch {
-    return undefined
-  }
 }
