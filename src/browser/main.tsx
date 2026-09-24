@@ -36,6 +36,7 @@ import { MainView } from "./features/main-view/main-view.tsx"
 import { ScreenNav } from "./features/screen-nav/screen-nav.tsx"
 import { Sidebar } from "./features/sidebar/sidebar.tsx"
 import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
+import { type Screen } from "./stores/location-hash.ts"
 import { QuestionAnswerProvider } from "./stores/question-answer.tsx"
 import { QuestionScrollProvider } from "./stores/question-scroll.tsx"
 import { useScreen } from "./stores/screen.tsx"
@@ -44,6 +45,18 @@ import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
 // ページ全体の下地（トークン・body・リンク）。**グローバルな CSS はこれだけ**で、機能ごとの
 // 見た目は各機能の `*.module.css` にある（docs/design.md 6.6）。
 import "./styles/theme.css"
+
+/**
+ * 会話の画面を除いた画面の部品を引く表（`stores/location-hash.ts` の画面の一覧が正典）。
+ * **`satisfies` で `Screen` を尽くしているかを検査する**ので、画面を1つ足したのに部品の登録を
+ * 忘れると `bun run typecheck` が落ちる。会話の画面は `<Layout>` を常時マウントしたまま
+ * `<Activity>` の可視/不可視で切り替える別枠（下の {@link Root} 参照）なのでここには乗らない。
+ */
+const OVERLAY_SCREEN = {
+  character: <CharacterScreen />,
+  "token-usage": <TokenUsageScreen />,
+  achievement: <AchievementScreen />,
+} satisfies Record<Exclude<Screen, "conversation">, ReactElement>
 
 /**
  * 出している画面を選ぶ（`location.hash`。docs/screen-design.md 13.6）。**会話の画面は外さず
@@ -85,9 +98,7 @@ function Root(): ReactElement {
           mainAsGround={chatMode}
         />
       </Activity>
-      {screen === "character" ? <CharacterScreen /> : null}
-      {screen === "token-usage" ? <TokenUsageScreen /> : null}
-      {screen === "achievement" ? <AchievementScreen /> : null}
+      {screen === "conversation" ? null : OVERLAY_SCREEN[screen]}
     </>
   )
 }

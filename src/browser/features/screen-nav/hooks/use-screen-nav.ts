@@ -26,7 +26,7 @@ import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { roomName } from "../../../../shared/room.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../domain/character-face.ts"
 import { useDismissSignal } from "../../../hooks/use-dismiss-signal.ts"
-import { type Screen } from "../../../stores/location-hash.ts"
+import { SCREEN_NAV_ITEMS, type Screen } from "../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { resolveModelAlias } from "../domain/model-label.ts"
@@ -112,14 +112,6 @@ export type ScreenNavView = {
   readonly ref: RefObject<HTMLElement | null>
 }
 
-// 帯に出す画面と、その字。名前は用語集の語のまま（docs/glossary.md）。
-const NAV_SCREENS = [
-  { screen: "conversation", label: "会話" },
-  { screen: "character", label: "キャラクター" },
-  { screen: "token-usage", label: "トークン消費" },
-  { screen: "achievement", label: "成果" },
-] satisfies readonly { readonly screen: Screen; readonly label: string }[]
-
 export function useScreenNav(): ScreenNavView {
   const dispatch = useSessionDispatch()
   const current = useScreen()
@@ -165,7 +157,7 @@ export function useScreenNav(): ScreenNavView {
     parts: {
       room: currentRoomName(),
       face: characterFaceInfo(character),
-      gates: NAV_SCREENS.map((entry) => ({
+      gates: SCREEN_NAV_ITEMS.map((entry) => ({
         screen: entry.screen,
         label: entry.label,
         href: screenHref(entry.screen),
