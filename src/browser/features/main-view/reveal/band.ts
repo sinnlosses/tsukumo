@@ -20,6 +20,7 @@
 // する（`mini-portrait.tsx`）。
 
 import { type BrushStroke } from "./brush-tip.ts"
+import { clamp } from "./paint.ts"
 
 /**
  * 行1つの位置（ビューポート座標）。**左端は持たない**——筆はどの帯も塊の左端から書き始めるので、
@@ -224,8 +225,4 @@ function spanOf(timings: readonly SweepTiming[]): number {
 
 function widthOf(band: RevealBand): number {
   return Math.max(0, band.right - band.left)
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
 }

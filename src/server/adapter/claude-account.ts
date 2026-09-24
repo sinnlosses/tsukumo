@@ -10,7 +10,6 @@
 // 来ない。読めない・鍵が無い・形が違うときは「無い」を返し、呼ぶ側が SDK の値へ落ちる
 // （`docs/coding-standards.md`「エラーハンドリング」の「動作中の一時的な失敗」）。
 
-import { readFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 
@@ -18,6 +17,7 @@ import { isPlainObject } from "remeda"
 
 import { optionalString } from "../../shared/utils/optional-string.ts"
 import { type ClaudeAccountTier } from "../core/plan.ts"
+import { readJsonFile } from "./lib/json-file.ts"
 
 const ACCOUNT_FILE_NAME = ".claude.json"
 
@@ -32,19 +32,13 @@ const UNKNOWN_TIER = {
  * 触らない）。
  */
 export function readClaudeAccountTier(): ClaudeAccountTier {
-  try {
-    const parsed: unknown = JSON.parse(
-      readFileSync(join(homedir(), ACCOUNT_FILE_NAME), { encoding: "utf8" }),
-    )
-    if (!isPlainObject(parsed) || !isPlainObject(parsed.oauthAccount)) {
-      return UNKNOWN_TIER
-    }
-    const account = parsed.oauthAccount
-    return {
-      organizationType: optionalString(account.organizationType),
-      rateLimitTier: optionalString(account.organizationRateLimitTier),
-    }
-  } catch {
+  const parsed = readJsonFile(join(homedir(), ACCOUNT_FILE_NAME))
+  if (!isPlainObject(parsed) || !isPlainObject(parsed.oauthAccount)) {
     return UNKNOWN_TIER
+  }
+  const account = parsed.oauthAccount
+  return {
+    organizationType: optionalString(account.organizationType),
+    rateLimitTier: optionalString(account.organizationRateLimitTier),
   }
 }

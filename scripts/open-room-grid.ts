@@ -13,7 +13,6 @@
 // 打ち直すと前回の格子のタブを閉じるので、前のプロセスもそれを見て終わる。動いている tsukumo の
 // プロセスは変えない。
 
-import { execFileSync } from "node:child_process"
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from "node:http"
 import { basename } from "node:path"
 import process from "node:process"
@@ -21,7 +20,7 @@ import process from "node:process"
 import { closeTab, listTabs, openTab, type OrcaTab } from "../src/server/adapter/orca-host.ts"
 import { createStartupToken } from "../src/server/adapter/server.ts"
 import { roomName } from "../src/shared/room.ts"
-import { candidatePorts, findListener, type Listener } from "./lib/port-listener.ts"
+import { candidatePorts, findListener, run, type Listener } from "./lib/port-listener.ts"
 import {
   buildRoomGridHtml,
   type GridTabObservation,
@@ -248,14 +247,6 @@ function processCwd(pid: number): string | undefined {
 function gitBranch(cwd: string): string | undefined {
   const branch = run("git", ["-C", cwd, "branch", "--show-current"]).trim()
   return branch === "" ? undefined : branch
-}
-
-function run(file: string, args: readonly string[]): string {
-  try {
-    return execFileSync(file, [...args], { encoding: "utf8" })
-  } catch {
-    return ""
-  }
 }
 
 function delay(ms: number): Promise<void> {
