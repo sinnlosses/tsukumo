@@ -10,7 +10,11 @@ import process from "node:process"
 import { type CurrentCharacter } from "./current-character.ts"
 import { type UiBundle } from "./server/adapter/bundle.ts"
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
-import { readAchievement } from "./server/adapter/main-history.ts"
+import {
+  createAchievementCommitCache,
+  readAchievement,
+  readCommitCalendar,
+} from "./server/adapter/main-history.ts"
 import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
@@ -85,6 +89,9 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // 「取れない」を返すものを置いておき、`connect` で本物に差し替える（`assets` と同じ持ち方）。
   let readContextUsage: () => Promise<ContextUsageReport> = () =>
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+  // 成果の画面（1日ぶん・暦）が今日以外の日の数を覚える入れ物。**両方の口が同じ1つを見る**
+  // （`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。
+  const achievementCommitCache = createAchievementCommitCache()
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/server/core/port-resolution.ts）。明示的に渡されたときは一度だけ
@@ -105,8 +112,16 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       // 検証済みの日付キーだけを渡す。
       readAchievement: (rawDate) => {
         const today = todayLocalDateKey()
-        return readAchievement(process.cwd(), resolveAchievementDateKey(rawDate, today), today)
+        return readAchievement(
+          process.cwd(),
+          resolveAchievementDateKey(rawDate, today),
+          today,
+          achievementCommitCache,
+        )
       },
+      // 灯りの暦（直近5週ぶん）。「今日」を決めるのは配線層（`readAchievement` と同じ理由）。
+      readAchievementCalendar: () =>
+        readCommitCalendar(process.cwd(), todayLocalDateKey(), achievementCommitCache),
       token,
     }),
   )

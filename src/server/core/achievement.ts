@@ -346,6 +346,32 @@ export function commitMilestoneOf(
   return crossed
 }
 
+// --- 灯りの暦（docs/design.md「成果の集め方と配り方」「暦の数え方」）。 ---
+
+/** {@link AchievementCommit} に、committer date をローカルの日付に直したものを添えたもの
+ * （`main-history.ts` が `local-time.ts` で変換して渡す。OS のタイムゾーンを読むのは adapter の
+ * 仕事）。 */
+export type AchievementCommitWithDate = AchievementCommit & { readonly localDateKey: string }
+
+/**
+ * 暦ぶんのコミット（`readCommitsSince` で1回まとめて読んだもの）を、日付キーごとのコミット数に
+ * 畳む（{@link countAchievementCommits} と同じ絞り込み——運用の帳面だけを触ったコミットは除く。
+ * merge commit は `git log --no-merges` で既に除かれている前提）。**コミットが無い日はキーごと
+ * 出てこない**（呼び出し側が `0` で埋める）。
+ */
+export function achievementCommitCountsByDate(
+  commits: readonly AchievementCommitWithDate[],
+): ReadonlyMap<string, number> {
+  const counts = new Map<string, number>()
+  for (const commit of commits) {
+    if (commit.changedFiles.every(isLedgerPath)) {
+      continue
+    }
+    counts.set(commit.localDateKey, (counts.get(commit.localDateKey) ?? 0) + 1)
+  }
+  return counts
+}
+
 /** コミットの数から外すファイル（`docs/requirements.md` 4.11「運用の帳面」）。 */
 function isLedgerPath(path: string): boolean {
   return (

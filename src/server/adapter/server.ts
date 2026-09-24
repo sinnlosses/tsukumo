@@ -24,6 +24,7 @@ import process from "node:process"
 
 import { isPlainObject } from "remeda"
 
+import { ACHIEVEMENT_CALENDAR_PATH } from "../../shared/achievement-calendar.ts"
 import { ACHIEVEMENT_DATE_QUERY_NAME, ACHIEVEMENT_PATH } from "../../shared/achievement.ts"
 import {
   CHARACTER_ASSET_PATH_PREFIX,
@@ -50,7 +51,7 @@ import {
   type TokenUsageSummary,
 } from "../../shared/token-usage-summary.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../shared/vendor-asset.ts"
-import { type ReadAchievementResult } from "./main-history.ts"
+import { type ReadAchievementResult, type ReadCommitCalendarResult } from "./main-history.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
@@ -142,6 +143,12 @@ export type FindPromptImage = (id: string) => string | undefined
  */
 export type ReadAchievement = (rawDate: string | undefined) => Promise<ReadAchievementResult>
 
+/**
+ * 灯りの暦（直近5週ぶん）に配る応答（`src/server/adapter/main-history.ts` の
+ * `readCommitCalendar` を束ねたもの）。日は選べない（常に「今日を含む直近5週」）ので引数は無い。
+ */
+export type ReadAchievementCalendar = () => Promise<ReadCommitCalendarResult>
+
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
 
@@ -168,9 +175,12 @@ export type ViewServerOptions = {
   readonly findPromptImage: FindPromptImage
   /** `/achievement` に配る1日ぶんの成果。 */
   readonly readAchievement: ReadAchievement
+  /** `/achievement-calendar` に配る灯りの暦（直近5週ぶん）。 */
+  readonly readAchievementCalendar: ReadAchievementCalendar
   /**
    * 起動トークン（{@link createStartupToken}）。**`/repository-file`・`/token-usage`・
-   * `/context-usage`・`/prompt-image`・`/achievement` はこれが合わないと配らない**
+   * `/context-usage`・`/prompt-image`・`/achievement`・`/achievement-calendar` はこれが合わないと
+   * 配らない**
    * （`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
    */
   readonly token: string
@@ -293,6 +303,11 @@ function respond(
 
   if (path === ACHIEVEMENT_PATH && request.method === "GET") {
     writeAchievement(request, response, options)
+    return
+  }
+
+  if (path === ACHIEVEMENT_CALENDAR_PATH && request.method === "GET") {
+    writeAchievementCalendar(request, response, options)
     return
   }
 
@@ -490,6 +505,35 @@ function writeAchievement(
         return
       }
       writeJson(response, result.achievement)
+    },
+    () => writeUnavailable(response),
+  )
+}
+
+/**
+ * 灯りの暦（直近5週ぶん）を JSON で配る。**起動トークンが合わなければ 403**（`/achievement` と
+ * 同じ）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——`main` が読めないだけ
+ * なら 200 で `{ kind: "unknown" }` を返す（`src/server/adapter/main-history.ts` の
+ * `ReadCommitCalendarResult`）。
+ */
+function writeAchievementCalendar(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: ViewServerOptions,
+): void {
+  if (!hasStartupToken(request, options.token)) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
+    response.end("forbidden\n")
+    return
+  }
+
+  options.readAchievementCalendar().then(
+    (result) => {
+      if (result.kind === "unavailable") {
+        writeUnavailable(response)
+        return
+      }
+      writeJson(response, result.calendar)
     },
     () => writeUnavailable(response),
   )

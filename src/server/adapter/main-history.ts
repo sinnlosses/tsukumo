@@ -14,8 +14,13 @@
 
 import { basename } from "node:path"
 
+import {
+  achievementCalendarDateKeys,
+  type AchievementCalendar,
+} from "../../shared/achievement-calendar.ts"
 import { type AchievementMilestone, type DailyAchievement } from "../../shared/achievement.ts"
 import {
+  achievementCommitCountsByDate,
   achievementCommitsInRange,
   commitMilestoneOf,
   countAchievementCommits,
@@ -29,6 +34,7 @@ import {
   taskRegistrationDates,
   unionDoneTaskSummaries,
   type AchievementCommit,
+  type AchievementCommitWithDate,
   type DeletedTaskFile,
   type TaskFileChange,
   type TaskFileHistoryCommit,
@@ -36,6 +42,43 @@ import {
 } from "../core/achievement.ts"
 import { runGit, runGitCatFileBatch } from "./git.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "./local-time.ts"
+
+/**
+ * 今日以外の日の数を覚える入れ物（`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。
+ * **持ち主は `src/view-delivery.ts`**（配線で1つ作り、{@link readAchievement} と
+ * {@link readCommitCalendar} の両方に渡す。モジュールのトップレベルに可変の入れ物を置かない）。
+ * 中身の `Map` は外へ出さず、覚える・引く口だけを持たせる（渡した入れ物を呼び出し先が直接
+ * 書き換える形にしない。`docs/coding-standards.md`「変数は基本イミュータブル」）。
+ *
+ * - 日ごとの数: 暦の日ごとのコミット数（鍵は日付キー）
+ * - 通算の数: 節目に使う、その日の始まりまでの通算のコミット数（鍵は見ている日の日付キー）
+ *
+ * **どちらも今日の分は覚えない**（毎回取り直す）。覚えた数が後で変わりうるのは、旧形式で
+ * 過去の日付のコミットが後から `main` に入ったときだけで、そのずれは受け入れる
+ * （プロセスを起こし直せば取り直す）。
+ */
+export type AchievementCommitCache = {
+  readonly dailyCountOf: (dateKey: string) => number | undefined
+  readonly rememberDailyCount: (dateKey: string, count: number) => void
+  readonly totalBeforeDayOf: (dateKey: string) => number | undefined
+  readonly rememberTotalBeforeDay: (dateKey: string, total: number) => void
+}
+
+/** {@link AchievementCommitCache} を1つ作る（呼び出しは `src/view-delivery.ts`）。 */
+export function createAchievementCommitCache(): AchievementCommitCache {
+  const dailyCounts = new Map<string, number>()
+  const totalsBeforeDay = new Map<string, number>()
+  return {
+    dailyCountOf: (dateKey) => dailyCounts.get(dateKey),
+    rememberDailyCount: (dateKey, count) => {
+      dailyCounts.set(dateKey, count)
+    },
+    totalBeforeDayOf: (dateKey) => totalsBeforeDay.get(dateKey),
+    rememberTotalBeforeDay: (dateKey, total) => {
+      totalsBeforeDay.set(dateKey, total)
+    },
+  }
+}
 
 /** 完全な参照名で指す（`task-summary.ts` と同じ理由）。 */
 const MAIN_BRANCH_REF = "refs/heads/main"
@@ -62,14 +105,21 @@ export type ReadAchievementResult =
   | { readonly kind: "ok"; readonly achievement: DailyAchievement }
   | { readonly kind: "unavailable" }
 
+/** {@link readCommitCalendar} の結果。{@link ReadAchievementResult} と同じ割り切り。 */
+export type ReadCommitCalendarResult =
+  | { readonly kind: "ok"; readonly calendar: AchievementCalendar }
+  | { readonly kind: "unavailable" }
+
 /**
  * 成果を1日ぶん読む。`dateKey` は見る日、`today` はサーバのローカル時刻の今日
  * （どちらも呼び出し側が検証済みの `YYYY-MM-DD`。`resolveAchievementDateKey` の戻り値）。
+ * `cache` は今日以外の日の数を覚える入れ物（持ち主は `src/view-delivery.ts`）。
  */
 export async function readAchievement(
   cwd: string,
   dateKey: string,
   today: string,
+  cache: AchievementCommitCache,
 ): Promise<ReadAchievementResult> {
   const head = await mainHeadCommit(cwd)
   if (head === undefined) {
@@ -92,12 +142,18 @@ export async function readAchievement(
 
   // 節目（コミットの節目）は、タスクの記録の有無に関わらず出す（`docs/requirements.md`
   // 4.11「タスクの記録が無いリポジトリでは、卒業とタスクの節目は出さない（コミットの節目は
-  // 出す）」）。通算の数は履歴の頭から end までの1回の `git log` で数える。
-  const allCommitsUntilEnd = await readAllCommitsUntil(cwd, head, range.endEpochMilliseconds)
-  if (allCommitsUntilEnd === undefined) {
+  // 出す）」）。通算の数（その日の始まりまでの数）は、今日以外なら `cache` に覚えて取り直さない。
+  const totalCommitsBeforeToday = await totalAchievementCommitsBeforeDay(
+    cwd,
+    head,
+    dateKey,
+    today,
+    range,
+    cache,
+  )
+  if (totalCommitsBeforeToday === undefined) {
     return { kind: "unavailable" }
   }
-  const totalCommitsBeforeToday = countAchievementCommits(allCommitsUntilEnd, 0, startEpochSeconds)
   const todaysCommitEpochSeconds = achievementCommitsInRange(
     commits,
     startEpochSeconds,
@@ -197,10 +253,44 @@ function commitMilestoneOfDay(
 }
 
 /**
+ * その日の始まりまでの通算のコミットの数（節目。`docs/design.md`「成果の集め方と配り方」手順7）。
+ * **`dateKey` が今日以外なら `cache` の通算の数を先に見て、あれば `git` を起こさず返す**。
+ * 無ければ履歴の頭から `range.endEpochMilliseconds` までの全コミットを1回読み、`range` の始まり
+ * より前のものだけを数えて（今日以外なら）覚える。
+ */
+async function totalAchievementCommitsBeforeDay(
+  cwd: string,
+  head: string,
+  dateKey: string,
+  today: string,
+  range: { readonly startEpochMilliseconds: number; readonly endEpochMilliseconds: number },
+  cache: AchievementCommitCache,
+): Promise<number | undefined> {
+  if (dateKey !== today) {
+    const cached = cache.totalBeforeDayOf(dateKey)
+    if (cached !== undefined) {
+      return cached
+    }
+  }
+
+  const allCommitsUntilEnd = await readAllCommitsUntil(cwd, head, range.endEpochMilliseconds)
+  if (allCommitsUntilEnd === undefined) {
+    return undefined
+  }
+  const total = countAchievementCommits(
+    allCommitsUntilEnd,
+    0,
+    epochSecondsOf(range.startEpochMilliseconds),
+  )
+  if (dateKey !== today) {
+    cache.rememberTotalBeforeDay(dateKey, total)
+  }
+  return total
+}
+
+/**
  * 履歴の頭から `untilEpochMs` までの全コミット（`--no-merges`、`git log --until`）。
- * 通算のコミットの数（節目）を数えるのに使う。**まだ覚えない**——今日以外の日の数を覚える
- * 入れ物は暦と共有する形で足す（`docs/design.md`「成果の集め方と配り方」手順7）。それまでは
- * 1回の応答ごとに数え直す（同じ日は同じ値になる）。
+ * {@link totalAchievementCommitsBeforeDay} が通算のコミットの数（節目）を数えるのに使う。
  */
 async function readAllCommitsUntil(
   cwd: string,
@@ -216,6 +306,91 @@ async function readAllCommitsUntil(
     "--name-only",
   ])
   return result.kind === "output" ? parseCommitLog(result.stdout) : undefined
+}
+
+/**
+ * 灯りの暦（直近5週ぶん）の日ごとのコミット数を読む（`docs/design.md`「成果の集め方と配り方」
+ * 「暦の数え方」）。`today` はサーバのローカル時刻の今日。`cache` は今日以外の日の数を覚える
+ * 入れ物（持ち主は `src/view-delivery.ts`）。
+ *
+ * **範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を
+ * 覚える。すべて覚えていれば、今日の分だけを取り直す**。`diaryDates` は日記の保存（別タスク）が
+ * まだ無いので常に空。
+ */
+export async function readCommitCalendar(
+  cwd: string,
+  today: string,
+  cache: AchievementCommitCache,
+): Promise<ReadCommitCalendarResult> {
+  const head = await mainHeadCommit(cwd)
+  if (head === undefined) {
+    return { kind: "ok", calendar: { kind: "unknown" } }
+  }
+
+  const dateKeys = achievementCalendarDateKeys(today)
+  const rangeStart = dateKeys[0]
+  if (rangeStart === undefined) {
+    return { kind: "unavailable" }
+  }
+  const nonTodayKeys = dateKeys.filter((date) => date !== today)
+  const allNonTodayCached = nonTodayKeys.every((date) => cache.dailyCountOf(date) !== undefined)
+
+  if (allNonTodayCached) {
+    const todayRange = localDateEpochRange(today)
+    const todayCommits = await readCommitsSince(
+      cwd,
+      head,
+      todayRange.startEpochMilliseconds - SINCE_MARGIN_DAYS * MILLISECONDS_PER_DAY,
+    )
+    if (todayCommits === undefined) {
+      return { kind: "unavailable" }
+    }
+    const todayCount = countAchievementCommits(
+      todayCommits,
+      epochSecondsOf(todayRange.startEpochMilliseconds),
+      epochSecondsOf(todayRange.endEpochMilliseconds),
+    )
+    return {
+      kind: "ok",
+      calendar: {
+        kind: "known",
+        today,
+        days: dateKeys.map((date) => ({
+          date,
+          commitCount: date === today ? todayCount : (cache.dailyCountOf(date) ?? 0),
+        })),
+        diaryDates: [],
+      },
+    }
+  }
+
+  const rangeStartRange = localDateEpochRange(rangeStart)
+  const commits = await readCommitsSince(
+    cwd,
+    head,
+    rangeStartRange.startEpochMilliseconds - SINCE_MARGIN_DAYS * MILLISECONDS_PER_DAY,
+  )
+  if (commits === undefined) {
+    return { kind: "unavailable" }
+  }
+  const commitsWithDate: readonly AchievementCommitWithDate[] = commits.map((commit) => ({
+    ...commit,
+    localDateKey: localDateKey(commit.committedAtEpochSeconds * 1000),
+  }))
+  const countsByDate = achievementCommitCountsByDate(commitsWithDate)
+  for (const date of nonTodayKeys) {
+    cache.rememberDailyCount(date, countsByDate.get(date) ?? 0)
+  }
+
+  return {
+    kind: "ok",
+    calendar: {
+      kind: "known",
+      today,
+      days: dateKeys.map((date) => ({ date, commitCount: countsByDate.get(date) ?? 0 })),
+      diaryDates: [],
+    },
+  }
 }
 
 /** `main` の先端。取れなければ `undefined`（「`main` が読めない」。冒頭のコメント）。 */

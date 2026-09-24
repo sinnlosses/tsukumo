@@ -30,6 +30,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
   findPromptImage: () => undefined,
   readAchievement: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
+  readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
   token: "架空の起動トークン",
 }
 

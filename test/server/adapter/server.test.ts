@@ -12,10 +12,15 @@ import {
 import {
   createStartupToken,
   type ReadAchievement,
+  type ReadAchievementCalendar,
   type ServeCharacterAsset,
   startViewServer,
   type ViewServer,
 } from "../../../src/server/adapter/server.ts"
+import {
+  ACHIEVEMENT_CALENDAR_PATH,
+  type AchievementCalendar,
+} from "../../../src/shared/achievement-calendar.ts"
 import { ACHIEVEMENT_PATH, type DailyAchievement } from "../../../src/shared/achievement.ts"
 import { type CharacterAssetLocation } from "../../../src/shared/character-asset.ts"
 import {
@@ -77,6 +82,14 @@ function noAchievement(): Promise<{ readonly kind: "ok"; readonly achievement: D
   return Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } })
 }
 
+/** 灯りの暦の代役。既定では「main が読めない」（`noAchievement` と同じ理由）。 */
+function noAchievementCalendar(): Promise<{
+  readonly kind: "ok"
+  readonly calendar: AchievementCalendar
+}> {
+  return Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } })
+}
+
 async function startView(
   serveCharacterAsset: ServeCharacterAsset = noCharacterAsset,
   listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
@@ -84,6 +97,7 @@ async function startView(
   readContextUsage: () => Promise<ContextUsageReport> = noContextUsage,
   findPromptImage: (id: string) => string | undefined = noPromptImage,
   readAchievement: ReadAchievement = noAchievement,
+  readAchievementCalendar: ReadAchievementCalendar = noAchievementCalendar,
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
@@ -93,6 +107,7 @@ async function startView(
     readContextUsage,
     findPromptImage,
     readAchievement,
+    readAchievementCalendar,
     token: TOKEN,
   })
   runningView = server
@@ -136,6 +151,15 @@ function achievementUrl(server: ViewServer, token: string | undefined, date?: st
   }
   if (date !== undefined) {
     url.searchParams.set("date", date)
+  }
+  return url.toString()
+}
+
+/** 暦の URL（起動トークン付き）。 */
+function achievementCalendarUrl(server: ViewServer, token: string | undefined): string {
+  const url = new URL(`${viewOrigin(server)}${ACHIEVEMENT_CALENDAR_PATH}`)
+  if (token !== undefined) {
+    url.searchParams.set("t", token)
   }
   return url.toString()
 }
@@ -490,6 +514,75 @@ describe("startViewServer", () => {
 
     expect((await fetch(achievementUrl(server, undefined))).status).toBe(403)
     expect((await fetch(achievementUrl(server, "ちがう"))).status).toBe(403)
+    expect(asked).toBe(0)
+  })
+
+  it("/achievement-calendar は、正しいトークンなら暦を JSON で返す", async () => {
+    const calendar: AchievementCalendar = {
+      kind: "known",
+      today: "2026-09-25",
+      days: [{ date: "2026-09-25", commitCount: 3 }],
+      diaryDates: [],
+    }
+    const server = await startView(
+      noCharacterAsset,
+      noRepositoryFile,
+      noTokenUsage,
+      noContextUsage,
+      noPromptImage,
+      noAchievement,
+      () => Promise.resolve({ kind: "ok", calendar }),
+    )
+
+    const response = await fetch(achievementCalendarUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("application/json")
+    expect(await response.json()).toEqual(calendar)
+  })
+
+  it("/achievement-calendar は、main が読めなくても 200 で「不明」を返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(achievementCalendarUrl(server, TOKEN))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ kind: "unknown" })
+  })
+
+  it("/achievement-calendar は、git の呼び出しが一時的に失敗したときは 503（部分的な数を出さない）", async () => {
+    const server = await startView(
+      noCharacterAsset,
+      noRepositoryFile,
+      noTokenUsage,
+      noContextUsage,
+      noPromptImage,
+      noAchievement,
+      () => Promise.resolve({ kind: "unavailable" }),
+    )
+
+    const response = await fetch(achievementCalendarUrl(server, TOKEN))
+
+    expect(response.status).toBe(503)
+  })
+
+  it("/achievement-calendar は、トークンが無い・違うときは 403（読み取りにも行かない）", async () => {
+    let asked = 0
+    const server = await startView(
+      noCharacterAsset,
+      noRepositoryFile,
+      noTokenUsage,
+      noContextUsage,
+      noPromptImage,
+      noAchievement,
+      () => {
+        asked += 1
+        return noAchievementCalendar()
+      },
+    )
+
+    expect((await fetch(achievementCalendarUrl(server, undefined))).status).toBe(403)
+    expect((await fetch(achievementCalendarUrl(server, "ちがう"))).status).toBe(403)
     expect(asked).toBe(0)
   })
 
