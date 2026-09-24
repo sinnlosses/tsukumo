@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 task コマンドの new・status・claim・release と台帳を作った（T-521）
+
+claude-skills `2eda698` に `task.py` と台帳（共有 `.git` の下の `task-workflow/`）を足した。既存のスキルからはまだ呼ばれないので、どのプロジェクトの挙動も変わらない。
+
 ### 2026-09-24 新しいタスク運用の設計書を claude-skills に書いた（T-520）
 
 `docs/task-workflow-redesign.md`（claude-skills `45d195f`）に、1件1ファイル・台帳・`task` コマンドの仕様・移行・採らなかった案をまとめた。着手の印を消すのは `done` ではなく `ship` にしたので、T-522 は着手時にこの設計書に合わせる。
