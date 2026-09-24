@@ -317,6 +317,11 @@
   outline: none;
   border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
 }
+/* 答え待ちのあいだは、フォーカスの枠も答え待ちの色（--state-warn）の系統にする。混ぜ方は
+   上の accent のときと揃える（60%, var(--rule)）。 */
+.dispatch-form.is-answering .dispatch-text:focus-visible {
+  border-color: color-mix(in srgb, var(--state-warn) 60%, var(--rule));
+}
 /* 経過時間（送信ボタンと同じ行）。他の2つ（ボタン・候補）と同じく伸び縮みしない
    固定幅にしておく。 */
 .dispatch-elapsed-row {
