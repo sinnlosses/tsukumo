@@ -21,9 +21,10 @@ import { type SessionState } from "./session-state.ts"
  *
  * 直近は状態に `lastTurnFinishedAt`（直近でターンが終わった時刻。`turn` が `running` に
  * 移っても戻らない）を足したことで上げた（古いタブは持たず、サイドバーの使用量の行の
- * 取り直しの合図がターンの途中に `0` へ戻ってしまう）。
+ * 取り直しの合図がターンの途中に `0` へ戻ってしまう）。同じときに入った `turn-resumed`
+ * （イベントの追加なので単独では上げない）と合わせて、12 から 14 へ一度に上げた。
  */
-export const PROTOCOL_VERSION = 13
+export const PROTOCOL_VERSION = 14
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の

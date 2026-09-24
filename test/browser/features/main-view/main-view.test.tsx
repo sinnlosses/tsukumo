@@ -52,7 +52,11 @@ function renderMainView(
   records: readonly SessionRecord[],
   turn: SessionState["turn"] = INITIAL_SESSION_STATE.turn,
 ): RenderResult {
-  store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records, turn })
+  // 動いているターンを渡したときは、記録の本文がいまの SDK ターンで届いたものとして扱う
+  // （前の SDK ターンで確定した本文は、動いているあいだも出したままになるため）。
+  const bodiesInTurn =
+    turn.kind === "running" ? { report: true, utterance: true } : INITIAL_SESSION_STATE.bodiesInTurn
+  store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records, turn, bodiesInTurn })
   return render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionProvider>

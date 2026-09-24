@@ -39,12 +39,12 @@ describe("withSelfStartedTurns", () => {
     ])
   })
 
-  it("ターンが終わったあとに届いた init（知らせで claude が始めた続きのターン）の前に turn-started を補う", () => {
+  it("ターンが終わったあとに届いた init（知らせで claude が始めた続きのターン）の前に turn-resumed を補う", () => {
     expect(relayedKinds([REQUEST, INIT, FINISHED, INIT, UTTERANCE, FINISHED])).toEqual([
       "request",
       "session-info",
       "turn-finished",
-      "turn-started",
+      "turn-resumed",
       "session-info",
       "utterance",
       "turn-finished",
@@ -55,7 +55,7 @@ describe("withSelfStartedTurns", () => {
     expect(relayedKinds([REQUEST, FINISHED, INIT, INIT, FINISHED])).toEqual([
       "request",
       "turn-finished",
-      "turn-started",
+      "turn-resumed",
       "session-info",
       "session-info",
       "turn-finished",

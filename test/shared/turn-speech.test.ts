@@ -84,7 +84,10 @@ describe("turnSpeeches（通し番号）", () => {
       detailRecord("3つ目のレポート"),
     ]
 
-    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
+    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), {
+      report: false,
+      utterance: false,
+    })
 
     expect(turnSpeeches(records).map((turn) => turn.id)).toEqual(viewTurns.map((turn) => turn.id))
   })
@@ -99,7 +102,10 @@ describe("turnSpeeches（通し番号）", () => {
       speechRecord({ text: "2つ目のセリフ" }),
     ]
 
-    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
+    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), {
+      report: false,
+      utterance: false,
+    })
     const speechTurns = turnSpeeches(records)
 
     expect(speechTurns.map((turn) => turn.id)).toEqual(viewTurns.map((turn) => turn.id))
@@ -119,7 +125,10 @@ describe("turnSpeeches（通し番号）", () => {
       speechRecord({ text: "1つ目のセリフ" }),
     ]
 
-    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
+    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), {
+      report: false,
+      utterance: false,
+    })
     const speechTurns = turnSpeeches(records)
 
     expect(speechTurns.map((turn) => turn.id)).toEqual(viewTurns.map((turn) => turn.id))
@@ -136,7 +145,10 @@ describe("turnSpeeches（通し番号）", () => {
       detailRecord(`レポート${String(index)}`),
     ]).flat()
 
-    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), false)
+    const viewTurns = mainViewTurns(mainViewEntries({ ...INITIAL_SESSION_STATE, records }), {
+      report: false,
+      utterance: false,
+    })
     const speechTurns = turnSpeeches(records)
 
     const expectedIds = Array.from(

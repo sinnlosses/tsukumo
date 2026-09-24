@@ -9,7 +9,7 @@
 // キーにして結果を覚える（`WeakMap` なので、古い姿と一緒に落ちる）。
 
 import { mainViewEntries, mainViewTurns, type MainViewTurn } from "../../shared/main-view.ts"
-import { type SessionState } from "../../shared/session-state.ts"
+import { type SessionState, type TurnBodies } from "../../shared/session-state.ts"
 import { useSessionSelector } from "./session.tsx"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()
@@ -25,13 +25,18 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
   if (remembered !== undefined) {
     return remembered
   }
-  const turns = mainViewTurns(mainViewEntries(state), isTurnUnsettled(state))
+  const turns = mainViewTurns(mainViewEntries(state), unsettledBodies(state))
   TURNS_BY_STATE.set(state, turns)
   return turns
 }
 
 /**
- * いちばん新しいやり取りの締めの本文が**まだ伸びうるか**（`mainViewTurns` の2つめの引数）。
+ * いちばん新しいやり取りで**まだ伸びうる本文の種類**（`mainViewTurns` の2つめの引数）。
+ *
+ * **伸びうるのは、いま走っている SDK ターンで届いた本文だけ**（`SessionState.bodiesInTurn`）。
+ * サブエージェントの `SendMessage` や背景のタスクの通知で claude が自分で続きのターンを始めると
+ * `running` に戻るが、前の SDK ターンで確定した `report` まで伏せると、合図が届くたびに
+ * 出ていた中間レポートが消えて、ターンが終わると同じものが出直す（画面で出た）。
  *
  * **ターンが `running` かどうかだけでは足りない。** 背景の仕事（サブエージェント・背景の
  * コマンド）を待って黙ると SDK が `result` を出すので `turn-finished` が届き、`finished` に落ちる。
@@ -42,6 +47,10 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  *
  * 書きかけがあるあいだ（`partialUtterance` が空でない）は伸びる途中とみなす。
  */
-function isTurnUnsettled(state: SessionState): boolean {
-  return state.turn.kind === "running" || state.partialUtterance !== ""
+function unsettledBodies(state: SessionState): TurnBodies {
+  const running = state.turn.kind === "running"
+  return {
+    report: running && state.bodiesInTurn.report,
+    utterance: (running && state.bodiesInTurn.utterance) || state.partialUtterance !== "",
+  }
 }

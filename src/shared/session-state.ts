@@ -215,6 +215,14 @@ export type TurnProgress =
       readonly ending: TurnEnding
     }
 
+/**
+ * いま走っている SDK ターンで届いた本文の種類（{@link SessionState.bodiesInTurn}）。`report` は
+ * `report` ツールの呼び出し、`utterance` はツールの外に書いた本文（空白だけのものは数えない）。
+ */
+export type TurnBodies = { readonly report: boolean; readonly utterance: boolean }
+
+const NO_TURN_BODIES = { report: false, utterance: false } as const satisfies TurnBodies
+
 /** メインが `report` の引数を書いている途中か（{@link SessionState.reportDrafting}）。 */
 export type ReportDrafting =
   | { readonly kind: "idle" }
@@ -244,6 +252,13 @@ export type SessionState = {
    * 今のターンに積み重ねるかの判定に使う。`speech` イベントを参照）。`request` で false に戻る。
    */
   readonly speechCalledInTurn: boolean
+  /**
+   * いま走っている SDK ターンで本文が届いたか（{@link TurnBodies}）。**やり取り（依頼）ではなく
+   * SDK のターンで区切る**——背景のタスクやサブエージェントの合図で claude が自分で始めたターン
+   * （`turn-started`）でも戻す。メインビューが「まだ伸びうる本文」を伏せるときに、前の SDK
+   * ターンで確定した本文まで巻き込まないために要る（`src/browser/stores/main-view-turn.ts`）。
+   */
+  readonly bodiesInTurn: TurnBodies
   /** 確定した記録。書きかけの本文は含まない。 */
   readonly records: readonly SessionRecord[]
   /** 書きかけの本文。完成した本文が来たら空に戻る。 */
@@ -435,6 +450,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   speeches: [],
   speechExpression: "default",
   speechCalledInTurn: false,
+  bodiesInTurn: NO_TURN_BODIES,
   records: [],
   partialUtterance: "",
   pending: [],
@@ -545,10 +561,18 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。docs/screen-design.md 13.7）。
       // 積むものが無いだけで、吹き出し・表情・進行中の印は `request` と同じに動かす。
       return beginTurn(state, at)
+    case "turn-resumed":
+      return resumeTurn(state, at)
     case "partial-utterance":
       return { ...state, partialUtterance: state.partialUtterance + event.text }
     case "utterance":
-      return settleUtterance({ ...state, partialUtterance: event.text })
+      return settleUtterance({
+        ...state,
+        partialUtterance: event.text,
+        bodiesInTurn: isBlankText(event.text)
+          ? state.bodiesInTurn
+          : { ...state.bodiesInTurn, utterance: true },
+      })
     case "speech":
       return {
         ...state,
@@ -575,6 +599,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
       return {
         ...settleReportDrafting(state, event.toolUseId),
+        bodiesInTurn: { ...state.bodiesInTurn, report: true },
         records: [
           ...state.records,
           {
@@ -664,6 +689,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         speeches: [],
         speechExpression: INITIAL_SESSION_STATE.speechExpression,
         speechCalledInTurn: false,
+        bodiesInTurn: NO_TURN_BODIES,
         records: [],
         partialUtterance: "",
         reportDrafting: { kind: "idle" },
@@ -828,6 +854,7 @@ function beginTurn(state: SessionState, at: number): SessionState {
     turn: { kind: "running", startedAt: at },
     nextTurnId: state.nextTurnId + 1,
     speechCalledInTurn: false,
+    bodiesInTurn: NO_TURN_BODIES,
     apiTrouble: { kind: "none" },
   }
 }
@@ -878,6 +905,22 @@ function finishTurn(turn: TurnProgress, at: number, ending: TurnEnding): TurnPro
  */
 function lastTurnFinishedAtOf(state: SessionState, at: number): number | undefined {
   return state.turn.kind === "idle" ? state.lastTurnFinishedAt : at
+}
+
+/**
+ * claude が自分で始めた続きのターン（`turn-resumed`）。進行中の印と SDK ターンごとの持ち物は
+ * {@link beginTurn} と同じに戻すが、**吹き出しのセリフと表情は持ち越し**、ターンの通し番号も
+ * 進めない（新しいやり取りではなく、同じやり取りの続き）。
+ */
+function resumeTurn(state: SessionState, at: number): SessionState {
+  return {
+    ...state,
+    partialUtterance: "",
+    reportDrafting: { kind: "idle" },
+    turn: { kind: "running", startedAt: at },
+    bodiesInTurn: NO_TURN_BODIES,
+    apiTrouble: { kind: "none" },
+  }
 }
 
 /**

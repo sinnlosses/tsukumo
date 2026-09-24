@@ -1,4 +1,4 @@
-// claude が**依頼なしで自分で始めたターン**に、ターンの始まり（`turn-started`）を補う。
+// claude が**依頼なしで自分で始めたターン**に、続きのターンの始まり（`turn-resumed`）を補う。
 //
 // 背景のタスク（docs/glossary.md「背景のタスク」）が終わると、claude は依頼を待たずに続きを
 // 報告するターンを始める。SDK はそのターンの頭に**依頼に当たるメッセージを流さない**（実測:
@@ -18,7 +18,7 @@
 import { type SessionEvent } from "../../shared/session-event.ts"
 
 /**
- * `onEvent` を包み、claude が自分で始めたターンの頭に `turn-started` を1つ挟んでから流す
+ * `onEvent` を包み、claude が自分で始めたターンの頭に `turn-resumed` を1つ挟んでから流す
  * 関数を返す。**駆動の送り出す全イベント（依頼も SDK 由来も）をこれに通す**——依頼で開いた
  * ターンを見ていないと、その `init` を「ターンの外」と取り違える。
  */
@@ -30,7 +30,7 @@ export function withSelfStartedTurns(
   return (event) => {
     if (event.kind === "session-info" && position === "between-turns") {
       position = "in-turn"
-      onEvent({ kind: "turn-started" })
+      onEvent({ kind: "turn-resumed" })
     }
     position = nextPosition(position, event)
     onEvent(event)

@@ -114,12 +114,19 @@ export type SessionEvent =
    * **落とすのは組み立ての側ではなく、ここ。** 記録に積まないので、雑談のログ
    * （`src/shared/chat-log.ts`）にも仕事のメインビュー（`src/shared/main-view.ts`）にも
    * 雑談の会話のアーカイブにも、初めから流れようが無い。
-   *
-   * **claude が自分で始めたターンもこれで始まる**（背景のタスクが終わった知らせを受けて、依頼
-   * なしで続きを報告するターン。実測: `task_notification` のあと、依頼を送らなくても `init` →
-   * `assistant` → `result` が届く）。起こすのは SDK の口（`src/server/core/self-started-turn.ts`）。
    */
   | { readonly kind: "turn-started" }
+  /**
+   * **claude が自分で始めた続きのターン**（背景のタスクが終わった知らせや、サブエージェントの
+   * `SendMessage` を受けて、依頼なしで続きを報告するターン。実測: `task_notification` のあと、
+   * 依頼を送らなくても `init` → `assistant` → `result` が届く）。起こすのは SDK の口
+   * （`src/server/core/self-started-turn.ts`）。
+   *
+   * `turn-started` と同じく記録を持たないが、**新しいターンではなく同じやり取りの続き**なので、
+   * 吹き出しのセリフと表情は持ち越す（空にすると、合図が届くたびに吹き出しが
+   * 「（まだ発話がありません）」に戻る）。
+   */
+  | { readonly kind: "turn-resumed" }
   /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/display.md 4.2）。 */
   | { readonly kind: "partial-utterance"; readonly text: string }
   /** 完成したターンの本文。仮の本文を置き換える。 */

@@ -6,7 +6,12 @@
 import { describe, expect, it } from "bun:test"
 
 import { mainViewTurnsOf } from "../../../src/browser/stores/main-view-turn.ts"
-import { INITIAL_SESSION_STATE, type SessionState } from "../../../src/shared/session-state.ts"
+import { type SessionEvent } from "../../../src/shared/session-event.ts"
+import {
+  applySessionEvent,
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../src/shared/session-state.ts"
 
 const FIXTURE_STATE: SessionState = {
   ...INITIAL_SESSION_STATE,
@@ -65,5 +70,62 @@ describe("mainViewTurnsOf", () => {
 
     expect(mainViewTurnsOf(next)).not.toBe(mainViewTurnsOf(FIXTURE_STATE))
     expect(mainViewTurnsOf(next)[0]?.steps.length).toBe(2)
+  })
+})
+
+// サブエージェントの `SendMessage` や背景のタスクの通知で、claude は同じやり取りの続きを自分で
+// 始める（`turn-resumed`）。そのたびに前の SDK ターンで出た `report` まで伏せていたので、
+// 合図が届くたびに中間レポートが消え、ターンが終わると同じものが出直していた。
+describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", () => {
+  const fold = (events: readonly SessionEvent[]) =>
+    events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
+  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const report = (conclusion: string): SessionEvent => ({
+    kind: "report",
+    toolUseId: "toolu_r1",
+    conclusion,
+    body: "",
+    favor: "",
+  })
+  const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+  const resumed: SessionEvent = { kind: "turn-resumed" }
+  const shownBodies = (state: SessionState) =>
+    (mainViewTurnsOf(state).at(-1)?.steps ?? []).flatMap((step) =>
+      step.body.kind === "text" ? [step.body.report] : [],
+    )
+
+  it("前の SDK ターンで出た report は、続きのターンが動いていても出したまま", () => {
+    const state = fold([
+      ask,
+      report("架空の途中の結論。"),
+      finished,
+      resumed,
+      { kind: "utterance", text: "架空の一言" },
+    ])
+
+    expect(state.turn.kind).toBe("running")
+    expect(shownBodies(state)).toEqual(["架空の途中の結論。"])
+  })
+
+  it("続きのターンで届いた report は、そのターンが終わるまで出さない", () => {
+    const running = fold([
+      ask,
+      report("架空の途中の結論。"),
+      finished,
+      resumed,
+      report("架空の結論。"),
+    ])
+
+    expect(shownBodies(running)).toEqual(["架空の途中の結論。"])
+    expect(shownBodies(applySessionEvent(running, finished, 0))).toEqual([
+      "架空の途中の結論。",
+      "架空の結論。",
+    ])
+  })
+
+  it("report の無いやり取りでも、前の SDK ターンの本文は続きのターンが動いていても出したまま", () => {
+    const state = fold([ask, { kind: "utterance", text: "架空の答え" }, finished, resumed])
+
+    expect(shownBodies(state)).toEqual(["架空の答え"])
   })
 })
