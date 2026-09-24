@@ -218,7 +218,8 @@ src/
       chat-archive.ts         雑談の会話のアーカイブ（~/.tsukumo/chat-archive/<pack>/<日付>.jsonl）
       remembered-default.ts   次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・許可モード）
       task-summary.ts         main のタスク一覧の読み直し（main の先端の変化を tasks-changed イベントにする。新形式は develop/task/ を `git ls-tree` / `git cat-file --batch`、旧形式は develop/tasks.json を `git show`）
-      repository-file.ts      git 管理下のファイルの列挙（`git ls-files` を起こす唯一の場所）
+      git.ts                  `git` を起こす唯一の口（`runGit` / `runGitCatFileBatch`）。task-summary.ts・main-history.ts・repository-file.ts が使う
+      repository-file.ts      git 管理下のファイルの列挙（`git.ts` の `runGit` で `git ls-files` を呼ぶ）
       context-usage-log.ts    コンテキストの内訳の記録（ファイルに触るのはここだけ）。~/.tsukumo/context-usage/<日付>.jsonl
       token-usage-log.ts      トークン消費の記録（ファイルに触るのはここだけ）。~/.tsukumo/token-usage/<日付>.jsonl
       local-time.ts           ~/.tsukumo/ に積む JSONL の「いつ」の書き方（日の境目も時差もそのマシンのローカル時刻）

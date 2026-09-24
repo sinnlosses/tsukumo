@@ -110,7 +110,8 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/adapter/bundled-path.ts`                                         | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く                                         |
 | `src/server/adapter/character-pack.ts`                                       | adapter    | キャラクターパックの列挙・読み込みと `/character/<pack>/<file>` が配ってよい1件の判定                                                        |
 | `src/server/adapter/task-summary.ts`                                         | adapter    | `main` の `develop/tasks.json` の読み直し。`main` の先端が変わったときだけ `tasks-changed` を起こす（`git rev-parse` / `git show` を起こす） |
-| `src/server/adapter/repository-file.ts`                                      | adapter    | 入力欄の `@` 補完に配るパスの列挙。**`git ls-files` を起こすのはここだけ**（失敗したら空）                                                   |
+| `src/server/adapter/git.ts`                                                  | adapter    | **`git` を起こすのはここだけ**。`task-summary.ts`・`main-history.ts`・`repository-file.ts` が使う                                            |
+| `src/server/adapter/repository-file.ts`                                      | adapter    | 入力欄の `@` 補完に配るパスの列挙。`git.ts` の `runGit` で `git ls-files` を呼ぶ（失敗したら空）                                             |
 | `src/server/core/host.ts`                                                    | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                                                                |
 | `src/server/adapter/orca-host.ts`                                            | adapter    | `src/server/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                                                           |
 | `src/browser/main.tsx`                                                       | browser    | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                                                                  |

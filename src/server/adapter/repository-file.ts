@@ -1,6 +1,5 @@
 // 作業ディレクトリの git 管理下のファイルを列挙する（`git ls-files`）。**境界は「管理下の
-// ファイルの列挙」**の1つだけ（原則3。`node:child_process` を import してよいファイルは
-// `test/architecture.test.ts` が絞っている）。
+// ファイルの列挙」**の1つだけ（原則3）。子プロセスを起こすのは `./git.ts` の `runGit` に任せる。
 //
 // **返すのはパスだけで、ファイルを開かない**（入力欄の `@` 補完が要るのは名前だけ。取り込む
 // 情報を最小に保つ）。パスは `cwd` からの相対で、サブディレクトリで起動していればその下だけが
@@ -11,13 +10,7 @@
 // 「常駐プロセスは描画1回の失敗で落ちない」）。git リポジトリでないのは異常ではないので、
 // ターミナルにも何も出さない。
 
-import { execFile } from "node:child_process"
-
-/** `git` の応答を待つ上限。超えたら空を返す（入力欄の補完なので、待たせ続けない）。 */
-const LIST_TIMEOUT_MS = 5000
-
-/** 受け取る標準出力の上限。超えると `git` の呼び出しごと失敗し、空になる。 */
-const MAX_OUTPUT_BYTES = 16 * 1024 * 1024
+import { runGit } from "./git.ts"
 
 /**
  * 返す件数の上限。**巨大なリポジトリでも応答の大きさを見切れる形にしておく**
@@ -31,17 +24,9 @@ export const MAX_REPOSITORY_FILES = 20000
  * `-z` で NUL 区切りにする（`git` は既定だと変わった名前を引用符で包んで書き換えるので、
  * そのままではパスとして使えない）。
  */
-export function listRepositoryFiles(cwd: string): Promise<readonly string[]> {
-  return new Promise((resolve) => {
-    execFile(
-      "git",
-      ["ls-files", "-z"],
-      { cwd, timeout: LIST_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
-      (error, stdout) => {
-        resolve(error === null ? splitNulSeparated(stdout) : [])
-      },
-    )
-  })
+export async function listRepositoryFiles(cwd: string): Promise<readonly string[]> {
+  const outcome = await runGit(cwd, ["ls-files", "-z"])
+  return outcome.kind === "output" ? splitNulSeparated(outcome.stdout) : []
 }
 
 /** NUL 区切りの出力をパスの並びにする（末尾の NUL が作る空文字は落とす）。 */
