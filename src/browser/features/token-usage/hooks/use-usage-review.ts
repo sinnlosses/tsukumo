@@ -20,10 +20,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 
 import {
-  readTokenUsageSummary,
   TOKEN_USAGE_DAYS_CHOICES,
-  TOKEN_USAGE_DAYS_QUERY_NAME,
-  TOKEN_USAGE_SUMMARY_PATH,
   type TokenUsageDays,
   type TokenUsageSummary,
 } from "../../../../shared/token-usage-summary.ts"
@@ -42,7 +39,6 @@ import {
 } from "../../../../shared/usage-review.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../domain/character-face.ts"
 import { formatElapsed } from "../../../domain/elapsed-time.ts"
-import { sessionTokenUrl } from "../../../lib/session-token-url.ts"
 import {
   useSessionDispatch,
   useSessionSelector,
@@ -57,6 +53,7 @@ import {
 } from "../../../utils/clock.ts"
 import { formatCount } from "../../../utils/format-count.ts"
 import { totalUsage } from "../usage-format.ts"
+import { fetchTokenUsageSummary } from "./use-token-usage.ts"
 
 const CHAT_MODE_BLOCKED_REASON = "雑談中は使えない。仕事に切り替えてから押す。"
 const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない。終わってからもう一度押す。"
@@ -339,16 +336,6 @@ function useReviewStageSummary(days: TokenUsageDays | undefined): TokenUsageSumm
     staleTime: 0,
   })
   return query.data
-}
-
-async function fetchTokenUsageSummary(days: TokenUsageDays): Promise<TokenUsageSummary> {
-  const response = await fetch(
-    sessionTokenUrl(TOKEN_USAGE_SUMMARY_PATH, { [TOKEN_USAGE_DAYS_QUERY_NAME]: String(days) }),
-  )
-  if (!response.ok) {
-    throw new Error(String(response.status))
-  }
-  return readTokenUsageSummary(await response.json())
 }
 
 /** 「前回の提案（09-16）」の日付部分。この端末のローカルの日で読む。 */

@@ -39,7 +39,7 @@ export function findListener(listenPort: number): Listener | undefined {
   return { port: listenPort, pid, command: command === "" ? "(不明)" : command }
 }
 
-function run(file: string, args: readonly string[]): string {
+export function run(file: string, args: readonly string[]): string {
   try {
     return execFileSync(file, [...args], { encoding: "utf8" })
   } catch {

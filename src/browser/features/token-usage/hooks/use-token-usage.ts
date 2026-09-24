@@ -58,7 +58,7 @@ export function useTokenUsage(): UseTokenUsageResult {
  * 落ちた応答は例外にせず `response.ok` で分けて、取れなかったことは呼び出し側の `isError` で
  * 伝える。
  */
-async function fetchTokenUsageSummary(days: TokenUsageDays): Promise<TokenUsageSummary> {
+export async function fetchTokenUsageSummary(days: TokenUsageDays): Promise<TokenUsageSummary> {
   const response = await fetch(tokenUsageSummaryUrl(days))
   if (!response.ok) {
     throw new Error(String(response.status))
