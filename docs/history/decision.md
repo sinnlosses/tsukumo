@@ -220,6 +220,26 @@
 **effort が外から観測できないことの実測**（2026-09-12）: `init` のシステムメッセージに `effort` は
 無く、`setModel` はモデル名しか取らない。
 
+**effort の途中変更と読み取りが成り立った実測**（2026-09-25、SDK 0.3.280）:
+2026-09-12 の実測は `init` と `setModel` しか見ておらず、hook 入力の `effort` は調べていなかった。
+本物の claude を `query()`（ストリーミング入力、`persistSession: false`、`tools: []`、cwd はスクラッチ）
+で起こし、`Stop` hook を登録して届く `input.effort` を読んだ。
+
+- 手順: (1) `effort: "low"` で起こし1ターン送る → `Stop` の `effort` を記録。(2)
+  `session.applyFlagSettings({ effortLevel: "high" })` を呼ぶ。(3) 2ターン目を送る →
+  `Stop` の `effort` を記録
+- 読めた値の形: 各ターンとも `{ level: "low" }` → `{ level: "high" }`（`sdk.d.ts` の
+  `BaseHookInput.effort` の型どおり）
+- 結果: 1ターン目は `level: "low"`、`applyFlagSettings` のあとの2ターン目は `level: "high"`
+  に変わって見えた。**「途中で変える」「外から読む」の両方が成り立った**
+- 実装上の注意（本題ではないが実測中に踏んだ）: `Query` は `AsyncGenerator` なので、
+  `for await...of` を `break` すると暗黙に `.return()` が呼ばれてセッションごと閉じる
+  （`applyFlagSettings` が "Query closed before response received" で落ちた）。`.next()` を
+  手で回せば起きない
+- `supportedModels()` の `ModelInfo.supportsEffort` / `supportedEffortLevels` は対応の有無・
+  選べる段だけで、いま効いている値ではない（引き続き不可）。`get_settings` の `applied.effort`
+  は `Query` の公開メソッドに出ていない（引き続き不可）ので、**読む口は hook 入力の `effort` だけ**
+
 ## requirements.md 4.3 状態連動（ユーザーの発言の引用と覆した記録）
 
 2026-09-23 に `docs/requirements.md`「4.3 状態連動」から、ユーザーの発言の引用・撤回の経緯・
