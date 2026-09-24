@@ -6,6 +6,7 @@ import {
   type ContextUsageEntry,
   type ContextUsageLog,
 } from "../../../src/server/core/context-usage.ts"
+import { type DiaryDay } from "../../../src/server/core/diary-tool.ts"
 import {
   createPromptImageShelf,
   type PromptImageShelf,
@@ -20,6 +21,7 @@ import {
 import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
 import { createSessionManager } from "../../../src/server/core/session-manager.ts"
 import { type TokenUsageEntry, type TokenUsageLog } from "../../../src/server/core/token-usage.ts"
+import { type DailyAchievement } from "../../../src/shared/achievement.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"
 import {
   type CharacterCreateCommand,
@@ -95,6 +97,7 @@ function createStubDriver(): StubDriver {
     driver: {
       prompt: (text: string) => calls.push(`prompt:${text}`),
       promptWithoutRecord: (text: string) => calls.push(`promptWithoutRecord:${text}`),
+      beginDiaryDay: (day: DiaryDay) => calls.push(`beginDiaryDay:${day.date}`),
       interrupt: () => {
         calls.push("interrupt")
         return Promise.resolve()
@@ -147,7 +150,11 @@ const REMEMBERED_LINES_EVENT: SessionEvent = {
   lines: ["架空の残った1行"],
 }
 
-function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
+function startManagerWithStub(
+  writeResult: "written" | "rejected" = "written",
+  readAchievementDay: (date: string) => Promise<DailyAchievement | undefined> = () =>
+    Promise.resolve(undefined),
+) {
   const stub = createStubDriver()
   const edits: CharacterEditCommand[] = []
   const creates: CharacterCreateCommand[] = []
@@ -172,6 +179,7 @@ function startManagerWithStub(writeResult: "written" | "rejected" = "written") {
       openedFiles.push(path)
       return Promise.resolve(writeResult === "written")
     },
+    readAchievementDay,
     batchIntervalMs: BATCH_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     chatArchive: NOOP_CHAT_ARCHIVE,
@@ -349,6 +357,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -458,6 +467,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -540,6 +550,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -591,6 +602,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -643,6 +655,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -704,6 +717,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -801,6 +815,113 @@ describe("createSessionManager", () => {
     })
   })
 
+  describe("成果の振り返り（reflect-achievement）", () => {
+    const KNOWN_DAY: DailyAchievement = {
+      kind: "known",
+      date: "2026-09-23",
+      today: "2026-09-24",
+      commitCount: 5,
+      doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+      graduations: [],
+      milestones: [],
+      diary: { kind: "none" },
+    }
+
+    const EMPTY_DAY: DailyAchievement = {
+      ...KNOWN_DAY,
+      commitCount: 0,
+      doneTasks: { kind: "known", items: [] },
+    }
+
+    it("その日の成果を数え直して依頼を送り、窓口へいま書く日を渡して diary-requested を流す", async () => {
+      const seenDates: string[] = []
+      const { manager, stub } = startManagerWithStub("written", async (date) => {
+        seenDates.push(date)
+        return KNOWN_DAY
+      })
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
+
+      expect(
+        await manager.dispatch({
+          type: "reflect-achievement",
+          commandId: "c-1",
+          date: "2026-09-23",
+        }),
+      ).toEqual({ ok: true })
+      await waitForBatch()
+
+      expect(seenDates).toEqual(["2026-09-23"])
+      // 書く日を先に渡してから依頼を送る。
+      expect(stub.calls[0]).toBe("beginDiaryDay:2026-09-23")
+      expect(stub.calls[1]?.startsWith("prompt:")).toBe(true)
+      expect(stub.calls[1]).toContain("この日の日記を書いてほしい")
+
+      const eventKinds = frames
+        .filter(
+          (frame): frame is Extract<ServerFrame, { readonly type: "events" }> =>
+            frame.type === "events",
+        )
+        .flatMap((frame) => frame.events.map((stamped) => stamped.event.kind))
+      expect(eventKinds).toContain("diary-requested")
+    })
+
+    it("ターン進行中は受け付けない（画面のボタンと同じ条件をサーバでも見る）", async () => {
+      const { manager, stub } = startManagerWithStub("written", () => Promise.resolve(KNOWN_DAY))
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+
+      expect(
+        await manager.dispatch({
+          type: "reflect-achievement",
+          commandId: "c-1",
+          date: "2026-09-23",
+        }),
+      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionDuringTurn })
+      expect(stub.calls).toEqual([])
+    })
+
+    it("空の日は断る", async () => {
+      const { manager, stub } = startManagerWithStub("written", () => Promise.resolve(EMPTY_DAY))
+
+      expect(
+        await manager.dispatch({
+          type: "reflect-achievement",
+          commandId: "c-1",
+          date: "2026-09-23",
+        }),
+      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
+      expect(stub.calls).toEqual([])
+    })
+
+    it("main が読めない日は断る", async () => {
+      const { manager, stub } = startManagerWithStub("written", () =>
+        Promise.resolve({ kind: "unknown" }),
+      )
+
+      expect(
+        await manager.dispatch({
+          type: "reflect-achievement",
+          commandId: "c-1",
+          date: "2026-09-23",
+        }),
+      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
+      expect(stub.calls).toEqual([])
+    })
+
+    it("成果が読めなかった（undefined）ときも断る", async () => {
+      const { manager, stub } = startManagerWithStub("written", () => Promise.resolve(undefined))
+
+      expect(
+        await manager.dispatch({
+          type: "reflect-achievement",
+          commandId: "c-1",
+          date: "2026-09-23",
+        }),
+      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
+      expect(stub.calls).toEqual([])
+    })
+  })
+
   describe("雑談の記憶の圧縮", () => {
     // 本番の閾値（128 KiB）だと架空の短い文面では届かないので、**`SessionManagerOptions` の
     // フィールドに小さい閾値を渡して**テストする（`batchIntervalMs` と同じ形。
@@ -831,6 +952,7 @@ describe("createSessionManager", () => {
       const manager = createSessionManager({
         now: () => 1_000,
         openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
         chatArchive: archive,
@@ -1261,6 +1383,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1310,6 +1433,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1350,6 +1474,7 @@ describe("createSessionManager", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1364,6 +1489,7 @@ describe("createSessionManager", () => {
         Promise.resolve({
           prompt: () => {},
           promptWithoutRecord: () => {},
+          beginDiaryDay: () => {},
           interrupt: () => Promise.reject(new Error("架空の駆動エラー")),
           answer: () => true,
           pending: () => [],
@@ -1437,6 +1563,7 @@ describe("createSessionManager", () => {
       const manager = createSessionManager({
         now: () => 1_000,
         openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive,
@@ -1664,6 +1791,7 @@ describe("createSessionManager", () => {
       const manager = createSessionManager({
         now: () => 1_000,
         openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1955,6 +2083,7 @@ describe("createSessionManager", () => {
       const manager = createSessionManager({
         now: () => 1_000,
         openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2146,6 +2275,7 @@ describe("依頼に添えた画像の棚", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2320,6 +2450,7 @@ describe("createSessionManager（見直し）", () => {
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatArchive: NOOP_CHAT_ARCHIVE,

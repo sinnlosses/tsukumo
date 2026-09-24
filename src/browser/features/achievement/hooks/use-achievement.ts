@@ -16,7 +16,6 @@
 import { useQuery, type Query } from "@tanstack/react-query"
 
 import {
-  achievementReviewRequestText,
   ACHIEVEMENT_DATE_QUERY_NAME,
   ACHIEVEMENT_PATH,
   isEmptyAchievementDay,
@@ -100,7 +99,6 @@ export function useAchievement(): UseAchievementResult {
   const selection = useAchievementDateSelection()
   const dispatch = useSessionDispatch()
   const turnRunning = useTurnRunning()
-  const chatMode = useSessionSelector((session) => session.state.chatMode)
   const characterName = useSessionSelector(
     (session) => session.state.character?.name ?? DEFAULT_CHARACTER_NAME,
   )
@@ -138,21 +136,22 @@ export function useAchievement(): UseAchievementResult {
     onToday: () => {
       selectAchievementToday()
     },
-    review: reviewButtonOf(view, daySwitch, turnRunning, chatMode, characterName, dispatch, screen),
+    review: reviewButtonOf(view, daySwitch, turnRunning, characterName, dispatch, screen),
   }
 }
 
 /**
  * 振り返りのボタン（13.10「並べるもの」4・「ボタンを押せないとき・押したあと」）。
  * **空の日の理由をターンが動いている理由より先に見る**——両方成り立つときは空の日の理由だけを
- * 出す決まり（同節）。押すと依頼を1回送り、会話の画面へ移る（`use-current-work.ts` の
- * `onGoToQuestion` と同じく、いま居る画面が違うときだけ `navigateTo` を呼ぶ）。
+ * 出す決まり（同節）。押すと**日付だけを送り**（`reflect-achievement`。依頼文は session-manager が
+ * その日の成果を数え直して組む。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）、
+ * 会話の画面へ移る（`use-current-work.ts` の `onGoToQuestion` と同じく、いま居る画面が違うときだけ
+ * `navigateTo` を呼ぶ）。
  */
 function reviewButtonOf(
   view: AchievementView,
   daySwitch: AchievementDaySwitch,
   turnRunning: boolean,
-  chatMode: boolean,
   characterName: string,
   dispatch: SessionDispatch,
   screen: Screen,
@@ -182,17 +181,7 @@ function reviewButtonOf(
       if (availability.kind !== "available") {
         return
       }
-      dispatch({
-        type: "prompt",
-        text: achievementReviewRequestText({
-          date: daySwitch.date,
-          today: daySwitch.today,
-          commitCount: view.commitCount,
-          doneTasks: view.doneTasks,
-          chatMode,
-        }),
-        images: [],
-      })
+      dispatch({ type: "reflect-achievement", date: daySwitch.date })
       if (screen !== "conversation") {
         navigateTo("conversation")
       }

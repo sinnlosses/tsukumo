@@ -17,6 +17,7 @@ import { z } from "zod"
 import { type ApiErrorKind, type ApiRetry } from "./api-trouble.ts"
 import { type BackgroundTask } from "./background-task.ts"
 import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
+import { type DiaryStage } from "./diary.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
@@ -406,6 +407,25 @@ export type SessionEvent =
    * 流す）。`date` は振り返りの対象の日（`YYYY-MM-DD`）。
    */
   | { readonly kind: "diary-written"; readonly date: string }
+  /**
+   * 成果の画面から振り返りを頼まれた（`reflect-achievement` コマンド）。**出し手は
+   * session-manager**——その日の成果を数え直し、依頼文を組んで送り、窓口
+   * （`src/server/core/diary-tool.ts` の `DiaryIntake.beginDay`）に「いま書く日」を渡した直後に
+   * 流す。`date` は振り返りの対象の日（`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
+   */
+  | { readonly kind: "diary-requested"; readonly date: string }
+  /**
+   * `includePartialMessages` の断片で、メインの `diary` の呼び出しの塊が開いた（立ち絵の
+   * 「書いている」の材料。`report-drafting` と同じ形）。段は「日記を書く」（`write`）。
+   */
+  | { readonly kind: "diary-drafting"; readonly toolUseId: string }
+  /**
+   * 振り返りの段が進んだ（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
+   * **出し手は駆動**——同じ塊の引数の断片（`input_json_delta`）に、最上位の鍵 `bookmark` が
+   * 現れた回だけ流す（`src/server/core/diary-tool.ts` の純関数が拾う）。運ぶのは段だけで、
+   * 引数の中身はイベントに載せない。
+   */
+  | { readonly kind: "diary-stage"; readonly stage: DiaryStage }
 
 /**
  * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で

@@ -237,6 +237,10 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       emit({ kind: "turn-started" })
       playNextTurn()
     },
+    // 疑似セッションは `diary` ツールの中身を持たない（架空の会話は手で書いた場面のまま進む）ので
+    // 何もしない。呼んでも落ちないだけでよい（`reflect-achievement` を fake driver 越しに確かめる
+    // ときのため）。
+    beginDiaryDay: () => {},
     interrupt: () => {
       emit({ kind: "turn-finished", outcome: { kind: "interrupted" } })
       return Promise.resolve()

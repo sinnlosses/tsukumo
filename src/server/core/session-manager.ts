@@ -17,6 +17,11 @@
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
 
 import {
+  achievementReflectionRequestText,
+  isEmptyAchievementDay,
+  type DailyAchievement,
+} from "../../shared/achievement.ts"
+import {
   type CharacterCreateCommand,
   type CharacterDeleteCommand,
   type CharacterEditCommand,
@@ -37,6 +42,7 @@ import { type PreviousUsageReview, type UsageReviewFindings } from "../../shared
 import { appendChatArchiveEntry } from "./chat-archive-entry.ts"
 import { type ChatCompactWatch, createChatCompactWatch } from "./chat-compact.ts"
 import { type ContextUsageLog, createContextUsageRecorder } from "./context-usage.ts"
+import { type DiaryDayTask } from "./diary-tool.ts"
 import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
@@ -192,6 +198,14 @@ export type SessionManagerOptions = {
    * （開けた・開けなかったの結果は `error` フレーム越しにだけ伝わる）。
    */
   readonly openFile: (path: string) => Promise<boolean>
+  /**
+   * 成果の振り返り（`reflect-achievement`）を受けたときに、その日の成果を数え直す口
+   * （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。**画面が出している
+   * `GET /achievement` と同じ数え方**（`src/server/adapter/main-history.ts` の
+   * `readAchievement`）を使い、依頼文と関所（その日の終えたタスクの ID）を同じ読み取りから
+   * 作る。`main` が読めない・`git` の呼び出しが失敗したときは undefined。
+   */
+  readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
 }
 
 /**
@@ -522,6 +536,61 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
   }
 
+  /**
+   * 成果の振り返り（`reflect-achievement`）。**その日の成果を数え直し**（`options.readAchievementDay`。
+   * 画面が読んでいるのと同じ数え方）、空の日・読めなかったときは断る。通れば依頼文を組んで送り、
+   * 窓口（`SessionDriver.beginDiaryDay`）に「いま書く日」を渡してから `diary-requested` を流す
+   * （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
+   */
+  const reflectAchievement = async (date: string): Promise<DispatchResult> => {
+    const achievement = await readAchievementDaySafely(date)
+    if (
+      achievement === undefined ||
+      achievement.kind !== "known" ||
+      isEmptyAchievementDay(achievement.commitCount, achievement.doneTasks)
+    ) {
+      return declined(FRAME_ERROR_REASON.achievementReflectionUnavailable)
+    }
+    // 数え直しを待つあいだに入力欄の依頼でターンが始まっていれば、ここで断る（入口の判定は
+    // 待つ前のもの）。
+    if (state.turn.kind === "running") {
+      return declined(FRAME_ERROR_REASON.achievementReflectionDuringTurn)
+    }
+
+    const doneTasks: readonly DiaryDayTask[] =
+      achievement.doneTasks.kind === "known" ? achievement.doneTasks.items : []
+    const text = achievementReflectionRequestText({
+      date,
+      today: achievement.today,
+      commitCount: achievement.commitCount,
+      doneTasks: achievement.doneTasks,
+      graduations: achievement.graduations,
+      milestones: achievement.milestones,
+      alreadyWritten: achievement.diary.kind === "written",
+      chatMode: state.chatMode,
+    })
+
+    try {
+      const started = await generation.driver
+      // 書く日を先に渡す（依頼が先に届くと、渡す前に `diary` が呼ばれうる）。
+      started.beginDiaryDay({ date, doneTasks })
+      started.prompt(text, [])
+      receive(generation, { kind: "diary-requested", date }, "driver")
+      return { ok: true }
+    } catch {
+      return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
+    }
+  }
+
+  /** `options.readAchievementDay` が例外を投げても、常駐プロセスは落とさず undefined に畳む。 */
+  const readAchievementDaySafely = async (date: string): Promise<DailyAchievement | undefined> => {
+    try {
+      return await options.readAchievementDay(date)
+    } catch {
+      return undefined
+    }
+  }
+
   return {
     dispatch: (command) => {
       // 画面は同じ条件で操作子を塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が
@@ -552,6 +621,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
             return declined(FRAME_ERROR_REASON.sessionSwitchDuringTurn)
           case "nudge":
             return declined(FRAME_ERROR_REASON.nudgeDuringTurn)
+          case "reflect-achievement":
+            return declined(FRAME_ERROR_REASON.achievementReflectionDuringTurn)
           default:
             break
         }
@@ -626,6 +697,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         // エディタで開くだけ。`docs/display.md` 4.2「各表示物」）。
         case "open-file":
           return openFile(command.path)
+        // **駆動へそのまま渡さない**（`nudge` と同じく依頼文をここで組んでから送る）。
+        case "reflect-achievement":
+          return reflectAchievement(command.date)
         default:
           break
       }

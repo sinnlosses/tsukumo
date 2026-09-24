@@ -6,10 +6,18 @@
 //
 // **引数の形（文字列・列挙）は zod の形で SDK が先に検査する**（崩れていれば handler は
 // 呼ばれない）。ここで見るのは形の外の条（いま書く日・1ターンに1回・本文やしおりの中身・
-// 保存の失敗）だけ。**3段目の合図（引数の断片から `bookmark` を見つける純関数）はここには無い**
-// （進みの表示は別の関心事）。
+// 保存の失敗）だけ。
+//
+// **3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数と、駆動の世代ごとに1つ
+// 持つ状態機械）もここに持つ**（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
+// **SDK の型は import しない**——`stream_event` の生の形は `isPlainObject` で構造だけを見る
+// （`src/server/core/sdk-message.ts` と同じやり方。呼び出し側は `src/server/adapter/sdk-driver.ts`
+// で、ツールのフル名〔`mcp__tsukumo__diary`〕はそちらが `tsukumoToolFullName` で組んで渡す——
+// ここが MCP の命名規則を知らなくて済むようにするため）。
 
-import { type DiaryBookmark } from "../../shared/diary.ts"
+import { isPlainObject } from "remeda"
+
+import { type DiaryBookmark, type DiaryStage } from "../../shared/diary.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 
@@ -195,6 +203,132 @@ function diaryBookmarkOf(
       taskId: task.id,
       summary: task.summary,
       reason: submitted.reason,
+    },
+  }
+}
+
+/** `diary` の引数の最上位に現れる、しおりの鍵。 */
+const DIARY_BOOKMARK_KEY = "bookmark"
+
+/**
+ * 引数の断片（累積した JSON の途中経過）の最上位に、しおりの鍵 `bookmark` が現れたかどうかを
+ * 判定する純関数（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。文字列の
+ * 中かどうかと入れ子の深さを数えながら読み、**閉じていない断片でも渡し直せば拾える**——
+ * 鍵の名前が断片の切れ目をまたいでいても、累積したものを毎回渡し直す前提で作ってある。
+ */
+export function diaryArgumentHasBookmarkKey(accumulatedPartialJson: string): boolean {
+  let depth = 0
+  let inString = false
+  let escaped = false
+  let keyStart: number | undefined
+
+  const text = accumulatedPartialJson
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i]
+    if (inString) {
+      if (escaped) {
+        escaped = false
+      } else if (char === "\\") {
+        escaped = true
+      } else if (char === '"') {
+        inString = false
+        if (
+          depth === 1 &&
+          keyStart !== undefined &&
+          text.slice(keyStart, i) === DIARY_BOOKMARK_KEY
+        ) {
+          // 閉じた文字列が最上位の `bookmark` なら、続く `:`（間の空白は読み飛ばす）を確かめる。
+          let cursor = i + 1
+          while (cursor < text.length && /\s/.test(text[cursor] ?? "")) {
+            cursor += 1
+          }
+          if (text[cursor] === ":") {
+            return true
+          }
+        }
+      }
+      continue
+    }
+    if (char === '"') {
+      inString = true
+      keyStart = i + 1
+    } else if (char === "{" || char === "[") {
+      depth += 1
+    } else if (char === "}" || char === "]") {
+      depth -= 1
+    }
+  }
+  return false
+}
+
+/** {@link createDiaryStageTracker} が返す窓口。 */
+export type DiaryStageTracker = {
+  /**
+   * 生のメッセージ1件を渡す。`diary` ツールの塊が開いたら追いかけ始め、引数の断片をつないで
+   * `bookmark` を探し、見つけた回だけ `"pick"` を返す（同じ塊では二度と返さない）。塊が閉じたら
+   * 追いかけるのをやめる。それ以外は常に `undefined`。
+   */
+  readonly observe: (message: unknown) => DiaryStage | undefined
+}
+
+/**
+ * {@link DiaryStageTracker} を1つ作る（**駆動の世代ごとに1つ**。呼び出し側は
+ * `src/server/adapter/sdk-driver.ts`）。`diaryToolFullName` は追いかける塊の名前
+ * （`mcp__tsukumo__diary` の形。組み立ては呼び出し側の `tsukumoToolFullName`）。
+ */
+export function createDiaryStageTracker(diaryToolFullName: string): DiaryStageTracker {
+  let tracking: { readonly index: number; readonly buffer: string } | undefined
+
+  return {
+    observe: (message) => {
+      if (
+        !isPlainObject(message) ||
+        message.type !== "stream_event" ||
+        typeof message.parent_tool_use_id === "string" ||
+        !isPlainObject(message.event)
+      ) {
+        return undefined
+      }
+      const event = message.event
+      const index = event.index
+      if (typeof index !== "number") {
+        return undefined
+      }
+
+      if (event.type === "content_block_start" && isPlainObject(event.content_block)) {
+        const block = event.content_block
+        tracking =
+          block.type === "tool_use" && block.name === diaryToolFullName
+            ? { index, buffer: "" }
+            : undefined
+        return undefined
+      }
+
+      if (tracking === undefined || tracking.index !== index) {
+        return undefined
+      }
+
+      if (event.type === "content_block_delta" && isPlainObject(event.delta)) {
+        if (
+          event.delta.type !== "input_json_delta" ||
+          typeof event.delta.partial_json !== "string"
+        ) {
+          return undefined
+        }
+        const buffer = tracking.buffer + event.delta.partial_json
+        tracking = { index, buffer }
+        if (diaryArgumentHasBookmarkKey(buffer)) {
+          // 拾ったら、この塊が閉じるまで待たずに追いかけるのをやめる（二重に出さない）。
+          tracking = undefined
+          return "pick"
+        }
+        return undefined
+      }
+
+      if (event.type === "content_block_stop") {
+        tracking = undefined
+      }
+      return undefined
     },
   }
 }

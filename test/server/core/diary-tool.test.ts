@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { createDiaryIntake, type DiaryDay } from "../../../src/server/core/diary-tool.ts"
+import {
+  createDiaryIntake,
+  createDiaryStageTracker,
+  diaryArgumentHasBookmarkKey,
+  type DiaryDay,
+} from "../../../src/server/core/diary-tool.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 
 // 引数はすべて手で書いた架空の文面（docs/coding-standards.md「会話内容の扱い」）。保存の成否だけ
@@ -240,5 +245,119 @@ describe("createDiaryIntake", () => {
     expect(failed.kind).toBe("rejected")
     expect(retried.kind).toBe("accepted")
     expect(events).toEqual([{ kind: "diary-written", date: "2026-09-23" }])
+  })
+})
+
+describe("diaryArgumentHasBookmarkKey", () => {
+  it("空の断片は false", () => {
+    expect(diaryArgumentHasBookmarkKey("")).toBe(false)
+  })
+
+  it("bookmark が無い断片は false", () => {
+    expect(diaryArgumentHasBookmarkKey('{"body":"架空の本文","expression":"proud"')).toBe(false)
+  })
+
+  it("値としての「bookmark」（鍵ではない）は拾わない", () => {
+    expect(diaryArgumentHasBookmarkKey('{"body":"bookmark"')).toBe(false)
+  })
+
+  it("最上位の鍵 bookmark が現れたら true（値がまだ閉じていなくても）", () => {
+    expect(diaryArgumentHasBookmarkKey('{"body":"架空","bookmark":{"taskId":"T-1"')).toBe(true)
+  })
+
+  it("鍵と `:` の間に空白があっても拾う", () => {
+    expect(diaryArgumentHasBookmarkKey('{"bookmark" : {')).toBe(true)
+  })
+
+  it("入れ子の中の bookmark（最上位ではない）は拾わない", () => {
+    expect(diaryArgumentHasBookmarkKey('{"body":{"bookmark":1}}')).toBe(false)
+  })
+
+  it("断片の切れ目をまたいでも、累積した文字列を渡し直せば拾える", () => {
+    const fragments = ['{"bo', 'dy":"架空","book', 'mark":{"taskId"']
+    let buffer = ""
+    let found = false
+    for (const fragment of fragments) {
+      buffer += fragment
+      found = diaryArgumentHasBookmarkKey(buffer)
+    }
+    expect(found).toBe(true)
+  })
+})
+
+describe("createDiaryStageTracker", () => {
+  const DIARY_TOOL_FULL_NAME = "mcp__tsukumo__diary"
+
+  function blockStart(name: string, index: number, parentToolUseId: string | null = null) {
+    return {
+      type: "stream_event",
+      parent_tool_use_id: parentToolUseId,
+      event: {
+        type: "content_block_start",
+        index,
+        content_block: { type: "tool_use", id: "toolu_d1", name, input: {} },
+      },
+    }
+  }
+
+  function delta(index: number, partialJson: string, parentToolUseId: string | null = null) {
+    return {
+      type: "stream_event",
+      parent_tool_use_id: parentToolUseId,
+      event: {
+        type: "content_block_delta",
+        index,
+        delta: { type: "input_json_delta", partial_json: partialJson },
+      },
+    }
+  }
+
+  function stop(index: number, parentToolUseId: string | null = null) {
+    return {
+      type: "stream_event",
+      parent_tool_use_id: parentToolUseId,
+      event: { type: "content_block_stop", index },
+    }
+  }
+
+  it("関係ないメッセージは undefined", () => {
+    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
+    expect(tracker.observe({ type: "assistant" })).toBeUndefined()
+    expect(tracker.observe("壊れた形")).toBeUndefined()
+  })
+
+  it("diary の塊が開いて bookmark が現れたら pick を1回だけ返す", () => {
+    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
+    expect(tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 2))).toBeUndefined()
+    expect(tracker.observe(delta(2, '{"body":"架空","expression":"proud"'))).toBeUndefined()
+    expect(tracker.observe(delta(2, ',"bookmark":{"taskId":"T-1"'))).toBe("pick")
+    // 同じ塊で二度とは返さない。
+    expect(tracker.observe(delta(2, '"}}'))).toBeUndefined()
+    expect(tracker.observe(stop(2))).toBeUndefined()
+  })
+
+  it("しおりの無い日は塊が閉じるまで pick を返さない", () => {
+    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
+    tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 1))
+    expect(tracker.observe(delta(1, '{"body":"架空","expression":"proud"}'))).toBeUndefined()
+    expect(tracker.observe(stop(1))).toBeUndefined()
+  })
+
+  it("ほかのツールの塊は追いかけない", () => {
+    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
+    tracker.observe(blockStart("Bash", 1))
+    expect(tracker.observe(delta(1, '{"bookmark":{'))).toBeUndefined()
+  })
+
+  it("サブエージェントの中の diary の塊は追いかけない", () => {
+    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
+    tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 1, "toolu_agent"))
+    expect(tracker.observe(delta(1, '{"bookmark":{', "toolu_agent"))).toBeUndefined()
+  })
+
+  it("index が合わない断片は追いかけない", () => {
+    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
+    tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 1))
+    expect(tracker.observe(delta(2, '{"bookmark":{'))).toBeUndefined()
   })
 })

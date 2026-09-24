@@ -13,6 +13,8 @@ import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
+import { todayLocalDateKey } from "./server/adapter/local-time.ts"
+import { createAchievementCommitCache, readAchievement } from "./server/adapter/main-history.ts"
 import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
@@ -101,6 +103,11 @@ export function startSession(options: SessionStartOptions): SessionManager {
   // レポートのパスを開く先（`main.ts` の `openLayoutView` とは別に、ここでも1つ作る。
   // `createOrcaHost()` は状態を持たないので、作り直しても構わない）。
   const host = createOrcaHost()
+  // 成果の振り返り（`reflect-achievement`）がその日の成果を数え直すための入れ物。**配線層
+  // （`view-delivery.ts`）が `/achievement` に配るのと別に1つ持つ**——両者は別の層（`src/`
+  // 直下）で、依存し合わせない。同じ日を両方から数えても、今日以外の日はどちらかが先に
+  // 覚えた数を使うだけで結果は変わらない（`src/server/adapter/main-history.ts`）。
+  const achievementCommitCache = createAchievementCommitCache()
   return createSessionManager({
     // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す
     // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
@@ -171,6 +178,13 @@ export function startSession(options: SessionStartOptions): SessionManager {
         () => listRepositoryFiles(cwd),
         (tracked) => host.openFile(tracked),
       ),
+    // **`GET /achievement`（`src/view-delivery.ts`）と同じ数え方**（`readAchievement`）。「今日」を
+    // 決めるのもそちらと同じくここ（配線層）の仕事。読めなかった・`main` が読めない日は
+    // `undefined` に畳み、断る理由は session-manager が決める。
+    readAchievementDay: async (date) => {
+      const result = await readAchievement(cwd, date, todayLocalDateKey(), achievementCommitCache)
+      return result.kind === "ok" ? result.achievement : undefined
+    },
   })
 }
 

@@ -21,6 +21,7 @@
 import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
 import { type BackgroundTask, type BackgroundTaskKind } from "../../../../shared/background-task.ts"
+import { type DiaryWriting } from "../../../../shared/diary.ts"
 import { type PendingAsk } from "../../../../shared/pending-ask.ts"
 import {
   currentTurnSteps,
@@ -42,12 +43,21 @@ const MAX_COLLAPSED_STEPS = 5
 /**
  * 5つの状態の語（上ほど強い。表の並びは docs/screen-design.md 13.9「いまの作業」）。
  * `background` は**ターンは終わっているが背景のタスクが動いている**とき（同「背景のタスク」）。
+ * `diary` は**成果の振り返りで日記を書いている**とき（`docs/screen-design.md` 13.9「いまの作業」の
+ * 表。`state.diaryWriting.kind === "writing"`）で、答え待ちの次・作業中の前に見る。
  */
-export type ScreenNavCurrentWorkState = "stopped" | "pending" | "running" | "background" | "idle"
+export type ScreenNavCurrentWorkState =
+  | "stopped"
+  | "pending"
+  | "diary"
+  | "running"
+  | "background"
+  | "idle"
 
 const WORK_WORD_LABEL = {
   stopped: "止まっている",
   pending: "答え待ち",
+  diary: "振り返り中",
   running: "作業中",
   background: "背景で作業中",
   idle: "依頼待ち",
@@ -199,6 +209,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const turnInProgress = useTurnRunning()
   const records = useSessionSelector((session) => session.state.records)
   const backgroundTasks = useSessionSelector((session) => session.state.backgroundTasks)
+  const diaryWriting = useSessionSelector((session) => session.state.diaryWriting)
   const chatMode = useSessionSelector((session) => session.state.chatMode)
   const characterName = useSessionSelector((session) => session.state.character?.name)
   const screen = useScreen()
@@ -270,11 +281,13 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     ? "stopped"
     : firstPending !== undefined
       ? "pending"
-      : turnInProgress
-        ? "running"
-        : backgroundTasks.length > 0
-          ? "background"
-          : "idle"
+      : diaryWriting.kind === "writing"
+        ? "diary"
+        : turnInProgress
+          ? "running"
+          : backgroundTasks.length > 0
+            ? "background"
+            : "idle"
 
   // **雑談中の依頼待ちだけ**「<名前> とおしゃべり中」に変える（`docs/screen-design.md` 13.9「いまの作業」。
   // 答え待ち・作業中・止まっているは、雑談中でもそのまま意味を持つ語なので変えない）。
@@ -290,7 +303,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     mark: state === "idle" && !chatIdle ? "○" : "●",
     chatIdle,
     pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
-    summary: toSummaryView(state, firstPending, runningStep, backgroundTasks),
+    summary: toSummaryView(state, firstPending, runningStep, backgroundTasks, diaryWriting),
     runningStep,
     backgroundList: toBackgroundListView(backgroundTasks),
     stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
@@ -329,14 +342,18 @@ function isRunningStep(step: TurnStep): boolean {
  * {@link ScreenNavCurrentWorkSummary} を組み立てる。**答え待ちの先頭が質問なら、実行中の手順の
  * 要約より質問の要約を優先する**（docs/screen-design.md 13.9「いまの作業」）。許可要求の答え待ちは
  * 今までどおり実行中の手順の要約に従う。**背景で作業中なら、背景のタスクの要約を出す**
- * （同「背景のタスク」）。
+ * （同「背景のタスク」）。**振り返り中は「<日付>の日記を書いています」**（同）。
  */
 function toSummaryView(
   state: ScreenNavCurrentWorkState,
   firstPending: PendingAsk | undefined,
   runningStep: ScreenNavCurrentWorkRunningStep,
   backgroundTasks: readonly BackgroundTask[],
+  diaryWriting: DiaryWriting,
 ): ScreenNavCurrentWorkSummary {
+  if (state === "diary" && diaryWriting.kind === "writing") {
+    return { kind: "text", label: `${diaryDateLabel(diaryWriting.date)}の日記を書いています` }
+  }
   if (state === "background") {
     const label = backgroundSummaryLabel(backgroundTasks)
     return label === undefined ? { kind: "none" } : { kind: "text", label }
@@ -383,6 +400,12 @@ function backgroundSummaryLabel(tasks: readonly BackgroundTask[]): string | unde
 
 function backgroundTaskLabel(task: BackgroundTask): string {
   return task.description === "" ? BACKGROUND_TASK_KIND_LABEL[task.kind] : task.description
+}
+
+/** 「9月23日」の形（`docs/screen-design.md` 13.9「いまの作業」。曜日は付けない）。 */
+function diaryDateLabel(date: string): string {
+  const parsed = Temporal.PlainDate.from(date)
+  return `${String(parsed.month)}月${String(parsed.day)}日`
 }
 
 /** {@link ScreenNavCurrentWorkBackgroundList} を組み立てる。動いているものが無ければ `none`。 */

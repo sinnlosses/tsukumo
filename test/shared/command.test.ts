@@ -105,6 +105,21 @@ describe("parseClientCommand（受け付ける形）", () => {
       { type: "open-file", commandId: "c-7", path: "src/foo.ts" },
     )
   })
+
+  it("reflect-achievement は日付をそのまま受け付ける", () => {
+    expect(
+      parseClientCommand({ type: "reflect-achievement", commandId: "c-8", date: "2026-09-23" }),
+    ).toEqual({ type: "reflect-achievement", commandId: "c-8", date: "2026-09-23" })
+  })
+
+  it("reflect-achievement は YYYY-MM-DD の形でない日付を拒む", () => {
+    expect(
+      parseClientCommand({ type: "reflect-achievement", commandId: "c-8", date: "9/23" }),
+    ).toBeUndefined()
+    expect(
+      parseClientCommand({ type: "reflect-achievement", commandId: "c-8", date: "" }),
+    ).toBeUndefined()
+  })
 })
 
 describe("parseClientCommand（キャラクターの見た目）", () => {

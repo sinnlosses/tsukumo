@@ -52,6 +52,35 @@ export type DailyDiaryStatus =
   | { readonly kind: "none" }
   | { readonly kind: "unreadable" }
 
+/**
+ * 振り返りの3段の並び（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
+ * **この並びが段の順**で、いまの段より前は済、後は未着手と読む（段は戻らない）。
+ */
+export const DIARY_STAGES = ["read", "write", "pick"] as const
+
+export type DiaryStage = (typeof DIARY_STAGES)[number]
+
+/**
+ * 振り返りの進み（`SessionState.diaryWriting`。`docs/design.md`「日記の受け取りと保存」
+ * 「状態とイベント」）。
+ *
+ * - `idle`: ふだん。一度も振り返っていない
+ * - `writing`: 振り返り中。`startedAt` はそのターンが始まった時刻、`stage` はいまの段
+ * - `written`: 直前の振り返りが書き上がった。**次の `diary-requested` まで持ち続ける**
+ * - `failed`: `writing` のままターンが終わった（成功・中断・失敗のどれでも）。`written` と同じく
+ *   次の `diary-requested` まで持ち続ける
+ */
+export type DiaryWriting =
+  | { readonly kind: "idle" }
+  | {
+      readonly kind: "writing"
+      readonly date: string
+      readonly startedAt: number
+      readonly stage: DiaryStage
+    }
+  | { readonly kind: "written"; readonly date: string; readonly writtenAt: number }
+  | { readonly kind: "failed"; readonly date: string }
+
 const diaryBookmarkSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("none") }),
   z.object({

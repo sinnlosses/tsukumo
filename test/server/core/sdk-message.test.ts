@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { DIARY_TOOL_NAME } from "../../../src/server/core/diary-tool.ts"
 import {
   isSubagentMessage,
   REPORT_TOOL_NAME,
@@ -1088,6 +1089,37 @@ describe("toSessionEvents（report ツール）", () => {
     }
 
     expect(toSessionEvents(delta, EXPRESSIONS)).toEqual([])
+  })
+
+  const DIARY_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${DIARY_TOOL_NAME}`
+
+  it("メインの diary の呼び出しの塊が開いたら、書き始めた合図にする", () => {
+    expect(
+      toSessionEvents(
+        {
+          type: "stream_event",
+          parent_tool_use_id: null,
+          event: {
+            type: "content_block_start",
+            index: 1,
+            content_block: {
+              type: "tool_use",
+              id: "toolu_d1",
+              name: DIARY_TOOL_FULL_NAME,
+              input: {},
+            },
+          },
+        },
+        EXPRESSIONS,
+      ),
+    ).toEqual([{ kind: "diary-drafting", toolUseId: "toolu_d1" }])
+  })
+
+  it("サブエージェントの diary や、ほかのツールの塊が開いても合図にしない", () => {
+    expect(
+      toSessionEvents(toolUseStarted(DIARY_TOOL_FULL_NAME, "toolu_agent"), EXPRESSIONS),
+    ).toEqual([])
+    expect(toSessionEvents(toolUseStarted("Read", null), EXPRESSIONS)).toEqual([])
   })
 })
 

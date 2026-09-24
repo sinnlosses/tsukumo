@@ -223,6 +223,51 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
   })
 
+  describe("振り返り中（成果の振り返り。docs/screen-design.md 13.9「いまの作業」）", () => {
+    it("diaryWriting が writing なら「振り返り中」で、要約は「<日付>の日記を書いています」", () => {
+      renderScreenNav({
+        diaryWriting: { kind: "writing", date: "2026-09-23", startedAt: 0, stage: "read" },
+      })
+
+      expect(document.querySelector(".screen-nav-work")?.getAttribute("data-work-state")).toBe(
+        "diary",
+      )
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("振り返り中")
+      expect(document.querySelector(".screen-nav-work-mark")?.textContent).toBe("●")
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+        "9月23日の日記を書いています",
+      )
+    })
+
+    it("答え待ちのほうが振り返り中より強い", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        pending: [FIXTURE_PENDING],
+        diaryWriting: { kind: "writing", date: "2026-09-23", startedAt: 0, stage: "read" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
+    })
+
+    it("振り返り中はターンが動いていても「作業中」にならない", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        diaryWriting: { kind: "writing", date: "2026-09-23", startedAt: 0, stage: "write" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("振り返り中")
+    })
+
+    it("written / failed / idle は「振り返り中」にならない", () => {
+      renderScreenNav({ diaryWriting: { kind: "written", date: "2026-09-23", writtenAt: 0 } })
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).not.toBe("振り返り中")
+
+      cleanup()
+      renderScreenNav({ diaryWriting: { kind: "failed", date: "2026-09-23" } })
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).not.toBe("振り返り中")
+    })
+  })
+
   it("答え待ちで札の語が「答え待ち」に変わり、要約も出る", () => {
     renderScreenNav({
       turn: { kind: "running", startedAt: 0 },

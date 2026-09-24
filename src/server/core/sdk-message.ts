@@ -20,6 +20,7 @@ import { type CommandDescription, type SessionEvent } from "../../shared/session
 import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 import { type TurnOutcome } from "../../shared/turn-failure.ts"
 import { optionalString } from "../../shared/utils/optional-string.ts"
+import { DIARY_TOOL_NAME } from "./diary-tool.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
@@ -112,6 +113,7 @@ export function toSessionEvents(
       return [
         ...partialUtteranceEvents(message.event, optionalString(message.parent_tool_use_id)),
         ...reportDraftingEvents(message.event, optionalString(message.parent_tool_use_id)),
+        ...diaryDraftingEvents(message.event, optionalString(message.parent_tool_use_id)),
       ]
     case "assistant":
       return assistantMessageEvents(message, expressions)
@@ -289,6 +291,32 @@ function reportDraftingEvents(
     block.name === tsukumoToolFullName(REPORT_TOOL_NAME) &&
     typeof block.id === "string"
     ? [{ kind: "report-drafting", toolUseId: block.id }]
+    : []
+}
+
+/**
+ * `includePartialMessages` の断片のうち、メインの `diary` の呼び出しの塊が開いた合図
+ * （`content_block_start` の `tool_use`）だけを `diary-drafting` にする
+ * （{@link reportDraftingEvents} と同じ形。`docs/design.md`「日記の受け取りと保存」）。
+ */
+function diaryDraftingEvents(
+  event: unknown,
+  parentToolUseId: string | undefined,
+): readonly SessionEvent[] {
+  if (
+    parentToolUseId !== undefined ||
+    !isPlainObject(event) ||
+    event.type !== "content_block_start" ||
+    !isPlainObject(event.content_block)
+  ) {
+    return []
+  }
+
+  const block = event.content_block
+  return block.type === "tool_use" &&
+    block.name === tsukumoToolFullName(DIARY_TOOL_NAME) &&
+    typeof block.id === "string"
+    ? [{ kind: "diary-drafting", toolUseId: block.id }]
     : []
 }
 

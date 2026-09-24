@@ -17,6 +17,7 @@ import { isBlankText } from "./blank-text.ts"
 import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import { isModelAlias } from "./command.ts"
+import { type DiaryStage, type DiaryWriting } from "./diary.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
@@ -434,6 +435,16 @@ export type SessionState = {
    */
   readonly previousUsageReview: PreviousUsageReview
   /**
+   * 成果の振り返り（docs/glossary.md「成果の振り返り」）の進み。帯の「いまの作業」の
+   * 「振り返り中」が読む（`docs/screen-design.md` 13.9「いまの作業」）。
+   *
+   * **源は `diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` の4つ**で、
+   * **`writing` のままターンが終わったら（止めた・失敗したも同じ）`failed` にする**。`written` と
+   * `failed` は次の `diary-requested` まで持ち続ける。起こし直すと初期値の `idle` から始まる
+   * （`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
+   */
+  readonly diaryWriting: DiaryWriting
+  /**
    * いまのターンで API が不調か（{@link ApiTrouble}。入力欄の経過時間の行に「再試行中」を出す
    * 材料と、失敗で終わったときの理由の材料）。**源は `api-retry` / `api-error`** で、ターンの
    * 境目と、モデルが何かを出したとき（{@link MODEL_OUTPUT_EVENT_KINDS}）に `none` へ戻る。
@@ -476,6 +487,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   backgroundTasks: [],
   usageReview: { kind: "idle" },
   previousUsageReview: { kind: "none" },
+  diaryWriting: { kind: "idle" },
   apiTrouble: { kind: "none" },
   rateLimit: { kind: "clear" },
 }
@@ -657,6 +669,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         lastTurnFinishedAt: lastTurnFinishedAtOf(state, at),
         reportDrafting: { kind: "idle" },
         usageReview: settleUsageReview(state.usageReview),
+        diaryWriting: settleDiaryWriting(state.diaryWriting),
         apiTrouble: { kind: "none" },
       }
     }
@@ -669,6 +682,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         lastTurnFinishedAt: lastTurnFinishedAtOf(state, at),
         backgroundTasks: [],
         usageReview: settleUsageReview(state.usageReview),
+        diaryWriting: { kind: "idle" },
         apiTrouble: { kind: "none" },
       }
     case "api-retry":
@@ -766,10 +780,20 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           event.key,
         ),
       }
+    case "diary-requested":
+      return {
+        ...state,
+        diaryWriting: { kind: "writing", date: event.date, startedAt: at, stage: "read" },
+      }
+    case "diary-drafting":
+      return { ...state, diaryWriting: withDiaryStage(state.diaryWriting, "write") }
+    case "diary-stage":
+      return { ...state, diaryWriting: withDiaryStage(state.diaryWriting, event.stage) }
     case "diary-written":
-      // 日記が書けたことを姿へ載せる（進み・帯の「振り返り中」）のは、渡す口ができてから。
-      // ここでは受け付けたことそのものは変えず、そのまま通す。
-      return state
+      return {
+        ...state,
+        diaryWriting: { kind: "written", date: event.date, writtenAt: at },
+      }
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
       // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと
@@ -824,6 +848,19 @@ function withoutProposal(findings: UsageReviewFindings, key: string): UsageRevie
 /** ターンの終わりで、結果を渡さずに終わった見直しをふだんへ戻す（結果・ふだんはそのまま）。 */
 function settleUsageReview(review: UsageReview): UsageReview {
   return review.kind === "running" ? { kind: "idle" } : review
+}
+
+/** `diary-drafting` / `diary-stage` で段を進める。`writing` でなければ何もしない（段は戻らない）。 */
+function withDiaryStage(writing: DiaryWriting, stage: DiaryStage): DiaryWriting {
+  return writing.kind === "writing" ? { ...writing, stage } : writing
+}
+
+/**
+ * ターンの終わりで、書き上がらなかった振り返りを `failed` にする（`written` / `idle` /
+ * `failed` はそのまま。`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
+ */
+function settleDiaryWriting(writing: DiaryWriting): DiaryWriting {
+  return writing.kind === "writing" ? { kind: "failed", date: writing.date } : writing
 }
 
 /**

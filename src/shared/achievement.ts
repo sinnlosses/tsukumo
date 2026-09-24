@@ -139,15 +139,21 @@ export function isEmptyAchievementDay(
 }
 
 /**
- * 振り返りのボタンを押したときに会話へ送る依頼文（`docs/requirements.md` 4.11「振り返りの依頼」）。
- * **画面に出している数だけから組み立てる**——コミットの件名や会話の文面は入れない
- * （`docs/coding-standards.md`「会話内容の扱い」）。
+ * 振り返りのボタンを押したときに会話へ送る依頼文（`docs/requirements.md` 4.11「振り返りの依頼」、
+ * 語は `docs/glossary.md`「成果の振り返り」）。**画面に出している数だけから組み立てる**——
+ * コミットの件名や会話の文面は入れない（`docs/coding-standards.md`「会話内容の扱い」）。
  */
-export function achievementReviewRequestText(params: {
+export function achievementReflectionRequestText(params: {
   readonly date: string
   readonly today: string
   readonly commitCount: number
   readonly doneTasks: AchievementDoneTasks
+  /** 該当が無ければ空の並び。 */
+  readonly graduations: readonly AchievementGraduation[]
+  /** 該当が無ければ空の並び。 */
+  readonly milestones: readonly AchievementMilestone[]
+  /** その日に既に日記があるか（続きとして書き足す1行を足す）。 */
+  readonly alreadyWritten: boolean
   /** 雑談中は `report` ツールが無いので、その1行を足さない。 */
   readonly chatMode: boolean
 }): string {
@@ -156,21 +162,49 @@ export function achievementReviewRequestText(params: {
   const commitClause = `main に入ったコミットは ${String(params.commitCount)} 件`
   const headLine =
     taskCountClause === ""
-      ? `${dayPhrase}の成果を一緒に振り返ってほしい。${commitClause}。`
-      : `${dayPhrase}の成果を一緒に振り返ってほしい。${commitClause}、${taskCountClause}`
+      ? `${dayPhrase}の成果を一緒に振り返って、この日の日記を書いてほしい。${commitClause}。`
+      : `${dayPhrase}の成果を一緒に振り返って、この日の日記を書いてほしい。${commitClause}、${taskCountClause}`
 
   const lines = [headLine]
   const taskListLines = achievementTaskListLines(params.doneTasks)
   if (taskListLines.length > 0) {
     lines.push("終えたタスク:", ...taskListLines)
   }
+  const surpriseLines = achievementSurpriseLines(params.graduations, params.milestones)
+  if (surpriseLines.length > 0) {
+    lines.push("小さな驚き:", ...surpriseLines)
+  }
+  if (params.alreadyWritten) {
+    lines.push("この日の日記は既にあるので、続きとして書き足す。")
+  }
+  const bookmarkClause =
+    params.doneTasks.kind === "known" && params.doneTasks.items.length > 0
+      ? "しおりには終えたタスクから1件を選び、選んだ理由を添える。"
+      : "しおりは要らない。"
   lines.push(
-    "感想を speak で聞かせて。どれか1〜2件に触れてくれると嬉しい。ファイルやログは読みに行かず、この一覧だけで話してほしい。次にやることの提案はいらない。",
+    `日記は diary ツールで1回書いて。本文はこの日の仕事の感想とねぎらいを短く。${bookmarkClause}ファイルやログは読みに行かず、この一覧だけで書いてほしい。次にやることの提案はいらない。`,
   )
   if (!params.chatMode) {
     lines.push("report は、何日の分を振り返ったかの1行でよい。")
   }
   return lines.join("\n")
+}
+
+/** 「小さな驚き:」の下に並べる行（卒業→節目の順）。該当が無ければ空。 */
+function achievementSurpriseLines(
+  graduations: readonly AchievementGraduation[],
+  milestones: readonly AchievementMilestone[],
+): readonly string[] {
+  const graduationLines = graduations.map(
+    (graduation) =>
+      `- 先輩タスクの卒業: ${graduation.id}（登録から ${String(graduation.days)} 日）`,
+  )
+  const milestoneLines = milestones.map((milestone) =>
+    milestone.kind === "task"
+      ? `- 節目: 通算 ${String(milestone.count)} 件目のタスク`
+      : `- 節目: 通算 ${String(milestone.count)} コミット目`,
+  )
+  return [...graduationLines, ...milestoneLines]
 }
 
 /** 「今日」「昨日」、それより前は「9月21日」の形（`dayLabel` と違い曜日は付けない）。 */

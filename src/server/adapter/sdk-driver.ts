@@ -33,7 +33,13 @@ import { expressionNames as toExpressionNames } from "../../shared/expression-ch
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { readChatTopics } from "../core/chat-compact.ts"
-import { createDiaryIntake } from "../core/diary-tool.ts"
+import {
+  createDiaryIntake,
+  createDiaryStageTracker,
+  DIARY_TOOL_NAME,
+  type DiaryIntake,
+  type DiaryStageTracker,
+} from "../core/diary-tool.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
@@ -44,6 +50,7 @@ import {
   toCommandDescriptions,
   toPlan,
   toSessionEvents,
+  tsukumoToolFullName,
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
@@ -114,6 +121,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     (paragraph) => appendDiaryParagraph(options.cwd, { ...paragraph, writer: options.diaryWriter }),
     options.onEvent,
   )
+  // **駆動の世代に1つ**（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
+  const diaryStageTracker = createDiaryStageTracker(tsukumoToolFullName(DIARY_TOOL_NAME))
   const titleIntake = createSessionTitleIntake()
   const titleWriter = createSessionTitleWriter()
 
@@ -141,7 +150,16 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   })
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options, reportGate, reportReview, titleIntake, titleWriter)
+  void relayMessages(
+    session,
+    options,
+    reportGate,
+    reportReview,
+    titleIntake,
+    titleWriter,
+    diaryStageTracker,
+    diaryIntake,
+  )
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
 
@@ -158,6 +176,9 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
       options.onEvent({ kind: "turn-started" })
       input.push({ text, images: [] })
+    },
+    beginDiaryDay: (day) => {
+      diaryIntake.beginDay(day)
     },
     interrupt: async () => {
       await session.interrupt()
@@ -334,6 +355,11 @@ export function reportGateHooks(
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数。`src/server/adapter/sdk-tool.ts`）も
  * ターンの終わりに取り出し、`titleWriter` に書く予約をする。
+ *
+ * `diaryStageTracker`（`src/server/core/diary-tool.ts`）には**メインのメッセージを生のまま**
+ * 渡す——3段目の合図（`bookmark` の鍵）は変換前の `input_json_delta` にしか無い
+ * （`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。`diaryIntake` は
+ * ターンが終わるたびに「いま書く日」を忘れる（{@link DiaryIntake.forgetDay}）。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
@@ -342,6 +368,8 @@ async function relayMessages(
   reportReview: ReportReview,
   titleIntake: SessionTitleIntake,
   titleWriter: SessionTitleWriter,
+  diaryStageTracker: DiaryStageTracker,
+  diaryIntake: DiaryIntake,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに
   // 印を付け直す（{@link scheduleMarkSession}）。
@@ -352,6 +380,12 @@ async function relayMessages(
       // 環境変数が効かなくなったことに気づくための1行。届いた事実だけで、中身は写さない。
       if (fromMain && isVisibleOutputNudge(message)) {
         process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
+      }
+      if (fromMain) {
+        const stage = diaryStageTracker.observe(message)
+        if (stage !== undefined) {
+          options.onEvent({ kind: "diary-stage", stage })
+        }
       }
       const converted = toSessionEvents(message, toExpressionNames(options.expressions))
       const events = fromMain ? converted.flatMap((event) => reportReview.pass(event)) : converted
@@ -368,6 +402,9 @@ async function relayMessages(
           if (options.mode.kind === "chat") {
             options.mode.personaMemory.finishTurn()
           }
+          // 成果の振り返りの窓口も、ターンが終わるたびに「いま書く日」を忘れる
+          // （`docs/design.md`「日記の受け取りと保存」）。
+          diaryIntake.forgetDay()
           if (sessionId !== undefined) {
             scheduleMarkSession(sessionId, options)
             const title = titleIntake.take()

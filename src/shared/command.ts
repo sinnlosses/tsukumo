@@ -445,6 +445,17 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
     commandId: commandIdSchema,
     path: z.string().min(1).max(MAX_OPEN_FILE_PATH_LENGTH),
   }),
+  /**
+   * 成果の画面のボタン（と見開きの「この日を振り返る」）から送る、成果の振り返り
+   * （`docs/glossary.md`「成果の振り返り」）。**画面は日付だけを送る**——依頼文は
+   * session-manager がその日の成果を数え直して組む（`docs/design.md`「日記の受け取りと
+   * 保存」「コマンドと依頼」）。`date` は `YYYY-MM-DD`。
+   */
+  z.object({
+    type: z.literal("reflect-achievement"),
+    commandId: commandIdSchema,
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }),
 ])
 
 export type ClientCommand = z.infer<typeof clientCommandSchema>
@@ -506,7 +517,9 @@ export type DismissUsageProposalCommand = Extract<
  * `nudge` も文面をサーバ側が足すので外れる）。**`forget-remembered-line` も外れる** —
  * 書き込みと `remembered-lines-changed` の流し直しで済み、`editCharacter` と同じくセッションは
  * 起こし直さない（`docs/design.md` 7.1）。**`open-file` も外れる** — git 管理下の一覧との
- * 照合と `orca file open` の呼び出しだけで、駆動には触らない。
+ * 照合と `orca file open` の呼び出しだけで、駆動には触らない。**`reflect-achievement` も外れる** —
+ * `nudge` と同じく文面（依頼文）をサーバ側が組んでから駆動へ送る（`docs/design.md`「日記の受け取りと
+ * 保存」「コマンドと依頼」）。
  */
 export type DriverCommand = Exclude<
   ClientCommand,
@@ -521,6 +534,7 @@ export type DriverCommand = Exclude<
   | { readonly type: "forget-remembered-line" }
   | { readonly type: "dismiss-usage-proposal" }
   | { readonly type: "open-file" }
+  | { readonly type: "reflect-achievement" }
 >
 
 /** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */

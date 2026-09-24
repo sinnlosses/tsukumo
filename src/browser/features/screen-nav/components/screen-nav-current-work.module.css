@@ -93,10 +93,12 @@
 .screen-nav-work[data-work-state="pending"] .screen-nav-work-word {
   color: var(--state-warn);
 }
-.screen-nav-work[data-work-state="running"] .screen-nav-work-toggle {
+.screen-nav-work[data-work-state="running"] .screen-nav-work-toggle,
+.screen-nav-work[data-work-state="diary"] .screen-nav-work-toggle {
   border-color: var(--accent);
 }
-.screen-nav-work[data-work-state="running"] .screen-nav-work-mark {
+.screen-nav-work[data-work-state="running"] .screen-nav-work-mark,
+.screen-nav-work[data-work-state="diary"] .screen-nav-work-mark {
   color: var(--accent);
 }
 /* 背景で作業中は、ターンが終わっていても動いていると分かるように印だけ差し色にする。枠は

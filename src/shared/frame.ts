@@ -19,12 +19,10 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態に `lastTurnFinishedAt`（直近でターンが終わった時刻。`turn` が `running` に
- * 移っても戻らない）を足したことで上げた（古いタブは持たず、サイドバーの使用量の行の
- * 取り直しの合図がターンの途中に `0` へ戻ってしまう）。同じときに入った `turn-resumed`
- * （イベントの追加なので単独では上げない）と合わせて、12 から 14 へ一度に上げた。
+ * 直近は状態に `diaryWriting`（成果の振り返りの進み）を足したことで 14 から 15 へ上げた
+ * （古いタブは持たず、帯の「いまの作業」が「振り返り中」を読めない）。
  */
-export const PROTOCOL_VERSION = 14
+export const PROTOCOL_VERSION = 15
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
@@ -73,6 +71,8 @@ export const FRAME_ERROR_REASON = {
   forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
   usageProposalDismissFailed: "提案を見送れなかった",
   openFileFailed: "ファイルを開けなかった",
+  achievementReflectionDuringTurn: "ターン進行中は振り返りを頼めない（中断すると頼める）",
+  achievementReflectionUnavailable: "その日の成果が読めない、または振り返る成果が無い",
 } as const
 
 /**

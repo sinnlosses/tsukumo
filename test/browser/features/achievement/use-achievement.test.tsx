@@ -253,8 +253,7 @@ describe("useAchievement（振り返りのボタン）", () => {
       result.current.review.onReview()
     })
 
-    expect(sent).toHaveLength(1)
-    expect((sent[0] as { readonly type: string }).type).toBe("prompt")
+    expect(sent).toEqual([{ type: "reflect-achievement", date: "2026-09-24" }])
     expect(window.location.hash.startsWith("#achievement")).toBe(false)
   })
 
