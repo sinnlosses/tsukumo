@@ -2,6 +2,18 @@
 
 ## ユーザーから
 
+- **改修コストを下げる直し9件をすべてタスクにする**（2026-09-24 に `/simplify` の4観点（再利用・単純化・効率・根本対処）でリポジトリ全体を洗った結果。7 と 9 は指摘を受けただけで裏取りしていないので、**`/plan-tasks` のときに調べてから入れ方を決める**）
+  1. 帯のモデル・許可モードの既定値（`src/browser/features/screen-nav/domain/model-label.ts` の `MODEL_FALLBACK`、`permission-mode-label.ts` の `PERMISSION_MODE_FALLBACK`）を `src/shared/session-default.ts` の `BUILTIN_SESSION_DEFAULT` から読む。コメントが指す `session-driver.ts` の `DEFAULT_MODEL` / `DEFAULT_PERMISSION_MODE` はもう無い。どこからも呼ばれていない `modelLabel` / `permissionModeLabel` も消す
+  2. `src/shared/session-state.ts` の `character-changed` の畳み込みで `CharacterInfo` の13項目を手で写すのをやめ、`kind` と `packs` を除いてそのまま展開する（いまは項目を足しても型エラーにならず、黙って抜け落ちる）
+  3. `src/server/adapter/character-edit.ts` の画像の差し替え・消去（`set-portrait` / `set-background` / `clear-portrait` / `clear-background`）で4つの枝が同じ手順を書き写しているのを1つにまとめる。`character-edit.ts` と `character-pack.ts` に同じものがある `readOptionalFile` も1つにする
+  4. 画面を1枚足すたびに触る4箇所（`src/browser/stores/location-hash.ts` の `SCREENS` と表示名の表、`src/browser/features/screen-nav/hooks/use-screen-nav.ts` の帯のメニュー、`src/browser/main.tsx` の import と分岐）を、`{ screen, label, Component }` の1つの表から導く
+  5. `typeof value === "string" ? value : undefined` の6箇所（`src/server/core/sdk-message.ts`、`src/server/adapter/claude-account.ts`、`src/shared/task-summary.ts`、`src/shared/character-definition.ts`、`src/browser/features/main-view/markdown/markdown.tsx`、`src/browser/lib/tool-summary.ts`）を `src/shared/` の1つの関数に寄せる
+  6. 字句がまったく同じ重複4組を消す: `clamp`（`src/browser/features/main-view/reveal/paint.ts` と `band.ts`）、`fetchTokenUsageSummary`（`src/browser/features/token-usage/hooks/use-token-usage.ts` と `use-usage-review.ts`）、`run()`（`scripts/lib/port-listener.ts` と `scripts/open-room-grid.ts`）、`src/server/adapter/claude-account.ts` の `JSON.parse(readFileSync(...))` の手書き（`src/server/adapter/lib/json-file.ts` の `readJsonFile` に寄せる）
+  7. **（要調査）** `src/server/adapter/repository-file.ts` の git 呼び出しを `src/server/adapter/git.ts` の `runGit` に寄せ、`test/architecture.test.ts` で `node:child_process` を使ってよいファイルを1つ減らす
+  8. `src/server/adapter/main-history.ts` の成果の集計で、互いに依存しない git 呼び出し2組（今日と昨日の切り口、今日と昨日のタスクの読み取り）を `Promise.all` で同時に走らせる（今日を見ているあいだは60秒ごとに走る）
+  9. **（要調査）** テストの固定時間の `setTimeout`（指摘では約13ファイル・合計約3秒。多いのは `test/server/adapter/task-summary.test.ts`、`test/browser/features/character-screen/use-character-edit.test.tsx`）を、条件が満たされるまで待つ形に揃える。`bun run check` の所要時間がどれだけ縮むかを先に測る
+  - 見送ったもの: レポートの記法と `sanitize-schema.ts` の同期（`test/server/core/report-notation.test.ts` がすでに突き合わせている）、browser の `fetch` → `response.ok` → `readX(json)` 5箇所の共通化（失敗したときの扱いが3通りに分かれていて、まとめても引数が増えるだけ）
+
 ## エージェントのドラフト
 
 - **新しい合図やターンの扱いを足すタスクは、同じ SDK の出来事を起こす経路をすべて挙げてから頻度を仮定する**（振り返り: T-448, T-475, 2026-09-24 の修正 7b06eec3・1cdf60fd）
