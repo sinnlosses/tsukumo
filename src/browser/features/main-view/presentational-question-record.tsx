@@ -44,7 +44,7 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
       </h4>
       <ul className={styles["question-options"]}>
         {question.answers.map((row) => (
-          <AnswerRow row={row} key={row.key} />
+          <AnswerRow row={row} multiSelect={question.multiSelect} key={row.key} />
         ))}
       </ul>
       {question.previews.length > 0 && (
@@ -54,7 +54,11 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
           <summary>{PREVIEWS_SUMMARY}</summary>
           {question.previewsOpened
             ? question.previews.map((preview) => (
-                <PreviewBlock preview={preview} key={preview.label} />
+                <PreviewBlock
+                  preview={preview}
+                  multiSelect={question.multiSelect}
+                  key={preview.label}
+                />
               ))
             : null}
         </details>
@@ -63,8 +67,11 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
   )
 }
 
-function AnswerRow(props: { readonly row: QuestionRecordAnswerRow }): ReactElement {
-  const { row } = props
+function AnswerRow(props: {
+  readonly row: QuestionRecordAnswerRow
+  readonly multiSelect: boolean
+}): ReactElement {
+  const { row, multiSelect } = props
 
   return (
     <li
@@ -72,21 +79,24 @@ function AnswerRow(props: { readonly row: QuestionRecordAnswerRow }): ReactEleme
         row.isFreeText ? ` ${styles["is-free-text"]}` : ""
       }`}
     >
-      <QuestionMark chosen={row.chosen} /> {row.label}
+      <QuestionMark chosen={row.chosen} multiSelect={multiSelect} /> {row.label}
       {row.isFreeText ? FREE_TEXT_SUFFIX : null}
     </li>
   )
 }
 
-function PreviewBlock(props: { readonly preview: QuestionRecordPreviewRow }): ReactElement {
-  const { preview } = props
+function PreviewBlock(props: {
+  readonly preview: QuestionRecordPreviewRow
+  readonly multiSelect: boolean
+}): ReactElement {
+  const { preview, multiSelect } = props
 
   return (
     // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ。
     // `markdown/report-notation.module.css`）に乗せる。
     <div className={notationStyles["detail-block"]}>
       <p className={styles["question-preview-label"]}>
-        <QuestionMark chosen={preview.chosen} /> {preview.label}
+        <QuestionMark chosen={preview.chosen} multiSelect={multiSelect} /> {preview.label}
       </p>
       <Markdown text={preview.preview} />
     </div>
@@ -94,19 +104,25 @@ function PreviewBlock(props: { readonly preview: QuestionRecordPreviewRow }): Re
 }
 
 /**
- * 選んだ印（`●`/`○`）を包む要素。**文字そのものは常に DOM に残す**（`::before` に移すと
- * 支援技術とコピーで拾えなくなるため）。色は文字の上への重ねがけで付け、選んだ側
- * （`chosen`）だけに `accent` を当てる。選ばなかった `○` は親の `.question-option` の色を
- * そのまま継ぎ、素の `accent` を当てない（`docs/screen-design.md` 13.1 原則1が許すのは
+ * 選んだ印（単一選択は `●`/`○`、複数選択は `■`/`□`）を包む要素。**文字そのものは常に DOM に
+ * 残す**（`::before` に移すと支援技術とコピーで拾えなくなるため）。色は文字の上への重ねがけで
+ * 付け、選んだ側（`chosen`）だけに `accent` を当てる。選ばなかった側は親の `.question-option` の
+ * 色をそのまま継ぎ、素の `accent` を当てない（`docs/screen-design.md` 13.1 原則1が許すのは
  * 「選んだ選択肢」で、選ばなかった側ではない）。答え待ちの札
  * （`question-ask.module.css` の `.question-ask-option.is-selected`）と同じ、
  * 「選んだ＝accent」という意味を記録の側にも揃える。折りたたみの中の preview の札
- * （`question-preview-label`）も同じ印を使うので、ここで共有する。
+ * （`question-preview-label`）も同じ印を使うので、ここで共有する。**形の違い（丸か四角か）が
+ * 単一選択か複数選択かを運び、色は選んだかどうかだけを運ぶ**（2つの意味を1つの見た目要素に
+ * 重ねない）。
  */
-function QuestionMark(props: { readonly chosen: boolean }): ReactElement {
+function QuestionMark(props: {
+  readonly chosen: boolean
+  readonly multiSelect: boolean
+}): ReactElement {
+  const mark = props.multiSelect ? (props.chosen ? "■" : "□") : props.chosen ? "●" : "○"
   return (
     <span className={`${styles["question-mark"]}${props.chosen ? ` ${styles["is-chosen"]}` : ""}`}>
-      {props.chosen ? "●" : "○"}
+      {mark}
     </span>
   )
 }

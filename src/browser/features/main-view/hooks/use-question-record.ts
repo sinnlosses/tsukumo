@@ -50,6 +50,8 @@ export type QuestionRecordQuestionModel = {
   readonly key: string
   readonly header: string
   readonly text: string
+  /** 複数選択の質問か（単一選択は `●`/`○`、複数選択は `■`/`□` の印を選ぶ材料）。 */
+  readonly multiSelect: boolean
   readonly answers: readonly QuestionRecordAnswerRow[]
   /** `preview` を持つ選択肢が1つも無ければ空（折りたたみ自体を出さない）。 */
   readonly previews: readonly QuestionRecordPreviewRow[]
@@ -71,6 +73,7 @@ export function useQuestionRecord(props: QuestionRecordProps): QuestionRecordMod
         key: `${question.header}-${String(index)}`,
         header: question.header,
         text: question.text,
+        multiSelect: question.multiSelect,
         answers: answerRows(question, answer),
         previews: previewRows(question, answer),
         previewsOpened: openedIndexes.has(index),
