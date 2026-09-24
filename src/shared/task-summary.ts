@@ -10,6 +10,8 @@
 
 import { isPlainObject } from "remeda"
 
+import { optionalString } from "./utils/optional-string.ts"
+
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
  *
@@ -237,16 +239,12 @@ function taskSummaryItem(task: unknown): readonly TaskSummaryItem[] {
     {
       id: task.id,
       summary,
-      status: optionalStringOf(task.status),
-      difficulty: optionalStringOf(task.difficulty),
-      loopable: optionalStringOf(task.loopable),
+      status: optionalString(task.status),
+      difficulty: optionalString(task.difficulty),
+      loopable: optionalString(task.loopable),
       dependencies: dependenciesOf(task.dependencies),
     },
   ]
-}
-
-function optionalStringOf(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined
 }
 
 /** 依存は**文字列の配列のときだけ**受け取る。壊れていたら「依存なし」に倒す（表の1列が空になるだけ）。 */

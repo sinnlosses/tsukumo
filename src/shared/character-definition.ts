@@ -19,6 +19,7 @@ import {
   type Outfit,
   type RemovableExpression,
 } from "./expression.ts"
+import { optionalString } from "./utils/optional-string.ts"
 
 /**
  * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」
@@ -250,8 +251,7 @@ function toOutfitAccents(source: unknown): Readonly<Record<Outfit, string | unde
 }
 
 function stringField(record: Readonly<Record<string, unknown>>, key: string): string | undefined {
-  const value = record[key]
-  return typeof value === "string" ? value : undefined
+  return optionalString(record[key])
 }
 
 /**

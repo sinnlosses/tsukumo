@@ -14,6 +14,8 @@
 
 import { isPlainObject } from "remeda"
 
+import { optionalString } from "../../shared/utils/optional-string.ts"
+
 /** ツール入力の要約に出す1行の長さの上限（目安）。 */
 const MAX_TOOL_SUMMARY_LENGTH = 120
 
@@ -62,8 +64,7 @@ function firstStringValue(input: Readonly<Record<string, unknown>>): string | un
 }
 
 function stringField(input: Readonly<Record<string, unknown>>, field: string): string | undefined {
-  const value = input[field]
-  return typeof value === "string" ? value : undefined
+  return optionalString(input[field])
 }
 
 function truncateToolSummary(text: string): string {

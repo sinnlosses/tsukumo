@@ -45,6 +45,7 @@ import rehypeSanitize from "rehype-sanitize"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
+import { optionalString } from "../../../../shared/utils/optional-string.ts"
 import { ChartBlock } from "./chart-block.tsx"
 import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
@@ -193,8 +194,7 @@ function findCodeChild(node: Element | undefined): Element | undefined {
  * ここに来る（モデルが書いた文字列なので、型の上では何が入っていてもよい形で受ける）。
  */
 function codeFileName(codeNode: Element): string | undefined {
-  const value = codeNode.properties[CODE_FILE_NAME_PROPERTY]
-  return typeof value === "string" ? value : undefined
+  return optionalString(codeNode.properties[CODE_FILE_NAME_PROPERTY])
 }
 
 function codeLanguage(codeNode: Element): string | undefined {

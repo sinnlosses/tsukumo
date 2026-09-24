@@ -16,6 +16,7 @@ import { join } from "node:path"
 
 import { isPlainObject } from "remeda"
 
+import { optionalString } from "../../shared/utils/optional-string.ts"
 import { type ClaudeAccountTier } from "../core/plan.ts"
 
 const ACCOUNT_FILE_NAME = ".claude.json"
@@ -46,8 +47,4 @@ export function readClaudeAccountTier(): ClaudeAccountTier {
   } catch {
     return UNKNOWN_TIER
   }
-}
-
-function optionalString(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined
 }

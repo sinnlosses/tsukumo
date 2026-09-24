@@ -19,6 +19,7 @@ import { type RateLimit, type RateLimitBucket } from "../../shared/rate-limit.ts
 import { type CommandDescription, type SessionEvent } from "../../shared/session-event.ts"
 import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 import { type TurnOutcome } from "../../shared/turn-failure.ts"
+import { optionalString } from "../../shared/utils/optional-string.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
@@ -700,10 +701,6 @@ const INTERRUPTED_TERMINAL_REASONS: ReadonlySet<unknown> = new Set([
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value)
-}
-
-function optionalString(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined
 }
 
 function stringArray(value: unknown): readonly string[] {
