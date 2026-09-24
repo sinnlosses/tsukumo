@@ -1,5 +1,5 @@
 // 筆先に添うミニ立ち絵（`docs/requirements.md` 4.3・`docs/design.md` 6.5）。**レポートの上に
-// 出てよい唯一の立ち絵**で、書いている様子を式神として見せる。
+// 出てよい唯一の立ち絵**で、書いている様子を分身として見せる。
 //
 // **キャラビューの立ち絵は消さない。** 2体見えるのは「分身」として受け入れる決定で、
 // こちらは明確に小さくして見分ける（縁取りと暈は
@@ -43,6 +43,12 @@ import { useBrushTip, type BrushTip } from "./reveal/brush-tip.ts"
  */
 const MINI_EXPRESSION = "default"
 
+/**
+ * `character.json` に `miniCall` が無いパックで alt に使う呼び名。キャラクターの世界の言葉
+ * （「式神」など）はパックが持つので、ここは画面の用語のまま置く。
+ */
+const MINI_CALL_FALLBACK = "ミニ立ち絵"
+
 export type MiniPortraitProps = {
   /**
    * いま出ているやり取り（`MainViewTurn.id`）。**筆先が別のやり取りのものなら出さない**
@@ -80,7 +86,7 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
         <Portrait
           url={url}
           accent={character.outfitAccents[outfit]}
-          altText={miniAltText(character.name)}
+          altText={miniAltText(character.name, character.miniCall)}
           expression={MINI_EXPRESSION}
           outfit={outfit}
           motion={undefined}
@@ -143,8 +149,9 @@ function followStyle(tip: BrushTip): CSSProperties {
 }
 
 /** 読み上げ上もキャラビューの立ち絵と見分けが付くようにする（同じ姿がもう1体居るため）。 */
-function miniAltText(name: string | undefined): string {
-  return name === undefined ? "式神" : `${name}の式神`
+function miniAltText(name: string | undefined, miniCall: string | undefined): string {
+  const call = miniCall ?? MINI_CALL_FALLBACK
+  return name === undefined ? call : `${name}の${call}`
 }
 
 function px(value: number): string {

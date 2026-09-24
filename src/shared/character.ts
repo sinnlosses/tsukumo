@@ -64,6 +64,10 @@ export type CharacterInfo = {
    * サイドバーのプロフィールの札が名前の下に出す。無いパックでは undefined（名前だけ）。
    */
   readonly tagline: string | undefined
+  /** {@link CharacterDefinition.userCall}（利用者の呼び名）をそのまま持つ。無いパックでは undefined。 */
+  readonly userCall: string | undefined
+  /** {@link CharacterDefinition.miniCall}（ミニ立ち絵の呼び名）をそのまま持つ。無いパックでは undefined。 */
+  readonly miniCall: string | undefined
   /**
    * 衣装 → 差し色。**衣装ごとに `default` へ畳み済み**（読む側は表を引くだけでよい）。
    * `default` も無ければその衣装は undefined。
@@ -188,6 +192,8 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     mini: definition?.mini === undefined ? portraits?.default : assetUrl(definition.mini),
     face: definition?.face === undefined ? undefined : assetUrl(definition.face),
     tagline: definition?.tagline,
+    userCall: definition?.userCall,
+    miniCall: definition?.miniCall,
     outfitAccents: foldedOutfitAccents(definition),
     background: backgroundWithUrl(definition?.background, assetUrl),
     editable: source.editable,

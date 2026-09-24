@@ -85,6 +85,18 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     expect(placement().style.transform).toBe("translate3d(320px, 206px, 0) translateY(-100%)")
   })
 
+  it("alt はパックのミニ立ち絵の呼び名を名前に添え、呼び名の無いパックでは「ミニ立ち絵」に落ちる", () => {
+    renderMiniPortrait({ ...FIXTURE_CHARACTER, name: "架空の名前", miniCall: "架空の使い魔" })
+    act(() => {
+      publishBrushTip(TIP)
+    })
+    expect(miniImage()?.getAttribute("alt")).toBe("架空の名前の架空の使い魔")
+
+    cleanup()
+    renderMiniPortrait({ ...FIXTURE_CHARACTER, name: "架空の名前", miniCall: undefined })
+    expect(miniImage()?.getAttribute("alt")).toBe("架空の名前のミニ立ち絵")
+  })
+
   it("筆先が動けば付いていく", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {

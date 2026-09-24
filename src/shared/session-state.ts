@@ -727,6 +727,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           mini: event.mini,
           face: event.face,
           tagline: event.tagline,
+          userCall: event.userCall,
+          miniCall: event.miniCall,
           outfitAccents: event.outfitAccents,
           background: event.background,
           editable: event.editable,

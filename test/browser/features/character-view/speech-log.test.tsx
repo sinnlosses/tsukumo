@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { SpeechLog } from "../../../../src/browser/features/character-view/speech-log.tsx"
 import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionRecord } from "../../../../src/shared/session-state.ts"
+import { characterInfo } from "../../../fixture/character.ts"
 import { requestRecord, speechRecord } from "../../../fixture/session-record.ts"
 import { sessionStoreWith } from "../../session-store.ts"
 
@@ -15,7 +16,18 @@ afterEach(() => {
 })
 
 function renderSpeechLog(records: readonly SessionRecord[]): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records })
+  renderSpeechLogWithCall(records, "きみ")
+}
+
+function renderSpeechLogWithCall(
+  records: readonly SessionRecord[],
+  userCall: string | undefined,
+): void {
+  const store = sessionStoreWith({
+    ...INITIAL_SESSION_STATE,
+    records,
+    character: characterInfo({ userCall }),
+  })
   render(
     <SessionStoreContext.Provider value={store}>
       <SpeechLog portrait={<img alt="架空の立ち絵" />} speakerName="架空の名前" />
@@ -170,6 +182,21 @@ describe("SpeechLog", () => {
       "false",
       "true",
     ])
+  })
+
+  it("依頼の区切りの頭はパックの利用者の呼び名で、呼び名の無いパックでは「」だけになる", () => {
+    const records = [
+      requestRecord({ text: "架空の依頼", time: { kind: "restored" } }),
+      speechRecord({ text: "架空のセリフ" }),
+    ]
+    renderSpeechLogWithCall(records, "あるじ")
+    openLog()
+    expect(document.querySelector(".speech-log-request")?.textContent).toBe("あるじ「架空の依頼」")
+
+    cleanup()
+    renderSpeechLogWithCall(records, undefined)
+    openLog()
+    expect(document.querySelector(".speech-log-request")?.textContent).toBe("「架空の依頼」")
   })
 
   it("キャラビューから受け取った立ち絵を床に立たせる", () => {

@@ -76,6 +76,17 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ tagline: "  " }))?.tagline).toBeUndefined()
   })
 
+  it("任意の userCall / miniCall（利用者とミニ立ち絵の呼び名）を読む。無い・壊れた値・空白だけは undefined", () => {
+    const parsed = parseCharacterDefinition(
+      JSON.stringify({ userCall: "あるじ", miniCall: "架空の使い魔" }),
+    )
+    expect(parsed?.userCall).toBe("あるじ")
+    expect(parsed?.miniCall).toBe("架空の使い魔")
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.userCall).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ userCall: 3 }))?.userCall).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ miniCall: " " }))?.miniCall).toBeUndefined()
+  })
+
   it("任意の chatAccent（雑談中だけの accent）を読む。無い・壊れた値は undefined", () => {
     expect(parseCharacterDefinition(JSON.stringify({ chatAccent: "#f2984a" }))?.chatAccent).toBe(
       "#f2984a",

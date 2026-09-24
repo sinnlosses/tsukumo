@@ -37,6 +37,7 @@ export function PresentationalSpeechLog({
   scrollerRef,
   open,
   entries,
+  userCall,
   onOpen,
   onClose,
   onDialogClick,
@@ -80,7 +81,12 @@ export function PresentationalSpeechLog({
             ) : (
               <ol className={styles["speech-log-entries"]}>
                 {entries.map((entry) => (
-                  <SpeechLogRow key={entry.key} entry={entry} speakerName={speakerName} />
+                  <SpeechLogRow
+                    key={entry.key}
+                    entry={entry}
+                    speakerName={speakerName}
+                    userCall={userCall}
+                  />
                 ))}
               </ol>
             )}
@@ -95,6 +101,7 @@ export function PresentationalSpeechLog({
 function SpeechLogRow(props: {
   readonly entry: SpeechLogEntry
   readonly speakerName: string | undefined
+  readonly userCall: string | undefined
 }): ReactElement {
   const { entry } = props
   if (entry.kind === "request") {
@@ -102,7 +109,7 @@ function SpeechLogRow(props: {
       <li className={styles["speech-log-request"]} data-current={entry.current}>
         {/* 依頼が長いときに切るのは文面だけで、時刻は切らない。 */}
         <span className={styles["speech-log-request-text"]} title={entry.requestText}>
-          きみ「{entry.heading}」
+          {props.userCall}「{entry.heading}」
         </span>
         {entry.time.kind === "known" && (
           <time className={styles["speech-log-request-time"]} dateTime={entry.time.dateTime}>

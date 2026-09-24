@@ -56,6 +56,11 @@ export type SpeechLogModel = {
   readonly open: boolean
   /** 古い→新しい。セリフが1件も無いターンは区切りごと落としてある。 */
   readonly entries: readonly SpeechLogEntry[]
+  /**
+   * 依頼の区切りの頭に付ける、キャラクターが利用者を呼ぶ言葉（`character.json` の `userCall`）。
+   * 呼び名を持たないパックでは `undefined`（区切りは「」だけになる）。
+   */
+  readonly userCall: string | undefined
   readonly onOpen: () => void
   readonly onClose: () => void
   /** 枠の外（backdrop）を押したら閉じる読み替え。 */
@@ -64,6 +69,7 @@ export type SpeechLogModel = {
 
 export function useSpeechLog(): SpeechLogModel {
   const records = useSessionSelector((session) => session.state.records)
+  const userCall = useSessionSelector((session) => session.state.character?.userCall)
   const [open, setOpen] = useState(false)
   const dialogRef = useModalDialog(open)
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -83,6 +89,7 @@ export function useSpeechLog(): SpeechLogModel {
     scrollerRef,
     open,
     entries: open ? logEntries(records, localTimeZoneId()) : [],
+    userCall,
     onOpen: () => setOpen(true),
     onClose: () => setOpen(false),
     onDialogClick: (event) => {

@@ -66,6 +66,18 @@ export type CharacterDefinition = {
    * 同じに畳む（札に空の行が出ないように）。
    */
   readonly tagline: string | undefined
+  /**
+   * キャラクターが利用者を呼ぶ言葉（`docs/glossary.md`「利用者の呼び名」）。セリフのログで依頼の
+   * 区切りの頭に付く。**任意**で、無いパックは呼び名を付けない。**キャラクターの言葉なので
+   * コードに持たない**（`CLAUDE.md` 原則4）。空白だけの値は無いのと同じに畳む。
+   */
+  readonly userCall: string | undefined
+  /**
+   * ミニ立ち絵をキャラクターの世界で何と呼ぶか（`docs/glossary.md`「ミニ立ち絵の呼び名」）。
+   * ミニ立ち絵の alt に出る。**任意**で、無いパックは画面側の中立な呼び名に落ちる。
+   * 空白だけの値は無いのと同じに畳む。
+   */
+  readonly miniCall: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景（`docs/screen-design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
@@ -228,8 +240,9 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
     face: typeof value.face === "string" ? value.face : undefined,
-    tagline:
-      typeof value.tagline === "string" && value.tagline.trim() !== "" ? value.tagline : undefined,
+    tagline: nonBlankString(value.tagline),
+    userCall: nonBlankString(value.userCall),
+    miniCall: nonBlankString(value.miniCall),
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
   }
@@ -248,6 +261,10 @@ function toPortraits(source: unknown): Readonly<Record<Expression, string | unde
 function toOutfitAccents(source: unknown): Readonly<Record<Outfit, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
   return fromKeys(OUTFITS, (outfit) => stringField(record, outfit))
+}
+
+function nonBlankString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() !== "" ? value : undefined
 }
 
 function stringField(record: Readonly<Record<string, unknown>>, key: string): string | undefined {
