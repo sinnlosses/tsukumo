@@ -56,7 +56,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 入っていて、`bun run start` はセッションを起こし、WebSocket 1本でフレームを組み立てて
 3つのビューへ配る。**旧方針（transcript の追従・hook の状態ファイル・Orca 経由の入力送信）は
 2026-09-12 に撤去した。** 残るホスト依存はビューを開く `showView` 1つだけ。最初に着手すべき
-タスクは `develop/progress.md` が正典。
+タスクは `develop/task/` が正典（`task status` で見る）。
 
 実装スタックは **Bun + TypeScript**、チェックコマンドは `bun run check`。
 規約は `docs/coding-standards.md` が正典。
@@ -954,6 +954,11 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
 
 `evidence` には「どの環境で何を見たか」を1行で書く。
 
+**fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る
+ことがある**（再現条件は分かっておらず、手で触ったときには起きていない。操作側の問題の
+可能性もある）。そのときは疑似セッションの `opening` に質問を足して、開いた時点で出す形で
+確かめる。もう一度踏んだら条件を書き足す。
+
 ## 既知の制約・注意点
 
 - **`~/.claude/settings.json` の hooks と statusLine は orca（`~/.orca/agent-hooks/`）が
@@ -994,3 +999,5 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
   はそこに当たる。**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部ライブラリ）は
   tsukumo 自身の場所から読む**（`src/server/adapter/bundled-path.ts`）。`tsukumo` コマンドをどの
   プロジェクトのディレクトリで起こしても見つかるようにするための区別
+- **出力スタイル（`~/.claude/output-styles/`）はセッションを起こしたときにしか読まれない。**
+  `/clear` では読み直されない（2026-09-10 実測）。書き換えを効かせるには tsukumo を起こし直す

@@ -1,9 +1,0 @@
-# develop/progress.md は複数の作業ツリーが「## 完了したこと（このセッション）」の直下へ
-# 同じ位置に小節を差し込むため、素の3wayだと衝突が絶えない。この1ファイルだけ自前のドライバ
-# （scripts/merge-progress.ts）で3wayマージする。
-#
-# **ドライバの登録（`git config merge.progress.driver ...`）はこのファイルだけでは効かない。**
-# 登録はクローンごとに人が1回打つ（このリポジトリではまだ登録していない。手順は
-# CLAUDE.md「タスク運用」または docs/workflow.md を参照）。未登録のあいだは git が黙って
-# 既定の3wayに落ちるだけで、壊れることはない。
-develop/progress.md merge=progress

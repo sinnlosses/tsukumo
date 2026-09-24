@@ -38,7 +38,7 @@ Markdown、キャラクターパック）。**正典は [`docs/design.md`](./doc
 **2026-09-11 に方針を全面的に見直し、2026-09-12 に旧方針の実装を撤去した。** いまは新方針
 （Agent SDK で Claude Code を動かす）だけが動いている。**transcript の追従・hook と状態ファイル・
 Orca 経由の入力送信はコードごと消えた**ので、ホストに依存するのはビューを開く `showView` 1つだけ。
-最初に着手すべきタスクと未解決事項は [`develop/progress.md`](./develop/progress.md) が正典。
+最初に着手すべきタスクと未解決事項は [`develop/task/`](./develop/task/) が正典（`task status` で見る）。
 
 ## セットアップ / 環境構築
 
@@ -55,15 +55,6 @@ Orca 経由の入力送信はコードごと消えた**ので、ホストに依�
   ホストに載せ替えたくなったときに、差し替える場所が1箇所で済むようにする
   （`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」）
 - **`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
-- **`develop/progress.md` 用のマージドライバはクローンに1回登録する**（`.gitattributes` の
-  `merge=progress` だけでは効かず、`git config` は作業ツリーではなくクローン共有の
-  `.git/config` に書くので、新しい作業ツリーごとには要らない。「新しい作業ツリーの立ち上げは
-  人がやる」と同じく人が打つ）:
-  ```bash
-  git config merge.progress.driver "bun run scripts/merge-progress.ts %O %A %B"
-  ```
-  未登録のあいだは git が黙って既定の3wayに落ちるだけで、壊れることはない
-  （`scripts/merge-progress.ts` 冒頭のコメント）
 
 環境の実測値（macOS / 端末 / 導入済み・未導入コマンド）は
 `docs/requirements.md`「5. 実行環境・非機能要件」を参照。**実測値は時間が経つと変わる**ので、
@@ -277,7 +268,7 @@ tsukumo は**起こしたディレクトリでそのまま claude を動かす**
 - ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
   1本の枝がいくつでもタスクを持つ
 
-`develop/task/`（1件1ファイル）・`develop/progress.md`（解体の途中。T-527）・
+`develop/task/`（1件1ファイル）と
 `develop/direction.md` で管理する。指示は `develop/direction.md` に溜め、`/plan-tasks` で
 タスク化して `/next-task` で進める。
 
@@ -296,16 +287,14 @@ INVALID）。手順3の「`doing` を `main` に入れる」は `task claim T-xx
 
 1. **ビハインドなら取り込む**: `git rev-list --count <枝>..main` が 0 でなければ `git merge main`
    （並行して動かしていると相手が先に `main` を進めていることがあり、そのときはここが
-   merge commit になる。**`develop/progress.md` の衝突はマージドライバ
-   （`scripts/merge-progress.ts`。登録は「## セットアップ / 環境構築」参照）が畳むので
-   手が要らない。それ以外のファイルで衝突したら手を止めて預ける**）
+   merge commit になる。**衝突したら手を止めて預ける**）
 2. **`main` から選ぶ**: `task status` の `READY` から1件選ぶ（自分の作業ツリーの印が残って
    いれば取り残し。共通の手順2の扱いに従って止まる）
 3. **`doing` を `main` に入れる**: その1行だけ `doing` に書き換えてコミットし、
    `git -C <本体> merge --ff-only <枝>` で `main` へ送る。**`--ff-only` が落ちたら手順1へ戻る**
    （自分以外が `main` を進めた合図。競合の検出はこれが兼ねる）
 4. **作業する**
-5. **`done` を `main` に入れる**: `status` / `passes` / `evidence` と `progress.md` を書いて
+5. **`done` を `main` に入れる**: `status` / `passes` / `evidence` を書いて
    コミットし、同じ `--ff-only` で `main` へ送る
 
 **`doing` はコミットする。** 共通の `WORKFLOW.md`「この書き換えはコミットしない」は
@@ -322,8 +311,7 @@ INVALID）。手順3の「`doing` を `main` に入れる」は `task claim T-xx
 - **新しい作業ツリーの立ち上げは人がやる**（`bun install` と `bun run build`。
   `node_modules` と `dist/browser/` は `.gitignore` なので、切った直後は `bun run check` も
   `bun run start` も通らない。自動化はしない——2026-09-23 決定）
-- **アーカイブ（`develop/task/` の完了したタスクを `docs/history/tasks.md` へ、
-  `develop/progress.md` の完了した小節を `docs/history/progress.md` へ移すこと）は単独の
+- **アーカイブ（`develop/task/` の完了したタスクを `docs/history/tasks.md` へ移すこと）は単独の
   コミットにし、`doing`・`done` と同じく `git -C <本体> merge --ff-only <枝>` ですぐ `main` へ
   送る。** **`--ff-only` が落ちたら、そのコミットを捨てて手順1（`git merge main`）へ戻り、
   アーカイブの基準を判定し直す**（`archive.py` でやり直せる機械的な操作なので、衝突を手で
@@ -354,15 +342,15 @@ INVALID）。手順3の「`doing` を `main` に入れる」は `task claim T-xx
 ## 進捗管理とHandoff
 
 会話やセッションが切れても再開できるよう、状態はチャットではなく `develop/` 配下の
-`task/`（1件1ファイル） / `progress.md`（2026-09-24 の切り替えで解体の途中。T-527）に記録する。
+`task/`（1件1ファイル）に記録する（`progress.md` は 2026-09-24 に無くした。知見は done の前に
+正典の docs かタスクへ置く）。
 ユーザーからの指示も同様に `direction.md` に書く。
 **各手順の詳細（フィールド定義・difficultyの基準と委譲の書き方・evidenceの粒度・アーカイブの
 トリガーと手順）は `~/.claude/skills/task-workflow/WORKFLOW.md` が正典**（複数のプロジェクトで
 共通）。**このリポジトリでの上乗せだけ**が [`docs/workflow.md`](./docs/workflow.md) にある。
 
-1. セッション開始時に `develop/progress.md` と `develop/task/` を読み、アーカイブすべき
-   タイミングなら作業前にアーカイブする（**両方が判定の対象**。基準は `task-workflow` の
-   `WORKFLOW.md`）。
+1. セッション開始時に `develop/task/` を読み、アーカイブすべき
+   タイミングなら作業前にアーカイブする（基準は `task-workflow` の `WORKFLOW.md`）。
    `develop/direction.md` に見出し以外の中身があれば未タスク化の指示が残っているので、
    他の作業より先に `/plan-tasks` でタスク化する
 2. `develop/task/` から依存が完了済みの `todo` タスクを1つ選ぶ
@@ -371,7 +359,7 @@ INVALID）。手順3の「`doing` を `main` に入れる」は `task claim T-xx
    その場で押し切らず `difficulty` を上げてから再開する
 4. 完了の判定はテスト結果・生成物・実行ログなど検証可能な証拠で行う（宣言だけで合格にしない）。
    **描画に関わる変更は目視確認の結果も証拠に含める**
-5. `develop/task/T-xxx.md` の `status` と `## 結果` と `develop/progress.md` を更新する
+5. `develop/task/T-xxx.md` の `status` と `## 結果` を更新する
 
 **IMPORTANT**: 以下は必ず人間の承認を得てから行う — 外部への公開・送信、破壊的なgit操作、
 認証情報や権限の変更、**`~/.claude/settings.json` などユーザーのグローバル設定の書き換え**、
@@ -413,11 +401,12 @@ grep -c '^#\{2,3\} ' docs/requirements.md   # 編集の前後で数が合うか
 - アーキテクチャ詳細（全体図、設計判断、目視確認の手順、既知の制約）: `docs/architecture.md`
 - コーディング規約の詳細（各ルールの理由・例外、**会話内容の扱い**）: `docs/coding-standards.md`
 - 用語集（日本語表記とコード上の識別子の対応、避ける言い方）: `docs/glossary.md`
-- 進捗管理の詳細（`develop/` の task/・progress.md・direction.md のフィールド定義・
+- 進捗管理の詳細（`develop/` の task/・direction.md のフィールド定義・
   evidenceの粒度・アーカイブ運用）: `~/.claude/skills/task-workflow/WORKFLOW.md`（共通の正典）と
   `docs/workflow.md`（このリポジトリでの上乗せ）
 - 検討当時のユーザーの指示メモ: `docs/history/direction.md`
 - 完了タスク・過去セッションの記録: `docs/history/tasks.md` /
-  `docs/history/progress.md`（セッション開始時に読む必要はない。過去の判断の経緯を
-  たどりたいときだけ、`grep` で該当する節を見つけてそこだけ参照する。**通読しない**）
+  `docs/history/progress.md`（`progress.md` を無くすまでの記録）。セッション開始時に読む
+  必要はない。過去の判断の経緯をたどりたいときだけ、`grep` で該当する節を見つけて
+  そこだけ参照する。**通読しない**
 - Issueトラッカー・外部の設計ドキュメントは未設定（今後追加され次第ここに記載する）

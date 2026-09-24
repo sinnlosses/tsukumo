@@ -18,9 +18,9 @@
   下の「`loopable` の判定」で決める**（描画の確認そのものは自動でできるので、それだけを理由に
   `"N"` にしない）
 - **`~/.claude/settings.json` を触るタスクには、既存の hooks / statusLine を壊さないことを
-  必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT と `develop/progress.md`「注意」）
+  必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT と `docs/architecture.md`「既知の制約・注意点」）
 - **環境側の前提はその場で確かめる。** ターミナルの画像プロトコル対応、外部コマンドの有無、
-  常駐プロセスの生死は時間とともに変わる。`develop/progress.md`「注意」を鵜呑みにしない
+  常駐プロセスの生死は時間とともに変わる。docs やタスク本文に書かれた実測を鵜呑みにしない
 - **spec の出典**は `docs/requirements.md` と `develop/tasks.json` の各タスク本文
   （issueトラッカーは未設定）。**standards の出典**は `CLAUDE.md` ＋
   `docs/coding-standards.md` ＋ `docs/architecture.md` の3つ。`code-review` スキルが
@@ -38,6 +38,13 @@
 - **対象の場所は行番号ではなくシンボル名（関数名・型名・ファイル名）で書き、件数を挙げるときは
   着手時に一覧を取り直す grep のコマンドを添える。** 行番号と件数は、並行する作業ツリーの
   分割・移動で着手までにずれる
+- **正典の大掃除（本文を `docs/history/` などへ移して消す）を委譲するときは、「先に移送先へ
+  書いてから元を消す」順で進めさせる。** 途中で落ちても「移り終わったところまで」が残る。
+  逆の順だと、利用上限で止まったときに消した本文がどこにも無い状態で残る（実際に
+  `docs/requirements.md` から151行が消え、移送先がまだ作られていないまま止まったことがある）
+- **サブエージェントの途中経過は `TaskOutput` で読まない。** 出力ファイルは会話まるごとの
+  JSONL で、読むとメインのコンテキストが溢れる。途中経過は委譲した側から
+  `SendMessage({ to: "main" })` で押し込ませる（背景で動いているときだけ使える）
 
 ## 参考に示された画像・ディレクトリを残す（2026-09-23 決定）
 
@@ -142,8 +149,8 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 - **開始の基準が `main` の完了件数で決まる。** `WORKFLOW.md` の基準（完了件数と文字数）は
   `main` の `develop/tasks.json` を見て判定するので、並行して動かしている作業ツリーが
   どれも同じ時点で基準に達する。一方だけがアーカイブして済む話ではない
-- **衝突を畳むドライバが無い2ファイルが絡む。** `develop/progress.md` はマージドライバ
-  （`scripts/merge-progress.ts`）が衝突を畳むが、`develop/tasks.json`・
+- **衝突を畳むドライバが無い2ファイルが絡む。** 当時の `develop/progress.md` はマージドライバ
+  （いまは `progress.md` ごと撤去した）が衝突を畳んだが、`develop/tasks.json`・
   `docs/history/tasks.md`・`docs/history/progress.md` には無い。基準に一斉に達した
   作業ツリーが両方ともアーカイブのコミットを作ると、`git merge main` がこれらのファイルで
   手で解く衝突になる

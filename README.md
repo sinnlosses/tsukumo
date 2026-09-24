@@ -303,7 +303,7 @@ bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
 ├── scripts/                # 閉じたタブを開き直す道具など
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
-├── develop/                # 進捗管理（tasks.json・progress.md・direction.md）。機能には関係しない
+├── develop/                # 進捗管理（task/・direction.md）。機能には関係しない
 ├── bin/tsukumo             # エントリポイント（bun link でグローバルに入る）
 └── package.json
 ```
