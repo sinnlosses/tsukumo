@@ -1472,6 +1472,12 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）�
 同居に移した理由は `docs/history/decision.md`「design.md 6.6 CSS（機能と同居させる形に
 移した理由）」。
 
+**Tailwind には移らない**（2026-09-24 決定）。移ると `theme.css` のトークンと `color-mix` の導出を
+`@theme` へ作り直し、`docs/screen-design.md` のトークンの節を書き直すことになる。npm の依存も
+1つ増える。CSS Modules に移したあと困りごとが出ていないので、その作り直しに見合う理由が無い。
+候補に上がったのは「React + TypeScript + CSS で最もメジャーな方法は」という問いからで、
+困りごとから出たものではなかった。
+
 **機能をまたいで見た目が要るときは className を渡す**（CSS の選択子で他の機能の class を
 指さない）。`<Portrait>` が例で、立ち絵そのものの中身と動きは `components/portrait.module.css`、
 **どこにどれだけの大きさで置くか**は呼び出し側（キャラビュー／キャラクター画面）が
