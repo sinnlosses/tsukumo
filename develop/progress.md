@@ -55,6 +55,10 @@ Claude Code の TUI を捨て、Agent SDK で動かすことに決めた。リ�
 
 ## 完了したこと（このセッション）
 
+### 2026-09-24 タスクIDの重複を bun run check で落とす検査を足した（T-519）
+
+`test/task-id.test.ts` が `develop/tasks.json` と `docs/history/tasks.md` のIDを合わせて数え、既知の例外 T-225（2件まで）以外の重複を落とす。拾う・数える純粋関数は `scripts/task-id.ts`。
+
 ### 2026-09-24 雑談の作法から無い条への言及を消し、「思い出す」の太字を2つに絞った（T-509）
 
 `CHAT_MANNER_PROMPT` から「結論から書く」を打ち消す行を消し、`index` / `recall` の段落の太字をプライバシーと作り話の2つだけにした。

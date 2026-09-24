@@ -127,9 +127,9 @@
     "dependencies": [],
     "summary": "タスクIDの重複を bun run check で落とす検査を足す",
     "task": "## 背景\n\n`docs/history/tasks.md` に `## T-225` が2つある（「モバイルの orca から tsukumo に届くかを調べ…」と「レポートを書き上げていくように見せる演出を作る」）。2026-09-20 に `62509476` で T-225 を登録し、`73793bb5` のアーカイブでそれが `develop/tasks.json` から消えた直後、`c5c599fe` が `tasks.json` の最大（224）+ 1 で採番したため。ID の一意性を確かめる検査はリポジトリにも共通スキルのスクリプトにも無い。\n\nこれはタスク運用の作り直し（T-520〜T-528）の第1段（止血）。承認済みの方針は `docs/history/direction.md` の 2026-09-24 の「タスク運用の作り直し」の項にある（1件1ファイル・着手の印は共有の `.git` の中・完了は作業のコミットに同梱して rebase → ff-only で1回送る・錠の中で採番・`progress.md` をなくす・登録は粗く着手時に確かめ直す・手順は `task` コマンドに）。\n\n## 決まっていること（蒸し返さない）\n\n- 既存の T-225 の重複は履歴を書き換えず、**既知の例外として検査に名指しで載せる**（2件まで許す）\n- 読み元は切り替え（T-526）で新しい形式に差し替える。いまは `develop/tasks.json` と `docs/history/tasks.md` を読む\n\n## やること\n\n1. `develop/tasks.json` の `id` と `docs/history/tasks.md` の行頭 `## T-<数字>` を集め、同じIDが2回以上あれば落とすテストを `test/` に足す（置き場と名前は `docs/coding-standards.md`「テスト」節に従う）\n2. 例外の T-225 は、例外にした理由（上の背景）をテストのそばに1行で書く\n\n## 完了条件\n\n- いまのリポジトリで通る\n- 一時的に `docs/history/tasks.md` へ既存のIDの見出しを1つ足すと落ちる（確かめたら戻す。`evidence` に落ちたときのメッセージを書く）\n- `bun run check` が通る\n",
-    "status": "doing",
-    "passes": false,
-    "evidence": ""
+    "status": "done",
+    "passes": true,
+    "evidence": "bun run check 通過（2158 pass / 0 fail、165 files）。test/task-id.test.ts が develop/tasks.json と docs/history/tasks.md のIDの重複を落とす（T-225 のみ2件まで許す）。docs/history/tasks.md に ## T-001 を足すと「+ [\"T-001: 2回\"]」で落ち、戻して通ることを確かめた"
   },
   {
     "id": "T-520",
