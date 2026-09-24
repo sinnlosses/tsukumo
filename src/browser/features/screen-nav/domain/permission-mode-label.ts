@@ -3,6 +3,7 @@
 // フックを呼ばない部品が読む対応表、表示の整形は契約ではない）。
 
 import { isPermissionMode, type PermissionMode } from "../../../../shared/command.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../shared/session-default.ts"
 
 /**
  * 許可モードの値と、日本語ラベル。**並びは `<select>` に出す順**（緩い側が下）。
@@ -20,12 +21,9 @@ export const PERMISSION_MODE_LABELS = [
  * 見た目上の既定へ畳む**ので、呼んだ側は「必ず値がある」型で受け取れる。
  */
 export function resolvePermissionMode(mode: string | undefined): PermissionMode {
-  return mode !== undefined && isPermissionMode(mode) ? mode : PERMISSION_MODE_FALLBACK
-}
-
-/** 画面に出す許可モードの日本語ラベル。 */
-export function permissionModeLabel(mode: PermissionMode): string {
-  return PERMISSION_MODE_LABELS.find(([value]) => value === mode)?.[1] ?? mode
+  return mode !== undefined && isPermissionMode(mode)
+    ? mode
+    : BUILTIN_SESSION_DEFAULT.permissionMode
 }
 
 /**
@@ -36,9 +34,4 @@ export function isDangerousPermissionMode(mode: PermissionMode): boolean {
   return mode === DANGEROUS_PERMISSION_MODE
 }
 
-/**
- * `permissionMode` がまだ届いていないとき（`session-info` 前）の見た目上の既定値。
- * `src/server/core/session-driver.ts` の DEFAULT_PERMISSION_MODE と同じ値。
- */
-const PERMISSION_MODE_FALLBACK: PermissionMode = "auto"
 const DANGEROUS_PERMISSION_MODE: PermissionMode = "bypassPermissions"

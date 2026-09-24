@@ -7,6 +7,7 @@
 // `shared` には置かない（`shared/command.ts`「画面に出す日本語ラベルは描く側が持つ」）。
 
 import { type ModelAlias } from "../../../../shared/command.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../shared/session-default.ts"
 
 /**
  * モデルのエイリアスと、日本語ラベル。**並びは重い順**（Fable は Opus の上の階層なので先頭）で、
@@ -27,19 +28,8 @@ export const MODEL_LABELS = [
  */
 export function resolveModelAlias(model: string | undefined): ModelAlias {
   if (model === undefined) {
-    return MODEL_FALLBACK
+    return BUILTIN_SESSION_DEFAULT.model
   }
 
-  return MODEL_LABELS.find(([alias]) => model.includes(alias))?.[0] ?? MODEL_FALLBACK
+  return MODEL_LABELS.find(([alias]) => model.includes(alias))?.[0] ?? BUILTIN_SESSION_DEFAULT.model
 }
-
-/** 画面に出すモデルの日本語ラベル（一覧に無い値は来ない — 引数が畳んだあとの型）。 */
-export function modelLabel(alias: ModelAlias): string {
-  return MODEL_LABELS.find(([value]) => value === alias)?.[1] ?? alias
-}
-
-/**
- * `model` がまだ届いていない、またはエイリアスと対応しないときの見た目上の既定値。値は
- * `src/server/core/session-driver.ts` の DEFAULT_MODEL と同じ（`opus`）。
- */
-const MODEL_FALLBACK: ModelAlias = "opus"
