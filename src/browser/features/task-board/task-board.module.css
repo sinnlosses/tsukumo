@@ -346,7 +346,7 @@
   max-width: 16em;
   white-space: normal;
 }
-/* IDそのものは折らない（`T-328` が `-` で改行されると読めなくなる）。折り返せるのは
+/* IDそのものは折らない（`T-xxx` が `-` で改行されると読めなくなる）。折り返せるのは
    task-board.tsx が区切りに置く `, ` だけになる。 */
 .task-dep-id {
   white-space: nowrap;

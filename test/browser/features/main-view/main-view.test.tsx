@@ -544,7 +544,7 @@ describe("MainView（中間レポート）", () => {
     expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
   })
 
-  it("後ろに別のレポートが現れた中間レポートは <details> で畳んで出す（T-161）", () => {
+  it("後ろに別のレポートが現れた中間レポートは <details> で畳んで出す", () => {
     const { container } = renderMainView([
       requestRecord({ text: "依頼", turnId: 0 }),
       reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
@@ -597,7 +597,7 @@ describe("MainView（中間レポート）", () => {
     expect(screen.getByText("片付いた")).toBeDefined()
   })
 
-  it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない（T-165）", () => {
+  it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない", () => {
     // 十分な数の中間レポート（それぞれ report + tool の対）を積み、1つのやり取りが画面に出す
     // 記録の上限（40。**ツールの実行は数えない**ので、数えるのはレポートの件数）を超えさせる。
     // 全部のあとに非中間の締めの report を置くので、手前は全部 superseded = true になり

@@ -166,7 +166,7 @@ export function taskFileIdOfPath(path: string): string | undefined {
   return TASK_FILE_PATH_PATTERN.exec(path)?.[1]
 }
 
-/** `git log --name-status` の1行（`A\tdevelop/task/T-001.md` の形）。R（リネーム）は扱わない
+/** `git log --name-status` の1行（`A\tdevelop/task/T-xxx.md` の形）。R（リネーム）は扱わない
  * （タスクファイルはリネームしない運用のため）。 */
 export type TaskFileChange = { readonly status: string; readonly path: string }
 
@@ -292,7 +292,7 @@ export function graduationsOf(
     )
 }
 
-/** `T-561` の数の部分（`561`）。並び替えだけに使う。桁が読めなければ `Number.POSITIVE_INFINITY`
+/** `T-NNN` の数の部分（`NNN`）。並び替えだけに使う。桁が読めなければ `Number.POSITIVE_INFINITY`
  * （並びの最後に落ちるだけで、例外は投げない）。 */
 function taskIdNumber(id: string): number {
   const match = /^T-(\d+)$/.exec(id)

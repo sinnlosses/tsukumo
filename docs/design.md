@@ -986,7 +986,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 見回りは重ならない。
 
 **読むのは `develop/task/*.md` の front matter だけ**（claude-skills の
-`docs/task-workflow-redesign.md`。T-528 で develop/tasks.json の読み方を消した）:
+`docs/task-workflow-redesign.md`。develop/tasks.json の読み方は後から消した）:
 
 先端に `develop/task/` があれば（`git ls-tree --name-only <先端> develop/task/`
 が1件でも返せば）、そちらを使う。列挙した `*.md` を `git cat-file --batch` の1回の子プロセスで

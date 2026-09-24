@@ -144,7 +144,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(reportOf(turns[0]?.steps.at(-1))).toBe(materialReport("直した"))
   })
 
-  it("上限を超えて古いステップが落ちても、残ったステップの id は変わらない（T-165）", () => {
+  it("上限を超えて古いステップが落ちても、残ったステップの id は変わらない", () => {
     const entries = [
       request("依頼"),
       ...Array.from({ length: 45 }, (_, index) =>
@@ -271,7 +271,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 })
 
-describe("mainViewTurns（追い越された中間レポートを畳む印。T-161）", () => {
+describe("mainViewTurns（追い越された中間レポートを畳む印）", () => {
   it("後ろにレポートを持つステップがあれば superseded が立つ", () => {
     const first = "## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"
     const turns = mainViewTurns(

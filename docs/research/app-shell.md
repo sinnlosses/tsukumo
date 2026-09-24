@@ -2,7 +2,7 @@
 
 **この文書は調査メモであって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
 
-**このタスクでは選ばない。** T-046（Orca のタブのままか、アプリに包むか）が、この表を読んで実際に使った感想と合わせて決める。ここに書くのは一次情報（公式ドキュメント・ベンダーの文書・手元の実測）に基づく事実の比較だけで、結論（どれにするか）は書かない。
+**このタスクでは選ばない。** 箱の方針（Orca のタブのままか、アプリに包むか）は、この表を読んで実際に使った感想と合わせて別途決める。ここに書くのは一次情報（公式ドキュメント・ベンダーの文書・手元の実測）に基づく事実の比較だけで、結論（どれにするか）は書かない。
 
 箱を替えるとは、`src/host.ts` の `showView`（URL を箱の中に開く）の実装を差し替えることで、Web アプリ側（`http://127.0.0.1:<port>/layout` を配る HTTP サーバ）を作り直すことではない。7つの軸は `develop/tasks.json`（このタスクの依頼文）で固定されたもの。
 
@@ -17,7 +17,7 @@
 | macOS                        | `sw_vers` → ProductVersion `26.6.2`（BuildVersion `25G83`）                                                            |
 | `orca`                       | 導入済み。`orca status --json` → `appVersion "1.4.200"`（`docs/requirements.md` 記載の `v1.4.194` から更新されている） |
 
-**実測値は時間が経つと変わる**ので、T-046 で決めるときはその場で確認し直す。
+**実測値は時間が経つと変わる**ので、箱の方針を決めるときはその場で確認し直す。
 
 **再実測（2026-09-16）**: `cargo` / `rustc` は依然として未導入。`node` `v22.13.1`・`npm` `11.1.0`・macOS
 `26.6.2` は変わらず。`orca` は `1.4.203` に上がっている（上表の `1.4.200` から）。加えて
@@ -109,13 +109,13 @@ Chromium を同梱する選択もできる。hello world が「about a megabyte�
 
 **確度についての注記**: 調査中にドキュメントのドメインが `blackboard.sh/electrobun/docs/` →
 `framework.blackboard.sh/electrobun/` → 一部ページが `electrobun.dev` へ、と 301 / 302 で行き来していた。
-**一次情報の置き場所自体がまだ動いている**ので、T-046 で使うときは URL を取り直す。
+**一次情報の置き場所自体がまだ動いている**ので、箱の方針を決めるときに使う URL は取り直す。
 
 ### その他（足切りしたもの）
 
 Wails（[wails.io](https://wails.io/docs/introduction/)）・Neutralino.js（[neutralino.js.org](https://neutralino.js.org/)）・Photino（[tryphotino.io](https://www.tryphotino.io/)）は、いずれも macOS で動きメンテナンスも継続しているため「動かない／止まっている」による足切りではないが、**Wails は Go、Photino は .NET(C#) という、tsukumo のスタック（Bun + TypeScript）にも Tauri（Rust）にも無い新しい言語ランタイムを追加で持ち込む**ため、Neutralino.js は OS 内蔵の WebView をそのまま使い軽量な一方で **ドキュメント上でも Electron/Tauri ほどウィンドウ操作 API が整理されていない**ため、3つとも比較表には入れず名前だけ残す。
 
-## T-046 で決めるときに効く違い
+## 箱の方針を決めるときに効く違い
 
 - **追加ツールチェーンの重さが候補で大きく違う。** Orca のまま・Electron・素のブラウザは手元の `node`/`npm` でおおむね足りるが、Tauri は `cargo`/`rustc`/`rustup` の新規導入が要り、WKWebView は Xcode プロジェクト一式を新規に作る必要がある（`CLAUDE.md`「`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る」に関わる）。
 - **既定の外部通信の有無に差がある。** 現状の Orca はテレメトリと自動更新の両方が既定でオン。Chrome も既定で使用統計を送る。一方 Electron 本体・Tauri の updater/localhost プラグインは、明示的にコードを書かない限り既定では通信しない（Electron・Tauri のテレメトリ自体の有無は一次情報で確認できず不明）。
@@ -126,11 +126,11 @@ Wails（[wails.io](https://wails.io/docs/introduction/)）・Neutralino.js（[ne
 ## 箱の仕事の大きさは、tsukumo 側の形で変わる（2026-09-16 追記）
 
 上の比較は「tsukumo の Bun プロセスが今の形のまま動く」ことを前提にしている。**その前提は
-tsukumo 側の選択で動く**ので、T-046 で読むときに効く点を書いておく。結論は書かない。
+tsukumo 側の選択で動く**ので、箱の方針を決めるときに効く点を書いておく。結論は書かない。
 
 - **「Bun プロセスを子として起こせるか・同梱」の軸が、そもそも成立しない組み方がある。** 現状の
   `src/core/bundle.ts` は起動のたびに `execFile("bun", ["build", …])` を呼ぶので、実行時に `bun` と
-  `src/ui/**` の両方が要る（T-122 の依存3と依存5）。`bun build --compile` で単一の実行ファイルに
+  `src/ui/**` の両方が要る（`docs/research/external-dependency.md` の依存の表にある2件）。`bun build --compile` で単一の実行ファイルに
   すればこの2つは消え、箱が抱えるのは**バイナリ1つ**になる。埋め込みは `with { type: "file" }` と
   `Bun.embeddedFiles` で行う。出典: https://bun.com/docs/bundler/executables
 - **その形にすると、箱に残る仕事は「窓を1枚開くこと」だけになる。** 比較表の7軸のうち「Bun プロセスを
@@ -141,7 +141,7 @@ tsukumo 側の選択で動く**ので、T-046 で読むときに効く点を書�
   同規約は「退避先（Node へ移せること）を残すため」と理由を書いているが、上記のとおり
   `bundle.ts` 経由で `bun` への実行時依存は既にある。**規約の現状と実態のずれは
   `docs/research/architecture-proposal.md` 側の論点**で、この文書では扱わない。
-- **`docs/design.md` 1章と T-046 の依頼文で、Electron の想定が食い違っている**（前者は「core を
+- **`docs/design.md` 1章と箱の方針の依頼文で、Electron の想定が食い違っている**（前者は「core を
   Electron の Node で動かせるので Bun は不要」、後者は「Bun のプロセスを子として起こす」）。
   **この比較表は後者の前提で書かれている**（7軸の2つ目がそれを前提にしている）。どちらを採るかで
-  「Bun を採用できるか」の答えが変わるので、T-046 は先にこの食い違いを解く。
+  「Bun を採用できるか」の答えが変わるので、箱の方針を決めるタスクは先にこの食い違いを解く。

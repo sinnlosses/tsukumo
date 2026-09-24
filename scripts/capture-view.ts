@@ -25,7 +25,7 @@ import process from "node:process"
 
 import { chromium } from "playwright-core"
 
-/** 既定の窓の大きさ。実機の目視（T-091 / T-092）で使ってきた値に揃えてある。 */
+/** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
 const DEFAULT_HEIGHT = 900
 

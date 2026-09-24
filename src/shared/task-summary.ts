@@ -99,7 +99,7 @@ const NEW_TASK_HEADER_LINE_COUNT = 8
  * 欠け・重複・順の違い・知らないキーはどれも「その行が期待した接頭辞で始まらない」という
  * 1種類の失敗に落ちる。Python 側の読み手 `taskfile.py` の `parse` と同じ形）。
  *
- * `fileName` はファイル名（`T-521.md` の形。パスの区切りは呼び出し側が落とす）。front matter の
+ * `fileName` はファイル名（`T-xxx.md` の形。パスの区切りは呼び出し側が落とす）。front matter の
  * `id` と語幹が一致しないものは INVALID にする（3.4 の見本）。
  */
 export function parseNewTaskFile(fileName: string, content: string): NewTaskFile | undefined {
@@ -233,12 +233,12 @@ function newTaskDependenciesOf(depsField: string | undefined): readonly string[]
   return parts
 }
 
-/** ファイル名の語幹（`T-521.md` → `T-521`）。パスの区切りは呼び出し側で落としてから渡す前提。 */
+/** ファイル名の語幹（`T-xxx.md` → `T-xxx`）。パスの区切りは呼び出し側で落としてから渡す前提。 */
 function fileNameStem(fileName: string): string {
   return fileName.endsWith(".md") ? fileName.slice(0, -".md".length) : fileName
 }
 
-/** `T-521` → `521`。呼ぶ側で {@link NEW_TASK_ID_PATTERN} に通した値だけを渡す。 */
+/** `T-NNN` → `NNN`。呼ぶ側で {@link NEW_TASK_ID_PATTERN} に通した値だけを渡す。 */
 function newTaskIdNumber(id: string): number {
   return Number(id.slice("T-".length))
 }

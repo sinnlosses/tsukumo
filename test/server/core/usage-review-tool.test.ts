@@ -11,7 +11,7 @@ import { createUsageReviewIntake } from "../../../src/server/core/usage-review-t
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 import { type UsageReviewFindings, usageProposalKey } from "../../../src/shared/usage-review.ts"
 
-// T-500: 見送った提案の一覧が、ホームのファイル（読み書きは
+// 見送った提案の一覧が、ホームのファイル（読み書きは
 // `src/server/adapter/usage-proposal-dismissal.ts`）から `createUsageReviewIntake` へ実際に
 // 渡ることを確かめる（`test/server/adapter/sdk-tool.test.ts` は同じ口を偽の配列で確かめている）。
 

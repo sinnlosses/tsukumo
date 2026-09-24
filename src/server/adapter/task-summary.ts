@@ -12,7 +12,7 @@
 // ため。
 //
 // **読むのは `develop/task/*.md` の front matter だけ**（claude-skills の
-// `docs/task-workflow-redesign.md`。T-528 で develop/tasks.json の読み方を消した）:
+// `docs/task-workflow-redesign.md`。develop/tasks.json の読み方は後から消した）:
 // `main` に `develop/task/` があれば、そこの `*.md` を1件ずつ front matter として
 // 読む（`git ls-tree` で列挙し、`git cat-file --batch` で1回の子プロセスでまとめて読む）。
 // 着手中（旧 `doing`）はファイルに書かれない。**台帳の着手の印（`task claim` / `task release`）は

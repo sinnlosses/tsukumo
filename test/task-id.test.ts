@@ -2,7 +2,9 @@ import { describe, expect, it } from "bun:test"
 import { fileURLToPath } from "node:url"
 
 import { collectTaskIds } from "../scripts/lib/task-id-repository.ts"
+import { collectStrayTaskMentions } from "../scripts/lib/task-mention-repository.ts"
 import { findExcessiveTaskIdDuplicates, formatDuplicateTaskId } from "../scripts/task-id.ts"
+import { formatStrayTaskMention } from "../scripts/task-mention.ts"
 
 // `develop/tasks.json` の `id` と `docs/history/tasks.md` の見出しを合わせたIDが重複していないかを
 // 保つ（T-225 は既知の例外として2件まで許す。理由は `scripts/task-id.ts` の冒頭）。ID は一度
@@ -15,5 +17,13 @@ describe("タスクIDの重複", () => {
     expect(
       findExcessiveTaskIdDuplicates(collectTaskIds(REPOSITORY_ROOT)).map(formatDuplicateTaskId),
     ).toEqual([])
+  })
+})
+
+// CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」を、`src/` / `test/` /
+// `scripts/` のコメント・テスト名で保つ（拾う形・許す範囲は `scripts/task-mention.ts` の冒頭）。
+describe("タスク番号の書き込み", () => {
+  it("src/・test/・scripts/ のコメント・テスト名に、許した範囲を超えたタスク番号が無い", () => {
+    expect(collectStrayTaskMentions(REPOSITORY_ROOT).map(formatStrayTaskMention)).toEqual([])
   })
 })

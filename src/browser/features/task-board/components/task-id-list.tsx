@@ -1,5 +1,5 @@
 // IDの並び。**区切りの `, ` だけを折り返せる場所にする**ため、IDを1つずつ包んで出す
-// （`T-328` の `-` で改行されると読めなくなる。折らない指定は task-board.module.css の
+// （`T-xxx` の `-` で改行されると読めなくなる。折らない指定は task-board.module.css の
 // `.task-dep-id`）。
 
 import { Fragment, type ReactElement } from "react"

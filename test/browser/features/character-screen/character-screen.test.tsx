@@ -122,8 +122,8 @@ describe("CharacterScreen", () => {
     expect(screen.queryByRole("button", { name: /このキャラクターに切り替える/ })).toBeNull()
   })
 
-  // 完了条件: ダイアログから作ると T-493 の形のコマンドが送られ、閉じて一覧で新しいパックが
-  // 選ばれる。
+  // 完了条件: ダイアログから作ると id・名前・立ち絵・差し色を持つ create-character コマンドが
+  // 送られ、閉じて一覧で新しいパックが選ばれる。
   it("新しく作るはダイアログを開き、作れたら閉じて一覧でそのパックを選ぶ", async () => {
     const calls: unknown[] = []
     const store = sessionStoreWith(

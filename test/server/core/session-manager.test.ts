@@ -912,7 +912,7 @@ describe("createSessionManager", () => {
       ])
     })
 
-    it("圧縮を送っても、T-250 の圧縮の区切り（compact-boundary）はいままでどおり events に乗る", async () => {
+    it("圧縮を送っても、圧縮の区切り（compact-boundary）はいままでどおり events に乗る", async () => {
       const { manager, stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
       const frames: ServerFrame[] = []
       manager.subscribe((frame) => frames.push(frame))
@@ -928,7 +928,7 @@ describe("createSessionManager", () => {
         stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
       ).toHaveLength(1)
 
-      // T-250: 実際に本体が圧縮した合図（SDK の `compact_boundary`）は、`/compact` の依頼文面とは
+      // 実際に本体が圧縮した合図（SDK の `compact_boundary`）は、`/compact` の依頼文面とは
       // 別に `sdk-message.ts` が `compact-boundary` へ変換して流す。ここでは駆動から届いたその
       // イベントが、記録に残さない口へ差し替えたあとも変わらず events に乗ることを見る。
       stub.emit({ kind: "compact-boundary" })
