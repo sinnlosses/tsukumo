@@ -971,3 +971,4 @@ VOICEVOX hooks）はいずれも**本体の出力に絵か音を添える**も�
 - コーディング規約: [`docs/coding-standards.md`](./coding-standards.md)
 - 検討当時のユーザーの指示メモ: [`docs/history/direction.md`](./history/direction.md)
 - 外に依存しているものの洗い出しと「外せるか」の評価: [`docs/research/external-dependency.md`](./research/external-dependency.md)
+- 待ち時間にほかのキャラクターが訪ねてくる仕組みの提案（未決。決まったら本文へ移す）: [`docs/research/character-visit.md`](./research/character-visit.md)
