@@ -12,38 +12,51 @@ import {
 } from "../../../../src/browser/features/achievement/presentational-achievement-screen.tsx"
 
 /**
- * 見た目だけを測る（`hooks/use-achievement.ts` は素通しなので、フィクスチャは手で書いた架空の
- * 成果をそのまま渡す。`docs/coding-standards.md`「会話内容の扱い」）。空の日・数えられないときの
- * 見せ方は `docs/screen-design.md` 13.10「空の日・数えられないとき」の表がそのまま正典。
+ * 各区画（`day-switch.tsx` / `diary-section.tsx` / `bookmark-section.tsx` /
+ * `surprise-section.tsx` / `lantern-calendar.tsx`）の中身は個別のテストが持つ。ここは
+ * **並ぶ順と、main が読めないときに他をすべて隠すこと**だけを測る（フィクスチャは架空の値。
+ * docs/coding-standards.md「会話内容の扱い」）。
  */
 
 afterEach(() => {
   cleanup()
 })
 
-const KNOWN_TODAY: AchievementDaySwitch = { kind: "known", date: "2026-09-24", today: "2026-09-24" }
-const KNOWN_YESTERDAY: AchievementDaySwitch = {
-  kind: "known",
-  date: "2026-09-23",
-  today: "2026-09-24",
-}
-
 const NOOP = (): void => {}
+const NOOP_DATE = (_date: string): void => {}
+
+const KNOWN_TODAY: AchievementDaySwitch = { kind: "known", date: "2026-09-24", today: "2026-09-24" }
 
 const AVAILABLE_REVIEW: AchievementReviewButton = {
-  label: "つくもと振り返る",
+  label: "架空の名前と振り返る",
   availability: { kind: "available" },
   onReview: NOOP,
 }
 
 const DEFAULT_PROPS: PresentationalAchievementScreenProps = {
-  view: { kind: "ready", commitCount: 3, doneTasks: { kind: "known", items: [] } },
+  view: {
+    kind: "ready",
+    commitCount: 3,
+    doneTasks: { kind: "known", items: [] },
+    graduations: [],
+    milestones: [],
+    diary: { kind: "none" },
+  },
   daySwitch: KNOWN_TODAY,
   isFetching: false,
   onPreviousDay: NOOP,
   onNextDay: NOOP,
   onToday: NOOP,
+  onSelectDate: NOOP_DATE,
   review: AVAILABLE_REVIEW,
+  writing: { kind: "none" },
+  diaryPortrait: {
+    name: "架空の名前",
+    portrait: { portraitUrl: undefined, accent: undefined, altText: "" },
+  },
+  diaryReveal: false,
+  onWatchConversation: NOOP,
+  calendar: { kind: "loading" },
 }
 
 function renderScreen(
@@ -53,171 +66,66 @@ function renderScreen(
 }
 
 describe("PresentationalAchievementScreen", () => {
-  it("main が読めなければ、日の切り替えも札も出さず1行だけ", () => {
+  it("main が読めなければ、日の切り替え・日記の区画・暦を出さず1行だけ", () => {
     renderScreen({ view: { kind: "unavailable" }, daySwitch: { kind: "unknown" } })
 
     expect(
       screen.getByText("このディレクトリでは成果を数えられない（main が読めない）"),
     ).toBeDefined()
     expect(document.querySelector(".achievement-day-switch")).toBeNull()
-    expect(document.querySelector(".achievement-card")).toBeNull()
+    expect(document.querySelector(".achievement-diary")).toBeNull()
+    expect(document.querySelector(".achievement-calendar")).toBeNull()
   })
 
-  it("読み込み中は日の切り替えが押せず、札は「…」", () => {
-    renderScreen({ view: { kind: "loading" }, daySwitch: { kind: "unknown" } })
+  it("日の切り替え → 日記の区画 → 灯りの暦の順で並ぶ（しおり・小さな驚きは無ければ挟まらない）", () => {
+    renderScreen()
 
-    expect(screen.getByRole("button", { name: "‹ 前の日" }).getAttribute("aria-disabled")).toBe(
-      "true",
-    )
-    expect(screen.getByRole("button", { name: "次の日 ›" }).getAttribute("aria-disabled")).toBe(
-      "true",
-    )
-    const values = [...document.querySelectorAll(".achievement-card-value")].map(
-      (node) => node.textContent,
-    )
-    expect(values).toEqual(["…", "…"])
+    const root = document.querySelector(".achievement")
+    const children = [...(root?.children ?? [])].map((node) => node.className)
+    // 灯りの暦は achievement-calendar のクラスを持つ区画として最後に来る。
+    expect(children.at(-1)).toBe("achievement-calendar")
+    expect(children[0]).toBe("achievement-day-switch")
   })
 
-  it("取れなかったときは、日の切り替えは使えるまま札と一覧の代わりに1行", () => {
-    renderScreen({ view: { kind: "failed" }, daySwitch: KNOWN_YESTERDAY })
-
-    expect(screen.getByText("成果を取れなかった。")).toBeDefined()
-    expect(document.querySelector(".achievement-card")).toBeNull()
-    // 前の日に居るので、次の日はまだ押せる（今日ではない）。
-    expect(screen.getByRole("button", { name: "次の日 ›" }).getAttribute("aria-disabled")).toBe(
-      "false",
-    )
-  })
-
-  it("今日を見ているときは次の日と今日へが aria-disabled、前の日は押せる", () => {
-    renderScreen({ daySwitch: KNOWN_TODAY })
-
-    expect(screen.getByRole("button", { name: "‹ 前の日" }).getAttribute("aria-disabled")).toBe(
-      "false",
-    )
-    expect(screen.getByRole("button", { name: "次の日 ›" }).getAttribute("aria-disabled")).toBe(
-      "true",
-    )
-    expect(screen.getByRole("button", { name: "今日へ" }).getAttribute("aria-disabled")).toBe(
-      "true",
-    )
-  })
-
-  it("前の日を見ているときは次の日と今日へが押せる", () => {
-    renderScreen({ daySwitch: KNOWN_YESTERDAY })
-
-    expect(screen.getByRole("button", { name: "次の日 ›" }).getAttribute("aria-disabled")).toBe(
-      "false",
-    )
-    expect(screen.getByRole("button", { name: "今日へ" }).getAttribute("aria-disabled")).toBe(
-      "false",
-    )
-  })
-
-  it("見ている日の見出しは今日・昨日を頭に添える", () => {
-    renderScreen({ daySwitch: KNOWN_TODAY })
-    expect(document.querySelector(".achievement-day-switch-label")?.textContent).toBe(
-      "今日 9月24日（木）",
-    )
-
-    cleanup()
-    renderScreen({ daySwitch: KNOWN_YESTERDAY })
-    expect(document.querySelector(".achievement-day-switch-label")?.textContent).toBe(
-      "昨日 9月23日（水）",
-    )
-  })
-
-  it("空の日（コミットも終えたタスクも0）は、札を0のまま出し一覧の場所に1行", () => {
-    renderScreen({
-      view: { kind: "ready", commitCount: 0, doneTasks: { kind: "known", items: [] } },
-    })
-
-    const values = [...document.querySelectorAll(".achievement-card-value")].map(
-      (node) => node.textContent,
-    )
-    expect(values).toEqual(["0", "0"])
-    expect(screen.getByText("この日に main へ入った成果は無い。")).toBeDefined()
-  })
-
-  it("コミットはあり終えたタスクが0なら、その旨の1行になる", () => {
-    renderScreen({
-      view: { kind: "ready", commitCount: 5, doneTasks: { kind: "known", items: [] } },
-    })
-
-    expect(screen.getByText("この日に終えたタスクは無い。")).toBeDefined()
-  })
-
-  it("タスクの記録が無いリポジトリでは、終えたタスクの札が「—」で一覧は出さない", () => {
-    renderScreen({
-      view: { kind: "ready", commitCount: 2, doneTasks: { kind: "unknown" } },
-    })
-
-    const values = [...document.querySelectorAll(".achievement-card-value")].map(
-      (node) => node.textContent,
-    )
-    expect(values).toEqual(["2", "—"])
-    expect(screen.getByText("タスクの記録が無い")).toBeDefined()
-    expect(document.querySelector(".achievement-task")).toBeNull()
-  })
-
-  it("終えたタスクがあれば、ID と summary を並べる", () => {
+  it("しおりがあれば日記の区画のあとに出る", () => {
     renderScreen({
       view: {
         kind: "ready",
-        commitCount: 4,
-        doneTasks: {
-          kind: "known",
-          items: [
-            { id: "T-1", summary: "架空のタスク1" },
-            { id: "T-2", summary: "架空のタスク2" },
-          ],
+        commitCount: 3,
+        doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+        graduations: [],
+        milestones: [],
+        diary: {
+          kind: "written",
+          diary: {
+            version: 1,
+            date: "2026-09-24",
+            paragraphs: [
+              {
+                writtenAt: "2026-09-24T21:40:00+09:00",
+                body: "架空の本文。",
+                expression: "proud",
+                writer: { pack: "fixture", name: "架空の名前" },
+              },
+            ],
+            bookmark: {
+              kind: "placed",
+              taskId: "T-1",
+              summary: "架空のタスク",
+              reason: "架空の理由",
+            },
+          },
         },
       },
     })
 
-    const rows = [...document.querySelectorAll(".achievement-task")].map((node) => node.textContent)
-    expect(rows).toEqual(["T-1架空のタスク1", "T-2架空のタスク2"])
+    expect(screen.getByText("架空の名前が選んだ この日のいちばん")).toBeDefined()
   })
 
-  it("日を切り替えている間は薄く残す", () => {
-    renderScreen({ isFetching: true })
+  it("灯りの暦は main が読める限り、1日ぶんが取れていなくても出る", () => {
+    renderScreen({ view: { kind: "failed" }, calendar: { kind: "loading" } })
 
-    expect(document.querySelector(".achievement-content")?.className).toContain("is-fetching")
-  })
-
-  it("押せるときはボタンが出て、押すと onReview が1回呼ばれる", () => {
-    let calls = 0
-    renderScreen({ review: { ...AVAILABLE_REVIEW, onReview: () => (calls += 1) } })
-
-    const button = screen.getByRole("button", { name: "つくもと振り返る" })
-    expect(button.getAttribute("aria-disabled")).toBe("false")
-
-    button.click()
-
-    expect(calls).toBe(1)
-  })
-
-  it("押せないときは aria-disabled になり、理由が下に出る", () => {
-    renderScreen({
-      review: {
-        label: "つくもと振り返る",
-        availability: { kind: "blocked", reason: "いまターンが動いているので送れない" },
-        onReview: NOOP,
-      },
-    })
-
-    expect(
-      screen.getByRole("button", { name: "つくもと振り返る" }).getAttribute("aria-disabled"),
-    ).toBe("true")
-    expect(screen.getByText("いまターンが動いているので送れない")).toBeDefined()
-  })
-
-  it("読み込み中・取れなかったときはボタンを出さない", () => {
-    renderScreen({ view: { kind: "loading" }, daySwitch: { kind: "unknown" } })
-    expect(screen.queryByRole("button", { name: /振り返る/ })).toBeNull()
-
-    cleanup()
-    renderScreen({ view: { kind: "failed" }, daySwitch: KNOWN_YESTERDAY })
-    expect(screen.queryByRole("button", { name: /振り返る/ })).toBeNull()
+    expect(document.querySelector(".achievement-calendar")).not.toBeNull()
+    expect(screen.getByText("成果を取れなかった。")).toBeDefined()
   })
 })

@@ -6,7 +6,7 @@
 //
 // **読み手は2つ**（2つ目の読み手が出たときに上げる、appearance-color.ts と同じ引き金）:
 // 歯車のポップオーバー（`features/screen-nav/`）が選択肢を出して保存し、レポートの演出
-// （`features/main-view/reveal/use-report-reveal.ts`）がマウント時に読んで速さに使う。**機能どうしの
+// （`domain/reveal/use-report-reveal.ts`）がマウント時に読んで速さに使う。**機能どうしの
 // import を増やさないため、保存と読み取りをここへ集める。**
 //
 // 具体の ms 値（`REVEAL_TIMING`）もここに置く。`reveal/plan.ts` は値を持たず、渡された
@@ -15,7 +15,7 @@
 // 渡す側（ここ）に置き、`reveal/plan.ts` が型だけを読む向きにする。
 //
 // **`off` は物差しを持たない。** 「切る」は演出そのものを走らせない選択で、
-// `features/main-view/reveal/use-report-reveal.ts` が `revealSpeed === "off"` を見て `startReveal` を呼ばずに済ませる（本文はすぐ全部出て、ミニ立ち絵の
+// `domain/reveal/use-report-reveal.ts` が `revealSpeed === "off"` を見て `startReveal` を呼ばずに済ませる（本文はすぐ全部出て、ミニ立ち絵の
 // 筆も出ない）。だから {@link RevealTiming} の対応表は `standard` / `fast` の2つだけで足りる。
 
 export type RevealSpeed = "standard" | "fast" | "off"

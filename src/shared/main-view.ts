@@ -385,7 +385,7 @@ function newStep(
  *
  * `settled` でないあいだは何も出さない。書きかけは最後のステップへ積まれるので、最後の本文は
  * まだ伸びる途中か、次の本文に席を譲るかもしれない——出してから変わると、書き上げる演出
- * （マウントした時点でしか始まらない。`src/browser/features/main-view/reveal/use-report-reveal.ts`）が
+ * （マウントした時点でしか始まらない。`src/browser/domain/reveal/use-report-reveal.ts`）が
  * 確定した本文に掛からない。
  */
 function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {

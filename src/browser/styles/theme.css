@@ -90,6 +90,19 @@
   --usage-ink-note: #8a8896; /* 見出しの横の添え書き・表の見出し行・凡例の割合・「最大 n」 */
   --usage-ink-faint: #6f6d7a; /* モデル名と更新時刻・期間の両端の目盛り */
 
+  /* 成果の画面（13.10）のしおり・小さな驚き・灯りの暦の「日記あり」の鈴に使う金色。**この画面の
+     中でだけ使う固定の色**で、`--state-warn`（答え待ち・注意の意味の色）は流用しない
+     （`--usage-*` と同じ考え方）。値は見本（`docs/history/mockup/achievement-diary-2026-09-25/
+     SEIKA-4a-Base.dc.html`）から取った。しおり・小さな驚きの卒業の札・節目の札はどれも
+     「小さな驚き」1つの概念の下なので、見本で微妙に違う色相を使い分けているところを
+     1系統に簡略化してある。 */
+  --diary-gold: #e3b95c; /* 金色そのもの。アイコン・節目の地・灯りの暦の「日記あり」の鈴 */
+  --diary-gold-strong: #f3ecdc; /* いちばん明るい字。しおりの要約・節目の数 */
+  --diary-gold-ink: #d9c79c; /* 見出し・ラベルの字。しおりの見出しと理由・「通算」「件目のタスク」 */
+  --diary-gold-ink-quiet: #a8976c; /* 控えめな字。タスク ID・卒業の日数のラベル・添え書き */
+  --diary-gold-surface: #221f19; /* しおり・節目・卒業の札の地 */
+  --diary-gold-border: #5a4b25; /* しおり・節目・卒業の札の枠 */
+
   /* タイプスケール。段はこの6つだけ（13.3）。 */
   --font-label: 0.6875rem;
   --font-action: 0.75rem;
@@ -102,6 +115,9 @@
   /* 書体は system-ui と等幅の2本のまま（13.3）。 */
   --font-sans: system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
+  /* 唯一の例外（13.3）: 成果の画面（13.10）の日記の本文だけ、端末に入っている明朝体の名前を
+     並べ、最後を `serif` に落とす。外部フォントは足さない。 */
+  --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
 
   /* 画面の縁の余白（body の padding）。**帯（13.9）はこの余白の外へはみ出して画面の端から端まで
      出る**ので、帯（screen-nav.module.css）と会話の画面の grid（layout.module.css）も読む。 */

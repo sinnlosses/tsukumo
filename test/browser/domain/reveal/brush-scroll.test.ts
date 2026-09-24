@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { brushScroller } from "../../../../../src/browser/features/main-view/reveal/brush-scroll.ts"
+import { brushScroller } from "../../../../src/browser/domain/reveal/brush-scroll.ts"
 
 /**
  * 転がる器のふり（happy-dom はレイアウトを持たないので、寸法を自分で名乗らせる）。

@@ -6,14 +6,14 @@
 // `mini-portrait.module.css`）。`<Portrait>`（矩形を描く部品）は共有するが、**4つの動き（呼吸・待っている間の移動・完了の反応・失敗でびくっ）は
 // 渡さない**——あれはキャラビューの領域の中の話で、ここが持つ動きは筆先への追従だけ。
 //
-// **出る条件は「その筆先が、いま出ているやり取りのものであること」**（`reveal/brush-tip.ts`）。
+// **出る条件は「その筆先が、いま出ているやり取りのものであること」**（`domain/reveal/brush-tip.ts`）。
 // 筆先を配るのは演出
-// （`reveal/use-report-reveal.ts`）で、演出が掛かるのは**いちばん新しいターンの最後の確定レポートが
+// （`domain/reveal/use-report-reveal.ts`）で、演出が掛かるのは**いちばん新しいターンの最後の確定レポートが
 // 現れたとき**だけ（`turn.tsx`）。`prefers-reduced-motion: reduce` と過去のターンでは演出自体が
 // 走らないので、ここに同じ判定を書き足さなくても出ない。
 //
 // **書き上げたあとも消えない。** 筆先が `resting` になってその場に留まり、
-// **本文と一緒に転がる**——座標が本文の入れ物の原点基準（`reveal/brush-tip.ts`）なので、
+// **本文と一緒に転がる**——座標が本文の入れ物の原点基準（`domain/reveal/brush-tip.ts`）なので、
 // `position: absolute` で置くだけで貼り付く。次のターンで書き始めると、そのまま新しい筆先へ
 // 滑って移る（同じ原点の座標どうしなので、遷移を外さなくても飛ばない）。
 //
@@ -33,9 +33,9 @@ import { type CSSProperties, type ReactElement } from "react"
 
 import { resolveOutfit } from "../../../shared/expression.ts"
 import { Portrait } from "../../components/portrait.tsx"
+import { useBrushTip, type BrushTip } from "../../domain/reveal/brush-tip.ts"
 import { useSessionSelector } from "../../stores/session.tsx"
 import styles from "./mini-portrait.module.css"
-import { useBrushTip, type BrushTip } from "./reveal/brush-tip.ts"
 
 /**
  * ミニ立ち絵の表情。**表情では変わらない1件**（`character.json` の `mini`。無ければ
@@ -122,7 +122,7 @@ function motionClassName(tip: BrushTip): string | undefined {
 
 /**
  * 筆先の**右・帯の下端**に立たせる（なぞっている帯と同じ高さで、書き進む先の側）。座標は
- * 本文の入れ物の原点基準（`reveal/brush-tip.ts`）なので、置いた先は本文と一緒に転がる。
+ * 本文の入れ物の原点基準（`domain/reveal/brush-tip.ts`）なので、置いた先は本文と一緒に転がる。
  * Z字の斜めの戻りでは筆先が右から左へ動くので、立ち絵も
  * 一緒に戻ってくる。
  *

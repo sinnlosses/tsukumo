@@ -1,7 +1,7 @@
 // 成果の画面（`#achievement`。会話の画面と入れ替わる別の画面で、常駐の3領域には混ぜない）の
-// **入口**。取得と日の切り替えは `hooks/use-achievement.ts`、見た目は
-// `presentational-achievement-screen.tsx` が持つ（docs/design.md 2章「機能の中を分ける」の
-// container / presenter）。
+// **入口**。1日ぶんの取得と日の切り替えは `hooks/use-achievement.ts`、灯りの暦は
+// `hooks/use-achievement-calendar.ts`、見た目は `presentational-achievement-screen.tsx` が持つ
+// （docs/design.md 2章「機能の中を分ける」の container / presenter）。
 //
 // **入る口も会話へ戻る口も、全画面の最上部の帯**（`features/screen-nav/`。13.9）にある。
 //
@@ -10,9 +10,12 @@
 
 import { type ReactElement } from "react"
 
+import { useAchievementCalendar } from "./hooks/use-achievement-calendar.ts"
 import { useAchievement } from "./hooks/use-achievement.ts"
 import { PresentationalAchievementScreen } from "./presentational-achievement-screen.tsx"
 
 export function AchievementScreen(): ReactElement {
-  return <PresentationalAchievementScreen {...useAchievement()} />
+  return (
+    <PresentationalAchievementScreen {...useAchievement()} calendar={useAchievementCalendar()} />
+  )
 }

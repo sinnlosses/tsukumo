@@ -496,18 +496,25 @@ features/task-board/
 追うのに開くディレクトリが1つで済み、機能の直下に「接頭辞だけが仲間を表す」ファイルが並ばなく
 なる。**中では接頭辞を落とす**（`reveal/band.ts`。`markdown/split-blocks.ts` と同じ）。
 
-| ディレクトリ          | 中身                                                                     | 外から呼ぶ入口                                                           |
-| --------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `main-view/markdown/` | unified の設定・記法の部品・塊の切り方                                   | `Markdown` / `splitReportBlocks`                                         |
-| `main-view/reveal/`   | レポートを筆で書き上げる演出（段取り・測る・塗る・帯・ぶら下がり・筆先） | `useReportReveal`（`report.tsx`）と `useBrushTip`（`mini-portrait.tsx`） |
+| ディレクトリ          | 中身                                   | 外から呼ぶ入口                   |
+| --------------------- | -------------------------------------- | -------------------------------- |
+| `main-view/markdown/` | unified の設定・記法の部品・塊の切り方 | `Markdown` / `splitReportBlocks` |
 
 - **その概念のフックもこの中に置く。** 機能の中の `hooks/` は「その機能だけが読むフック」の箱
   だが、概念のディレクトリを切ったなら、そのフックはそちらへ入れる
-  （`reveal/use-report-reveal.ts`）。`hooks/` に残すと、演出を追うのに2つのディレクトリを開く
-- **読み手が1つの機能に閉じているかどうかは、いつもどおり数える。** `reveal/brush-tip.ts` は
-  `stores/` にあったが、読むのは同じ機能の `mini-portrait.tsx` だけなので機能の中へ下ろした
-  （2026-09-23。`stores/` は**複数の機能が読む**状態の箱）。逆に2つ目の読み手が出たら、
-  部品は `browser/components/`、道具は `browser/lib/`、状態は `stores/` へ上げる
+  （`markdown/` の中のフック）。`hooks/` に残すと、演出を追うのに2つのディレクトリを開く
+- **読み手が1つの機能に閉じているかどうかは、いつもどおり数える。** 逆に2つ目の読み手が
+  出たら、部品は `browser/components/`、道具は `browser/lib/`、状態は `stores/` へ上げる。
+  **概念ディレクトリそのものが2つ目の読み手を得たときも同じ**——`main-view/reveal/`
+  （レポートを筆で書き上げる演出。段取り・測る・塗る・帯・ぶら下がり・筆先）は
+  `main-view` だけが読む前提で機能の中に置いていたが、2026-09-25 に成果の画面
+  （`features/achievement/`）の日記の吹き出しも同じ演出を再利用することになり、
+  `browser/domain/reveal/` へディレクトリごと引き上げた（`useReportReveal`（`report.tsx`と
+  `features/achievement/diary-section.tsx`）と `useBrushTip`（`mini-portrait.tsx`。成果の画面は
+  `data-brush-origin` を付けないので、ミニ立ち絵の追従だけは main-view 側にとどまる）。**中の
+  ファイル名は接頭辞を落としたまま**（`reveal/band.ts` など）で、`browser/domain/` に初めて
+  概念のサブディレクトリを持ち込む形になるが、条件（3ファイル以上・概念だけで閉じている・
+  `hooks/`/`components/`/`domain/` のどれか1つに収まらない）は機能の中で切るときと同じ
 
 **`components/` とストア**: **機能の中の `components/` はストアを読んでよい**（2026-09-23 決定。
 `browser/components/` のほうは読めない——箱の表で `stores/` を引く辺が無い）。**条件は2つ**で、

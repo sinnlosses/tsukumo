@@ -1,19 +1,21 @@
 // 成果の画面のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
 // 見ている日（hash の `date`。`stores/location-hash.ts`）から `GET /achievement` を取りに行き、
-// 見た目（`presentational-achievement-screen.tsx`）がそのまま置ける形へ畳んで返す。
+// 見た目（`presentational-achievement-screen.tsx` と各区画の部品）がそのまま置ける形へ畳んで返す。
+// 暦（`GET /achievement-calendar`）は別のフック `use-achievement-calendar.ts`。
 //
 // **日の切り替えは、取れた応答の `date`/`today` から計算する**（ブラウザは時計を読まないので、
-// hash の raw な値だけでは「前の日」「今日」を計算できない。`docs/design.md` 5章「成果の集め方と
+// hash の raw な値だけでは「前の日」「今日」を計算できない。`docs/design.md`「成果の集め方と
 // 配り方」）。前の日は常に計算できる（そのまま引くだけ）が、次の日と「今日へ」は「いま見ている日が
 // 今日かどうか」が要るので、応答が届くまで押せない。
 //
-// **「つくもと振り返る」ボタン（`docs/screen-design.md` 13.10「並べるもの」4）のロジックもここに
-// 持つ**——押せない条件（ターンが進行中・空の日）は `use-usage-review.ts` の
-// `startAvailability` と同じ形、押したあとの依頼と画面遷移は `use-current-work.ts` の
-// `onGoToQuestion` と同じ形（コマンドを送った直後だけ `navigateTo` を読む。`stores/screen.tsx`
-// 冒頭の注記）。
+// **「<パックの名前>と振り返る」ボタン（`docs/screen-design.md` 13.10「並べるもの」4）のロジックも
+// ここに持つ**——押せない条件（ターンが進行中・空の日）は `use-usage-review.ts` の
+// `startAvailability` と同じ形。**押しても画面は移らない**: `reflect-achievement { date }` を
+// 送るだけで、進みは `SessionState.diaryWriting` から同じ画面の中に出す（`writing`。同節
+// 「ボタンを押せないとき・押したあと」）。
 
-import { useQuery, type Query } from "@tanstack/react-query"
+import { useQuery, useQueryClient, type Query } from "@tanstack/react-query"
+import { useEffect } from "react"
 
 import {
   ACHIEVEMENT_DATE_QUERY_NAME,
@@ -23,17 +25,24 @@ import {
   previousDateKey,
   readDailyAchievement,
   type AchievementDoneTasks,
+  type AchievementGraduation,
+  type AchievementMilestone,
   type DailyAchievement,
 } from "../../../../shared/achievement.ts"
-import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
+import { type CharacterInfo, type CharacterPackEntry } from "../../../../shared/character.ts"
+import {
+  type DailyDiaryStatus,
+  type DiaryStage,
+  type DiaryWriting,
+} from "../../../../shared/diary.ts"
+import { DEFAULT_CHARACTER_NAME, portraitAppearance } from "../../../domain/portrait-appearance.ts"
 import { sessionTokenUrl } from "../../../lib/session-token-url.ts"
-import { type AchievementDateSelection, type Screen } from "../../../stores/location-hash.ts"
+import { type AchievementDateSelection } from "../../../stores/location-hash.ts"
 import {
   navigateTo,
   selectAchievementDate,
   selectAchievementToday,
   useAchievementDateSelection,
-  useScreen,
 } from "../../../stores/screen.tsx"
 import {
   useSessionDispatch,
@@ -41,6 +50,7 @@ import {
   useTurnRunning,
   type SessionDispatch,
 } from "../../../stores/session.tsx"
+import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../diary-writer.ts"
 
 /** 今日を見ているあいだだけ取り直す間隔（13.10「並べるもの」のさらに上、5章「取り直す契機」）。 */
 const TODAY_REFETCH_INTERVAL_MS = 60_000
@@ -66,6 +76,9 @@ export type AchievementView =
       readonly kind: "ready"
       readonly commitCount: number
       readonly doneTasks: AchievementDoneTasks
+      readonly graduations: readonly AchievementGraduation[]
+      readonly milestones: readonly AchievementMilestone[]
+      readonly diary: DailyDiaryStatus
     }
 
 /** 振り返りのボタンを押せるか（13.10「ボタンを押せないとき・押したあと」）。 */
@@ -81,6 +94,17 @@ export type AchievementReviewButton = {
   readonly onReview: () => void
 }
 
+/**
+ * 見ている日を、いま `diary` ツールで書いているか（13.10「ボタンを押せないとき・押したあと」）。
+ * **`SessionState.diaryWriting` の日付が見ている日と一致するときだけ**（別の日を書いている・
+ * 書き終えている・そもそも振り返っていないのはどれも `none`——振り返りのボタンそのものが
+ * 押せるかどうかは {@link AchievementReviewButton} が別に持つ、常に画面全体で1つの状態）。
+ */
+export type AchievementWriting =
+  | { readonly kind: "none" }
+  | { readonly kind: "writing"; readonly stage: DiaryStage }
+  | { readonly kind: "failed" }
+
 export type UseAchievementResult = {
   readonly view: AchievementView
   readonly daySwitch: AchievementDaySwitch
@@ -89,20 +113,41 @@ export type UseAchievementResult = {
   readonly onPreviousDay: () => void
   readonly onNextDay: () => void
   readonly onToday: () => void
+  /** 灯りの暦のマスを押したときに見ている日を切り替える口（13.10「灯りの暦」「押すと」）。 */
+  readonly onSelectDate: (date: string) => void
   readonly review: AchievementReviewButton
+  readonly writing: AchievementWriting
+  /** 日記の区画の立ち絵と名前（書いたパック。13.10「並べるもの」2「書いたパックが無いとき」）。 */
+  readonly diaryPortrait: DiaryWriterPortrait
+  /**
+   * 最新の段落を書き上げの演出で見せてよいか（13.10「書き上がったら」）。**この描画で1回だけ
+   * `true` になる**——同じ段落を日を開き直して見たときは `false`（下の `takeDiaryReveal`）。
+   */
+  readonly diaryReveal: boolean
+  /** 「会話の画面で様子を見る ›」（13.10「ボタンを押せないとき・押したあと」）。 */
+  readonly onWatchConversation: () => void
 }
 
 const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない"
 const EMPTY_DAY_BLOCKED_REASON = "振り返る成果が無い"
 
+/**
+ * 書き上がった日記の演出を、この起動のあいだ1回だけ見せたことを覚える（React の外の値。
+ * 成果の画面はアンマウントされうる——`main.tsx` の `OVERLAY_SCREEN` は見ていない画面を描かない
+ * ——ので、React の状態に持つとページを移っただけで忘れる。`domain/reveal/brush-tip.ts` と同じ
+ * 「React の外に1つだけ持つ」考え方）。鍵は日付と最新段落の書いた時刻——書き足すたびに変わる
+ * ので、同じ日を再訪しても前の段落までは再生しない。
+ */
+const revealedDiaryKeys = new Set<string>()
+
 export function useAchievement(): UseAchievementResult {
   const selection = useAchievementDateSelection()
   const dispatch = useSessionDispatch()
+  const queryClient = useQueryClient()
   const turnRunning = useTurnRunning()
-  const characterName = useSessionSelector(
-    (session) => session.state.character?.name ?? DEFAULT_CHARACTER_NAME,
-  )
-  const screen = useScreen()
+  const character = useSessionSelector((session) => session.state.character)
+  const characterPacks = useSessionSelector((session) => session.state.characterPacks)
+  const diaryWriting = useSessionSelector((session) => session.state.diaryWriting)
   const query = useQuery({
     queryKey: ["achievement", queryDateKey(selection)],
     queryFn: () => fetchAchievement(selection),
@@ -118,6 +163,42 @@ export function useAchievement(): UseAchievementResult {
 
   const daySwitch = daySwitchOf(query.data)
   const view = viewOf(query.data, query.isPending, query.isError)
+  const writing = writingViewOf(diaryWriting, daySwitch)
+
+  const latestParagraph =
+    view.kind === "ready" && view.diary.kind === "written"
+      ? view.diary.diary.paragraphs.at(-1)
+      : undefined
+  const justWritten =
+    daySwitch.kind === "known" &&
+    diaryWriting.kind === "written" &&
+    diaryWriting.date === daySwitch.date
+  const revealKey =
+    latestParagraph === undefined || daySwitch.kind !== "known"
+      ? undefined
+      : `${daySwitch.date}:${latestParagraph.writtenAt}`
+  const diaryReveal = revealKey !== undefined && justWritten && !revealedDiaryKeys.has(revealKey)
+
+  // **React の外にある状態への書き込み**（4類型の1つ）。ここで覚えてから返すと、同じ描画の中で
+  // 「見せてよい」が2回目以降 `false` になる——次に書き上げの演出を見るのは、書き足しで
+  // `revealKey` が変わったとき（新しい段落）か、次に別の日で書き上がったときだけ。
+  useEffect(() => {
+    if (revealKey !== undefined && justWritten) {
+      revealedDiaryKeys.add(revealKey)
+    }
+  }, [revealKey, justWritten])
+
+  // 日記が書き上がったとき、その日の1日ぶんと暦を取り直す（`docs/design.md`「成果の集め方と
+  // 配り方」の「取り直す契機」）。**書いた日と見ている日が違っても広く無効化する**——1日ぶんの
+  // クエリキーは日付ごとに分かれるが、同時に描かれているのは見ている日の1件だけなので、
+  // 広く無効化しても取り直しは1回で済む。暦は常に今日を含む固定範囲なので、書いた日を問わず
+  // 鈴が変わりうる。
+  useEffect(() => {
+    if (diaryWriting.kind === "written") {
+      void queryClient.invalidateQueries({ queryKey: ["achievement"] })
+      void queryClient.invalidateQueries({ queryKey: ["achievement-calendar"] })
+    }
+  }, [queryClient, diaryWriting])
 
   return {
     view,
@@ -136,27 +217,34 @@ export function useAchievement(): UseAchievementResult {
     onToday: () => {
       selectAchievementToday()
     },
-    review: reviewButtonOf(view, daySwitch, turnRunning, characterName, dispatch, screen),
+    onSelectDate: (date: string) => {
+      selectAchievementDate(date)
+    },
+    review: reviewButtonOf(view, daySwitch, turnRunning, character, dispatch),
+    writing,
+    diaryPortrait: diaryPortraitOf(view, character, characterPacks),
+    diaryReveal,
+    onWatchConversation: () => {
+      navigateTo("conversation")
+    },
   }
 }
 
 /**
  * 振り返りのボタン（13.10「並べるもの」4・「ボタンを押せないとき・押したあと」）。
  * **空の日の理由をターンが動いている理由より先に見る**——両方成り立つときは空の日の理由だけを
- * 出す決まり（同節）。押すと**日付だけを送り**（`reflect-achievement`。依頼文は session-manager が
- * その日の成果を数え直して組む。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）、
- * 会話の画面へ移る（`use-current-work.ts` の `onGoToQuestion` と同じく、いま居る画面が違うときだけ
- * `navigateTo` を呼ぶ）。
+ * 出す決まり（同節）。押すと**日付だけを送る**（`reflect-achievement`。依頼文は session-manager が
+ * その日の成果を数え直して組む。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
+ * **画面は移らない。**
  */
 function reviewButtonOf(
   view: AchievementView,
   daySwitch: AchievementDaySwitch,
   turnRunning: boolean,
-  characterName: string,
+  character: CharacterInfo | undefined,
   dispatch: SessionDispatch,
-  screen: Screen,
 ): AchievementReviewButton {
-  const label = `${characterName}と振り返る`
+  const label = `${character?.name ?? DEFAULT_CHARACTER_NAME}と振り返る`
 
   if (view.kind !== "ready" || daySwitch.kind !== "known") {
     return { label, availability: { kind: "blocked", reason: "" }, onReview: () => {} }
@@ -182,10 +270,47 @@ function reviewButtonOf(
         return
       }
       dispatch({ type: "reflect-achievement", date: daySwitch.date })
-      if (screen !== "conversation") {
-        navigateTo("conversation")
-      }
     },
+  }
+}
+
+/** 見ている日を、いま `diary` ツールで書いているか（`SessionState.diaryWriting` と見ている日の
+ * 日付が一致するときだけ拾う。他の日を書いている・書いていないはどちらも `none`）。 */
+function writingViewOf(
+  diaryWriting: DiaryWriting,
+  daySwitch: AchievementDaySwitch,
+): AchievementWriting {
+  if (daySwitch.kind !== "known") {
+    return { kind: "none" }
+  }
+  if (diaryWriting.kind === "writing" && diaryWriting.date === daySwitch.date) {
+    return { kind: "writing", stage: diaryWriting.stage }
+  }
+  if (diaryWriting.kind === "failed" && diaryWriting.date === daySwitch.date) {
+    return { kind: "failed" }
+  }
+  return { kind: "none" }
+}
+
+/**
+ * 日記の区画の立ち絵と名前（13.10「並べるもの」2）。**その日の日記が書き上がっていれば書いた
+ * パック**（`diary-writer.ts`）、そうでなければ**いまのパックを `default` の表情で**
+ * （13.10「並べるもの」2「立ち絵」）。
+ */
+function diaryPortraitOf(
+  view: AchievementView,
+  character: CharacterInfo | undefined,
+  characterPacks: readonly CharacterPackEntry[],
+): DiaryWriterPortrait {
+  if (view.kind === "ready" && view.diary.kind === "written") {
+    const latest = view.diary.diary.paragraphs.at(-1)
+    if (latest !== undefined) {
+      return diaryWriterPortraitOf(latest, characterPacks)
+    }
+  }
+  return {
+    name: character?.name ?? DEFAULT_CHARACTER_NAME,
+    portrait: portraitAppearance(character, "default", "default"),
   }
 }
 
@@ -249,5 +374,12 @@ function viewOf(
   if (isError) {
     return { kind: "failed" }
   }
-  return { kind: "ready", commitCount: data.commitCount, doneTasks: data.doneTasks }
+  return {
+    kind: "ready",
+    commitCount: data.commitCount,
+    doneTasks: data.doneTasks,
+    graduations: data.graduations,
+    milestones: data.milestones,
+    diary: data.diary,
+  }
 }

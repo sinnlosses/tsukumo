@@ -6,7 +6,7 @@ import {
   publishBrushTip,
   restBrushTip,
   useBrushTip,
-} from "../../../../../src/browser/features/main-view/reveal/brush-tip.ts"
+} from "../../../../src/browser/domain/reveal/brush-tip.ts"
 
 function Probe(): string {
   const tip = useBrushTip()

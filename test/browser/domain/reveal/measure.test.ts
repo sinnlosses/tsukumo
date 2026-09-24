@@ -1,13 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
-import {
-  lineBoxesOf,
-  type MemberShape,
-} from "../../../../../src/browser/features/main-view/reveal/measure.ts"
+import { lineBoxesOf, type MemberShape } from "../../../../src/browser/domain/reveal/measure.ts"
 import {
   type RevealElement,
   type RevealMember,
-} from "../../../../../src/browser/features/main-view/reveal/plan.ts"
+} from "../../../../src/browser/domain/reveal/plan.ts"
 
 // 実際に見えている帯の位置は目視で確かめる（`docs/architecture.md`「手で確かめること」）。
 // ここで守るのは、図・グラフの塊で右端をどの box から取るかだけ。

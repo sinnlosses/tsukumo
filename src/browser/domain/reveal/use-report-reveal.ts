@@ -30,7 +30,7 @@
 
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
-import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../../../domain/reveal-speed.ts"
+import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../reveal-speed.ts"
 import { brushStep, toBands, type BrushStep } from "./band.ts"
 import { brushScroller } from "./brush-scroll.ts"
 import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "./brush-tip.ts"

@@ -7,14 +7,14 @@ import { type ReactElement, type ReactNode } from "react"
 import { useAchievement } from "../../../../src/browser/features/achievement/hooks/use-achievement.ts"
 import { SessionStoreContext, type SessionStore } from "../../../../src/browser/stores/session.tsx"
 import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
+import { type CharacterInfo, type CharacterPackEntry } from "../../../../src/shared/character.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
 
 /**
- * 画面（`achievement-screen.tsx`）を丸ごと描かずに、日の切り替えと取得の畳み方だけを測る
- * （docs/design.md 2章「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の成果
- * （`docs/coding-standards.md`「会話内容の扱い」— 応答にそもそも会話の文面は入らないが、
- * 実物は使わない）。
+ * 画面（`achievement-screen.tsx`）を丸ごと描かずに、日の切り替えと取得の畳み方・振り返りの
+ * ボタン・書いている進み・立ち絵の解決だけを測る（docs/design.md 2章「機能の中を分ける」）。
+ * フィクスチャはすべて手で書いた架空の成果・日記（`docs/coding-standards.md`「会話内容の扱い」）。
  */
 
 let originalFetch: typeof globalThis.fetch | undefined = undefined
@@ -49,9 +49,6 @@ function okResponse(body: unknown): StubResponse {
   return { ok: true, status: 200, json: () => Promise.resolve(body) }
 }
 
-/** `useQuery` が要る `QueryClientProvider` と、`useAchievement` が読む session store。
- * **client は呼び出し側で1回だけ作る**（再レンダーのたびに作り直すとキャッシュが毎回リセット
- * され、日を切り替えた取り直しが測れない）。 */
 function achievementWrapper(
   client: QueryClient,
   store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE),
@@ -84,15 +81,42 @@ const KNOWN_TODAY: DailyAchievement = {
   diary: { kind: "none" },
 }
 
-const KNOWN_YESTERDAY: DailyAchievement = {
-  kind: "known",
-  date: "2026-09-23",
-  today: "2026-09-24",
-  commitCount: 0,
-  doneTasks: { kind: "known", items: [] },
-  graduations: [],
-  milestones: [],
-  diary: { kind: "none" },
+const WRITTEN_TODAY: DailyAchievement = {
+  ...KNOWN_TODAY,
+  diary: {
+    kind: "written",
+    diary: {
+      version: 1,
+      date: "2026-09-24",
+      paragraphs: [
+        {
+          writtenAt: "2026-09-24T21:40:00+09:00",
+          body: "架空の日記の本文。",
+          expression: "proud",
+          writer: { pack: "fixture-pack", name: "架空の名前" },
+        },
+      ],
+      bookmark: { kind: "none" },
+    },
+  },
+}
+
+const FIXTURE_CHARACTER: CharacterInfo = {
+  pack: "fixture-pack",
+  name: "架空のいまの名前",
+  accent: undefined,
+  chatAccent: undefined,
+  expressions: [],
+  portraits: undefined,
+  expressionsWithPortrait: [],
+  mini: undefined,
+  face: undefined,
+  tagline: undefined,
+  userCall: undefined,
+  miniCall: undefined,
+  outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
+  background: undefined,
+  editable: false,
 }
 
 describe("useAchievement", () => {
@@ -115,20 +139,6 @@ describe("useAchievement", () => {
     })
   })
 
-  it("hash に date があれば、その日を date クエリで取りに行く", async () => {
-    window.location.hash = "#achievement?date=2026-09-20"
-    stubAchievementFetch(() => okResponse(KNOWN_YESTERDAY))
-
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(newClient()),
-    })
-
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-    expect(fetchCalls.some((url) => url.includes("date=2026-09-20"))).toBe(true)
-  })
-
   it("main が読めなければ unavailable", async () => {
     stubAchievementFetch(() => okResponse({ kind: "unknown" }))
 
@@ -139,10 +149,9 @@ describe("useAchievement", () => {
     await waitFor(() => {
       expect(result.current.view.kind).toBe("unavailable")
     })
-    expect(result.current.daySwitch).toEqual({ kind: "unknown" })
   })
 
-  it("応答が落ち、一度も届いていなければ failed で日の切り替えも unknown", async () => {
+  it("応答が落ち、一度も届いていなければ failed", async () => {
     stubAchievementFetch(() => ({ ok: false, status: 503, json: () => Promise.resolve(null) }))
 
     const { result } = renderHook(() => useAchievement(), {
@@ -151,38 +160,6 @@ describe("useAchievement", () => {
 
     await waitFor(() => {
       expect(result.current.view.kind).toBe("failed")
-    })
-    expect(result.current.daySwitch).toEqual({ kind: "unknown" })
-  })
-
-  it("取れたあとに落ちても、日の切り替えは前に届いた日のまま使える", async () => {
-    let succeed = true
-    stubAchievementFetch(() =>
-      succeed
-        ? okResponse(KNOWN_YESTERDAY)
-        : { ok: false, status: 503, json: () => Promise.resolve(null) },
-    )
-    const client = newClient()
-    const { result } = renderHook(() => useAchievement(), { wrapper: achievementWrapper(client) })
-
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-
-    succeed = false
-    await act(async () => {
-      await client.refetchQueries({ queryKey: ["achievement", "today"] })
-    })
-
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("failed")
-    })
-    // 直前に届いていた日付はそのまま残る（`docs/screen-design.md` 13.10「取りに行って失敗した」
-    // 「日の切り替えは使える」）。
-    expect(result.current.daySwitch).toEqual({
-      kind: "known",
-      date: "2026-09-23",
-      today: "2026-09-24",
     })
   })
 
@@ -202,7 +179,7 @@ describe("useAchievement", () => {
     expect(window.location.hash).toBe("#achievement?date=2026-09-23")
   })
 
-  it("今日を見ているときに次の日を押しても hash は変わらない", async () => {
+  it("灯りの暦のマスと同じ口（onSelectDate）で日を選べる", async () => {
     stubAchievementFetch(() => okResponse(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient()),
@@ -212,32 +189,15 @@ describe("useAchievement", () => {
     })
 
     act(() => {
-      result.current.onNextDay()
+      result.current.onSelectDate("2026-09-10")
     })
 
-    expect(window.location.hash).toBe("")
-  })
-
-  it("今日へを押すと hash の date が外れる", async () => {
-    window.location.hash = "#achievement?date=2026-09-20"
-    stubAchievementFetch(() => okResponse(KNOWN_YESTERDAY))
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(newClient()),
-    })
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-
-    act(() => {
-      result.current.onToday()
-    })
-
-    expect(window.location.hash).toBe("#achievement")
+    expect(window.location.hash).toBe("#achievement?date=2026-09-10")
   })
 })
 
 describe("useAchievement（振り返りのボタン）", () => {
-  it("押すと依頼を1回送り、会話の画面へ移る", async () => {
+  it("押すと日付だけを送り、画面は移らない（hash はそのまま）", async () => {
     stubAchievementFetch(() => okResponse(KNOWN_TODAY))
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
@@ -281,14 +241,9 @@ describe("useAchievement（振り返りのボタン）", () => {
 
   it("空の日は押せず、送らない（ターンが進行中でも空の日の理由になる）", async () => {
     const emptyDay: DailyAchievement = {
-      kind: "known",
-      date: "2026-09-24",
-      today: "2026-09-24",
+      ...KNOWN_TODAY,
       commitCount: 0,
       doneTasks: { kind: "known", items: [] },
-      graduations: [],
-      milestones: [],
-      diary: { kind: "none" },
     }
     stubAchievementFetch(() => okResponse(emptyDay))
     const spy: CommandSpy = (command) => sent.push(command)
@@ -337,5 +292,109 @@ describe("useAchievement（振り返りのボタン）", () => {
     })
 
     expect(result.current.review.label).toBe("キャラクターと振り返る")
+  })
+})
+
+describe("useAchievement（書いている進み）", () => {
+  it("見ている日を書いているときだけ writing になる", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(
+          stateWith({
+            diaryWriting: { kind: "writing", date: "2026-09-24", startedAt: 0, stage: "write" },
+          }),
+        ),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.writing).toEqual({ kind: "writing", stage: "write" })
+  })
+
+  it("別の日を書いていれば、見ている日は none のまま", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(
+          stateWith({
+            diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+          }),
+        ),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.writing).toEqual({ kind: "none" })
+  })
+
+  it("見ている日で書けなかったときは failed になる", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(stateWith({ diaryWriting: { kind: "failed", date: "2026-09-24" } })),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.writing).toEqual({ kind: "failed" })
+  })
+})
+
+describe("useAchievement（日記の立ち絵）", () => {
+  it("日記が無い日は、いまのパックの名前を default の表情で出す", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(stateWith({ character: FIXTURE_CHARACTER })),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.diaryPortrait.name).toBe("架空のいまの名前")
+  })
+
+  it("日記が書き上がっていれば、書いたパックの名前を出す（いまのパックと違ってもよい）", async () => {
+    stubAchievementFetch(() => okResponse(WRITTEN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(stateWith({ character: FIXTURE_CHARACTER })),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.diaryPortrait.name).toBe("架空の名前")
+  })
+
+  it("書いたパックが一覧に無ければ、立ち絵は出ず名前だけ残る", async () => {
+    stubAchievementFetch(() => okResponse(WRITTEN_TODAY))
+    const packs: readonly CharacterPackEntry[] = []
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(stateWith({ characterPacks: packs })),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.diaryPortrait.name).toBe("架空の名前")
+    expect(result.current.diaryPortrait.portrait.portraitUrl).toBeUndefined()
   })
 })
