@@ -713,28 +713,14 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
               ? { ...state.session, sessionId: event.current }
               : { kind: "identified", sessionId: event.current },
       }
-    case "character-changed":
-      return {
-        ...state,
-        character: {
-          pack: event.pack,
-          name: event.name,
-          accent: event.accent,
-          chatAccent: event.chatAccent,
-          expressions: event.expressions,
-          portraits: event.portraits,
-          expressionsWithPortrait: event.expressionsWithPortrait,
-          mini: event.mini,
-          face: event.face,
-          tagline: event.tagline,
-          userCall: event.userCall,
-          miniCall: event.miniCall,
-          outfitAccents: event.outfitAccents,
-          background: event.background,
-          editable: event.editable,
-        },
-        characterPacks: event.packs,
-      }
+    case "character-changed": {
+      // `kind` と `packs` を外すと、残りがちょうど `CharacterInfo`
+      // （イベントの型が `{ kind: "character-changed" } & CharacterInfo & { packs }` なので）。
+      // 項目を1つずつ手で写さないことで、`CharacterInfo` に項目が増えても畳み込みが黙って
+      // 落とさない（`satisfies` で残りの形を検査する）。
+      const { kind: _kind, packs, ...character } = event
+      return { ...state, character: character satisfies CharacterInfo, characterPacks: packs }
+    }
     case "token-usage":
     case "step-usage":
       // **画面に出すものが何も無い**（数の記録は `~/.tsukumo/token-usage/` へ書くだけで、
