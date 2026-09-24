@@ -17,7 +17,7 @@
     "dependencies": ["T-513"],
     "summary": "成果の画面に「つくもと振り返る」を置き、会話へ1ターンの依頼を送る",
     "task": "## 背景\n\nT-513 で成果の画面ができた。押すとキャラクターが感想を言うボタンを足す。依頼の文面・押せない条件は T-511 で決めた（書いた節は T-511 の `evidence`）。\n\n- 先例はトークン消費の画面の「減らし方を見てもらう」（`src/browser/features/token-usage/`）。送り方は `src/browser/features/task-board/components/task-run-confirm.tsx` の `dispatch({ type: \"prompt\", ... })`\n- キャラクターのセリフは `speak` で言う。レポートの記法と間合いは `src/server/core/report-notation.ts` / `src/server/core/speech-cadence.ts`\n\n## 決まっていること（蒸し返さない）\n\n- 押したときだけ会話へ1ターンの依頼を送る。画面を開いただけではターンを使わない（2026-09-24 ユーザー決定）\n\n## やること\n\n1. ボタンを置き、T-511 の文面で依頼を送る\n2. 押せない条件（ターンが進んでいる・雑談モードなど。T-511 の結論）で押せなくし、理由を添える\n3. `docs/screen-design.md` を実装に合わせて直す（ずれが出たときだけ）\n\n## 完了条件\n\n- 押すと依頼が1回送られ、押せない条件では送られない（部品のテスト）\n- 実際の tsukumo で押し、キャラクターが `speak` で感想を言ったことを `evidence` に書く（会話の中身は写さず、何が起きたかだけ書く）\n- `bun run check` が通る",
-    "status": "todo",
+    "status": "doing",
     "passes": false,
     "evidence": ""
   },
