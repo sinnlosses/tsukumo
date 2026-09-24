@@ -1640,7 +1640,7 @@
         {
           "afterMs": 16100,
           "event": {
-            "kind": "turn-started"
+            "kind": "turn-resumed"
           }
         },
         {

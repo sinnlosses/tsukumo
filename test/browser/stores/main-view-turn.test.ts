@@ -74,7 +74,7 @@ describe("mainViewTurnsOf", () => {
 })
 
 // サブエージェントの `SendMessage` や背景のタスクの通知で、claude は同じやり取りの続きを自分で
-// 始める（`turn-started`）。そのたびに前の SDK ターンで出た `report` まで伏せていたので、
+// 始める（`turn-resumed`）。そのたびに前の SDK ターンで出た `report` まで伏せていたので、
 // 合図が届くたびに中間レポートが消え、ターンが終わると同じものが出直していた。
 describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", () => {
   const fold = (events: readonly SessionEvent[]) =>
@@ -88,7 +88,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     favor: "",
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
-  const resumed: SessionEvent = { kind: "turn-started" }
+  const resumed: SessionEvent = { kind: "turn-resumed" }
   const shownBodies = (state: SessionState) =>
     (mainViewTurnsOf(state).at(-1)?.steps ?? []).flatMap((step) =>
       step.body.kind === "text" ? [step.body.report] : [],

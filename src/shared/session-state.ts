@@ -549,6 +549,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。docs/screen-design.md 13.7）。
       // 積むものが無いだけで、吹き出し・表情・進行中の印は `request` と同じに動かす。
       return beginTurn(state, at)
+    case "turn-resumed":
+      return resumeTurn(state, at)
     case "partial-utterance":
       return { ...state, partialUtterance: state.partialUtterance + event.text }
     case "utterance":
@@ -880,6 +882,22 @@ function finishTurn(turn: TurnProgress, at: number, ending: TurnEnding): TurnPro
     return turn
   }
   return { kind: "finished", startedAt: turn.startedAt, finishedAt: at, ending }
+}
+
+/**
+ * claude が自分で始めた続きのターン（`turn-resumed`）。進行中の印と SDK ターンごとの持ち物は
+ * {@link beginTurn} と同じに戻すが、**吹き出しのセリフと表情は持ち越し**、ターンの通し番号も
+ * 進めない（新しいやり取りではなく、同じやり取りの続き）。
+ */
+function resumeTurn(state: SessionState, at: number): SessionState {
+  return {
+    ...state,
+    partialUtterance: "",
+    reportDrafting: { kind: "idle" },
+    turn: { kind: "running", startedAt: at },
+    bodiesInTurn: NO_TURN_BODIES,
+    apiTrouble: { kind: "none" },
+  }
 }
 
 /**

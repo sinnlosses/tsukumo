@@ -191,7 +191,7 @@ src/
       character-selection.ts  どのパックを出すかの順位（一覧を作るのは adapter/character-pack.ts）
       pending-answer.ts       答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
       sdk-message.ts          SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
-      self-started-turn.ts    claude が依頼なしで始めた続きのターンに turn-started を補う（ターンの外で届いた init が合図）
+      self-started-turn.ts    claude が依頼なしで始めた続きのターンに turn-resumed を補う（ターンの外で届いた init が合図）
       session-restore.ts      続きから始めるセッションを選ぶ・transcript を履歴イベントにする
       port-resolution.ts      どのポートで試すかの決定（listen そのものは adapter/server.ts）
       config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）

@@ -1044,17 +1044,30 @@ describe("applySessionEvent（背景のタスク）", () => {
     expect(view.backgroundTasks).toEqual([])
   })
 
-  it("知らせのあとの続きのターン（turn-started）はターンを進行中に戻し、吹き出しを空にする", () => {
+  it("知らせのあとの続きのターン（turn-resumed）はターンを進行中に戻し、吹き出しと表情は持ち越す", () => {
+    const view = apply(
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "speech", text: "架空の一言", expression: "proud" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      { kind: "background-tasks-changed", tasks: [] },
+      { kind: "turn-resumed" },
+    )
+
+    expect(view.turn.kind).toBe("running")
+    expect(view.speeches).toEqual(["架空の一言"])
+    expect(view.speechExpression).toBe("proud")
+  })
+
+  it("続きのターンのセリフは、前の SDK ターンのセリフに続けて積む", () => {
     const view = apply(
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "speech", text: "架空の一言", expression: "default" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "background-tasks-changed", tasks: [] },
-      { kind: "turn-started" },
+      { kind: "turn-resumed" },
+      { kind: "speech", text: "架空の続き", expression: "default" },
     )
 
-    expect(view.turn.kind).toBe("running")
-    expect(view.speeches).toEqual([])
+    expect(view.speeches).toEqual(["架空の一言", "架空の続き"])
   })
 })
 

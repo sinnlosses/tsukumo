@@ -267,7 +267,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   合図にしない
 - **背景のタスクが終わると、claude は依頼なしで続きのターンを始める**（実測は
   `docs/history/decision.md`）。依頼に当たるメッセージは流れないので、**ターンの外で届いた
-  `init` を合図に、記録を持たないターンの始まりを補う**（`src/server/core/self-started-turn.ts`。
+  `init` を合図に、記録を持たない続きのターンの始まり（`turn-resumed`）を補う**（`src/server/core/self-started-turn.ts`。
   見え方は `docs/screen-design.md` 13.9「背景のタスク」）
 - **中断は SDK の `interrupt()` で効く。** 中断されたターンの `result` は `error_during_execution`
   で終わり、同じセッションに続けて入力を送れる（中断前の文脈を保っている）
