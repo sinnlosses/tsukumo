@@ -28,6 +28,10 @@ function question(header: string, text: string): MainViewQuestion["questions"][n
   }
 }
 
+function multiSelectQuestion(header: string, text: string): MainViewQuestion["questions"][number] {
+  return { ...question(header, text), multiSelect: true }
+}
+
 describe("QuestionRecord（選んだ印の色）", () => {
   it("選んだ ● は差し色を当てる class を持ち、文字は DOM に残る", () => {
     const entry: MainViewQuestion = {
@@ -89,6 +93,71 @@ describe("QuestionRecord（選んだ印の色）", () => {
       element.textContent?.includes("案B"),
     )
     expect(label?.querySelector(".question-mark.is-chosen")).not.toBeNull()
+  })
+})
+
+describe("QuestionRecord（単一選択と複数選択で印が変わる）", () => {
+  it("複数選択の質問は、選択肢の行で ■/□ を出す（●/○ ではない）", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [multiSelectQuestion("確認", "どれにする？")],
+      answers: [["案B"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    const marks = [...container.querySelectorAll(".question-option .question-mark")].map(
+      (mark) => mark.textContent,
+    )
+    expect(marks).toEqual(["□", "■"])
+  })
+
+  it("複数選択の preview の札でも ■/□ を出す", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [
+        {
+          header: "確認",
+          text: "どれにする？",
+          multiSelect: true,
+          options: [
+            { label: "案A", description: "", preview: "### 案Aの下書き" },
+            { label: "案B", description: "", preview: "### 案Bの下書き" },
+          ],
+        },
+      ],
+      answers: [["案B"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+    const details = container.querySelector("details")
+    if (details === null) {
+      throw new Error("折りたたみが無い")
+    }
+    act(() => {
+      details.open = true
+      details.dispatchEvent(new Event("toggle"))
+    })
+
+    const marks = [...container.querySelectorAll(".question-preview-label .question-mark")].map(
+      (mark) => mark.textContent,
+    )
+    expect(marks).toEqual(["□", "■"])
+  })
+
+  it("単一選択の質問は、複数選択と混ざっていても ●/○ のまま", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      questions: [question("確認", "どちらにする？")],
+      answers: [["案B"]],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    const marks = [...container.querySelectorAll(".question-option .question-mark")].map(
+      (mark) => mark.textContent,
+    )
+    expect(marks).toEqual(["○", "●"])
   })
 })
 

@@ -27,10 +27,26 @@ import { useSyncExternalStore } from "react"
 
 import { ACHIEVEMENT_DATE_QUERY_NAME } from "../../shared/achievement.ts"
 
-const SCREENS = ["conversation", "character", "token-usage", "achievement"] as const
+/**
+ * 画面の名前とラベルの一覧（唯一の正典。`docs/screen-design.md` 13.9）。**画面を1つ足すときは
+ * ここへ1行足すだけでよい形にする**——`Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS` を
+ * `use-screen-nav.ts` がそのまま使う）・hash の `?` より前のパス（{@link pathOf}）は全部ここから
+ * 導く。画面の部品を引く表は `main.tsx` 側（`Record<Exclude<Screen, "conversation">, ReactElement>`
+ * を `satisfies` で検査し、ここへ足したのに部品の登録を忘れたら型エラーになる）。
+ */
+const SCREEN_LIST = [
+  { screen: "conversation", label: "会話" },
+  { screen: "character", label: "キャラクター" },
+  { screen: "token-usage", label: "トークン消費" },
+  { screen: "achievement", label: "成果" },
+] as const satisfies readonly { readonly screen: string; readonly label: string }[]
 
 /** 出している画面。hash が対応しない値のときは会話の画面に落ちる。 */
-export type Screen = (typeof SCREENS)[number]
+export type Screen = (typeof SCREEN_LIST)[number]["screen"]
+
+/** 帯のメニューが並べる順そのもの（`use-screen-nav.ts` がそのまま使う）。 */
+export const SCREEN_NAV_ITEMS: readonly { readonly screen: Screen; readonly label: string }[] =
+  SCREEN_LIST
 
 /**
  * 見ているターン。`"newest"` は今回に追従する（新しいターンが始まればそちらへ移る）。
@@ -68,13 +84,10 @@ export type HashRoute = {
 /** hash の値の型。スナップショットが同じ値なら描き直さないよう、プリミティブに限る。 */
 type HashSnapshot = string | number
 
-/** 画面と hash の `?` より前の対応。会話の画面は空（`#` だけになる）。 */
-const SCREEN_PATH = {
-  conversation: "",
-  character: "character",
-  "token-usage": "token-usage",
-  achievement: "achievement",
-} as const satisfies Readonly<Record<Screen, string>>
+/** 画面と hash の `?` より前の対応。会話の画面だけ空（`#` だけになる）で、ほかは画面名そのまま。 */
+function pathOf(screen: Screen): string {
+  return screen === "conversation" ? "" : screen
+}
 
 const TURN_PARAM = "turn"
 const PACK_PARAM = "pack"
@@ -130,7 +143,7 @@ export function formatHash(route: HashRoute): string {
     params.set(TURN_PARAM, String(route.turn))
   }
   const query = params.toString()
-  return `#${SCREEN_PATH[route.screen]}${query === "" ? "" : `?${query}`}`
+  return `#${pathOf(route.screen)}${query === "" ? "" : `?${query}`}`
 }
 
 function subscribeToHash(onStoreChange: () => void): () => void {
@@ -141,7 +154,7 @@ function subscribeToHash(onStoreChange: () => void): () => void {
 }
 
 function screenOf(path: string): Screen {
-  return SCREENS.find((screen) => SCREEN_PATH[screen] === path) ?? "conversation"
+  return SCREEN_LIST.find((entry) => pathOf(entry.screen) === path)?.screen ?? "conversation"
 }
 
 /** `URLSearchParams.get` の `null`（無い）もここで畳む。番号に読めない値は今回に追従する。 */

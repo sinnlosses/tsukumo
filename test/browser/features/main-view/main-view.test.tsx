@@ -709,7 +709,7 @@ describe("MainView（質問の記録）", () => {
     const chosen = [...container.querySelectorAll(".question-option.is-chosen")].map(
       (option) => option.textContent,
     )
-    expect(chosen).toEqual(["● 案A", "● 案C"])
+    expect(chosen).toEqual(["■ 案A", "■ 案C"])
   })
 
   it("自由入力の答えは、選択肢の下に別の行で出る", () => {
