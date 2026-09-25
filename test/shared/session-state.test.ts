@@ -1302,6 +1302,18 @@ describe("applySessionEvent（成果の振り返り）", () => {
     })
   })
 
+  it("前の段への diary-stage は段を戻さない", () => {
+    const requested = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "diary-requested", date: "2026-09-23" },
+      100,
+    )
+    const drafting = applySessionEvent(requested, { kind: "diary-drafting", toolUseId: "t1" }, 200)
+    const picked = applySessionEvent(drafting, { kind: "diary-stage", stage: "pick" }, 300)
+    const backward = applySessionEvent(picked, { kind: "diary-stage", stage: "read" }, 400)
+    expect(backward.diaryWriting).toEqual(picked.diaryWriting)
+  })
+
   it("writing でなければ diary-drafting / diary-stage は姿を変えない", () => {
     const idleDrafting = applySessionEvent(
       INITIAL_SESSION_STATE,

@@ -17,7 +17,7 @@ import { isBlankText } from "./blank-text.ts"
 import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import { type EffortLevel, isModelAlias } from "./command.ts"
-import { type DiaryStage, type DiaryWriting } from "./diary.ts"
+import { DIARY_STAGES, type DiaryStage, type DiaryWriting } from "./diary.ts"
 import { type Expression } from "./expression.ts"
 import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
@@ -916,9 +916,17 @@ function settleUsageReview(review: UsageReview): UsageReview {
   return review.kind === "running" ? { kind: "idle" } : review
 }
 
-/** `diary-drafting` / `diary-stage` で段を進める。`writing` でなければ何もしない（段は戻らない）。 */
+/**
+ * `diary-drafting` / `diary-stage` で段を進める。`writing` でなければ何もしない。
+ * **段は戻らない**（`DIARY_STAGES` の並びでいまの段より前へは動かさない）。
+ */
 function withDiaryStage(writing: DiaryWriting, stage: DiaryStage): DiaryWriting {
-  return writing.kind === "writing" ? { ...writing, stage } : writing
+  if (writing.kind !== "writing") {
+    return writing
+  }
+  return DIARY_STAGES.indexOf(stage) < DIARY_STAGES.indexOf(writing.stage)
+    ? writing
+    : { ...writing, stage }
 }
 
 /**
