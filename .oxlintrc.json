@@ -16,6 +16,7 @@
         "message": "Date を使わず Temporal を使う（docs/coding-standards.md「Date を使わない」）"
       }
     ],
+    "react/no-unstable-nested-components": "error",
     "react/react-in-jsx-scope": "off",
     "typescript/consistent-type-imports": [
       "error",
