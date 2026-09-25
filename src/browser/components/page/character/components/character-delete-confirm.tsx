@@ -15,13 +15,13 @@
 // `character-create.tsx` とは違う——こちらは常設の入力欄を持たないので、開くたびに空から始まる
 // ほうが「打ちかけの id が残る」事故を避けられる）。
 
-import { useState, type MouseEvent, type ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 
 import { Button } from "../../../../components/ui/button/button.tsx"
+import { Dialog } from "../../../../components/ui/dialog/dialog.tsx"
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
-import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
 import { type CharacterDeleteBandModel } from "../hooks/use-character-edit.ts"
 
@@ -35,24 +35,17 @@ export type CharacterDeleteConfirmProps = {
 
 export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): ReactElement {
   const { band } = props
-  const dialogRef = useModalDialog(true)
   const [typedId, setTypedId] = useState("")
   const canSubmit = typedId === band.pack
 
-  // backdrop のクリックは `<dialog>` 自身が受け取る（`task-run-confirm.tsx` と同じ読み替え）。
-  const onDialogClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    if (event.target === dialogRef.current) {
-      props.onClose()
-    }
-  }
-
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles["character-delete-dialog"]}
-      aria-label={band.heading}
+    <Dialog
+      open={true}
+      name={{ kind: "label", label: band.heading }}
+      backdrop="dim"
+      placement={{ kind: "auto" }}
       onClose={props.onClose}
-      onClick={onDialogClick}
+      className={styles["character-delete-dialog"] ?? ""}
     >
       <VStack element="div" gap="lg" align="stretch" justify="start" wrap="nowrap" className="">
         <div className={styles["character-delete-head"]}>
@@ -122,6 +115,6 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
           </Button>
         </div>
       </VStack>
-    </dialog>
+    </Dialog>
   )
 }

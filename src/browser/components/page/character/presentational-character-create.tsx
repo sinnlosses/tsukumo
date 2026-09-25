@@ -5,13 +5,14 @@
 // （docs/design.md 2章「機能の中を分ける」）。
 //
 // **`<dialog>` は top layer に出る**ので、キャラクター画面の `overflow` には切り取られない。
-// Esc で閉じるのはブラウザのモーダル挙動に任せ、閉じたときの後始末（下書きを空へ戻す）は
-// `<dialog onClose={onClose}>` を通す（`onClose` はフックを介さず呼び出し側から直接渡る。
+// 開閉・Esc・backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。閉じたときの後始末
+// （下書きを空へ戻す）は `onClose` を通す（`onClose` はフックを介さず呼び出し側から直接渡る。
 // `character-create.tsx`）。
 
 import { type ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
@@ -24,21 +25,19 @@ export type PresentationalCharacterCreateProps = CharacterCreateModel & {
   readonly onClose: () => void
 }
 
-/** **props はここだけ分解して受ける**（`presentational-task-board.tsx` と同じ理由。`ref` を
- * `props.ref` の形で描画中に読むと react(refs) が落ちるため）。 */
 export function PresentationalCharacterCreate({
-  ref,
-  onDialogClick,
+  open,
   onClose,
   form,
 }: PresentationalCharacterCreateProps): ReactElement {
   return (
-    <dialog
-      ref={ref}
-      className={styles["character-create-dialog"]}
-      aria-label="新しいキャラクターを作る"
+    <Dialog
+      open={open}
+      name={{ kind: "label", label: "新しいキャラクターを作る" }}
+      backdrop="dim"
+      placement={{ kind: "auto" }}
       onClose={onClose}
-      onClick={onDialogClick}
+      className={styles["character-create-dialog"] ?? ""}
     >
       <VStack element="div" gap="xl" align="stretch" justify="start" wrap="nowrap" className="">
         <Heading
@@ -141,6 +140,6 @@ export function PresentationalCharacterCreate({
           </Button>
         </div>
       </VStack>
-    </dialog>
+    </Dialog>
   )
 }

@@ -9,16 +9,16 @@
 // 作るダイアログのクラスをそのまま流用する**（`.character-create-*`。見た目が同じなので、
 // このためだけの見た目違いのクラスを増やさない）。
 
-import { useState, type MouseEvent, type ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 
 import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../../../../shared/character-definition.ts"
 import { Button } from "../../../../components/ui/button/button.tsx"
+import { Dialog } from "../../../../components/ui/dialog/dialog.tsx"
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
-import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
 
 /** ひとことプロフィールの説明（雑談のサイドバーの札にも出ることを添える。`docs/screen-design.md`
@@ -37,16 +37,8 @@ export type CharacterProfileEditDialogProps = {
 }
 
 export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProps): ReactElement {
-  const dialogRef = useModalDialog(true)
   const [name, setName] = useState(props.name)
   const [tagline, setTagline] = useState(props.tagline)
-
-  // backdrop のクリックは `<dialog>` 自身が受け取る（`character-create.tsx` と同じ読み替え）。
-  const onDialogClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    if (event.target === dialogRef.current) {
-      props.onClose()
-    }
-  }
 
   function submit(): void {
     props.onSubmit(name, tagline)
@@ -54,12 +46,13 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
   }
 
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles["character-create-dialog"]}
-      aria-label="名前とプロフィールを変える"
+    <Dialog
+      open={true}
+      name={{ kind: "label", label: "名前とプロフィールを変える" }}
+      backdrop="dim"
+      placement={{ kind: "auto" }}
       onClose={props.onClose}
-      onClick={onDialogClick}
+      className={styles["character-create-dialog"] ?? ""}
     >
       <div className={styles["character-create-body"]}>
         <Heading
@@ -144,6 +137,6 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
           </Button>
         </div>
       </div>
-    </dialog>
+    </Dialog>
   )
 }

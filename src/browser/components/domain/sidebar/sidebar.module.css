@@ -489,9 +489,7 @@
   border-radius: 0.75rem;
   font-size: var(--font-secondary);
 }
-.sidebar-persona-memory-confirm::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
+/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 .sidebar-persona-memory-confirm-question {
   margin: 0;
   font-size: var(--font-heading);

@@ -426,9 +426,7 @@
   max-width: none;
   max-height: none;
 }
-.diary-book::backdrop {
-  background: color-mix(in srgb, var(--ground) 88%, transparent);
-}
+/* 背景（backdrop）は `<Dialog backdrop="deep">` が持つ（`dialog.module.css`）。 */
 /* 並べ・間隔（`gap="lg"`）は `VStack` が持つ。 */
 .diary-book-stage {
   position: relative;

@@ -342,12 +342,10 @@
   box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
   overflow: hidden;
 }
-/* 見本どおり、後ろは暗くしない（開いているあいだの操作は modal が止める）。 */
-.speech-log::backdrop {
-  background: transparent;
-}
+/* 見本どおり、後ろは暗くしない（`<Dialog backdrop="clear">` が持つ。開いているあいだの操作は
+   modal が止める）。 */
 /* 枠の中を丸ごと覆う箱。空いたところを押しても `<dialog>` 自身が target にならない
-   （`use-speech-log.ts` の onDialogClick は target が `<dialog>` のときだけ閉じる）。 */
+   （`<Dialog>` の backdrop クリックの読み替えは target が `<dialog>` のときだけ閉じる）。 */
 .speech-log-stage {
   position: relative;
   height: 100%;

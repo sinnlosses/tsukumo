@@ -6,7 +6,7 @@
 // 差し色を分ける・背景を敷くのは作ったあと `<CharacterEdit>` の側で行う（作る口は最低限にする。
 // `docs/design.md` 7.1）。
 //
-// **`<dialog>` は常にマウントし、`open` に開閉だけを追随させる**（`browser/hooks/use-modal-dialog.ts`。
+// **`<Dialog>` は常にマウントし、`open` に開閉だけを追随させる**（`components/ui/dialog/dialog.tsx`。
 // `features/task-board/hooks/use-task-board.ts` と同じ形）。**作れたら一覧で作ったパックを選んだ
 // 状態にして、呼び出し元へ閉じたことを知らせる**（`switch-character` は送らない。切り替えは
 // `<CharacterEdit>` の「このキャラクターに切り替える」の仕事。`docs/screen-design.md` 13.6）。
@@ -21,11 +21,10 @@
 // 送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す（`error` フレームは
 // 画面にまだ出していない）。
 
-import { useCallback, useEffect, useState, type MouseEvent, type RefObject } from "react"
+import { useEffect, useState } from "react"
 
 import { isCharacterPackName } from "../../../../../shared/character.ts"
 import { readAccentColor } from "../../../../domain/appearance-color.ts"
-import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import { readDataUrl } from "../../../../lib/data-url.ts"
 import { selectPack } from "../../../../stores/screen.tsx"
 import { useSessionDispatch, useSessionSelector } from "../../../../stores/session.tsx"
@@ -51,9 +50,7 @@ export type CreateIdNoteModel =
   | { readonly kind: "invalid" | "taken"; readonly text: string }
 
 export type CharacterCreateModel = {
-  readonly ref: RefObject<HTMLDialogElement | null>
-  /** backdrop のクリックで閉じる（`onClose` は呼び出し側が直接つなぐ。下の注記）。 */
-  readonly onDialogClick: (event: MouseEvent<HTMLDialogElement>) => void
+  readonly open: boolean
   readonly form: {
     readonly nameHint: string
     readonly name: string
@@ -76,7 +73,6 @@ export type CharacterCreateModel = {
 export function useCharacterCreate(open: boolean, onClose: () => void): CharacterCreateModel {
   const dispatch = useSessionDispatch()
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
-  const dialogRef = useModalDialog(open)
 
   const [name, setName] = useState("")
   const [id, setId] = useState("")
@@ -99,16 +95,6 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       onClose()
     }
   }, [sentId, characterPacks, onClose])
-
-  // backdrop のクリックは `<dialog>` 自身が受け取る（中身は子要素が受け取る）。
-  const onDialogClick = useCallback(
-    (event: MouseEvent<HTMLDialogElement>): void => {
-      if (event.target === dialogRef.current) {
-        onClose()
-      }
-    },
-    [dialogRef, onClose],
-  )
 
   async function holdPortraitFile(file: File): Promise<void> {
     const image = await readDataUrl(file)
@@ -144,8 +130,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       : { kind: "hint", text: ID_HINT }
 
   return {
-    ref: dialogRef,
-    onDialogClick,
+    open,
     form: {
       nameHint: NAME_HINT,
       name,

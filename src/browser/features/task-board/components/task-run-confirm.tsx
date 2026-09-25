@@ -14,11 +14,11 @@
 // **どの機能の語彙も持たない確認ではない**（タスクIDと `/next-task` を知っている）ので
 // `browser/components/` には上げない。上げたとしてもあちらの箱は `stores/` を引けない。
 
-import { type MouseEvent, type ReactElement } from "react"
+import { type ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
-import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { useSessionDispatch, useTurnRunning } from "../../../stores/session.tsx"
 import { useBoardClose } from "../board-close.tsx"
 import styles from "../task-board.module.css"
@@ -37,7 +37,6 @@ export type TaskRunConfirmProps = {
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSessionDispatch()
   const turnInProgress = useTurnRunning()
-  const dialogRef = useModalDialog(true)
   const closeBoard = useBoardClose()
   const prompt = `/next-task ${props.taskId}`
 
@@ -48,20 +47,14 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
     closeBoard()
   }
 
-  // backdrop のクリックは `<dialog>` 自身が受け取る（`hooks/use-task-board.ts` と同じ読み替え）。
-  const onDialogClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    if (event.target === dialogRef.current) {
-      props.onClose()
-    }
-  }
-
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles["task-run-confirm"]}
-      aria-label="タスクの実行"
+    <Dialog
+      open={true}
+      name={{ kind: "label", label: "タスクの実行" }}
+      backdrop="dim"
+      placement={{ kind: "auto" }}
       onClose={props.onClose}
-      onClick={onDialogClick}
+      className={styles["task-run-confirm"] ?? ""}
     >
       <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
         {props.taskId} を実行しますか
@@ -107,6 +100,6 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
           </Button>
         )}
       </div>
-    </dialog>
+    </Dialog>
   )
 }

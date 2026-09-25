@@ -264,8 +264,8 @@ describe("CharacterEdit", () => {
     expect(clearConfirmDialog()).toBeNull()
   })
 
-  // 外側のクリックは `<dialog>` 自身への click として届く（`onDialogClick` の読み替え。
-  // `task-run-confirm.tsx` と同じ形）。
+  // 外側のクリックは `<dialog>` 自身への click として届く（`<Dialog>` の backdrop クリックの
+  // 読み替え）。
   it("外側のクリックで閉じ、何も送らない", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))

@@ -796,6 +796,9 @@ function propertiesOfClass(cssContent: string, className: string): readonly stri
  * 部品が `:where()` の外に持つ property（呼び出し側の class と競ってはいけないもの）。
  * 自分の CSS を持たない部品（`VStack` / `HStack`）は、レンダーする先の部品名を `.tsx` から辿って
  * その CSS を見る（同じ DOM ノードに乗るため。`visited` は辿りが循環しないための歯止め）。
+ * **`::backdrop` などの疑似要素の規則は別の持ち物として数え、ここには含めない**
+ * （`docs/design.md` 2章「`components/ui/` の部品」の検査の注記。別の要素に描くので、呼び出し側の
+ * class が同じ property 名を持っていても競らない）。
  */
 function ownExternalProperties(
   dirName: string,
@@ -812,7 +815,9 @@ function ownExternalProperties(
       ...new Set(
         cssRules(cssContent)
           .filter((rule) =>
-            rule.selectors.every((selector) => !selector.trim().startsWith(":where(")),
+            rule.selectors.every(
+              (selector) => !selector.trim().startsWith(":where(") && !selector.includes("::"),
+            ),
           )
           .flatMap((rule) => rule.properties),
       ),

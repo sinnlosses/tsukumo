@@ -22,7 +22,7 @@
 // 4. 縦書き本文のオーバーフローは `overflow: auto`（`achievement.module.css`）で両軸に任せる
 
 import { useQuery } from "@tanstack/react-query"
-import { useState, type MouseEvent, type RefObject } from "react"
+import { useState } from "react"
 
 import { lampLevel, type LampLevel } from "../../../../../shared/achievement-calendar.ts"
 import {
@@ -43,7 +43,6 @@ import {
   portraitAppearance,
   type PortraitAppearance,
 } from "../../../../domain/portrait-appearance.ts"
-import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import { sessionTokenUrl } from "../../../../lib/session-token-url.ts"
 import {
   useSessionDispatch,
@@ -157,7 +156,6 @@ export type DiaryBookTocMonth = {
 }
 
 export type DiaryBookModel = {
-  readonly ref: RefObject<HTMLDialogElement | null>
   readonly open: boolean
   readonly openNote: string
   readonly page: DiaryBookPage
@@ -173,7 +171,6 @@ export type DiaryBookModel = {
   readonly onToggleToc: () => void
   readonly onSelectTocDate: (date: string) => void
   readonly onClose: () => void
-  readonly onDialogClick: (event: MouseEvent<HTMLDialogElement>) => void
 }
 
 export function useDiaryBook(params: {
@@ -188,8 +185,6 @@ export function useDiaryBook(params: {
   const viewedDate = params.daySwitch.kind === "known" ? params.daySwitch.date : undefined
 
   const [state, setState] = useState<BookState>({ kind: "closed" })
-  const open = state.kind === "open"
-  const dialogRef = useModalDialog(open)
   const dispatch = useSessionDispatch()
   const turnRunning = useTurnRunning()
   const character = useSessionSelector((session) => session.state.character)
@@ -228,7 +223,6 @@ export function useDiaryBook(params: {
 
   if (state.kind !== "open") {
     return {
-      ref: dialogRef,
       open: false,
       openNote: "",
       page: { kind: "loading" },
@@ -242,7 +236,6 @@ export function useDiaryBook(params: {
       onToggleToc: () => {},
       onSelectTocDate: () => {},
       onClose,
-      onDialogClick: () => {},
     }
   }
 
@@ -262,7 +255,6 @@ export function useDiaryBook(params: {
   )
 
   return {
-    ref: dialogRef,
     open: true,
     openNote: OPEN_NOTE[state.source],
     page,
@@ -294,11 +286,6 @@ export function useDiaryBook(params: {
       setState({ ...state, date, tocOpen: false })
     },
     onClose,
-    onDialogClick: (event) => {
-      if (event.target === event.currentTarget) {
-        onClose()
-      }
-    },
   }
 }
 

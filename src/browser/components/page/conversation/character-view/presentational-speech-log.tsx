@@ -7,10 +7,12 @@
 // キャラビューと同じ `<Balloon>` で描く。どこに重ねるかは CSS（`character-view.module.css` の
 // anchor positioning）が決める。
 //
-// **`<dialog>` は top layer に出る**ので、キャラビューの `overflow` には切り取られない。
+// **`<dialog>` は top layer に出る**ので、キャラビューの `overflow` には切り取られない。開閉・Esc・
+// backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。
 
 import { type ReactElement, type ReactNode } from "react"
 
+import { Dialog } from "../../../../components/ui/dialog/dialog.tsx"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { Balloon } from "./balloon.tsx"
@@ -30,19 +32,13 @@ export type PresentationalSpeechLogProps = SpeechLogModel & {
   readonly speakerName: string | undefined
 }
 
-/**
- * **props はここだけ分解して受ける**（ref を持つ入れ物を `props.ref` の形で描画中に読むと
- * `react(refs)` が落ちるため。`layout/presentational-layout.tsx` と同じ理由）。
- */
 export function PresentationalSpeechLog({
-  ref,
   scrollerRef,
   open,
   entries,
   userCall,
   onOpen,
   onClose,
-  onDialogClick,
   portrait,
   speakerName,
 }: PresentationalSpeechLogProps): ReactElement {
@@ -57,12 +53,13 @@ export function PresentationalSpeechLog({
         <LogIcon />
         {OPEN_LABEL}
       </button>
-      <dialog
-        ref={ref}
-        className={styles["speech-log"]}
-        aria-label={DIALOG_LABEL}
+      <Dialog
+        open={open}
+        name={{ kind: "label", label: DIALOG_LABEL }}
+        backdrop="clear"
+        placement={{ kind: "auto" }}
         onClose={onClose}
-        onClick={onDialogClick}
+        className={styles["speech-log"] ?? ""}
       >
         {/* 枠の中を丸ごと覆う。空いたところを押しても target が `<dialog>` にならない
             （＝枠の外を押したときだけ閉じる）。 */}
@@ -111,7 +108,7 @@ export function PresentationalSpeechLog({
             )}
           </div>
         </div>
-      </dialog>
+      </Dialog>
     </>
   )
 }

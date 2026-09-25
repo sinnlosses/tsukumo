@@ -9,12 +9,12 @@
 // 切り取られない。`::backdrop` は透明にして、画面を暗く覆わずに「外側クリックで閉じる」の
 // 読み替えだけ borrow する（`task-run-confirm.tsx` と同じ `event.target === dialogRef.current`）。
 
-import { type CSSProperties, type MouseEvent, type ReactElement } from "react"
+import { type ReactElement } from "react"
 
 import { Button } from "../../../../components/ui/button/button.tsx"
+import { Dialog, type DialogPlacement } from "../../../../components/ui/dialog/dialog.tsx"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
-import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
 
 /** 吹き出しの幅（見本の実測。`docs/screen-design.md` 13.6「表情を消す前の確かめ」）。 */
@@ -38,26 +38,17 @@ export type PortraitClearConfirmProps = {
   readonly onClose: () => void
 }
 
-/** 開いた状態で組み立てられる `<dialog>`。閉じるときは呼び出し側がこの部品ごと外す
+/** 開いた状態で組み立てられる部品。閉じるときは呼び出し側がこの部品ごと外す
  * （`task-run-confirm.tsx` と同じ形）。 */
 export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactElement {
-  const dialogRef = useModalDialog(true)
-
-  // backdrop のクリックは `<dialog>` 自身が受け取る（`task-run-confirm.tsx` と同じ読み替え）。
-  const onDialogClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    if (event.target === dialogRef.current) {
-      props.onClose()
-    }
-  }
-
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles["character-clear-confirm"]}
-      style={anchoredStyle(props.anchor)}
-      aria-label="表情を消す"
+    <Dialog
+      open={true}
+      name={{ kind: "label", label: "表情を消す" }}
+      backdrop="clear"
+      placement={anchoredPlacement(props.anchor)}
       onClose={props.onClose}
-      onClick={onDialogClick}
+      className={styles["character-clear-confirm"] ?? ""}
     >
       <HStack element="div" gap="md" align="center" justify="start" wrap="nowrap" className="">
         <img
@@ -110,15 +101,16 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
           </Text>
         </Button>
       </HStack>
-    </dialog>
+    </Dialog>
   )
 }
 
 /**
  * `anchor` から吹き出しの固定位置を計算する。カードの右下寄りに添わせつつ、ビューポートの外へ
- * はみ出さないよう左右・上下を詰める（`anchor` は `position: fixed` と同じ座標系）。
+ * はみ出さないよう左右・上下を詰める（`anchor` は `position: fixed` と同じ座標系。座標は
+ * `<Dialog placement={{ kind: "at" }}>` が inline style へ置く）。
  */
-function anchoredStyle(anchor: DOMRect): CSSProperties {
+function anchoredPlacement(anchor: DOMRect): DialogPlacement {
   const maxLeft = Math.max(window.innerWidth - CONFIRM_WIDTH - VIEWPORT_MARGIN, VIEWPORT_MARGIN)
   const left = Math.min(Math.max(anchor.left, VIEWPORT_MARGIN), maxLeft)
 
@@ -128,5 +120,5 @@ function anchoredStyle(anchor: DOMRect): CSSProperties {
     ? below
     : Math.max(VIEWPORT_MARGIN, anchor.top - ESTIMATED_HEIGHT + anchor.height * 0.45)
 
-  return { top: `${String(top)}px`, left: `${String(left)}px` }
+  return { kind: "at", top, left }
 }

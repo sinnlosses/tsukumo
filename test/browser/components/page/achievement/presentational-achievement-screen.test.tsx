@@ -35,7 +35,6 @@ const AVAILABLE_REVIEW: AchievementReviewButton = {
 }
 
 const CLOSED_DIARY_BOOK: DiaryBookModel = {
-  ref: { current: null },
   open: false,
   openNote: "",
   page: { kind: "loading" },
@@ -49,7 +48,6 @@ const CLOSED_DIARY_BOOK: DiaryBookModel = {
   onToggleToc: NOOP,
   onSelectTocDate: NOOP_DATE,
   onClose: NOOP,
-  onDialogClick: NOOP,
 }
 
 const DEFAULT_PROPS: PresentationalAchievementScreenProps = {

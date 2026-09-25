@@ -11,10 +11,10 @@
 // （{@link ImageZoomFallback}）。この部品は代わりの絵と1行を出し分けるだけで、なぜ読めないかは
 // 知らない。
 
-import { type MouseEvent, type ReactElement, useState } from "react"
+import { type ReactElement, useState } from "react"
 
-import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { Button } from "../button/button.tsx"
+import { Dialog } from "../dialog/dialog.tsx"
 import styles from "./image-zoom.module.css"
 
 const HEADING = "画像の拡大"
@@ -40,27 +40,20 @@ export type ImageZoomProps = {
   readonly onClose: () => void
 }
 
-/** 開いた状態で組み立てられる `<dialog>`。閉じるときは呼び出し側がこの部品ごと外す。 */
+/** 開いた状態で組み立てられる部品。閉じるときは呼び出し側がこの部品ごと外す。 */
 export function ImageZoom(props: ImageZoomProps): ReactElement {
-  const dialogRef = useModalDialog(true)
   // 読めなかったか。**開くたびに組み立て直す部品なので**、閉じて開き直せばまた原寸を取りに行く。
   const [failed, setFailed] = useState(false)
   const substitute = failed && props.fallback.kind === "substitute" ? props.fallback : undefined
 
-  // backdrop のクリックは `<dialog>` 自身が受け取る（`task-run-confirm.tsx` と同じ読み替え）。
-  const onDialogClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    if (event.target === dialogRef.current) {
-      props.onClose()
-    }
-  }
-
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles["image-zoom"]}
-      aria-label={HEADING}
+    <Dialog
+      open={true}
+      name={{ kind: "label", label: HEADING }}
+      backdrop="dim"
+      placement={{ kind: "auto" }}
       onClose={props.onClose}
-      onClick={onDialogClick}
+      className={styles["image-zoom"] ?? ""}
     >
       <img
         className={styles["image-zoom-image"]}
@@ -83,6 +76,6 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
       >
         {CLOSE_LABEL}
       </Button>
-    </dialog>
+    </Dialog>
   )
 }

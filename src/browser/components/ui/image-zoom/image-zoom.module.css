@@ -17,9 +17,7 @@
   border-radius: 0.75rem;
   overflow: hidden;
 }
-.image-zoom::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
+/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 /* 絵そのもの。器（.image-zoom）の内側に収まるところまでしか広がらない。 */
 .image-zoom-image {
   display: block;

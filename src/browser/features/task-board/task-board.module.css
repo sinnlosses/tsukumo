@@ -259,9 +259,7 @@
   font-size: var(--font-secondary);
   overflow: hidden;
 }
-.task-board::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
+/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 /* 見出しと閉じる口は動かさず、表だけが内側でスクロールする（件数が増えても閉じる口を探しに
    スクロールしなくて済む）。 */
 .task-board-body {
@@ -357,9 +355,7 @@
   border-radius: 0.75rem;
   font-size: var(--font-secondary);
 }
-.task-run-confirm::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
+/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 /* 問い（`Text`。size="heading" tone="inherit" weight="semibold"。margin: 0 は既定と同じなので
    ここには残さない）。 */
 /* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。 */

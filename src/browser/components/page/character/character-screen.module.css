@@ -383,10 +383,8 @@
   border-radius: 0.875rem;
   box-shadow: 0 16px 40px color-mix(in srgb, var(--ground) 70%, transparent);
 }
-/* 画面を暗く覆わない（`showModal()` の既定の暗いベールを消し、外側クリックの読み替えだけ使う）。 */
-.character-clear-confirm::backdrop {
-  background: transparent;
-}
+/* 画面を暗く覆わない（`<Dialog backdrop="clear">` が既定の暗いベールを消し、外側クリックの
+   読み替えだけ使う）。 */
 /* 並べ・間隔（`gap="md"`）・揃えは `HStack` が持つ。 */
 .character-clear-confirm-portrait {
   flex-shrink: 0;
@@ -626,9 +624,7 @@
   border-radius: 0.875rem;
   overflow: auto;
 }
-.character-delete-dialog::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
+/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 /* 並べ・間隔（`gap="lg"`）は `VStack` が持つ。 */
 .character-delete-head {
   display: flex;
@@ -702,9 +698,7 @@
   border-radius: 0.875rem;
   overflow: auto;
 }
-.character-create-dialog::backdrop {
-  background: color-mix(in srgb, var(--ground) 70%, transparent);
-}
+/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 /* 並べ・間隔（`gap="xl"`）は `VStack` が持つ。 */
 /* 字の段・色・太さは `Heading`（size="heading" tone="inherit" weight="bold"）が持つ。字間だけ
    ここに残す（語彙に無い見た目）。 */

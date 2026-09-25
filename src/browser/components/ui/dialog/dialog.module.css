@@ -1,0 +1,14 @@
+/* Dialog の背景（`backdrop`。`dialog.tsx`。`docs/design.md` 2章「`components/ui/` の部品
+   （variant の作法と一覧）」の Dialog）。**顔と箱（幅・余白・地・枠・角丸・影）はここに持たない**
+   ——呼び出し側が `className` で渡す。`::backdrop` は呼び出し側の class と重ならない別の持ち物として
+   数える（`docs/design.md` 2章「`components/ui/` の部品」の検査の注記）。 */
+
+.dialog-backdrop-dim::backdrop {
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+}
+.dialog-backdrop-deep::backdrop {
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+}
+.dialog-backdrop-clear::backdrop {
+  background: transparent;
+}

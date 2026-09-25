@@ -2,14 +2,14 @@
 // `hooks/use-diary-book.ts` が畳んだ値をそのまま並べるだけの部品——`DiarySection` /
 // `LanternCalendar` と同じく、フックは持たない（`docs/design.md` 2章「機能の中を分ける」）。
 //
-// `<dialog>` は開閉に関わらず常に描画し、中身だけ `open` で出し分ける（`ref` を安定させるため。
-// `speech-log.tsx` と同じ形）。Esc は `<dialog onClose>` で拾い、枠の外（backdrop）は
-// `event.target === event.currentTarget` で判定する。
+// **`<Dialog>` は開閉に関わらず常に描画し、中身だけ `open` で出し分ける**（`speech-log.tsx` と
+// 同じ形）。開閉・Esc・backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。
 
 import { type ReactElement } from "react"
 
 import { Portrait } from "../../../components/domain/portrait.tsx"
 import { Button } from "../../../components/ui/button/button.tsx"
+import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -38,12 +38,7 @@ const LOADING_NOTE = "…"
 const FAILED_NOTE = "成果を取れなかった。"
 const GRADUATION_LABEL = "卒業"
 
-/**
- * **props はここだけ分解して受ける**（ref を持つ入れ物を `props.ref` の形で描画中に読むと
- * `react(refs)` が落ちるため。`presentational-speech-log.tsx` と同じ理由）。
- */
 export function DiaryBook({
-  ref,
   open,
   openNote,
   page,
@@ -55,15 +50,15 @@ export function DiaryBook({
   onToggleToc,
   onSelectTocDate,
   onClose,
-  onDialogClick,
 }: DiaryBookModel): ReactElement {
   return (
-    <dialog
-      ref={ref}
-      className={styles["diary-book"]}
-      aria-label={dialogLabel(page)}
+    <Dialog
+      open={open}
+      name={{ kind: "label", label: dialogLabel(page) }}
+      backdrop="deep"
+      placement={{ kind: "auto" }}
       onClose={onClose}
-      onClick={onDialogClick}
+      className={styles["diary-book"] ?? ""}
     >
       {open ? (
         <VStack
@@ -117,7 +112,7 @@ export function DiaryBook({
           {toc.open ? <Toc months={toc.months} onSelect={onSelectTocDate} /> : null}
         </VStack>
       ) : null}
-    </dialog>
+    </Dialog>
   )
 }
 

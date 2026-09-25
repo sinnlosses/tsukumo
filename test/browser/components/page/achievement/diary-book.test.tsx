@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { createRef } from "react"
 
 import { DiaryBook } from "../../../../../src/browser/components/page/achievement/diary-book.tsx"
 import {
@@ -68,24 +67,13 @@ const BLANK_PAGE: DiaryBookPage = {
   portrait: NO_PORTRAIT,
 }
 
-/**
- * 描いてから、開いているモデルなら本物の `<dialog>` を `showModal()` で開く。この部品は
- * `useModalDialog` を使わず、開閉は呼び出し側（`use-diary-book.ts`）の効果が DOM へ写す前提
- * （presentational-speech-log.tsx と同じ形）なので、ここで自前に呼ぶ必要がある——呼ばないと
- * `<dialog>` の既定のスタイル（`dialog:not([open]) { display: none }`）で中身ごと見えなくなり、
- * `getByRole` が拾えない。
- */
+/** 描く。開閉・Esc・backdrop のクリックは `<Dialog>`（`components/ui/dialog/dialog.tsx`）が持つ。 */
 function renderBook(model: DiaryBookModel): ReturnType<typeof render> {
-  const result = render(<DiaryBook {...model} />)
-  if (model.open) {
-    document.querySelector("dialog")?.showModal()
-  }
-  return result
+  return render(<DiaryBook {...model} />)
 }
 
 function openModel(overrides: Partial<DiaryBookModel> = {}): DiaryBookModel {
   return {
-    ref: createRef<HTMLDialogElement>(),
     open: true,
     openNote: "灯りの暦から開きました",
     page: WRITTEN_PAGE,
@@ -99,7 +87,6 @@ function openModel(overrides: Partial<DiaryBookModel> = {}): DiaryBookModel {
     onToggleToc: NOOP,
     onSelectTocDate: NOOP_DATE,
     onClose: NOOP,
-    onDialogClick: NOOP,
     ...overrides,
   }
 }
@@ -146,9 +133,9 @@ describe("DiaryBook", () => {
     expect(calls).toBe(1)
   })
 
-  it("枠の外（backdrop）を押すと onDialogClick が呼ばれる", () => {
+  it("枠の外（backdrop）を押すと onClose が呼ばれる", () => {
     let calls = 0
-    renderBook(openModel({ onDialogClick: () => (calls += 1) }))
+    renderBook(openModel({ onClose: () => (calls += 1) }))
     const dialog = document.querySelector("dialog")
     if (dialog === null) {
       throw new Error("<dialog> が無い")

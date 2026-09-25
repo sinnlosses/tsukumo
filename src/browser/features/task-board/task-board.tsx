@@ -22,10 +22,7 @@ export function TaskBoard(props: TaskBoardProps): ReactElement {
   // 表の中で開く確認が、送ったあとにこの表も閉じられるようにする（`board-close.tsx`）。
   return (
     <BoardCloseContext.Provider value={props.onClose}>
-      <PresentationalTaskBoard
-        {...useTaskBoard(props.tasks, props.open, props.onClose)}
-        onClose={props.onClose}
-      />
+      <PresentationalTaskBoard {...useTaskBoard(props.tasks, props.open)} onClose={props.onClose} />
     </BoardCloseContext.Provider>
   )
 }

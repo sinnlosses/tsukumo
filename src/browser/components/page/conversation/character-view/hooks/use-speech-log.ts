@@ -9,12 +9,11 @@
 //
 // **並びを組み立てるのは開いている間だけ**（閉じているときに記録が伸びるたびに作り直さない）。
 
-import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react"
+import { useEffect, useRef, useState, type RefObject } from "react"
 import { sumBy } from "remeda"
 
 import { type RecordTime, type SessionRecord } from "../../../../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../shared/turn-speech.ts"
-import { useModalDialog } from "../../../../../hooks/use-modal-dialog.ts"
 import { useSessionSelector } from "../../../../../stores/session.tsx"
 import {
   clockDateTime,
@@ -55,8 +54,6 @@ export type SpeechLogEntry =
 
 /** `<SpeechLog>` が画面に出す形。 */
 export type SpeechLogModel = {
-  /** `<dialog>` に付ける ref。開閉はこのフックが DOM へ写す。 */
-  readonly ref: RefObject<HTMLDialogElement | null>
   /** 並びを転がす箱に付ける ref。開いた直後に下端（最新）へ転がす。 */
   readonly scrollerRef: RefObject<HTMLDivElement | null>
   readonly open: boolean
@@ -69,20 +66,18 @@ export type SpeechLogModel = {
   readonly userCall: string | undefined
   readonly onOpen: () => void
   readonly onClose: () => void
-  /** 枠の外（backdrop）を押したら閉じる読み替え。 */
-  readonly onDialogClick: (event: MouseEvent<HTMLDialogElement>) => void
 }
 
 export function useSpeechLog(): SpeechLogModel {
   const records = useSessionSelector((session) => session.state.records)
   const userCall = useSessionSelector((session) => session.state.character?.userCall)
   const [open, setOpen] = useState(false)
-  const dialogRef = useModalDialog(open)
   const scrollerRef = useRef<HTMLDivElement>(null)
 
   // 開いた直後に下端（最新）を見せる（`scrollTop` は React の外にある状態への書き込み）。
-  // **`useModalDialog` の effect より後に宣言する** — 閉じた `<dialog>` は描かれておらず
-  // （`display: none`）、`showModal()` の前に測ると高さが 0 で転がらない。
+  // **`<Dialog>`（`components/ui/dialog/dialog.tsx`）の中の `useModalDialog` の effect より後に
+  // 走る** — `<Dialog>` はこの部品の子なので、React は子の effect を親より先に実行する。閉じた
+  // `<dialog>` は描かれておらず（`display: none`）、`showModal()` の前に測ると高さが 0 で転がらない。
   useEffect(() => {
     const scroller = scrollerRef.current
     if (open && scroller !== null) {
@@ -91,20 +86,12 @@ export function useSpeechLog(): SpeechLogModel {
   }, [open])
 
   return {
-    ref: dialogRef,
     scrollerRef,
     open,
     entries: open ? logEntries(records, localTimeZoneId()) : [],
     userCall,
     onOpen: () => setOpen(true),
     onClose: () => setOpen(false),
-    onDialogClick: (event) => {
-      // 枠の外（backdrop）を押したら閉じる。枠の中は `.speech-log-stage` が覆っているので、
-      // 中を押したときの target は必ず子要素になる。
-      if (event.target === event.currentTarget) {
-        setOpen(false)
-      }
-    },
   }
 }
 

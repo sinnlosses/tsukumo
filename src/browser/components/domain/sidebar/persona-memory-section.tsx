@@ -12,12 +12,12 @@
 // **1ターン1行の上限は掛からない**（その上限はモデルの暴走を防ぐためのもので、画面から
 // 名指しした削除には要らない）。
 
-import { useState, type MouseEvent, type ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
-import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 import { SidebarSection } from "./section.tsx"
 import styles from "./sidebar.module.css"
@@ -128,27 +128,20 @@ type PersonaMemoryForgetConfirmProps = {
  */
 function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): ReactElement {
   const dispatch = useSessionDispatch()
-  const dialogRef = useModalDialog(true)
 
   const forget = (): void => {
     dispatch({ type: "forget-remembered-line", line: props.line })
     props.onClose()
   }
 
-  // backdrop のクリックは `<dialog>` 自身が受け取る（`task-run-confirm.tsx` と同じ読み替え）。
-  const onDialogClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    if (event.target === dialogRef.current) {
-      props.onClose()
-    }
-  }
-
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles["sidebar-persona-memory-confirm"]}
-      aria-label="覚えたことを消す"
+    <Dialog
+      open={true}
+      name={{ kind: "label", label: "覚えたことを消す" }}
+      backdrop="dim"
+      placement={{ kind: "auto" }}
       onClose={props.onClose}
-      onClick={onDialogClick}
+      className={styles["sidebar-persona-memory-confirm"] ?? ""}
     >
       <p className={styles["sidebar-persona-memory-confirm-question"]}>
         「{props.line}」を消しますか
@@ -191,6 +184,6 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           消す
         </Button>
       </HStack>
-    </dialog>
+    </Dialog>
   )
 }
